@@ -10,8 +10,10 @@
 #ifndef OSSL_QLOG_H
 #define OSSL_QLOG_H
 
-#include <openssl/ssl.h>
 #include <stdbool.h>
+
+#include <openssl/ssl.h>
+
 #include "internal/quic_types.h"
 #include "internal/time.h"
 

@@ -11,8 +11,8 @@
 #pragma once
 
 #include <openssl/e_os2.h>
-#include <openssl/trace.h>
 #include <openssl/err.h>
+#include <openssl/trace.h>
 
 #if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \

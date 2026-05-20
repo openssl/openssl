@@ -13,6 +13,7 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/e_os2.h> /* For 'ossl_inline' */
 
 /*-

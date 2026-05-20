@@ -9,12 +9,13 @@
 #ifndef OSSL_QUIC_REACTOR_H
 #define OSSL_QUIC_REACTOR_H
 
-#include "internal/time.h"
-#include "internal/sockets.h"
-#include "internal/quic_predef.h"
-#include "internal/thread_arch.h"
-#include "internal/rio_notifier.h"
 #include <openssl/bio.h>
+
+#include "internal/quic_predef.h"
+#include "internal/rio_notifier.h"
+#include "internal/sockets.h"
+#include "internal/thread_arch.h"
+#include "internal/time.h"
 
 #ifndef OPENSSL_NO_QUIC
 

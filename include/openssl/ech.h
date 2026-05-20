@@ -19,8 +19,8 @@
 extern "C" {
 #endif
 
-#include <openssl/ssl.h>
 #include <openssl/hpke.h>
+#include <openssl/ssl.h>
 
 #ifndef OPENSSL_NO_ECH
 

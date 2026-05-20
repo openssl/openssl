@@ -10,10 +10,12 @@
 #ifndef OSSL_QUIC_TYPES_H
 #define OSSL_QUIC_TYPES_H
 
-#include <openssl/ssl.h>
-#include <internal/ssl.h>
 #include <assert.h>
 #include <string.h>
+
+#include <openssl/ssl.h>
+
+#include <internal/ssl.h>
 
 #ifndef OPENSSL_NO_QUIC
 

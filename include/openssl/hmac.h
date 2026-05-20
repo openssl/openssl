@@ -16,9 +16,8 @@
 #define HEADER_HMAC_H
 #endif
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/evp.h>
+#include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define HMAC_MAX_MD_CBLOCK 200 /* Deprecated */

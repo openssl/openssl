@@ -11,13 +11,14 @@
 #define OSSL_CRYPTO_X509_H
 #pragma once
 
-#include "internal/refcount.h"
 #include <openssl/asn1.h>
+#include <openssl/conf.h>
 #include <openssl/x509.h>
 #include <openssl/x509_vfy.h>
-#include <openssl/conf.h>
-#include "crypto/types.h"
 
+#include "internal/refcount.h"
+
+#include "crypto/types.h"
 #include <crypto/asn1.h>
 
 /* Internal X509 structures and functions: not for application use */

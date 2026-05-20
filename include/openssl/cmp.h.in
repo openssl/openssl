@@ -23,14 +23,14 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #include <openssl/opensslconf.h>
 #ifndef OPENSSL_NO_CMP
 
-#include <openssl/crmf.h>
-#include <openssl/cmperr.h>
 #include <openssl/cmp_util.h>
+#include <openssl/cmperr.h>
+#include <openssl/crmf.h>
 #include <openssl/http.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
-#include <openssl/types.h>
 #include <openssl/safestack.h>
+#include <openssl/types.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 

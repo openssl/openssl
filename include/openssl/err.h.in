@@ -29,10 +29,10 @@ use OpenSSL::stackhash qw(generate_lhash_macros);
 #include <stdlib.h>
 #endif
 
-#include <openssl/types.h>
 #include <openssl/bio.h>
-#include <openssl/lhash.h>
 #include <openssl/cryptoerr_legacy.h>
+#include <openssl/lhash.h>
+#include <openssl/types.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -46,8 +46,8 @@ extern "C" {
 #endif
 #endif
 
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
 
 #define ERR_TXT_MALLOCED 0x01
 #define ERR_TXT_STRING 0x02

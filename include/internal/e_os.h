@@ -11,10 +11,11 @@
 #define OSSL_E_OS_H
 
 #include <limits.h>
+
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
 #include <openssl/opensslconf.h>
 
-#include <openssl/e_os2.h>
-#include <openssl/crypto.h>
 #include "internal/numbers.h" /* Ensure the definition of SIZE_MAX */
 
 /*
@@ -60,8 +61,8 @@
 #if (defined(WINDOWS) || defined(MSDOS))
 
 #ifdef __DJGPP__
-#include <unistd.h>
 #include <sys/stat.h>
+#include <unistd.h>
 #define _setmode setmode
 #define _O_TEXT O_TEXT
 #define _O_BINARY O_BINARY
@@ -111,15 +112,15 @@
  */
 #define _WIN32_WINNT 0x0501
 #endif
-#include <windows.h>
-#include <stdio.h>
-#include <stddef.h>
 #include <errno.h>
+#include <stddef.h>
+#include <stdio.h>
+#include <windows.h>
 #if defined(_WIN32_WCE) && !defined(EACCES)
 #define EACCES 13
 #endif
-#include <string.h>
 #include <malloc.h>
+#include <string.h>
 #if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
 #if _MSC_VER >= 1300 && _MSC_VER < 1600
 #undef stdin
@@ -133,8 +134,8 @@ FILE *__iob_func(void);
 #endif
 #endif
 
-#include <io.h>
 #include <fcntl.h>
+#include <io.h>
 
 #ifdef OPENSSL_SYS_WINCE
 #define OPENSSL_NO_POSIX_IO
@@ -216,11 +217,11 @@ FILE *__iob_func(void);
 
 #else
 /* !defined VMS */
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 #ifdef OPENSSL_SYS_WIN32_CYGWIN
-#include <io.h>
 #include <fcntl.h>
+#include <io.h>
 #endif
 
 #define LIST_SEPARATOR_CHAR ':'
@@ -250,11 +251,11 @@ FILE *__iob_func(void);
 /* vxworks */
 #if defined(OPENSSL_SYS_VXWORKS)
 #include <ioLib.h>
-#include <tickLib.h>
-#include <sysLib.h>
-#include <vxWorks.h>
 #include <sockLib.h>
+#include <sysLib.h>
 #include <taskLib.h>
+#include <tickLib.h>
+#include <vxWorks.h>
 
 typedef int TTY_STRUCT;
 #define sleep(a) taskDelay((a) * sysClkRateGet())
@@ -273,8 +274,8 @@ struct servent *getservbyname(const char *name, const char *proto);
 /* ----------------------------- HP NonStop -------------------------------- */
 /* Required to support platform variant without getpid() and pid_t. */
 #if defined(__TANDEM) && defined(_GUARDIAN_TARGET)
-#include <strings.h>
 #include <netdb.h>
+#include <strings.h>
 #define getservbyname(name, proto) getservbyname((char *)name, proto)
 #define gethostbyname(name) gethostbyname((char *)name)
 #define ioctlsocket(a, b, c) ioctl(a, b, c)
@@ -282,8 +283,8 @@ struct servent *getservbyname(const char *name, const char *proto);
 inline int nssgetpid(void);
 #ifndef NSSGETPID_MACRO
 #define NSSGETPID_MACRO
-#include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
 #include <cextdecs.h(PROCESSHANDLE_DECOMPOSE_)>
+#include <cextdecs.h(PROCESSHANDLE_GETMINE_)>
 inline int nssgetpid(void)
 {
     short phandle[10] = { 0 };

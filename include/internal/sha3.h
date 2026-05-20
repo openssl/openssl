@@ -12,8 +12,9 @@
 #define OSSL_INTERNAL_SHA3_H
 #pragma once
 
-#include <openssl/e_os2.h>
 #include <stddef.h>
+
+#include <openssl/e_os2.h>
 
 #define KECCAK1600_WIDTH 1600
 #define SHA3_MDSIZE(bitlen) (bitlen / 8)

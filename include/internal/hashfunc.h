@@ -10,8 +10,9 @@
 #ifndef OPENSSL_HASHFUNC_H
 #define OPENSSL_HASHFUNC_H
 
-#include <openssl/e_os2.h>
 #include <stddef.h>
+
+#include <openssl/e_os2.h>
 /**
  * Generalized fnv1a 64 bit hash function
  */

@@ -25,11 +25,11 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_CRMF
+#include <openssl/cms.h>
+#include <openssl/crmferr.h>
 #include <openssl/opensslv.h>
 #include <openssl/safestack.h>
-#include <openssl/crmferr.h>
 #include <openssl/x509v3.h> /* for GENERAL_NAME etc. */
-#include <openssl/cms.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <openssl/types.h>

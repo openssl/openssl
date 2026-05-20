@@ -44,9 +44,10 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_SEED
-#include <openssl/e_os2.h>
-#include <openssl/crypto.h>
 #include <sys/types.h>
+
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
 
 #ifdef __cplusplus
 extern "C" {

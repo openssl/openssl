@@ -24,9 +24,9 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #define HEADER_OCSP_H
 #endif
 
-#include <openssl/opensslconf.h>
-#include <openssl/http.h>
 #include <openssl/asn1.h>
+#include <openssl/http.h>
+#include <openssl/opensslconf.h>
 
 /*
  * These definitions are outside the OPENSSL_NO_OCSP guard because although for
@@ -61,10 +61,10 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 
 #ifndef OPENSSL_NO_OCSP
 
+#include <openssl/ocsperr.h>
+#include <openssl/safestack.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/safestack.h>
-#include <openssl/ocsperr.h>
 
 #ifdef __cplusplus
 extern "C" {

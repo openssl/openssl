@@ -33,9 +33,10 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #ifndef OPENSSL_NO_SRP
 #include <stdio.h>
 #include <string.h>
-#include <openssl/safestack.h>
+
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
+#include <openssl/safestack.h>
 
 #ifdef __cplusplus
 extern "C" {

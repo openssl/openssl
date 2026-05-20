@@ -12,6 +12,7 @@
 #pragma once
 
 #include <stdio.h>
+
 #include <openssl/rand.h>
 
 /*

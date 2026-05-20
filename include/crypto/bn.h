@@ -11,8 +11,9 @@
 #define OSSL_CRYPTO_BN_H
 #pragma once
 
-#include <openssl/bn.h>
 #include <limits.h>
+
+#include <openssl/bn.h>
 
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);

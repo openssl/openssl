@@ -12,6 +12,7 @@
 #pragma once
 
 #include <string.h>
+
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/crypto.h>

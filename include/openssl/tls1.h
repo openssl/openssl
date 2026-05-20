@@ -19,8 +19,8 @@
 #endif
 
 #include <openssl/buffer.h>
-#include <openssl/x509.h>
 #include <openssl/prov_ssl.h>
+#include <openssl/x509.h>
 
 #ifdef __cplusplus
 extern "C" {

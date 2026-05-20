@@ -10,8 +10,8 @@
 #ifndef OSSL_QUIC_ERROR_H
 #define OSSL_QUIC_ERROR_H
 
-#include <openssl/ssl.h>
 #include <openssl/quic.h>
+#include <openssl/ssl.h>
 
 #ifndef OPENSSL_NO_QUIC
 

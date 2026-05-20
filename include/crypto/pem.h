@@ -12,6 +12,7 @@
 #pragma once
 
 #include <openssl/pem.h>
+
 #include "crypto/types.h"
 
 /* Found in crypto/pem/pvkfmt.c */

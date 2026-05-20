@@ -15,6 +15,7 @@
 #pragma once
 #include <openssl/e_os2.h>
 #include <openssl/types.h>
+
 #include "crypto/types.h"
 
 #define SLH_DSA_MAX_CONTEXT_STRING_LEN 255

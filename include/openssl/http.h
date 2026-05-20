@@ -12,11 +12,10 @@
 #define OPENSSL_HTTP_H
 #pragma once
 
-#include <openssl/opensslconf.h>
-
-#include <openssl/bio.h>
 #include <openssl/asn1.h>
+#include <openssl/bio.h>
 #include <openssl/conf.h>
+#include <openssl/opensslconf.h>
 
 #ifdef __cplusplus
 extern "C" {

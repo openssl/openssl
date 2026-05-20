@@ -12,6 +12,7 @@
 #pragma once
 
 #include <openssl/bn.h>
+
 #include "internal/packet.h"
 
 /*

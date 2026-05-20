@@ -18,9 +18,10 @@
 #endif
 #include <stdarg.h>
 #include <stddef.h>
+
+#include <openssl/core.h>
 #include <openssl/encodererr.h>
 #include <openssl/types.h>
-#include <openssl/core.h>
 
 #ifdef __cplusplus
 extern "C" {
