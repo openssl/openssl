@@ -20,32 +20,34 @@
 #include <string.h>
 #include <sys/types.h>
 #ifndef OPENSSL_NO_POSIX_IO
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #endif
 #include <ctype.h>
 #include <errno.h>
-#include <openssl/err.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/http.h>
-#include <openssl/pem.h>
-#include <openssl/store.h>
-#include <openssl/pkcs12.h>
-#include <openssl/ui.h>
-#include <openssl/safestack.h>
-#include <openssl/rsa.h>
-#include <openssl/rand.h>
+
 #include <openssl/bn.h>
-#include <openssl/ssl.h>
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
-#include "s_apps.h"
-#include "apps.h"
+#include <openssl/err.h>
+#include <openssl/http.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs12.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/safestack.h>
+#include <openssl/ssl.h>
+#include <openssl/store.h>
+#include <openssl/ui.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
-#include "internal/sockets.h" /* for openssl_fdset() */
-#include "internal/numbers.h" /* for LONG_MAX */
 #include "internal/e_os.h"
+#include "internal/numbers.h" /* for LONG_MAX */
+#include "internal/sockets.h" /* for openssl_fdset() */
+
+#include "apps.h"
+#include "s_apps.h"
 
 #ifdef _WIN32
 static int WIN32_rename(const char *from, const char *to);
@@ -3059,8 +3061,8 @@ ASN1_VALUE *app_http_post_asn1(const char *host, const char *port,
 #define fileno(a) (int)_fileno(a)
 #endif
 
-#include <windows.h>
 #include <tchar.h>
+#include <windows.h>
 
 static int WIN32_rename(const char *from, const char *to)
 {
@@ -3228,8 +3230,8 @@ double app_tminterval(int stop, int usertime)
 }
 
 #else
-#include <sys/time.h>
 #include <sys/resource.h>
+#include <sys/time.h>
 
 double app_tminterval(int stop, int usertime)
 {

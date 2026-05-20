@@ -10,17 +10,16 @@
  */
 
 /* This app is disabled when OPENSSL_NO_CMP is defined. */
+#include <ctype.h>
+#include <string.h>
+
 #include "internal/e_os.h"
 
-#include <string.h>
-#include <ctype.h>
-
 #include "apps.h"
-#include "http_server.h"
-#include "s_apps.h"
-#include "progs.h"
-
 #include "cmp_mock_srv.h"
+#include "http_server.h"
+#include "progs.h"
+#include "s_apps.h"
 
 /* tweaks needed due to missing unistd.h on Windows */
 #if defined(_WIN32) && !defined(__BORLANDC__)
@@ -30,19 +29,20 @@
 #define F_OK 0
 #endif
 
-#include <openssl/ui.h>
 #include <openssl/pkcs12.h>
 #include <openssl/ssl.h>
+#include <openssl/ui.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <stdlib.h>
+
 #include <openssl/cmp.h>
 #include <openssl/cmp_util.h>
 #include <openssl/crmf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/store.h>
 #include <openssl/objects.h>
+#include <openssl/store.h>
 #include <openssl/x509.h>
 
 static char *prog;

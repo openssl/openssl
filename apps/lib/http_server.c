@@ -17,16 +17,19 @@
 #define _POSIX_C_SOURCE 2
 #endif
 
-#include <ctype.h>
-#include "internal/e_os.h"
 #include "http_server.h"
-#include "internal/sockets.h" /* for openssl_fdset() */
+
+#include <ctype.h>
 
 #include <openssl/err.h>
-#include <openssl/trace.h>
 #include <openssl/rand.h>
-#include "s_apps.h"
+#include <openssl/trace.h>
+
+#include "internal/e_os.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
+
 #include "log.h"
+#include "s_apps.h"
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */

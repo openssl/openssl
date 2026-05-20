@@ -7,20 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-
 #include <stdio.h>
 #include <stdlib.h>
-#include "internal/common.h"
+
 #include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/trace.h>
-#include <openssl/lhash.h>
 #include <openssl/conf.h>
-#include <openssl/x509.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/lhash.h>
 #include <openssl/pem.h>
 #include <openssl/ssl.h>
-#include <openssl/err.h>
+#include <openssl/trace.h>
+#include <openssl/x509.h>
+
+#include "internal/common.h"
+#include "internal/e_os.h"
 
 #if defined __has_include
 /* Any compiler you're going to run valgrind on has this */

@@ -8,13 +8,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
 #include "cmp_mock_srv.h"
-#include "../../crypto/cmp/cmp_local.h" /* for access to msg->protection */
 
 #include <openssl/cmp.h>
-#include <openssl/err.h>
 #include <openssl/cmperr.h>
+#include <openssl/err.h>
+
+#include "../../crypto/cmp/cmp_local.h" /* for access to msg->protection */
+#include "apps.h"
 
 /* the context for the CMP mock server */
 typedef struct {

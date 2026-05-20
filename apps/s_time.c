@@ -15,14 +15,16 @@
 
 #ifndef OPENSSL_NO_SOCK
 
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
+#include "internal/sockets.h"
+
 #include "apps.h"
 #include "progs.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/pem.h>
 #include "s_apps.h"
-#include <openssl/err.h>
-#include "internal/sockets.h"
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
 #endif

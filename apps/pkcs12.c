@@ -7,21 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "apps.h"
-#include "progs.h"
+
 #include <openssl/asn1.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/kdf.h>
+#include <openssl/opensslconf.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
-#include <openssl/kdf.h>
 #include <openssl/rand.h>
+
+#include "apps.h"
+#include "progs.h"
 
 #define NOKEYS 0x1
 #define NOCERTS 0x2

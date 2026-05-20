@@ -9,12 +9,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include "internal/e_os.h"
 #if defined(_WIN32)
 /* Included before async.h to avoid some warnings */
 #include <windows.h>
@@ -23,10 +23,11 @@
 #define PATH_MAX 4096
 #endif
 
-#include <openssl/e_os2.h>
 #include <openssl/async.h>
-#include <openssl/ssl.h>
 #include <openssl/decoder.h>
+#include <openssl/e_os2.h>
+#include <openssl/ssl.h>
+
 #include "internal/sockets.h" /* for openssl_fdset() */
 
 #ifndef OPENSSL_NO_ECH
@@ -40,13 +41,14 @@
 #include <ws2ipdef.h>
 #include <ws2tcpip.h>
 #else
-#include <netinet/in.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netdb.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
 #endif
 /* for timing in some TRACE statements */
 #include <time.h>
+
 #include "internal/o_dir.h" /* for OPENSSL_DIR_read */
 #endif
 
@@ -64,17 +66,19 @@ typedef unsigned int u_int;
 #endif
 
 #include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/ocsp.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
+
 #include "apps.h"
 #include "progs.h"
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/x509.h>
-#include <openssl/rand.h>
-#include <openssl/ocsp.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif
 #include <openssl/rsa.h>
+
 #include "s_apps.h"
 #include "timeouts.h"
 #ifdef CHARSET_EBCDIC

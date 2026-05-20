@@ -8,7 +8,9 @@
  */
 
 #include <stdlib.h>
+
 #include <openssl/crypto.h>
+
 #include "platform.h" /* for copy_argv() */
 
 char **newargv = NULL;

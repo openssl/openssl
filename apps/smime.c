@@ -11,13 +11,15 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "apps.h"
-#include "progs.h"
+
 #include <openssl/crypto.h>
-#include <openssl/pem.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
+
+#include "apps.h"
+#include "progs.h"
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int smime_cb(int ok, X509_STORE_CTX *ctx);

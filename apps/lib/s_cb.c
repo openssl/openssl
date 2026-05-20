@@ -14,14 +14,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
-#include "apps.h"
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
+
 #include <openssl/bn.h>
+#include <openssl/core_names.h>
+#include <openssl/err.h>
+#include <openssl/params.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
+#include "apps.h"
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif

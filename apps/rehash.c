@@ -9,17 +9,18 @@
  */
 
 #include "internal/e_os.h" /* LIST_SEPARATOR_CHAR */
+
 #include "apps.h"
 #include "progs.h"
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)
-#include <unistd.h>
-#include <stdio.h>
-#include <limits.h>
-#include <errno.h>
-#include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 /*
  * Make sure that the processing of symbol names is treated the same as when

@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
 #include "app_params.h"
+
+#include "apps.h"
 
 /* Maximum number of bytes that will be output for an octet string body */
 #define MAX_OCTET_STRING_OUTPUT_BYTES 24

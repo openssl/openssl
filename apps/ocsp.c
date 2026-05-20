@@ -14,24 +14,26 @@
 #define _XOPEN_SOURCE_EXTENDED
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
 
 /* Needs to be included before the openssl headers */
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/x509v3.h>
+
+#include "internal/sockets.h"
+
 #include "apps.h"
 #include "http_server.h"
 #include "progs.h"
-#include "internal/sockets.h"
-#include <openssl/e_os2.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/x509v3.h>
 
 #if defined(OPENSSL_SYS_VXWORKS)
 /* not supported */
