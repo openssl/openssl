@@ -10,8 +10,9 @@
 /* We need to use some HMAC deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
+
+#include "ssl_local.h"
 
 /*
  * The HMAC APIs below are only used to support the deprecated public API

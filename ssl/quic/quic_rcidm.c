@@ -8,9 +8,10 @@
  */
 
 #include "internal/quic_rcidm.h"
-#include "internal/priority_queue.h"
-#include "internal/list.h"
+
 #include "internal/common.h"
+#include "internal/list.h"
+#include "internal/priority_queue.h"
 
 /*
  * QUIC Remote Connection ID Manager

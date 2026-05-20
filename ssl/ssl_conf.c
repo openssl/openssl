@@ -7,16 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-
 #include <stdio.h>
-#include "ssl_local.h"
+
 #include <openssl/conf.h>
-#include <openssl/objects.h>
-#include <openssl/decoder.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/decoder.h>
+#include <openssl/objects.h>
+
+#include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
+
+#include "ssl_local.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists

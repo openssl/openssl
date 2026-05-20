@@ -8,14 +8,17 @@
  */
 
 #include <stdlib.h>
-#include "ssl_local.h"
-#include "internal/ktls.h"
-#include "record/record_local.h"
-#include "internal/cryptlib.h"
-#include "internal/ssl_unwrap.h"
+
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/core_names.h>
+
+#include "internal/cryptlib.h"
+#include "internal/ktls.h"
+#include "internal/ssl_unwrap.h"
+
+#include "record/record_local.h"
+#include "ssl_local.h"
 
 #define TLS13_MAX_LABEL_LEN 249
 

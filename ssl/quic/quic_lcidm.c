@@ -8,13 +8,16 @@
  */
 
 #include "internal/quic_lcidm.h"
-#include "internal/quic_types.h"
-#include "internal/quic_vlint.h"
-#include "internal/common.h"
-#include "crypto/siphash.h"
+
+#include <openssl/err.h>
 #include <openssl/lhash.h>
 #include <openssl/rand.h>
-#include <openssl/err.h>
+
+#include "internal/common.h"
+#include "internal/quic_types.h"
+#include "internal/quic_vlint.h"
+
+#include "crypto/siphash.h"
 
 /*
  * QUIC Local Connection ID Manager

@@ -28,9 +28,9 @@
 #endif
 #include <openssl/sha.h>
 
-#include "internal/ssl3_cbc.h"
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl3_cbc.h"
 
 /*
  * MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's

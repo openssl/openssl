@@ -12,36 +12,37 @@
 #ifndef OSSL_SSL_LOCAL_H
 #define OSSL_SSL_LOCAL_H
 
+#include <errno.h>
 #include <stdlib.h>
 #include <time.h>
-#include <errno.h>
-#include "internal/common.h" /* for HAS_PREFIX */
 
-#include <openssl/buffer.h>
+#include <openssl/async.h>
 #include <openssl/bio.h>
+#include <openssl/buffer.h>
 #include <openssl/comp.h>
+#include <openssl/ct.h>
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/async.h>
 #include <openssl/symhacks.h>
-#include <openssl/ct.h>
-#include "internal/recordmethod.h"
-#include "internal/statem.h"
-#include "internal/packet.h"
-#include "internal/dane.h"
-#include "internal/refcount.h"
-#include "internal/tlssigalgs.h"
-#include "internal/tsan_assist.h"
+
 #include "internal/bio.h"
-#include "internal/ktls.h"
-#include "internal/time.h"
-#include "internal/ssl.h"
+#include "internal/common.h" /* for HAS_PREFIX */
 #include "internal/cryptlib.h"
-#include "internal/quic_predef.h"
-#include "record/record.h"
+#include "internal/dane.h"
+#include "internal/ktls.h"
+#include "internal/packet.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_tls.h"
+#include "internal/recordmethod.h"
+#include "internal/refcount.h"
+#include "internal/ssl.h"
+#include "internal/statem.h"
+#include "internal/time.h"
+#include "internal/tlssigalgs.h"
+#include "internal/tsan_assist.h"
+
+#include "record/record.h"
 #ifndef OPENSSL_NO_ECH
 #include "ech/ech_local.h"
 #endif

@@ -7,15 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
 #include <errno.h>
-#include "../ssl_local.h"
-#include <openssl/evp.h>
+#include <stdio.h>
+
 #include <openssl/buffer.h>
-#include "record_local.h"
-#include "internal/packet.h"
+#include <openssl/evp.h>
+
 #include "internal/cryptlib.h"
+#include "internal/packet.h"
 #include "internal/ssl_unwrap.h"
+
+#include "../ssl_local.h"
+#include "record_local.h"
 
 int DTLS_RECORD_LAYER_new(RECORD_LAYER *rl)
 {

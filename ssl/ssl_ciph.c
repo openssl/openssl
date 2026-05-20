@@ -14,19 +14,22 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <stdio.h>
 #include <ctype.h>
-#include <openssl/objects.h>
+#include <stdio.h>
+
 #include <openssl/comp.h>
-#include <openssl/crypto.h>
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
+#include <openssl/objects.h>
 #include <openssl/trace.h>
-#include "internal/nelem.h"
-#include "ssl_local.h"
-#include "internal/thread_once.h"
-#include "internal/cryptlib.h"
+
 #include "internal/comp.h"
+#include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/thread_once.h"
+
+#include "ssl_local.h"
 
 /* NB: make sure indices in these tables match values above */
 

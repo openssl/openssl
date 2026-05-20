@@ -15,9 +15,10 @@
 #ifndef OPENSSL_NO_QUIC
 
 #include <openssl/lhash.h>
+
 #include "internal/list.h"
-#include "internal/quic_predef.h"
 #include "internal/quic_fc.h"
+#include "internal/quic_predef.h"
 #include "internal/quic_stream_map.h"
 #include "internal/quic_tls.h"
 

@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
 #include <openssl/ech.h>
+#include <openssl/ssl.h>
+
+#include "internal/ech_helpers.h"
+
 #include "../ssl_local.h"
 #include "ech_local.h"
-#include "internal/ech_helpers.h"
 
 /* used in ECH crypto derivations (odd format for EBCDIC goodness) */
 /* "tls ech" */

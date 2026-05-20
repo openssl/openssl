@@ -8,10 +8,12 @@
  */
 
 #include "internal/quic_srtm.h"
-#include "internal/common.h"
-#include <openssl/lhash.h>
+
 #include <openssl/core_names.h>
+#include <openssl/lhash.h>
 #include <openssl/rand.h>
+
+#include "internal/common.h"
 
 /*
  * QUIC Stateless Reset Token Manager

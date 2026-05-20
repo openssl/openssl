@@ -8,12 +8,14 @@
  */
 
 #include "internal/quic_record_tx.h"
-#include "internal/qlog_event_helpers.h"
+
 #include "internal/bio_addr.h"
 #include "internal/common.h"
-#include "quic_record_shared.h"
 #include "internal/list.h"
+#include "internal/qlog_event_helpers.h"
+
 #include "../ssl_local.h"
+#include "quic_record_shared.h"
 
 #define QTX_DEFAULT_MTU 1500
 

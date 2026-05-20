@@ -8,6 +8,7 @@
  */
 
 #include "internal/qlog_event_helpers.h"
+
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/quic_channel.h"

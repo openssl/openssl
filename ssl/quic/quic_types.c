@@ -8,8 +8,9 @@
  */
 
 #include "internal/quic_types.h"
-#include <openssl/rand.h>
+
 #include <openssl/err.h>
+#include <openssl/rand.h>
 
 int ossl_quic_gen_rand_conn_id(OSSL_LIB_CTX *libctx, size_t len,
     QUIC_CONN_ID *cid)

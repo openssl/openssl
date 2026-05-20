@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdbool.h>
 #include "internal/qlog.h"
-#include "internal/json_enc.h"
+
+#include <stdbool.h>
+
 #include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/json_enc.h"
+
 #include "crypto/ctype.h"
 
 #define BITS_PER_WORD (sizeof(size_t) * 8)

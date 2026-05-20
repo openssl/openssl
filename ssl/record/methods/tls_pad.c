@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/rand.h>
 #include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"

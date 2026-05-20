@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/priority_queue.h"
+
+#include <assert.h>
+
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <assert.h>
-#include "internal/priority_queue.h"
-#include "internal/safe_math.h"
+
 #include "internal/numbers.h"
+#include "internal/safe_math.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 

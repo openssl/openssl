@@ -8,8 +8,8 @@
  */
 
 /* This is the C source file where we include this header directly */
-#include <openssl/sslerr_legacy.h>
 #include <openssl/ssl.h>
+#include <openssl/sslerr_legacy.h>
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 int ERR_load_SSL_strings(void)

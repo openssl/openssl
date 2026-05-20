@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/uint_set.h"
-#include "internal/common.h"
 #include "internal/quic_sf_list.h"
+
+#include "internal/common.h"
+#include "internal/uint_set.h"
 
 struct stream_frame_st {
     struct stream_frame_st *prev, *next;

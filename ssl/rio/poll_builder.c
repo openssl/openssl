@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "poll_builder.h"
+
 #include <assert.h>
 #include <errno.h>
+
 #include "internal/safe_math.h"
-#include "poll_builder.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 

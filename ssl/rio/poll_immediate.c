@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/common.h"
-#include "internal/quic_ssl.h"
-#include "internal/quic_reactor_wait_ctx.h"
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
+
+#include "internal/common.h"
+#include "internal/quic_reactor_wait_ctx.h"
+#include "internal/quic_ssl.h"
+
 #include "../ssl_local.h"
 #include "poll_builder.h"
 
