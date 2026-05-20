@@ -41,16 +41,13 @@
 #error "Your compiler doesn't appear to support 128-bit integer types"
 #endif
 
-typedef uint8_t u8;
-typedef uint64_t u64;
-
 /*
  * The underlying field. P384 operates over GF(2^384-2^128-2^96+2^32-1). We
  * can serialize an element of this field into 48 bytes. We call this an
  * felem_bytearray.
  */
 
-typedef u8 felem_bytearray[48];
+typedef uint8_t felem_bytearray[48];
 
 /*
  * These are the parameters of P384, taken from FIPS 186-3, section D.1.2.4.
@@ -113,7 +110,7 @@ typedef widelimb widefelem[2 * NLIMBS - 1];
 static const limb bottom56bits = 0xffffffffffffff;
 
 /* Helper functions (de)serialising reduced field elements in little endian */
-static void bin48_to_felem(felem out, const u8 in[48])
+static void bin48_to_felem(felem out, const uint8_t in[48])
 {
     memset(out, 0, 56);
     out[0] = (*((limb *)&in[0])) & bottom56bits;
@@ -125,7 +122,7 @@ static void bin48_to_felem(felem out, const u8 in[48])
     memmove(&out[6], &in[42], 6);
 }
 
-static void felem_to_bin48(u8 out[48], const felem in)
+static void felem_to_bin48(uint8_t out[48], const felem in)
 {
     memset(out, 0, 48);
     (*((limb *)&out[0])) |= (in[0] & bottom56bits);
@@ -1404,7 +1401,7 @@ static char get_bit(const felem_bytearray in, int i)
  */
 static void batch_mul(felem x_out, felem y_out, felem z_out,
     const felem_bytearray scalars[],
-    const unsigned int num_points, const u8 *g_scalar,
+    const unsigned int num_points, const uint8_t *g_scalar,
     const int mixed, const felem pre_comp[][17][3],
     const felem g_pre_comp[16][3])
 {
@@ -1412,7 +1409,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
     unsigned int num, gen_mul = (g_scalar != NULL);
     felem nq[3], tmp[4];
     limb bits;
-    u8 sign, digit;
+    uint8_t sign, digit;
 
     /* set nq to the point at infinity */
     memset(nq, 0, sizeof(nq));

@@ -49,16 +49,13 @@
 #error "Your compiler doesn't appear to support 128-bit integer types"
 #endif
 
-typedef uint8_t u8;
-typedef uint64_t u64;
-
 /*
  * The underlying field. P521 operates over GF(2^521-1). We can serialize an
  * element of this field into 66 bytes where the most significant byte
  * contains only a single bit. We call this an felem_bytearray.
  */
 
-typedef u8 felem_bytearray[66];
+typedef uint8_t felem_bytearray[66];
 
 /*
  * These are the parameters of P521, taken from FIPS 186-3, section D.1.2.5.
@@ -140,7 +137,7 @@ static const limb bottom58bits = 0x3ffffffffffffff;
  * bin66_to_felem takes a little-endian byte array and converts it into felem
  * form. This assumes that the CPU is little-endian.
  */
-static void bin66_to_felem(felem out, const u8 in[66])
+static void bin66_to_felem(felem out, const uint8_t in[66])
 {
     out[0] = (*((limb *)&in[0])) & bottom58bits;
     out[1] = (*((limb_aX *)&in[7]) >> 2) & bottom58bits;
@@ -157,7 +154,7 @@ static void bin66_to_felem(felem out, const u8 in[66])
  * felem_to_bin66 takes an felem and serializes into a little endian, 66 byte
  * array. This assumes that the CPU is little-endian.
  */
-static void felem_to_bin66(u8 out[66], const felem in)
+static void felem_to_bin66(uint8_t out[66], const felem in)
 {
     memset(out, 0, 66);
     (*((limb *)&out[0])) = in[0];
@@ -521,7 +518,7 @@ static const limb bottom52bits = 0xfffffffffffff;
  */
 static void felem_reduce(felem out, const largefelem in)
 {
-    u64 overflow1, overflow2;
+    uint64_t overflow1, overflow2;
 
     out[0] = ((limb)in[0]) & bottom58bits;
     out[1] = ((limb)in[1]) & bottom58bits;
@@ -1497,7 +1494,7 @@ static char get_bit(const felem_bytearray in, int i)
  */
 static void batch_mul(felem x_out, felem y_out, felem z_out,
     const felem_bytearray scalars[],
-    const unsigned num_points, const u8 *g_scalar,
+    const unsigned num_points, const uint8_t *g_scalar,
     const int mixed, const felem pre_comp[][17][3],
     const felem g_pre_comp[16][3])
 {
@@ -1505,7 +1502,7 @@ static void batch_mul(felem x_out, felem y_out, felem z_out,
     unsigned num, gen_mul = (g_scalar != NULL);
     felem nq[3], tmp[4];
     limb bits;
-    u8 sign, digit;
+    uint8_t sign, digit;
 
     /* set nq to the point at infinity */
     memset(nq, 0, sizeof(nq));

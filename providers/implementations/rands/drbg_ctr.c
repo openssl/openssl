@@ -71,12 +71,12 @@ typedef struct rand_drbg_ctr_st {
 static void inc_128(PROV_DRBG_CTR *ctr)
 {
     unsigned char *p = &ctr->V[0];
-    u32 n = 16, c = 1;
+    uint32_t n = 16, c = 1;
 
     do {
         --n;
         c += p[n];
-        p[n] = (u8)c;
+        p[n] = (uint8_t)c;
         c >>= 8;
     } while (n);
 }
@@ -391,12 +391,12 @@ static int drbg_ctr_reseed_wrapper(void *vdrbg, int prediction_resistance,
 
 static void ctr96_inc(unsigned char *counter)
 {
-    u32 n = 12, c = 1;
+    uint32_t n = 12, c = 1;
 
     do {
         --n;
         c += counter[n];
-        counter[n] = (u8)c;
+        counter[n] = (uint8_t)c;
         c >>= 8;
     } while (n);
 }
