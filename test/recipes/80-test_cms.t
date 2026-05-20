@@ -54,7 +54,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 36;
+plan tests => 37;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1642,3 +1642,22 @@ subtest "ML-KEM KEMRecipientInfo tests for CMS" => sub {
            "CMS decrypt with ML-KEM-768 and using UKM");
     }
 };
+
+# Regression test for NULL dereference in PWRI decrypt path
+# when optional keyDerivationAlgorithm is omitted.
+subtest "PWRI missing keyDerivationAlgorithm regression" => sub {
+    plan tests => 1;
+
+    with({ exit_checker => sub { return shift == 4; } }, sub {
+        ok(run(app([
+            "openssl", "cms", @prov,
+            "-decrypt",
+            "-inform", "DER",
+            "-in",
+            srctop_file('test', 'cms-msg', 'missing-kdf.der'),
+            "-out", "pwri-out.txt",
+            "-pwri_password", "secret"])),
+        "missing keyDerivationAlgorithm is rejected");
+    });
+};
+
