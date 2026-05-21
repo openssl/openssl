@@ -3027,7 +3027,9 @@ int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 int ossl_dtls_tick(DTLS_LISTENER *dl);
+#endif
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
