@@ -205,7 +205,7 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     unsigned char *tmp;
     int outl, rv = 0;
 
-    if (blocklen <= 0)
+    if (blocklen < 4)
         return 0;
 
     if (inlen < 2 * (size_t)blocklen) {
