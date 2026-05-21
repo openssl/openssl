@@ -678,17 +678,16 @@ int X509v3_addr_get_range(IPAddressOrRange *aor,
 static int IPAddressFamily_cmp(const IPAddressFamily *const *a_,
     const IPAddressFamily *const *b_)
 {
-    int cmp;
-
     const ASN1_OCTET_STRING *a = (*a_)->addressFamily;
     const ASN1_OCTET_STRING *b = (*b_)->addressFamily;
+    int cmp, len = (a->length <= b->length) ? a->length : b->length;
 
-    int len = (a->length <= b->length) ? a->length : b->length;
     if (len > 0) {
         cmp = memcmp(a->data, b->data, len);
         if (cmp != 0)
             return cmp;
     }
+
     return a->length - b->length;
 }
 
