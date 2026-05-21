@@ -37,11 +37,18 @@ static char *privkey = NULL;
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DTLS)
 
 /*
- * Helper function to read data from a listener-based DTLS server connection.
+ * Helper function that waits for data using SSL_poll and then reads.
  * Uses SSL_poll() to wait for data since server connections from a listener
  * don't have their own socket fd.
+ *
+ * This function retries in a loop because SSL_poll() may report data is
+ * available (based on the URXE queue having encrypted records) but SSL_read_ex()
+ * may return SSL_ERROR_WANT_READ if those records don't yet constitute a
+ * complete application data message. The retry loop allows the
+ * demux to pump additional packets and complete the message.
  */
-#define DTLS_READ_TIMEOUT_MS 50000 /* 50 second timeout */
+#define DTLS_READ_TIMEOUT_SEC 2
+#define DTLS_READ_MAX_RETRIES 10
 
 static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
     size_t *readbytes)
@@ -49,35 +56,41 @@ static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
     SSL_POLL_ITEM item;
     struct timeval timeout;
     size_t result_count;
+    int ret, err, retries;
 
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
     item.desc.value.ssl = ssl;
     item.events = SSL_POLL_EVENT_R;
     item.revents = 0;
 
-    timeout.tv_sec = DTLS_READ_TIMEOUT_MS / 1000;
-    timeout.tv_usec = (DTLS_READ_TIMEOUT_MS % 1000) * 1000;
+    timeout.tv_sec = DTLS_READ_TIMEOUT_SEC;
+    timeout.tv_usec = 0;
 
-    if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
-        TEST_error("SSL_poll failed");
-        return 0;
+    for (retries = 0; retries < DTLS_READ_MAX_RETRIES; retries++) {
+        item.revents = 0;
+        if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
+            TEST_error("SSL_poll failed");
+            return 0;
+        }
+
+        /* No data yet or not read-ready, continue polling */
+        if (result_count == 0 || (item.revents & SSL_POLL_EVENT_R) == 0)
+            continue;
+
+        ret = SSL_read_ex(ssl, buf, bufsize, readbytes);
+        if (ret == 1)
+            return 1; /* Success */
+
+        err = SSL_get_error(ssl, ret);
+        if (err != SSL_ERROR_WANT_READ) {
+            TEST_error("SSL_read_ex failed with error %d", err);
+            return 0;
+        }
+        /* SSL_ERROR_WANT_READ: retry the poll/read cycle */
     }
 
-    if (result_count == 0) {
-        TEST_error("SSL_poll timed out after %d ms", DTLS_READ_TIMEOUT_MS);
-        return 0;
-    }
-
-    if ((item.revents & SSL_POLL_EVENT_R) == 0) {
-        TEST_error("SSL_poll returned unexpected events: 0x%lx",
-            (unsigned long)item.revents);
-        return 0;
-    }
-
-    if (!TEST_true(SSL_read_ex(ssl, buf, bufsize, readbytes)))
-        return 0;
-
-    return 1;
+    TEST_error("dtls_read_with_retry exhausted retries");
+    return 0;
 }
 
 /*

@@ -10,6 +10,7 @@
 #include "internal/common.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_reactor_wait_ctx.h"
+#include "internal/ssl_unwrap.h"
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include "../ssl_local.h"
@@ -186,13 +187,49 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
 
 static int poll_translate_ssl_dtls_conn(SSL *ssl,
     RIO_POLL_BUILDER *rpb,
-    uint64_t events)
+    uint64_t events,
+    int *abort_blocking)
 {
     BIO *rbio, *wbio;
     int rfd = -1, wfd = -1;
+    SSL_CONNECTION *sc;
 
     if ((events & SSL_POLL_EVENT_R) != 0) {
         rbio = SSL_get_rbio(ssl);
+
+        if (rbio == NULL) {
+            sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+            if (sc != NULL && sc->d1 != NULL && sc->d1->listener != NULL) {
+                /*
+                 * Listener-based DTLS connection. First, pump the listener's
+                 * demux to ensure any pending datagrams on the socket are
+                 * routed to their respective connection URXE queues.
+                 */
+                DTLS_LISTENER *dl = (DTLS_LISTENER *)sc->d1->listener;
+
+                ossl_dtls_tick(dl);
+
+                /*
+                 * Now check the URXE buffer. If data has been demuxed into
+                 * this connection's receive queue, abort blocking immediately -
+                 * there is no need to wait on the socket FD.
+                 */
+                if (sc->d1->rx != NULL
+                    && !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending)) {
+                    *abort_blocking = 1;
+                    return 1;
+                }
+
+                /*
+                 * URXE buffer is empty. Fall back to the listener's rbio so the
+                 * OS-level poll() wakes us up when the shared socket becomes
+                 * readable and new datagrams may arrive.
+                 */
+                rbio = SSL_get_rbio(sc->d1->listener);
+            }
+        }
+
         if (rbio != NULL)
             BIO_get_fd(rbio, &rfd);
     }
@@ -331,8 +368,12 @@ static int poll_translate(SSL_POLL_ITEM *items,
                 break;
             case SSL_TYPE_SSL_CONNECTION:
                 if (SSL_is_dtls(ssl)) {
-                    if (!poll_translate_ssl_dtls_conn(ssl, rpb, item->events))
+                    if (!poll_translate_ssl_dtls_conn(ssl, rpb, item->events,
+                            abort_blocking))
                         FAIL_ITEM(i);
+
+                    if (*abort_blocking)
+                        return 1;
                 } else {
                     ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                         "SSL_poll currently only supports DTLS listeners for DTLS connections");
@@ -426,8 +467,10 @@ static int poll_block(SSL_POLL_ITEM *items,
             p_result_count))
         goto out;
 
-    if (abort_blocking)
+    if (abort_blocking) {
+        ok = 1; /* Data is already available, this is success not failure */
         goto out;
+    }
 
     earliest_wakeup_deadline = ossl_time_min(earliest_wakeup_deadline,
         user_deadline);

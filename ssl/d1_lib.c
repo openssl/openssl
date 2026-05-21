@@ -2132,7 +2132,7 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
  *   0   Exchange incomplete (HRR/HVR sent, or no data yet); call again.
  *  -1   Fatal error; dl->fatal is set.
  */
-static int ossl_dtls_tick(DTLS_LISTENER *dl)
+int ossl_dtls_tick(DTLS_LISTENER *dl)
 {
     int pump_ret;
 
