@@ -46,6 +46,13 @@ bool ossl_fn_is_negative(const OSSL_FN *f);
 bool ossl_fn_is_dynamically_allocated(const OSSL_FN *f);
 bool ossl_fn_is_securely_allocated(const OSSL_FN *f);
 
+OSSL_FN_ULONG ossl_fn_add_words(OSSL_FN_ULONG *r, size_t rl,
+    const OSSL_FN_ULONG *a, size_t al,
+    const OSSL_FN_ULONG *b, size_t bl);
+OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
+    const OSSL_FN_ULONG *a, size_t al,
+    const OSSL_FN_ULONG *b, size_t bl);
+
 #ifdef __cplusplus
 }
 #endif
