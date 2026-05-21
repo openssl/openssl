@@ -31,6 +31,17 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Add support for AArch64 Guarded Control Stack (GCS) in assembly code.
+
+   When building with compilers that support GCS (Clang 18+, GCC 15+),
+   assembly modules are marked as compatible when branch protection is
+   enabled (e.g. -mbranch-protection=standard). No functional changes to
+   the assembly implementations are required, but compliance ensures
+   correct operation with shadow stack enforcement.
+
+   *Guillaume Gardet*
+   *Gowtham Suresh Kumar*
+
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
    (NID_rsaesOaep, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
    are now decoded as RSA keys.  This is required for interoperability
