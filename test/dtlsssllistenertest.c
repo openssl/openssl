@@ -41,7 +41,7 @@ static char *privkey = NULL;
  * Uses SSL_poll() to wait for data since server connections from a listener
  * don't have their own socket fd.
  */
-#define DTLS_READ_TIMEOUT_MS 5000 /* 5 second timeout */
+#define DTLS_READ_TIMEOUT_MS 20000 /* 20 second timeout */
 
 static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
     size_t *readbytes)
