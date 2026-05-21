@@ -4732,8 +4732,8 @@ X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
     return ret;
 }
 
-X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert, const unsigned char *certbytes,
-    unsigned long cert_len, unsigned char *sha1_hash)
+X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert,
+    unsigned char *sha1_hash)
 {
     X509_HS_CACHE_ENT *tmp, *del;
     X509 *ret = cert;

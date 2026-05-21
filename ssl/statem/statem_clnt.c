@@ -2410,13 +2410,9 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
             }
 
             /*
-             * Hash the wire DER starting at certstart -- d2i_X509() has
-             * advanced certbytes past the end of this cert into the next
-             * one (or past the end of the list), so passing certbytes
-             * here would hash the wrong bytes and the insert hash would
-             * never match a subsequent lookup hash.
+             * Add the cert to our handshake cache
              */
-            x = ssl_ctx_add_handshake_cert(sctx, x, certstart, cert_len, sha1_hash);
+            x = ssl_ctx_add_handshake_cert(sctx, x, sha1_hash);
         }
 
         if (SSL_CONNECTION_IS_TLS13(s)) {
