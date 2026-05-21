@@ -12,81 +12,152 @@
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
 #include "fn_local.h"
 
-/* add of b to a. */
-/* unsigned add of b to a, r can be equal to a or b. */
-int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
+/*
+ * ossl_fn_add_words and ossl_fn_sub_words perform fixed-width unsigned
+ * addition and subtraction of multi-limb integers.
+ *
+ * The carry or borrow is always propagated through every limb of both
+ * operands (and through any extra result limbs when rl exceeds the operand
+ * sizes).  The operation is effectively performed at the precision of the
+ * wider operand, then truncated to rl limbs — analogous to performing an
+ * unsigned operation in the wider of the operand types and then casting
+ * the result to a narrower type.
+ *
+ * The returned carry (addition) or borrow (subtraction) is the true
+ * overflow / borrow out of the most significant processed limb:
+ *
+ *   - When rl <= max(al, bl), it is the carry / borrow out of max(al, bl)
+ *     limbs.  Note that this does NOT indicate whether the result fits in
+ *     rl limbs; non-zero high limbs may have been truncated without
+ *     generating a carry.  If the caller needs the exact magnitude, rl
+ *     must be at least max(al, bl).
+ *
+ *   - For addition, when rl > max(al, bl), the carry is absorbed into the
+ *     result (written to r[max(al,bl)], higher limbs zeroed) and the
+ *     function returns 0.
+ *
+ *   - For subtraction, when rl > max(al, bl), the borrow is propagated
+ *     through all remaining result limbs (two's complement sign extension)
+ *     and the function returns the borrow out of rl limbs.
+ */
+
+/* unsigned addition of a and b, returns carry if there is one past the result size */
+OSSL_FN_ULONG ossl_fn_add_words(OSSL_FN_ULONG *r, size_t rl,
+    const OSSL_FN_ULONG *a, size_t al,
+    const OSSL_FN_ULONG *b, size_t bl)
 {
     /*
      * Addition is commutative, so we switch 'a' and 'b' around to
      * ensure that 'a' is physically the largest, so a maximum of
      * work is done with 'bn_add_words'
      */
-    if (a->dsize < b->dsize) {
-        const OSSL_FN *tmp;
+    if (al < bl) {
+        const OSSL_FN_ULONG *tmp;
+        size_t tmpl;
 
         tmp = a;
+        tmpl = al;
         a = b;
+        al = bl;
         b = tmp;
+        bl = tmpl;
     }
 
-    /* At this point, we know that a->dsize >= b->dsize */
-    size_t max = a->dsize;
-    size_t min = b->dsize;
-    size_t rs = r->dsize;
-    const OSSL_FN_ULONG *ap = a->d;
-    const OSSL_FN_ULONG *bp = b->d;
-    OSSL_FN_ULONG *rp = r->d;
-
     /*
-     * Three stages, after which there's a possible return.
-     * Each stage is limited by the number of remaining limbs
-     * in |r|.
+     * Four stages.
      *
      * For each stage, |stage_limbs| is used to hold the number
-     * of limbs being treated in that stage, and |carry| is
-     * used to transport the carry from one stage to the other.
+     * of limbs being treated in that stage, |i| is used as an
+     * index into the arrays, and |carry| is used to transport
+     * the carry from one stage to the other.
+     *
+     * Note: |stage_limbs| is passed cast to 'int' when calling
+     * bn_add_words().  This is fine because the maximum size of
+     * any OSSL_FN_ULONG is BN_MAX_WORDS, which is small enough.
+     * Should that change some day, there's trouble ahead.
      */
     size_t stage_limbs;
     OSSL_FN_ULONG carry;
+    size_t i;
 
-    /* Stage 1 */
+    /*
+     * Stage 1: calculate the least min(rl,bl) limbs
+     *
+     * This uses bn_add_words, with what performance benefits that gives.
+     */
 
-    stage_limbs = (min > rs) ? rs : min;
-    carry = bn_add_words(rp, ap, bp, (int)stage_limbs);
-    if (stage_limbs == rs)
-        return 1;
+    stage_limbs = (bl > rl) ? rl : bl;
+    carry = bn_add_words(r, a, b, (int)stage_limbs);
 
-    /* At this point, we know that |min| limbs have been used so far */
-    rp += min;
-    ap += min;
+    /* Record the array position past what bn_add_words calculated */
+    i = stage_limbs;
 
-    /* Stage 2 */
+    /*
+     * Stage 2: calculate min(rl,bl) to bl limbs
+     *
+     * Because this loop only engages when rl < bl, it cannot affect r.
+     * The only purpose of this loop is to propagate carry in this particular
+     * scenario.
+     */
 
-    stage_limbs = ((max > rs) ? rs : max) - min;
+    stage_limbs = bl - stage_limbs;
 
-    for (size_t dif = stage_limbs; dif > 0; dif--, ap++, rp++) {
-        OSSL_FN_ULONG t1 = *ap;
-        OSSL_FN_ULONG t2 = (t1 + carry) & OSSL_FN_MASK;
+    for (size_t dif = stage_limbs; dif > 0; dif--, i++) {
+        OSSL_FN_ULONG t1, t2;
 
-        *rp = t2;
-        carry &= (t2 == 0);
-    }
-    if (stage_limbs == rs - min)
-        return 1;
-
-    /* Stage 3 */
-
-    /* We know that |max| limbs have been used */
-    stage_limbs = rs - max;
-
-    for (size_t dif = stage_limbs; dif > 0; dif--, rp++) {
-        OSSL_FN_ULONG t1 = 0;
-        OSSL_FN_ULONG t2 = (t1 + carry) & OSSL_FN_MASK;
-
-        *rp = carry;
-        carry &= (t2 == 0);
+        t1 = (a[i] + carry) & OSSL_FN_MASK;
+        carry = (t1 < carry);
+        t2 = (b[i] + t1) & OSSL_FN_MASK;
+        carry |= (t2 < t1);
     }
 
+    assert(i == bl);
+
+    /*
+     * Stage 3: calculate bl to al limbs
+     *
+     * Note: at any time, the end of r may be reached.  This is solved
+     * with a temporary pointer that's set appropriately inside the loop.
+     */
+
+    stage_limbs = al - bl;
+
+    for (size_t dif = stage_limbs; dif > 0; dif--, i++) {
+        OSSL_FN_ULONG tmp = 0;
+        OSSL_FN_ULONG *rp = (i < rl) ? &r[i] : &tmp;
+        OSSL_FN_ULONG t1;
+
+        t1 = (a[i] + carry) & OSSL_FN_MASK;
+        carry = (t1 < carry);
+
+        *rp = t1;
+    }
+
+    assert(i == al);
+
+    /* If |r| is exhausted, there's nothing more to do */
+    if (i >= rl)
+        return carry;
+
+    /*
+     * Stage 4: calculate a final carry, for when rl > al
+     *
+     * This is relatively simple, compare to earlier loops.
+     */
+
+    stage_limbs = rl - al;
+
+    for (size_t dif = stage_limbs; dif > 0; dif--, i++) {
+        r[i] = carry;
+        carry = 0;
+    }
+
+    return carry;
+}
+
+int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
+{
+    (void)ossl_fn_add_words(r->d, r->dsize, a->d, a->dsize, b->d, b->dsize);
     return 1;
 }
 
@@ -118,74 +189,124 @@ int OSSL_FN_add_word(OSSL_FN *a, OSSL_FN_ULONG w)
     return 1;
 }
 
-/* unsigned subtraction of b from a */
-int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
+/* unsigned subtraction of b from a, returns borrow if there is one past the result size */
+OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
+    const OSSL_FN_ULONG *a, size_t al,
+    const OSSL_FN_ULONG *b, size_t bl)
 {
-    size_t max = (a->dsize >= b->dsize) ? a->dsize : b->dsize;
-    size_t min = (a->dsize <= b->dsize) ? a->dsize : b->dsize;
-    size_t rs = r->dsize;
-    const OSSL_FN_ULONG *ap = a->d;
-    const OSSL_FN_ULONG *bp = b->d;
-    OSSL_FN_ULONG *rp = r->d;
+    size_t max = (al >= bl) ? al : bl;
+    size_t min = (al <= bl) ? al : bl;
 
     /*
-     * Three stages, after which there's a possible return.
-     * Each stage is limited by the number of remaining limbs
-     * in |r|.
+     * Four stages.
      *
      * For each stage, |stage_limbs| is used to hold the number
-     * of limbs being treated in that stage, and |borrow| is
-     * used to transport the borrow from one stage to the other.
+     * of limbs being treated in that stage, |i| is used as an
+     * index into the arrays, and |borrow| is used to transport
+     * the borrow from one stage to the other.
+     *
+     * Note: |stage_limbs| is passed cast to 'int' when calling
+     * bn_sub_words().  This is fine because the maximum size of
+     * any OSSL_FN_ULONG is BN_MAX_WORDS, which is small enough.
+     * Should that change some day, there's trouble ahead.
      */
     size_t stage_limbs;
     OSSL_FN_ULONG borrow;
+    size_t i;
 
-    /* Stage 1 */
+    /*
+     * Stage 1: calculate the least min(rl,al,bl) limbs
+     *
+     * This uses bn_sub_words, with what performance benefits that gives.
+     */
 
-    stage_limbs = (min > rs) ? rs : min;
-    borrow = bn_sub_words(rp, ap, bp, (int)stage_limbs);
-    if (stage_limbs == rs)
-        return 1;
+    stage_limbs = (min > rl) ? rl : min;
+    borrow = bn_sub_words(r, a, b, (int)stage_limbs);
 
-    /* At this point, we know that |min| limbs have been used so far */
-    ap += min;
-    bp += min;
-    rp += min;
+    /* Record the array position past what bn_sub_words calculated */
+    i = stage_limbs;
 
-    /* Stage 2 */
+    /*
+     * Stage 2: calculate the min(rl,al,bl) to min(al,bl) limbs
+     *
+     * Because this loop only engages when rl < min(al,bl), it cannot affect r.
+     * The only purpose of this loop is to propagate borrow in this particular
+     * scenario.
+     */
 
-    const OSSL_FN_ULONG *maxp = (a->dsize >= b->dsize) ? ap : bp;
-    const OSSL_FN_ULONG s2_mask1 = (a->dsize >= b->dsize) ? OSSL_FN_MASK : 0;
+    stage_limbs = min - stage_limbs;
+
+    for (size_t dif = stage_limbs; dif > 0; dif--, i++) {
+        OSSL_FN_ULONG t1, t2;
+
+        t1 = a[i];
+        t2 = (t1 - borrow) & OSSL_FN_MASK;
+        borrow = (t2 > t1);
+        t1 = b[i];
+        t1 = (t2 - t1) & OSSL_FN_MASK;
+        borrow |= (t1 > t2);
+    }
+
+    assert(i == min);
+
+    /*
+     * Stage 3: calculate the min(al,bl) to max(al,bl) limbs
+     *
+     * Note: at any time, the end of r may be reached.  This is solved
+     * with a temporary pointer that's set appropriately inside the loop.
+     */
+
+    const OSSL_FN_ULONG *maxp = (al >= bl) ? a : b;
+    const OSSL_FN_ULONG s2_mask1 = (al >= bl) ? OSSL_FN_MASK : 0;
     const OSSL_FN_ULONG s2_mask2 = ~s2_mask1;
 
-    stage_limbs = ((max > rs) ? rs : max) - min;
+    stage_limbs = max - min;
 
     /* calculate the result of borrowing from more significant limbs */
-    for (size_t dif = stage_limbs; dif > 0; dif--, maxp++, rp++) {
-        OSSL_FN_ULONG t1 = (*maxp & s2_mask1);
-        OSSL_FN_ULONG t2 = (*maxp & s2_mask2);
-        OSSL_FN_ULONG t3 = (t1 - t2 - borrow) & OSSL_FN_MASK;
+    for (size_t dif = stage_limbs; dif > 0; dif--, i++) {
+        OSSL_FN_ULONG tmp = 0;
+        OSSL_FN_ULONG *rp = (i < rl) ? &r[i] : &tmp;
+        OSSL_FN_ULONG t1, t2;
 
-        *rp = t3;
-        borrow = (t1 < t2 + borrow);
+        t1 = maxp[i] & s2_mask1;
+        t2 = (t1 - borrow) & OSSL_FN_MASK;
+        borrow = (t2 > t1);
+        t1 = maxp[i] & s2_mask2;
+        t1 = (t2 - t1) & OSSL_FN_MASK;
+        borrow |= (t1 > t2);
+
+        *rp = t1;
     }
-    if (stage_limbs == rs - min)
-        return 1;
 
-    /* Stage 3 */
+    assert(i == max);
 
-    /* We know that |max| limbs have been used */
-    stage_limbs = rs - max;
+    /* If |r| is exhausted, there's nothing more to do */
+    if (i >= rl)
+        return borrow;
+
+    /*
+     * Stage 4: calculate a final borrow, for when rl > max
+     *
+     * This is relatively simple, compare to earlier loops.
+     */
+
+    stage_limbs = rl - max;
 
     /* Finally, fill in the rest of the result array by borrowing from zeros */
-    for (size_t dif = stage_limbs; dif > 0; dif--, rp++) {
-        OSSL_FN_ULONG t1 = 0;
-        OSSL_FN_ULONG t2 = (t1 - borrow) & OSSL_FN_MASK;
+    for (size_t dif = stage_limbs; dif > 0; dif--, i++) {
+        OSSL_FN_ULONG t1 = (0 - borrow) & OSSL_FN_MASK;
 
-        *rp = t2;
-        borrow &= (t1 == 0);
+        borrow = (t1 > 0);
+
+        r[i] = t1;
     }
 
+    return borrow;
+}
+
+int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
+{
+    (void)ossl_fn_sub_words(r->d, r->dsize, a->d, a->dsize, b->d, b->dsize);
     return 1;
 }
 
