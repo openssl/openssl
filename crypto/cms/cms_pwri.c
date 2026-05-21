@@ -367,6 +367,11 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
     /* Finish password based key derivation to setup key in "ctx" */
 
+    if (algtmp == NULL) {
+        ERR_raise_data(ERR_LIB_CMS, CMS_R_INVALID_KEY_ENCRYPTION_PARAMETER,
+            "Missing KeyDerivationAlgorithm");
+        goto err;
+    }
     if (!EVP_PBE_CipherInit_ex(algtmp->algorithm,
             (char *)pwri->pass, (int)pwri->passlen,
             algtmp->parameter, kekctx, en_de,
