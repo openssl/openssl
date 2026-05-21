@@ -1132,6 +1132,37 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     return ok != 0;
 }
 
+size_t EVP_CIPHER_CTX_max_update_output(const EVP_CIPHER_CTX *ctx, size_t inl)
+{
+    int blocksize;
+
+    if (ctx == NULL || EVP_CIPHER_CTX_get0_cipher(ctx) == NULL)
+        return 0;
+
+    blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+    if (blocksize < 1)
+        return 0;
+
+    /* Stream ciphers */
+    if (blocksize == 1)
+        return inl;
+
+    if (inl > SIZE_MAX - (size_t)blocksize)
+        return 0;
+
+    /* Block and wrrapped ciphers */
+    return inl + (size_t)blocksize;
+}
+
+size_t EVP_CIPHER_CTX_max_final_output(const EVP_CIPHER_CTX *ctx)
+{
+    /*
+     * EVP final output is currently equivalent to update with inl = 0.
+     * Once the provider API can report specific value, this is a safe way.
+     */
+    return EVP_CIPHER_CTX_max_update_output(ctx, 0);
+}
+
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
 {
     int ret = EVP_CTRL_RET_UNSUPPORTED;

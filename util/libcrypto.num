@@ -5728,3 +5728,5 @@ EVP_DecryptFinal_ex2                    ?	4_1_0	EXIST::FUNCTION:
 EVP_DecryptUpdate_ex                    ?	4_1_0	EXIST::FUNCTION:
 EVP_EncryptFinal_ex2                    ?	4_1_0	EXIST::FUNCTION:
 EVP_EncryptUpdate_ex                    ?	4_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_max_update_output        ?	4_1_0	EXIST::FUNCTION:
+EVP_CIPHER_CTX_max_final_output         ?	4_1_0	EXIST::FUNCTION:

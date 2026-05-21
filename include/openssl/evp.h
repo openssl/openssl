@@ -849,6 +849,8 @@ int EVP_CIPHER_CTX_reset(EVP_CIPHER_CTX *c);
 void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *c);
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *x, int keylen);
 int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *c, int pad);
+size_t EVP_CIPHER_CTX_max_update_output(const EVP_CIPHER_CTX *ctx, size_t inl);
+size_t EVP_CIPHER_CTX_max_final_output(const EVP_CIPHER_CTX *ctx);
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr);
 int EVP_CIPHER_CTX_rand_key(EVP_CIPHER_CTX *ctx, unsigned char *key);
 int EVP_CIPHER_get_params(EVP_CIPHER *cipher, OSSL_PARAM params[]);

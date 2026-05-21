@@ -32,6 +32,8 @@ EVP_CipherFinal_ex,
 EVP_CipherFinal_ex2,
 EVP_CIPHER_CTX_set_key_length,
 EVP_CIPHER_CTX_ctrl,
+EVP_CIPHER_CTX_max_update_output,
+EVP_CIPHER_CTX_max_final_output,
 EVP_EncryptInit,
 EVP_EncryptFinal,
 EVP_DecryptInit,
@@ -212,6 +214,9 @@ EVP_CIPHER_CTX_mode
  void EVP_CIPHER_CTX_set_flags(EVP_CIPHER_CTX *ctx, int flags);
  void EVP_CIPHER_CTX_clear_flags(EVP_CIPHER_CTX *ctx, int flags);
  int EVP_CIPHER_CTX_test_flags(const EVP_CIPHER_CTX *ctx, int flags);
+
+ size_t EVP_CIPHER_CTX_max_update_output(const EVP_CIPHER_CTX *ctx, size_t inl);
+ size_t EVP_CIPHER_CTX_max_final_output(const EVP_CIPHER_CTX *ctx);
 
  const EVP_CIPHER *EVP_get_cipherbyname(const char *name);
  const EVP_CIPHER *EVP_get_cipherbynid(int nid);
@@ -451,6 +456,9 @@ operation being performed. The call fails if operation produces more
 than I<max_outl> bytes.
 The actual number of bytes written is placed in I<outl>.
 
+The required size of the output buffer can be obtained in advance with
+EVP_CIPHER_CTX_max_update_output().
+
 If padding is enabled (the default) then EVP_EncryptFinal_ex2() encrypts
 the "final" data, that is any data that remains in a partial block.
 It uses standard block padding (aka PKCS padding) as described in
@@ -459,6 +467,9 @@ final data is written to I<out> which should have sufficient space for
 one cipher block. The number of bytes written is placed in I<outl>. After
 this function is called the encryption operation is finished and no further
 calls to EVP_EncryptUpdate() should be made.
+
+The required size of the output buffer can be obtained in advance with
+EVP_CIPHER_CTX_max_final_output().
 
 If padding is disabled then EVP_EncryptFinal_ex2() will not encrypt any more
 data and it will return an error if any data remains in a partial block:
@@ -623,6 +634,14 @@ padding is checked and removed when decrypting. If the I<pad> parameter is zero
 then no padding is performed, the total amount of data encrypted or decrypted
 must then be a multiple of the block size or an error will occur. I<x> B<MUST
 NOT> be NULL.
+
+=item EVP_CIPHER_CTX_max_update_output() and EVP_CIPHER_CTX_max_final_output()
+
+Return the maximum number of bytes that a subsequent Update or Final
+call may write to the output buffer for cipher context I<ctx> and input
+length I<inl>. They replace the legacy idiom of calling EVP_*Update()
+with a NULL output buffer to query the required size, which is no
+longer supported by the I<_ex> variants. Both return 0 on error.
 
 =item EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length()
 
@@ -2033,8 +2052,9 @@ B<EVP_CIPHER_CTX_get_block_size()> would result in a NULL pointer dereference,
 rather than a 0 return value indicating an error.
 
 The EVP_EncryptUpdate_ex(), EVP_EncryptFinal_ex2(), EVP_DecryptUpdate_ex(),
-EVP_DecryptFinal_ex2(), EVP_CipherUpdate_ex(), EVP_CipherFinal_ex2(), and
-EVP_CipherUpdateAAD() were added in OpenSSL 4.1.
+EVP_DecryptFinal_ex2(), EVP_CipherUpdate_ex(), EVP_CipherFinal_ex2(),
+EVP_CipherUpdateAAD(), EVP_CIPHER_CTX_max_update_output(), and
+EVP_CIPHER_CTX_max_final_output() were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
