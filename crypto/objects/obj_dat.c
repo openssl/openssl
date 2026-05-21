@@ -393,6 +393,9 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
     if (a == NULL || a->data == NULL)
         return 0;
 
+    if (buf_len < 0)
+        buf_len = 0;
+
     if (!no_name && (nid = OBJ_obj2nid(a)) != NID_undef) {
         s = OBJ_nid2ln(nid);
         if (s == NULL)
