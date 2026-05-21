@@ -321,7 +321,7 @@ static char *win32_joiner(DSO *dso, const struct file_st *file_split)
         len++; /* 1 for ending \ */
     }
     len += file_split->dirlen;
-    if (file_split->dir && file_split->file) {
+    if (file_split->dir) {
         len++; /* 1 for ending \ */
     }
     len += file_split->filelen;
