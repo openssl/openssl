@@ -189,14 +189,18 @@ static int kek_unwrap_key(unsigned char *out, size_t *outlen,
     const unsigned char *in, size_t inlen,
     EVP_CIPHER_CTX *ctx)
 {
-    size_t blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
+    int blocklen = EVP_CIPHER_CTX_get_block_size(ctx);
     unsigned char *tmp;
     int outl, rv = 0;
-    if (inlen < 2 * blocklen) {
+
+    if (blocklen < 4)
+        return 0;
+
+    if (inlen < 2 * (size_t)blocklen) {
         /* too small */
         return 0;
     }
-    if (inlen % blocklen) {
+    if (inlen > INT_MAX || inlen % blocklen) {
         /* Invalid size */
         return 0;
     }
