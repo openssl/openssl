@@ -230,30 +230,26 @@ static void poly_ntt_inverse_avx2_wrapper(POLY *p)
 /*
  * PPC64le wrapper functions.
  */
-#if defined(_ARCH_PPC64)
-#include "arch/ppc_arch.h"
-#endif
-
-#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && \
-    defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && (defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__))
 #define MLDSA_NTT_PPC_ASM
+#include "arch/ppc_arch.h"
 #endif
 
 #if defined(MLDSA_NTT_PPC_ASM)
 extern void mldsa_poly_ntt_mult_ppc(POLY *out, const POLY *lhs, const POLY *rhs);
-void poly_ntt_mult_ppc64le_wrapper(const POLY *lhs, const POLY *rhs, POLY *out)
+static void poly_ntt_mult_ppc64le_wrapper(const POLY *lhs, const POLY *rhs, POLY *out)
 {
     mldsa_poly_ntt_mult_ppc(out, lhs, rhs);
 }
 
 extern void mldsa_poly_ntt_ppc(uint32_t *p);
-void poly_ntt_ppc64le_wrapper(POLY *p)
+static void poly_ntt_ppc64le_wrapper(POLY *p)
 {
     mldsa_poly_ntt_ppc(p->coeff);
 }
 
 extern void mldsa_poly_ntt_inverse_ppc(uint32_t *p);
-void poly_ntt_inverse_ppc64le_wrapper(POLY *p)
+static void poly_ntt_inverse_ppc64le_wrapper(POLY *p)
 {
     mldsa_poly_ntt_inverse_ppc(p->coeff);
 }
