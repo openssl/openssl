@@ -71,7 +71,7 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test bio_eof_test ech_test
+          engine_stubs_test base64_simdutf_test bio_eof_test ech_test evp_sizet_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -259,6 +259,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_fetch_prov_test]=evp_fetch_prov_test.c fake_cipherprov.c
   INCLUDE[evp_fetch_prov_test]=../include ../apps/include
   DEPEND[evp_fetch_prov_test]=../libcrypto libtestutil.a
+
+  SOURCE[evp_sizet_test]=evp_sizet_test.c
+  INCLUDE[evp_sizet_test]=../include ../apps/include
+  DEPEND[evp_sizet_test]=../libcrypto libtestutil.a
 
   SOURCE[provfetchtest]=provfetchtest.c
   INCLUDE[provfetchtest]=../include ../apps/include

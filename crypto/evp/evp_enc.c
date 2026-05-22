@@ -474,6 +474,16 @@ int EVP_CipherPipelineDecryptInit(EVP_CIPHER_CTX *ctx, const EVP_CIPHER *cipher,
         NULL);
 }
 
+int EVP_CipherUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl,
+    const unsigned char *in, size_t inl)
+{
+    if (ctx->encrypt)
+        return EVP_EncryptUpdate_ex(ctx, out, outl, max_outl, in, inl);
+    else
+        return EVP_DecryptUpdate_ex(ctx, out, outl, max_outl, in, inl);
+}
+
 int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
@@ -481,6 +491,50 @@ int EVP_CipherUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
         return EVP_EncryptUpdate(ctx, out, outl, in, inl);
     else
         return EVP_DecryptUpdate(ctx, out, outl, in, inl);
+}
+
+int EVP_CipherUpdateAAD(EVP_CIPHER_CTX *ctx, const unsigned char *in,
+    size_t inl)
+{
+    size_t soutl = 0;
+    size_t outsize;
+    int blocksize;
+    int ret;
+
+    if (ossl_unlikely(in == NULL && inl > 0)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    blocksize = ctx->cipher->block_size;
+    if (ossl_unlikely(ctx->cipher->cupdate == NULL || blocksize < 1)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+
+    /*
+     * The provider's OSSL_FUNC_cipher_update() distinguishes AAD from
+     * plaintext/ciphertext by out == NULL.
+     * Pass the same outsize as the legacy EVP_EncryptUpdate() AAD path.
+     */
+    outsize = inl + (size_t)(blocksize == 1 ? 0 : blocksize);
+    ret = ctx->cipher->cupdate(ctx->algctx, NULL, &soutl, outsize, in, inl);
+
+    /*
+     * AAD calls should not produce output length.
+     * However, providers return processed input length here.
+     */
+    if (ossl_unlikely(ret && (soutl != 0 && soutl != inl))) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+
+    return ret;
 }
 
 int EVP_CipherPipelineUpdate(EVP_CIPHER_CTX *ctx,
@@ -516,6 +570,15 @@ int EVP_CipherPipelineUpdate(EVP_CIPHER_CTX *ctx,
     return ctx->cipher->p_cupdate(ctx->algctx, ctx->numpipes,
         out, outl, outsize,
         in, inl);
+}
+
+int EVP_CipherFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl)
+{
+    if (ctx->encrypt)
+        return EVP_EncryptFinal_ex2(ctx, out, outl, max_outl);
+    else
+        return EVP_DecryptFinal_ex2(ctx, out, outl, max_outl);
 }
 
 int EVP_CipherFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -647,6 +710,49 @@ int ossl_is_partially_overlapping(const void *ptr1, const void *ptr2, int len)
     return overlapped;
 }
 
+int EVP_EncryptUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl,
+    const unsigned char *in, size_t inl)
+{
+    if (ossl_unlikely(outl == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    *outl = 0;
+
+    /*
+     * Setting out == NULL is no longer a way to pass AAD.
+     * Callers must use EVP_CipherUpdateAAD() instead.
+     */
+    if (ossl_unlikely(out == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ossl_unlikely(in == NULL && inl > 0)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Prevent accidental use of decryption context when encrypting */
+    if (ossl_unlikely(!ctx->encrypt)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher->cupdate == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->cupdate(ctx->algctx, out, outl, max_outl, in, inl);
+}
+
 int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     const unsigned char *in, int inl)
 {
@@ -702,11 +808,37 @@ int EVP_EncryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     return ret;
 }
 
-int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+int EVP_EncryptFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl)
 {
-    int ret;
-    ret = EVP_EncryptFinal_ex(ctx, out, outl);
-    return ret;
+    if (outl == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    *outl = 0;
+
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Prevent accidental use of decryption context when encrypting */
+    if (!ctx->encrypt) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->cipher == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ctx->cipher->cfinal == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->cfinal(ctx->algctx, out, outl, max_outl);
 }
 
 int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -756,6 +888,52 @@ int EVP_EncryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     }
 
     return ret;
+}
+
+int EVP_EncryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+{
+    int ret;
+    ret = EVP_EncryptFinal_ex(ctx, out, outl);
+    return ret;
+}
+
+int EVP_DecryptUpdate_ex(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl,
+    const unsigned char *in, size_t inl)
+{
+    if (ossl_unlikely(outl == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    *outl = 0;
+
+    if (ossl_unlikely(out == NULL)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (ossl_unlikely(in == NULL && inl > 0)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Prevent accidental use of encryption context when decrypting */
+    if (ossl_unlikely(ctx->encrypt)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ossl_unlikely(ctx->cipher->cupdate == NULL)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UPDATE_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->cupdate(ctx->algctx, out, outl, max_outl, in, inl);
 }
 
 int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
@@ -813,11 +991,37 @@ int EVP_DecryptUpdate(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl,
     return ret;
 }
 
-int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+int EVP_DecryptFinal_ex2(EVP_CIPHER_CTX *ctx, unsigned char *out,
+    size_t *outl, size_t max_outl)
 {
-    int ret;
-    ret = EVP_DecryptFinal_ex(ctx, out, outl);
-    return ret;
+    if (outl == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    *outl = 0;
+
+    if (out == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /* Prevent accidental use of encryption context when decrypting */
+    if (ctx->encrypt) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_OPERATION);
+        return 0;
+    }
+
+    if (ctx->cipher == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_NO_CIPHER_SET);
+        return 0;
+    }
+
+    if (ctx->cipher->cfinal == NULL) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_FINAL_ERROR);
+        return 0;
+    }
+
+    return ctx->cipher->cfinal(ctx->algctx, out, outl, max_outl);
 }
 
 int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
@@ -870,6 +1074,13 @@ int EVP_DecryptFinal_ex(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
     return ret;
 }
 
+int EVP_DecryptFinal(EVP_CIPHER_CTX *ctx, unsigned char *out, int *outl)
+{
+    int ret;
+    ret = EVP_DecryptFinal_ex(ctx, out, outl);
+    return ret;
+}
+
 int EVP_CIPHER_CTX_set_key_length(EVP_CIPHER_CTX *c, int keylen)
 {
     int ok;
@@ -919,6 +1130,37 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
 
     return ok != 0;
+}
+
+size_t EVP_CIPHER_CTX_max_update_output(const EVP_CIPHER_CTX *ctx, size_t inl)
+{
+    int blocksize;
+
+    if (ctx == NULL || EVP_CIPHER_CTX_get0_cipher(ctx) == NULL)
+        return 0;
+
+    blocksize = EVP_CIPHER_CTX_get_block_size(ctx);
+    if (blocksize < 1)
+        return 0;
+
+    /* Stream ciphers */
+    if (blocksize == 1)
+        return inl;
+
+    if (inl > SIZE_MAX - (size_t)blocksize)
+        return 0;
+
+    /* Block and wrrapped ciphers */
+    return inl + (size_t)blocksize;
+}
+
+size_t EVP_CIPHER_CTX_max_final_output(const EVP_CIPHER_CTX *ctx)
+{
+    /*
+     * EVP final output is currently equivalent to update with inl = 0.
+     * Once the provider API can report specific value, this is a safe way.
+     */
+    return EVP_CIPHER_CTX_max_update_output(ctx, 0);
 }
 
 int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
