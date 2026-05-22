@@ -2690,6 +2690,84 @@ err:
     return testresult;
 }
 
+/*
+ * Verify that the SSL* received in the info callback after SSL_new_from_listener
+ * is the outer QUIC connection object, not the inner TLS SSL.
+ */
+static SSL *new_from_listener_info_cb_ssl = NULL;
+
+static void new_from_listener_info_cb(const SSL *ssl, int type, int val)
+{
+    if (type == SSL_CB_HANDSHAKE_DONE)
+        new_from_listener_info_cb_ssl = (SSL *)ssl;
+}
+
+static int test_ssl_new_from_listener_user_ssl(void)
+{
+    SSL_CTX *lctx = NULL, *sctx = NULL;
+    SSL *qlistener = NULL, *qserver = NULL, *qconn = NULL;
+    BIO *lbio = NULL, *sbio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+    int ret = 0, chk;
+
+    ina.s_addr = htonl(0x1f000001);
+    new_from_listener_info_cb_ssl = NULL;
+
+    if (!TEST_ptr(lctx = create_server_ctx())
+        || !TEST_ptr(sctx = create_server_ctx())
+        || !TEST_true(BIO_new_bio_dgram_pair(&lbio, 0, &sbio, 0)))
+        goto err;
+
+    /*
+     * Register an info callback on the listener CTX. The inner TLS connection
+     * created by ossl_quic_new_from_listener inherits this CTX, so when the TLS
+     * handshake completes it invokes the callback with user_ssl. That must be
+     * qconn (the outer QUIC object), not the inner TLS SSL object.
+     */
+    SSL_CTX_set_info_callback(lctx, new_from_listener_info_cb);
+
+    if (!TEST_ptr(addr = create_addr(&ina, 8041))
+        || !TEST_true(bio_addr_bind(lbio, addr)))
+        goto err;
+    addr = NULL;
+
+    if (!TEST_ptr(addr = create_addr(&ina, 4081))
+        || !TEST_true(bio_addr_bind(sbio, addr)))
+        goto err;
+    addr = NULL;
+
+    qlistener = ql_create(lctx, lbio);
+    lbio = NULL;
+    qserver = ql_create(sctx, sbio);
+    sbio = NULL;
+    if (!TEST_ptr(qlistener) || !TEST_ptr(qserver)
+        || !TEST_ptr(qconn = SSL_new_from_listener(qlistener, 0))
+        || !TEST_ptr(addr = create_addr(&ina, 4081))
+        || !TEST_true(qc_init(qconn, addr)))
+        goto err;
+
+    while ((chk = SSL_do_handshake(qconn)) == -1) {
+        SSL_handle_events(qserver);
+        SSL_handle_events(qlistener);
+    }
+
+    ret = TEST_int_gt(chk, 0)
+        && TEST_ptr(new_from_listener_info_cb_ssl)
+        && TEST_ptr_eq(new_from_listener_info_cb_ssl, qconn);
+
+err:
+    SSL_free(qconn);
+    SSL_free(qlistener);
+    SSL_free(qserver);
+    BIO_free(lbio);
+    BIO_free(sbio);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(lctx);
+    BIO_ADDR_free(addr);
+    return ret;
+}
+
 static int test_server_method_with_ssl_new(void)
 {
     SSL_CTX *ctx = NULL;
@@ -3105,6 +3183,7 @@ int setup_tests(void)
     ADD_TEST(test_domain_flags);
     ADD_TEST(test_early_ticks);
     ADD_TEST(test_ssl_new_from_listener);
+    ADD_TEST(test_ssl_new_from_listener_user_ssl);
 #ifndef OPENSSL_NO_SSL_TRACE
     ADD_TEST(test_new_token);
 #endif
