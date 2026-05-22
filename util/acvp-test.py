@@ -35,9 +35,12 @@ Credentials needed (pass via command-line arguments):
 import argparse
 import base64
 import ctypes
+import glob
 import hashlib
 import json
 import os
+import platform
+import re
 import subprocess
 import sys
 import time
@@ -307,19 +310,46 @@ _OSSL_LIB_PATH = None   # set from --lib-path or auto-detected in main()
 
 
 def _find_libcrypto(openssl_bin):
-    """Auto-detect libcrypto shared library relative to the OpenSSL binary."""
-    import glob
-    import platform
+    """Auto-detect libcrypto shared library for the given OpenSSL binary.
 
+    Strategy (in order):
+    1. Read the binary's dynamic link metadata to find the exact library it
+       was compiled against (otool -L on macOS; ldd on Linux).
+    2. Glob for libcrypto in lib/ and lib64/ relative to the binary.
+    3. Fall back to ctypes.util.find_library("crypto").
+    """
+    # 1. Inspect the binary's dynamic link metadata.
+    if platform.system() == "Darwin":
+        try:
+            out = subprocess.check_output(
+                ["otool", "-L", openssl_bin], stderr=subprocess.DEVNULL
+            ).decode()
+            for line in out.splitlines():
+                m = re.match(r"\s+(/\S*libcrypto\S*\.dylib)", line)
+                if m:
+                    return m.group(1)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+    else:
+        try:
+            out = subprocess.check_output(
+                ["ldd", openssl_bin], stderr=subprocess.DEVNULL
+            ).decode()
+            for line in out.splitlines():
+                m = re.search(r"libcrypto\.so\S*\s+=>\s+(\S+)", line)
+                if m and m.group(1) != "not":
+                    return m.group(1)
+        except (subprocess.CalledProcessError, FileNotFoundError):
+            pass
+
+    # 2. Glob relative to the binary location.
     bin_dir = os.path.dirname(os.path.realpath(openssl_bin))
     search_dirs = [
         os.path.realpath(os.path.join(bin_dir, "..", "lib")),
         os.path.realpath(os.path.join(bin_dir, "..", "lib64")),
     ]
-    if platform.system() == "Darwin":
-        patterns = ["libcrypto.*.dylib", "libcrypto.dylib"]
-    else:
-        patterns = ["libcrypto.so.*", "libcrypto.so"]
+    patterns = (["libcrypto.*.dylib", "libcrypto.dylib"] if platform.system() == "Darwin"
+                else ["libcrypto.so.*", "libcrypto.so"])
 
     for lib_dir in search_dirs:
         for pattern in patterns:
@@ -327,6 +357,7 @@ def _find_libcrypto(openssl_bin):
             if matches:
                 return matches[-1]
 
+    # 3. System-wide search.
     from ctypes.util import find_library
     found = find_library("crypto")
     if found:
