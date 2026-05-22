@@ -3,6 +3,7 @@
 =head1 NAME
 
 OPENSSL_FILE, OPENSSL_LINE, OPENSSL_FUNC,
+OSSL_BEGIN_ALLOW_DEPRECATED, OSSL_END_ALLOW_DEPRECATED,
 OPENSSL_MSTR, OPENSSL_MSTR_HELPER
 - generic C programming utility macros
 
@@ -16,6 +17,9 @@ OPENSSL_MSTR, OPENSSL_MSTR_HELPER
 
  #define OPENSSL_MSTR_HELPER(x) #x
  #define OPENSSL_MSTR(x) OPENSSL_MSTR_HELPER(x)
+
+ #define OSSL_BEGIN_ALLOW_DEPRECATED /* compiler specific */
+ #define OSSL_END_ALLOW_DEPRECATED /* compiler specific */
 
 =head1 DESCRIPTION
 
@@ -31,6 +35,17 @@ The macro B<OPENSSL_MSTR> yields the expansion of the macro given as argument,
 which is useful for concatenation with string constants.
 The macro B<OPENSSL_MSTR_HELPER> is an auxiliary macro for this purpose.
 
+The macros B<OSSL_BEGIN_ALLOW_DEPRECATED> and
+B<OSSL_END_ALLOW_DEPRECATED> respectively disable and then
+re-enable compiler warnings for deprecated functions within a source
+file, for compilers which OpenSSL supports. They are equivalent to
+disabling the warnings with compiler-specific options, but may be
+convenient when you wish to use deprecated OpenSSL functions
+temporarily in limited areas of code without turning off warnings more
+globally. It is nevertheless important to remember to eventually
+transition such code to replacement functions, as deprecated functions
+may be removed in later major OpenSSL releases.
+
 =head1 RETURN VALUES
 
 see above
@@ -44,9 +59,12 @@ L<crypto(7)>
 B<OPENSSL_FUNC>, B<OPENSSL_MSTR>, and B<OPENSSL_MSTR_HELPER>
 were added in OpenSSL 3.0.
 
+B<OSSL_BEGIN_ALLOW_DEPRECATED> and B<OSSL_END_ALLOW_DEPRECATED> were
+added in OpenSSL 4.0, inspired by BoringSSL.
+
 =head1 COPYRIGHT
 
-Copyright 2018-2019 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
