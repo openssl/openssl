@@ -5,10 +5,14 @@ acvp-test.py
 Tests an OpenSSL binary against the NIST ACVTS demo server for a chosen algorithm.
 
 Usage:
-    python acvp-test.py --algorithm ACVP-AES-CBC
-    python acvp-test.py --algorithm ACVP-AES-CBC --direction encrypt --key-len 256
-    python acvp-test.py --algorithm SHA2-256
-    python acvp-test.py --algorithm HMAC-SHA2-256 --save-vectors
+    python acvp-test.py --openssl /path/to/openssl --cert my.cer --key my.key \
+        --totp-seed totp.txt --algorithm ACVP-AES-CBC
+    python acvp-test.py --openssl /path/to/openssl --cert my.cer --key my.key \
+        --totp-seed totp.txt --algorithm ACVP-AES-CBC --direction encrypt --key-len 256
+    python acvp-test.py --openssl /path/to/openssl --cert my.cer --key my.key \
+        --totp-seed totp.txt --algorithm SHA2-256
+    python acvp-test.py --openssl /path/to/openssl --cert my.cer --key my.key \
+        --totp-seed totp.txt --algorithm HMAC-SHA2-256 --save-vectors
 
 Algorithms supported:
     Symmetric : ACVP-AES-CBC, ACVP-AES-ECB, ACVP-AES-CTR
@@ -21,10 +25,11 @@ Algorithms supported:
 Requirements:
     pip install requests pyotp cryptography
 
-Credentials needed (place in CERT_FILE / KEY_FILE / TOTP_SEED_FILE paths below):
-    *.cer          - TLS client certificate from NIST
-    *.key          - corresponding private key
-    *_totp.txt     - Base64-encoded TOTP seed (one line)
+Credentials needed (pass via command-line arguments):
+    --openssl PATH   - path to the OpenSSL binary to test
+    --cert FILE      - TLS client certificate from NIST (.cer)
+    --key FILE       - corresponding private key (.key)
+    --totp-seed FILE - file containing the Base64-encoded TOTP seed (one line)
 """
 
 import argparse
@@ -41,16 +46,13 @@ import pyotp
 import requests
 from cryptography.hazmat.primitives.ciphers import Cipher, algorithms, modes
 
-# ---------------------------------------------------------------------------
-# CONFIGURATION — edit paths as needed
-# ---------------------------------------------------------------------------
 DEMO_URL       = "https://demo.acvts.nist.gov/acvp/v1"
 PROD_URL       = "https://acvts.nist.gov/acvp/v1"
 BASE_URL       = DEMO_URL   # overridden to PROD_URL when --production is set
-CERT_FILE      = "FIXME.cer"
-KEY_FILE       = "FIXME.key"
-TOTP_SEED_FILE = "FIXME.txt"
-OPENSSL_BIN    = "FIXME"
+CERT_FILE      = None       # set from --cert
+KEY_FILE       = None       # set from --key
+TOTP_SEED_FILE = None       # set from --totp-seed
+OPENSSL_BIN    = None       # set from --openssl
 
 
 # ---------------------------------------------------------------------------
@@ -301,7 +303,40 @@ def run_openssl(args_list, stdin=None):
 # PQC CTYPES HELPERS  (EVP C API for deterministic keygen and sign/verify)
 # ---------------------------------------------------------------------------
 
-_OSSL_LIB_PATH    = os.path.join(os.path.dirname(OPENSSL_BIN), "..", "lib", "libcrypto.4.dylib")
+_OSSL_LIB_PATH = None   # set from --lib-path or auto-detected in main()
+
+
+def _find_libcrypto(openssl_bin):
+    """Auto-detect libcrypto shared library relative to the OpenSSL binary."""
+    import glob
+    import platform
+
+    bin_dir = os.path.dirname(os.path.realpath(openssl_bin))
+    search_dirs = [
+        os.path.realpath(os.path.join(bin_dir, "..", "lib")),
+        os.path.realpath(os.path.join(bin_dir, "..", "lib64")),
+    ]
+    if platform.system() == "Darwin":
+        patterns = ["libcrypto.*.dylib", "libcrypto.dylib"]
+    else:
+        patterns = ["libcrypto.so.*", "libcrypto.so"]
+
+    for lib_dir in search_dirs:
+        for pattern in patterns:
+            matches = sorted(glob.glob(os.path.join(lib_dir, pattern)))
+            if matches:
+                return matches[-1]
+
+    from ctypes.util import find_library
+    found = find_library("crypto")
+    if found:
+        return found
+
+    raise RuntimeError(
+        "Could not find libcrypto. Use --lib-path to specify the path explicitly."
+    )
+
+
 _EVP_PKEY_PUBLIC_KEY = 0x86   # OSSL_KEYMGMT_SELECT_PUBLIC_KEY | OSSL_KEYMGMT_SELECT_ALL_PARAMS
 _EVP_PKEY_KEYPAIR    = 0x87   # public + private
 
@@ -1120,6 +1155,26 @@ def main():
         epilog=f"Supported algorithms: {', '.join(algo_choices)}",
     )
     parser.add_argument(
+        "--openssl", required=True, metavar="PATH",
+        help="Path to the openssl binary to test",
+    )
+    parser.add_argument(
+        "--cert", required=True, metavar="FILE",
+        help="TLS client certificate file (.cer) from NIST",
+    )
+    parser.add_argument(
+        "--key", required=True, metavar="FILE",
+        help="Private key file (.key) for the client certificate",
+    )
+    parser.add_argument(
+        "--totp-seed", required=True, metavar="FILE",
+        help="File containing the Base64-encoded TOTP seed (one line)",
+    )
+    parser.add_argument(
+        "--lib-path", metavar="PATH",
+        help="Path to libcrypto shared library (auto-detected if omitted)",
+    )
+    parser.add_argument(
         "--algorithm", default="ACVP-AES-CBC", choices=algo_choices, metavar="ALGO",
         help=f"Algorithm to test (default: ACVP-AES-CBC)",
     )
@@ -1141,8 +1196,13 @@ def main():
     )
     args = parser.parse_args()
 
-    global BASE_URL
-    BASE_URL = PROD_URL if args.production else DEMO_URL
+    global BASE_URL, OPENSSL_BIN, CERT_FILE, KEY_FILE, TOTP_SEED_FILE, _OSSL_LIB_PATH
+    BASE_URL       = PROD_URL if args.production else DEMO_URL
+    OPENSSL_BIN    = args.openssl
+    CERT_FILE      = args.cert
+    KEY_FILE       = args.key
+    TOTP_SEED_FILE = args.totp_seed
+    _OSSL_LIB_PATH = args.lib_path if args.lib_path else _find_libcrypto(args.openssl)
 
     algorithm_cap = CAPABILITY_BUILDERS[args.algorithm](args.direction, args.key_len)
 
