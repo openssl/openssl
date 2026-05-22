@@ -67,25 +67,6 @@ static CRYPTO_ONCE ml_dsa_ntt_once = CRYPTO_ONCE_STATIC_INIT;
  * which is then Montgomery reduced, removing the excess factor of R = 2^32.
  */
 
-#ifdef MLDSA_NTT_ASM
-extern void mldsa_poly_ntt_mult(POLY *out, const POLY *lhs, const POLY *rhs);
-void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out)
-{
-    mldsa_poly_ntt_mult(out, lhs, rhs);
-}
-
-extern void mldsa_poly_ntt(uint32_t *p);
-void ossl_ml_dsa_poly_ntt(POLY *p)
-{
-    mldsa_poly_ntt(p->coeff);
-}
-
-extern void mldsa_poly_ntt_inverse(uint32_t *p);
-void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
-{
-    mldsa_poly_ntt_inverse(p->coeff);
-}
-#else
 /*
  * The table in FIPS 204 Appendix B uses the following formula
  * zeta[k]= 1753^bitrev(k) mod q for (k = 1..255) (The first value is not used).
@@ -247,6 +228,38 @@ static void poly_ntt_inverse_avx2_wrapper(POLY *p)
 #endif
 
 /*
+ * PPC64le wrapper functions.
+ */
+#if defined(_ARCH_PPC64)
+#include "arch/ppc_arch.h"
+#endif
+
+#if !defined(OPENSSL_NO_ASM) && defined(_ARCH_PPC64) && \
+    defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
+#define MLDSA_NTT_PPC_ASM
+#endif
+
+#if defined(MLDSA_NTT_PPC_ASM)
+extern void mldsa_poly_ntt_mult_ppc(POLY *out, const POLY *lhs, const POLY *rhs);
+void poly_ntt_mult_ppc64le_wrapper(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    mldsa_poly_ntt_mult_ppc(out, lhs, rhs);
+}
+
+extern void mldsa_poly_ntt_ppc(uint32_t *p);
+void poly_ntt_ppc64le_wrapper(POLY *p)
+{
+    mldsa_poly_ntt_ppc(p->coeff);
+}
+
+extern void mldsa_poly_ntt_inverse_ppc(uint32_t *p);
+void poly_ntt_inverse_ppc64le_wrapper(POLY *p)
+{
+    mldsa_poly_ntt_inverse_ppc(p->coeff);
+}
+#endif
+
+/*
  * Initialize NTT function pointers to AVX2 implementations if available.
  * Scalar implementations are used by default.
  */
@@ -257,6 +270,14 @@ static void ml_dsa_ntt_init(void)
         poly_ntt_impl = poly_ntt_avx2_wrapper;
         poly_ntt_inverse_impl = poly_ntt_inverse_avx2_wrapper;
         poly_ntt_mult_impl = poly_ntt_mult_avx2_wrapper;
+    }
+#endif
+
+#if defined(MLDSA_NTT_PPC_ASM)
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
+        poly_ntt_impl = poly_ntt_ppc64le_wrapper;
+        poly_ntt_inverse_impl = poly_ntt_inverse_ppc64le_wrapper;
+        poly_ntt_mult_impl = poly_ntt_mult_ppc64le_wrapper;
     }
 #endif
 }
@@ -303,4 +324,3 @@ void ossl_ml_dsa_poly_ntt_inverse(POLY *p)
     (void)CRYPTO_THREAD_run_once(&ml_dsa_ntt_once, ml_dsa_ntt_init);
     poly_ntt_inverse_impl(p);
 }
-#endif
