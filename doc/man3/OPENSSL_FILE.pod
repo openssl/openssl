@@ -39,13 +39,12 @@ The macros B<OSSL_BEGIN_ALLOW_DEPRECATED> and
 B<OSSL_END_ALLOW_DEPRECATED> respectively disable and then
 re-enable compiler warnings for deprecated functions within a source
 file, for compilers which OpenSSL supports. They are equivalent to
-disabling the warnings with compiler specific directives, but may be
+disabling the warnings with compiler-specific options, but may be
 convenient when you wish to use deprecated OpenSSL functions
 temporarily in limited areas of code without turning off warnings more
 globally. It is nevertheless important to remember to eventually
-transition such code to replacement functions as deprecated functions
-may be removed in later major OpenSSL releases, at which point the
-use of these macros will not save you.
+transition such code to replacement functions, as deprecated functions
+may be removed in later major OpenSSL releases.
 
 =head1 RETURN VALUES
 
