@@ -4587,26 +4587,6 @@ static int ssl_security_cert_key(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x,
         return ssl_ctx_security(ctx, op, secbits, 0, x);
 }
 
-static int ssl_security_cert_sig(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x,
-    int op)
-{
-    /* Lookup signature algorithm digest */
-    int secbits, nid, pknid;
-
-    /* Don't check signature if self signed */
-    if ((X509_get_extension_flags(x) & EXFLAG_SS) != 0)
-        return 1;
-    if (!X509_get_signature_info(x, &nid, &pknid, &secbits, NULL))
-        secbits = -1;
-    /* If digest NID not defined use signature NID */
-    if (nid == NID_undef)
-        nid = pknid;
-    if (s != NULL)
-        return ssl_security(s, op, secbits, nid, x);
-    else
-        return ssl_ctx_security(ctx, op, secbits, nid, x);
-}
-
 int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int is_ee)
 {
     if (is_ee) {
@@ -4616,8 +4596,6 @@ int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int is_ee)
         if (!ssl_security_cert_key(s, ctx, x, SSL_SECOP_CA_KEY))
             return SSL_R_CA_KEY_TOO_SMALL;
     }
-    if (!ssl_security_cert_sig(s, ctx, x, SSL_SECOP_CA_MD))
-        return SSL_R_CA_MD_TOO_WEAK;
     return 1;
 }
 
