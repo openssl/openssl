@@ -214,6 +214,73 @@ end:
     return ret;
 }
 
+static int test_ssl_read_key_update_mfail(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientquic = NULL;
+    QUIC_TSERVER *qtserv = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    int ret = 0;
+    const char *msg = "ping";
+    size_t msglen = strlen(msg);
+    size_t numbytes = 0;
+    unsigned char buf[64];
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method())))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_objects(libctx, cctx, NULL, cert, privkey,
+            0, &qtserv, &clientquic,
+            NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(SSL_set_tlsext_host_name(clientquic, "localhost")))
+        goto err;
+
+    if (!TEST_true(qtest_create_quic_connection(qtserv, clientquic)))
+        goto err;
+
+    /* Open stream 0 so the server has something to write back on. */
+    if (!TEST_true(SSL_write_ex(clientquic, msg, msglen, &numbytes))
+        || !TEST_size_t_eq(numbytes, msglen))
+        goto err;
+
+    ossl_quic_tserver_tick(qtserv);
+    if (!TEST_true(ossl_quic_tserver_read(qtserv, 0, buf, sizeof(buf),
+            &numbytes)))
+        goto err;
+
+    /*
+     * Force the server's TX side to rotate keys. Its next outgoing packet
+     * will carry the flipped Key Phase bit. When the client decrypts that
+     * packet, qrx_key_update_initiated -> rxku_detected -> ch_trigger_txku
+     * fires on the client.
+     */
+    ch = ossl_quic_tserver_get_channel(qtserv);
+    if (!TEST_ptr(ch) || !TEST_true(ossl_qtx_trigger_key_update(ch->qtx)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_tserver_write(qtserv, 0,
+            (unsigned char *)msg, msglen,
+            &numbytes))
+        || !TEST_size_t_eq(numbytes, msglen))
+        goto err;
+    ossl_quic_tserver_tick(qtserv);
+
+    MFAIL_start();
+    ret = SSL_read_ex(clientquic, buf, sizeof(buf), &numbytes);
+    MFAIL_end();
+
+    ret = (ret > 0);
+
+err:
+    SSL_free(clientquic);
+    ossl_quic_tserver_free(qtserv);
+    SSL_CTX_free(cctx);
+
+    return ret;
+}
+
 /*
  * Test that sending FIN with no data to a client blocking in SSL_read_ex() will
  * wake up the client.
@@ -3554,6 +3621,7 @@ int setup_tests(void)
         goto err;
 
     ADD_ALL_TESTS(test_quic_write_read, 3);
+    ADD_MFAIL_TEST(test_ssl_read_key_update_mfail);
     ADD_TEST(test_fin_only_blocking);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_cipher_find);
