@@ -15,6 +15,7 @@
 #include <openssl/err.h>
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
+#include "crypto/x509.h"
 #endif
 #include "crypto/ecx.h"
 #include "ecx_backend.h"
@@ -248,6 +249,19 @@ ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     ecx = ossl_ecx_key_op(palg, p, plen, EVP_PKEY_NONE, KEY_OP_PRIVATE,
         libctx, propq);
     ASN1_OCTET_STRING_free(oct);
+
+    if (ecx != NULL && p8inf->kpub != NULL) {
+        const unsigned char *pubdata = ASN1_STRING_get0_data(p8inf->kpub);
+        int publen = ASN1_STRING_length(p8inf->kpub);
+
+        if (publen != (int)ecx->keylen) {
+            ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
+            ossl_ecx_key_free(ecx);
+            return NULL;
+        }
+        memcpy(ecx->pubkey, pubdata, ecx->keylen);
+    }
+
     return ecx;
 }
 #endif
