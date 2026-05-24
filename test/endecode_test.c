@@ -1008,19 +1008,13 @@ static int test_dup(const char *type, EVP_PKEY *key)
     dup = NULL;
 
     /*
-     * 3. Dup an embryonic key (just algorithm + domain parameters, no
-     * key bits).  Not every keymgmt allows building such a key: RSA's
-     * dup op, for instance, deliberately refuses any selection without
-     * keypair bits ("do not allow creating empty keys by duplication"),
-     * which makes EVP_PKEY_copy_parameters() fail for RSA / RSA-PSS.
-     * Treat that as a graceful skip rather than a hard failure.
-     *
-     * Where an embryo can be built, the right comparator is
-     * EVP_PKEY_parameters_eq(): EVP_PKEY_eq() returns 0 for material-
-     * less keys because it requires public bits to match.  Algorithms
-     * without domain parameters may legitimately answer -2 ("nothing
-     * to compare").  We only reject 0 (definitively unequal) and -1
-     * (different keymgmts).
+     * 3. Dup an embryonic key (algorithm + domain parameters only,
+     * no key bits).  Some keymgmts (RSA, RSA-PSS) refuse to build
+     * such a key via EVP_PKEY_copy_parameters(); treat that as a
+     * graceful skip.  Where an embryo can be built we compare via
+     * EVP_PKEY_parameters_eq() since EVP_PKEY_eq() requires key
+     * bits to match.  Algorithms with no domain parameters may
+     * legitimately answer -2 ("nothing to compare").
      */
     embryo = make_embryonic_copy(key);
     if (embryo != NULL) {
@@ -1049,6 +1043,254 @@ end:
     EVP_PKEY_free(pub_only);
     EVP_PKEY_free(embryo);
     return ok;
+}
+
+/*
+ * Drive EVP_PKEY_fromdata with the supplied OSSL_PARAM[] (NULL =
+ * empty array) for the given selection.  Either outcome is accepted:
+ * fromdata may reject the input, or it may succeed and yield a key
+ * with at most algorithm-bound parameters.  In the success case a
+ * battery of common consumer ops must not crash on the resulting
+ * key; their return values are not asserted.
+ */
+static int run_empty_fromdata_probe(const char *type, EVP_PKEY_CTX *cctx,
+    int selection, OSSL_PARAM *params, const char *selname)
+{
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM empty[1];
+    int r;
+    int ok = 0;
+
+    if (params == NULL) {
+        empty[0] = OSSL_PARAM_construct_end();
+        params = empty;
+    }
+
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(cctx), 0)) {
+        TEST_info("%s: fromdata_init failed (%s)", type, selname);
+        goto end;
+    }
+    r = EVP_PKEY_fromdata(cctx, &pkey, selection, params);
+    if (r <= 0) {
+        /* Rejection is fine, but the out-pointer must remain NULL. */
+        if (!TEST_ptr_null(pkey)) {
+            TEST_info("%s: fromdata returned %d but pkey != NULL (%s)",
+                type, r, selname);
+            goto end;
+        }
+        ok = 1;
+        goto end;
+    }
+    if (!TEST_ptr(pkey)) {
+        TEST_info("%s: fromdata returned %d but pkey == NULL (%s)",
+            type, r, selname);
+        goto end;
+    }
+    /*
+     * Walk a battery of common consumer ops on the resulting key.
+     * Their return values are not asserted - a contentless key may
+     * fail every op - only crashing is forbidden.
+     */
+    (void)EVP_PKEY_get_bits(pkey);
+    (void)EVP_PKEY_get_security_bits(pkey);
+    (void)EVP_PKEY_get_size(pkey);
+    (void)EVP_PKEY_eq(pkey, pkey);
+    (void)EVP_PKEY_parameters_eq(pkey, pkey);
+    {
+        OSSL_PARAM *out = NULL;
+
+        if (EVP_PKEY_todata(pkey, selection, &out) > 0)
+            OSSL_PARAM_free(out);
+    }
+    {
+        EVP_PKEY *clone = EVP_PKEY_dup(pkey);
+
+        EVP_PKEY_free(clone);
+    }
+    {
+        BIO *bio = BIO_new(BIO_s_null());
+
+        if (bio != NULL) {
+            (void)EVP_PKEY_print_public(bio, pkey, 0, NULL);
+            (void)EVP_PKEY_print_private(bio, pkey, 0, NULL);
+            (void)EVP_PKEY_print_params(bio, pkey, 0, NULL);
+            BIO_free(bio);
+        }
+    }
+    {
+        /* The param/public/private/pairwise check family. */
+        EVP_PKEY_CTX *vctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+
+        if (vctx != NULL) {
+            (void)EVP_PKEY_param_check(vctx);
+            (void)EVP_PKEY_param_check_quick(vctx);
+            (void)EVP_PKEY_public_check(vctx);
+            (void)EVP_PKEY_public_check_quick(vctx);
+            (void)EVP_PKEY_private_check(vctx);
+            (void)EVP_PKEY_pairwise_check(vctx);
+            EVP_PKEY_CTX_free(vctx);
+        }
+    }
+    ok = 1;
+end:
+    EVP_PKEY_free(pkey);
+    return ok;
+}
+
+static int probe_empty_fromdata(const char *type, EVP_PKEY *prototype,
+    int selection, const char *selname)
+{
+    EVP_PKEY_CTX *cctx = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(cctx = EVP_PKEY_CTX_new_from_pkey(NULL, prototype, NULL))) {
+        TEST_info("%s: CTX alloc failed for empty fromdata (%s)",
+            type, selname);
+        goto end;
+    }
+    ok = run_empty_fromdata_probe(type, cctx, selection, NULL, selname);
+end:
+    EVP_PKEY_CTX_free(cctx);
+    return ok;
+}
+
+/*
+ * Same probe driven from an algorithm name rather than a prototype
+ * key, for keymgmts without a keygen path (e.g. LMS).  Algorithms
+ * not loadable under the active provider set are silently skipped.
+ * |params| may be NULL (= empty OSSL_PARAM[]) or a caller-built
+ * partial array.
+ */
+static int probe_fromdata_by_name(const char *name, int selection,
+    OSSL_PARAM *params, const char *selname)
+{
+    EVP_PKEY_CTX *cctx = NULL;
+    int ok = 1;
+
+    cctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL);
+    if (cctx == NULL)
+        return 1;
+    ok = run_empty_fromdata_probe(name, cctx, selection, params, selname);
+    EVP_PKEY_CTX_free(cctx);
+    return ok;
+}
+
+/*
+ * Drive EVP_PKEY_fromdata with an empty OSSL_PARAM[] for both
+ * EVP_PKEY_PUBLIC_KEY and EVP_PKEY_KEYPAIR selections.  Either
+ * outcome is acceptable: fromdata rejects, or it succeeds and the
+ * resulting key survives the consumer-op battery without crashing.
+ */
+static int test_fromdata(const char *type, EVP_PKEY *prototype)
+{
+    if (!TEST_ptr(prototype)) {
+        TEST_info("%s: no prototype key", type);
+        return 0;
+    }
+    if (!probe_empty_fromdata(type, prototype, EVP_PKEY_PUBLIC_KEY,
+            "EVP_PKEY_PUBLIC_KEY"))
+        return 0;
+    if (!probe_empty_fromdata(type, prototype, EVP_PKEY_KEYPAIR,
+            "EVP_PKEY_KEYPAIR"))
+        return 0;
+    return 1;
+}
+
+/*
+ * Companion to test_fromdata for keymgmts without a keygen path
+ * (LMS and similar verify-only / signature-only algorithms), plus
+ * named-group-only partial-shape variants for the prototype-matrix
+ * algorithms.  Each entry is one (name, selection, params-builder)
+ * shape; a NULL builder means "use an empty OSSL_PARAM[]".
+ * Algorithms not loadable under the active provider set are
+ * silently skipped.
+ */
+typedef int (*fromdata_shape_build_fn)(OSSL_PARAM_BLD *bld);
+
+struct fromdata_shape {
+    const char *name; /* keymgmt algorithm name */
+    int selection; /* EVP_PKEY_PUBLIC_KEY / KEYPAIR / etc. */
+    fromdata_shape_build_fn build; /* NULL -> empty OSSL_PARAM[] */
+    const char *label; /* diagnostic label */
+};
+
+#ifndef OPENSSL_NO_DH
+static int build_dh_named_group(OSSL_PARAM_BLD *bld)
+{
+    return OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        "ffdhe2048", 0);
+}
+#endif
+
+#ifndef OPENSSL_NO_EC
+static int build_ec_named_group(OSSL_PARAM_BLD *bld)
+{
+    return OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        "P-256", 0);
+}
+#ifndef OPENSSL_NO_SM2
+static int build_sm2_named_group(OSSL_PARAM_BLD *bld)
+{
+    return OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        "SM2", 0);
+}
+#endif
+#endif
+
+static const struct fromdata_shape no_keygen_shapes[] = {
+    /* Empty OSSL_PARAM[] for LMS (no keygen path). */
+    { "LMS", EVP_PKEY_PUBLIC_KEY, NULL, "LMS / empty / PUBLIC_KEY" },
+    { "LMS", EVP_PKEY_KEYPAIR, NULL, "LMS / empty / KEYPAIR" },
+/* Named-group-only partial shapes. */
+#ifndef OPENSSL_NO_DH
+    { "DH", EVP_PKEY_KEYPAIR, build_dh_named_group,
+        "DH / named group only / KEYPAIR" },
+    { "DH", EVP_PKEY_PUBLIC_KEY, build_dh_named_group,
+        "DH / named group only / PUBLIC_KEY" },
+#endif
+#ifndef OPENSSL_NO_EC
+    { "EC", EVP_PKEY_KEYPAIR, build_ec_named_group,
+        "EC / group only / KEYPAIR" },
+    { "EC", EVP_PKEY_PUBLIC_KEY, build_ec_named_group,
+        "EC / group only / PUBLIC_KEY" },
+#ifndef OPENSSL_NO_SM2
+    { "SM2", EVP_PKEY_KEYPAIR, build_sm2_named_group,
+        "SM2 / group only / KEYPAIR" },
+#endif
+#endif
+};
+
+static int test_fromdata_no_keygen(void)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(no_keygen_shapes); i++) {
+        const struct fromdata_shape *s = &no_keygen_shapes[i];
+        OSSL_PARAM_BLD *bld = NULL;
+        OSSL_PARAM *params = NULL;
+        int ok;
+
+        if (s->build != NULL) {
+            if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+                return 0;
+            if (!s->build(bld)) {
+                TEST_info("%s: builder failed", s->label);
+                OSSL_PARAM_BLD_free(bld);
+                return 0;
+            }
+            params = OSSL_PARAM_BLD_to_param(bld);
+            if (!TEST_ptr(params)) {
+                OSSL_PARAM_BLD_free(bld);
+                return 0;
+            }
+        }
+        ok = probe_fromdata_by_name(s->name, s->selection, params, s->label);
+        OSSL_PARAM_free(params);
+        OSSL_PARAM_BLD_free(bld);
+        if (!ok)
+            return 0;
+    }
+    return 1;
 }
 
 #define KEYS(KEYTYPE) \
@@ -1104,6 +1346,10 @@ end:
     static int test_dup_##KEYTYPE(void)                                   \
     {                                                                     \
         return test_dup(KEYTYPEstr, key_##KEYTYPE);                       \
+    }                                                                     \
+    static int test_fromdata_##KEYTYPE(void)                              \
+    {                                                                     \
+        return test_fromdata(KEYTYPEstr, key_##KEYTYPE);                  \
     }
 
 #define ADD_TEST_SUITE(KEYTYPE)                             \
@@ -1117,6 +1363,7 @@ end:
             ADD_TEST(test_public_##KEYTYPE##_via_DER);      \
             ADD_TEST(test_public_##KEYTYPE##_via_PEM);      \
             ADD_TEST(test_dup_##KEYTYPE);                   \
+            ADD_TEST(test_fromdata_##KEYTYPE);              \
         }                                                   \
     } while (0)
 
@@ -1866,6 +2113,15 @@ int setup_tests(void)
             ADD_TEST_SUITE(SLH_DSA_SHAKE_256f);
         }
 #endif /* OPENSSL_NO_SLH_DSA */
+
+        /*
+         * Cover keymgmts that have no keygen path and so don't
+         * appear in the prototype matrix above (LMS, and any future
+         * verify-only / signature-only algorithms).  The probe is a
+         * no-op for algorithms not loadable under the active provider
+         * set (e.g. LMS under FIPS), so the test stays portable.
+         */
+        ADD_TEST(test_fromdata_no_keygen);
     }
 
     return ok;
