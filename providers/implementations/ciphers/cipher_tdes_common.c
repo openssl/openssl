@@ -132,7 +132,7 @@ int ossl_tdes_dinit(void *vctx, const unsigned char *key, size_t keylen,
 
 CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(ossl_tdes)
 OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_RANDOM_KEY, NULL, 0),
-    OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
+    OSSL_FIPS_IND_GETTABLE_CTX_PARAM(),
         CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(ossl_tdes)
 
             static int tdes_generatekey(PROV_CIPHER_CTX *ctx, void *ptr)
@@ -170,7 +170,7 @@ int ossl_tdes_get_ctx_params(void *vctx, OSSL_PARAM params[])
 }
 
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(ossl_tdes)
-OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK)
+OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_CIPHER_PARAM_FIPS_ENCRYPT_CHECK),
 CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(ossl_tdes)
 
 int ossl_tdes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
