@@ -301,8 +301,8 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
         return 0;
     if (ossl_ml_dsa_key_has(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
         /* Invalid attempt to mutate a key. */
-        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_FROZEN,
-            "Keys are frozen once key material has been loaded or generated");
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
         return 0;
     }
 
