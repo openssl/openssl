@@ -784,6 +784,10 @@ has been negotiated, and early data is enabled on the server. A full handshake
 is forced if a session ticket is used a second or subsequent time. Any early
 data that was sent will be rejected.
 
+Note that the server manages an internal cache of session tickets. If a client
+closes the connection without sending the close_notify alert, the
+corresponding session ticket is removed and a full handshake is forced.
+
 =item B<-tfo>
 
 Enable acceptance of TCP Fast Open (RFC7413) connections.
