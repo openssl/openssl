@@ -40,6 +40,17 @@ OpenSSL Releases
 
    *Craig Lorentzen*
 
+ * Do not issue TLS1.3 session tickets if the server has explicitly disabled
+   them via `SSL_OP_NO_TICKET` and also turned off the session cache with
+   `SSL_SESS_CACHE_OFF`. Both conditions together indicate a clear intent to
+   suppress resumption, so sending NewSessionTicket messages would be wasteful
+   and misleading. TLS1.3 client that does not send the `psk_key_exchange_modes`
+   extension, or that sends it together with [RFC 9149] parameters such as
+   `new_session_count = 0` or `resumption_count = 0`, is effectively signaling
+   no interest in session tickets and session resumption.
+
+   *Daniel Kubec*
+
  * Added test framework for testing function memory allocation failures.
 
    *Jakub Zelenka*
@@ -23057,6 +23068,7 @@ ndif
 [RFC 7919]: https://datatracker.ietf.org/doc/html/rfc7919
 [RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
+[RFC 9149]: https://datatracker.ietf.org/doc/html/rfc9149
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
 [SP 800-132]: https://csrc.nist.gov/pubs/sp/800/132/final
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
