@@ -2541,6 +2541,7 @@ $code.=<<___;
 
 .global	asm_sha256_hmac_aescbc_dec
 .type	asm_sha256_hmac_aescbc_dec,%function
+.align  4
 
 asm_sha256_hmac_aescbc_dec:
 	AARCH64_VALID_CALL_TARGET
