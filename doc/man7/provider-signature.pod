@@ -269,7 +269,6 @@ OSSL_FUNC_signature_gettable_ctx_params() functions,
 as well as the "md_params" functions.
 
 The OSSL_FUNC_signature_dupctx() function is optional.
-It is not yet used by OpenSSL.
 
 The OSSL_FUNC_signature_query_key_types() function is optional.
 When present, it should return a NULL-terminated array of strings
