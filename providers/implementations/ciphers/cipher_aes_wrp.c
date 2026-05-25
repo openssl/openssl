@@ -144,6 +144,7 @@ static int aes_wrap_init(void *vctx, const unsigned char *key,
             AES_set_decrypt_key(key, (int)(keylen * 8), &wctx->ks.ks);
             ctx->block = (block128_f)AES_decrypt;
         }
+        ctx->key_set = 1;
     }
     return aes_wrap_set_ctx_params(ctx, params);
 }
@@ -215,6 +216,10 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
      */
     if (wctx->updated) {
         ERR_raise(ERR_LIB_PROV, EVP_R_UPDATE_ERROR);
+        return -1;
+    }
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return -1;
     }
     wctx->updated = 1;
