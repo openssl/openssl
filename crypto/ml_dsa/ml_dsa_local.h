@@ -83,6 +83,7 @@ void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
 #define VX_COMPILER_SUPPORT_VEC128
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
+void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out);
 #endif
 
 void ossl_ml_dsa_key_compress_power2_round(uint32_t r, uint32_t *r1, uint32_t *r0);

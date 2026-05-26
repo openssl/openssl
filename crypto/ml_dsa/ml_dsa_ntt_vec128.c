@@ -19,6 +19,7 @@ typedef int int32_t;
 /* Width of vector registers in bytes */
 #define VECTOR_REG_WIDTH_BYTES 16
 typedef int vec_int32_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES)));
+typedef unsigned int vec_uint32_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES)));
 
 /* Our implementation of the vectorized algorithms assumes NUM_INT32_IN_VECTOR == 4. */
 #define NUM_INT32_IN_VECTOR (VECTOR_REG_WIDTH_BYTES / ((int)sizeof(int32_t)))
@@ -105,6 +106,7 @@ static const int32_t neg_zetas_montgomery_twisted[256] = {
 };
 
 static const vec_int32_t vec_q = { ML_DSA_Q, ML_DSA_Q, ML_DSA_Q, ML_DSA_Q };
+static const vec_int32_t vec_q_inv = { ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV };
 
 /*
  * @brief Computes the Montgomery product of a and b.
@@ -142,7 +144,7 @@ static ossl_inline
     const int32_t v_scalar = 1074791296;
     const vec_int32_t v = { v_scalar, v_scalar, v_scalar, v_scalar };
     vec_int32_t t = vec_mulh(a, v) >> 21;
-    t *= ML_DSA_Q; /* this is tight on int32 */
+    t *= ML_DSA_Q;
     vec_int32_t r = a - t; /* in [0, q] */
     r -= vec_q; /* in [-q, 0] */
     r += (r >> 31) & vec_q; /* CSEL: add q back if negative */
@@ -160,6 +162,28 @@ static ossl_inline
     reduce_once_signed(vec_int32_t a)
 {
     return a + ((a >> 31) & vec_q);
+}
+
+void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out)
+{
+    int i;
+
+    for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i++) {
+        vec_int32_t lhs_vec = { lhs->coeff[4 * i], lhs->coeff[4 * i + 1],
+            lhs->coeff[4 * i + 2], lhs->coeff[4 * i + 3] };
+        vec_int32_t rhs_vec = { rhs->coeff[4 * i], rhs->coeff[4 * i + 1],
+            rhs->coeff[4 * i + 2], rhs->coeff[4 * i + 3] };
+
+        vec_int32_t twist_vec = (vec_int32_t)((vec_uint32_t)lhs_vec * (vec_uint32_t)vec_q_inv);
+        vec_int32_t result = montgomery_multiplication_vectorized(
+            lhs_vec, twist_vec, rhs_vec);
+        result = reduce_once_signed(result);
+
+        out->coeff[4 * i] = result[0];
+        out->coeff[4 * i + 1] = result[1];
+        out->coeff[4 * i + 2] = result[2];
+        out->coeff[4 * i + 3] = result[3];
+    }
 }
 
 /*

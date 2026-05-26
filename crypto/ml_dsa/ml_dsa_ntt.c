@@ -244,6 +244,7 @@ static void ml_dsa_ntt_init(void)
     if (S390X_VX_CAPABLE) {
         poly_ntt_impl = ossl_ml_dsa_poly_ntt_vec128;
         poly_ntt_inverse_impl = ossl_ml_dsa_poly_ntt_inverse_vec128;
+        poly_ntt_mult_impl = ossl_poly_ntt_mult_scalar_vec128;
     }
 #endif
 }
