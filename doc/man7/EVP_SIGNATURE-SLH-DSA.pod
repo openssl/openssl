@@ -61,7 +61,7 @@ They can be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)>.
 
 =over 4
 
-=item "message-encoding" (B<OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING>) <integer>
+=item "message-encoding" (B<OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING>) <int>
 
 The default value of 1 uses 'Pure SLH-DSA Signature Generation' as described
 above. Setting it to 0 does not encode the message, which is used for testing,
@@ -71,7 +71,7 @@ but can also be used for 'Pre Hash SLH-DSA Signature Generation'.
 
 Used for testing to pass a optional random value.
 
-=item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <integer>
+=item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <int>
 
 The default value of 0 generates a random value (using a DRBG) this is used when
 processing the message. Setting this to 1 causes the private key seed to be used

@@ -51,7 +51,7 @@ They can be set by passing an OSSL_PARAM array to L<EVP_PKEY_sign_init_ex2(3)>.
 
 =over 4
 
-=item "message-encoding" (B<OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING>) <integer>
+=item "message-encoding" (B<OSSL_SIGNATURE_PARAM_MESSAGE_ENCODING>) <int>
 
 The default value of 1 uses 'Pure ML-DSA Signature Generation' as described
 above. Setting it to 0 does not encode the message, which is used for testing.
@@ -64,14 +64,14 @@ Algorithm 3 step 5.
 Used for testing to pass an optional deterministic per message random value.
 If set the size must be 32 bytes.
 
-=item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <integer>
+=item "deterministic" (B<OSSL_SIGNATURE_PARAM_DETERMINISTIC>) <int>
 
 The default value of 0 causes the per message randomness to be randomly
 generated using a DRBG. Setting this to a nonzero value causes the per message
 randomness to be set to 32 bytes of zeros. This value is ignored
 if "test-entropy" is provided.
 
-=item "mu" (B<OSSL_SIGNATURE_PARAM_MU>) <integer>
+=item "mu" (B<OSSL_SIGNATURE_PARAM_MU>) <int>
 
 The default value of 0 causes sign and verify operations to process a raw message.
 Setting this to a nonzero value causes those operations to assume the input is
