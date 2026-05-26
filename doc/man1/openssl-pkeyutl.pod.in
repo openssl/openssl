@@ -373,7 +373,7 @@ explicitly set in PSS mode then the signing digest is used.
 =item B<rsa_oaep_md:>I<digest>
 
 Sets the digest used for the OAEP hash function. If not explicitly set then
-SHA256 is used.
+SHA1 is used.
 
 =item B<rsa_pkcs1_implicit_rejection:>I<flag>
 
