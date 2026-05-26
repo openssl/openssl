@@ -49,6 +49,10 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * TLS 1.3: Fix server not sending NewSessionTicket after ciphersuite mismatch.
+
+   *Daniel Kubec*
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 
