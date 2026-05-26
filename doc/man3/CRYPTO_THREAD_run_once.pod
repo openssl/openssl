@@ -179,9 +179,9 @@ atomic operations.
 int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock);
 
 CRYPTO_atomic_cmp_exch_ptr() atomically performs a read-modify-write operation.  If the contents of
-I<*ptr> matches the contents of I<*expect> then the value of I<desire> is stored in I<*ptr> and the
-function returns 1.  If I<*ptr> does not match the contents of I<*expect>, then the contents of
-I<*ptr> are atomically loaded to the contents of I<*expect> and the function returns 0.
+I<*ptr> matches the contents of I<*expect> then the value of I<desire> is stored in I<*ptr>
+If I<*ptr> does not match the contents of I<*expect>, then the contents of
+I<*ptr> is loaded to the contents of I<*expect> and the function returns 0.
 I<lock> will be used to emulate atomic operations on platforms that do not support
 atomic operations.
 
