@@ -65,14 +65,14 @@ OpenSSL Releases
 
    *Tong Li*
 
- *  Header files in OpenSSL are being changed to reflect modern development
-    practices - Include files should all be guarded for inclusion by a define
-    and must be self contained, meaning they include all dependencies they need
-    to compile on their own. Headers have been changed to include guards and
-    to include the dependencies they require.  Doing this will help the
-    future use of more modern tooling.
+ * Header files in OpenSSL are being changed to reflect modern development
+   practices - Include files should all be guarded for inclusion by a define
+   and must be self contained, meaning they include all dependencies they need
+   to compile on their own. Headers have been changed to include guards and
+   to include the dependencies they require.  Doing this will help the
+   future use of more modern tooling.
 
-    *Bob Beck*
+   *Bob Beck*
 
  * `EVP_CIPHER_CTX_get_num()` and `EVP_CIPHER_CTX_set_num()' have been deprecated.
 
