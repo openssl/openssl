@@ -11,12 +11,14 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <openssl/bio.h>
+/* clang-format off */
 #include <openssl/pem.h>
 #include <openssl/cms.h>
-#include <openssl/bio.h>
+/* clang-format on */
 #include <openssl/x509.h>
-#include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
+#include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 #include "openssl/cmserr.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
