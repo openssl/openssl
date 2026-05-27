@@ -12,9 +12,11 @@
 #include "sm3_local.h"
 #include "internal/sm3.h"
 #include <openssl/e_os2.h>
-#include "crypto/md32_common.inc"
 #include <stddef.h>
 #include <string.h>
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 
 int ossl_sm3_init(SM3_CTX *c)
 {
