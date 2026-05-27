@@ -2,89 +2,453 @@
 
 =head1 NAME
 
-X509_build_chain,
 X509_verify_cert,
-X509_STORE_CTX_verify - build and verify X509 certificate chain
+X509_STORE_CTX_verify,
+X509_build_chain - build and verify X509 certificate chain
 
 =head1 SYNOPSIS
 
  #include <openssl/x509_vfy.h>
 
+ int X509_verify_cert(X509_STORE_CTX *ctx);
+ int X509_STORE_CTX_verify(X509_STORE_CTX *ctx);
  STACK_OF(X509) *X509_build_chain(X509 *target, STACK_OF(X509) *certs,
                                   X509_STORE *store, int with_self_signed,
                                   OSSL_LIB_CTX *libctx, const char *propq);
- int X509_verify_cert(X509_STORE_CTX *ctx);
- int X509_STORE_CTX_verify(X509_STORE_CTX *ctx);
 
 =head1 DESCRIPTION
 
-X509_build_chain() builds a certificate chain starting from I<target>
-using the optional list of intermediate CA certificates I<certs>.
-If I<store> is NULL it builds the chain as far down as possible, ignoring errors.
-Else the chain must reach a trust anchor contained in I<store>.
-It internally uses a B<X509_STORE_CTX> structure associated with the library
-context I<libctx> and property query string I<propq>, both of which may be NULL.
-In case there is more than one possibility for the chain, only one is taken.
+=head2 X509_verify_cert and X509_STORE_CTX_verify
 
-On success it returns a pointer to a new stack of (up_ref'ed) certificates
-starting with I<target> and followed by all available intermediate certificates.
-A self-signed trust anchor is included only if I<target> is the trust anchor
-of I<with_self_signed> is 1.
-If a non-NULL stack is returned the caller is responsible for freeing it.
+X509_verify_cert() attempts to build and validate a certificate chain for the
+target certificate set in I<ctx>. The verification context, of type
+B<X509_STORE_CTX>, must first be constructed with L<X509_STORE_CTX_new(3)> and
+initialised with L<X509_STORE_CTX_init(3)>. It carries the target certificate,
+the trust store, an optional stack of untrusted certificates that may assist
+chain construction, verification parameters such as flags and a verification
+purpose, an optional verification callback, and, after a call, the verification
+outcome.
 
-The X509_verify_cert() function attempts to discover and validate a
-certificate chain based on parameters in I<ctx>.
-The verification context, of type B<X509_STORE_CTX>, can be constructed
-using L<X509_STORE_CTX_new(3)> and L<X509_STORE_CTX_init(3)>.
-It usually includes a target certificate to be verified,
-a set of certificates serving as trust anchors,
-a list of non-trusted certificates that may be helpful for chain construction,
-flags such as X509_V_FLAG_X509_STRICT, and various other optional components
-such as a callback function that allows customizing the verification outcome.
-A complete description of the certificate verification process is contained in
-the L<openssl-verification-options(1)> manual page.
+A B<X509_STORE_CTX> can be used for only one verification. Calling
+X509_verify_cert() a second time on the same context without reinitialising it
+fails with a negative return value, and L<X509_STORE_CTX_get_error(3)>
+subsequently returns B<X509_V_ERR_INVALID_CALL>.
 
-Applications rarely call this function directly but it is used by
-OpenSSL internally for certificate validation, in both the S/MIME and
-SSL/TLS code.
+When the target is a certificate, the function performs the following steps in
+order. The first step that fails aborts verification, except where a
+verification callback explicitly waives the error (see
+L</THE VERIFICATION CALLBACK> below):
 
-A negative return value from X509_verify_cert() can occur if it is invoked
-incorrectly, such as with no certificate set in I<ctx>, or when it is called
-twice in succession without reinitialising I<ctx> for the second call.
-A negative return value can also happen due to internal resource problems
-or because an internal inconsistency has been detected.
-Applications must interpret any return value <= 0 as an error.
+=over 4
 
-The X509_STORE_CTX_verify() behaves like X509_verify_cert() except that its
-target certificate is the first element of the list of untrusted certificates
-in I<ctx> unless a target certificate is set explicitly.
+=item 1.
 
-When the verification target is a raw public key, rather than a certificate,
-both functions validate the target raw public key.
-In that case the number of possible checks is significantly reduced.
-The raw public key can be authenticated only via DANE TLSA records, either
-locally synthesised or obtained by the application from DNS.
-Raw public key DANE TLSA records may be added via L<SSL_add_expected_rpk(3)> or
-L<SSL_dane_tlsa_add(3)>.
+B<Chain construction.> Starting from the target certificate, the verification
+machinery seeks an issuer for the certificate currently at the top of the
+chain, drawing candidates from I<ctx>'s untrusted stack and from the trust
+store. By default the search is untrusted-first: the untrusted stack is
+examined before the trust store. Setting B<X509_V_FLAG_TRUSTED_FIRST> on
+I<ctx>'s verification parameters reverses this. When an untrusted-first
+search fails to reach a trust anchor and B<X509_V_FLAG_NO_ALT_CHAINS> is not
+set, the search is retried with progressively shorter untrusted prefixes in
+an attempt to find an alternative trusted path. The chain length is bounded
+by the configured depth limit (see L<X509_VERIFY_PARAM_set_depth(3)>);
+exceeding it yields B<X509_V_ERR_CERT_CHAIN_TOO_LONG>. If more than one
+chain is possible, only one is taken.
+
+Failure to build a chain to a trust anchor yields an error such as
+B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT>,
+B<X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY>,
+B<X509_V_ERR_SELF_SIGNED_CERT_IN_CHAIN>,
+B<X509_V_ERR_DEPTH_ZERO_SELF_SIGNED_CERT>, or
+B<X509_V_ERR_CERT_CHAIN_TOO_LONG>.
+
+=item 2.
+
+B<Certificate extension validation> per RFC 5280, including basic constraints,
+key usage and the verification purpose set via
+L<X509_VERIFY_PARAM_set_purpose(3)>.
+
+=item 3.
+
+B<Security level checks> against the configured authentication level, covering
+issuer key sizes (B<X509_V_ERR_CA_KEY_TOO_SMALL>) and signature algorithm
+strength (B<X509_V_ERR_CA_MD_TOO_WEAK>). The leaf key is checked separately
+before chain construction begins (B<X509_V_ERR_EE_KEY_TOO_SMALL>).
+
+=item 4.
+
+B<Identity checks> against any hostnames, email addresses or IP addresses
+configured on the verification parameters
+(L<X509_VERIFY_PARAM_set1_host(3)> and related).
+
+=item 5.
+
+B<Revocation checks> via CRLs and, when configured, OCSP. The set of checks
+performed is controlled by flags such as B<X509_V_FLAG_CRL_CHECK> and
+B<X509_V_FLAG_CRL_CHECK_ALL>.
+
+=item 6.
+
+B<Signature and validity period checks> on every certificate in the chain,
+walking from the trust anchor down to the target. The signature on the
+chain's terminating certificate is not verified: trust is taken from its
+presence in the trust store rather than from its signature. This applies
+both to a conventional self-signed trust anchor and, when
+B<X509_V_FLAG_PARTIAL_CHAIN> is in effect, to a non-self-signed
+intermediate promoted to anchor status. B<X509_V_FLAG_CHECK_SS_SIGNATURE>
+requests that the self-signature on a self-signed terminator be verified;
+it has no effect when the terminator is a non-self-signed certificate.
+Validity periods are checked on every certificate, including the
+terminator.
+
+=item 7.
+
+B<Name constraint validation> per RFC 5280 section 4.2.1.10.
+
+=item 8.
+
+B<RFC 3779 path validation> of AS-number and IP-address delegation
+extensions, performed by default unless OpenSSL was built with
+B<no-rfc3779>.
+
+=item 9.
+
+B<Certificate policy validation>, performed only when
+B<X509_V_FLAG_POLICY_CHECK> is set.
+
+=back
+
+Several B<X509_V_FLAG_*> values modify the behaviour of these checks;
+representative ones are named at the relevant step above, but the list there
+is not exhaustive. The complete set of verification flags, the effect each
+one has, and the functions used to query and modify them are documented in
+L<X509_VERIFY_PARAM_set_flags(3)>.
+
+Applications rarely call X509_verify_cert() directly. It is invoked internally
+by OpenSSL during S/MIME and CMS verification and during the TLS handshake.
+
+X509_STORE_CTX_verify() behaves identically to X509_verify_cert() except for
+the selection of the target certificate: if no target has been set on I<ctx>
+(see L<X509_STORE_CTX_set_cert(3)>) and the untrusted stack is nonempty, the
+first certificate in the untrusted stack is adopted as the target before
+verification begins. If a target was set explicitly, X509_STORE_CTX_verify()
+uses it and does not consult the untrusted stack for this purpose.
+
+=head2 Raw public key targets
+
+When the verification target is a raw public key rather than a certificate
+(set via L<X509_STORE_CTX_init_rpk(3)>), both functions validate the raw public
+key instead of a certificate chain. The set of possible checks is significantly
+reduced: there are no extensions, names, CRLs or signatures to verify. The raw
+public key can be authenticated only via DANE TLSA records, either locally
+synthesised or obtained by the application from DNS. Raw public key DANE TLSA
+records may be added via L<SSL_add_expected_rpk(3)> or L<SSL_dane_tlsa_add(3)>.
+
+=head2 X509_build_chain
+
+X509_build_chain() builds a certificate chain starting from I<target>, using
+the same chain-construction algorithm as X509_verify_cert() (see
+L</X509_verify_cert and X509_STORE_CTX_verify> above). It internally uses a
+B<X509_STORE_CTX> structure associated with the library context I<libctx>
+and property query string I<propq>, both of which may be NULL. The role of
+I<certs> depends on I<store>:
+
+=over 4
+
+=item *
+
+If I<store> is non-NULL, I<certs> is treated as an optional list of
+B<untrusted> intermediate certificates that may help complete the chain, and
+the chain must reach a trust anchor contained in I<store>. If no chain to a
+trust anchor can be built, the function fails and returns NULL.
+
+=item *
+
+If I<store> is NULL, I<certs> is installed as the B<trusted> stack for the
+internal context (see L<X509_STORE_CTX_set0_trusted_stack(3)>). In this mode
+the function builds the chain as far as it can but does not require it to
+reach an anchor: if chain construction fails partway, the partial chain built
+so far is still returned.
+
+=back
+
+Because the internal B<X509_STORE_CTX> is allocated and freed inside
+X509_build_chain(), search-policy flags such as B<X509_V_FLAG_TRUSTED_FIRST>
+and B<X509_V_FLAG_NO_ALT_CHAINS> and the configured depth limit always take
+their default values, and the specific B<X509_V_ERR_*> code that caused
+chain construction to fail is not reported back: the function signals only
+success or failure through its return value (and, when I<store> is NULL, may
+also return a partial chain).
+
+On success the returned stack starts with a newly up-referenced I<target>
+followed by the issuer certificates that were found. A self-signed certificate
+at the top of the chain is included in the returned stack when either
+I<with_self_signed> is 1, or the chain consists solely of I<target> (for
+example because I<target> itself is self-signed or no further issuer could
+be found). When the chain has more than one element and I<with_self_signed>
+is 0, the self-signed top is omitted from the result.
+
+The caller is responsible for freeing the returned stack.
+
+=head1 THE VERIFICATION CALLBACK
+
+Each B<X509_STORE_CTX> carries a I<verification callback> with the signature
+
+ int (*verify_cb)(int ok, X509_STORE_CTX *ctx);
+
+This callback is invoked by X509_verify_cert() and X509_STORE_CTX_verify()
+at multiple points during verification, both to B<report errors> and to
+B<notify of progress>. It is installed by L<X509_STORE_CTX_set_verify_cb(3)>
+on the context, or it is inherited at L<X509_STORE_CTX_init(3)> time from
+the B<X509_STORE> (see L<X509_STORE_set_verify_cb_func(3)>). If neither has
+been set, a default callback is used which simply returns its I<ok> argument
+unchanged, causing every error to abort verification.
+
+=head2 When the callback is called
+
+There are two distinct invocation patterns:
+
+=over 4
+
+=item B<Error notification> (I<ok> = 0)
+
+The callback is called with I<ok> set to 0 each time a check fails. Before the
+call, the verification machinery records the B<X509_V_ERR_*> code describing
+the failure on I<ctx>, and for certificate-level errors also records the
+depth at which the error was detected and the certificate in question. The
+callback inspects these via L<X509_STORE_CTX_get_error(3)>,
+L<X509_STORE_CTX_get_error_depth(3)>, and L<X509_STORE_CTX_get_current_cert(3)>.
+CRL- and OCSP-related errors update only the error code; the depth and
+current certificate retain their values from a preceding context.
+
+=item B<Per-certificate success notification> (I<ok> = 1)
+
+During the signature-and-validity pass, after each certificate in the chain
+has been checked successfully, the callback is called with I<ok> set to 1.
+The current certificate, current issuer, and error depth (queryable
+respectively via L<X509_STORE_CTX_get_current_cert(3)>,
+L<X509_STORE_CTX_get0_current_issuer(3)>, and
+L<X509_STORE_CTX_get_error_depth(3)>) describe the certificate that has just
+been accepted. The callback may use this to log progress, but B<must> return
+a nonzero value, otherwise verification is aborted.
+
+=back
+
+The callback's return value controls subsequent verification:
+
+=over 4
+
+=item *
+
+A nonzero return value causes verification to B<continue>. For an error
+notification this constitutes B<waiving> the error.
+
+=item *
+
+A zero return value causes verification to B<abort> immediately. The function
+returns 0 to its caller in this case, regardless of whether the callback was
+invoked with I<ok> = 0 or I<ok> = 1.
+
+=back
+
+=head2 Sticky errors
+
+When the callback waives an error by returning nonzero, the underlying check is
+treated as passed for control-flow purposes, but the error code recorded on
+I<ctx> is B<not> reset to B<X509_V_OK>. A subsequent successful return from
+X509_verify_cert() therefore does B<not> imply that
+L<X509_STORE_CTX_get_error(3)> will return B<X509_V_OK>: it may still hold
+the last error code that was waived. This is intentional. Only the callback
+itself is permitted to overwrite the error code, via
+L<X509_STORE_CTX_set_error(3)>, and only at its own risk.
+
+=head2 Dangers
+
+A verification callback that returns nonzero on an error notification has, by
+definition, suppressed an authentication check that OpenSSL considered
+necessary. Callers should treat installing a callback that waives errors as a
+deliberate weakening of the security guarantees of X509_verify_cert(), to be
+done only for specific, well-understood error codes. The following pitfalls are
+common:
+
+=over 4
+
+=item *
+
+B<Blanket waivers>. A callback that returns 1 unconditionally turns
+X509_verify_cert() into "accept anything" and is almost always wrong outside of
+diagnostics. Inspect the error code via L<X509_STORE_CTX_get_error(3)> and
+waive only the specific codes you intend to.
+
+=item *
+
+B<Failing a success notification>. Because the callback is also called with
+I<ok> = 1, a callback that mistakenly returns 0 in that case causes
+verification to fail even though every check passed. The caller cannot
+distinguish this from a genuine failure based on the return value alone.
+
+=item *
+
+B<Clearing the error code>. The sticky-error rule exists so that a waived
+error remains visible to the caller after verification returns. A callback
+that calls L<X509_STORE_CTX_set_error(3)> with B<X509_V_OK> hides this
+information and can also mask a later error if the callback is invoked again
+before verification completes.
+
+=item *
+
+B<Mutating the verification context>. The B<X509_STORE_CTX> is live during
+the callback: the verification routines are actively reading its chain,
+parameters, and other state. Calling context-mutating functions from within
+the callback -- for example, replacing the verified chain via
+L<X509_STORE_CTX_set0_verified_chain(3)>, swapping the trust store or
+untrusted stack, or changing verification flags, depth, purpose, or target
+-- can corrupt the in-progress verification, produce inconsistent behaviour
+between later steps of the pipeline, or, in the case of the verified chain,
+cause use-after-free. The only mutators reasonable from within a callback
+are the error-related setters (L<X509_STORE_CTX_set_error(3)>,
+L<X509_STORE_CTX_set_error_depth(3)>, L<X509_STORE_CTX_set_current_cert(3)>),
+and even those should be used sparingly (see L</Sticky errors>).
+
+=item *
+
+B<Heavy work in the callback>. The callback is on the hot path of every
+certificate check; expensive work performed there will slow every TLS handshake
+or S/MIME verification that uses the surrounding context.
+
+=item *
+
+B<Trusting the depth alone>. The error depth, from
+L<X509_STORE_CTX_get_error_depth(3)>, records where an error was detected
+during chain processing, not the position of the certificate in the final
+chain. Always consult L<X509_STORE_CTX_get_current_cert(3)> in addition to
+the depth when deciding whether to waive.
+
+=item *
+
+B<Fragility with respect to check order>. The set of errors the callback
+observes, and the order in which it observes them, depends on the internal
+order in which verification checks are performed. When a certificate has more
+than one problem, only the first check to detect a problem causes the
+callback to be invoked for that certificate; later checks are not reached
+unless the callback waives the earlier error. This ordering is an
+implementation detail and is not part of the stable API: a refactor that
+reorders internal checks without altering the binary success/failure contract
+of X509_verify_cert() may still change which B<X509_V_ERR_*> code the
+callback sees, or whether a given code is reported at all. Callbacks that
+branch on a specific error code being reported, or that assume earlier checks
+have already filtered out certain conditions, can therefore change behaviour
+silently across OpenSSL releases. Write callbacks defensively: re-fetch the
+error code and the current certificate via L<X509_STORE_CTX_get_error(3)>
+and L<X509_STORE_CTX_get_current_cert(3)> afresh on each invocation, and
+treat "this error code never appears" as an assumption that may be
+invalidated. More fundamentally, because the set and order of error
+notifications is not a stable contract, the callback cannot be relied upon to
+observe any particular condition or sequence of conditions; that makes it an
+unsound mechanism for enforcing or modifying security policy. Use of the
+verification callback to alter verification outcomes -- to waive errors, to
+inject conditional acceptance, or to gate behaviour on a specific
+B<X509_V_ERR_*> code being reported -- is therefore discouraged in production
+code. Reserve the callback for diagnostic and logging purposes, where future
+changes in which errors appear, or in what order, are not security-relevant.
+
+=back
+
+The default callback waives nothing and is the safe choice; it is the right
+behaviour for almost all production uses.
 
 =head1 RETURN VALUES
 
-X509_build_chain() returns NULL on error, else a stack of certificates.
+X509_verify_cert() and X509_STORE_CTX_verify() return:
 
-Both X509_verify_cert() and X509_STORE_CTX_verify()
-return 1 if a complete chain can be built and validated,
-otherwise they return 0, and in exceptional circumstances (such as malloc
-failure and internal errors) they can also return a negative code.
+=over 4
 
-If a complete chain can be built and validated both functions return 1.
-If the certificate must be rejected on the basis of the data available
-or any required certificate status data is not available they return 0.
-If no definite answer possible they usually return a negative code.
+=item B<1>
 
-On error or failure additional error information can be obtained by
-examining I<ctx> using, for example, L<X509_STORE_CTX_get_error(3)>.  Even if
-verification indicated success, the stored error code may be different from
-X509_V_OK, likely because a verification callback function has waived the error.
+if a complete chain has been built and every check either succeeded or was
+waived by the verification callback. Note that the latter case does not
+guarantee that L<X509_STORE_CTX_get_error(3)> returns B<X509_V_OK>; see
+L</Sticky errors>. The return value is the authoritative success/failure
+signal: callers do not need to additionally check that
+L<X509_STORE_CTX_get_error(3)> returns B<X509_V_OK> to consider verification
+successful. They may consult it to learn whether, and which, errors were
+waived by the verification callback.
+
+=item B<0>
+
+if verification was rejected. This occurs when a check failed and the callback
+did not waive the error, when a trust decision actively rejected the chain, or
+when the verification callback returned 0 from a success notification (see
+L</THE VERIFICATION CALLBACK>). When a certificate would have failed more
+than one check, the specific B<X509_V_ERR_*> code returned by
+L<X509_STORE_CTX_get_error(3)> reflects whichever check fired first; this
+ordering is an implementation detail and is not stable across releases.
+Callers must therefore treat the return value as the authoritative
+success/failure signal, and treat the specific error code as diagnostic
+information that may shift over time.
+
+=item A B<negative> value
+
+on a hard error that prevented verification from running to completion. The
+documented cases are: I<ctx> is NULL; I<ctx> has no target certificate set;
+I<ctx> has already been used for a previous verification; memory allocation
+failed; the trust store lookup function returned an error; or an internal
+invariant was violated. In these cases L<X509_STORE_CTX_get_error(3)>
+returns an appropriate B<X509_V_ERR_*> value (B<X509_V_ERR_INVALID_CALL>,
+B<X509_V_ERR_OUT_OF_MEM>, B<X509_V_ERR_STORE_LOOKUP> or
+B<X509_V_ERR_UNSPECIFIED>).
+
+=back
+
+In all failure modes, additional information can be obtained from
+L<X509_STORE_CTX_get_error(3)> and the related accessors. Applications must
+treat any return value E<lt>= 0 as verification not having succeeded.
+
+X509_build_chain() returns NULL on error. Otherwise it returns a newly
+allocated stack of certificates that the caller must free; the stack may
+represent only a partial chain when I<store> is NULL.
+
+=head1 BUGS
+
+Several aspects of chain construction depart from the recommendations of
+RFC 4158 (Certification Path Building) and from strict RFC 5280 path
+validation. Callers should be aware of the following:
+
+The chain search is not optimised in the manner described by RFC 4158
+sections 3.1 to 3.5. Candidate issuers are not scored against the set of
+heuristics RFC 4158 recommends; at each step the first viable candidate
+is committed to, with the only preference being for a candidate whose
+validity period covers the current time. There is no tree-traversal
+backtracking: when an initial chain does not reach a trust anchor, the
+search is retried with progressively shorter untrusted prefixes (unless
+B<X509_V_FLAG_NO_ALT_CHAINS> is set), but different candidate issuers at
+intermediate positions of the same chain are not tried. In simple
+hierarchical PKIs this is rarely an issue. In cross-certified or bridged
+PKI environments X509_verify_cert() may fail to find a valid certification
+path even when one demonstrably exists in the available certificate set.
+
+Issuer key usage is not enforced during chain construction. RFC 5280
+section 6.1.4(n) and RFC 4158 section 3.5.3 call for verifying that an
+issuer candidate's keyUsage extension permits certificate signing
+(B<keyCertSign>) before that candidate is selected. OpenSSL defers this
+check to the later extension-validation pass: if two candidate issuers
+exist for a certificate, and the one lacking B<keyCertSign> happens to be
+selected first, verification fails on the extension check rather than
+backing off and trying the other candidate. The misuse is ultimately
+caught, but a chain that would have validated through the alternative
+issuer is not built.
+
+B<X509_V_FLAG_PARTIAL_CHAIN> relaxes the trust-anchor requirement from
+the one defined by RFC 5280 section 6.1.1(d). With the flag set, any
+certificate in the trust store is acceptable as the terminator of the
+chain, even if it is not a self-signed root. This is an intentional and
+now-common deviation that supports modern practices such as pinning trust
+to a specific intermediate, or shortening chains by treating a
+sufficiently-trusted intermediate as the trust point and eliding the root
+above it. Callers should nevertheless be aware that the chain returned in
+this mode does not necessarily terminate at an RFC 5280-style trust
+anchor.
 
 =head1 SEE ALSO
 
@@ -94,7 +458,10 @@ L<SSL_dane_tlsa_add(3)>,
 L<X509_STORE_CTX_new(3)>,
 L<X509_STORE_CTX_init(3)>,
 L<X509_STORE_CTX_init_rpk(3)>,
-L<X509_STORE_CTX_get_error(3)>
+L<X509_STORE_CTX_get_error(3)>,
+L<X509_STORE_CTX_set_verify_cb(3)>,
+L<X509_STORE_set_verify_cb_func(3)>,
+L<X509_VERIFY_PARAM_set_flags(3)>
 
 =head1 HISTORY
 
