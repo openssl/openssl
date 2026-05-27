@@ -7,38 +7,44 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/cms.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/param_build.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/provider.h>
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
-#include <openssl/param_build.h>
-#include <openssl/cms.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include "crypto/ml_kem.h"
+
 #include "internal/der.h"
 #include "internal/fips.h"
 #include "internal/packet.h"
 #include "internal/param_build_set.h"
 #include "internal/sizes.h"
+
+#include "crypto/ml_kem.h"
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "prov/der_hkdf.h"
 #include "prov/der_wrap.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
-#include "prov/securitycheck.h"
 #include "prov/ml_kem.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 #define ml_kem_export_params_st
 #define ml_kem_export_params_decoder
+/* clang-format off */
 #include "providers/implementations/keymgmt/ml_kem_kmgmt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keymgmt_new_fn ml_kem_512_new;
 static OSSL_FUNC_keymgmt_new_fn ml_kem_768_new;

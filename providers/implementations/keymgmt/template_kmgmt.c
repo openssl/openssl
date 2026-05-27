@@ -9,23 +9,27 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/err.h>
-#include <openssl/proverr.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/params.h>
+#include <openssl/proverr.h>
 #include <openssl/rand.h>
 #include <openssl/self_test.h>
+
 #include "internal/param_build_set.h"
-#include <openssl/param_build.h>
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/template_kmgmt.inc"
+/* clang-format on */
 
 extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
 

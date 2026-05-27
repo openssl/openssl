@@ -14,19 +14,23 @@
 #include "internal/deprecated.h"
 
 #include <limits.h>
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
+
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/kdf.h>
 #include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/numbers.h"
+
 #include "crypto/evp.h"
+
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
@@ -34,12 +38,14 @@
 #include "openssl/err.h"
 #include "openssl/obj_mac.h"
 #include "openssl/params.h"
-#include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/pbkdf2.inc"
+/* clang-format on */
 #include "fips/fipsindicator.h"
 
 /* Constants specified in SP800-132 */

@@ -17,14 +17,14 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
-#include <openssl/err.h>
 
-#include "internal/ssl3_cbc.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl3_cbc.h"
 
 #include "openssl/core.h"
 #include "openssl/crypto.h"
@@ -34,7 +34,9 @@
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/macs/hmac_prov.inc"
+/* clang-format on */
 #include "fips/fipsindicator.h"
 
 /*

@@ -12,21 +12,27 @@
  */
 
 #include <string.h>
-#include <openssl/evp.h>
+
 #include <openssl/core_dispatch.h>
+#include <openssl/evp.h>
 #include <openssl/params.h>
-#include <openssl/self_test.h>
 #include <openssl/proverr.h>
-#include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
-#include "prov/implementations.h"
+#include <openssl/self_test.h>
+
 #include "internal/common.h"
 #include "internal/cryptlib.h"
-#include "crypto/rand_pool.h"
-#include "prov/drbg.h"
-#include "prov/seeding.h"
+
 #include "crypto/context.h"
+#include "crypto/rand_pool.h"
+
+#include "prov/drbg.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+#include "prov/seeding.h"
+/* clang-format off */
 #include "providers/implementations/rands/fips_crng_test.inc"
+/* clang-format on */
 
 static OSSL_FUNC_rand_newctx_fn crng_test_new;
 static OSSL_FUNC_rand_freectx_fn crng_test_free;

@@ -10,8 +10,10 @@
 #ifndef OSSL_QLOG_H
 #define OSSL_QLOG_H
 
-#include <openssl/ssl.h>
 #include <stdbool.h>
+
+#include <openssl/ssl.h>
+
 #include "internal/quic_types.h"
 #include "internal/time.h"
 
@@ -23,7 +25,9 @@ enum {
     QLOG_EVENT_TYPE_NONE,
 /* clang-format off */
 #define QLOG_EVENT(cat, name) QLOG_EVENT_TYPE_##cat##_##name,
+/* clang-format off */
 #include "internal/qlog_events.inc"
+/* clang-format on */
 #undef QLOG_EVENT
     /* clang-format on */
 

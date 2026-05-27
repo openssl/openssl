@@ -13,30 +13,34 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
+#include <openssl/bn.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/ffc.h"
+#include "internal/nelem.h"
+#include "internal/param_build_set.h"
+#include "internal/sizes.h"
+
+#include "crypto/dsa.h"
+
+#include "fips/fipsindicator.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/dsa.h"
 #include "openssl/e_os2.h"
 #include "openssl/param_build.h"
 #include "openssl/params.h"
-#include <stddef.h>
-#include "prov/securitycheck.h"
-#include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "crypto/dsa.h"
-#include "internal/sizes.h"
-#include "internal/nelem.h"
-#include "internal/param_build_set.h"
-#include "fips/fipsindicator.h"
-#include "internal/common.h"
-#include "internal/cryptlib.h"
+#include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 
 static OSSL_FUNC_keymgmt_new_fn dsa_newdata;
 static OSSL_FUNC_keymgmt_new_ex_fn dsa_newdata_ex;
@@ -367,7 +371,9 @@ struct dsa_params_st {
 
 #define dsa_get_params_st dsa_params_st
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/dsa_kmgmt.inc"
+/* clang-format on */
 
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
 {

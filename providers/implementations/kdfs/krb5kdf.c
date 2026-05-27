@@ -13,8 +13,8 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdlib.h>
 #include <string.h>
 
 #include <openssl/core_names.h>
@@ -24,8 +24,10 @@
 #include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"
-#include "crypto/evp.h"
 #include "internal/numbers.h"
+
+#include "crypto/evp.h"
+
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
@@ -37,7 +39,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/krb5kdf.inc"
+/* clang-format on */
 
 /* KRB5 KDF defined in RFC 3961, Section 5.1 */
 

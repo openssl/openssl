@@ -13,15 +13,18 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/proverr.h>
 #include <stddef.h>
+
+#include <openssl/proverr.h>
+
+#include "crypto/aes_platform.h"
+
 #include "cipher_aes.h"
 #include "cipher_aes_cfb.h"
 #include "openssl/aes.h"
 #include "openssl/err.h"
 #include "openssl/modes.h"
 #include "prov/ciphercommon.h"
-#include "crypto/aes_platform.h"
 
 static int cipher_hw_aes_initkey(PROV_CIPHER_CTX *dat,
     const unsigned char *key, size_t keylen)
@@ -82,17 +85,29 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_aes_copyctx, PROV_AES_CTX)
     }
 
 #if defined(AESNI_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_cfb_hw_aesni.inc"
+/* clang-format on */
 #elif defined(SPARC_AES_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_hw_t4.inc"
+/* clang-format on */
 #elif defined(S390X_aes_128_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_cfb_hw_s390x.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+/* clang-format off */
 #include "cipher_aes_hw_rv64i.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+/* clang-format off */
 #include "cipher_aes_hw_rv32i.inc"
+/* clang-format on */
 #elif defined(ARMv8_HWAES_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_hw_armv8.inc"
+/* clang-format on */
 #else
 /* The generic case */
 #define PROV_CIPHER_HW_declare(mode)

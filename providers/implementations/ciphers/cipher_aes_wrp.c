@@ -14,9 +14,11 @@
 #include "internal/deprecated.h"
 
 #include <limits.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <openssl/proverr.h>
+
 #include "cipher_aes.h"
 #include "openssl/aes.h"
 #include "openssl/core.h"
@@ -28,9 +30,11 @@
 #include "openssl/modes.h"
 #include "openssl/params.h"
 #include "prov/ciphercommon.h"
-#include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_wrp.inc"
+/* clang-format on */
 #include "internal/common.h"
 
 /* AES wrap with padding has IV length of 4, without padding 8 */

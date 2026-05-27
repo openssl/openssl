@@ -12,30 +12,36 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h> /* memset */
+
 #include <openssl/core_names.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
+
+#include "internal/common.h"
+#include "internal/fips.h"
+#include "internal/packet.h"
+#include "internal/sizes.h"
+
+#include "crypto/ml_dsa.h"
+
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/evp.h"
 #include "openssl/params.h"
-#include "prov/implementations.h"
-#include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
 #include "prov/der_ml_dsa.h"
-#include "crypto/ml_dsa.h"
-#include "internal/common.h"
-#include "internal/packet.h"
-#include "internal/sizes.h"
-#include "internal/fips.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 
 #define ml_dsa_set_ctx_params_st ml_dsa_verifymsg_set_ctx_params_st
 #define ml_dsa_set_ctx_params_decoder ml_dsa_verifymsg_set_ctx_params_decoder
 
+/* clang-format off */
 #include "providers/implementations/signature/ml_dsa_sig.inc"
+/* clang-format on */
 
 #define ML_DSA_MESSAGE_ENCODE_RAW 0
 #define ML_DSA_MESSAGE_ENCODE_PURE 1

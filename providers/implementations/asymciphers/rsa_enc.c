@@ -13,30 +13,36 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/rsa.h>
-#include <openssl/params.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+#include <openssl/rsa.h>
 /* Just for SSL_MAX_MASTER_KEY_LENGTH */
+#include <stdlib.h>
+#include <string.h>
+
 #include <openssl/prov_ssl.h>
+
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/sizes.h"
+
 #include "crypto/rsa.h"
+
 #include "openssl/core.h"
 #include "openssl/e_os2.h"
-#include "prov/provider_ctx.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include <stdlib.h>
-#include <string.h>
+/* clang-format off */
 #include "providers/implementations/asymciphers/rsa_enc.inc"
+/* clang-format on */
 #include "fips/fipsindicator.h"
 
 static OSSL_FUNC_asym_cipher_newctx_fn rsa_newctx;

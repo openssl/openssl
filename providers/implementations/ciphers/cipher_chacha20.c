@@ -9,11 +9,15 @@
 
 /* Dispatch functions for chacha20 cipher */
 
-#include <openssl/proverr.h>
-#include <openssl/params.h>
-#include <stddef.h>
 #include "cipher_chacha20.h"
+
+#include <stddef.h>
+
+#include <openssl/params.h>
+#include <openssl/proverr.h>
+
 #include "crypto/chacha.h"
+
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
@@ -22,7 +26,9 @@
 #include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_chacha20.inc"
+/* clang-format on */
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)

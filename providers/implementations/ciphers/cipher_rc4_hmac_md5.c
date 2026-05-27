@@ -15,9 +15,12 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/proverr.h>
-#include <stddef.h>
 #include "cipher_rc4_hmac_md5.h"
+
+#include <stddef.h>
+
+#include <openssl/proverr.h>
+
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
@@ -27,7 +30,9 @@
 #include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_rc4_hmac_md5.inc"
+/* clang-format on */
 
 #define RC4_HMAC_MD5_FLAGS (PROV_CIPHER_FLAG_VARIABLE_LENGTH \
     | PROV_CIPHER_FLAG_AEAD)

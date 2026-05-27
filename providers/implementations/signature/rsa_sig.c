@@ -15,34 +15,40 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/crypto.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/obj_mac.h>
-#include <openssl/rsa.h>
-#include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/obj_mac.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+#include <openssl/rsa.h>
+
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
 #include "internal/sizes.h"
+
 #include "crypto/rsa.h"
+
+#include "fips/fipsindicator.h"
 #include "openssl/bio.h"
 #include "openssl/core.h"
 #include "openssl/e_os2.h"
-#include "prov/providercommon.h"
+#include "prov/der_rsa.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/der_rsa.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "internal/fips.h"
-#include "fips/fipsindicator.h"
 
 #define rsa_set_ctx_params_no_digest_st rsa_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/rsa_sig.inc"
+/* clang-format on */
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 

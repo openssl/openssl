@@ -13,9 +13,11 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/camellia.h>
 #include <openssl/proverr.h>
-#include <stddef.h>
+
 #include "cipher_camellia.h"
 #include "openssl/err.h"
 #include "openssl/evp.h"
@@ -48,7 +50,9 @@ static int cipher_hw_camellia_initkey(PROV_CIPHER_CTX *dat,
 IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_camellia_copyctx, PROV_CAMELLIA_CTX)
 
 #if defined(SPARC_CMLL_CAPABLE)
+/* clang-format off */
 #include "cipher_camellia_hw_t4.inc"
+/* clang-format on */
 #else
 /* The generic case */
 #define PROV_CIPHER_HW_declare(mode)

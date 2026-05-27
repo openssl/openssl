@@ -12,7 +12,9 @@
  */
 
 #include <openssl/evp.h>
+/* clang-format off */
 #include "dsa.inc"
+/* clang-format on */
 
 /*
  * Generate dsa params using default values.
