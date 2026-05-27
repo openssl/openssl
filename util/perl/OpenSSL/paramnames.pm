@@ -868,6 +868,7 @@ sub output_param_decoder {
     # IWYU
     print "#include <string.h>\n";
     print "#include <openssl/params.h>\n";
+    print "#include <openssl/err.h>\n";
     print "#include \"internal/common.h\"\n";
     print "#include \"prov/proverr.h\"\n";
     print "\n";
