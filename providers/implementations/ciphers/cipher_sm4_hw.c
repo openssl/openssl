@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cipher_sm4.h"
+#include <stddef.h>
+
 #include "crypto/sm4.h"
+
+#include "cipher_sm4.h"
 #include "openssl/evp.h"
 #include "openssl/modes.h"
 #include "prov/ciphercommon.h"
-#include <stddef.h>
 
 static int cipher_hw_sm4_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
@@ -140,9 +142,13 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_sm4_copyctx, PROV_SM4_CTX)
     }
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+/* clang-format off */
 #include "cipher_sm4_hw_rv64i.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+/* clang-format off */
 #include "cipher_sm4_hw_x86_64.inc"
+/* clang-format on */
 #else
 /* The generic case */
 #define PROV_CIPHER_HW_declare(mode)

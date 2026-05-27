@@ -7,18 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/qlog.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include "internal/qlog.h"
-#include "internal/json_enc.h"
+
 #include "internal/common.h"
 #include "internal/cryptlib.h"
-#include "crypto/ctype.h"
+#include "internal/json_enc.h"
 #include "internal/time.h"
+
+#include "crypto/ctype.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
@@ -656,7 +660,9 @@ static void filter_apply(size_t *enabled, int add,
 #define QLOG_EVENT(e_cat, e_name)                                            \
 	if (filter_match_event(cat, cat_l, event, event_l, #e_cat, #e_name)) \
 		bit_set(enabled, QLOG_EVENT_TYPE_##e_cat##_##e_name, add);
+/* clang-format off */
 #include "internal/qlog_events.inc"
+/* clang-format on */
 #undef QLOG_EVENT
     /* clang-format on */
 }

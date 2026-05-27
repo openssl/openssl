@@ -17,30 +17,36 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/kdf.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/sha.h>
-#include <openssl/rand.h>
+#include <openssl/evp.h>
+#include <openssl/hpke.h>
+#include <openssl/kdf.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
+
 #include "internal/cryptlib.h"
+#include "internal/hpke_util.h"
+
+#include "crypto/ecx.h"
+
 #include "openssl/core.h"
 #include "openssl/e_os2.h"
 #include "openssl/obj_mac.h"
-#include "prov/provider_ctx.h"
-#include "prov/implementations.h"
-#include "prov/securitycheck.h"
-#include "prov/providercommon.h"
-#include "prov/ecx.h"
-#include "crypto/ecx.h"
-#include <openssl/hpke.h>
-#include "internal/hpke_util.h"
 #include "prov/eckem.h"
+#include "prov/ecx.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+#include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kem/ecx_kem.inc"
+/* clang-format on */
 #include "crypto/types.h"
 
 #define MAX_ECX_KEYLEN X448_KEYLEN

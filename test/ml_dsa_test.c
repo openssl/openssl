@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core_names.h>
-#include <openssl/evp.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
@@ -20,7 +23,9 @@
 #include "openssl/provider.h"
 #include "opt.h"
 #include "testutil.h"
+/* clang-format off */
 #include "ml_dsa.inc"
+/* clang-format on */
 #include "crypto/ml_dsa.h"
 
 typedef enum OPTION_choice {

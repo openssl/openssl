@@ -8,32 +8,36 @@
  */
 
 #include <assert.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/fips_names.h>
 #include <openssl/fipskey.h>
-#include <openssl/rand.h> /* RAND_get0_public() */
-#include <openssl/proverr.h>
 #include <openssl/indicator.h>
+#include <openssl/params.h>
+#include <openssl/proverr.h>
+#include <openssl/rand.h> /* RAND_get0_public() */
 #include <openssl/self_test.h>
+
+#include "internal/core.h"
 #include "internal/cryptlib.h"
+#include "internal/fips.h"
+#include "internal/mem_alloc_utils.h"
+#include "internal/nelem.h"
 #include "internal/provider.h"
+#include "internal/thread_once.h"
+#include "internal/threads_common.h"
+
+#include "crypto/context.h"
+
+#include "fipscommon.h"
 #include "prov/implementations.h"
 #include "prov/names.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 #include "prov/seeding.h"
-#include "internal/nelem.h"
 #include "self_test.h"
-#include "crypto/context.h"
-#include "fipscommon.h"
-#include "internal/core.h"
-#include "internal/fips.h"
-#include "internal/mem_alloc_utils.h"
-#include "internal/thread_once.h"
-#include "internal/threads_common.h"
 
 static const char FIPS_DEFAULT_PROPERTIES[] = "provider=fips,fips=yes";
 static const char FIPS_UNAPPROVED_PROPERTIES[] = "provider=fips,fips=no";
@@ -89,7 +93,9 @@ static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
 static OSSL_FUNC_indicator_cb_fn *c_indcbfn = NULL;
 static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
+/* clang-format off */
 #include "providers/fips/fipsparams.inc"
+/* clang-format on */
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;

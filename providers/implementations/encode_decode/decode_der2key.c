@@ -13,6 +13,11 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/asn1t.h>
 #include <openssl/byteorder.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -22,25 +27,25 @@
 #include <openssl/params.h>
 #include <openssl/pem.h> /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
+#include <openssl/proverr.h>
 #include <openssl/provider.h>
 #include <openssl/x509.h>
-#include <openssl/proverr.h>
-#include <openssl/asn1t.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+
 #include "internal/cryptlib.h" /* ossl_assert() */
+#include "internal/nelem.h"
+#include "internal/sizes.h"
+
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
-#include "crypto/evp.h"
 #include "crypto/ecx.h"
-#include "crypto/rsa.h"
+#include "crypto/evp.h"
 #include "crypto/ml_dsa.h"
+#include "crypto/ml_kem.h"
+#include "crypto/rsa.h"
 #include "crypto/slh_dsa.h"
 #include "crypto/x509.h"
-#include "crypto/ml_kem.h"
-#include "internal/sizes.h"
+
 #include "openssl/asn1.h"
 #include "openssl/core.h"
 #include "openssl/dh.h"
@@ -52,14 +57,15 @@
 #include "openssl/objects.h"
 #include "openssl/rsa.h"
 #include "prov/bio.h"
-#include "prov/implementations.h"
 #include "prov/endecoder_local.h"
-#include "internal/nelem.h"
+#include "prov/implementations.h"
+#include "prov/lms_codecs.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
-#include "prov/lms_codecs.h"
 #include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_der2key.inc"
+/* clang-format on */
 
 #ifndef OPENSSL_NO_SLH_DSA
 typedef struct {

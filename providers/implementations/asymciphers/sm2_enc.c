@@ -9,25 +9,31 @@
 
 #include "internal/deprecated.h"
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/core_dispatch.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/err.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <string.h>
-#include "crypto/sm2.h"
+
+#include <openssl/core_dispatch.h>
+#include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/sm2.h"
+
 #include "openssl/core.h"
 #include "openssl/e_os2.h"
 #include "openssl/ec.h"
-#include "prov/provider_ctx.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
+#include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/asymciphers/sm2_enc.inc"
+/* clang-format on */
 
 static OSSL_FUNC_asym_cipher_newctx_fn sm2_newctx;
 static OSSL_FUNC_asym_cipher_encrypt_init_fn sm2_init;

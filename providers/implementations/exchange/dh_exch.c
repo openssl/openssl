@@ -14,25 +14,31 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include <openssl/crypto.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/dh.h>
 #include <openssl/err.h>
-#include <openssl/proverr.h>
 #include <openssl/params.h>
+#include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
 #include "internal/ffc.h"
 #include "internal/fips.h"
+
+#include "crypto/dh.h"
+
 #include "openssl/core.h"
 #include "openssl/e_os2.h"
 #include "openssl/evp.h"
-#include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "crypto/dh.h"
+/* clang-format off */
 #include "providers/implementations/exchange/dh_exch.inc"
+/* clang-format on */
 #include "fips/fipsindicator.h"
 
 static OSSL_FUNC_keyexch_newctx_fn dh_newctx;

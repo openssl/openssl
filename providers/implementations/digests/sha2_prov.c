@@ -13,24 +13,30 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/byteorder.h>
-#include <openssl/crypto.h>
-#include <openssl/core_dispatch.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/sha.h>
-#include <openssl/params.h>
-#include <openssl/proverr.h>
-#include <openssl/core_names.h>
-#include "openssl/e_os2.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/byteorder.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/proverr.h>
+#include <openssl/sha.h>
+
+#include "internal/common.h"
+
+#include "crypto/sha.h"
+
+#include "openssl/e_os2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
-#include "crypto/sha.h"
-#include "internal/common.h"
+/* clang-format off */
 #include "providers/implementations/digests/sha2_prov.inc"
+/* clang-format on */
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 

@@ -11,12 +11,13 @@
 
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"
+
 #include "crypto/poly1305.h"
 
 #include "openssl/core.h"
@@ -24,7 +25,9 @@
 #include "openssl/e_os2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/macs/poly1305_prov.inc"
+/* clang-format on */
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

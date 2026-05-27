@@ -7,13 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
-#include <openssl/param_build.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/proverr.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/bn.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
@@ -41,7 +44,9 @@ static OSSL_PARAM opparam[2];
 static EVP_PKEY *rkey[TEST_KEYTYPES_P256_X25519] = { NULL, NULL };
 static EVP_PKEY_CTX *rctx[TEST_KEYTYPES_P256_X25519] = { NULL, NULL };
 
+/* clang-format off */
 #include "dhkem_test.inc"
+/* clang-format on */
 
 /* Perform encapsulate KAT's */
 static int test_dhkem_encapsulate(int tstid)

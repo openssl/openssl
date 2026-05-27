@@ -14,15 +14,23 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
+
+#include <openssl/bn.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
+
+#include "internal/cryptlib.h"
+#include "internal/fips.h"
+#include "internal/param_build_set.h"
+
 #include "crypto/bn.h"
 #include "crypto/ec.h"
+
+#include "fips/fipsindicator.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
@@ -31,13 +39,9 @@
 #include "openssl/param_build.h"
 #include "openssl/params.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "internal/fips.h"
-#include "internal/param_build_set.h"
-#include "fips/fipsindicator.h"
-#include "internal/cryptlib.h"
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2
@@ -590,7 +594,9 @@ end:
  * They are in a separate file as it is ~100 lines of unreadable and
  * uninteresting machine generated stuff.
  */
+/* clang-format off */
 #include "ec_kmgmt_imexport.inc"
+/* clang-format on */
 
 static ossl_inline const OSSL_PARAM *ec_imexport_types(int selection)
 {

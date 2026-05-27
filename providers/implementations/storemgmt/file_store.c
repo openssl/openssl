@@ -9,23 +9,26 @@
 
 /* This file has quite some overlap with engines/e_loader_attic.c */
 
+#include <assert.h>
+#include <ctype.h> /* isdigit */
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include "internal/common.h"
-#include "internal/e_os.h" /* for stat() */
 #include <sys/stat.h> /* for struct stat */
-#include <ctype.h> /* isdigit */
-#include <assert.h>
 
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/store.h> /* The OSSL_STORE_INFO type numbers */
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/e_os.h" /* for stat() */
 #include "internal/o_dir.h"
+
 #include "crypto/decoder.h"
+
 #include "openssl/bio.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
@@ -35,13 +38,15 @@
 #include "openssl/safestack.h"
 #include "openssl/storeerr.h"
 #include "openssl/x509.h"
-#include "prov/implementations.h"
 #include "prov/bio.h"
+#include "prov/file_store_local.h"
+#include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/file_store_local.h"
 
+/* clang-format off */
 #include "providers/implementations/storemgmt/file_store.inc"
+/* clang-format on */
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 

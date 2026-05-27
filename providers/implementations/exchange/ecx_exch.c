@@ -7,16 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#include <stddef.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
-#include "crypto/types.h"
-#include <stddef.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/ecx.h"
+#include "crypto/types.h"
+
 #include "openssl/core.h"
 #include "openssl/e_os2.h"
 #include "prov/implementations.h"
@@ -24,7 +28,9 @@
 #include "prov/securitycheck.h"
 
 #ifdef FIPS_MODULE
+/* clang-format off */
 #include "providers/implementations/exchange/ecx_exch.inc"
+/* clang-format on */
 #endif
 
 static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;

@@ -15,19 +15,23 @@
  */
 
 #include <string.h>
-#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
+
 #include <openssl/core_names.h>
-#include <openssl/evp.h>
-#include <openssl/ec.h>
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
-#include <openssl/rsa.h>
+#include <openssl/ec.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
 #include <openssl/param_build.h>
 #include <openssl/provider.h>
+#include <openssl/rsa.h>
 #include <openssl/self_test.h>
+
 #include "testutil.h"
 #include "testutil/output.h"
+/* clang-format off */
 #include "acvp_test.inc"
+/* clang-format on */
 #include "internal/nelem.h"
 
 typedef enum OPTION_choice {

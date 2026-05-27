@@ -23,27 +23,33 @@
  * specialized decoders to recognise and process their stuff first.
  */
 
+#include <stddef.h>
+
+#include <openssl/asn1err.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/bio.h>
-#include <openssl/buffer.h>
 #include <openssl/err.h>
-#include <openssl/asn1err.h>
-#include <openssl/proverr.h>
-#include "internal/cryptlib.h"
 #include <openssl/params.h>
-#include <stddef.h>
+#include <openssl/proverr.h>
+
 #include "internal/asn1.h"
+#include "internal/cryptlib.h"
 #include "internal/sizes.h"
+
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "prov/bio.h"
 #include "prov/file_store_local.h"
 #include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/storemgmt/file_store_any2obj.inc"
+/* clang-format on */
 
 /*
  * newctx and freectx are not strictly necessary.  However, the method creator,

@@ -92,4 +92,6 @@ IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 192, 8, 128, stream)
 /* ossl_camellia128ctr_functions */
 IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 128, 8, 128, stream)
 
+/* clang-format off */
 #include "cipher_camellia_cts.inc"
+/* clang-format on */

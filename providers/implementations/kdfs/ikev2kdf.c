@@ -7,26 +7,31 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/core_names.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+#include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
+
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/err.h"
 #include "openssl/obj_mac.h"
 #include "openssl/params.h"
-#include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/ikev2kdf.inc"
+/* clang-format on */
 
 /* The shared secret length: 28 ~ 1024 bytes */
 #define IKEV2KDF_MIN_SECRET_LENGTH 28

@@ -52,33 +52,37 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
+#include "internal/e_os.h"
+#include "internal/fips.h"
 #include "internal/numbers.h"
+#include "internal/params.h"
+#include "internal/safe_math.h"
+
 #include "crypto/evp.h"
+
+#include "fips/fipsindicator.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/err.h"
-#include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "internal/e_os.h"
-#include "internal/fips.h"
-#include "internal/params.h"
-#include "internal/safe_math.h"
-#include "fips/fipsindicator.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 
@@ -102,7 +106,9 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
 
 #define TLSPRF_MAX_SEEDS 6
 
+/* clang-format off */
 #include "providers/implementations/kdfs/tls1_prf.inc"
+/* clang-format on */
 
 /* TLS KDF kdf context structure */
 typedef struct {

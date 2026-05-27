@@ -12,12 +12,15 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 
-#include "prov/blake2.h"
 #include "internal/cryptlib.h"
+
+#include "prov/blake2.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
+/* clang-format off */
 #include "prov/blake2_params.inc"
+/* clang-format on */
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly
