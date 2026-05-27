@@ -18,8 +18,10 @@
 #include "rmd_local.h"
 #include <openssl/opensslv.h>
 #include <string.h>
-#include "crypto/md32_common.inc"
 #include "crypto/ripemd/rmdconst.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 
 #ifdef RMD160_ASM
 void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p, size_t num);
