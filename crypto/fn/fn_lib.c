@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include "internal/common.h"
+#include "internal/constant_time.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
 
@@ -192,25 +193,24 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
     if (check_a || check_b)
         return check_b - check_a;
 
-    int top_a, top_b;
-    for (top_a = a->dsize - 1; top_a > 0; top_a--)
-        if (a->d[top_a] != 0)
-            break;
-    for (top_b = b->dsize - 1; top_b > 0; top_b--)
-        if (b->d[top_b] != 0)
-            break;
-    if (top_a > top_b)
-        return 1;
-    if (top_a < top_b)
-        return -1;
-    for (int i = top_a; i >= 0; i--) {
-        if (a->d[i] > b->d[i])
-            return 1;
-        if (a->d[i] < b->d[i])
-            return -1;
+    int i;
+    int res = 0;
+    int min_dsize = a->dsize < b->dsize ? a->dsize : b->dsize;
+
+    for (i = 0; i < min_dsize; ++i) {
+        res = constant_time_select_int((int)constant_time_lt_bn(a->d[i], b->d[i]),
+            -1, res);
+        res = constant_time_select_int((int)constant_time_lt_bn(b->d[i], a->d[i]),
+            1, res);
     }
 
-    return 0;
+    for (i = min_dsize; i < a->dsize; ++i)
+        res = constant_time_select_int((int)constant_time_is_zero_bn(a->d[i]), res, 1);
+
+    for (i = min_dsize; i < b->dsize; ++i)
+        res = constant_time_select_int((int)constant_time_is_zero_bn(b->d[i]), res, -1);
+
+    return res;
 }
 
 static int hex_to_nibble(char c)

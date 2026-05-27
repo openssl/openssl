@@ -267,8 +267,6 @@ int OSSL_FN_num_bits(const OSSL_FN *a);
  * @returns             -1 if a<b or a is invalid,
  *                      0 if a==b or both are invalid,
  *                      1 if a>b or b is invalid.
- *
- * @note This function is not constant-time.
  */
 int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
 
