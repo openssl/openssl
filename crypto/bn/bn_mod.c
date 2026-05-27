@@ -314,23 +314,93 @@ int BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     bn_check_top(b);
     bn_check_top(m);
 
-    BN_CTX_start(ctx);
-    if ((t = BN_CTX_get(ctx)) == NULL)
-        goto err;
-    if (a == b) {
-        if (!BN_sqr(t, a, ctx))
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL || b->data == NULL || m->data == NULL) {
+        BN_CTX_start(ctx);
+        if ((t = BN_CTX_get(ctx)) == NULL)
             goto err;
-    } else {
-        if (!BN_mul(t, a, b, ctx))
+        if (a == b) {
+            if (!BN_sqr(t, a, ctx))
+                goto err;
+        } else {
+            if (!BN_mul(t, a, b, ctx))
+                goto err;
+        }
+        if (!BN_nnmod(r, t, m, ctx))
             goto err;
+        bn_check_top(r);
+        ret = 1;
+    err:
+        BN_CTX_end(ctx);
+        return ret;
     }
-    if (!BN_nnmod(r, t, m, ctx))
-        goto err;
-    bn_check_top(r);
-    ret = 1;
-err:
-    BN_CTX_end(ctx);
-    return ret;
+
+    /* Save signs early, in case r is the same BIGNUM as a or b. */
+    int product_neg = a->neg ^ b->neg;
+
+    /*
+     * Handle acquiring result OSSL_FNs to size first
+     * If r is the same as one of the operands, its size
+     * may change as well!
+     */
+    size_t max_res = m->top;
+    assert(max_res <= INT_MAX);
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)max_res);
+
+    if (rf == NULL)
+        return 0;
+
+    size_t al = a->dmax;
+    size_t bl = b->dmax;
+    size_t ml = m->dmax;
+
+    size_t modmul_ctx_limbs = al + bl;
+
+    size_t mul_ctx_limbs = al + bl;
+
+    size_t mod_ctx_limbs1 = ((mul_ctx_limbs > ml) ? mul_ctx_limbs : ml) + 1;
+    size_t mod_ctx_limbs2 = ml;
+    size_t mod_ctx_limbs3 = ml + 1;
+    size_t mod_ctx_limbs4 = mul_ctx_limbs;
+    size_t mod_ctx_limbs = mod_ctx_limbs1 + mod_ctx_limbs2 + mod_ctx_limbs3 + mod_ctx_limbs4;
+
+    size_t max_ctx_limbs = modmul_ctx_limbs
+        + ((mul_ctx_limbs > mod_ctx_limbs) ? mul_ctx_limbs : mod_ctx_limbs);
+
+    assert(max_ctx_limbs <= INT_MAX);
+
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 5, max_ctx_limbs);
+
+    if (fnctx == NULL)
+        return 0;
+
+    int sret = OSSL_FN_mod_mul(rf, a->data, b->data, m->data, fnctx);
+
+    if (sret) {
+        /*
+         * OSSL_FN_mod_mul returns |a * b| mod |m|.  If the product was
+         * negative and the remainder is non-zero, subtract it from |m| to
+         * get the non-negative residue.
+         */
+        if (product_neg) {
+            int i, is_zero = 1;
+
+            for (i = 0; i < rf->dsize; i++) {
+                if (rf->d[i] != 0) {
+                    is_zero = 0;
+                    break;
+                }
+            }
+            if (!is_zero)
+                sret = OSSL_FN_sub(rf, m->data, rf);
+        }
+
+        bn_release(r, (int)max_res);
+        r->neg = 0;
+    }
+
+    bn_ctx_release_ossl_fn_ctx(ctx);
+    return sret;
 }
 
 int BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
