@@ -20,6 +20,7 @@ ENDIF
 IF[{- !$disabled{"dgram"} -}]
     SUBDIRS=guide
     SUBDIRS=dtlsecho
+    SUBDIRS=dtlslistenerecho
 ENDIF
 
 IF[{- !$disabled{"des"} -}]

@@ -286,6 +286,9 @@ int main(int argc, char **argv)
     /* Else client */
     else {
         BIO *bio;
+        BIO_ADDRINFO *res = NULL;
+        char port_str[6];
+        const BIO_ADDR *server_addr;
 
         printf("We are the client\n\n");
 
@@ -299,19 +302,30 @@ int main(int argc, char **argv)
             exit(EXIT_FAILURE);
         }
 
-        /* Set up server address */
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = AF_INET;
-        inet_pton(AF_INET, rem_server_name, &addr.sin_addr.s_addr);
-        addr.sin_port = htons(server_port);
+        /* Resolve server hostname or IP address and connect */
+        BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
+        if (!BIO_lookup(rem_server_name, port_str, BIO_LOOKUP_CLIENT,
+                AF_INET, SOCK_DGRAM, &res)) {
+            fprintf(stderr, "Unable to resolve server: %s\n", rem_server_name);
+            goto exit;
+        }
+        server_addr = BIO_ADDRINFO_address(res);
 
         /* Connect the UDP socket to the server (sets default peer address) */
-        if (connect(client_skt, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
+        if (!BIO_connect(client_skt, server_addr, 0)) {
             perror("Unable to UDP connect to server");
+            BIO_ADDRINFO_free(res);
             goto exit;
-        } else {
-            printf("UDP connection to server successful\n");
         }
+
+        /* Copy the address for later use with BIO_ctrl */
+        memset(&addr, 0, sizeof(addr));
+        addr.sin_family = BIO_ADDR_family(server_addr);
+        BIO_ADDR_rawaddress(server_addr, &addr.sin_addr, NULL);
+        addr.sin_port = BIO_ADDR_rawport(server_addr);
+
+        BIO_ADDRINFO_free(res);
+        printf("UDP connection to server successful\n");
 
         /* Create a datagram BIO for the connected socket */
         bio = BIO_new_dgram((int)client_skt, BIO_NOCLOSE);
