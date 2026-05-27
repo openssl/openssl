@@ -669,8 +669,12 @@ int ossl_ssl_connection_reset(SSL *s)
             saved_rx = sc->d1->rx;
             saved_listener = sc->d1->listener;
             saved_created_at = sc->d1->created_at;
-            /* Prevent dtls1_free from freeing rx - we'll restore it */
+            /*
+             * Prevent dtls1_free from freeing rx and releasing the listener
+             * reference - we'll restore them after ssl_init.
+             */
             sc->d1->rx = NULL;
+            sc->d1->listener = NULL;
         }
 #endif
 
@@ -1034,7 +1038,7 @@ int SSL_is_dtls(const SSL *s)
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
     /* DTLS listener is always DTLS */
-    if (s->type == SSL_TYPE_DTLS_LISTENER)
+    if (IS_DTLS_LISTENER(s))
         return 1;
 #endif
 
@@ -1622,7 +1626,7 @@ void SSL_set0_rbio(SSL *s, BIO *rbio)
 #endif
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (s->type == SSL_TYPE_DTLS_LISTENER) {
+    if (IS_DTLS_LISTENER(s)) {
         ossl_dtls_listener_set0_net_rbio(s, rbio);
         return;
     }
@@ -1648,7 +1652,7 @@ void SSL_set0_wbio(SSL *s, BIO *wbio)
 #endif
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (s->type == SSL_TYPE_DTLS_LISTENER) {
+    if (IS_DTLS_LISTENER(s)) {
         ossl_dtls_listener_set0_net_wbio(s, wbio);
         return;
     }
@@ -1725,7 +1729,7 @@ BIO *SSL_get_rbio(const SSL *s)
 #endif
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (s->type == SSL_TYPE_DTLS_LISTENER)
+    if (IS_DTLS_LISTENER(s))
         return ossl_dtls_listener_get_net_rbio(s);
 #endif
 
@@ -1745,7 +1749,7 @@ BIO *SSL_get_wbio(const SSL *s)
 #endif
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (s->type == SSL_TYPE_DTLS_LISTENER)
+    if (IS_DTLS_LISTENER(s))
         return ossl_dtls_listener_get_net_wbio(s);
 #endif
 
@@ -7863,10 +7867,12 @@ int SSL_set1_initial_peer_addr(SSL *s, const BIO_ADDR *peer_addr)
         if (sc == NULL || sc->d1 == NULL)
             return 0;
 
-        if (peer_addr != NULL)
-            sc->d1->peer_addr = *peer_addr;
-        else
+        if (peer_addr != NULL) {
+            if (!BIO_ADDR_copy(&sc->d1->peer_addr, peer_addr))
+                return 0;
+        } else {
             BIO_ADDR_clear(&sc->d1->peer_addr);
+        }
 
         /*
          * Update the record layers' peer address if they exist.

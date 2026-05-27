@@ -754,6 +754,9 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     OSSL_RECORD_TEMPLATE tmpl;
     SSL *s = SSL_CONNECTION_GET_SSL(sc);
     int ret;
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK) && defined(OPENSSL_THREADS)
+    DTLS_LISTENER *dl = NULL;
+#endif
 
     /* If we have an alert to send, lets send it */
     if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
@@ -789,8 +792,25 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     tmpl.buf = buf;
     tmpl.buflen = len;
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK) && defined(OPENSSL_THREADS)
+    /*
+     * If this connection was created by a listener, we share the write BIO
+     * with other connections. Acquire the listener's write mutex to serialize
+     * writes for thread safety.
+     */
+    if (sc->d1 != NULL && sc->d1->listener != NULL) {
+        dl = (DTLS_LISTENER *)sc->d1->listener;
+        ossl_crypto_mutex_lock(dl->write_mutex);
+    }
+#endif
+
     ret = HANDLE_RLAYER_WRITE_RETURN(sc,
         sc->rlayer.wrlmethod->write_records(sc->rlayer.wrl, &tmpl, 1));
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK) && defined(OPENSSL_THREADS)
+    if (dl != NULL)
+        ossl_crypto_mutex_unlock(dl->write_mutex);
+#endif
 
     if (ret > 0)
         *written = len;

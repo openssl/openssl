@@ -22,7 +22,7 @@ typedef struct dtls_rx_st {
 
 /*
  * Creates a new DTLS_RX structe. The demuxer is
- * provider and owned by the DTLS listener.
+ * provided and owned by the DTLS listener.
  */
 DTLS_RX *ossl_dtls_rx_new(DGRAM_DEMUX *demux);
 

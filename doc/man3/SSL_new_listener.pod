@@ -287,7 +287,7 @@ A typical DTLS server using the listener API looks like:
 
  SSL_CTX *ctx = SSL_CTX_new(DTLS_server_method());
  SSL_CTX_use_certificate_file(ctx, "server.pem", SSL_FILETYPE_PEM);
- SSL_CTX_use_PrivateKey_file(ctx, "server.pem", SSL_FILETYPE_PEM);
+ SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM);
 
  /* Create listener with HVR and HRR requirements */
  SSL *listener = SSL_new_listener(ctx,

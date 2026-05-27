@@ -54,11 +54,18 @@ struct dgram_conn_lookup_st {
 /* Factory function for address-based lookup (DTLS) */
 DGRAM_CONN_LOOKUP *ossl_dgram_conn_lookup_new_addr(void);
 
-/* Public API - calls through methods table */
-SSL *ossl_dgram_conn_lookup_find(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e);
-int ossl_dgram_conn_lookup_register(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e, SSL *ssl);
-int ossl_dgram_conn_lookup_register_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer, SSL *ssl);
-int ossl_dgram_conn_lookup_unregister(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer);
+/*
+ * Public API - calls through methods table.
+ */
+SSL *ossl_dgram_conn_lookup_find(DGRAM_CONN_LOOKUP *lookup,
+    const DGRAM_URXE *e);
+int ossl_dgram_conn_lookup_register(DGRAM_CONN_LOOKUP *lookup,
+    const DGRAM_URXE *e, SSL *ssl);
+int ossl_dgram_conn_lookup_register_addr(DGRAM_CONN_LOOKUP *lookup,
+    const BIO_ADDR *peer,
+    SSL *ssl);
+int ossl_dgram_conn_lookup_unregister(DGRAM_CONN_LOOKUP *lookup,
+    const BIO_ADDR *peer);
 void ossl_dgram_conn_lookup_foreach(DGRAM_CONN_LOOKUP *lookup,
     ossl_dgram_conn_lookup_iter_fn cb,
     void *arg);

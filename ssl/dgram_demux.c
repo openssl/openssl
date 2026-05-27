@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 #include "internal/dgram_demux.h"
+#include "internal/thread_arch.h"
 #include "internal/common.h"
 #include <openssl/err.h>
 #include <string.h>
@@ -59,6 +60,16 @@ struct dgram_demux_st {
 
     /* Whether to use local address support. */
     char use_local_addr;
+
+    /* Whether internal locking is required */
+    char require_mutex;
+
+#if defined(OPENSSL_THREADS)
+    /*
+     * Mutex protecting the URXE lists (urx_free and urx_pending).
+     */
+    CRYPTO_MUTEX *mutex;
+#endif
 };
 
 /* List management helpers */
@@ -78,6 +89,7 @@ void ossl_dgram_urxe_insert_tail(DGRAM_URXE_LIST *l, DGRAM_URXE *e)
 }
 
 DGRAM_DEMUX *ossl_dgram_demux_new(BIO *net_bio,
+    int threadsafe,
     OSSL_TIME (*now)(void *arg),
     void *now_arg)
 {
@@ -87,16 +99,22 @@ DGRAM_DEMUX *ossl_dgram_demux_new(BIO *net_bio,
     if (demux == NULL)
         return NULL;
 
-    demux->net_bio = net_bio;
+#if defined(OPENSSL_THREADS)
+    if (threadsafe) {
+        demux->require_mutex = 1;
+        if ((demux->mutex = ossl_crypto_mutex_new()) == NULL) {
+            OPENSSL_free(demux);
+            return NULL;
+        }
+    }
+#endif
+
     /* We update this if possible when we get a BIO. */
     demux->mtu = DEMUX_DEFAULT_MTU;
     demux->now = now;
     demux->now_arg = now_arg;
 
-    if (net_bio != NULL
-        && BIO_dgram_get_local_addr_cap(net_bio)
-        && BIO_dgram_set_local_addr_enable(net_bio, 1))
-        demux->use_local_addr = 1;
+    ossl_dgram_demux_set_bio(demux, net_bio);
 
     return demux;
 }
@@ -121,6 +139,11 @@ void ossl_dgram_demux_free(DGRAM_DEMUX *demux)
     dgram_demux_free_urxl(&demux->urx_free);
     dgram_demux_free_urxl(&demux->urx_pending);
 
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_free(&demux->mutex);
+#endif
+
     OPENSSL_free(demux);
 }
 
@@ -138,7 +161,11 @@ void ossl_dgram_demux_set_bio(DGRAM_DEMUX *demux, BIO *net_bio)
          */
         mtu = BIO_dgram_get_mtu(net_bio);
         if (mtu >= DEMUX_MIN_INITIAL_DGRAM_LEN)
-            ossl_dgram_demux_set_mtu(demux, mtu); /* best effort */
+            ossl_dgram_demux_set_mtu(demux, mtu);
+
+        if (BIO_dgram_get_local_addr_cap(net_bio)
+            && BIO_dgram_set_local_addr_enable(net_bio, 1))
+            demux->use_local_addr = 1;
     }
 }
 
@@ -189,18 +216,13 @@ static DGRAM_URXE *dgram_demux_resize_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e,
     ossl_list_urxe_remove(&demux->urx_free, e);
 
     if (new_alloc_len >= SIZE_MAX - sizeof(DGRAM_URXE))
-        return NULL;
+        goto rollback;
 
     e2 = OPENSSL_realloc(e, sizeof(DGRAM_URXE) + new_alloc_len);
-    if (e2 == NULL) {
-        /* Failed to resize, abort. */
-        if (prev == NULL)
-            ossl_list_urxe_insert_head(&demux->urx_free, e);
-        else
-            ossl_list_urxe_insert_after(&demux->urx_free, prev, e);
 
-        return NULL;
-    }
+    /* Failed to resize, abort. */
+    if (e2 == NULL)
+        goto rollback;
 
     if (prev == NULL)
         ossl_list_urxe_insert_head(&demux->urx_free, e2);
@@ -209,6 +231,15 @@ static DGRAM_URXE *dgram_demux_resize_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e,
 
     e2->alloc_len = new_alloc_len;
     return e2;
+
+rollback:
+    /* Reinsert e back into the list on failures */
+    if (prev == NULL)
+        ossl_list_urxe_insert_head(&demux->urx_free, e);
+    else
+        ossl_list_urxe_insert_after(&demux->urx_free, prev, e);
+
+    return NULL;
 }
 
 static DGRAM_URXE *dgram_demux_reserve_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e,
@@ -223,6 +254,7 @@ static int dgram_demux_ensure_free_urxe(DGRAM_DEMUX *demux, size_t min_num_free)
 {
     DGRAM_URXE *e;
 
+    /* Caller must hold the lock */
     while (ossl_list_urxe_num(&demux->urx_free) < min_num_free) {
         e = dgram_demux_alloc_urxe(demux->mtu);
         if (e == NULL)
@@ -242,6 +274,7 @@ static int dgram_demux_ensure_free_urxe(DGRAM_DEMUX *demux, size_t min_num_free)
  *
  * Precondition: at least one URXE is free
  * Precondition: there are no pending URXEs
+ * Precondition: Caller holds the demux lock
  */
 static int dgram_demux_recv(DGRAM_DEMUX *demux)
 {
@@ -328,6 +361,9 @@ static int dgram_demux_recv(DGRAM_DEMUX *demux)
 /*
  * Process a single pending URXE.
  * Returning 1 on success, 0 on failure.
+ *
+ * Precondition: Caller holds the demux lock
+ * Note: Lock is released before callback and reacquired after.
  */
 static int dgram_demux_process_pending_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
 {
@@ -341,9 +377,19 @@ static int dgram_demux_process_pending_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
     if (demux->default_cb != NULL) {
         /*
          * Pass to handler for routing. The URXE now belongs to the callback.
+         * Release lock before callback to avoid deadlock if callback calls
+         * release_urxe or reinject_urxe.
          */
         e->demux_state = URXE_DEMUX_STATE_ISSUED;
+#if defined(OPENSSL_THREADS)
+        if (demux->require_mutex)
+            ossl_crypto_mutex_unlock(demux->mutex);
+#endif
         demux->default_cb(e, demux->default_cb_arg);
+#if defined(OPENSSL_THREADS)
+        if (demux->require_mutex)
+            ossl_crypto_mutex_lock(demux->mutex);
+#endif
     } else {
         /* No handler, discard. */
         ossl_list_urxe_insert_tail(&demux->urx_free, e);
@@ -353,7 +399,10 @@ static int dgram_demux_process_pending_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
     return 1; /* keep processing pending URXEs */
 }
 
-/* Process pending URXEs to generate callbacks. */
+/*
+ * Process pending URXEs to generate callbacks.
+ * Precondition: Caller holds the demux lock
+ */
 static int dgram_demux_process_pending_urxl(DGRAM_DEMUX *demux)
 {
     DGRAM_URXE *e;
@@ -374,14 +423,20 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
 {
     int ret;
 
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+#endif
+
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
-        ret = dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL);
-        if (ret != 1)
-            return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
+            ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+            goto end;
+        }
 
         ret = dgram_demux_recv(demux);
         if (ret != DGRAM_DEMUX_PUMP_RES_OK)
-            return ret;
+            goto end;
 
         /*
          * If dgram_demux_recv returned successfully, we should always have
@@ -390,10 +445,19 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
         assert(ossl_list_urxe_head(&demux->urx_pending) != NULL);
     }
 
-    if ((ret = dgram_demux_process_pending_urxl(demux)) <= 0)
-        return DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+    if (dgram_demux_process_pending_urxl(demux) <= 0) {
+        ret = DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL;
+        goto end;
+    }
 
-    return DGRAM_DEMUX_PUMP_RES_OK;
+    ret = DGRAM_DEMUX_PUMP_RES_OK;
+
+end:
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+#endif
+    return ret;
 }
 
 /* Artificially inject a packet into the demuxer for testing purposes. */
@@ -403,12 +467,16 @@ int ossl_dgram_demux_inject(DGRAM_DEMUX *demux,
     const BIO_ADDR *peer,
     const BIO_ADDR *local)
 {
-    int ret;
+    int ret = 0;
     DGRAM_URXE *urxe;
 
-    ret = dgram_demux_ensure_free_urxe(demux, 1);
-    if (ret != 1)
-        return 0;
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+#endif
+
+    if (!dgram_demux_ensure_free_urxe(demux, 1))
+        goto end;
 
     urxe = ossl_list_urxe_head(&demux->urx_free);
 
@@ -416,18 +484,18 @@ int ossl_dgram_demux_inject(DGRAM_DEMUX *demux,
 
     urxe = dgram_demux_reserve_urxe(demux, urxe, buf_len);
     if (urxe == NULL)
-        return 0;
+        goto end;
 
     memcpy(ossl_dgram_urxe_data(urxe), buf, buf_len);
     urxe->data_len = buf_len;
 
     if (peer != NULL)
-        urxe->peer = *peer;
+        BIO_ADDR_copy(&urxe->peer, peer);
     else
         BIO_ADDR_clear(&urxe->peer);
 
     if (local != NULL)
-        urxe->local = *local;
+        BIO_ADDR_copy(&urxe->local, local);
     else
         BIO_ADDR_clear(&urxe->local);
 
@@ -440,7 +508,14 @@ int ossl_dgram_demux_inject(DGRAM_DEMUX *demux,
     ossl_list_urxe_insert_tail(&demux->urx_pending, urxe);
     urxe->demux_state = URXE_DEMUX_STATE_PENDING;
 
-    return dgram_demux_process_pending_urxl(demux) > 0;
+    ret = dgram_demux_process_pending_urxl(demux) > 0;
+
+end:
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+#endif
+    return ret;
 }
 
 /* Called by our user to return a URXE to the free list. */
@@ -448,16 +523,34 @@ void ossl_dgram_demux_release_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
 {
     assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
     assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
+
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+#endif
     ossl_list_urxe_insert_tail(&demux->urx_free, e);
     e->demux_state = URXE_DEMUX_STATE_FREE;
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+#endif
 }
 
 void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
 {
     assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
     assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
+
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
+#endif
     ossl_list_urxe_insert_head(&demux->urx_pending, e);
     e->demux_state = URXE_DEMUX_STATE_PENDING;
+#if defined(OPENSSL_THREADS)
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
+#endif
 }
 
 int ossl_dgram_demux_has_pending(const DGRAM_DEMUX *demux)

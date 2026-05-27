@@ -511,8 +511,7 @@ struct ssl_method_st {
     size_t (*ssl_pending)(const SSL *s);
     int (*num_ciphers)(void);
     const SSL_CIPHER *(*get_cipher)(unsigned ncipher);
-    OSSL_TIME(*get_timeout)
-    (void);
+    OSSL_TIME (*get_timeout)(void);
     const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
     int (*ssl_version)(void);
     long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
@@ -1299,6 +1298,8 @@ typedef struct cert_pkey_st CERT_PKEY;
 #define SSL_TYPE_DTLS_LISTENER 0x01
 
 #define SSL_TYPE_IS_QUIC(x) (((x) & 0x80) != 0)
+#define IS_DTLS_LISTENER(ssl) \
+    ((ssl) != NULL && (ssl)->type == SSL_TYPE_DTLS_LISTENER)
 
 struct ssl_st {
     int type;
@@ -2189,6 +2190,24 @@ typedef struct dtls_listener_st {
     /* SSL object common header. */
     struct ssl_st ssl;
 
+#if defined(OPENSSL_THREADS)
+    /*
+     * Mutex protecting the established_conns lookup table.
+     * This is the only data structure accessed from multiple threads:
+     * - Listener thread: looking up/registering connections
+     * - Connection thread: unregistering via SSL_free -> dtls1_free
+     */
+    CRYPTO_MUTEX *mutex;
+
+    /*
+     * Mutex protecting writes to net_wbio. Multiple DTLS connections created
+     * by this listener share the same write BIO. When accessed from different
+     * threads, concurrent BIO_sendmmsg() calls must be serialized to ensure
+     * thread safety for BIO types that are not inherently thread-safe.
+     */
+    CRYPTO_MUTEX *write_mutex;
+#endif
+
     /* Datagram demultiplexer for incoming connections. */
     DGRAM_DEMUX *demux;
 
@@ -2238,6 +2257,7 @@ typedef struct dtls_listener_st {
      */
     OSSL_TIME pending_timeout;
 } DTLS_LISTENER;
+
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 /*
@@ -3006,6 +3026,7 @@ void dtls1_hm_fragment_free(hm_fragment *frag);
 void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags);
 void ossl_dtls_listener_free(SSL *ssl);
 SSL *ossl_dtls_get0_listener(const SSL *ssl);
@@ -3015,6 +3036,17 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio);
 void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio);
 BIO *ossl_dtls_listener_get_net_rbio(const SSL *s);
 BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
+
+/* Established connections API - these handle their own locking */
+SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
+    const DGRAM_URXE *urxe);
+int ossl_dtls_listener_register_established_conn(DTLS_LISTENER *dl,
+    const BIO_ADDR *peer,
+    SSL *ssl);
+void ossl_dtls_listener_unregister_established_conn(SSL *s,
+    const BIO_ADDR *peer_addr);
+void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl);
+
 size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl);
 int ossl_dtls_listener_set_override_now_cb(SSL *s,
     OSSL_TIME (*now_cb)(void *arg),
@@ -3027,9 +3059,8 @@ int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 int ossl_dtls_tick(DTLS_LISTENER *dl);
-#endif
+#endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);

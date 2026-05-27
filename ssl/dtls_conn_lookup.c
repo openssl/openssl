@@ -169,7 +169,7 @@ static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
     SSL *ssl)
 {
     LHASH_OF(DGRAM_CONN_ENTRY) *htable;
-    DGRAM_CONN_ENTRY *entry;
+    DGRAM_CONN_ENTRY *entry, *old;
 
     if (lookup == NULL || lookup->impl_data == NULL || e == NULL || ssl == NULL)
         return 0;
@@ -188,13 +188,17 @@ static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
         return 0;
     }
 
-    lh_DGRAM_CONN_ENTRY_insert(htable, entry);
+    old = lh_DGRAM_CONN_ENTRY_insert(htable, entry);
 
-    /* Check if insert failed (e.g., duplicate key replaced) */
+    /* Check if insert failed due to allocation error */
     if (lh_DGRAM_CONN_ENTRY_error(htable)) {
         conn_entry_free(entry);
+        /* Don't free old since it is still in the hash table since insert failed */
         return 0;
     }
+
+    /* Free any old entry that was replaced (duplicate key) */
+    conn_entry_free(old);
 
     return 1;
 }
@@ -207,7 +211,7 @@ static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *pe
     SSL *ssl)
 {
     LHASH_OF(DGRAM_CONN_ENTRY) *htable;
-    DGRAM_CONN_ENTRY *entry;
+    DGRAM_CONN_ENTRY *entry, *old;
 
     if (lookup == NULL || lookup->impl_data == NULL || peer == NULL || ssl == NULL)
         return 0;
@@ -226,13 +230,17 @@ static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *pe
         return 0;
     }
 
-    lh_DGRAM_CONN_ENTRY_insert(htable, entry);
+    old = lh_DGRAM_CONN_ENTRY_insert(htable, entry);
 
-    /* Check if insert failed (e.g., duplicate key replaced) */
+    /* Check if insert failed due to allocation error */
     if (lh_DGRAM_CONN_ENTRY_error(htable)) {
         conn_entry_free(entry);
+        /* Don't free old since it is still in the hash table since insert failed */
         return 0;
     }
+
+    /* Free any old entry that was replaced (duplicate key) */
+    conn_entry_free(old);
 
     return 1;
 }

@@ -394,50 +394,36 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
         clear_sys_error();
 
         /*
-         * For DTLS listener-created connections, read from the URXE queue
-         * instead of the BIO. These connections are identified by having
-         * peer set and a DTLS_RX queue.
+         * For listener-based connections, read from the packet queue instead
+         * of the BIO. These connections are identified by having peer set and
+         * a get_packet callback.
          *
          * However, we must first check rl->prev for buffered records from
          * a previous epoch's record layer.
          */
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
         if (rl->isdtls && BIO_ADDR_family(&rl->peer) != AF_UNSPEC
-            && rl->prev == NULL) {
-            SSL_CONNECTION *sc = (SSL_CONNECTION *)rl->cbarg;
+            && rl->prev == NULL && rl->get_urxe_packet != NULL) {
+            unsigned char *pkt_data = NULL;
+            size_t pkt_len = 0;
+            void *pkt_handle = NULL;
 
-            if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
-                DGRAM_URXE *urxe = ossl_dtls_read_datagram(sc->d1->rx);
+            if (rl->get_urxe_packet(rl->cbarg, &pkt_data, &pkt_len, &pkt_handle)) {
+                size_t urxe_data_read = pkt_len;
 
-                /*
-                 * If no datagrams available and we have a parent listener,
-                 * trigger the listener's demux pump to get more data from
-                 * the network.
-                 */
-                if (urxe == NULL && sc->d1->listener != NULL) {
-                    ossl_dgram_demux_pump(sc->d1->rx->demux);
-                    urxe = ossl_dtls_read_datagram(sc->d1->rx);
-                }
+                if (urxe_data_read > max - left)
+                    urxe_data_read = max - left;
 
-                if (urxe != NULL) {
-                    unsigned char *urxe_data = ossl_dgram_urxe_data(urxe);
-                    size_t tocopy = urxe->data_len;
+                /* TODO: DTLS1.3 QUIC avoid the copy can we avoid the copy here */
+                memcpy(pkt + len + left, pkt_data, urxe_data_read);
+                bioread = urxe_data_read;
+                ret = OSSL_RECORD_RETURN_SUCCESS;
 
-                    if (tocopy > max - left)
-                        tocopy = max - left;
-
-                    memcpy(pkt + len + left, urxe_data, tocopy);
-                    bioread = tocopy;
-                    ret = OSSL_RECORD_RETURN_SUCCESS;
-
-                    /* Release URXE back to demux */
-                    ossl_dtls_rx_release_urxe(sc->d1->rx, urxe);
-                } else {
-                    /* No datagrams available */
-                    ret = OSSL_RECORD_RETURN_RETRY;
-                }
+                /* Release packet back via callback */
+                if (rl->release_urxe_packet != NULL)
+                    rl->release_urxe_packet(rl->cbarg, pkt_handle);
             } else {
-                /* Fallback - shouldn't happen for properly configured connections */
+                /* No packets available */
                 ret = OSSL_RECORD_RETURN_RETRY;
             }
         } else
@@ -1402,6 +1388,13 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
                 break;
             case OSSL_FUNC_RLAYER_PADDING:
                 rl->padding = OSSL_FUNC_rlayer_padding(fns);
+                break;
+            case OSSL_FUNC_RLAYER_GET_URXE_PACKET:
+                rl->get_urxe_packet = OSSL_FUNC_rlayer_get_urxe_packet(fns);
+                break;
+            case OSSL_FUNC_RLAYER_RELEASE_URXE_PACKET:
+                rl->release_urxe_packet = OSSL_FUNC_rlayer_release_urxe_packet(fns);
+                break;
             default:
                 /* Just ignore anything we don't understand */
                 break;
@@ -2138,10 +2131,9 @@ int tls_set1_peer(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer)
     }
 
     if (peer != NULL)
-        rl->peer = *peer;
-    else
-        BIO_ADDR_clear(&rl->peer);
+        return BIO_ADDR_copy(&rl->peer, peer);
 
+    BIO_ADDR_clear(&rl->peer);
     return 1;
 }
 #endif

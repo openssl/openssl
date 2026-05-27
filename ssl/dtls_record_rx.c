@@ -12,8 +12,8 @@
 #ifndef OPENSSL_NO_DTLS
 
 /*
- * Creates a new DTLS_RX structe. The demuxer is
- * provider and owned by the DTLS listener.
+ * Creates a new DTLS_RX structure. The demuxer is
+ * provided and owned by the DTLS listener.
  */
 DTLS_RX *ossl_dtls_rx_new(DGRAM_DEMUX *demux)
 {

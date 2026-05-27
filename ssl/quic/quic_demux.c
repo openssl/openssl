@@ -50,17 +50,18 @@ struct quic_demux_st {
 static void quic_demux_dgram_cb(DGRAM_URXE *e, void *arg)
 {
     QUIC_DEMUX *demux = arg;
-    QUIC_CONN_ID dst_conn_id;
-    int dst_conn_id_ok = 0;
-
-    /* Extract DCID from the first packet in the datagram. */
-    dst_conn_id_ok = ossl_quic_wire_get_pkt_hdr_dst_conn_id(
-        ossl_quic_urxe_data(e),
-        e->data_len,
-        demux->short_conn_id_len,
-        &dst_conn_id);
 
     if (demux->default_cb != NULL) {
+        QUIC_CONN_ID dst_conn_id;
+        int dst_conn_id_ok;
+
+        /* Extract DCID from the first packet in the datagram. */
+        dst_conn_id_ok = ossl_quic_wire_get_pkt_hdr_dst_conn_id(
+            ossl_quic_urxe_data(e),
+            e->data_len,
+            demux->short_conn_id_len,
+            &dst_conn_id);
+
         demux->default_cb(e, demux->default_cb_arg,
             dst_conn_id_ok ? &dst_conn_id : NULL);
     } else {
@@ -82,8 +83,8 @@ QUIC_DEMUX *ossl_quic_demux_new(BIO *net_bio,
 
     demux->short_conn_id_len = short_conn_id_len;
 
-    /* Create the underlying generic demuxer. */
-    demux->dgram_demux = ossl_dgram_demux_new(net_bio, now, now_arg);
+    /* Create the underlying generic demuxer (no internal locking for QUIC). */
+    demux->dgram_demux = ossl_dgram_demux_new(net_bio, 0, now, now_arg);
     if (demux->dgram_demux == NULL) {
         OPENSSL_free(demux);
         return NULL;

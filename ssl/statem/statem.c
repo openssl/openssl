@@ -451,9 +451,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         /*
          * Ok, we now need to push on a buffering BIO ...but not with
-         * SCTP or DTLS listener-created connections (which need BIO_sendmmsg
-         * for explicit peer addressing and the buffer BIO doesn't support it).
-         * For DTLSv1.3 we also skip this for post-handshake messages
+         * SCTP. For DTLSv1.3 we also skip this for post-handshake messages
          * (e.g. NewSessionTicket, KeyUpdate) since we are not in the initial
          * handshake and re-initialising the write buffer is not appropriate.
          */
@@ -461,12 +459,6 @@ static int state_machine(SSL_CONNECTION *s, int server)
         if (!SSL_CONNECTION_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
 #endif
             if (!SSL_CONNECTION_IS_DTLS13(s) && st->hand_state != TLS_ST_OK) {
-                if (!SSL_CONNECTION_IS_DTLS(s)
-                    || s->d1 == NULL
-#ifndef OPENSSL_NO_SOCK
-                    || BIO_ADDR_family(&s->d1->peer_addr) == AF_UNSPEC
-#endif
-            )
                 if (!ssl_init_wbio_buffer(s)) {
                     SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                     goto end;

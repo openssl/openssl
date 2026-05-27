@@ -513,6 +513,14 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
 /*
  * Combined DTLS listen test covering both DTLS 1.2 and DTLS 1.3 packet
  * variants.
+ *
+ * Note: DTLSv1_listen() only supports the legacy HelloVerifyRequest mechanism
+ * which is not used in DTLS 1.3. When processing DTLS 1.3 ClientHello packets
+ * (tests 9-17), the server is NOT constrained to DTLS 1.3 only - instead it
+ * uses the full version range and DTLSv1_listen() clamps to DTLS 1.2. These
+ * tests verify that DTLSv1_listen() correctly handles ClientHello packets
+ * that advertise DTLS 1.3 via supported_versions extension.
+ *
  * 0: Test that DTLS 1.2 without a cookie is accepted by DTLSv1_listen().
  * 1: Test that a fragmented DTLS 1.2 ClientHello without a cookie is
  *   accepted by DTLSv1_listen().
@@ -530,23 +538,9 @@ static int cookie_verify(SSL *ssl, const unsigned char *cookie,
  * 7: Test that a DTLS 1.2 ClientHello with a truncated cookie is dropped
  *   by DTLSv1_listen().
  * 8: Test that a short record is dropped by DTLSv1_listen().
- * 9: Test that DTLS 1.3 without a cookie is accepted by DTLSv1_listen().
- * 10: Test that a fragmented DTLS 1.3 ClientHello without a cookie is
- *   accepted by DTLSv1_listen().
- * 11: Test that a truncated DTLS 1.3 ClientHello without a cookie is
- *   dropped by DTLSv1_listen().
- * 12: Test that a second fragment of a DTLS 1.3 ClientHello without a
- *   cookie is dropped by DTLSv1_listen() (it cannot reconstruct a full
- *   ClientHello from it).
- * 13: Test that a DTLS 1.3 ClientHello with a good cookie is accepted by
- *   DTLSv1_listen().
- * 14: Test that a fragmented DTLS 1.3 ClientHello with a good cookie is
- *   accepted by DTLSv1_listen().
- * 15: Test that a DTLS 1.3 ClientHello with a bad cookie is rejected by
- *   DTLSv1_listen() with a HelloVerifyRequest.
- * 16: Test that a DTLS 1.3 ClientHello with a truncated cookie is dropped
- *   by DTLSv1_listen().
- * 17: Test that a short record is dropped by DTLSv1_listen().
+ * 9-17: Same as 0-8 but with DTLS 1.3 format ClientHello packets (containing
+ *   supported_versions extension). The server is clamped to DTLS 1.2 by
+ *   DTLSv1_listen(), so these test packet parsing, not DTLS 1.3 negotiation.
  */
 static int dtls_listen_test(int i)
 {
@@ -574,13 +568,6 @@ static int dtls_listen_test(int i)
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
         || !TEST_ptr(peer = BIO_ADDR_new()))
         goto err;
-
-    /* Constrain to DTLSv1.3 only for the second set of test vectors */
-    if (is_dtls13) {
-        if (!TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-            || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
-            goto err;
-    }
 
     SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
     SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
