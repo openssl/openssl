@@ -31,7 +31,10 @@ OpenSSL 3.6
 
 ### Changes between 3.6.2 and 3.6.3 [xx XXX xxxx]
 
- * none yet
+ * TLS 1.3: Fix server not sending NewSessionTicket after ciphersuite mismatch.
+   <!-- https://github.com/openssl/openssl/pull/30626 -->
+
+   *Daniel Kubec*
 
 ### Changes between 3.6.1 and 3.6.2 [7 Apr 2026]
 
