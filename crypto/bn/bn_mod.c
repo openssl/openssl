@@ -164,10 +164,23 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 int BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     const BIGNUM *m)
 {
-    int ret = bn_mod_add_fixed_top(r, a, b, m);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL || b->data == NULL || m->data == NULL) {
+        int ret = bn_mod_add_fixed_top(r, a, b, m);
 
-    if (ret)
-        bn_correct_top(r);
+        if (ret)
+            bn_correct_top(r);
+
+        return ret;
+    }
+
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, m->dmax);
+    int ret = OSSL_FN_mod_add_quick(rf, a->data, b->data, m->data);
+
+    if (ret) {
+        bn_release(r, m->top);
+        r->neg = 0;
+    }
 
     return ret;
 }
