@@ -29,7 +29,10 @@ OpenSSL 3.4
 
 ### Changes between 3.4.5 and 3.4.6 [xx XXX xxxx]
 
- * none yet
+ * TLS 1.3: Fix server not sending NewSessionTicket after ciphersuite mismatch.
+   <!-- https://github.com/openssl/openssl/pull/30626 -->
+
+   *Daniel Kubec*
 
 ### Changes between 3.4.4 and 3.4.5 [7 Apr 2026]
 
