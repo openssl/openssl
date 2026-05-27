@@ -11,24 +11,85 @@
 #include "internal/nelem.h"
 #include "bn_local.h"
 
-int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
+int BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
 {
     /*
      * like BN_mod, but returns non-negative remainder (i.e., 0 <= r < |d|
      * always holds)
      */
 
-    if (r == d) {
+    if (r == m) {
         ERR_raise(ERR_LIB_BN, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
-    if (!(BN_mod(r, m, d, ctx)))
-        return 0;
-    if (!r->neg)
-        return 1;
-    /* now   -|d| < r < 0,  so we have to set  r := r + |d| */
-    return (d->neg ? BN_sub : BN_add)(r, r, d);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (a->data == NULL || m->data == NULL || r->data == NULL) {
+        if (!(BN_mod(r, a, m, ctx)))
+            return 0;
+        if (!r->neg)
+            return 1;
+        /* now   -|d| < r < 0,  so we have to set  r := r + |d| */
+        return (m->neg ? BN_sub : BN_add)(r, r, m);
+    }
+
+    /* Save a->neg early, in case |r| and |a| are the same BIGNUM. */
+    int a_neg = a->neg;
+
+    /*
+     * If a is positive, it's straight forward, the result (the remainder)
+     * will be at most as large as a.
+     * If the a is negative, though, the result (the remainder) will be
+     * subtracted from |m|, and may have to be as large as m.
+     */
+    size_t max_res = (a_neg && m->top > a->top) ? m->top : a->top;
+
+    assert(max_res <= INT_MAX);
+
+    /*
+     * Handle acquiring result OSSL_FN to size first.
+     * If r is the same as one of the operands, its size may change as well!
+     */
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)max_res);
+
+    /* Unfortunately, allocating an OSSL_FN_CTX for OSSL_FN_mod() is quite complex */
+    size_t numcopy = ((a->dmax <= m->dmax) ? m->dmax : a->dmax) + 1;
+    size_t divcopy = m->dmax;
+    size_t tmp = m->dmax + 1;
+    size_t res = a->dmax;
+    size_t max_ctx = numcopy + divcopy + tmp + res;
+
+    assert(max_ctx <= INT_MAX);
+
+    OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 4, max_ctx);
+    int ret;
+    ret = OSSL_FN_mod(rf, a->data, m->data, fnctx);
+
+    if (ret) {
+        /*
+         * OSSL_FN_mod returns |a| mod |m|.  If a was negative and the
+         * remainder is non-zero, we need |m| - remainder to get the
+         * non-negative result.
+         */
+        if (a_neg) {
+            int i, is_zero = 1;
+
+            for (i = 0; i < rf->dsize; i++) {
+                if (rf->d[i] != 0) {
+                    is_zero = 0;
+                    break;
+                }
+            }
+            if (!is_zero)
+                ret = OSSL_FN_sub(rf, m->data, rf);
+        }
+
+        bn_release(r, (int)max_res);
+        r->neg = 0;
+    }
+
+    OSSL_FN_CTX_free(fnctx);
+    return ret;
 }
 
 int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
