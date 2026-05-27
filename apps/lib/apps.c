@@ -973,18 +973,27 @@ static int load_key_certs_crls_suppress(const char *uri, int format, int maybe_s
             if (pcert != NULL && *pcert == NULL) {
                 ok = (*pcert = OSSL_STORE_INFO_get1_CERT(info)) != NULL;
                 cnt_expectations -= ok;
-            } else if (pcerts != NULL)
-                ok = X509_add_cert(*pcerts,
-                    OSSL_STORE_INFO_get1_CERT(info),
-                    X509_ADD_FLAG_DEFAULT);
+            } else if (pcerts != NULL) {
+                X509 *cert = OSSL_STORE_INFO_get1_CERT(info);
+
+                ok = cert != NULL
+                    && X509_add_cert(*pcerts, cert, X509_ADD_FLAG_DEFAULT);
+                if (!ok)
+                    X509_free(cert);
+            }
             ncerts += ok;
             break;
         case OSSL_STORE_INFO_CRL:
             if (pcrl != NULL && *pcrl == NULL) {
                 ok = (*pcrl = OSSL_STORE_INFO_get1_CRL(info)) != NULL;
                 cnt_expectations -= ok;
-            } else if (pcrls != NULL)
-                ok = sk_X509_CRL_push(*pcrls, OSSL_STORE_INFO_get1_CRL(info));
+            } else if (pcrls != NULL) {
+                X509_CRL *crl = OSSL_STORE_INFO_get1_CRL(info);
+
+                ok = crl != NULL && sk_X509_CRL_push(*pcrls, crl);
+                if (!ok)
+                    X509_CRL_free(crl);
+            }
             ncrls += ok;
             break;
         default:

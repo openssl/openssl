@@ -12,6 +12,10 @@ permissions:
 
 jobs:
   Fuzzing:
+    # The OSS-Fuzz openssl build script builds master plus versioned source
+    # trees (openssl30, openssl33, ...). That layout is only present on
+    # master CI, so skip this job on branch backport PRs/pushes.
+    if: github.base_ref == 'master' || github.ref_name == 'master'
     runs-on: ubuntu-latest
     steps:
     - name: Clear unnecessary files
