@@ -30,7 +30,10 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.20 and 3.0.21 [xx XXX xxxx]
 
- * none yet
+ * TLS 1.3: Fix server not sending NewSessionTicket after ciphersuite mismatch.
+   <!-- https://github.com/openssl/openssl/pull/30626 -->
+
+   *Daniel Kubec*
 
 ### Changes between 3.0.19 and 3.0.20 [7 Apr 2026]
 
