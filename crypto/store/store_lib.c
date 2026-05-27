@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* We need to use some STORE deprecated APIs */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include "internal/common.h"
 #include "internal/passphrase.h"
 #include "openssl/asn1.h"
@@ -20,9 +23,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
-
-/* We need to use some STORE deprecated APIs */
-#define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "internal/e_os.h"
 
