@@ -9,19 +9,25 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stddef.h>
+#include <string.h>
+
+#include <openssl/opensslconf.h>
+
 #include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/endian.h"
+
 #include "bn_local.h"
-#include <openssl/opensslconf.h>
-#include <stddef.h>
-#include <string.h>
-#include "internal/constant_time.h"
 #include "openssl/bn.h"
 #include "openssl/bnerr.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/err.h"
+
+/* clang-format off */
+#include "internal/constant_time.h"
+/* clang-format on */
 
 /* This stuff appears to be completely unused, so is deprecated */
 #ifndef OPENSSL_NO_DEPRECATED_0_9_8
