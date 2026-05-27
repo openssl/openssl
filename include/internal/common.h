@@ -27,12 +27,15 @@
 #endif
 
 #if defined(__GNUC__) || defined(__clang__)
+#define ALIGN16 __attribute((aligned(16)))
 #define ALIGN32 __attribute((aligned(32)))
 #define ALIGN64 __attribute((aligned(64)))
 #elif defined(_MSC_VER)
+#define ALIGN16 __declspec(align(16))
 #define ALIGN32 __declspec(align(32))
 #define ALIGN64 __declspec(align(64))
 #else
+#define ALIGN16
 #define ALIGN32
 #define ALIGN64
 #endif
