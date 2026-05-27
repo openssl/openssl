@@ -12,12 +12,14 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
 
-#include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
 #include "crypto/x509.h" /* x509_st definition */
+
 #include "testutil.h"
 
 static char *certfile = NULL;

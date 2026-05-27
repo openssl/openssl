@@ -11,12 +11,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/opensslconf.h>
 #include <openssl/safestack.h>
-#include <openssl/err.h>
-#include <openssl/crypto.h>
 
 #include "internal/nelem.h"
+
 #include "testutil.h"
 
 /* The macros below generate unused functions which error out one of the clang

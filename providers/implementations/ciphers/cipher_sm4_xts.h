@@ -10,9 +10,10 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_SM4_XTS_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_SM4_XTS_H
 
-#include <crypto/sm4.h>
-#include "prov/ciphercommon.h"
 #include "crypto/sm4_platform.h"
+#include <crypto/sm4.h>
+
+#include "prov/ciphercommon.h"
 
 PROV_CIPHER_FUNC(void, xts_stream,
     (const unsigned char *in, unsigned char *out, size_t len,

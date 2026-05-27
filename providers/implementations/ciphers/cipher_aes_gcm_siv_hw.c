@@ -14,12 +14,15 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/evp.h>
-#include <internal/endian.h>
 #include <prov/implementations.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/evp.h>
+
+#include <internal/endian.h>
+
 #include "cipher_aes_gcm_siv.h"
 #include "openssl/crypto.h"
 

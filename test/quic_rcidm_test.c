@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
+
 #include "internal/quic_rcidm.h"
 #include "internal/quic_types.h"
 #include "internal/quic_wire.h"
+
 #include "testutil.h"
-#include <stdint.h>
 
 static const QUIC_CONN_ID cid8_1 = { 8, { 1 } };
 static const QUIC_CONN_ID cid8_2 = { 8, { 2 } };

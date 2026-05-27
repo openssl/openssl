@@ -16,17 +16,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "internal/nelem.h"
-
+#include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/bn.h>
+#include <openssl/rsa.h>
 
-#include "testutil.h"
+#include "internal/nelem.h"
 
 #include "rsa_local.h"
-#include <openssl/rsa.h>
+#include "testutil.h"
 
 /* taken from RSA2 cavs data */
 static const unsigned char cav_e[] = {

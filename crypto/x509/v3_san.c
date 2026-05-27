@@ -8,12 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "crypto/x509.h"
+#include <string.h>
+
+#include <openssl/bio.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include <openssl/bio.h>
-#include <string.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/x509.h"
+
 #include "ext_dat.h"
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"

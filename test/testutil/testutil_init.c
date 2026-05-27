@@ -8,10 +8,12 @@
  */
 
 #include <string.h>
+
 #include <openssl/opensslconf.h>
 #include <openssl/trace.h>
-#include "apps.h"
+
 #include "../testutil.h"
+#include "apps.h"
 
 #ifndef OPENSSL_NO_TRACE
 typedef struct tracedata_st {

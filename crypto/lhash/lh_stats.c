@@ -10,18 +10,19 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 /*
  * If you wish to build this outside of OpenSSL, remove the following lines
  * and things should work as expected
  */
-#include "internal/cryptlib.h"
-
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
-#include "openssl/crypto.h"
+
+#include "internal/cryptlib.h"
+
 #include "lhash_local.h"
+#include "openssl/crypto.h"
 
 #ifndef OPENSSL_NO_STDIO
 #ifndef OPENSSL_NO_DEPRECATED_3_1

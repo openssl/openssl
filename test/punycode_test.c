@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
 #include <string.h>
 
-#include "crypto/punycode.h"
+#include <openssl/crypto.h>
+
 #include "internal/nelem.h"
 #include "internal/packet.h"
+
+#include "crypto/punycode.h"
+
 #include "openssl/buffer.h"
 #include "testutil.h"
 

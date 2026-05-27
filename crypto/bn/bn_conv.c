@@ -8,12 +8,16 @@
  */
 
 #include <limits.h>
-#include <openssl/err.h>
-#include "crypto/bn.h"
 #include <stddef.h>
-#include "crypto/ctype.h"
-#include "bn_local.h"
+
+#include <openssl/err.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+#include "crypto/ctype.h"
+
+#include "bn_local.h"
 #include "openssl/bio.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"

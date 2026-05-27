@@ -14,12 +14,15 @@
 #include "internal/deprecated.h"
 
 #include <openssl/bn.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/ffc.h"
 #include "internal/refcount.h"
-#include "internal/common.h"
-#include "crypto/dsa.h"
+
 #include "crypto/dh.h" /* required by DSA_dup_DH() */
+#include "crypto/dsa.h"
+
 #include "dsa_local.h"
 #include "openssl/crypto.h"
 #include "openssl/dh.h"

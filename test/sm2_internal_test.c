@@ -18,11 +18,12 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
+
 #include "openssl/e_os2.h"
 #include "openssl/ec.h"
 #include "testutil.h"

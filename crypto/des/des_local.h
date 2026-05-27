@@ -10,13 +10,12 @@
 #ifndef OSSL_CRYPTO_DES_LOCAL_H
 #define OSSL_CRYPTO_DES_LOCAL_H
 
-#include <openssl/e_os2.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/des.h>
+#include <openssl/e_os2.h>
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #undef OPENSSL_EXTERN

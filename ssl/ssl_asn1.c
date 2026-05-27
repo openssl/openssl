@@ -11,7 +11,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <openssl/asn1t.h>
+#include <openssl/encoder.h>
+#include <openssl/x509.h>
+
 #include "internal/time.h"
+
+#include <crypto/asn1.h>
+
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/dtls1.h"
@@ -22,12 +31,6 @@
 #include "openssl/ssl3.h"
 #include "openssl/sslerr.h"
 #include "ssl_local.h"
-#include <openssl/asn1t.h>
-#include <openssl/encoder.h>
-#include <openssl/x509.h>
-
-#include <crypto/asn1.h>
-#include <string.h>
 
 typedef struct {
     uint32_t version;

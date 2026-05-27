@@ -8,19 +8,28 @@
  */
 
 #include "internal/quic_txp.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+
+#include <openssl/err.h>
+
+#include "internal/common.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
 #include "internal/qlog.h"
 #include "internal/quic_ackm.h"
 #include "internal/quic_cfq.h"
+#include "internal/quic_error.h"
 #include "internal/quic_fc.h"
 #include "internal/quic_fifd.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_stream_map.h"
-#include "internal/quic_error.h"
-#include "internal/common.h"
 #include "internal/quic_txpim.h"
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
@@ -28,17 +37,12 @@
 #include "internal/quic_wire_pkt.h"
 #include "internal/ssl.h"
 #include "internal/time.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
 #include "openssl/quic.h"
 #include "openssl/ssl3.h"
-#include <assert.h>
-#include <openssl/err.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/socket.h>
 
 #define MIN_CRYPTO_HDR_SIZE 3
 

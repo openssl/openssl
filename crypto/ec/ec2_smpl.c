@@ -14,10 +14,12 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/err.h>
 #include <stddef.h>
 
+#include <openssl/err.h>
+
 #include "crypto/bn.h"
+
 #include "ec_local.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"

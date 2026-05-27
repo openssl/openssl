@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
-#include <openssl/param_build.h>
+#include "predefined_dhparams.h"
+
 #include <stddef.h>
 
-#include "predefined_dhparams.h"
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/param_build.h>
+
 #include "openssl/bn.h"
 #include "openssl/params.h"
 

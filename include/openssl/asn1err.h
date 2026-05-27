@@ -12,9 +12,9 @@
 #define OPENSSL_ASN1ERR_H
 #pragma once
 
+#include <openssl/cryptoerr_legacy.h>
 #include <openssl/opensslconf.h>
 #include <openssl/symhacks.h>
-#include <openssl/cryptoerr_legacy.h>
 
 /*
  * ASN1 reason codes.

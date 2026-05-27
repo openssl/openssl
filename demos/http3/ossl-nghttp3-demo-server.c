@@ -7,15 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 #include <assert.h>
+#include <fcntl.h>
 #include <netinet/in.h>
 #include <nghttp3/nghttp3.h>
+#include <sys/socket.h>
+#include <sys/stat.h>
+#include <unistd.h>
+
 #include <openssl/err.h>
 #include <openssl/quic.h>
 #include <openssl/ssl.h>
-#include <unistd.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-#include <sys/socket.h>
 
 #ifndef PATH_MAX
 #define PATH_MAX 255

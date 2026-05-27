@@ -11,6 +11,7 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CAST_H
 
 #include <openssl/cast.h>
+
 #include "prov/ciphercommon.h"
 
 typedef struct prov_cast_ctx_st {

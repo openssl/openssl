@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "prov/ml_common_codecs.h"
+
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "prov/ml_common_codecs.h"
 
 static int pref_cmp(const void *va, const void *vb)
 {

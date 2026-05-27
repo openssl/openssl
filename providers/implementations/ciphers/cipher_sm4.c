@@ -10,6 +10,7 @@
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
 
 #include "cipher_sm4.h"
+
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "prov/ciphercommon.h"

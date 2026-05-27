@@ -12,16 +12,17 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "openssl/crypto.h"
-#include "testutil.h"
-
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
 #include "internal/nelem.h"
+
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 static const ASN1_ITEM *item_type;
 static const char *test_file;

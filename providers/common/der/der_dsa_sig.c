@@ -13,10 +13,13 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/obj_mac.h>
-#include "internal/der.h"
 #include <stddef.h>
+
+#include <openssl/obj_mac.h>
+
+#include "internal/der.h"
 #include "internal/packet.h"
+
 #include "openssl/bn.h"
 #include "prov/der_dsa.h"
 

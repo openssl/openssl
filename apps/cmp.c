@@ -10,21 +10,22 @@
  */
 
 /* This app is disabled when OPENSSL_NO_CMP is defined. */
-#include "app_libctx.h"
-#include "apps_ui.h"
-#include "fmt.h"
-#include "internal/common.h"
-#include "internal/e_os.h"
-
+#include <ctype.h>
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include <ctype.h>
 #include <unistd.h>
 
-#include "apps.h"
-#include "http_server.h"
+#include "internal/common.h"
+#include "internal/e_os.h"
 #include "internal/nelem.h"
+
+#include "app_libctx.h"
+#include "apps.h"
+#include "apps_ui.h"
+#include "cmp_mock_srv.h"
+#include "fmt.h"
+#include "http_server.h"
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/conf.h"
@@ -37,10 +38,8 @@
 #include "openssl/x509_vfy.h"
 #include "openssl/x509v3.h"
 #include "opt.h"
-#include "s_apps.h"
 #include "progs.h"
-
-#include "cmp_mock_srv.h"
+#include "s_apps.h"
 
 /* tweaks needed due to missing unistd.h on Windows */
 #if defined(_WIN32) && !defined(__BORLANDC__)
@@ -50,19 +49,20 @@
 #define F_OK 0
 #endif
 
-#include <openssl/ui.h>
 #include <openssl/pkcs12.h>
 #include <openssl/ssl.h>
+#include <openssl/ui.h>
 
 /* explicit #includes not strictly needed since implied by the above: */
 #include <stdlib.h>
+
 #include <openssl/cmp.h>
 #include <openssl/cmp_util.h>
 #include <openssl/crmf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/store.h>
 #include <openssl/objects.h>
+#include <openssl/store.h>
 #include <openssl/x509.h>
 
 static char *prog;

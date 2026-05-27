@@ -8,32 +8,36 @@
  */
 #include <assert.h>
 #include <netinet/in.h>
-#include <openssl/ssl.h>
-#include <openssl/quic.h>
-#include <openssl/bio.h>
-#include <openssl/lhash.h>
-#include <openssl/rand.h>
-#include "internal/nelem.h"
-#include "internal/packet.h"
-#include "internal/packet_quic.h"
-#include "internal/quic_channel.h"
-#include "internal/quic_predef.h"
-#include "internal/quic_record_tx.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <sys/socket.h>
-#include "internal/quic_tserver.h"
-#include "internal/quic_ssl.h"
-#include "internal/quic_error.h"
-#include "internal/quic_stream_map.h"
+
+#include <openssl/bio.h>
+#include <openssl/lhash.h>
+#include <openssl/quic.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+
+#include "internal/nelem.h"
+#include "internal/packet.h"
+#include "internal/packet_quic.h"
+#include "internal/quic_channel.h"
 #include "internal/quic_engine.h"
+#include "internal/quic_error.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_ssl.h"
+#include "internal/quic_stream_map.h"
+#include "internal/quic_tserver.h"
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
 #include "internal/quic_wire.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/time.h"
+
+#include "helpers/quictestlib.h"
 #include "openssl/buffer.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
@@ -43,7 +47,6 @@
 #include "openssl/sslerr.h"
 #include "openssl/tls1.h"
 #include "testutil.h"
-#include "helpers/quictestlib.h"
 #if defined(OPENSSL_THREADS)
 #include "internal/thread_arch.h"
 #endif

@@ -24,10 +24,14 @@
  */
 #include <stdint.h>
 #include <stdio.h>
+
 #include <openssl/bn.h>
-#include "bn_local.h"
-#include "crypto/bn.h"
+
 #include "internal/nelem.h"
+
+#include "crypto/bn.h"
+
+#include "bn_local.h"
 #include "openssl/bnerr.h"
 #include "openssl/e_os2.h"
 #include "openssl/err.h"

@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/punycode.h"
+
 #include <limits.h>
 #include <stddef.h>
 #include <stdio.h>
-#include <openssl/e_os2.h>
 #include <string.h>
-#include "crypto/punycode.h"
+
+#include <openssl/e_os2.h>
+
 #include "internal/common.h" /* for HAS_PREFIX */
 #include "internal/packet.h" /* for WPACKET */
 

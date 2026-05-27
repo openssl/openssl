@@ -14,12 +14,15 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+
 #include "internal/cryptlib.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
 
 #ifndef OPENSSL_NO_STDIO
 int RSA_print_fp(FILE *fp, const RSA *x, int off)

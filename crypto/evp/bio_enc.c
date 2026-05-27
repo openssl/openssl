@@ -9,15 +9,18 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED /* for BIO_get_callback */
 
-#include "openssl/bio.h"
-#include "openssl/crypto.h"
-#include <string.h>
-#include <stdio.h>
 #include <errno.h>
-#include "internal/cryptlib.h"
+#include <stdio.h>
+#include <string.h>
+
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
+
 #include "internal/bio.h"
+#include "internal/cryptlib.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 static int enc_write(BIO *h, const char *buf, int num);
 static int enc_read(BIO *h, char *buf, int size);

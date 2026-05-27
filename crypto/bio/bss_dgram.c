@@ -14,29 +14,30 @@
 #include "bio_local.h"
 
 #ifndef OPENSSL_NO_DGRAM
-#include <stdio.h>
 #include <errno.h>
+#include <limits.h>
+#include <netinet/in.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
-#include "internal/time.h"
 #include "internal/bio.h"
 #include "internal/common.h"
 #include "internal/sockets.h"
+#include "internal/time.h"
+
 #include "openssl/bio.h"
 #include "openssl/bioerr.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/err.h"
-#include <limits.h>
-#include <netinet/in.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <unistd.h>
 
 #ifndef OPENSSL_NO_SCTP
-#include <netinet/sctp.h>
 #include <fcntl.h>
+#include <netinet/sctp.h>
 #define OPENSSL_SCTP_DATA_CHUNK_TYPE 0x00
 #define OPENSSL_SCTP_FORWARD_CUM_TSN_CHUNK_TYPE 0xc0
 #endif

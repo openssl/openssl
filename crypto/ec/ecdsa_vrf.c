@@ -14,9 +14,10 @@
 #include "internal/deprecated.h"
 
 #include <openssl/ec.h>
+#include <openssl/err.h>
+
 #include "ec_local.h"
 #include "openssl/ecerr.h"
-#include <openssl/err.h>
 
 /*-
  * returns

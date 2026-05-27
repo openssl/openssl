@@ -12,6 +12,7 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/sha.h>
+
 #include "arch/ppc_arch.h"
 
 void sha256_block_p8(void *ctx, const void *inp, size_t len);

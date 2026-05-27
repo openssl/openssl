@@ -12,12 +12,14 @@
  * methods to calculate and verify a signature of two static buffers.
  */
 
-#include <string.h>
+#include "EVP_EC_Signature_demo.h"
+
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/decoder.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/decoder.h>
-#include "EVP_EC_Signature_demo.h"
 
 /*
  * This demonstration will calculate and verify a signature of data using

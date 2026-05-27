@@ -12,12 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <internal/priority_queue.h>
-#include <openssl/err.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/opensslconf.h>
 
 #include "internal/nelem.h"
+#include <internal/priority_queue.h>
+
 #include "openssl/e_os2.h"
 #include "testutil.h"
 

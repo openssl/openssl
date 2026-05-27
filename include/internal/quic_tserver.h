@@ -10,10 +10,11 @@
 #ifndef OSSL_QUIC_TSERVER_H
 #define OSSL_QUIC_TSERVER_H
 
-#include <openssl/ssl.h>
 #include <openssl/bio.h>
-#include "internal/quic_stream.h"
+#include <openssl/ssl.h>
+
 #include "internal/quic_channel.h"
+#include "internal/quic_stream.h"
 #include "internal/statem.h"
 #include "internal/time.h"
 

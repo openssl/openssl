@@ -8,12 +8,15 @@
  */
 
 #include <string.h>
+
 #include <openssl/ssl.h>
-#include "helpers/quictestlib.h"
+
 #include "internal/quic_error.h"
 #include "internal/quic_tserver.h"
 #include "internal/quic_types.h"
 #include "internal/quic_wire_pkt.h"
+
+#include "helpers/quictestlib.h"
 #include "openssl/crypto.h"
 #include "openssl/quic.h"
 #include "testutil.h"

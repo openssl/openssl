@@ -14,9 +14,12 @@
  * fill in parameter data for the same key and data fields.
  */
 
-#include <openssl/core_names.h>
-#include <stddef.h>
 #include "internal/param_build_set.h"
+
+#include <stddef.h>
+
+#include <openssl/core_names.h>
+
 #include "openssl/core.h"
 #include "openssl/cryptoerr.h"
 #include "openssl/err.h"

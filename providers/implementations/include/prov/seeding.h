@@ -10,8 +10,9 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_SEEDING_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_SEEDING_H
 
-#include "prov/provider_ctx.h"
 #include "crypto/rand_pool.h"
+
+#include "prov/provider_ctx.h"
 
 /* Hardware-based seeding functions. */
 size_t ossl_prov_acquire_entropy_from_tsc(RAND_POOL *pool);

@@ -14,12 +14,15 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
+
 #include <openssl/byteorder.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/ml_kem.h>
+#include <openssl/rand.h>
+
 #include "internal/nelem.h"
+
 #include "fuzzer.h"
 #include "openssl/crypto.h"
 #include "openssl/params.h"

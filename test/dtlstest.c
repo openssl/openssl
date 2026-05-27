@@ -9,10 +9,11 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "helpers/ssltestlib.h"
 #include "openssl/dtls1.h"

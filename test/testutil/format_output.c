@@ -7,15 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <ctype.h>
+#include <string.h>
+
 #include "../testutil.h"
 #include "openssl/bio.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "output.h"
 #include "tu_local.h"
-
-#include <string.h>
-#include <ctype.h>
 
 /* The size of memory buffers to display on failure */
 #define MEM_BUFFER_SIZE (2000)

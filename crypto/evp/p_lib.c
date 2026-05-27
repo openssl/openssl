@@ -16,34 +16,37 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "internal/nelem.h"
-#include "internal/refcount.h"
-#include "internal/namemap.h"
-#include <openssl/bn.h>
-#include <openssl/err.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
-#include <openssl/ec.h>
-#include <openssl/cmac.h>
-#include <openssl/params.h>
-#include <openssl/param_build.h>
-#include <openssl/encoder.h>
-#include <openssl/core_names.h>
-#include <openssl/provider.h>
 #include <string.h>
 
-#include "internal/numbers.h" /* includes SIZE_MAX */
+#include <openssl/bn.h>
+#include <openssl/cmac.h>
+#include <openssl/core_names.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/ec.h>
+#include <openssl/encoder.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/param_build.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
+#include <openssl/rsa.h>
+
+#include "internal/cryptlib.h"
 #include "internal/ffc.h"
-#include "crypto/evp.h"
+#include "internal/namemap.h"
+#include "internal/nelem.h"
+#include "internal/numbers.h" /* includes SIZE_MAX */
+#include "internal/refcount.h"
+
 #include "crypto/dh.h"
 #include "crypto/dsa.h"
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
+#include "crypto/evp.h"
 #include "crypto/rsa.h"
+
 #include "openssl/bio.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
@@ -55,10 +58,12 @@
 #include "crypto/asn1.h"
 #include "crypto/x509.h"
 #endif
-#include "internal/provider.h"
 #include "internal/common.h"
-#include "evp_local.h"
+#include "internal/provider.h"
+
 #include "crypto/types.h"
+
+#include "evp_local.h"
 
 static int pkey_set_type(EVP_PKEY *pkey, int type, const char *str,
     int len, EVP_KEYMGMT *keymgmt);

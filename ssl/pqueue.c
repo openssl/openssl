@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/crypto.h"
-#include "ssl_local.h"
-#include <openssl/bn.h>
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/bn.h>
+
+#include "openssl/crypto.h"
+#include "ssl_local.h"
 
 struct pqueue_st {
     pitem *items;

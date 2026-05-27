@@ -11,10 +11,12 @@
  * Stolen from tjh's ssl/ssl_trc.c stuff.
  */
 
+#include "bio_local.h"
+
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include "bio_local.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 

@@ -10,12 +10,15 @@
 #include "internal/deprecated.h"
 
 #include <limits.h>
-#include <openssl/core_names.h>
-#include <openssl/err.h>
-#include <openssl/ec.h>
 #include <stddef.h>
-#include "crypto/evp.h"
+
+#include <openssl/core_names.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
+
 #include "crypto/ec.h"
+#include "crypto/evp.h"
+
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/evp.h"

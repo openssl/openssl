@@ -13,18 +13,19 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/crypto.h>
-#include <openssl/opensslconf.h>
-
-#include <openssl/opensslv.h>
-#include <openssl/evp.h>
-#include <openssl/sha.h>
 #include <string.h>
+
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/opensslv.h>
+#include <openssl/sha.h>
 
 /* The implementation is in crypto/md32_common.inc */
 
-#include "sha_local.h"
 #include "crypto/sha.h"
+
+#include "sha_local.h"
 
 int ossl_sha1_ctrl(SHA_CTX *sha1, int cmd, int mslen, void *ms)
 {

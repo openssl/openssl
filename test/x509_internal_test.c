@@ -12,10 +12,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <openssl/x509.h>
-#include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
+
+#include "internal/nelem.h"
+
+#include "crypto/x509.h"
+
 #include "openssl/asn1.h"
 #include "openssl/asn1err.h"
 #include "openssl/e_os2.h"
@@ -25,10 +31,7 @@
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "openssl/safestack.h"
-#include <time.h>
 #include "testutil.h"
-#include "internal/nelem.h"
-#include "crypto/x509.h"
 
 /**********************************************************************
  *

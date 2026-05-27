@@ -13,21 +13,25 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <openssl/buffer.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs12.h>
-#include <openssl/pem.h>
-#include <openssl/dh.h>
-#include <openssl/decoder.h>
-#include <openssl/ui.h>
 #include <string.h>
+
+#include <openssl/buffer.h>
+#include <openssl/decoder.h>
+#include <openssl/dh.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs12.h>
+#include <openssl/ui.h>
+#include <openssl/x509.h>
+
 #include "internal/cryptlib.h"
 #include "internal/passphrase.h"
+
 #include "crypto/asn1.h"
-#include "crypto/x509.h"
 #include "crypto/evp.h"
+#include "crypto/x509.h"
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/core_dispatch.h"

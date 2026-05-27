@@ -8,6 +8,7 @@
  */
 
 #include "internal/ffc.h"
+
 #include "openssl/bn.h"
 #include "openssl/core.h"
 

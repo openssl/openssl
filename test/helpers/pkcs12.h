@@ -8,15 +8,15 @@
  */
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "internal/nelem.h"
-
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/pem.h>
+
+#include "internal/nelem.h"
 
 #include "../testutil.h"
 

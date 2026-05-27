@@ -8,12 +8,23 @@
  */
 
 #include <assert.h>
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/core_names.h>
+#include <openssl/dsa.h>
+#include <openssl/encoder.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+
 #include "apps.h"
 #include "apps_ui.h"
 #include "fmt.h"
@@ -21,16 +32,6 @@
 #include "openssl/params.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/dsa.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include <openssl/bn.h>
-#include <openssl/encoder.h>
-#include <openssl/core_names.h>
-#include <openssl/core_dispatch.h>
 
 #ifndef OPENSSL_NO_RC4
 #define DEFAULT_PVK_ENCR_STRENGTH 2

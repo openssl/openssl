@@ -14,11 +14,14 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/opensslv.h>
+
+#include "crypto/ripemd/rmdconst.h"
+
 #include "openssl/ripemd.h"
 #include "rmd_local.h"
-#include <openssl/opensslv.h>
-#include <string.h>
-#include "crypto/ripemd/rmdconst.h"
 /* clang-format off */
 #include "crypto/md32_common.inc"
 /* clang-format on */

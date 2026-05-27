@@ -8,8 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include <openssl/dsaerr.h>
+#include <openssl/err.h>
+
 #include "crypto/dsaerr.h"
 
 #ifndef OPENSSL_NO_DSA

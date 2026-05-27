@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+
 #include "apps.h"
 #include "openssl/asn1.h"
 #include "openssl/bio.h"

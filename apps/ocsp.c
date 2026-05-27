@@ -7,6 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "openssl/ocsp.h"
+
+#include <signal.h>
+#include <sys/stat.h>
+#include <sys/syslog.h>
+
+#include <openssl/opensslconf.h>
+
 #include "app_libctx.h"
 #include "fmt.h"
 #include "log.h"
@@ -16,40 +24,37 @@
 #include "openssl/http.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
-#include "openssl/ocsp.h"
 #include "openssl/safestack.h"
 #include "openssl/txt_db.h"
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "opt.h"
-#include <openssl/opensslconf.h>
-#include <signal.h>
-#include <sys/stat.h>
-#include <sys/syslog.h>
 
 #ifdef OPENSSL_SYS_VMS
 /* So fd_set and friends get properly defined on OpenVMS */
 #define _XOPEN_SOURCE_EXTENDED
 #endif
 
+#include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <ctype.h>
 
 /* Needs to be included before the openssl headers */
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/x509v3.h>
+
+#include "internal/sockets.h"
+
 #include "apps.h"
 #include "http_server.h"
 #include "progs.h"
-#include "internal/sockets.h"
-#include <openssl/e_os2.h>
-#include <openssl/crypto.h>
-#include <openssl/err.h>
-#include <openssl/ssl.h>
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/x509v3.h>
 
 #if defined(OPENSSL_SYS_VXWORKS)
 /* not supported */

@@ -21,25 +21,29 @@
  */
 #undef UNICODE
 
-#include <assert.h>
-#include <string.h>
-
 #include "bio_local.h"
-#include <openssl/crypto.h>
-#include "internal/sockets.h"
-#include "openssl/bio.h"
-#include "openssl/bioerr.h"
+
 #include <arpa/inet.h>
+#include <assert.h>
 #include <netdb.h>
 #include <netinet/in.h>
 #include <stdlib.h>
+#include <string.h>
 #include <sys/socket.h>
 #include <sys/un.h>
 #include <unistd.h>
 
+#include <openssl/crypto.h>
+
+#include "internal/sockets.h"
+
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+
 #ifndef OPENSSL_NO_SOCK
-#include <openssl/err.h>
 #include <openssl/buffer.h>
+#include <openssl/err.h>
+
 #include "internal/thread_once.h"
 
 CRYPTO_RWLOCK *bio_lookup_lock;

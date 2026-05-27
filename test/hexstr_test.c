@@ -12,12 +12,14 @@
  * This program tests the use of OSSL_PARAM, currently in raw form.
  */
 
-#include "internal/nelem.h"
-#include "internal/cryptlib.h"
-#include "openssl/crypto.h"
-#include "testutil.h"
 #include <stddef.h>
 #include <string.h>
+
+#include "internal/cryptlib.h"
+#include "internal/nelem.h"
+
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 struct testdata {
     const char *in;

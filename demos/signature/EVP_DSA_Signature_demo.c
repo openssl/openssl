@@ -13,12 +13,13 @@
  * two static buffers.
  */
 
-#include <string.h>
 #include <stdio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
+#include <string.h>
+
 #include <openssl/decoder.h>
 #include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 /*
  * This demonstration will calculate and verify a signature of data using

@@ -13,9 +13,11 @@
 
 #ifndef OPENSSL_NO_ML_KEM
 #include <openssl/e_os2.h>
+
 #include "crypto/ml_kem.h"
-#include "prov/provider_ctx.h"
+
 #include "prov/ml_common_codecs.h"
+#include "prov/provider_ctx.h"
 
 __owur ML_KEM_KEY *ossl_ml_kem_d2i_PUBKEY(const uint8_t *pubenc, int publen,
     int evp_type, PROV_CTX *provctx,

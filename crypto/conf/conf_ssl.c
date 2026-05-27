@@ -9,12 +9,15 @@
 
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/conf.h>
 #include <openssl/err.h>
-#include "conf_local.h"
-#include "internal/sslconf.h"
+
 #include "internal/core.h"
 #include "internal/cryptlib.h"
+#include "internal/sslconf.h"
+
+#include "conf_local.h"
 #include "openssl/conferr.h"
 #include "openssl/crypto.h"
 #include "openssl/safestack.h"

@@ -9,21 +9,25 @@
 
 /* Time tests for the asn1 module */
 
+#include "internal/deprecated.h"
+
 #include <inttypes.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
-#include <crypto/asn1.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include "openssl/crypto.h"
-#include <time.h>
-#include "testutil.h"
-#include "internal/deprecated.h"
+
 #include "internal/nelem.h"
+
+#include <crypto/asn1.h>
+
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 struct testdata {
     char *data; /* TIME string value */

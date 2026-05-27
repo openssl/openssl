@@ -10,9 +10,10 @@
 #ifndef OSSL_CRYPTO_ML_DSA_LOCAL_H
 #define OSSL_CRYPTO_ML_DSA_LOCAL_H
 
-#include "crypto/ml_dsa.h"
 #include "internal/constant_time.h"
 #include "internal/packet.h"
+
+#include "crypto/ml_dsa.h"
 
 /* The following constants are shared by ML-DSA-44, ML-DSA-65 & ML-DSA-87 */
 #define ML_DSA_Q 8380417 /* The modulus is 23 bits (2^23 - 2^13 + 1) */

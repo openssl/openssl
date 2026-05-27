@@ -7,19 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/opensslconf.h>
+#include <openssl/rand.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "openssl/params.h"
-#include <stdint.h>
-#include <string.h>
-#include <openssl/opensslconf.h>
-#include <openssl/rand.h>
-#include <openssl/core_names.h>
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif
 #include <crypto/ml_kem.h>
+
 #include "testutil.h"
 #include "testutil/output.h"
 

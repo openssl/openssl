@@ -12,8 +12,8 @@
 
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
-#include <openssl/params.h>
 #include <openssl/param_build.h>
+#include <openssl/params.h>
 
 /* used by speed.c */
 EVP_PKEY *get_dsa(int);

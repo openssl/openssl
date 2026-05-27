@@ -19,8 +19,10 @@
 #include <string.h>
 
 #include <openssl/mdc2.h>
-#include "testutil.h"
+
 #include "internal/nelem.h"
+
+#include "testutil.h"
 
 typedef struct {
     const char *input;

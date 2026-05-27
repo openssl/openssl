@@ -11,12 +11,14 @@
 #define OSSL_CRYPTO_RAND_LOCAL_H
 
 #include <openssl/aes.h>
-#include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
 #include <openssl/ec.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
 #include <openssl/rand.h>
+#include <openssl/sha.h>
+
 #include "internal/tsan_assist.h"
+
 #include "crypto/rand.h"
 
 /* Default reseed intervals */

@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/cast.h>
+
 #include "cast_local.h"
 
 void CAST_encrypt(CAST_LONG *data, const CAST_KEY *key)

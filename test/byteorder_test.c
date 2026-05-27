@@ -1,7 +1,9 @@
 #include <stdint.h>
 #include <string.h>
-#include <openssl/e_os2.h>
+
 #include <openssl/byteorder.h>
+#include <openssl/e_os2.h>
+
 #include "testutil.h"
 #include "testutil/output.h"
 

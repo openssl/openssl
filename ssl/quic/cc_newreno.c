@@ -1,13 +1,15 @@
+#include <stddef.h>
+#include <stdint.h>
+
 #include "internal/quic_cc.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_types.h"
 #include "internal/safe_math.h"
 #include "internal/time.h"
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/params.h"
-#include <stddef.h>
-#include <stdint.h>
 
 OSSL_SAFE_MATH_UNSIGNED(u64, uint64_t)
 

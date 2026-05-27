@@ -14,8 +14,10 @@
 
 #include <stdint.h>
 #include <stdio.h>
+
 #include <openssl/ct.h>
 #include <openssl/err.h>
+
 #include "fuzzer.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

@@ -9,12 +9,14 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
+
 #include <openssl/core_names.h>
-#include <openssl/self_test.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
 #include <openssl/rsa.h>
+#include <openssl/self_test.h>
+
 #include "openssl/bio.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"

@@ -7,13 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/crypto.h"
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/bio.h>
 #include <openssl/conf.h>
-#include <openssl/safestack.h>
 #include <openssl/err.h>
+#include <openssl/safestack.h>
+
+#include "openssl/crypto.h"
 
 static void dump_section(const char *name, const CONF *cnf)
 {

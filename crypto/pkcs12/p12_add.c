@@ -8,10 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/pkcs12.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/pkcs7/pk7_local.h"
+
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
@@ -23,7 +28,6 @@
 #include "openssl/safestack.h"
 #include "openssl/x509.h"
 #include "p12_local.h"
-#include "crypto/pkcs7/pk7_local.h"
 
 /* Pack an object into an OCTET STRING and turn into a safebag */
 

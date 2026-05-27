@@ -7,17 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 #include <netinet/in.h>
-#include <openssl/ssl.h>
-#include <openssl/quic.h>
-#include <openssl/bio.h>
 #include <stddef.h>
 #include <sys/socket.h>
+
+#include <openssl/bio.h>
+#include <openssl/quic.h>
+#include <openssl/ssl.h>
+
 #include "internal/common.h"
-#include "internal/sockets.h"
-#include "internal/quic_tserver.h"
-#include "internal/quic_thread_assist.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_thread_assist.h"
+#include "internal/quic_tserver.h"
+#include "internal/sockets.h"
 #include "internal/time.h"
+
 #include "openssl/crypto.h"
 #include "testutil.h"
 

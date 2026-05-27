@@ -15,7 +15,9 @@
 #include "internal/deprecated.h"
 
 #include <openssl/err.h>
+
 #include "crypto/bn.h"
+
 #include "ec_local.h"
 #include "openssl/ec.h"
 

@@ -11,9 +11,15 @@
 
 /* CMP functions for PKIMessage construction */
 
-#include "cmp_local.h"
-#include "crypto/x509.h"
+#include <stdint.h>
+#include <time.h>
+
 #include "internal/common.h"
+#include <internal/cms.h> /* for ossl_cms_sign_encrypt() */
+
+#include "crypto/x509.h"
+
+#include "cmp_local.h"
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/cmp.h"
@@ -28,10 +34,6 @@
 #include "openssl/safestack.h"
 #include "openssl/x509.h"
 #include "openssl/x509v3.h"
-
-#include <internal/cms.h> /* for ossl_cms_sign_encrypt() */
-#include <stdint.h>
-#include <time.h>
 
 OSSL_CMP_MSG *OSSL_CMP_MSG_new(OSSL_LIB_CTX *libctx, const char *propq)
 {

@@ -9,16 +9,19 @@
  */
 
 #include <assert.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "fuzzer.h"
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include "internal/nelem.h"
+#include "internal/quic_ssl.h"
 #include "internal/sockets.h"
 #include "internal/time.h"
-#include "internal/quic_ssl.h"
+
+#include "fuzzer.h"
 #include "openssl/comp.h"
 #include "openssl/crypto.h"
 #include "openssl/quic.h"

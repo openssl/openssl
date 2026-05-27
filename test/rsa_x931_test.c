@@ -9,9 +9,11 @@
 
 #include "internal/deprecated.h"
 
-#include <openssl/rsa.h>
 #include <openssl/bn.h>
+#include <openssl/rsa.h>
+
 #include "crypto/rsa.h"
+
 #include "openssl/crypto.h"
 #include "openssl/provider.h"
 #include "testutil.h"

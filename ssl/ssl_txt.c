@@ -9,8 +9,12 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/buffer.h>
+
+#include "internal/comp.h"
 #include "internal/time.h"
+
 #include "openssl/bio.h"
 #include "openssl/comp.h"
 #include "openssl/err.h"
@@ -18,8 +22,6 @@
 #include "openssl/ssl.h"
 #include "openssl/x509.h"
 #include "ssl_local.h"
-
-#include "internal/comp.h"
 
 #ifndef OPENSSL_NO_STDIO
 int SSL_SESSION_print_fp(FILE *fp, const SSL_SESSION *x)

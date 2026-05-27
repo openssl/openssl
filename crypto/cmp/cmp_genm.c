@@ -8,8 +8,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_local.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/cmp_util.h>
+
 #include "crypto/x509.h"
+
+#include "cmp_local.h"
 #include "openssl/cmp.h"
 #include "openssl/cmperr.h"
 #include "openssl/crmf.h"
@@ -22,10 +29,6 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "openssl/x509v3.h"
-#include <openssl/cmp_util.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 
 static const X509_VERIFY_PARAM *get0_trustedStore_vpm(const OSSL_CMP_CTX *ctx)
 {

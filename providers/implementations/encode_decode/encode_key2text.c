@@ -12,23 +12,29 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
+#include <openssl/bn.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/bn.h>
 #include <openssl/err.h>
-#include <openssl/safestack.h>
 #include <openssl/proverr.h>
-#include <stddef.h>
+#include <openssl/safestack.h>
+
+#include "internal/encoder.h"
+#include "internal/ffc.h"
+
 #include "crypto/dh.h" /* ossl_dh_get0_params() */
 #include "crypto/dsa.h" /* ossl_dsa_get0_params() */
 #include "crypto/ec.h" /* ossl_ec_key_get_libctx */
 #include "crypto/ecx.h" /* ECX_KEY, etc... */
+#include "crypto/ml_dsa.h"
 #include "crypto/ml_kem.h" /* ML_KEM_KEY, etc... */
 #include "crypto/rsa.h" /* RSA_PSS_PARAMS_30, etc... */
-#include "crypto/ml_dsa.h"
 #include "crypto/slh_dsa.h"
-#include "internal/ffc.h"
+#include "crypto/types.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/dh.h"
@@ -39,13 +45,11 @@
 #include "openssl/objects.h"
 #include "openssl/rsa.h"
 #include "prov/bio.h"
-#include "prov/implementations.h"
-#include "internal/encoder.h"
 #include "prov/endecoder_local.h"
+#include "prov/implementations.h"
+#include "prov/lms_codecs.h"
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
-#include "prov/lms_codecs.h"
-#include "crypto/types.h"
 
 DEFINE_SPECIAL_STACK_OF_CONST(BIGNUM_const, BIGNUM)
 

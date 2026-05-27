@@ -14,12 +14,13 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include "cipher_idea.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "openssl/idea.h"
 #include "prov/ciphercommon.h"
-#include <stddef.h>
 
 static int cipher_hw_idea_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)

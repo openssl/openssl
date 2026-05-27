@@ -16,11 +16,13 @@
 #endif
 
 #include <openssl/ssl.h>
+
 #include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
+
+#include "../ssl/ssl_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
-#include "../ssl/ssl_local.h"
 
 #undef OSSL_NO_USABLE_TLS1_3
 #if defined(OPENSSL_NO_TLS1_3) \

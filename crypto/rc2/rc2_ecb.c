@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rc2.h>
-#include "rc2_local.h"
 #include <openssl/opensslv.h>
+#include <openssl/rc2.h>
+
+#include "rc2_local.h"
 
 /*-
  * RC2 as implemented frm a posting from

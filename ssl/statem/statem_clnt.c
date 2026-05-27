@@ -9,17 +9,35 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include <assert.h>
-#include "../ssl_local.h"
+
+#include <openssl/bn.h>
+#include <openssl/buffer.h>
+#include <openssl/core_names.h>
+#include <openssl/dh.h>
+#include <openssl/evp.h>
+#include <openssl/md5.h>
+#include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/param_build.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/trace.h>
+
 #include "internal/common.h"
+#include "internal/comp.h"
+#include "internal/cryptlib.h"
 #include "internal/packet.h"
 #include "internal/recordmethod.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
 #include "internal/time.h"
+
+#include "../ssl_local.h"
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/comp.h"
@@ -41,21 +59,6 @@
 #include "ssl/ech/ech_local.h"
 #include "ssl/record/record.h"
 #include "statem_local.h"
-#include <openssl/buffer.h>
-#include <openssl/rand.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/md5.h>
-#include <openssl/dh.h>
-#include <openssl/rsa.h>
-#include <openssl/bn.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
-#include <openssl/param_build.h>
-#include "internal/cryptlib.h"
-#include "internal/comp.h"
-#include "internal/ssl_unwrap.h"
-#include <openssl/ocsp.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions);

@@ -14,8 +14,11 @@
 #include "internal/deprecated.h"
 
 #include <openssl/sha.h> /* diverse SHA macros */
+
 #include "internal/sha3.h" /* KECCAK1600_WIDTH */
+
 #include "crypto/evp.h"
+
 #include "openssl/evp.h"
 #include "openssl/obj_mac.h"
 

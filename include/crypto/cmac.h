@@ -11,9 +11,9 @@
 #define OSSL_CRYPTO_CMAC_H
 #pragma once
 
-#include <openssl/types.h>
 #include <openssl/cmac.h>
 #include <openssl/params.h>
+#include <openssl/types.h>
 
 int ossl_cmac_init(CMAC_CTX *ctx, const void *key, size_t keylen,
     const EVP_CIPHER *cipher, const OSSL_PARAM param[]);

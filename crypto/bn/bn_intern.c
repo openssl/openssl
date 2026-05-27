@@ -7,14 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/bn.h"
+#include <stddef.h>
+#include <string.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
-#include <stddef.h>
-#include <string.h>
 
 /*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.

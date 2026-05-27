@@ -10,10 +10,13 @@
 
 #include <stdint.h>
 #include <string.h>
-#include <openssl/params.h>
-#include <openssl/param_build.h>
 #include <time.h>
+
+#include <openssl/param_build.h>
+#include <openssl/params.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/bn.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"

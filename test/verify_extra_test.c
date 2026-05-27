@@ -10,16 +10,18 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
-#include <openssl/crypto.h>
+#include <time.h>
+
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
+
 #include "openssl/asn1.h"
 #include "openssl/safestack.h"
 #include "openssl/x509_vfy.h"
-#include <time.h>
 #include "testutil.h"
 
 static const char *certs_dir;

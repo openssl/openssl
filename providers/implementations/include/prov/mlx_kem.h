@@ -13,8 +13,9 @@
 
 #include <openssl/evp.h>
 #include <openssl/ml_kem.h>
-#include <crypto/ml_kem.h>
+
 #include <crypto/ecx.h>
+#include <crypto/ml_kem.h>
 
 typedef struct ecdh_vinfo_st {
     const char *algorithm_name;

@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/crypto.h"
 #include <stdio.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 
 #include <crypto/asn1.h>
+
+#include "openssl/crypto.h"
 
 /* Declarations for string types */
 

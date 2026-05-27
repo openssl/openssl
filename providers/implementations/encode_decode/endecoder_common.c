@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core.h>
 #include <openssl/buffer.h>
+#include <openssl/core.h>
+
 #include "internal/asn1.h"
+
 #include "openssl/bio.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"

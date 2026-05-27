@@ -7,15 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/bio.h>
+
 #include "internal/time.h"
+
+#include "../testutil.h"
 #include "openssl/bioerr.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
-#include <stddef.h>
-#include <stdint.h>
 #include "quictestlib.h"
-#include "../testutil.h"
 
 #define MSG_DATA_LEN_MAX 1472
 #define SAMPLING_WINDOW_PERIOD 10 /* in milliseconds */

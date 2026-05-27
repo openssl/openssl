@@ -8,28 +8,46 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+
 #include <openssl/macros.h>
 #include <openssl/objects.h>
 #include <openssl/sslerr.h>
-#include <crypto/rand.h>
+
 #include "internal/common.h"
+#include "internal/hashfunc.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_demux.h"
+#include "internal/quic_engine.h"
+#include "internal/quic_error.h"
 #include "internal/quic_fc.h"
+#include "internal/quic_port.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_reactor.h"
+#include "internal/quic_reactor_wait_ctx.h"
+#include "internal/quic_rx_depack.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_statm.h"
 #include "internal/quic_stream.h"
 #include "internal/quic_stream_map.h"
 #include "internal/quic_thread_assist.h"
+#include "internal/quic_tls.h"
 #include "internal/quic_types.h"
 #include "internal/quic_vlint.h"
 #include "internal/refcount.h"
 #include "internal/rio_notifier.h"
 #include "internal/ssl.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
 #include "internal/thread_arch.h"
+#include "internal/time.h"
+
+#include <crypto/rand.h>
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
@@ -37,21 +55,7 @@
 #include "openssl/lhash.h"
 #include "openssl/quic.h"
 #include "openssl/ssl.h"
-#include <stdarg.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/socket.h>
 #include "quic_local.h"
-#include "internal/hashfunc.h"
-#include "internal/ssl_unwrap.h"
-#include "internal/quic_tls.h"
-#include "internal/quic_rx_depack.h"
-#include "internal/quic_error.h"
-#include "internal/quic_engine.h"
-#include "internal/quic_port.h"
-#include "internal/quic_reactor_wait_ctx.h"
-#include "internal/time.h"
 #include "ssl/quic/quic_obj_local.h"
 #include "ssl/ssl_local.h"
 

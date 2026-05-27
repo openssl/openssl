@@ -8,9 +8,9 @@
  */
 
 /* Simple S/MIME signing example */
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs7.h>
-#include <openssl/err.h>
 
 int main(int argc, char **argv)
 {

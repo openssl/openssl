@@ -7,17 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/ml_kem.h"
+
 #include <limits.h>
-#include <openssl/byteorder.h>
-#include <openssl/rand.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "crypto/ml_kem.h"
+
+#include <openssl/byteorder.h>
+#include <openssl/proverr.h>
+#include <openssl/rand.h>
+
 #include "internal/common.h"
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
+
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"

@@ -11,6 +11,7 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_BLOWFISH_H
 
 #include <openssl/blowfish.h>
+
 #include "prov/ciphercommon.h"
 
 typedef struct prov_blowfish_ctx_st {

@@ -8,17 +8,19 @@
  */
 
 /* This must be the first #include file */
-#include "../async_local.h"
-#include "openssl/async.h"
 #include <sys/ucontext.h>
 #include <ucontext.h>
+
+#include "../async_local.h"
+#include "openssl/async.h"
 
 #ifdef ASYNC_POSIX
 
 #include <stddef.h>
 #include <unistd.h>
-#include <openssl/err.h>
+
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 
 #define STACKSIZE 32768
 

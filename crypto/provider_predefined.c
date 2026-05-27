@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core.h>
+
 #include "provider_local.h"
 
 OSSL_provider_init_fn ossl_default_provider_init;

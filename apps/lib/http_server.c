@@ -9,12 +9,6 @@
 
 /* Very basic HTTP server */
 
-#include "apps.h"
-#include "internal/common.h"
-#include "openssl/asn1.h"
-#include "openssl/bio.h"
-#include "openssl/crypto.h"
-#include "openssl/evp.h"
 #include <errno.h>
 #include <signal.h>
 #include <stddef.h>
@@ -25,6 +19,14 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include "internal/common.h"
+
+#include "apps.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #if !defined(_POSIX_C_SOURCE) && defined(OPENSSL_SYS_VMS)
 /*
  * On VMS, you need to define this to get the declaration of fileno().  The
@@ -34,15 +36,17 @@
 #endif
 
 #include <ctype.h>
-#include "internal/e_os.h"
-#include "http_server.h"
-#include "internal/sockets.h" /* for openssl_fdset() */
 
 #include <openssl/err.h>
-#include <openssl/trace.h>
 #include <openssl/rand.h>
-#include "s_apps.h"
+#include <openssl/trace.h>
+
+#include "internal/e_os.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
+
+#include "http_server.h"
 #include "log.h"
+#include "s_apps.h"
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */

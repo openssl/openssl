@@ -7,9 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/trace.h>
 #include <string.h>
+
+#include <openssl/trace.h>
+
 #include "internal/cryptlib.h"
+
 #include "bn_local.h"
 #include "openssl/bio.h"
 #include "openssl/bn.h"

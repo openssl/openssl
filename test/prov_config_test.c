@@ -10,8 +10,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
-#include <openssl/evp.h>
+
 #include <openssl/conf.h>
+#include <openssl/evp.h>
+
 #include "openssl/conferr.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"

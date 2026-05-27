@@ -8,10 +8,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include <openssl/bn.h>
+#include <openssl/err.h>
+
 #include "crypto/bn.h"
 #include "crypto/rsa.h"
+
 #include "openssl/rsa.h"
 #include "openssl/rsaerr.h"
 #include "rsa_local.h"

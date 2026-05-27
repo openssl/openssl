@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+
 #include "openssl/bio.h"
 #include "openssl/buffer.h"
 #include "openssl/crypto.h"
@@ -14,29 +16,31 @@
 #include "openssl/safestack.h"
 #include "openssl/x509_vfy.h"
 #include "openssl/x509err.h"
-#include <string.h>
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
 /*
  * These definitions have to come first in SPT due to scoping of the
  * declarations in c99 associated with SPT use of stat.
  */
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
 
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
-#include <stdio.h>
-#include <time.h>
 #include <errno.h>
+#include <stdio.h>
 #include <sys/types.h>
+#include <time.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
 
 #ifndef OPENSSL_NO_POSIX_IO
 #include <sys/stat.h>
 #endif
 
 #include <openssl/x509.h>
+
 #include "crypto/x509.h"
+
 #include "x509_local.h"
 
 struct lookup_dir_hashes_st {

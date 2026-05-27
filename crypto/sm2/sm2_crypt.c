@@ -15,19 +15,22 @@
  */
 #include "internal/deprecated.h"
 
-#include "crypto/sm2.h"
-#include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
-#include "openssl/crypto.h"
-#include "openssl/ec.h"
 #include <limits.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+#include "crypto/sm2.h"
+#include "crypto/sm2err.h"
+
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
 
 typedef struct SM2_Ciphertext_st SM2_Ciphertext;
 DECLARE_ASN1_FUNCTIONS(SM2_Ciphertext)

@@ -9,7 +9,9 @@
 
 #include <stdarg.h>
 #include <string.h>
+
 #include <openssl/err.h>
+
 #include "err_local.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

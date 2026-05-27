@@ -8,16 +8,19 @@
  */
 
 #include "internal/quic_rcidm.h"
-#include "internal/priority_queue.h"
-#include "internal/list.h"
-#include "internal/common.h"
-#include "internal/quic_types.h"
-#include "internal/quic_vlint.h"
-#include "internal/quic_wire.h"
-#include "openssl/crypto.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "internal/common.h"
+#include "internal/list.h"
+#include "internal/priority_queue.h"
+#include "internal/quic_types.h"
+#include "internal/quic_vlint.h"
+#include "internal/quic_wire.h"
+
+#include "openssl/crypto.h"
 
 /*
  * QUIC Remote Connection ID Manager

@@ -14,13 +14,15 @@
  * hence this is not a known answer test.
  */
 
+#include "rsa_encrypt.h"
+
 #include <stdio.h>
 #include <stdlib.h>
+
+#include <openssl/core_names.h>
+#include <openssl/decoder.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/decoder.h>
-#include <openssl/core_names.h>
-#include "rsa_encrypt.h"
 
 /* Input data to encrypt */
 static const unsigned char msg[] = "To be, or not to be, that is the question,\n"

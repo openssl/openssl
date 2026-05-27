@@ -13,12 +13,13 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <string.h>
+
 #include "cipher_tdes_default.h"
 #include "openssl/des.h"
 #include "prov/ciphercommon.h"
 #include "providers/implementations/ciphers/cipher_tdes.h"
-#include <stddef.h>
-#include <string.h>
 
 #define ks1 tks.ks[0]
 #define ks2 tks.ks[1]

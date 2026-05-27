@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "ssltestlib.h"
+
 #include <arpa/inet.h>
 #include <errno.h>
 #include <netinet/in.h>
@@ -19,7 +21,7 @@
 
 #include "internal/e_os.h"
 #include "internal/nelem.h"
-#include "ssltestlib.h"
+
 #include "../testutil.h"
 #include "openssl/crypto.h"
 #include "openssl/dtls1.h"
@@ -33,9 +35,10 @@
 
 #if (!defined(OPENSSL_NO_KTLS) || !defined(OPENSSL_NO_QUIC)) && !defined(OPENSSL_NO_POSIX_IO) && !defined(OPENSSL_NO_SOCK)
 #define OSSL_USE_SOCKETS 1
+#include <openssl/bio.h>
+
 #include "internal/e_winsock.h"
 #include "internal/sockets.h"
-#include <openssl/bio.h>
 #endif
 
 static int tls_dump_new(BIO *bi);

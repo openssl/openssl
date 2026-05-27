@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509_acert.h>
-#include <stddef.h>
 
 #include "internal/nelem.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"

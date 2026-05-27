@@ -8,14 +8,17 @@
  */
 #include <netinet/in.h>
 #include <stdio.h>
-#include <openssl/ssl.h>
-#include <openssl/quic.h>
-#include <openssl/bio.h>
 #include <sys/socket.h>
 #include <unistd.h>
+
+#include <openssl/bio.h>
+#include <openssl/quic.h>
+#include <openssl/ssl.h>
+
 #include "internal/common.h"
 #include "internal/sockets.h"
 #include "internal/time.h"
+
 #include "openssl/crypto.h"
 #include "testutil.h"
 

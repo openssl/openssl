@@ -11,8 +11,10 @@
 #define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_BIO_H
 
 #include <stdarg.h>
+
 #include <openssl/bio.h>
 #include <openssl/core.h>
+
 #include "prov/provider_ctx.h"
 
 int ossl_prov_bio_from_dispatch(const OSSL_DISPATCH *fns);

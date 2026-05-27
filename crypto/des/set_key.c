@@ -23,8 +23,10 @@
 #include "internal/deprecated.h"
 
 #include <openssl/crypto.h>
+
 #include "internal/constant_time.h"
 #include "internal/nelem.h"
+
 #include "des_local.h"
 #include "openssl/des.h"
 

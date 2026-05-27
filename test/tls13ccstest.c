@@ -7,15 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
 #include <string.h>
+
+#include <openssl/ssl.h>
+
+#include "internal/packet.h"
+
 #include "helpers/ssltestlib.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
 #include "openssl/ssl3.h"
 #include "testutil.h"
-#include "internal/packet.h"
 
 static char *cert = NULL;
 static char *privkey = NULL;

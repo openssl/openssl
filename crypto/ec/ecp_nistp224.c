@@ -36,14 +36,15 @@
  * and Adam Langley's public domain 64-bit C implementation of curve25519
  */
 
-#include <openssl/opensslconf.h>
-
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/err.h>
-#include "ec_local.h"
+#include <openssl/opensslconf.h>
 
 #include "internal/numbers.h"
+
+#include "ec_local.h"
 
 #ifndef INT128_MAX
 #error "Your compiler doesn't appear to support 128-bit integer types"

@@ -14,8 +14,10 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <openssl/opensslv.h>
 #include <string.h>
+
+#include <openssl/opensslv.h>
+
 #include "md4_local.h"
 #include "openssl/md4.h"
 /* clang-format off */

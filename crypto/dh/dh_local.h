@@ -11,8 +11,9 @@
 #define OSSL_LIBCRYPTO_DH_DH_LOCAL_H
 
 #include <openssl/dh.h>
-#include "internal/refcount.h"
+
 #include "internal/ffc.h"
+#include "internal/refcount.h"
 
 #define DH_MIN_MODULUS_BITS 512
 

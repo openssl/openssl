@@ -8,26 +8,28 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "app_libctx.h"
+#include <stdlib.h>
+
 #include "internal/e_os.h" /* LIST_SEPARATOR_CHAR */
-#include "apps.h"
 #include "internal/nelem.h"
+
+#include "app_libctx.h"
+#include "apps.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/safestack.h"
 #include "opt.h"
 #include "progs.h"
-#include <stdlib.h>
 
 #if defined(OPENSSL_SYS_UNIX) || defined(__APPLE__) || (defined(__VMS) && defined(__DECC) && __CRTL_VER >= 80300000)
-#include <unistd.h>
-#include <stdio.h>
-#include <limits.h>
-#include <errno.h>
-#include <string.h>
 #include <ctype.h>
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/stat.h>
+#include <unistd.h>
 
 /*
  * Make sure that the processing of symbol names is treated the same as when

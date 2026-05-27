@@ -10,8 +10,9 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_RC4_HMAC_MD5_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_RC4_HMAC_MD5_H
 
-#include <openssl/rc4.h>
 #include <openssl/md5.h>
+#include <openssl/rc4.h>
+
 #include "prov/ciphercommon.h"
 
 typedef struct prov_rc4_hmac_md5_ctx_st {

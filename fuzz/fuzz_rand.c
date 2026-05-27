@@ -9,11 +9,13 @@
  */
 
 #include <limits.h>
-#include <openssl/core_names.h>
-#include <openssl/rand.h>
-#include <openssl/provider.h>
 #include <stddef.h>
 #include <stdlib.h>
+
+#include <openssl/core_names.h>
+#include <openssl/provider.h>
+#include <openssl/rand.h>
+
 #include "fuzzer.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"

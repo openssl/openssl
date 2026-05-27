@@ -13,11 +13,13 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/cryptlib.h"
-
-#include <openssl/aes.h>
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/aes.h>
+
+#include "internal/cryptlib.h"
+
 #include "aes_local.h"
 #include "openssl/crypto.h"
 

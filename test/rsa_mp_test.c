@@ -19,16 +19,16 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/bn.h>
+#include <openssl/rsa.h>
+
+#include "crypto/rsa.h"
 
 #include "openssl/safestack.h"
 #include "testutil.h"
-
-#include <openssl/rsa.h>
-#include "crypto/rsa.h"
 
 #define NUM_EXTRA_PRIMES 1
 

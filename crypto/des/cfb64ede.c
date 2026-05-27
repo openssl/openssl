@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <string.h>
+
 #include "des_local.h"
 #include "openssl/des.h"
-#include <string.h>
 
 /*
  * The input and output encrypted as though 64bit cfb mode is being used.

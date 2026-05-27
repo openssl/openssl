@@ -13,9 +13,11 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/des.h>
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/des.h>
+
 #include "cipher_tdes_default.h"
 #include "prov/ciphercommon.h"
 #include "providers/implementations/ciphers/cipher_tdes.h"

@@ -17,9 +17,10 @@
  * cc -I../../include saccept.c -L../.. -lssl -lcrypto -ldl
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 

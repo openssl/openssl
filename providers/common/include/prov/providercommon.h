@@ -10,8 +10,8 @@
 #if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDERCOMMON_H)
 #define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDERCOMMON_H
 
-#include <openssl/provider.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/provider.h>
 
 const OSSL_CORE_HANDLE *FIPS_get_core_handle(OSSL_LIB_CTX *ctx);
 

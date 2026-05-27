@@ -8,7 +8,9 @@
  */
 
 #include "internal/recordmethod.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
@@ -19,7 +21,6 @@
 #include "openssl/tls1.h"
 #include "ssl/record/record.h"
 #include "ssl_local.h"
-#include "internal/ssl_unwrap.h"
 
 int ssl3_do_change_cipher_spec(SSL_CONNECTION *s)
 {

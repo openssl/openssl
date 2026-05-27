@@ -9,14 +9,18 @@
 
 #include <assert.h>
 #include <limits.h>
+#include <stdint.h>
+
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include <openssl/err.h>
 #include <openssl/decoder.h>
-#include <stdint.h>
+#include <openssl/err.h>
+
 #include "internal/sizes.h"
+
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+
 #include "cms_local.h"
 #include "openssl/asn1.h"
 #include "openssl/cmserr.h"

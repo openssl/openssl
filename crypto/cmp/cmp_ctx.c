@@ -9,9 +9,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_local.h"
-#include "crypto/x509.h"
+#include <stdarg.h>
+
+#include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
+
 #include "internal/common.h"
+
+#include "crypto/x509.h"
+
+#include "cmp_local.h"
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/cmp.h"
@@ -28,8 +34,6 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "openssl/x509v3.h"
-#include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
-#include <stdarg.h>
 
 #define DEFINE_OSSL_CMP_CTX_get0(FIELD, TYPE) \
     DEFINE_OSSL_CMP_CTX_get0_NAME(FIELD, FIELD, TYPE)

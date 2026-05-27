@@ -37,7 +37,9 @@
  */
 
 #include <openssl/opensslconf.h>
+
 #include "crypto/chacha.h"
+
 #include "arch/riscv_arch.h"
 
 void ChaCha20_ctr32_v_zbb_zvkb(unsigned char *out, const unsigned char *inp,

@@ -12,16 +12,16 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
 #include "apps.h"
 #include "fmt.h"
 #include "openssl/crypto.h"
 #include "opt.h"
 #include "progs.h"
-
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
-#include <openssl/rand.h>
 #if !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_DEPRECATED_3_0)
 #include <openssl/des.h>
 #endif

@@ -7,20 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 #include <assert.h>
+#include <ctype.h>
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
-#include <ctype.h>
 
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+
 #include "internal/nelem.h"
 #include "internal/numbers.h"
-#include "testutil.h"
-#include "bn_prime.h"
+
 #include "crypto/bn.h"
+
+#include "bn_prime.h"
+#include "testutil.h"
 
 static BN_CTX *ctx;
 

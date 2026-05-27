@@ -14,15 +14,16 @@
  */
 #include "internal/deprecated.h"
 
-#include <string.h>
 #include <limits.h>
+#include <string.h>
+
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/err.h>
+#include <openssl/objects.h>
 
 #include "internal/cryptlib.h"
 
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
-#include <openssl/ec.h>
 #include "ec_local.h"
 #include "openssl/crypto.h"
 #include "openssl/ecerr.h"

@@ -8,12 +8,15 @@
  */
 
 #include "internal/quic_cfq.h"
-#include "internal/numbers.h"
-#include "internal/quic_predef.h"
-#include "openssl/crypto.h"
+
 #include <assert.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "internal/numbers.h"
+#include "internal/quic_predef.h"
+
+#include "openssl/crypto.h"
 
 typedef struct quic_cfq_item_ex_st QUIC_CFQ_ITEM_EX;
 

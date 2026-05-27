@@ -11,6 +11,11 @@
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+
 #include "app_libctx.h"
 #include "apps.h"
 #include "fmt.h"
@@ -22,9 +27,6 @@
 #include "openssl/x509.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/pem.h>
-#include <openssl/err.h>
-#include <openssl/evp.h>
 
 static int verbose = 0;
 

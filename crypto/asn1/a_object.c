@@ -7,16 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
 #include <limits.h>
-#include "crypto/ctype.h"
-#include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/asn1.h>
-#include <openssl/objects.h>
-#include <openssl/bn.h>
+#include <stdio.h>
 #include <string.h>
+
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
+#include "crypto/ctype.h"
+
 #include "asn1_local.h"
 #include "openssl/asn1err.h"
 #include "openssl/bio.h"

@@ -15,14 +15,18 @@
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <limits.h>
+#include <stdint.h>
 #include <time.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
+
+#include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
-#include <openssl/dh.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
+
 #include "fuzzer.h"
 #include "openssl/bio.h"
 #include "openssl/comp.h"
@@ -31,8 +35,6 @@
 #include "openssl/pem.h"
 #include "openssl/safestack.h"
 #include "openssl/x509.h"
-#include <limits.h>
-#include <stdint.h>
 
 static const uint8_t kCertificateDER[] = {
     0x30,

@@ -8,12 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/objects.h>
-#include <openssl/buffer.h>
 #include <string.h>
+
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
 #include "crypto/asn1/asn1_local.h"
+
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"

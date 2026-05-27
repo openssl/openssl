@@ -10,16 +10,19 @@
 
 #include <assert.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
-#include <openssl/evp.h>
-#include <openssl/encoder.h>
-#include <openssl/decoder.h>
-#include <openssl/core_names.h>
+
 #include <openssl/core_dispatch.h>
-#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/params.h>
+
 #include "app_libctx.h"
 #include "apps.h"
+#include "ec_common.h"
 #include "fmt.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
@@ -28,7 +31,6 @@
 #include "openssl/objects.h"
 #include "opt.h"
 #include "progs.h"
-#include "ec_common.h"
 
 typedef enum OPTION_choice {
     OPT_COMMON,

@@ -11,8 +11,8 @@
 #define OSSL_QUIC_SF_LIST_H
 
 #include "internal/common.h"
-#include "internal/uint_set.h"
 #include "internal/quic_record_rx.h"
+#include "internal/uint_set.h"
 
 /*
  * Stream frame list

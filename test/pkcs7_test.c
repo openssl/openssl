@@ -8,11 +8,14 @@
  */
 
 #include <string.h>
+
+#include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/pem.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"

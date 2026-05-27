@@ -7,21 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs7.h>
+#include <openssl/x509.h>
+
+#include <crypto/asn1.h>
+
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "openssl/safestack.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/bio.h>
-#include <openssl/asn1.h>
-#include <openssl/asn1t.h>
-#include <openssl/pem.h>
-#include <openssl/pkcs7.h>
-#include <openssl/x509.h>
-#include <openssl/err.h>
-
-#include <crypto/asn1.h>
 
 int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
     STACK_OF(X509_ALGOR) *cap)

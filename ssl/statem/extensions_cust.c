@@ -9,15 +9,18 @@
 
 /* Custom extension utility functions */
 
-#include <openssl/ct.h>
 #include <stddef.h>
 #include <string.h>
-#include "../ssl_local.h"
+
+#include <openssl/ct.h>
+
 #include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/packet.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
+#include "../ssl_local.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/ech.h"

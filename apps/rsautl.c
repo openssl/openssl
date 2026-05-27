@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+
+#include <openssl/err.h>
 #include <openssl/opensslconf.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
 
 #include "apps.h"
 #include "fmt.h"
@@ -18,10 +23,6 @@
 #include "openssl/x509.h"
 #include "opt.h"
 #include "progs.h"
-#include <string.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
 
 #define RSA_SIGN 1
 #define RSA_VERIFY 2

@@ -8,12 +8,19 @@
  */
 
 #include <assert.h>
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <stdlib.h>
-#include <time.h>
 #include <string.h>
+#include <time.h>
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/err.h>
+#include <openssl/opensslconf.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+
 #include "app_libctx.h"
 #include "apps.h"
 #include "fmt.h"
@@ -21,12 +28,6 @@
 #include "openssl/evp.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/dsa.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
 
 static int verbose = 0;
 

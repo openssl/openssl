@@ -17,7 +17,9 @@
 #include <assert.h>
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/crypto.h>
+
 #include "blake2_impl.h"
 #include "openssl/e_os2.h"
 #include "prov/blake2.h"

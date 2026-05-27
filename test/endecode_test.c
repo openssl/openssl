@@ -9,21 +9,23 @@
 
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/core_dispatch.h>
+#include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/params.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/param_build.h>
-#include <openssl/encoder.h>
-#include <openssl/decoder.h>
 
 #include "internal/common.h"
 #include "internal/cryptlib.h" /* ossl_assert */
-#include "crypto/pem.h" /* For PVK and "blob" PEM headers */
+
 #include "crypto/evp.h" /* For evp_pkey_is_provided() */
+#include "crypto/pem.h" /* For PVK and "blob" PEM headers */
 
 #include "helpers/predefined_dhparams.h"
 #include "openssl/bio.h"

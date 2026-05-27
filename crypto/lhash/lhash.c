@@ -7,15 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "crypto/lhash.h"
+
 #include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include <openssl/crypto.h>
-#include <openssl/lhash.h>
 #include <openssl/err.h>
+#include <openssl/lhash.h>
+
 #include "crypto/ctype.h"
-#include "crypto/lhash.h"
+
 #include "lhash_local.h"
 
 /*

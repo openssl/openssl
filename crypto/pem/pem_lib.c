@@ -14,19 +14,24 @@
 
 #include <limits.h>
 #include <stdio.h>
-#include "crypto/ctype.h"
 #include <string.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
+#include <openssl/des.h>
 #include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
-#include <openssl/des.h>
+#include "crypto/ctype.h"
 #include "crypto/evp.h"
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
@@ -34,7 +39,6 @@
 #include "openssl/err.h"
 #include "openssl/macros.h"
 #include "openssl/pemerr.h"
-#include "internal/common.h"
 
 #define MIN_LENGTH 4
 

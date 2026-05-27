@@ -13,11 +13,13 @@
  */
 #include "internal/deprecated.h"
 
+#include <string.h>
+
+#include <openssl/err.h>
+
 #include "dh_local.h"
 #include "openssl/crypto.h"
 #include "openssl/dh.h"
-#include <string.h>
-#include <openssl/err.h>
 
 DH_METHOD *DH_meth_new(const char *name, int flags)
 {

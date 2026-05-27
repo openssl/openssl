@@ -8,9 +8,10 @@
  */
 
 #include <string.h>
-#include <openssl/opensslconf.h>
+
 #include <openssl/err.h>
 #include <openssl/macros.h>
+#include <openssl/opensslconf.h>
 
 #include "openssl/bio.h"
 #include "testutil.h"

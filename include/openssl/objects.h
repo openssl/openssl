@@ -16,9 +16,9 @@
 #define HEADER_OBJECTS_H
 #endif
 
-#include <openssl/obj_mac.h>
-#include <openssl/bio.h>
 #include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/obj_mac.h>
 #include <openssl/objectserr.h>
 
 #define OBJ_NAME_TYPE_UNDEF 0x00

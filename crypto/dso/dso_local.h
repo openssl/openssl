@@ -11,10 +11,12 @@
 #define OSSL_LIBCRYPTO_DSO_DSO_LOCAL_H
 
 #include <stdio.h>
+
 #include "internal/cryptlib.h"
 #include "internal/dso.h"
-#include "crypto/dso_conf.h"
 #include "internal/refcount.h"
+
+#include "crypto/dso_conf.h"
 
 /**********************************************************************/
 /* The low-level handle type used to refer to a loaded shared library */

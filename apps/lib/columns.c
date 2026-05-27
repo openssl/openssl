@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+
 #include "apps.h"
 #include "function.h"
 

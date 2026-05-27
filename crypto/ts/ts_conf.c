@@ -10,8 +10,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/conf_api.h>
 #include <openssl/crypto.h>
+#include <openssl/pem.h>
+#include <openssl/ts.h>
+
 #include "internal/cryptlib.h"
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/conf.h"
@@ -22,9 +27,6 @@
 #include "openssl/tserr.h"
 #include "openssl/x509.h"
 #include "openssl/x509v3.h"
-#include <openssl/pem.h>
-#include <openssl/ts.h>
-#include <openssl/conf_api.h>
 
 /* Macro definitions for the configuration file. */
 #define BASE_SECTION "tsa"

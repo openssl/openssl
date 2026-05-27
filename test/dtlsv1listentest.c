@@ -8,11 +8,14 @@
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
+
 #include <openssl/bio.h>
-#include <openssl/err.h>
 #include <openssl/conf.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/crypto.h"
 #include "testutil.h"
 

@@ -22,6 +22,7 @@
 #include "../ssl/quic/quic_local.h"
 #include "../ssl/quic/quic_port_local.h"
 
+#include "../ssl/quic/quic_local.h"
 #include "testutil.h"
 
 static int test_ossl_quic_port_create_incoming(void)

@@ -7,23 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
+#include "handshake.h"
 
-#include <openssl/bio.h>
-#include <openssl/x509_vfy.h>
-#include <openssl/ssl.h>
-#include <openssl/core_names.h>
-#include <openssl/ocsp.h>
+#include <string.h>
 #include <time.h>
 
-#include "../../ssl/ssl_local.h"
+#include <openssl/bio.h>
+#include <openssl/core_names.h>
+#include <openssl/ocsp.h>
+#include <openssl/ssl.h>
+#include <openssl/x509_vfy.h>
+
 #include "internal/common.h"
-#include "internal/ssl_unwrap.h"
-#include "internal/sockets.h"
 #include "internal/nelem.h"
-#include "handshake.h"
-#include "../testutil.h"
+#include "internal/sockets.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
+#include "../../ssl/ssl_local.h"
+#include "../testutil.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "openssl/obj_mac.h"

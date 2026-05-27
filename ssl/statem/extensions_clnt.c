@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ocsp.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "../ssl_local.h"
+
+#include <openssl/ocsp.h>
+
 #include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/packet.h"
@@ -19,6 +20,8 @@
 #include "internal/statem.h"
 #include "internal/time.h"
 #include "internal/tlsgroups.h"
+
+#include "../ssl_local.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/dtls1.h"
@@ -41,6 +44,7 @@
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
 #include <openssl/rand.h>
+
 #include "internal/ech_helpers.h"
 #endif
 

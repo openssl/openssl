@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
 #include <time.h>
+
+#include <openssl/crypto.h>
 
 #include "testutil.h"
 

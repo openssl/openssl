@@ -6,14 +6,15 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "openssl/bio.h"
-#include "opt.h"
 #include <assert.h>
 #include <errno.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include "openssl/bio.h"
+#include "opt.h"
 #ifdef __TANDEM
 #include <strings.h> /* strcasecmp */
 #endif
@@ -23,8 +24,10 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+
 #include "testutil.h"
 
 /*

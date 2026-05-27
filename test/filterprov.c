@@ -12,16 +12,19 @@
  * default provider except where we want other behaviour for a test.
  */
 
+#include "filterprov.h"
+
 #include <string.h>
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
-#include <openssl/provider.h>
 #include <openssl/crypto.h>
+#include <openssl/provider.h>
+
 #include "openssl/bio.h"
+#include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "testutil.h"
-#include "filterprov.h"
-#include "prov/bio.h"
 
 #define MAX_FILTERS 10
 #define MAX_ALG_FILTERS 5

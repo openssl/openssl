@@ -16,12 +16,15 @@
 #include <limits.h>
 #include <stdio.h>
 #include <string.h>
+
 #include "internal/cryptlib.h"
-#include "dh_local.h"
+#include "internal/ffc.h"
+
 #include "crypto/bn.h"
 #include "crypto/dh.h"
 #include "crypto/security_bits.h"
-#include "internal/ffc.h"
+
+#include "dh_local.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "openssl/dh.h"

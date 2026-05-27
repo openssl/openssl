@@ -8,11 +8,14 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/pkcs12.h>
+
 #include "internal/cryptlib.h"
+
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/x509.h"
-#include <openssl/pkcs12.h>
 
 PKCS8_PRIV_KEY_INFO *PKCS8_decrypt_ex(const X509_SIG *p8, const char *pass,
     int passlen, OSSL_LIB_CTX *ctx,

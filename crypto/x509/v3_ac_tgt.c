@@ -9,13 +9,20 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include <openssl/x509_acert.h>
-#include <crypto/x509_acert.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
+#include <openssl/x509_acert.h>
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/asn1.h"
+#include "crypto/evp.h"
+#include <crypto/asn1.h>
+#include <crypto/x509_acert.h>
+
 #include "ext_dat.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
@@ -24,10 +31,6 @@
 #include "openssl/objects.h"
 #include "openssl/x509.h"
 #include "x509_local.h"
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
-
-#include <crypto/asn1.h>
 
 static int i2r_ISSUER_SERIAL(X509V3_EXT_METHOD *method,
     OSSL_ISSUER_SERIAL *iss,

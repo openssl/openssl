@@ -11,8 +11,10 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CBC_HMAC_SHA_ETM_H
 
 #include <openssl/proverr.h>
-#include "prov/ciphercommon.h"
+
 #include "crypto/aes_platform.h"
+
+#include "prov/ciphercommon.h"
 
 int ossl_cipher_capable_aes_cbc_hmac_sha1_etm(void);
 int ossl_cipher_capable_aes_cbc_hmac_sha256_etm(void);

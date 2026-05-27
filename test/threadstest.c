@@ -13,6 +13,10 @@
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define OPENSSL_SUPPRESS_DEPRECATED
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/e_os2.h"
@@ -22,9 +26,6 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "opt.h"
-#include <stdint.h>
-#include <stdlib.h>
-#include <time.h>
 #endif
 
 #if defined(_WIN32)
@@ -32,17 +33,20 @@
 #endif
 
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/rsa.h>
+
 #include <openssl/aes.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/pem.h>
 #include <openssl/evp.h>
-#include "internal/tsan_assist.h"
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+
 #include "internal/nelem.h"
-#include "internal/time.h"
 #include "internal/rcu.h"
+#include "internal/time.h"
+#include "internal/tsan_assist.h"
+
 #include "testutil.h"
 #include "threadstest.h"
 

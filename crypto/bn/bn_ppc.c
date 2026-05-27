@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+
 #include "arch/ppc_arch.h"
 #include "bn_local.h"
 

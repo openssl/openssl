@@ -21,8 +21,11 @@
 
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/evp.h>
+
 #include "crypto/ml_dsa.h"
+
 #include "openssl/crypto.h"
 #include "testutil.h"
 

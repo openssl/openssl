@@ -8,11 +8,13 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/decoder.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <stddef.h>
-#include <stdint.h>
+
 #include "fuzzer.h"
 #include "openssl/asn1.h"
 #include "openssl/bio.h"

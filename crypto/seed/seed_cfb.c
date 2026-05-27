@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/seed.h>
-#include <openssl/modes.h>
 #include <stddef.h>
+
+#include <openssl/modes.h>
+#include <openssl/seed.h>
 
 void SEED_cfb128_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const SEED_KEY_SCHEDULE *ks,

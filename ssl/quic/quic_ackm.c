@@ -8,6 +8,12 @@
  */
 
 #include "internal/quic_ackm.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+
+#include "internal/common.h"
 #include "internal/list.h"
 #include "internal/nelem.h"
 #include "internal/quic_cc.h"
@@ -17,13 +23,10 @@
 #include "internal/quic_wire.h"
 #include "internal/time.h"
 #include "internal/uint_set.h"
-#include "internal/common.h"
+
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
 #include "openssl/lhash.h"
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
 
 DEFINE_LIST_OF(tx_history, OSSL_ACKM_TX_PKT);
 

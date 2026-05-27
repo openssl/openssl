@@ -11,6 +11,7 @@
 #define OSSL_INTERNAL_PARAMS_H
 
 #include <stddef.h>
+
 #include <openssl/params.h>
 
 /*

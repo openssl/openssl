@@ -13,12 +13,12 @@
  * a parameter request it makes to the loading library.
  */
 
-#include <openssl/macros.h>
+#include <stdarg.h>
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdio.h>
 
-#include <stdarg.h>
+#include <openssl/macros.h>
 
 /*
  * When built as an object file to link the application with, we get the
@@ -30,13 +30,14 @@
 #define OSSL_provider_init PROVIDER_INIT_FUNCTION_NAME
 #endif
 
-#include "internal/e_os.h"
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/crypto.h>
 #include <openssl/provider.h>
+
+#include "internal/e_os.h"
 
 typedef struct p_test_ctx {
     char *thisfile;

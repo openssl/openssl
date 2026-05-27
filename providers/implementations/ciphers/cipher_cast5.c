@@ -16,6 +16,7 @@
 /* Dispatch functions for cast cipher modes ecb, cbc, ofb, cfb */
 
 #include <openssl/proverr.h>
+
 #include "cipher_cast.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"

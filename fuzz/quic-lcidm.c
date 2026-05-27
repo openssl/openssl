@@ -8,17 +8,20 @@
  * or in the file LICENSE in the source distribution.
  */
 
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
 #include <stddef.h>
 #include <stdint.h>
-#include "fuzzer.h"
-#include "internal/quic_lcidm.h"
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include "internal/packet.h"
+#include "internal/quic_lcidm.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_types.h"
 #include "internal/quic_wire.h"
+
+#include "fuzzer.h"
 #include "openssl/crypto.h"
 
 int FuzzerInitialize(int *argc, char ***argv)

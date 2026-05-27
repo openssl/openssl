@@ -10,9 +10,9 @@
  */
 
 #include "crypto/cmp/cmp_local.h"
-#include "helpers/cmp_testlib.h"
 
 #include "cmp_mock_srv.h"
+#include "helpers/cmp_testlib.h"
 #include "openssl/cmp.h"
 #include "openssl/crmf.h"
 #include "openssl/crypto.h"

@@ -13,9 +13,10 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/aes.h>
 #include <openssl/modes.h>
-#include <stddef.h>
 
 void AES_ofb128_encrypt(const unsigned char *in, unsigned char *out,
     size_t length, const AES_KEY *key,

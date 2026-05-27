@@ -9,9 +9,12 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/e_os2.h>
 #include <openssl/evp.h>
+
 #include "crypto/ecx.h"
+
 #include "curve448_local.h"
 #include "opt.h"
 #include "testutil.h"

@@ -11,6 +11,7 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_ARIA_H
 
 #include "crypto/aria.h"
+
 #include "prov/ciphercommon.h"
 
 typedef struct prov_aria_ctx_st {

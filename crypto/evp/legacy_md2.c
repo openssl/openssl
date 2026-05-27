@@ -8,6 +8,7 @@
  */
 
 #include <openssl/md2.h>
+
 #include "crypto/evp.h"
 
 static const EVP_MD md2_md = {

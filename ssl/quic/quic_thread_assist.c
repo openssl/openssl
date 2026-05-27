@@ -7,17 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/quic_thread_assist.h"
+
 #include <openssl/macros.h>
+
 #include "internal/common.h"
 #include "internal/quic_channel.h"
 #include "internal/quic_engine.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_reactor.h"
-#include "quic_local.h"
-#include "internal/time.h"
 #include "internal/thread.h"
 #include "internal/thread_arch.h"
-#include "internal/quic_thread_assist.h"
+#include "internal/time.h"
+
+#include "quic_local.h"
 
 #if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
 

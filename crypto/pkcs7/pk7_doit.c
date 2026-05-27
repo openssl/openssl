@@ -8,14 +8,20 @@
  */
 
 #include <stdio.h>
-#include <openssl/rand.h>
+#include <string.h>
+
+#include <openssl/err.h>
 #include <openssl/objects.h>
+#include <openssl/rand.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/err.h>
+
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
+
 #include "crypto/evp.h"
+#include <crypto/asn1.h>
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
@@ -26,9 +32,6 @@
 #include "openssl/safestack.h"
 #include "openssl/x509_vfy.h"
 #include "pk7_local.h"
-
-#include <crypto/asn1.h>
-#include <string.h>
 
 static int add_attribute(STACK_OF(X509_ATTRIBUTE) **sk, int nid, int atrtype,
     void *value);

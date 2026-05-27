@@ -10,9 +10,10 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_SM4_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_SM4_H
 
-#include "prov/ciphercommon.h"
 #include "crypto/sm4.h"
 #include "crypto/sm4_platform.h"
+
+#include "prov/ciphercommon.h"
 
 typedef struct prov_cast_ctx_st {
     PROV_CIPHER_CTX base; /* Must be first */

@@ -14,6 +14,7 @@
 
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
+
 #include "testutil.h"
 
 static int test_kdf_tls1_prf(int index)

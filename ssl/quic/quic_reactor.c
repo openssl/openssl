@@ -7,22 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/quic_reactor.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <sys/poll.h>
+
 #include "internal/common.h"
 #include "internal/quic_predef.h"
 #include "internal/rio_notifier.h"
 #include "internal/sockets.h"
 #include "internal/thread_arch.h"
 #include "internal/time.h"
+
 #include "openssl/bio.h"
-#include <assert.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <sys/poll.h>
 
 #if defined(OPENSSL_SYS_WINDOWS)
-#include <winsock2.h>
 #include <mstcpip.h>
 #include <mswsock.h>
+#include <winsock2.h>
 #endif
 
 /*

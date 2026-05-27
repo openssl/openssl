@@ -14,12 +14,15 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+
+#include <openssl/dh.h>
+#include <openssl/evp.h>
+
 #include "internal/cryptlib.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
-#include <openssl/evp.h>
-#include <openssl/dh.h>
 
 #ifndef OPENSSL_NO_STDIO
 int DHparams_print_fp(FILE *fp, const DH *x)

@@ -13,13 +13,15 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/e_os2.h>
 #include <string.h>
+
+#include <openssl/e_os2.h>
+
+#include "internal/nelem.h"
 
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "testutil.h"
-#include "internal/nelem.h"
 
 #ifndef OPENSSL_NO_DES
 #include <openssl/des.h>

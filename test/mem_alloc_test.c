@@ -11,9 +11,12 @@
 #include <stdbool.h>
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/err.h>
 #include <openssl/types.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/crypto.h"
 #include "openssl/cryptoerr.h"
 #include "openssl/macros.h"

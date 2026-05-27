@@ -10,10 +10,14 @@
 /* Simple PKCS#7 processing functions */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "crypto/x509.h"
+
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/x509.h"
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

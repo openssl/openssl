@@ -7,13 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
 #include <stddef.h>
-#include "../../ssl_local.h"
-#include "../record_local.h"
+
+#include <openssl/evp.h>
+
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/recordmethod.h"
+
+#include "../../ssl_local.h"
+#include "../record_local.h"
 #include "openssl/dtls1.h"
 #include "openssl/err.h"
 #include "openssl/prov_ssl.h"

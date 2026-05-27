@@ -14,11 +14,13 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/core_names.h>
+
 #include "internal/numbers.h"
 #include "internal/sizes.h"
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"

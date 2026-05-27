@@ -13,11 +13,17 @@
  */
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #define OPENSSL_SUPPRESS_DEPRECATED
+#include <limits.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <time.h>
+
 #include "internal/packet.h"
 #include "internal/refcount.h"
 #include "internal/statem.h"
 #include "internal/time.h"
 #include "internal/tlssigalgs.h"
+
 #include "openssl/asn1.h"
 #include "openssl/bn.h"
 #include "openssl/core.h"
@@ -36,41 +42,38 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "ssl/record/record.h"
-#include <limits.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <time.h>
 #endif
 
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/ssl.h>
-#include <openssl/ocsp.h>
-#include <openssl/srp.h>
-#include <openssl/txt_db.h>
 #include <openssl/aes.h>
-#include <openssl/rand.h>
-#include <openssl/core_names.h>
+#include <openssl/bio.h>
 #include <openssl/core_dispatch.h>
-#include <openssl/provider.h>
-#include <openssl/param_build.h>
-#include <openssl/x509v3.h>
+#include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/dh.h>
+#include <openssl/ocsp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/param_build.h>
+#include <openssl/provider.h>
+#include <openssl/rand.h>
+#include <openssl/srp.h>
+#include <openssl/ssl.h>
+#include <openssl/txt_db.h>
+#include <openssl/x509v3.h>
 
+#include "internal/ktls.h"
+#include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/tlsgroups.h"
+
+#include "../ssl/record/methods/recmethod_local.h"
+#include "../ssl/ssl_local.h"
+#include "filterprov.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "testutil/output.h"
-#include "internal/nelem.h"
-#include "internal/tlsgroups.h"
-#include "internal/ktls.h"
-#include "internal/ssl_unwrap.h"
-#include "../ssl/ssl_local.h"
-#include "../ssl/record/methods/recmethod_local.h"
-#include "filterprov.h"
 
 #undef OSSL_NO_USABLE_TLS1_3
 #if defined(OPENSSL_NO_TLS1_3) \

@@ -6,13 +6,14 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <openssl/lhash.h>
 #include <assert.h>
 
-#include "internal/quic_engine.h"
+#include <openssl/lhash.h>
+
 #include "internal/quic_channel.h"
-#include "internal/quic_ssl.h"
+#include "internal/quic_engine.h"
 #include "internal/quic_error.h"
+#include "internal/quic_ssl.h"
 
 /*
  * RADIX 6D QUIC Test Framework

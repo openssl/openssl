@@ -8,18 +8,19 @@
  */
 
 #include <openssl/asn1t.h>
-#include <openssl/x509.h>
+#include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/pem.h>
-#include <openssl/cms.h>
+#include <openssl/x509.h>
+
+#include <crypto/asn1.h>
+
 #include "cms_local.h"
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "openssl/safestack.h"
-
-#include <crypto/asn1.h>
 
 /* unfortunately cannot constify BIO_new_NDEF() due to this and PKCS7_stream() */
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)

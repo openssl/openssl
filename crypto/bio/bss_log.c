@@ -16,14 +16,16 @@
  *
  */
 
-#include <stdio.h>
+#include "bio_local.h"
+
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 #include <sys/syslog.h>
 
-#include "bio_local.h"
 #include "internal/bio.h"
 #include "internal/cryptlib.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 
@@ -32,9 +34,9 @@
 #elif defined(__wasi__)
 #define NO_SYSLOG
 #elif defined(OPENSSL_SYS_VMS)
-#include <opcdef.h>
 #include <descrip.h>
 #include <lib$routines.h>
+#include <opcdef.h>
 #include <starlet.h>
 /* Some compiler options may mask the declaration of "_malloc32". */
 #if __INITIAL_POINTER_SIZE && defined _ANSI_C_SOURCE

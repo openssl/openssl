@@ -8,8 +8,9 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <openssl/buffer.h>
+
 #include <openssl/bio.h>
+#include <openssl/buffer.h>
 
 #include "openssl/asn1.h"
 #include "openssl/obj_mac.h"

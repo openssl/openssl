@@ -21,10 +21,13 @@
  * }
  */
 
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
-#include <stddef.h>
 #include "crypto/asn1_dsa.h"
+
+#include <stddef.h>
+
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+
 #include "internal/packet.h"
 
 #define ID_SEQUENCE 0x30

@@ -7,15 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/bn.h"
+#include <stddef.h>
+
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
 #include "openssl/bn.h"
 #include "openssl/bnerr.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
-#include <stddef.h>
 
 int BN_nnmod(BIGNUM *r, const BIGNUM *m, const BIGNUM *d, BN_CTX *ctx)
 {

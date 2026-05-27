@@ -7,10 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
+
+#include <openssl/crypto.h>
+
 #include "ml_dsa_local.h"
 #include "ml_dsa_poly.h"
-#include <openssl/crypto.h>
-#include <stdint.h>
 
 /* Assembly function declarations for AVX2 implementations */
 #if !defined(OPENSSL_NO_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))

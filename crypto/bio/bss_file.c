@@ -25,19 +25,23 @@
 #endif
 #endif
 
-#include <stdio.h>
-#include <errno.h>
 #include "bio_local.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+
 #include <openssl/err.h>
+
 #include "internal/bio.h"
 #include "internal/common.h"
 #include "internal/cryptlib.h"
+
 #include "openssl/bio.h"
 #include "openssl/bioerr.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
-#include <limits.h>
-#include <string.h>
 
 #if !defined(OPENSSL_NO_STDIO)
 

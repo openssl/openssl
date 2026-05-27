@@ -16,11 +16,14 @@
  * they are tested as part of a higher level algorithm (such as HMAC).
  */
 
-#include <openssl/kdf.h>
 #include <openssl/core_names.h>
-#include "self_test.h"
-#include "crypto/ml_kem.h"
+#include <openssl/kdf.h>
+
 #include "internal/nelem.h"
+
+#include "crypto/ml_kem.h"
+
+#include "self_test.h"
 
 /* Macros to build Self test data */
 #define ITM(x) ((const void *)&x), sizeof(x)

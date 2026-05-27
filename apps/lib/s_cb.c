@@ -17,6 +17,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h> /* for memcpy() and strcmp() */
+
+#include <openssl/bn.h>
+#include <openssl/core_names.h>
+#include <openssl/err.h>
+#include <openssl/params.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 #include "apps.h"
 #include "fmt.h"
 #include "openssl/asn1.h"
@@ -33,13 +42,6 @@
 #include "openssl/tls1.h"
 #include "openssl/x509_vfy.h"
 #include "opt.h"
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/bn.h>
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
 #endif

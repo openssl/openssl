@@ -13,20 +13,26 @@
  * cost of this is not having certain buffer overrun/underrun checks etc for
  * this source file :-(
  */
-#include "internal/cryptlib.h"
 #include "openssl/async.h"
+
+#include <limits.h>
+
+#include "internal/cryptlib.h"
+
 #include "openssl/asyncerr.h"
 #include "openssl/crypto.h"
-#include <limits.h>
 #undef _FORTIFY_SOURCE
 
 /* This must be the first #include file */
-#include "async_local.h"
-#include "internal/threads_common.h"
+#include <string.h>
 
 #include <openssl/err.h>
+
+#include "internal/threads_common.h"
+
 #include "crypto/cryptlib.h"
-#include <string.h>
+
+#include "async_local.h"
 
 #define ASYNC_JOB_RUNNING 0
 #define ASYNC_JOB_PAUSING 1

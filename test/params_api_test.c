@@ -10,15 +10,18 @@
 
 #include <stdint.h>
 #include <string.h>
+#include <time.h>
+
+#include <openssl/bn.h>
+#include <openssl/params.h>
+
 #include "internal/common.h"
+#include "internal/endian.h"
+#include "internal/nelem.h"
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "testutil.h"
-#include "internal/nelem.h"
-#include "internal/endian.h"
-#include <openssl/params.h>
-#include <openssl/bn.h>
-#include <time.h>
 
 /* The maximum size of the static buffers used to test most things */
 #define MAX_LEN 20

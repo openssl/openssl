@@ -7,11 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <openssl/conf.h>
+#include <openssl/core_dispatch.h>
+#include <openssl/decoder.h>
+#include <openssl/objects.h>
+
+#include "internal/e_os.h"
+#include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
@@ -23,14 +33,6 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "ssl_local.h"
-#include <openssl/conf.h>
-#include <openssl/objects.h>
-#include <openssl/decoder.h>
-#include <openssl/core_dispatch.h>
-#include <stdlib.h>
-#include <string.h>
-#include "internal/nelem.h"
-#include "internal/ssl_unwrap.h"
 
 /*
  * structure holding name tables. This is used for permitted elements in lists

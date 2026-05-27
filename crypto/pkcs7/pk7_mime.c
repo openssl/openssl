@@ -8,10 +8,14 @@
  */
 
 #include <stdio.h>
-#include "crypto/pkcs7.h"
-#include "internal/cryptlib.h"
-#include <openssl/x509.h>
+
 #include <openssl/asn1.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/pkcs7.h"
+
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"

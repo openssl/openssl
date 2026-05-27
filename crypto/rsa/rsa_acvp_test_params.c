@@ -8,9 +8,12 @@
  */
 
 #include <string.h> /* memcpy */
+
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
+
 #include "crypto/rsa.h"
+
 #include "rsa_local.h"
 
 int ossl_rsa_acvp_test_gen_params_new(OSSL_PARAM **dst, const OSSL_PARAM src[])

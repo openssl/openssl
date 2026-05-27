@@ -8,18 +8,21 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/objects.h>
-#include <openssl/x509.h>
 #include <openssl/ocsp.h>
+#include <openssl/rand.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
 #include "ocsp_local.h"
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
 #include "openssl/safestack.h"
-#include <openssl/rand.h>
-#include <openssl/x509v3.h>
-#include <string.h>
 
 /* Standard wrapper functions for extensions */
 

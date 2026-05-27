@@ -9,6 +9,10 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/err.h>
+#include <openssl/pem.h>
+
 #include "apps.h"
 #include "fmt.h"
 #include "openssl/bio.h"
@@ -16,8 +20,6 @@
 #include "openssl/x509.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/pem.h>
-#include <openssl/err.h>
 
 typedef enum OPTION_choice {
     OPT_COMMON,

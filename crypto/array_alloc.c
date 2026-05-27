@@ -12,10 +12,12 @@
  * perform integer overflow checking for size calculation.
  */
 
+#include <stddef.h>
+
+#include <openssl/crypto.h>
+
 #include "internal/common.h"
 #include "internal/mem_alloc_utils.h"
-#include <openssl/crypto.h>
-#include <stddef.h>
 
 void *CRYPTO_malloc_array(size_t num, size_t size, const char *file, int line)
 {

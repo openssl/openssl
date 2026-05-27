@@ -26,16 +26,20 @@
  * cases increases its link count) in the parent and so both should be freed up.
  */
 
-#include "crmf_local.h"
 #include <limits.h>
-#include <openssl/asn1t.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/asn1t.h>
+
 #include "internal/constant_time.h"
 #include "internal/crmf.h"
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
+
 #include "crypto/x509.h" /* for ossl_x509_check_private_key() */
+
+#include "crmf_local.h"
 #include "openssl/asn1.h"
 #include "openssl/asn1err.h"
 #include "openssl/bio.h"

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/crypto.h>
+
 #include "apps.h"
 #include "openssl/bio.h"
 #include "opt.h"

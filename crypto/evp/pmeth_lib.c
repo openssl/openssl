@@ -17,13 +17,16 @@
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/evp.h>
+#include <string.h>
+
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
-#include <openssl/rsa.h>
+#include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <string.h>
+#include <openssl/rsa.h>
+
 #include "internal/cryptlib.h"
+
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
@@ -34,13 +37,15 @@
 #ifndef FIPS_MODULE
 #include "crypto/asn1.h"
 #endif
-#include "crypto/evp.h"
-#include "crypto/dh.h"
-#include "crypto/ec.h"
+#include "internal/common.h"
 #include "internal/ffc.h"
 #include "internal/numbers.h"
 #include "internal/provider.h"
-#include "internal/common.h"
+
+#include "crypto/dh.h"
+#include "crypto/ec.h"
+#include "crypto/evp.h"
+
 #include "evp_local.h"
 
 #ifndef FIPS_MODULE

@@ -13,21 +13,26 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/constant_time.h"
-
 #include <stdint.h>
 #include <stdio.h>
+
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
+
+#include "internal/constant_time.h"
 /* Just for the SSL_MAX_MASTER_KEY_LENGTH value */
-#include <openssl/prov_ssl.h>
-#include <openssl/evp.h>
-#include <openssl/sha.h>
-#include <openssl/hmac.h>
 #include <string.h>
+
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/prov_ssl.h>
+#include <openssl/sha.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/rsa.h"
+
 #include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/rsaerr.h"

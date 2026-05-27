@@ -7,15 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <ctype.h>
+#include <string.h>
+
+#include <openssl/err.h>
+#include <openssl/provider.h>
+#include <openssl/safestack.h>
+
 #include "app_libctx.h"
 #include "apps.h"
 #include "openssl/crypto.h"
 #include "opt.h"
-#include <ctype.h>
-#include <string.h>
-#include <openssl/err.h>
-#include <openssl/provider.h>
-#include <openssl/safestack.h>
 
 /* Non-zero if any of the provider options have been seen */
 static int provider_option_given = 0;

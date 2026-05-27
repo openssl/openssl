@@ -7,7 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/dtls1.h"
@@ -17,10 +23,6 @@
 #include "openssl/sslerr.h"
 #include "ssl/record/record.h"
 #include "ssl_local.h"
-#include "internal/ssl_unwrap.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
     size_t len, size_t *written)

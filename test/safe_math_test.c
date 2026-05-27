@@ -20,6 +20,7 @@
 
 #include "internal/nelem.h"
 #include "internal/safe_math.h"
+
 #include "testutil.h"
 
 /* Create the safe math instances we're interested in */

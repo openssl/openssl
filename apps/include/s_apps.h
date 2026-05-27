@@ -11,9 +11,8 @@
 #define OSSL_APPS_INCLUDE_S_APPS_H
 
 #include <openssl/opensslconf.h>
-
-#include <openssl/ssl.h>
 #include <openssl/srp.h>
+#include <openssl/ssl.h>
 
 #define PORT "4433"
 #define PROTOCOL "tcp"

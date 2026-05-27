@@ -9,13 +9,16 @@
 
 #include <assert.h>
 /* For SSL3_VERSION, TLS1_VERSION etc */
-#include <openssl/prov_ssl.h>
-#include <openssl/rand.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/prov_ssl.h>
+#include <openssl/proverr.h>
+#include <openssl/rand.h>
+
 #include "internal/constant_time.h"
 #include "internal/ssl3_cbc.h"
+
 #include "ciphercommon_local.h"
 #include "openssl/err.h"
 

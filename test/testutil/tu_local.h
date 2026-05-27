@@ -8,8 +8,10 @@
  */
 
 #include <stdlib.h> /* size_t */
-#include <openssl/bn.h>
+
 #include <openssl/bio.h>
+#include <openssl/bn.h>
+
 #include "../testutil.h"
 
 #define TEST_SKIP_CODE 123

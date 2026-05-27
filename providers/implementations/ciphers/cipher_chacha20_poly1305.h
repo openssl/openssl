@@ -12,8 +12,8 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CHACHA20_POLY1305_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CHACHA20_POLY1305_H
 
-#include "include/crypto/poly1305.h"
 #include "cipher_chacha20.h"
+#include "include/crypto/poly1305.h"
 
 #define NO_TLS_PAYLOAD_LENGTH ((size_t)-1)
 #define CHACHA20_POLY1305_IVLEN 12

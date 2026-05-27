@@ -8,10 +8,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
-#include <openssl/bn.h>
-#include <stddef.h>
 #include "crypto/sparse_array.h"
+
+#include <stddef.h>
+
+#include <openssl/bn.h>
+#include <openssl/crypto.h>
+
 #include "openssl/e_os2.h"
 
 /*

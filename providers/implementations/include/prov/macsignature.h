@@ -11,8 +11,11 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_MACSIGNATURE_H
 
 #include <stdlib.h>
+
 #include <openssl/crypto.h>
+
 #include "internal/refcount.h"
+
 #include "prov/provider_util.h"
 
 struct mac_key_st {

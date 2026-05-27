@@ -11,15 +11,19 @@
  */
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+
+#include "internal/numbers.h"
+
 #include "crypto/ec/curve448/curve448utils.h"
 #include "crypto/ec/curve448/point_448.h"
 #include "crypto/ecx.h"
+
 #include "curve448_local.h"
-#include "word.h"
 #include "ed448.h"
-#include "internal/numbers.h"
+#include "word.h"
 
 #define COFACTOR 4
 

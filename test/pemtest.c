@@ -8,13 +8,15 @@
  */
 
 #include <string.h>
+
 #include <openssl/bio.h>
 #include <openssl/pem.h>
+
+#include "internal/nelem.h"
 
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "testutil.h"
-#include "internal/nelem.h"
 
 typedef struct {
     const char *raw;

@@ -16,14 +16,15 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <openssl/bn.h>
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
+#include <openssl/bn.h>
 #include <openssl/srp.h>
+#include <openssl/ssl.h>
+
+#include "apps.h"
+#include "apps_ui.h"
 #include "openssl/crypto.h"
 #include "openssl/ssl3.h"
-#include "apps_ui.h"
-#include "apps.h"
 #include "s_apps.h"
 
 static int srp_Verify_N_and_g(const BIGNUM *N, const BIGNUM *g)

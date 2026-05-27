@@ -8,10 +8,13 @@
  */
 
 #include <string.h> /* memset */
+
 #include <openssl/core_names.h>
+
 #include "internal/ffc.h"
-#include "internal/param_build_set.h"
 #include "internal/nelem.h"
+#include "internal/param_build_set.h"
+
 #include "openssl/bio.h"
 #include "openssl/bn.h"
 #include "openssl/core.h"

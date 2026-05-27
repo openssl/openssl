@@ -10,10 +10,11 @@
 #ifndef OSSL_PROV_BLAKE2_H
 #define OSSL_PROV_BLAKE2_H
 
-#include <openssl/opensslconf.h>
+#include <stddef.h>
 
 #include <openssl/e_os2.h>
-#include <stddef.h>
+#include <openssl/opensslconf.h>
+
 #include <crypto/evp.h>
 
 #define BLAKE2S_BLOCKBYTES 64

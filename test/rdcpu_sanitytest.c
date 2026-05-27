@@ -10,8 +10,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "testutil.h"
+
 #include "internal/cryptlib.h"
+
+#include "testutil.h"
 
 #if (defined(__i386) || defined(__i386__) || defined(_M_IX86) || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) && defined(OPENSSL_CPUID_OBJ)
 #define IS_X_86 1

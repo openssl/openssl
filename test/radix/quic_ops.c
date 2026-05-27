@@ -6,8 +6,9 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "internal/sockets.h"
 #include <openssl/rand.h>
+
+#include "internal/sockets.h"
 
 static const unsigned char alpn_ossltest[] = {
     /* "\x08ossltest" (hex for EBCDIC resilience) */

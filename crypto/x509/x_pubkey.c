@@ -14,19 +14,26 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
-#include "crypto/x509.h"
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/decoder.h>
-#include <openssl/encoder.h>
 #include <string.h>
+
+#include <openssl/asn1t.h>
+#include <openssl/decoder.h>
+#include <openssl/dsa.h>
+#include <openssl/encoder.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/sizes.h"
+
+#include "crypto/asn1.h"
+#include "crypto/ecx.h"
+#include "crypto/evp.h"
+#include "crypto/types.h"
+#include "crypto/x509.h"
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/core.h"
@@ -39,9 +46,6 @@
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "openssl/x509err.h"
-#include "crypto/ecx.h"
-#include "crypto/types.h"
-#include "internal/common.h"
 
 struct X509_pubkey_st {
     X509_ALGOR *algor;

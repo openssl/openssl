@@ -25,13 +25,17 @@
  */
 
 #include <string.h> /* memset */
-#include <openssl/sha.h> /* SHA_DIGEST_LENGTH */
-#include <openssl/rand.h>
-#include <openssl/err.h>
+
 #include <openssl/dherr.h>
 #include <openssl/dsaerr.h>
-#include "crypto/bn.h"
+#include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h> /* SHA_DIGEST_LENGTH */
+
 #include "internal/ffc.h"
+
+#include "crypto/bn.h"
+
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"

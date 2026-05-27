@@ -8,7 +8,9 @@
  */
 
 #include <string.h>
+
 #include <openssl/sha.h>
+
 #include "openssl/evp.h"
 #include "testutil.h"
 

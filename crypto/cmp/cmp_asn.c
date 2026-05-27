@@ -10,10 +10,12 @@
  */
 
 #include <limits.h>
+
 #include <openssl/asn1t.h>
 
-#include "cmp_local.h"
 #include "internal/crmf.h"
+
+#include "cmp_local.h"
 #include "openssl/asn1.h"
 #include "openssl/asn1err.h"
 #include "openssl/cmperr.h"
@@ -27,9 +29,10 @@
 #include "openssl/x509v3.h"
 
 /* explicit #includes not strictly needed since implied by the above: */
+#include <stdint.h>
+
 #include <openssl/cmp.h>
 #include <openssl/crmf.h>
-#include <stdint.h>
 
 /* ASN.1 declarations from RFC 9810 */
 ASN1_SEQUENCE(OSSL_CMP_REVANNCONTENT) = {

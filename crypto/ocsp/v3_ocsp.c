@@ -8,14 +8,17 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/conf.h>
-#include <openssl/asn1.h>
-#include <openssl/ocsp.h>
-#include "ocsp_local.h"
-#include <openssl/x509v3.h>
 #include <string.h>
+
+#include <openssl/asn1.h>
+#include <openssl/conf.h>
+#include <openssl/ocsp.h>
+#include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
 #include "../x509/ext_dat.h"
+#include "ocsp_local.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"

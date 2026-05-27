@@ -12,11 +12,12 @@
  */
 
 #include <stdio.h>
-#include <openssl/err.h>
+
 #include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/crypto.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 
 /* ARIA key */
 static const unsigned char cbc_key[] = {

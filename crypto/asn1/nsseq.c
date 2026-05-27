@@ -7,14 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+
+#include <openssl/asn1t.h>
+#include <openssl/objects.h>
+#include <openssl/x509.h>
+
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <openssl/asn1t.h>
-#include <openssl/x509.h>
-#include <openssl/objects.h>
 
 static int nsseq_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)

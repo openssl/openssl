@@ -9,11 +9,14 @@
 
 #include <stdint.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "internal/numbers.h"
+#include <string.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
-#include <string.h>
+
+#include "internal/cryptlib.h"
+#include "internal/numbers.h"
+
 #include "asn1_local.h"
 #include "openssl/asn1.h"
 #include "openssl/asn1err.h"

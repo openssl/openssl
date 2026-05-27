@@ -8,8 +8,11 @@
  */
 
 #include <stdlib.h>
+
 #include <openssl/bn.h>
+
 #include "internal/cryptlib.h"
+
 #include "arch/sparc_arch.h"
 #include "bn_local.h" /* for definition of bn_mul_mont */
 

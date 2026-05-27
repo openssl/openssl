@@ -8,14 +8,14 @@
  */
 
 #include <string.h>
+#include <time.h>
 
-#include <openssl/opensslconf.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <time.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/ssl.h>
 
 #include "internal/packet.h"
 

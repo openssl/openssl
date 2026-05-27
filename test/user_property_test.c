@@ -7,14 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/provider.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/provider.h>
+
 #include "openssl/params.h"
-#include <stddef.h>
 #include "testutil.h"
 
 #define MYPROPERTIES "foo.bar=yes"

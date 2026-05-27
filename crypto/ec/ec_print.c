@@ -8,8 +8,11 @@
  */
 
 #include <string.h> /* strlen */
+
 #include <openssl/crypto.h>
+
 #include "internal/cryptlib.h"
+
 #include "ec_local.h"
 #include "openssl/ec.h"
 

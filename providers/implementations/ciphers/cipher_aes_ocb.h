@@ -11,8 +11,10 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_OCB_H
 
 #include <openssl/aes.h>
-#include "prov/ciphercommon.h"
+
 #include "crypto/aes_platform.h"
+
+#include "prov/ciphercommon.h"
 
 #define OCB_MAX_TAG_LEN AES_BLOCK_SIZE
 #define OCB_MAX_DATA_LEN AES_BLOCK_SIZE

@@ -8,8 +8,9 @@
  */
 #include <openssl/ssl.h>
 
-#include "helpers/ssltestlib.h"
 #include "internal/dane.h"
+
+#include "helpers/ssltestlib.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
 #include "openssl/provider.h"

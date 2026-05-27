@@ -9,13 +9,16 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include "openssl/obj_mac.h"
-#include "crypto/evp.h"
 #include <openssl/core_names.h>
 #include <openssl/macros.h>
+
+#include "crypto/evp.h"
+
+#include "openssl/obj_mac.h"
 #ifndef OPENSSL_NO_DEPRECATED_3_6
-#include "crypto/asn1.h"
 #include <openssl/types.h>
+
+#include "crypto/asn1.h"
 #else
 #include "internal/nelem.h"
 #endif

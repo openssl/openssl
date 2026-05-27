@@ -14,14 +14,17 @@
 #include "internal/deprecated.h"
 
 #include <limits.h>
-#include <openssl/sha.h>
-#include <openssl/rand.h>
-#include <openssl/proverr.h>
 #include <stddef.h>
 #include <string.h>
-#include "cipher_tdes_default.h"
+
+#include <openssl/proverr.h>
+#include <openssl/rand.h>
+#include <openssl/sha.h>
+
 #include "crypto/evp.h"
 #include "crypto/sha.h"
+
+#include "cipher_tdes_default.h"
 #include "openssl/buffer.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"

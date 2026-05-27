@@ -15,8 +15,10 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/proverr.h>
 #include "cipher_rc5.h"
+
+#include <openssl/proverr.h>
+
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

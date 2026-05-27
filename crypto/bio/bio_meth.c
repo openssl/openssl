@@ -8,15 +8,18 @@
  */
 
 #include "bio_local.h"
-#include "internal/bio.h"
-#include "internal/refcount.h"
-#include "internal/thread_once.h"
-#include "openssl/bio.h"
-#include "openssl/crypto.h"
-#include "openssl/err.h"
+
 #include <limits.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include "internal/bio.h"
+#include "internal/refcount.h"
+#include "internal/thread_once.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 CRYPTO_REF_COUNT bio_type_count;
 static CRYPTO_ONCE bio_type_init = CRYPTO_ONCE_STATIC_INIT;

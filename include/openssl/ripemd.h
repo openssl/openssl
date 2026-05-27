@@ -19,8 +19,9 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_RMD160
-#include <openssl/e_os2.h>
 #include <stddef.h>
+
+#include <openssl/e_os2.h>
 
 #define RIPEMD160_DIGEST_LENGTH 20
 

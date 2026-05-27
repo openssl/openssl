@@ -11,6 +11,7 @@
 #define OSSL_INTERNAL_THREAD_ARCH_H
 #include <openssl/configuration.h>
 #include <openssl/e_os2.h>
+
 #include "internal/time.h"
 
 #if defined(_WIN32)

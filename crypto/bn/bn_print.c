@@ -8,7 +8,9 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/bio.h>
+
 #include "bn_local.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"

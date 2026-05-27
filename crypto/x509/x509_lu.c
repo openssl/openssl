@@ -9,14 +9,18 @@
 
 #include <stdint.h>
 #include <stdio.h>
+
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #include "internal/cryptlib.h"
-#include "internal/hashtable.h"
 #include "internal/hashfunc.h"
+#include "internal/hashtable.h"
 #include "internal/rcu.h"
 #include "internal/refcount.h"
-#include <openssl/x509.h>
+
 #include "crypto/x509.h"
-#include <openssl/x509v3.h>
+
 #include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/safestack.h"

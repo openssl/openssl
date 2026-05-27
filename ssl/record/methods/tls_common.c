@@ -8,21 +8,23 @@
  */
 
 #include <assert.h>
-#include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/core_names.h>
-#include <openssl/comp.h>
-#include <openssl/ssl.h>
-#include "internal/common.h"
 #include <stdarg.h>
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include <openssl/bio.h>
+#include <openssl/comp.h>
+#include <openssl/core_names.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
+#include "internal/common.h"
 #include "internal/e_os.h"
 #include "internal/packet.h"
 #include "internal/recordmethod.h"
 #include "internal/ssl3_cbc.h"
+
 #include "../../ssl_local.h"
 #include "../record_local.h"
 #include "openssl/crypto.h"

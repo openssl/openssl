@@ -8,12 +8,13 @@
  */
 
 /* This must be the first #include file */
+#include <stddef.h>
+
+#include <openssl/err.h>
+
 #include "async_local.h"
 #include "openssl/async.h"
 #include "openssl/crypto.h"
-
-#include <openssl/err.h>
-#include <stddef.h>
 
 ASYNC_WAIT_CTX *ASYNC_WAIT_CTX_new(void)
 {

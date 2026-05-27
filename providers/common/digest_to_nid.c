@@ -9,15 +9,18 @@
 
 #include "internal/deprecated.h"
 
-#include <openssl/objects.h>
+#include <stddef.h>
+
+#include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
-#include <openssl/core.h>
+#include <openssl/objects.h>
+
+#include "internal/nelem.h"
+
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"
-#include <stddef.h>
 #include "prov/securitycheck.h"
-#include "internal/nelem.h"
 
 /*
  * Internal library code deals with NIDs, so we need to translate from a name.

@@ -8,6 +8,15 @@
  */
 
 #include "internal/quic_port.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+
+#include <openssl/rand.h>
+
 #include "internal/common.h"
 #include "internal/list.h"
 #include "internal/nelem.h"
@@ -30,6 +39,8 @@
 #include "internal/statem.h"
 #include "internal/thread_arch.h"
 #include "internal/time.h"
+
+#include "../ssl_local.h"
 #include "openssl/bio.h"
 #include "openssl/buffer.h"
 #include "openssl/crypto.h"
@@ -37,17 +48,10 @@
 #include "openssl/evp.h"
 #include "openssl/ssl.h"
 #include "openssl/sslerr.h"
-#include "quic_port_local.h"
 #include "quic_channel_local.h"
 #include "quic_engine_local.h"
 #include "quic_local.h"
-#include "../ssl_local.h"
-#include <assert.h>
-#include <openssl/rand.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <sys/socket.h>
+#include "quic_port_local.h"
 
 /*
  * QUIC Port Structure

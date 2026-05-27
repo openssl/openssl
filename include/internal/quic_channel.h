@@ -11,13 +11,14 @@
 #define OSSL_QUIC_CHANNEL_H
 
 #include <openssl/ssl.h>
-#include "internal/quic_types.h"
-#include "internal/quic_record_tx.h"
-#include "internal/quic_wire.h"
-#include "internal/quic_predef.h"
+
 #include "internal/qlog.h"
-#include "internal/time.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
 #include "internal/thread.h"
+#include "internal/time.h"
 
 #ifndef OPENSSL_NO_QUIC
 

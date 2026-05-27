@@ -1,7 +1,9 @@
 #include "internal/quic_vlint.h"
-#include "internal/e_os.h"
+
 #include <stddef.h>
 #include <stdint.h>
+
+#include "internal/e_os.h"
 
 #ifndef OPENSSL_NO_QUIC
 

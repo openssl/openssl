@@ -8,7 +8,16 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/bn.h>
+#include <openssl/buffer.h>
+#include <openssl/objects.h>
+#include <openssl/x509_acert.h>
+
 #include "internal/cryptlib.h"
+
+#include <crypto/asn1.h>
+
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
@@ -17,12 +26,6 @@
 #include "openssl/x509.h"
 #include "openssl/x509err.h"
 #include "openssl/x509v3.h"
-#include <openssl/buffer.h>
-#include <openssl/bn.h>
-#include <openssl/objects.h>
-#include <openssl/x509_acert.h>
-
-#include <crypto/asn1.h>
 
 static int print_attribute(BIO *bp, X509_ATTRIBUTE *a)
 {

@@ -14,16 +14,21 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <openssl/x509.h>
+
 #include <openssl/asn1.h>
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
-#include "internal/ffc.h"
+#include <openssl/x509.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/ffc.h"
+
 #include "crypto/asn1.h"
 #include "crypto/dh.h"
 #include "crypto/evp.h"
+
 #include "dh_local.h"
 #include "openssl/bio.h"
 #include "openssl/core_dispatch.h"
@@ -34,7 +39,6 @@
 #include "openssl/evp.h"
 #include "openssl/objects.h"
 #include "openssl/params.h"
-#include "internal/common.h"
 
 /*
  * i2d/d2i like DH parameter functions which use the appropriate routine for

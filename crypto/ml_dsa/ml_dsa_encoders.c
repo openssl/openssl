@@ -7,22 +7,26 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/byteorder.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/proverr.h>
+
+#include "internal/constant_time.h"
+#include "internal/packet.h"
+
 #include "crypto/ml_dsa.h"
 #include "crypto/ml_dsa/ml_dsa_local.h"
 #include "crypto/ml_dsa/ml_dsa_poly.h"
 #include "crypto/ml_dsa/ml_dsa_vector.h"
-#include "internal/constant_time.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
+
 #include "ml_dsa_hash.h"
 #include "ml_dsa_key.h"
 #include "ml_dsa_sign.h"
-#include "internal/packet.h"
 #include "openssl/crypto.h"
 
 #define POLY_COEFF_NUM_BYTES(bits) ((bits) * (ML_DSA_NUM_POLY_COEFFICIENTS / 8))

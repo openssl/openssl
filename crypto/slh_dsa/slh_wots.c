@@ -9,14 +9,18 @@
 
 #include <stdint.h>
 #include <string.h>
+
 #include <openssl/crypto.h>
+
+#include "internal/packet.h"
+
 #include "crypto/slh_dsa.h"
 #include "crypto/slh_dsa/slh_adrs.h"
 #include "crypto/slh_dsa/slh_hash.h"
-#include "internal/packet.h"
+
 #include "openssl/e_os2.h"
-#include "slh_dsa_local.h"
 #include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 /* For the parameter sets defined there is only one w value */
 #define SLH_WOTS_LOGW 4

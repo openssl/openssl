@@ -13,22 +13,24 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rand.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
+
+#include "cipher_tdes.h"
+#include "fips/fipsindicator.h"
 #include "openssl/core_names.h"
 #include "openssl/crypto.h"
 #include "openssl/des.h"
 #include "openssl/err.h"
 #include "openssl/evp.h"
 #include "openssl/params.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 #include "prov/ciphercommon.h"
-#include "cipher_tdes.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "fips/fipsindicator.h"
 
 void *ossl_tdes_newctx(void *provctx, int mode, size_t kbits, size_t blkbits,
     size_t ivbits, uint64_t flags, const PROV_CIPHER_HW *hw)

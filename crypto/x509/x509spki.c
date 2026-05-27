@@ -8,13 +8,16 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/x509.h>
+
 #include "internal/cryptlib.h"
+
 #include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/evp.h"
 #include "openssl/x509err.h"
-#include <openssl/x509.h>
-#include <string.h>
 
 int NETSCAPE_SPKI_set_pubkey(NETSCAPE_SPKI *x, EVP_PKEY *pkey)
 {

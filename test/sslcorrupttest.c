@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+
 #include "helpers/ssltestlib.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

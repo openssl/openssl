@@ -6,13 +6,15 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "openssl/evp.h"
-#include "openssl/obj_mac.h"
 #include <openssl/macros.h>
 
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+
 #ifndef OPENSSL_NO_RC2
-#include "crypto/evp.h"
 #include <openssl/rc2.h>
+
+#include "crypto/evp.h"
 
 IMPLEMENT_BLOCK_CIPHER(rc2, ks, RC2, EVP_RC2_KEY, NID_rc2,
     8,

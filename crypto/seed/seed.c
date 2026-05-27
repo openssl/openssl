@@ -48,6 +48,7 @@
 #endif
 
 #include <openssl/seed.h>
+
 #include "seed_local.h"
 
 #ifdef SS /* can get defined on Solaris by inclusion of \

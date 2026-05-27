@@ -1,8 +1,9 @@
 #ifndef OSSL_CRYPTO_EVP_B64_AVX2_H
 #define OSSL_CRYPTO_EVP_B64_AVX2_H
 
-#include <openssl/evp.h>
 #include <stddef.h>
+
+#include <openssl/evp.h>
 
 #if defined(__clang__)
 #define HAVE_AVX2_INTRINSICS 1

@@ -11,12 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal/nelem.h"
-
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+
+#include "internal/nelem.h"
 
 #include "openssl/crypto.h"
 #include "testutil.h"

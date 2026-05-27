@@ -8,9 +8,12 @@
  */
 
 #include <assert.h>
-#include "crypto/bn.h"
 #include <string.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"

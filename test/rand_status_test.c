@@ -8,6 +8,7 @@
  */
 
 #include <openssl/rand.h>
+
 #include "testutil.h"
 
 /*

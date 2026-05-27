@@ -10,6 +10,7 @@
 /* Dispatch functions for ARIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_aria.h"
+
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "prov/ciphercommon.h"

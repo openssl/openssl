@@ -8,9 +8,11 @@
  */
 
 #include <openssl/byteorder.h>
+
+#include "internal/common.h"
+
 #include "crypto/lms_sig.h"
 #include "crypto/lms_util.h"
-#include "internal/common.h"
 
 /*
  * Constants used for obtaining unique inputs for different hashing operations

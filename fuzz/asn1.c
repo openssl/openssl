@@ -18,30 +18,33 @@
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
+#include <openssl/bio.h>
+#include <openssl/cms.h>
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
+#include <openssl/err.h>
+#include <openssl/ess.h>
+#include <openssl/evp.h>
 #include <openssl/ocsp.h>
 #include <openssl/pkcs12.h>
-#include <openssl/rsa.h>
-#include <openssl/ts.h>
-#include <openssl/x509v3.h>
-#include <openssl/cms.h>
-#include <openssl/ess.h>
-#include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
+#include <openssl/rsa.h>
 #include <openssl/ssl.h>
+#include <openssl/ts.h>
 #include <openssl/x509_acert.h>
+#include <openssl/x509v3.h>
+
 #include "internal/nelem.h"
+
 #include "fuzzer.h"
 #include "openssl/crypto.h"
-#include <stdint.h>
 
 static ASN1_ITEM_EXP *item_type[] = {
     ASN1_ITEM_ref(ACCESS_DESCRIPTION),

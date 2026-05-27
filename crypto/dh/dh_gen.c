@@ -24,13 +24,17 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
 #include <openssl/sha.h>
+
+#include "internal/cryptlib.h"
+#include "internal/ffc.h"
+
 #include "crypto/dh.h"
 #include "crypto/security_bits.h"
+
 #include "dh_local.h"
-#include "internal/ffc.h"
 #include "openssl/crypto.h"
 #include "openssl/dh.h"
 #include "openssl/dherr.h"

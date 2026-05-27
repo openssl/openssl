@@ -14,15 +14,19 @@
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
-#include "internal/common.h"
-#include "internal/cryptlib.h"
-#include <openssl/conf.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/x509v3.h>
-#include <openssl/x509.h>
-#include "crypto/x509.h"
 #include <openssl/bn.h>
+#include <openssl/conf.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+
+#include "crypto/x509.h"
+
 #include "ext_dat.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

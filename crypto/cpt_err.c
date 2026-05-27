@@ -8,8 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include <openssl/cryptoerr.h>
+#include <openssl/err.h>
+
 #include "crypto/cryptoerr.h"
 
 #ifndef OPENSSL_NO_ERR

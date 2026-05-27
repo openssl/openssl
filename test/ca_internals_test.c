@@ -11,11 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+
+#include "crypto/asn1.h"
+
 #include "apps.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "testutil.h"
-#include "crypto/asn1.h"
 
 #define binname "ca_internals_test"
 

@@ -7,10 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-#include "crypto/bn.h"
 #include <stddef.h>
+
+#include <openssl/opensslconf.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
 #include "openssl/bn.h"
 #include "openssl/bnerr.h"

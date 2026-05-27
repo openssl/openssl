@@ -17,8 +17,8 @@
 #define HEADER_SSL3_H
 #endif
 
-#include <openssl/comp.h>
 #include <openssl/buffer.h>
+#include <openssl/comp.h>
 #include <openssl/evp.h>
 #include <openssl/ssl.h>
 

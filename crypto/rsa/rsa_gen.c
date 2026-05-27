@@ -23,9 +23,14 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/rsa.h"
+
 #include "openssl/bnerr.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
@@ -35,7 +40,6 @@
 #include "openssl/safestack.h"
 #include "prov/providercommon.h"
 #include "rsa_local.h"
-#include "crypto/rsa.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
 static int rsa_keygen(OSSL_LIB_CTX *libctx, RSA *rsa, int bits, int primes,

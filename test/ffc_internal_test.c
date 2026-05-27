@@ -18,18 +18,20 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal/nelem.h"
-#include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/rand.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+
+#include "internal/ffc.h"
+#include "internal/nelem.h"
+
+#include "crypto/security_bits.h"
+
 #include "openssl/dh.h"
 #include "openssl/obj_mac.h"
 #include "testutil.h"
-
-#include "internal/ffc.h"
-#include "crypto/security_bits.h"
 
 #ifndef OPENSSL_NO_DSA
 static const unsigned char dsa_2048_224_sha224_p[] = {

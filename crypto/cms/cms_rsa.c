@@ -8,13 +8,16 @@
  */
 
 #include <assert.h>
-#include <openssl/cms.h>
-#include <openssl/err.h>
-#include <openssl/core_names.h>
 #include <stddef.h>
+
+#include <openssl/cms.h>
+#include <openssl/core_names.h>
+#include <openssl/err.h>
+
 #include "crypto/asn1.h"
-#include "crypto/rsa.h"
 #include "crypto/evp.h"
+#include "crypto/rsa.h"
+
 #include "cms_local.h"
 #include "openssl/asn1.h"
 #include "openssl/cmserr.h"

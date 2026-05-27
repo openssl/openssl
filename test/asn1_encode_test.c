@@ -12,10 +12,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/rand.h>
 #include <openssl/asn1t.h>
+#include <openssl/rand.h>
+
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+
 #include "openssl/asn1.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"

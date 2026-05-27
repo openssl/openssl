@@ -8,6 +8,7 @@
  */
 
 #include <openssl/evp.h>
+
 #include "testutil.h"
 
 static const unsigned char gcm_key[] = {

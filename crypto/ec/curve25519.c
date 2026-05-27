@@ -15,12 +15,15 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "crypto/ecx.h"
-#include "ec_local.h"
+
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #include "internal/numbers.h"
+
+#include "crypto/ecx.h"
+
+#include "ec_local.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/obj_mac.h"

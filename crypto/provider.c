@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <openssl/err.h>
-#include <openssl/cryptoerr.h>
-#include <openssl/provider.h>
-#include <openssl/core_names.h>
 #include "internal/provider.h"
+
+#include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/cryptoerr.h>
+#include <openssl/err.h>
+#include <openssl/provider.h>
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "provider_local.h"

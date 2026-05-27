@@ -7,13 +7,14 @@
  *  https://www.openssl.org/source/license.html
  */
 
+#include <arpa/inet.h>
 #include <stdio.h>
-#include <unistd.h>
 #include <string.h>
 #include <sys/socket.h>
-#include <arpa/inet.h>
-#include <openssl/ssl.h>
+#include <unistd.h>
+
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 static const int server_port = 4433;
 

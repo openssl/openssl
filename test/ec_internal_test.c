@@ -12,19 +12,23 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <stdio.h>
+
+#include <openssl/ec.h>
+#include <openssl/objects.h>
+
 #include "internal/nelem.h"
+
+#include <crypto/bn.h>
+
+#include "ec_local.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "openssl/ecerr.h"
 #include "openssl/err.h"
 #include "openssl/obj_mac.h"
 #include "testutil.h"
-#include <openssl/ec.h>
-#include "ec_local.h"
-#include <crypto/bn.h>
-#include <openssl/objects.h>
-#include <stddef.h>
-#include <stdio.h>
 
 static size_t crv_len = 0;
 static EC_builtin_curve *curves = NULL;

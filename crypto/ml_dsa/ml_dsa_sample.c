@@ -7,19 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/byteorder.h>
-#include "crypto/ml_dsa.h"
-#include "crypto/ml_dsa/ml_dsa_poly.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "ml_dsa_local.h"
-#include "ml_dsa_vector.h"
-#include "ml_dsa_matrix.h"
-#include "ml_dsa_hash.h"
+
+#include <openssl/byteorder.h>
+
 #include "internal/constant_time.h"
-#include "internal/sha3.h"
 #include "internal/packet.h"
+#include "internal/sha3.h"
+
+#include "crypto/ml_dsa.h"
+#include "crypto/ml_dsa/ml_dsa_poly.h"
+
+#include "ml_dsa_hash.h"
+#include "ml_dsa_local.h"
+#include "ml_dsa_matrix.h"
+#include "ml_dsa_vector.h"
 #include "openssl/e_os2.h"
 #include "openssl/evp.h"
 

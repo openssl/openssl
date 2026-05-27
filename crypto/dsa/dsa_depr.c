@@ -18,16 +18,18 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/opensslconf.h>
-
 #include <stdio.h>
 #include <time.h>
-#include "internal/cryptlib.h"
-#include "openssl/crypto.h"
-#include <openssl/evp.h>
+
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
 #include <openssl/sha.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/crypto.h"
 
 DSA *DSA_generate_parameters(int bits,
     unsigned char *seed_in, int seed_len,

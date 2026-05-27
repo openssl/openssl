@@ -17,20 +17,23 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "internal/nelem.h"
-#include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/rand.h>
+#include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
-#include <openssl/core_names.h>
+#include <openssl/rand.h>
+
+#include "internal/nelem.h"
+
 #include "openssl/evp.h"
 #include "openssl/x509.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_DH
 #include <openssl/dh.h>
+
 #include "crypto/bn_dh.h"
 #include "crypto/dh.h"
 

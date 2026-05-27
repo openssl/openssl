@@ -13,6 +13,7 @@
 
 #include <openssl/aes.h>
 #include <openssl/e_os2.h>
+
 #include "crypto/modes.h"
 
 #ifdef VPAES_ASM

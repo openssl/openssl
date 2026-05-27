@@ -8,16 +8,19 @@
  */
 
 #include <stdio.h>
-#include "internal/common.h"
-#include "internal/cryptlib.h"
+#include <stdlib.h>
+#include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/objects.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 #include "internal/nelem.h"
+
 #include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/safestack.h"
-#include <stdlib.h>
-#include <string.h>
 #include "tbl_standard.h"
 
 static STACK_OF(ASN1_STRING_TABLE) *stable = NULL;

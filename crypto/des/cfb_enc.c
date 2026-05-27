@@ -13,11 +13,13 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/e_os.h"
-#include "des_local.h"
-#include "openssl/des.h"
 #include <assert.h>
 #include <string.h>
+
+#include "internal/e_os.h"
+
+#include "des_local.h"
+#include "openssl/des.h"
 
 /*
  * The input and output are loaded in multiples of 8 bits. What this means is

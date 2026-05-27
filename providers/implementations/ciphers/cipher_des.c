@@ -13,8 +13,15 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rand.h>
+#include "cipher_des.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
+
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/core_names.h"
@@ -22,11 +29,7 @@
 #include "openssl/des.h"
 #include "openssl/err.h"
 #include "openssl/params.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 #include "prov/ciphercommon.h"
-#include "cipher_des.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

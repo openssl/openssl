@@ -8,10 +8,14 @@
  */
 
 #include <assert.h>
-#include <openssl/bn.h>
-#include "crypto/bn.h"
 #include <string.h>
+
+#include <openssl/bn.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
 #include "openssl/bnerr.h"
 #include "openssl/err.h"

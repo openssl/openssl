@@ -8,8 +8,11 @@
  */
 
 #include <string.h>
+
 #include <openssl/pem.h> /* PEM_def_callback() */
+
 #include "internal/thread_once.h"
+
 #include "openssl/crypto.h"
 #include "openssl/ui.h"
 #include "ui_local.h"

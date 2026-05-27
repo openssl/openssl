@@ -10,19 +10,22 @@
  * Originally written by Mike Hamburg
  */
 #include <assert.h>
-#include <openssl/crypto.h>
-#include "crypto/ec/curve448/curve448utils.h"
-#include "internal/constant_time.h"
-#include "openssl/e_os2.h"
 #include <stdint.h>
 #include <string.h>
-#include "word.h"
-#include "field.h"
 
-#include "point_448.h"
-#include "ed448.h"
+#include <openssl/crypto.h>
+
+#include "internal/constant_time.h"
+
+#include "crypto/ec/curve448/curve448utils.h"
 #include "crypto/ecx.h"
+
 #include "curve448_local.h"
+#include "ed448.h"
+#include "field.h"
+#include "openssl/e_os2.h"
+#include "point_448.h"
+#include "word.h"
 
 #define COFACTOR 4
 

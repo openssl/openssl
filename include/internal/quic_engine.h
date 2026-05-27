@@ -11,8 +11,8 @@
 
 #include <openssl/ssl.h>
 
-#include "internal/quic_predef.h"
 #include "internal/quic_port.h"
+#include "internal/quic_predef.h"
 #include "internal/thread_arch.h"
 
 #ifndef OPENSSL_NO_QUIC

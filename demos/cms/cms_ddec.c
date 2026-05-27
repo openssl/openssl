@@ -11,9 +11,9 @@
  * S/MIME detached data decrypt example: rarely done but should the need
  * arise this is an example....
  */
-#include <openssl/pem.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
 
 int main(int argc, char **argv)
 {

@@ -16,6 +16,8 @@
 
 /* Dispatch functions for AES GCM mode */
 
+#include <stddef.h>
+
 #include "cipher_aes_gcm.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
@@ -24,7 +26,6 @@
 #include "prov/ciphercommon_gcm.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include <stddef.h>
 
 static void *aes_gcm_newctx(void *provctx, size_t keybits)
 {

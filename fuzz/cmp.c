@@ -12,12 +12,14 @@
  */
 
 #include <limits.h>
-#include <openssl/bio.h>
-#include <openssl/cmp.h>
-#include "../crypto/cmp/cmp_local.h"
-#include <openssl/err.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <openssl/bio.h>
+#include <openssl/cmp.h>
+#include <openssl/err.h>
+
+#include "../crypto/cmp/cmp_local.h"
 #include "fuzzer.h"
 #include "openssl/asn1.h"
 #include "openssl/cmp_util.h"

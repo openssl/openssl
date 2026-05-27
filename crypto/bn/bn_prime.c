@@ -9,10 +9,13 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "crypto/bn.h"
+
 #include "internal/cryptlib.h"
-#include "bn_local.h"
 #include "internal/nelem.h"
+
+#include "crypto/bn.h"
+
+#include "bn_local.h"
 #include "openssl/bn.h"
 #include "openssl/bnerr.h"
 #include "openssl/crypto.h"

@@ -9,12 +9,14 @@
  */
 #include <stdint.h>
 #include <string.h>
-#include <openssl/types.h>
-#include <openssl/crypto.h>
+
 #include <openssl/core_names.h>
-#include <openssl/kdf.h>
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/provider.h>
+#include <openssl/types.h>
+
 #include "fuzzer.h"
 #include "openssl/core.h"
 #include "openssl/params.h"

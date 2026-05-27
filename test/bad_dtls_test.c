@@ -29,20 +29,22 @@
  */
 #include <stdint.h>
 #include <string.h>
-
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/opensslconf.h>
-#include <openssl/bio.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/kdf.h>
 #include <time.h>
-#include "internal/packet.h"
+
+#include <openssl/bio.h>
+#include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+#include <openssl/opensslconf.h>
+#include <openssl/params.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+
 #include "internal/nelem.h"
+#include "internal/packet.h"
+
 #include "openssl/core.h"
 #include "openssl/dtls1.h"
 #include "openssl/prov_ssl.h"

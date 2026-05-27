@@ -7,29 +7,32 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <time.h>
+
+#include <openssl/opensslconf.h>
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
 #include "openssl/x509_vfy.h"
 #include "opt.h"
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
-#include <openssl/opensslconf.h>
-#include <sys/socket.h>
-#include <time.h>
 
 #ifndef OPENSSL_NO_SOCK
 
+#include <openssl/err.h>
+#include <openssl/pem.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
+#include "internal/sockets.h"
+
 #include "apps.h"
 #include "progs.h"
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/pem.h>
 #include "s_apps.h"
-#include <openssl/err.h>
-#include "internal/sockets.h"
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
 #endif

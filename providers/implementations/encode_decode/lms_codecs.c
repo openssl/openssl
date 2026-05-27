@@ -7,16 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "prov/lms_codecs.h"
+
 #include <string.h>
+
 #include <openssl/byteorder.h>
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/x509.h>
-#include <openssl/core_names.h>
+
 #include "internal/encoder.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
-#include "prov/lms_codecs.h"
 
 /*-
  * The DER ASN.1 encoding of LMS public keys prepends 20 bytes

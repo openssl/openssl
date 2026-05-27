@@ -8,15 +8,18 @@
  */
 
 #include <assert.h>
-#include <openssl/bio.h>
-#include "internal/packet.h"
-#include "internal/quic_wire_pkt.h"
-#include "openssl/crypto.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "quictestlib.h"
+
+#include <openssl/bio.h>
+
+#include "internal/packet.h"
+#include "internal/quic_wire_pkt.h"
+
 #include "../testutil.h"
+#include "openssl/crypto.h"
+#include "quictestlib.h"
 
 static long pkt_split_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {

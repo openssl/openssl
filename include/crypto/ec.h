@@ -13,8 +13,8 @@
 #define OSSL_CRYPTO_EC_H
 #pragma once
 
-#include <openssl/opensslconf.h>
 #include <openssl/evp.h>
+#include <openssl/opensslconf.h>
 
 int ossl_ec_curve_name2nid(const char *name);
 const char *ossl_ec_curve_nid2nist_int(int nid);
@@ -24,6 +24,7 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
 #ifndef OPENSSL_NO_EC
 #include <openssl/core.h>
 #include <openssl/ec.h>
+
 #include "crypto/types.h"
 
 /*-

@@ -10,13 +10,15 @@
 #ifndef OSSL_CRYPTO_PROV_LOCAL_H
 #define OSSL_CRYPTO_PROV_LOCAL_H
 
-#include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
 #include <openssl/params.h>
-#include "internal/tsan_assist.h"
+
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+#include "internal/tsan_assist.h"
+
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 

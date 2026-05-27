@@ -15,12 +15,16 @@
 #include <stdio.h>
 #include <string.h>
 #include <time.h>
-#include "crypto/asn1.h"
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/asn1.h"
+
 #include "asn1_local.h"
 #include "openssl/crypto.h"
-#include <openssl/asn1t.h>
 
 IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_GENERALIZEDTIME)
 

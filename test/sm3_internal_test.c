@@ -13,7 +13,9 @@
  */
 
 #include <string.h>
+
 #include <openssl/opensslconf.h>
+
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SM3

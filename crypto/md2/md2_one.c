@@ -14,8 +14,10 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/md2.h>
+
+#include "internal/cryptlib.h"
 
 /*
  * This is a separate file so that #defines in cryptlib.h can map my MD

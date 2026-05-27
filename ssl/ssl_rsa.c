@@ -8,8 +8,20 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #include "internal/common.h"
+#include "internal/packet.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
 #include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/pemerr.h"
@@ -17,15 +29,6 @@
 #include "openssl/ssl.h"
 #include "openssl/sslerr.h"
 #include "ssl_local.h"
-#include "internal/packet.h"
-#include "internal/ssl_unwrap.h"
-#include <openssl/bio.h>
-#include <openssl/objects.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/pem.h>
-#include <string.h>
 
 static int ssl_set_cert(CERT *c, X509 *x509, SSL_CTX *ctx);
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx);

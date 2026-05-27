@@ -8,8 +8,10 @@
  */
 
 #include <openssl/err.h>
-#include "err_local.h"
+
 #include "internal/err.h"
+
+#include "err_local.h"
 
 int ERR_set_mark(void)
 {

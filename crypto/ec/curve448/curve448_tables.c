@@ -10,7 +10,6 @@
  * Originally written by Mike Hamburg
  */
 #include "field.h"
-
 #include "point_448.h"
 
 static const curve448_precomputed_s curve448_precomputed_base_table = {

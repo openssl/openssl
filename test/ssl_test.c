@@ -12,8 +12,8 @@
 
 #include <openssl/conf.h>
 #include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <openssl/provider.h>
+#include <openssl/ssl.h>
 
 #include "helpers/handshake.h"
 #include "helpers/ssl_test_ctx.h"

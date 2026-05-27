@@ -10,18 +10,21 @@
 #define OPENSSL_SUPPRESS_DEPRECATED
 
 #include "bio_local.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/socket.h>
+
 #include "internal/bio.h"
 #include "internal/sockets.h"
+
 #include "openssl/bio.h"
 #include "openssl/bioerr.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
-#include <limits.h>
-#include <string.h>
-#include <sys/socket.h>
-#include <stdio.h>
-#include <errno.h>
 
 #ifndef OPENSSL_NO_SOCK
 

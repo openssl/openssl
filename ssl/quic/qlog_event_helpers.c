@@ -8,6 +8,10 @@
  */
 
 #include "internal/qlog_event_helpers.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
 #include "internal/common.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
@@ -20,10 +24,9 @@
 #include "internal/quic_wire.h"
 #include "internal/quic_wire_pkt.h"
 #include "internal/time.h"
+
 #include "openssl/bio.h"
 #include "openssl/quic.h"
-#include <stddef.h>
-#include <stdint.h>
 
 void ossl_qlog_event_connectivity_connection_started(QLOG *qlog,
     const QUIC_CONN_ID *init_dcid)

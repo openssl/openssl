@@ -8,19 +8,22 @@
  */
 
 #include <stdio.h>
+
+#include <openssl/asn1.h>
+#include <openssl/bn.h>
+#include <openssl/dsa.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
 #include "internal/cryptlib.h"
+
+#include <crypto/asn1.h>
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
-#include <openssl/x509.h>
-#include <openssl/asn1.h>
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
-#include <openssl/bn.h>
-
-#include <crypto/asn1.h>
 
 /* Print out an SPKI */
 

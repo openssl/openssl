@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
 #include <stddef.h>
 
-#include "testutil.h"
+#include <openssl/crypto.h>
+
 #include "internal/e_os.h"
+
+#include "testutil.h"
 
 static int test_sec_mem(void)
 {

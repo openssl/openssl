@@ -7,9 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <time.h>
+
 #include <openssl/hpke.h>
+#include <openssl/ssl.h>
+
 #include "internal/nelem.h"
+#include "internal/packet.h"
+
+#include "helpers/ssltestlib.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/ech.h"
@@ -20,13 +29,7 @@
 #include "openssl/tls1.h"
 #include "openssl/x509_vfy.h"
 #include "opt.h"
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
-#include <time.h>
 #include "testutil.h"
-#include "helpers/ssltestlib.h"
-#include "internal/packet.h"
 
 #ifndef OPENSSL_NO_ECH
 

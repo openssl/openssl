@@ -7,32 +7,37 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <ctype.h>
 #include <limits.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <ctype.h>
-#include <openssl/objects.h>
+#include <string.h>
+
+#include <openssl/bn.h>
+#include <openssl/conf.h>
+#include <openssl/core_names.h>
+#include <openssl/ct.h>
+#include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/hmac.h>
-#include <openssl/core_names.h>
+#include <openssl/objects.h>
 #include <openssl/ocsp.h>
-#include <openssl/conf.h>
-#include <openssl/x509v3.h>
-#include <openssl/dh.h>
-#include <openssl/bn.h>
-#include <openssl/provider.h>
 #include <openssl/param_build.h>
+#include <openssl/provider.h>
+#include <openssl/x509v3.h>
+
 #include "internal/common.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
 #include "internal/sizes.h"
 #include "internal/ssl.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
 #include "internal/time.h"
 #include "internal/tlsgroups.h"
-#include "internal/ssl_unwrap.h"
 #include "internal/tlssigalgs.h"
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/dtls1.h"
@@ -48,10 +53,8 @@
 #include "openssl/tls1.h"
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
-#include "ssl_local.h"
 #include "quic/quic_local.h"
-#include <openssl/ct.h>
-#include <string.h>
+#include "ssl_local.h"
 
 #define MAX_SIGALGS 128
 

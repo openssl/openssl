@@ -10,26 +10,30 @@
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "../providers/implementations/include/prov/drbg.h"
+
+#include <pthread.h>
+#include <stdlib.h>
 #include <string.h>
-#include "internal/nelem.h"
+#include <time.h>
+
+#include <openssl/aes.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
-#include <openssl/obj_mac.h>
 #include <openssl/evp.h>
-#include <openssl/aes.h>
-#include "../crypto/rand/rand_local.h"
-#include "../include/crypto/rand.h"
-#include "../include/crypto/evp.h"
-#include "../providers/implementations/include/prov/drbg.h"
+#include <openssl/obj_mac.h>
+#include <openssl/rand.h>
+
+#include "internal/nelem.h"
+
 #include "../crypto/evp/evp_local.h"
+#include "../crypto/rand/rand_local.h"
+#include "../include/crypto/evp.h"
+#include "../include/crypto/rand.h"
 #include "openssl/bio.h"
 #include "openssl/core_names.h"
 #include "openssl/params.h"
 #include "openssl/provider.h"
-#include <pthread.h>
-#include <stdlib.h>
-#include <time.h>
 
 #if defined(_WIN32)
 #include <windows.h>

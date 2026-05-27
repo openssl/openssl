@@ -10,10 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
-#include <openssl/err.h>
 
 /*
  * This is a demonstration of how to compute Poly1305-AES using the OpenSSL

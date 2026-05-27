@@ -15,15 +15,17 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/conf.h>
+#include <openssl/e_os2.h>
+#include <openssl/err.h>
+#include <openssl/ssl.h>
+
 #include "internal/nelem.h"
+
 #include "helpers/ssl_test_ctx.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
 #include "testutil.h"
-#include <openssl/e_os2.h>
-#include <openssl/err.h>
-#include <openssl/conf.h>
-#include <openssl/ssl.h>
 
 static CONF *conf = NULL;
 

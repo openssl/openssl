@@ -7,10 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
+
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/statem.h"
 #include "internal/tsan_assist.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
@@ -28,20 +31,22 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "ssl/ech/ech_local.h"
-#include <stdint.h>
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
-#include <spthread.h>
 #include <spt_extensions.h> /* timeval */
+#include <spthread.h>
 #endif
 
 #include <string.h>
-#include "internal/nelem.h"
+
+#include <openssl/core_names.h>
+#include <openssl/ocsp.h>
+
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
 #include "internal/ssl_unwrap.h"
+
 #include "../ssl_local.h"
 #include "statem_local.h"
-#include <openssl/ocsp.h>
-#include <openssl/core_names.h>
 
 /*
  * values for ext_defs ech_handling field

@@ -13,9 +13,12 @@
 #include <string.h>
 
 #include <openssl/bio.h>
-#include "testutil.h"
-#include "crypto/siphash.h"
+
 #include "internal/nelem.h"
+
+#include "crypto/siphash.h"
+
+#include "testutil.h"
 
 typedef struct {
     size_t size;

@@ -7,21 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "openssl/crypto.h"
-#include "openssl/evp.h"
 #include <stdio.h>
 #include <stdlib.h>
-
-#include <openssl/e_os2.h>
 #include <sys/time.h>
 
+#include <openssl/e_os2.h>
+
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+
 #ifdef OPENSSL_SYS_UNIX
-#include <sys/stat.h>
 #include <sys/resource.h>
+#include <sys/stat.h>
+
+#include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
-#include <openssl/err.h>
-#include <openssl/bio.h>
+
 #include "internal/e_os.h"
 #if defined(_POSIX_VERSION) && _POSIX_VERSION >= 200112L
 

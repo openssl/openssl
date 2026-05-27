@@ -11,7 +11,9 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_KDFEXCHANGE_H
 
 #include <stdlib.h>
+
 #include <openssl/crypto.h>
+
 #include "internal/refcount.h"
 
 struct kdf_data_st {

@@ -8,8 +8,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "crypto/evp.h"
 #include "internal/sm3.h"
+
+#include "crypto/evp.h"
+
 #include "openssl/evp.h"
 #include "openssl/obj_mac.h"
 

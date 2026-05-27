@@ -9,8 +9,14 @@
 
 #include <stdint.h>
 #include <string.h>
-#include "helpers/ssltestlib.h"
+
+#include <openssl/ech.h>
+
 #include "internal/nelem.h"
+#include <internal/ech_helpers.h>
+#include <internal/packet.h>
+
+#include "helpers/ssltestlib.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
@@ -23,9 +29,6 @@
 #include "openssl/x509_vfy.h"
 #include "opt.h"
 #include "testutil.h"
-#include <openssl/ech.h>
-#include <internal/ech_helpers.h>
-#include <internal/packet.h>
 
 #define OSSL_ECH_MAX_LINELEN 1000 /* for a sanity check */
 #define DEF_CERTS_DIR "test/certs"

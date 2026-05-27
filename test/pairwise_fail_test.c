@@ -7,9 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/pem.h>
+#include <stddef.h>
+#include <string.h>
+
 #include <openssl/core_names.h>
+#include <openssl/pem.h>
 #include <openssl/self_test.h>
+
 #include "openssl/bio.h"
 #include "openssl/core.h"
 #include "openssl/crypto.h"
@@ -17,8 +21,6 @@
 #include "openssl/params.h"
 #include "openssl/provider.h"
 #include "opt.h"
-#include <stddef.h>
-#include <string.h>
 #include "testutil.h"
 
 typedef enum OPTION_choice {

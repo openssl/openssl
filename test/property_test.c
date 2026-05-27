@@ -9,16 +9,19 @@
  */
 
 #include <stdarg.h>
-#include <openssl/evp.h>
-#include "openssl/bio.h"
-#include "openssl/crypto.h"
 #include <stddef.h>
 #include <string.h>
-#include "testutil.h"
+
+#include <openssl/evp.h>
+
 #include "internal/nelem.h"
 #include "internal/property.h"
 #include "internal/refcount.h"
+
 #include "../crypto/property/property_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 /*
  * We make our OSSL_PROVIDER for testing purposes.  All we really need is

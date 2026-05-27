@@ -12,11 +12,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "internal/nelem.h"
 #include "internal/constant_time.h"
+#include "internal/nelem.h"
+#include "internal/numbers.h"
+
 #include "openssl/bio.h"
 #include "testutil.h"
-#include "internal/numbers.h"
 
 static const unsigned int CONSTTIME_TRUE = (unsigned)(~0);
 static const unsigned int CONSTTIME_FALSE = 0;

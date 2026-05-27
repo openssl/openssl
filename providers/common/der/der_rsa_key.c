@@ -13,21 +13,25 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/obj_mac.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <openssl/obj_mac.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/der.h"
 #include "internal/packet.h"
+
+#include "crypto/rsa.h"
+
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
 #include "openssl/rsa.h"
 #include "openssl/rsaerr.h"
-#include "prov/der_rsa.h"
 #include "prov/der_digests.h"
-#include "crypto/rsa.h"
-#include "internal/common.h"
+#include "prov/der_rsa.h"
 
 /* More complex pre-compiled sequences. */
 

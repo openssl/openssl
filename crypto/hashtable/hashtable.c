@@ -50,14 +50,17 @@
  * searched for a match until an empty entry is found.
  */
 
-#include "openssl/crypto.h"
-#include "openssl/e_os2.h"
 #include <stdint.h>
 #include <string.h>
-#include <internal/rcu.h>
-#include <internal/hashtable.h>
-#include <internal/hashfunc.h>
+
 #include <openssl/rand.h>
+
+#include <internal/hashfunc.h>
+#include <internal/hashtable.h>
+#include <internal/rcu.h>
+
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 
 /*
  * gcc defines __SANITIZE_THREAD__

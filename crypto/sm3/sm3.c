@@ -9,11 +9,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "sm3_local.h"
 #include "internal/sm3.h"
-#include <openssl/e_os2.h>
+
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/e_os2.h>
+
+#include "sm3_local.h"
 /* clang-format off */
 #include "crypto/md32_common.inc"
 /* clang-format on */

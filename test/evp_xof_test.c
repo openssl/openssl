@@ -7,17 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/rand.h>
-#include <openssl/core_names.h>
-#include "openssl/crypto.h"
-#include "openssl/err.h"
-#include "openssl/params.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "testutil.h"
+
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
+
 #include "internal/nelem.h"
+
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "testutil.h"
 
 static const uint8_t shake256_input[] = {
     0x8d, 0x80, 0x01, 0xe2, 0xc0, 0x96, 0xf1, 0xb8,

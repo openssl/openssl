@@ -13,11 +13,14 @@
  *  allows you to use them for any 128 bit block cipher.
  */
 
-#include "internal/cryptlib.h"
-#include "openssl/crypto.h"
-#include <openssl/modes.h>
 #include <stddef.h>
 #include <string.h>
+
+#include <openssl/modes.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/crypto.h"
 
 /** RFC 3394 section 2.2.3.1 Default Initial Value */
 static const unsigned char default_iv[] = {

@@ -11,6 +11,7 @@
 #define OSSL_RECORD_TEST_UTIL_H
 
 #include "internal/quic_wire_pkt.h"
+
 #include "testutil.h"
 
 static int cmp_pkt_hdr(const QUIC_PKT_HDR *a, const QUIC_PKT_HDR *b,

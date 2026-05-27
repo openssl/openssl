@@ -7,9 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/evp.h>
+#include <openssl/opensslconf.h>
 
 /*
  * Define some deprecated functions, so older programs don't crash and burn

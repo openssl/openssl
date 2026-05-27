@@ -12,6 +12,7 @@
 #include <string.h>
 
 #include <openssl/evp.h>
+
 #include "testutil.h"
 
 static int test_evp_get_digestbyname(void)

@@ -9,7 +9,9 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/types.h>
+
 #include "crypto/poly1305.h"
+
 #include "arch/ppc_arch.h"
 
 void poly1305_init_int(void *ctx, const unsigned char key[16]);

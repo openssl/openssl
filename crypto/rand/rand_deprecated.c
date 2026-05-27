@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include <openssl/macros.h>
 #include <openssl/rand.h>
+
+#include "internal/e_os.h"
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
 #include <windows.h>

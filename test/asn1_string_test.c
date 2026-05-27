@@ -14,7 +14,9 @@
 #include <stdio.h>
 
 #include <openssl/asn1.h>
+
 #include "internal/nelem.h"
+
 #include "openssl/crypto.h"
 #include "openssl/macros.h"
 #include "testutil.h"

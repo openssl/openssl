@@ -7,17 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/objects.h>
+
 #include "internal/nelem.h"
+
+#include "helpers/ssltestlib.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
 #include "openssl/ssl.h"
 #include "openssl/ssl3.h"
 #include "testutil.h"
-#include "helpers/ssltestlib.h"
-#include <openssl/objects.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <string.h>
 
 #define TEST_true_or_end(a) \
     if (!TEST_true(a))      \

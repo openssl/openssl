@@ -13,9 +13,11 @@
 #ifdef FIPS_MODULE
 
 #include <openssl/core.h> /* OSSL_CALLBACK, OSSL_LIB_CTX */
-#include <openssl/indicator.h>
-#include "crypto/types.h"
 #include <openssl/ec.h>
+#include <openssl/indicator.h>
+
+#include "crypto/types.h"
+
 #include "fipscommon.h"
 
 /*

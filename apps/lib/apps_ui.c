@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "apps_ui.h"
+
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/err.h>
 #include <openssl/ui.h>
-#include "apps_ui.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 

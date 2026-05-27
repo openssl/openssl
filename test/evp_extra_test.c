@@ -10,36 +10,40 @@
 /* We need to use some deprecated APIs */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <openssl/aes.h>
 #include <openssl/bio.h>
 #include <openssl/conf.h>
+#include <openssl/core_names.h>
 #include <openssl/crypto.h>
+#include <openssl/decoder.h>
+#include <openssl/dh.h>
+#include <openssl/dsa.h>
+#include <openssl/encoder.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
 #include <openssl/kdf.h>
-#include <openssl/provider.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/param_build.h>
-#include <openssl/dsa.h>
-#include <openssl/dh.h>
-#include <openssl/aes.h>
-#include <openssl/decoder.h>
-#include <openssl/encoder.h>
-#include <openssl/rsa.h>
+#include <openssl/params.h>
+#include <openssl/pem.h>
 #include <openssl/proverr.h>
+#include <openssl/provider.h>
 #include <openssl/rand.h>
-#include <crypto/ml_kem.h>
-#include "testutil.h"
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
 #include "internal/nelem.h"
 #include "internal/sizes.h"
+
 #include "crypto/evp.h"
-#include "fake_rsaprov.h"
+#include <crypto/ml_kem.h>
+
 #include "fake_pipelineprov.h"
+#include "fake_rsaprov.h"
 #include "openssl/bn.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
@@ -47,7 +51,7 @@
 #include "openssl/obj_mac.h"
 #include "openssl/objects.h"
 #include "opt.h"
-#include <stdint.h>
+#include "testutil.h"
 
 #ifndef OPENSSL_NO_DSA
 #include "helpers/predefined_dsaparams.h"

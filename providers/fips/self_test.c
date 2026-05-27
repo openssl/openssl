@@ -8,20 +8,24 @@
  */
 
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/params.h>
+
 #include <openssl/crypto.h>
-#include "internal/cryptlib.h"
-#include <openssl/fipskey.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/fipskey.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
+
+#include "internal/cryptlib.h"
 #include "internal/e_os.h"
 #include "internal/fips.h"
 #include "internal/threads_common.h"
 #include "internal/tsan_assist.h"
-#include "prov/providercommon.h"
+
 #include "crypto/rand.h"
+
+#include "prov/providercommon.h"
 
 /*
  * We're cheating here. Normally we don't allow RUN_ONCE usage inside the FIPS
@@ -31,6 +35,7 @@
  */
 #define ALLOW_RUN_ONCE_IN_FIPS
 #include "internal/thread_once.h"
+
 #include "self_test.h"
 
 #define FIPS_STATE_INIT 0
@@ -123,9 +128,9 @@ BOOL WINAPI DllMain(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved)
         init();
         break;
     case DLL_PROCESS_DETACH:
-# ifndef __CYGWIN__
+#ifndef __CYGWIN__
         cleanup();
-# endif
+#endif
         break;
     default:
         break;

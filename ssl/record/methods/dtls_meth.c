@@ -11,11 +11,13 @@
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
-#include "../../ssl_local.h"
-#include "../record_local.h"
+
 #include "internal/common.h"
 #include "internal/packet.h"
 #include "internal/recordmethod.h"
+
+#include "../../ssl_local.h"
+#include "../record_local.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/dtls1.h"

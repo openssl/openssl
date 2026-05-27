@@ -8,10 +8,11 @@
  */
 #include <stdio.h>
 #include <string.h>
-#include <openssl/evp.h>
+
 #include <openssl/bio.h>
-#include <openssl/rand.h>
 #include <openssl/comp.h>
+#include <openssl/evp.h>
+#include <openssl/rand.h>
 
 #include "testutil.h"
 #include "testutil/output.h"

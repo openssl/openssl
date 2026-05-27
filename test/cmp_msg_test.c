@@ -10,6 +10,7 @@
  */
 
 #include "crypto/cmp/cmp_local.h"
+
 #include "helpers/cmp_testlib.h"
 #include "openssl/asn1.h"
 #include "openssl/cmp.h"

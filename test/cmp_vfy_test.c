@@ -9,9 +9,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <time.h>
+
 #include "crypto/cmp/cmp_local.h"
-#include "helpers/cmp_testlib.h"
+
 #include "../crypto/crmf/crmf_local.h" /* for manipulating POPO signature */
+#include "helpers/cmp_testlib.h"
 #include "openssl/asn1.h"
 #include "openssl/cmp.h"
 #include "openssl/crmf.h"
@@ -21,7 +24,6 @@
 #include "openssl/x509.h"
 #include "openssl/x509_vfy.h"
 #include "test/testutil.h"
-#include <time.h>
 
 static const char *server_f;
 static const char *client_f;

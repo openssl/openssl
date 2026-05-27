@@ -7,15 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include "internal/nelem.h"
 #include "internal/packet.h"
 #include "internal/quic_cfq.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_types.h"
 #include "internal/quic_wire.h"
+
 #include "testutil.h"
-#include <stddef.h>
-#include <stdint.h>
 
 static const unsigned char ref_buf[] = {
     0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19

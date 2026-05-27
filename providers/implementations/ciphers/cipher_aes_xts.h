@@ -11,8 +11,10 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_XTS_H
 
 #include <openssl/aes.h>
-#include "prov/ciphercommon.h"
+
 #include "crypto/aes_platform.h"
+
+#include "prov/ciphercommon.h"
 
 /*
  * Available in cipher_fips.c, and compiled with different values depending

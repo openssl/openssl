@@ -13,10 +13,12 @@
  */
 
 #include <limits.h>
-#include <openssl/conf.h>
-#include <openssl/err.h>
 #include <stddef.h>
 #include <stdint.h>
+
+#include <openssl/conf.h>
+#include <openssl/err.h>
+
 #include "fuzzer.h"
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

@@ -11,6 +11,7 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_IDEA_H
 
 #include <openssl/idea.h>
+
 #include "prov/ciphercommon.h"
 
 typedef struct prov_idea_ctx_st {

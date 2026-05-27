@@ -29,13 +29,14 @@
  * acceleration of felem_{square,mul} as supported in these files.
  */
 
-#include <openssl/e_os2.h>
-
 #include <string.h>
+
+#include <openssl/e_os2.h>
 #include <openssl/err.h>
-#include "ec_local.h"
 
 #include "internal/numbers.h"
+
+#include "ec_local.h"
 
 #ifndef INT128_MAX
 #error "Your compiler doesn't appear to support 128-bit integer types"

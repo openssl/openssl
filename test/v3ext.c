@@ -9,18 +9,20 @@
 
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/pem.h>
-#include <openssl/err.h>
+
 #include "internal/nelem.h"
+
+#include <crypto/asn1.h>
 
 #include "openssl/asn1.h"
 #include "openssl/bio.h"
 #include "openssl/conf.h"
 #include "testutil.h"
-
-#include <crypto/asn1.h>
 
 static const char *infile;
 

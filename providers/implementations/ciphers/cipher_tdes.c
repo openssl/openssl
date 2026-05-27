@@ -13,10 +13,12 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rand.h>
-#include <openssl/proverr.h>
-#include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
+
+#include <openssl/proverr.h>
+#include <openssl/rand.h>
+
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 
 /* ossl_tdes_ede3_ecb_functions */

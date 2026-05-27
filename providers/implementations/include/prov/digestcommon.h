@@ -13,6 +13,7 @@
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
+
 #include "prov/providercommon.h"
 
 /* Internal flags that can be queried */
@@ -51,6 +52,7 @@ extern "C" {
 
 #if defined(FIPS_MODULE)
 #include "internal/fips.h"
+
 #include "prov/provider_ctx.h"
 #define DIGEST_PROV_CHECK(provctx, name)                  \
     if (!ossl_prov_is_running())                          \

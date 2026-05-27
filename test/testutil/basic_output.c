@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/bio.h>
+#include <openssl/crypto.h>
+
 #include "../testutil.h"
 #include "openssl/e_os2.h"
 #include "output.h"
 #include "tu_local.h"
-
-#include <openssl/crypto.h>
-#include <openssl/bio.h>
 
 /* These are available for any test program */
 BIO *bio_out = NULL;

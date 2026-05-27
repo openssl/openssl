@@ -7,14 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/macros.h>
+
 #include "openssl/evp.h"
 #include "openssl/obj_mac.h"
-#include <openssl/macros.h>
 
 #ifndef OPENSSL_NO_CHACHA
 
-#include "crypto/evp.h"
 #include "crypto/chacha.h"
+#include "crypto/evp.h"
 
 static const EVP_CIPHER chacha20 = {
     NID_chacha20,

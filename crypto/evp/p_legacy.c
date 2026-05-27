@@ -13,13 +13,15 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/types.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/rsa.h>
 #include <openssl/ec.h>
-#include "crypto/types.h"
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/types.h>
+
 #include "crypto/evp.h"
+#include "crypto/types.h"
+
 #include "evp_local.h"
 #include "openssl/evperr.h"
 

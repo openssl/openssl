@@ -9,6 +9,7 @@
  */
 
 #include <stddef.h> /* for size_t */
+
 #include <openssl/e_os2.h> /* for uint8_t */
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len);

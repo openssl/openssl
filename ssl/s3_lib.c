@@ -9,15 +9,31 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/common.h"
-#include "internal/e_os.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
+#include <openssl/core_names.h>
+#include <openssl/dh.h>
+#include <openssl/md5.h>
 #include <openssl/objects.h>
+#include <openssl/ocsp.h>
+#include <openssl/rand.h>
+#include <openssl/trace.h>
+#include <openssl/x509v3.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/packet.h"
 #include "internal/quic_tls.h"
 #include "internal/ssl.h"
+#include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"
@@ -33,20 +49,6 @@
 #include "openssl/x509_vfy.h"
 #include "ssl/record/record.h"
 #include "ssl_local.h"
-#include <openssl/md5.h>
-#include <openssl/dh.h>
-#include <openssl/rand.h>
-#include <openssl/trace.h>
-#include <openssl/x509v3.h>
-#include <openssl/core_names.h>
-#include "internal/cryptlib.h"
-#include "internal/ssl_unwrap.h"
-#include <openssl/ocsp.h>
-#include <stddef.h>
-#include <stdint.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 
 #define TLS13_NUM_CIPHERS OSSL_NELEM(tls13_ciphers)
 #define SSL3_NUM_CIPHERS OSSL_NELEM(ssl3_ciphers)

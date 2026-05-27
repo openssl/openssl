@@ -15,14 +15,18 @@
 
 #include <stdio.h>
 #include <time.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
+
+#include "internal/cryptlib.h"
 #include "internal/ffc.h"
+
+#include "crypto/dsa.h"
+
+#include "dsa_local.h"
 #include "openssl/crypto.h"
 #include "prov/providercommon.h"
-#include "crypto/dsa.h"
-#include "dsa_local.h"
 
 #ifdef FIPS_MODULE
 #define MIN_STRENGTH 112

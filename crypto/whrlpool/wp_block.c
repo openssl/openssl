@@ -42,10 +42,12 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/cryptlib.h"
-#include "wp_local.h"
 #include <stdint.h>
 #include <string.h>
+
+#include "internal/cryptlib.h"
+
+#include "wp_local.h"
 
 #define ROUNDS 10
 

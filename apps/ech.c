@@ -8,27 +8,29 @@
  */
 
 #include "openssl/ech.h"
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/hpke.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+
 #include "apps.h"
 #include "fmt.h"
 #include "openssl/crypto.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/ssl.h>
-#include <openssl/bio.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/pem.h>
-#include <openssl/rand.h>
-#include <openssl/hpke.h>
-
-#include <openssl/objects.h>
-#include <openssl/x509.h>
-#include <time.h>
 
 #ifndef OPENSSL_NO_ECH
 

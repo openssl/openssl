@@ -1,4 +1,5 @@
 #include <sys/poll.h>
+
 #include <openssl/ssl.h>
 
 /*
@@ -286,13 +287,13 @@ void teardown_ctx(SSL_CTX *ctx)
  * Example driver for the above code. This is just to demonstrate that the code
  * works and is not intended to be representative of a real application.
  */
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/signal.h>
-#include <netdb.h>
-#include <unistd.h>
-#include <fcntl.h>
 #include <errno.h>
+#include <fcntl.h>
+#include <netdb.h>
+#include <sys/signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static int pump(APP_CONN *conn, int fd, int events, int timeout)
 {

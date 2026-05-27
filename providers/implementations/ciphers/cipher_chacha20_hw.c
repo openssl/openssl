@@ -9,12 +9,14 @@
 
 /* chacha20 cipher implementation */
 
-#include "cipher_chacha20.h"
-#include "crypto/chacha.h"
-#include "prov/ciphercommon.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <string.h>
+
+#include "crypto/chacha.h"
+
+#include "cipher_chacha20.h"
+#include "prov/ciphercommon.h"
 
 static int chacha20_initkey(PROV_CIPHER_CTX *bctx, const uint8_t *key,
     size_t keylen)

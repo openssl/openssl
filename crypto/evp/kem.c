@@ -9,15 +9,19 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/objects.h>
+
 #include <openssl/evp.h>
+#include <openssl/objects.h>
+
 #include "internal/common.h"
+#include "internal/core.h"
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
-#include "internal/core.h"
-#include "crypto/evp.h"
-#include "evp_local.h"
 #include "internal/refcount.h"
+
+#include "crypto/evp.h"
+
+#include "evp_local.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
 #include "openssl/err.h"

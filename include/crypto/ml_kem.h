@@ -11,9 +11,10 @@
 #define OPENSSL_HEADER_ML_KEM_H
 #pragma once
 
-#include <openssl/e_os2.h>
 #include <openssl/bio.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/e_os2.h>
+
 #include <crypto/evp.h>
 
 #define ML_KEM_DEGREE 256

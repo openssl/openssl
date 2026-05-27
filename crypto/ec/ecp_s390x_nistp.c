@@ -15,10 +15,12 @@
 
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include "ec_local.h"
+
 #include "arch/s390x_arch.h"
+#include "ec_local.h"
 
 /* Size of parameter blocks */
 #define S390X_SIZE_PARAM 4096

@@ -8,18 +8,22 @@
  */
 
 #include "internal/quic_record_util.h"
+
+#include <stddef.h>
+#include <stdint.h>
+
+#include <openssl/core_names.h>
+#include <openssl/kdf.h>
+
 #include "internal/quic_record_rx.h"
 #include "internal/quic_record_tx.h"
 #include "internal/quic_types.h"
 #include "internal/quic_wire_pkt.h"
+
 #include "../ssl_local.h"
 #include "openssl/crypto.h"
 #include "openssl/evp.h"
 #include "openssl/params.h"
-#include <openssl/kdf.h>
-#include <openssl/core_names.h>
-#include <stddef.h>
-#include <stdint.h>
 
 /*
  * QUIC Key Derivation Utilities

@@ -7,10 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/opensslconf.h>
+#include <openssl/pem.h>
+#include <openssl/rand.h>
+#include <openssl/ts.h>
+
 #include "app_libctx.h"
 #include "apps.h"
 #include "fmt.h"
@@ -25,12 +33,6 @@
 #include "openssl/x509_vfy.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/rand.h>
-#include <openssl/ts.h>
-#include <openssl/bn.h>
 
 /* Request nonce length, in bits (must be a multiple of 8). */
 #define NONCE_LENGTH 64

@@ -29,9 +29,11 @@
 
 #include "internal/common.h"
 #include "internal/cryptlib.h"
-#include "crypto/bn.h"
-#include "ec_local.h"
 #include "internal/refcount.h"
+
+#include "crypto/bn.h"
+
+#include "ec_local.h"
 #include "openssl/bn.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"

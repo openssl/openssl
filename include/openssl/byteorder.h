@@ -11,8 +11,9 @@
 #define OPENSSL_BYTEORDER_H
 #pragma once
 
-#include <openssl/e_os2.h>
 #include <string.h>
+
+#include <openssl/e_os2.h>
 
 /*
  * "Modern" compilers do a decent job of optimising these functions to just a

@@ -9,14 +9,18 @@
  */
 
 #include <string.h>
+
 #include <openssl/crypto.h>
 #include <openssl/lhash.h>
-#include "crypto/lhash.h"
+
 #include "internal/cryptlib.h"
+
+#include "crypto/context.h"
+#include "crypto/lhash.h"
+
 #include "openssl/err.h"
 #include "openssl/safestack.h"
 #include "property_local.h"
-#include "crypto/context.h"
 
 /*
  * Property strings are a consolidation of all strings seen by the property

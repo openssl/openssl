@@ -8,25 +8,28 @@
  */
 
 #include <ctype.h>
-
-#include <openssl/core_names.h>
-#include <openssl/bio.h>
-#include <openssl/encoder.h>
-#include <openssl/buffer.h>
-#include <openssl/params.h>
-#include <openssl/provider.h>
-#include <openssl/trace.h>
-#include <crypto/bn.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/core_names.h>
+#include <openssl/encoder.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
+#include <openssl/trace.h>
+
 #include "internal/bio.h"
 #include "internal/common.h"
+#include "internal/encoder.h"
 #include "internal/ffc.h"
 #include "internal/passphrase.h"
 #include "internal/property.h"
 #include "internal/provider.h"
-#include "internal/encoder.h"
+
+#include <crypto/bn.h>
+
 #include "encoder_local.h"
 #include "openssl/bn.h"
 #include "openssl/core.h"

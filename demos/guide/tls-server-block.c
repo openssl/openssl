@@ -20,13 +20,13 @@
 #include <winsock2.h>
 #else /* Linux/Unix */
 #include <err.h>
-#include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/socket.h>
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 static const char cache_id[] = "OpenSSL Demo Server";
 

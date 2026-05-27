@@ -7,18 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/provider.h>
-#include <openssl/params.h>
-#include <openssl/param_build.h>
+#include <stddef.h>
+#include <string.h>
+
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
+
+#include "fake_cipherprov.h"
 #include "openssl/core.h"
 #include "openssl/core_dispatch.h"
 #include "openssl/crypto.h"
-#include <stddef.h>
-#include <string.h>
 #include "testutil.h"
-#include "fake_cipherprov.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *deflprov = NULL;

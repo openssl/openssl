@@ -10,6 +10,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
+#include <unistd.h>
+
+#include <openssl/asn1.h>
+#include <openssl/bio.h>
+#include <openssl/bn.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
+
 #include "app_libctx.h"
 #include "apps.h"
 #include "fmt.h"
@@ -21,18 +35,6 @@
 #include "openssl/x509_vfy.h"
 #include "opt.h"
 #include "progs.h"
-#include <openssl/bio.h>
-#include <openssl/asn1.h>
-#include <openssl/err.h>
-#include <openssl/bn.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/objects.h>
-#include <openssl/pem.h>
-#include <openssl/rsa.h>
-#include <time.h>
-#include <unistd.h>
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
