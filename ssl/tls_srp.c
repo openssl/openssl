@@ -17,12 +17,13 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#ifndef OPENSSL_NO_SRP
 #include <openssl/srp.h>
+#include "ssl_local.h"
+
+#ifndef OPENSSL_NO_SRP
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
-#include "ssl_local.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/statem.h"
 #include "openssl/bn.h"

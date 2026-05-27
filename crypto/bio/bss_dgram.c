@@ -11,12 +11,13 @@
 #define _GNU_SOURCE
 #endif
 
+#include "bio_local.h"
+
 #ifndef OPENSSL_NO_DGRAM
 #include <stdio.h>
 #include <errno.h>
 
 #include "internal/time.h"
-#include "bio_local.h"
 #include "internal/bio.h"
 #include "internal/common.h"
 #include "internal/sockets.h"
