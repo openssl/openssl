@@ -8,18 +8,22 @@
  */
 
 #include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
-#include "crypto/ctype.h"
-#include "internal/cryptlib.h"
-#include "internal/unicode.h"
-#include "openssl/asn1err.h"
-#include "openssl/crypto.h"
-#include "openssl/err.h"
+#include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/byteorder.h>
 
+#include "internal/cryptlib.h"
+#include "internal/unicode.h"
+
+#include "crypto/ctype.h"
 #include <crypto/asn1.h>
-#include <string.h>
+
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 static int traverse_string(const unsigned char *p, int len, int inform,
     int (*rfunc)(uint32_t value, void *in),

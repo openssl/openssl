@@ -7,10 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/crypto.h>
+
 #include "internal/endian.h"
+
 #include "crypto/modes.h"
+
 #include "openssl/modes.h"
 
 #ifndef STRICT_ALIGNMENT

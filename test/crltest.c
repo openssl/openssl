@@ -8,6 +8,7 @@
  */
 
 #include <time.h>
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
@@ -15,6 +16,7 @@
 #include <openssl/x509.h>
 
 #include "openssl/asn1err.h"
+#include "openssl/evp.h"
 #include "openssl/safestack.h"
 #include "openssl/x509_vfy.h"
 #include "testutil.h"

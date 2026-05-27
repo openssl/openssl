@@ -15,14 +15,18 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
 #include <openssl/aes.h>
 #include <openssl/modes.h>
-#include "testutil.h"
-#include "crypto/modes.h"
+
 #include "internal/nelem.h"
+
+#include "crypto/modes.h"
+
+#include "testutil.h"
 
 typedef struct {
     size_t size;

@@ -8,10 +8,14 @@
  */
 
 #include <string.h>
+
 #include <openssl/ssl.h>
+
 #include "helpers/ssltestlib.h"
 #include "openssl/crypto.h"
 #include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 /*
