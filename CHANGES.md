@@ -31,7 +31,10 @@ OpenSSL Releases
 
 ### Changes between 4.0.0 and 4.0.1 [xx XXX xxxx]
 
- * none yet
+ * TLS 1.3: Fix server not sending NewSessionTicket after ciphersuite mismatch.
+   <!-- https://github.com/openssl/openssl/pull/30626 -->
+
+   *Daniel Kubec*
 
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
