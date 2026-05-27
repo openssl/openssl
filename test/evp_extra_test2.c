@@ -1295,6 +1295,115 @@ static const unsigned char kExampleRSAKeyPKCS8[] = {
     0xdf,
 };
 
+/*
+ * An RSA-PSS 2048-bit private key in ASN.1 DER form.  Used by the
+ * table-driven checks instead of keygen to save CI cycles (RSA keygen
+ * at this size is slow).  Generated with:
+ * > openssl genpkey -quiet -algorithm rsa-pss -outform DER > rsa-pss.der
+ * > xxd -i < rsa-pss.der
+ * Of course, never use this key for anything but tests.
+ */
+static const unsigned char kExampleRSAPSSKeyDER[] = {
+    0x30, 0x82, 0x04, 0xba, 0x02, 0x01, 0x00, 0x30, 0x0b, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86,
+    0xf7, 0x0d, 0x01, 0x01, 0x0a, 0x04, 0x82, 0x04, 0xa6, 0x30, 0x82, 0x04, 0xa2, 0x02, 0x01,
+    0x00, 0x02, 0x82, 0x01, 0x01, 0x00, 0xa3, 0x32, 0x24, 0xdb, 0x9b, 0xec, 0x8f, 0x18, 0xbe,
+    0xeb, 0xef, 0x9b, 0x0e, 0x06, 0x11, 0x78, 0x26, 0x66, 0x2b, 0x75, 0xff, 0x79, 0x50, 0xa9,
+    0x96, 0xb2, 0xdf, 0xe1, 0x71, 0x2f, 0x8f, 0x3f, 0x08, 0x16, 0x3f, 0x53, 0x5a, 0x2c, 0x7c,
+    0xbb, 0xb9, 0xa2, 0x54, 0x2c, 0x81, 0xaf, 0x58, 0xd1, 0xb4, 0xfe, 0xd6, 0x2a, 0x5c, 0x47,
+    0xfe, 0x20, 0xf0, 0xce, 0xdc, 0xfe, 0x08, 0x7f, 0x3a, 0x24, 0xcd, 0xa0, 0x87, 0xcb, 0x0e,
+    0xd7, 0xcf, 0xee, 0x26, 0x12, 0x1f, 0xdb, 0x8b, 0x0f, 0x12, 0x32, 0x05, 0x73, 0x8f, 0x60,
+    0xfa, 0x75, 0x49, 0xb5, 0x50, 0x2d, 0x45, 0x72, 0x8b, 0x1d, 0x7f, 0xd3, 0x47, 0x2c, 0x5b,
+    0x0e, 0x24, 0x28, 0xe2, 0xc6, 0x01, 0x74, 0x10, 0xbe, 0xe4, 0xc7, 0xd2, 0xe5, 0xf4, 0x90,
+    0x10, 0xc0, 0x28, 0x66, 0xed, 0xc4, 0x84, 0xac, 0xb2, 0x01, 0x8e, 0x8a, 0xd1, 0x86, 0x82,
+    0x77, 0x89, 0xd8, 0x64, 0xaa, 0xca, 0x1d, 0x27, 0x3e, 0xfd, 0x78, 0x4e, 0xd7, 0x8d, 0xc5,
+    0x25, 0xab, 0xb1, 0xfb, 0x94, 0x86, 0xa1, 0x3d, 0xc4, 0x8d, 0x62, 0x5e, 0x59, 0x13, 0x25,
+    0xb7, 0x77, 0x20, 0x7e, 0x0a, 0xf8, 0xd0, 0x4f, 0xf4, 0x9c, 0x6f, 0x19, 0x67, 0xe7, 0x6f,
+    0x62, 0xd9, 0xc9, 0xe5, 0x97, 0x90, 0xaa, 0xd5, 0x94, 0x98, 0x61, 0xb7, 0xf9, 0xfc, 0x86,
+    0x45, 0xd8, 0x6f, 0x37, 0x35, 0x51, 0x0d, 0x9f, 0xb0, 0x9f, 0xd5, 0x1b, 0x10, 0x87, 0xa2,
+    0xb9, 0xe0, 0x5e, 0xc9, 0x6b, 0x1b, 0x5d, 0xf3, 0x3a, 0x16, 0x4a, 0x79, 0x25, 0xcf, 0x95,
+    0xfc, 0xca, 0x8a, 0x7a, 0xac, 0x49, 0xd9, 0x36, 0xa5, 0x45, 0xc4, 0x9a, 0x01, 0x60, 0xed,
+    0x8b, 0xcf, 0x66, 0xf2, 0xfb, 0x98, 0x93, 0x69, 0x84, 0xf2, 0xa8, 0x02, 0x12, 0x4d, 0x7b,
+    0x48, 0xa1, 0xfb, 0x4d, 0x59, 0x96, 0x57, 0x02, 0x03, 0x01, 0x00, 0x01, 0x02, 0x82, 0x01,
+    0x00, 0x0f, 0x43, 0x65, 0xda, 0x1a, 0x53, 0xbe, 0x30, 0x78, 0xce, 0xd5, 0x4a, 0xa1, 0xbd,
+    0xa4, 0x8d, 0xa1, 0xbd, 0xc5, 0x8b, 0xd4, 0x38, 0x92, 0xf8, 0x41, 0x8d, 0x7a, 0x4d, 0xfa,
+    0x09, 0x92, 0x32, 0xb9, 0x7d, 0x67, 0x2f, 0xd3, 0x0b, 0xbd, 0x20, 0xcb, 0xa4, 0x68, 0x8d,
+    0xff, 0x15, 0x18, 0xd0, 0x08, 0x47, 0x1b, 0x5d, 0xbb, 0xe2, 0xc9, 0xdc, 0x67, 0xd9, 0x59,
+    0x26, 0xf3, 0x41, 0x7e, 0xfd, 0x29, 0x34, 0x3d, 0xef, 0x1a, 0x74, 0xc9, 0xd0, 0x42, 0xc4,
+    0x48, 0x31, 0x7e, 0xe8, 0x8a, 0x71, 0x9e, 0x3b, 0xe8, 0x29, 0x90, 0x53, 0x3e, 0xf1, 0x13,
+    0xce, 0x20, 0x24, 0x2d, 0xe9, 0xb4, 0xe6, 0x5c, 0x4e, 0x44, 0x37, 0xe6, 0xde, 0xe2, 0x12,
+    0xd5, 0xd8, 0xf6, 0xa5, 0xfb, 0xfc, 0xca, 0x77, 0x52, 0x6f, 0xd4, 0xf9, 0x3b, 0xee, 0x20,
+    0x87, 0xd4, 0x46, 0xd8, 0xa1, 0x37, 0xa5, 0x39, 0x22, 0x5e, 0xb6, 0x2c, 0xe8, 0x49, 0xf4,
+    0x78, 0x07, 0x23, 0xba, 0x19, 0x6e, 0x25, 0xb6, 0x7b, 0x2b, 0x9d, 0x7e, 0x19, 0x26, 0x95,
+    0xe7, 0x20, 0xb8, 0x21, 0xd1, 0xf5, 0xb9, 0x6d, 0xa6, 0x2a, 0xcb, 0x46, 0xe4, 0x62, 0x71,
+    0x63, 0xe1, 0xa0, 0x77, 0x1d, 0xf7, 0x10, 0xf6, 0x1e, 0x70, 0x27, 0x72, 0xf8, 0x68, 0x19,
+    0x6d, 0x84, 0xa1, 0x46, 0xcd, 0x52, 0x0f, 0x86, 0x77, 0x7a, 0x92, 0x5c, 0xc6, 0x39, 0xc2,
+    0x67, 0x12, 0xb0, 0x68, 0x6c, 0xe0, 0x19, 0xde, 0x61, 0xeb, 0x39, 0x1f, 0x14, 0xd0, 0xc7,
+    0xd6, 0x77, 0xc2, 0x83, 0x9e, 0xe2, 0xa3, 0x3a, 0x22, 0x02, 0x45, 0xf1, 0x10, 0x86, 0x77,
+    0x4a, 0x95, 0xf3, 0x75, 0x90, 0x22, 0x9b, 0xb2, 0xcd, 0xcd, 0x2f, 0x27, 0xff, 0xe7, 0xac,
+    0x9c, 0xdb, 0x85, 0x31, 0xeb, 0x2b, 0xfa, 0x8f, 0x9e, 0xbe, 0x92, 0x1a, 0xcd, 0xd3, 0x98,
+    0x1a, 0x75, 0x02, 0x81, 0x81, 0x00, 0xd5, 0x06, 0xa1, 0x08, 0x41, 0x02, 0xab, 0x3a, 0x00,
+    0xf5, 0x74, 0x5f, 0xb7, 0xf0, 0xa7, 0x9d, 0x0a, 0x26, 0x32, 0x7e, 0x48, 0xa4, 0xf7, 0xbe,
+    0xcf, 0xba, 0x27, 0x2a, 0x7d, 0x60, 0xd2, 0x16, 0x59, 0xc3, 0xf0, 0x78, 0x33, 0x3a, 0x36,
+    0x86, 0xb5, 0xd4, 0x29, 0x25, 0x23, 0x5a, 0xeb, 0x5a, 0x96, 0x82, 0xfc, 0x08, 0x08, 0x1c,
+    0xcc, 0xed, 0xb3, 0xf1, 0x27, 0xca, 0x1c, 0xa8, 0xe8, 0x36, 0x77, 0xa4, 0x57, 0x9a, 0x1d,
+    0xde, 0x2b, 0x3b, 0xc3, 0x41, 0x7c, 0x58, 0x33, 0x11, 0x3b, 0xee, 0x7a, 0xc9, 0xe9, 0x4b,
+    0xa2, 0x3b, 0xc3, 0x68, 0x19, 0x6a, 0x00, 0x7c, 0x59, 0x90, 0x77, 0x11, 0xed, 0x47, 0x4a,
+    0x5a, 0xfe, 0x3a, 0x29, 0x3a, 0xad, 0x80, 0xe9, 0xff, 0xce, 0x07, 0x3f, 0x80, 0x5f, 0x98,
+    0x14, 0x1a, 0xf0, 0x9c, 0xc7, 0x8d, 0x42, 0x06, 0xc4, 0xf8, 0x89, 0xe3, 0xe0, 0x23, 0x02,
+    0x81, 0x81, 0x00, 0xc4, 0x1e, 0x20, 0x31, 0xfa, 0xe7, 0x6a, 0xa5, 0x18, 0xbe, 0xce, 0x45,
+    0x15, 0x97, 0x67, 0x5f, 0xd0, 0xc6, 0x0f, 0xa2, 0x6c, 0x68, 0x5e, 0xe9, 0xca, 0x48, 0x8c,
+    0x46, 0x08, 0x06, 0xc1, 0xe9, 0xac, 0x8c, 0x01, 0x55, 0xc7, 0xf2, 0x02, 0x98, 0x2b, 0x8d,
+    0x4e, 0x24, 0x2d, 0x56, 0x7b, 0x40, 0x24, 0x28, 0xaa, 0x4a, 0xf7, 0x83, 0x88, 0x38, 0xa5,
+    0x03, 0x2b, 0xb3, 0x1c, 0x4a, 0x95, 0x70, 0xf6, 0x80, 0xcc, 0x21, 0xd0, 0xab, 0x8a, 0x10,
+    0xb2, 0xa6, 0x1a, 0x27, 0xb6, 0xae, 0x24, 0xed, 0xa9, 0xfe, 0xfc, 0x74, 0x7f, 0x97, 0x9b,
+    0xe1, 0xc2, 0x46, 0x48, 0xed, 0x5f, 0x2f, 0x9e, 0x54, 0x77, 0x1f, 0x61, 0x46, 0x24, 0x08,
+    0x7e, 0xb5, 0x63, 0xa1, 0xe2, 0x6f, 0x58, 0xc8, 0x76, 0x98, 0x8a, 0x9a, 0xa5, 0xb9, 0x15,
+    0xfb, 0xf4, 0xb8, 0xfd, 0x84, 0xb6, 0xbc, 0x5f, 0x59, 0xfa, 0x3d, 0x02, 0x81, 0x80, 0x2a,
+    0x97, 0x43, 0xb4, 0xf1, 0xc2, 0x85, 0xd7, 0x77, 0xff, 0x9b, 0x3f, 0xd3, 0xf7, 0xe2, 0x9b,
+    0x2c, 0x3f, 0x4c, 0xd3, 0x20, 0xd5, 0x12, 0xcf, 0x6c, 0x9a, 0xcc, 0x5f, 0xdb, 0x67, 0x73,
+    0x39, 0x92, 0xc2, 0xf1, 0x1e, 0x27, 0x27, 0xd9, 0x64, 0xff, 0x8f, 0xa6, 0x96, 0x4d, 0x46,
+    0x4d, 0x4d, 0xf4, 0x4f, 0xc5, 0xf2, 0x19, 0x25, 0x20, 0xf7, 0xd9, 0x85, 0x3a, 0xae, 0x57,
+    0x22, 0x92, 0x22, 0xe9, 0xb2, 0xca, 0xec, 0xfe, 0x51, 0xc0, 0x15, 0x17, 0xc9, 0xcd, 0x01,
+    0x99, 0x5c, 0x35, 0xbe, 0x4d, 0x80, 0x77, 0x0b, 0x6f, 0x29, 0x41, 0xbd, 0x5b, 0x6f, 0x6d,
+    0x1f, 0x6f, 0x8c, 0xc9, 0xb1, 0xa4, 0xde, 0x1f, 0x08, 0xa8, 0x51, 0x9a, 0x92, 0xa7, 0xc3,
+    0xe1, 0x85, 0x0a, 0x7d, 0x3a, 0x7e, 0x01, 0x1e, 0xd7, 0xce, 0x37, 0x13, 0x31, 0x76, 0x95,
+    0x9f, 0xe2, 0xdb, 0xca, 0x3d, 0xec, 0x3f, 0x02, 0x81, 0x80, 0x73, 0x99, 0x66, 0x54, 0xcf,
+    0x96, 0x34, 0xd0, 0x58, 0x03, 0xb0, 0x46, 0x1c, 0x72, 0x00, 0x27, 0x04, 0x42, 0x9a, 0xd8,
+    0x9c, 0x99, 0xf0, 0xc8, 0x51, 0xc9, 0xed, 0x95, 0x22, 0x0a, 0x09, 0xa7, 0x19, 0x63, 0xf5,
+    0x2d, 0x81, 0x0b, 0xef, 0xe7, 0x8e, 0x54, 0x5e, 0x69, 0x08, 0xa8, 0x5f, 0x41, 0xf1, 0x8e,
+    0x5e, 0xc2, 0x8d, 0x9e, 0xe4, 0x5e, 0xaf, 0x35, 0x6d, 0x3e, 0xc8, 0x40, 0x56, 0x52, 0x1d,
+    0x9a, 0xd1, 0xb8, 0x64, 0xed, 0x98, 0x16, 0x3b, 0x97, 0x98, 0xf7, 0x2b, 0xc0, 0xfe, 0x57,
+    0x70, 0xca, 0xb2, 0x38, 0x61, 0x35, 0x16, 0x57, 0x3e, 0x52, 0x7b, 0x8e, 0x1f, 0x7b, 0x4c,
+    0x12, 0x71, 0x9c, 0xf7, 0x93, 0x86, 0x8d, 0xd3, 0x52, 0x4c, 0x06, 0x12, 0x18, 0x9b, 0xf6,
+    0x9d, 0xa1, 0x50, 0xa1, 0xd3, 0x69, 0x83, 0xc1, 0xde, 0x00, 0x64, 0xbf, 0x23, 0x8f, 0x69,
+    0x8c, 0xf9, 0xe9, 0x02, 0x81, 0x80, 0x02, 0xce, 0x66, 0x6b, 0x32, 0x73, 0x62, 0x60, 0x27,
+    0x3e, 0x38, 0x1d, 0xd8, 0x70, 0xdb, 0x4e, 0x32, 0xf7, 0x7a, 0x7b, 0x22, 0x7b, 0x9b, 0xd7,
+    0x49, 0x4f, 0x5b, 0x9b, 0xaa, 0x2c, 0x5b, 0x99, 0x22, 0x1e, 0x6e, 0x7e, 0x19, 0x8a, 0xf1,
+    0x97, 0xfe, 0x3f, 0xcd, 0x9e, 0xa4, 0x46, 0xf0, 0x9a, 0x62, 0x0f, 0x1a, 0xcd, 0x77, 0xe1,
+    0x88, 0xe1, 0x9a, 0x22, 0x84, 0x1b, 0xbf, 0xf0, 0x71, 0xf4, 0x64, 0xfd, 0xd5, 0xaa, 0xb4,
+    0x28, 0xdc, 0xef, 0xd9, 0xec, 0x29, 0x11, 0xc4, 0x58, 0x0f, 0xeb, 0x3c, 0x41, 0x66, 0x4a,
+    0x98, 0x18, 0x26, 0xfe, 0x3e, 0x7e, 0xc3, 0x36, 0xfa, 0xbc, 0x64, 0x69, 0x1f, 0xce, 0x1c,
+    0xc1, 0xb5, 0xe9, 0xa8, 0x78, 0xf7, 0x6d, 0xb6, 0x0c, 0x58, 0x29, 0xe2, 0xbf, 0xd0, 0xbe,
+    0x2e, 0x10, 0xfa, 0x74, 0x02, 0x9b, 0x48, 0xa5, 0xc9, 0x74, 0xed, 0xed, 0x7d, 0xa8
+};
+
+#ifndef OPENSSL_NO_DH
+static char group_ffdhe2048[] = "ffdhe2048";
+static const OSSL_PARAM dhx_keygen_params[] = {
+    OSSL_PARAM_utf8_string("group", group_ffdhe2048,
+        sizeof(group_ffdhe2048) - 1),
+    OSSL_PARAM_END
+};
+#endif
+
+#ifndef OPENSSL_NO_EC
+static char group_p256[] = "P-256";
+static const OSSL_PARAM ec_keygen_params[] = {
+    OSSL_PARAM_utf8_string("group", group_p256, sizeof(group_p256) - 1),
+    OSSL_PARAM_END
+};
+#endif
+
 #ifndef OPENSSL_NO_DH
 static const unsigned char kExampleDHPrivateKeyDER[] = {
     0x30, 0x82, 0x02, 0x26, 0x02, 0x01, 0x00, 0x30, 0x82, 0x01, 0x17, 0x06,
@@ -1521,49 +1630,73 @@ static APK_DATA keydata[] = {
 static int pkey_has_private(EVP_PKEY *key, const char *privtag,
     int use_octstring)
 {
-    int ret = 0;
-
     if (use_octstring) {
-        unsigned char buf[64];
-
-        ret = EVP_PKEY_get_octet_string_param(key, privtag, buf, sizeof(buf),
-            NULL);
+        /*
+         * Existence probe only: pass NULL buffer, ignore the returned size.
+         * Avoids hard-coded fixed buffers that would cap at 64 bytes and
+         * fail for PQC private keys (ML-DSA-44 is ~2.5 KB).
+         */
+        return EVP_PKEY_get_octet_string_param(key, privtag, NULL, 0, NULL);
     } else {
         BIGNUM *bn = NULL;
+        int ret = EVP_PKEY_get_bn_param(key, privtag, &bn);
 
-        ret = EVP_PKEY_get_bn_param(key, privtag, &bn);
         BN_free(bn);
+        return ret;
     }
-    return ret;
 }
+
+/*
+ * Private-component tags we know about, in lookup order.  Extend this
+ * list if a new algorithm adopts a different convention; do_pkey_tofrom
+ * _data_select() scans it on each key and only needs one match.
+ */
+static const char *const pkey_priv_tags[] = {
+    OSSL_PKEY_PARAM_PRIV_KEY, /* DH, DSA, EC, ECX, SM2, ML-*, SLH-DSA */
+    OSSL_PKEY_PARAM_RSA_D, /* RSA, RSA-PSS */
+};
 
 static int do_pkey_tofrom_data_select(EVP_PKEY *key, const char *keytype)
 {
     int ret = 0;
     OSSL_PARAM *pub_params = NULL, *keypair_params = NULL;
+    const OSSL_PARAM *priv = NULL;
     EVP_PKEY *fromkey = NULL, *fromkeypair = NULL;
     EVP_PKEY_CTX *fromctx = NULL;
-    const char *privtag = strcmp(keytype, "RSA") == 0 ? "d" : "priv";
-    const int use_octstring = strcmp(keytype, "X25519") == 0;
+    const char *privtag;
+    int use_octstring;
+    size_t t;
 
     /*
-     * Select only the public key component when using EVP_PKEY_todata() and
-     * check that the resulting param array does not contain a private key.
+     * Export the full keypair first so we can discover the algorithm's
+     * private-component tag from the emitted params rather than hand-coding
+     * it per keytype.
+     */
+    if (!TEST_int_eq(EVP_PKEY_todata(key, EVP_PKEY_KEYPAIR, &keypair_params), 1))
+        goto end;
+
+    for (t = 0; t < OSSL_NELEM(pkey_priv_tags); t++)
+        if ((priv = OSSL_PARAM_locate(keypair_params, pkey_priv_tags[t])) != NULL)
+            break;
+    if (priv == NULL) {
+        TEST_error("%s: KEYPAIR todata() emitted no known private component",
+            keytype);
+        goto end;
+    }
+    privtag = priv->key;
+    use_octstring = priv->data_type == OSSL_PARAM_OCTET_STRING;
+
+    /*
+     * Select only the public key via EVP_PKEY_todata(): the private tag we
+     * just learned must be absent.
      */
     if (!TEST_int_eq(EVP_PKEY_todata(key, EVP_PKEY_PUBLIC_KEY, &pub_params), 1)
         || !TEST_ptr_null(OSSL_PARAM_locate(pub_params, privtag)))
         goto end;
-    /*
-     * Select the keypair when using EVP_PKEY_todata() and check that
-     * the param array contains a private key.
-     */
-    if (!TEST_int_eq(EVP_PKEY_todata(key, EVP_PKEY_KEYPAIR, &keypair_params), 1)
-        || !TEST_ptr(OSSL_PARAM_locate(keypair_params, privtag)))
-        goto end;
 
     /*
-     * Select only the public key when using EVP_PKEY_fromdata() and check that
-     * the resulting key does not contain a private key.
+     * Round-trip: importing only the public selection from the full keypair
+     * params must yield a key that has no private component.
      */
     if (!TEST_ptr(fromctx = EVP_PKEY_CTX_new_from_name(mainctx, keytype, NULL))
         || !TEST_int_eq(EVP_PKEY_fromdata_init(fromctx), 1)
@@ -1572,10 +1705,8 @@ static int do_pkey_tofrom_data_select(EVP_PKEY *key, const char *keytype)
             1)
         || !TEST_false(pkey_has_private(fromkey, privtag, use_octstring)))
         goto end;
-    /*
-     * Select the keypair when using EVP_PKEY_fromdata() and check that
-     * the resulting key contains a private key.
-     */
+
+    /* Round-trip: a full keypair import must carry the private component. */
     if (!TEST_int_eq(EVP_PKEY_fromdata(fromctx, &fromkeypair,
                          EVP_PKEY_KEYPAIR, keypair_params),
             1)
@@ -1591,35 +1722,135 @@ end:
     return ret;
 }
 
-#ifndef OPENSSL_NO_DH
-static int test_dh_tofrom_data_select(void)
+/*
+ * Pass every advertised gettable parameter through EVP_PKEY_get_params()
+ * as a probe, twice: once with NULL data (size negotiation), then again
+ * with storage allocated for the advertised type.  Either fetch must
+ * succeed as a whole.  Pass 2 is what exercises the type-matching
+ * branches in the per-type OSSL_PARAM setters: a NULL-data probe
+ * succeeds before those branches are reached, which is why this check
+ * would otherwise miss gettable-table / getter mismatches (an entry
+ * advertised as OCTET_STRING whose getter populates it as a BIGNUM).
+ *
+ * The provider is free to leave individual entries unmodified, e.g.
+ * private-key data on a public-only key; only whole-fetch failure
+ * is treated as a regression.
+ */
+static int do_pkey_all_gettables_probe(EVP_PKEY *pkey, const char *keytype)
 {
-    int ret;
-    OSSL_PARAM params[2];
-    EVP_PKEY *key = NULL;
-    EVP_PKEY_CTX *gctx = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    const DH *dhkey;
-    const BIGNUM *privkey;
-#endif
+    int ret = 0;
+    const OSSL_PARAM *gettable;
+    OSSL_PARAM *probe = NULL;
+    void **storage = NULL;
+    size_t n = 0, i;
+    int need_refetch = 0;
 
-    params[0] = OSSL_PARAM_construct_utf8_string("group", "ffdhe2048", 0);
-    params[1] = OSSL_PARAM_construct_end();
-    ret = TEST_ptr(gctx = EVP_PKEY_CTX_new_from_name(mainctx, "DHX", NULL))
-        && TEST_int_gt(EVP_PKEY_keygen_init(gctx), 0)
-        && TEST_true(EVP_PKEY_CTX_set_params(gctx, params))
-        && TEST_int_gt(EVP_PKEY_generate(gctx, &key), 0)
-        && TEST_true(do_pkey_tofrom_data_select(key, "DHX"));
-#ifndef OPENSSL_NO_DEPRECATED_3_0
-    ret = ret && TEST_ptr(dhkey = EVP_PKEY_get0_DH(key))
-        && TEST_ptr(privkey = DH_get0_priv_key(dhkey))
-        && TEST_int_le(BN_num_bits(privkey), 225);
-#endif
-    EVP_PKEY_free(key);
-    EVP_PKEY_CTX_free(gctx);
+    if (!TEST_ptr(gettable = EVP_PKEY_gettable_params(pkey)))
+        goto err;
+
+    while (gettable[n].key != NULL)
+        n++;
+    if (!TEST_ptr(probe = OPENSSL_zalloc((n + 1) * sizeof(*probe)))
+        || (n > 0
+            && !TEST_ptr(storage = OPENSSL_zalloc(n * sizeof(*storage)))))
+        goto err;
+
+    for (i = 0; i < n; i++) {
+        /*
+         * Copy the advertised entry as a template, then reset the
+         * data fields to the "probe" state.  For OCTET_PTR / UTF8_PTR
+         * the setter writes *data directly (no size negotiation),
+         * so hand it a pointer slot up front.
+         */
+        probe[i] = gettable[i];
+        probe[i].data = NULL;
+        probe[i].data_size = 0;
+        probe[i].return_size = OSSL_PARAM_UNMODIFIED;
+        if (gettable[i].data_type == OSSL_PARAM_OCTET_PTR
+            || gettable[i].data_type == OSSL_PARAM_UTF8_PTR) {
+            if (!TEST_ptr(storage[i] = OPENSSL_zalloc(sizeof(void *))))
+                goto err;
+            probe[i].data = storage[i];
+        }
+    }
+    probe[n] = OSSL_PARAM_construct_end();
+
+    /* Pass 1: NULL-data probe populates return_size for sized entries. */
+    if (!TEST_true(EVP_PKEY_get_params(pkey, probe))) {
+        TEST_info("%s: Pass 1 (size probe) failed", keytype);
+        goto err;
+    }
+
+    /* Allocate storage for each populated sized entry. */
+    for (i = 0; i < n; i++) {
+        size_t need;
+
+        if (!OSSL_PARAM_modified(&probe[i]))
+            continue;
+        switch (probe[i].data_type) {
+        case OSSL_PARAM_INTEGER:
+        case OSSL_PARAM_UNSIGNED_INTEGER:
+        case OSSL_PARAM_OCTET_STRING:
+        case OSSL_PARAM_REAL:
+            need = probe[i].return_size;
+            if (!TEST_ptr(storage[i] = OPENSSL_malloc(need == 0 ? 1 : need)))
+                goto err;
+            probe[i].data = storage[i];
+            probe[i].data_size = need;
+            probe[i].return_size = OSSL_PARAM_UNMODIFIED;
+            need_refetch = 1;
+            break;
+        case OSSL_PARAM_UTF8_STRING:
+            /* Leave room for a trailing NUL beyond return_size. */
+            need = probe[i].return_size + 1;
+            if (!TEST_ptr(storage[i] = OPENSSL_malloc(need)))
+                goto err;
+            probe[i].data = storage[i];
+            probe[i].data_size = need;
+            probe[i].return_size = OSSL_PARAM_UNMODIFIED;
+            need_refetch = 1;
+            break;
+        default:
+            /* PTR types were populated in Pass 1; unknown types left as-is. */
+            break;
+        }
+    }
+
+    /*
+     * Pass 2: real fetch, with typed storage.  This is what actually
+     * catches advertised-vs-populated type mismatches: the per-type
+     * OSSL_PARAM_set_*() setters only enforce data_type when data is
+     * non-NULL.
+     */
+    if (need_refetch && !TEST_true(EVP_PKEY_get_params(pkey, probe))) {
+        TEST_info("%s: Pass 2 (real fetch) failed", keytype);
+        goto err;
+    }
+    ret = 1;
+err:
+    if (storage != NULL)
+        for (i = 0; i < n; i++)
+            OPENSSL_free(storage[i]);
+    OPENSSL_free(storage);
+    OPENSSL_free(probe);
     return ret;
 }
 
+/*
+ * Composite check: exercise both the selection-mask semantics of
+ * todata/fromdata and the advertised-vs-populated type consistency of
+ * every gettable parameter on the given key.  The individual helpers are
+ * algorithm-agnostic, so this driver works for any asymmetric EVP_PKEY.
+ * Each keytype-specific test function reduces to (a) key generation and
+ * (b) invoking this driver.
+ */
+static int do_pkey_checks(EVP_PKEY *key, const char *keytype)
+{
+    return do_pkey_tofrom_data_select(key, keytype)
+        && do_pkey_all_gettables_probe(key, keytype);
+}
+
+#ifndef OPENSSL_NO_DH
 static int test_dh_paramgen(void)
 {
     int ret;
@@ -1784,57 +2015,7 @@ err:
     return ret;
 }
 
-static int test_ec_tofrom_data_select(void)
-{
-    int ret;
-    EVP_PKEY *key = NULL;
-
-    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "EC", "P-256"))
-        && TEST_true(do_pkey_tofrom_data_select(key, "EC"));
-    EVP_PKEY_free(key);
-    return ret;
-}
-
-#ifndef OPENSSL_NO_ECX
-static int test_ecx_tofrom_data_select(void)
-{
-    int ret;
-    EVP_PKEY *key = NULL;
-
-    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "X25519"))
-        && TEST_true(do_pkey_tofrom_data_select(key, "X25519"));
-    EVP_PKEY_free(key);
-    return ret;
-}
-#endif
-#endif
-
-#ifndef OPENSSL_NO_SM2
-static int test_sm2_tofrom_data_select(void)
-{
-    int ret;
-    EVP_PKEY *key = NULL;
-
-    ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "SM2"))
-        && TEST_true(do_pkey_tofrom_data_select(key, "SM2"));
-    EVP_PKEY_free(key);
-    return ret;
-}
-#endif
-
-static int test_rsa_tofrom_data_select(void)
-{
-    int ret;
-    EVP_PKEY *key = NULL;
-    const unsigned char *pdata = kExampleRSAKeyDER;
-    int pdata_len = sizeof(kExampleRSAKeyDER);
-
-    ret = TEST_ptr(key = d2i_AutoPrivateKey_ex(NULL, &pdata, pdata_len,
-                       mainctx, NULL))
-        && TEST_true(do_pkey_tofrom_data_select(key, "RSA"));
-    EVP_PKEY_free(key);
-    return ret;
-}
+#endif /* OPENSSL_NO_EC */
 
 /* This is the equivalent of test_d2i_AutoPrivateKey in evp_extra_test */
 static int test_d2i_AutoPrivateKey_ex(int i)
@@ -3060,7 +3241,9 @@ static const unsigned char dsa_pub[] = {
     0xcc, 0xe2, 0x46, 0xce, 0xf5, 0x6d, 0xd8, 0x18, 0x91, 0xc4, 0x20, 0xbf, 0x07, 0x48, 0x45,
     0xfd
 };
+#endif
 
+#ifndef OPENSSL_NO_DSA
 static int do_check_params(OSSL_PARAM key_params[], int expected)
 {
     EVP_PKEY_CTX *gen_ctx = NULL, *check_ctx = NULL;
@@ -3105,20 +3288,6 @@ static int do_check_int(OSSL_PARAM params[], const char *key, int expected)
     return TEST_ptr(p = OSSL_PARAM_locate(params, key))
         && TEST_true(OSSL_PARAM_get_int(p, &val))
         && TEST_int_eq(val, expected);
-}
-
-static int test_dsa_tofrom_data_select(void)
-{
-    int ret;
-    EVP_PKEY *key = NULL;
-    const unsigned char *pkeydata = dsa_key;
-
-    ret = TEST_ptr(key = d2i_AutoPrivateKey_ex(NULL, &pkeydata, sizeof(dsa_key),
-                       mainctx, NULL))
-        && TEST_true(do_pkey_tofrom_data_select(key, "DSA"));
-
-    EVP_PKEY_free(key);
-    return ret;
 }
 
 static int test_dsa_todata(void)
@@ -3544,6 +3713,112 @@ static int evp_test_name_parsing(void)
     return 1;
 }
 
+/*
+ * Table-driven driver for do_pkey_checks().  Each entry names the
+ * algorithm and supplies either (a) a prefabricated DER blob, loaded
+ * via d2i_AutoPrivateKey_ex(), or (b) an optional OSSL_PARAM array
+ * passed to EVP_PKEY_CTX_set_params() before EVP_PKEY_generate().
+ * The downstream checks are algorithm-agnostic; only the per-algorithm
+ * inputs live in this table.
+ */
+typedef struct pkey_test_spec_st {
+    const char *name; /* algorithm name for keygen or logging */
+    const unsigned char *der; /* prefab private key DER, or NULL */
+    uint32_t der_len; /* size of the DER blob when set */
+    const OSSL_PARAM *params; /* keygen params, or NULL for defaults */
+} PKEY_TEST_SPEC;
+
+static const PKEY_TEST_SPEC pkey_test_specs[] = {
+#ifndef OPENSSL_NO_DH
+    { "DHX", NULL, 0, dhx_keygen_params },
+#endif
+#ifndef OPENSSL_NO_DSA
+    { "DSA", dsa_key, sizeof(dsa_key), NULL },
+#endif
+    { "RSA", kExampleRSAKeyDER, sizeof(kExampleRSAKeyDER), NULL },
+    { "RSA-PSS", kExampleRSAPSSKeyDER, sizeof(kExampleRSAPSSKeyDER), NULL },
+#ifndef OPENSSL_NO_EC
+    { "EC", NULL, 0, ec_keygen_params },
+#ifndef OPENSSL_NO_ECX
+    { "X25519", NULL, 0, NULL },
+    { "ED25519", NULL, 0, NULL },
+#endif
+#ifndef OPENSSL_NO_SM2
+    { "SM2", NULL, 0, NULL },
+#endif
+#endif
+#ifndef OPENSSL_NO_ML_KEM
+    { "ML-KEM-512", NULL, 0, NULL },
+#endif
+#ifndef OPENSSL_NO_ML_DSA
+    { "ML-DSA-44", NULL, 0, NULL },
+#endif
+#ifndef OPENSSL_NO_SLH_DSA
+    { "SLH-DSA-SHA2-128f", NULL, 0, NULL },
+#endif
+};
+
+static EVP_PKEY *pkey_from_spec(OSSL_LIB_CTX *libctx,
+    const PKEY_TEST_SPEC *spec)
+{
+    EVP_PKEY *key = NULL;
+    EVP_PKEY_CTX *gctx = NULL;
+
+    if (spec->der != NULL) {
+        const unsigned char *p = spec->der;
+
+        return d2i_AutoPrivateKey_ex(NULL, &p, spec->der_len, libctx, NULL);
+    }
+
+    if ((gctx = EVP_PKEY_CTX_new_from_name(libctx, spec->name, NULL)) == NULL
+        || EVP_PKEY_keygen_init(gctx) <= 0
+        || (spec->params != NULL
+            && EVP_PKEY_CTX_set_params(gctx, spec->params) <= 0)
+        || EVP_PKEY_generate(gctx, &key) <= 0) {
+        EVP_PKEY_free(key);
+        key = NULL;
+    }
+    EVP_PKEY_CTX_free(gctx);
+    return key;
+}
+
+static int test_pkey_by_spec(int i)
+{
+    EVP_PKEY *key = pkey_from_spec(mainctx, &pkey_test_specs[i]);
+    int ret = TEST_ptr(key)
+        && do_pkey_checks(key, pkey_test_specs[i].name);
+
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+#if !defined(OPENSSL_NO_DH) && !defined(OPENSSL_NO_DEPRECATED_3_0)
+/*
+ * DHX keygen with group "ffdhe2048" reduces the private exponent modulo
+ * the sub-group order, so the exposed BN_num_bits() should not exceed
+ * the sub-group size.  This tail check is DHX-specific and therefore
+ * does not fit the generic spec-table driver.
+ */
+static int test_dh_priv_bits(void)
+{
+    static const PKEY_TEST_SPEC dhx_spec = {
+        "DHX", NULL, 0, dhx_keygen_params
+    };
+    int ret;
+    EVP_PKEY *key;
+    const DH *dhkey;
+    const BIGNUM *privkey;
+
+    if (!TEST_ptr(key = pkey_from_spec(mainctx, &dhx_spec)))
+        return 0;
+    ret = TEST_ptr(dhkey = EVP_PKEY_get0_DH(key))
+        && TEST_ptr(privkey = DH_get0_priv_key(dhkey))
+        && TEST_int_le(BN_num_bits(privkey), 225);
+    EVP_PKEY_free(key);
+    return ret;
+}
+#endif
+
 int setup_tests(void)
 {
     if (!test_get_libctx(&mainctx, &nullprov, NULL, NULL, NULL)) {
@@ -3558,28 +3833,22 @@ int setup_tests(void)
     ADD_TEST(test_new_keytype);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 2);
-    ADD_TEST(test_ec_tofrom_data_select);
-#ifndef OPENSSL_NO_ECX
-    ADD_TEST(test_ecx_tofrom_data_select);
-#endif
     ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else
     ADD_ALL_TESTS(test_d2i_PrivateKey_ex, 1);
 #endif
-#ifndef OPENSSL_NO_SM2
-    ADD_TEST(test_sm2_tofrom_data_select);
-#endif
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_dsa_todata);
-    ADD_TEST(test_dsa_tofrom_data_select);
     ADD_ALL_TESTS(test_dsa_fromdata_digest_prop, 2);
 #endif
 #ifndef OPENSSL_NO_DH
-    ADD_TEST(test_dh_tofrom_data_select);
     ADD_TEST(test_dh_paramgen);
     ADD_TEST(test_dh_paramfromdata);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_dh_priv_bits);
 #endif
-    ADD_TEST(test_rsa_tofrom_data_select);
+#endif
+    ADD_ALL_TESTS(test_pkey_by_spec, OSSL_NELEM(pkey_test_specs));
 
     ADD_TEST(test_pkey_todata_null);
     ADD_TEST(test_pkey_export_null);
