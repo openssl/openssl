@@ -279,11 +279,28 @@ int BN_mod_sub_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         return 0;
     }
 
-    if (!BN_sub(r, a, b))
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL || b->data == NULL || m->data == NULL) {
+        if (!BN_sub(r, a, b))
+            return 0;
+        if (r->neg)
+            return BN_add(r, r, m);
+        return 1;
+    }
+
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, m->dmax);
+
+    if (rf == NULL)
         return 0;
-    if (r->neg)
-        return BN_add(r, r, m);
-    return 1;
+
+    int ret = OSSL_FN_mod_sub_quick(rf, a->data, b->data, m->data);
+
+    if (ret) {
+        bn_release(r, m->top);
+        r->neg = 0;
+    }
+
+    return ret;
 }
 
 /* slow but works */
