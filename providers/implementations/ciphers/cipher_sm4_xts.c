@@ -9,8 +9,6 @@
 
 /* Dispatch functions for SM4 XTS mode */
 
-#include "cipher_sm4_xts.h"
-
 #include <stddef.h>
 #include <stdint.h>
 
@@ -30,6 +28,7 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 /* clang-format off */
+#include "cipher_sm4_xts.h"
 #include "providers/implementations/ciphers/cipher_sm4_xts.inc"
 /* clang-format on */
 
