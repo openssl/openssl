@@ -136,11 +136,17 @@ typedef void(ossl_dgram_demux_cb_fn)(DGRAM_URXE *e, void *arg);
  * Creates a new demuxer. The given BIO is used to receive datagrams from the
  * network using BIO_recvmmsg.
  *
+ * threadsafe: If non-zero, enables internal locking for thread safety. Use this
+ *             when the demux may be accessed from multiple threads (DTLS
+ *             where connections share a demux). Pass 0 if thread safety is
+ *             handled at a higher level (QUIC).
+ *
  * now is an optional function used to determine the time a datagram was
  * received. now_arg is an opaque argument passed to the function. If now is
  * NULL, ossl_time_zero() is used as the datagram reception time.
  */
 DGRAM_DEMUX *ossl_dgram_demux_new(BIO *net_bio,
+    int threadsafe,
     OSSL_TIME (*now)(void *arg),
     void *now_arg);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -33,8 +33,6 @@
 
 static char *cert = NULL;
 static char *privkey = NULL;
-
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DTLS)
 
 /*
  * Helper function that waits for data using SSL_poll and then reads.
@@ -79,7 +77,7 @@ static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
 
         ret = SSL_read_ex(ssl, buf, bufsize, readbytes);
         if (ret == 1)
-            return 1; /* Success */
+            return 1;
 
         err = SSL_get_error(ssl, ret);
         if (err != SSL_ERROR_WANT_READ) {
@@ -149,7 +147,7 @@ static int create_dtls_listener(SSL_CTX *sctx, uint64_t listener_flags,
         goto err;
 
     SSL_set_bio(*listener, listener_bio, listener_bio);
-    listener_bio = NULL; /* ownership transferred */
+    listener_bio = NULL;
 
     /* Start listening */
     if (!TEST_int_eq(SSL_listen(*listener), 1))
@@ -210,7 +208,7 @@ static int create_dtls_client_for_addr(SSL_CTX *cctx, const BIO_ADDR *server_add
         goto err;
 
     SSL_set_bio(*clientssl, c_bio, c_bio);
-    c_bio = NULL; /* ownership transferred */
+    c_bio = NULL;
 
     ret = 1;
 
@@ -227,43 +225,107 @@ err:
 }
 
 /*
- * Helper to create a DTLS listener with real UDP sockets and a connected client.
+ * Helper to create a DTLS listener and client using memory BIOs.
  *
- * This sets up:
- *   - Server UDP socket bound to loopback with ephemeral port
- *   - DTLS listener attached to that socket (with SSL_listen() called)
- *   - Client UDP socket
- *   - Client SSL connected to the server address
- *
- * Returns 1 on success, 0 on failure.
- * On success, caller is responsible for cleanup using the returned pointers/fds.
+ * This uses BIO_new_bio_dgram_pair() to create a connected pair of dgram BIOs
+ * for in-memory testing without real sockets.
  */
-static int create_dtls_listener_and_client(SSL_CTX *sctx, SSL_CTX *cctx,
+static int create_dtls_listener_and_client_mem(SSL_CTX *sctx, SSL_CTX *cctx,
     uint64_t listener_flags,
     SSL **listener, SSL **clientssl,
-    BIO_ADDR **server_addr,
-    int *server_fd, int *client_fd)
+    BIO_ADDR **client_addr)
 {
+    BIO *server_bio = NULL, *client_bio = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO_ADDR *client_local_addr = NULL;
+    struct in_addr ina;
+    int ret = 0;
+    int bio_caps = BIO_DGRAM_CAP_HANDLES_DST_ADDR | BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
+
+    *listener = NULL;
     *clientssl = NULL;
-    *client_fd = -1;
+    *client_addr = NULL;
 
-    /* Create the listener */
-    if (!create_dtls_listener(sctx, listener_flags, listener, server_addr, server_fd))
-        return 0;
+    /* Create dgram BIO pair for in-memory communication */
+    if (!TEST_int_eq(BIO_new_bio_dgram_pair(&server_bio, 0, &client_bio, 0), 1))
+        goto err;
 
-    /* Create the client */
-    if (!create_dtls_client_for_addr(cctx, *server_addr, clientssl, client_fd)) {
+    /* Set capabilities on both BIOs to support addressed mode */
+    if (!TEST_true(BIO_dgram_set_caps(server_bio, bio_caps))
+        || !TEST_true(BIO_dgram_set_caps(client_bio, bio_caps)))
+        goto err;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+
+    /* Create and set server's local address (127.0.0.1:54321) */
+    if (!TEST_ptr(server_addr = BIO_ADDR_new()))
+        goto err;
+    if (!TEST_true(BIO_ADDR_rawmake(server_addr, AF_INET, &ina,
+            sizeof(ina), htons(54321))))
+        goto err;
+    if (!TEST_int_eq(BIO_dgram_set0_local_addr(server_bio, server_addr), 1))
+        goto err;
+    server_addr = NULL; /* ownership transferred */
+
+    /* Create and set client's local address (127.0.0.1:12345) */
+    if (!TEST_ptr(client_local_addr = BIO_ADDR_new()))
+        goto err;
+    if (!TEST_true(BIO_ADDR_rawmake(client_local_addr, AF_INET, &ina,
+            sizeof(ina), htons(12345))))
+        goto err;
+    if (!TEST_int_eq(BIO_dgram_set0_local_addr(client_bio, client_local_addr), 1))
+        goto err;
+    client_local_addr = NULL; /* ownership transferred */
+
+    /* Create the listener and attach the server BIO */
+    if (!TEST_ptr(*listener = SSL_new_listener(sctx, listener_flags)))
+        goto err;
+
+    SSL_set_bio(*listener, server_bio, server_bio);
+    server_bio = NULL; /* ownership transferred */
+
+    /* Start listening */
+    if (!TEST_int_eq(SSL_listen(*listener), 1))
+        goto err;
+
+    /* Create client SSL */
+    if (!TEST_ptr(*clientssl = SSL_new(cctx)))
+        goto err;
+
+    /*
+     * NOTE: For regular DTLS clients with dgram pair BIOs, we do NOT call
+     * SSL_set1_initial_peer_addr(). That function is for listener-created
+     * connections. For dgram pairs, the BIOs are already connected and
+     * BIO_write() will work without an explicit peer address.
+     */
+
+    /* Attach the client BIO */
+    SSL_set_bio(*clientssl, client_bio, client_bio);
+    client_bio = NULL; /* ownership transferred */
+
+    /* Create the returned client_addr for the caller */
+    if (!TEST_ptr(*client_addr = BIO_ADDR_new()))
+        goto err;
+    if (!TEST_true(BIO_ADDR_rawmake(*client_addr, AF_INET, &ina,
+            sizeof(ina), htons(12345))))
+        goto err;
+
+    ret = 1;
+
+err:
+    BIO_free(server_bio);
+    BIO_free(client_bio);
+    BIO_ADDR_free(server_addr);
+    BIO_ADDR_free(client_local_addr);
+    if (ret == 0) {
         SSL_free(*listener);
-        BIO_ADDR_free(*server_addr);
-        if (*server_fd >= 0)
-            BIO_closesocket(*server_fd);
+        SSL_free(*clientssl);
+        BIO_ADDR_free(*client_addr);
         *listener = NULL;
-        *server_addr = NULL;
-        *server_fd = -1;
-        return 0;
+        *clientssl = NULL;
+        *client_addr = NULL;
     }
-
-    return 1;
+    return ret;
 }
 
 /*
@@ -275,6 +337,7 @@ static int test_dtls_new_listener(void)
     SSL_CTX *ctx = NULL;
     SSL *listener = NULL;
     int success = 0;
+
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
         || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
@@ -651,7 +714,7 @@ static int test_dtls_accept_connection_no_bio_block(void)
     /* No BIO has been set on the listener */
 
     ERR_clear_error();
-    conn = SSL_accept_connection(listener, 0); /* blocking */
+    conn = SSL_accept_connection(listener, 0);
 
     /* Must return NULL */
     if (!TEST_ptr_null(conn))
@@ -693,8 +756,7 @@ static int test_dtls13_connection_with_hrr(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    BIO_ADDR *server_addr = NULL;
-    int server_fd = -1, client_fd = -1;
+    BIO_ADDR *client_addr = NULL;
     const char msg[] = "Hello DTLS 1.3 with HRR";
     const char reply[] = "Reply from server";
     char buf[64];
@@ -713,11 +775,10 @@ static int test_dtls13_connection_with_hrr(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    /* Create listener and client using helper */
-    if (!TEST_true(create_dtls_listener_and_client(sctx, cctx,
+    /* Create listener and client using memory BIO helper */
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
             SSL_LISTENER_FLAG_REQUIRE_HRR,
-            &listener, &clientssl, &server_addr,
-            &server_fd, &client_fd)))
+            &listener, &clientssl, &client_addr)))
         goto end;
 
     /*
@@ -742,15 +803,15 @@ static int test_dtls13_connection_with_hrr(void)
             goto end;
         }
 
-        /* Poll the listener for incoming connection with short timeout */
+        /* Poll the listener for incoming connection */
         poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
         poll_item.desc.value.ssl = listener;
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 0;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
@@ -797,11 +858,7 @@ end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
-    BIO_ADDR_free(server_addr);
-    if (server_fd >= 0)
-        BIO_closesocket(server_fd);
-    if (client_fd >= 0)
-        BIO_closesocket(client_fd);
+    BIO_ADDR_free(client_addr);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
@@ -828,8 +885,7 @@ static int test_dtls13_connection_without_hrr(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    BIO_ADDR *server_addr = NULL;
-    int server_fd = -1, client_fd = -1;
+    BIO_ADDR *client_addr = NULL;
     const char msg[] = "Hello DTLS 1.3 without HRR";
     const char reply[] = "Reply from server";
     char buf[64];
@@ -849,13 +905,12 @@ static int test_dtls13_connection_without_hrr(void)
         goto end;
 
     /*
-     * Create listener and client using helper.
+     * Create listener and client using memory BIO helper.
      * Use NO_VALIDATE flag to skip HRR - server won't send HelloRetryRequest.
      */
-    if (!TEST_true(create_dtls_listener_and_client(sctx, cctx,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
             SSL_LISTENER_FLAG_NO_VALIDATE,
-            &listener, &clientssl, &server_addr,
-            &server_fd, &client_fd)))
+            &listener, &clientssl, &client_addr)))
         goto end;
 
     /*
@@ -881,15 +936,15 @@ static int test_dtls13_connection_without_hrr(void)
             goto end;
         }
 
-        /* Poll the listener for incoming connection with short timeout */
+        /* Poll the listener for incoming connection */
         poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
         poll_item.desc.value.ssl = listener;
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 0;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
@@ -936,11 +991,7 @@ end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
-    BIO_ADDR_free(server_addr);
-    if (server_fd >= 0)
-        BIO_closesocket(server_fd);
-    if (client_fd >= 0)
-        BIO_closesocket(client_fd);
+    BIO_ADDR_free(client_addr);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
@@ -1048,9 +1099,9 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 100000;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
@@ -1106,9 +1157,9 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 0;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
@@ -1276,7 +1327,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
         goto end;
 
     SSL_set_bio(client1, c1_bio, c1_bio);
-    c1_bio = NULL; /* ownership transferred */
+    c1_bio = NULL;
 
     /*
      * --- Create Client 2 ---
@@ -1310,7 +1361,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
         goto end;
 
     SSL_set_bio(client2, c2_bio, c2_bio);
-    c2_bio = NULL; /* ownership transferred */
+    c2_bio = NULL;
 
     /*
      * --- Drive both clients concurrently through handshake ---
@@ -1358,9 +1409,9 @@ static int test_dtls_concurrent_clients_real_sockets(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 100000;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         /* Accept connections from listener if poll indicates availability */
@@ -1520,8 +1571,7 @@ static int test_dtls12_connection_with_hvr(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    BIO_ADDR *server_addr = NULL;
-    int server_fd = -1, client_fd = -1;
+    BIO_ADDR *client_addr = NULL;
     const char msg[] = "Hello DTLS 1.2 with HVR";
     const char reply[] = "Reply from server";
     char buf[64];
@@ -1540,11 +1590,10 @@ static int test_dtls12_connection_with_hvr(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    /* Create listener and client using helper */
-    if (!TEST_true(create_dtls_listener_and_client(sctx, cctx,
+    /* Create listener and client using memory BIO helper */
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
             SSL_LISTENER_FLAG_REQUIRE_HVR,
-            &listener, &clientssl, &server_addr,
-            &server_fd, &client_fd)))
+            &listener, &clientssl, &client_addr)))
         goto end;
 
     /*
@@ -1570,15 +1619,15 @@ static int test_dtls12_connection_with_hvr(void)
             goto end;
         }
 
-        /* Poll the listener for incoming connection with short timeout */
+        /* Poll the listener for incoming connection */
         poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
         poll_item.desc.value.ssl = listener;
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 0;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
@@ -1625,11 +1674,7 @@ end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
-    BIO_ADDR_free(server_addr);
-    if (server_fd >= 0)
-        BIO_closesocket(server_fd);
-    if (client_fd >= 0)
-        BIO_closesocket(client_fd);
+    BIO_ADDR_free(client_addr);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
@@ -1656,8 +1701,7 @@ static int test_dtls12_connection_without_hvr(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *listener = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
-    BIO_ADDR *server_addr = NULL;
-    int server_fd = -1, client_fd = -1;
+    BIO_ADDR *client_addr = NULL;
     const char msg[] = "Hello DTLS 1.2 without HVR";
     const char reply[] = "Reply from server";
     char buf[64];
@@ -1677,13 +1721,12 @@ static int test_dtls12_connection_without_hvr(void)
         goto end;
 
     /*
-     * Create listener and client using helper.
+     * Create listener and client using memory BIO helper.
      * Use NO_VALIDATE flag to skip HVR - server won't send HelloVerifyRequest.
      */
-    if (!TEST_true(create_dtls_listener_and_client(sctx, cctx,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
             SSL_LISTENER_FLAG_NO_VALIDATE,
-            &listener, &clientssl, &server_addr,
-            &server_fd, &client_fd)))
+            &listener, &clientssl, &client_addr)))
         goto end;
 
     /*
@@ -1709,15 +1752,15 @@ static int test_dtls12_connection_without_hvr(void)
             goto end;
         }
 
-        /* Poll the listener for incoming connection with short timeout */
+        /* Poll the listener for incoming connection */
         poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
         poll_item.desc.value.ssl = listener;
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 100000; /* 100ms */
+        poll_timeout.tv_usec = 0;
 
-        if (!SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result))
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
 
         if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
@@ -1764,11 +1807,7 @@ end:
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_free(listener);
-    BIO_ADDR_free(server_addr);
-    if (server_fd >= 0)
-        BIO_closesocket(server_fd);
-    if (client_fd >= 0)
-        BIO_closesocket(client_fd);
+    BIO_ADDR_free(client_addr);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
@@ -1988,7 +2027,7 @@ static int test_dtls_listener_time_callback_basic(void)
 {
     SSL_CTX *ctx = NULL;
     SSL *listener = NULL;
-    uint64_t fake_time = 1700000000; /* A fixed timestamp */
+    uint64_t fake_time = 1700000000;
     int success = 0;
 
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
@@ -2149,7 +2188,7 @@ static int test_dtls_listener_pending_timeout_invalid(void)
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
 
-    timeout = 60000; /* 60 seconds in ms */
+    timeout = 60000;
 
     /* Setting timeout on NULL should fail */
     if (!TEST_false(SSL_listener_set_pending_timeout(NULL, timeout)))
@@ -2182,7 +2221,1390 @@ err:
     return success;
 }
 
-#endif /* !OPENSSL_NO_SOCK && !OPENSSL_NO_DTLS */
+/*
+ * Test: Free listener with connection in pending_conns only.
+ *
+ * This test creates a listener and starts a client handshake but does NOT
+ * complete it. The connection will be in pending_conns when the listener
+ * is freed. The listener should properly free the SSL object.
+ */
+static int test_ssl_ownership_pending_conn_leak(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    ret = SSL_connect(clientssl);
+    err_code = SSL_get_error(clientssl, ret);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_true(err_code == SSL_ERROR_WANT_READ
+            || err_code == SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Listener processes the ClientHello.
+     * This creates a pending connection in pending_conns and sends HVR.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * Now the pending connection is in pending_conns and if we have a
+     * leak the ASAN tests will detect it
+     */
+    testresult = 1;
+
+end:
+    /* Clean up - listener should free pending_conns SSL objects */
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: Free listener with connection in incoming_connections.
+ *
+ * This test creates a listener, completes a handshake so the connection
+ * moves to incoming_connections, but does NOT call SSL_accept_connection().
+ * This means the connection will be in the incoming_connections queue.
+ * The listener should properly free the SSL object when destroyed.
+ */
+static int test_ssl_ownership_incoming_conn_leak(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+    int conn_ready = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (!conn_ready) {
+        if (++abortctr > 100) {
+            TEST_error("Handshake did not converge");
+            goto end;
+        }
+
+        /* Drive the client side */
+        ret = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, ret);
+        if (ret <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            /* Only fail if we haven't seen the connection ready yet */
+            if (!conn_ready) {
+                TEST_error("SSL_connect failed (err %d)", err_code);
+                goto end;
+            }
+        }
+
+        /* Poll the listener to drive server-side handshake */
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        /*
+         * Check if a connection is ready (in incoming_connections).
+         * Do NOT call SSL_accept_connection() - we want to leave it there.
+         */
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            conn_ready = 1;
+    }
+
+    /*
+     * When we free the listener, it should free the SSL in incoming_connections.
+     * If there's a leak, ASAN will detect it.
+     */
+    testresult = 1;
+
+end:
+    /*
+     * We do NOT free any serverssl here because we never called accept.
+     * The listener owns the connection and should free it.
+     */
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: Three connections with different ownership states.
+ *
+ * This test creates three connections:
+ *   1. One accepted by user (user owns)
+ *   2. One in incoming_connections (complete, not accepted, listener owns)
+ *   3. One in pending_conns (handshake in progress, listener owns)
+ *
+ * When the listener is freed:
+ *   - Connection 1 should NOT be freed by listener (user frees it)
+ *   - Connection 2 should be freed by listener
+ *   - Connection 3 should be freed by listener
+ */
+static int test_ssl_ownership_three_conn_states(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL_CTX *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *client1 = NULL, *client2 = NULL, *client3 = NULL;
+    SSL *accepted1 = NULL;
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1;
+    int client1_fd = -1, client2_fd = -1, client3_fd = -1;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr;
+    int conn2_ready = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    /*
+     * --- Connection 1: Complete handshake AND accept (user owns) ---
+     */
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &client1, &client1_fd)))
+        goto end;
+
+    SSL_set_connect_state(client1);
+    abortctr = 0;
+    while (accepted1 == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection 1 handshake did not converge");
+            goto end;
+        }
+
+        ret = SSL_connect(client1);
+        err_code = SSL_get_error(client1, ret);
+        if (ret <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE)
+            break;
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 100000;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            accepted1 = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(accepted1))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(accepted1, client1, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * --- Connection 2: Complete handshake but don't accept (listener owns) ---
+     *
+     * Drive handshake to completion via listener tick, but do NOT call
+     * SSL_accept_connection(). The connection will be in incoming_connections.
+     */
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &client2, &client2_fd)))
+        goto end;
+
+    SSL_set_connect_state(client2);
+    abortctr = 0;
+    while (!conn2_ready) {
+        if (++abortctr > 100) {
+            TEST_error("Connection 2 handshake did not converge");
+            goto end;
+        }
+
+        ret = SSL_connect(client2);
+        err_code = SSL_get_error(client2, ret);
+        if (ret <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE
+            && !conn2_ready) {
+            TEST_error("Connection 2 handshake failed unexpectedly");
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 100000;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        /*
+         * Check if connection is ready. Do NOT call SSL_accept_connection()
+         * - we want it to stay in incoming_connections.
+         */
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            conn2_ready = 1;
+    }
+
+    /*
+     * --- Connection 3: Start handshake but don't complete (listener owns) ---
+     */
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+            &client3, &client3_fd)))
+        goto end;
+
+    SSL_set_connect_state(client3);
+    ret = SSL_connect(client3);
+    err_code = SSL_get_error(client3, ret);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_true(err_code == SSL_ERROR_WANT_READ
+            || err_code == SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Listener processes the ClientHello - creates SSL in pending_conns */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 100000;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * Now we have:
+     *   - Connection 1 (accepted1): accepted by user (user owns)
+     *   - Connection 2: in incoming_connections (listener owns)
+     *   - Connection 3: in pending_conns (listener owns)
+     *
+     * When we free the listener, it should:
+     *   - NOT double-free accepted1 (we free it ourselves)
+     *   - Free the incoming connection for client2
+     *   - Free the pending connection for client3
+     */
+    testresult = 1;
+
+end:
+    /* User-owned connection - we free it */
+    SSL_free(accepted1);
+
+    /* Client SSLs - we always own these */
+    SSL_free(client1);
+    SSL_free(client2);
+    SSL_free(client3);
+
+    /* Listener frees pending_conns and incoming_connections */
+    SSL_free(listener);
+
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client1_fd >= 0)
+        BIO_closesocket(client1_fd);
+    if (client2_fd >= 0)
+        BIO_closesocket(client2_fd);
+    if (client3_fd >= 0)
+        BIO_closesocket(client3_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_set0_rbio with pending connections causes leak.
+ *
+ * This test verifies that when SSL_set0_rbio is called on a listener
+ * with connections in pending_conns, those connections are properly freed.
+ */
+static int test_ssl_ownership_set_rbio_pending_leak(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    BIO *new_server_bio = NULL;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    /*
+     * Client sends initial ClientHello.
+     */
+    SSL_set_connect_state(clientssl);
+    ret = SSL_connect(clientssl);
+    err_code = SSL_get_error(clientssl, ret);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_true(err_code == SSL_ERROR_WANT_READ
+            || err_code == SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Listener processes the ClientHello.
+     * This creates a pending connection in pending_conns and sends HVR.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * The pending connection is still in pending_conns, NOT in incoming_connections.
+     * Now we call SSL_set0_rbio which should free the pending connections.
+     * If there's a leak, ASAN will detect it.
+     */
+
+    /* Create a new mem BIO for the replacement */
+    if (!TEST_ptr(new_server_bio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    /*
+     * Replace the BIO - this should trigger cleanup of pending_conns.
+     * If there's a leak, ASAN will detect it.
+     */
+    SSL_set0_rbio(listener, new_server_bio);
+    new_server_bio = NULL;
+
+    testresult = 1;
+
+end:
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_free(new_server_bio);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_set0_rbio with completed connection in incoming_connections.
+ *
+ * This test verifies that when SSL_set0_rbio is called on a listener
+ * with connections in incoming_connections (completed but not accepted),
+ * those connections are properly freed.
+ */
+static int test_ssl_ownership_set_rbio_incoming_leak(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    BIO *new_server_bio = NULL;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+    int conn_ready = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (!conn_ready) {
+        if (++abortctr > 100) {
+            TEST_error("Handshake did not converge");
+            goto end;
+        }
+
+        /* Drive the client side */
+        ret = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, ret);
+        if (ret <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            /* Only fail if we haven't seen the connection ready yet */
+            if (!conn_ready) {
+                TEST_error("SSL_connect failed with error %d", err_code);
+                goto end;
+            }
+        }
+
+        /* Poll the listener to drive server-side handshake */
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        /*
+         * Check if a connection is ready (in incoming_connections).
+         * Do NOT call SSL_accept_connection() - we want to leave it there.
+         */
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            conn_ready = 1;
+    }
+
+    /*
+     * Now call SSL_set0_rbio which should free the incoming connections.
+     * If there's a leak, ASAN will detect it.
+     */
+
+    /* Create a new mem BIO for the replacement */
+    if (!TEST_ptr(new_server_bio = BIO_new(BIO_s_mem())))
+        goto end;
+
+    SSL_set0_rbio(listener, new_server_bio);
+    new_server_bio = NULL;
+
+    testresult = 1;
+
+end:
+    /* Do NOT free serverssl - we never called SSL_accept_connection() */
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_free(new_server_bio);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: User accepts connection and frees it - no double-free.
+ *
+ * This test verifies that when a user accepts a connection and frees it,
+ * the listener does not double-free when it is destroyed.
+ */
+static int test_ssl_ownership_accept_free_no_double_free(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    SSL *serverssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Handshake did not converge");
+            goto end;
+        }
+
+        ret = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, ret);
+
+        if (ret <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed with error %d", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * User owns serverssl now. Free it before freeing the listener.
+     * The listener should NOT try to free it again.
+     */
+    SSL_free(serverssl);
+    serverssl = NULL;
+
+    /*
+     * Now free the listener. If there's a double-free bug, ASAN will catch it.
+     */
+    SSL_free(listener);
+    listener = NULL;
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: Multiple pending connections, free listener mid-handshake.
+ *
+ * This test creates multiple clients that start handshakes but don't
+ * complete them. All pending connections should be freed when the
+ * listener is destroyed.
+ */
+static int test_ssl_ownership_multiple_pending_leak(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[3] = { NULL, NULL, NULL };
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1;
+    int client_fds[3] = { -1, -1, -1 };
+    int testresult = 0;
+    int ret, err_code;
+    int i;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    for (i = 0; i < 3; i++) {
+        /* Create client */
+        if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr,
+                &clients[i], &client_fds[i])))
+            goto end;
+
+        /* Client sends initial ClientHello */
+        SSL_set_connect_state(clients[i]);
+        ret = SSL_connect(clients[i]);
+        err_code = SSL_get_error(clients[i], ret);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_true(err_code == SSL_ERROR_WANT_READ
+                || err_code == SSL_ERROR_WANT_WRITE))
+            goto end;
+
+        /* Listener processes the ClientHello - creates SSL in pending_conns */
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+    }
+
+    /*
+     * Now we have 3 connections in pending_conns.
+     * Free the listener - it should free all pending SSL objects.
+     * If there's a leak, ASAN will detect it.
+     */
+    testresult = 1;
+
+end:
+    for (i = 0; i < 3; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/* Helper for timeout test - fake time value */
+static OSSL_TIME timeout_test_fake_time;
+
+/* Helper callback that returns our fake time */
+static OSSL_TIME timeout_test_now_cb(void *arg)
+{
+    return timeout_test_fake_time;
+}
+
+static int test_ssl_ownership_pending_timeout_cleanup(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int ret, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    if (!TEST_true(SSL_listener_set_pending_timeout(listener, 1000)))
+        goto end;
+
+    /* Set our fake time callback */
+    timeout_test_fake_time = ossl_time_from_time_t(1700000000);
+    if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
+            timeout_test_now_cb, NULL)))
+        goto end;
+
+    /*
+     * Client sends initial ClientHello.
+     */
+    SSL_set_connect_state(clientssl);
+    ret = SSL_connect(clientssl);
+    err_code = SSL_get_error(clientssl, ret);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_true(err_code == SSL_ERROR_WANT_READ
+            || err_code == SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Listener processes the ClientHello.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * Advance the fake time past the timeout (more than 1 second).
+     * The next tick should detect the timeout and free the pending connection.
+     */
+    timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+        ossl_seconds2time(5));
+
+    /* Trigger a tick to process the timeout */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * The pending connection should have been timed out and freed by the listener.
+     * If there's a leak (timeout didn't free the SSL), ASAN will detect it.
+     *
+     * Now free the listener - it should have nothing left in pending_conns
+     * since the timeout already cleaned it up.
+     */
+    testresult = 1;
+
+end:
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_poll() with SSL_POLL_EVENT_W on established connection.
+ *
+ * This test verifies that SSL_POLL_EVENT_W (writable) always returns
+ * true on an established DTLS connection, since DTLS connections are
+ * always ready for writing.
+ */
+static int test_dtls_poll_conn_event_w(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int retc, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection loop did not converge");
+            goto end;
+        }
+
+        retc = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, retc);
+        if (retc <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    /* Complete the handshake */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Now poll the established server connection for SSL_POLL_EVENT_W.
+     * This should always return true since DTLS connections are always writable.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_W;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* Verify SSL_POLL_EVENT_W is returned */
+    if (!TEST_size_t_gt(poll_result, 0))
+        goto end;
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_W) != 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_poll() with SSL_POLL_EVENT_R on dgram pair BIO connection.
+ *
+ * This test validates the fix to ossl_dtls_conn_poll_events() that allows
+ * polling for readable data on connections using dgram pair BIOs.
+ */
+static int test_dtls_poll_conn_dgram_pair_readable(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    const char msg[] = "Test data for poll readable";
+    char buf[64];
+    size_t written, readbytes;
+    int testresult = 0;
+    int retc, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection loop did not converge");
+            goto end;
+        }
+
+        retc = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, retc);
+        if (retc <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    /* Complete the handshake */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Poll server connection for SSL_POLL_EVENT_R BEFORE any data is sent.
+     * This should return revents=0 since no data is pending.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* No data pending, so revents should be 0 */
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_R) == 0))
+        goto end;
+
+    /* Now have the client send data */
+    if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg)))
+        goto end;
+
+    /*
+     * Poll server connection for SSL_POLL_EVENT_R AFTER data is sent.
+     * This should return SSL_POLL_EVENT_R since data is now pending.
+     * This is the key test for the dgram pair BIO fix - it uses BIO_pending()
+     * instead of BIO_get_fd() + BIO_socket_ready().
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* Data is pending, so SSL_POLL_EVENT_R should be set */
+    if (!TEST_size_t_gt(poll_result, 0))
+        goto end;
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_R) != 0))
+        goto end;
+
+    /* Verify we can actually read the data */
+    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+        || !TEST_size_t_eq(readbytes, sizeof(msg))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_poll() returns no events when no data is pending.
+ *
+ * This test verifies that polling a connection for SSL_POLL_EVENT_R
+ * returns revents=0 and result_count=0 when no data is available.
+ */
+static int test_dtls_poll_conn_no_events_before_data(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int retc, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection loop did not converge");
+            goto end;
+        }
+
+        retc = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, retc);
+        if (retc <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    /* Complete the handshake */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Poll server connection for SSL_POLL_EVENT_R with no data pending.
+     * Use zero timeout for non-blocking behavior.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* No data pending - verify revents has no SSL_POLL_EVENT_R */
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_R) == 0))
+        goto end;
+
+    /* poll_result should be 0 since no events fired */
+    if (!TEST_size_t_eq(poll_result, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_poll() on listener with multiple event types.
+ *
+ * This test verifies that polling a listener with both SSL_POLL_EVENT_IC
+ * and SSL_POLL_EVENT_R works correctly.
+ */
+static int test_dtls_poll_listener_multiple_events(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int retc, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    /*
+     * Poll listener with multiple events BEFORE client sends anything.
+     * Should return revents=0 since no incoming connection yet.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC | SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* No incoming connection yet */
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) == 0))
+        goto end;
+
+    /* Have client initiate the handshake (send ClientHello) */
+    SSL_set_connect_state(clientssl);
+    retc = SSL_connect(clientssl);
+    err_code = SSL_get_error(clientssl, retc);
+    if (!TEST_int_le(retc, 0)
+        || !TEST_true(err_code == SSL_ERROR_WANT_READ
+            || err_code == SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Poll listener with multiple events AFTER client sends ClientHello.
+     * Should return SSL_POLL_EVENT_R since data is available on the BIO.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC | SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* Should have at least one event */
+    if (!TEST_size_t_gt(poll_result, 0))
+        goto end;
+
+    /*
+     * The listener should report SSL_POLL_EVENT_R since there's data
+     * on the underlying BIO (the ClientHello).
+     */
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) != 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_poll() with SSL_POLL_EVENT_EC after shutdown.
+ *
+ * This test verifies that SSL_POLL_EVENT_EC (exception condition) is
+ * returned after SSL_shutdown() is called on the connection.
+ */
+static int test_dtls_poll_conn_event_ec(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int retc, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    while (serverssl == NULL) {
+        if (++abortctr > 100) {
+            TEST_error("Connection loop did not converge");
+            goto end;
+        }
+
+        retc = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, retc);
+        if (retc <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            goto end;
+        }
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener, SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    /* Complete the handshake */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Poll server connection for SSL_POLL_EVENT_EC before shutdown.
+     * Should return revents=0 since no error/shutdown condition.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_EC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* No error condition yet */
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_EC) == 0))
+        goto end;
+
+    /* Initiate shutdown on the server connection */
+    SSL_shutdown(serverssl);
+
+    /*
+     * Poll server connection for SSL_POLL_EVENT_EC after shutdown.
+     * Should return SSL_POLL_EVENT_EC since shutdown is in progress.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_EC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /* Shutdown is in progress, so SSL_POLL_EVENT_EC should be set */
+    if (!TEST_size_t_gt(poll_result, 0))
+        goto end;
+    if (!TEST_true((poll_item.revents & SSL_POLL_EVENT_EC) != 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test: SSL_poll() with NULL SSL in descriptor.
+ *
+ * This test verifies that SSL_poll() handles a NULL SSL pointer in the
+ * poll descriptor gracefully.
+ */
+static int test_dtls_poll_null_item(void)
+{
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int testresult = 0;
+
+    /* Create a poll item with NULL SSL */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = NULL;
+    poll_item.events = SSL_POLL_EVENT_R | SSL_POLL_EVENT_W;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    /*
+     * Call SSL_poll with a NULL SSL descriptor.
+     * Expected behavior: Should either return success with revents=0 (no-op),
+     * or return failure. Either way, it should not crash.
+     */
+    if (SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)) {
+        /* If it succeeds, revents should be 0 (no events for NULL) */
+        if (!TEST_true(poll_item.revents == 0))
+            goto end;
+    }
+    /* If SSL_poll returns 0 (failure), that's also acceptable behavior */
+
+    testresult = 1;
+end:
+    return testresult;
+}
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
@@ -2197,7 +3619,6 @@ int setup_tests(void)
         || !TEST_ptr(privkey = test_get_argument(1)))
         return 0;
 
-#if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_DTLS)
     /* Basic listener creation and configuration tests */
     ADD_TEST(test_dtls_new_listener);
     ADD_TEST(test_dtls_new_listener_dtls12);
@@ -2245,16 +3666,33 @@ int setup_tests(void)
 
     /* Concurrent client tests */
     ADD_TEST(test_dtls_concurrent_clients_real_sockets);
+
+    /* SSL_poll() specific tests */
+    ADD_TEST(test_dtls_poll_conn_event_w);
+    ADD_TEST(test_dtls_poll_conn_dgram_pair_readable);
+    ADD_TEST(test_dtls_poll_conn_no_events_before_data);
+    ADD_TEST(test_dtls_poll_listener_multiple_events);
+    ADD_TEST(test_dtls_poll_conn_event_ec);
+    ADD_TEST(test_dtls_poll_null_item);
 #endif /* OPENSSL_NO_DTLS1_3 */
 
-    /* Time callback tests (internal API) */
+    /* Time callback tests */
     ADD_TEST(test_dtls_listener_time_callback_basic);
     ADD_TEST(test_dtls_listener_time_callback_invalid);
 
-    /* Pending timeout tests (internal API) */
+    /* Pending timeout tests */
     ADD_TEST(test_dtls_listener_pending_timeout_basic);
     ADD_TEST(test_dtls_listener_pending_timeout_invalid);
-#endif /* !OPENSSL_NO_SOCK && !OPENSSL_NO_DTLS */
+
+    /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */
+    ADD_TEST(test_ssl_ownership_pending_conn_leak);
+    ADD_TEST(test_ssl_ownership_incoming_conn_leak);
+    ADD_TEST(test_ssl_ownership_three_conn_states);
+    ADD_TEST(test_ssl_ownership_set_rbio_pending_leak);
+    ADD_TEST(test_ssl_ownership_accept_free_no_double_free);
+    ADD_TEST(test_ssl_ownership_set_rbio_incoming_leak);
+    ADD_TEST(test_ssl_ownership_multiple_pending_leak);
+    ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
 
     return 1;
 }

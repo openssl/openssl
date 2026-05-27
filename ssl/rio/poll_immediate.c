@@ -16,6 +16,11 @@
 #include "../ssl_local.h"
 #include "poll_builder.h"
 
+#ifdef OPENSSL_NO_QUIC
+/* Stub type when QUIC is disabled so function signatures remain consistent */
+typedef int QUIC_REACTOR_WAIT_CTX;
+#endif
+
 #if defined(_AIX)
 /*
  * Some versions of AIX define macros for events and revents for use when
@@ -167,19 +172,20 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
     uint64_t events)
 {
     BIO *rbio;
-    int fd;
+    BIO_POLL_DESCRIPTOR desc;
 
     rbio = SSL_get_rbio(ssl);
     if (rbio == NULL)
         return 0;
 
-    if (!BIO_get_fd(rbio, &fd) || fd < 0) {
+    if (!BIO_get_rpoll_descriptor(rbio, &desc)
+        || desc.type != BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD) {
         ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
             "DTLS listener requires a socket BIO for blocking poll");
         return 0;
     }
 
-    if (!ossl_rio_poll_builder_add_fd(rpb, fd, /*r=*/1, /*w=*/0))
+    if (!ossl_rio_poll_builder_add_fd(rpb, desc.value.fd, /*r=*/1, /*w=*/0))
         return 0;
 
     return 1;
@@ -230,14 +236,14 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
             }
         }
 
-        if (rbio != NULL)
-            BIO_get_fd(rbio, &rfd);
+        if (rbio != NULL && BIO_get_fd(rbio, &rfd) < 0)
+            rfd = -1;
     }
 
     if ((events & SSL_POLL_EVENT_W) != 0) {
         wbio = SSL_get_wbio(ssl);
-        if (wbio != NULL)
-            BIO_get_fd(wbio, &wfd);
+        if (wbio != NULL && BIO_get_fd(wbio, &wfd) < 0)
+            wfd = -1;
     }
 
     /* If same FD for read and write, combine them */
@@ -260,12 +266,8 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
 #if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
 static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
     size_t num_items,
-    size_t stride
-#ifndef OPENSSL_NO_QUIC
-    ,
-    QUIC_REACTOR_WAIT_CTX *wctx
-#endif
-)
+    size_t stride,
+    ossl_unused QUIC_REACTOR_WAIT_CTX *wctx)
 {
     SSL_POLL_ITEM *item;
     SSL *ssl;
@@ -308,9 +310,7 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
 static int poll_translate(SSL_POLL_ITEM *items,
     size_t num_items,
     size_t stride,
-#ifndef OPENSSL_NO_QUIC
-    QUIC_REACTOR_WAIT_CTX *wctx,
-#endif
+    ossl_unused QUIC_REACTOR_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
     OSSL_TIME *p_earliest_wakeup_deadline,
     int *abort_blocking,
@@ -406,12 +406,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
 out:
     if (!ok)
-        postpoll_translation_cleanup(items, i, stride
-#ifndef OPENSSL_NO_QUIC
-            ,
-            wctx
-#endif
-        );
+        postpoll_translation_cleanup(items, i, stride, wctx);
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
     *p_result_count = result_count;
@@ -426,9 +421,7 @@ static int poll_block(SSL_POLL_ITEM *items,
 {
     int ok = 0, abort_blocking = 0;
     RIO_POLL_BUILDER rpb;
-#ifndef OPENSSL_NO_QUIC
     QUIC_REACTOR_WAIT_CTX wctx;
-#endif
     OSSL_TIME earliest_wakeup_deadline;
 
     /*
@@ -457,11 +450,7 @@ static int poll_block(SSL_POLL_ITEM *items,
 #endif
     ossl_rio_poll_builder_init(&rpb);
 
-    if (!poll_translate(items, num_items, stride,
-#ifndef OPENSSL_NO_QUIC
-            &wctx,
-#endif
-            &rpb,
+    if (!poll_translate(items, num_items, stride, &wctx, &rpb,
             &earliest_wakeup_deadline,
             &abort_blocking,
             p_result_count))
@@ -477,12 +466,7 @@ static int poll_block(SSL_POLL_ITEM *items,
 
     ok = ossl_rio_poll_builder_poll(&rpb, earliest_wakeup_deadline);
 
-    postpoll_translation_cleanup(items, num_items, stride
-#ifndef OPENSSL_NO_QUIC
-        ,
-        &wctx
-#endif
-    );
+    postpoll_translation_cleanup(items, num_items, stride, &wctx);
 
 out:
     ossl_rio_poll_builder_cleanup(&rpb);
