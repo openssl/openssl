@@ -8,8 +8,9 @@
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
+
 #include <openssl/rand.h>
+#include <openssl/ssl.h>
 #include <openssl/ssl3.h>
 
 #include "helpers/ssltestlib.h"
