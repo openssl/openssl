@@ -35,7 +35,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
-#include <sys/socket.h>
+#include <sys/socket.h> /* IWYU pragma: export */
 #include <sys/un.h>
 #include <tcp.h>
 #elif defined(_WIN32_WCE) && _WIN32_WCE < 410
@@ -106,9 +106,9 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #if defined(OPENSSL_SYS_VMS_NODECC)
 #include <in.h>
 #include <inet.h>
-#include <socket.h>
+#include <socket.h> /* IWYU pragma: export */
 #else
-#include <sys/socket.h>
+#include <sys/socket.h> /* IWYU pragma: export */
 #if !defined(NO_SYS_UN_H) && defined(AF_UNIX) && !defined(OPENSSL_NO_UNIX_SOCK)
 #include <sys/un.h>
 #ifndef UNIX_PATH_MAX

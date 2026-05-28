@@ -11,8 +11,8 @@
 #include <stdint.h>
 #if defined(OPENSSL_SYS_UNIX)
 #include <sys/mman.h>
-#endif
 #include <sys/select.h>
+#endif
 #include <unistd.h>
 
 #include "internal/common.h"

@@ -46,7 +46,6 @@
 
 #include "internal/time.h"
 #endif
-#include <pthread.h>
 #include <stdint.h>
 
 #include "internal/common.h"
@@ -74,6 +73,7 @@
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
 #if defined(OPENSSL_SYS_UNIX)
+#include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
 #endif
