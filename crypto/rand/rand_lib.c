@@ -246,6 +246,7 @@ int RAND_set_rand_method(const RAND_METHOD *meth)
 const RAND_METHOD *RAND_get_rand_method(void)
 {
     const RAND_METHOD *tmp_meth = NULL;
+    int lock_failed;
 
     if (!RUN_ONCE(&rand_init, do_rand_init))
         goto end;
@@ -267,8 +268,12 @@ const RAND_METHOD *RAND_get_rand_method(void)
      * which we can just return as is
      */
     if (CRYPTO_atomic_cmp_exch_ptr((void **)&default_RAND_meth, (void **)&tmp_meth,
-            (void *)&ossl_rand_meth, rand_meth_lock))
+            (void *)&ossl_rand_meth, rand_meth_lock, &lock_failed)) {
         tmp_meth = &ossl_rand_meth;
+    } else {
+        if (lock_failed == 1)
+            return NULL;
+    }
 end:
     return tmp_meth;
 }
