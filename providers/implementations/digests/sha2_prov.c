@@ -31,6 +31,7 @@
 
 #include "crypto/sha.h"
 
+#include "openssl/core.h"
 #include "openssl/e_os2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"

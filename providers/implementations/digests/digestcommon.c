@@ -16,6 +16,7 @@
 
 #include "internal/common.h"
 
+#include "openssl/core.h"
 #include "openssl/params.h"
 /* clang-format off */
 #include "providers/implementations/digests/digestcommon.inc"

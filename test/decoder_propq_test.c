@@ -7,13 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/pem.h>
+#include <string.h>
+
 #include <openssl/evp.h>
+#include <openssl/pem.h>
+
 #include "openssl/bio.h"
 #include "openssl/crypto.h"
 #include "openssl/provider.h"
+#include "openssl/x509.h"
 #include "opt.h"
-#include <string.h>
 #include "testutil.h"
 
 static OSSL_LIB_CTX *libctx = NULL;

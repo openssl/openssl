@@ -40,6 +40,7 @@
 #include "crypto/ec.h"
 #include "crypto/ecx.h"
 #include "crypto/evp.h"
+#include "crypto/lms.h"
 #include "crypto/ml_dsa.h"
 #include "crypto/ml_kem.h"
 #include "crypto/rsa.h"

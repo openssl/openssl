@@ -33,6 +33,7 @@
 #include "openssl/core.h"
 #include "openssl/crypto.h"
 #include "openssl/e_os2.h"
+#include "openssl/x509.h"
 #include "prov/der_hkdf.h"
 #include "prov/der_wrap.h"
 #include "prov/implementations.h"
