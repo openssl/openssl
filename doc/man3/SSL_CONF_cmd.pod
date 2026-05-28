@@ -794,7 +794,7 @@ Set supported signature algorithms:
 
 There are various ways to select the supported protocols.
 
-This set the minimum protocol version to TLSv1.1, and so disables TLSv1.
+This sets the minimum protocol version to TLSv1.1, and so disables TLSv1.
 This is the recommended way to disable protocols.
 
  SSL_CONF_cmd(ctx, "MinProtocol", "TLSv1.1");
