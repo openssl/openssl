@@ -767,8 +767,9 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
     return 1;
 }
 
-int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock, int *lock_failed)
 {
+    *lock_failed = 0;
     InterlockedCompareExchangePointer(ptr, desire, *expect);
     if (*ptr == desire)
         return 1;
