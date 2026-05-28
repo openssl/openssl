@@ -12,9 +12,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/conf.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include "openssl/bio.h"

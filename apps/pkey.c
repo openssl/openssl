@@ -11,11 +11,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/pem.h>
 
 #include "apps.h"
 #include "ec_common.h"

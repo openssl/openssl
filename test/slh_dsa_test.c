@@ -11,10 +11,11 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
-#include <openssl/pem.h>
 #include <openssl/rand.h>
 
 #include "internal/nelem.h"

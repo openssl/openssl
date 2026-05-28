@@ -48,8 +48,9 @@
 #pragma names restore
 #endif
 
-#include <openssl/evp.h>
 #include <openssl/pem.h>
+
+#include <openssl/evp.h>
 #include <openssl/x509.h>
 
 #ifndef PATH_MAX

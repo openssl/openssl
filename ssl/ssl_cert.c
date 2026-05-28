@@ -13,11 +13,12 @@
 #include <string.h>
 #include <sys/types.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/dh.h>
-#include <openssl/pem.h>
 #include <openssl/store.h>
 #include <openssl/x509v3.h>
 

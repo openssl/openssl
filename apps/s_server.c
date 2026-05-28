@@ -85,10 +85,11 @@
 typedef unsigned int u_int;
 #endif
 
+#include <openssl/pem.h>
+
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
-#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/x509.h>
 

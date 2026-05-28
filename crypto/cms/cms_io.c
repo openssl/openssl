@@ -7,10 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/pem.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include <crypto/asn1.h>

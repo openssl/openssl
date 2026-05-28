@@ -10,9 +10,10 @@
 #include <stdarg.h>
 #include <stddef.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
-#include <openssl/pem.h>
 #include <openssl/store.h>
 #include <openssl/x509v3.h> /* s2i_ASN1_INTEGER */
 

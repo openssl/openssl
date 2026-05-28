@@ -12,6 +12,8 @@
  */
 #include "internal/deprecated.h"
 
+#include <openssl/pem.h>
+
 #include <openssl/asn1.h>
 #include <openssl/byteorder.h>
 #include <openssl/core.h>
@@ -23,7 +25,6 @@
 #include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/pem.h>
 #include <openssl/pkcs12.h> /* PKCS8_encrypt() */
 #include <openssl/proverr.h>
 #include <openssl/x509.h>

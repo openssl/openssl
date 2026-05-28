@@ -13,9 +13,10 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/pem.h>
 
 #include "app_libctx.h"
 #include "apps.h"

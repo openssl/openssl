@@ -9,8 +9,9 @@
 
 #include <string.h>
 
-#include <openssl/bio.h>
 #include <openssl/pem.h>
+
+#include <openssl/bio.h>
 
 #include "internal/nelem.h"
 

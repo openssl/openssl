@@ -17,6 +17,8 @@
 #include <stdint.h>
 #include <string.h>
 
+#include <openssl/pem.h> /* PEM_BUFSIZE and public PEM functions */
+
 #include <openssl/asn1t.h>
 #include <openssl/byteorder.h>
 #include <openssl/core_dispatch.h>
@@ -25,7 +27,6 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/pem.h> /* PEM_BUFSIZE and public PEM functions */
 #include <openssl/pkcs12.h>
 #include <openssl/proverr.h>
 #include <openssl/provider.h>

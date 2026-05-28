@@ -11,9 +11,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/err.h>
 #include <openssl/http.h>
-#include <openssl/pem.h>
 #include <openssl/x509v3.h>
 
 #include "internal/common.h"

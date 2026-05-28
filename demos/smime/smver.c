@@ -8,8 +8,9 @@
  */
 
 /* Simple S/MIME verification example */
-#include <openssl/err.h>
 #include <openssl/pem.h>
+
+#include <openssl/err.h>
 #include <openssl/pkcs7.h>
 
 int main(int argc, char **argv)

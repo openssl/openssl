@@ -9,10 +9,11 @@
 
 #include <stddef.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
 #include <openssl/ocsp.h>
-#include <openssl/pem.h>
 
 #include "internal/cryptlib.h"
 #include "internal/nelem.h"

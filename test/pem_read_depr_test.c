@@ -13,10 +13,11 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include <openssl/pem.h>
+
 #include <openssl/bio.h>
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
-#include <openssl/pem.h>
 #include <openssl/rsa.h>
 
 #include "openssl/crypto.h"

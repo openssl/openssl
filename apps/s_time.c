@@ -23,8 +23,9 @@
 
 #ifndef OPENSSL_NO_SOCK
 
-#include <openssl/err.h>
 #include <openssl/pem.h>
+
+#include <openssl/err.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>
 

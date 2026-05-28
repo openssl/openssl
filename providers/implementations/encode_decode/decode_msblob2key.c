@@ -15,13 +15,14 @@
 
 #include <string.h>
 
+#include <openssl/pem.h> /* For public PVK functions */
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/pem.h> /* For public PVK functions */
 #include <openssl/x509.h>
 
 #include "internal/passphrase.h"

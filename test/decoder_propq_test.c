@@ -9,8 +9,9 @@
 
 #include <string.h>
 
-#include <openssl/evp.h>
 #include <openssl/pem.h>
+
+#include <openssl/evp.h>
 
 #include "openssl/bio.h"
 #include "openssl/crypto.h"

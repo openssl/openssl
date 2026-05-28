@@ -11,11 +11,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
-#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/ts.h>
 

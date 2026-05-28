@@ -13,12 +13,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/bio.h>
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/lhash.h>
-#include <openssl/pem.h>
 #include <openssl/ssl.h>
 #include <openssl/trace.h>
 #include <openssl/x509.h>

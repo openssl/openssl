@@ -21,11 +21,12 @@
 #include <stddef.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/dsa.h>
 #include <openssl/kdf.h>
-#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 

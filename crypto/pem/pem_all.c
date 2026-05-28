@@ -16,11 +16,12 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/bio.h>
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/evp.h>
-#include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>

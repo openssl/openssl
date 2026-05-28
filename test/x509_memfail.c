@@ -12,9 +12,10 @@
 
 #define OPENSSL_SUPPRESS_DEPRECATED /* EVP_PKEY_get1/set1_RSA */
 
+#include <openssl/pem.h>
+
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
-#include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
 

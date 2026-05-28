@@ -12,12 +12,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/pem.h>
+
 #include <openssl/asn1.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/kdf.h>
 #include <openssl/opensslconf.h>
-#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
 #include <openssl/rand.h>

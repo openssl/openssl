@@ -11,8 +11,9 @@
 #include <stdio.h>
 #include <time.h>
 
-#include <openssl/buffer.h>
 #include <openssl/pem.h>
+
+#include <openssl/buffer.h>
 #include <openssl/x509.h>
 
 #include "internal/cryptlib.h"

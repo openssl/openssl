@@ -8,9 +8,10 @@
  */
 
 /* Simple S/MIME decryption example */
+#include <openssl/pem.h>
+
 #include <openssl/cms.h>
 #include <openssl/err.h>
-#include <openssl/pem.h>
 
 int main(int argc, char **argv)
 {
