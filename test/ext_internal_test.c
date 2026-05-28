@@ -14,6 +14,7 @@
 
 #define EXT_ENTRY(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_##name, #name }
 #define EXT_EXCEPTION(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_invalid, #name }
+#undef EXT_END
 #define EXT_END(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_out_of_range, #name }
 
 typedef struct {
