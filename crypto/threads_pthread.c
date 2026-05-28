@@ -1283,10 +1283,10 @@ int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_R
         return -1;
     if (*ptr == *expect) {
         *ptr = desire;
-         ret = 1;
+        ret = 1;
     } else {
         *expect = *ptr;
-         ret = 0;
+        ret = 0;
     }
     if (!CRYPTO_THREAD_unlock(lock))
         return -1;
