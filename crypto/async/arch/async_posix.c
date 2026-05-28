@@ -8,17 +8,20 @@
  */
 
 /* This must be the first #include file */
+/* IWYU pragma: begin_keep */
 #include "../async_local.h"
-#include "openssl/async.h"
-#include <sys/ucontext.h>
-#include <ucontext.h>
+/* IWYU pragma: end_keep */
 
 #ifdef ASYNC_POSIX
 
 #include <stddef.h>
+#include <sys/ucontext.h>
+#include <ucontext.h>
 #include <unistd.h>
 #include <openssl/err.h>
 #include <openssl/crypto.h>
+
+#include "openssl/async.h"
 
 #define STACKSIZE 32768
 
@@ -33,10 +36,7 @@ int async_local_init(void)
     return async_mem_lock != NULL;
 }
 
-void async_local_deinit(void)
-{
-    CRYPTO_THREAD_lock_free(async_mem_lock);
-}
+void async_local_deinit(void) { CRYPTO_THREAD_lock_free(async_mem_lock); }
 
 static int allow_customize = 1;
 static ASYNC_stack_alloc_fn stack_alloc_impl = async_stack_alloc;
@@ -82,19 +82,11 @@ void ASYNC_get_mem_functions(ASYNC_stack_alloc_fn *alloc_fn,
         *free_fn = stack_free_impl;
 }
 
-static void *async_stack_alloc(size_t *num)
-{
-    return OPENSSL_malloc(*num);
-}
+static void *async_stack_alloc(size_t *num) { return OPENSSL_malloc(*num); }
 
-static void async_stack_free(void *addr)
-{
-    OPENSSL_free(addr);
-}
+static void async_stack_free(void *addr) { OPENSSL_free(addr); }
 
-void async_local_cleanup(void)
-{
-}
+void async_local_cleanup(void) { }
 
 int async_fibre_makecontext(async_fibre *fibre)
 {
