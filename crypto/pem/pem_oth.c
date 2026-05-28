@@ -9,11 +9,10 @@
 
 #include <stdio.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include "internal/cryptlib.h"

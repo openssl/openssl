@@ -13,9 +13,8 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/err.h>
+#include <openssl/pem.h>
 
 #include "fuzzer.h"
 #include "openssl/bio.h"

@@ -9,14 +9,13 @@
 
 #include <stdio.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/bn.h>
 #include <openssl/buffer.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include "internal/cryptlib.h"

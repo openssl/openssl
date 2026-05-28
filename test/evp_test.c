@@ -14,8 +14,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -23,6 +21,7 @@
 #include <openssl/kdf.h>
 #include <openssl/param_build.h>
 #include <openssl/params.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
 #include <openssl/thread.h>

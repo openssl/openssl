@@ -9,9 +9,8 @@
 
 #include <stddef.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/asn1.h>
+#include <openssl/pem.h>
 
 #include "internal/sizes.h"
 

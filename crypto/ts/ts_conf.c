@@ -10,10 +10,9 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/conf_api.h>
 #include <openssl/crypto.h>
+#include <openssl/pem.h>
 #include <openssl/ts.h>
 
 #include "internal/cryptlib.h"

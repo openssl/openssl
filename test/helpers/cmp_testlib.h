@@ -12,9 +12,8 @@
 #ifndef OSSL_TEST_CMP_TESTLIB_H
 #define OSSL_TEST_CMP_TESTLIB_H
 
-#include <openssl/pem.h>
-
 #include <openssl/cmp.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
 
 #include "../../crypto/cmp/cmp_local.h"

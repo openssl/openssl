@@ -8,10 +8,9 @@
  */
 
 /* Simple S/MIME verification example */
-#include <openssl/pem.h>
-
 #include <openssl/cms.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
 
 /*
  * print any signingTime attributes.

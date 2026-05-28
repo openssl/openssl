@@ -10,13 +10,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/buffer.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/encoder.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 

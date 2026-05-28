@@ -20,10 +20,9 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include "internal/e_os.h"

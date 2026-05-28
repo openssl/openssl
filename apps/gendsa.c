@@ -13,13 +13,12 @@
 #include <sys/stat.h>
 #include <sys/types.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include <openssl/opensslconf.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 
 #include "app_libctx.h"

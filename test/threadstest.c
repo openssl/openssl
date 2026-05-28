@@ -34,12 +34,11 @@
 
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/aes.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
 

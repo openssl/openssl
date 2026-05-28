@@ -10,10 +10,9 @@
 #if !defined(OSSL_LIBCRYPTO_PEM_PEM_LOCAL_H)
 #define OSSL_LIBCRYPTO_PEM_PEM_LOCAL_H
 
-#include <openssl/pem.h>
-
 #include <openssl/core_dispatch.h>
 #include <openssl/encoder.h>
+#include <openssl/pem.h>
 
 /*
  * Selectors, named according to the ASN.1 names used throughout libcrypto.

@@ -15,14 +15,13 @@
 #include <string.h>
 #include <time.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/bio.h>
 #include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/hpke.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/ssl.h>
 #include <openssl/x509.h>

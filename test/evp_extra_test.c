@@ -15,8 +15,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/aes.h>
 #include <openssl/bio.h>
 #include <openssl/conf.h>
@@ -31,6 +29,7 @@
 #include <openssl/kdf.h>
 #include <openssl/param_build.h>
 #include <openssl/params.h>
+#include <openssl/pem.h>
 #include <openssl/proverr.h>
 #include <openssl/provider.h>
 #include <openssl/rand.h>

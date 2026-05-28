@@ -9,10 +9,9 @@
 
 #include <stdio.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 

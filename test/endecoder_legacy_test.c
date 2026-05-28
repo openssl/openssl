@@ -38,8 +38,6 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <openssl/pem.h>
-
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/decoder.h>
@@ -48,6 +46,7 @@
 #include <openssl/encoder.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
+#include <openssl/pem.h>
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #include <openssl/rsa.h>
 #endif

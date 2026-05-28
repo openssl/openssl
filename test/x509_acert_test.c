@@ -10,7 +10,6 @@
 #include <stddef.h>
 
 #include <openssl/pem.h>
-
 #include <openssl/rsa.h>
 #include <openssl/x509_acert.h>
 

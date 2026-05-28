@@ -9,12 +9,11 @@
 
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/asn1t.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/ess.h>
+#include <openssl/pem.h>
 #include <openssl/rand.h>
 #include <openssl/x509v3.h>
 

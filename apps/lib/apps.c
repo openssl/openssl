@@ -55,13 +55,12 @@
 #include <ctype.h>
 #include <errno.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/bn.h>
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
 #include <openssl/err.h>
 #include <openssl/http.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>

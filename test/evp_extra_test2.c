@@ -21,11 +21,10 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/provider.h>
 #include <openssl/rsa.h>
 #include <openssl/ui.h>

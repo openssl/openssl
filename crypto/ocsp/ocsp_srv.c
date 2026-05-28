@@ -10,10 +10,9 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/objects.h>
 #include <openssl/ocsp.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 

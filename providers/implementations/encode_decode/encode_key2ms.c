@@ -14,14 +14,13 @@
 
 #include <string.h>
 
-#include <openssl/pem.h> /* Functions for writing MSBLOB and PVK */
-
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/dsa.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
+#include <openssl/pem.h> /* Functions for writing MSBLOB and PVK */
 #include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"

@@ -15,13 +15,12 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/buffer.h>
 #include <openssl/decoder.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/ui.h>
 #include <openssl/x509.h>

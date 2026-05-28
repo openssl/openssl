@@ -9,12 +9,11 @@
 
 #include <string.h> /* memset */
 
-#include <openssl/pem.h>
-
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
+#include <openssl/pem.h>
 #include <openssl/provider.h>
 #include <openssl/sha.h>
 

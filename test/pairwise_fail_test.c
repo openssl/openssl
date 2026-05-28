@@ -10,9 +10,8 @@
 #include <stddef.h>
 #include <string.h>
 
-#include <openssl/pem.h>
-
 #include <openssl/core_names.h>
+#include <openssl/pem.h>
 #include <openssl/self_test.h>
 
 #include "openssl/bio.h"

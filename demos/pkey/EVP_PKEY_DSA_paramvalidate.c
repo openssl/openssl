@@ -21,10 +21,9 @@
  * added to the key. See doc/man7/EVP_PKEY-FFC for more information.
  */
 
-#include <openssl/pem.h>
-
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 /* clang-format off */
 #include "dsa.inc"
 /* clang-format on */
