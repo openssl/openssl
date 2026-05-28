@@ -15,7 +15,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/types.h>
+#if defined(OPENSSL_SYS_UNIX)
 #include <sys/wait.h>
+#endif
 #include <unistd.h>
 
 #include "internal/common.h"
