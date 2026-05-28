@@ -1401,17 +1401,11 @@ IncludeCategories:
   - Regex:           '^["<]internal/.*\.h[>"]'
     Priority:        4
     SortPriority:    0
-  - Regex:           '^<openssl/pem\.h>'
-    Priority:        2
-    SortPriority:    0
   - Regex:           '^<openssl/.*\.h>'
     Priority:        3
     SortPriority:    0
   - Regex:           '^<.*\.h>'
     Priority:        1
-    SortPriority:    0
-  - Regex:           '^"internal/constant_time.h"'
-    Priority:        10
     SortPriority:    0
   # we do not currently include C++ style files, in case we ever do?
   - Regex:           '^<.*'
