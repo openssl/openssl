@@ -9,7 +9,9 @@
 
 #include <stdarg.h>
 #include <stdint.h>
+#if defined(OPENSSL_SYS_UNIX)
 #include <sys/mman.h>
+#endif
 #include <sys/select.h>
 #include <unistd.h>
 
