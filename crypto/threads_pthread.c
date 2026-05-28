@@ -1287,20 +1287,25 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
 #endif
 }
 
-int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock)
+int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock, int *lock_failed)
 {
 #if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
+    *lock_failed = 0;
     return __atomic_compare_exchange_n(ptr, expect, desire, 0, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED) ? 1 : 0;
 #else
+    *lock_failed = 1;
+    int ret = 0;
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
         return 0;
-    if (*ptr == *expect)
+    if (*ptr == *expect) {
+        ret = 1;
         *ptr = desire;
-    else
+    } else {
         *expect = *ptr;
-    if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-    return 1;
+    }
+    if (CRYPTO_THREAD_unlock(lock))
+        *lock_failed = 0;
+    return ret;
 #endif
 }
 

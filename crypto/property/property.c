@@ -1111,14 +1111,19 @@ static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY 
     int nid = (new->nid >> NUM_SHARDS_BITS) & (MAX_CACHE_LINES - 1);
     QUERY *headptr;
     int ret = 0;
+    int lock_failed;
 
     if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[nid], (void **)&headptr, sa->alock))
         goto out;
 try_again:
     if (!CRYPTO_atomic_store_ptr((void **)&new->next, (void **)&headptr, sa->alock))
         goto out;
-    if (!CRYPTO_atomic_cmp_exch_ptr((void **)&sa->cache_lists[nid], (void **)&headptr, new, sa->alock))
+    if (!CRYPTO_atomic_cmp_exch_ptr((void **)&sa->cache_lists[nid], (void **)&headptr, new, sa->alock,
+            &lock_failed)) {
+        if (lock_failed == 1)
+            goto out;
         goto try_again;
+    }
     ret = 1;
 out:
     return ret;
