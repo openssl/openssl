@@ -226,6 +226,7 @@ $code.=<<___;
 	.word	0xca62c1d6, 0xca62c1d6, 0xca62c1d6, 0xca62c1d6
 .text
 
+.align	4
 asm_aescbc_sha1_hmac:
 	AARCH64_VALID_CALL_TARGET
 	/* protect registers */
