@@ -123,12 +123,12 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #endif
 
 #ifdef OPENSSL_SYS_AIX
-#include <sys/select.h>
+#include <sys/select.h> /* IWYU pragma: export */
 #endif
 
 #ifdef OPENSSL_SYS_UNIX
 #ifndef OPENSSL_SYS_TANDEM
-#include <poll.h>
+#include <poll.h> /* IWYU pragma: export */
 #endif
 #include <errno.h>
 #endif
@@ -142,7 +142,7 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #endif
 #include <unixio.h>
 #if defined(TCPIP_TYPE_SOCKETSHR)
-#include <socketshr.h>
+#include <socketshr.h> /* IWYU pragma: export */
 #endif
 #endif
 

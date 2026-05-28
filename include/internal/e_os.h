@@ -60,8 +60,8 @@
 #if (defined(WINDOWS) || defined(MSDOS))
 
 #ifdef __DJGPP__
-#include <unistd.h>
-#include <sys/stat.h>
+#include <sys/stat.h> /* IWYU pragma: export */
+#include <unistd.h> /* IWYU pragma: export */
 #define _setmode setmode
 #define _O_TEXT O_TEXT
 #define _O_BINARY O_BINARY
@@ -166,9 +166,9 @@ FILE *__iob_func(void);
 #else /* The non-microsoft world */
 
 #if defined(OPENSSL_SYS_VXWORKS)
-#include <time.h>
+#include <time.h> /* IWYU pragma: export */
 #else
-#include <sys/time.h>
+#include <sys/time.h> /* IWYU pragma: export */
 #endif
 
 #ifdef OPENSSL_SYS_VMS
@@ -179,9 +179,9 @@ FILE *__iob_func(void);
  */
 #include <stdlib.h>
 #if defined(__DECC)
-#include <unistd.h>
+#include <unistd.h> /* IWYU pragma: export */
 #else
-#include <unixlib.h>
+#include <unixlib.h> /* IWYU pragma: export */
 #endif
 #define LIST_SEPARATOR_CHAR ','
 /* We don't have any well-defined random devices on VMS, yet... */
@@ -216,11 +216,11 @@ FILE *__iob_func(void);
 
 #else
 /* !defined VMS */
-#include <unistd.h>
-#include <sys/types.h>
+#include <sys/types.h> /* IWYU pragma: export */
+#include <unistd.h> /* IWYU pragma: export */
 #ifdef OPENSSL_SYS_WIN32_CYGWIN
-#include <io.h>
-#include <fcntl.h>
+#include <fcntl.h> /* IWYU pragma: export */
+#include <io.h> /* IWYU pragma: export */
 #endif
 
 #define LIST_SEPARATOR_CHAR ':'
