@@ -406,9 +406,8 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     if (kctx != NULL && mdname != NULL) {
         OSSL_PARAM params[3], *p = params;
 
-        if (mdname != NULL)
-            *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
-                (char *)mdname, 0);
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
+            (char *)mdname, 0);
         if (propq != NULL)
             *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_PROPERTIES,
                 (char *)propq, 0);
