@@ -291,6 +291,7 @@ WORD64(0x5fcb6fab,0x3ad6faec, 0x6c44198c,0x4a475817)
 
 .global	sha512_block_data_order
 .type	sha512_block_data_order,%function
+.align 5
 sha512_block_data_order:
 .Lsha512_block_data_order:
 #if __ARM_ARCH__<7 && !defined(__thumb2__)
