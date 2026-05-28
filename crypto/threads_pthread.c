@@ -1275,26 +1275,23 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock)
 {
 #if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
-    int swapped;
-    swapped = __atomic_compare_exchange_n(ptr, expect, desire, 0, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED);
-    if (swapped) {
-        *expect = desire;   /* 'return' what we wanted to store */
-    } /* leave expect intact on failure caller must retry  then */
-    /*
-     * non-atomic version function returns success of operation on lock,
-     * because there is no lock, function must always succeed.
-     */
-    return 1;
+    return __atomic_compare_exchange_n(ptr, expect, desire, 0, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED) ? 1 : 0;
 #else
+    int ret;
+
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock))
-        return 0;
+        return -1;
     if (*ptr == *expect) {
         *ptr = desire;
-        *expect = desire;
+         ret = 1;
+    } else {
+        *expect = *ptr;
+         ret = 0;
     }
     if (!CRYPTO_THREAD_unlock(lock))
-        return 0;
-    return 1;
+        return -1;
+
+    return ret;
 #endif
 }
 
