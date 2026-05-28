@@ -85,6 +85,7 @@ typedef size_t size_t_aX;
  * Value of 1 is not appropriate for performance reasons.
  */
 
+#if !(defined(__riscv) && __riscv_xlen == 64)
 static void gcm_init_4bit(u128 Htable[16], const uint64_t H[2])
 {
     u128 V;
@@ -156,6 +157,7 @@ static void gcm_init_4bit(u128 Htable[16], const uint64_t H[2])
     }
 #endif
 }
+#endif
 
 #if defined(__riscv) && __riscv_xlen == 64
 /*
@@ -173,7 +175,7 @@ static void gcm_gmult_1bit(u64 Xi[2], const u128 Htable[16])
 {
     u128 V, Z = { 0, 0 };
     long X;
-    int i, j;
+    size_t i, j;
     const long *xi = (const long *)Xi;
     DECLARE_IS_ENDIAN;
 
@@ -246,7 +248,8 @@ static void gcm_ghash_1bit(u64 Xi[2], const u128 Htable[16],
 }
 #endif
 
-#if !defined(GHASH_ASM) || defined(INCLUDE_C_GMULT_4BIT)
+#if !defined(GHASH_ASM) || (defined(INCLUDE_C_GMULT_4BIT) \
+    && !(defined(__riscv) && __riscv_xlen == 64))
 static const size_t rem_4bit[16] = {
     PACK(0x0000), PACK(0x1C20), PACK(0x3840), PACK(0x2460),
     PACK(0x7080), PACK(0x6CA0), PACK(0x48C0), PACK(0x54E0),
@@ -323,7 +326,8 @@ static void gcm_gmult_4bit(uint64_t Xi[2], const u128 Htable[16])
 
 #endif
 
-#if !defined(GHASH_ASM) || defined(INCLUDE_C_GHASH_4BIT)
+#if !defined(GHASH_ASM) || (defined(INCLUDE_C_GHASH_4BIT) \
+    && !(defined(__riscv) && __riscv_xlen == 64))
 #if !defined(OPENSSL_SMALL_FOOTPRINT)
 /*
  * Streamed gcm_mult_4bit, see CRYPTO_gcm128_[en|de]crypt for
