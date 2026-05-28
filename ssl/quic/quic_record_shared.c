@@ -87,9 +87,6 @@ static void el_teardown_keyslot(OSSL_QRL_ENC_LEVEL_SET *els,
 {
     OSSL_QRL_ENC_LEVEL *el = ossl_qrl_enc_level_set_get(els, enc_level, 0);
 
-    if (!ossl_qrl_enc_level_set_has_keyslot(els, enc_level, el->state, keyslot))
-        return;
-
     if (el->cctx[keyslot] != NULL) {
         EVP_CIPHER_CTX_free(el->cctx[keyslot]);
         el->cctx[keyslot] = NULL;
