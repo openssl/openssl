@@ -91,8 +91,16 @@ B<X509_V_FLAG_CRL_CHECK_ALL>.
 =item 6.
 
 B<Signature and validity period checks> on every certificate in the chain,
-walking from the trust anchor down to the target. Signatures on self-signed
-certificates are checked only when B<X509_V_FLAG_CHECK_SS_SIGNATURE> is set.
+walking from the trust anchor down to the target. The signature on the
+chain's terminating certificate is not verified: trust is taken from its
+presence in the trust store rather than from its signature. This applies
+both to a conventional self-signed trust anchor and, when
+B<X509_V_FLAG_PARTIAL_CHAIN> is in effect, to a non-self-signed
+intermediate promoted to anchor status. B<X509_V_FLAG_CHECK_SS_SIGNATURE>
+requests that the self-signature on a self-signed terminator be verified;
+it has no effect when the terminator is a non-self-signed certificate.
+Validity periods are checked on every certificate, including the
+terminator.
 
 =item 7.
 
