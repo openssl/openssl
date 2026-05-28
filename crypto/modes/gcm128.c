@@ -164,14 +164,14 @@ static void gcm_init_4bit(u128 Htable[16], const uint64_t H[2])
  * For riscv64 systems without scalar or vector carryless multiply support,
  * prefer a 1-bit GHASH fallback over the 4-bit table-based fallback.
  */
-static void gcm_init_1bit(u128 Htable[16], const u64 H[2])
+static void gcm_init_1bit(u128 Htable[16], const uint64_t H[2])
 {
     memset(Htable, 0, sizeof(*Htable) * 16);
     Htable[0].hi = H[0];
     Htable[0].lo = H[1];
 }
 
-static void gcm_gmult_1bit(u64 Xi[2], const u128 Htable[16])
+static void gcm_gmult_1bit(uint64_t Xi[2], const u128 Htable[16])
 {
     u128 V, Z = { 0, 0 };
     long X;
@@ -189,11 +189,11 @@ static void gcm_gmult_1bit(u64 Xi[2], const u128 Htable[16])
 #ifdef BSWAP8
                 X = (long)(BSWAP8(xi[j]));
 #else
-                const u8 *p = (const u8 *)(xi + j);
-                X = (long)((u64)GETU32(p) << 32 | GETU32(p + 4));
+                const uint8_t *p = (const uint8_t *)(xi + j);
+                X = (long)((uint64_t)GETU32(p) << 32 | GETU32(p + 4));
 #endif
             } else {
-                const u8 *p = (const u8 *)(xi + j);
+                const uint8_t *p = (const uint8_t *)(xi + j);
                 X = (long)GETU32(p);
             }
         } else {
@@ -201,7 +201,7 @@ static void gcm_gmult_1bit(u64 Xi[2], const u128 Htable[16])
         }
 
         for (i = 0; i < 8 * sizeof(long); ++i, X <<= 1) {
-            u64 M = (u64)(X >> (8 * sizeof(long) - 1));
+            uint64_t M = (uint64_t)(X >> (8 * sizeof(long) - 1));
             Z.hi ^= V.hi & M;
             Z.lo ^= V.lo & M;
 
@@ -214,15 +214,15 @@ static void gcm_gmult_1bit(u64 Xi[2], const u128 Htable[16])
         Xi[0] = BSWAP8(Z.hi);
         Xi[1] = BSWAP8(Z.lo);
 #else
-        u8 *p = (u8 *)Xi;
-        u32 v;
-        v = (u32)(Z.hi >> 32);
+        uint8_t *p = (uint8_t *)Xi;
+        uint32_t v;
+        v = (uint32_t)(Z.hi >> 32);
         PUTU32(p, v);
-        v = (u32)(Z.hi);
+        v = (uint32_t)(Z.hi);
         PUTU32(p + 4, v);
-        v = (u32)(Z.lo >> 32);
+        v = (uint32_t)(Z.lo >> 32);
         PUTU32(p + 8, v);
-        v = (u32)(Z.lo);
+        v = (uint32_t)(Z.lo);
         PUTU32(p + 12, v);
 #endif
     } else {
@@ -231,10 +231,10 @@ static void gcm_gmult_1bit(u64 Xi[2], const u128 Htable[16])
     }
 }
 
-static void gcm_ghash_1bit(u64 Xi[2], const u128 Htable[16],
-    const u8 *inp, size_t len)
+static void gcm_ghash_1bit(uint64_t Xi[2], const u128 Htable[16],
+    const uint8_t *inp, size_t len)
 {
-    u64 tmp[2];
+    uint64_t tmp[2];
 
     while (len > 0) {
         memcpy(tmp, inp, sizeof(tmp));
