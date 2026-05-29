@@ -199,14 +199,14 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
 
     if (!mlx_kem_have_pubkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
-        goto end;
+        return 0;
     }
     encap_clen = key->minfo->ctext_bytes + key->xinfo->pubkey_bytes;
     combined_encap_slen = ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes;
 
     if (hpke_mode) {
         if (sizeof(ss_tmp) < combined_encap_slen)
-            goto end;
+            return 0;
         encap_slen = 32; /* SHA3_256 output size */
         ss = ss_tmp; /* writes to a temporary buffer */
     } else {
@@ -281,6 +281,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
         goto end;
     }
     EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
 
     /*-
      * ECDHE encapsulation
@@ -323,6 +324,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
         goto end;
     }
     EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
     clear_entropy(mlxctx);
 
     /* Derive the ECDH shared secret */
@@ -360,7 +362,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *xkey = NULL;
     const uint8_t *cbuf;
-    uint8_t *sbuf, *ss;
+    uint8_t *sbuf, *ss = NULL;
     uint8_t ss_tmp[128];
     size_t decap_slen;
     size_t combined_decap_slen = ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes;
@@ -376,7 +378,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
 
     if (hpke_mode) {
         if (sizeof(ss_tmp) < combined_decap_slen)
-            goto end;
+            return 0;
         decap_slen = 32; /* SHA3_256 output size */
         ss = ss_tmp; /* writes to a temporary buffer */
     } else {
@@ -425,6 +427,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
         goto end;
     }
     EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
 
     /* ECDH decapsulation */
     decap_clen = key->xinfo->pubkey_bytes;
