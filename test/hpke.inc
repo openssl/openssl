@@ -1895,6 +1895,7 @@ static const unsigned char pubp521[] = {
 };
 #endif /* OPENSSL_NO_EC */
 
+#if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_EC)
 static const TEST_HPKE_DATA hpke_kat_tests[] = {
 #ifndef OPENSSL_NO_EC
     {
@@ -2069,7 +2070,7 @@ static const TEST_HPKE_DATA hpke_kat_tests[] = {
         mlkem768_p256_hkdfsha256_aes128gcm_base_exportdata,
         OSSL_NELEM(mlkem768_p256_hkdfsha256_aes128gcm_base_exportdata)
     },
-#endif /* OPENSSL_NO_EC */
+#ifndef OPENSSL_NO_ECX
     {
         "XWING_HKDFSHA256_POLY1305_BASE",
         OSSL_HPKE_MODE_BASE,
@@ -2091,5 +2092,8 @@ static const TEST_HPKE_DATA hpke_kat_tests[] = {
         xwing_hkdfsha256_poly1305_base_exportdata,
         OSSL_NELEM(xwing_hkdfsha256_poly1305_base_exportdata)
     }
+#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_ML_KEM */
 };
+#endif /* !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_EC) */
