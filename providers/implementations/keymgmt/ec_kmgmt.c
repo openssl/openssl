@@ -1307,8 +1307,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
 #ifndef FIPS_MODULE
         if (gctx->ikm != NULL && gctx->ikmlen != 0)
-            ret = ret && ossl_ec_derive_key(ec, gctx->ikm, gctx->ikmlen,
-                    gctx->ikm_derivemode);
+            ret = ret && ossl_ec_derive_key(ec, gctx->ikm, gctx->ikmlen, gctx->ikm_derivemode);
         else
 #endif
             ret = ret && EC_KEY_generate_key(ec);
