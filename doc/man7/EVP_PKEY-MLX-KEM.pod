@@ -3,6 +3,7 @@
 =head1 NAME
 
 EVP_PKEY-MLX-KEM, EVP_KEYMGMT-MLX-KEM - Hybrid ML-KEM key support for TLS 1.3
+and HPKE.
 
 =head1 DESCRIPTION
 
@@ -11,8 +12,8 @@ ECDH (classical) algorithm (such as X25519, or P-256) and a post-quantum
 algorithm (ML_KEM), ensuring that key agreement remains secure unless both
 schemes are broken.
 
-The algorithms supported here are specifically for use in TLS 1.3 and are not
-suitable for other purposes. There is no encoder/decoder support, and
+The algorithms supported here are specifically for use in either TLS 1.3 or HPKE,
+and are not suitable for other purposes. There is no encoder/decoder support, and
 EVP_PKEY_CTX_new_id() is also not supported as there are no associated EVP_PKEY
 type identifiers.
 
@@ -48,7 +49,7 @@ secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
 
 =back
 
-The following name is supported only in OpenSSL's default provider.
+The following names are supported only in OpenSSL's default provider.
 
 =over 4
 
@@ -56,6 +57,18 @@ The following name is supported only in OpenSSL's default provider.
 
 The shared secret is the concatenation of a 32 byte L<EVP_PKEY-SM2(7)> shared
 secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
+
+=item B<HPKE-XWING> or B<HPKE-MLKEM768-X25519>
+
+This is a HPKE hybrid ML-KEM algorithm that combines MLKEM768 and X25519.
+
+=item B<HPKE-MLKEM768P256>
+
+This is a HPKE hybrid ML-KEM algorithm that combines MLKEM768 and EC P-256.
+
+=item B<HPKE-MLKEM1024P384>
+
+This is a HPKE hybrid ML-KEM algorithm that combines MLKEM1024 and EC P-384.
 
 =back
 
@@ -71,6 +84,18 @@ L<EVP_PKEY_keygen_init(3)>.
 
 Sets properties to be used when fetching algorithm implementations used for
 the B<ML-KEM>, B<ECDH> or B<SM2> algorithms.
+
+=item "dhkem-ikm" (B<OSSL_PKEY_PARAM_IKM>) <octet string>
+
+Used for testing purposes purposes to deterministically set the input key material
+that will be used to derive a keypair.  If this is set B<OSSL_PKEY_PARAM_SEED>
+must not be set. This parameter is only used by HPKE algorithms.
+
+=item "seed" (B<OSSL_PKEY_PARAM_SEED> <octet string>
+
+Used for testing purposes purposes to deterministically set the raw seed used
+generate a keypair. If this is set B<OSSL_PKEY_PARAM_IKM> must not be set.
+This parameter is only used by HPKE algorithms.
 
 =back
 
@@ -130,6 +155,18 @@ A 1568 byte ML-KEM-1024 public key followed by a 56 byte X448 public key.
 
 A 65 byte SM2 public key followed by a 1184 byte ML-KEM-768 public key.
 
+=item B<HPKE-XWING>
+
+A 1184 byte ML-KEM-768 public key followed by a 32 byte X25519 public key.
+
+=item B<HPKE-MLKEM768P256>
+
+A 1184 byte ML-KEM-768 public key followed by a 65 byte EC public key.
+
+=item B<HPKE-MLKEM1024P384>
+
+A 1568 byte ML-KEM-1024 public key followed by a 97 byte EC public key.
+
 =back
 
 =item "pub" (B<OSSL_PKEY_PARAM_PUB_KEY>) <octet string>
@@ -138,7 +175,7 @@ The public key value.
 
 This parameter is only used when importing or exporting the public key value with
 the EVP_PKEY_fromdata() and EVP_PKEY_todata() functions.
-The public key format format is the same as "encoded-pub-key".
+The public key format is the same as "encoded-pub-key".
 
 =item "priv" (B<OSSL_PKEY_PARAM_PRIV_KEY>) <octet string>
 
@@ -172,6 +209,18 @@ The format of the private keys for the different algorithms is:
 
 32 byte SM2 private key followed by a 2400 byte ML-KEM-768 private key.
 
+=item B<HPKE-XWING>
+
+2400 byte ML-KEM-768 private key followed by a 32 byte X25519 private key.
+
+=item B<HPKE-MLKEM768P256>
+
+2400 byte ML-KEM-768 private key followed by a 32 byte EC private key.
+
+=item B<HPKE-MLKEM1024P384>
+
+3168 byte ML-KEM-1024 private key followed by a 48 byte EC private key.
+
 =back
 
 =back
@@ -193,6 +242,14 @@ X25519 and X448 are not FIPS approved algorithms.
 Even though they are not FIPS approved the hybrid combination is still allowed
 since MLKEM is FIPS approved.
 
+=item https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-11
+
+=item https://datatracker.ietf.org/doc/draft-ietf-hpke-pq/04/
+
+=item https://datatracker.ietf.org/doc/draft-connolly-cfrg-xwing-kem/
+
+=item https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-concrete-hybrid-kems-03
+
 =back
 
 =head1 SEE ALSO
@@ -208,6 +265,9 @@ L<provider-keymgmt(7)>
 This functionality was added in OpenSSL 3.5.
 
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
+
+Support for B<HPKE-XWING>, B<HPKE-MLKEM768P256> and B<HPKE-MLKEM1024P384> was
+added in openSSL 4.1.
 
 =head1 COPYRIGHT
 
