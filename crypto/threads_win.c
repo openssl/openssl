@@ -773,7 +773,7 @@ int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_R
 
     *lock_failed = 0;
     /* Load the current pointer value */
-    prev = InterlockedCompareExchange(ptr, NULL, NULL);
+    prev = InterlockedCompareExchangePointer(ptr, NULL, NULL);
     initial = InterlockedCompareExchangePointer(ptr, desire, *expect);
     if (prev == initial)
         return 1;
