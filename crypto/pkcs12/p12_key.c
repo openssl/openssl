@@ -8,13 +8,21 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/pkcs12.h>
+
 #include <openssl/bn.h>
-#include <openssl/trace.h>
-#include <openssl/kdf.h>
 #include <openssl/core_names.h>
+#include <openssl/kdf.h>
+#include <openssl/pkcs12.h>
+#include <openssl/trace.h>
+
+#include "internal/cryptlib.h"
 #include "internal/provider.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
 
 int PKCS12_key_gen_asc_ex(const char *pass, int passlen, unsigned char *salt,
     int saltlen, int id, int iter, int n,

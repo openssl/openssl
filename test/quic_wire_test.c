@@ -7,9 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include "internal/nelem.h"
 #include "internal/packet.h"
+#include "internal/quic_types.h"
 #include "internal/quic_wire.h"
 #include "internal/quic_wire_pkt.h"
+#include "internal/time.h"
+
+#include "openssl/bn.h"
+#include "openssl/buffer.h"
+#include "openssl/e_os2.h"
 #include "testutil.h"
 
 struct encode_test_case {

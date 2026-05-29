@@ -7,7 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/bio.h>
+
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "testutil.h"
 
 static const char *filename = NULL;

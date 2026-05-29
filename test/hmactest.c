@@ -14,13 +14,17 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
-
-#include "internal/nelem.h"
+#include <string.h>
 
 #include <openssl/hmac.h>
 #include <openssl/sha.h>
+
+#include "internal/nelem.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 #ifndef OPENSSL_NO_MD5
 #include <openssl/md5.h>
 #endif

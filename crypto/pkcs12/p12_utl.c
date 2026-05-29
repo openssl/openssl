@@ -7,12 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/pkcs12.h>
-#include "p12_local.h"
+
+#include "internal/cryptlib.h"
+
 #include "crypto/pkcs7/pk7_local.h"
 #include <crypto/asn1.h>
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/pkcs7.h"
+#include "p12_local.h"
 
 /* Cheap and nasty Unicode stuff */
 

@@ -16,14 +16,17 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "testutil.h"
-
-#include <openssl/evp.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
+
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
+
 #include "helpers/predefined_dsaparams.h"
 
 static DSA *dsakey;

@@ -7,9 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/crypto.h>
+
+#include "openssl/core_dispatch.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 typedef struct {
     unsigned char nothing;

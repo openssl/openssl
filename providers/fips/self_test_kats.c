@@ -8,15 +8,19 @@
  */
 
 #include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/ml_dsa.h"
 #include "crypto/rand.h"
-#include "internal/cryptlib.h"
+
 #include "self_test.h"
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)

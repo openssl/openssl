@@ -11,6 +11,7 @@
 #define OSSL_QUIC_RECORD_UTIL_H
 
 #include <openssl/ssl.h>
+
 #include "internal/quic_types.h"
 
 #ifndef OPENSSL_NO_QUIC

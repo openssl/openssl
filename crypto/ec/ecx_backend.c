@@ -8,15 +8,29 @@
  */
 
 #include <string.h>
+
 #include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/ec.h>
-#include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/params.h>
+#include <openssl/rand.h>
+
+#include "internal/refcount.h"
+
+#include "crypto/types.h"
+
+#include "openssl/asn1.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ecerr.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
 #endif
 #include "crypto/ecx.h"
+
 #include "ecx_backend.h"
 
 /*

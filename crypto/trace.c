@@ -10,13 +10,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "internal/thread_once.h"
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/trace.h>
+
 #include "internal/bio.h"
+#include "internal/common.h"
 #include "internal/nelem.h"
 #include "internal/refcount.h"
+#include "internal/thread_once.h"
+
 #include "crypto/cryptlib.h"
 #include "crypto/ctype.h"
 

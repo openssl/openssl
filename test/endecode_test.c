@@ -7,23 +7,35 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/core_dispatch.h>
+#include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
 #include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/params.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
 #include <openssl/x509.h>
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/param_build.h>
-#include <openssl/encoder.h>
-#include <openssl/decoder.h>
 
+#include "internal/common.h"
 #include "internal/cryptlib.h" /* ossl_assert */
-#include "crypto/pem.h" /* For PVK and "blob" PEM headers */
+
 #include "crypto/evp.h" /* For evp_pkey_is_provided() */
+#include "crypto/pem.h" /* For PVK and "blob" PEM headers */
 
 #include "helpers/predefined_dhparams.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/provider.h"
+#include "opt.h"
 #include "testutil.h"
 
 #ifdef STATIC_LEGACY

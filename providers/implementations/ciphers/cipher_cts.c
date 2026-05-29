@@ -46,10 +46,17 @@
  *      Otherwise it is the same as CS2.
  */
 
-#include <openssl/core_names.h>
-#include "prov/ciphercommon.h"
-#include "internal/nelem.h"
 #include "cipher_cts.h"
+
+#include <stddef.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
+
+#include "internal/nelem.h"
+
+#include "openssl/crypto.h"
+#include "prov/ciphercommon.h"
 
 /* The value assigned to 0 is the default */
 #define CTS_CS1 0

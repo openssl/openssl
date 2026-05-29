@@ -12,6 +12,9 @@
 #pragma once
 
 #include <openssl/aes.h>
+#include <openssl/e_os2.h>
+
+#include "crypto/modes.h"
 
 #ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,

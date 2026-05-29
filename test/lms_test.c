@@ -10,10 +10,15 @@
 #include <openssl/core_names.h>
 #include <openssl/decoder.h>
 #include <openssl/evp.h>
-#include "crypto/lms.h"
+
 #include "internal/nelem.h"
+
+#include "crypto/lms.h"
+
 #include "testutil.h"
+/* clang-format off */
 #include "lms.inc"
+/* clang-format on */
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,

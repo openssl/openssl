@@ -7,14 +7,44 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/ocsp.h>
-#include "../ssl_local.h"
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/packet.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+#include "internal/time.h"
 #include "internal/tlsgroups.h"
+
+#include "../ssl_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/e_os2.h"
+#include "openssl/ech.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/hpke.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/srtp.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/trace.h"
+#include "openssl/x509.h"
+#include "ssl/ech/ech_local.h"
+#include "ssl/record/record.h"
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
 #include <openssl/rand.h>
+
 #include "internal/ech_helpers.h"
 #endif
 

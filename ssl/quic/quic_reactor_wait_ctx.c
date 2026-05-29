@@ -7,9 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/quic_reactor_wait_ctx.h"
-#include "internal/common.h"
-#include "internal/thread_arch.h"
+
 #include <assert.h>
+#include <stddef.h>
+
+#include "internal/common.h"
+#include "internal/list.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_reactor.h"
+#include "internal/thread_arch.h"
+
+#include "openssl/crypto.h"
 
 struct quic_reactor_wait_slot_st {
     OSSL_LIST_MEMBER(quic_reactor_wait_slot, QUIC_REACTOR_WAIT_SLOT);

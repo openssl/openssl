@@ -14,22 +14,32 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/ec.h>
-#include <openssl/params.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
+
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/implementations.h"
 #include "prov/securitycheck.h"
-#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+/* clang-format off */
 #include "providers/implementations/exchange/ecdh_exch.inc"
+/* clang-format on */
+#include "fips/fipsindicator.h"
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;

@@ -7,14 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "apps.h"
-#include "progs.h"
 #include <limits.h>
 #include <string.h>
-#include <openssl/err.h>
-#include <openssl/pem.h>
-#include <openssl/evp.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
+#include <sys/types.h>
+
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
+
+#include "app_libctx.h"
+#include "apps.h"
+#include "fmt.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/conf.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "opt.h"
+#include "progs.h"
 
 #define KEY_NONE 0
 #define KEY_PRIVKEY 1

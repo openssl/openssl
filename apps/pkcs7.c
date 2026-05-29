@@ -11,14 +11,23 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "apps.h"
-#include "progs.h"
+
 #include <openssl/err.h>
-#include <openssl/objects.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/pkcs7.h>
+#include <openssl/x509.h>
+
+#include "app_libctx.h"
+#include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "opt.h"
+#include "progs.h"
 
 typedef enum OPTION_choice {
     OPT_COMMON,

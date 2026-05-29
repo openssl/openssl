@@ -14,9 +14,15 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/evp.h>
+
 #include <openssl/dsa.h>
+#include <openssl/evp.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #ifndef OPENSSL_NO_STDIO
 int DSA_print_fp(FILE *fp, const DSA *x, int off)

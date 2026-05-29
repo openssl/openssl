@@ -12,19 +12,25 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include <openssl/ec.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/ec.h>
-#include "internal/passphrase.h"
+#include <openssl/params.h>
+
 #include "internal/nelem.h"
-#include "prov/implementations.h"
+#include "internal/passphrase.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 #include "prov/bio.h"
-#include "prov/provider_ctx.h"
 #include "prov/endecoder_local.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 
 static int write_blob(void *provctx, OSSL_CORE_BIO *cout,
     void *data, int len)

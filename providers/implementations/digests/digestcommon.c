@@ -7,13 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "prov/digestcommon.h"
+
 #include <string.h>
+
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "prov/digestcommon.h"
+
 #include "internal/common.h"
 
+#include "openssl/params.h"
+/* clang-format off */
 #include "providers/implementations/digests/digestcommon.inc"
+/* clang-format on */
 
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
     size_t paramsz, unsigned long flags)

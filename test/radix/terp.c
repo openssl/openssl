@@ -6,14 +6,16 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <openssl/ssl.h>
-#include <openssl/quic.h>
 #include <openssl/bio.h>
 #include <openssl/lhash.h>
+#include <openssl/quic.h>
 #include <openssl/rand.h>
-#include "../testutil.h"
+#include <openssl/ssl.h>
+
 #include "internal/numbers.h" /* UINT64_C */
 #include "internal/time.h" /* OSSL_TIME */
+
+#include "../testutil.h"
 
 static const char *cert_file, *key_file;
 

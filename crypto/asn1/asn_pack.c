@@ -8,10 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
 
+#include "internal/cryptlib.h"
+
 #include <crypto/asn1.h>
+
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /* ASN1 packing and unpacking functions */
 

@@ -7,8 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "internal/recordmethod.h"
+
 #include "../../ssl_local.h"
 #include "../record_local.h"
+#include "openssl/bio.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
 #include "recmethod_local.h"
 
 #if defined(OPENSSL_SMALL_FOOTPRINT) \

@@ -14,7 +14,9 @@
 #include <openssl/types.h>
 
 #define FIPSPARAMS_AS_HEADER
+/* clang-format off */
 #include "providers/fips/fipsparams.inc"
+/* clang-format on */
 #undef FIPSPARAMS_AS_HEADER
 
 int ossl_fips_config(OSSL_LIB_CTX *libctx, enum fips_config_id id);

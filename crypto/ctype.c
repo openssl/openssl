@@ -7,9 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <stdio.h>
 #include "crypto/ctype.h"
+
+#include <stdio.h>
+#include <string.h>
+
 #include <openssl/ebcdic.h>
 
 /*

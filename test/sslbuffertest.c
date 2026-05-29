@@ -9,9 +9,16 @@
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
+
+#include "internal/statem.h"
+
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
 
 #ifndef OPENSSL_NO_QUIC
 /* This test does not link libssl so avoid pulling in QUIC unwrappers. */
@@ -19,14 +26,13 @@
 #endif
 
 /* We include internal headers so we can check if the buffers are allocated */
-#include "../ssl/ssl_local.h"
-#include "../ssl/record/record_local.h"
+#include "internal/packet.h"
 #include "internal/recordmethod.h"
-#include "../ssl/record/methods/recmethod_local.h"
 #include "internal/ssl_unwrap.h"
 
-#include "internal/packet.h"
-
+#include "../ssl/record/methods/recmethod_local.h"
+#include "../ssl/record/record_local.h"
+#include "../ssl/ssl_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 

@@ -7,9 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/bio.h>
-#include "quictestlib.h"
+
+#include "internal/packet.h"
+#include "internal/quic_wire_pkt.h"
+
 #include "../testutil.h"
+#include "openssl/crypto.h"
+#include "quictestlib.h"
 
 static long pkt_split_dgram_ctrl(BIO *bio, int cmd, long num, void *ptr)
 {

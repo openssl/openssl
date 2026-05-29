@@ -21,10 +21,12 @@
  * added to the key. See doc/man7/EVP_PKEY-FFC for more information.
  */
 
-#include <openssl/evp.h>
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
+/* clang-format off */
 #include "dsa.inc"
+/* clang-format on */
 
 /* The following values were output from the EVP_PKEY_DSA_paramgen demo */
 static const char dsapem[] = "-----BEGIN DSA PARAMETERS-----\n"

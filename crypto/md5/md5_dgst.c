@@ -14,8 +14,12 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "md5_local.h"
+#include <string.h>
+
 #include <openssl/opensslv.h>
+
+#include "md5_local.h"
+#include "openssl/md5.h"
 
 /*
  * Implemented from RFC1321 The MD5 Message-Digest Algorithm

@@ -9,6 +9,8 @@
 
 #include <openssl/macros.h>
 
+#include "openssl/evp.h"
+
 #if !defined(OPENSSL_NO_RC4) && !defined(OPENSSL_NO_MD5)
 #include "crypto/evp.h"
 

@@ -8,19 +8,22 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
-#include <openssl/opensslconf.h>
-#include <openssl/lhash.h>
-#include <openssl/err.h>
-#include <openssl/rand.h>
 #include <openssl/crypto.h>
-#include <internal/hashtable.h>
+#include <openssl/err.h>
+#include <openssl/lhash.h>
+#include <openssl/opensslconf.h>
+#include <openssl/rand.h>
 
 #include "internal/nelem.h"
-#include "threadstest.h"
+#include <internal/hashtable.h>
+
 #include "testutil.h"
+#include "threadstest.h"
 
 /*
  * The macros below generate unused functions which error out one of the clang

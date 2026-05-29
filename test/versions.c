@@ -8,8 +8,9 @@
  */
 
 #include <stdio.h>
-#include <openssl/opensslv.h>
+
 #include <openssl/crypto.h>
+#include <openssl/opensslv.h>
 
 /* A simple helper for the perl function OpenSSL::Test::openssl_versions */
 int main(void)

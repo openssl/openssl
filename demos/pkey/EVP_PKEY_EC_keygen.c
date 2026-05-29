@@ -12,11 +12,12 @@
  * generated key.
  */
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/core_names.h>
 
 static int get_key_values(EVP_PKEY *pkey);
 

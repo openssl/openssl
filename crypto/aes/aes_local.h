@@ -10,10 +10,11 @@
 #ifndef OSSL_CRYPTO_AES_LOCAL_H
 #define OSSL_CRYPTO_AES_LOCAL_H
 
-#include <openssl/e_os2.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <openssl/e_os2.h>
 
 #if defined(_MSC_VER) && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64))
 #define SWAP(x) (_lrotl(x, 8) & 0x00ff00ff | _lrotr(x, 8) & 0xff00ff00)

@@ -7,15 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
-#include <openssl/rand.h>
 #include <openssl/pem.h>
-#include "crypto/slh_dsa.h"
+#include <openssl/rand.h>
+
 #include "internal/nelem.h"
+
+#include "crypto/slh_dsa.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/provider.h"
+#include "opt.h"
 #include "testutil.h"
+/* clang-format off */
 #include "slh_dsa.inc"
+/* clang-format on */
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,

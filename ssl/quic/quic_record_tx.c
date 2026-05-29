@@ -8,12 +8,36 @@
  */
 
 #include "internal/quic_record_tx.h"
-#include "internal/qlog_event_helpers.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+
 #include "internal/bio_addr.h"
 #include "internal/common.h"
-#include "quic_record_shared.h"
 #include "internal/list.h"
+#include "internal/nelem.h"
+#include "internal/packet.h"
+#include "internal/qlog.h"
+#include "internal/qlog_event_helpers.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_util.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire_pkt.h"
+#include "internal/ssl.h"
+
 #include "../ssl_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "quic_record_shared.h"
 
 #define QTX_DEFAULT_MTU 1500
 

@@ -8,6 +8,7 @@
  */
 
 #include <stddef.h>
+
 #include "internal/cryptlib.h"
 
 typedef int (*cmpthunk_fn)(const void *, const void *);

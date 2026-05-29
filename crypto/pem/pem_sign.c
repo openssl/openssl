@@ -8,11 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
-#include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/crypto.h"
 
 int PEM_SignInit(EVP_MD_CTX *ctx, EVP_MD *type)
 {

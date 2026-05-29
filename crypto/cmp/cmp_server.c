@@ -11,7 +11,20 @@
 
 /* general CMP server functions */
 
+#include <stdint.h>
+
+#include "internal/common.h"
+
 #include "cmp_local.h"
+#include "openssl/cmp.h"
+#include "openssl/cmperr.h"
+#include "openssl/crmf.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3.h"
 
 /* the context for the generic CMP server */
 struct ossl_cmp_srv_ctx_st {

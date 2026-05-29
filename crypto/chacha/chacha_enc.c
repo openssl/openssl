@@ -13,6 +13,7 @@
 #include <string.h>
 
 #include "internal/endian.h"
+
 #include "crypto/chacha.h"
 #include "crypto/ctype.h"
 

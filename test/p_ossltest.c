@@ -40,24 +40,39 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/rand.h> /* RAND_get0_public() */
-#include <openssl/proverr.h>
 #include <openssl/md5.h>
-#include <openssl/sha.h>
+#include <openssl/params.h>
 #include <openssl/prov_ssl.h>
-#include "prov/provider_ctx.h"
-#include "prov/digestcommon.h"
-#include "prov/ciphercommon.h"
-#include "prov/names.h"
-#include "prov/implementations.h"
-#include "ciphers/cipher_aes.h"
+#include <openssl/proverr.h>
+#include <openssl/rand.h> /* RAND_get0_public() */
+#include <openssl/sha.h>
+
+#include "internal/core.h"
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
+
 #include "crypto/context.h"
-#include "internal/core.h"
+
+#include "ciphers/cipher_aes.h"
+#include "openssl/aes.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/opensslv.h"
+#include "prov/ciphercommon.h"
+#include "prov/digestcommon.h"
+#include "prov/implementations.h"
+#include "prov/names.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 
 /**
  * @brief Release resources and clean up the context.

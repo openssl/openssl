@@ -11,8 +11,10 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_CAMELLIA_H
 
 #include <openssl/camellia.h>
-#include "prov/ciphercommon.h"
+
 #include "crypto/cmll_platform.h"
+
+#include "prov/ciphercommon.h"
 
 typedef struct prov_camellia_ctx_st {
     PROV_CIPHER_CTX base; /* Must be first */

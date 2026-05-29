@@ -9,7 +9,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/common.h"
 #include "internal/e_os.h"
+
+#include "openssl/comp.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
 
 /* Or gethostname won't be declared properly on Linux and GNU platforms. */
 #ifndef _BSD_SOURCE
@@ -40,13 +49,13 @@
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/x509v3.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/rsa.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <openssl/x509v3.h>
 #ifndef OPENSSL_NO_DSA
 #include <openssl/dsa.h>
 #endif
@@ -55,6 +64,7 @@
 #include <openssl/ct.h>
 #endif
 #include <openssl/provider.h>
+
 #include "testutil.h"
 #include "testutil/output.h"
 

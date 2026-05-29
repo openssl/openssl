@@ -8,7 +8,15 @@
  */
 
 #include "internal/quic_txpim.h"
+
+#include <assert.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "internal/quic_cfq.h"
+#include "internal/quic_predef.h"
+
+#include "openssl/crypto.h"
 
 typedef struct quic_txpim_pkt_ex_st QUIC_TXPIM_PKT_EX;
 

@@ -9,8 +9,19 @@
 
 /* chacha20_poly1305 cipher implementation */
 
+#include <stddef.h>
+#include <string.h>
+
 #include "internal/endian.h"
+
+#include "crypto/chacha.h"
+#include "crypto/poly1305.h"
+
 #include "cipher_chacha20_poly1305.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "prov/ciphercommon.h"
+#include "providers/implementations/ciphers/cipher_chacha20.h"
 
 static int chacha_poly1305_tls_init(PROV_CIPHER_CTX *bctx,
     unsigned char *aad, size_t alen)

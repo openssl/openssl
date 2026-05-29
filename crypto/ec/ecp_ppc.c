@@ -8,6 +8,7 @@
  */
 
 #include "internal/cryptlib.h"
+
 #include "arch/ppc_arch.h"
 #include "ec_local.h"
 

@@ -14,13 +14,21 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <string.h>
+
 #include <openssl/err.h>
 
 #include "internal/cryptlib.h"
-#include "crypto/bn.h"
-#include "ec_local.h"
 #include "internal/refcount.h"
+
+#include "crypto/bn.h"
+
+#include "ec_local.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
 
 /*
  * This file implements the wNAF-based interleaving multi-exponentiation method

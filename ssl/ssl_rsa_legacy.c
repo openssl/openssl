@@ -14,6 +14,13 @@
 #include <openssl/rsa.h>
 #include <openssl/ssl.h>
 
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/pem.h"
+#include "openssl/sslerr.h"
+#include "openssl/x509.h"
+
 int SSL_use_RSAPrivateKey(SSL *ssl, RSA *rsa)
 {
     EVP_PKEY *pkey;

@@ -8,11 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/crypto.h>
+#include <string.h>
+
 #include <openssl/buffer.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+
+#include "internal/cryptlib.h"
+
 #include "err_local.h"
+#include "openssl/bio.h"
 
 #define ERR_PRINT_BUF_SIZE 4096
 void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),

@@ -15,13 +15,25 @@
 
 #include <openssl/core_names.h>
 #include <openssl/err.h>
+
+#include "internal/ffc.h"
+
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/dsaerr.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
 #endif
 #include "crypto/dsa.h"
-#include "dsa_local.h"
-
 #include <crypto/asn1.h>
+
+#include "dsa_local.h"
 
 /*
  * The intention with the "backend" source file is to offer backend functions

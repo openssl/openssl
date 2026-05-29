@@ -9,6 +9,9 @@
 
 #include "internal/ffc.h"
 
+#include "openssl/bn.h"
+#include "openssl/core.h"
+
 /*
  * See SP800-56Ar3 Section 5.6.2.3.1 : FFC Partial public key validation.
  * To only be used with ephemeral FFC public keys generated using the approved

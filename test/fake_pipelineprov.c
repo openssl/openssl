@@ -13,15 +13,25 @@
  */
 #include "internal/deprecated.h"
 
+#include "fake_pipelineprov.h"
+
+#include <stddef.h>
+
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
-#include "prov/providercommon.h"
+
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/provider.h"
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_aead.h"
+#include "prov/providercommon.h"
 #include "testutil.h"
-#include "fake_pipelineprov.h"
 
 /*
  * This file provides a fake provider that implements a pipeline cipher

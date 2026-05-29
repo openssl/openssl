@@ -7,13 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stddef.h>
+
+#include <openssl/core_names.h>
 #include <openssl/crypto.h>
-#include <openssl/provider.h>
 #include <openssl/decoder.h>
 #include <openssl/encoder.h>
-#include <openssl/store.h>
+#include <openssl/provider.h>
 #include <openssl/rand.h>
-#include <openssl/core_names.h>
+#include <openssl/store.h>
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/params.h"
 #include "testutil.h"
 
 static int dummy_decoder_decode(void *ctx, OSSL_CORE_BIO *cin, int selection,

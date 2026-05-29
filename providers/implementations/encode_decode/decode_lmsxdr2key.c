@@ -7,14 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core_object.h>
 #include <openssl/core_names.h>
+#include <openssl/core_object.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include "prov/endecoder_local.h"
+
 #include "crypto/lms.h"
+
 #include "prov/bio.h"
+#include "prov/endecoder_local.h"
 #include "prov/implementations.h"
 
 static OSSL_FUNC_decoder_newctx_fn lmsxdr2key_newctx;

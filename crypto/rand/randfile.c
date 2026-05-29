@@ -7,37 +7,42 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <unistd.h>
+
+#include "openssl/err.h"
+#include "openssl/randerr.h"
 #if defined(__TANDEM) && defined(_SPT_MODEL_)
 /*
  * These definitions have to come first in SPT due to scoping of the
  * declarations in c99 associated with SPT use of stat.
  */
-#include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/types.h>
 #endif
-
-#include "internal/e_os.h"
-#include "internal/cryptlib.h"
 
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
+#include <openssl/buffer.h>
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
-#include <openssl/buffer.h>
+
+#include "internal/cryptlib.h"
+#include "internal/e_os.h"
 
 #ifdef OPENSSL_SYS_VMS
 #include <unixio.h>
 #endif
 #include <sys/types.h>
 #ifndef OPENSSL_NO_POSIX_IO
-#include <sys/stat.h>
 #include <fcntl.h>
+#include <sys/stat.h>
 #if defined(_WIN32) && !defined(_WIN32_WCE)
-#include <windows.h>
 #include <io.h>
+#include <windows.h>
 #define stat _stat
 #define chmod _chmod
 #define open _open

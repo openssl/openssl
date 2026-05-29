@@ -8,12 +8,20 @@
  */
 
 #include <stddef.h>
-#include <openssl/asn1.h>
-#include <openssl/objects.h>
-#include <openssl/err.h>
-#include <openssl/asn1t.h>
 #include <string.h>
+
+#include <openssl/asn1.h>
+#include <openssl/asn1t.h>
+#include <openssl/err.h>
+#include <openssl/objects.h>
+
+#include "crypto/asn1.h"
+
 #include "asn1_local.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
 
 static int asn1_item_embed_new(ASN1_VALUE **pval, const ASN1_ITEM *it,
     int embed, OSSL_LIB_CTX *libctx,

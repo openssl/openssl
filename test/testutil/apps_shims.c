@@ -8,8 +8,10 @@
  */
 
 #include <stdlib.h>
-#include "apps.h"
+
 #include "../testutil.h"
+#include "apps.h"
+#include "openssl/crypto.h"
 
 /* shim that avoids sucking in too much from apps/apps.c */
 

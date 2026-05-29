@@ -16,6 +16,9 @@
 /* Dispatch functions for CAMELLIA cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_camellia.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
@@ -89,4 +92,6 @@ IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 192, 8, 128, stream)
 /* ossl_camellia128ctr_functions */
 IMPLEMENT_generic_cipher(camellia, CAMELLIA, ctr, CTR, 0, 128, 8, 128, stream)
 
+/* clang-format off */
 #include "cipher_camellia_cts.inc"
+/* clang-format on */

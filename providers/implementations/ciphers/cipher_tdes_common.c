@@ -13,10 +13,22 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/rand.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/proverr.h>
-#include "prov/ciphercommon.h"
+#include <openssl/rand.h>
+
 #include "cipher_tdes.h"
+#include "fips/fipsindicator.h"
+#include "openssl/core_names.h"
+#include "openssl/crypto.h"
+#include "openssl/des.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

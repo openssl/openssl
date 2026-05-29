@@ -14,7 +14,11 @@
 #include "internal/deprecated.h"
 
 #include <openssl/mdc2.h>
+
 #include "crypto/evp.h"
+
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
 
 static const EVP_MD mdc2_md = {
     NID_mdc2,

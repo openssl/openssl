@@ -8,10 +8,21 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <limits.h>
+#include <stddef.h>
+#include <stdlib.h>
+
 #include <openssl/core_names.h>
-#include <openssl/rand.h>
 #include <openssl/provider.h>
+#include <openssl/rand.h>
+
 #include "fuzzer.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
 
 static OSSL_FUNC_rand_newctx_fn fuzz_rand_newctx;
 static OSSL_FUNC_rand_freectx_fn fuzz_rand_freectx;

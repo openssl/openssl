@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
@@ -14,11 +17,18 @@
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
 #include <openssl/x509.h>
-#include "cms_local.h"
-#include "crypto/evp.h"
+
 #include "internal/sizes.h"
 
+#include "crypto/evp.h"
 #include <crypto/asn1.h>
+
+#include "cms_local.h"
+#include "openssl/asn1.h"
+#include "openssl/cmserr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 /* KEM Recipient Info (KEMRI) routines */
 

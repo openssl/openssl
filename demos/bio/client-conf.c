@@ -8,9 +8,10 @@
  */
 
 #include <string.h>
+
+#include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/conf.h>
 
 int main(int argc, char **argv)
 {

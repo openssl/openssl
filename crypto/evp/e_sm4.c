@@ -11,6 +11,8 @@
 
 #include <openssl/macros.h>
 
+#include "openssl/evp.h"
+
 #ifndef OPENSSL_NO_SM4
 #include "crypto/evp.h"
 

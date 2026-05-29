@@ -9,7 +9,13 @@
  *
  * Originally written by Mike Hamburg
  */
+#include <assert.h>
+#include <stdint.h>
+
+#include "crypto/ec/curve448/word.h"
+
 #include "field.h"
+#include "word.h"
 
 static const gf MODULUS = {
     FIELD_LITERAL(0xffffffffffffffULL, 0xffffffffffffffULL, 0xffffffffffffffULL,

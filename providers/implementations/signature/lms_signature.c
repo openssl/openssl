@@ -10,15 +10,18 @@
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/proverr.h>
-#include <openssl/params.h>
-#include <openssl/evp.h>
 #include <openssl/err.h>
-#include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
-#include "prov/implementations.h"
-#include "crypto/lms_sig.h"
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/proverr.h>
+
 #include "internal/fips.h"
+
+#include "crypto/lms_sig.h"
+
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_signature_newctx_fn lms_newctx;
 static OSSL_FUNC_signature_freectx_fn lms_freectx;

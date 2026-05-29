@@ -14,7 +14,21 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/aes_platform.h"
+#include "crypto/modes.h"
+
 #include "cipher_aes_cbc_hmac_sha.h"
+#include "openssl/aes.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/sha.h"
+#include "prov/ciphercommon.h"
 
 #if !defined(AES_CBC_HMAC_SHA_CAPABLE) || !defined(AESNI_CAPABLE)
 int ossl_cipher_capable_aes_cbc_hmac_sha256(void)
@@ -29,8 +43,10 @@ const PROV_CIPHER_HW_AES_HMAC_SHA *ossl_prov_cipher_hw_aes_cbc_hmac_sha256(void)
 #else
 
 #include <openssl/rand.h>
-#include "crypto/evp.h"
+
 #include "internal/constant_time.h"
+
+#include "crypto/evp.h"
 
 void sha256_block_data_order(void *c, const void *p, size_t len);
 int aesni_cbc_sha256_enc(const void *inp, void *out, size_t blocks,

@@ -14,9 +14,20 @@
  */
 
 #include <stdio.h>
+#include <string.h>
+
 #include <openssl/objects.h>
-#include "ssl_local.h"
+
 #include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/safestack.h"
+#include "openssl/srtp.h"
+#include "openssl/ssl.h"
+#include "openssl/sslerr.h"
+#include "ssl_local.h"
 
 #ifndef OPENSSL_NO_SRTP
 

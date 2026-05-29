@@ -7,9 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
-#include "slh_dsa_local.h"
+
+#include "internal/packet.h"
+
+#include "crypto/slh_dsa.h"
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_hash.h"
+
 #include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 /**
  * @brief Compute the root Public key of a XMSS tree.

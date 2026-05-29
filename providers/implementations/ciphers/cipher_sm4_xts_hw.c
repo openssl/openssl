@@ -7,7 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
+#include "crypto/sm4.h"
+
 #include "cipher_sm4_xts.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon.h"
 
 #define XTS_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,   \
     fn_block_enc, fn_block_dec,                          \
@@ -90,9 +96,13 @@ static const PROV_CIPHER_HW sm4_generic_xts = {
 };
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+/* clang-format off */
 #include "cipher_sm4_xts_hw_rv64i.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+/* clang-format off */
 #include "cipher_sm4_xts_hw_x86_64.inc"
+/* clang-format on */
 #else
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_sm4_xts(size_t keybits)
 {

@@ -23,11 +23,12 @@
 #pragma GCC diagnostic ignored "-Wstrict-prototypes"
 #endif
 
-#include <windows.h>
-#include <tchar.h>
-#include <stdio.h>
-#include <stddef.h>
 #include "uplink.h"
+
+#include <stddef.h>
+#include <stdio.h>
+#include <tchar.h>
+#include <windows.h>
 void OPENSSL_showfatal(const char *, ...);
 void OPENSSL_Uplink(volatile void **table, int index);
 

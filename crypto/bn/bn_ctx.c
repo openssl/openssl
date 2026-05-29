@@ -7,9 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+
 #include <openssl/trace.h>
+
 #include "internal/cryptlib.h"
+
 #include "bn_local.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /* How many bignums are in each "pool item"; */
 #define BN_CTX_POOL_SIZE 16

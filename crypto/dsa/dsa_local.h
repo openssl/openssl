@@ -11,8 +11,9 @@
 #define OSSL_LIBCRYPTO_DSA_DSA_LOCAL_H
 
 #include <openssl/dsa.h>
-#include "internal/refcount.h"
+
 #include "internal/ffc.h"
+#include "internal/refcount.h"
 
 struct dsa_st {
     /*

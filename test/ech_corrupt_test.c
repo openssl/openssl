@@ -7,12 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
-#include "helpers/ssltestlib.h"
-#include "testutil.h"
+
 #include <openssl/ech.h>
+
+#include "internal/nelem.h"
 #include <internal/ech_helpers.h>
 #include <internal/packet.h>
+
+#include "helpers/ssltestlib.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/hpke.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
+#include "opt.h"
+#include "testutil.h"
 
 #define OSSL_ECH_MAX_LINELEN 1000 /* for a sanity check */
 #define DEF_CERTS_DIR "test/certs"

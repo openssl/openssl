@@ -8,21 +8,34 @@
  */
 
 #include <string.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/x509.h>
+
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
-#include "crypto/x509.h"
+
 #include "crypto/ec.h"
+#include "crypto/x509.h"
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 #include "prov/bio.h"
 #include "prov/decoders.h"
-#include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_spki2typespki.inc"
+/* clang-format on */
 
 static OSSL_FUNC_decoder_newctx_fn spki2typespki_newctx;
 static OSSL_FUNC_decoder_freectx_fn spki2typespki_freectx;

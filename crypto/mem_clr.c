@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+
 #include <openssl/crypto.h>
 
 /*

@@ -12,11 +12,12 @@
  * a message using  EVP_DigestSign() and EVP_DigestVerify().
  */
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/core_names.h>
 
 /* A test message to be signed (TBS) */
 static const unsigned char hamlet[] = "To be, or not to be, that is the question,\n"

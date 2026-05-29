@@ -14,10 +14,12 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
-#include <openssl/types.h>
+
 #include <openssl/core_names.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
+#include <openssl/types.h>
+
 #include "testutil.h"
 
 #if defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_MDC2)

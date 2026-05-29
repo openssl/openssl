@@ -14,10 +14,20 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
-#include "dsa_local.h"
+
+#include "internal/cryptlib.h"
+#include "internal/ffc.h"
+
 #include "crypto/dsa.h"
+
+#include "dsa_local.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
+#include "openssl/dsaerr.h"
+#include "openssl/err.h"
 
 static int dsa_precheck_params(const DSA *dsa, int *ret)
 {

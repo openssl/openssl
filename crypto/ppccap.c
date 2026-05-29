@@ -7,11 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <setjmp.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <setjmp.h>
-#include <signal.h>
 #include <unistd.h>
 #if defined(__linux) || defined(_AIX)
 #include <sys/utsname.h>
@@ -23,11 +23,13 @@
 #endif
 #endif
 #if defined(__APPLE__) && defined(__MACH__)
-#include <sys/types.h>
 #include <sys/sysctl.h>
+#include <sys/types.h>
 #endif
 #include <openssl/crypto.h>
+
 #include "internal/cryptlib.h"
+
 #include "arch/ppc_arch.h"
 
 unsigned int OPENSSL_ppccap_P = 0;

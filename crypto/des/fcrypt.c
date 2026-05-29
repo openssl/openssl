@@ -13,6 +13,8 @@
  */
 #include "internal/deprecated.h"
 
+#include "openssl/des.h"
+
 /* NOCW */
 #include <stdio.h>
 #ifdef _OSD_POSIX
@@ -25,6 +27,7 @@
 #endif
 
 #include <openssl/crypto.h>
+
 #include "des_local.h"
 
 /*

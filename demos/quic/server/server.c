@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 #include <openssl/err.h>
-#include <openssl/ssl.h>
 #include <openssl/quic.h>
+#include <openssl/ssl.h>
 #ifdef _WIN32 /* Windows */
 #include <winsock2.h>
 #else /* Linux/Unix */

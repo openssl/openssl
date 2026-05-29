@@ -7,10 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <openssl/conf.h>
 #include <openssl/err.h>
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/provider.h"
+#include "opt.h"
 #include "testutil.h"
 
 #ifdef _WIN32

@@ -46,13 +46,13 @@
 #ifdef _WIN32 /* Windows */
 #include <winsock2.h>
 #else /* Linux/Unix */
-#include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/socket.h>
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 static int handle_io_failure(SSL *ssl, int res);
 

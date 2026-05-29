@@ -16,11 +16,10 @@
 #define HEADER_RSA_H
 #endif
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/opensslconf.h>
 #include <openssl/types.h>
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #include <openssl/bn.h>

@@ -12,9 +12,9 @@
 #define OPENSSL_COMPERR_H
 #pragma once
 
+#include <openssl/cryptoerr_legacy.h>
 #include <openssl/opensslconf.h>
 #include <openssl/symhacks.h>
-#include <openssl/cryptoerr_legacy.h>
 
 #ifndef OPENSSL_NO_COMP
 

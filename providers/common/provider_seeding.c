@@ -7,9 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/core_dispatch.h>
-#include "prov/seeding.h"
+
+#include "openssl/core.h"
+#include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "prov/seeding.h"
 
 static OSSL_FUNC_get_entropy_fn *c_get_entropy = NULL;
 static OSSL_FUNC_get_user_entropy_fn *c_get_user_entropy = NULL;

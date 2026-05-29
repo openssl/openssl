@@ -7,17 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
+#include <sys/socket.h>
+
+#include "openssl/crypto.h"
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_NO_SOCK) && !defined(__DJGPP__)
 
-#include "internal/sockets.h"
+#include <errno.h>
+#include <signal.h>
+
 #include <openssl/bio.h>
-#include <internal/bio.h>
 #include <openssl/err.h>
 
-#include "testutil.h"
+#include "internal/sockets.h"
+#include <internal/bio.h>
 
-#include <signal.h>
-#include <errno.h>
+#include "testutil.h"
 
 static volatile sig_atomic_t sigpipe_seen = 0;
 

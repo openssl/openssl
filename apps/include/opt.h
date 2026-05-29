@@ -9,10 +9,11 @@
 #ifndef OSSL_APPS_OPT_H
 #define OSSL_APPS_OPT_H
 
+#include <stdarg.h>
 #include <sys/types.h>
+
 #include <openssl/e_os2.h>
 #include <openssl/types.h>
-#include <stdarg.h>
 
 #define OPT_COMMON OPT_ERR = -1, OPT_EOF = 0, OPT_HELP
 

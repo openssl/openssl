@@ -7,11 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/evp.h>
+#include <openssl/ssl.h>
+
+#include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
 
 #include "../ssl/ssl_local.h"
-#include "internal/ssl_unwrap.h"
+#include "openssl/comp.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 #define IVLEN 12

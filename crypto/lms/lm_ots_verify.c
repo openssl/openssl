@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
 #include <openssl/byteorder.h>
+#include <openssl/evp.h>
+
 #include "crypto/lms_sig.h"
 #include "crypto/lms_util.h"
 

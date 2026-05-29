@@ -8,8 +8,13 @@
  */
 
 #include "internal/uint_set.h"
-#include "internal/common.h"
+
 #include <assert.h>
+#include <stdint.h>
+
+#include "internal/common.h"
+
+#include "openssl/crypto.h"
 
 /*
  * uint64_t Integer Sets

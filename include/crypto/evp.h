@@ -11,9 +11,11 @@
 #define OSSL_CRYPTO_EVP_H
 #pragma once
 
-#include <openssl/evp.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/evp.h>
+
 #include "internal/refcount.h"
+
 #include "crypto/ecx.h"
 
 /*

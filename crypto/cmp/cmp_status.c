@@ -11,7 +11,17 @@
 
 /* CMP functions for PKIStatusInfo handling and PKIMessage decomposition */
 
+#include <stddef.h>
+
+#include "internal/common.h"
+
 #include "cmp_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/cmp.h"
+#include "openssl/cmperr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /* CMP functions related to PKIStatus */
 

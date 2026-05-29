@@ -8,6 +8,11 @@
  */
 
 #include <openssl/evp.h>
+
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "opt.h"
 #include "testutil.h"
 
 static char *config_file = NULL;

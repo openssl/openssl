@@ -8,18 +8,38 @@
  */
 
 #include <assert.h>
+#include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
-#include <openssl/core_names.h>
 #include <openssl/comp.h>
+#include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/ssl.h>
+
+#include "internal/common.h"
 #include "internal/e_os.h"
 #include "internal/packet.h"
+#include "internal/recordmethod.h"
 #include "internal/ssl3_cbc.h"
+
 #include "../../ssl_local.h"
 #include "../record_local.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl2.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "openssl/trace.h"
 #include "recmethod_local.h"
+#include "ssl/record/record.h"
 
 static void tls_int_free(OSSL_RECORD_LAYER *rl);
 

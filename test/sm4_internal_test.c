@@ -12,8 +12,11 @@
  * Internal tests for the SM4 module.
  */
 
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/opensslconf.h>
+
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SM4

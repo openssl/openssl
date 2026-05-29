@@ -13,13 +13,20 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <string.h>
-#include "crypto/ecx.h"
-#include "ec_local.h"
+
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
 #include "internal/numbers.h"
+
+#include "crypto/ecx.h"
+
+#include "ec_local.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 

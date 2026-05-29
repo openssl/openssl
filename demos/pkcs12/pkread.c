@@ -9,8 +9,9 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <openssl/pem.h>
+
 #include <openssl/err.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 
 /* Simple PKCS#12 file reader */

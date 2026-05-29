@@ -12,6 +12,7 @@
 #pragma once
 
 #include <openssl/core.h>
+
 #include "internal/cryptlib.h"
 
 /* This file is not scanned by mkdef.pl, whereas cryptlib.h is */

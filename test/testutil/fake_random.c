@@ -8,13 +8,23 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/core_names.h>
-#include <openssl/rand.h>
 #include <openssl/provider.h>
-#include "../include/crypto/evp.h"
+#include <openssl/rand.h>
+
 #include "../../crypto/evp/evp_local.h"
+#include "../include/crypto/evp.h"
 #include "../testutil.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
 
 typedef struct {
     fake_random_generate_cb *cb;

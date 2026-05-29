@@ -7,19 +7,30 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
-#include <openssl/proverr.h>
-#include "crypto/slh_dsa.h"
+
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+
+#include "crypto/slh_dsa.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/keymgmt/slh_dsa_kmgmt.inc"
+/* clang-format on */
 
 #ifdef FIPS_MODULE
 static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,

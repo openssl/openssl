@@ -11,8 +11,8 @@
 #define OSSL_LIBCRYPTO_PEM_PEM_LOCAL_H
 
 #include <openssl/core_dispatch.h>
-#include <openssl/pem.h>
 #include <openssl/encoder.h>
+#include <openssl/pem.h>
 
 /*
  * Selectors, named according to the ASN.1 names used throughout libcrypto.

@@ -9,14 +9,23 @@
 
 #include <stddef.h>
 #include <string.h>
-#include <openssl/provider.h>
-#include <openssl/params.h>
+
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/provider.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
-#include "testutil.h"
+
+#include "internal/nelem.h"
+
 #include "fake_rsaprov.h"
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/pem.h"
+#include "openssl/x509.h"
+#include "testutil.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 extern int key_deleted; /* From fake_rsaprov.c */

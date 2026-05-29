@@ -6,9 +6,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <string.h>
-#include <openssl/byteorder.h>
 #include "slh_adrs.h"
+
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/byteorder.h>
 
 /* See FIPS 205 - Section 4.3 Table 1  Uncompressed Addresses */
 #define SLH_ADRS_OFF_LAYER_ADR 0

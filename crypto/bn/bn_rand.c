@@ -8,13 +8,23 @@
  */
 
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
-#include "internal/cryptlib.h"
-#include "crypto/rand.h"
-#include "bn_local.h"
+
+#include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
-#include <openssl/evp.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+#include "crypto/rand.h"
+
+#include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 typedef enum bnrand_flag_e {
     NORMAL,

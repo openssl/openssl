@@ -13,27 +13,39 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
+
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/kdf.h>
 #include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
-#include "internal/numbers.h"
-#include "internal/packet.h"
-#include "crypto/evp.h"
-#include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
-#include "prov/implementations.h"
-#include "prov/provider_util.h"
-#include "prov/securitycheck.h"
 #include "internal/e_os.h"
 #include "internal/fips.h"
+#include "internal/numbers.h"
+#include "internal/packet.h"
 #include "internal/params.h"
 #include "internal/sizes.h"
+
+#include "crypto/evp.h"
+
+#include "fips/fipsindicator.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/provider_util.h"
+#include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 
 #define HKDF_MAXBUF 2048
 #define HKDF_MAXINFO (32 * 1024)
@@ -289,7 +301,9 @@ struct hkdf_all_set_ctx_params_st {
 #define hkdf_fixed_digest_set_ctx_params_st hkdf_all_set_ctx_params_st
 #define kdf_tls1_3_set_ctx_params_st hkdf_all_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/kdfs/hkdf.inc"
+/* clang-format on */
 
 static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, struct hkdf_all_set_ctx_params_st *p)
 {

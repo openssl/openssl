@@ -26,6 +26,7 @@
 #define OSSL_CRYPTO_CAMELLIA_CMLL_LOCAL_H
 
 #include <stdint.h>
+
 #include <openssl/camellia.h>
 
 int Camellia_Ekeygen(int keyBitLength, const uint8_t *rawKey,

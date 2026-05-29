@@ -8,8 +8,11 @@
  */
 
 #include <string.h> /* strcmp */
+
 #include <openssl/dh.h>
+
 #include "internal/nelem.h"
+
 #include "crypto/dh.h"
 
 typedef struct dh_name2id_st {

@@ -7,9 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
 #include <openssl/opensslconf.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/rand_pool.h"
+
+#include "openssl/macros.h"
 #include "prov/seeding.h"
 
 #ifdef OPENSSL_RAND_SEED_RDCPU

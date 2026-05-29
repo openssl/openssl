@@ -11,12 +11,20 @@
  * GENERALIZEDTIME implementation. Based on UTCTIME
  */
 
+#include <limits.h>
 #include <stdio.h>
+#include <string.h>
 #include <time.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
-#include "asn1_local.h"
 #include <openssl/asn1t.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/asn1.h"
+
+#include "asn1_local.h"
+#include "openssl/crypto.h"
 
 IMPLEMENT_ASN1_DUP_FUNCTION(ASN1_GENERALIZEDTIME)
 

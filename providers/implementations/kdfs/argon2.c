@@ -10,28 +10,35 @@
  *
  */
 
-#include <stdlib.h>
-#include <stddef.h>
 #include <stdarg.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include <openssl/e_os2.h>
-#include <openssl/evp.h>
-#include <openssl/objects.h>
-#include <openssl/crypto.h>
-#include <openssl/kdf.h>
-#include <openssl/err.h>
+
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
+#include <openssl/e_os2.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/kdf.h>
+#include <openssl/objects.h>
 #include <openssl/params.h>
-#include <openssl/thread.h>
 #include <openssl/proverr.h>
-#include "internal/thread.h"
-#include "internal/numbers.h"
+#include <openssl/thread.h>
+
 #include "internal/endian.h"
+#include "internal/numbers.h"
+#include "internal/thread.h"
+
 #include "crypto/evp.h"
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "prov/blake2.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/blake2.h"
 
 #if defined(OPENSSL_NO_DEFAULT_THREAD_POOL) && defined(OPENSSL_NO_THREAD_POOL)
 #define ARGON2_NO_THREADS
@@ -43,7 +50,9 @@
 
 #ifndef OPENSSL_NO_ARGON2
 
+/* clang-format off */
 #include "providers/implementations/kdfs/argon2.inc"
+/* clang-format on */
 
 #define ARGON2_MIN_LANES 1u
 #define ARGON2_MAX_LANES 0xFFFFFFu

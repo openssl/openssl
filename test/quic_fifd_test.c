@@ -7,9 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include "internal/nelem.h"
 #include "internal/packet.h"
-#include "internal/quic_txpim.h"
+#include "internal/quic_ackm.h"
+#include "internal/quic_cc.h"
+#include "internal/quic_cfq.h"
 #include "internal/quic_fifd.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_statm.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_txpim.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
+#include "internal/time.h"
+
 #include "testutil.h"
 
 static OSSL_TIME cur_time;

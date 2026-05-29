@@ -11,8 +11,8 @@
 #define OSSL_INTERNAL_BIO_H
 #pragma once
 
-#include <openssl/core.h>
 #include <openssl/bio.h>
+#include <openssl/core.h>
 
 struct bio_method_st {
     int type;

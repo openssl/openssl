@@ -8,6 +8,7 @@
  */
 
 #include <openssl/ssl.h>
+
 #include <internal/quic_tserver.h>
 
 /* Type to represent the Fault Injector */

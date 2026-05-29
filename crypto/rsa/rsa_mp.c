@@ -10,6 +10,8 @@
 
 #include <openssl/bn.h>
 #include <openssl/err.h>
+
+#include "openssl/crypto.h"
 #include "rsa_local.h"
 
 void ossl_rsa_multip_info_free_ex(RSA_PRIME_INFO *pinfo)

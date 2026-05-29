@@ -7,10 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
 #include <limits.h>
+#include <string.h>
+
 #include <openssl/store.h>
 #include <openssl/ui.h>
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/provider.h"
+#include "openssl/storeerr.h"
+#include "opt.h"
 #include "testutil.h"
 
 #ifndef PATH_MAX

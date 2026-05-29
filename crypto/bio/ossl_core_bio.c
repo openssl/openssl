@@ -7,8 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/core.h>
 #include "bio_local.h"
+
+#include <stddef.h>
+
+#include <openssl/core.h>
+
+#include "internal/refcount.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 /*-
  * Core BIO structure

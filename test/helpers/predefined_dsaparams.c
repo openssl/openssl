@@ -14,8 +14,9 @@
 #include "internal/deprecated.h"
 
 #ifndef OPENSSL_NO_DSA
-#include <openssl/dsa.h>
 #include <openssl/bn.h>
+#include <openssl/dsa.h>
+
 #include "predefined_dsaparams.h"
 
 /*

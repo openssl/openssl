@@ -10,6 +10,8 @@
 
 #include <openssl/macros.h>
 
+#include "openssl/evp.h"
+
 #ifndef OPENSSL_NO_ARIA
 #include "crypto/evp.h"
 

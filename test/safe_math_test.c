@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -18,6 +20,7 @@
 
 #include "internal/nelem.h"
 #include "internal/safe_math.h"
+
 #include "testutil.h"
 
 /* Create the safe math instances we're interested in */

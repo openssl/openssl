@@ -8,8 +8,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <inttypes.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+
 #include <openssl/params.h>
+
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 #include "testutil.h"
 
 /* On machines that dont support <inttypes.h> just disable the tests */

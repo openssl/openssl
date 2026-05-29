@@ -14,10 +14,17 @@
  * resizable memory buffer.
  */
 
-#include <stdio.h>
-#include <errno.h>
 #include "bio_local.h"
+
+#include <errno.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "internal/bio.h"
 #include "internal/cryptlib.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 #define DEFAULT_BUFFER_SIZE 4096
 

@@ -10,12 +10,14 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_H
 
+#include <openssl/core_dispatch.h>
 #include <openssl/des.h>
 #include <openssl/evp.h>
-#include <openssl/core_dispatch.h>
+
+#include "crypto/des_platform.h"
+
 #include "prov/ciphercommon.h"
 #include "prov/securitycheck.h"
-#include "crypto/des_platform.h"
 
 #define DES_BLOCK_SIZE 8
 #define TDES_IVLEN 8

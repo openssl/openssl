@@ -13,8 +13,15 @@
  * and https://cetinkayakoc.net/docs/r01.pdf
  */
 
+#include <stdint.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 #define MONT_WORD /* use the faster word-based algorithm */
 

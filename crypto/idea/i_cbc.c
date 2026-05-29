@@ -15,6 +15,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/idea.h>
+
 #include "idea_local.h"
 
 void IDEA_cbc_encrypt(const unsigned char *in, unsigned char *out,

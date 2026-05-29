@@ -12,13 +12,14 @@
 #ifdef OPENSSL_SYS_VMS
 
 #pragma message disable DOLLARID
+#include <descrip.h>
 #include <errno.h>
-#include <rms.h>
 #include <lib$routines.h>
 #include <libfisdef.h>
-#include <stsdef.h>
-#include <descrip.h>
+#include <rms.h>
 #include <starlet.h>
+#include <stsdef.h>
+
 #include "../vms_rms.h"
 
 /* Some compiler options may mask the declaration of "_malloc32". */

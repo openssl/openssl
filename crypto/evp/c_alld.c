@@ -8,11 +8,16 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/evp.h>
-#include "crypto/evp.h"
-#include <openssl/pkcs12.h>
 #include <openssl/objects.h>
+#include <openssl/pkcs12.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/evp.h"
+
+#include "openssl/obj_mac.h"
 
 void openssl_add_all_digests_int(void)
 {

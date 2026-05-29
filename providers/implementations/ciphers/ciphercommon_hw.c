@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
+#include "openssl/modes.h"
 #include "prov/ciphercommon.h"
 
 /*-

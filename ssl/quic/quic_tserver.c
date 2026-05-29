@@ -8,13 +8,33 @@
  */
 
 #include "internal/quic_tserver.h"
-#include "internal/quic_channel.h"
-#include "internal/quic_statm.h"
-#include "internal/quic_port.h"
-#include "internal/quic_engine.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "internal/common.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_engine.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_port.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_reactor.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_statm.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_stream_map.h"
+#include "internal/quic_types.h"
+#include "internal/statem.h"
+#include "internal/thread_arch.h"
 #include "internal/time.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/ssl.h"
+#include "openssl/tls1.h"
 #include "quic_local.h"
+#include "ssl/ssl_local.h"
 
 /*
  * QUIC Test Server Module

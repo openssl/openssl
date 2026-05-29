@@ -11,15 +11,30 @@
 
 #include <stdio.h>
 #include <string.h>
-#include "apps.h"
-#include "progs.h"
 
-#include <openssl/crypto.h>
+/* clang-format off */
 #include <openssl/pem.h>
+#include <openssl/cms.h>
+/* clang-format on */
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/x509v3.h>
-#include <openssl/cms.h>
+
+#include "app_libctx.h"
+#include "apps.h"
+#include "fmt.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/cmserr.h"
+#include "openssl/conf.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "opt.h"
+#include "progs.h"
 
 static int save_certs(char *signerfile, STACK_OF(X509) *signers);
 static int cms_cb(int ok, X509_STORE_CTX *ctx);

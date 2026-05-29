@@ -7,14 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
-#include "internal/provider.h"
+#include <openssl/err.h>
+#include <openssl/evp.h>
+
 #include "internal/core.h"
+#include "internal/provider.h"
+#include "internal/refcount.h"
+
 #include "crypto/evp.h"
+
 #include "evp_local.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
 
 static int evp_mac_up_ref(void *vmac)
 {

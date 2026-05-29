@@ -8,8 +8,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include <openssl/comperr.h>
+#include <openssl/err.h>
+
 #include "crypto/comperr.h"
 
 #ifndef OPENSSL_NO_COMP

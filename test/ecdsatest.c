@@ -13,16 +13,26 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/opensslconf.h> /* To see if OPENSSL_NO_EC is defined */
+
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/provider.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_EC
 
-#include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
+
 #include "internal/nelem.h"
+
 #include "ecdsatest.h"
 
 static fake_random_generate_cb fbytes;

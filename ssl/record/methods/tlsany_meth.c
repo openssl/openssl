@@ -7,9 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/evp.h>
+
+#include "internal/common.h"
+#include "internal/packet.h"
+#include "internal/recordmethod.h"
+
 #include "../../ssl_local.h"
 #include "../record_local.h"
+#include "openssl/dtls1.h"
+#include "openssl/err.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
 #include "recmethod_local.h"
 
 #define MIN_SSL2_RECORD_LEN 9

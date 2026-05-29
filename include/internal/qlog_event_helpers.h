@@ -11,11 +11,12 @@
 #define OSSL_QLOG_EVENT_HELPERS_H
 
 #include <openssl/ssl.h>
+
 #include "internal/qlog.h"
-#include "internal/quic_types.h"
 #include "internal/quic_channel.h"
-#include "internal/quic_txpim.h"
 #include "internal/quic_record_tx.h"
+#include "internal/quic_txpim.h"
+#include "internal/quic_types.h"
 #include "internal/quic_wire_pkt.h"
 
 /* connectivity:connection_started */

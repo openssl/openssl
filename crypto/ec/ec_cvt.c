@@ -15,8 +15,11 @@
 #include "internal/deprecated.h"
 
 #include <openssl/err.h>
+
 #include "crypto/bn.h"
+
 #include "ec_local.h"
+#include "openssl/ec.h"
 
 EC_GROUP *EC_GROUP_new_curve_GFp(const BIGNUM *p, const BIGNUM *a,
     const BIGNUM *b, BN_CTX *ctx)

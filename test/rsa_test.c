@@ -18,16 +18,16 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "internal/nelem.h"
-
+#include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
-#include <openssl/bn.h>
-
-#include "testutil.h"
-
 #include <openssl/rsa.h>
+
+#include "internal/nelem.h"
+
+#include "openssl/evp.h"
+#include "testutil.h"
 
 #define SetKey                                     \
     RSA_set0_key(key,                              \

@@ -7,22 +7,67 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/rand.h>
-#include <openssl/err.h>
-#include "internal/ssl_unwrap.h"
 #include "internal/quic_channel.h"
-#include "internal/quic_error.h"
-#include "internal/quic_rx_depack.h"
-#include "internal/quic_lcidm.h"
-#include "internal/quic_srtm.h"
+
+#include <assert.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+
+#include <openssl/err.h>
+#include <openssl/rand.h>
+
+#include "internal/common.h"
+#include "internal/list.h"
+#include "internal/packet.h"
+#include "internal/qlog.h"
 #include "internal/qlog_event_helpers.h"
-#include "internal/quic_txp.h"
-#include "internal/quic_tls.h"
+#include "internal/quic_ackm.h"
+#include "internal/quic_cc.h"
+#include "internal/quic_cfq.h"
+#include "internal/quic_demux.h"
+#include "internal/quic_error.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_lcidm.h"
+#include "internal/quic_port.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_reactor.h"
+#include "internal/quic_record_rx.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_record_util.h"
+#include "internal/quic_rx_depack.h"
+#include "internal/quic_srtm.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_statm.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_stream_map.h"
+#include "internal/quic_tls.h"
+#include "internal/quic_txp.h"
+#include "internal/quic_txpim.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
+#include "internal/quic_wire_pkt.h"
+#include "internal/sockets.h"
+#include "internal/ssl.h"
+#include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+#include "internal/thread_arch.h"
+#include "internal/time.h"
+
 #include "../ssl_local.h"
+#include "openssl/bio.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/lhash.h"
+#include "openssl/quic.h"
+#include "openssl/ssl.h"
+#include "openssl/sslerr.h"
 #include "quic_channel_local.h"
-#include "quic_port_local.h"
 #include "quic_engine_local.h"
+#include "quic_port_local.h"
 
 #define INIT_CRYPTO_RECV_BUF_LEN 16384
 #define INIT_CRYPTO_SEND_BUF_LEN 16384

@@ -15,16 +15,26 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
-#include <openssl/pkcs12.h>
 #include <openssl/objects.h>
+#include <openssl/pkcs12.h>
 #include <openssl/posix_time.h>
-#include "testutil.h"
+
 #include "internal/nelem.h"
+
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objectserr.h"
+#include "testutil.h"
 
 /**********************************************************************
  *
@@ -68,6 +78,7 @@ static int test_tbl_standard(void)
  ***/
 
 #include "crypto/asn1.h"
+
 #include "../crypto/asn1/standard_methods.h"
 
 static int test_standard_methods(void)

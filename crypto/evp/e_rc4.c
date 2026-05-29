@@ -9,6 +9,9 @@
 
 #include <openssl/macros.h>
 
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+
 #ifndef OPENSSL_NO_RC4
 #include "crypto/evp.h"
 

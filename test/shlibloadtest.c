@@ -7,12 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
 #include <openssl/opensslv.h>
 #include <openssl/ssl.h>
 #include <openssl/types.h>
+
 #include "simpledynamic.h"
 
 typedef void DSO;

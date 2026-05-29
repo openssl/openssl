@@ -15,12 +15,23 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include "ec_local.h"
+
 #include <openssl/err.h>
 #include <openssl/obj_mac.h>
 #include <openssl/objects.h>
 #include <openssl/opensslconf.h>
+
 #include "internal/nelem.h"
+
+#include "crypto/ec.h"
+
+#include "ec_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/evp.h"
 
 typedef struct {
     int field_type, /* either NID_X9_62_prime_field or

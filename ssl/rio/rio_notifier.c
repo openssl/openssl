@@ -7,11 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/sockets.h"
+#include "internal/rio_notifier.h"
+
+#include <sys/socket.h>
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
+
+#include "internal/common.h"
+#include "internal/sockets.h"
 #include "internal/thread_once.h"
-#include "internal/rio_notifier.h"
+
+#include "openssl/e_os2.h"
 
 #if !defined(OPENSSL_SYS_WINDOWS) || RIO_NOTIFIER_METHOD == RIO_NOTIFIER_METHOD_SOCKETPAIR
 /*

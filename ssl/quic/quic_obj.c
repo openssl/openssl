@@ -7,9 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "quic_obj_local.h"
-#include "quic_local.h"
+#include <assert.h>
+
+#include "internal/common.h"
+#include "internal/quic_engine.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_reactor.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+
+#include "openssl/crypto.h"
+#include "openssl/ssl.h"
+#include "quic_local.h"
+#include "quic_obj_local.h"
+#include "ssl/ssl_local.h"
 
 static int obj_update_cache(QUIC_OBJ *obj);
 

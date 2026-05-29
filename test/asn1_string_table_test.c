@@ -13,6 +13,8 @@
 #include <string.h>
 
 #include <openssl/asn1.h>
+
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static int test_string_tbl(void)

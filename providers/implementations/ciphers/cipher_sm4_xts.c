@@ -9,11 +9,28 @@
 
 /* Dispatch functions for SM4 XTS mode */
 
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/proverr.h>
-#include "cipher_sm4_xts.h"
+
+#include "crypto/modes.h"
+#include "crypto/sm4.h"
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/modes.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
+#include "cipher_sm4_xts.h"
 #include "providers/implementations/ciphers/cipher_sm4_xts.inc"
+/* clang-format on */
 
 #define SM4_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define SM4_XTS_IV_BITS 128

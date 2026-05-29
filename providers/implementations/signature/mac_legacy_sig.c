@@ -8,26 +8,35 @@
  */
 
 #include <stdbool.h>
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
+#include <stddef.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+
+#include "internal/common.h"
+#include "internal/fips.h"
+
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
-#include "prov/provider_ctx.h"
 #include "prov/macsignature.h"
+#include "prov/provider_ctx.h"
+#include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "internal/fips.h"
-#include "internal/common.h"
 
 #ifndef FIPS_MODULE
 #define mac_legacy_get_ctx_params_decoder
 #define mac_legacy_set_ctx_params_decoder
 #endif
+/* clang-format off */
 #include "providers/implementations/signature/mac_legacy_sig.inc"
+/* clang-format on */
 
 static OSSL_FUNC_signature_newctx_fn mac_hmac_newctx;
 static OSSL_FUNC_signature_newctx_fn mac_siphash_newctx;

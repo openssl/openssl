@@ -11,6 +11,7 @@
 #define OSSL_QUIC_WIRE_PKT_H
 
 #include <openssl/ssl.h>
+
 #include "internal/packet_quic.h"
 #include "internal/quic_types.h"
 

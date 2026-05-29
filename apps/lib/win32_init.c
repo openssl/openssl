@@ -7,9 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <windows.h>
 #include <stdlib.h>
 #include <string.h>
+#include <windows.h>
+
 #include "platform.h"
 
 #if defined(CP_UTF8)

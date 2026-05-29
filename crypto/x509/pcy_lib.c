@@ -7,10 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "internal/cryptlib.h"
+
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 #include "pcy_local.h"
 
 /* accessor functions */

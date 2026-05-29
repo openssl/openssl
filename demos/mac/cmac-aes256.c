@@ -12,13 +12,14 @@
  * a CMAC of static buffers
  */
 
-#include <string.h>
 #include <stdio.h>
-#include <openssl/crypto.h>
+#include <string.h>
+
+#include <openssl/cmac.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/cmac.h>
 #include <openssl/params.h>
 
 /*

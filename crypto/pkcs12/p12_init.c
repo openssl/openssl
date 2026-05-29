@@ -8,9 +8,20 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/pkcs12.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/pkcs7.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/pkcs12err.h"
+#include "openssl/pkcs7.h"
 #include "p12_local.h"
 
 /* Initialise a PKCS12 structure to take data */

@@ -11,14 +11,21 @@
 
 #include "internal/deprecated.h"
 
-#include "crypto/sm2.h"
-#include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ossl_ec_group_do_inverse_ord() */
-#include "internal/numbers.h"
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/bn.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/bn.h>
-#include <string.h>
+
+#include "internal/numbers.h"
+
+#include "crypto/ec.h" /* ossl_ec_group_do_inverse_ord() */
+#include "crypto/sm2.h"
+#include "crypto/sm2err.h"
+
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
 
 /*
  * [SM2 Signature Scheme]

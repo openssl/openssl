@@ -7,11 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/objects.h>
 #include "obj_xref.h"
+
+#include <openssl/err.h>
+#include <openssl/objects.h>
+
 #include "internal/nelem.h"
 #include "internal/thread_once.h"
-#include <openssl/err.h>
+
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
 
 static STACK_OF(nid_triple) *sig_app, *sigx_app;
 static CRYPTO_RWLOCK *sig_lock;

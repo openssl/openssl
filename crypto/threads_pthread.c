@@ -31,18 +31,26 @@
 #endif
 
 #include <openssl/crypto.h>
+
+#include "internal/cryptlib.h"
+#include "internal/rcu.h"
+#include "internal/threads_common.h"
+
 #include <crypto/cryptlib.h>
 #include <crypto/sparse_array.h>
-#include "internal/cryptlib.h"
-#include "internal/threads_common.h"
-#include "internal/rcu.h"
 #ifdef REPORT_RWLOCK_CONTENTION
 #include <fcntl.h>
 #include <stdbool.h>
 #include <sys/syscall.h>
 #include <sys/uio.h>
+
 #include "internal/time.h"
 #endif
+#include <stdint.h>
+
+#include "internal/common.h"
+
+#include "openssl/e_os2.h"
 #include "rcu_internal.h"
 
 #if defined(__SANITIZE_THREAD__)
@@ -65,6 +73,7 @@
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_SYS_WINDOWS)
 
 #if defined(OPENSSL_SYS_UNIX)
+#include <pthread.h>
 #include <sys/types.h>
 #include <unistd.h>
 #endif

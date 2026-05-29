@@ -8,10 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
+#include <openssl/asn1.h>
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
-#include <openssl/asn1.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 #ifndef ASN1_PARSE_MAXDEPTH
 #define ASN1_PARSE_MAXDEPTH 128

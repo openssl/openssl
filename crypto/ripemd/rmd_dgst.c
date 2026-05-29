@@ -14,8 +14,17 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "rmd_local.h"
+#include <string.h>
+
 #include <openssl/opensslv.h>
+
+#include "crypto/ripemd/rmdconst.h"
+
+#include "openssl/ripemd.h"
+#include "rmd_local.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 
 #ifdef RMD160_ASM
 void ripemd160_block_x86(RIPEMD160_CTX *c, unsigned long *p, size_t num);

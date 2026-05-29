@@ -8,13 +8,17 @@
  */
 
 #include <stdio.h>
-#include <openssl/opensslconf.h>
-
 #include <string.h>
+
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/opensslconf.h>
 #include <openssl/ssl.h>
 #include <openssl/tls1.h>
+
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "opt.h"
 #include "testutil.h"
 
 static int expect_failure = 0;

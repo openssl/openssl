@@ -18,11 +18,11 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#include "internal/common.h"
-#include "internal/safe_math.h"
-
 #include <openssl/cryptoerr.h>
 #include <openssl/err.h>
+
+#include "internal/common.h"
+#include "internal/safe_math.h"
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
 

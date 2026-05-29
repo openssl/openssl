@@ -7,19 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "pkcs12.h" /* from the same directory */
+
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
 
-#include "internal/nelem.h"
-
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/pem.h>
+
+#include "internal/nelem.h"
 
 #include "../testutil.h"
-#include "pkcs12.h" /* from the same directory */
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/pkcs7.h"
+#include "openssl/safestack.h"
 
 /* Set this to > 0 write test data to file */
 static int write_files = 0;

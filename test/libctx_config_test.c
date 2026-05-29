@@ -8,8 +8,14 @@
  */
 
 #include <sys/stat.h>
+
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
+
+#include "internal/nelem.h"
+
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
 #include "testutil.h"
 
 static char *cfg1 = NULL;

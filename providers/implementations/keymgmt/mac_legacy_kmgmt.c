@@ -8,18 +8,26 @@
  */
 
 #include <string.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/params.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/proverr.h>
 #include <openssl/param_build.h>
+#include <openssl/params.h>
+#include <openssl/proverr.h>
+
 #include "internal/param_build_set.h"
+#include "internal/refcount.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
 #include "prov/macsignature.h"
+#include "prov/provider_ctx.h"
+#include "prov/provider_util.h"
+#include "prov/providercommon.h"
 
 static OSSL_FUNC_keymgmt_new_fn mac_new;
 static OSSL_FUNC_keymgmt_free_fn mac_free;
@@ -188,7 +196,9 @@ struct mac_common_params_st {
 #define mac_gen_set_params_st mac_common_params_st
 #define cmac_gen_set_params_st mac_common_params_st
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/mac_legacy_kmgmt.inc"
+/* clang-format on */
 
 static int mac_key_fromdata(MAC_KEY *key, const struct mac_common_params_st *p)
 {

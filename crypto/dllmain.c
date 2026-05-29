@@ -8,6 +8,7 @@
  */
 
 #include "internal/e_os.h"
+
 #include "crypto/cryptlib.h"
 
 #if defined(_WIN32) || defined(__CYGWIN__)

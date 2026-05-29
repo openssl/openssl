@@ -14,12 +14,23 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
+#include <openssl/rsa.h>
 #include <openssl/sha.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/rsa.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/rsaerr.h"
 #include "rsa_local.h"
 
 static const unsigned char zeroes[] = { 0, 0, 0, 0, 0, 0, 0, 0 };

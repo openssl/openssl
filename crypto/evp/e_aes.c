@@ -9,6 +9,9 @@
 
 #include "crypto/evp.h"
 
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+
 #define BLOCK_CIPHER_generic(nid, keylen, blocksize, ivlen, nmode, mode, MODE, flags) \
     static const EVP_CIPHER aes_##keylen##_##mode = {                                 \
         nid##_##keylen##_##nmode,                                                     \

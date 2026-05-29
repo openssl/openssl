@@ -17,9 +17,12 @@
 /* Dispatch functions for AES cipher modes ecb, cbc, ofb, cfb, ctr */
 
 #include "cipher_aes.h"
+#include "cipher_aes_cfb.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "cipher_aes_cfb.h"
 
 static OSSL_FUNC_cipher_freectx_fn aes_freectx;
 static OSSL_FUNC_cipher_dupctx_fn aes_dupctx;
@@ -91,4 +94,6 @@ IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 192, 8, 128, stream)
 /* ossl_aes128ctr_functions */
 IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 128, 8, 128, stream)
 
+/* clang-format off */
 #include "cipher_aes_cts.inc"
+/* clang-format on */

@@ -14,6 +14,7 @@
 #include "internal/deprecated.h"
 
 #include "des_local.h"
+#include "openssl/des.h"
 
 void DES_pcbc_encrypt(const unsigned char *input, unsigned char *output,
     long length, DES_key_schedule *schedule,

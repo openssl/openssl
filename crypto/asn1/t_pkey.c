@@ -8,10 +8,17 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/objects.h>
+
 #include <openssl/buffer.h>
+#include <openssl/objects.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/bn.h"
+
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 /* Number of octets per line */
 #define ASN1_BUF_PRINT_WIDTH 16

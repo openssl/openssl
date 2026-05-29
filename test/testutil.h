@@ -11,16 +11,18 @@
 #define OSSL_TESTUTIL_H
 
 #include <stdarg.h>
+
+#include <openssl/bn.h>
+#include <openssl/e_os2.h>
+#include <openssl/err.h>
+#include <openssl/provider.h>
+#include <openssl/x509.h>
+
 #include "internal/common.h" /* for HAS_PREFIX */
 #include "internal/err.h" /* for ERR_NUM_ERRORS */
 
-#include <openssl/provider.h>
-#include <openssl/err.h>
-#include <openssl/e_os2.h>
-#include <openssl/bn.h>
-#include <openssl/x509.h>
-#include "opt.h"
 #include "mfail/mfail.h"
+#include "opt.h"
 
 /*-
  * Simple unit tests should implement setup_tests().

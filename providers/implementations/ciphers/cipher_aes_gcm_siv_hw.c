@@ -14,10 +14,17 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/evp.h>
-#include <internal/endian.h>
 #include <prov/implementations.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/evp.h>
+
+#include <internal/endian.h>
+
 #include "cipher_aes_gcm_siv.h"
+#include "openssl/crypto.h"
 
 static int aes_gcm_siv_ctr32(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *init_counter,
     unsigned char *out, const unsigned char *in, size_t len);

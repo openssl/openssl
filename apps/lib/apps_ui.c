@@ -7,10 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "apps_ui.h"
+
+#include <stdlib.h>
 #include <string.h>
+
 #include <openssl/err.h>
 #include <openssl/ui.h>
-#include "apps_ui.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 static UI_METHOD *ui_method = NULL;
 static const UI_METHOD *ui_base_method = NULL;

@@ -23,9 +23,12 @@
 #include "internal/deprecated.h"
 
 #include <openssl/crypto.h>
+
 #include "internal/constant_time.h"
 #include "internal/nelem.h"
+
 #include "des_local.h"
+#include "openssl/des.h"
 
 static const unsigned char odd_parity[256] = {
     1, 1, 2, 2, 4, 4, 7, 7, 8, 8, 11, 11, 13, 13, 14, 14,

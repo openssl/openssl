@@ -9,6 +9,8 @@
 
 #include "output.h"
 
+#include <stdarg.h>
+
 int test_printf_stdout(const char *fmt, ...)
 {
     va_list ap;

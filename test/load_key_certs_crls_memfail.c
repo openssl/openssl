@@ -15,10 +15,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include <openssl/x509.h>
 #include <openssl/crypto.h>
-#include "apps.h"
+#include <openssl/x509.h>
+
 #include "app_libctx.h"
+#include "apps.h"
 #include "testutil.h"
 
 char *default_config_file = NULL;

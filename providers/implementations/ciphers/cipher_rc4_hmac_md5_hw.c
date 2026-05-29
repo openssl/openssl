@@ -15,7 +15,18 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "internal/cryptlib.h"
+
 #include "cipher_rc4_hmac_md5.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/md5.h"
+#include "openssl/rc4.h"
+#include "prov/ciphercommon.h"
 
 #define NO_PAYLOAD_LENGTH ((size_t)-1)
 

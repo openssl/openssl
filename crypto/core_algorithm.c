@@ -7,11 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <string.h>
+
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
+
+#include "internal/common.h"
 #include "internal/core.h"
+#include "internal/cryptlib.h"
 #include "internal/property.h"
 #include "internal/provider.h"
+
+#include "openssl/crypto.h"
 
 struct algorithm_data_st {
     OSSL_LIB_CTX *libctx;

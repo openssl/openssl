@@ -11,8 +11,8 @@
 #define OSSL_INTERNAL_LIST_H
 #pragma once
 
-#include <string.h>
 #include <assert.h>
+#include <string.h>
 
 #ifdef NDEBUG
 #define OSSL_LIST_DBG(x)

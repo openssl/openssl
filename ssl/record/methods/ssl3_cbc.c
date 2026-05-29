@@ -22,15 +22,22 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <string.h>
+
 #include <openssl/evp.h>
+
+#include "internal/common.h"
+
+#include "openssl/crypto.h"
 #ifndef FIPS_MODULE
 #include <openssl/md5.h>
 #endif
 #include <openssl/sha.h>
 
-#include "internal/ssl3_cbc.h"
 #include "internal/constant_time.h"
 #include "internal/cryptlib.h"
+#include "internal/ssl3_cbc.h"
 
 /*
  * MAX_HASH_BIT_COUNT_BYTES is the maximum number of bytes in the hash's

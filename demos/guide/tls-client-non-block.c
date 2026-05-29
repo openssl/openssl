@@ -18,13 +18,13 @@
 #ifdef _WIN32 /* Windows */
 #include <winsock2.h>
 #else /* Linux/Unix */
-#include <sys/socket.h>
 #include <sys/select.h>
+#include <sys/socket.h>
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 /* Helper function to create a BIO connected to the server */
 static BIO *create_socket_bio(const char *hostname, const char *port, int family)

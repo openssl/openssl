@@ -7,14 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
+#include <stdarg.h>
+#include <stddef.h>
 
-#include "apps.h"
-#include "progs.h"
 #include <openssl/err.h>
+#include <openssl/opensslconf.h>
 #include <openssl/pem.h>
 #include <openssl/store.h>
 #include <openssl/x509v3.h> /* s2i_ASN1_INTEGER */
+
+#include "internal/nelem.h"
+
+#include "app_libctx.h"
+#include "apps.h"
+#include "apps_ui.h"
+#include "fmt.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/x509.h"
+#include "opt.h"
+#include "progs.h"
 
 static int process(const char *uri, const UI_METHOD *uimeth, PW_CB_DATA *uidata,
     int expected, int criterion, OSSL_STORE_SEARCH *search,

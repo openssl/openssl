@@ -6,12 +6,17 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <openssl/e_os2.h>
 #include <openssl/evp.h>
+
 #include "crypto/ecx.h"
+
 #include "curve448_local.h"
+#include "opt.h"
 #include "testutil.h"
 
 static unsigned int max = 1000;

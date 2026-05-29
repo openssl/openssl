@@ -9,6 +9,9 @@
 
 #include "crypto/evp.h"
 
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+
 static const EVP_CIPHER n_cipher = {
     NID_undef,
     1, 0, 0, 0,

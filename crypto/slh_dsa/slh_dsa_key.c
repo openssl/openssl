@@ -7,16 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "slh_dsa_key.h"
+
+#include <stdint.h>
 #include <string.h>
-#include <openssl/err.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/rand.h>
 #include <openssl/proverr.h>
-#include "slh_dsa_local.h"
-#include "slh_dsa_key.h"
+#include <openssl/rand.h>
+
 #include "internal/encoder.h"
+
+#include "crypto/slh_dsa.h"
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_hash.h"
+#include "crypto/slh_dsa/slh_params.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "slh_dsa_local.h"
 
 static int slh_dsa_compute_pk_root(SLH_DSA_HASH_CTX *ctx, SLH_DSA_KEY *out, int verify);
 

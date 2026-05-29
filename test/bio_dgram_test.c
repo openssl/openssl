@@ -7,12 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <netinet/in.h>
+#include <stdint.h>
 #include <string.h>
+#include <sys/socket.h>
+
 #include <openssl/bio.h>
 #include <openssl/rand.h>
-#include "testutil.h"
-#include "internal/sockets.h"
+
 #include "internal/bio_addr.h"
+#include "internal/nelem.h"
+#include "internal/sockets.h"
+
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "testutil.h"
 
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 

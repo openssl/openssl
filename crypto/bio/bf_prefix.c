@@ -7,10 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "bio_local.h"
+
+#include <errno.h>
+#include <limits.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
-#include "bio_local.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 static int prefix_write(BIO *b, const char *out, size_t outl,
     size_t *numwritten);

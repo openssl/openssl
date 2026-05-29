@@ -14,16 +14,23 @@
 #include "internal/deprecated.h"
 
 #include <string.h>
-#include <openssl/crypto.h>
-#include <openssl/params.h>
-#include <openssl/mdc2.h>
+
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/mdc2.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+
 #include <internal/common.h>
+
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+/* clang-format off */
 #include "providers/implementations/digests/mdc2_prov.inc"
+/* clang-format on */
 
 static OSSL_FUNC_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn mdc2_settable_ctx_params;

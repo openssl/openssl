@@ -12,15 +12,27 @@
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
+#include "ssl_test_ctx.h"
+
+#include <stdlib.h>
 #include <string.h>
 
-#include <openssl/e_os2.h>
 #include <openssl/crypto.h>
+#include <openssl/e_os2.h>
 
 #include "internal/nelem.h"
 #include "internal/tlsgroups.h"
-#include "ssl_test_ctx.h"
+
 #include "../testutil.h"
+#include "openssl/conf.h"
+#include "openssl/ec.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/safestack.h"
+#include "openssl/ssl.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
 
 static const int default_app_data_size = 256;
 /* Default set to be as small as possible to exercise fragmentation. */

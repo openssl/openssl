@@ -12,6 +12,7 @@
 #pragma once
 
 #include <openssl/opensslconf.h>
+
 #include "internal/common.h"
 
 #if defined(OPENSSL_SYS_VXWORKS) || defined(OPENSSL_SYS_UEFI)
@@ -31,12 +32,12 @@
 #if defined(__DJGPP__)
 #define WATT32
 #define WATT32_NO_OLDIES
-#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <netdb.h>
+#include <netinet/tcp.h>
+#include <sys/socket.h> /* IWYU pragma: export */
 #include <sys/un.h>
 #include <tcp.h>
-#include <netdb.h>
-#include <arpa/inet.h>
-#include <netinet/tcp.h>
 #elif defined(_WIN32_WCE) && _WIN32_WCE < 410
 #define getservbyname _masked_declaration_getservbyname
 #endif
@@ -103,11 +104,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #endif
 #if defined(OPENSSL_SYS_VMS_NODECC)
-#include <socket.h>
 #include <in.h>
 #include <inet.h>
+#include <socket.h> /* IWYU pragma: export */
 #else
-#include <sys/socket.h>
+#include <sys/socket.h> /* IWYU pragma: export */
 #if !defined(NO_SYS_UN_H) && defined(AF_UNIX) && !defined(OPENSSL_NO_UNIX_SOCK)
 #include <sys/un.h>
 #ifndef UNIX_PATH_MAX
@@ -117,8 +118,8 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #ifdef FILIO_H
 #include <sys/filio.h> /* FIONBIO in some SVR4, e.g. unixware, solaris */
 #endif
-#include <netinet/in.h>
 #include <arpa/inet.h>
+#include <netinet/in.h>
 #include <netinet/tcp.h>
 #endif
 

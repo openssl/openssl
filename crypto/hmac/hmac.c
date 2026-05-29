@@ -16,11 +16,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "internal/cryptlib.h"
-#include <openssl/opensslconf.h>
-#include <openssl/hmac.h>
+
 #include <openssl/core_names.h>
+#include <openssl/hmac.h>
+#include <openssl/opensslconf.h>
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+
 #include "hmac_local.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 
 int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
     const EVP_MD *md, ENGINE *impl)

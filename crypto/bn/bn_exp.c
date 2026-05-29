@@ -7,11 +7,24 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
-#include "internal/constant_time.h"
-#include "bn_local.h"
-
+#include <limits.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
+#include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+
+/* clang-format off */
+#include "internal/constant_time.h"
+/* clang-format on */
+
 #ifdef _WIN32
 #include <malloc.h>
 #ifndef alloca

@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core_names.h>
+
 #include "crypto/lms.h"
 #include "crypto/lms_util.h"
 

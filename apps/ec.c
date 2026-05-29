@@ -7,19 +7,26 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <string.h>
-#include <openssl/opensslconf.h>
-#include <openssl/evp.h>
-#include <openssl/encoder.h>
-#include <openssl/decoder.h>
-#include <openssl/core_names.h>
+
 #include <openssl/core_dispatch.h>
-#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include <openssl/decoder.h>
+#include <openssl/encoder.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/params.h>
 
 #include "apps.h"
-#include "progs.h"
+#include "apps_ui.h"
 #include "ec_common.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "opt.h"
+#include "progs.h"
 
 typedef enum OPTION_choice {
     OPT_COMMON,

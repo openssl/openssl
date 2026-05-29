@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "testutil.h"
-#include "crypto/ctype.h"
-#include "internal/nelem.h"
 #include <ctype.h>
 #include <stdio.h>
+
+#include "internal/nelem.h"
+
+#include "crypto/ctype.h"
+
+#include "testutil.h"
 
 /*
  * Even though the VMS C RTL claims to be C99 compatible, it's not entirely

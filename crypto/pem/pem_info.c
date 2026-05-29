@@ -14,15 +14,26 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
+#include <openssl/dsa.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
 #include <openssl/rsa.h>
-#include <openssl/dsa.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/evp.h"
+
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/pemerr.h"
+#include "openssl/safestack.h"
 
 #ifndef OPENSSL_NO_STDIO
 STACK_OF(X509_INFO)

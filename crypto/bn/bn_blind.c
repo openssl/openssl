@@ -7,9 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/opensslconf.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #define BN_BLINDING_COUNTER 32
 

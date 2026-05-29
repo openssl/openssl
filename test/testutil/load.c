@@ -10,10 +10,15 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include <openssl/x509.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "../testutil.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/safestack.h"
 
 X509 *load_cert_pem(const char *file, OSSL_LIB_CTX *libctx)
 {

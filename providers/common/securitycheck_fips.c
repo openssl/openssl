@@ -9,14 +9,15 @@
 
 #include "internal/deprecated.h"
 
-#include <openssl/rsa.h>
-#include <openssl/dsa.h>
+#include <openssl/core_names.h>
 #include <openssl/dh.h>
+#include <openssl/dsa.h>
 #include <openssl/ec.h>
 #include <openssl/err.h>
-#include <openssl/proverr.h>
-#include <openssl/core_names.h>
 #include <openssl/obj_mac.h>
+#include <openssl/proverr.h>
+#include <openssl/rsa.h>
+
 #include "prov/securitycheck.h"
 
 int ossl_digest_rsa_sign_get_md_nid(const EVP_MD *md)

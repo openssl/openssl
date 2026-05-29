@@ -7,14 +7,20 @@
  * https://www.openssl.org/source/license.html
  * or in the file LICENSE in the source distribution.
  */
+#include <stdint.h>
 #include <string.h>
-#include <openssl/types.h>
-#include <openssl/crypto.h>
+
 #include <openssl/core_names.h>
-#include <openssl/kdf.h>
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
+#include <openssl/kdf.h>
 #include <openssl/provider.h>
+#include <openssl/types.h>
+
 #include "fuzzer.h"
+#include "openssl/core.h"
+#include "openssl/params.h"
+#include "openssl/safestack.h"
 
 #define DEFINE_ALGORITHMS(name, evp)                                     \
     DEFINE_STACK_OF(evp)                                                 \

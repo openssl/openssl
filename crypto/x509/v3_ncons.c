@@ -7,20 +7,35 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
-#include "internal/numbers.h"
-#include "internal/safe_math.h"
 #include <stdio.h>
-#include "crypto/asn1.h"
+#include <string.h>
+
 #include <openssl/asn1t.h>
+#include <openssl/bn.h>
 #include <openssl/conf.h>
 #include <openssl/http.h>
 #include <openssl/x509v3.h>
-#include <openssl/bn.h>
 
-#include "crypto/x509.h"
+#include "internal/common.h"
+#include "internal/cryptlib.h"
+#include "internal/numbers.h"
+#include "internal/safe_math.h"
+
+#include "crypto/asn1.h"
 #include "crypto/punycode.h"
+#include "crypto/x509.h"
+
 #include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509v3err.h"
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 

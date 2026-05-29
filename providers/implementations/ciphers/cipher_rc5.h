@@ -12,6 +12,7 @@
 
 #if !defined(OPENSSL_NO_RC5)
 #include <openssl/rc5.h>
+
 #include "prov/ciphercommon.h"
 
 typedef struct prov_rc5_ctx_st {

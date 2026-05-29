@@ -16,10 +16,13 @@
  */
 
 #include <string.h> /* memcpy */
+
 #include <openssl/err.h>
 #include <openssl/proverr.h>
-#include "crypto/sha.h"
+
 #include "internal/common.h" /* ossl_assert */
+
+#include "crypto/sha.h"
 
 /* Returns the number of bytes required to store 'bits' into a byte array */
 static unsigned int get_encode_size(size_t bits)

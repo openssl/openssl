@@ -8,6 +8,8 @@
  */
 
 #include <openssl/bio.h>
+
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static int test_eof(void)

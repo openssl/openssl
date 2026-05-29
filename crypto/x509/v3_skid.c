@@ -8,10 +8,22 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/x509.h"
+
 #include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3err.h"
 
 static ASN1_OCTET_STRING *s2i_skey_id(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, char *str);

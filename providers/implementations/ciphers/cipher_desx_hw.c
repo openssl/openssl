@@ -13,8 +13,14 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <string.h>
+
 #include <openssl/des.h>
+
 #include "cipher_tdes_default.h"
+#include "prov/ciphercommon.h"
+#include "providers/implementations/ciphers/cipher_tdes.h"
 
 /*
  * Note the PROV_TDES_CTX has been used for the DESX cipher, just to reduce

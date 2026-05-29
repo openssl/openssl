@@ -1,7 +1,8 @@
-#include <sys/poll.h>
-#include <openssl/ssl.h>
-#include <uv.h>
 #include <assert.h>
+#include <sys/poll.h>
+#include <uv.h>
+
+#include <openssl/ssl.h>
 #ifdef USE_QUIC
 #include <sys/time.h>
 #endif

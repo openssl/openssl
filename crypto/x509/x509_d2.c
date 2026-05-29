@@ -8,9 +8,14 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/err.h"
+#include "openssl/x509_vfy.h"
 
 int X509_STORE_set_default_paths_ex(X509_STORE *ctx, OSSL_LIB_CTX *libctx,
     const char *propq)

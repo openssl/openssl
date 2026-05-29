@@ -8,13 +8,21 @@
  */
 
 #include <openssl/asn1t.h>
+#include <openssl/cms.h>
+#include <openssl/err.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
-#include <openssl/err.h>
-#include <openssl/cms.h>
+
 #include "internal/nelem.h"
+
 #include "crypto/x509.h"
+
 #include "cms_local.h"
+#include "openssl/cmserr.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 
 /*-
  * Attribute flags.

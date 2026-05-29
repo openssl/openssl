@@ -11,8 +11,9 @@
 #define OSSL_PROVIDERS_FIPS_SELF_TEST_H
 
 #include <openssl/core_dispatch.h>
-#include <openssl/types.h>
 #include <openssl/self_test.h>
+#include <openssl/types.h>
+
 #include "internal/fips.h"
 
 typedef struct self_test_post_params_st {

@@ -8,7 +8,12 @@
  */
 
 #include <string.h>
+
 #include "apps.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/x509.h"
 
 /*
  * X509_ctrl_str() is sorely lacking in libcrypto, but is still needed to

@@ -9,13 +9,18 @@
  */
 
 #include <string.h>
-#include <openssl/ssl.h>
+
 #include <openssl/bio.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "internal/packet.h"
 
 #include "helpers/ssltestlib.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 /* Should we fragment records or not? 0 = no, !0 = yes*/

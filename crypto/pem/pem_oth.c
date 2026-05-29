@@ -8,12 +8,18 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/buffer.h>
-#include <openssl/objects.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
+#include <openssl/objects.h>
 #include <openssl/pem.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /* Handle 'other' PEMs: not private keys */
 

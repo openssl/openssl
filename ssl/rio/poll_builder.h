@@ -9,8 +9,9 @@
 #ifndef OSSL_POLL_BUILDER_H
 #define OSSL_POLL_BUILDER_H
 
-#include "poll_method.h"
 #include "internal/time.h"
+
+#include "poll_method.h"
 
 /*
  * RIO_POLL_BUILDER

@@ -7,15 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
+#include <stdint.h>
 
-#include "internal/err.h"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/trace.h>
-#include "ssl_local.h"
-#include "internal/thread_once.h"
+
+#include "internal/e_os.h"
+#include "internal/err.h"
 #include "internal/rio_notifier.h" /* for ossl_wsa_cleanup() */
+#include "internal/thread_once.h"
+
+#include "openssl/err.h"
+#include "openssl/ssl.h"
+#include "ssl_local.h"
 
 static int stopped;
 

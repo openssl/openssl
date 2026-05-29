@@ -14,15 +14,29 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/cryptlib.h"
+#include <limits.h>
 #include <string.h>
-#include "ec_local.h"
-#include "internal/refcount.h"
+
 #include <openssl/err.h>
 #include <openssl/self_test.h>
-#include "prov/providercommon.h"
-#include "prov/ecx.h"
+
+#include "internal/cryptlib.h"
+#include "internal/refcount.h"
+
 #include "crypto/bn.h"
+#include "crypto/ec.h"
+
+#include "ec_local.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "prov/ecx.h"
+#include "prov/providercommon.h"
 
 static int ecdsa_keygen_pairwise_test(EC_KEY *eckey, OSSL_CALLBACK *cb,
     void *cbarg);

@@ -8,8 +8,17 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/asn1t.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #define COPY_SIZE(a, b) (sizeof(a) < sizeof(b) ? sizeof(a) : sizeof(b))
 

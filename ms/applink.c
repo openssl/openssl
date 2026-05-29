@@ -48,9 +48,9 @@
  * include lines somewhere in the file that is including applink.c.
  */
 #ifndef APPLINK_NO_INCLUDES
-#include <stdio.h>
-#include <io.h>
 #include <fcntl.h>
+#include <io.h>
+#include <stdio.h>
 #endif
 
 #ifdef __BORLANDC__

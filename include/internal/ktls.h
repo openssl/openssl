@@ -27,11 +27,12 @@
 #ifndef OPENSSL_NO_KTLS
 
 #if defined(__FreeBSD__)
-#include <sys/types.h>
-#include <sys/socket.h>
-#include <sys/ktls.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
+#include <sys/ktls.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+
 #include <openssl/ssl3.h>
 
 #ifndef TCP_RXTLS_ENABLE
@@ -240,12 +241,14 @@ static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size,
 #endif
 #endif
 
-#include <sys/sendfile.h>
-#include <netinet/tcp.h>
+#include <errno.h>
 #include <linux/socket.h>
+#include <netinet/tcp.h>
+#include <sys/sendfile.h>
+
+#include <openssl/evp.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
-#include <openssl/evp.h>
 
 #ifndef SOL_TLS
 #define SOL_TLS 282

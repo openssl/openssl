@@ -45,15 +45,15 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #else
-#include <sys/socket.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/quic.h>
+#include <openssl/ssl.h>
 
 #define BUF_SIZE 4096
 

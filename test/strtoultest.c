@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stddef.h>
+
 #include <openssl/crypto.h>
+
 #include <internal/nelem.h>
+
 #include "testutil.h"
 
 struct strtoul_test_entry {

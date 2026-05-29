@@ -7,12 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <errno.h>
 #include "bio_local.h"
+
+#include <errno.h>
+#include <limits.h>
+#include <stdio.h>
+#include <string.h>
+
+#include "internal/bio.h"
 #include "internal/bio_tfo.h"
 #include "internal/cryptlib.h"
 #include "internal/ktls.h"
+#include "internal/sockets.h"
+
+#include "openssl/bioerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #ifndef OPENSSL_NO_SOCK
 

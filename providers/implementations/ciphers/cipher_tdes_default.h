@@ -10,8 +10,8 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_DEFAULT_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_TDES_DEFAULT_H
 
-#include "prov/ciphercommon.h"
 #include "cipher_tdes.h"
+#include "prov/ciphercommon.h"
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_ofb(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_tdes_ede3_cfb(void);

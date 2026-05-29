@@ -11,6 +11,7 @@
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_SM4_GCM_H
 
 #include "crypto/sm4.h"
+
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_gcm.h"
 

@@ -11,7 +11,13 @@
  * Generic support for ARIA CCM.
  */
 
+#include <stddef.h>
+
+#include "crypto/aria.h"
+
 #include "cipher_aria_ccm.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon_ccm.h"
 
 static int ccm_aria_initkey(PROV_CCM_CTX *ctx,
     const unsigned char *key, size_t keylen)

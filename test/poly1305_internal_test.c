@@ -12,9 +12,11 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "testutil.h"
-#include "crypto/poly1305.h"
 #include "internal/nelem.h"
+
+#include "crypto/poly1305.h"
+
+#include "testutil.h"
 
 typedef struct {
     size_t size;

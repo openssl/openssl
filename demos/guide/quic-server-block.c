@@ -20,16 +20,16 @@
 #include <winsock2.h>
 #else /* Linux/Unix */
 #include <err.h>
-#include <sys/socket.h>
-#include <sys/select.h>
 #include <netinet/in.h>
+#include <sys/select.h>
+#include <sys/socket.h>
 #include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/quic.h>
+#include <openssl/ssl.h>
 
 #ifdef _WIN32
 static const char *progname;

@@ -13,15 +13,23 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/e_os.h"
 #include <string.h>
+
+#include <openssl/asn1.h>
 #include <openssl/core_names.h>
 #include <openssl/dh.h>
 #include <openssl/evp.h>
-#include <openssl/asn1.h>
 #include <openssl/kdf.h>
+
+#include "internal/e_os.h"
 #include "internal/provider.h"
+#include "internal/sizes.h"
+
 #include "crypto/dh.h"
+
+#include "openssl/crypto.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 /* Key derivation function from X9.63/SECG */
 int ossl_dh_kdf_X9_42_asn1(unsigned char *out, size_t outlen,

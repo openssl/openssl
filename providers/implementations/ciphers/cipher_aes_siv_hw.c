@@ -13,7 +13,13 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
+#include "crypto/siv.h"
+
 #include "cipher_aes_siv.h"
+#include "openssl/core.h"
+#include "openssl/evp.h"
 
 static void aes_siv_cleanup(void *vctx);
 

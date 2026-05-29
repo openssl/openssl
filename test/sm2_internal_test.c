@@ -12,16 +12,20 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
 #include <openssl/bio.h>
-#include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
+
+#include "openssl/e_os2.h"
+#include "openssl/ec.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SM2

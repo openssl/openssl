@@ -21,8 +21,11 @@
 #include <openssl/asn1.h>
 #include <openssl/posix_time.h>
 
+#include "crypto/asn1.h"
 #include <crypto/x509.h>
+
 #include "asn1_local.h"
+#include "openssl/crypto.h"
 
 #define SECS_PER_HOUR (int64_t)(60 * 60)
 #define SECS_PER_DAY (int64_t)(24 * SECS_PER_HOUR)

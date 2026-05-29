@@ -14,6 +14,7 @@
 #include <openssl/bio.h>
 #include <openssl/buffer.h>
 #include <openssl/types.h>
+
 #include "internal/ffc.h"
 
 int ossl_bio_print_labeled_bignum(BIO *out, const char *label,

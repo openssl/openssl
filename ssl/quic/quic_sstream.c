@@ -7,10 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/quic_stream.h"
-#include "internal/uint_set.h"
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "internal/common.h"
+#include "internal/nelem.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_wire.h"
 #include "internal/ring_buf.h"
+#include "internal/uint_set.h"
+
+#include "openssl/crypto.h"
 
 /*
  * ==================================================================

@@ -10,6 +10,13 @@
 /* Dispatch functions for SM4 CCM mode */
 
 #include "cipher_sm4_ccm.h"
+
+#include <stddef.h>
+
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "prov/ciphercommon_aead.h"
+#include "prov/ciphercommon_ccm.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 

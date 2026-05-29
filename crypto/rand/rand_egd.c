@@ -7,10 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
 #include <openssl/crypto.h>
 #include <openssl/e_os2.h>
+#include <openssl/opensslconf.h>
 #include <openssl/rand.h>
 
 /*
@@ -35,10 +34,10 @@ int RAND_egd_bytes(const char *path, int bytes)
 
 #else
 
-#include <unistd.h>
 #include <stddef.h>
-#include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/types.h>
+#include <unistd.h>
 #ifndef NO_SYS_UN_H
 #include <sys/un.h>
 #else
@@ -47,8 +46,8 @@ struct sockaddr_un {
     char sun_path[108]; /* path name (gag) */
 };
 #endif /* NO_SYS_UN_H */
-#include <string.h>
 #include <errno.h>
+#include <string.h>
 
 #if defined(OPENSSL_SYS_TANDEM)
 /*
@@ -104,7 +103,6 @@ static int hpns_connect_attempt = 0;
 
 #endif /* defined(OPENSSL_SYS_HPNS) */
 
-
 int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
 {
     FILE *fp = NULL;
@@ -137,7 +135,7 @@ int RAND_query_egd_bytes(const char *path, unsigned char *buf, int bytes)
     for (;;) {
         if (connect(fd, (struct sockaddr *)&addr, i) == 0)
             break;
-# ifdef EISCONN
+#ifdef EISCONN
         if (errno == EISCONN)
             break;
 #endif

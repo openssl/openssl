@@ -7,9 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stddef.h>
+
 #include <openssl/err.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
 #include "crypto/ctype.h"
+
 #include "bn_local.h"
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 /* Must 'OPENSSL_free' the returned data */
 char *BN_bn2hex(const BIGNUM *a)

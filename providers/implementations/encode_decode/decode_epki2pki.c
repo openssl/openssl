@@ -7,24 +7,35 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/asn1.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/asn1.h>
 #include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/pkcs12.h>
-#include <openssl/x509.h>
 #include <openssl/proverr.h>
-#include "internal/cryptlib.h"
+#include <openssl/x509.h>
+
 #include "internal/asn1.h"
+#include "internal/cryptlib.h"
 #include "internal/sizes.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
 #include "prov/bio.h"
 #include "prov/decoders.h"
-#include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_epki2pki.inc"
+/* clang-format on */
+
+#include <stddef.h>
 
 #include <crypto/asn1.h>
 

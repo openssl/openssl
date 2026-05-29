@@ -8,12 +8,25 @@
  */
 
 #include <string.h>
-#include <openssl/x509v3.h>
+
 #include <openssl/err.h>
 #include <openssl/ess.h>
+#include <openssl/x509v3.h>
+
 #include "internal/sizes.h"
+
 #include "crypto/ess.h"
 #include "crypto/x509.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/esserr.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/sha.h"
+#include "openssl/x509.h"
 
 static ESS_CERT_ID *ESS_CERT_ID_new_init(const X509 *cert,
     int set_issuer_serial);

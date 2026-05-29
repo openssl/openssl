@@ -7,23 +7,37 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
 #include <openssl/proverr.h>
 #include <openssl/self_test.h>
-#include "crypto/ml_dsa.h"
+
 #include "internal/fips.h"
 #include "internal/param_build_set.h"
+
+#include "crypto/ml_dsa.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
-#include "prov/providercommon.h"
-#include "prov/provider_ctx.h"
 #include "prov/ml_dsa.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 
 #define ml_dsa_export_params
 #define ml_dsa_export_params_decoder
+/* clang-format off */
 #include "providers/implementations/keymgmt/ml_dsa_kmgmt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keymgmt_free_fn ml_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn ml_dsa_has;

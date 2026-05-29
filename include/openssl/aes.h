@@ -16,9 +16,9 @@
 #define HEADER_AES_H
 #endif
 
-#include <openssl/opensslconf.h>
-
 #include <stddef.h>
+
+#include <openssl/opensslconf.h>
 #ifdef __cplusplus
 extern "C" {
 #endif

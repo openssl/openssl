@@ -8,10 +8,15 @@
  */
 
 #include <openssl/asn1.h>
+#include <openssl/err.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
-#include <openssl/err.h>
 
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
 #include "pcy_local.h"
 
 static int node_cmp(const X509_POLICY_NODE *const *a,

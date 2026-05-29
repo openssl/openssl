@@ -7,11 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdlib.h>
 #include <string.h>
-#include <openssl/params.h>
+
 #include <openssl/param_build.h>
+#include <openssl/params.h>
+
+#include "internal/common.h"
 #include "internal/mem_alloc_utils.h"
 #include "internal/param_build_set.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/cryptoerr.h"
+#include "openssl/err.h"
+#include "openssl/macros.h"
 
 #define OSSL_PARAM_ALLOCATED_END 127
 #define OSSL_PARAM_MERGE_LIST_MAX 128

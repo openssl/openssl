@@ -7,17 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
 #include <openssl/rand.h>
-#include "crypto/evp.h"
+#include <openssl/x509.h>
 
+#include "internal/cryptlib.h"
+
+#include "crypto/evp.h"
 #include <crypto/asn1.h>
+
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 /* PKCS#5 scrypt password based encryption structures */

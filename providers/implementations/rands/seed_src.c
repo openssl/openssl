@@ -8,21 +8,29 @@
  */
 
 #include <string.h>
-#include <openssl/rand.h>
+
 #include <openssl/core_dispatch.h>
-#include <openssl/e_os2.h>
-#include <openssl/params.h>
 #include <openssl/core_names.h>
-#include <openssl/evp.h>
+#include <openssl/e_os2.h>
 #include <openssl/err.h>
-#include <openssl/randerr.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+#include <openssl/rand.h>
+#include <openssl/randerr.h>
+
 #include "internal/common.h"
-#include "prov/implementations.h"
-#include "prov/provider_ctx.h"
+
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/rands/seed_src.inc"
+/* clang-format on */
 
 static OSSL_FUNC_rand_newctx_fn seed_src_new;
 static OSSL_FUNC_rand_freectx_fn seed_src_free;

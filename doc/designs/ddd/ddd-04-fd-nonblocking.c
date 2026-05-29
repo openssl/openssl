@@ -1,4 +1,5 @@
 #include <sys/poll.h>
+
 #include <openssl/ssl.h>
 
 /*
@@ -266,15 +267,15 @@ void teardown_ctx(SSL_CTX *ctx)
  * Example driver for the above code. This is just to demonstrate that the code
  * works and is not intended to be representative of a real application.
  */
-#include <sys/types.h>
-#include <sys/socket.h>
 #include <sys/signal.h>
+#include <sys/socket.h>
+#include <sys/types.h>
 #ifdef USE_QUIC
 #include <sys/time.h>
 #endif
+#include <fcntl.h>
 #include <netdb.h>
 #include <unistd.h>
-#include <fcntl.h>
 
 #ifdef USE_QUIC
 

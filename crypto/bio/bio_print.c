@@ -7,13 +7,19 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
-#include "internal/cryptlib.h"
-#include "crypto/ctype.h"
-#include "internal/numbers.h"
+
 #include <openssl/bio.h>
 #include <openssl/configuration.h>
+
+#include "internal/cryptlib.h"
+#include "internal/numbers.h"
+
+#include "crypto/ctype.h"
+
+#include "openssl/crypto.h"
 
 int BIO_printf(BIO *bio, const char *format, ...)
 {

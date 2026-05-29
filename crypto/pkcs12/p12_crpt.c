@@ -8,13 +8,22 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/core.h>
 #include <openssl/core_names.h>
-#include "crypto/evp.h"
 #include <openssl/pkcs12.h>
 
+#include "internal/cryptlib.h"
+
+#include "crypto/evp.h"
 #include <crypto/asn1.h>
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/pkcs12err.h"
+#include "openssl/x509.h"
 
 /* PKCS#12 PBE algorithms now in static table */
 

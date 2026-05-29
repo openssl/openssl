@@ -10,11 +10,11 @@
 #ifndef OSSL_PROV_PROVIDER_CTX_H
 #define OSSL_PROV_PROVIDER_CTX_H
 
-#include <openssl/types.h>
-#include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/crypto.h>
+#include <openssl/types.h>
 
 typedef struct prov_ctx_st {
     const OSSL_CORE_HANDLE *handle;

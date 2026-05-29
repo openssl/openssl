@@ -13,13 +13,14 @@
  * -L../.. -lssl -lcrypto -ldl
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/conf.h>
 
 int main(int argc, char *argv[])
 {

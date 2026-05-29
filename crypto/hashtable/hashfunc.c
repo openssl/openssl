@@ -10,6 +10,11 @@
 
 #include "internal/hashfunc.h"
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include "openssl/e_os2.h"
+
 ossl_unused uint64_t ossl_fnv1a_hash(uint8_t *key, size_t len)
 {
     uint64_t hash = 0xcbf29ce484222325ULL;

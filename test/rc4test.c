@@ -16,6 +16,7 @@
 #include <string.h>
 
 #include "internal/nelem.h"
+
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_RC4

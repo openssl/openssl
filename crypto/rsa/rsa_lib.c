@@ -13,18 +13,32 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/crypto.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/param_build.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/refcount.h"
-#include "internal/common.h"
+
 #include "crypto/bn.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
-#include "crypto/sparse_array.h"
 #include "crypto/security_bits.h"
+#include "crypto/sparse_array.h"
+
+#include "openssl/bn.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
+#include "openssl/rsa.h"
+#include "openssl/safestack.h"
 #include "rsa_local.h"
 
 static RSA *rsa_new_intern(OSSL_LIB_CTX *libctx);

@@ -8,8 +8,23 @@
  */
 
 #include "internal/quic_stream_map.h"
+
+#include <assert.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include "internal/nelem.h"
 #include "internal/quic_channel.h"
+#include "internal/quic_fc.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_tx.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_wire.h"
+#include "internal/time.h"
+
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/lhash.h"
 
 /*
  * QUIC Stream Map

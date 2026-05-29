@@ -8,9 +8,17 @@
  */
 
 #include <assert.h>
+#include <string.h>
+
 #include <openssl/bn.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
+#include "openssl/bnerr.h"
+#include "openssl/err.h"
 
 /* The old slow way */
 #if 0

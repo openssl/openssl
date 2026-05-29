@@ -14,14 +14,21 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/bn.h>
-#include "dh_local.h"
-#include <openssl/objects.h>
-#include <openssl/asn1t.h>
-#include "crypto/dh.h"
 
+#include <openssl/asn1t.h>
+#include <openssl/bn.h>
+#include <openssl/objects.h>
+
+#include "internal/cryptlib.h"
+#include "internal/ffc.h"
+
+#include "crypto/dh.h"
 #include <crypto/asn1.h>
+
+#include "dh_local.h"
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
 
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,

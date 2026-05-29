@@ -13,11 +13,22 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/bn.h>
+
 #include "internal/cryptlib.h"
-#include "dsa_local.h"
+#include "internal/packet.h"
+
 #include "crypto/asn1_dsa.h"
 #include "crypto/dsa.h"
+
+#include "dsa_local.h"
+#include "openssl/buffer.h"
+#include "openssl/crypto.h"
+#include "openssl/dsa.h"
 
 DSA_SIG *DSA_do_sign(const unsigned char *dgst, int dlen, DSA *dsa)
 {

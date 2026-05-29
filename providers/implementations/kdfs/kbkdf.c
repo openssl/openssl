@@ -25,6 +25,7 @@
  */
 
 #include <stdarg.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 
@@ -36,23 +37,33 @@
 #include <openssl/proverr.h>
 
 #include "internal/cryptlib.h"
-#include "crypto/evp.h"
-#include "internal/numbers.h"
+#include "internal/e_os.h"
 #include "internal/endian.h"
+#include "internal/fips.h"
+#include "internal/numbers.h"
+#include "internal/params.h"
+
+#include "crypto/evp.h"
+
+#include "fips/fipsindicator.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "internal/e_os.h"
-#include "internal/fips.h"
-#include "internal/params.h"
 
 #define ossl_min(a, b) ((a) < (b)) ? (a) : (b)
 
 #define KBKDF_MAX_INFOS 5
 
+/* clang-format off */
 #include "providers/implementations/kdfs/kbkdf.inc"
+/* clang-format on */
 
 typedef enum {
     COUNTER = 0,

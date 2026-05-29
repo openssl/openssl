@@ -7,22 +7,33 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include <string.h>
 
 #include <openssl/core.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
+#include <openssl/decoder.h>
 #include <openssl/err.h>
 #include <openssl/pkcs12.h>
 #include <openssl/provider.h>
-#include <openssl/decoder.h>
 #include <openssl/store.h>
-#include "internal/provider.h"
+
+#include "internal/e_os.h"
 #include "internal/passphrase.h"
+#include "internal/provider.h"
+
 #include "crypto/decoder.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h"
+
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "openssl/pem.h"
+#include "openssl/safestack.h"
+#include "openssl/storeerr.h"
+#include "openssl/x509.h"
 #include "store_local.h"
 
 #ifndef OSSL_OBJECT_PKCS12

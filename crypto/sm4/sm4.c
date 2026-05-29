@@ -9,8 +9,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/e_os2.h>
 #include "crypto/sm4.h"
+
+#include <stdint.h>
+
+#include <openssl/e_os2.h>
 
 static const uint8_t SM4_S[256] = {
     0xD6, 0x90, 0xE9, 0xFE, 0xCC, 0xE1, 0x3D, 0xB7, 0x16, 0xB6, 0x14, 0xC2,

@@ -7,21 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>
-#include <string.h>
 #include <ctype.h>
 #include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
+
 #include <openssl/crypto.h>
+
 #include "internal/cryptlib.h"
 
 #define OPENSSL_RISCVCAP_IMPL
 #include "arch/riscv_arch.h"
 
 #ifdef OSSL_RISCV_HWPROBE
-#include <unistd.h>
-#include <sys/syscall.h>
 #include <asm/hwprobe.h>
 #include <sys/auxv.h>
+#include <sys/syscall.h>
+#include <unistd.h>
 #endif
 
 extern size_t riscv_vlen_asm(void);

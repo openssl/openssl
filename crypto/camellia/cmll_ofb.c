@@ -13,6 +13,8 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/camellia.h>
 #include <openssl/modes.h>
 

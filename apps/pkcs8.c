@@ -7,15 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "apps.h"
-#include "progs.h"
-#include <openssl/pem.h>
+
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <openssl/pkcs12.h>
+
+#include "apps.h"
+#include "fmt.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
+#include "opt.h"
+#include "progs.h"
 
 #define STR(a) XSTR(a)
 #define XSTR(a) #a

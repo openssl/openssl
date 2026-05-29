@@ -8,6 +8,7 @@
  */
 
 #include <openssl/bn.h>
+
 #include "crypto/bn_dh.h"
 
 #define COPY_BN(dst, src) (dst != NULL) ? BN_copy(dst, &src) : BN_dup(&src)

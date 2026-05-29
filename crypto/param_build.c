@@ -8,13 +8,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
-#include <openssl/err.h>
+#include <time.h>
+
 #include <openssl/cryptoerr.h>
+#include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/types.h>
 #include <openssl/safestack.h>
+#include <openssl/types.h>
+
+#include "internal/common.h"
 #include "internal/param_build_set.h"
+
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
 
 /*
  * Special internal param type to indicate the end of an allocate OSSL_PARAM

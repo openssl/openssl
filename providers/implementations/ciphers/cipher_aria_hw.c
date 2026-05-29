@@ -7,8 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/proverr.h>
+
+#include "crypto/aria.h"
+
 #include "cipher_aria.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/modes.h"
+#include "prov/ciphercommon.h"
 
 static int cipher_hw_aria_initkey(PROV_CIPHER_CTX *dat,
     const unsigned char *key, size_t keylen)

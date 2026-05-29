@@ -7,27 +7,41 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
-#include <openssl/params.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+
 #include "internal/common.h"
-#include "internal/nelem.h"
-#include "internal/sizes.h"
-#include "prov/providercommon.h"
-#include "prov/implementations.h"
-#include "prov/securitycheck.h"
-#include "prov/provider_ctx.h"
-#include "prov/der_ecx.h"
-#include "crypto/ecx.h"
 #include "internal/fips.h"
+#include "internal/nelem.h"
+#include "internal/packet.h"
+#include "internal/sizes.h"
+
+#include "crypto/ecx.h"
+#include "crypto/types.h"
+
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "prov/der_ecx.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 
 #define eddsa_set_variant_ctx_params_st eddsa_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/eddsa_sig.inc"
+/* clang-format on */
 
 #ifdef S390X_EC_ASM
 #include "arch/s390x_arch.h"

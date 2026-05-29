@@ -8,12 +8,18 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/conf.h>
 #include <openssl/ssl.h>
 #include <openssl/trace.h>
-#include "ssl_local.h"
-#include "internal/sslconf.h"
+
 #include "internal/cryptlib.h"
+#include "internal/sslconf.h"
+
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/sslerr.h"
+#include "ssl_local.h"
 
 /* SSL library configuration module. */
 

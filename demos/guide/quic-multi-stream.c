@@ -22,8 +22,8 @@
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 /* Helper function to create a BIO connected to the server */
 static BIO *create_socket_bio(const char *hostname, const char *port,

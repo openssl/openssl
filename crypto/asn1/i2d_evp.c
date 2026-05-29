@@ -13,17 +13,26 @@
  */
 #include "internal/deprecated.h"
 
+#include <limits.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/evp.h>
-#include <openssl/encoder.h>
+
 #include <openssl/buffer.h>
-#include <openssl/x509.h>
-#include <openssl/rsa.h> /* For i2d_RSAPublicKey */
 #include <openssl/dsa.h> /* For i2d_DSAPublicKey */
 #include <openssl/ec.h> /* For i2o_ECPublicKey */
+#include <openssl/encoder.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h> /* For i2d_RSAPublicKey */
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
+
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 struct type_and_structure_st {
     const char *output_type;

@@ -13,18 +13,26 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdint.h>
 #include <string.h>
 
 #include <openssl/bio.h>
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/provider.h>
-#include <openssl/core_names.h>
+#include <openssl/rsa.h>
+
 #include "internal/core.h"
 #include "internal/nelem.h"
+
 #include "crypto/evp.h" /* For the internal API */
+
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/x509.h"
 #include "testutil.h"
 
 typedef struct {

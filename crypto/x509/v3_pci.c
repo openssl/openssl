@@ -44,12 +44,25 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
-#include "ext_dat.h"
+
+#include "internal/common.h"
+#include "internal/cryptlib.h"
 
 #include <crypto/asn1.h>
+
+#include "ext_dat.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509v3err.h"
 
 static int i2r_pci(X509V3_EXT_METHOD *method, PROXY_CERT_INFO_EXTENSION *ext,
     BIO *out, int indent);

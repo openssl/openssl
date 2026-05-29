@@ -16,8 +16,9 @@
 #include <stdint.h>
 
 #include <openssl/aes.h>
-#include "prov/ciphercommon.h"
+
 #include "ciphercommon_aead.h"
+#include "prov/ciphercommon.h"
 
 typedef struct prov_gcm_hw_st PROV_GCM_HW;
 

@@ -9,17 +9,29 @@
 
 #include "internal/deprecated.h" /* PKCS1_MGF1() */
 
-#include <string.h>
-#include <openssl/evp.h>
-#include <openssl/core_names.h>
-#include <openssl/rsa.h> /* PKCS1_MGF1() */
-#include "slh_dsa_local.h"
-#include "slh_dsa_key.h"
+#include "crypto/slh_dsa/slh_hash.h"
 
-#include "openssl/sha.h"
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/rsa.h> /* PKCS1_MGF1() */
+
+#include "internal/packet.h"
 #include "internal/sha3.h"
+
 #include "crypto/evp.h"
 #include "crypto/sha.h"
+#include "crypto/slh_dsa.h"
+#include "crypto/slh_dsa/slh_adrs.h"
+#include "crypto/slh_dsa/slh_params.h"
+
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "openssl/sha.h"
+#include "slh_dsa_key.h"
+#include "slh_dsa_local.h"
 
 #define MAX_DIGEST_SIZE 64 /* SHA-512 is used for security category 3 & 5 */
 #define NIBBLE_MASK 15

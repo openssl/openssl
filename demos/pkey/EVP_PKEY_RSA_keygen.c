@@ -15,13 +15,14 @@
  * are reasonable as of 2022.
  */
 
-#include <string.h>
 #include <stdio.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
-#include <openssl/core_names.h>
 #include <openssl/pem.h>
+#include <openssl/rsa.h>
 
 /* A property query used for selecting algorithm implementations. */
 static const char *propq = NULL;

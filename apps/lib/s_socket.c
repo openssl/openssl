@@ -8,12 +8,19 @@
  */
 
 /* socket-related functions used by s_client and s_server */
+#include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
-#include <signal.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
 #include <openssl/opensslconf.h>
+
+#include "openssl/crypto.h"
+#include "openssl/ssl.h"
 
 /*
  * With IPv6, it looks like Digital has mixed up the proper order of
@@ -37,13 +44,14 @@ typedef unsigned int u_int;
 
 #ifndef OPENSSL_NO_SOCK
 
-#include "internal/e_os.h"
-#include "apps.h"
-#include "s_apps.h"
-#include "internal/sockets.h" /* for openssl_fdset() */
-
 #include <openssl/bio.h>
 #include <openssl/err.h>
+
+#include "internal/e_os.h"
+#include "internal/sockets.h" /* for openssl_fdset() */
+
+#include "apps.h"
+#include "s_apps.h"
 
 /* Keep track of our peer's address for the cookie callback */
 BIO_ADDR *ourpeer = NULL;

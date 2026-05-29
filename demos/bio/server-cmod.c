@@ -12,12 +12,13 @@
  * set most server parameters.
  */
 
-#include <stdio.h>
 #include <signal.h>
+#include <stdio.h>
 #include <stdlib.h>
+
+#include <openssl/conf.h>
 #include <openssl/err.h>
 #include <openssl/ssl.h>
-#include <openssl/conf.h>
 
 int main(int argc, char *argv[])
 {

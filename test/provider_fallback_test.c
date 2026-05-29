@@ -8,8 +8,12 @@
  */
 
 #include <stddef.h>
-#include <openssl/provider.h>
+
 #include <openssl/evp.h>
+#include <openssl/provider.h>
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static int test_provider(OSSL_LIB_CTX *ctx)

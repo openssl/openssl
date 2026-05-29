@@ -11,15 +11,23 @@
 #include <string.h>
 
 #include <openssl/dtls1.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
+
+#include "internal/common.h"
+#include "internal/statem.h"
 
 #include "helpers/ssltestlib.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 /* for SSL_READ_ETM() */
-#include "../ssl/ssl_local.h"
 #include "internal/ssl_unwrap.h"
+
+#include "../ssl/ssl_local.h"
 
 static int debug = 0;
 

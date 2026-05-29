@@ -14,10 +14,17 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/err.h>
 #include <openssl/symhacks.h>
 
 #include "ec_local.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/obj_mac.h"
 
 const EC_METHOD *EC_GFp_simple_method(void)
 {

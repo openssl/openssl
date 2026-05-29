@@ -7,29 +7,34 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/store.h>
+#include <openssl/bio.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/bio.h>
+#include <openssl/decoder.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include <openssl/decoder.h>
 #include <openssl/proverr.h>
+#include <openssl/store.h>
 #include <openssl/store.h> /* The OSSL_STORE_INFO type numbers */
+
 #include "internal/cryptlib.h"
 #include "internal/o_dir.h"
-#include "crypto/decoder.h"
+
 #include "crypto/ctype.h" /* ossl_isdigit() */
-#include "prov/implementations.h"
-#include "prov/providercommon.h"
+#include "crypto/decoder.h"
+
 #include "prov/bio.h"
 #include "prov/file_store_local.h"
+#include "prov/implementations.h"
+#include "prov/providercommon.h"
 #ifdef __CYGWIN__
 #include <windows.h>
 #endif
 #include <wincrypt.h>
+/* clang-format off */
 #include "providers/implementations/storemgmt/winstore_store.inc"
+/* clang-format on */
 
 enum {
     STATE_IDLE,

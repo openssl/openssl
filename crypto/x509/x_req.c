@@ -8,10 +8,18 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/x509.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
 
 /*-
  * X509_REQ_INFO is handled in an unusual way to get round

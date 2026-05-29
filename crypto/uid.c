@@ -28,8 +28,8 @@ int OPENSSL_issetugid(void)
 
 #else
 
-#include <unistd.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #if defined(__GLIBC__) && defined(__GLIBC_PREREQ)
 #if __GLIBC_PREREQ(2, 16)

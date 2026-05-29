@@ -21,10 +21,10 @@
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
 #endif
+#include <openssl/bnerr.h>
+#include <openssl/crypto.h>
 #include <openssl/opensslconf.h>
 #include <openssl/types.h>
-#include <openssl/crypto.h>
-#include <openssl/bnerr.h>
 
 #ifdef __cplusplus
 extern "C" {

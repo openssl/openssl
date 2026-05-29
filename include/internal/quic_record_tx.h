@@ -11,11 +11,12 @@
 #define OSSL_QUIC_RECORD_TX_H
 
 #include <openssl/ssl.h>
-#include "internal/quic_wire_pkt.h"
-#include "internal/quic_types.h"
+
+#include "internal/qlog.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_record_util.h"
-#include "internal/qlog.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire_pkt.h"
 
 #ifndef OPENSSL_NO_QUIC
 

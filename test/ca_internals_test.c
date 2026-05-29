@@ -7,10 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include "apps.h"
-#include "testutil.h"
+#include <time.h>
+
 #include "crypto/asn1.h"
+
+#include "apps.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 #define binname "ca_internals_test"
 

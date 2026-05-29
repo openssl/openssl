@@ -8,15 +8,23 @@
  */
 
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
-#include "crypto/asn1.h"
+#include <openssl/objects.h>
+
 #include "internal/numbers.h"
+
+#include "crypto/asn1.h"
+
 #include "asn1_local.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 /*
  * Constructed types with a recursive definition (such as can be found in PKCS7)

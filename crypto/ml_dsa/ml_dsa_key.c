@@ -7,16 +7,30 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "ml_dsa_key.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
-#include "ml_dsa_key.h"
-#include "ml_dsa_matrix.h"
-#include "ml_dsa_hash.h"
+
 #include "internal/encoder.h"
+
+#include "crypto/ml_dsa.h"
+#include "crypto/ml_dsa/ml_dsa_local.h"
+#include "crypto/ml_dsa/ml_dsa_vector.h"
+
+#include "ml_dsa_hash.h"
+#include "ml_dsa_matrix.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/evp.h"
 
 const ML_DSA_PARAMS *ossl_ml_dsa_key_params(const ML_DSA_KEY *key)
 {

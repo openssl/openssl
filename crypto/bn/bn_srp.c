@@ -7,12 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "bn_local.h"
 #include "internal/nelem.h"
+
+#include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 #ifndef OPENSSL_NO_SRP
 
 #include <openssl/srp.h>
+
 #include "crypto/bn_srp.h"
 
 #if (BN_BYTES == 8)

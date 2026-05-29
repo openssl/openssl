@@ -7,13 +7,20 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
 #include <string.h>
+
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 
 #include "helpers/ssltestlib.h"
+#include "openssl/dtls1.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/sha.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
 #include "testutil.h"
 
 static char *cert = NULL;

@@ -7,21 +7,40 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <assert.h>
-#include <openssl/configuration.h>
-#include <openssl/bio.h>
-#include "internal/e_os.h" /* For struct timeval */
 #include "quictestlib.h"
-#include "ssltestlib.h"
+
+#include <assert.h>
+#include <netinet/in.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+#include <sys/socket.h>
+#include <unistd.h>
+
+#include <openssl/bio.h>
+#include <openssl/configuration.h>
+
+#include "internal/e_os.h" /* For struct timeval */
+#include "internal/quic_channel.h"
+#include "internal/quic_tserver.h"
+#include "internal/quic_wire.h"
+#include "internal/thread_arch.h"
+#include "internal/time.h"
+
 #include "../testutil.h"
+#include "openssl/crypto.h"
+#include "openssl/quic.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "ssltestlib.h"
 #if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
 #include "../threadstest.h"
 #endif
+#include "internal/packet.h"
+#include "internal/quic_error.h"
+#include "internal/quic_record_tx.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_wire_pkt.h"
-#include "internal/quic_record_tx.h"
-#include "internal/quic_error.h"
-#include "internal/packet.h"
 #include "internal/tsan_assist.h"
 
 #define GROWTH_ALLOWANCE 1024

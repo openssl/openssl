@@ -9,17 +9,29 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "internal/cryptlib.h"
-#include <openssl/x509.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
-#include <openssl/hmac.h>
-#include <openssl/trace.h>
-#include <openssl/core_names.h>
-#include "crypto/evp.h"
-#include "evp_local.h"
+#include <string.h>
 
+#include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/kdf.h>
+#include <openssl/trace.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/evp.h"
 #include <crypto/asn1.h>
+
+#include "evp_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evperr.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 
 int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     const unsigned char *salt, int saltlen, int iter,

@@ -14,15 +14,16 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <openssl/aes.h>
+#include <openssl/cmac.h>
+#include <openssl/evp.h>
 
 #include "internal/nelem.h"
 
-#include <openssl/cmac.h>
-#include <openssl/aes.h>
-#include <openssl/evp.h>
-
+#include "openssl/bio.h"
 #include "testutil.h"
 
 static const char xtskey[32] = {

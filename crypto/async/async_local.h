@@ -30,6 +30,7 @@ typedef struct async_pool_st async_pool;
 #define ASYNC_ARCH
 
 #include <windows.h>
+
 #include "internal/cryptlib.h"
 
 typedef struct async_fibre_st {
@@ -154,6 +155,7 @@ typedef struct async_fibre_st {
 
 /* needs to be included after windows.h */
 #include <openssl/async.h>
+
 #include "crypto/async.h"
 
 struct async_ctx_st {

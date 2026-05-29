@@ -36,6 +36,7 @@
  */
 
 #include <stddef.h>
+
 #include "ec_local.h"
 
 /*

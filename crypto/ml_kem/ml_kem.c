@@ -7,13 +7,26 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/byteorder.h>
-#include <openssl/rand.h>
-#include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
+
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/byteorder.h>
+#include <openssl/proverr.h>
+#include <openssl/rand.h>
+
 #include "internal/common.h"
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
+
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
 
 #if ML_KEM_SEED_BYTES != ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES
 #error "ML-KEM keygen seed length != shared secret + random bytes length"

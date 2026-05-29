@@ -8,10 +8,13 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 
 #include <crypto/asn1.h>
+
+#include "openssl/crypto.h"
 
 /* Declarations for string types */
 

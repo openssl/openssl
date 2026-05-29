@@ -7,12 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/crypto.h>
 #include <openssl/comp.h>
+#include <openssl/crypto.h>
 #include <openssl/obj_mac.h>
 
-#include "internal/cryptlib.h"
 #include "internal/comp.h"
+#include "internal/cryptlib.h"
+
+#include "openssl/safestack.h"
 
 #define SSL_COMP_NULL_IDX 0
 #define SSL_COMP_ZLIB_IDX 1

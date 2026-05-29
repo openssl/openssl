@@ -8,13 +8,24 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/objects.h>
-#include <openssl/x509.h>
 #include <openssl/pkcs7.h>
+#include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/x509.h" /* for sk_X509_add1_cert() */
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/pkcs7err.h"
+#include "openssl/safestack.h"
 #include "pk7_local.h"
 
 long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
@@ -49,7 +60,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
     case PKCS7_OP_GET_DETACHED_SIGNATURE:
         if (nid == NID_pkcs7_signed) {
             if (p7->d.sign == NULL || p7->d.sign->contents == NULL
-                    || p7->d.sign->contents->d.ptr == NULL)
+                || p7->d.sign->contents->d.ptr == NULL)
                 ret = 1;
             else
                 ret = 0;

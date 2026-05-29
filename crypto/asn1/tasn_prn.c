@@ -8,15 +8,22 @@
  */
 
 #include <stddef.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
-#include <openssl/objects.h>
 #include <openssl/buffer.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
 #include "crypto/asn1.h"
+
 #include "asn1_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
 
 /*
  * Print routines.

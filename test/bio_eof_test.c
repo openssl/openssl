@@ -7,7 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include <openssl/bio.h>
+
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 #define TEST_FLAG_EOF_BEHAVIOUR 0x1000

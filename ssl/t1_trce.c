@@ -7,14 +7,31 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <stdint.h>
+
+#include "internal/quic_predef.h"
+#include "internal/statem.h"
+#include "internal/tlssigalgs.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/evp.h"
+#include "openssl/pem.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
 #include "ssl_local.h"
 
 #ifndef OPENSSL_NO_SSL_TRACE
 
 /* Packet trace support for OpenSSL */
 #include "internal/nelem.h"
-#include "internal/ssl_unwrap.h"
 #include "internal/quic_trace.h"
+#include "internal/ssl_unwrap.h"
 
 typedef struct {
     int num;

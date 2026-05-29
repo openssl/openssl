@@ -11,8 +11,18 @@
 #include <assert.h>
 #include <limits.h>
 #include <stdio.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #ifndef OPENSSL_NO_EC2M
 #include <openssl/ec.h>

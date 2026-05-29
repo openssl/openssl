@@ -8,9 +8,11 @@
  */
 
 #include <openssl/bio.h>
+
+#include "internal/bio_tfo.h"
 #include "internal/e_os.h"
 #include "internal/sockets.h"
-#include "internal/bio_tfo.h"
+
 #include "testutil.h"
 
 /* If OS support is added in crypto/bio/bio_tfo.h, add it here */

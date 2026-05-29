@@ -10,9 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/buffer.h>
 #include <openssl/txt_db.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/lhash.h"
+#include "openssl/safestack.h"
 
 #undef BUFSIZE
 #define BUFSIZE 512

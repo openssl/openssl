@@ -10,8 +10,9 @@
 #if !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_SECURITYCHECK_H)
 #define OSSL_PROVIDERS_COMMON_INCLUDE_PROV_SECURITYCHECK_H
 
-#include "crypto/types.h"
 #include <openssl/ec.h>
+
+#include "crypto/types.h"
 
 #include "fips/fipsindicator.h"
 

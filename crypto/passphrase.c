@@ -7,11 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/passphrase.h"
+
+#include <stddef.h>
+#include <string.h>
+
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
-#include <openssl/core_names.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
-#include "internal/passphrase.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
 
 void ossl_pw_clear_passphrase_data(struct ossl_passphrase_data_st *data)
 {

@@ -9,8 +9,17 @@
 
 #include <stdio.h>
 #include <time.h>
+
 #include "internal/cryptlib.h"
+#include "internal/nelem.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 /*
  * The quick sieve algorithm approach to weeding out primes is Philip

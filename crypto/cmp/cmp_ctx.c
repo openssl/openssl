@@ -9,8 +9,31 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "cmp_local.h"
+#include <stdarg.h>
+
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
+
+#include "internal/common.h"
+
+#include "crypto/x509.h"
+
+#include "cmp_local.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/cmp.h"
+#include "openssl/cmp_util.h"
+#include "openssl/cmperr.h"
+#include "openssl/crmf.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/http.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509v3.h"
 
 #define DEFINE_OSSL_CMP_CTX_get0(FIELD, TYPE) \
     DEFINE_OSSL_CMP_CTX_get0_NAME(FIELD, FIELD, TYPE)

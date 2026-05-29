@@ -13,6 +13,7 @@
 
 #include <openssl/core.h>
 #include <openssl/rsa.h>
+
 #include "crypto/types.h"
 
 #define RSA_MIN_MODULUS_BITS 512

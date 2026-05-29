@@ -8,10 +8,19 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/asn1t.h>
 #include <openssl/conf.h>
 #include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/objects.h"
+#include "openssl/x509.h"
+#include "openssl/x509v3err.h"
 
 ASN1_SEQUENCE(OTHERNAME) = {
     ASN1_SIMPLE(OTHERNAME, type_id, ASN1_OBJECT),

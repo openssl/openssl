@@ -9,9 +9,13 @@
 
 #include <string.h>
 
-#include "apps.h"
-#include "progs.h"
 #include <openssl/bn.h>
+
+#include "apps.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "opt.h"
+#include "progs.h"
 
 /* Consistent with RSA modulus size limit and the size of plausible individual primes */
 #define BUFSIZE 4098

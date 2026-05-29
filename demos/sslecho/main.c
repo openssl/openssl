@@ -7,16 +7,17 @@
  *  https://www.openssl.org/source/license.html
  */
 
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <signal.h>
-#include <openssl/ssl.h>
+
 #include <openssl/err.h>
+#include <openssl/ssl.h>
 #if !defined(OPENSSL_SYS_WINDOWS)
-#include <unistd.h>
-#include <sys/socket.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+#include <unistd.h>
 
 #define SOCKET int
 #define INVALID_SOCKET -1

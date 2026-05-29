@@ -23,11 +23,13 @@
    <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
 
+#include "crypto/siphash.h"
+
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/crypto.h>
 
-#include "crypto/siphash.h"
+#include <openssl/crypto.h>
 
 #define ROTL(x, b) (uint64_t)(((x) << (b)) | ((x) >> (64 - (b))))
 

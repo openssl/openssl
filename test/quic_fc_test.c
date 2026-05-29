@@ -7,8 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/quic_fc.h"
+#include <stddef.h>
+#include <stdint.h>
+#include <stdio.h>
+
+#include "internal/nelem.h"
 #include "internal/quic_error.h"
+#include "internal/quic_fc.h"
+#include "internal/time.h"
+
+#include "openssl/quic.h"
 #include "testutil.h"
 
 static int test_txfc(int is_stream)

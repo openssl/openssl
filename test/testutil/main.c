@@ -7,9 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdlib.h>
+
 #include <openssl/crypto.h>
+
 #include "../testutil.h"
+#include "opt.h"
 #include "output.h"
+#include "test/mfail/mfail.h"
 #include "tu_local.h"
 
 #if defined __has_include

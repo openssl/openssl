@@ -15,24 +15,32 @@
 
 #include <string.h>
 
-#include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/err.h>
+#include <openssl/crypto.h>
 #include <openssl/dsa.h>
-#include <openssl/params.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
+
+#include "internal/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/nelem.h"
+#include "internal/packet.h"
 #include "internal/sizes.h"
-#include "internal/cryptlib.h"
-#include "prov/providercommon.h"
+
+#include "crypto/dsa.h"
+
+#include "fips/fipsindicator.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "openssl/obj_mac.h"
+#include "prov/der_dsa.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
-#include "prov/der_dsa.h"
-#include "crypto/dsa.h"
 
 static OSSL_FUNC_signature_newctx_fn dsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn dsa_sign_init;
@@ -689,7 +697,9 @@ struct dsa_all_set_ctx_params_st {
 #define dsa_set_ctx_params_st dsa_all_set_ctx_params_st
 #define dsa_sigalg_set_ctx_params_st dsa_all_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/dsa_sig.inc"
+/* clang-format on */
 
 static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
 {

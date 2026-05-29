@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
 #include <openssl/md5.h>
+#include <openssl/opensslconf.h>
+
 #include "arch/riscv_arch.h"
 
 void ossl_md5_block_asm_data_order(MD5_CTX *c, const void *p, size_t num);

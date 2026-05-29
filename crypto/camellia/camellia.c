@@ -45,10 +45,12 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/camellia.h>
-#include "cmll_local.h"
-#include <string.h>
 #include <stdlib.h>
+#include <string.h>
+
+#include <openssl/camellia.h>
+
+#include "cmll_local.h"
 
 #define RightRotate(x, s) (((x) >> (s)) + ((x) << (32 - s)))
 #define LeftRotate(x, s) (((x) << (s)) + ((x) >> (32 - s)))

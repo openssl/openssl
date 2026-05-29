@@ -14,12 +14,29 @@
  */
 #include "internal/deprecated.h"
 
-#include <openssl/proverr.h>
 #include "cipher_aes_ocb.h"
-#include "prov/providercommon.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include <openssl/proverr.h>
+
+#include "openssl/aes.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/modes.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_ocb.inc"
+/* clang-format on */
 
 #define AES_OCB_FLAGS AEAD_FLAGS
 

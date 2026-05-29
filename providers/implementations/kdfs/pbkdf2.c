@@ -13,24 +13,40 @@
  */
 #include "internal/deprecated.h"
 
-#include <stdlib.h>
+#include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
+
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/kdf.h>
 #include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/numbers.h"
+
 #include "crypto/evp.h"
-#include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
+#include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/pbkdf2.inc"
+/* clang-format on */
+#include "fips/fipsindicator.h"
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS 112

@@ -7,20 +7,41 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/packet_quic.h"
-#include "internal/nelem.h"
-#include "internal/quic_wire.h"
-#include "internal/quic_record_rx.h"
-#include "internal/quic_ackm.h"
 #include "internal/quic_rx_depack.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
+#include "internal/common.h"
+#include "internal/nelem.h"
+#include "internal/packet.h"
+#include "internal/packet_quic.h"
+#include "internal/quic_ackm.h"
+#include "internal/quic_cfq.h"
+#include "internal/quic_channel.h"
 #include "internal/quic_error.h"
 #include "internal/quic_fc.h"
-#include "internal/quic_channel.h"
+#include "internal/quic_port.h"
+#include "internal/quic_predef.h"
+#include "internal/quic_record_rx.h"
+#include "internal/quic_ssl.h"
+#include "internal/quic_stream.h"
+#include "internal/quic_stream_map.h"
+#include "internal/quic_txp.h"
+#include "internal/quic_types.h"
+#include "internal/quic_wire.h"
+#include "internal/quic_wire_pkt.h"
 #include "internal/sockets.h"
+#include "internal/time.h"
 
-#include "quic_local.h"
-#include "quic_channel_local.h"
 #include "../ssl_local.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/quic.h"
+#include "openssl/ssl3.h"
+#include "quic_channel_local.h"
+#include "quic_local.h"
 
 /*
  * Helper functions to process different frame types.

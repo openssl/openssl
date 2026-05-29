@@ -10,14 +10,24 @@
 
 /* Tests of the EVP_KDF_CTX APIs */
 
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/core_names.h>
+
 #include "internal/numbers.h"
 #include "internal/sizes.h"
+
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
+#include "openssl/provider.h"
+#include "openssl/sha.h"
 #include "testutil.h"
 
 static EVP_KDF_CTX *get_kdfbyname_libctx(OSSL_LIB_CTX *libctx, const char *name)

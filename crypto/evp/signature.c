@@ -7,18 +7,28 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
 #include <stdio.h>
 #include <stdlib.h>
+
 #include <openssl/core_names.h>
-#include <openssl/objects.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
-#include "internal/numbers.h" /* includes SIZE_MAX */
-#include "internal/cryptlib.h"
-#include "internal/provider.h"
+#include <openssl/objects.h>
+
+#include "internal/common.h"
 #include "internal/core.h"
+#include "internal/cryptlib.h"
+#include "internal/numbers.h" /* includes SIZE_MAX */
+#include "internal/provider.h"
+#include "internal/refcount.h"
+
 #include "crypto/evp.h"
+
 #include "evp_local.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 
 static void evp_signature_free(void *data)
 {

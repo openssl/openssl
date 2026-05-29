@@ -7,8 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+#include <string.h>
+
 #include <openssl/err.h>
+
+#include "internal/err.h"
+
 #include "err_local.h"
+#include "openssl/crypto.h"
 
 /*
  * Save and restore error state.

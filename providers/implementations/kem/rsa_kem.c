@@ -12,23 +12,35 @@
  * internal use.
  */
 #include "internal/deprecated.h"
-#include "internal/nelem.h"
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
+
+#include <stddef.h>
+
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
-#include <openssl/rsa.h>
-#include <openssl/params.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
 #include <openssl/proverr.h>
-#include "crypto/rsa.h"
+#include <openssl/rsa.h>
+
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
+#include "internal/nelem.h"
+
+#include "crypto/rsa.h"
+
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/e_os2.h"
+#include "prov/implementations.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
-#include "prov/implementations.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kem/rsa_kem.inc"
+/* clang-format on */
+#include "fips/fipsindicator.h"
 
 static OSSL_FUNC_kem_newctx_fn rsakem_newctx;
 static OSSL_FUNC_kem_encapsulate_init_fn rsakem_encapsulate_init;

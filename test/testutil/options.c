@@ -7,10 +7,16 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../testutil.h"
+#include <stdarg.h>
+#include <stddef.h>
+
 #include "internal/nelem.h"
-#include "tu_local.h"
+
+#include "../testutil.h"
+#include "openssl/crypto.h"
+#include "opt.h"
 #include "output.h"
+#include "tu_local.h"
 
 static int used[100] = { 0 };
 

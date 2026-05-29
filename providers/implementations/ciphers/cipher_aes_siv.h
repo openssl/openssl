@@ -10,9 +10,10 @@
 #if !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H)
 #define OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_SIV_H
 
-#include "prov/ciphercommon.h"
 #include "crypto/aes_platform.h"
 #include "crypto/siv.h"
+
+#include "prov/ciphercommon.h"
 
 typedef struct prov_cipher_hw_aes_siv_st {
     int (*initkey)(void *ctx, const uint8_t *key, size_t keylen);

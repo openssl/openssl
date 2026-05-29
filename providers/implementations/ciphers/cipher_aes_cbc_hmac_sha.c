@@ -17,9 +17,25 @@
 /* Dispatch functions for AES_CBC_HMAC_SHA ciphers */
 
 /* For SSL3_VERSION and TLS1_VERSION */
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
+
+#include "internal/common.h"
+
 #include "cipher_aes_cbc_hmac_sha.h"
+#include "openssl/aes.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/params.h"
+#include "prov/ciphercommon.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
@@ -30,7 +46,9 @@
     };
 #else
 
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc"
+/* clang-format on */
 
 #define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)

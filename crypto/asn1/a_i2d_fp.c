@@ -8,9 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/buffer.h>
+
 #include <openssl/asn1.h>
+#include <openssl/buffer.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #ifndef NO_OLD_ASN1
 

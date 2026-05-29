@@ -8,16 +8,30 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include "fake_rsaprov.h"
+
 #include <string.h>
+
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/core_names.h>
 #include <openssl/core_object.h>
-#include <openssl/rand.h>
 #include <openssl/provider.h>
-#include "testutil.h"
-#include "fake_rsaprov.h"
+#include <openssl/rand.h>
+
 #include "internal/asn1.h"
+#include "internal/nelem.h"
+
+#include "openssl/bio.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
+#include "openssl/x509.h"
+#include "testutil.h"
 
 static OSSL_FUNC_keymgmt_new_fn fake_rsa_keymgmt_new;
 static OSSL_FUNC_keymgmt_free_fn fake_rsa_keymgmt_free;

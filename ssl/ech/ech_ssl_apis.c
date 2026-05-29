@@ -7,10 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/ssl.h>
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/ech.h>
+#include <openssl/ssl.h>
+
 #include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+
 #include "../ssl_local.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/hpke.h"
+#include "openssl/tls1.h"
+#include "openssl/x509_vfy.h"
+#include "ssl/ech/ech_local.h"
 
 int SSL_CTX_set1_echstore(SSL_CTX *ctx, OSSL_ECHSTORE *es)
 {

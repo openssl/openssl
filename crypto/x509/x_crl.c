@@ -8,10 +8,21 @@
  */
 
 #include <stdio.h>
+
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
-#include "crypto/x509.h"
 #include <openssl/x509v3.h>
+
+#include "crypto/x509.h"
+
+#include "openssl/asn1.h"
+#include "openssl/asn1err.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
 #include "x509_local.h"
 
 static int X509_REVOKED_cmp(const X509_REVOKED *const *a,

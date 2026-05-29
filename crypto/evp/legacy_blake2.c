@@ -8,6 +8,9 @@
  */
 
 #include "crypto/evp.h"
+
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
 #include "prov/blake2.h" /* diverse BLAKE2 macros */
 
 static const EVP_MD blake2b_md = {

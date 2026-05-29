@@ -33,29 +33,35 @@
  * - PEM_read_bio_{TYPE}_PUBKEY()
  */
 
-#include <stdlib.h>
-#include <string.h>
-
 /*
  * We test deprecated functions, so we need to suppress deprecation warnings.
  */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <openssl/bio.h>
-#include <openssl/evp.h>
 #include <openssl/asn1.h>
-#include <openssl/pem.h>
-#include <openssl/params.h>
-#include <openssl/encoder.h>
+#include <openssl/bio.h>
 #include <openssl/decoder.h>
 #include <openssl/dh.h>
 #include <openssl/dsa.h>
+#include <openssl/encoder.h>
+#include <openssl/evp.h>
+#include <openssl/params.h>
+#include <openssl/pem.h>
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 #include <openssl/rsa.h>
 #endif
+#include <stdlib.h>
+#include <string.h>
+
 #include "internal/nelem.h"
+
 #include "crypto/evp.h"
 
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/x509.h"
 #include "testutil.h"
 
 typedef int PEM_write_bio_of_void_protected(BIO *out, const void *obj,

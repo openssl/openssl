@@ -7,21 +7,30 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/byteorder.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
-#include <openssl/err.h>
 #include <openssl/proverr.h>
+
+#include "internal/common.h"
 #include "internal/cryptlib.h"
 #include "internal/numbers.h"
 #include "internal/sha3.h"
+
+#include "openssl/core_dispatch.h"
+#include "openssl/e_os2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
-#include "internal/common.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/digests/sha3_prov.inc"
+/* clang-format on */
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)

@@ -8,11 +8,17 @@
  */
 
 #include <stdio.h>
-#include "crypto/ctype.h"
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/asn1.h>
 
+#include "internal/cryptlib.h"
+
+#include "crypto/ctype.h"
 #include <crypto/asn1.h>
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
 
 int ASN1_PRINTABLE_type(const unsigned char *s, int len)
 {

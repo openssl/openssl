@@ -8,9 +8,11 @@
  * or in the file LICENSE in the source distribution.
  */
 #include <stdint.h>
-#include <unistd.h>
 #include <stdlib.h>
+#include <unistd.h>
+
 #include <openssl/opensslconf.h>
+
 #include "fuzzer.h"
 
 #ifndef OPENSSL_NO_FUZZ_LIBFUZZER

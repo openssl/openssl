@@ -14,10 +14,11 @@
  *
  * cc -I../../include sconnect.c -L../.. -lssl -lcrypto
  */
+#include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
+
 #include <openssl/err.h>
 #include <openssl/ssl.h>
 #if !defined(OPENSSL_SYS_WINDOWS)

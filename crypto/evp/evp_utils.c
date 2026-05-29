@@ -9,13 +9,16 @@
 
 /* Internal EVP utility functions */
 
-#include <openssl/core.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/asn1.h> /* evp_local.h needs it */
+#include <openssl/core.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/safestack.h> /* evp_local.h needs it */
+
 #include "crypto/evp.h" /* evp_local.h needs it */
+
 #include "evp_local.h"
+#include "openssl/evperr.h"
 
 /*
  * EVP_CTRL_RET_UNSUPPORTED = -1 is the returned value from any ctrl function

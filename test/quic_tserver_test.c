@@ -6,15 +6,22 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include <openssl/ssl.h>
-#include <openssl/quic.h>
+#include <netinet/in.h>
+#include <stddef.h>
+#include <sys/socket.h>
+
 #include <openssl/bio.h>
+#include <openssl/quic.h>
+#include <openssl/ssl.h>
+
 #include "internal/common.h"
-#include "internal/sockets.h"
-#include "internal/quic_tserver.h"
-#include "internal/quic_thread_assist.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_thread_assist.h"
+#include "internal/quic_tserver.h"
+#include "internal/sockets.h"
 #include "internal/time.h"
+
+#include "openssl/crypto.h"
 #include "testutil.h"
 
 static const char msg1[] = "The quick brown fox jumped over the lazy dogs.";

@@ -11,8 +11,9 @@
 #define OSSL_INTERNAL_UNICODE_H
 #pragma once
 
-#include <openssl/e_os2.h>
 #include <stdint.h>
+
+#include <openssl/e_os2.h>
 
 typedef enum {
     SURROGATE_MIN = UINT32_C(0xd800),

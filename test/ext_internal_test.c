@@ -7,13 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
 #include "internal/nelem.h"
+
 #include "../ssl/ssl_local.h"
 #include "../ssl/statem/statem_local.h"
 #include "testutil.h"
 
 #define EXT_ENTRY(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_##name, #name }
 #define EXT_EXCEPTION(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_invalid, #name }
+#undef EXT_END
 #define EXT_END(name) { TLSEXT_IDX_##name, TLSEXT_TYPE_out_of_range, #name }
 
 typedef struct {

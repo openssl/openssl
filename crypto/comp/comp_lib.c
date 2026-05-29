@@ -10,10 +10,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/objects.h>
+
 #include <openssl/comp.h>
 #include <openssl/err.h>
+#include <openssl/objects.h>
+
 #include "comp_local.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 COMP_CTX *COMP_CTX_new(COMP_METHOD *meth)
 {

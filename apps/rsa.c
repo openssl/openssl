@@ -10,22 +10,29 @@
 /* Necessary for legacy RSA public key export */
 #define OPENSSL_SUPPRESS_DEPRECATED
 
-#include <openssl/opensslconf.h>
-
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include "apps.h"
-#include "progs.h"
+
 #include <openssl/bio.h>
-#include <openssl/err.h>
-#include <openssl/rsa.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
 #include <openssl/bn.h>
 #include <openssl/encoder.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/opensslconf.h>
+#include <openssl/pem.h>
+#include <openssl/rsa.h>
+#include <openssl/x509.h>
+
+#include "apps.h"
+#include "apps_ui.h"
+#include "fmt.h"
+#include "openssl/crypto.h"
+#include "openssl/params.h"
+#include "opt.h"
+#include "progs.h"
 
 /*
  * This include is to get OSSL_KEYMGMT_SELECT_*, which feels a bit

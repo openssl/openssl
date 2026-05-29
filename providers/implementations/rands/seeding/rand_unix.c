@@ -10,15 +10,26 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE
 #endif
-#include "internal/e_os.h"
+#include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/rand.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/ipc.h>
+#include <sys/select.h>
+#include <time.h>
+
 #include <openssl/crypto.h>
-#include "crypto/rand_pool.h"
-#include "crypto/rand.h"
+#include <openssl/rand.h>
+
+#include "internal/cryptlib.h"
 #include "internal/dso.h"
+#include "internal/e_os.h"
 #include "internal/nelem.h"
+
+#include "crypto/rand.h"
+#include "crypto/rand_pool.h"
+
 #include "prov/seeding.h"
 
 #ifndef OPENSSL_SYS_UEFI
@@ -30,9 +41,9 @@
 #endif
 #endif
 #if defined(__FreeBSD__) || defined(__NetBSD__)
-#include <sys/types.h>
-#include <sys/sysctl.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
+#include <sys/types.h>
 #endif
 #if defined(__FreeBSD__) && __FreeBSD_version >= 1200061
 #include <sys/random.h>
@@ -48,11 +59,11 @@
 
 #if (defined(OPENSSL_SYS_UNIX) && !defined(OPENSSL_SYS_VXWORKS)) \
     || defined(__DJGPP__)
-#include <sys/types.h>
-#include <sys/stat.h>
 #include <fcntl.h>
-#include <unistd.h>
+#include <sys/stat.h>
 #include <sys/time.h>
+#include <sys/types.h>
+#include <unistd.h>
 
 static uint64_t get_time_stamp(void);
 

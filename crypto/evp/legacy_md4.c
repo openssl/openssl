@@ -14,7 +14,11 @@
 #include "internal/deprecated.h"
 
 #include <openssl/md4.h>
+
 #include "crypto/evp.h"
+
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
 
 static const EVP_MD md4_md = {
     NID_md4,

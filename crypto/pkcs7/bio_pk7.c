@@ -8,8 +8,10 @@
  */
 
 #include <openssl/asn1.h>
-#include <openssl/pkcs7.h>
 #include <openssl/bio.h>
+#include <openssl/pkcs7.h>
+
+#include "openssl/crypto.h"
 
 /* Streaming encode support for PKCS#7 */
 

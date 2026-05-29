@@ -10,11 +10,16 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "apps.h"
-#include "progs.h"
-#include <openssl/evp.h>
-#include <openssl/crypto.h>
+
 #include <openssl/bn.h>
+#include <openssl/crypto.h>
+#include <openssl/evp.h>
+
+#include "apps.h"
+#include "openssl/bio.h"
+#include "openssl/opensslv.h"
+#include "opt.h"
+#include "progs.h"
 
 typedef enum OPTION_choice {
     OPT_COMMON,

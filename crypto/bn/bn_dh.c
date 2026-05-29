@@ -7,11 +7,15 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "bn_local.h"
-#include "internal/nelem.h"
+#include "crypto/bn_dh.h"
 
 #include <openssl/dh.h>
-#include "crypto/bn_dh.h"
+
+#include "internal/nelem.h"
+
+#include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/crypto.h"
 
 #if BN_BITS2 == 64
 #define BN_DEF(lo, hi) (BN_ULONG)hi << 32 | lo

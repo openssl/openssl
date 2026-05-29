@@ -14,10 +14,17 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/bn.h>
-#include <openssl/rsa.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/rsaerr.h"
 
 /*
  * X9.31 Embeds the hash inside the following data structure

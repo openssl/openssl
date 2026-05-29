@@ -9,6 +9,8 @@
 
 #include <openssl/macros.h>
 
+#include "openssl/evp.h"
+
 #ifndef OPENSSL_NO_BF
 #include "crypto/evp.h"
 

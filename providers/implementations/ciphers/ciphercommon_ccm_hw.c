@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stddef.h>
+
+#include "openssl/crypto.h"
+#include "openssl/modes.h"
 #include "prov/ciphercommon.h"
 #include "prov/ciphercommon_ccm.h"
 

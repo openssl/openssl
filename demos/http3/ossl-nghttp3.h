@@ -9,9 +9,10 @@
 #ifndef OSSL_NGHTTP3_H
 #define OSSL_NGHTTP3_H
 
+#include <nghttp3/nghttp3.h>
+
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
-#include <nghttp3/nghttp3.h>
 
 /*
  * ossl-nghttp3: Demo binding of nghttp3 to OpenSSL QUIC

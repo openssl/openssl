@@ -27,20 +27,30 @@
  * So we handle the server side manually. In a session resume there isn't
  * much to be done anyway.
  */
+#include <stdint.h>
 #include <string.h>
+#include <time.h>
 
-#include <openssl/core_names.h>
-#include <openssl/params.h>
-#include <openssl/opensslconf.h>
 #include <openssl/bio.h>
+#include <openssl/core_names.h>
 #include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
-#include <openssl/rand.h>
+#include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include "internal/packet.h"
+#include <openssl/opensslconf.h>
+#include <openssl/params.h>
+#include <openssl/rand.h>
+#include <openssl/ssl.h>
+
 #include "internal/nelem.h"
+#include "internal/packet.h"
+
+#include "openssl/core.h"
+#include "openssl/dtls1.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/sha.h"
+#include "openssl/ssl3.h"
+#include "openssl/tls1.h"
 #include "testutil.h"
 
 /* For DTLS1_BAD_VER packets the MAC doesn't include the handshake header */

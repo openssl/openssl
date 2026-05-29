@@ -11,11 +11,13 @@
 #define OSSL_PROV_CIPHERCOMMON_H
 #pragma once
 
-#include <openssl/params.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
+#include <openssl/params.h>
+
 #include "internal/cryptlib.h"
+
 #include "crypto/modes.h"
 
 #define MAXCHUNK ((size_t)1 << 30)
@@ -193,6 +195,7 @@ void ossl_cipher_generic_initkey(void *vctx, size_t kbits, size_t blkbits,
 
 #if defined(FIPS_MODULE)
 #include "internal/fips.h"
+
 #include "prov/provider_ctx.h"
 #define CIPHER_PROV_CHECK(provctx, name)                  \
     if (!ossl_prov_is_running())                          \

@@ -15,6 +15,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/ripemd.h>
+
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 

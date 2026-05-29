@@ -12,6 +12,7 @@
 #define OSSL_LIBCRYPTO_PROPERTY_PROPERTY_LOCAL_H
 
 #include <openssl/crypto.h>
+
 #include "internal/property.h"
 
 typedef int OSSL_PROPERTY_IDX;

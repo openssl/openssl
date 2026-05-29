@@ -6,11 +6,12 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
-#include "ossl-nghttp3.h"
+#include <netinet/in.h>
+#include <sys/socket.h>
+
 #include <openssl/err.h>
 
-#include <sys/socket.h>
-#include <netinet/in.h>
+#include "ossl-nghttp3.h"
 
 static int done;
 

@@ -7,17 +7,26 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <errno.h>
 #include <stdio.h>
 #include <time.h>
-#include <errno.h>
+
+#include <openssl/buffer.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "internal/cryptlib.h"
-#include <openssl/buffer.h>
-#include <openssl/x509.h>
-#include <openssl/pem.h>
-#include "x509_local.h"
 
 #include <crypto/asn1.h>
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/pemerr.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
+#include "openssl/x509err.h"
+#include "x509_local.h"
 
 static int by_file_ctrl(X509_LOOKUP *ctx, int cmd, const char *argc,
     long argl, char **ret);

@@ -13,21 +13,33 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/objects.h>
 #include <openssl/params.h>
-#include <openssl/err.h>
+
+#include "openssl/asn1.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/ecerr.h"
+#include "openssl/obj_mac.h"
 #ifndef FIPS_MODULE
 #include <openssl/x509.h>
 #endif
-#include "crypto/bn.h"
-#include "crypto/ec.h"
-#include "ec_local.h"
 #include "internal/e_os.h"
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
+#include "crypto/bn.h"
+#include "crypto/ec.h"
 #include <crypto/asn1.h>
+
+#include "ec_local.h"
 
 /* Mapping between a flag and a name */
 static const OSSL_ITEM encoding_nameid_map[] = {

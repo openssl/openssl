@@ -13,7 +13,11 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include "cipher_rc4.h"
+#include "openssl/rc4.h"
+#include "prov/ciphercommon.h"
 
 static int cipher_hw_rc4_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)

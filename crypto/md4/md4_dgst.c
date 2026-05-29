@@ -14,8 +14,15 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
+#include <string.h>
+
 #include <openssl/opensslv.h>
+
 #include "md4_local.h"
+#include "openssl/md4.h"
+/* clang-format off */
+#include "crypto/md32_common.inc"
+/* clang-format on */
 
 /*
  * Implemented from RFC1186 The MD4 Message-Digest Algorithm

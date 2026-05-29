@@ -12,6 +12,7 @@
 
 #include "internal/common.h"
 #include "internal/numbers.h"
+
 #include "openssl/sha.h"
 
 /* The current largest case is for SHA3-224 */

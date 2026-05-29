@@ -12,10 +12,16 @@
  * Test CMS DER parsing.
  */
 
+#include <limits.h>
+#include <stddef.h>
+#include <stdint.h>
+
 #include <openssl/bio.h>
 #include <openssl/cms.h>
 #include <openssl/err.h>
+
 #include "fuzzer.h"
+#include "openssl/crypto.h"
 
 int FuzzerInitialize(int *argc, char ***argv)
 {

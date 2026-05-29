@@ -10,9 +10,11 @@
 #include "internal/deprecated.h"
 
 #include "cipher_aes_cbc_hmac_sha_etm.h"
-#include "prov/providercommon.h"
+
+#include "openssl/core.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
+#include "prov/providercommon.h"
 
 #ifndef AES_CBC_HMAC_SHA_ETM_CAPABLE
 #define IMPLEMENT_CIPHER(nm, sub, kbits, blkbits, ivbits, flags) \
@@ -21,7 +23,9 @@
     };
 #else
 
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc"
+/* clang-format on */
 
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;

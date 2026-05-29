@@ -7,21 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
-#include <string.h>
 #include <ctype.h>
-#include <limits.h>
 #include <errno.h>
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-#include <openssl/crypto.h>
-#include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/ssl.h>
-#include <openssl/err.h>
 #include <openssl/conf.h>
-#include "testutil.h"
+#include <openssl/crypto.h>
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
 
 #include "internal/nelem.h"
+
+#include "openssl/bio.h"
+#include "openssl/e_os2.h"
+#include "openssl/pem.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
+#include "testutil.h"
 
 #define _UC(c) ((unsigned char)(c))
 

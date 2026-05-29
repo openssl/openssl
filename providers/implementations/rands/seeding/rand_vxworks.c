@@ -7,15 +7,18 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/opensslconf.h>
-
-#include <openssl/rand.h>
-#include "crypto/rand_pool.h"
-#include "crypto/rand.h"
-#include "internal/cryptlib.h"
-#include "prov/seeding.h"
-#include <version.h>
 #include <taskLib.h>
+#include <version.h>
+
+#include <openssl/opensslconf.h>
+#include <openssl/rand.h>
+
+#include "internal/cryptlib.h"
+
+#include "crypto/rand.h"
+#include "crypto/rand_pool.h"
+
+#include "prov/seeding.h"
 
 #if defined(OPENSSL_RAND_SEED_NONE)
 /* none means none */

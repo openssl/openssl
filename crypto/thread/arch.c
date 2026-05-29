@@ -7,8 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
+
 #include <openssl/configuration.h>
+
 #include <internal/thread_arch.h>
+
+#include "openssl/crypto.h"
 
 CRYPTO_THREAD *ossl_crypto_thread_native_start(CRYPTO_THREAD_ROUTINE routine,
     void *data, int joinable)

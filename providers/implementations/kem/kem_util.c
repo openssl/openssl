@@ -8,8 +8,10 @@
  */
 
 #include <string.h> /* for memcpy() */
+
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
+
 #include "prov/eckem.h"
 
 typedef struct {

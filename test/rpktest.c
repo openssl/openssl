@@ -8,8 +8,15 @@
  */
 #include <openssl/ssl.h>
 
-#include "helpers/ssltestlib.h"
 #include "internal/dane.h"
+
+#include "helpers/ssltestlib.h"
+#include "openssl/crypto.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/provider.h"
+#include "openssl/tls1.h"
+#include "openssl/x509.h"
+#include "openssl/x509_vfy.h"
 #include "testutil.h"
 
 #undef OSSL_NO_USABLE_TLS1_3

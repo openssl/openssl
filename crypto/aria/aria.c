@@ -18,11 +18,13 @@
  * Public domain version is distributed above.
  */
 
-#include <openssl/e_os2.h>
 #include "crypto/aria.h"
 
 #include <assert.h>
+#include <stdint.h>
 #include <string.h>
+
+#include <openssl/e_os2.h>
 
 #ifndef OPENSSL_SMALL_FOOTPRINT
 

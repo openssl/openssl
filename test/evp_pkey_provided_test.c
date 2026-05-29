@@ -8,17 +8,31 @@
  */
 
 #include <string.h> /* memset */
-#include <openssl/evp.h>
-#include <openssl/pem.h>
-#include <openssl/encoder.h>
-#include <openssl/provider.h>
-#include <openssl/param_build.h>
+
 #include <openssl/core_names.h>
+#include <openssl/encoder.h>
+#include <openssl/evp.h>
+#include <openssl/param_build.h>
+#include <openssl/pem.h>
+#include <openssl/provider.h>
 #include <openssl/sha.h>
+
+#include "internal/nelem.h"
+
+#include "crypto/bn_dh.h" /* _bignum_ffdhe2048_p */
 #include "crypto/ecx.h"
 #include "crypto/evp.h" /* For the internal API */
-#include "crypto/bn_dh.h" /* _bignum_ffdhe2048_p */
-#include "internal/nelem.h"
+
+#include "openssl/bio.h"
+#include "openssl/bn.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/ec.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/params.h"
 #include "testutil.h"
 
 static char *datadir = NULL;

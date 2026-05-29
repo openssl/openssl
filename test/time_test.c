@@ -7,8 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "testutil.h"
 #include "internal/time.h"
+
+#include "testutil.h"
 
 static int test_time_to_timeval(void)
 {

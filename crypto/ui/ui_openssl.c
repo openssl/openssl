@@ -7,10 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
 #include <openssl/e_os2.h>
 #include <openssl/err.h>
 #include <openssl/ui.h>
+
+#include "internal/e_os.h"
+
+#include "openssl/crypto.h"
+#include "openssl/uierr.h"
 
 #ifndef OPENSSL_NO_UI_CONSOLE
 /*
@@ -28,10 +32,10 @@
 #define _POSIX_C_SOURCE 2
 #endif
 #endif
+#include <errno.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
-#include <errno.h>
 
 #if !defined(OPENSSL_SYS_MSDOS) && !defined(OPENSSL_SYS_VMS)
 #include <unistd.h>
@@ -49,8 +53,9 @@
 #endif
 #endif
 
-#include "ui_local.h"
 #include "internal/cryptlib.h"
+
+#include "ui_local.h"
 
 #ifdef OPENSSL_SYS_VMS /* prototypes for sys$whatever */
 #include <starlet.h>
@@ -136,10 +141,10 @@
 #endif
 
 #ifdef OPENSSL_SYS_VMS
-#include <ssdef.h>
-#include <iodef.h>
-#include <ttdef.h>
 #include <descrip.h>
+#include <iodef.h>
+#include <ssdef.h>
+#include <ttdef.h>
 struct IOSB {
     short iosb$w_value;
     short iosb$w_count;

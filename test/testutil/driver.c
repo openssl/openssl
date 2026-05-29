@@ -7,20 +7,25 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "../testutil.h"
-#include "output.h"
-#include "tu_local.h"
-
-#include <string.h>
 #include <assert.h>
+#include <stdarg.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-#include "internal/nelem.h"
 #include <openssl/bio.h>
 
-#include "platform.h" /* From libapps */
+#include "internal/nelem.h"
 
+#include "../testutil.h"
 #include "mfail.h"
-#include <time.h>
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "opt.h"
+#include "output.h"
+#include "platform.h" /* From libapps */
+#include "test/mfail/mfail.h"
+#include "tu_local.h"
 
 #if defined(_WIN32) && !defined(__BORLANDC__)
 #define strdup _strdup

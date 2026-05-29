@@ -37,13 +37,14 @@
  * work which got its smarts from Daniel J. Bernstein's work on the same.
  */
 
-#include <openssl/e_os2.h>
-
 #include <string.h>
+
+#include <openssl/e_os2.h>
 #include <openssl/err.h>
-#include "ec_local.h"
 
 #include "internal/numbers.h"
+
+#include "ec_local.h"
 
 #ifndef INT128_MAX
 #error "Your compiler doesn't appear to support 128-bit integer types"

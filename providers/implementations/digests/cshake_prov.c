@@ -15,18 +15,31 @@
  * xof length MUST be set (since the initial implementation shipped with BAD
  * defaults - and the only safe way to fix it was to make the user set the value)
  */
+#include <stdint.h>
 #include <string.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
-#include <openssl/proverr.h>
+
 #include <openssl/core_names.h>
-#include "crypto/sha.h"
-#include "prov/provider_ctx.h"
-#include "prov/digestcommon.h"
-#include "prov/implementations.h"
+#include <openssl/err.h>
+#include <openssl/evp.h>
+#include <openssl/proverr.h>
+
 #include "internal/common.h"
 #include "internal/sha3.h"
+
+#include "crypto/sha.h"
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/params.h"
+#include "prov/digestcommon.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/digests/cshake_prov.inc"
+/* clang-format on */
 
 /*
  * Length encoding will be a 1 byte size + length in bits (3 bytes max)

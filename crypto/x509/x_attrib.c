@@ -7,15 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include <openssl/objects.h>
+
 #include <openssl/asn1t.h>
+#include <openssl/objects.h>
 #include <openssl/x509.h>
-#include "x509_local.h"
-#include <crypto/x509.h>
+
+#include "internal/cryptlib.h"
 
 #include <crypto/asn1.h>
+#include <crypto/x509.h>
+
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "x509_local.h"
 
 /*-
  * X509_ATTRIBUTE: this has the following form:

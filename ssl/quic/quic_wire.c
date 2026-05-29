@@ -7,12 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/quic_wire.h"
+
+#include <stddef.h>
+#include <stdint.h>
+#include <string.h>
+
 #include <openssl/macros.h>
 #include <openssl/objects.h>
-#include "internal/quic_ssl.h"
-#include "internal/quic_vlint.h"
-#include "internal/quic_wire.h"
+
+#include "internal/packet.h"
+#include "internal/packet_quic.h"
 #include "internal/quic_error.h"
+#include "internal/quic_ssl.h"
+#include "internal/quic_types.h"
+#include "internal/quic_vlint.h"
+#include "internal/safe_math.h"
+#include "internal/time.h"
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 

@@ -13,8 +13,9 @@
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_MD5
-#include <openssl/e_os2.h>
 #include <stddef.h>
+
+#include <openssl/e_os2.h>
 #include <openssl/md5.h>
 #include <openssl/sha.h>
 

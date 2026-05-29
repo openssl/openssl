@@ -7,11 +7,21 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include <stdint.h>
+
 #include <openssl/trace.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 
+#include "internal/cryptlib.h"
+
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/x509_vfy.h"
 #include "pcy_local.h"
 
 /*

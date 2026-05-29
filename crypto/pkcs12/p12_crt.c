@@ -8,8 +8,20 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/pkcs12.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/obj_mac.h"
+#include "openssl/pkcs12err.h"
+#include "openssl/pkcs7.h"
+#include "openssl/safestack.h"
+#include "openssl/x509.h"
 #include "p12_local.h"
 
 static int pkcs12_add_bag(STACK_OF(PKCS12_SAFEBAG) **pbags,

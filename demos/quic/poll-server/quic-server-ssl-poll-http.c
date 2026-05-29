@@ -43,10 +43,10 @@
  *    - rtf is used for response text buffers which carry HTTP/1.0 headers
  *      (response text full)
  */
-#include <string.h>
-#include <stdio.h>
 #include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 #include <sys/types.h>
 #include <time.h>
 
@@ -56,18 +56,18 @@
 #include <winsock2.h>
 #else /* Linux/Unix */
 #include <err.h>
-#include <sys/socket.h>
-#include <sys/select.h>
-#include <netinet/in.h>
-#include <unistd.h>
-#include <poll.h>
 #include <libgen.h>
+#include <netinet/in.h>
+#include <poll.h>
+#include <sys/select.h>
+#include <sys/socket.h>
+#include <unistd.h>
 #endif
 
 #include <openssl/bio.h>
-#include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/quic.h>
+#include <openssl/ssl.h>
 
 #include "internal/list.h"
 

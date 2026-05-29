@@ -7,11 +7,12 @@
  * https://www.openssl.org/source/license.html
  */
 #include "ossl-nghttp3.h"
-#include <openssl/err.h>
-#include <assert.h>
 
-#include <sys/socket.h>
+#include <assert.h>
 #include <netinet/in.h>
+#include <sys/socket.h>
+
+#include <openssl/err.h>
 
 #define ARRAY_LEN(x) (sizeof(x) / sizeof((x)[0]))
 

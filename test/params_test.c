@@ -12,13 +12,19 @@
  * This program tests the use of OSSL_PARAM, currently in raw form.
  */
 
+#include <stdint.h>
 #include <string.h>
+
 #include <openssl/bn.h>
 #include <openssl/core.h>
 #include <openssl/err.h>
 #include <openssl/params.h>
-#include "internal/numbers.h"
+
 #include "internal/nelem.h"
+#include "internal/numbers.h"
+
+#include "openssl/crypto.h"
+#include "openssl/opensslv.h"
 #include "testutil.h"
 
 /*-

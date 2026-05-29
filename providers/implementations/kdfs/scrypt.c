@@ -7,25 +7,39 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdlib.h>
+#include <limits.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
+
+#include <openssl/core_names.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/kdf.h>
-#include <openssl/err.h>
-#include <openssl/core_names.h>
 #include <openssl/proverr.h>
-#include "crypto/evp.h"
+
 #include "internal/common.h"
 #include "internal/numbers.h"
+
+#include "crypto/evp.h"
+
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 #include "prov/implementations.h"
 #include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
 #include "prov/provider_util.h"
+#include "prov/providercommon.h"
 
 #ifndef OPENSSL_NO_SCRYPT
 
+/* clang-format off */
 #include "providers/implementations/kdfs/scrypt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_kdf_newctx_fn kdf_scrypt_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_scrypt_dup;

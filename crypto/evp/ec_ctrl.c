@@ -9,11 +9,21 @@
 
 #include "internal/deprecated.h"
 
+#include <limits.h>
+#include <stddef.h>
+
 #include <openssl/core_names.h>
-#include <openssl/err.h>
 #include <openssl/ec.h>
-#include "crypto/evp.h"
+#include <openssl/err.h>
+
 #include "crypto/ec.h"
+#include "crypto/evp.h"
+
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/evp.h"
+#include "openssl/evperr.h"
+#include "openssl/params.h"
 
 /*
  * This file is meant to contain functions to provide EVP_PKEY support for EC

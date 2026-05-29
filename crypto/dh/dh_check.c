@@ -14,11 +14,22 @@
 #include "internal/deprecated.h"
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
-#include "dh_local.h"
+
+#include "internal/cryptlib.h"
+#include "internal/ffc.h"
+
 #include "crypto/dh.h"
+
+#include "dh_local.h"
+#include "openssl/core.h"
+#include "openssl/crypto.h"
+#include "openssl/dh.h"
+#include "openssl/dherr.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
 
 /*-
  * Check that p and g are suitable enough

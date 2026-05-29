@@ -13,7 +13,11 @@
  */
 #include "internal/deprecated.h"
 
+#include <stddef.h>
+
 #include "cipher_cast.h"
+#include "openssl/cast.h"
+#include "prov/ciphercommon.h"
 
 static int cipher_hw_cast5_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)

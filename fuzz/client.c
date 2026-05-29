@@ -8,15 +8,24 @@
  * or in the file LICENSE in the source distribution.
  */
 
+#include <limits.h>
+#include <stdint.h>
 #include <time.h>
-#include <openssl/rand.h>
-#include <openssl/ssl.h>
-#include <openssl/rsa.h>
+
+#include <openssl/dh.h>
 #include <openssl/dsa.h>
 #include <openssl/ec.h>
-#include <openssl/dh.h>
 #include <openssl/err.h>
+#include <openssl/rand.h>
+#include <openssl/rsa.h>
+#include <openssl/ssl.h>
+
 #include "fuzzer.h"
+#include "openssl/bio.h"
+#include "openssl/comp.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "openssl/tls1.h"
 
 /* unused, to avoid warning. */
 static int idx;

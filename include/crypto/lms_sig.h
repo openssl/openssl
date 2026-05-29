@@ -19,8 +19,9 @@
 #define OSSL_CRYPTO_LMS_SIG_H
 #pragma once
 #ifndef OPENSSL_NO_LMS
-#include "lms.h"
 #include "internal/packet.h"
+
+#include "lms.h"
 
 /* The values defined for 8 byte TAGS */
 extern const uint16_t OSSL_LMS_D_PBLC; /* 8080 */

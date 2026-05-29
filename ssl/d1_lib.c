@@ -7,14 +7,32 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/e_os.h"
-#include "internal/e_winsock.h" /* struct timeval for DTLS_CTRL_GET_TIMEOUT */
 #include <stdio.h>
+#include <string.h>
+
 #include <openssl/objects.h>
 #include <openssl/rand.h>
-#include "ssl_local.h"
-#include "internal/time.h"
+
+#include "internal/e_os.h"
+#include "internal/e_winsock.h" /* struct timeval for DTLS_CTRL_GET_TIMEOUT */
+#include "internal/packet.h"
+#include "internal/recordmethod.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/statem.h"
+#include "internal/time.h"
+
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/dtls1.h"
+#include "openssl/err.h"
+#include "openssl/obj_mac.h"
+#include "openssl/prov_ssl.h"
+#include "openssl/ssl.h"
+#include "openssl/ssl3.h"
+#include "openssl/sslerr.h"
+#include "openssl/tls1.h"
+#include "ssl/record/record.h"
+#include "ssl_local.h"
 
 static int dtls1_handshake_write(SSL_CONNECTION *s);
 static const size_t dtls1_link_min_mtu = 256;

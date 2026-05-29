@@ -11,6 +11,7 @@
 #define OSSL_LIBCRYPTO_ML_DSA_ML_DSA_VECTOR_H
 
 #include <assert.h>
+
 #include "ml_dsa_poly.h"
 
 struct vector_st {

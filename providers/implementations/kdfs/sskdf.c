@@ -34,25 +34,36 @@
  * algorithm, especially for H(x) = HMAC and H(x) = KMAC.
  * Test vectors for H(x) = Hash are indirectly used by CAVS KAS tests.
  */
-#include <stdlib.h>
 #include <stdarg.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <string.h>
-#include <openssl/hmac.h>
-#include <openssl/evp.h>
-#include <openssl/kdf.h>
+
 #include <openssl/core_names.h>
+#include <openssl/evp.h>
+#include <openssl/hmac.h>
+#include <openssl/kdf.h>
 #include <openssl/params.h>
 #include <openssl/proverr.h>
+
 #include "internal/cryptlib.h"
 #include "internal/fips.h"
 #include "internal/numbers.h"
-#include "crypto/evp.h"
-#include "prov/provider_ctx.h"
-#include "prov/providercommon.h"
-#include "prov/implementations.h"
-#include "prov/provider_util.h"
-#include "prov/securitycheck.h"
 #include "internal/params.h"
+
+#include "crypto/evp.h"
+
+#include "fips/fipsindicator.h"
+#include "openssl/core.h"
+#include "openssl/core_dispatch.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "prov/implementations.h"
+#include "prov/provider_ctx.h"
+#include "prov/provider_util.h"
+#include "prov/providercommon.h"
+#include "prov/securitycheck.h"
 
 #define SSKDF_MAX_INLEN (1 << 30)
 #define SSKDF_MAX_INFOS 5
@@ -110,7 +121,9 @@ static OSSL_FUNC_kdf_set_ctx_params_fn sskdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn sskdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn sskdf_get_ctx_params;
 #define sskdf_set_ctx_params_st sskdf_all_set_ctx_params_st
+/* clang-format off */
 #include "providers/implementations/kdfs/sskdf.inc"
+/* clang-format on */
 #endif
 #ifndef OPENSSL_NO_X963KDF
 static OSSL_FUNC_kdf_derive_fn x963kdf_derive;
@@ -119,7 +132,9 @@ static OSSL_FUNC_kdf_set_ctx_params_fn x963kdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn x963kdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn x963kdf_get_ctx_params;
 #define x963kdf_set_ctx_params_st sskdf_all_set_ctx_params_st
+/* clang-format off */
 #include "providers/implementations/kdfs/x963kdf.inc"
+/* clang-format on */
 #endif
 /*
  * Refer to https://csrc.nist.gov/publications/detail/sp/800-56c/rev-1/final

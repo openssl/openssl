@@ -7,11 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "fips/fipsindicator.h"
+
+#include <openssl/core_names.h>
 #include <openssl/indicator.h>
 #include <openssl/params.h>
-#include <openssl/core_names.h>
+
 #include "internal/common.h" /* for ossl_assert() */
-#include "fips/fipsindicator.h"
 
 void ossl_FIPS_IND_init(OSSL_FIPS_IND *ind)
 {

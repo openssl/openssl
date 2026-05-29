@@ -9,13 +9,19 @@
 
 #include <string.h>
 
-#include "apps.h"
-#include "progs.h"
 #include <openssl/bio.h>
+#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
-#include <openssl/core_names.h>
+
+#include "app_libctx.h"
+#include "apps.h"
+#include "fmt.h"
+#include "openssl/crypto.h"
+#include "openssl/safestack.h"
+#include "opt.h"
+#include "progs.h"
 
 #undef BUFSIZE
 #define BUFSIZE 1024 * 8

@@ -13,8 +13,10 @@
 #define OSSL_CRYPTO_CMP_LOCAL_H
 
 #include <openssl/cmp.h>
-#include "crypto/x509.h"
+
 #include "internal/cryptlib.h"
+
+#include "crypto/x509.h"
 
 #define IS_NULL_DN(name) (X509_NAME_get_entry(name, 0) == NULL)
 

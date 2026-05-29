@@ -15,10 +15,13 @@
 
 #include <openssl/asn1.h>
 #include <openssl/x509.h>
-#include "testutil.h"
+
 #include "internal/nelem.h"
 
 #include <crypto/asn1.h>
+
+#include "openssl/crypto.h"
+#include "testutil.h"
 
 typedef struct {
     const char *data;

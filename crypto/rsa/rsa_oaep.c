@@ -26,14 +26,20 @@
  */
 #include "internal/deprecated.h"
 
-#include "internal/constant_time.h"
-
 #include <stdio.h>
-#include "internal/cryptlib.h"
+#include <string.h>
+
 #include <openssl/bn.h>
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/sha.h>
+
+#include "internal/constant_time.h"
+#include "internal/cryptlib.h"
+
+#include "openssl/crypto.h"
+#include "openssl/err.h"
+#include "openssl/rsaerr.h"
 #include "rsa_local.h"
 
 int RSA_padding_add_PKCS1_OAEP(unsigned char *to, int tlen,

@@ -7,9 +7,22 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "bio_local.h"
+
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include "bio_local.h"
+#include <string.h>
+#include <sys/poll.h>
+#include <time.h>
+
+#include "internal/common.h"
+
+#include "openssl/bio.h"
+#include "openssl/bioerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 #ifndef OPENSSL_NO_SOCK
 #define SOCKET_PROTOCOL IPPROTO_TCP
@@ -25,8 +38,8 @@ static int wsa_init_done = 0;
 #endif
 
 #if defined __TANDEM
-#include <unistd.h>
 #include <sys/time.h> /* select */
+#include <unistd.h>
 #elif defined _WIN32
 #include <winsock.h> /* for type fd_set */
 #else

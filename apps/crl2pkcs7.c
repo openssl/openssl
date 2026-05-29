@@ -10,14 +10,23 @@
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>
-#include "apps.h"
-#include "progs.h"
+
 #include <openssl/err.h>
 #include <openssl/evp.h>
-#include <openssl/x509.h>
-#include <openssl/pkcs7.h>
-#include <openssl/pem.h>
 #include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/pkcs7.h>
+#include <openssl/x509.h>
+
+#include "apps.h"
+#include "fmt.h"
+#include "openssl/asn1.h"
+#include "openssl/bio.h"
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
+#include "openssl/safestack.h"
+#include "opt.h"
+#include "progs.h"
 
 static int add_certs_from_file(STACK_OF(X509) *stack, char *certfile);
 

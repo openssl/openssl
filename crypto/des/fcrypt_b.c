@@ -15,6 +15,8 @@
 
 #include <stdio.h>
 
+#include "openssl/des.h"
+
 #define DES_FCRYPT
 #include "des_local.h"
 #undef DES_FCRYPT

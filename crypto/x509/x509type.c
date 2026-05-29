@@ -8,10 +8,15 @@
  */
 
 #include <stdio.h>
-#include "internal/cryptlib.h"
+
 #include <openssl/evp.h>
 #include <openssl/objects.h>
 #include <openssl/x509.h>
+
+#include "internal/cryptlib.h"
+
+#include "openssl/crypto.h"
+#include "openssl/obj_mac.h"
 
 int X509_certificate_type(const X509 *x, const EVP_PKEY *pkey)
 {

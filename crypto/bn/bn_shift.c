@@ -8,8 +8,17 @@
  */
 
 #include <assert.h>
+#include <string.h>
+
 #include "internal/cryptlib.h"
+
+#include "crypto/bn.h"
+
 #include "bn_local.h"
+#include "openssl/bn.h"
+#include "openssl/bnerr.h"
+#include "openssl/crypto.h"
+#include "openssl/err.h"
 
 int BN_lshift1(BIGNUM *r, const BIGNUM *a)
 {

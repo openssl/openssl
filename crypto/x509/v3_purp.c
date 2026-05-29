@@ -7,16 +7,36 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdint.h>
 #include <stdio.h>
-#include "internal/cryptlib.h"
-#include "internal/numbers.h"
-#include <openssl/x509v3.h>
+#include <string.h>
+
 #include <openssl/x509_vfy.h>
-#include "crypto/x509.h"
-#include "internal/tsan_assist.h"
-#include "x509_local.h"
-#include "crypto/objects/obj_dat.h"
+#include <openssl/x509v3.h>
+
+#include "internal/cryptlib.h"
 #include "internal/hashfunc.h"
+#include "internal/nelem.h"
+#include "internal/numbers.h"
+#include "internal/tsan_assist.h"
+
+#include "crypto/objects/obj_dat.h"
+#include "crypto/x509.h"
+
+#include "openssl/asn1.h"
+#include "openssl/crypto.h"
+#include "openssl/e_os2.h"
+#include "openssl/err.h"
+#include "openssl/evp.h"
+#include "openssl/lhash.h"
+#include "openssl/obj_mac.h"
+#include "openssl/objects.h"
+#include "openssl/safestack.h"
+#include "openssl/sha.h"
+#include "openssl/x509.h"
+#include "openssl/x509err.h"
+#include "openssl/x509v3err.h"
+#include "x509_local.h"
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,

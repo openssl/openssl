@@ -11,6 +11,7 @@
 #define OSSL_JSON_ENC_H
 
 #include <stdbool.h>
+
 #include <openssl/bio.h>
 
 /*

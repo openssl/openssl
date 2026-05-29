@@ -7,11 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <string.h>
-#include <stdlib.h> /* For NULL */
-#include <openssl/macros.h> /* For NON_EMPTY_TRANSLATION_UNIT */
-#include <openssl/e_os2.h>
 #include "simpledynamic.h"
+
+#include <dlfcn.h>
+#include <stdlib.h> /* For NULL */
+#include <string.h>
+
+#include <openssl/e_os2.h>
+#include <openssl/macros.h> /* For NON_EMPTY_TRANSLATION_UNIT */
 
 #if defined(DSO_DLFCN) || defined(DSO_VMS)
 

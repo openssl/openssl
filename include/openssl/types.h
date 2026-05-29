@@ -31,8 +31,8 @@ extern "C" {
 #endif
 
 #include <openssl/e_os2.h>
-#include <openssl/safestack.h>
 #include <openssl/macros.h>
+#include <openssl/safestack.h>
 
 typedef struct ossl_provider_st OSSL_PROVIDER; /* Provider Object */
 
