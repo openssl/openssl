@@ -770,6 +770,10 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock, int *lock_failed)
 {
     void *initial;
+    int lock_sink;
+
+    if (lock_failed == NULL)
+        lock_failed = &lock_sink;
 
     *lock_failed = 0;
     /* Load the current pointer value */
