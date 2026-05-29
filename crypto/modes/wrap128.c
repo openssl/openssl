@@ -18,14 +18,7 @@
 
 /** RFC 3394 section 2.2.3.1 Default Initial Value */
 static const unsigned char default_iv[] = {
-    0xA6,
-    0xA6,
-    0xA6,
-    0xA6,
-    0xA6,
-    0xA6,
-    0xA6,
-    0xA6,
+    0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6, 0xA6
 };
 
 /** RFC 5649 section 3 Alternative Initial Value 32-bit constant */

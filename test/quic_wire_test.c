@@ -1625,27 +1625,19 @@ err:
 
 /* is_minimal=0 test */
 static const unsigned char non_minimal_1[] = {
-    0x40,
-    0x00,
+    0x40, 0x00
 };
 
 static const unsigned char non_minimal_2[] = {
-    0x40,
-    0x3F,
+    0x40, 0x3F
 };
 
 static const unsigned char non_minimal_3[] = {
-    0x80,
-    0x00,
-    0x00,
-    0x00,
+    0x80, 0x00, 0x00, 0x00
 };
 
 static const unsigned char non_minimal_4[] = {
-    0x80,
-    0x00,
-    0x3F,
-    0xFF,
+    0x80, 0x00, 0x3F, 0xFF
 };
 
 static const unsigned char non_minimal_5[] = {
