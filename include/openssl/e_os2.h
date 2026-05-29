@@ -58,6 +58,7 @@ extern "C" {
 #define OPENSSL_SYS_WIN32_CYGWIN
 #else
 #if defined(_WIN32) || defined(OPENSSL_SYS_WIN32)
+#include "windows.h"
 #undef OPENSSL_SYS_UNIX
 #if !defined(OPENSSL_SYS_WIN32)
 #define OPENSSL_SYS_WIN32
