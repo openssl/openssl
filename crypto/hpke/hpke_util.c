@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/hpke.h>
+#include <openssl/bio.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include "crypto/ecx.h"
@@ -440,6 +441,57 @@ static uint16_t synonyms_name2id(const char *st, const synonymttab_t *synp,
         }
     }
     return 0;
+}
+
+/*
+ * @brief look for an id in the synonym tables, and return its name
+ * @param id is the id to look for
+ * @param synp is the synonyms labels array
+ * @param arrsize is the previous array size
+ * @return NULL when not found, else the canonical name string
+ */
+static const char *synonyms_id2name(uint16_t id, const synonymttab_t *synp,
+    size_t arrsize)
+{
+    size_t i;
+
+    for (i = 0; i < arrsize; ++i) {
+        if (synp[i].id == id)
+            return synp[i].synonyms[0];
+    }
+    return NULL;
+}
+
+/*
+ * @brief map a HPKE suite to a string based on synonym tables
+ * @param suite is the suite to convert
+ * @return a newly allocated string or NULL on failure
+ *
+ * The caller must OPENSSL_free() the returned string.
+ */
+char *ossl_hpke_suite2str(OSSL_HPKE_SUITE suite)
+{
+    const char *kemstr, *kdfstr, *aeadstr;
+    char *ret = NULL;
+    size_t len;
+
+    kemstr = synonyms_id2name(suite.kem_id, kemstrtab,
+        OSSL_NELEM(kemstrtab));
+    kdfstr = synonyms_id2name(suite.kdf_id, kdfstrtab,
+        OSSL_NELEM(kdfstrtab));
+    aeadstr = synonyms_id2name(suite.aead_id, aeadstrtab,
+        OSSL_NELEM(aeadstrtab));
+    if (kemstr == NULL || kdfstr == NULL || aeadstr == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return NULL;
+    }
+    /* "KEM,KDF,AEAD" + NUL */
+    len = strlen(kemstr) + 1 + strlen(kdfstr) + 1 + strlen(aeadstr) + 1;
+    ret = OPENSSL_malloc(len);
+    if (ret == NULL)
+        return NULL;
+    BIO_snprintf(ret, len, "%s,%s,%s", kemstr, kdfstr, aeadstr);
+    return ret;
 }
 
 /*
