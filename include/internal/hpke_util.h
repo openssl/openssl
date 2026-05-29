@@ -41,11 +41,12 @@ typedef struct {
     size_t Nsecret; /* size of secrets */
     size_t Nenc; /* length of encapsulated key */
     size_t Npk; /* length of public key */
-    size_t Nsk; /* length of raw private key */
+    size_t Nsk; /* length of private key for EC and ECX */
+    size_t derivekey_seedlen; /* length of seed for MLKEM & Hybrid MLKEM*/
     uint8_t bitmask;
     bool auth; /* Supports authentication */
     bool pq;
-    size_t NSeed;
+    size_t recommended_ikmlen;
 } OSSL_HPKE_KEM_INFO;
 
 /*
@@ -102,8 +103,7 @@ int ossl_hpke_labeled_expand(EVP_KDF_CTX *kctx,
     const unsigned char *info, size_t infolen);
 
 int ossl_hpke_labeled_derive_xof(uint8_t *out, size_t outlen, EVP_MD *md_xof,
-    uint16_t kemid, const char *label, size_t labellen,
-    const uint8_t *ikm, size_t ikmlen,
+    uint16_t kemid, const char *label, const uint8_t *ikm, size_t ikmlen,
     const uint8_t *context, size_t contextlen);
 int ossl_hpke_keypair_derive_xof(uint8_t *out, size_t outlen,
     EVP_MD *md_xof, uint16_t kemid, const uint8_t *ikm, size_t ikmlen);

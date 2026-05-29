@@ -69,37 +69,37 @@ static const OSSL_HPKE_KEM_INFO hpke_kem_tab[] = {
 #if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ML_KEM)
 #ifndef OPENSSL_NO_ML_KEM
     { OSSL_HPKE_KEM_ID_ML_KEM_512, OSSL_HPKE_KEMSTR_ML_KEM_512, NULL,
-        LN_sha256, SHA256_DIGEST_LENGTH, 768, 800, 64, 0x00, false, true },
+        LN_sha256, SHA256_DIGEST_LENGTH, 768, 800, 0, 64, 0x00, false, true, 0 },
     { OSSL_HPKE_KEM_ID_ML_KEM_768, OSSL_HPKE_KEMSTR_ML_KEM_768, NULL,
-        LN_sha256, SHA256_DIGEST_LENGTH, 1088, 1184, 64, 0x00, false, true },
+        LN_sha256, SHA256_DIGEST_LENGTH, 1088, 1184, 0, 64, 0x00, false, true, 0 },
     { OSSL_HPKE_KEM_ID_ML_KEM_1024, OSSL_HPKE_KEMSTR_ML_KEM_1024, NULL,
-        LN_sha384, SHA384_DIGEST_LENGTH, 1568, 1568, 64, 0x00, false, true },
+        LN_sha384, SHA384_DIGEST_LENGTH, 1568, 1568, 0, 64, 0x00, false, true, 0 },
 #ifndef OPENSSL_NO_EC
     { OSSL_HPKE_KEM_ID_MLKEM768_P256, OSSL_HPKE_KEMSTR_MLKEM768_P256, NULL,
-        LN_sha256, SHA256_DIGEST_LENGTH, 1153, 1249, 32, 0x00, false, true },
+        LN_sha256, SHA256_DIGEST_LENGTH, 1153, 1249, 0, 32, 0x00, false, true, 160 },
     { OSSL_HPKE_KEM_ID_MLKEM1024_P384, OSSL_HPKE_KEMSTR_MLKEM1024_P384, NULL,
-        LN_sha384, SHA384_DIGEST_LENGTH, 1665, 1665, 32, 0x00, false, true },
+        LN_sha384, SHA384_DIGEST_LENGTH, 1665, 1665, 0, 32, 0x00, false, true, 80 },
 #ifndef OPENSSL_NO_ECX
     { OSSL_HPKE_KEM_ID_XWING, OSSL_HPKE_KEMSTR_XWING, NULL,
-        LN_sha256, SHA256_DIGEST_LENGTH, 1120, 1216, 32, 0x00, false, true },
+        LN_sha256, SHA256_DIGEST_LENGTH, 1120, 1216, 0, 32, 0x00, false, true, 64 },
 #endif /* OPENSSL_NO_ECX */
 #endif /* OPENSSL_NO_EC */
 #endif /* OPENSSL_NO_ML_KEM */
 
 #ifndef OPENSSL_NO_EC
     { OSSL_HPKE_KEM_ID_P256, "EC", OSSL_HPKE_KEMSTR_P256,
-        LN_sha256, SHA256_DIGEST_LENGTH, 65, 65, 32, 0xFF, true, false, 128 },
+        LN_sha256, SHA256_DIGEST_LENGTH, 65, 65, 32, 0, 0xFF, true, false, 32 },
     { OSSL_HPKE_KEM_ID_P384, "EC", OSSL_HPKE_KEMSTR_P384,
-        LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0xFF, true, false, 48 },
+        LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0, 0xFF, true, false, 48 },
     { OSSL_HPKE_KEM_ID_P521, "EC", OSSL_HPKE_KEMSTR_P521,
-        LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0x01, true, false },
+        LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0, 0x01, true, false, 66 },
 #ifndef OPENSSL_NO_ECX
     { OSSL_HPKE_KEM_ID_X25519, OSSL_HPKE_KEMSTR_X25519, NULL,
         LN_sha256, SHA256_DIGEST_LENGTH,
-        X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0x00, true, false },
+        X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0, 0x00, true, false, X25519_KEYLEN },
     { OSSL_HPKE_KEM_ID_X448, OSSL_HPKE_KEMSTR_X448, NULL,
         LN_sha512, SHA512_DIGEST_LENGTH,
-        X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0x00, true, false },
+        X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0, 0x00, true, false, X448_KEYLEN },
 #endif /* OPENSSL_NO_ECX */
 #endif /* OPENSSL_NO_EC */
 #else
@@ -380,7 +380,7 @@ end:
  * This is used by One Stage KDFs.
  */
 int ossl_hpke_labeled_derive_xof(uint8_t *out, size_t outlen,
-    EVP_MD *md_xof, uint16_t kemid, const char *label, size_t labellen,
+    EVP_MD *md_xof, uint16_t kemid, const char *label,
     const uint8_t *ikm, size_t ikmlen,
     const uint8_t *context, size_t contextlen)
 {
@@ -389,6 +389,7 @@ int ossl_hpke_labeled_derive_xof(uint8_t *out, size_t outlen,
     uint8_t suiteid_buf[2];
     uint8_t labellen_buf[2];
     uint8_t outlen_buf[2];
+    size_t labellen = strlen(label);
 
     /*
      * suite_id = concat("KEM", I2OSP(kemid, 2))
@@ -410,7 +411,7 @@ int ossl_hpke_labeled_derive_xof(uint8_t *out, size_t outlen,
         && EVP_DigestUpdate(mctx, LABEL_KEM, strlen(LABEL_KEM))
         && EVP_DigestUpdate(mctx, suiteid_buf, sizeof(suiteid_buf))
         && EVP_DigestUpdate(mctx, labellen_buf, sizeof(labellen_buf))
-        && EVP_DigestUpdate(mctx, label, strlen(label))
+        && EVP_DigestUpdate(mctx, label, labellen)
         && EVP_DigestUpdate(mctx, outlen_buf, sizeof(outlen_buf))
         && EVP_DigestUpdate(mctx, context, contextlen)
         && EVP_DigestFinalXOF(mctx, out, outlen);
@@ -422,7 +423,7 @@ int ossl_hpke_keypair_derive_xof(uint8_t *out, size_t outlen,
     EVP_MD *md_xof, uint16_t kemid, const uint8_t *ikm, size_t ikmlen)
 {
     return ossl_hpke_labeled_derive_xof(out, outlen, md_xof, kemid,
-        OSSL_HPKE_DERIVEKEYPAIR_LABEL, strlen(OSSL_HPKE_DERIVEKEYPAIR_LABEL),
+        OSSL_HPKE_DERIVEKEYPAIR_LABEL,
         ikm, ikmlen, NULL, 0);
 }
 
