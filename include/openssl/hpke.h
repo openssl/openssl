@@ -162,6 +162,11 @@ size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
 size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
 size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
 
+OSSL_HPKE_SUITE OSSL_HPKE_get_suite(const OSSL_HPKE_CTX *ctx);
+size_t OSSL_HPKE_get_public_key_size(OSSL_HPKE_SUITE suite);
+int OSSL_HPKE_mode_is_supported(OSSL_HPKE_SUITE suite, int mode);
+char *OSSL_HPKE_suite2str(OSSL_HPKE_SUITE suite);
+
 #ifdef __cplusplus
 }
 #endif
