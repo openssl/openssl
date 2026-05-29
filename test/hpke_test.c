@@ -21,8 +21,10 @@
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
 static OSSL_PROVIDER *deflprov = NULL;
-static char *testpropq = "provider=default";
 static int verbose = 0;
+
+#if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_EC)
+static char *testpropq = "provider=default";
 
 /**
  * @brief Test that an EVP_PKEY encoded public key matches the supplied buffer
@@ -213,6 +215,7 @@ end:
     EVP_PKEY_free(authpriv);
     return ret;
 }
+#endif /* !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_EC) */
 
 /*
  * Randomly toss a coin
@@ -1071,6 +1074,7 @@ static int test_hpke_random_suites(void)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ECX)
 /*
  * @brief generate a key pair from initial key material (ikm) and check public
  * @param kem_id the KEM to use (RFC9180 code point)
@@ -1104,6 +1108,7 @@ static int test_hpke_one_ikm_gen(uint16_t kem_id,
         return 0;
     return 1;
 }
+#endif
 
 /*
  * @brief test some uses of IKM produce the expected public keys
@@ -1112,6 +1117,7 @@ static int test_hpke_ikms(void)
 {
     int res = 1;
 
+#ifndef OPENSSL_NO_EC
 #ifndef OPENSSL_NO_ECX
     res = test_hpke_one_ikm_gen(OSSL_HPKE_KEM_ID_X25519,
         ikm25519, sizeof(ikm25519),
@@ -1119,7 +1125,6 @@ static int test_hpke_ikms(void)
     if (res != 1)
         return res;
 #endif
-
     res = test_hpke_one_ikm_gen(OSSL_HPKE_KEM_ID_P521,
         ikmp521, sizeof(ikmp521),
         pubp521, sizeof(pubp521));
@@ -1137,7 +1142,7 @@ static int test_hpke_ikms(void)
         pubiter, sizeof(pubiter));
     if (res != 1)
         return res;
-
+#endif
     return res;
 }
 
@@ -1335,7 +1340,9 @@ int setup_tests(void)
 
     if (!test_get_libctx(&testctx, &nullprov, NULL, &deflprov, "default"))
         return 0;
+#if !defined(OPENSSL_NO_ML_KEM) || !defined(OPENSSL_NO_EC)
     ADD_ALL_TESTS(test_hpke_kats, OSSL_NELEM(hpke_kat_tests));
+#endif
     ADD_TEST(test_hpke_export);
     ADD_TEST(test_hpke_modes_suites);
     ADD_TEST(test_hpke_suite_strs);
