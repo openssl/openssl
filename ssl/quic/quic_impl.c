@@ -5075,6 +5075,11 @@ int ossl_quic_set_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
         ossl_quic_free_peer_token(old);
     }
     lh_QUIC_TOKEN_insert(c->cache, tok);
+    if (lh_QUIC_TOKEN_error(c->cache)) {
+        ossl_quic_free_peer_token(tok);
+        ossl_crypto_mutex_unlock(c->mutex);
+        return 0;
+    }
 
     ossl_crypto_mutex_unlock(c->mutex);
     return 1;
