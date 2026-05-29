@@ -296,6 +296,7 @@ $code.=<<___;
 
 .global	gcm_gmult_4bit
 .type	gcm_gmult_4bit,%function
+.align	4
 gcm_gmult_4bit:
 	stmdb	sp!,{r4-r11,lr}
 	ldrb	$nlo,[$Xi,#15]
