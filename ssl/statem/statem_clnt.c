@@ -2980,8 +2980,10 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL_CONNECTION *s,
         s->s3.tmp.valid_flags = OPENSSL_calloc(s->ssl_pkey_num, sizeof(uint32_t));
 
     /* Give up for good if allocation didn't work */
-    if (s->s3.tmp.valid_flags == NULL)
-        return 0;
+    if (s->s3.tmp.valid_flags == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+        return MSG_PROCESS_ERROR;
+    }
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
         PACKET reqctx, extensions;
