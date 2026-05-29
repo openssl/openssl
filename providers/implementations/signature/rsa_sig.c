@@ -1016,6 +1016,14 @@ static int rsa_verify_recover(void *vprsactx,
             return 0;
         }
     } else {
+        int rsasize = RSA_size(prsactx->rsa);
+
+        if (routsize < (size_t)rsasize) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                "buffer size is %d, should be %d",
+                routsize, rsasize);
+            return 0;
+        }
         ret = RSA_public_decrypt((int)siglen, sig, rout, prsactx->rsa,
             prsactx->pad_mode);
         if (ret <= 0) {
