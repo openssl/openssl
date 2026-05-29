@@ -379,12 +379,41 @@ err:
 }
 
 #ifndef FIPS_MODULE
+
+/*
+ * See https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-concrete-hybrid-kems-03#name-p-256-and-p-384-nominal-gro
+ * RandomScalar()
+ */
+static int ossl_ec_hybrid_pq_random_scalar(EC_KEY *ec,
+    const uint8_t *seed, size_t seedlen)
+{
+    size_t nscalar = 0;
+    BIGNUM *priv = ec->priv_key;
+    const BIGNUM *order;
+
+    BN_zero_ex(priv);
+    order = EC_GROUP_get0_order(EC_KEY_get0_group(ec));
+    nscalar = BN_num_bytes(order);
+
+    while (BN_is_zero(priv) || BN_cmp(priv, order) >= 0) {
+        if (seedlen < nscalar)
+            goto err;
+        if (BN_bin2bn(seed, nscalar, priv) == NULL)
+            goto err;
+        seed += nscalar;
+        seedlen -= nscalar;
+    }
+    return 1;
+err:
+    return 0;
+}
+
 /*
  * This is similar to ec_generate_key(), except it uses an ikm to
- * derive the private key.
+ * derive the private key. This is used by EC related KEM's.
  */
-int ossl_ec_generate_key_dhkem(EC_KEY *eckey,
-    const unsigned char *ikm, size_t ikmlen)
+int ossl_ec_derive_key(EC_KEY *eckey,
+    const unsigned char *ikm, size_t ikmlen, int derivemode)
 {
     int ok = 0;
 
@@ -393,8 +422,18 @@ int ossl_ec_generate_key_dhkem(EC_KEY *eckey,
         if (eckey->priv_key == NULL)
             goto err;
     }
-    if (ossl_ec_dhkem_derive_private(eckey, eckey->priv_key, ikm, ikmlen) <= 0)
+    switch (derivemode) {
+    case OSSL_EC_KEYDERIVE_MODE_DHKEM:
+        if (ossl_ec_dhkem_derive_private(eckey, eckey->priv_key, ikm, ikmlen) <= 0)
+            goto err;
+        break;
+    case OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID:
+        if (ossl_ec_hybrid_pq_random_scalar(eckey, ikm, ikmlen) <= 0)
+            goto err;
+        break;
+    default:
         goto err;
+    }
     if (eckey->pub_key == NULL) {
         eckey->pub_key = EC_POINT_new(eckey->group);
         if (eckey->pub_key == NULL)
@@ -413,7 +452,7 @@ err:
     }
     return ok;
 }
-#endif
+#endif /* FIPS_MODULE */
 
 int ossl_ec_key_simple_generate_key(EC_KEY *eckey)
 {

@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdbool.h>
+#include <string.h> /* memset */
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
@@ -15,10 +17,13 @@
 #include <openssl/params.h>
 #include <openssl/proverr.h>
 #include <openssl/rand.h>
+#include "internal/cryptlib.h" /* ossl_likely */
 #include "prov/implementations.h"
 #include "prov/mlx_kem.h"
+#include "prov/ecx.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
+#include "providers/implementations/kem/mlx_kem.inc"
 
 static OSSL_FUNC_kem_newctx_fn mlx_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn mlx_kem_freectx;
@@ -33,23 +38,27 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     MLX_KEY *key;
     int op;
+    uint8_t entropy[256];
+    size_t entropy_len;
 } PROV_MLX_KEM_CTX;
 
 static void *mlx_kem_newctx(void *provctx)
 {
     PROV_MLX_KEM_CTX *ctx;
 
-    if ((ctx = OPENSSL_malloc(sizeof(*ctx))) == NULL)
+    if ((ctx = OPENSSL_zalloc(sizeof(*ctx))) == NULL)
         return NULL;
 
     ctx->libctx = PROV_LIBCTX_OF(provctx);
-    ctx->key = NULL;
-    ctx->op = 0;
     return ctx;
 }
 
 static void mlx_kem_freectx(void *vctx)
 {
+    PROV_MLX_KEM_CTX *ctx = vctx;
+
+    if (ctx != NULL && ctx->entropy_len != 0)
+        OPENSSL_cleanse(ctx->entropy, sizeof(ctx->entropy));
     OPENSSL_free(vctx);
 }
 
@@ -62,7 +71,7 @@ static int mlx_kem_init(void *vctx, int op, void *key,
         return 0;
     ctx->key = key;
     ctx->op = op;
-    return 1;
+    return mlx_kem_set_ctx_params(vctx, params);
 }
 
 static int
@@ -92,36 +101,102 @@ mlx_kem_decapsulate_init(void *vctx, void *vkey, const OSSL_PARAM params[])
 static const OSSL_PARAM *mlx_kem_settable_ctx_params(ossl_unused void *vctx,
     ossl_unused void *provctx)
 {
-    static const OSSL_PARAM params[] = { OSSL_PARAM_END };
-
-    return params;
+    return mlx_kem_set_ctx_params_list;
 }
 
-static int
-mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
+static int mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
+    PROV_MLX_KEM_CTX *ctx = vctx;
+    struct mlx_kem_set_ctx_params_st p;
+
+    if (ctx == NULL || !mlx_kem_set_ctx_params_decoder(params, &p))
+        return 0;
+
+    if (p.ikme != NULL) {
+        void *vp = ctx->entropy;
+        size_t len = sizeof(ctx->entropy);
+
+        if (!OSSL_PARAM_get_octet_string(p.ikme, &vp, len, &ctx->entropy_len))
+            return 0;
+        if (ctx->entropy_len < (32 + ctx->key->xinfo->prvkey_bytes))
+            return 0;
+    }
     return 1;
+}
+
+/*
+ * The shared secret combiner is defined in
+ * https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-11#section-5.1.3
+ * C2PRICombiner(ss_PQ, ss_T, ct_T, ek_T, label)
+ * which is:
+ *   ss = SHA3-256(ss_PQ || ss_T || ct_T || ek_T || Label)
+ */
+static int derive_shared_secret(uint8_t *out_ss, MLX_KEY *key,
+                                const uint8_t *ss_PQT, size_t ss_PQT_len,
+                                const uint8_t *ct_T, size_t ct_T_len)
+{
+    int ret = 0;
+    uint8_t pub[97]; /* ek_T */
+    size_t publen;
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx = NULL;
+
+    md = EVP_MD_fetch(key->libctx, SN_sha3_256, key->propq);
+    if (md == NULL)
+        return 0;
+    ctx = EVP_MD_CTX_new();
+    if (ctx == NULL)
+        goto end;
+
+    if (!EVP_PKEY_get_octet_string_param(key->xkey, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+           pub, sizeof(pub), &publen))
+        goto end;
+
+    ret = EVP_DigestInit_ex2(ctx, md, NULL)
+        && EVP_DigestUpdate(ctx, ss_PQT, ss_PQT_len)
+        && EVP_DigestUpdate(ctx, ct_T, ct_T_len)
+        && EVP_DigestUpdate(ctx, pub, publen)
+        && EVP_DigestUpdate(ctx, key->xinfo->label, strlen(key->xinfo->label))
+        && EVP_DigestFinal(ctx, out_ss, NULL);
+end:
+    EVP_MD_free(md);
+    EVP_MD_CTX_free(ctx);
+    return ret;
 }
 
 static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     unsigned char *shsec, size_t *slen)
 {
-    MLX_KEY *key = ((PROV_MLX_KEM_CTX *)vctx)->key;
+    PROV_MLX_KEM_CTX *mlxctx = (PROV_MLX_KEM_CTX *)vctx;
+    MLX_KEY *key = mlxctx->key;
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *xkey = NULL;
-    size_t encap_clen;
+    uint8_t ss_tmp[128];
+    size_t combined_encap_slen, encap_clen;
     size_t encap_slen;
     uint8_t *cbuf;
-    uint8_t *sbuf;
+    uint8_t *sbuf, *ss = NULL;
     int ml_kem_slot = key->xinfo->ml_kem_slot;
     int ret = 0;
+    OSSL_PARAM params[3], *p = params, *prms = NULL;
+    int hpke_mode = (key->xinfo->ec_nSeed > 0);
 
     if (!mlx_kem_have_pubkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         goto end;
     }
     encap_clen = key->minfo->ctext_bytes + key->xinfo->pubkey_bytes;
-    encap_slen = ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes;
+    combined_encap_slen = ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes;
+
+    if (hpke_mode) {
+        if (sizeof(ss_tmp) < combined_encap_slen)
+            goto end;
+        encap_slen = 32; /* SHA3_256 output size */
+        ss = ss_tmp; /* writes to a temporary buffer */
+    } else {
+        ss = shsec; /* writes directly to the output buffer */
+        encap_slen = combined_encap_slen;
+    }
 
     if (ctext == NULL) {
         if (clen == NULL && slen == NULL)
@@ -162,14 +237,19 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
         *slen = encap_slen;
     }
 
+    if (mlxctx->entropy_len > 0) {
+        prms = params;
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME, mlxctx->entropy, 32);
+        *p = OSSL_PARAM_construct_end();
+    }
     /* ML-KEM encapsulation */
     encap_clen = key->minfo->ctext_bytes;
     encap_slen = ML_KEM_SHARED_SECRET_BYTES;
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
-    sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
+    sbuf = ss + ml_kem_slot * key->xinfo->shsec_bytes;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, key->propq);
     if (ctx == NULL
-        || EVP_PKEY_encapsulate_init(ctx, NULL) <= 0
+        || EVP_PKEY_encapsulate_init(ctx, prms) <= 0
         || EVP_PKEY_encapsulate(ctx, cbuf, &encap_clen, sbuf, &encap_slen) <= 0)
         goto end;
     if (encap_clen != key->minfo->ctext_bytes) {
@@ -200,11 +280,21 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
      * support generating multiple keyshares, there's a workable keyshare
      * prediction specification, and the optimisation is justified.
      */
+
+    if (mlxctx->entropy_len > 0) {
+        int mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
+        p = params;
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, mlxctx->entropy + 32, mlxctx->entropy_len - 32);
+        *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_IKM_DERIVEMODE, &mode);
+        *p = OSSL_PARAM_construct_end();
+    }
+
     cbuf = ctext + (1 - ml_kem_slot) * key->minfo->ctext_bytes;
     encap_clen = key->xinfo->pubkey_bytes;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->xkey, key->propq);
     if (ctx == NULL
         || EVP_PKEY_keygen_init(ctx) <= 0
+        || EVP_PKEY_CTX_set_params(ctx, prms) <= 0
         || EVP_PKEY_keygen(ctx, &xkey) <= 0
         || EVP_PKEY_get_octet_string_param(xkey, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
                cbuf, encap_clen, &encap_clen)
@@ -220,7 +310,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
 
     /* Derive the ECDH shared secret */
     encap_slen = key->xinfo->shsec_bytes;
-    sbuf = shsec + (1 - ml_kem_slot) * ML_KEM_SHARED_SECRET_BYTES;
+    sbuf = ss + (1 - ml_kem_slot) * ML_KEM_SHARED_SECRET_BYTES;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, xkey, key->propq);
     if (ctx == NULL
         || EVP_PKEY_derive_init(ctx) <= 0
@@ -234,8 +324,13 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
         goto end;
     }
 
+    if (hpke_mode
+        && !derive_shared_secret(shsec, key, ss, combined_encap_slen, cbuf, encap_clen))
+        goto end;
     ret = 1;
 end:
+    if (ss == ss_tmp)
+        OPENSSL_cleanse(ss_tmp, sizeof(ss_tmp));
     EVP_PKEY_free(xkey);
     EVP_PKEY_CTX_free(ctx);
     return ret;
@@ -248,15 +343,28 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     EVP_PKEY_CTX *ctx = NULL;
     EVP_PKEY *xkey = NULL;
     const uint8_t *cbuf;
-    uint8_t *sbuf;
-    size_t decap_slen = ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes;
+    uint8_t *sbuf, *ss;
+    uint8_t ss_tmp[128];
+    size_t decap_slen;
+    size_t combined_decap_slen = ML_KEM_SHARED_SECRET_BYTES + key->xinfo->shsec_bytes;
     size_t decap_clen = key->minfo->ctext_bytes + key->xinfo->pubkey_bytes;
     int ml_kem_slot = key->xinfo->ml_kem_slot;
     int ret = 0;
+    int hpke_mode = (key->xinfo->ec_nSeed > 0);
 
     if (!mlx_kem_have_prvkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
         return 0;
+    }
+
+    if (hpke_mode) {
+        if (sizeof(ss_tmp) < combined_decap_slen)
+            goto end;
+        decap_slen = 32; /* SHA3_256 output size */
+        ss = ss_tmp; /* writes to a temporary buffer */
+    } else {
+        ss = shsec; /* writes directly to the output buffer */
+        decap_slen = combined_decap_slen;
     }
 
     if (shsec == NULL) {
@@ -287,7 +395,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     decap_clen = key->minfo->ctext_bytes;
     decap_slen = ML_KEM_SHARED_SECRET_BYTES;
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
-    sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
+    sbuf = ss + ml_kem_slot * key->xinfo->shsec_bytes;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, key->propq);
     if (ctx == NULL
         || EVP_PKEY_decapsulate_init(ctx, NULL) <= 0
@@ -305,7 +413,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     decap_clen = key->xinfo->pubkey_bytes;
     decap_slen = key->xinfo->shsec_bytes;
     cbuf = ctext + (1 - ml_kem_slot) * key->minfo->ctext_bytes;
-    sbuf = shsec + (1 - ml_kem_slot) * ML_KEM_SHARED_SECRET_BYTES;
+    sbuf = ss + (1 - ml_kem_slot) * ML_KEM_SHARED_SECRET_BYTES;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->xkey, key->propq);
     if (ctx == NULL
         || (xkey = EVP_PKEY_new()) == NULL
@@ -322,6 +430,9 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
         goto end;
     }
 
+    if (hpke_mode
+        && !derive_shared_secret(shsec, key, ss, combined_decap_slen, cbuf, decap_clen))
+        goto end;
     ret = 1;
 end:
     EVP_PKEY_CTX_free(ctx);

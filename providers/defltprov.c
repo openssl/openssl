@@ -561,22 +561,28 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
 #endif
     { PROV_NAMES_EC, "provider=default", ossl_ec_asym_kem_functions },
 #endif
+
 #ifndef OPENSSL_NO_ML_KEM
     { PROV_NAMES_ML_KEM_512, "provider=default", ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_768, "provider=default", ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_1024, "provider=default", ossl_ml_kem_asym_kem_functions },
-#if !defined(OPENSSL_NO_ECX)
-    { PROV_NAMES_X25519MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
-    { PROV_NAMES_X448MLKEM1024, "provider=default", ossl_mlx_kem_asym_kem_functions },
-#endif
 #if !defined(OPENSSL_NO_EC)
     { PROV_NAMES_SecP256r1MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
     { PROV_NAMES_SecP384r1MLKEM1024, "provider=default", ossl_mlx_kem_asym_kem_functions },
-#endif
+    { PROV_NAMES_MLKEM768P256, "provider=default", ossl_mlx_kem_asym_kem_functions,
+      PROV_DESCS_MLKEM768P256 },
+    { PROV_NAMES_MLKEM1024P384, "provider=default", ossl_mlx_kem_asym_kem_functions,
+      PROV_DESCS_MLKEM1024P384 },
+#if !defined(OPENSSL_NO_ECX)
+    { PROV_NAMES_X25519MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_X448MLKEM1024, "provider=default", ossl_mlx_kem_asym_kem_functions },
+    { PROV_NAMES_XWING, "provider=default", ossl_mlx_kem_asym_kem_functions },
+#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
 #if !defined(OPENSSL_NO_SM2)
     { PROV_NAMES_curveSM2MLKEM768, "provider=default", ossl_mlx_kem_asym_kem_functions },
-#endif
-#endif
+#endif /* OPENSSL_NO_SM2 */
+#endif /* OPENSSL_NO_ML_KEM */
     { NULL, NULL, NULL }
 };
 
@@ -656,23 +662,29 @@ static const OSSL_ALGORITHM deflt_keymgmt[] = {
         PROV_DESCS_ML_KEM_768 },
     { PROV_NAMES_ML_KEM_1024, "provider=default", ossl_ml_kem_1024_keymgmt_functions,
         PROV_DESCS_ML_KEM_1024 },
-#if !defined(OPENSSL_NO_ECX)
-    { PROV_NAMES_X25519MLKEM768, "provider=default", ossl_mlx_x25519_kem_kmgmt_functions,
-        PROV_DESCS_X25519MLKEM768 },
-    { PROV_NAMES_X448MLKEM1024, "provider=default", ossl_mlx_x448_kem_kmgmt_functions,
-        PROV_DESCS_X448MLKEM1024 },
-#endif
 #if !defined(OPENSSL_NO_EC)
     { PROV_NAMES_SecP256r1MLKEM768, "provider=default", ossl_mlx_p256_kem_kmgmt_functions,
         PROV_DESCS_SecP256r1MLKEM768 },
     { PROV_NAMES_SecP384r1MLKEM1024, "provider=default", ossl_mlx_p384_kem_kmgmt_functions,
         PROV_DESCS_SecP384r1MLKEM1024 },
-#endif
+    { PROV_NAMES_MLKEM768P256, "provider=default", ossl_mlx_p256_hpke_kem_kmgmt_functions,
+      PROV_DESCS_MLKEM768P256 },
+    { PROV_NAMES_MLKEM1024P384, "provider=default", ossl_mlx_p384_hpke_kem_kmgmt_functions,
+      PROV_DESCS_MLKEM1024P384 },
+#if !defined(OPENSSL_NO_ECX)
+    { PROV_NAMES_X25519MLKEM768, "provider=default", ossl_mlx_x25519_kem_kmgmt_functions,
+        PROV_DESCS_X25519MLKEM768 },
+    { PROV_NAMES_X448MLKEM1024, "provider=default", ossl_mlx_x448_kem_kmgmt_functions,
+        PROV_DESCS_X448MLKEM1024 },
+    { PROV_NAMES_XWING, "provider=default", ossl_mlx_x25519_hpke_kem_kmgmt_functions,
+      PROV_DESCS_XWING },
+#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
 #if !defined(OPENSSL_NO_SM2)
     { PROV_NAMES_curveSM2MLKEM768, "provider=default", ossl_mlx_curve_sm2_kem_kmgmt_functions,
         PROV_DESCS_curveSM2MLKEM768 },
-#endif
-#endif
+#endif /* OPENSSL_NO_SM2 */
+#endif /* OPENSSL_NO_ML_KEM */
 #ifndef OPENSSL_NO_SLH_DSA
     { PROV_NAMES_SLH_DSA_SHA2_128S, "provider=default", ossl_slh_dsa_sha2_128s_keymgmt_functions,
         PROV_DESCS_SLH_DSA_SHA2_128S },
