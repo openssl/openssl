@@ -444,6 +444,8 @@ my %params = (
 
 # EC, X25519 and X448 Key generation parameters
     'OSSL_PKEY_PARAM_DHKEM_IKM' =>        "dhkem-ikm",
+    'OSSL_PKEY_PARAM_IKM' =>              '*OSSL_PKEY_PARAM_DHKEM_IKM',
+    'OSSL_PKEY_PARAM_IKM_DERIVEMODE' =>   'ikm-derivemode',
 
 # ML-KEM parameters
     'OSSL_PKEY_PARAM_ML_KEM_SEED' => "seed",
@@ -452,6 +454,9 @@ my %params = (
     'OSSL_PKEY_PARAM_ML_KEM_INPUT_FORMATS' => "ml-kem.input_formats",
     'OSSL_PKEY_PARAM_ML_KEM_OUTPUT_FORMATS' => "ml-kem.output_formats",
     'OSSL_PKEY_PARAM_ML_KEM_IMPORT_PCT_TYPE' => "ml-kem.import_pct_type",
+
+# Hybrid ML-KEM HPKE parameters
+    'OSSL_PKEY_PARAM_SEED' => "seed",
 
 # Key generation parameters
     'OSSL_PKEY_PARAM_FFC_TYPE' =>         "type",

@@ -83,8 +83,9 @@ struct ecx_gen_ctx {
     char *propq;
     ECX_KEY_TYPE type;
     int selection;
-    unsigned char *dhkem_ikm;
-    size_t dhkem_ikmlen;
+    unsigned char *ikm;
+    size_t ikmlen;
+    int ikm_derivemode;
 };
 
 #ifdef S390X_EC_ASM
@@ -593,14 +594,20 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     if (p.ikm != NULL) {
         if (p.ikm->data_size != 0 && p.ikm->data != NULL) {
-            OPENSSL_free(gctx->dhkem_ikm);
-            gctx->dhkem_ikm = NULL;
-            if (!OSSL_PARAM_get_octet_string(p.ikm, (void **)&gctx->dhkem_ikm, 0,
-                    &gctx->dhkem_ikmlen))
+            OPENSSL_free(gctx->ikm);
+            gctx->ikm = NULL;
+            if (!OSSL_PARAM_get_octet_string(p.ikm, (void **)&gctx->ikm, 0,
+                    &gctx->ikmlen))
                 return 0;
         }
     }
-
+    if (p.ikmmode != NULL) {
+        if (!OSSL_PARAM_get_int(p.ikmmode, &gctx->ikm_derivemode))
+            return 0;
+        if (gctx->ikm_derivemode != OSSL_EC_KEYDERIVE_MODE_DHKEM
+                && gctx->ikm_derivemode != OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID)
+            return 0;
+    }
     return 1;
 }
 
@@ -678,6 +685,26 @@ err:
 }
 #endif
 
+#ifndef FIPS_MODULE
+/*
+ * HPKE uses a DeriveKeyPair() function for both DHKEM and Hybrid ML_KEM
+ */
+static int derive_private(ECX_KEY *ecx, uint8_t *privout,
+    const uint8_t *ikm, size_t ikmlen, int derive_mode)
+{
+    switch (derive_mode) {
+    case OSSL_EC_KEYDERIVE_MODE_DHKEM:
+        return ossl_ecx_dhkem_derive_private(ecx, privout, ikm, ikmlen);
+    case OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID:
+        /* For ECX this is just the identity function */
+        memcpy(privout, ikm, ikmlen);
+        return 1;
+    default:
+        return 0;
+    }
+}
+#endif
+
 static void *ecx_gen(struct ecx_gen_ctx *gctx)
 {
     ECX_KEY *key;
@@ -701,11 +728,11 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
         goto err;
     }
 #ifndef FIPS_MODULE
-    if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0) {
+    if (gctx->ikm != NULL && gctx->ikmlen != 0) {
         if (ecx_key_type_is_ed(gctx->type))
             goto err;
-        if (!ossl_ecx_dhkem_derive_private(key, privkey,
-                gctx->dhkem_ikm, gctx->dhkem_ikmlen))
+        if (!derive_private(key, privkey, gctx->ikm, gctx->ikmlen,
+                gctx->ikm_derivemode))
             goto err;
     } else
 #endif
@@ -846,7 +873,7 @@ static void ecx_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
-    OPENSSL_clear_free(gctx->dhkem_ikm, gctx->dhkem_ikmlen);
+    OPENSSL_clear_free(gctx->ikm, gctx->ikmlen);
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }
@@ -1062,11 +1089,10 @@ static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx)
     }
 
 #ifndef FIPS_MODULE
-    if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0) {
+    if (gctx->ikm != NULL && gctx->ikmlen != 0) {
         if (gctx->type != ECX_KEY_TYPE_X25519)
             goto err;
-        if (!ossl_ecx_dhkem_derive_private(key, privkey,
-                gctx->dhkem_ikm, gctx->dhkem_ikmlen))
+        if (!derive_private(key, privkey, gctx->ikm, gctx->ikmlen, gctx->ikm_derivemode))
             goto err;
     } else
 #endif
@@ -1119,11 +1145,10 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
     }
 
 #ifndef FIPS_MODULE
-    if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0) {
+    if (gctx->ikm != NULL && gctx->ikmlen != 0) {
         if (gctx->type != ECX_KEY_TYPE_X448)
             goto err;
-        if (!ossl_ecx_dhkem_derive_private(key, privkey,
-                gctx->dhkem_ikm, gctx->dhkem_ikmlen))
+        if (!derive_private(key, privkey, gctx->ikm, gctx->ikmlen, gctx->ikm_derivemode)
             goto err;
     } else
 #endif
@@ -1152,38 +1177,9 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         0xfe, 0x53, 0x6e, 0xcd, 0xd3, 0x36, 0x69, 0x21
     };
     static const unsigned char generator_y[] = {
-        0x58,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
+        0x58, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+        0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+        0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
     ECX_KEY *key = ossl_ecx_key_new(gctx->libctx, ECX_KEY_TYPE_ED25519, 1,
