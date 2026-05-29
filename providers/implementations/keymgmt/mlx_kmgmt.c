@@ -62,9 +62,9 @@ static const ECDH_VINFO hybrid_vtable[] = {
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
 #if !defined(FIPS_MODULE)
-    { "EC", "P-256", 65, 32, 32, 0, EVP_PKEY_ML_KEM_768, 128, "MLKEM768-P256"},
-    { "EC", "P-384", 97, 48, 48, 0, EVP_PKEY_ML_KEM_1024, 48, "MLKEM1024-P384"},
-    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768, 32, "\x5c\x2e\x2f\x2f\x5e\x5c"},
+    { "EC", "P-256", 65, 32, 32, 0, EVP_PKEY_ML_KEM_768, 128, "MLKEM768-P256" },
+    { "EC", "P-384", 97, 48, 48, 0, EVP_PKEY_ML_KEM_1024, 48, "MLKEM1024-P384" },
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768, 32, "\x5c\x2e\x2f\x2f\x5e\x5c" },
 #else
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
@@ -619,9 +619,9 @@ static int copy_public_param(const OSSL_PARAM *src, OSSL_PARAM *dst)
         return 1;
     if (dst->data_size < publen) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
-         "public key output buffer too short: %lu < %lu",
-         (unsigned long)dst->data_size,
-         (unsigned long)publen);
+            "public key output buffer too short: %lu < %lu",
+            (unsigned long)dst->data_size,
+            (unsigned long)publen);
         return 0;
     }
     memcpy(dst->data, src->data, publen);
@@ -939,7 +939,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         OSSL_LIB_CTX *libctx;                                                              \
                                                                                            \
         libctx = provctx == NULL ? NULL : PROV_LIBCTX_OF(provctx);                         \
-        return mlx_kem_gen_init(variant, libctx, kemid, selection, params);                       \
+        return mlx_kem_gen_init(variant, libctx, kemid, selection, params);                \
     }                                                                                      \
     const OSSL_DISPATCH ossl_mlx_##name##_kem_kmgmt_functions[] = {                        \
         { OSSL_FUNC_KEYMGMT_NEW, (OSSL_FUNC)mlx_##name##_kem_new },                        \

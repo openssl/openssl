@@ -132,8 +132,8 @@ static int mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
  *   ss = SHA3-256(ss_PQ || ss_T || ct_T || ek_T || Label)
  */
 static int derive_shared_secret(uint8_t *out_ss, MLX_KEY *key,
-                                const uint8_t *ss_PQT, size_t ss_PQT_len,
-                                const uint8_t *ct_T, size_t ct_T_len)
+    const uint8_t *ss_PQT, size_t ss_PQT_len,
+    const uint8_t *ct_T, size_t ct_T_len)
 {
     int ret = 0;
     uint8_t pub[97]; /* ek_T */
@@ -149,7 +149,7 @@ static int derive_shared_secret(uint8_t *out_ss, MLX_KEY *key,
         goto end;
 
     if (!EVP_PKEY_get_octet_string_param(key->xkey, OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
-           pub, sizeof(pub), &publen))
+            pub, sizeof(pub), &publen))
         goto end;
 
     ret = EVP_DigestInit_ex2(ctx, md, NULL)

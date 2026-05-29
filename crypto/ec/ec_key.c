@@ -388,7 +388,7 @@ err:
 static int ossl_ec_hybrid_pq_random_scalar(EC_KEY *ec,
     const uint8_t *seed, size_t seedlen)
 {
-    size_t nscalar = 0;
+    int nscalar = 0;
     BIGNUM *priv = ec->priv_key;
     const BIGNUM *order;
 
@@ -397,7 +397,7 @@ static int ossl_ec_hybrid_pq_random_scalar(EC_KEY *ec,
     nscalar = BN_num_bytes(order);
 
     while (BN_is_zero(priv) || BN_cmp(priv, order) >= 0) {
-        if (seedlen < nscalar)
+        if ((int)seedlen < nscalar)
             goto err;
         if (BN_bin2bn(seed, nscalar, priv) == NULL)
             goto err;

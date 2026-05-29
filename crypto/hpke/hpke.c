@@ -936,7 +936,7 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         return 0;
     }
     if (ikmelen == 0
-        || ikmelen > (ctx->kem_info->pq ? OSSL_HPKE_MAX_PQIKMLEN : OSSL_HPKE_MAX_PARMLEN)) {
+        || ikmelen > (size_t)(ctx->kem_info->pq ? OSSL_HPKE_MAX_PQIKMLEN : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1328,7 +1328,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
     if ((ikmlen > 0 && ikm == NULL)
         || (ikmlen == 0 && ikm != NULL)
-        || ikmlen > (kem_info->pq ? OSSL_HPKE_MAX_PQIKMLEN : OSSL_HPKE_MAX_PARMLEN)) {
+        || ikmlen > (size_t)(kem_info->pq ? OSSL_HPKE_MAX_PQIKMLEN : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1346,8 +1346,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
         goto err;
     }
     if (ikm != NULL) {
-        if (OSSL_PARAM_locate_const(EVP_PKEY_CTX_settable_params(pctx), OSSL_PKEY_PARAM_IKM) != NULL)
-        {
+        if (OSSL_PARAM_locate_const(EVP_PKEY_CTX_settable_params(pctx), OSSL_PKEY_PARAM_IKM) != NULL) {
             *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, (char *)ikm, ikmlen);
         } else {
             /*
@@ -1357,7 +1356,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
             size_t seedlen = kem_info->Nsk;
             EVP_MD *md_xof = EVP_MD_fetch(libctx, SN_shake256, propq);
             int rv = ossl_hpke_keypair_derive_xof(seed, seedlen, md_xof,
-                    kem_info->kem_id, ikm, ikmlen);
+                kem_info->kem_id, ikm, ikmlen);
 
             EVP_MD_free(md_xof);
             if (rv != 1)

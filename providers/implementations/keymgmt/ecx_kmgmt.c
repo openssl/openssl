@@ -605,7 +605,7 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
         if (!OSSL_PARAM_get_int(p.ikmmode, &gctx->ikm_derivemode))
             return 0;
         if (gctx->ikm_derivemode != OSSL_EC_KEYDERIVE_MODE_DHKEM
-                && gctx->ikm_derivemode != OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID)
+            && gctx->ikm_derivemode != OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID)
             return 0;
     }
     return 1;
@@ -1148,7 +1148,7 @@ static void *s390x_ecx_keygen448(struct ecx_gen_ctx *gctx)
     if (gctx->ikm != NULL && gctx->ikmlen != 0) {
         if (gctx->type != ECX_KEY_TYPE_X448)
             goto err;
-        if (!derive_private(key, privkey, gctx->ikm, gctx->ikmlen, gctx->ikm_derivemode)
+        if (!derive_private(key, privkey, gctx->ikm, gctx->ikmlen, gctx->ikm_derivemode))
             goto err;
     } else
 #endif
