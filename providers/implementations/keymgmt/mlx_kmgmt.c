@@ -136,6 +136,7 @@ static int mlx_kem_key_gen(MLX_KEY *key,
 #ifndef FIPS_MODULE
     size_t seed_len = 32;
     int hpke_mode = key->xinfo->ec_nSeed > 0;
+    int mode;
 
     /*
      * For the TLS use case we just do a normal keygen for both components
@@ -204,9 +205,8 @@ static int mlx_kem_key_gen(MLX_KEY *key,
     }
 #ifndef FIPS_MODULE
     if (hpke_mode) {
-        int mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
-
         prms = params;
+        mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
         if (!EVP_DigestSqueeze(mdctx, seed_buf, key->xinfo->ec_nSeed))
             goto err;
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, seed_buf, key->xinfo->ec_nSeed);

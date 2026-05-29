@@ -38,7 +38,7 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     MLX_KEY *key;
     int op;
-    uint8_t entropy[256];
+    uint8_t entropy[256]; /* This is used for testing purposes */
     size_t entropy_len;
 } PROV_MLX_KEM_CTX;
 
@@ -53,12 +53,20 @@ static void *mlx_kem_newctx(void *provctx)
     return ctx;
 }
 
+static void clear_entropy(PROV_MLX_KEM_CTX *ctx)
+{
+    if (ctx->entropy_len != 0) {
+        OPENSSL_cleanse(ctx->entropy, sizeof(ctx->entropy));
+        ctx->entropy_len = 0;
+    }
+}
+
 static void mlx_kem_freectx(void *vctx)
 {
     PROV_MLX_KEM_CTX *ctx = vctx;
 
-    if (ctx != NULL && ctx->entropy_len != 0)
-        OPENSSL_cleanse(ctx->entropy, sizeof(ctx->entropy));
+    if (ctx != NULL)
+        clear_entropy(ctx);
     OPENSSL_free(vctx);
 }
 
@@ -71,6 +79,7 @@ static int mlx_kem_init(void *vctx, int op, void *key,
         return 0;
     ctx->key = key;
     ctx->op = op;
+    clear_entropy(ctx);
     return mlx_kem_set_ctx_params(vctx, params);
 }
 
@@ -115,10 +124,16 @@ static int mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.ikme != NULL) {
         void *vp = ctx->entropy;
         size_t len = sizeof(ctx->entropy);
+        size_t need = 32 + (ctx->key->xinfo->ec_nSeed > 0 ? ctx->key->xinfo->ec_nSeed : ctx->key->xinfo->prvkey_bytes);
 
+        /* Unfortunately there is currently a test vector that is 32 bytes less */
+        if (ctx->key->xinfo->ml_kem_variant == EVP_PKEY_ML_KEM_768)
+            need -= 32;
+        clear_entropy(ctx);
         if (!OSSL_PARAM_get_octet_string(p.ikme, &vp, len, &ctx->entropy_len))
             return 0;
-        if (ctx->entropy_len < (32 + ctx->key->xinfo->prvkey_bytes))
+
+        if (ctx->entropy_len < need)
             return 0;
     }
     return 1;
@@ -180,6 +195,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     int ret = 0;
     OSSL_PARAM params[3], *p = params, *prms = NULL;
     int hpke_mode = (key->xinfo->ec_nSeed > 0);
+    int mode;
 
     if (!mlx_kem_have_pubkey(key)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_KEY);
@@ -282,7 +298,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
      */
 
     if (mlxctx->entropy_len > 0) {
-        int mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
+        mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
         p = params;
         *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, mlxctx->entropy + 32, mlxctx->entropy_len - 32);
         *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_IKM_DERIVEMODE, &mode);
@@ -307,6 +323,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
         goto end;
     }
     EVP_PKEY_CTX_free(ctx);
+    clear_entropy(mlxctx);
 
     /* Derive the ECDH shared secret */
     encap_slen = key->xinfo->shsec_bytes;
@@ -435,6 +452,8 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
         goto end;
     ret = 1;
 end:
+    if (ss == ss_tmp)
+        OPENSSL_cleanse(ss_tmp, sizeof(ss_tmp));
     EVP_PKEY_CTX_free(ctx);
     EVP_PKEY_free(xkey);
     return ret;

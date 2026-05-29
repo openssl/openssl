@@ -696,6 +696,8 @@ static int derive_private(ECX_KEY *ecx, uint8_t *privout,
     case OSSL_EC_KEYDERIVE_MODE_DHKEM:
         return ossl_ecx_dhkem_derive_private(ecx, privout, ikm, ikmlen);
     case OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID:
+        if (ikmlen != ecx->keylen)
+            return 0;
         /* For ECX this is just the identity function */
         memcpy(privout, ikm, ikmlen);
         return 1;

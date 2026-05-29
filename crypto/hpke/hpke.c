@@ -1353,11 +1353,15 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
              * In order to support ML-KEM in older FIPS providers we do the
              * derivekey code here rather than in the key manager
              */
-            size_t seedlen = kem_info->Nsk;
-            EVP_MD *md_xof = EVP_MD_fetch(libctx, SN_shake256, propq);
-            int rv = ossl_hpke_keypair_derive_xof(seed, seedlen, md_xof,
-                kem_info->kem_id, ikm, ikmlen);
+            size_t seedlen = kem_info->derivekey_seedlen; /* Note this value is 32 or 64 */
+            EVP_MD *md_xof;
+            int rv;
 
+            if (seedlen > sizeof(seed))
+                goto err;
+            md_xof = EVP_MD_fetch(libctx, SN_shake256, propq);
+            rv = ossl_hpke_keypair_derive_xof(seed, seedlen, md_xof,
+                kem_info->kem_id, ikm, ikmlen);
             EVP_MD_free(md_xof);
             if (rv != 1)
                 goto err;
@@ -1500,5 +1504,5 @@ size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite)
     if (kem_info == NULL)
         return 0;
 
-    return kem_info->Nsk;
+    return kem_info->recommended_ikmlen;
 }

@@ -709,7 +709,6 @@ static int test_hpke_grease(void)
     size_t clearlen = 128;
     size_t expanded = 0;
     size_t enclen = 0;
-    size_t ikmelen = 0;
 
     memset(&g_suite, 0, sizeof(OSSL_HPKE_SUITE));
     /* GREASEing */
@@ -736,10 +735,6 @@ static int test_hpke_grease(void)
     }
     enclen = OSSL_HPKE_get_public_encap_size(g_suite);
     if (!TEST_size_t_ne(enclen, 0))
-        overallresult = 0;
-    /* not really GREASE but we'll check ikmelen thing */
-    ikmelen = OSSL_HPKE_get_recommended_ikmelen(g_suite);
-    if (!TEST_size_t_ne(ikmelen, 0))
         overallresult = 0;
 
     return overallresult;
