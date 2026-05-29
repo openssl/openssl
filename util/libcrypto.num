@@ -5730,4 +5730,8 @@ ASN1_STRING_set1_data                   ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set1_string                 ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_get_length                  ?	4_1_0	EXIST::FUNCTION:
 CMS_add_standard_smimecap_ex            ?	4_1_0	EXIST::FUNCTION:CMS
+OSSL_HPKE_get_suite                     ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_get_public_key_size           ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_mode_is_supported             ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_suite2str                     ?	4_1_0	EXIST::FUNCTION:
 BIO_socket_ready                        ?	4_1_0	EXIST::FUNCTION:SOCK
