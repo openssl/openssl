@@ -769,13 +769,12 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
 
 int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock, int *lock_failed)
 {
-    void *prev, *initial;
+    void *initial;
 
     *lock_failed = 0;
     /* Load the current pointer value */
-    prev = InterlockedCompareExchangePointer(ptr, NULL, NULL);
     initial = InterlockedCompareExchangePointer(ptr, desire, *expect);
-    if (prev == initial)
+    if (*expect == initial)
         return 1;
     *expect = initial;
     return 0;
