@@ -104,7 +104,9 @@ terminator.
 
 =item 7.
 
-B<Name constraint validation> per RFC 5280 section 4.2.1.10.
+B<Name constraint validation> per RFC 5280 section 4.2.1.10; see
+L<NAME_CONSTRAINTS_check(3)> for details of the matching primitive and
+the general-name types it covers.
 
 =item 8.
 
@@ -450,8 +452,17 @@ above it. Callers should nevertheless be aware that the chain returned in
 this mode does not necessarily terminate at an RFC 5280-style trust
 anchor.
 
+L<NAME_CONSTRAINTS_check(3)> caps each per-pair check at 2**20
+comparisons, but the chain orchestrator issues B<N>(B<N>-1)/2 such
+checks for an B<N>-certificate chain. An adversary submitting a
+maximally constructed chain can therefore force up to approximately
+6.3 million name-constraint comparisons in a four-certificate chain
+(one leaf and three name-constrained signers), or approximately 5.2
+billion at the default chain-depth limit of 100.
+
 =head1 SEE ALSO
 
+L<NAME_CONSTRAINTS_check(3)>,
 L<SSL_add_expected_rpk(3)>,
 L<SSL_CTX_dane_enable(3)>,
 L<SSL_dane_tlsa_add(3)>,
