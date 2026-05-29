@@ -349,6 +349,16 @@ In TLSv1.3 it is possible to suppress all tickets (stateful and stateless) from
 being sent by calling L<SSL_CTX_set_num_tickets(3)> or
 L<SSL_set_num_tickets(3)>.
 
+All tickets (stateful and stateless) are also suppressed when the server has set
+B<SSL_OP_NO_TICKET> and the server-side session cache is disabled via
+B<SSL_SESS_CACHE_OFF> through L<SSL_CTX_set_session_cache_mode(3)>.
+Both conditions together indicate a clear intent to suppress resumption, so
+sending B<NewSessionTicket> messages would be wasteful and misleading.
+
+From the server's perspective, a TLS 1.3 client that does not send the
+B<psk_key_exchange_modes> extension is effectively signaling no interest in
+session tickets and session resumption, so tickets are also suppressed in this case.
+
 =item SSL_OP_PRIORITIZE_CHACHA
 
 When SSL_OP_SERVER_PREFERENCE is set, temporarily reprioritize
