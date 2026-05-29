@@ -280,7 +280,7 @@ static int test_xwing(void)
     int ret = 0;
     OSSL_LIB_CTX *libctx = NULL;
     EVP_PKEY *priv = NULL, *pub = NULL;
-    EVP_PKEY_CTX *ectx = NULL, *dctx;
+    EVP_PKEY_CTX *ectx = NULL, *dctx = NULL;
     uint8_t ss_e[32], ss_d[32], ct[1120];
     size_t ctlen = sizeof(ct), ss_elen = sizeof(ss_e), ss_dlen = sizeof(ss_d);
     size_t publen;
