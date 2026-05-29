@@ -5727,3 +5727,7 @@ EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_data                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_string                  ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_length_ex                   ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_get_suite                     ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_get_public_key_size           ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_mode_is_supported             ?	4_1_0	EXIST::FUNCTION:
+OSSL_HPKE_suite2str                     ?	4_1_0	EXIST::FUNCTION:
