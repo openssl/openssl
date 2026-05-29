@@ -512,32 +512,28 @@ void CRYPTO_THREAD_lock_free(CRYPTO_RWLOCK *lock)
     return;
 }
 
-#define ONCE_UNINITED 0
-#define ONCE_ININIT 1
-#define ONCE_DONE 2
+struct init_once_cb_info {
+    void (*init)(void);
+};
 
-/*
- * We don't use InitOnceExecuteOnce because that isn't available in WinXP which
- * we still have to support.
- */
+static BOOL CALLBACK init_wrapper(PINIT_ONCE InitOnce, PVOID param, PVOID *context)
+{
+    struct init_once_cb_info *info = (struct init_once_cb_info *)param;
+
+    info->init();
+    return TRUE;
+}
+
 int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
 {
-    LONG volatile *lock = (LONG *)once;
-    LONG result;
+    INIT_ONCE *myonce = (INIT_ONCE *)once;
+    struct init_once_cb_info info = { init };
+    BOOL bstatus;
 
-    if (*lock == ONCE_DONE)
+    bstatus = InitOnceExecuteOnce(myonce, init_wrapper, (void *)&info, NULL);
+    if (bstatus == TRUE)
         return 1;
-
-    do {
-        result = InterlockedCompareExchange(lock, ONCE_ININIT, ONCE_UNINITED);
-        if (result == ONCE_UNINITED) {
-            init();
-            *lock = ONCE_DONE;
-            return 1;
-        }
-    } while (result == ONCE_ININIT);
-
-    return (*lock == ONCE_DONE);
+    return 0;
 }
 
 int CRYPTO_THREAD_init_local(CRYPTO_THREAD_LOCAL *key, void (*cleanup)(void *))

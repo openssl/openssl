@@ -84,7 +84,6 @@ static void wsa_done(void)
         CRYPTO_atomic_add(&wsa_ref, -1, &ref, wsa_lock);
         if (ref == 0) {
             ossl_wsa_cleanup();
-            ensure_wsa_startup_once = CRYPTO_ONCE_STATIC_INIT;
             wsa_lock = NULL;
         }
     }
