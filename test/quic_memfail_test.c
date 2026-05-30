@@ -18,10 +18,11 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_port.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_stream_map.h"
 #include "internal/ssl_unwrap.h"
 #include "../ssl/quic/quic_local.h"
+#include "../ssl/quic/quic_channel_local.h"
 #include "../ssl/quic/quic_port_local.h"
-
 #include "testutil.h"
 
 static int test_ossl_quic_port_create_incoming(void)
@@ -138,10 +139,101 @@ err:
     return ret;
 }
 
+static int test_ossl_quic_stream_map_alloc_fail(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL;
+    QUIC_LISTENER *ql;
+    QUIC_CHANNEL_ARGS args = { 0 };
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_STREAM *qs = NULL;
+    int alloc_failed = 0;
+    int ret = 0;
+    OSSL_LIB_CTX *lctx = NULL;
+
+    if (!TEST_ptr(lctx = OSSL_LIB_CTX_new()))
+        goto err;
+    ctx = SSL_CTX_new_ex(lctx, NULL, OSSL_QUIC_server_method());
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_NO_VALIDATE);
+    if (!TEST_ptr(listener))
+        goto err;
+    ql = QUIC_LISTENER_FROM_SSL(listener);
+
+    args.port = ql->port;
+    args.lcidm = ql->port->lcidm;
+    args.srtm = ql->port->srtm;
+    args.is_server = 1;
+    args.is_tserver_ch = 1;
+
+    ch = ossl_quic_channel_alloc(&args);
+    if (ch == NULL)
+        goto err;
+
+    if (!ossl_quic_channel_init(ch))
+        goto err;
+
+    MFAIL_start();
+    qs = ossl_quic_stream_map_alloc(&ch->qsm, 4, QUIC_STREAM_DIR_BIDI);
+    if (qs == NULL)
+        alloc_failed = 1;
+    MFAIL_end();
+
+    ret = alloc_failed ? 0 : 1;
+
+err:
+    if (ch != NULL)
+        ossl_quic_channel_free(ch);
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(lctx);
+    return ret;
+}
+
+static int test_ossl_quic_peer_token_fail(void)
+{
+    SSL_CTX *ctx = NULL;
+    int alloc_failed = 0;
+    int ret = 0;
+    OSSL_LIB_CTX *lctx = NULL;
+    BIO_ADDR *peer = NULL;
+    const uint8_t token[] = "dummytokentest";
+
+    if (!TEST_ptr(lctx = OSSL_LIB_CTX_new()))
+        goto err;
+    ctx = SSL_CTX_new_ex(lctx, NULL, OSSL_QUIC_client_method());
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    peer = BIO_ADDR_new();
+    if (!TEST_ptr(peer))
+        goto err;
+
+    if (!TEST_true(BIO_ADDR_rawmake(peer, AF_INET, "\x7f\x00\x00\x01", 4, 443)))
+        goto err;
+
+    MFAIL_start();
+    if (!ossl_quic_set_peer_token(ctx, peer, token, sizeof(token)))
+        alloc_failed = 1;
+    MFAIL_end();
+
+    ret = alloc_failed ? 0 : 1;
+
+err:
+    BIO_ADDR_free(peer);
+    SSL_CTX_free(ctx);
+    OSSL_LIB_CTX_free(lctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_MFAIL_TEST(test_ossl_quic_port_create_incoming);
     ADD_MFAIL_TEST(test_ch_cleanup_idempotent);
+    ADD_MFAIL_TEST(test_ossl_quic_stream_map_alloc_fail);
+    ADD_MFAIL_TEST(test_ossl_quic_peer_token_fail);
 
     return 1;
 }
