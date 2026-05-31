@@ -169,7 +169,7 @@ err:
     EVP_CIPHER_CTX_free(cctx);
     EVP_CIPHER_free(cipher);
     OPENSSL_cleanse(key, sizeof(key));
-    OPENSSL_cleanse(out_iv, *out_iv_len);
+    OPENSSL_cleanse(out_iv, iv_len);
     return 0;
 }
 
