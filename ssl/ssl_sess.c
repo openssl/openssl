@@ -693,6 +693,32 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         s->session = ret;
     }
 
+    /*
+     * Explicit comparison between the session ID the client offered in
+     * ClientHello and the session ID embedded in the SSL_SESSION returned by
+     * the external cache. If they do not match, the cached session is released
+     * and ssl_get_prev_session() returns as a cache miss, forcing a full
+     * handshake. The check is placed in ssl_get_prev_session() rather than a
+     * later callback because this is the earliest point where both values are
+     * available simultaneously, before any ServerHello is composed.
+     * Catching the mismatch here ensures the server never sends a ServerHello
+     * that claims resumption of a session ID it cannot legitimately echo.
+     *
+     * A mismatch unambiguously indicates one of:
+     *   - a corrupt cache entry
+     *   - an external cache implementation that returned the wrong session
+     *   - an active tampering attempt
+     *
+     * Refusing resumption and falling back to a full handshake is the correct
+     * response.
+     */
+    if (!SSL_CONNECTION_IS_TLS13(s) && hello->session_id_len > 0
+        && (s->session->session_id_length != hello->session_id_len
+            || memcmp(s->session->session_id, hello->session_id,
+                   hello->session_id_len)
+                != 0)) {
+        return 0;
+    }
     ssl_tsan_counter(s->session_ctx, &s->session_ctx->stats.sess_hit);
     s->verify_result = s->session->verify_result;
     return 1;
@@ -1172,30 +1198,24 @@ int SSL_set_session_ticket_ext_cb(SSL *s, tls_session_ticket_ext_cb_fn cb,
 int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
-
-    if (sc == NULL)
+    if (sc == NULL || ext_len < 0 || ext_len > 0xffff)
         return 0;
-
-    if (sc->version >= TLS1_VERSION) {
-        OPENSSL_free(sc->ext.session_ticket);
-        sc->ext.session_ticket = NULL;
+    OPENSSL_free(sc->ext.session_ticket);
+    if (ext_data != NULL) {
         sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
         if (sc->ext.session_ticket == NULL)
             return 0;
-
-        if (ext_data != NULL) {
-            sc->ext.session_ticket->length = ext_len;
-            sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
-            memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
-        } else {
-            sc->ext.session_ticket->length = 0;
-            sc->ext.session_ticket->data = NULL;
-        }
-
-        return 1;
+        sc->ext.session_ticket->length = ext_len;
+        sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
+        memcpy(sc->ext.session_ticket->data, ext_data, ext_len);
+    } else {
+        sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT));
+        if (sc->ext.session_ticket == NULL)
+            return 0;
+        sc->ext.session_ticket->data = NULL;
+        sc->ext.session_ticket->length = 0;
     }
-
-    return 0;
+    return 1;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_4

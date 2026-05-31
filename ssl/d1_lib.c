@@ -17,10 +17,7 @@
 #include "internal/ssl_unwrap.h"
 
 static int dtls1_handshake_write(SSL_CONNECTION *s);
-static size_t dtls1_link_min_mtu(void);
-
-/* XDTLS:  figure out the right values */
-static const size_t g_probable_mtu[] = { 1500, 512, 256 };
+static const size_t dtls1_link_min_mtu = 256;
 
 const SSL3_ENC_METHOD DTLSv1_enc_data = {
     tls1_setup_key_block,
@@ -236,18 +233,18 @@ long dtls1_ctrl(SSL *ssl, int cmd, long larg, void *parg)
         ret = dtls1_handle_timeout(s);
         break;
     case DTLS_CTRL_SET_LINK_MTU:
-        if (larg < (long)dtls1_link_min_mtu())
+        if (larg < (long)dtls1_link_min_mtu)
             return 0;
         s->d1->link_mtu = larg;
         return 1;
     case DTLS_CTRL_GET_LINK_MIN_MTU:
-        return (long)dtls1_link_min_mtu();
+        return (long)dtls1_link_min_mtu;
     case SSL_CTRL_SET_MTU:
         /*
          *  We may not have a BIO set yet so can't call dtls1_min_mtu()
-         *  We'll have to make do with dtls1_link_min_mtu() and max overhead
+         *  We'll have to make do with dtls1_link_min_mtu and max overhead
          */
-        if (larg < (long)dtls1_link_min_mtu() - DTLS1_MAX_MTU_OVERHEAD)
+        if (larg < (long)dtls1_link_min_mtu - DTLS1_MAX_MTU_OVERHEAD)
             return 0;
         s->d1->mtu = larg;
         return larg;
@@ -906,16 +903,11 @@ int dtls1_query_mtu(SSL_CONNECTION *s)
     return 1;
 }
 
-static size_t dtls1_link_min_mtu(void)
-{
-    return (g_probable_mtu[(sizeof(g_probable_mtu) / sizeof(g_probable_mtu[0])) - 1]);
-}
-
 size_t dtls1_min_mtu(SSL_CONNECTION *s)
 {
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    return dtls1_link_min_mtu() - BIO_dgram_get_mtu_overhead(SSL_get_wbio(ssl));
+    return dtls1_link_min_mtu - BIO_dgram_get_mtu_overhead(SSL_get_wbio(ssl));
 }
 
 size_t DTLS_get_data_mtu(const SSL *ssl)

@@ -84,12 +84,12 @@ void AES_xts_decrypt(const unsigned char *inp, unsigned char *out, size_t len,
 #define AES_GCM_DEC_BYTES 128
 size_t ppc_aes_gcm_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key, unsigned char ivec[16],
-    u64 *Xi);
+    uint64_t *Xi);
 size_t ppc_aes_gcm_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key, unsigned char ivec[16],
-    u64 *Xi);
+    uint64_t *Xi);
 #define AES_GCM_ASM_PPC(gctx) ((gctx)->ctr == aes_p8_ctr32_encrypt_blocks && (gctx)->gcm.funcs.ghash == gcm_ghash_p8)
-void gcm_ghash_p8(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
+void gcm_ghash_p8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, size_t len);
 #endif /* OPENSSL_SYS_AIX || OPENSSL_SYS_MACOSX */
 #endif /* PPC */
 
@@ -157,10 +157,10 @@ size_t unroll8_eor3_aes_gcm_dec_192_kernel(const uint8_t *ciphertext, uint64_t p
 size_t unroll8_eor3_aes_gcm_dec_256_kernel(const uint8_t *ciphertext, uint64_t plaintext_length, uint8_t *plaintext,
     uint64_t *Xi, unsigned char ivec[16], const void *key);
 size_t armv8_aes_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len, const void *key,
-    unsigned char ivec[16], u64 *Xi);
+    unsigned char ivec[16], uint64_t *Xi);
 size_t armv8_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len, const void *key,
-    unsigned char ivec[16], u64 *Xi);
-void gcm_ghash_v8(u64 Xi[2], const u128 Htable[16], const u8 *inp, size_t len);
+    unsigned char ivec[16], uint64_t *Xi);
+void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, size_t len);
 #endif
 #endif
 #endif
@@ -286,10 +286,10 @@ void aesni_ccm64_decrypt_blocks(const unsigned char *in,
 
 #if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 size_t aesni_gcm_encrypt(const unsigned char *in, unsigned char *out, size_t len,
-    const void *key, unsigned char ivec[16], u64 *Xi);
+    const void *key, unsigned char ivec[16], uint64_t *Xi);
 size_t aesni_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t len,
-    const void *key, unsigned char ivec[16], u64 *Xi);
-void gcm_ghash_avx(u64 Xi[2], const u128 Htable[16], const u8 *in, size_t len);
+    const void *key, unsigned char ivec[16], uint64_t *Xi);
+void gcm_ghash_avx(uint64_t Xi[2], const u128 Htable[16], const uint8_t *in, size_t len);
 
 #define AES_gcm_encrypt aesni_gcm_encrypt
 #define AES_gcm_decrypt aesni_gcm_decrypt
@@ -478,12 +478,12 @@ void rv64i_zvkb_zvkned_ctr32_encrypt_blocks(const unsigned char *in,
 size_t rv64i_zvkb_zvkg_zvkned_aes_gcm_encrypt(const unsigned char *in,
     unsigned char *out, size_t len,
     const void *key,
-    unsigned char ivec[16], u64 *Xi);
+    unsigned char ivec[16], uint64_t *Xi);
 
 size_t rv64i_zvkb_zvkg_zvkned_aes_gcm_decrypt(const unsigned char *in,
     unsigned char *out, size_t len,
     const void *key,
-    unsigned char ivec[16], u64 *Xi);
+    unsigned char ivec[16], uint64_t *Xi);
 
 void rv64i_zvbb_zvkg_zvkned_aes_xts_encrypt(const unsigned char *in,
     unsigned char *out, size_t length,
@@ -497,7 +497,7 @@ void rv64i_zvbb_zvkg_zvkned_aes_xts_decrypt(const unsigned char *in,
     const AES_KEY *key2,
     const unsigned char iv[16]);
 
-void gcm_ghash_rv64i_zvkg(u64 Xi[2], const u128 Htable[16], const u8 *inp,
+void gcm_ghash_rv64i_zvkg(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp,
     size_t len);
 
 #define AES_GCM_ENC_BYTES 64

@@ -133,8 +133,7 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
     for (i = 0; i < n; i++) {
         OSSL_CMP_ITAV *itav = sk_OSSL_CMP_ITAV_shift(itavs);
         ASN1_OBJECT *obj = OSSL_CMP_ITAV_get0_type(itav);
-        char name[128] = "genp contains InfoType '";
-        size_t offset = strlen(name);
+        char name[128];
 
         if (OBJ_obj2nid(obj) == expected) {
             for (i++; i < n; i++)
@@ -143,9 +142,11 @@ static OSSL_CMP_ITAV *get_genm_itav(OSSL_CMP_CTX *ctx,
             return itav;
         }
 
-        if (OBJ_obj2txt(name + offset, (int)(sizeof(name) - offset), obj, 0) < 0)
-            strcat(name, "<unknown>");
-        ossl_cmp_log2(WARN, ctx, "%s' while expecting 'id-it-%s'", name, desc);
+        if (OBJ_obj2txt(name, sizeof(name), obj, 0) < 0)
+            name[0] = '\0';
+        ossl_cmp_log2(WARN, ctx,
+            "genp contains InfoType '%s' while expecting 'id-it-%s'",
+            name[0] == '\0' ? "<unknown>" : name, desc);
         OSSL_CMP_ITAV_free(itav);
     }
     ERR_raise_data(ERR_LIB_CMP, CMP_R_INVALID_GENP,

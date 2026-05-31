@@ -336,6 +336,7 @@ static int raw2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
     }
 
     BIO_free(in);
+    in = NULL;
 
     if (BUF_MEM_grow(mem, len) != len) {
         ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);

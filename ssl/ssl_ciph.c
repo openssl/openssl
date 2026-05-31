@@ -1234,6 +1234,10 @@ static int ciphersuite_cb(const char *elem, int len, void *arg)
     /* Arbitrary sized temp buffer for the cipher name. Should be big enough */
     char name[80];
 
+    /* CONF_parse_list signals empty elements with elem == NULL; skip them */
+    if (elem == NULL || len == 0)
+        return 1;
+
     if (len > (int)(sizeof(name) - 1))
         /* Anyway return 1 so we can parse rest of the list */
         return 1;

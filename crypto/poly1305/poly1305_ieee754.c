@@ -50,14 +50,12 @@
 #error "this is gcc-specific template"
 #endif
 
+#include <stdint.h>
 #include <stdlib.h>
 
-typedef unsigned char u8;
-typedef unsigned int u32;
-typedef unsigned long long u64;
 typedef union {
     double d;
-    u64 u;
+    uint64_t u;
 } elem64;
 
 #define TWO(p) ((double)(1ULL << (p)))
@@ -70,22 +68,22 @@ typedef union {
 #define EXP(p) ((1023ULL + (p)) << 52)
 
 #if defined(__x86_64__) || (defined(__PPC__) && defined(__LITTLE_ENDIAN__))
-#define U8TOU32(p) (*(const u32 *)(p))
-#define U32TO8(p, v) (*(u32 *)(p) = (v))
+#define U8TOU32(p) (*(const uint32_t *)(p))
+#define U32TO8(p, v) (*(uint32_t *)(p) = (v))
 #elif defined(__PPC__) || defined(__POWERPC__)
-#define U8TOU32(p) ({u32 ret; asm ("lwbrx	%0,0,%1":"=r"(ret):"b"(p)); ret; })
+#define U8TOU32(p) ({uint32_t ret; asm ("lwbrx	%0,0,%1":"=r"(ret):"b"(p)); ret; })
 #define U32TO8(p, v) asm("stwbrx %0,0,%1" ::"r"(v), "b"(p) : "memory")
 #elif defined(__s390x__)
-#define U8TOU32(p) ({u32 ret; asm ("lrv	%0,%1":"=d"(ret):"m"(*(u32 *)(p))); ret; })
-#define U32TO8(p, v) asm("strv	%1,%0" : "=m"(*(u32 *)(p)) : "d"(v))
+#define U8TOU32(p) ({uint32_t ret; asm ("lrv	%0,%1":"=d"(ret):"m"(*(uint32_t *)(p))); ret; })
+#define U32TO8(p, v) asm("strv	%1,%0" : "=m"(*(uint32_t *)(p)) : "d"(v))
 #endif
 
 #ifndef U8TOU32
-#define U8TOU32(p) ((u32)(p)[0] | (u32)(p)[1] << 8 | (u32)(p)[2] << 16 | (u32)(p)[3] << 24)
+#define U8TOU32(p) ((uint32_t)(p)[0] | (uint32_t)(p)[1] << 8 | (uint32_t)(p)[2] << 16 | (uint32_t)(p)[3] << 24)
 #endif
 #ifndef U32TO8
-#define U32TO8(p, v) ((p)[0] = (u8)(v), (p)[1] = (u8)((v) >> 8), \
-    (p)[2] = (u8)((v) >> 16), (p)[3] = (u8)((v) >> 24))
+#define U32TO8(p, v) ((p)[0] = (uint8_t)(v), (p)[1] = (uint8_t)((v) >> 8), \
+    (p)[2] = (uint8_t)((v) >> 16), (p)[3] = (uint8_t)((v) >> 24))
 #endif
 
 typedef struct {
@@ -96,15 +94,15 @@ typedef struct {
 
 /* "round toward zero (truncate), mask all exceptions" */
 #if defined(__x86_64__)
-static const u32 mxcsr = 0x7f80;
+static const uint32_t mxcsr = 0x7f80;
 #elif defined(__PPC__) || defined(__POWERPC__)
-static const u64 one = 1;
+static const uint64_t one = 1;
 #elif defined(__s390x__)
-static const u32 fpc = 1;
+static const uint32_t fpc = 1;
 #elif defined(__sparc__)
-static const u64 fsr = 1ULL << 30;
+static const uint64_t fsr = 1ULL << 30;
 #elif defined(__mips__)
-static const u32 fcsr = 1;
+static const uint32_t fcsr = 1;
 #else
 #error "unrecognized platform"
 #endif
@@ -132,7 +130,7 @@ int poly1305_init(void *ctx, const unsigned char key[16])
          * set "truncate" rounding mode
          */
 #if defined(__x86_64__)
-        u32 mxcsr_orig;
+        uint32_t mxcsr_orig;
 
         asm volatile("stmxcsr	%0" : "=m"(mxcsr_orig));
         asm volatile("ldmxcsr	%0" ::"m"(mxcsr));
@@ -142,17 +140,17 @@ int poly1305_init(void *ctx, const unsigned char key[16])
         asm volatile("mffs	%0" : "=f"(fpscr_orig));
         asm volatile("mtfsf	255,%0" ::"f"(fpscr));
 #elif defined(__s390x__)
-        u32 fpc_orig;
+        uint32_t fpc_orig;
 
         asm volatile("stfpc	%0" : "=m"(fpc_orig));
         asm volatile("lfpc	%0" ::"m"(fpc));
 #elif defined(__sparc__)
-        u64 fsr_orig;
+        uint64_t fsr_orig;
 
         asm volatile("stx	%%fsr,%0" : "=m"(fsr_orig));
         asm volatile("ldx	%0,%%fsr" ::"m"(fsr));
 #elif defined(__mips__)
-        u32 fcsr_orig;
+        uint32_t fcsr_orig;
 
         asm volatile("cfc1	%0,$31" : "=r"(fcsr_orig));
         asm volatile("ctc1	%0,$31" ::"r"(fcsr));
@@ -221,7 +219,7 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
 {
     poly1305_internal *st = (poly1305_internal *)ctx;
     elem64 in0, in1, in2, in3;
-    u64 pad = (u64)padbit << 32;
+    uint64_t pad = (uint64_t)padbit << 32;
 
     double x0, x1, x2, x3;
     double h0lo, h0hi, h1lo, h1hi, h2lo, h2hi, h3lo, h3hi;
@@ -247,7 +245,7 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
      * set "truncate" rounding mode
      */
 #if defined(__x86_64__)
-    u32 mxcsr_orig;
+    uint32_t mxcsr_orig;
 
     asm volatile("stmxcsr	%0" : "=m"(mxcsr_orig));
     asm volatile("ldmxcsr	%0" ::"m"(mxcsr));
@@ -257,17 +255,17 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
     asm volatile("mffs		%0" : "=f"(fpscr_orig));
     asm volatile("mtfsf	255,%0" ::"f"(fpscr));
 #elif defined(__s390x__)
-    u32 fpc_orig;
+    uint32_t fpc_orig;
 
     asm volatile("stfpc	%0" : "=m"(fpc_orig));
     asm volatile("lfpc		%0" ::"m"(fpc));
 #elif defined(__sparc__)
-    u64 fsr_orig;
+    uint64_t fsr_orig;
 
     asm volatile("stx		%%fsr,%0" : "=m"(fsr_orig));
     asm volatile("ldx		%0,%%fsr" ::"m"(fsr));
 #elif defined(__mips__)
-    u32 fcsr_orig;
+    uint32_t fcsr_orig;
 
     asm volatile("cfc1		%0,$31" : "=r"(fcsr_orig));
     asm volatile("ctc1		%0,$31" ::"r"(fcsr));
@@ -422,13 +420,13 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
 #endif
 }
 
-void poly1305_emit(void *ctx, unsigned char mac[16], const u32 nonce[4])
+void poly1305_emit(void *ctx, unsigned char mac[16], const uint32_t nonce[4])
 {
     poly1305_internal *st = (poly1305_internal *)ctx;
-    u64 h0, h1, h2, h3, h4;
-    u32 g0, g1, g2, g3, g4;
-    u64 t;
-    u32 mask;
+    uint64_t h0, h1, h2, h3, h4;
+    uint32_t g0, g1, g2, g3, g4;
+    uint64_t t;
+    uint32_t mask;
 
     /*
      * thanks to bias masking exponent gives integer result
@@ -456,11 +454,11 @@ void poly1305_emit(void *ctx, unsigned char mac[16], const u32 nonce[4])
     h2 &= 0xffffffffU;
 
     /* compute h + -p */
-    g0 = (u32)(t = h0 + 5);
-    g1 = (u32)(t = h1 + (t >> 32));
-    g2 = (u32)(t = h2 + (t >> 32));
-    g3 = (u32)(t = h3 + (t >> 32));
-    g4 = h4 + (u32)(t >> 32);
+    g0 = (uint32_t)(t = h0 + 5);
+    g1 = (uint32_t)(t = h1 + (t >> 32));
+    g2 = (uint32_t)(t = h2 + (t >> 32));
+    g3 = (uint32_t)(t = h3 + (t >> 32));
+    g4 = h4 + (uint32_t)(t >> 32);
 
     /* if there was carry, select g0-g3 */
     mask = 0 - (g4 >> 2);
@@ -475,10 +473,10 @@ void poly1305_emit(void *ctx, unsigned char mac[16], const u32 nonce[4])
     g3 |= (h3 & mask);
 
     /* mac = (h + nonce) % (2^128) */
-    g0 = (u32)(t = (u64)g0 + nonce[0]);
-    g1 = (u32)(t = (u64)g1 + (t >> 32) + nonce[1]);
-    g2 = (u32)(t = (u64)g2 + (t >> 32) + nonce[2]);
-    g3 = (u32)(t = (u64)g3 + (t >> 32) + nonce[3]);
+    g0 = (uint32_t)(t = (uint64_t)g0 + nonce[0]);
+    g1 = (uint32_t)(t = (uint64_t)g1 + (t >> 32) + nonce[1]);
+    g2 = (uint32_t)(t = (uint64_t)g2 + (t >> 32) + nonce[2]);
+    g3 = (uint32_t)(t = (uint64_t)g3 + (t >> 32) + nonce[3]);
 
     U32TO8(mac + 0, g0);
     U32TO8(mac + 4, g1);

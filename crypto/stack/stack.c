@@ -33,6 +33,7 @@ struct stack_st {
     OPENSSL_sk_compfunc comp;
     int (*cmp_thunk)(OPENSSL_sk_compfunc, const void *, const void *);
     OPENSSL_sk_freefunc_thunk free_thunk;
+    OPENSSL_sk_copyfunc_thunk copy_thunk;
 };
 
 OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
@@ -45,6 +46,16 @@ OPENSSL_sk_compfunc OPENSSL_sk_set_cmp_func(OPENSSL_STACK *sk,
     sk->comp = c;
 
     return old;
+}
+
+static void free_with_thunk(OPENSSL_STACK *sk, OPENSSL_sk_freefunc free_func, const void *data)
+{
+    if (data == NULL)
+        return;
+    if (sk->free_thunk != NULL)
+        sk->free_thunk(free_func, (void *)data);
+    else
+        free_func((void *)data);
 }
 
 static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
@@ -78,10 +89,14 @@ static OPENSSL_STACK *internal_copy(const OPENSSL_STACK *sk,
         for (i = 0; i < ret->num; ++i) {
             if (sk->data[i] == NULL)
                 continue;
-            if ((ret->data[i] = copy_func(sk->data[i])) == NULL) {
+            if (ret->copy_thunk != NULL)
+                ret->data[i] = ret->copy_thunk(copy_func, sk->data[i]);
+            else
+                ret->data[i] = copy_func(sk->data[i]);
+
+            if (ret->data[i] == NULL) {
                 while (--i >= 0)
-                    if (ret->data[i] != NULL)
-                        free_func((void *)ret->data[i]);
+                    free_with_thunk(ret, free_func, ret->data[i]);
                 goto err;
             }
         }
@@ -253,6 +268,14 @@ OPENSSL_STACK *OPENSSL_sk_set_cmp_thunks(OPENSSL_STACK *st, int (*c_thunk)(int (
 {
     if (st != NULL)
         st->cmp_thunk = c_thunk;
+
+    return st;
+}
+
+OPENSSL_STACK *OPENSSL_sk_set_copy_thunks(OPENSSL_STACK *st, OPENSSL_sk_copyfunc_thunk cp_thunk)
+{
+    if (st != NULL)
+        st->copy_thunk = cp_thunk;
 
     return st;
 }
@@ -460,14 +483,9 @@ void OPENSSL_sk_pop_free(OPENSSL_STACK *st, OPENSSL_sk_freefunc func)
     if (st == NULL)
         return;
 
-    for (i = 0; i < st->num; i++) {
-        if (st->data[i] != NULL) {
-            if (st->free_thunk != NULL)
-                st->free_thunk(func, (void *)st->data[i]);
-            else
-                func((void *)st->data[i]);
-        }
-    }
+    for (i = 0; i < st->num; i++)
+        free_with_thunk(st, func, st->data[i]);
+
     OPENSSL_sk_free(st);
 }
 

@@ -398,4 +398,27 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
 
+#define EVP_DO_ALL_PROVIDED_THUNK(type)                                                       \
+    struct type##_do_all_provided_thunk {                                                     \
+        void (*fn)(type * method, void *arg);                                                 \
+        void *arg;                                                                            \
+    };                                                                                        \
+    static ossl_inline ossl_unused void type##_do_all_provided_thunk(void *method, void *arg) \
+    {                                                                                         \
+        struct type##_do_all_provided_thunk *t = arg;                                         \
+        (*t->fn)((type *)method, t->arg);                                                     \
+    }
+
+EVP_DO_ALL_PROVIDED_THUNK(EVP_ASYM_CIPHER)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_MD)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_CIPHER)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_RAND)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KEYEXCH)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KDF)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KEM)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_KEYMGMT)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_MAC)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_SIGNATURE)
+EVP_DO_ALL_PROVIDED_THUNK(EVP_SKEYMGMT)
+
 #endif /* !defined(OSSL_LIBCRYPTO_EVP_EVP_LOCAL_H) */

@@ -23,14 +23,14 @@ static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static inline u32 UTO32(unsigned char *buf)
+static inline uint32_t UTO32(unsigned char *buf)
 {
-    return ((u32) buf[0] << 24) | ((u32) buf[1] << 16) | ((u32) buf[2] << 8) | ((u32) buf[3]);
+    return ((uint32_t) buf[0] << 24) | ((uint32_t) buf[1] << 16) | ((uint32_t) buf[2] << 8) | ((uint32_t) buf[3]);
 }
 
-static inline u32 add32TOU(unsigned char buf[4], u32 n)
+static inline uint32_t add32TOU(unsigned char buf[4], uint32_t n)
 {
-    u32 r;
+    uint32_t r;
 
     r = UTO32(buf);
     r += n;
@@ -42,20 +42,20 @@ static inline u32 add32TOU(unsigned char buf[4], u32 n)
 }
 
 static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
-                                const void *key, unsigned char ivec[16], u64 *Xi, int encrypt)
+                                const void *key, unsigned char ivec[16], uint64_t *Xi, int encrypt)
 {
     size_t s = 0;
     size_t ndone = 0;
     int ctr_reset = 0;
-    u64 blocks_unused;
-    u64 nb = len / 16;
-    u64 next_ctr = 0;
+    uint64_t blocks_unused;
+    uint64_t nb = len / 16;
+    uint64_t next_ctr = 0;
     unsigned char ctr_saved[12];
 
     memcpy(ctr_saved, ivec, 12);
 
     while (nb) {
-        blocks_unused = (u64) 0xffffffffU + 1 - (u64) UTO32 (ivec + 12);
+        blocks_unused = (uint64_t) 0xffffffffU + 1 - (uint64_t) UTO32 (ivec + 12);
         if (nb > blocks_unused) {
             len = blocks_unused * 16;
             nb -= blocks_unused;
@@ -71,7 +71,7 @@ static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, siz
                     : ppc_aes_gcm_decrypt(in, out, len, key, ivec, Xi);
 
         /* add counter to ivec */
-        add32TOU(ivec + 12, (u32) next_ctr);
+        add32TOU(ivec + 12, (uint32_t) next_ctr);
         if (ctr_reset) {
             ctr_reset = 0;
             in += len;

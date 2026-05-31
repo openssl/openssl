@@ -32,8 +32,8 @@ IF[{- !$disabled{tests} -}]
           testutil/test_cleanup.c testutil/main.c testutil/testutil_init.c \
           testutil/options.c testutil/test_options.c testutil/provider.c \
           testutil/apps_shims.c testutil/random.c testutil/helper.c \
-          testutil/compare.c testutil/mfail.c $LIBAPPSSRC
-  INCLUDE[libtestutil.a]=../include ../apps/include ..
+          testutil/compare.c mfail/mfail.c $LIBAPPSSRC
+  INCLUDE[libtestutil.a]=../include ../apps/include .. mfail
   DEPEND[libtestutil.a]=../libcrypto
 
   PROGRAMS{noinst}= \
@@ -969,11 +969,18 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[dsa_no_digest_size_test]=../include ../apps/include
     DEPEND[dsa_no_digest_size_test]=../libcrypto.a libtestutil.a
 
-    IF[{- !$disabled{ecx} && !$disabled{tls1_3} -}]
+    IF[{- !$disabled{ecx} && !$disabled{tls1_2} && !$disabled{tls1_3} -}]
       PROGRAMS{noinst}=tls13ticket_test
       SOURCE[tls13ticket_test]=tls13tickettest.c helpers/ssltestlib.c
-      INCLUDE[tls13ticket_test]=../include ../apps/include
+      INCLUDE[tls13ticket_test]=../include ../apps/include ..
       DEPEND[tls13ticket_test]=../libcrypto ../libssl libtestutil.a
+    ENDIF
+
+    IF[{- !$disabled{psk} && !$disabled{tls1_2} -}]
+      PROGRAMS{noinst}=tls12psk_test
+      SOURCE[tls12psk_test]=tls12psk.c helpers/ssltestlib.c
+      INCLUDE[tls12psk_test]=.. ../include ../apps/include
+      DEPEND[tls12psk_test]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c

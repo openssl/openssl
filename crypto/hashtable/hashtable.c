@@ -368,22 +368,23 @@ void ossl_ht_free(HT *h)
     if (h == NULL)
         return;
 
-    ossl_ht_write_lock(h);
-    flush_ok = ossl_ht_flush_internal(h);
-    ossl_ht_write_unlock(h);
-    /* Freeing the lock does a final sync for us */
-    if (!h->config.no_rcu) {
+    if (h->config.no_rcu) {
+        free_oldmd(h->md);
+    } else {
+        ossl_ht_write_lock(h);
+        flush_ok = ossl_ht_flush_internal(h);
+        ossl_ht_write_unlock(h);
+        /* Freeing the lock does a final sync for us */
         CRYPTO_THREAD_lock_free(h->atomic_lock);
         ossl_rcu_lock_free(h->lock);
-    }
-    if (flush_ok) {
-        OPENSSL_free(h->md->neighborhood_ptr_to_free);
-        OPENSSL_free(h->md);
-    } else {
-        free_oldmd(h->md);
+        if (flush_ok) {
+            OPENSSL_free(h->md->neighborhood_ptr_to_free);
+            OPENSSL_free(h->md);
+        } else {
+            free_oldmd(h->md);
+        }
     }
     OPENSSL_free(h);
-    return;
 }
 
 size_t ossl_ht_count(HT *h)

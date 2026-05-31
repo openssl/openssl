@@ -4036,6 +4036,85 @@ err:
     return ret;
 }
 
+static int test_RSA_verify_recover_rejects_short_buffer(void)
+{
+    int ret = 0;
+    int recovered_cap = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *sign_ctx = NULL, *verify_ctx = NULL;
+    unsigned char *sig = NULL, *recovered = NULL;
+    size_t sig_len = 0, recovered_len = 0;
+    unsigned long err = 0;
+    unsigned char shortbuf[] = { 0xa5, 0x5a };
+    const unsigned char shortbuf_expected[] = { 0xa5, 0x5a };
+    unsigned char digest[32];
+    size_t i;
+
+    for (i = 0; i < sizeof(digest); i++)
+        digest[i] = (unsigned char)i;
+
+    if (OSSL_PROVIDER_available(testctx, "fips"))
+        return TEST_skip("Test skipped for FIPS provider");
+
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(sign_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_sign_init(sign_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(sign_ctx,
+                            RSA_PKCS1_PADDING),
+            0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_signature_md(sign_ctx, EVP_sha256()),
+            0)
+        || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, NULL, &sig_len, digest,
+                            sizeof(digest)),
+            0)
+        || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
+        || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, sig, &sig_len, digest,
+                            sizeof(digest)),
+            0)
+        || !TEST_int_gt(recovered_cap = EVP_PKEY_get_size(pkey), 0)
+        || !TEST_ptr(recovered = OPENSSL_malloc(recovered_cap))
+        || !TEST_ptr(verify_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey,
+                         NULL))
+        || !TEST_int_gt(EVP_PKEY_verify_recover_init(verify_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(verify_ctx,
+                            RSA_PKCS1_PADDING),
+            0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_signature_md(verify_ctx, EVP_sha256()),
+            0))
+        goto done;
+
+    recovered_len = (size_t)recovered_cap;
+    if (!TEST_int_gt(EVP_PKEY_verify_recover(verify_ctx, recovered,
+                         &recovered_len, sig, sig_len),
+            0)
+        || !TEST_size_t_eq(recovered_len, sizeof(digest))
+        || !TEST_mem_eq(recovered, recovered_len, digest, sizeof(digest)))
+        goto done;
+
+    ERR_clear_error();
+    recovered_len = 1;
+    if (!TEST_int_le(EVP_PKEY_verify_recover(verify_ctx, shortbuf,
+                         &recovered_len, sig, sig_len),
+            0))
+        goto done;
+
+    err = ERR_peek_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_PROV)
+        || !TEST_int_eq(ERR_GET_REASON(err), PROV_R_OUTPUT_BUFFER_TOO_SMALL)
+        || !TEST_mem_eq(shortbuf, sizeof(shortbuf), shortbuf_expected,
+            sizeof(shortbuf_expected)))
+        goto done;
+
+    ret = 1;
+done:
+    EVP_PKEY_CTX_free(sign_ctx);
+    EVP_PKEY_CTX_free(verify_ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(sig);
+    OPENSSL_free(recovered);
+    return ret;
+}
+
 static int test_RSA_encrypt(void)
 {
     int ret = 0;
@@ -7958,6 +8037,7 @@ int setup_tests(void)
     ADD_TEST(test_RSA_get_set_params);
     ADD_TEST(test_RSA_OAEP_set_get_params);
     ADD_TEST(test_RSA_OAEP_set_null_label);
+    ADD_TEST(test_RSA_verify_recover_rejects_short_buffer);
     ADD_TEST(test_RSA_encrypt);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
