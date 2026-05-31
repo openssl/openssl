@@ -57,8 +57,10 @@ struct stats {
     unsigned int ch_has_psk;
     unsigned int ch_has_psk_kex_modes;
     unsigned int ch_has_session_ticket;
+    unsigned int ch_has_early_data;
     unsigned int sh_has_psk;
     unsigned int sh_has_supported_versions;
+    unsigned int ee_has_early_data;
 };
 
 struct tls13_endpoint {
@@ -137,10 +139,15 @@ static void parse_ch_exts(const unsigned char *buf, size_t len, struct stats *x)
         case TLSEXT_TYPE_session_ticket:
             x->ch_has_session_ticket = 1;
             break;
+        case TLSEXT_TYPE_early_data:
+            x->ch_has_early_data = 1;
+            break;
         }
     }
-    TEST_info("ch extensions: psk=%d psk_kex_modes=%d session_ticket=%d",
-        x->ch_has_psk, x->ch_has_psk_kex_modes, x->ch_has_session_ticket);
+    TEST_info("ch extensions: psk=%d psk_kex_modes=%d session_ticket=%d"
+              " early_data=%d",
+        x->ch_has_psk, x->ch_has_psk_kex_modes, x->ch_has_session_ticket,
+        x->ch_has_early_data);
 }
 
 static void parse_sh_exts(const unsigned char *buf, size_t len, struct stats *x)
@@ -171,6 +178,28 @@ static void parse_sh_exts(const unsigned char *buf, size_t len, struct stats *x)
         x->sh_has_psk, x->sh_has_supported_versions);
 }
 
+static void parse_ee_exts(const unsigned char *buf, size_t len, struct stats *x)
+{
+    PACKET pkt, e, ex;
+    unsigned int v;
+
+    if (!PACKET_buf_init(&pkt, buf, len)
+        || !PACKET_forward(&pkt, 4)
+        || !PACKET_as_length_prefixed_2(&pkt, &e))
+        return;
+
+    while (PACKET_remaining(&e) > 0) {
+        if (!PACKET_get_net_2(&e, &v) || !PACKET_get_length_prefixed_2(&e, &ex))
+            return;
+        switch (v) {
+        case TLSEXT_TYPE_early_data:
+            x->ee_has_early_data = 1;
+            break;
+        }
+    }
+    TEST_info("ee extensions: early_data=%d", x->ee_has_early_data);
+}
+
 static void msg_cb(int write_p, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg)
 {
@@ -185,6 +214,8 @@ static void msg_cb(int write_p, int version, int content_type,
             parse_ch_exts(buf, len, stats);
         if (mt == SSL3_MT_SERVER_HELLO && stats != NULL)
             parse_sh_exts(buf, len, stats);
+        if (mt == SSL3_MT_ENCRYPTED_EXTENSIONS && stats != NULL)
+            parse_ee_exts(buf, len, stats);
     }
 }
 
@@ -652,6 +683,161 @@ static int test_tls13_ticket_no_decrypt(void)
     return test;
 }
 
+/*
+ * TLS 1.3 Client-side Ticket Age Mismatch 0-RTT Rejection
+ *
+ * This test exercises the case where the client does not send a PSK due to a
+ * ticket age mismatch, and verifies that the client suppresses the early_data
+ * as a result.
+ *
+ * RFC 8446 4.2.10: When a PSK is used and early data is allowed for that PSK,
+ * the client can send Application Data in its first flight of messages. If the
+ * client opts to do so, it MUST supply both the "pre_shared_key" and
+ * "early_data" extensions. The PSK used to encrypt the early data MUST be the
+ * first PSK listed in the client's "pre_shared_key" extension.
+ *
+ * RFC 8446 4.2.11.1: Clients MUST NOT attempt to use tickets which have ages
+ * greater than the "ticket_lifetime" value which was provided with the ticket.
+ */
+static int test_tls13_ticket_client_age_mismatch_reject_early_data(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t r = 0, w = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_false(SSL_write_early_data(resumed.c.ssl, m, sizeof(m) - 1, &w))
+        && TEST_size_t_eq(w, 0)
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_NOT_SENT)
+        && TEST_false(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.c.stats.tickets, 2)
+        && TEST_uint_eq(resumed.s.stats.tickets, 2)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * TLS 1.3 Server-side Ticket Age Mismatch 0-RTT Rejection
+ *
+ * Exercises the server-side ticket age validation. The client considers the
+ * ticket fresh and proceeds with PSK + 0-RTT, but the transmitted
+ * obfuscated_ticket_age indicates a ticket roughly 10s old. Since the apparent
+ * ticket age exceeds TICKET_AGE_ALLOWANCE, the server rejects early data.
+ *
+ * RFC 8446 4.2.10: For PSKs provisioned via NewSessionTicket, a server MUST
+ * validate that the ticket age for the selected PSK identity is within a small
+ * tolerance of the time since the ticket was issued. If it is not, the server
+ * SHOULD proceed with the handshake but reject 0-RTT.
+ */
+static int test_tls13_ticket_server_age_mismatch_reject_early_data(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t w = 0, r = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY) != 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(SSL_write_early_data(resumed.c.ssl, m, sizeof(m) - 1, &w))
+        && TEST_size_t_eq(w, sizeof(m) - 1)
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED)
+        && TEST_true(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.c.stats.tickets, 1)
+        && TEST_uint_eq(resumed.s.stats.tickets, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 OPT_TEST_DECLARE_USAGE("\n")
 
 int setup_tests(void)
@@ -674,6 +860,8 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_resumed_set_num_tickets_zero);
     ADD_TEST(test_tls13_ticket_disable_server);
     ADD_TEST(test_tls13_ticket_no_decrypt);
+    ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data);
+    ADD_TEST(test_tls13_ticket_server_age_mismatch_reject_early_data);
 
     return 1;
 }
