@@ -4846,10 +4846,13 @@ void ssl_set_masks(SSL_CONNECTION *s)
 
     /*
      * If we only have an RSA-PSS certificate allow RSA authentication
-     * if TLS 1.2 and peer supports it.
+     * if TLS 1.2 or DTLS 1.2 and peer supports it.
      */
 
-    if (rsa_enc || rsa_sign || (ssl_has_cert(s, SSL_PKEY_RSA_PSS_SIGN) && pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_EXPLICIT_SIGN && TLS1_get_version(&s->ssl) == TLS1_2_VERSION))
+    if (rsa_enc || rsa_sign
+        || (ssl_has_cert(s, SSL_PKEY_RSA_PSS_SIGN)
+            && pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_EXPLICIT_SIGN
+            && (SSL_version(&s->ssl) == XTLS(&s->ssl, 1, 2))))
         mask_a |= SSL_aRSA;
 
     if (dsa_sign) {
@@ -4868,7 +4871,7 @@ void ssl_set_masks(SSL_CONNECTION *s)
     }
     if (pvalid[SSL_PKEY_ECC] & CERT_PKEY_RPK)
         mask_a |= SSL_aECDSA;
-    if (TLS1_get_version(&s->ssl) == TLS1_2_VERSION) {
+    if (SSL_version(&s->ssl) == XTLS(&s->ssl, 1, 2)) {
         if (pvalid[SSL_PKEY_RSA_PSS_SIGN] & CERT_PKEY_RPK)
             mask_a |= SSL_aRSA;
         if (pvalid[SSL_PKEY_ED25519] & CERT_PKEY_RPK
@@ -4889,16 +4892,16 @@ void ssl_set_masks(SSL_CONNECTION *s)
         if (ecdsa_ok)
             mask_a |= SSL_aECDSA;
     }
-    /* Allow Ed25519 for TLS 1.2 if peer supports it */
+    /* Allow Ed25519 for TLS 1.2 and DTLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED25519)
         && pvalid[SSL_PKEY_ED25519] & CERT_PKEY_EXPLICIT_SIGN
-        && TLS1_get_version(&s->ssl) == TLS1_2_VERSION)
+        && (SSL_version(&s->ssl) == XTLS(&s->ssl, 1, 2)))
         mask_a |= SSL_aECDSA;
 
-    /* Allow Ed448 for TLS 1.2 if peer supports it */
+    /* Allow Ed448 for TLS 1.2 and DTLS 1.2 if peer supports it */
     if (!(mask_a & SSL_aECDSA) && ssl_has_cert(s, SSL_PKEY_ED448)
         && pvalid[SSL_PKEY_ED448] & CERT_PKEY_EXPLICIT_SIGN
-        && TLS1_get_version(&s->ssl) == TLS1_2_VERSION)
+        && (SSL_version(&s->ssl) == XTLS(&s->ssl, 1, 2)))
         mask_a |= SSL_aECDSA;
 
     mask_k |= SSL_kECDHE;

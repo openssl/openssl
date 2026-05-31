@@ -86,8 +86,11 @@ typedef struct net_pkt_st {
 
 DEFINE_PRIORITY_QUEUE_OF(NET_PKT);
 
-static int net_pkt_cmp(const NET_PKT *a, const NET_PKT *b)
+static int net_pkt_cmp(const void *av, const void *bv)
 {
+    const NET_PKT *a = av;
+    const NET_PKT *b = bv;
+
     return ossl_time_compare(a->next_time, b->next_time);
 }
 
@@ -125,7 +128,7 @@ static int net_sim_init(struct net_sim *s,
     return 1;
 }
 
-static void do_free(NET_PKT *pkt)
+static void do_free(void *pkt)
 {
     OPENSSL_free(pkt);
 }

@@ -640,13 +640,30 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(MANDOCS7)
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(FIPSMODULE) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
-	-find . -name '*{- platform->depext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
-	-find . -name '*{- platform->objext() -}' \! -name '.*' \! -type d -exec $(RM) {} \;
 	$(RM) core
 	$(RM) tags TAGS doc-nits md-nits
 	$(RM) -r $(RESULT_D)
 	$(RM) providers/fips*.new
-	-find . -type l \! -name '.*' \! -path './pkcs11-provider/*' -exec $(RM) {} \;
+	# Remove the generated dependency files, object files, and symlinks
+	# in a single pass, avoid descending into submodules.
+	-find . \( -path './cloudflare-quiche' \
+	           -o -path './fuzz/corpora' \
+	           -o -path './gost-engine' \
+	           -o -path './krb5' \
+	           -o -path './oqs-provider' \
+	           -o -path './pkcs11-provider' \
+	           -o -path './pyca-cryptography' \
+	           -o -path './python-ecdsa' \
+	           -o -path './tlsfuzzer' \
+	           -o -path './tlslite-ng' \
+	           -o -path './wycheproof' \
+	           -prune \) \
+	        -o \! -type d \
+	           \( -name '*{- platform->depext() -}' \
+	              -o -name '*{- platform->objext() -}' \
+	              -o -type l \) \
+	           \! -name '.*' \
+	           -exec $(RM) '{}' +
 
 distclean: clean cov-clean ## Clean and remove the configuration
 	$(RM) include/openssl/configuration.h

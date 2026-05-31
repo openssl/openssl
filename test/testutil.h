@@ -20,6 +20,7 @@
 #include <openssl/bn.h>
 #include <openssl/x509.h>
 #include "opt.h"
+#include "mfail/mfail.h"
 
 /*-
  * Simple unit tests should implement setup_tests().
@@ -64,13 +65,19 @@
  * injected, asserts test_fn returns 0. When no failure is injected
  * (all allocation points exhausted), asserts test_fn returns 1 and stops.
  *
- * The slow variant is for marking the slow test that can be skipped using
- * environment variable.
+ * The NO_CHECK variant disables the assertion that failed tests must
+ * result in function failure.
  *
  * test_fn has no parameters and returns 1 on success, 0 on failure.
  */
-#define ADD_MFAIL_TEST(test_fn) add_mfail_test(#test_fn, test_fn, 0)
-#define ADD_MFAIL_SLOW_TEST(test_fn) add_mfail_test(#test_fn, test_fn, 1)
+
+/* Per-test flags for add_mfail_test() */
+#define MFAIL_TEST_NO_CHECK (1 << 0)
+
+#define ADD_MFAIL_TEST(test_fn) \
+    add_mfail_test(#test_fn, test_fn, 0)
+#define ADD_MFAIL_NO_CHECK_TEST(test_fn) \
+    add_mfail_test(#test_fn, test_fn, MFAIL_TEST_NO_CHECK)
 
 /*
  * A variant of the same without TAP output.
@@ -242,17 +249,8 @@ int test_arg_libctx(OSSL_LIB_CTX **libctx, OSSL_PROVIDER **default_null_prov,
 void add_test(const char *test_case_name, int (*test_fn)(void));
 void add_all_tests(const char *test_case_name, int (*test_fn)(int idx), int num,
     int subtest);
-void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int slow);
-
-/*
- * Start the memory allocation failure counter.
- */
-void mfail_start(void);
-
-/*
- * Stop the memory allocation failure counter.
- */
-void mfail_end(void);
+void add_mfail_test(const char *test_case_name, int (*test_fn)(void),
+    int flags);
 
 #define MFAIL_start mfail_start
 #define MFAIL_end mfail_end

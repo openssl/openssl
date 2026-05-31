@@ -1018,8 +1018,12 @@ void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,
     void (*fn)(EVP_MD *mac, void *arg),
     void *arg)
 {
+    struct EVP_MD_do_all_provided_thunk t;
+
+    t.fn = fn;
+    t.arg = arg;
     evp_generic_do_all(libctx, OSSL_OP_DIGEST,
-        (void (*)(void *, void *))fn, arg,
+        EVP_MD_do_all_provided_thunk, &t,
         evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
 }
 

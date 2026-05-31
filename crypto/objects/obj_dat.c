@@ -399,7 +399,7 @@ int OBJ_obj2txt(char *buf, int buf_len, const ASN1_OBJECT *a, int no_name)
             s = OBJ_nid2sn(nid);
         if (s != NULL) {
             if (buf != NULL)
-                OPENSSL_strlcpy(buf, s, buf_len);
+                return (int)OPENSSL_strlcpy(buf, s, buf_len);
             return (int)strlen(s);
         }
     }
@@ -616,8 +616,8 @@ const void *OBJ_bsearch_ex_(const void *key, const void *base, int num,
      */
     if (p == NULL) {
         const char *base_ = base;
-        int l, h, i = 0, c = 0;
-        char *p1;
+        int i = 0, c = 0;
+        const char *p1;
 
         for (i = 0; i < num; ++i) {
             p1 = &(base_[i * size]);

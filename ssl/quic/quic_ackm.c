@@ -117,6 +117,8 @@ tx_pkt_history_add_actual(struct tx_pkt_history_st *h,
         return 0;
 
     lh_OSSL_ACKM_TX_PKT_insert(h->map, pkt);
+    if (lh_OSSL_ACKM_TX_PKT_error(h->map))
+        return 0;
 
     ossl_list_tx_history_insert_tail(&h->packets, pkt);
     return 1;

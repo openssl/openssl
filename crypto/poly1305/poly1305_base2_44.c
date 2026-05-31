@@ -13,29 +13,27 @@
  * slower than compiler-generated base 2^64 code on [high-end] x86_64,
  * even though amount of multiplications is 50% higher. Go figure...
  */
+#include <stdint.h>
 #include <stdlib.h>
 
-typedef unsigned char u8;
-typedef unsigned int u32;
-typedef unsigned long u64;
 typedef uint128_t u128;
 
 typedef struct {
-    u64 h[3];
-    u64 s[2];
-    u64 r[3];
+    uint64_t h[3];
+    uint64_t s[2];
+    uint64_t r[3];
 } poly1305_internal;
 
 #define POLY1305_BLOCK_SIZE 16
 
 /* pick 64-bit unsigned integer in little endian order */
-static u64 U8TOU64(const unsigned char *p)
+static uint64_t U8TOU64(const unsigned char *p)
 {
-    return (((u64)(p[0] & 0xff)) | ((u64)(p[1] & 0xff) << 8) | ((u64)(p[2] & 0xff) << 16) | ((u64)(p[3] & 0xff) << 24) | ((u64)(p[4] & 0xff) << 32) | ((u64)(p[5] & 0xff) << 40) | ((u64)(p[6] & 0xff) << 48) | ((u64)(p[7] & 0xff) << 56));
+    return (((uint64_t)(p[0] & 0xff)) | ((uint64_t)(p[1] & 0xff) << 8) | ((uint64_t)(p[2] & 0xff) << 16) | ((uint64_t)(p[3] & 0xff) << 24) | ((uint64_t)(p[4] & 0xff) << 32) | ((uint64_t)(p[5] & 0xff) << 40) | ((uint64_t)(p[6] & 0xff) << 48) | ((uint64_t)(p[7] & 0xff) << 56));
 }
 
 /* store a 64-bit unsigned integer in little endian */
-static void U64TO8(unsigned char *p, u64 v)
+static void U64TO8(unsigned char *p, uint64_t v)
 {
     p[0] = (unsigned char)((v) & 0xff);
     p[1] = (unsigned char)((v >> 8) & 0xff);
@@ -50,7 +48,7 @@ static void U64TO8(unsigned char *p, u64 v)
 int poly1305_init(void *ctx, const unsigned char key[16])
 {
     poly1305_internal *st = (poly1305_internal *)ctx;
-    u64 r0, r1;
+    uint64_t r0, r1;
 
     /* h = 0 */
     st->h[0] = 0;
@@ -72,14 +70,14 @@ int poly1305_init(void *ctx, const unsigned char key[16])
 }
 
 void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
-    u32 padbit)
+    uint32_t padbit)
 {
     poly1305_internal *st = (poly1305_internal *)ctx;
-    u64 r0, r1, r2;
-    u64 s1, s2;
-    u64 h0, h1, h2, c;
+    uint64_t r0, r1, r2;
+    uint64_t s1, s2;
+    uint64_t h0, h1, h2, c;
     u128 d0, d1, d2;
-    u64 pad = (u64)padbit << 40;
+    uint64_t pad = (uint64_t)padbit << 40;
 
     r0 = st->r[0];
     r1 = st->r[1];
@@ -93,7 +91,7 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
     h2 = st->h[2];
 
     while (len >= POLY1305_BLOCK_SIZE) {
-        u64 m0, m1;
+        uint64_t m0, m1;
 
         m0 = U8TOU64(inp + 0);
         m1 = U8TOU64(inp + 8);
@@ -109,9 +107,9 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
         d2 = ((u128)h0 * r2) + ((u128)h1 * r1) + ((u128)h2 * r0);
 
         /* "lazy" reduction step */
-        h0 = (u64)d0 & 0x0fffffffffff;
-        h1 = (u64)(d1 += (u64)(d0 >> 44)) & 0x0fffffffffff;
-        h2 = (u64)(d2 += (u64)(d1 >> 44)) & 0x03ffffffffff; /* last 42 bits */
+        h0 = (uint64_t)d0 & 0x0fffffffffff;
+        h1 = (uint64_t)(d1 += (uint64_t)(d0 >> 44)) & 0x0fffffffffff;
+        h2 = (uint64_t)(d2 += (uint64_t)(d1 >> 44)) & 0x03ffffffffff; /* last 42 bits */
 
         c = (d2 >> 42);
         h0 += c + (c << 2);
@@ -125,29 +123,29 @@ void poly1305_blocks(void *ctx, const unsigned char *inp, size_t len,
     st->h[2] = h2;
 }
 
-void poly1305_emit(void *ctx, unsigned char mac[16], const u32 nonce[4])
+void poly1305_emit(void *ctx, unsigned char mac[16], const uint32_t nonce[4])
 {
     poly1305_internal *st = (poly1305_internal *)ctx;
-    u64 h0, h1, h2;
-    u64 g0, g1, g2;
+    uint64_t h0, h1, h2;
+    uint64_t g0, g1, g2;
     u128 t;
-    u64 mask;
+    uint64_t mask;
 
     h0 = st->h[0];
     h1 = st->h[1];
     h2 = st->h[2];
 
     /* after "lazy" reduction, convert 44+bit digits to 64-bit ones */
-    h0 = (u64)(t = (u128)h0 + (h1 << 44));
+    h0 = (uint64_t)(t = (u128)h0 + (h1 << 44));
     h1 >>= 20;
-    h1 = (u64)(t = (u128)h1 + (h2 << 24) + (t >> 64));
+    h1 = (uint64_t)(t = (u128)h1 + (h2 << 24) + (t >> 64));
     h2 >>= 40;
-    h2 += (u64)(t >> 64);
+    h2 += (uint64_t)(t >> 64);
 
     /* compare to modulus by computing h + -p */
-    g0 = (u64)(t = (u128)h0 + 5);
-    g1 = (u64)(t = (u128)h1 + (t >> 64));
-    g2 = h2 + (u64)(t >> 64);
+    g0 = (uint64_t)(t = (u128)h0 + 5);
+    g1 = (uint64_t)(t = (u128)h1 + (t >> 64));
+    g2 = h2 + (uint64_t)(t >> 64);
 
     /* if there was carry into 131st bit, h1:h0 = g1:g0 */
     mask = 0 - (g2 >> 2);
@@ -158,8 +156,8 @@ void poly1305_emit(void *ctx, unsigned char mac[16], const u32 nonce[4])
     h1 = (h1 & mask) | g1;
 
     /* mac = (h + nonce) % (2^128) */
-    h0 = (u64)(t = (u128)h0 + nonce[0] + ((u64)nonce[1] << 32));
-    h1 = (u64)(t = (u128)h1 + nonce[2] + ((u64)nonce[3] << 32) + (t >> 64));
+    h0 = (uint64_t)(t = (u128)h0 + nonce[0] + ((uint64_t)nonce[1] << 32));
+    h1 = (uint64_t)(t = (u128)h1 + nonce[2] + ((uint64_t)nonce[3] << 32) + (t >> 64));
 
     U64TO8(mac + 0, h0);
     U64TO8(mac + 8, h1);

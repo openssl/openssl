@@ -13,9 +13,11 @@
 #include "internal/sizes.h"
 #include "internal/unicode.h"
 #include "crypto/asn1.h"
+#include <openssl/byteorder.h>
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
+#include <inttypes.h>
 
 #include "charmap.h"
 
@@ -57,11 +59,11 @@ typedef int char_io(void *arg, const void *buf, int len);
 
 /*
  * This function handles display of strings, one character at a time. It is
- * passed an unsigned long for each character because it could come from 2 or
+ * passed a uint32_t for each character because it could come from 2 or
  * even 4 byte forms.
  */
 
-static int do_esc_char(unsigned long c, unsigned short flags, char *do_quotes,
+static int do_esc_char(uint32_t c, unsigned short flags, char *do_quotes,
     char_io *io_ch, void *arg)
 {
     unsigned short chflgs;
@@ -71,13 +73,13 @@ static int do_esc_char(unsigned long c, unsigned short flags, char *do_quotes,
     if (c > UNICODE_MAX)
         return -1;
     if (c > 0xffff) {
-        BIO_snprintf(tmphex, sizeof(tmphex), "\\W%08lX", c);
+        BIO_snprintf(tmphex, sizeof(tmphex), "\\W%08" PRIX32, c);
         if (!io_ch(arg, tmphex, 10))
             return -1;
         return 10;
     }
     if (c > 0xff) {
-        BIO_snprintf(tmphex, sizeof(tmphex), "\\U%04lX", c);
+        BIO_snprintf(tmphex, sizeof(tmphex), "\\U%04" PRIX32, c);
         if (!io_ch(arg, tmphex, 6))
             return -1;
         return 6;
@@ -131,14 +133,14 @@ static int do_esc_char(unsigned long c, unsigned short flags, char *do_quotes,
  * appropriate.
  */
 
-static int do_buf(unsigned char *buf, int buflen,
+static int do_buf(const unsigned char *buf, int buflen,
     int type, unsigned short flags, char *quotes, char_io *io_ch,
     void *arg)
 {
     int i, outlen, len, charwidth;
     unsigned short orflags;
-    unsigned char *p, *q;
-    unsigned long c;
+    const unsigned char *p, *q;
+    uint32_t c;
 
     p = buf;
     q = buf + buflen;
@@ -163,6 +165,8 @@ static int do_buf(unsigned char *buf, int buflen,
     }
 
     while (p != q) {
+        uint16_t tmp;
+
         if (p == buf && flags & ASN1_STRFLGS_ESC_2253)
             orflags = CHARTYPE_FIRST_ESC_2253;
         else
@@ -170,15 +174,12 @@ static int do_buf(unsigned char *buf, int buflen,
 
         switch (charwidth) {
         case 4:
-            c = ((unsigned long)*p++) << 24;
-            c |= ((unsigned long)*p++) << 16;
-            c |= ((unsigned long)*p++) << 8;
-            c |= *p++;
+            p = OPENSSL_load_u32_be(&c, p);
             break;
 
         case 2:
-            c = ((unsigned long)*p++) << 8;
-            c |= *p++;
+            p = OPENSSL_load_u16_be(&tmp, p);
+            c = tmp;
             break;
 
         case 1:
@@ -186,7 +187,7 @@ static int do_buf(unsigned char *buf, int buflen,
             break;
 
         case 0:
-            i = UTF8_getc(p, buflen, &c);
+            i = ossl_utf8_getc_internal(p, buflen, &c);
             if (i < 0)
                 return -1; /* Invalid UTF8String */
             buflen -= i;
@@ -199,7 +200,7 @@ static int do_buf(unsigned char *buf, int buflen,
             orflags = CHARTYPE_LAST_ESC_2253;
         if (type & BUF_TYPE_CONVUTF8) {
             unsigned char utfbuf[6];
-            int utflen = UTF8_putc(utfbuf, sizeof(utfbuf), c);
+            int utflen = ossl_utf8_putc_internal(utfbuf, sizeof(utfbuf), c);
 
             if (utflen < 0)
                 return -1; /* error happened with UTF8 */

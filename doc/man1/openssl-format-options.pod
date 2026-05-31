@@ -73,11 +73,11 @@ a block of base-64 encoding (defined in IETF RFC 4648), with specific
 lines used to mark the start and end:
 
  Text before the BEGIN line is ignored.
- ----- BEGIN object-type -----
+ -----BEGIN object-type-----
  OT43gQKBgQC/2OHZoko6iRlNOAQ/tMVFNq7fL81GivoQ9F1U0Qr+DH3ZfaH8eIkX
  xT0ToMPJUzWAn8pZv0snA0um6SIgvkCuxO84OkANCVbttzXImIsL7pFzfcwV/ERK
  UM6j0ZuSMFOCr/lGPAoOQU0fskidGEHi1/kW+suSr28TqsyYZpwBDQ==
- ----- END object-type -----
+ -----END object-type-----
  Text after the END line is also ignored
 
 The I<object-type> must match the type of object that is expected.

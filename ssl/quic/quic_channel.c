@@ -357,6 +357,11 @@ err:
     return 0;
 }
 
+/*
+ * ch_cleanup() is idempotent: every owned pointer is NULL'd after its free,
+ * and every "have_*" flag is reset after its destructor runs. Calling this
+ * twice on the same channel is safe.
+ */
 static void ch_cleanup(QUIC_CHANNEL *ch)
 {
     uint32_t pn_space;
@@ -374,33 +379,53 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
         ossl_quic_srtm_cull(ch->srtm, ch);
 
     ossl_quic_tx_packetiser_free(ch->txp);
+    ch->txp = NULL;
     ossl_quic_txpim_free(ch->txpim);
+    ch->txpim = NULL;
     ossl_quic_cfq_free(ch->cfq);
+    ch->cfq = NULL;
     ossl_qtx_free(ch->qtx);
-    if (ch->cc_data != NULL)
+    ch->qtx = NULL;
+    if (ch->cc_data != NULL) {
         ch->cc_method->free(ch->cc_data);
-    if (ch->have_statm)
+        ch->cc_data = NULL;
+    }
+    if (ch->have_statm) {
         ossl_statm_destroy(&ch->statm);
+        ch->have_statm = 0;
+    }
     ossl_ackm_free(ch->ackm);
+    ch->ackm = NULL;
 
-    if (ch->have_qsm)
+    if (ch->have_qsm) {
         ossl_quic_stream_map_cleanup(&ch->qsm);
+        ch->have_qsm = 0;
+    }
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         ossl_quic_sstream_free(ch->crypto_send[pn_space]);
+        ch->crypto_send[pn_space] = NULL;
         ossl_quic_rstream_free(ch->crypto_recv[pn_space]);
+        ch->crypto_recv[pn_space] = NULL;
     }
 
     ossl_qrx_pkt_release(ch->qrx_pkt);
     ch->qrx_pkt = NULL;
 
     ossl_quic_tls_free(ch->qtls);
+    ch->qtls = NULL;
     ossl_qrx_free(ch->qrx);
+    ch->qrx = NULL;
     OPENSSL_free(ch->local_transport_params);
+    ch->local_transport_params = NULL;
     OPENSSL_free((char *)ch->terminate_cause.reason);
+    ch->terminate_cause.reason = NULL;
     OSSL_ERR_STATE_free(ch->err_state);
+    ch->err_state = NULL;
     OPENSSL_free(ch->ack_range_scratch);
+    ch->ack_range_scratch = NULL;
     OPENSSL_free(ch->pending_new_token);
+    ch->pending_new_token = NULL;
 
     if (ch->on_port_list) {
         ossl_list_ch_remove(&ch->port->channel_list, ch);
@@ -412,7 +437,9 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
         ossl_qlog_flush(ch->qlog); /* best effort */
 
     OPENSSL_free(ch->qlog_title);
+    ch->qlog_title = NULL;
     ossl_qlog_free(ch->qlog);
+    ch->qlog = NULL;
 #endif
 }
 

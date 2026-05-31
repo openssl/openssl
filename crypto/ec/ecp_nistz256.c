@@ -39,8 +39,6 @@
 
 #define P256_LIMBS (256 / BN_BITS2)
 
-typedef unsigned short u16;
-
 typedef struct {
     BN_ULONG X[P256_LIMBS];
     BN_ULONG Y[P256_LIMBS];

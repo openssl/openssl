@@ -532,8 +532,12 @@ void EVP_SIGNATURE_do_all_provided(OSSL_LIB_CTX *libctx,
         void *arg),
     void *arg)
 {
+    struct EVP_SIGNATURE_do_all_provided_thunk t;
+
+    t.fn = fn;
+    t.arg = arg;
     evp_generic_do_all(libctx, OSSL_OP_SIGNATURE,
-        (void (*)(void *, void *))fn, arg,
+        EVP_SIGNATURE_do_all_provided_thunk, &t,
         evp_signature_from_algorithm,
         evp_signature_up_ref,
         evp_signature_free);
