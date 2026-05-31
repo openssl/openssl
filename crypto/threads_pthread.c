@@ -1275,7 +1275,8 @@ int CRYPTO_atomic_store_ptr(void **dst, void **val, CRYPTO_RWLOCK *lock)
 int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_RWLOCK *lock, int *lock_failed)
 {
 #if defined(__GNUC__) && defined(__ATOMIC_RELAXED) && !defined(BROKEN_CLANG_ATOMICS)
-    *lock_failed = 0;
+    if (lock_failed != NULL)
+        *lock_failed = 0;
     return __atomic_compare_exchange_n(ptr, expect, desire, 0, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED) ? 1 : 0;
 #else
     int lock_sink;
