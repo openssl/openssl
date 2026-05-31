@@ -95,7 +95,7 @@ int ossl_lms_pubkey_decode(const unsigned char *pub, size_t publen,
 {
     LMS_PUB_KEY *pkey = &lmskey->pub;
 
-    if (pkey->encoded != NULL && pkey->encodedlen != publen) {
+    if (pkey->encoded != NULL) {
         OPENSSL_free(pkey->encoded);
         pkey->encodedlen = 0;
     }
