@@ -79,6 +79,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
+static int matching_crl_issuer_and_akid(const X509_CRL *crl,
+    const X509 *issuer, const X509_NAME *crl_issuer_name);
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
@@ -1752,7 +1754,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     crl_issuer = sk_X509_value(ctx->chain, cidx);
 
-    if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+    if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
         if (*pcrl_score & CRL_SCORE_ISSUER_NAME) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_ISSUER_CERT;
             *pissuer = crl_issuer;
@@ -1762,9 +1764,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     for (cidx++; cidx < sk_X509_num(ctx->chain); cidx++) {
         crl_issuer = sk_X509_value(ctx->chain, cidx);
-        if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm))
-            continue;
-        if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+        if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_SAME_PATH;
             *pissuer = crl_issuer;
             return;
@@ -1781,14 +1781,22 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
      */
     for (i = 0; i < sk_X509_num(ctx->untrusted); i++) {
         crl_issuer = sk_X509_value(ctx->untrusted, i);
-        if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm) != 0)
-            continue;
-        if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+        if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
             *pissuer = crl_issuer;
             *pcrl_score |= CRL_SCORE_AKID;
             return;
         }
     }
+}
+
+static int matching_crl_issuer_and_akid(const X509_CRL *crl,
+    const X509 *issuer, const X509_NAME *crl_issuer_name)
+{
+    if (issuer == NULL)
+        return 0;
+    if (X509_NAME_cmp(X509_get_subject_name(issuer), crl_issuer_name) != 0)
+        return 0;
+    return X509_check_akid(issuer, crl->akid) == X509_V_OK;
 }
 
 /*
