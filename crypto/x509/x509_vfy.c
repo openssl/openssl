@@ -58,6 +58,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted);
 static int check_revocation(X509_STORE_CTX *ctx);
+static int revocation_check_end(X509_STORE_CTX *ctx, int check_all);
 #ifndef OPENSSL_NO_OCSP
 static int check_cert_ocsp_resp(X509_STORE_CTX *ctx);
 #endif
@@ -1173,6 +1174,20 @@ trusted:
     return X509_TRUST_UNTRUSTED;
 }
 
+/*
+ * Return the last chain depth whose revocation status should be checked.
+ * With X509_V_FLAG_*_CHECK_ALL and X509_V_FLAG_PARTIAL_CHAIN, revocation
+ * checking stops before the first trusted certificate in the chain.
+ */
+static int revocation_check_end(X509_STORE_CTX *ctx, int check_all)
+{
+    if (!check_all)
+        return 0;
+    return (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0
+        ? sk_X509_num(ctx->chain) - 1
+        : ctx->num_untrusted - 1;
+}
+
 /* Sadly, returns 0 also on internal error. */
 static int check_revocation(X509_STORE_CTX *ctx)
 {
@@ -1190,10 +1205,10 @@ static int check_revocation(X509_STORE_CTX *ctx)
         /*
          * certificate status checking with OCSP
          */
-        if (ocsp_check_all_enabled)
-            last = sk_X509_num(ctx->chain) - 1;
-        else if (!crl_check_all_enabled && ctx->parent != NULL)
+        if (!ocsp_check_all_enabled && !crl_check_all_enabled
+            && ctx->parent != NULL)
             return 1; /* If checking CRL paths this isn't the EE certificate */
+        last = revocation_check_end(ctx, ocsp_check_all_enabled);
 
         for (i = 0; i <= last; i++) {
             ctx->error_depth = i;
@@ -1246,14 +1261,9 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
     if (crl_check_enabled && !ocsp_check_all_enabled) {
         /* certificate status check with CRLs */
-        if (crl_check_all_enabled) {
-            last = sk_X509_num(ctx->chain) - 1;
-        } else {
-            /* If checking CRL paths this isn't the EE certificate */
-            if (ctx->parent != NULL)
-                return 1;
-            last = 0;
-        }
+        if (!crl_check_all_enabled && ctx->parent != NULL)
+            return 1; /* If checking CRL paths this isn't the EE certificate */
+        last = revocation_check_end(ctx, crl_check_all_enabled);
 
         /*
          * in the case that OCSP is only enabled for the server certificate
