@@ -31,7 +31,7 @@
 #if defined(__DJGPP__)
 #define WATT32
 #define WATT32_NO_OLDIES
-#include <sys/socket.h>
+#include <sys/socket.h> /* IWYU pragma: export */
 #include <sys/un.h>
 #include <tcp.h>
 #include <netdb.h>
@@ -103,11 +103,11 @@ struct servent *PASCAL getservbyname(const char *, const char *);
 typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #endif
 #if defined(OPENSSL_SYS_VMS_NODECC)
-#include <socket.h>
+#include <socket.h> /* IWYU pragma: export */
 #include <in.h>
 #include <inet.h>
 #else
-#include <sys/socket.h>
+#include <sys/socket.h> /* IWYU pragma: export */
 #if !defined(NO_SYS_UN_H) && defined(AF_UNIX) && !defined(OPENSSL_NO_UNIX_SOCK)
 #include <sys/un.h>
 #ifndef UNIX_PATH_MAX
@@ -123,12 +123,12 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #endif
 
 #ifdef OPENSSL_SYS_AIX
-#include <sys/select.h>
+#include <sys/select.h> /* IWYU pragma: export */
 #endif
 
 #ifdef OPENSSL_SYS_UNIX
 #ifndef OPENSSL_SYS_TANDEM
-#include <poll.h>
+#include <poll.h> /* IWYU pragma: export */
 #endif
 #include <errno.h>
 #endif
@@ -142,7 +142,7 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #endif
 #include <unixio.h>
 #if defined(TCPIP_TYPE_SOCKETSHR)
-#include <socketshr.h>
+#include <socketshr.h> /* IWYU pragma: export */
 #endif
 #endif
 

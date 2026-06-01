@@ -13,7 +13,7 @@
 #include <openssl/bio.h>
 #if !defined(OPENSSL_SYS_VMS) && !defined(OPENSSL_SYS_WINDOWS) \
     && !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_POSIX_IO)
-#include <syslog.h>
+#include <sys/syslog.h> /* IWYU pragma: export */
 #else
 #define LOG_EMERG 0
 #define LOG_ALERT 1
