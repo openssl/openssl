@@ -11,7 +11,6 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
-#include "internal/common.h"
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
 
@@ -36,8 +35,12 @@
  */
 #define DEGREE ML_KEM_DEGREE
 #define INVERSE_DEGREE (ML_KEM_PRIME - 2 * 13)
-#define LOG2PRIME 12
-#define BARRETT_SHIFT (2 * LOG2PRIME)
+/*
+ * It is enough that BARRETT_SHIFT >= 2 * LOG2PRIME (== 2 * 12),
+ * and BARRETT_SHIFT == 32 allows to optimize an int64 multiplication
+ * to an int32 high multiplication.
+ */
+#define BARRETT_SHIFT 32
 
 #ifdef SHA3_BLOCKSIZE
 #define SHAKE128_BLOCKSIZE SHA3_BLOCKSIZE(128)
@@ -57,14 +60,6 @@
 #else
 #define SCALAR_SAMPLING_BUFSIZE 168
 #endif
-
-/*
- * Structure of keys
- */
-typedef struct ossl_ml_kem_scalar_st {
-    /* On every function entry and exit, 0 <= c[i] < ML_KEM_PRIME. */
-    uint16_t c[ML_KEM_DEGREE];
-} scalar;
 
 /* Key material allocation layout */
 #define DECLARE_ML_KEM_PUBKEYDATA(name, rank)                  \
@@ -185,7 +180,7 @@ static const ML_KEM_VINFO vinfo_map[3] = {
  */
 static const int kPrime = ML_KEM_PRIME;
 static const unsigned int kBarrettShift = BARRETT_SHIFT;
-static const size_t kBarrettMultiplier = (1 << BARRETT_SHIFT) / ML_KEM_PRIME;
+static const size_t kBarrettMultiplier = (1ull << BARRETT_SHIFT) / ML_KEM_PRIME;
 static const uint16_t kHalfPrime = (ML_KEM_PRIME - 1) / 2;
 static const uint16_t kInverseDegree = INVERSE_DEGREE;
 
@@ -411,19 +406,24 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 #include "arch/ppc_arch.h"
 #endif
 
+/*
+ * Function pointer types for NTT dispatch
+ */
+typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
+typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
+typedef void (*ml_kem_scalar_inverse_ntt_demontgomerize_fn)(scalar *p);
+
+void scalar_ntt_generic(scalar *p);
+void scalar_inverse_ntt_generic(scalar *p);
+
+static ml_kem_scalar_ntt_fn scalar_ntt = scalar_ntt_generic;
+static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = scalar_inverse_ntt_generic;
+static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_generic;
+
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 /*
  * PPC64LE Platform supports.
  */
-typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
-typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
-
-static void scalar_ntt_generic(scalar *p);
-static void scalar_inverse_ntt_generic(scalar *p);
-
-static ml_kem_scalar_ntt_fn scalar_ntt = scalar_ntt_generic;
-static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = scalar_inverse_ntt_generic;
-
 void mlkem_ntt_ppc(uint16_t *c);
 void mlkem_inverse_ntt_ppc(uint16_t *c);
 
@@ -436,24 +436,68 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 {
     mlkem_inverse_ntt_ppc(s->c);
 }
-#else
-#define scalar_ntt_generic scalar_ntt
-#define scalar_inverse_ntt_generic scalar_inverse_ntt
 #endif
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+#include "arch/s390x_arch.h"
+
+void scalar_ntt_vec128(scalar *s);
+void scalar_inverse_ntt_vec128(scalar *s);
+void scalar_inverse_ntt_demontgomerize_vec128(scalar *s);
+void scalar_mult_vec128(scalar *out, const scalar *lhs, const scalar *rhs);
+void scalar_mult_add_vec128(scalar *out, const scalar *lhs, const scalar *rhs);
+void inner_product_vec128(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+void inner_product_montgomery_vec128(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+void matrix_mult_intt_vec128(scalar *out, const scalar *m, const scalar *a, int rank);
+#endif
+
+/* Function pointer types for scalar multiplication dispatch */
+typedef void (*ml_kem_scalar_mult_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
+typedef void (*ml_kem_scalar_mult_add_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
+typedef void (*ml_kem_inner_product_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+typedef void (*ml_kem_inner_product_montgomery_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+typedef void (*ml_kem_matrix_mult_intt_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
+
+/* Forward declarations */
+static void scalar_mult_generic(scalar *out, const scalar *lhs, const scalar *rhs);
+static void scalar_mult_add_generic(scalar *out, const scalar *lhs, const scalar *rhs);
+static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar *a, int rank);
+
+/* Function pointers for dispatch */
+static ml_kem_scalar_mult_add_fn scalar_mult_add = scalar_mult_add_generic;
+static ml_kem_inner_product_montgomery_fn inner_product_montgomery = inner_product_generic;
+static ml_kem_matrix_mult_intt_fn matrix_mult_intt = matrix_mult_intt_generic;
+
+static void ml_kem_ntt_init(void)
+{
 /*
  * Initialize NTT function pointers to PPC64le implementations if available.
  * Scalar implementations are used by default.
  */
-static void ml_kem_ntt_init(void)
-{
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 #if defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
         scalar_ntt = scalar_ntt_ppc;
         scalar_inverse_ntt = scalar_inverse_ntt_ppc;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_ppc;
     }
 #endif
+#endif
+
+/*
+ * Initialize NTT and scalar and matrix multiplication function pointers to
+ * s390x implementation if available.
+ * */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (S390X_VX_CAPABLE) {
+        scalar_ntt = scalar_ntt_vec128;
+        scalar_inverse_ntt = scalar_inverse_ntt_vec128;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_demontgomerize_vec128;
+        scalar_mult_add = scalar_mult_add_vec128;
+        inner_product_montgomery = inner_product_montgomery_vec128;
+        matrix_mult_intt = matrix_mult_intt_vec128;
+    }
 #endif
 }
 
@@ -481,6 +525,7 @@ static __owur uint16_t reduce_once(uint16_t x)
 static __owur uint16_t reduce(uint32_t x)
 {
     uint64_t product = (uint64_t)x * kBarrettMultiplier;
+    /* with kBarrettShift == 32, this could be optimized with mul-high */
     uint32_t quotient = (uint32_t)(product >> kBarrettShift);
     uint32_t remainder = x - quotient * kPrime;
 
@@ -507,7 +552,7 @@ static void scalar_mult_const(scalar *s, uint16_t a)
  * elements in GF(3329^2), with the coefficients of the elements being
  * consecutive entries in |s->c|.
  */
-static void scalar_ntt_generic(scalar *s)
+void scalar_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -539,7 +584,7 @@ static void scalar_ntt_generic(scalar *s)
  * iFFT to account for the fact that 3329 does not have a 512th root of unity,
  * using the precomputed 128 roots of unity stored in InverseNTTRoots.
  */
-static void scalar_inverse_ntt_generic(scalar *s)
+void scalar_inverse_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kInverseNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -593,7 +638,8 @@ static void scalar_sub(scalar *lhs, const scalar *rhs)
  * two reduced numbers together, so we need some intermediate reduction steps,
  * even if an uint64_t could hold 3 multiplied numbers.
  */
-static void scalar_mult(scalar *out, const scalar *lhs,
+
+static void scalar_mult_generic(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;
@@ -611,7 +657,7 @@ static void scalar_mult(scalar *out, const scalar *lhs,
 }
 
 /* Above, but add the result to an existing scalar */
-static ossl_inline void scalar_mult_add(scalar *out, const scalar *lhs,
+static ossl_inline void scalar_mult_add_generic(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;
@@ -806,6 +852,7 @@ static __owur uint16_t compress(uint16_t x, int bits)
 {
     uint32_t shifted = (uint32_t)x << bits;
     uint64_t product = (uint64_t)shifted * kBarrettMultiplier;
+    /* with kBarrettShift == 32, this could be optimized with mul-high */
     uint32_t quotient = (uint32_t)(product >> kBarrettShift);
     uint32_t remainder = shifted - quotient * kPrime;
 
@@ -931,28 +978,27 @@ static void vector_compress(scalar *a, int bits, int rank)
 }
 
 /* The output scalar must not overlap with the inputs */
-static void inner_product(scalar *out, const scalar *lhs, const scalar *rhs,
+static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs,
     int rank)
 {
-    scalar_mult(out, lhs, rhs);
+    scalar_mult_generic(out, lhs, rhs);
     while (--rank > 0)
-        scalar_mult_add(out, ++lhs, ++rhs);
+        scalar_mult_add_generic(out, ++lhs, ++rhs);
 }
 
 /*
  * Here, the output vector must not overlap with the inputs, the result is
  * directly subjected to inverse NTT.
  */
-static void
-matrix_mult_intt(scalar *out, const scalar *m, const scalar *a, int rank)
+static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar *a, int rank)
 {
     const scalar *ar;
     int i, j;
 
     for (i = rank; i-- > 0; ++out) {
-        scalar_mult(out, m++, ar = a);
+        scalar_mult_generic(out, m++, ar = a);
         for (j = rank - 1; j > 0; --j)
-            scalar_mult_add(out, m++, ++ar);
+            scalar_mult_add_generic(out, m++, ++ar);
         scalar_inverse_ntt(out);
     }
 }
@@ -1172,8 +1218,8 @@ static __owur int encrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
     if (!gencbd_vector_ntt(y, cbd_1, &counter, r, rank, mdctx, key))
         return 0;
     /* FIPS 203 "v" scalar */
-    inner_product(&v, key->t, y, rank);
-    scalar_inverse_ntt(&v);
+    inner_product_montgomery(&v, key->t, y, rank);
+    scalar_inverse_ntt_demontgomerize(&v);
     /* FIPS 203 "u" vector */
     matrix_mult_intt(u, key->m, y, rank);
 
@@ -1214,8 +1260,8 @@ decrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
     vector_decode_decompress_ntt(u, ctext, du, rank);
     scalar_decode(&v, ctext + vinfo->u_vector_bytes, dv);
     scalar_decompress(&v, dv);
-    inner_product(&mask, key->s, u, rank);
-    scalar_inverse_ntt(&mask);
+    inner_product_montgomery(&mask, key->s, u, rank);
+    scalar_inverse_ntt_demontgomerize(&mask);
     scalar_sub(&v, &mask);
     scalar_compress(&v, 1);
     scalar_encode_1(out, &v);
