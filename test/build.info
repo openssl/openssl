@@ -482,6 +482,14 @@ IF[{- !$disabled{tests} -}]
     DEPEND[dtlsssllistenertest]=../libcrypto.a ../libssl.a libtestutil.a
   ENDIF
 
+  IF[{- !$disabled{sock} && !$disabled{dtls} && !$disabled{threads}-}]
+    PROGRAMS{noinst}=dtls_multithread_test
+
+    SOURCE[dtls_multithread_test]=dtls_multithread_test.c helpers/ssltestlib.c
+    INCLUDE[dtls_multithread_test]=../include ../apps/include
+    DEPEND[dtls_multithread_test]=../libcrypto.a ../libssl.a libtestutil.a
+  ENDIF
+
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../include ../apps/include
   DEPEND[ct_test]=../libcrypto libtestutil.a
