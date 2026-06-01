@@ -187,8 +187,9 @@ I<*ptr> are atomically loaded to the contents of I<*expect> and the function ret
 I<lock> will be used to emulate atomic operations on platforms that do not support
 atomic operations.  Note that this function contains an additional parameter I<lock_failed> which
 this function will set to 0 (to indicate the lock functioned properly), or 1 (to indicate the lock
-encountered a failure).  This allows callers to independently determine if the comparison of I<*expect>
-to I<*ptr> was true.
+encountered a failure).  This parameter allows callers to determine if a failure was caused by a
+locking error (which is generally a permanent/fatal error), or because the compare and exchange
+operation itself failed (which is a transient error indicating the need to retry the operation.
 
 =item *
 
