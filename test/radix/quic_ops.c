@@ -1124,10 +1124,6 @@ err:
     (OP_SELECT_SSL(0, name), \
         OP_FUNC(hf_conclude))
 
-#define OP_CONCLUDE_FAIL(name) \
-    (OP_SELECT_SSL(0, name),   \
-        OP_FUNC(hf_conclude_fail))
-
 #define OP_READ_EXPECT(name, buf, buf_len) \
     (OP_SELECT_SSL(0, name),               \
         OP_PUSH_BUFP(buf, buf_len),        \
