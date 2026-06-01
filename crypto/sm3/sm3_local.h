@@ -73,7 +73,7 @@ void ossl_sm3_block_data_order(SM3_CTX *c, const void *p, size_t num);
 void ossl_sm3_transform(SM3_CTX *c, const unsigned char *data);
 
 /* clang-format off */
-#include "crypto/md32_common.inc"
+#include "crypto/md32_common.inc" /* IWYU pragma: export */
 /* clang-format on */
 
 #ifndef PEDANTIC

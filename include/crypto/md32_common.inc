@@ -63,6 +63,8 @@
  *      #define HASH_BLOCK_DATA_ORDER   md5_block_data_order
  */
 
+/* IWYU pragma: private */
+
 #ifndef OSSL_CRYPTO_MD32_COMMON_H
 #define OSSL_CRYPTO_MD32_COMMON_H
 #pragma once

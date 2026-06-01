@@ -52,7 +52,7 @@ void ripemd160_block_data_order(RIPEMD160_CTX *c, const void *p, size_t num);
 #define HASH_BLOCK_DATA_ORDER ripemd160_block_data_order
 
 /* clang-format off */
-#include "crypto/md32_common.inc"
+#include "crypto/md32_common.inc" /* IWYU pragma: export */
 /* clang-format on */
 
 /*

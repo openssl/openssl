@@ -53,7 +53,7 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #endif
 
 /* clang-format off */
-#include "crypto/md32_common.inc"
+#include "crypto/md32_common.inc" /* IWYU pragma: export */
 /* clang-format on */
 #undef HASH_UPDATE_THUNK
 
