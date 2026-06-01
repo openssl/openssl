@@ -108,8 +108,9 @@ B<Name constraint validation> per RFC 5280 section 4.2.1.10.
 
 =item 8.
 
-B<RFC 3779 path validation> of AS-number and IP-address delegation extensions,
-when the library is built with that support.
+B<RFC 3779 path validation> of AS-number and IP-address delegation
+extensions, performed by default unless OpenSSL was built with
+B<no-rfc3779>.
 
 =item 9.
 
