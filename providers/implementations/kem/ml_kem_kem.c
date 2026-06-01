@@ -22,7 +22,9 @@
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/kem/ml_kem_kem.inc"
+/* clang-format on */
 
 static OSSL_FUNC_kem_newctx_fn ml_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn ml_kem_freectx;

@@ -28,7 +28,9 @@
 #define ml_dsa_set_ctx_params_st ml_dsa_verifymsg_set_ctx_params_st
 #define ml_dsa_set_ctx_params_decoder ml_dsa_verifymsg_set_ctx_params_decoder
 
+/* clang-format off */
 #include "providers/implementations/signature/ml_dsa_sig.inc"
+/* clang-format on */
 
 #define ML_DSA_MESSAGE_ENCODE_RAW 0
 #define ML_DSA_MESSAGE_ENCODE_PURE 1

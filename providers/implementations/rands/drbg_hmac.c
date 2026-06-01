@@ -28,7 +28,9 @@
 #define drbg_hmac_get_ctx_params_st drbg_get_ctx_params_st
 #define drbg_hmac_set_ctx_params_st drbg_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/rands/drbg_hmac.inc"
+/* clang-format on */
 
 static OSSL_FUNC_rand_newctx_fn drbg_hmac_new_wrapper;
 static OSSL_FUNC_rand_freectx_fn drbg_hmac_free;

@@ -581,7 +581,9 @@ end:
  * They are in a separate file as it is ~100 lines of unreadable and
  * uninteresting machine generated stuff.
  */
+/* clang-format off */
 #include "ec_kmgmt_imexport.inc"
+/* clang-format on */
 
 static ossl_inline const OSSL_PARAM *ec_imexport_types(int selection)
 {

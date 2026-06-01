@@ -20,7 +20,9 @@
 
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/macs/siphash_prov.inc"
+/* clang-format on */
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

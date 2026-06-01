@@ -27,7 +27,9 @@
 
 #ifndef OPENSSL_NO_JITTER
 #include <jitterentropy.h>
+/* clang-format off */
 #include "providers/implementations/rands/seed_src_jitter.inc"
+/* clang-format on */
 
 #define JITTER_MAX_NUM_TRIES 3
 

@@ -23,7 +23,9 @@ enum {
     QLOG_EVENT_TYPE_NONE,
 /* clang-format off */
 #define QLOG_EVENT(cat, name) QLOG_EVENT_TYPE_##cat##_##name,
+/* clang-format off */
 #include "internal/qlog_events.inc"
+/* clang-format on */
 #undef QLOG_EVENT
     /* clang-format on */
 

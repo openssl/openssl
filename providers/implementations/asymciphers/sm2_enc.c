@@ -22,7 +22,9 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_util.h"
+/* clang-format off */
 #include "providers/implementations/asymciphers/sm2_enc.inc"
+/* clang-format on */
 
 static OSSL_FUNC_asym_cipher_newctx_fn sm2_newctx;
 static OSSL_FUNC_asym_cipher_encrypt_init_fn sm2_init;

@@ -52,7 +52,9 @@ struct ecdsa_all_set_ctx_params_st {
 #define ecdsa_set_ctx_params_st ecdsa_all_set_ctx_params_st
 #define ecdsa_sigalg_set_ctx_params_st ecdsa_all_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/ecdsa_sig.inc"
+/* clang-format on */
 
 static OSSL_FUNC_signature_newctx_fn ecdsa_newctx;
 static OSSL_FUNC_signature_sign_init_fn ecdsa_sign_init;

@@ -30,7 +30,9 @@
 #include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_pem2der.inc"
+/* clang-format on */
 
 static int read_pem(PROV_CTX *provctx, OSSL_CORE_BIO *cin,
     char **pem_name, char **pem_header,

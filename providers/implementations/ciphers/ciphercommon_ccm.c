@@ -14,7 +14,9 @@
 #include "prov/ciphercommon_ccm.h"
 #include "prov/providercommon.h"
 
+/* clang-format off */
 #include "providers/implementations/ciphers/ciphercommon_ccm.inc"
+/* clang-format on */
 
 static int ccm_cipher_internal(PROV_CCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,

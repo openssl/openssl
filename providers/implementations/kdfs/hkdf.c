@@ -289,7 +289,9 @@ struct hkdf_all_set_ctx_params_st {
 #define hkdf_fixed_digest_set_ctx_params_st hkdf_all_set_ctx_params_st
 #define kdf_tls1_3_set_ctx_params_st hkdf_all_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/kdfs/hkdf.inc"
+/* clang-format on */
 
 static int hkdf_common_set_ctx_params(KDF_HKDF *ctx, struct hkdf_all_set_ctx_params_st *p)
 {

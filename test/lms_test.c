@@ -13,7 +13,9 @@
 #include "crypto/lms.h"
 #include "internal/nelem.h"
 #include "testutil.h"
+/* clang-format off */
 #include "lms.inc"
+/* clang-format on */
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,

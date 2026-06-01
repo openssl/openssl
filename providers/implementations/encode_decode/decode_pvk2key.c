@@ -32,7 +32,9 @@
 #include "prov/bio.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_pvk2key.inc"
+/* clang-format on */
 
 struct pvk2key_ctx_st; /* Forward declaration */
 typedef int check_key_fn(void *, struct pvk2key_ctx_st *ctx);

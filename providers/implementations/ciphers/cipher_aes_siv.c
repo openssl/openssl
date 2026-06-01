@@ -21,7 +21,9 @@
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_siv.inc"
+/* clang-format on */
 
 #define siv_stream_update siv_cipher
 #define SIV_FLAGS AEAD_FLAGS

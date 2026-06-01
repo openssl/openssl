@@ -356,7 +356,9 @@ struct dsa_params_st {
 
 #define dsa_get_params_st dsa_params_st
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/dsa_kmgmt.inc"
+/* clang-format on */
 
 static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
 {

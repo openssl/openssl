@@ -33,7 +33,9 @@ static OSSL_PARAM opparam[2];
 static EVP_PKEY *rkey[TEST_KEYTYPES_P256_X25519] = { NULL, NULL };
 static EVP_PKEY_CTX *rctx[TEST_KEYTYPES_P256_X25519] = { NULL, NULL };
 
+/* clang-format off */
 #include "dhkem_test.inc"
+/* clang-format on */
 
 /* Perform encapsulate KAT's */
 static int test_dhkem_encapsulate(int tstid)

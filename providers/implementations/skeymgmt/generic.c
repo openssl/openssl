@@ -19,7 +19,9 @@
 #include "prov/implementations.h"
 #include "prov/skeymgmt_lcl.h"
 
+/* clang-format off */
 #include "providers/implementations/skeymgmt/generic.inc"
+/* clang-format on */
 
 void generic_free(void *keydata)
 {

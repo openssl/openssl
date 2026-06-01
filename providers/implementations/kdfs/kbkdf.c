@@ -52,7 +52,9 @@
 
 #define KBKDF_MAX_INFOS 5
 
+/* clang-format off */
 #include "providers/implementations/kdfs/kbkdf.inc"
+/* clang-format on */
 
 typedef enum {
     COUNTER = 0,

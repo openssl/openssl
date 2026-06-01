@@ -28,7 +28,9 @@
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "crypto/cmac.h"
+/* clang-format off */
 #include "providers/implementations/macs/cmac_prov.inc"
+/* clang-format on */
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

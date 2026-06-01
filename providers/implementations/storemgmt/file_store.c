@@ -28,7 +28,9 @@
 #include "prov/providercommon.h"
 #include "prov/file_store_local.h"
 
+/* clang-format off */
 #include "providers/implementations/storemgmt/file_store.inc"
+/* clang-format on */
 
 DEFINE_STACK_OF(OSSL_STORE_INFO)
 

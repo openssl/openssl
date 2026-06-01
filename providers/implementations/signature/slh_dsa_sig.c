@@ -20,7 +20,9 @@
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
 #include "internal/fips.h"
+/* clang-format off */
 #include "providers/implementations/signature/slh_dsa_sig.inc"
+/* clang-format on */
 
 #define SLH_DSA_MAX_ADD_RANDOM_LEN 32
 

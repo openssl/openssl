@@ -133,19 +133,33 @@ static const PROV_GCM_HW aes_gcm = {
 };
 
 #if defined(S390X_aes_128_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_gcm_hw_s390x.inc"
+/* clang-format on */
 #elif defined(AESNI_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_gcm_hw_aesni.inc"
+/* clang-format on */
 #elif defined(SPARC_AES_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_gcm_hw_t4.inc"
+/* clang-format on */
 #elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
+/* clang-format off */
 #include "cipher_aes_gcm_hw_armv8.inc"
+/* clang-format on */
 #elif defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
+/* clang-format off */
 #include "cipher_aes_gcm_hw_ppc.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+/* clang-format off */
 #include "cipher_aes_gcm_hw_rv64i.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+/* clang-format off */
 #include "cipher_aes_gcm_hw_rv32i.inc"
+/* clang-format on */
 #else
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {

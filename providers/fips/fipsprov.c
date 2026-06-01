@@ -89,7 +89,9 @@ static OSSL_FUNC_self_test_cb_fn *c_stcbfn = NULL;
 static OSSL_FUNC_indicator_cb_fn *c_indcbfn = NULL;
 static OSSL_FUNC_core_get_libctx_fn *c_get_libctx = NULL;
 
+/* clang-format off */
 #include "providers/fips/fipsparams.inc"
+/* clang-format on */
 
 typedef struct fips_global_st {
     const OSSL_CORE_HANDLE *handle;

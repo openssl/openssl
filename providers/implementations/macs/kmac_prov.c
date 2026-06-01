@@ -61,7 +61,9 @@
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
 #include "internal/cryptlib.h" /* ossl_assert */
+/* clang-format off */
 #include "providers/implementations/macs/kmac_prov.inc"
+/* clang-format on */
 #include "crypto/sha.h"
 
 /*

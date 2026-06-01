@@ -23,7 +23,9 @@
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/sshkdf.inc"
+/* clang-format on */
 
 /* See RFC 4253, Section 7.2 */
 static OSSL_FUNC_kdf_newctx_fn kdf_sshkdf_new;

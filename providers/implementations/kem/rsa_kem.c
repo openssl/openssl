@@ -28,7 +28,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kem/rsa_kem.inc"
+/* clang-format on */
 
 static OSSL_FUNC_kem_newctx_fn rsakem_newctx;
 static OSSL_FUNC_kem_encapsulate_init_fn rsakem_encapsulate_init;

@@ -43,7 +43,9 @@
 
 #ifndef OPENSSL_NO_ARGON2
 
+/* clang-format off */
 #include "providers/implementations/kdfs/argon2.inc"
+/* clang-format on */
 
 #define ARGON2_MIN_LANES 1u
 #define ARGON2_MAX_LANES 0xFFFFFFu

@@ -30,7 +30,9 @@
 #include "prov/ml_kem.h"
 #define ml_kem_export_params_st
 #define ml_kem_export_params_decoder
+/* clang-format off */
 #include "providers/implementations/keymgmt/ml_kem_kmgmt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keymgmt_new_fn ml_kem_512_new;
 static OSSL_FUNC_keymgmt_new_fn ml_kem_768_new;

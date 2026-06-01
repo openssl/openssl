@@ -30,7 +30,9 @@
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/pbkdf2.inc"
+/* clang-format on */
 
 /* Constants specified in SP800-132 */
 #define KDF_PBKDF2_MIN_KEY_LEN_BITS 112

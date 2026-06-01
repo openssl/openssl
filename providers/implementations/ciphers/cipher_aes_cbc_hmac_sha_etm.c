@@ -21,7 +21,9 @@
     };
 #else
 
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.inc"
+/* clang-format on */
 
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;

@@ -22,7 +22,9 @@
 #include "prov/provider_ctx.h"
 #include "crypto/rand.h"
 #include "crypto/rand_pool.h"
+/* clang-format off */
 #include "providers/implementations/rands/seed_src.inc"
+/* clang-format on */
 
 static OSSL_FUNC_rand_newctx_fn seed_src_new;
 static OSSL_FUNC_rand_freectx_fn seed_src_free;

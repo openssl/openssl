@@ -689,7 +689,9 @@ struct dsa_all_set_ctx_params_st {
 #define dsa_set_ctx_params_st dsa_all_set_ctx_params_st
 #define dsa_sigalg_set_ctx_params_st dsa_all_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/dsa_sig.inc"
+/* clang-format on */
 
 static int dsa_get_ctx_params(void *vpdsactx, OSSL_PARAM *params)
 {

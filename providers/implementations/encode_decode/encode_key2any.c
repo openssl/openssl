@@ -42,7 +42,9 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/encode_key2any.inc"
+/* clang-format on */
 
 #include <crypto/asn1.h>
 

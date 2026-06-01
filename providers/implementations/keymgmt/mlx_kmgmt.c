@@ -22,7 +22,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
+/* clang-format off */
 #include "providers/implementations/keymgmt/mlx_kmgmt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keymgmt_gen_fn mlx_kem_gen;
 static OSSL_FUNC_keymgmt_gen_cleanup_fn mlx_kem_gen_cleanup;

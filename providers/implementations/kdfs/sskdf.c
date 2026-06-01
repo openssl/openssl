@@ -110,7 +110,9 @@ static OSSL_FUNC_kdf_set_ctx_params_fn sskdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn sskdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn sskdf_get_ctx_params;
 #define sskdf_set_ctx_params_st sskdf_all_set_ctx_params_st
+/* clang-format off */
 #include "providers/implementations/kdfs/sskdf.inc"
+/* clang-format on */
 #endif
 #ifndef OPENSSL_NO_X963KDF
 static OSSL_FUNC_kdf_derive_fn x963kdf_derive;
@@ -119,7 +121,9 @@ static OSSL_FUNC_kdf_set_ctx_params_fn x963kdf_set_ctx_params;
 static OSSL_FUNC_kdf_gettable_ctx_params_fn x963kdf_gettable_ctx_params;
 static OSSL_FUNC_kdf_get_ctx_params_fn x963kdf_get_ctx_params;
 #define x963kdf_set_ctx_params_st sskdf_all_set_ctx_params_st
+/* clang-format off */
 #include "providers/implementations/kdfs/x963kdf.inc"
+/* clang-format on */
 #endif
 /*
  * Refer to https://csrc.nist.gov/publications/detail/sp/800-56c/rev-1/final

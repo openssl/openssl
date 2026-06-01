@@ -188,7 +188,9 @@ struct mac_common_params_st {
 #define mac_gen_set_params_st mac_common_params_st
 #define cmac_gen_set_params_st mac_common_params_st
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/mac_legacy_kmgmt.inc"
+/* clang-format on */
 
 static int mac_key_fromdata(MAC_KEY *key, const struct mac_common_params_st *p)
 {

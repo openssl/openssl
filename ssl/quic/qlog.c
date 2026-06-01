@@ -647,7 +647,9 @@ static void filter_apply(size_t *enabled, int add,
 #define QLOG_EVENT(e_cat, e_name)                                            \
 	if (filter_match_event(cat, cat_l, event, event_l, #e_cat, #e_name)) \
 		bit_set(enabled, QLOG_EVENT_TYPE_##e_cat##_##e_name, add);
+/* clang-format off */
 #include "internal/qlog_events.inc"
+/* clang-format on */
 #undef QLOG_EVENT
     /* clang-format on */
 }

@@ -26,7 +26,9 @@
 #include "prov/implementations.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
+/* clang-format off */
 #include "providers/implementations/digests/cshake_prov.inc"
+/* clang-format on */
 
 /*
  * Length encoding will be a 1 byte size + length in bits (3 bytes max)

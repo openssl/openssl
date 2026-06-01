@@ -45,7 +45,9 @@
 #include "prov/ml_dsa_codecs.h"
 #include "prov/ml_kem_codecs.h"
 #include "prov/lms_codecs.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_der2key.inc"
+/* clang-format on */
 
 #ifndef OPENSSL_NO_SLH_DSA
 typedef struct {

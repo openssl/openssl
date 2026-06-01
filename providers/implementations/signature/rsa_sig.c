@@ -36,7 +36,9 @@
 
 #define rsa_set_ctx_params_no_digest_st rsa_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/rsa_sig.inc"
+/* clang-format on */
 
 #define RSA_DEFAULT_DIGEST_NAME OSSL_DIGEST_NAME_SHA1
 

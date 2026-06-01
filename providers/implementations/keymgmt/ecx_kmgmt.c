@@ -219,7 +219,9 @@ struct ecx_ed_common_get_params_st {
 #define ecx_get_params_st ecx_ed_common_get_params_st
 #define ed_get_params_st ecx_ed_common_get_params_st
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/ecx_kmgmt.inc"
+/* clang-format on */
 
 static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 {

@@ -23,7 +23,9 @@
 #include <internal/common.h>
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+/* clang-format off */
 #include "providers/implementations/digests/mdc2_prov.inc"
+/* clang-format on */
 
 static OSSL_FUNC_digest_set_ctx_params_fn mdc2_set_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn mdc2_settable_ctx_params;

@@ -27,7 +27,9 @@
 #define mac_legacy_get_ctx_params_decoder
 #define mac_legacy_set_ctx_params_decoder
 #endif
+/* clang-format off */
 #include "providers/implementations/signature/mac_legacy_sig.inc"
+/* clang-format on */
 
 static OSSL_FUNC_signature_newctx_fn mac_hmac_newctx;
 static OSSL_FUNC_signature_newctx_fn mac_siphash_newctx;

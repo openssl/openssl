@@ -90,9 +90,13 @@ static const PROV_GCM_HW sm4_gcm = {
 };
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+/* clang-format off */
 #include "cipher_sm4_gcm_hw_rv64i.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+/* clang-format off */
 #include "cipher_sm4_gcm_hw_x86_64.inc"
+/* clang-format on */
 #else
 const PROV_GCM_HW *ossl_prov_sm4_hw_gcm(size_t keybits)
 {

@@ -26,7 +26,9 @@
 #include "prov/drbg.h"
 #include "prov/seeding.h"
 #include "crypto/context.h"
+/* clang-format off */
 #include "providers/implementations/rands/fips_crng_test.inc"
+/* clang-format on */
 
 static OSSL_FUNC_rand_newctx_fn crng_test_new;
 static OSSL_FUNC_rand_freectx_fn crng_test_free;

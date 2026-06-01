@@ -19,7 +19,9 @@
 #include "prov/providercommon.h"
 #include "prov/ciphercommon_aead.h"
 #include "prov/implementations.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_ocb.inc"
+/* clang-format on */
 
 #define AES_OCB_FLAGS AEAD_FLAGS
 

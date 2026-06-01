@@ -21,7 +21,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/macs/gmac_prov.inc"
+/* clang-format on */
 
 /*
  * Forward declaration of everything implemented here.  This is not strictly

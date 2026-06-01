@@ -22,7 +22,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/template_kmgmt.inc"
+/* clang-format on */
 
 extern const OSSL_DISPATCH ossl_template_keymgmt_functions[];
 

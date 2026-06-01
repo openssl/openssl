@@ -16,7 +16,9 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/keymgmt/lms_kmgmt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keymgmt_new_fn lms_new_key;
 static OSSL_FUNC_keymgmt_free_fn lms_free_key;

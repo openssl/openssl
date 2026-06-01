@@ -28,7 +28,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/securitycheck.h"
 #include "crypto/dh.h"
+/* clang-format off */
 #include "providers/implementations/exchange/dh_exch.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keyexch_newctx_fn dh_newctx;
 static OSSL_FUNC_keyexch_init_fn dh_init;

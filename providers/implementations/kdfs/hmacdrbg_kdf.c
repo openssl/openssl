@@ -20,7 +20,9 @@
 #include "prov/implementations.h"
 #include "prov/hmac_drbg.h"
 #include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/hmacdrbg_kdf.inc"
+/* clang-format on */
 
 static OSSL_FUNC_kdf_newctx_fn hmac_drbg_kdf_new;
 static OSSL_FUNC_kdf_dupctx_fn hmac_drbg_kdf_dup;

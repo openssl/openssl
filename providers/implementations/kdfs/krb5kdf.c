@@ -30,7 +30,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/krb5kdf.inc"
+/* clang-format on */
 
 /* KRB5 KDF defined in RFC 3961, Section 5.1 */
 

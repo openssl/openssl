@@ -28,7 +28,9 @@
 #include "prov/bio.h"
 #include "prov/provider_ctx.h"
 #include "prov/endecoder_local.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/encode_key2ms.inc"
+/* clang-format on */
 
 struct key2ms_ctx_st {
     PROV_CTX *provctx;

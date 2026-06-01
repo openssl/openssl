@@ -19,7 +19,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/srtpkdf.inc"
+/* clang-format on */
 
 #define KDF_SRTP_AUTH_KEY_LEN 20
 #define KDF_SRTP_SALT_KEY_LEN 14

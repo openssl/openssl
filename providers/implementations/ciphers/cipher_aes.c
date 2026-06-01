@@ -91,4 +91,6 @@ IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 192, 8, 128, stream)
 /* ossl_aes128ctr_functions */
 IMPLEMENT_generic_cipher(aes, AES, ctr, CTR, 0, 128, 8, 128, stream)
 
+/* clang-format off */
 #include "cipher_aes_cts.inc"
+/* clang-format on */

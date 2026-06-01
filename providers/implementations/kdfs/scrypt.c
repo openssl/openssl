@@ -25,7 +25,9 @@
 
 #ifndef OPENSSL_NO_SCRYPT
 
+/* clang-format off */
 #include "providers/implementations/kdfs/scrypt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_kdf_newctx_fn kdf_scrypt_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_scrypt_dup;

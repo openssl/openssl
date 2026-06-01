@@ -31,7 +31,9 @@
 #include "prov/implementations.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
+/* clang-format off */
 #include "providers/implementations/digests/ml_dsa_mu_prov.inc"
+/* clang-format on */
 
 #define SHAKE256_SIZE 64
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_ALGID_ABSENT)

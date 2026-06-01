@@ -13,7 +13,9 @@
 #include "cipher_sm4_xts.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_sm4_xts.inc"
+/* clang-format on */
 
 #define SM4_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define SM4_XTS_IV_BITS 128

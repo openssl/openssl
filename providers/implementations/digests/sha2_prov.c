@@ -26,7 +26,9 @@
 #include "prov/implementations.h"
 #include "crypto/sha.h"
 #include "internal/common.h"
+/* clang-format off */
 #include "providers/implementations/digests/sha2_prov.inc"
+/* clang-format on */
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 

@@ -16,7 +16,9 @@
 #include "prov/blake2.h"
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
+/* clang-format off */
 #include "providers/implementations/digests/blake2_prov.inc"
+/* clang-format on */
 
 static OSSL_FUNC_digest_gettable_ctx_params_fn blake_gettable_ctx_params;
 static OSSL_FUNC_digest_settable_ctx_params_fn blake_settable_ctx_params;

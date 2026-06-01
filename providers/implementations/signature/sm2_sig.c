@@ -33,7 +33,9 @@
 #include "crypto/ec.h"
 #include "crypto/sm2.h"
 #include "prov/der_sm2.h"
+/* clang-format off */
 #include "providers/implementations/signature/sm2_sig.inc"
+/* clang-format on */
 
 static OSSL_FUNC_signature_newctx_fn sm2sig_newctx;
 static OSSL_FUNC_signature_sign_init_fn sm2sig_signature_init;

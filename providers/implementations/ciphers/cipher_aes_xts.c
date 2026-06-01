@@ -19,7 +19,9 @@
 #include "cipher_aes_xts.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_xts.inc"
+/* clang-format on */
 
 #define AES_XTS_FLAGS PROV_CIPHER_FLAG_CUSTOM_IV
 #define AES_XTS_IV_BITS 128
@@ -64,7 +66,9 @@ static int aes_xts_check_keys_differ(const unsigned char *key, size_t bytes,
 }
 
 #ifdef AES_XTS_S390X
+/* clang-format off */
 #include "cipher_aes_xts_s390x.inc"
+/* clang-format on */
 #endif
 
 /*-

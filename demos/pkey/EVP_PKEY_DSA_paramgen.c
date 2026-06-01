@@ -13,7 +13,9 @@
  */
 
 #include <openssl/evp.h>
+/* clang-format off */
 #include "dsa.inc"
+/* clang-format on */
 
 int main(int argc, char **argv)
 {

@@ -19,7 +19,9 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+/* clang-format off */
 #include "providers/implementations/keymgmt/slh_dsa_kmgmt.inc"
+/* clang-format on */
 
 #ifdef FIPS_MODULE
 static int slh_dsa_fips140_pairwise_test(const SLH_DSA_KEY *key,

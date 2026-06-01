@@ -25,7 +25,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/pbkdf1.inc"
+/* clang-format on */
 
 static OSSL_FUNC_kdf_newctx_fn kdf_pbkdf1_new;
 static OSSL_FUNC_kdf_dupctx_fn kdf_pbkdf1_dup;

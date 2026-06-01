@@ -13,7 +13,9 @@
 #include "prov/digestcommon.h"
 #include "internal/common.h"
 
+/* clang-format off */
 #include "providers/implementations/digests/digestcommon.inc"
+/* clang-format on */
 
 int ossl_digest_default_get_params(OSSL_PARAM params[], size_t blksz,
     size_t paramsz, unsigned long flags)

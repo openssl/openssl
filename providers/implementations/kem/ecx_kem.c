@@ -36,7 +36,9 @@
 #include <openssl/hpke.h>
 #include "internal/hpke_util.h"
 #include "prov/eckem.h"
+/* clang-format off */
 #include "providers/implementations/kem/ecx_kem.inc"
+/* clang-format on */
 
 #define MAX_ECX_KEYLEN X448_KEYLEN
 

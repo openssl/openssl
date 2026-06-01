@@ -17,7 +17,9 @@
 #include "cipher_aes.h"
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_wrp.inc"
+/* clang-format on */
 
 /* AES wrap with padding has IV length of 4, without padding 8 */
 #define AES_WRAP_PAD_IVLEN 4

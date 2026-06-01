@@ -18,7 +18,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/snmpkdf.inc"
+/* clang-format on */
 
 #define KDF_SNMP_PASSWORD_HASH_AMOUNT (1024 * 1024)
 #define KDF_SNMP_MIN_PASSWORD_LEN 8

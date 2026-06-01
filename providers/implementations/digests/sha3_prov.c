@@ -21,7 +21,9 @@
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "internal/common.h"
+/* clang-format off */
 #include "providers/implementations/digests/sha3_prov.inc"
+/* clang-format on */
 
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)

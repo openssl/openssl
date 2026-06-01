@@ -21,9 +21,13 @@
 #include "internal/constant_time.h"
 
 #ifdef INT128_MAX
+/* clang-format off */
 #include "arch_64/arch_intrinsics.inc"
+/* clang-format on */
 #else
+/* clang-format off */
 #include "arch_32/arch_intrinsics.inc"
+/* clang-format on */
 #endif
 
 #if (ARCH_WORD_BITS == 64)

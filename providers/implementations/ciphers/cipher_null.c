@@ -14,7 +14,9 @@
 #include "prov/implementations.h"
 #include "prov/ciphercommon.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_null.inc"
+/* clang-format on */
 
 typedef struct prov_cipher_null_ctx_st {
     int enc;

@@ -36,7 +36,9 @@
 #include "crypto/ec.h"
 #include "prov/ecx.h"
 #include "prov/eckem.h"
+/* clang-format off */
 #include "providers/implementations/kem/ec_kem.inc"
+/* clang-format on */
 
 typedef struct {
     EC_KEY *recipient_key;

@@ -26,7 +26,9 @@
 #define cipher_generic_set_ctx_params_st ossl_cipher_set_ctx_param_list_st
 #define cipher_var_keylen_set_ctx_params_st ossl_cipher_set_ctx_param_list_st
 
+/* clang-format off */
 #include "providers/implementations/ciphers/ciphercommon.inc"
+/* clang-format on */
 
 /*-
  * Generic cipher functions for OSSL_PARAM gettables and settables

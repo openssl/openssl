@@ -11,7 +11,9 @@
 #include <openssl/evp.h>
 #include "internal/nelem.h"
 #include "testutil.h"
+/* clang-format off */
 #include "ml_dsa.inc"
+/* clang-format on */
 #include "crypto/ml_dsa.h"
 
 typedef enum OPTION_choice {

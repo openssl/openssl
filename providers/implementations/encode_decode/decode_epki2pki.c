@@ -24,7 +24,9 @@
 #include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_epki2pki.inc"
+/* clang-format on */
 
 #include <crypto/asn1.h>
 

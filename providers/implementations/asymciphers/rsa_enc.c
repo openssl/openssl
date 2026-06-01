@@ -33,7 +33,9 @@
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
 #include <stdlib.h>
+/* clang-format off */
 #include "providers/implementations/asymciphers/rsa_enc.inc"
+/* clang-format on */
 
 static OSSL_FUNC_asym_cipher_newctx_fn rsa_newctx;
 static OSSL_FUNC_asym_cipher_encrypt_init_fn rsa_encrypt_init;

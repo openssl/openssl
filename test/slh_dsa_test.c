@@ -15,7 +15,9 @@
 #include "crypto/slh_dsa.h"
 #include "internal/nelem.h"
 #include "testutil.h"
+/* clang-format off */
 #include "slh_dsa.inc"
+/* clang-format on */
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,

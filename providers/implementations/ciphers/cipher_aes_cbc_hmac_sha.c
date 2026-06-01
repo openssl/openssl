@@ -30,7 +30,9 @@
     };
 #else
 
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_cbc_hmac_sha.inc"
+/* clang-format on */
 
 #define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)

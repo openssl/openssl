@@ -21,7 +21,9 @@
 #include "prov/ciphercommon_aead.h"
 #include "prov/provider_ctx.h"
 #include "cipher_aes_gcm_siv.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_aes_gcm_siv.inc"
+/* clang-format on */
 
 static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[]);
 

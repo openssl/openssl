@@ -17,7 +17,9 @@
 #include "prov/providercommon.h"
 #include "prov/implementations.h"
 #include "prov/provider_util.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/ikev2kdf.inc"
+/* clang-format on */
 
 /* The shared secret length: 28 ~ 1024 bytes */
 #define IKEV2KDF_MIN_SECRET_LENGTH 28

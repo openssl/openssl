@@ -410,7 +410,9 @@ struct dh_gen_set_params_st {
 
 #define dh_gen_set_params_st dh_gen_set_params_st
 
+/* clang-format off */
 #include "providers/implementations/keymgmt/dh_kmgmt.inc"
+/* clang-format on */
 
 static int dh_get_params(void *key, OSSL_PARAM params[])
 {

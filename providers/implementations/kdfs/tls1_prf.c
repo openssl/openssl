@@ -95,7 +95,9 @@ static int tls1_prf_alg(EVP_MAC_CTX *mdctx, EVP_MAC_CTX *sha1ctx,
 
 #define TLSPRF_MAX_SEEDS 6
 
+/* clang-format off */
 #include "providers/implementations/kdfs/tls1_prf.inc"
+/* clang-format on */
 
 /* TLS KDF kdf context structure */
 typedef struct {

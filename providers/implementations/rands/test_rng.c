@@ -23,7 +23,9 @@
 #include "prov/provider_ctx.h"
 #include "prov/provider_util.h"
 #include "prov/implementations.h"
+/* clang-format off */
 #include "providers/implementations/rands/test_rng.inc"
+/* clang-format on */
 
 static OSSL_FUNC_rand_newctx_fn test_rng_new;
 static OSSL_FUNC_rand_freectx_fn test_rng_free;

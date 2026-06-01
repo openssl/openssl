@@ -26,7 +26,9 @@
 #include "prov/provider_util.h"
 #include "prov/securitycheck.h"
 #include "prov/der_wrap.h"
+/* clang-format off */
 #include "providers/implementations/kdfs/x942kdf.inc"
+/* clang-format on */
 
 #define X942KDF_MAX_INLEN (1 << 30)
 

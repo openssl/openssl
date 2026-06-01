@@ -15,7 +15,9 @@
 #include <openssl/param_build.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
+/* clang-format off */
 #include "dsa.inc"
+/* clang-format on */
 
 int main(int argc, char **argv)
 {

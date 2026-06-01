@@ -29,7 +29,9 @@
 #include <windows.h>
 #endif
 #include <wincrypt.h>
+/* clang-format off */
 #include "providers/implementations/storemgmt/winstore_store.inc"
+/* clang-format on */
 
 enum {
     STATE_IDLE,

@@ -23,7 +23,9 @@
 
 #define ml_dsa_export_params
 #define ml_dsa_export_params_decoder
+/* clang-format off */
 #include "providers/implementations/keymgmt/ml_dsa_kmgmt.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keymgmt_free_fn ml_dsa_free_key;
 static OSSL_FUNC_keymgmt_has_fn ml_dsa_has;

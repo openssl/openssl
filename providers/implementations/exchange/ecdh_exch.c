@@ -29,7 +29,9 @@
 #include "prov/implementations.h"
 #include "prov/securitycheck.h"
 #include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+/* clang-format off */
 #include "providers/implementations/exchange/ecdh_exch.inc"
+/* clang-format on */
 
 static OSSL_FUNC_keyexch_newctx_fn ecdh_newctx;
 static OSSL_FUNC_keyexch_init_fn ecdh_init;

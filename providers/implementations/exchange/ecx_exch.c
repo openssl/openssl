@@ -20,7 +20,9 @@
 #include "prov/securitycheck.h"
 
 #ifdef FIPS_MODULE
+/* clang-format off */
 #include "providers/implementations/exchange/ecx_exch.inc"
+/* clang-format on */
 #endif
 
 static OSSL_FUNC_keyexch_newctx_fn x25519_newctx;

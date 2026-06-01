@@ -27,7 +27,9 @@
 
 #define eddsa_set_variant_ctx_params_st eddsa_set_ctx_params_st
 
+/* clang-format off */
 #include "providers/implementations/signature/eddsa_sig.inc"
+/* clang-format on */
 
 #ifdef S390X_EC_ASM
 #include "arch/s390x_arch.h"

@@ -14,7 +14,9 @@
 #include "cipher_chacha20.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
+/* clang-format off */
 #include "providers/implementations/ciphers/cipher_chacha20.inc"
+/* clang-format on */
 
 #define CHACHA20_KEYLEN (CHACHA_KEY_SIZE)
 #define CHACHA20_BLKLEN (1)

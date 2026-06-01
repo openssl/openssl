@@ -22,7 +22,9 @@
 #include "prov/decoders.h"
 #include "prov/implementations.h"
 #include "prov/endecoder_local.h"
+/* clang-format off */
 #include "providers/implementations/encode_decode/decode_spki2typespki.inc"
+/* clang-format on */
 
 static OSSL_FUNC_decoder_newctx_fn spki2typespki_newctx;
 static OSSL_FUNC_decoder_freectx_fn spki2typespki_freectx;

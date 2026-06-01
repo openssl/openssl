@@ -27,7 +27,9 @@
 #include <openssl/self_test.h>
 #include "testutil.h"
 #include "testutil/output.h"
+/* clang-format off */
 #include "acvp_test.inc"
+/* clang-format on */
 #include "internal/nelem.h"
 
 typedef enum OPTION_choice {

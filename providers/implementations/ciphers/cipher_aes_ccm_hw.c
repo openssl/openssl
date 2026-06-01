@@ -57,15 +57,25 @@ static const PROV_CCM_HW aes_ccm = {
 };
 
 #if defined(S390X_aes_128_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_ccm_hw_s390x.inc"
+/* clang-format on */
 #elif defined(AESNI_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_ccm_hw_aesni.inc"
+/* clang-format on */
 #elif defined(SPARC_AES_CAPABLE)
+/* clang-format off */
 #include "cipher_aes_ccm_hw_t4.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+/* clang-format off */
 #include "cipher_aes_ccm_hw_rv64i.inc"
+/* clang-format on */
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+/* clang-format off */
 #include "cipher_aes_ccm_hw_rv32i.inc"
+/* clang-format on */
 #else
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {

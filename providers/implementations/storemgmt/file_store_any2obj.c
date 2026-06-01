@@ -38,7 +38,9 @@
 #include "crypto/pem.h" /* For internal PVK and "blob" headers */
 #include "prov/bio.h"
 #include "prov/file_store_local.h"
+/* clang-format off */
 #include "providers/implementations/storemgmt/file_store_any2obj.inc"
+/* clang-format on */
 
 /*
  * newctx and freectx are not strictly necessary.  However, the method creator,
