@@ -3414,6 +3414,49 @@ static int test_set_get_raw_keys(int tst)
         && test_set_get_raw_keys_int(tst, 1, 1);
 }
 
+static int test_set_get_raw_keys_mfail(int idx)
+{
+    const uint8_t *in;
+    size_t inlen, len = 0;
+    EVP_PKEY *pkey = NULL;
+    unsigned char *buf = NULL;
+    unsigned char *privalloc = NULL;
+    const char *name;
+    int ok = 0;
+    int ret = 0;
+
+    name = keys[idx].name != NULL ? keys[idx].name : OBJ_nid2sn(keys[idx].type);
+    inlen = keys[idx].privlen;
+    in = keys[idx].priv;
+#ifndef OPENSSL_NO_ML_KEM
+    if (in == ml_kem_seed) {
+        if (!TEST_true(ml_kem_seed_to_priv(name, in, inlen, &privalloc, &inlen)))
+            goto err;
+        in = privalloc;
+    }
+#endif
+
+    MFAIL_start();
+    pkey = EVP_PKEY_new_raw_private_key_ex(testctx, name, NULL, in, inlen);
+    if (pkey != NULL
+        && EVP_PKEY_get_raw_private_key(pkey, NULL, &len)
+        && (buf = OPENSSL_malloc(len == 0 ? 1 : len)) != NULL
+        && EVP_PKEY_get_raw_private_key(pkey, buf, &len))
+        ok = 1;
+    MFAIL_end();
+
+    if (!ok)
+        goto err;
+
+    ret = TEST_mem_eq(in, inlen, buf, len);
+
+err:
+    OPENSSL_free(privalloc);
+    OPENSSL_free(buf);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
 static int test_EVP_PKEY_check(int i)
 {
     int ret = 0;
@@ -8043,6 +8086,12 @@ int setup_tests(void)
     ADD_TEST(test_EVP_SM2_verify);
 #endif
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
+#if defined(_MSC_VER) || defined(OPENSSL_NO_CACHED_FETCH)
+    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_set_get_raw_keys_mfail,
+        OSSL_NELEM(keys));
+#else
+    ADD_MFAIL_ALL_TESTS(test_set_get_raw_keys_mfail, OSSL_NELEM(keys));
+#endif
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
 #ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);
