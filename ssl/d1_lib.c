@@ -21,6 +21,7 @@
 #include "internal/dtls_record_rx.h"
 #include "internal/dgram_demux.h"
 #include "internal/dgram_conn_lookup.h"
+#include "internal/rio_notifier.h"
 
 static int dtls1_handshake_write(SSL_CONNECTION *s);
 static size_t dtls1_link_min_mtu(void);
@@ -1318,10 +1319,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     conn_ssl = ossl_dtls_listener_find_established_conn(dl, urxe);
     if (conn_ssl != NULL) {
         sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
-            ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
-            return;
-        }
+        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL)
+            goto inject;
+
         /* Fall through to release if injection failed */
         goto release;
     }
@@ -1332,10 +1332,9 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
     if (conn_ssl != NULL) {
         sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
-            ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
-            return;
-        }
+        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL)
+            goto inject;
+
         /* Fall through to release if injection failed */
         goto release;
     }
@@ -1358,7 +1357,18 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
         goto release;
     }
 
+inject:
     ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
+
+    if (dl->have_notifier) {
+        ossl_crypto_mutex_lock(dl->mutex);
+        if (dl->cur_blocking_waiters > 0 && !dl->signalled_notifier) {
+            ossl_rio_notifier_signal(&dl->notifier);
+            dl->signalled_notifier = 1;
+        }
+        ossl_crypto_mutex_unlock(dl->mutex);
+    }
+
     return;
 
 release:
@@ -1740,11 +1750,32 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         }
     }
 
+    dl->have_notifier = 0;
+    dl->signalled_notifier = 0;
+    dl->cur_blocking_waiters = 0;
+
+    if ((flags & SSL_LISTENER_FLAG_MULTI_THREAD) != 0) {
+        if (!ossl_rio_notifier_init(&dl->notifier))
+            goto err;
+
+        dl->notifier_cv = ossl_crypto_condvar_new();
+        if (dl->notifier_cv == NULL) {
+            ossl_rio_notifier_cleanup(&dl->notifier);
+            goto err;
+        }
+
+        dl->have_notifier = 1;
+    }
+
     return &dl->ssl;
 
 err:
     if (dl == NULL)
         return NULL;
+
+    if (dl->notifier_cv != NULL)
+        ossl_crypto_condvar_free(&dl->notifier_cv);
+
     /*
      * If ossl_ssl_init succeeded, SSL_free handles all cleanup
      * including incoming_connections and OPENSSL_free(dl)
@@ -1818,6 +1849,11 @@ void ossl_dtls_listener_free(SSL *s)
 
     BIO_free_all(dl->net_wbio);
     BIO_free_all(dl->net_rbio);
+
+    if (dl->have_notifier) {
+        ossl_crypto_condvar_free(&dl->notifier_cv);
+        ossl_rio_notifier_cleanup(&dl->notifier);
+    }
 
 #if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_free(&dl->write_mutex);
@@ -2596,6 +2632,51 @@ OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s)
 
     dl = (const DTLS_LISTENER *)s;
     return dl->pending_timeout;
+}
+
+void ossl_dtls_listener_enter_blocking_section(SSL *s)
+{
+    DTLS_LISTENER *dl;
+
+    if (!IS_DTLS_LISTENER(s))
+        return;
+
+    dl = (DTLS_LISTENER *)s;
+
+    if (dl->have_notifier)
+        dl->cur_blocking_waiters++;
+}
+
+void ossl_dtls_listener_leave_blocking_section(SSL *s)
+{
+    DTLS_LISTENER *dl;
+
+    if (!IS_DTLS_LISTENER(s))
+        return;
+
+    dl = (DTLS_LISTENER *)s;
+
+    if (dl->have_notifier) {
+        assert(dl->cur_blocking_waiters > 0);
+        --dl->cur_blocking_waiters;
+
+        if (dl->signalled_notifier) {
+            if (dl->cur_blocking_waiters == 0) {
+                ossl_rio_notifier_unsignal(&dl->notifier);
+                dl->signalled_notifier = 0;
+
+                /*
+                 * Release the other threads which have woken up
+                 */
+                ossl_crypto_condvar_broadcast(dl->notifier_cv);
+            } else {
+                /* We are not the last waiter out - so wait for that one. */
+                while (dl->signalled_notifier)
+                    /* Using the existing DTLS Listener mutex here */
+                    ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
+            }
+        }
+    }
 }
 
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,

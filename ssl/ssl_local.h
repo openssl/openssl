@@ -46,6 +46,7 @@
 #include "internal/bio_addr.h"
 #include "internal/dtls_record_rx.h"
 #include "internal/dgram_conn_lookup.h"
+#include "internal/rio_notifier.h"
 
 /*
  * Forward declarations for DTLS listener types. These are defined in the
@@ -2243,6 +2244,12 @@ typedef struct dtls_listener_st {
     /* Require HelloRetryRequest + cookie for DTLS 1.3 */
     unsigned int require_hrr_cookie : 1;
 
+    /* Using the notifier architecture */
+    unsigned int have_notifier : 1;
+
+    /* Notifier has been signalled */
+    unsigned int signalled_notifier : 1;
+
     /*
      * Time callback for customizable time source (primarily for testing).
      * If NULL, ossl_time_now() is used.
@@ -2256,6 +2263,18 @@ typedef struct dtls_listener_st {
      * Default: 30 seconds. Set to ossl_time_infinite() to disable.
      */
     OSSL_TIME pending_timeout;
+
+    CRYPTO_CONDVAR *notifier_cv;
+
+    /*
+     * Notifier for signaling events related to this listener.
+     */
+    RIO_NOTIFIER notifier;
+
+    /*
+     * Count of threads currently blocked waiting in poll().
+     */
+    size_t cur_blocking_waiters;
 } DTLS_LISTENER;
 
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
@@ -3059,6 +3078,8 @@ int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
+void ossl_dtls_listener_enter_blocking_section(SSL *s);
+void ossl_dtls_listener_leave_blocking_section(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 

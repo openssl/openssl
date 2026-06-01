@@ -10,7 +10,8 @@ SSL_new_from_listener,
 SSL_ACCEPT_CONNECTION_NO_BLOCK,
 SSL_LISTENER_FLAG_NO_VALIDATE,
 SSL_LISTENER_FLAG_REQUIRE_HVR,
-SSL_LISTENER_FLAG_REQUIRE_HRR - SSL object interface for abstracted connection
+SSL_LISTENER_FLAG_REQUIRE_HRR,
+SSL_LISTENER_FLAG_MULTI_THREAD - SSL object interface for abstracted connection
 acceptance
 
 =head1 SYNOPSIS
@@ -31,6 +32,7 @@ acceptance
  #define SSL_LISTENER_FLAG_NO_VALIDATE
  #define SSL_LISTENER_FLAG_REQUIRE_HVR
  #define SSL_LISTENER_FLAG_REQUIRE_HRR
+ #define SSL_LISTENER_FLAG_MULTI_THREAD
 
  SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
 
@@ -260,6 +262,21 @@ The listener will send an HRR with a cookie extension, and the client must
 respond with a second ClientHello containing the valid cookie. This provides
 protection against amplification attacks for DTLS 1.3.
 
+=item B<SSL_LISTENER_FLAG_MULTI_THREAD>
+
+Enables multi-threaded support for the DTLS listener. When this flag is set,
+the listener initializes internal synchronization mechanisms that allow
+connections accepted from the listener to be safely used from multiple threads
+concurrently. This includes a notifier mechanism that enables efficient polling
+across threads - when data arrives for a connection while another thread is
+blocked in L<SSL_poll(3)>, that thread will be woken up.
+
+If this flag is not set, the listener operates in single-threaded mode and
+connections should only be used from a single thread. Single-threaded mode
+avoids the overhead of the notifier mechanism.
+
+This flag is only applicable to DTLS listeners.
+
 =back
 
 Both B<SSL_LISTENER_FLAG_REQUIRE_HVR> and B<SSL_LISTENER_FLAG_REQUIRE_HRR> may
@@ -379,6 +396,8 @@ SSL_listen_ex() was added in OpenSSL 4.0.
 
 DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR> and
 B<SSL_LISTENER_FLAG_REQUIRE_HRR> flags) was added in OpenSSL 4.1.
+
+B<SSL_LISTENER_FLAG_MULTI_THREAD> was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

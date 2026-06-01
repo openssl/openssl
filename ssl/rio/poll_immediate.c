@@ -197,43 +197,75 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     int *abort_blocking)
 {
     BIO *rbio, *wbio;
-    int rfd = -1, wfd = -1;
+    int rfd = -1, wfd = -1, nfd = -1;
     SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl = NULL;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+    if (sc != NULL && sc->d1 != NULL && sc->d1->listener != NULL)
+        dl = (DTLS_LISTENER *)sc->d1->listener;
 
     if ((events & SSL_POLL_EVENT_R) != 0) {
         rbio = SSL_get_rbio(ssl);
 
-        if (rbio == NULL) {
-            sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+        if (rbio == NULL && dl != NULL) {
+            /*
+             * Listener-based DTLS connection. First, pump the listener's
+             * demux to ensure any pending datagrams on the socket are
+             * routed to their respective connection URXE queues.
+             */
+            ossl_dtls_tick(dl);
 
-            if (sc != NULL && sc->d1 != NULL && sc->d1->listener != NULL) {
-                /*
-                 * Listener-based DTLS connection. First, pump the listener's
-                 * demux to ensure any pending datagrams on the socket are
-                 * routed to their respective connection URXE queues.
-                 */
-                DTLS_LISTENER *dl = (DTLS_LISTENER *)sc->d1->listener;
-
-                ossl_dtls_tick(dl);
-
-                /*
-                 * Now check the URXE buffer. If data has been demuxed into
-                 * this connection's receive queue, abort blocking immediately -
-                 * there is no need to wait on the socket FD.
-                 */
-                if (sc->d1->rx != NULL
-                    && !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending)) {
-                    *abort_blocking = 1;
-                    return 1;
-                }
-
-                /*
-                 * URXE buffer is empty. Fall back to the listener's rbio so the
-                 * OS-level poll() wakes us up when the shared socket becomes
-                 * readable and new datagrams may arrive.
-                 */
-                rbio = SSL_get_rbio(sc->d1->listener);
+            /*
+             * Now check the URXE buffer. If data has been demuxed into
+             * this connection's receive queue, abort blocking immediately -
+             * there is no need to wait on the socket FD.
+             */
+            if (sc->d1->rx != NULL
+                && !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending)) {
+                *abort_blocking = 1;
+                return 1;
             }
+
+            /*
+             * Add the notifier FD for the DTLS listener (if multi-threaded
+             * mode is enabled). This ensures we get woken up if another thread
+             * demuxes data to this connection's URXE queue without the
+             * underlying network socket ever becoming readable from our
+             * perspective.
+             */
+            if (dl->have_notifier) {
+                nfd = ossl_rio_notifier_as_fd(&dl->notifier);
+                if (nfd != -1) {
+                    if (!ossl_rio_poll_builder_add_fd(rpb, nfd, /*r=*/1, /*w=*/0))
+                        return 0;
+
+                    /* Tell listener we need to receive notifications. */
+                    ossl_dtls_listener_enter_blocking_section(sc->d1->listener);
+
+                    /*
+                     * Only after the above call returns is it guaranteed that
+                     * any readiness events will cause the notifier to become
+                     * readable. Therefore, it is possible data was demuxed to
+                     * our URXE queue after our initial check above but before
+                     * we entered the blocking section. Re-check now.
+                     */
+                    if (sc->d1->rx != NULL
+                        && !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending)) {
+                        ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
+                        *abort_blocking = 1;
+                        return 1;
+                    }
+                }
+            }
+
+            /*
+             * URXE buffer is empty. Fall back to the listener's rbio so the
+             * OS-level poll() wakes us up when the shared socket becomes
+             * readable and new datagrams may arrive.
+             */
+            rbio = SSL_get_rbio(sc->d1->listener);
         }
 
         if (rbio != NULL && BIO_get_fd(rbio, &rfd) < 0)
@@ -260,6 +292,27 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     }
 
     return 1;
+}
+
+static void postpoll_translation_cleanup_ssl_dtls_conn(SSL *ssl, uint64_t events)
+{
+    SSL_CONNECTION *sc;
+    DTLS_LISTENER *dl;
+
+    /*
+     * We only enter blocking section when read events are requested.
+     * Don't call leave if we never entered.
+     */
+    if ((events & SSL_POLL_EVENT_R) == 0)
+        return;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)
+        return;
+
+    dl = (DTLS_LISTENER *)sc->d1->listener;
+    if (dl->have_notifier && ossl_rio_notifier_as_fd(&dl->notifier) != -1)
+        ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
 }
 #endif /* OPENSSL_NO_DTLS */
 
@@ -293,7 +346,11 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
 
 #ifndef OPENSSL_NO_DTLS
             case SSL_TYPE_DTLS_LISTENER:
+                /* Listeners don't enter blocking sections */
+                break;
             case SSL_TYPE_SSL_CONNECTION:
+                if (SSL_is_dtls(ssl))
+                    postpoll_translation_cleanup_ssl_dtls_conn(ssl, item->events);
                 break;
 #endif
 
