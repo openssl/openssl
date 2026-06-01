@@ -330,7 +330,7 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
     test_flush_stdout();
     test_flush_tapout();
 
-    mfail_init(0, 0);
+    mfail_init(0, no_check ? MFAIL_FLAG_NO_CHECK : 0);
 
     while (mfail_has_next()) {
         int phase = mfail_get_phase();
