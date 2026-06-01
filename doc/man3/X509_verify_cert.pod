@@ -31,8 +31,8 @@ outcome.
 
 A B<X509_STORE_CTX> can be used for only one verification. Calling
 X509_verify_cert() a second time on the same context without reinitialising it
-fails with a negative return value and sets I<ctx>-E<gt>error to
-B<X509_V_ERR_INVALID_CALL>.
+fails with a negative return value, and L<X509_STORE_CTX_get_error(3)>
+subsequently returns B<X509_V_ERR_INVALID_CALL>.
 
 When the target is a certificate, the function performs the following steps in
 order. The first step that fails aborts verification, except where a
@@ -213,21 +213,24 @@ There are two distinct invocation patterns:
 =item B<Error notification> (I<ok> = 0)
 
 The callback is called with I<ok> set to 0 each time a check fails. Before the
-call, the verification machinery sets I<ctx>-E<gt>error to the
-B<X509_V_ERR_*> code describing the failure and, for certificate-level errors,
-sets I<ctx>-E<gt>error_depth to the depth at which the error was detected and
-I<ctx>-E<gt>current_cert to the certificate in question. CRL- and OCSP-related
-errors set I<ctx>-E<gt>error only; the depth and current certificate are
-already set from a preceding context.
+call, the verification machinery records the B<X509_V_ERR_*> code describing
+the failure on I<ctx>, and for certificate-level errors also records the
+depth at which the error was detected and the certificate in question. The
+callback inspects these via L<X509_STORE_CTX_get_error(3)>,
+L<X509_STORE_CTX_get_error_depth(3)>, and L<X509_STORE_CTX_get_current_cert(3)>.
+CRL- and OCSP-related errors update only the error code; the depth and
+current certificate retain their values from a preceding context.
 
 =item B<Per-certificate success notification> (I<ok> = 1)
 
 During the signature-and-validity pass, after each certificate in the chain
 has been checked successfully, the callback is called with I<ok> set to 1.
-I<ctx>-E<gt>current_cert, I<ctx>-E<gt>current_issuer and
-I<ctx>-E<gt>error_depth are set to describe the certificate that has just been
-accepted. The callback may use this to log progress, but B<must> return a
-nonzero value, otherwise verification is aborted.
+The current certificate, current issuer, and error depth (queryable
+respectively via L<X509_STORE_CTX_get_current_cert(3)>,
+L<X509_STORE_CTX_get0_current_issuer(3)>, and
+L<X509_STORE_CTX_get_error_depth(3)>) describe the certificate that has just
+been accepted. The callback may use this to log progress, but B<must> return
+a nonzero value, otherwise verification is aborted.
 
 =back
 
@@ -251,12 +254,13 @@ invoked with I<ok> = 0 or I<ok> = 1.
 =head2 Sticky errors
 
 When the callback waives an error by returning nonzero, the underlying check is
-treated as passed for control-flow purposes, but I<ctx>-E<gt>error is B<not>
-reset to B<X509_V_OK>. A subsequent successful return from X509_verify_cert()
-therefore does B<not> imply that L<X509_STORE_CTX_get_error(3)> will return
-B<X509_V_OK>: it may still hold the last error code that was waived. This is
-intentional. Only the callback itself is permitted to overwrite
-I<ctx>-E<gt>error, and only at its own risk.
+treated as passed for control-flow purposes, but the error code recorded on
+I<ctx> is B<not> reset to B<X509_V_OK>. A subsequent successful return from
+X509_verify_cert() therefore does B<not> imply that
+L<X509_STORE_CTX_get_error(3)> will return B<X509_V_OK>: it may still hold
+the last error code that was waived. This is intentional. Only the callback
+itself is permitted to overwrite the error code, via
+L<X509_STORE_CTX_set_error(3)>, and only at its own risk.
 
 =head2 Dangers
 
@@ -273,8 +277,8 @@ common:
 
 B<Blanket waivers>. A callback that returns 1 unconditionally turns
 X509_verify_cert() into "accept anything" and is almost always wrong outside of
-diagnostics. Inspect I<ctx>-E<gt>error and waive only the specific codes you
-intend to.
+diagnostics. Inspect the error code via L<X509_STORE_CTX_get_error(3)> and
+waive only the specific codes you intend to.
 
 =item *
 
@@ -285,11 +289,11 @@ distinguish this from a genuine failure based on the return value alone.
 
 =item *
 
-B<Clearing I<ctx>-E<gt>error>. The sticky-error rule exists so that a waived
-error remains visible to the caller after verification returns. A callback that
-overwrites I<ctx>-E<gt>error with B<X509_V_OK> hides this information and can
-also mask a later error if the callback is invoked again before verification
-completes.
+B<Clearing the error code>. The sticky-error rule exists so that a waived
+error remains visible to the caller after verification returns. A callback
+that calls L<X509_STORE_CTX_set_error(3)> with B<X509_V_OK> hides this
+information and can also mask a later error if the callback is invoked again
+before verification completes.
 
 =item *
 
@@ -299,10 +303,11 @@ or S/MIME verification that uses the surrounding context.
 
 =item *
 
-B<Trusting the depth alone>. I<ctx>-E<gt>error_depth records where an error
-was detected during chain processing, not the position of the certificate in
-the final chain. Always consult I<ctx>-E<gt>current_cert in addition to the
-depth when deciding whether to waive.
+B<Trusting the depth alone>. The error depth, from
+L<X509_STORE_CTX_get_error_depth(3)>, records where an error was detected
+during chain processing, not the position of the certificate in the final
+chain. Always consult L<X509_STORE_CTX_get_current_cert(3)> in addition to
+the depth when deciding whether to waive.
 
 =item *
 
@@ -318,8 +323,9 @@ of X509_verify_cert() may still change which B<X509_V_ERR_*> code the
 callback sees, or whether a given code is reported at all. Callbacks that
 branch on a specific error code being reported, or that assume earlier checks
 have already filtered out certain conditions, can therefore change behaviour
-silently across OpenSSL releases. Write callbacks defensively: inspect
-I<ctx>-E<gt>error and I<ctx>-E<gt>current_cert afresh on each invocation, and
+silently across OpenSSL releases. Write callbacks defensively: re-fetch the
+error code and the current certificate via L<X509_STORE_CTX_get_error(3)>
+and L<X509_STORE_CTX_get_current_cert(3)> afresh on each invocation, and
 treat "this error code never appears" as an assumption that may be
 invalidated. More fundamentally, because the set and order of error
 notifications is not a stable contract, the callback cannot be relied upon to
@@ -359,11 +365,12 @@ if verification was rejected. This occurs when a check failed and the callback
 did not waive the error, when a trust decision actively rejected the chain, or
 when the verification callback returned 0 from a success notification (see
 L</THE VERIFICATION CALLBACK>). When a certificate would have failed more
-than one check, the specific B<X509_V_ERR_*> code left in I<ctx>-E<gt>error
-reflects whichever check fired first; this ordering is an implementation
-detail and is not stable across releases. Callers must therefore treat the
-return value as the authoritative success/failure signal, and treat the
-specific error code as diagnostic information that may shift over time.
+than one check, the specific B<X509_V_ERR_*> code returned by
+L<X509_STORE_CTX_get_error(3)> reflects whichever check fired first; this
+ordering is an implementation detail and is not stable across releases.
+Callers must therefore treat the return value as the authoritative
+success/failure signal, and treat the specific error code as diagnostic
+information that may shift over time.
 
 =item A B<negative> value
 
@@ -371,8 +378,8 @@ on a hard error that prevented verification from running to completion. The
 documented cases are: I<ctx> is NULL; I<ctx> has no target certificate set;
 I<ctx> has already been used for a previous verification; memory allocation
 failed; the trust store lookup function returned an error; or an internal
-invariant was violated. In these cases I<ctx>-E<gt>error is set to an
-appropriate B<X509_V_ERR_*> value (B<X509_V_ERR_INVALID_CALL>,
+invariant was violated. In these cases L<X509_STORE_CTX_get_error(3)>
+returns an appropriate B<X509_V_ERR_*> value (B<X509_V_ERR_INVALID_CALL>,
 B<X509_V_ERR_OUT_OF_MEM>, B<X509_V_ERR_STORE_LOOKUP> or
 B<X509_V_ERR_UNSPECIFIED>).
 
