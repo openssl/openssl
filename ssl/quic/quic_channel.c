@@ -3211,10 +3211,11 @@ static void copy_tcause(QUIC_TERMINATE_CAUSE *dst,
          * If this fails, dst->reason becomes NULL and we simply do not use a
          * reason. This ensures termination is infallible.
          */
-        dst->reason = r = OPENSSL_memdup(src->reason, l + 1);
+        dst->reason = r = OPENSSL_malloc(l + 1);
         if (r == NULL)
             return;
 
+        memcpy(r, src->reason, l);
         r[l] = '\0';
         dst->reason_len = l;
     }
