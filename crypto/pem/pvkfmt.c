@@ -862,13 +862,13 @@ static void *do_PVK_body_key(const unsigned char **in,
                 (unsigned char *)psbuf, inlen, libctx, propq))
             goto err;
         p += saltlen;
-        /* Copy BLOBHEADER across, decrypt rest */
-        memcpy(enctmp, p, 8);
-        p += 8;
         if (keylen < 8) {
             ERR_raise(ERR_LIB_PEM, PEM_R_PVK_TOO_SHORT);
             goto err;
         }
+        /* Copy BLOBHEADER across, decrypt rest */
+        memcpy(enctmp, p, 8);
+        p += 8;
         inlen = keylen - 8;
         q = enctmp + 8;
         if ((rc4 = EVP_CIPHER_fetch(libctx, "RC4", propq)) == NULL)
