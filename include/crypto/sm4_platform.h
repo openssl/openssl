@@ -12,6 +12,7 @@
 #pragma once
 
 #if defined(OPENSSL_CPUID_OBJ)
+#include "crypto/sm4.h"
 #if defined(__aarch64__) || defined(_M_ARM64)
 #include "arch/arm_arch.h"
 extern unsigned int OPENSSL_arm_midr;
