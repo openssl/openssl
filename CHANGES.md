@@ -599,6 +599,13 @@ OpenSSL Releases
 
    *Bob Beck*
 
+ * Added `OSSL_CMP_OPT_PERMIT_TA_IN_EXTRACERTS_FOR_IR` option for `OSSL_CMP_CTX`
+   and a corresponding `-ta_in_ip_extracert` option for the `openssl cmp` command.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * `X509_ALGOR_set_md()` function now returns a value indicating success
     or failure.
     <!-- https://github.com/openssl/openssl/pull/17495 -->
