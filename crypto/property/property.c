@@ -1067,7 +1067,11 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
     *post_insert = NULL;
 
 #ifndef ALLOW_VLA
+#ifdef _MSC_VER
+    keybuf = _malloca(keylen);
+#else
     keybuf = OPENSSL_malloc(keylen);
+#endif
     if (keybuf == NULL)
         goto err;
 #endif
@@ -1153,7 +1157,11 @@ static ossl_inline int ossl_method_store_cache_get_locked(OSSL_METHOD_STORE *sto
     }
 err:
 #ifndef ALLOW_VLA
+#ifdef _MSC_VER
+    _freea(keybuf);
+#else
     OPENSSL_free(keybuf);
+#endif
 #endif
     return res;
 }
@@ -1241,7 +1249,11 @@ static ossl_inline int ossl_method_store_cache_set_locked(OSSL_METHOD_STORE *sto
 #endif
 
 #ifndef ALLOW_VLA
+#ifdef _MSC_VER
+    keybuf = _malloca(keylen);
+#else
     keybuf = OPENSSL_malloc(keylen);
+#endif
     if (keybuf == NULL)
         goto err;
 #endif
@@ -1345,7 +1357,11 @@ err:
     OPENSSL_free(p);
 end:
 #ifndef ALLOW_VLA
+#ifdef _MSC_VER
+    _freea(keybuf);
+#else
     OPENSSL_free(keybuf);
+#endif
 #endif
     return res;
 }
