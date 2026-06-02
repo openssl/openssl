@@ -1326,12 +1326,10 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
         ret = bnctx != NULL && ossl_ec_key_pairwise_check(ec, bnctx);
         BN_CTX_free(bnctx);
-        if (ret <= 0)
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
     }
 #endif /* FIPS_MODULE */
 
-    if (ret)
+    if (ret > 0)
         return ec;
 err:
     /* Something went wrong, throw the key away */

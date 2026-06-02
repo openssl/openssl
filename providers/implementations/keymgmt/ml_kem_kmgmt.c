@@ -485,9 +485,6 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     res = ml_kem_key_fromdata(key, params, include_private);
     if (res > 0 && include_private
         && !ml_kem_pairwise_test(key, key->prov_flags)) {
-#ifdef FIPS_MODULE
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
-#endif
         ossl_ml_kem_key_reset(key);
         res = 0;
     }
@@ -778,7 +775,6 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (genok) {
 #ifdef FIPS_MODULE
         if (!ml_kem_pairwise_test(key, ML_KEM_KEY_FIXED_PCT)) {
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
             ossl_ml_kem_key_free(key);
             return NULL;
         }
