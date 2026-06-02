@@ -1280,12 +1280,12 @@ int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_R
     return __atomic_compare_exchange_n(ptr, expect, desire, 0, __ATOMIC_ACQ_REL, __ATOMIC_RELAXED) ? 1 : 0;
 #else
     int lock_sink;
+    int ret = 0;
 
     if (lock_failed == NULL)
         lock_failed = &lock_sink;
 
     *lock_failed = 0;
-    int ret = 0;
     if (lock == NULL || !CRYPTO_THREAD_write_lock(lock)) {
         *lock_failed = 1;
         return 0;
