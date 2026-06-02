@@ -7,9 +7,18 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
-use OpenSSL::Test;
-use OpenSSL::Test::Simple;
+use OpenSSL::Test qw/:DEFAULT/;
+use OpenSSL::Test::Utils qw(disabled);
 
 setup("test_internal_groups_list");
 
-simple_test("test_internal_groups_list", "groups_list_struct_test");
+plan skip_all => "needs ECX enabled"
+    if disabled("ecx");
+
+plan skip_all => "needs EC enabled"
+    if disabled("ec");
+
+plan tests => 1;
+
+ok(run(test(["groups_list_struct_test"])),
+   "running groups_list_struct_test");
