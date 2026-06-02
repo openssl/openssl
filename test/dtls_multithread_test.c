@@ -49,10 +49,11 @@ static unsigned int server_conn_thread(void *arg)
     SSL_POLL_ITEM item;
     struct timeval timeout;
     size_t result_count, readbytes, written;
-    char buf[256];
+    char buf[256] = { 0 };
     int ret, err, retries;
 
     ta->result = 0;
+    readbytes = 0;
 
     item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
     item.desc.value.ssl = ta->conn;

@@ -3,6 +3,7 @@
 =head1 NAME
 
 BIO_socket_wait,
+BIO_socket_ready,
 BIO_wait,
 BIO_do_connect_retry
 - BIO connection utility functions
@@ -13,6 +14,7 @@ BIO_do_connect_retry
 
  #ifndef OPENSSL_NO_SOCK
  int BIO_socket_wait(int fd, int for_read, time_t max_time);
+ int BIO_socket_ready(int fd, int for_read);
  #endif
  int BIO_wait(BIO *bio, time_t max_time, unsigned int nap_milliseconds);
  int BIO_do_connect_retry(BIO *bio, int timeout, int nap_milliseconds);
@@ -22,6 +24,11 @@ BIO_do_connect_retry
 BIO_socket_wait() waits on the socket B<fd> for reading if B<for_read> is not 0,
 else for writing, at most until B<max_time>.
 It succeeds immediately if B<max_time> == 0 (which means no timeout given).
+
+BIO_socket_ready() checks if the socket B<fd> is ready for reading if
+B<for_read> is not 0, else for writing, without blocking.
+This is useful for polling a socket to determine if an I/O operation
+can be performed immediately without waiting.
 
 BIO_wait() waits at most until B<max_time> on the given (typically socket-based)
 B<bio>, for reading if B<bio> is supposed to read, else for writing.
@@ -45,8 +52,9 @@ The function may, directly or indirectly, invoke ERR_clear_error().
 
 =head1 RETURN VALUES
 
-BIO_socket_wait(), BIO_wait(), and BIO_do_connect_retry()
-return -1 on error, 0 on timeout, and 1 on success.
+BIO_socket_wait(), BIO_socket_ready(), BIO_wait(), and BIO_do_connect_retry()
+return -1 on error, 0 on timeout (or not ready in the case of BIO_socket_ready()),
+and 1 on success (or ready in the case of BIO_socket_ready()).
 
 =head1 SEE ALSO
 
@@ -56,6 +64,8 @@ L<BIO_do_connect(3)>, L<BIO_read(3)>
 
 BIO_socket_wait(), BIO_wait(), and BIO_do_connect_retry()
 were added in OpenSSL 3.0.
+
+BIO_socket_ready() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

@@ -1361,12 +1361,16 @@ inject:
     ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
 
     if (dl->have_notifier) {
+#if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_lock(dl->mutex);
+#endif
         if (dl->cur_blocking_waiters > 0 && !dl->signalled_notifier) {
             ossl_rio_notifier_signal(&dl->notifier);
             dl->signalled_notifier = 1;
         }
+#if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_unlock(dl->mutex);
+#endif
     }
 
     return;
@@ -2661,6 +2665,7 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
         --dl->cur_blocking_waiters;
 
         if (dl->signalled_notifier) {
+#if defined(OPENSSL_THREADS)
             if (dl->cur_blocking_waiters == 0) {
                 ossl_rio_notifier_unsignal(&dl->notifier);
                 dl->signalled_notifier = 0;
@@ -2675,6 +2680,10 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
                     /* Using the existing DTLS Listener mutex here */
                     ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
             }
+#else
+            ossl_rio_notifier_unsignal(&dl->notifier);
+            dl->signalled_notifier = 0;
+#endif
         }
     }
 }
