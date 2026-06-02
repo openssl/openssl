@@ -7211,6 +7211,7 @@ end:
     return testresult;
 }
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
+#ifndef OSSL_NO_USABLE_TLS1_3
 
 static unsigned char cookie_magic_value[] = "cookie magic";
 
@@ -7252,34 +7253,14 @@ static int verify_stateless_cookie_callback(SSL *ssl, const unsigned char *cooki
     return verify_cookie_callback(ssl, cookie, (unsigned int)cookie_len);
 }
 
-static int test_stateless(int idx)
+static int test_stateless(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-    const SSL_METHOD *smeth, *cmeth;
-    int vermin, vermax = 0;
-    int testdtls = idx >= 1;
 
-    if (testdtls) {
-        smeth = DTLS_server_method();
-        cmeth = DTLS_client_method();
-        vermin = DTLS1_VERSION;
-#if defined(OSSL_NO_USABLE_DTLS1_3) || defined(OPENSSL_NO_DTLS1_2)
-        testresult = TEST_skip("DTLSv1.3 not usable or no DTLSv1.2");
-        goto end;
-#endif
-    } else {
-        smeth = TLS_server_method();
-        cmeth = TLS_client_method();
-        vermin = TLS1_VERSION;
-#if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
-        testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
-        goto end;
-#endif
-    }
-
-    if (!TEST_true(create_ssl_ctx_pair(libctx, smeth, cmeth, vermin, vermax,
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -7324,16 +7305,6 @@ static int test_stateless(int idx)
     clientssl = NULL;
 
     /*
-     * Since we are using the same server object for multiple tests
-     * we need to clear it outside of SSL_stateless in this test
-     * to properly reset the handshake_req_seq
-     */
-    if (testdtls) {
-        if (!TEST_true(SSL_clear(serverssl)))
-            goto end;
-    }
-
-    /*
      * Now create a connection from a new client but with the same server SSL
      * object
      */
@@ -7365,6 +7336,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
 static int clntaddoldcb = 0;
@@ -16411,8 +16383,8 @@ int setup_tests(void)
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
-#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
-    ADD_ALL_TESTS(test_stateless, 2);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_stateless);
 #endif
     ADD_ALL_TESTS(test_export_key_mat, 6);
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
