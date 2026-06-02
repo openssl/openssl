@@ -1549,15 +1549,18 @@ static int gid_cb(const char *elem, int len, void *arg)
             if (!drop_ks) {
                 size_t end; /* End index of affected tuple */
 
-                /* Removing the first keyshare of an already completed tuple */
-                for (end = tpl_start_idx + garg->tuplcnt_arr[j]; i < end; ++i) {
+                /* Removing the first keyshare of an already completed tuple.*/
+                end = tpl_start_idx + garg->tuplcnt_arr[j];
+                if (end > garg->gidcnt)
+                    end = garg->gidcnt;
+                for (; i < end; ++i) {
                     /* Any other keyshares for the same tuple? */
                     if (k + 1 < garg->ksidcnt
                         && garg->gid_arr[i] == garg->ksid_arr[k + 1])
                         break;
                 }
                 /* Float keyshare to first group when no others found */
-                if (i >= end)
+                if (i >= end && tpl_start_idx < garg->gidcnt)
                     garg->ksid_arr[k] = garg->gid_arr[tpl_start_idx];
                 else
                     drop_ks = 1;
