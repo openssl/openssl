@@ -15,7 +15,7 @@ DTLSv1_listen
 
 =head1 DESCRIPTION
 
-SSL_stateless() statelessly listens for new incoming (D)TLSv1.3 connections.
+SSL_stateless() statelessly listens for new incoming TLSv1.3 connections.
 DTLSv1_listen() statelessly listens for new incoming DTLS 1.0 and DTLS 1.2
 connections. B<DTLSv1_listen() does not support DTLS 1.3>; for DTLS 1.3 server
 applications, use L<SSL_new_listener(3)> instead. If a ClientHello is received
@@ -44,7 +44,7 @@ address. In this case a TLSv1.3 application would be susceptible to this attack.
 As a countermeasure to this issue TLSv1.3 and DTLS include a stateless cookie
 mechanism. The idea is that when a client attempts to connect to a server it
 sends a ClientHello message. The server responds with a HelloRetryRequest (in
-(D)TLSv1.3) or a HelloVerifyRequest (in DTLS) which contains a unique cookie. The
+TLSv1.3) or a HelloVerifyRequest (in DTLS) which contains a unique cookie. The
 client then resends the ClientHello, but this time includes the cookie in the
 message thus proving that the client is capable of receiving messages sent to
 that address. All of this can be done by the server without allocating any
@@ -99,8 +99,8 @@ For SSL_stateless() if an entire ClientHello message cannot be read without the
 application's responsibility to ensure that data read from the "read" BIO during
 a single SSL_stateless() call is all from the same peer.
 
-SSL_stateless() will fail (with a 0 return value) if some (D)TLS version less than
-(D)TLSv1.3 is used.
+SSL_stateless() will fail (with a 0 return value) if some TLS version less than
+TLSv1.3 is used.
 
 Both SSL_stateless() and DTLSv1_listen() will clear the error queue when they
 start.
