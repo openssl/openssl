@@ -199,6 +199,12 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item curveSM2MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
 
+=item HPKE-XWING, see L<EVP_PKEY-MLX-KEM(7)>
+
+=item HPKE-MLKEM768P256, see L<EVP_PKEY-MLX-KEM(7)>
+
+=item HPKE-MLKEM1024P384, see L<EVP_PKEY-MLX-KEM(7)>
+
 =item TLS1-PRF
 
 =item HKDF
@@ -341,7 +347,13 @@ The OpenSSL default provider supports these operations and algorithms:
 
 =item SecP384r1MLKEM1024, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
-=item curveSM2MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
+=item curveSM2MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item HPKE-XWING, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item HPKE-MLKEM768P256, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item HPKE-MLKEM1024P384, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
 =item SLH-DSA-SHA2-128s, see L<EVP_KEYMGMT-SLH-DSA(7)>
 
@@ -583,6 +595,9 @@ was added in OpenSSL 4.0.
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
 
 Support for CSHAKE-128 and CSHAKE-256 was added in OpenSSL 4.0.
+
+Support for B<HPKE-XWING>, B<HPKE-MLKEM768P256> and B<HPKE-MLKEM1024P384> was
+added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

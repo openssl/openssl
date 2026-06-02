@@ -43,7 +43,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          )); -}
 
 {- produce_param_decoder('ecx_gen_set_params',
-                         (['OSSL_PKEY_PARAM_GROUP_NAME', 'group',    'utf8_string'],
-                          ['OSSL_KDF_PARAM_PROPERTIES',  'kdfpropq', 'utf8_string'],
-                          ['OSSL_PKEY_PARAM_DHKEM_IKM',  'ikm',      'octet_string'],
+                         (['OSSL_PKEY_PARAM_GROUP_NAME',     'group',    'utf8_string'],
+                          ['OSSL_KDF_PARAM_PROPERTIES',      'kdfpropq', 'utf8_string'],
+                          ['OSSL_PKEY_PARAM_IKM',            'ikm',      'octet_string'],
+                          ['OSSL_PKEY_PARAM_IKM_DERIVEMODE', 'ikmmode',  'int'],
                          )); -}

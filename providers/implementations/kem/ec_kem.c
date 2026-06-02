@@ -472,7 +472,7 @@ static EC_KEY *derivekey(PROV_EC_CTX *ctx,
             goto err;
         seed = tmpbuf;
     }
-    ret = ossl_ec_generate_key_dhkem(key, seed, seedlen);
+    ret = ossl_ec_derive_key(key, seed, seedlen, OSSL_EC_KEYDERIVE_MODE_DHKEM);
 err:
     if (seed != ikm)
         OPENSSL_cleanse(seed, seedlen);
