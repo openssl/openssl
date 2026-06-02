@@ -20,6 +20,9 @@ static long buffer_ctrl(BIO *h, int cmd, long arg1, void *arg2);
 static int buffer_new(BIO *h);
 static int buffer_free(BIO *data);
 static long buffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
+static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags,
+    size_t *msgs_processed);
 #define DEFAULT_BUFFER_SIZE 4096
 
 static const BIO_METHOD methods_buffer = {
@@ -35,6 +38,7 @@ static const BIO_METHOD methods_buffer = {
     buffer_new,
     buffer_free,
     buffer_callback_ctrl,
+    buffer_sendmmsg,
 };
 
 const BIO_METHOD *BIO_f_buffer(void)
@@ -469,4 +473,35 @@ static int buffer_puts(BIO *b, const char *str)
     if (len > INT_MAX)
         return -1;
     return buffer_write(b, str, (int)len);
+}
+
+/*
+ * buffer_sendmmsg - send multiple messages through the buffer BIO.
+ */
+static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags,
+    size_t *msgs_processed)
+{
+    BIO_F_BUFFER_CTX *ctx;
+
+    *msgs_processed = 0;
+
+    if (b == NULL || b->next_bio == NULL)
+        return 0;
+
+    ctx = (BIO_F_BUFFER_CTX *)b->ptr;
+    if (ctx == NULL)
+        return 0;
+
+    /*
+     * Flush any buffered output data before sending messages.
+     * This ensures proper ordering of data on the wire.
+     */
+    if (ctx->obuf_len > 0) {
+        if (buffer_ctrl(b, BIO_CTRL_FLUSH, 0, NULL) <= 0)
+            return 0;
+    }
+
+    /* Forward the sendmmsg call to the next BIO */
+    return BIO_sendmmsg(b->next_bio, msg, stride, num_msg, flags, msgs_processed);
 }

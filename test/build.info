@@ -474,6 +474,22 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlsv1listentest]=../include ../apps/include
   DEPEND[dtlsv1listentest]=../libcrypto ../libssl libtestutil.a
 
+  IF[{- !$disabled{sock} && !$disabled{dtls} -}]
+    PROGRAMS{noinst}=dtlsssllistenertest
+
+    SOURCE[dtlsssllistenertest]=dtlsssllistenertest.c helpers/ssltestlib.c
+    INCLUDE[dtlsssllistenertest]=../include ../apps/include
+    DEPEND[dtlsssllistenertest]=../libcrypto.a ../libssl.a libtestutil.a
+  ENDIF
+
+  IF[{- !$disabled{sock} && !$disabled{dtls} && !$disabled{threads}-}]
+    PROGRAMS{noinst}=dtls_multithread_test
+
+    SOURCE[dtls_multithread_test]=dtls_multithread_test.c helpers/ssltestlib.c
+    INCLUDE[dtls_multithread_test]=../include ../apps/include
+    DEPEND[dtls_multithread_test]=../libcrypto.a ../libssl.a libtestutil.a
+  ENDIF
+
   SOURCE[ct_test]=ct_test.c
   INCLUDE[ct_test]=../include ../apps/include
   DEPEND[ct_test]=../libcrypto libtestutil.a
