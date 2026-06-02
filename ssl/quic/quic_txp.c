@@ -429,7 +429,7 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
     uint32_t enc_level,
     uint32_t archetype,
     uint64_t cc_limit,
-    uint32_t *conn_close_enc_level);
+    uint32_t *conn_close_enc_level_mask);
 static size_t txp_determine_pn_len(OSSL_QUIC_TX_PACKETISER *txp);
 static int txp_determine_ppl_from_pl(OSSL_QUIC_TX_PACKETISER *txp,
     size_t pl,
@@ -868,7 +868,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
      */
     int res = 0, rc;
     uint32_t archetype, enc_level;
-    uint32_t conn_close_enc_level = QUIC_ENC_LEVEL_NUM;
+    uint32_t conn_close_enc_level_mask = 0;
     struct txp_pkt pkt[QUIC_ENC_LEVEL_NUM];
     size_t pkts_done = 0;
     uint64_t cc_limit = txp->args.cc_method->get_tx_allowance(txp->args.cc_data);
@@ -901,7 +901,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
         pkt[enc_level].geom.hwm = running_total;
 
         if (!txp_should_try_staging(txp, enc_level, archetype, cc_limit,
-                &conn_close_enc_level))
+                &conn_close_enc_level_mask))
             continue;
 
         if (!txp_pkt_init(&pkt[enc_level], txp, enc_level, archetype,
@@ -914,7 +914,7 @@ int ossl_quic_tx_packetiser_generate(OSSL_QUIC_TX_PACKETISER *txp,
             break;
 
         rc = txp_generate_for_el(txp, &pkt[enc_level],
-            conn_close_enc_level == enc_level);
+            (conn_close_enc_level_mask >> enc_level) & 1);
         if (rc != TXP_ERR_SUCCESS)
             goto out;
 
@@ -1434,7 +1434,7 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
     uint32_t enc_level,
     uint32_t archetype,
     uint64_t cc_limit,
-    uint32_t *conn_close_enc_level)
+    uint32_t *conn_close_enc_level_mask)
 {
     struct archetype_data a;
     uint32_t pn_space = ossl_quic_enc_level_to_pn_space(enc_level);
@@ -1451,12 +1451,10 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
         return 0;
 
     /*
-     * We can produce CONNECTION_CLOSE frames on any EL in principle, which
-     * means we need to choose which EL we would prefer to use. After a
+     * We can produce CONNECTION_CLOSE frames on any EL in principle. After a
      * connection is fully established we have only one provisioned EL and this
      * is a non-issue. Where multiple ELs are provisioned, it is possible the
-     * peer does not have the keys for the EL yet, which suggests in general it
-     * is preferable to use the lowest EL which is still provisioned.
+     * peer does not have the keys for all ELs yet.
      *
      * However (RFC 9000 s. 10.2.3 & 12.5) we are also required to not send
      * application CONNECTION_CLOSE frames in non-1-RTT ELs, so as to not
@@ -1464,25 +1462,23 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
      * authenticated. Thus when we have an application CONNECTION_CLOSE frame
      * queued and need to send it on a non-1-RTT EL, we have to convert it
      * into a transport CONNECTION_CLOSE frame which contains no application
-     * data. Since this loses information, it suggests we should use the 1-RTT
-     * EL to avoid this if possible, even if a lower EL is also available.
+     * data; see txp_generate_pre_token.
      *
-     * At the same time, just because we have the 1-RTT EL provisioned locally
-     * does not necessarily mean the peer does, for example if a handshake
-     * CRYPTO frame has been lost. It is fairly important that CONNECTION_CLOSE
-     * is signalled in a way we know our peer can decrypt, as we stop processing
-     * connection retransmission logic for real after connection close and
-     * simply 'blindly' retransmit the same CONNECTION_CLOSE frame.
+     * Just because we have the 1-RTT EL provisioned locally does not
+     * necessarily mean the peer does, for example if a handshake CRYPTO frame
+     * has been lost. It is fairly important that CONNECTION_CLOSE is signalled
+     * in a way we know our peer can decrypt, as we stop processing connection
+     * retransmission logic for real after connection close and simply 'blindly'
+     * retransmit the same CONNECTION_CLOSE frame.
      *
      * This is not a major concern for clients, since if a client has a 1-RTT EL
      * provisioned the server is guaranteed to also have a 1-RTT EL provisioned.
      *
-     * TODO(QUIC FUTURE): Revisit this when when have reached a decision on how
-     * best to implement this
+     * Per RFC 9000 s. 10.2.3, we therefore send CONNECTION_CLOSE in all
+     * provisioned ELs, excluding 0-RTT which the RFC treats separately.
      */
-    if (*conn_close_enc_level > enc_level
-        && *conn_close_enc_level != QUIC_ENC_LEVEL_1RTT)
-        *conn_close_enc_level = enc_level;
+    if (a.allow_conn_close && enc_level != QUIC_ENC_LEVEL_0RTT)
+        *conn_close_enc_level_mask |= (1U << enc_level);
 
     /* Do we need to send a PTO probe? */
     if (a.allow_force_ack_eliciting) {
@@ -1529,12 +1525,12 @@ static int txp_should_try_staging(OSSL_QUIC_TX_PACKETISER *txp,
         return 1;
 
     /* Do we want to produce a CONNECTION_CLOSE frame? */
-    if (a.allow_conn_close && txp->want_conn_close && *conn_close_enc_level == enc_level)
+    if (txp->want_conn_close && ((*conn_close_enc_level_mask >> enc_level) & 1))
         /*
          * This is a bit of a special case since CONNECTION_CLOSE can appear in
          * most packet types, and when we decide we want to send it this status
-         * isn't tied to a specific EL. So if we want to send it, we send it
-         * only on the lowest non-dropped EL.
+         * isn't tied to a specific EL. Per RFC 9000 s. 10.2.3 we send it on
+         * all provisioned ELs (see above).
          */
         return 1;
 

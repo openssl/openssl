@@ -1286,6 +1286,77 @@ static const struct script_op script_18[] = {
                                                         OP_END
 };
 
+/*
+ * 19. Handshake + 1-RTT, CONNECTION_CLOSE in both ELs (RFC 9000 s. 10.2.3)
+ *
+ * When both Handshake and 1-RTT ELs are provisioned (e.g. server that has
+ * completed the TLS handshake but the client has not yet confirmed it),
+ * CONNECTION_CLOSE must be sent in both ELs so the peer can process at least
+ * one.
+ */
+static int check_19(struct helper *h)
+{
+    if (!TEST_int_eq(h->frame.conn_close.is_app, 0)
+        || !TEST_uint64_t_eq(h->frame.conn_close.error_code, 2345))
+        return 0;
+
+    return 1;
+}
+
+static const struct script_op script_19[] = {
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, secret_1)
+        OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+            OP_CHECK(gen_conn_close)
+                OP_TXP_GENERATE()
+    /* First packet: Handshake with CONNECTION_CLOSE */
+    OP_RX_PKT()
+        OP_NEXT_FRAME()
+            OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
+                OP_CHECK(check_19)
+                    OP_EXPECT_NO_FRAME()
+    /* Second packet: 1-RTT with CONNECTION_CLOSE */
+    OP_RX_PKT()
+        OP_NEXT_FRAME()
+            OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
+                OP_CHECK(check_19)
+                    OP_EXPECT_NO_FRAME()
+                        OP_RX_PKT_NONE()
+                            OP_END
+};
+
+/*
+ * 20. Initial + Handshake + 1-RTT, CONNECTION_CLOSE in all ELs (RFC 9000
+ * s. 10.2.3). A server before any EL has been discarded should send
+ * CONNECTION_CLOSE in all three provisioned ELs.
+ */
+static const struct script_op script_20[] = {
+    OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_INITIAL, QRL_SUITE_AES128GCM, secret_1)
+        OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, secret_1)
+            OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, secret_1)
+                OP_CHECK(gen_conn_close)
+                    OP_TXP_GENERATE()
+    /* First packet: Initial with CONNECTION_CLOSE */
+    OP_RX_PKT()
+        OP_NEXT_FRAME()
+            OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
+                OP_CHECK(check_19)
+                    OP_EXPECT_NO_FRAME()
+    /* Second packet: Handshake with CONNECTION_CLOSE */
+    OP_RX_PKT()
+        OP_NEXT_FRAME()
+            OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
+                OP_CHECK(check_19)
+                    OP_EXPECT_NO_FRAME()
+    /* Third packet: 1-RTT with CONNECTION_CLOSE */
+    OP_RX_PKT()
+        OP_NEXT_FRAME()
+            OP_EXPECT_FRAME(OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_TRANSPORT)
+                OP_CHECK(check_19)
+                    OP_EXPECT_NO_FRAME()
+                        OP_RX_PKT_NONE()
+                            OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -1304,7 +1375,9 @@ static const struct script_op *const scripts[] = {
     script_15,
     script_16,
     script_17,
-    script_18
+    script_18,
+    script_19,
+    script_20
 };
 
 static void skip_padding(struct helper *h)
