@@ -304,10 +304,8 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
 #ifdef FIPS_MODULE
     if (res > 0) {
         res = ml_dsa_pairwise_test(key);
-        if (!res) {
+        if (!res)
             ossl_ml_dsa_key_reset(key);
-            ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT_IMPORT);
-        }
     }
 #endif /* FIPS_MODULE */
     return res;
@@ -508,10 +506,8 @@ static void *ml_dsa_gen(void *genctx, int evp_type)
         goto err;
     }
 #ifdef FIPS_MODULE
-    if (!ml_dsa_pairwise_test(key)) {
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
+    if (!ml_dsa_pairwise_test(key))
         goto err;
-    }
 #endif
     return key;
 err:
