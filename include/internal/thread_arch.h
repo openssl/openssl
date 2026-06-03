@@ -24,11 +24,9 @@
 #elif defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_WINDOWS) && defined(_WIN32_WINNT)
 #if _WIN32_WINNT >= 0x0600
 #define OPENSSL_THREADS_WINNT
-#elif _WIN32_WINNT >= 0x0501
+#else
 #define OPENSSL_THREADS_WINNT
 #define OPENSSL_THREADS_WINNT_LEGACY
-#else
-#define OPENSSL_THREADS_NONE
 #endif
 #else
 #define OPENSSL_THREADS_NONE
