@@ -81,7 +81,7 @@ jobs:
         branches: ${{ fromJSON(needs.define-matrix.outputs.branches) }}
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v6.0.2
       with:
         submodules: recursive
         ref: ${{ matrix.branches.branch }}

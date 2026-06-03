@@ -19,7 +19,7 @@ jobs:
     runs-on: "releaser"
     steps:
     - name: "Checkout"
-      uses: "actions/checkout@v6"
+      uses: "actions/checkout@v6.0.2"
       with:
         fetch-depth: 1
         ref: ${{ github.ref_name }}
