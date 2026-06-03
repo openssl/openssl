@@ -350,9 +350,14 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
     }
 err:
     EVP_MD_CTX_free(md_ctx);
-    if (alloc_freeptr != NULL)
-        OPENSSL_clear_free(alloc_freeptr, alloc_len);
-    OPENSSL_free(w1_encoded);
+    if (alloc_freeptr != NULL) {
+        /* Clear the actual sensitive buffer */
+        if (alloc != NULL)
+            OPENSSL_cleanse(alloc, alloc_len);
+        OPENSSL_free(alloc_freeptr);
+    }
+    if (w1_encoded != NULL)
+        OPENSSL_clear_free(w1_encoded, w1_encoded_len);
     OPENSSL_cleanse(rho_prime, sizeof(rho_prime));
     /*
      * Declassify the private key material before returning.  The key struct
