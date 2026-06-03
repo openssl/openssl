@@ -1727,20 +1727,83 @@ out:
 }
 
 #ifndef OPENSSL_NO_POLY1305
-/* Test that EVP_MAC_final fails for Poly1305 when no key was set */
+/* Test Poly1305 no-key failures and staged key initialization */
 static int test_evp_mac_poly1305_no_key(void)
 {
     int ret = 0;
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *ctx = NULL;
+    /* RFC 7539 Poly1305 test vector. */
+    static const unsigned char staged_data[] = "Cryptographic Forum Research Group";
+    static const unsigned char expected[16] = {
+        0xa8, 0x06, 0x1d, 0xc1, 0x30, 0x51, 0x36, 0xc6,
+        0xc2, 0x2b, 0x8b, 0xaf, 0x0c, 0x01, 0x27, 0xa9
+    };
+    unsigned char no_key_data[16] = { 0 };
+    unsigned char key[32] = {
+        0x85, 0xd6, 0xbe, 0x78, 0x57, 0x55, 0x6d, 0x33,
+        0x7f, 0x44, 0x52, 0xfe, 0x42, 0xd5, 0x06, 0xa8,
+        0x01, 0x03, 0x80, 0x8a, 0xfb, 0x0d, 0xb2, 0xfd,
+        0x4a, 0xbf, 0xf6, 0xaf, 0x41, 0x49, 0xf5, 0x1b
+    };
     unsigned char out[16];
+    OSSL_PARAM key_params[2];
+    OSSL_PARAM null_key_params[2];
     size_t outl = 0;
+
+    key_params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        key, sizeof(key));
+    key_params[1] = OSSL_PARAM_construct_end();
+    null_key_params[0] = OSSL_PARAM_construct_octet_string(OSSL_MAC_PARAM_KEY,
+        NULL, sizeof(key));
+    null_key_params[1] = OSSL_PARAM_construct_end();
 
     if (!TEST_ptr(mac = EVP_MAC_fetch(testctx, "Poly1305", testpropq))
         || !TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
-        || !TEST_int_eq(EVP_MAC_init(ctx, NULL, 0, NULL), 1)
-        || !TEST_int_eq(EVP_MAC_final(ctx, out, &outl, sizeof(out)), 0))
+        || !TEST_int_eq(EVP_MAC_init(ctx, NULL, 0, NULL), 1))
         goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(EVP_MAC_update(ctx, no_key_data, sizeof(no_key_data)), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_NO_KEY_SET))
+        goto err;
+
+    /* The failed update must not block staged key initialization. */
+    if (!TEST_int_eq(EVP_MAC_CTX_set_params(ctx, key_params), 1)
+        || !TEST_int_eq(EVP_MAC_update(ctx, staged_data,
+                            sizeof(staged_data) - 1),
+            1)
+        || !TEST_int_eq(EVP_MAC_final(ctx, out, &outl, sizeof(out)), 1)
+        || !TEST_size_t_eq(outl, sizeof(expected))
+        || !TEST_mem_eq(out, outl, expected, sizeof(expected)))
+        goto err;
+
+    EVP_MAC_CTX_free(ctx);
+    ctx = NULL;
+
+    if (!TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        || !TEST_int_eq(EVP_MAC_init(ctx, NULL, 0, NULL), 1))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(EVP_MAC_final(ctx, out, &outl, sizeof(out)), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_NO_KEY_SET))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(EVP_MAC_init(ctx, NULL, 0, null_key_params), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            PROV_R_INVALID_KEY_LENGTH))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(EVP_MAC_CTX_set_params(ctx, null_key_params), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            PROV_R_INVALID_KEY_LENGTH))
+        goto err;
+
+    EVP_MAC_CTX_free(ctx);
+    ctx = NULL;
     ret = 1;
 err:
     EVP_MAC_CTX_free(ctx);
