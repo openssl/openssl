@@ -53,6 +53,9 @@ typedef uint32_t vec_uint32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_
  * To transform |a| into Montgomery form |m| we use
  *   m = a mod q * ((2^32)*(2^32) mod q)
  * which is then Montgomery reduced, removing the excess factor of R = 2^32.
+ *
+ * A good reference for optimizations around ML-DSA and Montgomery multiplication is
+ * [Seiler 2018, Faster AVX2 optimized NTT multiplication for Ring-LWE lattice cryptography].
  */
 
 /*
@@ -308,6 +311,7 @@ static const vec_int32_t vec_q_inv = { ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV,
 
 /*
  * @brief Computes the Montgomery product of a and b.
+ *        See [Seiler 2018, Algorithm 3].
  *
  * @param a is the first factor, assumed to be non-negative.
  * @param a_twist is (int32)((uint32)a * ML_DSA_Q_INV).
@@ -329,6 +333,21 @@ static ossl_inline
 }
 
 /*
+ * @brief Reduce a in (-q, q) to a mod q in [0, q-1].
+ *
+ * @param a in (-q, q)
+ * @returns a mod q in [0, q-1]
+ */
+static ossl_inline
+    vec_int32_t
+    reduce_once_signed(vec_int32_t a)
+{
+    /* mask is 11..11 when a is negative, else 0 */
+    vec_uint32_t mask = -(((vec_uint32_t)a) >> 31);
+    return a + (vec_int32_t)(mask & (vec_uint32_t)vec_q);
+}
+
+/*
  * @brief Reduce modulo q to an non-negative vector.
  *        Note that the constant v_scalar equals
  *        floor(2**(floor(log_2(q))-1 * 2**32/q)).
@@ -345,22 +364,7 @@ static ossl_inline
     vec_int32_t t = vec_mulh((vec_int32_alias_t)a, v) >> 21;
     t *= ML_DSA_Q;
     vec_int32_t r = a - t; /* in [0, q] */
-    r -= vec_q; /* in [-q, 0] */
-    r += (r >> 31) & vec_q; /* CSEL: add q back if negative */
-    return r; /* in [0, q-1] */
-}
-
-/*
- * @brief Reduce a in (-q, q) to a mod q in [0, q-1].
- *
- * @param a in (-q, q)
- * @returns a mod q in [0, q-1]
- */
-static ossl_inline
-    vec_int32_t
-    reduce_once_signed(vec_int32_t a)
-{
-    return a + ((a >> 31) & vec_q);
+    return reduce_once_signed(r);
 }
 
 void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out)
