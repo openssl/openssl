@@ -151,13 +151,20 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
       run: |
-        Invoke-WebRequest -Uri "https://openssl-library.org/nasm-3.01-installer-x64.exe" -OutFile nasm-installer.exe
-        Start-Process -FilePath .\nasm-installer.exe -ArgumentList '/S' -Wait
+        $installer = "nasm-3.01-installer-x64.exe"
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+        $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
         "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: install jom
       run: |
         mkdir C:\jom
-        Invoke-WebRequest -Uri "https://openssl-library.org/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
         "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
