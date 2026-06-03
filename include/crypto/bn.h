@@ -19,6 +19,7 @@
 BIGNUM *bn_new_internal(size_t limbs, bool securely);
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
+BIGNUM *bn_copy_resized(BIGNUM *a, const BIGNUM *b);
 
 void bn_correct_top(BIGNUM *a);
 
