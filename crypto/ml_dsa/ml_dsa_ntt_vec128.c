@@ -14,7 +14,7 @@
 
 #include <vecintrin.h>
 
-typedef int int32_t;
+#include <stdint.h>
 
 /* Width of vector registers in bytes */
 #define VECTOR_REG_WIDTH_BYTES 16
@@ -22,11 +22,11 @@ typedef int int32_t;
  * __may_alias__ solves the undefined behavior problem in code like
  * vec_int32_t *out_vec_ptr = (vec_int32_t *)out->coeff;
  */
-typedef int vec_int32_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES), __may_alias__));
-typedef unsigned int vec_uint32_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES), __may_alias__));
+typedef int32_t vec_int32_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES), __may_alias__));
+typedef uint32_t vec_uint32_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES), __may_alias__));
 
-typedef int vec_int32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES)));
-typedef unsigned int vec_uint32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES)));
+typedef int32_t vec_int32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES)));
+typedef uint32_t vec_uint32_alias_t __attribute__((vector_size(VECTOR_REG_WIDTH_BYTES)));
 
 /* Our implementation of the vectorized algorithms assumes NUM_INT32_IN_VECTOR == 4. */
 #define NUM_INT32_IN_VECTOR (VECTOR_REG_WIDTH_BYTES / ((int)sizeof(int32_t)))
@@ -321,7 +321,8 @@ static ossl_inline
     montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
 {
     vec_uint32_t k = (vec_uint32_t)a_twist * (vec_uint32_t)b;
-    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
+    vec_uint32_t c_u = vec_mulh((vec_uint32_alias_t)k, (vec_uint32_alias_t)vec_q);
+    vec_int32_t c = (vec_int32_t)c_u;
     vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
     vec_int32_t r = z_high - c;
     return r;
