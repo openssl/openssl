@@ -407,6 +407,66 @@ KeccakF1600:
 	ret
 .cfi_endproc
 .size	KeccakF1600,.-KeccakF1600
+
+.type	KeccakP1600_12,\@abi-omnipotent
+.align	32
+KeccakP1600_12:
+.cfi_startproc
+	push	%rbx
+.cfi_push	%rbx
+	push	%rbp
+.cfi_push	%rbp
+	push	%r12
+.cfi_push	%r12
+	push	%r13
+.cfi_push	%r13
+	push	%r14
+.cfi_push	%r14
+	push	%r15
+.cfi_push	%r15
+
+	lea	100(%rdi),%rdi		# size optimization
+	sub	\$200,%rsp
+.cfi_adjust_cfa_offset	200
+
+	notq	$A[0][1](%rdi)
+	notq	$A[0][2](%rdi)
+	notq	$A[1][3](%rdi)
+	notq	$A[2][2](%rdi)
+	notq	$A[3][2](%rdi)
+	notq	$A[4][0](%rdi)
+
+	lea	96+iotas(%rip),$iotas
+	lea	100(%rsp),%rsi		# size optimization
+
+	call	__KeccakF1600
+
+	notq	$A[0][1](%rdi)
+	notq	$A[0][2](%rdi)
+	notq	$A[1][3](%rdi)
+	notq	$A[2][2](%rdi)
+	notq	$A[3][2](%rdi)
+	notq	$A[4][0](%rdi)
+	lea	-100(%rdi),%rdi		# preserve A[][]
+
+	add	\$200,%rsp
+.cfi_adjust_cfa_offset	-200
+
+	pop	%r15
+.cfi_pop	%r15
+	pop	%r14
+.cfi_pop	%r14
+	pop	%r13
+.cfi_pop	%r13
+	pop	%r12
+.cfi_pop	%r12
+	pop	%rbp
+.cfi_pop	%rbp
+	pop	%rbx
+.cfi_pop	%rbx
+	ret
+.cfi_endproc
+.size	KeccakP1600_12,.-KeccakP1600_12
 ___
 
 { my ($A_flat,$inp,$len,$bsz) = ("%rdi","%rsi","%rdx","%rcx");
@@ -501,6 +561,96 @@ SHA3_absorb:
 	ret
 .cfi_endproc
 .size	SHA3_absorb,.-SHA3_absorb
+
+.globl	ossl_keccak1600_absorb_p12
+.type	ossl_keccak1600_absorb_p12,\@function,4
+.align	32
+ossl_keccak1600_absorb_p12:
+.cfi_startproc
+	push	%rbx
+.cfi_push	%rbx
+	push	%rbp
+.cfi_push	%rbp
+	push	%r12
+.cfi_push	%r12
+	push	%r13
+.cfi_push	%r13
+	push	%r14
+.cfi_push	%r14
+	push	%r15
+.cfi_push	%r15
+
+	lea	100(%rdi),%rdi		# size optimization
+	sub	\$232,%rsp
+.cfi_adjust_cfa_offset	232
+
+	mov	%rsi,$inp
+	lea	100(%rsp),%rsi		# size optimization
+
+	notq	$A[0][1](%rdi)
+	notq	$A[0][2](%rdi)
+	notq	$A[1][3](%rdi)
+	notq	$A[2][2](%rdi)
+	notq	$A[3][2](%rdi)
+	notq	$A[4][0](%rdi)
+
+	mov	$bsz,216-100(%rsi)	# save bsz
+
+.Loop_absorb_p12:
+	cmp	$bsz,$len
+	jc	.Ldone_absorb_p12
+
+	shr	\$3,$bsz
+	lea	-100(%rdi),$A_flat
+
+.Lblock_absorb_p12:
+	mov	($inp),%rax
+	lea	8($inp),$inp
+	xor	($A_flat),%rax
+	lea	8($A_flat),$A_flat
+	sub	\$8,$len
+	mov	%rax,-8($A_flat)
+	sub	\$1,$bsz
+	jnz	.Lblock_absorb_p12
+
+	mov	$inp,200-100(%rsi)	# save inp
+	mov	$len,208-100(%rsi)	# save len
+	lea	96+iotas(%rip),$iotas
+	call	__KeccakF1600
+	mov	200-100(%rsi),$inp	# pull inp
+	mov	208-100(%rsi),$len	# pull len
+	mov	216-100(%rsi),$bsz	# pull bsz
+	jmp	.Loop_absorb_p12
+
+.align	32
+.Ldone_absorb_p12:
+	mov	$len,%rax		# return value
+
+	notq	$A[0][1](%rdi)
+	notq	$A[0][2](%rdi)
+	notq	$A[1][3](%rdi)
+	notq	$A[2][2](%rdi)
+	notq	$A[3][2](%rdi)
+	notq	$A[4][0](%rdi)
+
+	add	\$232,%rsp
+.cfi_adjust_cfa_offset	-232
+
+	pop	%r15
+.cfi_pop	%r15
+	pop	%r14
+.cfi_pop	%r14
+	pop	%r13
+.cfi_pop	%r13
+	pop	%r12
+.cfi_pop	%r12
+	pop	%rbp
+.cfi_pop	%rbp
+	pop	%rbx
+.cfi_pop	%rbx
+	ret
+.cfi_endproc
+.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
 ___
 }
 { my ($A_flat,$out,$len,$bsz,$next) = ("%rdi","%rsi","%rdx","%rcx","%r8");
@@ -564,6 +714,64 @@ SHA3_squeeze:
 	ret
 .cfi_endproc
 .size	SHA3_squeeze,.-SHA3_squeeze
+
+.globl	ossl_keccak1600_squeeze_p12
+.type	ossl_keccak1600_squeeze_p12,\@function,5
+.align	32
+ossl_keccak1600_squeeze_p12:
+.cfi_startproc
+	push	%r12
+.cfi_push	%r12
+	push	%r13
+.cfi_push	%r13
+	push	%r14
+.cfi_push	%r14
+
+	shr	\$3,%rcx
+	mov	$A_flat,%r9
+	mov	%rsi,$out
+	mov	%rdx,$len
+	mov	%rcx,$bsz
+	bt	\$0,${next}d
+	jc	.Lnext_block_p12
+	jmp	.Loop_squeeze_p12
+
+.align	32
+.Loop_squeeze_p12:
+	cmp	\$8,$len
+	jb	.Ltail_squeeze_p12
+
+	mov	(%r9),%rax
+	lea	8(%r9),%r9
+	mov	%rax,($out)
+	lea	8($out),$out
+	sub	\$8,$len		# len -= 8
+	jz	.Ldone_squeeze_p12
+
+	sub	\$1,%rcx		# bsz--
+	jnz	.Loop_squeeze_p12
+.Lnext_block_p12:
+	call	KeccakP1600_12
+	mov	$A_flat,%r9
+	mov	$bsz,%rcx
+	jmp	.Loop_squeeze_p12
+
+.Ltail_squeeze_p12:
+	mov	%r9, %rsi
+	mov	$out,%rdi
+	mov	$len,%rcx
+	.byte	0xf3,0xa4		# rep	movsb
+
+.Ldone_squeeze_p12:
+	pop	%r14
+.cfi_pop	%r14
+	pop	%r13
+.cfi_pop	%r13
+	pop	%r12
+.cfi_pop	%r12
+	ret
+.cfi_endproc
+.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
 ___
 }
 $code.=<<___;
