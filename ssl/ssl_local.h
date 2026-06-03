@@ -1239,7 +1239,7 @@ struct ssl_ctx_st {
 };
 
 X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
-    unsigned long cert_len, unsigned char *sha1_hash);
+    size_t cert_len, unsigned char *sha1_hash);
 X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert, unsigned char *sha1_hash);
 
 typedef struct ossl_quic_tls_callbacks_st {
