@@ -33,7 +33,6 @@
 #include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
 #include "quic/quic_local.h"
-#include "internal/hashfunc.h"
 
 #ifndef OPENSSL_NO_SSLKEYLOG
 #include <sys/stat.h>
