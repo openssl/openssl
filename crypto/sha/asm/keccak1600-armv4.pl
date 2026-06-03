@@ -166,6 +166,18 @@ KeccakF1600_enter:
 	str	@E[1],[sp,#444]
 	b	.Lround2x
 
+.type	KeccakP1600_12_int, %function
+KeccakP1600_12_int:
+	add	@C[9],sp,#$A[4][2]
+	add	@E[2],sp,#$A[0][0]
+	add	@E[0],sp,#$A[1][0]
+	ldmia	@C[9],{@C[4]-@C[9]}		@ A[4][2..4]
+KeccakP1600_12_enter:
+	str	lr,[sp,#440]
+	mov	@E[1],#96
+	str	@E[1],[sp,#444]
+	b	.Lround2x
+
 .align	4
 .Lround2x:
 ___
@@ -748,6 +760,52 @@ KeccakF1600:
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	KeccakF1600,.-KeccakF1600
+
+.type	KeccakP1600_12, %function
+.align	5
+KeccakP1600_12:
+	stmdb	sp!,{r0,r4-r11,lr}
+	sub	sp,sp,#440+16			@ space for A[5][5],D[5],T[5][5],...
+
+	add	@E[0],r0,#$A[1][0]
+	add	@E[1],sp,#$A[1][0]
+	ldmia	r0,    {@C[0]-@C[9]}		@ copy A[5][5] to stack
+	stmia	sp,    {@C[0]-@C[9]}
+	ldmia	@E[0]!,{@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}
+	ldmia	@E[0]!,{@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}
+	ldmia	@E[0]!,{@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}
+	ldmia	@E[0], {@C[0]-@C[9]}
+	add	@E[2],sp,#$A[0][0]
+	add	@E[0],sp,#$A[1][0]
+	stmia	@E[1], {@C[0]-@C[9]}
+
+	bl	KeccakP1600_12_enter
+
+	ldr	@E[1], [sp,#440+16]		@ restore pointer to A
+	ldmia	sp,    {@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}		@ return A[5][5]
+	ldmia	@E[0]!,{@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}
+	ldmia	@E[0]!,{@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}
+	ldmia	@E[0]!,{@C[0]-@C[9]}
+	stmia	@E[1]!,{@C[0]-@C[9]}
+	ldmia	@E[0], {@C[0]-@C[9]}
+	stmia	@E[1], {@C[0]-@C[9]}
+
+	add	sp,sp,#440+20
+#if __ARM_ARCH__>=5
+	ldmia	sp!,{r4-r11,pc}
+#else
+	ldmia	sp!,{r4-r11,lr}
+	tst	lr,#1
+	moveq	pc,lr		@ be binary compatible with V4, yet
+	bx	lr		@ interoperable with Thumb ISA:-)
+#endif
+.size	KeccakP1600_12,.-KeccakP1600_12
 ___
 { my ($A_flat,$inp,$len,$bsz) = map("r$_",(10..12,14));
 
@@ -930,6 +988,160 @@ SHA3_absorb:
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	SHA3_absorb,.-SHA3_absorb
+
+.global	ossl_keccak1600_absorb_p12
+.type	ossl_keccak1600_absorb_p12,%function
+.align	5
+ossl_keccak1600_absorb_p12:
+	stmdb	sp!,{r0-r12,lr}
+	sub	sp,sp,#456+16
+
+	add	$A_flat,r0,#$A[1][0]
+	@ mov	$inp,r1
+	mov	$len,r2
+	mov	$bsz,r3
+	cmp	r2,r3
+	blo	.Labsorb_abort_p12
+
+	add	$inp,sp,#0
+	ldmia	r0,      {@C[0]-@C[9]}	@ copy A[5][5] to stack
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp!,   {@C[0]-@C[9]}
+	ldmia	$A_flat!,{@C[0]-@C[9]}
+	stmia	$inp,    {@C[0]-@C[9]}
+
+	ldr	$inp,[sp,#476]		@ restore $inp
+#ifdef	__thumb2__
+	mov	r9,#0x00ff00ff
+	mov	r8,#0x0f0f0f0f
+	mov	r7,#0x33333333
+	mov	r6,#0x55555555
+#else
+	mov	r6,#0x11		@ compose constants
+	mov	r8,#0x0f
+	mov	r9,#0xff
+	orr	r6,r6,r6,lsl#8
+	orr	r8,r8,r8,lsl#8
+	orr	r6,r6,r6,lsl#16		@ 0x11111111
+	orr	r9,r9,r9,lsl#16		@ 0x00ff00ff
+	orr	r8,r8,r8,lsl#16		@ 0x0f0f0f0f
+	orr	r7,r6,r6,lsl#1		@ 0x33333333
+	orr	r6,r6,r6,lsl#2		@ 0x55555555
+#endif
+	str	r9,[sp,#468]
+	str	r8,[sp,#464]
+	str	r7,[sp,#460]
+	str	r6,[sp,#456]
+	b	.Loop_absorb_p12
+
+.align	4
+.Loop_absorb_p12:
+	subs	r0,$len,$bsz
+	blo	.Labsorbed_p12
+	add	$A_flat,sp,#0
+	str	r0,[sp,#480]		@ save len - bsz
+
+.align	4
+.Loop_block_p12:
+	ldrb	r0,[$inp],#1
+	ldrb	r1,[$inp],#1
+	ldrb	r2,[$inp],#1
+	ldrb	r3,[$inp],#1
+	ldrb	r4,[$inp],#1
+	orr	r0,r0,r1,lsl#8
+	ldrb	r1,[$inp],#1
+	orr	r0,r0,r2,lsl#16
+	ldrb	r2,[$inp],#1
+	orr	r0,r0,r3,lsl#24		@ lo
+	ldrb	r3,[$inp],#1
+	orr	r1,r4,r1,lsl#8
+	orr	r1,r1,r2,lsl#16
+	orr	r1,r1,r3,lsl#24		@ hi
+
+	and	r2,r0,r6		@ &=0x55555555
+	and	r0,r0,r6,lsl#1		@ &=0xaaaaaaaa
+	and	r3,r1,r6		@ &=0x55555555
+	and	r1,r1,r6,lsl#1		@ &=0xaaaaaaaa
+	orr	r2,r2,r2,lsr#1
+	orr	r0,r0,r0,lsl#1
+	orr	r3,r3,r3,lsr#1
+	orr	r1,r1,r1,lsl#1
+	and	r2,r2,r7		@ &=0x33333333
+	and	r0,r0,r7,lsl#2		@ &=0xcccccccc
+	and	r3,r3,r7		@ &=0x33333333
+	and	r1,r1,r7,lsl#2		@ &=0xcccccccc
+	orr	r2,r2,r2,lsr#2
+	orr	r0,r0,r0,lsl#2
+	orr	r3,r3,r3,lsr#2
+	orr	r1,r1,r1,lsl#2
+	and	r2,r2,r8		@ &=0x0f0f0f0f
+	and	r0,r0,r8,lsl#4		@ &=0xf0f0f0f0
+	and	r3,r3,r8		@ &=0x0f0f0f0f
+	and	r1,r1,r8,lsl#4		@ &=0xf0f0f0f0
+	ldmia	$A_flat,{r4-r5}		@ A_flat[i]
+	orr	r2,r2,r2,lsr#4
+	orr	r0,r0,r0,lsl#4
+	orr	r3,r3,r3,lsr#4
+	orr	r1,r1,r1,lsl#4
+	and	r2,r2,r9		@ &=0x00ff00ff
+	and	r0,r0,r9,lsl#8		@ &=0xff00ff00
+	and	r3,r3,r9		@ &=0x00ff00ff
+	and	r1,r1,r9,lsl#8		@ &=0xff00ff00
+	orr	r2,r2,r2,lsr#8
+	orr	r0,r0,r0,lsl#8
+	orr	r3,r3,r3,lsr#8
+	orr	r1,r1,r1,lsl#8
+
+	lsl	r2,r2,#16
+	lsr	r1,r1,#16
+	eor	r4,r4,r3,lsl#16
+	eor	r5,r5,r0,lsr#16
+	eor	r4,r4,r2,lsr#16
+	eor	r5,r5,r1,lsl#16
+	stmia	$A_flat!,{r4-r5}	@ A_flat[i++] ^= BitInterleave(inp[0..7])
+
+	subs	$bsz,$bsz,#8
+	bhi	.Loop_block_p12
+
+	str	$inp,[sp,#476]
+
+	bl	KeccakP1600_12_int
+
+	add	r14,sp,#456
+	ldmia	r14,{r6-r12,r14}	@ restore constants and variables
+	b	.Loop_absorb_p12
+
+.align	4
+.Labsorbed_p12:
+	add	$inp,sp,#$A[1][0]
+	ldmia	sp,      {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}	@ return A[5][5]
+	ldmia	$inp!,   {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}
+	ldmia	$inp!,   {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}
+	ldmia	$inp!,   {@C[0]-@C[9]}
+	stmia	$A_flat!,{@C[0]-@C[9]}
+	ldmia	$inp,    {@C[0]-@C[9]}
+	stmia	$A_flat, {@C[0]-@C[9]}
+
+.Labsorb_abort_p12:
+	add	sp,sp,#456+32
+	mov	r0,$len			@ return value
+#if __ARM_ARCH__>=5
+	ldmia	sp!,{r4-r12,pc}
+#else
+	ldmia	sp!,{r4-r12,lr}
+	tst	lr,#1
+	moveq	pc,lr		@ be binary compatible with V4, yet
+	bx	lr		@ interoperable with Thumb ISA:-)
+#endif
+.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
 ___
 }
 
@@ -1098,6 +1310,162 @@ SHA3_squeeze:
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	SHA3_squeeze,.-SHA3_squeeze
+
+.global	ossl_keccak1600_squeeze_p12
+.type	ossl_keccak1600_squeeze_p12,%function
+.align	5
+ossl_keccak1600_squeeze_p12:
+	stmdb	sp!,{r0,r3-r10,lr}
+
+	mov	$A_flat,r0
+	mov	$out,r1
+	mov	$len,r2
+	mov	$bsz,r3
+	ldr	$next, [sp, #40]  @ next is after the 10 pushed registers (10*4)
+
+#ifdef	__thumb2__
+	mov	r9,#0x00ff00ff
+	mov	r8,#0x0f0f0f0f
+	mov	r7,#0x33333333
+	mov	r6,#0x55555555
+#else
+	mov	r6,#0x11		@ compose constants
+	mov	r8,#0x0f
+	mov	r9,#0xff
+	orr	r6,r6,r6,lsl#8
+	orr	r8,r8,r8,lsl#8
+	orr	r6,r6,r6,lsl#16		@ 0x11111111
+	orr	r9,r9,r9,lsl#16		@ 0x00ff00ff
+	orr	r8,r8,r8,lsl#16		@ 0x0f0f0f0f
+	orr	r7,r6,r6,lsl#1		@ 0x33333333
+	orr	r6,r6,r6,lsl#2		@ 0x55555555
+#endif
+	stmdb	sp!,{r6-r9}
+
+	mov	r14,$A_flat
+	cmp	$next, #1
+	beq	.Lnext_block_p12
+	b	.Loop_squeeze_p12
+
+.align	4
+.Loop_squeeze_p12:
+	ldmia	$A_flat!,{r0,r1}	@ A_flat[i++]
+
+	lsl	r2,r0,#16
+	lsl	r3,r1,#16		@ r3 = r1 << 16
+	lsr	r2,r2,#16		@ r2 = r0 & 0x0000ffff
+	lsr	r1,r1,#16
+	lsr	r0,r0,#16		@ r0 = r0 >> 16
+	lsl	r1,r1,#16		@ r1 = r1 & 0xffff0000
+
+	orr	r2,r2,r2,lsl#8
+	orr	r3,r3,r3,lsr#8
+	orr	r0,r0,r0,lsl#8
+	orr	r1,r1,r1,lsr#8
+	and	r2,r2,r9		@ &=0x00ff00ff
+	and	r3,r3,r9,lsl#8		@ &=0xff00ff00
+	and	r0,r0,r9		@ &=0x00ff00ff
+	and	r1,r1,r9,lsl#8		@ &=0xff00ff00
+	orr	r2,r2,r2,lsl#4
+	orr	r3,r3,r3,lsr#4
+	orr	r0,r0,r0,lsl#4
+	orr	r1,r1,r1,lsr#4
+	and	r2,r2,r8		@ &=0x0f0f0f0f
+	and	r3,r3,r8,lsl#4		@ &=0xf0f0f0f0
+	and	r0,r0,r8		@ &=0x0f0f0f0f
+	and	r1,r1,r8,lsl#4		@ &=0xf0f0f0f0
+	orr	r2,r2,r2,lsl#2
+	orr	r3,r3,r3,lsr#2
+	orr	r0,r0,r0,lsl#2
+	orr	r1,r1,r1,lsr#2
+	and	r2,r2,r7		@ &=0x33333333
+	and	r3,r3,r7,lsl#2		@ &=0xcccccccc
+	and	r0,r0,r7		@ &=0x33333333
+	and	r1,r1,r7,lsl#2		@ &=0xcccccccc
+	orr	r2,r2,r2,lsl#1
+	orr	r3,r3,r3,lsr#1
+	orr	r0,r0,r0,lsl#1
+	orr	r1,r1,r1,lsr#1
+	and	r2,r2,r6		@ &=0x55555555
+	and	r3,r3,r6,lsl#1		@ &=0xaaaaaaaa
+	and	r0,r0,r6		@ &=0x55555555
+	and	r1,r1,r6,lsl#1		@ &=0xaaaaaaaa
+
+	orr	r2,r2,r3
+	orr	r0,r0,r1
+
+	cmp	$len,#8
+	blo	.Lsqueeze_tail_p12
+	lsr	r1,r2,#8
+	strb	r2,[$out],#1
+	lsr	r3,r2,#16
+	strb	r1,[$out],#1
+	lsr	r2,r2,#24
+	strb	r3,[$out],#1
+	strb	r2,[$out],#1
+
+	lsr	r1,r0,#8
+	strb	r0,[$out],#1
+	lsr	r3,r0,#16
+	strb	r1,[$out],#1
+	lsr	r0,r0,#24
+	strb	r3,[$out],#1
+	strb	r0,[$out],#1
+	subs	$len,$len,#8
+	beq	.Lsqueeze_done_p12
+
+	subs	$bsz,$bsz,#8		@ bsz -= 8
+	bhi	.Loop_squeeze_p12
+.Lnext_block_p12:
+	mov	r0,r14			@ original $A_flat
+
+	bl	KeccakP1600_12
+
+	ldmia	sp,{r6-r10,r12}		@ restore constants and variables
+	mov	r14,$A_flat
+	b	.Loop_squeeze_p12
+
+.align	4
+.Lsqueeze_tail_p12:
+	strb	r2,[$out],#1
+	lsr	r2,r2,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	r2,[$out],#1
+	lsr	r2,r2,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	r2,[$out],#1
+	lsr	r2,r2,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	r2,[$out],#1
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+
+	strb	r0,[$out],#1
+	lsr	r0,r0,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	r0,[$out],#1
+	lsr	r0,r0,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	r0,[$out]
+	b	.Lsqueeze_done_p12
+
+.align	4
+.Lsqueeze_done_p12:
+	add	sp,sp,#24
+#if __ARM_ARCH__>=5
+	ldmia	sp!,{r4-r10,pc}
+#else
+	ldmia	sp!,{r4-r10,lr}
+	tst	lr,#1
+	moveq	pc,lr		@ be binary compatible with V4, yet
+	bx	lr		@ interoperable with Thumb ISA:-)
+#endif
+.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
 ___
 }
 

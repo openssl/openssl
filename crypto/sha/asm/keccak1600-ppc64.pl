@@ -96,6 +96,12 @@ KeccakF1600_int:
 	li	r0,24
 	mtctr	r0
 	b	.Loop
+
+.type	KeccakP1600_12_int,\@function
+KeccakP1600_12_int:
+	li	r0,12
+	mtctr	r0
+	b	.Loop
 .align	4
 .Loop:
 	xor	$C[0],$A[0][0],$A[1][0]		; Theta
@@ -394,6 +400,123 @@ KeccakF1600:
 	.byte	0,12,4,1,0x80,18,1,0
 	.long	0
 .size	KeccakF1600,.-KeccakF1600
+
+.type	KeccakP1600_12,\@function
+.align	5
+KeccakP1600_12:
+	$STU	$sp,-$FRAME($sp)
+	mflr	r0
+	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
+	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
+	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
+	$PUSH	r17,`$FRAME-$SIZE_T*15`($sp)
+	$PUSH	r18,`$FRAME-$SIZE_T*14`($sp)
+	$PUSH	r19,`$FRAME-$SIZE_T*13`($sp)
+	$PUSH	r20,`$FRAME-$SIZE_T*12`($sp)
+	$PUSH	r21,`$FRAME-$SIZE_T*11`($sp)
+	$PUSH	r22,`$FRAME-$SIZE_T*10`($sp)
+	$PUSH	r23,`$FRAME-$SIZE_T*9`($sp)
+	$PUSH	r24,`$FRAME-$SIZE_T*8`($sp)
+	$PUSH	r25,`$FRAME-$SIZE_T*7`($sp)
+	$PUSH	r26,`$FRAME-$SIZE_T*6`($sp)
+	$PUSH	r27,`$FRAME-$SIZE_T*5`($sp)
+	$PUSH	r28,`$FRAME-$SIZE_T*4`($sp)
+	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
+	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
+	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
+	$PUSH	r0,`$FRAME+$LRSAVE`($sp)
+
+	bl	PICmeup
+	subi	r12,r12,8			; prepare for ldu
+	addi	r12,r12,`8*12`
+
+	$PUSH	r3,`$LOCALS+0*$SIZE_T`($sp)
+	;$PUSH	r4,`$LOCALS+1*$SIZE_T`($sp)
+	;$PUSH	r5,`$LOCALS+2*$SIZE_T`($sp)
+	;$PUSH	r6,`$LOCALS+3*$SIZE_T`($sp)
+	$PUSH	r12,`$LOCALS+4*$SIZE_T`($sp)
+
+	ld	$A[0][0],`8*0`(r3)		; load A[5][5]
+	ld	$A[0][1],`8*1`(r3)
+	ld	$A[0][2],`8*2`(r3)
+	ld	$A[0][3],`8*3`(r3)
+	ld	$A[0][4],`8*4`(r3)
+	ld	$A[1][0],`8*5`(r3)
+	ld	$A[1][1],`8*6`(r3)
+	ld	$A[1][2],`8*7`(r3)
+	ld	$A[1][3],`8*8`(r3)
+	ld	$A[1][4],`8*9`(r3)
+	ld	$A[2][0],`8*10`(r3)
+	ld	$A[2][1],`8*11`(r3)
+	ld	$A[2][2],`8*12`(r3)
+	ld	$A[2][3],`8*13`(r3)
+	ld	$A[2][4],`8*14`(r3)
+	ld	$A[3][0],`8*15`(r3)
+	ld	$A[3][1],`8*16`(r3)
+	ld	$A[3][2],`8*17`(r3)
+	ld	$A[3][3],`8*18`(r3)
+	ld	$A[3][4],`8*19`(r3)
+	ld	$A[4][0],`8*20`(r3)
+	ld	$A[4][1],`8*21`(r3)
+	ld	$A[4][2],`8*22`(r3)
+	ld	$A[4][3],`8*23`(r3)
+	ld	$A[4][4],`8*24`(r3)
+
+	bl	KeccakP1600_12_int
+
+	$POP	r3,`$LOCALS+0*$SIZE_T`($sp)
+	std	$A[0][0],`8*0`(r3)		; return A[5][5]
+	std	$A[0][1],`8*1`(r3)
+	std	$A[0][2],`8*2`(r3)
+	std	$A[0][3],`8*3`(r3)
+	std	$A[0][4],`8*4`(r3)
+	std	$A[1][0],`8*5`(r3)
+	std	$A[1][1],`8*6`(r3)
+	std	$A[1][2],`8*7`(r3)
+	std	$A[1][3],`8*8`(r3)
+	std	$A[1][4],`8*9`(r3)
+	std	$A[2][0],`8*10`(r3)
+	std	$A[2][1],`8*11`(r3)
+	std	$A[2][2],`8*12`(r3)
+	std	$A[2][3],`8*13`(r3)
+	std	$A[2][4],`8*14`(r3)
+	std	$A[3][0],`8*15`(r3)
+	std	$A[3][1],`8*16`(r3)
+	std	$A[3][2],`8*17`(r3)
+	std	$A[3][3],`8*18`(r3)
+	std	$A[3][4],`8*19`(r3)
+	std	$A[4][0],`8*20`(r3)
+	std	$A[4][1],`8*21`(r3)
+	std	$A[4][2],`8*22`(r3)
+	std	$A[4][3],`8*23`(r3)
+	std	$A[4][4],`8*24`(r3)
+
+	$POP	r0,`$FRAME+$LRSAVE`($sp)
+	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
+	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
+	$POP	r16,`$FRAME-$SIZE_T*16`($sp)
+	$POP	r17,`$FRAME-$SIZE_T*15`($sp)
+	$POP	r18,`$FRAME-$SIZE_T*14`($sp)
+	$POP	r19,`$FRAME-$SIZE_T*13`($sp)
+	$POP	r20,`$FRAME-$SIZE_T*12`($sp)
+	$POP	r21,`$FRAME-$SIZE_T*11`($sp)
+	$POP	r22,`$FRAME-$SIZE_T*10`($sp)
+	$POP	r23,`$FRAME-$SIZE_T*9`($sp)
+	$POP	r24,`$FRAME-$SIZE_T*8`($sp)
+	$POP	r25,`$FRAME-$SIZE_T*7`($sp)
+	$POP	r26,`$FRAME-$SIZE_T*6`($sp)
+	$POP	r27,`$FRAME-$SIZE_T*5`($sp)
+	$POP	r28,`$FRAME-$SIZE_T*4`($sp)
+	$POP	r29,`$FRAME-$SIZE_T*3`($sp)
+	$POP	r30,`$FRAME-$SIZE_T*2`($sp)
+	$POP	r31,`$FRAME-$SIZE_T*1`($sp)
+	mtlr	r0
+	addi	$sp,$sp,$FRAME
+	blr
+	.long	0
+	.byte	0,12,4,1,0x80,18,1,0
+	.long	0
+.size	KeccakP1600_12,.-KeccakP1600_12
 ___
 if (!$LITTLE_ENDIAN) {
 $code.=<<___;
@@ -647,6 +770,231 @@ SHA3_absorb:
 	.byte	0,12,4,1,0x80,18,4,0
 	.long	0
 .size	SHA3_absorb,.-SHA3_absorb
+
+.globl	ossl_keccak1600_absorb_p12
+.type	ossl_keccak1600_absorb_p12,\@function
+.align	5
+ossl_keccak1600_absorb_p12:
+	$STU	$sp,-$FRAME($sp)
+	mflr	r0
+	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
+	$PUSH	r15,`$FRAME-$SIZE_T*17`($sp)
+	$PUSH	r16,`$FRAME-$SIZE_T*16`($sp)
+	$PUSH	r17,`$FRAME-$SIZE_T*15`($sp)
+	$PUSH	r18,`$FRAME-$SIZE_T*14`($sp)
+	$PUSH	r19,`$FRAME-$SIZE_T*13`($sp)
+	$PUSH	r20,`$FRAME-$SIZE_T*12`($sp)
+	$PUSH	r21,`$FRAME-$SIZE_T*11`($sp)
+	$PUSH	r22,`$FRAME-$SIZE_T*10`($sp)
+	$PUSH	r23,`$FRAME-$SIZE_T*9`($sp)
+	$PUSH	r24,`$FRAME-$SIZE_T*8`($sp)
+	$PUSH	r25,`$FRAME-$SIZE_T*7`($sp)
+	$PUSH	r26,`$FRAME-$SIZE_T*6`($sp)
+	$PUSH	r27,`$FRAME-$SIZE_T*5`($sp)
+	$PUSH	r28,`$FRAME-$SIZE_T*4`($sp)
+	$PUSH	r29,`$FRAME-$SIZE_T*3`($sp)
+	$PUSH	r30,`$FRAME-$SIZE_T*2`($sp)
+	$PUSH	r31,`$FRAME-$SIZE_T*1`($sp)
+	$PUSH	r0,`$FRAME+$LRSAVE`($sp)
+
+	bl	PICmeup
+	subi	r4,r4,$LE_LOAD_SIZE		; prepare for ldu or lbzu
+	subi	r12,r12,8			; prepare for ldu
+	addi	r12,r12,`8*12`
+
+	$PUSH	r3,`$LOCALS+0*$SIZE_T`($sp)	; save A[][]
+	$PUSH	r4,`$LOCALS+1*$SIZE_T`($sp)	; save inp
+	$PUSH	r5,`$LOCALS+2*$SIZE_T`($sp)	; save len
+	$PUSH	r6,`$LOCALS+3*$SIZE_T`($sp)	; save bsz
+	mr	r0,r6
+	$PUSH	r12,`$LOCALS+4*$SIZE_T`($sp)
+
+	ld	$A[0][0],`8*0`(r3)		; load A[5][5]
+	ld	$A[0][1],`8*1`(r3)
+	ld	$A[0][2],`8*2`(r3)
+	ld	$A[0][3],`8*3`(r3)
+	ld	$A[0][4],`8*4`(r3)
+	ld	$A[1][0],`8*5`(r3)
+	ld	$A[1][1],`8*6`(r3)
+	ld	$A[1][2],`8*7`(r3)
+	ld	$A[1][3],`8*8`(r3)
+	ld	$A[1][4],`8*9`(r3)
+	ld	$A[2][0],`8*10`(r3)
+	ld	$A[2][1],`8*11`(r3)
+	ld	$A[2][2],`8*12`(r3)
+	ld	$A[2][3],`8*13`(r3)
+	ld	$A[2][4],`8*14`(r3)
+	ld	$A[3][0],`8*15`(r3)
+	ld	$A[3][1],`8*16`(r3)
+	ld	$A[3][2],`8*17`(r3)
+	ld	$A[3][3],`8*18`(r3)
+	ld	$A[3][4],`8*19`(r3)
+	ld	$A[4][0],`8*20`(r3)
+	ld	$A[4][1],`8*21`(r3)
+	ld	$A[4][2],`8*22`(r3)
+	ld	$A[4][3],`8*23`(r3)
+	ld	$A[4][4],`8*24`(r3)
+
+	mr	r3,r4
+	mr	r4,r5
+	mr	r5,r0
+
+	b	.Loop_absorb_p12
+
+.align	4
+.Loop_absorb_p12:
+	$UCMP	r4,r5				; len < bsz?
+	blt	.Labsorbed_p12
+
+	sub	r4,r4,r5			; len -= bsz
+	srwi	r5,r5,3
+	$PUSH	r4,`$LOCALS+2*$SIZE_T`($sp)	; save len
+	mtctr	r5
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[0][0],$A[0][0],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[0][1],$A[0][1],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[0][2],$A[0][2],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[0][3],$A[0][3],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[0][4],$A[0][4],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[1][0],$A[1][0],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[1][1],$A[1][1],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[1][2],$A[1][2],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[1][3],$A[1][3],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[1][4],$A[1][4],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[2][0],$A[2][0],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[2][1],$A[2][1],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[2][2],$A[2][2],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[2][3],$A[2][3],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[2][4],$A[2][4],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[3][0],$A[3][0],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[3][1],$A[3][1],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[3][2],$A[3][2],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[3][3],$A[3][3],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[3][4],$A[3][4],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[4][0],$A[4][0],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[4][1],$A[4][1],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[4][2],$A[4][2],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[4][3],$A[4][3],r0
+	bdz	.Lprocess_block_p12
+	$DWORD_LE_LOAD				; *inp++
+	xor	$A[4][4],$A[4][4],r0
+
+.Lprocess_block_p12:
+	$PUSH	r3,`$LOCALS+1*$SIZE_T`($sp)	; save inp
+
+	bl	KeccakP1600_12_int
+
+	$POP	r0,`$LOCALS+4*$SIZE_T`($sp)	; pull iotas pointer
+	$POP	r5,`$LOCALS+3*$SIZE_T`($sp)	; restore bsz
+	$POP	r4,`$LOCALS+2*$SIZE_T`($sp)	; restore len
+	$POP	r3,`$LOCALS+1*$SIZE_T`($sp)	; restore inp
+	addic	r0,r0,`-8*12`			; rewind iotas
+	$PUSH	r0,`$LOCALS+4*$SIZE_T`($sp)
+
+	b	.Loop_absorb_p12
+
+.align	4
+.Labsorbed_p12:
+	$POP	r3,`$LOCALS+0*$SIZE_T`($sp)
+	std	$A[0][0],`8*0`(r3)		; return A[5][5]
+	std	$A[0][1],`8*1`(r3)
+	std	$A[0][2],`8*2`(r3)
+	std	$A[0][3],`8*3`(r3)
+	std	$A[0][4],`8*4`(r3)
+	std	$A[1][0],`8*5`(r3)
+	std	$A[1][1],`8*6`(r3)
+	std	$A[1][2],`8*7`(r3)
+	std	$A[1][3],`8*8`(r3)
+	std	$A[1][4],`8*9`(r3)
+	std	$A[2][0],`8*10`(r3)
+	std	$A[2][1],`8*11`(r3)
+	std	$A[2][2],`8*12`(r3)
+	std	$A[2][3],`8*13`(r3)
+	std	$A[2][4],`8*14`(r3)
+	std	$A[3][0],`8*15`(r3)
+	std	$A[3][1],`8*16`(r3)
+	std	$A[3][2],`8*17`(r3)
+	std	$A[3][3],`8*18`(r3)
+	std	$A[3][4],`8*19`(r3)
+	std	$A[4][0],`8*20`(r3)
+	std	$A[4][1],`8*21`(r3)
+	std	$A[4][2],`8*22`(r3)
+	std	$A[4][3],`8*23`(r3)
+	std	$A[4][4],`8*24`(r3)
+
+	mr	r3,r4				; return value
+	$POP	r0,`$FRAME+$LRSAVE`($sp)
+	$POP	r14,`$FRAME-$SIZE_T*18`($sp)
+	$POP	r15,`$FRAME-$SIZE_T*17`($sp)
+	$POP	r16,`$FRAME-$SIZE_T*16`($sp)
+	$POP	r17,`$FRAME-$SIZE_T*15`($sp)
+	$POP	r18,`$FRAME-$SIZE_T*14`($sp)
+	$POP	r19,`$FRAME-$SIZE_T*13`($sp)
+	$POP	r20,`$FRAME-$SIZE_T*12`($sp)
+	$POP	r21,`$FRAME-$SIZE_T*11`($sp)
+	$POP	r22,`$FRAME-$SIZE_T*10`($sp)
+	$POP	r23,`$FRAME-$SIZE_T*9`($sp)
+	$POP	r24,`$FRAME-$SIZE_T*8`($sp)
+	$POP	r25,`$FRAME-$SIZE_T*7`($sp)
+	$POP	r26,`$FRAME-$SIZE_T*6`($sp)
+	$POP	r27,`$FRAME-$SIZE_T*5`($sp)
+	$POP	r28,`$FRAME-$SIZE_T*4`($sp)
+	$POP	r29,`$FRAME-$SIZE_T*3`($sp)
+	$POP	r30,`$FRAME-$SIZE_T*2`($sp)
+	$POP	r31,`$FRAME-$SIZE_T*1`($sp)
+	mtlr	r0
+	addi	$sp,$sp,$FRAME
+	blr
+	.long	0
+	.byte	0,12,4,1,0x80,18,4,0
+	.long	0
+.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
 ___
 {
 my ($A_flat,$out,$len,$bsz) = map("r$_",(28..31));
@@ -728,6 +1076,84 @@ SHA3_squeeze:
 	.byte	0,12,4,1,0x80,4,4,0
 	.long	0
 .size	SHA3_squeeze,.-SHA3_squeeze
+
+.globl	ossl_keccak1600_squeeze_p12
+.type	ossl_keccak1600_squeeze_p12,\@function
+.align	5
+ossl_keccak1600_squeeze_p12:
+	$STU	$sp,`-10*$SIZE_T`($sp)
+	mflr	r0
+	$PUSH	r28,`6*$SIZE_T`($sp)
+	$PUSH	r29,`7*$SIZE_T`($sp)
+	$PUSH	r30,`8*$SIZE_T`($sp)
+	$PUSH	r31,`9*$SIZE_T`($sp)
+	$PUSH	r0,`10*$SIZE_T+$LRSAVE`($sp)
+
+	mr	$A_flat,r3
+	subi	r3,r3,8			; prepare for ldu
+	subi	$out,r4,1		; prepare for stbu
+	mr	$len,r5
+	mr	$bsz,r6
+	cmplwi	r7,0                    ; r7 = 'next' argument
+	bne	.Lnext_block_p12
+	b	.Loop_squeeze_p12
+
+.align	4
+.Loop_squeeze_p12:
+	ldu	r0,8(r3)
+	${UCMP}i $len,8
+	blt	.Lsqueeze_tail_p12
+
+	stb	r0,1($out)
+	srdi	r0,r0,8
+	stb	r0,2($out)
+	srdi	r0,r0,8
+	stb	r0,3($out)
+	srdi	r0,r0,8
+	stb	r0,4($out)
+	srdi	r0,r0,8
+	stb	r0,5($out)
+	srdi	r0,r0,8
+	stb	r0,6($out)
+	srdi	r0,r0,8
+	stb	r0,7($out)
+	srdi	r0,r0,8
+	stbu	r0,8($out)
+
+	subic.	$len,$len,8
+	beq	.Lsqueeze_done_p12
+
+	subic.	r6,r6,8
+	bgt	.Loop_squeeze_p12
+
+.Lnext_block_p12:
+	mr	r3,$A_flat
+	bl	KeccakP1600_12
+	subi	r3,$A_flat,8		; prepare for ldu
+	mr	r6,$bsz
+	b	.Loop_squeeze_p12
+
+.align	4
+.Lsqueeze_tail_p12:
+	mtctr	$len
+.Loop_tail_p12:
+	stbu	r0,1($out)
+	srdi	r0,r0,8
+	bdnz	.Loop_tail_p12
+
+.Lsqueeze_done_p12:
+	$POP	r0,`10*$SIZE_T+$LRSAVE`($sp)
+	$POP	r28,`6*$SIZE_T`($sp)
+	$POP	r29,`7*$SIZE_T`($sp)
+	$POP	r30,`8*$SIZE_T`($sp)
+	$POP	r31,`9*$SIZE_T`($sp)
+	mtlr	r0
+	addi	$sp,$sp,`10*$SIZE_T`
+	blr
+	.long	0
+	.byte	0,12,4,1,0x80,4,4,0
+	.long	0
+.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
 ___
 }
 

@@ -131,6 +131,13 @@ KeccakF1600_int:
 	AARCH64_SIGN_LINK_REGISTER
 	adrp	$C[2],iotas
 	add	$C[2],$C[2],:lo12:iotas
+	b	.LKeccak1600_int
+.LKeccakP1600_12_int:
+	AARCH64_SIGN_LINK_REGISTER
+	adrp	$C[2],iotas
+	add	$C[2],$C[2],:lo12:iotas
+	add	$C[2],$C[2],#96
+.LKeccak1600_int:
 	stp	$C[2],x30,[sp,#16]		// 32 bytes on top are mine
 	b	.Loop
 .align	4
@@ -363,6 +370,63 @@ KeccakF1600:
 	ret
 .size	KeccakF1600,.-KeccakF1600
 
+.type	KeccakP1600_12,%function
+.align	5
+KeccakP1600_12:
+	AARCH64_SIGN_LINK_REGISTER
+	stp	x29,x30,[sp,#-128]!
+	add	x29,sp,#0
+	stp	x19,x20,[sp,#16]
+	stp	x21,x22,[sp,#32]
+	stp	x23,x24,[sp,#48]
+	stp	x25,x26,[sp,#64]
+	stp	x27,x28,[sp,#80]
+	sub	sp,sp,#48
+
+	str	x0,[sp,#32]			// offload argument
+	mov	$C[0],x0
+	ldp	$A[0][0],$A[0][1],[x0,#16*0]
+	ldp	$A[0][2],$A[0][3],[$C[0],#16*1]
+	ldp	$A[0][4],$A[1][0],[$C[0],#16*2]
+	ldp	$A[1][1],$A[1][2],[$C[0],#16*3]
+	ldp	$A[1][3],$A[1][4],[$C[0],#16*4]
+	ldp	$A[2][0],$A[2][1],[$C[0],#16*5]
+	ldp	$A[2][2],$A[2][3],[$C[0],#16*6]
+	ldp	$A[2][4],$A[3][0],[$C[0],#16*7]
+	ldp	$A[3][1],$A[3][2],[$C[0],#16*8]
+	ldp	$A[3][3],$A[3][4],[$C[0],#16*9]
+	ldp	$A[4][0],$A[4][1],[$C[0],#16*10]
+	ldp	$A[4][2],$A[4][3],[$C[0],#16*11]
+	ldr	$A[4][4],[$C[0],#16*12]
+
+	bl	.LKeccakP1600_12_int
+
+	ldr	$C[0],[sp,#32]
+	stp	$A[0][0],$A[0][1],[$C[0],#16*0]
+	stp	$A[0][2],$A[0][3],[$C[0],#16*1]
+	stp	$A[0][4],$A[1][0],[$C[0],#16*2]
+	stp	$A[1][1],$A[1][2],[$C[0],#16*3]
+	stp	$A[1][3],$A[1][4],[$C[0],#16*4]
+	stp	$A[2][0],$A[2][1],[$C[0],#16*5]
+	stp	$A[2][2],$A[2][3],[$C[0],#16*6]
+	stp	$A[2][4],$A[3][0],[$C[0],#16*7]
+	stp	$A[3][1],$A[3][2],[$C[0],#16*8]
+	stp	$A[3][3],$A[3][4],[$C[0],#16*9]
+	stp	$A[4][0],$A[4][1],[$C[0],#16*10]
+	stp	$A[4][2],$A[4][3],[$C[0],#16*11]
+	str	$A[4][4],[$C[0],#16*12]
+
+	ldp	x19,x20,[x29,#16]
+	add	sp,sp,#48
+	ldp	x21,x22,[x29,#32]
+	ldp	x23,x24,[x29,#48]
+	ldp	x25,x26,[x29,#64]
+	ldp	x27,x28,[x29,#80]
+	ldp	x29,x30,[sp],#128
+	AARCH64_VALIDATE_LINK_REGISTER
+	ret
+.size	KeccakP1600_12,.-KeccakP1600_12
+
 .globl	SHA3_absorb
 .type	SHA3_absorb,%function
 .align	5
@@ -468,6 +532,112 @@ $code.=<<___;
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	SHA3_absorb,.-SHA3_absorb
+
+.globl	ossl_keccak1600_absorb_p12
+.type	ossl_keccak1600_absorb_p12,%function
+.align	5
+ossl_keccak1600_absorb_p12:
+	AARCH64_SIGN_LINK_REGISTER
+	stp	x29,x30,[sp,#-128]!
+	add	x29,sp,#0
+	stp	x19,x20,[sp,#16]
+	stp	x21,x22,[sp,#32]
+	stp	x23,x24,[sp,#48]
+	stp	x25,x26,[sp,#64]
+	stp	x27,x28,[sp,#80]
+	sub	sp,sp,#64
+
+	stp	x0,x1,[sp,#32]			// offload arguments
+	stp	x2,x3,[sp,#48]
+
+	mov	$C[0],x0			// uint64_t A[5][5]
+	mov	$C[1],x1			// const void *inp
+	mov	$C[2],x2			// size_t len
+	mov	$C[3],x3			// size_t bsz
+	ldp	$A[0][0],$A[0][1],[$C[0],#16*0]
+	ldp	$A[0][2],$A[0][3],[$C[0],#16*1]
+	ldp	$A[0][4],$A[1][0],[$C[0],#16*2]
+	ldp	$A[1][1],$A[1][2],[$C[0],#16*3]
+	ldp	$A[1][3],$A[1][4],[$C[0],#16*4]
+	ldp	$A[2][0],$A[2][1],[$C[0],#16*5]
+	ldp	$A[2][2],$A[2][3],[$C[0],#16*6]
+	ldp	$A[2][4],$A[3][0],[$C[0],#16*7]
+	ldp	$A[3][1],$A[3][2],[$C[0],#16*8]
+	ldp	$A[3][3],$A[3][4],[$C[0],#16*9]
+	ldp	$A[4][0],$A[4][1],[$C[0],#16*10]
+	ldp	$A[4][2],$A[4][3],[$C[0],#16*11]
+	ldr	$A[4][4],[$C[0],#16*12]
+	b	.Loop_absorb_p12
+
+.align	4
+.Loop_absorb_p12:
+	subs	$C[0],$C[2],$C[3]		// len - bsz
+	blo	.Labsorbed_p12
+
+	str	$C[0],[sp,#48]			// save len - bsz
+___
+for (my $i=0; $i<24; $i+=2) {
+my $j = $i+1;
+$code.=<<___;
+	ldr	$C[0],[$C[1]],#8		// *inp++
+#ifdef	__AARCH64EB__
+	rev	$C[0],$C[0]
+#endif
+	eor	$A[$i/5][$i%5],$A[$i/5][$i%5],$C[0]
+	cmp	$C[3],#8*($i+2)
+	blo	.Lprocess_block_p12
+	ldr	$C[0],[$C[1]],#8		// *inp++
+#ifdef	__AARCH64EB__
+	rev	$C[0],$C[0]
+#endif
+	eor	$A[$j/5][$j%5],$A[$j/5][$j%5],$C[0]
+	beq	.Lprocess_block_p12
+___
+}
+$code.=<<___;
+	ldr	$C[0],[$C[1]],#8		// *inp++
+#ifdef	__AARCH64EB__
+	rev	$C[0],$C[0]
+#endif
+	eor	$A[4][4],$A[4][4],$C[0]
+
+.Lprocess_block_p12:
+	str	$C[1],[sp,#40]			// save inp
+
+	bl	.LKeccakP1600_12_int
+
+	ldr	$C[1],[sp,#40]			// restore arguments
+	ldp	$C[2],$C[3],[sp,#48]
+	b	.Loop_absorb_p12
+
+.align	4
+.Labsorbed_p12:
+	ldr	$C[1],[sp,#32]
+	stp	$A[0][0],$A[0][1],[$C[1],#16*0]
+	stp	$A[0][2],$A[0][3],[$C[1],#16*1]
+	stp	$A[0][4],$A[1][0],[$C[1],#16*2]
+	stp	$A[1][1],$A[1][2],[$C[1],#16*3]
+	stp	$A[1][3],$A[1][4],[$C[1],#16*4]
+	stp	$A[2][0],$A[2][1],[$C[1],#16*5]
+	stp	$A[2][2],$A[2][3],[$C[1],#16*6]
+	stp	$A[2][4],$A[3][0],[$C[1],#16*7]
+	stp	$A[3][1],$A[3][2],[$C[1],#16*8]
+	stp	$A[3][3],$A[3][4],[$C[1],#16*9]
+	stp	$A[4][0],$A[4][1],[$C[1],#16*10]
+	stp	$A[4][2],$A[4][3],[$C[1],#16*11]
+	str	$A[4][4],[$C[1],#16*12]
+
+	mov	x0,$C[2]			// return value
+	ldp	x19,x20,[x29,#16]
+	add	sp,sp,#64
+	ldp	x21,x22,[x29,#32]
+	ldp	x23,x24,[x29,#48]
+	ldp	x25,x26,[x29,#64]
+	ldp	x27,x28,[x29,#80]
+	ldp	x29,x30,[sp],#128
+	AARCH64_VALIDATE_LINK_REGISTER
+	ret
+.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
 ___
 {
 my ($A_flat,$out,$len,$bsz) = map("x$_",(19..22));
@@ -544,6 +714,79 @@ SHA3_squeeze:
 	AARCH64_VALIDATE_LINK_REGISTER
 	ret
 .size	SHA3_squeeze,.-SHA3_squeeze
+
+.globl	ossl_keccak1600_squeeze_p12
+.type	ossl_keccak1600_squeeze_p12,%function
+.align	5
+ossl_keccak1600_squeeze_p12:
+	AARCH64_SIGN_LINK_REGISTER
+	stp	x29,x30,[sp,#-48]!
+	add	x29,sp,#0
+	stp	x19,x20,[sp,#16]
+	stp	x21,x22,[sp,#32]
+
+	mov	$A_flat,x0			// put aside arguments
+	mov	$out,x1
+	mov	$len,x2
+	mov	$bsz,x3
+	cmp	w4, #0				// w4 = 'next' argument
+	bne	.Lnext_block_p12
+
+.Loop_squeeze_p12:
+	ldr	x4,[x0],#8
+	cmp	$len,#8
+	blo	.Lsqueeze_tail_p12
+#ifdef	__AARCH64EB__
+	rev	x4,x4
+#endif
+	str	x4,[$out],#8
+	subs	$len,$len,#8
+	beq	.Lsqueeze_done_p12
+
+	subs	x3,x3,#8
+	bhi	.Loop_squeeze_p12
+.Lnext_block_p12:
+	mov	x0,$A_flat
+	bl	KeccakP1600_12
+	mov	x0,$A_flat
+	mov	x3,$bsz
+	b	.Loop_squeeze_p12
+
+.align	4
+.Lsqueeze_tail_p12:
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	w4,[$out],#1
+	lsr	x4,x4,#8
+	subs	$len,$len,#1
+	beq	.Lsqueeze_done_p12
+	strb	w4,[$out],#1
+
+.Lsqueeze_done_p12:
+	ldp	x19,x20,[sp,#16]
+	ldp	x21,x22,[sp,#32]
+	ldp	x29,x30,[sp],#48
+	AARCH64_VALIDATE_LINK_REGISTER
+	ret
+.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
 ___
 }								}}}
 								{{{

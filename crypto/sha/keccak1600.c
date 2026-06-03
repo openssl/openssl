@@ -16,6 +16,10 @@
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
+size_t ossl_keccak1600_absorb_p12(uint64_t A[5][5],
+    const unsigned char *inp, size_t len, size_t r);
+void ossl_keccak1600_squeeze_p12(uint64_t A[5][5], unsigned char *out,
+    size_t len, size_t r, int next);
 
 #if !defined(KECCAK1600_ASM) || !defined(SELFTEST)
 
@@ -244,6 +248,19 @@ static void KeccakF1600(uint64_t A[5][5])
     }
 }
 
+static void KeccakP1600_12(uint64_t A[5][5])
+{
+    size_t i;
+
+    for (i = 12; i < 24; i++) {
+        Theta(A);
+        Rho(A);
+        Pi(A);
+        Chi(A);
+        Iota(A, i);
+    }
+}
+
 #elif defined(KECCAK_1X)
 /*
  * This implementation is optimization of above code featuring unroll
@@ -371,6 +388,15 @@ static void KeccakF1600(uint64_t A[5][5])
     size_t i;
 
     for (i = 0; i < 24; i++) {
+        Round(A, i);
+    }
+}
+
+static void KeccakP1600_12(uint64_t A[5][5])
+{
+    size_t i;
+
+    for (i = 12; i < 24; i++) {
         Round(A, i);
     }
 }
@@ -514,6 +540,15 @@ static void KeccakF1600(uint64_t A[5][5])
     size_t i;
 
     for (i = 0; i < 24; i++) {
+        Round(A, i);
+    }
+}
+
+static void KeccakP1600_12(uint64_t A[5][5])
+{
+    size_t i;
+
+    for (i = 12; i < 24; i++) {
         Round(A, i);
     }
 }
@@ -662,6 +697,35 @@ static void KeccakF1600(uint64_t A[5][5])
 #endif
 
     for (i = 0; i < 24; i += 2) {
+        Round(T, A, i);
+        Round(A, T, i + 1);
+    }
+
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    A[0][1] = ~A[0][1];
+    A[0][2] = ~A[0][2];
+    A[1][3] = ~A[1][3];
+    A[2][2] = ~A[2][2];
+    A[3][2] = ~A[3][2];
+    A[4][0] = ~A[4][0];
+#endif
+}
+
+static void KeccakP1600_12(uint64_t A[5][5])
+{
+    uint64_t T[5][5];
+    size_t i;
+
+#ifdef KECCAK_COMPLEMENTING_TRANSFORM
+    A[0][1] = ~A[0][1];
+    A[0][2] = ~A[0][2];
+    A[1][3] = ~A[1][3];
+    A[2][2] = ~A[2][2];
+    A[3][2] = ~A[3][2];
+    A[4][0] = ~A[4][0];
+#endif
+
+    for (i = 12; i < 24; i += 2) {
         Round(T, A, i);
         Round(A, T, i + 1);
     }
@@ -976,6 +1040,15 @@ static void KeccakF1600(uint64_t A[5][5])
     }
 }
 
+static void KeccakP1600_12(uint64_t A[5][5])
+{
+    size_t i;
+
+    for (i = 12; i < 24; i += 4) {
+        FourRounds(A, i);
+    }
+}
+
 #endif
 
 static uint64_t BitInterleave(uint64_t Ai)
@@ -1134,6 +1207,65 @@ void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r,
     while (len != 0) {
         if (next)
             KeccakF1600(A);
+        next = 1;
+        for (i = 0; i < w && len != 0; i++) {
+            uint64_t Ai = BitDeinterleave(A_flat[i]);
+
+            if (len < 8) {
+                for (i = 0; i < len; i++) {
+                    *out++ = (unsigned char)Ai;
+                    Ai >>= 8;
+                }
+                return;
+            }
+
+            out[0] = (unsigned char)(Ai);
+            out[1] = (unsigned char)(Ai >> 8);
+            out[2] = (unsigned char)(Ai >> 16);
+            out[3] = (unsigned char)(Ai >> 24);
+            out[4] = (unsigned char)(Ai >> 32);
+            out[5] = (unsigned char)(Ai >> 40);
+            out[6] = (unsigned char)(Ai >> 48);
+            out[7] = (unsigned char)(Ai >> 56);
+            out += 8;
+            len -= 8;
+        }
+    }
+}
+
+size_t ossl_keccak1600_absorb_p12(uint64_t A[5][5],
+    const unsigned char *inp, size_t len, size_t r)
+{
+    uint64_t *A_flat = (uint64_t *)A;
+    size_t i, w = r / 8;
+
+    assert(r < (25 * sizeof(A[0][0])) && (r % 8) == 0);
+
+    while (len >= r) {
+        for (i = 0; i < w; i++) {
+            uint64_t Ai = (uint64_t)inp[0] | (uint64_t)inp[1] << 8 | (uint64_t)inp[2] << 16 | (uint64_t)inp[3] << 24 | (uint64_t)inp[4] << 32 | (uint64_t)inp[5] << 40 | (uint64_t)inp[6] << 48 | (uint64_t)inp[7] << 56;
+            inp += 8;
+
+            A_flat[i] ^= BitInterleave(Ai);
+        }
+        KeccakP1600_12(A);
+        len -= r;
+    }
+
+    return len;
+}
+
+void ossl_keccak1600_squeeze_p12(uint64_t A[5][5], unsigned char *out,
+    size_t len, size_t r, int next)
+{
+    uint64_t *A_flat = (uint64_t *)A;
+    size_t i, w = r / 8;
+
+    assert(r < (25 * sizeof(A[0][0])) && (r % 8) == 0);
+
+    while (len != 0) {
+        if (next)
+            KeccakP1600_12(A);
         next = 1;
         for (i = 0; i < w && len != 0; i++) {
             uint64_t Ai = BitDeinterleave(A_flat[i]);
