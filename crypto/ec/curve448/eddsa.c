@@ -62,7 +62,7 @@ static c448_error_t hash_init_with_dom(OSSL_LIB_CTX *ctx, EVP_MD_CTX *hashctx,
     const char *propq)
 {
     /* ASCII: "SigEd448", in hex for EBCDIC compatibility */
-    const char dom_s[] = "\x53\x69\x67\x45\x64\x34\x34\x38";
+    static const char dom_s[] = "\x53\x69\x67\x45\x64\x34\x34\x38";
     uint8_t dom[2];
     EVP_MD *shake256 = NULL;
 
