@@ -298,6 +298,21 @@ before verification completes.
 
 =item *
 
+B<Mutating the verification context>. The B<X509_STORE_CTX> is live during
+the callback: the verification routines are actively reading its chain,
+parameters, and other state. Calling context-mutating functions from within
+the callback -- for example, replacing the verified chain via
+L<X509_STORE_CTX_set0_verified_chain(3)>, swapping the trust store or
+untrusted stack, or changing verification flags, depth, purpose, or target
+-- can corrupt the in-progress verification, produce inconsistent behaviour
+between later steps of the pipeline, or, in the case of the verified chain,
+cause use-after-free. The only mutators reasonable from within a callback
+are the error-related setters (L<X509_STORE_CTX_set_error(3)>,
+L<X509_STORE_CTX_set_error_depth(3)>, L<X509_STORE_CTX_set_current_cert(3)>),
+and even those should be used sparingly (see L</Sticky errors>).
+
+=item *
+
 B<Heavy work in the callback>. The callback is on the hot path of every
 certificate check; expensive work performed there will slow every TLS handshake
 or S/MIME verification that uses the surrounding context.
