@@ -130,10 +130,7 @@ static int test_priority_queue_int(int reserve, int order, int count,
                     goto err;
                 /*
                  * Mark as "removed" with a sentinel that sorts to the end
-                 * of sorted[].  We use ossl_pq_node_in_queue() as the real
-                 * "is it still here?" predicate above; this sentinel is
-                 * purely so the qsort below pushes removed entries past
-                 * the position the peek/pop loop will iterate to.
+                 * of sorted[].
                  */
                 elems[i].value = SIZE_MAX;
             }
@@ -270,7 +267,7 @@ err:
 /*
  * Edge cases not exercised by the combinatorial driver: NULL queue,
  * empty queue, remove() on a node that has never been in the queue, and
- * single-element push/peek/pop.  No analog in priority_queue_test.c.
+ * single-element push/peek/pop.
  */
 static int test_edge_cases(void)
 {
