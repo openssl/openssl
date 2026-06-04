@@ -3851,6 +3851,7 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
 
             BIO_ctrl(s->wbio, BIO_CTRL_DGRAM_SCTP_ADD_AUTH_KEY,
                 sizeof(sctpauthkey), sctpauthkey);
+            OPENSSL_cleanse(sctpauthkey, sizeof(sctpauthkey));
         }
     }
 #endif
