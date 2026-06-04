@@ -208,6 +208,7 @@ Depending on your distribution, you need to run the following command as
 root user or prepend `sudo` to the command:
 
     $ make install
+    $ ninja install                                  # when configured with BUILDFILE=build.ninja
 
 By default, OpenSSL will be installed to
 
@@ -238,6 +239,7 @@ If you are using Visual Studio, open the Developer Command Prompt _elevated_
 and issue the following command.
 
     $ nmake install
+    $ ninja install                                  # when configured with BUILDFILE=build.ninja
 
 The easiest way to elevate the Command Prompt is to press and hold down both
 the `<CTRL>` and `<SHIFT>` keys while clicking the menu item in the task menu.
@@ -1399,11 +1401,18 @@ from `include/openssl/configuration.h.in`.
 
 If none of the generated build files suit your purpose, it's possible to
 write your own build file template and give its name through the environment
-variable `BUILDFILE`.  For example, Ninja build files could be supported by
-writing `Configurations/build.ninja.tmpl` and then configure with `BUILDFILE`
-set like this (Unix syntax shown, you'll have to adapt for other platforms):
+variable `BUILDFILE`.
+
+OpenSSL also includes Ninja build file templates for Unix-like and native
+Windows targets.  To configure OpenSSL to generate `build.ninja`, set
+`BUILDFILE` like this:
 
     $ BUILDFILE=build.ninja perl Configure [options...]
+
+On Windows:
+
+    $ set BUILDFILE=build.ninja
+    $ perl Configure [options...]
 
 ### Out of Tree Builds
 
@@ -1440,6 +1449,7 @@ Build OpenSSL
 Build OpenSSL by running:
 
     $ make                                           # Unix
+    $ ninja                                          # Unix or Windows, when configured with BUILDFILE=build.ninja
     $ mms                                            ! (or mmk) OpenVMS
     $ nmake                                          # Windows
 
@@ -1458,6 +1468,7 @@ After a successful build, and before installing, the libraries should
 be tested.  Run:
 
     $ make test                                      # Unix
+    $ ninja test                                     # Unix or Windows, when configured with BUILDFILE=build.ninja
     $ mms test                                       ! OpenVMS
     $ nmake test                                     # Windows
 
@@ -1474,6 +1485,7 @@ Install OpenSSL
 If everything tests ok, install OpenSSL with
 
     $ make install                                   # Unix
+    $ ninja install                                  # Unix or Windows, when configured with BUILDFILE=build.ninja
     $ mms install                                    ! OpenVMS
     $ nmake install                                  # Windows
 
@@ -1547,6 +1559,7 @@ but have the package installed somewhere else so that it can easily be
 packaged, can use
 
     $ make DESTDIR=/tmp/package-root install         # Unix
+    $ DESTDIR=/tmp/package-root ninja install        # Unix, when configured with BUILDFILE=build.ninja
     $ mms/macro="DESTDIR=TMP:[PACKAGE-ROOT]" install ! OpenVMS
 
 The specified destination directory will be prepended to all installation
@@ -1834,8 +1847,12 @@ change, it might be helpful to clean the build tree before attempting another
 build.  Use this command:
 
     $ make clean                                     # Unix
+    $ ninja clean                                    # Unix or Windows, when configured with BUILDFILE=build.ninja
     $ mms clean                                      ! (or mmk) OpenVMS
     $ nmake clean                                    # Windows
+
+When configured with `BUILDFILE=build.ninja`, use `ninja distclean` for the
+corresponding distclean operation.
 
 Assembler error messages can sometimes be sidestepped by using the `no-asm`
 configuration option. See also [notes](#notes-on-assembler-modules-compilation).

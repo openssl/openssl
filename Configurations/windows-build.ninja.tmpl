@@ -1,0 +1,1091 @@
+##
+## Ninja build file for OpenSSL, native Windows targets
+##
+## {- join("\n## ", @autowarntext) -}
+{-
+     use File::Basename;
+     use File::Spec::Functions qw/:DEFAULT abs2rel rel2abs file_name_is_absolute
+                                    splitpath catpath canonpath/;
+     use Time::Piece;
+
+     use OpenSSL::Util;
+
+     my $build_scheme = $target{build_scheme};
+     our $builder_platform = $build_scheme->[1];
+     die "The Windows Ninja build template supports native Windows targets only\n"
+         if $builder_platform ne 'windows';
+
+     sub nval {
+         my $s = shift // '';
+         $s =~ s/\$/\$\$/g;
+         $s =~ s/\r?\n/ /g;
+         return $s;
+     }
+
+     sub npath {
+         my $s = shift;
+         return () unless defined $s && $s ne '';
+         $s =~ s/\$/\$\$/g;
+         $s =~ s/ /\$ /g;
+         $s =~ s/:/\$:/g;
+         return $s;
+     }
+
+     sub npaths {
+         return join(' ', map { npath($_) } grep { defined $_ && $_ ne '' } @_);
+     }
+
+     sub wq {
+         my $s = shift // '';
+         return '""' if $s eq '';
+         $s =~ s|/|\\|g;
+         $s =~ s/"/\\"/g;
+         return "\"$s\"";
+     }
+
+     sub cmd_c {
+         my $s = shift // '';
+         return $s =~ /^"/ ? 'cmd /C "'.$s.'"' : 'cmd /C '.$s;
+     }
+
+     sub cmd_q_c {
+         my $s = shift // '';
+         return 'cmd /C "'.$s.'"';
+     }
+
+     sub if_exist {
+         my ($path, $command) = @_;
+         return '(if exist '.wq($path).' '.$command.')';
+     }
+
+     sub if_not_exist {
+         my ($path, $command) = @_;
+         return '(if not exist '.wq($path).' '.$command.')';
+     }
+
+     sub shell_join {
+         return join(' ', grep { defined $_ && $_ ne '' } @_);
+     }
+
+     sub ninja_build {
+         my %args = @_;
+         my @outs = ref($args{out}) eq 'ARRAY' ? @{$args{out}} : ($args{out});
+         my @in = @{$args{in} // []};
+         my @implicit = @{$args{implicit} // []};
+         my @order = @{$args{order} // []};
+         my $result = 'build '.npaths(@outs).' : '.$args{rule};
+         $result .= ' '.npaths(@in) if @in;
+         $result .= ' | '.npaths(@implicit) if @implicit;
+         $result .= ' || '.npaths(@order) if @order;
+         $result .= "\n";
+         foreach my $k (sort keys %{$args{vars} // {}}) {
+             my $v = $args{vars}->{$k};
+             next unless defined $v && $v ne '';
+             $result .= "  $k = ".nval($v)."\n";
+         }
+         return $result;
+     }
+
+     sub run_build {
+         my ($out, $command, $in, $implicit, $order, $desc) = @_;
+         return ninja_build(out => $out, rule => 'run',
+                            in => $in // [], implicit => $implicit // [],
+                            order => $order // [],
+                            vars => { command => $command,
+                                      description => $desc // "GEN $out" });
+     }
+
+     sub run_console_build {
+         my ($out, $command, $in, $implicit, $order, $desc) = @_;
+         return ninja_build(out => $out, rule => 'run_console',
+                            in => $in // [], implicit => $implicit // [],
+                            order => $order // [],
+                            vars => { command => $command,
+                                      description => $desc // $out });
+     }
+
+     my $install_flavour = $build_scheme->[$#$build_scheme];
+     my $win_installenv =
+         $install_flavour eq "VC-WOW" ? "ProgramFiles(x86)"
+                                      : "ProgramW6432";
+     my $win_commonenv =
+         $install_flavour eq "VC-WOW" ? "CommonProgramFiles(x86)"
+                                      : "CommonProgramW6432";
+     my $win_installroot =
+         defined($ENV{$win_installenv}) ? $ENV{$win_installenv}
+                                        : $ENV{ProgramFiles};
+     my $win_commonroot =
+         defined($ENV{$win_commonenv}) ? $ENV{$win_commonenv}
+                                      : $ENV{CommonProgramFiles};
+
+     our $perl = (fixup_cmd_elements($config{PERL}))[0];
+     our $cc = $config{CC};
+     our $cpp = $config{CPP};
+     our $ld = $config{LD};
+     our $ar = $config{AR};
+     our $mt = $config{MT};
+     our $as = $config{AS};
+     our $rc = $config{RC};
+
+     our $coutflag = $target{coutflag} // '';
+     our $ldoutflag = $target{ldoutflag} // '';
+     our $ldpostoutflag = $target{ldpostoutflag} // '';
+     our $aroutflag = $target{aroutflag} // '';
+     our $mtinflag = $target{mtinflag} // '';
+     our $mtoutflag = $target{mtoutflag} // '';
+     our $asoutflag = $target{asoutflag} // '';
+     our $rcoutflag = $target{rcoutflag} // '';
+
+     our $prefix = canonpath($config{prefix}
+                             || "$win_installroot\\OpenSSL");
+     our $openssldir =
+         $config{openssldir}
+         ? (file_name_is_absolute($config{openssldir})
+            ? canonpath($config{openssldir})
+            : catdir($prefix, $config{openssldir}))
+         : canonpath("$win_commonroot\\SSL");
+     our $libdir = $config{libdir} || "lib";
+     our $libdir_abs = file_name_is_absolute($libdir) ? $libdir
+                                                      : catdir($prefix, $libdir);
+     our $modulesdir = catdir($libdir_abs, "ossl-modules");
+     our $cmakeconfigdir = catdir($libdir_abs, "cmake", "OpenSSL");
+     our @fipsmodules =
+         grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                && $unified_info{attributes}->{modules}->{$_}->{fips} }
+         @{$unified_info{modules}};
+     die "More than one FIPS module" if scalar @fipsmodules > 1;
+     our $fipsmodule = join(" ", map { platform->dso($_) } @fipsmodules);
+
+     my $cppflags1 =
+         join(" ",
+              (map { "-D".$_} @{$config{CPPDEFINES}}),
+              (map { "-I".wq($_)} @{$config{CPPINCLUDES}}),
+              @{$config{CPPFLAGS}});
+     my $cppflags2 =
+         join(' ', $target{cppflags} || (),
+                   (map { '-D'.quotify1($_) }
+                        @{$target{defines}}, @{$config{defines}}),
+                   (map { '-I'.wq($_) }
+                        @{$target{includes}}, @{$config{includes}}),
+                   @{$config{cppflags}});
+     my $cnf_asflags = join(' ', $target{asflags} || (),
+                                 @{$config{asflags}});
+     my $cnf_cflags = join(' ', $target{cflags} || (),
+                                @{$config{cflags}});
+     my $cnf_lflags = join(' ', $target{lflags} || (),
+                                @{$config{lflags}});
+     my $cnf_ex_libs = join(' ', $target{ex_libs} || (),
+                                 @{$config{ex_libs}});
+
+     our $lib_asflags =
+         join(' ', $target{lib_asflags} || (),
+                   @{$config{lib_asflags}},
+                   $cnf_asflags, @{$config{ASFLAGS}});
+     my $lib_cppflags_base =
+         join(' ', $target{lib_cppflags} || (),
+                   $target{shared_cppflag} || (),
+                   (map { '-D'.quotify1($_) }
+                        @{$target{lib_defines}},
+                        @{$target{shared_defines}},
+                        @{$config{lib_defines}},
+                        @{$config{shared_defines}}),
+                   (map { '-I'.wq($_) }
+                        @{$target{lib_includes}},
+                        @{$target{shared_includes}},
+                        @{$config{lib_includes}},
+                        @{$config{shared_includes}}),
+                   @{$config{lib_cppflags}},
+                   @{$config{shared_cppflag}});
+     our $lib_cppflags =
+         join(' ', $lib_cppflags_base,
+                   (map { '-D'.quotify1($_) }
+                        "OPENSSLDIR=\"$openssldir\"",
+                        "MODULESDIR=\"$modulesdir\""),
+                   $cppflags2, $cppflags1);
+     our $lib_cflags =
+         join(' ', $target{lib_cflags} || (),
+                   $target{shared_cflag} || (),
+                   @{$config{lib_cflags}},
+                   @{$config{shared_cflag}},
+                   $cnf_cflags, @{$config{CFLAGS}});
+     our $lib_lflags =
+         join(' ', $target{shared_ldflag} || (),
+                   $config{shared_ldflag} || (),
+                   $cnf_lflags, @{$config{LDFLAGS}});
+     our $lib_ex_libs = join(' ', $cnf_ex_libs, @{$config{LDLIBS}});
+
+     our $dso_asflags =
+         join(' ', $target{dso_asflags} || (),
+                   $target{module_asflags} || (),
+                   @{$config{dso_asflags}},
+                   @{$config{module_asflags}},
+                   $cnf_asflags, @{$config{ASFLAGS}});
+     our $dso_cppflags =
+         join(' ', $target{dso_cppflags} || (),
+                   $target{module_cppflag} || (),
+                   (map { '-D'.quotify1($_) }
+                        @{$target{dso_defines}},
+                        @{$target{module_defines}},
+                        @{$config{dso_defines}},
+                        @{$config{module_defines}}),
+                   (map { '-I'.wq($_) }
+                        @{$target{dso_includes}},
+                        @{$target{module_includes}},
+                        @{$config{dso_includes}},
+                        @{$config{module_includes}}),
+                   @{$config{dso_cppflags}},
+                   @{$config{module_cppflags}},
+                   $cppflags2, $cppflags1);
+     our $dso_cflags =
+         join(' ', $target{dso_cflags} || (),
+                   $target{module_cflags} || (),
+                   @{$config{dso_cflags}},
+                   @{$config{module_cflags}},
+                   $cnf_cflags, @{$config{CFLAGS}});
+     our $dso_lflags =
+         join(' ', $target{dso_lflags} || (),
+                   $target{module_ldflags} || (),
+                   @{$config{dso_lflags}},
+                   @{$config{module_ldflags}},
+                   $cnf_lflags, @{$config{LDFLAGS}});
+     our $dso_ex_libs = join(' ', $cnf_ex_libs, @{$config{LDLIBS}});
+
+     our $bin_asflags =
+         join(' ', $target{bin_asflags} || (),
+                   @{$config{bin_asflags}},
+                   $cnf_asflags, @{$config{ASFLAGS}});
+     our $bin_cppflags =
+         join(' ', $target{bin_cppflags} || (),
+                   (map { '-D'.$_ } @{$config{bin_defines} || ()}),
+                   @{$config{bin_cppflags}},
+                   $cppflags2, $cppflags1);
+     our $bin_cflags =
+         join(' ', $target{bin_cflags} || (),
+                   @{$config{bin_cflags}},
+                   $cnf_cflags, @{$config{CFLAGS}});
+     our $bin_lflags =
+         join(' ', $target{bin_lflags} || (),
+                   @{$config{bin_lflags}},
+                   $cnf_lflags, @{$config{LDFLAGS}});
+     our $bin_ex_libs = join(' ', $cnf_ex_libs, @{$config{LDLIBS}});
+
+     our $cppflags_q = do {
+         my $x = join(' ', $lib_cppflags_base || (), $cppflags2 || (),
+                           $cppflags1 || ());
+         $x =~ s|([\\"])|\\$1|g;
+         $x;
+     };
+     my $t = localtime;
+     if ($config{"release_date"}) {
+         eval { $t = Time::Piece->strptime($config{"release_date"}, "%d %b %Y"); }
+             || die "Parsing \$config{release_date} ('$config{release_date}') failed: $@";
+     }
+     our $release_date = $t->strftime("%Y-%m-%d");
+
+     our %makevars = (
+         APPS_OPENSSL => wq(catfile("apps", "openssl")),
+         BLDDIR => $config{builddir},
+         CC => $cc,
+         CMAKECONFIGDIR => $cmakeconfigdir,
+         CPP => $cpp,
+         CPPFLAGS_Q => $cppflags_q,
+         FIPSKEY => $config{FIPSKEY},
+         FIPSMODULE => $fipsmodule,
+         INSTALLTOP => $prefix,
+         LIBDIR => $libdir,
+         LIB_EX_LIBS => $lib_ex_libs,
+         LIB_CFLAGS => $lib_cflags,
+         MODULESDIR => $modulesdir,
+         PLATFORM => $config{target},
+         PREFIX => $prefix,
+         SRCDIR => $config{sourcedir},
+         VERSION => $config{full_version},
+         libdir => $libdir_abs,
+     );
+
+     sub expand_makevars {
+         my $s = shift;
+         $s =~ s/\$\(([^)]+)\)/exists $makevars{$1} ? $makevars{$1} : "\$($1)"/ge;
+         return $s;
+     }
+
+     sub command_args {
+         return join('', map { ' '.expand_makevars($_) } @_);
+     }
+
+     sub compute_lib_depends {
+         return map { $disabled{shared}
+                      ? platform->staticlib($_)
+                      : platform->sharedlib_import($_) // platform->staticlib($_) } @_;
+     }
+
+     sub compute_platform_depends {
+         map {
+             my $x = $_;
+             if (grep { $x eq $_ } @{$unified_info{programs}}) {
+                 platform->bin($x);
+             } elsif (grep { $x eq $_ } @{$unified_info{modules}}) {
+                 platform->dso($x);
+             } elsif (grep { $x eq $_ } @{$unified_info{libraries}}) {
+                 $disabled{shared}
+                     ? platform->staticlib($x)
+                     : platform->sharedlib_import($x) // platform->staticlib($x);
+             } else {
+                 platform->convertext($x);
+             }
+         } @_;
+     }
+
+     '';
+-}
+ninja_required_version = 1.8
+
+platform = {- nval($config{target}) -}
+srcdir = {- nval($config{sourcedir}) -}
+blddir = {- nval($config{builddir}) -}
+perl = {- nval($perl) -}
+cc = {- nval($cc) -}
+ld = {- nval($ld) -}
+ar = {- nval($ar) -}
+mt = {- nval($mt) -}
+as = {- nval($as) -}
+rc = {- nval($rc) -}
+
+rule run
+  command = $command
+  description = $description
+  restat = 1
+
+rule run_console
+  command = $command
+  description = $description
+  pool = console
+
+rule cc
+  command = $cmd $cmdflags $defs -c $coutflag$out $srcs
+  description = CC $out
+
+rule cc_msvcdeps
+  command = cmd /D /C set VSLANG=1033&& $cmd $cmdflags $defs /showIncludes -c $coutflag$out $srcs
+  deps = msvc
+  msvc_deps_prefix = Note: including file:
+  description = CC $out
+
+rule rc
+  command = $cmd $cmdflags $rcoutflag$out $srcs
+  description = RC $out
+
+rule asm
+  command = $cmd $cmdflags $asoutflag$out $srcs
+  description = ASM $out
+
+rule ar_rsp
+  command = $command
+  rspfile = $rspfile
+  rspfile_content = $rspfile_content
+  description = AR $out
+
+rule link_rsp
+  command = $command
+  rspfile = $rspfile
+  rspfile_content = $rspfile_content
+  description = $description
+
+rule regen_build
+  command = {- nval(wq($perl)) -} configdata.pm
+  description = REGEN build.ninja
+  generator = 1
+
+rule regen_config
+  command = {- nval(wq($perl)) -} configdata.pm -r
+  description = RECONF configdata.pm
+  generator = 1
+
+build build.ninja: regen_build configdata.pm | {- npaths(@{$config{build_file_templates}}) -}
+build configdata.pm: regen_config {- npaths(catfile($config{sourcedir}, "Configure"), @{$config{build_infos}}, @{$config{conf_files}}) -}
+
+build reconfigure reconf: run_console
+  command = {- nval(wq($perl)) -} configdata.pm -r
+  description = RECONF
+
+{-
+     my @libs =
+         map { ( platform->sharedlib_import($_) // (),
+                 platform->staticlib($_) // () ) } @{$unified_info{libraries}};
+     my @modules =
+         map { platform->dso($_) }
+         grep { my $x = $_;
+                !grep { grep { $_ eq $x } @$_ } values %{$unified_info{depends}} }
+         @{$unified_info{modules}};
+     my @programs = map { platform->bin($_) } @{$unified_info{programs}};
+     my @scripts = @{$unified_info{scripts}};
+     my @install_programs =
+         map { platform->bin($_) }
+         grep { !$unified_info{attributes}->{programs}->{$_}->{noinst} }
+         @{$unified_info{programs}};
+     my @install_libs =
+         map { platform->sharedlib_import($_) // platform->staticlib($_) }
+         grep { !$unified_info{attributes}->{libraries}->{$_}->{noinst} }
+         @{$unified_info{libraries}};
+     my @install_modules =
+         map { platform->dso($_) }
+         grep { !$unified_info{attributes}->{modules}->{$_}->{noinst}
+                && !$unified_info{attributes}->{modules}->{$_}->{fips} }
+         @{$unified_info{modules}};
+     my @install_fipsmoduleconf =
+         $disabled{fips} ? () : (catfile("providers", "fipsmodule.cnf"));
+     my @bin_scripts =
+         grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+                && !$unified_info{attributes}->{scripts}->{$_}->{misc} }
+         @scripts;
+     my @misc_scripts =
+         grep { !$unified_info{attributes}->{scripts}->{$_}->{noinst}
+                && $unified_info{attributes}->{scripts}->{$_}->{misc} }
+         @scripts;
+     my @generated_mandatory = @{$unified_info{depends}->{""}};
+     my @all_generated = map { platform->convertext($_) } @generated;
+     my @htmldocs = map { @{$unified_info{htmldocs}->{$_}} } qw(man1 man3 man5 man7);
+     my @utils = ();
+     @utils = (catfile("apps", "openssl.cnf"))
+         if $config{sourcedir} ne $config{builddir};
+
+     our %manual_phony_targets = ();
+
+     my $target = sub {
+         my ($name, @deps) = @_;
+         $manual_phony_targets{$name} = 1;
+         push @deps, compute_platform_depends(@{$unified_info{depends}->{$name} // []});
+         my %seen;
+         @deps = grep { !$seen{$_}++ } @deps;
+         return ninja_build(out => $name, rule => 'phony', in => \@deps);
+     };
+
+     my $out = '';
+     my $ninja_build = wq(catfile($config{sourcedir},
+                                  "util", "ninja-build.pl"));
+     my $action = sub {
+         cmd_c(wq($perl).' '.$ninja_build.' '.wq($_[0]));
+     };
+
+     $out .= $target->('build_sw', 'build_generated', 'build_libs_nodep',
+                       'build_modules_nodep', 'build_programs_nodep',
+                       'copy-utils');
+     $out .= $target->('build_libs', 'build_generated', 'build_libs_nodep');
+     $out .= $target->('build_modules', 'build_generated', 'build_modules_nodep');
+     $out .= $target->('build_programs', 'build_generated',
+                       'build_programs_nodep');
+     $out .= $target->('build_inst_sw', 'build_generated', 'build_libs_nodep',
+                       'build_modules_nodep', 'build_inst_programs_nodep',
+                       'copy-utils');
+     $out .= $target->('build_inst_programs', 'build_generated',
+                       'build_inst_programs_nodep');
+     $out .= $target->('all', 'build_sw', ($disabled{docs} ? () : 'build_docs'));
+     $out .= $target->('build_docs', 'build_html_docs');
+     $out .= $target->('build_html_docs', @htmldocs);
+     $out .= $target->('build_generated', @generated_mandatory);
+     $out .= $target->('build_libs_nodep', @libs);
+     $out .= $target->('build_modules_nodep', @modules);
+     $out .= $target->('build_programs_nodep', @programs, @scripts);
+     $out .= $target->('build_inst_programs_nodep', @install_programs, @scripts);
+     $out .= $target->('build_apps', 'build_programs');
+     $out .= $target->('build_tests', 'build_programs');
+     $out .= $target->('build_all_generated', @generated_mandatory,
+                       @all_generated, 'build_docs');
+     $out .= $target->('copy-utils', @utils);
+     $out .= $target->('install', 'install_sw', 'install_ssldirs',
+                       ($disabled{docs} ? () : 'install_docs'),
+                       ($disabled{fips} ? () : 'install_fips'));
+     $out .= $target->('uninstall',
+                       ($disabled{docs} ? () : 'uninstall_docs'),
+                       'uninstall_sw',
+                       ($disabled{fips} ? () : 'uninstall_fips'));
+     $out .= $target->('install_sw', 'install_dev', 'install_modules',
+                       'install_runtime');
+     $out .= $target->('uninstall_sw', 'uninstall_runtime',
+                       'uninstall_modules', 'uninstall_dev');
+     $out .= $target->('install_docs', 'install_html_docs');
+     $out .= $target->('install_runtime', 'install_programs');
+     $out .= $target->('uninstall_runtime', 'uninstall_programs',
+                       'uninstall_runtime_libs');
+
+     $out .= run_console_build('clean', $action->('clean'), [], [], [],
+                               'CLEAN');
+     $out .= run_console_build('distclean', $action->('distclean'),
+                               [ 'clean' ], [], [], 'DISTCLEAN');
+     $out .= run_console_build('depend', $action->('depend'), [], [], [],
+                               'DEPEND');
+     $out .= run_console_build('install_ssldirs',
+                               $action->('install_ssldirs'),
+                               [ @misc_scripts ], [], [], 'INSTALL SSLDIRS');
+     $out .= run_console_build('install_runtime_libs',
+                               $action->('install_runtime_libs'),
+                               [ 'build_libs' ], [], [], 'INSTALL RUNTIME LIBS');
+     $out .= run_console_build('install_dev', $action->('install_dev'),
+                               [ 'install_runtime_libs', @install_libs ],
+                               [], [], 'INSTALL DEV');
+     $out .= run_console_build('install_modules',
+                               $action->('install_modules'),
+                               [ 'install_runtime_libs', 'build_modules',
+                                 @install_modules ],
+                               [], [], 'INSTALL MODULES');
+     $out .= run_console_build('install_programs',
+                               $action->('install_programs'),
+                               [ 'install_runtime_libs',
+                                 'build_inst_programs', @install_programs,
+                                 @bin_scripts ],
+                               [], [], 'INSTALL PROGRAMS');
+     $out .= run_console_build('install_fips', $action->('install_fips'),
+                               [ 'build_inst_sw', @install_fipsmoduleconf ],
+                               [], [], 'INSTALL FIPS');
+     $out .= run_console_build('install_image_docs',
+                               $action->('install_image_docs'),
+                               [], [], [], 'INSTALL IMAGE DOCS');
+     $out .= run_console_build('install_html_docs',
+                               $action->('install_html_docs'),
+                               [ 'install_image_docs', 'build_html_docs' ],
+                               [], [], 'INSTALL HTML DOCS');
+     $out .= run_console_build('uninstall_runtime_libs',
+                               $action->('uninstall_runtime_libs'),
+                               [], [], [], 'UNINSTALL RUNTIME LIBS');
+     $out .= run_console_build('uninstall_dev',
+                               $action->('uninstall_dev'),
+                               [ 'uninstall_runtime_libs' ], [], [],
+                               'UNINSTALL DEV');
+     $out .= run_console_build('uninstall_modules',
+                               $action->('uninstall_modules'),
+                               [], [], [], 'UNINSTALL MODULES');
+     $out .= run_console_build('uninstall_programs',
+                               $action->('uninstall_programs'),
+                               [], [], [], 'UNINSTALL PROGRAMS');
+     $out .= run_console_build('uninstall_fips',
+                               $action->('uninstall_fips'),
+                               [], [], [], 'UNINSTALL FIPS');
+     $out .= run_console_build('uninstall_image_docs',
+                               $action->('uninstall_image_docs'),
+                               [], [], [], 'UNINSTALL IMAGE DOCS');
+     $out .= run_console_build('uninstall_html_docs',
+                               $action->('uninstall_html_docs'),
+                               [ 'uninstall_image_docs' ], [], [],
+                               'UNINSTALL HTML DOCS');
+     $out .= run_console_build('uninstall_docs',
+                               $action->('uninstall_docs'),
+                               [ 'uninstall_html_docs' ], [], [],
+                               'UNINSTALL DOCS');
+
+     if (@utils) {
+         my $src = catfile($config{sourcedir}, "apps", "openssl.cnf");
+         my $dst = catfile("apps", "openssl.cnf");
+         $out .= run_build($dst,
+                           cmd_c(if_not_exist("apps", 'mkdir '.wq("apps"))
+                                 .' & copy /Y '.wq($src).' '.wq($dst)),
+                           [ 'build.ninja' ], [ $src ], [], "COPY $dst");
+     }
+
+     my $test_command;
+     my $list_command;
+     if ($disabled{tests}) {
+         $test_command = $list_command =
+             cmd_c('echo Tests are not supported with your chosen Configure options');
+     } else {
+         my $run_tests =
+             wq($perl).' '.wq(catfile($config{sourcedir}, "test", "run_tests.pl"));
+         $test_command =
+             cmd_q_c('set "SRCTOP='.$config{sourcedir}.'"'
+                     .' & set "BLDTOP='.$config{builddir}.'"'
+                     .' & set "PERL='.$config{PERL}.'"'
+                     .' & set "FIPSKEY='.$config{FIPSKEY}.'"'
+                     .' & if defined TESTS (call '.$run_tests.' %TESTS%)'
+                     .' else (call '.$run_tests.')');
+         $list_command =
+             cmd_c('set "SRCTOP='.$config{sourcedir}.'"'
+                   .' & '.wq($perl).' '
+                   .wq(catfile($config{sourcedir}, "test", "run_tests.pl"))
+                   .' list');
+     }
+     $out .= run_console_build('run_tests', $test_command,
+                               [ 'build_generated',
+                                 'build_programs_nodep',
+                                 'build_modules_nodep',
+                                 'copy-utils' ], [], [], 'TEST');
+     $out .= $target->('tests', 'run_tests');
+     $out .= $target->('test', 'tests');
+     $out .= run_console_build('list-tests', $list_command, [], [], [],
+                               'LIST TESTS');
+     $out .= run_console_build('help',
+                               cmd_c('echo Use ninja -t targets to list targets'),
+                               [], [], [], 'HELP');
+     $out .= "\ndefault all\n\n";
+     $out;
+-}
+
+{- # Building targets #####################################################
+
+  sub generatetarget {
+      my %args = @_;
+      our %manual_phony_targets;
+      return '' if $manual_phony_targets{$args{target}};
+      my @deps = compute_platform_depends(@{$args{deps}});
+      return ninja_build(out => $args{target}, rule => 'phony', in => \@deps);
+  }
+
+  sub generatesrc {
+      my %args = @_;
+      my $gen0 = $args{generator}->[0];
+      my $gen_args = command_args(@{$args{generator}}[1..$#{$args{generator}}]);
+      my $gen_incs = join("", map { " -I".wq($_) } @{$args{generator_incs}});
+      my $incs = join("", map { " -I".wq($_) } @{$args{incs}});
+      my $defs = join("", map { " -D".$_ } @{$args{defs}});
+      my @deps = compute_platform_depends(@{$args{generator_deps}},
+                                          @{$args{deps}});
+      if ($args{src} =~ /\.html$/) {
+          my $title = basename($args{src}, ".html");
+          my $pod = $gen0;
+          my $cmd = cmd_c(wq($perl).' '
+                          .wq(catfile($config{sourcedir}, "util", "mkpod2html.pl"))
+                          .' -i '.wq($pod)
+                          .' -o '.wq($args{src})
+                          .' -t '.wq($title)
+                          .' -r '.wq(catdir($config{sourcedir}, "doc")));
+          return run_build($args{src}, $cmd, [ $pod ],
+                           [ catfile($config{sourcedir}, "util", "mkpod2html.pl") ],
+                           [], "HTML $args{src}");
+      } elsif ($args{src} =~ /\.(\d)$/) {
+          my $section = $1;
+          my $name = uc basename($args{src}, ".$section");
+          my $pod = $gen0;
+          my $cmd = cmd_c('pod2man --name='.wq($name)
+                          .' --section='.$section.'ossl'
+                          .' --center=OpenSSL'
+                          .' --date='.wq($release_date)
+                          .' --release='.wq($config{full_version})
+                          .' '.wq($pod).' > '.wq($args{src}));
+          return run_build($args{src}, $cmd, [ $pod ], [], [],
+                           "MAN $args{src}");
+      } elsif (platform->isdef($args{src})) {
+          my $out = platform->def($args{src});
+          my $mkdef = abs2rel(rel2abs(catfile($config{sourcedir},
+                                              "util", "mkdef.pl")),
+                              rel2abs($config{builddir}));
+          my $ord_ver = $args{intent} eq 'lib'
+              ? ' --version '.quotify1($config{version}) : '';
+          my $ord_name =
+              $args{generator}->[1] || basename(platform->dsoname($args{product}));
+          my $cmd = cmd_c(wq($perl).' '.wq($mkdef).$ord_ver
+                          .' --type '.$args{intent}
+                          .' --ordinals '.wq($gen0)
+                          .' --name '.wq($ord_name)
+                          .' --OS windows > '.wq($out));
+          return run_build($out, $cmd, [ $gen0 ], [ @deps, $mkdef ],
+                           [], "MKDEF $out");
+      } elsif (platform->isasm($args{src})
+               || platform->iscppasm($args{src})) {
+          my $cppflags = {
+              shlib => "$lib_cflags $lib_cppflags",
+              lib => "$lib_cflags $lib_cppflags",
+              dso => "$dso_cflags $dso_cppflags",
+              bin => "$bin_cflags $bin_cppflags"
+          } -> {$args{intent}};
+          my $out = platform->isasm($args{src})
+              ? platform->asm($args{src}) : $args{src};
+          my $cmd;
+          if ($gen0 =~ /\.pl$/) {
+              $cmd = cmd_c('set "ASM='.$as.'" & '.wq($perl).$gen_incs.' '
+                           .wq($gen0).$gen_args.' '
+                           .wq($target{perlasm_scheme}).$incs.' '
+                           .$cppflags.$defs.' '.$config{processor}.' '
+                           .wq($out));
+          } elsif ($gen0 =~ /\.S$/) {
+              $cmd = cmd_c($cpp.' /D__ASSEMBLER__ '.$incs.' '.$cppflags
+                           .$defs.' '.wq($gen0).' > '.wq("$out.i")
+                           .' && move /Y '.wq("$out.i").' '.wq($out));
+          } else {
+              die "Generator type for $args{src} unknown: $gen0\n";
+          }
+          return run_build($out, $cmd, [ $gen0 ], \@deps, [],
+                           "GENASM $out");
+      } elsif ($gen0 =~ m|^.*\.in$|) {
+          my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
+                                               "util", "dofile.pl")),
+                               rel2abs($config{builddir}));
+          my @perlmodules = ();
+          my %perlmoduleincs = ();
+          my %perlmoduledeps = ();
+          my @raw_deps = @{$args{deps}};
+          push @raw_deps,
+              @{$unified_info{depends}->{generated_source_path($args{src})} // []};
+          my %seen_raw_deps = ();
+          @raw_deps = grep { !$seen_raw_deps{$_}++ } @raw_deps;
+
+          foreach my $x (('configdata.pm', @raw_deps)) {
+              my ($i, $m, $d);
+              if ($x =~ /\|/) {
+                  $i = $`;
+                  $d = $';
+                  $m = $d;
+                  $m =~ s|\.pm$||;
+                  $m =~ s|/|::|g;
+                  $d = catfile($i, $d) if $i;
+              } elsif ($x =~ /\.pm$/) {
+                  $i = dirname($x);
+                  $m = basename($x, '.pm');
+                  $d = $x;
+              } else {
+                  $d = $x;
+              }
+              if ($m) {
+                  my $resolved_d = resolve_perlmodule_path($d);
+                  if ($resolved_d ne $d) {
+                      $d = $resolved_d;
+                      $i = source_path_if_exists($i) if $i;
+                  }
+              }
+              push @perlmodules, '"-M'.$m.'"' if $m;
+              $perlmoduledeps{$d} = 1;
+              $perlmoduleincs{'"-I'.$i.'"'} = 1 if $i;
+          }
+          @deps = compute_platform_depends(@{$args{generator_deps}},
+                                           sort keys %perlmoduledeps);
+          my $perlmodules = join(' ', '', (sort keys %perlmoduleincs),
+                                 @perlmodules);
+          my $cmd = cmd_c(if_exist($args{src},
+                                   'attrib -r '.wq($args{src})).' & '
+                          .wq($perl).$perlmodules.' '.wq($dofile)
+                          .' '.wq("-o$config{build_file}")
+                          .' '.wq($gen0).$gen_args
+                          .' > '.wq($args{src})
+                          .' && attrib +r '.wq($args{src}));
+          return run_build($args{src}, $cmd, [ $gen0 ], \@deps, [],
+                           "DOFILE $args{src}");
+      } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
+          $gen0 = platform->bin($gen0);
+          my $wrap = catfile($config{builddir}, "util", "wrap.pl");
+          my $cmd = cmd_c(wq($perl).' '.wq($wrap).' '.wq($gen0).$gen_args
+                          .' > '.wq($args{src}));
+          return run_build($args{src}, $cmd, [ $gen0 ],
+                           [ @deps, $wrap ], [], "RUN $args{src}");
+      } else {
+          my $cmd = cmd_c(wq($perl).$gen_incs.' '.wq($gen0).$gen_args
+                          .' > '.wq($args{src}));
+          return run_build($args{src}, $cmd, [ $gen0 ], \@deps,
+                           [], "GEN $args{src}");
+      }
+  }
+
+  sub src2obj {
+      my %args = @_;
+      my $asmext = platform->asmext();
+      my @srcs =
+          map { my $x = $_;
+                (platform->isasm($x) && grep { $x eq $_ } @generated)
+                ? platform->asm($x) : $x }
+          @{$args{srcs}};
+      my @deps = (@srcs, @{$args{deps}});
+      my @order = ('build_generated');
+      my $srcs = join(' ', map { wq($_) } @srcs);
+      my @raw_incs = @{$args{incs}};
+      my @raw_defs = @{$args{defs}};
+      if (defined $args{product}) {
+          push @raw_incs,
+              @{$unified_info{includes}->{generated_source_path($args{product})} // []};
+          push @raw_defs,
+              @{$unified_info{defines}->{generated_source_path($args{product})} // []};
+      }
+      my %seen_incs = ();
+      my %seen_defs = ();
+      my $incs = join("", map { ' -I'.wq($_) }
+                          grep { !$seen_incs{$_}++ } @raw_incs);
+      my $defs = join("", map { " -D".$_ }
+                          grep { !$seen_defs{$_}++ } @raw_defs);
+      my $cflags = { shlib => "$lib_cflags",
+                     lib => "$lib_cflags",
+                     dso => "$dso_cflags",
+                     bin => "$bin_cflags" } -> {$args{intent}};
+      $cflags .= $incs;
+      $cflags .= { shlib => " $lib_cppflags",
+                   lib => " $lib_cppflags",
+                   dso => " $dso_cppflags",
+                   bin => " $bin_cppflags" } -> {$args{intent}};
+      my $asflags = { shlib => "$lib_asflags",
+                      lib => "$lib_asflags",
+                      dso => "$dso_asflags",
+                      bin => "$bin_asflags" } -> {$args{intent}};
+
+      if ($srcs[0] =~ /\.rc$/) {
+          my $res = platform->res($args{obj});
+          return ninja_build(out => $res, rule => 'rc', in => \@deps,
+                             order => \@order,
+                             vars => { srcs => $srcs,
+                                       cmd => $rc,
+                                       cmdflags => join(' ', @{$config{RCFLAGS}}),
+                                       rcoutflag => $rcoutflag });
+      }
+
+      my $obj = platform->obj($args{obj});
+      if ($srcs[0] =~ /\Q${asmext}\E$/) {
+          return ninja_build(out => $obj, rule => 'asm', in => \@deps,
+                             order => \@order,
+                             vars => { srcs => $srcs,
+                                       cmd => $as,
+                                       cmdflags => $asflags,
+                                       asoutflag => $asoutflag });
+      } elsif ($srcs[0] =~ /\.S$/) {
+          my $cmd = cmd_c($cc.' /EP -D__ASSEMBLER__ '.$cflags.$defs.' '
+                          .$srcs.' > '.wq("$obj.asm")
+                          .' && '.$as.' '.$asflags.' '.$asoutflag.wq($obj)
+                          .' '.wq("$obj.asm"));
+          return run_build($obj, $cmd, \@deps, [], \@order, "ASM $obj");
+      }
+
+      my $rule = (!$disabled{makedepend}
+                  && ($config{makedep_scheme} // '') eq 'VC')
+          ? 'cc_msvcdeps' : 'cc';
+      return ninja_build(out => $obj, rule => $rule,
+                         in => \@deps,
+                         order => \@order,
+                         vars => { srcs => $srcs,
+                                   cmd => $cc,
+                                   cmdflags => $cflags,
+                                   coutflag => $coutflag,
+                                   defs => $defs });
+  }
+
+  sub obj2lib {
+      my %args = @_;
+      my $lib = platform->staticlib($args{lib});
+      my @objs = map { platform->obj($_) } @{$args{objs}};
+      my $rsp = "$lib.rsp";
+      my $cmd = cmd_c(if_exist($lib, 'del /F /Q '.wq($lib))
+                      .' & '.wq($ar).' '.join(' ', @{$config{ARFLAGS}})
+                      .' '.$aroutflag.wq($lib).' @'.wq($rsp));
+      return ninja_build(out => $lib, rule => 'ar_rsp', in => \@objs,
+                         vars => { command => $cmd,
+                                   rspfile => $rsp,
+                                   rspfile_content => join(' ', map { wq($_) } @objs) });
+  }
+
+  sub obj2shlib {
+      my %args = @_;
+      my $lib = $args{lib};
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) } @{$args{objs}};
+      my @ress = map { platform->convertext($_) }
+                 grep { platform->isres($_) } @{$args{objs}};
+      my @defs = map { platform->def($_) }
+                 grep { platform->isdef($_) } @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      die "More than one exported symbols list" if scalar @defs > 1;
+      my $import = platform->sharedlib_import($lib);
+      my $dll = platform->sharedlib($lib);
+      my $rsp = "$dll.rsp";
+      my $shared_def = @defs ? $target{lddefflag}.wq($defs[0]) : '';
+      my $implib_flag = $target{ld_implib_flag}
+                        ? $target{ld_implib_flag}.wq($import) : '';
+      my $rsp_content =
+          join(' ', (map { wq($_) } @objs),
+                    $ldoutflag.wq($dll).$ldpostoutflag,
+                    (map { wq($_) } @deps),
+                    $lib_ex_libs,
+                    $shared_def,
+                    (map { wq($_) } @ress));
+      my $postlink = if_exist("$dll.manifest",
+                              wq($mt).' '.join(' ', @{$config{MTFLAGS}}).' '
+                              .$mtinflag.wq("$dll.manifest").' '.$mtoutflag.wq($dll))
+                     .' & '.if_not_exist("apps", 'mkdir '.wq("apps"))
+                     .' & '.if_not_exist("fuzz", 'mkdir '.wq("fuzz"))
+                     .($disabled{tests} ? ''
+                        : ' & '.if_not_exist("test", 'mkdir '.wq("test")))
+                     .' & copy /Y '.wq($dll).' '.wq("apps")
+                     .' & copy /Y '.wq($dll).' '.wq("fuzz")
+                     .($disabled{tests} ? ''
+                        : ' & copy /Y '.wq($dll).' '.wq("test"));
+      my $cmd = cmd_c(if_exist("$dll.manifest",
+                               'del /F /Q '.wq("$dll.manifest"))
+                      .' & '.if_exist($dll, 'del /F /Q '.wq($dll))
+                      .' & '.if_exist($import, 'del /F /Q '.wq($import))
+                      .' & '.wq($ld).' '.join(' ', @{$config{LDFLAGS}})
+                      .' '.$lib_lflags.' @'.wq($rsp).' '.$implib_flag
+                      .' && ('.$postlink.')');
+      return ninja_build(out => [ $dll, $import ], rule => 'link_rsp',
+                         in => [ @objs, @ress, @defs, @deps ],
+                         vars => { command => $cmd,
+                                   description => "LINK $dll",
+                                   rspfile => $rsp,
+                                   rspfile_content => $rsp_content });
+  }
+
+  sub obj2dso {
+      my %args = @_;
+      my $dso = platform->dso($args{module});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) } @{$args{objs}};
+      my @ress = map { platform->convertext($_) }
+                 grep { platform->isres($_) } @{$args{objs}};
+      my @defs = map { platform->def($_) }
+                 grep { platform->isdef($_) } @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      die "More than one exported symbols list" if scalar @defs > 1;
+      my $rsp = "$dso.rsp";
+      my $shared_def = @defs ? $target{lddefflag}.wq($defs[0]) : '';
+      my $rsp_content =
+          join(' ', (map { wq($_) } @objs),
+                    $ldoutflag.wq($dso).$ldpostoutflag,
+                    (map { wq($_) } @deps),
+                    $dso_ex_libs,
+                    $shared_def,
+                    (map { wq($_) } @ress));
+      my $cmd = cmd_c(if_exist("$dso.manifest",
+                               'del /F /Q '.wq("$dso.manifest"))
+                      .' & '.wq($ld).' '.join(' ', @{$config{LDFLAGS}})
+                      .' '.$dso_lflags.' @'.wq($rsp)
+                      .' && '.if_exist("$dso.manifest",
+                                       wq($mt).' '.join(' ', @{$config{MTFLAGS}}).' '
+                                       .$mtinflag.wq("$dso.manifest").' '.$mtoutflag.wq($dso)));
+      return ninja_build(out => $dso, rule => 'link_rsp',
+                         in => [ @objs, @ress, @defs, @deps ],
+                         vars => { command => $cmd,
+                                   description => "LINK $dso",
+                                   rspfile => $rsp,
+                                   rspfile_content => $rsp_content });
+  }
+
+  sub obj2bin {
+      my %args = @_;
+      my $bin = platform->bin($args{bin});
+      my @objs = map { platform->convertext($_) }
+                 grep { platform->isobj($_) } @{$args{objs}};
+      my @ress = map { platform->convertext($_) }
+                 grep { platform->isres($_) } @{$args{objs}};
+      my @deps = compute_lib_depends(@{$args{deps}});
+      my $rsp = "$bin.rsp";
+      my $rsp_content =
+          join(' ', (map { wq($_) } @objs),
+                    $ldoutflag.wq($bin).$ldpostoutflag,
+                    (map { wq($_) } @deps),
+                    $bin_ex_libs,
+                    (map { wq($_) } @ress));
+      my $cmd = cmd_c(if_exist("$bin.manifest",
+                               'del /F /Q '.wq("$bin.manifest"))
+                      .' & '.wq($ld).' '.join(' ', @{$config{LDFLAGS}})
+                      .' '.$bin_lflags.' @'.wq($rsp)
+                      .' && '.if_exist("$bin.manifest",
+                                       wq($mt).' '.join(' ', @{$config{MTFLAGS}}).' '
+                                       .$mtinflag.wq("$bin.manifest").' '.$mtoutflag.wq($bin)));
+      return ninja_build(out => $bin, rule => 'link_rsp',
+                         in => [ @objs, @ress, @deps ],
+                         vars => { command => $cmd,
+                                   description => "LINK $bin",
+                                   rspfile => $rsp,
+                                   rspfile_content => $rsp_content });
+  }
+
+  sub in2script {
+      my %args = @_;
+      my $script = $args{script};
+      my @sources = @{$args{sources}};
+      my $dofile = abs2rel(rel2abs(catfile($config{sourcedir},
+                                           "util", "dofile.pl")),
+                           rel2abs($config{builddir}));
+      my $cmd = cmd_c(if_exist($script, 'attrib -r '.wq($script))
+                      .' & '.wq($perl).' '.wq("-I$config{builddir}")
+                      .' -Mconfigdata '.wq($dofile)
+                      .' '.wq("-o$config{build_file}")
+                      .' '.join(' ', map { wq($_) } @sources)
+                      .' > '.wq($script)
+                      .' && attrib +r '.wq($script));
+      return run_build($script, $cmd, [ @sources, 'configdata.pm' ], [], [],
+                       "SCRIPT $script");
+  }
+
+  sub generatedir {
+      my %args = @_;
+      my $dir = $args{dir};
+      return if $dir eq "test" || $dir eq ".";
+      my @deps = compute_platform_depends(@{$args{deps}});
+      my %extinfo = ( dso => platform->dsoext(),
+                      lib => platform->libext(),
+                      bin => platform->binext() );
+
+      foreach my $type (("dso", "lib", "bin", "script")) {
+          next unless defined($unified_info{dirinfo}->{$dir}->{products}->{$type});
+          next if $type eq "lib";
+          foreach my $prod (@{$unified_info{dirinfo}->{$dir}->{products}->{$type}}) {
+              push @deps, $prod.$extinfo{$type} if dirname($prod) eq $dir;
+          }
+      }
+      return ninja_build(out => [ $dir, "$dir\\" ], rule => 'phony',
+                         in => \@deps);
+  }
+
+  sub generated_source_path {
+      my $src = shift;
+      return $src if file_name_is_absolute($src) || $src =~ m|^\.\.[\\/]|;
+      return catfile($config{sourcedir}, split m|[\\/]+|, $src);
+  }
+
+  sub resolve_perlmodule_path {
+      my $path = shift;
+      return $path if !defined($path) || $path eq '' || $path eq '.'
+                      || file_name_is_absolute($path)
+                      || $path =~ m|^\.\.[\\/]|
+                      || exists $unified_info{generate}->{$path}
+                      || -e $path;
+      my $source_path = generated_source_path($path);
+      return -e $source_path ? $source_path : $path;
+  }
+
+  sub source_path_if_exists {
+      my $path = shift;
+      return $path if !defined($path) || $path eq ''
+                      || file_name_is_absolute($path)
+                      || $path =~ m|^\.\.[\\/]|;
+      my $source_path = generated_source_path($path);
+      return -e $source_path ? $source_path : $path;
+  }
+
+  sub shadowed_generated_rules {
+      return '' if lc canonpath(rel2abs($config{sourcedir}))
+                   eq lc canonpath(rel2abs($config{builddir}));
+
+      # Out-of-tree builds can be configured from a source tree that already
+      # contains ignored generated exporter files.  Add local rules for the
+      # shadowed generated dependencies that the normal generation pass skips.
+      my @fallbacks = (
+          "OpenSSLConfig.cmake",
+          "builddata.pm",
+          catfile("exporters", "OpenSSLConfig.cmake"),
+          catfile("exporters", "libcrypto.pc"),
+          catfile("exporters", "libssl.pc"),
+          "installdata.pm",
+          "libcrypto.pc",
+          "libssl.pc",
+      );
+      my $out = '';
+
+      for my $src (@fallbacks) {
+          my $generator = $unified_info{generate}->{$src} // next;
+          my $source_path = generated_source_path($src);
+          next unless -e $source_path;
+
+          my $gen0 = $generator->[0];
+          my @deps = @{$unified_info{depends}->{$src}
+                       // $unified_info{depends}->{$source_path}
+                       // []};
+          my %attrs = %{$unified_info{attributes}->{generate}->{$src} // {}};
+
+          $out .= generatesrc(
+              src => $src,
+              product => undef,
+              generator => $generator,
+              generator_incs => $unified_info{includes}->{$gen0} // [],
+              generator_deps => $unified_info{depends}->{$gen0} // [],
+              deps => \@deps,
+              incs => [],
+              defs => [],
+              attrs => { %attrs });
+      }
+
+      return $out;
+  }
+
+  shadowed_generated_rules();
+-}
