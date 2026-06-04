@@ -876,10 +876,10 @@ static void ossl_cache_lists_free(STORED_ALGORITHMS *sa)
 
     for (i = 0; i < MAX_CACHE_LINES; i++) {
         if (!CRYPTO_atomic_load_ptr((void **)&sa->cache_lists[i], (void **)&idx, sa->alock))
-            break;
+            return;
         while (idx != NULL) {
             if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&idxn, sa->alock))
-                break;
+                return;
             impl_cache_free_unlinked(idx);
             idx = idxn;
         }
