@@ -187,8 +187,8 @@ static int cipher_hw_des_cfb8_cipher(PROV_CIPHER_CTX *ctx, unsigned char *out,
     }
 
 PROV_CIPHER_HW_des_mode(ecb)
-    PROV_CIPHER_HW_des_mode(cbc)
-        PROV_CIPHER_HW_des_mode(ofb64)
-            PROV_CIPHER_HW_des_mode(cfb64)
-                PROV_CIPHER_HW_des_mode(cfb1)
-                    PROV_CIPHER_HW_des_mode(cfb8)
+PROV_CIPHER_HW_des_mode(cbc)
+PROV_CIPHER_HW_des_mode(ofb64)
+PROV_CIPHER_HW_des_mode(cfb64)
+PROV_CIPHER_HW_des_mode(cfb1)
+PROV_CIPHER_HW_des_mode(cfb8)

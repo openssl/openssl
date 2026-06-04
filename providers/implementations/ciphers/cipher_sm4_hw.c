@@ -145,7 +145,7 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_sm4_copyctx, PROV_SM4_CTX)
 #endif
 
 PROV_CIPHER_HW_sm4_mode(cbc)
-    PROV_CIPHER_HW_sm4_mode(ecb)
-        PROV_CIPHER_HW_sm4_mode(ofb128)
-            PROV_CIPHER_HW_sm4_mode(cfb128)
-                PROV_CIPHER_HW_sm4_mode(ctr)
+PROV_CIPHER_HW_sm4_mode(ecb)
+PROV_CIPHER_HW_sm4_mode(ofb128)
+PROV_CIPHER_HW_sm4_mode(cfb128)
+PROV_CIPHER_HW_sm4_mode(ctr)

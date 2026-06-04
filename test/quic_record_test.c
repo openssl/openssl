@@ -51,39 +51,39 @@ struct rx_test_op {
 #define RX_OP_END \
     { RX_TEST_OP_END }
 #define RX_OP_SET_SCID_LEN(scid_len) \
-    { RX_TEST_OP_SET_SCID_LEN, 0, NULL, 0, NULL, (scid_len), 0, 0, NULL, NULL },
+    { RX_TEST_OP_SET_SCID_LEN, 0, NULL, 0, NULL, (scid_len), 0, 0, NULL, NULL }
 #define RX_OP_SET_INIT_LARGEST_PN(largest_pn) \
-    { RX_TEST_OP_SET_INIT_LARGEST_PN, 0, NULL, 0, NULL, 0, 0, (largest_pn), NULL, NULL },
+    { RX_TEST_OP_SET_INIT_LARGEST_PN, 0, NULL, 0, NULL, 0, 0, (largest_pn), NULL, NULL }
 #define RX_OP_SET_RX_DCID(dcid) \
-    { RX_TEST_OP_SET_RX_DCID, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
+    { RX_TEST_OP_SET_RX_DCID, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL }
 #define RX_OP_INJECT(dgram) \
-    { RX_TEST_OP_INJECT, 0, (dgram), sizeof(dgram), NULL, 0, 0, 0, NULL },
+    { RX_TEST_OP_INJECT, 0, (dgram), sizeof(dgram), NULL, 0, 0, 0, NULL }
 #define RX_OP_PROVIDE_SECRET(el, suite, key)              \
     {                                                     \
         RX_TEST_OP_PROVIDE_SECRET, 0, (key), sizeof(key), \
         NULL, (el), (suite), 0, NULL, NULL                \
-    },
+    }
 #define RX_OP_PROVIDE_SECRET_INITIAL(dcid) \
-    { RX_TEST_OP_PROVIDE_SECRET_INITIAL, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL },
+    { RX_TEST_OP_PROVIDE_SECRET_INITIAL, 0, NULL, 0, NULL, 0, 0, 0, &(dcid), NULL }
 #define RX_OP_DISCARD_EL(el) \
-    { RX_TEST_OP_DISCARD_EL, 0, NULL, 0, NULL, (el), 0, 0, NULL, NULL },
+    { RX_TEST_OP_DISCARD_EL, 0, NULL, 0, NULL, (el), 0, 0, NULL, NULL }
 #define RX_OP_CHECK_PKT(expect_hdr, expect_body)                     \
     {                                                                \
         RX_TEST_OP_CHECK_PKT, 0, (expect_body), sizeof(expect_body), \
         &(expect_hdr), 0, 0, 0, NULL, NULL                           \
-    },
+    }
 #define RX_OP_CHECK_NO_PKT() \
-    { RX_TEST_OP_CHECK_NO_PKT, 0, NULL, 0, NULL, 0, 0, 0, NULL, NULL },
+    { RX_TEST_OP_CHECK_NO_PKT, 0, NULL, 0, NULL, 0, 0, 0, NULL, NULL }
 #define RX_OP_CHECK_KEY_EPOCH(expected) \
-    { RX_TEST_OP_CHECK_KEY_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL },
+    { RX_TEST_OP_CHECK_KEY_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL }
 #define RX_OP_KEY_UPDATE_TIMEOUT(normal) \
-    { RX_TEST_OP_KEY_UPDATE_TIMEOUT, 0, NULL, 0, NULL, (normal), 0, 0, NULL },
+    { RX_TEST_OP_KEY_UPDATE_TIMEOUT, 0, NULL, 0, NULL, (normal), 0, 0, NULL }
 #define RX_OP_SET_INIT_KEY_PHASE(kp_bit) \
-    { RX_TEST_OP_SET_INIT_KEY_PHASE, 0, NULL, 0, NULL, (kp_bit), 0, 0, NULL },
+    { RX_TEST_OP_SET_INIT_KEY_PHASE, 0, NULL, 0, NULL, (kp_bit), 0, 0, NULL }
 #define RX_OP_CHECK_PKT_EPOCH(expected) \
-    { RX_TEST_OP_CHECK_PKT_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL },
+    { RX_TEST_OP_CHECK_PKT_EPOCH, 0, NULL, 0, NULL, 0, 0, (expected), NULL }
 #define RX_OP_ALLOW_1RTT() \
-    { RX_TEST_OP_ALLOW_1RTT, 0, NULL, 0, NULL, 0, 0, 0, NULL },
+    { RX_TEST_OP_ALLOW_1RTT, 0, NULL, 0, NULL, 0, 0, 0, NULL }
 
 #define RX_OP_INJECT_N(n) \
     RX_OP_INJECT(rx_script_##n##_in)
@@ -91,8 +91,7 @@ struct rx_test_op {
     RX_OP_CHECK_PKT(rx_script_##n##_expect_hdr, rx_script_##n##_body)
 
 #define RX_OP_INJECT_CHECK(n) \
-    RX_OP_INJECT_N(n)         \
-    RX_OP_CHECK_PKT_N(n)
+    RX_OP_INJECT_N(n), RX_OP_CHECK_PKT_N(n)
 
 /* 1. RFC 9001 - A.3 Server Initial */
 static const unsigned char rx_script_1_in[] = {
@@ -136,13 +135,13 @@ static const QUIC_PKT_HDR rx_script_1_expect_hdr = {
 };
 
 static const struct rx_test_op rx_script_1[] = {
-    RX_OP_SET_SCID_LEN(2)
-        RX_OP_SET_INIT_LARGEST_PN(0)
-            RX_OP_SET_RX_DCID(empty_conn_id)
-                RX_OP_PROVIDE_SECRET_INITIAL(rx_script_1_dcid)
-                    RX_OP_INJECT_CHECK(1)
-                        RX_OP_CHECK_NO_PKT()
-                            RX_OP_END
+    RX_OP_SET_SCID_LEN(2),
+    RX_OP_SET_INIT_LARGEST_PN(0),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_1_dcid),
+    RX_OP_INJECT_CHECK(1),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_END
 };
 
 /* 2. RFC 9001 - A.5 ChaCha20-Poly1305 Short Header Packet */
@@ -171,14 +170,13 @@ static const QUIC_PKT_HDR rx_script_2_expect_hdr = {
 };
 
 static const struct rx_test_op rx_script_2[] = {
-    RX_OP_ALLOW_1RTT()
-        RX_OP_SET_INIT_LARGEST_PN(654360560)
-            RX_OP_SET_RX_DCID(empty_conn_id)
-                RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305,
-                    rx_script_2_secret)
-                    RX_OP_INJECT_CHECK(2)
-                        RX_OP_CHECK_NO_PKT()
-                            RX_OP_END
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_SET_INIT_LARGEST_PN(654360560),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305, rx_script_2_secret),
+    RX_OP_INJECT_CHECK(2),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_END
 };
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
@@ -218,15 +216,15 @@ static const unsigned char rx_script_3_body[] = {
 };
 
 static const struct rx_test_op rx_script_3[] = {
-    RX_OP_SET_RX_DCID(empty_conn_id)
+    RX_OP_SET_RX_DCID(empty_conn_id),
     /*
      * This is a version negotiation packet, so doesn't have any frames.
      * However, the depacketizer still handles this sort of packet, so
      * we still pass the packet to it, to exercise what it does.
      */
-    RX_OP_INJECT_CHECK(3)
-        RX_OP_CHECK_NO_PKT()
-            RX_OP_END
+    RX_OP_INJECT_CHECK(3),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_END
 };
 
 /* 4. Real World - Retry (S2C) */
@@ -281,10 +279,10 @@ static const unsigned char rx_script_4_body[] = {
 };
 
 static const struct rx_test_op rx_script_4[] = {
-    RX_OP_SET_RX_DCID(empty_conn_id)
-        RX_OP_INJECT_CHECK(4)
-            RX_OP_CHECK_NO_PKT()
-                RX_OP_END
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_INJECT_CHECK(4),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_END
 };
 
 /*
@@ -652,66 +650,62 @@ static const unsigned char rx_script_5c_body[] = {
 };
 
 static const struct rx_test_op rx_script_5[] = {
-    RX_OP_ALLOW_1RTT()
-        RX_OP_SET_RX_DCID(empty_conn_id)
-            RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
-                RX_OP_INJECT_N(5)
-                    RX_OP_CHECK_PKT_N(5a)
-                        RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-        QRL_SUITE_AES128GCM, rx_script_5_handshake_secret)
-        RX_OP_CHECK_PKT_N(5b)
-            RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-        QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret)
-        RX_OP_CHECK_PKT_N(5c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid),
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_PKT_N(5a),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, rx_script_5_handshake_secret),
+    RX_OP_CHECK_PKT_N(5b),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret),
+    RX_OP_CHECK_PKT_N(5c),
+    RX_OP_CHECK_NO_PKT(),
 
     /* Discard Initial EL and try injecting the packet again */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
-        RX_OP_INJECT_N(5)
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL),
+    RX_OP_INJECT_N(5),
     /* Initial packet is not output because we have discarded Initial keys */
-    RX_OP_CHECK_PKT_N(5b)
-        RX_OP_CHECK_PKT_N(5c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_PKT_N(5b),
+    RX_OP_CHECK_PKT_N(5c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again with discarded keys */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
-        RX_OP_INJECT_N(5)
-            RX_OP_CHECK_PKT_N(5c)
-                RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE),
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_PKT_N(5c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again */
-    RX_OP_INJECT_N(5)
-        RX_OP_CHECK_PKT_N(5c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_PKT_N(5c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again with discarded 1-RTT keys */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
-        RX_OP_INJECT_N(5)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT),
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_NO_PKT(),
 
     /* Recreate QRL, test reading packets received before key */
-    RX_OP_SET_SCID_LEN(0)
-        RX_OP_SET_RX_DCID(empty_conn_id)
-            RX_OP_INJECT_N(5)
-                RX_OP_CHECK_NO_PKT()
-                    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
-                        RX_OP_CHECK_PKT_N(5a)
-                            RX_OP_CHECK_NO_PKT()
-                                RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-                                    QRL_SUITE_AES128GCM, rx_script_5_handshake_secret)
-                                    RX_OP_CHECK_PKT_N(5b)
-                                        RX_OP_CHECK_NO_PKT()
-                                            RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-                                                QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret)
-                                                RX_OP_CHECK_PKT_N(5c)
-                                                    RX_OP_CHECK_NO_PKT()
+    RX_OP_SET_SCID_LEN(0),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid),
+    RX_OP_CHECK_PKT_N(5a),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, rx_script_5_handshake_secret),
+    RX_OP_CHECK_PKT_N(5b),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret),
+    RX_OP_CHECK_PKT_N(5c),
+    RX_OP_CHECK_NO_PKT(),
 
-                                                        RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
-                                                            RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
-                                                                RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
-                                                                    RX_OP_INJECT_N(5)
-                                                                        RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL),
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE),
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT),
+    RX_OP_INJECT_N(5),
+    RX_OP_CHECK_NO_PKT(),
 
-                                                                            RX_OP_END
+    RX_OP_END
 };
 
 /*
@@ -1082,60 +1076,56 @@ static const unsigned char rx_script_6c_body[] = {
 };
 
 static const struct rx_test_op rx_script_6[] = {
-    RX_OP_ALLOW_1RTT()
-        RX_OP_SET_RX_DCID(empty_conn_id)
-            RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid)
-                RX_OP_INJECT_N(6)
-                    RX_OP_CHECK_PKT_N(6a)
-                        RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-        QRL_SUITE_AES256GCM, rx_script_6_handshake_secret)
-        RX_OP_CHECK_PKT_N(6b)
-            RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-        QRL_SUITE_AES256GCM, rx_script_6_1rtt_secret)
-        RX_OP_CHECK_PKT_N(6c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid),
+    RX_OP_INJECT_N(6),
+    RX_OP_CHECK_PKT_N(6a),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES256GCM, rx_script_6_handshake_secret),
+    RX_OP_CHECK_PKT_N(6b),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES256GCM, rx_script_6_1rtt_secret),
+    RX_OP_CHECK_PKT_N(6c),
+    RX_OP_CHECK_NO_PKT(),
 
     /* Discard Initial EL and try injecting the packet again */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
-        RX_OP_INJECT_N(6)
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL),
+    RX_OP_INJECT_N(6),
     /* Initial packet is not output because we have discarded Initial keys */
-    RX_OP_CHECK_PKT_N(6b)
-        RX_OP_CHECK_PKT_N(6c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_PKT_N(6b),
+    RX_OP_CHECK_PKT_N(6c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again with discarded keys */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
-        RX_OP_INJECT_N(6)
-            RX_OP_CHECK_PKT_N(6c)
-                RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE),
+    RX_OP_INJECT_N(6),
+    RX_OP_CHECK_PKT_N(6c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again */
-    RX_OP_INJECT_N(6)
-        RX_OP_CHECK_PKT_N(6c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_INJECT_N(6),
+    RX_OP_CHECK_PKT_N(6c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again with discarded 1-RTT keys */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
-        RX_OP_INJECT_N(6)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT),
+    RX_OP_INJECT_N(6),
+    RX_OP_CHECK_NO_PKT(),
 
     /* Recreate QRL, test reading packets received before key */
-    RX_OP_SET_SCID_LEN(0)
-        RX_OP_SET_RX_DCID(empty_conn_id)
-            RX_OP_INJECT_N(6)
-                RX_OP_CHECK_NO_PKT()
-                    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid)
-                        RX_OP_CHECK_PKT_N(6a)
-                            RX_OP_CHECK_NO_PKT()
-                                RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-                                    QRL_SUITE_AES256GCM, rx_script_6_handshake_secret)
-                                    RX_OP_CHECK_PKT_N(6b)
-                                        RX_OP_CHECK_NO_PKT()
-                                            RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-                                                QRL_SUITE_AES256GCM, rx_script_6_1rtt_secret)
-                                                RX_OP_CHECK_PKT_N(6c)
-                                                    RX_OP_CHECK_NO_PKT()
+    RX_OP_SET_SCID_LEN(0),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_INJECT_N(6),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_6_c2s_init_dcid),
+    RX_OP_CHECK_PKT_N(6a),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES256GCM, rx_script_6_handshake_secret),
+    RX_OP_CHECK_PKT_N(6b),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES256GCM, rx_script_6_1rtt_secret),
+    RX_OP_CHECK_PKT_N(6c),
+    RX_OP_CHECK_NO_PKT(),
 
-                                                        RX_OP_END
+    RX_OP_END
 };
 
 /*
@@ -1506,60 +1496,56 @@ static const unsigned char rx_script_7c_body[] = {
 };
 
 static const struct rx_test_op rx_script_7[] = {
-    RX_OP_ALLOW_1RTT()
-        RX_OP_SET_RX_DCID(empty_conn_id)
-            RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid)
-                RX_OP_INJECT_N(7)
-                    RX_OP_CHECK_PKT_N(7a)
-                        RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-        QRL_SUITE_CHACHA20POLY1305, rx_script_7_handshake_secret)
-        RX_OP_CHECK_PKT_N(7b)
-            RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-        QRL_SUITE_CHACHA20POLY1305, rx_script_7_1rtt_secret)
-        RX_OP_CHECK_PKT_N(7c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid),
+    RX_OP_INJECT_N(7),
+    RX_OP_CHECK_PKT_N(7a),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_CHACHA20POLY1305, rx_script_7_handshake_secret),
+    RX_OP_CHECK_PKT_N(7b),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305, rx_script_7_1rtt_secret),
+    RX_OP_CHECK_PKT_N(7c),
+    RX_OP_CHECK_NO_PKT(),
 
     /* Discard Initial EL and try injecting the packet again */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL)
-        RX_OP_INJECT_N(7)
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_INITIAL),
+    RX_OP_INJECT_N(7),
     /* Initial packet is not output because we have discarded Initial keys */
-    RX_OP_CHECK_PKT_N(7b)
-        RX_OP_CHECK_PKT_N(7c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_PKT_N(7b),
+    RX_OP_CHECK_PKT_N(7c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again with discarded keys */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE)
-        RX_OP_INJECT_N(7)
-            RX_OP_CHECK_PKT_N(7c)
-                RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_HANDSHAKE),
+    RX_OP_INJECT_N(7),
+    RX_OP_CHECK_PKT_N(7c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again */
-    RX_OP_INJECT_N(7)
-        RX_OP_CHECK_PKT_N(7c)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_INJECT_N(7),
+    RX_OP_CHECK_PKT_N(7c),
+    RX_OP_CHECK_NO_PKT(),
     /* Try again with discarded 1-RTT keys */
-    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT)
-        RX_OP_INJECT_N(7)
-            RX_OP_CHECK_NO_PKT()
+    RX_OP_DISCARD_EL(QUIC_ENC_LEVEL_1RTT),
+    RX_OP_INJECT_N(7),
+    RX_OP_CHECK_NO_PKT(),
 
     /* Recreate QRL, test reading packets received before key */
-    RX_OP_SET_SCID_LEN(0)
-        RX_OP_SET_RX_DCID(empty_conn_id)
-            RX_OP_INJECT_N(7)
-                RX_OP_CHECK_NO_PKT()
-                    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid)
-                        RX_OP_CHECK_PKT_N(7a)
-                            RX_OP_CHECK_NO_PKT()
-                                RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-                                    QRL_SUITE_CHACHA20POLY1305, rx_script_7_handshake_secret)
-                                    RX_OP_CHECK_PKT_N(7b)
-                                        RX_OP_CHECK_NO_PKT()
-                                            RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-                                                QRL_SUITE_CHACHA20POLY1305, rx_script_7_1rtt_secret)
-                                                RX_OP_CHECK_PKT_N(7c)
-                                                    RX_OP_CHECK_NO_PKT()
+    RX_OP_SET_SCID_LEN(0),
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_INJECT_N(7),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_7_c2s_init_dcid),
+    RX_OP_CHECK_PKT_N(7a),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_CHACHA20POLY1305, rx_script_7_handshake_secret),
+    RX_OP_CHECK_PKT_N(7b),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305, rx_script_7_1rtt_secret),
+    RX_OP_CHECK_PKT_N(7c),
+    RX_OP_CHECK_NO_PKT(),
 
-                                                        RX_OP_END
+    RX_OP_END
 };
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
@@ -1778,118 +1764,115 @@ static const unsigned char rx_script_8f_body[] = {
 };
 
 static const struct rx_test_op rx_script_8[] = {
-    RX_OP_ALLOW_1RTT()
-        RX_OP_SET_RX_DCID(empty_conn_id)
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_SET_RX_DCID(empty_conn_id),
     /* Inject before we get the keys */
-    RX_OP_INJECT_N(8a)
+    RX_OP_INJECT_N(8a),
     /* Nothing yet */
-    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_NO_PKT(),
     /* Provide keys */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-        QRL_SUITE_AES128GCM, rx_script_8_1rtt_secret)
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, rx_script_8_1rtt_secret),
     /* Now the injected packet is successfully returned */
-    RX_OP_CHECK_PKT_N(8a)
-        RX_OP_CHECK_NO_PKT()
-            RX_OP_CHECK_KEY_EPOCH(0)
-                RX_OP_CHECK_PKT_EPOCH(0)
+    RX_OP_CHECK_PKT_N(8a),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(0),
+    RX_OP_CHECK_PKT_EPOCH(0),
 
     /* Packet with new key phase */
-    RX_OP_INJECT_N(8b)
+    RX_OP_INJECT_N(8b),
     /* Packet is successfully decrypted and returned */
-    RX_OP_CHECK_PKT_N(8b)
-        RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_PKT_N(8b),
+    RX_OP_CHECK_NO_PKT(),
     /* Key epoch has increased */
-    RX_OP_CHECK_KEY_EPOCH(1)
-        RX_OP_CHECK_PKT_EPOCH(1)
+    RX_OP_CHECK_KEY_EPOCH(1),
+    RX_OP_CHECK_PKT_EPOCH(1),
 
     /*
      * Now inject an old packet with the old keys (perhaps reordered in
      * network).
      */
-    RX_OP_INJECT_N(8c)
+    RX_OP_INJECT_N(8c),
     /* Should still be decrypted OK */
-    RX_OP_CHECK_PKT_N(8c)
-        RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_PKT_N(8c),
+    RX_OP_CHECK_NO_PKT(),
     /* Epoch has not changed */
-    RX_OP_CHECK_KEY_EPOCH(1)
-        RX_OP_CHECK_PKT_EPOCH(0)
+    RX_OP_CHECK_KEY_EPOCH(1),
+    RX_OP_CHECK_PKT_EPOCH(0),
 
     /* Another packet with the new keys. */
-    RX_OP_INJECT_N(8d)
-        RX_OP_CHECK_PKT_N(8d)
-            RX_OP_CHECK_NO_PKT()
-                RX_OP_CHECK_KEY_EPOCH(1)
-                    RX_OP_CHECK_PKT_EPOCH(1)
+    RX_OP_INJECT_N(8d),
+    RX_OP_CHECK_PKT_N(8d),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(1),
+    RX_OP_CHECK_PKT_EPOCH(1),
 
     /* We can inject the old packet multiple times and it still works */
-    RX_OP_INJECT_N(8c)
-        RX_OP_CHECK_PKT_N(8c)
-            RX_OP_CHECK_NO_PKT()
-                RX_OP_CHECK_KEY_EPOCH(1)
-                    RX_OP_CHECK_PKT_EPOCH(0)
+    RX_OP_INJECT_N(8c),
+    RX_OP_CHECK_PKT_N(8c),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(1),
+    RX_OP_CHECK_PKT_EPOCH(0),
 
     /* Until we move from UPDATING to COOLDOWN */
-    RX_OP_KEY_UPDATE_TIMEOUT(0)
-        RX_OP_INJECT_N(8c)
-            RX_OP_CHECK_NO_PKT()
-                RX_OP_CHECK_KEY_EPOCH(1)
+    RX_OP_KEY_UPDATE_TIMEOUT(0),
+    RX_OP_INJECT_N(8c),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(1),
 
     /*
      * Injecting a packet from the next epoch (epoch 2) while in COOLDOWN
      * doesn't work
      */
-    RX_OP_INJECT_N(8e)
-        RX_OP_CHECK_NO_PKT()
-            RX_OP_CHECK_KEY_EPOCH(1)
+    RX_OP_INJECT_N(8e),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(1),
 
     /* Move from COOLDOWN to NORMAL and try again */
-    RX_OP_KEY_UPDATE_TIMEOUT(1)
-        RX_OP_INJECT_N(8e)
-            RX_OP_CHECK_PKT_N(8e)
-                RX_OP_CHECK_NO_PKT()
-                    RX_OP_CHECK_KEY_EPOCH(2)
-                        RX_OP_CHECK_PKT_EPOCH(2)
+    RX_OP_KEY_UPDATE_TIMEOUT(1),
+    RX_OP_INJECT_N(8e),
+    RX_OP_CHECK_PKT_N(8e),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(2),
+    RX_OP_CHECK_PKT_EPOCH(2),
 
     /* Can still receive old packet */
-    RX_OP_INJECT_N(8d)
-        RX_OP_CHECK_PKT_N(8d)
-            RX_OP_CHECK_NO_PKT()
-                RX_OP_CHECK_KEY_EPOCH(2)
-                    RX_OP_CHECK_PKT_EPOCH(1)
+    RX_OP_INJECT_N(8d),
+    RX_OP_CHECK_PKT_N(8d),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(2),
+    RX_OP_CHECK_PKT_EPOCH(1),
 
     /* Move straight from UPDATING to NORMAL */
-    RX_OP_KEY_UPDATE_TIMEOUT(1)
+    RX_OP_KEY_UPDATE_TIMEOUT(1),
 
     /* Try a packet from epoch 3 */
-    RX_OP_INJECT_N(8f)
-        RX_OP_CHECK_PKT_N(8f)
-            RX_OP_CHECK_NO_PKT()
-                RX_OP_CHECK_KEY_EPOCH(3)
-                    RX_OP_CHECK_PKT_EPOCH(3)
+    RX_OP_INJECT_N(8f),
+    RX_OP_CHECK_PKT_N(8f),
+    RX_OP_CHECK_NO_PKT(),
+    RX_OP_CHECK_KEY_EPOCH(3),
+    RX_OP_CHECK_PKT_EPOCH(3),
 
-                        RX_OP_END
+    RX_OP_END
 };
 
 /* 9. 1-RTT Deferral Test */
 static const struct rx_test_op rx_script_9[] = {
-    RX_OP_SET_RX_DCID(empty_conn_id)
-        RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid)
-            RX_OP_INJECT_N(5)
+    RX_OP_SET_RX_DCID(empty_conn_id),
+    RX_OP_PROVIDE_SECRET_INITIAL(rx_script_5_c2s_init_dcid),
+    RX_OP_INJECT_N(5),
 
-                RX_OP_CHECK_PKT_N(5a)
-                    RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE,
-        QRL_SUITE_AES128GCM, rx_script_5_handshake_secret)
-        RX_OP_CHECK_PKT_N(5b)
-            RX_OP_CHECK_NO_PKT() /* not got secret for next packet yet */
-    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT,
-        QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret)
-        RX_OP_CHECK_NO_PKT() /* still nothing - 1-RTT not enabled */
-    RX_OP_ALLOW_1RTT()
-        RX_OP_CHECK_PKT_N(5c) /* now we get the 1-RTT packet */
-    RX_OP_CHECK_NO_PKT()
+    RX_OP_CHECK_PKT_N(5a),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_HANDSHAKE, QRL_SUITE_AES128GCM, rx_script_5_handshake_secret),
+    RX_OP_CHECK_PKT_N(5b),
+    RX_OP_CHECK_NO_PKT(), /* not got secret for next packet yet */
+    RX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, rx_script_5_1rtt_secret),
+    RX_OP_CHECK_NO_PKT(), /* still nothing - 1-RTT not enabled */
+    RX_OP_ALLOW_1RTT(),
+    RX_OP_CHECK_PKT_N(5c), /* now we get the 1-RTT packet */
+    RX_OP_CHECK_NO_PKT(),
 
-        RX_OP_END
+    RX_OP_END
 };
 
 static const struct rx_test_op *rx_scripts[] = {
@@ -3211,24 +3194,24 @@ struct tx_test_op {
 #define TX_OP_END \
     { TX_TEST_OP_END }
 #define TX_OP_WRITE(pkt) \
-    { TX_TEST_OP_WRITE, NULL, 0, &(pkt), 0, 0, NULL },
+    { TX_TEST_OP_WRITE, NULL, 0, &(pkt), 0, 0, NULL }
 #define TX_OP_PROVIDE_SECRET(el, suite, key)           \
     {                                                  \
         TX_TEST_OP_PROVIDE_SECRET, (key), sizeof(key), \
         NULL, (el), (suite), NULL                      \
-    },
+    }
 #define TX_OP_PROVIDE_SECRET_INITIAL(dcid, is_server) \
     { TX_TEST_OP_PROVIDE_SECRET_INITIAL,              \
-        NULL, 0, NULL, 0, (is_server), &(dcid) },
+        NULL, 0, NULL, 0, (is_server), &(dcid) }
 #define TX_OP_DISCARD_EL(el) \
-    { TX_TEST_OP_DISCARD_EL, NULL, 0, NULL, (el), 0, NULL },
+    { TX_TEST_OP_DISCARD_EL, NULL, 0, NULL, (el), 0, NULL }
 #define TX_OP_CHECK_DGRAM(expect_dgram)                               \
     {                                                                 \
         TX_TEST_OP_CHECK_DGRAM, (expect_dgram), sizeof(expect_dgram), \
         NULL, 0, 0, NULL                                              \
-    },
+    }
 #define TX_OP_CHECK_NO_DGRAM() \
-    { TX_TEST_OP_CHECK_NO_PKT, NULL, 0, NULL, 0, 0, NULL },
+    { TX_TEST_OP_CHECK_NO_PKT, NULL, 0, NULL, 0, 0, NULL }
 
 #define TX_OP_WRITE_N(n) \
     TX_OP_WRITE(tx_script_##n##_pkt)
@@ -3236,11 +3219,10 @@ struct tx_test_op {
     TX_OP_CHECK_DGRAM(tx_script_##n##_dgram)
 
 #define TX_OP_WRITE_CHECK(n) \
-    TX_OP_WRITE_N(n)         \
-    TX_OP_CHECK_DGRAM_N(n)
+    TX_OP_WRITE_N(n), TX_OP_CHECK_DGRAM_N(n)
 
 #define TX_OP_KEY_UPDATE() \
-    { TX_TEST_OP_KEY_UPDATE, NULL, 0, NULL, 0, 0, NULL },
+    { TX_TEST_OP_KEY_UPDATE, NULL, 0, NULL, 0, 0, NULL }
 
 /* 1. RFC 9001 - A.2 Client Initial */
 static const unsigned char tx_script_1_body[1162] = {
@@ -3401,9 +3383,9 @@ static const OSSL_QTX_PKT tx_script_1_pkt = {
 };
 
 static const struct tx_test_op tx_script_1[] = {
-    TX_OP_PROVIDE_SECRET_INITIAL(tx_script_1_hdr.dst_conn_id, 0)
-        TX_OP_WRITE_CHECK(1)
-            TX_OP_END
+    TX_OP_PROVIDE_SECRET_INITIAL(tx_script_1_hdr.dst_conn_id, 0),
+    TX_OP_WRITE_CHECK(1),
+    TX_OP_END
 };
 
 /* 2. RFC 9001 - A.3 Server Initial */
@@ -3466,9 +3448,9 @@ static const OSSL_QTX_PKT tx_script_2_pkt = {
 };
 
 static const struct tx_test_op tx_script_2[] = {
-    TX_OP_PROVIDE_SECRET_INITIAL(tx_script_1_hdr.dst_conn_id, 1)
-        TX_OP_WRITE_CHECK(2)
-            TX_OP_END
+    TX_OP_PROVIDE_SECRET_INITIAL(tx_script_1_hdr.dst_conn_id, 1),
+    TX_OP_WRITE_CHECK(2),
+    TX_OP_END
 };
 
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
@@ -3518,9 +3500,9 @@ static const OSSL_QTX_PKT tx_script_3_pkt = {
 };
 
 static const struct tx_test_op tx_script_3[] = {
-    TX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305, tx_script_3_secret)
-        TX_OP_WRITE_CHECK(3)
-            TX_OP_END
+    TX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_CHACHA20POLY1305, tx_script_3_secret),
+    TX_OP_WRITE_CHECK(3),
+    TX_OP_END
 };
 #endif /* !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305) */
 
@@ -3669,13 +3651,13 @@ static const OSSL_QTX_PKT tx_script_4c_pkt = {
 };
 
 static const struct tx_test_op tx_script_4[] = {
-    TX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, tx_script_4_secret)
-        TX_OP_WRITE_CHECK(4a)
-            TX_OP_KEY_UPDATE()
-                TX_OP_WRITE_CHECK(4b)
-                    TX_OP_KEY_UPDATE()
-                        TX_OP_WRITE_CHECK(4c)
-                            TX_OP_END
+    TX_OP_PROVIDE_SECRET(QUIC_ENC_LEVEL_1RTT, QRL_SUITE_AES128GCM, tx_script_4_secret),
+    TX_OP_WRITE_CHECK(4a),
+    TX_OP_KEY_UPDATE(),
+    TX_OP_WRITE_CHECK(4b),
+    TX_OP_KEY_UPDATE(),
+    TX_OP_WRITE_CHECK(4c),
+    TX_OP_END
 };
 
 /* 5. Real World - Retry Packet */
@@ -3743,8 +3725,8 @@ static const OSSL_QTX_PKT tx_script_5_pkt = {
 };
 
 static const struct tx_test_op tx_script_5[] = {
-    TX_OP_WRITE_CHECK(5)
-        TX_OP_END
+    TX_OP_WRITE_CHECK(5),
+    TX_OP_END
 };
 
 /* 6. Real World - Version Negotiation Packet */
@@ -3795,8 +3777,8 @@ static const OSSL_QTX_PKT tx_script_6_pkt = {
 };
 
 static const struct tx_test_op tx_script_6[] = {
-    TX_OP_WRITE_CHECK(6)
-        TX_OP_END
+    TX_OP_WRITE_CHECK(6),
+    TX_OP_END
 };
 
 static const struct tx_test_op *const tx_scripts[] = {
