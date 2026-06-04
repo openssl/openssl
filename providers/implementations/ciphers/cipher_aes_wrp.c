@@ -215,7 +215,7 @@ static int aes_wrap_cipher_internal(void *vctx, unsigned char *out,
      * relies on all fields being present.
      */
     if (wctx->updated) {
-        ERR_raise(ERR_LIB_PROV, EVP_R_UPDATE_ERROR);
+        ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
         return -1;
     }
     if (!ctx->key_set) {
