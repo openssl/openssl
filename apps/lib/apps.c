@@ -2964,7 +2964,10 @@ BIO *app_http_tls_cb(BIO *bio, void *arg, int connect, int detail)
             goto err;
 
         SSL_set_connect_state(ssl);
-        BIO_set_ssl(sbio, ssl, BIO_CLOSE);
+        if (BIO_set_ssl(sbio, ssl, BIO_CLOSE) <= 0) {
+            SSL_free(ssl);
+            goto err;
+        }
         if (!host_is_ip_address(info->server)) {
             if (!SSL_set_tlsext_host_name(ssl, info->server)) /* set SNI */
                 goto err;
