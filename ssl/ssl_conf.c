@@ -734,6 +734,29 @@ static int cmd_NumTickets(SSL_CONF_CTX *cctx, const char *value)
     return rv;
 }
 
+static int cmd_SessionTimeout(SSL_CONF_CTX *cctx, const char *value)
+{
+    long t;
+    char *endptr = NULL;
+
+    if (cctx->ctx == NULL)
+        return 1;
+
+    if (value == NULL || *value == '\0')
+        return 0;
+
+    if (OPENSSL_strcasecmp(value, "infinite") == 0)
+        t = -1;
+    else {
+        t = strtol(value, &endptr, 0);
+        if (endptr == value || (endptr != NULL && *endptr != '\0'))
+            return 0;
+    }
+
+    SSL_CTX_set_timeout(cctx->ctx, t);
+    return 1;
+}
+
 typedef struct {
     int (*cmd)(SSL_CONF_CTX *cctx, const char *value);
     const char *str_file;
@@ -838,6 +861,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
         SSL_CONF_TYPE_FILE),
     SSL_CONF_CMD_STRING(RecordPadding, "record_padding", 0),
     SSL_CONF_CMD_STRING(NumTickets, "num_tickets", SSL_CONF_FLAG_SERVER),
+    SSL_CONF_CMD_STRING(SessionTimeout, "session_timeout", SSL_CONF_FLAG_SERVER),
 };
 
 /* Supported switches: must match order of switches in ssl_conf_cmds */
