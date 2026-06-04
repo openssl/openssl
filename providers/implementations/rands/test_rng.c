@@ -305,7 +305,7 @@ static int test_rng_enable_locking(void *vtest)
     if (t != NULL && t->lock == NULL) {
         t->lock = CRYPTO_THREAD_lock_new();
         if (t->lock == NULL) {
-            ERR_raise(ERR_LIB_PROV, RAND_R_FAILED_TO_CREATE_LOCK);
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_CREATE_LOCK);
             return 0;
         }
     }
