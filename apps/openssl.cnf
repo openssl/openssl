@@ -90,7 +90,6 @@ default_ca	= CA_default		# The default ca section
 [ CA_default ]
 
 dir		= ./demoCA		# Where everything is kept
-certs		= $dir/certs		# Where the issued certs are kept
 database	= $dir/index.txt	# database index file.
 #unique_subject	= no			# Set to 'no' to allow creation of
 					# several certs with same subject.
