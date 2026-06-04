@@ -238,7 +238,7 @@ DH *ossl_dh_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     goto done;
 
 decerr:
-    ERR_raise(ERR_LIB_DH, EVP_R_DECODE_ERROR);
+    ERR_raise(ERR_LIB_DH, DH_R_DECODE_ERROR);
 dherr:
     DH_free(dh);
     dh = NULL;
