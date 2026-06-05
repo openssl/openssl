@@ -4209,6 +4209,24 @@ static BIO *get_sslkeylog_bio(const char *keylogfile)
 
 static int x509_hs_cmp(const X509_HS_CACHE_ENT *const *a, const X509_HS_CACHE_ENT *const *b)
 {
+    /*
+     * This deserves a bit of explanation.
+     * Its obvious that we are doing comparisons of sha1_hash values between certificates
+     * here.  What's less obvious is why we are always returning either 0 (match) or -1 (i.e. less
+     * than/not match).  Its done because this STACK_OF is unsorted.
+     *
+     * Because the stack is unsorted, we need to search through every entry in the list for a match,
+     * And the STACK_OF api has an efficiency built in that aborts a lookup if 1 (greater than /
+     * not match) is returned.  This gives lookups a average search time of O(n/2), but means that
+     * we have to sort the list on each insert, or insert to exactly the right location.  Because
+     * the cache is capped at 64 entries, which is small, it seems like the better approach here is
+     * to accept a O(n) lookup time, in exchange for allowing a O(1) (always insert to head) insert
+     * semantic, which also gives us the ability to cull from the cache by eliminating the oldest
+     * entry by dropping index 63 from the stack.
+     *
+     * So this comparison is effectively implementing linear list traversal.  Are there better ways
+     * to do this?  Maybe, but this works pretty well right now
+     */
     return memcmp((*a)->sha1_hash, (*b)->sha1_hash, SHA_DIGEST_LENGTH) == 0 ? 0 : -1;
 }
 
