@@ -785,6 +785,10 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     int hostlen;
     int ret;
 
+    /* Reject *embedded* NULs */
+    if (memchr(uri->data, '\0', uri->length) != NULL)
+        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+
     if ((uri_copy = OPENSSL_strndup((const char *)uri->data, uri->length)) == NULL)
         return X509_V_ERR_UNSPECIFIED;
 
