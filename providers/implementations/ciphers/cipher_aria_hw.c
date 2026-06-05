@@ -43,7 +43,6 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_aria_copyctx, PROV_ARIA_CTX)
         return &aria_##mode;                                              \
     }
 
-/* clang-format off */
 PROV_CIPHER_HW_aria_mode(cbc)
 PROV_CIPHER_HW_aria_mode(ecb)
 PROV_CIPHER_HW_aria_mode(ofb128)
@@ -51,4 +50,3 @@ PROV_CIPHER_HW_aria_mode(cfb128)
 PROV_CIPHER_HW_aria_mode(cfb1)
 PROV_CIPHER_HW_aria_mode(cfb8)
 PROV_CIPHER_HW_aria_mode(ctr)
-    /* clang-format on */

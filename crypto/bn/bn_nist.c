@@ -281,8 +281,8 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 }
 
 #if BN_BITS2 == 64
-#define bn_cp_64(to, n, from, m) (to)[n] = (m >= 0) ? ((from)[m]) : 0;
-#define bn_64_set_0(to, n) (to)[n] = (BN_ULONG)0;
+#define bn_cp_64(to, n, from, m) (to)[n] = (m >= 0) ? ((from)[m]) : 0
+#define bn_64_set_0(to, n) (to)[n] = (BN_ULONG)0
 /*
  * two following macros are implemented under assumption that they
  * are called in a sequence with *ascending* n, i.e. as they are...
@@ -340,14 +340,12 @@ static ossl_inline void store_lo32(void *ptr, NIST_INT64 val)
 }
 #endif /* NIST_INT64 */
 
-/* clang-format off */
-#define nist_set_192(to, from, a1, a2, a3)      \
-    {                                           \
-        bn_cp_64(to, 0, from, (a3) - 3)         \
-        bn_cp_64(to, 1, from, (a2) - 3)         \
-        bn_cp_64(to, 2, from, (a1) - 3)         \
+#define nist_set_192(to, from, a1, a2, a3) \
+    {                                      \
+        bn_cp_64(to, 0, from, (a3) - 3);   \
+        bn_cp_64(to, 1, from, (a2) - 3);   \
+        bn_cp_64(to, 2, from, (a1) - 3);   \
     }
-/* clang-format on */
 
 int BN_nist_mod_192(BIGNUM *r, const BIGNUM *a, const BIGNUM *field,
     BN_CTX *ctx)

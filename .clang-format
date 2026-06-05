@@ -1375,6 +1375,10 @@ StatementMacros:
   - "static_ASN1_SEQUENCE_END_cb"
   - "static_ASN1_SEQUENCE_END_name"
   - "static_ASN1_SEQUENCE_END_ref"
+  - "PROV_CIPHER_HW_aria_mode"
+  - "PROV_CIPHER_HW_camellia_mode"
+  - "PROV_CIPHER_HW_des_mode"
+  - "PROV_CIPHER_HW_sm4_mode"
   # This isn't quite right, but it causes clang-format to do a slightly better
   # job formatting this macro.
   - "ASN1_EX_TEMPLATE_TYPE"

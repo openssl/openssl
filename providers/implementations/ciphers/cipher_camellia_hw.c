@@ -63,7 +63,6 @@ IMPLEMENT_CIPHER_HW_COPYCTX(cipher_hw_camellia_copyctx, PROV_CAMELLIA_CTX)
         PROV_CIPHER_HW_select(mode) return &camellia_##mode; \
     }
 
-/* clang-format off */
 PROV_CIPHER_HW_camellia_mode(cbc)
 PROV_CIPHER_HW_camellia_mode(ecb)
 PROV_CIPHER_HW_camellia_mode(ofb128)
@@ -71,4 +70,3 @@ PROV_CIPHER_HW_camellia_mode(cfb128)
 PROV_CIPHER_HW_camellia_mode(cfb1)
 PROV_CIPHER_HW_camellia_mode(cfb8)
 PROV_CIPHER_HW_camellia_mode(ctr)
-    /* clang-format on */
