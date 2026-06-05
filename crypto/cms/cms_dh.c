@@ -310,7 +310,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         dukmlen = ASN1_STRING_length_ex(ukm);
         if (dukmlen > INT_MAX)
             goto err;
-        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), (int)dukmlen);
+        dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);
         if (dukm == NULL)
             goto err;
     }

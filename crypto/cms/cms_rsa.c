@@ -102,7 +102,7 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
     if (EVP_PKEY_CTX_set_rsa_mgf1_md(pkctx, mgf1md) <= 0)
         goto err;
     if (label != NULL) {
-        unsigned char *dup_label = OPENSSL_memdup(label, (int)labellen);
+        unsigned char *dup_label = OPENSSL_memdup(label, labellen);
 
         if (dup_label == NULL)
             goto err;
