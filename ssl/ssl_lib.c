@@ -5208,6 +5208,8 @@ int SSL_do_handshake(SSL *s)
 void SSL_set_accept_state(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc == NULL)
+        return;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s)) {
@@ -5228,6 +5230,8 @@ void SSL_set_accept_state(SSL *s)
 void SSL_set_connect_state(SSL *s)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    if (sc == NULL)
+        return;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s)) {
