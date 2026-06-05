@@ -991,6 +991,13 @@ IF[{- !$disabled{tests} -}]
       DEPEND[tls12psk_test]=../libcrypto.a ../libssl.a libtestutil.a
     ENDIF
 
+    IF[{- !$disabled{psk} && !$disabled{dtls1_2} -}]
+      PROGRAMS{noinst}=dtls12psk_test
+      SOURCE[dtls12psk_test]=dtls12psk.c helpers/ssltestlib.c
+      INCLUDE[dtls12psk_test]=.. ../include ../apps/include
+      DEPEND[dtls12psk_test]=../libcrypto.a ../libssl.a libtestutil.a
+    ENDIF
+
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
     DEPEND[tls13encryptiontest]=../libcrypto.a ../libssl.a libtestutil.a
