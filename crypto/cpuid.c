@@ -193,6 +193,10 @@ void OPENSSL_cpuid_setup(void)
  * not volatile, but compilers do this in practice anyway.
  *
  * There are also assembler versions of this function.
+ *
+ * This C version and the per-architecture assembler versions are all verified
+ * to be constant-time under enable-ct-validation for Valgrind-supported
+ * architectures, currently x86_64 and aarch64.
  */
 #undef CRYPTO_memcmp
 int CRYPTO_memcmp(const void *in_a, const void *in_b, size_t len)

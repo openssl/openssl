@@ -6,7 +6,8 @@
 # https://www.openssl.org/source/license.html
 
 name: Constant-time validation (daily)
-# Verifies that ML-KEM and ML-DSA signing do not branch on secret data.
+# Verifies that several algorithms needing constant-time execution do not
+# branch on secret data.
 #
 # The library is built with enable-ct-validation, which defines
 # OPENSSL_CONSTANT_TIME_VALIDATION and causes secret regions to be marked
@@ -49,11 +50,26 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Constant-timeness is a property of the generated machine code, which
+        # the compiler derives differently per architecture. Therefore we verify
+        # both the assembly and C implementations on every architecture we can
+        # run Valgrind on.
         include:
+          # Default builds use assembler implementations (when available)
           - name: linux-x86_64
             runs-on: ubuntu-latest
+            config_extra: ""
           - name: linux-aarch64
             runs-on: ubuntu-24.04-arm
+            config_extra: ""
+
+          # no-asm builds always use C implementations
+          - name: linux-x86_64-no-asm
+            runs-on: ubuntu-latest
+            config_extra: no-asm
+          - name: linux-aarch64-no-asm
+            runs-on: ubuntu-24.04-arm
+            config_extra: no-asm
 
     name: CT validation (${{ matrix.name }})
     runs-on: ${{ matrix.runs-on }}
@@ -72,18 +88,23 @@ jobs:
 
       - name: Configure with CT validation enabled
         run: |
-          ./Configure enable-ct-validation
+          ./Configure enable-ct-validation ${{ matrix.config_extra }}
           ./configdata.pm --dump
 
       - name: Build
         run: make -j$(nproc)
 
-      - name: Run ML-KEM and ML-DSA CT validation under Valgrind
+      - name: Run CT validation under Valgrind
         # OSSL_VALGRIND_CT=yes causes OpenSSL::Test::test() to wrap each
         # test binary with valgrind --track-origins=yes --error-exitcode=1.
         # util/wrap.pl -> util/shlib_wrap.sh sets LD_LIBRARY_PATH first, so
         # the shared libraries are found correctly.
+        #
+        # Algorithms covered:
+        # - memcmp: test_crypto_memcmp
+        # - ML-KEM: test_internal_ml_kem
+        # - ML-DSA: test_internal_ml_dsa
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp" \
                OSSL_VALGRIND_CT=yes \
                test
