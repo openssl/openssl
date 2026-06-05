@@ -390,7 +390,6 @@ asn1_bit_string_set1_test(int idx)
 }
 
 static int
-
 asn1_string_new_not_owned_test(void)
 {
     int success = 0;
