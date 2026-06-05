@@ -169,15 +169,15 @@
  * NTT computation for layers, 1, 2, 3, 4, 5, 6.
  */
 .macro _ntt_body _vz0, _vz1, _vz2, _vz3
-        lxvd2x  32+6, 5, 10
-        lxvd2x  32+7, 5, 12
-        lxvd2x  32+8, 5, 16
-        lxvd2x  32+9, 5, 18
+        lxvd2x  32+6, 5, GPR_OFFSET_P0
+        lxvd2x  32+7, 5, GPR_OFFSET_P1
+        lxvd2x  32+8, 5, GPR_OFFSET_P2
+        lxvd2x  32+9, 5, GPR_OFFSET_P3
         mont_mul_reduce_4x \_vz0, \_vz1, \_vz2, \_vz3
-        lxvd2x  32+26, 5, 9
-        lxvd2x  32+27, 5, 11
-        lxvd2x  32+28, 5, 15
-        lxvd2x  32+29, 5, 17
+        lxvd2x  32+26, 5, GPR_OFFSET_C0
+        lxvd2x  32+27, 5, GPR_OFFSET_C1
+        lxvd2x  32+28, 5, GPR_OFFSET_C2
+        lxvd2x  32+29, 5, GPR_OFFSET_C3
 
 	/* update curr and peer coefficients */
 	_update_curr_peer_coeffs
@@ -305,15 +305,15 @@ mldsa_poly_ntt_ppc:
          */
         mr      5, 3
 
-	li	9, 0
-        li      11, 0x10
-        li      15, 0x20
-        li      17, 0x30
+	li	GPR_OFFSET_C0, 0
+        li      GPR_OFFSET_C1, 0x10
+        li      GPR_OFFSET_C2, 0x20
+        li      GPR_OFFSET_C3, 0x30
 
-        li      10, 0x200
-        li      12, 0x210
-        li      16, 0x220
-        li      18, 0x230
+        li      GPR_OFFSET_P0, 0x200
+        li      GPR_OFFSET_P1, 0x210
+        li      GPR_OFFSET_P2, 0x220
+        li      GPR_OFFSET_P3, 0x230
 
         lvx     V_ZETA, 0, 14
         addi    14, 14, 16
@@ -333,10 +333,10 @@ mldsa_poly_ntt_ppc:
          */
         mr      5, 3
 
-        li      10, 0x100
-        li      12, 0x110
-        li      16, 0x120
-        li      18, 0x130
+        li      GPR_OFFSET_P0, 0x100
+        li      GPR_OFFSET_P1, 0x110
+        li      GPR_OFFSET_P2, 0x120
+        li      GPR_OFFSET_P3, 0x130
 
         lvx     V_ZETA, 0, 14
         addi    14, 14, 16
@@ -359,10 +359,10 @@ mldsa_poly_ntt_ppc:
          */
         mr      5, 3
 
-        li      10, 0x80
-        li      12, 0x90
-        li      16, 0xa0
-        li      18, 0xb0
+        li      GPR_OFFSET_P0, 0x80
+        li      GPR_OFFSET_P1, 0x90
+        li      GPR_OFFSET_P2, 0xa0
+        li      GPR_OFFSET_P3, 0xb0
 
 	Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         NTT_Layer123_4x V_Z0, V_Z0, V_Z0, V_Z0
@@ -386,10 +386,10 @@ mldsa_poly_ntt_ppc:
          */
         mr      5, 3
 
-        li      10, 0x40
-        li      12, 0x50
-        li      16, 0x60
-        li      18, 0x70
+        li      GPR_OFFSET_P0, 0x40
+        li      GPR_OFFSET_P1, 0x50
+        li      GPR_OFFSET_P2, 0x60
+        li      GPR_OFFSET_P3, 0x70
 
 	Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         NTT_Layer456_4x V_Z0, V_Z0, V_Z0, V_Z0
@@ -409,14 +409,14 @@ mldsa_poly_ntt_ppc:
          */
         mr      5, 3
 
-        li      11, 0x10
-        li      15, 0x40
-        li      17, 0x50
+        li      GPR_OFFSET_C1, 0x10
+        li      GPR_OFFSET_C2, 0x40
+        li      GPR_OFFSET_C3, 0x50
 
-        li      10, 0x20
-        li      12, 0x30
-        li      16, 0x60
-        li      18, 0x70
+        li      GPR_OFFSET_P0, 0x20
+        li      GPR_OFFSET_P1, 0x30
+        li      GPR_OFFSET_P2, 0x60
+        li      GPR_OFFSET_P3, 0x70
 
 	Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         NTT_Layer456_4x V_Z0, V_Z0, V_Z1, V_Z1
@@ -440,14 +440,14 @@ mldsa_poly_ntt_ppc:
          */
         mr      5, 3
 
-        li      11, 0x20
-        li      15, 0x40
-        li      17, 0x60
+        li      GPR_OFFSET_C1, 0x20
+        li      GPR_OFFSET_C2, 0x40
+        li      GPR_OFFSET_C3, 0x60
 
-        li      10, 0x10
-        li      12, 0x30
-        li      16, 0x50
-        li      18, 0x70
+        li      GPR_OFFSET_P0, 0x10
+        li      GPR_OFFSET_P1, 0x30
+        li      GPR_OFFSET_P2, 0x50
+        li      GPR_OFFSET_P3, 0x70
 
 	Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         NTT_Layer456_4x V_Z0, V_Z1, V_Z2, V_Z3
@@ -476,6 +476,7 @@ mldsa_poly_ntt_ppc:
 .align 4
         /*
          * Layer 7. len = 2
+	 *   Layer 7 uses the same offset as Layer 6.
          */
         mr      5, 3
 
@@ -491,6 +492,7 @@ mldsa_poly_ntt_ppc:
 .align 4
         /*
          * Layer 8. len = 1
+	 *   Layer 8 uses the same offset as Layer 6.
          */
         mr      5, 3
 

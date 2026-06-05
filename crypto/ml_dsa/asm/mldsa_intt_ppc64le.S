@@ -203,15 +203,15 @@
 .endm
 
 .macro _load_curr_peer_coeffs
-        lxvd2x  32+18, 10, 5
-        lxvd2x  32+19, 12, 5
-        lxvd2x  32+20, 16, 5
-        lxvd2x  32+21, 18, 5
+        lxvd2x  32+18, GPR_OFFSET_P0, 5
+        lxvd2x  32+19, GPR_OFFSET_P1, 5
+        lxvd2x  32+20, GPR_OFFSET_P2, 5
+        lxvd2x  32+21, GPR_OFFSET_P3, 5
 
-        lxvd2x  32+14, 0, 5
-        lxvd2x  32+15, 11, 5
-        lxvd2x  32+16, 15, 5
-        lxvd2x  32+17, 17, 5
+        lxvd2x  32+14, GPR_OFFSET_C0, 5
+        lxvd2x  32+15, GPR_OFFSET_C1, 5
+        lxvd2x  32+16, GPR_OFFSET_C2, 5
+        lxvd2x  32+17, GPR_OFFSET_C3, 5
 .endm
 
 /*
@@ -348,15 +348,15 @@ mldsa_poly_ntt_inverse_ppc:
          */
         mr      5, 3
 
-	li	9, 0
-        li      11, 0x20
-        li      15, 0x40
-        li      17, 0x60
+	li	GPR_OFFSET_C0, 0
+        li      GPR_OFFSET_C1, 0x20
+        li      GPR_OFFSET_C2, 0x40
+        li      GPR_OFFSET_C3, 0x60
 
-        li      10, 0x10
-        li      12, 0x30
-        li      16, 0x50
-        li      18, 0x70
+        li      GPR_OFFSET_P0, 0x10
+        li      GPR_OFFSET_P1, 0x30
+        li      GPR_OFFSET_P2, 0x50
+        li      GPR_OFFSET_P3, 0x70
 
         INTT_Layer1_4x
         INTT_Layer1_4x
@@ -418,14 +418,14 @@ mldsa_poly_ntt_inverse_ppc:
          */
         mr      5, 3
 
-        li      11, 0x10
-        li      15, 0x40
-        li      17, 0x50
+        li      GPR_OFFSET_C1, 0x10
+        li      GPR_OFFSET_C2, 0x40
+        li      GPR_OFFSET_C3, 0x50
 
-        li      10, 0x20
-        li      12, 0x30
-        li      16, 0x60
-        li      18, 0x70
+        li      GPR_OFFSET_P0, 0x20
+        li      GPR_OFFSET_P1, 0x30
+        li      GPR_OFFSET_P2, 0x60
+        li      GPR_OFFSET_P3, 0x70
 
         Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         INTT_Layer345_4x V_Z0, V_Z0, V_Z1, V_Z1
@@ -449,14 +449,14 @@ mldsa_poly_ntt_inverse_ppc:
          */
         mr      5, 3
 
-        li      11, 0x10
-        li      15, 0x20
-        li      17, 0x30
+        li      GPR_OFFSET_C1, 0x10
+        li      GPR_OFFSET_C2, 0x20
+        li      GPR_OFFSET_C3, 0x30
 
-        li      10, 0x40
-        li      12, 0x50
-        li      16, 0x60
-        li      18, 0x70
+        li      GPR_OFFSET_P0, 0x40
+        li      GPR_OFFSET_P1, 0x50
+        li      GPR_OFFSET_P2, 0x60
+        li      GPR_OFFSET_P3, 0x70
 
         Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         INTT_Layer345_4x V_Z0, V_Z0, V_Z0, V_Z0
@@ -476,10 +476,10 @@ mldsa_poly_ntt_inverse_ppc:
          */
         mr      5, 3
 
-        li      10, 0x80
-        li      12, 0x90
-        li      16, 0xa0
-        li      18, 0xb0
+        li      GPR_OFFSET_P0, 0x80
+        li      GPR_OFFSET_P1, 0x90
+        li      GPR_OFFSET_P2, 0xa0
+        li      GPR_OFFSET_P3, 0xb0
 
 	Load_4zetas V_Z0, V_Z1, V_Z2, V_Z3
         INTT_Layer678 V_Z0, V_Z0, V_Z0, V_Z0
@@ -503,10 +503,10 @@ mldsa_poly_ntt_inverse_ppc:
          */
         mr      5, 3
 
-        li      10, 0x100
-        li      12, 0x110
-        li      16, 0x120
-        li      18, 0x130
+        li      GPR_OFFSET_P0, 0x100
+        li      GPR_OFFSET_P1, 0x110
+        li      GPR_OFFSET_P2, 0x120
+        li      GPR_OFFSET_P3, 0x130
 
         lvx     V_ZETA, 0, 14
         addi    14, 14, 16
@@ -528,10 +528,10 @@ mldsa_poly_ntt_inverse_ppc:
          */
         mr      5, 3
 
-        li      10, 0x200
-        li      12, 0x210
-        li      16, 0x220
-        li      18, 0x230
+        li      GPR_OFFSET_P0, 0x200
+        li      GPR_OFFSET_P1, 0x210
+        li      GPR_OFFSET_P2, 0x220
+        li      GPR_OFFSET_P3, 0x230
 
         lvx     V_ZETA, 0, 14
         addi    14, 14, 16

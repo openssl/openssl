@@ -19,6 +19,16 @@
 #define Q_NEG_INV    0
 #define V_Q     1
 
+#define GPR_OFFSET_C0 9
+#define GPR_OFFSET_C1 11
+#define GPR_OFFSET_C2 15
+#define GPR_OFFSET_C3 17
+
+#define GPR_OFFSET_P0 10
+#define GPR_OFFSET_P1 12
+#define GPR_OFFSET_P2 16
+#define GPR_OFFSET_P3 18
+
 /* ===================================================================== */
 /*
  * For NTT implementation, initial peer and curr vectors setup as
@@ -42,20 +52,20 @@
  * in the proper order to match the multiplication.
  */
 .macro Load_vmrg_coeffs _c1, _c2, _c3, _c4, _p1, _p2, _p3, _p4
-        lxvd2x     32+10, 0, 5
-        lxvd2x     32+11, 10, 5
+        lxvd2x     32+10, GPR_OFFSET_C0, 5
+        lxvd2x     32+11, GPR_OFFSET_P0, 5
         vmrgew \_p1, 10, 11
         vmrgow \_c1, 10, 11
-        lxvd2x     32+12, 11, 5
-        lxvd2x     32+13, 12, 5
+        lxvd2x     32+12, GPR_OFFSET_C1, 5
+        lxvd2x     32+13, GPR_OFFSET_P1, 5
         vmrgew \_p2, 12, 13
         vmrgow \_c2, 12, 13
-        lxvd2x     32+10, 15, 5
-        lxvd2x     32+11, 16, 5
+        lxvd2x     32+10, GPR_OFFSET_C2, 5
+        lxvd2x     32+11, GPR_OFFSET_P2, 5
         vmrgew \_p3, 10, 11
         vmrgow \_c3, 10, 11
-        lxvd2x     32+12, 17, 5
-        lxvd2x     32+13, 18, 5
+        lxvd2x     32+12, GPR_OFFSET_C3, 5
+        lxvd2x     32+13, GPR_OFFSET_P3, 5
         vmrgew \_p4, 12, 13
         vmrgow \_c4, 12, 13
 .endm
@@ -73,20 +83,20 @@
  * in the proper order to match the multiplication.
  */
 .macro Load_xxperm_coeffs _c1, _c2, _c3, _c4, _p1, _p2, _p3, _p4
-        lxvd2x     1, 0, 5
-        lxvd2x     2, 10, 5
+        lxvd2x     1, GPR_OFFSET_C0, 5
+        lxvd2x     2, GPR_OFFSET_P0, 5
         xxpermdi 32+\_p1, 1, 2, 3
         xxpermdi 32+\_c1, 1, 2, 0
-        lxvd2x     3, 11, 5
-        lxvd2x     4, 12, 5
+        lxvd2x     3, GPR_OFFSET_C1, 5
+        lxvd2x     4, GPR_OFFSET_P1, 5
         xxpermdi 32+\_p2, 3, 4, 3
         xxpermdi 32+\_c2, 3, 4, 0
-        lxvd2x     1, 15, 5
-        lxvd2x     2, 16, 5
+        lxvd2x     1, GPR_OFFSET_C2, 5
+        lxvd2x     2, GPR_OFFSET_P2, 5
         xxpermdi 32+\_p3, 1, 2, 3
         xxpermdi 32+\_c3, 1, 2, 0
-        lxvd2x     3, 17, 5
-        lxvd2x     4, 18, 5
+        lxvd2x     3, GPR_OFFSET_C3, 5
+        lxvd2x     4, GPR_OFFSET_P3, 5
         xxpermdi 32+\_p4, 3, 4, 3
         xxpermdi 32+\_c4, 3, 4, 0
 .endm
@@ -120,14 +130,14 @@
 
 /* Delayed writes resulting curr and peer coefficients */
 .macro delayed_writes_curr_peer _c1, _p1, _c2, _p2, _c3, _p3, _c4, _p4
-        stxvd2x    32+\_c1, 0, 5
-        stxvd2x    32+\_p1, 10, 5
-        stxvd2x    32+\_c2, 11, 5
-        stxvd2x    32+\_p2, 12, 5
-        stxvd2x    32+\_c3, 15, 5
-        stxvd2x    32+\_p3, 16, 5
-        stxvd2x    32+\_c4, 17, 5
-        stxvd2x    32+\_p4, 18, 5
+        stxvd2x    32+\_c1, GPR_OFFSET_C0, 5
+        stxvd2x    32+\_p1, GPR_OFFSET_P0, 5
+        stxvd2x    32+\_c2, GPR_OFFSET_C1, 5
+        stxvd2x    32+\_p2, GPR_OFFSET_P1, 5
+        stxvd2x    32+\_c3, GPR_OFFSET_C2, 5
+        stxvd2x    32+\_p3, GPR_OFFSET_P2, 5
+        stxvd2x    32+\_c4, GPR_OFFSET_C3, 5
+        stxvd2x    32+\_p4, GPR_OFFSET_P3, 5
 .endm
 
 .macro Load_4zetas _vz0, _vz1, _vz2, _vz3
