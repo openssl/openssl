@@ -32,6 +32,13 @@ OpenSSL 4.0
 
 ### Changes between 4.0.3 and 4.0.4 [xx XXX xxxx]
 
+ * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
+   differs from the ciphersuite associated with the selected PSK. Same-hash
+   PSK resumption can still continue without accepting 0-RTT data.
+
+   *Mounir IDRASSI*
+
+
  * none yet
 
 ### Changes between 4.0.2 and 4.0.3 [29 Sep 2026]
