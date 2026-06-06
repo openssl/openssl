@@ -37,10 +37,10 @@
 #define KEY_UPDATE_MAX_LENGTH 1
 #define CCS_MAX_LENGTH 1
 
-/* Max ServerHello size permitted by RFC 8446 */
+/* Max ServerHello size permitted by RFC 9846 */
 #define SERVER_HELLO_MAX_LENGTH 65607
 
-/* Max CertificateVerify size permitted by RFC 8446 */
+/* Max CertificateVerify size permitted by RFC 9846 */
 #define CERTIFICATE_VERIFY_MAX_LENGTH 65539
 
 /* Max should actually be 36 but we are generous */

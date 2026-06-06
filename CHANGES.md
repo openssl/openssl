@@ -87,6 +87,12 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
+   differs from the ciphersuite associated with the selected PSK. Same-hash
+   PSK resumption can still continue without accepting 0-RTT data.
+
+   *Mounir IDRASSI*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 

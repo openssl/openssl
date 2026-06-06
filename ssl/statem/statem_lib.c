@@ -1126,7 +1126,7 @@ int tls_process_rpk(SSL_CONNECTION *sc, PACKET *pkt, EVP_PKEY **peer_rpk)
      * ----------------------------
      * TLS 1.3 Certificate message:
      * ----------------------------
-     * https://datatracker.ietf.org/doc/html/rfc8446#section-4.4.2
+     * https://datatracker.ietf.org/doc/html/rfc9846#section-4.5.1
      *
      *   enum {
      *       X509(0),
@@ -1961,7 +1961,7 @@ static int is_tls13_capable(const SSL_CONNECTION *s)
         /*
          * Prior to TLSv1.3 sig algs allowed any curve to be used. TLSv1.3 is
          * more restrictive so check that our sig algs are consistent with this
-         * EC cert. See section 4.2.3 of RFC8446.
+         * EC cert. See section 4.3.3 of RFC9846.
          */
         curve = ssl_get_EC_curve_nid(s->cert->pkeys[SSL_PKEY_ECC].privatekey);
         if (tls_check_sigalg_curve(s, curve))

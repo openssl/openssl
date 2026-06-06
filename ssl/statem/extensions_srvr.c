@@ -702,7 +702,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
 
         /*
          * Check if this share is in supported_groups sent from client
-         * RFC 8446 also mandates that clients send keyshares in the same
+         * RFC 9846 also mandates that clients send keyshares in the same
          * order as listed in the supported groups extension, but its not
          * required that the server check that, and some clients violate this
          * so instead of failing the connection when that occurs, log a trace
@@ -714,7 +714,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         }
 
         if (key_share_pos < previous_key_share_pos)
-            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 8446 order\n", group_id);
+            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 9846 order\n", group_id);
 
         previous_key_share_pos = key_share_pos;
 
@@ -1511,6 +1511,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.ticket_expected = 1;
             continue;
         }
+        /*
+         * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK
+         * resumption, but RFC 9846 Section 4.3.10 requires the selected
+         * ciphersuite to match the selected PSK before accepting early data.
+         */
+        if (sess->cipher->id != s->s3.tmp.new_cipher->id)
+            s->ext.early_data_ok = 0;
         break;
     }
 
@@ -1525,7 +1532,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         }
         /*
          * decrypt_error here to keep the alert the same as if the binder
-         * failed. See RFC8446 Appendix E.6. Note we make no attempt to do this
+         * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
          * in constant time compared to verifying the binder. None of this code
          * is constant time anyway.
          */
