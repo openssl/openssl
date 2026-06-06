@@ -276,7 +276,9 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
          * iteration we're on.
          */
         EVP_KEYEXCH_free(exchange);
+        exchange = NULL;
         EVP_KEYMGMT_free(tmp_keymgmt);
+        tmp_keymgmt = NULL;
 
         switch (iter) {
         case 1:
