@@ -75,7 +75,6 @@ default_ca	= CA_default
 [ CA_default ]
 dir		= ./demoCA
 certs		= $dir/certs
-crl_dir		= $dir/crl
 database	= $dir/index.txt
 new_certs_dir	= $dir/newcerts
 certificate	= $dir/cacert.pem

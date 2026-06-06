@@ -205,7 +205,7 @@ void ossl_asn1_primitive_free(ASN1_VALUE **pval, const ASN1_ITEM *it, int embed)
         break;
 
     default:
-        ossl_asn1_string_embed_free((ASN1_STRING *)*pval, embed);
+        ossl_asn1_string_free_internal((ASN1_STRING *)*pval, 0, embed);
         break;
     }
     *pval = NULL;

@@ -42,6 +42,7 @@ static OSSL_FUNC_mac_final_fn poly1305_final;
 struct poly1305_data_st {
     void *provctx;
     int updated;
+    int key_set;
     POLY1305 poly1305; /* Poly1305 data */
 };
 
@@ -91,6 +92,7 @@ static int poly1305_setkey(struct poly1305_data_st *ctx,
     }
     Poly1305_Init(&ctx->poly1305, key);
     ctx->updated = 0;
+    ctx->key_set = 1;
     return 1;
 }
 
@@ -129,6 +131,10 @@ static int poly1305_final(void *vmacctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+    if (!ctx->key_set) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
+        return 0;
+    }
     ctx->updated = 1;
     Poly1305_Final(&ctx->poly1305, out);
     *outl = poly1305_size();

@@ -32,6 +32,7 @@ dynamically from the calling application or from a loadable provider.
 
 Support for the 'file' scheme is built into C<libcrypto>.
 See L<ossl_store-file(7)> for more information.
+For information on the 'org.openssl.winstore' scheme, see L<OSSL_STORE-winstore(7)>.
 
 =head2 UI_METHOD and pass phrases
 
@@ -78,7 +79,8 @@ other encoding is undefined.
 
 L<OSSL_STORE_INFO(3)>, L<OSSL_STORE_LOADER(3)>,
 L<OSSL_STORE_open(3)>, L<OSSL_STORE_expect(3)>,
-L<OSSL_STORE_SEARCH(3)>
+L<OSSL_STORE_SEARCH(3)>,
+L<ossl_store-file(7)>, L<OSSL_STORE-winstore(7)>
 
 =head1 COPYRIGHT
 

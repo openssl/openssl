@@ -102,7 +102,9 @@ static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
          * iteration we're on.
          */
         EVP_ASYM_CIPHER_free(cipher);
+        cipher = NULL;
         EVP_KEYMGMT_free(tmp_keymgmt);
+        tmp_keymgmt = NULL;
 
         switch (iter) {
         case 1:

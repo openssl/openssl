@@ -248,9 +248,15 @@ int ASN1_object_size(int constructed, int length, int tag)
     return ret + length;
 }
 
-void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num)
+void ossl_asn1_bit_string_clear_unused_bits(ASN1_STRING *str)
 {
     str->flags &= ~0x07;
+    str->flags &= ~ASN1_STRING_FLAG_BITS_LEFT;
+}
+
+void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num)
+{
+    ossl_asn1_bit_string_clear_unused_bits(str);
     str->flags |= ASN1_STRING_FLAG_BITS_LEFT | (num & 0x07);
 }
 
@@ -309,6 +315,13 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
         return 0;
     }
+
+    if ((str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
+        str->data = NULL;
+        str->length = 0;
+        str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
+    }
+
     if ((size_t)str->length <= len || str->data == NULL) {
         c = str->data;
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
@@ -337,12 +350,17 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
         str->data[len] = '\0';
 #endif
     }
+    ossl_asn1_bit_string_clear_unused_bits(str);
+
     return 1;
 }
 
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
-    OPENSSL_free(str->data);
+    if (!(str->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
+        OPENSSL_clear_free(str->data, str->length);
+    }
+    str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
     str->length = len;
 }
@@ -363,30 +381,75 @@ ASN1_STRING *ASN1_STRING_type_new(int type)
     return ret;
 }
 
-void ossl_asn1_string_embed_free(ASN1_STRING *a, int embed)
+ASN1_STRING *ASN1_STRING_new_not_owned(int type, const uint8_t *data,
+    size_t length)
+{
+    ASN1_STRING *ret;
+
+    if (type == V_ASN1_BIT_STRING)
+        return NULL;
+
+    if (data == NULL || length == 0)
+        return NULL;
+
+    if (length > INT_MAX)
+        return NULL;
+
+    ret = OPENSSL_zalloc(sizeof(*ret));
+    if (ret == NULL)
+        return NULL;
+
+    ret->type = type;
+    ret->data = (unsigned char *)data;
+    ret->length = (int)length;
+    ret->flags |= ASN1_STRING_FLAG_DATA_NOT_OWNED;
+
+    return ret;
+}
+
+void ossl_asn1_string_free_internal(ASN1_STRING *a, int clear, int embed)
 {
     if (a == NULL)
         return;
-    if (!(a->flags & ASN1_STRING_FLAG_NDEF))
-        OPENSSL_free(a->data);
-    if (embed == 0)
-        OPENSSL_free(a);
+
+    if ((a->flags & ASN1_STRING_FLAG_DATA_NOT_OWNED)) {
+        a->data = NULL;
+        a->length = 0;
+        a->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
+    }
+
+    if (!(a->flags & ASN1_STRING_FLAG_NDEF)) {
+        if (clear)
+            OPENSSL_clear_free(a->data, a->length);
+        else
+            OPENSSL_free(a->data);
+    }
+    /*
+     * TODO(beck): Add an assert here to verify that the embed arg is
+     * always set to match the flag, and then get rid of the arg.
+     */
+    if (!embed && !(a->flags & ASN1_STRING_FLAG_EMBED)) {
+        if (clear)
+            OPENSSL_clear_free(a, sizeof(*a));
+        else
+            OPENSSL_free(a);
+    }
 }
 
 void ASN1_STRING_free(ASN1_STRING *a)
 {
     if (a == NULL)
         return;
-    ossl_asn1_string_embed_free(a, a->flags & ASN1_STRING_FLAG_EMBED);
+
+    ossl_asn1_string_free_internal(a, 0, a->flags & ASN1_STRING_FLAG_EMBED);
 }
 
 void ASN1_STRING_clear_free(ASN1_STRING *a)
 {
     if (a == NULL)
         return;
-    if (a->data && !(a->flags & ASN1_STRING_FLAG_NDEF))
-        OPENSSL_cleanse(a->data, a->length);
-    ASN1_STRING_free(a);
+
+    ossl_asn1_string_free_internal(a, 1, a->flags & ASN1_STRING_FLAG_EMBED);
 }
 
 int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)

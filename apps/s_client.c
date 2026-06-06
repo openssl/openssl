@@ -9,6 +9,7 @@
  */
 
 #include "internal/e_os.h"
+#include <inttypes.h>
 #include <ctype.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -186,7 +187,7 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     }
     if (max_psk_len > INT_MAX || key_len > (long)max_psk_len) {
         BIO_printf(bio_err,
-            "psk buffer of callback is too small (%d) for key (%ld)\n",
+            "psk buffer of callback is too small (%u) for key (%ld)\n",
             max_psk_len, key_len);
         OPENSSL_free(key);
         return 0;
@@ -340,7 +341,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     ext_buf[3] = (unsigned char)(inlen);
     memcpy(ext_buf + 4, in, inlen);
 
-    BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %d",
+    BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %u",
         ext_type);
     PEM_write_bio(bio_c_out, pem_name, "", ext_buf, (long)(4 + inlen));
     return 1;
@@ -686,9 +687,9 @@ const OPTIONS s_client_options[] = {
     { "pass", OPT_PASS, 's', "Private key and cert file pass phrase source" },
     { "verify", OPT_VERIFY, 'p', "Turn on peer certificate verification, set depth" },
     { "nameopt", OPT_NAMEOPT, 's', "Certificate subject/issuer name printing options" },
-    { "CApath", OPT_CAPATH, '/', "PEM format directory of CA's" },
-    { "CAfile", OPT_CAFILE, '<', "PEM format file of CA's" },
-    { "CAstore", OPT_CASTORE, ':', "URI to store of CA's" },
+    { "CAfile", OPT_CAFILE, '<', "File in PEM format with trusted CA certs" },
+    { "CApath", OPT_CAPATH, '/', "Dir with trusted CA cert files in PEM format" },
+    { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
@@ -874,17 +875,21 @@ const OPTIONS s_client_options[] = {
         "Close connection on verification error" },
     { "verify_quiet", OPT_VERIFY_QUIET, '-', "Restrict verify output to errors" },
     { "chainCAfile", OPT_CHAINCAFILE, '<',
-        "CA file for certificate chain (PEM format)" },
+        "File in PEM format with trusted CA certs to build own cert chain" },
     { "chainCApath", OPT_CHAINCAPATH, '/',
-        "Use dir as certificate store path to build CA certificate chain" },
+        "Dir with trusted CA cert files in PEM format to build own cert chain" },
     { "chainCAstore", OPT_CHAINCASTORE, ':',
-        "CA store URI for certificate chain" },
+        "URI of trusted CA cert store to build own cert chain" },
+    { OPT_MORE_STR, 0, 0,
+        "NOTE: these override -CApath, -CAfile, and -CAstore for client chain building" },
     { "verifyCAfile", OPT_VERIFYCAFILE, '<',
-        "CA file for certificate verification (PEM format)" },
+        "File in PEM format with trusted CA certs for server cert verification" },
     { "verifyCApath", OPT_VERIFYCAPATH, '/',
-        "Use dir as certificate store path to verify CA certificate" },
+        "Dir with trusted CA cert files in PEM format for server cert verification" },
     { "verifyCAstore", OPT_VERIFYCASTORE, ':',
-        "CA store URI for certificate verification" },
+        "URI of trusted CA cert store for server cert verification" },
+    { OPT_MORE_STR, 0, 0,
+        "NOTE: these override -CApath, -CAfile, and -CAstore for server cert verification" },
     OPT_X_OPTIONS,
     OPT_PROV_OPTIONS,
 
@@ -1706,7 +1711,7 @@ int s_client_main(int argc, char **argv)
                 break;
             default:
                 BIO_printf(bio_err,
-                    "%s: Max Fragment Len %u is out of permitted values",
+                    "%s: Max Fragment Len %d is out of permitted values",
                     prog, len);
                 goto opthelp;
             }
@@ -2084,7 +2089,7 @@ int s_client_main(int argc, char **argv)
             vfyCApath, vfyCAfile, vfyCAstore,
             chCApath, chCAfile, chCAstore,
             crls, crl_download)) {
-        BIO_puts(bio_err, "Error loading store locations\n");
+        BIO_puts(bio_err, "Error loading store locations for server cert verification and client cert chain building\n");
         goto end;
     }
     if (ReqCAfile != NULL) {
@@ -2192,8 +2197,10 @@ int s_client_main(int argc, char **argv)
     SSL_CTX_set_verify(ctx, verify, verify_callback);
 
     if (!ctx_set_verify_locations(ctx, CAfile, noCAfile, CApath, noCApath,
-            CAstore, noCAstore))
+            CAstore, noCAstore)) {
+        BIO_puts(bio_err, "Error setting default locations for trusted certificates\n");
         goto end;
+    }
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
 
@@ -3844,8 +3851,8 @@ static void print_stuff(BIO *bio, SSL *s, int full)
 #endif
 
         BIO_printf(bio,
-            "---\nSSL handshake has read %ju bytes "
-            "and written %ju bytes\n",
+            "---\nSSL handshake has read %" PRIu64 " bytes "
+            "and written %" PRIu64 " bytes\n",
             BIO_number_read(SSL_get_rbio(s)),
             BIO_number_written(SSL_get_wbio(s)));
     }

@@ -50,7 +50,7 @@ DEFINE_STACK_OF(MIME_PARAM)
 typedef struct mime_header_st MIME_HEADER;
 DEFINE_STACK_OF(MIME_HEADER)
 
-void ossl_asn1_string_embed_free(ASN1_STRING *a, int embed);
+void ossl_asn1_string_free_internal(ASN1_STRING *a, int clear, int embed);
 
 int ossl_asn1_get_choice_selector(ASN1_VALUE **pval, const ASN1_ITEM *it);
 int ossl_asn1_get_choice_selector_const(const ASN1_VALUE **pval,

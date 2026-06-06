@@ -2322,6 +2322,29 @@ out:
     return ret;
 }
 
+#ifndef OPENSSL_NO_POLY1305
+/* Test that EVP_MAC_final fails for Poly1305 when no key was set */
+static int test_evp_mac_poly1305_no_key(void)
+{
+    int ret = 0;
+    EVP_MAC *mac = NULL;
+    EVP_MAC_CTX *ctx = NULL;
+    unsigned char out[16];
+    size_t outl = 0;
+
+    if (!TEST_ptr(mac = EVP_MAC_fetch(testctx, "Poly1305", testpropq))
+        || !TEST_ptr(ctx = EVP_MAC_CTX_new(mac))
+        || !TEST_int_eq(EVP_MAC_init(ctx, NULL, 0, NULL), 1)
+        || !TEST_int_eq(EVP_MAC_final(ctx, out, &outl, sizeof(out)), 0))
+        goto err;
+    ret = 1;
+err:
+    EVP_MAC_CTX_free(ctx);
+    EVP_MAC_free(mac);
+    return ret;
+}
+#endif
+
 static int test_d2i_AutoPrivateKey(int i)
 {
     int ret = 0;
@@ -7994,6 +8017,9 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_EVP_Digest);
     ADD_TEST(test_EVP_md_null);
+#ifndef OPENSSL_NO_POLY1305
+    ADD_TEST(test_evp_mac_poly1305_no_key);
+#endif
     ADD_ALL_TESTS(test_EVP_PKEY_sign, 3);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_EVP_PKEY_sign_with_app_method, 2);
