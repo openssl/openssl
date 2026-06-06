@@ -31,11 +31,6 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
- * `CRYPTO_memcmp()` is now verified as constant-time via Valgrind
-   on x86_64 and aarch64. It also has significantly more direct test coverage.
-
-   *David Foster*
-
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 
