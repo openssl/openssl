@@ -5290,6 +5290,83 @@ end:
     return testresult;
 }
 
+static int test_early_data_psk_cipher_mismatch(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+    const SSL_CIPHER *cipher = NULL;
+    unsigned char buf[20];
+    size_t readbytes, written;
+    const char *negotiated_cipher[] = {
+        TLS1_3_RFC_AES_128_CCM_8_SHA256 ":" TLS1_3_RFC_AES_128_CCM_SHA256,
+        TLS1_3_RFC_AES_128_CCM_SHA256 ":" TLS1_3_RFC_AES_128_CCM_8_SHA256
+    };
+    const unsigned char *psk_cipher_id[] = {
+        TLS13_AES_128_CCM_SHA256_BYTES,
+        TLS13_AES_128_CCM_8_SHA256_BYTES
+    };
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+            &serverssl, &sess, 2,
+            SHA256_DIGEST_LENGTH)))
+        goto end;
+
+    /*
+     * CCM8 is below the default security level, and each test case uses it
+     * either as the selected ciphersuite or as the PSK ciphersuite.
+     */
+    SSL_set_security_level(clientssl, 0);
+    SSL_set_security_level(serverssl, 0);
+
+    if (!TEST_true(SSL_set_ciphersuites(clientssl, negotiated_cipher[idx]))
+        || !TEST_true(SSL_set_ciphersuites(serverssl, negotiated_cipher[idx])))
+        goto end;
+
+    cipher = SSL_CIPHER_find(clientssl, psk_cipher_id[idx]);
+    if (!TEST_ptr(cipher)
+        || !TEST_true(SSL_SESSION_set_cipher(sess, cipher)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+            &written))
+        || !TEST_size_t_eq(written, strlen(MSG1)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                         &readbytes),
+            SSL_READ_EARLY_DATA_FINISH)
+        || !TEST_size_t_eq(readbytes, 0)
+        || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+            SSL_EARLY_DATA_REJECTED))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_true(SSL_write_ex(clientssl, MSG2, strlen(MSG2), &written))
+        || !TEST_size_t_eq(written, strlen(MSG2))
+        || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+            SSL_EARLY_DATA_REJECTED)
+        || !TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, MSG2, strlen(MSG2))
+        || !TEST_true(SSL_session_reused(clientssl))
+        || !TEST_long_eq(ERR_peek_error(), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 /*
  * Test that a server that doesn't try to read early data can handle a
  * client sending some.
@@ -15269,6 +15346,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
     ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 7);
+    ADD_ALL_TESTS(test_early_data_psk_cipher_mismatch, 2);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_early_data_tls1_2, 3);
