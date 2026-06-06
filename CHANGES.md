@@ -30,7 +30,11 @@ OpenSSL 3.5
 
 ### Changes between 3.5.9 and 3.5.10 [xx XXX xxxx]
 
- * none yet
+ * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
+   differs from the ciphersuite associated with the selected PSK. Same-hash
+   PSK resumption can still continue without accepting 0-RTT data.
+
+   *Mounir IDRASSI*
 
 ### Changes between 3.5.8 and 3.5.9 [29 Sep 2026]
 
