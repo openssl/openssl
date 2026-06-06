@@ -1345,9 +1345,22 @@ int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx)
     return 0;
 }
 
+static int ssl_pkey_group_nid(const EVP_PKEY *pk)
+{
+    char gname[256];
+
+    if (pk == NULL
+        || !EVP_PKEY_get_group_name(pk, gname, sizeof(gname), NULL))
+        return NID_undef;
+    return OBJ_txt2nid(gname);
+}
+
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_CTX *ctx)
 {
     size_t i;
+    int pk_group_nid;
+    const SSL_CERT_LOOKUP *fallback = NULL;
+    size_t fallback_idx = 0;
 
     /* check classic pk types */
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
@@ -1360,16 +1373,34 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
             return tmp_lu;
         }
     }
-    /* check provider-loaded pk types */
+
+    pk_group_nid = ssl_pkey_group_nid(pk);
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
 
-        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
-            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid))) {
-            if (pidx != NULL)
-                *pidx = SSL_PKEY_NUM + i;
-            return &ctx->ssl_cert_info[i];
+        if (!EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
+            && !EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid)))
+            continue;
+
+        if (tmp_lu->group_nid != NID_undef) {
+            if (tmp_lu->group_nid == pk_group_nid) {
+                if (pidx != NULL)
+                    *pidx = SSL_PKEY_NUM + i;
+                return tmp_lu;
+            }
+            continue;
         }
+
+        if (fallback == NULL) {
+            fallback = tmp_lu;
+            fallback_idx = SSL_PKEY_NUM + i;
+        }
+    }
+
+    if (fallback != NULL) {
+        if (pidx != NULL)
+            *pidx = fallback_idx;
+        return fallback;
     }
 
     return NULL;
