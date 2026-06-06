@@ -701,7 +701,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * parameters such as new_session_count = 0 or resumption_count = 0, is
          * effectively signaling no interest in session tickets or resumption.
          *
-         * RFC 8446 section 4.2.9: Servers MUST NOT select a key exchange mode
+         * RFC 9846 section 4.3.9: Servers MUST NOT select a key exchange mode
          * that is not listed by the client. This extension also restricts the
          * modes for use with PSK resumption. Servers SHOULD NOT send
          * NewSessionTicket with tickets that are not compatible with the
@@ -4243,7 +4243,7 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
     /*
      * Ticket lifetime hint:
      * In TLSv1.3 we reset the "time" field above, and always specify the
-     * timeout, limited to a 1 week period per RFC8446.
+     * timeout, limited to a 1 week period per RFC9846.
      * For TLSv1.2 this is advisory only and we leave this unspecified for
      * resumed session (for simplicity).
      */

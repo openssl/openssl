@@ -4080,7 +4080,7 @@ static int tls1_check_sig_alg(SSL_CONNECTION *s, X509 *x, int default_nid)
     size_t sigalgslen;
 
     /*-
-     * RFC 8446, section 4.2.3:
+     * RFC 9846, section 4.3.3:
      *
      * The signatures on certificates that are self-signed or certificates
      * that are trust anchors are not validated, since they begin a

@@ -3179,7 +3179,7 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
         PACKET extpkt;
 
         /*
-         * Fulfilling RFC8446:4.6.1 requirement: Clients MUST NOT cache
+         * Fulfilling RFC9846:4.7.1 requirement: Clients MUST NOT cache
          * tickets for longer than 7 days.
          */
         if (ticket_lifetime_hint > 604800) {
