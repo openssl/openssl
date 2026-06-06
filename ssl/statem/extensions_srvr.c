@@ -1516,6 +1516,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.ticket_expected = 1;
             continue;
         }
+        /*
+         * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK
+         * resumption, but RFC 8446 Section 4.2.10 requires the selected
+         * ciphersuite to match the selected PSK before accepting early data.
+         */
+        if (sess->cipher->id != s->s3.tmp.new_cipher->id)
+            s->ext.early_data_ok = 0;
         break;
     }
 
