@@ -19,6 +19,8 @@
 
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
+static X509 *ed448_cert = NULL;
+static EVP_PKEY *ed448_privkey = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
@@ -286,6 +288,47 @@ static int test_CMS_add1_cert(void)
 
     CMS_ContentInfo_free(cms);
     return ret;
+}
+
+static int test_CMS_add1_signer_ed448(const EVP_MD *md, unsigned int flags,
+    int expect_success)
+{
+    CMS_ContentInfo *cms = NULL;
+    CMS_SignerInfo *si = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cms = CMS_ContentInfo_new()))
+        goto end;
+
+    si = CMS_add1_signer(cms, ed448_cert, ed448_privkey, md, flags);
+    if (expect_success) {
+        if (!TEST_ptr(si))
+            goto end;
+    } else if (!TEST_ptr_null(si)) {
+        goto end;
+    }
+
+    ret = 1;
+end:
+    if (!expect_success && ret)
+        ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+static int test_CMS_add1_signer_ed448_signed_attrs(void)
+{
+    return test_CMS_add1_signer_ed448(NULL, 0, 0);
+}
+
+static int test_CMS_add1_signer_ed448_signed_attrs_md(void)
+{
+    return test_CMS_add1_signer_ed448(EVP_shake256(), 0, 0);
+}
+
+static int test_CMS_add1_signer_ed448_noattr(void)
+{
+    return test_CMS_add1_signer_ed448(NULL, CMS_NOATTR, 1);
 }
 
 static int test_d2i_CMS_bio_NULL(void)
@@ -739,12 +782,12 @@ end:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer\n")
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer [ed448certfile ed448privkeyfile]\n")
 
 int setup_tests(void)
 {
     char *certin = NULL, *privkeyin = NULL;
-    BIO *certbio = NULL, *privkeybio = NULL;
+    char *ed448_certin = NULL, *ed448_privkeyin = NULL;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
@@ -758,28 +801,28 @@ int setup_tests(void)
         || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4)))
         return 0;
 
-    certbio = BIO_new_file(certin, "r");
-    if (!TEST_ptr(certbio))
-        return 0;
-    if (!TEST_true(PEM_read_bio_X509(certbio, &cert, NULL, NULL))) {
-        BIO_free(certbio);
+    if (!TEST_ptr(cert = load_cert_pem(certin, NULL))
+        || !TEST_ptr(privkey = load_pkey_pem(privkeyin, NULL))) {
+        X509_free(cert);
+        cert = NULL;
+        EVP_PKEY_free(privkey);
+        privkey = NULL;
         return 0;
     }
-    BIO_free(certbio);
 
-    privkeybio = BIO_new_file(privkeyin, "r");
-    if (!TEST_ptr(privkeybio)) {
-        X509_free(cert);
-        cert = NULL;
-        return 0;
+    if (test_get_argument_count() >= 7) {
+        ed448_certin = test_get_argument(5);
+        ed448_privkeyin = test_get_argument(6);
+
+        if (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
+            || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin, NULL))) {
+            X509_free(ed448_cert);
+            ed448_cert = NULL;
+            EVP_PKEY_free(ed448_privkey);
+            ed448_privkey = NULL;
+            return 0;
+        }
     }
-    if (!TEST_true(PEM_read_bio_PrivateKey(privkeybio, &privkey, NULL, NULL))) {
-        BIO_free(privkeybio);
-        X509_free(cert);
-        cert = NULL;
-        return 0;
-    }
-    BIO_free(privkeybio);
 
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
@@ -796,6 +839,11 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
+    if (ed448_cert != NULL && ed448_privkey != NULL) {
+        ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
+        ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs_md);
+        ADD_TEST(test_CMS_add1_signer_ed448_noattr);
+    }
     return 1;
 }
 
@@ -803,4 +851,6 @@ void cleanup_tests(void)
 {
     X509_free(cert);
     EVP_PKEY_free(privkey);
+    X509_free(ed448_cert);
+    EVP_PKEY_free(ed448_privkey);
 }
