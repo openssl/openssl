@@ -890,6 +890,8 @@ done_resp:
         } else {
             BIO_puts(bio_err, "Response verify OK\n");
         }
+
+        sk_X509_free(x509_tmp);
     }
 
     if (!print_ocsp_summary(out, bs, req, reqnames, ids, nsec, maxage))

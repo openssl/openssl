@@ -1351,7 +1351,7 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_OCSP_EXTRA_UNTRUSTED:
             if (!load_certs(opt_arg(), 0, &ocsp_extra_untrusted, NULL,
-                    "validator certificates")) {
+                    "OCSP extra untrusted certificates")) {
                 BIO_printf(bio_err, "Error reading file %s\n", opt_arg());
                 goto end;
             }

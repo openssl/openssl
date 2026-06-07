@@ -1318,6 +1318,8 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 
     i = OCSP_basic_verify(bs, x509_tmp, ctx->store, 0);
 
+    sk_X509_free(x509_tmp);
+
     if (i <= 0) {
         ret = X509_V_ERR_OCSP_SIGNATURE_FAILURE;
         goto end;
