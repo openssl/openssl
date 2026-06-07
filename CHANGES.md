@@ -31,6 +31,16 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * X509_check_host() no longer matches an IP address literal against a
+   dNSName subjectAltName entry or the subject CommonName. Per section 6.1.1
+   of RFC 9525, an IP address reference identifier must only be matched
+   against an explicitly marked iPAddress SAN entry. Previously a name such
+   as "127.0.0.1" would match a certificate that (incorrectly) carried the
+   address as a dNSName. Use X509_check_ip() or X509_check_ip_asc() to match
+   an IP address.
+
+   *Samaresh Kumar Singh*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 

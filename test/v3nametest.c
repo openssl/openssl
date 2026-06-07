@@ -365,6 +365,65 @@ static int call_run_cert(int i)
     }
     return failed == 0;
 }
+
+/*
+ * Regression test for GitHub issue #31377: X509_check_host() must not match an
+ * IP-address literal against a dNSName SAN or the subject CN.  Per RFC 9525
+ * (Section 6.1.1) an IP-address reference identifier is an IP-ID and may only
+ * match an iPAddress SAN.
+ */
+static int test_ip_not_matched_as_dns(void)
+{
+    X509 *crt = NULL;
+    int ret = 0;
+
+    /*
+     * Certificate that (incorrectly) encodes IP addresses as dNSName SAN
+     * entries and as the subject CN.
+     */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_cn(crt, NID_commonName, "127.0.0.1", 0))
+        || !TEST_true(set_altname(crt, GEN_DNS, "127.0.0.1",
+            GEN_DNS, "::1", 0)))
+        goto end;
+
+    /* IPv4 literal must not match a dNSName. */
+    if (!TEST_int_eq(X509_check_host(crt, "127.0.0.1", 0, 0, NULL), 0))
+        goto end;
+    /* IPv6 literal must not match a dNSName. */
+    if (!TEST_int_eq(X509_check_host(crt, "::1", 0, 0, NULL), 0))
+        goto end;
+    /* The CN must not provide a fallback match either. */
+    if (!TEST_int_eq(X509_check_host(crt, "127.0.0.1", 0,
+                         X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, NULL),
+            0))
+        goto end;
+    /* The correct IP API also must not match a misencoded dNSName cert. */
+    if (!TEST_int_eq(X509_check_ip_asc(crt, "127.0.0.1", 0), 0))
+        goto end;
+
+    X509_free(crt);
+    crt = NULL;
+
+    /*
+     * Positive control: genuine DNS-IDs, including names whose labels are
+     * purely numeric, must still match.  The guard only rejects full IP
+     * literals, not hostnames that merely contain digits.
+     */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_altname(crt, GEN_DNS, "www.example.com",
+            GEN_DNS, "1.example.com", 0)))
+        goto end;
+    if (!TEST_int_eq(X509_check_host(crt, "www.example.com", 0, 0, NULL), 1))
+        goto end;
+    if (!TEST_int_eq(X509_check_host(crt, "1.example.com", 0, 0, NULL), 1))
+        goto end;
+
+    ret = 1;
+end:
+    X509_free(crt);
+    return ret;
+}
 OSSL_END_ALLOW_DEPRECATED
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
@@ -668,6 +727,7 @@ int setup_tests(void)
 {
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
     ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
+    ADD_TEST(test_ip_not_matched_as_dns);
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
     ADD_TEST(test_GENERAL_NAME_cmp);
     return 1;

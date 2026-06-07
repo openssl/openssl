@@ -41,6 +41,13 @@ with a dot (e.g. ".example.com"), it will be matched by a certificate
 valid for any sub-domain of B<name>, (see also
 B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS> below).
 
+If B<name> is an IPv4 or IPv6 address in textual form, X509_check_host()
+does not report a match, because an IP address is not a DNS name.  Per
+section 6.1.1 of RFC 9525, an IP address reference identifier must only be
+matched against an explicitly marked iPAddress SAN entry, never against a
+dNSName or the Subject CommonName.  Use X509_check_ip() or
+X509_check_ip_asc() to match an IP address.
+
 When the certificate is matched, and B<peername> is not NULL, a
 pointer to a copy of the matching SAN or CN from the peer certificate
 is stored at the address passed in B<peername>.  The application

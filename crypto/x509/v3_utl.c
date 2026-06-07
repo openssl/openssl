@@ -902,6 +902,28 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
     if (chklen == 0)
         chklen = strlen(chk);
 
+    /*
+     * RFC 9525 (Section 6.1.1): a reference identifier that is an IP address
+     * is an IP-ID and MUST only be matched against iPAddress subjectAltName
+     * entries, never against a dNSName or the subject Common Name.  When an
+     * IP-address literal is supplied to the DNS matcher (X509_check_host()),
+     * decline to match it so that a certificate carrying an IP address that
+     * was mistakenly encoded as a dNSName (or placed in the CN) does not yield
+     * a false positive via plain string comparison.  Callers that want to
+     * match an IP address must use X509_check_ip()/X509_check_ip_asc().  The
+     * longest textual IPv6 address is 45 characters, so anything that does not
+     * fit the buffer cannot be an IP literal.
+     */
+    if (check_type == GEN_DNS && chklen != 0 && chklen < 64) {
+        char ipasc[64];
+        unsigned char ipout[16];
+
+        memcpy(ipasc, chk, chklen);
+        ipasc[chklen] = '\0';
+        if (ossl_a2i_ipadd(ipout, ipasc) != 0)
+            return 0;
+    }
+
     gens = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
     if (gens) {
         for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
