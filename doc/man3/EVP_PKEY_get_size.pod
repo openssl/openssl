@@ -108,6 +108,24 @@ The post-quantum security category is an integer value from 0 to 5 that
 is based on an algorithm's classification on the range of security strengths
 offered by the existing standards in symmetric cryptography:
 
+=begin man
+
+.TS H
+box,center;
+cb lb
+c l.
+Security Category	Attack Type
+_
+0	Weak
+1	Key search on a block cipher with a 128-bit key
+2	Collision search on a 256-bit hash function
+3	Key search on a block cipher with a 192-bit key
+4	Collision search on a 384-bit hash function
+5	Key search on a block cipher with a 256-bit key
+.TE
+
+=end man
+
 =begin text
 
  Security       Attack
