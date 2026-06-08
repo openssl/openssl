@@ -3190,7 +3190,7 @@ int speed_main(int argc, char **argv)
         }
         if (!st) {
             error = ERR_peek_error();
-            /* if (0x1C800069 == error) */
+            /* skip or stop depending on error code */
             if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                 && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH) {
                 /* skip only this key length */
@@ -3282,17 +3282,16 @@ int speed_main(int argc, char **argv)
             }
             if (!st) {
                 error = ERR_peek_error();
-                /* if (0x1C8000A8 == error) */
+                /* skip or stop depending on error code */
                 if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                     && ERR_GET_REASON(error) == PROV_R_INVALID_PADDING_MODE) {
                     /* skip rsa encrypt and decrypt only */
                     rsa_no_enc_dec = 1;
                     ERR_get_error(); /* skip this error */
                     uh_error = ERR_peek_error();
-                    /* if (0x030000E8 == uh_error) */
                     if (ERR_GET_LIB(uh_error) == ERR_LIB_EVP /* evperr.h */
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_ASYM_CIPHER_FAILURE)
-                        ERR_get_error(); /* skip this error */
+                        ERR_get_error(); /* skip this error as well */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
                     if (!mr) {
                         /* space after 'Skip' is to align with 'Doing' */
@@ -3479,7 +3478,7 @@ int speed_main(int argc, char **argv)
         st = (pkey = get_ecdsa(&ec_curves[testnum])) != NULL;
         if (!st) {
             error = ERR_peek_error();
-            /* if (0x08000081 == error || 0x1C800069 == error || (0x0308010C == error) */
+            /* skip or stop depending on error code */
             if ((ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
                     && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
                 || (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
@@ -3491,25 +3490,21 @@ int speed_main(int argc, char **argv)
                 ecdsa_doit[testnum] = 0;
                 ERR_get_error(); /* skip this error */
                 uh_error = ERR_peek_error();
-                /* if (0x030000E9 == uh_error) */
                 if (ERR_GET_LIB(uh_error) == ERR_LIB_EVP /* evperr.h */
                     && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
-                    ERR_get_error(); /* skip this error */
+                    ERR_get_error(); /* skip this error as well */
                 ERR_print_errors(bio_err); /* print unhandled errors if exist */
                 if (!mr) {
-                    /* if (0x08000081 == error) */
                     if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
                         && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
                         /* space after 'Skip' is to align with 'Doing' */
                         BIO_printf(bio_err, "Skip  %s with unkown group\n",
                             ecdsa_choices[testnum].name);
-                    /* if (0x1C800069 == error) */
                     else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                         && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
                         /* space after 'Skip' is to align with 'Doing' */
                         BIO_printf(bio_err, "Skip  %s with invalid key length\n",
                             ecdsa_choices[testnum].name);
-                    /* if (0x0308010C == error) */
                     else if (ERR_GET_LIB(error) == ERR_LIB_EVP
                         /* (268|ERR_RFLAG_COMMON) in err.h */
                         && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED)
@@ -3560,7 +3555,7 @@ int speed_main(int argc, char **argv)
         }
         if (!st) {
             error = ERR_peek_error();
-            /* if (0x0308010C == error) */
+            /* skip or stop depending on error code */
             if (ERR_GET_LIB(error) == ERR_LIB_EVP
                 /* (268|ERR_RFLAG_COMMON) in err.h */
                 && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED) {
@@ -3686,7 +3681,7 @@ int speed_main(int argc, char **argv)
                 || outlen > MAX_ECDH_SIZE /* avoid buffer overflow */) {
                 ecdh_checks = 0;
                 error = ERR_peek_error();
-                /* if (0x08000081 == error || 0x1C800069 == error || 0x0308010C == error) */
+                /* skip or stop depending on error code */
                 if ((ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
                         && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
                     || (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
@@ -3698,25 +3693,21 @@ int speed_main(int argc, char **argv)
                     ecdh_doit[testnum] = 0;
                     ERR_get_error(); /* skip this error */
                     uh_error = ERR_peek_error();
-                    /* if (0x030000E9 == uh_error) */
                     if (ERR_GET_LIB(uh_error) == ERR_LIB_EVP /* evperr.h */
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
-                        ERR_get_error(); /* skip this error */
+                        ERR_get_error(); /* skip this error as well */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
                     if (!mr) {
-                        /* if (0x08000081 == error) */
                         if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
                             && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
                             /* space after 'Skip' is to align with 'Doing' */
                             BIO_printf(bio_err, "Skip  %s with unkown group\n",
                                 ecdh_choices[testnum].name);
-                        /* if (0x1C800069 == error) */
                         else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                             && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
                             /* space after 'Skip' is to align with 'Doing' */
                             BIO_printf(bio_err, "Skip  %s with invalid key length\n",
                                 ecdh_choices[testnum].name);
-                        /* if (0x0308010C == error) */
                         else if (ERR_GET_LIB(error) == ERR_LIB_EVP
                             /* (268|ERR_RFLAG_COMMON) in err.h */
                             && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED)
@@ -3748,7 +3739,7 @@ int speed_main(int argc, char **argv)
                 || test_outlen != outlen /* compare output length */) {
                 ecdh_checks = 0;
                 error = ERR_peek_error();
-                /* if (0x1C8000EC == error) */
+                /* skip or stop depending on error code */
                 if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                     && ERR_GET_REASON(error) == PROV_R_COFACTOR_REQUIRED) {
                     /* skip only this */
@@ -4065,17 +4056,16 @@ int speed_main(int argc, char **argv)
             }
             if (EVP_PKEY_keygen(kem_gen_ctx, &pkey) <= 0) {
                 error = ERR_peek_error();
-                /* if (0x020000AE == error) */
+                /* skip or stop depending on error code */
                 if (ERR_GET_LIB(error) == ERR_LIB_RSA /* rsaerr.h */
                     && ERR_GET_REASON(error) == RSA_R_INVALID_MODULUS) {
                     /* skip only this key length */
                     kems_doit[testnum] = 0;
                     ERR_get_error(); /* skip this error */
                     uh_error = ERR_peek_error();
-                    /* if (0x030000E9 == uh_error) */
                     if (ERR_GET_LIB(uh_error) == ERR_LIB_EVP /* evperr.h */
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
-                        ERR_get_error(); /* skip this error */
+                        ERR_get_error(); /* skip this error as well */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
                     if (!mr) {
                         /* space after 'Skip' is to align with 'Doing' */
@@ -4262,7 +4252,7 @@ int speed_main(int argc, char **argv)
                     || (sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL
                     || EVP_PKEY_keygen_init(sig_gen_ctx) <= 0) {
                     error = ERR_peek_error();
-                    /* 0x030000E9 == error */
+                    /* skip or stop depending on error code */
                     if (ERR_GET_LIB(error) == ERR_LIB_EVP /* evperr.h */
                         && ERR_GET_REASON(error) == EVP_R_PROVIDER_KEYMGMT_FAILURE) {
                         /* skip only this */
@@ -4296,17 +4286,16 @@ int speed_main(int argc, char **argv)
             }
             if (EVP_PKEY_keygen(sig_gen_ctx, &pkey) <= 0) {
                 error = ERR_peek_error();
-                /* if (0x020000AE == error) */
+                /* skip or stop depending on error code */
                 if (ERR_GET_LIB(error) == ERR_LIB_RSA /* rsaerr.h */
                     && ERR_GET_REASON(error) == RSA_R_INVALID_MODULUS) {
                     /* skip only this key length */
                     sigs_doit[testnum] = 0;
                     ERR_get_error(); /* skip this error */
                     uh_error = ERR_peek_error();
-                    /* if (0x030000E9 == uh_error) */
                     if (ERR_GET_LIB(uh_error) == ERR_LIB_EVP /* evperr.h */
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
-                        ERR_get_error(); /* skip this error */
+                        ERR_get_error(); /* skip this error as well */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
                     if (!mr) {
                         BIO_printf(bio_err, "Skip  %s in sigs with invalid modulus\n",
