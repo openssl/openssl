@@ -352,7 +352,12 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
                 break;
         } else {
             injections++;
-            if (mfail_was_triggered()) {
+            if (rv == -1) {
+                TEST_error("mfail test '%s': unconditional failure at "
+                           "point %d",
+                    t->test_case_name, mfail_get_point());
+                injection_ok = 0;
+            } else if (mfail_was_triggered()) {
                 if (!no_check && !TEST_int_eq(rv, 0)) {
                     TEST_error("mfail test '%s': allocation failure at "
                                "point %d not handled",
