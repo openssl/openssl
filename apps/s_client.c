@@ -3457,7 +3457,7 @@ re_start:
             if (crlf) {
                 int j, lf_num;
 
-                i = raw_read_stdin(cbuf, BUFSIZZ / 2);
+                i = raw_read_stdin(cbuf, (BUFSIZZ - 1) / 2);
                 lf_num = 0;
                 /* both loops are skipped when i <= 0 */
                 for (j = 0; j < i; j++)
@@ -3473,7 +3473,7 @@ re_start:
                 }
                 assert(lf_num == 0);
             } else
-                i = raw_read_stdin(cbuf, BUFSIZZ);
+                i = raw_read_stdin(cbuf, BUFSIZZ - 1);
 #if !defined(OPENSSL_SYS_WINDOWS) && !defined(OPENSSL_SYS_MSDOS)
             if (i == 0)
                 at_eof = 1;
