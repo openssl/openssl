@@ -443,8 +443,8 @@ the function.
 
 The pseudo code to derive the key would look similar to:
 
- EVP_CIPHER* cipher = EVP_des_ede3_cbc();
- EVP_MD* md = EVP_md5();
+ EVP_CIPHER* cipher = EVP_aes_256_cbc();
+ EVP_MD* md = EVP_sha256();
 
  unsigned int nkey = EVP_CIPHER_get_key_length(cipher);
  unsigned int niv = EVP_CIPHER_get_iv_length(cipher);
@@ -516,15 +516,15 @@ Write a certificate to a BIO:
      /* Error */
 
 Write a private key (using traditional format) to a BIO using
-triple DES encryption, the pass phrase is prompted for:
+AES-256-CBC encryption, the pass phrase is prompted for:
 
- if (!PEM_write_bio_PrivateKey(bp, key, EVP_des_ede3_cbc(), NULL, 0, 0, NULL))
+ if (!PEM_write_bio_PrivateKey(bp, key, EVP_aes_256_cbc(), NULL, 0, 0, NULL))
      /* Error */
 
-Write a private key (using PKCS#8 format) to a BIO using triple
-DES encryption, using the pass phrase "hello":
+Write a private key (using PKCS#8 format) to a BIO using
+AES-256-CBC encryption, using the pass phrase "hello":
 
- if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_des_ede3_cbc(),
+ if (!PEM_write_bio_PKCS8PrivateKey(bp, key, EVP_aes_256_cbc(),
                                     NULL, 0, 0, "hello"))
      /* Error */
 
