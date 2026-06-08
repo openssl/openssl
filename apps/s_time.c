@@ -109,7 +109,6 @@ const OPTIONS s_time_options[] = {
     { "CAfile", OPT_CAFILE, '<', "File in PEM format with trusted CA certs" },
     { "CApath", OPT_CAPATH, '/', "Dir with trusted CA cert files in PEM format" },
     { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
-    { "CAstore", OPT_CASTORE, ':', "URI to store of CA's" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
