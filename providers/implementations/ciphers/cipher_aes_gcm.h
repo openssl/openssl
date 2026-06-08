@@ -45,6 +45,30 @@ typedef struct prov_aes_gcm_ctx_st {
     } plat;
 } PROV_AES_GCM_CTX;
 
+int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+    size_t len, unsigned char *out);
+
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits);
+#if defined(AESNI_CAPABLE)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_aesni(size_t keybits);
+#endif
+#if defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_armv8(size_t keybits);
+#endif
+#if defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_ppc(size_t keybits);
+#endif
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv64i(size_t keybits);
+#endif
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv32i(size_t keybits);
+#endif
+#if defined(S390X_aes_128_CAPABLE)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_s390x(size_t keybits);
+#endif
+#if defined(SPARC_AES_CAPABLE)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_t4(size_t keybits);
+#endif
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_GCM_H) */

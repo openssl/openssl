@@ -9,16 +9,19 @@
 
 /*-
  * Fujitsu SPARC64 X support for AES GCM.
- * This file is included by cipher_aes_gcm_hw.c
+ * This file is used by cipher_aes_gcm_hw.c
  */
+#include "internal/deprecated.h"
+#include "cipher_aes_gcm.h"
+
+#if defined(SPARC_AES_CAPABLE)
 
 static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                              size_t keylen)
+    size_t keylen)
 {
     ctr128_f ctr;
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
-
 
     switch (keylen) {
     case 16:
@@ -46,7 +49,10 @@ static const PROV_GCM_HW t4_aes_gcm = {
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
-const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
+
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_t4(size_t keybits)
 {
-    return SPARC_AES_CAPABLE ? &t4_aes_gcm : &aes_gcm;
+    return SPARC_AES_CAPABLE ? &t4_aes_gcm : NULL;
 }
+
+#endif
