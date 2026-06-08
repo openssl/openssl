@@ -19,11 +19,8 @@
 static int aesni_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-    GCM_HW_SET_KEY_CTR_FN(ks, aesni_set_encrypt_key, aesni_encrypt,
-        aesni_ctr32_encrypt_blocks);
-    return 1;
+    return aes_gcm_hw_initkey(ctx, key, keylen, aesni_set_encrypt_key,
+        aesni_encrypt, aesni_ctr32_encrypt_blocks);
 }
 
 static const PROV_GCM_HW aesni_gcm = {
