@@ -1155,27 +1155,6 @@ end:
 }
 
 /*
- * Same probe driven from an algorithm name rather than a prototype
- * key, for keymgmts without a keygen path (e.g. LMS).  Algorithms
- * not loadable under the active provider set are silently skipped.
- * |params| may be NULL (= empty OSSL_PARAM[]) or a caller-built
- * partial array.
- */
-static int probe_fromdata_by_name(const char *name, int selection,
-    OSSL_PARAM *params, const char *selname)
-{
-    EVP_PKEY_CTX *cctx = NULL;
-    int ok = 1;
-
-    cctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL);
-    if (cctx == NULL)
-        return 1;
-    ok = run_empty_fromdata_probe(name, cctx, selection, params, selname);
-    EVP_PKEY_CTX_free(cctx);
-    return ok;
-}
-
-/*
  * Drive EVP_PKEY_fromdata with an empty OSSL_PARAM[] for both
  * EVP_PKEY_PUBLIC_KEY and EVP_PKEY_KEYPAIR selections.  Either
  * outcome is acceptable: fromdata rejects, or it succeeds and the
@@ -1237,10 +1216,17 @@ static int build_sm2_named_group(OSSL_PARAM_BLD *bld)
 #endif
 #endif
 
+#if defined(OPENSSL_NO_LMS) && defined(OPENSSL_NO_DH) && defined(OPENSSL_NO_EC)
+#undef TEST_FROMDATA_NO_KEYGEN
+#else
+#define TEST_FROMDATA_NO_KEYGEN
+
 static const struct fromdata_shape no_keygen_shapes[] = {
+#ifndef OPENSSL_NO_LMS
     /* Empty OSSL_PARAM[] for LMS (no keygen path). */
     { "LMS", EVP_PKEY_PUBLIC_KEY, NULL, "LMS / empty / PUBLIC_KEY" },
     { "LMS", EVP_PKEY_KEYPAIR, NULL, "LMS / empty / KEYPAIR" },
+#endif
 /* Named-group-only partial shapes. */
 #ifndef OPENSSL_NO_DH
     { "DH", EVP_PKEY_KEYPAIR, build_dh_named_group,
@@ -1259,6 +1245,26 @@ static const struct fromdata_shape no_keygen_shapes[] = {
 #endif
 #endif
 };
+
+/*
+ * Probe an algorithm by name rather than a prototype key, for keymgmts without
+ * a keygen path (e.g. LMS).  Algorithms not loadable under the active provider
+ * set are silently skipped.  |params| may be NULL (= empty OSSL_PARAM[]) or a
+ * caller-built partial array.
+ */
+static int probe_fromdata_by_name(const char *name, int selection,
+    OSSL_PARAM *params, const char *selname)
+{
+    EVP_PKEY_CTX *cctx = NULL;
+    int ok = 1;
+
+    cctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL);
+    if (cctx == NULL)
+        return 1;
+    ok = run_empty_fromdata_probe(name, cctx, selection, params, selname);
+    EVP_PKEY_CTX_free(cctx);
+    return ok;
+}
 
 static int test_fromdata_no_keygen(void)
 {
@@ -1292,6 +1298,7 @@ static int test_fromdata_no_keygen(void)
     }
     return 1;
 }
+#endif
 
 #define KEYS(KEYTYPE) \
     static EVP_PKEY *key_##KEYTYPE = NULL
@@ -2094,7 +2101,9 @@ int setup_tests(void)
          * no-op for algorithms not loadable under the active provider
          * set (e.g. LMS under FIPS), so the test stays portable.
          */
+#ifdef TEST_FROMDATA_NO_KEYGEN
         ADD_TEST(test_fromdata_no_keygen);
+#endif
     }
 
     return ok;
