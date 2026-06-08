@@ -9,20 +9,23 @@
 
 /*-
  * IBM S390X support for AES GCM.
- * This file is included by cipher_aes_gcm_hw.c
+ * This file is used by cipher_aes_gcm_hw.c
  */
+#include "internal/deprecated.h"
+#include "cipher_aes_gcm.h"
+
+#if defined(S390X_aes_128_CAPABLE)
 
 /* iv + padding length for iv lengths != 12 */
-#define S390X_gcm_ivpadlen(i)  ((((i) + 15) >> 4 << 4) + 16)
+#define S390X_gcm_ivpadlen(i) ((((i) + 15) >> 4 << 4) + 16)
 
 /* Additional flag or'ed to fc for decryption */
 #define S390X_gcm_decrypt_flag(ctx) (((ctx)->enc) ? 0 : S390X_DECRYPT)
 
-#define S390X_gcm_fc(A,C) ((A)->plat.s390x.fc | (A)->plat.s390x.hsflag |\
-                            S390X_gcm_decrypt_flag((C)))
+#define S390X_gcm_fc(A, C) ((A)->plat.s390x.fc | (A)->plat.s390x.hsflag | S390X_gcm_decrypt_flag((C)))
 
 static int s390x_aes_gcm_initkey(PROV_GCM_CTX *ctx,
-                                 const unsigned char *key, size_t keylen)
+    const unsigned char *key, size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
 
@@ -33,7 +36,7 @@ static int s390x_aes_gcm_initkey(PROV_GCM_CTX *ctx,
 }
 
 static int s390x_aes_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv,
-                               size_t ivlen)
+    size_t ivlen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     S390X_KMA_PARAMS *kma = &actx->plat.s390x.param.kma;
@@ -93,8 +96,8 @@ static int s390x_aes_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
     kma->tpcl <<= 3;
     fc = S390X_gcm_fc(actx, ctx) | S390X_KMA_LAAD | S390X_KMA_LPC;
     s390x_kma(actx->plat.s390x.ares, actx->plat.s390x.areslen,
-              actx->plat.s390x.mres, actx->plat.s390x.mreslen, out,
-              fc, kma);
+        actx->plat.s390x.mres, actx->plat.s390x.mreslen, out,
+        fc, kma);
 
     /* gctx->mres already returned to the caller */
     OPENSSL_cleanse(out, actx->plat.s390x.mreslen);
@@ -110,10 +113,10 @@ static int s390x_aes_gcm_cipher_final(PROV_GCM_CTX *ctx, unsigned char *tag)
 }
 
 static int s390x_aes_gcm_one_shot(PROV_GCM_CTX *ctx,
-                                  unsigned char *aad, size_t aad_len,
-                                  const unsigned char *in, size_t in_len,
-                                  unsigned char *out,
-                                  unsigned char *tag, size_t taglen)
+    unsigned char *aad, size_t aad_len,
+    const unsigned char *in, size_t in_len,
+    unsigned char *out,
+    unsigned char *tag, size_t taglen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     S390X_KMA_PARAMS *kma = &actx->plat.s390x.param.kma;
@@ -139,7 +142,7 @@ static int s390x_aes_gcm_one_shot(PROV_GCM_CTX *ctx,
  * big-endian.
  */
 static int s390x_aes_gcm_aad_update(PROV_GCM_CTX *ctx,
-                                    const unsigned char *aad, size_t len)
+    const unsigned char *aad, size_t len)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     S390X_KMA_PARAMS *kma = &actx->plat.s390x.param.kma;
@@ -203,8 +206,8 @@ static int s390x_aes_gcm_aad_update(PROV_GCM_CTX *ctx,
  * success. Code is big-endian.
  */
 static int s390x_aes_gcm_cipher_update(PROV_GCM_CTX *ctx,
-                                       const unsigned char *in, size_t len,
-                                       unsigned char *out)
+    const unsigned char *in, size_t len,
+    unsigned char *out)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     S390X_KMA_PARAMS *kma = &actx->plat.s390x.param.kma;
@@ -237,7 +240,7 @@ static int s390x_aes_gcm_cipher_update(PROV_GCM_CTX *ctx,
         /* ctx->mres contains a complete block if offset has wrapped around */
         if (!n) {
             s390x_kma(actx->plat.s390x.ares, actx->plat.s390x.areslen,
-                      actx->plat.s390x.mres, 16, buf.b, fc, kma);
+                actx->plat.s390x.mres, 16, buf.b, fc, kma);
             actx->plat.s390x.hsflag = S390X_KMA_HS;
             fc |= S390X_KMA_HS;
             actx->plat.s390x.areslen = 0;
@@ -261,7 +264,7 @@ static int s390x_aes_gcm_cipher_update(PROV_GCM_CTX *ctx,
     len &= ~(size_t)0xf;
     if (len) {
         s390x_kma(actx->plat.s390x.ares, actx->plat.s390x.areslen, in, len, out,
-                  fc, kma);
+            fc, kma);
         in += len;
         out += len;
         actx->plat.s390x.hsflag = S390X_KMA_HS;
@@ -280,7 +283,7 @@ static int s390x_aes_gcm_cipher_update(PROV_GCM_CTX *ctx,
             buf.w[2] = kma->j0.w[2];
             buf.w[3] = kma->cv.w + 1;
             s390x_km(buf.b, 16, actx->plat.s390x.kres,
-                     fc & 0x1f, &kma->k);
+                fc & 0x1f, &kma->k);
         }
 
         n = actx->plat.s390x.mreslen;
@@ -302,11 +305,13 @@ static const PROV_GCM_HW s390x_aes_gcm = {
     s390x_aes_gcm_one_shot
 };
 
-const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_s390x(size_t keybits)
 {
     if ((keybits == 128 && S390X_aes_128_gcm_CAPABLE)
-         || (keybits == 192 && S390X_aes_192_gcm_CAPABLE)
-         || (keybits == 256 && S390X_aes_256_gcm_CAPABLE))
+        || (keybits == 192 && S390X_aes_192_gcm_CAPABLE)
+        || (keybits == 256 && S390X_aes_256_gcm_CAPABLE))
         return &s390x_aes_gcm;
-    return &aes_gcm;
+    return NULL;
 }
+
+#endif

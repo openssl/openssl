@@ -668,8 +668,13 @@ providers/implementations/ciphers/cipher_aes_cts.inc
 providers/implementations/ciphers/cipher_aes_gcm.c
 providers/implementations/ciphers/cipher_aes_gcm.h
 providers/implementations/ciphers/cipher_aes_gcm_hw.c
-providers/implementations/ciphers/cipher_aes_gcm_hw_aesni.inc
-providers/implementations/ciphers/cipher_aes_gcm_hw_vaes_avx512.inc
+providers/implementations/ciphers/cipher_aes_gcm_hw_aesni.c
+providers/implementations/ciphers/cipher_aes_gcm_hw_s390x.c
+providers/implementations/ciphers/cipher_aes_gcm_hw_armv8.c
+providers/implementations/ciphers/cipher_aes_gcm_hw_ppc.c
+providers/implementations/ciphers/cipher_aes_gcm_hw_rv32i.c
+providers/implementations/ciphers/cipher_aes_gcm_hw_rv64i.c
+providers/implementations/ciphers/cipher_aes_gcm_hw_t4.c
 providers/implementations/ciphers/cipher_aes_hw.c
 providers/implementations/ciphers/cipher_aes_hw_aesni.inc
 providers/implementations/ciphers/cipher_aes_ocb.c
