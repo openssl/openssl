@@ -9,23 +9,27 @@
 
 /*-
  * PPC support for AES GCM.
- * This file is included by cipher_aes_gcm_hw.c
+ * This file is used by cipher_aes_gcm_hw.c
  */
+#include "internal/deprecated.h"
+#include "cipher_aes_gcm.h"
+
+#if defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
 
 static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                               size_t keylen)
+    size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
 
     GCM_HW_SET_KEY_CTR_FN(ks, aes_p8_set_encrypt_key, aes_p8_encrypt,
-                          aes_p8_ctr32_encrypt_blocks);
+        aes_p8_ctr32_encrypt_blocks);
     return 1;
 }
 
 static inline uint32_t UTO32(unsigned char *buf)
 {
-    return ((uint32_t) buf[0] << 24) | ((uint32_t) buf[1] << 16) | ((uint32_t) buf[2] << 8) | ((uint32_t) buf[3]);
+    return ((uint32_t)buf[0] << 24) | ((uint32_t)buf[1] << 16) | ((uint32_t)buf[2] << 8) | ((uint32_t)buf[3]);
 }
 
 static inline uint32_t add32TOU(unsigned char buf[4], uint32_t n)
@@ -34,15 +38,15 @@ static inline uint32_t add32TOU(unsigned char buf[4], uint32_t n)
 
     r = UTO32(buf);
     r += n;
-    buf[0] = (unsigned char) (r >> 24) & 0xFF;
-    buf[1] = (unsigned char) (r >> 16) & 0xFF;
-    buf[2] = (unsigned char) (r >> 8) & 0xFF;
-    buf[3] = (unsigned char) r & 0xFF;
+    buf[0] = (unsigned char)(r >> 24) & 0xFF;
+    buf[1] = (unsigned char)(r >> 16) & 0xFF;
+    buf[2] = (unsigned char)(r >> 8) & 0xFF;
+    buf[3] = (unsigned char)r & 0xFF;
     return r;
 }
 
 static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, size_t len,
-                                const void *key, unsigned char ivec[16], uint64_t *Xi, int encrypt)
+    const void *key, unsigned char ivec[16], uint64_t *Xi, int encrypt)
 {
     size_t s = 0;
     size_t ndone = 0;
@@ -55,7 +59,7 @@ static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, siz
     memcpy(ctr_saved, ivec, 12);
 
     while (nb) {
-        blocks_unused = (uint64_t) 0xffffffffU + 1 - (uint64_t) UTO32 (ivec + 12);
+        blocks_unused = (uint64_t)0xffffffffU + 1 - (uint64_t)UTO32(ivec + 12);
         if (nb > blocks_unused) {
             len = blocks_unused * 16;
             nb -= blocks_unused;
@@ -71,7 +75,7 @@ static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, siz
                     : ppc_aes_gcm_decrypt(in, out, len, key, ivec, Xi);
 
         /* add counter to ivec */
-        add32TOU(ivec + 12, (uint32_t) next_ctr);
+        add32TOU(ivec + 12, (uint32_t)next_ctr);
         if (ctr_reset) {
             ctr_reset = 0;
             in += len;
@@ -85,7 +89,7 @@ static size_t ppc_aes_gcm_crypt(const unsigned char *in, unsigned char *out, siz
 }
 
 static int ppc_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-                                     size_t len, unsigned char *out)
+    size_t len, unsigned char *out)
 {
     if (ctx->enc) {
         if (ctx->ctr != NULL) {
@@ -98,14 +102,14 @@ static int ppc_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                     return 0;
 
                 bulk = ppc_aes_gcm_crypt(in + res, out + res, len - res,
-                                         ctx->gcm.key,
-                                         ctx->gcm.Yi.c, ctx->gcm.Xi.u, 1);
+                    ctx->gcm.key,
+                    ctx->gcm.Yi.c, ctx->gcm.Xi.u, 1);
 
                 ctx->gcm.len.u[1] += bulk;
                 bulk += res;
             }
             if (CRYPTO_gcm128_encrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
-                                            len - bulk, ctx->ctr))
+                    len - bulk, ctx->ctr))
                 return 0;
         } else {
             if (CRYPTO_gcm128_encrypt(&ctx->gcm, in, out, len))
@@ -122,14 +126,14 @@ static int ppc_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
                     return 0;
 
                 bulk = ppc_aes_gcm_crypt(in + res, out + res, len - res,
-                                         ctx->gcm.key,
-                                         ctx->gcm.Yi.c, ctx->gcm.Xi.u, 0);
+                    ctx->gcm.key,
+                    ctx->gcm.Yi.c, ctx->gcm.Xi.u, 0);
 
                 ctx->gcm.len.u[1] += bulk;
                 bulk += res;
             }
             if (CRYPTO_gcm128_decrypt_ctr32(&ctx->gcm, in + bulk, out + bulk,
-                                            len - bulk, ctx->ctr))
+                    len - bulk, ctx->ctr))
                 return 0;
         } else {
             if (CRYPTO_gcm128_decrypt(&ctx->gcm, in, out, len))
@@ -148,8 +152,9 @@ static const PROV_GCM_HW aes_ppc_gcm = {
     ossl_gcm_one_shot
 };
 
-const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_ppc(size_t keybits)
 {
-    return PPC_AES_GCM_CAPABLE ? &aes_ppc_gcm : &aes_gcm;
+    return PPC_AES_GCM_CAPABLE ? &aes_ppc_gcm : NULL;
 }
 
+#endif

@@ -1,6 +1,5 @@
 /*
- * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
- * Copyright (c) 2021, Intel Corporation. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,40 +8,62 @@
  */
 
 /*-
+ * AES-NI support for AES GCM.
+ * This file is used by cipher_aes_gcm_hw.c
+ */
+#include "internal/deprecated.h"
+#include "cipher_aes_gcm.h"
+
+#if defined(AESNI_CAPABLE)
+
+static int aesni_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+    size_t keylen)
+{
+    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
+    AES_KEY *ks = &actx->ks.ks;
+    GCM_HW_SET_KEY_CTR_FN(ks, aesni_set_encrypt_key, aesni_encrypt,
+        aesni_ctr32_encrypt_blocks);
+    return 1;
+}
+
+static const PROV_GCM_HW aesni_gcm = {
+    aesni_gcm_initkey,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
+    generic_aes_gcm_cipher_update,
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
+};
+
+/*-
  * AVX512 VAES + VPCLMULDQD support for AES GCM.
- * This file is included by cipher_aes_gcm_hw_aesni.inc
  */
 
 #undef VAES_GCM_ENABLED
-#if (defined(__x86_64) || defined(__x86_64__) || \
-     defined(_M_AMD64) || defined(_M_X64))
-# define VAES_GCM_ENABLED
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+#define VAES_GCM_ENABLED
 
 /* Returns non-zero when AVX512F + VAES + VPCLMULDQD combination is available */
 int ossl_vaes_vpclmulqdq_capable(void);
 
-# define OSSL_AES_GCM_UPDATE(direction)                                 \
-    void ossl_aes_gcm_ ## direction ## _avx512(const void *ks,          \
-                                               void *gcm128ctx,         \
-                                               unsigned int *pblocklen, \
-                                               const unsigned char *in, \
-                                               size_t len,              \
-                                               unsigned char *out);
-
-OSSL_AES_GCM_UPDATE(encrypt)
-OSSL_AES_GCM_UPDATE(decrypt)
+void ossl_aes_gcm_encrypt_avx512(const void *ks, void *gcm128ctx,
+    unsigned int *pblocklen, const unsigned char *in, size_t len,
+    unsigned char *out);
+void ossl_aes_gcm_decrypt_avx512(const void *ks, void *gcm128ctx,
+    unsigned int *pblocklen, const unsigned char *in, size_t len,
+    unsigned char *out);
 
 void ossl_aes_gcm_init_avx512(const void *ks, void *gcm128ctx);
 void ossl_aes_gcm_setiv_avx512(const void *ks, void *gcm128ctx,
-                               const unsigned char *iv, size_t ivlen);
+    const unsigned char *iv, size_t ivlen);
 void ossl_aes_gcm_update_aad_avx512(void *gcm128ctx, const unsigned char *aad,
-                                    size_t aadlen);
+    size_t aadlen);
 void ossl_aes_gcm_finalize_avx512(void *gcm128ctx, unsigned int pblocklen);
 
 void ossl_gcm_gmult_avx512(uint64_t Xi[2], const void *gcm128ctx);
 
 static int vaes_gcm_setkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                           size_t keylen)
+    size_t keylen)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
@@ -59,16 +80,16 @@ static int vaes_gcm_setkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 }
 
 static int vaes_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv,
-                          size_t ivlen)
+    size_t ivlen)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
 
-    gcmctx->Yi.u[0] = 0;           /* Current counter */
+    gcmctx->Yi.u[0] = 0; /* Current counter */
     gcmctx->Yi.u[1] = 0;
-    gcmctx->Xi.u[0] = 0;           /* AAD hash */
+    gcmctx->Xi.u[0] = 0; /* AAD hash */
     gcmctx->Xi.u[1] = 0;
-    gcmctx->len.u[0] = 0;          /* AAD length */
-    gcmctx->len.u[1] = 0;          /* Message length */
+    gcmctx->len.u[0] = 0; /* AAD length */
+    gcmctx->len.u[1] = 0; /* Message length */
     gcmctx->ares = 0;
     gcmctx->mres = 0;
 
@@ -82,8 +103,8 @@ static int vaes_gcm_setiv(PROV_GCM_CTX *ctx, const unsigned char *iv,
 }
 
 static int vaes_gcm_aadupdate(PROV_GCM_CTX *ctx,
-                              const unsigned char *aad,
-                              size_t aad_len)
+    const unsigned char *aad,
+    size_t aad_len)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
     uint64_t alen = gcmctx->len.u[0];
@@ -143,7 +164,7 @@ static int vaes_gcm_aadupdate(PROV_GCM_CTX *ctx,
 }
 
 static int vaes_gcm_cipherupdate(PROV_GCM_CTX *ctx, const unsigned char *in,
-                                 size_t len, unsigned char *out)
+    size_t len, unsigned char *out)
 {
     GCM128_CONTEXT *gcmctx = &ctx->gcm;
     uint64_t mlen = gcmctx->len.u[1];
@@ -182,8 +203,7 @@ static int vaes_gcm_cipherfinal(PROV_GCM_CTX *ctx, unsigned char *tag)
     if (ctx->enc) {
         ctx->taglen = GCM_TAG_MAX_SIZE;
         memcpy(tag, gcmctx->Xi.c,
-               ctx->taglen <= sizeof(gcmctx->Xi.c) ? ctx->taglen :
-               sizeof(gcmctx->Xi.c));
+            ctx->taglen <= sizeof(gcmctx->Xi.c) ? ctx->taglen : sizeof(gcmctx->Xi.c));
         *res = 0;
     } else {
         return !CRYPTO_memcmp(gcmctx->Xi.c, tag, ctx->taglen);
@@ -200,5 +220,19 @@ static const PROV_GCM_HW vaes_gcm = {
     vaes_gcm_cipherfinal,
     ossl_gcm_one_shot
 };
+
+#endif
+
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_aesni(size_t keybits)
+{
+#ifdef VAES_GCM_ENABLED
+    if (ossl_vaes_vpclmulqdq_capable())
+        return &vaes_gcm;
+#endif
+    if (AESNI_CAPABLE)
+        return &aesni_gcm;
+
+    return NULL;
+}
 
 #endif

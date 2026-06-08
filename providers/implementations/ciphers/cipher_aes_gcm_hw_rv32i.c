@@ -9,29 +9,33 @@
 
 /*-
  * RISC-V 32 ZKND ZKNE support for AES GCM.
- * This file is included by cipher_aes_gcm_hw.c
+ * This file is used by cipher_aes_gcm_hw.c
  */
+#include "internal/deprecated.h"
+#include "cipher_aes_gcm.h"
+
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 
 static int rv32i_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-                                       size_t keylen)
+    size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
 
     GCM_HW_SET_KEY_CTR_FN(ks, rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt,
-                          NULL);
+        NULL);
     return 1;
 }
 
 static int rv32i_zbkb_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx,
-                                            const unsigned char *key,
-                                            size_t keylen)
+    const unsigned char *key,
+    size_t keylen)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
 
     GCM_HW_SET_KEY_CTR_FN(ks, rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt,
-                          NULL);
+        NULL);
     return 1;
 }
 
@@ -53,11 +57,13 @@ static const PROV_GCM_HW rv32i_zbkb_zknd_zkne_gcm = {
     ossl_gcm_one_shot
 };
 
-const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv32i(size_t keybits)
 {
     if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
         return &rv32i_zbkb_zknd_zkne_gcm;
     if (RISCV_HAS_ZKND_AND_ZKNE())
         return &rv32i_zknd_zkne_gcm;
-    return &aes_gcm;
+    return NULL;
 }
+
+#endif

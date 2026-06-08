@@ -58,7 +58,7 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     return 1;
 }
 
-static int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
+int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
     size_t len, unsigned char *out)
 {
     if (ctx->enc) {
@@ -132,23 +132,28 @@ static const PROV_GCM_HW aes_gcm = {
     ossl_gcm_one_shot
 };
 
-#if defined(S390X_aes_128_CAPABLE)
-#include "cipher_aes_gcm_hw_s390x.inc"
-#elif defined(AESNI_CAPABLE)
-#include "cipher_aes_gcm_hw_aesni.inc"
-#elif defined(SPARC_AES_CAPABLE)
-#include "cipher_aes_gcm_hw_t4.inc"
-#elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
-#include "cipher_aes_gcm_hw_armv8.inc"
-#elif defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
-#include "cipher_aes_gcm_hw_ppc.inc"
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-#include "cipher_aes_gcm_hw_rv64i.inc"
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
-#include "cipher_aes_gcm_hw_rv32i.inc"
-#else
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 {
-    return &aes_gcm;
-}
+    const PROV_GCM_HW *aes_gcm_hw = NULL;
+
+#if defined(AESNI_CAPABLE)
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_aesni(keybits);
+#elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_armv8(keybits);
+#elif defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_ppc(keybits);
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_rv64i(keybits);
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_rv32i(keybits);
+#elif defined(S390X_aes_128_CAPABLE)
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_s390x(keybits);
+#elif defined(SPARC_AES_CAPABLE)
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_t4(keybits);
 #endif
+
+    if (aes_gcm_hw == NULL)
+        aes_gcm_hw = &aes_gcm;
+
+    return aes_gcm_hw;
+}
