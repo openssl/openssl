@@ -3197,12 +3197,18 @@ int speed_main(int argc, char **argv)
                 rsa_doit[testnum] = 0;
                 ERR_get_error(); /* skip this error */
                 ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                BIO_printf(bio_err, "Skip  %-9s with invalid key length\n",
-                    rsa_choices[testnum].name);
+                if (!mr) {
+                    /* space after 'Skip' is to align with 'Doing' */
+                    BIO_printf(bio_err, "Skip  %-9s with invalid key length\n",
+                        rsa_choices[testnum].name);
+                }
             } else {
                 /* stop all the rsa's except for kems_doit[] and sigs_doit[] */
-                BIO_puts(bio_err,
-                    "RSA sign setup failure.  No RSA sign will be done.\n");
+                if (!mr) {
+                    /* space after 'Skip' is to align with 'Doing' */
+                    BIO_puts(bio_err,
+                        "RSA sign setup failure.  No RSA sign will be done.\n");
+                }
                 dofail();
                 op_count = 1;
             }
@@ -3288,8 +3294,11 @@ int speed_main(int argc, char **argv)
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_ASYM_CIPHER_FAILURE)
                         ERR_get_error(); /* skip this error */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                    BIO_printf(bio_err, "Skip  %-9s enc/dec with invalid padding mode\n",
-                        rsa_choices[testnum].name);
+                    if (!mr) {
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %-9s enc/dec with invalid padding mode\n",
+                            rsa_choices[testnum].name);
+                    }
                 } else {
                     /* stop all the rsa's except for kems_doit[] and sigs_doit[] */
                     BIO_puts(bio_err,
@@ -3384,8 +3393,11 @@ int speed_main(int argc, char **argv)
             /* this failure is usually caused by EVP_PKEY_*() not by get_dsa() */
             /* skip only this */
             dsa_doit[testnum] = 0;
-            BIO_printf(bio_err, "Skip  %s with invalid sign setup\n",
-                dsa_choices[testnum].name);
+            if (!mr) {
+                /* space after 'Skip' is to align with 'Doing' */
+                BIO_printf(bio_err, "Skip  %s with invalid sign setup\n",
+                    dsa_choices[testnum].name);
+            }
             /* to stop all the dsa's, use below instead */
             /*
              * BIO_puts(bio_err,
@@ -3484,22 +3496,27 @@ int speed_main(int argc, char **argv)
                     && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
                     ERR_get_error(); /* skip this error */
                 ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                /* if (0x08000081 == error) */
-                if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
-                    && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
-                    BIO_printf(bio_err, "Skip  %s with unkown group\n",
-                        ecdsa_choices[testnum].name);
-                /* if (0x1C800069 == error) */
-                else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
-                    && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
-                    BIO_printf(bio_err, "Skip  %s with invalid key length\n",
-                        ecdsa_choices[testnum].name);
-                /* if (0x0308010C == error) */
-                else if (ERR_GET_LIB(error) == ERR_LIB_EVP
-                    /* (268|ERR_RFLAG_COMMON) in err.h */
-                    && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED)
-                    BIO_printf(bio_err, "Skip  %s with unsupported\n",
-                        ecdsa_choices[testnum].name);
+                if (!mr) {
+                    /* if (0x08000081 == error) */
+                    if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
+                        && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %s with unkown group\n",
+                            ecdsa_choices[testnum].name);
+                    /* if (0x1C800069 == error) */
+                    else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
+                        && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %s with invalid key length\n",
+                            ecdsa_choices[testnum].name);
+                    /* if (0x0308010C == error) */
+                    else if (ERR_GET_LIB(error) == ERR_LIB_EVP
+                        /* (268|ERR_RFLAG_COMMON) in err.h */
+                        && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED)
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %s with unsupported\n",
+                            ecdsa_choices[testnum].name);
+                }
                 continue;
             } else {
                 /* stop all the ecdsa's */
@@ -3551,8 +3568,11 @@ int speed_main(int argc, char **argv)
                 ecdsa_doit[testnum] = 0;
                 ERR_get_error(); /* skip this error */
                 ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                BIO_printf(bio_err, "Skip  %s with unsupported sign setup\n",
-                    EC_CURVE_NAME(ec_curves[testnum]));
+                if (!mr) {
+                    /* space after 'Skip' is to align with 'Doing' */
+                    BIO_printf(bio_err, "Skip  %s with unsupported sign setup\n",
+                        EC_CURVE_NAME(ec_curves[testnum]));
+                }
             } else {
                 /* stop all the ecdsa's */
                 BIO_printf(bio_err,
@@ -3683,22 +3703,27 @@ int speed_main(int argc, char **argv)
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
                         ERR_get_error(); /* skip this error */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                    /* if (0x08000081 == error) */
-                    if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
-                        && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
-                        BIO_printf(bio_err, "Skip  %s with unkown group\n",
-                            ecdh_choices[testnum].name);
-                    /* if (0x1C800069 == error) */
-                    else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
-                        && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
-                        BIO_printf(bio_err, "Skip  %s with invalid key length\n",
-                            ecdh_choices[testnum].name);
-                    /* if (0x0308010C == error) */
-                    else if (ERR_GET_LIB(error) == ERR_LIB_EVP
-                        /* (268|ERR_RFLAG_COMMON) in err.h */
-                        && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED)
-                        BIO_printf(bio_err, "Skip  %s with unsupported\n",
-                            ecdh_choices[testnum].name);
+                    if (!mr) {
+                        /* if (0x08000081 == error) */
+                        if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
+                            && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
+                            /* space after 'Skip' is to align with 'Doing' */
+                            BIO_printf(bio_err, "Skip  %s with unkown group\n",
+                                ecdh_choices[testnum].name);
+                        /* if (0x1C800069 == error) */
+                        else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
+                            && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
+                            /* space after 'Skip' is to align with 'Doing' */
+                            BIO_printf(bio_err, "Skip  %s with invalid key length\n",
+                                ecdh_choices[testnum].name);
+                        /* if (0x0308010C == error) */
+                        else if (ERR_GET_LIB(error) == ERR_LIB_EVP
+                            /* (268|ERR_RFLAG_COMMON) in err.h */
+                            && ERR_GET_REASON(error) == ERR_R_UNSUPPORTED)
+                            /* space after 'Skip' is to align with 'Doing' */
+                            BIO_printf(bio_err, "Skip  %s with unsupported\n",
+                                ecdh_choices[testnum].name);
+                    }
                 } else {
                     /* stop all the ecdh's */
                     BIO_puts(bio_err, "ECDH key generation failure.\n");
@@ -3730,8 +3755,11 @@ int speed_main(int argc, char **argv)
                     ecdh_doit[testnum] = 0;
                     ERR_get_error(); /* skip this error */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                    BIO_printf(bio_err, "Skip  %s with cofactor required\n",
-                        ecdh_choices[testnum].name);
+                    if (!mr) {
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %s with cofactor required\n",
+                            ecdh_choices[testnum].name);
+                    }
                 } else {
                     /* stop all the ecdh's */
                     BIO_puts(bio_err, "ECDH computation failure.\n");
@@ -4049,8 +4077,11 @@ int speed_main(int argc, char **argv)
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
                         ERR_get_error(); /* skip this error */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                    BIO_printf(bio_err, "Skip  %s in kems with invalid modulus\n",
-                        kems_algname[testnum]);
+                    if (!mr) {
+                        /* space after 'Skip' is to align with 'Doing' */
+                        BIO_printf(bio_err, "Skip  %s in kems with invalid modulus\n",
+                            kems_algname[testnum]);
+                    }
                 } else {
                     /* stop all the kems_doit[] */
                     BIO_puts(bio_err, "Error while generating KEM EVP_PKEY.\n");
@@ -4237,8 +4268,11 @@ int speed_main(int argc, char **argv)
                         /* skip only this */
                         sigs_doit[testnum] = 0;
                         ERR_get_error(); /* skip this error */
-                        BIO_printf(bio_err, "Skip  %s with invalid key management\n",
-                            sig_name);
+                        if (!mr) {
+                            /* space after 'Skip' is to align with 'Doing' */
+                            BIO_printf(bio_err, "Skip  %s with invalid key management\n",
+                                sig_name);
+                        }
                     } else {
                         /* stop all the sigs_doit[] */
                         BIO_printf(bio_err,
@@ -4274,8 +4308,10 @@ int speed_main(int argc, char **argv)
                         && ERR_GET_REASON(uh_error) == EVP_R_PROVIDER_KEYMGMT_FAILURE)
                         ERR_get_error(); /* skip this error */
                     ERR_print_errors(bio_err); /* print unhandled errors if exist */
-                    BIO_printf(bio_err, "Skip  %s in sigs with invalid modulus\n",
-                        sigs_algname[testnum]);
+                    if (!mr) {
+                        BIO_printf(bio_err, "Skip  %s in sigs with invalid modulus\n",
+                            sigs_algname[testnum]);
+                    }
                 } else {
                     BIO_printf(bio_err,
                         "Error while generating signature EVP_PKEY for %s.\n",
