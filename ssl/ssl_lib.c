@@ -4292,6 +4292,9 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     if ((ret->tktenc = EVP_CIPHER_fetch(libctx, "AES-256-CBC", propq)) == NULL)
         goto err;
+    if ((ret->sha1 = EVP_MD_fetch(libctx, "SHA1", propq)) == NULL)
+        goto err;
+
 #if defined(OPENSSL_HAVE_TLS1PRF)
     if ((ret->tls1prf = EVP_KDF_fetch(libctx, OSSL_KDF_NAME_TLS1_PRF, propq)) == NULL)
         goto err;
@@ -4633,6 +4636,7 @@ void SSL_CTX_free(SSL_CTX *a)
     EVP_MAC_free(a->hmac);
     EVP_MD_free(a->sha256);
     EVP_CIPHER_free(a->tktenc);
+    EVP_MD_free(a->sha1);
 #ifdef OPENSSL_HAVE_TLS1PRF
     EVP_KDF_free(a->tls1prf);
 #endif
@@ -4725,13 +4729,16 @@ X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
     int idx;
     X509_HS_CACHE_ENT *find = NULL;
     X509 *ret = NULL;
+    unsigned int len = SHA_DIGEST_LENGTH;
 
     if (sctx->handshake_certs == NULL)
         return NULL;
 
     lookup.cert = NULL;
-    if (!EVP_Q_digest(sctx->libctx, "SHA1", NULL,
-            certbytes, cert_len, lookup.sha1_hash, NULL))
+    if (!EVP_Digest(certbytes, cert_len, lookup.sha1_hash, &len, sctx->sha1, NULL))
+        return NULL;
+
+    if (len != SHA_DIGEST_LENGTH)
         return NULL;
 
     memcpy(sha1_hash, lookup.sha1_hash, SHA_DIGEST_LENGTH);

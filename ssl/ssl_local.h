@@ -934,7 +934,7 @@ struct ssl_ctx_st {
     CRYPTO_EX_DATA ex_data;
 
     const EVP_MD *md5; /* For SSLv3/TLSv1 'ssl3-md5' */
-    const EVP_MD *sha1; /* For SSLv3/TLSv1 'ssl3-sha1' */
+    EVP_MD *sha1; /* For SSLv3/TLSv1 'ssl3-sha1' */
 
     STACK_OF(X509) *extra_certs;
     STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
