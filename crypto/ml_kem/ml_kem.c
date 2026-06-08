@@ -2173,6 +2173,9 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
         || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
 
+    /* Clear any unused seed */
+    ossl_ml_kem_key_reset(key);
+
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
         ret = parse_prvkey(in, mdctx, key);
