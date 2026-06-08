@@ -19,26 +19,22 @@
 static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
-    ctr128_f ctr;
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
     switch (keylen) {
     case 16:
-        ctr = (ctr128_f)aes128_t4_ctr32_encrypt;
-        break;
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            aes_t4_set_encrypt_key, aes_t4_encrypt,
+            (ctr128_f)aes128_t4_ctr32_encrypt);
     case 24:
-        ctr = (ctr128_f)aes192_t4_ctr32_encrypt;
-        break;
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            aes_t4_set_encrypt_key, aes_t4_encrypt,
+            (ctr128_f)aes192_t4_ctr32_encrypt);
     case 32:
-        ctr = (ctr128_f)aes256_t4_ctr32_encrypt;
-        break;
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            aes_t4_set_encrypt_key, aes_t4_encrypt,
+            (ctr128_f)aes256_t4_ctr32_encrypt);
     default:
         return 0;
     }
-
-    GCM_HW_SET_KEY_CTR_FN(ks, aes_t4_set_encrypt_key, aes_t4_encrypt, ctr);
-    return 1;
 }
 
 static const PROV_GCM_HW t4_aes_gcm = {
