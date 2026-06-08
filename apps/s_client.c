@@ -525,6 +525,7 @@ typedef enum OPTION_choice {
     OPT_STATUS,
     OPT_STATUS_OCSP_CHECK_LEAF,
     OPT_STATUS_OCSP_CHECK_ALL,
+    OPT_OCSP_EXTRA_UNTRUSTED,
 #endif
     OPT_MSG,
     OPT_MSGFILE,
@@ -745,6 +746,8 @@ const OPTIONS s_client_options[] = {
         "Require checking leaf certificate status, attempting to use OCSP stapling first" },
     { "ocsp_check_all", OPT_STATUS_OCSP_CHECK_ALL, '-',
         "Require checking status of full chain, attempting to use OCSP stapling first" },
+    { "ocsp_extra_untrusted", OPT_OCSP_EXTRA_UNTRUSTED, '<',
+        "Additional certificates to search for OCSP signer or intermediate CA certificates" },
 #endif
 
     OPT_SECTION("Debug"),
@@ -1090,6 +1093,7 @@ int s_client_main(int argc, char **argv)
     int c_tlsextdebug = 0;
 #ifndef OPENSSL_NO_OCSP
     int c_status_req = 0;
+    STACK_OF(X509) *ocsp_extra_untrusted = NULL;
 #endif
     BIO *bio_c_msg = NULL;
     const char *keylog_file = NULL, *early_data_file = NULL;
@@ -1344,6 +1348,15 @@ int s_client_main(int argc, char **argv)
             X509_VERIFY_PARAM_set_flags(vpm,
                 X509_V_FLAG_OCSP_RESP_CHECK | X509_V_FLAG_OCSP_RESP_CHECK_ALL);
             vpmtouched++;
+            break;
+        case OPT_OCSP_EXTRA_UNTRUSTED:
+            if (!load_certs(opt_arg(), 0, &ocsp_extra_untrusted, NULL,
+                    "OCSP extra untrusted certificates")) {
+                BIO_printf(bio_err, "Error reading file %s\n", opt_arg());
+                goto end;
+            }
+            X509_VERIFY_PARAM_set1_ocsp_extra_untrusted(vpm, ocsp_extra_untrusted);
+            sk_X509_pop_free(ocsp_extra_untrusted, X509_free);
             break;
 #endif
         case OPT_WDEBUG:
