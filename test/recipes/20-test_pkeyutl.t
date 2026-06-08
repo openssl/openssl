@@ -17,7 +17,7 @@ use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 29;
+plan tests => 30;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -336,3 +336,37 @@ SKIP: {
     is(compare(srctop_file('test', 'encap_secret.bin'), "decap_out_etl.bin"), 0,
                "Secret is correctly decapsulated - pregenerated");
 }
+
+subtest "pkeyutl -pkeyopt_passin" => sub {
+    plan tests => 5;
+
+    my @common = ('openssl', 'pkeyutl', '-kdf', 'TLS1-PRF', '-kdflen', '16',
+                  '-pkeyopt', 'md:SHA256',
+                  '-pkeyopt', 'seed:someseed');
+
+    ok(run(app([@common, '-pkeyopt', 'secret:somesecret',
+                '-out', 'tls1prf_plain.bin'])),
+       "Derive with -pkeyopt secret");
+
+    ok(run(app([@common, '-pkeyopt_passin', 'secret:pass:somesecret',
+                '-out', 'tls1prf_passin.bin'])),
+       "Derive with -pkeyopt_passin secret");
+
+    is(compare('tls1prf_plain.bin', 'tls1prf_passin.bin'), 0,
+       "pkeyopt_passin secret matches plain pkeyopt secret");
+
+    # app_passwd failure: passphrase source cannot be read
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            ok(run(app([@common, '-pkeyopt_passin',
+                        'secret:file:no_such_passfile'])),
+               "Fail when the passphrase source cannot be read");
+        });
+
+    # EVP_PKEY_CTX_ctrl_str failure: unknown control name
+    with({ exit_checker => sub { return shift == 1; } },
+        sub {
+            ok(run(app([@common, '-pkeyopt_passin', 'bogus:pass:whatever'])),
+               "Fail on unknown pkey option via passin");
+        });
+};
