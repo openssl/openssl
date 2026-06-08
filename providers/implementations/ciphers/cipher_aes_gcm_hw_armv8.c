@@ -83,17 +83,15 @@ size_t armv8_aes_gcm_decrypt(const unsigned char *in, unsigned char *out, size_t
 static int armv8_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
     if (AES_UNROLL12_EOR3_CAPABLE) {
-        GCM_HW_SET_KEY_CTR_FN(ks, aes_v8_set_encrypt_key, aes_v8_encrypt,
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            aes_v8_set_encrypt_key, aes_v8_encrypt,
             aes_v8_ctr32_encrypt_blocks_unroll12_eor3);
     } else {
-        GCM_HW_SET_KEY_CTR_FN(ks, aes_v8_set_encrypt_key, aes_v8_encrypt,
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            aes_v8_set_encrypt_key, aes_v8_encrypt,
             aes_v8_ctr32_encrypt_blocks);
     }
-    return 1;
 }
 
 static const PROV_GCM_HW armv8_aes_gcm = {

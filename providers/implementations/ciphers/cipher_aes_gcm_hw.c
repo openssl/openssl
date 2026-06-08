@@ -14,48 +14,67 @@
  * non-internal use) in order to implement provider AES ciphers.
  */
 #include "internal/deprecated.h"
-
+#include <openssl/proverr.h>
 #include "cipher_aes_gcm.h"
 
-static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
-    size_t keylen)
+int aes_gcm_hw_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+    size_t keylen, aes_set_encrypt_key_fn fn_set_key,
+    aes_block128_f fn_block, ctr128_f fn_ctr)
 {
     PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
     AES_KEY *ks = &actx->ks.ks;
 
+    int ret = fn_set_key(key, (int)(keylen * 8), ks);
+    if (ret < 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_KEY_SETUP_FAILED);
+        return 0;
+    }
+
+    CRYPTO_gcm128_init(&ctx->gcm, ks, (block128_f)fn_block);
+    ctx->ctr = fn_ctr;
+    ctx->key_set = 1;
+
+    return 1;
+}
+
+static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+    size_t keylen)
+{
 #ifdef HWAES_CAPABLE
     if (HWAES_CAPABLE) {
 #ifdef HWAES_ctr32_encrypt_blocks
-        GCM_HW_SET_KEY_CTR_FN(ks, HWAES_set_encrypt_key, HWAES_encrypt,
-            HWAES_ctr32_encrypt_blocks);
+        return aes_gcm_hw_initkey(ctx, key, keylen, HWAES_set_encrypt_key,
+            HWAES_encrypt, HWAES_ctr32_encrypt_blocks);
 #else
-        GCM_HW_SET_KEY_CTR_FN(ks, HWAES_set_encrypt_key, HWAES_encrypt, NULL);
+        return aes_gcm_hw_initkey(ctx, key, keylen, HWAES_set_encrypt_key,
+            HWAES_encrypt, NULL);
 #endif /* HWAES_ctr32_encrypt_blocks */
     } else
 #endif /* HWAES_CAPABLE */
 
 #ifdef BSAES_CAPABLE
         if (BSAES_CAPABLE) {
-        GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
-            ossl_bsaes_ctr32_encrypt_blocks);
+        return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
+            AES_encrypt, (ctr128_f)ossl_bsaes_ctr32_encrypt_blocks);
     } else
 #endif /* BSAES_CAPABLE */
 
 #ifdef VPAES_CAPABLE
         if (VPAES_CAPABLE) {
-        GCM_HW_SET_KEY_CTR_FN(ks, vpaes_set_encrypt_key, vpaes_encrypt, NULL);
+        return aes_gcm_hw_initkey(ctx, key, keylen, vpaes_set_encrypt_key,
+            vpaes_encrypt, NULL);
     } else
 #endif /* VPAES_CAPABLE */
 
     {
 #ifdef AES_CTR_ASM
-        GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt,
-            AES_ctr32_encrypt);
+        return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
+            AES_encrypt, (ctr128_f)AES_ctr32_encrypt);
 #else
-        GCM_HW_SET_KEY_CTR_FN(ks, AES_set_encrypt_key, AES_encrypt, NULL);
+        return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
+            AES_encrypt, NULL);
 #endif /* AES_CTR_ASM */
     }
-    return 1;
 }
 
 int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,

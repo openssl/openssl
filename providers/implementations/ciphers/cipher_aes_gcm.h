@@ -45,6 +45,16 @@ typedef struct prov_aes_gcm_ctx_st {
     } plat;
 } PROV_AES_GCM_CTX;
 
+typedef void (*aes_block128_f)(const unsigned char in[16],
+    unsigned char out[16], const AES_KEY *key);
+
+typedef int (*aes_set_encrypt_key_fn)(const unsigned char *key,
+    int bits, AES_KEY *ks);
+
+int aes_gcm_hw_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+    size_t keylen, aes_set_encrypt_key_fn fn_set_key,
+    aes_block128_f fn_block, ctr128_f fn_ctr);
+
 int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
     size_t len, unsigned char *out);
 

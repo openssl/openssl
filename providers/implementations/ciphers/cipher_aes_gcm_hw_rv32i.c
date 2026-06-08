@@ -19,24 +19,16 @@
 static int rv32i_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
-    GCM_HW_SET_KEY_CTR_FN(ks, rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt,
-        NULL);
-    return 1;
+    return aes_gcm_hw_initkey(ctx, key, keylen,
+        rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL);
 }
 
 static int rv32i_zbkb_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx,
     const unsigned char *key,
     size_t keylen)
 {
-    PROV_AES_GCM_CTX *actx = (PROV_AES_GCM_CTX *)ctx;
-    AES_KEY *ks = &actx->ks.ks;
-
-    GCM_HW_SET_KEY_CTR_FN(ks, rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt,
-        NULL);
-    return 1;
+    return aes_gcm_hw_initkey(ctx, key, keylen,
+        rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL);
 }
 
 static const PROV_GCM_HW rv32i_zknd_zkne_gcm = {
