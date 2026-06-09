@@ -102,8 +102,8 @@ static int test_ctx(void)
     /*
      * Make a CTX that is likely to contain two 2048-bit or one 4096-bit OSSL_FN
      * and one frame (let's overestimate its size to 128 bytes).
-     * Note that OSSL_FN_CTX_new() takes a size in bytes, so we must ensure that
-     * we get that number right.
+     * Note that OSSL_FN_CTX_new() takes a maximum number of limbs in the last
+     * parameter, so we must ensure that we get that number right.
      */
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 2, 4096 / 8 / OSSL_FN_BYTES))) {
         ret = 0;
@@ -174,8 +174,8 @@ static int test_secure_ctx(void)
     /*
      * Make a CTX that is likely to contain two 2048-bit OSSL_FN and one frame
      * (let's overestimate its size to 128 bytes).
-     * Note that OSSL_FN_CTX_new() takes a size in bytes, so we must ensure that
-     * we get that number right.
+     * Note that OSSL_FN_CTX_new() takes a maximum number of limbs in the last
+     * parameter, so we must ensure that we get that number right.
      */
     if (!TEST_ptr(ctx = OSSL_FN_CTX_secure_new(NULL, 1, 2, 2048 / 8 / OSSL_FN_BYTES))) {
         ret = 0;
@@ -205,6 +205,138 @@ end:
     return ret;
 }
 
+static int test_ctx_peak_used(void)
+{
+    int ret = 1;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *f = NULL;
+    const void *token1 = NULL;
+    const void *token2 = NULL;
+    size_t frames, numbers, limbs;
+    size_t limbs_2048 = 2048 / 8 / OSSL_FN_BYTES;
+    size_t limbs_4096 = 4096 / 8 / OSSL_FN_BYTES;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 2, 4, 256))) {
+        ret = 0;
+        goto end;
+    }
+
+    /*
+     * Fresh context.
+     */
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 0)
+        || !TEST_size_t_eq(numbers, 0)
+        || !TEST_size_t_eq(limbs, 0))
+        ret = 0;
+
+    /*
+     * NULL context: all out parameters set to 0.
+     */
+    OSSL_FN_CTX_peak_usage(NULL, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 0)
+        || !TEST_size_t_eq(numbers, 0)
+        || !TEST_size_t_eq(limbs, 0))
+        ret = 0;
+
+    /*
+     * NULL out parameters are tolerated.
+     */
+    OSSL_FN_CTX_peak_usage(ctx, NULL, NULL, NULL);
+
+    /*
+     * Start frame 1.
+     */
+    if (!TEST_ptr(token1 = OSSL_FN_CTX_start(ctx))) {
+        ret = 0;
+        goto end;
+    }
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 1)
+        || !TEST_size_t_eq(numbers, 0)
+        || !TEST_size_t_eq(limbs, 0))
+        ret = 0;
+
+    /*
+     * Allocate one number in frame 1.
+     */
+    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048)))
+        ret = 0;
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 1)
+        || !TEST_size_t_eq(numbers, 1)
+        || !TEST_size_t_eq(limbs, limbs_2048))
+        ret = 0;
+
+    /*
+     * Start frame 2 (nested inside frame 1).
+     */
+    if (!TEST_ptr(token2 = OSSL_FN_CTX_start(ctx))) {
+        ret = 0;
+        goto end;
+    }
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 2)
+        || !TEST_size_t_eq(numbers, 1)
+        || !TEST_size_t_eq(limbs, limbs_2048))
+        ret = 0;
+
+    /*
+     * Allocate one number in frame 2.
+     */
+    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 4096)))
+        ret = 0;
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 2)
+        || !TEST_size_t_eq(numbers, 2)
+        || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096))
+        ret = 0;
+
+    /*
+     * Allocate a second number in frame 2.
+     */
+    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048)))
+        ret = 0;
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 2)
+        || !TEST_size_t_eq(numbers, 3)
+        || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096 + limbs_2048))
+        ret = 0;
+
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token2))) {
+        ret = 0;
+        goto end;
+    }
+
+    /*
+     * After ending frame 2: peaks must not decrease.
+     */
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 2)
+        || !TEST_size_t_eq(numbers, 3)
+        || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096 + limbs_2048))
+        ret = 0;
+
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token1))) {
+        ret = 0;
+        goto end;
+    }
+
+    /*
+     * After ending frame 1: peaks still preserved.
+     */
+    OSSL_FN_CTX_peak_usage(ctx, &frames, &numbers, &limbs);
+    if (!TEST_size_t_eq(frames, 2)
+        || !TEST_size_t_eq(numbers, 3)
+        || !TEST_size_t_eq(limbs, limbs_2048 + limbs_4096 + limbs_2048))
+        ret = 0;
+
+end:
+    OSSL_FN_CTX_free(ctx);
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_struct);
@@ -212,6 +344,7 @@ int setup_tests(void)
     ADD_TEST(test_secure_alloc);
     ADD_TEST(test_ctx);
     ADD_TEST(test_secure_ctx);
+    ADD_TEST(test_ctx_peak_used);
 
     return 1;
 }
