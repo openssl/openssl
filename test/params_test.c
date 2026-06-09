@@ -648,9 +648,9 @@ static int check_int_from_text(const struct int_from_text_test_st a)
         return 0;
     }
     if (param.data_size != a.expected_bufsize) {
-        TEST_error("unexpected size for %s \"%s\":  %d != %d",
+        TEST_error("unexpected size for %s \"%s\":  %zu != %zu",
             a.argname, a.strval,
-            (int)a.expected_bufsize, (int)param.data_size);
+            a.expected_bufsize, param.data_size);
         return 0;
     }
 

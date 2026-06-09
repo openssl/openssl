@@ -83,9 +83,9 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
         SSL_set_mtu(clnt_ssl, 500 + i);
         mtus[i] = DTLS_get_data_mtu(clnt_ssl);
         if (debug)
-            TEST_info("%s%s MTU for record mtu %d = %lu",
+            TEST_info("%s%s MTU for record mtu %d = %zu",
                 cs, no_etm ? "-noEtM" : "",
-                500 + i, (unsigned long)mtus[i]);
+                500 + i, mtus[i]);
         if (!TEST_size_t_ne(mtus[i], 0)) {
             TEST_info("Cipher %s MTU %d", cs, 500 + i);
             goto end;
@@ -116,9 +116,8 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
                  * We sent a packet smaller than or equal to mtus[j] and
                  * that made a record *larger* than the record MTU 500+j!
                  */
-                TEST_error("%s: s=%lu, mtus[i]=%lu, reclen=%lu, i=%d",
-                    cs, (unsigned long)s, (unsigned long)mtus[i],
-                    (unsigned long)reclen, 500 + i);
+                TEST_error("%s: s=%zu, mtus[i]=%zu, reclen=%zu, i=%d",
+                    cs, s, mtus[i], reclen, 500 + i);
                 goto end;
             }
             if (!TEST_false(s > mtus[i] && reclen <= (size_t)(500 + i))) {
@@ -127,9 +126,8 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
                  * fits within the record MTU 500+i, so DTLS_get_data_mtu()
                  * was overly pessimistic.
                  */
-                TEST_error("%s: s=%lu, mtus[i]=%lu, reclen=%lu, i=%d",
-                    cs, (unsigned long)s, (unsigned long)mtus[i],
-                    (unsigned long)reclen, 500 + i);
+                TEST_error("%s: s=%zu, mtus[i]=%zu, reclen=%zu, i=%d",
+                    cs, s, mtus[i], reclen, 500 + i);
                 goto end;
             }
         }

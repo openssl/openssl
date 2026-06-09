@@ -39,9 +39,9 @@ void ossl_ech_pbuf(const char *msg, const unsigned char *buf, const size_t blen)
             BIO_printf(trc_out, "msg is NULL\n");
         } else if (buf == NULL || blen == 0) {
             BIO_printf(trc_out, "%s: buf is %p\n", msg, (void *)buf);
-            BIO_printf(trc_out, "%s: blen is %lu\n", msg, (unsigned long)blen);
+            BIO_printf(trc_out, "%s: blen is %zu\n", msg, blen);
         } else {
-            BIO_printf(trc_out, "%s (%lu)\n", msg, (unsigned long)blen);
+            BIO_printf(trc_out, "%s (%zu)\n", msg, blen);
             BIO_dump_indent(trc_out, buf, (int)blen, 4);
         }
     }
