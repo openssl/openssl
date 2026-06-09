@@ -4207,29 +4207,6 @@ static BIO *get_sslkeylog_bio(const char *keylogfile)
 }
 #endif
 
-static int x509_hs_cmp(const X509_HS_CACHE_ENT *const *a, const X509_HS_CACHE_ENT *const *b)
-{
-    /*
-     * This deserves a bit of explanation.
-     * Its obvious that we are doing comparisons of sha1_hash values between certificates
-     * here.  What's less obvious is why we are always returning either 0 (match) or -1 (i.e. less
-     * than/not match).  Its done because this STACK_OF is unsorted.
-     *
-     * Because the stack is unsorted, we need to search through every entry in the list for a match,
-     * And the STACK_OF api has an efficiency built in that aborts a lookup if 1 (greater than /
-     * not match) is returned.  This gives lookups a average search time of O(n/2), but means that
-     * we have to sort the list on each insert, or insert to exactly the right location.  Because
-     * the cache is capped at 64 entries, which is small, it seems like the better approach here is
-     * to accept a O(n) lookup time, in exchange for allowing a O(1) (always insert to head) insert
-     * semantic, which also gives us the ability to cull from the cache by eliminating the oldest
-     * entry by dropping index 63 from the stack.
-     *
-     * So this comparison is effectively implementing linear list traversal.  Are there better ways
-     * to do this?  Maybe, but this works pretty well right now
-     */
-    return memcmp((*a)->sha1_hash, (*b)->sha1_hash, SHA_DIGEST_LENGTH) == 0 ? 0 : -1;
-}
-
 SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const SSL_METHOD *meth)
 {
@@ -4323,7 +4300,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
     }
 
     if (!SSL_CTX_is_server(ret)) {
-        ret->handshake_certs = sk_X509_HS_CACHE_ENT_new(x509_hs_cmp);
+        ret->handshake_certs = sk_X509_HS_CACHE_ENT_new(NULL);
         if (ret->handshake_certs == NULL) {
             ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
             goto err;
@@ -4725,31 +4702,31 @@ void SSL_CTX_free(SSL_CTX *a)
 X509 *ssl_ctx_find_handshake_cert(SSL_CTX *sctx, const unsigned char *certbytes,
     size_t cert_len, unsigned char *sha1_hash)
 {
-    X509_HS_CACHE_ENT lookup;
     int idx;
     X509_HS_CACHE_ENT *find = NULL;
     X509 *ret = NULL;
     unsigned int len = SHA_DIGEST_LENGTH;
+    int cache_len;
 
     if (sctx->handshake_certs == NULL)
         return NULL;
 
-    lookup.cert = NULL;
-    if (!EVP_Digest(certbytes, cert_len, lookup.sha1_hash, &len, sctx->sha1, NULL))
+    if (!EVP_Digest(certbytes, cert_len, sha1_hash, &len, sctx->sha1, NULL))
         return NULL;
 
     if (len != SHA_DIGEST_LENGTH)
         return NULL;
 
-    memcpy(sha1_hash, lookup.sha1_hash, SHA_DIGEST_LENGTH);
     if (!CRYPTO_THREAD_read_lock(sctx->lock))
         return NULL;
-    idx = sk_X509_HS_CACHE_ENT_find(sctx->handshake_certs, &lookup);
-    if (idx != -1) {
+
+    cache_len = sk_X509_HS_CACHE_ENT_num(sctx->handshake_certs);
+    for (idx = 0; idx < cache_len; idx++) {
         find = sk_X509_HS_CACHE_ENT_value(sctx->handshake_certs, idx);
-        if (find != NULL) {
+        if (!memcmp(find->sha1_hash, sha1_hash, SHA_DIGEST_LENGTH)) {
             X509_up_ref(find->cert);
             ret = find->cert;
+            break;
         }
     }
     CRYPTO_THREAD_unlock(sctx->lock);
