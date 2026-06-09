@@ -113,4 +113,78 @@ static ossl_inline OSSL_FN *ossl_fn_copy_internal(OSSL_FN *dest,
     return dest;
 }
 
+/* OSSL_FN_CTX internals */
+
+struct ossl_fn_ctx_st {
+    /*
+     * Pointer to the last OSSL_FN_CTX_start() location (a simple pointer into
+     * the memory area).  See the struct ossl_fn_ctx_frame_st definition below
+     * for details.
+     */
+    struct ossl_fn_ctx_frame_st *last_frame;
+
+    /*
+     * Flags
+     */
+    unsigned int is_securely_allocated : 1;
+
+    /*
+     * Current and peak usage tracking, by allocation components.
+     * The |n_*| fields hold the currently active counts; the |peak_n_*|
+     * fields hold the maximum each count has ever reached simultaneously.
+     * This allows callers to determine suitable arena parameters for a
+     * given workload without precise up-front prediction.
+     */
+    size_t n_frames;
+    size_t n_numbers;
+    size_t n_limbs;
+    size_t peak_n_frames;
+    size_t peak_n_numbers;
+    size_t peak_n_limbs;
+
+    /*
+     * The arena itself.
+     */
+    size_t msize; /* Size of the arena, in bytes */
+    unsigned char memory[];
+};
+
+struct ossl_fn_ctx_frame_st {
+    /*
+     * Pointer back to the whole arena where the frame is located,
+     * for |last_frame| bookkeeping.
+     */
+    struct ossl_fn_ctx_st *arena;
+    /*
+     * Pointer to the previous frame in the arena, allowing OSSL_FN_CTX_end()
+     * to do its job.
+     */
+    struct ossl_fn_ctx_frame_st *previous_frame;
+    /*
+     * Tracking for peak usage instrumentation.  These count the OSSL_FN
+     * instances and total limbs allocated within this frame.
+     */
+    size_t n_numbers;
+    size_t n_limbs;
+    /*
+     * Every time OSSL_FN_CTX_get() is called, the current value of
+     * |free_memory| is returned, and it's updated by incrementing it
+     * by the number of bytes given by OSSL_FN_CTX_get().
+     * The available number of bytes is limited by what's left in the arena.
+     */
+    unsigned char *free_memory; /* Pointer to the free area of the frame */
+    size_t msize; /* Size of the frame, in bytes */
+    unsigned char memory[];
+};
+
+static ossl_inline size_t ossl_fn_ctx_calculate_arena_size(size_t max_n_frames,
+    size_t max_n_numbers, size_t max_n_limbs)
+{
+    return max_n_frames * sizeof(struct ossl_fn_ctx_frame_st)
+        + max_n_numbers * sizeof(OSSL_FN)
+        + max_n_limbs * OSSL_FN_BYTES;
+}
+
+/* end OSSL_FN_CTX internals */
+
 #endif
