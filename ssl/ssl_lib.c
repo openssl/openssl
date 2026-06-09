@@ -4765,18 +4765,17 @@ X509 *ssl_ctx_add_handshake_cert(SSL_CTX *sctx, X509 *cert,
     if (sctx->handshake_certs == NULL)
         return cert;
 
-    tmp = OPENSSL_malloc(sizeof(X509_HS_CACHE_ENT));
-    if (tmp == NULL)
-        return cert;
     /*
      * Force extension caching on the X509 now, while we still "own" it
      * exclusively. From this point on the cached cert is treated as
      * immutable by all readers (they only X509_up_ref it).
      */
-    if (X509_check_purpose(cert, -1, 0) <= 0) {
-        OPENSSL_free(tmp);
+    if (X509_check_purpose(cert, -1, 0) <= 0)
         return cert;
-    }
+
+    tmp = OPENSSL_malloc(sizeof(X509_HS_CACHE_ENT));
+    if (tmp == NULL)
+        return cert;
 
     /*
      * We had to compute the hash of the der string in the find routine, so
