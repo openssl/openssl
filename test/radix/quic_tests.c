@@ -494,6 +494,141 @@ DEF_SCRIPT(check_pc_flood, "check path challenge flood")
 }
 
 /*
+ * Test to make sure that SSL_accept_connection returns the same ssl object
+ * that is used in the various TLS callbacks
+ *
+ * Unlike TCP, QUIC processes new connections independently from their
+ * acceptance, and so we need to pre-allocate tls objects to return during
+ * connection acceptance via the user_ssl.  This is just a quic test to validate
+ * that:
+ * 1) The new callback to inform the user of a new pending ssl acceptance works
+ *    properly
+ * 2) That the object returned from SSL_accept_connection matches the one passed
+ *    to various callbacks
+ *
+ * It would be better as its own test, but currently the tserver used in the
+ * other quic_tests doesn't actually accept connections (it pre-creates them
+ * and fixes them up in place), so testing there is not feasible at the moment
+ *
+ * For details on this issue see:
+ * https://github.com/openssl/project/issues/918
+ */
+static SSL *pending_ssl_obj = NULL;
+static SSL *client_hello_ssl_obj = NULL;
+static int check_pending_match = 0;
+static int pending_cb_called = 0;
+static int hello_cb_called = 0;
+
+static int new_pending_cb(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    pending_ssl_obj = new_ssl;
+    pending_cb_called = 1;
+    return 1;
+}
+
+static int client_hello_cb(SSL *s, int *al, void *arg)
+{
+    client_hello_ssl_obj = s;
+    hello_cb_called = 1;
+    return 1;
+}
+
+DEF_FUNC(init_pending_test)
+{
+    pending_ssl_obj = NULL;
+    client_hello_ssl_obj = NULL;
+    check_pending_match = 0;
+    pending_cb_called = 0;
+    hello_cb_called = 0;
+
+    return 1;
+}
+
+DEF_FUNC(check_pending)
+{
+    int ok = 0;
+    SSL *conn;
+
+    REQUIRE_SSL(conn);
+
+    if (check_pending_match) {
+        if (!pending_cb_called || !hello_cb_called) {
+            TEST_info("Callbacks not called, skipping user_ssl check\n");
+        } else {
+            if (!TEST_ptr_eq(pending_ssl_obj, client_hello_ssl_obj))
+                goto err;
+
+            if (!TEST_ptr_eq(pending_ssl_obj, conn))
+                goto err;
+        }
+        pending_ssl_obj = client_hello_ssl_obj = NULL;
+        check_pending_match = 0;
+        pending_cb_called = hello_cb_called = 0;
+    }
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(new_listener)
+{
+    int ok = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *listener;
+    const char *name;
+
+    F_POP(name);
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(OSSL_QUIC_server_method())))
+        goto err;
+
+#if defined(OPENSSL_THREADS)
+    if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
+            SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_BLOCKING)))
+        goto err;
+#endif
+
+    if (!TEST_true(ssl_ctx_configure(ctx, 1)))
+        goto err;
+
+    SSL_CTX_set_new_pending_conn_cb(ctx, new_pending_cb, NULL);
+    SSL_CTX_set_client_hello_cb(ctx, client_hello_cb, NULL);
+    check_pending_match = 1;
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+        goto err;
+
+    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL)))
+        goto err;
+
+    if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), name, listener))) {
+        SSL_free(listener);
+        goto err;
+    }
+
+    ok = 1;
+err:
+    /* SSL object will hold ref, we don't need it */
+    SSL_CTX_free(ctx);
+    return ok;
+}
+
+DEF_SCRIPT(check_ctx_cbks, "Check new_pending and client_hello callbacks")
+{
+    OP_FUNC(init_pending_test);
+    OP_PUSH_PZ("L");
+    OP_FUNC(new_listener);
+    OP_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+    OP_CONNECT_WAIT(C);
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_SELECT_SSL(0, S);
+    OP_FUNC(check_pending);
+}
+
+/*
  * List of Test Scripts
  * ============================================================================
  */
@@ -504,4 +639,5 @@ static SCRIPT_INFO *const scripts[] = {
     USE(ssl_poll),
     USE(check_cwm),
     USE(check_pc_flood),
+    USE(check_ctx_cbks),
 };
