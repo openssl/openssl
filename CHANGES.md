@@ -29,7 +29,7 @@ OpenSSL Releases
 
 -----------
 
-### Changes between 4.0.0 and 4.0.1 [xx XXX xxxx]
+### Changes between 4.0.0 and 4.0.1 [9 Jun 2026]
 
  * Fixed heap use-after-free in `PKCS7_verify()`.
 

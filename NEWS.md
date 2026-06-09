@@ -25,7 +25,7 @@ OpenSSL Releases
 OpenSSL 4.0
 -----------
 
-### Major changes between OpenSSL 4.0.0 and OpenSSL 4.0.1 [under development]
+### Major changes between OpenSSL 4.0.0 and OpenSSL 4.0.1 [9 Jun 2026]
 
 OpenSSL 4.0.1 is a security patch release.  The most severe CVE fixed
 in this release is High.
