@@ -4600,9 +4600,12 @@ int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int is_ee)
 }
 
 /*
- * Check security of a chain, if |sk| includes the end entity certificate then
- * |x| is NULL. If |vfy| is 1 then we are verifying a peer chain and not sending
- * one to the peer. Return values: 1 if ok otherwise error code to use
+ * Call ssl_security_check() on all certificates in a stack.
+ * If |x| is non NULL it is checked first, before checking the
+ * certificates in the stack.
+ *
+ * Return values: 1 if ok otherwise the error code from the first
+ * failing ssl_security_check().;
  */
 
 int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
