@@ -1496,21 +1496,15 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     const ML_KEM_VINFO *vinfo = key->vinfo;
     int i;
     uint8_t mask;
+    int ret = 0;
 
     /*
-     * If our KDF is unavailable, fail early! Otherwise, keep going ignoring
-     * any further errors, returning success, and whatever we got for a shared
-     * secret.  The decrypt_cpa() function is just arithmetic on secret data,
-     * so should not be subject to failure that makes its output predictable.
-     *
-     * We guard against "should never happen" catastrophic failure of the
-     * "pure" function |hash_g| by overwriting the shared secret with the
-     * content of the failure key and returning early, if nevertheless hash_g
-     * fails.  This is not constant-time, but a failure of |hash_g| already
-     * implies loss of side-channel resistance.
-     *
-     * The same action is taken, if also |encrypt_cpa| should catastrophically
-     * fail, due to failure of the |PRF| underlying the CBD functions.
+     * The functions called below (kdf, hash_kr, encrypt_cpa) only fail on
+     * catastrophic failure of an underlying SHA3/SHAKE primitive, for example
+     * a memory allocation failure in EVP_DigestInit_ex(). None of these
+     * failures are dependent on the ciphertext content, so reporting them as a
+     * hard error does not create a chosen-ciphertext oracle and does not affect
+     * the constant-time properties of the implicit rejection path below.
      */
     if (!kdf(failure_key, key->z, ctext, vinfo->ctext_bytes, mdctx, key)) {
         ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
@@ -1521,16 +1515,19 @@ static int decap(uint8_t secret[ML_KEM_SHARED_SECRET_BYTES],
     decrypt_cpa(m, ctext, tmp, key);
     if (!hash_kr(Kr, m, mdctx, key)
         || !encrypt_cpa(tmp_ctext, m, r, tmp, mdctx, key)) {
-        memcpy(secret, failure_key, ML_KEM_SHARED_SECRET_BYTES);
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR,
+            "internal error while performing %s decapsulation",
+            vinfo->algorithm_name);
         goto end;
     }
     mask = constant_time_eq_int_8(0,
         CRYPTO_memcmp(ctext, tmp_ctext, vinfo->ctext_bytes));
     for (i = 0; i < ML_KEM_SHARED_SECRET_BYTES; i++)
         secret[i] = constant_time_select_8(mask, Kr[i], failure_key[i]);
+    ret = 1;
 end:
     OPENSSL_cleanse(buf, DECAP_BUFFER_SZ);
-    return 1;
+    return ret;
 }
 
 /*

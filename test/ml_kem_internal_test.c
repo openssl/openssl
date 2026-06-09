@@ -242,11 +242,81 @@ err:
     return ret == 0;
 }
 
+static int decap_mfail_test(void)
+{
+    EVP_RAND_CTX *privctx, *pubctx;
+    OSSL_PARAM params[3];
+    uint8_t shared_secret[ML_KEM_SHARED_SECRET_BYTES];
+    uint8_t decap_secret[ML_KEM_SHARED_SECRET_BYTES];
+    uint8_t *encoded_public_key = NULL;
+    uint8_t *ciphertext = NULL;
+    ML_KEM_KEY *private_key = NULL;
+    ML_KEM_KEY *public_key = NULL;
+    unsigned int strength = 256;
+    const ML_KEM_VINFO *v;
+    int rc, ret = -1;
+
+    if (!TEST_ptr(privctx = RAND_get0_private(NULL))
+        || !TEST_ptr(pubctx = RAND_get0_public(NULL)))
+        return 0;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        ml_kem_private_entropy, sizeof(ml_kem_private_entropy));
+    params[1] = OSSL_PARAM_construct_uint(OSSL_RAND_PARAM_STRENGTH, &strength);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(privctx, params)))
+        goto err;
+
+    public_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_768);
+    private_key = ossl_ml_kem_key_new(NULL, NULL, EVP_PKEY_ML_KEM_768);
+    if (private_key == NULL || public_key == NULL
+        || (v = ossl_ml_kem_key_vinfo(public_key)) == NULL)
+        goto err;
+
+    encoded_public_key = OPENSSL_malloc(v->pubkey_bytes);
+    ciphertext = OPENSSL_malloc(v->ctext_bytes);
+    if (encoded_public_key == NULL || ciphertext == NULL)
+        goto err;
+
+    if (!ossl_ml_kem_genkey(encoded_public_key, v->pubkey_bytes, private_key)
+        || !ossl_ml_kem_parse_public_key(encoded_public_key, v->pubkey_bytes,
+            public_key))
+        goto err;
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        ml_kem_public_entropy, sizeof(ml_kem_public_entropy));
+    if (!TEST_true(EVP_RAND_CTX_set_params(pubctx, params)))
+        goto err;
+
+    if (!ossl_ml_kem_encap_rand(ciphertext, v->ctext_bytes,
+            shared_secret, sizeof(shared_secret), public_key))
+        goto err;
+
+    MFAIL_start();
+    rc = ossl_ml_kem_decap(decap_secret, sizeof(decap_secret),
+        ciphertext, v->ctext_bytes, private_key);
+    MFAIL_end();
+
+    if (rc == 1
+        && !TEST_mem_eq(decap_secret, sizeof(decap_secret),
+            shared_secret, sizeof(shared_secret)))
+        goto err;
+
+    ret = rc;
+err:
+    ossl_ml_kem_key_free(private_key);
+    ossl_ml_kem_key_free(public_key);
+    OPENSSL_free(encoded_public_key);
+    OPENSSL_free(ciphertext);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_true(RAND_set_DRBG_type(NULL, "TEST-RAND", "fips=no", NULL, NULL)))
         return 0;
 
     ADD_TEST(sanity_test);
+    ADD_MFAIL_TEST(decap_mfail_test);
     return 1;
 }
