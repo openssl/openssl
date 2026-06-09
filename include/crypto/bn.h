@@ -126,6 +126,15 @@ int ossl_bn_rsa_fips186_5_derive_prime(BIGNUM *Y, BIGNUM *X, const BIGNUM *Xin,
 
 OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
 
+/*
+ * bn_ctx_acquire_ossl_fn_ctx() and bn_ctx_release_ossl_fn_ctx() work
+ * in tandem.  They manage an OSSL_FN_CTX that is cached inside a BN_CTX
+ * for use by BIGNUM wrapper functions that delegate to OSSL_FN.
+ */
+OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx(BN_CTX *ctx, size_t max_n_frames,
+    size_t max_n_numbers, size_t max_n_limbs);
+void bn_ctx_release_ossl_fn_ctx(BN_CTX *ctx);
+
 extern const BIGNUM ossl_bn_inv_sqrt_2;
 
 #if defined(OPENSSL_SYS_LINUX) && !defined(FIPS_MODULE) && defined(__s390x__) \
