@@ -23,6 +23,8 @@ SSL_set_accept_state() sets B<ssl> to work in server mode.
 
 SSL_is_server() checks if B<ssl> is working in server mode.
 
+B<ssl> must point to a valid SSL object and B<MUST NOT> be NULL.
+
 =head1 NOTES
 
 When the SSL_CTX object was created with L<SSL_CTX_new(3)>,
