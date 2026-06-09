@@ -38,6 +38,20 @@ struct ossl_fn_ctx_st {
     unsigned int is_securely_allocated : 1;
 
     /*
+     * Current and peak usage tracking, by allocation components.
+     * The |n_*| fields hold the currently active counts; the |peak_n_*|
+     * fields hold the maximum each count has ever reached simultaneously.
+     * This allows callers to determine suitable arena parameters for a
+     * given workload without precise up-front prediction.
+     */
+    size_t n_frames;
+    size_t n_numbers;
+    size_t n_limbs;
+    size_t peak_n_frames;
+    size_t peak_n_numbers;
+    size_t peak_n_limbs;
+
+    /*
      * The arena itself.
      */
     size_t msize; /* Size of the arena, in bytes */
@@ -55,6 +69,12 @@ struct ossl_fn_ctx_frame_st {
      * to do its job.
      */
     struct ossl_fn_ctx_frame_st *previous_frame;
+    /*
+     * Tracking for peak usage instrumentation.  These count the OSSL_FN
+     * instances and total limbs allocated within this frame.
+     */
+    size_t n_numbers;
+    size_t n_limbs;
     /*
      * Every time OSSL_FN_CTX_get() is called, the current value of
      * |free_memory| is returned, and it's updated by incrementing it
@@ -99,6 +119,26 @@ OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     return ctx;
 }
 
+void OSSL_FN_CTX_peak_usage(const OSSL_FN_CTX *ctx, size_t *peak_n_frames,
+    size_t *peak_n_numbers, size_t *peak_n_limbs)
+{
+    if (ctx == NULL) {
+        if (peak_n_frames != NULL)
+            *peak_n_frames = 0;
+        if (peak_n_numbers != NULL)
+            *peak_n_numbers = 0;
+        if (peak_n_limbs != NULL)
+            *peak_n_limbs = 0;
+        return;
+    }
+    if (peak_n_frames != NULL)
+        *peak_n_frames = ctx->peak_n_frames;
+    if (peak_n_numbers != NULL)
+        *peak_n_numbers = ctx->peak_n_numbers;
+    if (peak_n_limbs != NULL)
+        *peak_n_limbs = ctx->peak_n_limbs;
+}
+
 void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx)
 {
     if (ctx == NULL)
@@ -133,6 +173,12 @@ const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)
     frame->previous_frame = last_frame;
     frame->free_memory = frame->memory;
     frame->msize = ctx->msize - used - sizeof(*frame);
+    frame->n_numbers = 0;
+    frame->n_limbs = 0;
+
+    ctx->n_frames++;
+    if (ctx->n_frames > ctx->peak_n_frames)
+        ctx->peak_n_frames = ctx->n_frames;
 
     return ctx->last_frame;
 }
@@ -147,6 +193,9 @@ int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx, const void *token)
     if (last_frame != token)
         return 0;
 
+    ctx->n_numbers -= last_frame->n_numbers;
+    ctx->n_limbs -= last_frame->n_limbs;
+    ctx->n_frames--;
     ctx->last_frame = last_frame->previous_frame;
 
     return 1;
@@ -169,6 +218,15 @@ OSSL_FN *OSSL_FN_CTX_get_limbs(OSSL_FN_CTX *ctx, size_t limbs)
 
     OSSL_FN *fn = (OSSL_FN *)frame->free_memory;
     frame->free_memory += totalsize;
+    frame->n_numbers++;
+    frame->n_limbs += limbs;
+
+    ctx->n_numbers++;
+    ctx->n_limbs += limbs;
+    if (ctx->n_numbers > ctx->peak_n_numbers)
+        ctx->peak_n_numbers = ctx->n_numbers;
+    if (ctx->n_limbs > ctx->peak_n_limbs)
+        ctx->peak_n_limbs = ctx->n_limbs;
 
     memset(fn, 0, totalsize);
     fn->dsize = (int)limbs;
