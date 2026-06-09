@@ -45,6 +45,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn cmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn cmac_init;
 static OSSL_FUNC_mac_update_fn cmac_update;
 static OSSL_FUNC_mac_final_fn cmac_final;
+static OSSL_FUNC_mac_cleanse_fn cmac_cleanse;
 
 /* local CMAC data */
 
@@ -281,6 +282,14 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static void cmac_cleanse(void *vmacctx)
+{
+    struct cmac_data_st *macctx = vmacctx;
+
+    if (macctx->ctx != NULL)
+        CMAC_CTX_cleanup(macctx->ctx);
+}
+
 const OSSL_DISPATCH ossl_cmac_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))cmac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))cmac_dup },
@@ -288,6 +297,7 @@ const OSSL_DISPATCH ossl_cmac_functions[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))cmac_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))cmac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))cmac_final },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))cmac_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
         (void (*)(void))cmac_gettable_ctx_params },
     { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))cmac_get_ctx_params },
