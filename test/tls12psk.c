@@ -51,7 +51,7 @@ static void hello_session_id(const unsigned char *p, size_t len)
         return;
 
     str = OPENSSL_buf2hexstr(p + HELLO_SID_OFF, (long)sid_len);
-    TEST_info("session_id(%u): <%s>", (unsigned int)sid_len, str);
+    TEST_info("session_id(%zu): <%s>", sid_len, str);
     OPENSSL_free(str);
 }
 

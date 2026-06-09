@@ -187,8 +187,8 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
         goto out_err;
     }
     if (s_debug)
-        BIO_printf(bio_s_out, "identity_len=%d identity=%s\n",
-            (int)strlen(identity), identity);
+        BIO_printf(bio_s_out, "identity_len=%zu identity=%s\n",
+            strlen(identity), identity);
 
     /* here we could lookup the given identity e.g. from a database */
     if (strcmp(identity, psk_identity) != 0) {
