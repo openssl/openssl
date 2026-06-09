@@ -271,8 +271,8 @@ static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
 
 static int rcid_cmp(const OSSL_PQ_NODE *a, const OSSL_PQ_NODE *b)
 {
-    const RCID *ra = CONTAINER_OF(a, RCID, pqn);
-    const RCID *rb = CONTAINER_OF(b, RCID, pqn);
+    const RCID *ra = CONTAINER_OF_CONST(a, RCID, pqn);
+    const RCID *rb = CONTAINER_OF_CONST(b, RCID, pqn);
 
     if (ra->seq_num < rb->seq_num)
         return -1;
