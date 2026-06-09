@@ -48,12 +48,19 @@ static const struct {
     int diff_pos;
 } memcmp_cases[] = {
     /* empty: always equal */
-    {  0, -1 },
-    {  1, -1 }, {  1,  0 },
+    { 0, -1 },
+    { 1, -1 },
+    { 1, 0 },
     /* asm fast path (length = 16) */
-    { 16, -1 }, { 16,  0 }, { 16,  8 }, { 16, 15 },
+    { 16, -1 },
+    { 16, 0 },
+    { 16, 8 },
+    { 16, 15 },
     /* byte loop */
-    { 64, -1 }, { 64,  0 }, { 64, 31 }, { 64, 63 },
+    { 64, -1 },
+    { 64, 0 },
+    { 64, 31 },
+    { 64, 63 },
 };
 
 static int test_crypto_memcmp(int idx)
