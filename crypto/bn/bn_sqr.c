@@ -39,17 +39,12 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 
     size_t max = a->dmax * 2;
 
-    /*
-     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
-     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
-     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
-     */
-    OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 2, max * 4);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 2, max * 4);
     int ret = OSSL_FN_sqr(rf, a->data, fnctx);
     bn_release(r, (int)top);
     r->neg = 0;
 
-    OSSL_FN_CTX_free(fnctx);
+    bn_ctx_release_ossl_fn_ctx(ctx);
     return ret;
 }
 
