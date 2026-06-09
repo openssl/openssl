@@ -30,12 +30,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     size_t top = a->top + b->top;
     size_t max = a->dmax + b->dmax;
 
-    /*
-     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
-     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
-     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
-     */
-    OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 1, max);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 1, max);
     OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
     int ret = OSSL_FN_mul(rf, a->data, b->data, fnctx);
     bn_release(r, (int)top);
@@ -43,7 +38,7 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     if (ret && !BN_is_zero(r))
         r->neg = a->neg ^ b->neg;
 
-    OSSL_FN_CTX_free(fnctx);
+    bn_ctx_release_ossl_fn_ctx(ctx);
     return ret;
 }
 
