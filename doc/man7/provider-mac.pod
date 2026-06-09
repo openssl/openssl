@@ -28,6 +28,7 @@ provider-mac - The mac library E<lt>-E<gt> provider functions
  int OSSL_FUNC_mac_init_skey(void *mctx, const void *key, const OSSL_PARAM params[]);
  int OSSL_FUNC_mac_update(void *mctx, const unsigned char *in, size_t inl);
  int OSSL_FUNC_mac_final(void *mctx, unsigned char *out, size_t *outl, size_t outsize);
+ void OSSL_FUNC_mac_cleanse(void *mctx);
 
  /* MAC parameter descriptors */
  const OSSL_PARAM *OSSL_FUNC_mac_gettable_params(void *provctx);
@@ -75,6 +76,7 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_mac_init_skey            OSSL_FUNC_MAC_INIT_SKEY
  OSSL_FUNC_mac_update               OSSL_FUNC_MAC_UPDATE
  OSSL_FUNC_mac_final                OSSL_FUNC_MAC_FINAL
+ OSSL_FUNC_mac_cleanse              OSSL_FUNC_MAC_CLEANSE
 
  OSSL_FUNC_mac_get_params           OSSL_FUNC_MAC_GET_PARAMS
  OSSL_FUNC_mac_get_ctx_params       OSSL_FUNC_MAC_GET_CTX_PARAMS
@@ -131,6 +133,14 @@ The resulting MAC should be written to I<out> and the amount of data written
 to I<*outl>, which should not exceed I<outsize> bytes.
 The same expectations apply to I<outsize> as documented for
 L<EVP_MAC_final(3)>.
+
+OSSL_FUNC_mac_cleanse() clears any sensitive data for an existing provider side
+mac context in the I<mctx> parameter. This can be used if the user intends to
+maintain a pool of existing provider side mac contexts that can be used for
+multiple operations by calling OSSL_FUNC_mac_init() with a new MAC I<key>.
+If there is a delay before reuse, OSSL_FUNC_mac_cleanse() should been called to
+clear out any sensitive data related to the last operation.
+OSSL_FUNC_mac_cleanse() is not needed when OSSL_FUNC_mac_freectx() is called,
 
 =head2 Mac Parameters
 
@@ -263,6 +273,7 @@ The provider MAC interface was introduced in OpenSSL 3.0.
 The parameters "no-short-mac" and "fips-indicator" were added in OpenSSL 3.4.
 
 The function OSSL_FUNC_mac_init_skey() was introduced in OpenSSL 3.5.
+The function OSSL_FUNC_mac_cleanse() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

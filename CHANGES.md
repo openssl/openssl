@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added EVP_MAC_cleanse() API. This allows key material to be cleared if the
+   user intends to reuse (pool) EVP_MAC_CTX() objects.
+
+   *Shane Lontis*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 
