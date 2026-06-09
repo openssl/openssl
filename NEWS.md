@@ -18,7 +18,7 @@ OpenSSL Releases
 OpenSSL 3.0
 -----------
 
-### Major changes between OpenSSL 3.0.20 and OpenSSL 3.0.21 [under development]
+### Major changes between OpenSSL 3.0.20 and OpenSSL 3.0.21 [9 Jun 2026]
 
 OpenSSL 3.0.21 is a security patch release.  The most severe CVE fixed
 in this release is High.
