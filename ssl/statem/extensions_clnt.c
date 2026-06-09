@@ -2891,7 +2891,7 @@ EXT_RETURN tls_construct_ctos_grease1(SSL_CONNECTION *s, WPACKET *pkt,
         if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX)
             return EXT_RETURN_FAIL;
         s->ext.ech.outer_only[s->ext.ech.n_outer_only++] = grease_type;
-        OSSL_TRACE2(TLS, "%s: compressing GREASE ext type %hu\n", __func__, grease_type);
+        OSSL_TRACE1(TLS, "grease1: compressing GREASE ext type %hu\n", grease_type);
     }
 #endif
 
@@ -2925,7 +2925,7 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
         if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX)
             return EXT_RETURN_FAIL;
         s->ext.ech.outer_only[s->ext.ech.n_outer_only++] = grease_type;
-        OSSL_TRACE2(TLS, "%s: compressing GREASE ext type %hu\n", __func__, grease_type);
+        OSSL_TRACE1(TLS, "grease2: compressing GREASE ext type %hu\n", grease_type);
     }
 #endif
 

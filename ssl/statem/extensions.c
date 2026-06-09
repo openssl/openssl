@@ -1130,11 +1130,11 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
 #ifndef OPENSSL_NO_ECH
-    comp_first = (s->ext.ech.attempted
+    comp_first = s->ext.ech.attempted == 1
         && s->ext.ech.grease == OSSL_ECH_NOT_GREASE
-        && s->ext.ech.ch_depth == 1);
+        && s->ext.ech.ch_depth == 1;
     /*
-     * Two passes if encoding inner ECH - we first construct the
+     * Two passes if doing inner ECH - we first construct the
      * to-be-ECH-compressed extensions, and then go around again
      * constructing those that aren't to be ECH-compressed. We
      * need to ensure this ordering so that all the ECH-compressed

@@ -521,9 +521,11 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
     }
     /* now copy the rest, as "proper" exts, into encoded inner */
     for (ind = 0; ind < TLSEXT_IDX_num_builtins; ind++) {
-        OSSL_TRACEV(TLS, (
-            trc_out, "%s: copy ext type %d; ind %zu; comp %d; pres %d; last %zu; recv %zu\n",
-                __func__, raws[ind].type, ind, ossl_ech_2bcompressed(ind), raws[ind].present, last_received_order, raws[ind].received_order));
+        OSSL_TRACE6(
+            TLS, "encode_inner: copy ext type %d; ind %zu; comp %d; pres %d;"
+            "last %zu; recv %zu\n", raws[ind].type, ind, ossl_ech_2bcompressed(ind),
+            raws[ind].present, last_received_order, raws[ind].received_order);
+
         if (raws[ind].present == 0 || ossl_ech_2bcompressed((int)ind) == 1)
             continue;
         if (last_received_order != SIZE_MAX && ossl_assert(last_received_order >= raws[ind].received_order)) {
