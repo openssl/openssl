@@ -2881,6 +2881,20 @@ EXT_RETURN tls_construct_ctos_grease1(SSL_CONNECTION *s, WPACKET *pkt,
 
     grease_type = ossl_grease_value(s, OSSL_GREASE_EXT1);
 
+    /*
+     * ECH_SAME_EXT doesn't handle dynamic types, so we will have to
+     * compress the extension ourselves. Note that the extension type
+     * is checked by verify_extension() in ssl/statem/extensions.c
+     */
+#ifndef OPENSSL_NO_ECH
+    if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1) {
+        if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX)
+            return EXT_RETURN_FAIL;
+        s->ext.ech.outer_only[s->ext.ech.n_outer_only++] = grease_type;
+        OSSL_TRACE2(TLS, "%s: compressing GREASE ext type %hu\n", __func__, grease_type);
+    }
+#endif
+
     if (!WPACKET_put_bytes_u16(pkt, grease_type)
         || !WPACKET_put_bytes_u16(pkt, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -2900,6 +2914,20 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_NOT_SENT;
 
     grease_type = ossl_grease_value(s, OSSL_GREASE_EXT2);
+
+    /*
+     * ECH_SAME_EXT doesn't handle dynamic types, so we will have to
+     * compress the extension ourselves. Note that the extension type
+     * is checked by verify_extension() in ssl/statem/extensions.c
+     */
+#ifndef OPENSSL_NO_ECH
+    if (s->ext.ech.attempted == 1 && s->ext.ech.ch_depth == 1) {
+        if (s->ext.ech.n_outer_only >= OSSL_ECH_OUTERS_MAX)
+            return EXT_RETURN_FAIL;
+        s->ext.ech.outer_only[s->ext.ech.n_outer_only++] = grease_type;
+        OSSL_TRACE2(TLS, "%s: compressing GREASE ext type %hu\n", __func__, grease_type);
+    }
+#endif
 
     /*
      * RFC 8701 recommends "varying length and contents" for GREASE

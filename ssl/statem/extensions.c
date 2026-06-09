@@ -468,15 +468,27 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     { /* RFC 8701 GREASE extension 1 - type is dynamic */
         TLSEXT_TYPE_grease1,
         SSL_EXT_CLIENT_HELLO,
-        0,
+        /*
+         * We don't delegate compression to ECH_SAME_EXT. Modify the
+         * ctos constructor accordingly when changing ech_handling.
+         */
+        OSSL_ECH_HANDLING_COMPRESS,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease1, NULL },
     { /* RFC 8701 GREASE extension 2 - type is dynamic */
         TLSEXT_TYPE_grease2,
         SSL_EXT_CLIENT_HELLO,
-        0,
+        /*
+         * We don't delegate compression to ECH_SAME_EXT. Modify the
+         * ctos constructor accordingly when changing ech_handling.
+         */
+        OSSL_ECH_HANDLING_COMPRESS,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
+    /*
+     * When adding a new OSSL_ECH_HANDLING_COMPRESS extension, remember to
+     * bump OSSL_ECH_OUTERS_MAX from include/openssl/ech.h
+     */
     { /* Must be immediately before pre_shared_key */
         TLSEXT_TYPE_padding,
         SSL_EXT_CLIENT_HELLO,
@@ -592,6 +604,9 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
     if (tind < 0 || tind >= nexts)
         return OSSL_ECH_SAME_EXT_ERR;
     type = ext_defs[tind].type;
+    /* Avoid invalid or placeholder types, as outer_only stores uint16 */
+    if (type > UINT16_MAX)
+        return OSSL_ECH_SAME_EXT_ERR;
     if (s->ext.ech.ch_depth == 1) {
         /* inner CH - just note compression as configured */
         if (ext_defs[tind].ech_handling != OSSL_ECH_HANDLING_COMPRESS)
@@ -712,6 +727,22 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
                 return 0;
 
             *found = &rawexlist[i];
+            return 1;
+        }
+    }
+
+    /*
+     * Check for GREASE extensions we added through tls_construct_ctos_grease1/2
+     * in ssl/statem/extensions_clnt.c
+     */
+    if (!s->server
+        && ossl_is_grease_value(type)
+        && s->options & SSL_OP_GREASE) {
+        if (type == ossl_grease_value(s, OSSL_GREASE_EXT1)) {
+            *found = &rawexlist[TLSEXT_IDX_grease1];
+            return 1;
+        } else if (type == ossl_grease_value(s, OSSL_GREASE_EXT2)) {
+            *found = &rawexlist[TLSEXT_IDX_grease2];
             return 1;
         }
     }
@@ -1057,7 +1088,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     const EXTENSION_DEFINITION *thisexd;
     int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 #ifndef OPENSSL_NO_ECH
-    int pass;
+    int pass, comp_first;
 #endif
 
     if (!WPACKET_start_sub_packet_u16(pkt)
@@ -1099,15 +1130,18 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
 #ifndef OPENSSL_NO_ECH
+    comp_first = (s->ext.ech.attempted
+        && s->ext.ech.grease == OSSL_ECH_NOT_GREASE
+        && s->ext.ech.ch_depth == 1);
     /*
-     * Two passes if doing real ECH - we first construct the
+     * Two passes if encoding inner ECH - we first construct the
      * to-be-ECH-compressed extensions, and then go around again
      * constructing those that aren't to be ECH-compressed. We
      * need to ensure this ordering so that all the ECH-compressed
      * extensions are contiguous in the encoding. The actual
      * compression happens later in ech_encode_inner().
      */
-    for (pass = 0; pass <= 1; pass++)
+    for (pass = 0; pass < (comp_first ? 2 : 1); pass++)
 #endif
 
         for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs);
@@ -1119,7 +1153,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
 #ifndef OPENSSL_NO_ECH
             /* do compressed in pass 0, non-compressed in pass 1 */
-            if (ossl_ech_2bcompressed((int)i) == pass)
+            if (ossl_ech_2bcompressed((int)i) == pass && comp_first)
                 continue;
             /* stash index - needed for COMPRESS ECH handling */
             s->ext.ech.ext_ind = (int)i;
