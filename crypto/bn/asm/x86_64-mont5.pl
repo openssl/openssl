@@ -133,9 +133,12 @@ $code.=<<___;
 	push	%r15
 .cfi_push	%r15
 
+	# The first 8 bytes at %rsp will be used for saving the frame pointer (%rax),
+	# as it is not possible for win64 unwind code to place it afterwards, while the tp
+	# array starts at byte 16 (%rsp + 16; for proper SSE alignment).
 	neg	$num
 	mov	%rsp,%r11
-	lea	-280(%rsp,$num,8),%r10	# future alloca(8*(num+2)+256+8)
+	lea	`-16-280`(%rsp,$num,8),%r10	# future alloca(16+8*(num+2)+256+8)
 	neg	$num			# restore $num
 	and	\$-1024,%r10		# minimize TLB usage
 
@@ -163,9 +166,9 @@ $code.=<<___;
 .Lmul_page_walk_done:
 
 	lea	.Linc(%rip),%r10
-	mov	%rax,8(%rsp,$num,8)	# tp[num+1]=%rsp
-.cfi_cfa_expression	%rsp+8,$num,8,mul,plus,deref,+8
-.Lmul_body:
+	mov	%rax,(%rsp)	# tp[-2]=%rsp
+.cfi_cfa_expression	%rsp+0,deref,+8
+.cfi_endprolog
 
 	lea	128($bp),%r12		# reassign $bp (+size optimization)
 ___
@@ -175,7 +178,7 @@ ___
 $code.=<<___;
 	movdqa	0(%r10),%xmm0		# 00000001000000010000000000000000
 	movdqa	16(%r10),%xmm1		# 00000002000000020000000200000002
-	lea	24-112(%rsp,$num,8),%r10# place the mask after tp[num+3] (+ICache optimization)
+	lea	`+16+24-112`(%rsp,$num,8),%r10# place the mask after tp[num+3] (+ICache optimization)
 	and	\$-16,%r10
 
 	pshufd	\$0,%xmm5,%xmm5		# broadcast index
@@ -289,7 +292,7 @@ $code.=<<___;
 	add	$hi0,$hi1		# np[j]*m1+ap[j]*bp[0]
 	mov	$lo0,$hi0
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$j,8)	# tp[j-1]
+	mov	$hi1,`+16-16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$hi1
 
 .L1st_enter:
@@ -309,21 +312,21 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$hi0,$hi1		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$num,8)	# tp[num-1]
+	mov	$hi1,`+16-16`(%rsp,$num,8)	# tp[num-1]
 	mov	%rdx,$hi1
 	mov	$lo0,$hi0
 
 	xor	%rdx,%rdx
 	add	$hi0,$hi1
 	adc	\$0,%rdx
-	mov	$hi1,-8(%rsp,$num,8)
-	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
+	mov	$hi1,`+16-8`(%rsp,$num,8)
+	mov	%rdx,`+16`(%rsp,$num,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 	jmp	.Louter
 .align	16
 .Louter:
-	lea	24+128(%rsp,$num,8),%rdx	# where 256-byte mask is (+size optimization)
+	lea	`+16+24+128`(%rsp,$num,8),%rdx	# where 256-byte mask is (+size optimization)
 	and	\$-16,%rdx
 	pxor	%xmm4,%xmm4
 	pxor	%xmm5,%xmm5
@@ -355,7 +358,7 @@ $code.=<<___;
 
 	xor	$j,$j			# j=0
 	mov	$n0,$m1
-	mov	(%rsp),$lo0
+	mov	`+16`(%rsp),$lo0
 
 	mulq	$m0			# ap[0]*bp[i]
 	add	%rax,$lo0		# ap[0]*bp[i]+tp[0]
@@ -369,7 +372,7 @@ $code.=<<___;
 	add	%rax,$lo0		# discarded
 	mov	8($ap),%rax
 	adc	\$0,%rdx
-	mov	8(%rsp),$lo0		# tp[1]
+	mov	`+16+8`(%rsp),$lo0	# tp[1]
 	mov	%rdx,$hi1
 
 	lea	1($j),$j		# j++
@@ -381,9 +384,9 @@ $code.=<<___;
 	mov	($ap,$j,8),%rax
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# np[j]*m1+ap[j]*bp[i]+tp[j]
-	mov	(%rsp,$j,8),$lo0
+	mov	`+16`(%rsp,$j,8),$lo0
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$j,8)	# tp[j-1]
+	mov	$hi1,`+16-16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$hi1
 
 .Linner_enter:
@@ -403,9 +406,9 @@ $code.=<<___;
 	add	%rax,$hi1
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# np[j]*m1+ap[j]*bp[i]+tp[j]
-	mov	(%rsp,$num,8),$lo0
+	mov	`+16`(%rsp,$num,8),$lo0
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$num,8)	# tp[num-1]
+	mov	$hi1,`+16-16`(%rsp,$num,8)	# tp[num-1]
 	mov	%rdx,$hi1
 
 	xor	%rdx,%rdx
@@ -413,16 +416,16 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# pull upmost overflow bit
 	adc	\$0,%rdx
-	mov	$hi1,-8(%rsp,$num,8)
-	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
+	mov	$hi1,`+16-8`(%rsp,$num,8)
+	mov	%rdx,`+16`(%rsp,$num,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 	cmp	$num,$i
 	jb	.Louter
 
 	xor	$i,$i			# i=0 and clear CF!
-	mov	(%rsp),%rax		# tp[0]
-	lea	(%rsp),$ap		# borrow ap for tp
+	mov	`+16`(%rsp),%rax	# tp[0]
+	lea	`+16`(%rsp),$ap		# borrow ap for tp
 	mov	$num,$j			# j=num
 	jmp	.Lsub
 .align	16
@@ -441,17 +444,17 @@ $code.=<<___;
 
 .Lcopy:					# conditional copy
 	mov	($rp,$i,8),%rcx
-	mov	(%rsp,$i,8),%rdx
+	mov	`+16`(%rsp,$i,8),%rdx
 	and	%rbx,%rcx
 	and	%rax,%rdx
-	mov	$i,(%rsp,$i,8)		# zap temporary vector
+	mov	$i,`+16`(%rsp,$i,8)	# zap temporary vector
 	or	%rcx,%rdx
 	mov	%rdx,($rp,$i,8)		# rp[i]=tp[i]
 	lea	1($i),$i
 	sub	\$1,$j
 	jnz	.Lcopy
 
-	mov	8(%rsp,$num,8),%rsi	# restore %rsp
+	mov	(%rsp),%rsi		# restore %rsp
 .cfi_def_cfa	%rsi,8
 	mov	\$1,%rax
 
@@ -469,7 +472,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_epilogue:
 	ret
 .cfi_endproc
 .size	bn_mul_mont_gather5,.-bn_mul_mont_gather5
@@ -505,7 +507,6 @@ $code.=<<___;
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lmul4x_prologue:
 
 	.byte	0x67
 	shl	\$3,${num}d		# convert $num to bytes
@@ -561,7 +562,7 @@ $code.=<<___;
 
 	mov	%rax,40(%rsp)
 .cfi_cfa_expression	%rsp+40,deref,+8
-.Lmul4x_body:
+.cfi_endprolog
 
 	call	mul4x_internal
 
@@ -583,7 +584,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lmul4x_epilogue:
 	ret
 .cfi_endproc
 .size	bn_mul4x_mont_gather5,.-bn_mul4x_mont_gather5
@@ -592,6 +592,7 @@ $code.=<<___;
 .align	32
 mul4x_internal:
 .cfi_startproc
+.cfi_endprolog
 	shl	\$5,$num		# $num was in bytes
 	movd	`($win64?56:8)`(%rax),%xmm5	# load 7th argument, index
 	lea	.Linc(%rip),%rax
@@ -1134,7 +1135,6 @@ $code.=<<___;
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lpower5_prologue:
 
 	shl	\$3,${num}d		# convert $num to bytes
 	lea	($num,$num,2),%r10d	# 3*$num
@@ -1174,8 +1174,9 @@ $code.=<<___;
 	lea	(%rbp,%r11),%rsp
 	mov	(%rsp),%r10
 	cmp	%rbp,%rsp
-	ja	.Lpwr_page_walk
-	jmp	.Lpwr_page_walk_done
+	#ja	.Lpwr_page_walk
+	#jmp	.Lpwr_page_walk_done
+	jbe	.Lpwr_page_walk_done	# Reduce prolog length for win64.
 
 .Lpwr_page_walk:
 	lea	-4096(%rsp),%rsp
@@ -1184,8 +1185,8 @@ $code.=<<___;
 	ja	.Lpwr_page_walk
 .Lpwr_page_walk_done:
 
-	mov	$num,%r10
-	neg	$num
+	#mov	$num,%r10    		# Moved down after .cfi_endprolog.
+	#neg	$num    		# Moved down after .cfi_endprolog.
 
 	##############################################################
 	# Stack layout
@@ -1196,10 +1197,14 @@ $code.=<<___;
 	# +40	saved %rsp
 	# +48	t[2*$num]
 	#
-	mov	$n0,  32(%rsp)
+	#mov	$n0,  32(%rsp)		# Moved down after .cfi_endprolog.
 	mov	%rax, 40(%rsp)		# save original %rsp
 .cfi_cfa_expression	%rsp+40,deref,+8
-.Lpower5_body:
+.cfi_endprolog
+	mov	$num,%r10       	# These three instruction have been
+	neg	$num    		# moved down here to save prolog space
+	mov	$n0,  32(%rsp)  	# since on win64 it must be < 256 bytes.
+
 	movq	$rptr,%xmm1		# save $rptr, used in sqr8x
 	movq	$nptr,%xmm2		# save $nptr
 	movq	%r10, %xmm3		# -$num, used in sqr8x
@@ -1241,7 +1246,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lpower5_epilogue:
 	ret
 .cfi_endproc
 .size	bn_power5,.-bn_power5
@@ -1253,6 +1257,7 @@ $code.=<<___;
 bn_sqr8x_internal:
 __bn_sqr8x_internal:
 .cfi_startproc
+.cfi_endprolog
 	##############################################################
 	# Squaring part:
 	#
@@ -2058,6 +2063,7 @@ $code.=<<___;
 .align	32
 __bn_post4x_internal:
 .cfi_startproc
+.cfi_endprolog
 	mov	8*0($nptr),%r12
 	lea	(%rdi,$num),$tptr	# %rdi was $tptr above
 	mov	$num,%rcx
@@ -2137,7 +2143,6 @@ bn_mulx4x_mont_gather5:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lmulx4x_prologue:
 
 	shl	\$3,${num}d		# convert $num to bytes
 	lea	($num,$num,2),%r10	# 3*$num in bytes
@@ -2203,7 +2208,7 @@ bn_mulx4x_mont_gather5:
 	mov	$n0, 32(%rsp)		# save *n0
 	mov	%rax,40(%rsp)		# save original %rsp
 .cfi_cfa_expression	%rsp+40,deref,+8
-.Lmulx4x_body:
+.cfi_endprolog
 	call	mulx4x_internal
 
 	mov	40(%rsp),%rsi		# restore %rsp
@@ -2224,7 +2229,6 @@ bn_mulx4x_mont_gather5:
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lmulx4x_epilogue:
 	ret
 .cfi_endproc
 .size	bn_mulx4x_mont_gather5,.-bn_mulx4x_mont_gather5
@@ -2233,6 +2237,7 @@ bn_mulx4x_mont_gather5:
 .align	32
 mulx4x_internal:
 .cfi_startproc
+.cfi_endprolog
 	mov	$num,8(%rsp)		# save -$num (it was in bytes)
 	mov	$num,%r10
 	neg	$num			# restore $num
@@ -2622,7 +2627,6 @@ bn_powerx5:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lpowerx5_prologue:
 
 	shl	\$3,${num}d		# convert $num to bytes
 	lea	($num,$num,2),%r10	# 3*$num in bytes
@@ -2686,15 +2690,21 @@ bn_powerx5:
 	# +40	saved %rsp
 	# +48	t[2*$num]
 	#
-	pxor	%xmm0,%xmm0
+	#pxor	%xmm0,%xmm0		# These six instruction has been moved down after .cfi_endprolog (win64 limit)
+	#movq	$rptr,%xmm1		# save $rptr
+	#movq	$nptr,%xmm2		# save $nptr
+	#movq	%r10, %xmm3		# -$num
+	#movq	$bptr,%xmm4
+	#mov	$n0,  32(%rsp)
+	mov	%rax, 40(%rsp)		# save original %rsp
+.cfi_cfa_expression	%rsp+40,deref,+8
+.cfi_endprolog
+	pxor	%xmm0,%xmm0		# These six instruction was moved down to reduce the prolog to < 256 bytes (win64 limit).
 	movq	$rptr,%xmm1		# save $rptr
 	movq	$nptr,%xmm2		# save $nptr
 	movq	%r10, %xmm3		# -$num
 	movq	$bptr,%xmm4
 	mov	$n0,  32(%rsp)
-	mov	%rax, 40(%rsp)		# save original %rsp
-.cfi_cfa_expression	%rsp+40,deref,+8
-.Lpowerx5_body:
 
 	call	__bn_sqrx8x_internal
 	call	__bn_postx4x_internal
@@ -2733,7 +2743,6 @@ bn_powerx5:
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lpowerx5_epilogue:
 	ret
 .cfi_endproc
 .size	bn_powerx5,.-bn_powerx5
@@ -2745,6 +2754,7 @@ bn_powerx5:
 bn_sqrx8x_internal:
 __bn_sqrx8x_internal:
 .cfi_startproc
+.cfi_endprolog
 	##################################################################
 	# Squaring part:
 	#
@@ -3387,9 +3397,11 @@ ___
 {
 my ($rptr,$nptr)=("%rdx","%rbp");
 $code.=<<___;
+.type	__bn_postx4x_internal,\@abi-omnipotent
 .align	32
 __bn_postx4x_internal:
 .cfi_startproc
+.cfi_endprolog
 	mov	8*0($nptr),%r12
 	mov	%rcx,%r10		# -$num
 	mov	%rcx,%r9		# -$num
@@ -3455,6 +3467,7 @@ $code.=<<___;
 .align	16
 bn_get_bits5:
 .cfi_startproc
+.cfi_endprolog
 	lea	0($inp),%r10
 	lea	1($inp),%r11
 	mov	$num,%ecx
@@ -3476,6 +3489,7 @@ bn_get_bits5:
 .align	16
 bn_scatter5:
 .cfi_startproc
+.cfi_endprolog
 	cmp	\$0, $num
 	jz	.Lscatter_epilogue
 	lea	($tbl,$idx,8),$tbl
@@ -3495,8 +3509,8 @@ bn_scatter5:
 .type	bn_gather5,\@abi-omnipotent
 .align	32
 bn_gather5:
-.LSEH_begin_bn_gather5:			# Win64 thing, but harmless in other cases
 .cfi_startproc
+.cfi_endprolog
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x4c,0x8d,0x14,0x24			#lea    (%rsp),%r10
 	.byte	0x48,0x81,0xec,0x08,0x01,0x00,0x00	#sub	$0x108,%rsp
@@ -3580,7 +3594,6 @@ $code.=<<___;
 
 	lea	(%r10),%rsp
 	ret
-.LSEH_end_bn_gather5:
 .cfi_endproc
 .size	bn_gather5,.-bn_gather5
 ___
@@ -3594,185 +3607,6 @@ $code.=<<___;
 .asciz	"Montgomery Multiplication with scatter/gather for x86_64, CRYPTOGAMS by <https://github.com/dot-asm>"
 .previous
 ___
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	mul_handler,\@abi-omnipotent
-.align	16
-mul_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# end of prologue label
-	cmp	%r10,%rbx		# context->Rip<end of prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# beginning of body label
-	cmp	%r10,%rbx		# context->Rip<body label
-	jb	.Lcommon_pop_regs
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	8(%r11),%r10d		# HandlerData[2]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	lea	.Lmul_epilogue(%rip),%r10
-	cmp	%r10,%rbx
-	ja	.Lbody_40
-
-	mov	192($context),%r10	# pull $num
-	mov	8(%rax,%r10,8),%rax	# pull saved stack pointer
-
-	jmp	.Lcommon_pop_regs
-
-.Lbody_40:
-	mov	40(%rax),%rax		# pull saved stack pointer
-.Lcommon_pop_regs:
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	mul_handler,.-mul_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_bn_mul_mont_gather5
-	.rva	.LSEH_end_bn_mul_mont_gather5
-	.rva	.LSEH_info_bn_mul_mont_gather5
-
-	.rva	.LSEH_begin_bn_mul4x_mont_gather5
-	.rva	.LSEH_end_bn_mul4x_mont_gather5
-	.rva	.LSEH_info_bn_mul4x_mont_gather5
-
-	.rva	.LSEH_begin_bn_power5
-	.rva	.LSEH_end_bn_power5
-	.rva	.LSEH_info_bn_power5
-___
-$code.=<<___ if ($addx);
-	.rva	.LSEH_begin_bn_mulx4x_mont_gather5
-	.rva	.LSEH_end_bn_mulx4x_mont_gather5
-	.rva	.LSEH_info_bn_mulx4x_mont_gather5
-
-	.rva	.LSEH_begin_bn_powerx5
-	.rva	.LSEH_end_bn_powerx5
-	.rva	.LSEH_info_bn_powerx5
-___
-$code.=<<___;
-	.rva	.LSEH_begin_bn_gather5
-	.rva	.LSEH_end_bn_gather5
-	.rva	.LSEH_info_bn_gather5
-
-.section	.xdata
-.align	8
-.LSEH_info_bn_mul_mont_gather5:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lmul_body,.Lmul_body,.Lmul_epilogue		# HandlerData[]
-.align	8
-.LSEH_info_bn_mul4x_mont_gather5:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lmul4x_prologue,.Lmul4x_body,.Lmul4x_epilogue		# HandlerData[]
-.align	8
-.LSEH_info_bn_power5:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lpower5_prologue,.Lpower5_body,.Lpower5_epilogue	# HandlerData[]
-___
-$code.=<<___ if ($addx);
-.align	8
-.LSEH_info_bn_mulx4x_mont_gather5:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lmulx4x_prologue,.Lmulx4x_body,.Lmulx4x_epilogue	# HandlerData[]
-.align	8
-.LSEH_info_bn_powerx5:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lpowerx5_prologue,.Lpowerx5_body,.Lpowerx5_epilogue	# HandlerData[]
-___
-$code.=<<___;
-.align	8
-.LSEH_info_bn_gather5:
-	.byte	0x01,0x0b,0x03,0x0a
-	.byte	0x0b,0x01,0x21,0x00	# sub	rsp,0x108
-	.byte	0x04,0xa3,0x00,0x00	# lea	r10,(rsp)
-.align	8
-___
-}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 

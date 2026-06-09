@@ -121,6 +121,8 @@ elsif (`$ENV{CC} -V 2>/dev/null`
     $gnuas=1;
 }
 
+my $comment_ch = $masm || $nasm ? ';' : '#';
+
 my $cet_property;
 if ($flavour =~ /elf/) {
 	# Always generate .note.gnu.property section for ELF outputs to
@@ -216,6 +218,7 @@ my $current_segment;
 #
 my @segment_stack = ();
 my $current_function;
+my $cfi_state; # value: undef, 'prologue', 'body', 'endproc'
 my %globals;
 
 { package vex_prefix;	# pick up vex prefixes, example: {vex} vpmadd52luq m256, %ymm, %ymm
@@ -524,14 +527,16 @@ my %globals;
 	my $self = shift;
 
 	if ($gas) {
-	    my $func = ($globals{$self->{value}} or $self->{value}) . ":";
+	    my $func;
 	    if ($win64	&& $current_function->{name} eq $self->{value}
 			&& $current_function->{abi} eq "svr4") {
-		$func .= "\n";
+		$cfi_state = 'prologue'; # indicate that we've already emitted SEH64_PROC_FRAME.
+		$func  = 'SEH64_PROC_FRAME ' . ($globals{$self->{value}} or $self->{value}) . "\n";
 		$func .= "	movq	%rdi,8(%rsp)\n";
+		$func .= "SEH64_SAVEREG rdi, 8\n";
 		$func .= "	movq	%rsi,16(%rsp)\n";
+		$func .= "SEH64_SAVEREG rsi, 16\n";
 		$func .= "	movq	%rsp,%rax\n";
-		$func .= "${decor}SEH_begin_$current_function->{name}:\n";
 		my $narg = $current_function->{narg};
 		$narg=6 if (!defined($narg));
 		$func .= "	movq	%rcx,%rdi\n" if ($narg>0);
@@ -540,6 +545,8 @@ my %globals;
 		$func .= "	movq	%r9,%rcx\n"  if ($narg>3);
 		$func .= "	movq	40(%rsp),%r8\n" if ($narg>4);
 		$func .= "	movq	48(%rsp),%r9\n" if ($narg>5);
+	    } else {
+		$func = ($globals{$self->{value}} or $self->{value}) . ":";
 	    }
 	    $func;
 	} elsif ($self->{value} ne "$current_function->{name}") {
@@ -547,15 +554,14 @@ my %globals;
 	    $self->{value} .= ":" if ($masm);
 	    $self->{value} . ":";
 	} elsif ($win64 && $current_function->{abi} eq "svr4") {
-	    my $func =	"$current_function->{name}" .
-			($nasm ? ":" : "\tPROC $current_function->{scope}") .
-			"\n";
+	    die "unexpected cfi state for proc label: $cfi_state" if (defined($cfi_state));
+            $cfi_state = 'prologue'; # indicate that we've already emitted SEH64_PROC_FRAME.
+            my $func = "SEH64_PROC_FRAME $current_function->{name},$current_function->{scope}\n";
 	    $func .= "	mov	QWORD$PTR\[8+rsp\],rdi\t;WIN64 prologue\n";
+	    $func .= "SEH64_SAVEREG rdi, 8\n";
 	    $func .= "	mov	QWORD$PTR\[16+rsp\],rsi\n";
+	    $func .= "SEH64_SAVEREG rsi, 16\n";
 	    $func .= "	mov	rax,rsp\n";
-	    $func .= "${decor}SEH_begin_$current_function->{name}:";
-	    $func .= ":" if ($masm);
-	    $func .= "\n";
 	    my $narg = $current_function->{narg};
 	    $narg=6 if (!defined($narg));
 	    $func .= "	mov	rdi,rcx\n" if ($narg>0);
@@ -566,8 +572,9 @@ my %globals;
 	    $func .= "	mov	r9,QWORD$PTR\[48+rsp\]\n" if ($narg>5);
 	    $func .= "\n";
 	} else {
-	   "$current_function->{name}".
-			($nasm ? ":" : "\tPROC $current_function->{scope}");
+	    die "unexpected cfi state for proc label: $cfi_state" if (defined($cfi_state));
+	    $cfi_state = 'prologue'; # indicate that we've already emitted PROC_FRAME.
+	    "SEH64_PROC_FRAME $current_function->{name},$current_function->{scope}";
 	}
     }
 }
@@ -672,7 +679,7 @@ my %globals;
 	"%r12"=>12, "%r13"=>13, "%r14"=>14, "%r15"=>15
 	);
 
-    my ($cfa_reg, $cfa_rsp);
+    my ($cfa_reg, $cfa_reg_offset, $cfa_rsp, $last_cfa_expression);
     my @cfa_stack;
 
     # [us]leb128 format is variable-length integer representation base
@@ -772,7 +779,11 @@ my %globals;
 	if ($$line =~ s/^\s*\.cfi_(\w+)\s*//) {
 	    bless $self,$class;
 	    $ret = $self;
-	    undef $self->{value};
+            if ($win64) {
+                $self->{value} = "";	# default: drop it.
+            } else {
+                undef $self->{value};	# default: pass through.
+            }
 	    my $dir = $1;
 
 	    SWITCH: for ($dir) {
@@ -780,40 +791,87 @@ my %globals;
 	    # value and current CFA, Canonical Frame Address, which is
 	    # why it starts with -8. Recall that CFA is top of caller's
 	    # stack...
-	    /startproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp", -8); last; };
-	    /endproc/	&& do {	($cfa_reg, $cfa_rsp) = ("%rsp",  0);
+	    /startproc/	&& do {	($cfa_reg, $cfa_reg_offset, $cfa_rsp) = ("%rsp", 8, -8);
+				if (defined($cfi_state) && $cfi_state ne 'prologue' && (!$elf || $cfi_state ne 'endproc')) {
+				    die "invalid cfi state for cfi_startproc: $cfi_state";
+				}
+			        if ($win64 && !defined($cfi_state)) {
+				    $self->{value} = "SEH64_PROC_FRAME\t$current_function->{name},$current_function->{scope}";
+				}
+				$cfi_state = 'prologue';
+				last;
+			      };
+	    /endproc/	&& do {	($cfa_reg, $cfa_rsp, $cfa_reg_offset) = ("%rsp", 0, 0);
 				# .cfi_remember_state directives that are not
 				# matched with .cfi_restore_state are
 				# unnecessary.
 				die "unpaired .cfi_remember_state" if (@cfa_stack);
+				die ".cfi_endproc without .cfi_endprolog in $current_function->{name}" if ($cfi_state eq 'prologue');
+				die "bogus .cfi_endproc (state: $cfi_state)" if ($cfi_state ne 'body');
+                                $self->{value} = "SEH64_ENDPROC_FRAME\t$current_function->{name}" if ($win64);
+				$cfi_state = 'endproc';
 				last;
 			      };
 	    /def_cfa_register/
-			&& do {	$cfa_reg = $$line; last; };
+			&& do { $cfa_reg = $$line;
+				$last_cfa_expression = undef;
+				last;
+			      };
 	    /def_cfa_offset/
-			&& do {	$cfa_rsp = -1*eval($$line) if ($cfa_reg eq "%rsp");
+			&& do { $cfa_reg_offset = 1*eval($$line);
+				$cfa_rsp = -$cfa_reg_offset if ($cfa_reg eq "%rsp");
+				$last_cfa_expression = undef;
+				die "TODO: .cfi_$dir" if ($win64 && $cfi_state eq 'prologue');
 				last;
 			      };
 	    /adjust_cfa_offset/
-			&& do {	$cfa_rsp -= 1*eval($$line) if ($cfa_reg eq "%rsp");
+			&& do {	my $diff = 1*eval($$line);
+				$cfa_reg_offset += $diff;
+				$cfa_rsp -= $diff if ($cfa_reg eq "%rsp");
+				$last_cfa_expression = undef;
+				if ($win64 && $cfi_state eq 'prologue' && $cfa_reg eq '%rsp') {
+				    $self->{value} = "SEH64_ALLOCSTACK $diff";
+				}
 				last;
 			      };
-	    /def_cfa/	&& do {	if ($$line =~ /(%r\w+)\s*,\s*(.+)/) {
+	    /stackalloc/	# win64: .cfi_stackalloc nbytes - adjusts $cfa_rsp;
+			&& do {	#        same as .cfi_adjust_cfa_offset if $cfa_reg is %rsp.
+				die ".cfi_$dir $$line" if (!($$line =~ /^([-0-9a-fA-FxX+*]+)$/));
+				die ".cfi_$dir following .cfi_cfa_expression" if (defined($last_cfa_expression));
+				my $adj = 0 + eval($1);
+				$cfa_rsp -= $adj;
+				$cfa_reg_offset += $adj if ($cfa_reg eq '%rsp');
+				if ($win64 && $cfi_state eq 'prologue') {
+				    $self->{value} = "SEH64_ALLOCSTACK $adj";
+				}
+				last;
+			      };
+	    /^def_cfa$/	&& do {	if ($$line =~ /(%r\w+)\s*,\s*(.+)/) {
+				    die "TODO: .cfi_$dir $1,$2" if ($1 ne '%rsp' && $win64 && $cfi_state eq 'prologue');
 				    $cfa_reg = $1;
-				    $cfa_rsp = -1*eval($2) if ($cfa_reg eq "%rsp");
+				    $cfa_reg_offset = 1*eval($$line);
+				    $cfa_rsp = -$cfa_reg_offset if ($cfa_reg eq "%rsp");
 				}
+				$last_cfa_expression = undef;
 				last;
 			      };
-	    /push/	&& do {	$dir = undef;
+	    /push/	&& do { die ".cfi_push outside the prologue: $cfi_state" if ($cfi_state ne 'prologue');
 				$cfa_rsp -= 8;
-				if ($cfa_reg eq "%rsp") {
-				    $self->{value} = ".cfi_adjust_cfa_offset\t8\n";
-				}
-				$self->{value} .= ".cfi_offset\t$$line,$cfa_rsp";
+				$cfa_reg_offset += 8 if ($cfa_reg eq "%rsp");
+                                if ($win64) {
+				    $self->{value}  = "SEH64_PUSHREG\t" . substr($$line, 1) . "\t"
+						    . "$comment_ch cfa_rsp,cfa_reg_offset => $cfa_rsp,$cfa_reg_offset cfa_reg=$cfa_reg";
+                                } else {
+				    if ($cfa_reg eq "%rsp") {
+				        $self->{value} = ".cfi_adjust_cfa_offset\t8\n";
+				    }
+				    $self->{value} .= ".cfi_offset\t$$line,$cfa_rsp";
+                                }
 				last;
 			      };
-	    /pop/	&& do {	$dir = undef;
-				$cfa_rsp += 8;
+	    /pop/	&& do { $cfa_rsp += 8;
+				$cfa_reg_offset += 8 if ($cfa_reg eq "%rsp");
+				last if ($win64);
 				if ($cfa_reg eq "%rsp") {
 				    $self->{value} = ".cfi_adjust_cfa_offset\t-8\n";
 				}
@@ -821,23 +879,115 @@ my %globals;
 				last;
 			      };
 	    /cfa_expression/
-			&& do {	$dir = undef;
-				$self->{value} = ".cfi_escape\t" .
-					join(",", map(sprintf("0x%02x", $_),
-						      cfa_expression($$line)));
+			&& do { $last_cfa_expression = $$line; # For win64
+				$cfa_reg_offset = undef;
+				if (!$win64) {
+				    $self->{value} = ".cfi_escape\t" .
+					    join(",", map(sprintf("0x%02x", $_),
+							  cfa_expression($$line)));
+				}
 				last;
 			      };
-	    /remember_state/
-			&& do {	push @cfa_stack, [$cfa_reg, $cfa_rsp];
+	    /remember_state/   	# Pseudo directive. Unused (doesn't work for win64).
+			&& do {	push @cfa_stack, [$cfa_reg, $cfa_reg_offset, $cfa_rsp];
 				last;
 			      };
-	    /restore_state/
-			&& do {	($cfa_reg, $cfa_rsp) = @{pop @cfa_stack};
+	    /restore_state/	# Pseudo directive. Unused.
+			&& do {	($cfa_reg, $cfa_reg_offset, $cfa_rsp) = @{pop @cfa_stack};
 				last;
 			      };
+	    /^sp_offset$/	# Pseudo directive. Translated using $cfa_rsp to .cfi_offset.
+			&& do { die "malformed: $dir $$line" if (!($$line =~ /(%\w+)\s*,\s*(.+)/));
+				die ".cfi_sp_offset cannot follow .cfi_cfa_expression " if (defined($last_cfa_expression));
+				my $off = eval($2) + $cfa_rsp;
+				$$line = "$1, $off";
+				$dir = "offset";
+			      };
+	    /^rel_offset$/
+			&& do { last if (!$win64 || $cfi_state ne 'prologue');
+				# win64: Convert to .cfi_offset to avoid code duplication.
+				die "malformed: .cfi_$dir $$line"  if (!($$line =~ /(%\w+)\s*,\s*(.+)/));
+				die ".cfi_$dir: undefined cfa offset " if (!defined($cfa_reg_offset));
+				die ".cfi_$dir: cfa_reg=$cfa_reg" if ($cfa_reg ne '%rsp');
+				my $off = -($cfa_reg_offset - eval($2));
+				$$line = "$1, $off";
+				$dir = 'offset';
+			      };
+	    /^offset$/  && do { # win64: Need to convert these to SEH64_SAVEXXX.
+				if ($win64 && $cfi_state eq 'prologue') {
+				    if ($$line =~ /^%(\w+)\s*,\s*(.+)$/) {
+					# The offset is relative to the preceived RSP for win64.
+					my $w64_off_rsp = -$cfa_rsp + eval($2);
+					if (rindex($1,'xmm') == 0) {
+					    $self->{value} = "SEH64_SAVEXMM128 $1, $w64_off_rsp";
+					} else {
+					    $self->{value} = "SEH64_SAVEREG $1, $w64_off_rsp";
+					}
+					$self->{value} .= "\t$comment_ch .cfi_$dir $1, $2 cfa_reg_offset=$cfa_reg_offset cfa_rsp=$cfa_rsp";
+				    } else {
+					die "line: .cfi_$dir $$line";
+				    }
+				}
+				last;
+			      };
+	    /^endprolog$/	# win64: .cfi_endprolog - marks the end of the prolog (fake directive).
+			&& do { die ".cfi_endprolog without .cfi_startproc" if ($cfi_state ne 'prologue');
+				$cfi_state = 'body';
+				if ($win64) {
+				    if (defined($last_cfa_expression)) {
+					if (   ($last_cfa_expression =~ m/^\s*(0[Xx][0-9a-fA-F]+|\d+)\(%rsp\)\s*,\s*deref\s*,\s*([^,]*)$/)
+					    || ($last_cfa_expression =~ m/^\s*%rsp\s*\+\s*(0[Xx][0-9a-fA-F]+|\d+),\s*deref\s*,\s*([^,]*)$/) ) {
+					    my $rsp_off   = eval($1) + 0;
+					    my $adj       = eval($2) + 0;
+					    my $frame_off = -($cfa_rsp + $adj);
+					    die $frame_off if ($frame_off & 7);
+					    $self->{value}  = "$comment_ch Hack using rax to load saved CFA expression: $last_cfa_expression\n";
+					    if ($frame_off & 15) {
+						$self->{value} .= "SEH64_ALLOCSTACK 8";
+						$self->{value} .= "\t$comment_ch Make frame reg offset multiple of 16.\n";
+						$frame_off += 8;
+					    }
+					    $self->{value} .= "SEH64_SETFRAME rax, $frame_off\t"
+							    . "$comment_ch Unwind basically does: rsp = rax - offset\n";
+					    $self->{value} .= "SEH64_PUSHREG rax    \t"
+							    . "$comment_ch Unwind will load deref'ed value into volatile reg for SET_FRAME above.\n";
+					    if ($rsp_off != 0) {
+						$self->{value} .= "SEH64_ALLOCSTACK $rsp_off\t";
+						$self->{value} .= "$comment_ch Can only deref by .PUSHREG, so adjust RSP by feigning stack alloc.\n";
+					    }
+					} else {
+					    ## @todo define CFA
+					    die "TODO CFA: $last_cfa_expression";
+					}
+				    } elsif ($cfa_reg eq "%rsp") {
+					$self->{value} = "\t$comment_ch cfa_rsp=$cfa_rsp\n";
+				    } elsif (index("%rbp%rax%r11%r9", $cfa_reg) >= 0) { # Make sure to check the code properly...
+					die ".cfi_$dir: cfa_reg=$cfa_reg" if ($cfa_reg eq "%rsp"); # If we're using RSP, then assume no frame pointer reg.
+					my $off_rsp_to_fpreg = -$cfa_rsp - $cfa_reg_offset;
+					if (($off_rsp_to_fpreg & 7) || $off_rsp_to_fpreg < 0 || $off_rsp_to_fpreg > 240) {
+					    die "bad fpreg off: $off_rsp_to_fpreg (0..240, 8 byte aligned)";
+					}
+					die "$off_rsp_to_fpreg" if ($off_rsp_to_fpreg & 7);
+					if ($off_rsp_to_fpreg & 15) {
+					    $self->{value} = "SEH64_ALLOCSTACK 8\n";
+					    $off_rsp_to_fpreg += 8;
+					}
+					$self->{value} .= 'SEH64_SETFRAME ' . substr($cfa_reg, 1) . ", $off_rsp_to_fpreg\n";
+				    } else {
+					die "TODO: CFA cfa_reg=$cfa_reg cfa_rsp=$cfa_rsp";
+				    }
+				    $self->{value} .= "SEH64_ENDPROLOG";
+				    $self->{value} .= " $current_function->{name}" if ($gas);
+				    $self->{value} .= "\t$comment_ch cfa_reg=$cfa_reg cfa_reg_offset=$cfa_reg_offset cfa_rsp=$cfa_rsp";
+				} else {
+				    $self->{value} = "# .cfi_endprolog";
+				}
+				last;
+			      };
+	       die "unknown cfi prolog directive: .cfi_$dir" if ($win64 && $cfi_state eq 'prologue');
 	    }
 
-	    $self->{value} = ".cfi_$dir\t$$line" if ($dir);
+	    $self->{value} = ".cfi_$dir\t$$line" if (!defined($self->{value}));
 
 	    $$line = "";
 	}
@@ -846,7 +996,7 @@ my %globals;
     }
     sub out {
 	my $self = shift;
-	return ($elf ? $self->{value} : undef);
+	return ($elf || $win64 ? $self->{value} : undef);
     }
 }
 { package directive;	# pick up directives, which start with .
@@ -918,6 +1068,7 @@ my %globals;
 			$self->{value} .= "${decor}SEH_end_$current_function->{name}:"
 				if ($win64 && $current_function->{abi} eq "svr4");
 			undef $current_function;
+			undef $cfi_state;
 		    }
 		} elsif (!$elf && $dir =~ /\.align/) {
 		    $self->{value} = ".p2align\t" . (log($$line)/log(2));
@@ -1102,8 +1253,9 @@ my %globals;
 					    $self->{value}="${decor}SEH_end_$current_function->{name}:";
 					    $self->{value}.=":\n" if($masm);
 					}
-					$self->{value}.="$current_function->{name}\tENDP" if($masm && $current_function->{name});
+					$self->{value}.="$current_function->{name}\tENDP" if($masm && $current_function->{name} && $cfi_state ne 'endproc');
 					undef $current_function;
+					undef $cfi_state;
 				    }
 				    last;
 				  };
@@ -1397,9 +1549,506 @@ default	rel
 %define YMMWORD
 %define ZMMWORD
 ___
+    if ($win64) {
+        print <<___;
+;; For concatenation.
+%define SEH64_CONCAT(a,b) a %+ b
+
+%ifndef __YASM_MAJOR__
+ ;; \@name Register numbers.
+ ;; \@{
+ %define SEH64_PE_GREG_rax     0
+ %define SEH64_PE_GREG_rcx     1
+ %define SEH64_PE_GREG_rdx     2
+ %define SEH64_PE_GREG_rbx     3
+ %define SEH64_PE_GREG_rsp     4
+ %define SEH64_PE_GREG_rbp     5
+ %define SEH64_PE_GREG_rsi     6
+ %define SEH64_PE_GREG_rdi     7
+ %define SEH64_PE_GREG_r8      8
+ %define SEH64_PE_GREG_r9      9
+ %define SEH64_PE_GREG_r10     10
+ %define SEH64_PE_GREG_r11     11
+ %define SEH64_PE_GREG_r12     12
+ %define SEH64_PE_GREG_r13     13
+ %define SEH64_PE_GREG_r14     14
+ %define SEH64_PE_GREG_r15     15
+
+ %define SEH64_PE_XREG_xmm0     0
+ %define SEH64_PE_XREG_xmm1     1
+ %define SEH64_PE_XREG_xmm2     2
+ %define SEH64_PE_XREG_xmm3     3
+ %define SEH64_PE_XREG_xmm4     4
+ %define SEH64_PE_XREG_xmm5     5
+ %define SEH64_PE_XREG_xmm6     6
+ %define SEH64_PE_XREG_xmm7     7
+ %define SEH64_PE_XREG_xmm8     8
+ %define SEH64_PE_XREG_xmm9     9
+ %define SEH64_PE_XREG_xmm10    10
+ %define SEH64_PE_XREG_xmm11    11
+ %define SEH64_PE_XREG_xmm12    12
+ %define SEH64_PE_XREG_xmm13    13
+ %define SEH64_PE_XREG_xmm14    14
+ %define SEH64_PE_XREG_xmm15    15
+ ;; \@}
+
+ ;; \@name PE unwind operations.
+ ;; \@{
+ %define SEH64_PE_PUSH_NONVOL      0
+ %define SEH64_PE_ALLOC_LARGE      1
+ %define SEH64_PE_ALLOC_SMALL      2
+ %define SEH64_PE_SET_FPREG        3
+ %define SEH64_PE_SAVE_NONVOL      4
+ %define SEH64_PE_SAVE_NONVOL_FAR  5
+ %define SEH64_PE_SAVE_XMM128      8
+ %define SEH64_PE_SAVE_XMM128_FAR  9
+ ;; \@}
+
+ ;; We keep the unwind bytes in the seh64_slot_bytes (x)define, in reverse order as per spec.
+ %macro SEH64_APPEND_SLOT_PAIR 2
+  %ifdef seh64_slot_bytes
+   %xdefine seh64_slot_bytes %1, %2, seh64_slot_bytes
+  %else
+   %xdefine seh64_slot_bytes %1, %2
+  %endif
+ %endmacro
+
+ ;; For multi-slot unwind info.
+ %macro SEH64_APPEND_SLOT_BYTES 2+
+  %rep %0
+   %rotate -1
+   %ifdef seh64_slot_bytes
+    %xdefine seh64_slot_bytes %1, seh64_slot_bytes
+   %else
+    %xdefine seh64_slot_bytes %1
+   %endif
+  %endrep
+ %endmacro
+
+ ;; For generating labels.
+ %define SEH64_OP_LABEL(a_idx) asm_seh64_proc %+ .seh64_op_label %+ a_idx
+%endif ; !__YASM__
+
+;; For producing proper .labels despite .Lxxxx labels messing up the prefixing.
+%define SEH64_DOT_LABEL(a_DotLabel) SEH64_CONCAT(asm_seh64_proc,a_DotLabel)
+
+%macro SEH64_PROC_FRAME 2
+ %define asm_seh64_proc %1
+ %ifdef __YASM_MAJOR__
+        proc_frame %1
+ %else
+  %assign seh64_idxOps   0
+  ;%assign seh64_FrameReg SEH64_PE_GREG_rsp
+  %assign seh64_FrameReg 0
+  %assign seh64_offFrame 0
+  %undef  seh64_slot_bytes
+%1:
+.start_of_prologue:
+ %endif
+%endmacro
+
+%macro SEH64_ENDPROC_FRAME 1
+SEH64_DOT_LABEL(.end_proc):
+ %ifdef __YASM_MAJOR__
+	[endproc_frame]
+ %else
+        ; Emit the RUNTIME_FUNCTION entry.  The linker is picky here, no label.
+  %ifndef ASM_DEFINED_PDATA_SECTION
+   %define ASM_DEFINED_PDATA_SECTION
+        section .pdata rdata align=4
+  %else
+        section .pdata
+  %endif
+        dd      %1                              wrt ..imagebase
+        dd      SEH64_DOT_LABEL(.end_proc)      wrt ..imagebase
+        dd      SEH64_DOT_LABEL(.unwind_info)   wrt ..imagebase
+
+        ; Restore code section.
+        section .text
+ %endif
+%endmacro
+
+%macro SEH64_ENDPROLOG 0
+SEH64_DOT_LABEL(.end_of_prologue):
+ %ifdef __YASM_MAJOR__
+        [endprolog]
+ %else
+        ; Emit the unwind info now.
+  %ifndef ASM_DEFINED_XDATA_SECTION
+   %define ASM_DEFINED_XDATA_SECTION
+        section .xdata rdata align=4
+  %else
+        section .xdata
+        align   4, db 0
+  %endif
+SEH64_DOT_LABEL(.unwind_info):
+        db      1                       ; version 1 (3 bit), no flags (5 bits)
+        db      SEH64_DOT_LABEL(.end_of_prologue) - SEH64_DOT_LABEL(.start_of_prologue)
+
+        db      (SEH64_DOT_LABEL(.unwind_info_array_end) - SEH64_DOT_LABEL(.unwind_info_array)) / 2
+        db      seh64_FrameReg | (seh64_offFrame & 0xf0) ; framereg and offset/16.
+SEH64_DOT_LABEL(.unwind_info_array):
+   %ifdef seh64_slot_bytes
+        db      seh64_slot_bytes
+    %undef seh64_slot_bytes
+   %endif
+SEH64_DOT_LABEL(.unwind_info_array_end):
+
+        ; Reset the segment
+        section .text
+ %endif
+%endmacro
+
+%macro SEH64_ALLOCSTACK 1
+ %ifdef __YASM_MAJOR__
+        [allocstack %1]
+ %else
+SEH64_OP_LABEL(seh64_idxOps):
+  %if (%1) & 7
+   %error "SEH64_ALLOCSTACK must be a multiple of 8"
+  %endif
+  %if (%1) < 8
+   %error "SEH64_ALLOCSTACK must have an argument that's 8 or higher."
+  %elif (%1) <= 128
+   SEH64_APPEND_SLOT_PAIR \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+        SEH64_PE_ALLOC_SMALL | ((((%1) / 8) - 1) << 4)
+  %elif (%1) < 512
+   SEH64_APPEND_SLOT_BYTES \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+	SEH64_PE_ALLOC_LARGE | 0, \\
+	((%1) / 8) & 0xff, ((%1) / 8) >> 8
+  %else
+   SEH64_APPEND_SLOT_BYTES \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+	SEH64_PE_ALLOC_LARGE | 1, \\
+	(%1) & 0xff, ((%1) >> 8) & 0xff, ((%1) >> 16) & 0xff, ((%1) >> 24) & 0xff
+  %endif
+  %assign seh64_idxOps seh64_idxOps + 1
+ %endif
+%endmacro
+
+%macro SEH64_PUSHREG 1
+ %ifdef __YASM_MAJOR__
+        [pushreg %1]
+ %else
+SEH64_OP_LABEL(seh64_idxOps):
+  SEH64_APPEND_SLOT_PAIR \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+	SEH64_PE_PUSH_NONVOL | (SEH64_PE_GREG_ %+ %1 << 4)
+  %assign seh64_idxOps seh64_idxOps + 1
+ %endif
+%endmacro
+
+%macro SEH64_SAVEREG 2
+ %ifdef __YASM_MAJOR__
+        [savereg %1, %2]
+ %else
+  %if (%2) & 7
+   %error "SEH64_SAVEREG offset must be a multiple of 8"
+  %endif
+  %if (%2) <= (65535*8)
+SEH64_OP_LABEL(seh64_idxOps):
+   SEH64_APPEND_SLOT_BYTES \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+	SEH64_PE_SAVE_NONVOL | (SEH64_PE_GREG_ %+ %1 << 4), \\
+	((%2) / 8) & 0xff, \\
+	((%2) / 8) >> 8
+  %else
+   %error "SEH64_SAVEREG implement far offsets"
+  %endif
+  %assign seh64_idxOps seh64_idxOps + 1
+ %endif
+%endmacro
+
+%macro SEH64_SAVEXMM128 2
+ %ifdef __YASM_MAJOR__
+        [savexmm128 %1, %2]
+ %else
+SEH64_OP_LABEL(seh64_idxOps):
+  %if (%2) & 15
+   %error "SEH64_SAVE_XMM128 offset must be a multiple of 16"
+  %endif
+  %if (%2) <= (65535*16)
+   SEH64_APPEND_SLOT_BYTES \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+        SEH64_PE_SAVE_XMM128 | (SEH64_PE_XREG_ %+ %1 << 4), \\
+        ((%2) / 16) & 0xff, \\
+        ((%2) / 16) >> 8
+  %else
+   %error "SEH64_SAVE_XMM128 implement far offsets"
+  %endif
+  %assign seh64_idxOps seh64_idxOps + 1
+ %endif
+%endmacro
+
+%macro SEH64_SETFRAME 2
+ %ifdef __YASM_MAJOR__
+        [setframe %1, %2]
+ %else
+SEH64_OP_LABEL(seh64_idxOps):
+  SEH64_APPEND_SLOT_PAIR \\
+	SEH64_OP_LABEL(seh64_idxOps) - SEH64_DOT_LABEL(.start_of_prologue), \\
+        SEH64_PE_SET_FPREG | 0
+  %assign seh64_FrameReg SEH64_PE_GREG_ %+ %1
+  %assign seh64_offFrame %2
+  %assign seh64_idxOps seh64_idxOps + 1
+ %endif
+%endmacro
+___
+    }
 } elsif ($masm) {
     print <<___;
 OPTION	DOTNAME
+___
+    if ($win64) {
+        print <<___;
+SEH64_PROC_FRAME MACRO a_Name, a_Scope
+    a_Name PROC a_Scope FRAME
+ENDM
+SEH64_ENDPROC_FRAME MACRO a_Name
+    a_Name ENDP
+ENDM
+SEH64_ENDPROLOG MACRO
+    .ENDPROLOG
+ENDM
+SEH64_ALLOCSTACK MACRO a_Size
+    .ALLOCSTACK a_Size
+ENDM
+SEH64_PUSHREG MACRO a_Reg
+    .PUSHREG a_Reg
+ENDM
+SEH64_SAVEREG MACRO a_Reg, a_Offset
+    .SAVEREG a_Reg, a_Offset
+ENDM
+SEH64_SAVEXMM128 MACRO a_XReg, a_Offset
+    .SAVEXMM128 a_XReg, a_Offset
+ENDM
+SEH64_SETFRAME MACRO a_Reg, a_Offset
+    .SETFRAME a_Reg, a_Offset
+ENDM
+___
+    }
+} elsif ($gas) {
+    print <<___ if ($win64);
+# Converting register names to constants.
+.equ seh64_greg_rax,	0
+.equ seh64_greg_rcx,	1
+.equ seh64_greg_rdx,	2
+.equ seh64_greg_rbx,	3
+.equ seh64_greg_rsp,	4
+.equ seh64_greg_rbp,	5
+.equ seh64_greg_rsi,	6
+.equ seh64_greg_rdi,	7
+.equ seh64_greg_r8,	8
+.equ seh64_greg_r9,	9
+.equ seh64_greg_r10,	10
+.equ seh64_greg_r11,	11
+.equ seh64_greg_r12,	12
+.equ seh64_greg_r13,	13
+.equ seh64_greg_r14,	14
+.equ seh64_greg_r15,	15
+.equ seh64_greg_shl4_rax,	0  << 4
+.equ seh64_greg_shl4_rcx,	1  << 4
+.equ seh64_greg_shl4_rdx,	2  << 4
+.equ seh64_greg_shl4_rbx,	3  << 4
+.equ seh64_greg_shl4_rsp,	4  << 4
+.equ seh64_greg_shl4_rbp,	5  << 4
+.equ seh64_greg_shl4_rsi,	6  << 4
+.equ seh64_greg_shl4_rdi,	7  << 4
+.equ seh64_greg_shl4_r8,	8  << 4
+.equ seh64_greg_shl4_r9,	9  << 4
+.equ seh64_greg_shl4_r10,	10 << 4
+.equ seh64_greg_shl4_r11,	11 << 4
+.equ seh64_greg_shl4_r12,	12 << 4
+.equ seh64_greg_shl4_r13,	13 << 4
+.equ seh64_greg_shl4_r14,	14 << 4
+.equ seh64_greg_shl4_r15,	15 << 4
+.equ seh64_xreg_shl4_xmm0,	0  << 4
+.equ seh64_xreg_shl4_xmm1,	1  << 4
+.equ seh64_xreg_shl4_xmm2,	2  << 4
+.equ seh64_xreg_shl4_xmm3,	3  << 4
+.equ seh64_xreg_shl4_xmm4,	4  << 4
+.equ seh64_xreg_shl4_xmm5,	5  << 4
+.equ seh64_xreg_shl4_xmm6,	6  << 4
+.equ seh64_xreg_shl4_xmm7,	7  << 4
+.equ seh64_xreg_shl4_xmm8,	8  << 4
+.equ seh64_xreg_shl4_xmm9,	9  << 4
+.equ seh64_xreg_shl4_xmm10,	10 << 4
+.equ seh64_xreg_shl4_xmm11,	11 << 4
+.equ seh64_xreg_shl4_xmm12,	12 << 4
+.equ seh64_xreg_shl4_xmm13,	13 << 4
+.equ seh64_xreg_shl4_xmm14,	14 << 4
+.equ seh64_xreg_shl4_xmm15,	15 << 4
+
+# FP register tracking... not sure if this works...
+.equ seh64_fpreg_no_and_offset, 0
+
+# The current .xdata subsection index.  We work in reverse order (decrementing),
+# since the unwind opcodes must be stored in reverse order.
+.equ seh64_sec_no, 999999
+# Define the .xdata section (unwind info).
+.section .xdata, "r0"
+# Define the .pdata section (function table).
+.section .pdata, "r2"
+# Back to the .text section.
+.section .text
+
+.macro SEH64_PROC_FRAME a_Name, a_Scope
+\\a_Name:
+\\a_Name\\().start_of_prologue:
+9:
+
+# Define end of the unwind info array (opcode):
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+\\a_Name\\().unwind_info_array_end:
+# Back to the .text section.
+.section .text
+
+.endm
+
+.macro SEH64_ENDPROC_FRAME a_Name
+\\a_Name\\().end_proc:
+
+# Emit the RUNTIME_FUNCTION entry.  The linker is picky here, no label.
+.section .pdata
+	.rva	\\a_Name
+	.rva	\\a_Name\\().end_proc
+	.rva	\\a_Name\\().unwind_info
+# Back to the .text section.
+.section .text
+
+.endm
+
+.macro SEH64_ENDPROLOG a_Name
+\\a_Name\\().end_of_prologue:
+
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+\\a_Name\\().unwind_info:
+	.byte	1                       # version 1 (3 bit), no flags (5 bits)
+	.byte	\\a_Name\\().end_of_prologue - \\a_Name\\().start_of_prologue
+	.byte	(\\a_Name\\().unwind_info_array_end - \\a_Name\\().unwind_info_array) / 2
+	.byte	seh64_fpreg_no_and_offset # framereg and offset/16.
+\\a_Name\\().unwind_info_array:
+
+# Back to the .text section.
+.section .text
+.endm
+
+.macro SEH64_ALLOCSTACK a_Size
+# Local post-instruction label.
+8:
+
+# Switch to the current opcode subsection of .xdata and emit the unwind code.
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+	# The prolog offset.
+	.byte	8b - 9b
+	# The opcode and associated data.
+.if \\a_Size < 8
+ .error "SEH64_ALLOCSTACK must have an argument that's 8 or higher."
+.elseif (\\a_Size) <= 128
+	.byte	2 | ((((\\a_Size) / 8) - 1) << 4)       # 2 = SEH64_PE_ALLOC_SMALL
+.elseif (\\a_Size) < 512
+	.byte	1 | (0 << 4)                            # 1 = SEH64_PE_ALLOC_LARGE
+	.byte	(\\a_Size / 8) & 0xff, ((\\a_Size) / 8) >> 8
+.else
+	.byte	1 | (1 << 4)                            # 1 = SEH64_PE_ALLOC_LARGE
+	.byte	(\\a_Size) & 0xff, ((\\a_Size) >> 8) & 0xff, ((\\a_Size) >> 16) & 0xff, ((\\a_Size) >> 24) & 0xff
+.endif
+
+# Back to the .text section.
+.section .text
+.endm
+
+.macro SEH64_PUSHREG a_Reg
+# Local post-instruction label.
+8:
+
+# Switch to the current opcode subsection of .xdata and emit the unwind code.
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+	# The prolog offset.
+	.byte	8b - 9b
+	# The opcode and associated data.
+	.byte	0 + seh64_greg_shl4_\\()\\a_Reg         # 0 = SEH64_PE_PUSH_NONVOL
+
+# Back to the .text section.
+.section .text
+.endm
+
+.macro SEH64_SAVEREG a_Reg, a_Offset
+# Local post-instruction label.
+8:
+
+# Switch to the current opcode subsection of .xdata and emit the unwind code.
+.if (\\a_Offset) & 7
+ .error "SEH64_SAVEREG: Offset must be a multiple of 8."
+.endif
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+	# The prolog offset.
+	.byte	8b - 9b
+.if (\\a_Offset) < (65535*8)
+	# The opcode and associated data.
+	.byte	4 + (seh64_greg_shl4_\\()\\a_Reg)        # 4 = SEH64_PE_SAVE_NONVOL
+	.byte	((\\a_Offset) / 8) & 0xff
+	.byte	((\\a_Offset) / 8) >> 8
+.else
+ .error "SEH64_SAVEREG: Implement SEH64_PE_SAVE_NONVOL_FAR"
+.endif
+
+# Back to the .text section.
+.section .text
+.endm
+
+.macro SEH64_SAVEXMM128 a_XReg, a_Offset
+# Local post-instruction label.
+8:
+
+# Switch to the current opcode subsection of .xdata and emit the unwind code.
+.if (\\a_Offset) & 15
+ .error "SEH64_SAVEXMM128: Offset must be a multiple of 16."
+.endif
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+	# The prolog offset.
+	.byte	8b - 9b
+.if (\\a_Offset) < (65535*8)
+	# The opcode and associated data.
+	.byte	8 + seh64_xreg_shl4_\\()\\a_XReg        # 8 = SEH64_PE_SAVE_XMM128
+	.byte	((\\a_Offset) / 16) & 0xff
+	.byte	((\\a_Offset) / 16) >> 8
+.else
+ .error "SEH64_SAVEXMM128: Implement SEH64_PE_SAVE_XMM128_FAR"
+.endif
+
+# Back to the .text section.
+.section .text
+.endm
+
+.macro SEH64_SETFRAME a_Reg, a_Offset
+.if (\\a_Offset & 15) || (\\a_Offset > 240) # (\\a_Offset < 8)
+ .error "SEH64_SETFRAME offset is out of range or misaligned: \\a_Offset"
+.endif
+.equ seh64_fpreg_no_and_offset, seh64_greg_\\()\\a_Reg + \\a_Offset
+
+# Local post-instruction label.
+8:
+
+# Switch to the current opcode subsection of .xdata and emit the unwind code.
+.equ seh64_sec_no, (seh64_sec_no - 1)
+.section .xdata, seh64_sec_no
+	# The prolog offset.
+	.byte	8b - 9b
+	# The opcode and associated data.
+	.byte	3                                       # 3 = SEH64_PE_SET_FPREG
+
+# Back to the .text section.
+.section .text
+.endm
 ___
 }
 while(defined(my $line=<>)) {
@@ -1547,7 +2196,7 @@ close STDOUT or die "error closing STDOUT: $!;"
 #	ret
 #
 #################################################
-# Win64 SEH, Structured Exception Handling.
+# Win64 Unwind Instructions
 #
 # Unlike on Unix systems(*) lack of Win64 stack unwinding information
 # has undesired side-effect at run-time: if an exception is raised in
@@ -1555,8 +2204,54 @@ close STDOUT or die "error closing STDOUT: $!;"
 # referring to segmentation violations caused by malformed input
 # parameters), the application is briskly terminated without invoking
 # any exception handlers, most notably without generating memory dump
-# or any user notification whatsoever. This poses a problem. It's
-# possible to address it by registering custom language-specific
+# or any user notification whatsoever. This poses a problem. This was
+# previously dealth with using custom exception handlers, which were
+# difficult to maintain and offered zero help in a debugger. These days,
+# Win64 piggy backs on the dwarf unwind directives (.cfi_startproc,
+# .cfi_cfa_expression, .cfi_offset, ..., .cfi_endproc).
+#
+# The Windows x86_64 unwind information is very basic and inflexible
+# compared to DWARF.  For starters, it only covers the prologue and
+# just assumes RtlVirtualUnwind and others will figure out how to
+# unwind the epilogue.  A requirement is that the end of the prologue
+# is marked.  Since DWARF/gas doesn't have an .cfi_ directive for this
+# we have introduced our own pseudo directive .cfi_endprolog.
+#
+# .cfi_endprolog: Marks the end of the prologue, i.e. where a reliable
+# stack frame has been established.  For Win64 the frame register and
+# offset is established with this directive rather than when any of
+# the .cfa_def_cfa* directives was used earlier in the prologue.  This
+# is different from the way DWARF works and must be kept in mind.
+#
+# Any function with a .cfi_startproc must have both a .cfi_endprolog
+# as well as a .cfi_endproc directive. The .cfi_endproc directive must
+# be followed by a .size directive.
+#
+# .cfi_stackalloc <bytes>: This pseudo directive indicates that %rsp
+# has been adjusted, irrespective of whether it is the register for
+# the frame or not.  If %rsp is defined as the CFA register, it will
+# also update the CFA offset.
+#
+# Since the CFA register is only established at .cfi_endprolog in the
+# Win64 unwind instructions, this directive is necessary to keep
+# track of %rsp changes as these are always relevant to unwinding on
+# Win64 before that point.
+#
+# .cfi_sp_offset <reg>,<offset>: Same as .cfi_offset, only it is
+# relative to the current %rsp rather than the CFA.  This can be a
+# lot simpler to use when the instruction doing the register saving
+# is using %rsp for addressing.
+#
+# For an exact reference of the x86_64 Windows unwind handling, wine's
+# implementation of RtlVirtualUnwind2 can be very helpful, see:
+# https://gitlab.winehq.org/wine/wine/-/blob/b9f5aa42b1532a80963583cabeaeec2a4b479d9f/dlls/ntdll/unwind.c#L2053
+#
+#
+#################################################
+# HISTORICAL - Win64 SEH, Structured Exception Handling
+# This is left here for explaining the %rax=%rsp coding pattern.
+#
+# It's possible to address it by registering custom language-specific
 # handler that would restore processor context to the state at
 # subroutine entry point and return "exception is not handled, keep
 # unwinding" code. Writing such handler can be a challenge... But it's
@@ -1708,3 +2403,5 @@ close STDOUT or die "error closing STDOUT: $!;"
 #	Unix. "Unlike" refers to the fact that on Unix signal handler
 #	will always be invoked, core dumped and appropriate exit code
 #	returned to parent (for user notification).
+#
+# HISTORICAL END

@@ -329,6 +329,7 @@ $code.=<<___;
 .align	16
 _x86_64_AES_encrypt:
 .cfi_startproc
+.cfi_endprolog
 	xor	0($key),$s0			# xor with key
 	xor	4($key),$s1
 	xor	8($key),$s2
@@ -559,6 +560,7 @@ $code.=<<___;
 .align	16
 _x86_64_AES_encrypt_compact:
 .cfi_startproc
+.cfi_endprolog
 	lea	128($sbox),$inp			# size optimization
 	mov	0-128($inp),$acc1		# prefetch Te4
 	mov	32-128($inp),$acc2
@@ -634,7 +636,7 @@ AES_encrypt:
 	mov	%rsi,16(%rsp)	# save out
 	mov	%rax,24(%rsp)	# save original stack pointer
 .cfi_cfa_expression	%rsp+24,deref,+8
-.Lenc_prologue:
+.cfi_endprolog
 
 	mov	%rdx,$key
 	mov	240($key),$rnds	# load rounds
@@ -680,7 +682,6 @@ AES_encrypt:
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lenc_epilogue:
 	ret
 .cfi_endproc
 .size	AES_encrypt,.-AES_encrypt
@@ -916,6 +917,7 @@ $code.=<<___;
 .align	16
 _x86_64_AES_decrypt:
 .cfi_startproc
+.cfi_endprolog
 	xor	0($key),$s0			# xor with key
 	xor	4($key),$s1
 	xor	8($key),$s2
@@ -1171,6 +1173,7 @@ $code.=<<___;
 .align	16
 _x86_64_AES_decrypt_compact:
 .cfi_startproc
+.cfi_endprolog
 	lea	128($sbox),$inp			# size optimization
 	mov	0-128($inp),$acc1		# prefetch Td4
 	mov	32-128($inp),$acc2
@@ -1255,7 +1258,7 @@ AES_decrypt:
 	mov	%rsi,16(%rsp)	# save out
 	mov	%rax,24(%rsp)	# save original stack pointer
 .cfi_cfa_expression	%rsp+24,deref,+8
-.Ldec_prologue:
+.cfi_endprolog
 
 	mov	%rdx,$key
 	mov	240($key),$rnds	# load rounds
@@ -1303,7 +1306,6 @@ AES_decrypt:
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Ldec_epilogue:
 	ret
 .cfi_endproc
 .size	AES_decrypt,.-AES_decrypt
@@ -1359,7 +1361,7 @@ AES_set_encrypt_key:
 .cfi_push	%r15
 	sub	\$8,%rsp
 .cfi_adjust_cfa_offset	8
-.Lenc_key_prologue:
+.cfi_endprolog
 
 	call	_x86_64_AES_set_encrypt_key
 
@@ -1369,7 +1371,6 @@ AES_set_encrypt_key:
 .cfi_restore	%rbx
 	add	\$56,%rsp
 .cfi_adjust_cfa_offset	-56
-.Lenc_key_epilogue:
 	ret
 .cfi_endproc
 .size	AES_set_encrypt_key,.-AES_set_encrypt_key
@@ -1378,6 +1379,7 @@ AES_set_encrypt_key:
 .align	16
 _x86_64_AES_set_encrypt_key:
 .cfi_startproc
+.cfi_endprolog
 	mov	%esi,%ecx			# %ecx=bits
 	mov	%rdi,%rsi			# %rsi=userKey
 	mov	%rdx,%rdi			# %rdi=key
@@ -1639,7 +1641,7 @@ AES_set_decrypt_key:
 .cfi_push	%r15
 	push	%rdx			# save key schedule
 .cfi_adjust_cfa_offset	8
-.Ldec_key_prologue:
+.cfi_endprolog
 
 	call	_x86_64_AES_set_encrypt_key
 	mov	(%rsp),%r8		# restore key schedule
@@ -1705,7 +1707,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	add	\$56,%rsp
 .cfi_adjust_cfa_offset	-56
-.Ldec_key_epilogue:
 	ret
 .cfi_endproc
 .size	AES_set_decrypt_key,.-AES_set_decrypt_key
@@ -1768,7 +1769,6 @@ AES_cbc_encrypt:
 	cmp	\$0,%r9
 	cmoveq	%r10,$sbox
 
-.cfi_remember_state
 	mov	OPENSSL_ia32cap_P(%rip),%r10d
 	cmp	\$$speed_limit,%rdx
 	jb	.Lcbc_slow_prologue
@@ -1807,7 +1807,7 @@ AES_cbc_encrypt:
 	#add	\$8,%rsp	# reserve for return address!
 	mov	$key,$_rsp	# save %rsp
 .cfi_cfa_expression	$_rsp,deref,+64
-.Lcbc_fast_body:
+.cfi_endprolog
 	mov	%rdi,$_inp	# save copy of inp
 	mov	%rsi,$_out	# save copy of out
 	mov	%rdx,$_len	# save copy of len
@@ -2001,10 +2001,54 @@ AES_cbc_encrypt:
 
 	jmp	.Lcbc_exit
 
+.align	16
+.Lcbc_exit:
+	mov	$_rsp,%rsi
+.cfi_def_cfa	%rsi,64
+	mov	(%rsi),%r15
+.cfi_restore	%r15
+	mov	8(%rsi),%r14
+.cfi_restore	%r14
+	mov	16(%rsi),%r13
+.cfi_restore	%r13
+	mov	24(%rsi),%r12
+.cfi_restore	%r12
+	mov	32(%rsi),%rbp
+.cfi_restore	%rbp
+	mov	40(%rsi),%rbx
+.cfi_restore	%rbx
+	lea	48(%rsi),%rsp
+.cfi_def_cfa	%rsp,16
+.Lcbc_popfq:
+	popfq
+# This could be .cfi_pop 49, but libunwind fails on registers it does not
+# recognize. See https://bugzilla.redhat.com/show_bug.cgi?id=217087.
+.cfi_adjust_cfa_offset	-8
+.Lcbc_epilogue:
+	ret
+.cfi_endproc
+.size	AES_cbc_encrypt,.-AES_cbc_encrypt
+
+
+# Note! This isn't directly callable.
+# Win64 unwinding forces us to repeat common unwind info from AES_cbc_encrypt.
+.type	_AES_cbc_encrypt_slow,\@function,6
+.align	16
+.hidden	_AES_cbc_encrypt_slow
+_AES_cbc_encrypt_slow:
+.cfi_startproc
+        ud2                                 # Not callable!
+.cfi_adjust_cfa_offset	8
+.cfi_push	%rbx
+.cfi_push	%rbp
+.cfi_push	%r12
+.cfi_push	%r13
+.cfi_push	%r14
+.cfi_push	%r15
+
 #--------------------------- SLOW ROUTINE ---------------------------#
 .align	16
 .Lcbc_slow_prologue:
-.cfi_restore_state
 	# allocate aligned stack frame...
 	lea	-88(%rsp),%rbp
 	and	\$-64,%rbp
@@ -2020,7 +2064,7 @@ AES_cbc_encrypt:
 	#add	\$8,%rsp	# reserve for return address!
 	mov	%rbp,$_rsp	# save %rsp
 .cfi_cfa_expression	$_rsp,deref,+64
-.Lcbc_slow_body:
+.cfi_endprolog
 	#mov	%rdi,$_inp	# save copy of inp
 	#mov	%rsi,$_out	# save copy of out
 	#mov	%rdx,$_len	# save copy of len
@@ -2188,30 +2232,6 @@ AES_cbc_encrypt:
 	.long	0x9066A4F3	# rep movsb
 	jmp	.Lcbc_exit
 
-.align	16
-.Lcbc_exit:
-	mov	$_rsp,%rsi
-.cfi_def_cfa	%rsi,64
-	mov	(%rsi),%r15
-.cfi_restore	%r15
-	mov	8(%rsi),%r14
-.cfi_restore	%r14
-	mov	16(%rsi),%r13
-.cfi_restore	%r13
-	mov	24(%rsi),%r12
-.cfi_restore	%r12
-	mov	32(%rsi),%rbp
-.cfi_restore	%rbp
-	mov	40(%rsi),%rbx
-.cfi_restore	%rbx
-	lea	48(%rsi),%rsp
-.cfi_def_cfa	%rsp,16
-.Lcbc_popfq:
-	popfq
-# This could be .cfi_pop 49, but libunwind fails on registers it does not
-# recognize. See https://bugzilla.redhat.com/show_bug.cgi?id=217087.
-.cfi_adjust_cfa_offset	-8
-.Lcbc_epilogue:
 	ret
 .cfi_endproc
 .size	AES_cbc_encrypt,.-AES_cbc_encrypt
@@ -2644,281 +2664,6 @@ $code.=<<___;
 .align	64
 .previous
 ___
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	block_se_handler,\@abi-omnipotent
-.align	16
-block_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lin_block_prologue
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lin_block_prologue
-
-	mov	24(%rax),%rax		# pull saved real stack pointer
-
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lin_block_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	jmp	.Lcommon_seh_exit
-.size	block_se_handler,.-block_se_handler
-
-.type	key_se_handler,\@abi-omnipotent
-.align	16
-key_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lin_key_prologue
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lin_key_prologue
-
-	lea	56(%rax),%rax
-
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lin_key_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	jmp	.Lcommon_seh_exit
-.size	key_se_handler,.-key_se_handler
-
-.type	cbc_se_handler,\@abi-omnipotent
-.align	16
-cbc_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	lea	.Lcbc_prologue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<.Lcbc_prologue
-	jb	.Lin_cbc_prologue
-
-	lea	.Lcbc_fast_body(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<.Lcbc_fast_body
-	jb	.Lin_cbc_frame_setup
-
-	lea	.Lcbc_slow_prologue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<.Lcbc_slow_prologue
-	jb	.Lin_cbc_body
-
-	lea	.Lcbc_slow_body(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<.Lcbc_slow_body
-	jb	.Lin_cbc_frame_setup
-
-.Lin_cbc_body:
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	.Lcbc_epilogue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>=.Lcbc_epilogue
-	jae	.Lin_cbc_prologue
-
-	lea	8(%rax),%rax
-
-	lea	.Lcbc_popfq(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>=.Lcbc_popfq
-	jae	.Lin_cbc_prologue
-
-	mov	`16-8`(%rax),%rax	# biased $_rsp
-	lea	56(%rax),%rax
-
-.Lin_cbc_frame_setup:
-	mov	-16(%rax),%rbx
-	mov	-24(%rax),%rbp
-	mov	-32(%rax),%r12
-	mov	-40(%rax),%r13
-	mov	-48(%rax),%r14
-	mov	-56(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lin_cbc_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-.Lcommon_seh_exit:
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$`1232/8`,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	cbc_se_handler,.-cbc_se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_AES_encrypt
-	.rva	.LSEH_end_AES_encrypt
-	.rva	.LSEH_info_AES_encrypt
-
-	.rva	.LSEH_begin_AES_decrypt
-	.rva	.LSEH_end_AES_decrypt
-	.rva	.LSEH_info_AES_decrypt
-
-	.rva	.LSEH_begin_AES_set_encrypt_key
-	.rva	.LSEH_end_AES_set_encrypt_key
-	.rva	.LSEH_info_AES_set_encrypt_key
-
-	.rva	.LSEH_begin_AES_set_decrypt_key
-	.rva	.LSEH_end_AES_set_decrypt_key
-	.rva	.LSEH_info_AES_set_decrypt_key
-
-	.rva	.LSEH_begin_AES_cbc_encrypt
-	.rva	.LSEH_end_AES_cbc_encrypt
-	.rva	.LSEH_info_AES_cbc_encrypt
-
-.section	.xdata
-.align	8
-.LSEH_info_AES_encrypt:
-	.byte	9,0,0,0
-	.rva	block_se_handler
-	.rva	.Lenc_prologue,.Lenc_epilogue	# HandlerData[]
-.LSEH_info_AES_decrypt:
-	.byte	9,0,0,0
-	.rva	block_se_handler
-	.rva	.Ldec_prologue,.Ldec_epilogue	# HandlerData[]
-.LSEH_info_AES_set_encrypt_key:
-	.byte	9,0,0,0
-	.rva	key_se_handler
-	.rva	.Lenc_key_prologue,.Lenc_key_epilogue	# HandlerData[]
-.LSEH_info_AES_set_decrypt_key:
-	.byte	9,0,0,0
-	.rva	key_se_handler
-	.rva	.Ldec_key_prologue,.Ldec_key_epilogue	# HandlerData[]
-.LSEH_info_AES_cbc_encrypt:
-	.byte	9,0,0,0
-	.rva	cbc_se_handler
-___
-}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 

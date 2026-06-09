@@ -43,6 +43,7 @@ print<<___;
 OPENSSL_atomic_add:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	movl	($arg1),%eax
 .Lspin:	leaq	($arg2,%rax),%r8
 	.byte	0xf0		# lock
@@ -60,6 +61,7 @@ OPENSSL_atomic_add:
 OPENSSL_rdtsc:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	rdtsc
 	shl	\$32,%rdx
 	or	%rdx,%rax
@@ -73,8 +75,17 @@ OPENSSL_rdtsc:
 OPENSSL_ia32_cpuid:
 .cfi_startproc
 	endbranch
-	mov	%rbx,%r8		# save %rbx
+        mov	%rbx,%r8		# save %rbx
+___
+print<<___ if (!$win64);
 .cfi_register	%rbx,%r8
+___
+print<<___ if ($win64);
+	mov	%rbx,24(%rsp)		# save %rbx for unwinding purposes.
+.cfi_offset	%rbx,24-8
+___
+print<<___;
+.cfi_endprolog
 
 	xor	%eax,%eax
 	mov	%rax,8(%rdi)		# clear extended feature flags
@@ -269,6 +280,7 @@ OPENSSL_ia32_cpuid:
 OPENSSL_cleanse:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	xor	%rax,%rax
 	cmp	\$15,$arg2
 	jae	.Lot
@@ -307,6 +319,7 @@ OPENSSL_cleanse:
 CRYPTO_memcmp:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	xor	%rax,%rax
 	xor	%r10,%r10
 	cmp	\$0,$arg3
@@ -354,6 +367,7 @@ print<<___;
 OPENSSL_instrument_bus:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
 	mov	$arg2,$max
@@ -389,6 +403,7 @@ OPENSSL_instrument_bus:
 OPENSSL_instrument_bus2:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	mov	$arg1,$out	# tribute to Win64
 	mov	$arg2,$cnt
 	mov	$arg3,$max
@@ -445,6 +460,7 @@ print<<___;
 OPENSSL_ia32_${rdop}_bytes:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	xor	%rax, %rax	# return value
 	cmp	\$0,$arg2
 	je	.Ldone_${rdop}_bytes

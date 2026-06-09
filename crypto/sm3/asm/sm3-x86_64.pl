@@ -108,7 +108,6 @@ ossl_hwsm3_block_data_order:
     push    %rbp
 .cfi_push   %rbp
 .cfi_def_cfa_register %rbp
-.Lossl_hwsm3_block_data_order_seh_setfp:
 ___
 
 $code.=<<___ if($win64);
@@ -126,7 +125,7 @@ ___
 
   $code .= <<___;
 # Prolog ends here.
-.Lossl_hwsm3_block_data_order_seh_prolog_end:
+.cfi_endprolog
     or $num, $num
     je .done_hash
 
@@ -276,8 +275,11 @@ $code .= <<___;
 .globl	ossl_hwsm3_block_data_order
 .type ossl_hwsm3_block_data_order,\@abi-omnipotent
 ossl_hwsm3_block_data_order:
+.cfi_startproc
+.cfi_endprolog
     .byte   0x0f,0x0b    # ud2
     ret
+.cfi_endproc
 .size   ossl_hwsm3_block_data_order, .-ossl_hwsm3_block_data_order
 ___
 } # avx2_sm3_ni

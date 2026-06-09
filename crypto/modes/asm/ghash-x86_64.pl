@@ -263,7 +263,7 @@ gcm_gmult_4bit:
 .cfi_push	%r15
 	sub	\$280,%rsp
 .cfi_adjust_cfa_offset	280
-.Lgmult_prologue:
+.cfi_endprolog
 
 	movzb	15($Xi),$Zlo
 	lea	.Lrem_4bit(%rip),$rem_4bit
@@ -279,7 +279,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lgmult_epilogue:
 	ret
 .cfi_endproc
 .size	gcm_gmult_4bit,.-gcm_gmult_4bit
@@ -311,7 +310,7 @@ gcm_ghash_4bit:
 .cfi_push	%r15
 	sub	\$280,%rsp
 .cfi_adjust_cfa_offset	280
-.Lghash_prologue:
+.cfi_endprolog
 	mov	$inp,%r14		# reassign couple of args
 	mov	$len,%r15
 ___
@@ -454,7 +453,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	0(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lghash_epilogue:
 	ret
 .cfi_endproc
 .size	gcm_ghash_4bit,.-gcm_ghash_4bit
@@ -542,10 +540,10 @@ $code.=<<___;
 gcm_init_clmul:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 .L_init_clmul:
 ___
 $code.=<<___ if ($win64);
-.LSEH_begin_gcm_init_clmul:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x83,0xec,0x18		#sub	$0x18,%rsp
 	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
@@ -607,7 +605,6 @@ ___
 $code.=<<___ if ($win64);
 	movaps	(%rsp),%xmm6
 	lea	0x18(%rsp),%rsp
-.LSEH_end_gcm_init_clmul:
 ___
 $code.=<<___;
 	ret
@@ -625,6 +622,7 @@ $code.=<<___;
 gcm_gmult_clmul:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 .L_gmult_clmul:
 	movdqu		($Xip),$Xi
 	movdqa		.Lbswap_mask(%rip),$T3
@@ -681,21 +679,32 @@ gcm_ghash_clmul:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
-.LSEH_begin_gcm_ghash_clmul:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
+.cfi_stackalloc	 0x88+0x20
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
+.cfi_sp_offset	%xmm6,0x00
 	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7,-0x10(%rax)
+.cfi_sp_offset	%xmm7,0x10
 	.byte	0x44,0x0f,0x29,0x00		#movaps	%xmm8,0(%rax)
+.cfi_sp_offset	%xmm8,0x20
 	.byte	0x44,0x0f,0x29,0x48,0x10	#movaps	%xmm9,0x10(%rax)
+.cfi_sp_offset	%xmm9,0x30
 	.byte	0x44,0x0f,0x29,0x50,0x20	#movaps	%xmm10,0x20(%rax)
+.cfi_sp_offset	%xmm10,0x40
 	.byte	0x44,0x0f,0x29,0x58,0x30	#movaps	%xmm11,0x30(%rax)
+.cfi_sp_offset	%xmm11,0x50
 	.byte	0x44,0x0f,0x29,0x60,0x40	#movaps	%xmm12,0x40(%rax)
+.cfi_sp_offset	%xmm12,0x60
 	.byte	0x44,0x0f,0x29,0x68,0x50	#movaps	%xmm13,0x50(%rax)
+.cfi_sp_offset	%xmm13,0x70
 	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
+.cfi_sp_offset	%xmm14,0x80
 	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
+.cfi_sp_offset	%xmm15,0x90
 ___
 $code.=<<___;
+.cfi_endprolog
 	movdqa		.Lbswap_mask(%rip),$T3
 
 	movdqu		($Xip),$Xi
@@ -1020,7 +1029,6 @@ $code.=<<___ if ($win64);
 	movaps	0x80(%rsp),%xmm14
 	movaps	0x90(%rsp),%xmm15
 	lea	0xa8(%rsp),%rsp
-.LSEH_end_gcm_ghash_clmul:
 ___
 $code.=<<___;
 	ret
@@ -1042,12 +1050,14 @@ my ($Htbl,$Xip)=@_4args;
 my $HK="%xmm6";
 
 $code.=<<___ if ($win64);
-.LSEH_begin_gcm_init_avx:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x83,0xec,0x18		#sub	$0x18,%rsp
+.cfi_stackalloc	0x18
 	.byte	0x0f,0x29,0x34,0x24		#movaps	%xmm6,(%rsp)
+.cfi_sp_offset	%xmm6,0
 ___
 $code.=<<___;
+.cfi_endprolog
 	vzeroupper
 
 	vmovdqu		($Xip),$Hkey
@@ -1160,7 +1170,6 @@ ___
 $code.=<<___ if ($win64);
 	movaps	(%rsp),%xmm6
 	lea	0x18(%rsp),%rsp
-.LSEH_end_gcm_init_avx:
 ___
 $code.=<<___;
 	ret
@@ -1169,6 +1178,7 @@ $code.=<<___;
 ___
 } else {
 $code.=<<___;
+.cfi_endprolog
 	jmp	.L_init_clmul
 .cfi_endproc
 .size	gcm_init_avx,.-gcm_init_avx
@@ -1182,6 +1192,7 @@ $code.=<<___;
 gcm_gmult_avx:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	jmp	.L_gmult_clmul
 .cfi_endproc
 .size	gcm_gmult_avx,.-gcm_gmult_avx
@@ -1204,21 +1215,32 @@ my ($Xlo,$Xhi,$Xmi,
 
 $code.=<<___ if ($win64);
 	lea	-0x88(%rsp),%rax
-.LSEH_begin_gcm_ghash_avx:
 	# I can't trust assembler to use specific encoding:-(
 	.byte	0x48,0x8d,0x60,0xe0		#lea	-0x20(%rax),%rsp
+.cfi_stackalloc	0x88+0x20
 	.byte	0x0f,0x29,0x70,0xe0		#movaps	%xmm6,-0x20(%rax)
+.cfi_sp_offset	%xmm6,0x00
 	.byte	0x0f,0x29,0x78,0xf0		#movaps	%xmm7,-0x10(%rax)
+.cfi_sp_offset	%xmm7,0x10
 	.byte	0x44,0x0f,0x29,0x00		#movaps	%xmm8,0(%rax)
+.cfi_sp_offset	%xmm8,0x20
 	.byte	0x44,0x0f,0x29,0x48,0x10	#movaps	%xmm9,0x10(%rax)
+.cfi_sp_offset	%xmm9,0x30
 	.byte	0x44,0x0f,0x29,0x50,0x20	#movaps	%xmm10,0x20(%rax)
+.cfi_sp_offset	%xmm10,0x40
 	.byte	0x44,0x0f,0x29,0x58,0x30	#movaps	%xmm11,0x30(%rax)
+.cfi_sp_offset	%xmm11,0x50
 	.byte	0x44,0x0f,0x29,0x60,0x40	#movaps	%xmm12,0x40(%rax)
+.cfi_sp_offset	%xmm12,0x60
 	.byte	0x44,0x0f,0x29,0x68,0x50	#movaps	%xmm13,0x50(%rax)
+.cfi_sp_offset	%xmm13,0x70
 	.byte	0x44,0x0f,0x29,0x70,0x60	#movaps	%xmm14,0x60(%rax)
+.cfi_sp_offset	%xmm14,0x80
 	.byte	0x44,0x0f,0x29,0x78,0x70	#movaps	%xmm15,0x70(%rax)
+.cfi_sp_offset	%xmm15,0x90
 ___
 $code.=<<___;
+.cfi_endprolog
 	vzeroupper
 
 	vmovdqu		($Xip),$Xi		# load $Xi
@@ -1602,7 +1624,6 @@ $code.=<<___ if ($win64);
 	movaps	0x80(%rsp),%xmm14
 	movaps	0x90(%rsp),%xmm15
 	lea	0xa8(%rsp),%rsp
-.LSEH_end_gcm_ghash_avx:
 ___
 $code.=<<___;
 	ret
@@ -1611,6 +1632,7 @@ $code.=<<___;
 ___
 } else {
 $code.=<<___;
+.cfi_endprolog
 	jmp	.L_ghash_clmul
 .cfi_endproc
 .size	gcm_ghash_avx,.-gcm_ghash_avx
@@ -1674,161 +1696,6 @@ $code.=<<___;
 .align	64
 .previous
 ___
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	se_handler,\@abi-omnipotent
-.align	16
-se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lin_prologue
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lin_prologue
-
-	lea	48+280(%rax),%rax	# adjust "rsp"
-
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lin_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$`1232/8`,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	se_handler,.-se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_gcm_gmult_4bit
-	.rva	.LSEH_end_gcm_gmult_4bit
-	.rva	.LSEH_info_gcm_gmult_4bit
-
-	.rva	.LSEH_begin_gcm_ghash_4bit
-	.rva	.LSEH_end_gcm_ghash_4bit
-	.rva	.LSEH_info_gcm_ghash_4bit
-
-	.rva	.LSEH_begin_gcm_init_clmul
-	.rva	.LSEH_end_gcm_init_clmul
-	.rva	.LSEH_info_gcm_init_clmul
-
-	.rva	.LSEH_begin_gcm_ghash_clmul
-	.rva	.LSEH_end_gcm_ghash_clmul
-	.rva	.LSEH_info_gcm_ghash_clmul
-___
-$code.=<<___	if ($avx);
-	.rva	.LSEH_begin_gcm_init_avx
-	.rva	.LSEH_end_gcm_init_avx
-	.rva	.LSEH_info_gcm_init_clmul
-
-	.rva	.LSEH_begin_gcm_ghash_avx
-	.rva	.LSEH_end_gcm_ghash_avx
-	.rva	.LSEH_info_gcm_ghash_clmul
-___
-$code.=<<___;
-.section	.xdata
-.align	8
-.LSEH_info_gcm_gmult_4bit:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lgmult_prologue,.Lgmult_epilogue	# HandlerData
-.LSEH_info_gcm_ghash_4bit:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lghash_prologue,.Lghash_epilogue	# HandlerData
-.LSEH_info_gcm_init_clmul:
-	.byte	0x01,0x08,0x03,0x00
-	.byte	0x08,0x68,0x00,0x00	#movaps	0x00(rsp),xmm6
-	.byte	0x04,0x22,0x00,0x00	#sub	rsp,0x18
-.LSEH_info_gcm_ghash_clmul:
-	.byte	0x01,0x33,0x16,0x00
-	.byte	0x33,0xf8,0x09,0x00	#movaps 0x90(rsp),xmm15
-	.byte	0x2e,0xe8,0x08,0x00	#movaps 0x80(rsp),xmm14
-	.byte	0x29,0xd8,0x07,0x00	#movaps 0x70(rsp),xmm13
-	.byte	0x24,0xc8,0x06,0x00	#movaps 0x60(rsp),xmm12
-	.byte	0x1f,0xb8,0x05,0x00	#movaps 0x50(rsp),xmm11
-	.byte	0x1a,0xa8,0x04,0x00	#movaps 0x40(rsp),xmm10
-	.byte	0x15,0x98,0x03,0x00	#movaps 0x30(rsp),xmm9
-	.byte	0x10,0x88,0x02,0x00	#movaps 0x20(rsp),xmm8
-	.byte	0x0c,0x78,0x01,0x00	#movaps 0x10(rsp),xmm7
-	.byte	0x08,0x68,0x00,0x00	#movaps 0x00(rsp),xmm6
-	.byte	0x04,0x01,0x15,0x00	#sub	rsp,0xa8
-___
-}
 
 $code =~ s/\`([^\`]*)\`/eval($1)/gem;
 

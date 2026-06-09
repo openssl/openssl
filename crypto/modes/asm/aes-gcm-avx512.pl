@@ -92,6 +92,8 @@ $code .= <<___;
 .type   ossl_vaes_vpclmulqdq_capable,\@abi-omnipotent
 .align 32
 ossl_vaes_vpclmulqdq_capable:
+.cfi_startproc
+.cfi_endprolog
     mov OPENSSL_ia32cap_P+8(%rip), %rcx
     # avx512vpclmulqdq + avx512vaes + avx512vl + avx512bw + avx512dq + avx512f
     mov \$`1<<42|1<<41|1<<31|1<<30|1<<17|1<<16`,%rdx
@@ -100,6 +102,7 @@ ossl_vaes_vpclmulqdq_capable:
     cmp %rdx,%rcx
     cmove %rcx,%rax
     ret
+.cfi_endproc
 .size   ossl_vaes_vpclmulqdq_capable, .-ossl_vaes_vpclmulqdq_capable
 ___
 
@@ -342,33 +345,27 @@ sub PROLOG {
   $code .= <<___;
     push    %rbx
 .cfi_push   %rbx
-.L${func_name}_seh_push_rbx:
     push    %rbp
 .cfi_push   %rbp
-.L${func_name}_seh_push_rbp:
     push    %r12
 .cfi_push   %r12
-.L${func_name}_seh_push_r12:
     push    %r13
 .cfi_push   %r13
-.L${func_name}_seh_push_r13:
     push    %r14
 .cfi_push   %r14
-.L${func_name}_seh_push_r14:
     push    %r15
 .cfi_push   %r15
-.L${func_name}_seh_push_r15:
 ___
 
   if ($win64) {
     $code .= <<___;
     push    %rdi
-.L${func_name}_seh_push_rdi:
+.cfi_push   %rdi
     push    %rsi
-.L${func_name}_seh_push_rsi:
+.cfi_push   %rsi
 
     sub     \$`$XMM_STORAGE+8`,%rsp   # +8 alignment
-.L${func_name}_seh_allocstack_xmm:
+.cfi_stackalloc `$XMM_STORAGE+8`
 ___
   }
   $code .= <<___;
@@ -384,23 +381,25 @@ ___
     # ; and Windows.
     lea     `$XMM_STORAGE`(%rsp),%rbp
 .cfi_def_cfa_register %rbp
-.L${func_name}_seh_setfp:
 ___
   if ($win64) {
+    $code .= <<___;
+.cfi_adjust_cfa_offset `-$XMM_STORAGE`
+___
 
     # ; xmm6:xmm15 need to be preserved on Windows
     foreach my $reg_idx (6 .. 15) {
       my $xmm_reg_offset = ($reg_idx - 6) * 16;
       $code .= <<___;
         vmovdqu           %xmm${reg_idx},$xmm_reg_offset(%rsp)
-.L${func_name}_seh_save_xmm${reg_idx}:
+.cfi_sp_offset %xmm${reg_idx},$xmm_reg_offset
 ___
     }
   }
 
   $code .= <<___;
 # Prolog ends here. Next stack allocation is treated as "dynamic".
-.L${func_name}_seh_prolog_end:
+.cfi_endprolog
 ___
 
   if ($DYNAMIC_STACK_ALLOC_SIZE) {
@@ -4324,6 +4323,7 @@ $code .= ".text\n";
 ossl_aes_gcm_init_avx512:
 .cfi_startproc
         endbranch
+.cfi_endprolog
 ___
   if ($CHECK_FUNCTION_ARGUMENTS) {
     $code .= <<___;
@@ -4386,7 +4386,6 @@ $code .= <<___;
 .align 32
 ossl_aes_gcm_setiv_avx512:
 .cfi_startproc
-.Lsetiv_seh_begin:
         endbranch
 ___
 if ($CHECK_FUNCTION_ARGUMENTS) {
@@ -4424,7 +4423,6 @@ ___
 $code .= <<___;
 .Labort_setiv:
 ret
-.Lsetiv_seh_end:
 .cfi_endproc
 .size ossl_aes_gcm_setiv_avx512, .-ossl_aes_gcm_setiv_avx512
 ___
@@ -4443,7 +4441,6 @@ $code .= <<___;
 .align 32
 ossl_aes_gcm_update_aad_avx512:
 .cfi_startproc
-.Lghash_seh_begin:
         endbranch
 ___
 if ($CHECK_FUNCTION_ARGUMENTS) {
@@ -4477,7 +4474,6 @@ ___
 $code .= <<___;
 .Lexit_update_aad:
 ret
-.Lghash_seh_end:
 .cfi_endproc
 .size ossl_aes_gcm_update_aad_avx512, .-ossl_aes_gcm_update_aad_avx512
 ___
@@ -4500,7 +4496,6 @@ $code .= <<___;
 .align 32
 ossl_aes_gcm_encrypt_avx512:
 .cfi_startproc
-.Lencrypt_seh_begin:
         endbranch
 ___
 
@@ -4562,7 +4557,6 @@ $code .= ".Lexit_gcm_encrypt:\n";
 &EPILOG(1, $arg5);
 $code .= <<___;
 ret
-.Lencrypt_seh_end:
 .cfi_endproc
 .size ossl_aes_gcm_encrypt_avx512, .-ossl_aes_gcm_encrypt_avx512
 ___
@@ -4585,7 +4579,6 @@ $code .= <<___;
 .align 32
 ossl_aes_gcm_decrypt_avx512:
 .cfi_startproc
-.Ldecrypt_seh_begin:
         endbranch
 ___
 
@@ -4647,7 +4640,6 @@ $code .= ".Lexit_gcm_decrypt:\n";
 &EPILOG(1, $arg5);
 $code .= <<___;
 ret
-.Ldecrypt_seh_end:
 .cfi_endproc
 .size ossl_aes_gcm_decrypt_avx512, .-ossl_aes_gcm_decrypt_avx512
 ___
@@ -4667,6 +4659,7 @@ $code .= <<___;
 ossl_aes_gcm_finalize_avx512:
 .cfi_startproc
         endbranch
+.cfi_endprolog
 ___
 if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
@@ -4699,6 +4692,7 @@ $code .= <<___;
 ossl_gcm_gmult_avx512:
 .cfi_startproc
         endbranch
+.cfi_endprolog
 ___
 if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
@@ -4729,94 +4723,6 @@ ret
 .cfi_endproc
 .size ossl_gcm_gmult_avx512, .-ossl_gcm_gmult_avx512
 ___
-
-if ($win64) {
-
-  # Add unwind metadata for SEH.
-
-  # See https://docs.microsoft.com/en-us/cpp/build/exception-handling-x64?view=msvc-160
-  my $UWOP_PUSH_NONVOL = 0;
-  my $UWOP_ALLOC_LARGE = 1;
-  my $UWOP_SET_FPREG   = 3;
-  my $UWOP_SAVE_XMM128 = 8;
-  my %UWOP_REG_NUMBER  = (
-    rax => 0,
-    rcx => 1,
-    rdx => 2,
-    rbx => 3,
-    rsp => 4,
-    rbp => 5,
-    rsi => 6,
-    rdi => 7,
-    map(("r$_" => $_), (8 .. 15)));
-
-  $code .= <<___;
-.section    .pdata
-.align  4
-    .rva    .Lsetiv_seh_begin
-    .rva    .Lsetiv_seh_end
-    .rva    .Lsetiv_seh_info
-
-    .rva    .Lghash_seh_begin
-    .rva    .Lghash_seh_end
-    .rva    .Lghash_seh_info
-
-    .rva    .Lencrypt_seh_begin
-    .rva    .Lencrypt_seh_end
-    .rva    .Lencrypt_seh_info
-
-    .rva    .Ldecrypt_seh_begin
-    .rva    .Ldecrypt_seh_end
-    .rva    .Ldecrypt_seh_info
-
-.section    .xdata
-___
-
-  foreach my $func_name ("setiv", "ghash", "encrypt", "decrypt") {
-    $code .= <<___;
-.align  8
-.L${func_name}_seh_info:
-    .byte   1   # version 1, no flags
-    .byte   .L${func_name}_seh_prolog_end-.L${func_name}_seh_begin
-    .byte   31 # num_slots = 1*8 + 2 + 1 + 2*10
-    # FR = rbp; Offset from RSP = $XMM_STORAGE scaled on 16
-    .byte   @{[$UWOP_REG_NUMBER{rbp} | (($XMM_STORAGE / 16 ) << 4)]}
-___
-
-    # Metadata for %xmm15-%xmm6
-    # Occupy 2 slots each
-    for (my $reg_idx = 15; $reg_idx >= 6; $reg_idx--) {
-
-      # Scaled-by-16 stack offset
-      my $xmm_reg_offset = ($reg_idx - 6);
-      $code .= <<___;
-    .byte   .L${func_name}_seh_save_xmm${reg_idx}-.L${func_name}_seh_begin
-    .byte   @{[$UWOP_SAVE_XMM128 | (${reg_idx} << 4)]}
-    .value  $xmm_reg_offset
-___
-    }
-
-    $code .= <<___;
-    # Frame pointer (occupy 1 slot)
-    .byte   .L${func_name}_seh_setfp-.L${func_name}_seh_begin
-    .byte   $UWOP_SET_FPREG
-
-    # Occupy 2 slots, as stack allocation < 512K, but > 128 bytes
-    .byte   .L${func_name}_seh_allocstack_xmm-.L${func_name}_seh_begin
-    .byte   $UWOP_ALLOC_LARGE
-    .value  `($XMM_STORAGE + 8) / 8`
-___
-
-    # Metadata for GPR regs
-    # Occupy 1 slot each
-    foreach my $reg ("rsi", "rdi", "r15", "r14", "r13", "r12", "rbp", "rbx") {
-      $code .= <<___;
-    .byte   .L${func_name}_seh_push_${reg}-.L${func_name}_seh_begin
-    .byte   @{[$UWOP_PUSH_NONVOL | ($UWOP_REG_NUMBER{$reg} << 4)]}
-___
-    }
-  }
-}
 
 $code .= <<___;
 .section .rodata align=16
@@ -4954,8 +4860,11 @@ $code .= <<___;
 .globl  ossl_vaes_vpclmulqdq_capable
 .type   ossl_vaes_vpclmulqdq_capable,\@abi-omnipotent
 ossl_vaes_vpclmulqdq_capable:
+.cfi_startproc
+.cfi_endprolog
     xor     %eax,%eax
     ret
+.cfi_endproc
 .size   ossl_vaes_vpclmulqdq_capable, .-ossl_vaes_vpclmulqdq_capable
 
 .globl ossl_aes_gcm_init_avx512
@@ -4974,8 +4883,11 @@ ossl_aes_gcm_encrypt_avx512:
 ossl_aes_gcm_decrypt_avx512:
 ossl_aes_gcm_finalize_avx512:
 ossl_gcm_gmult_avx512:
+.cfi_startproc
+.cfi_endprolog
     .byte   0x0f,0x0b    # ud2
     ret
+.cfi_endproc
 .size   ossl_aes_gcm_init_avx512, .-ossl_aes_gcm_init_avx512
 ___
 }

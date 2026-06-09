@@ -178,6 +178,7 @@ $code.=<<___;
 .align	32
 poly1305_init:
 .cfi_startproc
+.cfi_endprolog
 	xor	%rax,%rax
 	mov	%rax,0($ctx)		# initialize hash value
 	mov	%rax,8($ctx)
@@ -253,7 +254,7 @@ poly1305_blocks:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lblocks_body:
+.cfi_endprolog
 
 	mov	$len,%r15		# reassign $len
 
@@ -302,7 +303,6 @@ $code.=<<___;
 	lea	48(%rsp),%rsp
 .cfi_adjust_cfa_offset	-48
 .Lno_data:
-.Lblocks_epilogue:
 	ret
 .cfi_endproc
 .size	poly1305_blocks,.-poly1305_blocks
@@ -312,6 +312,7 @@ $code.=<<___;
 poly1305_emit:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 .Lemit:
 	mov	0($ctx),%r8	# load hash value
 	mov	8($ctx),%r9
@@ -358,6 +359,7 @@ $code.=<<___;
 .align	32
 __poly1305_block:
 .cfi_startproc
+.cfi_endprolog
 ___
 	&poly1305_iteration();
 $code.=<<___;
@@ -369,6 +371,7 @@ $code.=<<___;
 .align	32
 __poly1305_init_avx:
 .cfi_startproc
+.cfi_endprolog
 	mov	$r0,$h0
 	mov	$r1,$h1
 	xor	$h2,$h2
@@ -547,10 +550,10 @@ poly1305_blocks_avx:
 	vzeroupper
 
 	test	%r8d,%r8d
-	jz	.Lbase2_64_avx
+	jz	_base2_64_shortcut
 
 	test	\$31,$len
-	jz	.Leven_avx
+	jz	_avx_even_shortcut
 
 	push	%rbx
 .cfi_push	%rbx
@@ -564,7 +567,7 @@ poly1305_blocks_avx:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lblocks_avx_body:
+.cfi_endprolog
 
 	mov	$len,%r15		# reassign $len
 
@@ -680,13 +683,15 @@ poly1305_blocks_avx:
 	lea	48(%rsp),%rsp
 .cfi_adjust_cfa_offset	-48
 .Lno_data_avx:
-.Lblocks_avx_epilogue:
 	ret
 .cfi_endproc
+.size	poly1305_blocks_avx,.-poly1305_blocks_avx
 
+.type	poly1305_blocks_avx_base2_64,\@function,4
 .align	32
-.Lbase2_64_avx:
+poly1305_blocks_avx_base2_64:
 .cfi_startproc
+_base2_64_shortcut:                     # skips the win64->elf abi glue
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -699,7 +704,7 @@ poly1305_blocks_avx:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lbase2_64_avx_body:
+.cfi_endprolog
 
 	mov	$len,%r15		# reassign $len
 
@@ -772,13 +777,15 @@ poly1305_blocks_avx:
 	lea	48(%rsp),%rax
 	lea	48(%rsp),%rsp
 .cfi_adjust_cfa_offset	-48
-.Lbase2_64_avx_epilogue:
 	jmp	.Ldo_avx
 .cfi_endproc
+.size	poly1305_blocks_avx_base2_64,.-poly1305_blocks_avx_base2_64
 
+.type	poly1305_blocks_avx_even,\@function,4
 .align	32
-.Leven_avx:
+poly1305_blocks_avx_even:
 .cfi_startproc
+_avx_even_shortcut:                             # skips the win64->elf abi glue
 	vmovd		4*0($ctx),$H0		# load hash value
 	vmovd		4*1($ctx),$H1
 	vmovd		4*2($ctx),$H2
@@ -792,9 +799,11 @@ $code.=<<___	if (!$win64);
 .cfi_def_cfa		%r11,0x60
 	sub		\$0x178,%rsp
 ___
+# TODO: .SAVEXMM128 (lazy)
 $code.=<<___	if ($win64);
 	lea		-0xf8(%rsp),%r11
 	sub		\$0x218,%rsp
+.cfi_stackalloc		  0x218
 	vmovdqa		%xmm6,0x50(%r11)
 	vmovdqa		%xmm7,0x60(%r11)
 	vmovdqa		%xmm8,0x70(%r11)
@@ -805,9 +814,9 @@ $code.=<<___	if ($win64);
 	vmovdqa		%xmm13,0xc0(%r11)
 	vmovdqa		%xmm14,0xd0(%r11)
 	vmovdqa		%xmm15,0xe0(%r11)
-.Ldo_avx_body:
 ___
 $code.=<<___;
+.cfi_endprolog
 	sub		\$64,$len
 	lea		-32($inp),%rax
 	cmovc		%rax,$inp
@@ -1378,7 +1387,6 @@ $code.=<<___	if ($win64);
 	vmovdqa		0xd0(%r11),%xmm14
 	vmovdqa		0xe0(%r11),%xmm15
 	lea		0xf8(%r11),%rsp
-.Ldo_avx_epilogue:
 ___
 $code.=<<___	if (!$win64);
 	lea		0x58(%r11),%rsp
@@ -1388,13 +1396,14 @@ $code.=<<___;
 	vzeroupper
 	ret
 .cfi_endproc
-.size	poly1305_blocks_avx,.-poly1305_blocks_avx
+.size	poly1305_blocks_avx_even,.-poly1305_blocks_avx_even
 
 .type	poly1305_emit_avx,\@function,3
 .align	32
 poly1305_emit_avx:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	cmpl	\$0,20($ctx)	# is_base2_26?
 	je	.Lemit
 
@@ -1473,10 +1482,10 @@ poly1305_blocks_avx2:
 	vzeroupper
 
 	test	%r8d,%r8d
-	jz	.Lbase2_64_avx2
+	jz	_base2_64_avx2_shortcut
 
 	test	\$63,$len
-	jz	.Leven_avx2
+	jz	_even_avx2_shortcut
 
 	push	%rbx
 .cfi_push	%rbx
@@ -1490,7 +1499,7 @@ poly1305_blocks_avx2:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lblocks_avx2_body:
+.cfi_endprolog
 
 	mov	$len,%r15		# reassign $len
 
@@ -1612,13 +1621,15 @@ poly1305_blocks_avx2:
 	lea	48(%rsp),%rsp
 .cfi_adjust_cfa_offset	-48
 .Lno_data_avx2:
-.Lblocks_avx2_epilogue:
 	ret
 .cfi_endproc
+.size	poly1305_blocks_avx2,.-poly1305_blocks_avx2
 
+.type	poly1305_blocks_avx2_base2_64,\@function,4
 .align	32
-.Lbase2_64_avx2:
+poly1305_blocks_avx2_base2_64:
 .cfi_startproc
+_base2_64_avx2_shortcut:                # skips the win64->elf abi glue
 	push	%rbx
 .cfi_push	%rbx
 	push	%rbp
@@ -1631,7 +1642,7 @@ poly1305_blocks_avx2:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lbase2_64_avx2_body:
+.cfi_endprolog
 
 	mov	$len,%r15		# reassign $len
 
@@ -1711,13 +1722,15 @@ poly1305_blocks_avx2:
 	lea	48(%rsp),%rax
 	lea	48(%rsp),%rsp
 .cfi_adjust_cfa_offset	-48
-.Lbase2_64_avx2_epilogue:
 	jmp	.Ldo_avx2
 .cfi_endproc
+.size	poly1305_blocks_avx2_base2_64,.-poly1305_blocks_avx2_base2_64
 
+.type	poly1305_blocks_avx2_even,\@function,4
 .align	32
-.Leven_avx2:
+poly1305_blocks_avx2_even:
 .cfi_startproc
+_even_avx2_shortcut:                            # skips the win64->elf abi glue
 	mov		OPENSSL_ia32cap_P+8(%rip),%r10d
 	vmovd		4*0($ctx),%x#$H0	# load hash value base 2^26
 	vmovd		4*1($ctx),%x#$H1
@@ -1740,9 +1753,11 @@ $code.=<<___	if (!$win64);
 .cfi_def_cfa		%r11,16
 	sub		\$0x128,%rsp
 ___
+# TODO: .SAVEXMM128 (lazy)
 $code.=<<___	if ($win64);
 	lea		-0xf8(%rsp),%r11
 	sub		\$0x1c8,%rsp
+.cfi_stackalloc		  0x1c8
 	vmovdqa		%xmm6,0x50(%r11)
 	vmovdqa		%xmm7,0x60(%r11)
 	vmovdqa		%xmm8,0x70(%r11)
@@ -1753,9 +1768,9 @@ $code.=<<___	if ($win64);
 	vmovdqa		%xmm13,0xc0(%r11)
 	vmovdqa		%xmm14,0xd0(%r11)
 	vmovdqa		%xmm15,0xe0(%r11)
-.Ldo_avx2_body:
 ___
 $code.=<<___;
+.cfi_endprolog
 	lea		.Lconst(%rip),%rcx
 	lea		48+64($ctx),$ctx	# size optimization
 	vmovdqa		96(%rcx),$T0		# .Lpermd_avx2
@@ -2122,7 +2137,6 @@ $code.=<<___	if ($win64);
 	vmovdqa		0xd0(%r11),%xmm14
 	vmovdqa		0xe0(%r11),%xmm15
 	lea		0xf8(%r11),%rsp
-.Ldo_avx2_epilogue:
 ___
 $code.=<<___	if (!$win64);
 	lea		8(%r11),%rsp
@@ -2132,7 +2146,7 @@ $code.=<<___;
 	vzeroupper
 	ret
 .cfi_endproc
-.size	poly1305_blocks_avx2,.-poly1305_blocks_avx2
+.size	poly1305_blocks_avx2_even,.-poly1305_blocks_avx2_even
 ___
 #######################################################################
 if ($avx>2) {
@@ -2166,9 +2180,11 @@ $code.=<<___	if (!$win64);
 .cfi_def_cfa		%r11,16
 	sub		\$0x128,%rsp
 ___
+# TODO: .SAVEXMM128 (lazy)
 $code.=<<___	if ($win64);
 	lea		-0xf8(%rsp),%r11
 	sub		\$0x1c8,%rsp
+.cfi_stackalloc		  0x1c8
 	vmovdqa		%xmm6,0x50(%r11)
 	vmovdqa		%xmm7,0x60(%r11)
 	vmovdqa		%xmm8,0x70(%r11)
@@ -2179,9 +2195,9 @@ $code.=<<___	if ($win64);
 	vmovdqa		%xmm13,0xc0(%r11)
 	vmovdqa		%xmm14,0xd0(%r11)
 	vmovdqa		%xmm15,0xe0(%r11)
-.Ldo_avx512_body:
 ___
 $code.=<<___;
+.cfi_endprolog
 	lea		.Lconst(%rip),%rcx
 	lea		48+64($ctx),$ctx	# size optimization
 	vmovdqa		96(%rcx),%y#$T2		# .Lpermd_avx2
@@ -2726,7 +2742,6 @@ $code.=<<___	if ($win64);
 	movdqa		0xd0(%r11),%xmm14
 	movdqa		0xe0(%r11),%xmm15
 	lea		0xf8(%r11),%rsp
-.Ldo_avx512_epilogue:
 ___
 $code.=<<___	if (!$win64);
 	lea		8(%r11),%rsp
@@ -2767,6 +2782,7 @@ $code.=<<___;
 .align	32
 poly1305_init_base2_44:
 .cfi_startproc
+.cfi_endprolog
 	xor	%rax,%rax
 	mov	%rax,0($ctx)		# initialize hash value
 	mov	%rax,8($ctx)
@@ -2822,6 +2838,7 @@ $code.=<<___;
 poly1305_blocks_vpmadd52:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	shr	\$4,$len
 	jz	.Lno_data_vpmadd52		# too short
 
@@ -2947,6 +2964,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_vpmadd52_4x:
 .cfi_startproc
+.cfi_endprolog
 	shr	\$4,$len
 	jz	.Lno_data_vpmadd52_4x		# too short
 
@@ -3391,6 +3409,7 @@ $code.=<<___;
 .align	32
 poly1305_blocks_vpmadd52_8x:
 .cfi_startproc
+.cfi_endprolog
 	shr	\$4,$len
 	jz	.Lno_data_vpmadd52_8x		# too short
 
@@ -3756,6 +3775,7 @@ $code.=<<___;
 poly1305_emit_base2_44:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	mov	0($ctx),%r8	# load hash value
 	mov	8($ctx),%r9
 	mov	16($ctx),%r10
@@ -3840,6 +3860,7 @@ $code.=<<___;
 .align	16
 xor128_encrypt_n_pad:
 .cfi_startproc
+.cfi_endprolog
 	sub	$otp,$inp
 	sub	$otp,$out
 	mov	$len,%r10		# put len aside
@@ -3889,6 +3910,7 @@ xor128_encrypt_n_pad:
 .align	16
 xor128_decrypt_n_pad:
 .cfi_startproc
+.cfi_endprolog
 	sub	$otp,$inp
 	sub	$otp,$out
 	mov	$len,%r10		# put len aside
@@ -3936,258 +3958,6 @@ xor128_decrypt_n_pad:
 	ret
 .cfi_endproc
 .size	xor128_decrypt_n_pad,.-xor128_decrypt_n_pad
-___
-}
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	se_handler,\@abi-omnipotent
-.align	16
-se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<.Lprologue
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=.Lepilogue
-	jae	.Lcommon_seh_tail
-
-	lea	48(%rax),%rax
-
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R14
-
-	jmp	.Lcommon_seh_tail
-.size	se_handler,.-se_handler
-
-.type	avx_handler,\@abi-omnipotent
-.align	16
-avx_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	mov	208($context),%rax	# pull context->R11
-
-	lea	0x50(%rax),%rsi
-	lea	0xf8(%rax),%rax
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$20,%ecx
-	.long	0xa548f3fc		# cld; rep movsq
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	avx_handler,.-avx_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_poly1305_init
-	.rva	.LSEH_end_poly1305_init
-	.rva	.LSEH_info_poly1305_init
-
-	.rva	.LSEH_begin_poly1305_blocks
-	.rva	.LSEH_end_poly1305_blocks
-	.rva	.LSEH_info_poly1305_blocks
-
-	.rva	.LSEH_begin_poly1305_emit
-	.rva	.LSEH_end_poly1305_emit
-	.rva	.LSEH_info_poly1305_emit
-___
-$code.=<<___ if ($avx);
-	.rva	.LSEH_begin_poly1305_blocks_avx
-	.rva	.Lbase2_64_avx
-	.rva	.LSEH_info_poly1305_blocks_avx_1
-
-	.rva	.Lbase2_64_avx
-	.rva	.Leven_avx
-	.rva	.LSEH_info_poly1305_blocks_avx_2
-
-	.rva	.Leven_avx
-	.rva	.LSEH_end_poly1305_blocks_avx
-	.rva	.LSEH_info_poly1305_blocks_avx_3
-
-	.rva	.LSEH_begin_poly1305_emit_avx
-	.rva	.LSEH_end_poly1305_emit_avx
-	.rva	.LSEH_info_poly1305_emit_avx
-___
-$code.=<<___ if ($avx>1);
-	.rva	.LSEH_begin_poly1305_blocks_avx2
-	.rva	.Lbase2_64_avx2
-	.rva	.LSEH_info_poly1305_blocks_avx2_1
-
-	.rva	.Lbase2_64_avx2
-	.rva	.Leven_avx2
-	.rva	.LSEH_info_poly1305_blocks_avx2_2
-
-	.rva	.Leven_avx2
-	.rva	.LSEH_end_poly1305_blocks_avx2
-	.rva	.LSEH_info_poly1305_blocks_avx2_3
-___
-$code.=<<___ if ($avx>2);
-	.rva	.LSEH_begin_poly1305_blocks_avx512
-	.rva	.LSEH_end_poly1305_blocks_avx512
-	.rva	.LSEH_info_poly1305_blocks_avx512
-___
-$code.=<<___;
-.section	.xdata
-.align	8
-.LSEH_info_poly1305_init:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.LSEH_begin_poly1305_init,.LSEH_begin_poly1305_init
-
-.LSEH_info_poly1305_blocks:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lblocks_body,.Lblocks_epilogue
-
-.LSEH_info_poly1305_emit:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.LSEH_begin_poly1305_emit,.LSEH_begin_poly1305_emit
-___
-$code.=<<___ if ($avx);
-.LSEH_info_poly1305_blocks_avx_1:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lblocks_avx_body,.Lblocks_avx_epilogue		# HandlerData[]
-
-.LSEH_info_poly1305_blocks_avx_2:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lbase2_64_avx_body,.Lbase2_64_avx_epilogue	# HandlerData[]
-
-.LSEH_info_poly1305_blocks_avx_3:
-	.byte	9,0,0,0
-	.rva	avx_handler
-	.rva	.Ldo_avx_body,.Ldo_avx_epilogue			# HandlerData[]
-
-.LSEH_info_poly1305_emit_avx:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.LSEH_begin_poly1305_emit_avx,.LSEH_begin_poly1305_emit_avx
-___
-$code.=<<___ if ($avx>1);
-.LSEH_info_poly1305_blocks_avx2_1:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lblocks_avx2_body,.Lblocks_avx2_epilogue	# HandlerData[]
-
-.LSEH_info_poly1305_blocks_avx2_2:
-	.byte	9,0,0,0
-	.rva	se_handler
-	.rva	.Lbase2_64_avx2_body,.Lbase2_64_avx2_epilogue	# HandlerData[]
-
-.LSEH_info_poly1305_blocks_avx2_3:
-	.byte	9,0,0,0
-	.rva	avx_handler
-	.rva	.Ldo_avx2_body,.Ldo_avx2_epilogue		# HandlerData[]
-___
-$code.=<<___ if ($avx>2);
-.LSEH_info_poly1305_blocks_avx512:
-	.byte	9,0,0,0
-	.rva	avx_handler
-	.rva	.Ldo_avx512_body,.Ldo_avx512_epilogue		# HandlerData[]
 ___
 }
 

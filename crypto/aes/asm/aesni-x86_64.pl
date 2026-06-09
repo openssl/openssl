@@ -278,6 +278,7 @@ $code.=<<___;
 ${PREFIX}_encrypt:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -297,6 +298,7 @@ $code.=<<___;
 ${PREFIX}_decrypt:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	movups	($inp),$inout0		# load input
 	mov	240($key),$rounds	# key->rounds
 ___
@@ -334,6 +336,7 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt2:
 .cfi_startproc
+.cfi_endprolog
 	$movkey	($key),$rndkey0
 	shl	\$4,$rounds
 	$movkey	16($key),$rndkey1
@@ -372,6 +375,7 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt3:
 .cfi_startproc
+.cfi_endprolog
 	$movkey	($key),$rndkey0
 	shl	\$4,$rounds
 	$movkey	16($key),$rndkey1
@@ -419,6 +423,7 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt4:
 .cfi_startproc
+.cfi_endprolog
 	$movkey	($key),$rndkey0
 	shl	\$4,$rounds
 	$movkey	16($key),$rndkey1
@@ -468,6 +473,7 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt6:
 .cfi_startproc
+.cfi_endprolog
 	$movkey		($key),$rndkey0
 	shl		\$4,$rounds
 	$movkey		16($key),$rndkey1
@@ -531,6 +537,7 @@ $code.=<<___;
 .align	16
 _aesni_${dir}rypt8:
 .cfi_startproc
+.cfi_endprolog
 	$movkey		($key),$rndkey0
 	shl		\$4,$rounds
 	$movkey		16($key),$rndkey1
@@ -621,13 +628,18 @@ aesni_ecb_encrypt:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
+.cfi_stackalloc	 0x58
 	movaps	%xmm6,(%rsp)		# offload $inout4..7
+.cfi_sp_offset	%xmm6,0x00
 	movaps	%xmm7,0x10(%rsp)
+.cfi_sp_offset	%xmm7,0x10
 	movaps	%xmm8,0x20(%rsp)
+.cfi_sp_offset	%xmm8,0x20
 	movaps	%xmm9,0x30(%rsp)
-.Lecb_enc_body:
+.cfi_sp_offset	%xmm9,0x30
 ___
 $code.=<<___;
+.cfi_endprolog
 	and	\$-16,$len		# if ($len<16)
 	jz	.Lecb_ret		# return
 
@@ -994,13 +1006,18 @@ aesni_ccm64_encrypt_blocks:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
+.cfi_stackalloc	 0x58
 	movaps	%xmm6,(%rsp)		# $iv
+.cfi_sp_offset	%xmm6,0x00
 	movaps	%xmm7,0x10(%rsp)	# $bswap_mask
+.cfi_sp_offset	%xmm7,0x10
 	movaps	%xmm8,0x20(%rsp)	# $in0
+.cfi_sp_offset	%xmm8,0x20
 	movaps	%xmm9,0x30(%rsp)	# $increment
-.Lccm64_enc_body:
+.cfi_sp_offset	%xmm9,0x30
 ___
 $code.=<<___;
+.cfi_endprolog
 	mov	240($key),$rounds		# key->rounds
 	movdqu	($ivp),$iv
 	movdqa	.Lincrement64(%rip),$increment
@@ -1087,13 +1104,18 @@ aesni_ccm64_decrypt_blocks:
 ___
 $code.=<<___ if ($win64);
 	lea	-0x58(%rsp),%rsp
+.cfi_stackalloc	 0x58
 	movaps	%xmm6,(%rsp)		# $iv
+.cfi_sp_offset	%xmm6,0x00
 	movaps	%xmm7,0x10(%rsp)	# $bswap_mask
-	movaps	%xmm8,0x20(%rsp)	# $in8
+.cfi_sp_offset	%xmm7,0x10
+	movaps	%xmm8,0x20(%rsp)	# $in0
+.cfi_sp_offset	%xmm8,0x20
 	movaps	%xmm9,0x30(%rsp)	# $increment
-.Lccm64_dec_body:
+.cfi_sp_offset	%xmm9,0x30
 ___
 $code.=<<___;
+.cfi_endprolog
 	mov	240($key),$rounds		# key->rounds
 	movups	($ivp),$iv
 	movdqu	($cmac),$inout1
@@ -1211,6 +1233,7 @@ $code.=<<___;
 aesni_ctr32_encrypt_blocks:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	cmp	\$1,$len
 	jne	.Lctr32_bulk
 
@@ -1228,29 +1251,52 @@ $code.=<<___;
 	 pxor	$inout1,$inout1
 	movups	$inout0,($out)
 	 xorps	$inout0,$inout0
-	jmp	.Lctr32_epilogue
+	ret
+.cfi_endproc
+.size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
 
+.type	_aesni_ctr32_encrypt_blocks_bulk,\@function,5
 .align	16
-.Lctr32_bulk:
+_aesni_ctr32_encrypt_blocks_bulk:
+.cfi_startproc
+	ud2     				# Not called directly!
+.align	16
+.Lctr32_bulk:                               	# Jump target that skips the win64 abi conversion
 	lea	(%rsp),$key_			# use $key_ as frame pointer
 .cfi_def_cfa_register	$key_
 	push	%rbp
 .cfi_push	%rbp
-	sub	\$$frame_size,%rsp
-	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
+	sub	\$0xa0,%rsp
+.cfi_stackalloc	 0xa0
 	movaps	%xmm6,-0xa8($key_)		# offload everything
+.cfi_offset	%xmm6,-0xa8-8
 	movaps	%xmm7,-0x98($key_)
+.cfi_offset	%xmm7,-0x98-8
 	movaps	%xmm8,-0x88($key_)
+.cfi_offset	%xmm8,-0x88-8
 	movaps	%xmm9,-0x78($key_)
+.cfi_offset	%xmm9,-0x78-8
 	movaps	%xmm10,-0x68($key_)
+.cfi_offset	%xmm10,-0x68-8
 	movaps	%xmm11,-0x58($key_)
+.cfi_offset	%xmm11,-0x58-8
 	movaps	%xmm12,-0x48($key_)
+.cfi_offset	%xmm12,-0x48-8
 	movaps	%xmm13,-0x38($key_)
+.cfi_offset	%xmm13,-0x38-8
 	movaps	%xmm14,-0x28($key_)
+.cfi_offset	%xmm14,-0x28-8
 	movaps	%xmm15,-0x18($key_)
-.Lctr32_body:
+.cfi_offset	%xmm15,-0x18-8
+.cfi_endprolog
+	sub	\$`$frame_size-0xa0`,%rsp   	# The $frame_size is too large for win64 prologs.
+___
+$code.=<<___ if (!$win64);
+.cfi_endprolog
+	sub	\$$frame_size,%rsp
+	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___;
 
@@ -1758,10 +1804,9 @@ $code.=<<___;
 .cfi_restore	%rbp
 	lea	($key_),%rsp
 .cfi_def_cfa_register	%rsp
-.Lctr32_epilogue:
 	ret
 .cfi_endproc
-.size	aesni_ctr32_encrypt_blocks,.-aesni_ctr32_encrypt_blocks
+.size	_aesni_ctr32_encrypt_blocks_bulk,.-_aesni_ctr32_encrypt_blocks_bulk
 ___
 }
 
@@ -1792,19 +1837,32 @@ aesni_xts_encrypt:
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
+	# Hack! Only the XMM save area to keep frame pointer offset within bound.
+	#       Works as unwind-RSP is set to FPREG - 0xa0 - 0x08 at endprolog.
+.cfi_stackalloc	0xa0
 	movaps	%xmm6,-0xa8(%r11)		# offload everything
+.cfi_offset	%xmm6,-0xa8-8
 	movaps	%xmm7,-0x98(%r11)
+.cfi_offset	%xmm7,-0x98-8
 	movaps	%xmm8,-0x88(%r11)
+.cfi_offset	%xmm8,-0x88-8
 	movaps	%xmm9,-0x78(%r11)
+.cfi_offset	%xmm9,-0x78-8
 	movaps	%xmm10,-0x68(%r11)
+.cfi_offset	%xmm10,-0x68-8
 	movaps	%xmm11,-0x58(%r11)
+.cfi_offset	%xmm11,-0x58-8
 	movaps	%xmm12,-0x48(%r11)
+.cfi_offset	%xmm12,-0x48-8
 	movaps	%xmm13,-0x38(%r11)
+.cfi_offset	%xmm13,-0x38-8
 	movaps	%xmm14,-0x28(%r11)
+.cfi_offset	%xmm14,-0x28-8
 	movaps	%xmm15,-0x18(%r11)
-.Lxts_enc_body:
+.cfi_offset	%xmm15,-0x18-8
 ___
 $code.=<<___;
+.cfi_endprolog
 	movups	($ivp),$inout0			# load clear-text tweak
 	mov	240(%r8),$rounds		# key2->rounds
 	mov	240($key),$rnds_		# key1->rounds
@@ -2255,7 +2313,6 @@ $code.=<<___;
 .cfi_restore	%rbp
 	lea	(%r11),%rsp
 .cfi_def_cfa_register	%rsp
-.Lxts_enc_epilogue:
 	ret
 .cfi_endproc
 .size	aesni_xts_encrypt,.-aesni_xts_encrypt
@@ -2276,19 +2333,32 @@ aesni_xts_decrypt:
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
+	# Hack! Only the XMM save area to keep frame pointer offset within bound.
+	#       Works as unwind-RSP is set to FPREG - 0xa0 - 0x08 at endprolog.
+.cfi_stackalloc	0xa0
 	movaps	%xmm6,-0xa8(%r11)		# offload everything
+.cfi_offset	%xmm6,-0xa8-8
 	movaps	%xmm7,-0x98(%r11)
+.cfi_offset	%xmm7,-0x98-8
 	movaps	%xmm8,-0x88(%r11)
+.cfi_offset	%xmm8,-0x88-8
 	movaps	%xmm9,-0x78(%r11)
+.cfi_offset	%xmm9,-0x78-8
 	movaps	%xmm10,-0x68(%r11)
+.cfi_offset	%xmm10,-0x68-8
 	movaps	%xmm11,-0x58(%r11)
+.cfi_offset	%xmm11,-0x58-8
 	movaps	%xmm12,-0x48(%r11)
+.cfi_offset	%xmm12,-0x48-8
 	movaps	%xmm13,-0x38(%r11)
+.cfi_offset	%xmm13,-0x38-8
 	movaps	%xmm14,-0x28(%r11)
+.cfi_offset	%xmm14,-0x28-8
 	movaps	%xmm15,-0x18(%r11)
-.Lxts_dec_body:
+.cfi_offset	%xmm15,-0x18-8
 ___
 $code.=<<___;
+.cfi_endprolog
 	movups	($ivp),$inout0			# load clear-text tweak
 	mov	240($key2),$rounds		# key2->rounds
 	mov	240($key),$rnds_		# key1->rounds
@@ -2765,7 +2835,6 @@ $code.=<<___;
 .cfi_restore	%rbp
 	lea	(%r11),%rsp
 .cfi_def_cfa_register	%rsp
-.Lxts_dec_epilogue:
 	ret
 .cfi_endproc
 .size	aesni_xts_decrypt,.-aesni_xts_decrypt
@@ -2808,19 +2877,30 @@ aesni_ocb_encrypt:
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp),%rsp
+.cfi_stackalloc	 0xa0
 	movaps	%xmm6,0x00(%rsp)		# offload everything
+.cfi_sp_offset	%xmm6,0x00
 	movaps	%xmm7,0x10(%rsp)
+.cfi_sp_offset	%xmm7,0x10
 	movaps	%xmm8,0x20(%rsp)
+.cfi_sp_offset	%xmm8,0x20
 	movaps	%xmm9,0x30(%rsp)
+.cfi_sp_offset	%xmm9,0x30
 	movaps	%xmm10,0x40(%rsp)
+.cfi_sp_offset	%xmm10,0x40
 	movaps	%xmm11,0x50(%rsp)
+.cfi_sp_offset	%xmm11,0x50
 	movaps	%xmm12,0x60(%rsp)
+.cfi_sp_offset	%xmm12,0x60
 	movaps	%xmm13,0x70(%rsp)
+.cfi_sp_offset	%xmm13,0x70
 	movaps	%xmm14,0x80(%rsp)
+.cfi_sp_offset	%xmm14,0x80
 	movaps	%xmm15,0x90(%rsp)
-.Locb_enc_body:
+.cfi_sp_offset	%xmm15,0x90
 ___
 $code.=<<___;
+.cfi_endprolog
 	mov	$seventh_arg(%rax),$L_p		# 7th argument
 	mov	$seventh_arg+8(%rax),$checksum_p# 8th argument
 
@@ -3038,7 +3118,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rax),%rsp
 .cfi_def_cfa_register	%rsp
-.Locb_enc_epilogue:
 	ret
 .cfi_endproc
 .size	aesni_ocb_encrypt,.-aesni_ocb_encrypt
@@ -3047,6 +3126,7 @@ $code.=<<___;
 .align	32
 __ocb_encrypt6:
 .cfi_startproc
+.cfi_endprolog
 	 pxor		$rndkey0l,@offset[5]	# offset_i ^ round[0]
 	 movdqu		($L_p,$i1),@offset[1]
 	 movdqa		@offset[0],@offset[2]
@@ -3151,6 +3231,7 @@ __ocb_encrypt6:
 .align	32
 __ocb_encrypt4:
 .cfi_startproc
+.cfi_endprolog
 	 pxor		$rndkey0l,@offset[5]	# offset_i ^ round[0]
 	 movdqu		($L_p,$i1),@offset[1]
 	 movdqa		@offset[0],@offset[2]
@@ -3222,6 +3303,7 @@ __ocb_encrypt4:
 .align	32
 __ocb_encrypt1:
 .cfi_startproc
+.cfi_endprolog
 	 pxor		@offset[5],$inout5	# offset_i
 	 pxor		$rndkey0l,$inout5	# offset_i ^ round[0]
 	pxor		$inout0,$checksum	# accumulate checksum
@@ -3275,19 +3357,30 @@ aesni_ocb_decrypt:
 ___
 $code.=<<___ if ($win64);
 	lea	-0xa0(%rsp),%rsp
+.cfi_stackalloc	 0xa0
 	movaps	%xmm6,0x00(%rsp)		# offload everything
+.cfi_sp_offset	%xmm6,0x00
 	movaps	%xmm7,0x10(%rsp)
+.cfi_sp_offset	%xmm7,0x10
 	movaps	%xmm8,0x20(%rsp)
+.cfi_sp_offset	%xmm8,0x20
 	movaps	%xmm9,0x30(%rsp)
+.cfi_sp_offset	%xmm9,0x30
 	movaps	%xmm10,0x40(%rsp)
+.cfi_sp_offset	%xmm10,0x40
 	movaps	%xmm11,0x50(%rsp)
+.cfi_sp_offset	%xmm11,0x50
 	movaps	%xmm12,0x60(%rsp)
+.cfi_sp_offset	%xmm12,0x60
 	movaps	%xmm13,0x70(%rsp)
+.cfi_sp_offset	%xmm13,0x70
 	movaps	%xmm14,0x80(%rsp)
+.cfi_sp_offset	%xmm14,0x80
 	movaps	%xmm15,0x90(%rsp)
-.Locb_dec_body:
+.cfi_sp_offset	%xmm15,0x90
 ___
 $code.=<<___;
+.cfi_endprolog
 	mov	$seventh_arg(%rax),$L_p		# 7th argument
 	mov	$seventh_arg+8(%rax),$checksum_p# 8th argument
 
@@ -3527,7 +3620,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rax),%rsp
 .cfi_def_cfa_register	%rsp
-.Locb_dec_epilogue:
 	ret
 .cfi_endproc
 .size	aesni_ocb_decrypt,.-aesni_ocb_decrypt
@@ -3536,6 +3628,7 @@ $code.=<<___;
 .align	32
 __ocb_decrypt6:
 .cfi_startproc
+.cfi_endprolog
 	 pxor		$rndkey0l,@offset[5]	# offset_i ^ round[0]
 	 movdqu		($L_p,$i1),@offset[1]
 	 movdqa		@offset[0],@offset[2]
@@ -3634,6 +3727,7 @@ __ocb_decrypt6:
 .align	32
 __ocb_decrypt4:
 .cfi_startproc
+.cfi_endprolog
 	 pxor		$rndkey0l,@offset[5]	# offset_i ^ round[0]
 	 movdqu		($L_p,$i1),@offset[1]
 	 movdqa		@offset[0],@offset[2]
@@ -3701,6 +3795,7 @@ __ocb_decrypt4:
 .align	32
 __ocb_decrypt1:
 .cfi_startproc
+.cfi_endprolog
 	 pxor		@offset[5],$inout5	# offset_i
 	 pxor		$rndkey0l,$inout5	# offset_i ^ round[0]
 	pxor		$inout5,$inout0		# input ^ round[0] ^ offset_i
@@ -3750,6 +3845,7 @@ $code.=<<___;
 ${PREFIX}_cbc_encrypt:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	test	$len,$len		# check length
 	jz	.Lcbc_ret
 
@@ -3823,32 +3919,54 @@ $code.=<<___;
 	movups	$inout0,($out)		# store output
 	 pxor	$inout0,$inout0
 	jmp	.Lcbc_ret
+.cfi_endproc
+.size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
+
+
+.type	${PREFIX}_cbc_encrypt_bulk,\@function,6
 .align	16
-.Lcbc_decrypt_bulk:
+${PREFIX}_cbc_encrypt_bulk:
+.cfi_startproc
+	ud2                             # Not directly callable.
+.align	16
+.Lcbc_decrypt_bulk:     		# Entrypoint skipping abi conversion code on win64
 	lea	(%rsp),%r11		# frame pointer
 .cfi_def_cfa_register	%r11
 	push	%rbp
 .cfi_push	%rbp
 	sub	\$$frame_size,%rsp
+___
+$code.=<<___ if (!$win64);
 	and	\$-16,%rsp	# Linux kernel stack can be incorrectly seeded
 ___
 $code.=<<___ if ($win64);
+.cfi_stackalloc	$frame_size
 	movaps	%xmm6,0x10(%rsp)
+.cfi_sp_offset	%xmm6,0x10
 	movaps	%xmm7,0x20(%rsp)
+.cfi_sp_offset	%xmm7,0x20
 	movaps	%xmm8,0x30(%rsp)
+.cfi_sp_offset	%xmm8,0x30
 	movaps	%xmm9,0x40(%rsp)
+.cfi_sp_offset	%xmm9,0x40
 	movaps	%xmm10,0x50(%rsp)
+.cfi_sp_offset	%xmm10,0x50
 	movaps	%xmm11,0x60(%rsp)
+.cfi_sp_offset	%xmm11,0x60
 	movaps	%xmm12,0x70(%rsp)
+.cfi_sp_offset	%xmm12,0x70
 	movaps	%xmm13,0x80(%rsp)
+.cfi_sp_offset	%xmm13,0x80
 	movaps	%xmm14,0x90(%rsp)
+.cfi_sp_offset	%xmm14,0x90
 	movaps	%xmm15,0xa0(%rsp)
-.Lcbc_decrypt_body:
+.cfi_sp_offset	%xmm15,0xa0
 ___
 
 my $inp_=$key_="%rbp";			# reassign $key_
 
 $code.=<<___;
+.cfi_endprolog
 	mov	$key,$key_		# [re-]backup $key [after reassignment]
 	movups	($ivp),$iv
 	mov	$rnds_,$rounds
@@ -4277,7 +4395,7 @@ $code.=<<___;
 .Lcbc_ret:
 	ret
 .cfi_endproc
-.size	${PREFIX}_cbc_encrypt,.-${PREFIX}_cbc_encrypt
+.size	${PREFIX}_cbc_encrypt_bulk,.-${PREFIX}_cbc_encrypt_bulk
 ___
 } 
 # int ${PREFIX}_set_decrypt_key(const unsigned char *inp,
@@ -4300,6 +4418,7 @@ ${PREFIX}_set_decrypt_key:
 .cfi_startproc
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
 .cfi_adjust_cfa_offset	8
+.cfi_endprolog
 	call	__aesni_set_encrypt_key
 	shl	\$4,$bits		# rounds-1 after _aesni_set_encrypt_key
 	test	%eax,%eax
@@ -4335,7 +4454,6 @@ ${PREFIX}_set_decrypt_key:
 .cfi_adjust_cfa_offset	-8
 	ret
 .cfi_endproc
-.LSEH_end_set_decrypt_key:
 .size	${PREFIX}_set_decrypt_key,.-${PREFIX}_set_decrypt_key
 ___
 
@@ -4372,6 +4490,7 @@ __aesni_set_encrypt_key:
 .cfi_startproc
 	.byte	0x48,0x83,0xEC,0x08	# sub rsp,8
 .cfi_adjust_cfa_offset	8
+.cfi_endprolog
 	mov	\$-1,%rax
 	test	$inp,$inp
 	jz	.Lenc_key_ret
@@ -4666,7 +4785,6 @@ __aesni_set_encrypt_key:
 	add	\$8,%rsp
 .cfi_adjust_cfa_offset	-8
 	ret
-.LSEH_end_set_encrypt_key:
 
 .align	16
 .Lkey_expansion_128:
@@ -4768,345 +4886,6 @@ $code.=<<___;
 .align	64
 .previous
 ___
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-___
-$code.=<<___ if ($PREFIX eq "aesni");
-.type	ecb_ccm64_se_handler,\@abi-omnipotent
-.align	16
-ecb_ccm64_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	lea	0(%rax),%rsi		# %xmm save area
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$8,%ecx		# 4*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-	lea	0x58(%rax),%rax		# adjust stack pointer
-
-	jmp	.Lcommon_seh_tail
-.size	ecb_ccm64_se_handler,.-ecb_ccm64_se_handler
-
-.type	ctr_xts_se_handler,\@abi-omnipotent
-.align	16
-ctr_xts_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	mov	208($context),%rax	# pull context->R11
-
-	lea	-0xa8(%rax),%rsi	# %xmm save area
-	lea	512($context),%rdi	# & context.Xmm6
-	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	-8(%rax),%rbp		# restore saved %rbp
-	mov	%rbp,160($context)	# restore context->Rbp
-	jmp	.Lcommon_seh_tail
-.size	ctr_xts_se_handler,.-ctr_xts_se_handler
-
-.type	ocb_se_handler,\@abi-omnipotent
-.align	16
-ocb_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# prologue label
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	mov	8(%r11),%r10d		# HandlerData[2]
-	lea	(%rsi,%r10),%r10
-	cmp	%r10,%rbx		# context->Rip>=pop label
-	jae	.Locb_no_xmm
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	(%rax),%rsi		# %xmm save area
-	lea	512($context),%rdi	# & context.Xmm6
-	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-	lea	0xa0+0x28(%rax),%rax
-
-.Locb_no_xmm:
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-
-	jmp	.Lcommon_seh_tail
-.size	ocb_se_handler,.-ocb_se_handler
-___
-$code.=<<___;
-.type	cbc_se_handler,\@abi-omnipotent
-.align	16
-cbc_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	152($context),%rax	# pull context->Rsp
-	mov	248($context),%rbx	# pull context->Rip
-
-	lea	.Lcbc_decrypt_bulk(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<"prologue" label
-	jb	.Lcommon_seh_tail
-
-	mov	120($context),%rax	# pull context->Rax
-
-	lea	.Lcbc_decrypt_body(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<cbc_decrypt_body
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	.Lcbc_ret(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>="epilogue" label
-	jae	.Lcommon_seh_tail
-
-	lea	16(%rax),%rsi		# %xmm save area
-	lea	512($context),%rdi	# &context.Xmm6
-	mov	\$20,%ecx		# 10*sizeof(%xmm0)/sizeof(%rax)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	208($context),%rax	# pull context->R11
-
-	mov	-8(%rax),%rbp		# restore saved %rbp
-	mov	%rbp,160($context)	# restore context->Rbp
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	cbc_se_handler,.-cbc_se_handler
-
-.section	.pdata
-.align	4
-___
-$code.=<<___ if ($PREFIX eq "aesni");
-	.rva	.LSEH_begin_aesni_ecb_encrypt
-	.rva	.LSEH_end_aesni_ecb_encrypt
-	.rva	.LSEH_info_ecb
-
-	.rva	.LSEH_begin_aesni_ccm64_encrypt_blocks
-	.rva	.LSEH_end_aesni_ccm64_encrypt_blocks
-	.rva	.LSEH_info_ccm64_enc
-
-	.rva	.LSEH_begin_aesni_ccm64_decrypt_blocks
-	.rva	.LSEH_end_aesni_ccm64_decrypt_blocks
-	.rva	.LSEH_info_ccm64_dec
-
-	.rva	.LSEH_begin_aesni_ctr32_encrypt_blocks
-	.rva	.LSEH_end_aesni_ctr32_encrypt_blocks
-	.rva	.LSEH_info_ctr32
-
-	.rva	.LSEH_begin_aesni_xts_encrypt
-	.rva	.LSEH_end_aesni_xts_encrypt
-	.rva	.LSEH_info_xts_enc
-
-	.rva	.LSEH_begin_aesni_xts_decrypt
-	.rva	.LSEH_end_aesni_xts_decrypt
-	.rva	.LSEH_info_xts_dec
-
-	.rva	.LSEH_begin_aesni_ocb_encrypt
-	.rva	.LSEH_end_aesni_ocb_encrypt
-	.rva	.LSEH_info_ocb_enc
-
-	.rva	.LSEH_begin_aesni_ocb_decrypt
-	.rva	.LSEH_end_aesni_ocb_decrypt
-	.rva	.LSEH_info_ocb_dec
-___
-$code.=<<___;
-	.rva	.LSEH_begin_${PREFIX}_cbc_encrypt
-	.rva	.LSEH_end_${PREFIX}_cbc_encrypt
-	.rva	.LSEH_info_cbc
-
-	.rva	${PREFIX}_set_decrypt_key
-	.rva	.LSEH_end_set_decrypt_key
-	.rva	.LSEH_info_key
-
-	.rva	${PREFIX}_set_encrypt_key
-	.rva	.LSEH_end_set_encrypt_key
-	.rva	.LSEH_info_key
-.section	.xdata
-.align	8
-___
-$code.=<<___ if ($PREFIX eq "aesni");
-.LSEH_info_ecb:
-	.byte	9,0,0,0
-	.rva	ecb_ccm64_se_handler
-	.rva	.Lecb_enc_body,.Lecb_enc_ret		# HandlerData[]
-.LSEH_info_ccm64_enc:
-	.byte	9,0,0,0
-	.rva	ecb_ccm64_se_handler
-	.rva	.Lccm64_enc_body,.Lccm64_enc_ret	# HandlerData[]
-.LSEH_info_ccm64_dec:
-	.byte	9,0,0,0
-	.rva	ecb_ccm64_se_handler
-	.rva	.Lccm64_dec_body,.Lccm64_dec_ret	# HandlerData[]
-.LSEH_info_ctr32:
-	.byte	9,0,0,0
-	.rva	ctr_xts_se_handler
-	.rva	.Lctr32_body,.Lctr32_epilogue		# HandlerData[]
-.LSEH_info_xts_enc:
-	.byte	9,0,0,0
-	.rva	ctr_xts_se_handler
-	.rva	.Lxts_enc_body,.Lxts_enc_epilogue	# HandlerData[]
-.LSEH_info_xts_dec:
-	.byte	9,0,0,0
-	.rva	ctr_xts_se_handler
-	.rva	.Lxts_dec_body,.Lxts_dec_epilogue	# HandlerData[]
-.LSEH_info_ocb_enc:
-	.byte	9,0,0,0
-	.rva	ocb_se_handler
-	.rva	.Locb_enc_body,.Locb_enc_epilogue	# HandlerData[]
-	.rva	.Locb_enc_pop
-	.long	0
-.LSEH_info_ocb_dec:
-	.byte	9,0,0,0
-	.rva	ocb_se_handler
-	.rva	.Locb_dec_body,.Locb_dec_epilogue	# HandlerData[]
-	.rva	.Locb_dec_pop
-	.long	0
-___
-$code.=<<___;
-.LSEH_info_cbc:
-	.byte	9,0,0,0
-	.rva	cbc_se_handler
-.LSEH_info_key:
-	.byte	0x01,0x04,0x01,0x00
-	.byte	0x04,0x02,0x00,0x00	# sub rsp,8
-___
-}
 
 sub rex {
   local *opcode=shift;

@@ -153,7 +153,7 @@ RC4:
 .cfi_push	%r12
 	push	%r13
 .cfi_push	%r13
-.Lprologue:
+.cfi_endprolog
 	mov	$len,%r11
 	mov	$inp,%r12
 	mov	$out,%r13
@@ -442,7 +442,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	add	\$24,%rsp
 .cfi_adjust_cfa_offset	-24
-.Lepilogue:
 	ret
 .cfi_endproc
 .size	RC4,.-RC4
@@ -459,6 +458,7 @@ $code.=<<___;
 RC4_set_key:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	lea	8($dat),$dat
 	lea	($inp,$len),$inp
 	neg	$len
@@ -534,6 +534,7 @@ RC4_set_key:
 RC4_options:
 .cfi_startproc
 	endbranch
+.cfi_endprolog
 	lea	.Lopts(%rip),%rax
 	mov	OPENSSL_ia32cap_P(%rip),%edx
 	bt	\$20,%edx
@@ -556,138 +557,6 @@ RC4_options:
 .align	64
 .size	RC4_options,.-RC4_options
 ___
-
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	stream_se_handler,\@abi-omnipotent
-.align	16
-stream_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	lea	.Lprologue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip<prologue label
-	jb	.Lin_prologue
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	lea	.Lepilogue(%rip),%r10
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lin_prologue
-
-	lea	24(%rax),%rax
-
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%r12
-	mov	-24(%rax),%r13
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-
-.Lin_prologue:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	jmp	.Lcommon_seh_exit
-.size	stream_se_handler,.-stream_se_handler
-
-.type	key_se_handler,\@abi-omnipotent
-.align	16
-key_se_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	152($context),%rax	# pull context->Rsp
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-.Lcommon_seh_exit:
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	key_se_handler,.-key_se_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_RC4
-	.rva	.LSEH_end_RC4
-	.rva	.LSEH_info_RC4
-
-	.rva	.LSEH_begin_RC4_set_key
-	.rva	.LSEH_end_RC4_set_key
-	.rva	.LSEH_info_RC4_set_key
-
-.section	.xdata
-.align	8
-.LSEH_info_RC4:
-	.byte	9,0,0,0
-	.rva	stream_se_handler
-.LSEH_info_RC4_set_key:
-	.byte	9,0,0,0
-	.rva	key_se_handler
-___
-}
 
 sub reg_part {
 my ($reg,$conv)=@_;

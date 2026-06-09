@@ -109,7 +109,7 @@ ${prefix}_set_key:
     push    %rbp
 .cfi_push   %rbp
 # Prolog ends here.
-.Lossl_${prefix}_set_key_seh_prolog_end:
+.cfi_endprolog
 
     vmovdqu         ($userKey), %xmm0
     vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
@@ -146,6 +146,7 @@ ${prefix}_set_key:
 .cfi_pop     %rbp
     ret
 .cfi_endproc
+.size ${prefix}_set_key, . - ${prefix}_set_key
 
 # void ${prefix}_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 
@@ -159,7 +160,7 @@ ${prefix}_encrypt:
     push    %rbp
 .cfi_push   %rbp
 # Prolog ends here.
-.Lossl_${prefix}_encrypt_seh_prolog_end:
+.cfi_endprolog
 
     vmovdqu         ($in), %xmm0
     vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
@@ -183,6 +184,7 @@ ${prefix}_encrypt:
 .cfi_pop            %rbp
     ret
 .cfi_endproc
+.size ${prefix}_encrypt, . - ${prefix}_encrypt
 
 # void ${prefix}_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 
@@ -196,7 +198,7 @@ ${prefix}_decrypt:
     push    %rbp
 .cfi_push   %rbp
 # Prolog ends here.
-.Lossl_${prefix}_decrypt_seh_prolog_end:
+.cfi_endprolog
 
     vmovdqu         ($in), %xmm0
     vpshufb         IN_SHUFB(%rip), %xmm0, %xmm0
@@ -234,6 +236,7 @@ ${prefix}_decrypt:
 .cfi_pop            %rbp
     ret
 .cfi_endproc
+.size ${prefix}_decrypt, . - ${prefix}_decrypt
 ___
 }
 
@@ -245,22 +248,31 @@ $code .= <<___;
 .globl    ${prefix}_set_key
 .type     ${prefix}_set_key,\@abi-omnipotent
 ${prefix}_set_key:
+.cfi_startproc
+.cfi_endprolog
     .byte   0x0f,0x0b    # ud2
     ret
+.cfi_endproc
 .size     ${prefix}_set_key, .-${prefix}_set_key
 
 .globl    ${prefix}_encrypt
 .type ${prefix}_encrypt,\@abi-omnipotent
 ${prefix}_encrypt:
+.cfi_startproc
+.cfi_endprolog
     .byte   0x0f,0x0b    # ud2
     ret
+.cfi_endproc
 .size   ${prefix}_encrypt, .-${prefix}_encrypt
 
 .globl    ${prefix}_decrypt
 .type     ${prefix}_decrypt,\@abi-omnipotent
 ${prefix}_decrypt:
+.cfi_startproc
+.cfi_endprolog
     .byte   0x0f,0x0b    # ud2
     ret
+.cfi_endproc
 .size     ${prefix}_decrypt, .-${prefix}_decrypt
 ___
 } # avx2_sm4_ni
