@@ -21,6 +21,8 @@
 #include "testutil.h"
 #include "bn_prime.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 
 static BN_CTX *ctx;
 
@@ -86,6 +88,91 @@ err:
     return ret;
 }
 
+static int test_bn_ctx_fn_ctx(void)
+{
+    int ret = 1;
+    BN_CTX *bnctx = NULL;
+    OSSL_FN_CTX *fnctx = NULL;
+    OSSL_FN *fn = NULL;
+    const void *token = NULL;
+
+    /* Test non-secure BN_CTX */
+    if (!TEST_ptr(bnctx = BN_CTX_new()))
+        return 0;
+
+    /* Acquire should create a new OSSL_FN_CTX */
+    if (!TEST_ptr(fnctx = bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 32)))
+        ret = 0;
+
+    /* The returned pointer should be cached inside BN_CTX */
+    if (ret && !TEST_ptr_eq(fnctx, bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 32)))
+        ret = 0;
+
+    /* Re-acquire with same size should return the same cached context */
+    if (ret && !TEST_ptr_eq(fnctx, bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 32)))
+        ret = 0;
+
+    /* Use the OSSL_FN_CTX */
+    if (ret) {
+        if (!TEST_ptr(token = OSSL_FN_CTX_start(fnctx))
+            || !TEST_ptr(fn = OSSL_FN_CTX_get_limbs(fnctx, 4))
+            || !TEST_true(OSSL_FN_CTX_end(fnctx, token)))
+            ret = 0;
+    }
+
+    /*
+     * Release does NOT free the cached OSSL_FN_CTX; it just asserts
+     * no frames are outstanding.  Re-acquire should return the same
+     * cached pointer.
+     */
+    bn_ctx_release_ossl_fn_ctx(bnctx);
+    if (ret && !TEST_ptr_eq(fnctx, bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 32)))
+        ret = 0;
+
+    /*
+     * Re-acquire with a larger size should replace the cached context
+     * because the old one is too small.  (Free + alloc may reuse the
+     * same address, so only verify the new context satisfies the larger
+     * request.)
+     */
+    if (ret) {
+        OSSL_FN_CTX *small = bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 8);
+        if (!TEST_ptr(small))
+            ret = 0;
+        else {
+            OSSL_FN_CTX *large = bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 64);
+
+            if (!TEST_ptr(large)
+                || !TEST_ptr(token = OSSL_FN_CTX_start(large))
+                || !TEST_ptr(fn = OSSL_FN_CTX_get_limbs(large, 64))
+                || !TEST_true(OSSL_FN_CTX_end(large, token)))
+                ret = 0;
+        }
+    }
+
+    BN_CTX_free(bnctx);
+
+    /* Test secure BN_CTX */
+    if (ret) {
+        if (!TEST_ptr(bnctx = BN_CTX_secure_new()))
+            ret = 0;
+        else {
+            fn = NULL;
+            token = NULL;
+            fnctx = bn_ctx_acquire_ossl_fn_ctx(bnctx, 1, 1, 8);
+            if (!TEST_ptr(fnctx)
+                || !TEST_ptr(token = OSSL_FN_CTX_start(fnctx))
+                || !TEST_ptr(fn = OSSL_FN_CTX_get_limbs(fnctx, 1))
+                || !TEST_true(ossl_fn_is_securely_allocated(fn))
+                || !TEST_true(OSSL_FN_CTX_end(fnctx, token)))
+                ret = 0;
+            BN_CTX_free(bnctx);
+        }
+    }
+
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(ctx = BN_CTX_new()))
@@ -94,6 +181,7 @@ int setup_tests(void)
     ADD_TEST(test_is_prime_enhanced);
     ADD_ALL_TESTS(test_is_composite_enhanced, (int)OSSL_NELEM(composites));
     ADD_TEST(test_bn_small_factors);
+    ADD_TEST(test_bn_ctx_fn_ctx);
 
     return 1;
 }
