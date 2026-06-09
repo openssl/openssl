@@ -12,7 +12,6 @@
 #include <assert.h>
 #include "internal/pq.h"
 #include "internal/safe_math.h"
-#include "internal/numbers.h"
 
 OSSL_SAFE_MATH_UNSIGNED(pq_size, size_t)
 
@@ -43,13 +42,17 @@ struct ossl_pq_st {
  *  ASSERT_NODE_USED(pq, n)   -- the user-supplied node n is currently in
  *                               this queue at the position it claims.
  */
-#define ASSERT_USED(pq, idx)    \
-    assert((idx) < (pq)->htop); \
-    assert((pq)->heap[idx]->posn == (idx))
-#define ASSERT_NODE_USED(pq, n)                \
-    assert((n)->posn != OSSL_PQ_NOT_IN_QUEUE); \
-    assert((n)->posn < (pq)->htop);            \
-    assert((pq)->heap[(n)->posn] == (n))
+#define ASSERT_USED(pq, idx)                    \
+    do {                                        \
+        assert((idx) < (pq)->htop);             \
+        assert((pq)->heap[idx]->posn == (idx)); \
+    } while (0)
+#define ASSERT_NODE_USED(pq, n)                    \
+    do {                                           \
+        assert((n)->posn != OSSL_PQ_NOT_IN_QUEUE); \
+        assert((n)->posn < (pq)->htop);            \
+        assert((pq)->heap[(n)->posn] == (n));      \
+    } while (0)
 #else
 #define ASSERT_USED(pq, idx)
 #define ASSERT_NODE_USED(pq, n)
@@ -156,16 +159,34 @@ static void pq_sift_down(OSSL_PQ *pq, size_t n)
 
 int ossl_pq_reserve(OSSL_PQ *pq, size_t n)
 {
-    size_t new_max, cur_max;
+    size_t new_max, cur_max, need, target;
     OSSL_PQ_NODE **h;
+    int err = 0;
 
     if (pq == NULL)
         return 0;
     cur_max = pq->hmax;
-    if (pq->htop + n < cur_max)
+
+    /*
+     * Required slot count after this reservation.  Overflow here means
+     * the caller asked for more than size_t can index -- no allocation
+     * can satisfy it.
+     */
+    need = safe_add_pq_size(pq->htop, n, &err);
+    if (err) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    if (need < cur_max)
         return 1;
 
-    new_max = compute_growth(n + cur_max, cur_max);
+    /* Growth target preserves the prior policy of n + cur_max. */
+    target = safe_add_pq_size(n, cur_max, &err);
+    if (err) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    new_max = compute_growth(target, cur_max);
     if (new_max == 0) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
@@ -184,9 +205,8 @@ int ossl_pq_push(OSSL_PQ *pq, OSSL_PQ_NODE *n)
 {
     size_t i;
 
-    if (pq == NULL || n == NULL)
+    if (pq == NULL || n == NULL || n->posn != OSSL_PQ_NOT_IN_QUEUE)
         return 0;
-    assert(n->posn == OSSL_PQ_NOT_IN_QUEUE);
 
     if (!ossl_pq_reserve(pq, 1))
         return 0;
@@ -234,6 +254,10 @@ OSSL_PQ_NODE *ossl_pq_remove(OSSL_PQ *pq, OSSL_PQ_NODE *n)
 
     ASSERT_NODE_USED(pq, n);
     i = n->posn;
+    if (i == OSSL_PQ_NOT_IN_QUEUE || i >= pq->htop || pq->heap[i] != n) {
+        assert(0 && "ossl_pq_remove: node not in this queue");
+        return NULL;
+    }
 
     if (i == pq->htop - 1) {
         n->posn = OSSL_PQ_NOT_IN_QUEUE;
@@ -285,13 +309,13 @@ void ossl_pq_free(OSSL_PQ *pq)
 
 void ossl_pq_pop_free(OSSL_PQ *pq, void (*freefunc)(OSSL_PQ_NODE *))
 {
-    size_t i;
-
     if (pq == NULL)
         return;
+    if (freefunc == NULL)
+        goto out;
 
-    for (i = 0; i < pq->htop; i++)
+    for (size_t i = 0; i < pq->htop; i++)
         (*freefunc)(pq->heap[i]);
-
+out:
     ossl_pq_free(pq);
 }

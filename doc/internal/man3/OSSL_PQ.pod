@@ -93,6 +93,12 @@ is being torn down).  The node's I<posn> field is left untouched
 because I<freefunc>() is expected to release the containing struct.
 Passing NULL for I<pq> is a no-op.
 
+If I<freefunc> is NULL the per-element walk is skipped and only the
+queue object is released; any elements still in I<pq> are leaked.
+This is intentional fail-safe behaviour (no NULL dereference) but is
+almost never what the caller wants -- if there is nothing to free
+per element, call B<ossl_pq_free>() directly instead.
+
 B<ossl_pq_reserve>() grows the underlying heap array so that the
 next I<n> calls to B<ossl_pq_push>() will not need to allocate.
 If I<n> is zero, no additional space is reserved.  On error I<pq>

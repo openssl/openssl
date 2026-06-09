@@ -50,7 +50,12 @@
 #define OSSL_PQ_NOT_IN_QUEUE ((size_t)-1)
 
 typedef struct ossl_pq_node_st {
-    size_t posn; /* index in heap[]; OSSL_PQ_NOT_IN_QUEUE if detached */
+    /*
+     * internal: do not touch
+     *
+     * index in heap[]; OSSL_PQ_NOT_IN_QUEUE if detached
+     */
+    size_t posn;
 } OSSL_PQ_NODE;
 
 typedef struct ossl_pq_st OSSL_PQ;
