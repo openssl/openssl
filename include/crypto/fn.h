@@ -175,6 +175,23 @@ OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
 
 /**
+ * Report the peak number of frames, numbers, and limbs that were
+ * simultaneously active during the lifetime of the OSSL_FN_CTX.
+ * This can be used to determine suitable arena parameters for a
+ * given workload.
+ *
+ * @param[in]   ctx             The OSSL_FN_CTX to query.  This may be NULL.
+ * @param[out]  peak_n_frames   Peak number of simultaneously active frames
+ * @param[out]  peak_n_numbers  Peak number of simultaneously active OSSL_FNs
+ * @param[out]  peak_n_limbs    Peak total limbs across all active OSSL_FNs
+ *
+ * Any of the out parameters may be NULL.  If ctx is NULL, all out
+ * parameters that are non-NULL are set to 0.
+ */
+void OSSL_FN_CTX_peak_usage(const OSSL_FN_CTX *ctx, size_t *peak_n_frames,
+    size_t *peak_n_numbers, size_t *peak_n_limbs);
+
+/**
  * Free an OSSL_FN_CTX.
  *
  * @param[in]   ctx     The OSSL_FN_CTX to be freed.  This may be NULL.
