@@ -27,6 +27,10 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
+### Changes between 3.4.6 and 3.4.7 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.4.5 and 3.4.6 [9 Jun 2026]
 
  * Fixed heap use-after-free in `PKCS7_verify()`.
