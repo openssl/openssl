@@ -13,6 +13,12 @@
 
 #include <openssl/aes.h>
 
+typedef int (*aes_set_encrypt_key_fn)(const unsigned char *key,
+    int bits, AES_KEY *ks);
+
+typedef void (*aes_block128_f)(const unsigned char in[16],
+    unsigned char out[16], const AES_KEY *key);
+
 #ifdef VPAES_ASM
 int vpaes_set_encrypt_key(const unsigned char *userKey, int bits,
     AES_KEY *key);
