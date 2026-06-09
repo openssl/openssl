@@ -126,6 +126,31 @@ static int test_zstd(int n)
 {
     return do_bio_comp(BIO_f_zstd(), n);
 }
+
+static int test_zstd_wpending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[512];
+    int ret = 0;
+
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_zstd()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bcomp)))
+        goto err;
+    /* Once everything has been flushed nothing must be left pending */
+    if (!TEST_int_eq(BIO_wpending(bcomp), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bmem);
+    return ret;
+}
 #endif
 #ifndef OPENSSL_NO_BROTLI
 static int test_brotli(int n)
@@ -150,6 +175,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_ZSTD
     ADD_ALL_TESTS(test_zstd, NUM_SIZES * 4);
+    ADD_TEST(test_zstd_wpending);
 #endif
     return 1;
 }
