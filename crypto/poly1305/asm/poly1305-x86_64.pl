@@ -233,7 +233,7 @@ $code.=<<___;
 .cfi_endproc
 .size	poly1305_init,.-poly1305_init
 
-.type	poly1305_blocks,\@function,4
+.type	poly1305_blocks,\@function,4,endbranch
 .align	32
 poly1305_blocks:
 .cfi_startproc
@@ -307,7 +307,7 @@ $code.=<<___;
 .cfi_endproc
 .size	poly1305_blocks,.-poly1305_blocks
 
-.type	poly1305_emit,\@function,3
+.type	poly1305_emit,\@function,3,endbranch
 .align	32
 poly1305_emit:
 .cfi_startproc
@@ -532,7 +532,7 @@ __poly1305_init_avx:
 .cfi_endproc
 .size	__poly1305_init_avx,.-__poly1305_init_avx
 
-.type	poly1305_blocks_avx,\@function,4
+.type	poly1305_blocks_avx,\@function,4,endbranch
 .align	32
 poly1305_blocks_avx:
 .cfi_startproc
@@ -1398,7 +1398,7 @@ $code.=<<___;
 .cfi_endproc
 .size	poly1305_blocks_avx_even,.-poly1305_blocks_avx_even
 
-.type	poly1305_emit_avx,\@function,3
+.type	poly1305_emit_avx,\@function,3,endbranch
 .align	32
 poly1305_emit_avx:
 .cfi_startproc
@@ -1464,7 +1464,7 @@ my ($H0,$H1,$H2,$H3,$H4, $MASK, $T4,$T0,$T1,$T2,$T3, $D0,$D1,$D2,$D3,$D4) =
 my $S4=$MASK;
 
 $code.=<<___;
-.type	poly1305_blocks_avx2,\@function,4
+.type	poly1305_blocks_avx2,\@function,4,endbranch
 .align	32
 poly1305_blocks_avx2:
 .cfi_startproc
@@ -2166,7 +2166,7 @@ map(s/%y/%z/,($H0,$H1,$H2,$H3,$H4));
 map(s/%y/%z/,($MASK));
 
 $code.=<<___;
-.type	poly1305_blocks_avx512,\@function,4
+.type	poly1305_blocks_avx512,\@function,4,endbranch
 .align	32
 poly1305_blocks_avx512:
 .cfi_startproc
@@ -2833,7 +2833,7 @@ my ($T0,$inp_permd,$inp_shift,$PAD) = map("%ymm$_",(18..21));
 my ($reduc_mask,$reduc_rght,$reduc_left) = map("%ymm$_",(22..25));
 
 $code.=<<___;
-.type	poly1305_blocks_vpmadd52,\@function,4
+.type	poly1305_blocks_vpmadd52,\@function,4,endbranch
 .align	32
 poly1305_blocks_vpmadd52:
 .cfi_startproc
@@ -3770,7 +3770,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-.type	poly1305_emit_base2_44,\@function,3
+.type	poly1305_emit_base2_44,\@function,3,endbranch
 .align	32
 poly1305_emit_base2_44:
 .cfi_startproc

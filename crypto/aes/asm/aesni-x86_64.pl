@@ -273,7 +273,7 @@ ___
 
 $code.=<<___;
 .globl	${PREFIX}_encrypt
-.type	${PREFIX}_encrypt,\@abi-omnipotent
+.type	${PREFIX}_encrypt,\@abi-omnipotent,,endbranch
 .align	16
 ${PREFIX}_encrypt:
 .cfi_startproc
@@ -293,7 +293,7 @@ $code.=<<___;
 .size	${PREFIX}_encrypt,.-${PREFIX}_encrypt
 
 .globl	${PREFIX}_decrypt
-.type	${PREFIX}_decrypt,\@abi-omnipotent
+.type	${PREFIX}_decrypt,\@abi-omnipotent,,endbranch
 .align	16
 ${PREFIX}_decrypt:
 .cfi_startproc
@@ -620,7 +620,7 @@ if ($PREFIX eq "aesni") {
 #			  int enc);
 $code.=<<___;
 .globl	aesni_ecb_encrypt
-.type	aesni_ecb_encrypt,\@function,5
+.type	aesni_ecb_encrypt,\@function,5,endbranch
 .align	16
 aesni_ecb_encrypt:
 .cfi_startproc
@@ -998,7 +998,7 @@ my $bswap_mask="%xmm7";
 
 $code.=<<___;
 .globl	aesni_ccm64_encrypt_blocks
-.type	aesni_ccm64_encrypt_blocks,\@function,6
+.type	aesni_ccm64_encrypt_blocks,\@function,6,endbranch
 .align	16
 aesni_ccm64_encrypt_blocks:
 .cfi_startproc
@@ -1096,7 +1096,7 @@ ___
 ######################################################################
 $code.=<<___;
 .globl	aesni_ccm64_decrypt_blocks
-.type	aesni_ccm64_decrypt_blocks,\@function,6
+.type	aesni_ccm64_decrypt_blocks,\@function,6,endbranch
 .align	16
 aesni_ccm64_decrypt_blocks:
 .cfi_startproc
@@ -1228,7 +1228,7 @@ my $frame_size = 0x80 + ($win64?160:0);
 
 $code.=<<___;
 .globl	aesni_ctr32_encrypt_blocks
-.type	aesni_ctr32_encrypt_blocks,\@function,5
+.type	aesni_ctr32_encrypt_blocks,\@function,5,endbranch
 .align	16
 aesni_ctr32_encrypt_blocks:
 .cfi_startproc
@@ -1824,7 +1824,7 @@ my $key_ = "%rbp";	# override so that we can use %r11 as FP
 
 $code.=<<___;
 .globl	aesni_xts_encrypt
-.type	aesni_xts_encrypt,\@function,6
+.type	aesni_xts_encrypt,\@function,6,endbranch
 .align	16
 aesni_xts_encrypt:
 .cfi_startproc
@@ -2320,7 +2320,7 @@ ___
 
 $code.=<<___;
 .globl	aesni_xts_decrypt
-.type	aesni_xts_decrypt,\@function,6
+.type	aesni_xts_decrypt,\@function,6,endbranch
 .align	16
 aesni_xts_decrypt:
 .cfi_startproc
@@ -2858,7 +2858,7 @@ my $blocks = $len;
 
 $code.=<<___;
 .globl	aesni_ocb_encrypt
-.type	aesni_ocb_encrypt,\@function,6
+.type	aesni_ocb_encrypt,\@function,6,endbranch
 .align	32
 aesni_ocb_encrypt:
 .cfi_startproc
@@ -3338,7 +3338,7 @@ __ocb_encrypt1:
 .size	__ocb_encrypt1,.-__ocb_encrypt1
 
 .globl	aesni_ocb_decrypt
-.type	aesni_ocb_decrypt,\@function,6
+.type	aesni_ocb_decrypt,\@function,6,endbranch
 .align	32
 aesni_ocb_decrypt:
 .cfi_startproc
@@ -3840,7 +3840,7 @@ my ($iv,$in0,$in1,$in2,$in3,$in4)=map("%xmm$_",(10..15));
 
 $code.=<<___;
 .globl	${PREFIX}_cbc_encrypt
-.type	${PREFIX}_cbc_encrypt,\@function,6
+.type	${PREFIX}_cbc_encrypt,\@function,6,endbranch
 .align	16
 ${PREFIX}_cbc_encrypt:
 .cfi_startproc

@@ -100,7 +100,7 @@ OUT_SHUFB:
 #
 
 .globl    ${prefix}_set_key
-.type     ${prefix}_set_key,\@function,2
+.type     ${prefix}_set_key,\@function,2,endbranch
 .align    32
 ${prefix}_set_key:
 .cfi_startproc
@@ -151,7 +151,7 @@ ${prefix}_set_key:
 # void ${prefix}_encrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 
 .globl    ${prefix}_encrypt
-.type     ${prefix}_encrypt,\@function,3
+.type     ${prefix}_encrypt,\@function,3,endbranch
 .align    32
 ${prefix}_encrypt:
 .cfi_startproc
@@ -189,7 +189,7 @@ ${prefix}_encrypt:
 # void ${prefix}_decrypt(const uint8_t *in, uint8_t *out, const SM4_KEY *ks)
 
 .globl    ${prefix}_decrypt
-.type     ${prefix}_decrypt,\@function,3
+.type     ${prefix}_decrypt,\@function,3,endbranch
 .align    32
 ${prefix}_decrypt:
 .cfi_startproc

@@ -244,7 +244,7 @@ $code=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	gcm_gmult_4bit
-.type	gcm_gmult_4bit,\@function,2
+.type	gcm_gmult_4bit,\@function,2,endbranch
 .align	16
 gcm_gmult_4bit:
 .cfi_startproc
@@ -291,7 +291,7 @@ $rem_8bit=$rem_4bit;
 
 $code.=<<___;
 .globl	gcm_ghash_4bit
-.type	gcm_ghash_4bit,\@function,4
+.type	gcm_ghash_4bit,\@function,4,endbranch
 .align	16
 gcm_ghash_4bit:
 .cfi_startproc
@@ -535,7 +535,7 @@ ___
 
 $code.=<<___;
 .globl	gcm_init_clmul
-.type	gcm_init_clmul,\@abi-omnipotent
+.type	gcm_init_clmul,\@abi-omnipotent,,endbranch
 .align	16
 gcm_init_clmul:
 .cfi_startproc
@@ -617,7 +617,7 @@ ___
 
 $code.=<<___;
 .globl	gcm_gmult_clmul
-.type	gcm_gmult_clmul,\@abi-omnipotent
+.type	gcm_gmult_clmul,\@abi-omnipotent,,endbranch
 .align	16
 gcm_gmult_clmul:
 .cfi_startproc
@@ -670,7 +670,7 @@ ___
 
 $code.=<<___;
 .globl	gcm_ghash_clmul
-.type	gcm_ghash_clmul,\@abi-omnipotent
+.type	gcm_ghash_clmul,\@abi-omnipotent,,endbranch
 .align	32
 gcm_ghash_clmul:
 .cfi_startproc
@@ -1039,7 +1039,7 @@ ___
 
 $code.=<<___;
 .globl	gcm_init_avx
-.type	gcm_init_avx,\@abi-omnipotent
+.type	gcm_init_avx,\@abi-omnipotent,,endbranch
 .align	32
 gcm_init_avx:
 .cfi_startproc
@@ -1187,7 +1187,7 @@ ___
 
 $code.=<<___;
 .globl	gcm_gmult_avx
-.type	gcm_gmult_avx,\@abi-omnipotent
+.type	gcm_gmult_avx,\@abi-omnipotent,,endbranch
 .align	32
 gcm_gmult_avx:
 .cfi_startproc
@@ -1200,7 +1200,7 @@ ___
 
 $code.=<<___;
 .globl	gcm_ghash_avx
-.type	gcm_ghash_avx,\@abi-omnipotent
+.type	gcm_ghash_avx,\@abi-omnipotent,,endbranch
 .align	32
 gcm_ghash_avx:
 .cfi_startproc

@@ -268,6 +268,13 @@ my %globals;
 		$self->{op} = $1;
 		$self->{sz} = $2;
 	    }
+
+	    # TODO: Remove endbranch instructions in favor of the .type annotation.
+	    if ($self->{op} eq "endbranch") {
+		die "Missing function annotation for 'endbranch' instruction." if (!defined($current_function->{endbr}));
+		die "Found 'endbranch' instruction outside the prologue." if ($cfi_state ne 'prologue');
+		$self->{op} = ""; # suppress it as we emit endbranch from label.
+	    }
 	}
 	$ret;
     }
@@ -532,6 +539,7 @@ my %globals;
 			&& $current_function->{abi} eq "svr4") {
 		$cfi_state = 'prologue'; # indicate that we've already emitted SEH64_PROC_FRAME.
 		$func  = 'SEH64_PROC_FRAME ' . ($globals{$self->{value}} or $self->{value}) . "\n";
+		$func .= "	.byte	0xf3,0x0f,0x1e,0xfa # endbr\n" if (defined($current_function->{endbr}));
 		$func .= "	movq	%rdi,8(%rsp)\n";
 		$func .= "SEH64_SAVEREG rdi, 8\n";
 		$func .= "	movq	%rsi,16(%rsp)\n";
@@ -545,6 +553,14 @@ my %globals;
 		$func .= "	movq	%r9,%rcx\n"  if ($narg>3);
 		$func .= "	movq	40(%rsp),%r8\n" if ($narg>4);
 		$func .= "	movq	48(%rsp),%r9\n" if ($narg>5);
+	    } elsif (defined($current_function->{endbr}) && $current_function->{name} eq $self->{value}) {
+		$cfi_state = 'prologue'; # indicate that we've already emitted SEH64_PROC_FRAME and/or endbr.
+		if (!$win64) {
+		    $func = ($globals{$self->{value}} or $self->{value}) . ":";
+		} else {
+		    $func = 'SEH64_PROC_FRAME ' . ($globals{$self->{value}} or $self->{value}) . "\n";
+		}
+		$func .= "	.byte	0xf3,0x0f,0x1e,0xfa # endbr\n";
 	    } else {
 		$func = ($globals{$self->{value}} or $self->{value}) . ":";
 	    }
@@ -557,6 +573,7 @@ my %globals;
 	    die "unexpected cfi state for proc label: $cfi_state" if (defined($cfi_state));
             $cfi_state = 'prologue'; # indicate that we've already emitted SEH64_PROC_FRAME.
             my $func = "SEH64_PROC_FRAME $current_function->{name},$current_function->{scope}\n";
+	    $func .= "	db 	0f3h,0fh,1eh,0fah ; endbr\n" if (defined($current_function->{endbr}));
 	    $func .= "	mov	QWORD$PTR\[8+rsp\],rdi\t;WIN64 prologue\n";
 	    $func .= "SEH64_SAVEREG rdi, 8\n";
 	    $func .= "	mov	QWORD$PTR\[16+rsp\],rsi\n";
@@ -573,8 +590,10 @@ my %globals;
 	    $func .= "\n";
 	} else {
 	    die "unexpected cfi state for proc label: $cfi_state" if (defined($cfi_state));
-	    $cfi_state = 'prologue'; # indicate that we've already emitted PROC_FRAME.
-	    "SEH64_PROC_FRAME $current_function->{name},$current_function->{scope}";
+	    $cfi_state = 'prologue'; # indicate that we've already emitted SEH64_PROC_FRAME.
+	    my $func = "SEH64_PROC_FRAME $current_function->{name},$current_function->{scope}\n";
+	    $func .= "	db	0f3h,0fh,1eh,0fah ; endbr\n" if (defined($current_function->{endbr}));
+	    $func;
 	}
     }
 }
@@ -797,6 +816,9 @@ my %globals;
 				}
 			        if ($win64 && !defined($cfi_state)) {
 				    $self->{value} = "SEH64_PROC_FRAME\t$current_function->{name},$current_function->{scope}";
+				    if (defined($current_function->{endbr})) {
+					die "Need explicit label for endbranch tagged function: ". $current_function->{name};
+				    }
 				}
 				$cfi_state = 'prologue';
 				last;
@@ -808,7 +830,10 @@ my %globals;
 				die "unpaired .cfi_remember_state" if (@cfa_stack);
 				die ".cfi_endproc without .cfi_endprolog in $current_function->{name}" if ($cfi_state eq 'prologue');
 				die "bogus .cfi_endproc (state: $cfi_state)" if ($cfi_state ne 'body');
-                                $self->{value} = "SEH64_ENDPROC_FRAME\t$current_function->{name}" if ($win64);
+				if ($win64) {
+				    $self->{value}  = "SEH64_ENDPROC_FRAME\t$current_function->{name}";
+				    $self->{value} .= defined($current_function->{endbr}) ? ",1" : ",0";
+				}
 				$cfi_state = 'endproc';
 				last;
 			      };
@@ -1022,19 +1047,22 @@ my %globals;
 				    $$line = $globals{$$line} if ($prefix);
 				    last;
 				  };
-		/\.type/    && do { my ($sym,$type,$narg) = split(',',$$line);
+		/\.type/    && do { my ($sym,$type,$narg,$endbr) = split(',',$$line);
+				    die "Unexpected endbr .type arg: $endbr" if (defined($endbr) && $endbr ne "endbranch");
 				    if ($type eq "\@function") {
 					undef $current_function;
 					$current_function->{name} = $sym;
 					$current_function->{abi}  = "svr4";
 					$current_function->{narg} = $narg;
 					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
+					$current_function->{endbr} = $endbr if (defined($endbr) && $endbr eq "endbranch");
 				    } elsif ($type eq "\@abi-omnipotent") {
 					undef $current_function;
 					$current_function->{name} = $sym;
 					$current_function->{scope} = defined($globals{$sym})?"PUBLIC":"PRIVATE";
+					$current_function->{endbr} = $endbr if (defined($endbr) && $endbr eq "endbranch");
 				    }
-				    $$line =~ s/\@abi\-omnipotent/\@function/;
+				    $$line =~ s/\@abi\-omnipotent.*/\@function/;
 				    $$line =~ s/\@function.*/\@function/;
 				    last;
 				  };
@@ -1249,11 +1277,8 @@ my %globals;
 				  };
 		/\.size/    && do { if (defined($current_function)) {
 					undef $self->{value};
-					if ($current_function->{abi} eq "svr4") {
-					    $self->{value}="${decor}SEH_end_$current_function->{name}:";
-					    $self->{value}.=":\n" if($masm);
-					}
-					$self->{value}.="$current_function->{name}\tENDP" if($masm && $current_function->{name} && $cfi_state ne 'endproc');
+					die "Missing .cfi_endprolog and .cfi_endproc: $current_function->{name}" if ($cfi_state eq 'prologue');
+					die "Missing .cfi_endproc: $current_function->{name}" if ($cfi_state eq 'body');
 					undef $current_function;
 					undef $cfi_state;
 				    }
@@ -1633,6 +1658,24 @@ ___
 %define SEH64_DOT_LABEL(a_DotLabel) SEH64_CONCAT(asm_seh64_proc,a_DotLabel)
 
 %macro SEH64_PROC_FRAME 2
+ %ifidni %2,PUBLIC
+  %ifdef __YASM_MAJOR__
+   global %1:function
+  %elifdef OPENSSL_CET_ENABLED_ASSEMBLY ; (Requires nasm 3.02rc8 (pr #233 / commit c8be7b7).)
+   global %1:function
+  %else
+   global %1
+  %endif
+ %elifidni %2,PRIVATE
+  %ifdef OPENSSL_CET_ENABLED_ASSEMBLY   ; (Requires nasm 3.02rc8 (pr #233 / commit c8be7b7).)
+   %ifndef __YASM_MAJOR__
+    static %1:function
+   %endif
+  %endif
+ %else
+  %error "SEH64_PROC_FRAME: unknown scope keyword (%2), expected PRIVATE or PUBLIC."
+ %endif
+
  %define asm_seh64_proc %1
  %ifdef __YASM_MAJOR__
         proc_frame %1
@@ -1647,7 +1690,7 @@ ___
  %endif
 %endmacro
 
-%macro SEH64_ENDPROC_FRAME 1
+%macro SEH64_ENDPROC_FRAME 2
 SEH64_DOT_LABEL(.end_proc):
  %ifdef __YASM_MAJOR__
 	[endproc_frame]
@@ -1662,6 +1705,21 @@ SEH64_DOT_LABEL(.end_proc):
         dd      %1                              wrt ..imagebase
         dd      SEH64_DOT_LABEL(.end_proc)      wrt ..imagebase
         dd      SEH64_DOT_LABEL(.unwind_info)   wrt ..imagebase
+
+  %if %2 != 0
+   %ifdef OPENSSL_CET_ENABLED_ASSEMBLY ; (Requires nasm 3.02rc8 (pr #235 / commit f1e4e6f).)
+	; Emit the indirect jump table entry.
+    %ifndef ASM_DEFINED_GIFDS_Y_SECTION
+     %define ASM_DEFINED_GIFDS_Y_SECTION
+	\@feat.00 equ 0x800 ; Required for the above table to have any effect.
+	section	.gfids\$y rdata align=4
+	__guard_fids__:
+    %else
+	section	.gfids\$y
+    %endif
+	dd	%1 wrt ..symtab
+   %endif
+  %endif
 
         ; Restore code section.
         section .text
@@ -1795,6 +1853,21 @@ SEH64_OP_LABEL(seh64_idxOps):
   %assign seh64_idxOps seh64_idxOps + 1
  %endif
 %endmacro
+
+%macro CET_ADD_FUNCTION_TO_GFIDS 2
+ %ifdef OPENSSL_CET_ENABLED_ASSEMBLY ; (Requires nasm 3.02rc8 (pr #235 / commit f1e4e6f).)
+  %ifndef ASM_DEFINED_GIFDS_Y_SECTION
+   %define ASM_DEFINED_GIFDS_Y_SECTION
+	\@feat.00 equ 0x800 ; Required for the above table to have any effect.
+	section .gfids\$y rdata align=4
+	__guard_fids__:
+  %else
+	section	.gfids\$y
+  %endif
+	dd	%1 wrt ..symtab
+	section %2 ; Switch back to the original section.
+ %endif
+%endmacro
 ___
     }
 } elsif ($masm) {
@@ -1806,7 +1879,7 @@ ___
 SEH64_PROC_FRAME MACRO a_Name, a_Scope
     a_Name PROC a_Scope FRAME
 ENDM
-SEH64_ENDPROC_FRAME MACRO a_Name
+SEH64_ENDPROC_FRAME MACRO a_Name, a_IndirBranchTarget
     a_Name ENDP
 ENDM
 SEH64_ENDPROLOG MACRO
@@ -1908,7 +1981,7 @@ ___
 
 .endm
 
-.macro SEH64_ENDPROC_FRAME a_Name
+.macro SEH64_ENDPROC_FRAME a_Name, a_IndirBranchTarget
 \\a_Name\\().end_proc:
 
 # Emit the RUNTIME_FUNCTION entry.  The linker is picky here, no label.
@@ -2114,6 +2187,9 @@ while(defined(my $line=<>)) {
 		@args = reverse(@args);
 		undef $sz if ($nasm && $opcode->mnemonic() eq "lea");
 		printf "\t%s\t%s",$insn,join(",",map($_->out($sz),@args));
+		if ($current_segment eq ".CRT\$XCU" && $nasm) {
+		    printf "\nCET_ADD_FUNCTION_TO_GFIDS ". $args[0]->out($sz) . ",.CRT\$XCU";
+		}
 	    }
 	} else {
 	    printf "\t%s",$opcode->out();

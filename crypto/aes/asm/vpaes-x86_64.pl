@@ -701,7 +701,7 @@ _vpaes_schedule_mangle:
 # Interface to OpenSSL
 #
 .globl	${PREFIX}_set_encrypt_key
-.type	${PREFIX}_set_encrypt_key,\@function,3
+.type	${PREFIX}_set_encrypt_key,\@function,3,endbranch
 .align	16
 ${PREFIX}_set_encrypt_key:
 .cfi_startproc
@@ -762,7 +762,7 @@ $code.=<<___;
 .size	${PREFIX}_set_encrypt_key,.-${PREFIX}_set_encrypt_key
 
 .globl	${PREFIX}_set_decrypt_key
-.type	${PREFIX}_set_decrypt_key,\@function,3
+.type	${PREFIX}_set_decrypt_key,\@function,3,endbranch
 .align	16
 ${PREFIX}_set_decrypt_key:
 .cfi_startproc
@@ -828,7 +828,7 @@ $code.=<<___;
 .size	${PREFIX}_set_decrypt_key,.-${PREFIX}_set_decrypt_key
 
 .globl	${PREFIX}_encrypt
-.type	${PREFIX}_encrypt,\@function,3
+.type	${PREFIX}_encrypt,\@function,3,endbranch
 .align	16
 ${PREFIX}_encrypt:
 .cfi_startproc
@@ -884,7 +884,7 @@ $code.=<<___;
 .size	${PREFIX}_encrypt,.-${PREFIX}_encrypt
 
 .globl	${PREFIX}_decrypt
-.type	${PREFIX}_decrypt,\@function,3
+.type	${PREFIX}_decrypt,\@function,3,endbranch
 .align	16
 ${PREFIX}_decrypt:
 .cfi_startproc
@@ -946,7 +946,7 @@ my ($inp,$out,$len,$key,$ivp,$enc)=("%rdi","%rsi","%rdx","%rcx","%r8","%r9");
 #                       unsigned char *ivp,const int enc);
 $code.=<<___;
 .globl	${PREFIX}_cbc_encrypt
-.type	${PREFIX}_cbc_encrypt,\@function,6
+.type	${PREFIX}_cbc_encrypt,\@function,6,endbranch
 .align	16
 ${PREFIX}_cbc_encrypt:
 .cfi_startproc

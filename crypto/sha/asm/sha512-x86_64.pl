@@ -2398,7 +2398,7 @@ ___
 
 if ($SZ==8 && $avx>1) {
 $code.=<<___;
-.type ${func}_sha512ext,\@function,3
+.type ${func}_sha512ext,\@function,3,endbranch
 .align 64
 ${func}_sha512ext:
 .cfi_startproc

@@ -1151,7 +1151,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_128_encrypt_avx512
       .hidden	aesni_xts_128_encrypt_avx512
-      .type	aesni_xts_128_encrypt_avx512,\@function,6
+      .type	aesni_xts_128_encrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_128_encrypt_avx512:
       .cfi_startproc
@@ -1161,7 +1161,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_256_encrypt_avx512
       .hidden	aesni_xts_256_encrypt_avx512
-      .type	aesni_xts_256_encrypt_avx512,\@function,6
+      .type	aesni_xts_256_encrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_256_encrypt_avx512:
       .cfi_startproc
@@ -1843,7 +1843,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_128_decrypt_avx512
       .hidden	aesni_xts_128_decrypt_avx512
-      .type	aesni_xts_128_decrypt_avx512,\@function,6
+      .type	aesni_xts_128_decrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_128_decrypt_avx512:
       .cfi_startproc
@@ -1853,7 +1853,7 @@ ___
       $code.=<<___;
       .globl	aesni_xts_256_decrypt_avx512
       .hidden	aesni_xts_256_decrypt_avx512
-      .type	aesni_xts_256_decrypt_avx512,\@function,6
+      .type	aesni_xts_256_decrypt_avx512,\@function,6,endbranch
       .align	32
       aesni_xts_256_decrypt_avx512:
       .cfi_startproc

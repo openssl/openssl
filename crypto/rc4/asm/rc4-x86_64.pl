@@ -138,7 +138,7 @@ $code=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	RC4
-.type	RC4,\@function,4
+.type	RC4,\@function,4,endbranch
 .align	16
 RC4:
 .cfi_startproc
@@ -453,7 +453,7 @@ $ido="%r9";
 
 $code.=<<___;
 .globl	RC4_set_key
-.type	RC4_set_key,\@function,3
+.type	RC4_set_key,\@function,3,endbranch
 .align	16
 RC4_set_key:
 .cfi_startproc
@@ -529,7 +529,7 @@ RC4_set_key:
 .size	RC4_set_key,.-RC4_set_key
 
 .globl	RC4_options
-.type	RC4_options,\@abi-omnipotent
+.type	RC4_options,\@abi-omnipotent,,endbranch
 .align	16
 RC4_options:
 .cfi_startproc

@@ -1645,7 +1645,7 @@ ___
 $code.=<<___;
 .extern	asm_AES_cbc_encrypt
 .globl	ossl_bsaes_cbc_encrypt
-.type	ossl_bsaes_cbc_encrypt,\@abi-omnipotent
+.type	ossl_bsaes_cbc_encrypt,\@abi-omnipotent,,endbranch
 .align	16
 ossl_bsaes_cbc_encrypt:
 .cfi_startproc
@@ -1960,7 +1960,7 @@ $code.=<<___;
 .size	ossl_bsaes_cbc_encrypt,.-ossl_bsaes_cbc_encrypt
 
 .globl	ossl_bsaes_ctr32_encrypt_blocks
-.type	ossl_bsaes_ctr32_encrypt_blocks,\@abi-omnipotent
+.type	ossl_bsaes_ctr32_encrypt_blocks,\@abi-omnipotent,,endbranch
 .align	16
 ossl_bsaes_ctr32_encrypt_blocks:
 .cfi_startproc
@@ -2229,7 +2229,7 @@ $arg6=~s/d$//;
 
 $code.=<<___;
 .globl	ossl_bsaes_xts_encrypt
-.type	ossl_bsaes_xts_encrypt,\@abi-omnipotent
+.type	ossl_bsaes_xts_encrypt,\@abi-omnipotent,,endbranch
 .align	16
 ossl_bsaes_xts_encrypt:
 .cfi_startproc
@@ -2638,7 +2638,7 @@ $code.=<<___;
 .size	ossl_bsaes_xts_encrypt,.-ossl_bsaes_xts_encrypt
 
 .globl	ossl_bsaes_xts_decrypt
-.type	ossl_bsaes_xts_decrypt,\@abi-omnipotent
+.type	ossl_bsaes_xts_decrypt,\@abi-omnipotent,,endbranch
 .align	16
 ossl_bsaes_xts_decrypt:
 .cfi_startproc

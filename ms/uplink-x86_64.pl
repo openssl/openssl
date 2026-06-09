@@ -27,7 +27,7 @@ print <<___;
 ___
 for ($i=1;$i<=$N;$i++) {
 print <<___;
-.type	$prefix${i},\@abi-omnipotent
+.type	$prefix${i},\@abi-omnipotent,,endbranch
 .align	16
 $prefix${i}:
 .cfi_startproc

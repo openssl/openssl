@@ -81,7 +81,7 @@ $code.=<<___;
 #################################################################
 
 .globl   ossl_aes_cfb128_vaes_eligible
-.type    ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent
+.type    ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent,,endbranch
 .balign  64
 
 ossl_aes_cfb128_vaes_eligible:
@@ -449,7 +449,7 @@ ___
 
 $code.=<<___;
 .globl   ossl_aes_cfb128_vaes_enc
-.type    ossl_aes_cfb128_vaes_enc,\@function,6
+.type    ossl_aes_cfb128_vaes_enc,\@function,6,endbranch
 .balign  64
 ossl_aes_cfb128_vaes_enc:
 .cfi_startproc
@@ -688,7 +688,7 @@ ___
 
 $code.=<<___;
 .globl   ossl_aes_cfb128_vaes_dec
-.type    ossl_aes_cfb128_vaes_dec,\@function,6
+.type    ossl_aes_cfb128_vaes_dec,\@function,6,endbranch
 .balign  64
 ossl_aes_cfb128_vaes_dec:
 .cfi_startproc

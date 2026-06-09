@@ -38,7 +38,7 @@ print<<___;
 .text
 
 .globl	OPENSSL_atomic_add
-.type	OPENSSL_atomic_add,\@abi-omnipotent
+.type	OPENSSL_atomic_add,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_atomic_add:
 .cfi_startproc
@@ -56,7 +56,7 @@ OPENSSL_atomic_add:
 .size	OPENSSL_atomic_add,.-OPENSSL_atomic_add
 
 .globl	OPENSSL_rdtsc
-.type	OPENSSL_rdtsc,\@abi-omnipotent
+.type	OPENSSL_rdtsc,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_rdtsc:
 .cfi_startproc
@@ -70,7 +70,7 @@ OPENSSL_rdtsc:
 .size	OPENSSL_rdtsc,.-OPENSSL_rdtsc
 
 .globl	OPENSSL_ia32_cpuid
-.type	OPENSSL_ia32_cpuid,\@function,1
+.type	OPENSSL_ia32_cpuid,\@function,1,endbranch
 .align	16
 OPENSSL_ia32_cpuid:
 .cfi_startproc
@@ -275,7 +275,7 @@ print<<___;
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
 .globl  OPENSSL_cleanse
-.type   OPENSSL_cleanse,\@abi-omnipotent
+.type   OPENSSL_cleanse,\@abi-omnipotent,,endbranch
 .align  16
 OPENSSL_cleanse:
 .cfi_startproc
@@ -314,7 +314,7 @@ OPENSSL_cleanse:
 .size	OPENSSL_cleanse,.-OPENSSL_cleanse
 
 .globl  CRYPTO_memcmp
-.type   CRYPTO_memcmp,\@abi-omnipotent
+.type   CRYPTO_memcmp,\@abi-omnipotent,,endbranch
 .align  16
 CRYPTO_memcmp:
 .cfi_startproc
@@ -362,7 +362,7 @@ my $redzone=win64?8:-8;
 
 print<<___;
 .globl	OPENSSL_instrument_bus
-.type	OPENSSL_instrument_bus,\@abi-omnipotent
+.type	OPENSSL_instrument_bus,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_instrument_bus:
 .cfi_startproc
@@ -398,7 +398,7 @@ OPENSSL_instrument_bus:
 .size	OPENSSL_instrument_bus,.-OPENSSL_instrument_bus
 
 .globl	OPENSSL_instrument_bus2
-.type	OPENSSL_instrument_bus2,\@abi-omnipotent
+.type	OPENSSL_instrument_bus2,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_instrument_bus2:
 .cfi_startproc
@@ -455,7 +455,7 @@ sub gen_random {
 my $rdop = shift;
 print<<___;
 .globl	OPENSSL_ia32_${rdop}_bytes
-.type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent
+.type	OPENSSL_ia32_${rdop}_bytes,\@abi-omnipotent,,endbranch
 .align	16
 OPENSSL_ia32_${rdop}_bytes:
 .cfi_startproc

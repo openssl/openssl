@@ -99,7 +99,7 @@ SHUFF_MASK:
 #
 
 .globl	ossl_hwsm3_block_data_order
-.type	ossl_hwsm3_block_data_order,\@function,3
+.type	ossl_hwsm3_block_data_order,\@function,3,endbranch
 .align	32
 ossl_hwsm3_block_data_order:
 .cfi_startproc
