@@ -47,7 +47,7 @@ IF[{- !$disabled{tests} -}]
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext byteorder_test punycode_test evp_byname_test \
-          crltest danetest bad_dtls_test lhash_test sparse_array_test \
+          crltest danetest lhash_test sparse_array_test \
           conf_include_test params_api_test params_conversion_test \
           constant_time_test crypto_memcmp_test safe_math_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
@@ -382,10 +382,6 @@ IF[{- !$disabled{tests} -}]
   SOURCE[clienthellotest]=clienthellotest.c
   INCLUDE[clienthellotest]=../include ../apps/include
   DEPEND[clienthellotest]=../libcrypto ../libssl libtestutil.a
-
-  SOURCE[bad_dtls_test]=bad_dtls_test.c
-  INCLUDE[bad_dtls_test]=../include ../apps/include
-  DEPEND[bad_dtls_test]=../libcrypto ../libssl libtestutil.a
 
   SOURCE[packettest]=packettest.c ../crypto/quic_vlint.c
   INCLUDE[packettest]=../include ../apps/include

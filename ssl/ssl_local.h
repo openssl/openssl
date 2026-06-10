@@ -55,14 +55,12 @@
 #define DTLS_MAX_VERSION_INTERNAL DTLS1_2_VERSION
 
 /*
- * DTLS version numbers are strange because they're inverted. Except for
- * DTLS1_BAD_VER, which should be considered "lower" than the rest.
+ * DTLS version numbers are strange because they're inverted.
  */
-#define dtls_ver_ordinal(v1) (((v1) == DTLS1_BAD_VER) ? 0xff00 : (v1))
-#define DTLS_VERSION_GT(v1, v2) (dtls_ver_ordinal(v1) < dtls_ver_ordinal(v2))
-#define DTLS_VERSION_GE(v1, v2) (dtls_ver_ordinal(v1) <= dtls_ver_ordinal(v2))
-#define DTLS_VERSION_LT(v1, v2) (dtls_ver_ordinal(v1) > dtls_ver_ordinal(v2))
-#define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
+#define DTLS_VERSION_GT(v1, v2) ((v1) < (v2))
+#define DTLS_VERSION_GE(v1, v2) ((v1) <= (v2))
+#define DTLS_VERSION_LT(v1, v2) ((v1) > (v2))
+#define DTLS_VERSION_LE(v1, v2) ((v1) >= (v2))
 /* TLS/DTLS version for the given SSL object: XTLS(ssl, 1, 2) == TLS 1.2 or DTLS 1.2 */
 #define XTLS(ssl, m, n) (SSL_is_dtls(ssl) ? (((0xFF - m) << 8) | (0xFF - n)) : (((0x02 + m) << 8) | (0x01 + n)))
 
@@ -2278,7 +2276,6 @@ __owur const SSL_METHOD *tlsv1_3_client_method(void);
 __owur const SSL_METHOD *dtlsv1_method(void);
 __owur const SSL_METHOD *dtlsv1_server_method(void);
 __owur const SSL_METHOD *dtlsv1_client_method(void);
-__owur const SSL_METHOD *dtls_bad_ver_client_method(void);
 __owur const SSL_METHOD *dtlsv1_2_method(void);
 __owur const SSL_METHOD *dtlsv1_2_server_method(void);
 __owur const SSL_METHOD *dtlsv1_2_client_method(void);
@@ -3004,16 +3001,12 @@ long ossl_ctrl_internal(SSL *s, int cmd, long larg, void *parg, int no_quic);
 #define OSSL_LEGACY_SSL_OPTIONS \
     (SSL_OP_NETSCAPE_REUSE_CIPHER_CHANGE_BUG | SSL_OP_MICROSOFT_BIG_SSLV3_BUFFER | SSL_OP_SSLEAY_080_CLIENT_DH_BUG | SSL_OP_TLS_D5_BUG | SSL_OP_TLS_BLOCK_PADDING_BUG | SSL_OP_MSIE_SSLV2_RSA_PADDING | SSL_OP_SSLREF2_REUSE_CERT_TYPE_BUG | SSL_OP_MICROSOFT_SESS_ID_BUG | SSL_OP_NETSCAPE_CHALLENGE_BUG | SSL_OP_PKCS1_CHECK_1 | SSL_OP_PKCS1_CHECK_2 | SSL_OP_SINGLE_DH_USE | SSL_OP_SINGLE_ECDH_USE | SSL_OP_EPHEMERAL_RSA)
 
-/* This option is undefined in public headers with no-dtls1-method. */
-#ifndef SSL_OP_CISCO_ANYCONNECT
-#define SSL_OP_CISCO_ANYCONNECT 0
-#endif
 /*
  * Options which are no-ops under QUIC or TLSv1.3 and which are therefore
  * allowed but ignored under QUIC.
  */
 #define OSSL_TLS1_2_OPTIONS \
-    (SSL_OP_CRYPTOPRO_TLSEXT_BUG | SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS | SSL_OP_ALLOW_CLIENT_RENEGOTIATION | SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION | SSL_OP_NO_COMPRESSION | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_DTLSv1 | SSL_OP_NO_DTLSv1_2 | SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION | SSL_OP_CISCO_ANYCONNECT | SSL_OP_NO_RENEGOTIATION | SSL_OP_NO_EXTENDED_MASTER_SECRET | SSL_OP_NO_ENCRYPT_THEN_MAC | SSL_OP_COOKIE_EXCHANGE | SSL_OP_LEGACY_SERVER_CONNECT | SSL_OP_IGNORE_UNEXPECTED_EOF)
+    (SSL_OP_CRYPTOPRO_TLSEXT_BUG | SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS | SSL_OP_ALLOW_CLIENT_RENEGOTIATION | SSL_OP_ALLOW_UNSAFE_LEGACY_RENEGOTIATION | SSL_OP_NO_COMPRESSION | SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2 | SSL_OP_NO_DTLSv1 | SSL_OP_NO_DTLSv1_2 | SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION | SSL_OP_NO_RENEGOTIATION | SSL_OP_NO_EXTENDED_MASTER_SECRET | SSL_OP_NO_ENCRYPT_THEN_MAC | SSL_OP_COOKIE_EXCHANGE | SSL_OP_LEGACY_SERVER_CONNECT | SSL_OP_IGNORE_UNEXPECTED_EOF)
 
 /* Total mask of connection-level options permitted or ignored under QUIC. */
 #define OSSL_QUIC_PERMITTED_OPTIONS_CONN \

@@ -345,7 +345,7 @@ int dtls1_do_write(SSL_CONNECTION *s, uint8_t type)
                 const struct hm_header_st *msg_hdr = &s->d1->w_msg_hdr;
                 size_t xlen;
 
-                if (frag_off == 0 && s->version != DTLS1_BAD_VER) {
+                if (frag_off == 0) {
                     /*
                      * reconstruct message header is if it is being sent in
                      * single fragment
@@ -470,11 +470,6 @@ int dtls_get_message_body(SSL_CONNECTION *s, size_t *len)
     if (*(s->init_buf->data) == SSL3_MT_FINISHED && !ssl3_take_mac(s)) {
         /* SSLfatal() already called */
         return 0;
-    }
-
-    if (s->version == DTLS1_BAD_VER) {
-        msg += DTLS1_HM_HEADER_LENGTH;
-        msg_len -= DTLS1_HM_HEADER_LENGTH;
     }
 
     if (!ssl3_finish_mac(s, msg, msg_len))
@@ -884,24 +879,16 @@ static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
 
 redo:
     /* Check for buffered CCS */
-    if ((s->version == DTLS1_VERSION || s->version == DTLS1_2_VERSION
-            || s->version == DTLS1_BAD_VER)
+    if ((s->version == DTLS1_VERSION || s->version == DTLS1_2_VERSION)
         && s->d1->has_change_cipher_spec && dtls_ccs_expected(s)) {
-        size_t extra = (s->version == DTLS1_BAD_VER) ? 2 : 0;
-
         s->d1->has_change_cipher_spec = 0;
         p[0] = SSL3_MT_CCS;
-        /*
-         * The extra 2 bytes are never consumed, only checked for
-         * length -- zero-fill to avoid old init_buf content.
-         */
-        if (extra > 0)
-            memset(p + 1, 0, extra);
-        s->init_num = extra;
+
+        s->init_num = 0;
         s->init_msg = p + 1;
         s->s3.tmp.message_type = SSL3_MT_CHANGE_CIPHER_SPEC;
-        s->s3.tmp.message_size = extra;
-        *len = extra;
+        s->s3.tmp.message_size = 0;
+        *len = 0;
         return 1;
     }
 
@@ -933,9 +920,8 @@ redo:
         }
 
         /* Buffer CCS for reorder tolerance */
-        if (s->version == DTLS1_VERSION || s->version == DTLS1_2_VERSION
-            || s->version == DTLS1_BAD_VER) {
-            size_t expected = (s->version == DTLS1_BAD_VER) ? 3 : 1;
+        if (s->version == DTLS1_VERSION || s->version == DTLS1_2_VERSION) {
+            size_t expected = 1;
 
             if (readbytes != expected) {
                 SSLfatal(s, SSL_AD_DECODE_ERROR,
@@ -1084,24 +1070,9 @@ f_err:
     return 0;
 }
 
-/*-
- * for these 2 messages, we need to
- * ssl->session->read_sym_enc           assign
- * ssl->session->read_compression       assign
- * ssl->session->read_hash              assign
- */
 CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
-    if (s->version == DTLS1_BAD_VER) {
-        s->d1->next_handshake_write_seq++;
-
-        if (!WPACKET_put_bytes_u16(pkt, s->d1->handshake_write_seq)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return CON_FUNC_ERROR;
-        }
-    }
-
     return CON_FUNC_SUCCESS;
 }
 
@@ -1210,6 +1181,7 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
     pitem *item;
     hm_fragment *frag;
     unsigned char seq64be[8];
+    size_t headerlen;
 
     /*
      * this function is called immediately after a message has been
@@ -1224,18 +1196,15 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
 
     memcpy(frag->fragment, s->init_buf->data, s->init_num);
 
-    if (is_ccs) {
-        /* For DTLS1_BAD_VER the header length is non-standard */
-        if (!ossl_assert(s->d1->w_msg_hdr.msg_len + ((s->version == DTLS1_BAD_VER) ? 3 : DTLS1_CCS_HEADER_LENGTH)
-                == (unsigned int)s->init_num)) {
-            dtls1_hm_fragment_free(frag);
-            return 0;
-        }
-    } else {
-        if (!ossl_assert(s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num)) {
-            dtls1_hm_fragment_free(frag);
-            return 0;
-        }
+    if (is_ccs)
+        headerlen = DTLS1_CCS_HEADER_LENGTH;
+    else
+        headerlen = DTLS1_HM_HEADER_LENGTH;
+
+
+    if (!ossl_assert(s->d1->w_msg_hdr.msg_len + headerlen == s->init_num)) {
+        dtls1_hm_fragment_free(frag);
+        return 0;
     }
 
     frag->msg_header.msg_len = s->d1->w_msg_hdr.msg_len;

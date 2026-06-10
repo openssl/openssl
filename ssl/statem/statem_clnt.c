@@ -1048,8 +1048,6 @@ size_t ossl_statem_client_max_message_size(SSL_CONNECTION *s)
         return SERVER_HELLO_DONE_MAX_LENGTH;
 
     case TLS_ST_CR_CHANGE:
-        if (s->version == DTLS1_BAD_VER)
-            return 3;
         return CCS_MAX_LENGTH;
 
     case TLS_ST_CR_SESSION_TICKET:

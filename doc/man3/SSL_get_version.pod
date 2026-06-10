@@ -121,10 +121,6 @@ The connection uses the TLSv1.2 protocol.
 The connection uses the TLSv1.3 protocol (never returned for
 SSL_client_version()).
 
-=item  DTLS1_BAD_VER
-
-The connection uses an obsolete pre-standardisation DTLS protocol
-
 =item DTLS1_VERSION
 
 The connection uses the DTLSv1 protocol

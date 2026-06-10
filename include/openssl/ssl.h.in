@@ -359,13 +359,6 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define SSL_OP_COOKIE_EXCHANGE SSL_OP_BIT(13)
 /* Don't use RFC4507 ticket extension */
 #define SSL_OP_NO_TICKET SSL_OP_BIT(14)
-#ifndef OPENSSL_NO_DTLS1_METHOD
-/*
- * Use Cisco's version identifier of DTLS_BAD_VER
- * (only with deprecated DTLSv1_client_method())
- */
-#define SSL_OP_CISCO_ANYCONNECT SSL_OP_BIT(15)
-#endif
 /* As server, disallow session resumption on renegotiation */
 #define SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION SSL_OP_BIT(16)
 /* Don't use compression even if supported */

@@ -203,10 +203,6 @@ int dtls1_clear(SSL *ssl)
 
     if (ssl->method->version == DTLS_ANY_VERSION)
         s->version = DTLS_MAX_VERSION_INTERNAL;
-#ifndef OPENSSL_NO_DTLS1_METHOD
-    else if (s->options & SSL_OP_CISCO_ANYCONNECT)
-        s->client_version = s->version = DTLS1_BAD_VER;
-#endif
     else
         s->version = ssl->method->version;
 
@@ -434,18 +430,6 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
 
     if (!rbio || !wbio) {
         ERR_raise(ERR_LIB_SSL, SSL_R_BIO_NOT_SET);
-        return -1;
-    }
-
-    /*
-     * Note: This check deliberately excludes DTLS1_BAD_VER because that version
-     * requires the MAC to be calculated *including* the first ClientHello
-     * (without the cookie). Since DTLSv1_listen is stateless that cannot be
-     * supported. DTLS1_BAD_VER must use cookies in a stateful manner (e.g. via
-     * SSL_accept)
-     */
-    if ((s->version & 0xff00) != (DTLS1_VERSION & 0xff00)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_SSL_VERSION);
         return -1;
     }
 
