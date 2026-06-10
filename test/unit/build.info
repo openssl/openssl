@@ -34,3 +34,9 @@ SOURCE[crypto/bio/test_bss_fd]=crypto/bio/test_bss_fd.c
 INCLUDE[crypto/bio/test_bss_fd]=../../include ../../crypto/bio
 DEPEND[crypto/bio/test_bss_fd]=../../libcrypto.a
 WRAP[crypto/bio/test_bss_fd]=read write lseek close
+
+PROGRAMS{noinst}=crypto/bio/test_bss_sock
+SOURCE[crypto/bio/test_bss_sock]=crypto/bio/test_bss_sock.c
+WRAP[crypto/bio/test_bss_sock]=read write BIO_closesocket
+INCLUDE[crypto/bio/test_bss_sock]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_sock]=../../libcrypto.a
