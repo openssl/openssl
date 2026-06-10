@@ -380,9 +380,9 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
 static int ascon_aead128_get_params(OSSL_PARAM params[])
 {
     return ossl_cipher_generic_get_params(params, 0, ASCON_AEAD128_FLAGS,
-                                          ASCON_AEAD128_KEY_LEN * 8,
-                                          1 * 8,
-                                          ASCON_AEAD_NONCE_LEN * 8);
+        ASCON_AEAD128_KEY_LEN * 8,
+        1 * 8,
+        ASCON_AEAD_NONCE_LEN * 8);
 }
 
 static const OSSL_PARAM *ascon_aead128_gettable_ctx_params(ossl_unused void *cctx,
