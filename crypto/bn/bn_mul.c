@@ -27,7 +27,14 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     bn_check_top(b);
     bn_check_top(r);
 
+    /*
+     * Acquiring rf may make r larger.
+     * If r == a, then a will also become larger.  Therefore, max must
+     * be calculated after rf has been acquired.
+     */
     size_t top = a->top + b->top;
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+
     size_t max = a->dmax + b->dmax;
 
     /*
@@ -36,7 +43,6 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
      * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
      */
     OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 1, max);
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
     int ret = OSSL_FN_mul(rf, a->data, b->data, fnctx);
     bn_release(r, (int)top);
 
