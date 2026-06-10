@@ -29,7 +29,14 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     bn_check_top(a);
     bn_check_top(r);
 
+    /*
+     * Acquiring rf may make r larger.
+     * If r == a, then a will also become larger.  Therefore, max must
+     * be calculated after rf has been acquired.
+     */
     size_t top = a->top * 2;
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+
     size_t max = a->dmax * 2;
 
     /*
@@ -38,7 +45,6 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
      * (OSSL_FN_CTX is only really useful within OSSL_FN functionality)
      */
     OSSL_FN_CTX *fnctx = OSSL_FN_CTX_new(NULL, 1, 2, max * 4);
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
     int ret = OSSL_FN_sqr(rf, a->data, fnctx);
     bn_release(r, (int)top);
     r->neg = 0;
