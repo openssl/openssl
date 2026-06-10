@@ -83,7 +83,7 @@ operation, the latter case has B<oper> or'ed with BIO_CB_RETURN.
 =item B<len>
 
 The length of the data requested to be read or written. This is only useful if
-B<oper> is BIO_CB_READ, BIO_CB_WRITE or BIO_CB_GETS.
+B<oper> is BIO_CB_READ, BIO_CB_WRITE, BIO_CB_GETS or BIO_CB_SENDFILE.
 
 =item B<argp> B<argi> B<argl>
 
@@ -94,7 +94,7 @@ the value of B<oper>, that is the operation being performed.
 
 B<processed> is a pointer to a location which will be updated with the amount of
 data that was actually read or written. Only used for BIO_CB_READ, BIO_CB_WRITE,
-BIO_CB_GETS and BIO_CB_PUTS.
+BIO_CB_GETS, BIO_CB_PUTS and BIO_CB_SENDFILE.
 
 =item B<ret>
 
@@ -200,6 +200,24 @@ is called before the operation and
 or
 
  callback(b, BIO_CB_PUTS|BIO_CB_RETURN, buf, 0, 0L, retvalue)
+
+after.
+
+=item B<BIO_sendfile(b, fd, offset, size, flags)>
+
+ callback_ex(b, BIO_CB_SENDFILE, NULL, size, fd, offset, 1L, NULL)
+
+or
+
+ callback(b, BIO_CB_SENDFILE, NULL, fd, offset, 1L)
+
+is called before the operation and
+
+ callback_ex(b, BIO_CB_SENDFILE | BIO_CB_RETURN, NULL, size, fd, offset, retvalue, &written)
+
+or
+
+ callback(b, BIO_CB_SENDFILE|BIO_CB_RETURN, NULL, fd, offset, retvalue)
 
 after.
 

@@ -2734,10 +2734,7 @@ int ssl_write_internal(SSL *s, const void *buf, size_t num,
 ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
-#ifndef OPENSSL_NO_KTLS
-    ossl_ssize_t sbytes;
-#endif
-    int ret;
+    ossl_ssize_t ret;
 
     if (sc == NULL)
         return 0;
@@ -2793,22 +2790,16 @@ ossl_ssize_t SSL_sendfile(SSL *s, int fd, off_t offset, size_t size, int flags)
     sc->statem.error_state = ERROR_STATE_SSL;
     return -1;
 #else
-    ret = ktls_sendfile(SSL_get_wfd(s), fd, offset, size, &sbytes, flags);
+    ret = BIO_sendfile(sc->wbio, fd, offset, size, flags);
     ssl_update_error_state(sc);
-    BIO_clear_retry_flags(sc->wbio);
-    if (ret < 0) {
-        if (BIO_sock_should_retry(ret)) {
-            BIO_set_retry_write(sc->wbio);
-            return (sbytes > 0 ? sbytes : ret);
-        } else {
-            ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
-                "ktls_sendfile failure");
-            sc->statem.error_state = ERROR_STATE_SYSCALL;
-        }
+    if (ret < 0 && !BIO_should_retry(sc->wbio)) {
+        ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),
+            "ktls_sendfile failure");
+        sc->statem.error_state = ERROR_STATE_SYSCALL;
         return ret;
     }
     sc->rwstate = SSL_NOTHING;
-    return sbytes;
+    return ret;
 #endif
 }
 

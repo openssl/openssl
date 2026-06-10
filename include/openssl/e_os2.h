@@ -221,6 +221,7 @@ typedef INTN ossl_ssize_t;
 #endif
 
 #ifdef _WIN32
+#include <sys/types.h>
 #ifdef _WIN64
 typedef int64_t ossl_ssize_t;
 #define OSSL_SSIZE_MAX INT64_MAX
