@@ -820,7 +820,10 @@ EVP_RAND_CTX *RAND_get0_public(OSSL_LIB_CTX *ctx)
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
             SECONDARY_RESEED_TIME_INTERVAL);
-        CRYPTO_THREAD_set_local(&dgbl->public, rand);
+        if (!CRYPTO_THREAD_set_local(&dgbl->public, rand)) {
+            EVP_RAND_CTX_free(rand);
+            rand = NULL;
+        }
     }
     return rand;
 }
@@ -856,7 +859,10 @@ EVP_RAND_CTX *RAND_get0_private(OSSL_LIB_CTX *ctx)
             return NULL;
         rand = rand_new_drbg(ctx, primary, SECONDARY_RESEED_INTERVAL,
             SECONDARY_RESEED_TIME_INTERVAL);
-        CRYPTO_THREAD_set_local(&dgbl->private, rand);
+        if (!CRYPTO_THREAD_set_local(&dgbl->private, rand)) {
+            EVP_RAND_CTX_free(rand);
+            rand = NULL;
+        }
     }
     return rand;
 }
