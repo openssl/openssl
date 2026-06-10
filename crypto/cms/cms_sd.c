@@ -631,7 +631,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     if (!ossl_cms_set1_SignerIdentifier(si->sid, signer, type, ctx))
         goto err;
 
-    if (ossl_cms_adjust_md(ctx, pk, &md, &local_md, flags) != 1 && local_md != md)
+    if (ossl_cms_adjust_md(ctx, pk, &md, &local_md, flags) != 1)
         goto err;
 
     if (!X509_ALGOR_set_md(si->digestAlgorithm, md))

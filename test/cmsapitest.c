@@ -19,6 +19,8 @@
 
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
+static X509 *ed448_cert = NULL;
+static EVP_PKEY *ed448_privkey = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 
@@ -98,6 +100,62 @@ static int test_CMS_add1_cert(void)
         && TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, 0))
         && TEST_true(CMS_add1_cert(cms, cert)); /* add cert again */
 
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+static int test_CMS_add1_signer_ed448_signed_attrs(void)
+{
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cms = CMS_ContentInfo_new()))
+        goto end;
+
+    if (!TEST_ptr_null(CMS_add1_signer(cms, ed448_cert, ed448_privkey,
+            NULL, 0)))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+static int test_CMS_add1_signer_ed448_signed_attrs_md(void)
+{
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cms = CMS_ContentInfo_new()))
+        goto end;
+
+    if (!TEST_ptr_null(CMS_add1_signer(cms, ed448_cert, ed448_privkey,
+            EVP_shake256(), 0)))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+static int test_CMS_add1_signer_ed448_noattr(void)
+{
+    CMS_ContentInfo *cms = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cms = CMS_ContentInfo_new()))
+        goto end;
+
+    if (!TEST_ptr(CMS_add1_signer(cms, ed448_cert, ed448_privkey,
+            NULL, CMS_NOATTR)))
+        goto end;
+
+    ret = 1;
+end:
     CMS_ContentInfo_free(cms);
     return ret;
 }
@@ -512,11 +570,12 @@ end:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile\n")
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile too_long_iv_cms [ed448certfile ed448privkeyfile]\n")
 
 int setup_tests(void)
 {
     char *certin = NULL, *privkeyin = NULL;
+    char *ed448_certin = NULL, *ed448_privkeyin = NULL;
     BIO *certbio = NULL, *privkeybio = NULL;
 
     if (!test_skip_common_options()) {
@@ -553,6 +612,15 @@ int setup_tests(void)
     }
     BIO_free(privkeybio);
 
+    if (test_get_argument_count() >= 6) {
+        ed448_certin = test_get_argument(4);
+        ed448_privkeyin = test_get_argument(5);
+
+        if (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
+            || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin, NULL)))
+            return 0;
+    }
+
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
@@ -564,6 +632,11 @@ int setup_tests(void)
     ADD_TEST(test_encrypted_data_aead);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     ADD_TEST(test_cms_aesgcm_iv_too_long);
+    if (ed448_cert != NULL && ed448_privkey != NULL) {
+        ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
+        ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs_md);
+        ADD_TEST(test_CMS_add1_signer_ed448_noattr);
+    }
     return 1;
 }
 
@@ -571,4 +644,6 @@ void cleanup_tests(void)
 {
     X509_free(cert);
     EVP_PKEY_free(privkey);
+    X509_free(ed448_cert);
+    EVP_PKEY_free(ed448_privkey);
 }

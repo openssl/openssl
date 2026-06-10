@@ -87,11 +87,18 @@ void X509_ALGOR_get0(const ASN1_OBJECT **paobj, int *pptype,
 /* Set up an X509_ALGOR DigestAlgorithmIdentifier from an EVP_MD */
 int X509_ALGOR_set_md(X509_ALGOR *alg, const EVP_MD *md)
 {
-    int type = md->flags & EVP_MD_FLAG_DIGALGID_ABSENT ? V_ASN1_UNDEF
-                                                       : V_ASN1_NULL;
-    int md_type = EVP_MD_type(md);
+    int type, md_type;
+    ASN1_OBJECT *obj;
 
-    ASN1_OBJECT *obj = (md_type == NID_undef) ? OBJ_txt2obj(EVP_MD_get0_name(md), 0) : OBJ_nid2obj(md_type);
+    if (md == NULL)
+        return 0;
+
+    type = md->flags & EVP_MD_FLAG_DIGALGID_ABSENT ? V_ASN1_UNDEF
+                                                   : V_ASN1_NULL;
+    md_type = EVP_MD_type(md);
+
+    obj = (md_type == NID_undef) ? OBJ_txt2obj(EVP_MD_get0_name(md), 0)
+                                 : OBJ_nid2obj(md_type);
     return X509_ALGOR_set0(alg, obj, type, NULL);
 }
 
