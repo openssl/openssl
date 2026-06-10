@@ -1082,7 +1082,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     const EXTENSION_DEFINITION *thisexd;
     int for_comp = (context & SSL_EXT_TLS1_3_CERTIFICATE_COMPRESSION) != 0;
 #ifndef OPENSSL_NO_ECH
-    int pass, comp_first;
+    int pass;
 #endif
 
     if (!WPACKET_start_sub_packet_u16(pkt)
@@ -1124,18 +1124,15 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
 #ifndef OPENSSL_NO_ECH
-    comp_first = s->ext.ech.attempted == 1
-        && s->ext.ech.grease == OSSL_ECH_NOT_GREASE
-        && s->ext.ech.ch_depth == 1;
     /*
-     * Two passes if doing inner ECH - we first construct the
+     * Two passes if doing real ECH - we first construct the
      * to-be-ECH-compressed extensions, and then go around again
      * constructing those that aren't to be ECH-compressed. We
      * need to ensure this ordering so that all the ECH-compressed
      * extensions are contiguous in the encoding. The actual
      * compression happens later in ech_encode_inner().
      */
-    for (pass = 0; pass < (comp_first ? 2 : 1); pass++)
+    for (pass = 0; pass <= 1; pass++)
 #endif
 
         for (i = 0, thisexd = ext_defs; i < OSSL_NELEM(ext_defs);
@@ -1147,7 +1144,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
 
 #ifndef OPENSSL_NO_ECH
             /* do compressed in pass 0, non-compressed in pass 1 */
-            if (ossl_ech_2bcompressed((int)i) == pass && comp_first)
+            if (ossl_ech_2bcompressed((int)i) == pass)
                 continue;
             /* stash index - needed for COMPRESS ECH handling */
             s->ext.ech.ext_ind = (int)i;

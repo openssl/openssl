@@ -453,7 +453,7 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
     size_t *encoded_len)
 {
     int rv = 0;
-    size_t nraws = 0, ind = 0, innerlen = 0, last_received_order = SIZE_MAX;
+    size_t nraws = 0, ind = 0, innerlen = 0;
     WPACKET inner = { 0 }; /* "fake" pkt for inner */
     BUF_MEM *inner_mem = NULL;
     RAW_EXTENSION *raws = NULL;
@@ -521,24 +521,14 @@ int ossl_ech_encode_inner(SSL_CONNECTION *s, unsigned char **encoded,
     }
     /* now copy the rest, as "proper" exts, into encoded inner */
     for (ind = 0; ind < TLSEXT_IDX_num_builtins; ind++) {
-        OSSL_TRACE6(
-            TLS, "encode_inner: copy ext type %d; ind %zu; comp %d; pres %d;"
-            "last %zu; recv %zu\n", raws[ind].type, ind, ossl_ech_2bcompressed(ind),
-            raws[ind].present, last_received_order, raws[ind].received_order);
-
         if (raws[ind].present == 0 || ossl_ech_2bcompressed((int)ind) == 1)
             continue;
-        if (last_received_order != SIZE_MAX && ossl_assert(last_received_order >= raws[ind].received_order)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
-        }
         if (!WPACKET_put_bytes_u16(&inner, raws[ind].type)
             || !WPACKET_sub_memcpy_u16(&inner, PACKET_data(&raws[ind].data),
                 PACKET_remaining(&raws[ind].data))) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
-        last_received_order = raws[ind].received_order;
     }
     if (!WPACKET_close(&inner) /* close the encoded inner packet */
         || !WPACKET_get_length(&inner, &innerlen)) { /* len for inner CH */
