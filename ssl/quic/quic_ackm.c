@@ -1003,6 +1003,7 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
     const OSSL_ACKM_TX_PKT *anext;
     QUIC_PN last_pn_acked = 0;
     OSSL_CC_ACK_INFO ainfo = { 0 };
+    unsigned int is_inflight;
 
     for (; apkt != NULL; apkt = anext) {
         if (apkt->is_inflight) {
@@ -1027,10 +1028,11 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
         ainfo.tx_time = apkt->time;
         ainfo.tx_size = apkt->num_bytes;
 
+        is_inflight = apkt->is_inflight;
         anext = apkt->anext;
         apkt->on_acked(apkt->cb_arg); /* may free apkt */
 
-        if (apkt->is_inflight)
+        if (is_inflight)
             ackm->cc_method->on_data_acked(ackm->cc_data, &ainfo);
     }
 }
