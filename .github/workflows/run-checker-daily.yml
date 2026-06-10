@@ -28,6 +28,7 @@ jobs:
           no-argon2,
           no-aria,
           no-asan,
+          no-ascon128,
           no-asm,
           no-async,
           no-atexit,

@@ -450,6 +450,7 @@ foreach my $proto ((@tls, @dtls))
 my @disablables_algorithms = (
     "argon2",
     "aria",
+    "ascon128",
     "bf",
     "blake2",
     "brotli",
@@ -511,7 +512,6 @@ my @disablables_features = (
     "asan",
     "asm",
     "async",
-    "ascon128",
     "atexit",
     "autoalginit",
     "autoerrinit",
@@ -665,7 +665,7 @@ our %disabled = ( # "what"         => "comment"
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     "bulk"              => [ "shared", "dso",
-                             "argon2", "aria", "async", "atexit", "autoload-config",
+                             "argon2", "aria", "ascon128", "async", "atexit", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
