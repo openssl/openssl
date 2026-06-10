@@ -22,6 +22,13 @@ WRAP[crypto/bio/test_bss_conn]=BIO_lookup BIO_socket BIO_connect \
 INCLUDE[crypto/bio/test_bss_conn]=../../include ../../crypto/bio
 DEPEND[crypto/bio/test_bss_conn]=../../libcrypto.a
 
+PROGRAMS{noinst}=crypto/bio/test_bss_dgram
+SOURCE[crypto/bio/test_bss_dgram]=crypto/bio/test_bss_dgram.c
+WRAP[crypto/bio/test_bss_dgram]=recvfrom sendto write getsockname \
+    getpeername BIO_closesocket BIO_socket_nbio
+INCLUDE[crypto/bio/test_bss_dgram]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_dgram]=../../libcrypto.a
+
 PROGRAMS{noinst}=crypto/bio/test_bss_fd
 SOURCE[crypto/bio/test_bss_fd]=crypto/bio/test_bss_fd.c
 INCLUDE[crypto/bio/test_bss_fd]=../../include ../../crypto/bio

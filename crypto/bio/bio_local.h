@@ -74,6 +74,7 @@ struct bio_addrinfo_st {
 #include "internal/cryptlib.h"
 #include "internal/bio.h"
 #include "internal/refcount.h"
+#include "internal/time.h"
 
 typedef struct bio_f_buffer_ctx_struct {
     /*-
@@ -173,6 +174,20 @@ typedef struct bio_accept_st {
 
     BIO *bio_chain;
 } BIO_ACCEPT;
+
+#ifndef OPENSSL_NO_DGRAM
+typedef struct bio_dgram_data_st {
+    BIO_ADDR peer;
+    BIO_ADDR local_addr;
+    unsigned int connected;
+    unsigned int _errno;
+    unsigned int mtu;
+    OSSL_TIME next_timeout;
+    OSSL_TIME socket_timeout;
+    unsigned int peekmode;
+    char local_addr_enabled;
+} bio_dgram_data;
+#endif
 
 #define BIO_CONN_S_BEFORE 1
 #define BIO_CONN_S_GET_ADDR 2
