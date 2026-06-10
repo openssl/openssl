@@ -17,7 +17,7 @@
 #include "fn_local.h"
 #include "internal/constant_time.h"
 
-static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
+OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
 {
     /* Total size of the whole OSSL_FN, in bytes */
     size_t totalsize = ossl_fn_totalsize(limbs);
