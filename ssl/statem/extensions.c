@@ -468,21 +468,15 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     { /* RFC 8701 GREASE extension 1 - type is dynamic */
         TLSEXT_TYPE_grease1,
         SSL_EXT_CLIENT_HELLO,
-        /*
-         * We don't delegate compression to ECH_SAME_EXT. Modify the
-         * ctos constructor accordingly when changing ech_handling.
-         */
-        OSSL_ECH_HANDLING_COMPRESS,
+        /* We use CALL_BOTH because ECH_SAME_EXT can't handle dynamic types */
+        OSSL_ECH_HANDLING_CALL_BOTH,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease1, NULL },
     { /* RFC 8701 GREASE extension 2 - type is dynamic */
         TLSEXT_TYPE_grease2,
         SSL_EXT_CLIENT_HELLO,
-        /*
-         * We don't delegate compression to ECH_SAME_EXT. Modify the
-         * ctos constructor accordingly when changing ech_handling.
-         */
-        OSSL_ECH_HANDLING_COMPRESS,
+        /* We use CALL_BOTH because ECH_SAME_EXT can't handle dynamic types */
+        OSSL_ECH_HANDLING_CALL_BOTH,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
     /*
