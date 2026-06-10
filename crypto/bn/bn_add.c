@@ -10,19 +10,14 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-static size_t calculate_max_limbs(const BIGNUM *a, const BIGNUM *b)
+static size_t calculate_max_top(const BIGNUM *a, const BIGNUM *b)
 {
-    OSSL_FN *af = a->data;
-    OSSL_FN *bf = b->data;
-
-    return (af->dsize > bf->dsize) ? af->dsize : bf->dsize;
+    return (a->top > b->top) ? a->top : b->top;
 }
 
 static bool is_highest_bit_set(const BIGNUM *a)
 {
-    OSSL_FN *af = a->data;
-
-    return (af->d[af->dsize - 1] & OSSL_FN_HIGH_BIT_MASK) != 0;
+    return a->top > 0 && (a->d[a->top - 1] & OSSL_FN_HIGH_BIT_MASK) != 0;
 }
 
 /* signed add of b to a. */
@@ -147,18 +142,18 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     bn_check_top(a);
     bn_check_top(b);
 
-    size_t max = calculate_max_limbs(a, b);
+    size_t top = calculate_max_top(a, b);
 
     /*
      * If either operands have the highest bit set the result may become
      * one limb larger.
      */
     if (is_highest_bit_set(a) || is_highest_bit_set(b))
-        max++;
+        top++;
 
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)max);
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
     int ret = OSSL_FN_add(rf, a->data, b->data);
-    bn_release(r, (int)max);
+    bn_release(r, (int)top);
 
     return ret;
 }
@@ -226,11 +221,11 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         return 0;
     }
 
-    size_t max = calculate_max_limbs(a, b);
+    size_t top = calculate_max_top(a, b);
 
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)max);
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
     int ret = OSSL_FN_sub(rf, a->data, b->data);
-    bn_release(r, (int)max);
+    bn_release(r, (int)top);
 
     return ret;
 }
