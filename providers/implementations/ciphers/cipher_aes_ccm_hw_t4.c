@@ -9,16 +9,19 @@
 
 /*-
  * Fujitsu SPARC64 X support for AES CCM.
- * This file is included by cipher_aes_ccm_hw.c
+ * This file is used by cipher_aes_ccm_hw.c
  */
 
-static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
-                              size_t keylen)
-{
-    PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
+#include "internal/deprecated.h"
+#include "cipher_aes_ccm.h"
 
-    AES_HW_CCM_SET_KEY_FN(aes_t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
-    return 1;
+#if defined(SPARC_AES_CAPABLE)
+
+static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
+    size_t keylen)
+{
+    return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
+        aes_t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
 }
 
 static const PROV_CCM_HW t4_aes_ccm = {
@@ -30,7 +33,10 @@ static const PROV_CCM_HW t4_aes_ccm = {
     ossl_ccm_generic_gettag
 };
 
-const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_t4(size_t keybits)
 {
-    return SPARC_AES_CAPABLE ? &t4_aes_ccm : &aes_ccm;
+    if (SPARC_AES_CAPABLE)
+        return &t4_aes_ccm;
+    return NULL;
 }
+#endif

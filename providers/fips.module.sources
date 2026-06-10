@@ -660,7 +660,6 @@ providers/implementations/ciphers/cipher_aes_cbc_hmac_sha_etm.h
 providers/implementations/ciphers/cipher_aes_ccm.c
 providers/implementations/ciphers/cipher_aes_ccm.h
 providers/implementations/ciphers/cipher_aes_ccm_hw.c
-providers/implementations/ciphers/cipher_aes_ccm_hw_aesni.inc
 providers/implementations/ciphers/cipher_aes_cts.inc
 providers/implementations/ciphers/cipher_aes_gcm.c
 providers/implementations/ciphers/cipher_aes_gcm.h

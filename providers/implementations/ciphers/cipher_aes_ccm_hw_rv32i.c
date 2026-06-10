@@ -9,27 +9,26 @@
 
 /*-
  * RISC-V 32 ZKND ZKNE support for AES CCM.
- * This file is included by cipher_aes_ccm_hw.c
+ * This file is used by cipher_aes_ccm_hw.c
  */
 
-static int ccm_rv32i_zknd_zkne_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
-                                       size_t keylen)
-{
-    PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
+#include "internal/deprecated.h"
+#include "cipher_aes_ccm.h"
 
-    AES_HW_CCM_SET_KEY_FN(rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt,
-                          NULL, NULL);
-    return 1;
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+
+static int ccm_rv32i_zknd_zkne_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
+    size_t keylen)
+{
+    return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
+        rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL, NULL);
 }
 
 static int ccm_rv32i_zbkb_zknd_zkne_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
-                                            size_t keylen)
+    size_t keylen)
 {
-    PROV_AES_CCM_CTX *actx = (PROV_AES_CCM_CTX *)ctx;
-
-    AES_HW_CCM_SET_KEY_FN(rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt,
-                          NULL, NULL);
-    return 1;
+    return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
+        rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL, NULL);
 }
 
 static const PROV_CCM_HW rv32i_zknd_zkne_ccm = {
@@ -50,11 +49,13 @@ static const PROV_CCM_HW rv32i_zbkb_zknd_zkne_ccm = {
     ossl_ccm_generic_gettag
 };
 
-const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv32i(size_t keybits)
 {
     if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
         return &rv32i_zbkb_zknd_zkne_ccm;
     if (RISCV_HAS_ZKND_AND_ZKNE())
         return &rv32i_zknd_zkne_ccm;
-    return &aes_ccm;
+    return NULL;
 }
+
+#endif
