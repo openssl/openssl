@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,11 +14,8 @@
 #ifndef OPENSSL_NO_ASCON128
 
 #include <stdint.h>
-#include <stdbool.h>
 #include <openssl/core.h>
-#define OSSL_INCLUDE_PROVIDER 1
 #include "crypto/ascon.h" /* ASCON algorithm header */
-#undef OSSL_INCLUDE_PROVIDER
 
 /*********************************************************************
  *
@@ -49,11 +46,11 @@ struct ascon_aead128_ctx_st {
     size_t tag_len; /* tag length being used */
 
     direction_t direction; /* either encryption or decryption */
-    bool is_tag_set; /* whether a tag has been computed or set */
-    bool is_ongoing; /* true = operation has started */
-    bool assoc_data_processed; /* whether associated data has been processed */
-    bool iv_set; /* whether the IV has been set */
-    bool key_set; /* whether the key has been set */
+    int is_tag_set; /* whether a tag has been computed or set */
+    int is_ongoing; /* nonzero once an operation has started */
+    int assoc_data_not_allowed; /* nonzero once payload begins; no more AAD accepted */
+    int iv_set; /* whether the IV has been set */
+    int key_set; /* whether the key has been set */
 };
 
 /*********************************************************************

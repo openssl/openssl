@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -12,7 +12,6 @@
 #include "internal/cryptlib.h"
 #include <openssl/byteorder.h>
 #include <openssl/crypto.h>
-#include <stdbool.h>
 
 /* semi-portable inline declaration */
 #define ASCON_INLINE ossl_inline
@@ -286,7 +285,7 @@ size_t ossl_ascon_aead128_encrypt_final(ASCON_AEAD_CTX *ctx,
 
 size_t ossl_ascon_aead128_decrypt_final(ASCON_AEAD_CTX *ctx,
     unsigned char *out,
-    bool *is_tag_valid,
+    int *is_tag_valid,
     const unsigned char *tag,
     size_t tag_len)
 {
@@ -296,7 +295,7 @@ size_t ossl_ascon_aead128_decrypt_final(ASCON_AEAD_CTX *ctx,
     if (is_tag_valid != NULL && tag != NULL && tag_len >= 16) {
         *is_tag_valid = (CRYPTO_memcmp(computed_tag, tag, 16) == 0);
     } else if (is_tag_valid != NULL) {
-        *is_tag_valid = false;
+        *is_tag_valid = 0;
     }
     return 0;
 }
