@@ -408,29 +408,19 @@ static const OSSL_ML_DSA_SAMPLE_OPS ml_dsa_sample_generic_meth = {
     vector_expand_mask_scalar
 };
 
-const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
-{
-#if defined(KECCAK1600_ASM)                                                               \
-    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
-    && !defined(OPENSSL_NO_ASM)
-    return ossl_ml_dsa_sample_x86_64_ops();
-#else
-    return ossl_ml_dsa_sample_generic_ops();
-#endif
-}
-
-const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_generic_ops(void)
-{
-    return &ml_dsa_sample_generic_meth;
-}
-
 #if defined(KECCAK1600_ASM)                                                               \
     && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
     && !defined(OPENSSL_NO_ASM)
 #include "ml_dsa_sample_hw_x86_64.inc"
-#else
-const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_x86_64_ops(void)
+const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
 {
-    return ossl_ml_dsa_sample_generic_ops();
+    if (SHA3_avx512vl_capable())
+        return &ml_dsa_sample_x86_64;
+    return &ml_dsa_sample_generic_meth;
+}
+#else
+const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
+{
+    return &ml_dsa_sample_generic_meth;
 }
 #endif
