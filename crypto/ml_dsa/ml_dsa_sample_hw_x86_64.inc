@@ -22,18 +22,14 @@
             ? ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_19 \
             : ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_17)
 
-static ossl_unused int rej_ntt_poly_mb(EVP_MD_CTX *g_ctx, const EVP_MD *md,
-    const uint8_t *seeds[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t seed_len,
-    POLY *outs[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t count)
+static ossl_unused int rej_ntt_poly_mb(const uint8_t *seeds[ML_DSA_SHAKE_X4_BATCH_SIZE],
+    const size_t seed_len, POLY *outs[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t count)
 {
     KECCAK1600_X4_CTX ctx;
     uint8_t blocks[ML_DSA_SHAKE_X4_BATCH_SIZE][SHAKE128_BLOCKSIZE];
     int coeff_idx[ML_DSA_SHAKE_X4_BATCH_SIZE] = { 0, 0, 0, 0 };
     size_t done_mask = 0;
     size_t lane;
-
-    (void)g_ctx;
-    (void)md;
 
     for (lane = count; lane < ML_DSA_SHAKE_X4_BATCH_SIZE; lane++)
         done_mask |= ((size_t)1 << lane);
@@ -130,8 +126,7 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
     }
 }
 
-static ossl_unused int rej_bounded_poly_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md,
-    COEFF_FROM_NIBBLE_FUNC *coef_from_nibble,
+static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nibble,
     const uint8_t *seeds[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t seed_len,
     POLY *outs[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t count)
 {
@@ -140,9 +135,6 @@ static ossl_unused int rej_bounded_poly_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md,
     int coeff_idx[ML_DSA_SHAKE_X4_BATCH_SIZE] = { 0, 0, 0, 0 };
     size_t done_mask = 0;
     size_t lane;
-
-    (void)h_ctx;
-    (void)md;
 
     for (lane = count; lane < ML_DSA_SHAKE_X4_BATCH_SIZE; lane++)
         done_mask |= ((size_t)1 << lane);
@@ -215,7 +207,7 @@ static int matrix_expand_A_mb(EVP_MD_CTX *g_ctx, const EVP_MD *md,
             polys[b] = &poly[idx + b];
         }
 
-        if (!rej_ntt_poly_mb(g_ctx, md, seeds, seed_len, polys, 4))
+        if (!rej_ntt_poly_mb(seeds, seed_len, polys, 4))
             return 0;
     }
 
@@ -231,7 +223,7 @@ static int matrix_expand_A_mb(EVP_MD_CTX *g_ctx, const EVP_MD *md,
             polys[b] = &poly[idx + b];
         }
 
-        if (!rej_ntt_poly_mb(g_ctx, md, seeds, seed_len, polys, left))
+        if (!rej_ntt_poly_mb(seeds, seed_len, polys, left))
             return 0;
     }
 
@@ -268,7 +260,7 @@ static int vector_expand_S_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md, const int eta
                 polys[b] = &s2->poly[poly_idx - l];
         }
 
-        if (!rej_bounded_poly_mb(h_ctx, md, coef_from_nibble_fn,
+        if (!rej_bounded_poly_mb(coef_from_nibble_fn,
                 seeds, seed_len, polys, ML_DSA_SHAKE_X4_BATCH_SIZE))
             return 0;
     }
@@ -288,7 +280,7 @@ static int vector_expand_S_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md, const int eta
                 polys[b] = &s2->poly[poly_idx - l];
         }
 
-        if (!rej_bounded_poly_mb(h_ctx, md, coef_from_nibble_fn,
+        if (!rej_bounded_poly_mb(coef_from_nibble_fn,
                 seeds, seed_len, polys, batch_count))
             return 0;
     }
@@ -301,10 +293,3 @@ static const OSSL_ML_DSA_SAMPLE_OPS ml_dsa_sample_x86_64 = {
     vector_expand_S_mb,
     vector_expand_mask_mb
 };
-
-const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_x86_64_ops(void)
-{
-    if (SHA3_avx512vl_capable())
-        return &ml_dsa_sample_x86_64;
-    return ossl_ml_dsa_sample_generic_ops();
-}

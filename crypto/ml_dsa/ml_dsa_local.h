@@ -74,8 +74,6 @@ typedef struct ossl_ml_dsa_sample_ops_st {
 } OSSL_ML_DSA_SAMPLE_OPS;
 
 const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void);
-const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_generic_ops(void);
-const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_x86_64_ops(void);
 void ossl_ml_dsa_matrix_mult_vector(const MATRIX *matrix_kl, const VECTOR *vl,
     VECTOR *vk);
 int ossl_ml_dsa_poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len,
