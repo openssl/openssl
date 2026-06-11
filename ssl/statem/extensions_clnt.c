@@ -2879,10 +2879,9 @@ EXT_RETURN tls_construct_ctos_grease1(SSL_CONNECTION *s, WPACKET *pkt,
     if (!(s->options & SSL_OP_GREASE) || s->server)
         return EXT_RETURN_NOT_SENT;
 
-    /*
-     * The extension type is checked by verify_extension()
-     * in ssl/statem/extensions.c
-     */
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, context, pkt)
+#endif
     grease_type = ossl_grease_value(s, OSSL_GREASE_EXT1);
 
     if (!WPACKET_put_bytes_u16(pkt, grease_type)
@@ -2903,10 +2902,9 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
     if (!(s->options & SSL_OP_GREASE) || s->server)
         return EXT_RETURN_NOT_SENT;
 
-    /*
-     * The extension type is checked by verify_extension()
-     * in ssl/statem/extensions.c
-     */
+#ifndef OPENSSL_NO_ECH
+    ECH_SAME_EXT(s, context, pkt)
+#endif
     grease_type = ossl_grease_value(s, OSSL_GREASE_EXT2);
 
     /*

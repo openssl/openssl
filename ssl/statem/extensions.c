@@ -33,7 +33,8 @@
  * DUPLICATE isn't really useful other than to show we can,
  * and for debugging/tests/coverage so may disappear. Changes mostly
  * won't affect the outer CH size, due to padding, but might for some
- * larger extensions.
+ * larger extensions. We do use it for GREASE extension types though
+ * just to show it works still.
  *
  * Note there is a co-dependency with test/recipes/75-test_quicapi.t:
  * If you change an |ech_handling| value, that may well affect the order
@@ -468,15 +469,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     { /* RFC 8701 GREASE extension 1 - type is dynamic */
         TLSEXT_TYPE_grease1,
         SSL_EXT_CLIENT_HELLO,
-        /* We use CALL_BOTH because ECH_SAME_EXT can't handle dynamic types */
-        OSSL_ECH_HANDLING_CALL_BOTH,
+        OSSL_ECH_HANDLING_DUPLICATE,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease1, NULL },
     { /* RFC 8701 GREASE extension 2 - type is dynamic */
         TLSEXT_TYPE_grease2,
         SSL_EXT_CLIENT_HELLO,
-        /* We use CALL_BOTH because ECH_SAME_EXT can't handle dynamic types */
-        OSSL_ECH_HANDLING_CALL_BOTH,
+        OSSL_ECH_HANDLING_DUPLICATE,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
     /*
@@ -598,9 +597,15 @@ int ossl_ech_same_ext(SSL_CONNECTION *s, WPACKET *pkt)
     if (tind < 0 || tind >= nexts)
         return OSSL_ECH_SAME_EXT_ERR;
     type = ext_defs[tind].type;
-    /* Avoid invalid or placeholder types, as outer_only stores uint16 */
-    if (type > UINT16_MAX)
-        return OSSL_ECH_SAME_EXT_ERR;
+    /*
+     * GREASE extension types break the invariant that the actual
+     * extension type is in the type field of ext_defs so handle
+     * those accordingly
+     */
+    if (type == TLSEXT_TYPE_grease1)
+        type = ossl_grease_value(s, OSSL_GREASE_EXT1);
+    if (type == TLSEXT_TYPE_grease2)
+        type = ossl_grease_value(s, OSSL_GREASE_EXT2);
     if (s->ext.ech.ch_depth == 1) {
         /* inner CH - just note compression as configured */
         if (ext_defs[tind].ech_handling != OSSL_ECH_HANDLING_COMPRESS)
