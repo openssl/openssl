@@ -45,6 +45,7 @@
  * returns a BIO for accepting requests, NULL on error
  */
 BIO *http_server_init(const char *prog, const char *port, int verbosity);
+BIO *http_ocspserver_init(const char *prog, const char *host, const char *port, int family, int verbosity);
 
 /*-
  * Accept an ASN.1-formatted HTTP request

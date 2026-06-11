@@ -235,6 +235,61 @@ err:
     BIO_free(bufbio);
     return NULL;
 }
+BIO *http_ocspserver_init(const char *prog, const char *host, const char *port, int family, int verb)
+{
+    BIO *acbio = NULL, *bufbio;
+    int asock;
+    int port_num;
+    char *name;
+    size_t n = 0;
+
+    if (host != NULL) n += strlen(host);
+    if (port != NULL) n += strlen(port);
+
+    name=app_malloc(n + 2, "listener host:port buffer");
+
+    log_HTTP2(prog, LOG_INFO, "host %s listen on port %s", host, port);
+
+    BIO_snprintf(name, n * sizeof(name), "%s:%s",host, port); /* port may be "0" */
+    if (verb >= 0 && !log_set_verbosity(prog, verb))
+        return NULL;
+    bufbio = BIO_new(BIO_f_buffer());
+    if (bufbio == NULL)
+        goto err;
+    acbio = BIO_new(BIO_s_accept());
+    if (acbio == NULL
+        || BIO_set_accept_ip_family(acbio, family) <= 0 /* IPv4/6 */
+        || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) <= 0
+        || BIO_set_accept_name(acbio, name) <= 0) {
+        log_HTTP(prog, LOG_ERR, "error setting up accept BIO");
+        goto err;
+    }
+
+    clear_free(name);
+
+    BIO_set_accept_bios(acbio, bufbio);
+    bufbio = NULL;
+    if (BIO_do_accept(acbio) <= 0) {
+        log_HTTP1(prog, LOG_ERR, "error setting accept on port %s", port);
+        goto err;
+    }
+
+    /* Report back what address and port are used */
+    BIO_get_fd(acbio, &asock);
+    port_num = report_server_accept(bio_out, asock, 1, 1);
+    if (port_num == 0) {
+        log_HTTP(prog, LOG_ERR, "error printing ACCEPT string");
+        goto err;
+    }
+
+    return acbio;
+
+err:
+    ERR_print_errors(bio_err);
+    BIO_free_all(acbio);
+    BIO_free(bufbio);
+    return NULL;
+}
 
 /*
  * Decode %xx URL-decoding in-place. Ignores malformed sequences.
