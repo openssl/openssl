@@ -627,7 +627,7 @@ static int test_vpm_input_validation(void)
             goto err;
     }
     for (size_t i = 0; invalid_emails[i] != NULL; i++) {
-        if (TEST_true(X509_VERIFY_PARAM_set1_email(vpm, invalid_emails[i], 0)))
+        if (!TEST_false(X509_VERIFY_PARAM_set1_email(vpm, invalid_emails[i], 0)))
             goto err;
     }
     for (size_t i = 0; multiname_ips[i] != NULL; i++) {

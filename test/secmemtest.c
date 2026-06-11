@@ -81,7 +81,7 @@ static int test_sec_mem(void)
      * If init fails, then initialized should be false, if not, this
      * could cause an infinite loop secure_malloc, but we don't test it
      */
-    if (TEST_false(CRYPTO_secure_malloc_init(16, 16)) && !TEST_false(CRYPTO_secure_malloc_initialized())) {
+    if (!TEST_true(CRYPTO_secure_malloc_init(16, 16)) && !TEST_false(CRYPTO_secure_malloc_initialized())) {
         TEST_true(CRYPTO_secure_malloc_done());
         goto end;
     }
