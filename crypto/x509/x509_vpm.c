@@ -7,6 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* X509_VERIFY_PARAM_{set1,add1}_host() and _set1_host_input_validation() are
+ * deprecated public API but are defined in this file, so suppress
+ * deprecation diagnostics here. */
+#define OPENSSL_SUPPRESS_DEPRECATED
+
 #include <stdio.h>
 
 #include "internal/cryptlib.h"
@@ -503,6 +508,13 @@ int X509_VERIFY_PARAM_inherit(X509_VERIFY_PARAM *dest,
     }
     x509_verify_param_copy(validate_cn, NULL);
 
+    /*
+     * The identifier API mode follows the dnsnames/cns lists. Without
+     * propagating it from src, an SSL inheriting from an SSL_CTX could see
+     * UNSET and accept a call from the wrong API family.
+     */
+    x509_verify_param_copy(identifier_api_mode, OSSL_VPM_IDENT_UNSET);
+
     if (test_x509_verify_param_copy(ips, NULL)) {
         if (!replace_buffer_stack(&dest->ips, &src->ips))
             return 0;
@@ -672,6 +684,36 @@ int X509_VERIFY_PARAM_set1_policies(X509_VERIFY_PARAM *param,
     return 1;
 }
 
+/*
+ * Lock the identifier API mode to the legacy host family.
+ * Returns 1 on success, or 0 (with an X509 error raised) if the param has
+ * already been configured with the explicit dnsname/cn family.
+ */
+static int lock_legacy_host_mode(X509_VERIFY_PARAM *param)
+{
+    if (param->identifier_api_mode == OSSL_VPM_IDENT_EXPLICIT_DNS_CN) {
+        ERR_raise(ERR_LIB_X509, X509_R_INVALID_IDENTIFIER_API);
+        return 0;
+    }
+    param->identifier_api_mode = OSSL_VPM_IDENT_LEGACY_HOST;
+    return 1;
+}
+
+/*
+ * Lock the identifier API mode to the explicit dnsname/cn family.
+ * Returns 1 on success, or 0 (with an X509 error raised) if the param has
+ * already been configured with the legacy host family.
+ */
+static int lock_explicit_dns_cn_mode(X509_VERIFY_PARAM *param)
+{
+    if (param->identifier_api_mode == OSSL_VPM_IDENT_LEGACY_HOST) {
+        ERR_raise(ERR_LIB_X509, X509_R_INVALID_IDENTIFIER_API);
+        return 0;
+    }
+    param->identifier_api_mode = OSSL_VPM_IDENT_EXPLICIT_DNS_CN;
+    return 1;
+}
+
 char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx)
 {
     X509_BUFFER *buf = sk_X509_BUFFER_value(param->dnsnames, idx);
@@ -682,6 +724,8 @@ char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx)
 int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
     const char *dnsname, size_t len)
 {
+    if (!lock_legacy_host_mode(param))
+        return 0;
     clear_buffer_stack(&param->dnsnames);
     if (dnsname == NULL)
         return 1;
@@ -695,6 +739,8 @@ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
 int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
     const char *dnsname, size_t len)
 {
+    if (!lock_legacy_host_mode(param))
+        return 0;
     if (dnsname == NULL)
         return 1;
     if (len == 0)
@@ -716,12 +762,62 @@ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
 void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_dnsname)(const char *name, size_t len))
 {
+    if (!lock_legacy_host_mode(param))
+        return;
+    param->validate_dnsname = validate_dnsname;
+}
+
+int X509_VERIFY_PARAM_set1_dnsname(X509_VERIFY_PARAM *param,
+    const char *dnsname, size_t len)
+{
+    if (!lock_explicit_dns_cn_mode(param))
+        return 0;
+    clear_buffer_stack(&param->dnsnames);
+    if (dnsname == NULL)
+        return 1;
+    if (len == 0)
+        len = strlen(dnsname);
+    if (len == 0)
+        return 1;
+    return X509_VERIFY_PARAM_add1_dnsname(param, dnsname, len);
+}
+
+int X509_VERIFY_PARAM_add1_dnsname(X509_VERIFY_PARAM *param,
+    const char *dnsname, size_t len)
+{
+    if (!lock_explicit_dns_cn_mode(param))
+        return 0;
+    if (dnsname == NULL)
+        return 1;
+    if (len == 0)
+        len = strlen(dnsname);
+    if (len == 0)
+        return 1;
+    if (!validate_string_name(dnsname, &len))
+        return 0;
+    if (param->validate_dnsname != NULL) {
+        if (!param->validate_dnsname(dnsname, len))
+            return 0;
+    } else {
+        if (!validate_hostname_part(dnsname, len, OSSL_CHARSET_ASCII_ALNUM))
+            return 0;
+    }
+    return add_string_to_buffer_stack(&param->dnsnames, (const uint8_t *)dnsname, len);
+}
+
+void X509_VERIFY_PARAM_set1_dnsname_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_dnsname)(const char *name, size_t len))
+{
+    if (!lock_explicit_dns_cn_mode(param))
+        return;
     param->validate_dnsname = validate_dnsname;
 }
 
 int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
     const char *cn, size_t len)
 {
+    if (!lock_explicit_dns_cn_mode(param))
+        return 0;
     clear_buffer_stack(&param->cns);
     if (cn == NULL)
         return 1;
@@ -735,6 +831,8 @@ int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
 int X509_VERIFY_PARAM_add1_cn(X509_VERIFY_PARAM *param,
     const char *cn, size_t len)
 {
+    if (!lock_explicit_dns_cn_mode(param))
+        return 0;
     if (cn == NULL)
         return 1;
     if (len == 0)
@@ -756,6 +854,8 @@ int X509_VERIFY_PARAM_add1_cn(X509_VERIFY_PARAM *param,
 void X509_VERIFY_PARAM_set1_cn_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_cn)(const char *name, size_t len))
 {
+    if (!lock_explicit_dns_cn_mode(param))
+        return;
     param->validate_cn = validate_cn;
 }
 

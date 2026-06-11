@@ -760,12 +760,21 @@ int X509_VERIFY_PARAM_set_inh_flags(X509_VERIFY_PARAM *param,
 uint32_t X509_VERIFY_PARAM_get_inh_flags(const X509_VERIFY_PARAM *param);
 
 char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int idx);
+OSSL_DEPRECATEDIN_4_1_FOR("use X509_VERIFY_PARAM_set1_dnsname() and/or X509_VERIFY_PARAM_set1_cn()")
 int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen);
+OSSL_DEPRECATEDIN_4_1_FOR("use X509_VERIFY_PARAM_add1_dnsname() and/or X509_VERIFY_PARAM_add1_cn()")
 int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen);
+OSSL_DEPRECATEDIN_4_1_FOR("use X509_VERIFY_PARAM_set1_dnsname_input_validation()")
 void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_host)(const char *name, size_t len));
+int X509_VERIFY_PARAM_set1_dnsname(X509_VERIFY_PARAM *param,
+    const char *name, size_t namelen);
+int X509_VERIFY_PARAM_add1_dnsname(X509_VERIFY_PARAM *param,
+    const char *name, size_t namelen);
+void X509_VERIFY_PARAM_set1_dnsname_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_dnsname)(const char *name, size_t len));
 int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
     const char *name, size_t namelen);
 int X509_VERIFY_PARAM_add1_cn(X509_VERIFY_PARAM *param,

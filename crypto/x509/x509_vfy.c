@@ -938,6 +938,26 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
         OPENSSL_free(vpm->peername);
         vpm->peername = NULL;
     }
+
+    /*
+     * Dispatch on the identifier API mode locked on this param. In
+     * LEGACY_HOST mode the dnsnames list carries entries configured via
+     * X509_VERIFY_PARAM_set1_host() / _add1_host(), which retain the
+     * pre-4.1 SAN-then-CN-fallback semantics. In EXPLICIT_DNS_CN mode the
+     * dnsnames list carries set1_dnsname() entries (SAN-only) and the cns
+     * list carries set1_cn() entries (CN-only).
+     */
+    if (vpm->identifier_api_mode == OSSL_VPM_IDENT_LEGACY_HOST) {
+        for (i = 0; i < n; ++i) {
+            size_t len = sk_X509_BUFFER_value(vpm->dnsnames, i)->len;
+            name = sk_X509_BUFFER_value(vpm->dnsnames, i)->data;
+            if (ossl_x509_check_hostname_legacy(x, (const char *)name, len,
+                    vpm->hostflags, &vpm->peername))
+                return 1;
+        }
+        return n <= 0;
+    }
+
     for (i = 0; i < n; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->dnsnames, i)->len;
         name = sk_X509_BUFFER_value(vpm->dnsnames, i)->data;
@@ -945,7 +965,6 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
                 vpm->hostflags, &vpm->peername))
             return 1;
     }
-    j = sk_X509_BUFFER_num(vpm->cns);
     for (i = 0; i < j; ++i) {
         size_t len = sk_X509_BUFFER_value(vpm->cns, i)->len;
         name = sk_X509_BUFFER_value(vpm->cns, i)->data;

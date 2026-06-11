@@ -1033,6 +1033,25 @@ int ossl_x509_check_hostname_subject(const X509 *x, const char *chk, size_t chkl
     return do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, NID_commonName, peername) == 1;
 }
 
+/*
+ * Legacy SAN-then-CN-fallback matcher used in support of
+ * X509_VERIFY_PARAM_set1_host() / _add1_host(). CN fallback is on by
+ * default; it is suppressed only by X509_CHECK_FLAG_NEVER_CHECK_SUBJECT.
+ */
+int ossl_x509_check_hostname_legacy(const X509 *x, const char *chk,
+    size_t chklen, unsigned int flags, char **peername)
+{
+    if (do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, NID_undef, peername)
+        == 1)
+        return 1;
+    if (check_subject(flags, 1)
+        && do_x509_check(x, chk, chklen, flags, GEN_DNS, 0, NID_commonName,
+               peername)
+            == 1)
+        return 1;
+    return 0;
+}
+
 int ossl_x509_check_rfc822(const X509 *x, const char *chk, size_t chklen, unsigned int flags)
 {
     return do_x509_check(x, chk, chklen, flags, GEN_EMAIL, 0, NID_undef, NULL) == 1;

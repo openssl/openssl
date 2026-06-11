@@ -2,6 +2,7 @@
 
 =head1 NAME
 
+X509_VERIFY_PARAM_set1_dnsname, X509_VERIFY_PARAM_add1_dnsname,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_get0_host,
 X509_VERIFY_PARAM_set1_cn, X509_VERIFY_PARAM_add1_cn,
@@ -12,6 +13,7 @@ X509_VERIFY_PARAM_set1_smtputf8, X509_VERIFY_PARAM_add1_smtputf8,
 X509_VERIFY_PARAM_set1_ip, X509_VERIFY_PARAM_add1_ip,
 X509_VERIFY_PARAM_set1_ip_asc, X509_VERIFY_PARAM_add1_ip_asc,
 X509_VERIFY_PARAM_get1_ip_asc,
+X509_VERIFY_PARAM_set1_dnsname_input_validation,
 X509_VERIFY_PARAM_set1_host_input_validation,
 X509_VERIFY_PARAM_set1_rfc822_input_validation,
 X509_VERIFY_PARAM_set1_smtputf8_input_validation,
@@ -23,10 +25,10 @@ X509_VERIFY_PARAM_set1_ip_input_validation
 
  #include <openssl/x509_vfy.h>
 
- int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
-                                 const char *name, size_t namelen);
- int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
-                                 const char *name, size_t namelen);
+ int X509_VERIFY_PARAM_set1_dnsname(X509_VERIFY_PARAM *param,
+                                    const char *name, size_t namelen);
+ int X509_VERIFY_PARAM_add1_dnsname(X509_VERIFY_PARAM *param,
+                                    const char *name, size_t namelen);
  char *X509_VERIFY_PARAM_get0_host(X509_VERIFY_PARAM *param, int n);
  int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
                                const char *name, size_t namelen);
@@ -55,8 +57,8 @@ X509_VERIFY_PARAM_set1_ip_input_validation
                                    const char *ip_asc);
  char *X509_VERIFY_PARAM_get1_ip_asc(X509_VERIFY_PARAM *param);
 
- void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
-     int (*validate_host)(const char *name, size_t len));
+ void X509_VERIFY_PARAM_set1_dnsname_input_validation(X509_VERIFY_PARAM *param,
+     int (*validate_dnsname)(const char *name, size_t len));
  void X509_VERIFY_PARAM_set1_rfc822_input_validation(X509_VERIFY_PARAM *param,
      int (*validate_rfc822)(const char *name, size_t len));
  void X509_VERIFY_PARAM_set1_smtputf8_input_validation(X509_VERIFY_PARAM *param,
@@ -65,6 +67,17 @@ X509_VERIFY_PARAM_set1_ip_input_validation
      int (*validate_cn)(const char *name, size_t len));
  void X509_VERIFY_PARAM_set1_ip_input_validation(X509_VERIFY_PARAM *param,
      int (*validate_ip)(const uint8_t *name, size_t len));
+
+The following functions have been deprecated since OpenSSL 4.1, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version
+value, see L<openssl_user_macros(7)>:
+
+ int X509_VERIFY_PARAM_set1_host(X509_VERIFY_PARAM *param,
+                                 const char *name, size_t namelen);
+ int X509_VERIFY_PARAM_add1_host(X509_VERIFY_PARAM *param,
+                                 const char *name, size_t namelen);
+ void X509_VERIFY_PARAM_set1_host_input_validation(X509_VERIFY_PARAM *param,
+     int (*validate_host)(const char *name, size_t len));
 
 =head1 DESCRIPTION
 
@@ -86,7 +99,7 @@ subject alternative name (SAN) extension.
 B<commonName values>, matched against the B<commonName> attribute of the
 certificate's subject distinguished name. The commonName list is separate
 from the DNS hostname list above; it is not automatically populated from
-the hostname configuration and must be set explicitly when commonName
+the dnsname configuration and must be set explicitly when commonName
 matching is desired.
 
 =item *
@@ -121,36 +134,43 @@ For the C<set1_> functions, passing NULL or the empty string clears the
 list and disables matching of that name type. For the C<add1_> functions,
 passing NULL or the empty string is rejected as an error.
 
-=head2 Hostname matching
+=head2 DNS hostname matching
 
-X509_VERIFY_PARAM_set1_host() sets in I<param> the expected DNS hostname to
-I<name>, for matching against B<dNSName> SAN entries in the peer's
-certificate, clearing any previously specified hostname.
+X509_VERIFY_PARAM_set1_dnsname() sets in I<param> the expected DNS hostname
+to I<name>, for matching against B<dNSName> SAN entries in the peer's
+certificate, clearing any previously specified dnsname.
 
-X509_VERIFY_PARAM_add1_host() adds I<name> as an additional reference
+X509_VERIFY_PARAM_add1_dnsname() adds I<name> as an additional reference
 identifier that can match a B<dNSName> SAN entry in the peer's certificate.
-Any previous names set via X509_VERIFY_PARAM_set1_host() or
-X509_VERIFY_PARAM_add1_host() are retained.
+Any previous names set via X509_VERIFY_PARAM_set1_dnsname() or
+X509_VERIFY_PARAM_add1_dnsname() are retained.
+
+These functions match only against B<dNSName> SAN entries; they do not
+fall back to the certificate's subject distinguished name. To match
+against the certificate's commonName attribute, configure the commonName
+list separately via X509_VERIFY_PARAM_set1_cn() and
+X509_VERIFY_PARAM_add1_cn().
 
 X509_VERIFY_PARAM_get0_host() returns the I<n>th DNS hostname previously
-configured on I<param> via X509_VERIFY_PARAM_set1_host() or
-X509_VERIFY_PARAM_add1_host(), or NULL if I<n> is out of range. To iterate
-over the configured hostnames, start with I<n> = 0 and increment I<n> until
-the function returns NULL. The returned string is owned by the library
-and remains valid until I<param> is modified or freed; the caller must
-not free it.
+configured on I<param> via X509_VERIFY_PARAM_set1_dnsname(),
+X509_VERIFY_PARAM_add1_dnsname(), or the deprecated
+X509_VERIFY_PARAM_set1_host() / X509_VERIFY_PARAM_add1_host(), or NULL if
+I<n> is out of range. To iterate over the configured names, start with
+I<n> = 0 and increment I<n> until the function returns NULL. The returned
+string is owned by the library and remains valid until I<param> is
+modified or freed; the caller must not free it.
 
-Hostname matching is governed by the B<X509_CHECK_FLAG_*> host flags;
-see L<X509_VERIFY_PARAM_set_hostflags(3)> for the available flags and
-their effect on wildcards and subject-DN consultation. The names by which
-the peer matched can be retrieved via L<X509_VERIFY_PARAM_get0_peername(3)>.
+Matching is governed by the B<X509_CHECK_FLAG_*> host flags; see
+L<X509_VERIFY_PARAM_set_hostflags(3)> for the available flags and their
+effect on wildcards. The names by which the peer matched can be retrieved
+via L<X509_VERIFY_PARAM_get0_peername(3)>.
 
 =head2 CommonName matching
 
 X509_VERIFY_PARAM_set1_cn() sets in I<param> the expected commonName value
 to I<name>, clearing any previously specified commonName. The commonName
-list is a separate set of reference identifiers from the hostname list set
-via X509_VERIFY_PARAM_set1_host(): the hostname list is matched against
+list is a separate set of reference identifiers from the dnsname list set
+via X509_VERIFY_PARAM_set1_dnsname(): the dnsname list is matched against
 B<dNSName> entries in the certificate's subject alternative name extension,
 while the commonName list is matched against the value of the commonName
 attribute of the certificate's subject distinguished name.
@@ -166,6 +186,45 @@ I<name> be no longer than 64 bytes, which is the X.509 maximum length for
 the value of a commonName attribute. This default validation can be
 overridden by installing a callback via
 X509_VERIFY_PARAM_set1_cn_input_validation().
+
+=head2 Legacy host matching (deprecated)
+
+X509_VERIFY_PARAM_set1_host() sets in I<param> the expected name to
+I<name>, clearing any previously specified host name.
+X509_VERIFY_PARAM_add1_host() adds I<name> to the existing list. These
+functions retain the pre-4.1 SAN-then-CN-fallback semantics: I<name> is
+matched against the certificate's B<dNSName> SAN entries first, and if no
+SAN match is found (and B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> is not set
+in the host flags), the matcher falls back to the B<commonName> attribute
+of the subject distinguished name.
+
+These functions are deprecated in favour of the explicit
+X509_VERIFY_PARAM_set1_dnsname() and X509_VERIFY_PARAM_set1_cn() families,
+which match SAN dNSName entries and commonName attributes separately. New
+code should configure the two name types explicitly and is encouraged not
+to match against commonName at all in modern Web PKI contexts; see RFC 9525.
+
+=head2 Mutual exclusion between the legacy and explicit families
+
+On any given B<X509_VERIFY_PARAM>, the legacy host family
+(X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
+X509_VERIFY_PARAM_set1_host_input_validation()) is mutually exclusive with
+the explicit dnsname/cn family (X509_VERIFY_PARAM_set1_dnsname(),
+X509_VERIFY_PARAM_add1_dnsname(),
+X509_VERIFY_PARAM_set1_dnsname_input_validation(),
+X509_VERIFY_PARAM_set1_cn(), X509_VERIFY_PARAM_add1_cn(),
+X509_VERIFY_PARAM_set1_cn_input_validation()). The first call to any
+function in one family locks the parameter to that family; any later call
+to a function in the other family returns 0 and raises
+B<X509_R_INVALID_IDENTIFIER_API>.
+
+The choice is sticky. Clearing the configured list with
+X509_VERIFY_PARAM_set1_host(I<param>, NULL, 0),
+X509_VERIFY_PARAM_set1_dnsname(I<param>, NULL, 0), or
+X509_VERIFY_PARAM_set1_cn(I<param>, NULL, 0) empties the list but does
+B<not> reset the family. A parameter returned by
+X509_VERIFY_PARAM_new() starts in the neutral state and accepts the first
+call from either family.
 
 =head2 Email matching
 
@@ -269,13 +328,20 @@ returned string with L<OPENSSL_free(3)>.
 X509_VERIFY_PARAM_set1_host_input_validation(),
 X509_VERIFY_PARAM_set1_rfc822_input_validation(),
 X509_VERIFY_PARAM_set1_smtputf8_input_validation(),
-X509_VERIFY_PARAM_set1_cn_input_validation(), and
+X509_VERIFY_PARAM_set1_cn_input_validation(),
+X509_VERIFY_PARAM_set1_dnsname_input_validation(), and
 X509_VERIFY_PARAM_set1_ip_input_validation() install a caller-supplied
 callback that validates a reference-identifier value at the point it is
 configured via the corresponding C<set1_> or C<add1_> function. The
 callback receives the value and its length, and returns a nonzero value to
 accept the input or zero to reject it; on rejection the C<set1_>/C<add1_>
 call fails and no value is stored.
+
+X509_VERIFY_PARAM_set1_host_input_validation() shares this contract but
+is deprecated alongside the legacy host family. Callers using the
+explicit dnsname/cn families should use
+X509_VERIFY_PARAM_set1_dnsname_input_validation() and
+X509_VERIFY_PARAM_set1_cn_input_validation() instead.
 
 These callbacks override OpenSSL's built-in input validation for the
 corresponding name type. They affect only the validation performed when
@@ -307,10 +373,14 @@ checks are performed. Configuring a list for a given name type implicitly
 enables the corresponding check; clearing it (by passing NULL or the
 empty string to the C<set1_> form) disables it.
 
-The hostname list is matched only against the certificate's subject
-alternative name extension. To verify identities against the certificate's
-commonName attribute, use the commonName list configured via
-X509_VERIFY_PARAM_set1_cn() and X509_VERIFY_PARAM_add1_cn().
+The dnsname list configured via X509_VERIFY_PARAM_set1_dnsname() is
+matched only against the certificate's subject alternative name
+extension. To match against the certificate's commonName attribute, use
+the commonName list configured via X509_VERIFY_PARAM_set1_cn() and
+X509_VERIFY_PARAM_add1_cn(). The legacy
+X509_VERIFY_PARAM_set1_host() / X509_VERIFY_PARAM_add1_host() functions
+preserve a SAN-then-CN-fallback behaviour for callers maintaining
+pre-4.1 code; new code should use the explicit dnsname/cn families.
 
 =head1 SEE ALSO
 
@@ -343,8 +413,15 @@ X509_VERIFY_PARAM_set1_rfc822_input_validation(),
 X509_VERIFY_PARAM_set1_smtputf8_input_validation(), and
 X509_VERIFY_PARAM_set1_ip_input_validation() were added in OpenSSL 4.0.
 
-X509_VERIFY_PARAM_set1_cn(), X509_VERIFY_PARAM_add1_cn(), and
-X509_VERIFY_PARAM_set1_cn_input_validation() were added in OpenSSL 4.1.
+X509_VERIFY_PARAM_set1_cn(), X509_VERIFY_PARAM_add1_cn(),
+X509_VERIFY_PARAM_set1_cn_input_validation(),
+X509_VERIFY_PARAM_set1_dnsname(), X509_VERIFY_PARAM_add1_dnsname(), and
+X509_VERIFY_PARAM_set1_dnsname_input_validation() were added in OpenSSL
+4.1.
+
+X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(), and
+X509_VERIFY_PARAM_set1_host_input_validation() were deprecated in OpenSSL
+4.1.
 
 =head1 COPYRIGHT
 

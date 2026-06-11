@@ -1862,6 +1862,7 @@ X509_R_INVALID_DIRECTORY:113:invalid directory
 X509_R_INVALID_DISTPOINT:143:invalid distpoint
 X509_R_INVALID_EXTENSION:146:invalid extension
 X509_R_INVALID_FIELD_NAME:119:invalid field name
+X509_R_INVALID_IDENTIFIER_API:148:invalid identifier api
 X509_R_INVALID_TRUST:123:invalid trust
 X509_R_ISSUER_MISMATCH:129:issuer mismatch
 X509_R_KEY_TYPE_MISMATCH:115:key type mismatch

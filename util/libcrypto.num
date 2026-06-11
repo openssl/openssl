@@ -5727,3 +5727,6 @@ EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_cn               ?	4_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_add1_cn               ?	4_1_0	EXIST::FUNCTION:
 X509_VERIFY_PARAM_set1_cn_input_validation ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_dnsname          ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_add1_dnsname          ?	4_1_0	EXIST::FUNCTION:
+X509_VERIFY_PARAM_set1_dnsname_input_validation ?	4_1_0	EXIST::FUNCTION:

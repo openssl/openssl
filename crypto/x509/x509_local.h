@@ -59,7 +59,19 @@ struct X509_VERIFY_PARAM_st {
     int (*validate_smtputf8)(const char *name, size_t len);
     unsigned int hostflags; /* Flags to control matching features */
     char *peername; /* Matching hostname in peer certificate */
+    /*
+     * Identifier API mode for the dnsnames/cns lists. Locked at the first
+     * call to any of the host/dnsname/cn configuration functions and is
+     * reset only when the parameter is freshly allocated via
+     * X509_VERIFY_PARAM_new(). See OSSL_VPM_IDENT_* constants below.
+     */
+    int identifier_api_mode;
 };
+
+/* Values for X509_VERIFY_PARAM_st::identifier_api_mode. */
+# define OSSL_VPM_IDENT_UNSET           0
+# define OSSL_VPM_IDENT_LEGACY_HOST     1
+# define OSSL_VPM_IDENT_EXPLICIT_DNS_CN 2
 
 /* No error callback if depth < 0 */
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
@@ -204,6 +216,15 @@ int ossl_x509_check_hostname(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
 int ossl_x509_check_hostname_subject(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags, char **peername);
+/*
+ * Legacy SAN-then-CN-fallback hostname matcher: matches I<chk> against the
+ * peer certificate's B<dNSName> SAN entries, falling back to the
+ * B<commonName> attribute of the subject distinguished name unless
+ * X509_CHECK_FLAG_NEVER_CHECK_SUBJECT is set in I<flags>. This preserves
+ * the pre-4.1 behaviour of X509_VERIFY_PARAM_set1_host()-configured names.
+ */
+int ossl_x509_check_hostname_legacy(const X509 *x, const char *chk,
+    size_t chklen, unsigned int flags, char **peername);
 int ossl_x509_check_smtputf8(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
 

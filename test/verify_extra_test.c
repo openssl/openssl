@@ -7,6 +7,17 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * The legacy X509_VERIFY_PARAM_set1_host() / _add1_host() /
+ * _set1_host_input_validation() APIs are deprecated since 4.1 but are
+ * still exercised by tests in this file (including the mutex tests that
+ * compare them against the explicit dnsname/cn APIs). Suppress
+ * deprecation diagnostics here.
+ */
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+# define OPENSSL_SUPPRESS_DEPRECATED
+#endif
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/crypto.h>
@@ -321,7 +332,7 @@ static int test_multiname_selfsigned(void)
             goto err;
         if (!TEST_false(X509_verify_cert(ctx))) {
             TEST_info("Verify succeeded for non-present name bunsen.muppetry.ca\n");
-            fails++;
+            goto err;
         }
         X509_STORE_CTX_cleanup(ctx);
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
@@ -357,32 +368,22 @@ static int test_multiname_selfsigned(void)
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
             goto err;
 
-        /* Try the CN */
+        /*
+         * Try the CN. Legacy X509_VERIFY_PARAM_set1_host() retains
+         * SAN-then-CN fallback semantics, so a name that appears only in
+         * the certificate's commonName attribute (and not in any
+         * dNSName SAN entry) must still verify successfully here.
+         */
         if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "beaker.muppetry.ca", 0)))
             goto err;
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
             goto err;
-        /* The CN should fail to verify when tried for a dns name */
-        if (!TEST_false(X509_verify_cert(ctx))) {
-            TEST_info("Verify unexpectedly succeeded for CN name beaker.muppetry.ca\n");
-            goto err;
-        }
-        X509_STORE_CTX_cleanup(ctx);
-        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
-            goto err;
-
-        /* Try the CN */
-        if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, "beaker.muppetry.ca", 0)))
-            goto err;
-        if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
-            goto err;
-        /* The CN should work the expected way */
         if (!TEST_true(X509_verify_cert(ctx))) {
-            TEST_info("Verify failed for CN name beaker.muppetry.ca\n");
+            TEST_info("Verify failed for legacy CN match beaker.muppetry.ca\n");
             fails++;
         }
         X509_STORE_CTX_cleanup(ctx);
-        if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, NULL, 0)))
+        if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
             goto err;
         /* Try the domain with . */
         if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
@@ -565,6 +566,96 @@ err:
     return ret;
 }
 
+/*
+ * Verify the explicit dnsname/cn identifier API end-to-end against the
+ * multiname certificate. set1_dnsname() matches only SAN dNSName entries;
+ * set1_cn() matches only the commonName attribute. The certificate's CN
+ * "beaker.muppetry.ca" is intentionally not present in any SAN entry, so
+ * set1_dnsname() must reject it while set1_cn() must accept it.
+ */
+static int test_multiname_explicit_api(void)
+{
+    X509 *cert = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_STORE *store = NULL;
+    X509_VERIFY_PARAM *vpm = NULL;
+    int fails = 0;
+    int ret = 0;
+
+    if (!TEST_ptr((cert = X509_from_strings(multiname_cert))))
+        goto err;
+    if (!TEST_true(X509_self_signed(cert, 1)))
+        goto err;
+    if (!TEST_ptr(store = X509_STORE_new()))
+        goto err;
+    if (!TEST_true(X509_STORE_add_cert(store, cert)))
+        goto err;
+    if (!TEST_ptr((vpm = X509_STORE_get0_param(store))))
+        goto err;
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new()))
+        goto err;
+    X509_VERIFY_PARAM_set_time(vpm, multiname_valid_at);
+
+    /* set1_dnsname for a SAN name should verify successfully. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_dnsname(vpm, multiname_dnsnames[0], 0)))
+        goto err;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        goto err;
+    if (!TEST_true(X509_verify_cert(ctx))) {
+        TEST_info("Verify failed for explicit dnsname %s\n", multiname_dnsnames[0]);
+        fails++;
+    }
+    X509_STORE_CTX_cleanup(ctx);
+
+    /*
+     * set1_dnsname for the CN value (no matching SAN dNSName) must NOT
+     * verify -- the explicit dnsname API does not fall back to CN.
+     */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_dnsname(vpm, "beaker.muppetry.ca", 0)))
+        goto err;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        goto err;
+    if (!TEST_false(X509_verify_cert(ctx))) {
+        TEST_info("Verify unexpectedly succeeded for CN value via set1_dnsname\n");
+        fails++;
+    }
+    X509_STORE_CTX_cleanup(ctx);
+
+    /* Clear the dnsname list; the mutex keeps the param in EXPLICIT mode. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_dnsname(vpm, NULL, 0)))
+        goto err;
+
+    /* set1_cn for the CN value should verify successfully. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, "beaker.muppetry.ca", 0)))
+        goto err;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        goto err;
+    if (!TEST_true(X509_verify_cert(ctx))) {
+        TEST_info("Verify failed for explicit CN beaker.muppetry.ca\n");
+        fails++;
+    }
+    X509_STORE_CTX_cleanup(ctx);
+
+    /* set1_cn for a SAN name (not the CN) must NOT verify. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, multiname_dnsnames[0], 0)))
+        goto err;
+    if (!TEST_true(X509_STORE_CTX_init(ctx, store, cert, NULL)))
+        goto err;
+    if (!TEST_false(X509_verify_cert(ctx))) {
+        TEST_info("Verify unexpectedly succeeded for SAN value via set1_cn\n");
+        fails++;
+    }
+    X509_STORE_CTX_cleanup(ctx);
+
+    ret = fails == 0;
+
+err:
+    X509_STORE_free(store);
+    X509_STORE_CTX_free(ctx);
+    X509_free(cert);
+    return ret;
+}
+
 static int yolo_name_validation(const char *name, size_t len)
 {
     return 1;
@@ -697,6 +788,86 @@ err:
     return ret;
 }
 
+/*
+ * Verify that the identifier API mode mutex on X509_VERIFY_PARAM rejects
+ * mixing the legacy host family (set1_host / add1_host /
+ * set1_host_input_validation) with the explicit dnsname/cn family
+ * (set1_dnsname, set1_cn, and friends), and that the choice of family is
+ * sticky: even clearing the configured list does not reset the mode.
+ */
+static int test_identifier_api_mutex(void)
+{
+    X509_VERIFY_PARAM *vpm = NULL;
+    int ret = 0;
+
+    /* set1_host first; then explicit-family calls must fail. */
+    if (!TEST_ptr(vpm = X509_VERIFY_PARAM_new()))
+        goto err;
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "host.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_dnsname(vpm, "dns.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_add1_dnsname(vpm, "dns.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_cn(vpm, "cn.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_add1_cn(vpm, "cn.example", 0)))
+        goto err;
+    /* Clearing the legacy list must NOT reset the mode. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, NULL, 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_dnsname(vpm, "dns.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_cn(vpm, "cn.example", 0)))
+        goto err;
+    X509_VERIFY_PARAM_free(vpm);
+    vpm = NULL;
+
+    /* set1_dnsname first; then legacy-family calls must fail. */
+    if (!TEST_ptr(vpm = X509_VERIFY_PARAM_new()))
+        goto err;
+    if (!TEST_true(X509_VERIFY_PARAM_set1_dnsname(vpm, "dns.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_host(vpm, "host.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_add1_host(vpm, "host.example", 0)))
+        goto err;
+    /* Clearing the explicit dnsname list must NOT reset the mode. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_dnsname(vpm, NULL, 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_host(vpm, "host.example", 0)))
+        goto err;
+    /* But set1_cn on the explicit-family param must still work. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, "cn.example", 0)))
+        goto err;
+    X509_VERIFY_PARAM_free(vpm);
+    vpm = NULL;
+
+    /* set1_cn first; then legacy-family calls must fail. */
+    if (!TEST_ptr(vpm = X509_VERIFY_PARAM_new()))
+        goto err;
+    if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, "cn.example", 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_host(vpm, "host.example", 0)))
+        goto err;
+    /* Clearing the cn list must NOT reset the mode. */
+    if (!TEST_true(X509_VERIFY_PARAM_set1_cn(vpm, NULL, 0)))
+        goto err;
+    if (!TEST_false(X509_VERIFY_PARAM_set1_host(vpm, "host.example", 0)))
+        goto err;
+    /* Independent params start fresh. */
+    X509_VERIFY_PARAM_free(vpm);
+    if (!TEST_ptr(vpm = X509_VERIFY_PARAM_new()))
+        goto err;
+    if (!TEST_true(X509_VERIFY_PARAM_set1_host(vpm, "host.example", 0)))
+        goto err;
+
+    ret = 1;
+err:
+    X509_VERIFY_PARAM_free(vpm);
+    return ret;
+}
+
 static int test_self_signed_good(void)
 {
     return test_self_signed(root_f, 1, 1);
@@ -818,7 +989,9 @@ int setup_tests(void)
     ADD_TEST(test_purpose_ssl_server);
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
+    ADD_TEST(test_multiname_explicit_api);
     ADD_TEST(test_vpm_input_validation);
+    ADD_TEST(test_identifier_api_mutex);
     return 1;
 err:
     cleanup_tests();

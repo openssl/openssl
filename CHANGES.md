@@ -73,6 +73,27 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Added `X509_VERIFY_PARAM_set1_dnsname()`, `X509_VERIFY_PARAM_add1_dnsname()`,
+   and `X509_VERIFY_PARAM_set1_dnsname_input_validation()` for configuring
+   reference identifiers that are matched only against `dNSName` subject
+   alternative name (SAN) entries, with no fallback to the certificate's
+   commonName attribute. Companion CN functions
+   `X509_VERIFY_PARAM_set1_cn()`, `X509_VERIFY_PARAM_add1_cn()`, and
+   `X509_VERIFY_PARAM_set1_cn_input_validation()` match only against the
+   commonName attribute. The legacy `X509_VERIFY_PARAM_set1_host()`,
+   `X509_VERIFY_PARAM_add1_host()`, and
+   `X509_VERIFY_PARAM_set1_host_input_validation()` retain their original
+   SAN-then-CN-fallback behaviour and are now deprecated. A single
+   `X509_VERIFY_PARAM` uses either the legacy host family or the explicit
+   dnsname/cn family but not both: the first call locks the parameter to
+   that family, and any later call from the other family returns an error
+   (`X509_R_INVALID_IDENTIFIER_API`). The choice is sticky; clearing the
+   configured list with `set1_host(NULL)` / `set1_dnsname(NULL)` /
+   `set1_cn(NULL)` does not reset it. A fresh `X509_VERIFY_PARAM_new()`
+   starts in the unset state.
+
+   *Bob Beck*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 

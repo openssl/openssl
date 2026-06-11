@@ -44,6 +44,8 @@ static const ERR_STRING_DATA X509_str_reasons[] = {
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_EXTENSION), "invalid extension" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_FIELD_NAME),
         "invalid field name" },
+    { ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_IDENTIFIER_API),
+        "invalid identifier api" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_INVALID_TRUST), "invalid trust" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_ISSUER_MISMATCH), "issuer mismatch" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_KEY_TYPE_MISMATCH), "key type mismatch" },
