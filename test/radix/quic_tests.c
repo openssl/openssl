@@ -552,15 +552,18 @@ DEF_FUNC(check_pending)
     REQUIRE_SSL(conn);
 
     if (check_pending_match) {
-        if (!pending_cb_called || !hello_cb_called) {
-            TEST_info("Callbacks not called, skipping user_ssl check\n");
-        } else {
-            if (!TEST_ptr_eq(pending_ssl_obj, client_hello_ssl_obj))
-                goto err;
+        if (TEST_false(pending_cb_called))
+            goto err;
 
-            if (!TEST_ptr_eq(pending_ssl_obj, conn))
-                goto err;
-        }
+        if (TEST_false(hello_cb_called))
+            goto err;
+
+        if (!TEST_ptr_eq(pending_ssl_obj, client_hello_ssl_obj))
+            goto err;
+
+        if (!TEST_ptr_eq(pending_ssl_obj, conn))
+            goto err;
+
         pending_ssl_obj = client_hello_ssl_obj = NULL;
         check_pending_match = 0;
         pending_cb_called = hello_cb_called = 0;
