@@ -58,8 +58,8 @@ sub run_test {
     # can be used to specify a fallback url when no url is specified
     # in the cert.  that is what we do here.
 
-    # openssl ocsp -port 0 -index index.txt -rsigner ocsp.pem -CA intermediate-cert.pem
-    my @ocsp_cmd = ("ocsp", "-port", "0", "-index", $index_txt, "-rsigner", $ocsp_pem, "-CA", $intermediate_cert_pem);
+    # openssl ocsp -host 0.0.0.0 -port 0 -index index.txt -rsigner ocsp.pem -CA intermediate-cert.pem
+    my @ocsp_cmd = ("ocsp", "-host", "0.0.0.0", "-port", "0", "-index", $index_txt, "-rsigner", $ocsp_pem, "-CA", $intermediate_cert_pem);
     my $ocsp_pid = open3(my $ocsp_i, my $ocsp_o, my $ocsp_e = gensym, $shlib_wrap, $apps_openssl, @ocsp_cmd);
 
     ## ipv4
