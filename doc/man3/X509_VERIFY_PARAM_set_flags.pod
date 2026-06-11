@@ -51,12 +51,26 @@ X509_VERIFY_PARAM_get0_peername
 
 =head1 DESCRIPTION
 
-These functions manipulate the B<X509_VERIFY_PARAM> structure associated with
-a certificate verification operation.
+An B<X509_VERIFY_PARAM> object collects the configuration consumed by a
+certificate verification operation: the verification flags, the purpose
+and trust selectors, the verification time, the maximum chain depth, the
+required security level, the acceptable certificate policies, and the
+reference identifiers against which the peer certificate's names are
+matched. B<X509_VERIFY_PARAM> objects are typically attached to an
+B<X509_STORE> or an B<SSL_CTX>/B<SSL> and reach L<X509_verify_cert(3)>
+through the B<X509_STORE_CTX> being verified; values propagate from one
+parameter set to another according to the rules in L</INHERITANCE FLAGS>.
 
-The X509_VERIFY_PARAM_set_flags() function sets the flags in I<param> by oring
-it with I<flags>. See L</VERIFICATION FLAGS> for a complete
+These functions manipulate an B<X509_VERIFY_PARAM>. The functions for
+configuring its reference identifiers (hostnames, commonNames, email
+addresses, and IP addresses) are documented in
+L<X509_VERIFY_PARAM_set1_host(3)>.
+
+The X509_VERIFY_PARAM_set_flags() function sets the flags in I<param> by
+ORing it with I<flags>. See L</VERIFICATION FLAGS> for a complete
 description of values the I<flags> parameter can take.
+
+X509_VERIFY_PARAM_clear_flags() clears the flags I<flags> in I<param>.
 
 X509_VERIFY_PARAM_get_flags() returns the flags in I<param>.
 
@@ -65,8 +79,6 @@ which specifies how verification flags are copied from one structure to
 another. X509_VERIFY_PARAM_set_inh_flags() sets the inheritance flags.
 See the L</INHERITANCE FLAGS> section for a description of these bits.
 
-X509_VERIFY_PARAM_clear_flags() clears the flags I<flags> in I<param>.
-
 X509_VERIFY_PARAM_set_purpose() sets the verification purpose in I<param>
 to I<purpose>. This determines the acceptable purpose of the certificate
 chain, for example B<X509_PURPOSE_SSL_CLIENT>.
@@ -74,24 +86,39 @@ The purpose requirement is cleared if I<purpose> is B<X509_PURPOSE_DEFAULT_ANY>.
 
 X509_VERIFY_PARAM_get_purpose() returns the purpose in I<param>.
 
-X509_VERIFY_PARAM_set_trust() sets the trust setting in I<param> to
-I<trust>.
+X509_VERIFY_PARAM_set_trust() sets the trust selector in I<param> to
+I<trust>, which must be one of the B<X509_TRUST_*> identifiers defined
+in F<openssl/x509_vfy.h> (such as B<X509_TRUST_SSL_SERVER>,
+B<X509_TRUST_SSL_CLIENT>, B<X509_TRUST_EMAIL>, or B<X509_TRUST_OBJECT_SIGN>).
+The trust selector determines how explicit trust settings recorded on
+trust-anchor certificates are matched against the verification operation;
+see the TRUST SETTINGS section of L<openssl-x509(1)>. There is no
+public getter for the trust selector.
 
 X509_VERIFY_PARAM_set_time() sets the verification time in I<param> to
-I<t>. Normally the current time is used.
+I<t>, which is then used as the reference time for certificate and CRL
+validity-period checks in place of the current time. Calling this
+function automatically sets the B<X509_V_FLAG_USE_CHECK_TIME> flag (see
+L</Validity period (time)>). If X509_VERIFY_PARAM_set_time() has not
+been called, validity checks are performed against the current time.
 
-X509_VERIFY_PARAM_add0_policy() adds I<policy> to the acceptable policy set.
-Contrary to preexisting documentation of this function it does not enable
-policy checking.
+X509_VERIFY_PARAM_get_time() returns the verification time configured on
+I<param>.
+
+X509_VERIFY_PARAM_add0_policy() adds I<policy> to the acceptable policy
+set. Policy checking itself must be enabled separately, either by setting
+B<X509_V_FLAG_POLICY_CHECK> via X509_VERIFY_PARAM_set_flags() or by
+calling X509_VERIFY_PARAM_set1_policies().
 
 X509_VERIFY_PARAM_set1_policies() enables policy checking (it is disabled
 by default) and sets the acceptable policy set to I<policies>. Any existing
 policy set is cleared. The I<policies> parameter can be NULL to clear
 an existing policy set.
 
-X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to I<depth>.
-That is the maximum number of intermediate CA certificates that can appear in a
-chain.
+X509_VERIFY_PARAM_set_depth() sets the maximum verification depth to
+I<depth>. That is the maximum number of intermediate CA certificates that
+can appear in a chain. If X509_VERIFY_PARAM_set_depth() is not called,
+the verification depth defaults to 100.
 A maximal depth chain contains 2 more certificates than the limit, since
 neither the end-entity certificate nor the trust-anchor count against this
 limit.
@@ -117,19 +144,16 @@ Security level 1 requires at least 80-bit-equivalent security and is broadly
 interoperable, though it will, for example, reject MD5 signatures or RSA keys
 shorter than 1024 bits.
 
+The remaining accessor on this page reports a result populated during
+certificate verification rather than a configured parameter:
 X509_VERIFY_PARAM_get0_peername() returns the DNS hostname or subject
 CommonName from the peer certificate that matched one of the reference
-identifiers.  When wildcard matching is not disabled, or when a
-reference identifier specifies a parent domain (starts with ".")
-rather than a hostname, the peer name may be a wildcard name or a
-sub-domain of the reference identifier respectively.  The return
-string is allocated by the library and is no longer valid once the
-associated I<param> argument is freed.  Applications must not free
-the return value.
-
-Configuration of the reference identifiers that drive hostname,
-commonName, email-address, and IP-address matching is documented in
-L<X509_VERIFY_PARAM_set1_host(3)>.
+identifiers. When wildcard matching is not disabled, or when a reference
+identifier specifies a parent domain (starts with "."), rather than a
+hostname, the peer name may be a wildcard name or a sub-domain of the
+reference identifier respectively. The returned string is allocated by
+the library and is no longer valid once the associated I<param> argument
+is freed. Applications must not free the return value.
 
 =head1 RETURN VALUES
 
@@ -147,8 +171,11 @@ X509_VERIFY_PARAM_get_flags() returns the current verification flags.
 
 X509_VERIFY_PARAM_get_inh_flags() returns the current inheritance flags.
 
-X509_VERIFY_PARAM_set_time() and X509_VERIFY_PARAM_set_depth() do not return
-values.
+X509_VERIFY_PARAM_set_time(), X509_VERIFY_PARAM_set_depth(), and
+X509_VERIFY_PARAM_set_auth_level() do not return values.
+
+X509_VERIFY_PARAM_get_time() returns the verification time previously
+configured on I<param> via X509_VERIFY_PARAM_set_time().
 
 X509_VERIFY_PARAM_get_depth() returns the current verification depth.
 
@@ -160,99 +187,151 @@ which may be B<X509_PURPOSE_DEFAULT_ANY> if unset.
 
 =head1 VERIFICATION FLAGS
 
-The verification flags consists of zero or more of the following flags
-ored together.
+The verification flags consist of zero or more of the following values
+ORed together. Unless noted otherwise, each flag is off by default.
 
-B<X509_V_FLAG_CRL_CHECK> enables CRL checking for the certificate chain leaf
-certificate. An error occurs if a suitable CRL cannot be found.
+=head2 Revocation checking
 
-B<X509_V_FLAG_CRL_CHECK_ALL> expands CRL checking to the entire certificate
-chain if B<X509_V_FLAG_CRL_CHECK> has also been enabled, and is otherwise ignored.
+B<X509_V_FLAG_CRL_CHECK> enables CRL checking for the certificate chain
+leaf certificate. An error occurs if a suitable CRL cannot be found.
 
-B<X509_V_FLAG_OCSP_RESP_CHECK> enables Online Certificate Status Protocol (OCSP)
-checking for the certificate chain leaf certificate. An error occurs if a suitable
-OCSP response cannot be found.
+B<X509_V_FLAG_CRL_CHECK_ALL> expands CRL checking to the entire
+certificate chain if B<X509_V_FLAG_CRL_CHECK> has also been enabled, and
+is otherwise ignored.
 
-B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> expands OCSP checking to the entire certificate
-chain if B<X509_V_FLAG_OCSP_RESP_CHECK> has also been enabled, and is otherwise
-ignored.
+B<X509_V_FLAG_OCSP_RESP_CHECK> enables Online Certificate Status Protocol
+(OCSP) checking for the certificate chain leaf certificate. An error
+occurs if a suitable OCSP response cannot be found.
 
-B<X509_V_FLAG_IGNORE_CRITICAL> disables critical extension checking. By default
-any unhandled critical extensions in certificates or (if checked) CRLs result
-in a fatal error. If this flag is set unhandled critical extensions are
-ignored. B<WARNING> setting this option for anything other than debugging
-purposes can be a security risk. Finer control over which extensions are
-supported can be performed in the verification callback.
+B<X509_V_FLAG_OCSP_RESP_CHECK_ALL> expands OCSP checking to the entire
+certificate chain if B<X509_V_FLAG_OCSP_RESP_CHECK> has also been
+enabled, and is otherwise ignored.
 
-The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some broken
-certificates and makes the verification strictly apply B<X509> rules.
+If B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> is set, some additional features
+such as indirect CRLs and CRLs signed by different keys are enabled. By
+default these features are disabled.
 
-B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
+If B<X509_V_FLAG_USE_DELTAS> is set, delta CRLs (if present) are used to
+determine certificate status. If not set, deltas are ignored.
 
-B<X509_V_FLAG_POLICY_CHECK> enables certificate policy checking, by default
-no policy checking is performed. Additional information is sent to the
-verification callback relating to policy checking.
+=head2 Certificate policy checking
 
-B<X509_V_FLAG_EXPLICIT_POLICY>, B<X509_V_FLAG_INHIBIT_ANY> and
-B<X509_V_FLAG_INHIBIT_MAP> set the C<require explicit policy>, C<inhibit any
-policy> and C<inhibit policy mapping> flags respectively as defined in
-RFC 5280. Policy checking is automatically enabled if any of these flags
-are set.
+B<X509_V_FLAG_POLICY_CHECK> enables certificate policy checking. By
+default no policy checking is performed. Additional information is sent
+to the verification callback relating to policy checking.
 
-If B<X509_V_FLAG_NOTIFY_POLICY> is set and the policy checking is successful
-a special status code is set to the verification callback. This permits it
-to examine the valid policy tree and perform additional checks or simply
-log it for debugging purposes.
+B<X509_V_FLAG_EXPLICIT_POLICY>, B<X509_V_FLAG_INHIBIT_ANY>, and
+B<X509_V_FLAG_INHIBIT_MAP> set the C<require explicit policy>, C<inhibit
+any policy>, and C<inhibit policy mapping> flags respectively as defined
+in RFC 5280. Policy checking is automatically enabled if any of these
+flags is set.
 
-By default some additional features such as indirect CRLs and CRLs signed by
-different keys are disabled. If B<X509_V_FLAG_EXTENDED_CRL_SUPPORT> is set
-they are enabled.
+If B<X509_V_FLAG_NOTIFY_POLICY> is set and policy checking is
+successful, a special status code is delivered to the verification
+callback. This permits the callback to examine the valid policy tree
+and perform additional checks, or simply to log it for debugging
+purposes.
 
-If B<X509_V_FLAG_USE_DELTAS> is set delta CRLs (if present) are used to
-determine certificate status. If not set deltas are ignored.
-
-B<X509_V_FLAG_CHECK_SS_SIGNATURE> requests checking the signature of
-the last certificate in a chain if the certificate is supposedly self-signed.
-This is prohibited and will result in an error if it is a non-conforming CA
-certificate with key usage restrictions not including the I<keyCertSign> bit.
-By default this check is disabled because it doesn't
-add any additional security but in some cases applications might want to
-check the signature anyway. A side effect of not checking the self-signature
-of such a certificate is that disabled or unsupported message digests used for
-the signature are not treated as fatal errors.
+=head2 Chain construction
 
 When B<X509_V_FLAG_TRUSTED_FIRST> is set, which is the default since
-OpenSSL 1.1.0, construction of the certificate chain
-in L<X509_verify_cert(3)> searches the trust store for issuer certificates
-before searching the provided untrusted certificates.
-Local issuer certificates are often more likely to satisfy local security
-requirements and lead to a locally trusted root.
-This is especially important when some certificates in the trust store have
-explicit trust settings (see "TRUST SETTINGS" in L<openssl-x509(1)>).
+OpenSSL 1.1.0, construction of the certificate chain in
+L<X509_verify_cert(3)> searches the trust store for issuer certificates
+before searching the provided untrusted certificates. Local issuer
+certificates are often more likely to satisfy local security
+requirements and lead to a locally trusted root. This is especially
+important when some certificates in the trust store have explicit trust
+settings (see "TRUST SETTINGS" in L<openssl-x509(1)>).
 
-The B<X509_V_FLAG_NO_ALT_CHAINS> flag suppresses checking for alternative chains.
+The B<X509_V_FLAG_NO_ALT_CHAINS> flag suppresses checking for
+alternative chains. By default, when the initial untrusted-first chain
+fails to reach a trust anchor, the build is retried with progressively
+shorter untrusted prefixes in an attempt to find an alternative.
 
-The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes non-self-signed certificates in the
-trust store to be treated as trust anchors, in the same way as self-signed
-root CA certificates.
-This makes it possible to trust self-issued certificates as well as certificates
-issued by an intermediate CA without having to trust their ancestor root CA.
-With B<X509_V_FLAG_PARTIAL_CHAIN> set, chain
-construction stops as soon as the first certificate contained in the trust store
-is added to the chain, whether that certificate is a self-signed "root"
-certificate or a not self-signed "intermediate" or self-issued certificate.
-Thus, when an intermediate certificate is found in the trust store, the
-verified chain passed to callbacks may be shorter than it otherwise would
-be without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
+The B<X509_V_FLAG_PARTIAL_CHAIN> flag causes non-self-signed
+certificates in the trust store to be treated as trust anchors, in the
+same way as self-signed root CA certificates. This makes it possible to
+trust self-issued certificates as well as certificates issued by an
+intermediate CA without having to trust their ancestor root CA. With
+B<X509_V_FLAG_PARTIAL_CHAIN> set, chain construction stops as soon as
+the first certificate contained in the trust store is added to the
+chain, whether that certificate is a self-signed "root" certificate or
+a not self-signed "intermediate" or self-issued certificate. Thus, when
+an intermediate certificate is found in the trust store, the verified
+chain passed to callbacks may be shorter than it otherwise would be
+without the B<X509_V_FLAG_PARTIAL_CHAIN> flag.
 
-The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity period
-of certificates and CRLs against the current time. If X509_VERIFY_PARAM_set_time()
-is used to specify a verification time, the check is not suppressed.
+B<X509_V_FLAG_CHECK_SS_SIGNATURE> requests checking the signature of
+the last certificate in a chain if the certificate is supposedly
+self-signed. This is prohibited and will result in an error if it is a
+non-conforming CA certificate with key usage restrictions not including
+the I<keyCertSign> bit. By default this check is disabled because it
+does not add any additional security, but in some cases applications
+might want to check the signature anyway. A side effect of not checking
+the self-signature of such a certificate is that disabled or
+unsupported message digests used for the signature are not treated as
+fatal errors.
+
+=head2 Validity period (time)
+
+B<X509_V_FLAG_USE_CHECK_TIME> indicates that the time stored on the
+parameters should be used for validity period checks in place of the
+current time. This flag is set automatically by
+X509_VERIFY_PARAM_set_time(); applications do not normally manipulate
+it directly.
+
+The B<X509_V_FLAG_NO_CHECK_TIME> flag suppresses checking the validity
+period of certificates and CRLs against the current time. If
+X509_VERIFY_PARAM_set_time() has been used to specify a verification
+time, the check is performed against the specified time and this flag
+has no effect.
+
+=head2 Extension processing and strictness
+
+B<X509_V_FLAG_IGNORE_CRITICAL> disables critical extension checking. By
+default, any unhandled critical extensions in certificates or (if
+checked) CRLs result in a fatal error. If this flag is set, unhandled
+critical extensions are ignored. B<WARNING:> setting this option for
+anything other than debugging purposes can be a security risk. Finer
+control over which extensions are supported can be performed in the
+verification callback.
+
+The B<X509_V_FLAG_X509_STRICT> flag disables workarounds for some
+broken certificates and makes verification strictly apply B<X509>
+rules.
+
+B<X509_V_FLAG_ALLOW_PROXY_CERTS> enables proxy certificate verification.
+By default, proxy certificates are not accepted.
+
+=head2 Suite B compliance
+
+These flags enable enforcement of the NSA Suite B cryptographic
+profile, a now-legacy profile that restricts chain validation to a
+specific subset of elliptic-curve algorithms. Suite B has been
+superseded by NSA's Commercial National Security Algorithm (CNSA) Suite
+for new deployments.
+
+B<X509_V_FLAG_SUITEB_128_LOS_ONLY> restricts the chain to the Suite B
+128-bit level of security: certificates must use the NIST P-256 curve
+with ECDSA and SHA-256.
+
+B<X509_V_FLAG_SUITEB_192_LOS> restricts the chain to the Suite B 192-bit
+level of security: certificates must use the NIST P-384 curve with
+ECDSA and SHA-384.
+
+B<X509_V_FLAG_SUITEB_128_LOS> is the bitwise OR of the two flags above
+and permits either level of security in the chain, with the constraint
+that once a P-384 certificate has appeared in the chain, P-256
+certificates may not subsequently be used.
 
 =head1 INHERITANCE FLAGS
 
-These flags specify how parameters are "inherited" from one structure to
-another.
+These flags control how the values stored in one B<X509_VERIFY_PARAM> are
+copied into another when verification parameters are "inherited", for
+example when an B<SSL> object inherits its verification parameters from
+the B<SSL_CTX> that created it. In the descriptions below, "from" refers
+to the source B<X509_VERIFY_PARAM> from which values are copied, and "to"
+refers to the destination B<X509_VERIFY_PARAM> into which they are copied.
 
 If B<X509_VP_FLAG_ONCE> is set then the current setting is zeroed
 after the next call.
@@ -265,8 +344,8 @@ to the destination. Effectively the values in "to" become default values
 which will be used only if nothing new is set in "from".  This is the
 default.
 
-If B<X509_VP_FLAG_OVERWRITE> is set then all value are copied across whether
-they are set or not. Flags is still Ored though.
+If B<X509_VP_FLAG_OVERWRITE> is set then all values are copied across
+whether they are set or not. Flags are still ORed though.
 
 If B<X509_VP_FLAG_RESET_FLAGS> is set then the flags value is copied instead
 of ORed.
@@ -278,11 +357,12 @@ instead of functions which work in specific structures such as
 X509_STORE_CTX_set_flags() which are likely to be deprecated in a future
 release.
 
-TLS clients are recommended to set up validation of server hostname(s) and/or
-IP address (directly using the above functions
-or more conveniently using L<SSL_set1_host(3)> or L<SSL_add1_host(3)>)
-and to use L<SSL_set_tlsext_host_name(3)> for Server Name Indication (SNI),
-which may be crucial also for correct routing of the connection request.
+TLS clients are recommended to set up validation of server hostname(s)
+and/or IP address (directly using the functions described in
+L<X509_VERIFY_PARAM_set1_host(3)>, or more conveniently using
+L<SSL_set1_host(3)> or L<SSL_add1_host(3)>) and to use
+L<SSL_set_tlsext_host_name(3)> for Server Name Indication (SNI), which
+may be crucial also for correct routing of the connection request.
 
 =head1 BUGS
 
@@ -290,7 +370,7 @@ Delta CRL checking is currently primitive. Only a single delta can be used and
 (partly due to limitations of B<X509_STORE>) constructed CRLs are not
 maintained.
 
-If CRLs checking is enable CRLs are expected to be available in the
+If CRL checking is enabled, CRLs are expected to be available in the
 corresponding B<X509_STORE> structure. No attempt is made to download
 CRLs from the CRL distribution points extension.
 
