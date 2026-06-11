@@ -35,6 +35,7 @@ unsigned char *OPENSSL_asc2uni(const char *asc, int asclen,
     }
     if (asclen < 0)
         return NULL;
+    /* If this changes, revisit test_safe_math_asc2uni_boundary() */
     ulen = safe_add_int(safe_mul_int(asclen, 2, &err), 2, &err);
     if (err)
         return NULL;

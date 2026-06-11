@@ -13,6 +13,7 @@
 #include <limits.h>
 
 #include "internal/nelem.h"
+#include "internal/safe_math.h"
 
 #include <openssl/pkcs12.h>
 #include <openssl/x509.h>
@@ -24,6 +25,8 @@
 
 static OSSL_LIB_CTX *testctx = NULL;
 static OSSL_PROVIDER *nullprov = NULL;
+
+OSSL_SAFE_MATH_SIGNED(int, int)
 
 static int test_null_args(void)
 {
@@ -310,19 +313,23 @@ err:
     return ret;
 }
 
+/*
+ * The largest asclen that does not overflow is (INT_MAX - 2) / 2, since
+ * OPENSSL_asc2uni() computes asclen * 2 + 2.  Anything larger overflows.
+ */
 static int test_asc2uni_overflow(void)
 {
     unsigned char *result = NULL;
     int unilen = 0;
     int ret = 0;
 
-    /* asclen = INT_MAX/2 causes (INT_MAX/2)*2+2 = INT_MAX+1 overflow */
-    result = OPENSSL_asc2uni("A", INT_MAX / 2, &result, &unilen);
+    /* (INT_MAX - 2) / 2 + 1 is the smallest asclen that overflows */
+    result = OPENSSL_asc2uni("A", (INT_MAX - 2) / 2 + 1, &result, &unilen);
     if (!TEST_ptr_null(result))
         goto err;
 
-    /* asclen = INT_MAX/2 + 1 also overflows */
-    result = OPENSSL_asc2uni("A", INT_MAX / 2 + 1, &result, &unilen);
+    /* asclen = INT_MAX/2 overflows */
+    result = OPENSSL_asc2uni("A", INT_MAX / 2, &result, &unilen);
     if (!TEST_ptr_null(result))
         goto err;
 
@@ -342,6 +349,31 @@ static int test_asc2uni_overflow(void)
 err:
     OPENSSL_free(result);
     return ret;
+}
+
+/*
+ * Positive test for the largest valid input.  Allocating a buffer for an
+ * INT_MAX-sized BMPString is impractical, so the boundary arithmetic that
+ * OPENSSL_asc2uni() performs is tested directly here.  If the computation in
+ * OPENSSL_asc2uni() changes, this test needs to be updated to match.
+ */
+static int test_safe_math_asc2uni_boundary(void)
+{
+    int err = 0;
+    int ulen;
+    int max_valid = (INT_MAX - 2) / 2;
+
+    /* Largest valid input: result fits in an int, no overflow */
+    ulen = safe_add_int(safe_mul_int(max_valid, 2, &err), 2, &err);
+    if (!TEST_false(err))
+        return 0;
+    if (!TEST_int_eq(ulen, max_valid * 2 + 2))
+        return 0;
+
+    /* One past the largest valid input overflows */
+    err = 0;
+    ulen = safe_add_int(safe_mul_int(max_valid + 1, 2, &err), 2, &err);
+    return TEST_true(err);
 }
 
 int setup_tests(void)
@@ -386,6 +418,7 @@ int setup_tests(void)
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
     ADD_TEST(test_asc2uni_overflow);
+    ADD_TEST(test_safe_math_asc2uni_boundary);
     return 1;
 }
 
