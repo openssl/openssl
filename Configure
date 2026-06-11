@@ -1125,6 +1125,14 @@ while (@argvcopy)
                         {
                         $withargs{cmocka_include}=$1;
                         }
+                elsif (/^--with-detours-lib=(.*)$/)
+                        {
+                        $withargs{detours_lib}=$1;
+                        }
+                elsif (/^--with-detours-include=(.*)$/)
+                        {
+                        $withargs{detours_include}=$1;
+                        }
                 elsif (/^--with-rand-seed=(.*)$/)
                         {
                         foreach my $x (split(m|,|, $1))
@@ -1927,15 +1935,26 @@ unless ($disabled{winstore}) {
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
+# Keywords accepted in a build.info UNIT_TEST[] link set.
+my @unit_test_keywords = qw(cmocka detours);
+
 unless ($disabled{"unit-tests"}) {
     if ($target =~ /^linux/ || $target =~ /^BSD/) {
         $config{cmocka_includes} =
             $withargs{cmocka_include} ? [$withargs{cmocka_include}] : [];
         $config{cmocka_libs} = $withargs{cmocka_lib}
-            ? "-L$withargs{cmocka_lib} -lcmocka"
-            : "-lcmocka";
+            ? "-L$withargs{cmocka_lib} -lcmocka" : "-lcmocka";
+    } elsif ($target =~ /^VC-/) {
+        $config{cmocka_includes} =
+            $withargs{cmocka_include} ? [$withargs{cmocka_include}] : [];
+        $config{cmocka_libs} = $withargs{cmocka_lib}
+            ? "/LIBPATH:$withargs{cmocka_lib} cmocka.lib" : "cmocka.lib";
+        $config{detours_includes} =
+            $withargs{detours_include} ? [$withargs{detours_include}] : [];
+        $config{detours_libs} = $withargs{detours_lib}
+            ? "/LIBPATH:$withargs{detours_lib} detours.lib" : "detours.lib";
     } else {
-        disable('no-wrap-support', 'unit-tests');
+        disable('no-unit-test-support', 'unit-tests');
     }
 }
 
@@ -2163,6 +2182,7 @@ if ($builder eq "unified") {
         my %includes = ();
         my %defines = ();
         my %depends = ();
+        my %unit_tests = ();
         my %wraps = ();
         my %generate = ();
         my %imagedocs = ();
@@ -2419,11 +2439,16 @@ if ($builder eq "unified") {
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* UNIT_TEST ${index_re} \s* = \s* ${value_re} \s* $/x
+            => sub { $push_to->(\%unit_tests, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* WRAP ${index_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%wraps, $expand_variables->($+{INDEX}),
                                 undef, undef,
                                 tokenize($expand_variables->($+{VALUE})))
-             if !@skip || $skip[$#skip] > 0; },
+                         if !@skip || $skip[$#skip] > 0; },
             qr/^\s* GENERATE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
                                 \$attributes{generate}, $+{ATTRIBS},
@@ -2715,6 +2740,20 @@ if ($builder eq "unified") {
             foreach my $fn (@{$wraps{$dest}}) {
                 push @{$unified_info{wraps}->{$ddest}}, $fn;
             }
+        }
+
+        foreach my $dest (keys %unit_tests) {
+            my $ddest = cleanfile($buildd, $dest, $blddir);
+            foreach my $kw (@{$unit_tests{$dest}}) {
+                die "***** Unknown keyword '$kw' in UNIT_TEST[$dest] at $sourced/$f\n"
+                    unless grep { $_ eq $kw } @unit_test_keywords;
+            }
+            $unified_info{unit_tests}->{$ddest} =
+                [ @{$unit_tests{$dest}} ];
+        }
+        # WRAP implies cmocka unless an explicit UNIT_TEST set was given
+        foreach my $dest (keys %{$unified_info{wraps} // {}}) {
+            $unified_info{unit_tests}->{$dest} //= [ "cmocka" ];
         }
 
         foreach my $section (keys %imagedocs) {
@@ -3049,11 +3088,25 @@ EOF
     }
 }
 
-# Add cmocka include path to all targets that use WRAP
-if (!$disabled{"unit-tests"} && @{$config{cmocka_includes} // []}) {
-    foreach my $dest (keys %{$unified_info{wraps} // {}}) {
-        push @{$unified_info{includes}->{$dest}},
-             @{$config{cmocka_includes}};
+# Attach cmocka (and, on Windows, Detours) include paths to unit tests,
+# based on each test's UNIT_TEST[] link set.
+if (!$disabled{"unit-tests"}) {
+    while (my ($dest, $libs) = each %{$unified_info{unit_tests} // {}}) {
+        my %want = map { $_ => 1 } @$libs;
+        push @{$unified_info{includes}->{$dest}}, @{$config{cmocka_includes}}
+            if $want{cmocka} && @{$config{cmocka_includes} // []};
+        push @{$unified_info{includes}->{$dest}}, @{$config{detours_includes}}
+            if $want{detours} && @{$config{detours_includes} // []};
+    }
+}
+
+if (!$disabled{"unit-tests"}) {
+    foreach my $dest (sort keys %{$unified_info{unit_tests} // {}}) {
+        my %want = map { $_ => 1 } @{$unified_info{unit_tests}->{$dest}};
+        my @resolved;
+        push @resolved, '$(CMOCKA_LIBS)'  if $want{cmocka}  && $config{cmocka_libs};
+        push @resolved, '$(DETOURS_LIBS)' if $want{detours} && $config{detours_libs};
+        $unified_info{unit_test_libs}->{$dest} = join(' ', @resolved);
     }
 }
 
