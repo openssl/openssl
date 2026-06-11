@@ -190,22 +190,38 @@ void spawn_loop(const char *prog)
 #endif
 
 #ifndef OPENSSL_NO_SOCK
-BIO *http_server_init(const char *prog, const char *port, int verb)
+BIO *http_server_init(const char *prog, const char *host, const char *port, int family, int verb)
 {
     BIO *acbio = NULL, *bufbio;
     int asock;
     int port_num;
-    char name[40];
+    char *name;
+    size_t n = 0;
+    int a_star = 0;
 
-    BIO_snprintf(name, sizeof(name), "*:%s", port); /* port may be "0" */
-    if (verb >= 0 && !log_set_verbosity(prog, verb))
+    if (host != NULL) n += strlen(host);
+    if (port != NULL) n += strlen(port);
+
+    if ((family == BIO_FAMILY_IPV6) && !strcmp(host, "*")) {
+        n += 3;
+        a_star = 1;
+    }
+
+    name=app_malloc(n + 2, "listener host:port buffer");
+
+    log_HTTP2(prog, verb, "host %s listen on port %s", host, port);
+
+    BIO_snprintf(name, n + 2, "%s:%s",(a_star ? "[::]" : host), port); /* port may be "0" */
+    if (verb >= 0 && !log_set_verbosity(prog, verb)) {
+        clear_free(name);
         return NULL;
+    }
     bufbio = BIO_new(BIO_f_buffer());
     if (bufbio == NULL)
         goto err;
     acbio = BIO_new(BIO_s_accept());
     if (acbio == NULL
-        || BIO_set_accept_ip_family(acbio, BIO_FAMILY_IPANY) <= 0 /* IPv4/6 */
+        || BIO_set_accept_ip_family(acbio, family) <= 0 /* IPv4/6 */
         || BIO_set_bind_mode(acbio, BIO_BIND_REUSEADDR) <= 0
         || BIO_set_accept_name(acbio, name) <= 0) {
         log_HTTP(prog, LOG_ERR, "error setting up accept BIO");
@@ -218,6 +234,8 @@ BIO *http_server_init(const char *prog, const char *port, int verb)
         log_HTTP1(prog, LOG_ERR, "error setting accept on port %s", port);
         goto err;
     }
+
+    clear_free(name);
 
     /* Report back what address and port are used */
     BIO_get_fd(acbio, &asock);
@@ -233,6 +251,7 @@ err:
     ERR_print_errors(bio_err);
     BIO_free_all(acbio);
     BIO_free(bufbio);
+    clear_free(name);
     return NULL;
 }
 
