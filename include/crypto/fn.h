@@ -263,6 +263,42 @@ OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
  */
 
 /**
+ * Return the number of significant bits in an OSSL_FN number.
+ *
+ * @param[in]           a       The operand
+ * @returns             The number of significant bits, or zero if a is zero
+ */
+size_t OSSL_FN_num_bits(const OSSL_FN *a);
+
+/**
+ * Compare two OSSL_FN numbers as unsigned integers.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             1 if a > b, -1 if a < b, 0 if a == b
+ */
+int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n);
+
+/**
+ * Shift an OSSL_FN number left by one bit.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
  * Add two OSSL_FN numbers.
  *
  * @param[out]          r       The OSSL_FN for the result
