@@ -158,7 +158,7 @@ const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 #if defined(AESNI_CAPABLE)
     aes_gcm_hw = ossl_prov_aes_hw_gcm_aesni();
 #elif defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
-    aes_gcm_hw = ossl_prov_aes_hw_gcm_armv8(keybits);
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_armv8();
 #elif defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
     aes_gcm_hw = ossl_prov_aes_hw_gcm_ppc(keybits);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
