@@ -8,8 +8,7 @@
  */
 
 /*-
- * AES-NI support for AES modes ecb, cbc, ofb, cfb, ctr.
- * This file is used by cipher_aes_hw.c
+ * AES-NI support for all hardware accelerated AES modes.
  */
 
 #include "internal/deprecated.h"
