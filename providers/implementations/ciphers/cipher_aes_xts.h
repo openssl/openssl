@@ -78,6 +78,10 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_aesni(void);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_rv32i(void);
 #endif
 
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_rv64i(void);
+#endif
+
 #ifdef AES_XTS_S390X
 int s390x_aes_xts_cipher_stream(PROV_AES_XTS_CTX *xctx,
     unsigned char *out, size_t *outl,

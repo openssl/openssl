@@ -62,7 +62,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm_aesni(void);
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv32i(void);
 #endif
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv64i(size_t keybits);
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv64i(void);
 #endif
 #if defined(S390X_aes_128_CAPABLE)
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm_s390x(size_t keybits);

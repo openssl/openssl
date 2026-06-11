@@ -223,7 +223,7 @@ static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_mode(enum aes_modes mode,
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
     aes_hw_mode = ossl_prov_cipher_hw_rv32i(mode);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-    aes_hw_mode = ossl_prov_cipher_hw_rv64i(mode, keybits);
+    aes_hw_mode = ossl_prov_cipher_hw_rv64i(mode);
 #elif defined(S390X_aes_128_CAPABLE)
     aes_hw_mode = ossl_prov_cipher_hw_s390x(mode, keybits);
 #elif defined(SPARC_AES_CAPABLE)
