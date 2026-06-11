@@ -13,7 +13,7 @@
 #include <openssl/httperr.h>
 #include <openssl/bio.h> /* for BIO_snprintf() */
 #include <openssl/err.h>
-#include "internal/cryptlib.h" /* for ossl_assert() */
+#include "internal/cryptlib.h" /* for ossl_assert(), ossl_parse_url_internal() */
 #ifndef OPENSSL_NO_SOCK
 #include "internal/bio_addr.h" /* for NI_MAXHOST */
 #endif
@@ -21,6 +21,7 @@
 #define NI_MAXHOST 255
 #endif
 #include "crypto/ctype.h" /* for ossl_isspace() */
+#include "crypto/x509.h"
 #define OSSL_URL_SCHEME_SUFFIX "://"
 
 static void init_pstring(char **pstr)
@@ -199,6 +200,36 @@ err:
     return 0;
 }
 
+int ossl_parse_url_internal(const char *url, size_t len, int *perr, char **pscheme, char **puser, char **phost,
+    char **pport, int *pport_num,
+    char **ppath, char **pquery, char **pfrag)
+{
+    if (perr != NULL)
+        *perr = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX; /* default error */
+
+    if (len == 0)
+        return 0;
+
+    /* Embedded NUL check — only when caller provides explicit length */
+    if (len > 0) {
+
+        if (memchr(url, '\0', len) != NULL)
+            return 0;
+
+        /* Check for NUL terminator at the end */
+        if (url[len] != '\0')
+            return 0;
+    }
+
+    if (!OSSL_parse_url(url, pscheme, puser, phost, pport, pport_num,
+            ppath, pquery, pfrag))
+        return 0;
+
+    if (perr != NULL)
+        *perr = X509_V_OK;
+    return 1;
+}
+
 #ifndef OPENSSL_NO_HTTP
 
 int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
@@ -211,7 +242,9 @@ int OSSL_HTTP_parse_url(const char *url, int *pssl, char **puser, char **phost,
     init_pstring(pport);
     if (pssl != NULL)
         *pssl = 0;
-    if (!OSSL_parse_url(url, &scheme, puser, phost, &port, pport_num,
+    if (!ossl_parse_url_internal(url, strlen(url), NULL,
+            &scheme, puser, phost,
+            &port, pport_num,
             ppath, pquery, pfrag))
         return 0;
 
