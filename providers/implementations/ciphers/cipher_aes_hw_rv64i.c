@@ -19,6 +19,14 @@
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 
+static int zvkned_key_schedule_supported(size_t keylen)
+{
+    if (keylen * 8 == 128 || keylen * 8 == 256) {
+        return 1;
+    }
+    return 0;
+}
+
 /* MODES: ecb, cbc, cfb, ofb, ctr */
 
 static int cipher_hw_rv64i_initkey(PROV_CIPHER_CTX *ctx,
@@ -34,7 +42,7 @@ static int cipher_hw_rv64i_initkey(PROV_CIPHER_CTX *ctx,
         aes_set_encrypt_key_fn fn_set_key = AES_set_encrypt_key;
         aes_block128_f fn_block = NULL;
 
-        if (keylen * 8 == 128 || keylen * 8 == 256) {
+        if (zvkned_key_schedule_supported(keylen)) {
             fn_set_key = rv64i_zvkned_set_encrypt_key;
         }
         ecb128_f fn_ecb = ctx->enc ? (ecb128_f)rv64i_zvkned_ecb_encrypt : (ecb128_f)rv64i_zvkned_ecb_decrypt;
@@ -164,7 +172,7 @@ static int rv64i_zvkned_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
      * Zvkned only supports 128 and 256 bit keys for key schedule generation.
      * For AES-192 case, we could fallback to `AES_set_encrypt_key`.
      */
-    if (keylen * 8 == 128 || keylen * 8 == 256) {
+    if (zvkned_key_schedule_supported(keylen)) {
         return aes_gcm_hw_initkey(ctx, key, keylen,
             rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt, NULL);
     } else {
@@ -193,7 +201,7 @@ static int rv64i_zvkb_zvkg_zvkned_gcm_initkey(PROV_GCM_CTX *ctx,
      * Zvkned only supports 128 and 256 bit keys for key schedule generation.
      * For AES-192 case, we could fallback to `AES_set_encrypt_key`.
      */
-    if (keylen * 8 == 128 || keylen * 8 == 256) {
+    if (zvkned_key_schedule_supported(keylen)) {
         return aes_gcm_hw_initkey(ctx, key, keylen,
             rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt,
             rv64i_zvkb_zvkned_ctr32_encrypt_blocks);
@@ -255,7 +263,7 @@ static int ccm_rv64i_zvkned_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
     /* Zvkned only supports 128 and 256 bit keys for key schedule generation. */
-    if (keylen * 8 == 128 || keylen * 8 == 256) {
+    if (zvkned_key_schedule_supported(keylen)) {
         return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
             rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt, NULL, NULL);
     } else {
@@ -290,13 +298,13 @@ static int cipher_hw_aes_xts_rv64i_initkey(PROV_CIPHER_CTX *ctx,
 {
     if (RISCV_HAS_ZVBB() && RISCV_HAS_ZVKG() && RISCV_HAS_ZVKNED() && riscv_vlen() >= 128) {
         /* Zvkned only supports 128 and 256 bit keys. */
-        if (keylen * 8 == 128 * 2 || keylen * 8 == 256 * 2)
+        if (zvkned_key_schedule_supported(keylen / 2)) {
             return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
                 rv64i_zvkned_set_encrypt_key, rv64i_zvkned_set_decrypt_key,
                 rv64i_zvkned_encrypt, rv64i_zvkned_decrypt,
                 rv64i_zvbb_zvkg_zvkned_aes_xts_encrypt,
                 rv64i_zvbb_zvkg_zvkned_aes_xts_decrypt);
-
+        }
         return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
             AES_set_encrypt_key, AES_set_encrypt_key,
             rv64i_zvkned_encrypt, rv64i_zvkned_decrypt, NULL, NULL);
@@ -304,20 +312,21 @@ static int cipher_hw_aes_xts_rv64i_initkey(PROV_CIPHER_CTX *ctx,
 
     if (RISCV_HAS_ZVKNED() && riscv_vlen() >= 128) {
         /* Zvkned only supports 128 and 256 bit keys. */
-        if (keylen * 8 == 128 * 2 || keylen * 8 == 256 * 2)
+        if (zvkned_key_schedule_supported(keylen / 2)) {
             return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
                 rv64i_zvkned_set_encrypt_key, rv64i_zvkned_set_decrypt_key,
                 rv64i_zvkned_encrypt, rv64i_zvkned_decrypt, NULL, NULL);
-
+        }
         return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
             AES_set_encrypt_key, AES_set_encrypt_key,
             rv64i_zvkned_encrypt, rv64i_zvkned_decrypt, NULL, NULL);
     }
 
-    if (RISCV_HAS_ZKND_AND_ZKNE())
+    if (RISCV_HAS_ZKND_AND_ZKNE()) {
         return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
             rv64i_zkne_set_encrypt_key, rv64i_zknd_set_decrypt_key,
             rv64i_zkne_encrypt, rv64i_zknd_decrypt, NULL, NULL);
+    }
 
     return 0;
 }
