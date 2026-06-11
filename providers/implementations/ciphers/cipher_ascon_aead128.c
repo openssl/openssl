@@ -418,37 +418,25 @@ static int ascon_aead128_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
-        if (p.tag->data_size < FIXED_TAG_LENGTH) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
         if (!ctx->is_tag_set) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
-        memcpy(p.tag->data, ctx->tag, FIXED_TAG_LENGTH);
-        p.tag->return_size = FIXED_TAG_LENGTH;
+        if (!OSSL_PARAM_set_octet_string(p.tag, ctx->tag, FIXED_TAG_LENGTH)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
 
     if (p.upd_iv != NULL) {
-        if (p.upd_iv->data_type != OSSL_PARAM_OCTET_STRING) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
-        if (p.upd_iv->data_size < ASCON_AEAD_NONCE_LEN) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
-            return 0;
-        }
         if (!ctx->iv_set) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
             return 0;
         }
-        memcpy(p.upd_iv->data, ctx->iv, ASCON_AEAD_NONCE_LEN);
-        p.upd_iv->return_size = ASCON_AEAD_NONCE_LEN;
+        if (!OSSL_PARAM_set_octet_string(p.upd_iv, ctx->iv, ASCON_AEAD_NONCE_LEN)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
+            return 0;
+        }
     }
 
     return 1;
