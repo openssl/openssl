@@ -86,6 +86,7 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_rv64i(void);
 int s390x_aes_xts_cipher_stream(PROV_AES_XTS_CTX *xctx,
     unsigned char *out, size_t *outl,
     const unsigned char *in, size_t inl);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_s390x(size_t keybits);
 #endif
 
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits);
