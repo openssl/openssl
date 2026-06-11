@@ -84,8 +84,7 @@ int ossl_cipher_hw_aes_initkey(PROV_CIPHER_CTX *ctx,
 void ossl_cipher_aes_copyctx(PROV_CIPHER_CTX *dst, const PROV_CIPHER_CTX *src);
 
 #if defined(AESNI_CAPABLE)
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode,
-    size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode);
 #elif defined(ARMv8_HWAES_CAPABLE)
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_arm(enum aes_modes mode,
     size_t keybits);
