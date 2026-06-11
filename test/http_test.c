@@ -586,7 +586,7 @@ static int test_http_resp_hdr_limit(size_t limit)
     int res = 0;
     OSSL_HTTP_REQ_CTX *rctx = NULL;
 
-    if (TEST_ptr(wbio) == 0 || TEST_ptr(rbio) == 0)
+    if (!TEST_ptr(wbio) || !TEST_ptr(rbio))
         goto err;
 
     mock_args.txt = text1;
@@ -598,7 +598,7 @@ static int test_http_resp_hdr_limit(size_t limit)
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192);
-    if (TEST_ptr(rctx) == 0)
+    if (!TEST_ptr(rctx))
         goto err;
 
     if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
