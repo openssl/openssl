@@ -15,6 +15,7 @@
 #include "internal/common.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
+#include "internal/constant_time.h"
 
 static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
 {
@@ -103,6 +104,84 @@ void OSSL_FN_clear(OSSL_FN *f)
     size_t limbssize = f->dsize * sizeof(OSSL_FN_ULONG);
 
     OPENSSL_cleanse(f->d, limbssize);
+}
+
+static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
+{
+    OSSL_FN_ULONG x, mask;
+    size_t bits = (size_t)constant_time_select_int(
+        (unsigned int)constant_time_is_zero_bn(l), 0, 1);
+
+#if OSSL_FN_BITS > 32
+    x = l >> 32;
+    mask = ~constant_time_is_zero_bn(x);
+    bits += 32 & (size_t)mask;
+    l ^= (x ^ l) & mask;
+#endif
+
+    x = l >> 16;
+    mask = ~constant_time_is_zero_bn(x);
+    bits += 16 & (size_t)mask;
+    l ^= (x ^ l) & mask;
+
+    x = l >> 8;
+    mask = ~constant_time_is_zero_bn(x);
+    bits += 8 & (size_t)mask;
+    l ^= (x ^ l) & mask;
+
+    x = l >> 4;
+    mask = ~constant_time_is_zero_bn(x);
+    bits += 4 & (size_t)mask;
+    l ^= (x ^ l) & mask;
+
+    x = l >> 2;
+    mask = ~constant_time_is_zero_bn(x);
+    bits += 2 & (size_t)mask;
+    l ^= (x ^ l) & mask;
+
+    x = l >> 1;
+    mask = ~constant_time_is_zero_bn(x);
+    bits += 1 & (size_t)mask;
+
+    return bits;
+}
+
+size_t OSSL_FN_num_bits(const OSSL_FN *a)
+{
+    size_t i;
+    size_t dsize = (size_t)a->dsize;
+    size_t ret = 0;
+
+    for (i = 0; i < dsize; i++) {
+        size_t limb_bits = ossl_fn_num_bits_word(a->d[i]);
+        size_t bits = i * OSSL_FN_BITS + limb_bits;
+        size_t mask = (size_t)~constant_time_is_zero_bn(a->d[i]);
+
+        ret = constant_time_select_s(mask, bits, ret);
+    }
+
+    return ret;
+}
+
+int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
+{
+    size_t i;
+    size_t asize = (size_t)a->dsize;
+    size_t bsize = (size_t)b->dsize;
+    size_t max = asize > bsize ? asize : bsize;
+    int res = 0;
+
+    for (i = 0; i < max; i++) {
+        OSSL_FN_ULONG aw = i < asize ? a->d[i] : 0;
+        OSSL_FN_ULONG bw = i < bsize ? b->d[i] : 0;
+
+        res = constant_time_select_int(
+            (unsigned int)constant_time_lt_bn(aw, bw), -1, res);
+        res = constant_time_select_int(
+            (unsigned int)constant_time_lt_bn(bw, aw), 1, res);
+    }
+
+    return res;
 }
 
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
