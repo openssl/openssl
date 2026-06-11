@@ -95,8 +95,7 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv64i(enum aes_modes mode);
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_s390x(enum aes_modes mode,
     size_t keybits);
 #elif defined(SPARC_AES_CAPABLE)
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_t4(enum aes_modes mode,
-    size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_t4(enum aes_modes mode);
 #endif
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_H) */

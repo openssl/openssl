@@ -227,7 +227,7 @@ static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_mode(enum aes_modes mode,
 #elif defined(S390X_aes_128_CAPABLE)
     aes_hw_mode = ossl_prov_cipher_hw_s390x(mode, keybits);
 #elif defined(SPARC_AES_CAPABLE)
-    aes_hw_mode = ossl_prov_cipher_hw_t4(mode, keybits);
+    aes_hw_mode = ossl_prov_cipher_hw_t4(mode);
 #endif
 
     if (aes_hw_mode == NULL) {
