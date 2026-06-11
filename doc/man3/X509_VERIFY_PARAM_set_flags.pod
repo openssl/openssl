@@ -90,10 +90,15 @@ X509_VERIFY_PARAM_set_trust() sets the trust selector in I<param> to
 I<trust>, which must be one of the B<X509_TRUST_*> identifiers defined
 in F<openssl/x509_vfy.h> (such as B<X509_TRUST_SSL_SERVER>,
 B<X509_TRUST_SSL_CLIENT>, B<X509_TRUST_EMAIL>, or B<X509_TRUST_OBJECT_SIGN>).
-The trust selector determines how explicit trust settings recorded on
-trust-anchor certificates are matched against the verification operation;
-see the TRUST SETTINGS section of L<openssl-x509(1)>. There is no
-public getter for the trust selector.
+The selector controls how OpenSSL-specific auxiliary trust information,
+when present on a candidate trust-anchor certificate, is matched against
+the verification operation. This auxiliary information is not part of
+the certificate itself: it is data attached to the in-memory B<X509>
+object by the application, for example by loading the certificate in
+the B<TRUSTED CERTIFICATE> PEM form (see the TRUST SETTINGS section of
+L<openssl-x509(1)>) or via calls such as X509_add1_trust_object().
+See L</BUGS> for important caveats about the practical effect of this
+selector. There is no public getter for the trust selector.
 
 X509_VERIFY_PARAM_set_time() sets the verification time in I<param> to
 I<t>, which is then used as the reference time for certificate and CRL
@@ -373,6 +378,29 @@ maintained.
 If CRL checking is enabled, CRLs are expected to be available in the
 corresponding B<X509_STORE> structure. No attempt is made to download
 CRLs from the CRL distribution points extension.
+
+The trust selectors accepted by X509_VERIFY_PARAM_set_trust()
+(B<X509_TRUST_SSL_SERVER>, B<X509_TRUST_SSL_CLIENT>, B<X509_TRUST_EMAIL>,
+and so on) are named after standard PKIX Extended Key Usage values,
+which makes it natural to assume that the selector enforces the
+corresponding B<extKeyUsage> extension on the certificate. It does not.
+The selectors are matched only against an OpenSSL-specific auxiliary
+trust structure attached to candidate trust-anchor certificates, which
+is populated only by loading the certificate in the B<TRUSTED CERTIFICATE>
+PEM form, or by calls such as X509_add1_trust_object(). Certificates
+loaded as plain B<CERTIFICATE> DER or PEM blobs (the overwhelming
+majority) carry no such auxiliary trust info; on such certificates the
+trust check falls through to a compatibility path that accepts any
+self-signed certificate as the anchor regardless of the configured
+selector. The net effect on typical self-signed root certificates is
+that X509_VERIFY_PARAM_set_trust() is silently a no-op. Constraints
+based on the standard B<extKeyUsage> extension are imposed by
+X509_VERIFY_PARAM_set_purpose() instead.
+
+Within the trust enumeration, B<X509_TRUST_OCSP_REQUEST> is matched
+against the OCSP Authority Information Access OID rather than an EKU
+OID, and B<X509_TRUST_COMPAT> carries no OID at all and simply accepts
+any self-signed certificate.
 
 =head1 EXAMPLES
 
