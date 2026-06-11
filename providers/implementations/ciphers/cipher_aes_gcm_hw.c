@@ -161,10 +161,10 @@ const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
     aes_gcm_hw = ossl_prov_aes_hw_gcm_armv8();
 #elif defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
     aes_gcm_hw = ossl_prov_aes_hw_gcm_ppc(keybits);
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_rv32i();
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
     aes_gcm_hw = ossl_prov_aes_hw_gcm_rv64i(keybits);
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
-    aes_gcm_hw = ossl_prov_aes_hw_gcm_rv32i(keybits);
 #elif defined(S390X_aes_128_CAPABLE)
     aes_gcm_hw = ossl_prov_aes_hw_gcm_s390x(keybits);
 #elif defined(SPARC_AES_CAPABLE)

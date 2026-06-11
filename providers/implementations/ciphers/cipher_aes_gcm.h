@@ -62,11 +62,11 @@ const PROV_GCM_HW *ossl_prov_aes_hw_gcm_armv8(void);
 #if defined(PPC_AES_GCM_CAPABLE) && defined(_ARCH_PPC64)
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm_ppc(size_t keybits);
 #endif
+#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv32i(void);
+#endif
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv64i(size_t keybits);
-#endif
-#if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
-const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv32i(size_t keybits);
 #endif
 #if defined(S390X_aes_128_CAPABLE)
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm_s390x(size_t keybits);

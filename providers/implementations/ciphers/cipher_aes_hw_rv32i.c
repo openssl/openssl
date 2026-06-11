@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,14 +8,18 @@
  */
 
 /*-
- * RISC-V 32 ZKND ZKNE support for AES modes ecb, cbc, ofb, cfb, ctr.
- * This file is used by cipher_aes_hw.c
+ * RISC-V 32 ZKND ZKNE support for all hardware accelerated AES modes.
  */
 
 #include "internal/deprecated.h"
 #include "cipher_aes.h"
+#include "cipher_aes_gcm.h"
+#include "cipher_aes_ccm.h"
+#include "cipher_aes_xts.h"
 
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
+
+/* MODES: ecb, cbc, cfb, ofb, ctr */
 
 static int cipher_hw_rv32i_initkey(PROV_CIPHER_CTX *ctx,
     const unsigned char *key, size_t keylen)
@@ -84,8 +88,7 @@ static const PROV_CIPHER_HW rv32i_ctr = {
     ossl_cipher_aes_copyctx
 };
 
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv32i(enum aes_modes mode,
-    size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv32i(enum aes_modes mode)
 {
     if (RISCV_HAS_ZKND_AND_ZKNE()) {
         switch (mode) {
@@ -107,6 +110,101 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv32i(enum aes_modes mode,
             return NULL;
         }
     }
+    return NULL;
+}
+
+/* MODES: GCM */
+
+static int aes_gcm_rv32i_initkey(PROV_GCM_CTX *ctx,
+    const unsigned char *key,
+    size_t keylen)
+{
+    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE()) {
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL);
+    } else if (RISCV_HAS_ZKND_AND_ZKNE()) {
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL);
+    }
+    return 0;
+}
+
+static const PROV_GCM_HW aes_gcm_rv32i = {
+    aes_gcm_rv32i_initkey,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
+    generic_aes_gcm_cipher_update,
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
+};
+
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_rv32i(void)
+{
+    if (RISCV_HAS_ZKND_AND_ZKNE())
+        return &aes_gcm_rv32i;
+    return NULL;
+}
+
+/* MODES: CCM */
+
+static int aes_ccm_rv32i_initkey(PROV_CCM_CTX *ctx,
+    const unsigned char *key, size_t keylen)
+{
+    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE()) {
+        return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
+            rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL, NULL);
+    } else if (RISCV_HAS_ZKND_AND_ZKNE()) {
+        return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
+            rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL, NULL);
+    }
+    return 0;
+}
+
+static const PROV_CCM_HW aes_ccm_rv32i = {
+    aes_ccm_rv32i_initkey,
+    ossl_ccm_generic_setiv,
+    ossl_ccm_generic_setaad,
+    ossl_ccm_generic_auth_encrypt,
+    ossl_ccm_generic_auth_decrypt,
+    ossl_ccm_generic_gettag
+};
+
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv32i(void)
+{
+    if (RISCV_HAS_ZKND_AND_ZKNE())
+        return &aes_ccm_rv32i;
+    return NULL;
+}
+
+/* MODES: XTS */
+
+static int cipher_hw_aes_xts_rv32i_initkey(PROV_CIPHER_CTX *ctx,
+    const unsigned char *key, size_t keylen)
+{
+    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
+        return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
+            rv32i_zbkb_zkne_set_encrypt_key,
+            rv32i_zbkb_zknd_zkne_set_decrypt_key,
+            rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+
+    if (RISCV_HAS_ZKND_AND_ZKNE())
+        return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
+            rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
+            rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
+
+    return 0;
+}
+
+static const PROV_CIPHER_HW aes_xts_rv32i = {
+    cipher_hw_aes_xts_rv32i_initkey,
+    NULL,
+    ossl_cipher_hw_aes_xts_copyctx
+};
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_rv32i(void)
+{
+    if (RISCV_HAS_ZKND_AND_ZKNE())
+        return &aes_xts_rv32i;
     return NULL;
 }
 

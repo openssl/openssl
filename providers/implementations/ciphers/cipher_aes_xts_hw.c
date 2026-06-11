@@ -195,38 +195,6 @@ static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_rv64i()
     return NULL;
 }
 
-#elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
-
-static int cipher_hw_aes_xts_rv32i_initkey(PROV_CIPHER_CTX *ctx,
-    const unsigned char *key, size_t keylen)
-{
-    if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE())
-        return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
-            rv32i_zbkb_zkne_set_encrypt_key,
-            rv32i_zbkb_zknd_zkne_set_decrypt_key,
-            rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
-
-    if (RISCV_HAS_ZKND_AND_ZKNE())
-        return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
-            rv32i_zkne_set_encrypt_key, rv32i_zknd_zkne_set_decrypt_key,
-            rv32i_zkne_encrypt, rv32i_zknd_decrypt, NULL, NULL);
-
-    return 0;
-}
-
-static const PROV_CIPHER_HW aes_xts_rv32i = {
-    cipher_hw_aes_xts_rv32i_initkey,
-    NULL,
-    ossl_cipher_hw_aes_xts_copyctx
-};
-
-static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_rv32i()
-{
-    if (RISCV_HAS_ZKND_AND_ZKNE())
-        return &aes_xts_rv32i;
-    return NULL;
-}
-
 #elif defined(AES_XTS_S390X)
 
 int s390x_aes_xts_cipher_stream(PROV_AES_XTS_CTX *xctx,
