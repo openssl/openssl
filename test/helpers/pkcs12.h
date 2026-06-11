@@ -49,6 +49,32 @@ typedef struct pkcs12_builder {
 } PKCS12_BUILDER;
 
 /* -------------------------------------------------------------------------
+ * Compatibility wrapper for PKCS12_parse (deprecated in 4.1)
+ */
+#ifdef OPENSSL_NO_DEPRECATED_4_1
+static ossl_inline int compat_pkcs12_parse(PKCS12 *p12, const char *pass,
+    EVP_PKEY **pkey, X509 **cert, STACK_OF(X509) **ca)
+{
+    PKCS12_PARSE_CTX *ctx = PKCS12_PARSE_CTX_new();
+    int ret;
+
+    if (ctx == NULL)
+        return 0;
+    if (pkey != NULL)
+        PKCS12_PARSE_CTX_set_pkey(ctx, pkey);
+    if (cert != NULL)
+        PKCS12_PARSE_CTX_set_cert(ctx, cert);
+    if (ca != NULL)
+        PKCS12_PARSE_CTX_set_ca(ctx, ca);
+    ret = PKCS12_parse_ex(p12, pass, ctx, NULL, NULL);
+    PKCS12_PARSE_CTX_free(ctx);
+    return ret;
+}
+#else
+#define compat_pkcs12_parse PKCS12_parse
+#endif
+
+/* -------------------------------------------------------------------------
  * PKCS#12 Test function declarations
  */
 

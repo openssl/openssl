@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 59 + ($no_fips ? 0 : 5);
+plan tests => 76 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -455,6 +455,90 @@ for my $file ("BOOLEAN-in-friendlyName-of-key-pbmac1.p12",
             ok(scalar @match > 0 ? 0 : 1, "Test against CVE-2026-22795 , missing ASN1_TYPE validation in keys, pbmac1");
         }
     );
+}
+
+# Test Java PKCS#12 files with symmetric keys
+{
+    my $java_p12 = srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12");
+    my $skey_out = "skey-out.bin";
+    my $skey_raw = "skey-raw.bin";
+
+    # Test 1: Info display shows bag attributes
+    my @java_pkcs12info = run(app(["openssl", "pkcs12", "-info", "-in", $java_p12,
+                                   "-passin", "pass:password"]), capture => 1);
+
+    ok(grep(/friendlyName:\s+my-explicit-key/, @java_pkcs12info) == 1,
+       "test Java PKCS#12 friendly name in output");
+
+    ok(grep(/localKeyID:/, @java_pkcs12info) == 1,
+       "test Java PKCS#12 localKeyID in output");
+
+    # Test 2: Default extraction (without -noenc) should NOT output key data
+    ok(run(app(["openssl", "pkcs12", "-in", $java_p12, "-nocerts",
+                "-out", $skey_out, "-passin", "pass:password"])),
+       "test Java PKCS#12 extract without -noenc");
+
+    open my $fh, '<', $skey_out or die "Cannot open $skey_out: $!";
+    my $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content =~ /Bag Attributes/,
+       "test extracted output contains bag attributes");
+    ok($content =~ /Algorithm:/ && $content =~ /Key Length: 32 bytes/,
+       "test extracted output contains algorithm and key length");
+    ok($content =~ /Symmetric Key \(use -noenc to output\)/,
+       "test extracted output does NOT contain key data by default");
+    ok($content !~ /414141414141/,
+       "test extracted output does NOT contain hex key bytes");
+
+    # Test 3: Extract with -noenc should output key data in hex
+    ok(run(app(["openssl", "pkcs12", "-in", $java_p12, "-nocerts",
+                "-out", $skey_out, "-passin", "pass:password", "-noenc"])),
+       "test Java PKCS#12 extract with -noenc");
+
+    open $fh, '<', $skey_out or die "Cannot open $skey_out: $!";
+    $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content =~ /Bag Attributes/,
+       "test extracted key contains bag attributes");
+    ok($content =~ /Algorithm:/ && $content =~ /Key Length: 32 bytes/ && $content =~ /Key Data:/,
+       "test extracted key contains algorithm, key length and key data labels");
+    ok($content =~ /4141414141414141/,
+       "test extracted key contains hex data");
+
+    # Test 4: Extract symmetric key as raw binary
+    ok(run(app(["openssl", "pkcs12", "-in", $java_p12, "-nocerts",
+                "-out", $skey_raw, "-passin", "pass:password", "-raw"])),
+       "test Java PKCS#12 extract symmetric key with -raw option");
+
+    ok(-s $skey_raw == 32,
+       "test raw extracted key is 32 bytes");
+
+    open $fh, '<:raw', $skey_raw or die "Cannot open $skey_raw: $!";
+    my $raw_content = do { local $/; <$fh> };
+    close $fh;
+    ok($raw_content eq ("A" x 32),
+       "test raw extracted key contains correct binary data");
+
+    unlink $skey_out, $skey_raw;
+}
+
+# Test PKCS12_parse_ex() with Java symmetric key file
+ok(run(test(["pkcs12_api_test",
+             "-in", srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12"),
+             "-pass", "password",
+             "-has-skey", "1",
+             ])), "Test PKCS12_parse_ex() with symmetric key");
+
+# Test OSSL_STORE with Java symmetric key file
+{
+    my @output = run(app(["openssl", "storeutl",
+                         "-passin", "pass:password",
+                         srctop_file("test", "recipes", "80-test_pkcs12_data", "java-skey.p12")]),
+                    capture => 1);
+    ok(@output > 0, "Test OSSL_STORE loads symmetric key from PKCS#12");
+
+    my $output_text = join("", @output);
+    like($output_text, qr/Symmetric key/, "OSSL_STORE output shows symmetric key");
 }
 
 SetConsoleOutputCP($savedcp) if (defined($savedcp));

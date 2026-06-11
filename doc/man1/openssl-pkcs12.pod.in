@@ -29,6 +29,7 @@ PKCS#12 input (parsing) options:
 [B<-nomacver>]
 [B<-clcerts>]
 [B<-cacerts>]
+[B<-raw>]
 
 [B<-aes128>]
 [B<-aes192>]
@@ -127,7 +128,7 @@ B<-password>, B<-passin> if importing from PKCS#12, or B<-passout> if exporting.
 
 =item B<-nokeys>
 
-No private keys will be output.
+No private or symmetric keys will be output.
 
 =item B<-nocerts>
 
@@ -193,6 +194,13 @@ Only output client certificates (not CA certificates).
 
 Only output CA certificates (not client certificates).
 
+=item B<-raw>
+
+Output symmetric secret keys as raw binary data instead of the default
+text format. This option is only meaningful when extracting symmetric keys
+from PKCS#12 files (e.g., those created by Java's keytool utility).
+When used with B<-nocerts>, only the raw key bytes are written.
+
 =item B<-aes128>, B<-aes192>, B<-aes256>
 
 Use AES to encrypt private keys before outputting.
@@ -220,6 +228,7 @@ Use IDEA to encrypt private keys before outputting.
 =item B<-noenc>
 
 Don't encrypt private keys at all.
+For symmetric secret keys, this enables output of the key data in hex format.
 
 =item B<-nodes>
 
@@ -475,6 +484,14 @@ PEM file containing a key, with default algorithms as in the legacy provider:
 
  openssl pkcs12 -export -in cert.pem -inkey key.pem -out file.p12 -legacy
 
+Extract a symmetric secret key from a Java keytool PKCS#12 file in hex format:
+
+ openssl pkcs12 -in keystore.p12 -nocerts -noenc
+
+Extract a symmetric secret key as raw binary:
+
+ openssl pkcs12 -in keystore.p12 -nocerts -raw -out key.bin
+
 =head1 SEE ALSO
 
 L<openssl(1)>,
@@ -488,9 +505,12 @@ The B<-macsaltlen> option default changed from 8 to 16 bytes in OpenSSL 3.6.
 
 The B<-engine> option was removed in OpenSSL 4.0.
 
+The B<-raw> option and support for symmetric secret keys in PKCS#12 files
+was added in OpenSSL 4.1.
+
 =head1 COPYRIGHT
 
-Copyright 2000-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

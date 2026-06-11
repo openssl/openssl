@@ -10,6 +10,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include <openssl/core_names.h>
+#include <openssl/objects.h>
 #include "p12_local.h"
 #include "crypto/x509.h"
 
@@ -145,6 +147,46 @@ X509_CRL *PKCS12_SAFEBAG_get1_crl_ex(const PKCS12_SAFEBAG *bag,
         return NULL;
     }
     return ret;
+}
+
+EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    const ASN1_OBJECT *algoid = NULL;
+    const unsigned char *raw_key = NULL;
+    int raw_key_len = 0;
+    const char *skey_type = OSSL_SKEY_TYPE_GENERIC;
+
+    if (p8inf == NULL)
+        return NULL;
+
+    if (!PKCS8_pkey_get0(&algoid, &raw_key, &raw_key_len, NULL, p8inf)
+        || raw_key == NULL || raw_key_len <= 0)
+        return NULL;
+
+    if (algoid != NULL) {
+        int nid = OBJ_obj2nid(algoid);
+
+        switch (nid) {
+        case NID_id_aes:
+        case NID_aes_128_cbc:
+        case NID_aes_192_cbc:
+        case NID_aes_256_cbc:
+        case NID_aes_128_ecb:
+        case NID_aes_192_ecb:
+        case NID_aes_256_ecb:
+        case NID_aes_128_gcm:
+        case NID_aes_192_gcm:
+        case NID_aes_256_gcm:
+            skey_type = OSSL_SKEY_TYPE_AES;
+            break;
+        default:
+            break;
+        }
+    }
+
+    return EVP_SKEY_import_raw_key(libctx, skey_type,
+        (unsigned char *)raw_key, raw_key_len, propq);
 }
 
 PKCS12_SAFEBAG *PKCS12_SAFEBAG_create_cert(X509 *x509)
