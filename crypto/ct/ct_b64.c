@@ -84,7 +84,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
     declen = ct_base64_decode(logid_base64, &dec);
     if (declen < 0) {
-        ERR_raise(ERR_LIB_CT, CT_R_BASE64_DECODE_ERROR);
+        ERR_raise(ERR_LIB_CT, X509_R_BASE64_DECODE_ERROR);
         goto err;
     }
     if (!SCT_set0_log_id(sct, dec, declen))
@@ -93,7 +93,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
     declen = ct_base64_decode(extensions_base64, &dec);
     if (declen < 0) {
-        ERR_raise(ERR_LIB_CT, CT_R_BASE64_DECODE_ERROR);
+        ERR_raise(ERR_LIB_CT, X509_R_BASE64_DECODE_ERROR);
         goto err;
     }
     SCT_set0_extensions(sct, dec, declen);
@@ -101,7 +101,7 @@ SCT *SCT_new_from_base64(unsigned char version, const char *logid_base64,
 
     declen = ct_base64_decode(signature_base64, &dec);
     if (declen < 0) {
-        ERR_raise(ERR_LIB_CT, CT_R_BASE64_DECODE_ERROR);
+        ERR_raise(ERR_LIB_CT, X509_R_BASE64_DECODE_ERROR);
         goto err;
     }
 
