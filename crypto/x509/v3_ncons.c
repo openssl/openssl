@@ -779,37 +779,28 @@ static int nc_email(ASN1_IA5STRING *eml, ASN1_IA5STRING *base)
 static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
 {
     const char *baseptr = (char *)base->data;
-    char *uri_copy;
     char *scheme;
     char *host;
     int hostlen;
     int ret;
+    int err;
 
-    /* Reject *embedded* NULs */
-    if (memchr(uri->data, '\0', uri->length) != NULL)
-        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
-
-    if ((uri_copy = OPENSSL_strndup((const char *)uri->data, uri->length)) == NULL)
-        return X509_V_ERR_UNSPECIFIED;
-
-    if (!OSSL_parse_url(uri_copy, &scheme, NULL, &host, NULL, NULL, NULL, NULL, NULL)) {
-        OPENSSL_free(uri_copy);
-        return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+    if (!ossl_parse_url_internal((const char *)uri->data, uri->length, &err,
+            &scheme, NULL, &host, NULL, NULL,
+            NULL, NULL, NULL)) {
+        return err;
     }
 
     /* Make sure the scheme is there */
     if (scheme == NULL || *scheme == '\0') {
         ERR_raise_data(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
-            "x509: missing scheme in URI: %s\n", uri_copy);
-        OPENSSL_free(scheme);
-        OPENSSL_free(uri_copy);
+            "x509: missing scheme in URI: %s\n", uri->data);
         ret = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
         goto end;
     }
 
     /* We don't need these anymore */
     OPENSSL_free(scheme);
-    OPENSSL_free(uri_copy);
 
     hostlen = (int)strlen(host);
 
