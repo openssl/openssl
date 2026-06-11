@@ -599,8 +599,10 @@ DEF_FUNC(new_listener)
     if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
         goto err;
 
-    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL)))
+    if (!TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))) {
+        SSL_free(listener);
         goto err;
+    }
 
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), name, listener))) {
         SSL_free(listener);
