@@ -168,7 +168,7 @@ const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits)
 #elif defined(S390X_aes_128_CAPABLE)
     aes_gcm_hw = ossl_prov_aes_hw_gcm_s390x(keybits);
 #elif defined(SPARC_AES_CAPABLE)
-    aes_gcm_hw = ossl_prov_aes_hw_gcm_t4(keybits);
+    aes_gcm_hw = ossl_prov_aes_hw_gcm_t4();
 #endif
 
     if (aes_gcm_hw == NULL)

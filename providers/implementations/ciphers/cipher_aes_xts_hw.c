@@ -102,48 +102,6 @@ void ossl_cipher_hw_aes_xts_copyctx(PROV_CIPHER_CTX *dst,
     dctx->xts.key2 = &dctx->ks2.ks;
 }
 
-#if defined(SPARC_AES_CAPABLE)
-
-static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
-    const unsigned char *key, size_t keylen)
-{
-    OSSL_xts_stream_fn stream_enc = NULL;
-    OSSL_xts_stream_fn stream_dec = NULL;
-
-    /* Note: keylen is the size of 2 keys */
-    switch (keylen) {
-    case 32:
-        stream_enc = aes128_t4_xts_encrypt;
-        stream_dec = aes128_t4_xts_decrypt;
-        break;
-    case 64:
-        stream_enc = aes256_t4_xts_encrypt;
-        stream_dec = aes256_t4_xts_decrypt;
-        break;
-    default:
-        return 0;
-    }
-
-    return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
-        aes_t4_set_encrypt_key, aes_t4_set_decrypt_key,
-        aes_t4_encrypt, aes_t4_decrypt, stream_enc, stream_dec);
-}
-
-static const PROV_CIPHER_HW aes_xts_t4 = {
-    cipher_hw_aes_xts_t4_initkey,
-    NULL,
-    ossl_cipher_hw_aes_xts_copyctx
-};
-
-static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_t4()
-{
-    if (SPARC_AES_CAPABLE)
-        return &aes_xts_t4;
-    return NULL;
-}
-
-#endif
-
 static const PROV_CIPHER_HW aes_generic_xts = {
     cipher_hw_aes_xts_generic_initkey,
     NULL,

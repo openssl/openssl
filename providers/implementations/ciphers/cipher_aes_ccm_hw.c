@@ -81,7 +81,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 #elif defined(S390X_aes_128_CAPABLE)
     aes_ccm_hw = ossl_prov_aes_hw_ccm_s390x(keybits);
 #elif defined(SPARC_AES_CAPABLE)
-    aes_ccm_hw = ossl_prov_aes_hw_ccm_t4(keybits);
+    aes_ccm_hw = ossl_prov_aes_hw_ccm_t4();
 #endif
     if (aes_ccm_hw != NULL)
         return aes_ccm_hw;

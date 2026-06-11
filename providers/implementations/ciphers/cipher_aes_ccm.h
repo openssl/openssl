@@ -68,7 +68,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv64i(void);
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm_s390x(size_t keybits);
 #endif
 #if defined(SPARC_AES_CAPABLE)
-const PROV_CCM_HW *ossl_prov_aes_hw_ccm_t4(size_t keybits);
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_t4(void);
 #endif
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_CCM_H) */

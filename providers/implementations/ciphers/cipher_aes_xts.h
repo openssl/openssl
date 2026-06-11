@@ -89,6 +89,10 @@ int s390x_aes_xts_cipher_stream(PROV_AES_XTS_CTX *xctx,
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_s390x(size_t keybits);
 #endif
 
+#if defined(SPARC_AES_CAPABLE)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_t4(void);
+#endif
+
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits);
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_XTS_H) */

@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,15 +8,19 @@
  */
 
 /*-
- * Sparc t4 support for AES modes ecb, cbc, ofb, cfb, ctr.
- * This file is used by cipher_aes_hw.c
+ * Sparc t4 support for all hardware accelerated AES modes.
  */
 
 #include "internal/deprecated.h"
 #include <openssl/proverr.h>
 #include "cipher_aes.h"
+#include "cipher_aes_gcm.h"
+#include "cipher_aes_ccm.h"
+#include "cipher_aes_xts.h"
 
 #if defined(SPARC_AES_CAPABLE)
+
+/* MODES: ecb, cbc, cfb, ofb, ctr */
 
 static int t4_set_encrypt_key(const unsigned char *key, int bits, AES_KEY *ks)
 {
@@ -118,8 +122,7 @@ static const PROV_CIPHER_HW aes_t4_ctr = {
     ossl_cipher_aes_copyctx
 };
 
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_t4(enum aes_modes mode,
-    size_t keybits)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_t4(enum aes_modes mode)
 {
     if (SPARC_AES_CAPABLE) {
         switch (mode) {
@@ -143,4 +146,107 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_t4(enum aes_modes mode,
     }
     return NULL;
 }
+
+/* MODES: GCM */
+
+static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+    size_t keylen)
+{
+    switch (keylen) {
+    case 16:
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            t4_set_encrypt_key, aes_t4_encrypt,
+            (ctr128_f)aes128_t4_ctr32_encrypt);
+    case 24:
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            t4_set_encrypt_key, aes_t4_encrypt,
+            (ctr128_f)aes192_t4_ctr32_encrypt);
+    case 32:
+        return aes_gcm_hw_initkey(ctx, key, keylen,
+            t4_set_encrypt_key, aes_t4_encrypt,
+            (ctr128_f)aes256_t4_ctr32_encrypt);
+    default:
+        return 0;
+    }
+}
+
+static const PROV_GCM_HW t4_aes_gcm = {
+    t4_aes_gcm_initkey,
+    ossl_gcm_setiv,
+    ossl_gcm_aad_update,
+    generic_aes_gcm_cipher_update,
+    ossl_gcm_cipher_final,
+    ossl_gcm_one_shot
+};
+
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_t4(void)
+{
+    return SPARC_AES_CAPABLE ? &t4_aes_gcm : NULL;
+}
+
+/* MODES: CCM */
+
+static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
+    size_t keylen)
+{
+    return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
+        t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
+}
+
+static const PROV_CCM_HW t4_aes_ccm = {
+    ccm_t4_aes_initkey,
+    ossl_ccm_generic_setiv,
+    ossl_ccm_generic_setaad,
+    ossl_ccm_generic_auth_encrypt,
+    ossl_ccm_generic_auth_decrypt,
+    ossl_ccm_generic_gettag
+};
+
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_t4(void)
+{
+    if (SPARC_AES_CAPABLE)
+        return &t4_aes_ccm;
+    return NULL;
+}
+
+/* MODES: XTS */
+
+static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
+    const unsigned char *key, size_t keylen)
+{
+    OSSL_xts_stream_fn stream_enc = NULL;
+    OSSL_xts_stream_fn stream_dec = NULL;
+
+    /* Note: keylen is the size of 2 keys */
+    switch (keylen) {
+    case 32:
+        stream_enc = aes128_t4_xts_encrypt;
+        stream_dec = aes128_t4_xts_decrypt;
+        break;
+    case 64:
+        stream_enc = aes256_t4_xts_encrypt;
+        stream_dec = aes256_t4_xts_decrypt;
+        break;
+    default:
+        return 0;
+    }
+
+    return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
+        t4_set_encrypt_key, t4_set_decrypt_key,
+        aes_t4_encrypt, aes_t4_decrypt, stream_enc, stream_dec);
+}
+
+static const PROV_CIPHER_HW aes_xts_t4 = {
+    cipher_hw_aes_xts_t4_initkey,
+    NULL,
+    ossl_cipher_hw_aes_xts_copyctx
+};
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_t4(void)
+{
+    if (SPARC_AES_CAPABLE)
+        return &aes_xts_t4;
+    return NULL;
+}
+
 #endif
