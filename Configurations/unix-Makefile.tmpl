@@ -505,6 +505,7 @@ BIN_LDFLAGS={- join(' ', $target{bin_lflags} || (),
 BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 
 CMOCKA_LIBS={- $config{cmocka_libs} // '' -}
+DETOURS_LIBS={- $config{detours_libs} // '' -}
 
 # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
 CPPFLAGS_Q={- $cppflags1 =~ s|([\\"])|\\$1|g;
@@ -2024,14 +2025,14 @@ EOF
           }
       }
       my $wrapflags = '';
-      my $cmocka = '';
       if (defined $unified_info{wraps}->{$args{bin}}) {
-          $wrapflags = join(' ',
-                            map { "-Wl,--wrap=$_" }
-                            @{$unified_info{wraps}->{$args{bin}}});
-          $wrapflags = ' ' . $wrapflags;
-          $cmocka = ' $(CMOCKA_LIBS)';
+          $wrapflags = ' ' . join(' ',
+                                  map { "-Wl,--wrap=$_" }
+                                  @{$unified_info{wraps}->{$args{bin}}});
       }
+      my $utlibs = $unified_info{unit_test_libs}->{$args{bin}};
+      $utlibs = $utlibs ne '' ? ' ' . $utlibs : '' if defined $utlibs;
+      $utlibs //= '';
       my $linkflags = join("", map { $_." " } @linkdirs);
       my $linklibs = join("", map { $_." " } @linklibs);
       my $cmd = '$(CC)';
@@ -2052,7 +2053,7 @@ $bin: $deps
 	\$\${LDCMD:-$cmd} $cmdflags $linkflags\$(BIN_LDFLAGS)$wrapflags \\
 		-o $bin \\
 		$objs \\
-		$linklibs\$(BIN_EX_LIBS)$cmocka
+		$linklibs\$(BIN_EX_LIBS)$utlibs
 EOF
   }
   sub in2script {
