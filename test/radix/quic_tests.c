@@ -455,9 +455,9 @@ DEF_FUNC(check_flood_stats)
     path_challenge_count = ossl_quic_channel_get_path_challenge_count(ch);
     path_response_count = ossl_quic_channel_get_path_response_count(ch);
 
-    if (TEST_uint64_t_ne(path_challenge_count, 16))
+    if (!TEST_uint64_t_eq(path_challenge_count, 16))
         goto err;
-    if (TEST_uint64_t_ne(path_response_count, 1))
+    if (!TEST_uint64_t_eq(path_response_count, 1))
         goto err;
 
     ok = 1;
