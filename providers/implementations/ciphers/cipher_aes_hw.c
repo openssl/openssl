@@ -219,7 +219,7 @@ static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_mode(enum aes_modes mode,
 #if defined(AESNI_CAPABLE)
     aes_hw_mode = ossl_prov_cipher_hw_aesni(mode);
 #elif defined(ARMv8_HWAES_CAPABLE)
-    aes_hw_mode = ossl_prov_cipher_hw_arm(mode, keybits);
+    aes_hw_mode = ossl_prov_cipher_hw_arm(mode);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
     aes_hw_mode = ossl_prov_cipher_hw_rv32i(mode, keybits);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
