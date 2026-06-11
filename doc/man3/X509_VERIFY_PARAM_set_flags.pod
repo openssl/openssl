@@ -15,6 +15,7 @@ X509_VERIFY_PARAM_get0_host,
 X509_VERIFY_PARAM_set1_host, X509_VERIFY_PARAM_add1_host,
 X509_VERIFY_PARAM_set_hostflags,
 X509_VERIFY_PARAM_get_hostflags,
+X509_VERIFY_PARAM_set1_cn, X509_VERIFY_PARAM_add1_cn,
 X509_VERIFY_PARAM_get0_peername,
 X509_VERIFY_PARAM_get0_email,
 X509_VERIFY_PARAM_set1_email,
@@ -26,6 +27,7 @@ X509_VERIFY_PARAM_get1_ip_asc,
 X509_VERIFY_PARAM_set1_host_input_validation,
 X509_VERIFY_PARAM_set1_rfc822_input_validation,
 X509_VERIFY_PARAM_set1_smtputf8_input_validation,
+X509_VERIFY_PARAM_set1_cn_input_validation,
 X509_VERIFY_PARAM_set1_ip_input_validation
 - X509 verification parameters
 
@@ -70,6 +72,10 @@ X509_VERIFY_PARAM_set1_ip_input_validation
  void X509_VERIFY_PARAM_set_hostflags(X509_VERIFY_PARAM *param,
                                       unsigned int flags);
  unsigned int X509_VERIFY_PARAM_get_hostflags(const X509_VERIFY_PARAM *param);
+ int X509_VERIFY_PARAM_set1_cn(X509_VERIFY_PARAM *param,
+                               const char *name, size_t namelen);
+ int X509_VERIFY_PARAM_add1_cn(X509_VERIFY_PARAM *param,
+                               const char *name, size_t namelen);
  char *X509_VERIFY_PARAM_get0_peername(const X509_VERIFY_PARAM *param);
  char *X509_VERIFY_PARAM_get0_email(X509_VERIFY_PARAM *param);
  int X509_VERIFY_PARAM_set1_email(X509_VERIFY_PARAM *param,
@@ -97,6 +103,8 @@ X509_VERIFY_PARAM_set1_ip_input_validation
     int (*validate_rfc822)(const char *name, size_t len));
  void X509_VERIFY_PARAM_set1_smtputf8_input_validation(X509_VERIFY_PARAM *param,
     int (*validate_smtputf8)(const char *name, size_t len));
+ void X509_VERIFY_PARAM_set1_cn_input_validation(X509_VERIFY_PARAM *param,
+    int (*validate_cn)(const char *name, size_t len));
 
 =head1 DESCRIPTION
 
@@ -210,6 +218,34 @@ are retained, no change is made if I<name> is NULL or the empty string.  When
 multiple names are configured, the peer is considered verified when
 any name matches.
 
+X509_VERIFY_PARAM_set1_cn() sets in I<param> the expected commonName
+value to I<name>, clearing any previously specified commonName. The
+list of expected commonName values is a separate set of reference
+identifiers from the host list set via X509_VERIFY_PARAM_set1_host():
+the host list is matched against the certificate's subject alternative
+name extension, while the commonName list is matched against the value
+of the commonName attribute of the certificate's subject distinguished
+name.
+If I<name> is NULL or the empty string the commonName list is cleared
+and commonName checks are not performed on the peer certificate.
+If I<namelen> is zero, I<name> must be NUL-terminated; otherwise
+I<namelen> must be set to the length of I<name>.
+
+X509_VERIFY_PARAM_add1_cn() adds I<name> as an additional reference
+identifier that can match the commonName attribute of the peer
+certificate's subject distinguished name. Any previous names set via
+X509_VERIFY_PARAM_set1_cn() or X509_VERIFY_PARAM_add1_cn() are retained,
+and no change is made if I<name> is NULL or the empty string. When
+multiple commonName values are configured, the peer is considered
+verified when any one of them matches.
+
+Before storing I<name>, both X509_VERIFY_PARAM_set1_cn() and
+X509_VERIFY_PARAM_add1_cn() validate it. By default they require that
+I<name> be no longer than 64 bytes, which is the X.509 maximum length
+for the value of a commonName attribute. This default validation can be
+overridden by installing a callback via
+X509_VERIFY_PARAM_set1_cn_input_validation().
+
 X509_VERIFY_PARAM_get0_peername() returns the DNS hostname or subject
 CommonName from the peer certificate that matched one of the reference
 identifiers.  When wildcard matching is not disabled, or when a
@@ -315,7 +351,8 @@ when any one of the specified addresses matches a corresponding IP address SAN i
 
 X509_VERIFY_PARAM_set1_host_input_validation(),
 X509_VERIFY_PARAM_set1_rfc822_input_validation(),
-X509_VERIFY_PARAM_set1_smtputf8_input_validation(), and
+X509_VERIFY_PARAM_set1_smtputf8_input_validation(),
+X509_VERIFY_PARAM_set1_cn_input_validation(), and
 X509_VERIFY_PARAM_set1_ip_input_validation() set a verification
 function to validate the input on setting the corresponding validation
 parameter expected values.
@@ -331,6 +368,7 @@ X509_VERIFY_PARAM_set_inh_flags(),
 X509_VERIFY_PARAM_set_purpose(), X509_VERIFY_PARAM_set_trust(),
 X509_VERIFY_PARAM_add0_policy() X509_VERIFY_PARAM_set1_policies(),
 X509_VERIFY_PARAM_set1_host(), X509_VERIFY_PARAM_add1_host(),
+X509_VERIFY_PARAM_set1_cn(), X509_VERIFY_PARAM_add1_cn(),
 X509_VERIFY_PARAM_set1_email(),
 X509_VERIFY_PARAM_set1_ip(), X509_VERIFY_PARAM_add1_ip(),
 X509_VERIFY_PARAM_set1_ip_asc(),
@@ -539,6 +577,10 @@ enabling policy checking however the implementation has never done this.
 The documentation was changed to align with the implementation.
 
 The X509_VERIFY_PARAM_get_purpose() function was added in OpenSSL 3.5.
+
+The X509_VERIFY_PARAM_set1_cn(), X509_VERIFY_PARAM_add1_cn(), and
+X509_VERIFY_PARAM_set1_cn_input_validation() functions were added in
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
