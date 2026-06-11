@@ -26,6 +26,9 @@ plan skip_all => "$test_name needs the module feature enabled"
 plan skip_all => "$test_name needs the sock feature enabled"
     if disabled("sock");
 
+plan skip_all => "$test_name needs EC or DH enabled"
+    if disabled("ec") && disabled("dh");
+
 plan tests => 2;
 
 my $proxy = TLSProxy::Proxy->new(

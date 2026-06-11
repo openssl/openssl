@@ -24,6 +24,7 @@ jobs:
           no-cms,
           no-dgram,
           no-dh,
+          no-dh no-ec,
           no-dtls,
           no-ec,
           no-ecx,
