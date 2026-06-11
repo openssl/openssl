@@ -92,8 +92,7 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_arm(enum aes_modes mode);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv32i(enum aes_modes mode);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv64i(enum aes_modes mode,
-    size_t keybits);
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv64i(enum aes_modes mode);
 #elif defined(S390X_aes_128_CAPABLE)
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_s390x(enum aes_modes mode,
     size_t keybits);
