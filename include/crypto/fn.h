@@ -132,7 +132,7 @@ void OSSL_FN_clear(OSSL_FN *f);
 /**
  * Copy the contents of one OSSL_FN instance to another.
  *
- * @param[out]  a       The destination OSSL_FN
+ * @param[out]  a       The destination OSSL_FN.
  * @param[in]   b       The source OSSL_FN
  * @returns     The destination on success, NULL on error.
  *
