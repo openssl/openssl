@@ -275,7 +275,7 @@ static int cmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
                 && !EVP_CIPHER_is_a(cipher, "AES-192-CBC")
                 && !EVP_CIPHER_is_a(cipher, "AES-128-CBC")
                 && !EVP_CIPHER_is_a(cipher, "DES-EDE3-CBC")) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_CIPHER);
+                ERR_raise(ERR_LIB_PROV, EVP_R_UNSUPPORTED_CIPHER);
                 return 0;
             }
         }
