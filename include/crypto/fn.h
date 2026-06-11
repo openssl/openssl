@@ -132,9 +132,12 @@ void OSSL_FN_clear(OSSL_FN *f);
 /**
  * Copy the contents of one OSSL_FN instance to another.
  *
- * @param[out]  a       The destination OSSL_FN
+ * @param[out]  a       The destination OSSL_FN.
  * @param[in]   b       The source OSSL_FN
  * @returns     The destination on success, NULL on error.
+ *
+ * @note The destination must be at least as large as the source.
+ * Any limbs beyond the source size are zeroed.
  */
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 
