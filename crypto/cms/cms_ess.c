@@ -131,14 +131,14 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
     if (id)
         ASN1_STRING_set0(rr->signedContentIdentifier, id, idlen);
     else {
-        if (!ASN1_STRING_set(rr->signedContentIdentifier, NULL, 32)) {
+        unsigned char tmp[32];
+
+        if (RAND_bytes_ex(libctx, tmp, 32, 0) <= 0)
+            goto err;
+        if (!ASN1_STRING_set(rr->signedContentIdentifier, tmp, 32)) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
             goto err;
         }
-        if (RAND_bytes_ex(libctx, rr->signedContentIdentifier->data, 32,
-                0)
-            <= 0)
-            goto err;
     }
 
     sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);
@@ -328,12 +328,12 @@ int ossl_cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
         goto err;
     }
 
-    if (diglen != (unsigned int)msig->length) {
+    if (diglen != (unsigned int)ASN1_STRING_length(msig)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_WRONG_LENGTH);
         goto err;
     }
 
-    if (memcmp(dig, msig->data, diglen)) {
+    if (memcmp(dig, ASN1_STRING_get0_data(msig), diglen)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE);
         goto err;
     }

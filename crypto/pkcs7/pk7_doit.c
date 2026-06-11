@@ -386,9 +386,9 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             bio = BIO_new(BIO_s_mem());
             if (bio != NULL) {
                 BIO_set_mem_eof_return(bio, 0);
-                const unsigned char *os_data = ASN1_STRING_get0_data(os);
-                int os_len = ASN1_STRING_length(os);
-                if (BIO_write(bio, os_data, os_len) != os_len) {
+                if (BIO_write(bio, ASN1_STRING_get0_data(os),
+                        ASN1_STRING_length(os))
+                    != ASN1_STRING_length(os)) {
                     BIO_free_all(bio);
                     bio = NULL;
                 }
@@ -663,10 +663,9 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     if (in_bio != NULL) {
         bio = in_bio;
     } else {
-        int data_body_len = ASN1_STRING_length(data_body);
-        if (data_body_len > 0)
+        if (ASN1_STRING_length(data_body) > 0)
             bio = BIO_new_mem_buf(ASN1_STRING_get0_data(data_body),
-                data_body_len);
+                ASN1_STRING_length(data_body));
         else {
             bio = BIO_new(BIO_s_mem());
             if (bio == NULL)
@@ -1148,9 +1147,8 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
         goto err;
     }
 
-    const unsigned char *sig_data = ASN1_STRING_get0_data(os);
-    int sig_len = ASN1_STRING_length(os);
-    i = EVP_VerifyFinal_ex(mdc_tmp, sig_data, sig_len, pkey, libctx, propq);
+    i = EVP_VerifyFinal_ex(mdc_tmp, ASN1_STRING_get0_data(os),
+        ASN1_STRING_length(os), pkey, libctx, propq);
     if (i <= 0) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;

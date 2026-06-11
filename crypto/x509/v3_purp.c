@@ -357,10 +357,10 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
         return 0;
     }
     if (dp->reasons != NULL) {
-        if (dp->reasons->length > 0)
-            dp->dp_reasons = dp->reasons->data[0];
-        if (dp->reasons->length > 1)
-            dp->dp_reasons |= (dp->reasons->data[1] << 8);
+        if (ASN1_STRING_length(dp->reasons) > 0)
+            dp->dp_reasons = ASN1_STRING_get0_data(dp->reasons)[0];
+        if (ASN1_STRING_length(dp->reasons) > 1)
+            dp->dp_reasons |= ASN1_STRING_get0_data(dp->reasons)[1] << 8;
         dp->dp_reasons &= CRLDP_ALL_REASONS;
     } else {
         dp->dp_reasons = CRLDP_ALL_REASONS;
@@ -588,7 +588,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
              * The error case !bs->ca is checked by check_chain()
              * in case ctx->param->flags & X509_V_FLAG_X509_STRICT
              */
-            if (bs->pathlen->type == V_ASN1_NEG_INTEGER) {
+            if (ASN1_STRING_type(bs->pathlen) == V_ASN1_NEG_INTEGER) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
                 tmp_ex_flags |= EXFLAG_INVALID;
             } else {
@@ -621,10 +621,10 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     /* Handle (basic) key usage */
     if ((usage = X509_get_ext_d2i(const_x, NID_key_usage, &i, NULL)) != NULL) {
         tmp_ex_kusage = 0;
-        if (usage->length > 0) {
-            tmp_ex_kusage = usage->data[0];
-            if (usage->length > 1)
-                tmp_ex_kusage |= usage->data[1] << 8;
+        if (ASN1_STRING_length(usage) > 0) {
+            tmp_ex_kusage = ASN1_STRING_get0_data(usage)[0];
+            if (ASN1_STRING_length(usage) > 1)
+                tmp_ex_kusage |= ASN1_STRING_get0_data(usage)[1] << 8;
         }
         tmp_ex_flags |= EXFLAG_KUSAGE;
         ASN1_BIT_STRING_free(usage);
@@ -683,8 +683,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     /* Handle legacy Netscape extension */
     if ((ns = X509_get_ext_d2i(const_x, NID_netscape_cert_type, &i, NULL)) != NULL) {
-        if (ns->length > 0)
-            tmp_ex_nscert = ns->data[0];
+        if (ASN1_STRING_length(ns) > 0)
+            tmp_ex_nscert = ASN1_STRING_get0_data(ns)[0];
         else
             tmp_ex_nscert = 0;
         tmp_ex_flags |= EXFLAG_NSCERT;

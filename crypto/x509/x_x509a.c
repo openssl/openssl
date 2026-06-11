@@ -87,8 +87,8 @@ const unsigned char *X509_alias_get0(const X509 *x, int *len)
     if (!x->aux || !x->aux->alias)
         return NULL;
     if (len)
-        *len = x->aux->alias->length;
-    return x->aux->alias->data;
+        *len = ASN1_STRING_length(x->aux->alias);
+    return ASN1_STRING_get0_data(x->aux->alias);
 }
 
 const unsigned char *X509_keyid_get0(const X509 *x, int *len)
@@ -96,8 +96,8 @@ const unsigned char *X509_keyid_get0(const X509 *x, int *len)
     if (!x->aux || !x->aux->keyid)
         return NULL;
     if (len)
-        *len = x->aux->keyid->length;
-    return x->aux->keyid->data;
+        *len = ASN1_STRING_length(x->aux->keyid);
+    return ASN1_STRING_get0_data(x->aux->keyid);
 }
 
 int X509_add1_trust_object(X509 *x, const ASN1_OBJECT *obj)

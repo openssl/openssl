@@ -34,11 +34,12 @@ X509_REQ *X509_to_X509_REQ(const X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 
     ri = &ret->req_info;
 
-    ri->version->length = 1;
-    ri->version->data = OPENSSL_malloc(1);
-    if (ri->version->data == NULL)
-        goto err;
-    ri->version->data[0] = 0; /* version == 0 */
+    {
+        unsigned char *data = OPENSSL_zalloc(1);
+        if (data == NULL)
+            goto err;
+        ASN1_STRING_set0(ri->version, data, 1);
+    }
 
     if (!X509_REQ_set_subject_name(ret, X509_get_subject_name(x)))
         goto err;
@@ -133,9 +134,9 @@ ossl_x509_req_get1_extensions_by_nid(const X509_REQ *req, int nid)
         ERR_raise(ERR_LIB_X509, X509_R_WRONG_TYPE);
         return NULL;
     }
-    p = ext->value.sequence->data;
+    p = ASN1_STRING_get0_data(ext->value.sequence);
     return (STACK_OF(X509_EXTENSION) *)
-        ASN1_item_d2i(NULL, &p, ext->value.sequence->length,
+        ASN1_item_d2i(NULL, &p, ASN1_STRING_length(ext->value.sequence),
             ASN1_ITEM_rptr(X509_EXTENSIONS));
 }
 

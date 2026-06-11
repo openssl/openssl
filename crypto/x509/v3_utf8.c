@@ -14,8 +14,6 @@
 #include <openssl/x509v3.h>
 #include "ext_dat.h"
 
-#include <crypto/asn1.h>
-
 /*
  * Subject Sign Tool (1.2.643.100.111) The name of the tool used to signs the subject (UTF8String)
  * This extension is required to obtain the status of a qualified certificate at Russian Federation.
@@ -32,14 +30,14 @@ char *i2s_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
 {
     char *tmp;
 
-    if (utf8 == NULL || utf8->length == 0) {
+    if (utf8 == NULL || ASN1_STRING_length(utf8) == 0) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    if ((tmp = OPENSSL_malloc(utf8->length + 1)) == NULL)
+    if ((tmp = OPENSSL_malloc(ASN1_STRING_length(utf8) + 1)) == NULL)
         return NULL;
-    memcpy(tmp, utf8->data, utf8->length);
-    tmp[utf8->length] = 0;
+    memcpy(tmp, ASN1_STRING_get0_data(utf8), ASN1_STRING_length(utf8));
+    tmp[ASN1_STRING_length(utf8)] = 0;
     return tmp;
 }
 
@@ -47,6 +45,11 @@ ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
     X509V3_CTX *ctx, const char *str)
 {
     ASN1_UTF8STRING *utf8;
+    int len;
+#ifdef CHARSET_EBCDIC
+    char *tmp;
+#endif
+
     if (str == NULL) {
         ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_NULL_ARGUMENT);
         return NULL;
@@ -55,13 +58,27 @@ ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
-    if (!ASN1_STRING_set((ASN1_STRING *)utf8, str, (int)strlen(str))) {
+    len = (int)strlen(str);
+#ifdef CHARSET_EBCDIC
+    if ((tmp = OPENSSL_malloc(len)) == NULL) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         ASN1_UTF8STRING_free(utf8);
         return NULL;
     }
-#ifdef CHARSET_EBCDIC
-    ebcdic2ascii(utf8->data, utf8->data, utf8->length);
+    ebcdic2ascii(tmp, str, (size_t)len);
+    if (!ASN1_STRING_set((ASN1_STRING *)utf8, tmp, len)) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        OPENSSL_free(tmp);
+        ASN1_UTF8STRING_free(utf8);
+        return NULL;
+    }
+    OPENSSL_free(tmp);
+#else
+    if (!ASN1_STRING_set((ASN1_STRING *)utf8, str, len)) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
+        ASN1_UTF8STRING_free(utf8);
+        return NULL;
+    }
 #endif /* CHARSET_EBCDIC */
     return utf8;
 }

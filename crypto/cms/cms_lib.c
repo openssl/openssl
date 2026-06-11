@@ -140,7 +140,7 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
     if (*pos == NULL || ((*pos)->flags == ASN1_STRING_FLAG_CONT))
         return BIO_new(BIO_s_mem());
     /* Else content was read in: return read only BIO for it */
-    return BIO_new_mem_buf((*pos)->data, (*pos)->length);
+    return BIO_new_mem_buf(ASN1_STRING_get0_data(*pos), ASN1_STRING_length(*pos));
 }
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)

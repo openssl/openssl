@@ -15,7 +15,6 @@
 #include <openssl/cms.h>
 #include <openssl/aes.h>
 #include "cms_local.h"
-#include "crypto/asn1.h"
 
 /* Key Agreement Recipient Info (KARI) routines */
 
@@ -249,13 +248,14 @@ int CMS_RecipientInfo_kari_decrypt(CMS_ContentInfo *cms,
     CMS_RecipientEncryptedKey *rek)
 {
     int rv = 0;
-    unsigned char *enckey = NULL, *cek = NULL;
+    const unsigned char *enckey = NULL;
+    unsigned char *cek = NULL;
     size_t enckeylen;
     size_t ceklen;
     CMS_EncryptedContentInfo *ec;
 
-    enckeylen = rek->encryptedKey->length;
-    enckey = rek->encryptedKey->data;
+    enckeylen = (size_t)ASN1_STRING_length(rek->encryptedKey);
+    enckey = ASN1_STRING_get0_data(rek->encryptedKey);
     /* Setup all parameters to derive KEK */
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;

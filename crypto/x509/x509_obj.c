@@ -69,13 +69,13 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         }
         l1 = (int)strlen(s);
 
-        type = ne->value->type;
-        num = ne->value->length;
+        type = ASN1_STRING_type(ne->value);
+        num = ASN1_STRING_length(ne->value);
         if (num > NAME_ONELINE_MAX) {
             ERR_raise(ERR_LIB_X509, X509_R_NAME_TOO_LONG);
             goto end;
         }
-        q = ne->value->data;
+        q = (unsigned char *)ASN1_STRING_get0_data(ne->value);
 #ifdef CHARSET_EBCDIC
         if (type == V_ASN1_GENERALSTRING || type == V_ASN1_VISIBLESTRING || type == V_ASN1_PRINTABLESTRING || type == V_ASN1_TELETEXSTRING || type == V_ASN1_IA5STRING) {
             if (num > (int)sizeof(ebcdic_buf))
@@ -130,7 +130,7 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         *(p++) = '=';
 
 #ifndef CHARSET_EBCDIC /* q was assigned above already. */
-        q = ne->value->data;
+        q = (unsigned char *)ASN1_STRING_get0_data(ne->value);
 #endif
 
         for (j = 0; j < num; j++) {

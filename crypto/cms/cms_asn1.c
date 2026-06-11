@@ -445,24 +445,29 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg, ASN1_OCTET_S
         NULL
     };
 
-    ASN1_OCTET_STRING oklen;
+    ASN1_OCTET_STRING *oklen;
     unsigned char kl[4];
     CMS_SharedInfo ecsi;
+    int ret;
 
     keylen <<= 3;
     kl[0] = (keylen >> 24) & 0xff;
     kl[1] = (keylen >> 16) & 0xff;
     kl[2] = (keylen >> 8) & 0xff;
     kl[3] = keylen & 0xff;
-    oklen.length = 4;
-    oklen.data = kl;
-    oklen.type = V_ASN1_OCTET_STRING;
-    oklen.flags = 0;
+    if ((oklen = ASN1_OCTET_STRING_new()) == NULL)
+        return -1;
+    if (!ASN1_OCTET_STRING_set(oklen, kl, 4)) {
+        ASN1_OCTET_STRING_free(oklen);
+        return -1;
+    }
     ecsi.keyInfo = kekalg;
     ecsi.entityUInfo = ukm;
-    ecsi.suppPubInfo = &oklen;
+    ecsi.suppPubInfo = oklen;
     intsi.pecsi = &ecsi;
-    return ASN1_item_i2d(intsi.a, pder, ASN1_ITEM_rptr(CMS_SharedInfo));
+    ret = ASN1_item_i2d(intsi.a, pder, ASN1_ITEM_rptr(CMS_SharedInfo));
+    ASN1_OCTET_STRING_free(oklen);
+    return ret;
 }
 
 /*

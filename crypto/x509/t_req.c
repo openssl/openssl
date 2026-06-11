@@ -17,8 +17,6 @@
 #include <openssl/rsa.h>
 #include <openssl/dsa.h>
 
-#include <crypto/asn1.h>
-
 #ifndef OPENSSL_NO_STDIO
 int X509_REQ_print_fp(FILE *fp, const X509_REQ *x)
 {
@@ -149,8 +147,9 @@ int X509_REQ_print_ex(BIO *bp, const X509_REQ *x, unsigned long nmflags, unsigne
                 case V_ASN1_NUMERICSTRING:
                 case V_ASN1_UTF8STRING:
                 case V_ASN1_IA5STRING:
-                    if (BIO_write(bp, (char *)bs->data, bs->length)
-                        != bs->length)
+                    if (BIO_write(bp, (char *)ASN1_STRING_get0_data(bs),
+                            ASN1_STRING_length(bs))
+                        != ASN1_STRING_length(bs))
                         goto err;
                     if (BIO_puts(bp, "\n") <= 0)
                         goto err;
