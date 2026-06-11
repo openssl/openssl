@@ -107,11 +107,11 @@ SOURCE[$AES_GOAL]=\
         cipher_aes_hw_armv8.c cipher_aes_hw_rv32i.c cipher_aes_hw_rv64i.c \
         cipher_aes_hw_s390x.c cipher_aes_hw_t4.c \
         cipher_aes_xts.c cipher_aes_xts_hw.c \
-        cipher_aes_gcm.c cipher_aes_gcm_hw.c cipher_aes_gcm_hw_aesni.c \
+        cipher_aes_gcm.c cipher_aes_gcm_hw.c \
         cipher_aes_gcm_hw_armv8.c cipher_aes_gcm_hw_ppc.c \
         cipher_aes_gcm_hw_rv32i.c cipher_aes_gcm_hw_rv64i.c \
         cipher_aes_gcm_hw_s390x.c cipher_aes_gcm_hw_t4.c \
-        cipher_aes_ccm.c cipher_aes_ccm_hw.c cipher_aes_ccm_hw_aesni.c \
+        cipher_aes_ccm.c cipher_aes_ccm_hw.c \
         cipher_aes_ccm_hw_rv32i.c cipher_aes_ccm_hw_rv64i.c \
         cipher_aes_ccm_hw_s390x.c cipher_aes_ccm_hw_t4.c \
         cipher_aes_wrp.c \

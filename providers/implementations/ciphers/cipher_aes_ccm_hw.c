@@ -73,7 +73,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 {
     const PROV_CCM_HW *aes_ccm_hw = NULL;
 #if defined(AESNI_CAPABLE)
-    aes_ccm_hw = ossl_prov_aes_hw_ccm_aesni(keybits);
+    aes_ccm_hw = ossl_prov_aes_hw_ccm_aesni();
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
     aes_ccm_hw = ossl_prov_aes_hw_ccm_rv32i(keybits);
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64

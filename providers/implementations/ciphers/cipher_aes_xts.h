@@ -60,6 +60,20 @@ typedef struct prov_aes_xts_ctx_st {
     } plat;
 } PROV_AES_XTS_CTX;
 
+int ossl_cipher_set_aes_xts_initkey(PROV_CIPHER_CTX *ctx,
+    const unsigned char *key, size_t keylen,
+    aes_set_encrypt_key_fn fn_set_enc_key,
+    aes_set_encrypt_key_fn fn_set_dec_key,
+    aes_block128_f fn_block_enc, aes_block128_f fn_block_dec,
+    OSSL_xts_stream_fn fn_stream_enc, OSSL_xts_stream_fn fn_stream_dec);
+
+void ossl_cipher_hw_aes_xts_copyctx(PROV_CIPHER_CTX *dst,
+    const PROV_CIPHER_CTX *src);
+
+#if defined(AESNI_CAPABLE)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_aesni(void);
+#endif
+
 #ifdef AES_XTS_S390X
 int s390x_aes_xts_cipher_stream(PROV_AES_XTS_CTX *xctx,
     unsigned char *out, size_t *outl,
