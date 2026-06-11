@@ -54,7 +54,7 @@ int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
 
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm(size_t keybits);
 #if defined(AESNI_CAPABLE)
-const PROV_GCM_HW *ossl_prov_aes_hw_gcm_aesni(size_t keybits);
+const PROV_GCM_HW *ossl_prov_aes_hw_gcm_aesni(void);
 #endif
 #if defined(AES_PMULL_CAPABLE) && defined(AES_GCM_ASM)
 const PROV_GCM_HW *ossl_prov_aes_hw_gcm_armv8(size_t keybits);
