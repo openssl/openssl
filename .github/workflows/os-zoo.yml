@@ -346,6 +346,7 @@ jobs:
 
   openbsd-x86_64:
     runs-on: ubuntu-latest
+    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v6
     - name: config
