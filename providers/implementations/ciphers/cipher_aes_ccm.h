@@ -59,7 +59,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keylen);
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm_aesni(void);
 #endif
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
-const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv32i(size_t keybits);
+const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv32i(void);
 #endif
 #if defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
 const PROV_CCM_HW *ossl_prov_aes_hw_ccm_rv64i(size_t keybits);
