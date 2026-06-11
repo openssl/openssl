@@ -60,6 +60,12 @@ typedef struct prov_aes_xts_ctx_st {
     } plat;
 } PROV_AES_XTS_CTX;
 
+#ifdef AES_XTS_S390X
+int s390x_aes_xts_cipher_stream(PROV_AES_XTS_CTX *xctx,
+    unsigned char *out, size_t *outl,
+    const unsigned char *in, size_t inl);
+#endif
+
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts(size_t keybits);
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_CIPHERS_CIPHER_AES_XTS_H) */
