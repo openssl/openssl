@@ -175,7 +175,7 @@ static int pkcs12_create_ex2_test(int test)
             0, 0, 0,
             testctx, NULL,
             NULL, NULL);
-        if (TEST_ptr(ptr))
+        if (!TEST_ptr_null(ptr))
             goto err;
 
         /* Can't proceed without a valid cert at least */
@@ -201,7 +201,7 @@ static int pkcs12_create_ex2_test(int test)
             testctx, NULL,
             pkcs12_create_cb, (void *)&cb_ret);
         /* PKCS12 not created */
-        if (TEST_ptr(ptr))
+        if (!TEST_ptr_null(ptr))
             goto err;
     } else if (test == 2) {
         /* Specified call back called - return failure */

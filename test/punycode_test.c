@@ -188,7 +188,7 @@ static int test_puny_overrun(void)
     unsigned int bsize = OSSL_NELEM(buf) - 1;
 
     if (!TEST_false(ossl_punycode_decode(in, strlen(in), buf, &bsize))) {
-        if (TEST_mem_eq(buf, bsize * sizeof(*buf), out, sizeof(out)))
+        if (!TEST_mem_ne(buf, bsize * sizeof(*buf), out, sizeof(out)))
             TEST_error("CRITICAL: buffer overrun detected!");
         return 0;
     }

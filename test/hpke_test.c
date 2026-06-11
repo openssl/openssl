@@ -949,10 +949,9 @@ static int test_hpke_modes_suites(void)
             hpke_suite.kem_id = kem_id;
             if (hpke_mode == OSSL_HPKE_MODE_AUTH
                 || hpke_mode == OSSL_HPKE_MODE_PSKAUTH) {
-                if (TEST_true(OSSL_HPKE_keygen(hpke_suite, authpub, &authpublen,
+                if (!TEST_true(OSSL_HPKE_keygen(hpke_suite, authpub, &authpublen,
                         &authpriv, NULL, 0,
-                        testctx, NULL))
-                    != 1) {
+                        testctx, NULL))) {
                     overallresult = 0;
                 }
                 authpubp = authpub;
@@ -1195,7 +1194,7 @@ static int test_hpke_suite_strs(void)
             for (aeadind = 0; aeadind != OSSL_NELEM(aead_str_list); aeadind++) {
                 BIO_snprintf(sstr, 128, "%s,%s,%s", kem_str_list[kemind],
                     kdf_str_list[kdfind], aead_str_list[aeadind]);
-                if (TEST_true(OSSL_HPKE_str2suite(sstr, &stirred)) != 1) {
+                if (!TEST_true(OSSL_HPKE_str2suite(sstr, &stirred))) {
                     if (verbose)
                         TEST_note("Unexpected str2suite fail for :%s",
                             bogus_suite_strs[sind]);
@@ -1205,9 +1204,8 @@ static int test_hpke_suite_strs(void)
         }
     }
     for (sind = 0; sind != OSSL_NELEM(bogus_suite_strs); sind++) {
-        if (TEST_false(OSSL_HPKE_str2suite(bogus_suite_strs[sind],
-                &stirred))
-            != 1) {
+        if (!TEST_false(OSSL_HPKE_str2suite(bogus_suite_strs[sind],
+                &stirred))) {
             if (verbose)
                 TEST_note("OSSL_HPKE_str2suite didn't fail for bogus[%d]:%s",
                     sind, bogus_suite_strs[sind]);
@@ -1250,20 +1248,18 @@ static int test_hpke_grease(void)
     /* GREASEing */
     /* check too short for public value */
     g_pub_len = 10;
-    if (TEST_false(OSSL_HPKE_get_grease_value(NULL, &g_suite,
+    if (!TEST_false(OSSL_HPKE_get_grease_value(NULL, &g_suite,
             g_pub, &g_pub_len,
             g_cipher, g_cipher_len,
-            testctx, NULL))
-        != 1) {
+            testctx, NULL))) {
         overallresult = 0;
     }
     /* reset to work */
     g_pub_len = OSSL_HPKE_TSTSIZE;
-    if (TEST_true(OSSL_HPKE_get_grease_value(NULL, &g_suite,
+    if (!TEST_true(OSSL_HPKE_get_grease_value(NULL, &g_suite,
             g_pub, &g_pub_len,
             g_cipher, g_cipher_len,
-            testctx, NULL))
-        != 1) {
+            testctx, NULL))) {
         overallresult = 0;
     }
     /* expansion */
