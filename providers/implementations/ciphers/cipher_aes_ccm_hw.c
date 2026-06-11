@@ -77,7 +77,7 @@ const PROV_CCM_HW *ossl_prov_aes_hw_ccm(size_t keybits)
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 32
     aes_ccm_hw = ossl_prov_aes_hw_ccm_rv32i();
 #elif defined(OPENSSL_CPUID_OBJ) && defined(__riscv) && __riscv_xlen == 64
-    aes_ccm_hw = ossl_prov_aes_hw_ccm_rv64i(keybits);
+    aes_ccm_hw = ossl_prov_aes_hw_ccm_rv64i();
 #elif defined(S390X_aes_128_CAPABLE)
     aes_ccm_hw = ossl_prov_aes_hw_ccm_s390x(keybits);
 #elif defined(SPARC_AES_CAPABLE)
