@@ -14,7 +14,7 @@
  * non-internal use) in order to implement provider AES ciphers.
  */
 #include "internal/deprecated.h"
-
+#include <openssl/proverr.h>
 #include "cipher_aes_gcm.h"
 
 int aes_gcm_hw_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
