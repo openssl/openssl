@@ -174,19 +174,19 @@ extern long __cdecl InterlockedExchangeAdd(long volatile *, long);
 
 static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd(&refcnt->val, 1) + 1;
+    *ret = _InterlockedExchangeAdd((long volatile *)&refcnt->val, 1) + 1;
     return 1;
 }
 
 static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd(&refcnt->val, -1) - 1;
+    *ret = _InterlockedExchangeAdd((long volatile *)&refcnt->val, -1) - 1;
     return 1;
 }
 
 static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
-    *ret = _InterlockedExchangeAdd(&refcnt->val, 0);
+    *ret = _InterlockedExchangeAdd((long volatile *)&refcnt->val, 0);
     return 1;
 }
 
