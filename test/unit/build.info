@@ -15,6 +15,13 @@ WRAP[crypto/bio/test_bio_sock]=getsockopt setsockopt getsockname ioctl poll \
     BIO_ADDRINFO_free BIO_accept_ex BIO_sock_should_retry \
     BIO_ADDR_hostname_string BIO_ADDR_service_string
 
+PROGRAMS{noinst}=crypto/bio/test_bio_sock2
+SOURCE[crypto/bio/test_bio_sock2]=crypto/bio/test_bio_sock2.c
+INCLUDE[crypto/bio/test_bio_sock2]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bio_sock2]=../../libcrypto.a
+WRAP[crypto/bio/test_bio_sock2]=socket connect bind listen accept close \
+    getsockopt setsockopt BIO_socket_nbio BIO_sock_should_retry
+
 PROGRAMS{noinst}=crypto/bio/test_bss_acpt
 SOURCE[crypto/bio/test_bss_acpt]=crypto/bio/test_bss_acpt.c
 WRAP[crypto/bio/test_bss_acpt]=BIO_lookup BIO_socket BIO_listen \
