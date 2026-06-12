@@ -15,7 +15,6 @@
 #include <openssl/provider.h>
 #include "internal/property.h"
 #include "internal/provider.h"
-#include "internal/hashfunc.h"
 #include "internal/tsan_assist.h"
 #include "internal/threads_common.h"
 #include "internal/list.h"
@@ -63,7 +62,7 @@ typedef struct query_st {
     int nid; /* nid of this query */
     int archived; /* Mark entry as no longer findable */
     OSSL_PROVIDER *prov; /*provider this belongs to */
-    uint64_t prop_hash; /* hash of the property string */
+    char *prop_query; /* query string */
     METHOD method; /* METHOD for this query */
 } QUERY;
 
@@ -93,7 +92,7 @@ typedef struct {
 static int ossl_method_store_atomic_insert_to_list(STORED_ALGORITHMS *sa, QUERY *new);
 static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old);
 static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int nid,
-    OSSL_PROVIDER *prov, uint64_t prop_hash);
+    OSSL_PROVIDER *prov, const char *prop_query);
 static void ossl_cache_lists_flush(STORED_ALGORITHMS *sa);
 static void ossl_cache_lists_free(STORED_ALGORITHMS *sa);
 static void ossl_method_store_atomic_clean_archive(STORED_ALGORITHMS *sa);
@@ -126,6 +125,27 @@ typedef struct ossl_global_properties_st {
 static void ossl_method_cache_flush_alg(STORED_ALGORITHMS *sa,
     ALGORITHM *alg);
 static void ossl_method_cache_flush(STORED_ALGORITHMS *sa, int nid);
+
+static ossl_inline QUERY *QUERY_new(size_t prop_query_len)
+{
+    /*
+     * allocate a new QUERY with the associated property query buffer
+     * immediately following it
+     */
+    QUERY *new = OPENSSL_malloc(sizeof(QUERY) + prop_query_len + 1);
+    if (new != NULL)
+        new->prop_query = (char *)(new + 1);
+    return new;
+}
+
+static ossl_inline void QUERY_free(QUERY *q)
+{
+    /*
+     * because we allocate the QUERY with its property query string
+     * as one contiguous chunk, this frees both
+     */
+    OPENSSL_free(q);
+}
 
 /* Global properties are stored per library context */
 void ossl_ctx_global_properties_free(void *vglobp)
@@ -213,7 +233,7 @@ static ossl_inline void impl_cache_free_unlinked(QUERY *elem)
 {
     if (elem != NULL) {
         ossl_method_free(&elem->method);
-        OPENSSL_free(elem);
+        QUERY_free(elem);
     }
 }
 
@@ -913,13 +933,10 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
 static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, STORED_ALGORITHMS *sa, void **method)
 {
-    uint64_t prop_hash;
     QUERY *r = NULL;
     int res = 0;
 
-    prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
-
-    r = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
+    r = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_query);
 
     if (r != NULL && ossl_method_up_ref(&r->method)) {
         *method = r->method.method;
@@ -1082,7 +1099,7 @@ static void ossl_method_store_atomic_clean_archive(STORED_ALGORITHMS *sa)
 }
 
 static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int nid,
-    OSSL_PROVIDER *prov, uint64_t prop_hash)
+    OSSL_PROVIDER *prov, const char *prop_query)
 {
     int nididx = (nid >> NUM_SHARDS_BITS) & (MAX_CACHE_LINES - 1);
     int archived;
@@ -1095,7 +1112,8 @@ static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int n
     while (idx != NULL) {
         if (!CRYPTO_atomic_load_int(&idx->archived, &archived, sa->alock))
             goto out;
-        if (archived == 0 && idx->nid == nid && idx->prop_hash == prop_hash && idx->prov == prov) {
+        if (archived == 0 && idx->nid == nid && idx->prov == prov
+            && !strcmp(idx->prop_query, prop_query)) {
             ret = idx;
             break;
         }
@@ -1135,31 +1153,30 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
     void (*method_destruct)(void *))
 {
     QUERY *p = NULL;
-    uint64_t prop_hash = ossl_fnv1a_hash((uint8_t *)prop_query, strlen(prop_query));
     int res = 1;
 
     if (method == NULL) {
-        p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
+        p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_query);
         if (p != NULL)
             ossl_method_store_atomic_archive(sa, p);
         goto end;
     }
 
-    p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_hash);
+    p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_query);
     if (p != NULL) {
         ossl_method_store_atomic_archive(sa, p);
-        p = ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_hash);
+        p = ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_query);
         if (p != NULL)
             ossl_method_store_atomic_archive(sa, p);
     }
-    p = OPENSSL_malloc(sizeof(*p));
+    p = QUERY_new(strlen(prop_query));
     if (p != NULL) {
         TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
         p->saptr = sa;
         p->nid = nid;
         p->prov = prov;
         p->archived = 0;
-        p->prop_hash = prop_hash;
+        strcpy(p->prop_query, prop_query);
         p->method.method = method;
         p->method.up_ref = method_up_ref;
         p->method.free = method_destruct;
@@ -1176,11 +1193,18 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
          * from nid and property query.  This lets us match in the event someone does a lookup
          * against a NULL provider (i.e. the "any provided alg will do" match
          */
-        p = OPENSSL_memdup(p, sizeof(*p));
+        p = QUERY_new(strlen(prop_query));
         if (p == NULL)
             goto err;
         TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
+        p->saptr = sa;
+        p->nid = nid;
         p->prov = NULL;
+        p->archived = 0;
+        strcpy(p->prop_query, prop_query);
+        p->method.method = method;
+        p->method.up_ref = method_up_ref;
+        p->method.free = method_destruct;
         if (!ossl_method_up_ref(&p->method))
             goto err;
         if (!ossl_method_store_atomic_insert_to_list(sa, p)) {
@@ -1192,7 +1216,7 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
     }
 err:
     res = 0;
-    OPENSSL_free(p);
+    QUERY_free(p);
 end:
     return res;
 }
