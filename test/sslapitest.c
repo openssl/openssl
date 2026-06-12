@@ -661,6 +661,111 @@ end:
     return testresult;
 }
 
+static int server_retry_state;
+
+static int server_verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
+{
+    int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
+    SSL *ssl;
+
+    if (idx < 0 || (ssl = X509_STORE_CTX_get_ex_data(ctx, idx)) == NULL)
+        return 0;
+
+    if (server_retry_state == 0) {
+        /* First call: ask the state machine to pause and retry. */
+        server_retry_state = 1;
+        return SSL_set_retry_verify(ssl);
+    }
+
+    /* Second call (after the app supplied a verdict): accept. */
+    server_retry_state = 2;
+    return 1;
+}
+
+static int test_server_cert_verify_cb(void)
+{
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+    char *root = test_mk_file_path(certsdir, "rootCA.pem");
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    server_retry_state = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+                                       TLS_client_method(), TLS1_VERSION, 0,
+                                       &sctx, &cctx, NULL, NULL)))
+        goto end;
+
+    /* Server needs its own cert/key for the TLS handshake. */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 1)
+            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, skey,
+                                                        SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+
+    /* Server requests and verifies a client certificate via the retry cb. */
+    SSL_CTX_set_verify(sctx,
+                       SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+                       NULL);
+    SSL_CTX_set_cert_verify_callback(sctx, server_verify_retry_cb, NULL);
+
+    /* Client presents its cert (leaf signed by interCA/rootCA). */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(cctx, leaf,
+                                                  SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(cctx, skey,
+                                                        SSL_FILETYPE_PEM), 1)
+            || !TEST_int_eq(SSL_CTX_check_private_key(cctx), 1))
+        goto end;
+    /* Client trusts the server's root so it accepts the server cert. */
+    if (!TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL)))
+        goto end;
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+                                      &clientssl, NULL, NULL)))
+        goto end;
+
+    /*
+     * Driving the handshake the first time must surface
+     * SSL_ERROR_WANT_RETRY_VERIFY (proving the server state machine actually
+     * honored the callback's pause request rather than silently accepting -1).
+     */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+                                          SSL_ERROR_WANT_RETRY_VERIFY)))
+        goto end;
+    if (!TEST_int_eq(server_retry_state, 1))
+        goto end;
+
+    /* Resuming the handshake must now complete cleanly. */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+                                         SSL_ERROR_NONE)))
+        goto end;
+    if (!TEST_int_eq(server_retry_state, 2))
+        goto end;
+
+    testresult = 1;
+
+end:
+    if (clientssl != NULL) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl != NULL) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(skey);
+    OPENSSL_free(leaf);
+    OPENSSL_free(leaf_chain);
+    OPENSSL_free(root);
+    return testresult;
+}
+
 static int test_ssl_build_cert_chain(void)
 {
     int ret = 0;
@@ -15452,6 +15557,7 @@ int setup_tests(void)
     ADD_TEST(test_keylog_no_master_key);
 #endif
     ADD_TEST(test_client_cert_verify_cb);
+    ADD_TEST(test_server_cert_verify_cb);
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2
