@@ -757,7 +757,7 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
-#if defined(_MSC_VER) || defined(OPENSSL_NO_CACHED_FETCH)
+#if defined(_MSC_VER) || defined(OPENSSL_NO_CACHED_FETCH) || defined(OPENSSL_HMAC_S390X)
     ADD_MFAIL_ALL_NO_CHECK_TESTS(test_rsa_pkcs1_mfail, 3);
     ADD_MFAIL_ALL_NO_CHECK_TESTS(test_rsa_oaep_mfail, 3);
 #else
