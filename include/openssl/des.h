@@ -25,7 +25,7 @@ extern "C" {
 #include <openssl/e_os2.h>
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
-typedef unsigned int DES_LONG;
+typedef uint32_t DES_LONG;
 
 #ifdef OPENSSL_BUILD_SHLIBCRYPTO
 #undef OPENSSL_EXTERN
