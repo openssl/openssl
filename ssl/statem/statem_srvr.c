@@ -1606,6 +1606,12 @@ WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
     case TLS_ST_SR_CLNT_HELLO:
         return tls_post_process_client_hello(s, wst);
 
+    case TLS_ST_SR_CERT:
+#ifndef OPENSSL_NO_COMP_ALG
+    case TLS_ST_SR_COMP_CERT:
+#endif
+        return tls_post_process_client_certificate(s, wst);
+
     case TLS_ST_SR_KEY_EXCH:
         return tls_post_process_client_key_exchange(s, wst);
     }
@@ -4070,27 +4076,50 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
 
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 {
-    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
-    SSL_SESSION *new_sess = NULL;
     EVP_PKEY *peer_rpk = NULL;
 
     if (!tls_process_rpk(sc, pkt, &peer_rpk)) {
         /* SSLfatal already called */
-        goto err;
+        return MSG_PROCESS_ERROR;
     }
+
+    /* Stash the parsed RPK; verification runs in the post-process step. */
+    EVP_PKEY_free(sc->session->peer_rpk);
+    sc->session->peer_rpk = peer_rpk;
+
+    return MSG_PROCESS_CONTINUE_PROCESSING;
+}
+
+/* Verify the parked RPK; may pause via SSL_set_retry_verify(). */
+static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
+    WORK_STATE wst)
+{
+    EVP_PKEY *peer_rpk = sc->session->peer_rpk;
+    SSL_SESSION *new_sess = NULL;
+
+    (void)wst;
 
     if (peer_rpk == NULL) {
         if ((sc->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
             && (sc->verify_mode & SSL_VERIFY_PEER)) {
             SSLfatal(sc, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            goto err;
+            return WORK_ERROR;
         }
     } else {
-        if (ssl_verify_rpk(sc, peer_rpk) <= 0) {
+        int v_ok;
+
+        if (sc->rwstate == SSL_RETRY_VERIFY)
+            sc->rwstate = SSL_NOTHING;
+        v_ok = ssl_verify_rpk(sc, peer_rpk);
+        if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
+            /* The verify callback asked to pause; resume here on retry. */
+            return WORK_MORE_A;
+        }
+        if (v_ok <= 0) {
             SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            goto err;
+            return WORK_ERROR;
         }
     }
 
@@ -4101,11 +4130,10 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
      * a new RPK (or certificate) is received via post-handshake authentication,
      * as the session may have already gone into the session cache.
      */
-
     if (sc->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(sc->session, 0)) == NULL) {
             SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
+            return WORK_ERROR;
         }
 
         SSL_SESSION_free(sc->session);
@@ -4117,10 +4145,6 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     sc->session->peer = NULL;
     sk_X509_pop_free(sc->session->peer_chain, X509_free);
     sc->session->peer_chain = NULL;
-    /* Save RPK */
-    EVP_PKEY_free(sc->session->peer_rpk);
-    sc->session->peer_rpk = peer_rpk;
-    peer_rpk = NULL;
 
     sc->session->verify_result = sc->verify_result;
 
@@ -4131,32 +4155,27 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     if (SSL_CONNECTION_IS_VERSION13(sc)) {
         if (!ssl3_digest_cached_records(sc, 1)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
 
         /* Save the current hash state for when we receive the CertificateVerify */
         if (!ssl_handshake_hash(sc, sc->cert_verify_hash,
                 sizeof(sc->cert_verify_hash),
                 &sc->cert_verify_hash_len)) {
-            /* SSLfatal() already called */;
-            goto err;
+            /* SSLfatal() already called */
+            return WORK_ERROR;
         }
 
         /* resend session tickets */
         sc->sent_tickets = 0;
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
-
-err:
-    EVP_PKEY_free(peer_rpk);
-    return ret;
+    return WORK_FINISHED_CONTINUE;
 }
 
 MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     PACKET *pkt)
 {
-    int i;
     MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
     unsigned long l;
@@ -4164,7 +4183,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     STACK_OF(X509) *sk = NULL;
     PACKET spkt, context;
     size_t chainidx;
-    SSL_SESSION *new_sess = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     /*
@@ -4251,34 +4269,80 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
-        x = NULL;
     }
 
-    if (sk_X509_num(sk) <= 0) {
+    /*
+     * Stash the parsed chain so that tls_post_process_client_certificate() can
+     * run verification and may pause the handshake via SSL_set_retry_verify().
+     */
+    OSSL_STACK_OF_X509_free(s->session->peer_chain);
+    s->session->peer_chain = sk;
+
+    return MSG_PROCESS_CONTINUE_PROCESSING;
+
+err:
+    X509_free(x);
+    OSSL_STACK_OF_X509_free(sk);
+    return ret;
+}
+
+/*
+ * Verify s->session->peer_chain (parked by tls_process_client_certificate())
+ * and finalize the peer cert / TLS 1.3 handshake-hash bookkeeping.
+ * Allows the verify callback to defer via SSL_set_retry_verify(), in which
+ * case we return WORK_MORE_A and the state machine re-enters this function
+ * once the application has supplied a verdict.
+ */
+WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
+    WORK_STATE wst)
+{
+    STACK_OF(X509) *sk;
+    SSL_SESSION *new_sess = NULL;
+    EVP_PKEY *pkey;
+    int i;
+
+    if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
+        return tls_post_process_client_rpk(s, wst);
+
+    sk = s->session->peer_chain;
+    (void)wst;
+
+    if (sk == NULL || sk_X509_num(sk) <= 0) {
         /* Fail only if we required a certificate */
-        if ((s->verify_mode & SSL_VERIFY_PEER) && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
+        if ((s->verify_mode & SSL_VERIFY_PEER)
+            && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            goto err;
+            return WORK_ERROR;
         }
         /* No client certificate so digest cached records */
         if (s->s3.handshake_buffer && !ssl3_digest_cached_records(s, 0)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
     } else {
-        EVP_PKEY *pkey;
+        if (s->rwstate == SSL_RETRY_VERIFY)
+            s->rwstate = SSL_NOTHING;
         i = ssl_verify_cert_chain(s, sk);
+        if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
+            /*
+             * The application's verify callback asked us to pause via
+             * SSL_set_retry_verify(); SSL_do_handshake() will return
+             * SSL_ERROR_WANT_RETRY_VERIFY and the state machine resumes here
+             * once the callback is invoked again.
+             */
+            return WORK_MORE_A;
+        }
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            goto err;
+            return WORK_ERROR;
         }
         pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                 SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-            goto err;
+            return WORK_ERROR;
         }
     }
 
@@ -4289,24 +4353,25 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      * a new certificate is received via post-handshake authentication, as the
      * session may have already gone into the session cache.
      */
-
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
-            goto err;
+            return WORK_ERROR;
         }
 
         SSL_SESSION_free(s->session);
         s->session = new_sess;
+        /* peer_chain follows the session via ssl_session_dup(); refresh sk. */
+        sk = s->session->peer_chain;
     }
 
-    X509_free(s->session->peer);
-    s->session->peer = sk_X509_shift(sk);
-    s->session->verify_result = s->verify_result;
+    if (sk != NULL && sk_X509_num(sk) > 0) {
+        X509_free(s->session->peer);
+        /* Server keeps the EE cert in session->peer; peer_chain holds issuers only. */
+        s->session->peer = sk_X509_shift(sk);
+        s->session->verify_result = s->verify_result;
+    }
 
-    OSSL_STACK_OF_X509_free(s->session->peer_chain);
-    s->session->peer_chain = sk;
-    sk = NULL;
     /* Ensure there is no RPK */
     EVP_PKEY_free(s->session->peer_rpk);
     s->session->peer_rpk = NULL;
@@ -4317,13 +4382,8 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      */
     if (SSL_CONNECTION_IS_VERSION13(s) && !ssl3_digest_cached_records(s, 1)) {
         /* SSLfatal() already called */
-        goto err;
+        return WORK_ERROR;
     }
-
-    /*
-     * Inconsistency alert: cert_chain does *not* include the peer's own
-     * certificate, while we do include it in statem_clnt.c
-     */
 
     /* Save the current hash state for when we receive the CertificateVerify */
     if (SSL_CONNECTION_IS_VERSION13(s)) {
@@ -4331,19 +4391,14 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
                 sizeof(s->cert_verify_hash),
                 &s->cert_verify_hash_len)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
 
         /* Resend session tickets */
         s->sent_tickets = 0;
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
-
-err:
-    X509_free(x);
-    OSSL_STACK_OF_X509_free(sk);
-    return ret;
+    return WORK_FINISHED_CONTINUE;
 }
 
 #ifndef OPENSSL_NO_COMP_ALG
