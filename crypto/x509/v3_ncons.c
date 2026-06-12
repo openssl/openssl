@@ -692,7 +692,7 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
     /* Special case: initial '.' is RHS match */
     if (*baseptr == '.') {
         ulabel[0] = '.';
-        if (ossl_a2ulabel(baseptr, ulabel + 1, size - 1) <= 0) {
+        if (ossl_a2ulabel(baseptr + 1, ulabel + 1, size - 1) <= 0) {
             ret = X509_V_ERR_UNSPECIFIED;
             goto end;
         }
@@ -707,10 +707,28 @@ static int nc_email_eai(ASN1_TYPE *emltype, ASN1_IA5STRING *base)
         goto end;
     }
 
-    if (ossl_a2ulabel(baseptr, ulabel, size) <= 0) {
+    const char *baseat = strchr(baseptr, '@');
+    const char *basehost;
+
+    /* If base has '@', match local part first (case sensitive) */
+    if (baseat != NULL) {
+        if (baseat != baseptr) {
+            if ((size_t)(baseat - baseptr) != (size_t)(emlat - emlptr)
+                || strncmp(baseptr, emlptr, emlat - emlptr) != 0) {
+                ret = X509_V_ERR_PERMITTED_VIOLATION;
+                goto end;
+            }
+        }
+        basehost = baseat + 1;
+    } else {
+        basehost = baseptr;
+    }
+
+    if (ossl_a2ulabel(basehost, ulabel, size) <= 0) {
         ret = X509_V_ERR_UNSPECIFIED;
         goto end;
     }
+
     /* Just have hostname left to match: case insensitive */
     emlptr = emlat + 1;
     emlhostlen = IA5_OFFSET_LEN(eml, emlptr);
