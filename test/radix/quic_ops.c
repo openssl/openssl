@@ -1069,8 +1069,10 @@ err:
         OP_PUSH_U64(1),                                      \
         OP_FUNC(hf_new_stream))
 
-#define OP_ACCEPT_STREAM_NONE(conn_name) \
-    (OP_SELECT_SSL(0, conn_name),        \
+#define OP_ACCEPT_STREAM_NONE(conn_name, flags) \
+    (OP_SELECT_SSL(0, conn_name),               \
+        OP_PUSH_PZ(#conn_name),                 \
+        OP_PUSH_U64(flags),                     \
         OP_FUNC(hf_accept_stream_none))
 
 #define OP_ACCEPT_CONN_WAIT(listener_name, conn_name, flags) \
@@ -1130,7 +1132,7 @@ err:
 #define OP_READ_EXPECT_B(name, buf) \
     OP_READ_EXPECT(name, (buf), sizeof(buf))
 
-#define OP_READ_FAIL()       \
+#define OP_READ_FAIL(name)   \
     (OP_SELECT_SSL(0, name), \
         OP_PUSH_U64(0),      \
         OP_FUNC(hf_read_fail))
