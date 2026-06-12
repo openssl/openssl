@@ -607,6 +607,30 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->first_packet = 0;
 
     sc->key_update = SSL_KEY_UPDATE_NONE;
+
+    /* Cleanse TLS 1.3 key schedule secrets (RFC 8446 §7.1) */
+    OPENSSL_cleanse(sc->early_secret, sizeof(sc->early_secret));
+    OPENSSL_cleanse(sc->handshake_secret, sizeof(sc->handshake_secret));
+    OPENSSL_cleanse(sc->master_secret, sizeof(sc->master_secret));
+    OPENSSL_cleanse(sc->resumption_master_secret,
+                    sizeof(sc->resumption_master_secret));
+    OPENSSL_cleanse(sc->client_finished_secret,
+                    sizeof(sc->client_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_secret,
+                    sizeof(sc->server_finished_secret));
+    OPENSSL_cleanse(sc->server_finished_hash,
+                    sizeof(sc->server_finished_hash));
+    OPENSSL_cleanse(sc->handshake_traffic_hash,
+                    sizeof(sc->handshake_traffic_hash));
+    OPENSSL_cleanse(sc->client_app_traffic_secret,
+                    sizeof(sc->client_app_traffic_secret));
+    OPENSSL_cleanse(sc->server_app_traffic_secret,
+                    sizeof(sc->server_app_traffic_secret));
+    OPENSSL_cleanse(sc->exporter_master_secret,
+                    sizeof(sc->exporter_master_secret));
+    OPENSSL_cleanse(sc->early_exporter_master_secret,
+                    sizeof(sc->early_exporter_master_secret));
+
     memset(sc->ext.compress_certificate_from_peer, 0,
         sizeof(sc->ext.compress_certificate_from_peer));
     sc->ext.compress_certificate_sent = 0;
@@ -1595,6 +1619,29 @@ void ossl_ssl_connection_free(SSL *ssl)
 #ifndef OPENSSL_NO_ECH
     ossl_ech_conn_clear(&s->ext.ech);
 #endif
+
+    /* Cleanse TLS 1.3 key schedule secrets (RFC 8446 §7.1) */
+    OPENSSL_cleanse(s->early_secret, sizeof(s->early_secret));
+    OPENSSL_cleanse(s->handshake_secret, sizeof(s->handshake_secret));
+    OPENSSL_cleanse(s->master_secret, sizeof(s->master_secret));
+    OPENSSL_cleanse(s->resumption_master_secret,
+                    sizeof(s->resumption_master_secret));
+    OPENSSL_cleanse(s->client_finished_secret,
+                    sizeof(s->client_finished_secret));
+    OPENSSL_cleanse(s->server_finished_secret,
+                    sizeof(s->server_finished_secret));
+    OPENSSL_cleanse(s->server_finished_hash,
+                    sizeof(s->server_finished_hash));
+    OPENSSL_cleanse(s->handshake_traffic_hash,
+                    sizeof(s->handshake_traffic_hash));
+    OPENSSL_cleanse(s->client_app_traffic_secret,
+                    sizeof(s->client_app_traffic_secret));
+    OPENSSL_cleanse(s->server_app_traffic_secret,
+                    sizeof(s->server_app_traffic_secret));
+    OPENSSL_cleanse(s->exporter_master_secret,
+                    sizeof(s->exporter_master_secret));
+    OPENSSL_cleanse(s->early_exporter_master_secret,
+                    sizeof(s->early_exporter_master_secret));
 }
 
 void SSL_set0_rbio(SSL *s, BIO *rbio)
