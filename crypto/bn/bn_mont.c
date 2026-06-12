@@ -19,13 +19,12 @@
 
 #define MONT_WORD /* use the faster word-based algorithm */
 
-#ifdef MONT_WORD
-static int bn_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont);
-#endif
-
 int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx)
 {
+    if (r == NULL || a == NULL || b == NULL || mont == NULL || ctx == NULL)
+        return 0;
+
     int ret = bn_mul_mont_fixed_top(r, a, b, mont, ctx);
 
     bn_correct_top(r);
@@ -34,135 +33,105 @@ int BN_mod_mul_montgomery(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     return ret;
 }
 
+/* // All parameters must be non‑NULL. The caller is responsible for this */
 int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx)
 {
-    BIGNUM *tmp;
     int ret = 0;
-    int num = mont->N.top;
+    int modsize = (mont->N.data != NULL) ? mont->N.data->dsize : mont->N.top;
+    BIGNUM *a_tmp = NULL, *b_tmp = NULL, *r_tmp = NULL;
+    OSSL_FN_MONT_CTX *fnmont = NULL;
+    OSSL_FN_CTX *fnctx = NULL;
 
-#if defined(OPENSSL_BN_ASM_MONT) && defined(MONT_WORD)
-    if (num > 1 && num <= BN_SOFT_LIMIT && a->top == num && b->top == num) {
-        if (bn_wexpand(r, num) == NULL)
-            return 0;
-        if (bn_mul_mont(r->d, a->d, b->d, mont->N.d, mont->n0, num)) {
-            r->neg = a->neg ^ b->neg;
-            bn_set_top(r, num);
-            r->flags |= BN_FLG_FIXED_TOP;
-            return 1;
+    if (a->data != NULL && a->data->dsize == modsize
+#if !defined(OPENSSL_BN_ASM_MONT)
+        && OSSL_FN_cmp(a->data, mont->N.data) < 0
+#endif
+    ) {
+        a_tmp = (BIGNUM *)a;
+    } else {
+        a_tmp = bn_new_internal(modsize, BN_get_flags(a, BN_FLG_SECURE));
+        if (ossl_unlikely(a_tmp == NULL)
+            || BN_nnmod(a_tmp, a, &mont->N, ctx) == 0)
+            goto end;
+    }
+
+    if (b->data != NULL && b->data->dsize == modsize
+#if !defined(OPENSSL_BN_ASM_MONT)
+        && OSSL_FN_cmp(b->data, mont->N.data) < 0
+#endif
+    ) {
+        b_tmp = (BIGNUM *)b;
+    } else {
+        b_tmp = bn_new_internal(modsize, BN_get_flags(b, BN_FLG_SECURE));
+        if (ossl_unlikely(b_tmp == NULL)
+            || BN_nnmod(b_tmp, b, &mont->N, ctx) == 0)
+            goto end;
+    }
+
+    if (r->data != NULL && r->data->dsize == modsize) {
+        r_tmp = r;
+    } else {
+        r_tmp = bn_new_internal(modsize,
+            BN_get_flags(a, BN_FLG_SECURE) && BN_get_flags(b, BN_FLG_SECURE));
+        if (ossl_unlikely(r_tmp == NULL))
+            goto end;
+    }
+
+    if (ossl_likely(mont->N.data != NULL)) {
+        fnmont = OSSL_FN_MONT_CTX_new(mont->N.data);
+    } else {
+        BIGNUM *mod = BN_dup(&mont->N);
+        fnmont = OSSL_FN_MONT_CTX_new(mod->data);
+        BN_free(mod);
+    }
+    if (ossl_unlikely(fnmont == NULL))
+        goto end;
+
+    /*
+     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
+     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
+     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality).
+     * The same about OSSL_FN_MONT_CTX and BN_MONT_CTX
+     */
+    fnctx = OSSL_FN_CTX_new(NULL, 1, 1, modsize + 2);
+    if (ossl_unlikely(fnctx == NULL))
+        goto end;
+
+    OSSL_FN *rf = bn_acquire_ossl_fn(r_tmp, modsize);
+    ret = ossl_fn_mul_mont(rf, a_tmp->data, b_tmp->data, fnmont, fnctx);
+    bn_release(r_tmp, modsize);
+    if (ret) {
+        r_tmp->neg = a->neg ^ b->neg;
+        bn_set_top(r_tmp, mont->N.top);
+        r_tmp->flags |= BN_FLG_FIXED_TOP;
+        if (r_tmp != r) {
+            if (BN_get_flags(r, BN_FLG_STATIC_DATA))
+                ret = ossl_likely(BN_copy(r, r_tmp) != NULL);
+            else
+                ret = ossl_likely(bn_copy_resized(r, r_tmp) != NULL);
         }
     }
-#endif
 
-    if ((a->top + b->top) > 2 * num)
-        return 0;
-
-    BN_CTX_start(ctx);
-    tmp = BN_CTX_get(ctx);
-    if (tmp == NULL)
-        goto err;
-
-    bn_check_top(tmp);
-    if (a == b) {
-        if (!bn_sqr_fixed_top(tmp, a, ctx))
-            goto err;
-    } else {
-        if (!bn_mul_fixed_top(tmp, a, b, ctx))
-            goto err;
-    }
-    /* reduce from aRR to aR */
-#ifdef MONT_WORD
-    if (!bn_from_montgomery_word(r, tmp, mont))
-        goto err;
-#else
-    if (!BN_from_montgomery(r, tmp, mont, ctx))
-        goto err;
-#endif
-    ret = 1;
-err:
-    BN_CTX_end(ctx);
+end:
+    if (a_tmp != a)
+        BN_free(a_tmp);
+    if (b_tmp != b)
+        BN_free(b_tmp);
+    if (r_tmp != r)
+        BN_free(r_tmp);
+    OSSL_FN_CTX_free(fnctx);
+    OSSL_FN_MONT_CTX_free(fnmont);
     return ret;
 }
-
-#ifdef MONT_WORD
-static int bn_from_montgomery_word(BIGNUM *ret, BIGNUM *r, BN_MONT_CTX *mont)
-{
-    BIGNUM *n;
-    BN_ULONG *ap, *np, *rp, n0, v, carry;
-    int nl, max, i;
-    unsigned int rtop;
-
-    n = &(mont->N);
-    nl = n->top;
-    if (nl == 0) {
-        bn_set_top(ret, 0);
-        return 1;
-    }
-
-    max = (2 * nl); /* carry is stored separately */
-    if (bn_wexpand(r, max) == NULL)
-        return 0;
-
-    r->neg ^= n->neg;
-    np = n->d;
-    rp = r->d;
-
-    /* clear the top words of T */
-    for (rtop = r->top, i = 0; i < max; i++) {
-        v = (BN_ULONG)0 - ((i - rtop) >> (8 * sizeof(rtop) - 1));
-        rp[i] &= v;
-    }
-
-    bn_set_top(r, max);
-    r->flags |= BN_FLG_FIXED_TOP;
-    n0 = mont->n0[0];
-
-    /*
-     * Add multiples of |n| to |r| until R = 2^(nl * BN_BITS2) divides it. On
-     * input, we had |r| < |n| * R, so now |r| < 2 * |n| * R. Note that |r|
-     * includes |carry| which is stored separately.
-     */
-    for (carry = 0, i = 0; i < nl; i++, rp++) {
-        v = bn_mul_add_words(rp, np, nl, (rp[0] * n0) & BN_MASK2);
-        v = (v + carry + rp[nl]) & BN_MASK2;
-        carry |= (v != rp[nl]);
-        carry &= (v <= rp[nl]);
-        rp[nl] = v;
-    }
-
-    if (bn_wexpand(ret, nl) == NULL)
-        return 0;
-    bn_set_top(ret, nl);
-    ret->flags |= BN_FLG_FIXED_TOP;
-    ret->neg = r->neg;
-
-    rp = ret->d;
-
-    /*
-     * Shift |nl| words to divide by R. We have |ap| < 2 * |n|. Note that |ap|
-     * includes |carry| which is stored separately.
-     */
-    ap = &(r->d[nl]);
-
-    carry -= bn_sub_words(rp, ap, np, nl);
-    /*
-     * |carry| is -1 if |ap| - |np| underflowed or zero if it did not. Note
-     * |carry| cannot be 1. That would imply the subtraction did not fit in
-     * |nl| words, and we know at most one subtraction is needed.
-     */
-    for (i = 0; i < nl; i++) {
-        rp[i] = (carry & ap[i]) | (~carry & rp[i]);
-        ap[i] = 0;
-    }
-
-    return 1;
-}
-#endif /* MONT_WORD */
 
 int BN_from_montgomery(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
     BN_CTX *ctx)
 {
     int retn;
+
+    if (ret == NULL || a == NULL || mont == NULL || ctx == NULL)
+        return 0;
 
     retn = bn_from_mont_fixed_top(ret, a, mont, ctx);
     bn_correct_top(ret);
@@ -175,47 +144,71 @@ int bn_from_mont_fixed_top(BIGNUM *ret, const BIGNUM *a, BN_MONT_CTX *mont,
     BN_CTX *ctx)
 {
     int retn = 0;
-#ifdef MONT_WORD
-    BIGNUM *t;
+    int modsize = (mont->N.data != NULL) ? mont->N.data->dsize : mont->N.top;
+    BIGNUM *a_tmp = NULL, *r_tmp = NULL;
+    OSSL_FN_MONT_CTX *fnmont = NULL;
+    OSSL_FN_CTX *fnctx = NULL;
 
-    BN_CTX_start(ctx);
-    if ((t = BN_CTX_get(ctx)) && BN_copy(t, a)) {
-        retn = bn_from_montgomery_word(ret, t, mont);
+    if (a->data != NULL && a->data->dsize == modsize
+#if !defined(OPENSSL_BN_ASM_MONT)
+        && OSSL_FN_cmp(a->data, mont->N.data) < 0
+#endif
+    ) {
+        a_tmp = (BIGNUM *)a;
+    } else {
+        a_tmp = bn_new_internal(modsize, BN_get_flags(a, BN_FLG_SECURE));
+        if (ossl_unlikely(a_tmp == NULL)
+            || BN_nnmod(a_tmp, a, &mont->N, ctx) == 0)
+            goto end;
     }
-    BN_CTX_end(ctx);
-#else /* !MONT_WORD */
-    BIGNUM *t1, *t2;
 
-    BN_CTX_start(ctx);
-    t1 = BN_CTX_get(ctx);
-    t2 = BN_CTX_get(ctx);
-    if (t2 == NULL)
-        goto err;
-
-    if (!BN_copy(t1, a))
-        goto err;
-    BN_mask_bits(t1, mont->ri);
-
-    if (!BN_mul(t2, t1, &mont->Ni, ctx))
-        goto err;
-    BN_mask_bits(t2, mont->ri);
-
-    if (!BN_mul(t1, t2, &mont->N, ctx))
-        goto err;
-    if (!BN_add(t2, a, t1))
-        goto err;
-    if (!BN_rshift(ret, t2, mont->ri))
-        goto err;
-
-    if (BN_ucmp(ret, &(mont->N)) >= 0) {
-        if (!BN_usub(ret, ret, &(mont->N)))
-            goto err;
+    if (ret->data != NULL && ret->data->dsize == modsize) {
+        r_tmp = ret;
+    } else {
+        r_tmp = bn_new_internal(modsize, BN_get_flags(a, BN_FLG_SECURE));
+        if (ossl_unlikely(r_tmp == NULL))
+            goto end;
     }
-    retn = 1;
-    bn_check_top(ret);
-err:
-    BN_CTX_end(ctx);
-#endif /* MONT_WORD */
+
+    if (ossl_likely(mont->N.data != NULL)) {
+        fnmont = OSSL_FN_MONT_CTX_new(mont->N.data);
+    } else {
+        BIGNUM *mod = BN_dup(&mont->N);
+        fnmont = OSSL_FN_MONT_CTX_new(mod->data);
+        BN_free(mod);
+    }
+    if (ossl_unlikely(fnmont == NULL))
+        goto end;
+
+    /*
+     * Unfortunately, OSSL_FN_CTX and BN_CTX are too wildly different to
+     * be interchangeable.  We must therefore create an OSSL_FN_CTX here.
+     * (OSSL_FN_CTX is only really useful within OSSL_FN functionality).
+     * The same about OSSL_FN_MONT_CTX and BN_MONT_CTX
+     */
+    fnctx = OSSL_FN_CTX_new(NULL, 1, 1, modsize + 2);
+    if (ossl_unlikely(fnctx == NULL))
+        goto end;
+
+    OSSL_FN *rf = bn_acquire_ossl_fn(r_tmp, modsize);
+    retn = OSSL_FN_from_mont(rf, a_tmp->data, fnmont, fnctx);
+    bn_release(r_tmp, modsize);
+    if (retn) {
+        r_tmp->neg = a->neg;
+        bn_set_top(r_tmp, mont->N.top);
+        r_tmp->flags |= BN_FLG_FIXED_TOP;
+        if (r_tmp != ret)
+            if (ossl_unlikely(bn_copy_resized(ret, r_tmp) == NULL))
+                retn = 0;
+    }
+
+end:
+    if (a_tmp != a)
+        BN_free(a_tmp);
+    if (r_tmp != ret)
+        BN_free(r_tmp);
+    OSSL_FN_CTX_free(fnctx);
+    OSSL_FN_MONT_CTX_free(fnmont);
     return retn;
 }
 
@@ -270,7 +263,7 @@ int BN_MONT_CTX_set(BN_MONT_CTX *mont, const BIGNUM *mod, BN_CTX *ctx)
     if ((Ri = BN_CTX_get(ctx)) == NULL)
         goto err;
     R = &(mont->RR); /* grab RR as a temp */
-    if (!BN_copy(&(mont->N), mod))
+    if (bn_copy_resized(&(mont->N), mod) == NULL)
         goto err; /* Set N */
     if (BN_get_flags(mod, BN_FLG_CONSTTIME) != 0)
         BN_set_flags(&(mont->N), BN_FLG_CONSTTIME);

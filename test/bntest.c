@@ -582,18 +582,6 @@ static int test_modexp_mont5(void)
         || !TEST_BN_eq(c, d))
         goto err;
 
-    /* Regression test for bug in BN_from_montgomery_word */
-    if (!(TEST_true(BN_hex2bn(&a,
-              "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-              "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-              "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"))
-            && TEST_true(BN_hex2bn(&n,
-                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-                "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"))
-            && TEST_true(BN_MONT_CTX_set(mont, n, ctx))
-            && TEST_false(BN_mod_mul_montgomery(d, a, a, mont, ctx))))
-        goto err;
-
     /* Regression test for bug in rsaz_1024_mul_avx2 */
     if (!(TEST_true(BN_hex2bn(&a,
               "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"

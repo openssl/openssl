@@ -68,8 +68,8 @@ int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
             return 0;
     }
 
-    ap = a->d != NULL ? a->d : tp;
-    bp = b->d != NULL ? b->d : tp;
+    ap = (a->d != NULL && a->dmax != 0) ? a->d : tp;
+    bp = (b->d != NULL && b->dmax != 0) ? b->d : tp;
 
     for (i = 0, ai = 0, bi = 0, carry = 0; i < mtop;) {
         mask = (BN_ULONG)0 - ((i - a->top) >> (8 * sizeof(i) - 1));
@@ -144,8 +144,8 @@ int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
         return 0;
 
     rp = r->d;
-    ap = a->d != NULL ? a->d : rp;
-    bp = b->d != NULL ? b->d : rp;
+    ap = (a->d != NULL && a->dmax != 0) ? a->d : rp;
+    bp = (b->d != NULL && b->dmax != 0) ? b->d : rp;
 
     for (i = 0, ai = 0, bi = 0, borrow = 0; i < mtop;) {
         mask = (BN_ULONG)0 - ((i - a->top) >> (8 * sizeof(i) - 1));

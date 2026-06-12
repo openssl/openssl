@@ -16,6 +16,7 @@
 #include "internal/endian.h"
 #include "internal/constant_time.h"
 #include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "bn_local.h"
 
 /* This stuff appears to be completely unused, so is deprecated */
@@ -209,7 +210,7 @@ static void bn_free_d(BIGNUM *a, bool clear)
 {
     if (BN_get_flags(a, BN_FLG_SECURE))
         OPENSSL_secure_clear_free(a->d, a->dmax * sizeof(a->d[0]));
-    else if (clear != 0)
+    else if (clear)
         OPENSSL_clear_free(a->d, a->dmax * sizeof(a->d[0]));
     else
         OPENSSL_free(a->d);
@@ -253,8 +254,31 @@ void bn_init(BIGNUM *a)
     bn_check_top(a);
 }
 
+BIGNUM *bn_new_internal(size_t limbs, bool securely)
+{
+    BIGNUM *ret;
+
+    if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
+        return NULL;
+    ret->data = ossl_fn_new_internal(limbs, securely);
+    if (ret->data == NULL) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+    ret->d = ret->data->d;
+    ret->dmax = (int)limbs;
+    ret->flags = BN_FLG_MALLOCED;
+    if (securely)
+        ret->flags |= BN_FLG_SECURE;
+    bn_check_top(ret);
+    return ret;
+}
+
 BIGNUM *BN_new(void)
 {
+    /* Avoiding to use OSSL_FN with dsize==0
+    return bn_new_internal(0, false);
+    */
     BIGNUM *ret;
 
     if ((ret = OPENSSL_zalloc(sizeof(*ret))) == NULL)
@@ -266,6 +290,9 @@ BIGNUM *BN_new(void)
 
 BIGNUM *BN_secure_new(void)
 {
+    /* Avoiding to use OSSL_FN with dsize==0
+    return bn_new_internal(0, true);
+    */
     BIGNUM *ret = BN_new();
 
     if (ret != NULL)
@@ -341,7 +368,9 @@ BIGNUM *BN_dup(const BIGNUM *a)
         return NULL;
     bn_check_top(a);
 
-    t = BN_get_flags(a, BN_FLG_SECURE) ? BN_secure_new() : BN_new();
+    int dsize = (a->data != NULL) ? a->data->dsize : a->top;
+
+    t = bn_new_internal(dsize, BN_get_flags(a, BN_FLG_SECURE));
     if (t == NULL)
         return NULL;
     if (!BN_copy(t, a)) {
@@ -362,17 +391,86 @@ BIGNUM *BN_copy(BIGNUM *a, const BIGNUM *b)
 
     if (ossl_unlikely(a == b))
         return a;
-    if (ossl_unlikely(bn_wexpand(a, bn_words) == NULL))
-        return NULL;
 
-    if (ossl_likely(bn_words > 0)) {
-        if (b->data != NULL)
-            ossl_fn_copy_internal(a->data, b->data, bn_words);
-        else if (b->d != NULL)
-            ossl_fn_copy_internal_limbs(a->data, b->d, bn_words);
+    /* A BIGNUM with static data can't be a wrapper around OSSL_FN */
+    if (BN_get_flags(a, BN_FLG_STATIC_DATA)) {
+        if (a->dmax < bn_words)
+            return NULL;
+        if (ossl_likely(b->top > 0))
+            memcpy(a->d, b->d, sizeof(b->d[0]) * bn_words);
+    } else {
+        if (ossl_unlikely(bn_wexpand(a, bn_words) == NULL))
+            return NULL;
+        /* TODO(FIXNUM): TO BE REMOVED */
+        if (ossl_unlikely(a->data == NULL)) {
+            a->data = ossl_fn_new_internal(bn_words, BN_get_flags(b, BN_FLG_SECURE));
+            if (a->data == NULL)
+                return NULL;
+            bn_free_d(a, false);
+            a->d = a->data->d;
+            a->dmax = a->data->dsize;
+        }
+        if (ossl_likely(bn_words > 0)) {
+            if (b->data != NULL)
+                ossl_fn_copy_internal(a->data, b->data, bn_words);
+            else if (b->d != NULL)
+                ossl_fn_copy_internal_limbs(a->data, b->d, bn_words);
+        }
     }
     a->neg = b->neg;
     bn_set_top(a, b->top);
+    a->flags |= b->flags & BN_FLG_FIXED_TOP;
+    bn_check_top(a);
+    return a;
+}
+
+BIGNUM *bn_copy_resized(BIGNUM *a, const BIGNUM *b)
+{
+    if (ossl_unlikely(a == b)) {
+        if (a->data != NULL && a->data->dsize == a->top) {
+            return a;
+        } else {
+            ERR_raise(ERR_LIB_BN, BN_R_RESIZED_COPY_TO_ITSELF);
+            return NULL;
+        }
+    }
+    if (ossl_unlikely(BN_get_flags(a, BN_FLG_STATIC_DATA))) {
+        ERR_raise(ERR_LIB_BN, BN_R_EXPAND_ON_STATIC_BIGNUM_DATA);
+        return NULL;
+    }
+
+    bn_check_top(b);
+
+    int dsize = b->top;
+    if (ossl_unlikely(dsize == 0))
+        dsize = 1;
+    if (!(a->data != NULL && a->data->dsize == dsize)) {
+        if (a->data != NULL)
+            OSSL_FN_clear_free(a->data);
+        else if (a->d != NULL)
+            bn_free_d(a, true);
+        if (BN_get_flags(b, BN_FLG_SECURE))
+            a->data = OSSL_FN_secure_new_limbs(dsize);
+        else
+            a->data = OSSL_FN_new_limbs(dsize);
+        if (ossl_unlikely(a->data == NULL)) {
+            a->d = NULL;
+            a->dmax = 0;
+            bn_set_top(a, 0);
+            return NULL;
+        }
+        a->d = a->data->d;
+        a->dmax = a->data->dsize;
+        a->top = b->top;
+    }
+
+    if (b->top > 0) {
+        if (b->data != NULL)
+            ossl_fn_copy_internal(a->data, b->data, dsize);
+        else if (b->d != NULL)
+            ossl_fn_copy_internal_limbs(a->data, b->d, dsize);
+    }
+    a->neg = b->neg;
     a->flags |= b->flags & BN_FLG_FIXED_TOP;
     bn_check_top(a);
     return a;
@@ -1120,6 +1218,8 @@ int BN_to_montgomery(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
 
 void BN_with_flags(BIGNUM *dest, const BIGNUM *b, int flags)
 {
+    if (!BN_get_flags(dest, BN_FLG_STATIC_DATA) && dest->data != NULL)
+        OSSL_FN_free(dest->data);
     dest->data = b->data;
     dest->d = b->d;
     dest->top = b->top;

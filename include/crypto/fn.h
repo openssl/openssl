@@ -235,6 +235,49 @@ OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, size_t bytes);
  */
 OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
 
+/**
+ * Shift OSSL_FN left (in the direction of the most significant bits),
+ * equivalent of a *= 2^n
+ *
+ * @param[in, out]    a    shiftable long number
+ * @param[in]         n    How many bits to shift
+ * @returns           bits pushed out from the last limb
+ *
+ * @note If n includes a whole-limb shift, limbs shifted out by that step are
+ * discarded; the return value is only the carry produced by the remaining
+ * intra-limb shift.
+ */
+OSSL_FN_ULONG OSSL_FN_lshift(OSSL_FN *a, int n);
+
+/**
+ * Return the number of significant bits in OSSL_FN.
+ *
+ * @param[in]    a    the long number
+ * @returns      the number of significant bits in a
+ *
+ * @note This function is not constant-time.
+ */
+int OSSL_FN_num_bits(const OSSL_FN *a);
+
+/**
+ * Compare two OSSL_FN.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             -1 if a<b or a is invalid,
+ *                      0 if a==b or both are invalid,
+ *                      1 if a>b or b is invalid.
+ */
+int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Convert a hex-represented long number to OSSL_FN.
+ * @param[out] r    OSSL_FN to be set. Should be allocated and have enough size
+ * @param[in]  hex  hex-represented long number
+ * @returns   1 on success, 0 on error
+ */
+int OSSL_FN_hex2fn(OSSL_FN *r, const char *hex);
+
 /*
  * Arithmetic functions treat the OSSL_FN 'd' array as a large 2's complement
  * unsigned integer, least significant limb first.  All carrys or borrows are
@@ -298,7 +341,7 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
 /**
- * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
+ * Calculate the square of one OSSL_FN number. Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -311,6 +354,74 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * frame (currently 32 bytes).
  */
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
+
+/**
+ * Initialize a Montgomery context for modulus mod.
+ * @param[in]           mod     The modulus
+ * @returns             An allocated OSSL_FN_MONT_CTX, or NULL on error.
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
+
+/**
+ * Free an OSSL_FN_MONT_CTX.
+ *
+ * @param[in]   ctx     The OSSL_FN_MONT_CTX to be freed. This may be NULL.
+ */
+void OSSL_FN_MONT_CTX_free(OSSL_FN_MONT_CTX *ctx);
+
+/**
+ * Fulfil the Montgomery multiplication.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that r, a, b, and mont->N are of
+ * the same size, a and b are less than mont->N, ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Convert a number to Montgomery representation: r = a * R mod N,
+ * where R = 2^(length of libm in bits).
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that r, a, and mont->N are of
+ * the same size, a is less than mont->N, ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Convert a number from Montgomery representation: r = a * R^(-1) mod N,
+ * where R = 2^(length of libm in bits).
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that r, a, and mont->N are of
+ * the same size, a is less than mont->N, ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
 
 #ifdef __cplusplus
 }
