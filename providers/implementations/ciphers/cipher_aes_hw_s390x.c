@@ -12,6 +12,7 @@
  */
 
 #include "internal/deprecated.h"
+#include <openssl/proverr.h>
 #include "cipher_aes.h"
 #include "cipher_aes_gcm.h"
 #include "cipher_aes_ccm.h"
