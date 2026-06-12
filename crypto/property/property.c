@@ -977,7 +977,7 @@ static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, Q
 {
     /*
      * point the item we're remoing's next pointer to the top of the archive list
-     * Note: We're writing to the old->next here which is shared, so thats suspicious, but
+     * Note: We're writing to the old->next here which is shared, so that's suspicious, but
      * because we've already removed old from the cache_list in ossl_method_store_clean_archive
      * this is safe for the following reasons:
      * 1) the clean path is done under a write lock, so sa->archive is guaranteed stable
@@ -985,7 +985,7 @@ static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, Q
      * while we're moving it, will either read the true next value (pointing to the next element
      * in the cache_list), or the one we write here (the next list in the archive)
      *
-     * Reading the true next value is fine, as thats the normal traversal anyway.
+     * Reading the true next value is fine, as that's the normal traversal anyway.
      * Reading the next pointer as pointing into the archive list is not great, but in the worst
      * case this results in a transient failed cache lookup, which just means a temporary slow path
      * retrieval of an algorithm.
