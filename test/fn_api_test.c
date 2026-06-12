@@ -16,8 +16,10 @@
  */
 
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
+#include "crypto/fnerr.h"
 #include "testutil.h"
 
 /*
@@ -1546,6 +1548,71 @@ static int test_mod_truncated(int i)
     return test_mod_common(test_mod_truncate_cases[i]);
 }
 
+static int check_div_by_zero_error(void)
+{
+    unsigned long err = ERR_get_error();
+
+    return TEST_ulong_ne(err, 0)
+        && TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_OSSL_FN)
+        && TEST_int_eq(ERR_GET_REASON(err), OSSL_FN_R_DIV_BY_ZERO);
+}
+
+static int test_div_by_zero_common(int test_mod)
+{
+    int ret = 1;
+    OSSL_FN *fn = NULL, *fd = NULL, *fq = NULL, *fr = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t n_new_limbs = LIMBSOF(num0) + 1;
+    size_t d_new_limbs = LIMBSOF(num4) + 2;
+    size_t q_limbs = LIMBSOF(num0) + 1;
+    size_t r_limbs = LIMBSOF(num0) + 1;
+    size_t ctx_numcopy_limbs = ((n_new_limbs <= d_new_limbs) ? d_new_limbs : n_new_limbs) + 1;
+    size_t ctx_divcopy_limbs = d_new_limbs;
+    size_t ctx_tmp_limbs = d_new_limbs + 1;
+    size_t ctx_res_limbs = n_new_limbs;
+    size_t ctx_max_limbs = ctx_numcopy_limbs + ctx_divcopy_limbs + ctx_res_limbs + ctx_tmp_limbs;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 4, ctx_max_limbs))
+        || !TEST_ptr(fn = OSSL_FN_new_limbs(n_new_limbs))
+        || !TEST_ptr(fd = OSSL_FN_new_limbs(d_new_limbs))
+        || !TEST_ptr(fq = OSSL_FN_new_limbs(q_limbs))
+        || !TEST_ptr(fr = OSSL_FN_new_limbs(r_limbs))
+        || !TEST_true(ossl_fn_set_words(fn, num0, LIMBSOF(num0)))) {
+        ret = 0;
+        goto end;
+    }
+
+    ERR_clear_error();
+    if (test_mod) {
+        if (!TEST_false(OSSL_FN_mod(fr, fn, fd, ctx))
+            || !TEST_true(check_div_by_zero_error()))
+            ret = 0;
+    } else {
+        if (!TEST_false(OSSL_FN_div(fq, fr, fn, fd, ctx))
+            || !TEST_true(check_div_by_zero_error()))
+            ret = 0;
+    }
+
+end:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(fd);
+    OSSL_FN_free(fq);
+    OSSL_FN_free(fr);
+
+    return ret;
+}
+
+static int test_div_by_zero(void)
+{
+    return test_div_by_zero_common(0);
+}
+
+static int test_mod_by_zero(void)
+{
+    return test_div_by_zero_common(1);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -1560,8 +1627,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sqr_truncated, OSSL_NELEM(test_sqr_truncate_cases));
     ADD_ALL_TESTS(test_div, OSSL_NELEM(test_div_cases));
     ADD_ALL_TESTS(test_div_truncated, OSSL_NELEM(test_div_truncate_cases));
+    ADD_TEST(test_div_by_zero);
     ADD_ALL_TESTS(test_mod, OSSL_NELEM(test_mod_cases));
     ADD_ALL_TESTS(test_mod_truncated, OSSL_NELEM(test_mod_truncate_cases));
+    ADD_TEST(test_mod_by_zero);
 
     return 1;
 }
