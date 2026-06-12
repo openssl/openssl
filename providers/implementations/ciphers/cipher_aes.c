@@ -44,7 +44,10 @@ static void *aes_dupctx(void *ctx)
     if (ret == NULL)
         return NULL;
     in->base.hw->copyctx(&ret->base, &in->base);
-
+    if (!ossl_cipher_generic_dupctx_tlsmac(&ret->base, &in->base)) {
+        OPENSSL_clear_free(ret, sizeof(*ret));
+        return NULL;
+    }
     return ret;
 }
 
