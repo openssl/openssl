@@ -69,7 +69,7 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     {
 #ifdef AES_CTR_ASM
         return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
-            AES_encrypt, AES_ctr32_encrypt);
+            AES_encrypt, (ctr128_f)AES_ctr32_encrypt);
 #else
         return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
             AES_encrypt, NULL);
