@@ -54,7 +54,7 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
 
 #ifdef OPENSSL_HMAC_S390X
     rv = s390x_HMAC_init(ctx, key, len);
-    if (rv >= 1)
+    if (rv != -1)
         return rv;
 #endif
 
