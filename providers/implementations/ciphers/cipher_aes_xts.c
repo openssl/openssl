@@ -171,25 +171,20 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)vctx;
 
+    if (!ossl_prov_is_running()
+        || inl < AES_BLOCK_SIZE
+        || in == NULL
+        || out == NULL)
+        return 0;
+
 #ifdef AES_XTS_S390X
     if (ctx->plat.s390x.fc) {
-        if (!ossl_prov_is_running()
-            || inl < AES_BLOCK_SIZE
-            || in == NULL
-            || out == NULL
-            || !ctx->plat.s390x.iv_set
-            || !ctx->plat.s390x.key_set)
+        if (!ctx->plat.s390x.iv_set || !ctx->plat.s390x.key_set)
             return 0;
     } else
 #endif
     {
-        if (!ossl_prov_is_running()
-            || ctx->xts.key1 == NULL
-            || ctx->xts.key2 == NULL
-            || !ctx->base.iv_set
-            || out == NULL
-            || in == NULL
-            || inl < AES_BLOCK_SIZE)
+        if (ctx->xts.key1 == NULL || ctx->xts.key2 == NULL)
             return 0;
     }
 
