@@ -1,1 +1,7 @@
 # Make sure all tests have WRAP otherwise -lcmocka is not added.
+
+PROGRAMS{noinst}=crypto/bio/test_bss_fd
+SOURCE[crypto/bio/test_bss_fd]=crypto/bio/test_bss_fd.c
+INCLUDE[crypto/bio/test_bss_fd]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_fd]=../../libcrypto.a
+WRAP[crypto/bio/test_bss_fd]=read write lseek close
