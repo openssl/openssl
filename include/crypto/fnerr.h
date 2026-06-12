@@ -25,6 +25,7 @@ int ossl_err_load_OSSL_FN_strings(void);
  * OSSL_FN reason codes.
  */
 #define OSSL_FN_R_DIV_BY_ZERO 101
+#define OSSL_FN_R_INVALID_SHIFT 102
 #define OSSL_FN_R_RESULT_ARG_TOO_SMALL 100
 
 #ifdef __cplusplus

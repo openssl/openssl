@@ -15,6 +15,8 @@
 
 static const ERR_STRING_DATA OSSL_FN_str_reasons[] = {
     { ERR_PACK(ERR_LIB_OSSL_FN, 0, OSSL_FN_R_DIV_BY_ZERO), "div by zero" },
+    { ERR_PACK(ERR_LIB_OSSL_FN, 0, OSSL_FN_R_INVALID_SHIFT),
+        "invalid shift" },
     { ERR_PACK(ERR_LIB_OSSL_FN, 0, OSSL_FN_R_RESULT_ARG_TOO_SMALL),
         "result arg too small" },
     { 0, NULL }
