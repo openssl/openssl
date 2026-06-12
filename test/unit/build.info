@@ -6,6 +6,14 @@ INCLUDE[crypto/bio/test_bio_addr]=../../include ../../crypto/bio
 DEPEND[crypto/bio/test_bio_addr]=../../libcrypto.a
 WRAP[crypto/bio/test_bio_addr]=BIO_sock_init getnameinfo freeaddrinfo
 
+PROGRAMS{noinst}=crypto/bio/test_bss_conn
+SOURCE[crypto/bio/test_bss_conn]=crypto/bio/test_bss_conn.c
+WRAP[crypto/bio/test_bss_conn]=BIO_lookup BIO_socket BIO_connect \
+    BIO_sock_should_retry BIO_closesocket BIO_socket_wait BIO_sock_error \
+    read write
+INCLUDE[crypto/bio/test_bss_conn]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_conn]=../../libcrypto.a
+
 PROGRAMS{noinst}=crypto/bio/test_bss_fd
 SOURCE[crypto/bio/test_bss_fd]=crypto/bio/test_bss_fd.c
 INCLUDE[crypto/bio/test_bss_fd]=../../include ../../crypto/bio
