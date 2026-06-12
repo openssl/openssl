@@ -22,7 +22,7 @@ SKIP: {
     skip "sockets disabled", 1 if disabled("sock");
     skip "OCSP disabled", 1 if disabled("ocsp");
     skip "HTTP disabled", 1 if disabled("http");
-    my $cmd = [qw{openssl ocsp -index any -port 0}];
+    my $cmd = [qw{openssl ocsp -index any -host 0.0.0.0 -port 0}];
     my @output = run(app($cmd), capture => 1);
     $output[0] =~ s/\r\n/\n/g;
     ok($output[0] =~ /^ACCEPT (0.0.0.0|\[::\]):(\d+?) PID=(\d+)$/
