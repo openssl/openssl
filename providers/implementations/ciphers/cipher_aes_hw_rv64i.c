@@ -45,8 +45,8 @@ static int cipher_hw_rv64i_initkey(PROV_CIPHER_CTX *ctx,
         if (zvkned_key_schedule_supported(keylen)) {
             fn_set_key = rv64i_zvkned_set_encrypt_key;
         }
-        ecb128_f fn_ecb = ctx->enc ? rv64i_zvkned_ecb_encrypt : rv64i_zvkned_ecb_decrypt;
-        cbc128_f fn_cbc = ctx->enc ? rv64i_zvkned_cbc_encrypt : rv64i_zvkned_cbc_decrypt;
+        ecb128_f fn_ecb = ctx->enc ? (ecb128_f)rv64i_zvkned_ecb_encrypt : (ecb128_f)rv64i_zvkned_ecb_decrypt;
+        cbc128_f fn_cbc = ctx->enc ? (cbc128_f)rv64i_zvkned_cbc_encrypt : (cbc128_f)rv64i_zvkned_cbc_decrypt;
         ctr128_f fn_ctr = RISCV_HAS_ZVKB() ? (ctr128_f)rv64i_zvkb_zvkned_ctr32_encrypt_blocks : NULL;
 
         /* Zvkned supports aes-128/192/256 encryption and decryption. */
@@ -54,7 +54,7 @@ static int cipher_hw_rv64i_initkey(PROV_CIPHER_CTX *ctx,
             && !ctx->enc) {
             fn_block = rv64i_zvkned_decrypt;
         } else {
-            fn_block = (block128_f)rv64i_zvkned_encrypt;
+            fn_block = rv64i_zvkned_encrypt;
         }
         return ossl_cipher_set_aes_initkey(ctx, key, keylen, fn_set_key,
             fn_block, fn_ecb, fn_cbc, fn_ctr);
