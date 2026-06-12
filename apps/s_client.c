@@ -2660,11 +2660,9 @@ re_start:
         }
         /*
          * According to RFC 5804 § 2.2, response codes are case-
-         * insensitive, make it uppercase but preserve the response.
+         * insensitive.
          */
-        strncpy(sbuf, mbuf, 2);
-        make_uppercase(sbuf);
-        if (strncmp(sbuf, "OK", 2) != 0) {
+        if (OPENSSL_strncasecmp(mbuf, "OK", 2) != 0) {
             BIO_printf(bio_err, "STARTTLS not supported: %s", mbuf);
             goto shut;
         }
