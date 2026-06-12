@@ -269,6 +269,10 @@ int ossl_sframe_list_is_head_locked(SFRAME_LIST *fl)
     return fl->head_locked;
 }
 
+/*
+ * used by tests only as far as I can tell.
+ * so don't bother too much.
+ */
 int ossl_sframe_list_move_data(SFRAME_LIST *fl,
     sframe_list_write_at_cb *write_at_cb,
     void *cb_arg)
@@ -279,15 +283,37 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
     if (sf == NULL)
         return 1;
 
-    if (fl->head_locked)
+    /*
+     * I'm still missing the concept of this 'head_locked'
+     */
+    if (fl->head_locked) {
+        /*
+         * the first frame (lowest offset) must be consumed
+         * if we are allowed to this.
+         */
+        assert(sf->data == NULL);
         sf = sf->next;
+    }
+
+    if (sf->range.start >= limit) {
+        /*
+         * there is a gap at left edge, there are no
+         * data available to read from stream
+         */
+        return 1;
+    }
 
     for (; sf != NULL; sf = sf->next) {
         size_t len;
         const unsigned char *data = sf->data;
 
-        if (limit < sf->range.start)
+        /*
+         * I think this may happen when ->head_locked == 1
+         */
+        if (limit < sf->range.start) {
+            assert(fl->head_locked);
             limit = sf->range.start;
+        }
 
         if (data != NULL) {
             if (limit > sf->range.start)
@@ -299,13 +325,16 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
                 return 0;
 
             if (fl->cleanse)
-                OPENSSL_cleanse((unsigned char *)sf->data,
-                    (size_t)(sf->range.end - sf->range.start));
+                OPENSSL_cleanse((unsigned char *)data, len);
 
             /* release the packet */
-            sf->data = NULL;
-            ossl_qrx_pkt_release(sf->pkt);
-            sf->pkt = NULL;
+            if (data == sf->data && len == (sf->range.end - sf->range.start)) {
+                sf->data = NULL;
+                ossl_qrx_pkt_release(sf->pkt);
+                sf->pkt = NULL;
+            } else {
+                sf->range.start += len;
+            }
         }
 
         limit = sf->range.end;
