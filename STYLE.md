@@ -319,9 +319,6 @@ int transmogrify(const uint8_t *Calvin, size_t Calvin_len,
                  uint8_t *Hobbes, size_t Hobbes_len);
 ```
 
-The RFC 31337 reference above is illustrative; no such RFC
-exists.
-
 #### Public functions: link the manual page
 
 Every public function declaration in a public header must carry a
