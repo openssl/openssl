@@ -302,6 +302,7 @@ $code .= <<___;
 .globl ossl_sm3_block_data_order_zbb
 .type   ossl_sm3_block_data_order_zbb,\@function
 ossl_sm3_block_data_order_zbb:
+    @{[lpad 0]}
 
     addi sp, sp, -96
 

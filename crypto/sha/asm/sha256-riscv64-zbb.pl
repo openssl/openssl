@@ -271,6 +271,7 @@ $code .= <<___;
 .globl sha256_block_data_order@{[$isaext]}
 .type   sha256_block_data_order@{[$isaext]},\@function
 sha256_block_data_order@{[$isaext]}:
+    @{[lpad 0]}
 
     addi sp, sp, -96
 

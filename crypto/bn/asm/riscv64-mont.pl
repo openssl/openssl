@@ -131,6 +131,7 @@ my $code .= <<___;
 .globl bn_mul_mont
 .type bn_mul_mont,\@function
 bn_mul_mont:
+    @{[lpad 0]}
     andi  $numtst, $num, 7
     beqz  $numtst, bn_sqr8x_mont
 .Lmul_mont:

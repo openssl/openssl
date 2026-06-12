@@ -74,6 +74,7 @@ $code .= <<___;
 .globl gcm_init_rv64i_zbc
 .type gcm_init_rv64i_zbc,\@function
 gcm_init_rv64i_zbc:
+    @{[lpad 0]}
     ld      $VAL0,0($H)
     ld      $VAL1,8($H)
     @{[brev8_rv64i   $VAL0, $TMP0, $TMP1, $TMP2]}
@@ -93,6 +94,7 @@ $code .= <<___;
 .globl gcm_init_rv64i_zbc__zbb
 .type gcm_init_rv64i_zbc__zbb,\@function
 gcm_init_rv64i_zbc__zbb:
+    @{[lpad 0]}
     ld      $VAL0,0($H)
     ld      $VAL1,8($H)
     @{[brev8_rv64i $VAL0, $TMP0, $TMP1, $TMP2]}
@@ -114,6 +116,7 @@ $code .= <<___;
 .globl gcm_init_rv64i_zbc__zbkb
 .type gcm_init_rv64i_zbc__zbkb,\@function
 gcm_init_rv64i_zbc__zbkb:
+    @{[lpad 0]}
     ld      $TMP0,0($H)
     ld      $TMP1,8($H)
     @{[brev8 $TMP0, $TMP0]}
@@ -152,6 +155,7 @@ $code .= <<___;
 .globl gcm_gmult_rv64i_zbc
 .type gcm_gmult_rv64i_zbc,\@function
 gcm_gmult_rv64i_zbc:
+    @{[lpad 0]}
     # Load Xi and bit-reverse it
     ld        $x0, 0($Xi)
     ld        $x1, 8($Xi)
@@ -209,6 +213,7 @@ $code .= <<___;
 .globl gcm_gmult_rv64i_zbc__zbkb
 .type gcm_gmult_rv64i_zbc__zbkb,\@function
 gcm_gmult_rv64i_zbc__zbkb:
+    @{[lpad 0]}
     # Load Xi and bit-reverse it
     ld        $x0, 0($Xi)
     ld        $x1, 8($Xi)
@@ -277,6 +282,7 @@ $code .= <<___;
 .globl gcm_ghash_rv64i_zbc
 .type gcm_ghash_rv64i_zbc,\@function
 gcm_ghash_rv64i_zbc:
+    @{[lpad 0]}
     # Load Xi and bit-reverse it
     ld        $x0, 0($Xi)
     ld        $x1, 8($Xi)
@@ -348,6 +354,7 @@ $code .= <<___;
 .globl gcm_ghash_rv64i_zbc__zbkb
 .type gcm_ghash_rv64i_zbc__zbkb,\@function
 gcm_ghash_rv64i_zbc__zbkb:
+    @{[lpad 0]}
     # Load Xi and bit-reverse it
     ld        $x0, 0($Xi)
     ld        $x1, 8($Xi)
