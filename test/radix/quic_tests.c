@@ -552,10 +552,10 @@ DEF_FUNC(check_pending)
     REQUIRE_SSL(conn);
 
     if (check_pending_match) {
-        if (TEST_false(pending_cb_called))
+        if (!TEST_true(pending_cb_called))
             goto err;
 
-        if (TEST_false(hello_cb_called))
+        if (!TEST_true(hello_cb_called))
             goto err;
 
         if (!TEST_ptr_eq(pending_ssl_obj, client_hello_ssl_obj))
