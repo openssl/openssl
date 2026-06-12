@@ -1375,6 +1375,7 @@ StatementMacros:
   - "static_ASN1_SEQUENCE_END_cb"
   - "static_ASN1_SEQUENCE_END_name"
   - "static_ASN1_SEQUENCE_END_ref"
+  - "PROV_CIPHER_HW_aes_mode"
   - "PROV_CIPHER_HW_aria_mode"
   - "PROV_CIPHER_HW_camellia_mode"
   - "PROV_CIPHER_HW_des_mode"
