@@ -232,6 +232,8 @@ __owur CON_FUNC_RETURN tls_construct_server_done(SSL_CONNECTION *s,
     WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     PACKET *pkt);
+__owur WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
+    WORK_STATE wst);
 #ifndef OPENSSL_NO_COMP_ALG
 __owur MSG_PROCESS_RETURN tls_process_client_compressed_certificate(SSL_CONNECTION *sc,
     PACKET *pkt);
