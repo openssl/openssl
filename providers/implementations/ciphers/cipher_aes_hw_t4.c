@@ -155,15 +155,15 @@ static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     switch (keylen) {
     case 16:
         return aes_gcm_hw_initkey(ctx, key, keylen,
-            aes_t4_set_encrypt_key, aes_t4_encrypt,
+            t4_set_encrypt_key, aes_t4_encrypt,
             (ctr128_f)aes128_t4_ctr32_encrypt);
     case 24:
         return aes_gcm_hw_initkey(ctx, key, keylen,
-            aes_t4_set_encrypt_key, aes_t4_encrypt,
+            t4_set_encrypt_key, aes_t4_encrypt,
             (ctr128_f)aes192_t4_ctr32_encrypt);
     case 32:
         return aes_gcm_hw_initkey(ctx, key, keylen,
-            aes_t4_set_encrypt_key, aes_t4_encrypt,
+            t4_set_encrypt_key, aes_t4_encrypt,
             (ctr128_f)aes256_t4_ctr32_encrypt);
     default:
         return 0;
@@ -190,7 +190,7 @@ static int ccm_t4_aes_initkey(PROV_CCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
     return ossl_cipher_set_ccm_aes_initkey(ctx, key, keylen,
-        aes_t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
+        t4_set_encrypt_key, aes_t4_encrypt, NULL, NULL);
 }
 
 static const PROV_CCM_HW t4_aes_ccm = {
@@ -232,7 +232,7 @@ static int cipher_hw_aes_xts_t4_initkey(PROV_CIPHER_CTX *ctx,
     }
 
     return ossl_cipher_set_aes_xts_initkey(ctx, key, keylen,
-        aes_t4_set_encrypt_key, aes_t4_set_decrypt_key,
+        t4_set_encrypt_key, t4_set_decrypt_key,
         aes_t4_encrypt, aes_t4_decrypt, stream_enc, stream_dec);
 }
 
