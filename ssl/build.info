@@ -32,7 +32,7 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
 ENDIF
 
 IF[{- !$disabled{quic} -}]
-  SOURCE[../libssl]=priority_queue.c
+  SOURCE[../libssl]=priority_queue.c pq.c
   SHARED_SOURCE[../libssl] = ../crypto/hashtable/hashfunc.c
   IF[{- $disabled{siphash} -}]
     SOURCE[../libssl]=../crypto/siphash/siphash.c
