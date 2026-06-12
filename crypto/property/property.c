@@ -976,7 +976,19 @@ static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old)
 static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, QUERY *old)
 {
     /*
-     * point the item we're remoing's next pointer to the top of the archive list
+     * point the item we're removing's next pointer to the top of the archive list
+     * Note: We're writing to the old->next here which is shared, so that's suspicious, but
+     * because we've already removed old from the cache_list in ossl_method_store_clean_archive
+     * this is safe for the following reasons:
+     * 1) the clean path is done under a write lock, so sa->archive is guaranteed stable
+     * 2) any concurrent reader (ie ossl_method_store_cache_set|get, if visiting the old node
+     * while we're moving it, will either read the true next value (pointing to the next element
+     * in the cache_list), or the one we write here (the next list in the archive)
+     *
+     * Reading the true next value is fine, as that's the normal traversal anyway.
+     * Reading the next pointer as pointing into the archive list is not great, but in the worst
+     * case this results in a transient failed cache lookup, which just means a temporary slow path
+     * retrieval of an algorithm.
      */
     if (!CRYPTO_atomic_load_ptr((void **)&sa->archive, (void **)&old->next, sa->alock))
         return 0;
@@ -994,7 +1006,7 @@ static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, Q
  */
 static void ossl_method_store_atomic_clean_archive(STORED_ALGORITHMS *sa)
 {
-    QUERY *idx, *idxn;
+    QUERY *idx, *idxn, *tmp;
     int archived;
     int i;
     int lock_failed;
@@ -1066,9 +1078,33 @@ static void ossl_method_store_atomic_clean_archive(STORED_ALGORITHMS *sa)
                 if (archived == 1) {
                     /*
                      * Start by making idx skip idxn in the list
+                     * First load the expected next value of idx->next
                      */
-                    if (!CRYPTO_atomic_load_ptr((void **)&idxn->next, (void **)&idx->next, sa->alock))
+                    if (!CRYPTO_atomic_load_ptr((void **)&idx->next, (void **)&tmp, sa->alock))
                         break;
+
+                    /*
+                     * Now compare the value of idx->next to what we just loaded to tmp above
+                     * if they match, we can safely update idx->next to skip the idxn entry
+                     * by pointing idx->next to idxn->next.
+                     * If the comparison fails, then we need to start the list traversal over again.
+                     * Note: This should never happen, as once an item is in the list, this is the
+                     * only path in which an in-list item has its next pointer mutated, and this
+                     * occurs under a write lock, but we should be safe here
+                     */
+                    if (!CRYPTO_atomic_cmp_exch_ptr((void **)&idx->next,
+                            (void **)&tmp, (void *)idxn->next,
+                            sa->alock, &lock_failed)) {
+                        if (lock_failed)
+                            break;
+                        /*
+                         * The list was mutated while we were trying to mutate it
+                         * Normally we would just use the reloaded value of tmp here to re-attempt
+                         * the removal, but since idx was changed underneath us, we don't know where
+                         * we are in the list anymore.  Its safer to just restart the whole traversal
+                         */
+                        goto restart_list;
+                    }
 
                     if (!ossl_method_store_put_in_archive(sa, idxn))
                         break;
@@ -1113,7 +1149,7 @@ static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int n
         if (!CRYPTO_atomic_load_int(&idx->archived, &archived, sa->alock))
             goto out;
         if (archived == 0 && idx->nid == nid && idx->prov == prov
-            && !strcmp(idx->prop_query, prop_query)) {
+            && (strcmp(idx->prop_query, prop_query) == 0)) {
             ret = idx;
             break;
         }
