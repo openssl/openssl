@@ -154,6 +154,26 @@ typedef struct bio_connect_st {
     BIO *dgram_bio;
 } BIO_CONNECT;
 
+typedef struct bio_accept_st {
+    int state;
+    int accept_family;
+    int bind_mode; /* Socket mode for BIO_listen */
+    int accepted_mode; /* Socket mode for BIO_accept (set on accepted sock) */
+    char *param_addr;
+    char *param_serv;
+
+    int accept_sock;
+
+    BIO_ADDRINFO *addr_first;
+    const BIO_ADDRINFO *addr_iter;
+    BIO_ADDR cache_accepting_addr; /* Useful if we asked for port 0 */
+    char *cache_accepting_name, *cache_accepting_serv;
+    BIO_ADDR cache_peer_addr;
+    char *cache_peer_name, *cache_peer_serv;
+
+    BIO *bio_chain;
+} BIO_ACCEPT;
+
 #define BIO_CONN_S_BEFORE 1
 #define BIO_CONN_S_GET_ADDR 2
 #define BIO_CONN_S_CREATE_SOCKET 3
@@ -161,6 +181,13 @@ typedef struct bio_connect_st {
 #define BIO_CONN_S_OK 5
 #define BIO_CONN_S_BLOCKED_CONNECT 6
 #define BIO_CONN_S_CONNECT_ERROR 7
+
+#define BIO_ACPT_S_BEFORE 1
+#define BIO_ACPT_S_GET_ADDR 2
+#define BIO_ACPT_S_CREATE_SOCKET 3
+#define BIO_ACPT_S_LISTEN 4
+#define BIO_ACPT_S_ACCEPT 5
+#define BIO_ACPT_S_OK 6
 
 #ifdef OPENSSL_SYS_VMS
 typedef unsigned int socklen_t;
