@@ -331,35 +331,36 @@ int OSSL_FN_mod_lshift_quick(OSSL_FN *r, const OSSL_FN *a, int n,
         goto err;
 
     while (n > 0) {
-        int max_shift;
+        size_t m_bits = OSSL_FN_num_bits(m);
+        size_t t_bits = OSSL_FN_num_bits(t);
+        size_t max_shift;
 
         /* 0 <= t < m */
-        max_shift = OSSL_FN_num_bits(m) - OSSL_FN_num_bits(t);
-        /* max_shift >= 0 */
-
-        if (max_shift < 0) {
+        if (m_bits < t_bits) {
             ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INPUT_NOT_REDUCED);
             goto err;
         }
+        max_shift = m_bits - t_bits;
 
-        if (max_shift > n)
-            max_shift = n;
+        if (max_shift > (size_t)n)
+            max_shift = (size_t)n;
 
         if (max_shift) {
-            if (!OSSL_FN_lshift(t, t, max_shift))
+            int shift = (int)max_shift;
+
+            if (!OSSL_FN_lshift(t, t, shift))
                 goto err;
+            n -= shift;
         } else {
             if (!OSSL_FN_lshift1(t, t))
                 goto err;
-            max_shift = 1;
+            n--;
         }
 
         if (OSSL_FN_cmp(t, m) >= 0) {
             if (!OSSL_FN_sub(t, t, m))
                 goto err;
         }
-
-        n -= max_shift;
     }
 
     if (OSSL_FN_copy_truncate(r, t) == NULL)
