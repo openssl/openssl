@@ -43,8 +43,6 @@ struct ascon_aead128_ctx_st {
     uint8_t iv[ASCON_AEAD_NONCE_LEN]; /* storing the IV (nonce) for get_updated_iv */
     uint8_t key[ASCON_AEAD128_KEY_LEN]; /* storing the key for reinitialization */
 
-    size_t tag_len; /* tag length being used */
-
     direction_t direction; /* either encryption or decryption */
     int is_tag_set; /* whether a tag has been computed or set */
     int is_ongoing; /* nonzero once an operation has started */

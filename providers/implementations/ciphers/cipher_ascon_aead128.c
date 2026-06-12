@@ -51,7 +51,6 @@ static void ascon_aead128_cleanctx(void *vctx)
     ctx->is_tag_set = 0;
     ctx->is_ongoing = 0;
     ctx->assoc_data_not_allowed = 0;
-    ctx->tag_len = FIXED_TAG_LENGTH;
     ctx->iv_set = 0;
     if (ctx->internal_ctx != NULL)
         ossl_ascon_aead_cleanup(ctx->internal_ctx);
@@ -76,7 +75,6 @@ static void *ascon_aead128_newctx(void *provctx)
     ctx->is_tag_set = 0;
     ctx->is_ongoing = 0;
     ctx->assoc_data_not_allowed = 0;
-    ctx->tag_len = FIXED_TAG_LENGTH; /* default tag length */
     ctx->iv_set = 0;
     ctx->key_set = 0;
 
@@ -195,7 +193,6 @@ static int ascon_aead128_internal_init(void *vctx, direction_t direction,
         ctx->is_ongoing = 0;
         ctx->assoc_data_not_allowed = 0;
         ctx->is_tag_set = 0;
-        ctx->tag_len = FIXED_TAG_LENGTH;
         if (ctx->internal_ctx != NULL)
             ossl_ascon_aead_cleanup(ctx->internal_ctx);
         OPENSSL_cleanse(ctx->tag, sizeof(ctx->tag));
@@ -412,7 +409,7 @@ static int ascon_aead128_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.taglen != NULL
-        && !OSSL_PARAM_set_size_t(p.taglen, ctx->tag_len)) {
+        && !OSSL_PARAM_set_size_t(p.taglen, FIXED_TAG_LENGTH)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -467,16 +464,15 @@ static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
             return 0;
         }
-        ctx->tag_len = tag_len;
     }
 
     if (p.tag != NULL) {
-        /* When data is NULL, this is a request to set tag length (for encryption) */
+        /* when data is NULL, this is a request to set tag length */
         if (p.tag->data == NULL) {
-            /* For encryption, we accept setting tag length via NULL data */
-            /* The tag length may be passed in data_size, but we always use FIXED_TAG_LENGTH */
-            /* Accept any tag length request during encryption and use our fixed length */
-            ctx->tag_len = FIXED_TAG_LENGTH;
+            /*
+             * this implementation only supports fixed, full-length tags of
+             * length FIXED_TAG_LENGTH, so do nothing and return success
+             */
             return 1;
         }
 
