@@ -64,14 +64,22 @@ included in the `doc/man7` section. This includes, but is not limited to:
 Internal functions, structures, globals and macros
 --------------------------------------------------
 
-Internal functions and macros are those defined in the `include/crypto`
-and `include/internal` directories.
+Internal functions, structures, globals and macros are non-public
+items declared in any header that is not part of the public API.
+These include items declared in:
 
-These should all be documented at the point of implementation, using a
-doxygen-style comment block. The comment should describe the purpose
-and, for functions, the input and output arguments and the return
-value. See [STYLE.md](STYLE.md) for the doxygen conventions used by
-OpenSSL.
+- `include/internal/` (shared across subsystems);
+- `include/crypto/` (cryptographic internals);
+- per-directory local headers (for example, `crypto/asn1/asn1_local.h`)
+  shared between source files in a single subdirectory.
+
+These should all be documented at the declaration site -- that is,
+in the header that declares them -- using a doxygen-style comment
+block. For functions, this places the comment at the prototype,
+where editor tooling (clangd and similar) can surface it to readers
+at every call site. The comment should describe the purpose and,
+for functions, the input and output arguments and the return value.
+See [STYLE.md](STYLE.md) for the doxygen conventions used by OpenSSL.
 
 For *trivial* items, where their operation is obvious from their
 implementation, the documentation requirement is not mandated. The
@@ -96,16 +104,17 @@ obvious. Some representative examples:
 - `struct *next;` in a linked list implementation.
 - `CRYPTO_REF_COUNT refcnt;`
 
-Static functions and globals and local structures and macros
-------------------------------------------------------------
+File-local items
+----------------
 
-These are functions, structures, globals and macros local to a specific
-C file or defined for a single directory as part of a local `.h` file.
+These are functions, structures, globals, and macros that are local
+to a single C file: `static` functions, file-scope variables,
+structures, and macros defined inside a `.c` file with no declaration
+in any header.
 
-These should all be documented at the point of implementation. Follow
-the same rules and exceptions as for internal functions and structures
-above. In some cases slightly more leniency with respect to *trivial*
-can be tolerated.
+These should all be documented at the point of definition. Follow the
+same rules and exceptions as for internal items above. In some cases
+slightly more leniency with respect to *trivial* can be tolerated.
 
 Code comments
 -------------
