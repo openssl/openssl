@@ -26,17 +26,15 @@ where; [STYLE.md](STYLE.md) describes how code comments look.
 Command line commands and arguments
 -----------------------------------
 
-All new or modified arguments to the commands must be documented in the
-`doc/man1` directory. This documentation is in POD format.
-
-All new commands must be documented in the `doc/man1` directory. This
+All new commands, as well as new or modified arguments to existing
+commands, must be documented in the `doc/man1` directory. This
 documentation is in POD format.
 
 Public symbols in the libraries
 -------------------------------
 
 All new public symbols must be documented in a POD manual page in the
-`doc/man3` directory. This includes both macros and functions.
+`doc/man3` directory. This includes types, macros, and functions.
 
 The allowed exceptions are:
 
@@ -58,10 +56,11 @@ Overviews, conventions, et al
 Where additional user-facing information is required, it should be
 included in the `doc/man7` section. This includes, but is not limited to:
 
-- descriptions of data structures and their usage
-- provider calls and call-backs
 - algorithm descriptions and parameters
-- descriptions of architectural decisions
+- architectural and subsystem overviews
+- user guides and tutorials
+- conventions and reference material (environment variables, glossary,
+  threading rules, file format conventions)
 
 Internal functions, structures, globals and macros
 --------------------------------------------------
@@ -165,7 +164,9 @@ Significant modifications should be documented in the
 Very significant features and changes should be documented in the
 [NEWS.md](NEWS.md) file.
 
-In both cases, the added note should be short and to the point.
+In both cases, the added note should be short and to the point, and
+should be written for users of the library, focusing on impact rather
+than implementation details.
 
 Automated sanity checking
 -------------------------
