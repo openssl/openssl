@@ -6,6 +6,15 @@ INCLUDE[crypto/bio/test_bio_addr]=../../include ../../crypto/bio
 DEPEND[crypto/bio/test_bio_addr]=../../libcrypto.a
 WRAP[crypto/bio/test_bio_addr]=BIO_sock_init getnameinfo freeaddrinfo
 
+PROGRAMS{noinst}=crypto/bio/test_bio_sock
+SOURCE[crypto/bio/test_bio_sock]=crypto/bio/test_bio_sock.c
+INCLUDE[crypto/bio/test_bio_sock]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bio_sock]=../../libcrypto.a
+WRAP[crypto/bio/test_bio_sock]=getsockopt setsockopt getsockname ioctl poll \
+    gethostbyname BIO_lookup BIO_socket BIO_listen BIO_closesocket \
+    BIO_ADDRINFO_free BIO_accept_ex BIO_sock_should_retry \
+    BIO_ADDR_hostname_string BIO_ADDR_service_string
+
 PROGRAMS{noinst}=crypto/bio/test_bss_acpt
 SOURCE[crypto/bio/test_bss_acpt]=crypto/bio/test_bss_acpt.c
 WRAP[crypto/bio/test_bss_acpt]=BIO_lookup BIO_socket BIO_listen \
