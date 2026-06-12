@@ -15,7 +15,7 @@
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
-#include <openssl/randerr.h>
+#include <openssl/proverr.h>
 #include "prov/securitycheck.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
