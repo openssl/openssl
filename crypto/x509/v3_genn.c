@@ -259,7 +259,7 @@ int GENERAL_NAME_set0_othername(GENERAL_NAME *gen,
 int GENERAL_NAME_get0_otherName(const GENERAL_NAME *gen,
     ASN1_OBJECT **poid, ASN1_TYPE **pvalue)
 {
-    if (gen->type != GEN_OTHERNAME)
+    if (gen->type != GEN_OTHERNAME || gen->d.otherName == NULL)
         return 0;
     if (poid)
         *poid = gen->d.otherName->type_id;
