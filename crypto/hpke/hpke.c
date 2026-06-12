@@ -1476,3 +1476,47 @@ size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite)
 
     return kem_info->Nsk;
 }
+
+OSSL_HPKE_SUITE OSSL_HPKE_get_suite(const OSSL_HPKE_CTX *ctx)
+{
+    OSSL_HPKE_SUITE rv = { OSSL_HPKE_KEM_ID_RESERVED,
+        OSSL_HPKE_KDF_ID_RESERVED, OSSL_HPKE_AEAD_ID_RESERVED };
+
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return rv;
+    }
+    return ctx->suite;
+}
+
+size_t OSSL_HPKE_get_public_key_size(OSSL_HPKE_SUITE suite)
+{
+    const OSSL_HPKE_KEM_INFO *kem_info = NULL;
+
+    if (hpke_suite_check(suite, &kem_info, NULL, NULL) != 1)
+        return 0;
+    if (kem_info == NULL)
+        return 0;
+
+    return kem_info->Npk;
+}
+
+int OSSL_HPKE_mode_is_supported(OSSL_HPKE_SUITE suite, int mode)
+{
+    if (hpke_mode_check(mode) != 1)
+        return 0;
+    if (hpke_suite_check(suite, NULL, NULL, NULL) != 1)
+        return 0;
+    /*
+     * All DHKEM-based KEMs support AuthEncap/AuthDecap, so all four
+     * modes (BASE, PSK, AUTH, PSKAUTH) are supported for all current
+     * KEMs. If a KEM is added in the future that does not support
+     * authenticated modes, this function should be updated.
+     */
+    return 1;
+}
+
+char *OSSL_HPKE_suite2str(OSSL_HPKE_SUITE suite)
+{
+    return ossl_hpke_suite2str(suite);
+}

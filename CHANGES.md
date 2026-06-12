@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added `OSSL_HPKE_get_suite()`, `OSSL_HPKE_get_public_key_size()`,
+   `OSSL_HPKE_mode_is_supported()`, and `OSSL_HPKE_suite2str()` functions.
+
+   *Shivam Kumar*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 
