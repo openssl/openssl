@@ -40,6 +40,8 @@ void mfail_end(void);
 int mfail_was_triggered(void);
 /* Check if the inject phase was skipped because it got over slow threshold */
 int mfail_was_slow_skipped(void);
+/* Check if mfail counts allocations and not inject */
+int mfail_is_count_only(void);
 /* If the counting was executed, get the total number of allocations */
 int mfail_get_count(void);
 /* Get the total number of failure points */
