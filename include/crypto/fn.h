@@ -132,9 +132,12 @@ void OSSL_FN_clear(OSSL_FN *f);
 /**
  * Copy the contents of one OSSL_FN instance to another.
  *
- * @param[out]  a       The destination OSSL_FN
+ * @param[out]  a       The destination OSSL_FN.
  * @param[in]   b       The source OSSL_FN
  * @returns     The destination on success, NULL on error.
+ *
+ * @note The destination must be at least as large as the source.
+ * Any limbs beyond the source size are zeroed.
  */
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 
@@ -243,6 +246,42 @@ OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
  */
 
 /**
+ * Return the number of significant bits in an OSSL_FN number.
+ *
+ * @param[in]           a       The operand
+ * @returns             The number of significant bits, or zero if a is zero
+ */
+size_t OSSL_FN_num_bits(const OSSL_FN *a);
+
+/**
+ * Compare two OSSL_FN numbers as unsigned integers.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             1 if a > b, -1 if a < b, 0 if a == b
+ */
+int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n);
+
+/**
+ * Shift an OSSL_FN number left by one bit.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
  * Add two OSSL_FN numbers.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -296,6 +335,206 @@ int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
  */
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
+
+/**
+ * Divide two OSSL_FN numbers.  Truncates the result to fit in q and r.
+ *
+ * @param[out]          q       The OSSL_FN for the quotient
+ * @param[out]          r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for:
+ *   one OSSL_FN with ((n->dsize <= d->dsize) ? d->dsize : n->dsize) + 1 limbs
+ *   one OSSL_FN with d->dsize limbs
+ *   one OSSL_FN with d->dsize + 1 limbs
+ *   one OSSL_FN with n->dsize limbs
+ *   one frame (currently 32 bytes).
+ */
+int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Add two OSSL_FN numbers modulo m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with max(a->dsize, b->dsize) + 1
+ * limbs, plus the requirements of OSSL_FN_mod(), plus one frame
+ * (currently 32 bytes).
+ */
+int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    const OSSL_FN *m, OSSL_FN_CTX *ctx);
+
+/**
+ * Add two OSSL_FN numbers modulo m.  This is a quick variant that may be
+ * used if both a and b are less than m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    const OSSL_FN *m);
+
+/**
+ * Subtract two OSSL_FN numbers modulo m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with m->dsize limbs, plus the
+ * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
+ */
+int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    const OSSL_FN *m, OSSL_FN_CTX *ctx);
+
+/**
+ * Subtract two OSSL_FN numbers modulo m.  This is a quick variant that may
+ * be used if a is less than m and b is of the same bit width as m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_mod_sub_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    const OSSL_FN *m);
+
+/**
+ * Multiply two OSSL_FN numbers modulo m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with a->dsize + b->dsize limbs
+ * (or 2 * a->dsize limbs if a == b), plus the largest of the
+ * requirements of OSSL_FN_mul(), OSSL_FN_sqr(), and OSSL_FN_mod(),
+ * plus one frame (currently 32 bytes).
+ */
+int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    const OSSL_FN *m, OSSL_FN_CTX *ctx);
+
+/**
+ * Square an OSSL_FN number modulo m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           m       The modulus
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with 2 * a->dsize limbs, plus the
+ * larger of the requirements of OSSL_FN_sqr() and OSSL_FN_mod(),
+ * plus one frame (currently 32 bytes).
+ */
+int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Left shift an OSSL_FN number by 1 bit, modulo m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           m       The modulus
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with m->dsize + 1 limbs, plus the
+ * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
+ */
+int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Left shift an OSSL_FN number by 1 bit, modulo m.  This is a quick
+ * variant that may be used if a is less than m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           m       The modulus
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
+
+/**
+ * Left shift an OSSL_FN number by n bits, modulo m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @param[in]           m       The modulus
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for one temporary OSSL_FN with m->dsize limbs, plus the
+ * requirements of OSSL_FN_mod(), plus one frame (currently 32 bytes).
+ */
+int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Left shift an OSSL_FN number by n bits, modulo m.  This is a quick
+ * variant that may be used if a is less than m.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @param[in]           m       The modulus
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_mod_lshift_quick(OSSL_FN *r, const OSSL_FN *a, int n,
+    const OSSL_FN *m);
+
+/**
+ * Calculate modulo of two OSSL_FN numbers.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function has the same requirements on ctx as OSSL_FN_div().
+ */
+static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
+    OSSL_FN_CTX *ctx)
+{
+    return OSSL_FN_div(NULL, r, n, d, ctx);
+}
 
 /**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
