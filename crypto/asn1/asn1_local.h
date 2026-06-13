@@ -99,5 +99,7 @@ int ossl_asn1_item_ex_new_intern(ASN1_VALUE **pval, const ASN1_ITEM *it,
     OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm);
 int ossl_asn1_time_tm_to_time_t(const struct tm *tm, time_t *out);
+int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
+    int len_in, int add_nul_byte);
 
 #endif /* !defined(OSSL_LIBCRYPTO_ASN1_ASN1_LOCAL_H) */

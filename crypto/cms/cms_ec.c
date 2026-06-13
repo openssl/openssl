@@ -79,7 +79,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
     int rv = 0;
     EVP_PKEY *pkpeer = NULL;
     const unsigned char *p;
-    int plen;
+    size_t plen;
 
     X509_ALGOR_get0(&aoid, &atype, &aval, alg);
     if (OBJ_obj2nid(aoid) != NID_X9_62_id_ecPublicKey)
@@ -106,12 +106,14 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
             goto err;
     }
     /* We have parameters now set public key */
-    plen = ASN1_STRING_length(pubkey);
+    plen = ASN1_STRING_length_ex(pubkey);
+    if (plen > INT_MAX)
+        goto err;
     p = ASN1_STRING_get0_data(pubkey);
     if (p == NULL || plen == 0)
         goto err;
 
-    if (EVP_PKEY_set1_encoded_public_key(pkpeer, p, plen) <= 0)
+    if (EVP_PKEY_set1_encoded_public_key(pkpeer, p, (int)plen) <= 0)
         goto err;
 
     if (EVP_PKEY_derive_set_peer(pctx, pkpeer) > 0)
@@ -163,7 +165,8 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     ASN1_OCTET_STRING *ukm;
     const unsigned char *p;
     unsigned char *der = NULL;
-    int plen, keylen;
+    int keylen, plen_i;
+    size_t plen;
     EVP_CIPHER *kekcipher = NULL;
     EVP_CIPHER_CTX *kekctx;
     const ASN1_OBJECT *aoid = NULL;
@@ -186,8 +189,10 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         return 0;
 
     p = ASN1_STRING_get0_data(parameter);
-    plen = ASN1_STRING_length(parameter);
-    kekalg = d2i_X509_ALGOR(NULL, &p, plen);
+    plen = ASN1_STRING_length_ex(parameter);
+    if (plen > INT_MAX)
+        goto err;
+    kekalg = d2i_X509_ALGOR(NULL, &p, (int)plen);
     if (kekalg == NULL)
         goto err;
     kekctx = CMS_RecipientInfo_kari_get0_ctx(ri);
@@ -206,12 +211,12 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (EVP_PKEY_CTX_set_ecdh_kdf_outlen(pctx, keylen) <= 0)
         goto err;
 
-    plen = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen);
+    plen_i = CMS_SharedInfo_encode(&der, kekalg, ukm, keylen);
 
-    if (plen <= 0)
+    if (plen_i <= 0)
         goto err;
 
-    if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen) <= 0)
+    if (EVP_PKEY_CTX_set0_ecdh_kdf_ukm(pctx, der, plen_i) <= 0)
         goto err;
     der = NULL;
 

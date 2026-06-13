@@ -409,6 +409,11 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
 {
     int bytelen = (prefixlen + 7) / 8, bitlen = prefixlen % 8;
     IPAddressOrRange *aor;
+    unsigned char *prefix = NULL;
+    uint8_t unused_bits = 0;
+
+    if (bitlen > 0)
+        unused_bits = 8 - bitlen;
 
     if (prefixlen < 0 || prefixlen > (afilen * 8))
         return 0;
@@ -417,19 +422,23 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
     aor->type = IPAddressOrRange_addressPrefix;
     if (aor->u.addressPrefix == NULL && (aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
         goto err;
-    /* BIT_STRING is a typedef of STRING
-     * this function allows to set value without checking invalid bits
-     * as they are nullified after setting */
-    if (!ASN1_STRING_set(aor->u.addressPrefix, addr, bytelen))
+    if (bytelen > 0) {
+        prefix = OPENSSL_malloc(bytelen);
+        if (prefix == NULL)
+            goto err;
+        memcpy(prefix, addr, bytelen);
+        if (unused_bits)
+            prefix[bytelen - 1] &= ~(0xFF >> bitlen);
+    }
+    if (!ASN1_BIT_STRING_set1(aor->u.addressPrefix, prefix, bytelen, unused_bits))
         goto err;
-    if (bitlen > 0)
-        aor->u.addressPrefix->data[bytelen - 1] &= ~(0xFF >> bitlen);
-    ossl_asn1_bit_string_set_unused_bits(aor->u.addressPrefix, 8 - bitlen);
-
     *result = aor;
+
+    OPENSSL_free(prefix);
     return 1;
 
 err:
+    OPENSSL_free(prefix);
     IPAddressOrRange_free(aor);
     return 0;
 }

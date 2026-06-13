@@ -207,24 +207,32 @@ static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
 {
     const ASN1_TYPE *attr;
     const unsigned char *p;
+    size_t len;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificate);
     if (attr == NULL || attr->type != V_ASN1_SEQUENCE)
         return NULL;
     p = ASN1_STRING_get0_data(attr->value.sequence);
-    return d2i_ESS_SIGNING_CERT(NULL, &p, ASN1_STRING_length(attr->value.sequence));
+    len = ASN1_STRING_length_ex(attr->value.sequence);
+    if (len > INT_MAX)
+        return NULL;
+    return d2i_ESS_SIGNING_CERT(NULL, &p, (int)len);
 }
 
 static ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO *si)
 {
     const ASN1_TYPE *attr;
     const unsigned char *p;
+    size_t len;
 
     attr = PKCS7_get_signed_attribute(si, NID_id_smime_aa_signingCertificateV2);
     if (attr == NULL || attr->type != V_ASN1_SEQUENCE)
         return NULL;
     p = ASN1_STRING_get0_data(attr->value.sequence);
-    return d2i_ESS_SIGNING_CERT_V2(NULL, &p, ASN1_STRING_length(attr->value.sequence));
+    len = ASN1_STRING_length_ex(attr->value.sequence);
+    if (len > INT_MAX)
+        return NULL;
+    return d2i_ESS_SIGNING_CERT_V2(NULL, &p, (int)len);
 }
 
 static int ts_check_signing_certs(const PKCS7_SIGNER_INFO *si,
@@ -482,6 +490,7 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
     TS_MSG_IMPRINT *b = tst_info->msg_imprint;
     X509_ALGOR *algor_b = b->hash_algo;
     int ret = 0;
+    size_t len;
 
     if (algor_a) {
         if (OBJ_cmp(algor_a->algorithm, algor_b->algorithm))
@@ -495,7 +504,11 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
             goto err;
     }
 
-    ret = len_a == (unsigned)ASN1_STRING_length(b->hashed_msg) && memcmp(imprint_a, ASN1_STRING_get0_data(b->hashed_msg), len_a) == 0;
+    len = ASN1_STRING_length_ex(b->hashed_msg);
+    if (len > INT_MAX)
+        goto err;
+
+    ret = len_a == (unsigned)len && memcmp(imprint_a, ASN1_STRING_get0_data(b->hashed_msg), len) == 0;
 err:
     if (!ret)
         ERR_raise(ERR_LIB_TS, TS_R_MESSAGE_IMPRINT_MISMATCH);

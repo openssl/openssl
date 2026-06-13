@@ -252,7 +252,7 @@ static int execute_HDR_push0_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(text))
         return 0;
 
-    if (!ASN1_STRING_set(text, "A free text", -1))
+    if (!ASN1_STRING_set_string(text, "A free text"))
         goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_push0_freeText(fixture->hdr, text), 1))
@@ -285,7 +285,7 @@ static int execute_HDR_push1_freeText_test(CMP_HDR_TEST_FIXTURE *fixture)
     if (!TEST_ptr(text))
         goto err;
 
-    if (!ASN1_STRING_set(text, "A free text", -1))
+    if (!ASN1_STRING_set_string(text, "A free text"))
         goto err;
 
     if (!TEST_int_eq(ossl_cmp_hdr_push1_freeText(fixture->hdr, text), 1))

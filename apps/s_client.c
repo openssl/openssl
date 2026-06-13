@@ -3051,6 +3051,7 @@ re_start:
         ASN1_TYPE *atyp = NULL;
         BIO *ldapbio = BIO_new(BIO_s_mem());
         CONF *cnf = NCONF_new(NULL);
+        size_t ssl_request_len;
 
         if (ldapbio == NULL || cnf == NULL) {
             BIO_free(ldapbio);
@@ -3085,9 +3086,16 @@ re_start:
         }
         NCONF_free(cnf);
 
+        ssl_request_len = ASN1_STRING_length_ex(atyp->value.sequence);
+        if (ssl_request_len > INT_MAX) {
+            NCONF_free(cnf);
+            ASN1_TYPE_free(atyp);
+            BIO_puts(bio_err, "generated NCONF size is too large\n");
+            goto end;
+        }
         /* Send SSLRequest packet */
         BIO_write(sbio, ASN1_STRING_get0_data(atyp->value.sequence),
-            ASN1_STRING_length(atyp->value.sequence));
+            (int)ssl_request_len);
         (void)BIO_flush(sbio);
         ASN1_TYPE_free(atyp);
 

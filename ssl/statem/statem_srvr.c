@@ -3574,7 +3574,8 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
     EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
     unsigned char premaster_secret[32];
     const unsigned char *start;
-    size_t outlen = sizeof(premaster_secret), inlen;
+    size_t outlen = sizeof(premaster_secret);
+    size_t inlen;
     unsigned long alg_a;
     GOST_KX_MESSAGE *pKX = NULL;
     const unsigned char *ptr;
@@ -3640,11 +3641,14 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    inlen = ASN1_STRING_length(pKX->kxBlob->value.sequence);
+    inlen = ASN1_STRING_length_ex(pKX->kxBlob->value.sequence);
+    if (inlen > INT_MAX)
+        goto err;
+
     start = ASN1_STRING_get0_data(pKX->kxBlob->value.sequence);
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
-            inlen)
+            (int)inlen)
         <= 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_DECRYPTION_FAILED);
         goto err;

@@ -575,7 +575,8 @@ GENERAL_NAME *a2i_GENERAL_NAME(GENERAL_NAME *out,
     }
 
     if (is_string) {
-        if ((gen->d.ia5 = ASN1_IA5STRING_new()) == NULL || !ASN1_STRING_set(gen->d.ia5, (unsigned char *)value, (int)strlen(value))) {
+        if ((gen->d.ia5 = ASN1_IA5STRING_new()) == NULL
+            || !ASN1_STRING_set_string(gen->d.ia5, value)) {
             ASN1_IA5STRING_free(gen->d.ia5);
             gen->d.ia5 = NULL;
             ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);

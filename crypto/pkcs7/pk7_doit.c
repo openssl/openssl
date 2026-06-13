@@ -74,16 +74,19 @@ static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7)
     if (PKCS7_type_is_other(p7) && (p7->d.other != NULL)
         && (p7->d.other->type == V_ASN1_SEQUENCE)
         && (p7->d.other->value.sequence != NULL)
-        && (ASN1_STRING_length(p7->d.other->value.sequence) > 0)) {
+        && (ASN1_STRING_length_ex(p7->d.other->value.sequence) > 0)) {
         const unsigned char *data = ASN1_STRING_get0_data(p7->d.other->value.sequence);
         long len;
         int inf, tag, class;
+        size_t tmp;
 
+        tmp = ASN1_STRING_length_ex(p7->d.other->value.sequence);
+        if (tmp > INT_MAX)
+            return NULL;
         os = ASN1_OCTET_STRING_new();
         if (os == NULL)
             return NULL;
-        inf = ASN1_get_object(&data, &len, &tag, &class,
-            ASN1_STRING_length(p7->d.other->value.sequence));
+        inf = ASN1_get_object(&data, &len, &tag, &class, (int)tmp);
         if (inf != V_ASN1_CONSTRUCTED || tag != V_ASN1_SEQUENCE
             || !ASN1_OCTET_STRING_set(os, data, len)) {
             ASN1_OCTET_STRING_free(os);
@@ -198,7 +201,7 @@ static int pkcs7_decrypt_rinfo(unsigned char **pek, int *peklen,
         goto err;
 
     ret = evp_pkey_decrypt_alloc(pctx, &ek, &eklen, fixlen,
-        ASN1_STRING_get0_data(ri->enc_key), ASN1_STRING_length(ri->enc_key));
+        ASN1_STRING_get0_data(ri->enc_key), ASN1_STRING_length_ex(ri->enc_key));
     if (ret <= 0)
         goto err;
 
@@ -371,7 +374,7 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     if (bio == NULL) {
         if (PKCS7_is_detached(p7)) {
             bio = BIO_new(BIO_s_null());
-        } else if (os != NULL && ASN1_STRING_length(os) > 0) {
+        } else if (os != NULL && ASN1_STRING_length_ex(os) > 0) {
             /*
              * bio needs a copy of os->data instead of a pointer because
              * the data will be used after os has been freed
@@ -380,8 +383,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
             if (bio != NULL) {
                 BIO_set_mem_eof_return(bio, 0);
                 const unsigned char *os_data = ASN1_STRING_get0_data(os);
-                int os_len = ASN1_STRING_length(os);
-                if (BIO_write(bio, os_data, os_len) != os_len) {
+                size_t os_len = ASN1_STRING_length_ex(os);
+                if (os_len > INT_MAX || BIO_write(bio, os_data, (int)os_len) != (int)os_len) {
                     BIO_free_all(bio);
                     bio = NULL;
                 }
@@ -656,10 +659,12 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     if (in_bio != NULL) {
         bio = in_bio;
     } else {
-        int data_body_len = ASN1_STRING_length(data_body);
+        size_t data_body_len = ASN1_STRING_length_ex(data_body);
+        if (data_body_len > INT_MAX)
+            goto err;
         if (data_body_len > 0)
             bio = BIO_new_mem_buf(ASN1_STRING_get0_data(data_body),
-                data_body_len);
+                (int)data_body_len);
         else {
             bio = BIO_new(BIO_s_mem());
             if (bio == NULL)
@@ -1110,7 +1115,7 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNABLE_TO_FIND_MESSAGE_DIGEST);
             goto err;
         }
-        if ((ASN1_STRING_length(message_digest) != (int)md_len)
+        if ((ASN1_STRING_length_ex(message_digest) != md_len)
             || (memcmp(ASN1_STRING_get0_data(message_digest), md_dat, md_len))) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_DIGEST_FAILURE);
             ret = -1;
@@ -1142,8 +1147,12 @@ int PKCS7_signatureVerify(BIO *bio, PKCS7 *p7, PKCS7_SIGNER_INFO *si,
     }
 
     const unsigned char *sig_data = ASN1_STRING_get0_data(os);
-    int sig_len = ASN1_STRING_length(os);
-    i = EVP_VerifyFinal_ex(mdc_tmp, sig_data, sig_len, pkey, libctx, propq);
+    size_t sig_len = ASN1_STRING_length_ex(os);
+    if (sig_len > INT_MAX) {
+        ret = -1;
+        goto err;
+    }
+    i = EVP_VerifyFinal_ex(mdc_tmp, sig_data, (int)sig_len, pkey, libctx, propq);
     if (i <= 0) {
         ERR_raise(ERR_LIB_PKCS7, PKCS7_R_SIGNATURE_FAILURE);
         ret = -1;
