@@ -58,6 +58,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted);
 static int check_revocation(X509_STORE_CTX *ctx);
+static int revocation_check_end(X509_STORE_CTX *ctx, int check_all);
 #ifndef OPENSSL_NO_OCSP
 static int check_cert_ocsp_resp(X509_STORE_CTX *ctx);
 #endif
@@ -78,6 +79,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
+static int matching_crl_issuer_and_akid(const X509_CRL *crl,
+    const X509 *issuer, const X509_NAME *crl_issuer_name);
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
@@ -1173,6 +1176,20 @@ trusted:
     return X509_TRUST_UNTRUSTED;
 }
 
+/*
+ * Return the last chain depth whose revocation status should be checked.
+ * With X509_V_FLAG_*_CHECK_ALL and X509_V_FLAG_PARTIAL_CHAIN, revocation
+ * checking stops before the first trusted certificate in the chain.
+ */
+static int revocation_check_end(X509_STORE_CTX *ctx, int check_all)
+{
+    if (!check_all)
+        return 0;
+    return (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0
+        ? sk_X509_num(ctx->chain) - 1
+        : ctx->num_untrusted - 1;
+}
+
 /* Sadly, returns 0 also on internal error. */
 static int check_revocation(X509_STORE_CTX *ctx)
 {
@@ -1190,10 +1207,10 @@ static int check_revocation(X509_STORE_CTX *ctx)
         /*
          * certificate status checking with OCSP
          */
-        if (ocsp_check_all_enabled)
-            last = sk_X509_num(ctx->chain) - 1;
-        else if (!crl_check_all_enabled && ctx->parent != NULL)
+        if (!ocsp_check_all_enabled && !crl_check_all_enabled
+            && ctx->parent != NULL)
             return 1; /* If checking CRL paths this isn't the EE certificate */
+        last = revocation_check_end(ctx, ocsp_check_all_enabled);
 
         for (i = 0; i <= last; i++) {
             ctx->error_depth = i;
@@ -1256,14 +1273,9 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
     if (crl_check_enabled && !ocsp_check_all_enabled) {
         /* certificate status check with CRLs */
-        if (crl_check_all_enabled) {
-            last = sk_X509_num(ctx->chain) - 1;
-        } else {
-            /* If checking CRL paths this isn't the EE certificate */
-            if (ctx->parent != NULL)
-                return 1;
-            last = 0;
-        }
+        if (!crl_check_all_enabled && ctx->parent != NULL)
+            return 1; /* If checking CRL paths this isn't the EE certificate */
+        last = revocation_check_end(ctx, crl_check_all_enabled);
 
         /*
          * in the case that OCSP is only enabled for the server certificate
@@ -1753,7 +1765,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     crl_issuer = sk_X509_value(ctx->chain, cidx);
 
-    if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+    if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
         if (*pcrl_score & CRL_SCORE_ISSUER_NAME) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_ISSUER_CERT;
             *pissuer = crl_issuer;
@@ -1763,9 +1775,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     for (cidx++; cidx < sk_X509_num(ctx->chain); cidx++) {
         crl_issuer = sk_X509_value(ctx->chain, cidx);
-        if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm))
-            continue;
-        if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+        if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_SAME_PATH;
             *pissuer = crl_issuer;
             return;
@@ -1782,14 +1792,22 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
      */
     for (i = 0; i < sk_X509_num(ctx->untrusted); i++) {
         crl_issuer = sk_X509_value(ctx->untrusted, i);
-        if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm) != 0)
-            continue;
-        if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+        if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
             *pissuer = crl_issuer;
             *pcrl_score |= CRL_SCORE_AKID;
             return;
         }
     }
+}
+
+static int matching_crl_issuer_and_akid(const X509_CRL *crl,
+    const X509 *issuer, const X509_NAME *crl_issuer_name)
+{
+    if (issuer == NULL)
+        return 0;
+    if (X509_NAME_cmp(X509_get_subject_name(issuer), crl_issuer_name) != 0)
+        return 0;
+    return X509_check_akid(issuer, crl->akid) == X509_V_OK;
 }
 
 /*
