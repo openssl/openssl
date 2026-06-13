@@ -1613,6 +1613,9 @@ EOF
           if ($gen0 =~ /\.pl$/) {
               $generator = 'CC="$(CC)" $(PERL)'.$gen_incs.' '.$gen0.$gen_args
                   .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSOR)';
+              if (defined($target{asm_arch}) && $target{asm_arch} eq "x86_64") {
+                  $deps .= " \$(SRCDIR)/crypto/perlasm/x86_64-xlate.pl";
+              }
           } elsif ($gen0 =~ /\.m4$/) {
               $generator = 'm4 -B 8192'.$gen_incs.' '.$gen0.$gen_args.' >'
           } elsif ($gen0 =~ /\.S$/) {
