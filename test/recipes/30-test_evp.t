@@ -174,8 +174,10 @@ my @defltfiles = qw(
                      evpmd_blake.txt
                      evpmd_md.txt
                      evpmd_mdc2.txt
+                     evpmd_kt.txt
                      evpmd_ripemd.txt
                      evpmd_sm3.txt
+                     evpmd_turboshake.txt
                      evpmd_whirlpool.txt
                      evppbe_scrypt.txt
                      evppbe_pkcs12.txt
