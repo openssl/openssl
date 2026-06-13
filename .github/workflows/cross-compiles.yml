@@ -9,6 +9,14 @@ name: Cross Compile
 
 on:
   pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
   push:
     paths-ignore:
       - 'doc/**'
