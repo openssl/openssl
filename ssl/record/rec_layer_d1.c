@@ -444,7 +444,6 @@ start:
             }
         } else if (alert_level == SSL3_AL_FATAL) {
             sc->rwstate = SSL_NOTHING;
-            sc->s3.fatal_alert = alert_descr;
             SSLfatal_data(sc, SSL_AD_NO_ALERT,
                 SSL_AD_REASON_OFFSET + alert_descr,
                 "SSL alert number %d", alert_descr);
@@ -631,7 +630,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
     int ret;
 
     /* If we have an alert to send, lets send it */
-    if (sc->s3.alert_dispatch > 0) {
+    if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
         i = s->method->ssl_dispatch_alert(s);
         if (i <= 0)
             return i;
