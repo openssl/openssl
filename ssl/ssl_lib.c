@@ -2911,7 +2911,10 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         /* Send the data as ordinary application data instead. */
         if (sc->early_data_state == SSL_EARLY_DATA_NONE
             && sc->ext.early_data_suppressed) {
+            partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
+            sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
             ret = SSL_write_ex(s, buf, num, written);
+            sc->mode |= partialwrite;
             if (ret)
                 sc->ext.early_data_suppressed = 0;
             return ret;
