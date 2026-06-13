@@ -125,34 +125,46 @@ static int test_ASYNC_init_thread(void)
 {
     ASYNC_JOB *job1 = NULL, *job2 = NULL, *job3 = NULL;
     int funcret1, funcret2, funcret3;
-    ASYNC_WAIT_CTX *waitctx = NULL;
+    ASYNC_WAIT_CTX *waitctx1 = NULL, *waitctx2 = NULL, *waitctx3 = NULL;
 
     if (!ASYNC_init_thread(2, 0)
-        || (waitctx = ASYNC_WAIT_CTX_new()) == NULL
-        || ASYNC_start_job(&job1, waitctx, &funcret1, only_pause, NULL, 0)
+        || (waitctx1 = ASYNC_WAIT_CTX_new()) == NULL
+        || (waitctx2 = ASYNC_WAIT_CTX_new()) == NULL
+        || (waitctx3 = ASYNC_WAIT_CTX_new()) == NULL
+        /* Start job1 and job2, both pause (pool size = 2) */
+        || ASYNC_start_job(&job1, waitctx1, &funcret1, only_pause, NULL, 0)
             != ASYNC_PAUSE
-        || ASYNC_start_job(&job2, waitctx, &funcret2, only_pause, NULL, 0)
+        || ASYNC_start_job(&job2, waitctx2, &funcret2, only_pause, NULL, 0)
             != ASYNC_PAUSE
-        || ASYNC_start_job(&job3, waitctx, &funcret3, only_pause, NULL, 0)
+        /* job3 cannot start - no available jobs in pool */
+        || ASYNC_start_job(&job3, waitctx3, &funcret3, only_pause, NULL, 0)
             != ASYNC_NO_JOBS
-        || ASYNC_start_job(&job1, waitctx, &funcret1, only_pause, NULL, 0)
+        /* Finish job1, freeing a slot */
+        || ASYNC_start_job(&job1, waitctx1, &funcret1, only_pause, NULL, 0)
             != ASYNC_FINISH
-        || ASYNC_start_job(&job3, waitctx, &funcret3, only_pause, NULL, 0)
+        /* Now job3 can start */
+        || ASYNC_start_job(&job3, waitctx3, &funcret3, only_pause, NULL, 0)
             != ASYNC_PAUSE
-        || ASYNC_start_job(&job2, waitctx, &funcret2, only_pause, NULL, 0)
+        /* Finish job2 */
+        || ASYNC_start_job(&job2, waitctx2, &funcret2, only_pause, NULL, 0)
             != ASYNC_FINISH
-        || ASYNC_start_job(&job3, waitctx, &funcret3, only_pause, NULL, 0)
+        /* Finish job3 */
+        || ASYNC_start_job(&job3, waitctx3, &funcret3, only_pause, NULL, 0)
             != ASYNC_FINISH
         || funcret1 != 1
         || funcret2 != 1
         || funcret3 != 1) {
         fprintf(stderr, "test_ASYNC_init_thread() failed\n");
-        ASYNC_WAIT_CTX_free(waitctx);
+        ASYNC_WAIT_CTX_free(waitctx1);
+        ASYNC_WAIT_CTX_free(waitctx2);
+        ASYNC_WAIT_CTX_free(waitctx3);
         ASYNC_cleanup_thread();
         return 0;
     }
 
-    ASYNC_WAIT_CTX_free(waitctx);
+    ASYNC_WAIT_CTX_free(waitctx1);
+    ASYNC_WAIT_CTX_free(waitctx2);
+    ASYNC_WAIT_CTX_free(waitctx3);
     ASYNC_cleanup_thread();
     return 1;
 }
