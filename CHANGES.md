@@ -125,6 +125,23 @@ OpenSSL Releases
 
    *Paul Louvel*
 
+### Changes between 4.1 and 5.0 [xx XXX xxxx]
+
+ * Removed TLS record-layer compression (CRIME hardening).
+
+   TLS record compression has been fully removed. The server and client
+   always negotiate and use the null compression method only. The option
+   SSL_OP_NO_COMPRESSION is retained for API compatibility but has no effect.
+   Certificate compression (RFC 8879) is unchanged.
+
+   The following APIs are deprecated in 5.0 and hidden when building with
+   OPENSSL_API_COMPAT set to 5.0 or with the no-deprecated option:
+   SSL_COMP_add_compression_method, SSL_COMP_get_compression_methods,
+   SSL_COMP_set0_compression_methods, SSL_COMP_get_name, SSL_COMP_get0_name,
+   SSL_COMP_get_id, SSL_get_current_compression, SSL_get_current_expansion,
+   SSL_SESSION_get_compress_id. Stub implementations remain for ABI
+   compatibility. SSL_client_hello_get0_compression_methods is unchanged.
+
  * Added `CTLOG_STORE_add0_log()` to add individual CT logs to a `CTLOG_STORE`.
 
    *Tim Perry*

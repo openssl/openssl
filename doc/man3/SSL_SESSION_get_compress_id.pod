@@ -13,19 +13,28 @@ SSL_SESSION_get_compress_id
 
 =head1 DESCRIPTION
 
-If compression has been negotiated for an ssl session then
-SSL_SESSION_get_compress_id() will return the id for the compression method or
-0 otherwise. The only built-in supported compression method is zlib which has an
-id of 1.
+SSL_SESSION_get_compress_id() returns the compression method id for the
+session, or 0 if none.
+
+As of OpenSSL 5.0, TLS record compression has been removed. New connections
+always use the null compression method, so this function returns 0 for
+sessions created in OpenSSL 5.0 and later. For older sessions (e.g. loaded
+from storage), it may still return a nonzero value if the session was
+originally negotiated with compression.
 
 =head1 RETURN VALUES
 
 SSL_SESSION_get_compress_id() returns the id of the compression method or 0 if
-none.
+none (always 0 for new sessions in OpenSSL 5.0 and later).
 
 =head1 SEE ALSO
 
 L<ssl(7)>
+
+=head1 HISTORY
+
+TLS record compression was removed in OpenSSL 5.0; new sessions no longer
+negotiate compression.
 
 =head1 COPYRIGHT
 

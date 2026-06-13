@@ -37,19 +37,19 @@ Various bug workarounds are set, same as setting B<SSL_OP_ALL>.
 
 =item B<-no_comp>
 
-Disables support for SSL/TLS compression, same as setting
+Disables support for SSL/TLS record compression, same as setting
 B<SSL_OP_NO_COMPRESSION>.
-As of OpenSSL 1.1.0, compression is off by default.
+As of OpenSSL 1.1.0, compression is off by default. In OpenSSL 5.0 and later,
+TLS record compression was removed; this option has no effect.
 
 =item B<-comp>
 
-Enables support for SSL/TLS compression, same as clearing
+Enables support for SSL/TLS record compression, same as clearing
 B<SSL_OP_NO_COMPRESSION>.
 This command was introduced in OpenSSL 1.1.0.
-As of OpenSSL 1.1.0, compression is off by default. TLS compression can only be
-used in security level 1 or lower. From OpenSSL 3.2.0 and above the default
-security level is 2, so this option will have no effect without also changing
-the security level. See L<SSL_CTX_set_security_level(3)>.
+As of OpenSSL 5.0, TLS record compression was removed; this option has no
+effect. In earlier versions, compression was off by default and could only be
+used at security level 1 or lower. See L<SSL_CTX_set_security_level(3)>.
 
 =item B<-no_ticket>
 
@@ -556,8 +556,9 @@ B<SessionTicket>: session ticket support, enabled by default. Inverse of
 B<SSL_OP_NO_TICKET>: that is B<-SessionTicket> is the same as setting
 B<SSL_OP_NO_TICKET>.
 
-B<Compression>: SSL/TLS compression support, disabled by default. Inverse
-of B<SSL_OP_NO_COMPRESSION>.
+B<Compression>: SSL/TLS record compression. As of OpenSSL 5.0, TLS record
+compression was removed; this option has no effect. Inverse of
+B<SSL_OP_NO_COMPRESSION>.
 
 B<EmptyFragments>: use empty fragments as a countermeasure against a
 SSL 3.0/TLS 1.0 protocol vulnerability affecting CBC ciphers. It
@@ -822,7 +823,8 @@ Disable TLS session tickets:
 
  SSL_CONF_cmd(ctx, "Options", "-SessionTicket");
 
-Enable compression:
+Enable compression (no effect in OpenSSL 5.0 and later; TLS record
+compression was removed):
 
  SSL_CONF_cmd(ctx, "Options", "Compression");
 

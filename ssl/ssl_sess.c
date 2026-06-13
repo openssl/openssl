@@ -300,10 +300,18 @@ const unsigned char *SSL_SESSION_get0_id_context(const SSL_SESSION *s,
     return s->sid_ctx;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_5_0
 unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 {
     return s->compress_meth;
 }
+#else
+unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
+{
+    (void)s;
+    return 0;
+}
+#endif /* OPENSSL_NO_DEPRECATED_5_0 */
 
 /*
  * SSLv3/TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling

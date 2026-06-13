@@ -692,7 +692,9 @@ static void sv_usage(void)
     fprintf(stderr, " -f            - Test even cases that can't work\n");
     fprintf(stderr,
         " -time         - measure processor time used by client and server\n");
-    fprintf(stderr, " -zlib         - use zlib compression\n");
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
+    fprintf(stderr, " -zlib         - use zlib compression (obsolete in 5.0)\n");
+#endif
 #ifndef OPENSSL_NO_NEXTPROTONEG
     fprintf(stderr, " -npn_client - have client side offer NPN\n");
     fprintf(stderr, " -npn_server - have server side offer NPN\n");
@@ -920,7 +922,7 @@ int main(int argc, char *argv[])
     int no_psk = 0;
     int print_time = 0;
     clock_t s_time = 0, c_time = 0;
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
     int n, comp = 0;
     COMP_METHOD *cm = NULL;
     STACK_OF(SSL_COMP) *ssl_comp_methods = NULL;
@@ -1095,7 +1097,7 @@ int main(int argc, char *argv[])
             ct_validation = 1;
         }
 #endif
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
         else if (strcmp(*argv, "-zlib") == 0) {
             comp = COMP_ZLIB;
         }
@@ -1314,7 +1316,7 @@ int main(int argc, char *argv[])
                 "Warning: For accurate timings, use more connections (e.g. -num 1000)\n");
     }
 
-#ifndef OPENSSL_NO_COMP
+#if !defined(OPENSSL_NO_COMP) && !defined(OPENSSL_NO_DEPRECATED_5_0)
     if (comp == COMP_ZLIB)
         cm = COMP_zlib();
     if (cm != NULL) {
@@ -1329,7 +1331,7 @@ int main(int argc, char *argv[])
         ERR_print_errors_fp(stderr);
     }
     ssl_comp_methods = SSL_COMP_get_compression_methods();
-    n = sk_SSL_COMP_num(ssl_comp_methods);
+    n = ssl_comp_methods != NULL ? sk_SSL_COMP_num(ssl_comp_methods) : 0;
     if (n) {
         int j;
         printf("Available compression methods:");

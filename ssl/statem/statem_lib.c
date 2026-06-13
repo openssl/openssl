@@ -1786,13 +1786,6 @@ int ssl_x509err2alert(int x509err)
     return tp->alert;
 }
 
-int ssl_allow_compression(SSL_CONNECTION *s)
-{
-    if (s->options & SSL_OP_NO_COMPRESSION)
-        return 0;
-    return ssl_security(s, SSL_SECOP_COMPRESSION, 0, 0, NULL);
-}
-
 /*
  * SSL/TLS/DTLS version comparison
  *
