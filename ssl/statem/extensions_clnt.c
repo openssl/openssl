@@ -1226,6 +1226,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || (edok == 0 && (psksess == NULL || psksess->ext.max_early_data == 0))) {
         s->max_early_data = 0;
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING)
+            s->ext.early_data_suppressed = 1;
         s->early_data_state = SSL_EARLY_DATA_NONE;
         return EXT_RETURN_NOT_SENT;
     }

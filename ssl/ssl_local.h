@@ -1730,6 +1730,7 @@ struct ssl_connection_st {
         int early_data;
         /* Is the session suitable for early data? */
         int early_data_ok;
+        int early_data_suppressed;
 
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;

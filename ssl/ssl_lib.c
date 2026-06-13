@@ -2870,6 +2870,16 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     switch (sc->early_data_state) {
     case SSL_EARLY_DATA_NONE:
+        if (!sc->server
+            && sc->ext.early_data_suppressed
+            && !SSL_in_before(s)) {
+            ret = SSL_connect(s);
+            if (ret <= 0)
+                return 0;
+            sc->ext.early_data_suppressed = 0;
+            return ret;
+        }
+
         if (sc->server
             || !SSL_in_before(s)
             || ((sc->session == NULL || sc->session->ext.max_early_data == 0)
@@ -2897,6 +2907,14 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
             if (sc->early_data_state == SSL_EARLY_DATA_CONNECTING)
                 sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
             return 0;
+        }
+        /* Send the data as ordinary application data instead. */
+        if (sc->early_data_state == SSL_EARLY_DATA_NONE
+            && sc->ext.early_data_suppressed) {
+            ret = SSL_write_ex(s, buf, num, written);
+            if (ret)
+                sc->ext.early_data_suppressed = 0;
+            return ret;
         }
         /* fall through */
 
