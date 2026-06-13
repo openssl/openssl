@@ -332,7 +332,7 @@ void ossl_quic_rstream_free(QUIC_RSTREAM *qrs);
 /*
  * Adds received stream frame data to `qrs`. The `pkt_wrap` refcount is
  * incremented if the `data` is queued directly without copying.
- * It can be NULL for unit-testing purposes, i.e. if `data` is static or
+ * It can be NULL for testing purposes, i.e. if `data` is static or
  * never released before calling ossl_quic_rstream_free().
  * The `offset` is the absolute offset of the data in the stream.
  * `data_len` can be 0 - can be useful for indicating `fin` for empty stream.

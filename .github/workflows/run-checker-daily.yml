@@ -122,7 +122,7 @@ jobs:
           enable-trace,
           no-ubsan,
           no-ui-console,
-          enable-unit-test,
+          enable-ssl-test-functions,
           no-uplink,
           no-weak-ssl-ciphers,
           no-whirlpool,

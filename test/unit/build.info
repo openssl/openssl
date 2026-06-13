@@ -1,0 +1,58 @@
+# Make sure all tests have WRAP otherwise -lcmocka is not added.
+
+PROGRAMS{noinst}=crypto/bio/test_bio_addr
+SOURCE[crypto/bio/test_bio_addr]=crypto/bio/test_bio_addr.c
+INCLUDE[crypto/bio/test_bio_addr]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bio_addr]=../../libcrypto.a
+WRAP[crypto/bio/test_bio_addr]=BIO_sock_init getnameinfo freeaddrinfo
+
+PROGRAMS{noinst}=crypto/bio/test_bio_sock
+SOURCE[crypto/bio/test_bio_sock]=crypto/bio/test_bio_sock.c
+INCLUDE[crypto/bio/test_bio_sock]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bio_sock]=../../libcrypto.a
+WRAP[crypto/bio/test_bio_sock]=getsockopt setsockopt getsockname ioctl poll \
+    gethostbyname BIO_lookup BIO_socket BIO_listen BIO_closesocket \
+    BIO_ADDRINFO_free BIO_accept_ex BIO_sock_should_retry \
+    BIO_ADDR_hostname_string BIO_ADDR_service_string
+
+PROGRAMS{noinst}=crypto/bio/test_bio_sock2
+SOURCE[crypto/bio/test_bio_sock2]=crypto/bio/test_bio_sock2.c
+INCLUDE[crypto/bio/test_bio_sock2]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bio_sock2]=../../libcrypto.a
+WRAP[crypto/bio/test_bio_sock2]=socket connect bind listen accept close \
+    getsockopt setsockopt BIO_socket_nbio BIO_sock_should_retry
+
+PROGRAMS{noinst}=crypto/bio/test_bss_acpt
+SOURCE[crypto/bio/test_bss_acpt]=crypto/bio/test_bss_acpt.c
+WRAP[crypto/bio/test_bss_acpt]=BIO_lookup BIO_socket BIO_listen \
+    BIO_accept_ex BIO_sock_info BIO_sock_should_retry BIO_closesocket \
+    BIO_ADDR_hostname_string BIO_ADDR_service_string
+INCLUDE[crypto/bio/test_bss_acpt]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_acpt]=../../libcrypto.a
+
+PROGRAMS{noinst}=crypto/bio/test_bss_conn
+SOURCE[crypto/bio/test_bss_conn]=crypto/bio/test_bss_conn.c
+WRAP[crypto/bio/test_bss_conn]=BIO_lookup BIO_socket BIO_connect \
+    BIO_sock_should_retry BIO_closesocket BIO_socket_wait BIO_sock_error \
+    read write
+INCLUDE[crypto/bio/test_bss_conn]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_conn]=../../libcrypto.a
+
+PROGRAMS{noinst}=crypto/bio/test_bss_dgram
+SOURCE[crypto/bio/test_bss_dgram]=crypto/bio/test_bss_dgram.c
+WRAP[crypto/bio/test_bss_dgram]=recvfrom sendto write getsockname \
+    getpeername BIO_closesocket BIO_socket_nbio
+INCLUDE[crypto/bio/test_bss_dgram]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_dgram]=../../libcrypto.a
+
+PROGRAMS{noinst}=crypto/bio/test_bss_fd
+SOURCE[crypto/bio/test_bss_fd]=crypto/bio/test_bss_fd.c
+INCLUDE[crypto/bio/test_bss_fd]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_fd]=../../libcrypto.a
+WRAP[crypto/bio/test_bss_fd]=read write lseek close
+
+PROGRAMS{noinst}=crypto/bio/test_bss_sock
+SOURCE[crypto/bio/test_bss_sock]=crypto/bio/test_bss_sock.c
+WRAP[crypto/bio/test_bss_sock]=read write BIO_closesocket
+INCLUDE[crypto/bio/test_bss_sock]=../../include ../../crypto/bio
+DEPEND[crypto/bio/test_bss_sock]=../../libcrypto.a

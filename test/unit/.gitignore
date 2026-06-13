@@ -1,0 +1,13 @@
+*
+!*/
+!*.c
+!*.h
+!*.inc
+!*.pl
+!*.t
+!*.txt
+!*.cnf
+!*.pem
+!build.info
+!.gitignore
+!README*
