@@ -35,8 +35,8 @@ if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 }
 
 if (!$avx2_sm3_ni && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
-	   `nasm -v 2>&1` =~ /NASM version ([2-9])\.([0-9]+)\.([0-9]+)/) {
-    my ($major, $minor, $patch) = ($1, $2, $3);
+	   `nasm -v 2>&1` =~ /NASM version ([2-9])\.([0-9]+)(?:\.([0-9]+))?/) {
+    my ($major, $minor, $patch) = ($1, $2, defined($3) ? $3 : 0);
     $avx2_sm3_ni = ($major > 2) || ($major == 2 && $minor > 10); # minimal avx2 supported version, binary translation for SM3 instructions (sub sm3op) is used
 	$avx2_sm3_ni_native = ($major > 2) || ($major == 2 && $minor > 16) || ($major == 2 && $minor == 16 && $patch >= 2); # support added at NASM 2.16.02
 }
