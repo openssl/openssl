@@ -1442,7 +1442,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             secret, secretlen, key, keylen, iv,
             ivlen, mackey, mackeylen, ciph, taglen,
             mactype, md, compm, kdfdigest, prev,
-            thisbio, next, NULL, NULL, settings,
+            thisbio, next, settings,
             options, rlayer_dispatch_tmp, s,
             s->rlayer.rlarg, &newrl);
         BIO_free(prev);

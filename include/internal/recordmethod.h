@@ -132,8 +132,6 @@ struct ossl_record_method_st {
         BIO *prev,
         BIO *transport,
         BIO *next,
-        BIO_ADDR *local,
-        BIO_ADDR *peer,
         const OSSL_PARAM *settings,
         const OSSL_PARAM *options,
         const OSSL_DISPATCH *fns,
