@@ -47,6 +47,12 @@ The following session cache modes and modifiers are available:
 
 No session caching for client or server takes place.
 
+For a server, setting B<SSL_SESS_CACHE_OFF> together with the
+B<SSL_OP_NO_TICKET> option (see L<SSL_CTX_set_options(3)>) suppresses the
+issuance of B<NewSessionTicket> messages. The combination indicates a clear
+intent to disable session resumption, so no stateful or stateless tickets are
+sent to the client.
+
 =item SSL_SESS_CACHE_CLIENT
 
 Client sessions are added to the session cache. As there is no reliable way
