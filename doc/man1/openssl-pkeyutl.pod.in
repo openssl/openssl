@@ -677,8 +677,10 @@ L<EVP_PKEY_CTX_set_tls1_prf_md(3)>,
 =head1 HISTORY
 
 Since OpenSSL 3.5,
-the B<-digest> option implies B<-rawin>, and these two options are
-no longer required when signing or verifying with an Ed25519 or Ed448 key.
+the B<-digest> option implies B<-rawin>. The B<-rawin> option is no longer
+required when signing or verifying with a key type that does not support a
+prehash digest, such as Ed25519, Ed448, ML-DSA, or SLH-DSA. For these key
+types, B<-digest> is not supported.
 
 Also since OpenSSL 3.5, the B<-kemop> option is no longer required for any of
 the supported algorithms, the only supported B<mode> is now the default.
