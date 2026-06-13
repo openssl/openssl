@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 151;
+plan tests => 153;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -543,10 +543,28 @@ ok(get_issuer($a2_cert) =~ /CN=ca.example.com/);
 my $in_csr = srctop_file('test', 'certs', 'x509-check.csr');
 my $in_key = srctop_file('test', 'certs', 'x509-check-key.pem');
 my $invextfile = srctop_file('test', 'invalid-x509.cnf');
-# Test that invalid extensions settings fail
+# Test that invalid extensions settings fail (capture stderr: diagnostics are
+# expected and would otherwise clutter the log next to the issuerSignTool tests)
 ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
             "-out", "/dev/null", "-days", "3650" , "-extensions", "ext",
-            "-extfile", $invextfile])));
+            "-extfile", $invextfile],
+            stderr => result_file("invalid-x509-ext.stderr"))));
+
+# Regression for https://github.com/openssl/openssl/issues/30564 (issuerSignTool v2i leak)
+my $ist_ext_cnf = srctop_file('test', 'issuer-sign-tool-x509.cnf');
+my $ist_out_cert = result_file("issuer-sign-tool.pem");
+ok(run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
+            "-out", $ist_out_cert, "-days", "365", "-extensions", "ext",
+            "-extfile", $ist_ext_cnf])),
+   "issuerSignTool extension: sign CSR with valid extension config");
+my $ist_text_ok;
+my @ist_lines = run(app(["openssl", "x509", "-text", "-noout", "-in", $ist_out_cert]),
+                    capture => 1, statusvar => \$ist_text_ok);
+my $ist_text = join('', @ist_lines);
+ok($ist_text_ok
+   && $ist_text =~ /Signing Tool of Issuer/
+   && $ist_text =~ /OpenSSL regression test/,
+   "issuerSignTool extension present in certificate text output");
 
 # Tests for issue #16080 (fixed in 1.1.1o)
 my $b_key = "b-key.pem";
