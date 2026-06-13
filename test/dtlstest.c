@@ -681,7 +681,736 @@ end:
     return testresult;
 }
 
-/* Confirm that we can create a connections using DTLSv1_listen() */
+/*
+ * Test that invalid DTLS records at the record layer are silently discarded.
+ * All cases test post-handshake (epoch 1) records that fail validation
+ * at the record layer level.
+ */
+
+#define SILENT_DISCARD_INVALID_VERSION 0
+#define SILENT_DISCARD_LENGTH_UNDERFLOW 1
+#define SILENT_DISCARD_FUTURE_EPOCH 2
+#define SILENT_DISCARD_BAD_MAC 3
+#define SILENT_DISCARD_ETM_BAD_MAC 4
+#define SILENT_DISCARD_NUM_TESTS 5
+
+/* Invalid DTLS version (0x00, 0x00) */
+static const unsigned char sd_invalid_version[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0x00, 0x00, /* Invalid version */
+    0x00, 0x01, /* Epoch 1 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
+    0x00, 0x04,
+    0x01, 0x02, 0x03, 0x04
+};
+
+/* Length underflow: zero length record */
+static const unsigned char sd_length_underflow[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD, /* DTLS 1.2 version */
+    0x00, 0x01, /* Epoch 1 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x13,
+    0x00, 0x00 /* Length = 0 */
+};
+
+/* Future epoch: epoch 99 which hasn't been negotiated */
+static const unsigned char sd_future_epoch[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD, /* DTLS 1.2 version */
+    0x00, 0x63, /* Epoch 99 - far in the future */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+    0x00, 0x04,
+    0x01, 0x02, 0x03, 0x04
+};
+
+/* Bad MAC: valid-looking encrypted record but garbage ciphertext */
+static const unsigned char sd_bad_mac[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD, /* DTLS 1.2 version */
+    0x00, 0x01, /* Epoch 1 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x20, /* Sequence 32 */
+    0x00, 0x20, /* Length = 32 (enough for MAC + some data) */
+    /* Garbage ciphertext that will fail MAC verification */
+    0xDE, 0xAD, 0xBE, 0xEF, 0xCA, 0xFE, 0xBA, 0xBE,
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+    0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77, 0x88,
+    0xAA, 0xBB, 0xCC, 0xDD, 0xEE, 0xFF, 0x00, 0x99
+};
+
+/*
+ * EtM Bad MAC: For Encrypt-then-MAC mode (CBC cipher), the MAC is appended
+ * to ciphertext and verified BEFORE decryption.
+ * Per RFC 9147 Section 4.5.2, records with invalid MAC must be silently discarded.
+ * Record structure for EtM: [header][IV][ciphertext][MAC]
+ */
+static const unsigned char sd_etm_bad_mac[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD, /* DTLS 1.2 version */
+    0x00, 0x01, /* Epoch 1 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x30, /* Sequence 48 */
+    0x00, 0x34, /* Length = 52 bytes (16 IV + 16 cipher + 20 MAC) */
+    /* Explicit IV (16 bytes for AES-CBC) */
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+    /* Ciphertext (16 bytes - one AES block) */
+    0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+    0x18, 0x19, 0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F,
+    /* Bad MAC (20 bytes for SHA-1) - garbage that will fail verification */
+    0xBA, 0xAD, 0x00, 0xAC, 0xBA, 0xAD, 0x00, 0xAC,
+    0xBA, 0xAD, 0x00, 0xAC, 0xBA, 0xAD, 0x00, 0xAC,
+    0xBA, 0xAD, 0x00, 0xAC
+};
+
+static int test_dtls_malformed_record(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    BIO *server_wbio = NULL;
+    int testresult = 0;
+    char msg[] = "test message";
+    char buf[64];
+    const unsigned char *malformed;
+    size_t malformed_len;
+    int ret, err;
+
+    switch (idx) {
+    case SILENT_DISCARD_INVALID_VERSION:
+        malformed = sd_invalid_version;
+        malformed_len = sizeof(sd_invalid_version);
+        break;
+    case SILENT_DISCARD_LENGTH_UNDERFLOW:
+        malformed = sd_length_underflow;
+        malformed_len = sizeof(sd_length_underflow);
+        break;
+    case SILENT_DISCARD_FUTURE_EPOCH:
+        malformed = sd_future_epoch;
+        malformed_len = sizeof(sd_future_epoch);
+        break;
+    case SILENT_DISCARD_BAD_MAC:
+        malformed = sd_bad_mac;
+        malformed_len = sizeof(sd_bad_mac);
+        break;
+    case SILENT_DISCARD_ETM_BAD_MAC:
+        malformed = sd_etm_bad_mac;
+        malformed_len = sizeof(sd_etm_bad_mac);
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
+    /*
+     * For EtM test, force CBC cipher (AES128-SHA) to trigger EtM code path.
+     * EtM is negotiated automatically for CBC ciphers.
+     */
+    if (idx == SILENT_DISCARD_ETM_BAD_MAC) {
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA:@SECLEVEL=0")))
+            goto end;
+    }
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * After handshake, inject malformed record directly into the client's
+     * read BIO. The server's wbio is connected to client's rbio.
+     */
+    server_wbio = SSL_get_wbio(sssl);
+    if (!TEST_ptr(server_wbio))
+        goto end;
+
+    if (!TEST_int_eq(BIO_write(server_wbio, malformed, (int)malformed_len),
+            (int)malformed_len))
+        goto end;
+
+    ret = SSL_read(cssl, buf, sizeof(buf));
+    err = SSL_get_error(cssl, ret);
+
+    if (!TEST_int_le(ret, 0))
+        goto end;
+
+    if (!TEST_int_eq(err, SSL_ERROR_WANT_READ)) {
+        TEST_info("idx=%d: Expected SSL_ERROR_WANT_READ, got %d", idx, err);
+        goto end;
+    }
+
+    /* Verify connection still works after silent discard */
+    if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(sssl);
+    SSL_free(cssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * EtM records too short for MAC are silently discarded.
+ * Uses CBC cipher (AES128-SHA) to trigger EtM code path.
+ */
+static const unsigned char etm_short_record[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD,
+    0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x40,
+    0x00, 0x10,
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+};
+
+static int test_dtls_etm_short_record(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    BIO *server_wbio = NULL;
+    int testresult = 0;
+    char msg[] = "test message";
+    char buf[64];
+    int ret, err;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA:@SECLEVEL=0")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    server_wbio = SSL_get_wbio(sssl);
+    if (!TEST_ptr(server_wbio))
+        goto end;
+
+    if (!TEST_int_eq(BIO_write(server_wbio, etm_short_record,
+                         (int)sizeof(etm_short_record)),
+            (int)sizeof(etm_short_record)))
+        goto end;
+
+    ret = SSL_read(cssl, buf, sizeof(buf));
+    err = SSL_get_error(cssl, ret);
+
+    if (!TEST_int_le(ret, 0))
+        goto end;
+
+    if (!TEST_int_eq(err, SSL_ERROR_WANT_READ)) {
+        TEST_info("EtM short record: Expected SSL_ERROR_WANT_READ, got %d", err);
+        goto end;
+    }
+
+    /* Verify connection still works after silent discard */
+    if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
+        goto end;
+
+    if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(sssl);
+    SSL_free(cssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Unexpected app data during handshake triggers fatal alert.
+ */
+static int test_dtls_unexpected_app_data(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    static const unsigned char app_data_record[] = {
+        SSL3_RT_APPLICATION_DATA,
+        0xFE, 0xFD,
+        0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+        0x00, 0x04,
+        0x74, 0x65, 0x73, 0x74
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    mempacket_test_inject(c_to_s_mempacket, (char *)app_data_record,
+        sizeof(app_data_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Records with encrypted record length overflows are discarded.
+ * SSL3_RT_MAX_ENCRYPTED_LENGTH = 17728
+ */
+static int test_dtls_encrypted_overflow(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    BIO *server_wbio = NULL;
+    int testresult = 0;
+    char buf[64];
+    int ret, err;
+    unsigned char *overflow_record = NULL;
+    size_t overflow_len;
+    /*
+     * Create record with length > SSL3_RT_MAX_ENCRYPTED_LENGTH (17728).
+     * Header (13 bytes) + declared length of 17800 bytes.
+     * We only send header + minimal payload but declare huge length.
+     */
+    static const unsigned char overflow_header[] = {
+        SSL3_RT_APPLICATION_DATA,
+        0xFE, 0xFD, /* DTLS 1.2 version */
+        0x00, 0x01, /* Epoch 1 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x50, /* Sequence 80 */
+        0x45, 0x98 /* Length = 17816 (> 17728) */
+    };
+
+    /*
+     * We need to send enough data so OpenSSL reads the full declared length.
+     * Allocate 17816 + 13 header bytes.
+     */
+    overflow_len = 13 + 17816;
+    overflow_record = OPENSSL_malloc(overflow_len);
+    if (!TEST_ptr(overflow_record))
+        return 0;
+
+    memcpy(overflow_record, overflow_header, sizeof(overflow_header));
+    memset(overflow_record + 13, 0xAA, 17816);
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    server_wbio = SSL_get_wbio(sssl);
+    if (!TEST_ptr(server_wbio))
+        goto end;
+
+    if (!TEST_int_eq(BIO_write(server_wbio, overflow_record, (int)overflow_len),
+            (int)overflow_len))
+        goto end;
+
+    ret = SSL_read(cssl, buf, sizeof(buf));
+    err = SSL_get_error(cssl, ret);
+
+    if (!TEST_int_le(ret, 0))
+        goto end;
+
+    /* Checking if the connection is kept open */
+    if (!TEST_int_eq(err, SSL_ERROR_WANT_READ))
+        goto end;
+
+    testresult = 1;
+end:
+    OPENSSL_free(overflow_record);
+    SSL_free(sssl);
+    SSL_free(cssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+#ifndef OPENSSL_NO_DTLS1_2
+/*
+ * Unknown record type (0x99) during DTLSv1.2 handshake triggers fatal alert.
+ */
+static int test_dtls12_unknown_record_type(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    /* Record with unknown type 0x99 at epoch 0 (unencrypted) */
+    static const unsigned char unknown_type_record[] = {
+        0x99, /* Unknown record type (valid types are 20-23) */
+        0xFE, 0xFD, /* DTLS 1.2 version */
+        0x00, 0x00, /* Epoch 0 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x05, /* Sequence 5 */
+        0x00, 0x04, /* Length = 4 bytes */
+        0x74, 0x65, 0x73, 0x74 /* Payload: "test" */
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
+        sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
+#ifndef OPENSSL_NO_DTLS1
+/*
+ * Unknown record type (0x99) during DTLSv1 handshake triggers fatal alert.
+ */
+static int test_dtls1_unknown_record_type(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    /* Record with unknown type 0x99 at epoch 0 - DTLSv1 version */
+    static const unsigned char unknown_type_record[] = {
+        0x99, /* Unknown record type (valid types are 20-23) */
+        0xFE, 0xFF, /* DTLSv1 version */
+        0x00, 0x00, /* Epoch 0 */
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x05, /* Sequence 5 */
+        0x00, 0x04, /* Length = 4 bytes */
+        0x74, 0x65, 0x73, 0x74 /* Payload: "test" */
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, DTLS1_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
+        sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+#endif
+
+/*
+ * Malformed alert records (not exactly 2 bytes) trigger fatal alert.
+ */
+static int test_dtls_malformed_alert(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    static const unsigned char malformed_alert[] = {
+        SSL3_RT_ALERT,
+        0xFE, 0xFD,
+        0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
+        0x00, 0x03, /* Length = 3 bytes (invalid: alerts must be exactly 2) */
+        0x01, 0x00, 0x99
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    mempacket_test_inject(c_to_s_mempacket, (char *)malformed_alert,
+        sizeof(malformed_alert), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Too many consecutive warning alerts (exceeds MAX_WARN_ALERT_COUNT) triggers fatal alert.
+ */
+static int test_dtls_too_many_warnings(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    int i;
+    static const unsigned char warning_alert_template[] = {
+        SSL3_RT_ALERT,
+        0xFE, 0xFD,
+        0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
+        0x00, 0x02,
+        0x01, 0x32
+    };
+    unsigned char warning_alert[sizeof(warning_alert_template)];
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    for (i = 0; i < 7; i++) {
+        memcpy(warning_alert, warning_alert_template, sizeof(warning_alert));
+        warning_alert[10] = (unsigned char)(0x0A + i);
+        mempacket_test_inject(c_to_s_mempacket, (char *)warning_alert,
+            sizeof(warning_alert), 1 + i, INJECT_PACKET_IGNORE_REC_SEQ);
+    }
+
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Unknown alert level (not 1 or 2) triggers fatal alert.
+ */
+static int test_dtls_unknown_alert_level(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
+    int testresult = 0;
+    static const unsigned char bad_level_alert[] = {
+        SSL3_RT_ALERT,
+        0xFE, 0xFD,
+        0x00, 0x00,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x10,
+        0x00, 0x02,
+        0x03, 0x00 /* Invalid alert level 3 (valid: 1=warning, 2=fatal) */
+    };
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
+
+    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
+    if (!TEST_ptr(c_to_s_fbio))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, c_to_s_fbio)))
+        goto end;
+
+    c_to_s_mempacket = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
+    if (!TEST_ptr(c_to_s_mempacket))
+        goto end;
+
+    mempacket_test_inject(c_to_s_mempacket, (char *)bad_level_alert,
+        sizeof(bad_level_alert), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+
+    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_SSL, 0, 0)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 static int test_listen(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -753,6 +1482,19 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_swap_records, 4);
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data);
+    ADD_ALL_TESTS(test_dtls_malformed_record, SILENT_DISCARD_NUM_TESTS);
+    ADD_TEST(test_dtls_etm_short_record);
+    ADD_TEST(test_dtls_unexpected_app_data);
+    ADD_TEST(test_dtls_encrypted_overflow);
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(test_dtls12_unknown_record_type);
+#endif
+#ifndef OPENSSL_NO_DTLS1
+    ADD_TEST(test_dtls1_unknown_record_type);
+#endif
+    ADD_TEST(test_dtls_malformed_alert);
+    ADD_TEST(test_dtls_too_many_warnings);
+    ADD_TEST(test_dtls_unknown_alert_level);
 
     return 1;
 }
