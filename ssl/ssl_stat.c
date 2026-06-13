@@ -21,79 +21,79 @@ const char *SSL_state_string_long(const SSL *s)
 
     switch (SSL_get_state(s)) {
     case TLS_ST_CR_CERT_STATUS:
-        return "SSLv3/TLS read certificate status";
+        return "TLS read certificate status";
     case TLS_ST_CW_NEXT_PROTO:
-        return "SSLv3/TLS write next proto";
+        return "TLS write next proto";
     case TLS_ST_SR_NEXT_PROTO:
-        return "SSLv3/TLS read next proto";
+        return "TLS read next proto";
     case TLS_ST_SW_CERT_STATUS:
-        return "SSLv3/TLS write certificate status";
+        return "TLS write certificate status";
     case TLS_ST_BEFORE:
         return "before SSL initialization";
     case TLS_ST_OK:
-        return "SSL negotiation finished successfully";
+        return "TLS negotiation finished successfully";
     case TLS_ST_CW_CLNT_HELLO:
-        return "SSLv3/TLS write client hello";
+        return "TLS write client hello";
     case TLS_ST_CR_SRVR_HELLO:
-        return "SSLv3/TLS read server hello";
+        return "TLS read server hello";
     case TLS_ST_CR_CERT:
-        return "SSLv3/TLS read server certificate";
+        return "TLS read server certificate";
     case TLS_ST_CR_COMP_CERT:
         return "TLSv1.3 read server compressed certificate";
     case TLS_ST_CR_KEY_EXCH:
-        return "SSLv3/TLS read server key exchange";
+        return "TLS read server key exchange";
     case TLS_ST_CR_CERT_REQ:
-        return "SSLv3/TLS read server certificate request";
+        return "TLS read server certificate request";
     case TLS_ST_CR_SESSION_TICKET:
-        return "SSLv3/TLS read server session ticket";
+        return "TLS read server session ticket";
     case TLS_ST_CR_SRVR_DONE:
-        return "SSLv3/TLS read server done";
+        return "TLS read server done";
     case TLS_ST_CW_CERT:
-        return "SSLv3/TLS write client certificate";
+        return "TLS write client certificate";
     case TLS_ST_CW_COMP_CERT:
         return "TLSv1.3 write client compressed certificate";
     case TLS_ST_CW_KEY_EXCH:
-        return "SSLv3/TLS write client key exchange";
+        return "TLS write client key exchange";
     case TLS_ST_CW_CERT_VRFY:
-        return "SSLv3/TLS write certificate verify";
+        return "TLS write certificate verify";
     case TLS_ST_CW_CHANGE:
     case TLS_ST_SW_CHANGE:
-        return "SSLv3/TLS write change cipher spec";
+        return "TLS write change cipher spec";
     case TLS_ST_CW_FINISHED:
     case TLS_ST_SW_FINISHED:
-        return "SSLv3/TLS write finished";
+        return "TLS write finished";
     case TLS_ST_CR_CHANGE:
     case TLS_ST_SR_CHANGE:
-        return "SSLv3/TLS read change cipher spec";
+        return "TLS read change cipher spec";
     case TLS_ST_CR_FINISHED:
     case TLS_ST_SR_FINISHED:
-        return "SSLv3/TLS read finished";
+        return "TLS read finished";
     case TLS_ST_SR_CLNT_HELLO:
-        return "SSLv3/TLS read client hello";
+        return "TLS read client hello";
     case TLS_ST_SW_HELLO_REQ:
-        return "SSLv3/TLS write hello request";
+        return "TLS write hello request";
     case TLS_ST_SW_SRVR_HELLO:
-        return "SSLv3/TLS write server hello";
+        return "TLS write server hello";
     case TLS_ST_SW_CERT:
-        return "SSLv3/TLS write certificate";
+        return "TLS write certificate";
     case TLS_ST_SW_COMP_CERT:
         return "TLSv1.3 write server compressed certificate";
     case TLS_ST_SW_KEY_EXCH:
-        return "SSLv3/TLS write key exchange";
+        return "TLS write key exchange";
     case TLS_ST_SW_CERT_REQ:
-        return "SSLv3/TLS write certificate request";
+        return "TLS write certificate request";
     case TLS_ST_SW_SESSION_TICKET:
-        return "SSLv3/TLS write session ticket";
+        return "TLS write session ticket";
     case TLS_ST_SW_SRVR_DONE:
-        return "SSLv3/TLS write server done";
+        return "TLS write server done";
     case TLS_ST_SR_CERT:
-        return "SSLv3/TLS read client certificate";
+        return "TLS read client certificate";
     case TLS_ST_SR_COMP_CERT:
         return "TLSv1.3 read client compressed certificate";
     case TLS_ST_SR_KEY_EXCH:
-        return "SSLv3/TLS read client key exchange";
+        return "TLS read client key exchange";
     case TLS_ST_SR_CERT_VRFY:
-        return "SSLv3/TLS read certificate verify";
+        return "TLS read certificate verify";
     case DTLS_ST_CR_HELLO_VERIFY_REQUEST:
         return "DTLS1 read hello verify request";
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
@@ -107,7 +107,7 @@ const char *SSL_state_string_long(const SSL *s)
     case TLS_ST_SW_CERT_VRFY:
         return "TLSv1.3 write server certificate verify";
     case TLS_ST_CR_HELLO_REQ:
-        return "SSLv3/TLS read hello request";
+        return "TLS read hello request";
     case TLS_ST_SW_KEY_UPDATE:
         return "TLSv1.3 write server key update";
     case TLS_ST_CW_KEY_UPDATE:
