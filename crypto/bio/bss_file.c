@@ -163,23 +163,16 @@ static int file_read(BIO *b, char *out, int outl)
 
 static int file_write(BIO *b, const char *in, int inl)
 {
-    int ret = 0;
+    size_t ret = 0;
 
-    if (b->init && (in != NULL)) {
+    if (inl < INT_MAX && inl >= 0 && b->init && (in != NULL)) {
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
-            ret = (int)UP_fwrite(in, inl, 1, b->ptr);
+            ret = (int)UP_fwrite(in, 1, (size_t)inl, b->ptr);
         else
-            ret = (int)fwrite(in, inl, 1, (FILE *)b->ptr);
-        if (ret)
-            ret = inl;
-        /* ret=fwrite(in,1,(int)inl,(FILE *)b->ptr); */
-        /*
-         * according to Tim Hudson <tjh@openssl.org>, the commented out
-         * version above can cause 'inl' write calls under some stupid stdio
-         * implementations (VMS)
-         */
+            ret = fwrite(in, 1, (size_t)inl, (FILE *)b->ptr);
     }
-    return ret;
+
+    return (int)ret;
 }
 
 static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
