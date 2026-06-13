@@ -183,6 +183,133 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
     return ret;
 }
 
+static int crl_extension_equal(const X509_CRL *a, const X509_CRL *b, int nid)
+{
+    int ai = X509_CRL_get_ext_by_NID(a, nid, -1);
+    int bi = X509_CRL_get_ext_by_NID(b, nid, -1);
+    const X509_EXTENSION *aext;
+    const X509_EXTENSION *bext;
+
+    if (ai < 0 || bi < 0)
+        return ai == bi;
+
+    /*
+     * Multiple occurrences make the CRL scope ambiguous. Do not replace an
+     * existing CRL based on a possibly incomplete comparison.
+     */
+    if (X509_CRL_get_ext_by_NID(a, nid, ai) >= 0
+        || X509_CRL_get_ext_by_NID(b, nid, bi) >= 0)
+        return 0;
+
+    aext = X509_CRL_get_ext(a, ai);
+    bext = X509_CRL_get_ext(b, bi);
+    if (aext == NULL || bext == NULL)
+        return aext == bext;
+
+    return ASN1_OCTET_STRING_cmp(X509_EXTENSION_get_data(aext),
+               X509_EXTENSION_get_data(bext))
+        == 0;
+}
+
+static int crl_same_replacement_scope(const X509_CRL *a, const X509_CRL *b)
+{
+    if (X509_NAME_cmp(X509_CRL_get_issuer(a), X509_CRL_get_issuer(b)) != 0)
+        return 0;
+
+    /*
+     * A CA can publish multiple CRLs. Only CRLs with the same authority key
+     * identifier and issuingDistributionPoint are replacement candidates. The
+     * IDP extension encodes distribution-point scope, indirect-CRL flags, and
+     * onlySomeReasons reason partitions.
+     */
+    if (!crl_extension_equal(a, b, NID_authority_key_identifier)
+        || !crl_extension_equal(a, b, NID_issuing_distribution_point))
+        return 0;
+
+    /*
+     * Keep full CRLs and delta CRLs together. Delta CRLs are equivalent
+     * replacement candidates only when they reference the same base CRL.
+     */
+    return crl_extension_equal(a, b, NID_delta_crl);
+}
+
+static int crl_last_update_cmp(const X509_CRL *a, const X509_CRL *b)
+{
+    int day, sec;
+
+    if (ASN1_TIME_diff(&day, &sec, X509_CRL_get0_lastUpdate(b),
+            X509_CRL_get0_lastUpdate(a))
+        == 0)
+        return 0;
+    if (day > 0 || sec > 0)
+        return 1;
+    if (day < 0 || sec < 0)
+        return -1;
+    return 0;
+}
+
+static int crl_freshness_cmp(const X509_CRL *a, const X509_CRL *b)
+{
+    ASN1_INTEGER *anum = X509_CRL_get_ext_d2i(a, NID_crl_number, NULL, NULL);
+    ASN1_INTEGER *bnum = X509_CRL_get_ext_d2i(b, NID_crl_number, NULL, NULL);
+    int ret = 0;
+
+    if (anum != NULL && bnum != NULL) {
+        ret = ASN1_INTEGER_cmp(anum, bnum);
+        if (ret != 0)
+            goto end;
+    }
+
+    ret = crl_last_update_cmp(a, b);
+
+end:
+    ASN1_INTEGER_free(anum);
+    ASN1_INTEGER_free(bnum);
+    return ret;
+}
+
+static int x509_store_add_crl_to_stack(STACK_OF(X509_OBJECT) *objs,
+    X509_OBJECT *obj, int *added)
+{
+    X509_CRL *new_crl = obj->data.crl;
+    int i, num;
+
+    /*
+     * If an equivalent same-scope CRL already exists and is at least as fresh,
+     * keep it and treat this add as successful. Otherwise insert the new CRL
+     * and remove older equivalent CRLs. Distinct CRL scopes remain in the
+     * store so the verifier can select the applicable CRL.
+     */
+    num = sk_X509_OBJECT_num(objs);
+    for (i = 0; i < num; i++) {
+        X509_OBJECT *old_obj = sk_X509_OBJECT_value(objs, i);
+
+        if (old_obj->type != X509_LU_CRL)
+            continue;
+        if (!crl_same_replacement_scope(new_crl, old_obj->data.crl))
+            continue;
+        if (crl_freshness_cmp(new_crl, old_obj->data.crl) <= 0)
+            return 1;
+    }
+
+    if (!sk_X509_OBJECT_push(objs, obj))
+        return 0;
+    *added = 1;
+
+    for (i = num - 1; i >= 0; i--) {
+        X509_OBJECT *old_obj = sk_X509_OBJECT_value(objs, i);
+
+        if (old_obj->type != X509_LU_CRL)
+            continue;
+        if (!crl_same_replacement_scope(new_crl, old_obj->data.crl))
+            continue;
+        sk_X509_OBJECT_delete(objs, i);
+        X509_OBJECT_free(old_obj);
+    }
+
+    return 1;
+}
+
 static void objs_ht_free(HT_VALUE *v)
 {
     STACK_OF(X509_OBJECT) *objs = v->value;
@@ -522,7 +649,19 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
         return 0;
     }
 
-    if (store->objs_ht != NULL) {
+    if (obj->type == X509_LU_CRL) {
+        if (store->objs_ht != NULL) {
+            objs = ossl_x509_store_ht_get_by_name(store, xn);
+            if (objs != NULL) {
+                ret = x509_store_add_crl_to_stack(objs, obj, &added);
+            } else {
+                added = x509_name_objs_ht_insert(store, xn, objs, obj);
+                ret = added != 0;
+            }
+        } else {
+            ret = x509_store_add_crl_to_stack(store->objs, obj, &added);
+        }
+    } else if (store->objs_ht != NULL) {
         objs = ossl_x509_store_ht_get_by_name(store, xn);
         if (objs != NULL && X509_OBJECT_retrieve_match(objs, obj)) {
             ret = 1;

@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 10;
+plan tests => 11;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -28,6 +28,7 @@ subtest 'crl conversions' => sub {
 };
 
 ok(run(test(['crltest'])));
+ok(run(test(['crlstoretest'])));
 
 ok(compare1stline([qw{openssl crl -noout -fingerprint -in},
                    srctop_file('test', 'testcrl.pem')],
