@@ -609,7 +609,6 @@ start:
             return 0;
         } else if (alert_level == SSL3_AL_FATAL || is_dtls13) {
             sc->rwstate = SSL_NOTHING;
-            sc->s3.fatal_alert = alert_descr;
             SSLfatal_data(sc, SSL_AD_NO_ALERT,
                 SSL_AD_REASON_OFFSET + alert_descr,
                 "SSL alert number %d", alert_descr);
