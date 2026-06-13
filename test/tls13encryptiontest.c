@@ -312,7 +312,7 @@ static int test_tls13_encryption(void)
                 OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, NULL, 0,
                 key, 16, iv, ivlen, NULL, 0, EVP_aes_128_gcm(),
                 EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
-                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL, NULL, NULL,
                 &wrl)))
             goto err;
         memcpy(wrl->sequence, seqbuf, sizeof(seqbuf));
@@ -335,7 +335,7 @@ static int test_tls13_encryption(void)
                 OSSL_RECORD_PROTECTION_LEVEL_APPLICATION, 0, NULL, 0,
                 key, 16, iv, ivlen, NULL, 0, EVP_aes_128_gcm(),
                 EVP_GCM_TLS_TAG_LEN, 0, NULL, NULL, NULL, NULL, NULL,
-                NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL,
+                NULL, NULL, NULL, NULL, NULL, NULL,
                 &rrl)))
             goto err;
         memcpy(rrl->sequence, seqbuf, sizeof(seqbuf));
