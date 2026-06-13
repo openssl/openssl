@@ -3750,7 +3750,7 @@ int SSL_get_servername_type(const SSL *s)
  * case 2. It returns either OPENSSL_NPN_NEGOTIATED if a common protocol was
  * found, or OPENSSL_NPN_NO_OVERLAP if the fallback case was reached.
  */
-int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
+int SSL_select_next_proto(const unsigned char **out, unsigned char *outlen,
     const unsigned char *server,
     unsigned int server_len,
     const unsigned char *client, unsigned int client_len)
@@ -3769,7 +3769,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
      * Set the default opportunistic protocol. Will be overwritten if we find
      * a match.
      */
-    *out = (unsigned char *)PACKET_data(&csubpkt);
+    *out = PACKET_data(&csubpkt);
     *outlen = (unsigned char)PACKET_remaining(&csubpkt);
 
     /*
@@ -3784,7 +3784,7 @@ int SSL_select_next_proto(unsigned char **out, unsigned char *outlen,
                     if (PACKET_equal(&csubpkt, PACKET_data(&ssubpkt),
                             PACKET_remaining(&ssubpkt))) {
                         /* We found a match */
-                        *out = (unsigned char *)PACKET_data(&ssubpkt);
+                        *out = PACKET_data(&ssubpkt);
                         *outlen = (unsigned char)PACKET_remaining(&ssubpkt);
                         return OPENSSL_NPN_NEGOTIATED;
                     }
