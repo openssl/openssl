@@ -120,6 +120,11 @@
                        : "=r"(ret)                    \
                        : "r"(x), "i"(32 - (n))); ret; })
 #endif
+#  elif defined(__e2k__)
+#   undef ROTATE
+#   define ROTATE(a,n)  ( (__builtin_constant_p(n) && (n) > 16) \
+                          ? __builtin_e2k_scrs((a), 32 - (n))   \
+                          : __builtin_e2k_scls((a),      (n))   )
 #endif
 #endif
 #endif

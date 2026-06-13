@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added various optimizations for the Elbrus2000 architecture in the
+   cryptographic and BN code.
+
+   *Gleb Popov*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 

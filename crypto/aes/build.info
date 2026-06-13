@@ -61,6 +61,13 @@ IF[{- !$disabled{asm} -}]
   $AESASM_loongarch64=aes_core.c aes_cbc.c vpaes-loongarch64.S
   $AESDEF_loongarch64=VPAES_ASM
 
+  $AESASM_e2k=aes_cbc.c aes_core.c asm/aes-e2k.c
+  $AESDEF_e2k=AES_ASM
+  $AESASM_e2kv6=$AESASM_e2k
+  $AESDEF_e2kv6=AES_ASM
+  $AESASM_e2kv7=$AESASM_e2k
+  $AESDEF_e2kv7=AES_ASM
+
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
   IF[$AESASM_{- $target{asm_arch} -}]
