@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -48,7 +48,9 @@ our($opt_a);
 sub help {
     print <<EOF;
 Find small errors (nits) in documentation.  Options:
-    -a List undocumented env vars
+    -a List undocumented env vars (scans .c, .in, .t, and .pl files;
+       known internal/system vars listed in util/env-ignore.txt and
+       util/missingenv.txt are excluded)
     -c List undocumented commands, undocumented options and unimplemented options.
     -d Detailed list of undocumented (implies -u)
     -e Detailed list of new undocumented (implies -v)
@@ -1283,7 +1285,6 @@ sub check_env_vars {
     my @env_files;
     my @except_dirs = (
         "$config{sourcedir}/demos",
-        "$config{sourcedir}/test",
     );
     my @except_env_files = (
         "$config{sourcedir}/providers/implementations/kem/template_kem.c",
@@ -1294,6 +1295,23 @@ sub check_env_vars {
     );
     my @env_headers;
     my @env_macro;
+
+    # Load env-var ignore lists from external files so they are easy to
+    # maintain and review independently of this script.
+    #   env-ignore.txt  – system/platform vars that never need OpenSSL docs
+    #   missingenv.txt  – internal vars that should eventually be documented
+    my %ignored_env;
+    for my $envfile (qw(util/env-ignore.txt util/missingenv.txt)) {
+        my $path = catfile($config{sourcedir}, $envfile);
+        open my $efh, '<', $path or die "Can't open $path: $!";
+        while (<$efh>) {
+            s/\R$//;
+            next if /^\s*#/ || /^\s*$/;
+            my ($name) = split;
+            $ignored_env{$name} = 1;
+        }
+        close $efh;
+    }
 
     if (open my $gs_file, '<', "$config{sourcedir}/.gitmodules") {
         while (<$gs_file>) {
@@ -1322,12 +1340,12 @@ sub check_env_vars {
     while (<$glf_pipe>) {
         $git_ok = 1;
         s/\R$//; # better chomp
-        push @env_files, $_ if /\.c$|\.in$/;
+        push @env_files, $_ if /\.(?:c|in|t|pl)$/;
     }
     close $glf_pipe;
     # git call has failed, trying to find files manually
     if (!$git_ok) {
-        find(sub { push @env_files, $File::Find::name if /\.c$|\.in$/; },
+        find(sub { push @env_files, $File::Find::name if /\.(?:c|in|t|pl)$/; },
              $config{sourcedir});
     }
 
@@ -1339,33 +1357,36 @@ sub check_env_vars {
         open my $fh, '<', $filename or die "Can't open $filename: $!";
         while (my $line = <$fh>) {
             # for windows
-            # for .in files
-            push @{$env_list{$1}}, "${filename}:$."
-                if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/
-                    || $line =~ /\$ENV\{([^}"']+)\}/);
-            # this also handles ossl_safe_getenv
-            if ($line =~ /getenv\(([^()\s]+)\)/) {
-                my $env1 = $1;
-                if ($env1 =~ /"([^"]+)"/) {
-                    push @{$env_list{$1}}, "${filename}:$.";
-                } elsif ($env1 =~ /([A-Z0-9_])/) {
-                    push(@env_macro, $env1);
-                }
+            if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/) {
+                push @{$env_list{$1}}, "${filename}:$.";
             }
-            # match ternary operators; $1 - true, $2 - false
-            if ($line =~ /env\(\s*[^?]+\?\s*([^:( ]+)\s*:\s*([^(]+)\s*\)/) {
-                my ($env1, $env2) = ($1, $2);
-                # if it's a string just add to the list
-                # otherwise look for the constant value later
-                if ($env1 =~ /"([^"]+)"/) {
-                    push @{$env_list{$1}}, "${filename}:$.";
-                } else {
-                    push(@env_macro, $env1);
+            # for .in and Perl (.t/.pl) files: $ENV{NAME}, $ENV{'NAME'}, $ENV{"NAME"}
+            while ($line =~ /\$ENV\{['"]?([^}'"]+)['"]?\}/g) {
+                push @{$env_list{$1}}, "${filename}:$." unless $1 =~ /^\$/;
+            }
+            # C/in only: getenv and ternary (no-op for .t/.pl)
+            if ($filename !~ /\.(?:t|pl)$/) {
+                if ($line =~ /getenv\(([^()\s]+)\)/) {
+                    my $env1 = $1;
+                    if ($env1 =~ /"([^"]+)"/) {
+                        push @{$env_list{$1}}, "${filename}:$.";
+                    } elsif ($env1 =~ /([A-Z0-9_])/) {
+                        push(@env_macro, $env1);
+                    }
                 }
-                if ($env2 =~ /"([^"]+)"/) {
-                    push @{$env_list{$1}}, "${filename}:$.";
-                } else {
-                    push(@env_macro, $env2);
+                # match ternary operators; $1 - true, $2 - false
+                if ($line =~ /env\(\s*[^?]+\?\s*([^:( ]+)\s*:\s*([^(]+)\s*\)/) {
+                    my ($env1, $env2) = ($1, $2);
+                    if ($env1 =~ /"([^"]+)"/) {
+                        push @{$env_list{$1}}, "${filename}:$.";
+                    } else {
+                        push(@env_macro, $env1);
+                    }
+                    if ($env2 =~ /"([^"]+)"/) {
+                        push @{$env_list{$1}}, "${filename}:$.";
+                    } else {
+                        push(@env_macro, $env2);
+                    }
                 }
             }
         }
@@ -1385,6 +1406,8 @@ sub check_env_vars {
             }
         }
     }
+
+    delete @env_list{keys %ignored_env};
 
     # need to save the value before starting to delete from the hash
     my $number_of_env = scalar keys %env_list;
