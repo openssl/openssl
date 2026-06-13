@@ -1269,6 +1269,79 @@ end:
     return rv;
 }
 
+#define CLIENT_VERSION_LEN 2
+static int ext_grease_ok = 0;
+
+static int is_grease(unsigned int v)
+{
+    return (v & 0x0f0f) == 0x0a0a && (v >> 8) == (v & 0xff);
+}
+
+static void grease_msg_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *grease_ch_buf = buf;
+    PACKET pkt, ciphers, session, compression, exts, ext_data;
+    PACKET inner;
+    unsigned int ext_type = 0;
+    int found_expected = 0;
+
+    /*
+     * We want the incoming (write_p == 0) handshake (content_type == 22)
+     * ClientHello (msg_type == 1).  The buf starts at the handshake header:
+     *   byte 0: msg_type, bytes 1-3: length
+     */
+    if (write_p != 0 || content_type != SSL3_RT_HANDSHAKE
+        || len < SSL3_HM_HEADER_LENGTH
+        || grease_ch_buf[0] != SSL3_MT_CLIENT_HELLO)
+        return;
+
+    memset(&pkt, 0, sizeof(pkt));
+    memset(&ciphers, 0, sizeof(ciphers));
+    memset(&session, 0, sizeof(session));
+    memset(&compression, 0, sizeof(compression));
+    memset(&exts, 0, sizeof(exts));
+    memset(&ext_data, 0, sizeof(ext_data));
+    memset(&inner, 0, sizeof(inner));
+
+    if (!TEST_ptr(grease_ch_buf)
+        || !TEST_true(PACKET_buf_init(&pkt, grease_ch_buf, len))
+        /* Skip handshake message header */
+        || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
+        /* Skip client_version + random */
+        || !TEST_true(PACKET_forward(&pkt,
+            CLIENT_VERSION_LEN + SSL3_RANDOM_SIZE))
+        /* Skip session_id */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &session))
+        /* Skip cipher suites */
+        || !TEST_true(PACKET_get_length_prefixed_2(&pkt, &ciphers))
+        /* Skip compression */
+        || !TEST_true(PACKET_get_length_prefixed_1(&pkt, &compression))
+        /* Get extensions */
+        || !TEST_true(PACKET_as_length_prefixed_2(&pkt, &exts)))
+        return;
+
+    /* Scan extensions */
+    while (PACKET_remaining(&exts) > 0) {
+        if (!TEST_true(PACKET_get_net_2(&exts, &ext_type))
+            || !TEST_true(PACKET_get_length_prefixed_2(&exts,
+                &ext_data)))
+            return;
+        if (verbose)
+            TEST_info("Server saw: ext: %04x", ext_type);
+        if (is_grease(ext_type))
+            found_expected++;
+        if (ext_type == TEST_EXT_TYPE1)
+            found_expected++;
+        if (ext_type == TEST_EXT_TYPE2)
+            found_expected++;
+    }
+    if (!TEST_int_eq(found_expected, 4))
+        return;
+    ext_grease_ok = 1;
+    return;
+}
+
 /* values that can be used in helper below */
 #define OSSL_ECH_TEST_BASIC 0
 #define OSSL_ECH_TEST_HRR 1
@@ -1369,6 +1442,11 @@ static int test_ech_roundtrip_helper(int idx, int combo)
                 new_add_cb, NULL,
                 &server, NULL, &server)))
             goto end;
+        /* add GREASE TLS extensions */
+        if (!TEST_true(SSL_CTX_set_options(cctx, SSL_OP_GREASE)))
+            goto end;
+        /* set server callback to check custom and GREASE extensions present */
+        SSL_CTX_set_msg_callback(sctx, grease_msg_cb);
     }
     if (combo == OSSL_ECH_TEST_CBS) {
         SSL_CTX_ech_set_callback(sctx, ech_test_cb);
@@ -1421,6 +1499,8 @@ static int test_ech_roundtrip_helper(int idx, int combo)
         && !TEST_int_eq(clientstatus, SSL_ECH_STATUS_NOT_CONFIGURED))
         goto end;
     if (combo == OSSL_ECH_TEST_CBS && !TEST_int_eq(ch_test_cb_ok, 1))
+        goto end;
+    if (combo == OSSL_ECH_TEST_CUSTOM && !TEST_int_eq(ext_grease_ok, 1))
         goto end;
     /* all good */
     if (combo == OSSL_ECH_TEST_BASIC || combo == OSSL_ECH_TEST_HRR

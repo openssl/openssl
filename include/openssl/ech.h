@@ -35,7 +35,7 @@ extern "C" {
 #define OSSL_ECH_MAX_MAXNAMELEN 255 /* ECHConfig max for max name length */
 #define OSSL_ECH_MAX_PUBLICNAME 255 /* max ECHConfig public name length */
 #define OSSL_ECH_MAX_ALPNLEN 255 /* max alpn length */
-#define OSSL_ECH_OUTERS_MAX 20 /* max extensions we compress via outer-exts */
+#define OSSL_ECH_OUTERS_MAX 22 /* max extensions we compress via outer-exts */
 #define OSSL_ECH_ALLEXTS_MAX 32 /* max total number of extension we allow */
 
 /*
