@@ -678,7 +678,9 @@ static int test_query_cache_set_duplicate(void)
         || !TEST_ptr_eq(result, &refs))
         goto err;
 
+#ifdef OPENSSL_NO_CACHED_FETCH
     counted_down_ref(result);
+#endif
     result = NULL;
     res = 1;
 

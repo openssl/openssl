@@ -23,6 +23,8 @@
 
 #include <crypto/asn1.h>
 
+static void evp_md_free(void *m);
+
 void evp_md_ctx_clear_digest(EVP_MD_CTX *ctx, int force, int keep_fetched)
 {
     if (ctx->algctx != NULL) {
@@ -965,31 +967,13 @@ static void *evp_md_from_algorithm(int name_id,
     return md;
 
 err:
-    EVP_MD_free(md);
+    evp_md_free(md);
     return NULL;
 }
 
-static int evp_md_up_ref(void *md)
+static int evp_md_up_ref(void *m)
 {
-    return EVP_MD_up_ref(md);
-}
-
-static void evp_md_free(void *md)
-{
-    EVP_MD_free(md);
-}
-
-EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
-    const char *properties)
-{
-    EVP_MD *md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
-        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
-
-    return md;
-}
-
-int EVP_MD_up_ref(EVP_MD *md)
-{
+    EVP_MD *md = (EVP_MD *)m;
     int ref = 0;
 
     if (md->origin == EVP_ORIG_DYNAMIC)
@@ -997,8 +981,9 @@ int EVP_MD_up_ref(EVP_MD *md)
     return 1;
 }
 
-void EVP_MD_free(EVP_MD *md)
+static void evp_md_free(void *m)
 {
+    EVP_MD *md = (EVP_MD *)m;
     int i;
 
     if (md == NULL || md->origin != EVP_ORIG_DYNAMIC)
@@ -1012,6 +997,33 @@ void EVP_MD_free(EVP_MD *md)
     ossl_provider_free(md->prov);
     CRYPTO_FREE_REF(&md->refcnt);
     OPENSSL_free(md);
+}
+
+EVP_MD *EVP_MD_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
+    const char *properties)
+{
+    EVP_MD *md = evp_generic_fetch(ctx, OSSL_OP_DIGEST, algorithm, properties,
+        evp_md_from_algorithm, evp_md_up_ref, evp_md_free);
+
+    return md;
+}
+
+int EVP_MD_up_ref(EVP_MD *md)
+{
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_md_up_ref(md);
+#else
+    return 1;
+#endif
+}
+
+void EVP_MD_free(EVP_MD *md)
+{
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_md_free(md);
+#else
+    return;
+#endif
 }
 
 void EVP_MD_do_all_provided(OSSL_LIB_CTX *libctx,

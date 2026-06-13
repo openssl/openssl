@@ -182,12 +182,18 @@ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     return evp_mac_up_ref(mac);
+#else
+    return 1;
+#endif
 }
 
 void EVP_MAC_free(EVP_MAC *mac)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     evp_mac_free(mac);
+#endif
 }
 
 const OSSL_PROVIDER *EVP_MAC_get0_provider(const EVP_MAC *mac)
