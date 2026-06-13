@@ -170,5 +170,8 @@ size_t ossl_to_hex(char *buf, uint8_t n);
 
 STACK_OF(SSL_COMP) *ossl_load_builtin_compressions(void);
 void ossl_free_compression_methods_int(STACK_OF(SSL_COMP) *methods);
-
+/* Expects a nul terminated C string as input.*/
+int ossl_parse_url_internal(const char *url, size_t len, int *perr, char **pscheme, char **puser, char **phost,
+    char **pport, int *pport_num,
+    char **ppath, char **pquery, char **pfrag);
 #endif
