@@ -454,13 +454,13 @@ asn1_string_new_not_owned_test(void)
     tmpstring = NULL;
     tmp = NULL;
 
-    if (TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_BIT_STRING, data, sizeof(data))))
+    if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_BIT_STRING, data, sizeof(data))))
         goto err;
 
-    if (TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, NULL, sizeof(data))))
+    if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, NULL, sizeof(data))))
         goto err;
 
-    if (TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, 0)))
+    if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, 0)))
         goto err;
 
     if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))

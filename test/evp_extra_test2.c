@@ -494,7 +494,7 @@ static int test_new_keytype(void)
     unsigned char *out = NULL, *secret = NULL, *secret2 = NULL;
 
     /* without tls-provider key should not be create-able */
-    if (TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
+    if (!TEST_ptr_null(key = EVP_PKEY_Q_keygen(mainctx, NULL, "XOR")))
         goto err;
     /* prepare & load tls-provider */
     if (!TEST_true(OSSL_PROVIDER_add_builtin(mainctx, "tls-provider",
