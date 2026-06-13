@@ -761,6 +761,138 @@ static int test_tls13_ticket_client_age_mismatch_reject_early_data(void)
     return test;
 }
 
+enum endpoint_state {
+    ENDPOINT_WRITE_EARLY_DATA,
+    ENDPOINT_READ_EARLY_DATA,
+    ENDPOINT_HANDSHAKE,
+    ENDPOINT_READ_APP_DATA,
+    ENDPOINT_DONE,
+    ENDPOINT_ERROR
+};
+
+static int is_retryable(SSL *ssl, int ret)
+{
+    switch (SSL_get_error(ssl, ret)) {
+    case SSL_ERROR_WANT_WRITE:
+    case SSL_ERROR_WANT_ASYNC:
+    case SSL_ERROR_WANT_READ:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * The client follows the s_client retry loop; the server skips early data and
+ * completes the handshake.
+ */
+static int early_data_retry(struct tls13_channel *x)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    enum endpoint_state c = ENDPOINT_WRITE_EARLY_DATA;
+    enum endpoint_state s = ENDPOINT_READ_EARLY_DATA;
+    size_t w = 0, r = 0;
+
+    for (int i = 0; i < 100 && (c != ENDPOINT_DONE || s != ENDPOINT_DONE); i++) {
+        if (c == ENDPOINT_WRITE_EARLY_DATA) {
+            if (SSL_write_early_data(x->c.ssl, m, sizeof(m) - 1, &w) > 0)
+                c = ENDPOINT_DONE;
+            else if (!is_retryable(x->c.ssl, 0))
+                c = ENDPOINT_ERROR;
+        }
+
+        switch (s) {
+        case ENDPOINT_READ_EARLY_DATA:
+            switch (SSL_read_early_data(x->s.ssl, buf, sizeof(buf), &r)) {
+            case SSL_READ_EARLY_DATA_FINISH:
+                s = ENDPOINT_HANDSHAKE;
+                break;
+	    default:
+                s = ENDPOINT_ERROR;
+                break;
+	    }
+        case ENDPOINT_HANDSHAKE:
+            if (SSL_is_init_finished(x->s.ssl))
+                s = ENDPOINT_DONE;
+            else if (SSL_accept(x->s.ssl) <= 0 && !is_retryable(x->s.ssl, 0))
+                s = ENDPOINT_ERROR;
+            break;
+	default:
+            break;
+        }
+        if (c == ENDPOINT_ERROR || s == ENDPOINT_ERROR)
+            break;
+    }
+
+    return TEST_int_eq(c, ENDPOINT_DONE)
+        && TEST_int_eq(s, ENDPOINT_DONE)
+        && TEST_size_t_eq(w, sizeof(m) - 1)
+        && TEST_uint_eq(r, 0);
+}
+
+/*
+ * TLS 1.3 Client-side Ticket Age Mismatch 0-RTT Rejection (API retry test)
+ *
+ * When early_data is suppressed, the first SSL_write_early_data() returns 0
+ * with SSL_get_error() reporting WANT_READ/WANT_WRITE, leaving early_data_state
+ * at SSL_EARLY_DATA_NONE.
+ */
+static int test_tls13_ticket_client_age_mismatch_reject_early_data_retry(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(early_data_retry(&resumed))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl),
+            SSL_EARLY_DATA_NOT_SENT)
+        && TEST_false(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 0)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.c.stats.tickets, 0)
+        && TEST_uint_eq(resumed.s.stats.tickets, 2)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 /*
  * TLS 1.3 Server-side Ticket Age Mismatch 0-RTT Rejection
  *
@@ -861,6 +993,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_disable_server);
     ADD_TEST(test_tls13_ticket_no_decrypt);
     ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data);
+    ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_retry);
     ADD_TEST(test_tls13_ticket_server_age_mismatch_reject_early_data);
 
     return 1;
