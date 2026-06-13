@@ -176,6 +176,9 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
 
     in = BIO_new(BIO_s_mem());
+    if (in == NULL)
+        return 0;
+
     if ((size_t)BIO_write(in, buf, (int)len) != len) {
         BIO_free(in);
         return 0;
@@ -184,6 +187,12 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
     msg = d2i_OSSL_CMP_MSG_bio(in, NULL);
     if (msg != NULL) {
         BIO *out = BIO_new(BIO_s_null());
+
+        if (out == NULL) {
+            BIO_free(in);
+            return 0;
+        }
+
         OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_SRV_CTX_new(NULL, NULL);
         OSSL_CMP_CTX *client_ctx = OSSL_CMP_CTX_new(NULL, NULL);
 

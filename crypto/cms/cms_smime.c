@@ -25,6 +25,8 @@ static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
         rbio = BIO_new(BIO_s_null());
     else if (flags & CMS_TEXT) {
         rbio = BIO_new(BIO_s_mem());
+        if (rbio == NULL)
+            return NULL;
         BIO_set_mem_eof_return(rbio, 0);
     } else
         rbio = out;
