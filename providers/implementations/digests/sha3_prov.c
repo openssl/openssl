@@ -26,6 +26,7 @@
 #define SHA3_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 #define SHAKE_FLAGS (PROV_DIGEST_FLAG_XOF | PROV_DIGEST_FLAG_ALGID_ABSENT)
 #define CSHAKE_KECCAK_FLAGS PROV_DIGEST_FLAG_XOF
+#define SHAKE_LEN_FLAGS PROV_DIGEST_FLAG_XOF
 
 /*
  * FIPS 202 Section 5.1 Specifies a padding mode that is added to the last
@@ -708,6 +709,7 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 #define SHAKE_SER_ID 0x020000
 #define SHA3_SER_ID 0x040000
 #define CSHAKE_KECCAK_SER_ID 0x080000
+#define SHAKE_LEN_SER_ID 0x100000
 
 #define IMPLEMENT_SHA3_functions(bitlen)                                           \
     SHA3_newctx(sha3, SHA3_##bitlen, sha3_##bitlen, bitlen, (uint8_t)SHA3_PADDING) \
@@ -739,6 +741,14 @@ static int shake_set_ctx_params(void *vctx, const OSSL_PARAM params[])
                 CSHAKE_KECCAK_MDSIZE(bitlen),                                            \
                 CSHAKE_KECCAK_FLAGS)
 
+#define IMPLEMENT_SHAKE_LEN_functions(bitlen)                                      \
+    SHAKE_newctx(shake, SHAKE_##bitlen, shake_##bitlen##_len, bitlen,        \
+        0 /* no default md length */, (uint8_t)SHAKE_PADDING)                      \
+        IMPLEMENT_SERIALIZE_FNS(shake_##bitlen##_len, SHAKE_LEN_SER_ID + bitlen )  \
+            PROV_FUNC_SHAKE_DIGEST(shake_##bitlen##_len, bitlen,                   \
+                SHA3_BLOCKSIZE(bitlen), 0,                                         \
+                SHAKE_LEN_FLAGS)
+
 /* ossl_sha3_224_functions */
 IMPLEMENT_SHA3_functions(224)
 /* ossl_sha3_256_functions */
@@ -761,5 +771,9 @@ IMPLEMENT_SHAKE_functions(128)
 IMPLEMENT_SHAKE_functions(256)
 /* ossl_cshake_keccak_128_functions */
 IMPLEMENT_CSHAKE_KECCAK_functions(128)
-    /* ossl_cshake_keccak_256_functions */
-    IMPLEMENT_CSHAKE_KECCAK_functions(256)
+/* ossl_cshake_keccak_256_functions */
+IMPLEMENT_CSHAKE_KECCAK_functions(256)
+/* ossl_shake_128_len_functions */
+IMPLEMENT_SHAKE_LEN_functions(128)
+/* ossl_shake_256_len_functions */
+IMPLEMENT_SHAKE_LEN_functions(256)

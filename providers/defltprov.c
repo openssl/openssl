@@ -133,6 +133,9 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_SHAKE_128, "provider=default", ossl_shake_128_functions },
     { PROV_NAMES_SHAKE_256, "provider=default", ossl_shake_256_functions },
 
+    { PROV_NAMES_SHAKE_128_LEN, "provider=default", ossl_shake_128_functions },
+    { PROV_NAMES_SHAKE_256_LEN, "provider=default", ossl_shake_256_functions },
+
     { PROV_NAMES_CSHAKE_128, "provider=default", ossl_cshake_128_functions },
     { PROV_NAMES_CSHAKE_256, "provider=default", ossl_cshake_256_functions },
 

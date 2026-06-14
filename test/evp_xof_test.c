@@ -103,6 +103,13 @@ static const TEST_DATA xof_test_data[] = {
         64,
         "KMAC",
         "Custom" },
+    {
+        "SHAKE256-LEN",
+        shake256_input,
+        sizeof(shake256_input),
+        shake256_output,
+        sizeof(shake256_output),
+    },
 };
 
 static const unsigned char shake256_largemsg_input[] = {
@@ -204,6 +211,16 @@ static const unsigned char shake256_largemsg_output[] = {
 static const TEST_DATA large_msg_test_data[] = {
     {
         "SHAKE256",
+        shake256_largemsg_input,
+        sizeof(shake256_largemsg_input),
+        shake256_largemsg_output,
+        sizeof(shake256_largemsg_output),
+    },
+};
+
+static const TEST_DATA large_msg_test_data_shake256_len[] = {
+    {
+        "SHAKE256-LEN",
         shake256_largemsg_input,
         sizeof(shake256_largemsg_input),
         shake256_largemsg_output,
@@ -634,6 +651,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(xof_squeeze_kat_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_large_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_dup_test, OSSL_NELEM(dupoffset_test_data));
+    ADD_ALL_TESTS(xof_absorb_test, OSSL_NELEM(large_msg_test_data_shake256_len));
     ADD_TEST(xof_fail_test);
     return 1;
 }
