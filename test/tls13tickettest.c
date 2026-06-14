@@ -792,7 +792,7 @@ static int early_data_retry(struct tls13_channel *x)
     unsigned char buf[256];
     enum endpoint_state c = ENDPOINT_WRITE_EARLY_DATA;
     enum endpoint_state s = ENDPOINT_READ_EARLY_DATA;
-    size_t w = 0, r = 0;
+    size_t w = 0, r = 0, a = 0;
 
     for (int i = 0; i < 100 && (c != ENDPOINT_DONE || s != ENDPOINT_DONE); i++) {
         if (c == ENDPOINT_WRITE_EARLY_DATA) {
@@ -801,24 +801,29 @@ static int early_data_retry(struct tls13_channel *x)
             else if (!is_retryable(x->c.ssl, 0))
                 c = ENDPOINT_ERROR;
         }
-
         switch (s) {
         case ENDPOINT_READ_EARLY_DATA:
             switch (SSL_read_early_data(x->s.ssl, buf, sizeof(buf), &r)) {
             case SSL_READ_EARLY_DATA_FINISH:
                 s = ENDPOINT_HANDSHAKE;
                 break;
-	    default:
+            default:
                 s = ENDPOINT_ERROR;
                 break;
-	    }
+            }
         case ENDPOINT_HANDSHAKE:
             if (SSL_is_init_finished(x->s.ssl))
                 s = ENDPOINT_DONE;
             else if (SSL_accept(x->s.ssl) <= 0 && !is_retryable(x->s.ssl, 0))
                 s = ENDPOINT_ERROR;
             break;
-	default:
+        case ENDPOINT_READ_APP_DATA:
+            if (SSL_read_ex(x->s.ssl, buf, sizeof(buf), &a) > 0)
+                s = ENDPOINT_DONE;
+            else if (!is_retryable(x->s.ssl, 0))
+                s = ENDPOINT_ERROR;
+            break;
+        default:
             break;
         }
         if (c == ENDPOINT_ERROR || s == ENDPOINT_ERROR)
