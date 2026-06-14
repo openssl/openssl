@@ -2550,18 +2550,6 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
             s->s3.tmp.new_cipher = s->session->cipher;
         }
 
-        /*-
-         * we now have the following setup.
-         * client_random
-         * cipher_list          - our preferred list of ciphers
-         * ciphers              - the client's preferred list of ciphers
-         * compression          - basically ignored right now
-         * ssl version is set   - sslv3
-         * s->session           - The ssl session has been setup.
-         * s->hit               - session reuse flag
-         * s->s3.tmp.new_cipher - the new cipher to use.
-         */
-
         /*
          * Call status_request callback if needed. Has to be done after the
          * certificate callbacks etc above.

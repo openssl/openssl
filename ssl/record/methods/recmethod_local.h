@@ -287,8 +287,7 @@ struct ossl_record_layer_st {
 
     /*
      * Do we need to send a prefix empty record before application data as a
-     * countermeasure against known-IV weakness (necessary for SSLv3 and
-     * TLSv1.0)
+     * countermeasure against known-IV weakness (necessary for TLSv1.0)
      */
     int need_empty_fragments;
 
@@ -325,9 +324,6 @@ struct ossl_record_layer_st {
     /* TLSv1.3 record padding */
     size_t block_padding;
     size_t hs_padding;
-
-    /* Only used by SSLv3 */
-    unsigned char mac_secret[EVP_MAX_MD_SIZE];
 
     /* TLSv1.0/TLSv1.1/TLSv1.2 */
     int use_etm;

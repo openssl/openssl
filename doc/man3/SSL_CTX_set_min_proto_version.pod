@@ -39,7 +39,7 @@ controlled by system configuration.
 Getters return 0 in case B<ctx> or B<ssl> have been configured to
 automatically use the lowest or highest version supported by the library.
 
-Currently supported versions are B<SSL3_VERSION>, B<TLS1_VERSION>,
+Currently supported versions are B<TLS1_VERSION>,
 B<TLS1_1_VERSION>, B<TLS1_2_VERSION>, B<TLS1_3_VERSION> for TLS and
 B<DTLS1_VERSION>, B<DTLS1_2_VERSION> for DTLS.
 

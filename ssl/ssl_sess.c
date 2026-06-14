@@ -306,7 +306,7 @@ unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 }
 
 /*
- * SSLv3/TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling
+ * TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling
  * the ID with random junk repeatedly until we have no conflict is going to
  * complete in one iteration pretty much "most" of the time (btw:
  * understatement). So, if it takes us 10 iterations and we still can't avoid

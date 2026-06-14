@@ -108,9 +108,6 @@ Notes:
 | `SSL_test_functions`                         | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `SSL_select_next_proto`                      | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | **⇒ Methods**                                |         |       |       |            |              |
-| `SSLv3_method`                               | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
-| `SSLv3_client_method`                        | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
-| `SSLv3_server_method`                        | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `TLS_method`                                 | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `TLS_client_method`                          | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |
 | `TLS_server_method`                          | Global  | 🟩U   | 🟦U   | 🟩NC       | 🟢Done       |

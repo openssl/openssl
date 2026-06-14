@@ -511,10 +511,6 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
             max_version = TLS1_VERSION;
 #endif
 #ifdef OPENSSL_NO_TLS1
-        if (max_version == TLS1_VERSION)
-            max_version = SSL3_VERSION;
-#endif
-#ifdef OPENSSL_NO_TLS1
         if (min_version == TLS1_VERSION)
             min_version = TLS1_1_VERSION;
 #endif
@@ -3469,7 +3465,7 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
         return NULL;
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
         const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
-        if (!ssl_cipher_disabled(sc, c, SSL_SECOP_CIPHER_SUPPORTED, 0)) {
+        if (!ssl_cipher_disabled(sc, c, SSL_SECOP_CIPHER_SUPPORTED)) {
             if (!sk)
                 sk = sk_SSL_CIPHER_new_null();
             if (!sk)

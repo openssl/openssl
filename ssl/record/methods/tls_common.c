@@ -1412,8 +1412,6 @@ static void tls_int_free(OSSL_RECORD_LAYER *rl)
 #endif
     OPENSSL_free(rl->iv);
     OPENSSL_free(rl->nonce);
-    if (rl->version == SSL3_VERSION)
-        OPENSSL_cleanse(rl->mac_secret, sizeof(rl->mac_secret));
 
     TLS_RL_RECORD_release(rl->rrec, SSL_MAX_PIPELINES);
 

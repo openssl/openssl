@@ -3054,12 +3054,11 @@ int ssl_set_client_disabled(SSL_CONNECTION *s)
  * @s: SSL connection that you want to use the cipher on
  * @c: cipher to check
  * @op: Security check that you want to do
- * @ecdhe: If set to 1 then TLSv1 ECDHE ciphers are also allowed in SSLv3
  *
  * Returns 1 when it's disabled, 0 when enabled.
  */
 int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
-    int op, int ecdhe)
+    int op)
 {
     int minversion = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
     int maxversion = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
@@ -3080,15 +3079,6 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
         default:
             return 1;
         }
-
-    /*
-     * For historical reasons we will allow ECHDE to be selected by a server
-     * in SSLv3 if we are a client
-     */
-    if (minversion == TLS1_VERSION
-        && ecdhe
-        && (c->algorithm_mkey & (SSL_kECDHE | SSL_kECDHEPSK)) != 0)
-        minversion = SSL3_VERSION;
 
     if (ssl_version_cmp(s, minversion, s->s3.tmp.max_ver) > 0
         || ssl_version_cmp(s, maxversion, s->s3.tmp.min_ver) < 0)
@@ -3539,7 +3529,7 @@ static int tls12_sigalg_allowed(const SSL_CONNECTION *s, int op,
 
                 c = sk_SSL_CIPHER_value(sk, i);
                 /* Skip disabled ciphers */
-                if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED, 0))
+                if (ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_SUPPORTED))
                     continue;
 
                 if ((c->algorithm_mkey & (SSL_kGOST | SSL_kGOST18)) != 0)

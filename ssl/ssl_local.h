@@ -387,7 +387,7 @@ typedef enum {
     SSL_PHA_REQUESTED /* request received by client, or sent by server */
 } SSL_PHA_STATE;
 
-/* CipherSuite length. SSLv3 and all TLS versions. */
+/* CipherSuite value length. */
 #define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
@@ -447,7 +447,7 @@ struct ssl_method_st {
     int (*num_ciphers)(void);
     const SSL_CIPHER *(*get_cipher)(unsigned ncipher);
     OSSL_TIME (*get_timeout)(void);
-    const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
+    const struct ssl3_enc_method *ssl3_enc; /* Extra TLS stuff */
     int (*ssl_version)(void);
     long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
     long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
@@ -927,11 +927,8 @@ struct ssl_ctx_st {
 
     CRYPTO_EX_DATA ex_data;
 
-    const EVP_MD *md5; /* For SSLv3/TLSv1 'ssl3-md5' */
-    const EVP_MD *sha1; /* For SSLv3/TLSv1 'ssl3-sha1' */
-
     STACK_OF(X509) *extra_certs;
-    STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
+    STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, TLSv1 */
 
     /* Default values used when no per-SSL value is defined follow */
 
@@ -1279,8 +1276,7 @@ struct ssl_connection_st {
     SSL *user_ssl;
 
     /*
-     * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
-     * DTLS1_VERSION)
+     * protocol version (one of TLS1_VERSION, DTLS1_VERSION)
      */
     int version;
     /*
@@ -1375,7 +1371,7 @@ struct ssl_connection_st {
         int in_read_app_data;
 
         struct {
-            /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
+            /* actually only need to be 12 for TLS */
             unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
             size_t finish_md_len;
             unsigned char peer_finish_md[EVP_MAX_MD_SIZE * 2];
@@ -1626,7 +1622,7 @@ struct ssl_connection_st {
     int first_packet;
     /*
      * What was passed in ClientHello.legacy_version. Used for RSA pre-master
-     * secret and SSLv3/TLS (<=1.2) rollback check
+     * secret and (D)TLS (<=1.2) rollback check
      */
     int client_version;
     /*
@@ -2183,8 +2179,7 @@ typedef struct cert_st {
 } CERT;
 
 /*
- * This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff It is a bit
- * of a mess of functions, but hell, think of it as an opaque structure :-)
+ * This is for the TLSv1.0 differences in crypto/hash stuff.
  */
 typedef struct ssl3_enc_method {
     int (*setup_key_block)(SSL_CONNECTION *);
@@ -2843,7 +2838,7 @@ __owur int tls_check_sigalg_curve(const SSL_CONNECTION *s, int curve);
 __owur int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL_CONNECTION *s);
 __owur int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
-    int op, int echde);
+    int op);
 
 __owur int ssl_handshake_hash(SSL_CONNECTION *s,
     unsigned char *out, size_t outlen,
