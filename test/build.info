@@ -236,6 +236,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[hpke_test]=../include ../apps/include
   DEPEND[hpke_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=mac_test
+  SOURCE[mac_test]=mac_test.c
+  INCLUDE[mac_test]=../include ../apps/include
+  DEPEND[mac_test]=../libcrypto.a libtestutil.a
+
   IF[{- !$disabled{'lms'} -}]
     PROGRAMS{noinst}=lms_test
     SOURCE[lms_test]=lms_test.c
@@ -313,7 +318,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[slh_dsa_test]=../include ../apps/include
     DEPEND[slh_dsa_test]=../libcrypto libtestutil.a
   ENDIF
-  
+
   IF[{- !$disabled{'deprecated-3.0'} -}]
     PROGRAMS{noinst}=igetest bftest casttest
 

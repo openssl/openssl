@@ -146,6 +146,11 @@ static void *evp_mac_from_algorithm(int name_id,
             mac->init_skey = OSSL_FUNC_mac_init_skey(fns);
             mac_init_found = 1;
             break;
+        case OSSL_FUNC_MAC_CLEANSE:
+            if (mac->cleanse != NULL)
+                break;
+            mac->cleanse = OSSL_FUNC_mac_cleanse(fns);
+            break;
         }
     }
     fnmaccnt += mac_init_found;

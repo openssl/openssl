@@ -48,6 +48,7 @@ static OSSL_FUNC_mac_set_ctx_params_fn hmac_set_ctx_params;
 static OSSL_FUNC_mac_init_fn hmac_init;
 static OSSL_FUNC_mac_update_fn hmac_update;
 static OSSL_FUNC_mac_final_fn hmac_final;
+static OSSL_FUNC_mac_cleanse_fn hmac_cleanse;
 
 /* local HMAC context structure */
 
@@ -342,6 +343,18 @@ static int hmac_set_ctx_params(void *vmacctx, const OSSL_PARAM params[])
     return 1;
 }
 
+static void hmac_cleanse(void *vmacctx)
+{
+    struct hmac_data_st *ctx = vmacctx;
+
+    if (ctx->key != NULL) {
+        /* Should this clear the HMAC_CTX here? */
+        OPENSSL_clear_free(ctx->key, ctx->keylen);
+        ctx->key = NULL;
+        ctx->keylen = 0;
+    }
+}
+
 const OSSL_DISPATCH ossl_hmac_functions[] = {
     { OSSL_FUNC_MAC_NEWCTX, (void (*)(void))hmac_new },
     { OSSL_FUNC_MAC_DUPCTX, (void (*)(void))hmac_dup },
@@ -349,6 +362,7 @@ const OSSL_DISPATCH ossl_hmac_functions[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))hmac_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))hmac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))hmac_final },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))hmac_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
         (void (*)(void))hmac_gettable_ctx_params },
     { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))hmac_get_ctx_params },
@@ -377,6 +391,7 @@ const OSSL_DISPATCH ossl_hmac_internal_functions[] = {
     { OSSL_FUNC_MAC_INIT, (void (*)(void))hmac_init },
     { OSSL_FUNC_MAC_UPDATE, (void (*)(void))hmac_update },
     { OSSL_FUNC_MAC_FINAL, (void (*)(void))hmac_final },
+    { OSSL_FUNC_MAC_CLEANSE, (void (*)(void))hmac_cleanse },
     { OSSL_FUNC_MAC_GETTABLE_CTX_PARAMS,
         (void (*)(void))hmac_gettable_ctx_params },
     { OSSL_FUNC_MAC_GET_CTX_PARAMS, (void (*)(void))hmac_get_ctx_params },

@@ -159,6 +159,7 @@ struct evp_mac_st {
     OSSL_FUNC_mac_get_ctx_params_fn *get_ctx_params;
     OSSL_FUNC_mac_set_ctx_params_fn *set_ctx_params;
     OSSL_FUNC_mac_init_skey_fn *init_skey;
+    OSSL_FUNC_mac_cleanse_fn *cleanse;
 };
 
 struct evp_kdf_st {
