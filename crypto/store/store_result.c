@@ -286,7 +286,7 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
     OSSL_DECODER_CTX *decoderctx = NULL;
     const unsigned char *pdata = data->octet_data;
     size_t pdatalen = data->octet_data_size;
-    int selection = 0;
+    int selection = OSSL_KEYMGMT_SELECT_ALL;
 
     switch (ctx->expected_type) {
     case 0:
