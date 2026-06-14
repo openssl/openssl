@@ -704,7 +704,7 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         str_version = tmpbuf;
     }
 
-    BIO_printf(bio, "%s %s%s [length %04zu]%s%s\n", str_write_p, str_version,
+    BIO_printf(bio, "%s %s%s [length %04zx]%s%s\n", str_write_p, str_version,
         str_content_type, len, str_details1,
         str_details2);
 
