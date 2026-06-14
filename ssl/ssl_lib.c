@@ -2854,11 +2854,23 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
     return ret;
 }
 
+static int SSL_write_ex_all(SSL *s, const void *buf, size_t num, size_t *written)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    uint32_t partialwrite;
+    int ret;
+
+    partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
+    sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
+    ret = SSL_write_ex2(s, buf, num, 0, written);
+    sc->mode |= partialwrite;
+    return ret;
+}
+
 int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret, early_data_state;
     size_t writtmp;
-    uint32_t partialwrite;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     /* TODO(QUIC 0RTT): This will need special handling for QUIC */
@@ -2870,6 +2882,18 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     switch (sc->early_data_state) {
     case SSL_EARLY_DATA_NONE:
+        if (!sc->server
+            && sc->ext.early_data_suppressed
+            && !SSL_in_before(s)) {
+            ret = SSL_connect(s);
+            if (ret <= 0)
+                return 0;
+            ret = SSL_write_ex_all(s, buf, num, written);
+            if (ret > 0)
+                sc->ext.early_data_suppressed = 0;
+            return ret;
+        }
+
         if (sc->server
             || !SSL_in_before(s)
             || ((sc->session == NULL || sc->session->ext.max_early_data == 0)
@@ -2884,9 +2908,27 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         sc->early_data_state = SSL_EARLY_DATA_CONNECTING;
         ret = SSL_connect(s);
         if (ret <= 0) {
-            /* NBIO or error */
-            sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
+            /*
+             * NBIO or error. Normally we stamp the state back to
+             * SSL_EARLY_DATA_CONNECT_RETRY so the next SSL_write_early_data()
+             * call resumes here. However tls_construct_ctos_early_data() may
+             * have reset early_data_state to SSL_EARLY_DATA_NONE because it
+             * decided not to send the early_data extension.
+             *
+             * In that case leave the state alone so the handshake can complete
+             * normally without 0-RTT.
+             */
+            if (sc->early_data_state == SSL_EARLY_DATA_CONNECTING)
+                sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
             return 0;
+        }
+        /* Send the early data as ordinary application data instead. */
+        if (sc->early_data_state == SSL_EARLY_DATA_NONE
+            && sc->ext.early_data_suppressed) {
+            ret = SSL_write_ex_all(s, buf, num, written);
+            if (ret > 0)
+                sc->ext.early_data_suppressed = 0;
+            return ret;
         }
         /* fall through */
 
@@ -2897,11 +2939,8 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
          * of how many bytes we've written between the SSL_write_ex() call and
          * the flush if the flush needs to be retried)
          */
-        partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
-        sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
-        ret = SSL_write_ex(s, buf, num, &writtmp);
-        sc->mode |= partialwrite;
-        if (!ret) {
+        ret = SSL_write_ex_all(s, buf, num, &writtmp);
+        if (ret == 0) {
             sc->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
             return ret;
         }
