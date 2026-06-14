@@ -4647,6 +4647,7 @@ void SSL_CTX_free(SSL_CTX *a)
         OPENSSL_free(a->sigalg_list[j].hash_oid);
         OPENSSL_free(a->sigalg_list[j].keytype);
         OPENSSL_free(a->sigalg_list[j].keytype_oid);
+        OPENSSL_free(a->sigalg_list[j].keytype_group);
     }
     OPENSSL_free(a->sigalg_list);
     OPENSSL_free(a->ssl_cert_info);

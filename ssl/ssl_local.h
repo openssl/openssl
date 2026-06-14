@@ -783,6 +783,7 @@ typedef struct tls_sigalg_info_st {
     char *hash_oid; /* hash algorithm OID */
     char *keytype; /* keytype name */
     char *keytype_oid; /* keytype OID */
+    char *keytype_group; /* optional group/parameter set that binds this sigalg */
     unsigned int secbits; /* Bits of security (from SP800-57) */
     int mintls; /* Minimum TLS version, -1 unsupported */
     int maxtls; /* Maximum TLS version (or 0 for undefined) */
@@ -797,6 +798,13 @@ typedef struct tls_sigalg_info_st {
 typedef struct {
     int pkey_nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
+    /*
+     * Optional group/parameter set that binds this cert slot to a specific
+     * signature scheme when several schemes share one key type OID (for
+     * example GOST 256a/b/c/d per RFC 9367). NID_undef means "any group",
+     * which preserves the legacy first-match-by-key-type behaviour.
+     */
+    int group_nid;
 } SSL_CERT_LOOKUP;
 
 /* flags values */
