@@ -101,6 +101,7 @@ $code=<<___;
 .extern	OPENSSL_ia32cap_P
 
 .globl	bn_mul_mont_gather5
+.hidden bn_mul_mont_gather5
 .type	bn_mul_mont_gather5,\@function,6
 .align	64
 bn_mul_mont_gather5:
@@ -1108,6 +1109,7 @@ my ($a0,$a1,$ai)=("%r14","%r15","%rbx");
 
 $code.=<<___;
 .globl	bn_power5
+.hidden bn_power5
 .type	bn_power5,\@function,6
 .align	32
 bn_power5:
@@ -3451,6 +3453,7 @@ my $N=$STRIDE/4;
 
 $code.=<<___;
 .globl	bn_get_bits5
+.hidden bn_get_bits5
 .type	bn_get_bits5,\@abi-omnipotent
 .align	16
 bn_get_bits5:
@@ -3472,6 +3475,7 @@ bn_get_bits5:
 .size	bn_get_bits5,.-bn_get_bits5
 
 .globl	bn_scatter5
+.hidden bn_scatter5
 .type	bn_scatter5,\@abi-omnipotent
 .align	16
 bn_scatter5:
@@ -3492,6 +3496,7 @@ bn_scatter5:
 .size	bn_scatter5,.-bn_scatter5
 
 .globl	bn_gather5
+.hidden bn_gather5
 .type	bn_gather5,\@abi-omnipotent
 .align	32
 bn_gather5:

@@ -224,6 +224,7 @@ K256:
 .align	5
 
 .global	sha256_block_data_order
+.hidden sha256_block_data_order
 .type	sha256_block_data_order,%function
 sha256_block_data_order:
 .Lsha256_block_data_order:
@@ -483,6 +484,7 @@ $code.=<<___;
 .fpu	neon
 
 .global	sha256_block_data_order_neon
+.hidden sha256_block_data_order_neon
 .type	sha256_block_data_order_neon,%function
 .align	5
 .skip	16
