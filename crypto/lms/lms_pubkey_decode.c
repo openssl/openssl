@@ -122,11 +122,17 @@ err:
  */
 int ossl_lms_pubkey_from_params(const OSSL_PARAM *pub, LMS_KEY *lmskey)
 {
-    if (pub != NULL) {
-        if (pub->data == NULL
-            || pub->data_type != OSSL_PARAM_OCTET_STRING
-            || !ossl_lms_pubkey_decode(pub->data, pub->data_size, lmskey))
-            return 0;
-    }
+    /*
+     * An LMS_KEY with no public key material is unusable - lms_params
+     * and ots_params would remain NULL and any subsequent consumer op
+     * (lms_get_params -> ossl_lms_key_get_pub_len, lms_verify_msg_init
+     * -> setdigest, ...) would dereference NULL.  Require the caller
+     * to supply a well-formed OSSL_PKEY_PARAM_PUB_KEY.
+     */
+    if (pub == NULL
+        || pub->data == NULL
+        || pub->data_type != OSSL_PARAM_OCTET_STRING
+        || !ossl_lms_pubkey_decode(pub->data, pub->data_size, lmskey))
+        return 0;
     return 1;
 }
