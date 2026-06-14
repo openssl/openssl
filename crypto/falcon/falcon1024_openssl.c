@@ -1,85 +1,65 @@
 #include <openssl/evp.h>
-#include <openssl/ec.h>
-#include <openssl/bn.h>
-#include <openssl/rand.h>
 #include <openssl/core_names.h>
+#include <oqs/oqs.h>
 #include <string.h>
-#include "falcon.h"
 
 #define FALCON1024_OID "1.3.9999.5.1024"
 
-static int falcon1024_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey);
-static int falcon1024_sign(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
-                            const unsigned char *tbs, size_t tbslen);
-static int falcon1024_verify(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen,
-                              const unsigned char *tbs, size_t tbslen);
-
-static EVP_PKEY_METHOD *falcon1024_pkey_method = NULL;
-
 static int falcon1024_keygen(EVP_PKEY_CTX *ctx, EVP_PKEY *pkey)
 {
-    unsigned char priv[FALCON1024_PRIVKEY_SIZE];
-    unsigned char pub[FALCON1024_PUBKEY_SIZE];
-    shake256_context rng;
+    OQS_SIG *sig = OQS_SIG_new(OQS_SIG_alg_falcon_1024);
+    if (!sig) return 0;
     
-    if (RAND_bytes(priv, 48) != 1) return 0;
-    shake256_init_prng_from_seed(&rng, priv, 48);
+    uint8_t *pk = OPENSSL_malloc(sig->length_public_key);
+    uint8_t *sk = OPENSSL_malloc(sig->length_secret_key);
     
-    int8_t *sk = NULL;
-    uint8_t *pk = NULL;
+    if (OQS_SIG_keypair(sig, pk, sk) != OQS_SUCCESS) {
+        OPENSSL_free(pk); OPENSSL_free(sk); OQS_SIG_free(sig);
+        return 0;
+    }
     
-    if (falcon_keygen(&rng, 9, &sk, &pk) != 0) return 0;
-    
-    memcpy(priv, sk, FALCON1024_PRIVKEY_SIZE);
-    memcpy(pub, pk, FALCON1024_PUBKEY_SIZE);
-    
-    EVP_PKEY *key = EVP_PKEY_new();
-    EVP_PKEY_set_type(key, EVP_PKEY_NONE);
-    *pkey = *key;
-    EVP_PKEY_free(key);
-    
-    free(sk); free(pk);
+    OQS_SIG_free(sig);
+    OPENSSL_free(pk); OPENSSL_free(sk);
     return 1;
 }
 
-static int falcon1024_sign(EVP_MD_CTX *ctx, unsigned char *sig, size_t *siglen,
+static int falcon1024_sign(EVP_MD_CTX *ctx, unsigned char *sig_out, size_t *siglen,
                             const unsigned char *tbs, size_t tbslen)
 {
-    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
-    int8_t *sk = (int8_t*)EVP_PKEY_get0(pkey);
+    OQS_SIG *sig = OQS_SIG_new(OQS_SIG_alg_falcon_1024);
+    if (!sig) return 0;
     
-    shake256_context rng;
-    unsigned char seed[48];
-    RAND_bytes(seed, 48);
-    shake256_init_prng_from_seed(&rng, seed, 48);
+    size_t slen = sig->length_signature;
+    int ret = OQS_SIG_sign(sig, sig_out, &slen, tbs, tbslen, NULL);
+    *siglen = slen;
+    OQS_SIG_free(sig);
     
-    size_t sig_len = FALCON1024_SIG_SIZE;
-    int ret = falcon_sign(&rng, sk, tbs, tbslen, sig, &sig_len);
-    *siglen = sig_len;
-    
-    return (ret == 0) ? 1 : 0;
+    return (ret == OQS_SUCCESS) ? 1 : 0;
 }
 
 static int falcon1024_verify(EVP_MD_CTX *ctx, const unsigned char *sig, size_t siglen,
                               const unsigned char *tbs, size_t tbslen)
 {
-    EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(EVP_MD_CTX_get_pkey_ctx(ctx));
-    uint8_t *pk = (uint8_t*)EVP_PKEY_get0(pkey);
+    OQS_SIG *s = OQS_SIG_new(OQS_SIG_alg_falcon_1024);
+    if (!s) return 0;
     
-    return (falcon_verify(sig, siglen, pk, tbs, tbslen) == 0) ? 1 : 0;
+    int ret = OQS_SIG_verify(s, sig, siglen, tbs, tbslen, NULL);
+    OQS_SIG_free(s);
+    
+    return (ret == OQS_SUCCESS) ? 1 : 0;
 }
 
 int OPENSSL_falcon1024_init(void)
 {
-    int nid = OBJ_create(FALCON1024_OID, "Falcon1024", "Falcon-1024 Post-Quantum Signature");
+    int nid = OBJ_create(FALCON1024_OID, "Falcon1024", "Falcon-1024 PQC Signature");
     if (nid == 0) return 0;
     
-    falcon1024_pkey_method = EVP_PKEY_meth_new(nid, EVP_PKEY_FLAG_SIGCTX_CUSTOM);
-    if (!falcon1024_pkey_method) return 0;
+    EVP_PKEY_METHOD *meth = EVP_PKEY_meth_new(nid, EVP_PKEY_FLAG_SIGCTX_CUSTOM);
+    if (!meth) return 0;
     
-    EVP_PKEY_meth_set_keygen(falcon1024_pkey_method, NULL, falcon1024_keygen);
-    EVP_PKEY_meth_set_sign(falcon1024_pkey_method, NULL, falcon1024_sign);
-    EVP_PKEY_meth_set_verify(falcon1024_pkey_method, NULL, falcon1024_verify);
+    EVP_PKEY_meth_set_keygen(meth, NULL, falcon1024_keygen);
+    EVP_PKEY_meth_set_sign(meth, NULL, falcon1024_sign);
+    EVP_PKEY_meth_set_verify(meth, NULL, falcon1024_verify);
     
     return 1;
 }
