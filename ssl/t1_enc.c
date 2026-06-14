@@ -450,6 +450,12 @@ int tls1_export_keying_material(SSL_CONNECTION *s, unsigned char *out,
         return 0;
     }
 
+    /* Impose a reasonable upper bound on label length */
+    if (llen > 0xffff) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
     /*
      * construct PRF arguments we construct the PRF argument ourself rather
      * than passing separate values into the TLS PRF to ensure that the
