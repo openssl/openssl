@@ -1648,16 +1648,23 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl, int *pscore,
     for (i = 0; i < sk_X509_CRL_num(crls); i++) {
         delta = sk_X509_CRL_value(crls, i);
         if (check_delta_base(delta, base)) {
+            /* RFC 5280 s.5.2.4/6.3.3: a delta CRL is only current
+             * when the current time falls between its thisUpdate and
+             * nextUpdate fields.  Do not select an expired or not-yet-
+             * valid delta CRL, even if the base CRL is fresh.  Check
+             * validity before up_ref to avoid a needless refcount
+             * increment/decrement cycle for stale deltas.
+             */
+            if (!ossl_x509_check_crl_time(ctx, delta, 0))
+                continue;
+
             if (!X509_CRL_up_ref(delta)) {
                 *dcrl = NULL;
                 return;
             }
 
             *dcrl = delta;
-
-            if (ossl_x509_check_crl_time(ctx, delta, 0))
-                *pscore |= CRL_SCORE_TIME_DELTA;
-
+            *pscore |= CRL_SCORE_TIME_DELTA;
             return;
         }
     }
