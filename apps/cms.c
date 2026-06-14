@@ -1299,7 +1299,7 @@ int cms_main(int argc, char **argv)
             if (kparam != NULL) {
                 EVP_PKEY_CTX *pctx = CMS_SignerInfo_get0_pkey_ctx(si);
 
-                if (!cms_set_pkey_param(pctx, kparam->param))
+                if (pctx == NULL || !cms_set_pkey_param(pctx, kparam->param))
                     goto end;
             }
             if (rr != NULL && !CMS_add1_ReceiptRequest(si, rr)) {
