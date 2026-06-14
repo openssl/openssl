@@ -36,14 +36,6 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn ascon_aead128_settable_ctx_params
 
 #define ASCON_AEAD128_FLAGS (PROV_CIPHER_FLAG_AEAD | PROV_CIPHER_FLAG_CUSTOM_IV)
 
-/*
- * Note: get_iv_length and get_tag_length are not standard OpenSSL dispatch functions.
- * IV and tag lengths are retrieved via get_ctx_params instead.
- * These functions are kept for internal use only.
- */
-
-/* ASCON-AEAD128 uses a fixed key length of 16 bytes (128 bits) */
-
 static void ascon_aead128_cleanctx(void *vctx)
 {
     struct ascon_aead128_ctx_st *ctx = vctx;
