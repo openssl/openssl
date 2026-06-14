@@ -81,12 +81,13 @@ $code.=<<___;
 #################################################################
 
 .globl   ossl_aes_cfb128_vaes_eligible
-.type    ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent
+.type    ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent,,endbranch
 .balign  64
 
 ossl_aes_cfb128_vaes_eligible:
 .cfi_startproc
     endbranch
+.cfi_endprolog
 
     mov OPENSSL_ia32cap_P+8(%rip),%ecx
     xor %eax,%eax
@@ -448,11 +449,12 @@ ___
 
 $code.=<<___;
 .globl   ossl_aes_cfb128_vaes_enc
-.type    ossl_aes_cfb128_vaes_enc,\@function,6
+.type    ossl_aes_cfb128_vaes_enc,\@function,6,endbranch
 .balign  64
 ossl_aes_cfb128_vaes_enc:
 .cfi_startproc
     endbranch
+.cfi_endprolog
 ___
 
 $inp="%rdi";          # arg0
@@ -686,7 +688,7 @@ ___
 
 $code.=<<___;
 .globl   ossl_aes_cfb128_vaes_dec
-.type    ossl_aes_cfb128_vaes_dec,\@function,6
+.type    ossl_aes_cfb128_vaes_dec,\@function,6,endbranch
 .balign  64
 ossl_aes_cfb128_vaes_dec:
 .cfi_startproc
@@ -737,6 +739,8 @@ $code.=<<___ if($win64);
 ___
 
 $code.=<<___;
+.cfi_endprolog
+
     test $num,$num                    # check if the first block is partial
     jz .Laes_cfb128_dec_mid           # if not, jump to processing full blocks
 
@@ -1029,8 +1033,11 @@ ossl_aes_cfb128_vaes_dec:
 .globl     ossl_aes_cfb128_vaes_eligible
 .type      ossl_aes_cfb128_vaes_eligible,\@abi-omnipotent
 ossl_aes_cfb128_vaes_eligible:
+.cfi_startproc
+.cfi_endprolog
     xor %eax,%eax
     ret
+.cfi_endproc
 .size ossl_aes_cfb128_vaes_eligible, .-ossl_aes_cfb128_vaes_eligible
 ___
 }
