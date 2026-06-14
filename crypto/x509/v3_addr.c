@@ -760,6 +760,7 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
         aors = f->ipAddressChoice->u.addressesOrRanges;
         if (sk_IPAddressOrRange_num(aors) == 0)
             return 0;
+
         for (j = 0; j < sk_IPAddressOrRange_num(aors) - 1; j++) {
             IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
             IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, j + 1);
@@ -814,78 +815,106 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
 
 /*
  * Whack an IPAddressOrRanges into canonical form.
+ *
+ * After the initial sort, the merge runs as a single linear sweep
+ * over the list using a write index.  Adjacent entries are folded
+ * into the previous output by replacing it with a freshly built
+ * merged range; both old entries are then freed and the source slot
+ * is left NULL so the asn1 free machinery does not double-free on a
+ * subsequent abort.  Total cost is O(N log N) sort + O(N) merge,
+ * with no stack deletes inside the loop.
  */
 static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
     const unsigned afi)
 {
-    int i, j, length = length_from_afi(afi);
+    int length = length_from_afi(afi);
+    int read, write = 0, n;
 
-    /*
-     * Sort the IPAddressOrRanges sequence.
-     */
     sk_IPAddressOrRange_sort(aors);
+    n = sk_IPAddressOrRange_num(aors);
 
     /*
-     * Clean up representation issues, punt on duplicates or overlaps.
+     * Error paths below all `return 0` directly.  Slots at
+     * [write..read-1] are NULL (from earlier iterations) and slots at
+     * [read..n-1] still hold their original entries; the caller's
+     * normal teardown walks the whole stack and frees each non-NULL
+     * slot safely, so leaving the stack in this mixed state is sound.
      */
-    for (i = 0; i < sk_IPAddressOrRange_num(aors) - 1; i++) {
-        IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, i);
-        IPAddressOrRange *b = sk_IPAddressOrRange_value(aors, i + 1);
-        unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
-        unsigned char b_min[ADDR_RAW_BUF_LEN], b_max[ADDR_RAW_BUF_LEN];
+    for (read = 0; read < n; read++) {
+        IPAddressOrRange *cur = sk_IPAddressOrRange_value(aors, read);
+        unsigned char c_min[ADDR_RAW_BUF_LEN], c_max[ADDR_RAW_BUF_LEN];
 
-        if (!extract_min_max(a, a_min, a_max, length) || !extract_min_max(b, b_min, b_max, length))
+        if (!extract_min_max(cur, c_min, c_max, length))
             return 0;
 
         /*
-         * Punt inverted ranges.
+         * Punt inverted range.
          */
-        if (memcmp(a_min, a_max, length) > 0 || memcmp(b_min, b_max, length) > 0)
+        if (memcmp(c_min, c_max, length) > 0)
             return 0;
 
-        /*
-         * Punt overlaps.
-         */
-        if (memcmp(a_max, b_min, length) >= 0)
-            return 0;
+        if (write > 0) {
+            IPAddressOrRange *prev = sk_IPAddressOrRange_value(aors,
+                write - 1);
+            unsigned char p_min[ADDR_RAW_BUF_LEN], p_max[ADDR_RAW_BUF_LEN];
+            unsigned char c_min_minus_one[ADDR_RAW_BUF_LEN];
+            int j;
 
-        /*
-         * Merge if a and b are adjacent.  We check for
-         * adjacency by subtracting one from b_min first.
-         */
-        for (j = length - 1; j >= 0 && b_min[j]-- == 0x00; j--)
-            ;
-        if (memcmp(a_max, b_min, length) == 0) {
-            IPAddressOrRange *merged;
-
-            if (!make_addressRange(&merged, a_min, b_max, length))
+            if (!extract_min_max(prev, p_min, p_max, length))
                 return 0;
-            (void)sk_IPAddressOrRange_set(aors, i, merged);
-            (void)sk_IPAddressOrRange_delete(aors, i + 1);
-            IPAddressOrRange_free(a);
-            IPAddressOrRange_free(b);
-            --i;
-            continue;
+
+            /*
+             * Reject overlap with the previous accepted entry.
+             */
+            if (memcmp(p_max, c_min, length) >= 0)
+                return 0;
+
+            /*
+             * Adjacency test: does c_min - 1 equal p_max?  Work on a
+             * scratch copy so the original c_min stays intact for use
+             * as the lower bound if we end up keeping cur.
+             */
+            memcpy(c_min_minus_one, c_min, length);
+            for (j = length - 1;
+                j >= 0 && c_min_minus_one[j]-- == 0x00;
+                j--)
+                ;
+            if (memcmp(p_max, c_min_minus_one, length) == 0) {
+                IPAddressOrRange *merged;
+
+                if (!make_addressRange(&merged, p_min, c_max, length))
+                    return 0;
+                /*
+                 * Replace prev with merged, free the originals, and
+                 * NULL the source slot so the stack does not retain a
+                 * second reference to cur.
+                 */
+                (void)sk_IPAddressOrRange_set(aors, write - 1, merged);
+                IPAddressOrRange_free(prev);
+                IPAddressOrRange_free(cur);
+                (void)sk_IPAddressOrRange_set(aors, read, NULL);
+                continue;
+            }
         }
+
+        /*
+         * Keep cur.  Slide it forward into the write slot if we have
+         * fallen behind, and NULL the source slot to avoid duplicate
+         * ownership.
+         */
+        if (write != read) {
+            (void)sk_IPAddressOrRange_set(aors, write, cur);
+            (void)sk_IPAddressOrRange_set(aors, read, NULL);
+        }
+        write++;
     }
 
     /*
-     * Check for inverted final range.
+     * Compaction succeeded: every slot at [write..n-1] is NULL, so
+     * popping the tail leaves the canonicalised list at [0..write-1].
      */
-    j = sk_IPAddressOrRange_num(aors) - 1;
-    {
-        IPAddressOrRange *a = sk_IPAddressOrRange_value(aors, j);
-
-        if (a != NULL && a->type == IPAddressOrRange_addressRange) {
-            unsigned char a_min[ADDR_RAW_BUF_LEN], a_max[ADDR_RAW_BUF_LEN];
-
-            if (!extract_min_max(a, a_min, a_max, length))
-                return 0;
-            if (memcmp(a_min, a_max, length) > 0)
-                return 0;
-        }
-    }
-
+    while (sk_IPAddressOrRange_num(aors) > write)
+        (void)sk_IPAddressOrRange_pop(aors);
     return 1;
 }
 
