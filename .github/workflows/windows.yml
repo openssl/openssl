@@ -25,7 +25,7 @@ jobs:
           - arch: amd64
             os: windows-2025
             config: enable-fips no-thread-pool no-quic
-            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+            vcvars: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat
           - arch: x86
             os: windows-2022
             config: no-fips
