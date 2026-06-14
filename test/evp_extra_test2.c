@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -579,6 +579,278 @@ static int test_ecx_tofrom_data_select(void)
     ret = TEST_ptr(key = EVP_PKEY_Q_keygen(mainctx, NULL, "X25519"))
         && TEST_true(do_pkey_tofrom_data_select(key, "X25519"));
     EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * Byte 0: high bits exercise raw vs clamped. Byte 31: use 0xbf so the low
+ * 7 bits are 0x3f; RFC7748 then sets bit 6 (0x7f) but legacy leaves 0x3f,
+ * giving distinct scalars. (With 0xff, RFC |0x40 was a no-op on 0x7f.)
+ */
+static const unsigned char x25519_scalar_mode_priv[32] = {
+    0xff, 0x02, 0x03, 0x04, 0xaa, 0xbb, 0xcc, 0xdd,
+    0x11, 0x12, 0x13, 0x14, 0x21, 0x22, 0x23, 0x24,
+    0x31, 0x32, 0x33, 0x34, 0x41, 0x42, 0x43, 0x44,
+    0x51, 0x52, 0x53, 0x54, 0x61, 0x62, 0x63, 0xbf
+};
+
+static EVP_PKEY *x25519_key_with_mode(const char *mode_name,
+    unsigned char pub[32])
+{
+    EVP_PKEY *key;
+    size_t publen = 0;
+
+    key = EVP_PKEY_new_raw_private_key_ex(mainctx, "X25519", NULL,
+        x25519_scalar_mode_priv,
+        sizeof(x25519_scalar_mode_priv));
+    if (key == NULL)
+        return NULL;
+    if (mode_name != NULL
+        && !EVP_PKEY_set_utf8_string_param(key, "x25519-scalar-mode",
+            mode_name)) {
+        EVP_PKEY_free(key);
+        return NULL;
+    }
+    if (pub != NULL
+        && (!EVP_PKEY_get_octet_string_param(key,
+                OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+                pub, 32, &publen)
+            || publen != 32)) {
+        EVP_PKEY_free(key);
+        return NULL;
+    }
+    return key;
+}
+
+/* Set/get plus distinct pubkey per mode for the same private bytes. */
+static int test_x25519_scalar_mode_param_basic(void)
+{
+    EVP_PKEY *key_rfc = NULL, *key_legacy = NULL, *key_raw = NULL;
+    EVP_PKEY *key_invalid = NULL;
+    unsigned char pub_rfc[32], pub_legacy[32], pub_raw[32];
+    char mode[64];
+    size_t modelen = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(key_rfc = x25519_key_with_mode(NULL, pub_rfc))
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(key_rfc,
+            "x25519-scalar-mode", mode, sizeof(mode), &modelen))
+        || !TEST_str_eq(mode, "rfc7748")
+        || !TEST_ptr(key_legacy = x25519_key_with_mode("legacy-ed25519-compat",
+                         pub_legacy))
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(key_legacy,
+            "x25519-scalar-mode", mode, sizeof(mode), &modelen))
+        || !TEST_str_eq(mode, "legacy-ed25519-compat")
+        || !TEST_ptr(key_raw = x25519_key_with_mode("raw-unclamped", pub_raw))
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(key_raw,
+            "x25519-scalar-mode", mode, sizeof(mode), &modelen))
+        || !TEST_str_eq(mode, "raw-unclamped")
+        || !TEST_mem_ne(pub_rfc, sizeof(pub_rfc),
+            pub_legacy, sizeof(pub_legacy))
+        || !TEST_mem_ne(pub_rfc, sizeof(pub_rfc), pub_raw, sizeof(pub_raw))
+        || !TEST_mem_ne(pub_legacy, sizeof(pub_legacy),
+            pub_raw, sizeof(pub_raw)))
+        goto err;
+
+    if (!TEST_ptr(key_invalid = x25519_key_with_mode(NULL, NULL))
+        || !TEST_false(EVP_PKEY_set_utf8_string_param(key_invalid,
+            "x25519-scalar-mode", "no-such-mode")))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(key_invalid);
+    EVP_PKEY_free(key_raw);
+    EVP_PKEY_free(key_legacy);
+    EVP_PKEY_free(key_rfc);
+    return ret;
+}
+
+/* Mode survives dup and todata/fromdata; EVP_PKEY_eq honors it. */
+static int test_x25519_scalar_mode_round_trip(void)
+{
+    EVP_PKEY *src = NULL, *dup = NULL, *imp = NULL, *baseline = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM *params = NULL;
+    char mode[64];
+    size_t modelen = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(src = x25519_key_with_mode("raw-unclamped", NULL))
+        || !TEST_ptr(dup = EVP_PKEY_dup(src))
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(dup,
+            "x25519-scalar-mode", mode, sizeof(mode), &modelen))
+        || !TEST_str_eq(mode, "raw-unclamped")
+        || !TEST_int_eq(EVP_PKEY_eq(src, dup), 1))
+        goto err;
+
+    /* Same private bytes but default mode -> not equal. */
+    if (!TEST_ptr(baseline = x25519_key_with_mode(NULL, NULL))
+        || !TEST_int_ne(EVP_PKEY_eq(src, baseline), 1))
+        goto err;
+
+    if (!TEST_true(EVP_PKEY_todata(src, EVP_PKEY_KEYPAIR, &params))
+        || !TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(mainctx, "X25519", NULL))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(ctx, &imp, EVP_PKEY_KEYPAIR, params),
+            0)
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(imp,
+            "x25519-scalar-mode", mode, sizeof(mode), &modelen))
+        || !TEST_str_eq(mode, "raw-unclamped")
+        || !TEST_int_eq(EVP_PKEY_eq(src, imp), 1))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_PARAM_free(params);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(imp);
+    EVP_PKEY_free(baseline);
+    EVP_PKEY_free(dup);
+    EVP_PKEY_free(src);
+    return ret;
+}
+
+/* Matching modes derive equal secrets; differing local modes do not. */
+static int test_x25519_scalar_mode_derive(void)
+{
+    static const unsigned char priv_b[32] = {
+        0x77, 0x07, 0x6d, 0x0a, 0x73, 0x18, 0xa5, 0x7d,
+        0x3c, 0x16, 0xc1, 0x72, 0x51, 0xb2, 0x66, 0x45,
+        0xdf, 0x4c, 0x2f, 0x87, 0xeb, 0xc0, 0x99, 0x2a,
+        0xb1, 0x77, 0xfb, 0xa5, 0x1d, 0xb9, 0x2c, 0x2a
+    };
+    EVP_PKEY *a_rfc = NULL, *b_rfc = NULL;
+    EVP_PKEY *a_raw = NULL, *peer_rfc = NULL;
+    EVP_PKEY *a_local_rfc = NULL, *a_local_raw = NULL;
+    EVP_PKEY_CTX *dctx = NULL;
+    unsigned char shared_a[32], shared_b[32];
+    unsigned char shared_rfc_local[32], shared_raw_local[32];
+    unsigned char b_pub[32];
+    size_t shared_len;
+    size_t b_publen = 0;
+    int ret = 0;
+
+    /* Symmetric ECDH with matching modes. */
+    if (!TEST_ptr(a_rfc = x25519_key_with_mode(NULL, NULL))
+        || !TEST_ptr(b_rfc = EVP_PKEY_new_raw_private_key_ex(mainctx,
+                         "X25519", NULL, priv_b, sizeof(priv_b)))
+        || !TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(mainctx, a_rfc, NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(dctx), 0)
+        || !TEST_int_gt(EVP_PKEY_derive_set_peer(dctx, b_rfc), 0)
+        || (shared_len = sizeof(shared_a),
+            !TEST_int_gt(EVP_PKEY_derive(dctx, shared_a, &shared_len), 0))
+        || !TEST_size_t_eq(shared_len, sizeof(shared_a)))
+        goto err;
+    EVP_PKEY_CTX_free(dctx);
+    dctx = NULL;
+    if (!TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(mainctx, b_rfc, NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(dctx), 0)
+        || !TEST_int_gt(EVP_PKEY_derive_set_peer(dctx, a_rfc), 0)
+        || (shared_len = sizeof(shared_b),
+            !TEST_int_gt(EVP_PKEY_derive(dctx, shared_b, &shared_len), 0))
+        || !TEST_size_t_eq(shared_len, sizeof(shared_b))
+        || !TEST_mem_eq(shared_a, sizeof(shared_a),
+            shared_b, sizeof(shared_b)))
+        goto err;
+    EVP_PKEY_CTX_free(dctx);
+    dctx = NULL;
+
+    /* Same priv bytes, rfc7748 vs raw-unclamped: different shared secrets. */
+    if (!TEST_ptr(a_local_rfc = x25519_key_with_mode(NULL, NULL))
+        || !TEST_ptr(a_local_raw = x25519_key_with_mode("raw-unclamped", NULL))
+        || !TEST_true(EVP_PKEY_get_octet_string_param(b_rfc,
+            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+            b_pub, sizeof(b_pub), &b_publen))
+        || !TEST_size_t_eq(b_publen, sizeof(b_pub))
+        || !TEST_ptr(peer_rfc = EVP_PKEY_new_raw_public_key_ex(mainctx,
+                         "X25519", NULL, b_pub, sizeof(b_pub)))
+        || !TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(mainctx, a_local_rfc,
+                         NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(dctx), 0)
+        || !TEST_int_gt(EVP_PKEY_derive_set_peer(dctx, peer_rfc), 0)
+        || (shared_len = sizeof(shared_rfc_local),
+            !TEST_int_gt(EVP_PKEY_derive(dctx, shared_rfc_local, &shared_len),
+                0)))
+        goto err;
+    EVP_PKEY_CTX_free(dctx);
+    dctx = NULL;
+    if (!TEST_ptr(dctx = EVP_PKEY_CTX_new_from_pkey(mainctx, a_local_raw,
+                      NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(dctx), 0)
+        || !TEST_int_gt(EVP_PKEY_derive_set_peer(dctx, peer_rfc), 0)
+        || (shared_len = sizeof(shared_raw_local),
+            !TEST_int_gt(EVP_PKEY_derive(dctx, shared_raw_local, &shared_len),
+                0))
+        || !TEST_mem_ne(shared_rfc_local, sizeof(shared_rfc_local),
+            shared_raw_local, sizeof(shared_raw_local)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(dctx);
+    EVP_PKEY_free(peer_rfc);
+    EVP_PKEY_free(a_local_raw);
+    EVP_PKEY_free(a_local_rfc);
+    EVP_PKEY_free(a_raw);
+    EVP_PKEY_free(b_rfc);
+    EVP_PKEY_free(a_rfc);
+    return ret;
+}
+
+/* Mode set at keygen via OSSL_PARAM. */
+static int test_x25519_scalar_mode_keygen(void)
+{
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *key = NULL;
+    OSSL_PARAM params[2];
+    char mode[64];
+    size_t modelen = 0;
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_utf8_string("x25519-scalar-mode",
+        (char *)"raw-unclamped", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(mainctx, "X25519", NULL))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_params(ctx, params), 1)
+        || !TEST_int_gt(EVP_PKEY_generate(ctx, &key), 0)
+        || !TEST_true(EVP_PKEY_get_utf8_string_param(key,
+            "x25519-scalar-mode", mode, sizeof(mode), &modelen))
+        || !TEST_str_eq(mode, "raw-unclamped"))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(key);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+/* Mode set fails on a public-only X25519 key. */
+static int test_x25519_scalar_mode_public_only(void)
+{
+    EVP_PKEY *priv_key = NULL, *pub_key = NULL;
+    unsigned char pub[32];
+    size_t publen = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(priv_key = x25519_key_with_mode(NULL, NULL))
+        || !TEST_true(EVP_PKEY_get_octet_string_param(priv_key,
+            OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY,
+            pub, sizeof(pub), &publen))
+        || !TEST_size_t_eq(publen, sizeof(pub))
+        || !TEST_ptr(pub_key = EVP_PKEY_new_raw_public_key_ex(mainctx,
+                         "X25519", NULL, pub, sizeof(pub)))
+        || !TEST_false(EVP_PKEY_set_utf8_string_param(pub_key,
+            "x25519-scalar-mode", "raw-unclamped")))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_PKEY_free(pub_key);
+    EVP_PKEY_free(priv_key);
     return ret;
 }
 #endif
@@ -1571,6 +1843,11 @@ int setup_tests(void)
     ADD_TEST(test_ec_tofrom_data_select);
 #ifndef OPENSSL_NO_ECX
     ADD_TEST(test_ecx_tofrom_data_select);
+    ADD_TEST(test_x25519_scalar_mode_param_basic);
+    ADD_TEST(test_x25519_scalar_mode_round_trip);
+    ADD_TEST(test_x25519_scalar_mode_derive);
+    ADD_TEST(test_x25519_scalar_mode_keygen);
+    ADD_TEST(test_x25519_scalar_mode_public_only);
 #endif
     ADD_TEST(test_ec_d2i_i2d_pubkey);
 #else

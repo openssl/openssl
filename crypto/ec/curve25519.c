@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -20,6 +20,28 @@
 #include <openssl/sha.h>
 
 #include "internal/numbers.h"
+
+static ossl_inline void ossl_x25519_clamp_private(uint8_t e[32],
+    OSSL_X25519_SCALAR_MODE scalar_mode)
+{
+    /* Bit 255 always cleared: 254-bit scalar is required by the ladder. */
+    e[31] &= 0x7f;
+    switch (scalar_mode) {
+    case OSSL_X25519_SCALAR_MODE_RFC7748:
+        e[0] &= 0xf8;
+        e[31] |= 0x40;
+        break;
+    case OSSL_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT:
+        e[0] &= 0xf8;
+        break;
+    case OSSL_X25519_SCALAR_MODE_RAW_UNCLAMPED:
+        break;
+    default:
+        e[0] &= 0xf8;
+        e[31] |= 0x40;
+        break;
+    }
+}
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 
@@ -208,7 +230,7 @@ static void fe64_invert(fe64 out, const fe64 z)
  * fe64_* subroutines.
  */
 static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
-    const uint8_t point[32])
+    const uint8_t point[32], OSSL_X25519_SCALAR_MODE scalar_mode)
 {
     fe64 x1, x2, z2, x3, z3, tmp0, tmp1;
     uint8_t e[32];
@@ -216,9 +238,7 @@ static void x25519_scalar_mulx(uint8_t out[32], const uint8_t scalar[32],
     int pos;
 
     memcpy(e, scalar, 32);
-    e[0] &= 0xf8;
-    e[31] &= 0x7f;
-    e[31] |= 0x40;
+    ossl_x25519_clamp_private(e, scalar_mode);
     fe64_frombytes(x1, point);
     fe64_1(x2);
     fe64_0(z2);
@@ -725,7 +745,7 @@ static void fe51_invert(fe51 out, const fe51 z)
  * fe51_* subroutines.
  */
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
-    const uint8_t point[32])
+    const uint8_t point[32], OSSL_X25519_SCALAR_MODE scalar_mode)
 {
     fe51 x1, x2, z2, x3, z3, tmp0, tmp1;
     uint8_t e[32];
@@ -734,15 +754,13 @@ static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
 
 #ifdef BASE_2_64_IMPLEMENTED
     if (x25519_fe64_eligible()) {
-        x25519_scalar_mulx(out, scalar, point);
+        x25519_scalar_mulx(out, scalar, point, scalar_mode);
         return;
     }
 #endif
 
     memcpy(e, scalar, 32);
-    e[0] &= 0xf8;
-    e[31] &= 0x7f;
-    e[31] |= 0x40;
+    ossl_x25519_clamp_private(e, scalar_mode);
     fe51_frombytes(x1, point);
     fe51_1(x2);
     fe51_0(z2);
@@ -4523,7 +4541,8 @@ static void fe_mul121666(fe h, fe f)
 
 static void x25519_scalar_mult_generic(uint8_t out[32],
     const uint8_t scalar[32],
-    const uint8_t point[32])
+    const uint8_t point[32],
+    OSSL_X25519_SCALAR_MODE scalar_mode)
 {
     fe x1, x2, z2, x3, z3, tmp0, tmp1;
     uint8_t e[32];
@@ -4531,9 +4550,7 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
     int pos;
 
     memcpy(e, scalar, 32);
-    e[0] &= 248;
-    e[31] &= 127;
-    e[31] |= 64;
+    ossl_x25519_clamp_private(e, scalar_mode);
     fe_frombytes(x1, point);
     fe_1(x2);
     fe_0(z2);
@@ -4574,9 +4591,9 @@ static void x25519_scalar_mult_generic(uint8_t out[32],
 }
 
 static void x25519_scalar_mult(uint8_t out[32], const uint8_t scalar[32],
-    const uint8_t point[32])
+    const uint8_t point[32], OSSL_X25519_SCALAR_MODE scalar_mode)
 {
-    x25519_scalar_mult_generic(out, scalar, point);
+    x25519_scalar_mult_generic(out, scalar, point, scalar_mode);
 }
 #endif
 
@@ -5842,25 +5859,23 @@ int ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[3
 }
 
 int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-    const uint8_t peer_public_value[32])
+    const uint8_t peer_public_value[32], OSSL_X25519_SCALAR_MODE scalar_mode)
 {
     static const uint8_t kZeros[32] = { 0 };
-    x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
+    x25519_scalar_mult(out_shared_key, private_key, peer_public_value, scalar_mode);
     /* The all-zero output results when the input is a point of small order. */
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
 
 void ossl_x25519_public_from_private(uint8_t out_public_value[32],
-    const uint8_t private_key[32])
+    const uint8_t private_key[32], OSSL_X25519_SCALAR_MODE scalar_mode)
 {
     uint8_t e[32];
     ge_p3 A;
     fe zplusy, zminusy, zminusy_inv;
 
     memcpy(e, private_key, 32);
-    e[0] &= 248;
-    e[31] &= 127;
-    e[31] |= 64;
+    ossl_x25519_clamp_private(e, scalar_mode);
 
     ge_scalarmult_base(&A, e);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -85,7 +85,48 @@ struct ecx_gen_ctx {
     int selection;
     unsigned char *dhkem_ikm;
     size_t dhkem_ikmlen;
+    OSSL_X25519_SCALAR_MODE x25519_scalar_mode;
 };
+
+#define OSSL_PKEY_PARAM_X25519_SCALAR_MODE "x25519-scalar-mode"
+#define OSSL_PKEY_X25519_SCALAR_MODE_RFC7748 "rfc7748"
+#define OSSL_PKEY_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT "legacy-ed25519-compat"
+#define OSSL_PKEY_X25519_SCALAR_MODE_RAW_UNCLAMPED "raw-unclamped"
+
+static int x25519_scalar_mode_from_name(const char *name,
+    OSSL_X25519_SCALAR_MODE *mode)
+{
+    if (name == NULL || mode == NULL)
+        return 0;
+    if (OPENSSL_strcasecmp(name, OSSL_PKEY_X25519_SCALAR_MODE_RFC7748) == 0) {
+        *mode = OSSL_X25519_SCALAR_MODE_RFC7748;
+        return 1;
+    }
+    if (OPENSSL_strcasecmp(name,
+            OSSL_PKEY_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT)
+        == 0) {
+        *mode = OSSL_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT;
+        return 1;
+    }
+    if (OPENSSL_strcasecmp(name, OSSL_PKEY_X25519_SCALAR_MODE_RAW_UNCLAMPED) == 0) {
+        *mode = OSSL_X25519_SCALAR_MODE_RAW_UNCLAMPED;
+        return 1;
+    }
+    return 0;
+}
+
+static const char *x25519_scalar_mode_to_name(OSSL_X25519_SCALAR_MODE mode)
+{
+    switch (mode) {
+    case OSSL_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT:
+        return OSSL_PKEY_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT;
+    case OSSL_X25519_SCALAR_MODE_RAW_UNCLAMPED:
+        return OSSL_PKEY_X25519_SCALAR_MODE_RAW_UNCLAMPED;
+    case OSSL_X25519_SCALAR_MODE_RFC7748:
+    default:
+        return OSSL_PKEY_X25519_SCALAR_MODE_RFC7748;
+    }
+}
 
 #ifdef S390X_EC_ASM
 static void *s390x_ecx_keygen25519(struct ecx_gen_ctx *gctx);
@@ -170,6 +211,11 @@ static int ecx_match(const void *keydata1, const void *keydata2, int selection)
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
         int key_checked = 0;
 
+        if (key1->type == ECX_KEY_TYPE_X25519
+            && key2->type == ECX_KEY_TYPE_X25519
+            && key1->x25519_scalar_mode != key2->x25519_scalar_mode)
+            return 0;
+
         if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
             const unsigned char *pa = key1->haspubkey ? key1->pubkey : NULL;
             const unsigned char *pb = key2->haspubkey ? key2->pubkey : NULL;
@@ -227,6 +273,7 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
     int ok = 1;
     int include_private;
     struct ecx_imexport_types_st p;
+    const OSSL_PARAM *x25519_mode = NULL;
 
     if (!ossl_prov_is_running()
         || key == NULL
@@ -238,6 +285,20 @@ static int ecx_import(void *keydata, int selection, const OSSL_PARAM params[])
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
     ok = ok && ossl_ecx_key_fromdata(key, p.pub, p.priv, include_private);
+    if (ok && key->type == ECX_KEY_TYPE_X25519) {
+        OSSL_X25519_SCALAR_MODE mode = key->x25519_scalar_mode;
+
+        x25519_mode = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_X25519_SCALAR_MODE);
+        if (x25519_mode != NULL) {
+            ok = x25519_mode->data_type == OSSL_PARAM_UTF8_STRING
+                && x25519_scalar_mode_from_name(x25519_mode->data, &mode);
+#ifdef FIPS_MODULE
+            ok = ok && mode == OSSL_X25519_SCALAR_MODE_RFC7748;
+#endif
+            if (ok)
+                key->x25519_scalar_mode = mode;
+        }
+    }
 
     return ok;
 }
@@ -285,6 +346,11 @@ static int ecx_export(void *keydata, int selection, OSSL_CALLBACK *param_cb,
         int include_private = ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0);
 
         if (!key_to_params(key, tmpl, NULL, NULL, include_private))
+            goto err;
+        if (key->type == ECX_KEY_TYPE_X25519
+            && !ossl_param_build_set_utf8_string(tmpl, NULL,
+                OSSL_PKEY_PARAM_X25519_SCALAR_MODE,
+                x25519_scalar_mode_to_name(key->x25519_scalar_mode)))
             goto err;
     }
 
@@ -365,8 +431,19 @@ static int ed_get_params(void *key, OSSL_PARAM params[], int bits, int secbits,
 
 static int x25519_get_params(void *key, OSSL_PARAM params[])
 {
-    return ecx_get_params(key, params, X25519_BITS, X25519_SECURITY_BITS,
-        X25519_KEYLEN);
+    ECX_KEY *ecx = key;
+    OSSL_PARAM *p;
+
+    if (!ecx_get_params(key, params, X25519_BITS, X25519_SECURITY_BITS,
+            X25519_KEYLEN))
+        return 0;
+
+    p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_X25519_SCALAR_MODE);
+    if (p != NULL
+        && !OSSL_PARAM_set_utf8_string(p,
+            x25519_scalar_mode_to_name(ecx->x25519_scalar_mode)))
+        return 0;
+    return 1;
 }
 
 static int x448_get_params(void *key, OSSL_PARAM params[])
@@ -388,7 +465,22 @@ static int ed448_get_params(void *key, OSSL_PARAM params[])
 
 static const OSSL_PARAM *x25519_gettable_params(void *provctx)
 {
-    return ecx_get_params_list;
+    static const OSSL_PARAM x25519_gettable_params_list[] = {
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_MAX_SIZE, NULL),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_CATEGORY, NULL),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PRIV_KEY, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
+#ifdef FIPS_MODULE
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_FIPS_APPROVED_INDICATOR, NULL),
+#endif
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_X25519_SCALAR_MODE, NULL, 0),
+        OSSL_PARAM_END
+    };
+
+    return x25519_gettable_params_list;
 }
 
 static const OSSL_PARAM *x448_gettable_params(void *provctx)
@@ -449,7 +541,32 @@ static int ecx_set_params(void *key, const OSSL_PARAM params[])
 
 static int x25519_set_params(void *key, const OSSL_PARAM params[])
 {
-    return ecx_set_params(key, params);
+    ECX_KEY *ecx = key;
+    const OSSL_PARAM *p;
+    OSSL_X25519_SCALAR_MODE mode;
+
+    if (!ecx_set_params(key, params))
+        return 0;
+
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_X25519_SCALAR_MODE);
+    if (p == NULL)
+        return 1;
+    if (p->data_type != OSSL_PARAM_UTF8_STRING
+        || !x25519_scalar_mode_from_name(p->data, &mode))
+        return 0;
+#ifdef FIPS_MODULE
+    if (mode != OSSL_X25519_SCALAR_MODE_RFC7748)
+        return 0;
+#endif
+
+    if (ecx->privkey == NULL)
+        return 0;
+
+    ecx->x25519_scalar_mode = mode;
+    ossl_x25519_public_from_private(ecx->pubkey, ecx->privkey,
+        ecx->x25519_scalar_mode);
+    ecx->haspubkey = 1;
+    return 1;
 }
 
 static int x448_set_params(void *key, const OSSL_PARAM params[])
@@ -473,7 +590,14 @@ static const OSSL_PARAM ed_settable_params[] = {
 
 static const OSSL_PARAM *x25519_settable_params(void *provctx)
 {
-    return ecx_set_params_list;
+    static const OSSL_PARAM x25519_settable_params_list[] = {
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_PROPERTIES, NULL, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_X25519_SCALAR_MODE, NULL, 0),
+        OSSL_PARAM_END
+    };
+
+    return x25519_settable_params_list;
 }
 
 static const OSSL_PARAM *x448_settable_params(void *provctx)
@@ -505,6 +629,7 @@ static void *ecx_gen_init(void *provctx, int selection,
         gctx->libctx = libctx;
         gctx->type = type;
         gctx->selection = selection;
+        gctx->x25519_scalar_mode = OSSL_X25519_SCALAR_MODE_RFC7748;
 #ifdef FIPS_MODULE
         /* X25519/X448 are not FIPS approved, (ED25519/ED448 are approved) */
         if (algdesc != NULL
@@ -551,9 +676,29 @@ static int ecx_gen_set_params(void *genctx, const OSSL_PARAM params[])
 {
     struct ecx_gen_ctx *gctx = genctx;
     struct ecx_gen_set_params_st p;
+    const OSSL_PARAM *x25519_mode = NULL;
 
     if (gctx == NULL || !ecx_gen_set_params_decoder(params, &p))
         return 0;
+
+    x25519_mode = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_X25519_SCALAR_MODE);
+    if (x25519_mode != NULL) {
+        OSSL_X25519_SCALAR_MODE mode;
+
+        if (gctx->type != ECX_KEY_TYPE_X25519
+            || x25519_mode->data_type != OSSL_PARAM_UTF8_STRING
+            || !x25519_scalar_mode_from_name(x25519_mode->data, &mode)) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+#ifdef FIPS_MODULE
+        if (mode != OSSL_X25519_SCALAR_MODE_RFC7748) {
+            ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+#endif
+        gctx->x25519_scalar_mode = mode;
+    }
 
     if (p.group != NULL) {
         const char *groupname = NULL;
@@ -716,10 +861,23 @@ static void *ecx_gen(struct ecx_gen_ctx *gctx)
 
     switch (gctx->type) {
     case ECX_KEY_TYPE_X25519:
-        privkey[0] &= 248;
-        privkey[X25519_KEYLEN - 1] &= 127;
-        privkey[X25519_KEYLEN - 1] |= 64;
-        ossl_x25519_public_from_private(key->pubkey, privkey);
+        key->x25519_scalar_mode = gctx->x25519_scalar_mode;
+        switch (gctx->x25519_scalar_mode) {
+        case OSSL_X25519_SCALAR_MODE_RFC7748:
+            privkey[0] &= 248;
+            privkey[X25519_KEYLEN - 1] &= 127;
+            privkey[X25519_KEYLEN - 1] |= 64;
+            break;
+        case OSSL_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT:
+            privkey[0] &= 248;
+            privkey[X25519_KEYLEN - 1] &= 127;
+            break;
+        case OSSL_X25519_SCALAR_MODE_RAW_UNCLAMPED:
+            privkey[X25519_KEYLEN - 1] &= 127;
+            break;
+        }
+        ossl_x25519_public_from_private(key->pubkey, privkey,
+            key->x25519_scalar_mode);
         break;
     case ECX_KEY_TYPE_X448:
         privkey[0] &= 252;
@@ -752,7 +910,9 @@ static void *x25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
         return 0;
 
 #ifdef S390X_EC_ASM
-    if (OPENSSL_s390xcap_P.pcc[1] & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519))
+    if (gctx->x25519_scalar_mode == OSSL_X25519_SCALAR_MODE_RFC7748
+        && (OPENSSL_s390xcap_P.pcc[1]
+            & S390X_CAPBIT(S390X_SCALAR_MULTIPLY_X25519)))
         return s390x_ecx_keygen25519(gctx);
 #endif
     return ecx_gen(gctx);
@@ -876,7 +1036,8 @@ static int ecx_key_pairwise_check(const ECX_KEY *ecx, int type)
 
     switch (type) {
     case ECX_KEY_TYPE_X25519:
-        ossl_x25519_public_from_private(pub, ecx->privkey);
+        ossl_x25519_public_from_private(pub, ecx->privkey,
+            ecx->x25519_scalar_mode);
         break;
     case ECX_KEY_TYPE_X448:
         ossl_x448_public_from_private(pub, ecx->privkey);
