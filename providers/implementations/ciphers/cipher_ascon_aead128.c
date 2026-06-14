@@ -314,6 +314,9 @@ static int ascon_aead128_final(void *vctx, unsigned char *out, size_t *outl, siz
 {
     struct ascon_aead128_ctx_st *ctx = vctx;
 
+    if (!ossl_prov_is_running())
+        return 0;
+
     if (ctx == NULL) {
         /* Context must be set before final */
         return 0;
