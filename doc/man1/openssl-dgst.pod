@@ -1,0 +1,24 @@
+
+=head2 ML-DSA-87 Signatures
+
+To sign a file using ML-DSA-87:
+
+    openssl dgst -sign private_key.pem -sigopt sigopts:ml-dsa-87 -out signature.bin message.txt
+
+To verify:
+
+    openssl dgst -verify public_key.pem -signature signature.bin message.txt
+
+=back
+
+=head2 ML-DSA-87 Signatures
+
+To sign a file using ML-DSA-87:
+
+    openssl dgst -sign private_key.pem -sigopt sigopts:ml-dsa-87 -out signature.bin message.txt
+
+To verify:
+
+    openssl dgst -verify public_key.pem -signature signature.bin message.txt
+
+=back

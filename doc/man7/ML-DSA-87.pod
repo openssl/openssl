@@ -1,0 +1,91 @@
+=pod
+
+=head1 NAME
+
+ML-DSA-87 - Module-Lattice Digital Signature Algorithm (NIST FIPS 204 Level 5)
+
+=head1 DESCRIPTION
+
+ML-DSA-87 (formerly known as Dilithium Level 5) is a post-quantum cryptographic
+signature algorithm standardized by NIST in FIPS 204. It provides 256-bit
+quantum security (NIST Level 5) based on the hardness of the Module-Learning
+with Errors (MLWE) problem.
+
+=head1 PARAMETERS
+
+=over 4
+
+=item Public key size: 2,592 bytes
+
+=item Private key size: 4,864 bytes
+
+=item Signature size: 4,595-4,627 bytes
+
+=item Security level: 256-bit quantum resistance
+
+=back
+
+=head1 ALGORITHM
+
+ML-DSA-87 uses the Fiat-Shamir with Aborts paradigm and operates on polynomial
+rings modulo the prime q = 8380417. The implementation includes:
+
+=over 4
+
+=item * Number Theoretic Transform (NTT) for fast polynomial multiplication
+
+=item * Power2 rounding for compression and decompression
+
+=item * Deterministic random number generation per RFC 6979 style
+
+=back
+
+=head1 KEY GENERATION
+
+To generate an ML-DSA-87 key pair:
+
+    openssl genpkey -algorithm ML-DSA-87 -out private_key.pem
+
+To extract the public key:
+
+    openssl pkey -in private_key.pem -pubout -out public_key.pem
+
+=head1 SIGNING AND VERIFICATION
+
+To sign a file:
+
+    openssl dgst -sign private_key.pem -out signature.bin message.txt
+
+To verify a signature:
+
+    openssl dgst -verify public_key.pem -signature signature.bin message.txt
+
+=head1 PERFORMANCE
+
+Performance on a typical x86-64 CPU:
+
+=over 4
+
+=item * Key generation: ~[insert ms]
+
+=item * Signing: ~[insert ms]
+
+=item * Verification: ~[insert ms]
+
+=back
+
+=head1 REFERENCES
+
+=over 4
+
+=item L<https://csrc.nist.gov/pubs/fips/204/final>
+
+=item L<https://pq-crystals.org/dilithium/>
+
+=back
+
+=head1 SEE ALSO
+
+openssl-genpkey(1), openssl-dgst(1), openssl-pkey(1)
+
+=cut

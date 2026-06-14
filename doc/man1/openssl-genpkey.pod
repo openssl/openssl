@@ -1,0 +1,32 @@
+
+=head2 ML-DSA-87 Algorithm
+
+=over 4
+
+=item B<ML-DSA-87>
+
+Generate an ML-DSA-87 (Dilithium Level 5) key pair:
+
+    openssl genpkey -algorithm ML-DSA-87 -out private_key.pem
+
+To extract the public key:
+
+    openssl pkey -in private_key.pem -pubout -out public_key.pem
+
+=back
+
+=head2 ML-DSA-87 Algorithm
+
+=over 4
+
+=item B<ML-DSA-87>
+
+Generate an ML-DSA-87 (Dilithium Level 5) key pair:
+
+    openssl genpkey -algorithm ML-DSA-87 -out private_key.pem
+
+To extract the public key:
+
+    openssl pkey -in private_key.pem -pubout -out public_key.pem
+
+=back
