@@ -729,6 +729,24 @@ int ossl_ech_aad_and_encrypt(SSL_CONNECTION *s, WPACKET *pkt)
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    /*
+     * Defense-in-depth: encoded_inner_len and clear_len are computed
+     * independently in tls_construct_ctos_ech() (encoded_inner_len
+     * from ossl_ech_encode_inner(), clear_len from
+     * ossl_ech_calc_padding()) which guarantees
+     * clear_len >= encoded_inner_len by the padding arithmetic.
+     * The relationship is not enforced locally, however --- a future
+     * widening of any intermediate type in calc_padding (which uses
+     * mixed size_t / int arithmetic) or a refactor that decouples
+     * the two computations would silently break the invariant and
+     * turn the memcpy below into a heap-buffer overflow.  Check it
+     * here so the function does not depend on cross-file invariants.
+     */
+    if (encoded_inner_len > clear_len) {
+        OPENSSL_free(clear);
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     memcpy(clear, encoded_inner, encoded_inner_len);
 #ifdef OSSL_ECH_SUPERVERBOSE
     ossl_ech_pbuf("EAAE: padded clear", clear, clear_len);

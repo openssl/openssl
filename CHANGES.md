@@ -31,6 +31,18 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Hardened `ossl_ech_aad_and_encrypt()` against a future invariant
+   break between `tls_construct_ctos_ech()` (which sets
+   `s->ext.ech.encoded_inner_len` from `ossl_ech_encode_inner()` and
+   `s->ext.ech.clearlen` from `ossl_ech_calc_padding()`) and the
+   `memcpy(clear, encoded_inner, encoded_inner_len)` site, by
+   verifying `encoded_inner_len <= clear_len` locally before the
+   copy.  The relationship holds today by `ossl_ech_calc_padding()`
+   arithmetic, but the local function should not rely on a
+   cross-translation-unit invariant for memory safety.
+
+   *Bee Rosa Davis*
+
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 
