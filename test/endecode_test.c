@@ -60,6 +60,7 @@ static OSSL_PROVIDER *keyprov = NULL;
 
 #ifndef OPENSSL_NO_EC
 static BN_CTX *bnctx = NULL;
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
 static OSSL_PARAM_BLD *bld_prime_nc = NULL;
 static OSSL_PARAM_BLD *bld_prime = NULL;
 static OSSL_PARAM *ec_explicit_prime_params_nc = NULL;
@@ -70,6 +71,7 @@ static OSSL_PARAM_BLD *bld_tri_nc = NULL;
 static OSSL_PARAM_BLD *bld_tri = NULL;
 static OSSL_PARAM *ec_explicit_tri_params_nc = NULL;
 static OSSL_PARAM *ec_explicit_tri_params_explicit = NULL;
+#endif
 #endif
 #endif
 
@@ -870,21 +872,397 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         test_mem, check_public_MSBLOB, dump_der, 0);
 }
 
+/*
+ * Build a public-only EVP_PKEY of the same algorithm as |src| by
+ * round-tripping the public component through OSSL_PARAMs.
+ */
+static EVP_PKEY *make_public_only_copy(EVP_PKEY *src)
+{
+    OSSL_PARAM *params = NULL;
+    EVP_PKEY_CTX *cctx = NULL;
+    EVP_PKEY *pub = NULL;
+
+    if (!EVP_PKEY_todata(src, EVP_PKEY_PUBLIC_KEY, &params))
+        goto end;
+    if ((cctx = EVP_PKEY_CTX_new_from_pkey(NULL, src, NULL)) == NULL
+        || EVP_PKEY_fromdata_init(cctx) <= 0
+        || EVP_PKEY_fromdata(cctx, &pub, EVP_PKEY_PUBLIC_KEY, params) <= 0) {
+        EVP_PKEY_free(pub);
+        pub = NULL;
+    }
+end:
+    OSSL_PARAM_free(params);
+    EVP_PKEY_CTX_free(cctx);
+    return pub;
+}
+
+/*
+ * Build an "embryonic" EVP_PKEY of the same algorithm as |src|: just
+ * the keymgmt-bound type and (where applicable) domain parameters,
+ * with no key material.  Mirrors the idiom used in
+ * test/ml_kem_evp_extra_test.c.
+ */
+static EVP_PKEY *make_embryonic_copy(EVP_PKEY *src)
+{
+    EVP_PKEY *embryo = EVP_PKEY_new();
+
+    if (embryo == NULL)
+        return NULL;
+    if (EVP_PKEY_copy_parameters(embryo, src) <= 0) {
+        EVP_PKEY_free(embryo);
+        return NULL;
+    }
+    return embryo;
+}
+
+/*
+ * Check that EVP_PKEY_dup() works for every supported provider-backed
+ * key type, and that the duplicate compares equal to the original.
+ *
+ * Exercised in three shapes:
+ *   1. The full keypair |key| (typically pub + priv).
+ *   2. A public-only key derived from |key|.
+ *   3. An "embryonic" key (algorithm + domain parameters only, no key
+ *      material) produced with EVP_PKEY_copy_parameters().  Not every
+ *      keymgmt allows building such a key (RSA's dup refuses any
+ *      selection without keypair bits); when EVP_PKEY_copy_parameters
+ *      fails we skip this arm with a TEST_info().
+ */
+static int test_dup(const char *type, EVP_PKEY *key)
+{
+    EVP_PKEY *dup = NULL;
+    EVP_PKEY *pub_only = NULL;
+    EVP_PKEY *embryo = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(key)) {
+        TEST_info("%s: no source key", type);
+        return 0;
+    }
+
+    /* 1. Dup the full keypair. */
+    if (!TEST_ptr(dup = EVP_PKEY_dup(key))) {
+        TEST_info("%s: EVP_PKEY_dup of keypair returned NULL", type);
+        goto end;
+    }
+    if (!TEST_int_eq(EVP_PKEY_eq(key, dup), 1)) {
+        TEST_info("%s: keypair dup does not compare equal to original", type);
+        goto end;
+    }
+    EVP_PKEY_free(dup);
+    dup = NULL;
+
+    /* 2. Dup a public-only copy of the same key. */
+    if (!TEST_ptr(pub_only = make_public_only_copy(key))) {
+        TEST_info("%s: could not derive a public-only key", type);
+        goto end;
+    }
+    if (!TEST_ptr(dup = EVP_PKEY_dup(pub_only))) {
+        TEST_info("%s: EVP_PKEY_dup of public-only key returned NULL", type);
+        goto end;
+    }
+    if (!TEST_int_eq(EVP_PKEY_eq(pub_only, dup), 1)) {
+        TEST_info("%s: public-only dup does not compare equal to original",
+            type);
+        goto end;
+    }
+    EVP_PKEY_free(dup);
+    dup = NULL;
+
+    /*
+     * 3. Dup an embryonic key.  EVP_PKEY_parameters_eq() answers 1 for
+     * algorithms with real domain parameters and may answer -2 ("nothing
+     * to compare") for those without.  We only reject 0 (definitively
+     * unequal) and -1 (different keymgmts).
+     */
+    embryo = make_embryonic_copy(key);
+    if (embryo != NULL) {
+        if (!TEST_ptr(dup = EVP_PKEY_dup(embryo))) {
+            TEST_info("%s: EVP_PKEY_dup of embryonic key returned NULL",
+                type);
+            goto end;
+        }
+        {
+            int eq = EVP_PKEY_parameters_eq(embryo, dup);
+
+            if (!TEST_true(eq == 1 || eq == -2)) {
+                TEST_info("%s: embryonic dup parameters_eq %d (want 1 or -2)",
+                    type, eq);
+                goto end;
+            }
+        }
+    } else {
+        TEST_info("%s: skipping embryonic dup (no params-only key shape)",
+            type);
+    }
+
+    ok = 1;
+end:
+    EVP_PKEY_free(dup);
+    EVP_PKEY_free(pub_only);
+    EVP_PKEY_free(embryo);
+    return ok;
+}
+
+/*
+ * Drive EVP_PKEY_fromdata with the supplied OSSL_PARAM[] (NULL =
+ * empty array) for the given selection.  Either outcome is accepted:
+ * fromdata may reject the input, or it may succeed and yield a key
+ * with at most algorithm-bound parameters.  In the success case a
+ * battery of common consumer ops must not crash on the resulting
+ * key; their return values are not asserted.
+ */
+static int run_empty_fromdata_probe(const char *type, EVP_PKEY_CTX *cctx,
+    int selection, OSSL_PARAM *params, const char *selname)
+{
+    EVP_PKEY *pkey = NULL;
+    OSSL_PARAM empty[1];
+    int r;
+    int ok = 0;
+
+    if (params == NULL) {
+        empty[0] = OSSL_PARAM_construct_end();
+        params = empty;
+    }
+
+    if (!TEST_int_gt(EVP_PKEY_fromdata_init(cctx), 0)) {
+        TEST_info("%s: fromdata_init failed (%s)", type, selname);
+        goto end;
+    }
+    r = EVP_PKEY_fromdata(cctx, &pkey, selection, params);
+    if (r <= 0) {
+        /* Rejection is fine, but the out-pointer must remain NULL. */
+        if (!TEST_ptr_null(pkey)) {
+            TEST_info("%s: fromdata returned %d but pkey != NULL (%s)",
+                type, r, selname);
+            goto end;
+        }
+        ok = 1;
+        goto end;
+    }
+    if (!TEST_ptr(pkey)) {
+        TEST_info("%s: fromdata returned %d but pkey == NULL (%s)",
+            type, r, selname);
+        goto end;
+    }
+    /*
+     * Walk a battery of common consumer ops on the resulting key.
+     * Their return values are not asserted - a contentless key may
+     * fail every op - only crashing is forbidden.
+     */
+    (void)EVP_PKEY_get_bits(pkey);
+    (void)EVP_PKEY_get_security_bits(pkey);
+    (void)EVP_PKEY_get_size(pkey);
+    (void)EVP_PKEY_eq(pkey, pkey);
+    (void)EVP_PKEY_parameters_eq(pkey, pkey);
+    {
+        OSSL_PARAM *out = NULL;
+
+        if (EVP_PKEY_todata(pkey, selection, &out) > 0)
+            OSSL_PARAM_free(out);
+    }
+    {
+        EVP_PKEY *clone = EVP_PKEY_dup(pkey);
+
+        EVP_PKEY_free(clone);
+    }
+    {
+        BIO *bio = BIO_new(BIO_s_null());
+
+        if (bio != NULL) {
+            (void)EVP_PKEY_print_public(bio, pkey, 0, NULL);
+            (void)EVP_PKEY_print_private(bio, pkey, 0, NULL);
+            (void)EVP_PKEY_print_params(bio, pkey, 0, NULL);
+            BIO_free(bio);
+        }
+    }
+    {
+        /* The param/public/private/pairwise check family. */
+        EVP_PKEY_CTX *vctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+
+        if (vctx != NULL) {
+            (void)EVP_PKEY_param_check(vctx);
+            (void)EVP_PKEY_param_check_quick(vctx);
+            (void)EVP_PKEY_public_check(vctx);
+            (void)EVP_PKEY_public_check_quick(vctx);
+            (void)EVP_PKEY_private_check(vctx);
+            (void)EVP_PKEY_pairwise_check(vctx);
+            EVP_PKEY_CTX_free(vctx);
+        }
+    }
+    ok = 1;
+end:
+    EVP_PKEY_free(pkey);
+    return ok;
+}
+
+static int probe_empty_fromdata(const char *type, EVP_PKEY *prototype,
+    int selection, const char *selname)
+{
+    EVP_PKEY_CTX *cctx = NULL;
+    int ok = 0;
+
+    if (!TEST_ptr(cctx = EVP_PKEY_CTX_new_from_pkey(NULL, prototype, NULL))) {
+        TEST_info("%s: CTX alloc failed for empty fromdata (%s)",
+            type, selname);
+        goto end;
+    }
+    ok = run_empty_fromdata_probe(type, cctx, selection, NULL, selname);
+end:
+    EVP_PKEY_CTX_free(cctx);
+    return ok;
+}
+
+/*
+ * Same probe driven from an algorithm name rather than a prototype
+ * key, for keymgmts without a keygen path.  Algorithms not loadable
+ * under the active provider set are silently skipped.  |params| may
+ * be NULL (= empty OSSL_PARAM[]) or a caller-built partial array.
+ */
+static int probe_fromdata_by_name(const char *name, int selection,
+    OSSL_PARAM *params, const char *selname)
+{
+    EVP_PKEY_CTX *cctx = NULL;
+    int ok = 1;
+
+    cctx = EVP_PKEY_CTX_new_from_name(NULL, name, NULL);
+    if (cctx == NULL)
+        return 1;
+    ok = run_empty_fromdata_probe(name, cctx, selection, params, selname);
+    EVP_PKEY_CTX_free(cctx);
+    return ok;
+}
+
+/*
+ * Drive EVP_PKEY_fromdata with an empty OSSL_PARAM[] for both
+ * EVP_PKEY_PUBLIC_KEY and EVP_PKEY_KEYPAIR selections.  Either
+ * outcome is acceptable: fromdata rejects, or it succeeds and the
+ * resulting key survives the consumer-op battery without crashing.
+ */
+static int test_fromdata(const char *type, EVP_PKEY *prototype)
+{
+    if (!TEST_ptr(prototype)) {
+        TEST_info("%s: no prototype key", type);
+        return 0;
+    }
+    if (!probe_empty_fromdata(type, prototype, EVP_PKEY_PUBLIC_KEY,
+            "EVP_PKEY_PUBLIC_KEY"))
+        return 0;
+    if (!probe_empty_fromdata(type, prototype, EVP_PKEY_KEYPAIR,
+            "EVP_PKEY_KEYPAIR"))
+        return 0;
+    return 1;
+}
+
+/*
+ * Named-group-only partial-shape variants for prototype-matrix
+ * algorithms, plus any keymgmts without a keygen path.  Each entry
+ * is one (name, selection, params-builder) shape; a NULL builder
+ * means "use an empty OSSL_PARAM[]".  Algorithms not loadable under
+ * the active provider set are silently skipped.
+ */
+typedef int (*fromdata_shape_build_fn)(OSSL_PARAM_BLD *bld);
+
+struct fromdata_shape {
+    const char *name; /* keymgmt algorithm name */
+    int selection; /* EVP_PKEY_PUBLIC_KEY / KEYPAIR / etc. */
+    fromdata_shape_build_fn build; /* NULL -> empty OSSL_PARAM[] */
+    const char *label; /* diagnostic label */
+};
+
+#ifndef OPENSSL_NO_DH
+static int build_dh_named_group(OSSL_PARAM_BLD *bld)
+{
+    return OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        "ffdhe2048", 0);
+}
+#endif
+
+#ifndef OPENSSL_NO_EC
+static int build_ec_named_group(OSSL_PARAM_BLD *bld)
+{
+    return OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        "P-256", 0);
+}
+#ifndef OPENSSL_NO_SM2
+static int build_sm2_named_group(OSSL_PARAM_BLD *bld)
+{
+    return OSSL_PARAM_BLD_push_utf8_string(bld, OSSL_PKEY_PARAM_GROUP_NAME,
+        "SM2", 0);
+}
+#endif
+#endif
+
+static const struct fromdata_shape no_keygen_shapes[] = {
+/* Named-group-only partial shapes. */
+#ifndef OPENSSL_NO_DH
+    { "DH", EVP_PKEY_KEYPAIR, build_dh_named_group,
+        "DH / named group only / KEYPAIR" },
+    { "DH", EVP_PKEY_PUBLIC_KEY, build_dh_named_group,
+        "DH / named group only / PUBLIC_KEY" },
+#endif
+#ifndef OPENSSL_NO_EC
+    { "EC", EVP_PKEY_KEYPAIR, build_ec_named_group,
+        "EC / group only / KEYPAIR" },
+    { "EC", EVP_PKEY_PUBLIC_KEY, build_ec_named_group,
+        "EC / group only / PUBLIC_KEY" },
+#ifndef OPENSSL_NO_SM2
+    { "SM2", EVP_PKEY_KEYPAIR, build_sm2_named_group,
+        "SM2 / group only / KEYPAIR" },
+#endif
+#endif
+};
+
+static int test_fromdata_no_keygen(void)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(no_keygen_shapes); i++) {
+        const struct fromdata_shape *s = &no_keygen_shapes[i];
+        OSSL_PARAM_BLD *bld = NULL;
+        OSSL_PARAM *params = NULL;
+        int ok;
+
+        if (s->build != NULL) {
+            if (!TEST_ptr(bld = OSSL_PARAM_BLD_new()))
+                return 0;
+            if (!s->build(bld)) {
+                TEST_info("%s: builder failed", s->label);
+                OSSL_PARAM_BLD_free(bld);
+                return 0;
+            }
+            params = OSSL_PARAM_BLD_to_param(bld);
+            if (!TEST_ptr(params)) {
+                OSSL_PARAM_BLD_free(bld);
+                return 0;
+            }
+        }
+        ok = probe_fromdata_by_name(s->name, s->selection, params, s->label);
+        OSSL_PARAM_free(params);
+        OSSL_PARAM_BLD_free(bld);
+        if (!ok)
+            return 0;
+    }
+    return 1;
+}
+
 #define KEYS(KEYTYPE) \
     static EVP_PKEY *key_##KEYTYPE = NULL
 #define MAKE_KEYS(KEYTYPE, KEYTYPEstr, params) \
-    ok = ok                                    \
-        && TEST_ptr(key_##KEYTYPE = make_key(KEYTYPEstr, NULL, params))
+    ok &= TEST_ptr(key_##KEYTYPE = make_key(KEYTYPEstr, NULL, params))
 #define FREE_KEYS(KEYTYPE) \
     EVP_PKEY_free(key_##KEYTYPE);
 
 #define DOMAIN_KEYS(KEYTYPE)                    \
     static EVP_PKEY *template_##KEYTYPE = NULL; \
     static EVP_PKEY *key_##KEYTYPE = NULL
-#define MAKE_DOMAIN_KEYS(KEYTYPE, KEYTYPEstr, params)                       \
-    ok = ok                                                                 \
-        && TEST_ptr(template_##KEYTYPE = make_template(KEYTYPEstr, params)) \
-        && TEST_ptr(key_##KEYTYPE = make_key(KEYTYPEstr, template_##KEYTYPE, NULL))
+#define MAKE_DOMAIN_KEYS(KEYTYPE, KEYTYPEstr, params)                 \
+    do {                                                              \
+        ok &= TEST_ptr(template_##KEYTYPE = make_template(KEYTYPEstr, \
+                           params));                                  \
+        ok &= TEST_ptr(key_##KEYTYPE = make_key(KEYTYPEstr,           \
+                           template_##KEYTYPE, NULL));                \
+    } while (0)
 #define FREE_DOMAIN_KEYS(KEYTYPE)      \
     EVP_PKEY_free(template_##KEYTYPE); \
     EVP_PKEY_free(key_##KEYTYPE)
@@ -913,15 +1291,29 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
     static int test_public_##KEYTYPE##_via_PEM(void)                      \
     {                                                                     \
         return test_public_via_PEM(KEYTYPEstr, key_##KEYTYPE, fips);      \
+    }                                                                     \
+    static int test_dup_##KEYTYPE(void)                                   \
+    {                                                                     \
+        return test_dup(KEYTYPEstr, key_##KEYTYPE);                       \
+    }                                                                     \
+    static int test_fromdata_##KEYTYPE(void)                              \
+    {                                                                     \
+        return test_fromdata(KEYTYPEstr, key_##KEYTYPE);                  \
     }
 
-#define ADD_TEST_SUITE(KEYTYPE)                     \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_DER); \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_PEM); \
-    ADD_TEST(test_protected_##KEYTYPE##_via_DER);   \
-    ADD_TEST(test_protected_##KEYTYPE##_via_PEM);   \
-    ADD_TEST(test_public_##KEYTYPE##_via_DER);      \
-    ADD_TEST(test_public_##KEYTYPE##_via_PEM)
+#define ADD_TEST_SUITE(KEYTYPE)                             \
+    do {                                                    \
+        if (key_##KEYTYPE != NULL) {                        \
+            ADD_TEST(test_unprotected_##KEYTYPE##_via_DER); \
+            ADD_TEST(test_unprotected_##KEYTYPE##_via_PEM); \
+            ADD_TEST(test_protected_##KEYTYPE##_via_DER);   \
+            ADD_TEST(test_protected_##KEYTYPE##_via_PEM);   \
+            ADD_TEST(test_public_##KEYTYPE##_via_DER);      \
+            ADD_TEST(test_public_##KEYTYPE##_via_PEM);      \
+            ADD_TEST(test_dup_##KEYTYPE);                   \
+            ADD_TEST(test_fromdata_##KEYTYPE);              \
+        }                                                   \
+    } while (0)
 
 #define IMPLEMENT_TEST_SUITE_PARAMS(KEYTYPE, KEYTYPEstr)       \
     static int test_params_##KEYTYPE##_via_DER(void)           \
@@ -933,9 +1325,13 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         return test_params_via_PEM(KEYTYPEstr, key_##KEYTYPE); \
     }
 
-#define ADD_TEST_SUITE_PARAMS(KEYTYPE)         \
-    ADD_TEST(test_params_##KEYTYPE##_via_DER); \
-    ADD_TEST(test_params_##KEYTYPE##_via_PEM)
+#define ADD_TEST_SUITE_PARAMS(KEYTYPE)                 \
+    do {                                               \
+        if (key_##KEYTYPE != NULL) {                   \
+            ADD_TEST(test_params_##KEYTYPE##_via_DER); \
+            ADD_TEST(test_params_##KEYTYPE##_via_PEM); \
+        }                                              \
+    } while (0)
 
 #define IMPLEMENT_TEST_SUITE_LEGACY(KEYTYPE, KEYTYPEstr)                   \
     static int test_unprotected_##KEYTYPE##_via_legacy_PEM(void)           \
@@ -947,9 +1343,13 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         return test_protected_via_legacy_PEM(KEYTYPEstr, key_##KEYTYPE);   \
     }
 
-#define ADD_TEST_SUITE_LEGACY(KEYTYPE)                     \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM); \
-    ADD_TEST(test_protected_##KEYTYPE##_via_legacy_PEM)
+#define ADD_TEST_SUITE_LEGACY(KEYTYPE)                             \
+    do {                                                           \
+        if (key_##KEYTYPE != NULL) {                               \
+            ADD_TEST(test_unprotected_##KEYTYPE##_via_legacy_PEM); \
+            ADD_TEST(test_protected_##KEYTYPE##_via_legacy_PEM);   \
+        }                                                          \
+    } while (0)
 
 #define IMPLEMENT_TEST_SUITE_MSBLOB(KEYTYPE, KEYTYPEstr)               \
     static int test_unprotected_##KEYTYPE##_via_MSBLOB(void)           \
@@ -961,25 +1361,35 @@ static int test_public_via_MSBLOB(const char *type, EVP_PKEY *key)
         return test_public_via_MSBLOB(KEYTYPEstr, key_##KEYTYPE);      \
     }
 
-#define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                 \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB); \
-    ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB)
+#define ADD_TEST_SUITE_MSBLOB(KEYTYPE)                         \
+    do {                                                       \
+        if (key_##KEYTYPE != NULL) {                           \
+            ADD_TEST(test_unprotected_##KEYTYPE##_via_MSBLOB); \
+            ADD_TEST(test_public_##KEYTYPE##_via_MSBLOB);      \
+        }                                                      \
+    } while (0)
 
 #define IMPLEMENT_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE, KEYTYPEstr)   \
     static int test_unprotected_##KEYTYPE##_via_PVK(void)           \
     {                                                               \
         return test_unprotected_via_PVK(KEYTYPEstr, key_##KEYTYPE); \
     }
-#define ADD_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE) \
-    ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK)
+#define ADD_TEST_SUITE_UNPROTECTED_PVK(KEYTYPE)             \
+    do {                                                    \
+        if (key_##KEYTYPE != NULL)                          \
+            ADD_TEST(test_unprotected_##KEYTYPE##_via_PVK); \
+    } while (0)
 #ifndef OPENSSL_NO_RC4
 #define IMPLEMENT_TEST_SUITE_PROTECTED_PVK(KEYTYPE, KEYTYPEstr)   \
     static int test_protected_##KEYTYPE##_via_PVK(void)           \
     {                                                             \
         return test_protected_via_PVK(KEYTYPEstr, key_##KEYTYPE); \
     }
-#define ADD_TEST_SUITE_PROTECTED_PVK(KEYTYPE) \
-    ADD_TEST(test_protected_##KEYTYPE##_via_PVK)
+#define ADD_TEST_SUITE_PROTECTED_PVK(KEYTYPE)             \
+    do {                                                  \
+        if (key_##KEYTYPE != NULL)                        \
+            ADD_TEST(test_protected_##KEYTYPE##_via_PVK); \
+    } while (0)
 #endif
 
 #ifndef OPENSSL_NO_DH
@@ -1010,6 +1420,7 @@ DOMAIN_KEYS(EC);
 IMPLEMENT_TEST_SUITE(EC, "EC", 1)
 IMPLEMENT_TEST_SUITE_PARAMS(EC, "EC")
 IMPLEMENT_TEST_SUITE_LEGACY(EC, "EC")
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
 DOMAIN_KEYS(ECExplicitPrimeNamedCurve);
 IMPLEMENT_TEST_SUITE(ECExplicitPrimeNamedCurve, "EC", 1)
 IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitPrimeNamedCurve, "EC")
@@ -1024,6 +1435,7 @@ DOMAIN_KEYS(ECExplicitTri2G);
 IMPLEMENT_TEST_SUITE(ECExplicitTri2G, "EC", 0)
 IMPLEMENT_TEST_SUITE_LEGACY(ECExplicitTri2G, "EC")
 #endif
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
 #ifndef OPENSSL_NO_SM2
 KEYS(SM2);
 IMPLEMENT_TEST_SUITE(SM2, "SM2", 0)
@@ -1106,6 +1518,7 @@ IMPLEMENT_TEST_SUITE(ML_DSA_87, "ML-DSA-87", 1)
 #endif /*  OPENSSL_NO_ML_DSA */
 
 #ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
 /* Explicit parameters that match a named curve */
 static int do_create_ec_explicit_prime_params(OSSL_PARAM_BLD *bld,
     const unsigned char *gen,
@@ -1286,6 +1699,7 @@ static int create_ec_explicit_trinomial_params(OSSL_PARAM_BLD *bld)
     return do_create_ec_explicit_trinomial_params(bld, gen2, sizeof(gen2));
 }
 #endif /* OPENSSL_NO_EC2M */
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
 
 /*
  * Test that multiple calls to OSSL_ENCODER_to_data() do not cause side effects
@@ -1425,8 +1839,10 @@ int setup_tests(void)
         return 0;
 
 #ifndef OPENSSL_NO_EC
-    if (!TEST_ptr(bnctx = BN_CTX_new_ex(testctx))
-        || !TEST_ptr(bld_prime_nc = OSSL_PARAM_BLD_new())
+    if (!TEST_ptr(bnctx = BN_CTX_new_ex(testctx)))
+        return 0;
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
+    if (!TEST_ptr(bld_prime_nc = OSSL_PARAM_BLD_new())
         || !TEST_ptr(bld_prime = OSSL_PARAM_BLD_new())
         || !create_ec_explicit_prime_params_namedcurve(bld_prime_nc)
         || !create_ec_explicit_prime_params(bld_prime)
@@ -1442,6 +1858,7 @@ int setup_tests(void)
 #endif
     )
         return 0;
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
 #endif
 
     TEST_info("Generating keys...");
@@ -1458,12 +1875,14 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     TEST_info("Generating EC keys...");
     MAKE_DOMAIN_KEYS(EC, "EC", EC_params);
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     MAKE_DOMAIN_KEYS(ECExplicitPrimeNamedCurve, "EC", ec_explicit_prime_params_nc);
     MAKE_DOMAIN_KEYS(ECExplicitPrime2G, "EC", ec_explicit_prime_params_explicit);
 #ifndef OPENSSL_NO_EC2M
     MAKE_DOMAIN_KEYS(ECExplicitTriNamedCurve, "EC", ec_explicit_tri_params_nc);
     MAKE_DOMAIN_KEYS(ECExplicitTri2G, "EC", ec_explicit_tri_params_explicit);
 #endif
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
 #ifndef OPENSSL_NO_SM2
     MAKE_KEYS(SM2, "SM2", NULL);
 #endif
@@ -1506,12 +1925,17 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_SLH_DSA */
 
     TEST_info("Loading RSA key...");
-    ok = ok && TEST_ptr(key_RSA = load_pkey_pem(rsa_file, keyctx));
+    ok &= TEST_ptr(key_RSA = load_pkey_pem(rsa_file, keyctx));
     TEST_info("Loading RSA_PSS key...");
-    ok = ok && TEST_ptr(key_RSA_PSS = load_pkey_pem(rsa_pss_file, keyctx));
+    ok &= TEST_ptr(key_RSA_PSS = load_pkey_pem(rsa_pss_file, keyctx));
     TEST_info("Generating keys done");
 
-    if (ok) {
+    /*
+     * Register every test whose key was successfully generated.  The
+     * per-algorithm key_##KEYTYPE != NULL guard inside each
+     * ADD_TEST_SUITE* macro keeps us from referencing missing keys.
+     */
+    {
 #ifndef OPENSSL_NO_DH
         ADD_TEST_SUITE(DH);
         ADD_TEST_SUITE_PARAMS(DH);
@@ -1537,6 +1961,7 @@ int setup_tests(void)
         ADD_TEST_SUITE(EC);
         ADD_TEST_SUITE_PARAMS(EC);
         ADD_TEST_SUITE_LEGACY(EC);
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
         ADD_TEST_SUITE(ECExplicitPrimeNamedCurve);
         ADD_TEST_SUITE_LEGACY(ECExplicitPrimeNamedCurve);
         ADD_TEST_SUITE(ECExplicitPrime2G);
@@ -1547,6 +1972,7 @@ int setup_tests(void)
         ADD_TEST_SUITE(ECExplicitTri2G);
         ADD_TEST_SUITE_LEGACY(ECExplicitTri2G);
 #endif
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
 #ifndef OPENSSL_NO_SM2
         if (!is_fips_3_0_0) {
             /* 3.0.0 FIPS provider imports explicit EC params and then fails. */
@@ -1608,14 +2034,21 @@ int setup_tests(void)
             ADD_TEST_SUITE(SLH_DSA_SHAKE_256f);
         }
 #endif /* OPENSSL_NO_SLH_DSA */
+
+        /*
+         * Named-group-only partial shapes for DH and EC/SM2.  Each
+         * shape is silently skipped if the algorithm is not loadable.
+         */
+        ADD_TEST(test_fromdata_no_keygen);
     }
 
-    return 1;
+    return ok;
 }
 
 void cleanup_tests(void)
 {
 #ifndef OPENSSL_NO_EC
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     OSSL_PARAM_free(ec_explicit_prime_params_nc);
     OSSL_PARAM_free(ec_explicit_prime_params_explicit);
     OSSL_PARAM_BLD_free(bld_prime_nc);
@@ -1626,6 +2059,7 @@ void cleanup_tests(void)
     OSSL_PARAM_BLD_free(bld_tri_nc);
     OSSL_PARAM_BLD_free(bld_tri);
 #endif
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
     BN_CTX_free(bnctx);
 #endif /* OPENSSL_NO_EC */
 
@@ -1638,12 +2072,14 @@ void cleanup_tests(void)
 #endif
 #ifndef OPENSSL_NO_EC
     FREE_DOMAIN_KEYS(EC);
+#ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     FREE_DOMAIN_KEYS(ECExplicitPrimeNamedCurve);
     FREE_DOMAIN_KEYS(ECExplicitPrime2G);
 #ifndef OPENSSL_NO_EC2M
     FREE_DOMAIN_KEYS(ECExplicitTriNamedCurve);
     FREE_DOMAIN_KEYS(ECExplicitTri2G);
 #endif
+#endif /* OPENSSL_NO_EC_EXPLICIT_CURVES */
 #ifndef OPENSSL_NO_SM2
     FREE_KEYS(SM2);
 #endif
