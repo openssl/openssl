@@ -2919,8 +2919,7 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
             sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
             ret = SSL_write_ex(s, buf, num, written);
             sc->mode |= partialwrite;
-            if (ret)
-                sc->ext.early_data_suppressed = 0;
+            sc->ext.early_data_suppressed = 0;
             return ret;
         }
         /* fall through */
