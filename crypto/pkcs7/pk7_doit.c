@@ -262,6 +262,10 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     switch (i) {
     case NID_pkcs7_signed:
         md_sk = p7->d.sign->md_algs;
+        if (p7->d.sign->contents == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            goto err;
+        }
         os = pkcs7_get1_data(p7->d.sign->contents);
         break;
     case NID_pkcs7_signedAndEnveloped:
@@ -285,6 +289,10 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         break;
     case NID_pkcs7_digest:
         xa = p7->d.digest->md;
+        if (p7->d.digest->contents == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            goto err;
+        }
         os = pkcs7_get1_data(p7->d.digest->contents);
         break;
     case NID_pkcs7_data:
@@ -468,6 +476,10 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
          * data_body is NULL if that structure has no (=detached) content
          * or if the contentType is wrong (i.e., not "data").
          */
+        if (p7->d.sign->contents == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            goto err;
+        }
         data_body = PKCS7_get_octet_string(p7->d.sign->contents);
         if (!PKCS7_is_detached(p7) && data_body == NULL) {
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_INVALID_SIGNED_DATA_TYPE);
