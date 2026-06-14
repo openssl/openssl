@@ -501,6 +501,25 @@ subtest "generating certificate requests with SLH-DSA" => sub {
     }
 };
 
+subtest "error message when country code exceeds 2 characters" => sub {
+    plan tests => 1;
+
+    my $errfile = "req-country-code.err";
+
+    ok(!run(app(["openssl", "req",
+                 "-newkey", "rsa:2048",
+                 "-nodes", 
+                 "-keyout", "server.key", 
+                 "-x509", 
+                 "-days", "365",
+                 "-out", "server.crt",
+                 "-subj", "/C=Foo/ST=St/L=Loc/O=Org/OU=mlaunch/CN=localhost"])
+            stderr => $errfile),
+       "Checking that character length of country code fails");
+
+    unlink $errfile;
+};
+
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
 
 run_conversion('req conversions',
