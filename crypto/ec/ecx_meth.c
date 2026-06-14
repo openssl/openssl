@@ -98,7 +98,7 @@ static int ecx_priv_decode_ex(EVP_PKEY *pkey, const PKCS8_PRIV_KEY_INFO *p8,
 static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
 {
     const ECX_KEY *ecxkey = pkey->pkey.ecx;
-    ASN1_OCTET_STRING oct;
+    ASN1_OCTET_STRING *oct;
     unsigned char *penc = NULL;
     int penclen;
 
@@ -107,11 +107,18 @@ static int ecx_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         return 0;
     }
 
-    oct.data = ecxkey->privkey;
-    oct.length = KEYLEN(pkey);
-    oct.flags = 0;
-
-    penclen = i2d_ASN1_OCTET_STRING(&oct, &penc);
+    oct = ASN1_OCTET_STRING_new();
+    if (oct == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
+        return 0;
+    }
+    if (!ASN1_OCTET_STRING_set(oct, ecxkey->privkey, KEYLEN(pkey))) {
+        ASN1_OCTET_STRING_free(oct);
+        ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
+        return 0;
+    }
+    penclen = i2d_ASN1_OCTET_STRING(oct, &penc);
+    ASN1_OCTET_STRING_free(oct);
     if (penclen < 0) {
         ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
         return 0;

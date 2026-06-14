@@ -12,8 +12,6 @@
 #include <openssl/pkcs12.h>
 #include <openssl/trace.h>
 
-#include <crypto/asn1.h>
-
 /*
  * Encrypt/Decrypt a buffer based on password and algor, result in a
  * OPENSSL_malloc'ed buffer
@@ -153,7 +151,7 @@ void *PKCS12_item_decrypt_d2i_ex(const X509_ALGOR *algor, const ASN1_ITEM *it,
         return NULL;
     }
 
-    if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, oct->data, oct->length,
+    if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, ASN1_STRING_get0_data(oct), ASN1_STRING_length(oct),
             &out, &outlen, 0, libctx, propq))
         return NULL;
     p = out;
@@ -206,11 +204,17 @@ ASN1_OCTET_STRING *PKCS12_item_i2d_encrypt_ex(X509_ALGOR *algor,
         ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCODE_ERROR);
         goto err;
     }
-    if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, in, inlen, &oct->data,
-            &oct->length, 1, ctx, propq)) {
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
-        OPENSSL_free(in);
-        goto err;
+    {
+        unsigned char *encdata = NULL;
+        int enclen = 0;
+        if (!PKCS12_pbe_crypt_ex(algor, pass, passlen, in, inlen,
+                &encdata, &enclen, 1, ctx, propq)) {
+            OPENSSL_free(encdata);
+            ERR_raise(ERR_LIB_PKCS12, PKCS12_R_ENCRYPT_ERROR);
+            OPENSSL_free(in);
+            goto err;
+        }
+        ASN1_STRING_set0(oct, encdata, enclen);
     }
     if (zbuf)
         OPENSSL_cleanse(in, inlen);

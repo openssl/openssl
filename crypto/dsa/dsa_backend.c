@@ -21,8 +21,6 @@
 #include "crypto/dsa.h"
 #include "dsa_local.h"
 
-#include <crypto/asn1.h>
-
 /*
  * The intention with the "backend" source file is to offer backend functions
  * for legacy backends (EVP_PKEY_ASN1_METHOD) and provider implementations
@@ -142,12 +140,12 @@ DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
 
     if ((privkey = d2i_ASN1_INTEGER(NULL, &p, pklen)) == NULL)
         goto decerr;
-    if (privkey->type == V_ASN1_NEG_INTEGER || ptype != V_ASN1_SEQUENCE)
+    if (ASN1_STRING_type(privkey) == V_ASN1_NEG_INTEGER || ptype != V_ASN1_SEQUENCE)
         goto decerr;
 
     pstr = pval;
-    pm = pstr->data;
-    pmlen = pstr->length;
+    pm = ASN1_STRING_get0_data(pstr);
+    pmlen = ASN1_STRING_length(pstr);
     if ((dsa = d2i_DSAparams(NULL, &pm, pmlen)) == NULL)
         goto decerr;
     /* We have parameters now set private key */

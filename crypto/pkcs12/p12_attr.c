@@ -12,8 +12,6 @@
 #include <openssl/pkcs12.h>
 #include "p12_local.h"
 
-#include <crypto/asn1.h>
-
 /* Add a local keyid to a safebag */
 
 int PKCS12_add_localkeyid(PKCS12_SAFEBAG *bag, const unsigned char *name,
@@ -117,8 +115,8 @@ char *PKCS12_get_friendlyname(PKCS12_SAFEBAG *bag)
         return NULL;
     if (atype->type != V_ASN1_BMPSTRING)
         return NULL;
-    return OPENSSL_uni2utf8(atype->value.bmpstring->data,
-        atype->value.bmpstring->length);
+    return OPENSSL_uni2utf8(ASN1_STRING_get0_data(atype->value.bmpstring),
+        ASN1_STRING_length(atype->value.bmpstring));
 }
 
 const STACK_OF(X509_ATTRIBUTE) *

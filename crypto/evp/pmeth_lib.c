@@ -22,7 +22,6 @@
 #include <openssl/kdf.h>
 #include "internal/cryptlib.h"
 #ifndef FIPS_MODULE
-#include "crypto/asn1.h"
 #endif
 #include "crypto/evp.h"
 #include "crypto/dh.h"
