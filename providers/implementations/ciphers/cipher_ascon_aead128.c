@@ -453,7 +453,7 @@ static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 0;
         }
         if (tag_len != FIXED_TAG_LENGTH) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_NOT_SUPPORTED);
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
     }
