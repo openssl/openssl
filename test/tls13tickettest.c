@@ -811,6 +811,7 @@ static int early_data_retry(struct tls13_channel *x)
                 s = ENDPOINT_ERROR;
                 break;
             }
+            break;
         case ENDPOINT_HANDSHAKE:
             if (SSL_is_init_finished(x->s.ssl))
                 s = ENDPOINT_DONE;
