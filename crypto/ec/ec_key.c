@@ -958,9 +958,16 @@ int EC_KEY_oct2key(EC_KEY *key, const unsigned char *buf, size_t len,
      * the last significant bit) contains the point conversion form.
      * EC_POINT_oct2point() has already performed sanity checking of
      * the buffer so we know it is valid.
+     *
+     * Mirror the form to the group as well, so that subsequent reads
+     * via EC_GROUP_get_point_conversion_form() see the loaded form
+     * rather than the EC_GROUP_new() default.  The encoder and the
+     * provider OSSL_PARAM emitter both consult the group.
      */
-    if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0)
+    if ((key->group->meth->flags & EC_FLAGS_CUSTOM_CURVE) == 0) {
         key->conv_form = (point_conversion_form_t)(buf[0] & ~0x01);
+        EC_GROUP_set_point_conversion_form(key->group, key->conv_form);
+    }
     return 1;
 }
 

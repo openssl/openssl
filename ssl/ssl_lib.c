@@ -823,15 +823,6 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
         goto err;
 
     s->session_ctx = ctx;
-    if (ctx->ext.ecpointformats != NULL) {
-        s->ext.ecpointformats = OPENSSL_memdup(ctx->ext.ecpointformats,
-            ctx->ext.ecpointformats_len);
-        if (s->ext.ecpointformats == NULL) {
-            s->ext.ecpointformats_len = 0;
-            goto err;
-        }
-        s->ext.ecpointformats_len = ctx->ext.ecpointformats_len;
-    }
     if (ctx->ext.supportedgroups != NULL) {
         size_t add = 0;
 
@@ -1531,7 +1522,6 @@ void ossl_ssl_connection_free(SSL *ssl)
 
     OPENSSL_free(s->ext.hostname);
     SSL_CTX_free(s->session_ctx);
-    OPENSSL_free(s->ext.ecpointformats);
     OPENSSL_free(s->ext.peer_ecpointformats);
     OPENSSL_free(s->ext.supportedgroups);
     OPENSSL_free(s->ext.keyshares);
@@ -4620,7 +4610,6 @@ void SSL_CTX_free(SSL_CTX *a)
     ssl_ctx_srp_ctx_free_intern(a);
 #endif
 
-    OPENSSL_free(a->ext.ecpointformats);
     OPENSSL_free(a->ext.supportedgroups);
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);

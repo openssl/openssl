@@ -282,7 +282,8 @@ static int do_EC_KEY_print(BIO *bp, const EC_KEY *x, int off, ec_print_t ktype)
     }
 
     if (ktype != EC_KEY_PRINT_PARAM && EC_KEY_get0_public_key(x) != NULL) {
-        publen = EC_KEY_key2buf(x, EC_KEY_get_conv_form(x), &pub, NULL);
+        publen = EC_KEY_key2buf(x,
+            EC_GROUP_get_point_conversion_form(group), &pub, NULL);
         if (publen == 0)
             goto err;
     }
@@ -500,7 +501,7 @@ static int ec_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
     if (pub_point != NULL) {
         /* convert pub_point to a octet string according to the SECG standard */
-        point_conversion_form_t format = EC_KEY_get_conv_form(eckey);
+        point_conversion_form_t format = EC_GROUP_get_point_conversion_form(ecg);
 
         if ((pub_key_buflen = EC_POINT_point2buf(ecg, pub_point,
                  format,

@@ -1042,10 +1042,6 @@ struct ssl_ctx_st {
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
 
-        /* EC extension values inherited by SSL structure */
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats;
-
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
 
@@ -1675,9 +1671,6 @@ struct ssl_connection_st {
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
 
-        /* our list */
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats;
         /* peer's list */
         size_t peer_ecpointformats_len;
         unsigned char *peer_ecpointformats;

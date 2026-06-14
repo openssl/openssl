@@ -1063,7 +1063,8 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
             goto err;
         }
 
-        publen = EC_KEY_key2buf(a, a->conv_form, &pub, NULL);
+        publen = EC_KEY_key2buf(a,
+            EC_GROUP_get_point_conversion_form(a->group), &pub, NULL);
 
         if (publen == 0 || publen > INT_MAX) {
             ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
@@ -1155,6 +1156,7 @@ EC_KEY *o2i_ECPublicKey(EC_KEY **a, const unsigned char **in, long len)
 
 int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
 {
+    point_conversion_form_t form;
     size_t buf_len = 0;
     int new_buffer = 0;
 
@@ -1163,8 +1165,16 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
         return 0;
     }
 
-    buf_len = EC_POINT_point2oct(a->group, a->pub_key,
-        a->conv_form, NULL, 0, NULL);
+    /*
+     * The encoded form follows the group's asn1_form, which the deprecated
+     * EC_KEY_set_conv_form() and the EC_KEY_oct2key() decode path both keep
+     * in sync with the key's conv_form.  Reading the group avoids a stale
+     * key-side value when the group was updated through one of the EC_GROUP
+     * setters directly.
+     */
+    form = EC_GROUP_get_point_conversion_form(a->group);
+
+    buf_len = EC_POINT_point2oct(a->group, a->pub_key, form, NULL, 0, NULL);
 
     if (buf_len > INT_MAX) {
         ERR_raise(ERR_LIB_EC, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -1179,7 +1189,7 @@ int i2o_ECPublicKey(const EC_KEY *a, unsigned char **out)
             return 0;
         new_buffer = 1;
     }
-    if (!EC_POINT_point2oct(a->group, a->pub_key, a->conv_form,
+    if (!EC_POINT_point2oct(a->group, a->pub_key, form,
             *out, buf_len, NULL)) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         if (new_buffer) {
