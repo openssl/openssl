@@ -7,8 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef ASCON_H
-#define ASCON_H
+#ifndef OSSL_CRYPTO_ASCON_H
+#define OSSL_CRYPTO_ASCON_H
 #include <openssl/opensslconf.h>
 
 #ifndef OPENSSL_NO_ASCON128
@@ -54,4 +54,4 @@ void ossl_ascon_aead_cleanup(ASCON_AEAD_CTX *ctx);
 
 #endif /* OPENSSL_NO_ASCON128 */
 
-#endif /* ASCON_H */
+#endif /* OSSL_CRYPTO_ASCON_H */
