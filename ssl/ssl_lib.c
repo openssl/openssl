@@ -2854,7 +2854,7 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
     return ret;
 }
 
-int SSL_write_ex_all(SSL *s, const void *buf, size_t num, size_t *written)
+static int SSL_write_ex_all(SSL *s, const void *buf, size_t num, size_t *written)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
     uint32_t partialwrite;
