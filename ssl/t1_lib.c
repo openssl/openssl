@@ -1549,18 +1549,25 @@ static int gid_cb(const char *elem, int len, void *arg)
             if (!drop_ks) {
                 size_t end; /* End index of affected tuple */
 
-                /* Removing the first keyshare of an already completed tuple */
-                for (end = tpl_start_idx + garg->tuplcnt_arr[j]; i < end; ++i) {
-                    /* Any other keyshares for the same tuple? */
-                    if (k + 1 < garg->ksidcnt
-                        && garg->gid_arr[i] == garg->ksid_arr[k + 1])
-                        break;
-                }
-                /* Float keyshare to first group when no others found */
-                if (i >= end)
-                    garg->ksid_arr[k] = garg->gid_arr[tpl_start_idx];
-                else
+                /* Removing the first keyshare of an already completed tuple.*/
+                if (garg->tuplcnt_arr[j] == 0) {
                     drop_ks = 1;
+                } else {
+                    end = tpl_start_idx + garg->tuplcnt_arr[j];
+                    if (end > garg->gidcnt)
+                        end = garg->gidcnt;
+                    for (; i < end; ++i) {
+                        /* Any other keyshares for the same tuple? */
+                        if (k + 1 < garg->ksidcnt
+                            && garg->gid_arr[i] == garg->ksid_arr[k + 1])
+                            break;
+                    }
+                    /* Float keyshare to first group when no others found */
+                    if (i >= end && tpl_start_idx < garg->gidcnt)
+                        garg->ksid_arr[k] = garg->gid_arr[tpl_start_idx];
+                    else
+                        drop_ks = 1;
+                }
             }
             if (drop_ks) {
                 garg->ksidcnt--;
@@ -1573,11 +1580,15 @@ static int gid_cb(const char *elem, int len, void *arg)
          * Adjust closed or current tuple's group count, if a closed tuple
          * count reaches zero excise the resulting empty tuple.  The current
          * (not yet closed) tuple at the end of the list stays even if empty.
+         *
+         * The active tuple's group count lives at tuplcnt_arr[tplcnt]; the
+         * memmove range must include that slot so the active counter shifts
+         * down with the closed tuples after `j`.
          */
         if (garg->tuplcnt_arr[j] == 0 && j < garg->tplcnt) {
             garg->tplcnt--;
             memmove(garg->tuplcnt_arr + j, garg->tuplcnt_arr + j + 1,
-                (garg->tplcnt - j) * sizeof(size_t));
+                (garg->tplcnt - j + 1) * sizeof(size_t));
         }
     } else { /* Processing addition of a single new group */
 
