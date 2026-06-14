@@ -2854,11 +2854,23 @@ int SSL_write_ex2(SSL *s, const void *buf, size_t num, uint64_t flags,
     return ret;
 }
 
+int SSL_write_ex_all(SSL *s, const void *buf, size_t num, size_t *written)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    uint32_t partialwrite;
+    int ret;
+
+    partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
+    sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
+    ret = SSL_write_ex2(s, buf, num, 0, written);
+    sc->mode |= partialwrite;
+    return ret;
+}
+
 int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 {
     int ret, early_data_state;
     size_t writtmp;
-    uint32_t partialwrite;
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
 
     /* TODO(QUIC 0RTT): This will need special handling for QUIC */
@@ -2876,10 +2888,7 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
             ret = SSL_connect(s);
             if (ret <= 0)
                 return 0;
-            partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
-            sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
-            ret = SSL_write_ex(s, buf, num, written);
-            sc->mode |= partialwrite;
+            ret = SSL_write_ex_all(s, buf, num, written);
             if (ret > 0)
                 sc->ext.early_data_suppressed = 0;
             return ret;
@@ -2913,13 +2922,10 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
                 sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
             return 0;
         }
-        /* Send the data as ordinary application data instead. */
+        /* Send the early data as ordinary application data instead. */
         if (sc->early_data_state == SSL_EARLY_DATA_NONE
             && sc->ext.early_data_suppressed) {
-            partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
-            sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
-            ret = SSL_write_ex(s, buf, num, written);
-            sc->mode |= partialwrite;
+            ret = SSL_write_ex_all(s, buf, num, written);
             if (ret > 0)
                 sc->ext.early_data_suppressed = 0;
             return ret;
@@ -2933,11 +2939,8 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
          * of how many bytes we've written between the SSL_write_ex() call and
          * the flush if the flush needs to be retried)
          */
-        partialwrite = sc->mode & SSL_MODE_ENABLE_PARTIAL_WRITE;
-        sc->mode &= ~SSL_MODE_ENABLE_PARTIAL_WRITE;
-        ret = SSL_write_ex(s, buf, num, &writtmp);
-        sc->mode |= partialwrite;
-        if (!ret) {
+        ret = SSL_write_ex_all(s, buf, num, &writtmp);
+        if (ret == 0) {
             sc->early_data_state = SSL_EARLY_DATA_WRITE_RETRY;
             return ret;
         }
