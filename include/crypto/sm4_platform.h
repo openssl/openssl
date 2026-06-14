@@ -53,6 +53,30 @@ void rv64i_zvksed_sm4_cbc_encrypt(const unsigned char *in, unsigned char *out,
 void rv64i_zvksed_sm4_cbc_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const SM4_KEY *key,
     unsigned char *iv, int enc);
+void rv64i_zvbb_zvkg_zvksed_sm4_xts_encrypt(const unsigned char *in,
+    unsigned char *out, size_t length,
+    const SM4_KEY *key1,
+    const SM4_KEY *key2,
+    const unsigned char iv[16],
+    const int enc);
+void rv64i_zvbb_zvkg_zvksed_sm4_xts_decrypt(const unsigned char *in,
+    unsigned char *out, size_t length,
+    const SM4_KEY *key1,
+    const SM4_KEY *key2,
+    const unsigned char iv[16],
+    const int enc);
+void rv64i_zvbb_zvkg_zvksed_sm4_xtsgb_encrypt(const unsigned char *in,
+    unsigned char *out, size_t length,
+    const SM4_KEY *key1,
+    const SM4_KEY *key2,
+    const unsigned char iv[16],
+    const int enc);
+void rv64i_zvbb_zvkg_zvksed_sm4_xtsgb_decrypt(const unsigned char *in,
+    unsigned char *out, size_t length,
+    const SM4_KEY *key1,
+    const SM4_KEY *key2,
+    const unsigned char iv[16],
+    const int enc);
 #elif (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* Intel x86_64 support */
 #include "internal/cryptlib.h"
