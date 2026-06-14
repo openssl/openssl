@@ -266,20 +266,17 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         goto next;
 
     ok = 0; /* Assume that we fail */
-
     ERR_set_mark();
     if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
         derp = der;
-        if (ctx->desc->d2i_PKCS8 != NULL) {
+        if (ctx->desc->d2i_PKCS8 != NULL)
             key = ctx->desc->d2i_PKCS8(&derp, der_len, ctx);
-            if (ctx->flag_fatal) {
-                ERR_clear_last_mark();
-                goto end;
-            }
-        } else if (ctx->desc->d2i_private_key != NULL) {
+        else if (ctx->desc->d2i_private_key != NULL)
             key = ctx->desc->d2i_private_key(NULL, &derp, der_len);
-        }
-        if (key == NULL && ctx->selection != 0) {
+        if (ctx->flag_fatal != 0) {
+            ERR_clear_last_mark();
+            goto end;
+        } else if (key == NULL && ctx->selection != 0) {
             ERR_clear_last_mark();
             goto next;
         }
@@ -290,7 +287,10 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
             key = ctx->desc->d2i_PUBKEY(&derp, der_len, ctx);
         else if (ctx->desc->d2i_public_key != NULL)
             key = ctx->desc->d2i_public_key(NULL, &derp, der_len);
-        if (key == NULL && ctx->selection != 0) {
+        if (ctx->flag_fatal != 0) {
+            ERR_clear_last_mark();
+            goto end;
+        } else if (key == NULL && ctx->selection != 0) {
             ERR_clear_last_mark();
             goto next;
         }
@@ -299,7 +299,10 @@ static int der2key_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
         derp = der;
         if (ctx->desc->d2i_key_params != NULL)
             key = ctx->desc->d2i_key_params(NULL, &derp, der_len);
-        if (key == NULL && ctx->selection != 0) {
+        if (ctx->flag_fatal != 0) {
+            ERR_clear_last_mark();
+            goto end;
+        } else if (key == NULL && ctx->selection != 0) {
             ERR_clear_last_mark();
             goto next;
         }
@@ -902,7 +905,12 @@ static void *
 rsa_d2i_PUBKEY(const unsigned char **der, long der_len,
     ossl_unused struct der2key_ctx_st *ctx)
 {
-    return d2i_RSA_PUBKEY(NULL, der, der_len);
+    void *key = d2i_RSA_PUBKEY(NULL, der, der_len);
+    if (key != NULL)
+        return key;
+
+    ctx->flag_fatal = 1;
+    return NULL;
 }
 
 static int rsa_check(void *key, struct der2key_ctx_st *ctx)
