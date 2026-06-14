@@ -1,0 +1,17 @@
+LIBS=../../libcrypto
+SOURCE= \
+       ml_dsa_evp.c \
+       sign.c \
+       poly.c \
+       polyvec.c \
+       ntt.c \
+       packing.c \
+       rounding.c \
+       fips202.c \
+       aes256ctr.c \
+       rng.c \
+       randombytes.c \
+       reduce.c \
+       symmetric-shake.c \
+       symmetric-aes.c
+INCLUDE=../../

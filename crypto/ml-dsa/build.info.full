@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE=ml_dsa_evp.c
+INCLUDE=../../
