@@ -29,7 +29,7 @@ Vector extension.
  OPENSSL_riscvcap="rv64gc_v_zba_zbb_zbs..."
 
 Note that extension implication is currently not implemented.
-For example, when "rv64gc_b" is provided as the environment variable,
+For example, when C<rv64gc_b> is provided as the environment variable,
 zba/zbb/zbs would not be implied in the capability vector.
 
 Currently only these extensions are recognized:
@@ -200,6 +200,10 @@ there is no way to override the riscv_vlen by the environment variable.
 Disables all instruction set extensions:
 
  export OPENSSL_riscvcap="rv64gc"
+
+Same for an RV32 build:
+
+ export OPENSSL_riscvcap="rv32gc"
 
 Only enable the vector extension:
 
