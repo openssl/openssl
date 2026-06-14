@@ -294,6 +294,25 @@ of an OpenSSL data structure (given in capital letters) that the function is
 primarily operating on. The B<func_name> portion of the name is usually in
 lowercase letters and indicates the purpose of the function.
 
+=head1 FINDING SOURCE CODE FOR A CRYPTOGRAPHIC ALGORITHM
+
+Most cryptographic code in OpenSSL starts with a call to an EVP_ API which
+then does an indirect call to a function that resides in a provider.
+You can find the provider algorithms in subfolders of /providers/implementations.
+There is a subfolder for each different operation type, which includes
+/ciphers, /digests, (key) /exchange, /kdfs, /macs, /kem, /signatures and /asymciphers.
+Each algorithm file in a subfolder contains one or more function tables of the
+form ````const OSSL_DISPATCH ossl_<alg_type>_functions[]````. Each table
+contains a list of functions associated with the algorithm. The algorithm
+functions call additional support functions within the /crypto folder which
+normally have an associated subfolder name e.g. crypto/ml_kem.
+The /providers/implementations/keymgmt subfolder contains a key manager for each
+EVP_PKEY key type (such as RSA), which handles key operations such as
+key generation, key validation, and importing/exporting keys to/from a provider.
+Each function table contains a new function which returns a blob of data to the
+EVP layer. This blob is then passed back in on subsequent calls from the EVP layer
+for other calls such as init and update.
+
 =head1 DEMO APPLICATIONS
 
 OpenSSL is distributed with a set of demo applications which provide some
