@@ -100,7 +100,7 @@ $0 =~ m/(.*[\/\\])[^\/\\]+$/; $dir=$1;
 ( $xlate="${dir}../../perlasm/x86_64-xlate.pl" and -f $xlate) or
 die "can't locate x86_64-xlate.pl";
 
-$avx=1 if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+$avx=1 if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 		=~ /GNU assembler version ([2-9]\.[0-9]+)/ &&
 	   $1>=2.19);
 $avx=1 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
@@ -109,9 +109,9 @@ $avx=1 if (!$avx && $win64 && ($flavour =~ /nasm/ || $ENV{ASM} =~ /nasm/) &&
 $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   `ml64 2>&1` =~ /Version ([0-9]+)\./ &&
 	   $1>=10);
-$avx=1 if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=3.0);
+$avx=1 if (!$avx && defined $ENV{CC} && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=3.0);
 
-$avx=1 if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
+$avx=1 if (!$avx && defined $ENV{CC} && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
 	   $1>=11); #icx started with clang 11
 
 $shaext=1;	### set to zero if compiling for 1.0.1
