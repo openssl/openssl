@@ -704,8 +704,8 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
         str_version = tmpbuf;
     }
 
-    BIO_printf(bio, "%s %s%s [length %04lx]%s%s\n", str_write_p, str_version,
-        str_content_type, (unsigned long)len, str_details1,
+    BIO_printf(bio, "%s %s%s [length %04zx]%s%s\n", str_write_p, str_version,
+        str_content_type, len, str_details1,
         str_details2);
 
     if (len > 0) {

@@ -197,7 +197,7 @@ static int execute_cts128(const CTS128_FIXTURE *fixture, int num)
     unsigned char cleartext[64], ciphertext[64], vector[64];
     size_t tail, size;
 
-    TEST_info("%s_vector_%lu", fixture->case_name, (unsigned long)len);
+    TEST_info("%s_vector_%zu", fixture->case_name, len);
 
     tail = fixture->last_blocks_correction(orig_vector, vector, len);
 

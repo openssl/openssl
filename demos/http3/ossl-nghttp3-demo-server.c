@@ -323,7 +323,7 @@ static int on_recv_data(nghttp3_conn *conn, int64_t stream_id,
     const uint8_t *data, size_t datalen,
     void *conn_user_data, void *stream_user_data)
 {
-    fprintf(stderr, "on_recv_data! %ld\n", (unsigned long)datalen);
+    fprintf(stderr, "on_recv_data! %zu\n", datalen);
     fprintf(stderr, "on_recv_data! %.*s\n", (int)datalen, data);
     return 0;
 }
@@ -502,7 +502,7 @@ static int read_from_ssl_ids(nghttp3_conn **curh3conn, struct h3ssl *h3ssl)
         printf("SSL_poll failed\n");
         return -1; /* something is wrong */
     }
-    printf("read_from_ssl_ids %ld events\n", (unsigned long)result_count);
+    printf("read_from_ssl_ids %zu events\n", result_count);
     if (result_count == 0) {
         /* Timeout may be something somewhere */
         return 0;
@@ -862,12 +862,12 @@ static int quic_server_write(struct h3ssl *h3ssl, uint64_t streamid,
                 ERR_print_errors_fp(stderr);
                 return 0;
             }
-            printf("written %lld on %lld flags %lld\n", (unsigned long long)len,
+            printf("written %zu on %llu flags %llu\n", len,
                 (unsigned long long)streamid, (unsigned long long)flags);
             return 1;
         }
     }
-    printf("quic_server_write %lld on %lld (NOT FOUND!)\n", (unsigned long long)len,
+    printf("quic_server_write %zu on %llu (NOT FOUND!)\n", len,
         (unsigned long long)streamid);
     return 0;
 }
@@ -1226,8 +1226,8 @@ static int run_quic_server(SSL_CTX *ctx, int fd)
                 size_t numbytes = vec[i].len;
                 int flagwrite = 0;
 
-                printf("quic_server_write on %llu for %ld\n",
-                    (unsigned long long)streamid, (unsigned long)vec[i].len);
+                printf("quic_server_write on %llu for %zu\n",
+                    (unsigned long long)streamid, vec[i].len);
                 if (fin && i == sveccnt - 1)
                     flagwrite = SSL_WRITE_FLAG_CONCLUDE;
                 if (!quic_server_write(&h3ssl, streamid, vec[i].base,

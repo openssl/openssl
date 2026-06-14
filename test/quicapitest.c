@@ -1705,12 +1705,12 @@ static int test_bw_limit(void)
                     sendlen > TEST_SINGLE_WRITE_SIZE ? TEST_SINGLE_WRITE_SIZE
                                                      : sendlen,
                     &written)) {
-                TEST_info("Retrying to send: %llu", (unsigned long long)sendlen);
+                TEST_info("Retrying to send: %zu", sendlen);
                 if (!TEST_int_eq(SSL_get_error(clientquic, 0), SSL_ERROR_WANT_WRITE))
                     goto err;
             } else {
                 sendlen -= written;
-                TEST_info("Remaining to send: %llu", (unsigned long long)sendlen);
+                TEST_info("Remaining to send: %zu", sendlen);
             }
         } else {
             SSL_handle_events(clientquic);
@@ -1722,9 +1722,9 @@ static int test_bw_limit(void)
                 &readbytes)
             && readbytes > 1) {
             recvlen -= readbytes;
-            TEST_info("Remaining to recv: %llu", (unsigned long long)recvlen);
+            TEST_info("Remaining to recv: %zu", recvlen);
         } else {
-            TEST_info("No progress on recv: %llu", (unsigned long long)recvlen);
+            TEST_info("No progress on recv: %zu", recvlen);
         }
         ossl_quic_tserver_tick(qtserv);
     }

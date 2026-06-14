@@ -824,7 +824,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
     OSSL_TRACE_BEGIN(TLS)
     {
-        BIO_printf(trc_out, "dec %lu\n", (unsigned long)rr[0].length);
+        BIO_printf(trc_out, "dec %zu\n", rr[0].length);
         BIO_dump_indent(trc_out, rr[0].data, (int)rr[0].length, 4);
     }
     OSSL_TRACE_END(TLS);

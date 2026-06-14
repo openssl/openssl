@@ -147,8 +147,8 @@ static int demonstrate_digest(void)
     fprintf(stdout, "\n");
     /* Check digest_value against the known answer */
     if ((size_t)digest_length != sizeof(known_answer)) {
-        fprintf(stdout, "Digest length(%d) not equal to known answer length(%lu).\n",
-            digest_length, (unsigned long)sizeof(known_answer));
+        fprintf(stdout, "Digest length(%u) not equal to known answer length(%zu).\n",
+            digest_length, sizeof(known_answer));
     } else if (memcmp(digest_value, known_answer, digest_length) != 0) {
         for (j = 0; j < sizeof(known_answer); j++) {
             fprintf(stdout, "%02x", known_answer[j]);
