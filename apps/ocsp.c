@@ -1123,7 +1123,7 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
         one = OCSP_request_onereq_get0(req, i);
         cid = OCSP_onereq_get0_id(one);
 
-        OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, NULL, cid);
+        OCSP_id_get0_info(NULL, &cert_id_md_oid, NULL, &serial, cid);
 
         cert_id_md = EVP_MD_fetch(app_get0_libctx(), OBJ_nid2sn(OBJ_obj2nid(cert_id_md_oid)),
             app_get0_propq());
@@ -1145,13 +1145,22 @@ static void make_ocsp_response(BIO *err, OCSP_RESPONSE **resp, OCSP_REQUEST *req
 
             if (OCSP_id_issuer_cmp(ca_id, cid) == 0) {
                 found = 1;
-                if (resp_md != NULL)
-                    cid_resp_md = OCSP_cert_to_id(resp_md, NULL, ca_cert);
+                if (resp_md != NULL) {
+                    cid_resp_md = OCSP_cert_id_new(resp_md,
+                        X509_get_subject_name(ca_cert),
+                        X509_get0_pubkey_bitstr(ca_cert), serial);
+                    if (cid_resp_md == NULL) {
+                        *resp = OCSP_response_create(
+                            OCSP_RESPONSE_STATUS_INTERNALERROR, NULL);
+                        OCSP_CERTID_free(ca_id);
+                        EVP_MD_free(cert_id_md);
+                        goto end;
+                    }
+                }
             }
             OCSP_CERTID_free(ca_id);
         }
         EVP_MD_free(cert_id_md);
-        OCSP_id_get0_info(NULL, NULL, NULL, &serial, cid);
         inf = lookup_serial(db, serial);
 
         /* at this point, we can have cid be an alias of cid_resp_md */
