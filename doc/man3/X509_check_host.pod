@@ -41,6 +41,17 @@ with a dot (e.g. ".example.com"), it will be matched by a certificate
 valid for any sub-domain of B<name>, (see also
 B<X509_CHECK_FLAG_SINGLE_LABEL_SUBDOMAINS> below).
 
+When the subject CommonName will not be ignored, whether as a result of the
+B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> host flag, or because no DNS subject
+alternative names are present in the certificate, any DNS name constraints in
+issuer certificates apply to the subject CommonName as well as the subject
+alternative name extension.
+
+When the subject CommonName will be ignored, whether as a result of the
+B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> host flag, or because some DNS subject
+alternative names are present in the certificate, DNS name constraints in
+issuer certificates will not be applied to the subject DN.
+
 When the certificate is matched, and B<peername> is not NULL, a
 pointer to a copy of the matching SAN or CN from the peer certificate
 is stored at the address passed in B<peername>.  The application
