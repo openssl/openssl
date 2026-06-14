@@ -22,7 +22,6 @@
 #include <openssl/buffer.h>
 #include <openssl/x509v3.h>
 #include "internal/cryptlib.h"
-#include "crypto/asn1.h"
 #include "crypto/x509.h"
 #include "ext_dat.h"
 #include "x509_local.h"
@@ -417,14 +416,18 @@ static int make_addressPrefix(IPAddressOrRange **result, unsigned char *addr,
     aor->type = IPAddressOrRange_addressPrefix;
     if (aor->u.addressPrefix == NULL && (aor->u.addressPrefix = ASN1_BIT_STRING_new()) == NULL)
         goto err;
-    /* BIT_STRING is a typedef of STRING
-     * this function allows to set value without checking invalid bits
-     * as they are nullified after setting */
-    if (!ASN1_STRING_set(aor->u.addressPrefix, addr, bytelen))
-        goto err;
-    if (bitlen > 0)
-        aor->u.addressPrefix->data[bytelen - 1] &= ~(0xFF >> bitlen);
-    ossl_asn1_bit_string_set_unused_bits(aor->u.addressPrefix, 8 - bitlen);
+    if (bitlen > 0) {
+        /* Zero unused bits in a copy; set1 rejects non-zero unused bits. */
+        unsigned char addr_buf[ADDR_RAW_BUF_LEN];
+        memcpy(addr_buf, addr, bytelen);
+        addr_buf[bytelen - 1] &= ~(0xFF >> bitlen);
+        if (!ASN1_BIT_STRING_set1(aor->u.addressPrefix, addr_buf, bytelen,
+                8 - bitlen))
+            goto err;
+    } else {
+        if (!ASN1_BIT_STRING_set1(aor->u.addressPrefix, addr, bytelen, 0))
+            goto err;
+    }
 
     *result = aor;
     return 1;
@@ -464,29 +467,29 @@ static int make_addressRange(IPAddressOrRange **result,
 
     for (i = length; i > 0 && min[i - 1] == 0x00; --i)
         ;
-    if (!ASN1_BIT_STRING_set1(aor->u.addressRange->min, min, i, 0))
-        goto err;
+    /* Trailing zeros stripped above are valid zero unused bits for set1. */
     if (i > 0) {
         unsigned char b = min[i - 1];
-        int j = 1;
+        int j = 1, unused_bits;
 
         while ((b & (0xFFU >> j)) != 0)
             ++j;
-        aor->u.addressRange->min->flags |= 8 - j;
+        unused_bits = (8 - j) & 7;
+        if (!ASN1_BIT_STRING_set1(aor->u.addressRange->min, min, i, unused_bits))
+            goto err;
+    } else {
+        if (!ASN1_BIT_STRING_set1(aor->u.addressRange->min, min, 0, 0))
+            goto err;
     }
 
-    for (i = length; i > 0 && max[i - 1] == 0xFF; --i)
-        ;
-    if (!ASN1_BIT_STRING_set1(aor->u.addressRange->max, max, i, 0))
+    /*
+     * RFC 3779 encodes the max address with trailing 1 bits as "unused" bits
+     * set to 1.  ASN1_BIT_STRING_set1 requires unused bits to be zero, so
+     * store the full address with unused_bits=0 instead.  addr_expand(fill=0xFF)
+     * produces the same expanded result whether unused_bits is 0 or non-zero.
+     */
+    if (!ASN1_BIT_STRING_set1(aor->u.addressRange->max, max, length, 0))
         goto err;
-    if (i > 0) {
-        unsigned char b = max[i - 1];
-        int j = 1;
-
-        while ((b & (0xFFU >> j)) != (0xFFU >> j))
-            ++j;
-        aor->u.addressRange->max->flags |= 8 - j;
-    }
 
     *result = aor;
     return 1;

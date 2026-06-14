@@ -13,7 +13,6 @@
 #include <openssl/err.h>
 #include <openssl/decoder.h>
 #include "internal/sizes.h"
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
 
@@ -26,8 +25,8 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
-        const unsigned char *pm = pstr->data;
-        size_t pmlen = (size_t)pstr->length;
+        const unsigned char *pm = ASN1_STRING_get0_data(pstr);
+        size_t pmlen = (size_t)ASN1_STRING_length(pstr);
         int selection = OSSL_KEYMGMT_SELECT_ALL_PARAMETERS;
 
         ctx = OSSL_DECODER_CTX_new_for_pkey(&pkey, "DER", NULL, "EC",
@@ -287,9 +286,9 @@ static int ecdh_cms_encrypt(CMS_RecipientInfo *ri)
         enckeylen = EVP_PKEY_get1_encoded_public_key(pkey, &penc);
         if (enckeylen > INT_MAX || enckeylen == 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, (int)enckeylen);
-        ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
-
+        if (!ASN1_BIT_STRING_set1(pubkey, penc, enckeylen, 0))
+            goto err;
+        OPENSSL_free(penc);
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_X9_62_id_ecPublicKey),
             V_ASN1_UNDEF, NULL); /* cannot fail */

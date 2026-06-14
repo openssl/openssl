@@ -10,7 +10,6 @@
  */
 
 #include "cmp_local.h"
-#include "crypto/asn1.h" /* for ossl_X509_ALGOR_from_nid() */
 
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.
@@ -88,7 +87,7 @@ ASN1_BIT_STRING *ossl_cmp_calc_protection(const OSSL_CMP_CTX *ctx,
         if (sig_len > INT_MAX || (prot = ASN1_BIT_STRING_new()) == NULL)
             goto end;
         /* OpenSSL by default encodes all bit strings as ASN.1 NamedBitList */
-        if (!ASN1_BIT_STRING_set1(prot, protection, (int)sig_len, 0)) {
+        if (!ASN1_BIT_STRING_set1(prot, protection, sig_len, 0)) {
             ASN1_BIT_STRING_free(prot);
             prot = NULL;
         }
