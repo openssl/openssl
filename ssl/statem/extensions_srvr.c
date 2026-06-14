@@ -22,6 +22,7 @@
 #define MAX_SUPPORTED_GROUPS 128
 #define MAX_KEY_SHARES 16
 #define MAX_PRE_SHARED_KEYS 16
+#define MAX_OCSP_RESPONDER_IDS 16
 
 /*
  * 2 bytes for packet length, 2 bytes for format version, 2 bytes for
@@ -339,6 +340,7 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
     X509 *x, size_t chainidx)
 {
     PACKET responder_id_list, exts;
+    int i;
 
     /* We ignore this in a resumption handshake */
     if (s->hit)
@@ -390,7 +392,11 @@ int tls_parse_ctos_status_request(SSL_CONNECTION *s, PACKET *pkt,
         s->ext.ocsp.ids = NULL;
     }
 
-    while (PACKET_remaining(&responder_id_list) > 0) {
+    /*
+     * Limit the number of OCSP responder IDs we will process - we ignore any
+     * beyond the limit.
+     */
+    for (i = 0; i < MAX_OCSP_RESPONDER_IDS && PACKET_remaining(&responder_id_list) > 0; i++) {
         OCSP_RESPID *id;
         PACKET responder_id;
         const unsigned char *id_data;
