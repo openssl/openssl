@@ -354,3 +354,45 @@ jobs:
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
+
+  openbsd-x86_64:
+    runs-on: ubuntu-latest
+    if: github.repository == 'openssl/openssl'
+    steps:
+    - uses: actions/checkout@v6
+    - name: config
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        shutdown_vm: false
+        run: |
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        shutdown_vm: false
+        run: |
+          ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        shutdown_vm: false
+        run: |
+          make -j4
+    - name: make test
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        run: |
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test
