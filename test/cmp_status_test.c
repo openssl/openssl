@@ -57,7 +57,7 @@ static int execute_PKISI_test(CMP_STATUS_TEST_FIXTURE *fixture)
     if (!TEST_ptr(statusString = sk_ASN1_UTF8STRING_value(ossl_cmp_pkisi_get0_statusString(si),
                       0))
         || !TEST_mem_eq(fixture->text, strlen(fixture->text),
-            (char *)statusString->data, statusString->length))
+            ASN1_STRING_get0_data(statusString), ASN1_STRING_length(statusString)))
         goto end;
 
     if (!TEST_int_eq(fixture->pkifailure,

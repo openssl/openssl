@@ -17,8 +17,6 @@
 #include "testutil.h"
 #include "internal/nelem.h"
 
-#include <crypto/asn1.h>
-
 typedef struct {
     const char *data;
     int type;
@@ -407,24 +405,26 @@ static TESTDATA x509_cmp_tests[] = {
 
 static int test_x509_cmp_time(int idx)
 {
-    ASN1_TIME t;
-    int result;
+    ASN1_TIME *t = NULL;
+    int result, rv = 0;
 
-    memset(&t, 0, sizeof(t));
-    t.type = x509_cmp_tests[idx].type;
-    t.data = (unsigned char *)(x509_cmp_tests[idx].data);
-    t.length = (int)strlen(x509_cmp_tests[idx].data);
-    t.flags = 0;
+    if (!TEST_ptr(t = ASN1_STRING_type_new(x509_cmp_tests[idx].type))
+        || !TEST_true(ASN1_STRING_set(t, x509_cmp_tests[idx].data,
+            (int)strlen(x509_cmp_tests[idx].data))))
+        goto out;
 
     OSSL_BEGIN_ALLOW_DEPRECATED
-    result = X509_cmp_time(&t, &x509_cmp_tests[idx].cmp_time);
+    result = X509_cmp_time(t, &x509_cmp_tests[idx].cmp_time);
     OSSL_END_ALLOW_DEPRECATED
     if (!TEST_int_eq(result, x509_cmp_tests[idx].expected)) {
         TEST_info("test_x509_cmp_time(%d) failed: expected %d, got %d\n",
             idx, x509_cmp_tests[idx].expected, result);
-        return 0;
+        goto out;
     }
-    return 1;
+    rv = 1;
+out:
+    ASN1_TIME_free(t);
+    return rv;
 }
 
 static int test_x509_cmp_time_current(void)
@@ -539,21 +539,23 @@ static int test_x509_time(int idx)
 
     /* if t is not NULL but expected_type is ignored(-1), it is an 'OK' case */
     if (t != NULL && x509_format_tests[idx].expected_type != -1) {
-        if (!TEST_int_eq(t->type, x509_format_tests[idx].expected_type)) {
+        if (!TEST_int_eq(ASN1_STRING_type(t),
+                x509_format_tests[idx].expected_type)) {
             TEST_info("test_x509_time(%d) failed: expected_type %d, got %d\n",
-                idx, x509_format_tests[idx].expected_type, t->type);
+                idx, x509_format_tests[idx].expected_type, ASN1_STRING_type(t));
             goto out;
         }
     }
 
     /* if t is not NULL but expected_string is NULL, it is an 'OK' case too */
     if (t != NULL && x509_format_tests[idx].expected_string) {
-        if (!TEST_mem_eq((const char *)t->data, t->length,
+        if (!TEST_mem_eq((const char *)ASN1_STRING_get0_data(t),
+                ASN1_STRING_length(t),
                 x509_format_tests[idx].expected_string,
                 strlen(x509_format_tests[idx].expected_string))) {
             TEST_info("test_x509_time(%d) failed: expected_string %s, got %.*s\n",
-                idx, x509_format_tests[idx].expected_string, t->length,
-                t->data);
+                idx, x509_format_tests[idx].expected_string,
+                ASN1_STRING_length(t), ASN1_STRING_get0_data(t));
             goto out;
         }
     }
@@ -644,75 +646,77 @@ static int test_days(int n)
     return r;
 }
 
-#define construct_asn1_time(s, t, e) \
-    { { sizeof(s) - 1, t, (unsigned char *)s, 0 }, e }
-
 static const struct {
-    ASN1_TIME asn1;
+    const char *timestring;
+    int type;
     const char *readable;
 } x509_print_tests_rfc_822[] = {
     /* Generalized Time */
-    construct_asn1_time("20170731222050Z", V_ASN1_GENERALIZEDTIME,
-        "Jul 31 22:20:50 2017 GMT"),
+    { "20170731222050Z", V_ASN1_GENERALIZEDTIME,
+        "Jul 31 22:20:50 2017 GMT" },
     /* Generalized Time, no seconds */
-    construct_asn1_time("201707312220Z", V_ASN1_GENERALIZEDTIME,
-        "Bad time value"),
+    { "201707312220Z", V_ASN1_GENERALIZEDTIME,
+        "Bad time value" },
     /* Generalized Time, fractional seconds (3 digits) */
-    construct_asn1_time("20170731222050.123Z", V_ASN1_GENERALIZEDTIME,
-        "Jul 31 22:20:50.123 2017 GMT"),
+    { "20170731222050.123Z", V_ASN1_GENERALIZEDTIME,
+        "Jul 31 22:20:50.123 2017 GMT" },
     /* Generalized Time, fractional seconds (1 digit) */
-    construct_asn1_time("20170731222050.1Z", V_ASN1_GENERALIZEDTIME,
-        "Jul 31 22:20:50.1 2017 GMT"),
+    { "20170731222050.1Z", V_ASN1_GENERALIZEDTIME,
+        "Jul 31 22:20:50.1 2017 GMT" },
     /* Generalized Time, fractional seconds (0 digit) */
-    construct_asn1_time("20170731222050.Z", V_ASN1_GENERALIZEDTIME,
-        "Bad time value"),
+    { "20170731222050.Z", V_ASN1_GENERALIZEDTIME,
+        "Bad time value" },
     /* UTC Time */
-    construct_asn1_time("170731222050Z", V_ASN1_UTCTIME,
-        "Jul 31 22:20:50 2017 GMT"),
+    { "170731222050Z", V_ASN1_UTCTIME,
+        "Jul 31 22:20:50 2017 GMT" },
     /* UTC Time, no seconds */
-    construct_asn1_time("1707312220Z", V_ASN1_UTCTIME,
-        "Bad time value"),
+    { "1707312220Z", V_ASN1_UTCTIME,
+        "Bad time value" },
 };
 
 static const struct {
-    ASN1_TIME asn1;
+    const char *timestring;
+    int type;
     const char *readable;
 } x509_print_tests_iso_8601[] = {
     /* Generalized Time */
-    construct_asn1_time("20170731222050Z", V_ASN1_GENERALIZEDTIME,
-        "2017-07-31 22:20:50Z"),
+    { "20170731222050Z", V_ASN1_GENERALIZEDTIME,
+        "2017-07-31 22:20:50Z" },
     /* Generalized Time, no seconds */
-    construct_asn1_time("201707312220Z", V_ASN1_GENERALIZEDTIME,
-        "Bad time value"),
+    { "201707312220Z", V_ASN1_GENERALIZEDTIME,
+        "Bad time value" },
     /* Generalized Time, fractional seconds (3 digits) */
-    construct_asn1_time("20170731222050.123Z", V_ASN1_GENERALIZEDTIME,
-        "2017-07-31 22:20:50.123Z"),
+    { "20170731222050.123Z", V_ASN1_GENERALIZEDTIME,
+        "2017-07-31 22:20:50.123Z" },
     /* Generalized Time, fractional seconds (1 digit) */
-    construct_asn1_time("20170731222050.1Z", V_ASN1_GENERALIZEDTIME,
-        "2017-07-31 22:20:50.1Z"),
+    { "20170731222050.1Z", V_ASN1_GENERALIZEDTIME,
+        "2017-07-31 22:20:50.1Z" },
     /* Generalized Time, fractional seconds (0 digit) */
-    construct_asn1_time("20170731222050.Z", V_ASN1_GENERALIZEDTIME,
-        "Bad time value"),
+    { "20170731222050.Z", V_ASN1_GENERALIZEDTIME,
+        "Bad time value" },
     /* UTC Time */
-    construct_asn1_time("170731222050Z", V_ASN1_UTCTIME,
-        "2017-07-31 22:20:50Z"),
+    { "170731222050Z", V_ASN1_UTCTIME,
+        "2017-07-31 22:20:50Z" },
     /* UTC Time, no seconds */
-    construct_asn1_time("1707312220Z", V_ASN1_UTCTIME,
-        "Bad time value"),
+    { "1707312220Z", V_ASN1_UTCTIME,
+        "Bad time value" },
 };
 
-static int test_x509_time_print_rfc_822(int idx)
+static int run_time_print_test(const char *timestring, int type,
+    const char *readable, unsigned long flags)
 {
-    BIO *m;
+    BIO *m = NULL;
+    ASN1_TIME *t = NULL;
     int ret = 0, rv;
     char *pp;
-    const char *readable;
 
-    if (!TEST_ptr(m = BIO_new(BIO_s_mem())))
+    if (!TEST_ptr(m = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(t = ASN1_STRING_type_new(type))
+        || !TEST_true(ASN1_STRING_set(t, timestring,
+            (int)strlen(timestring))))
         goto err;
 
-    rv = ASN1_TIME_print_ex(m, &x509_print_tests_rfc_822[idx].asn1, ASN1_DTFLGS_RFC822);
-    readable = x509_print_tests_rfc_822[idx].readable;
+    rv = ASN1_TIME_print_ex(m, t, flags);
 
     if (rv == 0 && !TEST_str_eq(readable, "Bad time value")) {
         /* only if the test case intends to fail... */
@@ -726,35 +730,24 @@ static int test_x509_time_print_rfc_822(int idx)
     ret = 1;
 err:
     BIO_free(m);
+    ASN1_TIME_free(t);
     return ret;
+}
+
+static int test_x509_time_print_rfc_822(int idx)
+{
+    return run_time_print_test(x509_print_tests_rfc_822[idx].timestring,
+        x509_print_tests_rfc_822[idx].type,
+        x509_print_tests_rfc_822[idx].readable,
+        ASN1_DTFLGS_RFC822);
 }
 
 static int test_x509_time_print_iso_8601(int idx)
 {
-    BIO *m;
-    int ret = 0, rv;
-    char *pp;
-    const char *readable;
-
-    if (!TEST_ptr(m = BIO_new(BIO_s_mem())))
-        goto err;
-
-    rv = ASN1_TIME_print_ex(m, &x509_print_tests_iso_8601[idx].asn1, ASN1_DTFLGS_ISO8601);
-    readable = x509_print_tests_iso_8601[idx].readable;
-
-    if (rv == 0 && !TEST_str_eq(readable, "Bad time value")) {
-        /* only if the test case intends to fail... */
-        goto err;
-    }
-    if (!TEST_int_ne(rv = BIO_get_mem_data(m, &pp), 0)
-        || !TEST_int_eq(rv, (int)strlen(readable))
-        || !TEST_strn_eq(pp, readable, rv))
-        goto err;
-
-    ret = 1;
-err:
-    BIO_free(m);
-    return ret;
+    return run_time_print_test(x509_print_tests_iso_8601[idx].timestring,
+        x509_print_tests_iso_8601[idx].type,
+        x509_print_tests_iso_8601[idx].readable,
+        ASN1_DTFLGS_ISO8601);
 }
 
 int setup_tests(void)
