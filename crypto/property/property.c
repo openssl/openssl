@@ -1149,7 +1149,7 @@ static QUERY *ossl_method_store_atomic_find_in_list(STORED_ALGORITHMS *sa, int n
         if (!CRYPTO_atomic_load_int(&idx->archived, &archived, sa->alock))
             goto out;
         if (archived == 0 && idx->nid == nid && idx->prov == prov
-            && !strcmp(idx->prop_query, prop_query)) {
+            && (strcmp(idx->prop_query, prop_query) == 0)) {
             ret = idx;
             break;
         }
