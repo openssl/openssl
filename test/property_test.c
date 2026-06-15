@@ -634,8 +634,8 @@ static int test_query_cache_stochastic(void)
             || result != v + i)
             errors++;
     }
-    /* There is a tiny probability that this will fail when it shouldn't */
-    res = !TEST_int_gt(errors, 0);
+
+    res = TEST_int_eq(errors, 0);
 
 err:
     ossl_method_store_free(store);
@@ -672,7 +672,7 @@ static int test_query_cache_set_duplicate(void)
      */
     ossl_method_store_cache_set(store, &prov, 1, "", &refs, counted_up_ref,
         counted_down_ref);
-    if (!TEST_int_eq(refs, 5)
+    if (!TEST_int_eq(refs, 4)
         || !TEST_true(ossl_method_store_cache_get(store, &prov, 1, "",
             &result))
         || !TEST_ptr_eq(result, &refs))
