@@ -291,7 +291,7 @@ static int on_recv_header(nghttp3_conn *conn, int64_t stream_id, int32_t token,
     fprintf(stdout, "\n");
 
     if (token == NGHTTP3_QPACK_TOKEN__PATH) {
-        int len = (((vvalue.len) < (MAXURL)) ? (vvalue.len) : (MAXURL));
+        int len = (((vvalue.len) < (MAXURL)) ? (vvalue.len) : (MAXURL - 1));
 
         memset(h3ssl->url, 0, sizeof(h3ssl->url));
         if (vvalue.base[0] == '/') {
