@@ -112,20 +112,32 @@ subtest "=== pkey handling of DER encoding ===" => sub {
        "Same file contents after converting to DER and back");
 };
 
-subtest "=== pkey text output ===" => sub {
-    plan tests => 3;
+subtest "=== pkey text and text_pub output ===" => sub {
+    plan tests => 6;
 
     ok((grep /BEGIN PRIVATE KEY/,
         run(app([@app, '-in', $in_key, '-text']), capture => 1)),
         "pkey text output contains PEM header");
 
     ok(!(grep /BEGIN PRIVATE KEY/,
-        run(app([@app, '-in', $in_key, '-text', '-noout']), capture => 1)),
-        "pkey text output with -noout does not contain PEM header");
+         run(app([@app, '-in', $in_key, '-text', '-noout']), capture => 1)),
+         "pkey text output with -noout does not contain PEM header");
 
     ok((grep /Private-Key:/,
         run(app([@app, '-in', $in_key, '-text', '-noout']), capture => 1)),
         "pkey text output (even with -noout) contains \"Private-Key:\"");
+
+    ok(!(grep /Private-Key:/,
+         run(app([@app, '-in', $in_key, '-text_pub', '-noout']), capture => 1)),
+         "-text_pub does not print private key components");
+
+    ok((grep /Public-Key:/,
+        run(app([@app, '-in', $in_key, '-text_pub', '-noout']), capture => 1)),
+        "-text_pub prints public key components");
+
+    ok(!run(app([@app, '-in', $in_key, '-text', '-outform', 'DER',
+                 '-out', 'text_der.tmp'])),
+       "-text combined with DER output is rejected");
 };
 
 subtest "=== pkey EC point conversion form ===" => sub {
