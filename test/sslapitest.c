@@ -15142,7 +15142,7 @@ int setup_tests(void)
 #else
     ADD_ALL_TESTS(test_custom_exts, 3);
 #endif
-#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
+#ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_stateless);
 #endif
     ADD_ALL_TESTS(test_export_key_mat, 6);
