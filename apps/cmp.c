@@ -1129,9 +1129,41 @@ static int setup_cert(void *ctx, const char *file, const char *pass,
     return ok;
 }
 
+typedef int (*add_X509_fn_srv_t)(OSSL_CMP_SRV_CTX *ctx, X509 *cert);
+static int setup_cert_srv(OSSL_CMP_SRV_CTX *ctx, const char *file, const char *pass,
+    const char *desc, add_X509_fn_srv_t set1_fn)
+{
+    X509 *cert;
+    int ok;
+
+    if (file == NULL)
+        return 1;
+    if ((cert = load_cert_pwd(file, pass, desc)) == NULL)
+        return 0;
+    ok = (*set1_fn)(ctx, cert);
+    X509_free(cert);
+    return ok;
+}
+
 typedef int (*add_X509_stack_fn_t)(void *ctx, const STACK_OF(X509) *certs);
 static int setup_certs(char *files, const char *desc, void *ctx,
     add_X509_stack_fn_t set1_fn)
+{
+    STACK_OF(X509) *certs;
+    int ok;
+
+    if (files == NULL)
+        return 1;
+    if ((certs = load_certs_multifile(files, opt_otherpass, desc, vpm)) == NULL)
+        return 0;
+    ok = (*set1_fn)(ctx, certs);
+    OSSL_STACK_OF_X509_free(certs);
+    return ok;
+}
+
+typedef int (*add_X509_stack_fn_srv_t)(OSSL_CMP_SRV_CTX *ctx, STACK_OF(X509) *certs);
+static int setup_certs_srv(char *files, const char *desc, OSSL_CMP_SRV_CTX *ctx,
+    add_X509_stack_fn_srv_t set1_fn)
 {
     STACK_OF(X509) *certs;
     int ok;
@@ -1288,16 +1320,16 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
             (add_X509_stack_fn_t)OSSL_CMP_CTX_set1_untrusted))
         goto err;
 
-    if (!setup_cert(srv_ctx, opt_ref_cert, opt_otherpass,
+    if (!setup_cert_srv(srv_ctx, opt_ref_cert, opt_otherpass,
             "reference cert to be expected by the mock server",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_refCert))
+            ossl_cmp_mock_srv_set1_refCert))
         goto err;
     if (opt_rsp_cert == NULL) {
         CMP_warn("no -rsp_cert given for mock server");
     } else {
-        if (!setup_cert(srv_ctx, opt_rsp_cert, opt_rsp_keypass,
+        if (!setup_cert_srv(srv_ctx, opt_rsp_cert, opt_rsp_keypass,
                 "cert the mock server returns on certificate requests",
-                (add_X509_fn_t)ossl_cmp_mock_srv_set1_certOut))
+                ossl_cmp_mock_srv_set1_certOut))
             goto err;
     }
     if (opt_rsp_key != NULL) {
@@ -1317,22 +1349,22 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
     if (!setup_mock_crlout(srv_ctx, opt_rsp_crl,
             "CRL to be returned by the mock server"))
         goto err;
-    if (!setup_certs(opt_rsp_extracerts,
+    if (!setup_certs_srv(opt_rsp_extracerts,
             "CMP extra certificates for mock server", srv_ctx,
-            (add_X509_stack_fn_t)ossl_cmp_mock_srv_set1_chainOut))
+            ossl_cmp_mock_srv_set1_chainOut))
         goto err;
-    if (!setup_certs(opt_rsp_capubs, "caPubs for mock server", srv_ctx,
-            (add_X509_stack_fn_t)ossl_cmp_mock_srv_set1_caPubsOut))
+    if (!setup_certs_srv(opt_rsp_capubs, "caPubs for mock server", srv_ctx,
+            ossl_cmp_mock_srv_set1_caPubsOut))
         goto err;
-    if (!setup_cert(srv_ctx, opt_rsp_newwithnew, opt_otherpass,
+    if (!setup_cert_srv(srv_ctx, opt_rsp_newwithnew, opt_otherpass,
             "NewWithNew cert the mock server returns in rootCaKeyUpdate",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_newWithNew)
-        || !setup_cert(srv_ctx, opt_rsp_newwithold, opt_otherpass,
+            ossl_cmp_mock_srv_set1_newWithNew)
+        || !setup_cert_srv(srv_ctx, opt_rsp_newwithold, opt_otherpass,
             "NewWithOld cert the mock server returns in rootCaKeyUpdate",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_newWithOld)
-        || !setup_cert(srv_ctx, opt_rsp_oldwithnew, opt_otherpass,
+            ossl_cmp_mock_srv_set1_newWithOld)
+        || !setup_cert_srv(srv_ctx, opt_rsp_oldwithnew, opt_otherpass,
             "OldWithNew cert the mock server returns in rootCaKeyUpdate",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_oldWithNew))
+            ossl_cmp_mock_srv_set1_oldWithNew))
         goto err;
     (void)ossl_cmp_mock_srv_set_pollCount(srv_ctx, opt_poll_count);
     (void)ossl_cmp_mock_srv_set_checkAfterTime(srv_ctx, opt_check_after);
