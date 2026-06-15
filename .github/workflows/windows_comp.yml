@@ -42,14 +42,14 @@ jobs:
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         perl ..\Configure --strict-warnings enable-comp enable-zstd --with-zstd-include=C:\vcpkg\packages\zstd_x64-windows\include --with-zstd-lib=C:\vcpkg\packages\zstd_x64-windows\lib\zstd.lib no-makedepend -DOSSL_WINCTX=openssl VC-WIN64A
         perl configdata.pm --dump
     - name: build
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake
     - name: Gather openssl version info
       working-directory: _build
@@ -81,7 +81,7 @@ jobs:
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake test VERBOSE_FAILURE=yes TESTS="-test_fuzz* -test_fipsload" HARNESS_JOBS=4
 
   brotli:
@@ -106,14 +106,14 @@ jobs:
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         perl ..\Configure --strict-warnings enable-comp enable-brotli --with-brotli-include=C:\vcpkg\packages\brotli_x64-windows\include --with-brotli-lib=C:\vcpkg\packages\brotli_x64-windows\lib no-makedepend -DOSSL_WINCTX=openssl VC-WIN64A
         perl configdata.pm --dump
     - name: build
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake
     - name: Gather openssl version info
       working-directory: _build
@@ -145,5 +145,5 @@ jobs:
       working-directory: _build
       shell: cmd
       run: |
-        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        call "C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake test VERBOSE_FAILURE=yes TESTS="-test_fuzz* -test_fipsload" HARNESS_JOBS=4
