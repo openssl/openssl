@@ -2330,7 +2330,7 @@ __owur SSL *SSL_get0_listener(SSL *s);
 #define SSL_LISTENER_FLAG_NO_VALIDATE (1UL << 1)
 #define SSL_LISTENER_FLAG_REQUIRE_HVR (1UL << 2)
 #define SSL_LISTENER_FLAG_REQUIRE_HRR (1UL << 3)
-#define SSL_LISTENER_FLAG_MULTI_THREAD (1UL << 4)
+#define SSL_LISTENER_FLAG_SINGLE_THREAD (1UL << 4)
 __owur SSL *SSL_new_listener(SSL_CTX *ctx, uint64_t flags);
 __owur SSL *SSL_new_listener_from(SSL *ssl, uint64_t flags);
 __owur SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);

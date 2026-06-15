@@ -1318,6 +1318,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     COMP_METHOD *compm = (comp == NULL) ? NULL : comp->method;
     uint64_t epoch_zero;
     uint64_t seq;
+    int use_urxe = 0;
 
     meth = ssl_select_next_record_layer(s, direction, level);
 
@@ -1498,11 +1499,18 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
          */
         peer = NULL;
 
-#ifndef OPENSSL_NO_SOCK
-        if (SSL_CONNECTION_IS_DTLS(s)
-            && s->d1 != NULL
-            && BIO_ADDR_family(&s->d1->peer_addr) != AF_UNSPEC)
-            peer = &s->d1->peer_addr;
+#ifndef OPENSSL_NO_DTLS
+        if (SSL_CONNECTION_IS_DTLS(s) && s->d1 != NULL) {
+            if (BIO_ADDR_family(&s->d1->peer_addr) != AF_UNSPEC)
+                peer = &s->d1->peer_addr;
+
+            /*
+             * For DTLS listener-created connections, use the URXE queue for
+             * reading. This is determined by the existence of s->d1->rx.
+             */
+            if (direction == OSSL_RECORD_DIRECTION_READ && s->d1->rx != NULL)
+                use_urxe = 1;
+        }
 #endif
 
         rlret = meth->new_record_layer(sctx->libctx, sctx->propq, version,
@@ -1511,7 +1519,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             iv,
             ivlen, mackey, mackeylen, snciph, ciph,
             taglen, mactype, md, compm, kdfdigest,
-            prev, thisbio, next, NULL, peer, settings,
+            prev, thisbio, next, NULL, peer, use_urxe, settings,
             options, rlayer_dispatch_tmp, s,
             s->rlayer.rlarg, &newrl);
         BIO_free(prev);

@@ -2191,23 +2191,17 @@ typedef struct dtls_listener_st {
     /* SSL object common header. */
     struct ssl_st ssl;
 
-#if defined(OPENSSL_THREADS)
     /*
-     * Mutex protecting the established_conns lookup table.
-     * This is the only data structure accessed from multiple threads:
-     * - Listener thread: looking up/registering connections
+     * Mutex protecting listener-owned data structures accessed across threads:
+     * - pending_conns: pending connection lookup table
+     * - established_conns: established connection lookup table
+     * - incoming_connections: queue of completed connections awaiting accept
+     *
+     * Accessed from:
+     * - Listener thread: packet handling, driving handshakes
      * - Connection thread: unregistering via SSL_free -> dtls1_free
      */
     CRYPTO_MUTEX *mutex;
-
-    /*
-     * Mutex protecting writes to net_wbio. Multiple DTLS connections created
-     * by this listener share the same write BIO. When accessed from different
-     * threads, concurrent BIO_sendmmsg() calls must be serialized to ensure
-     * thread safety for BIO types that are not inherently thread-safe.
-     */
-    CRYPTO_MUTEX *write_mutex;
-#endif
 
     /* Datagram demultiplexer for incoming connections. */
     DGRAM_DEMUX *demux;
@@ -3081,6 +3075,17 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
 void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
+
+/* DTLS Listener internal cookie callbacks */
+int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
+    unsigned int *cookie_len);
+int ossl_dtls_listener_verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len);
+int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
+    size_t *cookie_len);
+int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
+    const unsigned char *cookie,
+    size_t cookie_len);
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);

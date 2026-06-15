@@ -486,6 +486,10 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 
     *msgs_processed = 0;
 
+    /*
+     * TODO: DTLS1.3 Look at actually buffering the messages and
+     * this function may then be removed
+     */
     if (b == NULL || b->next_bio == NULL)
         return 0;
 

@@ -36,6 +36,16 @@ struct server_thread_args {
 };
 
 /*
+ * Per-thread state for client connection handlers
+ */
+struct client_thread_args {
+    SSL *conn; /* Client-side connection for this thread */
+    int thread_idx;
+    CRYPTO_THREAD *thread;
+    int result; /* 1 = success, 0 = failure */
+};
+
+/*
  * Thread function: waits for data on a server connection using SSL_poll,
  * reads the message from client, and sends a response.
  *
@@ -98,6 +108,65 @@ static unsigned int server_conn_thread(void *arg)
 }
 
 /*
+ * Thread function: sends a message to the server and waits for the response.
+ *
+ * Uses SSL_poll to wait for readable data from server, then verifies the response.
+ */
+static unsigned int client_conn_thread(void *arg)
+{
+    struct client_thread_args *ta = (struct client_thread_args *)arg;
+    SSL_POLL_ITEM item;
+    struct timeval timeout;
+    size_t result_count, readbytes, written;
+    char buf[256] = { 0 };
+    int ret, err, retries;
+
+    ta->result = 0;
+
+    /* Send message to server */
+    if (!TEST_true(SSL_write_ex(ta->conn, CLIENT_TO_SERVER_MSG,
+            strlen(CLIENT_TO_SERVER_MSG), &written)))
+        return 0;
+
+    /* Wait for and receive response from server */
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = ta->conn;
+    item.events = SSL_POLL_EVENT_R;
+    item.revents = 0;
+
+    timeout.tv_sec = POLL_TIMEOUT_SEC;
+    timeout.tv_usec = 0;
+
+    for (retries = 0; retries < MAX_POLL_RETRIES; retries++) {
+        item.revents = 0;
+
+        if (!TEST_true(SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)))
+            return 0;
+
+        if (result_count == 0 || (item.revents & SSL_POLL_EVENT_R) == 0)
+            continue;
+
+        ret = SSL_read_ex(ta->conn, buf, sizeof(buf) - 1, &readbytes);
+        if (ret == 1)
+            break;
+
+        err = SSL_get_error(ta->conn, ret);
+        if (!TEST_int_eq(err, SSL_ERROR_WANT_READ))
+            return 0;
+    }
+
+    if (!TEST_int_lt(retries, MAX_POLL_RETRIES))
+        return 0;
+
+    buf[readbytes] = '\0';
+    if (!TEST_str_eq(buf, SERVER_TO_CLIENT_MSG))
+        return 0;
+
+    ta->result = 1;
+    return 0;
+}
+
+/*
  * Helper: create DTLS listener with real UDP socket
  */
 static int create_listener(SSL_CTX *ctx, SSL **listener, BIO_ADDR **addr, int *fd)
@@ -136,7 +205,7 @@ static int create_listener(SSL_CTX *ctx, SSL **listener, BIO_ADDR **addr, int *f
     if (!TEST_ptr(bio = BIO_new_dgram(*fd, BIO_NOCLOSE)))
         goto err;
 
-    if (!TEST_ptr(*listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_MULTI_THREAD)))
+    if (!TEST_ptr(*listener = SSL_new_listener(ctx, 0)))
         goto err;
 
     SSL_set_bio(*listener, bio, bio);
@@ -266,18 +335,15 @@ static int test_dtls_multithread(void)
     SSL *clients[NUM_CLIENTS] = { NULL };
     SSL *server_conns[NUM_CLIENTS] = { NULL };
     int client_fds[NUM_CLIENTS] = { -1, -1, -1 };
-    struct server_thread_args thread_args[NUM_CLIENTS];
+    struct server_thread_args server_args[NUM_CLIENTS];
+    struct client_thread_args client_args[NUM_CLIENTS];
     BIO_ADDR *server_addr = NULL;
     int server_fd = -1;
     int testresult = 0;
     int i;
-    size_t written, readbytes;
-    char buf[256];
-    SSL_POLL_ITEM poll_item;
-    struct timeval poll_timeout;
-    size_t poll_result;
 
-    memset(thread_args, 0, sizeof(thread_args));
+    memset(server_args, 0, sizeof(server_args));
+    memset(client_args, 0, sizeof(client_args));
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
@@ -296,59 +362,66 @@ static int test_dtls_multithread(void)
             goto err;
     }
 
+    /* Start server threads - each will poll and wait for data */
     for (i = 0; i < NUM_CLIENTS; i++) {
-        thread_args[i].conn = server_conns[i];
-        thread_args[i].thread_idx = i;
-        thread_args[i].result = 0;
+        server_args[i].conn = server_conns[i];
+        server_args[i].thread_idx = i;
+        server_args[i].result = 0;
 
-        thread_args[i].thread = ossl_crypto_thread_native_start(
-            server_conn_thread, &thread_args[i], 1);
-        if (!TEST_ptr(thread_args[i].thread))
+        server_args[i].thread = ossl_crypto_thread_native_start(
+            server_conn_thread, &server_args[i], 1);
+        if (!TEST_ptr(server_args[i].thread))
             goto err;
     }
 
+    /* Start client threads - each will send data and wait for response */
     for (i = 0; i < NUM_CLIENTS; i++) {
-        if (!TEST_true(SSL_write_ex(clients[i], CLIENT_TO_SERVER_MSG,
-                strlen(CLIENT_TO_SERVER_MSG), &written)))
+        client_args[i].conn = clients[i];
+        client_args[i].thread_idx = i;
+        client_args[i].result = 0;
+
+        client_args[i].thread = ossl_crypto_thread_native_start(
+            client_conn_thread, &client_args[i], 1);
+        if (!TEST_ptr(client_args[i].thread))
             goto err;
     }
 
+    /* Wait for all server threads to complete */
     for (i = 0; i < NUM_CLIENTS; i++) {
-        ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
-        ossl_crypto_thread_native_clean(thread_args[i].thread);
-        thread_args[i].thread = NULL;
+        ossl_crypto_thread_native_join(server_args[i].thread, NULL);
+        ossl_crypto_thread_native_clean(server_args[i].thread);
+        server_args[i].thread = NULL;
 
-        if (!TEST_int_eq(thread_args[i].result, 1))
+        if (!TEST_int_eq(server_args[i].result, 1))
             goto err;
     }
 
+    /* Wait for all client threads to complete */
     for (i = 0; i < NUM_CLIENTS; i++) {
-        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
-        poll_item.desc.value.ssl = clients[i];
-        poll_item.events = SSL_POLL_EVENT_R;
-        poll_item.revents = 0;
-        poll_timeout.tv_sec = POLL_TIMEOUT_SEC;
-        poll_timeout.tv_usec = 0;
+        ossl_crypto_thread_native_join(client_args[i].thread, NULL);
+        ossl_crypto_thread_native_clean(client_args[i].thread);
+        client_args[i].thread = NULL;
 
-        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
-                &poll_timeout, 0, &poll_result)))
-            goto err;
-
-        if (!TEST_true(SSL_read_ex(clients[i], buf, sizeof(buf) - 1, &readbytes)))
-            goto err;
-
-        buf[readbytes] = '\0';
-        if (!TEST_str_eq(buf, SERVER_TO_CLIENT_MSG))
+        if (!TEST_int_eq(client_args[i].result, 1))
             goto err;
     }
 
     testresult = 1;
 
 err:
+    /* Clean up any remaining server threads */
     for (i = 0; i < NUM_CLIENTS; i++) {
-        if (thread_args[i].thread != NULL) {
-            ossl_crypto_thread_native_join(thread_args[i].thread, NULL);
-            ossl_crypto_thread_native_clean(thread_args[i].thread);
+        if (server_args[i].thread != NULL) {
+            ossl_crypto_thread_native_join(server_args[i].thread, NULL);
+            ossl_crypto_thread_native_clean(server_args[i].thread);
+        }
+    }
+
+    /* Clean up any remaining client threads */
+    for (i = 0; i < NUM_CLIENTS; i++) {
+        if (client_args[i].thread != NULL) {
+            ossl_crypto_thread_native_join(client_args[i].thread, NULL);
+            ossl_crypto_thread_native_clean(client_args[i].thread);
         }
     }
 

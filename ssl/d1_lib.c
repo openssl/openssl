@@ -1242,6 +1242,16 @@ static SSL *dtls_listener_create_conn_ssl(DTLS_LISTENER *dl,
         goto err;
 
     /*
+     * Update the read record layer to use the URXE queue if it already exists.
+     * This is needed because the record layer may have been created before
+     * sc->d1->rx was set, similar to how SSL_set1_initial_peer_addr() updates
+     * the peer address on existing record layers.
+     */
+    if (sc->rlayer.rrlmethod != NULL && sc->rlayer.rrl != NULL
+        && sc->rlayer.rrlmethod->set_use_urxe != NULL)
+        sc->rlayer.rrlmethod->set_use_urxe(sc->rlayer.rrl, 1);
+
+    /*
      * Store reference to parent listener. This allows the connection to
      * trigger the listener's demux pump when reading data.
      */
@@ -1329,18 +1339,30 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     /*
      * Check pending connections
      */
+    ossl_crypto_mutex_lock(dl->mutex);
     conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
     if (conn_ssl != NULL) {
         sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL)
+        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
+            ossl_crypto_mutex_unlock(dl->mutex);
             goto inject;
+        }
 
         /* Fall through to release if injection failed */
+        ossl_crypto_mutex_unlock(dl->mutex);
         goto release;
     }
 
     /*
      * No existing connection so create a new pending connection.
+     * Note: We release the lock during connection creation since it may
+     * take time and doesn't need the lock. We re-acquire for registration.
+     */
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    /*
+     * TODO: DTLS1.3 Look into bounding the number of connections
+     * that can be created at a time.
      */
     conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
     if (conn_ssl == NULL)
@@ -1348,10 +1370,13 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
     if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
+        ossl_crypto_mutex_lock(dl->mutex);
         if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
+            ossl_crypto_mutex_unlock(dl->mutex);
             SSL_free(conn_ssl);
             goto release;
         }
+        ossl_crypto_mutex_unlock(dl->mutex);
     } else {
         SSL_free(conn_ssl);
         goto release;
@@ -1361,16 +1386,12 @@ inject:
     ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
 
     if (dl->have_notifier) {
-#if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_lock(dl->mutex);
-#endif
         if (dl->cur_blocking_waiters > 0 && !dl->signalled_notifier) {
             ossl_rio_notifier_signal(&dl->notifier);
             dl->signalled_notifier = 1;
         }
-#if defined(OPENSSL_THREADS)
         ossl_crypto_mutex_unlock(dl->mutex);
-#endif
     }
 
     return;
@@ -1495,6 +1516,7 @@ static int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
     if (mac == NULL)
         goto err;
 
+    /* TODO: DTLS1.3 after rebase use ctx's hmac */
     mctx = EVP_MAC_CTX_new(mac);
     if (mctx == NULL)
         goto err;
@@ -1522,12 +1544,12 @@ err:
 }
 
 /*
- * dtls_listener_gen_cookie_cb - internal HVR cookie generate callback
+ * ossl_dtls_listener_gen_cookie_cb - internal HVR cookie generate callback
  *
  * Generates a cookie for HelloVerifyRequest (DTLS 1.2).
  * Cookie format: timestamp (8 bytes) || HMAC (32 bytes)
  */
-static int dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
+int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
     unsigned int *cookie_len)
 {
     uint64_t now = ossl_time2seconds(dtls_listener_get_time(ssl));
@@ -1551,7 +1573,7 @@ static int dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
 }
 
 /*
- * dtls_listener_verify_cookie_cb - internal HVR cookie verify callback
+ * ossl_dtls_listener_verify_cookie_cb - internal HVR cookie verify callback
  *
  * Verifies a cookie from ClientHello (DTLS 1.2).
  * Checks that:
@@ -1559,7 +1581,7 @@ static int dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
  *   2. Timestamp is not too old
  *   3. HMAC matches
  */
-static int dtls_listener_verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+int ossl_dtls_listener_verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
     unsigned int cookie_len)
 {
     uint64_t cookie_time, now;
@@ -1596,12 +1618,12 @@ static int dtls_listener_verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
 }
 
 /*
- * dtls_listener_gen_stateless_cookie_cb - internal HRR cookie generate callback
+ * ossl_dtls_listener_gen_stateless_cookie_cb - internal HRR cookie generate callback
  *
  * Generates a cookie for HelloRetryRequest (DTLS 1.3).
  * Uses the same format as the HVR cookie.
  */
-static int dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
+int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
     size_t *cookie_len)
 {
     uint64_t now = ossl_time2seconds(dtls_listener_get_time(ssl));
@@ -1625,12 +1647,12 @@ static int dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie
 }
 
 /*
- * dtls_listener_verify_stateless_cookie_cb - internal HRR cookie verify callback
+ * ossl_dtls_listener_verify_stateless_cookie_cb - internal HRR cookie verify callback
  *
  * Verifies a cookie from ClientHello (DTLS 1.3).
  * Uses the same verification logic as the HVR cookie.
  */
-static int dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
+int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
     const unsigned char *cookie,
     size_t cookie_len)
 {
@@ -1692,12 +1714,7 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     }
     ssl_init_done = 1;
 
-#if defined(OPENSSL_THREADS)
-    if ((dl->mutex = ossl_crypto_mutex_new()) == NULL)
-        goto err;
-    if ((dl->write_mutex = ossl_crypto_mutex_new()) == NULL)
-        goto err;
-#endif
+    dl->mutex = ossl_crypto_mutex_new();
 
     /* Create demux with internal locking for thread safety. */
     dl->demux = ossl_dgram_demux_new(NULL, 1, NULL, NULL);
@@ -1729,36 +1746,17 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     /* Handle cookie validation flags */
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
-        if (flags & SSL_LISTENER_FLAG_REQUIRE_HVR) {
+        if (flags & SSL_LISTENER_FLAG_REQUIRE_HVR)
             dl->require_hvr_cookie = 1;
-            /*
-             * Install internal cookie callbacks for HVR if the user hasn't
-             * provided their own. This allows the listener to handle address
-             * validation automatically.
-             */
-            if (ctx->app_gen_cookie_cb == NULL)
-                ctx->app_gen_cookie_cb = dtls_listener_gen_cookie_cb;
-            if (ctx->app_verify_cookie_cb == NULL)
-                ctx->app_verify_cookie_cb = dtls_listener_verify_cookie_cb;
-        }
-        if (flags & SSL_LISTENER_FLAG_REQUIRE_HRR) {
+        if (flags & SSL_LISTENER_FLAG_REQUIRE_HRR)
             dl->require_hrr_cookie = 1;
-            /*
-             * Install internal stateless cookie callbacks for HRR if the user
-             * hasn't provided their own.
-             */
-            if (ctx->gen_stateless_cookie_cb == NULL)
-                ctx->gen_stateless_cookie_cb = dtls_listener_gen_stateless_cookie_cb;
-            if (ctx->verify_stateless_cookie_cb == NULL)
-                ctx->verify_stateless_cookie_cb = dtls_listener_verify_stateless_cookie_cb;
-        }
     }
 
     dl->have_notifier = 0;
     dl->signalled_notifier = 0;
     dl->cur_blocking_waiters = 0;
 
-    if ((flags & SSL_LISTENER_FLAG_MULTI_THREAD) != 0) {
+    if ((flags & SSL_LISTENER_FLAG_SINGLE_THREAD) == 0) {
         if (!ossl_rio_notifier_init(&dl->notifier))
             goto err;
 
@@ -1794,14 +1792,53 @@ err:
     return NULL;
 }
 
+/*
+ * dtls_listener_connection_free - free an SSL connection owned by the listener.
+ *
+ * This function is used to free SSL connections that are in the listener's
+ * pending_conns or incoming_connections queues. These connections are owned
+ * by the listener, NOT by the application.
+ *
+ * Connections in pending_conns and incoming_connections do NOT hold a reference
+ * to the listener, even though sc->d1->listener points to it. This is intentional:
+ * if these connections held a reference to the listener, the listener's reference
+ * count would never reach zero, and ossl_dtls_listener_free() would never be
+ * called to clean up the pending/incoming connections - creating a circular
+ * dependency.
+ *
+ * Only when a connection is returned to the application via SSL_accept_connection()
+ * does it take a reference on the listener. At that point, ownership transfers
+ * to the application, and the normal SSL_free() path is used.
+ *
+ * The assert on ssl->references == 1 ensures that nobody else has taken a
+ * reference to this connection while it was in the listener's queues. If
+ * this assert fires, something has gone wrong with ownership tracking.
+ */
 static void dtls_listener_connection_free(SSL *ssl)
 {
-    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    SSL_CONNECTION *sc;
+    int ref_count;
+
+    if (ssl == NULL)
+        return;
+
+    sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    /*
+     * Listener-owned connections should have exactly one reference (held by
+     * the listener's queue). If this is not true, ownership has been corrupted.
+     */
+    if (!CRYPTO_GET_REF(&ssl->references, &ref_count)
+        || !ossl_assert(ref_count == 1))
+        return;
 
     if (sc != NULL && sc->d1 != NULL) {
-        /* Clear reference to listener before freeing */
-        if (sc->d1->listener != NULL)
-            sc->d1->listener = NULL;
+        /*
+         * Clear listener reference to prevent dtls1_free() from calling
+         * SSL_free() on the listener. The connection does not own the listener
+         * and SSL_free must not free the listener
+         */
+        sc->d1->listener = NULL;
     }
     SSL_free(ssl);
 }
@@ -1825,6 +1862,8 @@ void ossl_dtls_listener_free(SSL *s)
 
     dl = (DTLS_LISTENER *)s;
 
+    ossl_crypto_mutex_lock(dl->mutex);
+
     /* Free any pending incoming connections */
     if (dl->incoming_connections != NULL) {
         while (sk_SSL_num(dl->incoming_connections) > 0) {
@@ -1833,6 +1872,7 @@ void ossl_dtls_listener_free(SSL *s)
             dtls_listener_connection_free(conn);
         }
         sk_SSL_free(dl->incoming_connections);
+        dl->incoming_connections = NULL;
     }
 
     /*
@@ -1841,15 +1881,20 @@ void ossl_dtls_listener_free(SSL *s)
     if (dl->pending_conns != NULL) {
         ossl_dgram_conn_lookup_foreach(dl->pending_conns, dtls_free_pending_ssl_cb, NULL);
         ossl_dgram_conn_lookup_free(dl->pending_conns);
+        dl->pending_conns = NULL;
     }
+
+    /* Free all established connections in the hash table (no SSL ownership) */
+    if (dl->established_conns != NULL) {
+        ossl_dgram_conn_lookup_free(dl->established_conns);
+        dl->established_conns = NULL;
+    }
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the demux after all connections that reference it are freed */
     if (dl->demux != NULL)
         ossl_dgram_demux_free(dl->demux);
-
-    /* Free all established connections in the hash table (no SSL ownership) */
-    if (dl->established_conns != NULL)
-        ossl_dgram_conn_lookup_free(dl->established_conns);
 
     BIO_free_all(dl->net_wbio);
     BIO_free_all(dl->net_rbio);
@@ -1859,10 +1904,7 @@ void ossl_dtls_listener_free(SSL *s)
         ossl_rio_notifier_cleanup(&dl->notifier);
     }
 
-#if defined(OPENSSL_THREADS)
-    ossl_crypto_mutex_free(&dl->write_mutex);
     ossl_crypto_mutex_free(&dl->mutex);
-#endif
 }
 
 SSL *ossl_dtls_get0_listener(const SSL *ssl)
@@ -2047,6 +2089,11 @@ static void drive_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
      *   - Record layer sequence numbers: For proper DTLS record handling
      *   - Write BIO: SSL_clear() frees it, but we need it to send responses
      */
+    /*
+     * TODO: DTLS1.3 Investigate why the clear is needed and hopefully
+     * remove the if block in the future.
+     */
+#if 1
     if (sc->hello_retry_request == SSL_HRR_PENDING
         && !ossl_statem_in_error(sc)) {
         uint16_t handshake_read_seq = sc->d1->handshake_read_seq;
@@ -2106,6 +2153,7 @@ static void drive_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
             }
         }
     }
+#endif
 
     /*
      * Drive the state machine with SSL_accept().
@@ -2185,6 +2233,8 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         return -1;
     }
 
+    ossl_crypto_mutex_lock(dl->mutex);
+
     /* Drive all pending connections */
     ossl_dgram_conn_lookup_foreach(dl->pending_conns, drive_pending_cb, &ctx);
 
@@ -2202,8 +2252,8 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
             /* Remove from pending */
             ossl_dgram_conn_lookup_unregister(dl->pending_conns, &sc->d1->peer_addr);
 
-            /* Add to established connections (uses locking API) */
-            if (!ossl_dtls_listener_register_established_conn(dl, &sc->d1->peer_addr, ssl)) {
+            /* Add to established connections (inline, we already hold mutex) */
+            if (dl->established_conns == NULL || !ossl_dgram_conn_lookup_register_addr(dl->established_conns, &sc->d1->peer_addr, ssl)) {
                 dtls_listener_connection_free(ssl);
                 continue;
             }
@@ -2213,7 +2263,8 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
                 result = 1;
             } else {
                 /* Failed to add to queue, unregister and free */
-                ossl_dtls_listener_unregister_established_conn(&dl->ssl, &sc->d1->peer_addr);
+                ossl_dgram_conn_lookup_unregister(dl->established_conns,
+                    &sc->d1->peer_addr);
                 dtls_listener_connection_free(ssl);
             }
         }
@@ -2229,6 +2280,8 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
 
         dtls_listener_connection_free(ssl);
     }
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     sk_SSL_free(ctx.ready_conns);
     sk_SSL_free(ctx.failed_conns);
@@ -2299,7 +2352,9 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
         return NULL;
 
     /* Fast path: return any already-queued connection immediately. */
+    ossl_crypto_mutex_lock(dl->mutex);
     conn = sk_SSL_shift(dl->incoming_connections);
+    ossl_crypto_mutex_unlock(dl->mutex);
     if (conn != NULL)
         goto end;
 
@@ -2312,7 +2367,9 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
             if (ossl_dtls_tick(dl) < 0)
                 return NULL;
         }
+        ossl_crypto_mutex_lock(dl->mutex);
         conn = sk_SSL_shift(dl->incoming_connections);
+        ossl_crypto_mutex_unlock(dl->mutex);
         goto end;
     }
 
@@ -2331,7 +2388,9 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
         if (ossl_dtls_tick(dl) < 0)
             break; /* fatal BIO error */
 
+        ossl_crypto_mutex_lock(dl->mutex);
         conn = sk_SSL_shift(dl->incoming_connections);
+        ossl_crypto_mutex_unlock(dl->mutex);
         if (conn != NULL)
             break;
     }
@@ -2339,6 +2398,14 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
 end:
     if (conn != NULL) {
         sc = SSL_CONNECTION_FROM_SSL(conn);
+        /*
+         * Take a reference on the listener now that ownership of the connection
+         * is transferring to the application. While in incoming_connections,
+         * the connection did not hold a reference to avoid circular dependencies.
+         * Now that the application owns the connection, it must hold a reference
+         * to ensure the listener stays alive - the connection needs the listener
+         * for packet routing
+         */
         if (sc == NULL || sc->d1 == NULL || !SSL_up_ref(sc->d1->listener)) {
             dtls_listener_connection_free(conn);
             return NULL;
@@ -2368,31 +2435,25 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_rbio);
+}
 
-    /*
-     * Any pending/established connections hold references to the old BIO.
-     * Clear them so the next tick starts fresh with the new BIO.
-     * The pending_conns hash table owns the SSL objects, so free them first.
-     */
-    if (dl->pending_conns != NULL) {
-        ossl_dgram_conn_lookup_foreach(dl->pending_conns, dtls_free_pending_ssl_cb, NULL);
-        ossl_dgram_conn_lookup_free(dl->pending_conns);
-    }
-    dl->pending_conns = ossl_dgram_conn_lookup_new_addr();
+/*
+ * update_conn_wbio - callback to update the wbio on a single connection.
+ *
+ * Used by ossl_dtls_listener_set0_net_wbio() to propagate wbio changes
+ * to all pending and established connections
+ */
+static void update_conn_wbio(SSL *ssl, const BIO_ADDR *peer, void *arg)
+{
+    BIO *new_wbio = arg;
 
-    /* Clear established_conns (uses locking API) */
-    ossl_dtls_listener_clear_established_conns(dl);
+    if (SSL_get_wbio(ssl) == new_wbio)
+        return;
 
-    /*
-     * incoming_connections also holds SSL objects that reference the old BIO.
-     * Free them as they are no longer valid with the new BIO.
-     */
-    if (dl->incoming_connections != NULL) {
-        while (sk_SSL_num(dl->incoming_connections) > 0) {
-            SSL *conn = sk_SSL_pop(dl->incoming_connections);
-            dtls_listener_connection_free(conn);
-        }
-    }
+    if (!BIO_up_ref(new_wbio))
+        return;
+
+    SSL_set0_wbio(ssl, new_wbio);
 }
 
 void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
@@ -2409,6 +2470,18 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
     /* No change - nothing to do */
     if (old_wbio == bio)
         return;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+
+    /* Update wbio in all pending connections */
+    if (dl->pending_conns != NULL)
+        ossl_dgram_conn_lookup_foreach(dl->pending_conns, update_conn_wbio, bio);
+
+    /* Update wbio in all established connections */
+    if (dl->established_conns != NULL)
+        ossl_dgram_conn_lookup_foreach(dl->established_conns, update_conn_wbio, bio);
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     dl->net_wbio = bio;
 
@@ -2462,16 +2535,12 @@ SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
     if (dl == NULL || urxe == NULL)
         return NULL;
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(dl->mutex);
-#endif
 
     if (dl->established_conns != NULL)
         result = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(dl->mutex);
-#endif
     return result;
 }
 
@@ -2493,17 +2562,13 @@ int ossl_dtls_listener_register_established_conn(DTLS_LISTENER *dl,
     if (BIO_ADDR_family(peer) == AF_UNSPEC)
         return 0;
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(dl->mutex);
-#endif
 
     if (dl->established_conns != NULL)
         result = ossl_dgram_conn_lookup_register_addr(dl->established_conns,
             peer, ssl);
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(dl->mutex);
-#endif
     return result;
 }
 
@@ -2525,16 +2590,12 @@ void ossl_dtls_listener_unregister_established_conn(SSL *s, const BIO_ADDR *peer
 
     dl = (DTLS_LISTENER *)s;
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(dl->mutex);
-#endif
 
     if (dl->established_conns != NULL)
         ossl_dgram_conn_lookup_unregister(dl->established_conns, peer_addr);
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(dl->mutex);
-#endif
 }
 
 /*
@@ -2546,29 +2607,30 @@ void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl)
     if (dl == NULL)
         return;
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(dl->mutex);
-#endif
 
     if (dl->established_conns != NULL)
         ossl_dgram_conn_lookup_free(dl->established_conns);
     dl->established_conns = ossl_dgram_conn_lookup_new_addr();
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(dl->mutex);
-#endif
 }
 
 size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl)
 {
     DTLS_LISTENER *dl;
+    size_t len;
 
     if (!IS_DTLS_LISTENER(ssl))
         return 0;
 
     dl = (DTLS_LISTENER *)ssl;
 
-    return (size_t)sk_SSL_num(dl->incoming_connections);
+    ossl_crypto_mutex_lock(dl->mutex);
+    len = (size_t)sk_SSL_num(dl->incoming_connections);
+    ossl_crypto_mutex_unlock(dl->mutex);
+
+    return len;
 }
 
 /*
@@ -2647,8 +2709,11 @@ void ossl_dtls_listener_enter_blocking_section(SSL *s)
 
     dl = (DTLS_LISTENER *)s;
 
-    if (dl->have_notifier)
+    if (dl->have_notifier) {
+        ossl_crypto_mutex_lock(dl->mutex);
         dl->cur_blocking_waiters++;
+        ossl_crypto_mutex_unlock(dl->mutex);
+    }
 }
 
 void ossl_dtls_listener_leave_blocking_section(SSL *s)
@@ -2661,11 +2726,12 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
     dl = (DTLS_LISTENER *)s;
 
     if (dl->have_notifier) {
+        ossl_crypto_mutex_lock(dl->mutex);
+
         assert(dl->cur_blocking_waiters > 0);
         --dl->cur_blocking_waiters;
 
         if (dl->signalled_notifier) {
-#if defined(OPENSSL_THREADS)
             if (dl->cur_blocking_waiters == 0) {
                 ossl_rio_notifier_unsignal(&dl->notifier);
                 dl->signalled_notifier = 0;
@@ -2677,14 +2743,11 @@ void ossl_dtls_listener_leave_blocking_section(SSL *s)
             } else {
                 /* We are not the last waiter out - so wait for that one. */
                 while (dl->signalled_notifier)
-                    /* Using the existing DTLS Listener mutex here */
                     ossl_crypto_condvar_wait(dl->notifier_cv, dl->mutex);
             }
-#else
-            ossl_rio_notifier_unsignal(&dl->notifier);
-            dl->signalled_notifier = 0;
-#endif
         }
+
+        ossl_crypto_mutex_unlock(dl->mutex);
     }
 }
 
@@ -2722,6 +2785,7 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
 {
     SSL_CONNECTION *sc;
     uint64_t result = 0;
+    BIO_POLL_DESCRIPTOR desc;
 
     sc = SSL_CONNECTION_FROM_SSL(s);
     if (sc == NULL || sc->d1 == NULL)
@@ -2752,9 +2816,10 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
             BIO *rbio = SSL_get_rbio(s);
 
             if (rbio != NULL) {
-                if ((BIO_method_type(rbio) & BIO_TYPE_DESCRIPTOR) != 0) {
-                    int fd = BIO_get_fd(rbio, NULL);
-                    if (fd >= 0 && BIO_socket_ready(fd, 1) > 0)
+                if (BIO_get_rpoll_descriptor(rbio, &desc)
+                    && desc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD
+                    && desc.value.fd >= 0) {
+                    if (BIO_socket_ready(desc.value.fd, 1) > 0)
                         result |= SSL_POLL_EVENT_R;
                 } else {
                     /* Checking non-socket BIO */

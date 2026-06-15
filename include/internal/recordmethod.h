@@ -138,6 +138,7 @@ struct ossl_record_method_st {
         BIO *next,
         BIO_ADDR *local,
         BIO_ADDR *peer,
+        int use_urxe,
         const OSSL_PARAM *settings,
         const OSSL_PARAM *options,
         const OSSL_DISPATCH *fns,
@@ -257,6 +258,13 @@ struct ossl_record_method_st {
      * listener-created connections that share the listener's network BIO.
      */
     int (*set1_peer)(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer);
+
+    /*
+     * Set whether to use the URXE queue for reading. This is used by
+     * listener-created DTLS connections that receive data via the
+     * listener's demux rather than directly from a BIO.
+     */
+    void (*set_use_urxe)(OSSL_RECORD_LAYER *rl, int use_urxe);
 
     /* Called when protocol negotiation selects a protocol version to use */
     int (*set_protocol_version)(OSSL_RECORD_LAYER *rl, int version);

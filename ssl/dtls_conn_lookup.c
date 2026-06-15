@@ -10,8 +10,9 @@
 #include <openssl/crypto.h>
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
+#include <openssl/rand.h>
 #include "internal/dgram_conn_lookup.h"
-#include "internal/hashfunc.h"
+#include "crypto/siphash.h"
 
 #ifndef OPENSSL_NO_DTLS
 
@@ -24,9 +25,19 @@ typedef struct dgram_conn_entry_st {
     SSL *ssl; /* The SSL connection object */
     uint8_t *hashkey; /* Pre-built hash key (family + port + addr) */
     size_t hashkey_len; /* Length of the hash key */
+    uint64_t *siphash_key; /* Pointer to shared SipHash key (hash-flooding defense) */
 } DGRAM_CONN_ENTRY;
 
 DEFINE_LHASH_OF_EX(DGRAM_CONN_ENTRY);
+
+/*
+ * Wrapper structure for address-based lookup implementation data.
+ * Contains the hash table and SipHash key for hash-flooding defense.
+ */
+typedef struct addr_lookup_data_st {
+    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    uint64_t hash_key[2]; /* 128-bit SipHash key */
+} ADDR_LOOKUP_DATA;
 
 /*
  * Build a hash key from a BIO_ADDR.
@@ -88,14 +99,27 @@ static uint8_t *build_hashkey(const BIO_ADDR *peer, size_t *out_len)
 }
 
 /*
- * Hash function for DGRAM_CONN_ENTRY - uses pre-built hashkey.
+ * Hash function for DGRAM_CONN_ENTRY.
+ * Uses SipHash with a per-instance random key to defend against
+ * hash-flooding CPU DoS attacks
  */
 static unsigned long conn_entry_hash(const DGRAM_CONN_ENTRY *e)
 {
-    if (e->hashkey == NULL || e->hashkey_len == 0)
+    SIPHASH siphash = { 0 };
+    unsigned long hashval = 0;
+
+    if (e->hashkey == NULL || e->hashkey_len == 0 || e->siphash_key == NULL)
         return 0;
 
-    return (unsigned long)ossl_fnv1a_hash(e->hashkey, e->hashkey_len);
+    if (!SipHash_set_hash_size(&siphash, sizeof(unsigned long)))
+        return 0;
+    if (!SipHash_Init(&siphash, (const unsigned char *)e->siphash_key, 0, 0))
+        return 0;
+    SipHash_Update(&siphash, e->hashkey, e->hashkey_len);
+    if (!SipHash_Final(&siphash, (unsigned char *)&hashval, sizeof(unsigned long)))
+        return 0;
+
+    return hashval;
 }
 
 /*
@@ -135,14 +159,14 @@ static void conn_entry_free_cb(DGRAM_CONN_ENTRY *e)
  */
 static SSL *addr_lookup(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e)
 {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
     DGRAM_CONN_ENTRY key;
     DGRAM_CONN_ENTRY *result;
 
     if (lookup == NULL || lookup->impl_data == NULL || e == NULL)
         return NULL;
 
-    htable = (LHASH_OF(DGRAM_CONN_ENTRY) *)lookup->impl_data;
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
 
     memset(&key, 0, sizeof(key));
     BIO_ADDR_copy(&key.peer, &e->peer);
@@ -152,7 +176,10 @@ static SSL *addr_lookup(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e)
     if (key.hashkey == NULL)
         return NULL;
 
-    result = lh_DGRAM_CONN_ENTRY_retrieve(htable, &key);
+    /* Set SipHash key pointer for hash function */
+    key.siphash_key = data->hash_key;
+
+    result = lh_DGRAM_CONN_ENTRY_retrieve(data->htable, &key);
 
     OPENSSL_free(key.hashkey);
 
@@ -168,13 +195,13 @@ static SSL *addr_lookup(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e)
 static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
     SSL *ssl)
 {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
     DGRAM_CONN_ENTRY *entry, *old;
 
     if (lookup == NULL || lookup->impl_data == NULL || e == NULL || ssl == NULL)
         return 0;
 
-    htable = (LHASH_OF(DGRAM_CONN_ENTRY) *)lookup->impl_data;
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
 
     entry = OPENSSL_zalloc(sizeof(*entry));
     if (entry == NULL)
@@ -188,10 +215,13 @@ static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
         return 0;
     }
 
-    old = lh_DGRAM_CONN_ENTRY_insert(htable, entry);
+    /* Set SipHash key pointer for hash function */
+    entry->siphash_key = data->hash_key;
+
+    old = lh_DGRAM_CONN_ENTRY_insert(data->htable, entry);
 
     /* Check if insert failed due to allocation error */
-    if (lh_DGRAM_CONN_ENTRY_error(htable)) {
+    if (lh_DGRAM_CONN_ENTRY_error(data->htable)) {
         conn_entry_free(entry);
         /* Don't free old since it is still in the hash table since insert failed */
         return 0;
@@ -210,13 +240,13 @@ static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
 static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer,
     SSL *ssl)
 {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
     DGRAM_CONN_ENTRY *entry, *old;
 
     if (lookup == NULL || lookup->impl_data == NULL || peer == NULL || ssl == NULL)
         return 0;
 
-    htable = (LHASH_OF(DGRAM_CONN_ENTRY) *)lookup->impl_data;
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
 
     entry = OPENSSL_zalloc(sizeof(*entry));
     if (entry == NULL)
@@ -230,10 +260,13 @@ static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *pe
         return 0;
     }
 
-    old = lh_DGRAM_CONN_ENTRY_insert(htable, entry);
+    /* Set SipHash key pointer for hash function */
+    entry->siphash_key = data->hash_key;
+
+    old = lh_DGRAM_CONN_ENTRY_insert(data->htable, entry);
 
     /* Check if insert failed due to allocation error */
-    if (lh_DGRAM_CONN_ENTRY_error(htable)) {
+    if (lh_DGRAM_CONN_ENTRY_error(data->htable)) {
         conn_entry_free(entry);
         /* Don't free old since it is still in the hash table since insert failed */
         return 0;
@@ -250,14 +283,14 @@ static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *pe
  */
 static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
 {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
     DGRAM_CONN_ENTRY lookup_key;
     DGRAM_CONN_ENTRY *removed;
 
     if (lookup == NULL || lookup->impl_data == NULL || peer == NULL)
         return 0;
 
-    htable = (LHASH_OF(DGRAM_CONN_ENTRY) *)lookup->impl_data;
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
 
     memset(&lookup_key, 0, sizeof(lookup_key));
     BIO_ADDR_copy(&lookup_key.peer, peer);
@@ -266,7 +299,10 @@ static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
     if (lookup_key.hashkey == NULL)
         return 0;
 
-    removed = lh_DGRAM_CONN_ENTRY_delete(htable, &lookup_key);
+    /* Set SipHash key pointer for hash function */
+    lookup_key.siphash_key = data->hash_key;
+
+    removed = lh_DGRAM_CONN_ENTRY_delete(data->htable, &lookup_key);
 
     OPENSSL_free(lookup_key.hashkey);
 
@@ -283,15 +319,18 @@ static int addr_unregister_conn(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *peer)
  */
 static void addr_free(DGRAM_CONN_LOOKUP *lookup)
 {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
 
     if (lookup == NULL)
         return;
 
     if (lookup->impl_data != NULL) {
-        htable = (LHASH_OF(DGRAM_CONN_ENTRY) *)lookup->impl_data;
-        lh_DGRAM_CONN_ENTRY_doall(htable, conn_entry_free_cb);
-        lh_DGRAM_CONN_ENTRY_free(htable);
+        data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
+        if (data->htable != NULL) {
+            lh_DGRAM_CONN_ENTRY_doall(data->htable, conn_entry_free_cb);
+            lh_DGRAM_CONN_ENTRY_free(data->htable);
+        }
+        OPENSSL_free(data);
     }
 
     OPENSSL_free(lookup);
@@ -324,17 +363,17 @@ IMPLEMENT_LHASH_DOALL_ARG(DGRAM_CONN_ENTRY, void);
 static void addr_foreach(DGRAM_CONN_LOOKUP *lookup,
     ossl_dgram_conn_lookup_iter_fn cb, void *arg)
 {
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
     ADDR_FOREACH_CTX ctx;
 
     if (lookup == NULL || lookup->impl_data == NULL || cb == NULL)
         return;
 
-    htable = (LHASH_OF(DGRAM_CONN_ENTRY) *)lookup->impl_data;
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
     ctx.user_cb = cb;
     ctx.user_arg = arg;
 
-    lh_DGRAM_CONN_ENTRY_doall_void(htable, addr_foreach_cb, &ctx);
+    lh_DGRAM_CONN_ENTRY_doall_void(data->htable, addr_foreach_cb, &ctx);
 }
 
 static const DGRAM_CONN_LOOKUP_METHODS addr_methods = {
@@ -352,20 +391,36 @@ static const DGRAM_CONN_LOOKUP_METHODS addr_methods = {
 DGRAM_CONN_LOOKUP *ossl_dgram_conn_lookup_new_addr(void)
 {
     DGRAM_CONN_LOOKUP *lookup;
-    LHASH_OF(DGRAM_CONN_ENTRY) *htable;
+    ADDR_LOOKUP_DATA *data;
 
     lookup = OPENSSL_zalloc(sizeof(*lookup));
     if (lookup == NULL)
         return NULL;
 
-    htable = lh_DGRAM_CONN_ENTRY_new(conn_entry_hash, conn_entry_cmp);
-    if (htable == NULL) {
+    data = OPENSSL_zalloc(sizeof(*data));
+    if (data == NULL) {
+        OPENSSL_free(lookup);
+        return NULL;
+    }
+
+    /* Generate random SipHash key for hash-flooding defense */
+    if (RAND_bytes((unsigned char *)data->hash_key,
+            sizeof(data->hash_key))
+        <= 0) {
+        OPENSSL_free(data);
+        OPENSSL_free(lookup);
+        return NULL;
+    }
+
+    data->htable = lh_DGRAM_CONN_ENTRY_new(conn_entry_hash, conn_entry_cmp);
+    if (data->htable == NULL) {
+        OPENSSL_free(data);
         OPENSSL_free(lookup);
         return NULL;
     }
 
     lookup->methods = &addr_methods;
-    lookup->impl_data = htable;
+    lookup->impl_data = data;
 
     return lookup;
 }

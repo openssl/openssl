@@ -343,7 +343,7 @@ static int test_dtls_new_listener(void)
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
     /* Create a DTLS listener */
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
     /* Verify the listener is valid */
     if (!TEST_true(SSL_is_dtls(listener)))
@@ -372,7 +372,7 @@ static int test_dtls_listener_bio(void)
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
 
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     /* Initially, there should be no BIO */
@@ -425,7 +425,7 @@ static int test_dtls_new_listener_dtls12(void)
         goto err;
 
     /* Create a DTLS listener */
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     /* Verify the listener is valid */
@@ -485,7 +485,7 @@ static int test_dtls_get0_listener_listener(void)
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
     /* Create a DTLS listener */
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
     /* The listener should identify itself as the listener */
     if (!TEST_ptr_eq(SSL_get0_listener(listener), listener))
@@ -514,7 +514,7 @@ static int test_dtls_listen_basic(void)
         || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
     /* SSL_listen on a fresh listener must succeed */
     if (!TEST_int_eq(SSL_listen(listener), 1))
@@ -590,7 +590,7 @@ static int test_dtls_accept_connection_empty_no_block(void)
         || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
     /* Empty queue + NO_BLOCK -> NULL, no error */
     if (!TEST_ptr_null(SSL_accept_connection(listener,
@@ -642,7 +642,7 @@ static int test_dtls_queue_len_empty(void)
         || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
     if (!TEST_size_t_eq(SSL_get_accept_connection_queue_len(listener), 0))
         goto err;
@@ -669,7 +669,7 @@ static int test_dtls_accept_connection_no_bio_no_block(void)
         || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     /* No BIO has been set on the listener */
@@ -708,7 +708,7 @@ static int test_dtls_accept_connection_no_bio_block(void)
         || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
         goto err;
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     /* No BIO has been set on the listener */
@@ -777,7 +777,7 @@ static int test_dtls13_connection_with_hrr(void)
 
     /* Create listener and client using memory BIO helper */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HRR,
+            SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -909,7 +909,7 @@ static int test_dtls13_connection_without_hrr(void)
      * Use NO_VALIDATE flag to skip HRR - server won't send HelloRetryRequest.
      */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_NO_VALIDATE,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -1061,7 +1061,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
      * go through HRR cookie validation.
      */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -1278,7 +1278,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
      * This ensures address validation for both DTLS 1.2 and 1.3 clients.
      */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -1592,7 +1592,7 @@ static int test_dtls12_connection_with_hvr(void)
 
     /* Create listener and client using memory BIO helper */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -1725,7 +1725,7 @@ static int test_dtls12_connection_without_hvr(void)
      * Use NO_VALIDATE flag to skip HVR - server won't send HelloVerifyRequest.
      */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_NO_VALIDATE,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -1860,7 +1860,7 @@ static int test_dtls_get_peer_addr_listener(void)
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
 
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     peer_addr = BIO_ADDR_new();
@@ -1919,7 +1919,7 @@ static int test_tls_new_listener_fails(void)
     ERR_clear_error();
 
     /* SSL_new_listener should fail for TLS contexts */
-    listener = SSL_new_listener(ctx, 0);
+    listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD);
     if (!TEST_ptr_null(listener))
         goto err;
 
@@ -1978,7 +1978,7 @@ static int test_dtls_listen_ex_returns_error(void)
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
 
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     if (!TEST_ptr(new_conn = SSL_new(ctx)))
@@ -2033,7 +2033,7 @@ static int test_dtls_listener_time_callback_basic(void)
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
 
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     /* Setting the time callback should succeed */
@@ -2088,7 +2088,7 @@ static int test_dtls_listener_time_callback_invalid(void)
         goto err;
 
     /* Verify that a listener succeeds for contrast */
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
@@ -2122,7 +2122,7 @@ static int test_dtls_listener_pending_timeout_basic(void)
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
 
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     /* Default timeout should be 30 seconds (30000 ms) */
@@ -2207,7 +2207,7 @@ static int test_dtls_listener_pending_timeout_invalid(void)
         goto err;
 
     /* Verify that a listener succeeds for contrast */
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0)))
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
     if (!TEST_true(SSL_listener_set_pending_timeout(listener, timeout)))
@@ -2247,7 +2247,7 @@ static int test_ssl_ownership_pending_conn_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2318,7 +2318,7 @@ static int test_ssl_ownership_incoming_conn_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2413,12 +2413,12 @@ static int test_ssl_ownership_three_conn_states(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -2601,7 +2601,7 @@ static int test_ssl_ownership_set_rbio_pending_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2636,8 +2636,8 @@ static int test_ssl_ownership_set_rbio_pending_leak(void)
      * If there's a leak, ASAN will detect it.
      */
 
-    /* Create a new mem BIO for the replacement */
-    if (!TEST_ptr(new_server_bio = BIO_new(BIO_s_mem())))
+    /* Create a new dgram mem BIO for the replacement */
+    if (!TEST_ptr(new_server_bio = BIO_new(BIO_s_dgram_mem())))
         goto end;
 
     /*
@@ -2688,7 +2688,7 @@ static int test_ssl_ownership_set_rbio_incoming_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2736,8 +2736,8 @@ static int test_ssl_ownership_set_rbio_incoming_leak(void)
      * If there's a leak, ASAN will detect it.
      */
 
-    /* Create a new mem BIO for the replacement */
-    if (!TEST_ptr(new_server_bio = BIO_new(BIO_s_mem())))
+    /* Create a new dgram mem BIO for the replacement */
+    if (!TEST_ptr(new_server_bio = BIO_new(BIO_s_dgram_mem())))
         goto end;
 
     SSL_set0_rbio(listener, new_server_bio);
@@ -2783,7 +2783,7 @@ static int test_ssl_ownership_accept_free_no_double_free(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2878,7 +2878,7 @@ static int test_ssl_ownership_multiple_pending_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -2959,7 +2959,7 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3058,7 +3058,8 @@ static int test_dtls_poll_conn_event_w(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3158,7 +3159,8 @@ static int test_dtls_poll_conn_dgram_pair_readable(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3286,7 +3288,8 @@ static int test_dtls_poll_conn_no_events_before_data(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3384,7 +3387,8 @@ static int test_dtls_poll_listener_multiple_events(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3475,7 +3479,8 @@ static int test_dtls_poll_conn_event_ec(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
-    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx, 0,
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 

@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/dtls_record_rx.h"
+#include "ssl_local.h"
 
 #ifndef OPENSSL_NO_DTLS
 
@@ -23,6 +23,7 @@ DTLS_RX *ossl_dtls_rx_new(DGRAM_DEMUX *demux)
 
     rx->demux = demux;
     ossl_list_urxe_init(&rx->urxe_pending);
+    rx->mutex = ossl_crypto_mutex_new();
 
     return rx;
 }
@@ -50,6 +51,7 @@ void ossl_dtls_rx_free(DTLS_RX *rx)
      */
     rx->demux = NULL;
 
+    ossl_crypto_mutex_free(&rx->mutex);
     OPENSSL_free(rx);
 }
 
@@ -58,7 +60,9 @@ void ossl_dtls_rx_free(DTLS_RX *rx)
  */
 void ossl_dtls_rx_inject_urxe(DTLS_RX *rx, DGRAM_URXE *e)
 {
+    ossl_crypto_mutex_lock(rx->mutex);
     ossl_list_urxe_insert_tail(&rx->urxe_pending, e);
+    ossl_crypto_mutex_unlock(rx->mutex);
 }
 
 /*
@@ -76,12 +80,18 @@ DGRAM_URXE *ossl_dtls_read_datagram(DTLS_RX *rx)
 {
     DGRAM_URXE *e;
 
-    if (ossl_list_urxe_is_empty(&rx->urxe_pending))
+    ossl_crypto_mutex_lock(rx->mutex);
+
+    if (ossl_list_urxe_is_empty(&rx->urxe_pending)) {
+        ossl_crypto_mutex_unlock(rx->mutex);
         return NULL;
+    }
 
     e = ossl_list_urxe_head(&rx->urxe_pending);
     ossl_list_urxe_remove(&rx->urxe_pending, e);
     e->demux_state = URXE_DEMUX_STATE_ISSUED;
+
+    ossl_crypto_mutex_unlock(rx->mutex);
     return e;
 }
 

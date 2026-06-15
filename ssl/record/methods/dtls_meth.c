@@ -890,6 +890,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
     BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+    int use_urxe,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -920,6 +921,8 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     if (peer != NULL)
         (*retrl)->peer = *peer;
 #endif
+
+    (*retrl)->use_urxe = use_urxe;
 
     switch (vers) {
     case DTLS_ANY_VERSION:
@@ -1105,6 +1108,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
 #else
     NULL,
 #endif
+    tls_set_use_urxe,
     tls_set_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,

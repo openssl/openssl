@@ -64,12 +64,10 @@ struct dgram_demux_st {
     /* Whether internal locking is required */
     char require_mutex;
 
-#if defined(OPENSSL_THREADS)
     /*
      * Mutex protecting the URXE lists (urx_free and urx_pending).
      */
     CRYPTO_MUTEX *mutex;
-#endif
 };
 
 /* List management helpers */
@@ -99,15 +97,10 @@ DGRAM_DEMUX *ossl_dgram_demux_new(BIO *net_bio,
     if (demux == NULL)
         return NULL;
 
-#if defined(OPENSSL_THREADS)
     if (threadsafe) {
         demux->require_mutex = 1;
-        if ((demux->mutex = ossl_crypto_mutex_new()) == NULL) {
-            OPENSSL_free(demux);
-            return NULL;
-        }
+        demux->mutex = ossl_crypto_mutex_new();
     }
-#endif
 
     /* We update this if possible when we get a BIO. */
     demux->mtu = DEMUX_DEFAULT_MTU;
@@ -139,10 +132,8 @@ void ossl_dgram_demux_free(DGRAM_DEMUX *demux)
     dgram_demux_free_urxl(&demux->urx_free);
     dgram_demux_free_urxl(&demux->urx_pending);
 
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_free(&demux->mutex);
-#endif
 
     OPENSSL_free(demux);
 }
@@ -381,15 +372,11 @@ static int dgram_demux_process_pending_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
          * release_urxe or reinject_urxe.
          */
         e->demux_state = URXE_DEMUX_STATE_ISSUED;
-#if defined(OPENSSL_THREADS)
         if (demux->require_mutex)
             ossl_crypto_mutex_unlock(demux->mutex);
-#endif
         demux->default_cb(e, demux->default_cb_arg);
-#if defined(OPENSSL_THREADS)
         if (demux->require_mutex)
             ossl_crypto_mutex_lock(demux->mutex);
-#endif
     } else {
         /* No handler, discard. */
         ossl_list_urxe_insert_tail(&demux->urx_free, e);
@@ -423,10 +410,8 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
 {
     int ret;
 
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
-#endif
 
     if (ossl_list_urxe_head(&demux->urx_pending) == NULL) {
         if (!dgram_demux_ensure_free_urxe(demux, DEMUX_MAX_MSGS_PER_CALL)) {
@@ -453,10 +438,8 @@ int ossl_dgram_demux_pump(DGRAM_DEMUX *demux)
     ret = DGRAM_DEMUX_PUMP_RES_OK;
 
 end:
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
-#endif
     return ret;
 }
 
@@ -470,10 +453,8 @@ int ossl_dgram_demux_inject(DGRAM_DEMUX *demux,
     int ret = 0;
     DGRAM_URXE *urxe;
 
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
-#endif
 
     if (!dgram_demux_ensure_free_urxe(demux, 1))
         goto end;
@@ -511,10 +492,8 @@ int ossl_dgram_demux_inject(DGRAM_DEMUX *demux,
     ret = dgram_demux_process_pending_urxl(demux) > 0;
 
 end:
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
-#endif
     return ret;
 }
 
@@ -524,16 +503,12 @@ void ossl_dgram_demux_release_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
     assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
     assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
 
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
-#endif
     ossl_list_urxe_insert_tail(&demux->urx_free, e);
     e->demux_state = URXE_DEMUX_STATE_FREE;
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
-#endif
 }
 
 void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
@@ -541,16 +516,12 @@ void ossl_dgram_demux_reinject_urxe(DGRAM_DEMUX *demux, DGRAM_URXE *e)
     assert(ossl_list_urxe_prev(e) == NULL && ossl_list_urxe_next(e) == NULL);
     assert(e->demux_state == URXE_DEMUX_STATE_ISSUED);
 
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_lock(demux->mutex);
-#endif
     ossl_list_urxe_insert_head(&demux->urx_pending, e);
     e->demux_state = URXE_DEMUX_STATE_PENDING;
-#if defined(OPENSSL_THREADS)
     if (demux->require_mutex)
         ossl_crypto_mutex_unlock(demux->mutex);
-#endif
 }
 
 int ossl_dgram_demux_has_pending(const DGRAM_DEMUX *demux)

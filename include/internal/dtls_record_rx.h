@@ -12,12 +12,14 @@
 #pragma once
 
 #include "internal/dgram_demux.h"
+#include "internal/thread_arch.h"
 
 #ifndef OPENSSL_NO_DTLS
 
 typedef struct dtls_rx_st {
     DGRAM_DEMUX *demux;
     DGRAM_URXE_LIST urxe_pending;
+    CRYPTO_MUTEX *mutex;
 } DTLS_RX;
 
 /*

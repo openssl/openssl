@@ -402,7 +402,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
          * a previous epoch's record layer.
          */
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-        if (rl->isdtls && BIO_ADDR_family(&rl->peer) != AF_UNSPEC
+        if (rl->isdtls && rl->use_urxe
             && rl->prev == NULL && rl->get_urxe_packet != NULL) {
             unsigned char *pkt_data = NULL;
             size_t pkt_len = 0;
@@ -414,7 +414,7 @@ int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
                 if (urxe_data_read > max - left)
                     urxe_data_read = max - left;
 
-                /* TODO: DTLS1.3 QUIC avoid the copy can we avoid the copy here */
+                /* TODO: DTLS1.3 QUIC avoids the copy can we avoid the copy here */
                 memcpy(pkt + len + left, pkt_data, urxe_data_read);
                 bioread = urxe_data_read;
                 ret = OSSL_RECORD_RETURN_SUCCESS;
@@ -1438,6 +1438,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
     BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+    int use_urxe,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -2138,6 +2139,11 @@ int tls_set1_peer(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer)
 }
 #endif
 
+void tls_set_use_urxe(OSSL_RECORD_LAYER *rl, int use_urxe)
+{
+    rl->use_urxe = use_urxe;
+}
+
 size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl)
 {
     size_t headerlen;
@@ -2318,6 +2324,7 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_get_alert_code,
     tls_set1_bio,
     NULL, /* set1_peer: Not used for TLS */
+    NULL, /* set_use_urxe: Not used for TLS */
     tls_set_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,

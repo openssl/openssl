@@ -108,6 +108,7 @@ quic_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
     BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+    int use_urxe,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -584,6 +585,7 @@ static const OSSL_RECORD_METHOD quic_tls_record_method = {
     quic_get_alert_code,
     quic_set1_bio,
     NULL, /* set1_peer: Not used for QUIC */
+    NULL, /* set_use_urxe: Not used for QUIC */
     quic_set_protocol_version,
     quic_set_plain_alerts,
     quic_set_first_handshake,

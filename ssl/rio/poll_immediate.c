@@ -197,6 +197,7 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     int *abort_blocking)
 {
     BIO *rbio, *wbio;
+    BIO_POLL_DESCRIPTOR rdesc, wdesc;
     int rfd = -1, wfd = -1, nfd = -1;
     SSL_CONNECTION *sc;
     DTLS_LISTENER *dl = NULL;
@@ -268,14 +269,20 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
             rbio = SSL_get_rbio(sc->d1->listener);
         }
 
-        if (rbio != NULL && BIO_get_fd(rbio, &rfd) < 0)
-            rfd = -1;
+        if (rbio != NULL) {
+            if (BIO_get_rpoll_descriptor(rbio, &rdesc)
+                && rdesc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD)
+                rfd = rdesc.value.fd;
+        }
     }
 
     if ((events & SSL_POLL_EVENT_W) != 0) {
         wbio = SSL_get_wbio(ssl);
-        if (wbio != NULL && BIO_get_fd(wbio, &wfd) < 0)
-            wfd = -1;
+        if (wbio != NULL) {
+            if (BIO_get_wpoll_descriptor(wbio, &wdesc)
+                && wdesc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD)
+                wfd = wdesc.value.fd;
+        }
     }
 
     /* If same FD for read and write, combine them */
