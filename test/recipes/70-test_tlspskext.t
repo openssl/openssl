@@ -24,6 +24,8 @@ plan skip_all => "No TLS protocols are supported by this OpenSSL build"
     if alldisabled(available_protocols("tls"));
 plan skip_all => "$test_name needs the module feature enabled"
     if disabled("module");
+plan skip_all => "$test_name needs the psk feature enabled"
+    if disabled("psk");
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
