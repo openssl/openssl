@@ -453,6 +453,9 @@ These functions can be used for decryption or encryption. The operation
 performed depends on the value of the I<enc> parameter. It should be set to 1
 for encryption, 0 for decryption and -1 to leave the value unchanged
 (the actual value of 'enc' being supplied in a previous call).
+For compatibility, any other nonzero value of I<enc> is currently treated as 1
+(encryption), but relying on this is discouraged: only 1, 0 and -1 should be
+used, as other values are undocumented and may be rejected in a future release.
 
 =item EVP_CipherInit_SKEY()
 
