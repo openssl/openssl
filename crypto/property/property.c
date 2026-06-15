@@ -976,7 +976,7 @@ static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old)
 static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, QUERY *old)
 {
     /*
-     * point the item we're remoing's next pointer to the top of the archive list
+     * point the item we're removing's next pointer to the top of the archive list
      * Note: We're writing to the old->next here which is shared, so that's suspicious, but
      * because we've already removed old from the cache_list in ossl_method_store_clean_archive
      * this is safe for the following reasons:
