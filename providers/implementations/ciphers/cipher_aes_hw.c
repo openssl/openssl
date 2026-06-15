@@ -252,16 +252,37 @@ static const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_mode(enum aes_modes mode,
     return aes_hw_mode;
 }
 
-#define PROV_CIPHER_HW_aes_mode(ENUM_MODE, mode)                         \
-    const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_##mode(size_t keybits) \
-    {                                                                    \
-        return ossl_prov_cipher_hw_aes_mode(ENUM_MODE, keybits);         \
-    }
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ecb(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_ECB, keybits);
+}
 
-PROV_CIPHER_HW_aes_mode(AES_MODE_ECB, ecb)
-PROV_CIPHER_HW_aes_mode(AES_MODE_CBC, cbc)
-PROV_CIPHER_HW_aes_mode(AES_MODE_CFB128, cfb128)
-PROV_CIPHER_HW_aes_mode(AES_MODE_CFB8, cfb8)
-PROV_CIPHER_HW_aes_mode(AES_MODE_CFB1, cfb1)
-PROV_CIPHER_HW_aes_mode(AES_MODE_OFB128, ofb128)
-PROV_CIPHER_HW_aes_mode(AES_MODE_CTR, ctr)
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cbc(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_CBC, keybits);
+}
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cfb128(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_CFB128, keybits);
+}
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cfb8(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_CFB8, keybits);
+}
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_cfb1(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_CFB1, keybits);
+}
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ofb128(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_OFB128, keybits);
+}
+
+const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_ctr(size_t keybits)
+{
+    return ossl_prov_cipher_hw_aes_mode(AES_MODE_CTR, keybits);
+}
