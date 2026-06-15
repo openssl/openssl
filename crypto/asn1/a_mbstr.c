@@ -65,6 +65,9 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     if (len < 0) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_INVALID_ARGUMENT);
         return -1;
+    } else if (len >= INT_MAX) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG);
+        return -1;
     }
 
     /* First do a string check and work out the number of characters */
@@ -303,7 +306,7 @@ static int out_utf8(unsigned long value, void *arg)
         return len;
     }
     outlen = arg;
-    if (*outlen > INT_MAX - len) {
+    if (*outlen >= INT_MAX - len) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG);
         return -1;
     }
