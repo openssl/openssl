@@ -6958,6 +6958,7 @@ end:
     return testresult;
 }
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
+#ifndef OSSL_NO_USABLE_TLS1_3
 
 static unsigned char cookie_magic_value[] = "cookie magic";
 
@@ -7004,11 +7005,6 @@ static int test_stateless(void)
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
-
-#if defined(OSSL_NO_USABLE_TLS1_3) || defined(OPENSSL_NO_TLS1_2)
-    testresult = TEST_skip("TLSv1.3 not usable or no TLSv1.2");
-    goto end;
-#endif
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
             TLS_client_method(), TLS1_VERSION, 0,
@@ -7087,6 +7083,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
 static int clntaddoldcb = 0;
