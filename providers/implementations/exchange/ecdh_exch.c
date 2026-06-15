@@ -410,9 +410,8 @@ static const OSSL_PARAM *ecdh_gettable_ctx_params(ossl_unused void *vpecdhctx,
     return ecdh_get_ctx_params_list;
 }
 
-static inline
-    size_t
-    ecdh_size(const EC_KEY *k)
+static inline size_t
+ecdh_size(const EC_KEY *k)
 {
     size_t degree = 0;
     const EC_GROUP *group;

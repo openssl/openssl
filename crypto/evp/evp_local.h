@@ -398,15 +398,15 @@ int evp_names_do_all(OSSL_PROVIDER *prov, int number,
     void *data);
 int evp_cipher_cache_constants(EVP_CIPHER *cipher);
 
-#define EVP_DO_ALL_PROVIDED_THUNK(type)                                                       \
-    struct type##_do_all_provided_thunk {                                                     \
-        void (*fn)(type * method, void *arg);                                                 \
-        void *arg;                                                                            \
-    };                                                                                        \
+#define EVP_DO_ALL_PROVIDED_THUNK(type)                                                  \
+    struct type##_do_all_provided_thunk {                                                \
+        void (*fn)(type * method, void *arg);                                            \
+        void *arg;                                                                       \
+    };                                                                                   \
     static inline ossl_unused void type##_do_all_provided_thunk(void *method, void *arg) \
-    {                                                                                         \
-        struct type##_do_all_provided_thunk *t = arg;                                         \
-        (*t->fn)((type *)method, t->arg);                                                     \
+    {                                                                                    \
+        struct type##_do_all_provided_thunk *t = arg;                                    \
+        (*t->fn)((type *)method, t->arg);                                                \
     }
 
 EVP_DO_ALL_PROVIDED_THUNK(EVP_ASYM_CIPHER)

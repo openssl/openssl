@@ -119,15 +119,15 @@ typedef void *pvoid;
 #else
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
-#define IMPL_fallback_atomic_load_n(t)                    \
+#define IMPL_fallback_atomic_load_n(t)               \
     static inline t fallback_atomic_load_n_##t(t *p) \
-    {                                                     \
-        t ret;                                            \
-                                                          \
-        pthread_mutex_lock(&atomic_sim_lock);             \
-        ret = *p;                                         \
-        pthread_mutex_unlock(&atomic_sim_lock);           \
-        return ret;                                       \
+    {                                                \
+        t ret;                                       \
+                                                     \
+        pthread_mutex_lock(&atomic_sim_lock);        \
+        ret = *p;                                    \
+        pthread_mutex_unlock(&atomic_sim_lock);      \
+        return ret;                                  \
     }
 IMPL_fallback_atomic_load_n(uint32_t)
     IMPL_fallback_atomic_load_n(uint64_t)
@@ -135,27 +135,27 @@ IMPL_fallback_atomic_load_n(uint32_t)
 
 #define ATOMIC_LOAD_N(t, p, o) fallback_atomic_load_n_##t(p)
 
-#define IMPL_fallback_atomic_store_n(t)                         \
+#define IMPL_fallback_atomic_store_n(t)                    \
     static inline t fallback_atomic_store_n_##t(t *p, t v) \
-    {                                                           \
-        t ret;                                                  \
-                                                                \
-        pthread_mutex_lock(&atomic_sim_lock);                   \
-        ret = *p;                                               \
-        *p = v;                                                 \
-        pthread_mutex_unlock(&atomic_sim_lock);                 \
-        return ret;                                             \
+    {                                                      \
+        t ret;                                             \
+                                                           \
+        pthread_mutex_lock(&atomic_sim_lock);              \
+        ret = *p;                                          \
+        *p = v;                                            \
+        pthread_mutex_unlock(&atomic_sim_lock);            \
+        return ret;                                        \
     }
             IMPL_fallback_atomic_store_n(uint32_t)
 
 #define ATOMIC_STORE_N(t, p, v, o) fallback_atomic_store_n_##t(p, v)
 
-#define IMPL_fallback_atomic_store(t)                             \
+#define IMPL_fallback_atomic_store(t)                        \
     static inline void fallback_atomic_store_##t(t *p, t *v) \
-    {                                                             \
-        pthread_mutex_lock(&atomic_sim_lock);                     \
-        *p = *v;                                                  \
-        pthread_mutex_unlock(&atomic_sim_lock);                   \
+    {                                                        \
+        pthread_mutex_lock(&atomic_sim_lock);                \
+        *p = *v;                                             \
+        pthread_mutex_unlock(&atomic_sim_lock);              \
     }
                 IMPL_fallback_atomic_store(pvoid)
 

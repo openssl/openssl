@@ -16,56 +16,56 @@
 
 #define PRIORITY_QUEUE_OF(type) OSSL_PRIORITY_QUEUE_##type
 
-#define DEFINE_PRIORITY_QUEUE_OF_INTERNAL(type, ctype)                                                                            \
-    typedef struct ossl_priority_queue_st_##type PRIORITY_QUEUE_OF(type);                                                         \
+#define DEFINE_PRIORITY_QUEUE_OF_INTERNAL(type, ctype)                                                                       \
+    typedef struct ossl_priority_queue_st_##type PRIORITY_QUEUE_OF(type);                                                    \
     static ossl_unused inline PRIORITY_QUEUE_OF(type) * ossl_pqueue_##type##_new(int (*compare)(const void *, const void *)) \
-    {                                                                                                                             \
-        return (PRIORITY_QUEUE_OF(type) *)ossl_pqueue_new(                                                                        \
-            compare);                                                                                                             \
-    }                                                                                                                             \
+    {                                                                                                                        \
+        return (PRIORITY_QUEUE_OF(type) *)ossl_pqueue_new(                                                                   \
+            compare);                                                                                                        \
+    }                                                                                                                        \
     static ossl_unused inline void                                                                                           \
-    ossl_pqueue_##type##_free(PRIORITY_QUEUE_OF(type) * pq)                                                                       \
-    {                                                                                                                             \
-        ossl_pqueue_free((OSSL_PQUEUE *)pq);                                                                                      \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_free(PRIORITY_QUEUE_OF(type) * pq)                                                                  \
+    {                                                                                                                        \
+        ossl_pqueue_free((OSSL_PQUEUE *)pq);                                                                                 \
+    }                                                                                                                        \
     static ossl_unused inline void                                                                                           \
-    ossl_pqueue_##type##_pop_free(PRIORITY_QUEUE_OF(type) * pq,                                                                   \
-        void (*freefunc)(void *))                                                                                                 \
-    {                                                                                                                             \
-        ossl_pqueue_pop_free((OSSL_PQUEUE *)pq, freefunc);                                                                        \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_pop_free(PRIORITY_QUEUE_OF(type) * pq,                                                              \
+        void (*freefunc)(void *))                                                                                            \
+    {                                                                                                                        \
+        ossl_pqueue_pop_free((OSSL_PQUEUE *)pq, freefunc);                                                                   \
+    }                                                                                                                        \
     static ossl_unused inline int                                                                                            \
-    ossl_pqueue_##type##_reserve(PRIORITY_QUEUE_OF(type) * pq, size_t n)                                                          \
-    {                                                                                                                             \
-        return ossl_pqueue_reserve((OSSL_PQUEUE *)pq, n);                                                                         \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_reserve(PRIORITY_QUEUE_OF(type) * pq, size_t n)                                                     \
+    {                                                                                                                        \
+        return ossl_pqueue_reserve((OSSL_PQUEUE *)pq, n);                                                                    \
+    }                                                                                                                        \
     static ossl_unused inline size_t                                                                                         \
-    ossl_pqueue_##type##_num(const PRIORITY_QUEUE_OF(type) * pq)                                                                  \
-    {                                                                                                                             \
-        return ossl_pqueue_num((OSSL_PQUEUE *)pq);                                                                                \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_num(const PRIORITY_QUEUE_OF(type) * pq)                                                             \
+    {                                                                                                                        \
+        return ossl_pqueue_num((OSSL_PQUEUE *)pq);                                                                           \
+    }                                                                                                                        \
     static ossl_unused inline int                                                                                            \
-    ossl_pqueue_##type##_push(PRIORITY_QUEUE_OF(type) * pq,                                                                       \
-        ctype * data, size_t *elem)                                                                                               \
-    {                                                                                                                             \
-        return ossl_pqueue_push((OSSL_PQUEUE *)pq, (void *)data, elem);                                                           \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_push(PRIORITY_QUEUE_OF(type) * pq,                                                                  \
+        ctype * data, size_t *elem)                                                                                          \
+    {                                                                                                                        \
+        return ossl_pqueue_push((OSSL_PQUEUE *)pq, (void *)data, elem);                                                      \
+    }                                                                                                                        \
     static ossl_unused inline ctype *                                                                                        \
-    ossl_pqueue_##type##_peek(const PRIORITY_QUEUE_OF(type) * pq)                                                                 \
-    {                                                                                                                             \
-        return (type *)ossl_pqueue_peek((OSSL_PQUEUE *)pq);                                                                       \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_peek(const PRIORITY_QUEUE_OF(type) * pq)                                                            \
+    {                                                                                                                        \
+        return (type *)ossl_pqueue_peek((OSSL_PQUEUE *)pq);                                                                  \
+    }                                                                                                                        \
     static ossl_unused inline ctype *                                                                                        \
-    ossl_pqueue_##type##_pop(PRIORITY_QUEUE_OF(type) * pq)                                                                        \
-    {                                                                                                                             \
-        return (type *)ossl_pqueue_pop((OSSL_PQUEUE *)pq);                                                                        \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_pop(PRIORITY_QUEUE_OF(type) * pq)                                                                   \
+    {                                                                                                                        \
+        return (type *)ossl_pqueue_pop((OSSL_PQUEUE *)pq);                                                                   \
+    }                                                                                                                        \
     static ossl_unused inline ctype *                                                                                        \
-    ossl_pqueue_##type##_remove(PRIORITY_QUEUE_OF(type) * pq,                                                                     \
-        size_t elem)                                                                                                              \
-    {                                                                                                                             \
-        return (type *)ossl_pqueue_remove((OSSL_PQUEUE *)pq, elem);                                                               \
-    }                                                                                                                             \
+    ossl_pqueue_##type##_remove(PRIORITY_QUEUE_OF(type) * pq,                                                                \
+        size_t elem)                                                                                                         \
+    {                                                                                                                        \
+        return (type *)ossl_pqueue_remove((OSSL_PQUEUE *)pq, elem);                                                          \
+    }                                                                                                                        \
     struct ossl_priority_queue_st_##type
 
 #define DEFINE_PRIORITY_QUEUE_OF(type) \

@@ -320,9 +320,8 @@ static const vec_int32_t vec_q_inv = { ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV,
  *          -q+1..q-1.
  */
 
-static inline
-    vec_int32_t
-    montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
+static inline vec_int32_t
+montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
 {
     vec_uint32_t k = (vec_uint32_t)a_twist * (vec_uint32_t)b;
     vec_uint32_t c_u = vec_mulh((vec_uint32_alias_t)k, (vec_uint32_alias_t)vec_q);
@@ -338,9 +337,8 @@ static inline
  * @param a in (-q, q)
  * @returns a mod q in [0, q-1]
  */
-static inline
-    vec_int32_t
-    reduce_once_signed(vec_int32_t a)
+static inline vec_int32_t
+reduce_once_signed(vec_int32_t a)
 {
     /* mask is 11..11 when a is negative, else 0 */
     vec_uint32_t mask = -(((vec_uint32_t)a) >> 31);
@@ -355,9 +353,8 @@ static inline
  * @param a in the range -2**31..2**31-1
  * @returns a mod q in the range 0..q-1
  */
-static inline
-    vec_int32_t
-    reduce_fully(vec_int32_t a)
+static inline vec_int32_t
+reduce_fully(vec_int32_t a)
 {
     const int32_t v_scalar = 1074791296;
     const vec_int32_alias_t v = { v_scalar, v_scalar, v_scalar, v_scalar };
