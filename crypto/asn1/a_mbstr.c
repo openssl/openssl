@@ -66,7 +66,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     }
     if (!mask)
         mask = DIRSTRING_TYPE;
-    if (len < 0) {
+    if (len < 0 || len >= INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_PASSED_INVALID_ARGUMENT);
         return -1;
     }
@@ -305,7 +305,7 @@ static int out_utf8(uint32_t value, void *arg)
         return len;
     }
     outlen = arg;
-    if (*outlen > INT_MAX - len) {
+    if (*outlen >= INT_MAX - len) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG);
         return -1;
     }
