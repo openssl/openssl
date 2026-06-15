@@ -120,10 +120,10 @@ static int aes_gcm_rv32i_initkey(PROV_GCM_CTX *ctx,
     size_t keylen)
 {
     if (RISCV_HAS_ZBKB_AND_ZKND_AND_ZKNE()) {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             rv32i_zbkb_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL);
     } else if (RISCV_HAS_ZKND_AND_ZKNE()) {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             rv32i_zkne_set_encrypt_key, rv32i_zkne_encrypt, NULL);
     }
     return 0;
@@ -133,7 +133,7 @@ static const PROV_GCM_HW aes_gcm_rv32i = {
     aes_gcm_rv32i_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };

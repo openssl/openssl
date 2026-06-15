@@ -173,7 +173,7 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
 static int aesni_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
-    return aes_gcm_hw_initkey(ctx, key, keylen, aesni_set_encrypt_key,
+    return ossl_aes_gcm_hw_initkey(ctx, key, keylen, aesni_set_encrypt_key,
         aesni_encrypt, aesni_ctr32_encrypt_blocks);
 }
 
@@ -181,7 +181,7 @@ static const PROV_GCM_HW aesni_gcm = {
     aesni_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };

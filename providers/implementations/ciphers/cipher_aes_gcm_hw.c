@@ -17,7 +17,7 @@
 #include <openssl/proverr.h>
 #include "cipher_aes_gcm.h"
 
-int aes_gcm_hw_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
+int ossl_aes_gcm_hw_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen, aes_set_encrypt_key_fn fn_set_key,
     aes_block128_f fn_block, ctr128_f fn_ctr)
 {
@@ -43,10 +43,10 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 #ifdef HWAES_CAPABLE
     if (HWAES_CAPABLE) {
 #ifdef HWAES_ctr32_encrypt_blocks
-        return aes_gcm_hw_initkey(ctx, key, keylen, HWAES_set_encrypt_key,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen, HWAES_set_encrypt_key,
             HWAES_encrypt, HWAES_ctr32_encrypt_blocks);
 #else
-        return aes_gcm_hw_initkey(ctx, key, keylen, HWAES_set_encrypt_key,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen, HWAES_set_encrypt_key,
             HWAES_encrypt, NULL);
 #endif /* HWAES_ctr32_encrypt_blocks */
     } else
@@ -54,31 +54,31 @@ static int aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 
 #ifdef BSAES_CAPABLE
         if (BSAES_CAPABLE) {
-        return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
             AES_encrypt, (ctr128_f)ossl_bsaes_ctr32_encrypt_blocks);
     } else
 #endif /* BSAES_CAPABLE */
 
 #ifdef VPAES_CAPABLE
         if (VPAES_CAPABLE) {
-        return aes_gcm_hw_initkey(ctx, key, keylen, vpaes_set_encrypt_key,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen, vpaes_set_encrypt_key,
             vpaes_encrypt, NULL);
     } else
 #endif /* VPAES_CAPABLE */
 
     {
 #ifdef AES_CTR_ASM
-        return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
             AES_encrypt, (ctr128_f)AES_ctr32_encrypt);
 #else
-        return aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen, AES_set_encrypt_key,
             AES_encrypt, NULL);
 #endif /* AES_CTR_ASM */
     }
 }
 
-int generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx, const unsigned char *in,
-    size_t len, unsigned char *out)
+int ossl_generic_aes_gcm_cipher_update(PROV_GCM_CTX *ctx,
+    const unsigned char *in, size_t len, unsigned char *out)
 {
     if (ctx->enc) {
         if (ctx->ctr != NULL) {
@@ -146,7 +146,7 @@ static const PROV_GCM_HW aes_gcm = {
     aes_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
