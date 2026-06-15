@@ -98,7 +98,8 @@ guidelines:
     (usually by rebasing) before it will be acceptable.
 
  4. Code provided should follow our [coding style](STYLE.md) and
-    [documentation policy](DOCUMENTATION.md) and compile without warnings.
+    [documentation policy](DOCUMENTATION.md) and compile without warnings when
+    using a --strict-warnings configuation.
 
     Consistent formatting is enforced by using `clang-format` with configuration
     stored in [.clang-format](.clang-format). OpenSSL uses `WebKit` style.
