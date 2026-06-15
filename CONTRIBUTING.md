@@ -99,7 +99,7 @@ guidelines:
 
  4. Code provided should follow our [coding style](STYLE.md) and
     [documentation policy](DOCUMENTATION.md) and compile without warnings when
-    using a --strict-warnings configuation.
+    using a --strict-warnings configuration.
 
     Consistent formatting is enforced by using `clang-format` with configuration
     stored in [.clang-format](.clang-format). OpenSSL uses `WebKit` style.
