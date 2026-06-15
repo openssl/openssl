@@ -1212,9 +1212,6 @@ int SSL_CTX_set_tlsext_ticket_key_evp_cb(SSL_CTX *ctx, int (*fp)(SSL *, unsigned
 /* ASCII: "client write key", in hex for EBCDIC compatibility */
 #define TLS_MD_CLIENT_WRITE_KEY_CONST "\x63\x6c\x69\x65\x6e\x74\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
 #define TLS_MD_CLIENT_WRITE_KEY_CONST_SIZE 16
-/* ASCII: "server write key", in hex for EBCDIC compatibility */
-#define TLS_MD_SERVER_WRITE_KEY_CONST "\x73\x65\x72\x76\x65\x72\x20\x77\x72\x69\x74\x65\x20\x6b\x65\x79"
-#define TLS_MD_SERVER_WRITE_KEY_CONST_SIZE 16
 /* ASCII: "IV block", in hex for EBCDIC compatibility */
 #define TLS_MD_IV_BLOCK_CONST "\x49\x56\x20\x62\x6c\x6f\x63\x6b"
 #define TLS_MD_IV_BLOCK_CONST_SIZE 8
