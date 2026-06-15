@@ -149,7 +149,7 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_rv64i(enum aes_modes mode)
 static int rv64i_zknd_zkne_gcm_initkey(PROV_GCM_CTX *ctx,
     const unsigned char *key, size_t keylen)
 {
-    return aes_gcm_hw_initkey(ctx, key, keylen,
+    return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
         rv64i_zkne_set_encrypt_key, rv64i_zkne_encrypt, NULL);
 }
 
@@ -157,7 +157,7 @@ static const PROV_GCM_HW rv64i_zknd_zkne_gcm = {
     rv64i_zknd_zkne_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
@@ -173,10 +173,10 @@ static int rv64i_zvkned_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
      * For AES-192 case, we could fallback to `AES_set_encrypt_key`.
      */
     if (zvkned_key_schedule_supported(keylen)) {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt, NULL);
     } else {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             AES_set_encrypt_key, rv64i_zvkned_encrypt, NULL);
     }
 }
@@ -185,7 +185,7 @@ static const PROV_GCM_HW rv64i_zvkned_gcm = {
     rv64i_zvkned_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };
@@ -202,11 +202,11 @@ static int rv64i_zvkb_zvkg_zvkned_gcm_initkey(PROV_GCM_CTX *ctx,
      * For AES-192 case, we could fallback to `AES_set_encrypt_key`.
      */
     if (zvkned_key_schedule_supported(keylen)) {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             rv64i_zvkned_set_encrypt_key, rv64i_zvkned_encrypt,
             rv64i_zvkb_zvkned_ctr32_encrypt_blocks);
     } else {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             AES_set_encrypt_key, rv64i_zvkned_encrypt,
             rv64i_zvkb_zvkned_ctr32_encrypt_blocks);
     }
@@ -216,7 +216,7 @@ static const PROV_GCM_HW rv64i_zvkb_zvkg_zvkned_gcm = {
     rv64i_zvkb_zvkg_zvkned_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };

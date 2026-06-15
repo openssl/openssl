@@ -118,11 +118,11 @@ static int armv8_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
     if (AES_UNROLL12_EOR3_CAPABLE) {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             aes_v8_set_encrypt_key, aes_v8_encrypt,
             aes_v8_ctr32_encrypt_blocks_unroll12_eor3);
     } else {
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             aes_v8_set_encrypt_key, aes_v8_encrypt,
             aes_v8_ctr32_encrypt_blocks);
     }
@@ -132,7 +132,7 @@ static const PROV_GCM_HW armv8_aes_gcm = {
     armv8_aes_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };

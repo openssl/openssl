@@ -154,15 +154,15 @@ static int t4_aes_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
 {
     switch (keylen) {
     case 16:
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             t4_set_encrypt_key, aes_t4_encrypt,
             (ctr128_f)aes128_t4_ctr32_encrypt);
     case 24:
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             t4_set_encrypt_key, aes_t4_encrypt,
             (ctr128_f)aes192_t4_ctr32_encrypt);
     case 32:
-        return aes_gcm_hw_initkey(ctx, key, keylen,
+        return ossl_aes_gcm_hw_initkey(ctx, key, keylen,
             t4_set_encrypt_key, aes_t4_encrypt,
             (ctr128_f)aes256_t4_ctr32_encrypt);
     default:
@@ -174,7 +174,7 @@ static const PROV_GCM_HW t4_aes_gcm = {
     t4_aes_gcm_initkey,
     ossl_gcm_setiv,
     ossl_gcm_aad_update,
-    generic_aes_gcm_cipher_update,
+    ossl_generic_aes_gcm_cipher_update,
     ossl_gcm_cipher_final,
     ossl_gcm_one_shot
 };

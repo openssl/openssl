@@ -19,7 +19,7 @@
 static int aes_ppc_gcm_initkey(PROV_GCM_CTX *ctx, const unsigned char *key,
     size_t keylen)
 {
-    return aes_gcm_hw_initkey(ctx, key, keylen, aes_p8_set_encrypt_key,
+    return ossl_aes_gcm_hw_initkey(ctx, key, keylen, aes_p8_set_encrypt_key,
         aes_p8_encrypt, aes_p8_ctr32_encrypt_blocks);
 }
 
