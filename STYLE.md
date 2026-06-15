@@ -529,8 +529,8 @@ the stubs:
 
 ```c
 #if defined(OPENSSL_NO_FOO)
-static inline int foo_init(void) { return 1; }
-static inline void foo_cleanup(void) {}
+static ossl_inline int foo_init(void) { return 1; }
+static ossl_inline void foo_cleanup(void) {}
 #else
 int foo_init(void);
 void foo_cleanup(void);
@@ -573,7 +573,7 @@ maintain. Do not nest macros calling other macros.
 Prefer functions over function-like macros. Do not optimise for
 function-call overhead without first measuring with a function
 implementation; if the function is hot enough to need inlining,
-mark it `inline` rather than converting it to a macro.
+mark it `ossl_inline` rather than converting it to a macro.
 
 ### Macro parenthesisation
 
