@@ -17,7 +17,7 @@ use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 30;
+plan tests => 31;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -370,3 +370,52 @@ subtest "pkeyutl -pkeyopt_passin" => sub {
                "Fail on unknown pkey option via passin");
         });
 };
+
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", 1
+        if disabled("ec");
+
+    subtest "pkeyutl -derive peer key setup" => sub {
+        my $eckey = srctop_file("test", "testec-p256.pem");
+        my $ecpub = srctop_file("test", "testecpub-p256.pem");
+        my $rsapub = srctop_file("test", "testrsapub.pem");
+
+        plan tests => 5;
+
+        # ECDH derive against a matching peer public key
+        ok(run(app(['openssl', 'pkeyutl', '-derive',
+                    '-inkey', $eckey, '-peerkey', $ecpub,
+                    '-out', 'derive_secret.bin'])),
+           "Derive shared secret with matching peer key");
+
+        # setup_peer: peer key file cannot be loaded
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                ok(run(app(['openssl', 'pkeyutl', '-derive',
+                            '-inkey', $eckey, '-peerkey', 'no_such_peer.pem'])),
+                   "Fail when the peer key cannot be read");
+            });
+
+        # setup_peer: peer key type does not match the private key type
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                ok(run(app(['openssl', 'pkeyutl', '-derive',
+                            '-inkey', $eckey, '-peerkey', $rsapub])),
+                   "Fail when peer key type does not match private key");
+            });
+
+        # main: -derive requires -peerkey
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                ok(run(app(['openssl', 'pkeyutl', '-derive', '-inkey', $eckey])),
+                   "Fail when -derive is given without -peerkey");
+            });
+
+        # main: -peerkey is only valid with -derive
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                ok(run(app(['openssl', 'pkeyutl', '-inkey', $eckey, '-peerkey', $ecpub])),
+                   "Fail when -peerkey is given without -derive");
+            });
+    };
+}
