@@ -85,7 +85,7 @@ void ossl_curve448_point_double(curve448_point_t p, const curve448_point_t q)
 }
 
 /* Operations on [p]niels */
-static ossl_inline void cond_neg_niels(niels_t n, mask_t neg)
+static inline void cond_neg_niels(niels_t n, mask_t neg)
 {
     gf_cond_swap(n->a, n->b, neg);
     gf_cond_neg(n->c, neg);
@@ -217,7 +217,7 @@ ossl_curve448_point_valid(const curve448_point_t p)
     return mask_to_bool(out);
 }
 
-static ossl_inline void constant_time_lookup_niels(niels_s *RESTRICT ni,
+static inline void constant_time_lookup_niels(niels_s *RESTRICT ni,
     const niels_t *table,
     int nelts, int idx)
 {

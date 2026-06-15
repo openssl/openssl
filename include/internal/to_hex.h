@@ -13,14 +13,14 @@
 
 #include <openssl/e_os2.h>
 
-static ossl_inline size_t to_hex(char *buf, uint8_t n, const char hexdig[17])
+static inline size_t to_hex(char *buf, uint8_t n, const char hexdig[17])
 {
     *buf++ = hexdig[(n >> 4) & 0xf];
     *buf = hexdig[n & 0xf];
     return 2;
 }
 
-static ossl_inline size_t ossl_to_lowerhex(char *buf, uint8_t n)
+static inline size_t ossl_to_lowerhex(char *buf, uint8_t n)
 {
     static const char hexdig[] = "0123456789abcdef";
 

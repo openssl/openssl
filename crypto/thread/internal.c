@@ -16,7 +16,7 @@
 
 #if !defined(OPENSSL_NO_DEFAULT_THREAD_POOL)
 
-static ossl_inline uint64_t _ossl_get_avail_threads(OSSL_LIB_CTX_THREADS *tdata)
+static inline uint64_t _ossl_get_avail_threads(OSSL_LIB_CTX_THREADS *tdata)
 {
     /* assumes that tdata->lock is taken */
     return tdata->max_threads - tdata->active_threads;
@@ -101,7 +101,7 @@ int ossl_crypto_thread_clean(void *vhandle)
 
 #else
 
-ossl_inline uint64_t ossl_get_avail_threads(OSSL_LIB_CTX *ctx)
+inline uint64_t ossl_get_avail_threads(OSSL_LIB_CTX *ctx)
 {
     return 0;
 }

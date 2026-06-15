@@ -85,7 +85,7 @@ void ecp_sm2p256_mul(BN_ULONG *r, const BN_ULONG *a, const BN_ULONG *b);
 /* Modular sqr: r = a ^ 2 mod p */
 void ecp_sm2p256_sqr(BN_ULONG *r, const BN_ULONG *a);
 
-static ossl_inline BN_ULONG is_zeros(const BN_ULONG *a)
+static inline BN_ULONG is_zeros(const BN_ULONG *a)
 {
     BN_ULONG res;
 
@@ -94,7 +94,7 @@ static ossl_inline BN_ULONG is_zeros(const BN_ULONG *a)
     return constant_time_is_zero_64(res);
 }
 
-static ossl_inline int is_equal(const BN_ULONG *a, const BN_ULONG *b)
+static inline int is_equal(const BN_ULONG *a, const BN_ULONG *b)
 {
     BN_ULONG res;
 
@@ -106,7 +106,7 @@ static ossl_inline int is_equal(const BN_ULONG *a, const BN_ULONG *b)
     return constant_time_is_zero_64(res);
 }
 
-static ossl_inline int is_greater(const BN_ULONG *a, const BN_ULONG *b)
+static inline int is_greater(const BN_ULONG *a, const BN_ULONG *b)
 {
     int i;
 
@@ -165,7 +165,7 @@ static ossl_inline int is_greater(const BN_ULONG *a, const BN_ULONG *b)
     } while (0)
 
 /* Modular inverse |out| = |in|^(-1) mod |p|. */
-static ossl_inline void ecp_sm2p256_mod_inverse(BN_ULONG *out,
+static inline void ecp_sm2p256_mod_inverse(BN_ULONG *out,
     const BN_ULONG *in)
 {
     BN_MOD_INV(out, in, ecp_sm2p256_div_by_2, ecp_sm2p256_sub, def_p);

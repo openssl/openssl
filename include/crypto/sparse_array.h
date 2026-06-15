@@ -24,21 +24,21 @@ extern "C" {
     SPARSE_ARRAY_OF(type);                                                                                         \
     typedef void (*sa_##type##_leaffunc)(ossl_uintmax_t idx, type *t);                                             \
     typedef void (*sa_##type##_leaffunc_arg)(ossl_uintmax_t idx, type *t, void *arg);                              \
-    static ossl_unused ossl_inline SPARSE_ARRAY_OF(type) * ossl_sa_##type##_new(void)                              \
+    static ossl_unused inline SPARSE_ARRAY_OF(type) * ossl_sa_##type##_new(void)                              \
     {                                                                                                              \
         return (SPARSE_ARRAY_OF(type) *)ossl_sa_new();                                                             \
     }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
+    static ossl_unused inline void                                                                            \
     ossl_sa_##type##_free(SPARSE_ARRAY_OF(type) * sa)                                                              \
     {                                                                                                              \
         ossl_sa_free((OPENSSL_SA *)sa);                                                                            \
     }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
+    static ossl_unused inline void                                                                            \
     ossl_sa_##type##_free_leaves(SPARSE_ARRAY_OF(type) * sa)                                                       \
     {                                                                                                              \
         ossl_sa_free_leaves((OPENSSL_SA *)sa);                                                                     \
     }                                                                                                              \
-    static ossl_unused ossl_inline size_t                                                                          \
+    static ossl_unused inline size_t                                                                          \
     ossl_sa_##type##_num(const SPARSE_ARRAY_OF(type) * sa)                                                         \
     {                                                                                                              \
         return ossl_sa_num((OPENSSL_SA *)sa);                                                                      \
@@ -49,7 +49,7 @@ extern "C" {
         sa_##type##_leaffunc fn = *(sa_##type##_leaffunc *)arg;                                                    \
         (*fn)(idx, (type *)leaf);                                                                                  \
     }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
+    static ossl_unused inline void                                                                            \
     ossl_sa_##type##_doall(const SPARSE_ARRAY_OF(type) * sa,                                                       \
         void (*leaf)(ossl_uintmax_t, type *))                                                                      \
     {                                                                                                              \
@@ -66,7 +66,7 @@ extern "C" {
                                                                                                                    \
         (*t->fn)(idx, (type *)leaf, t->arg);                                                                       \
     }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
+    static ossl_unused inline void                                                                            \
     ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) * sa,                                                   \
         void (*leaf)(ossl_uintmax_t, type *, void *),                                                              \
         void *arg)                                                                                                 \
@@ -78,11 +78,11 @@ extern "C" {
         ossl_sa_doall_arg((OPENSSL_SA *)sa,                                                                        \
             ossl_sa_##type##_doall_arg_thunk, &t);                                                                 \
     }                                                                                                              \
-    static ossl_unused ossl_inline ctype *ossl_sa_##type##_get(const SPARSE_ARRAY_OF(type) * sa, ossl_uintmax_t n) \
+    static ossl_unused inline ctype *ossl_sa_##type##_get(const SPARSE_ARRAY_OF(type) * sa, ossl_uintmax_t n) \
     {                                                                                                              \
         return (type *)ossl_sa_get((OPENSSL_SA *)sa, n);                                                           \
     }                                                                                                              \
-    static ossl_unused ossl_inline int                                                                             \
+    static ossl_unused inline int                                                                             \
     ossl_sa_##type##_set(SPARSE_ARRAY_OF(type) * sa,                                                               \
         ossl_uintmax_t n, ctype *val)                                                                              \
     {                                                                                                              \

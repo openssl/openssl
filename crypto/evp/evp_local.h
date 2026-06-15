@@ -403,7 +403,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher);
         void (*fn)(type * method, void *arg);                                                 \
         void *arg;                                                                            \
     };                                                                                        \
-    static ossl_inline ossl_unused void type##_do_all_provided_thunk(void *method, void *arg) \
+    static inline ossl_unused void type##_do_all_provided_thunk(void *method, void *arg) \
     {                                                                                         \
         struct type##_do_all_provided_thunk *t = arg;                                         \
         (*t->fn)((type *)method, t->arg);                                                     \

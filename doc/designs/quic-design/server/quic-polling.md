@@ -1106,7 +1106,7 @@ int SSL_POLL_GROUP_change_poll(SSL_POLL_GROUP *pg,
                                (timeout), (flags), (result_c))
 
 /* Convenience inlines. */
-static ossl_inline ossl_unused void SSL_POLL_CHANGE_set(SSL_POLL_CHANGE *chg,
+static inline ossl_unused void SSL_POLL_CHANGE_set(SSL_POLL_CHANGE *chg,
                                                         BIO_POLL_DESCRIPTOR desc,
                                                         size_t instance,
                                                         void *cookie,
@@ -1122,7 +1122,7 @@ static ossl_inline ossl_unused void SSL_POLL_CHANGE_set(SSL_POLL_CHANGE *chg,
     chg->enable_flags   = flags;
 }
 
-static ossl_inline ossl_unused void SSL_POLL_CHANGE_delete(SSL_POLL_CHANGE *chg,
+static inline ossl_unused void SSL_POLL_CHANGE_delete(SSL_POLL_CHANGE *chg,
                                                            BIO_POLL_DESCRIPTOR desc,
                                                            size_t instance)
 {
@@ -1135,7 +1135,7 @@ static ossl_inline ossl_unused void SSL_POLL_CHANGE_delete(SSL_POLL_CHANGE *chg,
     chg->enable_flags   = SSL_POLL_EVENT_FLAG_DELETE;
 }
 
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 SSL_POLL_CHANGE_chevent(SSL_POLL_CHANGE *chg,
                         BIO_POLL_DESCRIPTOR desc,
                         size_t instance,
@@ -1151,7 +1151,7 @@ SSL_POLL_CHANGE_chevent(SSL_POLL_CHANGE *chg,
     chg->enable_flags   = 0;
 }
 
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 SSL_POLL_CHANGE_chflag(SSL_POLL_CHANGE *chg,
                        BIO_POLL_DESCRIPTOR desc,
                        size_t instance,
@@ -1167,7 +1167,7 @@ SSL_POLL_CHANGE_chflag(SSL_POLL_CHANGE *chg,
     chg->enable_flags   = enable_flags;
 }
 
-static ossl_inline ossl_unused BIO_POLL_DESCRIPTOR
+static inline ossl_unused BIO_POLL_DESCRIPTOR
 SSL_as_poll_descriptor(SSL *s)
 {
     BIO_POLL_DESCRIPTOR d;

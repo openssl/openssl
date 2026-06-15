@@ -332,7 +332,7 @@ void ossl_quic_stream_check(const QUIC_STREAM *s);
  * Returns 1 if the QUIC_STREAM was initiated by the endpoint with the server
  * role.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_is_server_init(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_is_server_init(const QUIC_STREAM *s)
 {
     return (s->type & QUIC_STREAM_INITIATOR_MASK) == QUIC_STREAM_INITIATOR_SERVER;
 }
@@ -340,13 +340,13 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_server_init(const QUIC_ST
 /*
  * Returns 1 if the QUIC_STREAM is bidirectional and 0 if it is unidirectional.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_is_bidi(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_is_bidi(const QUIC_STREAM *s)
 {
     return (s->type & QUIC_STREAM_DIR_MASK) == QUIC_STREAM_DIR_BIDI;
 }
 
 /* Returns 1 if the QUIC_STREAM was locally initiated. */
-static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STREAM *s)
 {
     return ossl_quic_stream_is_server_init(s) == s->as_server;
 }
@@ -358,7 +358,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STR
  * even if this function returns 1, s->sstream might be NULL if the QUIC_SSTREAM
  * has been deemed no longer needed, for example due to a RESET_STREAM.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *s)
 {
     return s->send_state != QUIC_SSTREAM_STATE_NONE;
 }
@@ -371,7 +371,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_has_send(const QUIC_STREAM *
  * has been deemed no longer needed, for example if the receive stream is
  * completely finished with.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_has_recv(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_has_recv(const QUIC_STREAM *s)
 {
     return s->recv_state != QUIC_RSTREAM_STATE_NONE;
 }
@@ -393,7 +393,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_has_recv(const QUIC_STREAM *
  * (meaning no more application data can be appended). This is enforced by
  * QUIC_SSTREAM.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_has_send_buffer(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_has_send_buffer(const QUIC_STREAM *s)
 {
     switch (s->send_state) {
     case QUIC_SSTREAM_STATE_READY:
@@ -409,7 +409,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_has_send_buffer(const QUIC_S
  * Returns 1 if the QUIC_STREAM has a sending part which is in one of the reset
  * states.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_send_is_reset(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_send_is_reset(const QUIC_STREAM *s)
 {
     return s->send_state == QUIC_SSTREAM_STATE_RESET_SENT
         || s->send_state == QUIC_SSTREAM_STATE_RESET_RECVD;
@@ -426,7 +426,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_send_is_reset(const QUIC_STR
  * stream buffer but there is no more specific receive state restriction which is
  * applicable.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_has_recv_buffer(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_has_recv_buffer(const QUIC_STREAM *s)
 {
     switch (s->recv_state) {
     case QUIC_RSTREAM_STATE_RECV:
@@ -442,7 +442,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_has_recv_buffer(const QUIC_S
  * Returns 1 if the QUIC_STREAM has a receiving part which is in one of the
  * reset states.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_recv_is_reset(const QUIC_STREAM *s)
+static inline ossl_unused int ossl_quic_stream_recv_is_reset(const QUIC_STREAM *s)
 {
     return s->recv_state == QUIC_RSTREAM_STATE_RESET_RECVD
         || s->recv_state == QUIC_RSTREAM_STATE_RESET_READ;
@@ -454,7 +454,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_is_reset(const QUIC_STR
  * If final_size is non-NULL, *final_size is the final size (on success) or an
  * undefined value otherwise.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_send_get_final_size(const QUIC_STREAM *s,
+static inline ossl_unused int ossl_quic_stream_send_get_final_size(const QUIC_STREAM *s,
     uint64_t *final_size)
 {
     switch (s->send_state) {
@@ -484,7 +484,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_send_get_final_size(const QU
  * If final_size is non-NULL, *final_size is the final size (on success) or an
  * undefined value otherwise.
  */
-static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QUIC_STREAM *s,
+static inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QUIC_STREAM *s,
     uint64_t *final_size)
 {
     switch (s->recv_state) {
@@ -510,7 +510,7 @@ static ossl_inline ossl_unused int ossl_quic_stream_recv_get_final_size(const QU
  * Determines the number of bytes available still to be read, and (if
  * include_fin is 1) whether a FIN or reset has yet to be read.
  */
-static ossl_inline ossl_unused size_t ossl_quic_stream_recv_pending(const QUIC_STREAM *s,
+static inline ossl_unused size_t ossl_quic_stream_recv_pending(const QUIC_STREAM *s,
     int include_fin)
 {
     size_t avail;

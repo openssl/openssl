@@ -162,17 +162,17 @@ manage_thread_local(OSSL_LIB_CTX *ctx, int alloc, int keep)
     return hands;
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **clear_thread_local(OSSL_LIB_CTX *ctx)
+static inline THREAD_EVENT_HANDLER **clear_thread_local(OSSL_LIB_CTX *ctx)
 {
     return manage_thread_local(ctx, 0, 0);
 }
 
-static ossl_inline ossl_unused THREAD_EVENT_HANDLER **fetch_thread_local(OSSL_LIB_CTX *ctx)
+static inline ossl_unused THREAD_EVENT_HANDLER **fetch_thread_local(OSSL_LIB_CTX *ctx)
 {
     return manage_thread_local(ctx, 0, 1);
 }
 
-static ossl_inline THREAD_EVENT_HANDLER **alloc_thread_local(OSSL_LIB_CTX *ctx)
+static inline THREAD_EVENT_HANDLER **alloc_thread_local(OSSL_LIB_CTX *ctx)
 {
     return manage_thread_local(ctx, 1, 0);
 }

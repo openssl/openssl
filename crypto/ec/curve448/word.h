@@ -70,12 +70,12 @@ typedef int64_t dsword_t;
  * that's handled in common.h: it converts between c448_bool_t and
  * c448_error_t.
  */
-static ossl_inline c448_bool_t mask_to_bool(mask_t m)
+static inline c448_bool_t mask_to_bool(mask_t m)
 {
     return (c448_sword_t)(sword_t)m;
 }
 
-static ossl_inline mask_t bool_to_mask(c448_bool_t m)
+static inline mask_t bool_to_mask(c448_bool_t m)
 {
     /* On most arches this will be optimized to a simple cast. */
     mask_t ret = 0;

@@ -90,7 +90,7 @@ B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_keymgmt_new() has these:
 
  typedef void *(OSSL_FUNC_keymgmt_new_fn)(void *provctx);
- static ossl_inline OSSL_FUNC_keymgmt_new_fn
+ static inline OSSL_FUNC_keymgmt_new_fn
      OSSL_FUNC_keymgmt_new(const OSSL_DISPATCH *opf);
 
 L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as

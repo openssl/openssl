@@ -44,19 +44,19 @@ static void wbuf_set0_bio(struct json_write_buf *wbuf, BIO *bio)
 }
 
 /* Empty write buffer. */
-static ossl_inline void wbuf_clean(struct json_write_buf *wbuf)
+static inline void wbuf_clean(struct json_write_buf *wbuf)
 {
     wbuf->cur = 0;
 }
 
 /* Available data remaining in buffer. */
-static ossl_inline size_t wbuf_avail(struct json_write_buf *wbuf)
+static inline size_t wbuf_avail(struct json_write_buf *wbuf)
 {
     return wbuf->alloc - wbuf->cur;
 }
 
 /* Add character to write buffer, returning 0 on flush failure. */
-static ossl_inline int wbuf_write_char(struct json_write_buf *wbuf, char c)
+static inline int wbuf_write_char(struct json_write_buf *wbuf, char c)
 {
     if (wbuf_avail(wbuf) == 0) {
         if (!wbuf_flush(wbuf, /*full=*/0))
@@ -219,17 +219,17 @@ enum {
     STATE_PRE_COMMA
 };
 
-static ossl_inline int in_ijson(const OSSL_JSON_ENC *json)
+static inline int in_ijson(const OSSL_JSON_ENC *json)
 {
     return (json->flags & OSSL_JSON_FLAG_IJSON) != 0;
 }
 
-static ossl_inline int in_seq(const OSSL_JSON_ENC *json)
+static inline int in_seq(const OSSL_JSON_ENC *json)
 {
     return (json->flags & OSSL_JSON_FLAG_SEQ) != 0;
 }
 
-static ossl_inline int in_pretty(const OSSL_JSON_ENC *json)
+static inline int in_pretty(const OSSL_JSON_ENC *json)
 {
     return (json->flags & OSSL_JSON_FLAG_PRETTY) != 0;
 }
@@ -599,12 +599,12 @@ void ossl_json_i64(OSSL_JSON_ENC *json, int64_t value)
  * Encode a JSON UTF-8 string from a zero-terminated string. The string passed
  * can be freed immediately following the call to this function.
  */
-static ossl_inline int hex_digit(int v)
+static inline int hex_digit(int v)
 {
     return v >= 10 ? 'a' + (v - 10) : '0' + v;
 }
 
-static ossl_inline void
+static inline void
 json_write_qstring_inner(OSSL_JSON_ENC *json, const char *str, size_t str_len,
     int nul_term)
 {

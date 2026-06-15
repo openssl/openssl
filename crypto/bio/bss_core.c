@@ -32,7 +32,7 @@ void *ossl_bio_core_globals_new(OSSL_LIB_CTX *ctx)
     return OPENSSL_zalloc(sizeof(BIO_CORE_GLOBALS));
 }
 
-static ossl_inline BIO_CORE_GLOBALS *get_globals(OSSL_LIB_CTX *libctx)
+static inline BIO_CORE_GLOBALS *get_globals(OSSL_LIB_CTX *libctx)
 {
     return ossl_lib_ctx_get_data(libctx, OSSL_LIB_CTX_BIO_CORE_INDEX);
 }

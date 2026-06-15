@@ -1208,7 +1208,7 @@ static int final_renegotiate(SSL_CONNECTION *s, unsigned int context, int sent)
     return 1;
 }
 
-static ossl_inline void ssl_tsan_decr(const SSL_CTX *ctx,
+static inline void ssl_tsan_decr(const SSL_CTX *ctx,
     TSAN_QUALIFIER int *stat)
 {
     if (ssl_tsan_lock(ctx)) {

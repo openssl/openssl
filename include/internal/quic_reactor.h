@@ -77,7 +77,7 @@ struct quic_tick_result_st {
     char notify_other_threads;
 };
 
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 ossl_quic_tick_result_merge_into(QUIC_TICK_RESULT *r,
     const QUIC_TICK_RESULT *src)
 {

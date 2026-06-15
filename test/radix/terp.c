@@ -100,7 +100,7 @@ typedef struct func_ctx_st {
     int skip_rest;
 } FUNC_CTX;
 
-static ossl_inline int TERP_stk_pop(TERP *terp,
+static inline int TERP_stk_pop(TERP *terp,
     void *buf, size_t buf_len);
 
 #define TERP_STK_PUSH(terp, v)                                  \
@@ -340,7 +340,7 @@ static void SRDR_init(SRDR *rdr, const uint8_t *buf, size_t buf_len)
     rdr->save_cur = NULL;
 }
 
-static ossl_inline int SRDR_get_operand(SRDR *srdr, void *buf, size_t buf_len)
+static inline int SRDR_get_operand(SRDR *srdr, void *buf, size_t buf_len)
 {
     if (!TEST_size_t_ge(srdr->end - srdr->cur, buf_len))
         return 0; /* malformed script */
@@ -350,12 +350,12 @@ static ossl_inline int SRDR_get_operand(SRDR *srdr, void *buf, size_t buf_len)
     return 1;
 }
 
-static ossl_inline void SRDR_save(SRDR *srdr)
+static inline void SRDR_save(SRDR *srdr)
 {
     srdr->save_cur = srdr->cur;
 }
 
-static ossl_inline void SRDR_restore(SRDR *srdr)
+static inline void SRDR_restore(SRDR *srdr)
 {
     srdr->cur = srdr->save_cur;
 }
@@ -599,7 +599,7 @@ static int TERP_stk_ensure_capacity(TERP *terp, size_t spare)
     return 1;
 }
 
-static ossl_inline int TERP_stk_push(TERP *terp,
+static inline int TERP_stk_push(TERP *terp,
     const void *buf, size_t buf_len)
 {
     if (!TEST_true(TERP_stk_ensure_capacity(terp, buf_len)))
@@ -610,7 +610,7 @@ static ossl_inline int TERP_stk_push(TERP *terp,
     return 1;
 }
 
-static ossl_inline int TERP_stk_pop(TERP *terp,
+static inline int TERP_stk_pop(TERP *terp,
     void *buf, size_t buf_len)
 {
     if (!TEST_size_t_ge(terp->stk_end - terp->stk_cur, buf_len))

@@ -19,7 +19,7 @@
  * Decodes a QUIC variable-length integer in |pkt| and stores the result in
  * |data|.
  */
-__owur static ossl_inline int PACKET_get_quic_vlint(PACKET *pkt,
+__owur static inline int PACKET_get_quic_vlint(PACKET *pkt,
     uint64_t *data)
 {
     size_t enclen;
@@ -43,7 +43,7 @@ __owur static ossl_inline int PACKET_get_quic_vlint(PACKET *pkt,
  * position. If was_minimal is non-NULL, *was_minimal is set to 1 if the integer
  * was encoded using the minimal possible number of bytes and 0 otherwise.
  */
-__owur static ossl_inline int PACKET_peek_quic_vlint_ex(PACKET *pkt,
+__owur static inline int PACKET_peek_quic_vlint_ex(PACKET *pkt,
     uint64_t *data,
     int *was_minimal)
 {
@@ -65,7 +65,7 @@ __owur static ossl_inline int PACKET_peek_quic_vlint_ex(PACKET *pkt,
     return 1;
 }
 
-__owur static ossl_inline int PACKET_peek_quic_vlint(PACKET *pkt,
+__owur static inline int PACKET_peek_quic_vlint(PACKET *pkt,
     uint64_t *data)
 {
     return PACKET_peek_quic_vlint_ex(pkt, data, NULL);
@@ -74,7 +74,7 @@ __owur static ossl_inline int PACKET_peek_quic_vlint(PACKET *pkt,
 /*
  * Skips over a QUIC variable-length integer in |pkt| without decoding it.
  */
-__owur static ossl_inline int PACKET_skip_quic_vlint(PACKET *pkt)
+__owur static inline int PACKET_skip_quic_vlint(PACKET *pkt)
 {
     size_t enclen;
 
@@ -97,7 +97,7 @@ __owur static ossl_inline int PACKET_skip_quic_vlint(PACKET *pkt)
  * buffer with the original |pkt|, so data wrapped by |pkt| must outlive the
  * |subpkt|. Upon failure, the original |pkt| and |subpkt| are not modified.
  */
-__owur static ossl_inline int PACKET_get_quic_length_prefixed(PACKET *pkt,
+__owur static inline int PACKET_get_quic_length_prefixed(PACKET *pkt,
     PACKET *subpkt)
 {
     uint64_t length;

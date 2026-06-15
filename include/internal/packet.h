@@ -29,7 +29,7 @@ typedef struct {
 } PACKET;
 
 /* Internal unchecked shorthand; don't use outside this file. */
-static ossl_inline void packet_forward(PACKET *pkt, size_t len)
+static inline void packet_forward(PACKET *pkt, size_t len)
 {
     pkt->curr += len;
     pkt->remaining -= len;
@@ -38,7 +38,7 @@ static ossl_inline void packet_forward(PACKET *pkt, size_t len)
 /*
  * Returns the number of bytes remaining to be read in the PACKET
  */
-static ossl_inline size_t PACKET_remaining(const PACKET *pkt)
+static inline size_t PACKET_remaining(const PACKET *pkt)
 {
     return pkt->remaining;
 }
@@ -49,7 +49,7 @@ static ossl_inline size_t PACKET_remaining(const PACKET *pkt)
  * Specifically, we use PACKET_end() to verify that a d2i_... call
  * has consumed the entire packet contents.
  */
-static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
+static inline const unsigned char *PACKET_end(const PACKET *pkt)
 {
     return pkt->curr + pkt->remaining;
 }
@@ -58,7 +58,7 @@ static ossl_inline const unsigned char *PACKET_end(const PACKET *pkt)
  * Returns a pointer to the very start of the buffer. If this is a sub packet
  * this will be the start of the buffer for the top of the PACKET tree.
  */
-static ossl_inline const unsigned char *PACKET_msg_start(const PACKET *pkt)
+static inline const unsigned char *PACKET_msg_start(const PACKET *pkt)
 {
     return pkt->msgstart;
 }
@@ -67,7 +67,7 @@ static ossl_inline const unsigned char *PACKET_msg_start(const PACKET *pkt)
  * Returns a pointer to the PACKET's current position.
  * For use in non-PACKETized APIs.
  */
-static ossl_inline const unsigned char *PACKET_data(const PACKET *pkt)
+static inline const unsigned char *PACKET_data(const PACKET *pkt)
 {
     return pkt->curr;
 }
@@ -77,7 +77,7 @@ static ossl_inline const unsigned char *PACKET_data(const PACKET *pkt)
  * copy of the data so |buf| must be present for the whole time that the PACKET
  * is being used.
  */
-__owur static ossl_inline int PACKET_buf_init(PACKET *pkt,
+__owur static inline int PACKET_buf_init(PACKET *pkt,
     const unsigned char *buf,
     size_t len)
 {
@@ -91,7 +91,7 @@ __owur static ossl_inline int PACKET_buf_init(PACKET *pkt,
 }
 
 /* Initialize a PACKET to hold zero bytes. */
-static ossl_inline void PACKET_null_init(PACKET *pkt)
+static inline void PACKET_null_init(PACKET *pkt)
 {
     pkt->curr = pkt->msgstart = NULL;
     pkt->remaining = 0;
@@ -102,7 +102,7 @@ static ossl_inline void PACKET_null_init(PACKET *pkt)
  * bytes read from |ptr|. Returns 0 otherwise (lengths or contents not equal).
  * If lengths are equal, performs the comparison in constant time.
  */
-__owur static ossl_inline int PACKET_equal(const PACKET *pkt, const void *ptr,
+__owur static inline int PACKET_equal(const PACKET *pkt, const void *ptr,
     size_t num)
 {
     if (PACKET_remaining(pkt) != num)
@@ -115,7 +115,7 @@ __owur static ossl_inline int PACKET_equal(const PACKET *pkt, const void *ptr,
  * Data is not copied: the |subpkt| packet will share its underlying buffer with
  * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  */
-__owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
+__owur static inline int PACKET_peek_sub_packet(const PACKET *pkt,
     PACKET *subpkt, size_t len)
 {
     if (PACKET_remaining(pkt) < len)
@@ -133,7 +133,7 @@ __owur static ossl_inline int PACKET_peek_sub_packet(const PACKET *pkt,
  * copied: the |subpkt| packet will share its underlying buffer with the
  * original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  */
-__owur static ossl_inline int PACKET_get_sub_packet(PACKET *pkt,
+__owur static inline int PACKET_get_sub_packet(PACKET *pkt,
     PACKET *subpkt, size_t len)
 {
     if (!PACKET_peek_sub_packet(pkt, subpkt, len))
@@ -148,7 +148,7 @@ __owur static ossl_inline int PACKET_get_sub_packet(PACKET *pkt,
  * Peek ahead at 2 bytes in network order from |pkt| and store the value in
  * |*data|
  */
-__owur static ossl_inline int PACKET_peek_net_2(const PACKET *pkt,
+__owur static inline int PACKET_peek_net_2(const PACKET *pkt,
     unsigned int *data)
 {
     if (PACKET_remaining(pkt) < 2)
@@ -162,7 +162,7 @@ __owur static ossl_inline int PACKET_peek_net_2(const PACKET *pkt,
 
 /* Equivalent of n2s */
 /* Get 2 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
+__owur static inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
 {
     if (!PACKET_peek_net_2(pkt, data))
         return 0;
@@ -173,7 +173,7 @@ __owur static ossl_inline int PACKET_get_net_2(PACKET *pkt, unsigned int *data)
 }
 
 /* Same as PACKET_get_net_2() but for a size_t */
-__owur static ossl_inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
+__owur static inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
 {
     unsigned int i;
     int ret = PACKET_get_net_2(pkt, &i);
@@ -188,7 +188,7 @@ __owur static ossl_inline int PACKET_get_net_2_len(PACKET *pkt, size_t *data)
  * Peek ahead at 3 bytes in network order from |pkt| and store the value in
  * |*data|
  */
-__owur static ossl_inline int PACKET_peek_net_3(const PACKET *pkt,
+__owur static inline int PACKET_peek_net_3(const PACKET *pkt,
     unsigned long *data)
 {
     if (PACKET_remaining(pkt) < 3)
@@ -203,7 +203,7 @@ __owur static ossl_inline int PACKET_peek_net_3(const PACKET *pkt,
 
 /* Equivalent of n2l3 */
 /* Get 3 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
+__owur static inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_net_3(pkt, data))
         return 0;
@@ -214,7 +214,7 @@ __owur static ossl_inline int PACKET_get_net_3(PACKET *pkt, unsigned long *data)
 }
 
 /* Same as PACKET_get_net_3() but for a size_t */
-__owur static ossl_inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
+__owur static inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
 {
     unsigned long i;
     int ret = PACKET_get_net_3(pkt, &i);
@@ -229,7 +229,7 @@ __owur static ossl_inline int PACKET_get_net_3_len(PACKET *pkt, size_t *data)
  * Peek ahead at 4 bytes in network order from |pkt| and store the value in
  * |*data|
  */
-__owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
+__owur static inline int PACKET_peek_net_4(const PACKET *pkt,
     unsigned long *data)
 {
     if (PACKET_remaining(pkt) < 4)
@@ -247,7 +247,7 @@ __owur static ossl_inline int PACKET_peek_net_4(const PACKET *pkt,
  * Peek ahead at 8 bytes in network order from |pkt| and store the value in
  * |*data|
  */
-__owur static ossl_inline int PACKET_peek_net_8(const PACKET *pkt,
+__owur static inline int PACKET_peek_net_8(const PACKET *pkt,
     uint64_t *data)
 {
     if (PACKET_remaining(pkt) < 8)
@@ -267,7 +267,7 @@ __owur static ossl_inline int PACKET_peek_net_8(const PACKET *pkt,
 
 /* Equivalent of n2l */
 /* Get 4 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
+__owur static inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_net_4(pkt, data))
         return 0;
@@ -278,7 +278,7 @@ __owur static ossl_inline int PACKET_get_net_4(PACKET *pkt, unsigned long *data)
 }
 
 /* Same as PACKET_get_net_4() but for a size_t */
-__owur static ossl_inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
+__owur static inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
 {
     unsigned long i;
     int ret = PACKET_get_net_4(pkt, &i);
@@ -297,7 +297,7 @@ __owur static ossl_inline int PACKET_get_net_4_len(PACKET *pkt, size_t *data)
  * @param data The object to write the data to.
  * @returns 1 on success, or 0 otherwise.
  */
-static ossl_unused ossl_inline int PACKET_get_net_4_len_u32(PACKET *pkt, uint32_t *data)
+static ossl_unused inline int PACKET_get_net_4_len_u32(PACKET *pkt, uint32_t *data)
 {
     size_t i = 0;
     int ret = PACKET_get_net_4_len(pkt, &i);
@@ -308,7 +308,7 @@ static ossl_unused ossl_inline int PACKET_get_net_4_len_u32(PACKET *pkt, uint32_
 }
 
 /* Get 8 bytes in network order from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_net_8(PACKET *pkt, uint64_t *data)
+__owur static inline int PACKET_get_net_8(PACKET *pkt, uint64_t *data)
 {
     if (!PACKET_peek_net_8(pkt, data))
         return 0;
@@ -319,7 +319,7 @@ __owur static ossl_inline int PACKET_get_net_8(PACKET *pkt, uint64_t *data)
 }
 
 /* Peek ahead at 1 byte from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_peek_1(const PACKET *pkt,
+__owur static inline int PACKET_peek_1(const PACKET *pkt,
     unsigned int *data)
 {
     if (!PACKET_remaining(pkt))
@@ -331,7 +331,7 @@ __owur static ossl_inline int PACKET_peek_1(const PACKET *pkt,
 }
 
 /* Get 1 byte from |pkt| and store the value in |*data| */
-__owur static ossl_inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
+__owur static inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
 {
     if (!PACKET_peek_1(pkt, data))
         return 0;
@@ -342,7 +342,7 @@ __owur static ossl_inline int PACKET_get_1(PACKET *pkt, unsigned int *data)
 }
 
 /* Same as PACKET_get_1() but for a size_t */
-__owur static ossl_inline int PACKET_get_1_len(PACKET *pkt, size_t *data)
+__owur static inline int PACKET_get_1_len(PACKET *pkt, size_t *data)
 {
     unsigned int i;
     int ret = PACKET_get_1(pkt, &i);
@@ -357,7 +357,7 @@ __owur static ossl_inline int PACKET_get_1_len(PACKET *pkt, size_t *data)
  * Peek ahead at 4 bytes in reverse network order from |pkt| and store the value
  * in |*data|
  */
-__owur static ossl_inline int PACKET_peek_4(const PACKET *pkt,
+__owur static inline int PACKET_peek_4(const PACKET *pkt,
     unsigned long *data)
 {
     if (PACKET_remaining(pkt) < 4)
@@ -376,7 +376,7 @@ __owur static ossl_inline int PACKET_peek_4(const PACKET *pkt,
  * Get 4 bytes in reverse network order from |pkt| and store the value in
  * |*data|
  */
-__owur static ossl_inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
+__owur static inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
 {
     if (!PACKET_peek_4(pkt, data))
         return 0;
@@ -392,7 +392,7 @@ __owur static ossl_inline int PACKET_get_4(PACKET *pkt, unsigned long *data)
  * caller should not free this data directly (it will be freed when the
  * underlying buffer gets freed
  */
-__owur static ossl_inline int PACKET_peek_bytes(const PACKET *pkt,
+__owur static inline int PACKET_peek_bytes(const PACKET *pkt,
     const unsigned char **data,
     size_t len)
 {
@@ -410,7 +410,7 @@ __owur static ossl_inline int PACKET_peek_bytes(const PACKET *pkt,
  * not free this data directly (it will be freed when the underlying buffer gets
  * freed
  */
-__owur static ossl_inline int PACKET_get_bytes(PACKET *pkt,
+__owur static inline int PACKET_get_bytes(PACKET *pkt,
     const unsigned char **data,
     size_t len)
 {
@@ -423,7 +423,7 @@ __owur static ossl_inline int PACKET_get_bytes(PACKET *pkt,
 }
 
 /* Peek ahead at |len| bytes from |pkt| and copy them to |data| */
-__owur static ossl_inline int PACKET_peek_copy_bytes(const PACKET *pkt,
+__owur static inline int PACKET_peek_copy_bytes(const PACKET *pkt,
     unsigned char *data,
     size_t len)
 {
@@ -439,7 +439,7 @@ __owur static ossl_inline int PACKET_peek_copy_bytes(const PACKET *pkt,
  * Read |len| bytes from |pkt| and copy them to |data|.
  * The caller is responsible for ensuring that |data| can hold |len| bytes.
  */
-__owur static ossl_inline int PACKET_copy_bytes(PACKET *pkt,
+__owur static inline int PACKET_copy_bytes(PACKET *pkt,
     unsigned char *data, size_t len)
 {
     if (!PACKET_peek_copy_bytes(pkt, data, len))
@@ -457,7 +457,7 @@ __owur static ossl_inline int PACKET_copy_bytes(PACKET *pkt,
  * Does not forward PACKET position (because it is typically the last thing
  * done with a given PACKET).
  */
-__owur static ossl_inline int PACKET_copy_all(const PACKET *pkt,
+__owur static inline int PACKET_copy_all(const PACKET *pkt,
     unsigned char *dest,
     size_t dest_len, size_t *len)
 {
@@ -479,7 +479,7 @@ __owur static ossl_inline int PACKET_copy_all(const PACKET *pkt,
  * Does not forward PACKET position (because it is typically the last thing
  * done with a given PACKET).
  */
-__owur static ossl_inline int PACKET_memdup(const PACKET *pkt,
+__owur static inline int PACKET_memdup(const PACKET *pkt,
     unsigned char **data, size_t *len)
 {
     size_t length;
@@ -511,7 +511,7 @@ __owur static ossl_inline int PACKET_memdup(const PACKET *pkt,
  * Does not forward PACKET position (because it is typically the last thing done
  * with a given PACKET).
  */
-__owur static ossl_inline int PACKET_strndup(const PACKET *pkt, char **data)
+__owur static inline int PACKET_strndup(const PACKET *pkt, char **data)
 {
     OPENSSL_free(*data);
 
@@ -521,13 +521,13 @@ __owur static ossl_inline int PACKET_strndup(const PACKET *pkt, char **data)
 }
 
 /* Returns 1 if |pkt| contains at least one 0-byte, 0 otherwise. */
-static ossl_inline int PACKET_contains_zero_byte(const PACKET *pkt)
+static inline int PACKET_contains_zero_byte(const PACKET *pkt)
 {
     return memchr(pkt->curr, 0, pkt->remaining) != NULL;
 }
 
 /* Move the current reading position forward |len| bytes */
-__owur static ossl_inline int PACKET_forward(PACKET *pkt, size_t len)
+__owur static inline int PACKET_forward(PACKET *pkt, size_t len)
 {
     if (PACKET_remaining(pkt) < len)
         return 0;
@@ -544,7 +544,7 @@ __owur static ossl_inline int PACKET_forward(PACKET *pkt, size_t len)
  * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  * Upon failure, the original |pkt| and |subpkt| are not modified.
  */
-__owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
+__owur static inline int PACKET_get_length_prefixed_1(PACKET *pkt,
     PACKET *subpkt)
 {
     unsigned int length;
@@ -566,7 +566,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_1(PACKET *pkt,
  * Like PACKET_get_length_prefixed_1, but additionally, fails when there are
  * leftover bytes in |pkt|.
  */
-__owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt,
+__owur static inline int PACKET_as_length_prefixed_1(PACKET *pkt,
     PACKET *subpkt)
 {
     unsigned int length;
@@ -591,7 +591,7 @@ __owur static ossl_inline int PACKET_as_length_prefixed_1(PACKET *pkt,
  * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  * Upon failure, the original |pkt| and |subpkt| are not modified.
  */
-__owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
+__owur static inline int PACKET_get_length_prefixed_2(PACKET *pkt,
     PACKET *subpkt)
 {
     unsigned int length;
@@ -614,7 +614,7 @@ __owur static ossl_inline int PACKET_get_length_prefixed_2(PACKET *pkt,
  * Like PACKET_get_length_prefixed_2, but additionally, fails when there are
  * leftover bytes in |pkt|.
  */
-__owur static ossl_inline int PACKET_as_length_prefixed_2(PACKET *pkt,
+__owur static inline int PACKET_as_length_prefixed_2(PACKET *pkt,
     PACKET *subpkt)
 {
     unsigned int length;
@@ -640,7 +640,7 @@ __owur static ossl_inline int PACKET_as_length_prefixed_2(PACKET *pkt,
  * the original |pkt|, so data wrapped by |pkt| must outlive the |subpkt|.
  * Upon failure, the original |pkt| and |subpkt| are not modified.
  */
-__owur static ossl_inline int PACKET_get_length_prefixed_3(PACKET *pkt,
+__owur static inline int PACKET_get_length_prefixed_3(PACKET *pkt,
     PACKET *subpkt)
 {
     unsigned long length;

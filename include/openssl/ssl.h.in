@@ -2539,7 +2539,7 @@ __owur int SSL_poll(SSL_POLL_ITEM *items,
     uint64_t flags,
     size_t *result_count);
 
-static ossl_inline ossl_unused BIO_POLL_DESCRIPTOR
+static inline ossl_unused BIO_POLL_DESCRIPTOR
 SSL_as_poll_descriptor(SSL *s)
 {
     BIO_POLL_DESCRIPTOR d;

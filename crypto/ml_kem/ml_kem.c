@@ -611,7 +611,7 @@ static void scalar_mult(scalar *out, const scalar *lhs,
 }
 
 /* Above, but add the result to an existing scalar */
-static ossl_inline void scalar_mult_add(scalar *out, const scalar *lhs,
+static inline void scalar_mult_add(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;

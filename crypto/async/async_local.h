@@ -110,7 +110,7 @@ typedef struct async_fibre_st {
 int async_local_init(void);
 void async_local_deinit(void);
 
-static ossl_inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
+static inline int async_fibre_swapcontext(async_fibre *o, async_fibre *n, int r)
 {
 #ifdef USE_SWAPCONTEXT
     swapcontext(&o->fibre, &n->fibre);

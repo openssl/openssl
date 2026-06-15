@@ -185,14 +185,14 @@ void test_close_streams(void)
 #endif
 }
 
-static ossl_inline void test_io_lock(void)
+static inline void test_io_lock(void)
 {
 #if defined(OPENSSL_THREADS)
     OPENSSL_assert(CRYPTO_THREAD_write_lock(io_lock) > 0);
 #endif
 }
 
-static ossl_inline void test_io_unlock(void)
+static inline void test_io_unlock(void)
 {
 #if defined(OPENSSL_THREADS)
     CRYPTO_THREAD_unlock(io_lock);

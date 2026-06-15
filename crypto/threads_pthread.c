@@ -120,7 +120,7 @@ typedef void *pvoid;
 static pthread_mutex_t atomic_sim_lock = PTHREAD_MUTEX_INITIALIZER;
 
 #define IMPL_fallback_atomic_load_n(t)                    \
-    static ossl_inline t fallback_atomic_load_n_##t(t *p) \
+    static inline t fallback_atomic_load_n_##t(t *p) \
     {                                                     \
         t ret;                                            \
                                                           \
@@ -136,7 +136,7 @@ IMPL_fallback_atomic_load_n(uint32_t)
 #define ATOMIC_LOAD_N(t, p, o) fallback_atomic_load_n_##t(p)
 
 #define IMPL_fallback_atomic_store_n(t)                         \
-    static ossl_inline t fallback_atomic_store_n_##t(t *p, t v) \
+    static inline t fallback_atomic_store_n_##t(t *p, t v) \
     {                                                           \
         t ret;                                                  \
                                                                 \
@@ -151,7 +151,7 @@ IMPL_fallback_atomic_load_n(uint32_t)
 #define ATOMIC_STORE_N(t, p, v, o) fallback_atomic_store_n_##t(p, v)
 
 #define IMPL_fallback_atomic_store(t)                             \
-    static ossl_inline void fallback_atomic_store_##t(t *p, t *v) \
+    static inline void fallback_atomic_store_##t(t *p, t *v) \
     {                                                             \
         pthread_mutex_lock(&atomic_sim_lock);                     \
         *p = *v;                                                  \
@@ -168,7 +168,7 @@ IMPL_fallback_atomic_load_n(uint32_t)
      * way as the fallbacks above.
      */
 
-    static ossl_inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
+    static inline uint64_t fallback_atomic_add_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
 
@@ -181,7 +181,7 @@ IMPL_fallback_atomic_load_n(uint32_t)
 
 #define ATOMIC_ADD_FETCH(p, v, o) fallback_atomic_add_fetch(p, v)
 
-static ossl_inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
+static inline uint64_t fallback_atomic_sub_fetch(uint64_t *p, uint64_t v)
 {
     uint64_t ret;
 
@@ -672,7 +672,7 @@ struct stack_traces {
 };
 
 /* The glibc gettid() definition presents only since 2.30. */
-static ossl_inline pid_t get_tid(void)
+static inline pid_t get_tid(void)
 {
 #ifdef OPENSSL_SYS_MACOSX
     /*
@@ -779,7 +779,7 @@ static void print_stack_traces(struct stack_traces *traces)
     }
 }
 
-static ossl_inline void ossl_init_rwlock_contention_data(void)
+static inline void ossl_init_rwlock_contention_data(void)
 {
     CRYPTO_THREAD_run_once(&init_contention_data_flag, init_contention_data_once);
 }
@@ -811,7 +811,7 @@ static int record_lock_contention(pthread_rwlock_t *lock,
     return 0;
 }
 
-static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
+static inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
 {
     struct stack_traces *traces = get_stack_traces(true);
 
@@ -831,7 +831,7 @@ static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *lock)
     return 0;
 }
 
-static ossl_inline int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
+static inline int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
 {
     struct stack_traces *traces = get_stack_traces(true);
 
@@ -851,7 +851,7 @@ static ossl_inline int ossl_rwlock_wrlock(pthread_rwlock_t *lock)
     return 0;
 }
 
-static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *lock)
+static inline int ossl_rwlock_unlock(pthread_rwlock_t *lock)
 {
     int ret;
 
@@ -876,21 +876,21 @@ static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *lock)
 #else /* !REPORT_RWLOCK_CONTENTION */
 
 #if defined(USE_RWLOCK)
-static ossl_inline void ossl_init_rwlock_contention_data(void)
+static inline void ossl_init_rwlock_contention_data(void)
 {
 }
 
-static ossl_inline int ossl_rwlock_rdlock(pthread_rwlock_t *rwlock)
+static inline int ossl_rwlock_rdlock(pthread_rwlock_t *rwlock)
 {
     return pthread_rwlock_rdlock(rwlock);
 }
 
-static ossl_inline int ossl_rwlock_wrlock(pthread_rwlock_t *rwlock)
+static inline int ossl_rwlock_wrlock(pthread_rwlock_t *rwlock)
 {
     return pthread_rwlock_wrlock(rwlock);
 }
 
-static ossl_inline int ossl_rwlock_unlock(pthread_rwlock_t *rwlock)
+static inline int ossl_rwlock_unlock(pthread_rwlock_t *rwlock)
 {
     return pthread_rwlock_unlock(rwlock);
 }

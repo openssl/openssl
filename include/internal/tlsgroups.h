@@ -13,7 +13,7 @@
 
 #include <stdint.h>
 
-#include <openssl/e_os2.h> /* For 'ossl_inline' */
+#include <openssl/e_os2.h> /* For 'inline' */
 
 #define OSSL_TLS_GROUP_ID_sect163k1 0x0001
 #define OSSL_TLS_GROUP_ID_sect163r1 0x0002
@@ -76,13 +76,13 @@
 #define OSSL_TLS_GROUP_ID_FFDHE_START 0x0100 /* inclusive */
 #define OSSL_TLS_GROUP_ID_FFDHE_END 0x01FF /* inclusive */
 
-static ossl_inline int is_ecdhe_group(const uint16_t group_id)
+static inline int is_ecdhe_group(const uint16_t group_id)
 {
     /* This includes the usual EC groups, and also ECX, GOST ... */
     return group_id < OSSL_TLS_GROUP_ID_FFDHE_START;
 }
 
-static ossl_inline int is_ffdhe_group(const uint16_t group_id)
+static inline int is_ffdhe_group(const uint16_t group_id)
 {
     return group_id >= OSSL_TLS_GROUP_ID_FFDHE_START
         && group_id <= OSSL_TLS_GROUP_ID_FFDHE_END;

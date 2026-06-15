@@ -131,7 +131,7 @@ int ossl_dh_is_foreign(const DH *dh)
     return 0;
 }
 
-static ossl_inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+static inline int dh_bn_dup_check(BIGNUM **out, const BIGNUM *f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
         return 0;

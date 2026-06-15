@@ -594,7 +594,7 @@ ml_kem_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
     return key;
 }
 
-static ossl_inline void *
+static inline void *
 ml_kem_d2i_PUBKEY(const uint8_t **der, long der_len,
     struct der2key_ctx_st *ctx)
 {
@@ -678,7 +678,7 @@ end:
     return ret;
 }
 
-static ossl_inline void *slh_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
+static inline void *slh_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
     struct der2key_ctx_st *ctx)
 {
     int ok = 0;
@@ -956,7 +956,7 @@ ml_dsa_d2i_PKCS8(const uint8_t **der, long der_len, struct der2key_ctx_st *ctx)
     return key;
 }
 
-static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
+static inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
     struct der2key_ctx_st *ctx)
 {
     ML_DSA_KEY *key;
@@ -1008,7 +1008,7 @@ static ossl_inline void *ml_dsa_d2i_PUBKEY(const uint8_t **der, long der_len,
 #define lms_check NULL
 #define lms_adjust NULL
 
-static ossl_inline void *lms_d2i_PUBKEY(const uint8_t **der, long der_len,
+static inline void *lms_d2i_PUBKEY(const uint8_t **der, long der_len,
     struct der2key_ctx_st *ctx)
 {
     LMS_KEY *key;

@@ -64,7 +64,7 @@ For example, the "function" OSSL_FUNC_store_attach() has these:
 
  typedef void *(OSSL_FUNC_store_attach_fn)(void *provctx,
                                            OSSL_CORE_BIO * bio);
- static ossl_inline OSSL_FUNC_store_attach_fn
+ static inline OSSL_FUNC_store_attach_fn
      OSSL_FUNC_store_attach(const OSSL_DISPATCH *opf);
 
 L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as macros

@@ -202,7 +202,7 @@ typedef size_t socklen_t; /* Currently appears to be missing on VMS */
 #define closesocket(s) close(s)
 #define readsocket(s, b, n) read((s), (b), (n))
 #define writesocket(s, b, n) write((s), (char *)(b), (n))
-static ossl_inline int writesocket_ex(int s, char *b, int n, int f)
+static inline int writesocket_ex(int s, char *b, int n, int f)
 {
     if (f == 0)
         return writesocket(s, b, n);
@@ -212,7 +212,7 @@ static ossl_inline int writesocket_ex(int s, char *b, int n, int f)
 #elif defined(OPENSSL_SYS_TANDEM)
 #define readsocket(s, b, n) read((s), (b), (n))
 #define writesocket(s, b, n) write((s), (b), (n))
-static ossl_inline int writesocket_ex(int s, const void *b, int n, int f)
+static inline int writesocket_ex(int s, const void *b, int n, int f)
 {
     if (f == 0)
         return writesocket(s, b, n);

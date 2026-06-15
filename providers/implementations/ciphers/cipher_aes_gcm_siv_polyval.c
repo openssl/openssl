@@ -19,7 +19,7 @@
 #include <prov/implementations.h>
 #include "cipher_aes_gcm_siv.h"
 
-static ossl_inline void mulx_ghash(uint64_t *a)
+static inline void mulx_ghash(uint64_t *a)
 {
     uint64_t t[2], mask;
     DECLARE_IS_ENDIAN;
@@ -44,7 +44,7 @@ static ossl_inline void mulx_ghash(uint64_t *a)
 }
 
 #define aligned64(p) (((uintptr_t)p & 0x07) == 0)
-static ossl_inline void byte_reverse16(uint8_t *out, const uint8_t *in)
+static inline void byte_reverse16(uint8_t *out, const uint8_t *in)
 {
     if (aligned64(out) && aligned64(in)) {
         ((uint64_t *)out)[0] = GSWAP8(((uint64_t *)in)[1]);

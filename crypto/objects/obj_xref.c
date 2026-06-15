@@ -58,7 +58,7 @@ DEFINE_RUN_ONCE_STATIC(o_sig_init)
     return sig_lock != NULL;
 }
 
-static ossl_inline int obj_sig_init(void)
+static inline int obj_sig_init(void)
 {
     return RUN_ONCE(&sig_init, o_sig_init);
 }

@@ -1150,7 +1150,7 @@ static int dgram_mem_read(BIO *bio, char *buf, int sz_)
  * We use an expansion factor of 8 / 5 = 1.6
  */
 static const size_t max_rbuf_size = SIZE_MAX / 2; /* unlimited in practice */
-static ossl_inline size_t compute_rbuf_growth(size_t target, size_t current)
+static inline size_t compute_rbuf_growth(size_t target, size_t current)
 {
     int err = 0;
 

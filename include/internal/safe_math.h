@@ -11,7 +11,7 @@
 #define OSSL_INTERNAL_SAFE_MATH_H
 #pragma once
 
-#include <openssl/e_os2.h> /* For 'ossl_inline' */
+#include <openssl/e_os2.h> /* For 'inline' */
 
 #ifndef OPENSSL_NO_BUILTIN_OVERFLOW_CHECKING
 #ifdef __has_builtin
@@ -32,7 +32,7 @@
  */
 #if has(__builtin_add_overflow)
 #define OSSL_SAFE_MATH_ADDS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_add_##type_name(type a, \
+    static inline ossl_unused type safe_add_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -45,7 +45,7 @@
     }
 
 #define OSSL_SAFE_MATH_ADDU(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_add_##type_name(type a, \
+    static inline ossl_unused type safe_add_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -59,7 +59,7 @@
 
 #else /* has(__builtin_add_overflow) */
 #define OSSL_SAFE_MATH_ADDS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_add_##type_name(type a, \
+    static inline ossl_unused type safe_add_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -73,7 +73,7 @@
     }
 
 #define OSSL_SAFE_MATH_ADDU(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_add_##type_name(type a, \
+    static inline ossl_unused type safe_add_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -88,7 +88,7 @@
  */
 #if has(__builtin_sub_overflow)
 #define OSSL_SAFE_MATH_SUBS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_sub_##type_name(type a, \
+    static inline ossl_unused type safe_sub_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -102,7 +102,7 @@
 
 #else /* has(__builtin_sub_overflow) */
 #define OSSL_SAFE_MATH_SUBS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_sub_##type_name(type a, \
+    static inline ossl_unused type safe_sub_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -118,7 +118,7 @@
 #endif /* has(__builtin_sub_overflow) */
 
 #define OSSL_SAFE_MATH_SUBU(type_name, type)                         \
-    static ossl_inline ossl_unused type safe_sub_##type_name(type a, \
+    static inline ossl_unused type safe_sub_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -132,7 +132,7 @@
  */
 #if has(__builtin_mul_overflow)
 #define OSSL_SAFE_MATH_MULS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_mul_##type_name(type a, \
+    static inline ossl_unused type safe_mul_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -145,7 +145,7 @@
     }
 
 #define OSSL_SAFE_MATH_MULU(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_mul_##type_name(type a, \
+    static inline ossl_unused type safe_mul_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -159,7 +159,7 @@
 
 #else /* has(__builtin_mul_overflow) */
 #define OSSL_SAFE_MATH_MULS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_mul_##type_name(type a, \
+    static inline ossl_unused type safe_mul_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -181,7 +181,7 @@
     }
 
 #define OSSL_SAFE_MATH_MULU(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_mul_##type_name(type a, \
+    static inline ossl_unused type safe_mul_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -195,7 +195,7 @@
  * Safe division helpers
  */
 #define OSSL_SAFE_MATH_DIVS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_div_##type_name(type a, \
+    static inline ossl_unused type safe_div_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -211,7 +211,7 @@
     }
 
 #define OSSL_SAFE_MATH_DIVU(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_div_##type_name(type a, \
+    static inline ossl_unused type safe_div_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -225,7 +225,7 @@
  * Safe modulus helpers
  */
 #define OSSL_SAFE_MATH_MODS(type_name, type, min, max)               \
-    static ossl_inline ossl_unused type safe_mod_##type_name(type a, \
+    static inline ossl_unused type safe_mod_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -241,7 +241,7 @@
     }
 
 #define OSSL_SAFE_MATH_MODU(type_name, type)                         \
-    static ossl_inline ossl_unused type safe_mod_##type_name(type a, \
+    static inline ossl_unused type safe_mod_##type_name(type a, \
         type b,                                                      \
         int *err)                                                    \
     {                                                                \
@@ -255,7 +255,7 @@
  * Safe negation helpers
  */
 #define OSSL_SAFE_MATH_NEGS(type_name, type, min)                    \
-    static ossl_inline ossl_unused type safe_neg_##type_name(type a, \
+    static inline ossl_unused type safe_neg_##type_name(type a, \
         int *err)                                                    \
     {                                                                \
         if (a != min)                                                \
@@ -265,7 +265,7 @@
     }
 
 #define OSSL_SAFE_MATH_NEGU(type_name, type)                         \
-    static ossl_inline ossl_unused type safe_neg_##type_name(type a, \
+    static inline ossl_unused type safe_neg_##type_name(type a, \
         int *err)                                                    \
     {                                                                \
         if (a == 0)                                                  \
@@ -278,7 +278,7 @@
  * Safe absolute value helpers
  */
 #define OSSL_SAFE_MATH_ABSS(type_name, type, min)                    \
-    static ossl_inline ossl_unused type safe_abs_##type_name(type a, \
+    static inline ossl_unused type safe_abs_##type_name(type a, \
         int *err)                                                    \
     {                                                                \
         if (a != min)                                                \
@@ -288,7 +288,7 @@
     }
 
 #define OSSL_SAFE_MATH_ABSU(type_name, type)                         \
-    static ossl_inline ossl_unused type safe_abs_##type_name(type a, \
+    static inline ossl_unused type safe_abs_##type_name(type a, \
         int *err)                                                    \
     {                                                                \
         return a;                                                    \
@@ -317,7 +317,7 @@
  * The algorithm used is not perfect but it should be "good enough".
  */
 #define OSSL_SAFE_MATH_MULDIVS(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_muldiv_##type_name(type a, \
+    static inline ossl_unused type safe_muldiv_##type_name(type a, \
         type b,                                                         \
         type c,                                                         \
         int *err)                                                       \
@@ -346,7 +346,7 @@
     }
 
 #define OSSL_SAFE_MATH_MULDIVU(type_name, type, max)                    \
-    static ossl_inline ossl_unused type safe_muldiv_##type_name(type a, \
+    static inline ossl_unused type safe_muldiv_##type_name(type a, \
         type b,                                                         \
         type c,                                                         \
         int *err)                                                       \
@@ -378,7 +378,7 @@
  * If you *know* that b != 0, then it's safe to ignore err.
  */
 #define OSSL_SAFE_MATH_DIV_ROUND_UP(type_name, type, max)                                        \
-    static ossl_inline ossl_unused type safe_div_round_up_##type_name(type a, type b, int *errp) \
+    static inline ossl_unused type safe_div_round_up_##type_name(type a, type b, int *errp) \
     {                                                                                            \
         type x;                                                                                  \
         int *err, err_local = 0;                                                                 \

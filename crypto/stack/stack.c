@@ -13,7 +13,7 @@
 #include "internal/safe_math.h"
 #include <openssl/stack.h>
 #include <errno.h>
-#include <openssl/e_os2.h> /* For ossl_inline */
+#include <openssl/e_os2.h> /* For inline */
 
 OSSL_SAFE_MATH_SIGNED(int, int)
 
@@ -151,7 +151,7 @@ OPENSSL_STACK *OPENSSL_sk_new(OPENSSL_sk_compfunc c)
  *
  * 3/2 and 8/5 have nice power of two shifts, so seem like a good choice.
  */
-static ossl_inline int compute_growth(int target, int current)
+static inline int compute_growth(int target, int current)
 {
     int err = 0;
 
@@ -218,7 +218,7 @@ static int sk_reserve(OPENSSL_STACK *st, int n, int exact)
     return 1;
 }
 
-static ossl_inline int cmp_with_thunk(const OPENSSL_STACK *st, const void *a, const void *b)
+static inline int cmp_with_thunk(const OPENSSL_STACK *st, const void *a, const void *b)
 {
     return (st->cmp_thunk == NULL) ? st->comp(a, b) : st->cmp_thunk(st->comp, a, b);
 }
@@ -324,7 +324,7 @@ int OPENSSL_sk_insert(OPENSSL_STACK *st, const void *data, int loc)
     return st->num;
 }
 
-static ossl_inline void *internal_delete(OPENSSL_STACK *st, int loc)
+static inline void *internal_delete(OPENSSL_STACK *st, int loc)
 {
     const void *ret = st->data[loc];
 

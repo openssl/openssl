@@ -122,7 +122,7 @@ void ossl_curve448_scalar_add(curve448_scalar_t out, const curve448_scalar_t a,
     sc_subx(out, out->limb, sc_p, sc_p, (c448_word_t)chain);
 }
 
-static ossl_inline void scalar_decode_short(curve448_scalar_t s,
+static inline void scalar_decode_short(curve448_scalar_t s,
     const unsigned char *ser,
     size_t nbytes)
 {

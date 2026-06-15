@@ -74,7 +74,7 @@ typedef enum {
 } c448_error_t;
 
 /* Return success if x is true */
-static ossl_inline c448_error_t c448_succeed_if(c448_bool_t x)
+static inline c448_error_t c448_succeed_if(c448_bool_t x)
 {
     return (c448_error_t)x;
 }

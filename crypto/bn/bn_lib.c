@@ -150,7 +150,7 @@ int BN_num_bits_word(BN_ULONG l)
  * This function still leaks `a->dmax`: it's caller's responsibility to
  * expand the input `a` in advance to a public length.
  */
-static ossl_inline int bn_num_bits_consttime(const BIGNUM *a)
+static inline int bn_num_bits_consttime(const BIGNUM *a)
 {
     int j, ret;
     unsigned int mask, past_i;

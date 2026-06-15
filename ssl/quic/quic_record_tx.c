@@ -44,7 +44,7 @@ struct txe_st {
 DEFINE_LIST_OF(txe, TXE);
 typedef OSSL_LIST(txe) TXE_LIST;
 
-static ossl_inline unsigned char *txe_data(const TXE *e)
+static inline unsigned char *txe_data(const TXE *e)
 {
     return (unsigned char *)(e + 1);
 }

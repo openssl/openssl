@@ -13,7 +13,7 @@
 
 #include <stdlib.h>
 #include <string.h>
-#include <openssl/e_os2.h> /* For 'ossl_inline' */
+#include <openssl/e_os2.h> /* For 'inline' */
 
 /*-
  * The boolean methods return a bitmask of all ones (0xff...f) for true
@@ -30,48 +30,48 @@
  */
 
 /* Returns the given value with the MSB copied to all the other bits. */
-static ossl_inline unsigned int constant_time_msb(unsigned int a);
+static inline unsigned int constant_time_msb(unsigned int a);
 /* Convenience method for uint32_t. */
-static ossl_inline uint32_t constant_time_msb_32(uint32_t a);
+static inline uint32_t constant_time_msb_32(uint32_t a);
 /* Convenience method for uint64_t. */
-static ossl_inline uint64_t constant_time_msb_64(uint64_t a);
+static inline uint64_t constant_time_msb_64(uint64_t a);
 
 /* Returns 0xff..f if a < b and 0 otherwise. */
-static ossl_inline unsigned int constant_time_lt(unsigned int a,
+static inline unsigned int constant_time_lt(unsigned int a,
     unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
-static ossl_inline unsigned char constant_time_lt_8(unsigned int a,
+static inline unsigned char constant_time_lt_8(unsigned int a,
     unsigned int b);
 /* Convenience method for uint32_t. */
-static ossl_inline uint32_t constant_time_lt_32(uint32_t a, uint32_t b);
+static inline uint32_t constant_time_lt_32(uint32_t a, uint32_t b);
 
 /* Convenience method for uint64_t. */
-static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b);
+static inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b);
 
 /* Returns 0xff..f if a >= b and 0 otherwise. */
-static ossl_inline unsigned int constant_time_ge(unsigned int a,
+static inline unsigned int constant_time_ge(unsigned int a,
     unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
-static ossl_inline unsigned char constant_time_ge_8(unsigned int a,
+static inline unsigned char constant_time_ge_8(unsigned int a,
     unsigned int b);
 
 /* Returns 0xff..f if a == 0 and 0 otherwise. */
-static ossl_inline unsigned int constant_time_is_zero(unsigned int a);
+static inline unsigned int constant_time_is_zero(unsigned int a);
 /* Convenience method for getting an 8-bit mask. */
-static ossl_inline unsigned char constant_time_is_zero_8(unsigned int a);
+static inline unsigned char constant_time_is_zero_8(unsigned int a);
 /* Convenience method for getting a 32-bit mask. */
-static ossl_inline uint32_t constant_time_is_zero_32(uint32_t a);
+static inline uint32_t constant_time_is_zero_32(uint32_t a);
 
 /* Returns 0xff..f if a == b and 0 otherwise. */
-static ossl_inline unsigned int constant_time_eq(unsigned int a,
+static inline unsigned int constant_time_eq(unsigned int a,
     unsigned int b);
 /* Convenience method for getting an 8-bit mask. */
-static ossl_inline unsigned char constant_time_eq_8(unsigned int a,
+static inline unsigned char constant_time_eq_8(unsigned int a,
     unsigned int b);
 /* Signed integers. */
-static ossl_inline unsigned int constant_time_eq_int(int a, int b);
+static inline unsigned int constant_time_eq_int(int a, int b);
 /* Convenience method for getting an 8-bit mask. */
-static ossl_inline unsigned char constant_time_eq_int_8(int a, int b);
+static inline unsigned char constant_time_eq_int_8(int a, int b);
 
 /*-
  * Returns (mask & a) | (~mask & b).
@@ -80,74 +80,74 @@ static ossl_inline unsigned char constant_time_eq_int_8(int a, int b);
  * the select methods return either |a| (if |mask| is nonzero) or |b|
  * (if |mask| is zero).
  */
-static ossl_inline unsigned int constant_time_select(unsigned int mask,
+static inline unsigned int constant_time_select(unsigned int mask,
     unsigned int a,
     unsigned int b);
 /* Convenience method for unsigned chars. */
-static ossl_inline unsigned char constant_time_select_8(unsigned char mask,
+static inline unsigned char constant_time_select_8(unsigned char mask,
     unsigned char a,
     unsigned char b);
 
 /* Convenience method for uint32_t. */
-static ossl_inline uint32_t constant_time_select_32(uint32_t mask, uint32_t a,
+static inline uint32_t constant_time_select_32(uint32_t mask, uint32_t a,
     uint32_t b);
 
 /* Convenience method for uint64_t. */
-static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
+static inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
     uint64_t b);
 /* Convenience method for signed integers. */
-static ossl_inline int constant_time_select_int(unsigned int mask, int a,
+static inline int constant_time_select_int(unsigned int mask, int a,
     int b);
 
-static ossl_inline unsigned int constant_time_msb(unsigned int a)
+static inline unsigned int constant_time_msb(unsigned int a)
 {
     return 0 - (a >> (sizeof(a) * 8 - 1));
 }
 
-static ossl_inline uint32_t constant_time_msb_32(uint32_t a)
+static inline uint32_t constant_time_msb_32(uint32_t a)
 {
     return 0 - (a >> 31);
 }
 
-static ossl_inline uint64_t constant_time_msb_64(uint64_t a)
+static inline uint64_t constant_time_msb_64(uint64_t a)
 {
     return 0 - (a >> 63);
 }
 
-static ossl_inline size_t constant_time_msb_s(size_t a)
+static inline size_t constant_time_msb_s(size_t a)
 {
     return 0 - (a >> (sizeof(a) * 8 - 1));
 }
 
-static ossl_inline unsigned int constant_time_lt(unsigned int a,
+static inline unsigned int constant_time_lt(unsigned int a,
     unsigned int b)
 {
     return constant_time_msb(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
-static ossl_inline size_t constant_time_lt_s(size_t a, size_t b)
+static inline size_t constant_time_lt_s(size_t a, size_t b)
 {
     return constant_time_msb_s(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
-static ossl_inline unsigned char constant_time_lt_8(unsigned int a,
+static inline unsigned char constant_time_lt_8(unsigned int a,
     unsigned int b)
 {
     return (unsigned char)constant_time_lt(a, b);
 }
 
-static ossl_inline uint32_t constant_time_lt_32(uint32_t a, uint32_t b)
+static inline uint32_t constant_time_lt_32(uint32_t a, uint32_t b)
 {
     return constant_time_msb_32(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
-static ossl_inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
+static inline uint64_t constant_time_lt_64(uint64_t a, uint64_t b)
 {
     return constant_time_msb_64(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
 #ifdef BN_BYTES
-static ossl_inline BN_ULONG value_barrier_bn(BN_ULONG a)
+static inline BN_ULONG value_barrier_bn(BN_ULONG a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
     BN_ULONG r;
@@ -158,28 +158,28 @@ static ossl_inline BN_ULONG value_barrier_bn(BN_ULONG a)
     return r;
 }
 
-static ossl_inline BN_ULONG constant_time_msb_bn(BN_ULONG a)
+static inline BN_ULONG constant_time_msb_bn(BN_ULONG a)
 {
     return 0 - (a >> (sizeof(a) * 8 - 1));
 }
 
-static ossl_inline BN_ULONG constant_time_lt_bn(BN_ULONG a, BN_ULONG b)
+static inline BN_ULONG constant_time_lt_bn(BN_ULONG a, BN_ULONG b)
 {
     return constant_time_msb_bn(a ^ ((a ^ b) | ((a - b) ^ b)));
 }
 
-static ossl_inline BN_ULONG constant_time_is_zero_bn(BN_ULONG a)
+static inline BN_ULONG constant_time_is_zero_bn(BN_ULONG a)
 {
     return constant_time_msb_bn(~a & (a - 1));
 }
 
-static ossl_inline BN_ULONG constant_time_eq_bn(BN_ULONG a,
+static inline BN_ULONG constant_time_eq_bn(BN_ULONG a,
     BN_ULONG b)
 {
     return constant_time_is_zero_bn(a ^ b);
 }
 
-static ossl_inline BN_ULONG constant_time_select_bn(BN_ULONG mask,
+static inline BN_ULONG constant_time_select_bn(BN_ULONG mask,
     BN_ULONG a,
     BN_ULONG b)
 {
@@ -187,81 +187,81 @@ static ossl_inline BN_ULONG constant_time_select_bn(BN_ULONG mask,
 }
 #endif
 
-static ossl_inline unsigned int constant_time_ge(unsigned int a,
+static inline unsigned int constant_time_ge(unsigned int a,
     unsigned int b)
 {
     return ~constant_time_lt(a, b);
 }
 
-static ossl_inline size_t constant_time_ge_s(size_t a, size_t b)
+static inline size_t constant_time_ge_s(size_t a, size_t b)
 {
     return ~constant_time_lt_s(a, b);
 }
 
-static ossl_inline unsigned char constant_time_ge_8(unsigned int a,
+static inline unsigned char constant_time_ge_8(unsigned int a,
     unsigned int b)
 {
     return (unsigned char)constant_time_ge(a, b);
 }
 
-static ossl_inline unsigned char constant_time_ge_8_s(size_t a, size_t b)
+static inline unsigned char constant_time_ge_8_s(size_t a, size_t b)
 {
     return (unsigned char)constant_time_ge_s(a, b);
 }
 
-static ossl_inline unsigned int constant_time_is_zero(unsigned int a)
+static inline unsigned int constant_time_is_zero(unsigned int a)
 {
     return constant_time_msb(~a & (a - 1));
 }
 
-static ossl_inline size_t constant_time_is_zero_s(size_t a)
+static inline size_t constant_time_is_zero_s(size_t a)
 {
     return constant_time_msb_s(~a & (a - 1));
 }
 
-static ossl_inline unsigned char constant_time_is_zero_8(unsigned int a)
+static inline unsigned char constant_time_is_zero_8(unsigned int a)
 {
     return (unsigned char)constant_time_is_zero(a);
 }
 
-static ossl_inline uint32_t constant_time_is_zero_32(uint32_t a)
+static inline uint32_t constant_time_is_zero_32(uint32_t a)
 {
     return constant_time_msb_32(~a & (a - 1));
 }
 
-static ossl_inline uint64_t constant_time_is_zero_64(uint64_t a)
+static inline uint64_t constant_time_is_zero_64(uint64_t a)
 {
     return constant_time_msb_64(~a & (a - 1));
 }
 
-static ossl_inline unsigned int constant_time_eq(unsigned int a,
+static inline unsigned int constant_time_eq(unsigned int a,
     unsigned int b)
 {
     return constant_time_is_zero(a ^ b);
 }
 
-static ossl_inline size_t constant_time_eq_s(size_t a, size_t b)
+static inline size_t constant_time_eq_s(size_t a, size_t b)
 {
     return constant_time_is_zero_s(a ^ b);
 }
 
-static ossl_inline unsigned char constant_time_eq_8(unsigned int a,
+static inline unsigned char constant_time_eq_8(unsigned int a,
     unsigned int b)
 {
     return (unsigned char)constant_time_eq(a, b);
 }
 
-static ossl_inline unsigned char constant_time_eq_8_s(size_t a, size_t b)
+static inline unsigned char constant_time_eq_8_s(size_t a, size_t b)
 {
     return (unsigned char)constant_time_eq_s(a, b);
 }
 
-static ossl_inline unsigned int constant_time_eq_int(int a, int b)
+static inline unsigned int constant_time_eq_int(int a, int b)
 {
     return constant_time_eq((unsigned)(a), (unsigned)(b));
 }
 
-static ossl_inline unsigned char constant_time_eq_int_8(int a, int b)
+static inline unsigned char constant_time_eq_int_8(int a, int b)
 {
     return constant_time_eq_8((unsigned)(a), (unsigned)(b));
 }
@@ -273,7 +273,7 @@ static ossl_inline unsigned char constant_time_eq_int_8(int a, int b)
  * statements, which avoids the recognition of the select
  * and turning it into a conditional load or branch.
  */
-static ossl_inline unsigned int value_barrier(unsigned int a)
+static inline unsigned int value_barrier(unsigned int a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
     unsigned int r;
@@ -285,7 +285,7 @@ static ossl_inline unsigned int value_barrier(unsigned int a)
 }
 
 /* Convenience method for uint32_t. */
-static ossl_inline uint32_t value_barrier_32(uint32_t a)
+static inline uint32_t value_barrier_32(uint32_t a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
     uint32_t r;
@@ -297,7 +297,7 @@ static ossl_inline uint32_t value_barrier_32(uint32_t a)
 }
 
 /* Convenience method for uint64_t. */
-static ossl_inline uint64_t value_barrier_64(uint64_t a)
+static inline uint64_t value_barrier_64(uint64_t a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
     uint64_t r;
@@ -309,7 +309,7 @@ static ossl_inline uint64_t value_barrier_64(uint64_t a)
 }
 
 /* Convenience method for size_t. */
-static ossl_inline size_t value_barrier_s(size_t a)
+static inline size_t value_barrier_s(size_t a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
     size_t r;
@@ -321,7 +321,7 @@ static ossl_inline size_t value_barrier_s(size_t a)
 }
 
 /* Convenience method for unsigned char. */
-static ossl_inline unsigned char value_barrier_8(unsigned char a)
+static inline unsigned char value_barrier_8(unsigned char a)
 {
 #if !defined(OPENSSL_NO_ASM) && defined(__GNUC__)
     unsigned char r;
@@ -332,46 +332,46 @@ static ossl_inline unsigned char value_barrier_8(unsigned char a)
     return r;
 }
 
-static ossl_inline unsigned int constant_time_select(unsigned int mask,
+static inline unsigned int constant_time_select(unsigned int mask,
     unsigned int a,
     unsigned int b)
 {
     return (value_barrier(mask) & a) | (value_barrier(~mask) & b);
 }
 
-static ossl_inline size_t constant_time_select_s(size_t mask,
+static inline size_t constant_time_select_s(size_t mask,
     size_t a,
     size_t b)
 {
     return (value_barrier_s(mask) & a) | (value_barrier_s(~mask) & b);
 }
 
-static ossl_inline unsigned char constant_time_select_8(unsigned char mask,
+static inline unsigned char constant_time_select_8(unsigned char mask,
     unsigned char a,
     unsigned char b)
 {
     return (unsigned char)constant_time_select(mask, a, b);
 }
 
-static ossl_inline int constant_time_select_int(unsigned int mask, int a,
+static inline int constant_time_select_int(unsigned int mask, int a,
     int b)
 {
     return (int)constant_time_select(mask, (unsigned)(a), (unsigned)(b));
 }
 
-static ossl_inline int constant_time_select_int_s(size_t mask, int a, int b)
+static inline int constant_time_select_int_s(size_t mask, int a, int b)
 {
     return (int)constant_time_select((unsigned)mask, (unsigned)(a),
         (unsigned)(b));
 }
 
-static ossl_inline uint32_t constant_time_select_32(uint32_t mask, uint32_t a,
+static inline uint32_t constant_time_select_32(uint32_t mask, uint32_t a,
     uint32_t b)
 {
     return (value_barrier_32(mask) & a) | (value_barrier_32(~mask) & b);
 }
 
-static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
+static inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
     uint64_t b)
 {
     return (value_barrier_64(mask) & a) | (value_barrier_64(~mask) & b);
@@ -387,7 +387,7 @@ static ossl_inline uint64_t constant_time_select_64(uint64_t mask, uint64_t a,
  *     *b = tmp;
  * }
  */
-static ossl_inline void constant_time_cond_swap_32(uint32_t mask, uint32_t *a,
+static inline void constant_time_cond_swap_32(uint32_t mask, uint32_t *a,
     uint32_t *b)
 {
     uint32_t xor = *a ^ *b;
@@ -407,7 +407,7 @@ static ossl_inline void constant_time_cond_swap_32(uint32_t mask, uint32_t *a,
  *     *b = tmp;
  * }
  */
-static ossl_inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
+static inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
     uint64_t *b)
 {
     uint64_t xor = *a ^ *b;
@@ -429,7 +429,7 @@ static ossl_inline void constant_time_cond_swap_64(uint64_t mask, uint64_t *a,
  *     memcpy(b, tmp);
  * }
  */
-static ossl_inline void constant_time_cond_swap_buff(unsigned char mask,
+static inline void constant_time_cond_swap_buff(unsigned char mask,
     unsigned char *a,
     unsigned char *b,
     size_t len)
@@ -450,7 +450,7 @@ static ossl_inline void constant_time_cond_swap_buff(unsigned char mask,
  * Copies row number idx into out. rowsize and numrows are not considered
  * private.
  */
-static ossl_inline void constant_time_lookup(void *out,
+static inline void constant_time_lookup(void *out,
     const void *table,
     size_t rowsize,
     size_t numrows,
@@ -527,7 +527,7 @@ void err_clear_last_constant_time(int clear);
 #define CONSTTIME_DECLASSIFY(ptr, len)
 #endif
 
-static ossl_inline uint32_t constant_time_declassify_u32(uint32_t v)
+static inline uint32_t constant_time_declassify_u32(uint32_t v)
 {
     /*
      * Return |v| through a value barrier to be safe. Valgrind-based

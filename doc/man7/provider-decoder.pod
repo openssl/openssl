@@ -83,7 +83,7 @@ For example, the "function" OSSL_FUNC_decoder_decode() has these:
                                    int selection,
                                    OSSL_CALLBACK *data_cb, void *data_cbarg,
                                    OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg);
- static ossl_inline OSSL_FUNC_decoder_decode_fn*
+ static inline OSSL_FUNC_decoder_decode_fn*
      OSSL_FUNC_decoder_decode(const OSSL_DISPATCH *opf);
 
 L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as

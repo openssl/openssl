@@ -19,17 +19,17 @@
 
 #ifndef OPENSSL_NO_SIV
 
-__owur static ossl_inline uint32_t rotl8(uint32_t x)
+__owur static inline uint32_t rotl8(uint32_t x)
 {
     return (x << 8) | (x >> 24);
 }
 
-__owur static ossl_inline uint32_t rotr8(uint32_t x)
+__owur static inline uint32_t rotr8(uint32_t x)
 {
     return (x >> 8) | (x << 24);
 }
 
-__owur static ossl_inline uint64_t byteswap8(uint64_t x)
+__owur static inline uint64_t byteswap8(uint64_t x)
 {
     uint32_t high = (uint32_t)(x >> 32);
     uint32_t low = (uint32_t)x;
@@ -39,7 +39,7 @@ __owur static ossl_inline uint64_t byteswap8(uint64_t x)
     return ((uint64_t)low) << 32 | (uint64_t)high;
 }
 
-__owur static ossl_inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
+__owur static inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
 {
     DECLARE_IS_ENDIAN;
 
@@ -48,7 +48,7 @@ __owur static ossl_inline uint64_t siv128_getword(SIV_BLOCK const *b, size_t i)
     return b->word[i];
 }
 
-static ossl_inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
+static inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
 {
     DECLARE_IS_ENDIAN;
 
@@ -58,7 +58,7 @@ static ossl_inline void siv128_putword(SIV_BLOCK *b, size_t i, uint64_t x)
         b->word[i] = x;
 }
 
-static ossl_inline void siv128_xorblock(SIV_BLOCK *x,
+static inline void siv128_xorblock(SIV_BLOCK *x,
     SIV_BLOCK const *y)
 {
     x->word[0] ^= y->word[0];
@@ -71,7 +71,7 @@ static ossl_inline void siv128_xorblock(SIV_BLOCK *x,
  * x**128 + x**7 + x**2 + x + 1.
  * Assumes two's-complement arithmetic
  */
-static ossl_inline void siv128_dbl(SIV_BLOCK *b)
+static inline void siv128_dbl(SIV_BLOCK *b)
 {
     uint64_t high = siv128_getword(b, 0);
     uint64_t low = siv128_getword(b, 1);
@@ -86,7 +86,7 @@ static ossl_inline void siv128_dbl(SIV_BLOCK *b)
     siv128_putword(b, 1, low);
 }
 
-__owur static ossl_inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *out,
+__owur static inline int siv128_do_s2v_p(SIV128_CONTEXT *ctx, SIV_BLOCK *out,
     unsigned char const *in, size_t len)
 {
     SIV_BLOCK t;
@@ -125,7 +125,7 @@ err:
     return ret;
 }
 
-__owur static ossl_inline int siv128_do_encrypt(EVP_CIPHER_CTX *ctx, unsigned char *out,
+__owur static inline int siv128_do_encrypt(EVP_CIPHER_CTX *ctx, unsigned char *out,
     unsigned char const *in, size_t len,
     SIV_BLOCK *icv)
 {

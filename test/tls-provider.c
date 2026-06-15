@@ -783,7 +783,7 @@ static void *xor_dup(const void *vfromkey, int selection)
     return tokey;
 }
 
-static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
+static inline int xor_get_params(void *vkey, OSSL_PARAM params[])
 {
     XORKEY *key = vkey;
     OSSL_PARAM *p;

@@ -31,7 +31,7 @@
  * Determine encryption level from packet type. Returns QUIC_ENC_LEVEL_NUM if
  * the packet is not of a type which is encrypted.
  */
-static ossl_inline ossl_unused uint32_t
+static inline ossl_unused uint32_t
 ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
 {
     switch (pkt_type) {
@@ -48,7 +48,7 @@ ossl_quic_pkt_type_to_enc_level(uint32_t pkt_type)
     }
 }
 
-static ossl_inline ossl_unused uint32_t
+static inline ossl_unused uint32_t
 ossl_quic_enc_level_to_pkt_type(uint32_t enc_level)
 {
     switch (enc_level) {
@@ -66,7 +66,7 @@ ossl_quic_enc_level_to_pkt_type(uint32_t enc_level)
 }
 
 /* Determine if a packet type contains an encrypted payload. */
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 ossl_quic_pkt_type_is_encrypted(uint32_t pkt_type)
 {
     switch (pkt_type) {
@@ -79,7 +79,7 @@ ossl_quic_pkt_type_is_encrypted(uint32_t pkt_type)
 }
 
 /* Determine if a packet type contains a PN field. */
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 ossl_quic_pkt_type_has_pn(uint32_t pkt_type)
 {
     /*
@@ -93,7 +93,7 @@ ossl_quic_pkt_type_has_pn(uint32_t pkt_type)
  * Determine if a packet type can appear with other packets in a datagram. Some
  * packet types must be the sole packet in a datagram.
  */
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 ossl_quic_pkt_type_can_share_dgram(uint32_t pkt_type)
 {
     /*
@@ -107,7 +107,7 @@ ossl_quic_pkt_type_can_share_dgram(uint32_t pkt_type)
  * Determine if the packet type must come at the end of the datagram (due to the
  * lack of a length field).
  */
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
 {
     /*
@@ -121,7 +121,7 @@ ossl_quic_pkt_type_must_be_last(uint32_t pkt_type)
 /*
  * Determine if the packet type has a version field.
  */
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 ossl_quic_pkt_type_has_version(uint32_t pkt_type)
 {
     return pkt_type != QUIC_PKT_TYPE_1RTT && pkt_type != QUIC_PKT_TYPE_VERSION_NEG;
@@ -130,7 +130,7 @@ ossl_quic_pkt_type_has_version(uint32_t pkt_type)
 /*
  * Determine if the packet type has a SCID field.
  */
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 ossl_quic_pkt_type_has_scid(uint32_t pkt_type)
 {
     return pkt_type != QUIC_PKT_TYPE_1RTT;

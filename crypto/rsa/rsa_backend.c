@@ -450,7 +450,7 @@ int ossl_rsa_is_foreign(const RSA *rsa)
     return 0;
 }
 
-static ossl_inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+static inline int rsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
         return 0;

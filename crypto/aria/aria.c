@@ -849,7 +849,7 @@ static void xor128(ARIA_c128 o, const ARIA_c128 x, const ARIA_u128 *y)
  * Generalised circular rotate right and exclusive or function.
  * It is safe for the output to overlap either input.
  */
-static ossl_inline void rotnr(unsigned int n, ARIA_u128 *o,
+static inline void rotnr(unsigned int n, ARIA_u128 *o,
     const ARIA_u128 *xor, const ARIA_u128 *z)
 {
     const unsigned int bytes = n / 8, bits = n % 8;
@@ -966,7 +966,7 @@ static void a(ARIA_u128 *y, const ARIA_u128 *x)
  * Apply the first substitution layer and then a diffusion step.
  * It is safe for the input and output to overlap.
  */
-static ossl_inline void FO(ARIA_u128 *o, const ARIA_u128 *d,
+static inline void FO(ARIA_u128 *o, const ARIA_u128 *d,
     const ARIA_u128 *rk)
 {
     ARIA_u128 y;
@@ -980,7 +980,7 @@ static ossl_inline void FO(ARIA_u128 *o, const ARIA_u128 *d,
  * Apply the second substitution layer and then a diffusion step.
  * It is safe for the input and output to overlap.
  */
-static ossl_inline void FE(ARIA_u128 *o, const ARIA_u128 *d,
+static inline void FE(ARIA_u128 *o, const ARIA_u128 *d,
     const ARIA_u128 *rk)
 {
     ARIA_u128 y;

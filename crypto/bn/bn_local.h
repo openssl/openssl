@@ -668,7 +668,7 @@ BIGNUM *int_bn_mod_inverse(BIGNUM *in,
     const BIGNUM *a, const BIGNUM *n, BN_CTX *ctx,
     int *noinv);
 
-static ossl_inline BIGNUM *bn_expand(BIGNUM *a, int bits)
+static inline BIGNUM *bn_expand(BIGNUM *a, int bits)
 {
     if (bits > (INT_MAX - BN_BITS2 + 1))
         return NULL;

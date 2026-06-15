@@ -39,13 +39,13 @@ static const uint8_t blake2s_sigma[10][16] = {
 };
 
 /* Set that it's the last block we'll compress */
-static ossl_inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
+static inline void blake2s_set_lastblock(BLAKE2S_CTX *S)
 {
     S->f[0] = -1;
 }
 
 /* Initialize the hashing state. */
-static ossl_inline void blake2s_init0(BLAKE2S_CTX *S)
+static inline void blake2s_init0(BLAKE2S_CTX *S)
 {
     int i;
 

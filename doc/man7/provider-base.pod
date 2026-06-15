@@ -138,7 +138,7 @@ For example, the "function" core_gettable_params() has these:
 
  typedef OSSL_PARAM *
      (OSSL_FUNC_core_gettable_params_fn)(const OSSL_CORE_HANDLE *handle);
- static ossl_inline OSSL_NAME_core_gettable_params_fn
+ static inline OSSL_NAME_core_gettable_params_fn
      OSSL_FUNC_core_gettable_params(const OSSL_DISPATCH *opf);
 
 L<OSSL_DISPATCH(3)> array entries contain a I<function_id> field that
@@ -976,28 +976,28 @@ This relies on a few things existing in F<openssl/core_dispatch.h>:
 
  #define OSSL_FUNC_BAR_NEWCTX      1
  typedef void *(OSSL_FUNC_bar_newctx_fn)(void *provctx);
- static ossl_inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
+ static inline OSSL_FUNC_bar_newctx(const OSSL_DISPATCH *opf)
  { return (OSSL_FUNC_bar_newctx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_FREECTX     2
  typedef void (OSSL_FUNC_bar_freectx_fn)(void *ctx);
- static ossl_inline OSSL_FUNC_bar_freectx(const OSSL_DISPATCH *opf)
+ static inline OSSL_FUNC_bar_freectx(const OSSL_DISPATCH *opf)
  { return (OSSL_FUNC_bar_freectx_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_INIT        3
  typedef void *(OSSL_FUNC_bar_init_fn)(void *ctx);
- static ossl_inline OSSL_FUNC_bar_init(const OSSL_DISPATCH *opf)
+ static inline OSSL_FUNC_bar_init(const OSSL_DISPATCH *opf)
  { return (OSSL_FUNC_bar_init_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_UPDATE      4
  typedef void *(OSSL_FUNC_bar_update_fn)(void *ctx,
                                        unsigned char *in, size_t inl);
- static ossl_inline OSSL_FUNC_bar_update(const OSSL_DISPATCH *opf)
+ static inline OSSL_FUNC_bar_update(const OSSL_DISPATCH *opf)
  { return (OSSL_FUNC_bar_update_fn *)opf->function; }
 
  #define OSSL_FUNC_BAR_FINAL       5
  typedef void *(OSSL_FUNC_bar_final_fn)(void *ctx);
- static ossl_inline OSSL_FUNC_bar_final(const OSSL_DISPATCH *opf)
+ static inline OSSL_FUNC_bar_final(const OSSL_DISPATCH *opf)
  { return (OSSL_FUNC_bar_final_fn *)opf->function; }
 
 =head1 SEE ALSO

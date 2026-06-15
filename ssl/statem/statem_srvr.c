@@ -57,7 +57,7 @@ IMPLEMENT_ASN1_FUNCTIONS(GOST_KX_MESSAGE)
 static CON_FUNC_RETURN tls_construct_encrypted_extensions(SSL_CONNECTION *s,
     WPACKET *pkt);
 
-static ossl_inline int received_client_cert(const SSL_CONNECTION *sc)
+static inline int received_client_cert(const SSL_CONNECTION *sc)
 {
     return sc->session->peer_rpk != NULL || sc->session->peer != NULL;
 }
@@ -1006,7 +1006,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
     return WORK_FINISHED_CONTINUE;
 }
 
-static ossl_inline int conn_is_closed(void)
+static inline int conn_is_closed(void)
 {
     switch (get_last_sys_error()) {
 #if defined(EPIPE)

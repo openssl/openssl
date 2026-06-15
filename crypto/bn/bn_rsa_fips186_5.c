@@ -258,7 +258,7 @@ err:
     return ret;
 }
 
-static ossl_inline int get_multiple_of_y_congruent_to_cmod8(BIGNUM *y, const BIGNUM *r1r2x2, int c)
+static inline int get_multiple_of_y_congruent_to_cmod8(BIGNUM *y, const BIGNUM *r1r2x2, int c)
 {
     int i = 0;
 

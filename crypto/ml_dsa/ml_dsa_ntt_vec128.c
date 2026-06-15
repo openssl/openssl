@@ -320,7 +320,7 @@ static const vec_int32_t vec_q_inv = { ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV,
  *          -q+1..q-1.
  */
 
-static ossl_inline
+static inline
     vec_int32_t
     montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
 {
@@ -338,7 +338,7 @@ static ossl_inline
  * @param a in (-q, q)
  * @returns a mod q in [0, q-1]
  */
-static ossl_inline
+static inline
     vec_int32_t
     reduce_once_signed(vec_int32_t a)
 {
@@ -355,7 +355,7 @@ static ossl_inline
  * @param a in the range -2**31..2**31-1
  * @returns a mod q in the range 0..q-1
  */
-static ossl_inline
+static inline
     vec_int32_t
     reduce_fully(vec_int32_t a)
 {

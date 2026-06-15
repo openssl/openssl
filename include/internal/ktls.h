@@ -52,7 +52,7 @@ typedef struct tls_enable ktls_crypto_info_t;
  * FreeBSD does not require any additional steps to enable KTLS before
  * setting keys.
  */
-static ossl_inline int ktls_enable(int fd)
+static inline int ktls_enable(int fd)
 {
     return 1;
 }
@@ -67,7 +67,7 @@ static ossl_inline int ktls_enable(int fd)
  * as using TLS.  If successful, then data received for this socket will
  * be authenticated and decrypted using the tls_en provided here.
  */
-static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
+static inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
 {
     if (is_tx)
         return setsockopt(fd, IPPROTO_TCP, TCP_TXTLS_ENABLE,
@@ -85,7 +85,7 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *tls_en, int is_tx)
 }
 
 /* Not supported on FreeBSD */
-static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
+static inline int ktls_enable_tx_zerocopy_sendfile(int fd)
 {
     return 0;
 }
@@ -97,7 +97,7 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
-static ossl_inline int ktls_send_ctrl_message(int fd,
+static inline int ktls_send_ctrl_message(int fd,
     unsigned char record_type, const void *data, size_t lengthi, int flags)
 {
     struct msghdr msg = { 0 };
@@ -125,7 +125,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd,
 
 #ifdef OPENSSL_NO_KTLS_RX
 
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+static inline int ktls_read_record(int fd, void *data, size_t length)
 {
     return -1;
 }
@@ -139,7 +139,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
  * with the TLS record such as an invalid header, invalid padding, or
  * authentication failure recvmsg() will fail with an error.
  */
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+static inline int ktls_read_record(int fd, void *data, size_t length)
 {
     struct msghdr msg = { 0 };
     int cmsg_len = sizeof(struct tls_get_record);
@@ -201,7 +201,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
  * KTLS enables the sendfile system call to send data from a file over
  * TLS.
  */
-static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size,
+static inline int ktls_sendfile(int s, int fd, off_t off, size_t size,
     ossl_ssize_t *sbytes, int flags)
 {
     return sendfile(fd, s, off, size, NULL, sbytes, flags);
@@ -285,7 +285,7 @@ typedef struct tls_crypto_info_all ktls_crypto_info_t;
  * processing of SOL_TLS socket options. All other functionality remains the
  * same.
  */
-static ossl_inline int ktls_enable(int fd)
+static inline int ktls_enable(int fd)
 {
     return setsockopt(fd, SOL_TCP, TCP_ULP, "tls", sizeof("tls")) ? 0 : 1;
 }
@@ -298,7 +298,7 @@ static ossl_inline int ktls_enable(int fd)
  * If successful, then data received using this socket will be decrypted,
  * authenticated and decapsulated using the crypto_info provided here.
  */
-static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *crypto_info,
+static inline int ktls_start(int fd, ktls_crypto_info_t *crypto_info,
     int is_tx)
 {
     /*
@@ -313,7 +313,7 @@ static ossl_inline int ktls_start(int fd, ktls_crypto_info_t *crypto_info,
         : 1;
 }
 
-static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
+static inline int ktls_enable_tx_zerocopy_sendfile(int fd)
 {
 #ifndef OPENSSL_NO_KTLS_ZC_TX
     int enable = 1;
@@ -334,7 +334,7 @@ static ossl_inline int ktls_enable_tx_zerocopy_sendfile(int fd)
  * the entire record is pushed to TCP. It is impossible to send a partial
  * record using this control message.
  */
-static ossl_inline int ktls_send_ctrl_message(int fd,
+static inline int ktls_send_ctrl_message(int fd,
     unsigned char record_type, const void *data, size_t length, int flags)
 {
     struct msghdr msg;
@@ -368,7 +368,7 @@ static ossl_inline int ktls_send_ctrl_message(int fd,
  * KTLS enables the sendfile system call to send data from a file over TLS.
  * @flags are ignored on Linux. (placeholder for FreeBSD sendfile)
  * */
-static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size, ossl_ssize_t *sbytes, int flags)
+static inline int ktls_sendfile(int s, int fd, off_t off, size_t size, ossl_ssize_t *sbytes, int flags)
 {
     ossl_ssize_t sent;
 
@@ -384,7 +384,7 @@ static ossl_inline int ktls_sendfile(int s, int fd, off_t off, size_t size, ossl
 
 #ifdef OPENSSL_NO_KTLS_RX
 
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+static inline int ktls_read_record(int fd, void *data, size_t length)
 {
     return -1;
 }
@@ -397,7 +397,7 @@ static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
  * returning only the plaintext data or an error on failure.
  * We add the TLS record header here to satisfy routines in rec_layer_s3.c
  */
-static ossl_inline int ktls_read_record(int fd, void *data, size_t length)
+static inline int ktls_read_record(int fd, void *data, size_t length)
 {
     struct msghdr msg;
     struct cmsghdr *cmsg;

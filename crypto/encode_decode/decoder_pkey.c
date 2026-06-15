@@ -726,7 +726,7 @@ static unsigned long decoder_cache_entry_hash(const DECODER_CACHE_ENTRY *cache)
     return hash;
 }
 
-static ossl_inline int nullstrcmp(const char *a, const char *b, int casecmp)
+static inline int nullstrcmp(const char *a, const char *b, int casecmp)
 {
     if (a == NULL || b == NULL) {
         if (a == NULL) {

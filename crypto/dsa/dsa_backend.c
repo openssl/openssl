@@ -72,7 +72,7 @@ int ossl_dsa_is_foreign(const DSA *dsa)
     return 0;
 }
 
-static ossl_inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
+static inline int dsa_bn_dup_check(BIGNUM **out, const BIGNUM *f)
 {
     if (f != NULL && (*out = BN_dup(f)) == NULL)
         return 0;

@@ -91,7 +91,7 @@
 
 #endif
 
-static ossl_inline ossl_unused unsigned char *
+static inline ossl_unused unsigned char *
 OPENSSL_store_u16_le(unsigned char *out, uint16_t val)
 {
 #ifdef OSSL_HTOLE16
@@ -106,7 +106,7 @@ OPENSSL_store_u16_le(unsigned char *out, uint16_t val)
 #endif
 }
 
-static ossl_inline ossl_unused unsigned char *
+static inline ossl_unused unsigned char *
 OPENSSL_store_u16_be(unsigned char *out, uint16_t val)
 {
 #ifdef OSSL_HTOBE16
@@ -121,7 +121,7 @@ OPENSSL_store_u16_be(unsigned char *out, uint16_t val)
 #endif
 }
 
-static ossl_inline ossl_unused unsigned char *
+static inline ossl_unused unsigned char *
 OPENSSL_store_u32_le(unsigned char *out, uint32_t val)
 {
 #ifdef OSSL_HTOLE32
@@ -138,7 +138,7 @@ OPENSSL_store_u32_le(unsigned char *out, uint32_t val)
 #endif
 }
 
-static ossl_inline ossl_unused unsigned char *
+static inline ossl_unused unsigned char *
 OPENSSL_store_u32_be(unsigned char *out, uint32_t val)
 {
 #ifdef OSSL_HTOBE32
@@ -155,7 +155,7 @@ OPENSSL_store_u32_be(unsigned char *out, uint32_t val)
 #endif
 }
 
-static ossl_inline ossl_unused unsigned char *
+static inline ossl_unused unsigned char *
 OPENSSL_store_u64_le(unsigned char *out, uint64_t val)
 {
 #ifdef OSSL_HTOLE64
@@ -176,7 +176,7 @@ OPENSSL_store_u64_le(unsigned char *out, uint64_t val)
 #endif
 }
 
-static ossl_inline ossl_unused unsigned char *
+static inline ossl_unused unsigned char *
 OPENSSL_store_u64_be(unsigned char *out, uint64_t val)
 {
 #ifdef OSSL_HTOLE64
@@ -197,7 +197,7 @@ OPENSSL_store_u64_be(unsigned char *out, uint64_t val)
 #endif
 }
 
-static ossl_inline ossl_unused const unsigned char *
+static inline ossl_unused const unsigned char *
 OPENSSL_load_u16_le(uint16_t *val, const unsigned char *in)
 {
 #ifdef OSSL_LE16TOH
@@ -215,7 +215,7 @@ OPENSSL_load_u16_le(uint16_t *val, const unsigned char *in)
 #endif
 }
 
-static ossl_inline ossl_unused const unsigned char *
+static inline ossl_unused const unsigned char *
 OPENSSL_load_u16_be(uint16_t *val, const unsigned char *in)
 {
 #ifdef OSSL_LE16TOH
@@ -233,7 +233,7 @@ OPENSSL_load_u16_be(uint16_t *val, const unsigned char *in)
 #endif
 }
 
-static ossl_inline ossl_unused const unsigned char *
+static inline ossl_unused const unsigned char *
 OPENSSL_load_u32_le(uint32_t *val, const unsigned char *in)
 {
 #ifdef OSSL_LE32TOH
@@ -253,7 +253,7 @@ OPENSSL_load_u32_le(uint32_t *val, const unsigned char *in)
 #endif
 }
 
-static ossl_inline ossl_unused const unsigned char *
+static inline ossl_unused const unsigned char *
 OPENSSL_load_u32_be(uint32_t *val, const unsigned char *in)
 {
 #ifdef OSSL_LE32TOH
@@ -273,7 +273,7 @@ OPENSSL_load_u32_be(uint32_t *val, const unsigned char *in)
 #endif
 }
 
-static ossl_inline ossl_unused const unsigned char *
+static inline ossl_unused const unsigned char *
 OPENSSL_load_u64_le(uint64_t *val, const unsigned char *in)
 {
 #ifdef OSSL_LE64TOH
@@ -298,7 +298,7 @@ OPENSSL_load_u64_le(uint64_t *val, const unsigned char *in)
 #endif
 }
 
-static ossl_inline ossl_unused const unsigned char *
+static inline ossl_unused const unsigned char *
 OPENSSL_load_u64_be(uint64_t *val, const unsigned char *in)
 {
 #ifdef OSSL_LE64TOH
