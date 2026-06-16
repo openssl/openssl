@@ -1300,7 +1300,6 @@ static int gid_cb(const char *elem, int len, void *arg)
     int ignore_unknown = 0;
     int add_keyshare = 0;
     int remove_group = 0;
-    size_t restored_prefix_index = 0;
     char *restored_default_group_string;
     int continue_while_loop = 1;
 
@@ -1353,6 +1352,7 @@ static int gid_cb(const char *elem, int len, void *arg)
                 if ((size_t)len == (strlen(default_group_strings[i].list_name))
                     && OPENSSL_strncasecmp(default_group_strings[i].list_name, elem, len) == 0) {
                     int saved_first;
+                    char prefix[2] = "";
 
                     /*
                      * We're asked to insert an entire list of groups from a
@@ -1369,19 +1369,16 @@ static int gid_cb(const char *elem, int len, void *arg)
                      * First, we restore any keyshare prefix in a new zero-terminated string
                      * (if not already present)
                      */
-                    restored_default_group_string = OPENSSL_malloc(1 /* max prefix length */ + strlen(default_group_strings[i].group_string) + 1 /* \0 */);
-                    if (restored_default_group_string == NULL)
-                        return 0;
+                    /* Remark: we tolerate a duplicated keyshare indicator here */
                     if (add_keyshare
-                        /* Remark: we tolerate a duplicated keyshare indicator here */
                         && default_group_strings[i].group_string[0]
                             != KEY_SHARE_INDICATOR_CHARACTER)
-                        restored_default_group_string[restored_prefix_index++] = KEY_SHARE_INDICATOR_CHARACTER;
-
-                    memcpy(restored_default_group_string + restored_prefix_index,
-                        default_group_strings[i].group_string,
-                        strlen(default_group_strings[i].group_string));
-                    restored_default_group_string[strlen(default_group_strings[i].group_string) + restored_prefix_index] = '\0';
+                        prefix[0] = KEY_SHARE_INDICATOR_CHARACTER;
+                    if (OPENSSL_asprintf(&restored_default_group_string,
+                            "%s%s", prefix,
+                            default_group_strings[i].group_string)
+                        < 0)
+                        return 0;
                     /*
                      * Append first tuple of result to current tuple, and don't
                      * terminate the last tuple until we return to a top-level
