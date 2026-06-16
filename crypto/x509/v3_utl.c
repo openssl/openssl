@@ -129,8 +129,7 @@ int X509V3_add_value_bool_nf(const char *name, int asn1_bool,
 
 static char *bignum_to_string(const BIGNUM *bn)
 {
-    char *tmp, *ret;
-    size_t len;
+    char *tmp, *ret = NULL;
 
     /*
      * Display large numbers in hex and small numbers in decimal. Converting to
@@ -144,20 +143,13 @@ static char *bignum_to_string(const BIGNUM *bn)
     if (tmp == NULL)
         return NULL;
 
-    len = strlen(tmp) + 3;
-    ret = OPENSSL_malloc(len);
-    if (ret == NULL) {
-        OPENSSL_free(tmp);
-        return NULL;
-    }
-
     /* Prepend "0x", but place it after the "-" if negative. */
     if (tmp[0] == '-') {
-        OPENSSL_strlcpy(ret, "-0x", len);
-        OPENSSL_strlcat(ret, tmp + 1, len);
+        if (OPENSSL_asprintf(&ret, "-0x%s", tmp + 1) < 0)
+            ret = NULL;
     } else {
-        OPENSSL_strlcpy(ret, "0x", len);
-        OPENSSL_strlcat(ret, tmp, len);
+        if (OPENSSL_asprintf(&ret, "0x%s", tmp) < 0)
+            ret = NULL;
     }
     OPENSSL_free(tmp);
     return ret;
