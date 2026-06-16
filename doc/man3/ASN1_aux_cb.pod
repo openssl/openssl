@@ -106,9 +106,11 @@ During the processing of an B<ASN1_VALUE> object the callbacks set via
 I<asn1_cb> or I<asn1_const_cb> will be invoked as a result of various events
 indicated via the I<operation> parameter. The value of I<*in> will be the
 B<ASN1_VALUE> object being processed based on the template in I<it>. An
-additional operation specific parameter may be passed in I<exarg>. The currently
-supported operations are as follows. The callbacks should return a positive
-value on success or zero on error, unless otherwise noted below.
+additional operation specific parameter may be passed in I<exarg>. The
+currently supported operations are as follows. Unless noted otherwise below,
+the callbacks should return a positive value on success and zero on error;
+some operations recognise additional return values, and a few do not consult
+the return value at all.
 
 =over 4
 
@@ -130,13 +132,15 @@ I<*pval>.
 Invoked when processing a B<CHOICE>, B<SEQUENCE> or B<NDEF_SEQUENCE> structure
 immediately before an B<ASN1_VALUE> is freed. If the callback originally
 constructed the B<ASN1_VALUE> via B<ASN1_OP_NEW_PRE> then it should free it at
-this point and return 2 from the callback. Otherwise it should return 1 for
-success or 0 on error.
+this point and return 2; the caller will then skip its normal freeing. Any
+other return value (including zero) causes the caller to proceed with normal
+freeing; the hook cannot signal an error.
 
 =item B<ASN1_OP_FREE_POST>
 
 Invoked when processing a B<CHOICE>, B<SEQUENCE> or B<NDEF_SEQUENCE> structure
-immediately after B<ASN1_VALUE> sub-structures are freed.
+immediately after B<ASN1_VALUE> sub-structures are freed. The caller does not
+consult the return value from this hook.
 
 =item B<ASN1_OP_D2I_PRE>
 
@@ -162,7 +166,10 @@ immediately after a "i2d" operation for the B<ASN1_VALUE>.
 
 Invoked when processing a B<SEQUENCE> or B<NDEF_SEQUENCE> structure immediately
 before printing the B<ASN1_VALUE>. The I<exarg> argument will be a pointer to an
-B<ASN1_PRINT_ARG> structure (see below).
+B<ASN1_PRINT_ARG> structure (see below). If the callback has fully printed the
+value itself it should return 2; the caller will then skip the per-field
+printing loop and the matching B<ASN1_OP_PRINT_POST> callback. Return zero on
+error or any other positive value to continue with normal printing.
 
 =item B<ASN1_OP_PRINT_POST>
 
@@ -260,8 +267,41 @@ The streaming I/O boundary.
 
 =head1 RETURN VALUES
 
-The callbacks return 0 on error and a positive value on success. Some operations
-require specific positive success values as noted above.
+In general the callbacks return zero on error and a positive value on
+success. Several operations have additional or different return-value
+semantics, summarised here:
+
+=over 4
+
+=item *
+
+B<ASN1_OP_NEW_PRE> recognises a return of 2, meaning that the callback has
+allocated the B<ASN1_VALUE> itself and normal allocation should be skipped.
+
+=item *
+
+B<ASN1_OP_FREE_PRE> recognises a return of 2, meaning that the callback has
+freed the B<ASN1_VALUE> itself and normal freeing should be skipped. Other
+return values (including zero) cause normal freeing to proceed; the hook
+cannot signal an error.
+
+=item *
+
+B<ASN1_OP_FREE_POST>'s return value is not consulted by the caller.
+
+=item *
+
+B<ASN1_OP_PRINT_PRE> recognises a return of 2, meaning that the callback
+has printed the value itself; the caller will skip the per-field printing
+loop and the matching B<ASN1_OP_PRINT_POST> invocation.
+
+=item *
+
+B<ASN1_OP_STREAM_PRE>, B<ASN1_OP_STREAM_POST>, B<ASN1_OP_DETACHED_PRE>, and
+B<ASN1_OP_DETACHED_POST> treat any non-positive return value (zero or
+negative) as an error.
+
+=back
 
 =head1 SEE ALSO
 
