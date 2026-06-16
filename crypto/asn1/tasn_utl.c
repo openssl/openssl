@@ -288,3 +288,19 @@ err:
         ERR_raise(ERR_LIB_ASN1, ASN1_R_UNSUPPORTED_ANY_DEFINED_BY_TYPE);
     return NULL;
 }
+
+int ossl_asn1_call_aux_cb(const ASN1_AUX *aux, int operation,
+    const ASN1_VALUE **in, const ASN1_ITEM *it, void *exarg)
+{
+    if (aux == NULL)
+        return 1;
+
+    if ((aux->flags & ASN1_AFLG_CONST_CB) != 0) {
+        if (aux->asn1_const_cb != NULL)
+            return aux->asn1_const_cb(operation, in, it, exarg);
+    } else if (aux->asn1_cb != NULL) {
+        return aux->asn1_cb(operation, (ASN1_VALUE **)in, it, exarg);
+    }
+
+    return 1;
+}
