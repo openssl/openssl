@@ -607,7 +607,7 @@ if (something)
 else
 
 /* This works. */
-#define KERMIT(x) do { muppet((x)); frog((x)); green((x)) } while (0)
+#define KERMIT(x) do { muppet((x)); frog((x)); green((x)); } while (0)
 if (something)
     KERMIT(bob);
 else
