@@ -478,10 +478,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         OSSL_ECH_HANDLING_DUPLICATE,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
-    /*
-     * When adding a new OSSL_ECH_HANDLING_COMPRESS extension, remember to
-     * bump OSSL_ECH_OUTERS_MAX from include/openssl/ech.h
-     */
     { /* Must be immediately before pre_shared_key */
         TLSEXT_TYPE_padding,
         SSL_EXT_CLIENT_HELLO,
