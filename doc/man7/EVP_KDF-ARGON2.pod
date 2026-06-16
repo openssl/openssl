@@ -99,30 +99,46 @@ are to be generated from a single password and secret.
 
 =head1 EXAMPLES
 
-This example uses Argon2d with password "1234567890", salt "saltsalt",
-using 2 lanes, 2 threads, and memory cost of 65536:
+This example uses Argon2id with an input password, and salt,
+using 2 lanes, and memory cost of 65536 using a one shot function:
 
- #include <string.h>                 /* strlen               */
+ #include <openssl/kdf.h>            /* EVP_KDF_*            */
+
+ /* argon2 params, please refer to RFC9106 for recommended defaults */
+ uint32_t lanes = 2, memcost = 65536, iterations = 3;
+ size_t outlen = 128;
+ unsigned char result[outlen];
+
+ int do_argon2id(const unsigned char *pwd, size_t pwdlen,
+     const unsigned char *salt, size_t saltlen)
+ {
+
+     if (!EVP_KDF_argon2(result, outlen, EVP_KDF_ARGON2ID_TYPE,
+         pwd, pwdlen, salt, saltlen, lanes, memcost, iterations, NULL, NULL))
+        return 0;
+    printf("Output = %s\n", OPENSSL_buf2hexstr(result, outlen));
+    return 1
+ }
+
+This example uses Argon2id with an input password, and salt,
+using 2 lanes, 2 threads and a memory cost of 65536 using OSSL_PARAM:
+
  #include <openssl/core_names.h>     /* OSSL_KDF_*           */
  #include <openssl/params.h>         /* OSSL_PARAM_*         */
  #include <openssl/thread.h>         /* OSSL_set_max_threads */
- #include <openssl/kdf.h>            /* EVP_KDF_*            */
 
- int main(void)
+ int do_argon2id(const unsigned char *password, size_t passlen,
+     const unsigned char *salt, size_t saltlen)
  {
-     int retval = 1;
+     int ret = 0;
+     uint32 threads = 2;
 
      EVP_KDF *kdf = NULL;
      EVP_KDF_CTX *kctx = NULL;
-     OSSL_PARAM params[6], *p = params;
-
-     /* argon2 params, please refer to RFC9106 for recommended defaults */
-     uint32_t lanes = 2, threads = 2, memcost = 65536;
-     char pwd[] = "1234567890", salt[] = "saltsalt";
+     OSSL_PARAM params[7], *p = params;
 
      /* derive result */
-     size_t outlen = 128;
-     unsigned char result[outlen];
+
 
      /* required if threads > 1 */
      if (OSSL_set_max_threads(NULL, threads) != 1)
@@ -135,12 +151,11 @@ using 2 lanes, 2 threads, and memory cost of 65536:
      *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ARGON2_MEMCOST,
                                         &memcost);
      *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SALT,
-                                              salt,
-                                              strlen((const char *)salt));
+                                              salt, saltlen));
      *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
-                                              pwd,
-                                              strlen((const char *)pwd));
-     *p++ = OSSL_PARAM_construct_end();
+                                              pwd, pwdlen));
+     *p++ = OSSL_PARAM_construct_uint32(OSSL_KDF_PARAM_ITER, &iterations);
+     *p = OSSL_PARAM_construct_end();
 
      if ((kdf = EVP_KDF_fetch(NULL, "ARGON2D", NULL)) == NULL)
          goto fail;
@@ -150,21 +165,14 @@ using 2 lanes, 2 threads, and memory cost of 65536:
          goto fail;
 
      printf("Output = %s\n", OPENSSL_buf2hexstr(result, outlen));
-     retval = 0;
+     ret = 1;
 
  fail:
      EVP_KDF_free(kdf);
      EVP_KDF_CTX_free(kctx);
      OSSL_set_max_threads(NULL, 0);
-
-     return retval;
+     return ret;
  }
-
-This example uses a simpler one shot function using the same parameters:
-
- return EVP_KDF_argon2(result, outlen, EVP_KDF_ARGON2D_TYPE,
-     pwd, strlen((const char *)pwd), salt, strlen((const char *)salt),
-     lanes, memcost, 1, NULL, NULL);
 
 =head1 NOTES
 
@@ -188,10 +196,11 @@ L<EVP_KDF_argon2(3)>
 =head1 HISTORY
 
 This functionality was added to OpenSSL 3.2.
+The function EVP_KDF_argon2() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
-Copyright 2022-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
