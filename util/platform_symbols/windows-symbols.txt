@@ -1,6 +1,5 @@
 AcquireSRWLockExclusive
 AcquireSRWLockShared
-BCryptGenRandom
 CertCloseStore
 CertFindCertificateInStore
 CertFreeCertificateContext
