@@ -757,6 +757,19 @@ DEF_SCRIPT(check_ctx_cbks, "Check new_pending and client_hello callbacks")
     OP_FUNC(check_pending);
 }
 
+/*
+ * script_5 - script_106 are place holders for tests we
+ * currently keep in test/quic_multistream_test.c.
+ * We need to move those here so we can get rid off
+ * QUIC T-server mock-up.
+ *
+ * there should be one PR for each script being moved here,
+ * to make reviewer's life easier. Once all scripts will be
+ * moved we can find better names for script_5, ..., script_106.
+ *
+ * The scaffolding here hopes to avoid conflicts in 'scripts'
+ * array below when more PRs will be in flight.
+ */
 DEF_SCRIPT(script_5, "place holder for multistram script_5")
 {
 }
