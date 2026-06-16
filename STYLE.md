@@ -601,7 +601,7 @@ if (something)
 else /* This now breaks. */
 
 /* This is also bad, because now you have to omit the semicolon. */
-#define KERMIT(x) { muppet((x)); frog((x)); green((x)) }
+#define KERMIT(x) { muppet((x)); frog((x)); green((x)); }
 if (something)
     KERMIT(bob)  /* No semicolon. */
 else
