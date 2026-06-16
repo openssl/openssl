@@ -39,12 +39,6 @@ static int ts_find_name(STACK_OF(GENERAL_NAME) *gen_names,
     GENERAL_NAME *name);
 
 /*
- * This must be large enough to hold all values in ts_status_text (with
- * comma separator) or all text fields in ts_failure_info (also with comma).
- */
-#define TS_STATUS_BUF_SIZE 256
-
-/*
  * Local mapping between response codes and descriptions.
  */
 static const char *ts_status_text[] = {
@@ -71,6 +65,37 @@ static const struct {
     { TS_INFO_ADD_INFO_NOT_AVAILABLE, "addInfoNotAvailable" },
     { TS_INFO_SYSTEM_FAILURE, "systemFailure" }
 };
+
+/*
+ * Pack the ts_failure_info[] entries from an ASN.1 bit string into a
+ * positional uint32_t: bit i is set iff ts_failure_info[i].code is set
+ * in @bs.
+ */
+static uint32_t ts_failure_mask(ASN1_BIT_STRING *bs)
+{
+    uint32_t mask = 0;
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(ts_failure_info); i++)
+        if (ASN1_BIT_STRING_get_bit(bs, ts_failure_info[i].code))
+            mask |= 1U << i;
+    return mask;
+}
+
+/* Return the failure text for slot @idx, or "" if that slot is not set. */
+static const char *ts_failure_text(uint32_t mask, int idx)
+{
+    return (mask & (1U << idx)) ? ts_failure_info[idx].text : "";
+}
+
+/*
+ * Return "," iff slot @idx is set and any earlier slot is also set,
+ * otherwise "". Used as the printf-style separator preceding each slot.
+ */
+static const char *ts_failure_sep(uint32_t mask, int idx)
+{
+    return (mask & (1U << idx)) && (mask & ((1U << idx) - 1)) ? "," : "";
+}
 
 /*-
  * This function carries out the following tasks:
@@ -353,7 +378,8 @@ static int ts_check_status_info(TS_RESP *response)
     long status = ASN1_INTEGER_get(info->status);
     const char *status_text = NULL;
     char *embedded_status_text = NULL;
-    char failure_text[TS_STATUS_BUF_SIZE] = "";
+    char *failure_text = NULL;
+    uint32_t mask;
 
     if (status == 0 || status == 1)
         return 1;
@@ -368,30 +394,29 @@ static int ts_check_status_info(TS_RESP *response)
         && (embedded_status_text = ts_get_status_text(info->text)) == NULL)
         return 0;
 
-    /* Fill in failure_text with the failure information. */
-    if (info->failure_info) {
-        int i;
-        int first = 1;
-        for (i = 0; i < (int)OSSL_NELEM(ts_failure_info); ++i) {
-            if (ASN1_BIT_STRING_get_bit(info->failure_info,
-                    ts_failure_info[i].code)) {
-                if (!first)
-                    strcat(failure_text, ",");
-                else
-                    first = 0;
-                strcat(failure_text, ts_failure_info[i].text);
-            }
-        }
-    }
-    if (failure_text[0] == '\0')
-        strcpy(failure_text, "unspecified");
+    /* Build a comma-separated list of failure_info bits, if any. */
+    mask = info->failure_info != NULL ? ts_failure_mask(info->failure_info) : 0;
+    if (mask != 0
+        && OPENSSL_asprintf(&failure_text,
+               "%s%s%s%s%s%s%s%s%s%s%s%s%s%s%s",
+               ts_failure_text(mask, 0),
+               ts_failure_sep(mask, 1), ts_failure_text(mask, 1),
+               ts_failure_sep(mask, 2), ts_failure_text(mask, 2),
+               ts_failure_sep(mask, 3), ts_failure_text(mask, 3),
+               ts_failure_sep(mask, 4), ts_failure_text(mask, 4),
+               ts_failure_sep(mask, 5), ts_failure_text(mask, 5),
+               ts_failure_sep(mask, 6), ts_failure_text(mask, 6),
+               ts_failure_sep(mask, 7), ts_failure_text(mask, 7))
+            < 0)
+        failure_text = NULL;
 
     ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
         "status code: %s, status text: %s, failure codes: %s",
         status_text,
-        embedded_status_text ? embedded_status_text : "unspecified",
-        failure_text);
+        embedded_status_text != NULL ? embedded_status_text : "unspecified",
+        failure_text != NULL ? failure_text : "unspecified");
     OPENSSL_free(embedded_status_text);
+    OPENSSL_free(failure_text);
 
     return 0;
 }
