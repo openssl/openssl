@@ -10,9 +10,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/bio.h"
 #include "crypto/ctype.h"
 #include "internal/numbers.h"
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/configuration.h>
 
 int BIO_printf(BIO *bio, const char *format, ...)
@@ -168,5 +170,108 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
     if ((size_t)ret >= n)
         ret = -1;
 #endif
+    return ret;
+}
+
+/* Remove this once we can use vsnprintf like it's 1999 */
+static int c99_is_a_lie(char *buf, size_t n, const char *fmt, va_list args)
+{
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    int count;
+    va_list args_copy;
+
+    va_copy(args_copy, args);
+    count = _vscprintf(fmt, args_copy);
+    va_end(args_copy);
+
+    if (count < 0)
+        return count;
+
+    if (n > 0)
+        (void)_vsnprintf_s(buf, n, _TRUNCATE, fmt, args);
+
+    return count;
+#else
+    return vsnprintf(buf, n, fmt, args);
+#endif
+}
+
+/*
+ * OPENSSL_malloc and friends are function-like macros that expand to
+ * CRYPTO_malloc(num, OPENSSL_FILE, OPENSSL_LINE); their address cannot
+ * be taken directly. Wrap them in thin static functions so they can be
+ * stored in function pointers alongside the libc allocators.
+ */
+static void *ossl_alloc_thunk(size_t n)
+{
+    return OPENSSL_malloc(n);
+}
+
+static void *ossl_realloc_thunk(void *p, size_t n)
+{
+    return OPENSSL_realloc(p, n);
+}
+
+static void ossl_free_thunk(void *p)
+{
+    OPENSSL_free(p);
+}
+
+int ossl_vasprintf_internal(char **str, const char *format, va_list args,
+    int system_malloc)
+{
+    void *(*allocate)(size_t) = system_malloc ? malloc : ossl_alloc_thunk;
+    void (*deallocate)(void *) = system_malloc ? free : ossl_free_thunk;
+    void *(*reallocate)(void *, size_t) = system_malloc ? realloc : ossl_realloc_thunk;
+    char *candidate = NULL;
+    size_t candidate_len = 64;
+    int ret;
+
+    if ((candidate = allocate(candidate_len)) == NULL) {
+        goto err;
+    }
+    va_list args_copy;
+    va_copy(args_copy, args);
+    ret = c99_is_a_lie(candidate, candidate_len, format, args_copy);
+    va_end(args_copy);
+    if (ret < 0) {
+        goto err;
+    }
+    if ((size_t)ret >= candidate_len) {
+        /*  Too big to fit in allocation. */
+        char *tmp;
+
+        candidate_len = (size_t)ret + 1;
+        if ((tmp = reallocate(candidate, candidate_len)) == NULL) {
+            goto err;
+        }
+        candidate = tmp;
+        ret = c99_is_a_lie(candidate, candidate_len, format, args);
+    }
+    /* At this point this should not happen unless vsnprintf is insane. */
+    if (ret < 0 || (size_t)ret >= candidate_len) {
+        goto err;
+    }
+    *str = candidate;
+    return ret;
+
+err:
+    deallocate(candidate);
+    *str = NULL;
+    errno = ENOMEM;
+    return -1;
+}
+
+int OPENSSL_vasprintf(char **str, const char *format, va_list args)
+{
+    return ossl_vasprintf_internal(str, format, args, /*system_malloc=*/0);
+}
+
+int OPENSSL_asprintf(char **str, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int ret = OPENSSL_vasprintf(str, format, args);
+    va_end(args);
     return ret;
 }

@@ -1547,6 +1547,10 @@ DEPEND[html/man3/OPENSSL_LH_stats.html]=man3/OPENSSL_LH_stats.pod
 GENERATE[html/man3/OPENSSL_LH_stats.html]=man3/OPENSSL_LH_stats.pod
 DEPEND[man/man3/OPENSSL_LH_stats.3]=man3/OPENSSL_LH_stats.pod
 GENERATE[man/man3/OPENSSL_LH_stats.3]=man3/OPENSSL_LH_stats.pod
+DEPEND[html/man3/OPENSSL_asprintf.html]=man3/OPENSSL_asprintf.pod
+GENERATE[html/man3/OPENSSL_asprintf.html]=man3/OPENSSL_asprintf.pod
+DEPEND[man/man3/OPENSSL_asprintf.3]=man3/OPENSSL_asprintf.pod
+GENERATE[man/man3/OPENSSL_asprintf.3]=man3/OPENSSL_asprintf.pod
 DEPEND[html/man3/OPENSSL_config.html]=man3/OPENSSL_config.pod
 GENERATE[html/man3/OPENSSL_config.html]=man3/OPENSSL_config.pod
 DEPEND[man/man3/OPENSSL_config.3]=man3/OPENSSL_config.pod
@@ -3438,6 +3442,7 @@ html/man3/OPENSSL_Applink.html \
 html/man3/OPENSSL_FILE.html \
 html/man3/OPENSSL_LH_COMPFUNC.html \
 html/man3/OPENSSL_LH_stats.html \
+html/man3/OPENSSL_asprintf.html \
 html/man3/OPENSSL_config.html \
 html/man3/OPENSSL_fork_prepare.html \
 html/man3/OPENSSL_gmtime.html \
@@ -4113,6 +4118,7 @@ man/man3/OPENSSL_Applink.3 \
 man/man3/OPENSSL_FILE.3 \
 man/man3/OPENSSL_LH_COMPFUNC.3 \
 man/man3/OPENSSL_LH_stats.3 \
+man/man3/OPENSSL_asprintf.3 \
 man/man3/OPENSSL_config.3 \
 man/man3/OPENSSL_fork_prepare.3 \
 man/man3/OPENSSL_gmtime.3 \
