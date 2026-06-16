@@ -466,18 +466,16 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                     goto err;
 
                 if (include_dir != NULL && !ossl_is_absolute_path(include)) {
-                    size_t newlen = strlen(include_dir) + strlen(include) + 2;
+                    const char *fmt = ossl_ends_with_dirsep(include_dir)
+                        ? "%s%s"
+                        : "%s/%s";
 
-                    include_path = OPENSSL_malloc(newlen);
-                    if (include_path == NULL) {
+                    if (OPENSSL_asprintf(&include_path, fmt,
+                            include_dir, include)
+                        < 0) {
                         OPENSSL_free(include);
                         goto err;
                     }
-
-                    OPENSSL_strlcpy(include_path, include_dir, newlen);
-                    if (!ossl_ends_with_dirsep(include_path))
-                        OPENSSL_strlcat(include_path, "/", newlen);
-                    OPENSSL_strlcat(include_path, include, newlen);
                     OPENSSL_free(include);
                 } else {
                     include_path = include;
