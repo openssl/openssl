@@ -34,4 +34,4 @@
 	branch = main
 [submodule "pkcs11-provider"]
 	path = pkcs11-provider
-	url = https://github.com/latchset/pkcs11-provider.git
+	url = https://github.com/bukka/pkcs11-provider.git
