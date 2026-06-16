@@ -212,6 +212,184 @@ err:
     return res;
 }
 
+static int test_ml_kem_dup(void)
+{
+    EVP_PKEY *key1 = NULL;
+    EVP_PKEY *key2 = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    unsigned char *pubkey1 = NULL;
+    unsigned char *pubkey2 = NULL;
+    size_t pubkey1_len = 0, pubkey2_len = 0;
+    unsigned char *ciphertext = NULL;
+    unsigned char *secret1 = NULL;
+    unsigned char *secret2 = NULL;
+    size_t ciphertext_len = 0, secret1_len = 0, secret2_len = 0;
+    int ret = 0;
+
+    /* Test 1: Dup full key pair */
+    if (!TEST_ptr(key1 = EVP_PKEY_Q_keygen(testctx, NULL, "ML-KEM-768")))
+        goto err;
+
+    if (!TEST_ptr(key2 = EVP_PKEY_dup(key1)))
+        goto err;
+
+    /* Verify duplicated keys are equal */
+    if (!TEST_int_eq(EVP_PKEY_eq(key1, key2), 1)
+        || !TEST_int_eq(EVP_PKEY_eq(key2, key1), 1))
+        goto err;
+
+    /* Verify public keys match */
+    pubkey1_len = EVP_PKEY_get1_encoded_public_key(key1, &pubkey1);
+    if (!TEST_size_t_gt(pubkey1_len, 0))
+        goto err;
+
+    pubkey2_len = EVP_PKEY_get1_encoded_public_key(key2, &pubkey2);
+    if (!TEST_size_t_eq(pubkey2_len, pubkey1_len))
+        goto err;
+
+    if (!TEST_mem_eq(pubkey1, pubkey1_len, pubkey2, pubkey2_len))
+        goto err;
+
+    /* Test encapsulation/decapsulation with duplicated key */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, key2, NULL))
+        || !TEST_int_gt(EVP_PKEY_encapsulate_init(ctx, NULL), 0)
+        || !TEST_int_gt(EVP_PKEY_encapsulate(ctx, NULL, &ciphertext_len,
+                            NULL, &secret1_len),
+            0))
+        goto err;
+
+    ciphertext = OPENSSL_zalloc(ciphertext_len);
+    secret1 = OPENSSL_zalloc(secret1_len);
+    if (!TEST_ptr(ciphertext) || !TEST_ptr(secret1))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_encapsulate(ctx, ciphertext, &ciphertext_len,
+                         secret1, &secret1_len),
+            0))
+        goto err;
+
+    EVP_PKEY_CTX_free(ctx);
+    ctx = NULL;
+
+    /* Decapsulate using original key */
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, key1, NULL))
+        || !TEST_int_gt(EVP_PKEY_decapsulate_init(ctx, NULL), 0)
+        || !TEST_int_gt(EVP_PKEY_decapsulate(ctx, NULL, &secret2_len,
+                            ciphertext, ciphertext_len),
+            0))
+        goto err;
+
+    secret2 = OPENSSL_zalloc(secret2_len);
+    if (!TEST_ptr(secret2))
+        goto err;
+
+    if (!TEST_int_gt(EVP_PKEY_decapsulate(ctx, secret2, &secret2_len,
+                         ciphertext, ciphertext_len),
+            0))
+        goto err;
+
+    /* Verify shared secrets match */
+    if (!TEST_size_t_eq(secret1_len, secret2_len)
+        || !TEST_mem_eq(secret1, secret1_len, secret2, secret2_len))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(pubkey1);
+    OPENSSL_free(pubkey2);
+    OPENSSL_free(ciphertext);
+    OPENSSL_free(secret1);
+    OPENSSL_free(secret2);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(key1);
+    EVP_PKEY_free(key2);
+    return ret;
+}
+
+static int test_ml_kem_dup_public_only(void)
+{
+    EVP_PKEY *key1 = NULL;
+    EVP_PKEY *key2 = NULL;
+    EVP_PKEY *pub_key = NULL;
+    EVP_PKEY *pub_dup = NULL;
+    unsigned char *pubkey = NULL;
+    size_t pubkey_len = 0;
+    int ret = 0;
+
+    /* Generate a full key pair */
+    if (!TEST_ptr(key1 = EVP_PKEY_Q_keygen(testctx, NULL, "ML-KEM-768")))
+        goto err;
+
+    /* Get public key */
+    pubkey_len = EVP_PKEY_get1_encoded_public_key(key1, &pubkey);
+    if (!TEST_size_t_gt(pubkey_len, 0))
+        goto err;
+
+    /* Create public-only key */
+    if (!TEST_ptr(pub_key = EVP_PKEY_new())
+        || !TEST_int_gt(EVP_PKEY_copy_parameters(pub_key, key1), 0)
+        || !TEST_int_gt(EVP_PKEY_set1_encoded_public_key(pub_key, pubkey, pubkey_len), 0))
+        goto err;
+
+    /* Verify public-only key is equal to full key (public key match) */
+    if (!TEST_int_eq(EVP_PKEY_eq(key1, pub_key), 1))
+        goto err;
+
+    /* Dup public-only key */
+    if (!TEST_ptr(pub_dup = EVP_PKEY_dup(pub_key)))
+        goto err;
+
+    /* Verify duplicated public keys are equal */
+    if (!TEST_int_eq(EVP_PKEY_eq(pub_key, pub_dup), 1)
+        || !TEST_int_eq(EVP_PKEY_eq(pub_dup, pub_key), 1))
+        goto err;
+
+    /* Verify duplicated key is also public-only (equal to full key's public) */
+    if (!TEST_int_eq(EVP_PKEY_eq(key1, pub_dup), 1))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(pubkey);
+    EVP_PKEY_free(key1);
+    EVP_PKEY_free(key2);
+    EVP_PKEY_free(pub_key);
+    EVP_PKEY_free(pub_dup);
+    return ret;
+}
+
+static int test_ml_kem_dup_variants(void)
+{
+    const char *algs[] = { "ML-KEM-512", "ML-KEM-768", "ML-KEM-1024" };
+    EVP_PKEY *key = NULL;
+    EVP_PKEY *dup_key = NULL;
+    size_t i;
+    int ret = 1;
+
+    for (i = 0; i < OSSL_NELEM(algs); i++) {
+        if (!TEST_ptr(key = EVP_PKEY_Q_keygen(testctx, NULL, algs[i])))
+            return 0;
+
+        if (!TEST_ptr(dup_key = EVP_PKEY_dup(key))) {
+            EVP_PKEY_free(key);
+            return 0;
+        }
+
+        if (!TEST_int_eq(EVP_PKEY_eq(key, dup_key), 1)) {
+            EVP_PKEY_free(key);
+            EVP_PKEY_free(dup_key);
+            return 0;
+        }
+
+        EVP_PKEY_free(key);
+        EVP_PKEY_free(dup_key);
+        key = NULL;
+        dup_key = NULL;
+    }
+
+    return ret;
+}
+
 static int test_non_derandomised_ml_kem(void)
 {
     static const int alg[3] = {
@@ -519,6 +697,9 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_ml_kem);
+    ADD_TEST(test_ml_kem_dup);
+    ADD_TEST(test_ml_kem_dup_public_only);
+    ADD_TEST(test_ml_kem_dup_variants);
     ADD_TEST(test_ml_kem_from_data_propq);
 #ifndef OPENSSL_NO_EC
     ADD_ALL_TESTS(test_mlx_kem_dup_partial_selection, OSSL_NELEM(mlx_kem_algs));

@@ -1707,33 +1707,37 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     else if (!ossl_ml_kem_have_prvkey(key))
         selection &= ~OSSL_KEYMGMT_SELECT_PRIVATE_KEY;
 
-    switch (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) {
-    case 0:
-        ok = 1;
-        break;
-    case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
-        ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, ret);
-        break;
-    case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0) {
+        /* Private key includes public key */
         tmp_pub = OPENSSL_memdup(key->t, key->vinfo->puballoc);
-        if (tmp_pub == NULL)
-            break;
         tmp_priv = OPENSSL_secure_malloc(key->vinfo->prvalloc);
-        if (tmp_priv == NULL) {
+        if (tmp_pub == NULL || tmp_priv == NULL) {
             OPENSSL_free(tmp_pub);
-            break;
+            OPENSSL_secure_free(tmp_priv);
+            ok = 0;
+        } else {
+            /* Always successful */
+            ok = add_storage(tmp_pub, tmp_priv, 1, ret);
+            if (ok) {
+                memcpy(tmp_priv, key->s, key->vinfo->prvalloc);
+                /* Duplicated keys retain |d|, if available */
+                if (key->d != NULL)
+                    ret->d = ret->z + ML_KEM_RANDOM_BYTES;
+            }
         }
-        if ((ok = add_storage(tmp_pub, tmp_priv, 1, ret)) != 0)
-            memcpy(tmp_priv, key->s, key->vinfo->prvalloc);
-        /* Duplicated keys retain |d|, if available */
-        if (key->d != NULL)
-            ret->d = ret->z + ML_KEM_RANDOM_BYTES;
-        break;
+    } else if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0) {
+        ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, ret);
+    } else {
+        ok = 1;
     }
 
     if (!ok) {
         OPENSSL_free(ret);
         return NULL;
+    }
+
+    if (ret->t != NULL) {
+        memcpy(ret->rho_pkhash, key->rho_pkhash, sizeof(key->rho_pkhash));
     }
 
     EVP_MD_up_ref(ret->shake128_md);
