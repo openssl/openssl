@@ -1651,7 +1651,7 @@ int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
 CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
-    unsigned int cookie_leni;
+    unsigned int cookie_leni = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
     int cb_ret = 0;

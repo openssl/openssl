@@ -117,7 +117,8 @@ static unsigned int client_conn_thread(void *arg)
     struct client_thread_args *ta = (struct client_thread_args *)arg;
     SSL_POLL_ITEM item;
     struct timeval timeout;
-    size_t result_count, readbytes, written;
+    size_t result_count, written;
+    size_t readbytes = 0;
     char buf[256] = { 0 };
     int ret, err, retries;
 

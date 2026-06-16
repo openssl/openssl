@@ -2114,7 +2114,8 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
 #if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned char *hashval1, *hashval2, *appcookie1, *appcookie2, *cookie;
     unsigned char *hmac, *hmac2;
-    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen, appcookielen;
+    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen;
+    size_t appcookielen = 0;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
     int ret = EXT_RETURN_FAIL;
