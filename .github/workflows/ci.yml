@@ -719,7 +719,7 @@ jobs:
     steps:
     - name: package installs
       run: |
-        dnf install -y perl-FindBin perl-IPC-Cmd perl-File-Compare perl-File-Copy perl-Test-Simple perl-Test-Harness python3 make g++ perl git meson opensc expect kryoptic
+        dnf install -y perl-FindBin perl-IPC-Cmd perl-File-Compare perl-File-Copy perl-Test-Simple perl-Test-Harness python3 make g++ perl git meson opensc expect kryoptic xxd
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
