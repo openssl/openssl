@@ -368,27 +368,17 @@ char *UI_construct_prompt(UI *ui, const char *phrase_desc,
     if (ui != NULL && ui->meth != NULL && ui->meth->ui_construct_prompt != NULL)
         prompt = ui->meth->ui_construct_prompt(ui, phrase_desc, object_name);
     else {
-        char prompt1[] = "Enter ";
-        char prompt2[] = " for ";
-        char prompt3[] = ":";
-        int len = 0;
+        int rv;
 
         if (phrase_desc == NULL)
             return NULL;
-        len = sizeof(prompt1) - 1 + (int)strlen(phrase_desc);
         if (object_name != NULL)
-            len += sizeof(prompt2) - 1 + (int)strlen(object_name);
-        len += sizeof(prompt3) - 1;
-
-        if ((prompt = OPENSSL_malloc(len + 1)) == NULL)
+            rv = OPENSSL_asprintf(&prompt, "Enter %s for %s:",
+                phrase_desc, object_name);
+        else
+            rv = OPENSSL_asprintf(&prompt, "Enter %s:", phrase_desc);
+        if (rv < 0)
             return NULL;
-        OPENSSL_strlcpy(prompt, prompt1, len + 1);
-        OPENSSL_strlcat(prompt, phrase_desc, len + 1);
-        if (object_name != NULL) {
-            OPENSSL_strlcat(prompt, prompt2, len + 1);
-            OPENSSL_strlcat(prompt, object_name, len + 1);
-        }
-        OPENSSL_strlcat(prompt, prompt3, len + 1);
     }
     return prompt;
 }
