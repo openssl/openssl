@@ -4440,6 +4440,139 @@ err:
     return ret;
 }
 #endif /* !OPENSSL_NO_DEPRECATED_3_0 */
+
+/* Test that DHX (X9.42) rejects a malicious peer key during the
+ * derivation phase (specifically EVP_PKEY_derive_set_peer) when the
+ * remote 'q' does not match the local domain parameters but is still
+ * consistent with the remote key share.
+ * (CVE-2026-42770)
+ */
+static int test_dhx_derive_rejects_bad_peer_q(void)
+{
+    int ret = 0;
+    EVP_PKEY *local_key = NULL, *remote_key = NULL;
+    EVP_PKEY_CTX *pctx = NULL, *derive_ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+
+    BIGNUM *p = NULL, *g = NULL;
+    BIGNUM *q_valid = NULL, *pub_local = NULL, *priv_local = NULL;
+    BIGNUM *q_bad = NULL, *pub_bad = NULL;
+
+    const char *hex_p = "87a8e61db4b6663cffbbd19c651959998ceef608660dd0f25d2ceed4435e3b00"
+                        "e00df8f1d61957d4faf7df4561b2aa3016c3d91134096faa3bf4296d830e9a7c"
+                        "209e0c6497517abd5a8a9d306bcf67ed91f9e6725b4758c022e0b1ef4275bf7b"
+                        "6c5bfc11d45f9088b941f54eb1e59bb8bc39a0bf12307f5c4fdb70c581b23f76"
+                        "b63acae1caa6b7902d52526735488a0ef13c6d9a51bfa4ab3ad8347796524d8e"
+                        "f6a167b5a41825d967e144e5140564251ccacb83e6b486f6b3ca3f7971506026"
+                        "c0b857f689962856ded4010abd0be621c3a3960a54e710c375f26375d7014103"
+                        "a4b54330c198af126116d2276e11715f693877fad7ef09cadb094ae91e1a1597";
+    const char *hex_g = "3FB32C9B73134D0B2E77506660EDBD484CA7B18F21EF205407F4793A1A0BA125"
+                        "10DBC15077BE463FFF4FED4AAC0BB555BE3A6C1B0C6B47B1BC3773BF7E8C6F62"
+                        "901228F8C28CBB18A55AE31341000A650196F931C77A57F2DDF463E5E9EC144B"
+                        "777DE62AAAB8A8628AC376D282D6ED3864E67982428EBC831D14348F6F2F9193"
+                        "B5045AF2767164E1DFC967C1FB3F2E55A4BD1BFFE83B9C80D052B985D182EA0A"
+                        "DB2A3B7313D3FE14C8484B1E052588B9B7D2BBD2DF016199ECD06E1557CD0915"
+                        "B3353BBB64E0EC377FD028370DF92B52C7891428CDC67EB6184B523D1DB246C3"
+                        "2F63078490F00EF8D647D148D47954515E2327CFEF98C582664B4C0F6CC41659";
+
+    const char *hex_q_valid = "8CF83642A709A097B447997640129DA299B1A47D1EB3750BA308B0FE64F5FBD3";
+    const char *hex_local_pub = "796e15431470ac86fa8a78b8bcdd1f3589dbf15ffe0e0a7a41dd8640887f3cc3"
+                                "f0439e281f4cf3800bac2dbdfcda589b26cc828512085ce0d3e57aa13cd9e7a4"
+                                "66d881bace91ed10c6064ab36e0d66367c4bfed56a9f907e4daec16732fb5c54"
+                                "891cb0d26251fd61c32040774246b3f8bdcd5ef60e6847cdd69bd6d318d1cda0"
+                                "e8a30a716de4dc1a4eb99b0686b77120c4b69b0005f6a8c3ae768d23c08c85bd"
+                                "1d58f40dc0138d6277436137ae69779fdc218c071c14826f471562033e85ffc9"
+                                "9a2147d539e274136a4a1e7f1db97583b51dc0385a52d7383963758d893398a8"
+                                "d013fdbad20ddf30fbe05fbb2249913ae6751b6b246ae5622ba26c4827417c2d";
+    const char *hex_local_priv = "1122334455667788990011223344556677889900112233445566778899001122";
+
+    /* Remote malicious parameters */
+    const char *hex_remote_q = "09f5";
+    const char *hex_remote_pub = "54c057903d362235a65c03f001d8a3ea252836b3580250abdc0a1083451af012"
+                                 "6fd150f9e8d212b384ae0c23aa7c67fe851368114ccc061a661e986bd7e63d25"
+                                 "7513339a6914cbfab209ad793ef25704cd532ddfb7e693de701d17e629ef3c18"
+                                 "4d40d5fea1f9edb89c5bf8d7aa19e3374f805932159ca7b5d573b9e2f3c94fe7"
+                                 "47c4a3b09e31afa3788d35833aaf2ac8ae8bc48500131464e793a2e0352e7c3e"
+                                 "d9da9fcf89b121bc1cee83c544214ceb3338b14ac6891968351746eaf62bb517"
+                                 "eb98fc633d8d235bac37bc08e47f1851d05501949a6733965adbfe8e43f7c3b9"
+                                 "3ca7515cd6ab36d7ef26bb0fd6033abc39613e880fffc8729b03bfeaddf08833";
+
+    if (!TEST_true(BN_hex2bn(&p, hex_p)) || !TEST_true(BN_hex2bn(&g, hex_g)))
+        goto err;
+
+    if (!TEST_true(BN_hex2bn(&q_valid, hex_q_valid))
+        || !TEST_true(BN_hex2bn(&pub_local, hex_local_pub))
+        || !TEST_true(BN_hex2bn(&priv_local, hex_local_priv)))
+        goto err;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q_valid))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub_local))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PRIV_KEY, priv_local))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "DHX", testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &local_key, EVP_PKEY_KEYPAIR, params), 0))
+        goto err;
+
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_CTX_free(pctx);
+    params = NULL;
+    bld = NULL;
+    pctx = NULL;
+
+    if (!TEST_true(BN_hex2bn(&q_bad, hex_remote_q))
+        || !TEST_true(BN_hex2bn(&pub_bad, hex_remote_pub)))
+        goto err;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_P, p))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_Q, q_bad))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_FFC_G, g))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_PUB_KEY, pub_bad))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_ptr(pctx = EVP_PKEY_CTX_new_from_name(testctx, "DHX", testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(pctx, &remote_key, EVP_PKEY_PUBLIC_KEY, params), 0))
+        goto err;
+
+    if (!TEST_ptr(derive_ctx = EVP_PKEY_CTX_new(local_key, NULL))
+        || !TEST_int_gt(EVP_PKEY_derive_init(derive_ctx), 0))
+        goto err;
+
+    /* reject the remote key share, even if it is self-consistent, correct
+     * code needs to use local q, not remote-provided q. */
+    if (!TEST_int_le(EVP_PKEY_derive_set_peer(derive_ctx, remote_key), 0)) {
+        TEST_error("EVP_PKEY_derive_set_peer incorrectly accepted a peer with malicious 'q'");
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    BN_free(p);
+    BN_free(g);
+    BN_free(q_valid);
+    BN_free(pub_local);
+    BN_free(priv_local);
+    BN_free(q_bad);
+    BN_free(pub_bad);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    EVP_PKEY_CTX_free(pctx);
+    EVP_PKEY_CTX_free(derive_ctx);
+    EVP_PKEY_free(local_key);
+    EVP_PKEY_free(remote_key);
+    return ret;
+}
 #endif /* !OPENSSL_NO_DH */
 
 /*
@@ -8525,6 +8658,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
+    ADD_TEST(test_dhx_derive_rejects_bad_peer_q);
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EC_priv_pub);
