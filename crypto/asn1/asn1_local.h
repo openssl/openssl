@@ -12,6 +12,7 @@
 #if !defined(OSSL_LIBCRYPTO_ASN1_ASN1_LOCAL_H)
 #define OSSL_LIBCRYPTO_ASN1_ASN1_LOCAL_H
 
+#include <openssl/asn1t.h>
 #include "crypto/asn1.h"
 
 typedef const ASN1_VALUE const_ASN1_VALUE;
@@ -99,5 +100,7 @@ int ossl_asn1_item_ex_new_intern(ASN1_VALUE **pval, const ASN1_ITEM *it,
     OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_asn1_time_time_t_to_tm(const time_t *time, struct tm *out_tm);
 int ossl_asn1_time_tm_to_time_t(const struct tm *tm, time_t *out);
+int ossl_asn1_call_aux_cb(const ASN1_AUX *aux, int operation,
+    const ASN1_VALUE **in, const ASN1_ITEM *it, void *exarg);
 
 #endif /* !defined(OSSL_LIBCRYPTO_ASN1_ASN1_LOCAL_H) */
