@@ -111,4 +111,18 @@ int ossl_bio_init_core(OSSL_LIB_CTX *libctx, const OSSL_DISPATCH *fns);
 int ossl_BIO_snprintf_msvc(char *buf, size_t n, const char *fmt, ...);
 #endif
 
+/**
+ * @brief Backing implementation of OPENSSL_vasprintf().
+ *
+ * Allocates a buffer with the OPENSSL_* allocators and formats into it,
+ * growing the buffer once if the first attempt would truncate.
+ *
+ * @param str    receives the allocated buffer
+ * @param format printf-style format string
+ * @param args   variadic arguments; consumed by the call
+ * @returns bytes written on success, or -1 on error
+ * @see OPENSSL_asprintf(3)
+ */
+int ossl_vasprintf_internal(char **str, const char *format, va_list args);
+
 #endif

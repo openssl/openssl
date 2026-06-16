@@ -10,9 +10,11 @@
 #include <stdio.h>
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/bio.h"
 #include "crypto/ctype.h"
 #include "internal/numbers.h"
 #include <openssl/bio.h>
+#include <openssl/crypto.h>
 #include <openssl/configuration.h>
 
 int BIO_printf(BIO *bio, const char *format, ...)
@@ -168,5 +170,79 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
     if ((size_t)ret >= n)
         ret = -1;
 #endif
+    return ret;
+}
+
+/* Remove this once we can use vsnprintf like it's 1999 */
+static int vsnprintf_because_we_cant_let_go_of_msvc2013(char *buf, size_t n, const char *fmt, va_list args)
+{
+#if defined(_MSC_VER) && _MSC_VER < 1900
+    int count;
+    va_list args_copy;
+
+    va_copy(args_copy, args);
+    count = _vscprintf(fmt, args_copy);
+    va_end(args_copy);
+
+    if (count < 0)
+        return count;
+
+    if (n > 0)
+        (void)_vsnprintf_s(buf, n, _TRUNCATE, fmt, args);
+
+    return count;
+#else
+    return vsnprintf(buf, n, fmt, args);
+#endif
+}
+
+int ossl_vasprintf_internal(char **str, const char *format, va_list args)
+{
+    char *candidate = NULL;
+    size_t candidate_len = 64;
+    int ret;
+
+    if ((candidate = OPENSSL_malloc(candidate_len)) == NULL)
+        goto err;
+    va_list args_copy;
+    va_copy(args_copy, args);
+    ret = vsnprintf_because_we_cant_let_go_of_msvc2013(candidate, candidate_len, format, args_copy);
+    va_end(args_copy);
+    if (ret < 0)
+        goto err;
+    if ((size_t)ret >= candidate_len) {
+        /*  Too big to fit in allocation. */
+        char *tmp;
+
+        candidate_len = (size_t)ret + 1;
+        if ((tmp = OPENSSL_realloc(candidate, candidate_len)) == NULL)
+            goto err;
+        candidate = tmp;
+        ret = vsnprintf_because_we_cant_let_go_of_msvc2013(candidate, candidate_len, format, args);
+    }
+    /* At this point this should not happen unless vsnprintf is insane. */
+    if (ret < 0 || (size_t)ret >= candidate_len)
+        goto err;
+    *str = candidate;
+    return ret;
+
+err:
+    OPENSSL_free(candidate);
+    *str = NULL;
+    errno = ENOMEM;
+    return -1;
+}
+
+int OPENSSL_vasprintf(char **str, const char *format, va_list args)
+{
+    return ossl_vasprintf_internal(str, format, args);
+}
+
+int OPENSSL_asprintf(char **str, const char *format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    int ret = OPENSSL_vasprintf(str, format, args);
+    va_end(args);
     return ret;
 }
