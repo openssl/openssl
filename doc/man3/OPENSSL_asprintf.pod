@@ -1,0 +1,71 @@
+=pod
+
+=head1 NAME
+
+OPENSSL_asprintf, OPENSSL_vasprintf
+- allocate and format a string
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ int OPENSSL_asprintf(char **str, const char *format, ...);
+ int OPENSSL_vasprintf(char **str, const char *format, va_list args);
+
+=head1 DESCRIPTION
+
+OPENSSL_asprintf() allocates a buffer with OPENSSL_malloc(), formats into
+it according to I<format> and the trailing arguments, and stores the
+resulting pointer in I<*str>. The caller is responsible for releasing the
+buffer with OPENSSL_free(). On failure I<*str> is set to NULL.
+
+OPENSSL_vasprintf() is the C<va_list> form of OPENSSL_asprintf(). The
+caller must initialise I<args> with C<va_start()> before calling and must
+not use I<args> again after the call returns; the call consumes it.
+
+The asprintf() and vasprintf() extensions provided by the GNU and BSD
+C libraries are not standardised by C or POSIX and are not available
+on every platform OpenSSL targets. OPENSSL_asprintf() and
+OPENSSL_vasprintf() provide equivalent functionality portably. As the
+returned buffer is allocated with OPENSSL_malloc() internally, it must
+be released with OPENSSL_free() rather than with the C library
+free().
+
+=head1 RETURN VALUES
+
+On success, both functions set I<*str> to point to the newly
+allocated formatted string and return the number of characters
+written (excluding the terminating nul byte). The caller takes
+ownership of the returned buffer and must release it with
+OPENSSL_free().
+
+On failure (allocation failure or a format error reported by the
+underlying vsnprintf(3)), both functions return -1 and set I<*str>
+to NULL.
+
+=head1 NOTES
+
+Some asprintf() implementations leave I<*str> undefined on failure;
+OPENSSL_asprintf() and OPENSSL_vasprintf() always set it to NULL, but
+this should not be relied on - the return value should always be
+checked.
+
+=head1 SEE ALSO
+
+L<BIO_printf(3)>, L<OPENSSL_malloc(3)>
+
+=head1 HISTORY
+
+OPENSSL_asprintf() and OPENSSL_vasprintf() were added in OpenSSL 4.1,
+ported from BoringSSL.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
