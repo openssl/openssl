@@ -13,7 +13,7 @@
 #include "testutil.h"
 #include <openssl/ssl.h>
 #include "internal/quic_cc.h"
-#include "internal/priority_queue.h"
+#include "internal/prioq.h"
 
 /*
  * Time Simulation
@@ -80,16 +80,13 @@ typedef struct net_pkt_st {
     /* Size of simulated packet in bytes. */
     size_t size;
 
-    /* pqueue internal index. */
-    size_t idx;
+    OSSL_PRIOQ_NODE pqn;
 } NET_PKT;
 
-DEFINE_PRIORITY_QUEUE_OF(NET_PKT);
-
-static int net_pkt_cmp(const void *av, const void *bv)
+static int net_pkt_cmp(const OSSL_PRIOQ_NODE *an, const OSSL_PRIOQ_NODE *bn)
 {
-    const NET_PKT *a = av;
-    const NET_PKT *b = bv;
+    const NET_PKT *a = CONTAINER_OF_CONST(an, NET_PKT, pqn);
+    const NET_PKT *b = CONTAINER_OF_CONST(bn, NET_PKT, pqn);
 
     return ossl_time_compare(a->next_time, b->next_time);
 }
@@ -102,7 +99,7 @@ struct net_sim {
     uint64_t latency; /* ms */
 
     uint64_t spare_capacity;
-    PRIORITY_QUEUE_OF(NET_PKT) * pkts;
+    OSSL_PRIOQ *pkts;
 
     uint64_t total_acked, total_lost; /* bytes */
 };
@@ -122,20 +119,21 @@ static int net_sim_init(struct net_sim *s,
     s->total_acked = 0;
     s->total_lost = 0;
 
-    if (!TEST_ptr(s->pkts = ossl_pqueue_NET_PKT_new(net_pkt_cmp)))
+    if (!TEST_ptr(s->pkts = ossl_prioq_new(net_pkt_cmp)))
         return 0;
 
     return 1;
 }
 
-static void do_free(void *pkt)
+static void do_free(OSSL_PRIOQ_NODE *n)
 {
+    NET_PKT *pkt = CONTAINER_OF(n, NET_PKT, pqn);
     OPENSSL_free(pkt);
 }
 
 static void net_sim_cleanup(struct net_sim *s)
 {
-    ossl_pqueue_NET_PKT_pop_free(s->pkts, do_free);
+    ossl_prioq_pop_free(s->pkts, do_free);
 }
 
 static int net_sim_process(struct net_sim *s, size_t skip_forward);
@@ -147,6 +145,8 @@ static int net_sim_send(struct net_sim *s, size_t sz)
 
     if (!TEST_ptr(pkt))
         return 0;
+
+    ossl_prioq_node_init(&pkt->pqn);
 
     /*
      * Ensure we have processed any events which have come due as these might
@@ -190,7 +190,7 @@ static int net_sim_send(struct net_sim *s, size_t sz)
     if (!TEST_true(s->ccm->on_data_sent(s->cc, sz)))
         goto err;
 
-    if (!TEST_true(ossl_pqueue_NET_PKT_push(s->pkts, pkt, &pkt->idx)))
+    if (!TEST_true(ossl_prioq_push(s->pkts, &pkt->pqn)))
         goto err;
 
     return 1;
@@ -202,10 +202,12 @@ err:
 
 static int net_sim_process_one(struct net_sim *s, int skip_forward)
 {
-    NET_PKT *pkt = ossl_pqueue_NET_PKT_peek(s->pkts);
+    NET_PKT *pkt;
+    OSSL_PRIOQ_NODE *pqn = ossl_prioq_peek(s->pkts);
 
-    if (pkt == NULL)
+    if (pqn == NULL)
         return 3;
+    pkt = CONTAINER_OF(pqn, NET_PKT, pqn);
 
     /* Jump forward to the next significant point in time. */
     if (skip_forward && ossl_time_compare(pkt->next_time, fake_time) > 0)
@@ -217,9 +219,9 @@ static int net_sim_process_one(struct net_sim *s, int skip_forward)
         s->spare_capacity += pkt->size;
         pkt->arrived = 1;
 
-        ossl_pqueue_NET_PKT_pop(s->pkts);
+        ossl_prioq_pop(s->pkts);
         pkt->next_time = pkt->determination_time;
-        if (!ossl_pqueue_NET_PKT_push(s->pkts, pkt, &pkt->idx))
+        if (!ossl_prioq_push(s->pkts, &pkt->pqn))
             return 0;
 
         return 1;
@@ -244,7 +246,7 @@ static int net_sim_process_one(struct net_sim *s, int skip_forward)
             return 0;
 
         s->total_lost += pkt->size;
-        ossl_pqueue_NET_PKT_pop(s->pkts);
+        ossl_prioq_pop(s->pkts);
         OPENSSL_free(pkt);
     } else {
         OSSL_CC_ACK_INFO ack_info = { 0 };
@@ -256,7 +258,7 @@ static int net_sim_process_one(struct net_sim *s, int skip_forward)
             return 0;
 
         s->total_acked += pkt->size;
-        ossl_pqueue_NET_PKT_pop(s->pkts);
+        ossl_prioq_pop(s->pkts);
         OPENSSL_free(pkt);
     }
 
