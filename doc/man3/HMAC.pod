@@ -112,6 +112,9 @@ be authenticated (I<len> bytes at I<data>).
 
 HMAC_Final() places the message authentication code in I<md>, which
 must have space for the hash function output.
+After calling HMAC_Final() no calls to HMAC_Update() or HMAC_Final() can be
+made, but HMAC_Init_ex() can be called to initialize a new HMAC
+operation.
 
 HMAC_CTX_copy() copies all of the internal state from I<sctx> into I<dctx>.
 
