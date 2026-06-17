@@ -53,9 +53,15 @@ ASN1_SEQUENCE(TS_REQ) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(TS_REQ)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_REQ)
+
+static void *d2i_TS_REQ_thunk(void **a, const unsigned char **pp, long length)
+{
+    return (void *)d2i_TS_REQ((TS_REQ **)a, pp, length);
+}
+
 TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 {
-    return ASN1_d2i_bio_of(TS_REQ, TS_REQ_new, d2i_TS_REQ, bp, a);
+    return ASN1_d2i_bio((void *(*)(void))TS_REQ_new, d2i_TS_REQ_thunk, bp, (void **)a);
 }
 
 int i2d_TS_REQ_bio(BIO *bp, const TS_REQ *a)
