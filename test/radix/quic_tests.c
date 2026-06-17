@@ -596,6 +596,14 @@ DEF_FUNC(check_flood_stats)
     path_challenge_count = ossl_quic_channel_get_path_challenge_count(ch);
     path_response_count = ossl_quic_channel_get_path_response_count(ch);
 
+    /*
+     * The flood is delivered over a real socket and processed by the
+     * connection's assist thread asynchronously, so give it a chance to
+     * catch up rather than failing on the first observation.
+     */
+    if (path_challenge_count < 16 || path_response_count < 1)
+        F_SPIN_AGAIN();
+
     if (!TEST_uint64_t_eq(path_challenge_count, 16))
         goto err;
     if (!TEST_uint64_t_eq(path_response_count, 1))
