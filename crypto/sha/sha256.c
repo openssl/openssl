@@ -164,7 +164,7 @@ static const SHA_LONG K256[64] = {
 };
 
 #ifndef PEDANTIC
-#if defined(__GNUC__) && __GNUC__ >= 2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#if defined(__GNUC__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #if defined(__riscv_zknh)
 #define Sigma0(x) ({ MD32_REG_T ret;            \
                         asm ("sha256sum0 %0, %1"    \

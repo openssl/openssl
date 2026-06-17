@@ -343,7 +343,7 @@ static const SHA_LONG64 K512[80] = {
 };
 
 #ifndef PEDANTIC
-#if defined(__GNUC__) && __GNUC__ >= 2 && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
+#if defined(__GNUC__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
 #if defined(__x86_64) || defined(__x86_64__)
 #define ROTR(a, n) ({ SHA_LONG64 ret;             \
                                 asm ("rorq %1,%0"       \
