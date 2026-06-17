@@ -83,7 +83,7 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
     }
 
 #ifndef OPENSSL_NO_GOST
-    if (!rl->isdtls && rl->tlstree) {
+    if (!rl->isdtls && rl->tlstree != 0) {
         const char *tlstree_mode = NULL;
 
         if ((rl->tlstree & TLS1_TLSTREE_S) != 0)
@@ -191,7 +191,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
 #ifndef OPENSSL_NO_GOST
-    if (!rl->isdtls && rl->tlstree) {
+    if (!rl->isdtls && rl->tlstree != 0) {
         OSSL_PARAM params[2];
 
         params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_TLSTREE,

@@ -1340,6 +1340,12 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
             tlstree = 1;
     }
 
+    /*
+     * During the handshake s->s3.tmp.new_cipher is the usual source of the
+     * negotiated cipher. For early data / PSK resumption we may switch the
+     * record layer before new_cipher is populated, so fall back to the cipher
+     * from the active session or PSK session when deriving TLSTREE mode.
+     */
     if (s->s3.tmp.new_cipher != NULL)
         algorithm2 = s->s3.tmp.new_cipher->algorithm2;
     else if (s->session != NULL && s->session->cipher != NULL)
@@ -1356,7 +1362,7 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         *set++ = OSSL_PARAM_construct_int(OSSL_LIBSSL_RECORD_LAYER_PARAM_STREAM_MAC,
             &stream_mac);
 
-    if (tlstree)
+    if (tlstree != 0)
         *set++ = OSSL_PARAM_construct_uint32(OSSL_LIBSSL_RECORD_LAYER_PARAM_TLSTREE,
             &tlstree);
 
