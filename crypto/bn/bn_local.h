@@ -413,7 +413,7 @@ struct bn_gencb_st {
         : "cc");
 #endif
 #elif (defined(_M_AMD64) || defined(_M_X64)) && defined(SIXTY_FOUR_BIT)
-#if defined(_MSC_VER) && _MSC_VER >= 1400
+#if defined(_MSC_VER)
 unsigned __int64 __umulh(unsigned __int64 a, unsigned __int64 b);
 unsigned __int64 _umul128(unsigned __int64 a, unsigned __int64 b,
     unsigned __int64 *h);
