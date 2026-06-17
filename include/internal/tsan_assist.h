@@ -77,7 +77,7 @@
 #define tsan_st_rel(ptr, val) __atomic_store_n((ptr), (val), __ATOMIC_RELEASE)
 #endif
 
-#elif defined(_MSC_VER) && _MSC_VER >= 1200 \
+#elif defined(_MSC_VER) \
     && (defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || defined(_M_ARM64) || (defined(_M_ARM) && _M_ARM >= 7 && !defined(_WIN32_WCE)))
 /*
  * There is subtle dependency on /volatile:<iso|ms> command-line option.
