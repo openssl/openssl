@@ -1535,6 +1535,23 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
     return WORK_FINISHED_STOP;
 }
 
+/*
+ * TLS 1.3 reserves handshake message type 0, so a HelloRequest must reach the
+ * state machine and be rejected there whenever TLS 1.3 is still possible.
+ *
+ * By the time a client reads a server handshake message, s->version is either
+ * the configured maximum for an initial pre-ServerHello handshake, or the
+ * already negotiated version after ServerHello or during renegotiation. Skip
+ * only when that version is below TLS 1.3.
+ */
+static int should_skip_hello_request(const SSL_CONNECTION *s)
+{
+    if (SSL_CONNECTION_IS_TLS13(s))
+        return 0;
+
+    return s->version > 0 && s->version < TLS1_3_VERSION;
+}
+
 int tls_get_message_header(SSL_CONNECTION *s, int *mt)
 {
     /* s->init_num < SSL3_HM_HEADER_LENGTH */
@@ -1594,7 +1611,8 @@ int tls_get_message_header(SSL_CONNECTION *s, int *mt)
         skip_message = 0;
         if (!s->server)
             if (s->statem.hand_state != TLS_ST_OK
-                && p[0] == SSL3_MT_HELLO_REQUEST)
+                && p[0] == SSL3_MT_HELLO_REQUEST
+                && should_skip_hello_request(s))
                 /*
                  * The server may always send 'Hello Request' messages --
                  * we are doing a handshake anyway now, so ignore them if
