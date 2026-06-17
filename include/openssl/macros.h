@@ -34,21 +34,11 @@
 #undef OSSL_DEPRECATED_FOR
 #ifndef OPENSSL_SUPPRESS_DEPRECATED
 #if defined(_MSC_VER)
-/*
- * MSVC supports __declspec(deprecated) since MSVC 2003 (13.10),
- * and __declspec(deprecated(message)) since MSVC 2005 (14.00)
- */
-#if _MSC_VER >= 1400
 #define OSSL_DEPRECATED(since) \
     __declspec(deprecated("Since OpenSSL " #since))
 #define OSSL_DEPRECATED_FOR(since, message) \
     __declspec(deprecated("Since OpenSSL " #since ";" message))
 #define OSSL_DEPRECATED_MESSAGE(message) __declspec(deprecated(message))
-#elif _MSC_VER >= 1310
-#define OSSL_DEPRECATED(since) __declspec(deprecated)
-#define OSSL_DEPRECATED_FOR(since, message) __declspec(deprecated)
-#define OSSL_DEPRECATED_MESSAGE(message) __declspec(deprecated)
-#endif
 #define OSSL_BEGIN_ALLOW_DEPRECATED \
     __pragma(warning(push)) __pragma(warning(disable : 4996))
 #define OSSL_END_ALLOW_DEPRECATED __pragma(warning(pop))
