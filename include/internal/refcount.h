@@ -127,7 +127,7 @@ static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-#elif defined(_MSC_VER) && _MSC_VER >= 1200
+#elif defined(_MSC_VER)
 
 #define HAVE_ATOMICS 1
 

@@ -65,18 +65,15 @@ void CRYPTO_THREAD_clean_local(void);
 #endif
 
 /*
- * VC++ 2008 or earlier x86 compilers do not have an inline implementation
- * of InterlockedOr64 for 32bit and will fail to run on Windows XP 32bit.
- * https://docs.microsoft.com/en-us/cpp/intrinsics/interlockedor-intrinsic-functions#requirements
- * To work around this problem, we implement a manual locking mechanism for
- * only VC++ 2008 or earlier x86 compilers.
+ * Define OSSL_USE_INTERLOCKEDOR64 on Windows toolchains that expose
+ * InterlockedOr64 in a form usable as a compiler intrinsic.  Today this
+ * means MSVC and 64-bit MinGW (mingw-w64 x86_64).  32-bit MinGW does not
+ * expose an intrinsic form, so OSSL_USE_INTERLOCKEDOR64 is left undefined
+ * there and crypto/threads_win.c falls back to a manual locking mechanism.
+ * The fallback path can be removed when 32-bit MinGW is no longer a
+ * supported build target.
  */
-
-#if defined(_MSC_VER)
-#if (!defined(_M_IX86) || _MSC_VER > 1600)
-#define OSSL_USE_INTERLOCKEDOR64
-#endif
-#elif defined(__MINGW64__)
+#if defined(_MSC_VER) || defined(__MINGW64__)
 #define OSSL_USE_INTERLOCKEDOR64
 #endif
 
