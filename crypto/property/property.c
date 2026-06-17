@@ -1190,7 +1190,6 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
 {
     QUERY *p = NULL;
     int res = 1;
-    int skip_providerless = 0;
 
     if (method == NULL) {
         p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_query);
@@ -1200,19 +1199,9 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
     }
 
     p = ossl_method_store_atomic_find_in_list(sa, nid, prov, prop_query);
-    if (p != NULL) {
+    if (p != NULL)
         ossl_method_store_atomic_archive(sa, p);
-        p = ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_query);
-        /*
-         * Note: We want to preserve previous behavior here.  Namely, if we load multiple
-         * providers we don't want to change the algorithm implementation we return if we've
-         * already potentially returned one from another provider.  So if an alg exists for
-         * a given nid/prop query with a NULL provider, don't replace the one we have.
-         * Instead, let the oldest one win
-         */
-        if (p != NULL)
-            skip_providerless = 1;
-    }
+
     p = QUERY_new(strlen(prop_query));
     if (p != NULL) {
         TSAN_BENIGN(p, "Unpublished value is safe on subsequent read");
@@ -1232,12 +1221,20 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
             goto err;
         }
 
-        if (skip_providerless == 0) {
-            /*
-             * We also want to add this method into the cache against a key computed _only_
-             * from nid and property query.  This lets us match in the event someone does a lookup
-             * against a NULL provider (i.e. the "any provided alg will do" match
-             */
+        /*
+         * We also want to add this method into the cache against a key computed
+         * _only_ from nid and property query.  This lets us match in the event
+         * someone does a lookup against a NULL provider (i.e. the "any provided
+         * alg will do" match).
+         *
+         * Only insert it if no NULL-provider entry exists yet for this nid and
+         * property query.  The first provider to cache this nid owns that
+         * entry, which matches the provider ossl_method_store_fetch would pick
+         * by implementation order.  Without this check, a later cache_set from
+         * a different provider would overwrite it and change which provider an
+         * "any provider" lookup resolves to.
+         */
+        if (ossl_method_store_atomic_find_in_list(sa, nid, NULL, prop_query) == NULL) {
             p = QUERY_new(strlen(prop_query));
             if (p == NULL)
                 goto err;
@@ -1257,6 +1254,7 @@ static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *sto
                 goto err;
             }
         }
+
         goto end;
     }
 err:
