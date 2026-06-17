@@ -1003,7 +1003,7 @@ static void ackm_on_pkts_acked(OSSL_ACKM *ackm, const OSSL_ACKM_TX_PKT *apkt)
     const OSSL_ACKM_TX_PKT *anext;
     QUIC_PN last_pn_acked = 0;
     OSSL_CC_ACK_INFO ainfo = { 0 };
-    int is_inflight;
+    unsigned int is_inflight;
 
     for (; apkt != NULL; apkt = anext) {
         if (apkt->is_inflight) {
