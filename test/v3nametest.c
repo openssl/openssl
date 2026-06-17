@@ -664,11 +664,38 @@ end:
     return testresult;
 }
 
+static int test_x509v3_addr_get_safi(void){
+
+    IPAddressFamily *f = NULL;
+    int data_k = 0;
+    unsigned char testdat[3] = {0x00, 0x01, 0x07};
+
+    if (!TEST_ptr(f = IPAddressFamily_new()))
+        goto err;
+
+    if(!TEST_ptr(f->addressFamily = ASN1_OCTET_STRING_new()))
+        goto err;
+
+    if (!TEST_true(ASN1_OCTET_STRING_set(f->addressFamily, testdat, 3)))
+        goto err;
+
+    if (!TEST_int_eq(X509v3_addr_get_safi(f), 7))
+        goto err;
+
+    data_k = 1;
+
+    err:
+        IPAddressFamily_free(f);
+        return data_k;
+
+}
+
 int setup_tests(void)
 {
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
     ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
     ADD_TEST(test_GENERAL_NAME_cmp);
+    ADD_TEST(test_x509v3_addr_get_safi);
     return 1;
 }
