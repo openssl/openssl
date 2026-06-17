@@ -213,7 +213,7 @@ err:
     return ret;
 }
 
-#if defined(__GNUC__) && __GNUC__ >= 4
+#if defined(__GNUC__)
 #define SENTINEL __attribute__((sentinel))
 #endif
 

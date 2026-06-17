@@ -31,7 +31,7 @@
 #endif
 
 #if !defined(PEDANTIC) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#if defined(__GNUC__) && __GNUC__ >= 2
+#if defined(__GNUC__)
 #if defined(__x86_64) || defined(__x86_64__)
 #define BSWAP8(x) ({ uint64_t ret_=(x);                   \
                         asm ("bswapq %0"                \

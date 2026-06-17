@@ -354,7 +354,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
      * internally. So we need to check errno for ENOSYS
      */
 #if !defined(__DragonFly__) && !defined(__NetBSD__) && !defined(__FreeBSD__)
-#if defined(__GNUC__) && __GNUC__ >= 2 && defined(__ELF__) && !defined(__hpux)
+#if defined(__GNUC__) && defined(__ELF__) && !defined(__hpux)
     extern int getentropy(void *buffer, size_t length) __attribute__((weak));
 
     if (getentropy != NULL) {
