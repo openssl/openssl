@@ -86,7 +86,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{quic} -}]
-    PROGRAMS{noinst}=priority_queue_test quicfaultstest quicapitest \
+    PROGRAMS{noinst}=quicfaultstest quicapitest \
                      quic_newcid_test quic_srt_gen_test rio_notifier_test
   ENDIF
 
@@ -1027,10 +1027,6 @@ IF[{- !$disabled{tests} -}]
     DEPEND[prioq_test]=../libcrypto ../libssl.a libtestutil.a
 
     IF[{- !$disabled{quic} -}]
-      SOURCE[priority_queue_test]=priority_queue_test.c
-      INCLUDE[priority_queue_test]=../include ../apps/include
-      DEPEND[priority_queue_test]=../libcrypto ../libssl.a libtestutil.a
-
       SOURCE[quicfaultstest]=quicfaultstest.c helpers/ssltestlib.c $QUICTESTHELPERS
       INCLUDE[quicfaultstest]=../include ../apps/include ..
       DEPEND[quicfaultstest]=../libcrypto.a ../libssl.a libtestutil.a
