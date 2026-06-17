@@ -194,6 +194,10 @@ OpenSSL Releases
 
    *Timo Keller*
 
+ * Added `X509v3_addr_get_safi`, which gets the SAFI from the IPAddressFamily structure.
+
+   *Nihal Kotte*
+
 ### Changes between 3.6 and 4.0.0 [14 Apr 2026]
 
  * Added `-expected-rpks` option to the `openssl s_client`
