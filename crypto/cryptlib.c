@@ -15,13 +15,6 @@
 #if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 #include <tchar.h>
 #include <signal.h>
-#ifdef __WATCOMC__
-#if defined(_UNICODE) || defined(__UNICODE__)
-#define _vsntprintf _vsnwprintf
-#else
-#define _vsntprintf _vsnprintf
-#endif
-#endif
 #ifdef _MSC_VER
 #define alloca _alloca
 #endif
