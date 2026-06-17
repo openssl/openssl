@@ -127,6 +127,11 @@ A subtree in I<nc> specified a B<minimum> other than 0 or a B<maximum> at
 all. RFC 5280 requires that these B<GeneralSubtree> fields not be used,
 and a constraint set that uses them cannot be processed.
 
+=item B<X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE>
+
+A general-name type for which matching is not implemented was encountered.
+The list of supported types is given in the DESCRIPTION above.
+
 =item B<X509_V_ERR_UNSUPPORTED_NAME_SYNTAX>
 
 A name in the certificate is encoded in a way that cannot be matched (for
