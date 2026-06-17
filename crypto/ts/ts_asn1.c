@@ -185,9 +185,14 @@ IMPLEMENT_ASN1_FUNCTIONS(TS_RESP)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_RESP)
 
+static void *d2i_TS_RESP_thunk(void **a, const unsigned char **pp, long length)
+{
+    return (void *)d2i_TS_RESP((TS_RESP **)a, pp, length);
+}
+
 TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 {
-    return ASN1_d2i_bio_of(TS_RESP, TS_RESP_new, d2i_TS_RESP, bp, a);
+    return ASN1_d2i_bio((void *(*)(void))TS_RESP_new, d2i_TS_RESP_thunk, bp, (void **)a);
 }
 
 int i2d_TS_RESP_bio(BIO *bp, const TS_RESP *a)
