@@ -5578,6 +5578,224 @@ err:
     EVP_CIPHER_CTX_free(ctx_onestep);
     return testresult;
 }
+
+/*-
+ * A zero-length AEAD message driven through the one-shot EVP_Cipher() interface
+ * must agree with the streaming EVP_CipherFinal_ex() path. This checks:
+ * - an empty message yields the same tag via both interfaces
+ * - the true tag passes verification on decrypt
+ * - the modified tag fails verification on decrypt
+ */
+static int test_evp_oneshot_aead_zerolen(int idx)
+{
+    const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
+    EVP_CIPHER_CTX *ctx_stream = NULL; /* reference: final only */
+    EVP_CIPHER_CTX *ctx_oneshot = NULL; /* encrypt via EVP_Cipher(in == NULL) */
+    EVP_CIPHER_CTX *ctx_dec = NULL; /* decrypt via EVP_Cipher(in == NULL) */
+    EVP_CIPHER_CTX *ctx_dec_bad = NULL; /* decrypt with a corrupted tag */
+    EVP_CIPHER_CTX *ctx_dec_s = NULL; /* streaming decrypt */
+    EVP_CIPHER_CTX *ctx_dec_s_bad = NULL; /* streaming decrypt, corrupted tag */
+
+    OSSL_PARAM get_tagparams[2];
+    OSSL_PARAM set_tagparams[2];
+
+    int taglen = info->taglen;
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+
+    unsigned char ct[16] = { 0 }; /* scratch out; AEAD finalize writes no data */
+    int finlen = 0, oneshot_flen = 0, dec_flen = 0;
+
+    unsigned char tag_stream[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_oneshot[EVPTEST_TAG_LEN_MAX] = { 0 };
+    unsigned char tag_bad[EVPTEST_TAG_LEN_MAX] = { 0 };
+
+    int i = 0, testresult = 1;
+    char *errmsg = NULL;
+
+    /* filter out various modes */
+    if (info->taglen == 0
+        || info->mode == EVP_CIPH_CCM_MODE
+        || info->mode == EVP_CIPH_OCB_MODE
+        || info->mode == EVP_CIPH_GCM_SIV_MODE
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA1")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA256")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256")
+        || EVP_CIPHER_is_a(info->ciph, "ChaCha20-Poly1305"))
+        return 1;
+
+    for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    /* reference: streaming finalize of an empty message */
+    if (!TEST_ptr(ctx_stream = EVP_CIPHER_CTX_new())) {
+        errmsg = "STREAM_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx_stream, info->ciph, key, iv, NULL))) {
+        errmsg = "STREAM_INIT";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptFinal_ex(ctx_stream, ct, &finlen))) {
+        errmsg = "STREAM_FINAL";
+        goto err;
+    }
+
+    /* clamp to the negotiated tag length if the cipher reports one */
+    i = EVP_CIPHER_CTX_get_tag_length(ctx_stream);
+    if (i > 0)
+        taglen = i;
+
+    /* bound the memcpy, should never happen but helps static analysis */
+    if (taglen > EVPTEST_TAG_LEN_MAX) {
+        errmsg = "TAGLEN_EXCEEDS_BUF";
+        goto err;
+    }
+
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_stream, taglen);
+    get_tagparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_stream, get_tagparams))) {
+        errmsg = "STREAM_GET_TAG";
+        goto err;
+    }
+
+    /* one-shot encrypt: finalize the empty message with in == NULL */
+    if (!TEST_ptr(ctx_oneshot = EVP_CIPHER_CTX_new())) {
+        errmsg = "ONESHOT_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx_oneshot, info->ciph, key, iv, NULL))) {
+        errmsg = "ONESHOT_INIT";
+        goto err;
+    }
+    oneshot_flen = EVP_Cipher(ctx_oneshot, ct, NULL, 0);
+    if (!TEST_int_ge(oneshot_flen, 0)) {
+        errmsg = "ONESHOT_FINAL_NULL";
+        goto err;
+    }
+
+    get_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_oneshot, taglen);
+    if (!TEST_true(EVP_CIPHER_CTX_get_params(ctx_oneshot, get_tagparams))) {
+        errmsg = "ONESHOT_GET_TAG";
+        goto err;
+    }
+    if (!TEST_mem_eq(tag_oneshot, taglen, tag_stream, taglen)) {
+        errmsg = "TAG_MISMATCH_ONESHOT_vs_STREAM";
+        goto err;
+    }
+
+    /* one-shot decrypt: the correct tag must verify via in == NULL */
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())) {
+        errmsg = "DEC_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))) {
+        errmsg = "DEC_INIT";
+        goto err;
+    }
+    set_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_stream, taglen);
+    set_tagparams[1] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, set_tagparams))) {
+        errmsg = "DEC_SET_TAG";
+        goto err;
+    }
+    dec_flen = EVP_Cipher(ctx_dec, ct, NULL, 0);
+    if (!TEST_int_ge(dec_flen, 0)) {
+        errmsg = "DEC_VERIFY_NULL";
+        goto err;
+    }
+
+    /*
+     * ...and a corrupted tag must be rejected. EVP_Cipher() returns < 0 on a
+     * failed one-shot, so a non-negative result here means verification was
+     * skipped or wrongly accepted the bad tag.
+     */
+    memcpy(tag_bad, tag_stream, taglen);
+    tag_bad[0] ^= 0x01;
+    if (!TEST_ptr(ctx_dec_bad = EVP_CIPHER_CTX_new())) {
+        errmsg = "DEC_BAD_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec_bad, info->ciph, key, iv, NULL))) {
+        errmsg = "DEC_BAD_INIT";
+        goto err;
+    }
+    set_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_bad, taglen);
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec_bad, set_tagparams))) {
+        errmsg = "DEC_BAD_SET_TAG";
+        goto err;
+    }
+    if (!TEST_int_lt(EVP_Cipher(ctx_dec_bad, ct, NULL, 0), 0)) {
+        errmsg = "DEC_BADTAG_NOT_REJECTED";
+        goto err;
+    }
+
+    /* streaming decrypt: the correct tag must verify via EVP_DecryptFinal_ex */
+    if (!TEST_ptr(ctx_dec_s = EVP_CIPHER_CTX_new())) {
+        errmsg = "DEC_STREAM_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec_s, info->ciph, key, iv, NULL))) {
+        errmsg = "DEC_STREAM_INIT";
+        goto err;
+    }
+    set_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_stream, taglen);
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec_s, set_tagparams))) {
+        errmsg = "DEC_STREAM_SET_TAG";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptFinal_ex(ctx_dec_s, ct, &finlen))) {
+        errmsg = "DEC_STREAM_VERIFY";
+        goto err;
+    }
+
+    /* streaming decrypt: a corrupted tag must be rejected */
+    if (!TEST_ptr(ctx_dec_s_bad = EVP_CIPHER_CTX_new())) {
+        errmsg = "DEC_STREAM_BAD_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec_s_bad, info->ciph, key, iv, NULL))) {
+        errmsg = "DEC_STREAM_BAD_INIT";
+        goto err;
+    }
+    set_tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag_bad, taglen);
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec_s_bad, set_tagparams))) {
+        errmsg = "DEC_STREAM_BAD_SET_TAG";
+        goto err;
+    }
+    if (!TEST_false(EVP_DecryptFinal_ex(ctx_dec_s_bad, ct, &finlen))) {
+        errmsg = "DEC_STREAM_BADTAG_NOT_REJECTED";
+        goto err;
+    }
+
+err:
+    if (errmsg != NULL) {
+        TEST_info("test_evp_oneshot_aead_zerolen %d, %s: %s",
+            idx, errmsg, info->name);
+        testresult = 0;
+    }
+    EVP_CIPHER_CTX_free(ctx_stream);
+    EVP_CIPHER_CTX_free(ctx_oneshot);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    EVP_CIPHER_CTX_free(ctx_dec_bad);
+    EVP_CIPHER_CTX_free(ctx_dec_s);
+    EVP_CIPHER_CTX_free(ctx_dec_s_bad);
+    return testresult;
+}
+
 /*
  * Verify stale key is not being used after providing a new key in multiple steps.
  * This test performs a full round of encryption and then changes the
@@ -8559,6 +8777,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_diff_order_init, cipher_list_n);
     ADD_ALL_TESTS(test_evp_stale_key_reinit, cipher_list_n);
     ADD_ALL_TESTS(test_evp_decrypt_roundtrip_multistep, cipher_list_n);
+    ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, cipher_list_n);
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
