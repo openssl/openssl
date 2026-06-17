@@ -272,6 +272,9 @@ On input I<ctlen> should contain the maximum size of the I<ct> buffer, and retur
 the output size. An error will occur if the input I<ctlen> is
 smaller than the value returned from OSSL_HPKE_get_public_encap_size().
 
+A zero-length plaintext is permitted: if I<ptlen> is zero then I<pt> may be
+NULL and the resulting ciphertext I<ct> will consist of the AEAD tag only.
+
 OSSL_HPKE_encap() must be called before the OSSL_HPKE_seal().  OSSL_HPKE_seal()
 may be called multiple times, with an internal "nonce" being incremented by one
 after each call.
@@ -324,6 +327,8 @@ returns the output size. A I<pt> buffer that is the same size as the
 I<ct> buffer will suffice - generally the plaintext output will be
 a little smaller than the ciphertext input.
 An error will occur if the input I<ptlen> is too small.
+If the recovered plaintext is zero-length (i.e. the I<ct> input consists of the
+AEAD tag only) then on output I<ptlen> will be zero and I<pt> is unused.
 OSSL_HPKE_open() may be called multiple times, but as with OSSL_HPKE_seal()
 there is an internally incrementing nonce value so ciphertexts need to be
 presented in the same order as used by the OSSL_HPKE_seal().
