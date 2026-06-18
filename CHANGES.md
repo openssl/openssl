@@ -102,6 +102,12 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Windows-on-Itanium (VC-WIN64I) support was dropped - the Itanium
+   architecture has been discontinued and the platform is no longer
+   supported or tested.
+
+   *Bob Beck*
+
  * Windows CE support was dropped - Windows CE has been unsupported since
    2018 and does not have a modern C99 toolchain.
 
