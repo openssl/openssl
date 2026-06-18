@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
 #include <string.h>
 #include <openssl/err.h>
 #include "err_local.h"
@@ -85,9 +86,9 @@ void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
         }
 
         if (buf != NULL) {
-            printed_len = BIO_vsnprintf(buf, buf_size, fmt, args);
+            printed_len = vsnprintf(buf, buf_size, fmt, args);
         }
-        if (printed_len < 0)
+        if (printed_len < 0 || (size_t)printed_len >= buf_size)
             printed_len = 0;
         if (buf != NULL)
             buf[printed_len] = '\0';
