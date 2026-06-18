@@ -91,13 +91,13 @@ void PEM_dek_info(char *buf, const char *type, int len, const char *str)
     char *p = buf + strlen(buf);
     int j = PEM_BUFSIZE - (int)(p - buf), n;
 
-    n = BIO_snprintf(p, j, "DEK-Info: %s,", type);
-    if (n > 0) {
+    n = snprintf(p, j, "DEK-Info: %s,", type);
+    if (n > 0 && n < j) {
         j -= n;
         p += n;
         for (i = 0; i < len; i++) {
-            n = BIO_snprintf(p, j, "%02X", 0xff & str[i]);
-            if (n <= 0)
+            n = snprintf(p, j, "%02X", 0xff & str[i]);
+            if (n <= 0 || n >= j)
                 return;
             j -= n;
             p += n;
