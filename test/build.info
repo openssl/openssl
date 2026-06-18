@@ -1447,3 +1447,7 @@ _____
 _____
    }
 -}
+PROGRAMS=schnorr_test
+SOURCE[schnorr_test]=schnorr_tests/schnorr_test.c
+INCLUDE[schnorr_test]=../include
+DEPEND[schnorr_test]=libcrypto
