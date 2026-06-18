@@ -163,8 +163,8 @@ EVP_SKEYMGMT *evp_skeymgmt_fetch_from_prov(OSSL_PROVIDER *prov,
         OSSL_OP_SKEYMGMT,
         name, properties,
         skeymgmt_from_algorithm,
-        (int (*)(void *))evp_skeymgmt_up_ref,
-        (void (*)(void *))evp_skeymgmt_free);
+        evp_skeymgmt_up_ref,
+        evp_skeymgmt_free);
 }
 
 EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -172,8 +172,8 @@ EVP_SKEYMGMT *EVP_SKEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 {
     return evp_generic_fetch(ctx, OSSL_OP_SKEYMGMT, algorithm, properties,
         skeymgmt_from_algorithm,
-        (int (*)(void *))evp_skeymgmt_up_ref,
-        (void (*)(void *))evp_skeymgmt_free);
+        evp_skeymgmt_up_ref,
+        evp_skeymgmt_free);
 }
 
 int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
