@@ -36,7 +36,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #if defined(_WIN32) && !defined(_WIN32_WCE)
-#include <windows.h>
 #include <io.h>
 #define stat _stat
 #define chmod _chmod
