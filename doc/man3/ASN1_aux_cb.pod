@@ -59,7 +59,7 @@ Arbitrary application data
 
 =item I<flags>
 
-Flags which indicate the auxiliarly functionality supported.
+Flags which indicate the auxiliary functionality supported.
 
 The B<ASN1_AFLG_REFCOUNT> flag indicates that objects support reference counting.
 

@@ -46,7 +46,7 @@ are used when retrieving algorithms from providers.
 CMS_EncryptedData_decrypt() returns 0 if an error occurred otherwise returns 1.
 
 CMS_EnvelopedData_decrypt() returns NULL if an error occurred,
-otherwise a BIO containing the decypted content.
+otherwise a BIO containing the decrypted content.
 
 =head1 SEE ALSO
 
