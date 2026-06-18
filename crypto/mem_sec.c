@@ -23,7 +23,6 @@
 
 #ifndef OPENSSL_NO_SECURE_MEMORY
 #if defined(_WIN32)
-#include <windows.h>
 #if defined(WINAPI_FAMILY_PARTITION)
 #if !defined(WINAPI_PARTITION_SYSTEM)
 #define WINAPI_PARTITION_SYSTEM 0

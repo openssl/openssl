@@ -67,7 +67,6 @@ static void ossl_sleep_millis(uint64_t millis)
 
 #endif
 #elif defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
-#include <windows.h>
 
 static void ossl_sleep_millis(uint64_t millis)
 {

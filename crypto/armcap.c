@@ -19,7 +19,7 @@
 #endif
 #include "internal/cryptlib.h"
 #ifdef _WIN32
-#include <windows.h>
+#include "internal/e_os.h"
 #else
 #include <unistd.h>
 #endif

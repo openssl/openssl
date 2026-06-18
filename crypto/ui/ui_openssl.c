@@ -60,7 +60,6 @@
 #endif
 
 #ifdef WIN_CONSOLE_BUG
-#include <windows.h>
 #ifndef OPENSSL_SYS_WINCE
 #include <wincon.h>
 #endif

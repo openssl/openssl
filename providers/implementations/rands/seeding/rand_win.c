@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/e_os.h" /* For windows.h */
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "crypto/rand_pool.h"
@@ -19,7 +20,6 @@
 #error "Unsupported seeding method configured; must be os"
 #endif
 
-#include <windows.h>
 /* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
 #if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
     && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600

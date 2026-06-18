@@ -36,8 +36,8 @@
  * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <windows.h>
 #include <tchar.h>
+#include "internal/e_os.h"
 #include "internal/numbers.h"
 #ifndef LPDIR_H
 #include "LPdir.h"

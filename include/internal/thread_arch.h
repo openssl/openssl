@@ -11,11 +11,8 @@
 #define OSSL_INTERNAL_THREAD_ARCH_H
 #include <openssl/configuration.h>
 #include <openssl/e_os2.h>
+#include "internal/e_os.h"
 #include "internal/time.h"
-
-#if defined(_WIN32)
-#include <windows.h>
-#endif
 
 #if defined(OPENSSL_THREADS) && defined(OPENSSL_SYS_UNIX)
 #define OPENSSL_THREADS_POSIX
