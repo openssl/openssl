@@ -11,6 +11,7 @@
 #include <openssl/ssl.h>
 #include "internal/quic_ackm.h"
 #include "internal/quic_cc.h"
+#include "internal/quic_vlint.h"
 
 static OSSL_TIME fake_time = { 0 };
 
@@ -147,13 +148,26 @@ struct tx_ack_test_case {
     const OSSL_QUIC_ACK_RANGE *ack_ranges;
     size_t num_ack_ranges;
     const char *expect_ack; /* 1=ack, 2=lost, 4=discarded */
+    int expect_reject; /* if nonzero the ACK must be rejected (returns 0) */
 };
 
 #define DEFINE_TX_ACK_CASE(n, pntable)                       \
     static const struct tx_ack_test_case tx_ack_case_##n = { \
         (pntable), OSSL_NELEM(pntable),                      \
         tx_ack_range_##n, OSSL_NELEM(tx_ack_range_##n),      \
-        tx_ack_expect_##n                                    \
+        tx_ack_expect_##n, 0                                 \
+    }
+
+/*
+ * As DEFINE_TX_ACK_CASE, but the ACK acknowledges a packet number that was
+ * never sent and so must be rejected by ossl_ackm_on_rx_ack_frame()
+ * (RFC 9000 s. 13.1).
+ */
+#define DEFINE_TX_ACK_CASE_REJECT(n, pntable)                \
+    static const struct tx_ack_test_case tx_ack_case_##n = { \
+        (pntable), OSSL_NELEM(pntable),                      \
+        tx_ack_range_##n, OSSL_NELEM(tx_ack_range_##n),      \
+        tx_ack_expect_##n, 1                                 \
     }
 
 /* One range, partial coverage of space */
@@ -207,32 +221,32 @@ static const char tx_ack_expect_5[] = {
 };
 DEFINE_TX_ACK_CASE(5, linear_20);
 
-/* One range, covering entire space */
+/* One range covering the whole space (0..19, highest sent PN is 19): all acked */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_6[] = {
-    { 0, 20 },
+    { 0, 19 },
 };
 static const char tx_ack_expect_6[] = {
     1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
 };
 DEFINE_TX_ACK_CASE(6, linear_20);
 
-/* One range, covering more space than exists */
+/* One range above the highest sent PN (30 > 19): ACK rejected */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_7[] = {
     { 0, 30 },
 };
 static const char tx_ack_expect_7[] = {
-    1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
-DEFINE_TX_ACK_CASE(7, linear_20);
+DEFINE_TX_ACK_CASE_REJECT(7, linear_20);
 
-/* One range, covering nothing (too high) */
+/* One range entirely above the sent PNs (21..30): ACK rejected */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_8[] = {
     { 21, 30 },
 };
 static const char tx_ack_expect_8[] = {
     0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
 };
-DEFINE_TX_ACK_CASE(8, linear_20);
+DEFINE_TX_ACK_CASE_REJECT(8, linear_20);
 
 /* One range, covering nothing (too low) */
 static const OSSL_QUIC_ACK_RANGE tx_ack_range_9[] = {
@@ -289,6 +303,20 @@ static const char tx_ack_expect_13[] = {
 };
 DEFINE_TX_ACK_CASE(13, high_linear_20);
 
+/*
+ * Largest range claims the maximum PN (2**62 - 1, never sent) plus a second
+ * range over real packets so loss detection would otherwise run. ACK rejected;
+ * otherwise largest_acked_pkt pins at the maximum and every in-flight packet is
+ * declared lost.
+ */
+static const OSSL_QUIC_ACK_RANGE tx_ack_range_14[] = {
+    { OSSL_QUIC_VLINT_MAX, OSSL_QUIC_VLINT_MAX }, { 15, 19 }
+};
+static const char tx_ack_expect_14[] = {
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+DEFINE_TX_ACK_CASE_REJECT(14, linear_20);
+
 static const struct tx_ack_test_case *const tx_ack_cases[] = {
     &tx_ack_case_1,
     &tx_ack_case_2,
@@ -303,6 +331,7 @@ static const struct tx_ack_test_case *const tx_ack_cases[] = {
     &tx_ack_case_11,
     &tx_ack_case_12,
     &tx_ack_case_13,
+    &tx_ack_case_14,
 };
 
 enum {
@@ -402,6 +431,25 @@ static int test_tx_ack_case_actual(int tidx, int space, int mode)
         /* Try acknowledging. */
         ack.ack_ranges = (OSSL_QUIC_ACK_RANGE *)c->ack_ranges;
         ack.num_ack_ranges = c->num_ack_ranges;
+
+        if (c->expect_reject) {
+            /* ACK of an unsent PN: rejected without touching loss detection. */
+            if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack, space,
+                                 fake_time),
+                    0))
+                goto err;
+
+            for (i = 0; i < c->pn_table_len; ++i) {
+                if (!TEST_int_eq(h.pkts[i].acked, 0)
+                    || !TEST_int_eq(h.pkts[i].lost, 0)
+                    || !TEST_int_eq(h.pkts[i].discarded, 0))
+                    goto err;
+            }
+
+            testresult = 1;
+            goto err;
+        }
+
         if (!TEST_int_eq(ossl_ackm_on_rx_ack_frame(h.ackm, &ack, space, fake_time), 1))
             goto err;
 
@@ -577,7 +625,7 @@ static int test_tx_ack_time_script(int tidx)
             ack.num_ack_ranges = 1;
 
             ack_range.start = s->pn;
-            ack_range.end = s->pn + s->num_pn;
+            ack_range.end = s->pn + s->num_pn - 1;
 
             fake_time = ossl_time_add(fake_time,
                 ossl_ticks2time(s->time_advance));

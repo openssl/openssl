@@ -3886,7 +3886,12 @@ static const struct script_op script_49[] = {
     OP_SET_INJECT_WORD(4, 0),
 
     OP_S_WRITE(a, "Strawberry", 10),
-    OP_C_READ_EXPECT(DEFAULT, "Strawberry", 10),
+    /*
+     * The injected ACK acknowledges a packet number we have not sent, which the
+     * peer is expected to treat as a PROTOCOL_VIOLATION, so the connection is
+     * closed rather than the stream data being delivered.
+     */
+    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0),
 
     OP_END
 };
