@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
@@ -66,17 +67,21 @@ static const OSSL_DISPATCH biocbs[] = {
     OSSL_DISPATCH_END
 };
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 static int call_bio_vsnprintf(char *buf, size_t n, const char *format, ...)
 {
     va_list args;
     int ret;
 
     va_start(args, format);
+    OSSL_BEGIN_ALLOW_DEPRECATED
     ret = BIO_vsnprintf(buf, n, format, args);
+    OSSL_END_ALLOW_DEPRECATED
     va_end(args);
 
     return ret;
 }
+#endif
 
 static int test_bio_core(void)
 {
@@ -159,7 +164,6 @@ static int test_bio_printf_c99_length_modifiers(void)
     static const char expected[] = "zu=12345 zd=-42 zx=3039 td=-7 ju=4294967338 jx=10000002a";
     static const char long_tail[] = "12345";
     BIO *bio = NULL;
-    char buf[128];
     char *memdata = NULL;
     long memlen;
     size_t z = (size_t)12345;
@@ -169,7 +173,10 @@ static int test_bio_printf_c99_length_modifiers(void)
     int expected_len = (int)strlen(expected);
     size_t long_tail_len = strlen(long_tail);
     int testresult = 0;
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+    char buf[128];
 
+    OSSL_BEGIN_ALLOW_DEPRECATED
     if (!TEST_int_eq(BIO_snprintf(buf, sizeof(buf),
                          "zu=%zu zd=%zd zx=%zx td=%td ju=%ju jx=%jx",
                          z, zs, z, t, j, j),
@@ -183,7 +190,8 @@ static int test_bio_printf_c99_length_modifiers(void)
             expected_len)
         || !TEST_str_eq(buf, expected))
         goto err;
-
+    OSSL_END_ALLOW_DEPRECATED
+#endif
     if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
         || !TEST_int_eq(BIO_printf(bio,
                             "zu=%zu zd=%zd zx=%zx td=%td ju=%ju jx=%jx",
@@ -209,8 +217,12 @@ static int test_bio_printf_c99_length_modifiers(void)
             long_tail_len, long_tail, long_tail_len))
         goto err;
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+    OSSL_BEGIN_ALLOW_DEPRECATED
     if (!TEST_int_eq(BIO_snprintf(buf, 4, "%zu", z), -1))
         goto err;
+    OSSL_END_ALLOW_DEPRECATED
+#endif
 
     testresult = 1;
 err:
