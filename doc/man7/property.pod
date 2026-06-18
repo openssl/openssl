@@ -105,6 +105,12 @@ The quotes are not included in the body of the string.
 
 =back
 
+String values in property definitions and queries are matched case-sensitively.
+An unquoted string value is converted to lowercase when it is parsed, while a
+quoted string value retains its case.  For example, C<foo=bar> matches
+C<foo='bar'>, and C<foo=BAR> is treated as C<foo=bar>, but neither matches
+C<foo='BAR'>.
+
 =head2 Lookups
 
 When an algorithm is looked up, a property query is used to determine

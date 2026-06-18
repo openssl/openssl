@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2019, Oracle and/or its affiliates.  All rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -157,6 +157,9 @@ static const struct {
     { "groan=blue", "?groan=yellow", 0 },
     { "groan=blue", "groan!=yellow", 1 },
     { "groan=blue", "?groan!=yellow", 1 },
+    { "sky='BLUE'", "sky='BLUE'", 1 },
+    { "sky=BLUE", "sky=blue", 1 },
+    { "sky='BLUE'", "sky=BLUE", -1 },
     { "today=monday, tomorrow=3", "today!=2", 1 },
     { "today=monday, tomorrow=3", "today!='monday'", -1 },
     { "today=monday, tomorrow=3", "tomorrow=3", 1 },
