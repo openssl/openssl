@@ -22,6 +22,7 @@
 #undef UNICODE
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include "bio_local.h"

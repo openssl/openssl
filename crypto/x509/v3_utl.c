@@ -1112,11 +1112,11 @@ char *ossl_ipaddr_to_asc(const unsigned char *p, int len)
         break;
     case 16: /* IPv6 */
         for (out = buf, i = 8, remain = sizeof(buf);
-            i-- > 0 && bytes >= 0;
+            i-- > 0 && bytes >= 0 && bytes < remain;
             remain -= bytes, out += bytes) {
             const char *template = (i > 0 ? "%X:" : "%X");
 
-            bytes = BIO_snprintf(out, remain, template, p[0] << 8 | p[1]);
+            bytes = snprintf(out, remain, template, p[0] << 8 | p[1]);
             p += 2;
         }
         break;
