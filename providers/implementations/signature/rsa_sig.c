@@ -13,6 +13,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdio.h>
 #include <string.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
@@ -1483,10 +1484,10 @@ static int rsa_get_ctx_params(void *vprsactx, OSSL_PARAM *params)
                 value = OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX;
                 break;
             default: {
-                int len = BIO_snprintf(p.slen->data, p.slen->data_size, "%d",
+                int len = snprintf(p.slen->data, p.slen->data_size, "%d",
                     prsactx->saltlen);
 
-                if (len <= 0)
+                if (len <= 0 || (size_t)len >= p.slen->data_size)
                     return 0;
                 p.slen->return_size = len;
                 break;
