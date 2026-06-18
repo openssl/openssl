@@ -35,7 +35,7 @@
 #ifndef OPENSSL_NO_POSIX_IO
 #include <sys/stat.h>
 #include <fcntl.h>
-#if defined(_WIN32) && !defined(_WIN32_WCE)
+#if defined(_WIN32)
 #include <io.h>
 #define stat _stat
 #define chmod _chmod
@@ -69,7 +69,8 @@
  * This declaration is a nasty hack to get around vms' extension to fopen for
  * passing in sharing options being disabled by /STANDARD=ANSI89
  */
-static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...) = (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
+static __FILE_ptr32 (*const vms_fopen)(const char *, const char *, ...)
+    = (__FILE_ptr32 (*)(const char *, const char *, ...))fopen;
 #define VMS_OPEN_ATTRS \
     "shr=get,put,upd,del", "ctx=bin,stm", "rfm=stm", "rat=none", "mrs=0"
 #define openssl_fopen(fname, mode) vms_fopen((fname), (mode), VMS_OPEN_ATTRS)
@@ -271,7 +272,7 @@ const char *RAND_file_name(char *buf, size_t size)
     size_t len;
     int use_randfile = 1;
 
-#if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)
+#if defined(_WIN32) && defined(CP_UTF8)
     DWORD envlen;
     WCHAR *var;
 

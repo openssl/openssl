@@ -83,7 +83,7 @@
 #endif
 
 #ifdef WINDOWS
-#if !defined(_WIN32_WCE) && !defined(_WIN32_WINNT)
+#if !defined(_WIN32_WINNT)
 /*
  * The _WIN32_WINNT is described here:
  * https://learn.microsoft.com/en-us/cpp/porting/modifying-winver-and-win32-winnt?view=msvc-170
@@ -115,12 +115,9 @@
 #include <stdio.h>
 #include <stddef.h>
 #include <errno.h>
-#if defined(_WIN32_WCE) && !defined(EACCES)
-#define EACCES 13
-#endif
 #include <string.h>
 #include <malloc.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
+#if defined(_MSC_VER) && !defined(_DLL) && defined(stdin)
 #if _MSC_VER >= 1300 && _MSC_VER < 1600
 #undef stdin
 #undef stdout
@@ -136,10 +133,6 @@ FILE *__iob_func(void);
 #include <io.h>
 #include <fcntl.h>
 
-#ifdef OPENSSL_SYS_WINCE
-#define OPENSSL_NO_POSIX_IO
-#endif
-
 #define EXIT(n) exit(n)
 #define LIST_SEPARATOR_CHAR ';'
 #ifndef W_OK
@@ -148,11 +141,7 @@ FILE *__iob_func(void);
 #ifndef R_OK
 #define R_OK 4
 #endif
-#ifdef OPENSSL_SYS_WINCE
-#define DEFAULT_HOME ""
-#else
 #define DEFAULT_HOME "C:"
-#endif
 
 /* Avoid Visual Studio 13 GetVersion deprecated problems */
 #if defined(_MSC_VER) && _MSC_VER >= 1800
@@ -232,7 +221,7 @@ FILE *__iob_func(void);
 /***********************************************/
 
 #if defined(OPENSSL_SYS_WINDOWS)
-#if defined(_MSC_VER) && (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
+#if defined(_MSC_VER) && (_MSC_VER >= 1310)
 #define open _open
 #define fdopen _fdopen
 #define close _close
