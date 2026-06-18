@@ -1,0 +1,56 @@
+=pod
+
+=head1 NAME
+
+Schnorr - Schnorr Σ-Protocol signature scheme (RFC 8235)
+
+=head1 DESCRIPTION
+
+This implementation provides Schnorr Σ-Protocol signatures using the
+secp256k1 elliptic curve.
+
+The scheme uses Fiat-Shamir transform to make it non-interactive.
+
+Algorithm:
+
+    c = H(R || Y || msg)
+    s = k + c * x (mod order)
+    Verification: s * G == R + c * Y
+
+=head1 PARAMETERS
+
+=over 4
+
+=item Public key: 33 bytes (compressed)
+
+=item Private key: 32 bytes
+
+=item Signature: 65 bytes (33 + 32)
+
+=item Curve: secp256k1
+
+=back
+
+=head1 KEY GENERATION
+
+    openssl genpkey -algorithm SCHNORR -out private.pem
+    openssl pkey -in private.pem -pubout -out public.pem
+
+=head1 SIGNING AND VERIFICATION
+
+    openssl dgst -sign private.pem -out sig.bin msg.txt
+    openssl dgst -verify public.pem -signature sig.bin msg.txt
+
+=head1 REFERENCES
+
+=over 4
+
+=item RFC 8235: https://datatracker.ietf.org/doc/html/rfc8235
+
+=back
+
+=head1 SEE ALSO
+
+openssl-genpkey(1), openssl-dgst(1), openssl-pkey(1)
+
+=cut

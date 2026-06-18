@@ -5542,3 +5542,6 @@ man/man7/provider.7 \
 man/man7/proxy-certificates.7 \
 man/man7/x509.7
 
+
+PROGRAMS=schnorr_doc
+SOURCE[schnorr_doc]=man7/SCHNORR.pod
