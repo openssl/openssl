@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "internal/e_os.h"
 
 #include <openssl/objects.h>
@@ -863,7 +865,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
         tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
         tm->tm_hour, tm->tm_min, tm->tm_sec);
     if (precision > 0) {
-        BIO_snprintf(p, 2 + precision, ".%06ld", usec);
+        snprintf(p, 2 + precision, ".%06ld", usec);
         p += strlen(p);
 
         /*

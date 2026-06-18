@@ -2622,7 +2622,7 @@ int speed_main(int argc, char **argv)
         if (evp_mac_mdname == NULL)
             goto end;
         evp_hmac_name = app_malloc(hmac_name_len, "HMAC name");
-        BIO_snprintf(evp_hmac_name, hmac_name_len, "hmac(%s)", evp_mac_mdname);
+        snprintf(evp_hmac_name, hmac_name_len, "hmac(%s)", evp_mac_mdname);
         names[D_HMAC] = evp_hmac_name;
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
@@ -3030,7 +3030,7 @@ int speed_main(int argc, char **argv)
             goto end;
         }
         evp_cmac_name = app_malloc(len, "CMAC name");
-        BIO_snprintf(evp_cmac_name, len, "cmac(%s)", evp_mac_ciphername);
+        snprintf(evp_cmac_name, len, "cmac(%s)", evp_mac_ciphername);
         names[D_EVP_CMAC] = evp_cmac_name;
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,

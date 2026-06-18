@@ -1652,12 +1652,12 @@ static int cipher_test_run(EVP_TEST *t)
                     if (inp_misalign == 1 && in_place == 1)
                         break;
                     if (in_place == 1) {
-                        BIO_snprintf(aux_err, sizeof(aux_err),
+                        snprintf(aux_err, sizeof(aux_err),
                             "%s in-place, %sfragmented",
                             out_misalign ? "misaligned" : "aligned",
                             frag ? "" : "not ");
                     } else {
-                        BIO_snprintf(aux_err, sizeof(aux_err),
+                        snprintf(aux_err, sizeof(aux_err),
                             "%s output and %s input, %sfragmented",
                             out_misalign ? "misaligned" : "aligned",
                             inp_misalign ? "misaligned" : "aligned",
