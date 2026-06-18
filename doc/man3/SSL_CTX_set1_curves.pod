@@ -113,7 +113,7 @@ levels, and can specify which predicted key shares should be sent by a client.
 Group tuples are used by OpenSSL TLS servers to decide whether to request a
 stronger keyshare than those predicted by sending a Hello Retry Request
 (B<HRR>) even if some of the predicted groups are supported.
-OpenSSL clients ignore tuple boundaries, and pay attenion only to the overall
+OpenSSL clients ignore tuple boundaries, and pay attention only to the overall
 order of I<list> elements and which groups are selected as predicted keyshares
 as described below.
 
