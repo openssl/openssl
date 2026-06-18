@@ -497,7 +497,7 @@ static int tls_record_app_data_waiting(OSSL_RECORD_LAYER *rl)
 static int rlayer_early_data_count_ok(OSSL_RECORD_LAYER *rl, size_t length,
     size_t overhead, int send)
 {
-    uint32_t max_early_data = rl->max_early_data;
+    uint64_t max_early_data = rl->max_early_data;
 
     if (max_early_data == 0) {
         RLAYERfatal(rl, send ? SSL_AD_INTERNAL_ERROR : SSL_AD_UNEXPECTED_MESSAGE,
@@ -506,7 +506,7 @@ static int rlayer_early_data_count_ok(OSSL_RECORD_LAYER *rl, size_t length,
     }
 
     /* If we are dealing with ciphertext we need to allow for the overhead */
-    max_early_data += (uint32_t)overhead;
+    max_early_data += overhead;
 
     if (rl->early_data_count + length > max_early_data) {
         RLAYERfatal(rl, send ? SSL_AD_INTERNAL_ERROR : SSL_AD_UNEXPECTED_MESSAGE,
