@@ -1273,7 +1273,9 @@ OpenSSL 4.0
    *Tomáš Mráz*
 
  * Removed deprecated functions `ERR_get_state()`, `ERR_remove_state()`
-   and `ERR_remove_thread_state()`. The `ERR_STATE` object is now always opaque.
+   and `ERR_remove_thread_state()`, as well as the `ERR_FLAG_MARK`,
+   `ERR_FLAG_CLEAR` and `ERR_NUM_ERRORS` macros. The `ERR_STATE` object is now
+   always opaque.
    <!-- https://github.com/openssl/openssl/pull/30005 -->
 
    *Tomáš Mráz*
