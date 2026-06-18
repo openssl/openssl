@@ -145,7 +145,8 @@ static int do_testhpke(const TEST_BASEDATA *base,
         goto end;
     if (base->mode == OSSL_HPKE_MODE_PSK
         || base->mode == OSSL_HPKE_MODE_PSKAUTH) {
-        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(sealctx, base->pskid,
+        if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(sealctx,
+                (const unsigned char *)base->pskid, strlen(base->pskid),
                 base->psk, base->psklen)))
             goto end;
     }
@@ -179,7 +180,8 @@ static int do_testhpke(const TEST_BASEDATA *base,
         if (!TEST_true(base->pskid != NULL && base->psk != NULL
                 && base->psklen > 0))
             goto end;
-        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(openctx, base->pskid,
+        if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(openctx,
+                (const unsigned char *)base->pskid, strlen(base->pskid),
                 base->psk, base->psklen)))
             goto end;
     }
@@ -989,7 +991,8 @@ static int test_hpke_modes_suites(void)
                         overallresult = 0;
                     if (hpke_mode == OSSL_HPKE_MODE_PSK
                         || hpke_mode == OSSL_HPKE_MODE_PSKAUTH) {
-                        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(ctx, pskidp,
+                        if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(ctx,
+                                (const unsigned char *)pskidp, strlen(pskidp),
                                 pskp, psklen)))
                             overallresult = 0;
                     }
@@ -1025,7 +1028,8 @@ static int test_hpke_modes_suites(void)
                         overallresult = 0;
                     if (hpke_mode == OSSL_HPKE_MODE_PSK
                         || hpke_mode == OSSL_HPKE_MODE_PSKAUTH) {
-                        if (!TEST_true(OSSL_HPKE_CTX_set1_psk(rctx, pskidp,
+                        if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(rctx,
+                                (const unsigned char *)pskidp, strlen(pskidp),
                                 pskp, psklen)))
                             overallresult = 0;
                     }
@@ -1321,7 +1325,7 @@ static int test_hpke_oddcalls(void)
         goto end;
     if (!TEST_false(OSSL_HPKE_CTX_set1_ikme(NULL, NULL, 0)))
         goto end;
-    if (!TEST_false(OSSL_HPKE_CTX_set1_psk(NULL, NULL, NULL, 0)))
+    if (!TEST_false(OSSL_HPKE_CTX_set1_psk_ex(NULL, NULL, 0, NULL, 0)))
         goto end;
 
     /* bad suite calls */
@@ -1389,13 +1393,14 @@ static int test_hpke_oddcalls(void)
                       testctx, NULL)))
         goto end;
     /* set bad length psk */
-    if (!TEST_false(OSSL_HPKE_CTX_set1_psk(ctx, "foo",
-            (unsigned char *)"bar", -1)))
+    if (!TEST_false(OSSL_HPKE_CTX_set1_psk_ex(ctx,
+            (const unsigned char *)"foo", 3, (unsigned char *)"bar", -1)))
         goto end;
     /* set bad length pskid */
     memset(giant_pskid, 'A', sizeof(giant_pskid) - 1);
     giant_pskid[sizeof(giant_pskid) - 1] = '\0';
-    if (!TEST_false(OSSL_HPKE_CTX_set1_psk(ctx, giant_pskid,
+    if (!TEST_false(OSSL_HPKE_CTX_set1_psk_ex(ctx,
+            (const unsigned char *)giant_pskid, strlen(giant_pskid),
             (unsigned char *)"bar", 3)))
         goto end;
     /* still no psk really set so encap fails */
@@ -1434,8 +1439,8 @@ static int test_hpke_oddcalls(void)
     if (!TEST_false(OSSL_HPKE_CTX_set1_authpriv(ctx, privp)))
         goto end;
     /* bad mode for psk */
-    if (!TEST_false(OSSL_HPKE_CTX_set1_psk(ctx, "foo",
-            (unsigned char *)"bar", 3)))
+    if (!TEST_false(OSSL_HPKE_CTX_set1_psk_ex(ctx,
+            (const unsigned char *)"foo", 3, (unsigned char *)"bar", 3)))
         goto end;
     /* seal before encap */
     if (!TEST_false(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
@@ -1922,6 +1927,100 @@ end:
     return erv;
 }
 
+/*
+ * @brief check OSSL_HPKE_CTX_set1_psk_ex() honours the full PSK id length
+ *
+ * The PSK id is an opaque byte string and may contain NUL bytes. A buggy
+ * implementation that treated it as a C string would ignore everything from
+ * the first NUL onward, so two ids that share a prefix up to and including a
+ * NUL but differ afterwards would be wrongly treated as identical. Here the
+ * sender and a matching receiver interoperate, while a receiver whose id
+ * differs only *after* the NUL fails to decrypt.
+ */
+static int test_hpke_pskid_nul(void)
+{
+    int erv = 0;
+    EVP_PKEY *privp = NULL;
+    unsigned char pub[OSSL_HPKE_TSTSIZE];
+    size_t publen = sizeof(pub);
+    int hpke_mode = OSSL_HPKE_MODE_PSK;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    OSSL_HPKE_CTX *sctx = NULL, *rctx = NULL;
+    /* two ids identical up to and including the NUL, differing after it */
+    static const unsigned char pskid_a[] = { 'i', 'd', 0x00, 'a', 'a' };
+    static const unsigned char pskid_b[] = { 'i', 'd', 0x00, 'b', 'b' };
+    static const unsigned char lpsk[] = {
+        0x02, 0x47, 0xfd, 0x33, 0xb9, 0x13, 0x76, 0x0f,
+        0xa1, 0xfa, 0x51, 0xe1, 0x89, 0x2d, 0x9f, 0x30,
+        0x7f, 0xbe, 0x65, 0xeb, 0x17, 0x1e, 0x81, 0x32,
+        0xc2, 0xaf, 0x18, 0x55, 0x5a, 0x73, 0x8b, 0x82
+    };
+    unsigned char plain[] = "quick brown fox";
+    size_t plainlen = sizeof(plain);
+    unsigned char enc[OSSL_HPKE_TSTSIZE];
+    size_t enclen = sizeof(enc);
+    unsigned char cipher[OSSL_HPKE_TSTSIZE];
+    size_t cipherlen = sizeof(cipher);
+    unsigned char clear[OSSL_HPKE_TSTSIZE];
+    size_t clearlen = sizeof(clear);
+
+    if (!TEST_true(OSSL_HPKE_keygen(hpke_suite, pub, &publen, &privp,
+            NULL, 0, testctx, NULL)))
+        goto end;
+    if (!TEST_ptr(sctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
+                      OSSL_HPKE_ROLE_SENDER, testctx, NULL)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(sctx, pskid_a, sizeof(pskid_a),
+            lpsk, sizeof(lpsk))))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_encap(sctx, enc, &enclen, pub, publen, NULL, 0)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_seal(sctx, cipher, &cipherlen, NULL, 0,
+            plain, plainlen)))
+        goto end;
+
+    /* receiver using the same full id (including bytes after the NUL) works */
+    if (!TEST_ptr(rctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
+                      OSSL_HPKE_ROLE_RECEIVER, testctx, NULL)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(rctx, pskid_a, sizeof(pskid_a),
+            lpsk, sizeof(lpsk))))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_decap(rctx, enc, enclen, privp, NULL, 0)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_open(rctx, clear, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
+    if (!TEST_mem_eq(clear, clearlen, plain, plainlen))
+        goto end;
+    OSSL_HPKE_CTX_free(rctx);
+    rctx = NULL;
+
+    /*
+     * A receiver whose id differs only after the NUL must fail to decrypt;
+     * this is what distinguishes the fixed behaviour from the old strlen() one.
+     */
+    clearlen = sizeof(clear);
+    if (!TEST_ptr(rctx = OSSL_HPKE_CTX_new(hpke_mode, hpke_suite,
+                      OSSL_HPKE_ROLE_RECEIVER, testctx, NULL)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_CTX_set1_psk_ex(rctx, pskid_b, sizeof(pskid_b),
+            lpsk, sizeof(lpsk))))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_decap(rctx, enc, enclen, privp, NULL, 0)))
+        goto end;
+    if (!TEST_false(OSSL_HPKE_open(rctx, clear, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
+    erv = 1;
+
+end:
+    EVP_PKEY_free(privp);
+    OSSL_HPKE_CTX_free(sctx);
+    OSSL_HPKE_CTX_free(rctx);
+    return erv;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -1973,6 +2072,7 @@ int setup_tests(void)
     ADD_TEST(test_hpke_oddcalls);
     ADD_TEST(test_hpke_compressed);
     ADD_TEST(test_hpke_noncereuse);
+    ADD_TEST(test_hpke_pskid_nul);
     return 1;
 }
 

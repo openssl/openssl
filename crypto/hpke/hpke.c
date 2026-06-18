@@ -9,6 +9,9 @@
 
 /* An OpenSSL-based HPKE implementation of RFC9180 */
 
+/* This file implements the deprecated OSSL_HPKE_CTX_set1_psk(). */
+#include "internal/deprecated.h"
+
 #include <string.h>
 #include <openssl/rand.h>
 #include <openssl/kdf.h>
@@ -64,7 +67,8 @@ struct ossl_hpke_ctx_st {
     size_t noncelen;
     unsigned char *exportersec; /* exporter secret */
     size_t exporterseclen;
-    char *pskid; /* PSK stuff */
+    unsigned char *pskid; /* PSK identifier (an opaque byte string) */
+    size_t pskidlen;
     unsigned char *psk;
     size_t psklen;
     EVP_PKEY *authpriv; /* sender's authentication private key */
@@ -709,7 +713,7 @@ static int hpke_do_middle(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         return 0;
     }
-    pskidlen = (ctx->psk == NULL ? 0 : strlen(ctx->pskid));
+    pskidlen = (ctx->psk == NULL ? 0 : ctx->pskidlen);
     /* full suite details as per RFC9180 sec 5.1 */
     suitebuf[0] = ctx->suite.kem_id / 256;
     suitebuf[1] = ctx->suite.kem_id % 256;
@@ -722,7 +726,7 @@ static int hpke_do_middle(OSSL_HPKE_CTX *ctx,
             NULL, 0, OSSL_HPKE_SEC51LABEL,
             suitebuf, sizeof(suitebuf),
             OSSL_HPKE_PSKIDHASH_LABEL,
-            (unsigned char *)ctx->pskid, pskidlen)
+            ctx->pskid, pskidlen)
         != 1) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
@@ -879,8 +883,8 @@ void OSSL_HPKE_CTX_free(OSSL_HPKE_CTX *ctx)
     return;
 }
 
-int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
-    const char *pskid,
+int OSSL_HPKE_CTX_set1_psk_ex(OSSL_HPKE_CTX *ctx,
+    const unsigned char *pskid, size_t pskidlen,
     const unsigned char *psk, size_t psklen)
 {
     if (ctx == NULL || pskid == NULL || psk == NULL || psklen == 0) {
@@ -895,11 +899,11 @@ int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
-    if (strlen(pskid) > OSSL_HPKE_MAX_PARMLEN) {
+    if (pskidlen > OSSL_HPKE_MAX_PARMLEN) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
-    if (strlen(pskid) == 0) {
+    if (pskidlen == 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -915,14 +919,28 @@ int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
         return 0;
     ctx->psklen = psklen;
     OPENSSL_free(ctx->pskid);
-    ctx->pskid = OPENSSL_strdup(pskid);
+    ctx->pskidlen = 0;
+    ctx->pskid = OPENSSL_memdup(pskid, pskidlen);
     if (ctx->pskid == NULL) {
         OPENSSL_clear_free(ctx->psk, ctx->psklen);
         ctx->psk = NULL;
         ctx->psklen = 0;
         return 0;
     }
+    ctx->pskidlen = pskidlen;
     return 1;
+}
+
+int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
+    const char *pskid,
+    const unsigned char *psk, size_t psklen)
+{
+    if (pskid == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    return OSSL_HPKE_CTX_set1_psk_ex(ctx, (const unsigned char *)pskid,
+        strlen(pskid), psk, psklen);
 }
 
 int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
