@@ -60,7 +60,8 @@ the IANA Exporter Label Registry
 (L<https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml#exporter-labels>).
 Alternatively labels beginning with "EXPERIMENTAL" are permitted by the standard
 to be used without registration. TLSv1.3 imposes a maximum label length of
-249 bytes.
+249 bytes. For TLSv1.2 and below, OpenSSL imposes a maximum label length of
+65535 bytes.
 
 Note that this function is only defined for TLSv1.0 and above, and DTLSv1.0 and
 above. Attempting to use it in SSLv3 will result in an error.
