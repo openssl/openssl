@@ -111,6 +111,9 @@ $avx=1 if (!$avx && $win64 && ($flavour =~ /masm/ || $ENV{ASM} =~ /ml64/) &&
 	   $1>=10);
 $avx=1 if (!$avx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/ && $2>=3.0);
 
+$avx=1 if (!$avx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__` =~ /#define __clang_major__.([0-9]+)/ &&
+	   $1>=11); #icx started with clang 11
+
 $shaext=1;	### set to zero if compiling for 1.0.1
 
 $stitched_decrypt=0;
