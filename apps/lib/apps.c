@@ -1713,6 +1713,16 @@ err:
     return ret;
 }
 
+/*
+ * Character that separates a filename from its suffix in the file-rotation
+ * helpers below.  On VMS, '.' is structural so we use '-' instead.
+ */
+#ifndef OPENSSL_SYS_VMS
+#define SUFFIX_SEP '.'
+#else
+#define SUFFIX_SEP '-'
+#endif
+
 int save_serial(const char *serialfile, const char *suffix,
     const BIGNUM *serial, ASN1_INTEGER **retai)
 {
@@ -1722,23 +1732,14 @@ int save_serial(const char *serialfile, const char *suffix,
     ASN1_INTEGER *ai = NULL;
 
     if (suffix == NULL) {
-        if (OPENSSL_strlcpy(buf[0], serialfile, BSIZE) >= BSIZE) {
-            BIO_puts(bio_err, "File name too long\n");
-            goto err;
-        }
+        if (OPENSSL_strlcpy(buf[0], serialfile, BSIZE) >= BSIZE)
+            goto too_long;
     } else {
-        int n = snprintf(buf[0], sizeof(buf[0]),
-#ifndef OPENSSL_SYS_VMS
-            "%s.%s",
-#else
-            "%s-%s",
-#endif
-            serialfile, suffix);
+        int n = snprintf(buf[0], sizeof(buf[0]), "%s%c%s",
+            serialfile, SUFFIX_SEP, suffix);
 
-        if (n < 0 || (size_t)n >= sizeof(buf[0])) {
-            BIO_puts(bio_err, "File name too long\n");
-            goto err;
-        }
+        if (n < 0 || (size_t)n >= sizeof(buf[0]))
+            goto too_long;
     }
     out = BIO_new_file(buf[0], "w");
     if (out == NULL) {
@@ -1756,6 +1757,9 @@ int save_serial(const char *serialfile, const char *suffix,
         *retai = ai;
         ai = NULL;
     }
+    goto err;
+too_long:
+    BIO_puts(bio_err, "File name too long\n");
 err:
     if (!ret)
         ERR_print_errors(bio_err);
@@ -1768,23 +1772,16 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
     const char *old_suffix)
 {
     char buf[2][BSIZE];
-    size_t i, j;
+    int n;
 
-    i = strlen(serialfile) + strlen(old_suffix);
-    j = strlen(serialfile) + strlen(new_suffix);
-    if (i > j)
-        j = i;
-    if (j + 1 >= BSIZE) {
-        BIO_puts(bio_err, "File name too long\n");
-        goto err;
-    }
-#ifndef OPENSSL_SYS_VMS
-    snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, new_suffix);
-    snprintf(buf[1], sizeof(buf[1]), "%s.%s", serialfile, old_suffix);
-#else
-    snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, new_suffix);
-    snprintf(buf[1], sizeof(buf[1]), "%s-%s", serialfile, old_suffix);
-#endif
+    n = snprintf(buf[0], sizeof(buf[0]), "%s%c%s",
+        serialfile, SUFFIX_SEP, new_suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[0]))
+        goto too_long;
+    n = snprintf(buf[1], sizeof(buf[1]), "%s%c%s",
+        serialfile, SUFFIX_SEP, old_suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[1]))
+        goto too_long;
     if (rename(serialfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
         && errno != ENOTDIR
@@ -1803,6 +1800,8 @@ int rotate_serial(const char *serialfile, const char *new_suffix,
         goto err;
     }
     return 1;
+too_long:
+    BIO_puts(bio_err, "File name too long\n");
 err:
     ERR_print_errors(bio_err);
     return 0;
@@ -1936,22 +1935,20 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
 {
     char buf[3][BSIZE];
     BIO *out;
-    int j;
+    int j, n;
 
-    j = (int)(strlen(dbfile) + strlen(suffix));
-    if (j + 6 >= BSIZE) {
-        BIO_puts(bio_err, "File name too long\n");
-        goto err;
-    }
-#ifndef OPENSSL_SYS_VMS
-    snprintf(buf[2], sizeof(buf[2]), "%s.attr", dbfile);
-    snprintf(buf[1], sizeof(buf[1]), "%s.attr.%s", dbfile, suffix);
-    snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, suffix);
-#else
-    snprintf(buf[2], sizeof(buf[2]), "%s-attr", dbfile);
-    snprintf(buf[1], sizeof(buf[1]), "%s-attr-%s", dbfile, suffix);
-    snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, suffix);
-#endif
+    n = snprintf(buf[2], sizeof(buf[2]), "%s%cattr",
+        dbfile, SUFFIX_SEP);
+    if (n < 0 || (size_t)n >= sizeof(buf[2]))
+        goto too_long;
+    n = snprintf(buf[1], sizeof(buf[1]), "%s%cattr%c%s",
+        dbfile, SUFFIX_SEP, SUFFIX_SEP, suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[1]))
+        goto too_long;
+    n = snprintf(buf[0], sizeof(buf[0]), "%s%c%s",
+        dbfile, SUFFIX_SEP, suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[0]))
+        goto too_long;
     out = BIO_new_file(buf[0], "w");
     if (out == NULL) {
         perror(dbfile);
@@ -1974,6 +1971,8 @@ int save_index(const char *dbfile, const char *suffix, CA_DB *db)
     BIO_free(out);
 
     return 1;
+too_long:
+    BIO_puts(bio_err, "File name too long\n");
 err:
     ERR_print_errors(bio_err);
     return 0;
@@ -1983,29 +1982,28 @@ int rotate_index(const char *dbfile, const char *new_suffix,
     const char *old_suffix)
 {
     char buf[5][BSIZE];
-    size_t i, j;
+    int n;
 
-    i = strlen(dbfile) + strlen(old_suffix);
-    j = strlen(dbfile) + strlen(new_suffix);
-    if (i > j)
-        j = i;
-    if (j + 6 >= BSIZE) {
-        BIO_puts(bio_err, "File name too long\n");
-        goto err;
-    }
-#ifndef OPENSSL_SYS_VMS
-    snprintf(buf[4], sizeof(buf[4]), "%s.attr", dbfile);
-    snprintf(buf[3], sizeof(buf[3]), "%s.attr.%s", dbfile, old_suffix);
-    snprintf(buf[2], sizeof(buf[2]), "%s.attr.%s", dbfile, new_suffix);
-    snprintf(buf[1], sizeof(buf[1]), "%s.%s", dbfile, old_suffix);
-    snprintf(buf[0], sizeof(buf[0]), "%s.%s", dbfile, new_suffix);
-#else
-    snprintf(buf[4], sizeof(buf[4]), "%s-attr", dbfile);
-    snprintf(buf[3], sizeof(buf[3]), "%s-attr-%s", dbfile, old_suffix);
-    snprintf(buf[2], sizeof(buf[2]), "%s-attr-%s", dbfile, new_suffix);
-    snprintf(buf[1], sizeof(buf[1]), "%s-%s", dbfile, old_suffix);
-    snprintf(buf[0], sizeof(buf[0]), "%s-%s", dbfile, new_suffix);
-#endif
+    n = snprintf(buf[4], sizeof(buf[4]), "%s%cattr",
+        dbfile, SUFFIX_SEP);
+    if (n < 0 || (size_t)n >= sizeof(buf[4]))
+        goto too_long;
+    n = snprintf(buf[3], sizeof(buf[3]), "%s%cattr%c%s",
+        dbfile, SUFFIX_SEP, SUFFIX_SEP, old_suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[3]))
+        goto too_long;
+    n = snprintf(buf[2], sizeof(buf[2]), "%s%cattr%c%s",
+        dbfile, SUFFIX_SEP, SUFFIX_SEP, new_suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[2]))
+        goto too_long;
+    n = snprintf(buf[1], sizeof(buf[1]), "%s%c%s",
+        dbfile, SUFFIX_SEP, old_suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[1]))
+        goto too_long;
+    n = snprintf(buf[0], sizeof(buf[0]), "%s%c%s",
+        dbfile, SUFFIX_SEP, new_suffix);
+    if (n < 0 || (size_t)n >= sizeof(buf[0]))
+        goto too_long;
     if (rename(dbfile, buf[1]) < 0 && errno != ENOENT
 #ifdef ENOTDIR
         && errno != ENOTDIR
@@ -2041,6 +2039,8 @@ int rotate_index(const char *dbfile, const char *new_suffix,
         goto err;
     }
     return 1;
+too_long:
+    BIO_puts(bio_err, "File name too long\n");
 err:
     ERR_print_errors(bio_err);
     return 0;
