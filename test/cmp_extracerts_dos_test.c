@@ -124,7 +124,7 @@ static X509 *generate_unique_self_signed_cert(EVP_PKEY *pkey, int index)
     ASN1_INTEGER *serial = NULL;
     char cn[64];
 
-    BIO_snprintf(cn, sizeof(cn), "attacker-cert-%d", index);
+    snprintf(cn, sizeof(cn), "attacker-cert-%d", index);
 
     if (!TEST_ptr(cert = X509_new())
         || !TEST_true(X509_set_version(cert, X509_VERSION_3)))
