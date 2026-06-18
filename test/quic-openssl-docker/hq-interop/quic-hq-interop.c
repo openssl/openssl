@@ -589,11 +589,11 @@ static size_t build_request_set(SSL *ssl)
         outnames[poll_idx] = req;
 
         /* Format the http request */
-        BIO_snprintf(req_string, REQ_STRING_SZ, "GET /%s\r\n", req);
+        snprintf(req_string, REQ_STRING_SZ, "GET /%s\r\n", req);
 
         /* build the outfile request path */
         memset(outfilename, 0, REQ_STRING_SZ);
-        BIO_snprintf(outfilename, REQ_STRING_SZ, "/downloads/%s", req);
+        snprintf(outfilename, REQ_STRING_SZ, "/downloads/%s", req);
 
         /* open a bio to write the file */
         outbiolist[poll_idx] = BIO_new_file(outfilename, "w+");
