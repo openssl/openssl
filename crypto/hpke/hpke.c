@@ -1212,7 +1212,7 @@ int OSSL_HPKE_open(OSSL_HPKE_CTX *ctx,
     unsigned char seqbuf[OSSL_HPKE_MAX_NONCELEN];
     size_t seqlen = 0;
 
-    if (ctx == NULL || pt == NULL || (ptlen == NULL && *ptlen != 0)
+    if (ctx == NULL || ptlen == NULL || (pt == NULL && *ptlen != 0)
         || ct == NULL || ctlen == 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
