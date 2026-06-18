@@ -45,9 +45,9 @@ int BIO_dump_indent_cb(int (*cb)(const void *data, size_t len, void *u),
     if ((rows * dump_width) < len)
         rows++;
     for (i = 0; i < rows; i++) {
-        n = BIO_snprintf(buf, sizeof(buf), "%*s%04x - ", indent, "",
+        n = snprintf(buf, sizeof(buf), "%*s%04x - ", indent, "",
             i * dump_width);
-        if (n < 0)
+        if (n < 0 || (size_t)n >= sizeof(buf))
             return -1;
         for (j = 0; j < dump_width; j++) {
             if (SPACE(buf, n, 3)) {
