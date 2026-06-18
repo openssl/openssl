@@ -516,6 +516,7 @@ void ossl_err_string_int(unsigned long e, const char *func,
     char lsbuf[64], rsbuf[256];
     const char *ls, *rs = NULL;
     unsigned long l, r;
+    int n;
 
     if (len == 0)
         return;
@@ -548,11 +549,10 @@ void ossl_err_string_int(unsigned long e, const char *func,
         rs = rsbuf;
     }
 
-    snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
-    if (strlen(buf) == len - 1) {
+    n = snprintf(buf, len, "error:%08lX:%s:%s:%s", e, ls, func, rs);
+    if (n < 0 || (size_t)n >= len)
         /* Didn't fit; use a minimal format. */
         snprintf(buf, len, "err:%lx:%lx:%lx:%lx", e, l, 0L, r);
-    }
 }
 
 void ERR_error_string_n(unsigned long e, char *buf, size_t len)
