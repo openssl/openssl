@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "dso_local.h"
 
 #ifdef DSO_DL
@@ -228,13 +230,13 @@ static char *dl_name_converter(DSO *dso, const char *filename)
         return NULL;
     }
     if (transform)
-        BIO_snprintf(translated, rsize,
+        snprintf(translated, rsize,
             (DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0
                 ? "lib%s%s"
                 : "%s%s",
             filename, DSO_EXTENSION);
     else
-        BIO_snprintf(translated, rsize, "%s", filename);
+        snprintf(translated, rsize, "%s", filename);
     return translated;
 }
 

@@ -685,7 +685,7 @@ static void put_num(int64_t val, char **buf, size_t *remain, size_t *needed)
     if (*remain == 0)
         return;
 
-    BIO_snprintf(*buf, *remain, "%lld", (long long int)val);
+    snprintf(*buf, *remain, "%lld", (long long int)val);
     if (*remain < len) {
         *buf += *remain;
         *remain = 0;

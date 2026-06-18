@@ -265,7 +265,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
          * didn't go the way one might expect.
          */
         if (serv[0] == '\0') {
-            BIO_snprintf(serv, sizeof(serv), "%d",
+            snprintf(serv, sizeof(serv), "%d",
                 ntohs(BIO_ADDR_rawport(ap)));
         }
 
@@ -279,7 +279,7 @@ static int addr_strings(const BIO_ADDR *ap, int numeric,
             *hostname = OPENSSL_strdup(inet_ntoa(ap->s_in.sin_addr));
         if (service != NULL) {
             char serv[6]; /* port is 16 bits => max 5 decimal digits */
-            BIO_snprintf(serv, sizeof(serv), "%d", ntohs(ap->s_in.sin_port));
+            snprintf(serv, sizeof(serv), "%d", ntohs(ap->s_in.sin_port));
             *service = OPENSSL_strdup(serv);
         }
     }

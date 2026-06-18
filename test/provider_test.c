@@ -45,7 +45,7 @@ static int test_provider(OSSL_LIB_CTX **libctx, const char *name,
     int dolegacycheck = (legacy != NULL);
     OSSL_PROVIDER *deflt = NULL, *base = NULL;
 
-    BIO_snprintf(expected_greeting, sizeof(expected_greeting),
+    snprintf(expected_greeting, sizeof(expected_greeting),
         "Hello OpenSSL %.20s, greetings from %s!",
         OPENSSL_VERSION_STR, name);
 

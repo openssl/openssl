@@ -275,7 +275,7 @@ static int check_message(const struct set_name_fn *fn, const char *op,
 
     if (match < 0)
         return 1;
-    BIO_snprintf(msg, sizeof(msg), "%s: %s: [%s] %s [%s]",
+    snprintf(msg, sizeof(msg), "%s: %s: [%s] %s [%s]",
         fn->name, op, nameincert,
         match ? "matches" : "does not match", name);
     if (is_exception(msg))

@@ -15,6 +15,7 @@
 #include "app_libctx.h"
 #include "internal/nelem.h"
 #include "internal/numbers.h"
+#include <stdio.h>
 #include <string.h>
 #if !defined(OPENSSL_SYS_MSDOS)
 #include <unistd.h>
@@ -148,7 +149,7 @@ char *opt_appname(const char *argv0)
     size_t len = strlen(prog);
 
     if (argv0 != NULL)
-        BIO_snprintf(prog + len, sizeof(prog) - len - 1, " %s", argv0);
+        snprintf(prog + len, sizeof(prog) - len - 1, " %s", argv0);
     return prog;
 }
 

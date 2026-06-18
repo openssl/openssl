@@ -672,7 +672,7 @@ char *CONF_get1_default_config_file(void)
 
     if (file == NULL)
         return NULL;
-    BIO_snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
+    snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
 
     return file;
 }

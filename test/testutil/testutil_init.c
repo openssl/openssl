@@ -33,7 +33,7 @@ static size_t internal_trace_cb(const char *buf, size_t cnt,
 
         tid = CRYPTO_THREAD_get_current_id();
         hex = OPENSSL_buf2hexstr((const unsigned char *)&tid, sizeof(tid));
-        BIO_snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
+        snprintf(buffer, sizeof(buffer), "TRACE[%s]:%s: ",
             hex, OSSL_trace_get_category_name(category));
         OPENSSL_free(hex);
         BIO_set_prefix(trace_data->bio, buffer);

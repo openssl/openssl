@@ -473,7 +473,7 @@ int enc_main(int argc, char **argv)
             for (;;) {
                 char prompt[200];
 
-                BIO_snprintf(prompt, sizeof(prompt), "enter %s %s password:",
+                snprintf(prompt, sizeof(prompt), "enter %s %s password:",
                     EVP_CIPHER_get0_name(cipher),
                     (enc) ? "encryption" : "decryption");
                 strbuf[0] = '\0';

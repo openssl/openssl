@@ -147,7 +147,7 @@ static int shouldfail(void)
     char buff[80];
 
     if (md_tracefd > 0) {
-        BIO_snprintf(buff, sizeof(buff),
+        snprintf(buff, sizeof(buff),
             "%c C%ld %%%d R%d\n",
             shoulditfail ? '-' : '+', md_count, md_fail_percent, roll);
         len = strlen(buff);

@@ -93,7 +93,7 @@ static int compare_with_file(const char *alg, int type, BIO *membio)
         goto err;
     }
 
-    BIO_snprintf(filename, sizeof(filename), "%s.%s", alg, suffix);
+    snprintf(filename, sizeof(filename), "%s.%s", alg, suffix);
     fullfile = test_mk_file_path(datadir, filename);
     if (!TEST_ptr(fullfile))
         goto err;

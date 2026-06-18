@@ -32,11 +32,11 @@ void ERR_print_errors_cb(int (*cb)(const char *str, size_t len, void *u),
             data = "";
 
         hex = ossl_buf2hexstr_sep((const unsigned char *)&tid, sizeof(tid), '\0');
-        BIO_snprintf(buf, sizeof(buf), "%s:", hex == NULL ? "<null>" : hex);
+        snprintf(buf, sizeof(buf), "%s:", hex == NULL ? "<null>" : hex);
         offset = (int)strlen(buf);
         ossl_err_string_int(l, func, buf + offset, sizeof(buf) - offset);
         offset += (int)strlen(buf + offset);
-        BIO_snprintf(buf + offset, sizeof(buf) - offset, ":%s:%d:%s\n",
+        snprintf(buf + offset, sizeof(buf) - offset, ":%s:%d:%s\n",
             file, line, data);
         OPENSSL_free(hex);
         if (cb(buf, strlen(buf), u) <= 0)

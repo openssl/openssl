@@ -73,13 +73,13 @@ static int do_esc_char(uint32_t c, unsigned short flags, char *do_quotes,
     if (c > UNICODE_MAX)
         return -1;
     if (c > 0xffff) {
-        BIO_snprintf(tmphex, sizeof(tmphex), "\\W%08" PRIX32, c);
+        snprintf(tmphex, sizeof(tmphex), "\\W%08" PRIX32, c);
         if (!io_ch(arg, tmphex, 10))
             return -1;
         return 10;
     }
     if (c > 0xff) {
-        BIO_snprintf(tmphex, sizeof(tmphex), "\\U%04" PRIX32, c);
+        snprintf(tmphex, sizeof(tmphex), "\\U%04" PRIX32, c);
         if (!io_ch(arg, tmphex, 6))
             return -1;
         return 6;
@@ -105,7 +105,7 @@ static int do_esc_char(uint32_t c, unsigned short flags, char *do_quotes,
         return 2;
     }
     if (chflgs & (ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB | ASN1_STRFLGS_ESC_2254)) {
-        BIO_snprintf(tmphex, 11, "\\%02X", chtmp);
+        snprintf(tmphex, 11, "\\%02X", chtmp);
         if (!io_ch(arg, tmphex, 3))
             return -1;
         return 3;

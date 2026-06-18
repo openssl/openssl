@@ -340,7 +340,7 @@ static void qlog_event_seq_header(QLOG *qlog)
                 if (qlog->info.override_impl_name != NULL) {
                     p = qlog->info.override_impl_name;
                 } else {
-                    BIO_snprintf(buf, sizeof(buf), "OpenSSL/%s (%s)",
+                    snprintf(buf, sizeof(buf), "OpenSSL/%s (%s)",
                         OpenSSL_version(OPENSSL_FULL_VERSION_STRING),
                         OpenSSL_version(OPENSSL_PLATFORM) + 10);
                 }

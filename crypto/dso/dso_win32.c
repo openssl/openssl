@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "internal/e_os.h"
 #include "dso_local.h"
 
@@ -456,7 +458,7 @@ static char *win32_name_converter(DSO *dso, const char *filename)
         ERR_raise(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED);
         return NULL;
     }
-    BIO_snprintf(translated, len, "%s%s", filename, transform ? ".dll" : "");
+    snprintf(translated, len, "%s%s", filename, transform ? ".dll" : "");
     return translated;
 }
 

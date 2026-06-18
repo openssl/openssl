@@ -181,7 +181,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
 
         if ((*ppath = OPENSSL_malloc(buflen)) == NULL)
             goto err;
-        BIO_snprintf(*ppath, buflen, "/%s", path);
+        snprintf(*ppath, buflen, "/%s", path);
     }
     return 1;
 

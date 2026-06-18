@@ -41,7 +41,7 @@ static const char *expected_greeting1(const char *name)
 {
     static char expected_greeting[256] = "";
 
-    BIO_snprintf(expected_greeting, sizeof(expected_greeting),
+    snprintf(expected_greeting, sizeof(expected_greeting),
         "Hello OpenSSL %.20s, greetings from %s!",
         OPENSSL_VERSION_STR, name);
 

@@ -84,7 +84,7 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         ntmp = OPENSSL_malloc(nlen);
         if (ntmp == NULL)
             goto err;
-        BIO_snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
+        snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
     }
