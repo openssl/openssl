@@ -245,7 +245,12 @@ static int test_bool(void)
     if (!TEST(0, TEST_true(0))
         || !TEST(1, TEST_true(1))
         || !TEST(1, TEST_false(0))
-        || !TEST(0, TEST_false(1)))
+        || !TEST(0, TEST_false(1))
+        /* test value not an element of {0,1} */
+        || !TEST(0, TEST_true(-4))
+        || !TEST(1, TEST_true(4))
+        || !TEST(1, TEST_false(-3))
+        || !TEST(0, TEST_false(3)))
         goto err;
     return 1;
 
