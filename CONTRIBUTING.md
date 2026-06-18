@@ -50,7 +50,37 @@ guidelines:
         git push -f [<repository> [<branch>]]
     ```
 
- 2. All source files should start with the following text (with
+ 2. Similarly, if a non-trivial portion of a contribution was created
+    by an AI, you must declare which agent and model were used. This
+    is done by adding `Assisted-by: {agent}:{model}` below the commit
+    message:
+
+    ```
+        One-line summary of change with AI-created portions
+
+        Assisted-by: Claude:claude-sonnet-4-6
+    ```
+
+    Multiple Assisted-by trailers can be included if multiple tools were used:
+
+    ```
+        Assisted-by: Claude:claude-sonnet-4-6
+        Assisted-by: ChatGPT:gpt-4o
+        Assisted-by: GitHub Copilot:gpt-4.1
+    ```
+
+    You will need to have signed a v1.1 or later CLA in order to
+    include AI-generated content in your contribution. CLAs signed
+    after June 2026 will have the requisite clauses.
+
+    Consult the [OpenSSL AI Code and Documentation Contribution
+    Policy] if an AI model assisted with the creation of your
+    contribution.
+
+    [OpenSSL AI Code and Documentation Contribution
+    Policy]: <https://openssl-library.org/policies/general/ai-policy/>
+
+ 3. All source files should start with the following text (with
     appropriate comment characters at the start of each line and the
     year(s) updated):
 
@@ -63,11 +93,11 @@ guidelines:
         https://www.openssl.org/source/license.html
     ```
 
- 3. Patches should be as current as possible; expect to have to rebase
+ 4. Patches should be as current as possible; expect to have to rebase
     often. We do not accept merge commits, you will have to remove them
     (usually by rebasing) before it will be acceptable.
 
- 4. Code provided should follow our [coding style] and [documentation policy]
+ 5. Code provided should follow our [coding style] and [documentation policy]
     and compile without warnings.
     There is a [Perl tool](util/check-format.pl) that helps
     finding code formatting mistakes and other coding style nits.
@@ -80,16 +110,16 @@ guidelines:
     [coding style]: https://openssl-library.org/policies/technical/coding-style/
     [documentation policy]: https://openssl-library.org/policies/technical/documentation-policy/
 
- 5. When at all possible, code contributions should include tests. These can
+ 6. When at all possible, code contributions should include tests. These can
     either be added to an existing test, or completely new.  Please see
     [test/README.md](test/README.md) for information on the test framework.
 
- 6. New features or changed functionality must include
+ 7. New features or changed functionality must include
     documentation. Please look at the `.pod` files in `doc/man[1357]` for
     examples of our style. Run `make doc-nits` to make sure that your
     documentation changes are clean.
 
- 7. For user visible changes (API changes, behaviour changes, ...),
+ 8. For user visible changes (API changes, behaviour changes, ...),
     consider adding a note in [CHANGES.md](CHANGES.md).
     This could be a summarising description of the change, and could
     explain the grander details.
@@ -100,7 +130,7 @@ guidelines:
     with a specific release without having to sift through the higher
     noise ratio in git-log.
 
- 8. For larger or more important user visible changes, as well as
+ 9. For larger or more important user visible changes, as well as
     security fixes, please add a line in [NEWS.md](NEWS.md).
     On exception, it might be worth adding a multi-line entry (such as
     the entry that announces all the types that became opaque with
@@ -108,5 +138,5 @@ guidelines:
     This file helps users get a very quick summary of what comes with a
     specific release, to see if an upgrade is worth the effort.
 
- 9. Guidelines how to integrate error output of new crypto library modules
+10. Guidelines how to integrate error output of new crypto library modules
     can be found in [crypto/err/README.md](crypto/err/README.md).
