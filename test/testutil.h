@@ -570,8 +570,8 @@ void test_perror(const char *s);
 #define TEST_mem_eq(a, m, b, n) test_mem_eq(__FILE__, __LINE__, #a, #b, a, m, b, n)
 #define TEST_mem_ne(a, m, b, n) test_mem_ne(__FILE__, __LINE__, #a, #b, a, m, b, n)
 
-#define TEST_true(a) test_true(__FILE__, __LINE__, #a, (a) != 0)
-#define TEST_false(a) test_false(__FILE__, __LINE__, #a, (a) != 0)
+#define TEST_true(a) test_true(__FILE__, __LINE__, #a, (int)(a))
+#define TEST_false(a) test_false(__FILE__, __LINE__, #a, (int)(a))
 
 #define TEST_err_r(a, b) test_err_r(__FILE__, __LINE__, a, b)
 #define TEST_err_s(a) test_err_s(__FILE__, __LINE__, a)

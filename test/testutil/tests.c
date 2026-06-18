@@ -259,17 +259,17 @@ int test_ptr(const char *file, int line, const char *s, const void *p)
 
 int test_true(const char *file, int line, const char *s, int b)
 {
-    if (b)
+    if (b > 0)
         return 1;
-    test_fail_message(NULL, file, line, "bool", s, "true", "==", "false");
+    test_fail_message(NULL, file, line, "truth", s, "0", "<=", "%d", b);
     return 0;
 }
 
 int test_false(const char *file, int line, const char *s, int b)
 {
-    if (!b)
+    if (b <= 0)
         return 1;
-    test_fail_message(NULL, file, line, "bool", s, "false", "==", "true");
+    test_fail_message(NULL, file, line, "truth", s, "0", ">", "%d", b);
     return 0;
 }
 
