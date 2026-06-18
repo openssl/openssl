@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "apps.h"
 #include "app_params.h"
 
@@ -45,29 +47,29 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
         break;
     }
 
-    printed_len = BIO_snprintf(buf, bufsz, "%s: ", param->key);
-    if (printed_len > 0) {
+    printed_len = snprintf(buf, bufsz, "%s: ", param->key);
+    if (printed_len > 0 && (size_t)printed_len < bufsz) {
         buf += printed_len;
         bufsz -= printed_len;
     }
-    printed_len = BIO_snprintf(buf, bufsz, "%s%s", type_mod, type);
-    if (printed_len > 0) {
+    printed_len = snprintf(buf, bufsz, "%s%s", type_mod, type);
+    if (printed_len > 0 && (size_t)printed_len < bufsz) {
         buf += printed_len;
         bufsz -= printed_len;
     }
     if (show_type_number) {
-        printed_len = BIO_snprintf(buf, bufsz, " [%u]", param->data_type);
-        if (printed_len > 0) {
+        printed_len = snprintf(buf, bufsz, " [%u]", param->data_type);
+        if (printed_len > 0 && (size_t)printed_len < bufsz) {
             buf += printed_len;
             bufsz -= printed_len;
         }
     }
     if (param->data_size == 0)
-        printed_len = BIO_snprintf(buf, bufsz, " (arbitrary size)");
+        printed_len = snprintf(buf, bufsz, " (arbitrary size)");
     else
-        printed_len = BIO_snprintf(buf, bufsz, " (max %zu bytes large)",
+        printed_len = snprintf(buf, bufsz, " (max %zu bytes large)",
             param->data_size);
-    if (printed_len > 0) {
+    if (printed_len > 0 && (size_t)printed_len < bufsz) {
         buf += printed_len;
         bufsz -= printed_len;
     }
