@@ -15,6 +15,7 @@
  */
 #include "internal/deprecated.h"
 
+#include <stdio.h>
 #include <string.h>
 
 /* The following includes get us all the EVP_PKEY_CTRL macros */
@@ -1410,7 +1411,7 @@ static int fix_rsa_pss_saltlen(enum state state,
                 break;
         }
         if (i == OSSL_NELEM(str_value_map)) {
-            BIO_snprintf(ctx->name_buf, sizeof(ctx->name_buf), "%d", ctx->p1);
+            snprintf(ctx->name_buf, sizeof(ctx->name_buf), "%d", ctx->p1);
         } else {
             /* This won't truncate but it will quiet static analysers */
             strncpy(ctx->name_buf, str_value_map[i].ptr, sizeof(ctx->name_buf) - 1);

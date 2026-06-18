@@ -12,8 +12,9 @@
 /* This app is disabled when OPENSSL_NO_CMP is defined. */
 #include "internal/e_os.h"
 
-#include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "apps.h"
 #include "http_server.h"
@@ -2270,7 +2271,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
     if (!OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_USE_TLS, opt_tls_used))
         goto err;
 
-    BIO_snprintf(server_port, sizeof(server_port), "%s", port);
+    snprintf(server_port, sizeof(server_port), "%s", port);
     if (opt_path == NULL)
         used_path = path;
     if (!OSSL_CMP_CTX_set1_server(ctx, host)
@@ -2280,13 +2281,13 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
         goto oom;
     if (opt_no_proxy != NULL && !OSSL_CMP_CTX_set1_no_proxy(ctx, opt_no_proxy))
         goto oom;
-    (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
+    (void)snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
         opt_tls_used ? "s" : "", host, port,
         *used_path == '/' ? used_path + 1 : used_path);
 
     proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, use_ssl);
     if (proxy_host != NULL)
-        (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
+        (void)snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
 
 set_path:
 #endif
@@ -2556,7 +2557,7 @@ static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
     if (cert == NULL) {
         char desc_cert[80];
 
-        BIO_snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
+        snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
         return delete_file(file, desc_cert);
     } else {
         STACK_OF(X509) *certs = sk_X509_new_null();
@@ -2805,7 +2806,7 @@ static int read_config(void)
             char *conf_argv[3];
             char arg1[82];
 
-            BIO_snprintf(arg1, 81, "-%s", (char *)opt->name);
+            snprintf(arg1, 81, "-%s", (char *)opt->name);
             conf_argv[0] = prog;
             conf_argv[1] = arg1;
             if (opt->valtype == '-') {

@@ -1938,7 +1938,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     if (BIO_do_accept(acpt) <= 0)
         goto err;
 
-    BIO_snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
+    snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
 
     client = BIO_new_connect(addr_str);
     if (!client)

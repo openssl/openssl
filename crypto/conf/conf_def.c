@@ -587,7 +587,7 @@ err:
 #endif
     if (line != NULL)
         *line = eline;
-    BIO_snprintf(btmp, sizeof(btmp), "%ld", eline);
+    snprintf(btmp, sizeof(btmp), "%ld", eline);
     ERR_add_error_data(2, "line ", btmp);
     if (h != conf->data) {
         CONF_free(conf->data);
