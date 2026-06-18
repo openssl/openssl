@@ -65,12 +65,12 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
     return ret;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 /*
- * For historical reasons BIO_snprintf and friends return a failure for string
- * truncation (-1) instead of the POSIX requirement of a success with the
- * number of characters that would have been written. Upon seeing -1 on
- * return, the caller must treat output buf as unsafe (as a buf with missing
- * nul terminator).
+ * For historical reasons BIO_snprintf and friends return -1 on truncation
+ * instead of the C99 snprintf semantic of returning the number of characters
+ * that would have been written.  Deprecated in 4.1; new code should call
+ * snprintf() / vsnprintf() directly.
  */
 int BIO_snprintf(char *buf, size_t n, const char *format, ...)
 {
@@ -100,3 +100,4 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
 #endif
     return ret;
 }
+#endif /* OPENSSL_NO_DEPRECATED_4_1 */

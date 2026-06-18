@@ -83,6 +83,13 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Deprecated BIO_snprintf() and BIO_vsnprintf(). C99 snprintf() is now
+   universally available, and the wrappers return -1 on truncation rather
+   than the would-have-been length, so callers reaching for the standard
+   idiom by reflex produce bugs. Use snprintf() and vsnprintf() directly.
+
+   *Bob Beck*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
