@@ -28,7 +28,7 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
     const char *p;
     int pop_f_prefix = 0;
     long saved_indent = -1;
-    int i = 0;
+    int i = 0, n;
     BIO *bio = NULL;
 
     if (constructed & V_ASN1_CONSTRUCTED)
@@ -36,16 +36,14 @@ static int asn1_print_info(BIO *bp, long offset, int depth, int hl, long len,
     else
         p = "prim: ";
     if (constructed != (V_ASN1_CONSTRUCTED | 1)) {
-        if (BIO_snprintf(str, sizeof(str), "%5ld:d=%-2d hl=%ld l=%4ld %s",
-                offset, depth, (long)hl, len, p)
-            <= 0)
-            goto err;
+        n = snprintf(str, sizeof(str), "%5ld:d=%-2d hl=%ld l=%4ld %s",
+            offset, depth, (long)hl, len, p);
     } else {
-        if (BIO_snprintf(str, sizeof(str), "%5ld:d=%-2d hl=%ld l=inf  %s",
-                offset, depth, (long)hl, p)
-            <= 0)
-            goto err;
+        n = snprintf(str, sizeof(str), "%5ld:d=%-2d hl=%ld l=inf  %s",
+            offset, depth, (long)hl, p);
     }
+    if (n <= 0 || (size_t)n >= sizeof(str))
+        goto err;
     if (bp != NULL) {
         if (BIO_set_prefix(bp, str) <= 0) {
             if ((bio = BIO_new(BIO_f_prefix())) == NULL
