@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 #include <openssl/core.h>
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
@@ -2283,7 +2284,9 @@ OSSL_FUNC_BIO_puts_fn ossl_core_bio_puts;
 OSSL_FUNC_BIO_up_ref_fn ossl_core_bio_up_ref;
 OSSL_FUNC_BIO_free_fn ossl_core_bio_free;
 OSSL_FUNC_BIO_vprintf_fn ossl_core_bio_vprintf;
-OSSL_FUNC_BIO_vsnprintf_fn BIO_vsnprintf;
+#ifndef FIPS_MODULE
+static OSSL_FUNC_BIO_vsnprintf_fn core_bio_vsnprintf;
+#endif
 static OSSL_FUNC_indicator_cb_fn core_indicator_get_callback;
 static OSSL_FUNC_self_test_cb_fn core_self_test_get_callback;
 static OSSL_FUNC_get_entropy_fn rand_get_entropy;
@@ -2586,6 +2589,18 @@ static int core_obj_create(const OSSL_CORE_HANDLE *prov, const char *oid,
 /*
  * Functions provided by the core.
  */
+#ifndef FIPS_MODULE
+static int core_bio_vsnprintf(char *buf, size_t n, const char *format,
+    va_list args)
+{
+    int ret = vsnprintf(buf, n, format, args);
+
+    if ((size_t)ret >= n)
+        ret = -1;
+    return ret;
+}
+#endif
+
 static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_CORE_GETTABLE_PARAMS, (void (*)(void))core_gettable_params },
     { OSSL_FUNC_CORE_GET_PARAMS, (void (*)(void))core_get_params },
@@ -2610,7 +2625,7 @@ static const OSSL_DISPATCH core_dispatch_[] = {
     { OSSL_FUNC_BIO_UP_REF, (void (*)(void))ossl_core_bio_up_ref },
     { OSSL_FUNC_BIO_FREE, (void (*)(void))ossl_core_bio_free },
     { OSSL_FUNC_BIO_VPRINTF, (void (*)(void))ossl_core_bio_vprintf },
-    { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))BIO_vsnprintf },
+    { OSSL_FUNC_BIO_VSNPRINTF, (void (*)(void))core_bio_vsnprintf },
     { OSSL_FUNC_SELF_TEST_CB, (void (*)(void))core_self_test_get_callback },
     { OSSL_FUNC_INDICATOR_CB, (void (*)(void))core_indicator_get_callback },
     { OSSL_FUNC_GET_ENTROPY, (void (*)(void))rand_get_entropy },
