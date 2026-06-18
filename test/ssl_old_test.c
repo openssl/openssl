@@ -2967,8 +2967,8 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
     int ret;
     unsigned int psk_len = 0;
 
-    ret = BIO_snprintf(identity, max_identity_len, "Client_identity");
-    if (ret < 0)
+    ret = snprintf(identity, max_identity_len, "Client_identity");
+    if (ret < 0 || (unsigned int)ret >= max_identity_len)
         goto out_err;
     if (debug)
         fprintf(stderr, "client: created identity '%s' len=%d\n", identity,
