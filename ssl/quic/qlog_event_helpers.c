@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "internal/qlog_event_helpers.h"
 #include "internal/common.h"
 #include "internal/packet.h"
@@ -130,7 +132,7 @@ void ossl_qlog_event_connectivity_connection_closed(QLOG *qlog,
 
         if (tcause->error_code >= OSSL_QUIC_ERR_CRYPTO_ERR_BEGIN
             && tcause->error_code <= OSSL_QUIC_ERR_CRYPTO_ERR_END) {
-            BIO_snprintf(ce, sizeof(ce), "crypto_error_0x%03llx",
+            snprintf(ce, sizeof(ce), "crypto_error_0x%03llx",
                 (unsigned long long)tcause->error_code);
             m = ce;
         }

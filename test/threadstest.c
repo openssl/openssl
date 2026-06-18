@@ -1190,10 +1190,10 @@ static void test_obj_create_one(void)
     char tids[12], oid[40], sn[30], ln[30];
     int id = get_new_uid();
 
-    BIO_snprintf(tids, sizeof(tids), "%d", id);
-    BIO_snprintf(oid, sizeof(oid), "1.3.6.1.4.1.16604.%s", tids);
-    BIO_snprintf(sn, sizeof(sn), "short-name-%s", tids);
-    BIO_snprintf(ln, sizeof(ln), "long-name-%s", tids);
+    snprintf(tids, sizeof(tids), "%d", id);
+    snprintf(oid, sizeof(oid), "1.3.6.1.4.1.16604.%s", tids);
+    snprintf(sn, sizeof(sn), "short-name-%s", tids);
+    snprintf(ln, sizeof(ln), "long-name-%s", tids);
     if (!TEST_int_ne(id, 0)
         || !TEST_true(id = OBJ_create(oid, sn, ln))
         || !TEST_true(OBJ_add_sigid(id, NID_sha3_256, NID_rsa)))
@@ -1379,7 +1379,7 @@ static void test_obj_create_worker(void)
 
     for (i = 0; i < 4; i++) {
         now = time(NULL);
-        BIO_snprintf(name, sizeof(name), "Time in Seconds = %ld", (long)now);
+        snprintf(name, sizeof(name), "Time in Seconds = %ld", (long)now);
         while (now == time(NULL))
             /* no-op */;
         nid = OBJ_create(NULL, NULL, name);

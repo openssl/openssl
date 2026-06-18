@@ -432,7 +432,7 @@ static int do_dir(const char *dirname, enum Hash h)
                 nextep = ep->next;
                 if (ep->old_id < bp->num_needed) {
                     /* Link exists, and is used as-is */
-                    BIO_snprintf(buf, buflen, "%08x.%s%d", bp->hash,
+                    snprintf(buf, buflen, "%08x.%s%d", bp->hash,
                         suffixes[bp->type], ep->old_id);
                     if (verbose)
                         BIO_printf(bio_out, "link %s -> %s\n",
@@ -442,7 +442,7 @@ static int do_dir(const char *dirname, enum Hash h)
                     while (bit_isset(idmask, nextid))
                         nextid++;
 
-                    BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
+                    snprintf(buf, buflen, "%s%s%08x.%s%d",
                         dirname, pathsep, bp->hash,
                         suffixes[bp->type], nextid);
                     if (verbose)
@@ -464,7 +464,7 @@ static int do_dir(const char *dirname, enum Hash h)
                     bit_set(idmask, nextid);
                 } else if (remove_links) {
                     /* Link to be deleted */
-                    BIO_snprintf(buf, buflen, "%s%s%08x.%s%d",
+                    snprintf(buf, buflen, "%s%s%08x.%s%d",
                         dirname, pathsep, bp->hash,
                         suffixes[bp->type], ep->old_id);
                     if (verbose)
