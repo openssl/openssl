@@ -8,6 +8,7 @@
  */
 
 #include <stdbool.h>
+#include <stdio.h>
 #include "internal/qlog.h"
 #include "internal/json_enc.h"
 #include "internal/common.h"
@@ -131,11 +132,20 @@ QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
     if (qlogdir_sep != '\0')
         filename[l++] = qlogdir_sep;
 
-    for (i = 0; i < info->odcid.id_len; ++i)
-        l += BIO_snprintf(filename + l, strl - l, "%02x", info->odcid.id[i]);
+    for (i = 0; i < info->odcid.id_len; ++i) {
+        int n = snprintf(filename + l, strl - l, "%02x", info->odcid.id[i]);
 
-    l += BIO_snprintf(filename + l, strl - l, "_%s.sqlog",
+        if (n < 0 || (size_t)n >= strl - l)
+            goto err;
+        l += n;
+    }
+
+    int n = snprintf(filename + l, strl - l, "_%s.sqlog",
         info->is_server ? "server" : "client");
+
+    if (n < 0 || (size_t)n >= strl - l)
+        goto err;
+    l += n;
 
     qlog = ossl_qlog_new(info);
     if (qlog == NULL)
