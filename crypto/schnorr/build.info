@@ -1,0 +1,3 @@
+LIBS=../../libcrypto
+SOURCE=schnorr_evp.c
+INCLUDE=../../
