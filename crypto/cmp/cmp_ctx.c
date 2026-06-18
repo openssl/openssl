@@ -9,6 +9,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "cmp_local.h"
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
 
@@ -381,7 +383,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
                 "%s:%s:%d:" OSSL_CMP_LOG_PREFIX "%s: ",
                 func, file, line, level_str);
             if (printed > 0 && (size_t)printed < sizeof(hugebuf)) {
-                if (BIO_vsnprintf(hugebuf + printed,
+                if (vsnprintf(hugebuf + printed,
                         sizeof(hugebuf) - printed, format, args)
                     > 0)
                     res = BIO_puts(trc_out, hugebuf) > 0;
@@ -391,7 +393,7 @@ int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
     }
 #else /* compensate for disabled trace API */
     {
-        if (BIO_vsnprintf(hugebuf, sizeof(hugebuf), format, args) > 0)
+        if (vsnprintf(hugebuf, sizeof(hugebuf), format, args) > 0)
             res = ctx->log_cb(func, file, line, level, hugebuf);
     }
 #endif
