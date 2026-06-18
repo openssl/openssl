@@ -761,7 +761,7 @@ int setup_tests(void)
     certbio = BIO_new_file(certin, "r");
     if (!TEST_ptr(certbio))
         return 0;
-    if (!TEST_true(PEM_read_bio_X509(certbio, &cert, NULL, NULL))) {
+    if (!TEST_ptr(PEM_read_bio_X509(certbio, &cert, NULL, NULL))) {
         BIO_free(certbio);
         return 0;
     }
@@ -773,7 +773,7 @@ int setup_tests(void)
         cert = NULL;
         return 0;
     }
-    if (!TEST_true(PEM_read_bio_PrivateKey(privkeybio, &privkey, NULL, NULL))) {
+    if (!TEST_ptr(PEM_read_bio_PrivateKey(privkeybio, &privkey, NULL, NULL))) {
         BIO_free(privkeybio);
         X509_free(cert);
         cert = NULL;

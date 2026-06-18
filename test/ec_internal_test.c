@@ -84,9 +84,9 @@ static int field_tests(const EC_METHOD *meth, const unsigned char *params,
     a = BN_CTX_get(ctx);
     if (!TEST_ptr(b = BN_CTX_get(ctx))
         || !TEST_ptr(group = EC_GROUP_new(meth))
-        || !TEST_true(BN_bin2bn(params, len, p))
-        || !TEST_true(BN_bin2bn(params + len, len, a))
-        || !TEST_true(BN_bin2bn(params + 2 * len, len, b))
+        || !TEST_ptr(BN_bin2bn(params, len, p))
+        || !TEST_ptr(BN_bin2bn(params + len, len, a))
+        || !TEST_ptr(BN_bin2bn(params + 2 * len, len, b))
         || !TEST_true(EC_GROUP_set_curve(group, p, a, b, ctx))
         || !group_field_tests(group, ctx))
         goto err;

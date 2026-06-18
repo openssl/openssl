@@ -883,7 +883,7 @@ static int test_gf2m_sqr(void)
             goto err;
         for (j = 0; j < 2; j++) {
             if (!(TEST_true(BN_GF2m_mod_sqr(c, a, b[j], ctx))
-                    && TEST_true(BN_copy(d, a))
+                    && TEST_ptr(BN_copy(d, a))
                     && TEST_true(BN_GF2m_mod_mul(d, a, d, b[j], ctx))
                     && TEST_true(BN_GF2m_add(d, c, d))
                     /* Test that a*a = a^2. */
@@ -1168,7 +1168,7 @@ static int test_kronecker(void)
         BN_set_negative(a, rand_neg());
 
         /* t := (|b|-1)/2  (note that b is odd) */
-        if (!TEST_true(BN_copy(t, b)))
+        if (!TEST_ptr(BN_copy(t, b)))
             goto err;
         BN_set_negative(t, 0);
         if (!TEST_true(BN_sub_word(t, 1)))
@@ -1240,22 +1240,22 @@ static int file_sum(STANZA *s)
      * or when |r| and |b| point to the same BIGNUM.
      * There is no test for all of |r|, |a|, and |b| pointint to the same BIGNUM.
      */
-    if (!TEST_true(BN_copy(ret, a))
+    if (!TEST_ptr(BN_copy(ret, a))
         || !TEST_true(BN_add(ret, ret, b))
         || !equalBN("A + B (r is a)", sum, ret)
-        || !TEST_true(BN_copy(ret, b))
+        || !TEST_ptr(BN_copy(ret, b))
         || !TEST_true(BN_add(ret, a, ret))
         || !equalBN("A + B (r is b)", sum, ret)
-        || !TEST_true(BN_copy(ret, sum))
+        || !TEST_ptr(BN_copy(ret, sum))
         || !TEST_true(BN_sub(ret, ret, a))
         || !equalBN("Sum - A (r is a)", b, ret)
-        || !TEST_true(BN_copy(ret, a))
+        || !TEST_ptr(BN_copy(ret, a))
         || !TEST_true(BN_sub(ret, sum, ret))
         || !equalBN("Sum - A (r is b)", b, ret)
-        || !TEST_true(BN_copy(ret, sum))
+        || !TEST_ptr(BN_copy(ret, sum))
         || !TEST_true(BN_sub(ret, ret, b))
         || !equalBN("Sum - B (r is a)", a, ret)
-        || !TEST_true(BN_copy(ret, b))
+        || !TEST_ptr(BN_copy(ret, b))
         || !TEST_true(BN_sub(ret, sum, ret))
         || !equalBN("Sum - B (r is b)", a, ret))
         goto err;
@@ -1280,22 +1280,22 @@ static int file_sum(STANZA *s)
          * There is no test for all of |r|, |a|, and |b| pointint to the same
          * BIGNUM.
          */
-        if (!TEST_true(BN_copy(ret, a))
+        if (!TEST_ptr(BN_copy(ret, a))
             || !TEST_true(BN_uadd(ret, ret, b))
             || !equalBN("A +u B (r is a)", sum, ret)
-            || !TEST_true(BN_copy(ret, b))
+            || !TEST_ptr(BN_copy(ret, b))
             || !TEST_true(BN_uadd(ret, a, ret))
             || !equalBN("A +u B (r is b)", sum, ret)
-            || !TEST_true(BN_copy(ret, sum))
+            || !TEST_ptr(BN_copy(ret, sum))
             || !TEST_true(BN_usub(ret, ret, a))
             || !equalBN("Sum -u A (r is a)", b, ret)
-            || !TEST_true(BN_copy(ret, a))
+            || !TEST_ptr(BN_copy(ret, a))
             || !TEST_true(BN_usub(ret, sum, ret))
             || !equalBN("Sum -u A (r is b)", b, ret)
-            || !TEST_true(BN_copy(ret, sum))
+            || !TEST_ptr(BN_copy(ret, sum))
             || !TEST_true(BN_usub(ret, ret, b))
             || !equalBN("Sum -u B (r is a)", a, ret)
-            || !TEST_true(BN_copy(ret, b))
+            || !TEST_ptr(BN_copy(ret, b))
             || !TEST_true(BN_usub(ret, sum, ret))
             || !equalBN("Sum -u B (r is b)", a, ret))
             goto err;
@@ -1306,10 +1306,10 @@ static int file_sum(STANZA *s)
      */
     b_word = BN_get_word(b);
     if (!BN_is_negative(b) && b_word != (BN_ULONG)-1) {
-        if (!TEST_true(BN_copy(ret, a))
+        if (!TEST_ptr(BN_copy(ret, a))
             || !TEST_true(BN_add_word(ret, b_word))
             || !equalBN("A + B (word)", sum, ret)
-            || !TEST_true(BN_copy(ret, sum))
+            || !TEST_ptr(BN_copy(ret, sum))
             || !TEST_true(BN_sub_word(ret, b_word))
             || !equalBN("Sum - B (word)", a, ret))
             goto err;
@@ -1463,7 +1463,7 @@ static int file_square(STANZA *s)
     /* BN_sqrt should fail on non-squares and negative numbers. */
     if (!TEST_BN_eq_zero(square)) {
         if (!TEST_ptr(tmp = BN_new())
-            || !TEST_true(BN_copy(tmp, square)))
+            || !TEST_ptr(BN_copy(tmp, square)))
             goto err;
         BN_set_negative(tmp, 1);
 
@@ -1592,7 +1592,7 @@ static int file_quotient(STANZA *s)
 
     /* Test BN_nnmod. */
     if (!BN_is_negative(b)) {
-        if (!TEST_true(BN_copy(nnmod, remainder))
+        if (!TEST_ptr(BN_copy(nnmod, remainder))
             || (BN_is_negative(nnmod)
                 && !TEST_true(BN_add(nnmod, nnmod, b)))
             || !TEST_true(BN_nnmod(ret, a, b, ctx))

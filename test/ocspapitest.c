@@ -92,7 +92,7 @@ static OCSP_BASICRESP *make_dummy_resp(void)
         || !TEST_ptr(thisupd)
         || !TEST_ptr(nextupd)
         || !TEST_ptr(cid)
-        || !TEST_true(OCSP_basic_add1_status(bs, cid,
+        || !TEST_ptr(OCSP_basic_add1_status(bs, cid,
             V_OCSP_CERTSTATUS_UNKNOWN,
             0, NULL, thisupd, nextupd)))
         goto err;

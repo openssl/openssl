@@ -2217,7 +2217,7 @@ retry:
     /* Test the EVP_Q_mac interface as well */
     if (!xof) {
         OPENSSL_cleanse(got, got_len);
-        if (!TEST_true(EVP_Q_mac(libctx, expected->mac_name, NULL,
+        if (!TEST_ptr(EVP_Q_mac(libctx, expected->mac_name, NULL,
                 expected->alg, params,
                 expected->key, expected->key_len,
                 expected->input, expected->input_len,

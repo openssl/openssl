@@ -793,7 +793,7 @@ static int char2_curve_test(int n)
         || !TEST_true(BN_hex2bn(&p, test->p))
         || !TEST_true(BN_hex2bn(&a, test->a))
         || !TEST_true(BN_hex2bn(&b, test->b))
-        || !TEST_true(group = EC_GROUP_new_curve_GF2m(p, a, b, ctx))
+        || !TEST_ptr(group = EC_GROUP_new_curve_GF2m(p, a, b, ctx))
         || !TEST_ptr(P = EC_POINT_new(group))
         || !TEST_ptr(Q = EC_POINT_new(group))
         || !TEST_ptr(R = EC_POINT_new(group))
@@ -1852,9 +1852,9 @@ static int check_named_curve_from_ecparameters(int id)
         || !TEST_true(EC_POINT_add(group, other_gen, group_gen, group_gen, NULL))
         || !TEST_true(EC_POINT_get_affine_coordinates(group, other_gen,
             other_gen_x, other_gen_y, bn_ctx))
-        || !TEST_true(BN_copy(other_order, group_order))
+        || !TEST_ptr(BN_copy(other_order, group_order))
         || !TEST_true(BN_add_word(other_order, 1))
-        || !TEST_true(BN_copy(other_cofactor, group_cofactor))
+        || !TEST_ptr(BN_copy(other_cofactor, group_cofactor))
         || !TEST_true(BN_add_word(other_cofactor, 1)))
         goto err;
 
@@ -2272,7 +2272,7 @@ static int cardinality_test(int n)
         || !TEST_true(EC_GROUP_get_curve(g1, g1_p, g1_a, g1_b, ctx))
         || !TEST_true(EC_POINT_get_affine_coordinates(g1,
             EC_GROUP_get0_generator(g1), g1_x, g1_y, ctx))
-        || !TEST_true(BN_copy(g1_order, EC_GROUP_get0_order(g1)))
+        || !TEST_ptr(BN_copy(g1_order, EC_GROUP_get0_order(g1)))
         || !TEST_true(EC_GROUP_get_cofactor(g1, g1_cf, ctx))
     /* construct g2 manually with g1 parameters */
 #ifndef OPENSSL_NO_EC2M
