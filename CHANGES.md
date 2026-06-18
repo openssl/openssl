@@ -64,6 +64,11 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Windows CE support was dropped - Windows CE has been unsupported since
+   2018 and does not have a modern C99 toolchain.
+
+   *Bob Beck*
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 
