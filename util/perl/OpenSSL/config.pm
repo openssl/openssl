@@ -411,7 +411,7 @@ sub determine_compiler_settings {
                 $CCVER = 0;
 
                 my $v = `cl 2>&1`;
-                if ( $v =~ /Microsoft .* Version ([0-9\.]+) for (x86|x64|ARM|ia64)/ ) {
+                if ( $v =~ /Microsoft .* Version ([0-9\.]+) for (x86|x64|ARM)/ ) {
                     $CCVER = $1;
                     $CL_ARCH = $2;
                 }
@@ -898,7 +898,7 @@ EOF
       ],
 
       # Windows values found by looking at Perl 5's win32/win32.c
-      [ '(amd64|ia64|x86|ARM)-.*?-Windows NT',
+      [ '(amd64|x86|ARM)-.*?-Windows NT',
         sub {
             # If we determined the arch by asking cl, take that value,
             # otherwise the SYSTEM we got from from POSIX::uname().
@@ -907,7 +907,6 @@ EOF
 
             if ($arch) {
                 $config = { 'amd64' => { target => 'VC-WIN64A'    },
-                            'ia64'  => { target => 'VC-WIN64I'    },
                             'x86'   => { target => 'VC-WIN32'     },
                             'x64'   => { target => 'VC-WIN64A'    },
                             'ARM'   => { target => 'VC-WIN64-ARM' },

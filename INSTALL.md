@@ -173,8 +173,7 @@ of the Configure targets in the first command.
 
 Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
 64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
-Windows binaries (X86).  `VC-WIN64I` (Intel IA64, Itanium) is also available
-but rather uncommon nowadays.
+Windows binaries (X86).
 
 Installing OpenSSL
 ------------------
@@ -1929,9 +1928,8 @@ on Cygwin, shared libraries are named `cygcrypto-1.1.dll` and `cygssl-1.1.dll`
 with import libraries `libcrypto.dll.a` and `libssl.dll.a`.
 
 On Windows build with MSVC or using MingW, shared libraries are named
-`libcrypto-1_1.dll` and `libssl-1_1.dll` for 32-bit Windows,
-`libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` for 64-bit x86_64 Windows,
-and `libcrypto-1_1-ia64.dll` and `libssl-1_1-ia64.dll` for IA64 Windows.
+`libcrypto-1_1.dll` and `libssl-1_1.dll` for 32-bit Windows, and
+`libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` for 64-bit x86_64 Windows.
 With MSVC, the import libraries are named `libcrypto.lib` and `libssl.lib`,
 while with MingW, they are named `libcrypto.dll.a` and `libssl.dll.a`.
 
