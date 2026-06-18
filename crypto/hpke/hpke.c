@@ -149,7 +149,7 @@ static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
     size_t taglen;
 
     taglen = hctx->aead_info->taglen;
-    if (ctlen <= taglen || *ptlen < ctlen - taglen
+    if (ctlen < taglen || *ptlen < ctlen - taglen
         || aadlen > INT_MAX || ctlen > INT_MAX) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -228,7 +228,7 @@ static int hpke_aead_enc(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
     unsigned char tag[EVP_MAX_AEAD_TAG_LENGTH];
 
     taglen = hctx->aead_info->taglen;
-    if (*ctlen <= taglen || ptlen > *ctlen - taglen
+    if (*ctlen < taglen || ptlen > *ctlen - taglen
         || aadlen > INT_MAX || ptlen > INT_MAX) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -1171,7 +1171,7 @@ int OSSL_HPKE_seal(OSSL_HPKE_CTX *ctx,
     size_t seqlen = 0;
 
     if (ctx == NULL || ct == NULL || ctlen == NULL || *ctlen == 0
-        || pt == NULL || ptlen == 0) {
+        || (pt == NULL && ptlen != 0)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1212,7 +1212,7 @@ int OSSL_HPKE_open(OSSL_HPKE_CTX *ctx,
     unsigned char seqbuf[OSSL_HPKE_MAX_NONCELEN];
     size_t seqlen = 0;
 
-    if (ctx == NULL || pt == NULL || ptlen == NULL || *ptlen == 0
+    if (ctx == NULL || pt == NULL || (ptlen == NULL && *ptlen != 0)
         || ct == NULL || ctlen == 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;

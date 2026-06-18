@@ -1462,11 +1462,6 @@ static int test_hpke_oddcalls(void)
     /* second encap fail */
     if (!TEST_false(OSSL_HPKE_encap(ctx, enc, &enclen, pub, publen, NULL, 0)))
         goto end;
-    plainlen = 0;
-    /* should fail for no plaintext */
-    if (!TEST_false(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
-            plain, plainlen)))
-        goto end;
     plainlen = sizeof(plain);
     /* working seal */
     if (!TEST_true(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
@@ -1521,6 +1516,26 @@ static int test_hpke_oddcalls(void)
         goto end;
     if (!TEST_mem_eq(plain, plainlen, clear, clearlen))
         goto end;
+    /* the zero-length plaintext is a valid input */
+    plainlen = 0;
+    if (!TEST_true(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
+            plain, plainlen)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_open(rctx, clear, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
+    if (!TEST_mem_eq(plain, plainlen, clear, clearlen))
+        goto end;
+    /* repeat the test now that cipherlen and clearlen are tightly bounded */
+    if (!TEST_true(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
+            plain, plainlen)))
+        goto end;
+    if (!TEST_true(OSSL_HPKE_open(rctx, clear, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
+    if (!TEST_mem_eq(plain, plainlen, clear, clearlen))
+        goto end;
+
     erv = 1;
 end:
     OSSL_HPKE_CTX_free(ctx);
