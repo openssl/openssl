@@ -92,7 +92,7 @@ The SSL_trace() function can be used as a pre-written callback in a call to
 SSL_CTX_set_msg_callback() or SSL_set_msg_callback(). It requires a BIO to be
 set as the callback argument via SSL_CTX_set_msg_callback_arg() or
 SSL_set_msg_callback_arg(). Setting this callback will cause human readable
-diagostic tracing information about an SSL/TLS/QUIC connection to be written to
+diagnostic tracing information about an SSL/TLS/QUIC connection to be written to
 the BIO.
 
 =head1 NOTES
