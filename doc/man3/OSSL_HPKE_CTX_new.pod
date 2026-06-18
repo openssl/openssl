@@ -556,6 +556,13 @@ OSSL_HPKE_CTX_set1_ikme() or OSSL_HPKE_keygen()) creates the potential for
 leaking keys (or IKM values). Only use that if really needed and if you
 understand how keys or IKM values could be abused.
 
+OSSL_HPKE_CTX_set1_psk() has an additional limitation not supported by RFC9180.
+RFC9180 does not impose any limitation on the byte values in a PSK identifier.
+However, the I<pskid> parameter in OSSL_HPKE_CTX_set1_psk() can only represent
+non-zero bytes. Additionally, callers must take care that I<pskid> is
+NUL-terminated. Passing a value with an embedded NUL will silently truncate, and
+passing a non-NUL-terminated value will read out of bounds.
+
 =head1 SEE ALSO
 
 The RFC9180 specification: https://datatracker.ietf.org/doc/rfc9180/
