@@ -1462,6 +1462,17 @@ static int test_hpke_oddcalls(void)
     /* second encap fail */
     if (!TEST_false(OSSL_HPKE_encap(ctx, enc, &enclen, pub, publen, NULL, 0)))
         goto end;
+    /* seal with NULL pt and non-zero ptlen */
+    if (!TEST_false(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0, NULL, 1)))
+        goto end;
+    /* seal with NULL output buffer */
+    if (!TEST_false(OSSL_HPKE_seal(ctx, NULL, &cipherlen, NULL, 0,
+            plain, plainlen)))
+        goto end;
+    /* seal with NULL ctlen */
+    if (!TEST_false(OSSL_HPKE_seal(ctx, cipher, NULL, NULL, 0,
+            plain, plainlen)))
+        goto end;
     plainlen = sizeof(plain);
     /* working seal */
     if (!TEST_true(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
@@ -1503,6 +1514,14 @@ static int test_hpke_oddcalls(void)
             cipher, cipherlen)))
         goto end;
     clearlen = OSSL_HPKE_TSTSIZE;
+    /* open with non-empty NULL output buffer */
+    if (!TEST_false(OSSL_HPKE_open(rctx, NULL, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
+    /* open with NULL ptlen */
+    if (!TEST_false(OSSL_HPKE_open(rctx, clear, NULL, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
     /* seq wrap around test */
     if (!TEST_true(OSSL_HPKE_CTX_set_seq(rctx, -1)))
         goto end;
@@ -1534,6 +1553,25 @@ static int test_hpke_oddcalls(void)
             cipher, cipherlen)))
         goto end;
     if (!TEST_mem_eq(plain, plainlen, clear, clearlen))
+        goto end;
+    /* NULL is a valid way to express both the empty plaintext and the empty
+     * output buffer */
+    if (!TEST_true(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
+            NULL, 0)))
+        goto end;
+    clearlen = 0;
+    if (!TEST_true(OSSL_HPKE_open(rctx, NULL, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
+    if (!TEST_size_t_eq(clearlen, 0))
+        goto end;
+    /* corrupt the tag of an encryption of the empty string */
+    if (!TEST_true(OSSL_HPKE_seal(ctx, cipher, &cipherlen, NULL, 0,
+            plain, plainlen)))
+        goto end;
+    cipher[cipherlen - 1] ^= 1;
+    if (!TEST_false(OSSL_HPKE_open(rctx, clear, &clearlen, NULL, 0,
+            cipher, cipherlen)))
         goto end;
 
     erv = 1;
