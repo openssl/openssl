@@ -184,11 +184,11 @@ extern "C" {
         return ret;                                     \
     }
 
-#define IMPLEMENT_PEM_write_bio(name, type, str, asn1)                 \
-    PEM_write_fnsig(name, type, BIO, write_bio)                        \
-    {                                                                  \
-        return PEM_ASN1_write_bio((i2d_of_void *)i2d_##asn1, str, out, \
-            x, NULL, NULL, 0, NULL, NULL);                             \
+#define IMPLEMENT_PEM_write_bio(name, type, str, asn1)                         \
+    PEM_write_fnsig(name, type, BIO, write_bio)                                \
+    {                                                                          \
+        return PEM_ASN1_write_bio((i2d_of_void *)i2d_##asn1##_thunk, str, out, \
+            x, NULL, NULL, 0, NULL, NULL);                                     \
     }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
