@@ -3017,8 +3017,8 @@ BIO_new_bio_dgram_pair                  3015	4_0_0	EXIST::FUNCTION:DGRAM
 BIO_copy_next_retry                     3016	4_0_0	EXIST::FUNCTION:
 BIO_printf                              3017	4_0_0	EXIST::FUNCTION:
 BIO_vprintf                             3018	4_0_0	EXIST::FUNCTION:
-BIO_snprintf                            3019	4_0_0	EXIST::FUNCTION:
-BIO_vsnprintf                           3020	4_0_0	EXIST::FUNCTION:
+BIO_snprintf                            3019	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
+BIO_vsnprintf                           3020	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 BIO_meth_new                            3021	4_0_0	EXIST::FUNCTION:
 BIO_meth_free                           3022	4_0_0	EXIST::FUNCTION:
 BIO_meth_set_write                      3023	4_0_0	EXIST::FUNCTION:
