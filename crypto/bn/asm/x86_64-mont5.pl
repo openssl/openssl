@@ -69,6 +69,13 @@ if (!$addx && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([
 	$addx = ($ver>=3.03);
 }
 
+if (!$addx && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
+	=~ /#define __clang_major__.([0-9]+)/) {
+	if ($1) {
+		$addx = ($1>=11); #icx started with clang 11
+	}
+}
+
 # int bn_mul_mont_gather5(
 $rp="%rdi";	# BN_ULONG *rp,
 $ap="%rsi";	# const BN_ULONG *ap,
