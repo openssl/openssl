@@ -241,7 +241,7 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         {
             char buf[32];
 
-            BIO_snprintf(buf, sizeof(buf), "JITTER (%d)", jent_version());
+            snprintf(buf, sizeof(buf), "JITTER (%d)", jent_version());
             add_seeds_string(buf);
         }
 #endif

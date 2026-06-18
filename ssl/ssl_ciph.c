@@ -1894,7 +1894,7 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
         break;
     }
 
-    BIO_snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
+    snprintf(buf, len, format, cipher->name, ver, kx, au, enc, mac);
 
     return buf;
 }
