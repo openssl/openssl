@@ -19,6 +19,7 @@
 #include <openssl/evp.h>
 #include <openssl/sha.h>
 
+#include "internal/constant_time.h"
 #include "internal/numbers.h"
 
 #if defined(X25519_ASM) && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
@@ -5841,11 +5842,20 @@ int ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[3
     return 1;
 }
 
+/*
+ * Verified to be constant-time under enable-ct-validation for
+ * CI & Valgrind-supported architectures, currently x86_64 and aarch64.
+ * Notably the 32-bit-only fe_* C implementation is UNCOVERED.
+ */
 int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     const uint8_t peer_public_value[32])
 {
     static const uint8_t kZeros[32] = { 0 };
+
+    CONSTTIME_SECRET(private_key, 32);
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
+    CONSTTIME_DECLASSIFY(out_shared_key, 32);
+
     /* The all-zero output results when the input is a point of small order. */
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
