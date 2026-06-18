@@ -1720,25 +1720,25 @@ int save_serial(const char *serialfile, const char *suffix,
     BIO *out = NULL;
     int ret = 0;
     ASN1_INTEGER *ai = NULL;
-    size_t j;
-
-    if (suffix == NULL)
-        j = strlen(serialfile);
-    else
-        j = strlen(serialfile) + strlen(suffix) + 1;
-    if (j >= BSIZE) {
-        BIO_puts(bio_err, "File name too long\n");
-        goto err;
-    }
 
     if (suffix == NULL) {
-        OPENSSL_strlcpy(buf[0], serialfile, BSIZE);
+        if (OPENSSL_strlcpy(buf[0], serialfile, BSIZE) >= BSIZE) {
+            BIO_puts(bio_err, "File name too long\n");
+            goto err;
+        }
     } else {
+        int n = snprintf(buf[0], sizeof(buf[0]),
 #ifndef OPENSSL_SYS_VMS
-        snprintf(buf[0], sizeof(buf[0]), "%s.%s", serialfile, suffix);
+            "%s.%s",
 #else
-        snprintf(buf[0], sizeof(buf[0]), "%s-%s", serialfile, suffix);
+            "%s-%s",
 #endif
+            serialfile, suffix);
+
+        if (n < 0 || (size_t)n >= sizeof(buf[0])) {
+            BIO_puts(bio_err, "File name too long\n");
+            goto err;
+        }
     }
     out = BIO_new_file(buf[0], "w");
     if (out == NULL) {
