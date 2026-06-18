@@ -169,13 +169,12 @@ issue the following commands to build OpenSSL.
     $ nmake test
 
 As mentioned in the [Choices](#choices) section, you need to pick one
-of the four Configure targets in the first command.
+of the Configure targets in the first command.
 
 Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
 64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
-Windows binaries (X86).
-The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
-`VC-CE` (Windows CE) are rather uncommon nowadays.
+Windows binaries (X86).  `VC-WIN64I` (Intel IA64, Itanium) is also available
+but rather uncommon nowadays.
 
 Installing OpenSSL
 ------------------

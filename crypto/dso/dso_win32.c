@@ -12,49 +12,6 @@
 
 #if defined(DSO_WIN32)
 
-#ifdef _WIN32_WCE
-#if _WIN32_WCE < 300
-static FARPROC GetProcAddressA(HMODULE hModule, LPCSTR lpProcName)
-{
-    WCHAR lpProcNameW[64];
-    int i;
-
-    for (i = 0; lpProcName[i] && i < 64; i++)
-        lpProcNameW[i] = (WCHAR)lpProcName[i];
-    if (i == 64)
-        return NULL;
-    lpProcNameW[i] = 0;
-
-    return GetProcAddressW(hModule, lpProcNameW);
-}
-#endif
-#undef GetProcAddress
-#define GetProcAddress GetProcAddressA
-
-static HINSTANCE LoadLibraryA(LPCSTR lpLibFileName)
-{
-    WCHAR *fnamw;
-    size_t len_0 = strlen(lpLibFileName) + 1, i;
-
-#ifdef _MSC_VER
-    fnamw = (WCHAR *)_alloca(len_0 * sizeof(WCHAR));
-#else
-    fnamw = (WCHAR *)alloca(len_0 * sizeof(WCHAR));
-#endif
-    if (fnamw == NULL) {
-        SetLastError(ERROR_NOT_ENOUGH_MEMORY);
-        return NULL;
-    }
-#if defined(_WIN32_WCE) && _WIN32_WCE >= 101
-    if (!MultiByteToWideChar(CP_ACP, 0, lpLibFileName, len_0, fnamw, len_0))
-#endif
-        for (i = 0; i < len_0; i++)
-            fnamw[i] = (WCHAR)lpLibFileName[i];
-
-    return LoadLibraryW(fnamw);
-}
-#endif
-
 #define GETPROCADDRESS(h, name, type) ((type)(void (*)(void))GetProcAddress((h), (name)))
 
 /* Part of the hack in "win32_load" ... */
@@ -472,14 +429,10 @@ static const char *openssl_strnchr(const char *string, int c, size_t len)
 }
 
 #include <tlhelp32.h>
-#ifdef _WIN32_WCE
-#define DLLNAME "TOOLHELP.DLL"
-#else
 #ifdef MODULEENTRY32
 #undef MODULEENTRY32 /* unmask the ASCII version! */
 #endif
 #define DLLNAME "KERNEL32.DLL"
-#endif
 
 typedef HANDLE(WINAPI *CREATETOOLHELP32SNAPSHOT)(DWORD, DWORD);
 typedef BOOL(WINAPI *CLOSETOOLHELP32SNAPSHOT)(HANDLE);
@@ -582,11 +535,7 @@ static void *win32_globallookup(const char *name)
         return NULL;
     }
     /* We take the rest for granted... */
-#ifdef _WIN32_WCE
-    close_snap = GETPROCADDRESS(dll, "CloseToolhelp32Snapshot", CLOSETOOLHELP32SNAPSHOT);
-#else
     close_snap = (CLOSETOOLHELP32SNAPSHOT)CloseHandle;
-#endif
     module_first = GETPROCADDRESS(dll, "Module32First", MODULE32);
     module_next = GETPROCADDRESS(dll, "Module32Next", MODULE32);
 
