@@ -1508,7 +1508,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         proxyauth = OPENSSL_malloc(len + 1);
         if (proxyauth == NULL)
             goto end;
-        if (BIO_snprintf(proxyauth, len + 1, "%s:%s", proxyuser,
+        if (snprintf(proxyauth, len + 1, "%s:%s", proxyuser,
                 proxypass != NULL ? proxypass : "")
             != (int)len)
             goto proxy_end;
