@@ -408,7 +408,7 @@ static int do_dir(const char *dirname, enum Hash h)
     numfiles = sk_OPENSSL_STRING_num(files);
     for (n = 0; n < numfiles; ++n) {
         filename = sk_OPENSSL_STRING_value(files, n);
-        if (BIO_snprintf(buf, buflen, "%s%s%s",
+        if (snprintf(buf, buflen, "%s%s%s",
                 dirname, pathsep, filename)
             >= buflen)
             continue;

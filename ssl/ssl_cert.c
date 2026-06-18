@@ -987,9 +987,9 @@ int SSL_add_dir_cert_subjects_to_stack(STACK_OF(X509_NAME) *stack,
             goto err;
         }
 #ifdef OPENSSL_SYS_VMS
-        r = BIO_snprintf(buf, sizeof(buf), "%s%s", dir, filename);
+        r = snprintf(buf, sizeof(buf), "%s%s", dir, filename);
 #else
-        r = BIO_snprintf(buf, sizeof(buf), "%s/%s", dir, filename);
+        r = snprintf(buf, sizeof(buf), "%s/%s", dir, filename);
 #endif
 #ifndef OPENSSL_NO_POSIX_IO
         /* Skip subdirectories */
