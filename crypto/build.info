@@ -16,7 +16,6 @@ IF[{- !$disabled{uplink} -}]
   $UPLINKSRC_common=../ms/uplink.c
   $UPLINKSRC_x86=$UPLINKSRC_common uplink-x86.S
   $UPLINKSRC_x86_64=$UPLINKSRC_common uplink-x86_64.s
-  $UPLINKSRC_ia64=$UPLINKSRC_common uplink-ia64.s
 
   IF[$UPLINKSRC_{- $target{uplink_arch} -}]
     $UPLINKSRC=$UPLINKSRC_{- $target{uplink_arch} -}
@@ -118,7 +117,6 @@ GENERATE[buildinf.h]=../util/mkbuildinf.pl "$(CC) $(LIB_CFLAGS) $(CPPFLAGS_Q)" "
 
 GENERATE[uplink-x86.S]=../ms/uplink-x86.pl
 GENERATE[uplink-x86_64.s]=../ms/uplink-x86_64.pl
-GENERATE[uplink-ia64.s]=../ms/uplink-ia64.pl
 
 GENERATE[x86cpuid.S]=x86cpuid.pl
 DEPEND[x86cpuid.s]=perlasm/x86asm.pl
