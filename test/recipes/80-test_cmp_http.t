@@ -257,14 +257,41 @@ sub load_tests {
     my $file = data_file("test_$aspect.csv");
     my $result_dir = result_dir();
     my @result;
-    my $openssl_app = cmdstr(app([qw(openssl)]));
+    my ($cert_issuer, $cert_serial) = ("", "");
+    if ($server_name eq "Mock" && $aspect eq "commands") {
+        my $cert_file;
+        if (open(my $cnf, '<', 'server.cnf')) {
+            while (<$cnf>) {
+                if (/^\s*rsp_cert\s*=\s*(\S+)/) {
+                    $cert_file = $1;
+                    last;
+                }
+            }
+            close($cnf);
+        }
+        if (defined $cert_file && -f $cert_file) {
+            my @issuer_out = run(app([qw(openssl x509 -noout -issuer -nameopt compat -in),
+                                      $cert_file]), capture => 1);
+            if (@issuer_out) {
+                ($cert_issuer = $issuer_out[0]) =~ s/^issuer=//;
+                chomp $cert_issuer;
+            }
+            my @serial_out = run(app([qw(openssl x509 -noout -serial -in), $cert_file]),
+                                 capture => 1);
+            if (@serial_out) {
+                ($cert_serial = $serial_out[0]) =~ s/^serial=/0x/;
+                chomp $cert_serial;
+            }
+        }
+    }
 
     open(my $data, '<', $file) || die "Cannot open '$file' for reading: $!";
   LOOP:
     while (my $line = <$data>) {
         chomp $line;
         $line =~ s{\r\n}{\n}g; # adjust line endings
-        $line =~ s{_OPENSSL_APP}{$openssl_app}g;
+        $line =~ s{_CERT_ISSUER}{$cert_issuer}g;
+        $line =~ s{_CERT_SERIAL}{$cert_serial}g;
         $line =~ s{_CA_DN}{$ca_dn}g;
         $line =~ s{_SERVER_DN}{$server_dn}g;
         $line =~ s{_SERVER_HOST}{$server_host}g;
