@@ -29,9 +29,9 @@ The supported parameters are:
 
 =item "digest" (B<OSSL_KDF_PARAM_DIGEST>) <UTF8 string>
 
-=item "pass" (B<OSSL_KDF_PARAM_PASS>) <octet string>
+=item "pass" (B<OSSL_KDF_PARAM_PASSWORD>) <octet string>
 
-These parameters works as described in L<EVP_KDF(3)/PARAMETERS>.
+These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
 =item "eid" (B<OSSL_KDF_PARAM_SNMPKDF_EID>) <octet string>
 
@@ -70,7 +70,7 @@ This example derives an 8 byte IV using SHA1 with a 1K "key" and appropriate
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                          SN_sha1, strlen(SN_sha1));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASS,
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_PASSWORD,
                                           pass, sizeof(pass));
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SNMPKDF_EID,
                                           eid, sizeof(eid));
@@ -100,7 +100,7 @@ This functionality was added in OpenSSL 4.0.
 
 =head1 COPYRIGHT
 
-Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
