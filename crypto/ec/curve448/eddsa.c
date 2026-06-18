@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright 2015-2016 Cryptography Research, Inc.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -94,6 +94,7 @@ static c448_error_t hash_init_with_dom(OSSL_LIB_CTX *ctx, EVP_MD_CTX *hashctx,
  *
  * pubkey (out): The public key.
  * privkey (in): The private key.
+ * propq (in): The property query used to fetch SHAKE256.
  */
 static c448_error_t
 c448_ed448_derive_public_key(
@@ -155,6 +156,7 @@ c448_ed448_derive_public_key(
  *                  you want to sign.
  * context (in):  A "context" for this signature of up to 255 bytes.
  * context_len (in):  Length of the context.
+ * propq (in):  The property query used to fetch SHAKE256.
  *
  * For Ed25519, it is unsafe to use the same key for both prehashed and
  * non-prehashed messages, at least without some very careful protocol-level
@@ -292,6 +294,7 @@ c448_ed448_pubkey_verify(const uint8_t *pub, size_t pub_len)
  *                 want to verify.
  * context (in): A "context" for this signature of up to 255 bytes.
  * context_len (in): Length of the context.
+ * propq (in): The property query used to fetch SHAKE256.
  *
  * For Ed25519, it is unsafe to use the same key for both prehashed and
  * non-prehashed messages, at least without some very careful protocol-level
