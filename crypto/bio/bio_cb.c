@@ -30,10 +30,10 @@ long BIO_debug_callback_ex(BIO *bio, int cmd, const char *argp, size_t len,
     if (processed != NULL)
         l = *processed;
 
-    left = BIO_snprintf(buf, sizeof(buf), "BIO[%p]: ", (void *)bio);
+    left = snprintf(buf, sizeof(buf), "BIO[%p]: ", (void *)bio);
 
     /* Ignore errors and continue printing the other information. */
-    if (left < 0)
+    if (left < 0 || (size_t)left >= sizeof(buf))
         left = 0;
     p = buf + left;
     left = sizeof(buf) - left;
