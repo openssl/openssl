@@ -916,7 +916,8 @@ end:
  * Fatal record tests: records that should trigger a fatal alert during handshake.
  */
 #define FATAL_UNEXPECTED_APP_DATA 0
-#define FATAL_NUM_TESTS 1
+#define FATAL_MALFORMED_ALERT 1
+#define FATAL_NUM_TESTS 2
 
 /* Unexpected app data during handshake */
 static const unsigned char fatal_unexpected_app_data[] = {
@@ -926,6 +927,16 @@ static const unsigned char fatal_unexpected_app_data[] = {
     0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
     0x00, 0x04,
     0x74, 0x65, 0x73, 0x74
+};
+
+/* Malformed alert: 3 bytes instead of required 2 */
+static const unsigned char fatal_malformed_alert[] = {
+    SSL3_RT_ALERT,
+    0xFE, 0xFD,
+    0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
+    0x00, 0x03,
+    0x01, 0x00, 0x99
 };
 
 static int test_dtls_fatal_record(int idx)
@@ -941,6 +952,10 @@ static int test_dtls_fatal_record(int idx)
     case FATAL_UNEXPECTED_APP_DATA:
         record = fatal_unexpected_app_data;
         record_len = sizeof(fatal_unexpected_app_data);
+        break;
+    case FATAL_MALFORMED_ALERT:
+        record = fatal_malformed_alert;
+        record_len = sizeof(fatal_malformed_alert);
         break;
     default:
         return 0;
@@ -1111,68 +1126,6 @@ end:
     return testresult;
 }
 #endif
-
-/*
- * Malformed alert records (not exactly 2 bytes) trigger fatal alert.
- */
-static int test_dtls_malformed_alert(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
-    int testresult = 0;
-    static const unsigned char malformed_alert[] = {
-        SSL3_RT_ALERT,
-        0xFE, 0xFD,
-        0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x06,
-        0x00, 0x03, /* Length = 3 bytes (invalid: alerts must be exactly 2) */
-        0x01, 0x00, 0x99
-    };
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(),
-            DTLS1_VERSION, 0,
-            &sctx, &cctx, cert, privkey)))
-        return 0;
-
-#ifdef OPENSSL_NO_DTLS1_2
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
-        goto end;
-#endif
-
-    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
-    if (!TEST_ptr(c_to_s_fbio))
-        goto end;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, c_to_s_fbio)))
-        goto end;
-
-    c_to_s_mempacket = SSL_get_wbio(clientssl);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-
-    mempacket_test_inject(c_to_s_mempacket, (char *)malformed_alert,
-        sizeof(malformed_alert), 1, INJECT_PACKET_IGNORE_REC_SEQ);
-
-    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_SSL, 0, 0)))
-        goto end;
-
-    testresult = 1;
-end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return testresult;
-}
 
 /*
  * Too many consecutive warning alerts (exceeds MAX_WARN_ALERT_COUNT) triggers fatal alert.
@@ -1383,7 +1336,6 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1
     ADD_TEST(test_dtls1_unknown_record_type);
 #endif
-    ADD_TEST(test_dtls_malformed_alert);
     ADD_TEST(test_dtls_too_many_warnings);
     ADD_TEST(test_dtls_unknown_alert_level);
 
