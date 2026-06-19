@@ -163,6 +163,8 @@ openssl x509 -in sca-cert.pem -trustout \
 ./mkcert.sh genee server.example ee-key ee-name2 ca-key ca-name2
 ./mkcert.sh genee server.example ee-key ee-pathlen ca-key ca-cert \
     -extfile <(echo "basicConstraints=CA:false,pathlen:0") # bash needed here
+# ee variant: issued directly by root CA
+./mkcert.sh genee server.example1 ee-key ee-cert1 root-key root-cert
 # purpose variants: clientAuth
 ./mkcert.sh genee -p clientAuth server.example ee-key ee-client ca-key ca-cert
 # trust variants: +serverAuth, -serverAuth, +clientAuth, -clientAuth
