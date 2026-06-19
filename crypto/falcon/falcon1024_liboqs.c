@@ -1,4 +1,4 @@
-#ifdef HAVE_LIBOQS
+#if __has_include(<oqs/oqs.h>)
 /* Falcon-1024 Post-Quantum Signature via liboqs
  * NIST FIPS 204 Level 5: 263-bit classical, 230-bit PQ security
  * Public key: 1793 bytes, Signature: ~1271 bytes
@@ -8,7 +8,9 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#if __has_include(<oqs/oqs.h>)
 #include <oqs/oqs.h>
+#endif
 #include <string.h>
 
 #define FALCON1024_OID "1.3.9999.5.1024"

@@ -1,4 +1,4 @@
-#ifdef HAVE_LIBOQS
+#if __has_include(<oqs/oqs.h>)
 /*
  * Schnorr+Falcon-1024 Hybrid Signature Provider
  * Classical: Schnorr secp256k1 + Post-Quantum: Falcon-1024 NIST Level 5
@@ -14,7 +14,9 @@
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#if __has_include(<oqs/oqs.h>)
 #include <oqs/oqs.h>
+#endif
 #include <string.h>
 #include "prov/implementations.h"
 #include "prov/providercommon.h"

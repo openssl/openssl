@@ -1,4 +1,4 @@
-#ifdef HAVE_LIBOQS
+#if __has_include(<oqs/oqs.h>)
 /* Schnorr + Falcon-1024 Hybrid Signature
  * 
  * Classical: Schnorr Σ-Protocol (RFC 8235, secp256k1) — 128-bit
@@ -14,7 +14,9 @@
 #include <openssl/ec.h>
 #include <openssl/bn.h>
 #include <openssl/obj_mac.h>
+#if __has_include(<oqs/oqs.h>)
 #include <oqs/oqs.h>
+#endif
 #include "schnorr_local.h"
 
 #define HYBRID_OID "1.3.9999.5.10241024"

@@ -1,4 +1,4 @@
-#ifdef HAVE_LIBOQS
+#if __has_include(<oqs/oqs.h>)
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
@@ -7,7 +7,9 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
+#if __has_include(<oqs/oqs.h>)
 #include <oqs/oqs.h>
+#endif
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"

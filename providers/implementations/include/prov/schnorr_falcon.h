@@ -1,9 +1,11 @@
-#ifdef HAVE_LIBOQS
+#if __has_include(<oqs/oqs.h>)
 #ifndef PROV_SCHNORR_FALCON_H
 #define PROV_SCHNORR_FALCON_H
 
 #include <openssl/ec.h>
+#if __has_include(<oqs/oqs.h>)
 #include <oqs/oqs.h>
+#endif
 
 typedef struct {
     EC_KEY *schnorr_key;
