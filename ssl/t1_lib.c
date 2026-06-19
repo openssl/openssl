@@ -1931,53 +1931,6 @@ void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     }
 }
 
-/* Check a key is compatible with compression extension */
-static int tls1_check_pkey_comp(SSL_CONNECTION *s, EVP_PKEY *pkey)
-{
-    unsigned char comp_id;
-    size_t i;
-    int point_conv;
-
-    /* If not an EC key nothing to check */
-    if (!EVP_PKEY_is_a(pkey, "EC"))
-        return 1;
-
-    /* Get required compression id */
-    point_conv = EVP_PKEY_get_ec_point_conv_form(pkey);
-    if (point_conv == 0)
-        return 0;
-    if (point_conv == POINT_CONVERSION_UNCOMPRESSED) {
-        comp_id = TLSEXT_ECPOINTFORMAT_uncompressed;
-    } else if (SSL_CONNECTION_IS_TLS13(s)) {
-        /*
-         * ec_point_formats extension is not used in TLSv1.3 so we ignore
-         * this check.
-         */
-        return 1;
-    } else {
-        int field_type = EVP_PKEY_get_field_type(pkey);
-
-        if (field_type == NID_X9_62_prime_field)
-            comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_prime;
-        else if (field_type == NID_X9_62_characteristic_two_field)
-            comp_id = TLSEXT_ECPOINTFORMAT_ansiX962_compressed_char2;
-        else
-            return 0;
-    }
-    /*
-     * If point formats extension present check it, otherwise everything is
-     * supported (see RFC4492).
-     */
-    if (s->ext.peer_ecpointformats == NULL)
-        return 1;
-
-    for (i = 0; i < s->ext.peer_ecpointformats_len; i++) {
-        if (s->ext.peer_ecpointformats[i] == comp_id)
-            return 1;
-    }
-    return 0;
-}
-
 /* Return group id of a key */
 static uint16_t tls1_get_group_id(EVP_PKEY *pkey)
 {
@@ -2002,9 +1955,6 @@ static int tls1_check_cert_param(SSL_CONNECTION *s, X509 *x, int check_ee_md)
     /* If not EC nothing to do */
     if (!EVP_PKEY_is_a(pkey, "EC"))
         return 1;
-    /* Check compression */
-    if (!tls1_check_pkey_comp(s, pkey))
-        return 0;
     group_id = tls1_get_group_id(pkey);
     /*
      * For a server we allow the certificate to not be in our list of supported
@@ -2945,13 +2895,6 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
     }
 
     if (pkeyid == EVP_PKEY_EC) {
-
-        /* Check point compression is permitted */
-        if (!tls1_check_pkey_comp(s, pkey)) {
-            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
-                SSL_R_ILLEGAL_POINT_COMPRESSION);
-            return 0;
-        }
 
         /* For TLS 1.3 or Suite B check curve matches signature algorithm */
         if (SSL_CONNECTION_IS_TLS13(s) || tls1_suiteb(s)) {
@@ -4277,8 +4220,6 @@ int tls1_check_chain(SSL_CONNECTION *s, X509 *x, EVP_PKEY *pk,
         chain = cpk->chain;
         strict_mode = c->cert_flags & SSL_CERT_FLAGS_CHECK_TLS_STRICT;
         if (tls12_rpk_and_privkey(s, idx)) {
-            if (EVP_PKEY_is_a(pk, "EC") && !tls1_check_pkey_comp(s, pk))
-                return 0;
             *pvalid = rv = CERT_PKEY_RPK;
             return rv;
         }
