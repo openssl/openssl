@@ -1,0 +1,76 @@
+# Generated with generate_ssl_tests.pl
+
+num_tests = 2
+
+test-0 = 0-tls12-compressed-spki
+test-1 = 1-tls13-compressed-spki
+# ===========================================================
+
+[0-tls12-compressed-spki]
+ssl_conf = 0-tls12-compressed-spki-ssl
+
+[0-tls12-compressed-spki-ssl]
+server = 0-tls12-compressed-spki-server
+client = 0-tls12-compressed-spki-client
+
+[0-tls12-compressed-spki-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+ClientCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Require
+
+[0-tls12-compressed-spki-client]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = ECDHE-ECDSA-AES128-GCM-SHA256
+MaxProtocol = TLSv1.2
+MinProtocol = TLSv1.2
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Peer
+
+[test-0]
+ExpectedClientCertType = P-256
+ExpectedProtocol = TLSv1.2
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
+# ===========================================================
+
+[1-tls13-compressed-spki]
+ssl_conf = 1-tls13-compressed-spki-ssl
+
+[1-tls13-compressed-spki-ssl]
+server = 1-tls13-compressed-spki-server
+client = 1-tls13-compressed-spki-client
+
+[1-tls13-compressed-spki-server]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+ClientCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Require
+
+[1-tls13-compressed-spki-client]
+Certificate = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-cert.pem
+CipherString = DEFAULT
+MaxProtocol = TLSv1.3
+MinProtocol = TLSv1.3
+PrivateKey = ${ENV::TEST_CERTS_DIR}/server-ec-compressed-key.pem
+VerifyCAFile = ${ENV::TEST_CERTS_DIR}/p384-root.pem
+VerifyMode = Peer
+
+[test-1]
+ExpectedClientCertType = P-256
+ExpectedProtocol = TLSv1.3
+ExpectedResult = Success
+ExpectedServerCertType = P-256
+
+
