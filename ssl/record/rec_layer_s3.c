@@ -835,15 +835,9 @@ start:
      */
 
     /*
-     * Lets just double check that we've not got an SSLv2 record
+     * Lets just double check that we've got a supported record version
      */
-    if (rr->version == SSL2_VERSION) {
-        /*
-         * Should never happen. ssl3_get_record() should only give us an SSLv2
-         * record back if this is the first packet and we are looking for an
-         * initial ClientHello. Therefore |type| should always be equal to
-         * |rr->type|. If not then something has gone horribly wrong
-         */
+    if (rr->version < TLS1_VERSION || rr->version > TLS1_3_VERSION) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return -1;
     }
