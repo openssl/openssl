@@ -48,7 +48,7 @@ static void tear_down(CMP_VFY_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
-static time_t test_time_valid = 0, test_time_after_expiration = 0;
+static time_t test_time_valid = 0, test_time_after_expiration = 0; /* for Insta certs */
 
 static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
@@ -68,6 +68,7 @@ static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
         X509_STORE_free(ts);
         return NULL;
     }
+    /* by default, set validation time relevant for Insta certs: */
     X509_VERIFY_PARAM_set_time(X509_STORE_get0_param(ts), test_time_valid);
     X509_STORE_set_verify_cb(ts, X509_STORE_CTX_print_verify_cb);
     return fixture;
@@ -75,11 +76,9 @@ static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
 
 static X509 *srvcert = NULL;
 static X509 *clcert = NULL;
-/* chain */
-static X509 *endentity1 = NULL, *endentity2 = NULL,
-            *intermediate = NULL, *root = NULL;
-/* INSTA chain */
-static X509 *insta_cert = NULL, *instaca_cert = NULL;
+static X509 *endentity1 = NULL, *intermediate = NULL, *root = NULL; /* 3-level chain */
+static X509 *endentity2 = NULL; /* 2-level chain together with same root as before */
+static X509 *insta_cert = NULL, *instaca_cert = NULL; /* 2-level Insta chain */
 
 static unsigned char rand_data[OSSL_CMP_TRANSACTIONID_LENGTH];
 static OSSL_CMP_MSG *ir_unprotected, *ir_rmprotection, *error_protected;
@@ -132,7 +131,7 @@ static int test_verify_popo_bad(void)
 }
 #endif
 
-/* indirectly checks also OSSL_CMP_validate_msg() */
+/* indirectly checks also OSSL_CMP_validate_msg(), uses Insta certs */
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     int res = TEST_int_eq(fixture->expected,
@@ -397,16 +396,16 @@ static int test_validate_msg_unprotected_request(void)
 }
 #endif
 
-static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int expired)
+/* used only with normal OpenSSL test certs, which are kept valid for current time */
+static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int not_yet_valid)
 {
-    (*fixture)->cert = endentity2;
-    (*fixture)->expected = wrong == NULL && !expired;
-    if (expired) {
-        X509_STORE *ts = OSSL_CMP_CTX_get0_trusted((*fixture)->cmp_ctx);
-        X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
+    X509_STORE *ts = OSSL_CMP_CTX_get0_trusted((*fixture)->cmp_ctx);
+    X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
 
-        X509_VERIFY_PARAM_set_time(vpm, test_time_after_expiration);
-    }
+    X509_VERIFY_PARAM_set_time(vpm, not_yet_valid ? 0 /* January 1st, 1900 */
+                                                  : time(NULL) /* override default validation time (set for Insta certs) by current time */);
+    (*fixture)->cert = endentity2;
+    (*fixture)->expected = wrong == NULL && !not_yet_valid;
     if (!add_trusted((*fixture)->cmp_ctx, wrong == NULL ? root : wrong)
         || !add_untrusted((*fixture)->cmp_ctx, endentity1)
         || !add_untrusted((*fixture)->cmp_ctx, intermediate)) {
@@ -431,7 +430,7 @@ static int test_validate_cert_path_wrong_anchor(void)
     return result;
 }
 
-static int test_validate_cert_path_expired(void)
+static int test_validate_cert_path_not_yet_valid(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     setup_path(&fixture, NULL, 1);
@@ -683,8 +682,8 @@ int setup_tests(void)
     ts.tm_year = 2018 - 1900; /* 2018 */
     ts.tm_mon = 1; /* February */
     ts.tm_mday = 18; /* 18th */
-    test_time_valid = mktime(&ts); /* February 18th 2018 */
-    ts.tm_year += 10; /* February 18th 2028 */
+    test_time_valid = mktime(&ts); /* February 18th 2018, within validity of insta_cert */
+    ts.tm_year += 10; /* February 18th 2028, past validity of instaca_cert */
     test_time_after_expiration = mktime(&ts);
 
     if (!test_skip_common_options()) {
@@ -715,7 +714,7 @@ int setup_tests(void)
     if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 15, USAGE))
         return 0;
 
-    /* Load certificates for cert chain */
+    /* Load certificates for mixed 3-level and 2-level cert chain */
     if (!TEST_ptr(endentity1 = load_cert_pem(endentity1_f, libctx))
         || !TEST_ptr(endentity2 = load_cert_pem(endentity2_f, libctx))
         || !TEST_ptr(root = load_cert_pem(root_f, NULL))
@@ -772,7 +771,7 @@ int setup_tests(void)
 
     /* Cert path validation tests */
     ADD_TEST(test_validate_cert_path_ok);
-    ADD_TEST(test_validate_cert_path_expired);
+    ADD_TEST(test_validate_cert_path_not_yet_valid);
     ADD_TEST(test_validate_cert_path_wrong_anchor);
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
