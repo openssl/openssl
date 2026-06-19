@@ -532,7 +532,8 @@ RSA *ossl_rsa_dup(const RSA *rsa, int selection)
     }
 
     if (rsa->pss != NULL) {
-        dupkey->pss = RSA_PSS_PARAMS_dup(rsa->pss);
+        if ((dupkey->pss = RSA_PSS_PARAMS_dup(rsa->pss)) == NULL)
+            goto err;
         if (rsa->pss->maskGenAlgorithm != NULL
             && dupkey->pss->maskGenAlgorithm == NULL) {
             dupkey->pss->maskHash = ossl_x509_algor_mgf1_decode(rsa->pss->maskGenAlgorithm);
