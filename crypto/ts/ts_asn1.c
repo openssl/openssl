@@ -195,6 +195,11 @@ static void *d2i_TS_RESP_thunk(void **a, const unsigned char **pp, long length)
     return (void *)d2i_TS_RESP((TS_RESP **)a, pp, length);
 }
 
+static int i2d_TS_RESP_thunk(const void *a, unsigned char **p)
+{
+    return i2d_TS_RESP((TS_RESP *)a, p);
+}
+
 TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 {
     return ASN1_d2i_bio((void *(*)(void))TS_RESP_new, d2i_TS_RESP_thunk, bp, (void **)a);
@@ -202,7 +207,7 @@ TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 
 int i2d_TS_RESP_bio(BIO *bp, const TS_RESP *a)
 {
-    return ASN1_i2d_bio_of(TS_RESP, i2d_TS_RESP, bp, a);
+    return ASN1_i2d_bio(i2d_TS_RESP_thunk, bp, a);
 }
 #ifndef OPENSSL_NO_STDIO
 TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
