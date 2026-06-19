@@ -1,0 +1,81 @@
+# -*- mode: perl; -*-
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+
+## End-to-end check that compressed-form EC leaf certificates
+## (server-ec-compressed-cert.pem, P-256 named curve, SPKI bit-string
+## leading byte 0x02 or 0x03, anchored to the P-384 EC root) work at
+## both TLS 1.2 and TLS 1.3 in both directions: the client presents
+## the same compressed leaf to a server that requires client
+## authentication, exercising X.509 acceptance of compressed point
+## form on both sides simultaneously.  The ec_point_formats extension
+## no longer affects X.509 cert selection or acceptance, so neither
+## peer opts into LegacyECPointFormats; the default ec_point_formats
+## lists ('uncompressed' only) and the compressed leaves coexist.
+
+package ssltests;
+use OpenSSL::Test::Utils;
+
+our @tests = ();
+
+unless (disabled("ec") || disabled("tls1_2") || disabled("tls1_3")) {
+@tests = (
+    {
+        name => "tls12-compressed-spki",
+        server => {
+            "Certificate"  => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"   => test_pem("server-ec-compressed-key.pem"),
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "ClientCAFile" => test_pem("p384-root.pem"),
+            "VerifyMode"   => "Require",
+            "MinProtocol"  => "TLSv1.2",
+            "MaxProtocol"  => "TLSv1.2",
+        },
+        client => {
+            "Certificate"  => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"   => test_pem("server-ec-compressed-key.pem"),
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "MinProtocol"  => "TLSv1.2",
+            "MaxProtocol"  => "TLSv1.2",
+            "CipherString" => "ECDHE-ECDSA-AES128-GCM-SHA256",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.2",
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedClientCertType" => "P-256",
+        },
+    },
+
+    {
+        name => "tls13-compressed-spki",
+        server => {
+            "Certificate"  => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"   => test_pem("server-ec-compressed-key.pem"),
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "ClientCAFile" => test_pem("p384-root.pem"),
+            "VerifyMode"   => "Require",
+            "MinProtocol"  => "TLSv1.3",
+            "MaxProtocol"  => "TLSv1.3",
+        },
+        client => {
+            "Certificate"  => test_pem("server-ec-compressed-cert.pem"),
+            "PrivateKey"   => test_pem("server-ec-compressed-key.pem"),
+            "VerifyCAFile" => test_pem("p384-root.pem"),
+            "MinProtocol"  => "TLSv1.3",
+            "MaxProtocol"  => "TLSv1.3",
+        },
+        test => {
+            "ExpectedResult"         => "Success",
+            "ExpectedProtocol"       => "TLSv1.3",
+            "ExpectedServerCertType" => "P-256",
+            "ExpectedClientCertType" => "P-256",
+        },
+    },
+);
+}

@@ -38,7 +38,7 @@ map { s/\^// } @conf_files if $^O eq "VMS";
 
 # We hard-code the number of tests to double-check that the globbing above
 # finds all files as expected.
-plan tests => 30;
+plan tests => 31;
 
 # Some test results depend on the configuration of enabled protocols. We only
 # verify generated sources in the default configuration.
@@ -84,6 +84,7 @@ my %conf_dependent_tests = (
   "27-ticket-appdata.cnf" => !$is_default_tls,
   "28-seclevel.cnf" => disabled("tls1_2") || $no_ec,
   "30-extended-master-secret.cnf" => disabled("tls1_2"),
+  "33-compressed-spki.cnf" => disabled("tls1_2") || disabled("tls1_3") || $no_ec,
 );
 
 # Add your test here if it should be skipped for some compile-time
@@ -118,6 +119,7 @@ my %skip = (
   "25-cipher.cnf" => disabled("ec") || disabled("tls1_2"),
   "26-tls13_client_auth.cnf" => disabled("tls1_3") || ($no_ec && $no_dh),
   "29-dtls-sctp-label-bug.cnf" => disabled("sctp") || disabled("sock"),
+  "33-compressed-spki.cnf" => disabled("tls1_2") || disabled("tls1_3") || $no_ec,
 );
 
 foreach my $conf (@conf_files) {
