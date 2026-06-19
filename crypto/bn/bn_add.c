@@ -152,6 +152,9 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         top++;
 
     OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    if (rf == NULL)
+        return 0;
+
     int ret = OSSL_FN_add(rf, a->data, b->data);
     bn_release(r, (int)top);
 
@@ -224,6 +227,9 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     size_t top = calculate_max_top(a, b);
 
     OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    if (rf == NULL)
+        return 0;
+
     int ret = OSSL_FN_sub(rf, a->data, b->data);
     bn_release(r, (int)top);
 
