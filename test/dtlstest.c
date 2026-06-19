@@ -919,7 +919,8 @@ end:
 #define FATAL_MALFORMED_ALERT 1
 #define FATAL_UNKNOWN_ALERT_LEVEL 2
 #define FATAL_TOO_MANY_WARNINGS 3
-#define FATAL_NUM_TESTS 4
+#define FATAL_DTLS12_UNKNOWN_RECORD_TYPE 4
+#define FATAL_NUM_TESTS 5
 
 /* Unexpected app data during handshake */
 static const unsigned char fatal_unexpected_app_data[] = {
@@ -961,6 +962,16 @@ static const unsigned char fatal_warning_alert_template[] = {
     0x01, 0x32
 };
 
+/* Unknown record type 0x99 for DTLS 1.2 */
+static const unsigned char fatal_unknown_record_type_dtls12[] = {
+    0x99,
+    0xFE, 0xFD,
+    0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+    0x00, 0x04,
+    0x74, 0x65, 0x73, 0x74
+};
+
 static int test_dtls_fatal_record(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -971,6 +982,8 @@ static int test_dtls_fatal_record(int idx)
     size_t record_len = 0;
     int i;
     unsigned char warning_alert[sizeof(fatal_warning_alert_template)];
+    int min_ver = DTLS1_VERSION;
+    int max_ver = 0;
 
     switch (idx) {
     case FATAL_UNEXPECTED_APP_DATA:
@@ -987,13 +1000,22 @@ static int test_dtls_fatal_record(int idx)
         break;
     case FATAL_TOO_MANY_WARNINGS:
         break;
+    case FATAL_DTLS12_UNKNOWN_RECORD_TYPE:
+#ifdef OPENSSL_NO_DTLS1_2
+        return TEST_skip("DTLS1.2 support disabled");
+#else
+        record = fatal_unknown_record_type_dtls12;
+        record_len = sizeof(fatal_unknown_record_type_dtls12);
+        min_ver = max_ver = DTLS1_2_VERSION;
+        break;
+#endif
     default:
         return 0;
     }
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_VERSION, 0,
+            min_ver, max_ver,
             &sctx, &cctx, cert, privkey)))
         return 0;
 
@@ -1044,65 +1066,6 @@ end:
 
     return testresult;
 }
-
-#ifndef OPENSSL_NO_DTLS1_2
-/*
- * Unknown record type (0x99) during DTLSv1.2 handshake triggers fatal alert.
- */
-static int test_dtls12_unknown_record_type(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
-    int testresult = 0;
-    /* Record with unknown type 0x99 at epoch 0 (unencrypted) */
-    static const unsigned char unknown_type_record[] = {
-        0x99, /* Unknown record type (valid types are 20-23) */
-        0xFE, 0xFD, /* DTLS 1.2 version */
-        0x00, 0x00, /* Epoch 0 */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x05, /* Sequence 5 */
-        0x00, 0x04, /* Length = 4 bytes */
-        0x74, 0x65, 0x73, 0x74 /* Payload: "test" */
-    };
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
-            &sctx, &cctx, cert, privkey)))
-        return 0;
-
-    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
-    if (!TEST_ptr(c_to_s_fbio))
-        goto end;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, c_to_s_fbio)))
-        goto end;
-
-    c_to_s_mempacket = SSL_get_wbio(clientssl);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-
-    mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
-        sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
-
-    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_SSL, 0, 0)))
-        goto end;
-
-    testresult = 1;
-end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return testresult;
-}
-#endif
 
 #ifndef OPENSSL_NO_DTLS1
 /*
@@ -1240,9 +1203,6 @@ int setup_tests(void)
     ADD_TEST(test_duplicate_app_data);
     ADD_ALL_TESTS(test_dtls_malformed_record, SILENT_DISCARD_NUM_TESTS);
     ADD_ALL_TESTS(test_dtls_fatal_record, FATAL_NUM_TESTS);
-#ifndef OPENSSL_NO_DTLS1_2
-    ADD_TEST(test_dtls12_unknown_record_type);
-#endif
 #ifndef OPENSSL_NO_DTLS1
     ADD_TEST(test_dtls1_unknown_record_type);
 #endif
