@@ -109,6 +109,12 @@ ASN1_SEQUENCE(TS_TST_INFO) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(TS_TST_INFO)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_TST_INFO)
+
+static int i2d_TS_TST_INFO_thunk(const void *a, unsigned char **p)
+{
+    return i2d_TS_TST_INFO((TS_TST_INFO *)a, p);
+}
+
 TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 {
     return ASN1_d2i_bio_of(TS_TST_INFO, TS_TST_INFO_new, d2i_TS_TST_INFO, bp,
@@ -117,7 +123,7 @@ TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 
 int i2d_TS_TST_INFO_bio(BIO *bp, const TS_TST_INFO *a)
 {
-    return ASN1_i2d_bio_of(TS_TST_INFO, i2d_TS_TST_INFO, bp, a);
+    return ASN1_i2d_bio(i2d_TS_TST_INFO_thunk, bp, a);
 }
 #ifndef OPENSSL_NO_STDIO
 TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
