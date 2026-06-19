@@ -152,3 +152,4 @@ IF[{- !$disabled{'sm2'} -}]
   GENERATE[ecp_sm2p256-riscv64.S]=asm/ecp_sm2p256-riscv64.pl
   INCLUDE[ecp_sm2p256-riscv64.o]=..
 ENDIF
+SOURCE[libcrypto-lib]=ecp_schnorr.c

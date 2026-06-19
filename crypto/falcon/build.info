@@ -1,0 +1,2 @@
+
+SOURCE[libcrypto-lib]=falcon1024_liboqs.c schnorr_falcon1024_hybrid.c
