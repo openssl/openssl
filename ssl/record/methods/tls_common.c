@@ -526,8 +526,6 @@ static int rlayer_early_data_count_ok(OSSL_RECORD_LAYER *rl, size_t length,
  */
 #define MAX_EMPTY_RECORDS 32
 
-#define SSL2_RT_HEADER_LENGTH 2
-
 /*-
  * Call this to buffer new input records in rl->rrec.
  * It will return a OSSL_RECORD_RETURN_* value.
@@ -626,12 +624,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
          * rl->rstate == SSL_ST_READ_BODY, get and decode the data. Calculate
          * how much more data we need to read for the rest of the record
          */
-        if (thisrr->rec_version == SSL2_VERSION) {
-            more = thisrr->length + SSL2_RT_HEADER_LENGTH
-                - SSL3_RT_HEADER_LENGTH;
-        } else {
-            more = thisrr->length;
-        }
+        more = thisrr->length;
 
         if (more > 0) {
             /* now rl->packet_length == SSL3_RT_HEADER_LENGTH */
@@ -646,13 +639,9 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
 
         /*
          * At this point, rl->packet_length == SSL3_RT_HEADER_LENGTH
-         * + thisrr->length, or rl->packet_length == SSL2_RT_HEADER_LENGTH
          * + thisrr->length and we have that many bytes in rl->packet
          */
-        if (thisrr->rec_version == SSL2_VERSION)
-            thisrr->input = &(rl->packet[SSL2_RT_HEADER_LENGTH]);
-        else
-            thisrr->input = &(rl->packet[SSL3_RT_HEADER_LENGTH]);
+        thisrr->input = &(rl->packet[SSL3_RT_HEADER_LENGTH]);
 
         /*
          * ok, we can now read from 'rl->packet' data into 'thisrr'.
