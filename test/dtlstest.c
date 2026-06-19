@@ -918,7 +918,8 @@ end:
 #define FATAL_UNEXPECTED_APP_DATA 0
 #define FATAL_MALFORMED_ALERT 1
 #define FATAL_UNKNOWN_ALERT_LEVEL 2
-#define FATAL_NUM_TESTS 3
+#define FATAL_TOO_MANY_WARNINGS 3
+#define FATAL_NUM_TESTS 4
 
 /* Unexpected app data during handshake */
 static const unsigned char fatal_unexpected_app_data[] = {
@@ -950,6 +951,16 @@ static const unsigned char fatal_unknown_alert_level[] = {
     0x03, 0x00
 };
 
+/* Warning alert template */
+static const unsigned char fatal_warning_alert_template[] = {
+    SSL3_RT_ALERT,
+    0xFE, 0xFD,
+    0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
+    0x00, 0x02,
+    0x01, 0x32
+};
+
 static int test_dtls_fatal_record(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -958,6 +969,8 @@ static int test_dtls_fatal_record(int idx)
     int testresult = 0;
     const unsigned char *record = NULL;
     size_t record_len = 0;
+    int i;
+    unsigned char warning_alert[sizeof(fatal_warning_alert_template)];
 
     switch (idx) {
     case FATAL_UNEXPECTED_APP_DATA:
@@ -971,6 +984,8 @@ static int test_dtls_fatal_record(int idx)
     case FATAL_UNKNOWN_ALERT_LEVEL:
         record = fatal_unknown_alert_level;
         record_len = sizeof(fatal_unknown_alert_level);
+        break;
+    case FATAL_TOO_MANY_WARNINGS:
         break;
     default:
         return 0;
@@ -1003,8 +1018,18 @@ static int test_dtls_fatal_record(int idx)
     if (!TEST_ptr(c_to_s_mempacket))
         goto end;
 
-    mempacket_test_inject(c_to_s_mempacket, (char *)record, record_len, 1,
-        INJECT_PACKET_IGNORE_REC_SEQ);
+    if (idx == FATAL_TOO_MANY_WARNINGS) {
+        for (i = 0; i < 7; i++) {
+            memcpy(warning_alert, fatal_warning_alert_template,
+                sizeof(warning_alert));
+            warning_alert[10] = (unsigned char)(0x0A + i);
+            mempacket_test_inject(c_to_s_mempacket, (char *)warning_alert,
+                sizeof(warning_alert), 1 + i, INJECT_PACKET_IGNORE_REC_SEQ);
+        }
+    } else {
+        mempacket_test_inject(c_to_s_mempacket, (char *)record, record_len, 1,
+            INJECT_PACKET_IGNORE_REC_SEQ);
+    }
 
     if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
             SSL_ERROR_SSL, 0, 0)))
@@ -1142,74 +1167,6 @@ end:
 }
 #endif
 
-/*
- * Too many consecutive warning alerts (exceeds MAX_WARN_ALERT_COUNT) triggers fatal alert.
- */
-static int test_dtls_too_many_warnings(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
-    int testresult = 0;
-    int i;
-    static const unsigned char warning_alert_template[] = {
-        SSL3_RT_ALERT,
-        0xFE, 0xFD,
-        0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x0A,
-        0x00, 0x02,
-        0x01, 0x32
-    };
-    unsigned char warning_alert[sizeof(warning_alert_template)];
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(),
-            DTLS1_VERSION, 0,
-            &sctx, &cctx, cert, privkey)))
-        return 0;
-
-#ifdef OPENSSL_NO_DTLS1_2
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
-        goto end;
-#endif
-
-    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
-    if (!TEST_ptr(c_to_s_fbio))
-        goto end;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, c_to_s_fbio)))
-        goto end;
-
-    c_to_s_mempacket = SSL_get_wbio(clientssl);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-
-    for (i = 0; i < 7; i++) {
-        memcpy(warning_alert, warning_alert_template, sizeof(warning_alert));
-        warning_alert[10] = (unsigned char)(0x0A + i);
-        mempacket_test_inject(c_to_s_mempacket, (char *)warning_alert,
-            sizeof(warning_alert), 1 + i, INJECT_PACKET_IGNORE_REC_SEQ);
-    }
-
-    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_SSL, 0, 0)))
-        goto end;
-
-    testresult = 1;
-end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return testresult;
-}
-
 static int test_listen(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -1289,7 +1246,6 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1
     ADD_TEST(test_dtls1_unknown_record_type);
 #endif
-    ADD_TEST(test_dtls_too_many_warnings);
 
     return 1;
 }
