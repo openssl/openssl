@@ -1084,8 +1084,8 @@ static int test_dtls_fatal_record(int idx)
                 sizeof(warning_alert), 1 + i, INJECT_PACKET_IGNORE_REC_SEQ);
         }
     } else {
-        mempacket_test_inject(c_to_s_mempacket, (char *)record, record_len, 1,
-            INJECT_PACKET_IGNORE_REC_SEQ);
+        mempacket_test_inject(c_to_s_mempacket, (char *)record, (int)record_len,
+            1, INJECT_PACKET_IGNORE_REC_SEQ);
     }
 
     if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
