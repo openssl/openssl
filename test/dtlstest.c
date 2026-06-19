@@ -692,7 +692,8 @@ end:
 #define SILENT_DISCARD_FUTURE_EPOCH 2
 #define SILENT_DISCARD_BAD_MAC 3
 #define SILENT_DISCARD_ETM_BAD_MAC 4
-#define SILENT_DISCARD_NUM_TESTS 5
+#define SILENT_DISCARD_ETM_SHORT 5
+#define SILENT_DISCARD_NUM_TESTS 6
 
 /* Invalid DTLS version (0x00, 0x00) */
 static const unsigned char sd_invalid_version[] = {
@@ -761,6 +762,17 @@ static const unsigned char sd_etm_bad_mac[] = {
     0xBA, 0xAD, 0x00, 0xAC
 };
 
+/* EtM short record: too short to contain the MAC */
+static const unsigned char sd_etm_short[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD,
+    0x00, 0x01,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x40,
+    0x00, 0x10,
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
+};
+
 static int test_dtls_malformed_record(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -794,6 +806,10 @@ static int test_dtls_malformed_record(int idx)
         malformed = sd_etm_bad_mac;
         malformed_len = sizeof(sd_etm_bad_mac);
         break;
+    case SILENT_DISCARD_ETM_SHORT:
+        malformed = sd_etm_short;
+        malformed_len = sizeof(sd_etm_short);
+        break;
     default:
         return 0;
     }
@@ -811,10 +827,10 @@ static int test_dtls_malformed_record(int idx)
 #endif
 
     /*
-     * For EtM test, force CBC cipher (AES128-SHA) to trigger EtM code path.
+     * For EtM tests, force CBC cipher (AES128-SHA) to trigger EtM code path.
      * EtM is negotiated automatically for CBC ciphers.
      */
-    if (idx == SILENT_DISCARD_ETM_BAD_MAC) {
+    if (idx == SILENT_DISCARD_ETM_BAD_MAC || idx == SILENT_DISCARD_ETM_SHORT) {
         if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
             || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA:@SECLEVEL=0")))
             goto end;
@@ -846,86 +862,6 @@ static int test_dtls_malformed_record(int idx)
 
     if (!TEST_int_eq(err, SSL_ERROR_WANT_READ)) {
         TEST_info("idx=%d: Expected SSL_ERROR_WANT_READ, got %d", idx, err);
-        goto end;
-    }
-
-    /* Verify connection still works after silent discard */
-    if (!TEST_int_eq(SSL_write(sssl, msg, sizeof(msg)), (int)sizeof(msg)))
-        goto end;
-
-    if (!TEST_int_eq(SSL_read(cssl, buf, sizeof(buf)), (int)sizeof(msg)))
-        goto end;
-
-    if (!TEST_mem_eq(buf, sizeof(msg), msg, sizeof(msg)))
-        goto end;
-
-    testresult = 1;
-end:
-    SSL_free(sssl);
-    SSL_free(cssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return testresult;
-}
-
-/*
- * EtM records too short for MAC are silently discarded.
- * Uses CBC cipher (AES128-SHA) to trigger EtM code path.
- */
-static const unsigned char etm_short_record[] = {
-    SSL3_RT_APPLICATION_DATA,
-    0xFE, 0xFD,
-    0x00, 0x01,
-    0x00, 0x00, 0x00, 0x00, 0x00, 0x40,
-    0x00, 0x10,
-    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-    0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
-};
-
-static int test_dtls_etm_short_record(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *sssl = NULL, *cssl = NULL;
-    BIO *server_wbio = NULL;
-    int testresult = 0;
-    char msg[] = "test message";
-    char buf[64];
-    int ret, err;
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(),
-            DTLS1_VERSION, 0,
-            &sctx, &cctx, cert, privkey)))
-        return 0;
-
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA:@SECLEVEL=0")))
-        goto end;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
-        goto end;
-
-    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
-        goto end;
-
-    server_wbio = SSL_get_wbio(sssl);
-    if (!TEST_ptr(server_wbio))
-        goto end;
-
-    if (!TEST_int_eq(BIO_write(server_wbio, etm_short_record,
-                         (int)sizeof(etm_short_record)),
-            (int)sizeof(etm_short_record)))
-        goto end;
-
-    ret = SSL_read(cssl, buf, sizeof(buf));
-    err = SSL_get_error(cssl, ret);
-
-    if (!TEST_int_le(ret, 0))
-        goto end;
-
-    if (!TEST_int_eq(err, SSL_ERROR_WANT_READ)) {
-        TEST_info("EtM short record: Expected SSL_ERROR_WANT_READ, got %d", err);
         goto end;
     }
 
@@ -1483,7 +1419,6 @@ int setup_tests(void)
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data);
     ADD_ALL_TESTS(test_dtls_malformed_record, SILENT_DISCARD_NUM_TESTS);
-    ADD_TEST(test_dtls_etm_short_record);
     ADD_TEST(test_dtls_unexpected_app_data);
     ADD_TEST(test_dtls_encrypted_overflow);
 #ifndef OPENSSL_NO_DTLS1_2
