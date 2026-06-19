@@ -1,3 +1,4 @@
+IF[{- !$disabled{falcon1024} -}]
 # We make separate GOAL variables for each algorithm, to make it easy to
 # switch each to the Legacy provider when needed.
 
@@ -73,3 +74,4 @@ ENDIF
 $SCHNORR_FALCON_GOAL=../../libdefault.a
 SOURCE[$SCHNORR_FALCON_GOAL]=schnorr_falcon_kmgmt.c
 
+ENDIF

@@ -1,3 +1,4 @@
+#ifdef HAVE_LIBOQS
 /* Falcon-1024 Post-Quantum Signature via liboqs
  * NIST FIPS 204 Level 5: 263-bit classical, 230-bit PQ security
  * Public key: 1793 bytes, Signature: ~1271 bytes
@@ -93,3 +94,4 @@ void OPENSSL_falcon1024_cleanup(void)
 {
     EVP_PKEY_meth_free(falcon1024_pkey_meth);
 }
+#endif /* HAVE_LIBOQS */

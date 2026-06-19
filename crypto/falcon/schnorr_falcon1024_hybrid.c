@@ -1,3 +1,4 @@
+#ifdef HAVE_LIBOQS
 /* Schnorr + Falcon-1024 Hybrid Signature
  * 
  * Classical: Schnorr Σ-Protocol (RFC 8235, secp256k1) — 128-bit
@@ -150,3 +151,4 @@ void OPENSSL_schnorr_falcon1024_cleanup(void)
 {
     EVP_PKEY_meth_free(hybrid_pkey_meth);
 }
+#endif /* HAVE_LIBOQS */

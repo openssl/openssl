@@ -447,7 +447,9 @@ static const OSSL_ALGORITHM deflt_rands[] = {
 };
 
 static const OSSL_ALGORITHM deflt_signature[] = {
+#ifdef HAVE_LIBOQS
     { "SCHNORRFALCON1024", "provider=default", ossl_schnorr_falcon_1024_signature_functions, PROV_DESCS_SCHNORR_FALCON1024 },
+#endif
 #ifndef OPENSSL_NO_DSA
     { PROV_NAMES_DSA, "provider=default", ossl_dsa_signature_functions },
     { PROV_NAMES_DSA_SHA1, "provider=default", ossl_dsa_sha1_signature_functions },
@@ -586,7 +588,9 @@ static const OSSL_ALGORITHM deflt_asym_kem[] = {
 };
 
 static const OSSL_ALGORITHM deflt_keymgmt[] = {
+#ifdef HAVE_LIBOQS
     { "SCHNORRFALCON1024", "provider=default", ossl_schnorr_falcon_1024_keymgmt_functions, PROV_DESCS_SCHNORR_FALCON1024 },
+#endif
 #ifndef OPENSSL_NO_DH
     { PROV_NAMES_DH, "provider=default", ossl_dh_keymgmt_functions,
         PROV_DESCS_DH },

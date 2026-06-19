@@ -1,3 +1,4 @@
+#ifdef HAVE_LIBOQS
 #ifndef OSSL_FALCON_SCHNORR_LOCAL_H
 #define OSSL_FALCON_SCHNORR_LOCAL_H
 
@@ -13,3 +14,4 @@ int schnorr_verify_raw(const unsigned char *msg, size_t msg_len,
                         const unsigned char *sig, size_t sig_len);
 
 #endif
+#endif /* HAVE_LIBOQS */

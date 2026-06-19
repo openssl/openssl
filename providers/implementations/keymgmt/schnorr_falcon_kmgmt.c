@@ -1,3 +1,4 @@
+#ifdef HAVE_LIBOQS
 #include <openssl/core_dispatch.h>
 #include <openssl/core_names.h>
 #include <openssl/evp.h>
@@ -105,3 +106,4 @@ const OSSL_DISPATCH ossl_schnorr_falcon_1024_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))sf_gettable_params },
     OSSL_DISPATCH_END
 };
+#endif /* HAVE_LIBOQS */

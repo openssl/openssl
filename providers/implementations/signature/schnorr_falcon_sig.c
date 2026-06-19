@@ -1,3 +1,4 @@
+#ifdef HAVE_LIBOQS
 /*
  * Schnorr+Falcon-1024 Hybrid Signature Provider
  * Classical: Schnorr secp256k1 + Post-Quantum: Falcon-1024 NIST Level 5
@@ -183,3 +184,4 @@ const OSSL_DISPATCH ossl_schnorr_falcon_1024_signature_functions[] = {
     { OSSL_FUNC_SIGNATURE_DIGEST_VERIFY, (void (*)(void))sf_digest_verify },
     OSSL_DISPATCH_END
 };
+#endif /* HAVE_LIBOQS */

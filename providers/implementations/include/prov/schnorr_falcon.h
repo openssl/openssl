@@ -1,3 +1,4 @@
+#ifdef HAVE_LIBOQS
 #ifndef PROV_SCHNORR_FALCON_H
 #define PROV_SCHNORR_FALCON_H
 
@@ -17,3 +18,4 @@ typedef struct {
 } SCHNORR_FALCON_KEY;
 
 #endif
+#endif /* HAVE_LIBOQS */
