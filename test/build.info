@@ -1167,6 +1167,11 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[ext_internal_test]=.. ../include ../apps/include
     DEPEND[ext_internal_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+    PROGRAMS{noinst}=statem_clnt_construct_test
+    SOURCE[statem_clnt_construct_test]=statem_clnt_construct_test.c
+    INCLUDE[statem_clnt_construct_test]=.. ../include ../apps/include
+    DEPEND[statem_clnt_construct_test]=../libcrypto.a ../libssl.a libtestutil.a
+
     PROGRAMS{noinst}=algorithmid_test
     SOURCE[algorithmid_test]=algorithmid_test.c
     INCLUDE[algorithmid_test]=../include ../apps/include
