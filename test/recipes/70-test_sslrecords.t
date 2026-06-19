@@ -131,8 +131,7 @@ sub run_tests
         ok($fatal_alert, "Fragmented alert records test");
    }
     #Unrecognised record type tests
-    #Note: DTLS silent discard per RFC 9147 S4.5.2 is tested in dtlstest.c
-    #      (test_dtls12_unknown_record_type, test_dtls1_unknown_record_type).
+    #Note: DTLS unrecognised record type tests are in dtlstest.c.
     #      Skip here to avoid TLSProxy socket cleanup timing issues.
 
     SKIP: {
