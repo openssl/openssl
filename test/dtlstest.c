@@ -693,7 +693,8 @@ end:
 #define SILENT_DISCARD_BAD_MAC 3
 #define SILENT_DISCARD_ETM_BAD_MAC 4
 #define SILENT_DISCARD_ETM_SHORT 5
-#define SILENT_DISCARD_NUM_TESTS 6
+#define SILENT_DISCARD_OVERFLOW 6
+#define SILENT_DISCARD_NUM_TESTS 7
 
 /* Invalid DTLS version (0x00, 0x00) */
 static const unsigned char sd_invalid_version[] = {
@@ -772,6 +773,19 @@ static const unsigned char sd_etm_short[] = {
     0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F
 };
 
+/*
+ * Overflow header: length field declares 17816 bytes (> SSL3_RT_MAX_ENCRYPTED_LENGTH).
+ * Full record is built dynamically in test_dtls_malformed_record.
+ */
+static const unsigned char sd_overflow_header[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD, /* DTLS 1.2 version */
+    0x00, 0x01, /* Epoch 1 */
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x50, /* Sequence 80 */
+    0x45, 0x98 /* Length = 17816 (> 17728) */
+};
+#define SD_OVERFLOW_LEN (13 + 17816)
+
 static int test_dtls_malformed_record(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -780,9 +794,11 @@ static int test_dtls_malformed_record(int idx)
     int testresult = 0;
     char msg[] = "test message";
     char buf[64];
-    const unsigned char *malformed;
-    size_t malformed_len;
+    const unsigned char *malformed = NULL;
+    size_t malformed_len = 0;
+    unsigned char *overflow_record = NULL;
     int ret, err;
+    int use_etm = 0;
 
     switch (idx) {
     case SILENT_DISCARD_INVALID_VERSION:
@@ -804,10 +820,21 @@ static int test_dtls_malformed_record(int idx)
     case SILENT_DISCARD_ETM_BAD_MAC:
         malformed = sd_etm_bad_mac;
         malformed_len = sizeof(sd_etm_bad_mac);
+        use_etm = 1;
         break;
     case SILENT_DISCARD_ETM_SHORT:
         malformed = sd_etm_short;
         malformed_len = sizeof(sd_etm_short);
+        use_etm = 1;
+        break;
+    case SILENT_DISCARD_OVERFLOW:
+        overflow_record = OPENSSL_malloc(SD_OVERFLOW_LEN);
+        if (!TEST_ptr(overflow_record))
+            return 0;
+        memcpy(overflow_record, sd_overflow_header, sizeof(sd_overflow_header));
+        memset(overflow_record + 13, 0xAA, 17816);
+        malformed = overflow_record;
+        malformed_len = SD_OVERFLOW_LEN;
         break;
     default:
         return 0;
@@ -829,7 +856,7 @@ static int test_dtls_malformed_record(int idx)
      * For EtM tests, force CBC cipher (AES128-SHA) to trigger EtM code path.
      * EtM is negotiated automatically for CBC ciphers.
      */
-    if (idx == SILENT_DISCARD_ETM_BAD_MAC || idx == SILENT_DISCARD_ETM_SHORT) {
+    if (use_etm) {
         if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "AES128-SHA:@SECLEVEL=0"))
             || !TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA:@SECLEVEL=0")))
             goto end;
@@ -876,6 +903,7 @@ static int test_dtls_malformed_record(int idx)
 
     testresult = 1;
 end:
+    OPENSSL_free(overflow_record);
     SSL_free(sssl);
     SSL_free(cssl);
     SSL_CTX_free(sctx);
@@ -940,92 +968,6 @@ static int test_dtls_unexpected_app_data(void)
 end:
     SSL_free(serverssl);
     SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return testresult;
-}
-
-/*
- * Records with encrypted record length overflows are discarded.
- * SSL3_RT_MAX_ENCRYPTED_LENGTH = 17728
- */
-static int test_dtls_encrypted_overflow(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *sssl = NULL, *cssl = NULL;
-    BIO *server_wbio = NULL;
-    int testresult = 0;
-    char buf[64];
-    int ret, err;
-    unsigned char *overflow_record = NULL;
-    size_t overflow_len;
-    /*
-     * Create record with length > SSL3_RT_MAX_ENCRYPTED_LENGTH (17728).
-     * Header (13 bytes) + declared length of 17800 bytes.
-     * We only send header + minimal payload but declare huge length.
-     */
-    static const unsigned char overflow_header[] = {
-        SSL3_RT_APPLICATION_DATA,
-        0xFE, 0xFD, /* DTLS 1.2 version */
-        0x00, 0x01, /* Epoch 1 */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x50, /* Sequence 80 */
-        0x45, 0x98 /* Length = 17816 (> 17728) */
-    };
-
-    /*
-     * We need to send enough data so OpenSSL reads the full declared length.
-     * Allocate 17816 + 13 header bytes.
-     */
-    overflow_len = 13 + 17816;
-    overflow_record = OPENSSL_malloc(overflow_len);
-    if (!TEST_ptr(overflow_record))
-        return 0;
-
-    memcpy(overflow_record, overflow_header, sizeof(overflow_header));
-    memset(overflow_record + 13, 0xAA, 17816);
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(),
-            DTLS1_VERSION, 0,
-            &sctx, &cctx, cert, privkey)))
-        goto end;
-
-#ifdef OPENSSL_NO_DTLS1_2
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
-        goto end;
-#endif
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
-        goto end;
-
-    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
-        goto end;
-
-    server_wbio = SSL_get_wbio(sssl);
-    if (!TEST_ptr(server_wbio))
-        goto end;
-
-    if (!TEST_int_eq(BIO_write(server_wbio, overflow_record, (int)overflow_len),
-            (int)overflow_len))
-        goto end;
-
-    ret = SSL_read(cssl, buf, sizeof(buf));
-    err = SSL_get_error(cssl, ret);
-
-    if (!TEST_int_le(ret, 0))
-        goto end;
-
-    /* Checking if the connection is kept open */
-    if (!TEST_int_eq(err, SSL_ERROR_WANT_READ))
-        goto end;
-
-    testresult = 1;
-end:
-    OPENSSL_free(overflow_record);
-    SSL_free(sssl);
-    SSL_free(cssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
@@ -1419,7 +1361,6 @@ int setup_tests(void)
     ADD_TEST(test_duplicate_app_data);
     ADD_ALL_TESTS(test_dtls_malformed_record, SILENT_DISCARD_NUM_TESTS);
     ADD_TEST(test_dtls_unexpected_app_data);
-    ADD_TEST(test_dtls_encrypted_overflow);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls12_unknown_record_type);
 #endif
