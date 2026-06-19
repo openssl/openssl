@@ -913,22 +913,38 @@ end:
 }
 
 /*
- * Unexpected app data during handshake triggers fatal alert.
+ * Fatal record tests: records that should trigger a fatal alert during handshake.
  */
-static int test_dtls_unexpected_app_data(void)
+#define FATAL_UNEXPECTED_APP_DATA 0
+#define FATAL_NUM_TESTS 1
+
+/* Unexpected app data during handshake */
+static const unsigned char fatal_unexpected_app_data[] = {
+    SSL3_RT_APPLICATION_DATA,
+    0xFE, 0xFD,
+    0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+    0x00, 0x04,
+    0x74, 0x65, 0x73, 0x74
+};
+
+static int test_dtls_fatal_record(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
     int testresult = 0;
-    static const unsigned char app_data_record[] = {
-        SSL3_RT_APPLICATION_DATA,
-        0xFE, 0xFD,
-        0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
-        0x00, 0x04,
-        0x74, 0x65, 0x73, 0x74
-    };
+    const unsigned char *record = NULL;
+    size_t record_len = 0;
+
+    switch (idx) {
+    case FATAL_UNEXPECTED_APP_DATA:
+        record = fatal_unexpected_app_data;
+        record_len = sizeof(fatal_unexpected_app_data);
+        break;
+    default:
+        return 0;
+    }
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
@@ -957,8 +973,8 @@ static int test_dtls_unexpected_app_data(void)
     if (!TEST_ptr(c_to_s_mempacket))
         goto end;
 
-    mempacket_test_inject(c_to_s_mempacket, (char *)app_data_record,
-        sizeof(app_data_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
+    mempacket_test_inject(c_to_s_mempacket, (char *)record, record_len, 1,
+        INJECT_PACKET_IGNORE_REC_SEQ);
 
     if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
             SSL_ERROR_SSL, 0, 0)))
@@ -1360,7 +1376,7 @@ int setup_tests(void)
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data);
     ADD_ALL_TESTS(test_dtls_malformed_record, SILENT_DISCARD_NUM_TESTS);
-    ADD_TEST(test_dtls_unexpected_app_data);
+    ADD_ALL_TESTS(test_dtls_fatal_record, FATAL_NUM_TESTS);
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls12_unknown_record_type);
 #endif
