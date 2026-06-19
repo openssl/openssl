@@ -920,7 +920,8 @@ end:
 #define FATAL_UNKNOWN_ALERT_LEVEL 2
 #define FATAL_TOO_MANY_WARNINGS 3
 #define FATAL_DTLS12_UNKNOWN_RECORD_TYPE 4
-#define FATAL_NUM_TESTS 5
+#define FATAL_DTLS1_UNKNOWN_RECORD_TYPE 5
+#define FATAL_NUM_TESTS 6
 
 /* Unexpected app data during handshake */
 static const unsigned char fatal_unexpected_app_data[] = {
@@ -962,6 +963,7 @@ static const unsigned char fatal_warning_alert_template[] = {
     0x01, 0x32
 };
 
+#ifndef OPENSSL_NO_DTLS1_2
 /* Unknown record type 0x99 for DTLS 1.2 */
 static const unsigned char fatal_unknown_record_type_dtls12[] = {
     0x99,
@@ -971,6 +973,19 @@ static const unsigned char fatal_unknown_record_type_dtls12[] = {
     0x00, 0x04,
     0x74, 0x65, 0x73, 0x74
 };
+#endif
+
+#ifndef OPENSSL_NO_DTLS1
+/* Unknown record type 0x99 for DTLS 1.0 */
+static const unsigned char fatal_unknown_record_type_dtls1[] = {
+    0x99,
+    0xFE, 0xFF,
+    0x00, 0x00,
+    0x00, 0x00, 0x00, 0x00, 0x00, 0x05,
+    0x00, 0x04,
+    0x74, 0x65, 0x73, 0x74
+};
+#endif
 
 static int test_dtls_fatal_record(int idx)
 {
@@ -1009,6 +1024,15 @@ static int test_dtls_fatal_record(int idx)
         min_ver = max_ver = DTLS1_2_VERSION;
         break;
 #endif
+    case FATAL_DTLS1_UNKNOWN_RECORD_TYPE:
+#ifdef OPENSSL_NO_DTLS1
+        return TEST_skip("DTLS1 support disabled");
+#else
+        record = fatal_unknown_record_type_dtls1;
+        record_len = sizeof(fatal_unknown_record_type_dtls1);
+        min_ver = max_ver = DTLS1_VERSION;
+        break;
+#endif
     default:
         return 0;
     }
@@ -1019,10 +1043,21 @@ static int test_dtls_fatal_record(int idx)
             &sctx, &cctx, cert, privkey)))
         return 0;
 
+    /*
+     * DTLS 1.0 ciphers require lower security level. Apply when:
+     * 1. DTLS 1.2 is disabled at compile time (DTLS 1.0 is the only option), OR
+     * 2. DTLS 1.0 is explicitly requested via max_ver
+     */
 #ifdef OPENSSL_NO_DTLS1_2
     if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
         || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
         goto end;
+#else
+    if (max_ver == DTLS1_VERSION) {
+        if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+            || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
+            goto end;
+    }
 #endif
 
     c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
@@ -1066,69 +1101,6 @@ end:
 
     return testresult;
 }
-
-#ifndef OPENSSL_NO_DTLS1
-/*
- * Unknown record type (0x99) during DTLSv1 handshake triggers fatal alert.
- */
-static int test_dtls1_unknown_record_type(void)
-{
-    SSL_CTX *sctx = NULL, *cctx = NULL;
-    SSL *serverssl = NULL, *clientssl = NULL;
-    BIO *c_to_s_fbio = NULL, *c_to_s_mempacket = NULL;
-    int testresult = 0;
-    /* Record with unknown type 0x99 at epoch 0 - DTLSv1 version */
-    static const unsigned char unknown_type_record[] = {
-        0x99, /* Unknown record type (valid types are 20-23) */
-        0xFE, 0xFF, /* DTLSv1 version */
-        0x00, 0x00, /* Epoch 0 */
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x05, /* Sequence 5 */
-        0x00, 0x04, /* Length = 4 bytes */
-        0x74, 0x65, 0x73, 0x74 /* Payload: "test" */
-    };
-
-    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(),
-            DTLS1_VERSION, DTLS1_VERSION,
-            &sctx, &cctx, cert, privkey)))
-        return 0;
-
-    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
-        || !TEST_true(SSL_CTX_set_cipher_list(cctx, "DEFAULT:@SECLEVEL=0")))
-        goto end;
-
-    c_to_s_fbio = BIO_new(bio_f_tls_dump_filter());
-    if (!TEST_ptr(c_to_s_fbio))
-        goto end;
-
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, c_to_s_fbio)))
-        goto end;
-
-    c_to_s_mempacket = SSL_get_wbio(clientssl);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-    c_to_s_mempacket = BIO_next(c_to_s_mempacket);
-    if (!TEST_ptr(c_to_s_mempacket))
-        goto end;
-
-    mempacket_test_inject(c_to_s_mempacket, (char *)unknown_type_record,
-        sizeof(unknown_type_record), 1, INJECT_PACKET_IGNORE_REC_SEQ);
-
-    if (!TEST_false(create_bare_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_SSL, 0, 0)))
-        goto end;
-
-    testresult = 1;
-end:
-    SSL_free(serverssl);
-    SSL_free(clientssl);
-    SSL_CTX_free(sctx);
-    SSL_CTX_free(cctx);
-
-    return testresult;
-}
-#endif
 
 static int test_listen(void)
 {
@@ -1203,9 +1175,6 @@ int setup_tests(void)
     ADD_TEST(test_duplicate_app_data);
     ADD_ALL_TESTS(test_dtls_malformed_record, SILENT_DISCARD_NUM_TESTS);
     ADD_ALL_TESTS(test_dtls_fatal_record, FATAL_NUM_TESTS);
-#ifndef OPENSSL_NO_DTLS1
-    ADD_TEST(test_dtls1_unknown_record_type);
-#endif
 
     return 1;
 }
