@@ -48,3 +48,7 @@ ENDIF
 IF[{- !$disabled{'slh-dsa'} -}]
   SOURCE[$DSA_GOAL]=slh_dsa_sig.c
 ENDIF
+
+$SCHNORR_FALCON_GOAL=../../libdefault.a
+SOURCE[$SCHNORR_FALCON_GOAL]=schnorr_falcon_sig.c
+
