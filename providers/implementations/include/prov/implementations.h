@@ -889,3 +889,5 @@ extern const OSSL_DISPATCH ossl_generic_skeymgmt_functions[];
 extern const OSSL_DISPATCH ossl_aes_skeymgmt_functions[];
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_IMPLEMENTATIONS_H) */
+extern const OSSL_DISPATCH ossl_schnorr_falcon_1024_keymgmt_functions[];
+extern const OSSL_DISPATCH ossl_schnorr_falcon_1024_signature_functions[];

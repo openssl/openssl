@@ -470,3 +470,4 @@
 #define PROV_DESCS_SLH_DSA_SHAKE_256F "OpenSSL SLH-DSA-SHAKE-256f implementation"
 
 #endif /* !defined(OSSL_PROVIDERS_IMPLEMENTATIONS_INCLUDE_PROV_NAMES_H) */
+#define PROV_DESCS_SCHNORR_FALCON1024 "OpenSSL Schnorr+Falcon-1024 Hybrid PQ Implementation"
