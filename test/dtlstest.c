@@ -741,7 +741,6 @@ static const unsigned char sd_bad_mac[] = {
 /*
  * EtM Bad MAC: For Encrypt-then-MAC mode (CBC cipher), the MAC is appended
  * to ciphertext and verified BEFORE decryption.
- * Per RFC 9147 Section 4.5.2, records with invalid MAC must be silently discarded.
  * Record structure for EtM: [header][IV][ciphertext][MAC]
  */
 static const unsigned char sd_etm_bad_mac[] = {
