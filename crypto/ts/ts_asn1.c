@@ -59,6 +59,11 @@ static void *d2i_TS_REQ_thunk(void **a, const unsigned char **pp, long length)
     return (void *)d2i_TS_REQ((TS_REQ **)a, pp, length);
 }
 
+static int i2d_TS_REQ_thunk(const void *a, unsigned char **p)
+{
+    return i2d_TS_REQ((TS_REQ *)a, p);
+}
+
 TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 {
     return ASN1_d2i_bio((void *(*)(void))TS_REQ_new, d2i_TS_REQ_thunk, bp, (void **)a);
@@ -66,7 +71,7 @@ TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 
 int i2d_TS_REQ_bio(BIO *bp, const TS_REQ *a)
 {
-    return ASN1_i2d_bio_of(TS_REQ, i2d_TS_REQ, bp, a);
+    return ASN1_i2d_bio(i2d_TS_REQ_thunk, bp, a);
 }
 #ifndef OPENSSL_NO_STDIO
 TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
