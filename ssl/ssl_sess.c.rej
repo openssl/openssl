@@ -1,0 +1,17 @@
+--- ssl/ssl_sess.c
++++ ssl/ssl_sess.c
+@@ -1204,11 +1204,14 @@ int SSL_set_session_ticket_ext(SSL *s, void *ext_data, int ext_len)
+         return 0;
+ 
+     OPENSSL_free(sc->ext.session_ticket);
+     sc->ext.session_ticket = NULL;
+ 
++    if (ext_data == NULL && ext_len > 0)
++        return 0;
++
+     if (ext_data != NULL) {
+         sc->ext.session_ticket = OPENSSL_malloc(sizeof(TLS_SESSION_TICKET_EXT) + ext_len);
+         if (sc->ext.session_ticket == NULL)
+             return 0;
+         sc->ext.session_ticket->length = ext_len;
+         sc->ext.session_ticket->data = sc->ext.session_ticket + 1;
