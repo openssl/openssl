@@ -1,5 +1,5 @@
 /*
- * Copyright 2005-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2005-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -872,6 +872,23 @@ static int dtls1_read_hm_header(unsigned char *msgheaderstart,
     return 1;
 }
 
+/*
+ * DTLS 1.3 reserves handshake message type 0, so a HelloRequest must reach the
+ * state machine and be rejected there whenever DTLS 1.3 is still possible.
+ *
+ * s->version is the negotiated, or maximum version: before ServerHello this is
+ * the effective maximum, and after ServerHello or during renegotiation it is the
+ * selected version.
+ */
+static int dtls_should_skip_hello_request(const SSL_CONNECTION *s)
+{
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        return 0;
+
+    return s->version > 0
+        && ssl_version_cmp(s, s->version, DTLS1_3_VERSION) < 0;
+}
+
 static int dtls_get_reassembled_message(SSL_CONNECTION *s, int *errtype,
     size_t *len)
 {
@@ -1002,7 +1019,8 @@ redo:
 
     if (!s->server
         && s->statem.hand_state != TLS_ST_OK
-        && msg_hdr.type == SSL3_MT_HELLO_REQUEST) {
+        && msg_hdr.type == SSL3_MT_HELLO_REQUEST
+        && dtls_should_skip_hello_request(s)) {
         /*
          * The server may always send 'Hello Request' messages -- we are
          * doing a handshake anyway now, so ignore them if their format is

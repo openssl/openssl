@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -199,7 +199,12 @@ plan skip_all => "$test_name needs EC enabled"
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
-my $testcount = 17;
+my $testcount = 19;
+my $fatal_alert = 0;
+my $hello_request_added = 0;
+my $hello_request_after_server_hello = 0;
+my $hello_request_record_epoch = -1;
+my $hello_request_record_seq = -1;
 
 plan tests => 2 * $testcount;
 
@@ -452,5 +457,224 @@ sub run_tests
                    | checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION,
                     "Acceptable but non preferred key_share");
 
+    #Test 18: HelloRequest is reserved in (D)TLSv1.3
+    $proxy->clear();
+    $fatal_alert = 0;
+    $hello_request_added = 0;
+    $hello_request_after_server_hello = 0;
+    $hello_request_record_epoch = -1;
+    $hello_request_record_seq = -1;
+    $proxy->filter(\&inject_hello_request);
+    $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+    if ($run_test_as_dtls) {
+        $proxy->clientflags("-no_rx_cert_comp -mtu 16384");
+        $proxy->serverflags("-timeout -mtu 16384");
+    } else {
+        $proxy->clientflags("-no_rx_cert_comp");
+    }
+    $proxy->start();
+    ok($fatal_alert, "HelloRequest rejected in "
+       . ($run_test_as_dtls ? "DTLSv1.3" : "TLSv1.3"));
+
+    #Test 19: A HelloRequest received after selecting (D)TLSv1.2 in the initial
+    #         handshake is still ignored, confirming the legacy skip path is
+    #         preserved even when (D)TLSv1.3 was initially enabled.
+    SKIP: {
+        my $legacy_version = $run_test_as_dtls ? "DTLSv1.2" : "TLSv1.2";
+        my $legacy_version_disabled = $run_test_as_dtls
+                                      ? disabled("dtls1_2")
+                                      : disabled("tls1_2");
+
+        skip "$legacy_version disabled", 1 if $legacy_version_disabled;
+
+        $proxy->clear();
+        $fatal_alert = 0;
+        $hello_request_added = 0;
+        $hello_request_after_server_hello = 1;
+        $hello_request_record_epoch = -1;
+        $hello_request_record_seq = -1;
+        $proxy->filter(\&inject_hello_request);
+        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+        if ($run_test_as_dtls) {
+            $proxy->clientflags("-no_rx_cert_comp -mtu 16384");
+            $proxy->serverflags("-max_protocol DTLSv1.2 -mtu 16384");
+        } else {
+            $proxy->clientflags("-no_rx_cert_comp");
+            $proxy->serverflags("-no_tls1_3");
+        }
+        $proxy->start();
+        ok(TLSProxy::Message->success() && !$fatal_alert,
+           "HelloRequest ignored in $legacy_version");
+    }
+
     unlink $session;
+}
+
+sub inject_hello_request
+{
+    my $proxy = shift;
+    my $records = $proxy->record_list;
+    my $hello_request;
+    my $record;
+    my $server_hello;
+    my $server_hello_record;
+    my $record_epoch;
+    my $record_seq;
+    my $record_version;
+    my $target_message;
+    my $target_record;
+    my $msgseq;
+    my $i;
+
+    if ($hello_request_added) {
+        if ($proxy->isdtls()) {
+            foreach my $existing_record (@{$records}) {
+                next if $existing_record->{sent};
+                next if !$existing_record->serverissender;
+                next if $existing_record->epoch != $hello_request_record_epoch;
+                next if $existing_record->seq < $hello_request_record_seq;
+
+                $existing_record->seq($existing_record->seq + 1);
+            }
+
+            foreach my $existing_record (reverse @{$records}) {
+                if ($existing_record->is_fatal_alert(0)
+                    == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE) {
+                    $fatal_alert = 1;
+                    last;
+                }
+            }
+        } elsif (@{$records}[-1]->is_fatal_alert(0)
+                 == TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE) {
+            $fatal_alert = 1;
+        }
+        return;
+    }
+
+    if (!$proxy->isdtls()) {
+        return if $proxy->flight != 1;
+
+        $hello_request = pack("C4", TLSProxy::Message::MT_HELLO_REQUEST,
+                              0, 0, 0);
+        $record = TLSProxy::Record->new(
+            1,
+            $proxy->flight,
+            TLSProxy::Record::RT_HANDSHAKE,
+            TLSProxy::Record::VERS_TLS_1_2,
+            length($hello_request),
+            0,
+            length($hello_request),
+            length($hello_request),
+            $hello_request,
+            $hello_request
+        );
+
+        if ($hello_request_after_server_hello) {
+            foreach my $message (@{$proxy->message_list}) {
+                next if $message->mt != TLSProxy::Message::MT_SERVER_HELLO
+                        || ${$message->records}[0]->flight != 1;
+
+                $server_hello_record = @{$message->records}[-1];
+                last;
+            }
+
+            return if !defined $server_hello_record;
+
+            for ($i = 0; $i < @{$records}; $i++) {
+                last if ${$records}[$i] == $server_hello_record;
+            }
+            $i++;
+        } else {
+            for ($i = 0; ${$records}[$i]->flight() < 1; $i++) {
+                next;
+            }
+        }
+
+        splice @{$records}, $i, 0, $record;
+        $hello_request_added = 1;
+        return;
+    }
+
+    # Insert a standalone server record into an existing DTLS flight, bumping
+    # later same-epoch record sequence numbers while preserving handshake message
+    # sequences for the expected DTLSv1.3 reject and DTLSv1.2 skip paths.
+    if ($hello_request_after_server_hello) {
+        return if ($proxy->flight & 1) == 0;
+
+        foreach my $message (@{$proxy->message_list}) {
+            next if $message->mt != TLSProxy::Message::MT_SERVER_HELLO
+                    || !$message->server;
+
+            $server_hello = $message;
+            $server_hello_record = @{$message->records}[-1];
+            last;
+        }
+
+        return if !defined $server_hello_record;
+
+        for ($i = 0; $i < @{$records}; $i++) {
+            last if ${$records}[$i] == $server_hello_record;
+        }
+
+        $i++;
+        $record_epoch = $server_hello_record->epoch;
+        $record_seq = $server_hello_record->seq + 1;
+        $record_version = $server_hello_record->version;
+        $msgseq = $server_hello->msgseq + 1;
+    } else {
+        return if $proxy->flight != 1;
+
+        foreach my $message (@{$proxy->message_list}) {
+            next if !$message->server
+                    || ${$message->records}[0]->flight != $proxy->flight;
+
+            $target_message = $message;
+            $target_record = ${$message->records}[0];
+            last;
+        }
+
+        return if !defined $target_record;
+
+        for ($i = 0; $i < @{$records}; $i++) {
+            last if ${$records}[$i] == $target_record;
+        }
+
+        $record_epoch = $target_record->epoch;
+        $record_seq = $target_record->seq;
+        $record_version = $target_record->version;
+        $msgseq = $target_message->msgseq;
+    }
+
+    foreach my $existing_record (@{$records}) {
+        next if !$existing_record->serverissender;
+        next if $existing_record->epoch != $record_epoch;
+        next if $existing_record->seq < $record_seq;
+
+        $existing_record->seq($existing_record->seq + 1);
+    }
+
+    $hello_request = pack("C", TLSProxy::Message::MT_HELLO_REQUEST)
+                     . pack("C3", 0, 0, 0)
+                     . pack("n", $msgseq)
+                     . pack("C3", 0, 0, 0)
+                     . pack("C3", 0, 0, 0);
+    $record = TLSProxy::Record->new_dtls(
+        1,
+        $proxy->flight,
+        TLSProxy::Record::RT_HANDSHAKE,
+        $record_version,
+        $record_epoch,
+        $record_seq,
+        length($hello_request),
+        0,
+        length($hello_request),
+        length($hello_request),
+        $hello_request,
+        $hello_request
+    );
+
+    splice @{$records}, $i, 0, $record;
+    $hello_request_added = 1;
+    $hello_request_record_epoch = $record_epoch;
+    $hello_request_record_seq = $record_seq;
 }
