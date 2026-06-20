@@ -577,6 +577,7 @@ my @disablables_features = (
     "ubsan",
     "ui-console",
     "unit-test",
+    "unit-tests",
     "uplink",
     "weak-ssl-ciphers",
     "zlib-dynamic",
@@ -654,6 +655,7 @@ our %disabled = ( # "what"         => "comment"
                   "trace"               => "default",
                   "ubsan"               => "default",
                   "unit-test"           => "default",
+                  "unit-tests"          => "default",
                   "weak-ssl-ciphers"    => "default",
                   "zlib"                => "default",
                   "zlib-dynamic"        => "default",
@@ -723,7 +725,7 @@ my @disable_cascades = (
 
     "stdio"             => [ "apps", "egd" ],
     "apps"              => [ "tests" ],
-    "tests"             => [ "external-tests" ],
+    "tests"             => [ "external-tests", "unit-tests" ],
     "comp"              => [ "zlib", "brotli", "zstd" ],
     "sm3"               => [ "sm2" ],
     sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
@@ -1114,6 +1116,14 @@ while (@argvcopy)
                 elsif (/^--with-fuzzer-include=(.*)$/)
                         {
                         $withargs{fuzzer_include}=$1;
+                        }
+                elsif (/^--with-cmocka-lib=(.*)$/)
+                        {
+                        $withargs{cmocka_lib}=$1;
+                        }
+                elsif (/^--with-cmocka-include=(.*)$/)
+                        {
+                        $withargs{cmocka_include}=$1;
                         }
                 elsif (/^--with-rand-seed=(.*)$/)
                         {
@@ -1916,6 +1926,18 @@ unless ($disabled{winstore}) {
 }
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
+
+unless ($disabled{"unit-tests"}) {
+    if ($target =~ /^linux/ || $target =~ /^BSD/) {
+        $config{cmocka_includes} =
+            $withargs{cmocka_include} ? [$withargs{cmocka_include}] : [];
+        $config{cmocka_libs} = $withargs{cmocka_lib}
+            ? "-L$withargs{cmocka_lib} -lcmocka"
+            : "-lcmocka";
+    } else {
+        disable('no-wrap-support', 'unit-tests');
+    }
+}
 
 # Get the extra flags used when building shared libraries and modules.  We
 # do this late because some of them depend on %disabled.
@@ -3024,6 +3046,14 @@ EOF
                     $product;
             }
         }
+    }
+}
+
+# Add cmocka include path to all targets that use WRAP
+if (!$disabled{"unit-tests"} && @{$config{cmocka_includes} // []}) {
+    foreach my $dest (keys %{$unified_info{wraps} // {}}) {
+        push @{$unified_info{includes}->{$dest}},
+             @{$config{cmocka_includes}};
     }
 }
 

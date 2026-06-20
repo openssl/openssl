@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added unit tests setup activated via `enable-unit-tests` option. This works
+   only on platforms with ld `--wrap` support (Linux, BSD).
+
+   *Jakub Zelenka*
+
  * Deprecated the `enable-unit-test` configure option and the
    `SSL_test_functions()` function. Both will be removed in OpenSSL 5.0.
 
