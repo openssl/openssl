@@ -24,6 +24,7 @@ struct ossl_lib_ctx_st {
     CRYPTO_RWLOCK *lock;
     OSSL_EX_DATA_GLOBAL global;
     CONF_IMODULE *ssl_imod;
+    CRYPTO_safe_getenv_fn safe_getenv_fn;
     void *property_string_data;
     void *evp_method_store;
     void *provider_store;
@@ -127,6 +128,9 @@ static int context_init(OSSL_LIB_CTX *ctx)
     if (!ossl_do_ex_data_init(ctx))
         goto err;
     exdata_done = 1;
+
+    /* Env lookup can occur early */
+    ctx->safe_getenv_fn = (CRYPTO_safe_getenv_fn)ossl_lib_ctx_safe_getenv_default;
 
     /* P2. We want evp_method_store to be cleaned up before the provider store */
     ctx->evp_method_store = ossl_method_store_new(ctx);
@@ -675,6 +679,9 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
     case OSSL_LIB_CTX_SSL_CONF_IMODULE:
         return (void *)ctx->ssl_imod;
 
+    case OSSL_LIB_CTX_SAFEENV_CB:
+        return NULL /* ctx->safe_getenv_fn */;
+
     default:
         return NULL;
     }
@@ -720,4 +727,27 @@ void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *libctx, int value)
     if (libctx == NULL)
         return;
     libctx->conf_diagnostics = value;
+}
+
+void OSSL_LIB_CTX_set_safe_getenv_function(OSSL_LIB_CTX *libctx,
+    CRYPTO_safe_getenv_fn safe_getenv_fn)
+{
+    if (safe_getenv_fn)
+        libctx->safe_getenv_fn = safe_getenv_fn;
+    else
+        libctx->safe_getenv_fn = (CRYPTO_safe_getenv_fn)&ossl_lib_ctx_safe_getenv_default;
+}
+
+void OSSL_LIB_CTX_get_safe_getenv_function(const OSSL_LIB_CTX *libctx,
+    CRYPTO_safe_getenv_fn *safe_getenv_fn)
+{
+    *safe_getenv_fn = libctx->safe_getenv_fn;
+}
+
+const char *ossl_lib_ctx_safe_getenv(const OSSL_LIB_CTX *libctx,
+    const char *env, const char *file, int line)
+{
+    if (libctx)
+        return libctx->safe_getenv_fn(env, file, line);
+    return ossl_lib_ctx_safe_getenv_default(env, file, line);
 }

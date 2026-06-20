@@ -10,7 +10,11 @@ The OpenSSL libraries and commands use environment variables to override
 compiled-in defaults for various aspects of their behaviour.
 To avoid security risks, the environment is not consulted
 for security-sensitive environment variables when the executable
-is set-user-ID or set-group-ID.
+is set-user-ID, set-group-ID or has capabilities.
+
+L<OSSL_LIB_CTX_get_safe_getenv_function(3)> can be used to provide an
+application callback to control the security-sensitivity or other aspects
+of retrieving an environment variable's value.
 
 =over 4
 

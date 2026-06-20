@@ -1343,8 +1343,11 @@ sub check_env_vars {
             push @{$env_list{$1}}, "${filename}:$."
                 if ($line =~ /GetEnvironmentVariableW\([\s\S]*"([^"]+)",/
                     || $line =~ /\$ENV\{([^}"']+)\}/);
-            # this also handles ossl_safe_getenv
-            if ($line =~ /getenv\(([^()\s]+)\)/) {
+            # this handles env arg 2 ossl_lib_ctx_safe_getenv/CRYPTO_safe_getenv
+            # and getenv(_default)? as arg 1 env
+            if ($line =~
+                /(?:ossl_lib_ctx|CRYPTO)_safe_getenv\([^,]+,\s*([^,]+),/
+                || $line =~ /getenv(?:_default)?\(([^()\s]+)\)/) {
                 my $env1 = $1;
                 if ($env1 =~ /"([^"]+)"/) {
                     push @{$env_list{$1}}, "${filename}:$.";

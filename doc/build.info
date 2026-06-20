@@ -100,6 +100,10 @@ DEPEND[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 GENERATE[man/man1/openssl-enc.1]=man1/openssl-enc.pod
 DEPEND[man1/openssl-enc.pod]{pod}=man1/openssl-enc.pod.in
 GENERATE[man1/openssl-enc.pod]=man1/openssl-enc.pod.in
+DEPEND[html/man1/openssl-engine.html]=man1/openssl-engine.pod
+GENERATE[html/man1/openssl-engine.html]=man1/openssl-engine.pod
+DEPEND[man/man1/openssl-engine.1]=man1/openssl-engine.pod
+GENERATE[man/man1/openssl-engine.1]=man1/openssl-engine.pod
 DEPEND[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 GENERATE[html/man1/openssl-errstr.html]=man1/openssl-errstr.pod
 DEPEND[man/man1/openssl-errstr.1]=man1/openssl-errstr.pod
@@ -361,6 +365,7 @@ html/man1/openssl-ec.html \
 html/man1/openssl-ech.html \
 html/man1/openssl-ecparam.html \
 html/man1/openssl-enc.html \
+html/man1/openssl-engine.html \
 html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
@@ -423,6 +428,7 @@ man/man1/openssl-ec.1 \
 man/man1/openssl-ech.1 \
 man/man1/openssl-ecparam.1 \
 man/man1/openssl-enc.1 \
+man/man1/openssl-engine.1 \
 man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
@@ -1783,6 +1789,10 @@ DEPEND[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_c
 GENERATE[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 DEPEND[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 GENERATE[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
+DEPEND[html/man3/OSSL_LIB_CTX_set_safe_getenv_function.html]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
+GENERATE[html/man3/OSSL_LIB_CTX_set_safe_getenv_function.html]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
+DEPEND[man/man3/OSSL_LIB_CTX_set_safe_getenv_function.3]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
+GENERATE[man/man3/OSSL_LIB_CTX_set_safe_getenv_function.3]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
 DEPEND[html/man3/OSSL_PARAM.html]=man3/OSSL_PARAM.pod
 GENERATE[html/man3/OSSL_PARAM.html]=man3/OSSL_PARAM.pod
 DEPEND[man/man3/OSSL_PARAM.3]=man3/OSSL_PARAM.pod
@@ -3501,6 +3511,7 @@ html/man3/OSSL_INDICATOR_set_callback.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html \
+html/man3/OSSL_LIB_CTX_set_safe_getenv_function.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
 html/man3/OSSL_PARAM_allocate_from_text.html \
@@ -4177,6 +4188,7 @@ man/man3/OSSL_INDICATOR_set_callback.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3 \
+man/man3/OSSL_LIB_CTX_set_safe_getenv_function.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \
 man/man3/OSSL_PARAM_allocate_from_text.3 \
