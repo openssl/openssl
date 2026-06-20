@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added unit tests setup activated via `enable-unit-tests` option. This works
+   only on platforms with ld `--wrap` support (Linux, BSD).
+
+   *Jakub Zelenka*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*

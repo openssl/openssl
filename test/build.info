@@ -9,6 +9,10 @@ IF[{- !$disabled{hqinterop} -}]
   SUBDIRS=quic-openssl-docker
 ENDIF
 
+IF[{- !$disabled{"unit-tests"} -}]
+  SUBDIRS=unit
+ENDIF
+
 # Auxiliary program source (copied from ../apps/build.info)
 IF[{- $config{target} =~ /^(?:VC-|mingw|BC-)/ -}]
   # It's called 'init', but doesn't have much 'init' in it...

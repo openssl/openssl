@@ -427,6 +427,22 @@ The names of the libraries are:
 * brotlidec.lib
 * brotlienc.lib
 
+### with-cmocka-include
+
+    --with-cmocka-include=DIR
+
+The directory for the location of the cmocka include file. This option is only
+necessary if [enable-unit-tests](#enable-unit-tests) is used and the include
+file is not already on the system include path.
+
+### with-cmocka-lib
+
+    --with-cmocka-lib=DIR
+
+The directory containing the cmocka library. This option is only necessary if
+[enable-unit-tests](#enable-unit-tests) is used and the library is not already
+on the system library path.
+
 ### with-zlib-include
 
     --with-zlib-include=DIR
@@ -817,6 +833,12 @@ external test suites are currently supported:
 See the file [test/README-external.md](test/README-external.md)
 for further details.
 
+### enable-unit-tests
+
+Enable building and running unit tests.
+
+This works only on platforms supporting ld `--wrap` option like Linux and BSD.
+
 ### no-filenames
 
 Don't compile in filename and line number information (e.g.  for errors and
@@ -1094,7 +1116,7 @@ The User Interface console method enables text based console prompts.
 
 ### enable-ssl-test-functions
 
-Enable exposing SSL_test_functions for ovewriting ssl_init_wbio_buffer.
+Enable exposing SSL_test_functions for overwriting ssl_init_wbio_buffer.
 
 This should not typically be used in production deployments.
 
