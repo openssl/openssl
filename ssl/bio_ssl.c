@@ -299,7 +299,6 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         BIO_set_shutdown(b, num);
         ssl = (SSL *)ptr;
-        bs->ssl = ssl;
         bio = SSL_get_rbio(ssl);
         if (bio != NULL) {
             if (!BIO_up_ref(bio)) {
@@ -311,6 +310,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
             BIO_set_next(b, bio);
         }
         BIO_set_init(b, 1);
+        bs->ssl = ssl;
         break;
     case BIO_C_GET_SSL:
         if (ptr != NULL) {

@@ -56,7 +56,7 @@ static int describe_param_type(char *buf, size_t bufsz, const OSSL_PARAM *param)
         bufsz -= printed_len;
     }
     if (show_type_number) {
-        printed_len = BIO_snprintf(buf, bufsz, " [%d]", param->data_type);
+        printed_len = BIO_snprintf(buf, bufsz, " [%u]", param->data_type);
         if (printed_len > 0) {
             buf += printed_len;
             bufsz -= printed_len;

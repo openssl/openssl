@@ -602,7 +602,7 @@ rsa_signverify_init(PROV_RSA_CTX *prsactx, void *vrsa,
 
         break;
     default:
-        ERR_raise(ERR_LIB_RSA, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 
@@ -1016,6 +1016,14 @@ static int rsa_verify_recover(void *vprsactx,
             return 0;
         }
     } else {
+        int rsasize = RSA_size(prsactx->rsa);
+
+        if (routsize < (size_t)rsasize) {
+            ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+                "buffer size is %d, should be %d",
+                routsize, rsasize);
+            return 0;
+        }
         ret = RSA_public_decrypt((int)siglen, sig, rout, prsactx->rsa,
             prsactx->pad_mode);
         if (ret <= 0) {
@@ -1895,7 +1903,7 @@ static int rsa_sigalg_signverify_init(void *vprsactx, void *vrsa,
 
     /* PSS is currently not supported as a sigalg */
     if (prsactx->pad_mode == RSA_PKCS1_PSS_PADDING) {
-        ERR_raise(ERR_LIB_RSA, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
+        ERR_raise(ERR_LIB_PROV, PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return 0;
     }
 

@@ -797,7 +797,6 @@ static void *ed25519_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
         return key;
     if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED25519, 1) != 1) {
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         ossl_ecx_key_free(key);
         return NULL;
     }
@@ -830,7 +829,6 @@ static void *ed448_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if (!key || ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0))
         return key;
     if (ecd_fips140_pairwise_test(key, ECX_KEY_TYPE_ED448, 1) != 1) {
-        ossl_set_error_state(OSSL_SELF_TEST_TYPE_PCT);
         ossl_ecx_key_free(key);
         return NULL;
     }
@@ -1152,38 +1150,10 @@ static void *s390x_ecd_keygen25519(struct ecx_gen_ctx *gctx)
         0xfe, 0x53, 0x6e, 0xcd, 0xd3, 0x36, 0x69, 0x21
     };
     static const unsigned char generator_y[] = {
-        0x58,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
-        0x66,
+        0x58, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+        0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+        0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66, 0x66,
+        0x66, 0x66
     };
     unsigned char x_dst[32], buff[SHA512_DIGEST_LENGTH];
     ECX_KEY *key = ossl_ecx_key_new(gctx->libctx, ECX_KEY_TYPE_ED25519, 1,

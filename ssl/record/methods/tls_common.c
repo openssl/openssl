@@ -824,7 +824,7 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
     OSSL_TRACE_BEGIN(TLS)
     {
-        BIO_printf(trc_out, "dec %lu\n", (unsigned long)rr[0].length);
+        BIO_printf(trc_out, "dec %zu\n", rr[0].length);
         BIO_dump_indent(trc_out, rr[0].data, (int)rr[0].length, 4);
     }
     OSSL_TRACE_END(TLS);
@@ -1349,7 +1349,7 @@ tls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
-    BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+    BIO *next,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -1918,6 +1918,28 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                 tls_release_write_buffer(rl);
             return OSSL_RECORD_RETURN_SUCCESS;
         } else if (i <= 0) {
+            /*
+             * If the app buffer is used directly (kTLS) and the caller is
+             * allowed to move it, copy the unsent data so the original
+             * buffer can be safely released.
+             */
+            if (TLS_BUFFER_is_app_buffer(thiswb)
+                && (rl->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0) {
+                size_t left = TLS_BUFFER_get_left(thiswb);
+                unsigned char *buf;
+
+                buf = OPENSSL_malloc(left);
+                if (buf == NULL) {
+                    RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    return OSSL_RECORD_RETURN_FATAL;
+                }
+                memcpy(buf,
+                    TLS_BUFFER_get_buf(thiswb) + TLS_BUFFER_get_offset(thiswb),
+                    left);
+                TLS_BUFFER_set_buf(thiswb, buf);
+                TLS_BUFFER_set_offset(thiswb, 0);
+                TLS_BUFFER_set_app_buffer(thiswb, 0);
+            }
             if (rl->isdtls) {
                 /*
                  * For DTLS, just drop it. That's kind of the whole point in

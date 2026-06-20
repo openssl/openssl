@@ -674,7 +674,7 @@ static void ssl_print_hex(BIO *bio, int indent, const char *name,
     size_t i;
 
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "%s (len=%d): ", name, (int)msglen);
+    BIO_printf(bio, "%s (len=%zu): ", name, msglen);
     for (i = 0; i < msglen; i++)
         BIO_printf(bio, "%02X", msg[i]);
     BIO_puts(bio, "\n");
@@ -769,8 +769,8 @@ static int ssl_print_extension(BIO *bio, int indent, int server,
     uint32_t max_early_data;
 
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "extension_type=%s(%d), length=%d\n",
-        ssl_trace_str(extype, ssl_exts_tbl), extype, (int)extlen);
+    BIO_printf(bio, "extension_type=%s(%d), length=%zu\n",
+        ssl_trace_str(extype, ssl_exts_tbl), extype, extlen);
     switch (extype) {
     case TLSEXT_TYPE_compress_certificate:
         if (extlen < 1)
@@ -996,7 +996,7 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
     }
     if (extslen > msglen)
         return 0;
-    BIO_printf(bio, "extensions, length = %d\n", (int)extslen);
+    BIO_printf(bio, "extensions, length = %zu\n", extslen);
     msglen -= extslen;
     while (extslen > 0) {
         int extype;
@@ -1006,8 +1006,8 @@ static int ssl_print_extensions(BIO *bio, int indent, int server,
         extype = (msg[0] << 8) | msg[1];
         extlen = (msg[2] << 8) | msg[3];
         if (extslen < extlen + 4) {
-            BIO_printf(bio, "extensions, extype = %d, extlen = %d\n", extype,
-                (int)extlen);
+            BIO_printf(bio, "extensions, extype = %d, extlen = %zu\n", extype,
+                extlen);
             BIO_dump_indent(bio, (const char *)msg, (int)extslen, indent + 2);
             return 0;
         }
@@ -1046,7 +1046,7 @@ static int ssl_print_client_hello(BIO *bio, const SSL_CONNECTION *sc, int indent
     msg += 2;
     msglen -= 2;
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "cipher_suites (len=%d)\n", (int)len);
+    BIO_printf(bio, "cipher_suites (len=%zu)\n", len);
     if (msglen < len || len & 1)
         return 0;
     while (len > 0) {
@@ -1066,7 +1066,7 @@ static int ssl_print_client_hello(BIO *bio, const SSL_CONNECTION *sc, int indent
     if (msglen < len)
         return 0;
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "compression_methods (len=%d)\n", (int)len);
+    BIO_printf(bio, "compression_methods (len=%zu)\n", len);
     while (len > 0) {
         BIO_indent(bio, indent + 2, 80);
         BIO_printf(bio, "%s (0x%02X)\n",
@@ -1306,7 +1306,7 @@ static int ssl_print_certificate(BIO *bio, const SSL_CONNECTION *sc, int indent,
         return 0;
     q = p + 3;
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "ASN.1Cert, length=%d", (int)clen);
+    BIO_printf(bio, "ASN.1Cert, length=%zu", clen);
     x = X509_new_ex(ctx->libctx, ctx->propq);
     if (x != NULL && d2i_X509(&x, &q, (long)clen) == NULL) {
         X509_free(x);
@@ -1362,7 +1362,7 @@ static int ssl_print_raw_public_key(BIO *bio, const SSL_CONNECTION *sc,
     }
 
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "raw_public_key, length=%d\n", (int)clen);
+    BIO_printf(bio, "raw_public_key, length=%zu\n", clen);
 
     pkey = d2i_PUBKEY_ex(NULL, &msg, (long)clen,
         sc->ssl.ctx->libctx, sc->ssl.ctx->propq);
@@ -1400,7 +1400,7 @@ static int ssl_print_certificates(BIO *bio, const SSL_CONNECTION *sc, int server
         return 1;
     }
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "certificate_list, length=%d\n", (int)clen);
+    BIO_printf(bio, "certificate_list, length=%zu\n", clen);
     while (clen > 0) {
         if (!ssl_print_certificate(bio, sc, indent + 2, &msg, &clen))
             return 0;
@@ -1440,12 +1440,12 @@ static int ssl_print_compressed_certificates(BIO *bio, const SSL_CONNECTION *sc,
     BIO_indent(bio, indent, 80);
     BIO_printf(bio, "Compression type=%s (0x%04x)\n", ssl_trace_str(alg, ssl_comp_cert_tbl), alg);
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "Uncompressed length=%d\n", (int)uclen);
+    BIO_printf(bio, "Uncompressed length=%zu\n", uclen);
     BIO_indent(bio, indent, 80);
     if (clen > 0)
-        BIO_printf(bio, "Compressed length=%d, Ratio=%f:1\n", (int)clen, (float)uclen / (float)clen);
+        BIO_printf(bio, "Compressed length=%zu, Ratio=%f:1\n", clen, (float)uclen / (float)clen);
     else
-        BIO_printf(bio, "Compressed length=%d, Ratio=unknown\n", (int)clen);
+        BIO_printf(bio, "Compressed length=%zu, Ratio=unknown\n", clen);
 
     BIO_dump_indent(bio, (const char *)msg, (int)clen, indent);
 
@@ -1506,7 +1506,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
             return 0;
         msg++;
         BIO_indent(bio, indent, 80);
-        BIO_printf(bio, "certificate_types (len=%d)\n", (int)xlen);
+        BIO_printf(bio, "certificate_types (len=%zu)\n", xlen);
         if (!ssl_trace_list(bio, indent + 2, msg, xlen, 1, ssl_ctype_tbl))
             return 0;
         msg += xlen;
@@ -1521,7 +1521,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
         msg += 2;
         msglen -= xlen + 2;
         BIO_indent(bio, indent, 80);
-        BIO_printf(bio, "signature_algorithms (len=%d)\n", (int)xlen);
+        BIO_printf(bio, "signature_algorithms (len=%zu)\n", xlen);
         while (xlen > 0) {
             BIO_indent(bio, indent + 2, 80);
             sigalg = (msg[0] << 8) | msg[1];
@@ -1541,7 +1541,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
         return 0;
     msg += 2;
     msglen -= 2 + xlen;
-    BIO_printf(bio, "certificate_authorities (len=%d)\n", (int)xlen);
+    BIO_printf(bio, "certificate_authorities (len=%zu)\n", xlen);
     while (xlen > 0) {
         size_t dlen;
         X509_NAME *nm;
@@ -1553,7 +1553,7 @@ static int ssl_print_cert_request(BIO *bio, int indent, const SSL_CONNECTION *sc
             return 0;
         msg += 2;
         BIO_indent(bio, indent + 2, 80);
-        BIO_printf(bio, "DistinguishedName (len=%d): ", (int)dlen);
+        BIO_printf(bio, "DistinguishedName (len=%zu): ", dlen);
         p = msg;
         nm = d2i_X509_NAME(NULL, &p, (long)dlen);
         if (!nm) {
@@ -1634,8 +1634,8 @@ static int ssl_print_handshake(BIO *bio, const SSL_CONNECTION *sc, int server,
     htype = msg[0];
     hlen = (msg[1] << 16) | (msg[2] << 8) | msg[3];
     BIO_indent(bio, indent, 80);
-    BIO_printf(bio, "%s, Length=%d\n",
-        ssl_trace_str(htype, ssl_handshake_tbl), (int)hlen);
+    BIO_printf(bio, "%s, Length=%zu\n",
+        ssl_trace_str(htype, ssl_handshake_tbl), hlen);
     msg += 4;
     msglen -= 4;
     if (SSL_CONNECTION_IS_DTLS(sc)) {

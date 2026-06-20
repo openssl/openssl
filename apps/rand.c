@@ -159,7 +159,7 @@ int rand_main(int argc, char **argv)
         if (shift != 0) {
             /* check for overflow */
             if ((UINT64_MAX >> shift) < (size_t)num) {
-                BIO_printf(bio_err, "%lu bytes with suffix overflows\n",
+                BIO_printf(bio_err, "%ld bytes with suffix overflows\n",
                     num);
                 goto opthelp;
             }

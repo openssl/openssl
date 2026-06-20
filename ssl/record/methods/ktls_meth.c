@@ -405,7 +405,7 @@ ktls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     int mactype,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
-    BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+    BIO *next,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -473,10 +473,15 @@ static int ktls_initialise_write_packets(OSSL_RECORD_LAYER *rl,
     wb->type = templates[0].type;
 
     /*
+     * Free any internal buffer allocated during a previous write retry
+     * (see tls_retry_write_records).  App buffers are not ours to free.
+     */
+    if (!TLS_BUFFER_is_app_buffer(wb))
+        OPENSSL_free(TLS_BUFFER_get_buf(wb));
+
+    /*
      * ktls doesn't modify the buffer, but to avoid a warning we need
      * to discard the const qualifier.
-     * This doesn't leak memory because the buffers have never been allocated
-     * with KTLS
      */
     TLS_BUFFER_set_buf(wb, (unsigned char *)templates[0].buf);
     TLS_BUFFER_set_offset(wb, 0);
@@ -547,15 +552,6 @@ static int ktls_alloc_buffers(OSSL_RECORD_LAYER *rl)
     return tls_alloc_buffers(rl);
 }
 
-static int ktls_free_buffers(OSSL_RECORD_LAYER *rl)
-{
-    /* We use the application buffer directly for writing */
-    if (rl->direction == OSSL_RECORD_DIRECTION_WRITE)
-        return 1;
-
-    return tls_free_buffers(rl);
-}
-
 static struct record_functions_st ossl_ktls_funcs = {
     ktls_set_crypto_state,
     ktls_cipher,
@@ -602,5 +598,5 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     NULL,
     tls_increment_sequence_ctr,
     ktls_alloc_buffers,
-    ktls_free_buffers
+    tls_free_buffers
 };

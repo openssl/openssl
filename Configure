@@ -511,7 +511,6 @@ my @disablables_features = (
     "asan",
     "asm",
     "async",
-    "atexit",
     "autoalginit",
     "autoerrinit",
     "autoload-config",
@@ -596,6 +595,7 @@ my @disablables_int = qw(
     );
 
 my %deprecated_disablables = (
+    "atexit" => undef,
     "engine" => undef,
     "static-engine" => undef,
     "dynamic-engine" => undef,
@@ -619,6 +619,7 @@ my %deprecated_disablables = (
 # All of the following are disabled by default:
 
 our %disabled = ( # "what"         => "comment"
+                  "atexit"              => "default",
                   "fips"                => "default",
                   "fips-jitter"         => "default",
                   "asan"                => "default",
@@ -664,7 +665,7 @@ our %disabled = ( # "what"         => "comment"
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     "bulk"              => [ "shared", "dso",
-                             "argon2", "aria", "async", "atexit", "autoload-config",
+                             "argon2", "aria", "async", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
@@ -1626,12 +1627,12 @@ unless ($disabled{threads}) {
     }
 }
 
-# Find out if clang's sanitizers have been enabled with -fsanitize
-# flags and ensure that the corresponding %disabled elements area
-# removed to reflect that the sanitizers are indeed enabled.
+# Find out if clang's sanitizers have been enabled with -fsanitize (or
+# /fsanitize for VC targets) flags and ensure that the corresponding %disabled
+# elements area removed to reflect that the sanitizers are indeed enabled.
 my %detected_sanitizers = ();
-foreach (grep /^-fsanitize=/, @{$config{CFLAGS} || []}) {
-    (my $checks = $_) =~ s/^-fsanitize=//;
+foreach (grep { /^[-\/]fsanitize=/ } @{$config{CFLAGS} || []}) {
+    (my $checks = $_) =~ s|^[-/]fsanitize=||;
     foreach (split /,/, $checks) {
         my $d = { address       => 'asan',
                   undefined     => 'ubsan',
@@ -1666,7 +1667,8 @@ if (($target{shared_target} // '') eq "")
         }
 
 unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
-    push @{$config{cflags}}, "-fsanitize=address";
+    push @{$config{cflags}},
+        $config{target} =~ /^VC-/ ? "/fsanitize=address" : "-fsanitize=address";
 }
 
 unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
@@ -1679,8 +1681,10 @@ unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
 
 unless ($disabled{"fuzz-libfuzzer"} && $disabled{"fuzz-afl"}
         && $disabled{asan} && $disabled{ubsan} && $disabled{msan}) {
-    push @{$config{cflags}}, "-fno-omit-frame-pointer", "-g";
-    push @{$config{cxxflags}}, "-fno-omit-frame-pointer", "-g" if $config{CXX};
+    unless ($config{target} =~ /^VC-/) {
+        push @{$config{cflags}}, "-fno-omit-frame-pointer", "-g";
+        push @{$config{cxxflags}}, "-fno-omit-frame-pointer", "-g" if $config{CXX};
+    }
 }
 
 # Valgrind-based constant-time validation: marks secret data as "undefined"

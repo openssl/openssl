@@ -25,7 +25,7 @@ jobs:
           - arch: amd64
             os: windows-2025
             config: enable-lms enable-fips no-thread-pool no-quic
-            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+            vcvars: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat
           - arch: x86
             os: windows-2022
             config: no-fips enable-lms
@@ -38,11 +38,38 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
+      if: github.repository == 'openssl/openssl'
       run: |
-        choco install nasm ${{ matrix.platform.arch == 'x86' && '--x86' || '' }}
+        $installer = "nasm-3.01-installer-${{ matrix.platform.arch == 'x86' && 'x86' || 'x64' }}.exe"
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+        $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+        "C:\Program Files${{ matrix.platform.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install nasm (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        $installer = "nasm-3.01-installer-${{ matrix.platform.arch == 'x86' && 'x86' || 'x64' }}.exe"
+        Invoke-WebRequest -Uri "https://www.nasm.us/pub/nasm/releasebuilds/3.01/win${{ matrix.platform.arch == 'x86' && '32' || '64' }}/$installer" -OutFile $installer
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
         "C:\Program Files${{ matrix.platform.arch == 'x86' && ' (x86)' || '' }}\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: install jom
-      run: choco install jom
+      if: github.repository == 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+        Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -117,7 +144,21 @@ jobs:
     - name: prepare the build directory
       run: mkdir _build
     - name: install jom
-      run:  choco install jom
+      if: github.repository == 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+        Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: config
       working-directory: _build
       shell: cmd
@@ -160,7 +201,21 @@ jobs:
     - name: prepare the build directory
       run: mkdir _build
     - name: install jom
-      run:  choco install jom
+      if: github.repository == 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+        Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: config
       working-directory: _build
       shell: cmd

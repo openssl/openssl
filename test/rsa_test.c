@@ -302,6 +302,70 @@ err:
     return ret;
 }
 
+static int test_rsa_pkcs1_mfail(int idx)
+{
+    RSA *key = NULL;
+    unsigned char ctext[256];
+    unsigned char ptext[256];
+    static unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
+    int plen = sizeof(ptext_ex) - 1;
+    int clen, enclen, declen = 0;
+    int ret = 0;
+
+    /* key construction is setup; only the round trip is under injection */
+    clen = rsa_setkey(&key, NULL, idx);
+    if (!TEST_ptr(key))
+        goto err;
+
+    MFAIL_start();
+    enclen = RSA_public_encrypt(plen, ptext_ex, ctext, key, RSA_PKCS1_PADDING);
+    if (enclen == clen)
+        declen = RSA_private_decrypt(enclen, ctext, ptext, key,
+            RSA_PKCS1_PADDING);
+    MFAIL_end();
+
+    if (enclen != clen || declen <= 0)
+        goto err;
+
+    ret = TEST_mem_eq(ptext, declen, ptext_ex, plen);
+
+err:
+    RSA_free(key);
+    return ret;
+}
+
+static int test_rsa_oaep_mfail(int idx)
+{
+    RSA *key = NULL;
+    unsigned char ctext[256];
+    unsigned char ptext[256];
+    static unsigned char ptext_ex[] = "\x54\x85\x9b\x34\x2c\x49\xea\x2a";
+    int plen = sizeof(ptext_ex) - 1;
+    int clen, enclen, declen = 0;
+    int ret = 0;
+
+    clen = rsa_setkey(&key, NULL, idx);
+    if (!TEST_ptr(key))
+        goto err;
+
+    MFAIL_start();
+    enclen = RSA_public_encrypt(plen, ptext_ex, ctext, key,
+        RSA_PKCS1_OAEP_PADDING);
+    if (enclen == clen)
+        declen = RSA_private_decrypt(enclen, ctext, ptext, key,
+            RSA_PKCS1_OAEP_PADDING);
+    MFAIL_end();
+
+    if (enclen != clen || declen <= 0)
+        goto err;
+
+    ret = TEST_mem_eq(ptext, declen, ptext_ex, plen);
+
+err:
+    RSA_free(key);
+    return ret;
+}
+
 static const struct {
     int bits;
     unsigned int r;
@@ -693,6 +757,13 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
+#if defined(_MSC_VER) || defined(OPENSSL_NO_CACHED_FETCH)
+    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_rsa_pkcs1_mfail, 3);
+    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_rsa_oaep_mfail, 3);
+#else
+    ADD_MFAIL_ALL_TESTS(test_rsa_pkcs1_mfail, 3);
+    ADD_MFAIL_ALL_TESTS(test_rsa_oaep_mfail, 3);
+#endif
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     ADD_TEST(test_rsa_saos);
     ADD_TEST(test_EVP_rsa_legacy_key);

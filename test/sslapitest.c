@@ -1461,6 +1461,144 @@ end:
     return testresult;
 }
 
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * Test kTLS with SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER: retry SSL_write() after
+ * SSL_ERROR_WANT_WRITE using a different buffer pointer (same content) and
+ * verify that the data arrives intact.
+ */
+static int test_ktls_moving_write_buffer(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    BIO *bio_retry = NULL, *bio_orig = NULL;
+    int testresult = 0, cfd = -1, sfd = -1;
+    unsigned char *buf_orig = NULL, *buf_retry = NULL;
+    unsigned char outbuf[1024];
+    const size_t bufsz = sizeof(outbuf);
+    size_t written, readbytes, totread = 0, i;
+
+    /* kTLS requires real sockets */
+    if (!TEST_true(create_test_sockets(&cfd, &sfd, SOCK_STREAM, NULL)))
+        goto end;
+
+    /* Skip if the kernel does not support kTLS */
+    if (!ktls_chk_platform(cfd)) {
+        testresult = TEST_skip("Kernel does not support KTLS");
+        goto end;
+    }
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx,
+            TLS_server_method(), TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx, "TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects2(sctx, cctx, &serverssl,
+            &clientssl, sfd, cfd)))
+        goto end;
+
+    /* Enable kTLS on the writing side (client) */
+    if (!TEST_true(SSL_set_options(clientssl, SSL_OP_ENABLE_KTLS)))
+        goto end;
+
+    SSL_set_mode(clientssl, SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER);
+    SSL_set_mode(clientssl, SSL_MODE_ENABLE_PARTIAL_WRITE);
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /* Get a reference to the original BIO to replace it later. */
+    bio_orig = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(bio_orig) || !TEST_true(BIO_up_ref(bio_orig))) {
+        bio_orig = NULL;
+        goto end;
+    }
+
+    /* Skip if kTLS TX was not activated for this cipher */
+    if (!BIO_get_ktls_send(bio_orig)) {
+        testresult = TEST_skip("kTLS send not supported");
+        goto end;
+    }
+
+    /* Swap write BIO to force WANT_WRITE */
+    bio_retry = BIO_new(bio_s_always_retry());
+    if (!TEST_ptr(bio_retry))
+        goto end;
+
+    SSL_set0_wbio(clientssl, bio_retry);
+    bio_retry = NULL; /* ownership transferred to clientssl */
+
+    /* Allocate two buffers with identical content but different addresses */
+    buf_orig = OPENSSL_malloc(bufsz);
+    buf_retry = OPENSSL_malloc(bufsz);
+    if (!TEST_ptr(buf_orig) || !TEST_ptr(buf_retry))
+        goto end;
+
+    for (i = 0; i < bufsz; i++)
+        buf_orig[i] = buf_retry[i] = (unsigned char)(i & 0xff);
+
+    /* First write attempt - will fail with WANT_WRITE */
+    if (!TEST_false(SSL_write_ex(clientssl, buf_orig, bufsz, &written))
+        || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /* Restore the real socket BIO so the retry can actually send data */
+    SSL_set0_wbio(clientssl, bio_orig);
+    bio_orig = NULL;
+
+    /* Poison and free the original buffer */
+    memset(buf_orig, 0xDE, bufsz);
+    OPENSSL_free(buf_orig);
+    buf_orig = NULL;
+
+    /* Retry with a different buffer pointer */
+    if (!TEST_true(SSL_write_ex(clientssl, buf_retry, bufsz, &written)))
+        goto end;
+
+    /* Read the data on the server side */
+    totread = 0;
+    while (totread < bufsz) {
+        if (!SSL_read_ex(serverssl, outbuf + totread, bufsz - totread,
+                &readbytes)) {
+            if (!TEST_int_eq(SSL_get_error(serverssl, 0), SSL_ERROR_WANT_READ))
+                goto end;
+        } else {
+            totread += readbytes;
+        }
+    }
+
+    /* Verify data integrity */
+    if (!TEST_mem_eq(buf_retry, bufsz, outbuf, totread))
+        goto end;
+
+    testresult = 1;
+end:
+    OPENSSL_free(buf_orig);
+    OPENSSL_free(buf_retry);
+    if (clientssl != NULL) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl != NULL) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free_all(bio_orig);
+    if (cfd != -1)
+        close(cfd);
+    if (sfd != -1)
+        close(sfd);
+    return testresult;
+}
+#endif /* !defined(OSSL_NO_USABLE_TLS1_3) */
+
 static struct ktls_test_cipher {
     int tls_version;
     const char *cipher;
@@ -2380,11 +2518,11 @@ static int test_tlsext_status_type_multi(void)
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), TLS_client_method(),
             TLS1_VERSION, 0, &sctx, &cctx, leaf, skey)))
         goto end;
-    if (TEST_int_lt(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 0))
+    if (!TEST_int_ge(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 0))
         goto end;
     if (!TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL)))
         goto end;
-    if (TEST_int_ne(SSL_CTX_get_tlsext_status_type(cctx), -1))
+    if (!TEST_int_eq(SSL_CTX_get_tlsext_status_type(cctx), -1))
         goto end;
 
     /* set verify callback function */
@@ -11898,7 +12036,7 @@ static int test_no_shared_ffdhe_group(int idx)
      * Note that the server should not select the DHE ciphersuite if there are
      * no shared FFDHE groups, so if it was selected, that is an error.
      */
-    if (TEST_int_eq(TLS1_CK_DHE_RSA_WITH_AES_128_SHA256,
+    if (!TEST_int_ne(TLS1_CK_DHE_RSA_WITH_AES_128_SHA256,
             SSL_CIPHER_get_id(SSL_get_current_cipher(clientssl))))
         goto end;
 
@@ -13935,16 +14073,53 @@ static int alert_cb(SSL *s, unsigned char alert_code, void *arg)
     return 1;
 }
 
+/* Extension id reserved for private use by IANA */
+#define TEST_TLS_EXTENSION_ID 65282
+
+static int add_ext_cb_called = 0;
+static int parse_ext_cb_called = 0;
+
+static int add_old_ext(SSL *s, unsigned int ext_type,
+    const unsigned char **out, size_t *outlen,
+    int *al, void *add_arg)
+{
+    static const unsigned char data = 0xff;
+
+    add_ext_cb_called++;
+    *out = &data;
+    *outlen = 1;
+    return 1;
+}
+
+static void free_old_ext(SSL *s, unsigned int ext_type,
+    const unsigned char *out, void *add_arg)
+{
+    /* Do nothing */
+}
+
+static int parse_old_ext(SSL *s, unsigned int ext_type,
+    const unsigned char *in, size_t inlen,
+    int *al, void *parse_arg)
+{
+    parse_ext_cb_called++;
+    if (inlen != 1 || *in != 0xff) {
+        *al = SSL_AD_DECODE_ERROR;
+        return 0;
+    }
+    return 1;
+}
+
 /*
  * Test the QUIC TLS API
  * Test 0: Normal run
  * Test 1: Force a failure
  * Test 3: Use a CCM based ciphersuite
  * Test 4: fail yield_secret_cb to see double free
+ * Test 5: Normal run with SNI
  */
 static int test_quic_tls(int idx)
 {
-    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL_CTX *sctx = NULL, *sctx2 = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     OSSL_DISPATCH qtdis[] = {
@@ -13972,6 +14147,7 @@ static int test_quic_tls(int idx)
     if (idx == 4)
         qtdis[3].function = (void (*)(void))yield_secret_cb_fail;
 
+    snicb = 0;
     memset(secret_history, 0, sizeof(secret_history));
     secret_history_idx = 0;
     memset(&sdata, 0, sizeof(sdata));
@@ -13985,6 +14161,39 @@ static int test_quic_tls(int idx)
             TLS_client_method(), TLS1_3_VERSION, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
+
+    if (idx == 5) {
+        static int dummy = 1;
+
+        if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(), NULL,
+                TLS1_3_VERSION, 0,
+                &sctx2, NULL, cert, privkey)))
+            goto end;
+
+        /*
+         * We add an old style custom extension to ensure that it gets correctly
+         * handled when we copy QUIC's connection specific custom extensions.
+         */
+        add_ext_cb_called = 0;
+        parse_ext_cb_called = 0;
+        if (!TEST_true(SSL_CTX_add_client_custom_ext(cctx,
+                TEST_TLS_EXTENSION_ID,
+                add_old_ext, free_old_ext, &dummy, parse_old_ext, &dummy)))
+            goto end;
+        if (!TEST_true(SSL_CTX_add_server_custom_ext(sctx,
+                TEST_TLS_EXTENSION_ID,
+                add_old_ext, free_old_ext, &dummy, parse_old_ext, &dummy)))
+            goto end;
+        if (!TEST_true(SSL_CTX_add_server_custom_ext(sctx2,
+                TEST_TLS_EXTENSION_ID,
+                add_old_ext, free_old_ext, &dummy, parse_old_ext, &dummy)))
+            goto end;
+
+        /* Set up SNI */
+        if (!TEST_true(SSL_CTX_set_tlsext_servername_callback(sctx, sni_cb))
+            || !TEST_true(SSL_CTX_set_tlsext_servername_arg(sctx, sctx2)))
+            goto end;
+    }
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
             NULL)))
@@ -14026,6 +14235,12 @@ static int test_quic_tls(int idx)
         goto end;
     }
 
+    /* We should have had the SNI callback called exactly once */
+    if (idx == 5) {
+        if (!TEST_int_eq(snicb, 1))
+            goto end;
+    }
+
     /* Check no problems during the handshake */
     if (!TEST_false(sdata.alert)
         || !TEST_false(cdata.alert)
@@ -14063,10 +14278,23 @@ static int test_quic_tls(int idx)
         || !TEST_true(cdata.wenc_level == OSSL_RECORD_PROTECTION_LEVEL_APPLICATION))
         goto end;
 
+    /*
+     * We only expect the add cb to have actually been called because we are
+     * using the old style callbacks that only apply to TLSv1.2. Since we are
+     * using TLSv1.3 here, the add will be called for the ClientHello but
+     * nothing else.
+     */
+    if (idx == 5) {
+        if (!TEST_int_eq(add_ext_cb_called, 1)
+            || !TEST_int_eq(parse_ext_cb_called, 0))
+            goto end;
+    }
+
     testresult = 1;
 end:
     SSL_free(serverssl);
     SSL_free(clientssl);
+    SSL_CTX_free(sctx2);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
@@ -14931,6 +15159,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ktls, NUM_KTLS_TEST_CIPHERS * 4);
     ADD_ALL_TESTS(test_ktls_sendfile, NUM_KTLS_TEST_CIPHERS * 2);
 #endif
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_ktls_moving_write_buffer);
+#endif
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
@@ -15117,7 +15348,7 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(test_alpn, 4);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
-    ADD_ALL_TESTS(test_quic_tls, 5);
+    ADD_ALL_TESTS(test_quic_tls, 6);
     ADD_TEST(test_quic_tls_early_data);
 #endif
     ADD_ALL_TESTS(test_no_renegotiation, 2);

@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 37;
+plan tests => 39;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1263,6 +1263,23 @@ subtest "CMS code signing test" => sub {
        "fail verify CMS signature with code signing certificate for purpose smime_sign");
 };
 
+# Regression test for PKCS7_verify() ownership handling when
+# digestAlgorithms is an empty SET.
+# The malformed structure must fail cleanly without crashing or
+# triggering use-after-free behaviour.
+with({ exit_checker => sub { return shift == 4; } },
+    sub {
+        ok(run(app([
+                'openssl', 'smime',
+                '-verify',
+                '-noverify',
+                '-in',
+                srctop_file('test', 'smime-eml',
+                            'pkcs7-empty-digest-set.eml'),
+            ])),
+           "Check empty digestAlgorithms SET is handled safely");
+    });
+
 # Test case for missing MD algorithm (must not segfault)
 
 with({ exit_checker => sub { return shift == 4; } },
@@ -1702,3 +1719,22 @@ subtest "ML-KEM KEMRecipientInfo tests for CMS" => sub {
            "CMS decrypt with ML-KEM-768 and using UKM");
     }
 };
+
+# Regression test for NULL dereference in PWRI decrypt path
+# when optional keyDerivationAlgorithm is omitted.
+subtest "PWRI missing keyDerivationAlgorithm regression" => sub {
+    plan tests => 1;
+
+    with({ exit_checker => sub { return shift == 4; } }, sub {
+        ok(run(app([
+            "openssl", "cms", @prov,
+            "-decrypt",
+            "-inform", "DER",
+            "-in",
+            srctop_file('test', 'cms-msg', 'missing-kdf.der'),
+            "-out", "pwri-out.txt",
+            "-pwri_password", "secret"])),
+        "missing keyDerivationAlgorithm is rejected");
+    });
+};
+

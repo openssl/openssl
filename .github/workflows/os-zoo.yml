@@ -141,7 +141,7 @@ jobs:
           - os: windows-2022
             vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
           - os: windows-2025
-            vcvars: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+            vcvars: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
     - uses: actions/checkout@v6
@@ -151,10 +151,21 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
       run: |
-        choco install nasm
+        $installer = "nasm-3.01-installer-x64.exe"
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+        $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
         "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: install jom
-      run:  choco install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
     - name: prepare the build directory
       run: mkdir _build
     - name: config
@@ -340,6 +351,48 @@ jobs:
       with:
         operating_system: freebsd
         version: "13.4"
+        run: |
+          ./util/opensslwrap.sh version -c
+          .github/workflows/make-test
+
+  openbsd-x86_64:
+    runs-on: ubuntu-latest
+    if: github.repository == 'openssl/openssl'
+    steps:
+    - uses: actions/checkout@v6
+    - name: config
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        shutdown_vm: false
+        run: |
+          ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
+    - name: config dump
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        shutdown_vm: false
+        run: |
+          ./configdata.pm --dump
+    - name: make
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
+        shutdown_vm: false
+        run: |
+          make -j4
+    - name: make test
+      uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
+      with:
+        operating_system: openbsd
+        architecture: x86-64
+        version: '7.7'
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test

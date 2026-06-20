@@ -287,8 +287,10 @@ err:
     return res;
 }
 
-static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
-    const char *exp_port, const char *exp_path)
+static int test_http_url_invalid(const char *url);
+
+static int test_http_url_frag_ok(const char *url, int exp_ssl, const char *exp_host,
+    const char *exp_port, const char *exp_path, const char *exp_frag)
 {
     char *user, *host, *port, *path, *query, *frag;
     int exp_num, num, ssl;
@@ -305,8 +307,8 @@ static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
         && TEST_int_eq(ssl, exp_ssl);
     if (res && *user != '\0')
         res = TEST_str_eq(user, "user:pass");
-    if (res && *frag != '\0')
-        res = TEST_str_eq(frag, "fr");
+    if (res)
+        res = TEST_str_eq(frag, exp_frag);
     if (res && *query != '\0')
         res = TEST_str_eq(query, "q");
     OPENSSL_free(user);
@@ -316,6 +318,12 @@ static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
     OPENSSL_free(query);
     OPENSSL_free(frag);
     return res;
+}
+
+static int test_http_url_ok(const char *url, int exp_ssl, const char *exp_host,
+    const char *exp_port, const char *exp_path)
+{
+    return test_http_url_frag_ok(url, exp_ssl, exp_host, exp_port, exp_path, "");
 }
 
 static int test_http_url_path_query_ok(const char *url, const char *exp_path_qu)
@@ -349,6 +357,11 @@ static int test_http_url_dns(void)
     return test_http_url_ok("host:65535/path", 0, "host", "65535", "/path");
 }
 
+static int test_http_url_ip(void)
+{
+    return test_http_url_ok("1.2.3.4:5678//blahblablah", 0, "1.2.3.4", "5678", "//blahblablah");
+}
+
 static int test_http_url_timestamp(void)
 {
     return test_http_url_ok("host/p/2017-01-03T00:00:00", 0, "host", "80",
@@ -368,7 +381,9 @@ static int test_http_url_path_query(void)
 
 static int test_http_url_userinfo_query_fragment(void)
 {
-    return test_http_url_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p");
+    return test_http_url_frag_ok("user:pass@host/p?q#fr", 0, "host", "80", "/p", "fr")
+        && test_http_url_frag_ok("host.example.org/some/path#://not-a-scheme/not.a.host:404", 0,
+            "host.example.org", "80", "/some/path", "://not-a-scheme/not.a.host:404");
 }
 
 static int test_http_url_at_sign_outside_authority(void)
@@ -385,7 +400,8 @@ static int test_http_url_ipv4(void)
 
 static int test_http_url_ipv6(void)
 {
-    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/");
+    return test_http_url_ok("http://[FF01::101]:6", 0, "[FF01::101]", "6", "/")
+        && test_http_url_invalid("http://[FF01::101/path]");
 }
 
 static int test_http_url_invalid(const char *url)
@@ -573,7 +589,7 @@ static int test_http_resp_hdr_limit(size_t limit)
     int res = 0;
     OSSL_HTTP_REQ_CTX *rctx = NULL;
 
-    if (TEST_ptr(wbio) == 0 || TEST_ptr(rbio) == 0)
+    if (!TEST_ptr(wbio) || !TEST_ptr(rbio))
         goto err;
 
     mock_args.txt = text1;
@@ -585,7 +601,7 @@ static int test_http_resp_hdr_limit(size_t limit)
     BIO_set_callback_arg(wbio, (char *)&mock_args);
 
     rctx = OSSL_HTTP_REQ_CTX_new(wbio, rbio, 8192);
-    if (TEST_ptr(rctx) == 0)
+    if (!TEST_ptr(rctx))
         goto err;
 
     if (!TEST_true(OSSL_HTTP_REQ_CTX_set_request_line(rctx, 0 /* GET */,
@@ -652,6 +668,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_http_url_dns);
+    ADD_TEST(test_http_url_ip);
     ADD_TEST(test_http_url_timestamp);
     ADD_TEST(test_http_url_path_query);
     ADD_TEST(test_http_url_userinfo_query_fragment);

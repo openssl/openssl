@@ -14,8 +14,25 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} -}]
-  SOURCE[../../libcrypto]=$COMMON $ML_DSA_ASM
-  SOURCE[../../providers/libfips.a]=$COMMON $ML_DSA_ASM
+  IF[{- ($target{perlasm_scheme} // '') ne '31' -}]
+    $ML_DSA_VX_s390x=ml_dsa_ntt_vec128.c
+    $ML_DSA_DEF_s390x=OPENSSL_ML_DSA_S390X
+  ENDIF
+
+  # Now that we have defined all the arch specific variables, use the
+  # appropriate ones, and define the appropriate macros
+  IF[$ML_DSA_VX_{- $target{asm_arch} -}]
+    $ML_DSA_VX=$ML_DSA_VX_{- $target{asm_arch} -}
+    $ML_DSA_DEF=$ML_DSA_DEF_{- $target{asm_arch} -}
+  ENDIF
+ENDIF
+
+DEFINE[../../libcrypto]=$ML_DSA_DEF
+DEFINE[../../providers/libfips.a]=$ML_DSA_DEF
+
+IF[{- !$disabled{'ml-dsa'} -}]
+  SOURCE[../../libcrypto]=$COMMON $ML_DSA_ASM $ML_DSA_VX
+  SOURCE[../../providers/libfips.a]=$COMMON $ML_DSA_ASM $ML_DSA_VX
 ENDIF
 
 # Assembly implementations

@@ -1246,33 +1246,33 @@ static const unsigned char encode_case_23_expect[] = {
         encode_case_##n##_expect,             \
         OSSL_NELEM(encode_case_##n##_expect), \
         encode_case_##n##_dec                 \
-    },
+    }
 
 static const struct encode_test_case encode_cases[] = {
-    ENCODE_CASE(1)
-        ENCODE_CASE(2)
-            ENCODE_CASE(3)
-                ENCODE_CASE(4)
-                    ENCODE_CASE(5)
-                        ENCODE_CASE(6)
-                            ENCODE_CASE(7)
-                                ENCODE_CASE(8)
-                                    ENCODE_CASE(9)
-                                        ENCODE_CASE(10)
-                                            ENCODE_CASE(11)
-                                                ENCODE_CASE(12)
-                                                    ENCODE_CASE(13)
-                                                        ENCODE_CASE(14)
-                                                            ENCODE_CASE(15)
-                                                                ENCODE_CASE(16)
-                                                                    ENCODE_CASE(16b)
-                                                                        ENCODE_CASE(17)
-                                                                            ENCODE_CASE(18)
-                                                                                ENCODE_CASE(19)
-                                                                                    ENCODE_CASE(20)
-                                                                                        ENCODE_CASE(21)
-                                                                                            ENCODE_CASE(22)
-                                                                                                ENCODE_CASE(23)
+    ENCODE_CASE(1),
+    ENCODE_CASE(2),
+    ENCODE_CASE(3),
+    ENCODE_CASE(4),
+    ENCODE_CASE(5),
+    ENCODE_CASE(6),
+    ENCODE_CASE(7),
+    ENCODE_CASE(8),
+    ENCODE_CASE(9),
+    ENCODE_CASE(10),
+    ENCODE_CASE(11),
+    ENCODE_CASE(12),
+    ENCODE_CASE(13),
+    ENCODE_CASE(14),
+    ENCODE_CASE(15),
+    ENCODE_CASE(16),
+    ENCODE_CASE(16b),
+    ENCODE_CASE(17),
+    ENCODE_CASE(18),
+    ENCODE_CASE(19),
+    ENCODE_CASE(20),
+    ENCODE_CASE(21),
+    ENCODE_CASE(22),
+    ENCODE_CASE(23),
 };
 
 static int test_wire_encode(int idx)
@@ -1466,16 +1466,16 @@ static int ack_generic_decode(PACKET *pkt)
         sizeof(ack_case_##n##_input), \
         (dec),                        \
         (expect_fail)                 \
-    },
+    }
 
 static const struct ack_test_case ack_cases[] = {
-    ACK_CASE(1, 1, ack_generic_decode)
-        ACK_CASE(2, 0, ack_generic_decode)
-            ACK_CASE(3, 1, ack_generic_decode)
-                ACK_CASE(4, 0, ack_generic_decode)
-                    ACK_CASE(5, 1, ack_generic_decode)
-                        ACK_CASE(6, 1, ack_generic_decode)
-                            ACK_CASE(7, 0, ack_generic_decode)
+    ACK_CASE(1, 1, ack_generic_decode),
+    ACK_CASE(2, 0, ack_generic_decode),
+    ACK_CASE(3, 1, ack_generic_decode),
+    ACK_CASE(4, 0, ack_generic_decode),
+    ACK_CASE(5, 1, ack_generic_decode),
+    ACK_CASE(6, 1, ack_generic_decode),
+    ACK_CASE(7, 0, ack_generic_decode),
 };
 
 static int test_wire_ack(int idx)
@@ -1625,27 +1625,19 @@ err:
 
 /* is_minimal=0 test */
 static const unsigned char non_minimal_1[] = {
-    0x40,
-    0x00,
+    0x40, 0x00
 };
 
 static const unsigned char non_minimal_2[] = {
-    0x40,
-    0x3F,
+    0x40, 0x3F
 };
 
 static const unsigned char non_minimal_3[] = {
-    0x80,
-    0x00,
-    0x00,
-    0x00,
+    0x80, 0x00, 0x00, 0x00
 };
 
 static const unsigned char non_minimal_4[] = {
-    0x80,
-    0x00,
-    0x3F,
-    0xFF,
+    0x80, 0x00, 0x3F, 0xFF
 };
 
 static const unsigned char non_minimal_5[] = {

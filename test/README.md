@@ -192,8 +192,16 @@ Some tests use the `ADD_MFAIL_TEST` framework to exhaustively verify that
 functions handle every possible allocation failure gracefully. These tests
 run repeatedly, failing one allocation later each iteration. The
 `ADD_MFAIL_NO_CHECK_TEST` variant relaxes the requirement that the test
-return 0 when a failure was triggered. Behavior is controlled with the
-following environment variables:
+return 0 when a failure was triggered. The `ADD_MFAIL_ALL_TESTS` and
+`ADD_MFAIL_ALL_NO_CHECK_TESTS` variants apply the same cycle to each index
+of a parameterised test, the same way `ADD_ALL_TESTS` does.
+
+An mfail test returns 1 on success or 0 on failure; under `NO_CHECK` a 0 is
+tolerated since a function may legitimately fail when an allocation fails.
+Returning -1 forces a failure that is reported even under `NO_CHECK`, for
+assertions that must hold regardless of which allocation was made to fail.
+
+Behavior is controlled with the following environment variables:
 
     OPENSSL_TEST_MFAIL_DISABLE=1    Disable mfail custom allocator installation.
 

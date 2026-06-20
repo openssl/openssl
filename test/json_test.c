@@ -64,11 +64,11 @@ struct script_word {
     void (*fp)(void);
 };
 
-#define OP_P(x) { (x) },
-#define OP_U64(x) { NULL, (x) },
-#define OP_I64(x) { NULL, 0, (x) },
-#define OP_D(x) { NULL, 0, 0, (x) },
-#define OP_FP(x) { NULL, 0, 0, 0, (void (*)(void))(x) },
+#define OP_P(x) { (x) }
+#define OP_U64(x) { NULL, (x) }
+#define OP_I64(x) { NULL, 0, (x) }
+#define OP_D(x) { NULL, 0, 0, (x) }
+#define OP_FP(x) { NULL, 0, 0, 0, (void (*)(void))(x) }
 
 struct script_info {
     const char *name, *title;
@@ -102,28 +102,28 @@ typedef void (*fp_d_type)(OSSL_JSON_ENC *, double);
 typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
 
 #define OP_END() OP_U64(OPK_END)
-#define OP_CALL(f) OP_U64(OPK_CALL) OP_FP(f)
-#define OP_CALL_P(f, x) OP_U64(OPK_CALL_P) OP_FP(f) OP_P(x)
-#define OP_CALL_I(f, x) OP_U64(OPK_CALL_I) OP_FP(f) OP_I64(x)
-#define OP_CALL_U64(f, x) OP_U64(OPK_CALL_U64) OP_FP(f) OP_U64(x)
-#define OP_CALL_I64(f, x) OP_U64(OPK_CALL_I64) OP_FP(f) OP_I64(x)
-#define OP_CALL_D(f, x) OP_U64(OPK_CALL_D) OP_FP(f) OP_D(x)
-#define OP_CALL_PZ(f, x, xl) OP_U64(OPK_CALL_PZ) OP_FP(f) OP_P(x) OP_U64(xl)
-#define OP_ASSERT_ERROR(err) OP_U64(OPK_ASSERT_ERROR) OP_U64(err)
-#define OP_INIT_FLAGS(flags) OP_U64(OPK_INIT_FLAGS) OP_U64(flags)
+#define OP_CALL(f) OP_U64(OPK_CALL), OP_FP(f)
+#define OP_CALL_P(f, x) OP_U64(OPK_CALL_P), OP_FP(f), OP_P(x)
+#define OP_CALL_I(f, x) OP_U64(OPK_CALL_I), OP_FP(f), OP_I64(x)
+#define OP_CALL_U64(f, x) OP_U64(OPK_CALL_U64), OP_FP(f), OP_U64(x)
+#define OP_CALL_I64(f, x) OP_U64(OPK_CALL_I64), OP_FP(f), OP_I64(x)
+#define OP_CALL_D(f, x) OP_U64(OPK_CALL_D), OP_FP(f), OP_D(x)
+#define OP_CALL_PZ(f, x, xl) OP_U64(OPK_CALL_PZ), OP_FP(f), OP_P(x), OP_U64(xl)
+#define OP_ASSERT_ERROR(err) OP_U64(OPK_ASSERT_ERROR), OP_U64(err),
+#define OP_INIT_FLAGS(flags) OP_U64(OPK_INIT_FLAGS), OP_U64(flags)
 
-#define OPJ_BEGIN_O() OP_CALL(ossl_json_object_begin)
-#define OPJ_END_O() OP_CALL(ossl_json_object_end)
-#define OPJ_BEGIN_A() OP_CALL(ossl_json_array_begin)
-#define OPJ_END_A() OP_CALL(ossl_json_array_end)
-#define OPJ_NULL() OP_CALL(ossl_json_null)
-#define OPJ_BOOL(x) OP_CALL_I(ossl_json_bool, (x))
-#define OPJ_U64(x) OP_CALL_U64(ossl_json_u64, (x))
-#define OPJ_I64(x) OP_CALL_I64(ossl_json_i64, (x))
-#define OPJ_KEY(x) OP_CALL_P(ossl_json_key, (x))
-#define OPJ_STR(x) OP_CALL_P(ossl_json_str, (x))
-#define OPJ_STR_LEN(x, xl) OP_CALL_PZ(ossl_json_str_len, (x), (xl))
-#define OPJ_STR_HEX(x, xl) OP_CALL_PZ(ossl_json_str_hex, (x), (xl))
+#define OPJ_BEGIN_O() OP_CALL(ossl_json_object_begin),
+#define OPJ_END_O() OP_CALL(ossl_json_object_end),
+#define OPJ_BEGIN_A() OP_CALL(ossl_json_array_begin),
+#define OPJ_END_A() OP_CALL(ossl_json_array_end),
+#define OPJ_NULL() OP_CALL(ossl_json_null),
+#define OPJ_BOOL(x) OP_CALL_I(ossl_json_bool, (x)),
+#define OPJ_U64(x) OP_CALL_U64(ossl_json_u64, (x)),
+#define OPJ_I64(x) OP_CALL_I64(ossl_json_i64, (x)),
+#define OPJ_KEY(x) OP_CALL_P(ossl_json_key, (x)),
+#define OPJ_STR(x) OP_CALL_P(ossl_json_str, (x)),
+#define OPJ_STR_LEN(x, xl) OP_CALL_PZ(ossl_json_str_len, (x), (xl)),
+#define OPJ_STR_HEX(x, xl) OP_CALL_PZ(ossl_json_str_hex, (x), (xl)),
 
 #define BEGIN_SCRIPT(name, title, flags)                     \
     static const struct script_info *get_script_##name(void) \
@@ -132,10 +132,10 @@ typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
         static const char script_title[] = #title;           \
                                                              \
         static const struct script_word script_words[] = {   \
-            OP_INIT_FLAGS(flags)
+            OP_INIT_FLAGS(flags),
 
 #define END_SCRIPT_EXPECTING(s, slen)                                      \
-    OP_END()                                                               \
+    OP_END(),                                                              \
     }                                                                      \
     ;                                                                      \
     static const struct script_info script_info = {                        \
@@ -157,7 +157,7 @@ typedef void (*fp_pz_type)(OSSL_JSON_ENC *, const void *, size_t);
 #define END_SCRIPT_EXPECTING_S(s) END_SCRIPT_EXPECTING(s, SIZE_MAX)
 #define END_SCRIPT_EXPECTING_Q(s) END_SCRIPT_EXPECTING(#s, sizeof(#s) - 1)
 
-#define SCRIPT(name) get_script_##name,
+#define SCRIPT(name) get_script_##name
 
 BEGIN_SCRIPT(null, "serialize a single null", 0)
 OPJ_NULL()
@@ -492,56 +492,56 @@ END_SCRIPT_EXPECTING_S("\x1Enull\n"
                        "\x1E{\"x\":1,\"y\":{}}\n")
 
 static const info_func scripts[] = {
-    SCRIPT(null)
-        SCRIPT(obj_empty)
-            SCRIPT(array_empty)
-                SCRIPT(bool_false)
-                    SCRIPT(bool_true)
-                        SCRIPT(u64_0)
-                            SCRIPT(u64_1)
-                                SCRIPT(u64_10)
-                                    SCRIPT(u64_12345)
-                                        SCRIPT(u64_18446744073709551615)
-                                            SCRIPT(i64_0)
-                                                SCRIPT(i64_1)
-                                                    SCRIPT(i64_2)
-                                                        SCRIPT(i64_10)
-                                                            SCRIPT(i64_12345)
-                                                                SCRIPT(i64_9223372036854775807)
-                                                                    SCRIPT(i64_m1)
-                                                                        SCRIPT(i64_m2)
-                                                                            SCRIPT(i64_m10)
-                                                                                SCRIPT(i64_m12345)
-                                                                                    SCRIPT(i64_m9223372036854775807)
-                                                                                        SCRIPT(i64_m9223372036854775808)
-                                                                                            SCRIPT(str_empty)
-                                                                                                SCRIPT(str_a)
-                                                                                                    SCRIPT(str_abc)
-                                                                                                        SCRIPT(str_quote)
-                                                                                                            SCRIPT(str_quote2)
-                                                                                                                SCRIPT(str_escape)
-                                                                                                                    SCRIPT(str_len)
-                                                                                                                        SCRIPT(str_len0)
-                                                                                                                            SCRIPT(str_len_nul)
-                                                                                                                                SCRIPT(hex_data0)
-                                                                                                                                    SCRIPT(hex_data)
-                                                                                                                                        SCRIPT(array_nest1)
-                                                                                                                                            SCRIPT(array_nest2)
-                                                                                                                                                SCRIPT(array_nest3)
-                                                                                                                                                    SCRIPT(array_nest4)
-                                                                                                                                                        SCRIPT(obj_nontrivial1)
-                                                                                                                                                            SCRIPT(obj_nontrivial2)
-                                                                                                                                                                SCRIPT(obj_nest1)
-                                                                                                                                                                    SCRIPT(err_obj_no_key)
-                                                                                                                                                                        SCRIPT(err_obj_multi_key)
-                                                                                                                                                                            SCRIPT(err_obj_no_value)
-                                                                                                                                                                                SCRIPT(err_utf8)
-                                                                                                                                                                                    SCRIPT(utf8_2)
-                                                                                                                                                                                        SCRIPT(utf8_3)
-                                                                                                                                                                                            SCRIPT(utf8_4)
-                                                                                                                                                                                                SCRIPT(ijson_int)
-                                                                                                                                                                                                    SCRIPT(multi_item)
-                                                                                                                                                                                                        SCRIPT(seq)
+    SCRIPT(null),
+    SCRIPT(obj_empty),
+    SCRIPT(array_empty),
+    SCRIPT(bool_false),
+    SCRIPT(bool_true),
+    SCRIPT(u64_0),
+    SCRIPT(u64_1),
+    SCRIPT(u64_10),
+    SCRIPT(u64_12345),
+    SCRIPT(u64_18446744073709551615),
+    SCRIPT(i64_0),
+    SCRIPT(i64_1),
+    SCRIPT(i64_2),
+    SCRIPT(i64_10),
+    SCRIPT(i64_12345),
+    SCRIPT(i64_9223372036854775807),
+    SCRIPT(i64_m1),
+    SCRIPT(i64_m2),
+    SCRIPT(i64_m10),
+    SCRIPT(i64_m12345),
+    SCRIPT(i64_m9223372036854775807),
+    SCRIPT(i64_m9223372036854775808),
+    SCRIPT(str_empty),
+    SCRIPT(str_a),
+    SCRIPT(str_abc),
+    SCRIPT(str_quote),
+    SCRIPT(str_quote2),
+    SCRIPT(str_escape),
+    SCRIPT(str_len),
+    SCRIPT(str_len0),
+    SCRIPT(str_len_nul),
+    SCRIPT(hex_data0),
+    SCRIPT(hex_data),
+    SCRIPT(array_nest1),
+    SCRIPT(array_nest2),
+    SCRIPT(array_nest3),
+    SCRIPT(array_nest4),
+    SCRIPT(obj_nontrivial1),
+    SCRIPT(obj_nontrivial2),
+    SCRIPT(obj_nest1),
+    SCRIPT(err_obj_no_key),
+    SCRIPT(err_obj_multi_key),
+    SCRIPT(err_obj_no_value),
+    SCRIPT(err_utf8),
+    SCRIPT(utf8_2),
+    SCRIPT(utf8_3),
+    SCRIPT(utf8_4),
+    SCRIPT(ijson_int),
+    SCRIPT(multi_item),
+    SCRIPT(seq),
 };
 
 /* Test runner. */
@@ -637,7 +637,7 @@ static int run_script(const struct script_info *info)
 
             break;
         }
-#define OP_ASSERT_ERROR(err) OP_U64(OPK_ASSERT_ERROR) OP_U64(err)
+#define OP_ASSERT_ERROR(err) OP_U64(OPK_ASSERT_ERROR), OP_U64(err),
 
         default:
             TEST_error("unknown opcode");

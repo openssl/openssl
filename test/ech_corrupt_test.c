@@ -1767,7 +1767,7 @@ static int ech_retry_config_test(int idx)
         if (!TEST_int_ne((int)retryconfiglen, 0))
             goto end;
         if (verbose)
-            TEST_info("ech_retry_config_test: retryconfglen: %d\n", (int)retryconfiglen);
+            TEST_info("ech_retry_config_test: retryconfglen: %zu\n", retryconfiglen);
         /* we kow the size to expect as the configs are hard-coded above */
         if (!TEST_size_t_eq(retryconfiglen, 64))
             goto end;

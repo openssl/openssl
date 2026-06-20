@@ -1136,7 +1136,7 @@ static int decrypt_validation_token(const QUIC_PORT *port,
         goto err;
 
     /* Prevent decryption of a buffer that is not within reasonable bounds */
-    if (ct_len < (size_t)(iv_len + tag_len) || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
+    if (ct_len < (size_t)iv_len + tag_len || ct_len > ENCRYPTED_TOKEN_MAX_LEN)
         goto err;
 
     *pt_len = ct_len - iv_len - tag_len;
@@ -1799,8 +1799,10 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * forget qrx so channel can create a new one
          * with valid initial encryption level keys.
          */
-        qrx_src = qrx;
-        qrx = NULL;
+        if (qrx != NULL) {
+            qrx_src = qrx;
+            qrx = NULL;
+        }
     }
 
     port_bind_channel(port, &e->peer, &hdr.dst_conn_id,

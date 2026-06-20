@@ -12,6 +12,7 @@
 #include "internal/ffc.h"
 #include "internal/param_build_set.h"
 #include "internal/nelem.h"
+#include "internal/zeroization.h"
 
 #ifndef FIPS_MODULE
 #include <openssl/asn1.h> /* ossl_ffc_params_print */
@@ -27,34 +28,27 @@ void ossl_ffc_params_init(FFC_PARAMS *params)
 
 void ossl_ffc_params_cleanup(FFC_PARAMS *params)
 {
-#ifdef OPENSSL_PEDANTIC_ZEROIZATION
-    BN_clear_free(params->p);
-    BN_clear_free(params->q);
-    BN_clear_free(params->g);
-    BN_clear_free(params->j);
-    OPENSSL_clear_free(params->seed, params->seedlen);
-#else
-    BN_free(params->p);
-    BN_free(params->q);
-    BN_free(params->g);
-    BN_free(params->j);
-    OPENSSL_free(params->seed);
-#endif
+    ossl_public_bn_free(params->p);
+    ossl_public_bn_free(params->q);
+    ossl_public_bn_free(params->g);
+    ossl_public_bn_free(params->j);
+    ossl_public_param_free(params->seed, params->seedlen);
+
     ossl_ffc_params_init(params);
 }
 
 void ossl_ffc_params_set0_pqg(FFC_PARAMS *d, BIGNUM *p, BIGNUM *q, BIGNUM *g)
 {
     if (p != NULL && p != d->p) {
-        BN_free(d->p);
+        ossl_public_bn_free(d->p);
         d->p = p;
     }
     if (q != NULL && q != d->q) {
-        BN_free(d->q);
+        ossl_public_bn_free(d->q);
         d->q = q;
     }
     if (g != NULL && g != d->g) {
-        BN_free(d->g);
+        ossl_public_bn_free(d->g);
         d->g = g;
     }
 }
@@ -73,7 +67,7 @@ void ossl_ffc_params_get0_pqg(const FFC_PARAMS *d, const BIGNUM **p,
 /* j is the 'cofactor' that is optionally output for ASN1. */
 void ossl_ffc_params_set0_j(FFC_PARAMS *d, BIGNUM *j)
 {
-    BN_free(d->j);
+    ossl_public_bn_free(d->j);
     d->j = NULL;
     if (j != NULL)
         d->j = j;
@@ -85,7 +79,7 @@ int ossl_ffc_params_set_seed(FFC_PARAMS *params,
     if (params->seed != NULL) {
         if (params->seed == seed)
             return 1;
-        OPENSSL_free(params->seed);
+        ossl_public_param_free(params->seed, params->seedlen);
     }
 
     if (seed != NULL && seedlen > 0) {
@@ -172,7 +166,7 @@ static int ffc_bn_cpy(BIGNUM **dst, const BIGNUM *src)
         a = (BIGNUM *)src;
     else if ((a = BN_dup(src)) == NULL)
         return 0;
-    BN_clear_free(*dst);
+    ossl_public_bn_free(*dst);
     *dst = a;
     return 1;
 }
@@ -189,7 +183,7 @@ int ossl_ffc_params_copy(FFC_PARAMS *dst, const FFC_PARAMS *src)
 
     dst->mdname = src->mdname;
     dst->mdprops = src->mdprops;
-    OPENSSL_free(dst->seed);
+    ossl_public_param_free(dst->seed, dst->seedlen);
     dst->seedlen = src->seedlen;
     if (src->seed != NULL) {
         dst->seed = OPENSSL_memdup(src->seed, src->seedlen);

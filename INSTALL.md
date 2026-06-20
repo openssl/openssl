@@ -645,7 +645,8 @@ Do not use `atexit()` in libcrypto builds.
 
 Before version 4.0, OpenSSL used to set `atexit()` handler for cleaning up
 global data, and this option allowed to disable that functionality.  `atexit()`
-handler setup was removed in OpenSSL 4.0, so this option does nothing now.
+handler setup was removed in OpenSSL 4.0, so `no-atexit` option is retained
+for compatibility reasons only, always present, and does nothing.
 
 ### no-autoalginit
 
@@ -867,6 +868,13 @@ Don't build support for GOST based ciphersuites.
 Note that if this feature is enabled then GOST ciphersuites are only available
 if the GOST algorithms are also available through loading an externally supplied
 engine.
+
+### no-engine, no-static-engine, no-dynamic-engine
+
+The `no-engine` option is always present.  These options are deprecated and do
+nothing, and are retained for backwards compatibility only.  The ENGINE API was
+deprecated in OpenSSL 3.0 and removed in OpenSSL 4.0, so applications should
+transition to using providers instead.
 
 ### no-http
 

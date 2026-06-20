@@ -12,6 +12,7 @@
 
 /* Flags for mfail_init(). */
 #define MFAIL_FLAG_COUNT (1 << 0)
+#define MFAIL_FLAG_NO_CHECK (1 << 1)
 
 /* Modes */
 #define MFAIL_MODE_EXHAUSTIVE 0

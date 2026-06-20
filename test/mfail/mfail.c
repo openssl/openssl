@@ -54,6 +54,7 @@ static struct {
     int triggered;
     int counting;
     int slow_skipped;
+    int no_check;
 } mf;
 
 static int env_is_true(const char *name)
@@ -92,11 +93,14 @@ static void mfail_print_bt(void)
 #endif
 }
 
-static int should_fail(void)
+static int should_fail(const char *file)
 {
     int idx;
 
     if (!mf.counting)
+        return 0;
+    /* skip if checking errors and file is not set (debug and error parts) */
+    if (!mf.no_check && file == NULL)
         return 0;
 
     idx = mf.alloc_count++;
@@ -116,7 +120,7 @@ static void *mf_malloc(size_t num, const char *file, int line)
 {
     if (num == 0)
         return NULL;
-    if (should_fail())
+    if (should_fail(file))
         return NULL;
     return malloc(num);
 }
@@ -129,7 +133,7 @@ static void *mf_realloc(void *addr, size_t num, const char *file, int line)
         free(addr);
         return NULL;
     }
-    if (should_fail())
+    if (should_fail(file))
         return NULL;
     return realloc(addr, num);
 }
@@ -216,6 +220,7 @@ void mfail_init(int seq, int flags)
     mf.triggered = 0;
     mf.counting = 0;
     mf.slow_skipped = 0;
+    mf.no_check = flags & MFAIL_FLAG_NO_CHECK;
 
     if (mf.single_point >= 0) {
         mf.mode = MFAIL_MODE_SINGLE;

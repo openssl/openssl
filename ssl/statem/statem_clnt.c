@@ -2966,8 +2966,10 @@ MSG_PROCESS_RETURN tls_process_certificate_request(SSL_CONNECTION *s,
         s->s3.tmp.valid_flags = OPENSSL_calloc(s->ssl_pkey_num, sizeof(uint32_t));
 
     /* Give up for good if allocation didn't work */
-    if (s->s3.tmp.valid_flags == NULL)
-        return 0;
+    if (s->s3.tmp.valid_flags == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+        return MSG_PROCESS_ERROR;
+    }
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
         PACKET reqctx, extensions;
@@ -3169,6 +3171,14 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
         PACKET extpkt;
+
+        /*
+         * Fulfilling RFC8446:4.6.1 requirement: Clients MUST NOT cache
+         * tickets for longer than 7 days.
+         */
+        if (ticket_lifetime_hint > 604800) {
+            ticket_lifetime_hint = 604800;
+        }
 
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
             || PACKET_remaining(pkt) != 0) {

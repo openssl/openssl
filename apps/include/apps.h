@@ -323,6 +323,8 @@ int check_cert_might_be_valid(BIO *bio, BIO *bio_err, X509 *x,
 
 void store_setup_crl_download(X509_STORE *st);
 
+int host_is_ip_address(const char *host);
+
 typedef struct app_http_tls_info_st {
     const char *server;
     const char *port;

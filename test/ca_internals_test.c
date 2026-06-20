@@ -49,13 +49,13 @@ static int test_do_updatedb(void)
     testdate = test_get_argument(2);
     if (!test_asn1_string_to_time_t(testdate, &testdateutc))
         return 0;
-    if (TEST_time_t_lt(testdateutc, 0)) {
+    if (!TEST_time_t_ge(testdateutc, 0)) {
         return 0;
     }
 
     indexfile = test_get_argument(1);
     db = load_index(indexfile, NULL);
-    if (TEST_ptr_null(db)) {
+    if (!TEST_ptr(db)) {
         return 0;
     }
 

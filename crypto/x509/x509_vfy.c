@@ -1205,6 +1205,16 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
             /* the issuer certificate is the next in the chain */
             ctx->current_issuer = sk_X509_value(ctx->chain, i + 1);
+            if (ctx->current_issuer == NULL) {
+                /*
+                 * No issuer exists at i+1 — this is the partial-chain
+                 * trust anchor. OCSP requires an issuer to build the
+                 * CertID, so skip OCSP checking for this certificate.
+                 */
+                if ((ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) != 0)
+                    continue;
+                return verify_cb_ocsp(ctx, X509_V_ERR_OCSP_VERIFY_FAILED);
+            }
 
             ok = check_cert_ocsp_resp(ctx);
 
@@ -1303,6 +1313,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         OCSP_BASICRESP_free(bs);
+        bs = NULL;
         ret = X509_V_ERR_OCSP_RESP_INVALID;
         goto end;
     }
@@ -1682,6 +1693,12 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     /* Invalid IDP cannot be processed */
     if ((crl->idp_flags & IDP_INVALID) != 0)
         return 0;
+    /*
+     * Reject delta CRLs unconditionally here. They are considered by
+     * get_delta_sk() after a base CRL is selected.
+     */
+    if (crl->base_crl_number != NULL)
+        return 0;
     /* Reason codes or indirect CRLs need extended CRL support */
     if ((ctx->param->flags & X509_V_FLAG_EXTENDED_CRL_SUPPORT) == 0) {
         if (crl->idp_flags & (IDP_INDIRECT | IDP_REASONS))
@@ -1691,9 +1708,6 @@ static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
         if ((crl->idp_reasons & ~tmp_reasons) == 0)
             return 0;
     }
-    /* Don't process deltas at this stage */
-    else if (crl->base_crl_number != NULL)
-        return 0;
     /* If issuer name doesn't match certificate need indirect CRL */
     if (X509_NAME_cmp(X509_get_issuer_name(x), X509_CRL_get_issuer(crl)) != 0) {
         if ((crl->idp_flags & IDP_INDIRECT) == 0)

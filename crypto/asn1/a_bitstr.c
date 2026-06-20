@@ -263,12 +263,6 @@ int ASN1_BIT_STRING_set1(ASN1_BIT_STRING *abs, const uint8_t *data, size_t lengt
     if (length > 0 && (data[length - 1] & ((1 << unused_bits) - 1)) != 0)
         return 0;
 
-    /*
-     * XXX - ASN1_STRING_set() and asn1_bit_string_set_unused_bits() preserve the
-     * state of flags irrelevant to ASN1_BIT_STRING. Should we explicitly
-     * clear them?
-     */
-
     if (!ASN1_STRING_set(abs, data, (int)length))
         return 0;
     abs->type = V_ASN1_BIT_STRING;

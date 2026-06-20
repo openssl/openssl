@@ -26,6 +26,8 @@ static const ERR_STRING_DATA X509_str_reasons[] = {
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_CERT_ALREADY_IN_HASH_TABLE),
         "cert already in hash table" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_CRL_ALREADY_DELTA), "crl already delta" },
+    { ERR_PACK(ERR_LIB_X509, 0, X509_R_CRL_SIGNATURE_ALGORITHM_MISMATCH),
+        "crl signature algorithm mismatch" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_CRL_VERIFY_FAILURE),
         "crl verify failure" },
     { ERR_PACK(ERR_LIB_X509, 0, X509_R_DUPLICATE_ATTRIBUTE),
