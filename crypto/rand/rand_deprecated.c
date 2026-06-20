@@ -12,7 +12,6 @@
 #include <openssl/rand.h>
 
 #if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-#include <windows.h>
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 
 #define DEPRECATED_RAND_FUNCTIONS_DEFINED
