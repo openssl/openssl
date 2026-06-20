@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/conf.h>
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 #include "testutil.h"
 
@@ -73,6 +74,7 @@ static CONF *conf;
 static BIO *in;
 static int expect_failure = 0;
 static int test_providers = 0;
+static int test_env = 0;
 static OSSL_LIB_CTX *libctx = NULL;
 static char *rel_conf_file = NULL;
 
@@ -224,11 +226,86 @@ static int test_available_providers(void)
     return 1;
 }
 
+static const char *test_safe_getenv_callback_function(const char *env, const char *file, int line)
+{
+    if (strcmp(env, "GOOD") == 0) {
+        return "VERY";
+    }
+    if (strcmp(env, "BAD") == 0) {
+        return "";
+    }
+    return NULL;
+}
+
+static int test_safe_getenv_callback(void)
+{
+    CRYPTO_safe_getenv_fn default_fn, restored_fn;
+    long line;
+    const char *val;
+    libctx = OSSL_LIB_CTX_new();
+    if (!TEST_ptr(libctx))
+        return 0;
+
+    OSSL_LIB_CTX_get_safe_getenv_function(libctx, &default_fn);
+    if (!TEST_fnptr((void (*)(void))default_fn))
+        return 0;
+
+    OSSL_LIB_CTX_set_safe_getenv_function(libctx, test_safe_getenv_callback_function);
+    OSSL_LIB_CTX_get_safe_getenv_function(libctx, &restored_fn);
+    if (!TEST_fnptr_eq(restored_fn, test_safe_getenv_callback_function))
+        return 0;
+
+    NCONF_free(conf);
+    if (!TEST_ptr(conf = NCONF_new_ex(libctx, NULL))) {
+        TEST_note("NCONF_new_ext failed to create config");
+        return 0;
+    }
+    if (!TEST_int_gt(NCONF_load(conf, rel_conf_file, &line), 0))
+        return 0;
+
+    if (!TEST_ptr(val = NCONF_get_string(conf, "envtests", "good")))
+        return 0;
+
+    if (!TEST_str_eq(val, "VERY"))
+        return 0;
+
+#if defined(_BSD_SOURCE)                                        \
+    || (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+    || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    setenv("BAD", "shouldn't be seen", 1);
+#elif defined(_WIN32)
+    SetEnvironmentVariableA("BAD", "shouldn't be seen");
+#else
+#define SKIP_HIDDEN_ENV
+#endif
+
+#ifndef SKIP_HIDDEN_ENV
+    /* test that any env that isn't GOOD is masked */
+    val = NCONF_get_string(conf, "envtests", "bad");
+    if (!TEST_ptr(val)) {
+        return 0;
+    }
+    if (!TEST_str_eq(val, "")) {
+        TEST_note("Retrieved wrong config value");
+        return 0;
+    }
+#endif
+
+    OSSL_LIB_CTX_set_safe_getenv_function(libctx, NULL);
+    OSSL_LIB_CTX_get_safe_getenv_function(libctx, &restored_fn);
+    if (!TEST_fnptr_eq(restored_fn, default_fn)) {
+        TEST_note("Failed to restore default callback");
+        return 0;
+    }
+    return 1;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
     OPT_FAIL,
     OPT_TEST_PROV,
+    OPT_TEST_ENV,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
 
@@ -239,6 +316,7 @@ const OPTIONS *test_get_options(void)
         { "f", OPT_FAIL, '-', "A failure is expected" },
         { "providers", OPT_TEST_PROV, '-',
             "Test for activated default and legacy providers" },
+        { "env", OPT_TEST_ENV, '-', "Test env callback in config" },
         { NULL }
     };
     return test_options;
@@ -259,6 +337,10 @@ int setup_tests(void)
             break;
         case OPT_TEST_PROV:
             test_providers = 1;
+            break;
+        case OPT_TEST_ENV:
+            test_env = 1;
+            break;
         case OPT_TEST_CASES:
             break;
         default:
@@ -283,6 +365,10 @@ int setup_tests(void)
         return 0;
     }
 
+    if (test_env != 0) {
+        ADD_TEST(test_safe_getenv_callback);
+        return 1;
+    }
     ADD_TEST(test_load_config);
     ADD_TEST(test_check_null_numbers);
     ADD_TEST(test_check_overflow);

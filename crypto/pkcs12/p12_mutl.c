@@ -245,7 +245,7 @@ static int pkcs12_gen_mac(PKCS12 *p12, const char *pass, int passlen,
     } else if ((md_nid == NID_id_GostR3411_94
                    || md_nid == NID_id_GostR3411_2012_256
                    || md_nid == NID_id_GostR3411_2012_512)
-        && ossl_safe_getenv("LEGACY_GOST_PKCS12") == NULL) {
+        && CRYPTO_safe_getenv(libctx, "LEGACY_GOST_PKCS12") == NULL) {
         keylen = TK26_MAC_KEY_LEN;
         if (!pkcs12_gen_gost_mac_key(pass, passlen, salt, saltlen, iter,
                 keylen, key, md)) {

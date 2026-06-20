@@ -160,7 +160,7 @@ static int ctlog_new_from_conf(CTLOG_STORE *store, CTLOG **ct_log,
 
 int CTLOG_STORE_load_default_file(CTLOG_STORE *store)
 {
-    const char *fpath = ossl_safe_getenv(CTLOG_FILE_EVP);
+    const char *fpath = CRYPTO_safe_getenv(store->libctx, CTLOG_FILE_EVP);
 
     if (fpath == NULL)
         fpath = CTLOG_FILE;

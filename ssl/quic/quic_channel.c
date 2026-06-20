@@ -115,7 +115,9 @@ static QLOG *ch_get_qlog(QUIC_CHANNEL *ch)
     qti.is_server = ch->is_server;
     qti.now_cb = get_time;
     qti.now_cb_arg = ch;
-    if ((ch->qlog = ossl_qlog_new_from_env(&qti)) == NULL) {
+    SSL *ssl = ossl_quic_channel_get0_ssl(ch);
+    OSSL_LIB_CTX *libctx = ssl && ssl->ctx ? ssl->ctx->libctx : NULL;
+    if ((ch->qlog = ossl_qlog_new_from_env(libctx, &qti)) == NULL) {
         ch->use_qlog = 0; /* don't try again */
         return NULL;
     }

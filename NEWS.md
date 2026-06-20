@@ -34,6 +34,10 @@ OpenSSL 4.1
 
   * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
 
+  * API calls `OSSL_LIB_CTX_set_safe_getenv_function`,
+    `OSSL_LIB_CTX_get_safe_getenv_function` and `OSSL_LIB_CTS_safe_getenv`
+    have been added.
+
 OpenSSL 4.0
 -----------
 
