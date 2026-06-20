@@ -478,12 +478,10 @@ static long bio_zstd_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 static const BIO_METHOD bio_meth_zstd = {
     BIO_TYPE_COMP,
     "zstd",
-    /* TODO: Convert to new style write function */
-    bwrite_conv,
     bio_zstd_write,
-    /* TODO: Convert to new style read function */
-    bread_conv,
+    NULL,
     bio_zstd_read,
+    NULL,
     NULL, /* bio_zstd_puts, */
     NULL, /* bio_zstd_gets, */
     bio_zstd_ctrl,
@@ -573,7 +571,7 @@ static int bio_zstd_free(BIO *bi)
     return 1;
 }
 
-static int bio_zstd_read(BIO *b, char *out, int outl)
+static int bio_zstd_read(BIO *b, char *out, size_t outl, size_t *readbytes)
 {
     BIO_ZSTD_CTX *ctx;
     size_t zret;
@@ -581,12 +579,14 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
     ZSTD_outBuffer outBuf;
     BIO *next = BIO_next(b);
 
-    if (out == NULL) {
+    if (out == NULL || readbytes == NULL) {
         ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_NULL_PARAMETER);
         return -1;
     }
-    if (outl <= 0)
+    if (outl == 0) {
+        *readbytes = 0;
         return 0;
+    }
 
     ctx = BIO_get_data(b);
     BIO_clear_retry_flags(b);
@@ -603,7 +603,7 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
 
     /* Copy output data directly to supplied buffer */
     outBuf.dst = out;
-    outBuf.size = (size_t)outl;
+    outBuf.size = outl;
     outBuf.pos = 0;
     for (;;) {
         /* Decompress while data available */
@@ -615,8 +615,10 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
                 return -1;
             }
             /* No more output space */
-            if (outBuf.pos == outBuf.size)
-                return (int)outBuf.pos;
+            if (outBuf.pos == outBuf.size) {
+                *readbytes = outBuf.pos;
+                return 1;
+            }
         } while (ctx->decompress.inbuf.pos < ctx->decompress.inbuf.size);
 
         /*
@@ -628,14 +630,15 @@ static int bio_zstd_read(BIO *b, char *out, int outl)
             BIO_copy_next_retry(b);
             if (ret < 0 && outBuf.pos == 0)
                 return ret;
-            return (int)outBuf.pos;
+            *readbytes = outBuf.pos;
+            return (outBuf.pos == 0) ? 0 : 1;
         }
         ctx->decompress.inbuf.size = ret;
         ctx->decompress.inbuf.pos = 0;
     }
 }
 
-static int bio_zstd_write(BIO *b, const char *in, int inl)
+static int bio_zstd_write(BIO *b, const char *in, size_t inl, size_t *written)
 {
     BIO_ZSTD_CTX *ctx;
     size_t zret;
@@ -644,8 +647,11 @@ static int bio_zstd_write(BIO *b, const char *in, int inl)
     int done = 0;
     BIO *next = BIO_next(b);
 
-    if (in == NULL || inl <= 0)
+    if (in == NULL || written == NULL || inl == 0) {
+        if (written != NULL)
+            *written = 0;
         return 0;
+    }
 
     ctx = BIO_get_data(b);
 
@@ -654,6 +660,7 @@ static int bio_zstd_write(BIO *b, const char *in, int inl)
         ctx->compress.outbuf.dst = OPENSSL_malloc(ctx->compress.bufsize);
         if (ctx->compress.outbuf.dst == NULL) {
             ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+            *written = 0;
             return 0;
         }
         ctx->compress.outbuf.size = ctx->compress.bufsize;
@@ -671,16 +678,21 @@ static int bio_zstd_write(BIO *b, const char *in, int inl)
                 (int)(ctx->compress.outbuf.pos - ctx->compress.write_pos));
             if (ret <= 0) {
                 BIO_copy_next_retry(b);
-                if (ret < 0 && inBuf.pos == 0)
+                if (ret < 0 && inBuf.pos == 0) {
+                    *written = 0;
                     return ret;
-                return (int)inBuf.pos;
+                }
+                *written = inBuf.pos;
+                return 1;
             }
             ctx->compress.write_pos += ret;
         }
 
         /* Have we consumed all supplied data? */
-        if (done)
-            return (int)inBuf.pos;
+        if (done) {
+            *written = inBuf.pos;
+            return 1;
+        }
 
         /* Reset buffer */
         ctx->compress.outbuf.pos = 0;
@@ -691,6 +703,7 @@ static int bio_zstd_write(BIO *b, const char *in, int inl)
         if (ZSTD_isError(zret)) {
             ERR_raise(ERR_LIB_COMP, COMP_R_ZSTD_COMPRESS_ERROR);
             ERR_add_error_data(1, ZSTD_getErrorName(zret));
+            *written = inBuf.pos;
             return 0;
         } else if (zret == 0) {
             done = 1;

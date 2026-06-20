@@ -413,12 +413,10 @@ static long bio_brotli_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 static const BIO_METHOD bio_meth_brotli = {
     BIO_TYPE_COMP,
     "brotli",
-    /* TODO: Convert to new style write function */
-    bwrite_conv,
     bio_brotli_write,
-    /* TODO: Convert to new style read function */
-    bread_conv,
+    NULL,
     bio_brotli_read,
+    NULL,
     NULL, /* bio_brotli_puts, */
     NULL, /* bio_brotli_gets, */
     bio_brotli_ctrl,
@@ -497,23 +495,21 @@ static int bio_brotli_free(BIO *bi)
     return 1;
 }
 
-static int bio_brotli_read(BIO *b, char *out, int outl)
+static int bio_brotli_read(BIO *b, char *out, size_t outl, size_t *readbytes)
 {
     BIO_BROTLI_CTX *ctx;
     BrotliDecoderResult bret;
     int ret;
     BIO *next = BIO_next(b);
 
-    if (out == NULL || outl <= 0) {
+    if (out == NULL || readbytes == NULL) {
         ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
+        return -1;
+    }
+    if (outl == 0) {
+        *readbytes = 0;
         return 0;
     }
-#if INT_MAX > SIZE_MAX
-    if ((unsigned int)outl > SIZE_MAX) {
-        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-#endif
 
     ctx = BIO_get_data(b);
     BIO_clear_retry_flags(b);
@@ -529,7 +525,7 @@ static int bio_brotli_read(BIO *b, char *out, int outl)
 
     /* Copy output data directly to supplied buffer */
     ctx->decode.next_out = (unsigned char *)out;
-    ctx->decode.avail_out = (size_t)outl;
+    ctx->decode.avail_out = outl;
     for (;;) {
         /* Decompress while data available */
         while (ctx->decode.avail_in > 0 || BrotliDecoderHasMoreOutput(ctx->decode.state)) {
@@ -541,13 +537,17 @@ static int bio_brotli_read(BIO *b, char *out, int outl)
                 return 0;
             }
             /* If EOF or we've read everything then return */
-            if (BrotliDecoderIsFinished(ctx->decode.state) || ctx->decode.avail_out == 0)
-                return (int)(outl - ctx->decode.avail_out);
+            if (BrotliDecoderIsFinished(ctx->decode.state) || ctx->decode.avail_out == 0) {
+                *readbytes = outl - ctx->decode.avail_out;
+                return 1;
+            }
         }
 
         /* If EOF */
-        if (BrotliDecoderIsFinished(ctx->decode.state))
+        if (BrotliDecoderIsFinished(ctx->decode.state)) {
+            *readbytes = 0;
             return 0;
+        }
 
         /*
          * No data in input buffer try to read some in, if an error then
@@ -556,45 +556,46 @@ static int bio_brotli_read(BIO *b, char *out, int outl)
         ret = BIO_read(next, ctx->decode.buf, (int)ctx->decode.bufsize);
         if (ret <= 0) {
             /* Total data read */
-            int tot = outl - (int)ctx->decode.avail_out;
+            size_t tot = outl - ctx->decode.avail_out;
 
             BIO_copy_next_retry(b);
-            if (ret < 0)
-                return (tot > 0) ? tot : ret;
-            return tot;
+            if (ret < 0) {
+                *readbytes = tot;
+                return (tot > 0) ? 1 : ret;
+            }
+            *readbytes = tot;
+            return (tot > 0) ? 1 : 0;
         }
         ctx->decode.avail_in = ret;
         ctx->decode.next_in = ctx->decode.buf;
     }
 }
 
-static int bio_brotli_write(BIO *b, const char *in, int inl)
+static int bio_brotli_write(BIO *b, const char *in, size_t inl, size_t *written)
 {
     BIO_BROTLI_CTX *ctx;
     BROTLI_BOOL brret;
     int ret;
     BIO *next = BIO_next(b);
 
-    if (in == NULL || inl <= 0) {
-        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
+    if (in == NULL || written == NULL || inl == 0) {
+        if (written != NULL)
+            *written = 0;
         return 0;
     }
-#if INT_MAX > SIZE_MAX
-    if ((unsigned int)inl > SIZE_MAX) {
-        ERR_raise(ERR_LIB_COMP, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
-    }
-#endif
 
     ctx = BIO_get_data(b);
-    if (ctx->encode.done)
+    if (ctx->encode.done) {
+        *written = 0;
         return 0;
+    }
 
     BIO_clear_retry_flags(b);
     if (ctx->encode.buf == NULL) {
         ctx->encode.buf = OPENSSL_malloc(ctx->encode.bufsize);
         if (ctx->encode.buf == NULL) {
             ERR_raise(ERR_LIB_COMP, ERR_R_MALLOC_FAILURE);
+            *written = 0;
             return 0;
         }
         ctx->encode.ptr = ctx->encode.buf;
@@ -604,27 +605,32 @@ static int bio_brotli_write(BIO *b, const char *in, int inl)
     }
     /* Obtain input data directly from supplied buffer */
     ctx->encode.next_in = (unsigned char *)in;
-    ctx->encode.avail_in = (size_t)inl;
+    ctx->encode.avail_in = inl;
     for (;;) {
         /* If data in output buffer write it first */
         while (ctx->encode.count > 0) {
             ret = BIO_write(next, ctx->encode.ptr, (int)ctx->encode.count);
             if (ret <= 0) {
                 /* Total data written */
-                int tot = inl - (int)ctx->encode.avail_in;
+                size_t tot = inl - ctx->encode.avail_in;
 
                 BIO_copy_next_retry(b);
-                if (ret < 0)
-                    return (tot > 0) ? tot : ret;
-                return tot;
+                if (ret < 0) {
+                    *written = tot;
+                    return (tot > 0) ? 1 : ret;
+                }
+                *written = tot;
+                return 1;
             }
             ctx->encode.ptr += ret;
             ctx->encode.count -= ret;
         }
 
         /* Have we consumed all supplied data? */
-        if (ctx->encode.avail_in == 0 && !BrotliEncoderHasMoreOutput(ctx->encode.state))
-            return inl;
+        if (ctx->encode.avail_in == 0 && !BrotliEncoderHasMoreOutput(ctx->encode.state)) {
+            *written = inl;
+            return 1;
+        }
 
         /* Compress some more */
 
@@ -638,6 +644,7 @@ static int bio_brotli_write(BIO *b, const char *in, int inl)
         if (brret != BROTLI_TRUE) {
             ERR_raise(ERR_LIB_COMP, COMP_R_BROTLI_ENCODE_ERROR);
             ERR_add_error_data(1, "brotli encoder error");
+            *written = inl - ctx->encode.avail_in;
             return 0;
         }
         ctx->encode.count = ctx->encode.bufsize - ctx->encode.avail_out;

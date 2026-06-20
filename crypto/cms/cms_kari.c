@@ -238,9 +238,7 @@ err:
     if (!rv)
         OPENSSL_free(out);
     EVP_CIPHER_CTX_reset(kari->ctx);
-    /* FIXME: WHY IS kari->pctx freed here?  /RL */
-    EVP_PKEY_CTX_free(kari->pctx);
-    kari->pctx = NULL;
+    /* FIXME: kari->pctx is managed by CMS_KeyAgreeRecipientInfo ASN1 callback */
     return rv;
 }
 
