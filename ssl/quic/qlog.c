@@ -120,11 +120,11 @@ static const char *ossl_dirsep_string(const char *path)
 #endif /* defined(_WIN32) */
 }
 
-QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
+QLOG *ossl_qlog_new_from_env(const OSSL_LIB_CTX *libctx, const QLOG_TRACE_INFO *info)
 {
     QLOG *qlog = NULL;
-    const char *qlogdir = ossl_safe_getenv("QLOGDIR");
-    const char *qfilter = ossl_safe_getenv("OSSL_QFILTER");
+    const char *qlogdir = CRYPTO_safe_getenv(libctx, "QLOGDIR");
+    const char *qfilter = CRYPTO_safe_getenv(libctx, "OSSL_QFILTER");
     char cid_hex[QUIC_MAX_CONN_ID_LEN * 2 + 1], *filename = NULL;
     size_t i, hexlen = 0;
 

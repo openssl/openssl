@@ -38,6 +38,10 @@ OpenSSL 4.2
     single KDF operation, as TLS requires. New API `EVP_KDF_derive_SKEYs()`,
     `EVP_KDF_CTX_get1_SKEY()` and `EVP_KDF_CTX_get0_IV()` have been added.
 
+  * API calls `OSSL_LIB_CTX_set_safe_getenv_function`,
+    `OSSL_LIB_CTX_get_safe_getenv_function` and `OSSL_LIB_CTX_safe_getenv`
+    have been added.
+
 OpenSSL 4.1
 -----------
 

@@ -48,8 +48,8 @@ typedef struct lookup_dir_st {
     CRYPTO_RWLOCK *lock;
 } BY_DIR;
 
-static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-    char **retp);
+static int dir_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
+    char **retp, OSSL_LIB_CTX *libctx, const char *propq);
 
 static int new_dir(X509_LOOKUP *lu);
 static void free_dir(X509_LOOKUP *lu);
@@ -65,13 +65,13 @@ static X509_LOOKUP_METHOD x509_dir_lookup = {
     free_dir, /* free */
     NULL, /* init */
     NULL, /* shutdown */
-    dir_ctrl, /* ctrl */
+    NULL, /* ctrl */
     get_cert_by_subject, /* get_by_subject */
     NULL, /* get_by_issuer_serial */
     NULL, /* get_by_fingerprint */
     NULL, /* get_by_alias */
     get_cert_by_subject_ex, /* get_by_subject_ex */
-    NULL, /* ctrl_ex */
+    dir_ctrl_ex, /* ctrl_ex */
 };
 
 X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
@@ -79,8 +79,8 @@ X509_LOOKUP_METHOD *X509_LOOKUP_hash_dir(void)
     return &x509_dir_lookup;
 }
 
-static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
-    char **retp)
+static int dir_ctrl_ex(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
+    char **retp, OSSL_LIB_CTX *libctx, const char *propq)
 {
     int ret = 0;
     BY_DIR *ld = (BY_DIR *)ctx->method_data;
@@ -88,7 +88,8 @@ static int dir_ctrl(X509_LOOKUP *ctx, int cmd, const char *argp, long argl,
     switch (cmd) {
     case X509_L_ADD_DIR:
         if (argl == X509_FILETYPE_DEFAULT) {
-            const char *dir = ossl_safe_getenv(X509_get_default_cert_dir_env());
+            const char *dir = CRYPTO_safe_getenv(libctx,
+                X509_get_default_cert_dir_env());
 
             if (dir)
                 ret = add_cert_dir(ld, dir, X509_FILETYPE_PEM);

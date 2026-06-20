@@ -15,7 +15,8 @@
 #include "internal/cryptlib.h"
 #include "internal/e_os.h"
 
-char *ossl_safe_getenv(const char *name)
+char *ossl_lib_ctx_safe_getenv_default(const char *name, const char *file,
+    int line)
 {
 #if defined(_WIN32) && defined(CP_UTF8)
     if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {

@@ -45,7 +45,18 @@ void ossl_crypto_cleanup_all_ex_data_int(OSSL_LIB_CTX *ctx);
 int openssl_init_fork_handlers(void);
 int openssl_get_fork_id(void);
 
-char *ossl_safe_getenv(const char *name);
+/**
+ * The default implementation of a security-sensitive environment variable.
+ *
+ * @param env   The environment variable name
+ * @param file  The filename for logging purposes
+ * @param line  The line in the file for logging purposes
+ * @return The environment variable value, if its safe to do so; NULL otherwise.
+ */
+char *ossl_lib_ctx_safe_getenv_default(const char *env, const char *file, int line);
+#define CRYPTO_safe_getenv(lib, env) \
+    OSSL_LIB_CTX_safe_getenv(lib, env, OPENSSL_FILE, OPENSSL_LINE)
+#define ossl_safe_getenv(name) CRYPTO_safe_getenv(NULL, (name))
 
 int openssl_strerror_r(int errnum, char *buf, size_t buflen);
 #if !defined(OPENSSL_NO_STDIO)
@@ -119,7 +130,8 @@ typedef struct ossl_ex_data_global_st {
 #define OSSL_LIB_CTX_COMP_METHODS 21
 #define OSSL_LIB_CTX_INDICATOR_CB_INDEX 22
 #define OSSL_LIB_CTX_SSL_CONF_IMODULE 23
-#define OSSL_LIB_CTX_MAX_INDEXES 23
+#define OSSL_LIB_CTX_SAFEENV_CB 24
+#define OSSL_LIB_CTX_MAX_INDEXES 24
 
 OSSL_LIB_CTX *ossl_lib_ctx_get_concrete(OSSL_LIB_CTX *ctx);
 int ossl_lib_ctx_is_default(OSSL_LIB_CTX *ctx);
