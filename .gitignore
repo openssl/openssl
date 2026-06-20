@@ -439,4 +439,4 @@ lcov.info
 run_tests
 depend
 
-build/
+build*/
