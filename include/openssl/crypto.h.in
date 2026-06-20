@@ -155,6 +155,9 @@ int CRYPTO_atomic_cmp_exch_ptr(void **ptr, void **expect, void *desire, CRYPTO_R
     CRYPTO_secure_clear_free(addr, num, OPENSSL_FILE, OPENSSL_LINE)
 #define OPENSSL_secure_actual_size(ptr) \
     CRYPTO_secure_actual_size(ptr)
+#define CRYPTO_safe_getenv(lib, env)                                      \
+    (lib ? OSSL_LIB_CTX_safe_getenv(lib, env, OPENSSL_FILE, OPENSSL_LINE) \
+         : OSSL_LIB_CTX_safe_getenv_default(env, OPENSSL_FILE, OPENSSL_LINE))
 
 size_t OPENSSL_strlcpy(char *dst, const char *src, size_t siz);
 size_t OPENSSL_strlcat(char *dst, const char *src, size_t siz);
@@ -351,6 +354,8 @@ typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
 typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
     int line);
 typedef void (*CRYPTO_free_fn)(void *addr, const char *file, int line);
+typedef const char *(*CRYPTO_safe_getenv_fn)(const char *env, const char *file,
+    int line);
 int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
     CRYPTO_realloc_fn realloc_fn,
     CRYPTO_free_fn free_fn);
@@ -594,6 +599,15 @@ void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *ctx, int value);
 void OSSL_sleep(uint64_t millis);
 
 void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index);
+
+/* Secure env functions */
+
+void OSSL_LIB_CTX_set_safe_getenv_function(OSSL_LIB_CTX *libctx,
+    CRYPTO_safe_getenv_fn safe_getenv_fn);
+void OSSL_LIB_CTX_get_safe_getenv_function(const OSSL_LIB_CTX *libctx,
+    CRYPTO_safe_getenv_fn *safe_getenv_fn);
+const char *OSSL_LIB_CTX_safe_getenv(const OSSL_LIB_CTX *libctx, const char *env, const char *file, int line);
+char *OSSL_LIB_CTX_safe_getenv_default(const char *env, const char *file, int line);
 
 #ifdef __cplusplus
 }

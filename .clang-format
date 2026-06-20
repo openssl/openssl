@@ -211,6 +211,7 @@ TypeNames:
   - "CRYPTO_realloc_fn"
   - "CRYPTO_REF_COUNT"
   - "CRYPTO_RWLOCK"
+  - "CRYPTO_safe_getenv_fn"
   - "CRYPTO_THREAD"
   - "CRYPTO_THREAD_ID"
   - "CRYPTO_THREADID"

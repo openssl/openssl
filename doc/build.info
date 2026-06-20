@@ -1779,6 +1779,10 @@ DEPEND[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_c
 GENERATE[html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 DEPEND[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
 GENERATE[man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3]=man3/OSSL_LIB_CTX_set_conf_diagnostics.pod
+DEPEND[html/man3/OSSL_LIB_CTX_set_safe_getenv_function.html]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
+GENERATE[html/man3/OSSL_LIB_CTX_set_safe_getenv_function.html]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
+DEPEND[man/man3/OSSL_LIB_CTX_set_safe_getenv_function.3]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
+GENERATE[man/man3/OSSL_LIB_CTX_set_safe_getenv_function.3]=man3/OSSL_LIB_CTX_set_safe_getenv_function.pod
 DEPEND[html/man3/OSSL_PARAM.html]=man3/OSSL_PARAM.pod
 GENERATE[html/man3/OSSL_PARAM.html]=man3/OSSL_PARAM.pod
 DEPEND[man/man3/OSSL_PARAM.3]=man3/OSSL_PARAM.pod
@@ -3496,6 +3500,7 @@ html/man3/OSSL_INDICATOR_set_callback.html \
 html/man3/OSSL_ITEM.html \
 html/man3/OSSL_LIB_CTX.html \
 html/man3/OSSL_LIB_CTX_set_conf_diagnostics.html \
+html/man3/OSSL_LIB_CTX_set_safe_getenv_function.html \
 html/man3/OSSL_PARAM.html \
 html/man3/OSSL_PARAM_BLD.html \
 html/man3/OSSL_PARAM_allocate_from_text.html \
@@ -4171,6 +4176,7 @@ man/man3/OSSL_INDICATOR_set_callback.3 \
 man/man3/OSSL_ITEM.3 \
 man/man3/OSSL_LIB_CTX.3 \
 man/man3/OSSL_LIB_CTX_set_conf_diagnostics.3 \
+man/man3/OSSL_LIB_CTX_set_safe_getenv_function.3 \
 man/man3/OSSL_PARAM.3 \
 man/man3/OSSL_PARAM_BLD.3 \
 man/man3/OSSL_PARAM_allocate_from_text.3 \

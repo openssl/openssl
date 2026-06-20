@@ -1,0 +1,48 @@
+=pod
+
+=head1 NAME
+
+OSSL_LIB_CTX_safe_getenv,
+CRYPTO_safe_getenv
+- Callback function for safe environment retrieval
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ const char *OSSL_LIB_CTX_safe_getenv(const OSSL_LIB_CTX *libctx, const char *env,
+     const char *file, int line);
+
+ const char *CRYPTO_safe_getenv(const OSSL_LIB_CTX *libctx, const char *env);
+
+=head1 DESCRIPTION
+
+B<CRYPTO_safe_getenv>, as a internal wrapper to B<OSSL_LIB_CTX_safe_getenv> is
+expected to be called by the OpenSSL library internally only.
+
+B<OSSL_LIB_CTX_safe_getenv> is exposed for the internal utility of B<libssl>.
+
+=head1 RETURN VALUES
+
+OSSL_LIB_CTX_safe_getenv() will return the environment variable
+value or NULL, depending on the security context (L<openssl-env(7)>)
+depending on the L<OSSL_LIB_CTX_set_safe_getenv_function(3)> callback.
+
+=head1 SEE ALSO
+
+L<openssl-env(7)>, L<OSSL_LIB_CTX_set_safe_getenv_function(3)>
+
+=head1 HISTORY
+
+The functions described on this page were added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

@@ -4212,7 +4212,7 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 {
     SSL_CTX *ret = NULL;
 #ifndef OPENSSL_NO_SSLKEYLOG
-    const char *keylogfile = ossl_safe_getenv("SSLKEYLOGFILE");
+    const char *keylogfile = CRYPTO_safe_getenv(libctx, "SSLKEYLOGFILE");
 #endif
 #ifndef OPENSSL_NO_COMP_ALG
     int i;

@@ -1,0 +1,81 @@
+=pod
+
+=head1 NAME
+
+OSSL_LIB_CTX_get_safe_getenv_function,
+OSSL_LIB_CTX_set_safe_getenv_function,
+OSSL_LIB_CTX_safe_getenv_default,
+CRYPTO_safe_getenv_fn
+- Callback function for safe environment retrieval
+
+=head1 SYNOPSIS
+
+ #include <openssl/crypto.h>
+
+ typedef const char *(*CRYPTO_safe_getenv_fn)(const char *env, const char *file,
+     int line);
+
+ void OSSL_LIB_CTX_set_safe_getenv_function(OSSL_LIB_CTX *libctx,
+     CRYPTO_safe_getenv_fn safe_getenv_fn);
+
+ void OSSL_LIB_CTX_get_safe_getenv_function(const OSSL_LIB_CTX *libctx,
+     CRYPTO_safe_getenv_fn *safe_getenv_fn);
+
+ char *OSSL_LIB_CTX_safe_getenv_default(const char *env, const char *file,
+   int line);
+
+=head1 DESCRIPTION
+
+OSSL_LIB_CTX_set_safe_getenv_function() sets callback function of the
+L<OSSL_LIB_CTX(3)> context. If B<safe_getenv_fn> is NULL, the default
+implementation, OSSL_LIB_CTX_safe_getenv_default() is used instead. OpenSSL
+will not free or deallocate the provided pointer.
+
+When OpenSSL needs to retrieve an environment variable, L<openssl-env(7)>,
+that has access to a B<OSSL_LIB_CTX>, it calls the B<CRYPTO_safe_getenv>
+macro resulting to a call to either the user provided function or the
+default implementation OSSL_LIB_CTX_safe_getenv_default(). These functions
+will return a character string of the value of the provided B<env> variable
+, or a NULL if the application isn't in a safe state to be processing that
+environment variable.
+
+The OSSL_LIB_CTX_safe_getenv_default() uses B<secure_getenv> is available
+or a B<OPENSSL_issetugid>, to return NULL for all environment variables
+retrieval where an elevated privileges on the application is current. This
+is the identical implementation of L<openssl-env(7)> that has always been
+present.
+
+OSSL_LIB_CTX_get_safe_getenv_function(), for completeness, returns the
+current function callback and stored in the B<safe_getenv_fn> pointer.
+
+Some OpenSSL function do not have access to a B<OSSL_LIB_CTX> and therefore
+will directly use the OSSL_LIB_CTX_safe_getenv_default() function:
+* B<def_load_bio>, a method of the L<NCONF_default(3)> structure for parsing
+  configuration files.
+* L<CONF_modules_load(3)>
+* L<OSSL_HTTP_adapt_proxy(3)>
+* L<RAND_file_name(3)>
+
+=head1 RETURN VALUES
+
+OSSL_LIB_CTX_safe_getenv_default() will return the environment variable
+value or NULL, depending on the security context (L<openssl-env(7)>).
+
+=head1 SEE ALSO
+
+L<openssl-env(7)>
+
+=head1 HISTORY
+
+The functions described on this page were added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
