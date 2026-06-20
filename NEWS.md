@@ -32,6 +32,10 @@ OpenSSL 4.2
   * Added support for Java keytool PKCS#12 files with symmetric keys.
     New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
 
+  * API calls `OSSL_LIB_CTX_set_safe_getenv_function`,
+    `OSSL_LIB_CTX_get_safe_getenv_function` and `OSSL_LIB_CTS_safe_getenv`
+    have been added.
+
 OpenSSL 4.1
 -----------
 

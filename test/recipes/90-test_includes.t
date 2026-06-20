@@ -14,7 +14,7 @@ plan skip_all => "test_includes doesn't work without posix-io"
 delete $ENV{OPENSSL_CONF_INCLUDE};
 
 plan tests =>                   # The number of tests being performed
-    7
+    8
     + ($^O eq "VMS" ? 2 : 0);
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("providers"));
@@ -23,6 +23,7 @@ ok(run(test(["conf_include_test", data_file("includes.cnf")])), "test directory 
 ok(run(test(["conf_include_test", data_file("includes-file.cnf")])), "test file includes");
 ok(run(test(["conf_include_test", data_file("includes-eq.cnf")])), "test includes with equal character");
 ok(run(test(["conf_include_test", data_file("includes-eq-ws.cnf")])), "test includes with equal and whitespaces");
+ok(run(test(["conf_include_test", "-env", data_file("includes-env.cnf")])), "test env callback");
 if ($^O eq "VMS") {
     ok(run(test(["conf_include_test", data_file("vms-includes.cnf")])),
        "test directory includes, VMS syntax");

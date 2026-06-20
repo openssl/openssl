@@ -268,11 +268,11 @@ int RAND_write_file(const char *file)
 
 const char *RAND_file_name(char *buf, size_t size)
 {
-    char *s = NULL;
     size_t len;
     int use_randfile = 1;
 
 #if defined(_WIN32) && defined(CP_UTF8)
+    char *s = NULL;
     DWORD envlen;
     WCHAR *var;
 
@@ -303,6 +303,7 @@ const char *RAND_file_name(char *buf, size_t size)
         }
     }
 #else
+    const char *s;
     if ((s = ossl_safe_getenv("RANDFILE")) == NULL || *s == '\0') {
         use_randfile = 0;
         s = ossl_safe_getenv("HOME");
