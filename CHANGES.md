@@ -92,6 +92,12 @@ OpenSSL Releases
 
    *Adriano Sela Aviles*
 
+ * Add a build target to provide MSVC 2013 hacks in a c99 world.
+   The build target adds internal functions to provide c99 functions
+   that are not present with MSVC 2013.
+
+   *Bob Beck*
+
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
    (`NID_rsaesOaep`, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
    are now decoded as RSA keys.  This is required for interoperability

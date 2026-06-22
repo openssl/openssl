@@ -21,3 +21,7 @@ ENDIF
 IF[{- !$disabled{srp} -}]
   SOURCE[../libapps.a]=tlssrp_depr.c
 ENDIF
+
+IF[{- $target{needs_c99_snprintf_compat} -}]
+  SOURCE[../libapps.a]=msvc2013_snprintf.c
+ENDIF
