@@ -2273,16 +2273,14 @@ static const SIGALG_LOOKUP sigalg_lookup_tbl[] = {
         TLS1_2_VERSION, TLS1_2_VERSION, DTLS1_2_VERSION, DTLS1_2_VERSION },
 
 #ifndef OPENSSL_NO_GOST
-    { TLSEXT_SIGALG_gostr34102012_256_intrinsic_alias, /* RFC9189 */
-        TLSEXT_SIGALG_gostr34102012_256_intrinsic_name,
-        TLSEXT_SIGALG_gostr34102012_256_intrinsic,
+    { TLSEXT_SIGALG_gostr34102012_256_intrinsic_name, /* RFC9189 */
+        NULL, TLSEXT_SIGALG_gostr34102012_256_intrinsic,
         NID_id_GostR3411_2012_256, SSL_MD_GOST12_256_IDX,
         NID_id_GostR3410_2012_256, SSL_PKEY_GOST12_256,
         NID_undef, NID_undef, 1, 0,
         TLS1_2_VERSION, TLS1_2_VERSION, DTLS1_2_VERSION, DTLS1_2_VERSION },
-    { TLSEXT_SIGALG_gostr34102012_512_intrinsic_alias, /* RFC9189 */
-        TLSEXT_SIGALG_gostr34102012_512_intrinsic_name,
-        TLSEXT_SIGALG_gostr34102012_512_intrinsic,
+    { TLSEXT_SIGALG_gostr34102012_512_intrinsic_name, /* RFC9189 */
+        NULL, TLSEXT_SIGALG_gostr34102012_512_intrinsic,
         NID_id_GostR3411_2012_512, SSL_MD_GOST12_512_IDX,
         NID_id_GostR3410_2012_512, SSL_PKEY_GOST12_512,
         NID_undef, NID_undef, 1, 0,
