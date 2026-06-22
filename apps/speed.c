@@ -4566,7 +4566,6 @@ int speed_main(int argc, char **argv)
 #ifndef NO_FORK
 show_res:
 #endif
-
     /* count succeeded symmetric-key and no-key algorithms */
     for (i = 0; i < ALGOR_NUM; i++)
         if (doit[i])
@@ -4601,7 +4600,8 @@ show_res:
             pr_header_all++;
 
     /* print header or not */
-    if (pr_header_all == 0) {
+    /* for testmode, print header */
+    if (pr_header_all == 0 && testmode == 0) {
         /* no header and return 1 because no algorithm was succeeded */
         goto end;
     } else if (!mr) {
