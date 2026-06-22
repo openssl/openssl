@@ -73,7 +73,7 @@ SKIP: {
                 $CAcert );
 
     open(my $out, '>', $CAobjects) or die $!;
-    my $pubkey = qx(openssl x509 -pubkey -noout -in $CAcert);
+    my $pubkey = run(app(["openssl", "x509", "-pubkey", "-noout", "-in", $CAcert]));
     print $out $pubkey;
     my @files;
     push @files, srctop_file("test", "certs", "dhp2048.pem")
