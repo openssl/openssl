@@ -12,6 +12,7 @@ B<openssl speed>
 [B<-config> I<filename>]
 [B<-elapsed>]
 [B<-evp> I<algo>]
+[B<-evp-list> I<algo>,...,I<algo>]
 [B<-hmac> I<algo>]
 [B<-cmac> I<algo>]
 [B<-mb>]
@@ -65,6 +66,10 @@ aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
 To see the algorithms supported with this option, use
 C<openssl list -digest-algorithms> or C<openssl list -cipher-algorithms>
 command.
+
+=item B<-evp-list> I<algo>,I<algo>,...,I<algo>
+
+Use the specified cipher or message digest algorithms via the EVP interface.
 
 =item B<-multi> I<num>
 
