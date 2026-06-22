@@ -5208,7 +5208,7 @@ static int do_multi(int multi, int size_num)
         }
         fclose(f);
     }
-    /* uncomment below to show the avarage of child processes instead of the sum */
+    /* uncomment below to show the average of child processes instead of the sum */
     /*
      * evp_algs_len /= n;
      * evp_aead_algs_len /= n;
