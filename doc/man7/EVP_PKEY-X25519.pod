@@ -62,6 +62,59 @@ The public key value.
 
 The private key value.
 
+=item "x25519-scalar-mode" ("x25519-scalar-mode") <UTF8 string>
+
+Controls how X25519 private scalars are processed before scalar
+multiplication. This parameter is only supported for B<X25519> keys. The
+supported values are:
+
+=over 4
+
+=item B<"rfc7748">
+
+The default mode. Applies the standard RFC 7748 clamping: clears the three
+low bits, clears bit 255, and forces bit 254. This mode must be used for
+interoperable X25519 ECDH.
+
+=item B<"legacy-ed25519-compat">
+
+Applies low-bit (torsion) clearing and clears bit 255, but does not force
+bit 254. Provided for specialized workflows that require an unclamped
+position-254 bit (for example, scalar inversion) while still clearing the
+torsion subgroup.
+
+=item B<"raw-unclamped">
+
+Uses the raw private key bytes verbatim (other than clearing bit 255, which
+the X25519 ladder ignores). Non-standard; provided to allow Ed25519-style
+(unclamped) keypairs to be used directly with X25519 operations.
+
+=back
+
+The mode is part of the key's identity:
+
+=over 4
+
+=item *
+
+It is preserved by L<EVP_PKEY_dup(3)> and by L<EVP_PKEY_todata(3)> /
+L<EVP_PKEY_fromdata(3)> round-trips.
+
+=item *
+
+L<EVP_PKEY_eq(3)> returns false for two X25519 keys that differ only in
+this mode.
+
+=item *
+
+Setting the mode regenerates the derived public key, so the mode should
+be set before the public key is exported or before deriving a shared
+secret. The parameter cannot be set on a public-only X25519 key.
+
+=back
+
+In the OpenSSL FIPS provider, only B<"rfc7748"> is accepted.
+
 =back
 
 =head2 Parameters for X25519 and X448
@@ -123,6 +176,20 @@ An B<X25519> key can be generated like this:
 
 An B<X448>, B<ED25519>, or B<ED448> key can be generated likewise.
 
+The X25519 scalar mode can be selected at generation time:
+
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_utf8_string("x25519-scalar-mode",
+                                                 "raw-unclamped", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    EVP_PKEY_CTX_set_params(pctx, params);
+    EVP_PKEY_generate(pctx, &pkey);
+
+It can also be changed on an existing X25519 key with a private component
+using L<EVP_PKEY_set_utf8_string_param(3)>.
+
 =head1 SEE ALSO
 
 L<EVP_KEYMGMT(3)>, L<EVP_PKEY(3)>, L<provider-keymgmt(7)>,
@@ -131,7 +198,7 @@ L<EVP_SIGNATURE-ED25519(7)>, L<EVP_SIGNATURE-ED448(7)>
 
 =head1 COPYRIGHT
 
-Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

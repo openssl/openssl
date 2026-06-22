@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -53,6 +53,12 @@ typedef enum {
     ECX_KEY_TYPE_ED448
 } ECX_KEY_TYPE;
 
+typedef enum {
+    OSSL_X25519_SCALAR_MODE_RFC7748 = 0,
+    OSSL_X25519_SCALAR_MODE_LEGACY_ED25519_COMPAT = 1,
+    OSSL_X25519_SCALAR_MODE_RAW_UNCLAMPED = 2
+} OSSL_X25519_SCALAR_MODE;
+
 #define KEYTYPE2NID(type)                               \
     ((type) == ECX_KEY_TYPE_X25519                      \
             ? EVP_PKEY_X25519                           \
@@ -70,6 +76,7 @@ struct ecx_key_st {
     unsigned char *privkey;
     size_t keylen;
     ECX_KEY_TYPE type;
+    OSSL_X25519_SCALAR_MODE x25519_scalar_mode;
     CRYPTO_REF_COUNT references;
 };
 
@@ -86,9 +93,9 @@ int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
     size_t outlen);
 
 int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
-    const uint8_t peer_public_value[32]);
+    const uint8_t peer_public_value[32], OSSL_X25519_SCALAR_MODE scalar_mode);
 void ossl_x25519_public_from_private(uint8_t out_public_value[32],
-    const uint8_t private_key[32]);
+    const uint8_t private_key[32], OSSL_X25519_SCALAR_MODE scalar_mode);
 
 int ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[32],
     const uint8_t private_key[32],

@@ -64,6 +64,13 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Added an advanced X25519 key parameter, `x25519-scalar-mode`, to control
+   private scalar preprocessing. The default remains RFC 7748 clamping; the
+   additional `legacy-ed25519-compat` and `raw-unclamped` modes are available
+   in the default provider for specialized interoperability workflows.
+
+   *John Claus*
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 
