@@ -1,0 +1,11 @@
+#
+# To run the demos when linked with a shared library (default) ensure
+# that libcrypto is on the library path. For example:
+#
+#    LD_LIBRARY_PATH=../.. ./info
+
+PROGRAMS{noinst} = fips-version
+
+INCLUDE[fips-version]=../../include
+SOURCE[fips-version]=fips-version.c
+DEPEND[fips-version]=../../libcrypto

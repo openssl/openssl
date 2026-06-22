@@ -42,6 +42,9 @@ tls-client-non-block.c:  A simple non-blocking SSL/TLS client
 http3:                 Demonstration of how to use OpenSSL's QUIC capabilities
                        for HTTP/3.
 
+info:
+fips-version.c         Demonstration of how to query the FIPS provider version
+
 kdf:
 hkdf.c                 Demonstration of HMAC based key derivation
 pbkdf2.c               Demonstration of PBKDF2 password based key derivation
