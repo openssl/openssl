@@ -51,12 +51,12 @@ guidelines:
     ```
 
  2. Similarly, if a non-trivial portion of a contribution was created
-    by an AI, you must declare which agent and model were used. This
-    is done by adding `Assisted-by: {agent}:{model}` below the commit
+    using an AI tool, you must declare which agent and model were used.
+    This is done by adding `Assisted-by: {agent}:{model}` below the commit
     message:
 
     ```
-        One-line summary of change with AI-created portions
+        One-line summary of change with AI-generated portions
 
         Assisted-by: Claude:claude-sonnet-4-6
     ```
