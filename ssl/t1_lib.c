@@ -2453,20 +2453,12 @@ err:
     return ret;
 }
 
-#define SIGLEN_BUF_INCREMENT 100
-
 char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
 {
-    size_t i, maxretlen = SIGLEN_BUF_INCREMENT;
+    size_t i;
     const SIGALG_LOOKUP *lu;
     EVP_PKEY *tmpkey = EVP_PKEY_new();
-    char *retval = OPENSSL_malloc(maxretlen);
-
-    if (retval == NULL)
-        return NULL;
-
-    /* ensure retval string is NUL terminated */
-    retval[0] = (char)0;
+    char *retval = NULL;
 
     for (i = 0, lu = sigalg_lookup_tbl;
         i < OSSL_NELEM(sigalg_lookup_tbl); lu++, i++) {
@@ -2503,20 +2495,19 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
             const char *sa = lu->name;
 
             if (sa != NULL) {
-                if (strlen(sa) + strlen(retval) + 1 >= maxretlen) {
-                    char *tmp;
+                char *new;
 
-                    maxretlen += SIGLEN_BUF_INCREMENT;
-                    tmp = OPENSSL_realloc(retval, maxretlen);
-                    if (tmp == NULL) {
-                        OPENSSL_free(retval);
-                        return NULL;
-                    }
-                    retval = tmp;
+                if (OPENSSL_asprintf(&new, "%s%s%s",
+                        retval == NULL ? "" : retval,
+                        retval == NULL ? "" : ":",
+                        sa)
+                    < 0) {
+                    OPENSSL_free(retval);
+                    EVP_PKEY_free(tmpkey);
+                    return NULL;
                 }
-                if (strlen(retval) > 0)
-                    OPENSSL_strlcat(retval, ":", maxretlen);
-                OPENSSL_strlcat(retval, sa, maxretlen);
+                OPENSSL_free(retval);
+                retval = new;
             } else {
                 /* lu->name must not be NULL */
                 ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -2525,6 +2516,8 @@ char *SSL_get1_builtin_sigalgs(OSSL_LIB_CTX *libctx)
     }
 
     EVP_PKEY_free(tmpkey);
+    if (retval == NULL)
+        retval = OPENSSL_strdup("");
     return retval;
 }
 
