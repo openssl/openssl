@@ -21,6 +21,7 @@
 #include "../ssl/ssl_local.h"
 #include "../ssl/quic/quic_channel_local.h"
 #include "internal/quic_error.h"
+#include "internal/quic_ssl.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static char *propq = NULL;
@@ -39,6 +40,9 @@ static BIO_ADDR *create_addr(struct in_addr *ina, short int port);
 static int bio_addr_bind(BIO *bio, BIO_ADDR *addr);
 static SSL *ql_create(SSL_CTX *ssl_ctx, BIO *bio);
 static SSL_CTX *create_server_ctx(void);
+static SSL_CTX *create_client_ctx(void);
+static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL **lssl, SSL **cssl);
 static int qc_init(SSL *qconn, BIO_ADDR *dst_addr);
 
 /* The ssltrace test assumes some options are switched on/off */
@@ -213,6 +217,92 @@ end:
 
     return ret;
 }
+
+#ifndef OPENSSL_NO_CACHED_FETCH
+static int test_ssl_read_key_update_mfail(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    QUIC_CHANNEL *sch = NULL;
+    int ret = 0, i;
+    const char *msg = "ping";
+    size_t msglen = strlen(msg);
+    size_t numbytes = 0;
+    unsigned char buf[64];
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "localhost")))
+        goto err;
+
+    /* Send ClientHello and server retry. */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    serverssl = SSL_accept_connection(qlistener, 0);
+    if (!TEST_ptr(serverssl)
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    if (!TEST_ptr(sch = ossl_quic_conn_get_channel(serverssl)))
+        goto err;
+
+    /* Open the default stream so the server has something to write back on. */
+    if (!TEST_true(SSL_write_ex(clientssl, msg, msglen, &numbytes))
+        || !TEST_size_t_eq(numbytes, msglen))
+        goto err;
+
+    /* Route the datagram to the server connection and let it consume it. */
+    SSL_handle_events(qlistener);
+    SSL_handle_events(serverssl);
+    if (!TEST_true(SSL_read_ex(serverssl, buf, sizeof(buf), &numbytes)))
+        goto err;
+
+    /*
+     * Force the server's TX side to rotate keys. Its next outgoing packet
+     * will carry the flipped Key Phase bit. When the client decrypts that
+     * packet, qrx_key_update_initiated -> rxku_detected -> ch_trigger_txku
+     * fires on the client.
+     */
+    if (!TEST_true(ossl_qtx_trigger_key_update(sch->qtx)))
+        goto err;
+
+    if (!TEST_true(SSL_write_ex(serverssl, msg, msglen, &numbytes))
+        || !TEST_size_t_eq(numbytes, msglen))
+        goto err;
+
+    /*
+     * Process the inbound packet (carrying the new Key Phase) under mfail.
+     * SSL_read_ex ticks the client, reads the datagram off its BIO and
+     * decrypts it, which is where the key update handling runs.
+     */
+    MFAIL_start();
+    ret = SSL_read_ex(clientssl, buf, sizeof(buf), &numbytes);
+    MFAIL_end();
+
+    ret = (ret > 0);
+
+err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return ret;
+}
+#endif
 
 /*
  * Test that sending FIN with no data to a client blocking in SSL_read_ex() will
@@ -3655,6 +3745,9 @@ int setup_tests(void)
         goto err;
 
     ADD_ALL_TESTS(test_quic_write_read, 3);
+#ifndef OPENSSL_NO_CACHED_FETCH
+    ADD_MFAIL_NO_CHECK_TEST(test_ssl_read_key_update_mfail);
+#endif
     ADD_TEST(test_fin_only_blocking);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_cipher_find);
