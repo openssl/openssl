@@ -111,8 +111,6 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
     nghttp3_nv nva[16];
     size_t num_nv = 0;
     struct stream_user_data *sdata;
-    size_t needed_size;
-    int pathsize;
 
     /* Build HTTP headers. */
     make_nv(&nva[num_nv++], ":method", "GET");
@@ -121,20 +119,15 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
     make_nv(&nva[num_nv++], ":path", path);
     make_nv(&nva[num_nv++], "user-agent", "OpenSSL-Demo/nghttp3");
 
-    needed_size = sizeof(struct stream_user_data);
-    pathsize = snprintf(NULL, 0, "%s/%s", dlpath, path);
-    if (pathsize < 0) {
-        fprintf(stderr, "Unable to format path string\n");
-        return 0;
-    }
-    needed_size += pathsize;
-
-    sdata = malloc(needed_size + 1);
+    sdata = OPENSSL_malloc(sizeof(*sdata));
     if (sdata == NULL)
         return 0;
-    sdata->outpath = (char *)(sdata + 1);
-    sprintf(sdata->outpath, "%s/%s", dlpath, path);
+    sdata->outpath = NULL;
     sdata->fp = NULL;
+    if (OPENSSL_asprintf(&sdata->outpath, "%s/%s", dlpath, path) < 0) {
+        OPENSSL_free(sdata);
+        return 0;
+    }
     fprintf(stderr, "Requesting %s\n", sdata->outpath);
     /* Submit request. */
     if (!OSSL_DEMO_H3_CONN_submit_request(conn, nva, num_nv, NULL, sdata)) {
@@ -154,7 +147,8 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
         fclose(sdata->fp);
         fprintf(stderr, "Closing local FILE pointer for %s\n", sdata->outpath);
     }
-    free(sdata);
+    OPENSSL_free(sdata->outpath);
+    OPENSSL_free(sdata);
     return 1;
 }
 
