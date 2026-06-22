@@ -646,7 +646,6 @@ char *CONF_get1_default_config_file(void)
 {
     const char *t;
     char *file, *sep = "";
-    size_t size;
 
     if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
         return OPENSSL_strdup(file);
@@ -667,12 +666,8 @@ char *CONF_get1_default_config_file(void)
 #ifndef OPENSSL_SYS_VMS
     sep = "/";
 #endif
-    size = strlen(t) + strlen(sep) + strlen(OPENSSL_CONF) + 1;
-    file = OPENSSL_malloc(size);
-
-    if (file == NULL)
+    if (OPENSSL_asprintf(&file, "%s%s%s", t, sep, OPENSSL_CONF) < 0)
         return NULL;
-    BIO_snprintf(file, size, "%s%s%s", t, sep, OPENSSL_CONF);
 
     return file;
 }
