@@ -626,7 +626,7 @@ int smime_main(int argc, char **argv)
             p7 = PKCS7_sign_ex(NULL, NULL, other, in, flags, libctx, app_get0_propq());
             if (p7 == NULL)
                 goto end;
-            if (flags & PKCS7_NOCERTS) {
+            if ((flags & PKCS7_NOCERTS) == 0) {
                 for (i = 0; i < sk_X509_num(other); i++) {
                     X509 *x = sk_X509_value(other, i);
                     PKCS7_add_certificate(p7, x);
