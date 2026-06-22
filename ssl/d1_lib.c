@@ -299,9 +299,8 @@ void dtls1_free(SSL *ssl)
 #ifndef OPENSSL_NO_DTLS
     ossl_dtls_rx_free(s->d1->rx);
 
-    if (s->d1 != NULL && s->d1->listener != NULL) {
+    if (s->d1 != NULL && s->d1->listener != NULL)
         SSL_free(s->d1->listener);
-    }
 #endif
 
     DTLS_RECORD_LAYER_free(&s->rlayer);
@@ -1308,6 +1307,57 @@ err:
 }
 
 /*
+ * dtls_listener_connection_free - free an SSL connection owned by the listener.
+ *
+ * This function is used to free SSL connections that are in the listener's
+ * pending_conns or incoming_connections queues. These connections are owned
+ * by the listener, NOT by the application.
+ *
+ * Connections in pending_conns and incoming_connections do NOT hold a reference
+ * to the listener, even though sc->d1->listener points to it. This is intentional:
+ * if these connections held a reference to the listener, the listener's reference
+ * count would never reach zero, and ossl_dtls_listener_free() would never be
+ * called to clean up the pending/incoming connections - creating a circular
+ * dependency.
+ *
+ * Only when a connection is returned to the application via SSL_accept_connection()
+ * does it take a reference on the listener. At that point, ownership transfers
+ * to the application, and the normal SSL_free() path is used.
+ *
+ * The assert on ssl->references == 1 ensures that nobody else has taken a
+ * reference to this connection while it was in the listener's queues. If
+ * this assert fires, something has gone wrong with ownership tracking.
+ */
+static void dtls_listener_connection_free(SSL *ssl)
+{
+    SSL_CONNECTION *sc;
+    int ref_count;
+
+    if (ssl == NULL)
+        return;
+
+    sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    /*
+     * Listener-owned connections should have exactly one reference (held by
+     * the listener's queue). If this is not true, ownership has been corrupted.
+     */
+    if (!CRYPTO_GET_REF(&ssl->references, &ref_count)
+        || !ossl_assert(ref_count == 1))
+        return;
+
+    if (sc != NULL && sc->d1 != NULL) {
+        /*
+         * Clear listener reference to prevent dtls1_free() from calling
+         * SSL_free() on the listener. The connection does not own the listener
+         * and SSL_free must not free the listener
+         */
+        sc->d1->listener = NULL;
+    }
+    SSL_free(ssl);
+}
+
+/*
  * dtls_listener_packet_handler - callback for handling incoming datagrams.
  *
  * This callback is invoked by the demux for each received datagram. It routes
@@ -1370,15 +1420,47 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
     if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
+        SSL *existing_ssl;
+        SSL_CONNECTION *existing_sc;
+
         ossl_crypto_mutex_lock(dl->mutex);
+
+        /*
+         * Re-check if another thread registered a connection while we were
+         * creating ours. This handles the race where multiple packets arrive
+         * simultaneously for the same new client.
+         */
+        existing_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
+        if (existing_ssl != NULL) {
+            /*
+             * Another thread already registered a connection for this peer.
+             * Use the existing one and free our newly created connection.
+             */
+
+            /* Validate existing connection while still holding the mutex */
+            existing_sc = SSL_CONNECTION_FROM_SSL_ONLY(existing_ssl);
+            if (existing_sc != NULL && existing_sc->d1 != NULL
+                && existing_sc->d1->rx != NULL) {
+                sc = existing_sc;
+                ossl_crypto_mutex_unlock(dl->mutex);
+                dtls_listener_connection_free(conn_ssl);
+                goto inject;
+            }
+
+            /* Existing connection is invalid, release and fall through to release packet */
+            ossl_crypto_mutex_unlock(dl->mutex);
+            dtls_listener_connection_free(conn_ssl);
+            goto release;
+        }
+
         if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
             ossl_crypto_mutex_unlock(dl->mutex);
-            SSL_free(conn_ssl);
+            dtls_listener_connection_free(conn_ssl);
             goto release;
         }
         ossl_crypto_mutex_unlock(dl->mutex);
     } else {
-        SSL_free(conn_ssl);
+        dtls_listener_connection_free(conn_ssl);
         goto release;
     }
 
@@ -1790,57 +1872,6 @@ err:
     else
         OPENSSL_free(dl);
     return NULL;
-}
-
-/*
- * dtls_listener_connection_free - free an SSL connection owned by the listener.
- *
- * This function is used to free SSL connections that are in the listener's
- * pending_conns or incoming_connections queues. These connections are owned
- * by the listener, NOT by the application.
- *
- * Connections in pending_conns and incoming_connections do NOT hold a reference
- * to the listener, even though sc->d1->listener points to it. This is intentional:
- * if these connections held a reference to the listener, the listener's reference
- * count would never reach zero, and ossl_dtls_listener_free() would never be
- * called to clean up the pending/incoming connections - creating a circular
- * dependency.
- *
- * Only when a connection is returned to the application via SSL_accept_connection()
- * does it take a reference on the listener. At that point, ownership transfers
- * to the application, and the normal SSL_free() path is used.
- *
- * The assert on ssl->references == 1 ensures that nobody else has taken a
- * reference to this connection while it was in the listener's queues. If
- * this assert fires, something has gone wrong with ownership tracking.
- */
-static void dtls_listener_connection_free(SSL *ssl)
-{
-    SSL_CONNECTION *sc;
-    int ref_count;
-
-    if (ssl == NULL)
-        return;
-
-    sc = SSL_CONNECTION_FROM_SSL(ssl);
-
-    /*
-     * Listener-owned connections should have exactly one reference (held by
-     * the listener's queue). If this is not true, ownership has been corrupted.
-     */
-    if (!CRYPTO_GET_REF(&ssl->references, &ref_count)
-        || !ossl_assert(ref_count == 1))
-        return;
-
-    if (sc != NULL && sc->d1 != NULL) {
-        /*
-         * Clear listener reference to prevent dtls1_free() from calling
-         * SSL_free() on the listener. The connection does not own the listener
-         * and SSL_free must not free the listener
-         */
-        sc->d1->listener = NULL;
-    }
-    SSL_free(ssl);
 }
 
 /*
