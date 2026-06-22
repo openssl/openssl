@@ -11,14 +11,15 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use File::Compare qw(compare);
+use OpenSSL::Test qw/:DEFAULT srctop_file data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 16;
+plan tests => 17;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -101,6 +102,31 @@ SKIP: {
                      -args => ["pkey", "-pubin", "-pubout"] );
     };
 }
+
+subtest 'EC point conversion form (-conv_form)' => sub {
+    plan tests => 6;
+
+    my $key = srctop_file("test", "testec-p256.pem");
+
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout',
+                '-outform', 'DER', '-out', 'ec-conv-unc.der'])),
+       "writing public key with default (uncompressed) conversion form");
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout',
+                '-conv_form', 'compressed',
+                '-outform', 'DER', '-out', 'ec-conv-comp.der'])),
+       "writing public key with compressed conversion form");
+    ok((-s 'ec-conv-comp.der') < (-s 'ec-conv-unc.der'),
+       "compressed point encoding is smaller than uncompressed");
+    # The encodings are deterministic for a fixed key, so compare them
+    # against the checked-in reference files.
+    is(compare('ec-conv-unc.der', data_file('ec-conv-unc.der')), 0,
+       "uncompressed encoding matches the reference file");
+    is(compare('ec-conv-comp.der', data_file('ec-conv-comp.der')), 0,
+       "compressed encoding matches the reference file");
+    ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
+                 '-conv_form', 'bogus'])),
+       "an invalid conversion form is rejected");
+};
 
 subtest 'Check loading of fips and non-fips keys' => sub {
     plan skip_all => "FIPS is disabled"
