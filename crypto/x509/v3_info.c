@@ -63,7 +63,6 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
 {
     ACCESS_DESCRIPTION *desc;
     int i;
-    size_t nlen;
     char objtmp[80], *ntmp;
     CONF_VALUE *vtmp;
     STACK_OF(CONF_VALUE) *tret = ret;
@@ -80,11 +79,8 @@ static STACK_OF(CONF_VALUE) *i2v_AUTHORITY_INFO_ACCESS(
         tret = tmp;
         vtmp = sk_CONF_VALUE_value(tret, i);
         i2t_ASN1_OBJECT(objtmp, sizeof(objtmp), desc->method);
-        nlen = strlen(objtmp) + 3 + strlen(vtmp->name) + 1;
-        ntmp = OPENSSL_malloc(nlen);
-        if (ntmp == NULL)
+        if (OPENSSL_asprintf(&ntmp, "%s - %s", objtmp, vtmp->name) < 0)
             goto err;
-        BIO_snprintf(ntmp, nlen, "%s - %s", objtmp, vtmp->name);
         OPENSSL_free(vtmp->name);
         vtmp->name = ntmp;
     }
