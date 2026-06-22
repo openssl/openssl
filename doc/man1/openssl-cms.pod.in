@@ -64,8 +64,8 @@ Keys and password options:
 
 Encryption options:
 
-[B<-originator> I<file>]
-[B<-recip> I<file>]
+[B<-originator> I<filename>|I<uri>]
+[B<-recip> I<filename>|I<uri>]
 [I<recipient-cert> ...]
 [B<-I<cipher>>]
 [B<-kekcipher> I<cipher>]
@@ -81,8 +81,8 @@ Encryption options:
 Signing options:
 
 [B<-md> I<digest>]
-[B<-signer> I<file>]
-[B<-certfile> I<file>]
+[B<-signer> I<filename>|I<uri>]
+[B<-certfile> I<filename>|I<uri>]
 [B<-cades>]
 [B<-nodetach>]
 [B<-nocerts>]
@@ -359,8 +359,8 @@ B<KEKRecipientInfo> structures.
 
 The private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
-private key must be included in the certificate file specified with
-the B<-recip> or B<-signer> file. When signing this option can be used
+private key must be included in the certificate specified with
+the B<-recip> or B<-signer> option. When signing this option can be used
 multiple times to specify successive keys.
 
 =item B<-passin> I<arg>
@@ -390,13 +390,13 @@ See L<openssl-format-options(1)> for details.
 
 =over 4
 
-=item B<-originator> I<file>
+=item B<-originator> I<filename>|I<uri>
 
 A certificate of the originator of the encrypted message. Necessary for
 decryption when Key Agreement is in use for a shared key. Currently, not
 allowed for encryption.
 
-=item B<-recip> I<file>
+=item B<-recip> I<filename>|I<uri>
 
 When decrypting a message this specifies the certificate of the recipient.
 The certificate must match one of the recipients of the message.
@@ -411,7 +411,7 @@ option.
 =item I<recipient-cert> ...
 
 This is an alternative to using the B<-recip> option when encrypting a message.
-One or more certificate filenames may be given.
+One or more certificates may be given.
 
 =item B<-I<cipher>>
 
@@ -480,20 +480,20 @@ and a digest algorithm required by the signing scheme will be used. This is
 the case for EdDSA (RFC 8419). For SLH-DSA (RFC 9814) and ML-DSA (RFC 9882),
 the scheme-suggested digest algorithm will only be used if none is given.
 
-=item B<-signer> I<file>
+=item B<-signer> I<filename>|I<uri>
 
 A signer certificate.  When signing or resigning a message, this option can be
 used multiple times if more than one signer is required.
 
-=item B<-certfile> I<file>
+=item B<-certfile> I<filename>|I<uri>
 
 Provide extra certificates.
 When signing, these will be included with the message and can serve
 both as candidate untrusted CA certificates for chain building in verification
 and as fallback signer certificates.
 When verifying, the provided certificates will be used for chain building
-and take precedence over the
-signer certificates in the message as a source of candidate signers.
+and take precedence over the signer certificates in the message
+as a source of candidate signers.
 With B<-nointern> these will be the only signer certificates considered.
 
 Note that a message can have multiple signers.
@@ -519,8 +519,9 @@ the MIME type multipart/signed is used.
 =item B<-nocerts>
 
 When signing a message, the signer certificates are normally included,
-but this option disables their inclusion. This will reduce the size of the
-signed message but the verifier must then have a copy of the signer certificates
+but this option disables their inclusion.
+This will reduce the size of the signed message,
+but the verifier must then have a copy of those certificates
 available locally (passed using the B<-certfile> option for example).
 
 =item B<-noattr>
@@ -592,7 +593,7 @@ Do not verify the signers certificate of a signed message.
 
 =item B<-nointern>
 
-When verifying a message, normally certificates (if any) included in
+Normally, when verifying a message, the certificates (if any) included in
 the message are searched for the signer certificates. With this option,
 only the certificates given with the B<-certfile> option are used.
 However, the certificates included in the message are still used

@@ -32,8 +32,8 @@ CMS_SignerInfo_verify_content, CMS_SignerInfo_verify_ex
 CMS_verify() is very similar to L<PKCS7_verify(3)>. It verifies a
 B<CMS SignedData> structure contained in a structure of type B<CMS_ContentInfo>.
 I<cms> points to the B<CMS_ContentInfo> structure to verify.
-The optional I<certs> parameter can provide a list of certificates,
-in which to search first for signer's certificates.
+The optional I<certs> parameter can provide a list of certificates
+that are used for searching for signer's certificates first.
 It is also used
 as a source of untrusted intermediate CA certificates for chain building.
 I<cms> may contain extra untrusted CA certificates that may be used for
@@ -57,7 +57,7 @@ Also the list of CRLs must not contain duplicates.
 The optional parameters library context I<libctx> and property query I<propq>
 are used when retrieving algorithms from providers.
 
-CMS_get0_signers() retrieves the signing certificate(s) from I<cms>; it may only
+CMS_get0_signers() retrieves the signer certificate(s) from I<cms>; it may only
 be called after a successful CMS_verify() or CMS_SignedData_verify() operation.
 
 CMS_SignerInfo_verify() verifies the signed attributes attached to the given
@@ -83,12 +83,14 @@ Initially some sanity checks are performed on I<cms>. The type of I<cms> must
 be SignedData. There must be at least one signature on the data and if
 the content is detached I<detached_data> cannot be NULL.
 
-An attempt is made to locate all the signing certificate(s), first looking in
-the I<certs> parameter (if it is not NULL). Then they are looked up in any
-certificates contained in the I<cms> structure unless B<CMS_NOINTERN> is set.
-If any signing certificate cannot be located the operation fails.
+An attempt is made to locate all the signer certificate(s).
+First, they are searched among the certificates provided
+in the I<certs> parameter (if it is not NULL).
+Then they are looked up among the certificates contained
+in the I<cms> structure unless B<CMS_NOINTERN> is set.
+If any of the signer certificates cannot be located, the operation fails.
 
-Each signing certificate is chain verified using by default the I<smime_sign> purpose and
+Each signer certificate is chain verified using by default the I<smime_sign> purpose and
 using I<store> as the trusted certificate store if supplied.
 The default purpose may be overridden using L<X509_STORE_set_purpose(3)>.
 Any internal certificates in the message, which may have been added using
@@ -107,8 +109,8 @@ Any of the following flags (ored together) can be passed in the I<flags>
 parameter to change the default verify behaviour.
 
 If B<CMS_NOINTERN> is set the certificates in the message itself are not
-searched when locating the signing certificate(s).
-This means that all the signing certificates must be in the I<certs> parameter.
+searched when locating the signer certificate(s).
+This means that all the signer certificates must be in the I<certs> parameter.
 
 If B<CMS_NOCRL> is set and CRL checking is enabled in I<store> then any
 CRLs in the message itself and provided via the I<crls> parameter are ignored.
@@ -117,7 +119,7 @@ If the B<CMS_TEXT> flag is set MIME headers for type C<text/plain> are deleted
 from the content. If the content is not of type C<text/plain> then an error is
 returned.
 
-If B<CMS_NO_SIGNER_CERT_VERIFY> is set the signing certificates are not
+If B<CMS_NO_SIGNER_CERT_VERIFY> is set the signer certificates are not
 chain verified, unless B<CMS_CADES> flag is also set.
 
 If B<CMS_NO_ATTR_VERIFY> is set the signed attributes signature is not
@@ -167,7 +169,7 @@ The error can be obtained from L<ERR_get_error(3)>.
 
 =head1 BUGS
 
-The trusted certificate store is not searched for the signing certificate.
+The trusted certificate store is not searched for the signer certificate.
 This is primarily due to the inadequacies of the current B<X509_STORE>
 functionality.
 

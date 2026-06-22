@@ -19,8 +19,8 @@ B<openssl> B<smime>
 [B<-crlfeol>]
 [B<-I<cipher>>]
 [B<-in> I<file>]
-[B<-certfile> I<file>]
-[B<-signer> I<file>]
+[B<-certfile> I<filename>|I<uri>]
+[B<-signer> I<filename>|I<uri>]
 [B<-nointern>]
 [B<-noverify>]
 [B<-nochain>]
@@ -29,7 +29,7 @@ B<openssl> B<smime>
 [B<-noattr>]
 [B<-nodetach>]
 [B<-nosmimecap>]
-[B<-recip> I< file>]
+[B<-recip> I<filename>|I<uri>]
 [B<-inform> B<DER>|B<PEM>|B<SMIME>]
 [B<-outform> B<DER>|B<PEM>|B<SMIME>]
 [B<-keyform> B<DER>|B<PEM>|B<P12>]
@@ -178,7 +178,7 @@ If not specified, AES-256-CBC is used as the default. Only used with B<-encrypt>
 
 =item B<-nointern>
 
-When verifying a message, normally certificates (if any) included in
+Normally, when verifying a message, the certificates (if any) included in
 the message are searched for the signer certificates. With this option,
 only the certificates given with the B<-certfile> option are used.
 However, the certificates included in the message are still used
@@ -199,10 +199,10 @@ Don't try to verify the signatures on the message.
 
 =item B<-nocerts>
 
-When signing a message, the signer certificates and chain certificates are
+When signing a message, the signer certificates and extra certificates are
 normally included, but this option disables their inclusion.
-This will reduce the size of
-the signed message, but the verifier must have a copy of those certificates
+This will reduce the size of the signed message,
+but the verifier must have a copy of those certificates
 available locally (passed using the B<-certfile> option for example).
 
 =item B<-noattr>
@@ -234,13 +234,16 @@ is useful when handling binary data which may not be in MIME format.
 Normally the output file uses a single B<LF> as end of line. When this
 option is present B<CRLF> is used instead.
 
-=item B<-certfile> I<file>
+=item B<-certfile> I<filename>|I<uri>
 
 Provide extra certificates.
 When signing, these will be included (unless the B<-nocerts> option is given)
-with the message to help chain building and to provide fallback signer certificates.
-When verifying, the provided certificates take precedence over the
-signer certificates in the message as a source of candidate signers.
+with the message and can serve
+both as candidate untrusted CA certificates for chain building in verification
+and as fallback signer certificates.
+When verifying, the provided certificates will be used for chain building
+and take precedence over the signer certificates in the message
+as a source of candidate signers.
 With B<-nointern> these will be the only signer certificates considered.
 
 Note that a message can have multiple signers.
@@ -249,14 +252,14 @@ and so all the signer certificates need to be available.
 
 The input can be in PEM, DER, or PKCS#12 format.
 
-=item B<-signer> I<file>
+=item B<-signer> I<filename>|I<uri>
 
 A signer certificate when signing or resigning a message, this option can be
 used multiple times if more than one signer is required. If a message is being
-verified then the signers certificates will be written to this file if the
+verified, then the signers certificates will be written to this file if the
 verification was successful.
 
-=item B<-recip> I<file>
+=item B<-recip> I<filename>|I<uri>
 
 The recipients certificate when decrypting a message. This certificate
 must match one of the recipients of the message or an error occurs.
@@ -266,7 +269,7 @@ must match one of the recipients of the message or an error occurs.
 The private key to use when signing or decrypting. This must match the
 corresponding certificate. If this option is not specified then the
 private key must be included in the certificate file specified with
-the B<-recip> or B<-signer> file. When signing this option can be used
+the B<-recip> or B<-signer> option. When signing this option can be used
 multiple times to specify successive keys.
 
 =item B<-passin> I<arg>

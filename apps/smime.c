@@ -117,7 +117,7 @@ const OPTIONS smime_options[] = {
     { "nodetach", OPT_NODETACH, '-', "Use opaque signing" },
     { "noattr", OPT_NOATTR, '-', "Don't include any signed attributes" },
     { "binary", OPT_BINARY, '-', "Don't translate message to text" },
-    { "signer", OPT_SIGNER, 's', "Signer certificate file" },
+    { "signer", OPT_SIGNER, 's', "Signer certificate" },
     { "content", OPT_CONTENT, '<',
         "Supply or override content for detached signature" },
     { "nocerts", OPT_NOCERTS, '-',
@@ -127,7 +127,7 @@ const OPTIONS smime_options[] = {
     { "nosigs", OPT_NOSIGS, '-', "Don't verify message signature" },
     { "noverify", OPT_NOVERIFY, '-', "Don't verify signers certificate" },
 
-    { "recip", OPT_RECIP, '<', "Recipient certificate file for decryption" },
+    { "recip", OPT_RECIP, '<', "Recipient certificate for decryption" },
 
     OPT_SECTION("Email"),
     { "to", OPT_TO, 's', "To address" },
