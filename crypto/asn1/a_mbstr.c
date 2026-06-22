@@ -51,8 +51,15 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     unsigned char *p;
     int nchar;
     int (*cpyfunc)(unsigned long, void *) = NULL;
-    if (len == -1)
-        len = strlen((const char *)in);
+    if (len == -1) {
+        size_t len_s = strlen((const char *)in);
+
+        if (len_s >= INT_MAX) {
+            ERR_raise(ERR_LIB_ASN1, ASN1_R_STRING_TOO_LONG);
+            return -1;
+        }
+        len = (int)len_s;
+    }
     if (!mask)
         mask = DIRSTRING_TYPE;
     if (len < 0) {
