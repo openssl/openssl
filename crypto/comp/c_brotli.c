@@ -402,8 +402,8 @@ typedef struct {
 
 static int bio_brotli_new(BIO *bi);
 static int bio_brotli_free(BIO *bi);
-static int bio_brotli_read(BIO *b, char *out, int outl);
-static int bio_brotli_write(BIO *b, const char *in, int inl);
+static int bio_brotli_read(BIO *b, char *out, size_t outl, size_t *readbytes);
+static int bio_brotli_write(BIO *b, const char *in, size_t inl, size_t *written);
 static long bio_brotli_ctrl(BIO *b, int cmd, long num, void *ptr);
 static long bio_brotli_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 

@@ -461,8 +461,8 @@ typedef struct {
 
 static int bio_zstd_new(BIO *bi);
 static int bio_zstd_free(BIO *bi);
-static int bio_zstd_read(BIO *b, char *out, int outl);
-static int bio_zstd_write(BIO *b, const char *in, int inl);
+static int bio_zstd_read(BIO *b, char *out, size_t outl, size_t *readbytes);
+static int bio_zstd_write(BIO *b, const char *in, size_t inl, size_t *written);
 static long bio_zstd_ctrl(BIO *b, int cmd, long num, void *ptr);
 static long bio_zstd_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp);
 

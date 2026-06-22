@@ -81,7 +81,7 @@ void CRYPTO_THREAD_clean_local(void);
 #endif
 
 #if defined(__GNUC__) && defined(__ATOMIC_ACQUIRE) && !defined(BROKEN_CLANG_ATOMICS) \
-    && !defined(USE_ATOMIC_FALLBACKS)
+    && !defined(OSSL_USE_ATOMIC_FALLBACKS)
 #define OSSL_USE_GCC_ATOMICS
 #elif defined(__sun) && (defined(__SunOS_5_10) || defined(__SunOS_5_11))
 #define OSSL_USE_SOLARIS_ATOMICS

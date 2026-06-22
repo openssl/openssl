@@ -194,7 +194,6 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
     const ASN1_TEMPLATE *tt, *errtt = NULL;
     const ASN1_EXTERN_FUNCS *ef;
     const ASN1_AUX *aux;
-    ASN1_aux_cb *asn1_cb;
     const unsigned char *p = NULL, *q;
     unsigned char oclass;
     char seq_eoc, seq_nolen, cst, isopt;
@@ -213,10 +212,6 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         return 0;
     }
     aux = it->funcs;
-    if (aux && aux->asn1_cb)
-        asn1_cb = aux->asn1_cb;
-    else
-        asn1_cb = 0;
 
     if (++depth > ASN1_MAX_CONSTRUCTED_NEST) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_NESTED_TOO_DEEP);
@@ -299,7 +294,7 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             goto err;
         }
 
-        if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
+        if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_D2I_PRE, (const ASN1_VALUE **)pval, it, NULL))
             goto auxerr;
         if (*pval) {
             /* Free up and zero CHOICE value if initialised */
@@ -353,7 +348,7 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 
         ossl_asn1_set_choice_selector(pval, i, it);
 
-        if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
+        if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_D2I_POST, (const ASN1_VALUE **)pval, it, NULL))
             goto auxerr;
         *in = p;
         return 1;
@@ -394,7 +389,7 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
             goto err;
         }
 
-        if (asn1_cb && !asn1_cb(ASN1_OP_D2I_PRE, pval, it, NULL))
+        if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_D2I_PRE, (const ASN1_VALUE **)pval, it, NULL))
             goto auxerr;
 
         /* Free up and zero any ADB found */
@@ -495,7 +490,7 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
         /* Save encoding */
         if (!ossl_asn1_enc_save(pval, *in, (long)(p - *in), it))
             goto auxerr;
-        if (asn1_cb && !asn1_cb(ASN1_OP_D2I_POST, pval, it, NULL))
+        if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_D2I_POST, (const ASN1_VALUE **)pval, it, NULL))
             goto auxerr;
         *in = p;
         return 1;
