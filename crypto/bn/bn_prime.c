@@ -412,8 +412,14 @@ int ossl_bn_miller_rabin_is_prime(const BIGNUM *w, int iterations, BN_CTX *ctx,
             }
         }
         /* (Step 4.5) z = b^m mod w */
-        if (!BN_mod_exp_mont(z, b, m, w, ctx, mont))
-            goto err;
+        {
+            BIGNUM local_w;
+            BN_set_flags(b, BN_FLG_CONSTTIME);
+            BN_set_flags(m, BN_FLG_CONSTTIME);
+            BN_with_flags(&local_w, w, BN_FLG_CONSTTIME);
+            if (!BN_mod_exp_mont(z, b, m, &local_w, ctx, mont))
+                goto err;
+        }
         /* (Step 4.6) if (z = 1 or z = w-1) */
         if (BN_is_one(z) || BN_cmp(z, w1) == 0)
             goto outer_loop;
