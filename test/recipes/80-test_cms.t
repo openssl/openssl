@@ -121,6 +121,16 @@ my @smime_pkcs7_tests = (
       \&final_compare
     ],
 
+    [ "signed content DER format, two RSA signers with explicit -inkey",
+      [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
+        "-signer", catfile($smdir, "smrsa3-cert.pem"),
+        "-inkey", catfile($smdir, "smrsa3-key.pem"),
+        "-signer", $smrsa1, "-out", "{output}.cms" ],
+      [ "{cmd2}", @prov, "-verify", "-in", "{output}.cms", "-inform", "DER",
+        "-CAfile", $smroot, "-out", "{output}.txt" ],
+      \&final_compare
+    ],
+
     [ "signed content DER format, DSA key",
       [ "{cmd1}", @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
         "-signer", catfile($smdir, "smdsa1.pem"), "-out", "{output}.cms" ],
