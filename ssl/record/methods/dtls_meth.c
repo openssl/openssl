@@ -287,7 +287,7 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
     pitem *item;
 
     /* Limit the size of the queue to prevent DOS attacks */
-    if (pqueue_size(queue) >= 100)
+    if (pqueue_size(queue) >= 16)
         return 0;
 
     rdata = OPENSSL_malloc(sizeof(*rdata));
