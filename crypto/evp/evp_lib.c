@@ -165,6 +165,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
      */
     if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_CUSTOM_ASN1) == 0) {
         switch (EVP_CIPHER_get_mode(cipher)) {
+        case EVP_CIPH_STREAM_CIPHER:
         case EVP_CIPH_WRAP_MODE:
             ret = 1;
             break;
@@ -180,7 +181,7 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             break;
 
         default:
-            ret = EVP_CIPHER_get_asn1_iv(c, type) >= 0 ? 1 : -1;
+            ret = EVP_CIPHER_get_asn1_iv(c, type);
         }
     } else if (cipher->prov != NULL) {
         /* We cheat, there's no need for an object ID for this use */
