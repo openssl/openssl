@@ -7636,6 +7636,30 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+static int test_chacha20_poly1305_late_aad(void)
+{
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *c = NULL;
+    unsigned char key[32] = { 0 };
+    unsigned char iv[12] = { 0 };
+    unsigned char aad[4] = "aad";
+    unsigned char msg[8] = "message";
+    unsigned char out[32];
+    int len, test;
+
+    test = TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        && TEST_ptr(c = EVP_CIPHER_fetch(testctx, "ChaCha20-Poly1305", testpropq))
+        && TEST_true(EVP_EncryptInit_ex2(ctx, c, key, iv, NULL))
+        && TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)))
+        && TEST_true(EVP_EncryptUpdate(ctx, out, &len, msg, sizeof(msg)))
+        && TEST_false(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)));
+
+    EVP_CIPHER_free(c);
+    EVP_CIPHER_CTX_free(ctx);
+    return test;
+}
+#endif
 /*
  * AES-SIV reuse-without-rekey:
  *   msg1: legit non-empty CT, tag verifies, final_ret=0
@@ -8870,6 +8894,7 @@ int setup_tests(void)
 #endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
+    ADD_TEST(test_chacha20_poly1305_late_aad);
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_DH_priv_pub);
