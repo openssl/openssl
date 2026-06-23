@@ -453,18 +453,14 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         /*
          * Ok, we now need to push on a buffering BIO ...but not with
-         * SCTP. For DTLSv1.3 we also skip this for post-handshake messages
-         * (e.g. NewSessionTicket, KeyUpdate) since we are not in the initial
-         * handshake and re-initialising the write buffer is not appropriate.
+         * SCTP
          */
 #ifndef OPENSSL_NO_SCTP
         if (!SSL_CONNECTION_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
 #endif
-            if (!SSL_CONNECTION_IS_DTLS13(s) && st->hand_state != TLS_ST_OK) {
-                if (!ssl_init_wbio_buffer(s)) {
-                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
-                    goto end;
-                }
+            if (!ssl_init_wbio_buffer(s)) {
+                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
+                goto end;
             }
 
         if ((SSL_in_before(ssl))
@@ -632,6 +628,10 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
                 if (SSL_CONNECTION_IS_DTLS13(s)
                     && st->hand_state == TLS_ST_OK
                     && s->statem.state != MSG_FLOW_ERROR) {
+                    if (!ssl_free_wbio_buffer(s)) {
+                        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                        return SUB_STATE_ERROR;
+                    }
                     ossl_statem_set_in_init(s, 0);
                     return SUB_STATE_END_HANDSHAKE;
                 }
