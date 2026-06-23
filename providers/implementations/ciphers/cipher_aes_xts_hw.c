@@ -15,25 +15,27 @@
 
 #include "cipher_aes_xts.h"
 
-#define XTS_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,           \
-    fn_block_enc, fn_block_dec,                                  \
-    fn_stream_enc, fn_stream_dec)                                \
-    {                                                            \
-        size_t bytes = keylen / 2;                               \
-        size_t bits = bytes * 8;                                 \
-                                                                 \
-        if (ctx->enc) {                                          \
-            fn_set_enc_key(key, (int)bits, &xctx->ks1.ks);       \
-            xctx->xts.block1 = (block128_f)fn_block_enc;         \
-        } else {                                                 \
-            fn_set_dec_key(key, (int)bits, &xctx->ks1.ks);       \
-            xctx->xts.block1 = (block128_f)fn_block_dec;         \
-        }                                                        \
-        fn_set_enc_key(key + bytes, (int)bits, &xctx->ks2.ks);   \
-        xctx->xts.block2 = (block128_f)fn_block_enc;             \
-        xctx->xts.key1 = &xctx->ks1;                             \
-        xctx->xts.key2 = &xctx->ks2;                             \
-        xctx->stream = ctx->enc ? fn_stream_enc : fn_stream_dec; \
+#define XTS_SET_KEY_FN(fn_set_enc_key, fn_set_dec_key,         \
+    fn_block_enc, fn_block_dec,                                \
+    fn_stream_enc, fn_stream_dec)                              \
+    {                                                          \
+        size_t bytes = keylen / 2;                             \
+        size_t bits = bytes * 8;                               \
+                                                               \
+        if (ctx->enc) {                                        \
+            fn_set_enc_key(key, (int)bits, &xctx->ks1.ks);     \
+            xctx->xts.block1 = (block128_f)fn_block_enc;       \
+        } else {                                               \
+            fn_set_dec_key(key, (int)bits, &xctx->ks1.ks);     \
+            xctx->xts.block1 = (block128_f)fn_block_dec;       \
+        }                                                      \
+        fn_set_enc_key(key + bytes, (int)bits, &xctx->ks2.ks); \
+        xctx->xts.block2 = (block128_f)fn_block_enc;           \
+        xctx->xts.key1 = &xctx->ks1;                           \
+        xctx->xts.key2 = &xctx->ks2;                           \
+        xctx->stream = ctx->enc                                \
+            ? (OSSL_xts_stream_fn)(fn_stream_enc)              \
+            : (OSSL_xts_stream_fn)(fn_stream_dec);             \
     }
 
 static int cipher_hw_aes_xts_generic_initkey(PROV_CIPHER_CTX *ctx,
