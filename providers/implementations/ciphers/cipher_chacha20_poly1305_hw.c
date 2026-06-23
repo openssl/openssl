@@ -301,6 +301,8 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
 
     if (in != NULL) { /* aad or text */
         if (out == NULL) { /* aad */
+            if (ctx->len.text != 0)
+                goto err;
             Poly1305_Update(poly, in, inl);
             ctx->len.aad += inl;
             ctx->aad = 1;
