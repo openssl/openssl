@@ -285,6 +285,9 @@ BN_BLINDING *BN_BLINDING_create_param(BN_BLINDING *b,
         }
     } while (1);
 
+    BN_set_flags(ret->A, BN_FLG_CONSTTIME);
+    BN_set_flags(ret->e, BN_FLG_CONSTTIME);
+    BN_set_flags(ret->mod, BN_FLG_CONSTTIME);
     if (ret->bn_mod_exp != NULL && ret->m_ctx != NULL) {
         if (!ret->bn_mod_exp(ret->A, ret->A, ret->e, ret->mod, ctx, ret->m_ctx))
             goto err;
