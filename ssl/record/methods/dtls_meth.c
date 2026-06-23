@@ -326,44 +326,6 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
     return 1;
 }
 
-/* copy buffered record into OSSL_RECORD_LAYER structure */
-static int dtls_copy_rlayer_record(OSSL_RECORD_LAYER *rl, pitem *item)
-{
-    DTLS_RLAYER_RECORD_DATA *rdata;
-
-    rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
-
-    ossl_tls_buffer_release(&rl->rbuf);
-
-    rl->packet = rdata->packet;
-    rl->packet_length = rdata->packet_length;
-    memcpy(&rl->rbuf, &(rdata->rbuf), sizeof(TLS_BUFFER));
-    memcpy(&rl->rrec[0], &(rdata->rrec), sizeof(TLS_RL_RECORD));
-
-    /* Set proper sequence number for mac calculation */
-    memcpy(&(rl->sequence[2]), &(rdata->packet[5]), 6);
-
-    return 1;
-}
-
-static int dtls_retrieve_rlayer_buffered_record(OSSL_RECORD_LAYER *rl,
-    struct pqueue_st *queue)
-{
-    pitem *item;
-
-    item = pqueue_pop(queue);
-    if (item) {
-        dtls_copy_rlayer_record(rl, item);
-
-        OPENSSL_free(item->data);
-        pitem_free(item);
-
-        return 1;
-    }
-
-    return 0;
-}
-
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -397,12 +359,6 @@ int dtls_get_more_records(OSSL_RECORD_LAYER *rl)
     }
 
 again:
-    /* if we're renegotiating, then there may be buffered records */
-    if (dtls_retrieve_rlayer_buffered_record(rl, rl->processed_rcds)) {
-        rl->num_recs = 1;
-        return OSSL_RECORD_RETURN_SUCCESS;
-    }
-
     /* get something from the wire */
 
     /* check if we have the header */
@@ -611,16 +567,6 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         pqueue_free(rl->unprocessed_rcds);
     }
 
-    if (rl->processed_rcds != NULL) {
-        while ((item = pqueue_pop(rl->processed_rcds)) != NULL) {
-            rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
-            OPENSSL_free(rdata->rbuf.buf);
-            OPENSSL_free(item->data);
-            pitem_free(item);
-        }
-        pqueue_free(rl->processed_rcds);
-    }
-
     return tls_free(rl) && ret;
 }
 
@@ -650,10 +596,8 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         return ret;
 
     (*retrl)->unprocessed_rcds = pqueue_new();
-    (*retrl)->processed_rcds = pqueue_new();
 
-    if ((*retrl)->unprocessed_rcds == NULL
-        || (*retrl)->processed_rcds == NULL) {
+    if ((*retrl)->unprocessed_rcds == NULL) {
         dtls_free(*retrl);
         *retrl = NULL;
         ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
