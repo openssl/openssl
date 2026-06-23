@@ -3648,7 +3648,7 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
     start = ASN1_STRING_get0_data(pKX->kxBlob->value.sequence);
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
-            (int)inlen)
+            inlen)
         <= 0) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_DECRYPTION_FAILED);
         goto err;
