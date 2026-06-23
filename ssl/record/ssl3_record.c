@@ -1683,8 +1683,11 @@ int dtls1_process_record(SSL *s, DTLS1_BITMAP *bitmap)
      *                        after use :-).
      */
 
-    /* we have pulled in a full packet so zero things */
-    RECORD_LAYER_reset_packet_length(&s->rlayer);
+    /*
+     * Leave s->rlayer.packet_length alone: ssl3_read_n() starts each new record
+     * by resetting it, and it must still describe this record's on-wire bytes
+     * for dtls1_buffer_record() should this record end up being buffered.
+     */
 
     /* Mark receipt of record. */
     dtls1_record_bitmap_update(s, bitmap);

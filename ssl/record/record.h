@@ -85,7 +85,6 @@ typedef struct record_pqueue_st {
 typedef struct dtls1_record_data_st {
     unsigned char *packet;
     size_t packet_length;
-    SSL3_BUFFER rbuf;
     SSL3_RECORD rrec;
 #ifndef OPENSSL_NO_SCTP
     struct bio_dgram_sctp_rcvinfo recordinfo;
