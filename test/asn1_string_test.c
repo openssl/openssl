@@ -428,7 +428,7 @@ asn1_string_new_not_owned_test(void)
     if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
         goto err;
 
-    if (!TEST_ptr(tmpstring = strdup("puppet")))
+    if (!TEST_ptr(tmpstring = OPENSSL_strdup("puppet")))
         goto err;
 
     ASN1_STRING_set0(tmp, tmpstring, 4);
@@ -450,8 +450,8 @@ asn1_string_new_not_owned_test(void)
     if (!TEST_mem_eq(tmpstring, strlen("puppet"), "zzzzet", strlen("puppet")))
         goto err;
 
-    ASN1_STRING_clear_free(tmp);
     tmpstring = NULL;
+    ASN1_STRING_clear_free(tmp);
     tmp = NULL;
 
     if (!TEST_ptr_null(tmp = ASN1_STRING_new_not_owned(V_ASN1_BIT_STRING, data, sizeof(data))))
@@ -470,7 +470,6 @@ asn1_string_new_not_owned_test(void)
 
 err:
     ASN1_STRING_clear_free(tmp);
-    free(tmpstring);
 
     return success;
 }
