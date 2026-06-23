@@ -834,14 +834,6 @@ start:
      * were actually expecting a CCS).
      */
 
-    /*
-     * Lets just double check that we've got a supported record version
-     */
-    if (rr->version < TLS1_VERSION || rr->version > TLS1_3_VERSION) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-
     if (ssl->method->version == TLS_ANY_VERSION
         && (s->server || rr->type != SSL3_RT_ALERT)) {
         /*
@@ -850,7 +842,14 @@ start:
          * with. We shouldn't be receiving anything other than a ClientHello
          * if we are a server.
          */
-        s->version = rr->version;
+        int min_version, max_version;
+
+        if (ssl_get_min_max_version(s, &min_version, &max_version, NULL) != 0) {
+            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, ERR_R_INTERNAL_ERROR);
+            return -1;
+        }
+
+        s->version = min_version;
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
         return -1;
     }
