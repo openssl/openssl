@@ -154,11 +154,17 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     }
 
     if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+        int mode = EVP_CIPHER_get_mode(cipher);
+
         /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
+         * Padding is only meaningful for the block-oriented ECB and CBC modes.
+         * For AEAD and stream modes the provider ignores the padding setting,
+         * so skip the costly OSSL_PARAM round-trip on the init hot path (e.g.
+         * AES-GCM re-init). If this ctx was already set up for no padding we
+         * still need to tell a newly set up block cipher about it.
          */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
+        if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
+            && !EVP_CIPHER_CTX_set_padding(ctx, 0))
             return 0;
     }
 
@@ -324,11 +330,17 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     }
 
     if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+        int mode = EVP_CIPHER_get_mode(cipher);
+
         /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
+         * Padding is only meaningful for the block-oriented ECB and CBC modes.
+         * For AEAD and stream modes the provider ignores the padding setting,
+         * so skip the costly OSSL_PARAM round-trip on the init hot path (e.g.
+         * AES-GCM re-init). If this ctx was already set up for no padding we
+         * still need to tell a newly set up block cipher about it.
          */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
+        if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
+            && !EVP_CIPHER_CTX_set_padding(ctx, 0))
             return 0;
     }
 
