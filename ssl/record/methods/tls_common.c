@@ -1938,13 +1938,9 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
 
 #ifndef OPENSSL_NO_SOCK
             /*
-             * For DTLS connections created via a listener (where rl->peer is
-             * set), use BIO_sendmmsg() with an explicit peer address. This
-             * allows multiple connections to share the listener's network BIO.
-             *
-             * For non-listener DTLS connections (where rl->peer is not set),
-             * continue using BIO_write() which relies on either a connected
-             * socket or the BIO's stored peer address set via BIO_dgram_set_peer().
+             * For DTLS connections created via a listener we need to
+             * call BIO_sendmmsg() to send the datagrams to the correct
+             * peer address.
              */
             if (rl->isdtls && BIO_ADDR_family(&rl->peer) != AF_UNSPEC) {
                 BIO_MSG msg;
