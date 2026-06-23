@@ -791,6 +791,7 @@ static int nc_uri(ASN1_IA5STRING *uri, ASN1_IA5STRING *base)
     if (scheme == NULL || *scheme == '\0') {
         ERR_raise_data(ERR_LIB_X509V3, X509_V_ERR_UNSUPPORTED_NAME_SYNTAX,
             "x509: missing scheme in URI: %s\n", uri_copy);
+        OPENSSL_free(scheme);
         OPENSSL_free(uri_copy);
         ret = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
         goto end;
