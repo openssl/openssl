@@ -72,6 +72,8 @@ int PKCS8_pkey_get0(const ASN1_OBJECT **ppkalg,
     const unsigned char **pk, int *ppklen,
     const X509_ALGOR **pa, const PKCS8_PRIV_KEY_INFO *p8)
 {
+    if (ASN1_STRING_length_ex(p8->pkey) > INT_MAX)
+        return 0;
     if (ppkalg)
         *ppkalg = p8->pkeyalg->algorithm;
     if (pk) {
