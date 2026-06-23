@@ -30,7 +30,7 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 219;
+plan tests => 220;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -476,6 +476,10 @@ ok(verify("nc-uri-cert", "", ["root-cert"], ["ncca4-cert"], ),
 ok(!verify("bad-cert-smtputf8-name-constraints", "root-cert", ["bad-cert-smtputf8-name-constraints"], [],
 	  "-partial_chain", "-attime", "1623060000"),
    "Name constraints bad othername name constraint");
+
+ok(!verify("nc-eai-leaf", "", ["nc-eai-root"], ["nc-eai-ica"],
+           "-attime", "1782000000"),
+   "Name Constraints SmtpUTF8Mailbox excluded by dot-prefix rfc822Name");
 
 #Check that we get the expected failure return code
 with({ exit_checker => sub { return shift == 2; } },
