@@ -308,7 +308,7 @@ SKIP: {
         unlink($empty);
     };
 
-    subtest "Ed2559 CLI signature generation and verification" => sub {
+    subtest "Ed25519 CLI signature generation and verification" => sub {
         tsignverify("Ed25519",
                     srctop_file("test","tested25519.pem"),
                     srctop_file("test","tested25519pub.pem"),
@@ -322,7 +322,7 @@ SKIP: {
                     "-rawin");
     };
 
-    subtest "Ed2559 CLI signature generation and verification, no -rawin" => sub {
+    subtest "Ed25519 CLI signature generation and verification, no -rawin" => sub {
         tsignverify("Ed25519",
                     srctop_file("test","tested25519.pem"),
                     srctop_file("test","tested25519pub.pem"));
