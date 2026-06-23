@@ -299,29 +299,26 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
         return -1;
     }
 
-    rdata->packet = rl->packet;
+    /*
+     * Take a copy of just this record's on-wire bytes (header + ciphertext)
+     * rather than the whole (much larger) read buffer. The live rl->rbuf is
+     * left untouched and continues to be used for subsequent reads.
+     */
     rdata->packet_length = rl->packet_length;
-    memcpy(&(rdata->rbuf), &rl->rbuf, sizeof(TLS_BUFFER));
+    rdata->packet = OPENSSL_memdup(rl->packet, rl->packet_length);
+    if (rdata->packet == NULL) {
+        OPENSSL_free(rdata);
+        pitem_free(item);
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+        return -1;
+    }
     memcpy(&(rdata->rrec), &rl->rrec[0], sizeof(TLS_RL_RECORD));
 
     item->data = rdata;
 
-    rl->packet = NULL;
-    rl->packet_length = 0;
-    memset(&rl->rbuf, 0, sizeof(TLS_BUFFER));
-    memset(&rl->rrec[0], 0, sizeof(rl->rrec[0]));
-
-    if (!tls_setup_read_buffer(rl)) {
-        /* RLAYERfatal() already called */
-        OPENSSL_free(rdata->rbuf.buf);
-        OPENSSL_free(rdata);
-        pitem_free(item);
-        return -1;
-    }
-
     if (pqueue_insert(queue, item) == NULL) {
         /* Must be a duplicate so ignore it */
-        OPENSSL_free(rdata->rbuf.buf);
+        OPENSSL_free(rdata->packet);
         OPENSSL_free(rdata);
         pitem_free(item);
     }
@@ -607,7 +604,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
             /* Push to the next record layer */
             ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
                 &written);
-            OPENSSL_free(rdata->rbuf.buf);
+            OPENSSL_free(rdata->packet);
             OPENSSL_free(item->data);
             pitem_free(item);
         }
