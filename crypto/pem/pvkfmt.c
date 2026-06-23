@@ -478,6 +478,12 @@ RSA *ossl_b2i_RSA_after_header(const unsigned char **in, unsigned int bitlen,
             goto bnerr;
         if (!read_lebn(&pin, nbyte, &d))
             goto bnerr;
+        BN_set_flags(p, BN_FLG_CONSTTIME);
+        BN_set_flags(q, BN_FLG_CONSTTIME);
+        BN_set_flags(dmp1, BN_FLG_CONSTTIME);
+        BN_set_flags(dmq1, BN_FLG_CONSTTIME);
+        BN_set_flags(iqmp, BN_FLG_CONSTTIME);
+        BN_set_flags(d, BN_FLG_CONSTTIME);
         if (!RSA_set0_factors(rsa, p, q))
             goto rsaerr;
         p = q = NULL;
