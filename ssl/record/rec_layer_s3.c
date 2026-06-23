@@ -1186,25 +1186,13 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
      * If no datagrams available and we have a parent listener, try to pump
      * the demux to get more data from the network.
      *
-     * We use trylock on the listener mutex to avoid deadlock. When called
-     * from dtls_listener_drive_pending(), the listener mutex is already held
-     * by this thread. If we called demux_pump directly, the packet handler
-     * callback would try to acquire the same mutex, causing deadlock.
-     *
-     * With trylock:
-     * - If we're NOT in drive_pending: trylock succeeds, we pump the demux
-     * - If we ARE in drive_pending: trylock fails, we skip the pump and
-     *   return 0. The caller (SSL_accept) will return WANT_READ, and the
-     *   listener's tick loop will pump the demux on the next iteration.
+     * This is safe because dtls_listener_drive_pending() releases the mutex
+     * before calling SSL_accept() on connections, so the packet handler
+     * callback can acquire the mutex when needed.
      */
     if (urxe == NULL && s->d1->listener != NULL) {
-        DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
-
-        if (ossl_crypto_mutex_try_lock(dl->mutex)) {
-            ossl_crypto_mutex_unlock(dl->mutex);
-            ossl_dgram_demux_pump(s->d1->rx->demux);
-            urxe = ossl_dtls_read_datagram(s->d1->rx);
-        }
+        ossl_dgram_demux_pump(s->d1->rx->demux);
+        urxe = ossl_dtls_read_datagram(s->d1->rx);
     }
 
     if (urxe == NULL)

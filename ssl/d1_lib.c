@@ -2061,29 +2061,33 @@ typedef struct {
     DTLS_LISTENER *dl;
     int ready_count; /* Connections ready to move to established */
     int error_count; /* Connections with fatal errors */
+    STACK_OF(SSL) *to_drive; /* Connections to drive (collected in phase 1) */
     STACK_OF(SSL) *ready_conns; /* Connections to move */
     STACK_OF(SSL) *failed_conns; /* Connections to remove */
 } DRIVE_PENDING_CTX;
 
 /*
- * Callback for iterating pending connections and driving their handshakes.
+ * Callback for collecting pending connections to drive.
+ * Called with dl->mutex held. Marks connections as being_driven and up-refs them.
+ * Also checks for timed-out connections and marks them as failed.
  */
-static void drive_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
+static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 {
     DRIVE_PENDING_CTX *ctx = arg;
     DTLS_LISTENER *dl = ctx->dl;
     SSL_CONNECTION *sc;
-    int ret, ssl_err;
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     if (sc == NULL)
         return;
 
-    /*
-     * Check if this connection has data in its DTLS_RX queue.
-     * If not, skip it - no point driving a connection with no data.
-     */
     if (sc->d1 == NULL || sc->d1->rx == NULL)
+        return;
+
+    /*
+     * Skip if already being driven by another thread.
+     */
+    if (sc->d1->being_driven)
         return;
 
     /*
@@ -2103,6 +2107,30 @@ static void drive_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
             return;
         }
     }
+
+    /*
+     * Mark as being driven, up-ref, and add to list.
+     * The up-ref ensures the connection stays valid while we drive it
+     * without holding the mutex.
+     */
+    sc->d1->being_driven = 1;
+    SSL_up_ref(ssl);
+    sk_SSL_push(ctx->to_drive, ssl);
+}
+
+/*
+ * Drive a single connection's handshake.
+ * Called WITHOUT holding dl->mutex so demux_pump can be called safely.
+ */
+static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
+    DRIVE_PENDING_CTX *ctx)
+{
+    SSL_CONNECTION *sc;
+    int ret, ssl_err;
+
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+    if (sc == NULL)
+        return;
 
     /*
      * Drive the state machine with SSL_accept().
@@ -2155,9 +2183,13 @@ static void drive_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
 /*
  * dtls_listener_drive_pending - drive handshakes for all pending connections.
  *
- * Iterates through pending connections and calls SSL_accept() to advance
- * their handshakes. Connections that complete successfully are moved to
- * established_conns and added to the incoming queue.
+ * Uses a three-phase approach to minimize lock contention:
+ *   Phase 1: LOCK - collect connections to drive, mark as being_driven, up-ref
+ *   Phase 2: UNLOCK - drive each connection (can safely call demux_pump)
+ *   Phase 3: LOCK - update data structures, clear being_driven, release refs
+ *
+ * This approach allows SSL_accept() to call demux_pump() without deadlock,
+ * since the mutex is not held during phase 2.
  *
  * Returns:
  *   1   At least one connection was moved to incoming_connections
@@ -2173,19 +2205,43 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
 
     memset(&ctx, 0, sizeof(ctx));
     ctx.dl = dl;
+    ctx.to_drive = sk_SSL_new_null();
     ctx.ready_conns = sk_SSL_new_null();
     ctx.failed_conns = sk_SSL_new_null();
 
-    if (ctx.ready_conns == NULL || ctx.failed_conns == NULL) {
+    if (ctx.to_drive == NULL || ctx.ready_conns == NULL
+        || ctx.failed_conns == NULL) {
+        sk_SSL_free(ctx.to_drive);
         sk_SSL_free(ctx.ready_conns);
         sk_SSL_free(ctx.failed_conns);
         return -1;
     }
 
+    /*
+     * Phase 1: Collect connections to drive.
+     * Hold mutex while iterating pending_conns, mark connections as being_driven,
+     * and up-ref them so they stay valid after we release the mutex.
+     */
     ossl_crypto_mutex_lock(dl->mutex);
+    ossl_dgram_conn_lookup_foreach(dl->pending_conns, collect_pending_cb, &ctx);
+    ossl_crypto_mutex_unlock(dl->mutex);
 
-    /* Drive all pending connections */
-    ossl_dgram_conn_lookup_foreach(dl->pending_conns, drive_pending_cb, &ctx);
+    /*
+     * Phase 2: Drive connections WITHOUT holding mutex.
+     * This allows SSL_accept() to call demux_pump() which may invoke
+     * packet_handler(), which needs to acquire the mutex.
+     */
+    for (i = 0; i < sk_SSL_num(ctx.to_drive); i++) {
+        ssl = sk_SSL_value(ctx.to_drive, i);
+        drive_single_connection(ssl, dl, &ctx);
+    }
+
+    /*
+     * Phase 3: Update data structures.
+     * Re-acquire mutex to move ready connections to established,
+     * remove failed connections, clear being_driven flags, and release refs.
+     */
+    ossl_crypto_mutex_lock(dl->mutex);
 
     /* Move ready connections to established and incoming queue */
     for (i = 0; i < sk_SSL_num(ctx.ready_conns); i++) {
@@ -2230,8 +2286,20 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         dtls_listener_connection_free(ssl);
     }
 
+    /* Clear being_driven flags and release references for all driven connections */
+    for (i = 0; i < sk_SSL_num(ctx.to_drive); i++) {
+        ssl = sk_SSL_value(ctx.to_drive, i);
+        sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+        if (sc != NULL && sc->d1 != NULL)
+            sc->d1->being_driven = 0;
+
+        SSL_free(ssl); /* Release reference from phase 1 */
+    }
+
     ossl_crypto_mutex_unlock(dl->mutex);
 
+    sk_SSL_free(ctx.to_drive);
     sk_SSL_free(ctx.ready_conns);
     sk_SSL_free(ctx.failed_conns);
 

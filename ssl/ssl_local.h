@@ -2172,6 +2172,14 @@ typedef struct dtls1_state_st {
      * that haven't completed their handshake within the timeout period.
      */
     OSSL_TIME created_at;
+
+    /*
+     * Set when this connection is being driven by dtls_listener_drive_pending().
+     * Used to prevent multiple threads from driving the same connection
+     * concurrently and to allow the demux pump to be called without holding
+     * the listener mutex.
+     */
+    unsigned int being_driven : 1;
 #endif
 
 } DTLS1_STATE;
