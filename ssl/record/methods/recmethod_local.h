@@ -344,9 +344,8 @@ struct ossl_record_layer_st {
 
     size_t taglen;
 
-    /* DTLS received handshake records (processed and unprocessed) */
+    /* DTLS received handshake records awaiting the next epoch */
     struct pqueue_st *unprocessed_rcds;
-    struct pqueue_st *processed_rcds;
 
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
@@ -374,7 +373,6 @@ struct ossl_record_layer_st {
 typedef struct dtls_rlayer_record_data_st {
     unsigned char *packet;
     size_t packet_length;
-    TLS_BUFFER rbuf;
     TLS_RL_RECORD rrec;
 } DTLS_RLAYER_RECORD_DATA;
 
