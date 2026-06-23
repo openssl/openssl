@@ -2798,8 +2798,16 @@ end:
     return ret;
 }
 
-static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
-    SSL **lssl, SSL **cssl)
+/* Fake clock for tests that advance QUIC time without consuming real time. */
+static OSSL_TIME fake_now;
+
+static OSSL_TIME fake_now_cb(void *arg)
+{
+    return fake_now;
+}
+
+static int create_quic_ssl_objects_ex(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL **lssl, SSL **cssl, int use_fake_time)
 {
     BIO_ADDR *addr = NULL;
     struct in_addr ina;
@@ -2840,6 +2848,18 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
     SSL_set_bio(*cssl, cbio, cbio);
     cbio = NULL;
 
+    if (use_fake_time) {
+        /*
+         * The base value does not matter but must be nonzero, as the ACK
+         * manager reads a zero packet timestamp as unset. Use real time to
+         * match the clock the engines were created with.
+         */
+        fake_now = ossl_time_now();
+        if (!TEST_true(ossl_quic_set_override_now_cb(*lssl, fake_now_cb, NULL))
+            || !TEST_true(ossl_quic_set_override_now_cb(*cssl, fake_now_cb, NULL)))
+            goto err;
+    }
+
     ret = 1;
 
 err:
@@ -2853,6 +2873,12 @@ err:
     BIO_ADDR_free(addr);
 
     return ret;
+}
+
+static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL **lssl, SSL **cssl)
+{
+    return create_quic_ssl_objects_ex(sctx, cctx, lssl, cssl, 0);
 }
 
 static int test_ssl_client_as_ossl_quic_method(void)
@@ -3494,6 +3520,146 @@ static int test_quic_peer_addr_v6(void)
 }
 #endif
 
+#ifndef OPENSSL_NO_CACHED_FETCH
+/*
+ * Advance the fake clock to the next QUIC timer event when both endpoints are
+ * idle, consuming no real time.
+ */
+static void quic_advance_time(SSL *clientssl, SSL *serverssl)
+{
+    struct timeval tv;
+    int inf = 0;
+    OSSL_TIME delay = ossl_time_infinite(), t;
+
+    /* If there is data waiting to be processed, do not wait - tick instead. */
+    if (BIO_pending(SSL_get_rbio(clientssl)) > 0)
+        return;
+
+    if (SSL_get_event_timeout(clientssl, &tv, &inf) && !inf) {
+        t = ossl_time_from_timeval(tv);
+        if (ossl_time_compare(t, delay) < 0)
+            delay = t;
+    }
+    if (SSL_get_event_timeout(serverssl, &tv, &inf) && !inf) {
+        t = ossl_time_from_timeval(tv);
+        if (ossl_time_compare(t, delay) < 0)
+            delay = t;
+    }
+
+    if (!ossl_time_is_infinite(delay))
+        fake_now = ossl_time_add(fake_now, delay);
+}
+
+static int test_quic_handshake_multipkt_mfail(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    QUIC_CHANNEL *sch = NULL, *cch = NULL;
+    int ret = 0, rc = 0, err, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+
+    if (!create_quic_ssl_objects_ex(sctx, cctx, &qlistener, &clientssl, 1))
+        goto err;
+
+    if (!TEST_true(SSL_set_tlsext_host_name(clientssl, "localhost")))
+        goto err;
+
+    /* Get the listener to bind a channel we can accept. */
+    for (i = 0; i < 10; i++) {
+        rc = SSL_connect(clientssl);
+        if (rc <= 0) {
+            err = SSL_get_error(clientssl, rc);
+            if (!TEST_true(err == SSL_ERROR_WANT_READ
+                    || err == SSL_ERROR_WANT_WRITE))
+                goto err;
+        }
+        SSL_handle_events(qlistener);
+
+        serverssl = SSL_accept_connection(qlistener, 0);
+        if (serverssl != NULL)
+            break;
+    }
+    if (!TEST_ptr(serverssl)
+        || !TEST_false(SSL_is_init_finished(serverssl)))
+        goto err;
+
+    if (!TEST_ptr(sch = ossl_quic_conn_get_channel(serverssl)))
+        goto err;
+
+    /* Do handshake until the server reaches the first flight. */
+    for (i = 0; i < 10; i++) {
+        rc = SSL_do_handshake(clientssl);
+        if (rc <= 0) {
+            err = SSL_get_error(clientssl, rc);
+            if (!TEST_true(err == SSL_ERROR_WANT_READ
+                    || err == SSL_ERROR_WANT_WRITE))
+                goto err;
+        }
+        if (ossl_quic_channel_is_term_any(sch))
+            goto err;
+        SSL_handle_events(serverssl);
+        if (sch->tx_enc_level >= QUIC_ENC_LEVEL_HANDSHAKE)
+            break;
+        quic_advance_time(clientssl, serverssl);
+    }
+    if (!TEST_int_lt(i, 10))
+        goto err;
+
+    /* Process the multi-packet datagram under mfail. */
+    MFAIL_start();
+    rc = SSL_do_handshake(clientssl);
+    MFAIL_end();
+
+    /* A fatal injected failure may terminate the connection - bail if so. */
+    if (rc <= 0) {
+        err = SSL_get_error(clientssl, rc);
+        if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE)
+            goto err;
+    }
+
+    if (!TEST_ptr(cch = ossl_quic_conn_get_channel(clientssl)))
+        goto err;
+
+    /* Connection still live so get the handshake to converge. */
+    for (i = 0; i < 10; i++) {
+        rc = SSL_do_handshake(clientssl);
+        if (rc == 1)
+            break;
+
+        err = SSL_get_error(clientssl, rc);
+        if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+            ret = -1;
+            goto err;
+        }
+
+        if (ossl_quic_channel_is_term_any(cch)
+            || ossl_quic_channel_is_term_any(sch))
+            goto err;
+
+        SSL_handle_events(serverssl);
+        quic_advance_time(clientssl, serverssl);
+    }
+    if (!TEST_int_lt(i, 10)) {
+        ret = -1;
+        goto err;
+    }
+
+    ret = 1;
+
+err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return ret;
+}
+#endif
+
 /* Test ECH with quic */
 static int test_ech(void)
 {
@@ -3789,6 +3955,9 @@ int setup_tests(void)
     ADD_TEST(test_quic_peer_addr_v6);
 #endif
     ADD_TEST(test_quic_peer_addr_v4);
+#ifndef OPENSSL_NO_CACHED_FETCH
+    ADD_MFAIL_NO_CHECK_TEST(test_quic_handshake_multipkt_mfail);
+#endif
     ADD_TEST(test_ech);
     ADD_TEST(test_quic_resize_txe);
 #ifdef OPENSSL_NO_CACHED_FETCH
