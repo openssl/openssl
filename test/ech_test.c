@@ -1579,6 +1579,7 @@ end:
     SSL_CTX_free(cctx);
     SSL_CTX_free(sctx);
     ch_test_cb_ok = 0;
+    ext_grease_ok = 0;
     return res;
 }
 
