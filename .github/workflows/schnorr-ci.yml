@@ -1,0 +1,25 @@
+name: Schnorr Provider CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: OpenSSL on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+    env:
+      OPENSSL_ROOT_DIR: /usr
+      OPENSSL_CONF: /etc/ssl/openssl.cnf
+      
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install deps
+        run: sudo apt-get update && sudo apt-get install -y libssl-dev
+      - name: Configure
+        run: ./Configure --prefix=/usr enable-schnorr
+      - name: Build
+        run: make -j$(nproc)
+      - name: Test Schnorr
+        run: ./test/schnorr_test 2>&1 | grep -q "PASS" && echo "✅ PASS" || exit 1

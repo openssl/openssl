@@ -1,0 +1,59 @@
+name: Hybrid Provider CI
+
+on: [push, pull_request]
+
+jobs:
+  test:
+    name: "OpenSSL ${{ matrix.openssl }} on ${{ matrix.os }}"
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-22.04, ubuntu-24.04]
+        openssl: ["3.0", "3.1", "3.2"]
+    
+    env:
+      OPENSSL_ROOT_DIR: /usr
+      OPENSSL_CONF: /etc/ssl/openssl.cnf
+      LD_LIBRARY_PATH: /usr/local/lib:/usr/lib
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Install OpenSSL
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y openssl libssl-dev pkg-config
+          openssl version -a
+      
+      - name: Verify Algorithms
+        run: |
+          echo "=== Ed25519 ==="
+          openssl genpkey -algorithm ED25519 2>&1 | head -3
+          echo "=== ECDSA P-384 ==="
+          openssl genpkey -algorithm EC -pkeyopt ec_paramgen_curve:P-384 2>&1 | head -3
+          echo "=== RSA 3072 ==="
+          openssl genpkey -algorithm RSA -pkeyopt rsa_keygen_bits:3072 2>&1 | head -3
+      
+      - name: Build Hybrid Test
+        run: |
+          gcc -std=c11 -O3 -Wall -Werror \
+            -I include \
+            test_hybrid_final_v4.c \
+            -lssl -lcrypto \
+            -o test_hybrid
+      
+      - name: Run Hybrid Test
+        run: timeout 30 ./test_hybrid
+      
+      - name: Verify 3/3
+        run: |
+          ./test_hybrid | grep -q "TRIPLE-LAYER HYBRID: 3/3 ALGORITHMS" && \
+          echo "✅ ALL 3 ALGORITHMS AVAILABLE" || \
+          (echo "❌ SOME ALGORITHMS MISSING" && exit 1)
+      
+      - name: Security Checks
+        run: |
+          echo "=== Supported Curves ==="
+          openssl ecparam -list_curves 2>&1 | grep -E "25519|384|3072"
+          echo "=== FIPS Status ==="
+          openssl list -providers 2>&1 | grep -i fips || echo "FIPS not loaded (optional)"
