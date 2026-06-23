@@ -336,7 +336,7 @@ static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, cons
     if (key != NULL && key->keysize + len > key->bufsize)
         len = (size_t)(key->bufsize - key->keysize);
 
-    for (i = 0; src[i] != '\0' && i < len; i++)
+    for (i = 0; i < len && src[i] != '\0'; i++)
         tgt[i] = case_adjust & src[i];
 }
 
