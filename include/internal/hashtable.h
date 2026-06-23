@@ -250,7 +250,7 @@ static void ossl_unused ossl_ht_strcase(char *tgt, const char *src, int len)
     if (src == NULL)
         return;
 
-    for (i = 0; src[i] != '\0' && i < len; i++)
+    for (i = 0; i < len && src[i] != '\0'; i++)
         tgt[i] = case_adjust & src[i];
 }
 
