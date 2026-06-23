@@ -366,7 +366,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
     }
 
     /* If we have an alert to send, lets send it */
-    if (s->s3.alert_dispatch > 0) {
+    if (s->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
         i = ssl->method->ssl_dispatch_alert(ssl);
         if (i <= 0) {
             /* SSLfatal() already called if appropriate */
@@ -913,7 +913,6 @@ start:
             return 0;
         } else if (alert_level == SSL3_AL_FATAL || is_tls13) {
             s->rwstate = SSL_NOTHING;
-            s->s3.fatal_alert = alert_descr;
             SSLfatal_data(s, SSL_AD_NO_ALERT,
                 SSL_AD_REASON_OFFSET + alert_descr,
                 "SSL alert number %d", alert_descr);
