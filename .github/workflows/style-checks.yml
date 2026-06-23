@@ -7,7 +7,16 @@
 
 name: Coding style validation 
 
-on: [pull_request]
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 
 jobs:
   check-style:
