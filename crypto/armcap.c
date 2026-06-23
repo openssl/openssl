@@ -149,6 +149,7 @@ static unsigned long getauxval(unsigned long key)
 /* AT_HWCAP2 */
 #define OSSL_HWCAP2 26
 #define OSSL_HWCAP2_SVE2 (1 << 1)
+#define OSSL_HWCAP2_SVEAES (1 << 2)
 #define OSSL_HWCAP2_RNG (1 << 16)
 #endif
 
@@ -220,6 +221,7 @@ void _armv8_sha512_probe(void);
 void _armv8_eor3_probe(void);
 void _armv8_sve_probe(void);
 void _armv8_sve2_probe(void);
+void _armv8_sve_aes_probe(void);
 void _armv8_rng_probe(void);
 #endif
 #endif /* !__APPLE__ && !OSSL_IMPLEMENT_GETAUXVAL */
@@ -352,6 +354,8 @@ void OPENSSL_cpuid_setup(void)
 
     if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVE2)
         OPENSSL_armcap_P |= ARMV9_SVE2;
+    if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_SVEAES)
+        OPENSSL_armcap_P |= ARMV9_SVE_AES;
 
     if (getauxval(OSSL_HWCAP2) & OSSL_HWCAP2_RNG)
         OPENSSL_armcap_P |= ARMV8_RNG;
@@ -397,6 +401,7 @@ void OPENSSL_cpuid_setup(void)
 #ifdef __aarch64__
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_probe, ARMV8_SVE);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_sve2_probe, ARMV9_SVE2);
+    OPENSSL_armcap_P |= arm_probe_for(_armv8_sve_aes_probe, ARMV9_SVE_AES);
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
 #endif
 

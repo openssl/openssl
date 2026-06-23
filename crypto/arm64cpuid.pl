@@ -120,6 +120,14 @@ _armv8_sve2_probe:
 	ret
 .size	_armv8_sve2_probe,.-_armv8_sve2_probe
 
+.globl	_armv8_sve_aes_probe
+.type	_armv8_sve_aes_probe,%function
+_armv8_sve_aes_probe:
+	AARCH64_VALID_CALL_TARGET
+	.inst	0x4522e000	// aese z0.b,z0.b,z0.b
+	ret
+.size	_armv8_sve_aes_probe,.-_armv8_sve_aes_probe
+
 .globl	_armv8_sve_get_vl_bytes
 .type	_armv8_sve_get_vl_bytes,%function
 _armv8_sve_get_vl_bytes:
