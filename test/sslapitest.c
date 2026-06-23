@@ -3029,6 +3029,58 @@ static int test_session_with_both_cache(void)
 #endif
 }
 
+/*
+ * Test that remove_session_cb is not invoked while ctx->lock is held.
+ * The callback calls SSL_CTX_flush_sessions_ex(), which itself tries to
+ * acquire ctx->lock; if the lock is already held when the callback fires,
+ * the nested acquisition deadlocks immediately.  t = 1 (Unix epoch + 1s) is
+ * used so that no current sessions are flushed and the callback is not
+ * re-entered.
+ */
+static void remove_session_lock_test_cb(SSL_CTX *ctx, SSL_SESSION *sess)
+{
+    SSL_CTX_flush_sessions_ex(ctx, 1);
+}
+
+static int test_remove_session_cb_not_under_lock(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL_SESSION *sess1 = NULL, *sess2 = NULL;
+    static const unsigned char sid1[] = { 1 };
+    static const unsigned char sid2[] = { 2 };
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+
+    SSL_CTX_sess_set_cache_size(ctx, 1);
+    SSL_CTX_sess_set_remove_cb(ctx, remove_session_lock_test_cb);
+
+    if (!TEST_ptr(sess1 = SSL_SESSION_new())
+        || !TEST_true(SSL_SESSION_set1_id(sess1, sid1, sizeof(sid1)))
+        || !TEST_true(SSL_CTX_add_session(ctx, sess1)))
+        goto end;
+
+    if (!TEST_ptr(sess2 = SSL_SESSION_new())
+        || !TEST_true(SSL_SESSION_set1_id(sess2, sid2, sizeof(sid2))))
+        goto end;
+
+    /*
+     * Adding sess2 evicts sess1 (cache is full), firing remove_session_cb.
+     * If the callback is invoked while holding ctx->lock the flush call
+     * inside it will deadlock.
+     */
+    if (!TEST_true(SSL_CTX_add_session(ctx, sess2)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess1);
+    SSL_SESSION_free(sess2);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 static int test_session_wo_ca_names(void)
 {
 #ifndef OSSL_NO_USABLE_TLS1_3
@@ -15179,6 +15231,7 @@ int setup_tests(void)
     ADD_TEST(test_session_with_only_int_cache);
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
+    ADD_TEST(test_remove_session_cb_not_under_lock);
     ADD_TEST(test_session_wo_ca_names);
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_stateful_tickets, 3);
