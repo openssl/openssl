@@ -834,14 +834,6 @@ start:
      * were actually expecting a CCS).
      */
 
-    /*
-     * Lets just double check that we've got a supported record version
-     */
-    if (rr->version < TLS1_VERSION || rr->version > TLS1_3_VERSION) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return -1;
-    }
-
     if (ssl->method->version == TLS_ANY_VERSION
         && (s->server || rr->type != SSL3_RT_ALERT)) {
         /*
