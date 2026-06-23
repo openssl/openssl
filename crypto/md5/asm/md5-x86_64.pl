@@ -139,6 +139,7 @@ $code .= <<EOF;
 .align 16
 
 .globl ossl_md5_block_asm_data_order
+.hidden ossl_md5_block_asm_data_order
 .type ossl_md5_block_asm_data_order,\@function,3
 ossl_md5_block_asm_data_order:
 .cfi_startproc

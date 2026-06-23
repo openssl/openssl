@@ -364,6 +364,7 @@ KeccakF1600:
 .size	KeccakF1600,.-KeccakF1600
 
 .globl	SHA3_absorb
+.hidden SHA3_absorb
 .type	SHA3_absorb,%function
 .align	5
 SHA3_absorb:
@@ -473,6 +474,7 @@ ___
 my ($A_flat,$out,$len,$bsz) = map("x$_",(19..22));
 $code.=<<___;
 .globl	SHA3_squeeze
+.hidden SHA3_squeeze
 .type	SHA3_squeeze,%function
 .align	5
 SHA3_squeeze:
@@ -704,6 +706,7 @@ my ($ctx,$inp,$len,$bsz) = map("x$_",(0..3));
 
 $code.=<<___;
 .globl	SHA3_absorb_cext
+.hidden SHA3_absorb_cext
 .type	SHA3_absorb_cext,%function
 .align	5
 SHA3_absorb_cext:
@@ -788,6 +791,7 @@ ___
 my ($ctx,$out,$len,$bsz) = map("x$_",(0..3));
 $code.=<<___;
 .globl	SHA3_squeeze_cext
+.hidden SHA3_squeeze_cext
 .type	SHA3_squeeze_cext,%function
 .align	5
 SHA3_squeeze_cext:
