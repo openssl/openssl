@@ -1090,7 +1090,8 @@ static int EVP_Update_loop(void *args)
     int outl, count, rc;
 
     if (decrypt) {
-        for (count = 0; COND(); count++) {
+        /* -1 in COND() is dummy and unused */
+        for (count = 0; COND(-1); count++) {
             rc = EVP_DecryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
@@ -1098,7 +1099,8 @@ static int EVP_Update_loop(void *args)
             }
         }
     } else {
-        for (count = 0; COND(); count++) {
+        /* -1 in COND() is dummy and unused */
+        for (count = 0; COND(-1); count++) {
             rc = EVP_EncryptUpdate(ctx, buf, &outl, buf, lengths[testnum]);
             if (rc != 1) {
                 /* reset iv in case of counter overflow */
@@ -1143,7 +1145,8 @@ static int EVP_Update_loop_aead_enc(void *args)
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count, realcount = 0;
 
-    for (count = 0; COND(); count++) {
+    /* -1 in COND() is dummy and unused */
+    for (count = 0; COND(-1); count++) {
         /* Set length of iv (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
@@ -1215,7 +1218,8 @@ static int EVP_Update_loop_aead_dec(void *args)
     EVP_CIPHER_CTX *ctx = tempargs->ctx;
     int outl, count, realcount = 0;
 
-    for (count = 0; COND(); count++) {
+    /* -1 in COND() is dummy and unused */
+    for (count = 0; COND(-1); count++) {
         /* Set the length of iv (Doesn't apply to SIV mode) */
         if (mode_op != EVP_CIPH_SIV_MODE) {
             if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_IVLEN,
@@ -4580,18 +4584,24 @@ show_res:
     for (k = 0; k < RSA_NUM; k++)
         if (rsa_doit[k])
             pr_header_all++;
+#ifndef OPENSSL_NO_DSA
     for (k = 0; k < DSA_NUM; k++)
         if (dsa_doit[k])
             pr_header_all++;
+#endif
+#ifndef OPENSSL_NO_EC
     for (k = 0; k < EC_NUM; k++) {
         if (ecdsa_doit[k])
             pr_header_all++;
         if (ecdh_doit[k])
             pr_header_all++;
     }
+#endif
+#ifndef OPENSSL_NO_DH
     for (k = 0; k < FFDH_NUM; k++)
         if (ffdh_doit[k])
             pr_header_all++;
+#endif
     for (k = 0; k < kems_algs_len; k++)
         if (kems_doit[k] && do_kems)
             pr_header_all++;
