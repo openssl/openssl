@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 61 + ($no_fips ? 0 : 5);
+plan tests => 64 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -174,6 +174,29 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
     my @match = grep /:error:/, <DATA>;
     close DATA;
     ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr6_empty");
+}
+
+# Test dumping a PKCS#12 file whose private key is stored in an unencrypted
+# keyBag (created with -keypbe NONE) rather than a shrouded keyBag.
+{
+    my $keybag = "keybag.p12";
+    ok(run(app(["openssl", "pkcs12", "-export", "-keypbe", "NONE",
+                "-certpbe", "NONE", "-nomac",
+                "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+                "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-passout", "pass:", "-out", $keybag])),
+       "export PKCS#12 with an unencrypted key bag");
+
+    # -nodes so the dumped key isn't re-encrypted (which would prompt).
+    my @info = run(app(["openssl", "pkcs12", "-in", $keybag, "-info", "-nodes",
+                        "-passin", "pass:"], stderr => "keybag_info.txt"),
+                   capture => 1);
+    open DATA, "keybag_info.txt";
+    my @match = grep /Key bag/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 1 : 0, "test unencrypted key bag is reported");
+    ok(grep(/-----BEGIN PRIVATE KEY-----/, @info) == 1,
+       "test private key from key bag is output");
 }
 
 my %pbmac1_tests = (
