@@ -3498,7 +3498,7 @@ int speed_main(int argc, char **argv)
                     if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
                         && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
                         /* space after 'Skip' is to align with 'Doing' */
-                        BIO_printf(bio_err, "Skip  %s with unkown group\n",
+                        BIO_printf(bio_err, "Skip  %s with unknown group\n",
                             ecdsa_choices[testnum].name);
                     else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                         && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
@@ -3701,7 +3701,7 @@ int speed_main(int argc, char **argv)
                         if (ERR_GET_LIB(error) == ERR_LIB_EC /* ecerr.h */
                             && ERR_GET_REASON(error) == EC_R_UNKNOWN_GROUP)
                             /* space after 'Skip' is to align with 'Doing' */
-                            BIO_printf(bio_err, "Skip  %s with unkown group\n",
+                            BIO_printf(bio_err, "Skip  %s with unknown group\n",
                                 ecdh_choices[testnum].name);
                         else if (ERR_GET_LIB(error) == ERR_LIB_PROV /* proverr.h */
                             && ERR_GET_REASON(error) == PROV_R_INVALID_KEY_LENGTH)
