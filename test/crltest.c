@@ -743,6 +743,43 @@ static const char *kCrlDeltaIndicatorString[] = {
     NULL
 };
 
+static const char *kCrlDeltaBase[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICQDCCASgCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFqgYzBhMB8GA1UdIwQYMBaAFP4UDhMbCWfLSg1L2k/z75C1Q9sz\n",
+    "MAsGA1UdFAQEAgIQADAxBgNVHS4EKjAoMCagJKAihiBodHRwOi8vY3JsLmV4YW1w\n",
+    "bGUuY29tL2RlbHRhLmNybDANBgkqhkiG9w0BAQsFAAOCAQEAIxrY08mNQ1L8+nL9\n",
+    "H6Wn1ElntRzMLnk6FqgxosA0Tq3EDzRWKHj2Xbk1vGdRdZi7ttYH1+8+5UA8JPmN\n",
+    "tRyvrm3NieEqW2reDoyFxJYsWQlJCFHjDVeNpoi8fv/qrOYxtuMfyiwho9WjovVi\n",
+    "AS9/oa/kSbD39RN/wc0UVRBtQn/vBAzlYExehiwnmiXXwbQA+waNlnL58F/34gRh\n",
+    "sJs0C/HJn9VU4gvSVW1vbpA7Fxt4alUj2NlXSXHi44mXuei4qc3Pxlw2A2Pfca7y\n",
+    "vcd30ZZdoKFzMViOnLtcM4vLw59ZEENJmz3vIIU6jACBy8/FbdPsH/iJTTvc76Yv\n",
+    "CjQcgQ==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
+static const char *kCrlDeltaValid[] = {
+    "-----BEGIN X509 CRL-----\n",
+    "MIICNDCCARwCAQEwDQYJKoZIhvcNAQELBQAwgZAxCzAJBgNVBAYTAlVTMRMwEQYD\n",
+    "VQQIDApDYWxpZm9ybmlhMRYwFAYDVQQHDA1TYW4gRnJhbmNpc2NvMRUwEwYDVQQK\n",
+    "DAxFeGFtcGxlIENvcnAxHjAcBgNVBAsMFUNlcnRpZmljYXRlIEF1dGhvcml0eTEd\n",
+    "MBsGA1UEAwwURXhhbXBsZSBDb3JwIFJvb3QgQ0EXDTI2MDMxMDA4MDAwMFoXDTI2\n",
+    "MDYwODA4MDAwMFowFTATAgIQABcNMjYwMzIwMDAwMDAwWqBAMD4wHwYDVR0jBBgw\n",
+    "FoAU/hQOExsJZ8tKDUvaT/PvkLVD2zMwCwYDVR0UBAQCAhABMA4GA1UdGwEB/wQE\n",
+    "AgIQADANBgkqhkiG9w0BAQsFAAOCAQEAjDx5wqkXfcfTtEbMUN1UcKAHQC5Fx/Kq\n",
+    "wpoDulPh52zmugl9zhEWWuwA0hSJ/qNRo5tatSGvHbIOrwvZ0LKgChHwtdQfAcBY\n",
+    "xMl8KsVRqgGjJ4NahyAglsnsJ95VvImMJGFm+eS0DxQgGJgvsj/dh3dsJEGIW4Mo\n",
+    "baF6e6sAYaYjn9QW0uzoc5zqux25/DUR5DG99cbi6NOqCm7U1gvWkZsjx4HInx4r\n",
+    "CFazu5IQE7gk1qipnROwgfi/QQXZmAueW+XasEqQcQw0WVEmCHq6OBlrelTs165b\n",
+    "sK0XOqWDfa745ZN0EZwJY6GIVl+KEAC0XkoGZdqudOEQbbWog0OKkQ==\n",
+    "-----END X509 CRL-----\n",
+    NULL
+};
+
 static const char *kCrlNumberString[] = {
     "-----BEGIN X509 CRL-----\n",
     "MIICJTCCAQ0CAQEwDQYJKoZIhvcNAQELBQAweTELMAkGA1UEBhMCVVMxEzARBgNV\n",
@@ -1933,6 +1970,36 @@ end:
     return ret;
 }
 
+/*
+ * Exercise the X509_V_FLAG_USE_DELTAS path.  kCrlDeltaBase carries a Freshest
+ * CRL extension and revokes nothing; kCrlDeltaValid is a current delta that
+ * revokes kLeaf.  The delta is in scope, so verification reports kLeaf revoked.
+ */
+static int test_crl_delta_valid(void)
+{
+    X509 *root = X509_from_strings(kRoot);
+    X509 *leaf = X509_from_strings(kLeaf);
+    X509_CRL *base = CRL_from_strings(kCrlDeltaBase);
+    X509_CRL *delta = CRL_from_strings(kCrlDeltaValid);
+    unsigned long flags = X509_V_FLAG_CRL_CHECK
+        | X509_V_FLAG_EXTENDED_CRL_SUPPORT | X509_V_FLAG_USE_DELTAS;
+    int test;
+
+    test = TEST_ptr(root)
+        && TEST_ptr(leaf)
+        && TEST_ptr(base)
+        && TEST_ptr(delta)
+        && TEST_int_eq(verify(leaf, root, make_CRL_stack(base, delta),
+                           flags, kVerify),
+            X509_V_ERR_CERT_REVOKED);
+
+    X509_CRL_free(base);
+    X509_CRL_free(delta);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_private_keys);
@@ -1945,6 +2012,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_date_invalid);
     ADD_TEST(test_crl_get_fn_score);
     ADD_TEST(test_crl_delta_indicator);
+    ADD_TEST(test_crl_delta_valid);
     ADD_TEST(test_crl_number);
     ADD_TEST(test_crl_idp_asn1_wrong_tag);
     ADD_TEST(test_crl_idp_asn1_wrong_tag2);
