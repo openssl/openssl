@@ -174,6 +174,10 @@ int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
             ret = evp_cipher_get_asn1_aead_params(c, type, asn1_params);
             break;
 
+        case EVP_CIPH_ECB_MODE:
+            ret = 1; /* Unsafe but accepted for backward compatibility */
+            break;
+
         case EVP_CIPH_CCM_MODE:
         case EVP_CIPH_XTS_MODE:
         case EVP_CIPH_OCB_MODE:
