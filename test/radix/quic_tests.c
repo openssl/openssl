@@ -798,8 +798,18 @@ DEF_SCRIPT(script_9, "place holder for multistrem script_9")
 {
 }
 
-DEF_SCRIPT(script_10, "place holder for multistrem script_10")
+/* 10. Shutdown */
+DEF_SCRIPT(script_10, "Shutdown test")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_READ_EXPECT(S, "apple", 5);
+
+    OP_SHUTDOWN_WAIT(C, 0, 0, NULL);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(S, 0, 1, 1);
 }
 
 DEF_SCRIPT(script_11, "place holder for multistrem script_11")
