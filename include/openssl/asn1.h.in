@@ -199,7 +199,10 @@ struct asn1_string_table_st {
  */
 typedef struct ASN1_TEMPLATE_st ASN1_TEMPLATE;
 typedef struct ASN1_TLC_st ASN1_TLC;
-/* This is just an opaque pointer */
+/*
+ * This is deliberately used as an opaque pointer to a structure that
+ * is never defined. In other words it will behave like void *
+ */
 typedef struct ASN1_VALUE_st ASN1_VALUE;
 
 /* Declare ASN1 functions: the implement macro is in asn1t.h */
