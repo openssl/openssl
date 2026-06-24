@@ -11,8 +11,7 @@ B<openssl speed>
 [B<-help>]
 [B<-config> I<filename>]
 [B<-elapsed>]
-[B<-evp> I<algo>]
-[B<-evp-list> I<algo>,...,I<algo>]
+[B<-evp> I<algo>[,I<algo>,...,I<algo>]]
 [B<-hmac> I<algo>]
 [B<-cmac> I<algo>]
 [B<-mb>]
@@ -56,20 +55,18 @@ see L<openssl(1)/COMMAND SUMMARY>.
 When calculating operations- or bytes-per-second, use wall-clock time
 instead of CPU user time as divisor.
 
-=item B<-evp> I<algo>
+=item B<-evp> I<algo>[,I<algo>,...,I<algo>]
 
-Use the specified cipher or message digest algorithm via the EVP interface.
-If I<algo> is an AEAD cipher, then you can pass B<-aead> to benchmark a
-TLS-like sequence. And if I<algo> is a multi-buffer capable cipher, e.g.
-aes-128-cbc-hmac-sha1, then B<-mb> will time multi-buffer operation.
+Use the specified cipher or message digest algorithm or algorithms via the EVP
+interface. If the algorithms include at least one AEAD cipher, then you can
+pass B<-aead> to benchmark the AEAD ciphers in TLS-like sequences. And if
+the algorithms include at least one multi-block capable cipher, e.g.
+aes-128-cbc-hmac-sha256, then B<-mb> will time the multi-block capable ciphers
+in multi-block mode.
 
 To see the algorithms supported with this option, use
 C<openssl list -digest-algorithms> or C<openssl list -cipher-algorithms>
 command.
-
-=item B<-evp-list> I<algo>,I<algo>,...,I<algo>
-
-Use the specified cipher or message digest algorithms via the EVP interface.
 
 =item B<-multi> I<num>
 
@@ -98,7 +95,7 @@ Time the decryption instead of encryption. Affects only the EVP testing.
 
 =item B<-mb>
 
-Enable multi-block mode on EVP-named cipher.
+Benchmark EVP-named multi-block cipher in multi-block mode.
 
 =item B<-aead>
 

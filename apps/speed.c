@@ -307,7 +307,6 @@ typedef enum OPTION_choice {
     OPT_COMMON,
     OPT_ELAPSED,
     OPT_EVP,
-    OPT_EVPLIST,
     OPT_HMAC,
     OPT_DECRYPT,
     OPT_MULTI,
@@ -340,10 +339,10 @@ const OPTIONS speed_options[] = {
     OPT_SECTION("General"),
     { "help", OPT_HELP, '-', "Display this summary" },
     { "aead", OPT_AEAD, '-',
-        "Enable TLS-like sequence benchmark on EVP-named AEAD cipher" },
+        "Enable TLS-like sequence benchmark on EVP-named AEAD ciphers" },
 #ifndef OPENSSL_NO_MULTIBLOCK
     { "mb", OPT_MB, '-',
-        "Enable (tls1>=1) multi-block mode on EVP-named cipher" },
+        "Enable (tls1>=1) multi-block mode on EVP-named multi-block capable ciphers" },
 #endif
     { "mr", OPT_MR, '-', "Produce machine readable output" },
 #ifndef NO_FORK
@@ -359,10 +358,10 @@ const OPTIONS speed_options[] = {
     OPT_CONFIG_OPTION,
 
     OPT_SECTION("Selection"),
-    { "evp", OPT_EVP, 's', "Use a EVP-named cipher or digest (-evp can be used multiple times)" },
-    { "evp-list", OPT_EVPLIST, 's',
-        "Use a list of EVP-named ciphers and digests "
-        "concatenated by a comma ',' with no-space" },
+    { "evp", OPT_EVP, 's',
+        "Use either a EVP-named cipher/digest or a list of EVP-named ciphers "
+        "and digests concatenated by a comma ',' with no-space "
+        "(-evp can be used multiple times)" },
     { "hmac", OPT_HMAC, 's', "HMAC using EVP-named digest" },
     { "cmac", OPT_CMAC, 's', "CMAC using EVP-named cipher" },
     { "decrypt", OPT_DECRYPT, '-',
@@ -2258,7 +2257,7 @@ int speed_main(int argc, char **argv)
     double d = 0.0;
     OPTION_CHOICE o;
     int async_init = 0, pr_header = 0;
-    uint8_t doit[ALGOR_NUM] = { 0 }, do_evp = 0, do_evp_list = 0;
+    uint8_t doit[ALGOR_NUM] = { 0 }, do_evp = 0;
     int ret = 1, misalign = 0, lengths_single = 0;
     const int *lengths_org = lengths_list; /* or lengths_single */
     const int *aead_lengths = aead_lengths_list; /* or lengths_single */
@@ -2419,24 +2418,9 @@ int speed_main(int argc, char **argv)
             usertime = 0;
             break;
         case OPT_EVP:
-            if (evp_names_buf_len < MAX_EVP_NAMES_BUF) {
-                evp_names_buf[evp_names_buf_len] = opt_arg();
-                evp_names_buf_len++;
-            } else {
-                BIO_puts(bio_err,
-                    "\nError: # of EVP-named ciphers and digests given by -evp's exceeded MAX_EVP_NAMES_BUF.\n");
-                goto end;
-            }
-            do_evp = 1;
-            break;
-        case OPT_EVPLIST:
+            /* uncomment below to limit -evp only once */
             /*
-             * -evp-list can be used with -evp (for a workaround that EVP-name
-             * unexpectedly contains the separator symbols for -evp-list).
-             */
-            /* uncomment below to limit -evp-list only once */
-            /*
-             * if (do_evp_list) {
+             * if (do_evp) {
              *   BIO_printf(bio_err, "%s: -evp-list option cannot be used more than once\n", prog);
              *   goto opterr;
              * }
@@ -2449,7 +2433,7 @@ int speed_main(int argc, char **argv)
                     "\nError: # of EVP-named ciphers and digests given by -evp-list exceeded MAX_EVP_NAMES_BUF.\n");
                 goto end;
             }
-            do_evp_list = 1;
+            do_evp = 1;
             break;
         case OPT_HMAC:
             if (!have_md(opt_arg())) {
@@ -2944,7 +2928,7 @@ int speed_main(int argc, char **argv)
     }
 
     /* No parameters; turn on everything. */
-    if (argc == 0 && !do_evp && !do_evp_list && !doit[D_HMAC]
+    if (argc == 0 && !do_evp && !doit[D_HMAC]
         && !doit[D_EVP_CMAC] && !do_kems && !do_sigs) {
         memset(doit, 1, sizeof(doit));
         doit[D_EVP_CMAC] = 0;
