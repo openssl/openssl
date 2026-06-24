@@ -871,8 +871,18 @@ DEF_SCRIPT(script_7, "Unidirectional default stream mode (client sends first)")
     OP_WRITE_FAIL(S);
 }
 
-DEF_SCRIPT(script_8, "place holder for multistrem script_8")
+/* 8. Unidirectional default stream mode test (server sends first) */
+DEF_SCRIPT(script_8, "Unidirectional default stream mode (server sends first)")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_AUTO_UNI);
+
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_NEW_STREAM(S, Sa, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_READ_EXPECT(C, "apple", 5);
+    OP_WRITE_FAIL(C);
 }
 
 DEF_SCRIPT(script_9, "place holder for multistrem script_9")
