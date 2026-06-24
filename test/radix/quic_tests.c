@@ -827,8 +827,36 @@ DEF_SCRIPT(script_5, "Test stream reset functionality")
     OP_READ_EXPECT(Sb, "strawberry", 10);
 }
 
-DEF_SCRIPT(script_6, "place holder for multistram script_6")
+DEF_FUNC(check_stream_stopped_6)
 {
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+
+    if (SSL_get_stream_write_state(ssl) != SSL_STREAM_STATE_RESET_LOCAL)
+        F_SPIN_AGAIN();
+
+    ok = 1;
+err:
+    return ok;
+}
+
+/* 6. Test STOP_SENDING functionality */
+DEF_SCRIPT(script_6, "Test STOP_SENDING functionality")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_NEW_STREAM(S, Sa, 0 /* bidirectional */);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_UNBIND(Ca);
+    OP_ACCEPT_STREAM_NONE(C, 0);
+
+    OP_SELECT_SSL(0, Sa);
+    OP_FUNC(check_stream_stopped_6);
 }
 
 DEF_SCRIPT(script_7, "place holder for multistrem script_7")
