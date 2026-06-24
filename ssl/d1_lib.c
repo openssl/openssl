@@ -1379,6 +1379,17 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
         if (conn_ssl == NULL)
             goto release;
 
+        /*
+         * Check if we've reached the pending connection limit before registering.
+         * Access the LHASH item count directly - it's O(1).
+         */
+        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns) {
+            /* Cap reached - reject new connection */
+            ossl_crypto_mutex_unlock(dl->mutex);
+            dtls_listener_connection_free(conn_ssl);
+            goto release;
+        }
+
         if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
             dtls_listener_connection_free(conn_ssl);
             goto release;
@@ -1763,6 +1774,9 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     /* Default timeout for pending connections: 30 seconds */
     dl->pending_timeout = ossl_seconds2time(30);
+
+    /* Default maximum pending connections */
+    dl->max_pending_conns = DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS;
 
     /* Handle cookie validation flags */
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
@@ -2708,6 +2722,51 @@ OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s)
 
     dl = (const DTLS_LISTENER *)s;
     return dl->pending_timeout;
+}
+
+/*
+ * Set the maximum number of pending connections for the DTLS listener.
+ *
+ * Parameters:
+ *   s         - The DTLS listener SSL object
+ *   max_conns - Maximum number of pending connections. Must be > 0.
+ *
+ * Returns:
+ *   1 on success
+ *   0 on failure (NULL pointer, not a listener, or max_conns is 0)
+ */
+int ossl_dtls_listener_set_max_pending_conns(SSL *s, size_t max_conns)
+{
+    DTLS_LISTENER *dl;
+
+    if (!IS_DTLS_LISTENER(s))
+        return 0;
+
+    /* Do not allow disabling the cap */
+    if (max_conns == 0)
+        return 0;
+
+    dl = (DTLS_LISTENER *)s;
+    dl->max_pending_conns = max_conns;
+
+    return 1;
+}
+
+/*
+ * Get the maximum pending connections limit for the DTLS listener.
+ *
+ * Returns:
+ *   The current maximum, or 0 if s is NULL or not a listener.
+ */
+size_t ossl_dtls_listener_get_max_pending_conns(const SSL *s)
+{
+    const DTLS_LISTENER *dl;
+
+    if (!IS_DTLS_LISTENER(s))
+        return 0;
+
+    dl = (const DTLS_LISTENER *)s;
+    return dl->max_pending_conns;
 }
 
 void ossl_dtls_listener_enter_blocking_section(SSL *s)

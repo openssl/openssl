@@ -2233,6 +2233,11 @@ typedef struct dtls1_state_st {
 DEFINE_STACK_OF(SSL)
 
 /*
+ * Default maximum number of pending connections for DTLS listeners.
+ */
+#define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 1000
+
+/*
  * DTLS listener SSL object type. This implements the API personality
  * layer for DTLS listener objects, providing server-side connection
  * demultiplexing for DTLS 1.3.
@@ -2307,6 +2312,15 @@ typedef struct dtls_listener_st {
      * Default: 30 seconds. Set to ossl_time_infinite() to disable.
      */
     OSSL_TIME pending_timeout;
+
+    /*
+     * Maximum number of pending connections allowed.
+     * When this limit is reached, new connection attempts are rejected.
+     *
+     * Default: DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS
+     * This limit cannot be disabled.
+     */
+    size_t max_pending_conns;
 
     CRYPTO_CONDVAR *notifier_cv;
 
@@ -2972,6 +2986,8 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio);
 void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio);
 BIO *ossl_dtls_listener_get_net_rbio(const SSL *s);
 BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
+int ossl_dtls_listener_set_max_pending_conns(SSL *s, size_t max_conns);
+size_t ossl_dtls_listener_get_max_pending_conns(const SSL *s);
 
 /* Established connections API - these handle their own locking */
 SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,

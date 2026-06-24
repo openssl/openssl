@@ -8505,6 +8505,26 @@ uint64_t SSL_listener_get_pending_timeout(const SSL *ssl)
     return 0;
 }
 
+int SSL_listener_set_max_pending_conns(SSL *ssl, size_t max_conns)
+{
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl))
+        return ossl_dtls_listener_set_max_pending_conns(ssl, max_conns);
+#endif
+
+    return 0;
+}
+
+size_t SSL_listener_get_max_pending_conns(const SSL *ssl)
+{
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS(ssl))
+        return ossl_dtls_listener_get_max_pending_conns(ssl);
+#endif
+
+    return 0;
+}
+
 SSL *SSL_new_domain(SSL_CTX *ctx, uint64_t flags)
 {
 #ifndef OPENSSL_NO_QUIC

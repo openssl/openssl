@@ -70,6 +70,7 @@ void ossl_dgram_conn_lookup_foreach(DGRAM_CONN_LOOKUP *lookup,
     ossl_dgram_conn_lookup_iter_fn cb,
     void *arg);
 void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup);
+size_t ossl_dgram_conn_lookup_num_items(const DGRAM_CONN_LOOKUP *lookup);
 
 #endif /* OPENSSL_NO_DTLS */
 #endif /* OSSL_INTERNAL_DGRAM_CONN_LOOKUP_H */

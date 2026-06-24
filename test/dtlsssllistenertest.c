@@ -35,6 +35,18 @@ static char *cert = NULL;
 static char *privkey = NULL;
 
 /*
+ * Fake time support for timeout testing.
+ * timeout_test_fake_time holds the simulated current time, and
+ * timeout_test_now_cb is passed to the listener to override its time source.
+ */
+static OSSL_TIME timeout_test_fake_time;
+
+static OSSL_TIME timeout_test_now_cb(void *arg)
+{
+    return timeout_test_fake_time;
+}
+
+/*
  * Helper function that waits for data using SSL_poll and then reads.
  * Uses SSL_poll() to wait for data since server connections from a listener
  * don't have their own socket fd.
@@ -3676,6 +3688,344 @@ end:
     return testresult;
 }
 
+static int test_dtls_listener_max_pending_conns_api(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL;
+    size_t max_conns, retrieved_max_conns;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto end;
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto end;
+
+    /* Retrieve default maximum pending connections (1000) */
+    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+
+    if (!TEST_size_t_eq(retrieved_max_conns, 1000))
+        goto end;
+
+    max_conns = 10;
+    if (!TEST_true(SSL_listener_set_max_pending_conns(listener, max_conns)))
+        goto end;
+
+    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+    if (!TEST_size_t_eq(retrieved_max_conns, max_conns))
+        goto end;
+
+    if (!TEST_false(SSL_listener_set_max_pending_conns(listener, 0)))
+        goto end;
+
+    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+    if (!TEST_size_t_eq(retrieved_max_conns, max_conns))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
+static int test_dtls_listener_max_pending_conns_invalid(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL;
+    size_t retrieved_max_conns;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto end;
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto end;
+
+    /* Retrieve default maximum pending connections (1000) */
+    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+
+    if (!TEST_size_t_eq(retrieved_max_conns, 1000))
+        goto end;
+
+    /* Setting the cap to 0 must fail - the cap cannot be disabled */
+    if (!TEST_false(SSL_listener_set_max_pending_conns(listener, 0)))
+        goto end;
+
+    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+    if (!TEST_size_t_eq(retrieved_max_conns, 1000))
+        goto end;
+
+    if (!TEST_false(SSL_listener_set_max_pending_conns(NULL, 100)))
+        goto end;
+
+    /* Get on NULL should return 0 */
+    if (!TEST_size_t_eq(SSL_listener_get_max_pending_conns(NULL), 0))
+        goto end;
+
+    testresult = 1;
+
+end:
+    SSL_free(listener);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
+#define PENDING_CAP_TEST_LIMIT 3
+#define PENDING_CAP_TEST_CLIENTS 5
+
+/*
+ * Helper for the pending-connection cap tests.
+ *
+ * Creates a single DTLS client, sends its initial ClientHello
+ * then drives the listener once via SSL_poll() so it processes the ClientHello
+ * - either admitting a pending connection (and sending an HVR/HRR) or rejecting
+ * it once the cap has been reached.
+ *
+ * On success the new client SSL and its socket fd are returned via *client and
+ * *client_fd for the caller to clean up.
+ *
+ * Returns 1 on success, 0 on failure.
+ */
+static int cap_test_send_clienthello(SSL_CTX *cctx, const BIO_ADDR *server_addr,
+    SSL *listener, SSL **client, int *client_fd)
+{
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int ret, err_code;
+
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr, client, client_fd)))
+        return 0;
+
+    /* Client sends initial ClientHello */
+    SSL_set_connect_state(*client);
+    ret = SSL_connect(*client);
+    err_code = SSL_get_error(*client, ret);
+
+    /* The ClientHello should be sent but the handshake should not complete */
+    if (!TEST_int_le(ret, 0))
+        return 0;
+    if (!TEST_true(err_code == SSL_ERROR_WANT_READ || err_code == SSL_ERROR_WANT_WRITE))
+        return 0;
+
+    /*
+     * Drive the listener so it processes the ClientHello. Depending on the
+     * current pending count it either creates a pending connection and sends
+     * an HRR/HVR, or rejects the connection and releases the packet once the
+     * cap has been reached.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 100000;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+            &poll_timeout, 0, &poll_result)))
+        return 0;
+
+    return 1;
+}
+
+/*
+ * Test that pending connection cap is enforced.
+ *
+ * This test:
+ *   1. Creates a listener with max_pending_conns = 3
+ *   2. Starts 5 clients that send ClientHello but don't complete handshake
+ *   3. Verifies only 3 pending connections are created
+ *   4. The 4th and 5th clients should be rejected (their packets released)
+ */
+static int test_pending_conn_cap_enforcement(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[PENDING_CAP_TEST_CLIENTS] = { NULL };
+    int client_fds[PENDING_CAP_TEST_CLIENTS] = { -1, -1, -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1;
+    int testresult = 0;
+    int i;
+
+    /* Create SSL contexts */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    /* Create listener with HVR required (so connections stay pending) */
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+
+    /* Set the pending connection cap to 3 */
+    if (!TEST_true(SSL_listener_set_max_pending_conns(listener, PENDING_CAP_TEST_LIMIT)))
+        goto err;
+
+    /* Verify the cap was set */
+    if (!TEST_size_t_eq(SSL_listener_get_max_pending_conns(listener), PENDING_CAP_TEST_LIMIT))
+        goto err;
+
+    /*
+     * Create 5 clients and have each send their ClientHello.
+     * The first three should end up in the pending connections.
+     * The 4th and 5th clients should be rejected due to the cap.
+     */
+    for (i = 0; i < PENDING_CAP_TEST_CLIENTS; i++)
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+
+    /*
+     * Only PENDING_CAP_TEST_LIMIT connections should have been admitted to
+     * pending_conns; the remaining clients were rejected once the cap was
+     * reached. Read the count directly from the listener's pending lookup
+     * table (there is no public accessor by design - the cap is silent).
+     */
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            PENDING_CAP_TEST_LIMIT))
+        goto err;
+
+    testresult = 1;
+
+err:
+    for (i = 0; i < PENDING_CAP_TEST_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Test that pending connection cap and timeout interaction.
+ *
+ * This test:
+ *   1. Creates a listener with max_pending_conns = 3
+ *   2. Starts 5 clients that send ClientHello but don't complete handshake
+ *   3. Verifies there are 3 pending connections
+ *   4. Waits for the pending connections to timeout and be released
+ *   5. Add the last two clients
+ *   5. Verifies there are 2 pending connections
+ */
+static int test_pending_cap_with_timeout(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[PENDING_CAP_TEST_CLIENTS] = { NULL };
+    int client_fds[PENDING_CAP_TEST_CLIENTS] = { -1, -1, -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int server_fd = -1;
+    int testresult = 0;
+    int i;
+
+    /* Create SSL contexts */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    /* Create listener with HVR required (so connections stay pending) */
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+
+    /* Set the pending connection cap to 3 */
+    if (!TEST_true(SSL_listener_set_max_pending_conns(listener, PENDING_CAP_TEST_LIMIT)))
+        goto err;
+
+    /* Verify the cap was set */
+    if (!TEST_size_t_eq(SSL_listener_get_max_pending_conns(listener), PENDING_CAP_TEST_LIMIT))
+        goto err;
+
+    if (!TEST_true(SSL_listener_set_pending_timeout(listener, 1000)))
+        goto err;
+
+    timeout_test_fake_time = ossl_time_from_time_t(1700000000);
+    if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
+            /* Use a callback that returns timeout_test_fake_time */
+            timeout_test_now_cb, NULL)))
+        goto err;
+
+    /*
+     * Create 5 clients and have each send their ClientHello.
+     * The first three should end up in the pending connections.
+     * The 4th and 5th clients should be rejected due to the cap.
+     */
+    for (i = 0; i < PENDING_CAP_TEST_LIMIT; i++)
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            PENDING_CAP_TEST_LIMIT))
+        goto err;
+
+    /* Advance time past timeout (5 seconds > 1 second timeout) */
+    timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
+        ossl_seconds2time(5));
+
+    /* Trigger a tick to process timeouts */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+            &poll_timeout, 0, &poll_result)))
+        goto err;
+
+    for (i = PENDING_CAP_TEST_LIMIT; i < PENDING_CAP_TEST_CLIENTS; i++)
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            PENDING_CAP_TEST_CLIENTS - PENDING_CAP_TEST_LIMIT))
+        goto err;
+
+    testresult = 1;
+
+err:
+    for (i = 0; i < PENDING_CAP_TEST_CLIENTS; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -3764,5 +4114,10 @@ int setup_tests(void)
     ADD_TEST(test_ssl_ownership_multiple_pending_leak);
     ADD_TEST(test_ssl_ownership_pending_timeout_cleanup);
 
+    /* Max number of pending connections tests */
+    ADD_TEST(test_dtls_listener_max_pending_conns_api);
+    ADD_TEST(test_dtls_listener_max_pending_conns_invalid);
+    ADD_TEST(test_pending_conn_cap_enforcement);
+    ADD_TEST(test_pending_cap_with_timeout);
     return 1;
 }
