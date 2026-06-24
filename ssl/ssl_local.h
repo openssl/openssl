@@ -293,12 +293,6 @@
  */
 #define SSL_USE_SIGALGS(s) \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
-/*
- * Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2: may
- * apply to others in future.
- */
-#define SSL_USE_TLS1_2_CIPHERS(s) \
-    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
 #define IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value) \
     (((value) >= TLSEXT_max_fragment_length_512) && ((value) <= TLSEXT_max_fragment_length_4096))
@@ -798,16 +792,6 @@ typedef struct {
     int pkey_nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
 } SSL_CERT_LOOKUP;
-
-/* flags values */
-#define TLS_GROUP_TYPE 0x0000000FU /* Mask for group type */
-#define TLS_GROUP_CURVE_PRIME 0x00000001U
-#define TLS_GROUP_CURVE_CHAR2 0x00000002U
-#define TLS_GROUP_CURVE_CUSTOM 0x00000004U
-#define TLS_GROUP_FFDHE 0x00000008U
-#define TLS_GROUP_ONLY_FOR_TLS1_3 0x00000010U
-
-#define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE | TLS_GROUP_ONLY_FOR_TLS1_3)
 
 #if !defined(OPENSSL_NO_TLS1)      \
     || !defined(OPENSSL_NO_TLS1_1) \
@@ -2506,7 +2490,6 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
 __owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
-__owur int ssl_verify_ocsp(SSL *s, STACK_OF(X509) *sk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
     int ref);
