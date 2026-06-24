@@ -883,8 +883,66 @@ DEF_SCRIPT(script_11, "Many threads accepted on same client connection")
     OP_CONCLUDE(Se);
 }
 
-DEF_SCRIPT(script_12, "place holder for multistrem script_12")
+DEF_FUNC(new_stream_c_slot0_12)
 {
+    int ok = 0;
+    SSL *conn, *stream;
+
+    conn = RADIX_PROCESS_get_ssl(RP(), "C");
+    if (!TEST_ptr(conn))
+        goto err;
+
+    stream = SSL_new_stream(conn, 0 /* bidirectional */);
+    if (!TEST_ptr(stream))
+        goto err;
+
+    RT()->slot[0] = NULL;
+    RT()->ssl[0] = stream;
+    ok = 1;
+err:
+    return ok;
+}
+
+/* 12. Many threads initiated on the same client connection */
+DEF_SCRIPT(script_12_child,
+    "child: create stream on C, write, conclude, free")
+{
+    OP_FUNC(new_stream_c_slot0_12);
+    OP_PUSH_BUFP("foo", 3);
+    OP_FUNC(hf_write);
+    OP_FUNC(hf_conclude);
+    OP_FUNC(free_slot0_stream_11);
+}
+
+DEF_SCRIPT(script_12, "Many threads initiated on same client connection")
+{
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    for (i = 0; i < 5; ++i)
+        OP_SPAWN_THREAD(script_12_child);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "foo", 3);
+    OP_EXPECT_FIN(Sa);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+    OP_READ_EXPECT(Sb, "foo", 3);
+    OP_EXPECT_FIN(Sb);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sc, 0);
+    OP_READ_EXPECT(Sc, "foo", 3);
+    OP_EXPECT_FIN(Sc);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sd, 0);
+    OP_READ_EXPECT(Sd, "foo", 3);
+    OP_EXPECT_FIN(Sd);
+
+    OP_ACCEPT_STREAM_WAIT(S, Se, 0);
+    OP_READ_EXPECT(Se, "foo", 3);
+    OP_EXPECT_FIN(Se);
 }
 
 DEF_SCRIPT(script_13, "place holder for multistrem script_13")
