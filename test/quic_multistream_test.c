@@ -2063,16 +2063,7 @@ static const struct script_op script_8[] = {
 
 /* 9. Unidirectional default stream mode test (server sends first on bidi) */
 static const struct script_op script_9[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_AUTO_UNI),
-    OP_S_NEW_STREAM_BIDI(a, S_BIDI_ID(0)),
-    OP_S_WRITE(a, "apple", 5),
-    OP_C_READ_EXPECT(DEFAULT, "apple", 5),
-    OP_C_WRITE(DEFAULT, "orange", 6),
-    OP_S_READ_EXPECT(a, "orange", 6),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
