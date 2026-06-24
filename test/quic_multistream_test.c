@@ -2172,35 +2172,8 @@ static const struct script_op script_13[] = {
 };
 
 /* 14. Many threads initiating on the same client connection (stress test) */
-static const struct script_op script_14_child[] = {
-    OP_BEGIN_REPEAT(10),
-
-    OP_C_NEW_STREAM_BIDI(a, ANY_ID),
-    OP_C_WRITE(a, "foo", 3),
-    OP_C_CONCLUDE(a),
-    OP_C_FREE_STREAM(a),
-
-    OP_END_REPEAT(),
-
-    OP_END
-};
-
 static const struct script_op script_14[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_NEW_THREAD(5, script_14_child),
-
-    OP_BEGIN_REPEAT(50),
-
-    OP_S_ACCEPT_STREAM_WAIT(a),
-    OP_S_READ_EXPECT(a, "foo", 3),
-    OP_S_EXPECT_FIN(a),
-    OP_S_UNBIND_STREAM_ID(a),
-
-    OP_END_REPEAT(),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
