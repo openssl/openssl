@@ -859,8 +859,16 @@ DEF_SCRIPT(script_6, "Test STOP_SENDING functionality")
     OP_FUNC(check_stream_stopped_6);
 }
 
-DEF_SCRIPT(script_7, "place holder for multistrem script_7")
+/* 7. Unidirectional default stream mode test (client sends first) */
+DEF_SCRIPT(script_7, "Unidirectional default stream mode (client sends first)")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_AUTO_UNI);
+    OP_WRITE(C, "apple", 5);
+
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_READ_EXPECT(S, "apple", 5);
+    OP_WRITE_FAIL(S);
 }
 
 DEF_SCRIPT(script_8, "place holder for multistrem script_8")

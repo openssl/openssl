@@ -2051,16 +2051,7 @@ static const struct script_op script_6[] = {
 
 /* 7. Unidirectional default stream mode test (client sends first) */
 static const struct script_op script_7[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_AUTO_UNI),
-    OP_C_WRITE(DEFAULT, "apple", 5),
-
-    OP_S_BIND_STREAM_ID(a, C_UNI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-    OP_S_WRITE_FAIL(a),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
