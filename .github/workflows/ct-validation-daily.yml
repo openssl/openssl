@@ -59,7 +59,7 @@ jobs:
           - name: x86_64
             runs-on: ubuntu-latest
             config_extra: ""
-            # Has ADX + BMI2
+            # Has ADX + BMI2, verified in step "Assert host CPU has ADX + BMI2"
             ia32cap: ""
           - name: x86_64-no-adx-no-bmi2
             runs-on: ubuntu-latest
@@ -106,6 +106,18 @@ jobs:
         # capability not actually possessed by the host CPU would SIGILL.
         if: matrix.ia32cap != ''
         run: echo "OPENSSL_ia32cap=${{ matrix.ia32cap }}" >> $GITHUB_ENV
+
+      - name: Assert host CPU has ADX + BMI2
+        if: matrix.name == 'x86_64'
+        run: |
+          flags=" $(grep -m1 '^flags' /proc/cpuinfo) "
+          for f in adx bmi2; do
+            case "$flags" in
+              *" $f "*) ;;
+              *) echo "::error::ubuntu-latest CPU lacks expected capability $f. Update the CT matrix."; exit 1 ;;
+            esac
+          done
+          echo "Host CPU advertises ADX + BMI2."
 
       - name: Configure with CT validation enabled
         run: |
