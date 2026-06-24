@@ -1797,6 +1797,12 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     ssl_init_done = 1;
 
     dl->mutex = ossl_crypto_mutex_new();
+#ifdef OPENSSL_THREADS
+    if (dl->mutex == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        goto err;
+    }
+#endif
 
     /* Create demux with internal locking for thread safety. */
     dl->demux = ossl_dgram_demux_new(NULL, 1, NULL, NULL);
@@ -1893,8 +1899,6 @@ void ossl_dtls_listener_free(SSL *s)
 
     dl = (DTLS_LISTENER *)s;
 
-    ossl_crypto_mutex_lock(dl->mutex);
-
     /* Free any pending incoming connections */
     if (dl->incoming_connections != NULL) {
         while (sk_SSL_num(dl->incoming_connections) > 0) {
@@ -1921,7 +1925,7 @@ void ossl_dtls_listener_free(SSL *s)
         dl->established_conns = NULL;
     }
 
-    ossl_crypto_mutex_unlock(dl->mutex);
+    ossl_crypto_mutex_free(&dl->mutex);
 
     /* Free the demux after all connections that reference it are freed */
     if (dl->demux != NULL)
@@ -1934,8 +1938,6 @@ void ossl_dtls_listener_free(SSL *s)
         ossl_crypto_condvar_free(&dl->notifier_cv);
         ossl_rio_notifier_cleanup(&dl->notifier);
     }
-
-    ossl_crypto_mutex_free(&dl->mutex);
 }
 
 SSL *ossl_dtls_get0_listener(const SSL *ssl)

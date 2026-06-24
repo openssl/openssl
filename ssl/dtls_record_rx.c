@@ -25,6 +25,13 @@ DTLS_RX *ossl_dtls_rx_new(DGRAM_DEMUX *demux)
     ossl_list_urxe_init(&rx->urxe_pending);
     rx->mutex = ossl_crypto_mutex_new();
 
+#ifdef OPENSSL_THREADS
+    if (rx->mutex == NULL) {
+        OPENSSL_free(rx);
+        return NULL;
+    }
+#endif
+
     return rx;
 }
 

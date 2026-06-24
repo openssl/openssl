@@ -271,10 +271,7 @@ of synchronization mechanisms and notifiers.
 
 If this flag is not set, the listener initializes internal synchronization
 mechanisms that allow connections accepted from the listener to be safely
-used from multiple threads concurrently. This includes a notifier mechanism
-that enables efficient polling across threads - when data arrives for a
-connection while another thread is blocked in L<SSL_poll(3)>, that thread
-will be woken up.
+used from multiple threads concurrently.
 
 This flag is only applicable to DTLS listeners.
 

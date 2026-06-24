@@ -404,7 +404,7 @@ DGRAM_CONN_LOOKUP *ossl_dgram_conn_lookup_new_addr(void)
     }
 
     /* Generate random SipHash key for hash-flooding defense */
-    if (RAND_bytes((unsigned char *)data->hash_key,
+    if (RAND_priv_bytes((unsigned char *)data->hash_key,
             sizeof(data->hash_key))
         <= 0) {
         OPENSSL_free(data);
