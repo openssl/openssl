@@ -18,7 +18,10 @@
 
 name: AVX512 tests via Intel SDE
 
-on: [pull_request, push]
+on:
+  schedule:
+    - cron: '30 02 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: read
