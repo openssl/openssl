@@ -193,6 +193,11 @@ static int msblob2obj_decode(void *vctx, OSSL_CORE_BIO *cin, int selection,
 
     ok = 0;
     mem_want = ossl_blob_length(bitlen, isdss, ispub);
+
+    if (bitlen > BLOB_MAX_LENGTH) {
+        ERR_raise(ERR_LIB_PEM, PEM_R_HEADER_TOO_LONG);
+        goto err;
+    }
     if (!BUF_MEM_grow(mem, mem_len + mem_want)) {
         ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);
         goto err;
