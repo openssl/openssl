@@ -531,6 +531,20 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
         result = InterlockedCompareExchange(lock, ONCE_ININIT, ONCE_UNINITED);
         if (result == ONCE_UNINITED) {
             init();
+            /*
+             * On weakly ordered systems, it may happen that the write to *lock
+             * below completes prior to some writes in whatever the init()
+             * callback routine above may do.  In this case, other threads
+             * entering here may see unsynchronized data in whatever the init
+             * routine initalizes, leading to errneous behavior.
+             *
+             * We should Use InitOnceExecuteOnce here to implement this, but
+             * doing so requires that we modify the definition of the
+             * CRYPTO_ONCE type, which is an abi breakage.  So instead
+             * Just insert a memory barrier here to ensure that any pending
+             * writes are flushed to memory prior to setting ONCE_DONE below
+             */
+            MemoryBarrier();
             *lock = ONCE_DONE;
             return 1;
         }
