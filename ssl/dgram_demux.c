@@ -172,7 +172,15 @@ int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu)
     if (mtu < DEMUX_MIN_INITIAL_DGRAM_LEN)
         return 0;
 
+    /*
+     * mtu is read under demux->mutex by the receive path
+     * so take the lock here.
+     */
+    if (demux->require_mutex)
+        ossl_crypto_mutex_lock(demux->mutex);
     demux->mtu = mtu;
+    if (demux->require_mutex)
+        ossl_crypto_mutex_unlock(demux->mutex);
     return 1;
 }
 
