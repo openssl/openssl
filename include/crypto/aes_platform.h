@@ -524,6 +524,42 @@ void rv32i_zkne_encrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key);
 void rv32i_zknd_decrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key);
+
+#elif defined(AES_ASM) && defined(__e2k__)
+#define HWAES_CAPABLE 1
+#define AES_GCM_ENC_BYTES 512
+#define AES_GCM_DEC_BYTES 512
+#if __iset__ >= 7
+void ossl_e2kv7_aes_ctr32_encrypt_blocks(const unsigned char *in,
+    unsigned char *out, size_t len, const void *key,
+    const unsigned char ivec[16]);
+#define HWAES_ctr32_encrypt_blocks ossl_e2kv7_aes_ctr32_encrypt_blocks
+#define AES_GCM_ASM(gctx) (gctx->ctr == ossl_e2kv7_aes_ctr32_encrypt_blocks)
+#define HWAES_set_encrypt_key e2k_AES_set_encrypt_key
+#define HWAES_set_decrypt_key e2k_AES_set_decrypt_key
+#define AES_gcm_encrypt e2k_aes_gcm_encrypt
+#define AES_gcm_decrypt e2k_aes_gcm_decrypt
+
+size_t e2k_aes_gcm_encrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16],
+    u64 *Xi);
+size_t e2k_aes_gcm_decrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16],
+    u64 *Xi);
+#else
+#define HWAES_ctr32_encrypt_blocks e2k_aes_ctr32_encrypt_blocks
+#define AES_GCM_ASM(gctx) (0)
+#define HWAES_set_encrypt_key AES_set_encrypt_key
+#define HWAES_set_decrypt_key AES_set_decrypt_key
+#define HWAES_encrypt AES_encrypt
+#define HWAES_decrypt AES_decrypt
+size_t AES_gcm_encrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16],
+    u64 *Xi);
+size_t AES_gcm_decrypt(const unsigned char *in, unsigned char *out,
+    size_t len, const void *key, unsigned char ivec[16],
+    u64 *Xi);
+#endif
 #endif
 
 #if defined(HWAES_CAPABLE)

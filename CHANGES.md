@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added various optimizations for the Elbrus2000 architecture in the
+   cryptographic and BN code.
+
+   *Gleb Popov*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
