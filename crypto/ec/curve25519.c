@@ -5854,6 +5854,7 @@ int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
 
     CONSTTIME_SECRET(private_key, 32);
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
+    CONSTTIME_DECLASSIFY(private_key, 32);
     CONSTTIME_DECLASSIFY(out_shared_key, 32);
 
     /* The all-zero output results when the input is a point of small order. */
