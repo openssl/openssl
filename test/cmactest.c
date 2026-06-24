@@ -307,7 +307,7 @@ static char *pt(unsigned char *md, size_t len)
     static char buf[81];
 
     for (i = 0; i < len && (i + 1) * OSSL_HEX_CHARS_PER_BYTE < sizeof(buf); i++)
-        BIO_snprintf(buf + i * OSSL_HEX_CHARS_PER_BYTE,
+        snprintf(buf + i * OSSL_HEX_CHARS_PER_BYTE,
             OSSL_HEX_CHARS_PER_BYTE + 1, "%02x", md[i]);
     return buf;
 }

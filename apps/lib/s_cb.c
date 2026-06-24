@@ -696,11 +696,11 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             str_content_type = ", InnerContent";
             break;
         default:
-            BIO_snprintf(tmpbuf, sizeof(tmpbuf) - 1, ", Unknown (content_type=%d)", content_type);
+            snprintf(tmpbuf, sizeof(tmpbuf) - 1, ", Unknown (content_type=%d)", content_type);
             str_content_type = tmpbuf;
         }
     } else {
-        BIO_snprintf(tmpbuf, sizeof(tmpbuf) - 1, "Not TLS data or unknown version (version=%d, content_type=%d)", version, content_type);
+        snprintf(tmpbuf, sizeof(tmpbuf) - 1, "Not TLS data or unknown version (version=%d, content_type=%d)", version, content_type);
         str_version = tmpbuf;
     }
 

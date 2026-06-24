@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include "internal/e_os.h"
 
 #include <openssl/objects.h>
@@ -844,6 +846,7 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
     char genTime_str[17 + TS_MAX_CLOCK_PRECISION_DIGITS];
     char *p = genTime_str;
     char *p_end = genTime_str + sizeof(genTime_str);
+    int n;
 
     if (precision > TS_MAX_CLOCK_PRECISION_DIGITS)
         goto err;
@@ -858,12 +861,15 @@ static ASN1_GENERALIZEDTIME *TS_RESP_set_genTime_with_precision(
      * meet the rfc3161 requirement: "GeneralizedTime syntax can include
      * fraction-of-second details".
      */
-    p += BIO_snprintf(p, p_end - p,
+    n = snprintf(p, p_end - p,
         "%04d%02d%02d%02d%02d%02d",
         tm->tm_year + 1900, tm->tm_mon + 1, tm->tm_mday,
         tm->tm_hour, tm->tm_min, tm->tm_sec);
+    if (n < 0 || n >= p_end - p)
+        goto err;
+    p += n;
     if (precision > 0) {
-        BIO_snprintf(p, 2 + precision, ".%06ld", usec);
+        snprintf(p, 2 + precision, ".%06ld", usec);
         p += strlen(p);
 
         /*

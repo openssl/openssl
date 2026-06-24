@@ -120,17 +120,6 @@
 #endif
 #include <string.h>
 #include <malloc.h>
-#if defined(_MSC_VER) && !defined(_WIN32_WCE) && !defined(_DLL) && defined(stdin)
-#if _MSC_VER >= 1300 && _MSC_VER < 1600
-#undef stdin
-#undef stdout
-#undef stderr
-FILE *__iob_func(void);
-#define stdin (&__iob_func()[0])
-#define stdout (&__iob_func()[1])
-#define stderr (&__iob_func()[2])
-#endif
-#endif
 #endif
 
 #include <io.h>
@@ -154,8 +143,8 @@ FILE *__iob_func(void);
 #define DEFAULT_HOME "C:"
 #endif
 
-/* Avoid Visual Studio 13 GetVersion deprecated problems */
-#if defined(_MSC_VER) && _MSC_VER >= 1800
+/* Avoid GetVersion deprecation warnings on MSVC */
+#if defined(_MSC_VER)
 #define check_winnt() (1)
 #define check_win_minplat(x) (1)
 #else
@@ -232,7 +221,7 @@ FILE *__iob_func(void);
 /***********************************************/
 
 #if defined(OPENSSL_SYS_WINDOWS)
-#if defined(_MSC_VER) && (_MSC_VER >= 1310) && !defined(_WIN32_WCE)
+#if defined(_MSC_VER) && !defined(_WIN32_WCE)
 #define open _open
 #define fdopen _fdopen
 #define close _close

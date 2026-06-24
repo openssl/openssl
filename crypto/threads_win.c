@@ -107,7 +107,7 @@ struct rcu_lock_st {
     /* signal to wake threads waiting on prior_lock */
     CRYPTO_CONDVAR *prior_signal;
 
-    /* lock used without OSSL_USE_INTERLOCKEDOR64: VS2010 x86, mingw32 */
+    /* lock used without OSSL_USE_INTERLOCKEDOR64: 32-bit MinGW */
     CRYPTO_RWLOCK *rw_lock;
 };
 
