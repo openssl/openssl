@@ -812,8 +812,75 @@ DEF_SCRIPT(script_10, "Shutdown test")
     OP_EXPECT_CONN_CLOSE_INFO(S, 0, 1, 1);
 }
 
-DEF_SCRIPT(script_11, "place holder for multistrem script_11")
+DEF_FUNC(accept_stream_c_slot0_11)
 {
+    int ok = 0;
+    SSL *conn, *stream;
+
+    conn = RADIX_PROCESS_get_ssl(RP(), "C");
+    if (!TEST_ptr(conn))
+        goto err;
+
+    stream = SSL_accept_stream(conn, SSL_ACCEPT_STREAM_NO_BLOCK);
+    if (stream == NULL)
+        F_SPIN_AGAIN();
+
+    RT()->slot[0] = NULL;
+    RT()->ssl[0] = stream;
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(free_slot0_stream_11)
+{
+    SSL_free(RT()->ssl[0]);
+    RT()->ssl[0] = NULL;
+    RT()->slot[0] = NULL;
+    return 1;
+}
+
+/* 11. Many threads accepted on the same client connection */
+DEF_SCRIPT(script_11_child,
+    "child: accept stream from C, read, sleep, expect FIN")
+{
+    OP_FUNC(accept_stream_c_slot0_11);
+    OP_PUSH_BUFP("foo", 3);
+    OP_FUNC(hf_read_expect);
+    OP_SLEEP(10);
+    OP_FUNC(hf_expect_fin);
+    OP_FUNC(free_slot0_stream_11);
+}
+
+DEF_SCRIPT(script_11, "Many threads accepted on same client connection")
+{
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    for (i = 0; i < 5; ++i)
+        OP_SPAWN_THREAD(script_11_child);
+
+    OP_NEW_STREAM(S, Sa, 0 /* bidirectional */);
+    OP_WRITE(Sa, "foo", 3);
+    OP_CONCLUDE(Sa);
+
+    OP_NEW_STREAM(S, Sb, 0 /* bidirectional */);
+    OP_WRITE(Sb, "foo", 3);
+    OP_CONCLUDE(Sb);
+
+    OP_NEW_STREAM(S, Sc, 0 /* bidirectional */);
+    OP_WRITE(Sc, "foo", 3);
+    OP_CONCLUDE(Sc);
+
+    OP_NEW_STREAM(S, Sd, 0 /* bidirectional */);
+    OP_WRITE(Sd, "foo", 3);
+    OP_CONCLUDE(Sd);
+
+    OP_NEW_STREAM(S, Se, 0 /* bidirectional */);
+    OP_WRITE(Se, "foo", 3);
+    OP_CONCLUDE(Se);
 }
 
 DEF_SCRIPT(script_12, "place holder for multistrem script_12")

@@ -2154,42 +2154,8 @@ static const struct script_op script_10[] = {
 };
 
 /* 11. Many threads accepted on the same client connection */
-static const struct script_op script_11_child[] = {
-    OP_C_ACCEPT_STREAM_WAIT(a),
-    OP_C_READ_EXPECT(a, "foo", 3),
-    OP_SLEEP(10),
-    OP_C_EXPECT_FIN(a),
-
-    OP_END
-};
-
 static const struct script_op script_11[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_NEW_THREAD(5, script_11_child),
-
-    OP_S_NEW_STREAM_BIDI(a, ANY_ID),
-    OP_S_WRITE(a, "foo", 3),
-    OP_S_CONCLUDE(a),
-
-    OP_S_NEW_STREAM_BIDI(b, ANY_ID),
-    OP_S_WRITE(b, "foo", 3),
-    OP_S_CONCLUDE(b),
-
-    OP_S_NEW_STREAM_BIDI(c, ANY_ID),
-    OP_S_WRITE(c, "foo", 3),
-    OP_S_CONCLUDE(c),
-
-    OP_S_NEW_STREAM_BIDI(d, ANY_ID),
-    OP_S_WRITE(d, "foo", 3),
-    OP_S_CONCLUDE(d),
-
-    OP_S_NEW_STREAM_BIDI(e, ANY_ID),
-    OP_S_WRITE(e, "foo", 3),
-    OP_S_CONCLUDE(e),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

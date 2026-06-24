@@ -435,23 +435,37 @@ static void RADIX_PROCESS_cleanup(RADIX_PROCESS *rp)
 static RADIX_OBJ *RADIX_PROCESS_get_obj(RADIX_PROCESS *rp, const char *name)
 {
     RADIX_OBJ key;
+    RADIX_OBJ *obj;
 
     key.name = (char *)name;
-    return lh_RADIX_OBJ_retrieve(rp->objs, &key);
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_lock(rp->gm);
+#endif
+    obj = lh_RADIX_OBJ_retrieve(rp->objs, &key);
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_unlock(rp->gm);
+#endif
+    return obj;
 }
 
 static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
     const char *name, RADIX_OBJ *obj)
 {
+    RADIX_OBJ key;
     RADIX_OBJ *existing;
+    int ok = 0;
 
     if (obj != NULL && !TEST_false(obj->registered))
         return 0;
 
-    existing = RADIX_PROCESS_get_obj(rp, name);
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_lock(rp->gm);
+#endif
+    key.name = (char *)name;
+    existing = lh_RADIX_OBJ_retrieve(rp->objs, &key);
     if (existing != NULL && obj != existing) {
         if (!TEST_true(existing->registered))
-            return 0;
+            goto err;
 
         lh_RADIX_OBJ_delete(rp->objs, existing);
         existing->registered = 0;
@@ -463,7 +477,12 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
         obj->registered = 1;
     }
 
-    return 1;
+    ok = 1;
+err:
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_unlock(rp->gm);
+#endif
+    return ok;
 }
 
 static int RADIX_PROCESS_set_ssl(RADIX_PROCESS *rp, const char *name, SSL *ssl)
@@ -733,6 +752,7 @@ static int RADIX_THREAD_worker_run(RADIX_THREAD *rt)
     cfg.debug_bio = rt->debug_bio;
     if (!TEST_true(bindings_adjust_terp_config(&cfg)))
         goto err;
+    cfg.per_op_cb = NULL;
 
     if (!TERP_run(rt->child_script_info, &cfg))
         goto err;
