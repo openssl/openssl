@@ -1099,7 +1099,7 @@ err:
 
 #define OP_STREAM_RESET(name, error_code) \
     (OP_SELECT_SSL(0, name),              \
-        OP_PUSH_U64(flags),               \
+        OP_PUSH_PZ(#name),                \
         OP_PUSH_U64(error_code),          \
         OP_FUNC(hf_stream_reset))
 

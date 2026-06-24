@@ -765,6 +765,30 @@ DEF_SCRIPT(check_ctx_cbks, "Check new_pending and client_hello callbacks")
     OP_FUNC(check_pending);
 }
 
+DEF_FUNC(check_stream_reset_5)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t aec = 0;
+    int state;
+
+    REQUIRE_SSL(ssl);
+
+    state = SSL_get_stream_read_state(ssl);
+    if (state != SSL_STREAM_STATE_RESET_REMOTE)
+        F_SPIN_AGAIN();
+
+    if (!TEST_true(SSL_get_stream_read_error_code(ssl, &aec)))
+        goto err;
+
+    if (!TEST_uint64_t_eq(aec, 42))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 /*
  * script_5 - script_106 are place holders for tests we
  * currently keep in test/quic_multistream_test.c.
@@ -778,8 +802,29 @@ DEF_SCRIPT(check_ctx_cbks, "Check new_pending and client_hello callbacks")
  * The scaffolding here hopes to avoid conflicts in 'scripts'
  * array below when more PRs will be in flight.
  */
-DEF_SCRIPT(script_5, "place holder for multistram script_5")
+
+/* 5. Test stream reset functionality */
+DEF_SCRIPT(script_5, "Test stream reset functionality")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_NEW_STREAM(C, Cb, 0 /* bidirectional */);
+
+    OP_WRITE(Ca, "apple", 5);
+    OP_STREAM_RESET(Ca, 42);
+
+    OP_WRITE(Cb, "strawberry", 10);
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0); /* first stream = Ca */
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0); /* second stream = Cb */
+
+    /* Reset disrupts read of already-sent data */
+    OP_SELECT_SSL(0, Sa);
+    OP_FUNC(check_stream_reset_5);
+
+    OP_READ_EXPECT(Sb, "strawberry", 10);
 }
 
 DEF_SCRIPT(script_6, "place holder for multistram script_6")
