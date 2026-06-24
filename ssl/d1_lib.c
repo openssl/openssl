@@ -1372,16 +1372,73 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     /* Create new pending connection if needed */
     if (conn_ssl == NULL) {
         /*
-         * TODO: DTLS1.3 Look into bounding the number of connections
-         * that can be created at a time.
+         * Reject before allocating anything if we have reached the pending
+         * connection limit. The LHASH item count is O(1), and this check does
+         * not need a conn_ssl, so performing it first avoids creating and then
+         * immediately freeing a connection when we are at capacity.
          */
+        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns)
+            goto release;
+
         conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
         if (conn_ssl == NULL)
             goto release;
 
+        /*
+         * Register the connection in pending_conns before running the
+         * application callback. This is to avoid a race condition where
+         * another thread grabs the lock and tries to register a connection
+         * for this address.
+         */
         if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
             dtls_listener_connection_free(conn_ssl);
             goto release;
+        }
+
+        /*
+         * Give the application a chance to decorate or veto the new
+         * pending connection via SSL_CTX_set_new_pending_conn_cb().
+         *
+         * A return value of 0 from the callback means "discard this
+         * connection". On a non-zero return there is nothing more to do here:
+         * we already registered the connection above.
+         */
+        if (dl->ssl.ctx->new_pending_conn_cb != NULL) {
+            int keep;
+
+            sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
+            if (sc == NULL || sc->d1 == NULL) {
+                ossl_dgram_conn_lookup_unregister(dl->pending_conns, &urxe->peer);
+                dtls_listener_connection_free(conn_ssl);
+                goto release;
+            }
+
+            /*
+             * Mark the connection being_driven while the mutex is dropped for
+             * the callback. This keeps the tick loop away from this connection.
+             */
+            sc->d1->being_driven = 1;
+            ossl_crypto_mutex_unlock(dl->mutex);
+            keep = dl->ssl.ctx->new_pending_conn_cb(dl->ssl.ctx, conn_ssl,
+                dl->ssl.ctx->new_pending_conn_arg);
+            ossl_crypto_mutex_lock(dl->mutex);
+
+            if (!keep) {
+                /*
+                 * The pending callback doesn't want this connection, so
+                 * unregister and free it. While the mutex was dropped a
+                 * concurrent handler may have found this same connection and
+                 * injected datagrams into its RX queue; freeing releases them
+                 * back to the demux via ossl_dtls_rx_free(), so nothing leaks.
+                 * being_driven kept the tick away, so the connection still
+                 * holds only its single reference and the free is safe.
+                 */
+                ossl_dgram_conn_lookup_unregister(dl->pending_conns, &urxe->peer);
+                dtls_listener_connection_free(conn_ssl);
+                goto release;
+            }
+
+            sc->d1->being_driven = 0;
         }
     }
 
@@ -1763,6 +1820,16 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     /* Default timeout for pending connections: 30 seconds */
     dl->pending_timeout = ossl_seconds2time(30);
+
+    /* Default maximum pending connections */
+    dl->max_pending_conns = DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS;
+
+    /*
+     * The listener owns its receive-buffer size independent of any
+     * network BIO's send-path MTU.
+     */
+    dl->max_dgram_size = DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE;
+    ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
 
     /* Handle cookie validation flags */
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
@@ -2436,16 +2503,27 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 
     dl = (DTLS_LISTENER *)s;
 
+    ossl_crypto_mutex_lock(dl->mutex);
+
+    /*
+     * The demux receive-buffer size is the listener's configured maximum
+     * datagram size, independent of the network BIO's path MTU. Size the demux
+     * to that value for whatever BIO is attached.
+     */
     ossl_dgram_demux_set_bio(dl->demux, bio);
+    ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
 
     old_rbio = dl->net_rbio;
 
     /* No change - nothing to do */
     if (old_rbio == bio) {
+        ossl_crypto_mutex_unlock(dl->mutex);
         return;
     }
 
     dl->net_rbio = bio;
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_rbio);
@@ -2665,49 +2743,183 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
 }
 
 /*
- * Set the pending connection timeout for the DTLS listener.
+ * ossl_dtls_get_value_uint - read a tunable value from a DTLS listener.
  *
- * Connections that haven't completed their handshake within this duration
- * are considered stale and will be cleaned up. This helps prevent resource
- * exhaustion from abandoned or slow connections.
+ * DTLS-side implementation backing SSL_get_value_uint(3) when the target
+ * SSL object is a DTLS listener created by SSL_new_listener().
+ *
+ * Supported (id) values:
+ *   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS
+ *       Current cap on the number of pending (handshake-in-progress)
+ *       connections the listener will track.
+ *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
+ *       Current reap timeout for pending connections, in milliseconds.
+ *       UINT64_MAX means "infinite / disabled".
+ *   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE
+ *       Maximum size in bytes of a datagram the listener will receive.
+ *
+ * Only SSL_VALUE_CLASS_GENERIC is accepted for class_; other
+ * classes are rejected with a return of 0
  *
  * Parameters:
- *   s       - The DTLS listener SSL object
- *   timeout - The timeout duration. Use ossl_time_infinite() to disable timeout.
- *             Use ossl_time_zero() or a negative duration for invalid input (returns 0).
+ *   s      - listener SSL. Must satisfy IS_DTLS_LISTENER(s).
+ *   class_ - value class; must be SSL_VALUE_CLASS_GENERIC.
+ *   id     - one of the SSL_VALUE_DTLS_LISTENER_* ids listed above.
+ *   value  - out-parameter receiving the current value. Must be non-NULL.
  *
  * Returns:
- *   1 on success
- *   0 on failure (NULL pointer, not a listener, or invalid timeout)
+ *   1 on success (*value populated).
+ *   0 on failure (unsupported id, wrong class, NULL value, or not a
+ *     DTLS listener).
  */
-int ossl_dtls_listener_set_pending_timeout(SSL *s, OSSL_TIME timeout)
+int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *value)
 {
     DTLS_LISTENER *dl;
+    int ret = 1;
 
-    if (!IS_DTLS_LISTENER(s))
+    if (!IS_DTLS_LISTENER(s)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_LISTENER_USE_ONLY);
         return 0;
+    }
+    if (class_ != SSL_VALUE_CLASS_GENERIC) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS);
+        return 0;
+    }
+    if (value == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     dl = (DTLS_LISTENER *)s;
-    dl->pending_timeout = timeout;
 
-    return 1;
+    ossl_crypto_mutex_lock(dl->mutex);
+
+    switch (id) {
+    case SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS:
+        *value = (uint64_t)dl->max_pending_conns;
+        break;
+    case SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT:
+        if (ossl_time_is_infinite(dl->pending_timeout))
+            *value = UINT64_MAX;
+        else
+            *value = ossl_time2ms(dl->pending_timeout);
+        break;
+    case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
+        *value = (uint64_t)dl->max_dgram_size;
+        break;
+    default:
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
+        ret = 0;
+        break;
+    }
+
+    ossl_crypto_mutex_unlock(dl->mutex);
+    return ret;
 }
 
 /*
- * Get the current pending connection timeout for the DTLS listener.
+ * ossl_dtls_set_value_uint - write a tunable value on a DTLS listener.
+ *
+ * DTLS-side implementation backing SSL_set_value_uint(3) when the target
+ * SSL object is a DTLS listener created by SSL_new_listener().
+ *
+ * Supported (id) values -- see ossl_dtls_get_value_uint() above.
+ *
+ * Per-id policy:
+ *   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS
+ *       value == 0 is rejected (a zero cap would reject every incoming
+ *       connection). Values larger than SIZE_MAX are clamped to SIZE_MAX
+ *       to avoid silent truncation on 32-bit builds.
+ *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
+ *       Interpreted as milliseconds. value == 0 is rejected. UINT64_MAX is
+ *       treated as "infinite / disabled".
+ *   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE
+ *       Clamped to the maximum UDP payload (DTLS_LISTENER_MAX_DGRAM_SIZE);
+ *       values below the demux minimum receive size are rejected.
+ *
+ * Only SSL_VALUE_CLASS_GENERIC is accepted for class_.
+ *
+ * Parameters:
+ *   s      - listener SSL. Must satisfy IS_DTLS_LISTENER(s).
+ *   class_ - value class; must be SSL_VALUE_CLASS_GENERIC.
+ *   id     - one of the SSL_VALUE_DTLS_LISTENER_* ids.
+ *   value  - new value to store, in the units documented per id.
  *
  * Returns:
- *   The current timeout duration, or ossl_time_zero() if s is NULL or not a listener.
+ *   1 on success.
+ *   0 on failure (unsupported id, wrong class, not a DTLS listener,
+ *     or policy rejection such as 0 on the cap).
  */
-OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s)
+int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t value)
 {
-    const DTLS_LISTENER *dl;
+    DTLS_LISTENER *dl;
+    int ret = 1;
 
-    if (!IS_DTLS_LISTENER(s))
-        return ossl_time_zero();
+    if (!IS_DTLS_LISTENER(s)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_LISTENER_USE_ONLY);
+        return 0;
+    }
+    if (class_ != SSL_VALUE_CLASS_GENERIC) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS);
+        return 0;
+    }
 
-    dl = (const DTLS_LISTENER *)s;
-    return dl->pending_timeout;
+    dl = (DTLS_LISTENER *)s;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+
+    switch (id) {
+    case SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS:
+        if (value == 0) {
+            /* A zero cap would reject every connection (num_items >= 0). */
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            ret = 0;
+            break;
+        }
+        /* Clamp to SIZE_MAX to prevent silent truncation on 32-bit. */
+        dl->max_pending_conns = (value > SIZE_MAX) ? SIZE_MAX : (size_t)value;
+        break;
+    case SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT:
+        if (value == 0) {
+            /*
+             * A zero timeout will remove all pending connections on the next
+             * tick, before the handshake could complete.
+             */
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            ret = 0;
+            break;
+        }
+        /*
+         * ossl_ms2time() scales by OSSL_TIME_MS (10^6 ns/ms), so any value
+         * above UINT64_MAX / OSSL_TIME_MS would overflow the product and
+         * silently wrap to a tiny timeout. Treat those (which includes the
+         * UINT64_MAX "infinite" sentinel) as an infinite timeout.
+         */
+        if (value > UINT64_MAX / OSSL_TIME_MS)
+            dl->pending_timeout = ossl_time_infinite();
+        else
+            dl->pending_timeout = ossl_ms2time(value);
+        break;
+    case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
+        /* Nothing larger than the maximum UDP payload can ever arrive. */
+        if (value > DTLS_LISTENER_MAX_DGRAM_SIZE)
+            value = DTLS_LISTENER_MAX_DGRAM_SIZE;
+        /* set_mtu returns 0 (rejecting) for values below the demux minimum. */
+        if (!ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)value)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            ret = 0;
+        } else {
+            dl->max_dgram_size = (size_t)value;
+        }
+        break;
+    default:
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
+        ret = 0;
+        break;
+    }
+
+    ossl_crypto_mutex_unlock(dl->mutex);
+    return ret;
 }
 
 void ossl_dtls_listener_enter_blocking_section(SSL *s)
