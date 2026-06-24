@@ -1079,9 +1079,9 @@ err:
         OP_FUNC(hf_read_fail))
 
 #define OP_READ_FAIL_WAIT(name) \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(1),                                            \
-     OP_FUNC(hf_read_fail)
+    (OP_SELECT_SSL(0, name),    \
+        OP_PUSH_U64(1),         \
+        OP_FUNC(hf_read_fail))
 
 #define OP_POP_ERR() \
     OP_FUNC(hf_pop_err)
