@@ -1102,6 +1102,7 @@ end:
     return testresult;
 }
 
+/* Confirm that we can create a connections using DTLSv1_listen() */
 static int test_listen(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
