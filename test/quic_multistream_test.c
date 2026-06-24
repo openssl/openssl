@@ -373,18 +373,6 @@ static void s_unlock(struct helper *h, struct helper_local *hl);
 #define ACQUIRE_S() s_lock(h, hl)
 #define ACQUIRE_S_NOHL() s_lock(h, NULL)
 
-static int check_stream_stopped(struct helper *h, struct helper_local *hl)
-{
-    uint64_t stream_id = hl->check_op->arg2;
-
-    if (!ossl_quic_tserver_stream_has_peer_stop_sending(ACQUIRE_S(), stream_id, NULL)) {
-        h->check_spin_again = 1;
-        return 0;
-    }
-
-    return 1;
-}
-
 static int override_key_update(struct helper *h, struct helper_local *hl)
 {
     QUIC_CHANNEL *ch = ossl_quic_conn_get_channel(h->c_conn);
@@ -2057,19 +2045,7 @@ static const struct script_op script_5[] = {
 
 /* 6. Test STOP_SENDING functionality */
 static const struct script_op script_6[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-    OP_S_NEW_STREAM_BIDI(a, S_BIDI_ID(0)),
-    OP_S_WRITE(a, "apple", 5),
-
-    OP_C_ACCEPT_STREAM_WAIT(a),
-    OP_C_FREE_STREAM(a),
-    OP_C_ACCEPT_STREAM_NONE(),
-
-    OP_CHECK(check_stream_stopped, S_BIDI_ID(0)),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
