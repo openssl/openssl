@@ -456,7 +456,6 @@ int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     uint8_t *type, const unsigned char **data, size_t *datalen,
     uint16_t *epoch, unsigned char *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
-int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
