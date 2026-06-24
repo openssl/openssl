@@ -22,8 +22,7 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
-#if defined(OPENSSL_SYS_WINCE)
-#elif defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WIN32)
 #elif defined(__wasi__)
 #define NO_SYSLOG
 #elif defined(OPENSSL_SYS_VMS)
