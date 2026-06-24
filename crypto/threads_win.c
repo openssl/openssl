@@ -536,7 +536,7 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
              * below completes prior to some writes in whatever the init()
              * callback routine above may do.  In this case, other threads
              * entering here may see unsynchronized data in whatever the init
-             * routine initalizes, leading to errneous behavior.
+             * routine initializes, leading to errneous behavior.
              *
              * We should Use InitOnceExecuteOnce here to implement this, but
              * doing so requires that we modify the definition of the
