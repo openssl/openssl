@@ -507,4 +507,15 @@ void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup)
     lookup->methods->free(lookup);
 }
 
+size_t ossl_dgram_conn_lookup_num_items(const DGRAM_CONN_LOOKUP *lookup)
+{
+    ADDR_LOOKUP_DATA *data;
+
+    if (lookup == NULL || lookup->impl_data == NULL)
+        return 0;
+
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
+    return lh_DGRAM_CONN_ENTRY_num_items(data->htable);
+}
+
 #endif /* OPENSSL_NO_DTLS */

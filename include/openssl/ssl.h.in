@@ -2332,6 +2332,8 @@ __owur size_t SSL_get_accept_connection_queue_len(SSL *ssl);
 __owur int SSL_listen(SSL *ssl);
 __owur int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms);
 __owur uint64_t SSL_listener_get_pending_timeout(const SSL *ssl);
+__owur int SSL_listener_set_max_pending_conns(SSL *ssl, size_t max_conns);
+__owur size_t SSL_listener_get_max_pending_conns(const SSL *ssl);
 
 __owur int SSL_is_domain(SSL *s);
 __owur SSL *SSL_get0_domain(SSL *s);

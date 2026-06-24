@@ -6,6 +6,7 @@ SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
 SSL_listen, SSL_listen_ex,
 SSL_accept_connection, SSL_get_accept_connection_queue_len,
 SSL_listener_set_pending_timeout, SSL_listener_get_pending_timeout,
+SSL_listener_set_max_pending_conns, SSL_listener_get_max_pending_conns,
 SSL_new_from_listener,
 SSL_ACCEPT_CONNECTION_NO_BLOCK,
 SSL_LISTENER_FLAG_NO_VALIDATE,
@@ -40,6 +41,9 @@ acceptance
 
  int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms);
  uint64_t SSL_listener_get_pending_timeout(const SSL *ssl);
+
+ int SSL_listener_set_max_pending_conns(SSL *ssl, size_t max_conns);
+ size_t SSL_listener_get_max_pending_conns(const SSL *ssl);
 
  SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);
 
@@ -191,6 +195,21 @@ seconds. Returns 1 on success, 0 on failure.
 The SSL_listener_get_pending_timeout() function returns the current pending
 connection timeout in milliseconds for a DTLS listener. Returns B<UINT64_MAX>
 if timeout checking is disabled, or 0 if the SSL object is not a DTLS listener.
+
+The SSL_listener_set_max_pending_conns() function sets the maximum number of
+pending connections allowed on a DTLS listener. Pending connections are those
+that have begun the handshake but have not yet completed it. When this limit
+is reached, new connection attempts will be silently rejected to prevent
+resource exhaustion from connection floods. The I<max_conns> parameter
+specifies the maximum number of pending connections and must be greater than
+zero; setting I<max_conns> to 0 will fail and return 0. Unlike the pending
+timeout, this limit cannot be disabled to prevent Denial of Service attacks
+where an attacker opens many connections without completing handshakes. The
+default limit is 1000 pending connections. Returns 1 on success, 0 on failure.
+
+The SSL_listener_get_max_pending_conns() function returns the current maximum
+pending connections limit for a DTLS listener. Returns 0 if the SSL object is
+not a DTLS listener.
 
 Currently, listener SSL objects are supported for QUIC server usage via
 L<OSSL_QUIC_server_method(3)>, QUIC client-only usage via
@@ -365,6 +384,12 @@ SSL_listener_get_pending_timeout() returns the timeout in milliseconds,
 B<UINT64_MAX> if timeout checking is disabled, or 0 if the SSL object is not a
 DTLS listener.
 
+SSL_listener_set_max_pending_conns() returns 1 on success, or 0 on failure
+(if the SSL object is not a DTLS listener or if I<max_conns> is 0).
+
+SSL_listener_get_max_pending_conns() returns the maximum pending connections
+limit, or 0 if the SSL object is not a DTLS listener.
+
 SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
@@ -414,6 +439,9 @@ SSL_listen_ex() was added in OpenSSL 4.0.
 DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR>,
 B<SSL_LISTENER_FLAG_REQUIRE_HRR> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 flags) was added in OpenSSL 4.1.
+
+SSL_listener_set_max_pending_conns() and SSL_listener_get_max_pending_conns()
+were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
