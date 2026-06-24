@@ -945,8 +945,38 @@ DEF_SCRIPT(script_12, "Many threads initiated on same client connection")
     OP_EXPECT_FIN(Se);
 }
 
-DEF_SCRIPT(script_13, "place holder for multistrem script_13")
+/* 13. Many threads accepted on the same client connection (stress test) */
+DEF_SCRIPT(script_13_child,
+    "child: 10x accept stream from C, read, expect FIN, free")
 {
+    size_t i;
+
+    for (i = 0; i < 10; ++i) {
+        OP_FUNC(accept_stream_c_slot0_11);
+        OP_PUSH_BUFP("foo", 3);
+        OP_FUNC(hf_read_expect);
+        OP_FUNC(hf_expect_fin);
+        OP_FUNC(free_slot0_stream_11);
+    }
+}
+
+DEF_SCRIPT(script_13,
+    "Many threads accepted on same client connection (stress test)")
+{
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    for (i = 0; i < 5; ++i)
+        OP_SPAWN_THREAD(script_13_child);
+
+    for (i = 0; i < 50; ++i) {
+        OP_NEW_STREAM(S, Sa, 0 /* bidirectional */);
+        OP_WRITE(Sa, "foo", 3);
+        OP_CONCLUDE(Sa);
+        OP_UNBIND(Sa);
+    }
 }
 
 DEF_SCRIPT(script_14, "place holder for multistrem script_14")
