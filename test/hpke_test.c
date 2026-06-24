@@ -1181,10 +1181,10 @@ end:
 static int test_hpke_suite_strs(void)
 {
     int overallresult = 1;
-    int kemind = 0;
-    int kdfind = 0;
-    int aeadind = 0;
-    int sind = 0;
+    size_t kemind = 0;
+    size_t kdfind = 0;
+    size_t aeadind = 0;
+    size_t sind = 0;
     char sstr[128];
     OSSL_HPKE_SUITE stirred;
     char giant[2048];
@@ -1211,7 +1211,7 @@ static int test_hpke_suite_strs(void)
                 &stirred))) {
             if (verbose)
                 TEST_note("OSSL_HPKE_str2suite didn't fail for bogus[%d]:%s",
-                    sind, bogus_suite_strs[sind]);
+                    (int)sind, bogus_suite_strs[sind]);
             overallresult = 0;
         }
     }
@@ -2062,7 +2062,6 @@ end:
     OSSL_HPKE_CTX_free(rctx);
     return erv;
 }
-
 
 typedef enum OPTION_choice {
     OPT_ERR = -1,
