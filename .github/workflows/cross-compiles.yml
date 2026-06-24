@@ -14,6 +14,10 @@ permissions:
 
 jobs:
   cross-compilation:
+    # Run the full test suite on push, and on pull requests labelled with
+    # 'extended tests'.  Other pull requests only run the EVP tests.
+    env:
+      EXTENDED: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'extended tests') }}
     strategy:
       fail-fast: false
       matrix:
@@ -211,19 +215,19 @@ jobs:
          cat /proc/cpuinfo
          QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh version -c
     - name: make all tests
-      if: github.event_name == 'push' && matrix.platform.tests == ''
+      if: env.EXTENDED == 'true' && matrix.platform.tests == ''
       run: |
         .github/workflows/make-test \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: env.EXTENDED == 'true' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      if: env.EXTENDED != 'true' && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \
