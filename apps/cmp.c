@@ -3706,9 +3706,13 @@ static int handle_opts_upfront(int argc, char **argv)
                 opt_section = argv[++i];
             else if (strcmp(argv[i] + 1,
                          cmp_options[OPT_VERBOSITY - OPT_HELP].name)
-                    == 0
-                && !set_verbosity(atoi(argv[++i])))
-                return 0;
+                == 0) {
+                int level;
+
+                ++i;
+                if (!opt_int(argv[i], &level) || !set_verbosity(level))
+                    return 0;
+            }
         }
     }
     if (opt_section[0] == '\0') /* empty string */

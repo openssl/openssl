@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <openssl/e_os2.h>
 #include "internal/nelem.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
@@ -1520,7 +1521,8 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTU:
 #ifndef OPENSSL_NO_DTLS
-            socket_mtu = atol(opt_arg());
+            if (!opt_long(opt_arg(), &socket_mtu))
+                goto opthelp;
 #endif
             break;
         case OPT_FALLBACKSCSV:
@@ -1625,7 +1627,20 @@ int s_client_main(int argc, char **argv)
             len = (int)strlen(p);
             for (start = 0, i = 0; i <= len; ++i) {
                 if (i == len || p[i] == ',') {
-                    serverinfo_types[serverinfo_count] = atoi(p + start);
+                    char *end;
+                    unsigned long ul;
+
+                    /*
+                     * Parse only the current comma-separated component.
+                     * OPENSSL_strtoul() with an endptr consumes the leading
+                     * digits; we require it to stop exactly at the delimiter
+                     * (or NUL) and to fit in an unsigned short.
+                     */
+                    if (!OPENSSL_strtoul(p + start, &end, 10, &ul)
+                        || end != p + i
+                        || ul > USHRT_MAX)
+                        goto opthelp;
+                    serverinfo_types[serverinfo_count] = (unsigned short)ul;
                     if (++serverinfo_count == MAX_SI_TYPES)
                         break;
                     start = i + 1;

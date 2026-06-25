@@ -451,9 +451,19 @@ static int wait_random_seeded(void)
              * this alternative but essentially identical source moot.
              */
             if (uname(&un) == 0) {
-                kernel[0] = atoi(un.release);
+                int val;
+                char *end;
+
+                kernel[0] = (ossl_strtoint(un.release, &end, 10, &val)
+                                && (*end == '.' || *end == '\0'))
+                    ? val
+                    : 0;
                 p = strchr(un.release, '.');
-                kernel[1] = p == NULL ? 0 : atoi(p + 1);
+                kernel[1] = (p != NULL
+                                && ossl_strtoint(p + 1, &end, 10, &val)
+                                && (*end == '.' || *end == '\0'))
+                    ? val
+                    : 0;
                 if (kernel[0] > kernel_version[0]
                     || (kernel[0] == kernel_version[0]
                         && kernel[1] >= kernel_version[1])) {

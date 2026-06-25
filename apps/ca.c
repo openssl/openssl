@@ -484,13 +484,16 @@ int ca_main(int argc, char **argv)
             crl_nextupdate = opt_arg();
             break;
         case OPT_CRLDAYS:
-            crldays = atol(opt_arg());
+            if (!opt_long(opt_arg(), &crldays))
+                goto opthelp;
             break;
         case OPT_CRLHOURS:
-            crlhours = atol(opt_arg());
+            if (!opt_long(opt_arg(), &crlhours))
+                goto opthelp;
             break;
         case OPT_CRLSEC:
-            crlsec = atol(opt_arg());
+            if (!opt_long(opt_arg(), &crlsec))
+                goto opthelp;
             break;
         case OPT_INFILES:
             req = 1;
