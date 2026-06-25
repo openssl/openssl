@@ -72,8 +72,58 @@ err:
     return testresult;
 }
 
+static int test_srtm_new_mfail(void)
+{
+    QUIC_SRTM *srtm;
+
+    MFAIL_start();
+    srtm = ossl_quic_srtm_new(NULL, NULL);
+    MFAIL_end();
+
+    ossl_quic_srtm_free(srtm);
+    return srtm != NULL;
+}
+
+static int test_srtm_ops_mfail(void)
+{
+    int testresult = 0;
+    QUIC_SRTM *srtm;
+    void *opaque = NULL;
+    uint64_t seq_num = 0;
+
+    if (!TEST_ptr(srtm = ossl_quic_srtm_new(NULL, NULL)))
+        goto err;
+
+    MFAIL_start();
+
+    if (!ossl_quic_srtm_add(srtm, ptrs + 0, 0, &token_1)
+        || !ossl_quic_srtm_add(srtm, ptrs + 0, 1, &token_1)
+        || !ossl_quic_srtm_add(srtm, ptrs + 0, 2, &token_1)
+        || !ossl_quic_srtm_add(srtm, ptrs + 1, 0, &token_1)
+        || !ossl_quic_srtm_add(srtm, ptrs + 2, 0, &token_2)
+        || !ossl_quic_srtm_add(srtm, ptrs + 3, 3, &token_2)
+        || !ossl_quic_srtm_remove(srtm, ptrs + 3, 3)
+        || !ossl_quic_srtm_lookup(srtm, &token_1, 0, &opaque, &seq_num)
+        || !ossl_quic_srtm_cull(srtm, ptrs + 0)
+        || !ossl_quic_srtm_lookup(srtm, &token_2, 0, &opaque, &seq_num)
+        || !ossl_quic_srtm_remove(srtm, ptrs + 2, 0))
+        goto err;
+
+    testresult = 1;
+err:
+    MFAIL_end();
+    ossl_quic_srtm_free(srtm);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_srtm);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    ADD_MFAIL_NO_CHECK_TEST(test_srtm_new_mfail);
+#else
+    ADD_MFAIL_TEST(test_srtm_new_mfail);
+#endif
+    ADD_MFAIL_TEST(test_srtm_ops_mfail);
     return 1;
 }
