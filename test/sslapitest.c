@@ -10601,7 +10601,6 @@ static int test_session_cache_overflow(int idx)
     SSL *serverssl = NULL, *clientssl = NULL;
     int testresult = 0;
     SSL_SESSION *sess = NULL;
-    int references;
 
 #ifdef OSSL_NO_USABLE_TLS1_3
     /* If no TLSv1.3 available then do nothing in this case */
@@ -10672,17 +10671,8 @@ static int test_session_cache_overflow(int idx)
      * The session we just negotiated may have been already removed from the
      * internal cache - but we will return it anyway from our external cache.
      */
-    get_sess_val = SSL_get_session(serverssl);
+    get_sess_val = SSL_get1_session(serverssl);
     if (!TEST_ptr(get_sess_val))
-        goto end;
-    /*
-     * Normally the session is also stored in the cache, thus we have more than
-     * one reference, but due to an out-of-memory error it can happen that this
-     * is the only reference, and in that case the SSL_free(serverssl) below
-     * would free the get_sess_val, causing a use-after-free error.
-     */
-    if (!TEST_true(CRYPTO_GET_REF(&get_sess_val->references, &references))
-        || !TEST_int_ge(references, 2))
         goto end;
     sess = SSL_get1_session(clientssl);
     if (!TEST_ptr(sess))
@@ -10707,6 +10697,7 @@ static int test_session_cache_overflow(int idx)
     testresult = 1;
 
 end:
+    SSL_SESSION_free(get_sess_val);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
