@@ -2003,11 +2003,13 @@ int SSL_COMP_add_compression_method(int id, COMP_METHOD *cm)
         return 1;
     }
 
-    comp = OPENSSL_malloc(sizeof(*comp));
+    comp = OPENSSL_zalloc(sizeof(*comp));
     if (comp == NULL)
         return 1;
 
     comp->id = id;
+    comp->method = cm;
+    comp->name = COMP_get_name(cm);
     if (sk_SSL_COMP_find(comp_methods, comp) >= 0) {
         OPENSSL_free(comp);
         ERR_raise(ERR_LIB_SSL, SSL_R_DUPLICATE_COMPRESSION_ID);
