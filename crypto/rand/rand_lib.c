@@ -383,10 +383,19 @@ int RAND_priv_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     if (dgbl == NULL)
         return 0;
 #ifndef FIPS_MODULE
-    if (dgbl->random_provider != NULL)
-        return ossl_provider_random_bytes(dgbl->random_provider,
-            OSSL_PROV_RANDOM_PRIVATE,
-            buf, num, strength);
+    {
+        OSSL_PROVIDER *prov;
+
+        if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+            return 0;
+        prov = dgbl->random_provider;
+        CRYPTO_THREAD_unlock(dgbl->lock);
+
+        if (prov != NULL)
+            return ossl_provider_random_bytes(prov,
+                OSSL_PROV_RANDOM_PRIVATE,
+                buf, num, strength);
+    }
 #endif /* !FIPS_MODULE */
     rand = rand_get0_private(ctx, dgbl);
     if (rand != NULL)
@@ -426,10 +435,19 @@ int RAND_bytes_ex(OSSL_LIB_CTX *ctx, unsigned char *buf, size_t num,
     if (dgbl == NULL)
         return 0;
 #ifndef FIPS_MODULE
-    if (dgbl->random_provider != NULL)
-        return ossl_provider_random_bytes(dgbl->random_provider,
-            OSSL_PROV_RANDOM_PUBLIC,
-            buf, num, strength);
+    {
+        OSSL_PROVIDER *prov;
+
+        if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+            return 0;
+        prov = dgbl->random_provider;
+        CRYPTO_THREAD_unlock(dgbl->lock);
+
+        if (prov != NULL)
+            return ossl_provider_random_bytes(prov,
+                OSSL_PROV_RANDOM_PUBLIC,
+                buf, num, strength);
+    }
 #endif /* !FIPS_MODULE */
 
     rand = rand_get0_public(ctx, dgbl);
@@ -983,8 +1001,15 @@ static int random_conf_init(CONF_IMODULE *md, const CONF *cnf)
                  * work as expected.
                  */
                 OSSL_PROVIDER_unload(prov);
-            } else if (!set_random_provider_name(dgbl, cval->value))
-                return 0;
+            } else {
+                int res;
+                if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+                    return 0;
+                res = set_random_provider_name(dgbl, cval->value);
+                CRYPTO_THREAD_unlock(dgbl->lock);
+                if (!res)
+                    return 0;
+            }
 #endif
         } else {
             ERR_raise_data(ERR_LIB_CRYPTO,
@@ -1046,20 +1071,29 @@ int RAND_set1_random_provider(OSSL_LIB_CTX *ctx, OSSL_PROVIDER *prov)
     if (dgbl == NULL)
         return 0;
 
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return 0;
+
     if (prov == NULL) {
         OPENSSL_free(dgbl->random_provider_name);
         dgbl->random_provider_name = NULL;
         dgbl->random_provider = NULL;
+        CRYPTO_THREAD_unlock(dgbl->lock);
         return 1;
     }
 
-    if (dgbl->random_provider == prov)
+    if (dgbl->random_provider == prov) {
+        CRYPTO_THREAD_unlock(dgbl->lock);
         return 1;
+    }
 
-    if (!set_random_provider_name(dgbl, OSSL_PROVIDER_get0_name(prov)))
+    if (!set_random_provider_name(dgbl, OSSL_PROVIDER_get0_name(prov))) {
+        CRYPTO_THREAD_unlock(dgbl->lock);
         return 0;
+    }
 
     dgbl->random_provider = prov;
+    CRYPTO_THREAD_unlock(dgbl->lock);
     return 1;
 }
 
@@ -1075,15 +1109,23 @@ int ossl_rand_check_random_provider_on_load(OSSL_LIB_CTX *ctx,
     if (dgbl == NULL)
         return 0;
 
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return 0;
+
     /* No random provider name specified, or one is installed already */
-    if (dgbl->random_provider_name == NULL || dgbl->random_provider != NULL)
+    if (dgbl->random_provider_name == NULL || dgbl->random_provider != NULL) {
+        CRYPTO_THREAD_unlock(dgbl->lock);
         return 1;
+    }
 
     /* Does this provider match the name we're using? */
-    if (strcmp(dgbl->random_provider_name, OSSL_PROVIDER_get0_name(prov)) != 0)
+    if (strcmp(dgbl->random_provider_name, OSSL_PROVIDER_get0_name(prov)) != 0) {
+        CRYPTO_THREAD_unlock(dgbl->lock);
         return 1;
+    }
 
     dgbl->random_provider = prov;
+    CRYPTO_THREAD_unlock(dgbl->lock);
     return 1;
 }
 
@@ -1099,8 +1141,12 @@ int ossl_rand_check_random_provider_on_unload(OSSL_LIB_CTX *ctx,
     if (dgbl == NULL)
         return 0;
 
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+        return 0;
     if (dgbl->random_provider == prov)
         dgbl->random_provider = NULL;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+
     return 1;
 }
 
