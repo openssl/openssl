@@ -449,8 +449,13 @@ static void dsa_free_key(void *key)
     DSA_free(key);
 }
 
+static void *d2i_DSAPrivateKey_thunk(void **a, const unsigned char **pp, long length)
+{
+    return (void *)d2i_DSAPrivateKey((DSA **)a, pp, length);
+}
+
 #define dsa_evp_type EVP_PKEY_DSA
-#define dsa_d2i_private_key (d2i_of_void *)d2i_DSAPrivateKey
+#define dsa_d2i_private_key (d2i_of_void *)d2i_DSAPrivateKey_thunk
 #define dsa_d2i_public_key (d2i_of_void *)d2i_DSAPublicKey
 #define dsa_d2i_key_params (d2i_of_void *)d2i_DSAparams
 #define dsa_free dsa_free_key
