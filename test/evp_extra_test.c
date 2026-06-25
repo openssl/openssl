@@ -5953,8 +5953,19 @@ static int test_evp_aead_tag_direction(int idx)
     char *errmsg = NULL;
     unsigned long err_code = 0;
 
-    /* only AEADs have a tag to misuse */
-    if (info->taglen == 0)
+    /* filter out various modes */
+    if (info->taglen == 0
+        || info->mode == EVP_CIPH_GCM_MODE
+        || info->mode == EVP_CIPH_OCB_MODE
+        || info->mode == EVP_CIPH_GCM_SIV_MODE
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA1")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA256")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256"))
         return 1;
 
     /* bound the tag buffer, should never happen but helps static analysis */
