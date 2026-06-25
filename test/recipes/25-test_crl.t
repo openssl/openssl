@@ -11,11 +11,12 @@ use strict;
 use warnings;
 
 use File::Spec;
+use File::Copy;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 10;
+plan tests => 11;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -50,6 +51,39 @@ ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "PEM",
             "-out", $out, "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
    0, 'Comparing utf8 output');
+
+# Verify a CRL's signature against its issuer certificate, supplied via
+# -CAfile, -CAstore and -CApath.
+subtest 'crl signature verification' => sub {
+    plan tests => 4;
+
+    my $crl = srctop_file("test/certs", "delta-crl-as-complete-delta.pem");
+    my $cacert = srctop_file("test/certs", "delta-crl-as-complete-ca.pem");
+
+    ok(run(app(["openssl", "crl", "-noout", "-in", $crl,
+                "-CAfile", $cacert])),
+       "verify CRL signature with -CAfile");
+
+    ok(run(app(["openssl", "crl", "-noout", "-in", $crl,
+                "-CAstore", $cacert])),
+       "verify CRL signature with -CAstore");
+
+    # -CApath needs a rehashed directory, which relies on the rehash command
+    # (not available on platforms without symlink support, e.g. Windows).
+    SKIP: {
+        skip "rehash is not available on this platform", 2
+            unless run(app(["openssl", "rehash", "-help"]));
+
+        my $capath = "crl_capath";
+        mkdir $capath;
+        copy($cacert, File::Spec->catfile($capath, "ca.pem"));
+        ok(run(app(["openssl", "rehash", $capath])),
+           "rehash the -CApath directory");
+        ok(run(app(["openssl", "crl", "-noout", "-in", $crl,
+                    "-CApath", $capath])),
+           "verify CRL signature with -CApath");
+    }
+};
 
 sub compare1stline {
     my ($cmdarray, $str) = @_;
