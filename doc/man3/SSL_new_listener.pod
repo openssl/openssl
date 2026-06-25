@@ -266,8 +266,8 @@ protection against amplification attacks for DTLS 1.3.
 
 Specifies that the DTLS listener will operate in single-threaded mode. When
 this flag is set, the listener and all connections accepted from it should
-only be used from a single thread. Single-threaded mode avoids the overhead
-of synchronization mechanisms and notifiers.
+only be used from a single thread at a time. Single-threaded mode avoids the
+overhead of synchronization mechanisms and notifiers.
 
 If this flag is not set, the listener initializes internal synchronization
 mechanisms that allow connections accepted from the listener to be safely

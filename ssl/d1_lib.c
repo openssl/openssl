@@ -1373,112 +1373,50 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     SSL *conn_ssl = NULL;
     SSL_CONNECTION *sc = NULL;
 
-    /*
-     * Check established connections first
-     */
-    conn_ssl = ossl_dtls_listener_find_established_conn(dl, urxe);
-    if (conn_ssl != NULL) {
-        sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL)
-            goto inject;
-
-        /* Fall through to release if injection failed */
-        goto release;
-    }
-
-    /*
-     * Check pending connections
-     */
     ossl_crypto_mutex_lock(dl->mutex);
-    conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
-    if (conn_ssl != NULL) {
-        sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-        if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
-            ossl_crypto_mutex_unlock(dl->mutex);
-            goto inject;
-        }
 
-        /* Fall through to release if injection failed */
-        ossl_crypto_mutex_unlock(dl->mutex);
-        goto release;
-    }
+    /* Check established connections first */
+    if (dl->established_conns != NULL)
+        conn_ssl = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
 
-    /*
-     * No existing connection so create a new pending connection.
-     * Note: We release the lock during connection creation since it may
-     * take time and doesn't need the lock. We re-acquire for registration.
-     */
-    ossl_crypto_mutex_unlock(dl->mutex);
-
-    /*
-     * TODO: DTLS1.3 Look into bounding the number of connections
-     * that can be created at a time.
-     */
-    conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
+    /* Check pending connections */
     if (conn_ssl == NULL)
-        goto release;
+        conn_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
 
-    sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
-    if (sc != NULL && sc->d1 != NULL && sc->d1->rx != NULL) {
-        SSL *existing_ssl;
-        SSL_CONNECTION *existing_sc;
-
-        ossl_crypto_mutex_lock(dl->mutex);
-
+    /* Create new pending connection if needed */
+    if (conn_ssl == NULL) {
         /*
-         * Re-check if another thread registered a connection while we were
-         * creating ours. This handles the race where multiple packets arrive
-         * simultaneously for the same new client.
+         * TODO: DTLS1.3 Look into bounding the number of connections
+         * that can be created at a time.
          */
-        existing_ssl = ossl_dgram_conn_lookup_find(dl->pending_conns, urxe);
-        if (existing_ssl != NULL) {
-            /*
-             * Another thread already registered a connection for this peer.
-             * Use the existing one and free our newly created connection.
-             */
-
-            /* Validate existing connection while still holding the mutex */
-            existing_sc = SSL_CONNECTION_FROM_SSL_ONLY(existing_ssl);
-            if (existing_sc != NULL && existing_sc->d1 != NULL
-                && existing_sc->d1->rx != NULL) {
-                sc = existing_sc;
-                ossl_crypto_mutex_unlock(dl->mutex);
-                dtls_listener_connection_free(conn_ssl);
-                goto inject;
-            }
-
-            /* Existing connection is invalid, release and fall through to release packet */
-            ossl_crypto_mutex_unlock(dl->mutex);
-            dtls_listener_connection_free(conn_ssl);
+        conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
+        if (conn_ssl == NULL)
             goto release;
-        }
 
         if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
-            ossl_crypto_mutex_unlock(dl->mutex);
             dtls_listener_connection_free(conn_ssl);
             goto release;
         }
-        ossl_crypto_mutex_unlock(dl->mutex);
-    } else {
-        dtls_listener_connection_free(conn_ssl);
-        goto release;
     }
 
-inject:
+    sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
+    if (sc == NULL || sc->d1 == NULL || sc->d1->rx == NULL)
+        goto release;
+
+    /* Inject packet into connection's URXE queue */
     ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
 
-    if (dl->have_notifier) {
-        ossl_crypto_mutex_lock(dl->mutex);
-        if (dl->cur_blocking_waiters > 0 && !dl->signalled_notifier) {
-            ossl_rio_notifier_signal(&dl->notifier);
-            dl->signalled_notifier = 1;
-        }
-        ossl_crypto_mutex_unlock(dl->mutex);
+    /* Signal notifier if needed */
+    if (dl->have_notifier && dl->cur_blocking_waiters > 0 && !dl->signalled_notifier) {
+        ossl_rio_notifier_signal(&dl->notifier);
+        dl->signalled_notifier = 1;
     }
 
+    ossl_crypto_mutex_unlock(dl->mutex);
     return;
 
 release:
+    ossl_crypto_mutex_unlock(dl->mutex);
     ossl_dgram_demux_release_urxe(dl->demux, urxe);
 }
 
@@ -2277,17 +2215,6 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         }
     }
 
-    /* Remove failed connections */
-    for (i = 0; i < sk_SSL_num(ctx.failed_conns); i++) {
-        ssl = sk_SSL_value(ctx.failed_conns, i);
-        sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-
-        if (sc != NULL && sc->d1 != NULL)
-            ossl_dgram_conn_lookup_unregister(dl->pending_conns, &sc->d1->peer_addr);
-
-        dtls_listener_connection_free(ssl);
-    }
-
     /* Clear being_driven flags and release references for all driven connections */
     for (i = 0; i < sk_SSL_num(ctx.to_drive); i++) {
         ssl = sk_SSL_value(ctx.to_drive, i);
@@ -2297,6 +2224,17 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
             sc->d1->being_driven = 0;
 
         SSL_free(ssl); /* Release reference from phase 1 */
+    }
+
+    /* Remove failed connections (after releasing refs so ref count is 1) */
+    for (i = 0; i < sk_SSL_num(ctx.failed_conns); i++) {
+        ssl = sk_SSL_value(ctx.failed_conns, i);
+        sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+        if (sc != NULL && sc->d1 != NULL)
+            ossl_dgram_conn_lookup_unregister(dl->pending_conns, &sc->d1->peer_addr);
+
+        dtls_listener_connection_free(ssl);
     }
 
     ossl_crypto_mutex_unlock(dl->mutex);
@@ -2337,7 +2275,9 @@ int ossl_dtls_tick(DTLS_LISTENER *dl)
 
     if (pump_ret == DGRAM_DEMUX_PUMP_RES_PERMANENT_FAIL) {
         /* Fatal BIO or allocation error */
+        ossl_crypto_mutex_lock(dl->mutex);
         dl->fatal = 1;
+        ossl_crypto_mutex_unlock(dl->mutex);
         return -1;
     }
 
@@ -2367,11 +2307,13 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
         return NULL;
 
     /* If a previous tick produced a fatal BIO error, do not try again. */
-    if (dl->fatal)
+    ossl_crypto_mutex_lock(dl->mutex);
+    if (dl->fatal) {
+        ossl_crypto_mutex_unlock(dl->mutex);
         return NULL;
+    }
 
     /* Fast path: return any already-queued connection immediately. */
-    ossl_crypto_mutex_lock(dl->mutex);
     conn = sk_SSL_shift(dl->incoming_connections);
     ossl_crypto_mutex_unlock(dl->mutex);
     if (conn != NULL)
@@ -2442,15 +2384,22 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
         return;
 
     dl = (DTLS_LISTENER *)s;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+
     ossl_dgram_demux_set_bio(dl->demux, bio);
 
     old_rbio = dl->net_rbio;
 
     /* No change - nothing to do */
-    if (old_rbio == bio)
+    if (old_rbio == bio) {
+        ossl_crypto_mutex_unlock(dl->mutex);
         return;
+    }
 
     dl->net_rbio = bio;
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_rbio);
@@ -2484,13 +2433,16 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
         return;
 
     dl = (DTLS_LISTENER *)s;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+
     old_wbio = dl->net_wbio;
 
     /* No change - nothing to do */
-    if (old_wbio == bio)
+    if (old_wbio == bio) {
+        ossl_crypto_mutex_unlock(dl->mutex);
         return;
-
-    ossl_crypto_mutex_lock(dl->mutex);
+    }
 
     /* Update wbio in all pending connections */
     if (dl->pending_conns != NULL)
@@ -2500,9 +2452,9 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
     if (dl->established_conns != NULL)
         ossl_dgram_conn_lookup_foreach(dl->established_conns, update_conn_wbio, bio);
 
-    ossl_crypto_mutex_unlock(dl->mutex);
-
     dl->net_wbio = bio;
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_wbio);
@@ -2805,6 +2757,7 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     SSL_CONNECTION *sc;
     uint64_t result = 0;
     BIO_POLL_DESCRIPTOR desc;
+    int has_pending;
 
     sc = SSL_CONNECTION_FROM_SSL(s);
     if (sc == NULL || sc->d1 == NULL)
@@ -2825,7 +2778,10 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
             result |= SSL_POLL_EVENT_R;
         } else if (sc->d1->rx != NULL) {
             /* Listener-based connection: check URXE queue */
-            if (!ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending))
+            ossl_crypto_mutex_lock(sc->d1->rx->mutex);
+            has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
+            ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
+            if (has_pending)
                 result |= SSL_POLL_EVENT_R;
         } else {
             /*

@@ -201,6 +201,7 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     int rfd = -1, wfd = -1, nfd = -1;
     SSL_CONNECTION *sc;
     DTLS_LISTENER *dl = NULL;
+    int has_pending;
 
     sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
@@ -223,10 +224,14 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
              * this connection's receive queue, abort blocking immediately -
              * there is no need to wait on the socket FD.
              */
-            if (sc->d1->rx != NULL
-                && !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending)) {
-                *abort_blocking = 1;
-                return 1;
+            if (sc->d1->rx != NULL) {
+                ossl_crypto_mutex_lock(sc->d1->rx->mutex);
+                has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
+                ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
+                if (has_pending) {
+                    *abort_blocking = 1;
+                    return 1;
+                }
             }
 
             /*
@@ -252,11 +257,15 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
                      * our URXE queue after our initial check above but before
                      * we entered the blocking section. Re-check now.
                      */
-                    if (sc->d1->rx != NULL
-                        && !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending)) {
-                        ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
-                        *abort_blocking = 1;
-                        return 1;
+                    if (sc->d1->rx != NULL) {
+                        ossl_crypto_mutex_lock(sc->d1->rx->mutex);
+                        has_pending = !ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
+                        ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
+                        if (has_pending) {
+                            ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
+                            *abort_blocking = 1;
+                            return 1;
+                        }
                     }
                 }
             }
@@ -436,8 +445,11 @@ static int poll_translate(SSL_POLL_ITEM *items,
                             abort_blocking))
                         FAIL_ITEM(i);
 
-                    if (*abort_blocking)
+                    if (*abort_blocking) {
+                        /* Need to clean up this item too */
+                        postpoll_translation_cleanup(items, i + 1, stride, wctx);
                         return 1;
+                    }
                 } else {
                     ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                         "SSL_poll currently only supports DTLS listeners for DTLS connections");

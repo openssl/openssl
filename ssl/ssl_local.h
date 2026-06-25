@@ -2238,7 +2238,7 @@ typedef struct dtls_listener_st {
      * Set by ossl_dtls_tick() when the network BIO returns a hard error.
      * Once set, ossl_dtls_accept_connection() returns NULL immediately.
      */
-    unsigned int fatal : 1;
+    int fatal;
 
     /* Require HelloVerifyRequest + cookie for DTLS 1.0/1.2 */
     unsigned int require_hvr_cookie : 1;
@@ -2250,7 +2250,7 @@ typedef struct dtls_listener_st {
     unsigned int have_notifier : 1;
 
     /* Notifier has been signalled */
-    unsigned int signalled_notifier : 1;
+    int signalled_notifier;
 
     /*
      * Time callback for customizable time source (primarily for testing).

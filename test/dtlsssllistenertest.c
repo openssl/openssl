@@ -225,6 +225,79 @@ err:
 }
 
 /*
+ * Helper to create a DTLS client with a bound local address.
+ *
+ * Similar to create_dtls_client_for_addr but also binds to an ephemeral
+ * local port so the client can be identified by its source address.
+ * This is useful for tests that need to match accepted server connections
+ * back to their corresponding clients.
+ *
+ * Returns 1 on success, 0 on failure.
+ * On success, caller is responsible for cleanup using the returned pointers/fds.
+ * The local_addr will be filled with the actual bound address (including port).
+ */
+static int create_dtls_client_bound(SSL_CTX *cctx, const BIO_ADDR *server_addr,
+    SSL **clientssl, int *client_fd, BIO_ADDR *local_addr)
+{
+    BIO *c_bio = NULL;
+    struct in_addr ina;
+    union BIO_sock_info_u info;
+    int ret = 0;
+
+    *clientssl = NULL;
+    *client_fd = -1;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+
+    /* Create client UDP socket */
+    *client_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    if (!TEST_int_ge(*client_fd, 0))
+        goto err;
+
+    if (!TEST_true(BIO_socket_nbio(*client_fd, 1)))
+        goto err;
+
+    /* Bind to ephemeral port so we can identify this client later */
+    if (!TEST_true(BIO_ADDR_rawmake(local_addr, AF_INET, &ina, sizeof(ina), 0)))
+        goto err;
+
+    if (!TEST_true(BIO_bind(*client_fd, local_addr, 0)))
+        goto err;
+
+    /* Get the actual assigned port */
+    info.addr = local_addr;
+    if (!TEST_true(BIO_sock_info(*client_fd, BIO_SOCK_INFO_ADDRESS, &info)))
+        goto err;
+
+    c_bio = BIO_new_dgram(*client_fd, BIO_NOCLOSE);
+    if (!TEST_ptr(c_bio))
+        goto err;
+
+    if (!TEST_true(BIO_dgram_set_peer(c_bio, server_addr)))
+        goto err;
+
+    /* Create client SSL and attach BIO */
+    if (!TEST_ptr(*clientssl = SSL_new(cctx)))
+        goto err;
+
+    SSL_set_bio(*clientssl, c_bio, c_bio);
+    c_bio = NULL;
+
+    ret = 1;
+
+err:
+    BIO_free(c_bio);
+    if (ret == 0) {
+        SSL_free(*clientssl);
+        if (*client_fd >= 0)
+            BIO_closesocket(*client_fd);
+        *clientssl = NULL;
+        *client_fd = -1;
+    }
+    return ret;
+}
+
+/*
  * Helper to create a DTLS listener and client using memory BIOs.
  *
  * This uses BIO_new_bio_dgram_pair() to create a connected pair of dgram BIOs
@@ -681,6 +754,11 @@ static int test_dtls_accept_connection_no_bio_no_block(void)
     if (!TEST_ptr_null(conn))
         goto err;
 
+    /*
+     * With NO_BLOCK, returning NULL without an error is correct behavior.
+     * it means "no connection available, try again later".
+     * This is not an error condition, just an indication to poll/retry.
+     */
     if (!TEST_int_eq((int)ERR_peek_error(), 0))
         goto err;
 
@@ -1226,11 +1304,11 @@ end:
 }
 
 /*
- * Test true concurrent multi-client with real UDP sockets.
+ * Test true concurrent multi-client with real UDP sockets (shared socket).
  *
  * This test verifies that:
  *   1. A DTLS listener can accept multiple concurrent clients using real sockets
- *   2. Each connection gets its own connected UDP socket after handshake
+ *   2. All connections share the listener's socket via the demux
  *   3. All connections can exchange data simultaneously
  *   4. The listener continues to accept new connections while others are active
  */
@@ -1242,15 +1320,12 @@ static int test_dtls_concurrent_clients_real_sockets(void)
     SSL *server1 = NULL, *client1 = NULL;
     SSL *server2 = NULL, *client2 = NULL;
     SSL *accepted1 = NULL, *accepted2 = NULL;
-    BIO *c1_bio = NULL, *c2_bio = NULL;
     BIO_ADDR *server_addr = NULL;
     BIO_ADDR *client1_local_addr = NULL;
     BIO_ADDR *client2_local_addr = NULL;
     BIO_ADDR *server_peer_addr = NULL;
     int server_fd = -1;
     int client1_fd = -1, client2_fd = -1;
-    struct in_addr ina;
-    union BIO_sock_info_u info;
     const char msg1[] = "Hello from client 1";
     const char msg2[] = "Hello from client 2";
     const char reply1[] = "Reply to client 1";
@@ -1263,8 +1338,6 @@ static int test_dtls_concurrent_clients_real_sockets(void)
     struct timeval poll_timeout;
     size_t poll_result;
     int abortctr;
-
-    ina.s_addr = htonl(INADDR_LOOPBACK);
 
     /* Create server and client contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
@@ -1298,70 +1371,16 @@ static int test_dtls_concurrent_clients_real_sockets(void)
     /*
      * --- Create Client 1 ---
      */
-    client1_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ge(client1_fd, 0))
+    if (!TEST_true(create_dtls_client_bound(cctx, server_addr,
+            &client1, &client1_fd, client1_local_addr)))
         goto end;
-
-    if (!TEST_true(BIO_socket_nbio(client1_fd, 1)))
-        goto end;
-
-    /* Bind client1 to ephemeral port so we can identify it later */
-    if (!TEST_true(BIO_ADDR_rawmake(client1_local_addr, AF_INET, &ina, sizeof(ina), 0)))
-        goto end;
-    if (!TEST_true(BIO_bind(client1_fd, client1_local_addr, 0)))
-        goto end;
-    /* Get assigned port */
-    info.addr = client1_local_addr;
-    if (!TEST_true(BIO_sock_info(client1_fd, BIO_SOCK_INFO_ADDRESS, &info)))
-        goto end;
-
-    c1_bio = BIO_new_dgram(client1_fd, BIO_NOCLOSE);
-    if (!TEST_ptr(c1_bio))
-        goto end;
-
-    if (!TEST_true(BIO_dgram_set_peer(c1_bio, server_addr)))
-        goto end;
-
-    client1 = SSL_new(cctx);
-    if (!TEST_ptr(client1))
-        goto end;
-
-    SSL_set_bio(client1, c1_bio, c1_bio);
-    c1_bio = NULL;
 
     /*
      * --- Create Client 2 ---
      */
-    client2_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ge(client2_fd, 0))
+    if (!TEST_true(create_dtls_client_bound(cctx, server_addr,
+            &client2, &client2_fd, client2_local_addr)))
         goto end;
-
-    if (!TEST_true(BIO_socket_nbio(client2_fd, 1)))
-        goto end;
-
-    /* Bind client2 to ephemeral port so we can identify it later */
-    if (!TEST_true(BIO_ADDR_rawmake(client2_local_addr, AF_INET, &ina, sizeof(ina), 0)))
-        goto end;
-    if (!TEST_true(BIO_bind(client2_fd, client2_local_addr, 0)))
-        goto end;
-    /* Get assigned port */
-    info.addr = client2_local_addr;
-    if (!TEST_true(BIO_sock_info(client2_fd, BIO_SOCK_INFO_ADDRESS, &info)))
-        goto end;
-
-    c2_bio = BIO_new_dgram(client2_fd, BIO_NOCLOSE);
-    if (!TEST_ptr(c2_bio))
-        goto end;
-
-    if (!TEST_true(BIO_dgram_set_peer(c2_bio, server_addr)))
-        goto end;
-
-    client2 = SSL_new(cctx);
-    if (!TEST_ptr(client2))
-        goto end;
-
-    SSL_set_bio(client2, c2_bio, c2_bio);
-    c2_bio = NULL;
 
     /*
      * --- Drive both clients concurrently through handshake ---
@@ -1532,8 +1551,6 @@ end:
     SSL_free(client1);
     SSL_free(client2);
     SSL_free(listener);
-    BIO_free(c1_bio);
-    BIO_free(c2_bio);
     BIO_ADDR_free(server_addr);
     BIO_ADDR_free(client1_local_addr);
     BIO_ADDR_free(client2_local_addr);
@@ -1888,8 +1905,6 @@ static int test_dtls_new_listener_null_ctx(void)
     SSL *listener = NULL;
     int success = 0;
 
-    ERR_clear_error();
-
     /* SSL_new_listener with NULL ctx should return NULL */
     listener = SSL_new_listener(NULL, 0);
     if (!TEST_ptr_null(listener))
@@ -1898,7 +1913,6 @@ static int test_dtls_new_listener_null_ctx(void)
     success = 1;
 err:
     SSL_free(listener);
-    ERR_clear_error();
     return success;
 }
 
@@ -1916,8 +1930,6 @@ static int test_tls_new_listener_fails(void)
     if (!TEST_ptr(ctx = SSL_CTX_new(TLS_server_method())))
         goto err;
 
-    ERR_clear_error();
-
     /* SSL_new_listener should fail for TLS contexts */
     listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD);
     if (!TEST_ptr_null(listener))
@@ -1927,7 +1939,6 @@ static int test_tls_new_listener_fails(void)
 err:
     SSL_free(listener);
     SSL_CTX_free(ctx);
-    ERR_clear_error();
     return success;
 }
 
@@ -1948,8 +1959,6 @@ static int test_dtls_new_listener_from_returns_null(void)
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
 
-    ERR_clear_error();
-
     /* SSL_new_listener_from should return NULL for DTLS */
     listener = SSL_new_listener_from(ssl, 0);
     if (!TEST_ptr_null(listener))
@@ -1960,7 +1969,6 @@ err:
     SSL_free(listener);
     SSL_free(ssl);
     SSL_CTX_free(ctx);
-    ERR_clear_error();
     return success;
 }
 
@@ -1984,8 +1992,6 @@ static int test_dtls_listen_ex_returns_error(void)
     if (!TEST_ptr(new_conn = SSL_new(ctx)))
         goto err;
 
-    ERR_clear_error();
-
     /* SSL_listen_ex should return 0 for DTLS */
     if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 0))
         goto err;
@@ -1995,7 +2001,6 @@ err:
     SSL_free(new_conn);
     SSL_free(listener);
     SSL_CTX_free(ctx);
-    ERR_clear_error();
     return success;
 }
 
