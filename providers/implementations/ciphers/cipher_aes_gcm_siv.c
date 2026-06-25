@@ -182,8 +182,11 @@ static int ossl_aes_gcm_siv_get_ctx_params(void *vctx, OSSL_PARAM params[])
         return 0;
 
     if (p.tag != NULL && p.tag->data_type == OSSL_PARAM_OCTET_STRING) {
-        if (!ctx->enc || !ctx->generated_tag
-            || p.tag->data_size != sizeof(ctx->tag)
+        if (!ctx->enc || !ctx->generated_tag) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
+            return 0;
+        }
+        if (p.tag->data_size != sizeof(ctx->tag)
             || !OSSL_PARAM_set_octet_string(p.tag, ctx->tag,
                 sizeof(ctx->tag))) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
@@ -227,6 +230,9 @@ static int ossl_aes_gcm_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[]
         if (!ctx->enc) {
             memcpy(ctx->user_tag, p.tag->data, sizeof(ctx->tag));
             ctx->have_user_tag = 1;
+        } else if (p.tag->data != NULL) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
+            return 0;
         }
     }
 
