@@ -691,6 +691,62 @@ err:
     return res;
 }
 
+/*
+ * When two providers cache the same nid and property query, the first one to
+ * do so must own the providerless ("any provider will do") cache entry, so
+ * that a NULL-provider lookup keeps resolving to that provider regardless of
+ * how many other providers subsequently cache the same nid.  This matches the
+ * provider ossl_method_store_fetch would pick by implementation order.
+ */
+static int test_query_cache_provider_order(void)
+{
+    OSSL_METHOD_STORE *store = NULL;
+    int res = 0;
+    int method1 = 0, method2 = 0;
+    void *result = NULL;
+    OSSL_PROVIDER prov1 = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "first-provider"
+    };
+    OSSL_PROVIDER prov2 = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "second-provider"
+    };
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL)))
+        goto err;
+
+    /* prov1 caches the nid first, so it owns the providerless entry. */
+    if (!TEST_true(ossl_method_store_cache_set(store, &prov1, 1, "", &method1,
+            up_ref, down_ref))
+        || !TEST_true(ossl_method_store_cache_set(store, &prov2, 1, "",
+            &method2, up_ref, down_ref)))
+        goto err;
+
+    /* A NULL-provider ("any provider") lookup must resolve to prov1. */
+    if (!TEST_true(ossl_method_store_cache_get(store, NULL, 1, "", &result))
+        || !TEST_ptr_eq(result, &method1))
+        goto err;
+
+    /* Provider-specific lookups must still return each provider's method. */
+    result = NULL;
+    if (!TEST_true(ossl_method_store_cache_get(store, &prov1, 1, "", &result))
+        || !TEST_ptr_eq(result, &method1))
+        goto err;
+    result = NULL;
+    if (!TEST_true(ossl_method_store_cache_get(store, &prov2, 1, "", &result))
+        || !TEST_ptr_eq(result, &method2))
+        goto err;
+
+    res = 1;
+
+err:
+    ossl_method_store_free(store);
+    return res;
+}
+
 static int test_fips_mode(void)
 {
     int ret = 0;
@@ -804,6 +860,7 @@ int setup_tests(void)
     ADD_TEST(test_property);
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_query_cache_set_duplicate);
+    ADD_TEST(test_query_cache_provider_order);
     ADD_TEST(test_fips_mode);
     ADD_ALL_TESTS(test_property_list_to_string, OSSL_NELEM(to_string_tests));
     ADD_TEST(test_property_list_to_string_bounds);
