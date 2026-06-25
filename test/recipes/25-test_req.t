@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 129;
+plan tests => 130;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -499,6 +499,27 @@ subtest "generating certificate requests with SLH-DSA" => sub {
                     "-in", "csr_slh_dsa_shake128.pem"])),
                     "verifying SLH-DSA-SHAKE-128s csr");
     }
+};
+
+subtest "generating certificate with -set_serial" => sub {
+    plan tests => 3;
+
+    my $cert = "self-signed_set_serial.pem";
+    ok(run(app(["openssl", "req", "-x509", "-new", "-days", "365",
+                "-config", srctop_file("test", "test.cnf"),
+                "-key", srctop_file("test", "testrsa.pem"),
+                "-set_serial", "12345",
+                "-out", $cert])),
+       "Generating self-signed cert with -set_serial");
+
+    cert_contains($cert, "Serial Number: 12345", 1);
+
+    ok(!run(app(["openssl", "req", "-x509", "-new", "-days", "365",
+                 "-config", srctop_file("test", "test.cnf"),
+                 "-key", srctop_file("test", "testrsa.pem"),
+                 "-set_serial", "12345", "-set_serial", "67890",
+                 "-out", $cert])),
+       "Supplying -set_serial twice fails");
 };
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
