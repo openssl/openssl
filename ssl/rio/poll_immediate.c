@@ -233,7 +233,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
                     FAIL_ITEM(i);
 
                 if (*abort_blocking)
-                    return 1;
+                    goto out;
 
                 if (!SSL_get_event_timeout(ssl, &timeout, &is_infinite))
                     FAIL_ITEM(i++); /* need to clean up this item too */
@@ -271,7 +271,12 @@ static int poll_translate(SSL_POLL_ITEM *items,
     }
 
 out:
-    if (!ok)
+    /*
+     * On abort_blocking, the item which triggered the abort has already
+     * balanced its own enter/leave of the blocking section (see
+     * poll_translate_ssl_quic()); only items 0..i-1 still need cleanup here.
+     */
+    if (!ok || *abort_blocking)
         postpoll_translation_cleanup(items, i, stride, wctx);
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;
@@ -320,8 +325,15 @@ static int poll_block(SSL_POLL_ITEM *items,
             p_result_count))
         goto out;
 
-    if (abort_blocking)
+    if (abort_blocking) {
+        /*
+         * Nothing actually failed; we just shouldn't block because an item
+         * may have become ready while we were setting up. The caller's
+         * retry loop will call poll_readout() again to pick this up.
+         */
+        ok = 1;
         goto out;
+    }
 
     earliest_wakeup_deadline = ossl_time_min(earliest_wakeup_deadline,
         user_deadline);
