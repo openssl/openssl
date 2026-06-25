@@ -27,8 +27,6 @@
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
 
-#include <crypto/asn1.h>
-
 /* Mapping between a flag and a name */
 static const OSSL_ITEM encoding_nameid_map[] = {
     { OPENSSL_EC_EXPLICIT_CURVE, OSSL_PKEY_EC_ENCODING_EXPLICIT },
@@ -747,8 +745,8 @@ int ossl_x509_algor_is_sm2(const X509_ALGOR *palg)
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *str = pval;
-        const unsigned char *der = str->data;
-        int derlen = str->length;
+        const unsigned char *der = ASN1_STRING_get0_data(str);
+        int derlen = ASN1_STRING_length(str);
         EC_GROUP *group;
         int ret;
 
@@ -780,8 +778,8 @@ EC_KEY *ossl_ec_key_param_from_x509_algor(const X509_ALGOR *palg,
 
     if (ptype == V_ASN1_SEQUENCE) {
         const ASN1_STRING *pstr = pval;
-        const unsigned char *pm = pstr->data;
-        int pmlen = pstr->length;
+        const unsigned char *pm = ASN1_STRING_get0_data(pstr);
+        int pmlen = ASN1_STRING_length(pstr);
 
         if (d2i_ECParameters(&eckey, &pm, pmlen) == NULL) {
             ERR_raise(ERR_LIB_EC, EC_R_DECODE_ERROR);

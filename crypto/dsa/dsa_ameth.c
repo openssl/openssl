@@ -20,9 +20,9 @@
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
 #include "internal/cryptlib.h"
-#include "crypto/asn1.h"
 #include "crypto/dsa.h"
 #include "crypto/evp.h"
+#include "crypto/asn1.h"
 #include "internal/ffc.h"
 #include "dsa_local.h"
 
@@ -44,8 +44,8 @@ static int dsa_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
 
     if (ptype == V_ASN1_SEQUENCE) {
         pstr = pval;
-        pm = pstr->data;
-        pmlen = pstr->length;
+        pm = ASN1_STRING_get0_data(pstr);
+        pmlen = ASN1_STRING_length(pstr);
 
         if ((dsa = d2i_DSAparams(NULL, &pm, pmlen)) == NULL) {
             ERR_raise(ERR_LIB_DSA, DSA_R_DECODE_ERROR);
@@ -103,10 +103,15 @@ static int dsa_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
             ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
             goto err;
         }
-        str->length = i2d_DSAparams(dsa, &str->data);
-        if (str->length <= 0) {
-            ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
-            goto err;
+        {
+            unsigned char *strdata = NULL;
+            int strsize = i2d_DSAparams(dsa, &strdata);
+            if (strsize <= 0) {
+                OPENSSL_free(strdata);
+                ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
+                goto err;
+            }
+            ASN1_STRING_set0(str, strdata, strsize);
         }
         ptype = V_ASN1_SEQUENCE;
     } else
@@ -171,19 +176,23 @@ static int dsa_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
         goto err;
     }
 
-    params = ASN1_STRING_new();
+    params = ASN1_STRING_type_new(V_ASN1_SEQUENCE);
 
     if (params == NULL) {
         ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
         goto err;
     }
 
-    params->length = i2d_DSAparams(pkey->pkey.dsa, &params->data);
-    if (params->length <= 0) {
-        ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
-        goto err;
+    {
+        unsigned char *paramsdata = NULL;
+        int paramssize = i2d_DSAparams(pkey->pkey.dsa, &paramsdata);
+        if (paramssize <= 0) {
+            OPENSSL_free(paramsdata);
+            ERR_raise(ERR_LIB_DSA, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        ASN1_STRING_set0(params, paramsdata, paramssize);
     }
-    params->type = V_ASN1_SEQUENCE;
 
     /* Get private key into integer */
     prkey = BN_to_ASN1_INTEGER(pkey->pkey.dsa->priv_key, NULL);
@@ -383,8 +392,8 @@ static int dsa_sig_print(BIO *bp, const X509_ALGOR *sigalg,
         else
             return 1;
     }
-    p = sig->data;
-    dsa_sig = d2i_DSA_SIG(NULL, &p, sig->length);
+    p = ASN1_STRING_get0_data(sig);
+    dsa_sig = d2i_DSA_SIG(NULL, &p, ASN1_STRING_length(sig));
     if (dsa_sig != NULL) {
         int rv = 0;
         const BIGNUM *r, *s;

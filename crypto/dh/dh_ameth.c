@@ -21,9 +21,9 @@
 #include <openssl/param_build.h>
 #include "internal/ffc.h"
 #include "internal/cryptlib.h"
-#include "crypto/asn1.h"
 #include "crypto/dh.h"
 #include "crypto/evp.h"
+#include "crypto/asn1.h"
 #include "dh_local.h"
 
 /*
@@ -79,8 +79,8 @@ static int dh_pub_decode(EVP_PKEY *pkey, const X509_PUBKEY *pubkey)
     }
 
     pstr = pval;
-    pm = pstr->data;
-    pmlen = pstr->length;
+    pm = ASN1_STRING_get0_data(pstr);
+    pmlen = ASN1_STRING_length(pstr);
 
     if ((dh = d2i_dhp(pkey, &pm, pmlen)) == NULL) {
         ERR_raise(ERR_LIB_DH, DH_R_DECODE_ERROR);
@@ -124,10 +124,15 @@ static int dh_pub_encode(X509_PUBKEY *pk, const EVP_PKEY *pkey)
         ERR_raise(ERR_LIB_DH, ERR_R_ASN1_LIB);
         goto err;
     }
-    str->length = i2d_dhp(pkey, dh, &str->data);
-    if (str->length <= 0) {
-        ERR_raise(ERR_LIB_DH, ERR_R_ASN1_LIB);
-        goto err;
+    {
+        unsigned char *strdata = NULL;
+        int strsize = i2d_dhp(pkey, dh, &strdata);
+        if (strsize <= 0) {
+            OPENSSL_free(strdata);
+            ERR_raise(ERR_LIB_DH, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        ASN1_STRING_set0(str, strdata, strsize);
     }
     ptype = V_ASN1_SEQUENCE;
 
@@ -181,19 +186,23 @@ static int dh_priv_encode(PKCS8_PRIV_KEY_INFO *p8, const EVP_PKEY *pkey)
     unsigned char *dp = NULL;
     int dplen;
 
-    params = ASN1_STRING_new();
+    params = ASN1_STRING_type_new(V_ASN1_SEQUENCE);
 
     if (params == NULL) {
         ERR_raise(ERR_LIB_DH, ERR_R_ASN1_LIB);
         goto err;
     }
 
-    params->length = i2d_dhp(pkey, pkey->pkey.dh, &params->data);
-    if (params->length <= 0) {
-        ERR_raise(ERR_LIB_DH, ERR_R_ASN1_LIB);
-        goto err;
+    {
+        unsigned char *paramsdata = NULL;
+        int paramssize = i2d_dhp(pkey, pkey->pkey.dh, &paramsdata);
+        if (paramssize <= 0) {
+            OPENSSL_free(paramsdata);
+            ERR_raise(ERR_LIB_DH, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        ASN1_STRING_set0(params, paramsdata, paramssize);
     }
-    params->type = V_ASN1_SEQUENCE;
 
     /* Get private key into integer */
     prkey = BN_to_ASN1_INTEGER(pkey->pkey.dh->priv_key, NULL);

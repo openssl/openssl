@@ -19,8 +19,6 @@
 #include "crypto/evp.h"
 #include "evp_local.h"
 
-#include <crypto/asn1.h>
-
 int ossl_pkcs5_pbkdf2_hmac_ex(const char *pass, int passlen,
     const unsigned char *salt, int saltlen, int iter,
     const EVP_MD *digest, int keylen, unsigned char *out,
@@ -179,7 +177,8 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     const EVP_CIPHER *c, const EVP_MD *md, int en_de,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
+    const unsigned char *salt;
+    unsigned char key[EVP_MAX_KEY_LENGTH];
     int saltlen, iter, t;
     int rv = 0;
     unsigned int keylen = 0;
@@ -239,8 +238,8 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     }
 
     /* it seems that its all OK */
-    salt = kdf->salt->value.octet_string->data;
-    saltlen = kdf->salt->value.octet_string->length;
+    salt = ASN1_STRING_get0_data(kdf->salt->value.octet_string);
+    saltlen = ASN1_STRING_length(kdf->salt->value.octet_string);
     iter = ASN1_INTEGER_get(kdf->iter);
     if (!ossl_pkcs5_pbkdf2_hmac_ex(pass, passlen, salt, saltlen, iter, prfmd,
             keylen, key, libctx, propq))

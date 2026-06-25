@@ -14,8 +14,6 @@
 #include "crypto/evp.h"
 #include <openssl/pkcs12.h>
 
-#include <crypto/asn1.h>
-
 /* PKCS#12 PBE algorithms now in static table */
 
 void PKCS12_PBE_add(void)
@@ -29,7 +27,7 @@ int PKCS12_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
 {
     PBEPARAM *pbe;
     int saltlen, iter, ret;
-    unsigned char *salt;
+    const unsigned char *salt;
     unsigned char key[EVP_MAX_KEY_LENGTH], iv[EVP_MAX_IV_LENGTH];
     unsigned char *piv = iv;
 
@@ -48,9 +46,9 @@ int PKCS12_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         iter = 1;
     else
         iter = ASN1_INTEGER_get(pbe->iter);
-    salt = pbe->salt->data;
-    saltlen = pbe->salt->length;
-    if (!PKCS12_key_gen_utf8_ex(pass, passlen, salt, saltlen, PKCS12_KEY_ID,
+    salt = ASN1_STRING_get0_data(pbe->salt);
+    saltlen = ASN1_STRING_length(pbe->salt);
+    if (!PKCS12_key_gen_utf8_ex(pass, passlen, (unsigned char *)salt, saltlen, PKCS12_KEY_ID,
             iter, EVP_CIPHER_get_key_length(cipher),
             key, md,
             libctx, propq)) {
@@ -59,7 +57,7 @@ int PKCS12_PBE_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass, int passlen,
         return 0;
     }
     if (EVP_CIPHER_get_iv_length(cipher) > 0) {
-        if (!PKCS12_key_gen_utf8_ex(pass, passlen, salt, saltlen, PKCS12_IV_ID,
+        if (!PKCS12_key_gen_utf8_ex(pass, passlen, (unsigned char *)salt, saltlen, PKCS12_IV_ID,
                 iter, EVP_CIPHER_get_iv_length(cipher),
                 iv, md,
                 libctx, propq)) {

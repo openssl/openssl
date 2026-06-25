@@ -26,8 +26,6 @@
 #include "prov/endecoder_local.h"
 #include "providers/implementations/encode_decode/decode_epki2pki.inc"
 
-#include <crypto/asn1.h>
-
 static OSSL_FUNC_decoder_newctx_fn epki2pki_newctx;
 static OSSL_FUNC_decoder_freectx_fn epki2pki_freectx;
 static OSSL_FUNC_decoder_decode_fn epki2pki_decode;
@@ -145,7 +143,7 @@ int ossl_epki2pki_der_decode(unsigned char *der, long der_len, int selection,
 
             X509_SIG_get0(p8, &alg, &oct);
             if (!PKCS12_pbe_crypt_ex(alg, pbuf, (int)plen,
-                    oct->data, oct->length,
+                    ASN1_STRING_get0_data(oct), ASN1_STRING_length(oct),
                     &new_der, &new_der_len, 0,
                     libctx, propq)) {
                 ok = 0;
