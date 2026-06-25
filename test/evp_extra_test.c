@@ -5949,7 +5949,7 @@ static int test_evp_aead_tag_direction(int idx)
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
     unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
 
-    int i = 0, testresult = 1;
+    int i = 0, testresult = 1, expected = 0;
     char *errmsg = NULL;
     unsigned long err_code = 0;
 
@@ -5983,17 +5983,21 @@ static int test_evp_aead_tag_direction(int idx)
     tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
         tag, taglen);
     tagparams[1] = OSSL_PARAM_construct_end();
-    ERR_clear_error();
+    ERR_set_mark();
     if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx_enc, tagparams))) {
+        ERR_clear_last_mark();
         errmsg = "ENC_SET_TAG_NOT_REJECTED";
         goto err;
     }
     err_code = ERR_peek_last_error();
     if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
         || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_TAG_NOT_NEEDED)) {
+        ERR_clear_last_mark();
+        expected = PROV_R_TAG_NOT_NEEDED;
         errmsg = "ENC_SET_TAG_WRONG_REASON";
         goto err;
     }
+    ERR_pop_to_mark();
 
     /* a tag read while decrypting must be rejected */
     if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())) {
@@ -6007,22 +6011,32 @@ static int test_evp_aead_tag_direction(int idx)
     tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
         tag, taglen);
     tagparams[1] = OSSL_PARAM_construct_end();
-    ERR_clear_error();
+    ERR_set_mark();
     if (!TEST_false(EVP_CIPHER_CTX_get_params(ctx_dec, tagparams))) {
+        ERR_clear_last_mark();
         errmsg = "DEC_GET_TAG_NOT_REJECTED";
         goto err;
     }
     err_code = ERR_peek_last_error();
     if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
         || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_TAG_NOT_SET)) {
+        ERR_clear_last_mark();
+        expected = PROV_R_TAG_NOT_SET;
         errmsg = "DEC_GET_TAG_WRONG_REASON";
         goto err;
     }
+    ERR_pop_to_mark();
 
 err:
     if (errmsg != NULL) {
-        TEST_info("test_evp_aead_tag_direction %d, %s: %s",
-            idx, errmsg, info->name);
+        if (expected != 0)
+            TEST_info("test_evp_aead_tag_direction %d, %s: %s"
+                      " (expected reason %d, got %d)",
+                idx, errmsg, info->name,
+                expected, ERR_GET_REASON(err_code));
+        else
+            TEST_info("test_evp_aead_tag_direction %d, %s: %s",
+                idx, errmsg, info->name);
         testresult = 0;
     }
     EVP_CIPHER_CTX_free(ctx_enc);
