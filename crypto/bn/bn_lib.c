@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -696,19 +696,37 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
     int i;
     BN_ULONG t1, t2, *ap, *bp;
 
+    /*
+     * As it is a public API function, we should handle NULL parameters in
+     * some way. The function can’t return an error, so let’s define that NULL
+     * is less than any BIGNUM.
+     */
+    if (!ossl_assert(a != NULL && b != NULL))
+        return (b == NULL) - (a == NULL);
+
     ap = a->d;
     bp = b->d;
 
     if (BN_get_flags(a, BN_FLG_CONSTTIME)
-        && a->top == b->top) {
+        || BN_get_flags(b, BN_FLG_CONSTTIME)) {
         int res = 0;
+        int min_top = a->top < b->top ? a->top : b->top;
 
-        for (i = 0; i < b->top; i++) {
+        for (i = 0; i < min_top; i++) {
             res = constant_time_select_int((int)constant_time_lt_bn(ap[i], bp[i]),
                 -1, res);
             res = constant_time_select_int((int)constant_time_lt_bn(bp[i], ap[i]),
                 1, res);
         }
+
+        for (i = min_top; i < a->top; ++i)
+            res = constant_time_select_int((int)constant_time_is_zero_bn(ap[i]),
+                res, 1);
+
+        for (i = min_top; i < b->top; ++i)
+            res = constant_time_select_int((int)constant_time_is_zero_bn(bp[i]),
+                res, -1);
+
         return res;
     }
 
