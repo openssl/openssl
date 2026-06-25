@@ -49,6 +49,9 @@
 #ifndef SHA1_ASM
 static void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #else
+#ifdef INCLUDE_C_SHA1
+void sha1_block_data_order_c(SHA_CTX *c, const void *p, size_t num);
+#endif
 void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 #endif
 
@@ -150,8 +153,12 @@ int HASH_INIT(SHA_CTX *c)
 #define X(i) XX[i]
 #endif
 
-#if !defined(SHA1_ASM)
+#if !defined(SHA1_ASM) || defined(INCLUDE_C_SHA1)
+#ifdef INCLUDE_C_SHA1
+void sha1_block_data_order_c(SHA_CTX *c, const void *p, size_t num)
+#else
 static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
+#endif
 {
     const unsigned char *data = p;
     register unsigned MD32_REG_T A, B, C, D, E, T, l;
@@ -388,8 +395,12 @@ static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
         A = ROTATE(A, 5) + T + xa;              \
     } while (0)
 
-#if !defined(SHA1_ASM)
+#if !defined(SHA1_ASM) || defined(INCLUDE_C_SHA1)
+#ifdef INCLUDE_C_SHA1
+void sha1_block_data_order_c(SHA_CTX *c, const void *p, size_t num)
+#else
 static void HASH_BLOCK_DATA_ORDER(SHA_CTX *c, const void *p, size_t num)
+#endif
 {
     const unsigned char *data = p;
     register unsigned MD32_REG_T A, B, C, D, E, T, l;
