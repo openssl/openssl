@@ -536,12 +536,12 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
              * below completes prior to some writes in whatever the init()
              * callback routine above may do.  In this case, other threads
              * entering here may see unsynchronized data in whatever the init
-             * routine initializes, leading to errneous behavior.
+             * routine initializes, leading to erroneous behavior.
              *
-             * We should Use InitOnceExecuteOnce here to implement this, but
+             * We should use InitOnceExecuteOnce here to implement this, but
              * doing so requires that we modify the definition of the
              * CRYPTO_ONCE type, which is an ABI breakage.  So instead
-             * Just insert a memory barrier here to ensure that any pending
+             * just insert a memory barrier here to ensure that any pending
              * writes are flushed to memory prior to setting ONCE_DONE below
              */
             MemoryBarrier();
