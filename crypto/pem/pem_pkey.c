@@ -334,6 +334,11 @@ PEM_write_cb_fnsig(PrivateKey, EVP_PKEY, BIO, write_bio)
         NULL, NULL);
 }
 
+static int i2d_PrivateKey_thunk(const void *a, unsigned char **p)
+{
+    return i2d_PrivateKey((EVP_PKEY *)a, p);
+}
+
 /*
  * Note: there is no way to tell a provided pkey encoder to use "traditional"
  * encoding.  Therefore, if the pkey is provided, we try to take a copy
@@ -361,7 +366,7 @@ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
         return 0;
     }
     BIO_snprintf(pem_str, 80, "%s PRIVATE KEY", x->ameth->pem_str);
-    ret = PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey,
+    ret = PEM_ASN1_write_bio((i2d_of_void *)i2d_PrivateKey_thunk,
         pem_str, bp, x, enc, kstr, klen, cb, u);
 
     EVP_PKEY_free(copy);
