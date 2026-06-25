@@ -3883,6 +3883,37 @@ static int test_tx_script(int idx)
     return tx_run_script(tx_scripts[idx]);
 }
 
+static int test_qrx_multipkt_alloc_failure(void)
+{
+    int testresult = 0;
+    struct rx_state s = { 0 };
+    OSSL_QRX_PKT *pkt = NULL;
+
+    s.args.short_conn_id_len = 0;
+
+    if (!TEST_true(rx_state_ensure(&s)))
+        goto err;
+
+    s.rx_dcid = empty_conn_id;
+
+    if (!TEST_true(ossl_quic_provide_initial_secret(NULL, NULL,
+            &rx_script_5_c2s_init_dcid, 0, s.qrx, NULL)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_demux_inject(s.demux, rx_script_5_in,
+            sizeof(rx_script_5_in), NULL, NULL)))
+        goto err;
+
+    MFAIL_start();
+    testresult = ossl_qrx_read_pkt(s.qrx, &pkt);
+    MFAIL_end();
+
+err:
+    ossl_qrx_pkt_release(pkt);
+    rx_state_teardown(&s);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rx_script, OSSL_NELEM(rx_scripts));
@@ -3897,5 +3928,6 @@ int setup_tests(void)
      */
     ADD_ALL_TESTS(test_wire_pkt_hdr, NUM_WIRE_PKT_HDR_TESTS + 1);
     ADD_ALL_TESTS(test_tx_script, OSSL_NELEM(tx_scripts));
+    ADD_MFAIL_NO_CHECK_TEST(test_qrx_multipkt_alloc_failure);
     return 1;
 }
