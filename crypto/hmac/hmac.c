@@ -53,9 +53,11 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         return 0;
 
 #ifdef OPENSSL_HMAC_S390X
-    rv = s390x_HMAC_init(ctx, key, len);
-    if (rv >= 1)
-        return rv;
+    {
+        int ret = s390x_HMAC_init(ctx, key, len);
+        if (ret != -1) /* -1 means SW fallback */
+            return ret;
+    }
 #endif
 
     if (key != NULL) {
