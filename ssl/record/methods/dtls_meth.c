@@ -140,7 +140,7 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
     size_t mac_size = 0;
     size_t rechdrsize = dtls_get_rec_header_size(rl->packet[0]);
     unsigned char md[EVP_MAX_MD_SIZE];
-    SSL_MAC_BUF macbuf = { NULL, 0 };
+    SSL_MAC_BUF macbuf = { NULL };
     int ret = 0;
 
     rr = &rl->rrec[0];
@@ -302,8 +302,6 @@ static int dtls_process_record(OSSL_RECORD_LAYER *rl, DTLS_BITMAP *bitmap)
 
     ret = 1;
 end:
-    if (macbuf.alloced)
-        OPENSSL_free(macbuf.mac);
     return ret;
 }
 
