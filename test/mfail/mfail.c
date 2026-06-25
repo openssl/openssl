@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <limits.h>
 #include <openssl/crypto.h>
 
 #if defined(__has_feature)
@@ -66,7 +67,12 @@ static int env_is_true(const char *name)
 static int env_int(const char *name, int dflt)
 {
     const char *value = getenv(name);
-    return (value != NULL && *value != '\0') ? atoi(value) : dflt;
+    unsigned long ul;
+
+    if (value != NULL && *value != '\0'
+        && OPENSSL_strtoul(value, NULL, 10, &ul) && ul <= INT_MAX)
+        return (int)ul;
+    return dflt;
 }
 
 static void mfail_print_bt(void)
