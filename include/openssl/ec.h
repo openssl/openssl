@@ -928,21 +928,13 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
-
-static ossl_inline void *d2i_ECPKParameters_thunk(void **a, const unsigned char **pp, long length)
-{
-    return (void *)d2i_ECPKParameters((EC_GROUP **)a, pp, length);
-}
+EC_GROUP *d2i_ECPKParameters_fp(FILE *fp, EC_GROUP *e);
+int i2d_ECPKParameters_fp(FILE *fp, EC_GROUP *e);
 
 #define d2i_ECPKParameters_bio(bp, x) \
     ASN1_d2i_bio_of(EC_GROUP, NULL, d2i_ECPKParameters, bp, x)
 #define i2d_ECPKParameters_bio(bp, x) \
     ASN1_i2d_bio_of(EC_GROUP, i2d_ECPKParameters, bp, x)
-#define d2i_ECPKParameters_fp(fp, x)                              \
-    (EC_GROUP *)ASN1_d2i_fp(NULL, d2i_ECPKParameters_thunk, (fp), \
-        (void **)(x))
-#define i2d_ECPKParameters_fp(fp, x) \
-    ASN1_i2d_fp((i2d_of_void *)i2d_ECPKParameters, (fp), (void *)(x))
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 OSSL_DEPRECATEDIN_3_0 int ECPKParameters_print(BIO *bp, const EC_GROUP *x,
