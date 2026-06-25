@@ -540,7 +540,7 @@ int CRYPTO_THREAD_run_once(CRYPTO_ONCE *once, void (*init)(void))
              *
              * We should Use InitOnceExecuteOnce here to implement this, but
              * doing so requires that we modify the definition of the
-             * CRYPTO_ONCE type, which is an abi breakage.  So instead
+             * CRYPTO_ONCE type, which is an ABI breakage.  So instead
              * Just insert a memory barrier here to ensure that any pending
              * writes are flushed to memory prior to setting ONCE_DONE below
              */
