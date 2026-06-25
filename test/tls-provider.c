@@ -1671,8 +1671,8 @@ static int xorx_pki_priv_to_der(const void *vecxkey, unsigned char **pder)
 {
     XORKEY *xorxkey = (XORKEY *)vecxkey;
     unsigned char *buf = NULL;
-    ASN1_OCTET_STRING oct;
-    int keybloblen;
+    ASN1_OCTET_STRING *oct = NULL;
+    int keybloblen = 0;
 
     if (xorxkey == NULL) {
         ERR_raise(ERR_LIB_USER, ERR_R_PASSED_NULL_PARAMETER);
@@ -1680,18 +1680,26 @@ static int xorx_pki_priv_to_der(const void *vecxkey, unsigned char **pder)
     }
 
     buf = OPENSSL_secure_malloc(XOR_KEY_SIZE);
+    if (buf == NULL) {
+        ERR_raise(ERR_LIB_USER, ERR_R_MALLOC_FAILURE);
+        return 0;
+    }
     memcpy(buf, xorxkey->privkey, XOR_KEY_SIZE);
 
-    oct.data = buf;
-    oct.length = XOR_KEY_SIZE;
-    oct.flags = 0;
+    if ((oct = ASN1_OCTET_STRING_new()) == NULL
+        || !ASN1_OCTET_STRING_set(oct, buf, XOR_KEY_SIZE)) {
+        ERR_raise(ERR_LIB_USER, ERR_R_MALLOC_FAILURE);
+        goto end;
+    }
 
-    keybloblen = i2d_ASN1_OCTET_STRING(&oct, pder);
+    keybloblen = i2d_ASN1_OCTET_STRING(oct, pder);
     if (keybloblen < 0) {
         ERR_raise(ERR_LIB_USER, ERR_R_MALLOC_FAILURE);
         keybloblen = 0;
     }
 
+end:
+    ASN1_STRING_clear_free(oct);
     OPENSSL_secure_clear_free(buf, XOR_KEY_SIZE);
     return keybloblen;
 }
