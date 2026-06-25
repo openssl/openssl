@@ -217,7 +217,7 @@ extern "C" {
     IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_write_nothunk(name, type, str, asn1) \
-    IMPLEMENT_PEM_write_bio(name, type, str, asn1) \
+    IMPLEMENT_PEM_write_bio(name, type, str, asn1)         \
     IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
