@@ -31,7 +31,7 @@
 #endif
 
 #if !defined(PEDANTIC) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#if defined(__GNUC__) && __GNUC__ >= 2
+#if defined(__GNUC__)
 #if defined(__x86_64) || defined(__x86_64__)
 #define BSWAP8(x) ({ uint64_t ret_=(x);                   \
                         asm ("bswapq %0"                \
@@ -74,17 +74,10 @@
                         : "+&r"(ret_));  ret_; })
 #endif
 #elif defined(_MSC_VER)
-#if _MSC_VER >= 1300
 #include <stdlib.h>
 #pragma intrinsic(_byteswap_uint64, _byteswap_ulong)
 #define BSWAP8(x) _byteswap_uint64((uint64_t)(x))
 #define BSWAP4(x) _byteswap_ulong((uint32_t)(x))
-#elif defined(_M_IX86)
-__inline uint32_t _bswap4(uint32_t val) {
-    _asm mov eax, val _asm bswap eax
-}
-#define BSWAP4(x) _bswap4(x)
-#endif
 #endif
 #endif
 #if defined(BSWAP4) && !defined(STRICT_ALIGNMENT)
