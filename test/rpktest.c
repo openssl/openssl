@@ -38,6 +38,37 @@ static OSSL_PROVIDER *defctxnull = NULL;
 static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk, TLSEXT_cert_type_x509 };
 static const unsigned char SID_CTX[] = { 'r', 'p', 'k' };
 
+/*
+ * Wire form of a SignatureSchemeList that lists rsa_pkcs1_sha256
+ * and ed448 -- between them they cover the issuer signature on
+ * every cert this file loads from test/certs
+ * (sha256WithRSAEncryption for the RSA/ECDSA/Ed25519 leaves and
+ * ED448 for the Ed448 leaf), so the extension is harmless when
+ * the handshake is non-RPK and the server's check_cert_usable()
+ * has to walk the list against a real cert.  When RPK is
+ * negotiated check_cert_usable() returns early without inspecting
+ * the list, and when the slot is an RPK-listed key-only slot but
+ * X509 was negotiated check_cert_usable() returns 0 on the x ==
+ * NULL path -- the inevitable outcome, now discovered earlier.
+ *
+ * Payload: length, rsa_pkcs1_sha256, ed448
+ */
+static const unsigned char sigalgs_cert_payload[] = {
+    0x00, 0x04,
+    0x04, 0x01,
+    0x08, 0x08
+};
+
+static int sigalgs_cert_add_cb(SSL *s, unsigned int ext_type,
+    unsigned int context,
+    const unsigned char **out, size_t *outlen,
+    X509 *x, size_t chainidx, int *al, void *add_arg)
+{
+    *out = sigalgs_cert_payload;
+    *outlen = sizeof(sigalgs_cert_payload);
+    return 1;
+}
+
 static int rpk_verify_client_cb(int ok, X509_STORE_CTX *ctx)
 {
     int err = X509_STORE_CTX_get_error(ctx);
@@ -255,18 +286,43 @@ static int test_rpk(int idx)
     /* NEW */
     SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, rpk_verify_client_cb);
 
-    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
-            NULL, NULL)))
+    /*
+     * Send signature_algorithms_cert in every ClientHello, and in
+     * every TLS 1.3 CertificateRequest.  The OpenSSL stack doesn't
+     * construct this extension by default in either direction, so
+     * register a custom add hook on both ends.  This exercises the
+     * three distinct paths through check_cert_usable() on whichever
+     * side receives the extension:
+     *   - RPK was negotiated for this side's cert -- early return 1,
+     *     list contents ignored.
+     *   - RPK was offered but X509 was negotiated and this side's
+     *     slot holds only a private key -- x == NULL, return 0
+     *     (any peer-sent signature_algorithms_cert against a key-only
+     *     slot would otherwise trigger a crash).
+     *   - X509 negotiated with a real cert -- walk the list, find
+     *     a match against the issuer's signature algorithm.
+     * The server's registration only fires on TLS 1.3 connections
+     * where the server requests a client certificate (case 2, 9,
+     * 10 etc.); on TLS 1.2 the sigalgs travel inside the
+     * CertificateRequest body, not as a separate extension.
+     */
+    if (!TEST_true(SSL_CTX_add_custom_ext(cctx,
+            TLSEXT_TYPE_signature_algorithms_cert,
+            SSL_EXT_CLIENT_HELLO,
+            sigalgs_cert_add_cb, NULL, NULL,
+            NULL, NULL))
+        || !TEST_true(SSL_CTX_add_custom_ext(sctx,
+            TLSEXT_TYPE_signature_algorithms_cert,
+            SSL_EXT_TLS1_3_CERTIFICATE_REQUEST,
+            sigalgs_cert_add_cb, NULL, NULL,
+            NULL, NULL))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_int_gt(SSL_dane_enable(serverssl, NULL), 0)
+        || !TEST_int_gt(SSL_dane_enable(clientssl, "example.com"), 0)
+        || !TEST_int_eq(SSL_use_PrivateKey_file(serverssl, privkey_file, SSL_FILETYPE_PEM), 1))
         goto end;
 
-    if (!TEST_int_gt(SSL_dane_enable(serverssl, NULL), 0))
-        goto end;
-    if (!TEST_int_gt(SSL_dane_enable(clientssl, "example.com"), 0))
-        goto end;
-
-    /* Set private key and certificate */
-    if (!TEST_int_eq(SSL_use_PrivateKey_file(serverssl, privkey_file, SSL_FILETYPE_PEM), 1))
-        goto end;
     /* Only a private key */
     if (idx == 1) {
         if (idx_server_server_rpk == 0 || idx_client_server_rpk == 0) {
