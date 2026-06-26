@@ -5948,7 +5948,7 @@ static int test_evp_aead_tag_direction(int idx)
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
     unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
 
-    int i = 0, testresult = 1, expected = 0;
+    int i = 0, testresult = 0, expected = 0;
     char *errmsg = NULL;
     unsigned long err_code = 0;
 
@@ -6028,6 +6028,8 @@ static int test_evp_aead_tag_direction(int idx)
     }
     ERR_pop_to_mark();
 
+    testresult = 1;
+
 err:
     if (errmsg != NULL) {
         if (expected != 0)
@@ -6038,7 +6040,6 @@ err:
         else
             TEST_info("test_evp_aead_tag_direction %d, %s: %s",
                 idx, errmsg, info->name);
-        testresult = 0;
     }
     EVP_CIPHER_CTX_free(ctx_enc);
     EVP_CIPHER_CTX_free(ctx_dec);
