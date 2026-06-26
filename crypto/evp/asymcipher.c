@@ -453,7 +453,7 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
 
     return cipher;
 err:
-    EVP_ASYM_CIPHER_free(cipher);
+    evp_asym_cipher_free(cipher);
     return NULL;
 }
 
