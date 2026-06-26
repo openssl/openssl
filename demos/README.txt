@@ -84,4 +84,5 @@ rsa_pss_hash.c            Compute and verify an RSA-PSS signature over a buffer
 smime:                 Demonstrations related to S/MIME
 
 sslecho:
+echecho.c              Simple SSL/TLS echo client/server that uses ECH.
 main.c                 Simple SSL/TLS echo client/server.
