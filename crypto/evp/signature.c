@@ -463,7 +463,7 @@ static void *evp_signature_from_algorithm(int name_id,
 
     return signature;
 err:
-    EVP_SIGNATURE_free(signature);
+    evp_signature_free(signature);
     return NULL;
 }
 
