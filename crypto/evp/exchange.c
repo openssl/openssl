@@ -169,7 +169,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
     return exchange;
 
 err:
-    EVP_KEYEXCH_free(exchange);
+    evp_keyexch_free(exchange);
     return NULL;
 }
 
