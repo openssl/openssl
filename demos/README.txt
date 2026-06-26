@@ -38,6 +38,7 @@ quic-client-non-block.c: A simple non-blocking QUIC client
 quic-multi-stream.c:     A simple QUIC client using multiple streams
 tls-client-block.c:      A simple blocking SSL/TLS client
 tls-client-non-block.c:  A simple non-blocking SSL/TLS client
+tls-server-block.c:      A simple blocking SSL/TLS server
 
 http3:                 Demonstration of how to use OpenSSL's QUIC capabilities
                        for HTTP/3.
