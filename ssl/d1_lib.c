@@ -1208,6 +1208,57 @@ void DTLS_set_timer_cb(SSL *ssl, DTLS_timer_cb cb)
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
 /*
+ * dtls_listener_connection_free - free an SSL connection owned by the listener.
+ *
+ * This function is used to free SSL connections that are in the listener's
+ * pending_conns or incoming_connections queues. These connections are owned
+ * by the listener, NOT by the application.
+ *
+ * Connections in pending_conns and incoming_connections do NOT hold a reference
+ * to the listener, even though sc->d1->listener points to it. This is intentional:
+ * if these connections held a reference to the listener, the listener's reference
+ * count would never reach zero, and ossl_dtls_listener_free() would never be
+ * called to clean up the pending/incoming connections - creating a circular
+ * dependency.
+ *
+ * Only when a connection is returned to the application via SSL_accept_connection()
+ * does it take a reference on the listener. At that point, ownership transfers
+ * to the application, and the normal SSL_free() path is used.
+ *
+ * The assert on ssl->references == 1 ensures that nobody else has taken a
+ * reference to this connection while it was in the listener's queues. If
+ * this assert fires, something has gone wrong with ownership tracking.
+ */
+static void dtls_listener_connection_free(SSL *ssl)
+{
+    SSL_CONNECTION *sc;
+    int ref_count;
+
+    if (ssl == NULL)
+        return;
+
+    sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    /*
+     * Listener-owned connections should have exactly one reference (held by
+     * the listener's queue). If this is not true, ownership has been corrupted.
+     */
+    if (!CRYPTO_GET_REF(&ssl->references, &ref_count)
+        || !ossl_assert(ref_count == 1))
+        return;
+
+    if (sc != NULL && sc->d1 != NULL) {
+        /*
+         * Clear listener reference to prevent dtls1_free() from calling
+         * SSL_free() on the listener. The connection does not own the listener
+         * and SSL_free must not free the listener
+         */
+        sc->d1->listener = NULL;
+    }
+    SSL_free(ssl);
+}
+
+/*
  * dtls_listener_create_conn_ssl - create an SSL object for a new connection.
  *
  * Creates and initializes an SSL object for handling a new incoming
@@ -1304,59 +1355,8 @@ static SSL *dtls_listener_create_conn_ssl(DTLS_LISTENER *dl,
     return ssl;
 
 err:
-    SSL_free(ssl);
+    dtls_listener_connection_free(ssl);
     return NULL;
-}
-
-/*
- * dtls_listener_connection_free - free an SSL connection owned by the listener.
- *
- * This function is used to free SSL connections that are in the listener's
- * pending_conns or incoming_connections queues. These connections are owned
- * by the listener, NOT by the application.
- *
- * Connections in pending_conns and incoming_connections do NOT hold a reference
- * to the listener, even though sc->d1->listener points to it. This is intentional:
- * if these connections held a reference to the listener, the listener's reference
- * count would never reach zero, and ossl_dtls_listener_free() would never be
- * called to clean up the pending/incoming connections - creating a circular
- * dependency.
- *
- * Only when a connection is returned to the application via SSL_accept_connection()
- * does it take a reference on the listener. At that point, ownership transfers
- * to the application, and the normal SSL_free() path is used.
- *
- * The assert on ssl->references == 1 ensures that nobody else has taken a
- * reference to this connection while it was in the listener's queues. If
- * this assert fires, something has gone wrong with ownership tracking.
- */
-static void dtls_listener_connection_free(SSL *ssl)
-{
-    SSL_CONNECTION *sc;
-    int ref_count;
-
-    if (ssl == NULL)
-        return;
-
-    sc = SSL_CONNECTION_FROM_SSL(ssl);
-
-    /*
-     * Listener-owned connections should have exactly one reference (held by
-     * the listener's queue). If this is not true, ownership has been corrupted.
-     */
-    if (!CRYPTO_GET_REF(&ssl->references, &ref_count)
-        || !ossl_assert(ref_count == 1))
-        return;
-
-    if (sc != NULL && sc->d1 != NULL) {
-        /*
-         * Clear listener reference to prevent dtls1_free() from calling
-         * SSL_free() on the listener. The connection does not own the listener
-         * and SSL_free must not free the listener
-         */
-        sc->d1->listener = NULL;
-    }
-    SSL_free(ssl);
 }
 
 /*
@@ -2047,10 +2047,28 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
         OSSL_TIME age = ossl_time_subtract(now, sc->d1->created_at);
 
         if (ossl_time_compare(age, dl->pending_timeout) > 0) {
-            /* Connection has timed out - mark for removal */
-            if (ctx->failed_conns != NULL)
-                sk_SSL_push(ctx->failed_conns, ssl);
-            ctx->error_count++;
+            /*
+             * Connection has timed out - mark for removal
+             *
+             * Set being_driven so that a concurrent ossl_dtls_tick() running
+             * phase 1 hits the being_driven check above and skips this
+             * connection, instead of collecting it and freeing it a second
+             * time (double-free).
+             *
+             * No up-ref is needed: phase 1 runs under dl->mutex, so collection
+             * is serialized, and being_driven keeps any other tick away until
+             * our phase 3 frees this connection. The single pending-queue
+             * reference is released by dtls_listener_connection_free() in the
+             * failed_conns loop.
+             *
+             * We intentionally do not handle a failed push specially: if the
+             * push fails (allocation failure) the connection stays registered
+             * in pending_conns and is simply retried on the next tick.
+             */
+            if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0) {
+                sc->d1->being_driven = 1;
+                ctx->error_count++;
+            }
             return;
         }
     }
@@ -2279,7 +2297,7 @@ int ossl_dtls_tick(DTLS_LISTENER *dl)
 {
     int pump_ret;
 
-    if (dl->net_rbio == NULL)
+    if (dl == NULL || dl->net_rbio == NULL)
         return 0;
 
     /*
@@ -2358,8 +2376,18 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
 
     /*
      * Loop calling ossl_dtls_tick() until a verified connection arrives or
-     * a fatal error occurs.  Each tick blocks inside BIO_read() until
-     * a datagram is received, so this loop does not spin.
+     * a fatal error occurs.
+     *
+     * This blocking accept path requires net_rbio to be a blocking BIO. With
+     * a blocking BIO each tick sleeps inside BIO_recvmmsg() until a datagram
+     * is received, so the loop waits efficiently and does not spin.
+     *
+     * If net_rbio were non-blocking, BIO_recvmmsg() would return a transient
+     * (non-fatal) error when no datagram is ready; ossl_dtls_tick() would then
+     * return >= 0 with the incoming queue still empty and this loop would busy
+     * spin. Callers that want non-blocking behaviour must use
+     * SSL_ACCEPT_CONNECTION_NO_BLOCK (handled above) instead of a non-blocking
+     * BIO on this path.
      */
     for (;;) {
         if (ossl_dtls_tick(dl) < 0) {
@@ -2386,7 +2414,8 @@ end:
          * to ensure the listener stays alive - the connection needs the listener
          * for packet routing
          */
-        if (sc == NULL || sc->d1 == NULL || !SSL_up_ref(sc->d1->listener)) {
+        if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL
+            || !SSL_up_ref(sc->d1->listener)) {
             dtls_listener_connection_free(conn);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return NULL;
@@ -2450,7 +2479,7 @@ static void update_conn_wbio(SSL *ssl, const BIO_ADDR *peer, void *arg)
     if (SSL_get_wbio(ssl) == new_wbio)
         return;
 
-    if (!BIO_up_ref(new_wbio))
+    if (new_wbio != NULL && !BIO_up_ref(new_wbio))
         return;
 
     SSL_set0_wbio(ssl, new_wbio);

@@ -326,6 +326,10 @@ static void postpoll_translation_cleanup_ssl_dtls_conn(SSL *ssl, uint64_t events
     if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)
         return;
 
+    /* Need to mirror the enter blocking section call */
+    if (SSL_get_rbio(ssl) != NULL)
+        return;
+
     dl = (DTLS_LISTENER *)sc->d1->listener;
     if (dl->have_notifier && ossl_rio_notifier_as_fd(&dl->notifier) != -1)
         ossl_dtls_listener_leave_blocking_section(sc->d1->listener);
