@@ -442,7 +442,7 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
 
     return kem;
 err:
-    EVP_KEM_free(kem);
+    evp_kem_free(kem);
     return NULL;
 }
 
