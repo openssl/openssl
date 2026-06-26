@@ -5955,7 +5955,6 @@ static int test_evp_aead_tag_direction(int idx)
 
     /* filter out various modes */
     if (info->taglen == 0
-        || info->mode == EVP_CIPH_GCM_MODE
         || info->mode == EVP_CIPH_OCB_MODE
         || info->mode == EVP_CIPH_GCM_SIV_MODE
         /* skip TLS stitched MTE cipher */
