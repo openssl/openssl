@@ -42,10 +42,12 @@ my $proxy = TLSProxy::Proxy->new_dtls(
     (!$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE})
 );
 
-plan tests => 1;
+plan tests => 2;
 
 my $epoch_check_failed;
 my $latest_epoch;
+my $nst_seq_check_failed;
+my $nst_msgseq;
 
 #Test 1: Check that epoch is incremented as expected during a handshake
 $epoch_check_failed = 0;
@@ -55,9 +57,28 @@ $proxy->clientflags("-min_protocol DTLSv1.3 -max_protocol DTLSv1.3 -groups ?X255
 $proxy->filter(\&current_record_epoch_filter);
 TLSProxy::Message->successondata(1);
 SKIP: {
-    skip "TLS Proxy did not start", 1 if !$proxy->start();
+    skip "TLS Proxy did not start", 2 if !$proxy->start();
     ok(!$epoch_check_failed
        && $latest_epoch == 3, "Epoch changes correctly during handshake");
+
+    #Test 2: Check that NewSessionTicket has the correct handshake sequence number
+    # In DTLS 1.3, post-handshake messages like NewSessionTicket should continue
+    # the handshake sequence numbering (not reset to 0)
+    $nst_seq_check_failed = 0;
+    $nst_msgseq = -1;
+    foreach my $message (@{$proxy->message_list}) {
+        if ($message->mt == TLSProxy::Message::MT_NEW_SESSION_TICKET) {
+            $nst_msgseq = $message->msgseq;
+            # The NewSessionTicket should have a sequence number > 0
+            if ($nst_msgseq == 0) {
+                print "NewSessionTicket has incorrect sequence number 0 (should be > 0)\n";
+                $nst_seq_check_failed = 1;
+            }
+            last;
+        }
+    }
+    ok(!$nst_seq_check_failed && $nst_msgseq > 0,
+       "NewSessionTicket has correct handshake sequence number ($nst_msgseq)");
 }
 
 sub current_record_epoch_filter

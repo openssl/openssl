@@ -1504,9 +1504,16 @@ WORK_STATE tls_finish_handshake(SSL_CONNECTION *s, ossl_unused WORK_STATE wst,
 
         if (SSL_CONNECTION_IS_DTLS(s)) {
             /* done with handshaking */
-            s->d1->handshake_read_seq = 0;
-            s->d1->handshake_write_seq = 0;
-            s->d1->next_handshake_write_seq = 0;
+            /*
+             * In DTLS 1.3, we must not reset the handshake sequence numbers
+             * because post-handshake messages like NewSessionTicket need to
+             * continue the sequence numbering from where the handshake left off.
+             */
+            if (!SSL_CONNECTION_IS_DTLS13(s)) {
+                s->d1->handshake_read_seq = 0;
+                s->d1->handshake_write_seq = 0;
+                s->d1->next_handshake_write_seq = 0;
+            }
             dtls1_clear_received_buffer(s);
         }
     }
