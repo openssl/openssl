@@ -769,8 +769,8 @@ i2d_OSSL_TIME_SPEC_TIME(), i2d_OSSL_TIME_SPEC_WEEKS(),
 i2d_OSSL_TIME_SPEC_X_DAY_OF()
 were added in OpenSSL 3.5.
 
-d2i_ECPKParameters_fp(), i2d_ECPKParameters_fp were converted from macros to
-functions in OpenSSL 4.1
+d2i_ECPKParameters_fp(), i2d_ECPKParameters_fp() were converted from macros to
+functions in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

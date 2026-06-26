@@ -162,7 +162,7 @@ IMPLEMENT_PEM_write_cb(ECPrivateKey, EC_KEY, PEM_STRING_ECPRIVATEKEY,
     ECPrivateKey)
 IMPLEMENT_PEM_rw(EC_PUBKEY, EC_KEY, PEM_STRING_PUBLIC, EC_PUBKEY)
 #ifndef OPENSSL_NO_STDIO
-EC_GROUP *d2i_ECPKParameters_fp(FILE *fp, EC_GROUP *e)
+EC_GROUP *d2i_ECPKParameters_fp(FILE *fp, EC_GROUP **e)
 {
     return (EC_GROUP *)ASN1_d2i_fp(NULL, d2i_ECPKParameters_thunk, fp, (void **)e);
 }

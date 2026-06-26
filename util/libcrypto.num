@@ -5722,5 +5722,5 @@ CRYPTO_atomic_cmp_exch_ptr              ?	4_1_0	EXIST::FUNCTION:
 EVP_EC_affine2oct                       ?	4_1_0	EXIST::FUNCTION:
 OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
-d2i_ECPKParameters_fp                   ?	4_1_0	EXIST::FUNCTION:EC
-i2d_ECPKParameters_fp                   ?	4_1_0	EXIST::FUNCTION:EC
+d2i_ECPKParameters_fp                   ?	4_1_0	EXIST::FUNCTION:EC,STDIO
+i2d_ECPKParameters_fp                   ?	4_1_0	EXIST::FUNCTION:EC,STDIO

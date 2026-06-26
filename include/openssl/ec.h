@@ -928,8 +928,10 @@ int EC_GROUP_get_pentanomial_basis(const EC_GROUP *, unsigned int *k1,
 
 EC_GROUP *d2i_ECPKParameters(EC_GROUP **, const unsigned char **in, long len);
 int i2d_ECPKParameters(const EC_GROUP *, unsigned char **out);
-EC_GROUP *d2i_ECPKParameters_fp(FILE *fp, EC_GROUP *e);
+#ifndef OPENSSL_NO_STDIO
+EC_GROUP *d2i_ECPKParameters_fp(FILE *fp, EC_GROUP **e);
 int i2d_ECPKParameters_fp(FILE *fp, EC_GROUP *e);
+#endif
 
 #define d2i_ECPKParameters_bio(bp, x) \
     ASN1_d2i_bio_of(EC_GROUP, NULL, d2i_ECPKParameters, bp, x)
