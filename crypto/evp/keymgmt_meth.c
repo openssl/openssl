@@ -50,7 +50,7 @@ static void *keymgmt_new(void)
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL)
         return NULL;
     if (!CRYPTO_NEW_REF(&keymgmt->refcnt, 1)) {
-        EVP_KEYMGMT_free(keymgmt);
+        OPENSSL_free(keymgmt);
         return NULL;
     }
     return keymgmt;
@@ -93,7 +93,7 @@ static void *keymgmt_from_algorithm(int name_id,
 
     keymgmt->name_id = name_id;
     if ((keymgmt->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        EVP_KEYMGMT_free(keymgmt);
+        evp_keymgmt_free(keymgmt);
         return NULL;
     }
     keymgmt->description = algodef->algorithm_description;
@@ -269,13 +269,13 @@ static void *keymgmt_from_algorithm(int name_id,
         || (keymgmt->gen != NULL
             && (keymgmt->gen_init == NULL
                 || keymgmt->gen_cleanup == NULL))) {
-        EVP_KEYMGMT_free(keymgmt);
+        evp_keymgmt_free(keymgmt);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
     keymgmt->prov = prov;
     if (prov != NULL && !ossl_provider_up_ref(prov)) {
-        EVP_KEYMGMT_free(keymgmt);
+        evp_keymgmt_free(keymgmt);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return NULL;
     }
