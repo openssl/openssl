@@ -49,6 +49,13 @@
     } while (0)
 
 #ifndef OPENSSL_NO_QUIC
+/*
+ * Test instrumentation only; see poll_builder.h. Always NULL in production
+ * use.
+ */
+void (*ossl_quic_poll_translate_test_step_cb)(size_t idx, void *arg) = NULL;
+void *ossl_quic_poll_translate_test_step_cb_arg = NULL;
+
 static int poll_translate_ssl_quic(SSL *ssl,
     QUIC_REACTOR_WAIT_CTX *wctx,
     RIO_POLL_BUILDER *rpb,
@@ -215,6 +222,10 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
+
+        if (ossl_quic_poll_translate_test_step_cb != NULL)
+            ossl_quic_poll_translate_test_step_cb(i,
+                ossl_quic_poll_translate_test_step_cb_arg);
 
         switch (item->desc.type) {
         case BIO_POLL_DESCRIPTOR_TYPE_SSL:
