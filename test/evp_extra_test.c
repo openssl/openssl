@@ -5944,7 +5944,6 @@ static int test_evp_aead_tag_direction(int idx)
 
     OSSL_PARAM tagparams[2];
 
-    int taglen = info->taglen;
     unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
     unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
     unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0 };
@@ -5965,12 +5964,6 @@ static int test_evp_aead_tag_direction(int idx)
         || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256"))
         return 1;
 
-    /* bound the tag buffer, should never happen but helps static analysis */
-    if (taglen > EVPTEST_TAG_LEN_MAX) {
-        errmsg = "TAGLEN_EXCEEDS_BUF";
-        goto err;
-    }
-
     for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
         key[i] = (unsigned char)(0xA0 + i);
     for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
@@ -5989,7 +5982,7 @@ static int test_evp_aead_tag_direction(int idx)
         goto err;
     }
     tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-        tag, taglen);
+        tag, info->taglen);
     tagparams[1] = OSSL_PARAM_construct_end();
     ERR_set_mark();
     if (!TEST_false(EVP_CIPHER_CTX_set_params(ctx_enc, tagparams))) {
@@ -6017,7 +6010,7 @@ static int test_evp_aead_tag_direction(int idx)
         goto err;
     }
     tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
-        tag, taglen);
+        tag, info->taglen);
     tagparams[1] = OSSL_PARAM_construct_end();
     ERR_set_mark();
     if (!TEST_false(EVP_CIPHER_CTX_get_params(ctx_dec, tagparams))) {
