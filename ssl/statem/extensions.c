@@ -857,37 +857,37 @@ int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
             SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_EXTENSION);
             goto err;
         }
-        idx = (unsigned int)(thisex - raw_extensions);
-        /*-
-         * Check that we requested this extension (if appropriate). Requests can
-         * be sent in the ClientHello and CertificateRequest. Unsolicited
-         * extensions can be sent in the NewSessionTicket. We only do this for
-         * the built-in extensions. Custom extensions have a different but
-         * similar check elsewhere.
-         * Special cases:
-         * - The HRR cookie extension is unsolicited
-         * - The renegotiate extension is unsolicited (the client signals
-         *   support via an SCSV)
-         * - The signed_certificate_timestamp extension can be provided by a
-         * custom extension or by the built-in version. We let the extension
-         * itself handle unsolicited response checks.
-         */
-        if (idx < OSSL_NELEM(ext_defs)
-            && (context & (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) == 0
-            && type != TLSEXT_TYPE_cookie
-            && type != TLSEXT_TYPE_renegotiate
-            && type != TLSEXT_TYPE_signed_certificate_timestamp
-            && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0
-#ifndef OPENSSL_NO_GOST
-            && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
-                && type == TLSEXT_TYPE_cryptopro_bug)
-#endif
-        ) {
-            SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
-                SSL_R_UNSOLICITED_EXTENSION);
-            goto err;
-        }
         if (thisex != NULL) {
+            idx = (unsigned int)(thisex - raw_extensions);
+            /*-
+             * Check that we requested this extension (if appropriate). Requests can
+             * be sent in the ClientHello and CertificateRequest. Unsolicited
+             * extensions can be sent in the NewSessionTicket. We only do this for
+             * the built-in extensions. Custom extensions have a different but
+             * similar check elsewhere.
+             * Special cases:
+             * - The HRR cookie extension is unsolicited
+             * - The renegotiate extension is unsolicited (the client signals
+             *   support via an SCSV)
+             * - The signed_certificate_timestamp extension can be provided by a
+             * custom extension or by the built-in version. We let the extension
+             * itself handle unsolicited response checks.
+             */
+            if (idx < OSSL_NELEM(ext_defs)
+                && (context & (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST | SSL_EXT_TLS1_3_NEW_SESSION_TICKET)) == 0
+                && type != TLSEXT_TYPE_cookie
+                && type != TLSEXT_TYPE_renegotiate
+                && type != TLSEXT_TYPE_signed_certificate_timestamp
+                && (s->ext.extflags[idx] & SSL_EXT_FLAG_SENT) == 0
+#ifndef OPENSSL_NO_GOST
+                && !((context & SSL_EXT_TLS1_2_SERVER_HELLO) != 0
+                    && type == TLSEXT_TYPE_cryptopro_bug)
+#endif
+            ) {
+                SSLfatal(s, SSL_AD_UNSUPPORTED_EXTENSION,
+                    SSL_R_UNSOLICITED_EXTENSION);
+                goto err;
+            }
             thisex->data = extension;
             thisex->present = 1;
             thisex->type = type;
