@@ -53,9 +53,21 @@ int HMAC_Init_ex(HMAC_CTX *ctx, const void *key, int len,
         return 0;
 
 #ifdef OPENSSL_HMAC_S390X
+    /*
+     * Note: Error aliasing below.  s390_HMAC_init returns 0/1
+     * in the same way HMAC_Init_ex does, except in the case that
+     * the hardware doesn't have the needed support in the kmac
+     * instruction, in which case it returns -1
+     * In that case we fall through to the software implementation
+     * below, but we need to set rv to 0, so HMAC_Init_ex doesn't
+     * erroneously return -1, which is counter to our documentation
+     * for the function
+     */
     rv = s390x_HMAC_init(ctx, key, len);
     if (rv != -1)
         return rv;
+    else
+        rv = 0;
 #endif
 
     if (key != NULL) {
