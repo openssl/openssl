@@ -297,10 +297,12 @@ void dtls1_free(SSL *ssl)
         dtls1_clear_queues(s);
 
 #ifndef OPENSSL_NO_DTLS
-    ossl_dtls_rx_free(s->d1->rx);
+    if (s->d1 != NULL) {
+        ossl_dtls_rx_free(s->d1->rx);
 
-    if (s->d1 != NULL && s->d1->listener != NULL)
-        SSL_free(s->d1->listener);
+        if (s->d1->listener != NULL)
+            SSL_free(s->d1->listener);
+    }
 #endif
 
     DTLS_RECORD_LAYER_free(&s->rlayer);
@@ -1744,27 +1746,35 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
 
     /* Create demux with internal locking for thread safety. */
     dl->demux = ossl_dgram_demux_new(NULL, 1, NULL, NULL);
-    if (dl->demux == NULL)
+    if (dl->demux == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     /* Set up the packet handler callback for routing datagrams to connections */
     ossl_dgram_demux_set_default_handler(dl->demux, dtls_listener_packet_handler, dl);
 
     dl->incoming_connections = sk_SSL_new_null();
-    if (dl->incoming_connections == NULL)
+    if (dl->incoming_connections == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     dl->pending_conns = ossl_dgram_conn_lookup_new_addr();
-    if (dl->pending_conns == NULL)
+    if (dl->pending_conns == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     dl->established_conns = ossl_dgram_conn_lookup_new_addr();
-    if (dl->established_conns == NULL)
+    if (dl->established_conns == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
+    }
 
     dl->net_rbio = NULL;
     dl->net_wbio = NULL;
-    dl->listening = 0;
+    tsan_store(&dl->listening, 0);
     dl->fatal = 0;
 
     /* Default timeout for pending connections: 30 seconds */
@@ -1801,12 +1811,9 @@ err:
     if (dl == NULL)
         return NULL;
 
-    if (dl->notifier_cv != NULL)
-        ossl_crypto_condvar_free(&dl->notifier_cv);
-
     /*
      * If ossl_ssl_init succeeded, SSL_free handles all cleanup
-     * including incoming_connections and OPENSSL_free(dl)
+     * including incoming_connections, notifier_cv, and OPENSSL_free(dl)
      * itself via ossl_dtls_listener_free. Otherwise ossl_ssl_init
      * did not run or partially failed, so we must free the raw
      * allocation directly.
@@ -1901,10 +1908,10 @@ int ossl_dtls_listen(SSL *ssl)
     dl = (DTLS_LISTENER *)ssl;
 
     /* Already listening is not an error. */
-    if (dl->listening)
+    if (tsan_load(&dl->listening))
         return 1;
 
-    dl->listening = 1;
+    tsan_store(&dl->listening, 1);
     return 1;
 }
 
@@ -2049,13 +2056,19 @@ static void collect_pending_cb(SSL *ssl, const BIO_ADDR *peer, void *arg)
     }
 
     /*
-     * Mark as being driven, up-ref, and add to list.
+     * Up-ref and add to list first, then mark as being driven.
      * The up-ref ensures the connection stays valid while we drive it
      * without holding the mutex.
      */
+    if (!SSL_up_ref(ssl))
+        return;
+
+    if (sk_SSL_push(ctx->to_drive, ssl) <= 0) {
+        SSL_free(ssl); /* Release the ref we just took */
+        return;
+    }
+
     sc->d1->being_driven = 1;
-    SSL_up_ref(ssl);
-    sk_SSL_push(ctx->to_drive, ssl);
 }
 
 /*
@@ -2094,9 +2107,8 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
 
     /* Check if connection is ready to move to established */
     if (dtls_listener_conn_ready(ssl, dl)) {
-        if (ctx->ready_conns != NULL)
-            sk_SSL_push(ctx->ready_conns, ssl);
-        ctx->ready_count++;
+        if (ctx->ready_conns != NULL && sk_SSL_push(ctx->ready_conns, ssl) > 0)
+            ctx->ready_count++;
         return;
     }
 
@@ -2114,9 +2126,8 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
 
     /* Fatal error on this connection - mark for removal */
     if (ssl_err == SSL_ERROR_SYSCALL || ssl_err == SSL_ERROR_SSL) {
-        if (ctx->failed_conns != NULL)
-            sk_SSL_push(ctx->failed_conns, ssl);
-        ctx->error_count++;
+        if (ctx->failed_conns != NULL && sk_SSL_push(ctx->failed_conns, ssl) > 0)
+            ctx->error_count++;
     }
 }
 
@@ -2183,6 +2194,20 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
      */
     ossl_crypto_mutex_lock(dl->mutex);
 
+    /*
+     * Since we have the mutex, clear the driven flag and release the
+     * up-ref for each connection.
+     */
+    for (i = 0; i < sk_SSL_num(ctx.to_drive); i++) {
+        ssl = sk_SSL_value(ctx.to_drive, i);
+        sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
+
+        if (sc != NULL && sc->d1 != NULL)
+            sc->d1->being_driven = 0;
+
+        SSL_free(ssl); /* Release reference from phase 1 */
+    }
+
     /* Move ready connections to established and incoming queue */
     for (i = 0; i < sk_SSL_num(ctx.ready_conns); i++) {
         ssl = sk_SSL_value(ctx.ready_conns, i);
@@ -2213,17 +2238,6 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
                 dtls_listener_connection_free(ssl);
             }
         }
-    }
-
-    /* Clear being_driven flags and release references for all driven connections */
-    for (i = 0; i < sk_SSL_num(ctx.to_drive); i++) {
-        ssl = sk_SSL_value(ctx.to_drive, i);
-        sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
-
-        if (sc != NULL && sc->d1 != NULL)
-            sc->d1->being_driven = 0;
-
-        SSL_free(ssl); /* Release reference from phase 1 */
     }
 
     /* Remove failed connections (after releasing refs so ref count is 1) */
@@ -2325,8 +2339,10 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
          * return whatever is in the queue
          */
         if (dl->net_rbio != NULL) {
-            if (ossl_dtls_tick(dl) < 0)
+            if (ossl_dtls_tick(dl) < 0) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
                 return NULL;
+            }
         }
         ossl_crypto_mutex_lock(dl->mutex);
         conn = sk_SSL_shift(dl->incoming_connections);
@@ -2346,8 +2362,11 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
      * a datagram is received, so this loop does not spin.
      */
     for (;;) {
-        if (ossl_dtls_tick(dl) < 0)
-            break; /* fatal BIO error */
+        if (ossl_dtls_tick(dl) < 0) {
+            /* fatal BIO error */
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            break;
+        }
 
         ossl_crypto_mutex_lock(dl->mutex);
         conn = sk_SSL_shift(dl->incoming_connections);
@@ -2369,12 +2388,25 @@ end:
          */
         if (sc == NULL || sc->d1 == NULL || !SSL_up_ref(sc->d1->listener)) {
             dtls_listener_connection_free(conn);
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return NULL;
         }
     }
     return conn;
 }
 
+/*
+ * ossl_dtls_listener_set0_net_rbio - set the network read BIO for a listener.
+ *
+ * Thread safety: The caller must ensure that this function is not called
+ * concurrently with any other operations on the listener or its connections.
+ * This includes SSL_accept_connection(), SSL_poll(), SSL_tick(), and any
+ * I/O operations on connections created from this listener.
+ *
+ * The BIO must not be changed while other threads are actively using the
+ * listener. Typically, the BIO should be set once before calling SSL_listen()
+ * and not modified afterward.
+ */
 void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 {
     DTLS_LISTENER *dl;
@@ -2424,6 +2456,18 @@ static void update_conn_wbio(SSL *ssl, const BIO_ADDR *peer, void *arg)
     SSL_set0_wbio(ssl, new_wbio);
 }
 
+/*
+ * ossl_dtls_listener_set0_net_wbio - set the network write BIO for a listener.
+ *
+ * Thread safety: The caller must ensure that this function is not called
+ * concurrently with any other operations on the listener or its connections.
+ * This includes SSL_accept_connection(), SSL_poll(), SSL_tick(), and any
+ * I/O operations on connections created from this listener.
+ *
+ * The BIO must not be changed while other threads are actively using the
+ * listener. Typically, the BIO should be set once before calling SSL_listen()
+ * and not modified afterward.
+ */
 void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
 {
     DTLS_LISTENER *dl;
@@ -2460,6 +2504,13 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
     BIO_free_all(old_wbio);
 }
 
+/*
+ * ossl_dtls_listener_get_net_rbio - get the network read BIO for a listener.
+ *
+ * Thread safety: The caller must ensure that the BIO is not being changed
+ * concurrently via SSL_set0_rbio(). The returned BIO pointer is only valid
+ * as long as no other thread modifies it.
+ */
 BIO *ossl_dtls_listener_get_net_rbio(const SSL *s)
 {
     const DTLS_LISTENER *dl;
@@ -2472,6 +2523,13 @@ BIO *ossl_dtls_listener_get_net_rbio(const SSL *s)
     return dl->net_rbio;
 }
 
+/*
+ * ossl_dtls_listener_get_net_wbio - get the network write BIO for a listener.
+ *
+ * Thread safety: The caller must ensure that the BIO is not being changed
+ * concurrently via SSL_set0_wbio(). The returned BIO pointer is only valid
+ * as long as no other thread modifies it.
+ */
 BIO *ossl_dtls_listener_get_net_wbio(const SSL *s)
 {
     const DTLS_LISTENER *dl;

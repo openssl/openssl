@@ -2232,7 +2232,7 @@ typedef struct dtls_listener_st {
     DGRAM_CONN_LOOKUP *established_conns;
 
     /* Have we started listening yet? */
-    unsigned int listening : 1;
+    TSAN_QUALIFIER int listening;
 
     /*
      * Set by ossl_dtls_tick() when the network BIO returns a hard error.

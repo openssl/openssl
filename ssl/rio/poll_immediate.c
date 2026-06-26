@@ -445,11 +445,9 @@ static int poll_translate(SSL_POLL_ITEM *items,
                             abort_blocking))
                         FAIL_ITEM(i);
 
-                    if (*abort_blocking) {
-                        /* Need to clean up this item too */
-                        postpoll_translation_cleanup(items, i + 1, stride, wctx);
-                        return 1;
-                    }
+                    if (*abort_blocking)
+                        goto out;
+
                 } else {
                     ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
                         "SSL_poll currently only supports DTLS listeners for DTLS connections");
@@ -481,7 +479,12 @@ static int poll_translate(SSL_POLL_ITEM *items,
     }
 
 out:
-    if (!ok)
+    /*
+     * On abort_blocking, the item which triggered the abort has already
+     * balanced its own enter/leave of the blocking section (see
+     * poll_translate_ssl_quic()); only items 0..i-1 still need cleanup here.
+     */
+    if (!ok || *abort_blocking)
         postpoll_translation_cleanup(items, i, stride, wctx);
 
     *p_earliest_wakeup_deadline = earliest_wakeup_deadline;

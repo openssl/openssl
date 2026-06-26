@@ -101,11 +101,14 @@ BIO is subsequently set on the SSL object which can support blocking mode,
 blocking mode will not be automatically re-enabled. For more information, see
 L<SSL_set_blocking_mode(3)>.
 
-When B<ssl> is a DTLS listener object, these functions are thread-safe and may
-be called while other threads are using the listener. However, if the listener
-was created with the B<SSL_LISTENER_FLAG_SINGLE_THREAD> flag, no mutex is
-allocated for the listener and these functions should only be called from a
-single thread.
+When B<ssl> is a DTLS listener object, these functions must not be called
+concurrently with any other operations on the listener or its connections.
+This includes L<SSL_accept_connection(3)>, L<SSL_poll(3)>,
+L<SSL_handle_events(3)>, and any I/O operations on connections created from
+the listener. The BIO should typically be configured once before calling
+L<SSL_listen(3)> and not modified afterward while the listener is in use.
+If the listener was created with the B<SSL_LISTENER_FLAG_SINGLE_THREAD> flag,
+all operations including BIO changes must be performed from a single thread.
 
 =head1 RETURN VALUES
 

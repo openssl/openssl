@@ -379,6 +379,23 @@ returned from SSL_accept_connection(), calls to SSL_get0_listener() made from
 such SSL callbacks will return NULL.  This can be used as an indicator within
 the callback that the referenced SSL object has not yet been accepted.
 
+=head1 THREAD SAFETY
+
+For DTLS listeners, the network BIOs (set via L<SSL_set_bio(3)>) must not be
+changed concurrently with any other operations on the listener or its
+connections. This includes SSL_accept_connection(), L<SSL_poll(3)>,
+L<SSL_handle_events(3)>, and any I/O operations on connections created from
+the listener.
+
+The BIO should typically be configured once before calling SSL_listen() and
+not modified afterward while the listener is in use. Changing the BIO while
+other threads are actively using the listener or its connections results in
+undefined behavior.
+
+When using B<SSL_LISTENER_FLAG_SINGLE_THREAD>, all operations on the listener
+and its connections must be performed from a single thread at a time. No
+additional synchronization is provided in this mode.
+
 =head1 SEE ALSO
 
 L<OSSL_QUIC_server_method(3)>, L<DTLS_server_method(3)>, L<DTLSv1_listen(3)>,

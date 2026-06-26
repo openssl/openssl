@@ -680,8 +680,15 @@ int ossl_ssl_connection_reset(SSL *s)
 
         s->method->ssl_deinit(s);
         s->method = s->defltmeth;
-        if (!s->method->ssl_init(s))
+        if (!s->method->ssl_init(s)) {
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+            if (is_dtls_listener_conn) {
+                ossl_dtls_rx_free(saved_rx);
+                SSL_free(saved_listener);
+            }
+#endif
             return 0;
+        }
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
         /* Restore DTLS listener connection state */

@@ -557,7 +557,7 @@ static int dtls_listen_test(int i)
 
     if (is_dtls13) {
         tp = &testpackets13[i - (int)OSSL_NELEM(testpackets)];
-#if defined(OSSL_NO_USABLE_DTLS1_3)
+#ifdef OPENSSL_NO_DTLS1_3
         testresult = TEST_skip("DTLSv1.3 not usable");
         goto end;
 #endif

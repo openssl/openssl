@@ -100,6 +100,13 @@ DGRAM_DEMUX *ossl_dgram_demux_new(BIO *net_bio,
     if (threadsafe) {
         demux->require_mutex = 1;
         demux->mutex = ossl_crypto_mutex_new();
+#ifdef OPENSSL_THREADS
+        if (demux->mutex == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+            OPENSSL_free(demux);
+            return NULL;
+        }
+#endif
     }
 
     /* We update this if possible when we get a BIO. */
