@@ -113,6 +113,12 @@ void gcm_ghash_p8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, siz
 #define ARMv8_HWAES_CAPABLE (OPENSSL_armcap_P & ARMV8_AES)
 #define HWAES_xts_encrypt aes_v8_xts_encrypt
 #define HWAES_xts_decrypt aes_v8_xts_decrypt
+#if defined(__aarch64__)
+uint64_t _armv8_sve_get_vl_bytes(void);
+#define HWAES_SVE2_XTS_CAPABLE (OPENSSL_armcap_P & ARMV9_SVE_AES)
+#define HWAES_SVE2_XTS_VL256_CAPABLE \
+    (HWAES_SVE2_XTS_CAPABLE && _armv8_sve_get_vl_bytes() == 32)
+#endif
 #define HWAES_CBC_HMAC_SHA1_ETM_CAPABLE (HWAES_CAPABLE && (OPENSSL_armcap_P & ARMV8_SHA1))
 #define HWAES_CBC_HMAC_SHA256_ETM_CAPABLE (HWAES_CAPABLE && (OPENSSL_armcap_P & ARMV8_SHA256))
 #define HWAES_CBC_HMAC_SHA512_ETM_CAPABLE (HWAES_CAPABLE && (OPENSSL_armcap_P & ARMV8_SHA512))
@@ -555,6 +561,20 @@ void HWAES_xts_encrypt(const unsigned char *inp, unsigned char *out,
 void HWAES_xts_decrypt(const unsigned char *inp, unsigned char *out,
     size_t len, const AES_KEY *key1,
     const AES_KEY *key2, const unsigned char iv[16]);
+#if defined(HWAES_SVE2_XTS_CAPABLE)
+void aes_v8_sve2_xts_128_encrypt(const unsigned char *inp, unsigned char *out,
+    size_t len, const AES_KEY *key1,
+    const AES_KEY *key2, const unsigned char iv[16]);
+void aes_v8_sve2_xts_128_decrypt(const unsigned char *inp, unsigned char *out,
+    size_t len, const AES_KEY *key1,
+    const AES_KEY *key2, const unsigned char iv[16]);
+void aes_v8_sve2_xts_256_encrypt(const unsigned char *inp, unsigned char *out,
+    size_t len, const AES_KEY *key1,
+    const AES_KEY *key2, const unsigned char iv[16]);
+void aes_v8_sve2_xts_256_decrypt(const unsigned char *inp, unsigned char *out,
+    size_t len, const AES_KEY *key1,
+    const AES_KEY *key2, const unsigned char iv[16]);
+#endif
 #ifndef OPENSSL_NO_OCB
 #ifdef HWAES_ocb_encrypt
 void HWAES_ocb_encrypt(const unsigned char *in, unsigned char *out,
