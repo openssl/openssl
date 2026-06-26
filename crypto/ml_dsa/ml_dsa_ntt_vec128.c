@@ -310,14 +310,46 @@ static const vec_int32_t vec_q = { ML_DSA_Q, ML_DSA_Q, ML_DSA_Q, ML_DSA_Q };
 static const vec_int32_t vec_q_inv = { ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV, ML_DSA_Q_INV };
 
 /*
+ * @brief Reduce a in (-q, q) to a mod q in [0, q).
+ *
+ * @param a in (-q, q)
+ * @returns a mod q in [0, q)
+ */
+static ossl_inline
+    vec_int32_t
+    reduce_once_signed(vec_int32_t a)
+{
+    /* mask is 11..11 when a is negative, else 0 */
+    vec_uint32_t mask = -(((vec_uint32_t)a) >> 31);
+    return a + (vec_int32_t)(mask & (vec_uint32_t)vec_q);
+}
+
+/*
+ * @brief Reduce a in (-2q, q) to a mod q in [0, q).
+ *
+ * @param a in (-2q, q)
+ * @returns a mod q in [0, q)
+ */
+static ossl_inline
+    vec_int32_t
+    reduce_twice_signed(vec_int32_t a)
+{
+    /* mask is 11..11 when a is negative, else 0 */
+    vec_uint32_t mask = -(((vec_uint32_t)a) >> 31);
+    /* b is in (-q, q) */
+    vec_int32_t b = a + (vec_int32_t)(mask & (vec_uint32_t)vec_q);
+    return reduce_once_signed(b);
+}
+
+/*
  * @brief Computes the Montgomery product of a and b.
  *        See [Seiler 2018, Algorithm 3].
  *
- * @param a is the first factor, assumed to be non-negative.
+ * @param a is the first factor, assumed to be in [0, q).
  * @param a_twist is (int32)((uint32)a * ML_DSA_Q_INV).
  * @param b is the second factor.
  * @returns The Montgomery product of a and b in the range
- *          -q+1..q-1.
+ *          [0, q).
  */
 
 static ossl_inline
@@ -329,22 +361,7 @@ static ossl_inline
     vec_int32_t c = (vec_int32_t)c_u;
     vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
     vec_int32_t r = z_high - c;
-    return r;
-}
-
-/*
- * @brief Reduce a in (-q, q) to a mod q in [0, q-1].
- *
- * @param a in (-q, q)
- * @returns a mod q in [0, q-1]
- */
-static ossl_inline
-    vec_int32_t
-    reduce_once_signed(vec_int32_t a)
-{
-    /* mask is 11..11 when a is negative, else 0 */
-    vec_uint32_t mask = -(((vec_uint32_t)a) >> 31);
-    return a + (vec_int32_t)(mask & (vec_uint32_t)vec_q);
+    return reduce_twice_signed(r);
 }
 
 /*
@@ -376,9 +393,8 @@ void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *ou
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i++) {
         vec_int32_t twist_vec = (vec_int32_t)((vec_uint32_t)lhs_vec_ptr[i] * (vec_uint32_t)vec_q_inv);
-        vec_int32_t result = montgomery_multiplication_vectorized(
+        out_vec_ptr[i] = montgomery_multiplication_vectorized(
             lhs_vec_ptr[i], twist_vec, rhs_vec_ptr[i]);
-        out_vec_ptr[i] = reduce_once_signed(result);
     }
 }
 
@@ -682,11 +698,10 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
     }
 
     for (i = 0; i < ML_DSA_NUM_POLY_COEFFICIENTS / NUM_INT32_IN_VECTOR; i += 1) {
-        vec_int32_t coeff_i_vec = montgomery_multiplication_vectorized(
+        p_vec[i] = montgomery_multiplication_vectorized(
             vec_inverse_degree_montgomery,
             vec_inverse_degree_montgomery_twisted,
             p_vec[i]);
-        p_vec[i] = reduce_once_signed(coeff_i_vec);
     }
 }
 
