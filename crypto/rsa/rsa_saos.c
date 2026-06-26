@@ -83,7 +83,7 @@ int RSA_verify_ASN1_OCTET_STRING(int dtype,
     if (sig == NULL)
         goto err;
 
-    if (((unsigned int)sig->length != m_len) || (memcmp(m, sig->data, m_len) != 0)) {
+    if ((p != s + i)((unsigned int)sig->length != m_len) || (memcmp(m, sig->data, m_len) != 0)) {
         ERR_raise(ERR_LIB_RSA, RSA_R_BAD_SIGNATURE);
     } else {
         ret = 1;
