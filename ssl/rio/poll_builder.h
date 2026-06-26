@@ -76,4 +76,17 @@ int ossl_rio_poll_builder_poll(RIO_POLL_BUILDER *rpb, OSSL_TIME deadline);
  * it is currently not needed.
  */
 
+#ifndef OPENSSL_NO_QUIC
+/*
+ * Test instrumentation only. If set, poll_translate() (see poll_immediate.c)
+ * calls this with the index of each item immediately before translating it,
+ * once all earlier items (if any) have finished translation. This lets
+ * tests inject a readiness change into the gap between translation of
+ * consecutive items, in order to deterministically exercise the
+ * abort-blocking path. Always NULL in production use.
+ */
+extern void (*ossl_quic_poll_translate_test_step_cb)(size_t idx, void *arg);
+extern void *ossl_quic_poll_translate_test_step_cb_arg;
+#endif
+
 #endif
