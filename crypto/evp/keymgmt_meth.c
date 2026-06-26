@@ -19,12 +19,28 @@
 
 static void evp_keymgmt_free(void *data)
 {
-    EVP_KEYMGMT_free(data);
+    EVP_KEYMGMT *keymgmt = (EVP_KEYMGMT *)data;
+    int ref = 0;
+
+    if (keymgmt == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
+    if (ref > 0)
+        return;
+    OPENSSL_free(keymgmt->type_name);
+    ossl_provider_free(keymgmt->prov);
+    CRYPTO_FREE_REF(&keymgmt->refcnt);
+    OPENSSL_free(keymgmt);
 }
 
 static int evp_keymgmt_up_ref(void *data)
 {
-    return EVP_KEYMGMT_up_ref(data);
+    EVP_KEYMGMT *keymgmt = (EVP_KEYMGMT *)data;
+    int ref = 0;
+
+    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
+    return 1;
 }
 
 static void *keymgmt_new(void)
@@ -293,26 +309,18 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_keymgmt_up_ref(keymgmt);
+#else
     return 1;
+#endif
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
-    int ref = 0;
-
-    if (keymgmt == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
-    if (ref > 0)
-        return;
-    OPENSSL_free(keymgmt->type_name);
-    ossl_provider_free(keymgmt->prov);
-    CRYPTO_FREE_REF(&keymgmt->refcnt);
-    OPENSSL_free(keymgmt);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_keymgmt_free(keymgmt);
+#endif
 }
 
 const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)

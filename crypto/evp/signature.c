@@ -22,12 +22,27 @@
 
 static void evp_signature_free(void *data)
 {
-    EVP_SIGNATURE_free(data);
+    EVP_SIGNATURE *signature = (EVP_SIGNATURE *)data;
+    int i;
+
+    if (signature == NULL)
+        return;
+    CRYPTO_DOWN_REF(&signature->refcnt, &i);
+    if (i > 0)
+        return;
+    OPENSSL_free(signature->type_name);
+    ossl_provider_free(signature->prov);
+    CRYPTO_FREE_REF(&signature->refcnt);
+    OPENSSL_free(signature);
 }
 
 static int evp_signature_up_ref(void *data)
 {
-    return EVP_SIGNATURE_up_ref(data);
+    EVP_SIGNATURE *signature = (EVP_SIGNATURE *)data;
+    int ref = 0;
+
+    CRYPTO_UP_REF(&signature->refcnt, &ref);
+    return 1;
 }
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
@@ -454,25 +469,18 @@ err:
 
 void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 {
-    int i;
-
-    if (signature == NULL)
-        return;
-    CRYPTO_DOWN_REF(&signature->refcnt, &i);
-    if (i > 0)
-        return;
-    OPENSSL_free(signature->type_name);
-    ossl_provider_free(signature->prov);
-    CRYPTO_FREE_REF(&signature->refcnt);
-    OPENSSL_free(signature);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_signature_free(signature);
+#endif
 }
 
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&signature->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_signature_up_ref(signature);
+#else
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)

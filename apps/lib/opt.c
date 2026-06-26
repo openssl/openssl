@@ -1236,9 +1236,7 @@ int opt_isdir(const char *name)
     if (len_0 > MAX_PATH)
         return -1;
 
-#if !defined(_WIN32_WCE) || _WIN32_WCE >= 101
     if (!MultiByteToWideChar(CP_ACP, 0, name, (int)len_0, tempname, MAX_PATH))
-#endif
         for (i = 0; i < len_0; i++)
             tempname[i] = (WCHAR)name[i];
 

@@ -64,6 +64,11 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Windows CE support was dropped - Windows CE has been unsupported since
+   2018 and does not have a modern C99 toolchain.
+
+   *Bob Beck*
+
  * Improved DTLS handshake robustness under UDP reordering by buffering and
    replaying early ChangeCipherSpec (CCS) records at the expected state.
 
@@ -1268,7 +1273,9 @@ OpenSSL 4.0
    *Tomáš Mráz*
 
  * Removed deprecated functions `ERR_get_state()`, `ERR_remove_state()`
-   and `ERR_remove_thread_state()`. The `ERR_STATE` object is now always opaque.
+   and `ERR_remove_thread_state()`, as well as the `ERR_FLAG_MARK`,
+   `ERR_FLAG_CLEAR` and `ERR_NUM_ERRORS` macros. The `ERR_STATE` object is now
+   always opaque.
    <!-- https://github.com/openssl/openssl/pull/30005 -->
 
    *Tomáš Mráz*

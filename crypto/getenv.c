@@ -17,7 +17,7 @@
 
 char *ossl_safe_getenv(const char *name)
 {
-#if defined(_WIN32) && defined(CP_UTF8) && !defined(_WIN32_WCE)
+#if defined(_WIN32) && defined(CP_UTF8)
     if (GetEnvironmentVariableW(L"OPENSSL_WIN32_UTF8", NULL, 0) != 0) {
         char *val = NULL;
         int vallen = 0;
