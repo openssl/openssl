@@ -5202,15 +5202,23 @@ static int do_multi(int multi, int size_num)
         }
         fclose(f);
     }
-    /* uncomment below to show the average of child processes instead of the sum */
-    /*
-     * evp_algs_len /= n;
-     * evp_aead_algs_len /= n;
-     * #ifndef OPENSSL_NO_MULTIBLOCK
-     * evp_mb_algs_len /= n;
-     * #endif
-     */
     OPENSSL_free(fds);
+    /*
+     * Check if *_len are incremented by n child processes,
+     * then divide them by n.
+     */
+    if ((evp_algs_len % n != 0)
+        || (evp_aead_algs_len % n != 0)
+        || (evp_mb_algs_len % n != 0)) {
+        BIO_puts(bio_err, "Runtime error in child\n");
+        return 1;
+    } else {
+        evp_algs_len /= n;
+        evp_aead_algs_len /= n;
+#ifndef OPENSSL_NO_MULTIBLOCK
+        evp_mb_algs_len /= n;
+#endif
+    }
     for (n = 0; n < multi; ++n) {
         while (wait(&status) == -1)
             if (errno != EINTR) {
