@@ -10602,6 +10602,8 @@ static int test_session_cache_overflow(int idx)
     int testresult = 0;
     SSL_SESSION *sess = NULL;
 
+    get_sess_val = NULL;
+
 #ifdef OSSL_NO_USABLE_TLS1_3
     /* If no TLSv1.3 available then do nothing in this case */
     if (idx % 2 == 0)
@@ -10698,6 +10700,7 @@ static int test_session_cache_overflow(int idx)
 
 end:
     SSL_SESSION_free(get_sess_val);
+    get_sess_val = NULL;
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
