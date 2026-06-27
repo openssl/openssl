@@ -251,7 +251,11 @@ int main(int argc, char **argv)
 
             /* Create server SSL structure using newly accepted client socket */
             ssl = SSL_new(ssl_ctx);
-            SSL_set_fd(ssl, client_skt);
+            if (SSL_set_fd(ssl, client_skt) <= 0) {
+                puts("Unable to set fd for the SSL object");
+                ERR_print_errors_fp(stderr);
+                exit(EXIT_FAILURE);
+            }
 
             /* Wait for SSL connection from the client */
             if (SSL_accept(ssl) <= 0) {
@@ -332,11 +336,19 @@ int main(int argc, char **argv)
 
         /* Create client SSL structure using dedicated client socket */
         ssl = SSL_new(ssl_ctx);
-        SSL_set_fd(ssl, client_skt);
+        if (SSL_set_fd(ssl, client_skt) <= 0) {
+            puts("Unable to set fd for the SSL object");
+            ERR_print_errors_fp(stderr);
+            exit(EXIT_FAILURE);
+        }
         /* Set hostname for SNI */
         SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
-        SSL_set1_ipaddr(ssl, rem_server_ip);
+        if (SSL_set1_ipaddr(ssl, rem_server_ip) <= 0) {
+            puts("Unable to set IP address for the SSL object");
+            ERR_print_errors_fp(stderr);
+            exit(EXIT_FAILURE);
+        }
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {
