@@ -47,7 +47,7 @@ static int ossl_decoder_up_ref(void *data)
     OSSL_DECODER *decoder = (OSSL_DECODER *)data;
     int ref = 0;
 
-    return CRYPTO_UP_REF(&decoder->base.refcnt, &ref);;
+    return CRYPTO_UP_REF(&decoder->base.refcnt, &ref);
 }
 
 /* Simple method structure constructor and destructor */
