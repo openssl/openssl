@@ -1346,7 +1346,7 @@ static int evp_cipher_up_ref(void *c)
     int ref = 0;
 
     if (cipher->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&cipher->refcnt, &ref);
+        return CRYPTO_UP_REF(&cipher->refcnt, &ref);
     return 1;
 }
 

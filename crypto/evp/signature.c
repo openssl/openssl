@@ -41,8 +41,7 @@ static int evp_signature_up_ref(void *data)
     EVP_SIGNATURE *signature = (EVP_SIGNATURE *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&signature->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&signature->refcnt, &ref);
 }
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)

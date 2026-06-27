@@ -5433,9 +5433,8 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
 
     ossl_crypto_mutex_lock(c->mutex);
     tok = lh_QUIC_TOKEN_retrieve(c->cache, key);
-    if (tok != NULL) {
+    if (tok != NULL && CRYPTO_UP_REF(&tok->references, &ret)) {
         *token = tok;
-        CRYPTO_UP_REF(&tok->references, &ret);
         rc = 1;
     }
 

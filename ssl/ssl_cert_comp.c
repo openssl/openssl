@@ -151,7 +151,7 @@ int OSSL_COMP_CERT_up_ref(OSSL_COMP_CERT *cc)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&cc->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&cc->references, &i))
         return 0;
 
     REF_PRINT_COUNT("OSSL_COMP_CERT", i, cc);

@@ -725,7 +725,7 @@ static int xor_key_up_ref(XORKEY *key)
 {
     int refcnt;
 
-    if (CRYPTO_UP_REF(&key->references, &refcnt) <= 0)
+    if (!CRYPTO_UP_REF(&key->references, &refcnt))
         return 0;
 
     assert(refcnt > 1);

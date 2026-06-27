@@ -196,7 +196,7 @@ int EVP_SKEY_up_ref(EVP_SKEY *skey)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&skey->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&skey->references, &i))
         return 0;
 
     REF_PRINT_COUNT("EVP_SKEY", i, skey);

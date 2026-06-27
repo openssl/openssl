@@ -1576,8 +1576,8 @@ NISTP384_PRE_COMP *ossl_ec_nistp384_pre_comp_dup(NISTP384_PRE_COMP *p)
 {
     int i;
 
-    if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i);
+    if (p == NULL || !CRYPTO_UP_REF(&p->references, &i))
+        return NULL;
     return p;
 }
 

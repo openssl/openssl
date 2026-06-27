@@ -110,8 +110,7 @@ int ossl_mac_key_up_ref(MAC_KEY *mackey)
     if (!ossl_prov_is_running())
         return 0;
 
-    CRYPTO_UP_REF(&mackey->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&mackey->refcnt, &ref);
 }
 
 static void *mac_new(void *provctx)
