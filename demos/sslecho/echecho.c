@@ -7,6 +7,7 @@
  *  https://www.openssl.org/source/license.html
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <unistd.h>
 #include <string.h>
@@ -28,10 +29,6 @@ static const char echprivbuf[]
       "AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA"
       "AQALZXhhbXBsZS5jb20AAA==\n"
       "-----END ECHCONFIG-----\n";
-
-typedef unsigned char bool;
-#define true 1
-#define false 0
 
 /*
  * This flag won't be useful until both accept/read (TCP & SSL) methods
