@@ -1402,7 +1402,7 @@ ENDIF
 
   SOURCE[strtoultest]=strtoultest.c
   INCLUDE[strtoultest]=../include ../apps/include
-  DEPEND[strtoultest]=../libcrypto libtestutil.a
+  DEPEND[strtoultest]=../libcrypto.a libtestutil.a
 
   SOURCE[bio_pw_callback_test]=bio_pw_callback_test.c
   INCLUDE[bio_pw_callback_test]=../include ../apps/include
