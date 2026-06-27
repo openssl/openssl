@@ -772,27 +772,13 @@ int ssl3_take_mac(SSL_CONNECTION *s)
 MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL_CONNECTION *s,
     PACKET *pkt)
 {
-    size_t remain;
-
-    remain = PACKET_remaining(pkt);
     /*
      * 'Change Cipher Spec' is just a single byte, which should already have
-     * been consumed by ssl_get_message() so there should be no bytes left,
-     * unless we're using DTLS1_BAD_VER, which has an extra 2 bytes
+     * been consumed by ssl_get_message() so there should be no bytes left
      */
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if ((s->version == DTLS1_BAD_VER
-                && remain != DTLS1_CCS_HEADER_LENGTH + 1)
-            || (s->version != DTLS1_BAD_VER
-                && remain != DTLS1_CCS_HEADER_LENGTH - 1)) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-            return MSG_PROCESS_ERROR;
-        }
-    } else {
-        if (remain != 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_CHANGE_CIPHER_SPEC);
-            return MSG_PROCESS_ERROR;
-        }
+    if (PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_CHANGE_CIPHER_SPEC);
+        return MSG_PROCESS_ERROR;
     }
 
     /* Check we have a cipher to change to */
@@ -807,11 +793,8 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL_CONNECTION *s,
         return MSG_PROCESS_ERROR;
     }
 
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if (s->version == DTLS1_BAD_VER)
-            s->d1->handshake_read_seq++;
-
 #ifndef OPENSSL_NO_SCTP
+    if (SSL_CONNECTION_IS_DTLS(s)) {
         /*
          * Remember that a CCS has been received, so that an old key of
          * SCTP-Auth can be deleted when a CCS is sent. Will be ignored if no
@@ -819,8 +802,8 @@ MSG_PROCESS_RETURN tls_process_change_cipher_spec(SSL_CONNECTION *s,
          */
         BIO_ctrl(SSL_get_wbio(SSL_CONNECTION_GET_SSL(s)),
             BIO_CTRL_DGRAM_SCTP_AUTH_CCS_RCVD, 1, NULL);
-#endif
     }
+#endif
 
     return MSG_PROCESS_CONTINUE_READING;
 }
@@ -1878,10 +1861,8 @@ static const version_info dtls_version_table[] = {
 #endif
 #ifndef OPENSSL_NO_DTLS1
     { DTLS1_VERSION, dtlsv1_client_method, dtlsv1_server_method },
-    { DTLS1_BAD_VER, dtls_bad_ver_client_method, NULL },
 #else
     { DTLS1_VERSION, NULL, NULL },
-    { DTLS1_BAD_VER, NULL, NULL },
 #endif
     { 0, NULL, NULL },
 };
@@ -2085,10 +2066,8 @@ int ssl_set_version_bound(int method_version, int version, int *bound)
 
     valid_tls = version > SSL3_VERSION && version <= TLS_MAX_VERSION_INTERNAL;
     valid_dtls =
-        /* We support client side pre-standardisation version of DTLS */
-        (version == DTLS1_BAD_VER)
-        || (DTLS_VERSION_LE(version, DTLS_MAX_VERSION_INTERNAL)
-            && DTLS_VERSION_GE(version, DTLS1_VERSION));
+        DTLS_VERSION_LE(version, DTLS_MAX_VERSION_INTERNAL)
+            && DTLS_VERSION_GE(version, DTLS1_VERSION);
 
     if (!valid_tls && !valid_dtls)
         return 0;
@@ -2587,19 +2566,7 @@ int ssl_set_client_hello_version(SSL_CONNECTION *s)
 
     s->version = ver_max;
 
-    if (SSL_CONNECTION_IS_DTLS(s)) {
-        if (ver_max == DTLS1_BAD_VER) {
-            /*
-             * Even though this is technically before version negotiation,
-             * because we have asked for DTLS1_BAD_VER we will never negotiate
-             * anything else, and this has impacts on the record layer for when
-             * we read the ServerHello. So we need to tell the record layer
-             * about this immediately.
-             */
-            if (!ssl_set_record_protocol_version(s, ver_max))
-                return 0;
-        }
-    } else if (ver_max > TLS1_2_VERSION) {
+    if (!SSL_CONNECTION_IS_DTLS(s) && ver_max > TLS1_2_VERSION) {
         /* TLS1.3 always uses TLS1.2 in the legacy_version field */
         ver_max = TLS1_2_VERSION;
     }

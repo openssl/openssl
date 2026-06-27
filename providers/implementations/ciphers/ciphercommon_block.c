@@ -156,7 +156,6 @@ int ossl_cipher_tlsunpadblock(OSSL_LIB_CTX *libctx, unsigned int tlsversion,
     case DTLS1_2_VERSION:
     case TLS1_1_VERSION:
     case DTLS1_VERSION:
-    case DTLS1_BAD_VER:
         /* Remove the explicit IV */
         buf += blocksize;
         *buflen -= blocksize;

@@ -12945,8 +12945,6 @@ static int test_version(int idx)
 #endif
     /*
      * NB we do not support QUIC in this test. That is covered by quicapitest.c
-     * We also don't support DTLS1_BAD_VER since we have no server support for
-     * that.
      */
     default:
         TEST_skip("Unsupported protocol version");

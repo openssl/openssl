@@ -355,7 +355,6 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     case TLS1_1_VERSION:
     case TLS1_2_VERSION:
     case TLS1_3_VERSION:
-    case DTLS1_BAD_VER:
     case DTLS1_VERSION:
     case DTLS1_2_VERSION:
         ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
