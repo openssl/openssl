@@ -36,7 +36,7 @@ static const char echprivbuf[]
  */
 static volatile bool server_running = true;
 
-int create_socket(bool isServer)
+static int create_socket(bool isServer)
 {
     int s;
     int optval = 1;
@@ -74,7 +74,7 @@ int create_socket(bool isServer)
     return s;
 }
 
-SSL_CTX *create_context(bool isServer)
+static SSL_CTX *create_context(bool isServer)
 {
     const SSL_METHOD *method;
     SSL_CTX *ctx;
@@ -116,7 +116,7 @@ err:
     return 0;
 }
 
-void configure_server_context(SSL_CTX *ctx)
+static void configure_server_context(SSL_CTX *ctx)
 {
     /* Set the key and cert */
     if (SSL_CTX_use_certificate_chain_file(ctx, "cert.pem") <= 0) {
@@ -137,7 +137,7 @@ void configure_server_context(SSL_CTX *ctx)
     }
 }
 
-void configure_client_context(SSL_CTX *ctx)
+static void configure_client_context(SSL_CTX *ctx)
 {
     /*
      * Configure the client to abort the handshake if certificate verification
@@ -163,7 +163,7 @@ void configure_client_context(SSL_CTX *ctx)
     }
 }
 
-void usage()
+static void usage(void)
 {
     printf("Usage: echecho s\n");
     printf("       --or--\n");
