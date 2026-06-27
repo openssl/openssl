@@ -777,7 +777,7 @@ static int test_nc_eai_excluded(int idx)
 {
     static const char *const leaf_files[] = {
         "nc-eai-leaf-rfc822.pem", /* SAN: rfc822Name */
-        "nc-eai-leaf.pem",        /* SAN: otherName SmtpUTF8Mailbox */
+        "nc-eai-leaf.pem", /* SAN: otherName SmtpUTF8Mailbox */
     };
     char *root_path = NULL, *ica_path = NULL, *leaf_path = NULL;
     X509 *root = NULL, *ica = NULL, *leaf = NULL;
@@ -786,7 +786,7 @@ static int test_nc_eai_excluded(int idx)
     X509_STORE_CTX *ctx = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(root_path = test_mk_file_path(certs_dir, "nc-eai-root.pem"))
+    if (!TEST_ptr(root_path = test_mk_file_path(certs_dir, "root-cert.pem"))
         || !TEST_ptr(ica_path = test_mk_file_path(certs_dir, "nc-eai-ica.pem"))
         || !TEST_ptr(leaf_path = test_mk_file_path(certs_dir, leaf_files[idx]))
         || !TEST_ptr(root = load_cert_from_file(root_path))
@@ -800,11 +800,10 @@ static int test_nc_eai_excluded(int idx)
         || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, untrusted)))
         goto end;
     ica = NULL;
-    X509_VERIFY_PARAM_set_time(X509_STORE_CTX_get0_param(ctx), 1782000000);
 
     ret = TEST_int_eq(X509_verify_cert(ctx), 0)
         && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
-                       X509_V_ERR_EXCLUDED_VIOLATION);
+            X509_V_ERR_EXCLUDED_VIOLATION);
 
 end:
     X509_STORE_CTX_free(ctx);
