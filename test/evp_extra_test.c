@@ -7776,6 +7776,70 @@ end:
     return ret;
 }
 
+static int test_aes_xts_rejects_missing_iv(void)
+{
+    static const unsigned char key[32] = {
+        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
+        0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17,
+        0x18, 0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f
+    };
+    static const unsigned char in[32] = {
+        0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+        0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+        0xff, 0xee, 0xdd, 0xcc, 0xbb, 0xaa, 0x99, 0x88,
+        0x77, 0x66, 0x55, 0x44, 0x33, 0x22, 0x11, 0x00
+    };
+    static const unsigned char iv[16] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02
+    };
+    EVP_CIPHER_CTX *ctx = NULL;
+    EVP_CIPHER *cipher = NULL;
+    unsigned char out[sizeof(in)];
+    int outl = 0;
+    int ret = 0;
+
+    if ((cipher = EVP_CIPHER_fetch(testctx, "AES-128-XTS", testpropq)) == NULL)
+        return TEST_skip("AES-128-XTS cipher is not available");
+
+    /* Initialize with a valid IV as a positive control */
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, out, &outl, in, sizeof(in)))
+        || !TEST_int_eq(outl, (int)sizeof(in)))
+        goto err;
+
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+    outl = 0;
+
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    /* Initialize with a NULL IV, which may fail immediately */
+    ERR_set_mark();
+    if (!EVP_EncryptInit_ex2(ctx, cipher, key, NULL, NULL)) {
+        ERR_pop_to_mark();
+        ret = 1;
+        goto err;
+    }
+
+    /* Test EVP_EncryptUpdate after NULL IV initialization, which should fail */
+    if (!TEST_false(EVP_EncryptUpdate(ctx, out, &outl, in, sizeof(in)))) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    ret = 1;
+
+err:
+    EVP_CIPHER_free(cipher);
+    EVP_CIPHER_CTX_free(ctx);
+    return ret;
+}
+
 /*
  * Cross-driver round-trip test for AEAD one-shot vs streaming paths.
  *
@@ -8972,6 +9036,7 @@ int setup_tests(void)
     ADD_TEST(test_invalid_ctx_for_digest);
 
     ADD_TEST(test_evp_cipher_negative_length);
+    ADD_TEST(test_aes_xts_rejects_missing_iv);
 
     ADD_TEST(test_evp_cipher_pipeline);
 
