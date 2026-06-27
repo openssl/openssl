@@ -336,7 +336,7 @@ int main(int argc, char **argv)
         /* Set hostname for SNI */
         SSL_set_tlsext_host_name(ssl, rem_server_ip);
         /* Configure server hostname check */
-        SSL_set1_host(ssl, rem_server_ip);
+        SSL_set1_ipaddr(ssl, rem_server_ip);
 
         /* Now do SSL connect with server */
         if (SSL_connect(ssl) == 1) {
