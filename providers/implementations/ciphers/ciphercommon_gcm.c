@@ -263,9 +263,12 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (sz == 0 || ctx->enc) {
-            ERR_raise(ERR_LIB_PROV,
-                ctx->enc ? PROV_R_TAG_NOT_NEEDED : PROV_R_INVALID_TAG);
+        if (ctx->enc) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
+            return 0;
+        }
+        if (sz == 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
             return 0;
         }
         ctx->taglen = sz;
