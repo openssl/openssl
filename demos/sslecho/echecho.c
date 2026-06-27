@@ -17,13 +17,17 @@
 
 static const int server_port = 4433;
 
-static const char echconfig[] = "AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEAAQALZXhhbXBsZS5jb20AAA==";
-static const char echprivbuf[] = "-----BEGIN PRIVATE KEY-----\n"
-                                 "MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V\n"
-                                 "-----END PRIVATE KEY-----\n"
-                                 "-----BEGIN ECHCONFIG-----\n"
-                                 "AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEAAQALZXhhbXBsZS5jb20AAA==\n"
-                                 "-----END ECHCONFIG-----\n";
+static const char echconfig[]
+    = "AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA"
+      "AQALZXhhbXBsZS5jb20AAA==";
+static const char echprivbuf[]
+    = "-----BEGIN PRIVATE KEY-----\n"
+      "MC4CAQAwBQYDK2VuBCIEICjd4yGRdsoP9gU7YT7My8DHx1Tjme8GYDXrOMCi8v1V\n"
+      "-----END PRIVATE KEY-----\n"
+      "-----BEGIN ECHCONFIG-----\n"
+      "AD7+DQA65wAgACA8wVN2BtscOl3vQheUzHeIkVmKIiydUhDCliA4iyQRCwAEAAEA"
+      "AQALZXhhbXBsZS5jb20AAA==\n"
+      "-----END ECHCONFIG-----\n";
 
 typedef unsigned char bool;
 #define true 1
@@ -144,9 +148,11 @@ void configure_client_context(SSL_CTX *ctx)
      */
     SSL_CTX_set_verify(ctx, SSL_VERIFY_PEER, NULL);
     /*
-     * In a real application you would probably just use the default system certificate trust store and call:
+     * In a real application you would probably just use the default system
+     * certificate trust store and call:
      *     SSL_CTX_set_default_verify_paths(ctx);
-     * In this demo though we are using a self-signed certificate, so the client must trust it directly.
+     * In this demo though we are using a self-signed certificate,
+     * so the client must trust it directly.
      */
     if (!SSL_CTX_load_verify_locations(ctx, "cert.pem", NULL)) {
         ERR_print_errors_fp(stderr);
@@ -268,7 +274,10 @@ int main(int argc, char **argv)
 
                 /* Echo loop */
                 while (true) {
-                    /* Get message from client; will fail if client closes connection */
+                    /*
+                     * Get message from client; will fail if client closes
+                     * connection
+                     */
                     if ((rxlen = SSL_read(ssl, rxbuf, rxcap)) <= 0) {
                         if (rxlen == 0) {
                             printf("Client closed connection\n");
