@@ -40,8 +40,7 @@ static int evp_keyexch_up_ref(void *data)
     EVP_KEYEXCH *exchange = (EVP_KEYEXCH *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&exchange->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&exchange->refcnt, &ref);
 }
 
 static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)

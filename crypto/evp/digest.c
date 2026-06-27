@@ -977,7 +977,7 @@ static int evp_md_up_ref(void *m)
     int ref = 0;
 
     if (md->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&md->refcnt, &ref);
+        return CRYPTO_UP_REF(&md->refcnt, &ref);
     return 1;
 }
 

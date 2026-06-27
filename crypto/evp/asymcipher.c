@@ -38,8 +38,7 @@ static int evp_asym_cipher_up_ref(void *data)
     EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)data;
     int ref = 0;
 
-    CRYPTO_UP_REF(&cipher->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&cipher->refcnt, &ref);
 }
 
 static int evp_pkey_asym_cipher_init(EVP_PKEY_CTX *ctx, int operation,
