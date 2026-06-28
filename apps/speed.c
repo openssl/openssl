@@ -5017,6 +5017,7 @@ static int strtoint(const char *str, const int min_val, const int upper_val,
 
 static int do_multi(int multi, int size_num)
 {
+    unsigned int i;
     int n;
     int fd[2];
     int *fds;
@@ -5054,6 +5055,10 @@ static int do_multi(int multi, int size_num)
 
     /* parent */
     /* get measurement results from child processes */
+#ifndef OPENSSL_NO_MULTIBLOCK
+    uint8_t evp_mb_mismatch = 0;
+#endif
+    uint8_t evp_mismatch = 0, evp_aead_mismatch = 0;
     /* for now, assume the pipe is long enough to take all the output */
     for (n = 0; n < multi; ++n) {
         FILE *f;
@@ -5066,7 +5071,9 @@ static int do_multi(int multi, int size_num)
         const unsigned int idx_offset_mb = idx_offset_aead + MAX_EVP_NUM_AEAD;
 #ifndef OPENSSL_NO_MULTIBLOCK
         const unsigned int idx_max_evp = idx_offset_mb + MAX_EVP_NUM_MB;
+        unsigned int tmp_evp_mb_algs_len = 0;
 #endif
+        unsigned int tmp_evp_algs_len = 0, tmp_evp_aead_algs_len = 0;
         if ((f = fdopen(fds[n], "r")) == NULL) {
             BIO_printf(bio_err, "fdopen failure with 0x%x\n",
                 errno);
@@ -5086,30 +5093,73 @@ static int do_multi(int multi, int size_num)
             printf("Got: %s from %d\n", buf, n);
             p = buf;
             if (CHECK_AND_SKIP_PREFIX(p, "+F:")) {
-                int alg;
+                /* symmetric- or no-key algorithms */
+                int mr_idx; /* algorithm index in machine-readable outputs */
                 int j;
-                const char *str_alg = sstrsep(&p, sep);
+                const char *str_mr_idx = sstrsep(&p, sep);
                 const char *alg_name = sstrsep(&p, sep);
-
-                if (strtoint(str_alg, 0, ALGOR_NUM, &alg)) {
+                /*
+                 * Range of mr_idx for *results[mr_idx - offset]
+                 *          results[]:               0 <= mr_idx < ALGOR_NUM
+                 *      evp_results[]:       ALGOR_NUM <= mr_idx < idx_offset_aead (= ALGOR_NUM + MAX_EVP_NUM)
+                 * evp_aead_results[]: idx_offset_aead <= mr_idx < idx_offset_mb (= idx_offset_aead + MAX_EVP_NUM_AEAD)
+                 *   evp_mb_results[]:   idx_offset_mb <= mr_idx < idx_max_evp (= idx_offset_mb + MAX_EVP_NUM_MB)
+                 */
+                if (strtoint(str_mr_idx, 0, ALGOR_NUM, &mr_idx)) {
                     for (j = 0; j < size_num; ++j)
-                        results[alg][j] += atof(sstrsep(&p, sep));
-                } else if (strtoint(str_alg, ALGOR_NUM, idx_offset_aead, &alg)) {
-                    for (j = 0; j < size_num; ++j)
-                        evp_results[alg - ALGOR_NUM][j] += atof(sstrsep(&p, sep));
-                    evp_names[alg - ALGOR_NUM] = strdup(alg_name);
-                    evp_algs_len++;
-                } else if (strtoint(str_alg, idx_offset_aead, idx_offset_mb, &alg)) {
-                    for (j = 0; j < (int)SIZE_NUM_AEAD; ++j)
-                        evp_aead_results[alg - idx_offset_aead][j] += atof(sstrsep(&p, sep));
-                    evp_aead_names[alg - idx_offset_aead] = strdup(alg_name);
-                    evp_aead_algs_len++;
+                        results[mr_idx][j] += atof(sstrsep(&p, sep));
+                } else if (strtoint(str_mr_idx, ALGOR_NUM, idx_offset_aead, &mr_idx)
+                    && !evp_mismatch) {
+                    /* check runtime error */
+                    if (mr_idx - (unsigned int)ALGOR_NUM != tmp_evp_algs_len) {
+                        BIO_printf(bio_err,
+                            "Runtime error: child %d might skip "
+                            "one or more EVP-algorithms before '%s'\n",
+                            n, alg_name);
+                        evp_mismatch = 1;
+                    } else {
+                        /* no runtime error */
+                        for (j = 0; j < size_num; ++j)
+                            evp_results[tmp_evp_algs_len][j] += atof(sstrsep(&p, sep));
+                        if (n == 0)
+                            evp_names[tmp_evp_algs_len] = strdup(alg_name); /* OPENSSL_free'ed in 'end:' */
+                        tmp_evp_algs_len++;
+                    }
+                } else if (strtoint(str_mr_idx, idx_offset_aead, idx_offset_mb, &mr_idx)
+                    && !evp_aead_mismatch) {
+                    /* check runtime error */
+                    if (mr_idx - idx_offset_aead != tmp_evp_aead_algs_len) {
+                        BIO_printf(bio_err,
+                            "Runtime error: child %d might skip "
+                            "one or more AEAD-algorithms before '%s'\n",
+                            n, alg_name);
+                        evp_aead_mismatch = 1;
+                    } else {
+                        /* no runtime error */
+                        for (j = 0; j < (int)SIZE_NUM_AEAD; ++j)
+                            evp_aead_results[tmp_evp_aead_algs_len][j] += atof(sstrsep(&p, sep));
+                        if (n == 0)
+                            evp_aead_names[tmp_evp_aead_algs_len] = strdup(alg_name); /* OPENSSL_free'ed in 'end:' */
+                        tmp_evp_aead_algs_len++;
+                    }
 #ifndef OPENSSL_NO_MULTIBLOCK
-                } else if (strtoint(str_alg, idx_offset_aead, idx_max_evp, &alg)) {
-                    for (j = 0; j < (int)SIZE_NUM_MB; ++j)
-                        evp_mb_results[alg - idx_offset_mb][j] += atof(sstrsep(&p, sep));
-                    evp_mb_names[alg - idx_offset_mb] = strdup(alg_name);
-                    evp_mb_algs_len++;
+                } else if (strtoint(str_mr_idx, idx_offset_aead, idx_max_evp, &mr_idx)
+                    && !evp_mb_mismatch) {
+                    /* check runtime error */
+                    if (mr_idx - idx_offset_mb != tmp_evp_mb_algs_len) {
+                        BIO_printf(bio_err,
+                            "Runtime error: child %d might skip "
+                            "one or more multi-block-mode algorithms before '%s'\n",
+                            n, alg_name);
+                        evp_mb_mismatch = 1;
+                    } else {
+                        /* no runtime error */
+                        for (j = 0; j < (int)SIZE_NUM_MB; ++j)
+                            evp_mb_results[tmp_evp_mb_algs_len][j] += atof(sstrsep(&p, sep));
+                        if (n == 0)
+                            evp_mb_names[tmp_evp_mb_algs_len] = strdup(alg_name); /* OPENSSL_free'ed in 'end:' */
+                        tmp_evp_mb_algs_len++;
+                    }
 #endif
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F2:")) {
@@ -5201,23 +5251,77 @@ static int do_multi(int multi, int size_num)
             }
         }
         fclose(f);
+        /* check the consistency between child 0 and n > 0 */
+        if (n == 0) {
+            /* set */
+            evp_algs_len = tmp_evp_algs_len;
+            evp_aead_algs_len = tmp_evp_aead_algs_len;
+#ifndef OPENSSL_NO_MULTIBLOCK
+            evp_mb_algs_len = tmp_evp_mb_algs_len;
+#endif
+        } else {
+            /* compare */
+            if (evp_algs_len != tmp_evp_algs_len) {
+                BIO_printf(bio_err,
+                    "Runtime error: # of EVP-algorithms different between "
+                    "'%d' from child0 and '%d' from child%d\n",
+                    evp_algs_len, tmp_evp_algs_len, n);
+                evp_mismatch = 1;
+            }
+            if (evp_aead_algs_len != tmp_evp_aead_algs_len) {
+                BIO_printf(bio_err,
+                    "Runtime error: # of AEAD-algorithms different between "
+                    "'%d' from child0 and '%d' from child%d\n",
+                    evp_aead_algs_len, tmp_evp_aead_algs_len, n);
+                evp_aead_mismatch = 1;
+            }
+#ifndef OPENSSL_NO_MULTIBLOCK
+            if (evp_mb_algs_len != tmp_evp_mb_algs_len) {
+                BIO_printf(bio_err,
+                    "Runtime error: # of multi-block-algorithms different between "
+                    "'%d' from child0 and '%d' from child%d\n",
+                    evp_mb_algs_len, tmp_evp_mb_algs_len, n);
+                evp_mb_mismatch = 1;
+            }
+#endif
+        }
     }
     OPENSSL_free(fds);
-    /*
-     * Check if *_len are incremented by n child processes,
-     * then divide them by n.
-     */
-    if ((evp_algs_len % n != 0)
-        || (evp_aead_algs_len % n != 0)
-        || (evp_mb_algs_len % n != 0)) {
-        BIO_puts(bio_err, "Runtime error in child\n");
-        return 1;
-    } else {
-        evp_algs_len /= n;
-        evp_aead_algs_len /= n;
+    /* runtime error handling */
+    if (evp_mismatch || evp_aead_mismatch
 #ifndef OPENSSL_NO_MULTIBLOCK
-        evp_mb_algs_len /= n;
+        || evp_mb_mismatch
 #endif
+    ) {
+        BIO_puts(bio_err, "\n");
+        if (evp_mismatch) {
+            for (i = 0; i < evp_algs_len; i++)
+                OPENSSL_free(evp_names[i]);
+            evp_algs_len = 0;
+            if (!mr) {
+                BIO_puts(bio_err, "WARNING: skip summary of evp results with "
+                                  "inconsistency among child processes\n");
+            }
+        }
+        if (evp_aead_mismatch) {
+            for (i = 0; i < evp_aead_algs_len; i++)
+                OPENSSL_free(evp_aead_names[i]);
+            evp_aead_algs_len = 0;
+            if (!mr)
+                BIO_puts(bio_err, "WARNING: skip summary of AEAD results with "
+                                  "inconsistency among child processes\n");
+        }
+#ifndef OPENSSL_NO_MULTIBLOCK
+        if (evp_mb_mismatch) {
+            for (i = 0; i < evp_mb_algs_len; i++)
+                OPENSSL_free(evp_mb_names[i]);
+            evp_mb_algs_len = 0;
+            if (!mr)
+                BIO_puts(bio_err, "WARNING: skip summary of multi-block results with "
+                                  "inconsistency among child processes\n");
+        }
+#endif
+        BIO_puts(bio_err, "\n");
     }
     for (n = 0; n < multi; ++n) {
         while (wait(&status) == -1)
@@ -5235,7 +5339,7 @@ static int do_multi(int multi, int size_num)
     }
     return 1;
 }
-#endif
+#endif /* NO_FORK */
 
 #ifndef OPENSSL_NO_MULTIBLOCK
 static int multiblock_cipher_bench(
