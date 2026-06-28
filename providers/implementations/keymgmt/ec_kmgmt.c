@@ -1302,6 +1302,7 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
 
     if (gctx->group_check != NULL)
         ret = ret && ossl_ec_set_check_group_type_from_name(ec, gctx->group_check);
+
     if (ret)
         return ec;
 err:
