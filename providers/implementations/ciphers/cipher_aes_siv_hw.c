@@ -112,7 +112,7 @@ static int aes_siv_cipher(void *vctx, unsigned char *out,
 
     /* EncryptFinal or DecryptFinal */
     if (in == NULL)
-        return ossl_siv128_finish(sctx) == 0;
+        return ossl_siv128_finish(sctx);
 
     /* Deal with associated data */
     if (out == NULL)

@@ -227,7 +227,7 @@ static int aes_siv_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         if (keylen != ctx->keylen)
             return 0;
     }
-    sctx->final_ret = -1;
+    sctx->final_ret = 0;
 
     return 1;
 }

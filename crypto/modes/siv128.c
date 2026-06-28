@@ -210,7 +210,7 @@ int ossl_siv128_init(SIV128_CONTEXT *ctx, const unsigned char *key, int klen,
     }
     EVP_MAC_CTX_free(mac_ctx);
 
-    ctx->final_ret = -1;
+    ctx->final_ret = 0;
     ctx->crypto_ok = 1;
 
     return 1;
@@ -291,7 +291,7 @@ int ossl_siv128_encrypt(SIV128_CONTEXT *ctx,
 
     if (!siv128_do_encrypt(ctx->cipher_ctx, out, in, len, &q))
         return 0;
-    ctx->final_ret = 0;
+    ctx->final_ret = 1;
     return 1;
 }
 
@@ -327,12 +327,13 @@ int ossl_siv128_decrypt(SIV128_CONTEXT *ctx,
         OPENSSL_cleanse(out, len);
         return 0;
     }
-    ctx->final_ret = 0;
+    ctx->final_ret = 1;
     return 1;
 }
 
 /*
  * Return the already calculated final result.
+ * Returns 1 on success and 0 on failure.
  */
 int ossl_siv128_finish(SIV128_CONTEXT *ctx)
 {
@@ -379,7 +380,7 @@ int ossl_siv128_cleanup(SIV128_CONTEXT *ctx)
         ctx->mac = NULL;
         OPENSSL_cleanse(&ctx->d, sizeof(ctx->d));
         OPENSSL_cleanse(&ctx->tag, sizeof(ctx->tag));
-        ctx->final_ret = -1;
+        ctx->final_ret = 0;
         ctx->crypto_ok = 1;
     }
     return 1;

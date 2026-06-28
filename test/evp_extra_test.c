@@ -7662,7 +7662,7 @@ static int test_chacha20_poly1305_late_aad(void)
 #endif
 /*
  * AES-SIV reuse-without-rekey:
- *   msg1: legit non-empty CT, tag verifies, final_ret=0
+ *   msg1: legit non-empty CT, tag verifies, final_ret=1
  *   msg2: no reinit (or reinit with key=NULL), set forged tag,
  *         AAD only, DecryptFinal -> does stale final_ret leak through?
  */
