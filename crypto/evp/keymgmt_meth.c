@@ -50,7 +50,7 @@ static void *keymgmt_new(void)
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL)
         return NULL;
     if (!CRYPTO_NEW_REF(&keymgmt->refcnt, 1)) {
-        EVP_KEYMGMT_free(keymgmt);
+        OPENSSL_free(keymgmt);
         return NULL;
     }
     return keymgmt;
