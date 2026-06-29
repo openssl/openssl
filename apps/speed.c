@@ -113,7 +113,7 @@ typedef struct openssl_speed_sec_st {
 
 static volatile int run = 0;
 
-static int mr = 0; /* machine-readeable output format to merge fork results */
+static int mr = 0; /* machine-readable output format to merge fork results */
 static int usertime = 1;
 
 static double Time_F(int s);
@@ -4633,7 +4633,7 @@ static int do_multi(int multi, int size_num)
     for (n = 0; n < multi; ++n) {
         while (wait(&status) == -1)
             if (errno != EINTR) {
-                BIO_printf(bio_err, "Waitng for child failed with 0x%x\n",
+                BIO_printf(bio_err, "Waiting for child failed with 0x%x\n",
                     errno);
                 return 1;
             }
