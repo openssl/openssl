@@ -2,7 +2,6 @@
 # To run the demos when linked with a shared library (default) ensure
 # that libcrypto is on the library path. For example:
 #
-#    LD_LIBRARY_PATH=../.. ./info
 
 TESTS = fips-version
 
@@ -25,5 +24,9 @@ test: all
 	@echo "\nINFO tests:"
 	@set -e; for tst in $(TESTS); do \
 		echo "\n"$$tst; \
-		LD_LIBRARY_PATH=../.. ./$$tst; \
+                LD_LIBRARY_PATH=../.. \
+                OPENSSL_CONF=../../test/fips-and-base.cnf \
+                OPENSSL_MODULES=../../providers \
+                OPENSSL_CONF_INCLUDE=../../providers \
+                ./$$tst; \
 	done
