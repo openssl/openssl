@@ -277,15 +277,24 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         break;
     case BIO_C_SET_SSL_RENEGOTIATE_TIMEOUT:
         ret = bs->renegotiate_timeout;
-        if (num < 60)
-            num = 5;
-        bs->renegotiate_timeout = (unsigned long)num;
+        if (num == 0) {
+            bs->renegotiate_timeout = 0;  /* Disable timeout-based renegotiation */
+        } else if (num < 60) {
+            bs->renegotiate_timeout = 5;  /* Apply minimum timeout of 5 seconds */
+        } else {
+            bs->renegotiate_timeout = (unsigned long)num;
+        }
         bs->last_time = (unsigned long)time(NULL);
         break;
     case BIO_C_SET_SSL_RENEGOTIATE_BYTES:
         ret = bs->renegotiate_count;
-        if ((long)num >= 512)
+        if (num == 0) {
+            bs->renegotiate_count = 0;  /* Disable byte-based renegotiation */
+        } else if (num < 512) {
+            bs->renegotiate_count = 512;  /* Apply minimum byte count of 512 */
+        } else {
             bs->renegotiate_count = (unsigned long)num;
+        }
         break;
     case BIO_C_GET_SSL_NUM_RENEGOTIATES:
         ret = bs->num_renegotiates;
