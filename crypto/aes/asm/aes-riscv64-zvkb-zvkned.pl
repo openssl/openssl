@@ -116,6 +116,7 @@ $code .= <<___;
 .globl rv64i_zvkb_zvkned_ctr32_encrypt_blocks
 .type rv64i_zvkb_zvkned_ctr32_encrypt_blocks,\@function
 rv64i_zvkb_zvkned_ctr32_encrypt_blocks:
+    @{[lpad 0]}
     beqz $BLOCK_NUM, 1f
 
     # Load number of rounds
@@ -139,6 +140,7 @@ ___
 $code .= <<___;
 .p2align 3
 ctr32_encrypt_blocks_128:
+    @{[lpad 0]}
     # Load all 11 round keys to v1-v11 registers.
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
     @{[vle32_v $V1, $KEYP]}
@@ -211,6 +213,7 @@ ___
 $code .= <<___;
 .p2align 3
 ctr32_encrypt_blocks_192:
+    @{[lpad 0]}
     # Load all 13 round keys to v1-v13 registers.
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
     @{[vle32_v $V1, $KEYP]}
@@ -289,6 +292,7 @@ ___
 $code .= <<___;
 .p2align 3
 ctr32_encrypt_blocks_256:
+    @{[lpad 0]}
     # Load all 15 round keys to v1-v15 registers.
     @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
     @{[vle32_v $V1, $KEYP]}
