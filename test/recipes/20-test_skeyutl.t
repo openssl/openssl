@@ -9,12 +9,16 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT with/;
+use OpenSSL::Test qw/:DEFAULT bldtop_dir with/;
 use OpenSSL::Test::Utils;
 
 setup("test_skeyutl");
 
-plan tests => 14;
+# The success path needs the loadable fake-cipher provider, which is only built
+# when module support is enabled.
+my $fake_cipher = !disabled('module');
+
+plan tests => 14 + ($fake_cipher ? 2 : 0);
 
 # Helper: run skeyutl expecting a non-zero (failure) exit code, and optionally
 # check that stderr matches a regular expression.
@@ -78,3 +82,18 @@ skeyutl_fails("skeyutl with an unknown cipher fails",
 skeyutl_fails("skeyutl with an unknown option fails",
               qr/Unknown option/,
               '-not-an-option');
+
+# Success path: load the fake-cipher provider, which implements opaque key
+# generation, and generate a key with it.
+if ($fake_cipher) {
+    $ENV{OPENSSL_MODULES} = bldtop_dir("test");
+    my @prov = ('-provider-path', bldtop_dir("test"), '-provider', 'fake-cipher');
+
+    my $status;
+    my @out = run(app(['openssl', 'skeyutl', @prov,
+                       '-genkey', '-skeymgmt', 'fake_cipher']),
+                  capture => 1, statusvar => \$status);
+    ok($status, "skeyutl -genkey with fake-cipher provider succeeds");
+    ok(grep(/opaque key/, @out),
+       "skeyutl -genkey reports the generated opaque key");
+}

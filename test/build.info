@@ -1265,6 +1265,16 @@ IF[{- !$disabled{tests} -}]
       SOURCE[p_minimal]=p_minimal.ld
       GENERATE[p_minimal.ld]=../util/providers.num
     ENDIF
+    # Loadable form of the fake cipher provider.
+    MODULES{noinst}=fake-cipher
+    SOURCE[fake-cipher]=fake_cipherprov.c
+    DEFINE[fake-cipher]=FAKE_CIPHER_AS_MODULE
+    INCLUDE[fake-cipher]=../include
+    DEPEND[fake-cipher]=../libcrypto
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[fake-cipher]=fake-cipher.ld
+      GENERATE[fake-cipher.ld]=../util/providers.num
+    ENDIF
   ENDIF
   IF[{- $disabled{module} || !$target{dso_scheme} -}]
     DEFINE[provider_test]=NO_PROVIDER_MODULE
