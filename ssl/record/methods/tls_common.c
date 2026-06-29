@@ -2038,6 +2038,7 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                         ERR_pop_to_mark();
                         ret = OSSL_RECORD_RETURN_RETRY;
                         i = 0;
+                        tmpwrit = 0;
                     } else {
                         ERR_clear_last_mark();
                         ERR_raise_data(ERR_LIB_SYS, get_last_sys_error(),

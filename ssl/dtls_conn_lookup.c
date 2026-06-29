@@ -11,6 +11,7 @@
 #include <openssl/bio.h>
 #include <openssl/ssl.h>
 #include <openssl/rand.h>
+#include "internal/common.h"
 #include "internal/dgram_conn_lookup.h"
 #include "crypto/siphash.h"
 
@@ -227,8 +228,21 @@ static int addr_register_conn(DGRAM_CONN_LOOKUP *lookup, const DGRAM_URXE *e,
         return 0;
     }
 
-    /* Free any old entry that was replaced (duplicate key) */
-    conn_entry_free(old);
+    /*
+     * A non-NULL return from lh_DGRAM_CONN_ENTRY_insert means an entry with the
+     * same key (peer address) was already present and has just been replaced.
+     * This must not happen: callers always look up an address and only register
+     * when no entry exists, all while holding the listener mutex, so the same peer
+     * is never registered twice. We therefore expect old == NULL here.
+     *
+     * We deliberately do NOT free old->ssl: this lookup table is an
+     * ownership-agnostic index and does not own the SSL objects it stores.
+     * The owning layer (the DTLS listener) is responsible for the lifecycle of
+     * those SSL objects. Freeing one here would be a use-after-free for the
+     * non-owning established_conns table.
+     */
+    if (!ossl_assert(old == NULL))
+        conn_entry_free(old);
 
     return 1;
 }
@@ -272,8 +286,21 @@ static int addr_register_conn_addr(DGRAM_CONN_LOOKUP *lookup, const BIO_ADDR *pe
         return 0;
     }
 
-    /* Free any old entry that was replaced (duplicate key) */
-    conn_entry_free(old);
+    /*
+     * A non-NULL return from lh_DGRAM_CONN_ENTRY_insert means an entry with the
+     * same key(peer address) was already present and has just been replaced. This
+     * must not happen: callers always look up an address and only register when no
+     * entry exists, all while holding the listener mutex, so the same peer is
+     * never registered twice. We therefore expect old == NULL here.
+     *
+     * We deliberately do NOT free old->ssl: this lookup table is an
+     * ownership-agnostic index and does not own the SSL objects it stores.
+     * The owning layer (the DTLS listener) is responsible for the lifecycle of
+     * those SSL objects. Freeing one here would be a use-after-free for the
+     * non-owning established_conns table.
+     */
+    if (!ossl_assert(old == NULL))
+        conn_entry_free(old);
 
     return 1;
 }

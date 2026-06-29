@@ -1232,20 +1232,11 @@ void DTLS_set_timer_cb(SSL *ssl, DTLS_timer_cb cb)
 static void dtls_listener_connection_free(SSL *ssl)
 {
     SSL_CONNECTION *sc;
-    int ref_count;
 
     if (ssl == NULL)
         return;
 
     sc = SSL_CONNECTION_FROM_SSL(ssl);
-
-    /*
-     * Listener-owned connections should have exactly one reference (held by
-     * the listener's queue). If this is not true, ownership has been corrupted.
-     */
-    if (!CRYPTO_GET_REF(&ssl->references, &ref_count)
-        || !ossl_assert(ref_count == 1))
-        return;
 
     if (sc != NULL && sc->d1 != NULL) {
         /*
@@ -2416,6 +2407,12 @@ end:
          */
         if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL
             || !SSL_up_ref(sc->d1->listener)) {
+            /*
+             * Ownership did not transfer to the application. A connection taken
+             * from incoming_connections is still registered in established_conns;
+             */
+            if (sc != NULL && sc->d1 != NULL)
+                ossl_dtls_listener_unregister_established_conn(ssl, &sc->d1->peer_addr);
             dtls_listener_connection_free(conn);
             ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
             return NULL;
@@ -2446,21 +2443,16 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 
     dl = (DTLS_LISTENER *)s;
 
-    ossl_crypto_mutex_lock(dl->mutex);
-
     ossl_dgram_demux_set_bio(dl->demux, bio);
 
     old_rbio = dl->net_rbio;
 
     /* No change - nothing to do */
     if (old_rbio == bio) {
-        ossl_crypto_mutex_unlock(dl->mutex);
         return;
     }
 
     dl->net_rbio = bio;
-
-    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_rbio);
@@ -2507,13 +2499,10 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
 
     dl = (DTLS_LISTENER *)s;
 
-    ossl_crypto_mutex_lock(dl->mutex);
-
     old_wbio = dl->net_wbio;
 
     /* No change - nothing to do */
     if (old_wbio == bio) {
-        ossl_crypto_mutex_unlock(dl->mutex);
         return;
     }
 
@@ -2526,8 +2515,6 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
         ossl_dgram_conn_lookup_foreach(dl->established_conns, update_conn_wbio, bio);
 
     dl->net_wbio = bio;
-
-    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_wbio);
@@ -2597,34 +2584,6 @@ SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
 
     if (dl->established_conns != NULL)
         result = ossl_dgram_conn_lookup_find(dl->established_conns, urxe);
-
-    ossl_crypto_mutex_unlock(dl->mutex);
-    return result;
-}
-
-/*
- * ossl_dtls_listener_register_established_conn - register an established connection.
- *
- * Adds a connection to the established_conns table for packet routing.
- * Returns 1 on success, 0 on failure.
- */
-int ossl_dtls_listener_register_established_conn(DTLS_LISTENER *dl,
-    const BIO_ADDR *peer,
-    SSL *ssl)
-{
-    int result = 0;
-
-    if (dl == NULL || peer == NULL || ssl == NULL)
-        return 0;
-
-    if (BIO_ADDR_family(peer) == AF_UNSPEC)
-        return 0;
-
-    ossl_crypto_mutex_lock(dl->mutex);
-
-    if (dl->established_conns != NULL)
-        result = ossl_dgram_conn_lookup_register_addr(dl->established_conns,
-            peer, ssl);
 
     ossl_crypto_mutex_unlock(dl->mutex);
     return result;

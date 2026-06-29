@@ -2279,6 +2279,14 @@ static int test_ssl_ownership_pending_conn_leak(void)
         goto end;
 
     /*
+     * The connection is pending so it is not yet queued in
+     * incoming_connections: no readiness event should be reported.
+     */
+    if (!TEST_size_t_eq(poll_result, 0)
+        || !TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) == 0))
+        goto end;
+
+    /*
      * Now the pending connection is in pending_conns and if we have a
      * leak the ASAN tests will detect it
      */
@@ -2542,6 +2550,15 @@ static int test_ssl_ownership_three_conn_states(void)
         goto end;
 
     /*
+     * The tick consumed the ClientHello and the connection is now pending in
+     * pending_conns; no data remains buffered on the listener's read BIO, so
+     * no readable event should be reported.
+     */
+    if (!TEST_size_t_eq(poll_result, 0)
+        || !TEST_true((poll_item.revents & SSL_POLL_EVENT_R) == 0))
+        goto end;
+
+    /*
      * Now we have:
      *   - Connection 1 (accepted1): accepted by user (user owns)
      *   - Connection 2: in incoming_connections (listener owns)
@@ -2633,6 +2650,14 @@ static int test_ssl_ownership_set_rbio_pending_leak(void)
     poll_timeout.tv_usec = 0;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * The connection is pending so it is not yet queued in
+     * incoming_connections: no readiness event should be reported.
+     */
+    if (!TEST_size_t_eq(poll_result, 0)
+        || !TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) == 0))
         goto end;
 
     /*
@@ -2912,6 +2937,14 @@ static int test_ssl_ownership_multiple_pending_leak(void)
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
+
+        /*
+         * The connection is pending (HVR in flight), so it is not yet queued
+         * in incoming_connections: no readiness event should be reported.
+         */
+        if (!TEST_size_t_eq(poll_result, 0)
+            || !TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) == 0))
+            goto end;
     }
 
     /*
@@ -2936,15 +2969,6 @@ end:
     return testresult;
 }
 
-/* Helper for timeout test - fake time value */
-static OSSL_TIME timeout_test_fake_time;
-
-/* Helper callback that returns our fake time */
-static OSSL_TIME timeout_test_now_cb(void *arg)
-{
-    return timeout_test_fake_time;
-}
-
 static int test_ssl_ownership_pending_timeout_cleanup(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -2953,6 +2977,8 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
     BIO_ADDR *client_addr = NULL;
     int testresult = 0;
     int ret, err_code;
+    int count_after_hello;
+    uint64_t fake_now_secs = 1700000000;
     SSL_POLL_ITEM poll_item;
     struct timeval poll_timeout;
     size_t poll_result;
@@ -2971,10 +2997,12 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
     if (!TEST_true(SSL_listener_set_pending_timeout(listener, 1000)))
         goto end;
 
-    /* Set our fake time callback */
-    timeout_test_fake_time = ossl_time_from_time_t(1700000000);
+    /*
+     * Setting test_now_cb_call_count to 0 before the test.
+     */
+    test_now_cb_call_count = 0;
     if (!TEST_true(ossl_dtls_listener_set_override_now_cb(listener,
-            timeout_test_now_cb, NULL)))
+            test_fake_now_cb, &fake_now_secs)))
         goto end;
 
     /*
@@ -3002,11 +3030,28 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
         goto end;
 
     /*
+     * The connection is pending (HVR in flight), so it is not yet queued in
+     * incoming_connections: no readiness event should be reported.
+     */
+    if (!TEST_size_t_eq(poll_result, 0)
+        || !TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) == 0))
+        goto end;
+
+    /*
+     * Processing the ClientHello (creating the pending connection and
+     * generating the HelloVerifyRequest cookie) must have consulted the
+     * listener's time override, so the callback should have been invoked at
+     * least once by now.
+     */
+    if (!TEST_int_gt(test_now_cb_call_count, 0))
+        goto end;
+    count_after_hello = test_now_cb_call_count;
+
+    /*
      * Advance the fake time past the timeout (more than 1 second).
      * The next tick should detect the timeout and free the pending connection.
      */
-    timeout_test_fake_time = ossl_time_add(timeout_test_fake_time,
-        ossl_seconds2time(5));
+    fake_now_secs += 5;
 
     /* Trigger a tick to process the timeout */
     poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
@@ -3017,6 +3062,21 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
     poll_timeout.tv_usec = 0;
 
     if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
+        goto end;
+
+    /*
+     * The timed-out pending connection was cleaned up, so nothing is queued in
+     * incoming_connections: no readiness event should be reported.
+     */
+    if (!TEST_size_t_eq(poll_result, 0)
+        || !TEST_true((poll_item.revents & SSL_POLL_EVENT_IC) == 0))
+        goto end;
+
+    /*
+     * The timeout check during the tick reads the (now advanced) time through
+     * the override as well, so the callback must have been invoked again.
+     */
+    if (!TEST_int_gt(test_now_cb_call_count, count_after_hello))
         goto end;
 
     /*
