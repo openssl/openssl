@@ -283,6 +283,9 @@ sub load_tests {
                 chomp $cert_serial;
             }
         }
+        die "Cannot extract cert issuer or serial"
+            . (defined $cert_file ? " from '$cert_file'" : " (rsp_cert not found in server.cnf)")
+            if $cert_issuer eq "" || $cert_serial eq "";
     }
 
     open(my $data, '<', $file) || die "Cannot open '$file' for reading: $!";
