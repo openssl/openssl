@@ -5422,7 +5422,6 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
     QUIC_TOKEN *key = NULL;
     QUIC_TOKEN *tok = NULL;
     int ret;
-    int rc = 0;
 
     if (c == NULL)
         return 0;
@@ -5433,14 +5432,12 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
 
     ossl_crypto_mutex_lock(c->mutex);
     tok = lh_QUIC_TOKEN_retrieve(c->cache, key);
-    if (tok != NULL) {
+    if (tok != NULL && CRYPTO_UP_REF(&tok->references, &ret))
         *token = tok;
-        rc = CRYPTO_UP_REF(&tok->references, &ret);
-    }
 
     ossl_crypto_mutex_unlock(c->mutex);
     ossl_quic_free_peer_token(key);
-    return rc;
+    return 1;
 }
 
 void ossl_quic_free_peer_token(QUIC_TOKEN *token)

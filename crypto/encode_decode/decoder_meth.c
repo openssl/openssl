@@ -19,6 +19,8 @@
 #include "encoder_local.h"
 #include "crypto/context.h"
 
+#include <stdbool.h>
+
 /*
  * Decoder can have multiple names, separated with colons in a name string
  */
@@ -42,7 +44,7 @@ static void ossl_decoder_free(void *data)
     OPENSSL_free(decoder);
 }
 
-static int ossl_decoder_up_ref(void *data)
+static bool ossl_decoder_up_ref(void *data)
 {
     OSSL_DECODER *decoder = (OSSL_DECODER *)data;
     int ref = 0;

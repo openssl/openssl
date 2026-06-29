@@ -1630,7 +1630,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&pkey->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&pkey->references, &i))
         return 0;
 
     REF_PRINT_COUNT("EVP_PKEY", i, pkey);
