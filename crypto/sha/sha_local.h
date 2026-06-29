@@ -41,7 +41,6 @@
 #define HASH_UPDATE SHA1_Update_thunk
 #define HASH_TRANSFORM SHA1_Transform
 #define HASH_FINAL SHA1_Final
-#define HASH_INIT SHA1_Init
 #define HASH_BLOCK_DATA_ORDER sha1_block_data_order
 #define Xupdate(a, ix, ia, ib, ic, id) ((a) = (ia ^ ib ^ ic ^ id), \
     ix = (a) = ROTATE((a), 1))
@@ -57,27 +56,11 @@ void sha1_block_data_order(SHA_CTX *c, const void *p, size_t num);
 /* clang-format on */
 #undef HASH_UPDATE_THUNK
 
-int SHA1_Update(SHA_CTX *c, const void *data, size_t len)
-{
-    return SHA1_Update_thunk((void *)c, (const unsigned char *)data, len);
-}
-
 #define INIT_DATA_h0 0x67452301UL
 #define INIT_DATA_h1 0xefcdab89UL
 #define INIT_DATA_h2 0x98badcfeUL
 #define INIT_DATA_h3 0x10325476UL
 #define INIT_DATA_h4 0xc3d2e1f0UL
-
-int HASH_INIT(SHA_CTX *c)
-{
-    memset(c, 0, sizeof(*c));
-    c->h0 = INIT_DATA_h0;
-    c->h1 = INIT_DATA_h1;
-    c->h2 = INIT_DATA_h2;
-    c->h3 = INIT_DATA_h3;
-    c->h4 = INIT_DATA_h4;
-    return 1;
-}
 
 #define K_00_19 0x5a827999UL
 #define K_20_39 0x6ed9eba1UL
