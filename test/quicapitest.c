@@ -218,7 +218,6 @@ end:
     return ret;
 }
 
-#ifndef OPENSSL_NO_CACHED_FETCH
 static int test_ssl_read_key_update_mfail(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -302,7 +301,6 @@ err:
 
     return ret;
 }
-#endif
 
 /*
  * Test that sending FIN with no data to a client blocking in SSL_read_ex() will
@@ -3520,7 +3518,6 @@ static int test_quic_peer_addr_v6(void)
 }
 #endif
 
-#ifndef OPENSSL_NO_CACHED_FETCH
 /*
  * Advance the fake clock to the next QUIC timer event when both endpoints are
  * idle, consuming no real time.
@@ -3660,7 +3657,6 @@ err:
 
     return ret;
 }
-#endif
 
 /* Test ECH with quic */
 static int test_ech(void)
@@ -3913,9 +3909,7 @@ int setup_tests(void)
         goto err;
 
     ADD_ALL_TESTS(test_quic_write_read, 3);
-#ifndef OPENSSL_NO_CACHED_FETCH
     ADD_MFAIL_NO_CHECK_TEST(test_ssl_read_key_update_mfail);
-#endif
     ADD_TEST(test_fin_only_blocking);
     ADD_TEST(test_ciphersuites);
     ADD_TEST(test_cipher_find);
@@ -3957,16 +3951,10 @@ int setup_tests(void)
     ADD_TEST(test_quic_peer_addr_v6);
 #endif
     ADD_TEST(test_quic_peer_addr_v4);
-#ifndef OPENSSL_NO_CACHED_FETCH
     ADD_MFAIL_NO_CHECK_TEST(test_quic_handshake_multipkt_mfail);
-#endif
     ADD_TEST(test_ech);
     ADD_TEST(test_quic_resize_txe);
-#ifdef OPENSSL_NO_CACHED_FETCH
-    ADD_MFAIL_NO_CHECK_TEST(test_ssl_new_mfail);
-#else
     ADD_MFAIL_TEST(test_ssl_new_mfail);
-#endif
 
     return 1;
 err:

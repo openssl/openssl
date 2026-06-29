@@ -558,7 +558,7 @@ err:
 }
 #endif
 
-#if !defined(OSSL_NO_USABLE_TLS1_3) && !defined(OPENSSL_NO_CACHED_FETCH)
+#ifndef OSSL_NO_USABLE_TLS1_3
 static int mfail_construct_ch_tls13(void)
 {
     CH_CONFIG cfg = { 0, TLS1_3_VERSION, TLS1_3_VERSION, 0 };
@@ -670,14 +670,12 @@ static int test_construct_ch_ech_tls12(void)
 }
 #endif /* OPENSSL_NO_TLS1_2 */
 
-#ifndef OPENSSL_NO_CACHED_FETCH
 static int mfail_construct_ch_ech(void)
 {
     CH_CONFIG cfg = { 0, TLS1_3_VERSION, TLS1_3_VERSION, 0 };
 
     return mfail_construct_ch_common(&cfg, prep_ech);
 }
-#endif /* OPENSSL_NO_CACHED_FETCH */
 #endif /* OSSL_NO_USABLE_ECH */
 
 int setup_tests(void)
@@ -695,7 +693,6 @@ int setup_tests(void)
     ADD_TEST(test_construct_ch_tls13);
     ADD_TEST(test_construct_ch_tls13_no_middlebox);
     ADD_TEST(test_construct_ch_hrr);
-#ifndef OPENSSL_NO_CACHED_FETCH
     /*
      * The non-cached mfail run takes too long and does not test too much extra
      * so better to skip it.
@@ -712,7 +709,6 @@ int setup_tests(void)
 #else
     ADD_MFAIL_TEST(mfail_construct_ch_tls13);
 #endif /* OPENSSL_NO_ECX */
-#endif /* OPENSSL_NO_CACHED_FETCH */
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_DTLS1_2)
@@ -726,9 +722,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_construct_ch_ech_tls12);
 #endif
-#ifndef OPENSSL_NO_CACHED_FETCH
     ADD_MFAIL_TEST(mfail_construct_ch_ech);
-#endif /* OPENSSL_NO_CACHED_FETCH */
 #endif /* OSSL_NO_USABLE_ECH */
     return 1;
 }

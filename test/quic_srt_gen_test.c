@@ -90,10 +90,6 @@ static int test_srt_gen_new_mfail(int idx)
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_srt_gen, OSSL_NELEM(tests));
-#ifdef OPENSSL_NO_CACHED_FETCH
-    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_srt_gen_new_mfail, OSSL_NELEM(tests));
-#else
     ADD_MFAIL_ALL_TESTS(test_srt_gen_new_mfail, OSSL_NELEM(tests));
-#endif
     return 1;
 }

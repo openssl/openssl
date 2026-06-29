@@ -9050,12 +9050,7 @@ int setup_tests(void)
     ADD_TEST(test_EVP_SM2_verify);
 #endif
     ADD_ALL_TESTS(test_set_get_raw_keys, OSSL_NELEM(keys));
-#if defined(_MSC_VER) || defined(OPENSSL_NO_CACHED_FETCH)
-    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_set_get_raw_keys_mfail,
-        OSSL_NELEM(keys));
-#else
     ADD_MFAIL_ALL_TESTS(test_set_get_raw_keys_mfail, OSSL_NELEM(keys));
-#endif
     ADD_ALL_TESTS(test_EVP_PKEY_check, OSSL_NELEM(keycheckdata));
 #ifndef OPENSSL_NO_CMAC
     ADD_TEST(test_CMAC_keygen);
