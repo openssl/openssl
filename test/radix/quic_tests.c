@@ -1268,8 +1268,44 @@ DEF_SCRIPT(script_14,
     }
 }
 
-DEF_SCRIPT(script_15, "place holder for multistrem script_15")
+/* 15. Client sending large number of streams, MAX_STREAMS test */
+DEF_SCRIPT(script_15, "Client sending large number of streams, MAX_STREAMS test")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /*
+     * This will cause a protocol violation to be raised by the server if we are
+     * not handling the stream limit correctly on the TX side.
+     */
+    for (i = 0; i < 200; ++i) {
+        OP_NEW_STREAM(C, Ca, SSL_STREAM_FLAG_ADVANCE);
+        OP_WRITE(Ca, "foo", 3);
+        OP_CONCLUDE(Ca);
+        OP_UNBIND(Ca);
+    }
+
+    /* Prove the connection is still good. */
+    OP_NEW_STREAM(S, Sa, 0);
+    OP_WRITE(Sa, "bar", 3);
+    OP_CONCLUDE(Sa);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "bar", 3);
+    OP_EXPECT_FIN(Ca);
+
+    /*
+     * Drain the queue of incoming streams. We should be able to get all 200
+     * even though only 100 can be initiated at a time.
+     */
+    for (i = 0; i < 200; ++i) {
+        OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+        OP_READ_EXPECT(Sb, "foo", 3);
+        OP_EXPECT_FIN(Sb);
+        OP_UNBIND(Sb);
+    }
 }
 
 DEF_SCRIPT(script_16, "place holder for multistrem script_16")
