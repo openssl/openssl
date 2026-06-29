@@ -35,7 +35,7 @@ target CPU does not support will result in an illegal instruction exception
 Please note that not all possible values in the Arm processor capabilities
 vector are actual processor capabilities. Some values represent OpenSSL
 performance preferences for some implementations which only make sense on
-specific CPUS.
+specific CPUs.
 
 The following extensions are defined:
 
