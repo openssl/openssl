@@ -3698,11 +3698,7 @@ int setup_tests(void)
     ADD_TEST(test_quic_peer_addr_v4);
     ADD_TEST(test_ech);
     ADD_TEST(test_quic_resize_txe);
-#ifdef OPENSSL_NO_CACHED_FETCH
-    ADD_MFAIL_NO_CHECK_TEST(test_ssl_new_mfail);
-#else
     ADD_MFAIL_TEST(test_ssl_new_mfail);
-#endif
 
     return 1;
 err:

@@ -119,11 +119,7 @@ err:
 int setup_tests(void)
 {
     ADD_TEST(test_srtm);
-#ifdef OPENSSL_NO_CACHED_FETCH
-    ADD_MFAIL_NO_CHECK_TEST(test_srtm_new_mfail);
-#else
     ADD_MFAIL_TEST(test_srtm_new_mfail);
-#endif
     ADD_MFAIL_TEST(test_srtm_ops_mfail);
     return 1;
 }
