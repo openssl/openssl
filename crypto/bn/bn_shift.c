@@ -46,6 +46,9 @@ int BN_lshift1(BIGNUM *r, const BIGNUM *a)
 
     size_t top = a->top + 1;
     OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    if (rf == NULL)
+        return 0;
+
     int ret = OSSL_FN_lshift1(rf, a->data);
     bn_release(r, (int)top);
 
@@ -112,6 +115,9 @@ int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
 
     size_t top = a->top + n / BN_BITS2 + 1;
     OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    if (rf == NULL)
+        return 0;
+
     ret = OSSL_FN_lshift(rf, a->data, n);
     bn_release(r, (int)top);
 
