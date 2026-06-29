@@ -122,12 +122,17 @@ Brotli may be found at L<https://github.com/google/brotli>.
 
 Zstandard may be found at L<https://github.com/facebook/zstd>.
 
-Compression of SSL/TLS records is not recommended, as it has been
-shown to lead to the CRIME attack L<https://en.wikipedia.org/wiki/CRIME>.
-It is disabled by default, and may be enabled by clearing the
-SSL_OP_NO_COMPRESSION option and setting the security level as appropriate.
-See the documentation for the L<SSL_CTX_set_options(3)> and
-L<SSL_set_options(3)> functions.
+As of OpenSSL 5.0, TLS record compression has been removed (CRIME hardening).
+The SSL_OP_NO_COMPRESSION option is retained for API compatibility but has no
+effect. Certificate compression (RFC 8879) uses these compression methods
+and is unaffected.
+
+In earlier versions, compression of SSL/TLS records was not recommended, as it
+had been shown to lead to the CRIME attack
+L<https://en.wikipedia.org/wiki/CRIME>. It was disabled by default, and could
+be enabled by clearing the SSL_OP_NO_COMPRESSION option and setting the
+security level as appropriate. See the documentation for the
+L<SSL_CTX_set_options(3)> and L<SSL_set_options(3)> functions.
 
 Compression is also used to support certificate compression as described
 in RFC8879 L<https://datatracker.ietf.org/doc/html/rfc8879>.

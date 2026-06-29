@@ -3,8 +3,9 @@
 =head1 NAME
 
 SSL_COMP_add_compression_method, SSL_COMP_get_compression_methods,
-SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
-- handle SSL/TLS integrated compression methods
+SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods,
+SSL_get_current_compression, SSL_get_current_expansion
+- handle SSL/TLS integrated compression methods (obsolete in OpenSSL 5.0)
 
 =head1 SYNOPSIS
 
@@ -14,6 +15,8 @@ SSL_COMP_get0_name, SSL_COMP_get_id, SSL_COMP_free_compression_methods
  STACK_OF(SSL_COMP) *SSL_COMP_get_compression_methods(void);
  const char *SSL_COMP_get0_name(const SSL_COMP *comp);
  int SSL_COMP_get_id(const SSL_COMP *comp);
+ const COMP_METHOD *SSL_get_current_compression(const SSL *s);
+ const COMP_METHOD *SSL_get_current_expansion(const SSL *s);
 
 The following function has been deprecated since OpenSSL 1.1.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -38,26 +41,30 @@ SSL_COMP_get_id() returns the id of the compression method B<comp>.
 SSL_COMP_free_compression_methods() releases any resources acquired to
 maintain the internal table of compression methods.
 
+SSL_get_current_compression() and SSL_get_current_expansion() return the
+compression or expansion method in use for the connection, or NULL if none.
+As of OpenSSL 5.0 they always return NULL (TLS record compression was removed).
+
 =head1 NOTES
 
-The TLS standard (or SSLv3) allows the integration of compression methods
-into the communication. The TLS RFC does however not specify compression
-methods or their corresponding identifiers, so there is currently no compatible
-way to integrate compression with unknown peers. It is therefore currently not
-recommended to integrate compression into applications. Applications for
-non-public use may agree on certain compression methods. Using different
-compression methods with the same identifier will lead to connection failure.
+As of OpenSSL 5.0, TLS record compression has been removed (CRIME hardening).
+The functions documented here no longer affect TLS handshake or record layer
+behavior; the library always negotiates and uses the null compression method
+only. These APIs are retained for compatibility. Certificate compression
+(RFC 8879) is separate and unaffected.
 
-An OpenSSL client speaking a protocol that allows compression (SSLv3, TLSv1)
-will unconditionally send the list of all compression methods enabled with
-SSL_COMP_add_compression_method() to the server during the handshake.
-Unlike the mechanisms to set a cipher list, there is no method available to
-restrict the list of compression method on a per connection basis.
+In earlier versions: The TLS standard (or SSLv3) allows the integration of
+compression methods into the communication. The TLS RFC does however not specify
+compression methods or their corresponding identifiers, so there is no
+compatible way to integrate compression with unknown peers. TLS record
+compression is not recommended (security level 2 or above disables it).
 
-An OpenSSL server will match the identifiers listed by a client against
-its own compression methods and will unconditionally activate compression
-when a matching identifier is found. There is no way to restrict the list
-of compression methods supported on a per connection basis.
+An OpenSSL client speaking a protocol that allowed compression (SSLv3, TLSv1)
+would send the list of compression methods enabled with
+SSL_COMP_add_compression_method() to the server during the handshake. An
+OpenSSL server would match the identifiers listed by a client against its own
+compression methods. There was no method to restrict the list on a per
+connection basis.
 
 If enabled during compilation, the OpenSSL library will have the
 following compression methods available:
@@ -97,7 +104,7 @@ NULL on error.
 
 SSL_COMP_get0_name() returns the name of the compression method or NULL on error.
 
-SSL_COMP_get_id() returns the name of the compression method or -1 on error.
+SSL_COMP_get_id() returns the id of the compression method or -1 on error.
 
 =head1 SEE ALSO
 
@@ -105,8 +112,10 @@ L<ssl(7)>
 
 =head1 HISTORY
 
-The SSL_COMP_free_compression_methods() function was deprecated in OpenSSL 1.1.0.
-The SSL_COMP_get0_name() and SSL_comp_get_id() functions were added in OpenSSL 1.1.0d.
+TLS record compression was removed in OpenSSL 5.0; these functions no longer
+affect TLS behavior. The SSL_COMP_free_compression_methods() function was
+deprecated in OpenSSL 1.1.0. The SSL_COMP_get0_name() and SSL_comp_get_id()
+functions were added in OpenSSL 1.1.0d.
 
 =head1 COPYRIGHT
 

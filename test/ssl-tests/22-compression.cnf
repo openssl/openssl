@@ -133,7 +133,7 @@ VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
 VerifyMode = Peer
 
 [test-4]
-CompressionExpected = Yes
+CompressionExpected = No
 ExpectedResult = Success
 
 
