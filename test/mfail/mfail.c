@@ -38,6 +38,7 @@ static struct {
     int single_point;
     int start_point;
     int env_count;
+    int count_only;
     int slow_threshold;
     int print_bt;
     int mode;
@@ -155,11 +156,12 @@ int mfail_install(int optional)
     mf.single_point = env_int("OPENSSL_TEST_MFAIL_POINT", -1);
     mf.start_point = env_int("OPENSSL_TEST_MFAIL_START", 0);
     mf.env_count = env_int("OPENSSL_TEST_MFAIL_COUNT", 0);
+    mf.count_only = env_is_true("OPENSSL_TEST_MFAIL_COUNT_ONLY");
     mf.slow_threshold = env_int("OPENSSL_TEST_MFAIL_SLOW", 1000);
     mf.print_bt = env_is_true("OPENSSL_TEST_MFAIL_BACKTRACE");
 
     /* if optional and nothing configured, then no point installing hooks */
-    if (optional && mf.env_count <= 0 && mf.single_point < 0)
+    if (optional && mf.env_count <= 0 && mf.single_point < 0 && !mf.count_only)
         return 0;
 
     if (!CRYPTO_set_mem_functions(mf_malloc, mf_realloc, mf_free))
@@ -240,6 +242,10 @@ int mfail_has_next(void)
         switch (mf.phase) {
         case MFAIL_PHASE_COUNTING:
             mf.total = mf.alloc_count;
+            if (mf.count_only) {
+                mf.phase = MFAIL_PHASE_DONE;
+                break;
+            }
             if (mf.skip_slow && mf.total > mf.slow_threshold) {
                 mf.slow_skipped = 1;
                 mf.phase = MFAIL_PHASE_DONE;
@@ -334,6 +340,11 @@ int mfail_was_triggered(void)
 int mfail_was_slow_skipped(void)
 {
     return mf.slow_skipped;
+}
+
+int mfail_is_count_only(void)
+{
+    return mf.count_only;
 }
 
 int mfail_get_count(void)
