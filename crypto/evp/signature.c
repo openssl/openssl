@@ -66,7 +66,7 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 
 static void *evp_signature_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_SIGNATURE *signature = NULL;
@@ -85,6 +85,7 @@ static void *evp_signature_from_algorithm(int name_id,
     }
 
     signature->name_id = name_id;
+    signature->no_store = no_store;
     if ((signature->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     signature->description = algodef->algorithm_description;
@@ -471,6 +472,9 @@ void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_signature_free(signature);
+#else
+    if (signature != NULL && (signature->no_store != 0))
+        evp_signature_free(signature);
 #endif
 }
 
@@ -479,6 +483,8 @@ int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_signature_up_ref(signature);
 #else
+    if (signature->no_store != 0)
+        return evp_signature_up_ref(signature);
     return 1;
 #endif
 }

@@ -24,6 +24,7 @@
 struct ossl_endecode_base_st {
     OSSL_PROVIDER *prov;
     int id;
+    int no_store;
     char *name;
     const OSSL_ALGORITHM *algodef;
     OSSL_PROPERTY_LIST *parsed_propdef;

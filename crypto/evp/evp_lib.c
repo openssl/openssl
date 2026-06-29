@@ -310,6 +310,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
     size_t blksz = 0;
     size_t keylen = 0;
     unsigned int mode = 0;
+    int no_store = cipher->flags & EVP_CIPH_FLAG_NO_STORE;
     OSSL_PARAM params[11];
 
     params[0] = OSSL_PARAM_construct_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, &blksz);
@@ -332,7 +333,7 @@ int evp_cipher_cache_constants(EVP_CIPHER *cipher)
         cipher->block_size = (int)blksz;
         cipher->iv_len = (int)ivlen;
         cipher->key_len = (int)keylen;
-        cipher->flags = mode;
+        cipher->flags = mode | no_store;
         if (aead)
             cipher->flags |= EVP_CIPH_FLAG_AEAD_CIPHER;
         if (custom_iv)

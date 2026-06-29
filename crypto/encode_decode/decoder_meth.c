@@ -79,7 +79,7 @@ int OSSL_DECODER_up_ref(OSSL_DECODER *decoder)
      * We can identify them based on the fact that they never have a registered nid (i.e.
      * its always zero)
      */
-    if (decoder->base.id == 0)
+    if (decoder->base.id == 0 || decoder->base.no_store != 0)
         return ossl_decoder_up_ref(decoder);
     return 1;
 #endif
@@ -90,7 +90,7 @@ void OSSL_DECODER_free(OSSL_DECODER *decoder)
 #ifdef OPENSSL_NO_CACHED_FETCH
     ossl_decoder_free(decoder);
 #else
-    if (decoder != NULL && decoder->base.id == 0)
+    if (decoder != NULL && (decoder->base.id == 0 || decoder->base.no_store != 0))
         ossl_decoder_free(decoder);
 #endif
 }
@@ -228,7 +228,7 @@ static int put_decoder_in_store(void *store, void *method,
 
 /* Create and populate a decoder method */
 void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     OSSL_DECODER *decoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -237,6 +237,7 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     if ((decoder = ossl_decoder_new()) == NULL)
         return NULL;
     decoder->base.id = id;
+    decoder->base.no_store = no_store;
     if ((decoder->base.name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
         ossl_decoder_free(decoder);
         return NULL;
@@ -317,7 +318,7 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
  * then call ossl_decoder_from_algorithm() with that identity number.
  */
 static void *construct_decoder(const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov, void *data)
+    OSSL_PROVIDER *prov, void *data, int no_store)
 {
     /*
      * This function is only called if get_decoder_from_store() returned
@@ -333,7 +334,7 @@ static void *construct_decoder(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = ossl_decoder_from_algorithm(id, algodef, prov);
+        method = ossl_decoder_from_algorithm(id, algodef, prov, no_store);
 
     /*
      * Flag to indicate that there was actual construction errors.  This

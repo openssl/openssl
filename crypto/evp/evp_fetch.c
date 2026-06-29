@@ -11,6 +11,7 @@
 #include <openssl/types.h>
 #include <openssl/evp.h>
 #include <openssl/core.h>
+#include <openssl/kdf.h>
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/property.h"
@@ -36,7 +37,7 @@ struct evp_method_data_st {
     unsigned int flag_construct_error_occurred : 1;
 
     void *(*method_from_algorithm)(int name_id, const OSSL_ALGORITHM *,
-        OSSL_PROVIDER *);
+        OSSL_PROVIDER *, int);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -208,7 +209,7 @@ static int put_evp_method_in_store(void *store, void *method,
  * This function is responsible to getting an identity number for it.
  */
 static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov, void *data)
+    OSSL_PROVIDER *prov, void *data, int no_store)
 {
     /*
      * This function is only called if get_evp_method_from_store() returned
@@ -227,7 +228,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     if (name_id == 0)
         return NULL;
 
-    method = methdata->method_from_algorithm(name_id, algodef, prov);
+    method = methdata->method_from_algorithm(name_id, algodef, prov, no_store);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -253,7 +254,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     const char *name, ossl_unused const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {
@@ -363,9 +364,70 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                  * cached end up in ->tmp_store when provider asks not
                  * to cache the result (see ossl_method_construct_reserve_store())
                  */
-                if (meth_id != 0 && methdata->tmp_store == NULL)
+                if (meth_id != 0 && methdata->tmp_store == NULL) {
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
                         method, up_ref_method, free_method);
+                } else {
+#ifndef OPENSSL_NO_CACHED_FETCH
+                    /*
+                     * There is a corner case we need to handle here.  IF:
+                     * 1) we are fetching an algorithm and plan to return it to the caller
+                     * 2) The provider we fetched from requested no_cache
+                     * Then we are in a situation in which this method that was constructed
+                     * only lives in the tmp_store, and has a reference count of 1.
+                     * On return from this function, that tmp_store is going to be deallocated,
+                     * Which will drop the methods ref count to 0 and free it, after which the
+                     * method will be returned to the called, as an already freed object.
+                     *
+                     * That's bad.  We need to grab an extra ref count on the method before returning
+                     * so that the requestor via EVP_*_fetch has ownership.
+                     *
+                     * BUT we only want to do this in the event that the algorithm is uncached.
+                     * Unfortunately, we don't know that here, because it was the provider that
+                     * made that request.  However, each algorithm type does store that information
+                     * so we have a path forward.  Based on the operation id, call the appropriate
+                     * up_ref method.  That implementation knows how to query its algorithm type and
+                     * decide if a reference needs to be taken here
+                     */
+                    switch (operation_id) {
+                    case OSSL_OP_DIGEST:
+                        EVP_MD_up_ref((EVP_MD *)method);
+                        break;
+                    case OSSL_OP_CIPHER:
+                        EVP_CIPHER_up_ref((EVP_CIPHER *)method);
+                        break;
+                    case OSSL_OP_MAC:
+                        EVP_MAC_up_ref((EVP_MAC *)method);
+                        break;
+                    case OSSL_OP_KDF:
+                        EVP_KDF_up_ref((EVP_KDF *)method);
+                        break;
+                    case OSSL_OP_RAND:
+                        EVP_RAND_up_ref((EVP_RAND *)method);
+                        break;
+                    case OSSL_OP_KEYMGMT:
+                        EVP_KEYMGMT_up_ref((EVP_KEYMGMT *)method);
+                        break;
+                    case OSSL_OP_KEYEXCH:
+                        EVP_KEYEXCH_up_ref((EVP_KEYEXCH *)method);
+                        break;
+                    case OSSL_OP_SIGNATURE:
+                        EVP_SIGNATURE_up_ref((EVP_SIGNATURE *)method);
+                        break;
+                    case OSSL_OP_ASYM_CIPHER:
+                        EVP_ASYM_CIPHER_up_ref((EVP_ASYM_CIPHER *)method);
+                        break;
+                    case OSSL_OP_KEM:
+                        EVP_KEM_up_ref((EVP_KEM *)method);
+                        break;
+                    case OSSL_OP_SKEYMGMT:
+                        EVP_SKEYMGMT_up_ref((EVP_SKEYMGMT *)method);
+                        break;
+                    default:
+                        break;
+                    }
+#endif
+                }
             }
         }
 
@@ -400,7 +462,7 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {
@@ -426,7 +488,7 @@ void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {
@@ -640,7 +702,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     void *user_arg,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {

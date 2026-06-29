@@ -62,7 +62,7 @@ static void *skeymgmt_new(void)
 
 static void *skeymgmt_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_SKEYMGMT *skeymgmt = NULL;
@@ -71,6 +71,7 @@ static void *skeymgmt_from_algorithm(int name_id,
         return NULL;
 
     skeymgmt->name_id = name_id;
+    skeymgmt->no_store = no_store;
     if ((skeymgmt->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
         evp_skeymgmt_free(skeymgmt);
         return NULL;
@@ -181,6 +182,8 @@ int EVP_SKEYMGMT_up_ref(EVP_SKEYMGMT *skeymgmt)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_skeymgmt_up_ref(skeymgmt);
 #else
+    if (skeymgmt->no_store != 0)
+        return evp_skeymgmt_up_ref(skeymgmt);
     return 1;
 #endif
 }
@@ -189,6 +192,9 @@ void EVP_SKEYMGMT_free(EVP_SKEYMGMT *skeymgmt)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_skeymgmt_free(skeymgmt);
+#else
+    if (skeymgmt != NULL && (skeymgmt->no_store != 0))
+        evp_skeymgmt_free(skeymgmt);
 #endif
 }
 

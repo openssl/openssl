@@ -78,7 +78,7 @@ static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
 
 static void *keymgmt_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYMGMT *keymgmt = NULL;
@@ -92,6 +92,8 @@ static void *keymgmt_from_algorithm(int name_id,
         return NULL;
 
     keymgmt->name_id = name_id;
+    keymgmt->no_store = no_store;
+
     if ((keymgmt->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
         evp_keymgmt_free(keymgmt);
         return NULL;
@@ -312,6 +314,8 @@ int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_keymgmt_up_ref(keymgmt);
 #else
+    if (keymgmt->no_store != 0)
+        return evp_keymgmt_up_ref(keymgmt);
     return 1;
 #endif
 }
@@ -320,6 +324,9 @@ void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_keymgmt_free(keymgmt);
+#else
+    if (keymgmt != NULL && (keymgmt->no_store != 0))
+        evp_keymgmt_free(keymgmt);
 #endif
 }
 

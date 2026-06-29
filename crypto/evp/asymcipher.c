@@ -342,7 +342,7 @@ static EVP_ASYM_CIPHER *evp_asym_cipher_new(OSSL_PROVIDER *prov)
 
 static void *evp_asym_cipher_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_ASYM_CIPHER *cipher = NULL;
@@ -355,6 +355,7 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
     }
 
     cipher->name_id = name_id;
+    cipher->no_store = no_store;
     if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     cipher->description = algodef->algorithm_description;
@@ -461,6 +462,9 @@ void EVP_ASYM_CIPHER_free(EVP_ASYM_CIPHER *cipher)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_asym_cipher_free(cipher);
+#else
+    if (cipher != NULL && (cipher->no_store != 0))
+        evp_asym_cipher_free(cipher);
 #endif
 }
 
@@ -469,6 +473,8 @@ int EVP_ASYM_CIPHER_up_ref(EVP_ASYM_CIPHER *cipher)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_asym_cipher_up_ref(cipher);
 #else
+    if (cipher->no_store != 0)
+        return evp_asym_cipher_up_ref(cipher);
     return 1;
 #endif
 }

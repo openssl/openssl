@@ -209,7 +209,7 @@ static int setup_decoder(struct winstore_ctx_st *ctx)
          * The decoder doesn't need any identification or to be
          * attached to any provider, since it's only used locally.
          */
-        to_obj = ossl_decoder_from_algorithm(0, to_algo, NULL);
+        to_obj = ossl_decoder_from_algorithm(0, to_algo, NULL, 0);
         if (to_obj != NULL)
             to_obj_inst = ossl_decoder_instance_new_forprov(to_obj, ctx->provctx,
                 input_structure);

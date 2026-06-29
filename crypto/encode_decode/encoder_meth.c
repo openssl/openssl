@@ -72,6 +72,8 @@ int OSSL_ENCODER_up_ref(OSSL_ENCODER *encoder)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return ossl_encoder_up_ref(encoder);
 #else
+    if (encoder->base.no_store != 0)
+        return ossl_encoder_up_ref(encoder);
     return 1;
 #endif
 }
@@ -80,6 +82,9 @@ void OSSL_ENCODER_free(OSSL_ENCODER *encoder)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     ossl_encoder_free(encoder);
+#else
+    if (encoder != NULL && (encoder->base.no_store != 0))
+        ossl_encoder_free(encoder);
 #endif
 }
 
@@ -216,7 +221,7 @@ static int put_encoder_in_store(void *store, void *method,
 
 /* Create and populate a encoder method */
 static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     OSSL_ENCODER *encoder = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -225,6 +230,7 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
     if ((encoder = ossl_encoder_new()) == NULL)
         return NULL;
     encoder->base.id = id;
+    encoder->base.no_store = no_store;
     if ((encoder->base.name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
         ossl_encoder_free(encoder);
         return NULL;
@@ -311,7 +317,7 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
  * then call encoder_from_algorithm() with that identity number.
  */
 static void *construct_encoder(const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov, void *data)
+    OSSL_PROVIDER *prov, void *data, int no_store)
 {
     /*
      * This function is only called if get_encoder_from_store() returned
@@ -327,7 +333,7 @@ static void *construct_encoder(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = encoder_from_algorithm(id, algodef, prov);
+        method = encoder_from_algorithm(id, algodef, prov, no_store);
 
     /*
      * Flag to indicate that there was actual construction errors.  This

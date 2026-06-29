@@ -47,6 +47,8 @@ int OSSL_STORE_LOADER_up_ref(OSSL_STORE_LOADER *loader)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return up_ref_loader(loader);
 #else
+    if (loader->no_store != 0)
+        return up_ref_loader(loader);
     return 1;
 #endif
 }
@@ -55,6 +57,9 @@ void OSSL_STORE_LOADER_free(OSSL_STORE_LOADER *loader)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     free_loader(loader);
+#else
+    if (loader != NULL && (loader->no_store != 0))
+        free_loader(loader);
 #endif
 }
 
@@ -185,7 +190,7 @@ static int put_loader_in_store(void *store, void *method,
 }
 
 static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     OSSL_STORE_LOADER *loader = NULL;
     const OSSL_DISPATCH *fns = algodef->implementation;
@@ -195,6 +200,7 @@ static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
     loader->scheme_id = scheme_id;
     loader->propdef = algodef->property_definition;
     loader->description = algodef->algorithm_description;
+    loader->no_store = no_store;
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -259,7 +265,7 @@ static void *loader_from_algorithm(int scheme_id, const OSSL_ALGORITHM *algodef,
  * then call loader_from_algorithm() with that identity number.
  */
 static void *construct_loader(const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov, void *data)
+    OSSL_PROVIDER *prov, void *data, int no_store)
 {
     /*
      * This function is only called if get_loader_from_store() returned
@@ -275,7 +281,7 @@ static void *construct_loader(const OSSL_ALGORITHM *algodef,
     void *method = NULL;
 
     if (id != 0)
-        method = loader_from_algorithm(id, algodef, prov);
+        method = loader_from_algorithm(id, algodef, prov, no_store);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
