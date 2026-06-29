@@ -109,7 +109,7 @@
  *	0x0603 // Windows 8.1
  *	0x0A00 // Windows 10
  */
-#define _WIN32_WINNT 0x0501
+#define _WIN32_WINNT 0x0600
 #endif
 #include <windows.h>
 #include <stdio.h>
