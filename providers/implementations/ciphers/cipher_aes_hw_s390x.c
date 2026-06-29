@@ -856,18 +856,23 @@ static int cipher_hw_aes_xts_s390x_initkey(PROV_CIPHER_CTX *ctx,
     unsigned int dec = 0;
     int supported = 0;
 
-    switch (keylen) {
-    case 128 / 8 * 2:
-        fc = S390X_XTS_AES_128_MSA10;
-        offs = 32;
-        break;
-    case 256 / 8 * 2:
-        fc = S390X_XTS_AES_256_MSA10;
-        offs = 0;
-        break;
-    default:
-        fc = 0;
-        break;
+    if (key != NULL) {
+        switch (keylen) {
+        case 128 / 8 * 2:
+            fc = S390X_XTS_AES_128_MSA10;
+            offs = 32;
+            break;
+        case 256 / 8 * 2:
+            fc = S390X_XTS_AES_256_MSA10;
+            offs = 0;
+            break;
+        default:
+            fc = 0;
+            break;
+        }
+    } else {
+        fc = xctx->plat.s390x.fc & ~S390X_DECRYPT;
+        offs = xctx->plat.s390x.offset;
     }
 
     if (fc != 0)

@@ -81,17 +81,6 @@ static int aes_xts_init(void *vctx, const unsigned char *key, size_t keylen,
     if (iv != NULL) {
         if (!ossl_cipher_generic_initiv(vctx, iv, ivlen))
             return 0;
-#ifdef AES_XTS_S390X
-        if (key == NULL) {
-            /* special handle iv-only update */
-            if (ivlen > sizeof(xctx->plat.s390x.param.km.tweak)) {
-                ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
-                return 0;
-            }
-            memcpy(xctx->plat.s390x.param.km.tweak, iv, ivlen);
-            xctx->plat.s390x.iv_set = 1;
-        }
-#endif
     }
     if (key != NULL) {
         if (keylen != ctx->keylen) {
@@ -103,6 +92,13 @@ static int aes_xts_init(void *vctx, const unsigned char *key, size_t keylen,
         if (!ctx->hw->init(ctx, key, keylen))
             return 0;
     }
+#ifdef AES_XTS_S390X
+    else if (xctx->plat.s390x.fc && ctx->iv_set) {
+        /* special handle iv-only update */
+        if (!ctx->hw->init(ctx, NULL, 0))
+            return 0;
+    }
+#endif
     return aes_xts_set_ctx_params(ctx, params);
 }
 
