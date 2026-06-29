@@ -446,14 +446,12 @@ static int execute_HDR_init_test(CMP_HDR_TEST_FIXTURE *fixture)
 
 static int test_HDR_init_with_ref(void)
 {
-    unsigned char ref[CMP_TEST_REFVALUE_LENGTH];
+    unsigned char ref[] = CMP_TEST_REFVALUE;
 
     SETUP_TEST_FIXTURE(CMP_HDR_TEST_FIXTURE, set_up);
 
     fixture->expected = 1;
-    if (!TEST_int_eq(1, RAND_bytes(ref, sizeof(ref)))
-        || !TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx,
-            ref, sizeof(ref)))) {
+    if (!TEST_true(OSSL_CMP_CTX_set1_referenceValue(fixture->cmp_ctx, ref, sizeof(ref)))) {
         tear_down(fixture);
         fixture = NULL;
     }
