@@ -8,6 +8,9 @@
 #
 # Script to set up mock certificates for CMP server and signer
 # Usage: ./setup-mock.sh [PQC]
+# Using the optional parameter "PQC" will generate certificates using PQC algorithms,
+# otherwise classic algorithms are used.
+# Using PQC algorithms makes testing take longer as it is more computationally intensive.
 ###################################################################
 set -e
 #set -x  # for debug
@@ -33,9 +36,9 @@ fi
 
 if [[ ${USE_PQC+set} ]]; then
     alg="MLDSA65"
-    #  For central key gen, leaf cert for encryption is required 
-    #  Cannot use KEM as for other case signature cert is required
-    alg2="rsa" 
+    #  Central key generation test(s) will fail as leaf cert is required
+    #  for encryption 
+    alg2="SLH-DSA-SHAKE-192s" 
 else
     alg="rsa"
     alg2="rsa"
