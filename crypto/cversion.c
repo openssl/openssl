@@ -80,7 +80,8 @@ const char *OpenSSL_version(int t)
 
     switch (t) {
     case OPENSSL_VERSION:
-        return OPENSSL_VERSION_TEXT;
+        return (EVP_default_properties_is_fips_enabled(NULL))
+            ? OPENSSL_VERSION_TEXT " fips" : OPENSSL_VERSION_TEXT;
     case OPENSSL_VERSION_STRING:
         return OPENSSL_VERSION_STR;
     case OPENSSL_FULL_VERSION_STRING:
