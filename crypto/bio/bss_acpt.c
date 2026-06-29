@@ -523,6 +523,7 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         } else
             ret = -1;
         break;
+
     case BIO_CTRL_GET_CLOSE:
         ret = b->shutdown;
         break;
@@ -549,7 +550,13 @@ static long acpt_ctrl(BIO *b, int cmd, long num, void *ptr)
         else
             ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         break;
+    case BIO_CTRL_PUSH:
+    case BIO_CTRL_POP:
+        ret = 0;
+        break;
+
     default:
+        ERR_raise_data(ERR_LIB_BIO, ERR_R_UNSUPPORTED, "cmd=%d", cmd);
         ret = 0;
         break;
     }
