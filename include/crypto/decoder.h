@@ -20,7 +20,7 @@
  * (provider-object(7)).
  */
 void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov);
+    OSSL_PROVIDER *prov, int no_store);
 
 OSSL_DECODER_INSTANCE *
 ossl_decoder_instance_new_forprov(OSSL_DECODER *decoder, void *provctx,

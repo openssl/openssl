@@ -1366,7 +1366,7 @@ static void evp_cipher_free(void *c)
 
 static void *evp_cipher_from_algorithm(const int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_CIPHER *cipher = NULL;
@@ -1376,6 +1376,9 @@ static void *evp_cipher_from_algorithm(const int name_id,
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }
+
+    if (no_store != 0)
+        cipher->flags |= EVP_CIPH_FLAG_NO_STORE;
 
 #ifndef FIPS_MODULE
     cipher->nid = NID_undef;
@@ -1574,6 +1577,8 @@ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_cipher_up_ref(cipher);
 #else
+    if (cipher->flags & EVP_CIPH_FLAG_NO_STORE)
+        return evp_cipher_up_ref(cipher);
     return 1;
 #endif
 }
@@ -1590,6 +1595,9 @@ void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_cipher_free(cipher);
+#else
+    if (cipher != NULL && (cipher->flags & EVP_CIPH_FLAG_NO_STORE))
+        evp_cipher_free(cipher);
 #endif
 }
 

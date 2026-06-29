@@ -317,7 +317,7 @@ static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
 }
 
 static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEM *kem = NULL;
@@ -330,6 +330,8 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
     }
 
     kem->name_id = name_id;
+    kem->no_store = no_store;
+
     if ((kem->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     kem->description = algodef->algorithm_description;
@@ -450,6 +452,9 @@ void EVP_KEM_free(EVP_KEM *kem)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_kem_free(kem);
+#else
+    if (kem != NULL && (kem->no_store != 0))
+        evp_kem_free(kem);
 #endif
 }
 
@@ -458,6 +463,8 @@ int EVP_KEM_up_ref(EVP_KEM *kem)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_kem_up_ref(kem);
 #else
+    if (kem->no_store != 0)
+        return evp_kem_up_ref(kem);
     return 1;
 #endif
 }

@@ -64,7 +64,7 @@ static EVP_KEYEXCH *evp_keyexch_new(OSSL_PROVIDER *prov)
 
 static void *evp_keyexch_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYEXCH *exchange = NULL;
@@ -76,6 +76,7 @@ static void *evp_keyexch_from_algorithm(int name_id,
     }
 
     exchange->name_id = name_id;
+    exchange->no_store = no_store;
     if ((exchange->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     exchange->description = algodef->algorithm_description;
@@ -177,6 +178,9 @@ void EVP_KEYEXCH_free(EVP_KEYEXCH *exchange)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_keyexch_free(exchange);
+#else
+    if (exchange != NULL && (exchange->no_store != 0))
+        evp_keyexch_free(exchange);
 #endif
 }
 
@@ -185,6 +189,8 @@ int EVP_KEYEXCH_up_ref(EVP_KEYEXCH *exchange)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_keyexch_up_ref(exchange);
 #else
+    if (exchange->no_store != 0)
+        return evp_keyexch_up_ref(exchange);
     return 1;
 #endif
 }

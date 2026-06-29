@@ -36,7 +36,7 @@ struct evp_method_data_st {
     unsigned int flag_construct_error_occurred : 1;
 
     void *(*method_from_algorithm)(int name_id, const OSSL_ALGORITHM *,
-        OSSL_PROVIDER *);
+        OSSL_PROVIDER *, int);
     int (*refcnt_up_method)(void *method);
     void (*destruct_method)(void *method);
 };
@@ -208,7 +208,7 @@ static int put_evp_method_in_store(void *store, void *method,
  * This function is responsible to getting an identity number for it.
  */
 static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov, void *data)
+    OSSL_PROVIDER *prov, void *data, int no_store)
 {
     /*
      * This function is only called if get_evp_method_from_store() returned
@@ -227,7 +227,7 @@ static void *construct_evp_method(const OSSL_ALGORITHM *algodef,
     if (name_id == 0)
         return NULL;
 
-    method = methdata->method_from_algorithm(name_id, algodef, prov);
+    method = methdata->method_from_algorithm(name_id, algodef, prov, no_store);
 
     /*
      * Flag to indicate that there was actual construction errors.  This
@@ -253,7 +253,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     const char *name, ossl_unused const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {
@@ -400,7 +400,7 @@ void *evp_generic_fetch(OSSL_LIB_CTX *libctx, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {
@@ -426,7 +426,7 @@ void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {
@@ -640,7 +640,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     void *user_arg,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *))
 {

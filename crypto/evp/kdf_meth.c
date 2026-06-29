@@ -57,7 +57,7 @@ static void *evp_kdf_new(void)
 
 static void *evp_kdf_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KDF *kdf = NULL;
@@ -68,6 +68,8 @@ static void *evp_kdf_from_algorithm(int name_id,
         return NULL;
     }
     kdf->name_id = name_id;
+    kdf->no_store = no_store;
+
     if ((kdf->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
 
@@ -179,6 +181,8 @@ int EVP_KDF_up_ref(EVP_KDF *kdf)
 #ifdef OPENSSL_NO_CACHED_FETCH
     return evp_kdf_up_ref(kdf);
 #else
+    if (kdf->no_store != 0)
+        return evp_kdf_up_ref(kdf);
     return 1;
 #endif
 }
@@ -187,6 +191,9 @@ void EVP_KDF_free(EVP_KDF *kdf)
 {
 #ifdef OPENSSL_NO_CACHED_FETCH
     evp_kdf_free(kdf);
+#else
+    if (kdf != NULL && (kdf->no_store != 0))
+        evp_kdf_free(kdf);
 #endif
 }
 
