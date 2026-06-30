@@ -198,6 +198,38 @@ err:
     return ret;
 }
 
+static int test_x509_get1_objects_mfail(void)
+{
+    X509 *cert1 = NULL, *cert2 = NULL;
+    X509_STORE *store = NULL;
+    STACK_OF(X509_OBJECT) *objs = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cert1 = X509_from_strings(cn_cert1))
+        || !TEST_ptr(cert2 = X509_from_strings(cn_cert2)))
+        goto err;
+
+    store = X509_STORE_new();
+    if (!TEST_ptr(store))
+        goto err;
+    if (!TEST_true(X509_STORE_add_cert(store, cert1))
+        || !TEST_true(X509_STORE_add_cert(store, cert2)))
+        goto err;
+
+    MFAIL_start();
+    objs = X509_STORE_get1_objects(store);
+    MFAIL_end();
+
+    ret = (objs != NULL);
+
+err:
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    X509_STORE_free(store);
+    X509_free(cert1);
+    X509_free(cert2);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem]\n")
 
 int setup_tests(void)
@@ -216,6 +248,7 @@ int setup_tests(void)
     ADD_TEST(test_load_cert_file);
     ADD_TEST(test_load_same_cn_certs);
     ADD_MFAIL_TEST(test_x509_store_add_mfail);
+    ADD_MFAIL_TEST(test_x509_get1_objects_mfail);
 
     return 1;
 }
