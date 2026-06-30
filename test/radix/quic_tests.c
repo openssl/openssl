@@ -1422,8 +1422,31 @@ DEF_SCRIPT(script_18, "Key update test - RTT-bounded")
     OP_READ_EXPECT(C, "plugh", 5);
 }
 
-DEF_SCRIPT(script_19, "place holder for multistrem script_19")
+/* 19. Key update test - artificially triggered */
+DEF_SCRIPT(script_19, "Key update test - artificially triggered")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE(C, "apple", 5);
+    OP_READ_EXPECT(S, "apple", 5);
+
+    OP_WRITE(C, "orange", 6);
+    OP_READ_EXPECT(S, "orange", 6);
+
+    OP_WRITE(S, "strawberry", 10);
+    OP_READ_EXPECT(C, "strawberry", 10);
+
+    OP_CHECK_KEY_UPDATE_LT(C, 1);
+
+    OP_TRIGGER_KEY_UPDATE(C, SSL_KEY_UPDATE_REQUESTED);
+
+    OP_WRITE(C, "orange", 6);
+    OP_READ_EXPECT(S, "orange", 6);
+    OP_WRITE(S, "ok", 2);
+
+    OP_READ_EXPECT(C, "ok", 2);
+    OP_CHECK_KEY_UPDATE_GE(C, 1);
 }
 
 DEF_SCRIPT(script_20, "place holder for multistrem script_20")
