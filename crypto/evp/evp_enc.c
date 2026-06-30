@@ -153,18 +153,21 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        int mode = EVP_CIPHER_get_mode(cipher);
-
+    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
+            && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
         /*
-         * Padding is only meaningful for the block-oriented ECB and CBC modes.
-         * For AEAD and stream modes the provider ignores the padding setting,
-         * so skip the costly OSSL_PARAM round-trip on the init hot path (e.g.
-         * AES-GCM re-init). If this ctx was already set up for no padding we
-         * still need to tell a newly set up block cipher about it.
+         * If this ctx was already set up for no padding then we need to tell
+         * the new cipher about it.
+         *
+         * AEAD ciphers never use padding and the provider ignores the setting,
+         * so skip the redundant OSSL_PARAM round-trip for them on the init hot
+         * path (e.g. AES-GCM re-init). This covers all AEAD ciphers, e.g.
+         * AES-GCM, AES-CCM, AES-OCB, AES-SIV, AES-GCM-SIV, ARIA-GCM/CCM,
+         * SM4-GCM/CCM and ChaCha20-Poly1305. We check the cipher's own AEAD
+         * flag, so all other ciphers (block, stream and custom-provider) keep
+         * the original behaviour.
          */
-        if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
-            && !EVP_CIPHER_CTX_set_padding(ctx, 0))
+        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
             return 0;
     }
 
@@ -329,18 +332,21 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
         return 0;
     }
 
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        int mode = EVP_CIPHER_get_mode(cipher);
-
+    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
+            && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
         /*
-         * Padding is only meaningful for the block-oriented ECB and CBC modes.
-         * For AEAD and stream modes the provider ignores the padding setting,
-         * so skip the costly OSSL_PARAM round-trip on the init hot path (e.g.
-         * AES-GCM re-init). If this ctx was already set up for no padding we
-         * still need to tell a newly set up block cipher about it.
+         * If this ctx was already set up for no padding then we need to tell
+         * the new cipher about it.
+         *
+         * AEAD ciphers never use padding and the provider ignores the setting,
+         * so skip the redundant OSSL_PARAM round-trip for them on the init hot
+         * path (e.g. AES-GCM re-init). This covers all AEAD ciphers, e.g.
+         * AES-GCM, AES-CCM, AES-OCB, AES-SIV, AES-GCM-SIV, ARIA-GCM/CCM,
+         * SM4-GCM/CCM and ChaCha20-Poly1305. We check the cipher's own AEAD
+         * flag, so all other ciphers (block, stream and custom-provider) keep
+         * the original behaviour.
          */
-        if ((mode == EVP_CIPH_ECB_MODE || mode == EVP_CIPH_CBC_MODE)
-            && !EVP_CIPHER_CTX_set_padding(ctx, 0))
+        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
             return 0;
     }
 
