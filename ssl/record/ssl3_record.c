@@ -104,7 +104,7 @@ static int ssl3_record_app_data_waiting(SSL *s)
 
 int early_data_count_ok(SSL *s, size_t length, size_t overhead, int send)
 {
-    uint32_t max_early_data;
+    uint64_t max_early_data;
     SSL_SESSION *sess = s->session;
 
     /*
