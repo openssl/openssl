@@ -769,6 +769,7 @@ static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
     return 1;
 
 err:
+    X509_OBJECT_free(dup);
     sk_X509_OBJECT_pop_free(*sk, X509_OBJECT_free);
     *sk = NULL;
 
