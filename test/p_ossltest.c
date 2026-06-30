@@ -1766,6 +1766,10 @@ static const OSSL_ALGORITHM *ossltest_query(void *provctx, int operation_id,
     int *no_cache)
 {
     *no_cache = 0;
+
+    if (getenv("OSSL_TEST_PROVIDER_NO_CACHE") != NULL)
+        *no_cache = 1;
+
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return ossltest_digests;
