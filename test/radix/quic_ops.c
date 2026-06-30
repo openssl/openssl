@@ -971,6 +971,44 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_check_key_update_lt)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t max_txke, txke;
+    QUIC_CHANNEL *ch;
+
+    F_POP(max_txke);
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    txke = ossl_quic_channel_get_tx_key_epoch(ch);
+
+    /* Caller specifies a maximum number of TXKEs which must not be exceeded. */
+    if (!TEST_uint64_t_lt(txke, max_txke))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_trigger_key_update)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t update_type;
+
+    F_POP(update_type);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_key_update(ssl, (int)update_type)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -1203,3 +1241,13 @@ err:
     (OP_SELECT_SSL(0, name),                   \
         OP_PUSH_U64(min_rxke),                 \
         OP_FUNC(hf_check_key_update_ge))
+
+#define OP_CHECK_KEY_UPDATE_LT(name, max_txke) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(max_txke),                 \
+        OP_FUNC(hf_check_key_update_lt))
+
+#define OP_TRIGGER_KEY_UPDATE(name, update_type) \
+    (OP_SELECT_SSL(0, name),                     \
+        OP_PUSH_U64(update_type),                \
+        OP_FUNC(hf_trigger_key_update))
