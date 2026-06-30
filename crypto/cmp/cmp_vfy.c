@@ -666,6 +666,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
 {
     OSSL_CMP_PKIHEADER *hdr;
     const X509_NAME *expected_sender;
+    int num_extra_before, num_extra_after, num_added;
 
     if (!ossl_assert(ctx != NULL && msg != NULL && msg->header != NULL))
         return 0;
@@ -700,17 +701,27 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * extraCerts because they do not belong to the protected msg part anyway.
      * For efficiency, the extraCerts are prepended so they get used first.
      */
+    num_extra_before = sk_X509_num(ctx->untrusted);
     if (!X509_add_certs(ctx->untrusted, msg->extraCerts,
             /* this allows self-signed certs */
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                 | X509_ADD_FLAG_PREPEND))
         return 0;
-
+    num_extra_after = sk_X509_num(ctx->untrusted);
+    num_added = num_extra_after - num_extra_before;
     /* validate message protection */
     if (hdr->protectionAlg != NULL) {
         /* detect explicitly permitted exceptions for invalid protection */
         if (!OSSL_CMP_validate_msg(ctx, msg)
             && (cb == NULL || (*cb)(ctx, msg, 1, cb_arg) <= 0)) {
+            /*
+             * remove extraCerts again if not caching
+             * or if we failed validation above, lest a remote user
+             * starts sending us lots of certificate in invalid messages
+             * leading to a DOS from unbounded certificate stack growth
+             */
+            while (num_added-- > 0)
+                X509_free(sk_X509_shift(ctx->untrusted));
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_PROTECTION);
             return 0;
@@ -719,6 +730,8 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     } else {
         /* detect explicitly permitted exceptions for missing protection */
         if (cb == NULL || (*cb)(ctx, msg, 0, cb_arg) <= 0) {
+            while (num_added-- > 0)
+                X509_free(sk_X509_shift(ctx->untrusted));
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
             ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PROTECTION);
             return 0;
