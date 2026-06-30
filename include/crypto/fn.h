@@ -426,6 +426,8 @@ size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
  */
 int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx);
+size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d);
 
 /**
  * Calculate modulo of two OSSL_FN numbers.  Truncates the result to fit in r.
@@ -443,6 +445,12 @@ static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx)
 {
     return OSSL_FN_div(NULL, r, n, d, ctx);
+}
+
+static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d)
+{
+    return OSSL_FN_div_ctx_size(NULL, r, n, d);
 }
 
 /**

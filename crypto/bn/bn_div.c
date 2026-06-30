@@ -81,14 +81,8 @@ int BN_div(BIGNUM *dv, BIGNUM *rm, const BIGNUM *num, const BIGNUM *divisor,
     if ((dv != NULL && dvf == NULL) || (rm != NULL && rmf == NULL))
         goto err;
 
-    /* Calculate total number of limbs for OSSL_FN_CTX */
-    size_t numcopy_limbs = ((num->dmax <= divisor->dmax) ? divisor->dmax : num->dmax) + 1;
-    size_t divcopy_limbs = divisor->dmax;
-    size_t tmp_limbs = divisor->dmax + 1;
-    size_t res_limbs = num->dmax;
-    size_t max_ctx_limbs = numcopy_limbs + divcopy_limbs + res_limbs + tmp_limbs;
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 4, max_ctx_limbs);
+    size_t ctx_size = OSSL_FN_div_ctx_size(dvf, rmf, num->data, divisor->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
 
     if (fnctx == NULL)
         goto err;
