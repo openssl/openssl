@@ -55,16 +55,8 @@ int BN_nnmod(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
     if (rf == NULL)
         return 0;
 
-    /* Unfortunately, allocating an OSSL_FN_CTX for OSSL_FN_mod() is quite complex */
-    size_t numcopy = ((a->dmax <= m->dmax) ? m->dmax : a->dmax) + 1;
-    size_t divcopy = m->dmax;
-    size_t tmp = m->dmax + 1;
-    size_t res = a->dmax;
-    size_t max_ctx = numcopy + divcopy + tmp + res;
-
-    assert(max_ctx <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 4, max_ctx);
+    size_t ctx_size = OSSL_FN_mod_ctx_size(rf, a->data, m->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
 
     if (fnctx == NULL)
         return 0;
@@ -113,33 +105,6 @@ static int ossl_fn_mod_negate(OSSL_FN *r, const OSSL_FN *m)
     return ossl_fn_mod_is_zero(r) || OSSL_FN_sub(r, m, r);
 }
 
-static size_t ossl_fn_mod_ctx_limbs(size_t nl, size_t ml)
-{
-    size_t numcopy = ((nl <= ml) ? ml : nl) + 1;
-    size_t divcopy = ml;
-    size_t tmp = ml + 1;
-    size_t res = nl;
-
-    return numcopy + divcopy + tmp + res;
-}
-
-static size_t ossl_fn_mod_add_ctx_limbs(size_t al, size_t bl, size_t ml)
-{
-    size_t t = ((al > bl) ? al : bl) + 1;
-
-    return t + ossl_fn_mod_ctx_limbs(t, ml);
-}
-
-static size_t ossl_fn_mod_sub_ctx_limbs(size_t al, size_t bl, size_t ml,
-    int r_is_m)
-{
-    size_t mod_a = ossl_fn_mod_ctx_limbs(al, ml);
-    size_t mod_b = ossl_fn_mod_ctx_limbs(bl, ml);
-    size_t max_mod = (mod_a > mod_b) ? mod_a : mod_b;
-
-    return 2 * ml + (r_is_m ? ml : 0) + max_mod;
-}
-
 int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     BN_CTX *ctx)
 {
@@ -165,16 +130,11 @@ int BN_mod_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     if (rf == NULL)
         return 0;
 
-    size_t al = a->dmax;
-    size_t bl = b->dmax;
-    size_t ml = m->dmax;
-    size_t mod_add_ctx = ossl_fn_mod_add_ctx_limbs(al, bl, ml);
-    size_t mod_sub_ctx = ossl_fn_mod_sub_ctx_limbs(al, bl, ml, r == m);
+    size_t mod_add_ctx = OSSL_FN_mod_add_ctx_size(rf, a->data, b->data, m->data);
+    size_t mod_sub_ctx = OSSL_FN_mod_sub_ctx_size(rf, a->data, b->data, m->data);
     size_t max_ctx = (mod_add_ctx > mod_sub_ctx) ? mod_add_ctx : mod_sub_ctx;
 
-    assert(max_ctx <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 7, max_ctx);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, max_ctx);
 
     if (fnctx == NULL)
         return 0;
@@ -319,16 +279,11 @@ int BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     if (rf == NULL)
         return 0;
 
-    size_t al = a->dmax;
-    size_t bl = b->dmax;
-    size_t ml = m->dmax;
-    size_t mod_add_ctx = ossl_fn_mod_add_ctx_limbs(al, bl, ml);
-    size_t mod_sub_ctx = ossl_fn_mod_sub_ctx_limbs(al, bl, ml, r == m);
+    size_t mod_add_ctx = OSSL_FN_mod_add_ctx_size(rf, a->data, b->data, m->data);
+    size_t mod_sub_ctx = OSSL_FN_mod_sub_ctx_size(rf, a->data, b->data, m->data);
     size_t max_ctx = (mod_add_ctx > mod_sub_ctx) ? mod_add_ctx : mod_sub_ctx;
 
-    assert(max_ctx <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 7, max_ctx);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, max_ctx);
 
     if (fnctx == NULL)
         return 0;
@@ -506,26 +461,8 @@ int BN_mod_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     if (rf == NULL)
         return 0;
 
-    size_t al = a->dmax;
-    size_t bl = b->dmax;
-    size_t ml = m->dmax;
-
-    size_t modmul_ctx_limbs = al + bl;
-
-    size_t mul_ctx_limbs = al + bl;
-
-    size_t mod_ctx_limbs1 = ((mul_ctx_limbs > ml) ? mul_ctx_limbs : ml) + 1;
-    size_t mod_ctx_limbs2 = ml;
-    size_t mod_ctx_limbs3 = ml + 1;
-    size_t mod_ctx_limbs4 = mul_ctx_limbs;
-    size_t mod_ctx_limbs = mod_ctx_limbs1 + mod_ctx_limbs2 + mod_ctx_limbs3 + mod_ctx_limbs4;
-
-    size_t max_ctx_limbs = modmul_ctx_limbs
-        + ((mul_ctx_limbs > mod_ctx_limbs) ? mul_ctx_limbs : mod_ctx_limbs);
-
-    assert(max_ctx_limbs <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 5, max_ctx_limbs);
+    size_t ctx_size = OSSL_FN_mod_mul_ctx_size(rf, a->data, b->data, m->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
 
     if (fnctx == NULL)
         return 0;
@@ -582,15 +519,8 @@ int BN_mod_sqr(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
     if (rf == NULL)
         return 0;
 
-    int ad = a->dmax;
-    int md = m->dmax;
-    size_t max_numcopy = ((2 * ad <= md) ? md : 2 * ad) + 1;
-    size_t mod_n_limbs = max_numcopy + md + (md + 1) + 2 * ad;
-    size_t max_n_limbs = 2 * ad + mod_n_limbs;
-
-    assert(max_n_limbs <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 3, 5, max_n_limbs);
+    size_t ctx_size = OSSL_FN_mod_sqr_ctx_size(rf, a->data, m->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
 
     if (fnctx == NULL)
         return 0;
@@ -629,17 +559,8 @@ int BN_mod_lshift1(BIGNUM *r, const BIGNUM *a, const BIGNUM *m, BN_CTX *ctx)
     if (rf == NULL)
         return 0;
 
-    int md = m->dmax;
-    size_t t1 = (size_t)(md + 1);
-    size_t numcopy = (size_t)(md + 2);
-    size_t divcopy = md;
-    size_t tmp = (size_t)(md + 1);
-    size_t res = (size_t)(md + 1);
-    size_t max_n_limbs = t1 + numcopy + divcopy + tmp + res;
-
-    assert(max_n_limbs <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 5, max_n_limbs);
+    size_t ctx_size = OSSL_FN_mod_lshift1_ctx_size(rf, a->data, m->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
 
     if (fnctx == NULL)
         return 0;
@@ -724,18 +645,8 @@ int BN_mod_lshift(BIGNUM *r, const BIGNUM *a, int n, const BIGNUM *m,
     if (rf == NULL)
         return 0;
 
-    int ad = a->dmax;
-    int md = m->dmax;
-    size_t max_am = ((ad <= md) ? md : ad);
-    size_t numcopy = max_am + 1;
-    size_t divcopy = md;
-    size_t tmp = (size_t)(md + 1);
-    size_t ra_limbs = md;
-    size_t max_n_limbs = ra_limbs + numcopy + divcopy + tmp + ad;
-
-    assert(max_n_limbs <= INT_MAX);
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 5, max_n_limbs);
+    size_t ctx_size = OSSL_FN_mod_lshift_ctx_size(rf, a->data, n, m->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
 
     if (fnctx == NULL)
         return 0;
