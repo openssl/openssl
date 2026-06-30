@@ -335,18 +335,8 @@ $code.=<<___;
 .size	__KeccakF1600,.-__KeccakF1600
 ___
 }
-{
-$code.=<<___;
-.type	KeccakF1600,\@function
-.align	32
-KeccakF1600:
-.LKeccakF1600:
-	lghi	%r1,-$frame
-	stm${g}	%r6,%r15,$SIZE_T*6($sp)
-	lgr	%r0,$sp
-	la	$sp,0(%r1,$sp)
-	st${g}	%r0,0($sp)
-
+sub s390x_lane_complement {
+    $code.=<<___;
 	lghi	@D[0],-1		# no 'not' instruction :-(
 	lghi	@D[1],-1
 	lghi	@D[2],-1
@@ -364,349 +354,166 @@ KeccakF1600:
 	stg	@D[3],$A[2][2]($src)
 	stg	@D[4],$A[3][2]($src)
 	stg	@T[0],$A[4][0]($src)
-
-	la	$dst,$stdframe($sp)
-
-	larl	$iotas,iotas
-	bras	%r14,__KeccakF1600
-
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-	lm${g}	%r6,%r15,$frame+6*$SIZE_T($sp)
-	br	%r14
-.size	KeccakF1600,.-KeccakF1600
-
-.type	KeccakP1600_12,\@function
-.align	32
-KeccakP1600_12:
-.LKeccakP1600_12:
-	lghi	%r1,-$frame
-	stm${g}	%r6,%r15,$SIZE_T*6($sp)
-	lgr	%r0,$sp
-	la	$sp,0(%r1,$sp)
-	st${g}	%r0,0($sp)
-
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-	la	$dst,$stdframe($sp)
-
-	larl	$iotas,iotas
-	la	$iotas,96($iotas)
-	bras	%r14,__KeccakF1600
-
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-	lm${g}	%r6,%r15,$frame+6*$SIZE_T($sp)
-	br	%r14
-.size	KeccakP1600_12,.-KeccakP1600_12
 ___
 }
+
+sub gen_keccak1600_wrapper {
+    my ($name, $iotas_offset) = @_;
+
+    $code.=<<___;
+.type	$name,\@function
+.align	32
+$name:
+.L$name:
+	lghi	%r1,-$frame
+	stm${g}	%r6,%r15,$SIZE_T*6($sp)
+	lgr	%r0,$sp
+	la	$sp,0(%r1,$sp)
+	st${g}	%r0,0($sp)
+
+___
+    s390x_lane_complement();
+
+    $code.=<<___;
+	la	$dst,$stdframe($sp)
+
+	larl	$iotas,iotas
+___
+    $code .= "\tla\t$iotas,96($iotas)\n" if $iotas_offset;
+    $code.=<<___;
+	bras	%r14,__KeccakF1600
+
+___
+    s390x_lane_complement();
+
+    $code.=<<___;
+	lm${g}	%r6,%r15,$frame+6*$SIZE_T($sp)
+	br	%r14
+.size	$name,.-$name
+___
+}
+
+gen_keccak1600_wrapper("KeccakF1600", 0);
+gen_keccak1600_wrapper("KeccakP1600_12", 1);
 { my ($A_flat,$inp,$len,$bsz) = map("%r$_",(2..5));
 
-$code.=<<___;
-.globl	SHA3_absorb
-.type	SHA3_absorb,\@function
+sub gen_absorb {
+    my ($name, $suffix, $iotas_offset) = @_;
+
+    $code.=<<___;
+.globl	$name
+.type	$name,\@function
 .align	32
-SHA3_absorb:
+$name:
 	lghi	%r1,-$frame
 	stm${g}	%r5,%r15,$SIZE_T*5($sp)
 	lgr	%r0,$sp
 	la	$sp,0(%r1,$sp)
 	st${g}	%r0,0($sp)
 
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-.Loop_absorb:
-	cl${g}r	$len,$bsz
-	jl	.Ldone_absorb
-
-	srl${g}	$bsz,3
-	la	%r1,0($A_flat)
-
-.Lblock_absorb:
-	lrvg	%r0,0($inp)
-	la	$inp,8($inp)
-	xg	%r0,0(%r1)
-	a${g}hi	$len,-8
-	stg	%r0,0(%r1)
-	la	%r1,8(%r1)
-	brct	$bsz,.Lblock_absorb
-
-	stm${g}	$inp,$len,$frame+3*$SIZE_T($sp)
-	la	$dst,$stdframe($sp)
-	larl	$iotas,iotas
-	bras	%r14,__KeccakF1600
-	lm${g}	$inp,$bsz,$frame+3*$SIZE_T($sp)
-	j	.Loop_absorb
-
-.align	16
-.Ldone_absorb:
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-	lgr	%r2,$len		# return value
-
-	lm${g}	%r6,%r15,$frame+6*$SIZE_T($sp)
-	br	%r14
-.size	SHA3_absorb,.-SHA3_absorb
-
-.globl	ossl_keccak1600_absorb_p12
-.type	ossl_keccak1600_absorb_p12,\@function
-.align	32
-ossl_keccak1600_absorb_p12:
-	lghi	%r1,-$frame
-	stm${g}	%r5,%r15,$SIZE_T*5($sp)
-	lgr	%r0,$sp
-	la	$sp,0(%r1,$sp)
-	st${g}	%r0,0($sp)
-
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-.Loop_absorb_p12:
-	cl${g}r	$len,$bsz
-	jl	.Ldone_absorb_p12
-
-	srl${g}	$bsz,3
-	la	%r1,0($A_flat)
-
-.Lblock_absorb_p12:
-	lrvg	%r0,0($inp)
-	la	$inp,8($inp)
-	xg	%r0,0(%r1)
-	a${g}hi	$len,-8
-	stg	%r0,0(%r1)
-	la	%r1,8(%r1)
-	brct	$bsz,.Lblock_absorb_p12
-
-	stm${g}	$inp,$len,$frame+3*$SIZE_T($sp)
-	la	$dst,$stdframe($sp)
-	larl	$iotas,iotas
-	la	$iotas,96($iotas)
-	bras	%r14,__KeccakF1600
-	lm${g}	$inp,$bsz,$frame+3*$SIZE_T($sp)
-	j	.Loop_absorb_p12
-
-.align	16
-.Ldone_absorb_p12:
-	lghi	@D[0],-1		# no 'not' instruction :-(
-	lghi	@D[1],-1
-	lghi	@D[2],-1
-	lghi	@D[3],-1
-	lghi	@D[4],-1
-	lghi	@T[0],-1
-	xg	@D[0],$A[0][1]($src)
-	xg	@D[1],$A[0][2]($src)
-	xg	@D[2],$A[1][3]($src)
-	xg	@D[3],$A[2][2]($src)
-	xg	@D[4],$A[3][2]($src)
-	xg	@T[0],$A[4][0]($src)
-	stmg	@D[0],@D[1],$A[0][1]($src)
-	stg	@D[2],$A[1][3]($src)
-	stg	@D[3],$A[2][2]($src)
-	stg	@D[4],$A[3][2]($src)
-	stg	@T[0],$A[4][0]($src)
-
-	lgr	%r2,$len		# return value
-
-	lm${g}	%r6,%r15,$frame+6*$SIZE_T($sp)
-	br	%r14
-.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
 ___
+    s390x_lane_complement();
+
+    $code.=<<___;
+.Loop_absorb$suffix:
+	cl${g}r	$len,$bsz
+	jl	.Ldone_absorb$suffix
+
+	srl${g}	$bsz,3
+	la	%r1,0($A_flat)
+
+.Lblock_absorb$suffix:
+	lrvg	%r0,0($inp)
+	la	$inp,8($inp)
+	xg	%r0,0(%r1)
+	a${g}hi	$len,-8
+	stg	%r0,0(%r1)
+	la	%r1,8(%r1)
+	brct	$bsz,.Lblock_absorb$suffix
+
+	stm${g}	$inp,$len,$frame+3*$SIZE_T($sp)
+	la	$dst,$stdframe($sp)
+	larl	$iotas,iotas
+___
+    $code .= "\tla\t$iotas,96($iotas)\n" if $iotas_offset;
+    $code.=<<___;
+	bras	%r14,__KeccakF1600
+	lm${g}	$inp,$bsz,$frame+3*$SIZE_T($sp)
+	j	.Loop_absorb$suffix
+
+.align	16
+.Ldone_absorb$suffix:
+___
+    s390x_lane_complement();
+
+    $code.=<<___;
+	lgr	%r2,$len		# return value
+
+	lm${g}	%r6,%r15,$frame+6*$SIZE_T($sp)
+	br	%r14
+.size	$name,.-$name
+___
+}
+gen_absorb("SHA3_absorb", "", 0);
+gen_absorb("ossl_keccak1600_absorb_p12", "_p12", 1);
 }
 { my ($A_flat,$out,$len,$bsz,$next) = map("%r$_",(2..6));
 
-$code.=<<___;
-.globl	SHA3_squeeze
-.type	SHA3_squeeze,\@function
+sub gen_squeeze {
+    my ($name, $suffix, $round_label) = @_;
+
+    $code.=<<___;
+.globl	$name
+.type	$name,\@function
 .align	32
-SHA3_squeeze:
+$name:
 	srl${g}	$bsz,3
 	st${g}	%r14,2*$SIZE_T($sp)
 	lghi	%r14,8
 	st${g}	$bsz,5*$SIZE_T($sp)
 	la	%r1,0($A_flat)
-	cijne	$next,0,.Lnext_block
+	cijne	$next,0,.Lnext_block$suffix
 
-	j	.Loop_squeeze
+	j	.Loop_squeeze$suffix
 
 .align	16
-.Loop_squeeze:
+.Loop_squeeze$suffix:
 	cl${g}r $len,%r14
-	jl	.Ltail_squeeze
+	jl	.Ltail_squeeze$suffix
 
 	lrvg	%r0,0(%r1)
 	la	%r1,8(%r1)
 	stg	%r0,0($out)
 	la	$out,8($out)
 	a${g}hi	$len,-8			# len -= 8
-	jz	.Ldone_squeeze
+	jz	.Ldone_squeeze$suffix
 
-	brct	$bsz,.Loop_squeeze	# bsz--
+	brct	$bsz,.Loop_squeeze$suffix	# bsz--
 
-.Lnext_block:
+.Lnext_block$suffix:
 	stm${g}	$out,$len,3*$SIZE_T($sp)
-	bras	%r14,.LKeccakF1600
+	bras	%r14,$round_label
 	lm${g}	$out,$bsz,3*$SIZE_T($sp)
 	lghi	%r14,8
 	la	%r1,0($A_flat)
-	j	.Loop_squeeze
+	j	.Loop_squeeze$suffix
 
-.Ltail_squeeze:
+.Ltail_squeeze$suffix:
 	lg	%r0,0(%r1)
-.Loop_tail_squeeze:
+.Loop_tail_squeeze$suffix:
 	stc	%r0,0($out)
 	la	$out,1($out)
 	srlg	%r0,8
-	brct	$len,.Loop_tail_squeeze
+	brct	$len,.Loop_tail_squeeze$suffix
 
-.Ldone_squeeze:
+.Ldone_squeeze$suffix:
 	l${g}	%r14,2*$SIZE_T($sp)
 	br	%r14
-.size	SHA3_squeeze,.-SHA3_squeeze
-
-.globl	ossl_keccak1600_squeeze_p12
-.type	ossl_keccak1600_squeeze_p12,\@function
-.align	32
-ossl_keccak1600_squeeze_p12:
-	srl${g}	$bsz,3
-	st${g}	%r14,2*$SIZE_T($sp)
-	lghi	%r14,8
-	st${g}	$bsz,5*$SIZE_T($sp)
-	la	%r1,0($A_flat)
-	cijne	$next,0,.Lnext_block_p12
-
-	j	.Loop_squeeze_p12
-
-.align	16
-.Loop_squeeze_p12:
-	cl${g}r $len,%r14
-	jl	.Ltail_squeeze_p12
-
-	lrvg	%r0,0(%r1)
-	la	%r1,8(%r1)
-	stg	%r0,0($out)
-	la	$out,8($out)
-	a${g}hi	$len,-8			# len -= 8
-	jz	.Ldone_squeeze_p12
-
-	brct	$bsz,.Loop_squeeze_p12	# bsz--
-
-.Lnext_block_p12:
-	stm${g}	$out,$len,3*$SIZE_T($sp)
-	bras	%r14,.LKeccakP1600_12
-	lm${g}	$out,$bsz,3*$SIZE_T($sp)
-	lghi	%r14,8
-	la	%r1,0($A_flat)
-	j	.Loop_squeeze_p12
-
-.Ltail_squeeze_p12:
-	lg	%r0,0(%r1)
-.Loop_tail_squeeze_p12:
-	stc	%r0,0($out)
-	la	$out,1($out)
-	srlg	%r0,8
-	brct	$len,.Loop_tail_squeeze_p12
-
-.Ldone_squeeze_p12:
-	l${g}	%r14,2*$SIZE_T($sp)
-	br	%r14
-.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
+.size	$name,.-$name
 ___
+}
+gen_squeeze("SHA3_squeeze", "", ".LKeccakF1600");
+gen_squeeze("ossl_keccak1600_squeeze_p12", "_p12", ".LKeccakP1600_12");
 }
 $code.=<<___;
 .align	256

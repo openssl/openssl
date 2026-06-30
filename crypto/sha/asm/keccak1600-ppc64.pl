@@ -400,10 +400,15 @@ KeccakF1600:
 	.byte	0,12,4,1,0x80,18,1,0
 	.long	0
 .size	KeccakF1600,.-KeccakF1600
+___
 
-.type	KeccakP1600_12,\@function
+sub gen_keccak1600_wrapper {
+    my ($name, $round_call, $iotas_offset) = @_;
+
+    $code.=<<___;
+.type	$name,\@function
 .align	5
-KeccakP1600_12:
+$name:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -428,7 +433,9 @@ KeccakP1600_12:
 
 	bl	PICmeup
 	subi	r12,r12,8			; prepare for ldu
-	addi	r12,r12,`8*12`
+___
+    $code .= "\taddi\tr12,r12,`8*12`\n" if $iotas_offset;
+    $code.=<<___;
 
 	$PUSH	r3,`$LOCALS+0*$SIZE_T`($sp)
 	;$PUSH	r4,`$LOCALS+1*$SIZE_T`($sp)
@@ -462,7 +469,7 @@ KeccakP1600_12:
 	ld	$A[4][3],`8*23`(r3)
 	ld	$A[4][4],`8*24`(r3)
 
-	bl	KeccakP1600_12_int
+	bl	$round_call
 
 	$POP	r3,`$LOCALS+0*$SIZE_T`($sp)
 	std	$A[0][0],`8*0`(r3)		; return A[5][5]
@@ -516,8 +523,11 @@ KeccakP1600_12:
 	.long	0
 	.byte	0,12,4,1,0x80,18,1,0
 	.long	0
-.size	KeccakP1600_12,.-KeccakP1600_12
+.size	$name,.-$name
 ___
+}
+
+gen_keccak1600_wrapper("KeccakP1600_12", "KeccakP1600_12_int", 1);
 if (!$LITTLE_ENDIAN) {
 $code.=<<___;
 .type	dword_le_load,\@function
@@ -770,11 +780,16 @@ SHA3_absorb:
 	.byte	0,12,4,1,0x80,18,4,0
 	.long	0
 .size	SHA3_absorb,.-SHA3_absorb
+___
 
-.globl	ossl_keccak1600_absorb_p12
-.type	ossl_keccak1600_absorb_p12,\@function
+sub gen_absorb {
+    my ($name, $suffix, $round_call, $rounds) = @_;
+
+    $code.=<<___;
+.globl	$name
+.type	$name,\@function
 .align	5
-ossl_keccak1600_absorb_p12:
+$name:
 	$STU	$sp,-$FRAME($sp)
 	mflr	r0
 	$PUSH	r14,`$FRAME-$SIZE_T*18`($sp)
@@ -800,7 +815,7 @@ ossl_keccak1600_absorb_p12:
 	bl	PICmeup
 	subi	r4,r4,$LE_LOAD_SIZE		; prepare for ldu or lbzu
 	subi	r12,r12,8			; prepare for ldu
-	addi	r12,r12,`8*12`
+	addi	r12,r12,`8*$rounds`
 
 	$PUSH	r3,`$LOCALS+0*$SIZE_T`($sp)	; save A[][]
 	$PUSH	r4,`$LOCALS+1*$SIZE_T`($sp)	; save inp
@@ -839,12 +854,12 @@ ossl_keccak1600_absorb_p12:
 	mr	r4,r5
 	mr	r5,r0
 
-	b	.Loop_absorb_p12
+	b	.Loop_absorb$suffix
 
 .align	4
-.Loop_absorb_p12:
+.Loop_absorb$suffix:
 	$UCMP	r4,r5				; len < bsz?
-	blt	.Labsorbed_p12
+	blt	.Labsorbed$suffix
 
 	sub	r4,r4,r5			; len -= bsz
 	srwi	r5,r5,3
@@ -852,95 +867,95 @@ ossl_keccak1600_absorb_p12:
 	mtctr	r5
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[0][0],$A[0][0],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[0][1],$A[0][1],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[0][2],$A[0][2],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[0][3],$A[0][3],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[0][4],$A[0][4],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[1][0],$A[1][0],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[1][1],$A[1][1],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[1][2],$A[1][2],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[1][3],$A[1][3],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[1][4],$A[1][4],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[2][0],$A[2][0],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[2][1],$A[2][1],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[2][2],$A[2][2],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[2][3],$A[2][3],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[2][4],$A[2][4],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[3][0],$A[3][0],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[3][1],$A[3][1],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[3][2],$A[3][2],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[3][3],$A[3][3],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[3][4],$A[3][4],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[4][0],$A[4][0],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[4][1],$A[4][1],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[4][2],$A[4][2],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[4][3],$A[4][3],r0
-	bdz	.Lprocess_block_p12
+	bdz	.Lprocess_block$suffix
 	$DWORD_LE_LOAD				; *inp++
 	xor	$A[4][4],$A[4][4],r0
 
-.Lprocess_block_p12:
+.Lprocess_block$suffix:
 	$PUSH	r3,`$LOCALS+1*$SIZE_T`($sp)	; save inp
 
-	bl	KeccakP1600_12_int
+	bl	$round_call
 
 	$POP	r0,`$LOCALS+4*$SIZE_T`($sp)	; pull iotas pointer
 	$POP	r5,`$LOCALS+3*$SIZE_T`($sp)	; restore bsz
 	$POP	r4,`$LOCALS+2*$SIZE_T`($sp)	; restore len
 	$POP	r3,`$LOCALS+1*$SIZE_T`($sp)	; restore inp
-	addic	r0,r0,`-8*12`			; rewind iotas
+	addic	r0,r0,`-8*$rounds`		; rewind iotas
 	$PUSH	r0,`$LOCALS+4*$SIZE_T`($sp)
 
-	b	.Loop_absorb_p12
+	b	.Loop_absorb$suffix
 
 .align	4
-.Labsorbed_p12:
+.Labsorbed$suffix:
 	$POP	r3,`$LOCALS+0*$SIZE_T`($sp)
 	std	$A[0][0],`8*0`(r3)		; return A[5][5]
 	std	$A[0][1],`8*1`(r3)
@@ -994,8 +1009,11 @@ ossl_keccak1600_absorb_p12:
 	.long	0
 	.byte	0,12,4,1,0x80,18,4,0
 	.long	0
-.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
+.size	$name,.-$name
 ___
+}
+
+gen_absorb("ossl_keccak1600_absorb_p12", "_p12", "KeccakP1600_12_int", 12);
 {
 my ($A_flat,$out,$len,$bsz) = map("r$_",(28..31));
 $code.=<<___;
@@ -1076,11 +1094,16 @@ SHA3_squeeze:
 	.byte	0,12,4,1,0x80,4,4,0
 	.long	0
 .size	SHA3_squeeze,.-SHA3_squeeze
+___
 
-.globl	ossl_keccak1600_squeeze_p12
-.type	ossl_keccak1600_squeeze_p12,\@function
+sub gen_squeeze {
+    my ($name, $suffix, $round_call) = @_;
+
+    $code.=<<___;
+.globl	$name
+.type	$name,\@function
 .align	5
-ossl_keccak1600_squeeze_p12:
+$name:
 	$STU	$sp,`-10*$SIZE_T`($sp)
 	mflr	r0
 	$PUSH	r28,`6*$SIZE_T`($sp)
@@ -1095,14 +1118,14 @@ ossl_keccak1600_squeeze_p12:
 	mr	$len,r5
 	mr	$bsz,r6
 	cmplwi	r7,0                    ; r7 = 'next' argument
-	bne	.Lnext_block_p12
-	b	.Loop_squeeze_p12
+	bne	.Lnext_block$suffix
+	b	.Loop_squeeze$suffix
 
 .align	4
-.Loop_squeeze_p12:
+.Loop_squeeze$suffix:
 	ldu	r0,8(r3)
 	${UCMP}i $len,8
-	blt	.Lsqueeze_tail_p12
+	blt	.Lsqueeze_tail$suffix
 
 	stb	r0,1($out)
 	srdi	r0,r0,8
@@ -1121,27 +1144,27 @@ ossl_keccak1600_squeeze_p12:
 	stbu	r0,8($out)
 
 	subic.	$len,$len,8
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 
 	subic.	r6,r6,8
-	bgt	.Loop_squeeze_p12
+	bgt	.Loop_squeeze$suffix
 
-.Lnext_block_p12:
+.Lnext_block$suffix:
 	mr	r3,$A_flat
-	bl	KeccakP1600_12
+	bl	$round_call
 	subi	r3,$A_flat,8		; prepare for ldu
 	mr	r6,$bsz
-	b	.Loop_squeeze_p12
+	b	.Loop_squeeze$suffix
 
 .align	4
-.Lsqueeze_tail_p12:
+.Lsqueeze_tail$suffix:
 	mtctr	$len
-.Loop_tail_p12:
+.Loop_tail$suffix:
 	stbu	r0,1($out)
 	srdi	r0,r0,8
-	bdnz	.Loop_tail_p12
+	bdnz	.Loop_tail$suffix
 
-.Lsqueeze_done_p12:
+.Lsqueeze_done$suffix:
 	$POP	r0,`10*$SIZE_T+$LRSAVE`($sp)
 	$POP	r28,`6*$SIZE_T`($sp)
 	$POP	r29,`7*$SIZE_T`($sp)
@@ -1153,8 +1176,11 @@ ossl_keccak1600_squeeze_p12:
 	.long	0
 	.byte	0,12,4,1,0x80,4,4,0
 	.long	0
-.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
+.size	$name,.-$name
 ___
+}
+
+gen_squeeze("ossl_keccak1600_squeeze_p12", "_p12", "KeccakP1600_12");
 }
 
 # Ugly hack here, because PPC assembler syntax seem to vary too

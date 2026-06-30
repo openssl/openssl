@@ -760,10 +760,15 @@ KeccakF1600:
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	KeccakF1600,.-KeccakF1600
+___
 
-.type	KeccakP1600_12, %function
+sub gen_keccak1600_wrapper {
+    my ($name, $round_call) = @_;
+
+    $code.=<<___;
+.type	$name, %function
 .align	5
-KeccakP1600_12:
+$name:
 	stmdb	sp!,{r0,r4-r11,lr}
 	sub	sp,sp,#440+16			@ space for A[5][5],D[5],T[5][5],...
 
@@ -782,7 +787,7 @@ KeccakP1600_12:
 	add	@E[0],sp,#$A[1][0]
 	stmia	@E[1], {@C[0]-@C[9]}
 
-	bl	KeccakP1600_12_enter
+	bl	$round_call
 
 	ldr	@E[1], [sp,#440+16]		@ restore pointer to A
 	ldmia	sp,    {@C[0]-@C[9]}
@@ -805,8 +810,11 @@ KeccakP1600_12:
 	moveq	pc,lr		@ be binary compatible with V4, yet
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
-.size	KeccakP1600_12,.-KeccakP1600_12
+.size	$name,.-$name
 ___
+}
+
+gen_keccak1600_wrapper("KeccakP1600_12", "KeccakP1600_12_enter");
 { my ($A_flat,$inp,$len,$bsz) = map("r$_",(10..12,14));
 
 ########################################################################
@@ -988,11 +996,16 @@ SHA3_absorb:
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	SHA3_absorb,.-SHA3_absorb
+___
 
-.global	ossl_keccak1600_absorb_p12
-.type	ossl_keccak1600_absorb_p12,%function
+sub gen_absorb {
+    my ($name, $suffix, $round_call) = @_;
+
+    $code.=<<___;
+.global	$name
+.type	$name,%function
 .align	5
-ossl_keccak1600_absorb_p12:
+$name:
 	stmdb	sp!,{r0-r12,lr}
 	sub	sp,sp,#456+16
 
@@ -1001,7 +1014,7 @@ ossl_keccak1600_absorb_p12:
 	mov	$len,r2
 	mov	$bsz,r3
 	cmp	r2,r3
-	blo	.Labsorb_abort_p12
+	blo	.Labsorb_abort$suffix
 
 	add	$inp,sp,#0
 	ldmia	r0,      {@C[0]-@C[9]}	@ copy A[5][5] to stack
@@ -1037,17 +1050,17 @@ ossl_keccak1600_absorb_p12:
 	str	r8,[sp,#464]
 	str	r7,[sp,#460]
 	str	r6,[sp,#456]
-	b	.Loop_absorb_p12
+	b	.Loop_absorb$suffix
 
 .align	4
-.Loop_absorb_p12:
+.Loop_absorb$suffix:
 	subs	r0,$len,$bsz
-	blo	.Labsorbed_p12
+	blo	.Labsorbed$suffix
 	add	$A_flat,sp,#0
 	str	r0,[sp,#480]		@ save len - bsz
 
 .align	4
-.Loop_block_p12:
+.Loop_block$suffix:
 	ldrb	r0,[$inp],#1
 	ldrb	r1,[$inp],#1
 	ldrb	r2,[$inp],#1
@@ -1106,18 +1119,18 @@ ossl_keccak1600_absorb_p12:
 	stmia	$A_flat!,{r4-r5}	@ A_flat[i++] ^= BitInterleave(inp[0..7])
 
 	subs	$bsz,$bsz,#8
-	bhi	.Loop_block_p12
+	bhi	.Loop_block$suffix
 
 	str	$inp,[sp,#476]
 
-	bl	KeccakP1600_12_int
+	bl	$round_call
 
 	add	r14,sp,#456
 	ldmia	r14,{r6-r12,r14}	@ restore constants and variables
-	b	.Loop_absorb_p12
+	b	.Loop_absorb$suffix
 
 .align	4
-.Labsorbed_p12:
+.Labsorbed$suffix:
 	add	$inp,sp,#$A[1][0]
 	ldmia	sp,      {@C[0]-@C[9]}
 	stmia	$A_flat!,{@C[0]-@C[9]}	@ return A[5][5]
@@ -1130,7 +1143,7 @@ ossl_keccak1600_absorb_p12:
 	ldmia	$inp,    {@C[0]-@C[9]}
 	stmia	$A_flat, {@C[0]-@C[9]}
 
-.Labsorb_abort_p12:
+.Labsorb_abort$suffix:
 	add	sp,sp,#456+32
 	mov	r0,$len			@ return value
 #if __ARM_ARCH__>=5
@@ -1141,8 +1154,11 @@ ossl_keccak1600_absorb_p12:
 	moveq	pc,lr		@ be binary compatible with V4, yet
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
-.size	ossl_keccak1600_absorb_p12,.-ossl_keccak1600_absorb_p12
+.size	$name,.-$name
 ___
+}
+
+gen_absorb("ossl_keccak1600_absorb_p12", "_p12", "KeccakP1600_12_int");
 }
 
 { my ($out,$len,$A_flat,$bsz,$next) = map("r$_", (4,5,10,12,0));
@@ -1310,11 +1326,16 @@ SHA3_squeeze:
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
 .size	SHA3_squeeze,.-SHA3_squeeze
+___
 
-.global	ossl_keccak1600_squeeze_p12
-.type	ossl_keccak1600_squeeze_p12,%function
+sub gen_squeeze {
+    my ($name, $suffix, $round_call) = @_;
+
+    $code.=<<___;
+.global	$name
+.type	$name,%function
 .align	5
-ossl_keccak1600_squeeze_p12:
+$name:
 	stmdb	sp!,{r0,r3-r10,lr}
 
 	mov	$A_flat,r0
@@ -1344,11 +1365,11 @@ ossl_keccak1600_squeeze_p12:
 
 	mov	r14,$A_flat
 	cmp	$next, #1
-	beq	.Lnext_block_p12
-	b	.Loop_squeeze_p12
+	beq	.Lnext_block$suffix
+	b	.Loop_squeeze$suffix
 
 .align	4
-.Loop_squeeze_p12:
+.Loop_squeeze$suffix:
 	ldmia	$A_flat!,{r0,r1}	@ A_flat[i++]
 
 	lsl	r2,r0,#16
@@ -1395,7 +1416,7 @@ ossl_keccak1600_squeeze_p12:
 	orr	r0,r0,r1
 
 	cmp	$len,#8
-	blo	.Lsqueeze_tail_p12
+	blo	.Lsqueeze_tail$suffix
 	lsr	r1,r2,#8
 	strb	r2,[$out],#1
 	lsr	r3,r2,#16
@@ -1412,50 +1433,50 @@ ossl_keccak1600_squeeze_p12:
 	strb	r3,[$out],#1
 	strb	r0,[$out],#1
 	subs	$len,$len,#8
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 
 	subs	$bsz,$bsz,#8		@ bsz -= 8
-	bhi	.Loop_squeeze_p12
-.Lnext_block_p12:
+	bhi	.Loop_squeeze$suffix
+.Lnext_block$suffix:
 	mov	r0,r14			@ original $A_flat
 
-	bl	KeccakP1600_12
+	bl	$round_call
 
 	ldmia	sp,{r6-r10,r12}		@ restore constants and variables
 	mov	r14,$A_flat
-	b	.Loop_squeeze_p12
+	b	.Loop_squeeze$suffix
 
 .align	4
-.Lsqueeze_tail_p12:
+.Lsqueeze_tail$suffix:
 	strb	r2,[$out],#1
 	lsr	r2,r2,#8
 	subs	$len,$len,#1
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 	strb	r2,[$out],#1
 	lsr	r2,r2,#8
 	subs	$len,$len,#1
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 	strb	r2,[$out],#1
 	lsr	r2,r2,#8
 	subs	$len,$len,#1
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 	strb	r2,[$out],#1
 	subs	$len,$len,#1
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 
 	strb	r0,[$out],#1
 	lsr	r0,r0,#8
 	subs	$len,$len,#1
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 	strb	r0,[$out],#1
 	lsr	r0,r0,#8
 	subs	$len,$len,#1
-	beq	.Lsqueeze_done_p12
+	beq	.Lsqueeze_done$suffix
 	strb	r0,[$out]
-	b	.Lsqueeze_done_p12
+	b	.Lsqueeze_done$suffix
 
 .align	4
-.Lsqueeze_done_p12:
+.Lsqueeze_done$suffix:
 	add	sp,sp,#24
 #if __ARM_ARCH__>=5
 	ldmia	sp!,{r4-r10,pc}
@@ -1465,8 +1486,11 @@ ossl_keccak1600_squeeze_p12:
 	moveq	pc,lr		@ be binary compatible with V4, yet
 	bx	lr		@ interoperable with Thumb ISA:-)
 #endif
-.size	ossl_keccak1600_squeeze_p12,.-ossl_keccak1600_squeeze_p12
+.size	$name,.-$name
 ___
+}
+
+gen_squeeze("ossl_keccak1600_squeeze_p12", "_p12", "KeccakP1600_12");
 }
 
 $code.=<<___;
