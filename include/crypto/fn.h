@@ -152,6 +152,27 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Calculate the arena payload size for an OSSL_FN_CTX.
+ *
+ * @param[in]   max_n_frames    Maximum number of simultaneously active frames.
+ *                              This indicates the expected depth of call stack
+ *                              that the resulting OSSL_FN_CTX will be used in.
+ *                              Must be at least 1.
+ * @param[in]   max_n_numbers   Maximum number of simultaneously active OSSL_FN.
+ *                              Must be 0 if and only if @p max_n_limbs is 0.
+ * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
+ *                              limbs.  Must be 0 if and only if
+ *                              @p max_n_numbers is 0.
+ * @returns     The arena payload size, in bytes.
+ * @retval      0               on arithmetic overflow or invalid argument.
+ *
+ * The returned size is the value to pass to OSSL_FN_CTX_new_size() or
+ * OSSL_FN_CTX_secure_new_size().  It does not include sizeof(OSSL_FN_CTX).
+ */
+size_t OSSL_FN_CTX_size(size_t max_n_frames, size_t max_n_numbers,
+    size_t max_n_limbs);
+
+/**
  * Allocate a new OSSL_FN_CTX, given a set of input numbers.
  *
  * @param[in]   libctx          OpenSSL library context (currently unused)
@@ -162,17 +183,40 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
  * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
  *                              limbs.
  * @returns     An allocated OSSL_FN_CTX, or NULL on error.
- **/
+ */
 OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+
+/**
+ * Allocate a new OSSL_FN_CTX with a given arena payload size.
+ *
+ * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   size            Arena payload size in bytes, typically from
+ *                              OSSL_FN_CTX_size().  A size of 0 is the error
+ *                              return of OSSL_FN_CTX_size() and is treated as
+ *                              an error here too.
+ * @returns     An allocated OSSL_FN_CTX, or NULL on error.
+ */
+OSSL_FN_CTX *OSSL_FN_CTX_new_size(OSSL_LIB_CTX *libctx, size_t size);
 
 /**
  * Allocate a new OSSL_FN_CTX in secure memory, given a set of input numbers.
  * Other than allocating in secure memory, this function does exactly the same
  * thing as OSSL_FN_CTX_new().
- **/
+ */
 OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+
+/**
+ * Allocate a new OSSL_FN_CTX in secure memory with a given arena payload size.
+ *
+ * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   size            Arena payload size in bytes, typically from
+ *                              OSSL_FN_CTX_size().  A size of 0 is treated as
+ *                              an error, as in OSSL_FN_CTX_new_size().
+ * @returns     An allocated OSSL_FN_CTX, or NULL on error.
+ */
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new_size(OSSL_LIB_CTX *libctx, size_t size);
 
 /**
  * Report the peak number of frames, numbers, and limbs that were
@@ -354,6 +398,20 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
 /**
+ * Calculate the arena payload size that OSSL_FN_mul() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mul().
+ */
+size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b);
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -367,6 +425,18 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * frame (currently 32 bytes).
  */
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_sqr() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_sqr().
+ */
+size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
 
 #ifdef __cplusplus
 }
