@@ -1384,8 +1384,42 @@ DEF_SCRIPT(script_17, "Key update test - unlimited")
     OP_READ_EXPECT(C, "plugh", 5);
 }
 
-DEF_SCRIPT(script_18, "place holder for multistrem script_18")
+/* 18. Key update test - RTT-bounded */
+DEF_SCRIPT(script_18, "Key update test - RTT-bounded")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE(C, "apple", 5);
+    OP_READ_EXPECT(S, "apple", 5);
+
+    OP_OVERRIDE_KEY_UPDATE(C, 1);
+
+    for (i = 0; i < 200; ++i) {
+        OP_WRITE(C, "apple", 5);
+        OP_READ_EXPECT(S, "apple", 5);
+        OP_SKIP_TIME(8);
+    }
+
+    /*
+     * This time we simulate far less time passing between writes, so there are
+     * fewer opportunities to initiate TXKUs. Note that we ask for a TXKU every
+     * 1 packet above, which is absurd; thus this ensures we only actually
+     * generate TXKUs when we are allowed to.
+     */
+    OP_CHECK_KEY_UPDATE_LT(C, 240);
+
+    /*
+     * Prove the connection is still healthy by sending something in both
+     * directions.
+     */
+    OP_WRITE(C, "xyzzy", 5);
+    OP_READ_EXPECT(S, "xyzzy", 5);
+
+    OP_WRITE(S, "plugh", 5);
+    OP_READ_EXPECT(C, "plugh", 5);
 }
 
 DEF_SCRIPT(script_19, "place holder for multistrem script_19")
