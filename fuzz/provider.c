@@ -32,8 +32,11 @@
     {                                                                    \
         STACK_OF(evp) *obj_stack = stack;                                \
                                                                          \
-        if (sk_##evp##_push(obj_stack, obj) > 0)                         \
-            evp##_up_ref(obj);                                           \
+        if (!evp##_up_ref(obj))                                          \
+            return;                                                      \
+                                                                         \
+        if (sk_##evp##_push(obj_stack, obj) <= 0)                        \
+            evp##_free(obj);                                             \
     }                                                                    \
     static void init_##name(OSSL_LIB_CTX *libctx)                        \
     {                                                                    \
