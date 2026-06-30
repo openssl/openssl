@@ -133,6 +133,7 @@ OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx);
  */
 OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx(BN_CTX *ctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx_size(BN_CTX *ctx, size_t size);
 void bn_ctx_release_ossl_fn_ctx(BN_CTX *ctx);
 
 extern const BIGNUM ossl_bn_inv_sqrt_2;
