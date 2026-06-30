@@ -564,7 +564,7 @@ IF[{- !$disabled{tests} -}]
   IF[{- !$disabled{cmp} -}]
     PROGRAMS{noinst}=cmp_asn_test cmp_ctx_test cmp_status_test cmp_hdr_test \
                      cmp_protect_test cmp_msg_test cmp_vfy_test \
-                     cmp_server_test cmp_client_test
+                     cmp_server_test cmp_client_test cmp_extracerts_dos_test
   ENDIF
 
   SOURCE[cmp_asn_test]=cmp_asn_test.c helpers/cmp_testlib.c
@@ -590,6 +590,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cmp_msg_test]=cmp_msg_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_msg_test]=.. ../include ../apps/include
   DEPEND[cmp_msg_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[cmp_extracerts_dos_test]=cmp_extracerts_dos_test.c helpers/cmp_testlib.c
+  INCLUDE[cmp_extracerts_dos_test]=.. ../include ../apps/include
+  DEPEND[cmp_extracerts_dos_test]=../libcrypto.a libtestutil.a
 
   SOURCE[cmp_vfy_test]=cmp_vfy_test.c helpers/cmp_testlib.c
   INCLUDE[cmp_vfy_test]=.. ../include ../apps/include
