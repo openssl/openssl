@@ -13,6 +13,7 @@
 #pragma once
 
 #include <openssl/types.h>
+#include <openssl/macros.h>
 
 /* HPKE modes */
 #define OSSL_HPKE_MODE_BASE 0 /* Base mode  */
@@ -141,9 +142,15 @@ int OSSL_HPKE_CTX_set1_authpriv(OSSL_HPKE_CTX *ctx, EVP_PKEY *priv);
 int OSSL_HPKE_CTX_set1_authpub(OSSL_HPKE_CTX *ctx,
     const unsigned char *pub,
     size_t publen);
+int OSSL_HPKE_CTX_set1_psk_ex(OSSL_HPKE_CTX *ctx,
+    const unsigned char *pskid, size_t pskidlen,
+    const unsigned char *psk, size_t psklen);
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+OSSL_DEPRECATEDIN_4_1_FOR("OSSL_HPKE_CTX_set1_psk_ex")
 int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
     const char *pskid,
     const unsigned char *psk, size_t psklen);
+#endif
 
 int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
     const unsigned char *ikme, size_t ikmelen);

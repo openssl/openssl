@@ -9,7 +9,7 @@ OSSL_HPKE_suite_check, OSSL_HPKE_str2suite,
 OSSL_HPKE_keygen, OSSL_HPKE_get_grease_value,
 OSSL_HPKE_get_ciphertext_size, OSSL_HPKE_get_public_encap_size,
 OSSL_HPKE_get_recommended_ikmelen,
-OSSL_HPKE_CTX_set1_psk, OSSL_HPKE_CTX_set1_ikme,
+OSSL_HPKE_CTX_set1_psk_ex, OSSL_HPKE_CTX_set1_psk, OSSL_HPKE_CTX_set1_ikme,
 OSSL_HPKE_CTX_set1_authpriv, OSSL_HPKE_CTX_set1_authpub,
 OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
 - Hybrid Public Key Encryption (HPKE) functions
@@ -57,9 +57,9 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
  int OSSL_HPKE_CTX_set1_authpriv(OSSL_HPKE_CTX *ctx, EVP_PKEY *priv);
  int OSSL_HPKE_CTX_set1_authpub(OSSL_HPKE_CTX *ctx,
                                 unsigned char *pub, size_t publen);
- int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
-                            const char *pskid,
-                            const unsigned char *psk, size_t psklen);
+ int OSSL_HPKE_CTX_set1_psk_ex(OSSL_HPKE_CTX *ctx,
+                               const unsigned char *pskid, size_t pskidlen,
+                               const unsigned char *psk, size_t psklen);
 
  int OSSL_HPKE_CTX_get_seq(OSSL_HPKE_CTX *ctx, uint64_t *seq);
  int OSSL_HPKE_CTX_set_seq(OSSL_HPKE_CTX *ctx, uint64_t seq);
@@ -78,6 +78,14 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
  size_t OSSL_HPKE_get_ciphertext_size(OSSL_HPKE_SUITE suite, size_t clearlen);
  size_t OSSL_HPKE_get_public_encap_size(OSSL_HPKE_SUITE suite);
  size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite);
+
+The following function has been deprecated since OpenSSL 4.1, and can be
+hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
+see L<openssl_user_macros(7)>:
+
+ int OSSL_HPKE_CTX_set1_psk(OSSL_HPKE_CTX *ctx,
+                            const char *pskid,
+                            const unsigned char *psk, size_t psklen);
 
 =head1 DESCRIPTION
 
@@ -191,7 +199,7 @@ HPKE contexts have a role - either sender or receiver. This is used
 to control which functions can be called and so that senders do not
 reuse a key and nonce with different plaintexts.
 
-OSSL_HPKE_CTX_free(), OSSL_HPKE_export(), OSSL_HPKE_CTX_set1_psk(),
+OSSL_HPKE_CTX_free(), OSSL_HPKE_export(), OSSL_HPKE_CTX_set1_psk_ex()
 and OSSL_HPKE_CTX_get_seq() can be called regardless of role.
 
 =over 4
@@ -369,12 +377,19 @@ HPKE also defines a symmetric equivalent to the authentication described above
 using a pre-shared key (PSK) and a PSK identifier. PSKs can be used with the
 B<OSSL_HPKE_MODE_PSK> and B<OSSL_HPKE_MODE_PSKAUTH> modes.
 
-OSSL_HPKE_CTX_set1_psk() sets the PSK identifier I<pskid> string, and PSK buffer
-I<psk> of size I<psklen> into the I<ctx>. If required this must be called
-before OSSL_HPKE_encap() or OSSL_HPKE_decap().
-As per RFC9180, if required, both I<psk> and I<pskid> must be set to non-NULL values.
-As PSKs are symmetric the same calls must happen on both sender and receiver
-sides.
+OSSL_HPKE_CTX_set1_psk_ex() sets the PSK identifier I<pskid> of size
+I<pskidlen>, and PSK buffer I<psk> of size I<psklen> into the I<ctx>. If
+required this must be called before OSSL_HPKE_encap() or OSSL_HPKE_decap().
+As per RFC9180, if required, both I<psk> and I<pskid> must be set to non-NULL
+values. As PSKs are symmetric the same calls must happen on both sender and
+receiver sides. The PSK identifier is an opaque byte string and may contain
+NUL bytes.
+
+OSSL_HPKE_CTX_set1_psk() is a deprecated equivalent of
+OSSL_HPKE_CTX_set1_psk_ex() that takes the PSK identifier as a NUL-terminated
+string I<pskid>. It cannot be used with PSK identifiers that contain NUL bytes,
+as the identifier is truncated at the first NUL; use
+OSSL_HPKE_CTX_set1_psk_ex() for such identifiers.
 
 =head2 Deterministic key generation for senders
 
@@ -563,6 +578,9 @@ The RFC9180 specification: https://datatracker.ietf.org/doc/rfc9180/
 =head1 HISTORY
 
 This functionality described here was added in OpenSSL 3.2.
+
+OSSL_HPKE_CTX_set1_psk_ex() was added in OpenSSL 4.1, and
+OSSL_HPKE_CTX_set1_psk() was deprecated in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
