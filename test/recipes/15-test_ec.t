@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 17;
+plan tests => 18;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -126,6 +126,30 @@ subtest 'EC point conversion form (-conv_form)' => sub {
     ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
                  '-conv_form', 'bogus'])),
        "an invalid conversion form is rejected");
+};
+
+subtest 'EC parameter encoding (-param_enc)' => sub {
+    plan tests => 6;
+
+    my $key = srctop_file("test", "testec-p256.pem");
+
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout', '-param_enc',
+                'named_curve', '-outform', 'DER', '-out', 'ec-param-named.der'])),
+       "writing public key with named_curve parameter encoding");
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout', '-param_enc',
+                'explicit', '-outform', 'DER', '-out', 'ec-param-explicit.der'])),
+       "writing public key with explicit parameter encoding");
+    ok((-s 'ec-param-named.der') < (-s 'ec-param-explicit.der'),
+       "named_curve encoding is smaller than explicit");
+    # The encodings are deterministic for a fixed key, so compare them
+    # against the checked-in reference files.
+    is(compare('ec-param-named.der', data_file('ec-param-named.der')), 0,
+       "named_curve encoding matches the reference file");
+    is(compare('ec-param-explicit.der', data_file('ec-param-explicit.der')), 0,
+       "explicit encoding matches the reference file");
+    ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
+                 '-param_enc', 'bogus'])),
+       "an invalid parameter encoding is rejected");
 };
 
 subtest 'Check loading of fips and non-fips keys' => sub {
