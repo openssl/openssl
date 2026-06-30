@@ -23,10 +23,6 @@
 /* How many times to read the TSC as a randomness source. */
 #define TSC_READ_COUNT 4
 
-/* Maximum reseed intervals */
-#define MAX_RESEED_INTERVAL (1 << 24)
-#define MAX_RESEED_TIME_INTERVAL (1 << 20) /* approx. 12 days */
-
 /* Default reseed intervals */
 #define RESEED_INTERVAL (1 << 8)
 #define TIME_INTERVAL (60 * 60) /* 1 hour */
