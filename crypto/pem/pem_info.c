@@ -192,7 +192,7 @@ STACK_OF(X509_INFO) *PEM_X509_INFO_read_bio_ex(BIO *bp, STACK_OF(X509_INFO) *sk,
                         decoded = d2i_AutoPrivateKey_ex((EVP_PKEY **)pp, &p,
                             len, libctx, propq);
                         break;
-                    case PEM_INFO_NONE:
+                    default:
                         break;
                     }
                     if (decoded == NULL) {
