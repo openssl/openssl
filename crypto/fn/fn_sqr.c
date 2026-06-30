@@ -9,10 +9,29 @@
 
 #include <assert.h>
 #include <openssl/err.h>
+#include "internal/safe_math.h"
 #include "crypto/cryptlib.h"
 #include "crypto/fnerr.h"
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
 #include "fn_local.h"
+
+OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
+
+size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a)
+{
+    size_t max, limbs, n_numbers = 1;
+
+    if (r == NULL || a == NULL)
+        return 0;
+    int err = 0;
+
+    max = safe_mul_size_t(2, a->dsize, &err);
+    if ((size_t)r->dsize < max)
+        n_numbers++;
+    limbs = safe_mul_size_t(n_numbers, max, &err);
+
+    return err == 0 ? OSSL_FN_CTX_size(1, n_numbers, limbs) : 0;
+}
 
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 {
