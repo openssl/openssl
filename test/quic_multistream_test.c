@@ -2239,44 +2239,7 @@ static const struct script_op script_16[] = {
 
 /* 17. Key update test - unlimited */
 static const struct script_op script_17[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_CHECK(override_key_update, 1),
-
-    OP_BEGIN_REPEAT(200),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    /*
-     * TXKU frequency is bounded by RTT because a previous TXKU needs to be
-     * acknowledged by the peer first before another one can be begin. By
-     * waiting this long, we eliminate any such concern and ensure as many key
-     * updates as possible can occur for the purposes of this test.
-     */
-    OP_CHECK(skip_time_ms, 100),
-
-    OP_END_REPEAT(),
-
-    /* At least 5 RXKUs detected */
-    OP_CHECK(check_key_update_ge, 5),
-
-    /*
-     * Prove the connection is still healthy by sending something in both
-     * directions.
-     */
-    OP_C_WRITE(DEFAULT, "xyzzy", 5),
-    OP_S_READ_EXPECT(a, "xyzzy", 5),
-
-    OP_S_WRITE(a, "plugh", 5),
-    OP_C_READ_EXPECT(DEFAULT, "plugh", 5),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

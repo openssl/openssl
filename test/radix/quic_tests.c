@@ -997,8 +997,43 @@ DEF_SCRIPT(script_16, "Server sending large number of streams, MAX_STREAMS test"
     }
 }
 
-DEF_SCRIPT(script_17, "place holder for multistrem script_17")
+/* 17. Key update test - unlimited */
+DEF_SCRIPT(script_17, "Key update test - unlimited")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE(C, "apple", 5);
+    OP_READ_EXPECT(S, "apple", 5);
+
+    OP_OVERRIDE_KEY_UPDATE(C, 1);
+
+    for (i = 0; i < 200; ++i) {
+        OP_WRITE(C, "apple", 5);
+        OP_READ_EXPECT(S, "apple", 5);
+        /*
+         * TXKU frequency is bounded by RTT because a previous TXKU needs to be
+         * acknowledged by the peer first before another one can begin. By
+         * waiting this long, we eliminate any such concern and ensure as many key
+         * updates as possible can occur for the purposes of this test.
+         */
+        OP_SKIP_TIME(100);
+    }
+
+    /* At least 5 RXKUs detected */
+    OP_CHECK_KEY_UPDATE_GE(C, 5);
+
+    /*
+     * Prove the connection is still healthy by sending something in both
+     * directions.
+     */
+    OP_WRITE(C, "xyzzy", 5);
+    OP_READ_EXPECT(S, "xyzzy", 5);
+
+    OP_WRITE(S, "plugh", 5);
+    OP_READ_EXPECT(C, "plugh", 5);
 }
 
 DEF_SCRIPT(script_18, "place holder for multistrem script_18")
