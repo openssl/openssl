@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -254,6 +254,14 @@ OSSL_FN *OSSL_FN_CTX_get_bytes(OSSL_FN_CTX *ctx, size_t bytes);
  * @returns     an OSSL_FN pointer on success, NULL on error.
  */
 OSSL_FN *OSSL_FN_CTX_get_bits(OSSL_FN_CTX *ctx, size_t bits);
+
+/**
+ * Convert a hex-represented long number to OSSL_FN.
+ * @param[out] r    OSSL_FN to be set. Should be allocated and have enough size
+ * @param[in]  hex  hex-represented long number
+ * @returns   1 on success, 0 on error
+ */
+int OSSL_FN_hex2fn(OSSL_FN *r, const char *hex);
 
 /*
  * Arithmetic functions treat the OSSL_FN 'd' array as a large 2's complement
