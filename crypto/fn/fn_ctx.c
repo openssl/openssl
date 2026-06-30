@@ -9,8 +9,12 @@
 
 #include <assert.h>
 #include <openssl/crypto.h>
+#include "internal/safe_math.h"
 #include "crypto/fn.h"
 #include "fn_local.h"
+
+OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
+OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
 /*
  * An OSSL_FN_CTX is a large pre-allocated chunk of memory that can be used
@@ -24,14 +28,68 @@
  * it when it's done.
  */
 
+size_t OSSL_FN_CTX_size(size_t max_n_frames, size_t max_n_numbers,
+    size_t max_n_limbs)
+{
+    int err = 0;
+    size_t frames, numbers, limbs, total;
+
+    /*
+     * A context always needs at least one frame, since every use of an
+     * OSSL_FN_CTX calls OSSL_FN_CTX_start(), which carves out a frame.
+     */
+    if (max_n_frames == 0)
+        return 0;
+    /*
+     * Number-header and limb budgets must both be present or both absent.
+     * OSSL_FN_CTX_get_limbs() allocates an OSSL_FN header and its limbs
+     * together, so a context with one budget but not the other can never
+     * produce a usable number.
+     */
+    if ((max_n_numbers == 0) != (max_n_limbs == 0))
+        return 0;
+
+    frames = safe_mul_size_t(max_n_frames,
+        sizeof(struct ossl_fn_ctx_frame_st), &err);
+    numbers = safe_mul_size_t(max_n_numbers, sizeof(OSSL_FN), &err);
+    limbs = safe_mul_size_t(max_n_limbs, OSSL_FN_BYTES, &err);
+    total = safe_add_size_t(frames, numbers, &err);
+    total = safe_add_size_t(total, limbs, &err);
+
+    return err == 0 ? total : 0;
+}
+
 OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs)
 {
-    size_t arena_size = ossl_fn_ctx_calculate_arena_size(max_n_frames, max_n_numbers, max_n_limbs);
-    OSSL_FN_CTX *ctx = OPENSSL_zalloc(sizeof(OSSL_FN_CTX) + arena_size);
+    return OSSL_FN_CTX_new_size(libctx,
+        OSSL_FN_CTX_size(max_n_frames, max_n_numbers, max_n_limbs));
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_new_size(OSSL_LIB_CTX *libctx, size_t size)
+{
+    size_t total_size;
+    OSSL_FN_CTX *ctx;
+
+    int err = 0;
+
+    /*
+     * A size of 0 is the error return of OSSL_FN_CTX_size() (and the
+     * per-operation ctx-size helpers).  Treat it as an error here too, so a
+     * caller does not get back a context with a zero-size arena that it
+     * would then hand to an operation expecting usable scratch space.
+     */
+    if (size == 0)
+        return NULL;
+
+    total_size = safe_add_size_t(sizeof(*ctx), size, &err);
+    if (err != 0)
+        return NULL;
+
+    ctx = OPENSSL_zalloc(total_size);
 
     if (ctx != NULL)
-        ctx->msize = arena_size;
+        ctx->msize = size;
 
     return ctx;
 }
@@ -39,11 +97,29 @@ OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
 OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs)
 {
-    size_t arena_size = ossl_fn_ctx_calculate_arena_size(max_n_frames, max_n_numbers, max_n_limbs);
-    OSSL_FN_CTX *ctx = OPENSSL_secure_zalloc(sizeof(OSSL_FN_CTX) + arena_size);
+    return OSSL_FN_CTX_secure_new_size(libctx,
+        OSSL_FN_CTX_size(max_n_frames, max_n_numbers, max_n_limbs));
+}
+
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new_size(OSSL_LIB_CTX *libctx, size_t size)
+{
+    size_t total_size;
+    OSSL_FN_CTX *ctx;
+
+    int err = 0;
+
+    /* As in OSSL_FN_CTX_new_size(), a size of 0 is an error. */
+    if (size == 0)
+        return NULL;
+
+    total_size = safe_add_size_t(sizeof(*ctx), size, &err);
+    if (err != 0)
+        return NULL;
+
+    ctx = OPENSSL_secure_zalloc(total_size);
 
     if (ctx != NULL) {
-        ctx->msize = arena_size;
+        ctx->msize = size;
         ctx->is_securely_allocated = 1;
     }
 

@@ -14,6 +14,19 @@
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
 #include "fn_local.h"
 
+size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b)
+{
+    size_t limbs = 0;
+
+    if (r == NULL || a == NULL || b == NULL)
+        return 0;
+    if (r == a || r == b)
+        limbs = r->dsize;
+
+    return OSSL_FN_CTX_size(1, limbs == 0 ? 0 : 1, limbs);
+}
+
 int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx)
 {
     size_t al = (size_t)a->dsize;
