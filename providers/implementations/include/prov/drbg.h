@@ -46,13 +46,6 @@
 
 typedef struct prov_drbg_st PROV_DRBG;
 
-/* DRBG status values */
-typedef enum drbg_status_e {
-    DRBG_UNINITIALISED,
-    DRBG_READY,
-    DRBG_ERROR
-} DRBG_STATUS;
-
 /*
  * The state of all types of DRBGs.
  */
@@ -149,7 +142,11 @@ struct prov_drbg_st {
     unsigned int parent_reseed_counter;
 
     size_t seedlen;
-    DRBG_STATUS state;
+    /*
+     * state is one of: EVP_RAND_STATE_UNINITIALISED, EVP_RAND_STATE_ERROR,
+     * EVP_RAND_STATE_READY.
+     */
+    int state;
 
     /* DRBG specific data */
     void *data;
