@@ -154,7 +154,7 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     }
 
     if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
-            && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
+        && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
         /*
          * If this ctx was already set up for no padding then we need to tell
          * the new cipher about it.
@@ -333,7 +333,7 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
     }
 
     if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
-            && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
+        && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
         /*
          * If this ctx was already set up for no padding then we need to tell
          * the new cipher about it.
