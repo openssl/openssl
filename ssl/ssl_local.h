@@ -3061,9 +3061,6 @@ BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
 /* Established connections API - these handle their own locking */
 SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
     const DGRAM_URXE *urxe);
-int ossl_dtls_listener_register_established_conn(DTLS_LISTENER *dl,
-    const BIO_ADDR *peer,
-    SSL *ssl);
 void ossl_dtls_listener_unregister_established_conn(SSL *s,
     const BIO_ADDR *peer_addr);
 void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl);
