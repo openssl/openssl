@@ -502,12 +502,23 @@ static int RADIX_PROCESS_set_ssl(RADIX_PROCESS *rp, const char *name, SSL *ssl)
 
 static SSL *RADIX_PROCESS_get_ssl(RADIX_PROCESS *rp, const char *name)
 {
-    RADIX_OBJ *obj = RADIX_PROCESS_get_obj(rp, name);
+    RADIX_OBJ key;
+    RADIX_OBJ *obj;
+    SSL *ssl = NULL;
 
-    if (obj == NULL)
-        return NULL;
-
-    return obj->ssl;
+    key.name = (char *)name;
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_lock(rp->gm);
+#endif
+    obj = lh_RADIX_OBJ_retrieve(rp->objs, &key);
+    if (obj != NULL) {
+        ssl = obj->ssl;
+        SSL_up_ref(ssl);
+    }
+#if defined(OPENSSL_THREADS)
+    ossl_crypto_mutex_unlock(rp->gm);
+#endif
+    return ssl;
 }
 
 static RADIX_THREAD *RADIX_THREAD_new(RADIX_PROCESS *rp)

@@ -337,7 +337,7 @@ DEF_FUNC(hf_accept_stream_none)
     int ok = 0;
     const char *conn_name;
     uint64_t flags;
-    SSL *conn, *stream;
+    SSL *conn = NULL, *stream;
 
     F_POP2(conn_name, flags);
 
@@ -345,6 +345,8 @@ DEF_FUNC(hf_accept_stream_none)
         goto err;
 
     stream = SSL_accept_stream(conn, flags);
+    SSL_free(conn);
+    conn = NULL;
     if (!TEST_ptr_null(stream)) {
         SSL_free(stream);
         goto err;
@@ -352,6 +354,7 @@ DEF_FUNC(hf_accept_stream_none)
 
     ok = 1;
 err:
+    SSL_free(conn);
     return ok;
 }
 

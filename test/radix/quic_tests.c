@@ -812,7 +812,7 @@ DEF_SCRIPT(script_10, "Shutdown test")
     OP_EXPECT_CONN_CLOSE_INFO(S, 0, 1, 1);
 }
 
-DEF_FUNC(accept_stream_c_slot0_11)
+DEF_FUNC(accept_stream_c_slot0)
 {
     int ok = 0;
     SSL *conn, *stream;
@@ -822,6 +822,8 @@ DEF_FUNC(accept_stream_c_slot0_11)
         goto err;
 
     stream = SSL_accept_stream(conn, SSL_ACCEPT_STREAM_NO_BLOCK);
+    SSL_free(conn);
+    conn = NULL;
     if (stream == NULL)
         F_SPIN_AGAIN();
 
@@ -829,10 +831,11 @@ DEF_FUNC(accept_stream_c_slot0_11)
     RT()->ssl[0] = stream;
     ok = 1;
 err:
+    SSL_free(conn);
     return ok;
 }
 
-DEF_FUNC(free_slot0_stream_11)
+DEF_FUNC(free_slot0_stream)
 {
     SSL_free(RT()->ssl[0]);
     RT()->ssl[0] = NULL;
@@ -844,12 +847,12 @@ DEF_FUNC(free_slot0_stream_11)
 DEF_SCRIPT(script_11_child,
     "child: accept stream from C, read, sleep, expect FIN")
 {
-    OP_FUNC(accept_stream_c_slot0_11);
+    OP_FUNC(accept_stream_c_slot0);
     OP_PUSH_BUFP("foo", 3);
     OP_FUNC(hf_read_expect);
     OP_SLEEP(10);
     OP_FUNC(hf_expect_fin);
-    OP_FUNC(free_slot0_stream_11);
+    OP_FUNC(free_slot0_stream);
 }
 
 DEF_SCRIPT(script_11, "Many threads accepted on same client connection")
@@ -883,7 +886,7 @@ DEF_SCRIPT(script_11, "Many threads accepted on same client connection")
     OP_CONCLUDE(Se);
 }
 
-DEF_FUNC(new_stream_c_slot0_12)
+DEF_FUNC(new_stream_c_slot0)
 {
     int ok = 0;
     SSL *conn, *stream;
@@ -893,6 +896,8 @@ DEF_FUNC(new_stream_c_slot0_12)
         goto err;
 
     stream = SSL_new_stream(conn, 0 /* bidirectional */);
+    SSL_free(conn);
+    conn = NULL;
     if (!TEST_ptr(stream))
         goto err;
 
@@ -900,6 +905,7 @@ DEF_FUNC(new_stream_c_slot0_12)
     RT()->ssl[0] = stream;
     ok = 1;
 err:
+    SSL_free(conn);
     return ok;
 }
 
@@ -907,11 +913,11 @@ err:
 DEF_SCRIPT(script_12_child,
     "child: create stream on C, write, conclude, free")
 {
-    OP_FUNC(new_stream_c_slot0_12);
+    OP_FUNC(new_stream_c_slot0);
     OP_PUSH_BUFP("foo", 3);
     OP_FUNC(hf_write);
     OP_FUNC(hf_conclude);
-    OP_FUNC(free_slot0_stream_11);
+    OP_FUNC(free_slot0_stream);
 }
 
 DEF_SCRIPT(script_12, "Many threads initiated on same client connection")
@@ -952,11 +958,11 @@ DEF_SCRIPT(script_13_child,
     size_t i;
 
     for (i = 0; i < 10; ++i) {
-        OP_FUNC(accept_stream_c_slot0_11);
+        OP_FUNC(accept_stream_c_slot0);
         OP_PUSH_BUFP("foo", 3);
         OP_FUNC(hf_read_expect);
         OP_FUNC(hf_expect_fin);
-        OP_FUNC(free_slot0_stream_11);
+        OP_FUNC(free_slot0_stream);
     }
 }
 
@@ -986,11 +992,11 @@ DEF_SCRIPT(script_14_child,
     size_t i;
 
     for (i = 0; i < 10; ++i) {
-        OP_FUNC(new_stream_c_slot0_12);
+        OP_FUNC(new_stream_c_slot0);
         OP_PUSH_BUFP("foo", 3);
         OP_FUNC(hf_write);
         OP_FUNC(hf_conclude);
-        OP_FUNC(free_slot0_stream_11);
+        OP_FUNC(free_slot0_stream);
     }
 }
 
