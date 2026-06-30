@@ -590,7 +590,12 @@ static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
 
     ret->type = obj->type;
     ret->data = obj->data;
-    X509_OBJECT_up_ref_count(ret);
+
+    if (!X509_OBJECT_up_ref_count(ret)) {
+        OPENSSL_free(ret);
+        return NULL;
+    }
+
     return ret;
 }
 
