@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed `asn1_d2i_read_bio()` so that a clean EOF at an ASN.1 object boundary
+   no longer raises `ASN1_R_NOT_ENOUGH_DATA`.  The error is now only raised for
+   a read error or an EOF in the middle of an object (truncated input).  This
+   restores the behaviour that callers looping over concatenated DER values via
+   `d2i_*_bio()` rely on, such as loading the Windows certificate store through
+   Python's `ssl` module.
+
+   *Marc Gutman*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
