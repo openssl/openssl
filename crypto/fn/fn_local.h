@@ -177,14 +177,6 @@ struct ossl_fn_ctx_frame_st {
     unsigned char memory[];
 };
 
-static ossl_inline size_t ossl_fn_ctx_calculate_arena_size(size_t max_n_frames,
-    size_t max_n_numbers, size_t max_n_limbs)
-{
-    return max_n_frames * sizeof(struct ossl_fn_ctx_frame_st)
-        + max_n_numbers * sizeof(OSSL_FN)
-        + max_n_limbs * OSSL_FN_BYTES;
-}
-
 /* end OSSL_FN_CTX internals */
 
 #endif
