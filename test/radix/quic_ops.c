@@ -958,6 +958,53 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_override_key_update)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t threshold;
+    QUIC_CHANNEL *ch;
+
+    F_POP(threshold);
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    ossl_quic_channel_set_txku_threshold_override(ch, threshold);
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_key_update_ge)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t min_rxke, txke, rxke;
+    int64_t diff;
+    QUIC_CHANNEL *ch;
+
+    F_POP(min_rxke);
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    txke = ossl_quic_channel_get_tx_key_epoch(ch);
+    rxke = ossl_quic_channel_get_rx_key_epoch(ch);
+    diff = (int64_t)txke - (int64_t)rxke;
+
+    /*
+     * TXKE must always be equal to or ahead of RXKE.
+     * It can be ahead of RXKE by at most 1.
+     */
+    if (!TEST_int64_t_ge(diff, 0) || !TEST_int64_t_le(diff, 1))
+        goto err;
+
+    /* Caller specifies a minimum number of RXKEs which must have happened. */
+    if (!TEST_uint64_t_ge(rxke, min_rxke))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -1184,3 +1231,13 @@ err:
 #define OP_SLEEP(ms)  \
     (OP_PUSH_U64(ms), \
         OP_FUNC(hf_sleep))
+
+#define OP_OVERRIDE_KEY_UPDATE(name, threshold) \
+    (OP_SELECT_SSL(0, name),                    \
+        OP_PUSH_U64(threshold),                 \
+        OP_FUNC(hf_override_key_update))
+
+#define OP_CHECK_KEY_UPDATE_GE(name, min_rxke) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(min_rxke),                 \
+        OP_FUNC(hf_check_key_update_ge))
