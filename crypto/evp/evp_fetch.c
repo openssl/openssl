@@ -379,7 +379,7 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                      * Which will drop the methods ref count to 0 and free it, after which the
                      * method will be returned to the called, as an already freed object.
                      *
-                     * Thats bad.  We need to grab an extra ref count on the method before returning
+                     * That's bad.  We need to grab an extra ref count on the method before returning
                      * so that the requestor via EVP_*_fetch has ownership.
                      *
                      * BUT we only want to do this in the event that the algorithm is uncached.
