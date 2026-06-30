@@ -1102,8 +1102,8 @@ nist_hashalgs 15	: id-hmacWithSHA3-384	: hmac-sha3-384
 nist_hashalgs 16	: id-hmacWithSHA3-512	: hmac-sha3-512
 # Below two are incomplete OIDs, to be uncommented when we figure out
 # how to handle them...
-# nist_hashalgs 17	: id-shake128-len	: shake128-len
-# nist_hashalgs 18	: id-shake256-len	: shake256-len
+nist_hashalgs 17	: id-shake128-len	: shake128-len
+nist_hashalgs 18	: id-shake256-len	: shake256-len
 nist_hashalgs 19        : KMAC128               : kmac128
 nist_hashalgs 20        : KMAC256               : kmac256
 # nist_hashalgs 21      : KMAC128-XOF           : kmac128-xof
