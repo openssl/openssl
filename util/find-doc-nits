@@ -43,6 +43,7 @@ our($opt_v);
 our($opt_c);
 our($opt_i);
 our($opt_a);
+our($opt_U);
 
 # Print usage message and exit.
 sub help {
@@ -59,11 +60,12 @@ Find small errors (nits) in documentation.  Options:
     -i Checks for history entries available for symbols added since 4.0.0 as new
     -u Count undocumented functions
     -v Count new undocumented functions
+    -U Auto-fix missingcrypto.txt and other missing files by removing documented functions
 EOF
     exit;
 }
 
-getopts('acdehlm:niuv');
+getopts('acdehlm:niuvU');
 
 help() if $opt_h;
 $opt_u = 1 if $opt_d;
@@ -73,10 +75,10 @@ die "Cannot use both -u and -v"
 die "Cannot use both -d and -e"
     if $opt_d && $opt_e;
 
-# We only need to check c, l, n, u and v.
+# We only need to check c, l, n, u, v and U.
 # Options d, e, o imply one of the above.
-die "Need one of -[acdehlnouv] flags.\n"
-    unless $opt_a or $opt_c or $opt_l or $opt_n or $opt_u or $opt_v;
+die "Need one of -[acdehlnouvU] flags.\n"
+    unless $opt_a or $opt_c or $opt_l or $opt_n or $opt_u or $opt_v or $opt_U;
 
 
 my $temp = '/tmp/docnits.txt';
@@ -1029,6 +1031,8 @@ sub checkstate () {
             if ( $declared_public && $name_map{$_} =~ /\/internal\// );
         err("$_ is supposedly internal (maybe missing from other.syms) but is documented as public")
             if ( $declared_internal && $name_map{$_} !~ /\/internal\// );
+        err("$_ is documented in $name_map{$_} but is listed in missingcrypto.txt (or similar)")
+            if defined $missing{$_};
     }
 }
 
@@ -1486,14 +1490,14 @@ if ( $opt_u || $opt_v) {
     checkmacros();
 }
 
-if ( $opt_n || $opt_l || $opt_u || $opt_v ) {
+if ( $opt_n || $opt_l || $opt_u || $opt_v || $opt_U ) {
     my @files_to_read = ( $opt_n && @ARGV ) ? @ARGV : files(TAGS => 'manual');
 
     foreach (@files_to_read) {
         my %podinfo = extract_pod_info($_, { debug => $debug });
 
         collectnames(%podinfo)
-            if ( $opt_l || $opt_u || $opt_v );
+            if ( $opt_l || $opt_u || $opt_v || $opt_U );
 
         check(%podinfo)
             if ( $opt_n );
@@ -1526,6 +1530,46 @@ if ( $opt_u || $opt_v) {
     printem('ssl');
     checkmacros_undocumented();
     printem('macro_functions');
+}
+
+sub update_missing_file {
+    my $missingfile = shift;
+    my $filepath = catfile($config{sourcedir}, $missingfile);
+    return unless -f $filepath;
+
+    open my $in, '<', $filepath or die "Can't open $filepath for reading: $!";
+    my @lines = <$in>;
+    close $in;
+
+    open my $out, '>', $filepath or die "Can't open $filepath for writing: $!";
+    my $removed = 0;
+    foreach my $line (@lines) {
+        if ($line =~ /^#/) {
+            print $out $line;
+            next;
+        }
+        my $func = $line;
+        chomp($func);
+        if ($func eq '') {
+            print $out $line;
+            next;
+        }
+        if ( defined $name_map{$func} && $name_map{$func} ne '' ) {
+            $removed++;
+        } else {
+            print $out $line;
+        }
+    }
+    close $out;
+    print "Removed $removed documented entries from $missingfile\n" if $removed > 0;
+}
+
+if ( $opt_U ) {
+    update_missing_file('util/missingmacro.txt');
+    update_missing_file('util/missingcrypto.txt');
+    update_missing_file('util/missingssl.txt');
+    update_missing_file('util/missingcrypto-internal.txt');
+    update_missing_file('util/missingssl-internal.txt');
 }
 
 exit $status;
