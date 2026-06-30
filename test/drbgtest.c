@@ -182,7 +182,7 @@ static int test_drbg_reseed(int expect_success,
     time_t reseed_when)
 {
     time_t before_reseed, after_reseed;
-    int expected_state = (expect_success ? DRBG_READY : DRBG_ERROR);
+    int expected_state = (expect_success ? EVP_RAND_STATE_READY : EVP_RAND_STATE_ERROR);
     unsigned int primary_reseed, public_reseed, private_reseed;
     unsigned char dummy[RANDOM_SIZE];
 
