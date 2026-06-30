@@ -297,9 +297,66 @@ int BN_mod_add_quick(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
 int BN_mod_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, const BIGNUM *m,
     BN_CTX *ctx)
 {
-    if (!BN_sub(r, a, b))
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL || b->data == NULL || m->data == NULL) {
+        if (!BN_sub(r, a, b))
+            return 0;
+        return BN_nnmod(r, r, m, ctx);
+    }
+
+    int a_neg = a->neg;
+    int b_neg = b->neg;
+    size_t max_res = m->top;
+
+    assert(max_res <= INT_MAX);
+
+    /*
+     * Handle acquiring result OSSL_FN to size first.
+     * If r is the same as one of the operands, its size may change as well!
+     */
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)max_res);
+
+    if (rf == NULL)
         return 0;
-    return BN_nnmod(r, r, m, ctx);
+
+    size_t al = a->dmax;
+    size_t bl = b->dmax;
+    size_t ml = m->dmax;
+    size_t mod_add_ctx = ossl_fn_mod_add_ctx_limbs(al, bl, ml);
+    size_t mod_sub_ctx = ossl_fn_mod_sub_ctx_limbs(al, bl, ml, r == m);
+    size_t max_ctx = (mod_add_ctx > mod_sub_ctx) ? mod_add_ctx : mod_sub_ctx;
+
+    assert(max_ctx <= INT_MAX);
+
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 2, 7, max_ctx);
+
+    if (fnctx == NULL)
+        return 0;
+
+    int ret;
+
+    if (a_neg != b_neg) {
+        ret = OSSL_FN_mod_add(rf, a->data, b->data, m->data, fnctx);
+        /*
+         * OSSL_FN_mod_add returns (|a| + |b|) mod |m|.  If |a| was
+         * negative, negate that residue to get the non-negative result
+         * for (-|a| - |b|) mod |m|.
+         */
+        if (ret && a_neg)
+            ret = ossl_fn_mod_negate(rf, m->data);
+    } else if (a_neg) {
+        ret = OSSL_FN_mod_sub(rf, b->data, a->data, m->data, fnctx);
+    } else {
+        ret = OSSL_FN_mod_sub(rf, a->data, b->data, m->data, fnctx);
+    }
+
+    if (ret) {
+        bn_release(r, (int)max_res);
+        r->neg = 0;
+    }
+
+    bn_ctx_release_ossl_fn_ctx(ctx);
+    return ret;
 }
 
 /*

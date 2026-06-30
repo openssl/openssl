@@ -433,6 +433,51 @@ err:
     return st;
 }
 
+static int test_mod_sub(void)
+{
+    static const struct {
+        int a;
+        int b;
+        int m;
+        int result;
+    } tests[] = {
+        { 1, 3, 5, 3 },
+        { -1, 3, 5, 1 },
+        { 1, -3, 5, 4 },
+        { -1, -3, 5, 2 },
+    };
+    BIGNUM *a = NULL, *b = NULL, *m = NULL, *expected = NULL, *ret = NULL;
+    int st = 0;
+
+    if (!TEST_ptr(ret = BN_new()))
+        goto err;
+
+    for (size_t i = 0; i < OSSL_NELEM(tests); i++) {
+        BN_free(a);
+        BN_free(b);
+        BN_free(m);
+        BN_free(expected);
+        a = b = m = expected = NULL;
+
+        if (!TEST_ptr(a = set_signed_bn(tests[i].a))
+            || !TEST_ptr(b = set_signed_bn(tests[i].b))
+            || !TEST_ptr(m = set_signed_bn(tests[i].m))
+            || !TEST_ptr(expected = set_signed_bn(tests[i].result))
+            || !TEST_true(BN_mod_sub(ret, a, b, m, ctx))
+            || !TEST_BN_eq(ret, expected))
+            goto err;
+    }
+
+    st = 1;
+err:
+    BN_free(a);
+    BN_free(b);
+    BN_free(m);
+    BN_free(expected);
+    BN_free(ret);
+    return st;
+}
+
 static int test_mod(void)
 {
     BIGNUM *a = NULL, *b = NULL, *c = NULL, *d = NULL, *e = NULL;
@@ -3465,6 +3510,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_signed_mod_replace_ab, OSSL_NELEM(signed_mod_tests));
         ADD_ALL_TESTS(test_signed_mod_replace_ba, OSSL_NELEM(signed_mod_tests));
         ADD_TEST(test_mod_add);
+        ADD_TEST(test_mod_sub);
         ADD_TEST(test_mod);
         ADD_TEST(test_mod_inverse);
         ADD_ALL_TESTS(test_mod_exp_alias, 2);
