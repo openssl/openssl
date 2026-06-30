@@ -11,6 +11,7 @@
 #include <openssl/types.h>
 #include <openssl/evp.h>
 #include <openssl/core.h>
+#include <openssl/kdf.h>
 #include "internal/cryptlib.h"
 #include "internal/thread_once.h"
 #include "internal/property.h"
@@ -363,9 +364,70 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                  * cached end up in ->tmp_store when provider asks not
                  * to cache the result (see ossl_method_construct_reserve_store())
                  */
-                if (meth_id != 0 && methdata->tmp_store == NULL)
+                if (meth_id != 0 && methdata->tmp_store == NULL) {
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
                         method, up_ref_method, free_method);
+                } else {
+#ifndef OPENSSL_NO_CACHED_FETCH
+                    /*
+                     * There is a corner case we need to handle here.  IF:
+                     * 1) we are fetching an algorithm and plan to return it to the caller
+                     * 2) The provider we fetched from requested no_cache
+                     * Then we are in a situation in which this method that was constructed
+                     * only lives in the tmp_store, and has a reference count of 1.
+                     * On return from this function, that tmp_store is going to be deallocated,
+                     * Which will drop the methods ref count to 0 and free it, after which the
+                     * method will be returned to the called, as an already freed object.
+                     *
+                     * Thats bad.  We need to grab an extra ref count on the method before returning
+                     * so that the requestor via EVP_*_fetch has ownership.
+                     *
+                     * BUT we only want to do this in the event that the algorithm is uncached.
+                     * Unfortunately, we don't know that here, because it was the provider that
+                     * made that request.  However, each algorithm type does store that information
+                     * so we have a path forward.  Based on the operation id, call the appropriate
+                     * up_ref method.  That implementation knows how to query its algorithm type and
+                     * decide if a reference needs to be taken here
+                     */
+                    switch (operation_id) {
+                    case OSSL_OP_DIGEST:
+                        EVP_MD_up_ref((EVP_MD *)method);
+                        break;
+                    case OSSL_OP_CIPHER:
+                        EVP_CIPHER_up_ref((EVP_CIPHER *)method);
+                        break;
+                    case OSSL_OP_MAC:
+                        EVP_MAC_up_ref((EVP_MAC *)method);
+                        break;
+                    case OSSL_OP_KDF:
+                        EVP_KDF_up_ref((EVP_KDF *)method);
+                        break;
+                    case OSSL_OP_RAND:
+                        EVP_RAND_up_ref((EVP_RAND *)method);
+                        break;
+                    case OSSL_OP_KEYMGMT:
+                        EVP_KEYMGMT_up_ref((EVP_KEYMGMT *)method);
+                        break;
+                    case OSSL_OP_KEYEXCH:
+                        EVP_KEYEXCH_up_ref((EVP_KEYEXCH *)method);
+                        break;
+                    case OSSL_OP_SIGNATURE:
+                        EVP_SIGNATURE_up_ref((EVP_SIGNATURE *)method);
+                        break;
+                    case OSSL_OP_ASYM_CIPHER:
+                        EVP_ASYM_CIPHER_up_ref((EVP_ASYM_CIPHER *)method);
+                        break;
+                    case OSSL_OP_KEM:
+                        EVP_KEM_up_ref((EVP_KEM *)method);
+                        break;
+                    case OSSL_OP_SKEYMGMT:
+                        EVP_SKEYMGMT_up_ref((EVP_SKEYMGMT *)method);
+                        break;
+                    default:
+                        break;
+                    }
+#endif
+                }
             }
         }
 
