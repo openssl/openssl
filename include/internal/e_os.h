@@ -152,6 +152,18 @@ FILE *__iob_func(void);
 #define check_win_minplat(x) (LOBYTE(LOWORD(GetVersion())) >= (x))
 #endif
 
+/*
+ * MSVC versions earlier than Visual Studio 2015 (_MSC_VER < 1900) do not
+ * declare or define C99 snprintf or vsnprintf.  Definitions are supplied
+ * by crypto/msvc2013_snprintf.c, which is built only on the matching
+ * Configure target variants.
+ */
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#include <stdarg.h>
+int snprintf(char *buf, size_t n, const char *fmt, ...);
+int vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
+#endif
+
 #else /* The non-microsoft world */
 
 #if defined(OPENSSL_SYS_VXWORKS)

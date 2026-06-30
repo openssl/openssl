@@ -171,8 +171,8 @@ static unsigned int psk_client_cb(SSL *ssl, const char *hint, char *identity,
     /*
      * lookup PSK identity and PSK key based on the given identity hint here
      */
-    ret = BIO_snprintf(identity, max_identity_len, "%s", psk_identity);
-    if (ret < 0 || (unsigned int)ret > max_identity_len)
+    ret = snprintf(identity, max_identity_len, "%s", psk_identity);
+    if (ret < 0 || (unsigned int)ret >= max_identity_len)
         goto out_err;
     if (c_debug)
         BIO_printf(bio_c_out, "created identity '%s' len=%d\n", identity,
@@ -341,7 +341,7 @@ static int serverinfo_cli_parse_cb(SSL *s, unsigned int ext_type,
     ext_buf[3] = (unsigned char)(inlen);
     memcpy(ext_buf + 4, in, inlen);
 
-    BIO_snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %u",
+    snprintf(pem_name, sizeof(pem_name), "SERVERINFO FOR EXTENSION %u",
         ext_type);
     PEM_write_bio(bio_c_out, pem_name, "", ext_buf, (long)(4 + inlen));
     return 1;

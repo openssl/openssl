@@ -400,7 +400,7 @@ static int test_handshake(int idx)
     HANDSHAKE_RESULT *result = NULL;
     char test_app[MAX_TESTCASE_NAME_LENGTH];
 
-    BIO_snprintf(test_app, sizeof(test_app), "test-%d", idx);
+    snprintf(test_app, sizeof(test_app), "test-%d", idx);
 
     test_ctx = SSL_TEST_CTX_create(conf, test_app, libctx);
     if (!TEST_ptr(test_ctx))
