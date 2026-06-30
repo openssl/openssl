@@ -23,6 +23,7 @@ typedef enum OPTION_choice {
     OPT_OUT,
     OPT_BASE64,
     OPT_HEX,
+    OPT_NO_NEWLINE,
     OPT_R_ENUM,
     OPT_PROV_ENUM
 } OPTION_CHOICE;
@@ -37,6 +38,7 @@ const OPTIONS rand_options[] = {
     { "out", OPT_OUT, '>', "Output file" },
     { "base64", OPT_BASE64, '-', "Base64 encode output" },
     { "hex", OPT_HEX, '-', "Hex encode output" },
+    { "n", OPT_NO_NEWLINE, '-', "Do not output the trailing newline" },
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
@@ -51,7 +53,7 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int format = FORMAT_BINARY, r, i, ret = 1;
+    int format = FORMAT_BINARY, r, i, ret = 1, newline = 1;
     size_t buflen = (1 << 16); /* max rand chunk size is 2^16 bytes */
     long num = -1;
     uint64_t scaled_num = 0;
@@ -81,6 +83,9 @@ int rand_main(int argc, char **argv)
             break;
         case OPT_HEX:
             format = FORMAT_TEXT;
+            break;
+        case OPT_NO_NEWLINE:
+            newline = 0;
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
@@ -208,7 +213,7 @@ int rand_main(int argc, char **argv)
         }
         scaled_num -= chunk;
     }
-    if (format == FORMAT_TEXT)
+    if (newline && format == FORMAT_TEXT)
         BIO_puts(out, "\n");
     if (BIO_flush(out) <= 0)
         goto end;
