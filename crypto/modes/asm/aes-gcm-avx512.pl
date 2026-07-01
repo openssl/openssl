@@ -1,5 +1,6 @@
-# Copyright 2021-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 # Copyright (c) 2021, Intel Corporation. All Rights Reserved.
+# Copyright (C) 2026, Advanced Micro Devices, Inc., all rights reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -3012,8 +3013,21 @@ sub GHASH_16_ENCRYPT_16_PARALLEL {
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;; prepare counter blocks
+  # ;;
+  # ;; INVARIANT (do not break): the counter increments below MUST use the
+  # ;; ddq_addbe_*(%rip) memory constants and MUST NOT reference the
+  # ;; $ADDBE_4x4 / $ADDBE_1234 register arguments (args 34/35).
+  # ;;
+  # ;; Rationale: the large-message callers in GCM_ENC_DEC (the 16-block hot
+  # ;; loop and the 32-block big loop) deliberately alias those two ZMM
+  # ;; registers (%zmm27/%zmm28) to preloaded AES round keys 2/3 and pass them
+  # ;; in here only as dead placeholders. If a counter addend were emitted from
+  # ;; $ADDBE_4x4 / $ADDBE_1234 it would add AES key bytes to the CTR block,
+  # ;; corrupting the keystream and causing catastrophic keystream/nonce reuse
+  # ;; (CWE-323). The $ADDBE_* register args are therefore intentionally unused
+  # ;; in this macro; the build-time check below enforces that.
 
-  $code .= <<___;
+  my $ctr_setup_code = <<___;
         cmpb              \$`(256 - 16)`,@{[BYTE($CTR_CHECK)]}
         jae               .L_16_blocks_overflow_${label_suffix}
         vpaddd            ddq_addbe_1234(%rip),$CTR_BE,$B00_03
@@ -3034,6 +3048,18 @@ sub GHASH_16_ENCRYPT_16_PARALLEL {
         vpshufb           $SHFMSK,$B12_15,$B12_15
 .L_16_blocks_ok_${label_suffix}:
 ___
+
+  # ;; Build-time enforcement of the invariant documented above. Scoped to the
+  # ;; counter-setup snippet only, so the legitimate use of the same physical
+  # ;; registers as preloaded AES keys later in this macro is not flagged.
+  if ($ctr_setup_code =~ /\Q$ADDBE_4x4\E\b/ || $ctr_setup_code =~ /\Q$ADDBE_1234\E\b/) {
+    die "GHASH_16_ENCRYPT_16_PARALLEL: counter setup must not reference the "
+      . "ADDBE register args ($ADDBE_4x4/$ADDBE_1234); use ddq_addbe_*(%rip). "
+      . "Callers alias these registers to preloaded AES round keys, so this "
+      . "would corrupt the CTR keystream (keystream/nonce reuse).\n";
+  }
+
+  $code .= $ctr_setup_code;
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   # ;; pre-load constants
