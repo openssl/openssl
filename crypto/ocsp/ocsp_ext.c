@@ -360,7 +360,7 @@ X509_EXTENSION *OCSP_crlID_new(const char *url, long *n, char *tim)
     if (url) {
         if ((cid->crlUrl = ASN1_IA5STRING_new()) == NULL)
             goto err;
-        if (!(ASN1_STRING_set(cid->crlUrl, url, -1)))
+        if (!(ASN1_STRING_set_string(cid->crlUrl, url)))
             goto err;
     }
     if (n) {
@@ -446,7 +446,7 @@ X509_EXTENSION *OCSP_url_svcloc_new(const X509_NAME *issuer, const char **urls)
             goto err;
         if ((ia5 = ASN1_IA5STRING_new()) == NULL)
             goto err;
-        if (!ASN1_STRING_set((ASN1_STRING *)ia5, *urls, -1))
+        if (!ASN1_STRING_set_string((ASN1_STRING *)ia5, *urls))
             goto err;
         /* ad->location is allocated inside ACCESS_DESCRIPTION_new */
         ad->location->type = GEN_URI;

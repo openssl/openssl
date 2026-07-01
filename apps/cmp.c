@@ -2140,7 +2140,7 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         goto err;
-    if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
+    if (!ASN1_STRING_set_string(utf8string, name)) {
         ASN1_STRING_free(utf8string);
         goto err;
     }
@@ -2215,7 +2215,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
             else
                 *end++ = '\0';
             if ((text = ASN1_UTF8STRING_new()) == NULL
-                || !ASN1_STRING_set(text, ptr, -1))
+                || !ASN1_STRING_set_string(text, ptr))
                 goto oom;
             ptr = end;
             ASN1_TYPE_set(type, V_ASN1_UTF8STRING, text);

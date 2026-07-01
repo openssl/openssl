@@ -2799,7 +2799,7 @@ static const char *get_dp_url(DIST_POINT *dp)
     for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
         gen = sk_GENERAL_NAME_value(gens, i);
         uri = GENERAL_NAME_get0_value(gen, &gtype);
-        if (gtype == GEN_URI && ASN1_STRING_length(uri) > 6) {
+        if (gtype == GEN_URI && ASN1_STRING_length_ex(uri) > 6) {
             const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
 
             if (IS_HTTP(uptr)) /* can/should not use HTTPS here */
@@ -3688,7 +3688,7 @@ int has_stdin_waiting(void)
 int corrupt_signature(ASN1_STRING *signature)
 {
     const unsigned char *valid = ASN1_STRING_get0_data(signature);
-    int length = ASN1_STRING_length(signature);
+    size_t length = ASN1_STRING_length_ex(signature);
     unsigned char *s = OPENSSL_memdup(valid, length);
 
     if (s == NULL)
@@ -3696,7 +3696,7 @@ int corrupt_signature(ASN1_STRING *signature)
 
     s[length - 1] ^= 0x1;
 
-    ASN1_STRING_set0(signature, s, length);
+    ASN1_STRING_set0(signature, s, (int)length);
     return 1;
 }
 

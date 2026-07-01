@@ -265,7 +265,8 @@ int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
     if (str == NULL)
         return 0;
     dst->type = str->type;
-    if (!ASN1_STRING_set(dst, str->data, str->length))
+    if (!ossl_asn1_string_set_internal(dst, str->data, str->length,
+            /*add_nul_byte=*/0))
         return 0;
     /* Copy flags but preserve embed value */
     dst->flags &= ASN1_STRING_FLAG_EMBED;
@@ -289,12 +290,18 @@ ASN1_STRING *ASN1_STRING_dup(const ASN1_STRING *str)
     return ret;
 }
 
-int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
+int ossl_asn1_string_set_internal(ASN1_STRING *str, const uint8_t *data,
+    int len_in, int add_nul_byte)
 {
-    unsigned char *c;
-    const char *data = _data;
-    size_t len;
+    size_t len, alloc_len;
 
+#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
+    /*
+     * Force no NUL byte for callers that are requesting it
+     * 0 length object data will be NULL
+     */
+    add_nul_byte = 0;
+#endif
     if (len_in < -1) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_SMALL);
         return 0;
@@ -302,16 +309,17 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
     if (len_in == -1) {
         if (data == NULL)
             return 0;
-        len = strlen(data);
+        len = strlen((const char *)data);
     } else {
         len = (size_t)len_in;
     }
     /*
-     * Verify that the length fits within an integer for assignment to
-     * str->length below.  The additional 1 is subtracted to allow for the
-     * '\0' terminator even though this isn't strictly necessary.
+     * Add one to the length to allow for adding an a '\0' terminator
+     * "even though this isn't strictly necessary".
      */
-    if (len > INT_MAX - 1) {
+    alloc_len = add_nul_byte ? len + 1 : len;
+
+    if (alloc_len > INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
         return 0;
     }
@@ -322,38 +330,46 @@ int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
         str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     }
 
-    if ((size_t)str->length <= len || str->data == NULL) {
-        c = str->data;
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        /* No NUL terminator in fuzzing builds */
-        str->data = OPENSSL_realloc(c, len != 0 ? len : 1);
-#else
-        str->data = OPENSSL_realloc(c, len + 1);
-#endif
-        if (str->data == NULL) {
-            str->data = c;
-            return 0;
-        }
+    /* Ensure copying a 0 length data field is defined. */
+    if (alloc_len == 0) {
+        OPENSSL_free(str->data);
+        str->data = NULL;
+        str->length = 0;
+        return 1;
     }
+
+    if ((size_t)str->length != alloc_len) {
+        uint8_t *c;
+        c = OPENSSL_realloc(str->length == 0 ? NULL : str->data, alloc_len);
+        if (c == NULL)
+            return 0;
+        str->data = c;
+    }
+    /* length never includes the added \0 byte */
     str->length = (int)len;
-    if (data != NULL) {
+
+    if (data != NULL && str->data != NULL) {
         memcpy(str->data, data, len);
-#ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
-        /* Set the unused byte to something non NUL and printable. */
-        if (len == 0)
-            str->data[len] = '~';
-#else
-        /*
-         * Add a NUL terminator. This should not be necessary - but we add it as
-         * a safety precaution
-         */
-        str->data[len] = '\0';
-#endif
+        if (add_nul_byte) {
+            /*
+             * Add a '\0' terminator. This should not be necessary - but we add it as
+             * a safety precaution
+             */
+            str->data[len] = '\0';
+        }
     }
     ossl_asn1_bit_string_clear_unused_bits(str);
 
     return 1;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+int ASN1_STRING_set(ASN1_STRING *str, const void *_data, int len_in)
+{
+    return ossl_asn1_string_set_internal(str, (const uint8_t *)_data, len_in,
+        /*add_nul_byte=*/1);
+}
+#endif
 
 void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
 {
@@ -363,6 +379,26 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
     str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
     str->length = len;
+}
+
+int ASN1_STRING_set_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
+{
+    if (str->type == V_ASN1_BIT_STRING) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
+        return 0;
+    }
+    /* This will go away once ASN1_STRING can size_t internally */
+    if (len_in > INT_MAX) {
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
+        return 0;
+    }
+    return ossl_asn1_string_set_internal(str, data, (int)len_in, /*add_nul_byte=*/0);
+}
+
+int ASN1_STRING_set_string(ASN1_STRING *str, const char *c_string)
+{
+    return ASN1_STRING_set_data(str, (const uint8_t *)c_string,
+        strlen(c_string));
 }
 
 ASN1_STRING *ASN1_STRING_new(void)
@@ -469,9 +505,16 @@ int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
     }
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
 int ASN1_STRING_length(const ASN1_STRING *x)
 {
     return x->length;
+}
+#endif
+
+size_t ASN1_STRING_length_ex(const ASN1_STRING *x)
+{
+    return (size_t)x->length;
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -509,7 +552,7 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
         current = sk_ASN1_UTF8STRING_value(text, i);
         if (i > 0)
             length += sep_len;
-        length += ASN1_STRING_length(current);
+        length += ASN1_STRING_length_ex(current);
         if (max_len != 0 && length > max_len)
             return NULL;
     }
@@ -519,7 +562,7 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
     p = result;
     for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
         current = sk_ASN1_UTF8STRING_value(text, i);
-        length = ASN1_STRING_length(current);
+        length = ASN1_STRING_length_ex(current);
         if (i > 0 && sep_len > 0) {
             strncpy(p, sep, sep_len + 1); /* using + 1 to silence gcc warning */
             p += sep_len;

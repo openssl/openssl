@@ -230,15 +230,19 @@ ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     const X509_ALGOR *palg;
 
     if (!PKCS8_pkey_get0(NULL, &p, &plen, &palg, p8inf))
-        return 0;
+        goto err;
 
     oct = d2i_ASN1_OCTET_STRING(NULL, &p, plen);
     if (oct == NULL) {
         p = NULL;
         plen = 0;
     } else {
+        size_t tmp;
         p = ASN1_STRING_get0_data(oct);
-        plen = ASN1_STRING_length(oct);
+        tmp = ASN1_STRING_length_ex(oct);
+        if (tmp > INT_MAX)
+            goto err;
+        plen = (int)tmp;
     }
 
     /*
@@ -247,6 +251,7 @@ ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
      */
     ecx = ossl_ecx_key_op(palg, p, plen, EVP_PKEY_NONE, KEY_OP_PRIVATE,
         libctx, propq);
+err:
     ASN1_OCTET_STRING_free(oct);
     return ecx;
 }

@@ -171,7 +171,7 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     }
     /* If both the same type just copy across */
     if (inform == outform) {
-        if (!ASN1_STRING_set(dest, in, len)) {
+        if (!ASN1_STRING_set_data(dest, in, len)) {
             if (free_out) {
                 ASN1_STRING_free(dest);
                 *out = NULL;

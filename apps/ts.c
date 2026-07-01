@@ -583,7 +583,7 @@ static ASN1_INTEGER *create_nonce(int bits)
     if ((nonce = ASN1_INTEGER_new()) == NULL)
         goto err;
 
-    if (!ASN1_STRING_set(nonce, buf, len))
+    if (!ASN1_STRING_set_data(nonce, buf, len))
         goto err;
 
     ret = nonce;

@@ -1,0 +1,27 @@
+From 891c0d9a615ce37506969875792afdb6defe9b79 Mon Sep 17 00:00:00 2001
+From: Bob Beck <beck@openssl.org>
+Date: Wed, 10 Jun 2026 16:40:37 -0600
+Subject: [PATCH] Temporarily disable the pem encoder
+
+This appears to have some sort of internal error fetching ec keys
+from the softhsm. (and appears to also be disabled for
+similar reasons on some linux distros)
+---
+ tests/meson.build | 1 -
+ 1 file changed, 1 deletion(-)
+
+diff --git a/tests/meson.build b/tests/meson.build
+index 6050fe5..24520d1 100644
+--- a/tests/meson.build
++++ b/tests/meson.build
+@@ -155,7 +155,6 @@ tests = {
+   'oaepsha2': {'suites': ['softokn', 'kryoptic', 'kryoptic.nss']},
+   'hkdf': {'suites': ['softokn', 'kryoptic', 'kryoptic.nss']},
+   'imported' : {'suites': ['softokn', 'kryoptic', 'kryoptic.nss']},
+-  'pem_encoder': {'suites': all_suites},
+   'rsa': {'suites': all_suites},
+   'rsapss': {'suites': all_suites},
+   'rsapssam': {'suites': ['softhsm', 'kryoptic']},
+-- 
+2.53.0
+
