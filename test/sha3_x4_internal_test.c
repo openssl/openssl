@@ -190,14 +190,12 @@ static int test_shake_x4_incremental(const unsigned int bitlen, const int n)
         ossl_sha3_shake128_x4_inc_init(&ctx);
         ossl_sha3_shake128_x4_inc_absorb(&ctx, in[0], in[1], in[2], in[3],
             inlen);
-        ossl_sha3_shake128_x4_inc_finalize(&ctx);
         ossl_sha3_shake128_x4_inc_squeeze(x4_out[0], x4_out[1],
             x4_out[2], x4_out[3], outlen, &ctx);
     } else {
         ossl_sha3_shake256_x4_inc_init(&ctx);
         ossl_sha3_shake256_x4_inc_absorb(&ctx, in[0], in[1], in[2], in[3],
             inlen);
-        ossl_sha3_shake256_x4_inc_finalize(&ctx);
         ossl_sha3_shake256_x4_inc_squeeze(x4_out[0], x4_out[1],
             x4_out[2], x4_out[3], outlen, &ctx);
     }
