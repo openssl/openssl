@@ -21,9 +21,8 @@ static OSSL_FUNC_cipher_set_ctx_params_fn camellia_cbc_cts_set_ctx_params;
 static OSSL_FUNC_cipher_gettable_ctx_params_fn camellia_cbc_cts_gettable_ctx_params;
 static OSSL_FUNC_cipher_settable_ctx_params_fn camellia_cbc_cts_settable_ctx_params;
 
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(camellia_cbc_cts)
-OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, NULL, 0),
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(camellia_cbc_cts)
+CIPHER_DEFAULT_GETTABLE_CTX_PARAMS(camellia_cbc_cts,
+    OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, NULL, 0))
 
 static int camellia_cbc_cts_einit(void *ctx, const unsigned char *key, size_t keylen,
                              const unsigned char *iv, size_t ivlen,
@@ -60,9 +59,8 @@ static int camellia_cbc_cts_get_ctx_params(void *vctx, OSSL_PARAM params[])
     return ossl_cipher_generic_get_ctx_params(vctx, params);
 }
 
-CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(camellia_cbc_cts)
-OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, NULL, 0),
-CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(camellia_cbc_cts)
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS(camellia_cbc_cts,
+    OSSL_PARAM_utf8_string(OSSL_CIPHER_PARAM_CTS_MODE, NULL, 0))
 
 static int camellia_cbc_cts_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
