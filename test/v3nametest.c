@@ -664,11 +664,52 @@ end:
     return testresult;
 }
 
+#if !defined(OPENSSL_NO_RFC3779)
+static int test_x509v3_addr_get_safi(void){
+
+    IPAddressFamily *f = NULL;
+    ASN1_OCTET_STRING *hi = NULL;
+    int ret = 0;
+    unsigned char testdat[3] = {0x00, 0x01, 0x07};
+    unsigned char testdat1[2] = {0x00, 0x01};
+
+    if (!TEST_ptr(f = IPAddressFamily_new()))
+        goto err;
+
+    if(!TEST_ptr(hi = ASN1_OCTET_STRING_new()))
+        goto err;
+
+    f->addressFamily = hi;
+
+    if (!TEST_true(ASN1_OCTET_STRING_set(f->addressFamily, testdat, 3)))
+        goto err;
+
+    if (!TEST_int_eq(X509v3_addr_get_safi(f), 7))
+        goto err;
+
+    if (!TEST_true(ASN1_OCTET_STRING_set(f->addressFamily, testdat1, 2)))
+        goto err;
+
+    if (!TEST_int_eq(X509v3_addr_get_safi(f), 1))
+        goto err;
+
+    ret = 1;
+
+    err:
+        IPAddressFamily_free(f);
+        return ret;
+}
+#endif
+
 int setup_tests(void)
 {
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
     ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
     ADD_TEST(test_GENERAL_NAME_cmp);
+
+#if !defined (OPENSSL_NO_RFC3779)
+    ADD_TEST(test_x509v3_addr_get_safi);
+#endif
     return 1;
 }
