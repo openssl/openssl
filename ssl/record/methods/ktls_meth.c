@@ -599,7 +599,7 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_release_record,
     tls_get_alert_code,
     tls_set1_bio,
-    NULL, /* set1_peer: Not used for TLS */
+    NULL, /* set1_peer: Not used for KTLS */
     NULL, /* set_use_urxe: Not used for KTLS */
     tls_set_protocol_version,
     tls_set_plain_alerts,
