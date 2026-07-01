@@ -1181,13 +1181,16 @@ end:
 static int test_hpke_suite_strs(void)
 {
     int overallresult = 1;
-    int kemind = 0;
-    int kdfind = 0;
-    int aeadind = 0;
-    int sind = 0;
+    size_t kemind = 0;
+    size_t kdfind = 0;
+    size_t aeadind = 0;
+    size_t sind = 0;
     char sstr[128];
     OSSL_HPKE_SUITE stirred;
     char giant[2048];
+    OSSL_HPKE_SUITE suite;
+    char *suitestr = NULL;
+    OSSL_HPKE_SUITE bad_suite = { 0xbad, 0xbad, 0xbad };
 
     for (kemind = 0; kemind != OSSL_NELEM(kem_str_list); kemind++) {
         for (kdfind = 0; kdfind != OSSL_NELEM(kdf_str_list); kdfind++) {
@@ -1208,7 +1211,7 @@ static int test_hpke_suite_strs(void)
                 &stirred))) {
             if (verbose)
                 TEST_note("OSSL_HPKE_str2suite didn't fail for bogus[%d]:%s",
-                    sind, bogus_suite_strs[sind]);
+                    (int)sind, bogus_suite_strs[sind]);
             overallresult = 0;
         }
     }
@@ -1223,6 +1226,64 @@ static int test_hpke_suite_strs(void)
     giant[sizeof(giant) - 1] = '\0';
     if (!TEST_false(OSSL_HPKE_str2suite(giant, &stirred)))
         overallresult = 0;
+
+    /* Test OSSL_HPKE_suite2str with bad suite */
+    suitestr = OSSL_HPKE_suite2str(bad_suite);
+    if (!TEST_ptr_null(suitestr))
+        overallresult = 0;
+    OPENSSL_free(suitestr);
+    suitestr = NULL;
+
+    /* Test OSSL_HPKE_suite2str round-trip for all valid suites */
+    for (kemind = 0; kemind < OSSL_NELEM(hpke_kem_list); kemind++) {
+        for (kdfind = 0; kdfind < OSSL_NELEM(hpke_kdf_list); kdfind++) {
+            for (aeadind = 0; aeadind < OSSL_NELEM(hpke_aead_list); aeadind++) {
+                OSSL_HPKE_SUITE roundtrip;
+
+                suite.kem_id = hpke_kem_list[kemind];
+                suite.kdf_id = hpke_kdf_list[kdfind];
+                suite.aead_id = hpke_aead_list[aeadind];
+
+                suitestr = OSSL_HPKE_suite2str(suite);
+                if (!TEST_ptr(suitestr)) {
+                    overallresult = 0;
+                    continue;
+                }
+                /* round-trip: str2suite should recover the original suite */
+                if (!TEST_true(OSSL_HPKE_str2suite(suitestr, &roundtrip))) {
+                    overallresult = 0;
+                    OPENSSL_free(suitestr);
+                    suitestr = NULL;
+                    continue;
+                }
+                if (!TEST_uint_eq(roundtrip.kem_id, suite.kem_id)
+                    || !TEST_uint_eq(roundtrip.kdf_id, suite.kdf_id)
+                    || !TEST_uint_eq(roundtrip.aead_id, suite.aead_id)) {
+                    overallresult = 0;
+                }
+                OPENSSL_free(suitestr);
+                suitestr = NULL;
+            }
+        }
+    }
+
+    /* Test OSSL_HPKE_suite2str with export-only AEAD */
+    suite.kem_id = OSSL_HPKE_KEM_ID_P256;
+    suite.kdf_id = OSSL_HPKE_KDF_ID_HKDF_SHA256;
+    suite.aead_id = OSSL_HPKE_AEAD_ID_EXPORTONLY;
+    suitestr = OSSL_HPKE_suite2str(suite);
+    if (!TEST_ptr(suitestr))
+        overallresult = 0;
+    if (suitestr != NULL) {
+        OSSL_HPKE_SUITE roundtrip;
+
+        if (!TEST_true(OSSL_HPKE_str2suite(suitestr, &roundtrip)))
+            overallresult = 0;
+        else if (!TEST_uint_eq(roundtrip.aead_id, OSSL_HPKE_AEAD_ID_EXPORTONLY))
+            overallresult = 0;
+    }
+    OPENSSL_free(suitestr);
+    suitestr = NULL;
 
     return overallresult;
 }
@@ -1306,6 +1367,8 @@ static int test_hpke_oddcalls(void)
     uint64_t lseq = 0;
     char giant_pskid[OSSL_HPKE_MAX_PARMLEN + 10];
     unsigned char info[OSSL_HPKE_TSTSIZE];
+    OSSL_HPKE_SUITE suite, retrieved;
+    size_t kemind, kdfind, aeadind, mind;
 
     /* many of the calls below are designed to get better test coverage */
 
@@ -1342,6 +1405,84 @@ static int test_hpke_oddcalls(void)
         goto end;
     if (!TEST_false(OSSL_HPKE_keygen(bad_suite, pub, &publen, &privp,
             NULL, 0, testctx, NULL)))
+        goto end;
+
+    /* Test OSSL_HPKE_get_suite with NULL ctx */
+    retrieved = OSSL_HPKE_get_suite(NULL);
+    if (!TEST_uint_eq(retrieved.kem_id, OSSL_HPKE_KEM_ID_RESERVED)
+        || !TEST_uint_eq(retrieved.kdf_id, OSSL_HPKE_KDF_ID_RESERVED)
+        || !TEST_uint_eq(retrieved.aead_id, OSSL_HPKE_AEAD_ID_RESERVED))
+        goto end;
+
+    /* Test OSSL_HPKE_get_suite with valid context for each suite combo */
+    for (kemind = 0; kemind < OSSL_NELEM(hpke_kem_list); kemind++) {
+        for (kdfind = 0; kdfind < OSSL_NELEM(hpke_kdf_list); kdfind++) {
+            for (aeadind = 0; aeadind < OSSL_NELEM(hpke_aead_list); aeadind++) {
+                suite.kem_id = hpke_kem_list[kemind];
+                suite.kdf_id = hpke_kdf_list[kdfind];
+                suite.aead_id = hpke_aead_list[aeadind];
+
+                ctx = OSSL_HPKE_CTX_new(OSSL_HPKE_MODE_BASE, suite,
+                    OSSL_HPKE_ROLE_SENDER, testctx, NULL);
+                if (!TEST_ptr(ctx))
+                    goto end;
+                retrieved = OSSL_HPKE_get_suite(ctx);
+                if (!TEST_uint_eq(retrieved.kem_id, suite.kem_id)
+                    || !TEST_uint_eq(retrieved.kdf_id, suite.kdf_id)
+                    || !TEST_uint_eq(retrieved.aead_id, suite.aead_id))
+                    goto end;
+                OSSL_HPKE_CTX_free(ctx);
+                ctx = NULL;
+            }
+        }
+    }
+
+    /* Test OSSL_HPKE_get_public_key_size - known values */
+    suite.kdf_id = OSSL_HPKE_KDF_ID_HKDF_SHA256;
+    suite.aead_id = OSSL_HPKE_AEAD_ID_AES_GCM_128;
+
+    suite.kem_id = OSSL_HPKE_KEM_ID_P256;
+    if (!TEST_size_t_eq(OSSL_HPKE_get_public_key_size(suite), 65))
+        goto end;
+    suite.kem_id = OSSL_HPKE_KEM_ID_P384;
+    if (!TEST_size_t_eq(OSSL_HPKE_get_public_key_size(suite), 97))
+        goto end;
+    suite.kem_id = OSSL_HPKE_KEM_ID_P521;
+    if (!TEST_size_t_eq(OSSL_HPKE_get_public_key_size(suite), 133))
+        goto end;
+#ifndef OPENSSL_NO_ECX
+    suite.kem_id = OSSL_HPKE_KEM_ID_X25519;
+    if (!TEST_size_t_eq(OSSL_HPKE_get_public_key_size(suite), 32))
+        goto end;
+    suite.kem_id = OSSL_HPKE_KEM_ID_X448;
+    if (!TEST_size_t_eq(OSSL_HPKE_get_public_key_size(suite), 56))
+        goto end;
+#endif
+
+    /* Test OSSL_HPKE_get_public_key_size with bad suite */
+    if (!TEST_size_t_eq(OSSL_HPKE_get_public_key_size(bad_suite), 0))
+        goto end;
+
+    /* Test OSSL_HPKE_mode_is_supported - all modes for all suites */
+    for (kemind = 0; kemind < OSSL_NELEM(hpke_kem_list); kemind++) {
+        suite.kem_id = hpke_kem_list[kemind];
+        suite.kdf_id = OSSL_HPKE_KDF_ID_HKDF_SHA256;
+        suite.aead_id = OSSL_HPKE_AEAD_ID_AES_GCM_128;
+        for (mind = 0; mind < OSSL_NELEM(hpke_mode_list); mind++) {
+            if (!TEST_true(OSSL_HPKE_mode_is_supported(suite,
+                    hpke_mode_list[mind])))
+                goto end;
+        }
+    }
+
+    /* Test OSSL_HPKE_mode_is_supported with bad mode */
+    suite.kem_id = OSSL_HPKE_KEM_ID_P256;
+    if (!TEST_false(OSSL_HPKE_mode_is_supported(suite, bad_mode)))
+        goto end;
+
+    /* Test OSSL_HPKE_mode_is_supported with bad suite */
+    if (!TEST_false(OSSL_HPKE_mode_is_supported(bad_suite,
+            OSSL_HPKE_MODE_BASE)))
         goto end;
 
     /* dodgy keygen calls */
