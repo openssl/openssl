@@ -151,11 +151,11 @@ extern "C" {
     IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 #endif
 
-#define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1)           \
-    PEM_write_cb_fnsig(name, type, FILE, write)                    \
-    {                                                              \
-        return PEM_ASN1_write((i2d_of_void *)i2d_##asn1, str, out, \
-            x, enc, kstr, klen, cb, u);                            \
+#define IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1)                   \
+    PEM_write_cb_fnsig(name, type, FILE, write)                            \
+    {                                                                      \
+        return PEM_ASN1_write((i2d_of_void *)i2d_##asn1##_thunk, str, out, \
+            x, enc, kstr, klen, cb, u);                                    \
     }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -184,11 +184,11 @@ extern "C" {
         return ret;                                     \
     }
 
-#define IMPLEMENT_PEM_write_bio(name, type, str, asn1)                 \
-    PEM_write_fnsig(name, type, BIO, write_bio)                        \
-    {                                                                  \
-        return PEM_ASN1_write_bio((i2d_of_void *)i2d_##asn1, str, out, \
-            x, NULL, NULL, 0, NULL, NULL);                             \
+#define IMPLEMENT_PEM_write_bio(name, type, str, asn1)          \
+    PEM_write_fnsig(name, type, BIO, write_bio)                 \
+    {                                                           \
+        return PEM_ASN1_write_bio(i2d_##asn1##_thunk, str, out, \
+            x, NULL, NULL, 0, NULL, NULL);                      \
     }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -196,11 +196,11 @@ extern "C" {
     IMPLEMENT_PEM_write_bio(name, type, str, asn1)
 #endif
 
-#define IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1)              \
-    PEM_write_cb_fnsig(name, type, BIO, write_bio)                     \
-    {                                                                  \
-        return PEM_ASN1_write_bio((i2d_of_void *)i2d_##asn1, str, out, \
-            x, enc, kstr, klen, cb, u);                                \
+#define IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1)                      \
+    PEM_write_cb_fnsig(name, type, BIO, write_bio)                             \
+    {                                                                          \
+        return PEM_ASN1_write_bio((i2d_of_void *)i2d_##asn1##_thunk, str, out, \
+            x, enc, kstr, klen, cb, u);                                        \
     }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -208,8 +208,16 @@ extern "C" {
     IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1)
 #endif
 
-#define IMPLEMENT_PEM_write(name, type, str, asn1) \
-    IMPLEMENT_PEM_write_bio(name, type, str, asn1) \
+#define IMPLEMENT_PEM_write(name, type, str, asn1)                              \
+    static ossl_unused int i2d_##asn1##_thunk(const void *a, unsigned char **p) \
+    {                                                                           \
+        return i2d_##asn1((type *)a, p);                                        \
+    }                                                                           \
+    IMPLEMENT_PEM_write_bio(name, type, str, asn1)                              \
+    IMPLEMENT_PEM_write_fp(name, type, str, asn1)
+
+#define IMPLEMENT_PEM_write_nothunk(name, type, str, asn1) \
+    IMPLEMENT_PEM_write_bio(name, type, str, asn1)         \
     IMPLEMENT_PEM_write_fp(name, type, str, asn1)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -218,8 +226,12 @@ extern "C" {
     IMPLEMENT_PEM_write_fp_const(name, type, str, asn1)
 #endif
 
-#define IMPLEMENT_PEM_write_cb(name, type, str, asn1) \
-    IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1) \
+#define IMPLEMENT_PEM_write_cb(name, type, str, asn1)                           \
+    static ossl_unused int i2d_##asn1##_thunk(const void *a, unsigned char **p) \
+    {                                                                           \
+        return i2d_##asn1((type *)a, p);                                        \
+    }                                                                           \
+    IMPLEMENT_PEM_write_cb_bio(name, type, str, asn1)                           \
     IMPLEMENT_PEM_write_cb_fp(name, type, str, asn1)
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -228,8 +240,12 @@ extern "C" {
     IMPLEMENT_PEM_write_cb_fp_const(name, type, str, asn1)
 #endif
 
-#define IMPLEMENT_PEM_read(name, type, str, asn1) \
-    IMPLEMENT_PEM_read_bio(name, type, str, asn1) \
+#define IMPLEMENT_PEM_read(name, type, str, asn1)                                                \
+    static ossl_unused void *d2i_##asn1##_thunk(void **a, const unsigned char **pp, long length) \
+    {                                                                                            \
+        return (void *)d2i_##asn1((type **)a, pp, length);                                       \
+    }                                                                                            \
+    IMPLEMENT_PEM_read_bio(name, type, str, asn1)                                                \
     IMPLEMENT_PEM_read_fp(name, type, str, asn1)
 
 #define IMPLEMENT_PEM_rw(name, type, str, asn1) \

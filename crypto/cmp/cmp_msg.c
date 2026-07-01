@@ -1289,7 +1289,7 @@ OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 
 int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
 {
-    return ASN1_i2d_bio_of(OSSL_CMP_MSG, i2d_OSSL_CMP_MSG, bio, msg);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(OSSL_CMP_MSG), bio, msg);
 }
 
 int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg)
