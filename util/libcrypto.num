@@ -2984,6 +2984,7 @@ BIO_sock_should_retry                   ?	4_0_0	EXIST::FUNCTION:SOCK
 BIO_sock_non_fatal_error                ?	4_0_0	EXIST::FUNCTION:SOCK
 BIO_err_is_non_fatal                    ?	4_0_0	EXIST::FUNCTION:SOCK
 BIO_socket_wait                         ?	4_0_0	EXIST::FUNCTION:SOCK
+BIO_socket_ready                        ?	4_0_0	EXIST::FUNCTION:SOCK
 BIO_wait                                ?	4_0_0	EXIST::FUNCTION:
 BIO_do_connect_retry                    ?	4_0_0	EXIST::FUNCTION:
 BIO_fd_should_retry                     ?	4_0_0	EXIST::FUNCTION:

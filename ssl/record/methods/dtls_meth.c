@@ -793,8 +793,8 @@ again:
     }
 
 #ifndef OPENSSL_NO_SCTP
-    /* Only do replay check if no SCTP bio */
-    if (!BIO_dgram_is_sctp(rl->bio)) {
+    /* Only do replay check if no SCTP bio (also check for NULL bio) */
+    if (rl->bio == NULL || !BIO_dgram_is_sctp(rl->bio)) {
 #endif
         /* Check whether this is a repeat, or aged record. */
         if (!dtls_record_replay_check(rl, bitmap)) {
@@ -890,6 +890,7 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     const EVP_MD *md, COMP_METHOD *comp,
     const EVP_MD *kdfdigest, BIO *prev, BIO *transport,
     BIO *next, BIO_ADDR *local, BIO_ADDR *peer,
+    int use_urxe,
     const OSSL_PARAM *settings, const OSSL_PARAM *options,
     const OSSL_DISPATCH *fns, void *cbarg, void *rlarg,
     OSSL_RECORD_LAYER **retrl)
@@ -909,6 +910,19 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     (*retrl)->in_init = 1;
     (*retrl)->dtls13_epoch_1_seq = 0;
     (*retrl)->dtls13_epoch_2_seq = 100;
+
+    /*
+     * Store peer address if provided. When set, tls_retry_write_records()
+     * will use BIO_sendmmsg() with this address instead of BIO_write().
+     * This is used by listener-created connections that share the listener's
+     * network BIO.
+     */
+#ifndef OPENSSL_NO_SOCK
+    if (peer != NULL)
+        (*retrl)->peer = *peer;
+#endif
+
+    (*retrl)->use_urxe = use_urxe;
 
     switch (vers) {
     case DTLS_ANY_VERSION:
@@ -1089,6 +1103,12 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_release_record,
     tls_get_alert_code,
     tls_set1_bio,
+#ifndef OPENSSL_NO_SOCK
+    tls_set1_peer,
+#else
+    NULL,
+#endif
+    tls_set_use_urxe,
     tls_set_protocol_version,
     tls_set_plain_alerts,
     tls_set_first_handshake,

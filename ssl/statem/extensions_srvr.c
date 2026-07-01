@@ -849,10 +849,14 @@ int tls_parse_ctos_key_share(SSL_CONNECTION *s, PACKET *pkt,
     if (s->hit && (s->ext.psk_kex_mode & TLSEXT_KEX_MODE_FLAG_KE_DHE) == 0)
         return 1;
 
-    /* Sanity check */
+    /*
+     * If prior Client Hello in HRR set the peer_temp clear it out to process
+     * the key share in the second client hello
+     */
     if (s->s3.peer_tmp != NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return 0;
+        EVP_PKEY_free(s->s3.peer_tmp);
+        s->s3.peer_tmp = NULL;
+        s->s3.group_id = 0;
     }
 
     if (!PACKET_as_length_prefixed_2(pkt, &key_share_list)) {
@@ -1026,10 +1030,20 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     size_t msgbody_offs = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_HM_HEADER_LENGTH
             - SSL3_HM_HEADER_LENGTH
                                                     : 0;
+    int verify_ret = 0;
+
+#if !defined(OPENSSL_NO_DTLS)
+    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
+        ? (DTLS_LISTENER *)s->d1->listener
+        : NULL;
+    int have_verify_cb = (sctx->verify_stateless_cookie_cb != NULL)
+        || (dl != NULL && dl->require_hrr_cookie);
+#else
+    int have_verify_cb = (sctx->verify_stateless_cookie_cb != NULL);
+#endif
 
     /* Ignore any cookie if we're not set up to verify it */
-    if (sctx->verify_stateless_cookie_cb == NULL
-        || (s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
+    if (!have_verify_cb || (s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return 1;
 
     if (!PACKET_as_length_prefixed_2(pkt, &cookie)) {
@@ -1144,10 +1158,21 @@ int tls_parse_ctos_cookie(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     }
 
     /* Verify the app cookie */
-    if (sctx->verify_stateless_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s),
+#if !defined(OPENSSL_NO_DTLS)
+    if (dl != NULL && dl->require_hrr_cookie && sctx->verify_stateless_cookie_cb == NULL) {
+        verify_ret = ossl_dtls_listener_verify_stateless_cookie_cb(
+            SSL_CONNECTION_GET_USER_SSL(s),
             PACKET_data(&appcookie),
-            PACKET_remaining(&appcookie))
-        == 0) {
+            PACKET_remaining(&appcookie));
+    } else
+#endif
+        if (sctx->verify_stateless_cookie_cb != NULL) {
+        verify_ret = sctx->verify_stateless_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s),
+            PACKET_data(&appcookie),
+            PACKET_remaining(&appcookie));
+    }
+
+    if (verify_ret == 0) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_COOKIE_MISMATCH);
         return 0;
     }
@@ -2093,7 +2118,8 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
 #if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
     unsigned char *hashval1, *hashval2, *appcookie1, *appcookie2, *cookie;
     unsigned char *hmac, *hmac2;
-    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen, appcookielen;
+    size_t startlen, ciphlen, totcookielen, hashlen, hmaclen;
+    size_t appcookielen = 0;
     EVP_MD_CTX *hctx;
     EVP_PKEY *pkey;
     int ret = EXT_RETURN_FAIL;
@@ -2101,11 +2127,21 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
     const int version = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+    int gen_ret = 0;
+#if !defined(OPENSSL_NO_DTLS)
+    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
+        ? (DTLS_LISTENER *)s->d1->listener
+        : NULL;
+    int have_gen_cb = (sctx->gen_stateless_cookie_cb != NULL)
+        || (dl != NULL && dl->require_hrr_cookie);
+#else
+    int have_gen_cb = (sctx->gen_stateless_cookie_cb != NULL);
+#endif
 
     if ((s->s3.flags & TLS1_FLAGS_STATELESS) == 0)
         return EXT_RETURN_NOT_SENT;
 
-    if (sctx->gen_stateless_cookie_cb == NULL) {
+    if (!have_gen_cb) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_NO_COOKIE_CALLBACK_SET);
         return EXT_RETURN_FAIL;
     }
@@ -2150,9 +2186,17 @@ EXT_RETURN tls_construct_stoc_cookie(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /* Generate the application cookie */
-    if (sctx->gen_stateless_cookie_cb(ussl, appcookie1,
-            &appcookielen)
-        == 0) {
+#if !defined(OPENSSL_NO_DTLS)
+    if (dl != NULL && dl->require_hrr_cookie && sctx->gen_stateless_cookie_cb == NULL) {
+        gen_ret = ossl_dtls_listener_gen_stateless_cookie_cb(ussl, appcookie1,
+            &appcookielen);
+    } else
+#endif
+        if (sctx->gen_stateless_cookie_cb != NULL) {
+        gen_ret = sctx->gen_stateless_cookie_cb(ussl, appcookie1, &appcookielen);
+    }
+
+    if (gen_ret == 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return EXT_RETURN_FAIL;
     }

@@ -27,9 +27,26 @@ IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=ssl_rsa_legacy.c
 ENDIF
 
+IF[{- !$disabled{dtls} || !$disabled{quic} -}]
+  # Datagram demux is shared between DTLS listener and QUIC
+  SOURCE[../libssl]=dgram_demux.c
+ENDIF
+
+IF[{- !$disabled{dtls} -}]
+  # DTLS listener support: connection lookup and RX handling
+  SOURCE[../libssl]=dtls_conn_lookup.c dtls_record_rx.c
+  # hashfunc.c is needed by dtls_conn_lookup.c for address hashing
+  SHARED_SOURCE[../libssl]=../crypto/hashtable/hashfunc.c
+ENDIF
+
 IF[{- !$disabled{quic} -}]
   SOURCE[../libssl]=priority_queue.c
   SHARED_SOURCE[../libssl] = ../crypto/hashtable/hashfunc.c
+ENDIF
+
+# siphash.c is needed by dtls_conn_lookup.c (DTLS) and quic_lcidm.c (QUIC)
+# for hash-flooding resistant connection lookup
+IF[{- !$disabled{dtls} || !$disabled{quic} -}]
   IF[{- $disabled{siphash} -}]
     SOURCE[../libssl]=../crypto/siphash/siphash.c
   ELSE
