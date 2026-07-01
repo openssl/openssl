@@ -309,11 +309,11 @@ sub HashKeyOffsetByIdx {
   my $offset_base;
   my $offset_idx;
   if ($base eq "frame") {    # frame storage
-    die "HashKeyOffsetByIdx: idx out of bounds (1..48)! idx = $idx\n" if ($idx > $HKEYS_STORAGE_CAPACITY || $idx < 1);
+    die "HashKeyOffsetByIdx: idx out of bounds (1..$HKEYS_STORAGE_CAPACITY)! idx = $idx\n" if ($idx > $HKEYS_STORAGE_CAPACITY || $idx < 1);
     $offset_base = $STACK_HKEYS_OFFSET;
     $offset_idx  = ($AES_BLOCK_SIZE * ($HKEYS_STORAGE_CAPACITY - $idx));
   } else {                   # context storage
-    die "HashKeyOffsetByIdx: idx out of bounds (1..16)! idx = $idx\n" if ($idx > $HKEYS_CONTEXT_CAPACITY || $idx < 1);
+    die "HashKeyOffsetByIdx: idx out of bounds (1..$HKEYS_CONTEXT_CAPACITY)! idx = $idx\n" if ($idx > $HKEYS_CONTEXT_CAPACITY || $idx < 1);
     $offset_base = $CTX_OFFSET_HTable;
     $offset_idx  = ($AES_BLOCK_SIZE * ($HKEYS_CONTEXT_CAPACITY - $idx));
   }
@@ -422,17 +422,20 @@ sub EPILOG {
 
   if ($hkeys_storage_on_stack && $CLEAR_HKEYS_STORAGE_ON_EXIT) {
 
-    # ; There is no need in hkeys cleanup if payload len was small, i.e. no hkeys
-    # ; were stored in the local frame storage
-    $code .= <<___;
-        cmpq              \$`16*16`,$payload_len
-        jbe               .Lskip_hkeys_cleanup_${label_suffix}
-        vpxor             %xmm0,%xmm0,%xmm0
-___
+    # ; Clear the hash-key stack storage unconditionally whenever it was
+    # ; allocated. The stored H^i powers are derived from the secret hash
+    # ; subkey (H = E_K(0)) and must not be left on the stack after return.
+    # ;
+    # ; NOTE: the previous "skip cleanup when payload_len <= 16*16" shortcut is
+    # ; intentionally removed. It is no longer a safe proxy for "no hkeys were
+    # ; written": CALC_AAD_HASH() now lazily precomputes H^1..H^16 onto the
+    # ; stack even for sub-16-block AAD/IV inputs (including the common 12-byte
+    # ; IV handled by setiv), so a small $payload_len no longer implies an
+    # ; untouched storage. $payload_len is therefore unused here now.
+    $code .= "vpxor             %xmm0,%xmm0,%xmm0\n";
     for (my $i = 0; $i < int($HKEYS_STORAGE / 64); $i++) {
       $code .= "vmovdqa64         %zmm0,`$STACK_HKEYS_OFFSET + 64*$i`(%rsp)\n";
     }
-    $code .= ".Lskip_hkeys_cleanup_${label_suffix}:\n";
   }
 
   if ($CLEAR_SCRATCH_REGISTERS) {
@@ -4706,98 +4709,57 @@ ___
         vmovdqa64         ddq_addbe_4444(%rip),$ADDBE_4x4
         vmovdqa64         ddq_addbe_1234(%rip),$ADDBE_1234
 
-        cmp               \$`(16 * 16)`,$LENGTH
-        jae               .L_encrypt_16_blocks_${label_suffix}
 ___
 
   # ;; =====================================================
-  # ;; ==== < 16 remaining blocks (32-deep pipeline flush)
-  # ;; ==== GHASH slot0 (start), then GCM_ENC_DEC_LAST(slot1 + remaining)
+  # ;; ==== 32-deep pipeline flush (correct drain)
+  # ;; ==== Fully reduce the 32 pending blocks (slot0: H^32..H^17,
+  # ;; ==== slot1: H^16..H^1) into AAD_HASH, then process the remaining
+  # ;; ==== < 32-block tail against the reduced hash. All GHASH key powers
+  # ;; ==== stay within H^1..H^32 (HKEYS_STORAGE_CAPACITY), so the tail can
+  # ;; ==== never require a stale/out-of-range hash key.
   # ;; =====================================================
   &GHASH_16(
-    "start", $GH, $GM, $GL, "%rsp", $STACK_LOCAL_OFFSET, 0,
+    "start", $GH, $GM, $GL, "%rsp", $STACK_LOCAL_OFFSET, (0 * 16),
     "%rsp", &HashKeyOffsetByIdx(32, "frame"),
     0, $AAD_HASHz, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP8, $ZTMP9);
 
-  $ghashin_offset = ($STACK_LOCAL_OFFSET + (16 * 16));
+  &GHASH_16(
+    "end_reduce", $GH, $GM, $GL, "%rsp", $STACK_LOCAL_OFFSET, (16 * 16),
+    "%rsp", &HashKeyOffsetByIdx(16, "frame"),
+    0, $AAD_HASHz, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP8, $ZTMP9);
 
-  # ;; calculate offset to the right hash key
-  $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
+  # ;; The 32 pending blocks are now folded into AAD_HASH; nothing is pending.
+  # ;; Dispatch the remaining tail (0..31 blocks + partial). The counter is
+  # ;; still big-endian here: keep it BE for the GCM_ENC_DEC_LAST path and
+  # ;; convert to little-endian before the small path / final store.
   $code .= <<___;
-        and               \$~15,@{[DWORD($IA0)]}
-        mov               \$`@{[HashKeyOffsetByIdx(16,"frame")]}`,@{[DWORD($HASHK_PTR)]}
-        sub               @{[DWORD($IA0)]},@{[DWORD($HASHK_PTR)]}
+        cmp               \$`(16 * 16)`,$LENGTH
+        ja                .L_tail_gt_16_blocks_${label_suffix}
 ___
-  &GCM_ENC_DEC_LAST(
-    $AES_KEYS,   $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $LENGTH,
-    $CTR_BLOCKz, $CTR_CHECK,  $HASHK_PTR,      $ghashin_offset, $SHUF_MASK,   $ZTMP0,
-    $ZTMP1,      $ZTMP2,      $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,
-    $ZTMP7,      $ZTMP8,      $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,
-    $ZTMP13,     $ZTMP14,     $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
-    $ZTMP19,     $ZTMP20,     $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
-    "end_reduce", $GL,        $GH,             $GM,             $ENC_DEC,     $AAD_HASHz,
-    $IA0,        $IA5,        $MASKREG,        $PBLOCK_LEN);
 
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  $code .= "jmp           .L_ghash_done_${label_suffix}\n";
+  $code .= <<___;
+        or                $LENGTH,$LENGTH
+        je                .L_ghash_done_${label_suffix}
+        jmp               .L_message_below_equal_16_blocks_${label_suffix}
 
-  # ;; =====================================================
-  # ;; ==== >= 16 remaining blocks (32-deep pipeline flush)
-  # ;; ==== Stitch: GHASH slot0 + encrypt 16 -> slot0 (same as first big-loop parallel)
-  # ;; ==== GCM_ENC_DEC_LAST(slot1 + remaining, end_reduce)
-  # ;; =====================================================
-  $code .= ".L_encrypt_16_blocks_${label_suffix}:\n";
+.L_tail_gt_16_blocks_${label_suffix}:
+___
 
-  # ;; Must match the first GHASH_16_ENCRYPT_16_PARALLEL in .L_encrypt_big_nblocks (aesout 0, not 32*16):
-  # ;; LOCAL_STORAGE is only 32 blocks; offset 32*16 from LOCAL base is past the buffer (stack smash).
-  $aesout_offset  = ($STACK_LOCAL_OFFSET + (0 * 16));
-  $ghashin_offset = ($STACK_LOCAL_OFFSET + (0 * 16));
+  # ;; 16 < remaining < 32 blocks: cipher the first 16 into slot0 (no ghash),
+  # ;; then fall into the below-32-blocks path, which GHASHes slot0 together
+  # ;; with the tail in a single reduction. slot0 is weighted H^(16+m)..H^(1+m)
+  # ;; with m <= 15 (i.e. up to H^31), which is within the stored key range.
+  $aesout_offset      = ($STACK_LOCAL_OFFSET + (0 * 16));
   $data_in_out_offset = (0 * 16);
-  &GHASH_16_ENCRYPT_16_PARALLEL(
-    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,
-    $CTR_CHECK,
-    32,        $aesout_offset,  $ghashin_offset, $SHUF_MASK,   $ZTMP0,
-    $ZTMP1,
-    $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,
-    $ZTMP7,
-    $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,
-    $ZTMP13,
-    $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
-    $ZTMP19,
-    $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
-    $GL,
-    $GH,       $GM,             "first_time",    $ENC_DEC,     $data_in_out_offset, $AAD_HASHz,
-    $IA0, $PRELOADED_AES_KEY0, $PRELOADED_AES_KEY1);
+  &INITIAL_BLOCKS_16(
+    $PLAIN_CIPH_IN, $CIPH_PLAIN_OUT, $AES_KEYS,      $DATA_OFFSET,        "no_ghash", $CTR_BLOCKz,
+    $CTR_CHECK,     $ADDBE_4x4,      $ADDBE_1234,    $ZTMP0,              $ZTMP1,     $ZTMP2,
+    $ZTMP3,         $ZTMP4,          $ZTMP5,         $ZTMP6,              $ZTMP7,     $ZTMP8,
+    $SHUF_MASK,     $ENC_DEC,        $aesout_offset, $data_in_out_offset, $IA0);
 
-  $ghashin_offset = ($STACK_LOCAL_OFFSET + (16 * 16));
-  $code .= <<___;
-        sub               \$`(16 * 16)`,$LENGTH
-        add               \$`(16 * 16)`,$DATA_OFFSET
-___
-
-  # ;; calculate offset to the right hash key
-  $code .= "mov               @{[DWORD($LENGTH)]},@{[DWORD($IA0)]}\n";
-  $code .= <<___;
-        and               \$~15,@{[DWORD($IA0)]}
-        mov               \$`@{[HashKeyOffsetByIdx(16,"frame")]}`,@{[DWORD($HASHK_PTR)]}
-        sub               @{[DWORD($IA0)]},@{[DWORD($HASHK_PTR)]}
-___
-  &GCM_ENC_DEC_LAST(
-    $AES_KEYS,    $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,
-    $DATA_OFFSET, $LENGTH,     $CTR_BLOCKz,     $CTR_CHECK,
-    $HASHK_PTR,   $ghashin_offset, $SHUF_MASK,  $ZTMP0,
-    $ZTMP1,       $ZTMP2,     $ZTMP3,     $ZTMP4,
-    $ZTMP5,       $ZTMP6,     $ZTMP7,     $ZTMP8,
-    $ZTMP9,       $ZTMP10,    $ZTMP11,    $ZTMP12,
-    $ZTMP13,      $ZTMP14,    $ZTMP15,    $ZTMP16,
-    $ZTMP17,      $ZTMP18,    $ZTMP19,    $ZTMP20,
-    $ZTMP21,      $ZTMP22,    $ADDBE_4x4, $ADDBE_1234,
-    "end_reduce", $GL,        $GH,        $GM,
-    $ENC_DEC,     $AAD_HASHz, $IA0,       $IA5,
-    $MASKREG,     $PBLOCK_LEN);
-
-  $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-  $code .= "jmp           .L_ghash_done_${label_suffix}\n";
+  $code .= "jmp           .L_message_below_32_blocks_${label_suffix}\n";
 
 
   $code .= <<___;
