@@ -444,6 +444,8 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
     const char *name, RADIX_OBJ *obj)
 {
     RADIX_OBJ *existing;
+    RADIX_THREAD *rt;
+    int i, j;
 
     if (obj != NULL && !TEST_false(obj->registered))
         return 0;
@@ -456,11 +458,29 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
         lh_RADIX_OBJ_delete(rp->objs, existing);
         existing->registered = 0;
         RADIX_OBJ_free(existing);
+    } else {
+        existing = NULL;
     }
 
     if (obj != NULL) {
         lh_RADIX_OBJ_insert(rp->objs, obj);
         obj->registered = 1;
+    }
+
+    /*
+     * update also slot so it does not keep a stale pointer.
+     * do it for all threads.
+     */
+    if (existing != NULL) {
+        for (i = 0; i < sk_RADIX_THREAD_num(rp->threads); i++) {
+            rt = (RADIX_THREAD *) sk_RADIX_THREAD_value(rp->threads, i);
+            for (j = 0; j < NUM_SLOTS; j++) {
+                if (rt->slot[j] == existing)
+                    rt->slot[j] = obj;
+                if (rt->ssl[j] == existing->ssl)
+                    rt->ssl[j] = (obj == NULL) ? NULL : obj->ssl;
+            }
+        }
     }
 
     return 1;
