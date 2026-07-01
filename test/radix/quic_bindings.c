@@ -149,8 +149,9 @@ static int RADIX_PROCESS_init(RADIX_PROCESS *rp, size_t node_idx, size_t process
 {
     const char *keylog_path;
 
+    rp->gm = ossl_crypto_mutex_new();
 #if defined(OPENSSL_THREADS)
-    if (!TEST_ptr(rp->gm = ossl_crypto_mutex_new()))
+    if (!TEST_ptr(rp->gm))
         goto err;
 #endif
 
@@ -438,13 +439,9 @@ static RADIX_OBJ *RADIX_PROCESS_get_obj(RADIX_PROCESS *rp, const char *name)
     RADIX_OBJ *obj;
 
     key.name = (char *)name;
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(rp->gm);
-#endif
     obj = lh_RADIX_OBJ_retrieve(rp->objs, &key);
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(rp->gm);
-#endif
     return obj;
 }
 
@@ -458,9 +455,7 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
     if (obj != NULL && !TEST_false(obj->registered))
         return 0;
 
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(rp->gm);
-#endif
     key.name = (char *)name;
     existing = lh_RADIX_OBJ_retrieve(rp->objs, &key);
     if (existing != NULL && obj != existing) {
@@ -479,9 +474,7 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
 
     ok = 1;
 err:
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(rp->gm);
-#endif
     return ok;
 }
 
@@ -507,17 +500,13 @@ static SSL *RADIX_PROCESS_get_ssl(RADIX_PROCESS *rp, const char *name)
     SSL *ssl = NULL;
 
     key.name = (char *)name;
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_lock(rp->gm);
-#endif
     obj = lh_RADIX_OBJ_retrieve(rp->objs, &key);
     if (obj != NULL) {
         ssl = obj->ssl;
         SSL_up_ref(ssl);
     }
-#if defined(OPENSSL_THREADS)
     ossl_crypto_mutex_unlock(rp->gm);
-#endif
     return ssl;
 }
 
@@ -531,8 +520,9 @@ static RADIX_THREAD *RADIX_THREAD_new(RADIX_PROCESS *rp)
 
     rt->rp = rp;
 
+    rt->m = ossl_crypto_mutex_new();
 #if defined(OPENSSL_THREADS)
-    if (!TEST_ptr(rt->m = ossl_crypto_mutex_new())) {
+    if (!TEST_ptr(rt->m)) {
         OPENSSL_free(rt);
         return 0;
     }
