@@ -37,7 +37,6 @@ static ossl_unused int rej_ntt_poly_mb(const uint8_t *seeds[ML_DSA_SHAKE_X4_BATC
     ossl_sha3_shake128_x4_inc_init(&ctx);
     ossl_sha3_shake128_x4_inc_absorb(&ctx, seeds[0], seeds[1],
         seeds[2], seeds[3], seed_len);
-    ossl_sha3_shake128_x4_inc_finalize(&ctx);
 
     while (done_mask != ML_DSA_SHAKE_X4_DONE_MASK) {
         ossl_sha3_shake128_x4_inc_squeeze(blocks[0], blocks[1],
@@ -102,6 +101,12 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
         ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 3], buffers[3], buf_size, gamma1);
     }
 
+    /*
+     * num_polys is always 4 (ML-DSA-44), 5 (ML-DSA-65), or 7 (ML-DSA-87), so the
+     * above loops will always runs at least once, initializing derived_seeds.
+     * As a result, 'left' below will be 0, 1, or 3, meaning the 4 way shake will
+     * recalculate values that are not used.
+     */
     if (i < num_polys) {
         const size_t left = num_polys - i;
         size_t b;
@@ -124,6 +129,8 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
         if ((i + 2) < num_polys)
             ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 2], buffers[2], buf_size, gamma1);
     }
+
+    OPENSSL_cleanse(derived_seeds, sizeof(derived_seeds));
 }
 
 static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nibble,
@@ -142,7 +149,6 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
     ossl_sha3_shake256_x4_inc_init(&ctx);
     ossl_sha3_shake256_x4_inc_absorb(&ctx, seeds[0], seeds[1],
         seeds[2], seeds[3], seed_len);
-    ossl_sha3_shake256_x4_inc_finalize(&ctx);
 
     while (done_mask != ML_DSA_SHAKE_X4_DONE_MASK) {
         ossl_sha3_shake256_x4_inc_squeeze(blocks[0], blocks[1],
@@ -178,6 +184,8 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
         }
     }
 
+    OPENSSL_cleanse(blocks, sizeof(blocks));
+    ossl_sha3_shake256_x4_inc_cleanup(&ctx);
     return 1;
 }
 
@@ -233,6 +241,7 @@ static int matrix_expand_A_mb(EVP_MD_CTX *g_ctx, const EVP_MD *md,
 static int vector_expand_S_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md, const int eta,
     const uint8_t *seed, VECTOR *s1, VECTOR *s2)
 {
+    int ret = 0;
     size_t b, idx;
     const size_t l = s1->num_poly;
     const size_t total = l + s2->num_poly;
@@ -262,7 +271,7 @@ static int vector_expand_S_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md, const int eta
 
         if (!rej_bounded_poly_mb(coef_from_nibble_fn,
                 seeds, seed_len, polys, ML_DSA_SHAKE_X4_BATCH_SIZE))
-            return 0;
+            goto err;
     }
 
     if (idx < total) {
@@ -282,10 +291,13 @@ static int vector_expand_S_mb(EVP_MD_CTX *h_ctx, const EVP_MD *md, const int eta
 
         if (!rej_bounded_poly_mb(coef_from_nibble_fn,
                 seeds, seed_len, polys, batch_count))
-            return 0;
+            goto err;
     }
 
-    return 1;
+    ret = 1;
+err:
+    OPENSSL_cleanse(derived_seeds, sizeof(derived_seeds));
+    return ret;
 }
 
 static const OSSL_ML_DSA_SAMPLE_OPS ml_dsa_sample_x86_64 = {

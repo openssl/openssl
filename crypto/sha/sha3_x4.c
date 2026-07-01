@@ -76,7 +76,7 @@ extern void SHA3_shake256_x4_avx512vl(
 void ossl_sha3_shake128_x4_inc_init(KECCAK1600_X4_CTX *ctx)
 {
     memset(ctx->A, 0, sizeof(ctx->A));
-    ctx->rate = 168; /* SHAKE-128 rate in bytes */
+    ctx->rate = SHA3_BLOCKSIZE(128);
     ctx->finalized = 0;
 }
 
@@ -95,7 +95,12 @@ void ossl_sha3_shake128_x4_inc_absorb(
         ctx->A, in0, in1, in2, in3, inlen);
 }
 
-void ossl_sha3_shake128_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
+void ossl_sha3_shake128_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx)
+{
+    ossl_sha3_shake128_x4_inc_init(ctx);
+}
+
+static void ossl_sha3_shake128_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
 {
     if (ctx->finalized) {
         return; /* Already finalized */
@@ -127,7 +132,7 @@ void ossl_sha3_shake128_x4_inc_squeeze(
 void ossl_sha3_shake256_x4_inc_init(KECCAK1600_X4_CTX *ctx)
 {
     memset(ctx->A, 0, sizeof(ctx->A));
-    ctx->rate = 136; /* SHAKE-256 rate in bytes */
+    ctx->rate = SHA3_BLOCKSIZE(256);
     ctx->finalized = 0;
 }
 
@@ -146,7 +151,12 @@ void ossl_sha3_shake256_x4_inc_absorb(
         ctx->A, in0, in1, in2, in3, inlen);
 }
 
-void ossl_sha3_shake256_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
+void ossl_sha3_shake256_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx)
+{
+    ossl_sha3_shake256_x4_inc_init(ctx);
+}
+
+static void ossl_sha3_shake256_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
 {
     if (ctx->finalized) {
         return; /* Already finalized */

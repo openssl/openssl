@@ -92,7 +92,7 @@ void ossl_sha3_shake128_x4_inc_absorb(
     const void *in2, const void *in3,
     size_t inlen);
 
-void ossl_sha3_shake128_x4_inc_finalize(KECCAK1600_X4_CTX *ctx);
+void ossl_sha3_shake128_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx);
 
 void ossl_sha3_shake128_x4_inc_squeeze(
     void *out0, void *out1,
@@ -109,7 +109,7 @@ void ossl_sha3_shake256_x4_inc_absorb(
     const void *in2, const void *in3,
     size_t inlen);
 
-void ossl_sha3_shake256_x4_inc_finalize(KECCAK1600_X4_CTX *ctx);
+void ossl_sha3_shake256_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx);
 
 void ossl_sha3_shake256_x4_inc_squeeze(
     void *out0, void *out1,
