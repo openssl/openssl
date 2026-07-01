@@ -411,12 +411,51 @@ end:
 }
 #endif /* OPENSSL_NO_EC */
 
+static int pkcs7_stream_non_data_test(void)
+{
+    int ret = 0;
+    PKCS7 *p7 = NULL;
+    BIO *sink = NULL;
+    BIO *bio = NULL;
+
+    const unsigned char malformed_der[] = {
+        0x30, 0x32, // SEQUENCE, 50 bytes
+        0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x02, // pkcs7-signedData
+        0xa0, 0x25, // [0] EXPLICIT, 37 bytes
+        0x30, 0x23, // SEQUENCE PKCS7_SIGNED, 35 bytes
+        0x02, 0x01, 0x01, // INTEGER version=1
+        0x31, 0x00, // SET{} md_algs
+        0x30, 0x1a, // SEQUENCE inner PKCS7 (contents), 26 bytes
+        0x06, 0x0b, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x01, 0x04, // id-ct-TSTInfo
+        0xa0, 0x0b, // [0] EXPLICIT, 11 bytes (makes d.other non-NULL)
+        0x30, 0x09, // SEQUENCE
+        0x02, 0x01, 0x01, // INTEGER 1
+        0x04, 0x04, 0xde, 0xad, 0xbe, 0xef, // OCTET STRING
+        0x31, 0x00, // SET{} signer_info
+
+    };
+
+    const unsigned char *ptr_malformed_der = malformed_der;
+
+    ret = TEST_ptr(p7 = d2i_PKCS7(NULL, &ptr_malformed_der, sizeof(malformed_der)))
+        && TEST_ptr(sink = BIO_new(BIO_s_null()))
+        && TEST_ptr_null(bio = BIO_new_PKCS7(sink, p7))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+
+    BIO_free(bio);
+    BIO_free(sink);
+    PKCS7_free(p7);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(pkcs7_issuer_and_serial_negative_idx_test);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(pkcs7_verify_test);
     ADD_TEST(pkcs7_inner_content_verify_test);
+
 #endif /* OPENSSL_NO_EC */
+    ADD_TEST(pkcs7_stream_non_data_test);
     return 1;
 }
