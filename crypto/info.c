@@ -118,7 +118,9 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
                                    "prno:0x%llx:0x%llx:"
                                    "kma:0x%llx:0x%llx:"
                                    "pcc:0x%llx:0x%llx:"
-                                   "kdsa:0x%llx:0x%llx",
+                                   "kdsa:0x%llx:0x%llx:"
+                                   "cex_min_bits:%u"
+                                   "%s",
         OPENSSL_s390xcap_P.stfle[0], OPENSSL_s390xcap_P.stfle[1],
         OPENSSL_s390xcap_P.stfle[2], OPENSSL_s390xcap_P.stfle[3],
         OPENSSL_s390xcap_P.kimd[0], OPENSSL_s390xcap_P.kimd[1],
@@ -132,7 +134,13 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
         OPENSSL_s390xcap_P.prno[0], OPENSSL_s390xcap_P.prno[1],
         OPENSSL_s390xcap_P.kma[0], OPENSSL_s390xcap_P.kma[1],
         OPENSSL_s390xcap_P.pcc[0], OPENSSL_s390xcap_P.pcc[1],
-        OPENSSL_s390xcap_P.kdsa[0], OPENSSL_s390xcap_P.kdsa[1]);
+        OPENSSL_s390xcap_P.kdsa[0], OPENSSL_s390xcap_P.kdsa[1],
+#ifdef S390X_MOD_EXP
+        OPENSSL_s390xcex_min_bits,
+        (OPENSSL_s390xcex == -1 || OPENSSL_s390xcex_nodev) ? ":nocex" : "");
+#else
+        0, "");
+#endif
     if ((env = getenv("OPENSSL_s390xcap")) != NULL)
         cpu_info_append(" env:%s", env);
 #elif defined(__riscv)
