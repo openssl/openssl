@@ -900,8 +900,55 @@ DEF_SCRIPT(script_9, "Unidirectional default stream mode (server sends bidi firs
     OP_READ_EXPECT(Sa, "orange", 6);
 }
 
-DEF_SCRIPT(script_10, "place holder for multistrem script_10")
+/* 10. Shutdown */
+DEF_SCRIPT(script_10, "Shutdown test")
 {
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_READ_EXPECT(S, "apple", 5);
+
+    OP_SHUTDOWN_WAIT(C, 0, 0, NULL);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(S, 0, 1, 1);
+}
+
+/* 11. Many threads accepted on the same client connection */
+DEF_SCRIPT(script_11_child_0,
+    "child: accept stream from C, read, sleep, expect FIN")
+{
+    OP_ACCEPT_STREAM_WAIT(C, C0, 0 /* bidirectional */);
+    OP_READ_EXPECT_B(C0, "foo");
+    OP_SLEEP(10);
+    OP_EXPECT_FIN(C0);
+}
+
+DEF_SCRIPT(script_11_child_1,
+    "child: accept stream from C, read, sleep, expect FIN")
+{
+    OP_ACCEPT_STREAM_WAIT(C, C1, 0 /* bidirectional */);
+    OP_READ_EXPECT_B(C1, "foo");
+    OP_SLEEP(10);
+    OP_EXPECT_FIN(C1);
+}
+
+DEF_SCRIPT(script_11_child_2,
+    "child: accept stream from C, read, sleep, expect FIN")
+{
+    OP_ACCEPT_STREAM_WAIT(C, C2, 0 /* bidirectional */);
+    OP_READ_EXPECT_B(C2, "foo");
+    OP_SLEEP(10);
+    OP_EXPECT_FIN(C2);
+}
+
+DEF_SCRIPT(script_11_child_3,
+    "child: accept stream from C, read, sleep, expect FIN")
+{
+    OP_ACCEPT_STREAM_WAIT(C, C3, 0 /* bidirectional */);
+    OP_READ_EXPECT_B(C3, "foo");
+    OP_SLEEP(10);
+    OP_EXPECT_FIN(C3);
 }
 
 DEF_SCRIPT(script_11, "place holder for multistrem script_11")
