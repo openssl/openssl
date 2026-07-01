@@ -56,20 +56,31 @@ jobs:
         # run Valgrind on.
         include:
           # Default builds use assembler implementations (when available)
-          - name: linux-x86_64
+          - name: x86_64
             runs-on: ubuntu-latest
             config_extra: ""
-          - name: linux-aarch64
+            # Has ADX + BMI2, verified in step "Assert host CPU has ADX + BMI2"
+            ia32cap: ""
+          - name: x86_64-no-adx-no-bmi2
+            runs-on: ubuntu-latest
+            config_extra: ""
+            # Clear ADX (bit 19) and BMI2 (bit 8) of OPENSSL_ia32cap LV1,
+            # leaving LV0/LV2/LV3/LV4 untouched
+            ia32cap: "~0x0:~0x80100:~0x0:~0x0:~0x0"
+          - name: aarch64
             runs-on: ubuntu-24.04-arm
             config_extra: ""
+            ia32cap: ""
 
           # no-asm builds always use C implementations
-          - name: linux-x86_64-no-asm
+          - name: x86_64-no-asm
             runs-on: ubuntu-latest
             config_extra: no-asm
-          - name: linux-aarch64-no-asm
+            ia32cap: ""
+          - name: aarch64-no-asm
             runs-on: ubuntu-24.04-arm
             config_extra: no-asm
+            ia32cap: ""
 
     name: CT validation (${{ matrix.name }})
     runs-on: ${{ matrix.runs-on }}
@@ -86,6 +97,28 @@ jobs:
           sudo apt-get -y update
           sudo apt-get -y install valgrind
 
+      - name: Set ia32cap
+        # Pin the runtime CPU-capability vector so a specific x86_64 asm
+        # ladder is exercised regardless of the runner's actual CPU.
+        # 
+        # Note that it is only possible to *hide* capabilities of the host CPU,
+        # not add new capabilities. Attempting to run code depending on a
+        # capability not actually possessed by the host CPU would SIGILL.
+        if: matrix.ia32cap != ''
+        run: echo "OPENSSL_ia32cap=${{ matrix.ia32cap }}" >> $GITHUB_ENV
+
+      - name: Assert host CPU has ADX + BMI2
+        if: matrix.name == 'x86_64'
+        run: |
+          flags=" $(grep -m1 '^flags' /proc/cpuinfo) "
+          for f in adx bmi2; do
+            case "$flags" in
+              *" $f "*) ;;
+              *) echo "::error::ubuntu-latest CPU lacks expected capability $f. Update the CT matrix."; exit 1 ;;
+            esac
+          done
+          echo "Host CPU advertises ADX + BMI2."
+
       - name: Configure with CT validation enabled
         run: |
           ./Configure enable-ct-validation ${{ matrix.config_extra }}
@@ -100,11 +133,24 @@ jobs:
         # util/wrap.pl -> util/shlib_wrap.sh sets LD_LIBRARY_PATH first, so
         # the shared libraries are found correctly.
         #
-        # Algorithms covered:
+        # Algorithms & implementation covered:
         # - memcmp: test_crypto_memcmp
-        # - ML-KEM: test_internal_ml_kem
-        # - ML-DSA: test_internal_ml_dsa
+        #     - x86_64 asm
+        #     - x86_64 no-asm
+        #     - aarch64 asm
+        #     - aarch64 no-asm
+        # - ML-KEM/ML-DSA: test_internal_ml_kem/test_internal_ml_dsa
+        #     - x86_64 asm
+        #     - x86_64 no-asm
+        #     - aarch64 asm
+        #     - aarch64 no-asm
+        # - x25519: test_internal_curve25519
+        #     - x86_64 asm ADX/BMI2 (fe64 asm)
+        #     - x86_64 asm no-ADX/no-BMI2 (fe51 asm)
+        #     - x86_64 no-asm (fe51 C)
+        #     - aarch64 no-asm (fe51 C)
+        #     - FUTURE: x86 (fe C)
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_internal_curve25519" \
                OSSL_VALGRIND_CT=yes \
                test
