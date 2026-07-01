@@ -208,10 +208,9 @@ void EVP_SKEY_free(EVP_SKEY *skey)
 {
     int i;
 
-    if (skey == NULL)
+    if (skey == NULL || !CRYPTO_DOWN_REF(&skey->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&skey->references, &i);
     REF_PRINT_COUNT("EVP_SKEY", i, skey);
     if (i > 0)
         return;

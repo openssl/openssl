@@ -50,11 +50,7 @@ void ossl_kdf_data_free(KDF_DATA *kdfdata)
 {
     int ref = 0;
 
-    if (kdfdata == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&kdfdata->refcnt, &ref);
-    if (ref > 0)
+    if (kdfdata == NULL || !CRYPTO_DOWN_REF(&kdfdata->refcnt, &ref) || ref > 0)
         return;
 
     CRYPTO_FREE_REF(&kdfdata->refcnt);

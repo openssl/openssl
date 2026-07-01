@@ -258,9 +258,9 @@ void X509_STORE_free(X509_STORE *xs)
     STACK_OF(X509_LOOKUP) *sk;
     X509_LOOKUP *lu;
 
-    if (xs == NULL)
+    if (xs == NULL || !CRYPTO_DOWN_REF(&xs->references, &i))
         return;
-    CRYPTO_DOWN_REF(&xs->references, &i);
+
     REF_PRINT_COUNT("X509_STORE", i, xs);
     if (i > 0)
         return;

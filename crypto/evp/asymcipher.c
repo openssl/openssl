@@ -22,10 +22,7 @@ static void evp_asym_cipher_free(void *data)
     EVP_ASYM_CIPHER *cipher = (EVP_ASYM_CIPHER *)data;
     int i;
 
-    if (cipher == NULL)
-        return;
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
+    if (cipher == NULL || !CRYPTO_DOWN_REF(&cipher->refcnt, &i) || i > 0)
         return;
     OPENSSL_free(cipher->type_name);
     ossl_provider_free(cipher->prov);

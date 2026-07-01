@@ -119,10 +119,9 @@ void RSA_free(RSA *r)
 {
     int i;
 
-    if (r == NULL)
+    if (r == NULL || !CRYPTO_DOWN_REF(&r->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&r->references, &i);
     REF_PRINT_COUNT("RSA", i, r);
     if (i > 0)
         return;

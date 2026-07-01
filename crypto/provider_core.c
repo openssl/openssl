@@ -737,10 +737,9 @@ err:
 
 void ossl_provider_free(OSSL_PROVIDER *prov)
 {
-    if (prov != NULL) {
-        int ref = 0;
+    int ref = 0;
 
-        CRYPTO_DOWN_REF(&prov->refcnt, &ref);
+    if (prov != NULL && CRYPTO_DOWN_REF(&prov->refcnt, &ref)) {
 
         /*
          * When the refcount drops to zero, we clean up the provider.
@@ -1587,8 +1586,8 @@ int ossl_provider_doall_activated(OSSL_LIB_CTX *ctx,
              * whilst still activated in the child for a short period. That's ok.
              */
             if (!CRYPTO_atomic_add(&prov->activatecnt, 1, &ref,
-                    prov->activatecnt_lock)) {
-                CRYPTO_DOWN_REF(&prov->refcnt, &ref);
+                    prov->activatecnt_lock)
+                || !CRYPTO_DOWN_REF(&prov->refcnt, &ref)) {
                 CRYPTO_THREAD_unlock(prov->flag_lock);
                 goto err_unlock;
             }

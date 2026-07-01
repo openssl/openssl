@@ -22,11 +22,7 @@ static void evp_kem_free(void *data)
     EVP_KEM *kem = (EVP_KEM *)data;
     int i;
 
-    if (kem == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&kem->refcnt, &i);
-    if (i > 0)
+    if (kem == NULL || !CRYPTO_DOWN_REF(&kem->refcnt, &i) || i > 0)
         return;
     OPENSSL_free(kem->type_name);
     ossl_provider_free(kem->prov);

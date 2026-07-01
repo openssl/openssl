@@ -22,11 +22,7 @@ static void evp_keymgmt_free(void *data)
     EVP_KEYMGMT *keymgmt = (EVP_KEYMGMT *)data;
     int ref = 0;
 
-    if (keymgmt == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
-    if (ref > 0)
+    if (keymgmt == NULL || !CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref) || ref > 0)
         return;
     OPENSSL_free(keymgmt->type_name);
     ossl_provider_free(keymgmt->prov);

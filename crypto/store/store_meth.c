@@ -33,8 +33,7 @@ static void free_loader(void *method)
     if (loader != NULL && loader->prov != NULL) {
         int i;
 
-        CRYPTO_DOWN_REF(&loader->refcnt, &i);
-        if (i > 0)
+        if (!CRYPTO_DOWN_REF(&loader->refcnt, &i) || i > 0)
             return;
         ossl_provider_free(loader->prov);
         CRYPTO_FREE_REF(&loader->refcnt);

@@ -30,11 +30,8 @@ static void ossl_encoder_free(void *data)
     OSSL_ENCODER *encoder = (OSSL_ENCODER *)data;
     int ref = 0;
 
-    if (encoder == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&encoder->base.refcnt, &ref);
-    if (ref > 0)
+    if (encoder == NULL || !CRYPTO_DOWN_REF(&encoder->base.refcnt, &ref)
+        || ref > 0)
         return;
     OPENSSL_free(encoder->base.name);
     ossl_property_free(encoder->base.parsed_propdef);

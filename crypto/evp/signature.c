@@ -25,10 +25,7 @@ static void evp_signature_free(void *data)
     EVP_SIGNATURE *signature = (EVP_SIGNATURE *)data;
     int i;
 
-    if (signature == NULL)
-        return;
-    CRYPTO_DOWN_REF(&signature->refcnt, &i);
-    if (i > 0)
+    if (signature == NULL || !CRYPTO_DOWN_REF(&signature->refcnt, &i) || i > 0)
         return;
     OPENSSL_free(signature->type_name);
     ossl_provider_free(signature->prov);

@@ -1585,10 +1585,9 @@ void ossl_ec_nistp384_pre_comp_free(NISTP384_PRE_COMP *p)
 {
     int i;
 
-    if (p == NULL)
+    if (p == NULL || !CRYPTO_DOWN_REF(&p->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&p->references, &i);
     REF_PRINT_COUNT("ossl_ec_nistp384", i, p);
     if (i > 0)
         return;

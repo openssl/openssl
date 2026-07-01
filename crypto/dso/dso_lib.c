@@ -51,7 +51,7 @@ int DSO_free(DSO *dso)
     if (dso == NULL)
         return 1;
 
-    if (CRYPTO_DOWN_REF(&dso->references, &i) <= 0)
+    if (!CRYPTO_DOWN_REF(&dso->references, &i))
         return 0;
 
     REF_PRINT_COUNT("DSO", i, dso);

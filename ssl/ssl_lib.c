@@ -1471,9 +1471,9 @@ void SSL_free(SSL *s)
 {
     int i;
 
-    if (s == NULL)
+    if (s == NULL || !CRYPTO_DOWN_REF(&s->references, &i))
         return;
-    CRYPTO_DOWN_REF(&s->references, &i);
+
     REF_PRINT_COUNT("SSL", i, s);
     if (i > 0)
         return;
@@ -4559,10 +4559,9 @@ void SSL_CTX_free(SSL_CTX *a)
     int i;
     size_t j;
 
-    if (a == NULL)
+    if (a == NULL || !CRYPTO_DOWN_REF(&a->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&a->references, &i);
     REF_PRINT_COUNT("SSL_CTX", i, a);
     if (i > 0)
         return;

@@ -1243,10 +1243,9 @@ void EC_nistp224_pre_comp_free(NISTP224_PRE_COMP *p)
 {
     int i;
 
-    if (p == NULL)
+    if (p == NULL || !CRYPTO_DOWN_REF(&p->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&p->references, &i);
     REF_PRINT_COUNT("EC_nistp224", i, p);
     if (i > 0)
         return;
