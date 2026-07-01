@@ -54,24 +54,14 @@ ASN1_SEQUENCE(TS_REQ) = {
 IMPLEMENT_ASN1_FUNCTIONS(TS_REQ)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_REQ)
 
-static void *d2i_TS_REQ_thunk(void **a, const unsigned char **pp, long length)
-{
-    return (void *)d2i_TS_REQ((TS_REQ **)a, pp, length);
-}
-
-static int i2d_TS_REQ_thunk(const void *a, unsigned char **p)
-{
-    return i2d_TS_REQ((TS_REQ *)a, p);
-}
-
 TS_REQ *d2i_TS_REQ_bio(BIO *bp, TS_REQ **a)
 {
-    return ASN1_d2i_bio((void *(*)(void))TS_REQ_new, d2i_TS_REQ_thunk, bp, (void **)a);
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(TS_REQ), bp, (void **)a);
 }
 
 int i2d_TS_REQ_bio(BIO *bp, const TS_REQ *a)
 {
-    return ASN1_i2d_bio(i2d_TS_REQ_thunk, bp, a);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(TS_REQ), bp, a);
 }
 #ifndef OPENSSL_NO_STDIO
 TS_REQ *d2i_TS_REQ_fp(FILE *fp, TS_REQ **a)
@@ -110,11 +100,6 @@ ASN1_SEQUENCE(TS_TST_INFO) = {
 IMPLEMENT_ASN1_FUNCTIONS(TS_TST_INFO)
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_TST_INFO)
 
-static int i2d_TS_TST_INFO_thunk(const void *a, unsigned char **p)
-{
-    return i2d_TS_TST_INFO((TS_TST_INFO *)a, p);
-}
-
 TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 {
     return ASN1_d2i_bio_of(TS_TST_INFO, TS_TST_INFO_new, d2i_TS_TST_INFO, bp,
@@ -123,7 +108,7 @@ TS_TST_INFO *d2i_TS_TST_INFO_bio(BIO *bp, TS_TST_INFO **a)
 
 int i2d_TS_TST_INFO_bio(BIO *bp, const TS_TST_INFO *a)
 {
-    return ASN1_i2d_bio(i2d_TS_TST_INFO_thunk, bp, a);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(TS_TST_INFO), bp, a);
 }
 #ifndef OPENSSL_NO_STDIO
 TS_TST_INFO *d2i_TS_TST_INFO_fp(FILE *fp, TS_TST_INFO **a)
@@ -196,24 +181,14 @@ IMPLEMENT_ASN1_FUNCTIONS(TS_RESP)
 
 IMPLEMENT_ASN1_DUP_FUNCTION(TS_RESP)
 
-static void *d2i_TS_RESP_thunk(void **a, const unsigned char **pp, long length)
-{
-    return (void *)d2i_TS_RESP((TS_RESP **)a, pp, length);
-}
-
-static int i2d_TS_RESP_thunk(const void *a, unsigned char **p)
-{
-    return i2d_TS_RESP((TS_RESP *)a, p);
-}
-
 TS_RESP *d2i_TS_RESP_bio(BIO *bp, TS_RESP **a)
 {
-    return ASN1_d2i_bio((void *(*)(void))TS_RESP_new, d2i_TS_RESP_thunk, bp, (void **)a);
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(TS_RESP), bp, (void **)a);
 }
 
 int i2d_TS_RESP_bio(BIO *bp, const TS_RESP *a)
 {
-    return ASN1_i2d_bio(i2d_TS_RESP_thunk, bp, a);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(TS_RESP), bp, a);
 }
 #ifndef OPENSSL_NO_STDIO
 TS_RESP *d2i_TS_RESP_fp(FILE *fp, TS_RESP **a)
