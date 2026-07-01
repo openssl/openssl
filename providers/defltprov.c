@@ -34,10 +34,6 @@ static OSSL_FUNC_provider_query_operation_fn deflt_query;
 #define ALGC(NAMES, FUNC, CHECK) { { NAMES, "provider=default", FUNC }, CHECK }
 #define ALG(NAMES, FUNC) ALGC(NAMES, FUNC, NULL)
 
-/* Functions provided by the core */
-static OSSL_FUNC_core_gettable_params_fn *c_gettable_params = NULL;
-static OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
-
 /* Parameters we provide to the core */
 static const OSSL_PARAM deflt_param_types[] = {
     OSSL_PARAM_DEFN(OSSL_PROV_PARAM_NAME, OSSL_PARAM_UTF8_PTR, NULL, 0),
@@ -632,12 +628,6 @@ int ossl_default_provider_init(const OSSL_CORE_HANDLE *handle,
         return 0;
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
-        case OSSL_FUNC_CORE_GETTABLE_PARAMS:
-            c_gettable_params = OSSL_FUNC_core_gettable_params(in);
-            break;
-        case OSSL_FUNC_CORE_GET_PARAMS:
-            c_get_params = OSSL_FUNC_core_get_params(in);
-            break;
         case OSSL_FUNC_CORE_GET_LIBCTX:
             c_get_libctx = OSSL_FUNC_core_get_libctx(in);
             break;
