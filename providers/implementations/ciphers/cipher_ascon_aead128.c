@@ -471,6 +471,12 @@ static int ascon_aead128_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             return 1;
         }
 
+        /* only take tags as input during decryption */
+        if (ctx->direction == ENCRYPTION) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
+            return 0;
+        }
+
         if (p.tag->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
