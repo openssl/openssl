@@ -246,16 +246,17 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
 OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx(BN_CTX *ctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs)
 {
-    size_t needed;
+    return bn_ctx_acquire_ossl_fn_ctx_size(ctx,
+        OSSL_FN_CTX_size(max_n_frames, max_n_numbers, max_n_limbs));
+}
 
-    if (ctx == NULL)
+OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx_size(BN_CTX *ctx, size_t size)
+{
+    if (ctx == NULL || size == 0)
         return NULL;
 
-    needed = ossl_fn_ctx_calculate_arena_size(max_n_frames, max_n_numbers,
-        max_n_limbs);
-
     if (ctx->fn_ctx != NULL) {
-        if (ctx->fn_ctx->msize >= needed) {
+        if (ctx->fn_ctx->msize >= size) {
             /*
              * Existing context is large enough.  Ensure no frames are
              * outstanding (callers are expected to have ended them).
@@ -269,11 +270,9 @@ OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx(BN_CTX *ctx, size_t max_n_frames,
     }
 
     if (ctx->flags & BN_FLG_SECURE)
-        ctx->fn_ctx = OSSL_FN_CTX_secure_new(ctx->libctx, max_n_frames,
-            max_n_numbers, max_n_limbs);
+        ctx->fn_ctx = OSSL_FN_CTX_secure_new_size(ctx->libctx, size);
     else
-        ctx->fn_ctx = OSSL_FN_CTX_new(ctx->libctx, max_n_frames,
-            max_n_numbers, max_n_limbs);
+        ctx->fn_ctx = OSSL_FN_CTX_new_size(ctx->libctx, size);
 
     return ctx->fn_ctx;
 }

@@ -39,9 +39,8 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     if (rf == NULL)
         return 0;
 
-    size_t max = a->dmax * 2;
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 2, max * 4);
+    size_t ctx_size = OSSL_FN_sqr_ctx_size(rf, a->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
     if (fnctx == NULL) {
         bn_release(r, r->top);
         return 0;
