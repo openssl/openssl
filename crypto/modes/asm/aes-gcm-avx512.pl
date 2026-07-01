@@ -4713,12 +4713,23 @@ ___
 
   # ;; =====================================================
   # ;; ==== 32-deep pipeline flush (correct drain)
-  # ;; ==== Fully reduce the 32 pending blocks (slot0: H^32..H^17,
-  # ;; ==== slot1: H^16..H^1) into AAD_HASH, then process the remaining
-  # ;; ==== < 32-block tail against the reduced hash. All GHASH key powers
-  # ;; ==== stay within H^1..H^32 (HKEYS_STORAGE_CAPACITY), so the tail can
-  # ;; ==== never require a stale/out-of-range hash key.
+  # ;; ==== 32 blocks are pending in the two stack slots (slot0 = oldest 16,
+  # ;; ==== weighted H^32..H^17; slot1 = next 16, weighted H^16..H^1). To stay
+  # ;; ==== within the 32 stored hash keys, the pending window is reduced as a
+  # ;; ==== single 32-block GHASH chain and the < 32-block tail is hashed as a
+  # ;; ==== second chain. The counter is still big-endian here: keep it BE for
+  # ;; ==== the GCM_ENC_DEC_LAST path and convert to LE before the small path
+  # ;; ==== or the final store.
   # ;; =====================================================
+  $code .= <<___;
+        cmp               \$`(16 * 16)`,$LENGTH
+        ja                .L_tail_gt_16_blocks_${label_suffix}
+___
+
+  # ;; ---- tail <= 16 blocks (including none) ----
+  # ;; There is no full 16-block group of new ciphertext to hide the pending
+  # ;; GHASH under, so just reduce the 32 pending blocks and then encrypt+hash
+  # ;; the small tail with GCM_ENC_DEC_SMALL.
   &GHASH_16(
     "start", $GH, $GM, $GL, "%rsp", $STACK_LOCAL_OFFSET, (0 * 16),
     "%rsp", &HashKeyOffsetByIdx(32, "frame"),
@@ -4729,15 +4740,6 @@ ___
     "%rsp", &HashKeyOffsetByIdx(16, "frame"),
     0, $AAD_HASHz, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP8, $ZTMP9);
 
-  # ;; The 32 pending blocks are now folded into AAD_HASH; nothing is pending.
-  # ;; Dispatch the remaining tail (0..31 blocks + partial). The counter is
-  # ;; still big-endian here: keep it BE for the GCM_ENC_DEC_LAST path and
-  # ;; convert to little-endian before the small path / final store.
-  $code .= <<___;
-        cmp               \$`(16 * 16)`,$LENGTH
-        ja                .L_tail_gt_16_blocks_${label_suffix}
-___
-
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
   $code .= <<___;
         or                $LENGTH,$LENGTH
@@ -4747,18 +4749,39 @@ ___
 .L_tail_gt_16_blocks_${label_suffix}:
 ___
 
-  # ;; 16 < remaining < 32 blocks: cipher the first 16 into slot0 (no ghash),
-  # ;; then fall into the below-32-blocks path, which GHASHes slot0 together
-  # ;; with the tail in a single reduction. slot0 is weighted H^(16+m)..H^(1+m)
-  # ;; with m <= 15 (i.e. up to H^31), which is within the stored key range.
+  # ;; ---- 16 < tail < 32 blocks ----
+  # ;; Stitch: GHASH the oldest pending 16 (slot0, H^32..H^17) while encrypting
+  # ;; the first 16 tail blocks into slot0, hiding that GHASH under the tail's
+  # ;; AES-CTR instead of running it as a standalone pass. This starts the
+  # ;; 32-block pending reduction chain.
   $aesout_offset      = ($STACK_LOCAL_OFFSET + (0 * 16));
+  $ghashin_offset     = ($STACK_LOCAL_OFFSET + (0 * 16));
   $data_in_out_offset = (0 * 16);
-  &INITIAL_BLOCKS_16(
-    $PLAIN_CIPH_IN, $CIPH_PLAIN_OUT, $AES_KEYS,      $DATA_OFFSET,        "no_ghash", $CTR_BLOCKz,
-    $CTR_CHECK,     $ADDBE_4x4,      $ADDBE_1234,    $ZTMP0,              $ZTMP1,     $ZTMP2,
-    $ZTMP3,         $ZTMP4,          $ZTMP5,         $ZTMP6,              $ZTMP7,     $ZTMP8,
-    $SHUF_MASK,     $ENC_DEC,        $aesout_offset, $data_in_out_offset, $IA0);
+  &GHASH_16_ENCRYPT_16_PARALLEL(
+    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,
+    $CTR_CHECK,
+    32,        $aesout_offset,  $ghashin_offset, $SHUF_MASK,   $ZTMP0,
+    $ZTMP1,
+    $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,
+    $ZTMP7,
+    $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,
+    $ZTMP13,
+    $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
+    $ZTMP19,
+    $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
+    $GL,
+    $GH,       $GM,             "first_time",    $ENC_DEC,     $data_in_out_offset, $AAD_HASHz,
+    $IA0, $PRELOADED_AES_KEY0, $PRELOADED_AES_KEY1);
 
+  # ;; Finish the 32-block pending chain: hash slot1 (H^16..H^1) with reduction.
+  &GHASH_16(
+    "end_reduce", $GH, $GM, $GL, "%rsp", $STACK_LOCAL_OFFSET, (16 * 16),
+    "%rsp", &HashKeyOffsetByIdx(16, "frame"),
+    0, $AAD_HASHz, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP8, $ZTMP9);
+
+  # ;; slot0 now holds the first 16 tail blocks (ciphered, unhashed). The
+  # ;; below-32-blocks path hashes them together with the remaining tail as a
+  # ;; second reduction chain (slot0 weighted H^(16+m)..H^(1+m), m <= 15).
   $code .= "jmp           .L_message_below_32_blocks_${label_suffix}\n";
 
 
