@@ -164,6 +164,48 @@ end:
     return ret;
 }
 
+static int test_ctx_size(void)
+{
+    int ret = 1;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *f = NULL;
+    const void *token = NULL;
+    size_t size = OSSL_FN_CTX_size(1, 2, 4096 / OSSL_FN_BITS);
+
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size))) {
+        ret = 0;
+        goto end;
+    }
+
+    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+        ret = 0;
+        goto end;
+    }
+
+    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048))
+        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
+        || !TEST_false(ossl_fn_is_securely_allocated(f))
+        || !TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048))
+        || !TEST_ptr_null(f = OSSL_FN_CTX_get_bits(ctx, 2048)))
+        ret = 0;
+
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token)))
+        ret = 0;
+
+end:
+    OSSL_FN_CTX_free(ctx);
+
+    if (!TEST_size_t_eq(OSSL_FN_CTX_size(SIZE_MAX,
+                            sizeof(struct ossl_fn_ctx_frame_st), 0),
+            0))
+        ret = 0;
+    if (!TEST_ptr_null(OSSL_FN_CTX_new_size(NULL, SIZE_MAX)))
+        ret = 0;
+
+    return ret;
+}
+
 static int test_secure_ctx(void)
 {
     int ret = 1;
@@ -201,6 +243,42 @@ static int test_secure_ctx(void)
 
 end:
     OSSL_FN_CTX_free(ctx);
+
+    return ret;
+}
+
+static int test_secure_ctx_size(void)
+{
+    int ret = 1;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *f = NULL;
+    const void *token = NULL;
+    size_t size = OSSL_FN_CTX_size(1, 1, 2048 / OSSL_FN_BITS);
+
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx = OSSL_FN_CTX_secure_new_size(NULL, size))) {
+        ret = 0;
+        goto end;
+    }
+
+    if (!TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+        ret = 0;
+        goto end;
+    }
+
+    if (!TEST_ptr(f = OSSL_FN_CTX_get_bits(ctx, 2048))
+        || !TEST_false(ossl_fn_is_dynamically_allocated(f))
+        || !TEST_true(ossl_fn_is_securely_allocated(f)))
+        ret = 0;
+
+    if (!TEST_true(OSSL_FN_CTX_end(ctx, token)))
+        ret = 0;
+
+end:
+    OSSL_FN_CTX_free(ctx);
+
+    if (!TEST_ptr_null(OSSL_FN_CTX_secure_new_size(NULL, SIZE_MAX)))
+        ret = 0;
 
     return ret;
 }
@@ -343,7 +421,9 @@ int setup_tests(void)
     ADD_TEST(test_alloc);
     ADD_TEST(test_secure_alloc);
     ADD_TEST(test_ctx);
+    ADD_TEST(test_ctx_size);
     ADD_TEST(test_secure_ctx);
+    ADD_TEST(test_secure_ctx_size);
     ADD_TEST(test_ctx_peak_used);
 
     return 1;

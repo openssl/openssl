@@ -16,8 +16,10 @@
  */
 
 #include <openssl/rand.h>
+#include <openssl/err.h>
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
+#include "crypto/fnerr.h"
 #include "testutil.h"
 
 /*
@@ -61,18 +63,27 @@ static int check_limbs_value(const OSSL_FN *f, size_t start, size_t end,
 }
 
 /* A set of numbers on OSSL_FN_ULONG array form */
+/* $num0 = 0x8000000000000001 */
 static const OSSL_FN_ULONG num0[] = { OSSL_FN_ULONG64_C(0x80000000, 0x00000001) };
+/* $num1 = 0x0000000180000000 */
 static const OSSL_FN_ULONG num1[] = { OSSL_FN_ULONG64_C(0x00000001, 0x80000000) };
+/* $num2 = 0x0123456789abcdef */
 static const OSSL_FN_ULONG num2[] = { OSSL_FN_ULONG64_C(0x01234567, 0x89abcdef) };
+/* $num3 = 0x76543210fedcba98 */
 static const OSSL_FN_ULONG num3[] = { OSSL_FN_ULONG64_C(0xfedcba98, 0x76543210) };
 
 /* Numbers for edge cases */
+/* $num4 = 0x0000000000000000 */
 static const OSSL_FN_ULONG num4[] = { OSSL_FN_ULONG64_C(0x00000000, 0x00000000) };
+/* $num5 = 0xffffffffffffffff */
 static const OSSL_FN_ULONG num5[] = { OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff) };
+/* $num6 = 0x10000000000000000000000000000000 */
 static const OSSL_FN_ULONG num6[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
     OSSL_FN_ULONG64_C(0x10000000, 0x00000000),
 };
+/* [32-bit] $num7 = 0xffffffff00000000000000000000000000000000 */
+/* [64-bit] $num7 = 0xffffffffffffffff00000000000000000000000000000000 */
 static const OSSL_FN_ULONG num7[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
@@ -98,38 +109,47 @@ static const OSSL_FN_ULONG num8[] = {
  */
 #define LIMBSOF(num) ((sizeof(num) + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES)
 struct test_case_st {
-    /* Two operands and expected full result */
+    /* Two operands and expected full result (possibly two numbers) */
     const OSSL_FN_ULONG *op1;
     size_t op1_size;
     const OSSL_FN_ULONG *op2;
     size_t op2_size;
-    const OSSL_FN_ULONG *ex;
-    size_t ex_size;
+    const OSSL_FN_ULONG *ex1;
+    size_t ex1_size;
+    const OSSL_FN_ULONG *ex2;
+    size_t ex2_size;
 
     /* Setup sizes for creating OSSL_FNs */
     size_t op1_live_size;
     size_t op2_live_size;
-    size_t res_live_size;
+    size_t res1_live_size;
+    size_t res2_live_size;
 
-    /* Number of limbs to compare the result's OSSL_FN_ULONG array against ex */
-    size_t check_size;
+    /* Number of limbs to compare the result's OSSL_FN_ULONG array against ex1 and ex2 */
+    size_t check1_size;
+    size_t check2_size;
 
-    /* When the result is larger than check_size, the expected extended value */
-    OSSL_FN_ULONG extended_limb_value;
+    /* When the result is larger than check1_size or check2_size, the expected extended value */
+    OSSL_FN_ULONG extended_limb_value1;
+    OSSL_FN_ULONG extended_limb_value2;
 #define EXTENDED_LIMB_ZERO ((OSSL_FN_ULONG)0)
 #define EXTENDED_LIMB_MINUS_ONE ((OSSL_FN_ULONG)-1)
 };
 
+/* $num0 + $num0 == 0x10000000000000002 */
 static const OSSL_FN_ULONG ex_add_num0_num0[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000002),
     OSSL_FN_ULONG_C(0x1),
 };
+/* $num0 + $num1 == 0x8000000180000001 */
 static const OSSL_FN_ULONG ex_add_num0_num1[] = {
     OSSL_FN_ULONG64_C(0x80000001, 0x80000001),
 };
+/* $num0 + $num2 == 0x8123456789abcdf0 */
 static const OSSL_FN_ULONG ex_add_num0_num2[] = {
     OSSL_FN_ULONG64_C(0x81234567, 0x89abcdf0),
 };
+/* $num0 + $num3 == 0x17edcba9876543211 */
 static const OSSL_FN_ULONG ex_add_num0_num3[] = {
     OSSL_FN_ULONG64_C(0x7edcba98, 0x76543211),
     OSSL_FN_ULONG_C(0x1),
@@ -171,12 +191,12 @@ static int test_add_common(struct test_case_st test_case)
     size_t n1_limbs = test_case.op1_size;
     const OSSL_FN_ULONG *n2 = test_case.op2;
     size_t n2_limbs = test_case.op2_size;
-    const OSSL_FN_ULONG *ex = test_case.ex;
+    const OSSL_FN_ULONG *ex = test_case.ex1;
     size_t n1_new_limbs = test_case.op1_live_size;
     size_t n2_new_limbs = test_case.op2_live_size;
-    size_t res_limbs = test_case.res_live_size;
-    size_t check_limbs = test_case.check_size;
-    OSSL_FN_ULONG extended_value = test_case.extended_limb_value;
+    size_t res_limbs = test_case.res1_live_size;
+    size_t check_limbs = test_case.check1_size;
+    OSSL_FN_ULONG extended_value = test_case.extended_limb_value1;
     int ret = 1;
     OSSL_FN *fn1 = NULL, *fn2 = NULL, *res = NULL;
     const OSSL_FN_ULONG *u = NULL;
@@ -210,19 +230,24 @@ end:
     return ret;
 }
 
-#define ADD_CASE(i, op1, op2, ex)                     \
-    {                                                 \
-        /* op1 */ op1,                                \
-        /* op1_size */ LIMBSOF(op1),                  \
-        /* op2 */ op2,                                \
-        /* op2_size */ LIMBSOF(op2),                  \
-        /* ex */ ex,                                  \
-        /* ex_size */ LIMBSOF(ex),                    \
-        /* op1_live_size */ LIMBSOF(op1) + 1,         \
-        /* op2_live_size */ LIMBSOF(op2) + 2,         \
-        /* res_live_size */ LIMBSOF(ex) + 3,          \
-        /* check_size */ LIMBSOF(ex),                 \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO, \
+#define ADD_CASE(i, op1, op2, ex)                      \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ op2,                                 \
+        /* op2_size */ LIMBSOF(op2),                   \
+        /* ex1 */ ex,                                  \
+        /* ex1_size */ LIMBSOF(ex),                    \
+        /* ex2 */ NULL,                                \
+        /* ex2_size */ 0,                              \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ LIMBSOF(op2) + 2,          \
+        /* res1_live_size */ LIMBSOF(ex) + 3,          \
+        /* res2_live_size */ 0,                        \
+        /* check1_size */ LIMBSOF(ex),                 \
+        /* check2_size */ 0,                           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ 0,                  \
     }
 
 static struct test_case_st test_add_cases[] = {
@@ -250,19 +275,24 @@ static int test_add(int i)
     return test_add_common(test_add_cases[i]);
 }
 
-#define ADD_TRUNCATED_CASE(i, op1, op2, ex)           \
-    {                                                 \
-        /* op1 */ op1,                                \
-        /* op1_size */ LIMBSOF(op1),                  \
-        /* op2 */ op2,                                \
-        /* op2_size */ LIMBSOF(op2),                  \
-        /* ex */ ex,                                  \
-        /* ex_size */ LIMBSOF(ex),                    \
-        /* op1_live_size */ LIMBSOF(op1) + 1,         \
-        /* op2_live_size */ LIMBSOF(op2) + 2,         \
-        /* res_live_size */ LIMBSOF(ex) - 1,          \
-        /* check_size */ LIMBSOF(ex) - 1,             \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO, \
+#define ADD_TRUNCATED_CASE(i, op1, op2, ex)            \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ op2,                                 \
+        /* op2_size */ LIMBSOF(op2),                   \
+        /* ex1 */ ex,                                  \
+        /* ex1_size */ LIMBSOF(ex),                    \
+        /* ex2 */ NULL,                                \
+        /* ex2_size */ 0,                              \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ LIMBSOF(op2) + 2,          \
+        /* res1_live_size */ LIMBSOF(ex) - 1,          \
+        /* res2_live_size */ 0,                        \
+        /* check1_size */ LIMBSOF(ex) - 1,             \
+        /* check2_size */ 0,                           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ 0,                  \
     }
 
 static struct test_case_st test_add_truncated_cases[] = {
@@ -413,12 +443,12 @@ static int test_sub_common(struct test_case_st test_case)
     size_t n1_limbs = test_case.op1_size;
     const OSSL_FN_ULONG *n2 = test_case.op2;
     size_t n2_limbs = test_case.op2_size;
-    const OSSL_FN_ULONG *ex = test_case.ex;
+    const OSSL_FN_ULONG *ex = test_case.ex1;
     size_t n1_new_limbs = test_case.op1_live_size;
     size_t n2_new_limbs = test_case.op2_live_size;
-    size_t res_limbs = test_case.res_live_size;
-    size_t check_limbs = test_case.check_size;
-    OSSL_FN_ULONG extended_value = test_case.extended_limb_value;
+    size_t res_limbs = test_case.res1_live_size;
+    size_t check_limbs = test_case.check1_size;
+    OSSL_FN_ULONG extended_value = test_case.extended_limb_value1;
     int ret = 1;
     OSSL_FN *fn1 = NULL, *fn2 = NULL, *res = NULL;
     const OSSL_FN_ULONG *u = NULL;
@@ -458,13 +488,18 @@ end:
         /* op1_size */ LIMBSOF(op1),          \
         /* op2 */ op2,                        \
         /* op2_size */ LIMBSOF(op2),          \
-        /* ex */ ex,                          \
-        /* ex_size */ LIMBSOF(ex),            \
+        /* ex1 */ ex,                         \
+        /* ex1_size */ LIMBSOF(ex),           \
+        /* ex2 */ NULL,                       \
+        /* ex2_size */ 0,                     \
         /* op1_live_size */ LIMBSOF(op1) + 1, \
         /* op2_live_size */ LIMBSOF(op2) + 2, \
-        /* res_live_size */ LIMBSOF(ex) + 3,  \
-        /* check_size */ LIMBSOF(ex),         \
-        /* extended_limb_value */ (ext),      \
+        /* res1_live_size */ LIMBSOF(ex) + 3, \
+        /* res2_live_size */ 0,               \
+        /* check1_size */ LIMBSOF(ex),        \
+        /* check2_size */ 0,                  \
+        /* extended_limb_value1 */ (ext),     \
+        /* extended_limb_value2 */ 0,         \
     }
 
 static struct test_case_st test_sub_cases[] = {
@@ -493,19 +528,24 @@ static int test_sub(int i)
     return test_sub_common(test_sub_cases[i]);
 }
 
-#define SUB_TRUNCATED_CASE(i, op1, op2, ex)           \
-    {                                                 \
-        /* op1 */ op1,                                \
-        /* op1_size */ LIMBSOF(op1),                  \
-        /* op2 */ op2,                                \
-        /* op2_size */ LIMBSOF(op2),                  \
-        /* ex */ ex,                                  \
-        /* ex_size */ LIMBSOF(ex),                    \
-        /* op1_live_size */ LIMBSOF(op1) + 1,         \
-        /* op2_live_size */ LIMBSOF(op2) + 2,         \
-        /* res_live_size */ LIMBSOF(ex) - 1,          \
-        /* check_size */ LIMBSOF(ex) - 1,             \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO, \
+#define SUB_TRUNCATED_CASE(i, op1, op2, ex)            \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ op2,                                 \
+        /* op2_size */ LIMBSOF(op2),                   \
+        /* ex1 */ ex,                                  \
+        /* ex1_size */ LIMBSOF(ex),                    \
+        /* ex2 */ NULL,                                \
+        /* ex2_size */ 0,                              \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ LIMBSOF(op2) + 2,          \
+        /* res1_live_size */ LIMBSOF(ex) - 1,          \
+        /* res2_live_size */ 0,                        \
+        /* check1_size */ LIMBSOF(ex) - 1,             \
+        /* check2_size */ 0,                           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ 0,                  \
     }
 
 static struct test_case_st test_sub_truncated_cases[] = {
@@ -760,6 +800,7 @@ static const OSSL_FN_ULONG ex_mul_num5_num5[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
     OSSL_FN_ULONG64_C(0xFFFFFFFF, 0xFFFFFFFE),
 };
+/* $num6 * $num6 == 0x0100000000000000000000000000000000000000000000000000000000000000 */
 static const OSSL_FN_ULONG ex_mul_num6_num6[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
@@ -880,12 +921,12 @@ static int test_mul_common(struct test_case_st test_case)
     size_t n1_limbs = test_case.op1_size;
     const OSSL_FN_ULONG *n2 = test_case.op2;
     size_t n2_limbs = test_case.op2_size;
-    const OSSL_FN_ULONG *ex = test_case.ex;
+    const OSSL_FN_ULONG *ex = test_case.ex1;
     size_t n1_new_limbs = test_case.op1_live_size;
     size_t n2_new_limbs = test_case.op2_live_size;
-    size_t res_limbs = test_case.res_live_size;
-    size_t check_limbs = test_case.check_size;
-    OSSL_FN_ULONG extended_value = test_case.extended_limb_value;
+    size_t res_limbs = test_case.res1_live_size;
+    size_t check_limbs = test_case.check1_size;
+    OSSL_FN_ULONG extended_value = test_case.extended_limb_value1;
     OSSL_FN *fn1 = NULL, *fn2 = NULL, *res = NULL;
     const OSSL_FN_ULONG *u = NULL;
 
@@ -922,19 +963,24 @@ end:
 }
 
 /* i should be set to match the iteration number that's displayed when testing */
-#define MUL_CASE(i, op1, op2, ex)                                        \
-    {                                                                    \
-        /* op1 */ op1,                                                   \
-        /* op1_size */ LIMBSOF(op1),                                     \
-        /* op2 */ op2,                                                   \
-        /* op2_size */ LIMBSOF(op2),                                     \
-        /* ex */ ex,                                                     \
-        /* ex_size */ LIMBSOF(ex),                                       \
-        /* op1_live_size */ LIMBSOF(op1) + 1,                            \
-        /* op2_live_size */ LIMBSOF(op2) + 2,                            \
-        /* res_live_size */ LIMBSOF(op1) + LIMBSOF(op2) + ((i - 1) % 4), \
-        /* check_size */ LIMBSOF(ex),                                    \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO,                    \
+#define MUL_CASE(i, op1, op2, ex)                                         \
+    {                                                                     \
+        /* op1 */ op1,                                                    \
+        /* op1_size */ LIMBSOF(op1),                                      \
+        /* op2 */ op2,                                                    \
+        /* op2_size */ LIMBSOF(op2),                                      \
+        /* ex1 */ ex,                                                     \
+        /* ex1_size */ LIMBSOF(ex),                                       \
+        /* ex2 */ ex,                                                     \
+        /* ex2_size */ 0,                                                 \
+        /* op1_live_size */ LIMBSOF(op1) + 1,                             \
+        /* op2_live_size */ LIMBSOF(op2) + 2,                             \
+        /* res1_live_size */ LIMBSOF(op1) + LIMBSOF(op2) + ((i - 1) % 4), \
+        /* res2_live_size */ 0,                                           \
+        /* check1_size */ LIMBSOF(ex),                                    \
+        /* check2_size */ 0,                                              \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO,                    \
+        /* extended_limb_value2 */ 0,                                     \
     }
 
 static struct test_case_st test_mul_cases[] = {
@@ -967,34 +1013,44 @@ static int test_mul(int i)
 }
 
 /* i should be set to match the iteration number that's displayed when testing */
-#define MUL_TRUNCATED_CASE(i, op1, op2, ex)           \
-    {                                                 \
-        /* op1 */ op1,                                \
-        /* op1_size */ LIMBSOF(op1),                  \
-        /* op2 */ op2,                                \
-        /* op2_size */ LIMBSOF(op2),                  \
-        /* ex */ ex,                                  \
-        /* ex_size */ LIMBSOF(ex),                    \
-        /* op1_live_size */ LIMBSOF(op1) + 1,         \
-        /* op2_live_size */ LIMBSOF(op2) + 2,         \
-        /* res_live_size */ LIMBSOF(ex) / 2,          \
-        /* check_size */ LIMBSOF(ex) / 2,             \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO, \
+#define MUL_TRUNCATED_CASE(i, op1, op2, ex)            \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ op2,                                 \
+        /* op2_size */ LIMBSOF(op2),                   \
+        /* ex1 */ ex,                                  \
+        /* ex1_size */ LIMBSOF(ex),                    \
+        /* ex2 */ NULL,                                \
+        /* ex2_size */ 0,                              \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ LIMBSOF(op2) + 2,          \
+        /* res1_live_size */ LIMBSOF(ex) / 2,          \
+        /* res2_live_size */ 0,                        \
+        /* check1_size */ LIMBSOF(ex) / 2,             \
+        /* check2_size */ 0,                           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ 0,                  \
     }
 /* A special case, where the truncation is set to the size of ex minus 64 bits */
-#define MUL_TRUNCATED_SPECIAL_CASE1(i, op1, op2, ex)         \
-    {                                                        \
-        /* op1 */ op1,                                       \
-        /* op1_size */ LIMBSOF(op1),                         \
-        /* op2 */ op2,                                       \
-        /* op2_size */ LIMBSOF(op2),                         \
-        /* ex */ ex,                                         \
-        /* ex_size */ LIMBSOF(ex),                           \
-        /* op1_live_size */ LIMBSOF(op1) + 1,                \
-        /* op2_live_size */ LIMBSOF(op2) + 2,                \
-        /* res_live_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES, \
-        /* check_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES,    \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO,        \
+#define MUL_TRUNCATED_SPECIAL_CASE1(i, op1, op2, ex)          \
+    {                                                         \
+        /* op1 */ op1,                                        \
+        /* op1_size */ LIMBSOF(op1),                          \
+        /* op2 */ op2,                                        \
+        /* op2_size */ LIMBSOF(op2),                          \
+        /* ex1 */ ex,                                         \
+        /* ex1_size */ LIMBSOF(ex),                           \
+        /* ex2 */ NULL,                                       \
+        /* ex2_size */ 0,                                     \
+        /* op1_live_size */ LIMBSOF(op1) + 1,                 \
+        /* op2_live_size */ LIMBSOF(op2) + 2,                 \
+        /* res1_live_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES, \
+        /* res2_live_size */ 0,                               \
+        /* check1_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES,    \
+        /* check2_size */ 0,                                  \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO,        \
+        /* extended_limb_value2 */ 0,                         \
     }
 
 static struct test_case_st test_mul_truncate_cases[] = {
@@ -1116,11 +1172,11 @@ static int test_sqr_common(struct test_case_st test_case)
     int ret = 1;
     const OSSL_FN_ULONG *n1 = test_case.op1;
     size_t n1_limbs = test_case.op1_size;
-    const OSSL_FN_ULONG *ex = test_case.ex;
+    const OSSL_FN_ULONG *ex = test_case.ex1;
     size_t n1_new_limbs = test_case.op1_live_size;
-    size_t res_limbs = test_case.res_live_size;
-    size_t check_limbs = test_case.check_size;
-    OSSL_FN_ULONG extended_value = test_case.extended_limb_value;
+    size_t res_limbs = test_case.res1_live_size;
+    size_t check_limbs = test_case.check1_size;
+    OSSL_FN_ULONG extended_value = test_case.extended_limb_value1;
     OSSL_FN *fn1 = NULL, *res = NULL;
     const OSSL_FN_ULONG *u = NULL;
 
@@ -1154,19 +1210,24 @@ end:
 }
 
 /* i should be set to match the iteration number that's displayed when testing */
-#define SQR_CASE(i, op1, ex)                                  \
-    {                                                         \
-        /* op1 */ op1,                                        \
-        /* op1_size */ LIMBSOF(op1),                          \
-        /* op2 */ NULL,                                       \
-        /* op2_size */ 0,                                     \
-        /* ex */ ex,                                          \
-        /* ex_size */ LIMBSOF(ex),                            \
-        /* op1_live_size */ LIMBSOF(op1) + 1,                 \
-        /* op2_live_size */ 0,                                \
-        /* res_live_size */ LIMBSOF(op1) * 2 + ((i - 1) % 4), \
-        /* check_size */ LIMBSOF(ex),                         \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO,         \
+#define SQR_CASE(i, op1, ex)                                   \
+    {                                                          \
+        /* op1 */ op1,                                         \
+        /* op1_size */ LIMBSOF(op1),                           \
+        /* op2 */ NULL,                                        \
+        /* op2_size */ 0,                                      \
+        /* ex1 */ ex,                                          \
+        /* ex1_size */ LIMBSOF(ex),                            \
+        /* ex2 */ NULL,                                        \
+        /* ex2_size */ 0,                                      \
+        /* op1_live_size */ LIMBSOF(op1) + 1,                  \
+        /* op2_live_size */ 0,                                 \
+        /* res1_live_size */ LIMBSOF(op1) * 2 + ((i - 1) % 4), \
+        /* res2_live_size */ 0,                                \
+        /* check_size */ LIMBSOF(ex),                          \
+        /* check_size */ 0,                                    \
+        /* extended_limb_value */ EXTENDED_LIMB_ZERO,          \
+        /* extended_limb_value */ 0,                           \
     }
 
 static struct test_case_st test_sqr_cases[] = {
@@ -1188,34 +1249,44 @@ static int test_sqr(int i)
 }
 
 /* i should be set to match the iteration number that's displayed when testing */
-#define SQR_TRUNCATED_CASE(i, op1, ex)                \
-    {                                                 \
-        /* op1 */ op1,                                \
-        /* op1_size */ LIMBSOF(op1),                  \
-        /* op2 */ NULL,                               \
-        /* op2_size */ 0,                             \
-        /* ex */ ex,                                  \
-        /* ex_size */ LIMBSOF(ex),                    \
-        /* op1_live_size */ LIMBSOF(op1) + 1,         \
-        /* op2_live_size */ 0,                        \
-        /* res_live_size */ LIMBSOF(ex) / 2,          \
-        /* check_size */ LIMBSOF(ex) / 2,             \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO, \
+#define SQR_TRUNCATED_CASE(i, op1, ex)                 \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ NULL,                                \
+        /* op2_size */ 0,                              \
+        /* ex1 */ ex,                                  \
+        /* ex1_size */ LIMBSOF(ex),                    \
+        /* ex2 */ NULL,                                \
+        /* ex2_size */ 0,                              \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ 0,                         \
+        /* res1_live_size */ LIMBSOF(ex) / 2,          \
+        /* res2_live_size */ 0,                        \
+        /* check1_size */ LIMBSOF(ex) / 2,             \
+        /* check2_size */ 0,                           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ 0,                  \
     }
 /* A special case, where the truncation is set to the size of ex minus 64 bits */
-#define SQR_TRUNCATED_SPECIAL_CASE1(i, op1, ex)              \
-    {                                                        \
-        /* op1 */ op1,                                       \
-        /* op1_size */ LIMBSOF(op1),                         \
-        /* op2 */ NULL,                                      \
-        /* op2_size */ 0,                                    \
-        /* ex */ ex,                                         \
-        /* ex_size */ LIMBSOF(ex),                           \
-        /* op1_live_size */ LIMBSOF(op1) + 1,                \
-        /* op2_live_size */ 0,                               \
-        /* res_live_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES, \
-        /* check_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES,    \
-        /* extended_limb_value */ EXTENDED_LIMB_ZERO,        \
+#define SQR_TRUNCATED_SPECIAL_CASE1(i, op1, ex)               \
+    {                                                         \
+        /* op1 */ op1,                                        \
+        /* op1_size */ LIMBSOF(op1),                          \
+        /* op2 */ NULL,                                       \
+        /* op2_size */ 0,                                     \
+        /* ex1 */ ex,                                         \
+        /* ex1_size */ LIMBSOF(ex),                           \
+        /* ex2 */ NULL,                                       \
+        /* ex2_size */ 0,                                     \
+        /* op1_live_size */ LIMBSOF(op1) + 1,                 \
+        /* op2_live_size */ 0,                                \
+        /* res1_live_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES, \
+        /* res2_live_size */ 0,                               \
+        /* check1_size */ LIMBSOF(ex) - 8 / OSSL_FN_BYTES,    \
+        /* check2_size */ 0,                                  \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO,        \
+        /* extended_limb_value2 */ 0,                         \
     }
 
 static struct test_case_st test_sqr_truncate_cases[] = {
@@ -1236,6 +1307,538 @@ static int test_sqr_truncated(int i)
     return test_sqr_common(test_sqr_truncate_cases[i]);
 }
 
+/* A set of expected results, also in OSSL_FN_ULONG array form */
+/* : $num0 / $num0 == 1 */
+static const OSSL_FN_ULONG ex_div_num0_num0[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/* : $num0 % $num0 == 0 */
+static const OSSL_FN_ULONG ex_rem_num0_num0[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num0 / $num1 == 0x55555555 */
+static const OSSL_FN_ULONG ex_div_num0_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x55555555),
+};
+/* : $num0 % $num1 == 0x80000001 */
+static const OSSL_FN_ULONG ex_rem_num0_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x80000001),
+};
+/* : $num0 / $num2 == 0x70 */
+static const OSSL_FN_ULONG ex_div_num0_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000070),
+};
+/* : $num0 % $num2 == 0x91a2b3 c4d5e771 */
+static const OSSL_FN_ULONG ex_rem_num0_num2[] = {
+    OSSL_FN_ULONG64_C(0x0091A2B3, 0xC4D5E771),
+};
+/* : $num0 / $num3 == 1 */
+static const OSSL_FN_ULONG ex_div_num0_num3[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num0 % $num3 == 0x9abcdef 01234569 */
+static const OSSL_FN_ULONG ex_rem_num0_num3[] = {
+    OSSL_FN_ULONG64_C(0x80000000, 0x00000001),
+};
+/* : $num1 / $num0 == 0 */
+static const OSSL_FN_ULONG ex_div_num1_num0[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num1 % $num0 == 0x180000000 */
+static const OSSL_FN_ULONG ex_rem_num1_num0[] = {
+    OSSL_FN_ULONG64_C(0x00000001, 0x80000000),
+};
+/* : $num1 / $num1 == 1 */
+static const OSSL_FN_ULONG ex_div_num1_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/* : $num1 % $num1 == 0 */
+static const OSSL_FN_ULONG ex_rem_num1_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num1 / $num2 == 0 */
+static const OSSL_FN_ULONG ex_div_num1_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num1 % $num2 == 0x180000000 */
+static const OSSL_FN_ULONG ex_rem_num1_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000001, 0x80000000),
+};
+/* : $num1 / $num3 == 0 */
+static const OSSL_FN_ULONG ex_div_num1_num3[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num1 % $num3 == 0x180000000 */
+static const OSSL_FN_ULONG ex_rem_num1_num3[] = {
+    OSSL_FN_ULONG64_C(0x00000001, 0x80000000),
+};
+/* : $num2 / $num0 == 0 */
+static const OSSL_FN_ULONG ex_div_num2_num0[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num2 % $num0 == 0X123456789abcdef */
+static const OSSL_FN_ULONG ex_rem_num2_num0[] = {
+    OSSL_FN_ULONG64_C(0X01234567, 0x89ABCDEF),
+};
+/* : $num2 / $num1 == 0xc22e45 */
+static const OSSL_FN_ULONG ex_div_num2_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00C22E45),
+};
+/* : $num2 % $num1 == 0x9abcdef */
+static const OSSL_FN_ULONG ex_rem_num2_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x09ABCDEF),
+};
+/* : $num2 / $num2 == 1 */
+static const OSSL_FN_ULONG ex_div_num2_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/* : $num2 % $num2 == 0 */
+static const OSSL_FN_ULONG ex_rem_num2_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num2 / $num3 == 0 */
+static const OSSL_FN_ULONG ex_div_num2_num3[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* : $num2 % $num3 == 0X0123456789abcdef */
+static const OSSL_FN_ULONG ex_rem_num2_num3[] = {
+    OSSL_FN_ULONG64_C(0X01234567, 0x89ABCDEF),
+};
+/* : $num3 / $num0 == 1 */
+static const OSSL_FN_ULONG ex_div_num3_num0[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/* : $num3 % $num0 == 0x7edcba987654320f */
+static const OSSL_FN_ULONG ex_rem_num3_num0[] = {
+    OSSL_FN_ULONG64_C(0x7edcba98, 0x7654320f),
+};
+/* : $num3 / $num1 == 0xa9e87c65 */
+static const OSSL_FN_ULONG ex_div_num3_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0xa9e87c65),
+};
+/* : $num3 % $num1 == 0x00000000f6543210 */
+static const OSSL_FN_ULONG ex_rem_num3_num1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0xf6543210),
+};
+/* : $num3 / $num2 == 0xe0 */
+static const OSSL_FN_ULONG ex_div_num3_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x000000e0),
+};
+/* : $num3 % $num2 == 0xf0 */
+static const OSSL_FN_ULONG ex_rem_num3_num2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x000000f0),
+};
+/* : $num3 / $num3 == 1 */
+static const OSSL_FN_ULONG ex_div_num3_num3[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/* : $num3 % $num3 == o */
+static const OSSL_FN_ULONG ex_rem_num3_num3[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* Expected results for edge cases */
+/* $num5 / $num5 == 1 */
+static const OSSL_FN_ULONG ex_div_num5_num5[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/* $num5 % $num5 == 0 */
+static const OSSL_FN_ULONG ex_rem_num5_num5[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* $num6 / $num6 == 1 */
+static const OSSL_FN_ULONG ex_div_num6_num6[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+/* $num6 % $num6 == 0 */
+static const OSSL_FN_ULONG ex_rem_num6_num6[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+
+static int test_div_common(struct test_case_st test_case)
+{
+    int ret = 1;
+    const OSSL_FN_ULONG *n = test_case.op1;
+    size_t n_limbs = test_case.op1_size;
+    const OSSL_FN_ULONG *d = test_case.op2;
+    size_t d_limbs = test_case.op2_size;
+    const OSSL_FN_ULONG *ex_q = test_case.ex1;
+    const OSSL_FN_ULONG *ex_r = test_case.ex2;
+    size_t n_new_limbs = test_case.op1_live_size;
+    size_t d_new_limbs = test_case.op2_live_size;
+    size_t q_limbs = test_case.res1_live_size;
+    size_t r_limbs = test_case.res2_live_size;
+    size_t check_q_limbs = test_case.check1_size;
+    size_t check_r_limbs = test_case.check2_size;
+    OSSL_FN_ULONG extended_q = test_case.extended_limb_value1;
+    OSSL_FN_ULONG extended_r = test_case.extended_limb_value2;
+    OSSL_FN *fn = NULL, *fd = NULL, *fq = NULL, *fr = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    /* Calculate total number of limbs for OSSL_FN_CTX */
+    size_t ctx_numcopy_limbs = ((n_new_limbs <= d_new_limbs) ? d_new_limbs : n_new_limbs) + 1;
+    size_t ctx_divcopy_limbs = d_new_limbs;
+    size_t ctx_tmp_limbs = d_new_limbs + 1;
+    size_t ctx_res_limbs = n_new_limbs;
+    size_t ctx_max_limbs = ctx_numcopy_limbs + ctx_divcopy_limbs + ctx_res_limbs + ctx_tmp_limbs;
+
+    OSSL_FN_CTX *ctx = NULL;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 4, ctx_max_limbs))
+        || !TEST_ptr(fn = OSSL_FN_new_limbs(n_new_limbs))
+        || !TEST_ptr(fd = OSSL_FN_new_limbs(d_new_limbs))
+        || !TEST_true(ossl_fn_set_words(fn, n, n_limbs))
+        || !TEST_true(ossl_fn_set_words(fd, d, d_limbs))
+        || !TEST_ptr(fq = OSSL_FN_new_limbs(q_limbs))
+        || !TEST_ptr(fr = OSSL_FN_new_limbs(r_limbs))) {
+        ret = 0;
+        /* There's no way to continue tests in this case */
+        goto end;
+    }
+
+    /* To test that OSSL_FN_div() does a complete job, 'res' is pre-polluted */
+
+    if (!TEST_true(pollute(fq, 0, q_limbs))
+        || !TEST_true(pollute(fr, 0, r_limbs))
+        || !TEST_true(OSSL_FN_div(fq, fr, fn, fd, ctx))
+        || !TEST_ptr(u = ossl_fn_get_words(fq))
+        || !TEST_mem_eq(u, check_q_limbs * OSSL_FN_BYTES,
+            ex_q, check_q_limbs * OSSL_FN_BYTES)
+        || !TEST_ptr(u = ossl_fn_get_words(fr))
+        || !TEST_mem_eq(u, check_r_limbs * OSSL_FN_BYTES,
+            ex_r, check_r_limbs * OSSL_FN_BYTES)
+        || !TEST_true(check_limbs_value(fq, check_q_limbs, q_limbs, extended_q))
+        || !TEST_true(check_limbs_value(fr, check_r_limbs, r_limbs, extended_r)))
+        ret = 0;
+
+end:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(fd);
+    OSSL_FN_free(fq);
+    OSSL_FN_free(fr);
+
+    return ret;
+}
+
+/* i should be set to match the iteration number that's displayed when testing */
+#define DIV_CASE(i, op1, op2, ex_q, ex_r)                  \
+    {                                                      \
+        /* op1 */ op1,                                     \
+        /* op1_size */ LIMBSOF(op1),                       \
+        /* op2 */ op2,                                     \
+        /* op2_size */ LIMBSOF(op2),                       \
+        /* ex1 */ ex_q,                                    \
+        /* ex1_size */ LIMBSOF(ex_q),                      \
+        /* ex2 */ ex_r,                                    \
+        /* ex2_size */ LIMBSOF(ex_r),                      \
+        /* op1_live_size */ LIMBSOF(op1) + 1,              \
+        /* op2_live_size */ LIMBSOF(op2) + 2,              \
+        /* res1_live_size */ LIMBSOF(op1) + ((i - 1) % 4), \
+        /* res2_live_size */ LIMBSOF(op1) + ((i - 1) % 4), \
+        /* check1_size */ LIMBSOF(ex_q),                   \
+        /* check2_size */ LIMBSOF(ex_r),                   \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO,     \
+        /* extended_limb_value2 */ EXTENDED_LIMB_ZERO,     \
+    }
+
+static struct test_case_st test_div_cases[] = {
+    DIV_CASE(1, num0, num0, ex_div_num0_num0, ex_rem_num0_num0),
+    DIV_CASE(2, num0, num1, ex_div_num0_num1, ex_rem_num0_num1),
+    DIV_CASE(3, num0, num2, ex_div_num0_num2, ex_rem_num0_num2),
+    DIV_CASE(4, num0, num3, ex_div_num0_num3, ex_rem_num0_num3),
+    DIV_CASE(5, num1, num0, ex_div_num1_num0, ex_rem_num1_num0),
+    DIV_CASE(6, num1, num1, ex_div_num1_num1, ex_rem_num1_num1),
+    DIV_CASE(7, num1, num2, ex_div_num1_num2, ex_rem_num1_num2),
+    DIV_CASE(8, num1, num3, ex_div_num1_num3, ex_rem_num1_num3),
+    DIV_CASE(9, num2, num0, ex_div_num2_num0, ex_rem_num2_num0),
+    DIV_CASE(10, num2, num1, ex_div_num2_num1, ex_rem_num2_num1),
+    DIV_CASE(11, num2, num2, ex_div_num2_num2, ex_rem_num2_num2),
+    DIV_CASE(12, num2, num3, ex_div_num2_num3, ex_rem_num2_num3),
+    DIV_CASE(13, num3, num0, ex_div_num3_num0, ex_rem_num3_num0),
+    DIV_CASE(14, num3, num1, ex_div_num3_num1, ex_rem_num3_num1),
+    DIV_CASE(15, num3, num2, ex_div_num3_num2, ex_rem_num3_num2),
+    DIV_CASE(16, num3, num3, ex_div_num3_num3, ex_rem_num3_num3),
+
+    /* Edge cases */
+    DIV_CASE(17, num5, num5, ex_div_num5_num5, ex_rem_num5_num5),
+    DIV_CASE(18, num6, num6, ex_div_num6_num6, ex_rem_num6_num6),
+};
+
+static int test_div(int i)
+{
+    return test_div_common(test_div_cases[i]);
+}
+
+/* i should be set to match the iteration number that's displayed when testing */
+#define DIV_TRUNCATED_CASE(i, op1, op2, ex_q, ex_r)    \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ op2,                                 \
+        /* op2_size */ LIMBSOF(op2),                   \
+        /* ex1 */ ex_q,                                \
+        /* ex1_size */ LIMBSOF(ex_q),                  \
+        /* ex2 */ ex_r,                                \
+        /* ex2_size */ LIMBSOF(ex_r),                  \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ LIMBSOF(op2) + 2,          \
+        /* res1_live_size */ LIMBSOF(ex_q) / 2,        \
+        /* res2_live_size */ LIMBSOF(ex_r) / 2,        \
+        /* check1_size */ LIMBSOF(ex_q) / 2,           \
+        /* check2_size */ LIMBSOF(ex_r) / 2,           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ EXTENDED_LIMB_ZERO, \
+    }
+
+static struct test_case_st test_div_truncate_cases[] = {
+    DIV_TRUNCATED_CASE(1, num0, num0, ex_div_num0_num0, ex_rem_num0_num0),
+    DIV_TRUNCATED_CASE(2, num0, num1, ex_div_num0_num1, ex_rem_num0_num1),
+    DIV_TRUNCATED_CASE(3, num0, num2, ex_div_num0_num2, ex_rem_num0_num2),
+    DIV_TRUNCATED_CASE(4, num0, num3, ex_div_num0_num3, ex_rem_num0_num3),
+    DIV_TRUNCATED_CASE(5, num1, num0, ex_div_num1_num0, ex_rem_num1_num0),
+    DIV_TRUNCATED_CASE(6, num1, num1, ex_div_num1_num1, ex_rem_num1_num1),
+    DIV_TRUNCATED_CASE(7, num1, num2, ex_div_num1_num2, ex_rem_num1_num2),
+    DIV_TRUNCATED_CASE(8, num1, num3, ex_div_num1_num3, ex_rem_num1_num3),
+    DIV_TRUNCATED_CASE(9, num2, num0, ex_div_num2_num0, ex_rem_num2_num0),
+    DIV_TRUNCATED_CASE(10, num2, num1, ex_div_num2_num1, ex_rem_num2_num1),
+    DIV_TRUNCATED_CASE(11, num2, num2, ex_div_num2_num2, ex_rem_num2_num2),
+    DIV_TRUNCATED_CASE(12, num2, num3, ex_div_num2_num3, ex_rem_num2_num3),
+    DIV_TRUNCATED_CASE(13, num3, num0, ex_div_num3_num0, ex_rem_num3_num0),
+    DIV_TRUNCATED_CASE(14, num3, num1, ex_div_num3_num1, ex_rem_num3_num1),
+    DIV_TRUNCATED_CASE(15, num3, num2, ex_div_num3_num2, ex_rem_num3_num2),
+    DIV_TRUNCATED_CASE(16, num3, num3, ex_div_num3_num3, ex_rem_num3_num3),
+
+    /* Edge cases */
+    DIV_TRUNCATED_CASE(17, num5, num5, ex_div_num5_num5, ex_rem_num5_num5),
+    DIV_TRUNCATED_CASE(18, num6, num6, ex_div_num6_num6, ex_rem_num6_num6),
+};
+
+static int test_div_truncated(int i)
+{
+    return test_div_common(test_div_truncate_cases[i]);
+}
+
+/*
+ * The modulo tests are a bit silly, 'cause we know that OSSL_FN_mod()
+ * simply calls OSSL_FN_div() with NULL for the quotient.  Still, these
+ * tests ensure that calling OSSL_FN_div() like that works without flaws.
+ */
+static int test_mod_common(struct test_case_st test_case)
+{
+    int ret = 1;
+    const OSSL_FN_ULONG *n = test_case.op1;
+    size_t n_limbs = test_case.op1_size;
+    const OSSL_FN_ULONG *d = test_case.op2;
+    size_t d_limbs = test_case.op2_size;
+    const OSSL_FN_ULONG *ex = test_case.ex1;
+    size_t n_new_limbs = test_case.op1_live_size;
+    size_t d_new_limbs = test_case.op2_live_size;
+    size_t res_limbs = test_case.res1_live_size;
+    size_t check_res_limbs = test_case.check1_size;
+    OSSL_FN_ULONG extended_res = test_case.extended_limb_value1;
+    OSSL_FN *fn = NULL, *fd = NULL, *fres = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    /* Calculate total number of limbs for OSSL_FN_CTX */
+    size_t ctx_numcopy_limbs = ((n_new_limbs <= d_new_limbs) ? d_new_limbs : n_new_limbs) + 1;
+    size_t ctx_divcopy_limbs = d_new_limbs;
+    size_t ctx_tmp_limbs = d_new_limbs + 1;
+    size_t ctx_res_limbs = n_new_limbs;
+    size_t ctx_max_limbs = ctx_numcopy_limbs + ctx_divcopy_limbs + ctx_res_limbs + ctx_tmp_limbs;
+
+    OSSL_FN_CTX *ctx = NULL;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 4, ctx_max_limbs))
+        || !TEST_ptr(fn = OSSL_FN_new_limbs(n_new_limbs))
+        || !TEST_ptr(fd = OSSL_FN_new_limbs(d_new_limbs))
+        || !TEST_true(ossl_fn_set_words(fn, n, n_limbs))
+        || !TEST_true(ossl_fn_set_words(fd, d, d_limbs))
+        || !TEST_ptr(fres = OSSL_FN_new_limbs(res_limbs))) {
+        ret = 0;
+        /* There's no way to continue tests in this case */
+        goto end;
+    }
+
+    /* To test that OSSL_FN_mod() does a complete job, 'res' is pre-polluted */
+
+    if (!TEST_true(pollute(fres, 0, res_limbs))
+        || !TEST_true(OSSL_FN_mod(fres, fn, fd, ctx))
+        || !TEST_ptr(u = ossl_fn_get_words(fres))
+        || !TEST_mem_eq(u, check_res_limbs * OSSL_FN_BYTES,
+            ex, check_res_limbs * OSSL_FN_BYTES)
+        || !TEST_true(check_limbs_value(fres, check_res_limbs, res_limbs, extended_res)))
+        ret = 0;
+
+end:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(fd);
+    OSSL_FN_free(fres);
+
+    return ret;
+}
+
+/* i should be set to match the iteration number that's displayed when testing */
+#define MOD_CASE(i, op1, op2, ex)                          \
+    {                                                      \
+        /* op1 */ op1,                                     \
+        /* op1_size */ LIMBSOF(op1),                       \
+        /* op2 */ op2,                                     \
+        /* op2_size */ LIMBSOF(op2),                       \
+        /* ex1 */ ex,                                      \
+        /* ex1_size */ LIMBSOF(ex),                        \
+        /* ex2 */ NULL,                                    \
+        /* ex2_size */ 0,                                  \
+        /* op1_live_size */ LIMBSOF(op1) + 1,              \
+        /* op2_live_size */ LIMBSOF(op2) + 2,              \
+        /* res1_live_size */ LIMBSOF(op1) + ((i - 1) % 4), \
+        /* res2_live_size */ LIMBSOF(op1) + ((i - 1) % 4), \
+        /* check1_size */ LIMBSOF(ex),                     \
+        /* check2_size */ 0,                               \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO,     \
+        /* extended_limb_value2 */ 0,                      \
+    }
+
+static struct test_case_st test_mod_cases[] = {
+    MOD_CASE(1, num0, num0, ex_rem_num0_num0),
+    MOD_CASE(2, num0, num1, ex_rem_num0_num1),
+    MOD_CASE(3, num0, num2, ex_rem_num0_num2),
+    MOD_CASE(4, num0, num3, ex_rem_num0_num3),
+    MOD_CASE(5, num1, num0, ex_rem_num1_num0),
+    MOD_CASE(6, num1, num1, ex_rem_num1_num1),
+    MOD_CASE(7, num1, num2, ex_rem_num1_num2),
+    MOD_CASE(8, num1, num3, ex_rem_num1_num3),
+    MOD_CASE(9, num2, num0, ex_rem_num2_num0),
+    MOD_CASE(10, num2, num1, ex_rem_num2_num1),
+    MOD_CASE(11, num2, num2, ex_rem_num2_num2),
+    MOD_CASE(12, num2, num3, ex_rem_num2_num3),
+    MOD_CASE(13, num3, num0, ex_rem_num3_num0),
+    MOD_CASE(14, num3, num1, ex_rem_num3_num1),
+    MOD_CASE(15, num3, num2, ex_rem_num3_num2),
+    MOD_CASE(16, num3, num3, ex_rem_num3_num3),
+
+    /* Edge cases */
+    MOD_CASE(17, num5, num5, ex_rem_num5_num5),
+    MOD_CASE(18, num6, num6, ex_rem_num6_num6),
+};
+
+static int test_mod(int i)
+{
+    return test_mod_common(test_mod_cases[i]);
+}
+
+/* i should be set to match the iteration number that's displayed when testing */
+#define MOD_TRUNCATED_CASE(i, op1, op2, ex)            \
+    {                                                  \
+        /* op1 */ op1,                                 \
+        /* op1_size */ LIMBSOF(op1),                   \
+        /* op2 */ op2,                                 \
+        /* op2_size */ LIMBSOF(op2),                   \
+        /* ex1 */ ex,                                  \
+        /* ex1_size */ LIMBSOF(ex),                    \
+        /* ex2 */ NULL,                                \
+        /* ex2_size */ 0,                              \
+        /* op1_live_size */ LIMBSOF(op1) + 1,          \
+        /* op2_live_size */ LIMBSOF(op2) + 2,          \
+        /* res1_live_size */ LIMBSOF(ex) / 2,          \
+        /* res2_live_size */ 0,                        \
+        /* check1_size */ LIMBSOF(ex) / 2,             \
+        /* check2_size */ 0,                           \
+        /* extended_limb_value1 */ EXTENDED_LIMB_ZERO, \
+        /* extended_limb_value2 */ 0,                  \
+    }
+
+static struct test_case_st test_mod_truncate_cases[] = {
+    MOD_TRUNCATED_CASE(1, num0, num0, ex_rem_num0_num0),
+    MOD_TRUNCATED_CASE(2, num0, num1, ex_rem_num0_num1),
+    MOD_TRUNCATED_CASE(3, num0, num2, ex_rem_num0_num2),
+    MOD_TRUNCATED_CASE(4, num0, num3, ex_rem_num0_num3),
+    MOD_TRUNCATED_CASE(5, num1, num0, ex_rem_num1_num0),
+    MOD_TRUNCATED_CASE(6, num1, num1, ex_rem_num1_num1),
+    MOD_TRUNCATED_CASE(7, num1, num2, ex_rem_num1_num2),
+    MOD_TRUNCATED_CASE(8, num1, num3, ex_rem_num1_num3),
+    MOD_TRUNCATED_CASE(9, num2, num0, ex_rem_num2_num0),
+    MOD_TRUNCATED_CASE(10, num2, num1, ex_rem_num2_num1),
+    MOD_TRUNCATED_CASE(11, num2, num2, ex_rem_num2_num2),
+    MOD_TRUNCATED_CASE(12, num2, num3, ex_rem_num2_num3),
+    MOD_TRUNCATED_CASE(13, num3, num0, ex_rem_num3_num0),
+    MOD_TRUNCATED_CASE(14, num3, num1, ex_rem_num3_num1),
+    MOD_TRUNCATED_CASE(15, num3, num2, ex_rem_num3_num2),
+    MOD_TRUNCATED_CASE(16, num3, num3, ex_rem_num3_num3),
+
+    /* Edge cases */
+    MOD_TRUNCATED_CASE(17, num5, num5, ex_rem_num5_num5),
+    MOD_TRUNCATED_CASE(18, num6, num6, ex_rem_num6_num6),
+};
+
+static int test_mod_truncated(int i)
+{
+    return test_mod_common(test_mod_truncate_cases[i]);
+}
+
+static int check_div_by_zero_error(void)
+{
+    unsigned long err = ERR_get_error();
+
+    return TEST_ulong_ne(err, 0)
+        && TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_OSSL_FN)
+        && TEST_int_eq(ERR_GET_REASON(err), OSSL_FN_R_DIV_BY_ZERO);
+}
+
+static int test_div_by_zero_common(int test_mod)
+{
+    int ret = 1;
+    OSSL_FN *fn = NULL, *fd = NULL, *fq = NULL, *fr = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t n_new_limbs = LIMBSOF(num0) + 1;
+    size_t d_new_limbs = LIMBSOF(num4) + 2;
+    size_t q_limbs = LIMBSOF(num0) + 1;
+    size_t r_limbs = LIMBSOF(num0) + 1;
+    size_t ctx_numcopy_limbs = ((n_new_limbs <= d_new_limbs) ? d_new_limbs : n_new_limbs) + 1;
+    size_t ctx_divcopy_limbs = d_new_limbs;
+    size_t ctx_tmp_limbs = d_new_limbs + 1;
+    size_t ctx_res_limbs = n_new_limbs;
+    size_t ctx_max_limbs = ctx_numcopy_limbs + ctx_divcopy_limbs + ctx_res_limbs + ctx_tmp_limbs;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 4, ctx_max_limbs))
+        || !TEST_ptr(fn = OSSL_FN_new_limbs(n_new_limbs))
+        || !TEST_ptr(fd = OSSL_FN_new_limbs(d_new_limbs))
+        || !TEST_ptr(fq = OSSL_FN_new_limbs(q_limbs))
+        || !TEST_ptr(fr = OSSL_FN_new_limbs(r_limbs))
+        || !TEST_true(ossl_fn_set_words(fn, num0, LIMBSOF(num0)))) {
+        ret = 0;
+        goto end;
+    }
+
+    ERR_clear_error();
+    if (test_mod) {
+        if (!TEST_false(OSSL_FN_mod(fr, fn, fd, ctx))
+            || !TEST_true(check_div_by_zero_error()))
+            ret = 0;
+    } else {
+        if (!TEST_false(OSSL_FN_div(fq, fr, fn, fd, ctx))
+            || !TEST_true(check_div_by_zero_error()))
+            ret = 0;
+    }
+
+end:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(fd);
+    OSSL_FN_free(fq);
+    OSSL_FN_free(fr);
+
+    return ret;
+}
+
+static int test_div_by_zero(void)
+{
+    return test_div_by_zero_common(0);
+}
+
+static int test_mod_by_zero(void)
+{
+    return test_div_by_zero_common(1);
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -1252,6 +1855,12 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sqr_feature_r_is_operand, 2);
     ADD_ALL_TESTS(test_sqr, OSSL_NELEM(test_sqr_cases));
     ADD_ALL_TESTS(test_sqr_truncated, OSSL_NELEM(test_sqr_truncate_cases));
+    ADD_ALL_TESTS(test_div, OSSL_NELEM(test_div_cases));
+    ADD_ALL_TESTS(test_div_truncated, OSSL_NELEM(test_div_truncate_cases));
+    ADD_TEST(test_div_by_zero);
+    ADD_ALL_TESTS(test_mod, OSSL_NELEM(test_mod_cases));
+    ADD_ALL_TESTS(test_mod_truncated, OSSL_NELEM(test_mod_truncate_cases));
+    ADD_TEST(test_mod_by_zero);
 
     return 1;
 }

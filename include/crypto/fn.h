@@ -152,6 +152,24 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Calculate the arena payload size for an OSSL_FN_CTX.
+ *
+ * @param[in]   max_n_frames    Maximum number of simultaneously active frames.
+ *                              This indicates the expected depth of call stack
+ *                              that the resulting OSSL_FN_CTX will be used in.
+ * @param[in]   max_n_numbers   Maximum number of simultaneously active OSSL_FN.
+ * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
+ *                              limbs.
+ * @returns     The arena payload size, in bytes.
+ * @retval      0               on arithmetic overflow.
+ *
+ * The returned size is the value to pass to OSSL_FN_CTX_new_size() or
+ * OSSL_FN_CTX_secure_new_size().  It does not include sizeof(OSSL_FN_CTX).
+ */
+size_t OSSL_FN_CTX_size(size_t max_n_frames, size_t max_n_numbers,
+    size_t max_n_limbs);
+
+/**
  * Allocate a new OSSL_FN_CTX, given a set of input numbers.
  *
  * @param[in]   libctx          OpenSSL library context (currently unused)
@@ -162,9 +180,19 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
  * @param[in]   max_n_limbs     Maximum number of simultaneously active OSSL_FN
  *                              limbs.
  * @returns     An allocated OSSL_FN_CTX, or NULL on error.
- **/
+ */
 OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+
+/**
+ * Allocate a new OSSL_FN_CTX with a given arena payload size.
+ *
+ * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   size            Arena payload size in bytes, typically from
+ *                              OSSL_FN_CTX_size().
+ * @returns     An allocated OSSL_FN_CTX, or NULL on error.
+ */
+OSSL_FN_CTX *OSSL_FN_CTX_new_size(OSSL_LIB_CTX *libctx, size_t size);
 
 /**
  * Allocate a new OSSL_FN_CTX in secure memory, given a set of input numbers.
@@ -173,6 +201,16 @@ OSSL_FN_CTX *OSSL_FN_CTX_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
  **/
 OSSL_FN_CTX *OSSL_FN_CTX_secure_new(OSSL_LIB_CTX *libctx, size_t max_n_frames,
     size_t max_n_numbers, size_t max_n_limbs);
+
+/**
+ * Allocate a new OSSL_FN_CTX in secure memory with a given arena payload size.
+ *
+ * @param[in]   libctx          OpenSSL library context (currently unused)
+ * @param[in]   size            Arena payload size in bytes, typically from
+ *                              OSSL_FN_CTX_size().
+ * @returns     An allocated OSSL_FN_CTX, or NULL on error.
+ */
+OSSL_FN_CTX *OSSL_FN_CTX_secure_new_size(OSSL_LIB_CTX *libctx, size_t size);
 
 /**
  * Report the peak number of frames, numbers, and limbs that were
@@ -354,6 +392,68 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_CTX *ctx);
 
 /**
+ * Calculate the arena payload size that OSSL_FN_mul() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mul().
+ */
+size_t OSSL_FN_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b);
+
+/**
+ * Divide two OSSL_FN numbers.  Truncates the result to fit in q and r.
+ *
+ * @param[out]          q       The OSSL_FN for the quotient
+ * @param[out]          r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for:
+ *   one OSSL_FN with ((n->dsize <= d->dsize) ? d->dsize : n->dsize) + 1 limbs
+ *   one OSSL_FN with d->dsize limbs
+ *   one OSSL_FN with d->dsize + 1 limbs
+ *   one OSSL_FN with n->dsize limbs
+ *   one frame (currently 32 bytes).
+ */
+int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
+    OSSL_FN_CTX *ctx);
+size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d);
+
+/**
+ * Calculate modulo of two OSSL_FN numbers.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function has the same requirements on ctx as OSSL_FN_div().
+ */
+static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
+    OSSL_FN_CTX *ctx)
+{
+    return OSSL_FN_div(NULL, r, n, d, ctx);
+}
+
+static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d)
+{
+    return OSSL_FN_div_ctx_size(NULL, r, n, d);
+}
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -367,6 +467,18 @@ int OSSL_FN_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * frame (currently 32 bytes).
  */
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_sqr() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_sqr().
+ */
+size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
 
 #ifdef __cplusplus
 }
