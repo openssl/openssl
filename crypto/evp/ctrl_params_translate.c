@@ -1046,9 +1046,19 @@ static int fix_dh_nid5114(enum state state,
     case PRE_CTRL_STR_TO_PARAMS:
         if (ctx->p2 == NULL)
             return 0;
-        if ((ctx->p2 = (char *)ossl_ffc_named_group_get_name(ossl_ffc_uid_to_dh_named_group(atoi(ctx->p2)))) == NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
-            return 0;
+        {
+            int uid;
+
+            if (!ossl_strtoint(ctx->p2, NULL, 10, &uid)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+                return 0;
+            }
+            ctx->p2 = (char *)ossl_ffc_named_group_get_name(
+                ossl_ffc_uid_to_dh_named_group(uid));
+            if (ctx->p2 == NULL) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+                return 0;
+            }
         }
 
         ctx->p1 = 0;
@@ -1076,8 +1086,14 @@ static int fix_dh_paramgen_type(enum state state,
         return 0;
 
     if (state == PRE_CTRL_STR_TO_PARAMS) {
-        if ((ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2)))
-            == NULL) {
+        int id;
+
+        if (!ossl_strtoint(ctx->p2, NULL, 10, &id)) {
+            ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+            return 0;
+        }
+        ctx->p2 = (char *)ossl_dh_gen_type_id2name(id);
+        if (ctx->p2 == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
         }
@@ -1433,8 +1449,14 @@ static int fix_rsa_pss_saltlen(enum state state,
                 break;
         }
 
-        val = i == OSSL_NELEM(str_value_map) ? atoi(ctx->p2)
-                                             : (int)str_value_map[i].id;
+        if (i == OSSL_NELEM(str_value_map)) {
+            if (!ossl_strtoint(ctx->p2, NULL, 10, &val)) {
+                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
+                return 0;
+            }
+        } else {
+            val = (int)str_value_map[i].id;
+        }
         if (state == POST_CTRL_TO_PARAMS) {
             /*
              * EVP_PKEY_CTRL_GET_RSA_PSS_SALTLEN weirdness explained further

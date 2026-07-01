@@ -1689,8 +1689,11 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
                 saltlen = RSA_PSS_SALTLEN_AUTO;
             else if (strcmp(p.slen->data, OSSL_PKEY_RSA_PSS_SALT_LEN_AUTO_DIGEST_MAX) == 0)
                 saltlen = RSA_PSS_SALTLEN_AUTO_DIGEST_MAX;
-            else
-                saltlen = atoi(p.slen->data);
+            else if (!ossl_strtoint(p.slen->data, NULL, 10, &saltlen)) {
+                ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_SALT_LENGTH,
+                    "invalid RSA-PSS saltlen value");
+                return 0;
+            }
         }
 
         /*

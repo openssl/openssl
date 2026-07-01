@@ -13,6 +13,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
 #include <openssl/bio.h>
@@ -134,14 +135,22 @@ int setup_test_framework(int argc, char *argv[])
     char *test_rand_seed = getenv("OPENSSL_TEST_RAND_SEED");
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
 
-    if (TAP_levels != NULL)
-        level = 4 * atoi(TAP_levels);
+    if (TAP_levels != NULL) {
+        int n;
+
+        if (test_strtoint(TAP_levels, &n) && n <= INT_MAX / 4)
+            level = 4 * n;
+    }
     test_adjust_streams_tap_level(level);
     if (test_rand_order != NULL) {
+        int n;
+
         rand_order = 1;
-        set_seed(atoi(test_rand_order));
+        set_seed(test_strtoint(test_rand_order, &n) ? n : 0);
     } else if (test_rand_seed != NULL) {
-        set_seed(atoi(test_rand_seed));
+        int n;
+
+        set_seed(test_strtoint(test_rand_seed, &n) ? n : 0);
     } else {
         set_seed(0);
     }
@@ -174,8 +183,12 @@ static int check_single_test_params(char *name, char *testname, char *itname)
                 break;
             }
         }
-        if (i >= num_tests)
-            single_test = atoi(name);
+        if (i >= num_tests) {
+            int n;
+
+            if (test_strtoint(name, &n))
+                single_test = n;
+        }
     }
 
     /* if only iteration is specified, assume we want the first test */

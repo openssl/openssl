@@ -1561,10 +1561,12 @@ static EVP_PKEY_CTX *set_keygen_ctx(const char *gstr,
     /* Treat the second part of gstr, if there is one */
     if (gstr != NULL) {
         /* If the second part starts with a digit, we assume it's a size */
-        if (!expect_paramfile && gstr[0] >= '0' && gstr[0] <= '9')
-            keylen = atol(gstr);
-        else
+        if (!expect_paramfile && gstr[0] >= '0' && gstr[0] <= '9') {
+            if (!opt_long(gstr, &keylen))
+                return NULL;
+        } else {
             paramfile = gstr;
+        }
     }
 
     if (paramfile != NULL) {
