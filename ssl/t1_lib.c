@@ -553,6 +553,18 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
             goto err;
     }
 
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP);
+    if (p == NULL) {
+        sinf->keytype_group = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        OPENSSL_free(sinf->keytype_group);
+        sinf->keytype_group = OPENSSL_strdup(p->data);
+        if (sinf->keytype_group == NULL)
+            goto err;
+    }
+
     /* Optional, not documented prior to 3.5 */
     sinf->mindtls = sinf->maxdtls = -1;
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS);
@@ -673,6 +685,8 @@ err:
         sinf->keytype = NULL;
         OPENSSL_free(sinf->keytype_oid);
         sinf->keytype_oid = NULL;
+        OPENSSL_free(sinf->keytype_group);
+        sinf->keytype_group = NULL;
     }
     return ret;
 }
@@ -708,8 +722,17 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
             return 0;
         for (i = 0; i < ctx->sigalg_list_len; i++) {
             const char *keytype = inferred_keytype(&ctx->sigalg_list[i]);
+            const char *group = ctx->sigalg_list[i].keytype_group;
+
             ctx->ssl_cert_info[i].pkey_nid = OBJ_txt2nid(keytype);
             ctx->ssl_cert_info[i].amask = SSL_aANY;
+            /*
+             * If the provider bound this sigalg to a group/parameter set,
+             * remember it so cert loading can disambiguate several schemes
+             * that share the same key type OID. NID_undef keeps the legacy
+             * first-match behaviour.
+             */
+            ctx->ssl_cert_info[i].group_nid = (group != NULL) ? OBJ_txt2nid(group) : NID_undef;
         }
     }
 
