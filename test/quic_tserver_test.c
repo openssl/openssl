@@ -331,16 +331,38 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
                 CRYPTO_THREAD_unlock(fake_time_lock);
 
                 ++idle_units_done;
-                ossl_quic_conn_force_assist_thread_wake(c_ssl);
 
                 /*
-                 * If the event timeout has expired then give the assistance
-                 * thread a chance to catch up
+                 * The assist thread alone keeps the idle connection alive. It
+                 * waits on real time internally, so advancing fake time can
+                 * outrun it. Rather than race it, wait until it has caught up:
+                 * the event timeout is computed against fake time, so once the
+                 * next deadline is back in the future all events due up to now
+                 * - including any keepalive - have been serviced.
                  */
-                if (!TEST_true(SSL_get_event_timeout(c_ssl, &tv, &isinf)))
-                    goto err;
-                if (!isinf && ossl_time_compare(ossl_time_zero(), ossl_time_from_timeval(tv)) >= 0)
-                    OSSL_sleep(10); /* Ensure CPU scheduling for test purposes */
+                for (;;) {
+                    ossl_quic_conn_force_assist_thread_wake(c_ssl);
+
+                    if (!TEST_true(SSL_get_event_timeout(c_ssl, &tv, &isinf)))
+                        goto err;
+
+                    if (isinf
+                        || ossl_time_compare(ossl_time_from_timeval(tv),
+                               ossl_time_zero())
+                            > 0)
+                        break;
+
+                    if (ossl_time_compare(ossl_time_subtract(real_now(NULL),
+                                              start_time),
+                            ossl_ms2time(limit_ms))
+                        >= 0) {
+                        TEST_error("timeout waiting for assist thread to send "
+                                   "keepalive during idle test");
+                        goto err;
+                    }
+
+                    OSSL_sleep(1); /* Yield so the assist thread can run. */
+                }
             } else {
                 c_done_idle_test = 1;
             }
