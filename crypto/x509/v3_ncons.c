@@ -615,6 +615,12 @@ static int nc_dn(const X509_NAME *nm, const X509_NAME *base)
         return X509_V_ERR_OUT_OF_MEM;
     if (base->canon_enclen > nm->canon_enclen)
         return X509_V_ERR_PERMITTED_VIOLATION;
+    /*
+     * An empty base Name has no canonical encoding (canon_enc == NULL) and is
+     * a prefix of every Name, so it matches unconditionally.
+     */
+    if (base->canon_enclen == 0)
+        return X509_V_OK;
     if (memcmp(base->canon_enc, nm->canon_enc, base->canon_enclen))
         return X509_V_ERR_PERMITTED_VIOLATION;
     return X509_V_OK;
