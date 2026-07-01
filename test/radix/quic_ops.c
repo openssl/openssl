@@ -42,10 +42,10 @@ static int ssl_ctx_select_alpn(SSL *ssl,
 
 static void keylog_cb(const SSL *ssl, const char *line)
 {
-    ossl_crypto_mutex_lock(RP()->gm);
+/*     ossl_crypto_mutex_lock(RP()->gm); */
     BIO_printf(RP()->keylog_out, "%s", line);
     (void)BIO_flush(RP()->keylog_out);
-    ossl_crypto_mutex_unlock(RP()->gm);
+/*    ossl_crypto_mutex_unlock(RP()->gm); */
 }
 
 static int ssl_ctx_configure(SSL_CTX *ctx, int is_server)

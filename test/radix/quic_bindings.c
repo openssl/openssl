@@ -444,19 +444,23 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
     const char *name, RADIX_OBJ *obj)
 {
     RADIX_OBJ *existing;
+    SSL *existing_ssl;
     RADIX_THREAD *rt;
-    int i, j;
+    int i, j, ok;
 
     if (obj != NULL && !TEST_false(obj->registered))
         return 0;
 
+    ok = 0;
+    ossl_crypto_mutex_lock(rp->gm);
     existing = RADIX_PROCESS_get_obj(rp, name);
     if (existing != NULL && obj != existing) {
         if (!TEST_true(existing->registered))
-            return 0;
+            goto done;
 
         lh_RADIX_OBJ_delete(rp->objs, existing);
         existing->registered = 0;
+        existing_ssl = existing->ssl;
         RADIX_OBJ_free(existing);
     } else {
         existing = NULL;
@@ -477,13 +481,17 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
             for (j = 0; j < NUM_SLOTS; j++) {
                 if (rt->slot[j] == existing)
                     rt->slot[j] = obj;
-                if (rt->ssl[j] == existing->ssl)
+                if (rt->ssl[j] == existing_ssl)
                     rt->ssl[j] = (obj == NULL) ? NULL : obj->ssl;
             }
         }
     }
 
-    return 1;
+    ok = 1;
+
+done:
+    ossl_crypto_mutex_unlock(rp->gm);
+    return ok;
 }
 
 static int RADIX_PROCESS_set_ssl(RADIX_PROCESS *rp, const char *name, SSL *ssl)
@@ -676,7 +684,9 @@ static void per_op_tick_obj(RADIX_OBJ *obj)
 
 static int do_per_op(TERP *terp, void *arg)
 {
+    ossl_crypto_mutex_lock(RP()->gm);
     lh_RADIX_OBJ_doall(RP()->objs, per_op_tick_obj);
+    ossl_crypto_mutex_unlock(RP()->gm);
     return 1;
 }
 
