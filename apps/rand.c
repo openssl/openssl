@@ -53,8 +53,7 @@ int rand_main(int argc, char **argv)
     BIO *out = NULL;
     char *outfile = NULL, *prog;
     OPTION_CHOICE o;
-    int format = FORMAT_BINARY, r, i, ret = 1;
-    bool newline = true;
+    int format = FORMAT_BINARY, r, i, ret = 1, newline = 1;
     size_t buflen = (1 << 16); /* max rand chunk size is 2^16 bytes */
     long num = -1;
     uint64_t scaled_num = 0;
@@ -86,7 +85,7 @@ int rand_main(int argc, char **argv)
             format = FORMAT_TEXT;
             break;
         case OPT_NO_NEWLINE:
-            newline = false;
+            newline = 0;
             break;
         case OPT_PROV_CASES:
             if (!opt_provider(o))
