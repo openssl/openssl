@@ -951,7 +951,48 @@ DEF_SCRIPT(script_11_child_3,
     OP_EXPECT_FIN(C3);
 }
 
-DEF_SCRIPT(script_11, "place holder for multistrem script_11")
+DEF_SCRIPT(script_11_child_4,
+    "child: accept stream from C, read, sleep, expect FIN")
+{
+    OP_ACCEPT_STREAM_WAIT(C, C4, 0 /* bidirectional */);
+    OP_READ_EXPECT_B(C4, "foo");
+    OP_SLEEP(10);
+    OP_EXPECT_FIN(C4);
+}
+
+DEF_SCRIPT(script_11, "Many threads accepted on the same client connection")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SPAWN_THREAD(script_11_child_0);
+    OP_SPAWN_THREAD(script_11_child_1);
+    OP_SPAWN_THREAD(script_11_child_2);
+    OP_SPAWN_THREAD(script_11_child_3);
+    OP_SPAWN_THREAD(script_11_child_4);
+
+    OP_NEW_STREAM(S, Sa, 0 /* bidirectional */);
+    OP_WRITE_B(Sa, "foo");
+    OP_CONCLUDE(Sa);
+
+    OP_NEW_STREAM(S, Sb, 0 /* bidirectional */);
+    OP_WRITE_B(Sb, "foo");
+    OP_CONCLUDE(Sb);
+
+    OP_NEW_STREAM(S, Sc, 0 /* bidirectional */);
+    OP_WRITE_B(Sc, "foo");
+    OP_CONCLUDE(Sc);
+
+    OP_NEW_STREAM(S, Sd, 0 /* bidirectional */);
+    OP_WRITE_B(Sd, "foo");
+    OP_CONCLUDE(Sd);
+
+    OP_NEW_STREAM(S, Se, 0 /* bidirectional */);
+    OP_WRITE_B(Se, "foo");
+    OP_CONCLUDE(Se);
+    OP_SLEEP(10);
+}
+
 {
 }
 
