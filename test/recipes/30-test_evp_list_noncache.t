@@ -10,7 +10,7 @@ use strict;
 use warnings;
 
 
-use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir/;
 use OpenSSL::Test::Utils;
 
 setup("test_noncaching_evp_fetch");
@@ -23,7 +23,7 @@ plan tests => 1;
 # This tells the p_ossltest provider to request no caching of algs
 $ENV{OSSL_TEST_PROVIDER_NO_CACHE} = "yes";
 
-my $provdir = srctop_dir("test");
+my $provdir = bldtop_dir("test");
 
 # list all algorithms in p_ossltest, this exercises the EVP_*do_all_provided paths when algorithms
 # are not being cached
