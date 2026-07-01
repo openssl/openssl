@@ -16,37 +16,51 @@
 
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 {
+    return OSSL_FN_sqr_limbs(r, a, (size_t)a->dsize, ctx);
+}
+
+int OSSL_FN_sqr_limbs(OSSL_FN *r, const OSSL_FN *a, size_t al,
+    OSSL_FN_CTX *ctx)
+{
     const void *token = OSSL_FN_CTX_start(ctx);
     if (token == NULL)
         return 0;
 
-    size_t al = (size_t)a->dsize;
+    int ret = 0;
+
+    if (al > (size_t)a->dsize)
+        goto err;
+
     size_t rl = (size_t)r->dsize;
     size_t max = (size_t)(2 * al);
+    OSSL_FN *rr = r;
 
-    int ret = 0;
+    if (max > 0 && (r == a || rl < max))
+        if ((rr = OSSL_FN_CTX_get_limbs(ctx, max)) == NULL)
+            goto err;
+
 #ifdef BN_SQR_COMBA
-    if (al == 4 && rl >= 8) {
-        bn_sqr_comba4(r->d, a->d);
+    if (al == 4) {
+        bn_sqr_comba4(rr->d, a->d);
         goto end;
-    } else if (al == 8 && rl >= 16) {
-        bn_sqr_comba8(r->d, a->d);
+    } else if (al == 8) {
+        bn_sqr_comba8(rr->d, a->d);
         goto end;
     }
 #endif
 
-    /* rl < max is always true when r == a, so covers that case too */
-    OSSL_FN *rr = r;
-    if (rl < max)
-        if ((rr = OSSL_FN_CTX_get_limbs(ctx, max)) == NULL)
+    if (al != 0) {
+        OSSL_FN *tmp = NULL;
+
+        if ((tmp = OSSL_FN_CTX_get_limbs(ctx, max)) == NULL)
             goto err;
 
-    OSSL_FN *tmp = NULL;
-    if ((tmp = OSSL_FN_CTX_get_limbs(ctx, max)) == NULL)
-        goto err;
-
-    if (al != 0)
         bn_sqr_normal(rr->d, a->d, (int)al, tmp->d);
+    }
+
+#ifdef BN_SQR_COMBA
+end:
+#endif
 
     if (rr != r) {
         /*
@@ -55,10 +69,6 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
          */
         OSSL_FN_copy_truncate(r, rr);
     }
-
-#ifdef BN_SQR_COMBA
-end:
-#endif
 
     ret = 1;
 

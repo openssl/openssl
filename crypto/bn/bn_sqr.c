@@ -10,7 +10,6 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-/* r must not be a */
 /*
  * I've just gone over this and it is now %20 faster on x86 - eay - 27 Jun 96
  */
@@ -29,17 +28,13 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
     bn_check_top(a);
     bn_check_top(r);
 
-    /*
-     * Acquiring rf may make r larger.
-     * If r == a, then a will also become larger.  Therefore, max must
-     * be calculated after rf has been acquired.
-     */
-    size_t top = a->top * 2;
+    size_t al = (size_t)a->top;
+    size_t top = al * 2;
     OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
     if (rf == NULL)
         return 0;
 
-    size_t max = a->dmax * 2;
+    size_t max = top;
 
     OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 2, max * 4);
     if (fnctx == NULL) {
@@ -47,7 +42,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
         return 0;
     }
 
-    int ret = OSSL_FN_sqr(rf, a->data, fnctx);
+    int ret = OSSL_FN_sqr_limbs(rf, a->data, al, fnctx);
     bn_release(r, (int)top);
     r->neg = 0;
 
