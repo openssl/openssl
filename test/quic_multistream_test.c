@@ -2080,38 +2080,8 @@ static const struct script_op script_11[] = {
 };
 
 /* 12. Many threads initiated on the same client connection */
-static const struct script_op script_12_child[] = {
-    OP_C_NEW_STREAM_BIDI(a, ANY_ID),
-    OP_C_WRITE(a, "foo", 3),
-    OP_C_CONCLUDE(a),
-    OP_C_FREE_STREAM(a),
-
-    OP_END
-};
-
 static const struct script_op script_12[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_NEW_THREAD(5, script_12_child),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "foo", 3),
-    OP_S_EXPECT_FIN(a),
-    OP_S_BIND_STREAM_ID(b, C_BIDI_ID(1)),
-    OP_S_READ_EXPECT(b, "foo", 3),
-    OP_S_EXPECT_FIN(b),
-    OP_S_BIND_STREAM_ID(c, C_BIDI_ID(2)),
-    OP_S_READ_EXPECT(c, "foo", 3),
-    OP_S_EXPECT_FIN(c),
-    OP_S_BIND_STREAM_ID(d, C_BIDI_ID(3)),
-    OP_S_READ_EXPECT(d, "foo", 3),
-    OP_S_EXPECT_FIN(d),
-    OP_S_BIND_STREAM_ID(e, C_BIDI_ID(4)),
-    OP_S_READ_EXPECT(e, "foo", 3),
-    OP_S_EXPECT_FIN(e),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

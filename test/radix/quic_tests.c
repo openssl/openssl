@@ -993,11 +993,74 @@ DEF_SCRIPT(script_11, "Many threads accepted on the same client connection")
     OP_SLEEP(10);
 }
 
+/* 12. Many threads initiated on the same client connection */
+DEF_SCRIPT(script_12_child_0,
+    "child: create stream on C, write, conclude")
 {
+    OP_NEW_STREAM(C, C0, 0 /* bidirectional */);
+    OP_WRITE_B(C0, "foo");
+    OP_CONCLUDE(C0);
 }
 
-DEF_SCRIPT(script_12, "place holder for multistrem script_12")
+DEF_SCRIPT(script_12_child_1,
+    "child: create stream on C, write, conclude")
 {
+    OP_NEW_STREAM(C, C1, 0 /* bidirectional */);
+    OP_WRITE_B(C1, "foo");
+    OP_CONCLUDE(C1);
+}
+
+DEF_SCRIPT(script_12_child_2,
+    "child: create stream on C, write, conclude")
+{
+    OP_NEW_STREAM(C, C2, 0 /* bidirectional */);
+    OP_WRITE_B(C2, "foo");
+    OP_CONCLUDE(C2);
+}
+
+DEF_SCRIPT(script_12_child_3,
+    "child: create stream on C, write, conclude")
+{
+    OP_NEW_STREAM(C, C3, 0 /* bidirectional */);
+    OP_WRITE_B(C3, "foo");
+    OP_CONCLUDE(C3);
+}
+
+DEF_SCRIPT(script_12_child_4,
+    "child: create stream on C, write, conclude")
+{
+    OP_NEW_STREAM(C, C4, 0 /* bidirectional */);
+    OP_WRITE_B(C4, "foo");
+    OP_CONCLUDE(C4);
+}
+
+DEF_SCRIPT(script_12, "Many threads initiated on the same client connection")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SPAWN_THREAD(script_12_child_0);
+    OP_SPAWN_THREAD(script_12_child_1);
+    OP_SPAWN_THREAD(script_12_child_2);
+    OP_SPAWN_THREAD(script_12_child_3);
+    OP_SPAWN_THREAD(script_12_child_4);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT_B(Sa, "foo");
+    OP_EXPECT_FIN(Sa);
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+    OP_READ_EXPECT_B(Sb, "foo");
+    OP_EXPECT_FIN(Sb);
+    OP_ACCEPT_STREAM_WAIT(S, Sc, 0);
+    OP_READ_EXPECT_B(Sc, "foo");
+    OP_EXPECT_FIN(Sc);
+    OP_ACCEPT_STREAM_WAIT(S, Sd, 0);
+    OP_READ_EXPECT_B(Sd, "foo");
+    OP_EXPECT_FIN(Sd);
+    OP_ACCEPT_STREAM_WAIT(S, Se, 0);
+    OP_READ_EXPECT_B(Se, "foo");
+    OP_EXPECT_FIN(Se);
+    OP_SLEEP(10);
 }
 
 DEF_SCRIPT(script_13, "place holder for multistrem script_13")
