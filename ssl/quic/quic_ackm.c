@@ -611,7 +611,7 @@ struct ossl_ackm_st {
     void *ack_deadline_cb_arg;
 };
 
-static ossl_inline uint32_t min_u32(uint32_t x, uint32_t y)
+static inline uint32_t min_u32(uint32_t x, uint32_t y)
 {
     return x < y ? x : y;
 }

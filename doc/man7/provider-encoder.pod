@@ -100,7 +100,7 @@ For example, the "function" OSSL_FUNC_encoder_encode() has these:
                                    const OSSL_PARAM obj_abstract[],
                                    int selection,
                                    OSSL_PASSPHRASE_CALLBACK *cb, void *cbarg);
- static ossl_inline OSSL_FUNC_encoder_encode_fn
+ static inline OSSL_FUNC_encoder_encode_fn
      OSSL_FUNC_encoder_encode(const OSSL_DISPATCH *opf);
 
 L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as

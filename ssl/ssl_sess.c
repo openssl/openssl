@@ -26,7 +26,7 @@ static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
 
 DEFINE_STACK_OF(SSL_SESSION)
 
-__owur static ossl_inline int sess_timedout(OSSL_TIME t, SSL_SESSION *ss)
+__owur static inline int sess_timedout(OSSL_TIME t, SSL_SESSION *ss)
 {
     return ossl_time_compare(t, ss->calc_timeout) > 0;
 }
@@ -35,7 +35,7 @@ __owur static ossl_inline int sess_timedout(OSSL_TIME t, SSL_SESSION *ss)
  * Returns -1/0/+1 as other XXXcmp-type functions
  * Takes calculated timeout into consideration
  */
-__owur static ossl_inline int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
+__owur static inline int timeoutcmp(SSL_SESSION *a, SSL_SESSION *b)
 {
     return ossl_time_compare(a->calc_timeout, b->calc_timeout);
 }

@@ -224,11 +224,11 @@ static const OSSL_PARAM *kdf_argon2_gettable_ctx_params(ossl_unused void *ctx,
 static int argon2_set_ctx_params(KDF_ARGON2 *ctx, const OSSL_PARAM params[],
     OSSL_PARAM **size_param_ptr);
 
-static ossl_inline uint64_t load64(const uint8_t *src);
-static ossl_inline void store32(uint8_t *dst, uint32_t w);
-static ossl_inline void store64(uint8_t *dst, uint64_t w);
-static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned int c);
-static ossl_inline uint64_t mul_lower(uint64_t x, uint64_t y);
+static inline uint64_t load64(const uint8_t *src);
+static inline void store32(uint8_t *dst, uint32_t w);
+static inline void store64(uint8_t *dst, uint64_t w);
+static inline uint64_t rotr64(const uint64_t w, const unsigned int c);
+static inline uint64_t mul_lower(uint64_t x, uint64_t y);
 
 static void init_block_value(BLOCK *b, uint8_t in);
 static void copy_block(BLOCK *dst, const BLOCK *src);
@@ -256,7 +256,7 @@ static int fill_mem_blocks_mt(KDF_ARGON2 *ctx);
 #endif
 
 static int fill_mem_blocks_st(KDF_ARGON2 *ctx);
-static ossl_inline int fill_memory_blocks(KDF_ARGON2 *ctx);
+static inline int fill_memory_blocks(KDF_ARGON2 *ctx);
 
 static void initial_hash(uint8_t *blockhash, KDF_ARGON2 *ctx);
 static int initialize(KDF_ARGON2 *ctx);
@@ -268,7 +268,7 @@ static int blake2b(EVP_MD *md, EVP_MAC *mac, void *out, size_t outlen,
 static int blake2b_long(EVP_MD *md, EVP_MAC *mac, unsigned char *out,
     size_t outlen, const void *in, size_t inlen);
 
-static ossl_inline uint64_t load64(const uint8_t *src)
+static inline uint64_t load64(const uint8_t *src)
 {
     return (((uint64_t)src[0]) << 0)
         | (((uint64_t)src[1]) << 8)
@@ -280,7 +280,7 @@ static ossl_inline uint64_t load64(const uint8_t *src)
         | (((uint64_t)src[7]) << 56);
 }
 
-static ossl_inline void store32(uint8_t *dst, uint32_t w)
+static inline void store32(uint8_t *dst, uint32_t w)
 {
     dst[0] = (uint8_t)(w >> 0);
     dst[1] = (uint8_t)(w >> 8);
@@ -288,7 +288,7 @@ static ossl_inline void store32(uint8_t *dst, uint32_t w)
     dst[3] = (uint8_t)(w >> 24);
 }
 
-static ossl_inline void store64(uint8_t *dst, uint64_t w)
+static inline void store64(uint8_t *dst, uint64_t w)
 {
     dst[0] = (uint8_t)(w >> 0);
     dst[1] = (uint8_t)(w >> 8);
@@ -300,12 +300,12 @@ static ossl_inline void store64(uint8_t *dst, uint64_t w)
     dst[7] = (uint8_t)(w >> 56);
 }
 
-static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned int c)
+static inline uint64_t rotr64(const uint64_t w, const unsigned int c)
 {
     return (w >> c) | (w << (64 - c));
 }
 
-static ossl_inline uint64_t mul_lower(uint64_t x, uint64_t y)
+static inline uint64_t mul_lower(uint64_t x, uint64_t y)
 {
     const uint64_t m = 0xFFFFFFFFUL;
     return (x & m) * (y & m);
@@ -637,7 +637,7 @@ static int fill_mem_blocks_st(KDF_ARGON2 *ctx)
     return 1;
 }
 
-static ossl_inline int fill_memory_blocks(KDF_ARGON2 *ctx)
+static inline int fill_memory_blocks(KDF_ARGON2 *ctx)
 {
 #if !defined(ARGON2_NO_THREADS)
     return ctx->threads == 1 ? fill_mem_blocks_st(ctx) : fill_mem_blocks_mt(ctx);

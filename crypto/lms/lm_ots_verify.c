@@ -63,7 +63,7 @@ int ossl_lm_ots_compute_pubkey(EVP_MD_CTX *ctx, EVP_MD_CTX *ctxIq,
  * @brief simple function to increment a big-endian 16 bit counter by 1.
  * It assumes checking for overflow is not required.
  */
-static ossl_inline void INC16(unsigned char *tag)
+static inline void INC16(unsigned char *tag)
 {
     if (++(tag[1]) == 0)
         ++tag[0];

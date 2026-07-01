@@ -358,7 +358,7 @@ struct dsa_params_st {
 
 #include "providers/implementations/keymgmt/dsa_kmgmt.inc"
 
-static ossl_inline int dsa_get_params(void *key, OSSL_PARAM params[])
+static inline int dsa_get_params(void *key, OSSL_PARAM params[])
 {
     DSA *dsa = key;
     struct dsa_params_st p;

@@ -21,7 +21,7 @@
 
 #define word_is_zero(a) constant_time_is_zero_32(a)
 
-static ossl_inline uint64_t widemul(uint32_t a, uint32_t b)
+static inline uint64_t widemul(uint32_t a, uint32_t b)
 {
     return ((uint64_t)a) * b;
 }

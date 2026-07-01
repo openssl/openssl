@@ -65,7 +65,7 @@ DEFINE_RUN_ONCE_STATIC(do_wsa_startup)
     return 1;
 }
 
-static ossl_inline int ensure_wsa_startup(void)
+static inline int ensure_wsa_startup(void)
 {
     int rv, unused;
 

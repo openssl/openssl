@@ -77,7 +77,7 @@
 
 const char *ossl_quic_frame_type_to_string(uint64_t frame_type);
 
-static ossl_unused ossl_inline int
+static ossl_unused inline int
 ossl_quic_frame_type_is_ack_eliciting(uint64_t frame_type)
 {
     switch (frame_type) {

@@ -19,14 +19,14 @@
  *
  * pkt_idx: index of packet within datagram.
  */
-static ossl_inline void pkt_mark(uint64_t *bitf, size_t pkt_idx)
+static inline void pkt_mark(uint64_t *bitf, size_t pkt_idx)
 {
     assert(pkt_idx < QUIC_MAX_PKT_PER_URXE);
     *bitf |= ((uint64_t)1) << pkt_idx;
 }
 
 /* Returns 1 if a packet is in the bitfield. */
-static ossl_inline int pkt_is_marked(const uint64_t *bitf, size_t pkt_idx)
+static inline int pkt_is_marked(const uint64_t *bitf, size_t pkt_idx)
 {
     assert(pkt_idx < QUIC_MAX_PKT_PER_URXE);
     return (*bitf & (((uint64_t)1) << pkt_idx)) != 0;
@@ -82,7 +82,7 @@ struct rxe_st {
 DEFINE_LIST_OF(rxe, RXE);
 typedef OSSL_LIST(rxe) RXE_LIST;
 
-static ossl_inline unsigned char *rxe_data(const RXE *e)
+static inline unsigned char *rxe_data(const RXE *e)
 {
     return (unsigned char *)(e + 1);
 }
@@ -990,7 +990,7 @@ static int qrx_decrypt_pkt_body(OSSL_QRX *qrx, unsigned char *dst,
     return 1;
 }
 
-static ossl_inline void ignore_res(int x)
+static inline void ignore_res(int x)
 {
     /* No-op. */
 }

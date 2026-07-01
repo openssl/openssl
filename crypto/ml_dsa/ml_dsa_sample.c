@@ -46,7 +46,7 @@ static COEFF_FROM_NIBBLE_FUNC coeff_from_nibble_2;
  * @returns 1 if the value is less than q or 0 otherwise.
  *          This is used for rejection sampling.
  */
-static ossl_inline int coeff_from_three_bytes(const uint8_t *s, uint32_t *out)
+static inline int coeff_from_three_bytes(const uint8_t *s, uint32_t *out)
 {
     /* Zero out the top bit of the 3rd byte to get a value in the range 0..2^23-1) */
     *out = (uint32_t)s[0] | ((uint32_t)s[1] << 8) | (((uint32_t)s[2] & 0x7f) << 16);
@@ -63,7 +63,7 @@ static ossl_inline int coeff_from_three_bytes(const uint8_t *s, uint32_t *out)
  * @param out The returned value if the range (q-4)..0..4 if nibble is < 9
  * @returns 1 nibble was in range, or 0 if the nibble was rejected.
  */
-static ossl_inline int coeff_from_nibble_4(uint32_t nibble, uint32_t *out)
+static inline int coeff_from_nibble_4(uint32_t nibble, uint32_t *out)
 {
     /*
      * This is not constant time but will not leak any important info since
@@ -86,7 +86,7 @@ static ossl_inline int coeff_from_nibble_4(uint32_t nibble, uint32_t *out)
  * @param out The returned value if the range (q-2)..0..2 if nibble is < 15
  * @returns 1 nibble was in range, or 0 if the nibble was rejected.
  */
-static ossl_inline int coeff_from_nibble_2(uint32_t nibble, uint32_t *out)
+static inline int coeff_from_nibble_2(uint32_t nibble, uint32_t *out)
 {
     if (value_barrier_32(nibble < 15)) {
         *out = mod_sub(2, MOD5(nibble));

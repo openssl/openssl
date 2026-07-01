@@ -17,12 +17,12 @@
 #define BITS_PER_WORD (sizeof(size_t) * 8)
 #define NUM_ENABLED_W ((QLOG_EVENT_TYPE_NUM + BITS_PER_WORD - 1) / BITS_PER_WORD)
 
-static ossl_unused ossl_inline int bit_get(const size_t *p, uint32_t bit_no)
+static ossl_unused inline int bit_get(const size_t *p, uint32_t bit_no)
 {
     return p[bit_no / BITS_PER_WORD] & (((size_t)1) << (bit_no % BITS_PER_WORD));
 }
 
-static ossl_unused ossl_inline void bit_set(size_t *p, uint32_t bit_no, int enable)
+static ossl_unused inline void bit_set(size_t *p, uint32_t bit_no, int enable)
 {
     size_t mask = (((size_t)1) << (bit_no % BITS_PER_WORD));
 
@@ -519,12 +519,12 @@ struct lexer {
     const char *p, *term_end, *end;
 };
 
-static ossl_inline int is_term_sep_ws(char c)
+static inline int is_term_sep_ws(char c)
 {
     return c == ' ' || c == '\r' || c == '\n' || c == '\t';
 }
 
-static ossl_inline int is_name_char(char c)
+static inline int is_name_char(char c)
 {
     return ossl_isalpha(c) || ossl_isdigit(c) || c == '_' || c == '-';
 }

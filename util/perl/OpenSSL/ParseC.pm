@@ -301,7 +301,7 @@ my @opensslchandlers = (
       massager => sub {
           return (<<"EOF");
 typedef $1 OSSL_FUNC_$2_fn$3;
-static ossl_inline OSSL_FUNC_$2_fn *OSSL_FUNC_$2(const OSSL_DISPATCH *opf);
+static inline OSSL_FUNC_$2_fn *OSSL_FUNC_$2(const OSSL_DISPATCH *opf);
 EOF
       },
     },
@@ -317,21 +317,21 @@ EOF
     { regexp   => qr/DEFINE_LHASH_OF(?:_INTERNAL|_EX)?<<<\((.*)\)>>>/,
       massager => sub {
           return (<<"EOF");
-static ossl_inline LHASH_OF($1) * lh_$1_new(unsigned long (*hfn)(const $1 *),
+static inline LHASH_OF($1) * lh_$1_new(unsigned long (*hfn)(const $1 *),
                                             int (*cfn)(const $1 *, const $1 *));
-static ossl_inline void lh_$1_free(LHASH_OF($1) *lh);
-static ossl_inline $1 *lh_$1_insert(LHASH_OF($1) *lh, $1 *d);
-static ossl_inline $1 *lh_$1_delete(LHASH_OF($1) *lh, const $1 *d);
-static ossl_inline $1 *lh_$1_retrieve(LHASH_OF($1) *lh, const $1 *d);
-static ossl_inline int lh_$1_error(LHASH_OF($1) *lh);
-static ossl_inline unsigned long lh_$1_num_items(LHASH_OF($1) *lh);
-static ossl_inline void lh_$1_node_stats_bio(const LHASH_OF($1) *lh, BIO *out);
-static ossl_inline void lh_$1_node_usage_stats_bio(const LHASH_OF($1) *lh,
+static inline void lh_$1_free(LHASH_OF($1) *lh);
+static inline $1 *lh_$1_insert(LHASH_OF($1) *lh, $1 *d);
+static inline $1 *lh_$1_delete(LHASH_OF($1) *lh, const $1 *d);
+static inline $1 *lh_$1_retrieve(LHASH_OF($1) *lh, const $1 *d);
+static inline int lh_$1_error(LHASH_OF($1) *lh);
+static inline unsigned long lh_$1_num_items(LHASH_OF($1) *lh);
+static inline void lh_$1_node_stats_bio(const LHASH_OF($1) *lh, BIO *out);
+static inline void lh_$1_node_usage_stats_bio(const LHASH_OF($1) *lh,
                                                    BIO *out);
-static ossl_inline void lh_$1_stats_bio(const LHASH_OF($1) *lh, BIO *out);
-static ossl_inline unsigned long lh_$1_get_down_load(LHASH_OF($1) *lh);
-static ossl_inline void lh_$1_set_down_load(LHASH_OF($1) *lh, unsigned long dl);
-static ossl_inline void lh_$1_doall(LHASH_OF($1) *lh, void (*doall)($1 *));
+static inline void lh_$1_stats_bio(const LHASH_OF($1) *lh, BIO *out);
+static inline unsigned long lh_$1_get_down_load(LHASH_OF($1) *lh);
+static inline void lh_$1_set_down_load(LHASH_OF($1) *lh, unsigned long dl);
+static inline void lh_$1_doall(LHASH_OF($1) *lh, void (*doall)($1 *));
 LHASH_OF($1)
 EOF
       }
@@ -361,34 +361,34 @@ STACK_OF($1);
 typedef int (*sk_$1_compfunc)(const $3 * const *a, const $3 *const *b);
 typedef void (*sk_$1_freefunc)($3 *a);
 typedef $3 * (*sk_$1_copyfunc)(const $3 *a);
-static ossl_inline int sk_$1_num(const STACK_OF($1) *sk);
-static ossl_inline $2 *sk_$1_value(const STACK_OF($1) *sk, int idx);
-static ossl_inline STACK_OF($1) *sk_$1_new(sk_$1_compfunc compare);
-static ossl_inline STACK_OF($1) *sk_$1_new_null(void);
-static ossl_inline STACK_OF($1) *sk_$1_new_reserve(sk_$1_compfunc compare,
+static inline int sk_$1_num(const STACK_OF($1) *sk);
+static inline $2 *sk_$1_value(const STACK_OF($1) *sk, int idx);
+static inline STACK_OF($1) *sk_$1_new(sk_$1_compfunc compare);
+static inline STACK_OF($1) *sk_$1_new_null(void);
+static inline STACK_OF($1) *sk_$1_new_reserve(sk_$1_compfunc compare,
                                                    int n);
-static ossl_inline int sk_$1_reserve(STACK_OF($1) *sk, int n);
-static ossl_inline void sk_$1_free(STACK_OF($1) *sk);
-static ossl_inline void sk_$1_zero(STACK_OF($1) *sk);
-static ossl_inline $2 *sk_$1_delete(STACK_OF($1) *sk, int i);
-static ossl_inline $2 *sk_$1_delete_ptr(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline int sk_$1_push(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline int sk_$1_unshift(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline $2 *sk_$1_pop(STACK_OF($1) *sk);
-static ossl_inline $2 *sk_$1_shift(STACK_OF($1) *sk);
-static ossl_inline void sk_$1_pop_free(STACK_OF($1) *sk,
+static inline int sk_$1_reserve(STACK_OF($1) *sk, int n);
+static inline void sk_$1_free(STACK_OF($1) *sk);
+static inline void sk_$1_zero(STACK_OF($1) *sk);
+static inline $2 *sk_$1_delete(STACK_OF($1) *sk, int i);
+static inline $2 *sk_$1_delete_ptr(STACK_OF($1) *sk, $2 *ptr);
+static inline int sk_$1_push(STACK_OF($1) *sk, $2 *ptr);
+static inline int sk_$1_unshift(STACK_OF($1) *sk, $2 *ptr);
+static inline $2 *sk_$1_pop(STACK_OF($1) *sk);
+static inline $2 *sk_$1_shift(STACK_OF($1) *sk);
+static inline void sk_$1_pop_free(STACK_OF($1) *sk,
                                        sk_$1_freefunc freefunc);
-static ossl_inline int sk_$1_insert(STACK_OF($1) *sk, $2 *ptr, int idx);
-static ossl_inline $2 *sk_$1_set(STACK_OF($1) *sk, int idx, $2 *ptr);
-static ossl_inline int sk_$1_find(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline int sk_$1_find_ex(STACK_OF($1) *sk, $2 *ptr);
-static ossl_inline void sk_$1_sort(STACK_OF($1) *sk);
-static ossl_inline int sk_$1_is_sorted(const STACK_OF($1) *sk);
-static ossl_inline STACK_OF($1) * sk_$1_dup(const STACK_OF($1) *sk);
-static ossl_inline STACK_OF($1) *sk_$1_deep_copy(const STACK_OF($1) *sk,
+static inline int sk_$1_insert(STACK_OF($1) *sk, $2 *ptr, int idx);
+static inline $2 *sk_$1_set(STACK_OF($1) *sk, int idx, $2 *ptr);
+static inline int sk_$1_find(STACK_OF($1) *sk, $2 *ptr);
+static inline int sk_$1_find_ex(STACK_OF($1) *sk, $2 *ptr);
+static inline void sk_$1_sort(STACK_OF($1) *sk);
+static inline int sk_$1_is_sorted(const STACK_OF($1) *sk);
+static inline STACK_OF($1) * sk_$1_dup(const STACK_OF($1) *sk);
+static inline STACK_OF($1) *sk_$1_deep_copy(const STACK_OF($1) *sk,
                                                  sk_$1_copyfunc copyfunc,
                                                  sk_$1_freefunc freefunc);
-static ossl_inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
+static inline sk_$1_compfunc sk_$1_set_cmp_func(STACK_OF($1) *sk,
                                                      sk_$1_compfunc compare);
 EOF
       }
@@ -400,11 +400,11 @@ STACK_OF($1);
 typedef int (*sk_$1_compfunc)(const $3 * const *a, const $3 *const *b);
 typedef void (*sk_$1_freefunc)($3 *a);
 typedef $3 * (*sk_$1_copyfunc)(const $3 *a);
-static ossl_unused ossl_inline $2 *ossl_check_$1_type($2 *ptr);
-static ossl_unused ossl_inline const OPENSSL_STACK *ossl_check_const_$1_sk_type(const STACK_OF($1) *sk);
-static ossl_unused ossl_inline OPENSSL_sk_compfunc ossl_check_$1_compfunc_type(sk_$1_compfunc cmp);
-static ossl_unused ossl_inline OPENSSL_sk_copyfunc ossl_check_$1_copyfunc_type(sk_$1_copyfunc cpy);
-static ossl_unused ossl_inline OPENSSL_sk_freefunc ossl_check_$1_freefunc_type(sk_$1_freefunc fr);
+static ossl_unused inline $2 *ossl_check_$1_type($2 *ptr);
+static ossl_unused inline const OPENSSL_STACK *ossl_check_const_$1_sk_type(const STACK_OF($1) *sk);
+static ossl_unused inline OPENSSL_sk_compfunc ossl_check_$1_compfunc_type(sk_$1_compfunc cmp);
+static ossl_unused inline OPENSSL_sk_copyfunc ossl_check_$1_copyfunc_type(sk_$1_copyfunc cpy);
+static ossl_unused inline OPENSSL_sk_freefunc ossl_check_$1_freefunc_type(sk_$1_freefunc fr);
 EOF
       }
     },

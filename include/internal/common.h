@@ -15,7 +15,7 @@
 #include <string.h>
 #include "openssl/configuration.h"
 
-#include "internal/e_os.h" /* ossl_inline in many files */
+#include "internal/e_os.h" /* inline in many files */
 #include "internal/nelem.h"
 
 #if defined(__GNUC__) || defined(__clang__)
@@ -43,7 +43,7 @@
 #ifdef NDEBUG
 #define ossl_assert(x) ossl_likely((x) != 0)
 #else
-__owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
+__owur static inline int ossl_assert_int(int expr, const char *exprstr,
     const char *file, int line)
 {
     if (!expr)
@@ -277,7 +277,7 @@ __owur static ossl_inline int ossl_assert_int(int expr, const char *exprstr,
                         (c)[2] = (unsigned char)(((l)) & 0xff)),     \
     (c) += 3)
 
-static ossl_inline int ossl_ends_with_dirsep(const char *path)
+static inline int ossl_ends_with_dirsep(const char *path)
 {
     if (*path != '\0')
         path += strlen(path) - 1;
@@ -291,7 +291,7 @@ static ossl_inline int ossl_ends_with_dirsep(const char *path)
     return *path == '/';
 }
 
-static ossl_inline char ossl_determine_dirsep(const char *path)
+static inline char ossl_determine_dirsep(const char *path)
 {
     if (ossl_ends_with_dirsep(path))
         return '\0';
@@ -305,7 +305,7 @@ static ossl_inline char ossl_determine_dirsep(const char *path)
 #endif
 }
 
-static ossl_inline int ossl_is_absolute_path(const char *path)
+static inline int ossl_is_absolute_path(const char *path)
 {
 #if defined __VMS
     if (strchr(path, ':') != NULL

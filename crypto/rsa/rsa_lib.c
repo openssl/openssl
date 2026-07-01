@@ -213,7 +213,7 @@ static const unsigned int c4_690 = 0x12c28f; /* scale * 4.690 */
 /*
  * Multiply two scaled integers together and rescale the result.
  */
-static ossl_inline uint64_t mul2(uint64_t a, uint64_t b)
+static inline uint64_t mul2(uint64_t a, uint64_t b)
 {
     return a * b / scale;
 }

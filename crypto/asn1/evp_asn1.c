@@ -51,7 +51,7 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
     return ret;
 }
 
-static ossl_inline void asn1_type_init_oct(ASN1_OCTET_STRING *oct,
+static inline void asn1_type_init_oct(ASN1_OCTET_STRING *oct,
     unsigned char *data, int len)
 {
     oct->data = data;

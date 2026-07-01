@@ -62,14 +62,14 @@ void ossl_polyval_ghash_init(u128 Htable[16], const uint64_t H[2]);
 void ossl_polyval_ghash_hash(const u128 Htable[16], uint8_t *tag, const uint8_t *inp, size_t len);
 
 /* Define GSWAP8/GSWAP4 - used for BOTH little and big endian architectures */
-static ossl_inline uint32_t GSWAP4(uint32_t n)
+static inline uint32_t GSWAP4(uint32_t n)
 {
     return (((n & 0x000000FF) << 24)
         | ((n & 0x0000FF00) << 8)
         | ((n & 0x00FF0000) >> 8)
         | ((n & 0xFF000000) >> 24));
 }
-static ossl_inline uint64_t GSWAP8(uint64_t n)
+static inline uint64_t GSWAP8(uint64_t n)
 {
     uint64_t result;
 

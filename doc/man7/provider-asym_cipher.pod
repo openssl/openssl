@@ -66,7 +66,7 @@ B<OSSL_FUNC_{name}>.
 For example, the "function" OSSL_FUNC_asym_cipher_newctx() has these:
 
  typedef void *(OSSL_FUNC_asym_cipher_newctx_fn)(void *provctx);
- static ossl_inline OSSL_FUNC_asym_cipher_newctx_fn
+ static inline OSSL_FUNC_asym_cipher_newctx_fn
      OSSL_FUNC_asym_cipher_newctx(const OSSL_DISPATCH *opf);
 
 L<OSSL_DISPATCH(3)> arrays are indexed by numbers that are provided as

@@ -27,7 +27,7 @@ struct matrix_st {
  * @param k The number of rows
  * @param l The number of columns
  */
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 matrix_init(MATRIX *m, POLY *polys, size_t k, size_t l)
 {
     m->k = k;
@@ -35,13 +35,13 @@ matrix_init(MATRIX *m, POLY *polys, size_t k, size_t l)
     m->m_poly = polys;
 }
 
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 matrix_mult_vector(const MATRIX *a, const VECTOR *s, VECTOR *t)
 {
     ossl_ml_dsa_matrix_mult_vector(a, s, t);
 }
 
-static ossl_inline ossl_unused int
+static inline ossl_unused int
 matrix_expand_A(EVP_MD_CTX *g_ctx, const EVP_MD *md, const uint8_t *rho,
     MATRIX *out)
 {

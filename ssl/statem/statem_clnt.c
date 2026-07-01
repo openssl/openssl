@@ -35,10 +35,10 @@ static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
 static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL_CONNECTION *s,
     PACKET *pkt);
 
-static ossl_inline int cert_req_allowed(SSL_CONNECTION *s);
+static inline int cert_req_allowed(SSL_CONNECTION *s);
 static int key_exchange_expected(SSL_CONNECTION *s);
 
-static ossl_inline int received_server_cert(SSL_CONNECTION *sc)
+static inline int received_server_cert(SSL_CONNECTION *sc)
 {
     return sc->session->peer_rpk != NULL || sc->session->peer != NULL;
 }
@@ -50,7 +50,7 @@ static ossl_inline int received_server_cert(SSL_CONNECTION *sc)
  *  1: Yes
  *  0: No
  */
-static ossl_inline int cert_req_allowed(SSL_CONNECTION *s)
+static inline int cert_req_allowed(SSL_CONNECTION *s)
 {
     /* TLS does not like anon-DH with client cert */
     if ((s->s3.tmp.new_cipher->algorithm_auth & SSL_aNULL) != 0

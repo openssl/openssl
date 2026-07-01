@@ -46,37 +46,37 @@ static OSSL_FUNC_cipher_settable_ctx_params_fn cipher_ocb_settable_ctx_params;
  * The following methods could be moved into PROV_AES_OCB_HW if
  * multiple hardware implementations are ever needed.
  */
-static ossl_inline int aes_generic_ocb_setiv(PROV_AES_OCB_CTX *ctx,
+static inline int aes_generic_ocb_setiv(PROV_AES_OCB_CTX *ctx,
     const unsigned char *iv,
     size_t ivlen, size_t taglen)
 {
     return (CRYPTO_ocb128_setiv(&ctx->ocb, iv, ivlen, taglen) == 1);
 }
 
-static ossl_inline int aes_generic_ocb_setaad(PROV_AES_OCB_CTX *ctx,
+static inline int aes_generic_ocb_setaad(PROV_AES_OCB_CTX *ctx,
     const unsigned char *aad,
     size_t alen)
 {
     return CRYPTO_ocb128_aad(&ctx->ocb, aad, alen) == 1;
 }
 
-static ossl_inline int aes_generic_ocb_gettag(PROV_AES_OCB_CTX *ctx,
+static inline int aes_generic_ocb_gettag(PROV_AES_OCB_CTX *ctx,
     unsigned char *tag, size_t tlen)
 {
     return CRYPTO_ocb128_tag(&ctx->ocb, tag, tlen) > 0;
 }
 
-static ossl_inline int aes_generic_ocb_final(PROV_AES_OCB_CTX *ctx)
+static inline int aes_generic_ocb_final(PROV_AES_OCB_CTX *ctx)
 {
     return (CRYPTO_ocb128_finish(&ctx->ocb, ctx->tag, ctx->taglen) == 0);
 }
 
-static ossl_inline void aes_generic_ocb_cleanup(PROV_AES_OCB_CTX *ctx)
+static inline void aes_generic_ocb_cleanup(PROV_AES_OCB_CTX *ctx)
 {
     CRYPTO_ocb128_cleanup(&ctx->ocb);
 }
 
-static ossl_inline int aes_generic_ocb_cipher(PROV_AES_OCB_CTX *ctx,
+static inline int aes_generic_ocb_cipher(PROV_AES_OCB_CTX *ctx,
     const unsigned char *in,
     unsigned char *out, size_t len)
 {
@@ -90,7 +90,7 @@ static ossl_inline int aes_generic_ocb_cipher(PROV_AES_OCB_CTX *ctx,
     return 1;
 }
 
-static ossl_inline int aes_generic_ocb_copy_ctx(PROV_AES_OCB_CTX *dst,
+static inline int aes_generic_ocb_copy_ctx(PROV_AES_OCB_CTX *dst,
     PROV_AES_OCB_CTX *src)
 {
     return CRYPTO_ocb128_copy_ctx(&dst->ocb, &src->ocb,

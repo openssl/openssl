@@ -23,7 +23,7 @@
 
 #include "internal/endian.h"
 
-static ossl_inline uint32_t load32(const uint8_t *src)
+static inline uint32_t load32(const uint8_t *src)
 {
     DECLARE_IS_ENDIAN;
 
@@ -40,7 +40,7 @@ static ossl_inline uint32_t load32(const uint8_t *src)
     }
 }
 
-static ossl_inline uint64_t load64(const uint8_t *src)
+static inline uint64_t load64(const uint8_t *src)
 {
     DECLARE_IS_ENDIAN;
 
@@ -61,7 +61,7 @@ static ossl_inline uint64_t load64(const uint8_t *src)
     }
 }
 
-static ossl_inline void store32(uint8_t *dst, uint32_t w)
+static inline void store32(uint8_t *dst, uint32_t w)
 {
     DECLARE_IS_ENDIAN;
 
@@ -76,7 +76,7 @@ static ossl_inline void store32(uint8_t *dst, uint32_t w)
     }
 }
 
-static ossl_inline void store64(uint8_t *dst, uint64_t w)
+static inline void store64(uint8_t *dst, uint64_t w)
 {
     DECLARE_IS_ENDIAN;
 
@@ -91,7 +91,7 @@ static ossl_inline void store64(uint8_t *dst, uint64_t w)
     }
 }
 
-static ossl_inline uint64_t load48(const uint8_t *src)
+static inline uint64_t load48(const uint8_t *src)
 {
     uint64_t w = ((uint64_t)src[0])
         | ((uint64_t)src[1] << 8)
@@ -102,7 +102,7 @@ static ossl_inline uint64_t load48(const uint8_t *src)
     return w;
 }
 
-static ossl_inline void store48(uint8_t *dst, uint64_t w)
+static inline void store48(uint8_t *dst, uint64_t w)
 {
     uint8_t *p = (uint8_t *)dst;
     p[0] = (uint8_t)w;
@@ -113,12 +113,12 @@ static ossl_inline void store48(uint8_t *dst, uint64_t w)
     p[5] = (uint8_t)(w >> 40);
 }
 
-static ossl_inline uint32_t rotr32(const uint32_t w, const unsigned int c)
+static inline uint32_t rotr32(const uint32_t w, const unsigned int c)
 {
     return (w >> c) | (w << (32 - c));
 }
 
-static ossl_inline uint64_t rotr64(const uint64_t w, const unsigned int c)
+static inline uint64_t rotr64(const uint64_t w, const unsigned int c)
 {
     return (w >> c) | (w << (64 - c));
 }

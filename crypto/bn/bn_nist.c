@@ -321,7 +321,7 @@ static void nist_cp_bn(BN_ULONG *dst, const BN_ULONG *src, int top)
 #ifdef NIST_INT64
 /* Helpers to load/store a 32-bit word (uint32_t) from/into a memory
  * location and avoid potential aliasing issue.  */
-static ossl_inline uint32_t load_u32(const void *ptr)
+static inline uint32_t load_u32(const void *ptr)
 {
     uint32_t tmp;
 
@@ -329,7 +329,7 @@ static ossl_inline uint32_t load_u32(const void *ptr)
     return tmp;
 }
 
-static ossl_inline void store_lo32(void *ptr, NIST_INT64 val)
+static inline void store_lo32(void *ptr, NIST_INT64 val)
 {
     /* A cast is needed for big-endian system: on a 32-bit BE system
      * NIST_INT64 may be defined as well if the compiler supports 64-bit

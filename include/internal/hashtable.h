@@ -139,7 +139,7 @@ typedef struct ht_config_st {
  * This should not be called independently
  * use the HT_COPY_RAW_KEY macro instead
  */
-static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t *buf, size_t len)
+static inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t *buf, size_t len)
 {
     if (key->keysize + len > key->bufsize)
         return 0;
@@ -337,7 +337,7 @@ static ossl_inline ossl_unused int ossl_key_raw_copy(HT_KEY *key, const uint8_t 
 /*
  * Helper function to construct case insensitive keys
  */
-static ossl_inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, size_t len)
+static inline ossl_unused void ossl_ht_strcase(HT_KEY *key, char *tgt, const char *src, size_t len)
 {
     size_t i;
 #if defined(CHARSET_EBCDIC) && !defined(CHARSET_EBCDIC_TEST)

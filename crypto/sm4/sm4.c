@@ -224,17 +224,17 @@ static const uint32_t SM4_SBOX_T3[256] = {
     0xD45F5F8B, 0xC82F2FE7, 0x39E4E4DD, 0x49212168
 };
 
-static ossl_inline uint32_t rotl(uint32_t a, uint8_t n)
+static inline uint32_t rotl(uint32_t a, uint8_t n)
 {
     return (a << n) | (a >> (32 - n));
 }
 
-static ossl_inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
+static inline uint32_t load_u32_be(const uint8_t *b, uint32_t n)
 {
     return ((uint32_t)b[4 * n] << 24) | ((uint32_t)b[4 * n + 1] << 16) | ((uint32_t)b[4 * n + 2] << 8) | ((uint32_t)b[4 * n + 3]);
 }
 
-static ossl_inline void store_u32_be(uint32_t v, uint8_t *b)
+static inline void store_u32_be(uint32_t v, uint8_t *b)
 {
     b[0] = (uint8_t)(v >> 24);
     b[1] = (uint8_t)(v >> 16);
@@ -242,7 +242,7 @@ static ossl_inline void store_u32_be(uint32_t v, uint8_t *b)
     b[3] = (uint8_t)(v);
 }
 
-static ossl_inline uint32_t SM4_T_non_lin_sub(uint32_t X)
+static inline uint32_t SM4_T_non_lin_sub(uint32_t X)
 {
     uint32_t t = 0;
 
@@ -254,7 +254,7 @@ static ossl_inline uint32_t SM4_T_non_lin_sub(uint32_t X)
     return t;
 }
 
-static ossl_inline uint32_t SM4_T_slow(uint32_t X)
+static inline uint32_t SM4_T_slow(uint32_t X)
 {
     uint32_t t = SM4_T_non_lin_sub(X);
 
@@ -264,12 +264,12 @@ static ossl_inline uint32_t SM4_T_slow(uint32_t X)
     return t ^ rotl(t, 2) ^ rotl(t, 10) ^ rotl(t, 18) ^ rotl(t, 24);
 }
 
-static ossl_inline uint32_t SM4_T(uint32_t X)
+static inline uint32_t SM4_T(uint32_t X)
 {
     return SM4_SBOX_T0[(uint8_t)(X >> 24)] ^ SM4_SBOX_T1[(uint8_t)(X >> 16)] ^ SM4_SBOX_T2[(uint8_t)(X >> 8)] ^ SM4_SBOX_T3[(uint8_t)X];
 }
 
-static ossl_inline uint32_t SM4_key_sub(uint32_t X)
+static inline uint32_t SM4_key_sub(uint32_t X)
 {
     uint32_t t = SM4_T_non_lin_sub(X);
 

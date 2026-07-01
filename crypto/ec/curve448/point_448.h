@@ -159,7 +159,7 @@ void ossl_curve448_scalar_halve(curve448_scalar_t out, const curve448_scalar_t a
  * a (in): A scalar.
  * out (out): Will become a copy of a.
  */
-static ossl_inline void curve448_scalar_copy(curve448_scalar_t out,
+static inline void curve448_scalar_copy(curve448_scalar_t out,
     const curve448_scalar_t a)
 {
     *out = *a;
@@ -172,7 +172,7 @@ static ossl_inline void curve448_scalar_copy(curve448_scalar_t out,
  * a (out): A copy of the point.
  * b (in): Any point.
  */
-static ossl_inline void curve448_point_copy(curve448_point_t a,
+static inline void curve448_point_copy(curve448_point_t a,
     const curve448_point_t b)
 {
     *a = *b;

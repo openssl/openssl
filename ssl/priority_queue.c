@@ -83,7 +83,7 @@ static const size_t max_nodes = SIZE_MAX / (sizeof(struct pq_heap_st) > sizeof(s
  *
  * We use an expansion factor of 8 / 5 = 1.6
  */
-static ossl_inline size_t compute_pqueue_growth(size_t target, size_t current)
+static inline size_t compute_pqueue_growth(size_t target, size_t current)
 {
     int err = 0;
 
@@ -100,7 +100,7 @@ static ossl_inline size_t compute_pqueue_growth(size_t target, size_t current)
     return current;
 }
 
-static ossl_inline void pqueue_swap_elem(OSSL_PQUEUE *pq, size_t i, size_t j)
+static inline void pqueue_swap_elem(OSSL_PQUEUE *pq, size_t i, size_t j)
 {
     struct pq_heap_st *h = pq->heap, t_h;
     struct pq_elem_st *e = pq->elements;
@@ -116,7 +116,7 @@ static ossl_inline void pqueue_swap_elem(OSSL_PQUEUE *pq, size_t i, size_t j)
     e[h[j].index].posn = j;
 }
 
-static ossl_inline void pqueue_move_elem(OSSL_PQUEUE *pq, size_t from, size_t to)
+static inline void pqueue_move_elem(OSSL_PQUEUE *pq, size_t from, size_t to)
 {
     struct pq_heap_st *h = pq->heap;
     struct pq_elem_st *e = pq->elements;
@@ -131,7 +131,7 @@ static ossl_inline void pqueue_move_elem(OSSL_PQUEUE *pq, size_t from, size_t to
  * Force the specified element to the front of the heap.  This breaks
  * the heap partial ordering pre-condition.
  */
-static ossl_inline void pqueue_force_bottom(OSSL_PQUEUE *pq, size_t n)
+static inline void pqueue_force_bottom(OSSL_PQUEUE *pq, size_t n)
 {
     ASSERT_USED(pq, n);
     while (n > 0) {
@@ -147,7 +147,7 @@ static ossl_inline void pqueue_force_bottom(OSSL_PQUEUE *pq, size_t n)
  * Move an element down to its correct position to restore the partial
  * order pre-condition.
  */
-static ossl_inline void pqueue_move_down(OSSL_PQUEUE *pq, size_t n)
+static inline void pqueue_move_down(OSSL_PQUEUE *pq, size_t n)
 {
     struct pq_heap_st *h = pq->heap;
 
@@ -167,7 +167,7 @@ static ossl_inline void pqueue_move_down(OSSL_PQUEUE *pq, size_t n)
  * Move an element up to its correct position to restore the partial
  * order pre-condition.
  */
-static ossl_inline void pqueue_move_up(OSSL_PQUEUE *pq, size_t n)
+static inline void pqueue_move_up(OSSL_PQUEUE *pq, size_t n)
 {
     struct pq_heap_st *h = pq->heap;
     size_t p = n * 2 + 1;

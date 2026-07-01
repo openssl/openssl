@@ -1743,7 +1743,7 @@ err:
  * This function returns TRUE (1) if the checked nids are identical, or if they
  * alias to the same curve. FALSE (0) otherwise.
  */
-static ossl_inline int are_ec_nids_compatible(int n1d, int n2d)
+static inline int are_ec_nids_compatible(int n1d, int n2d)
 {
     int ret = 0;
     switch (n1d) {
@@ -2381,7 +2381,7 @@ err:
  *
  * If P is NULL use point at infinity.
  */
-static ossl_inline int ec_point_hex2point_test_helper(const EC_GROUP *group, const EC_POINT *P,
+static inline int ec_point_hex2point_test_helper(const EC_GROUP *group, const EC_POINT *P,
     point_conversion_form_t form,
     BN_CTX *bnctx)
 {

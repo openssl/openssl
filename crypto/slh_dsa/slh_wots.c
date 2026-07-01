@@ -30,7 +30,7 @@
  * @param in_len The size of |in|.
  * @param out The returned array of nibbles, with a size of 2*|in_len|
  */
-static ossl_inline void slh_bytes_to_nibbles(const uint8_t *in, size_t in_len,
+static inline void slh_bytes_to_nibbles(const uint8_t *in, size_t in_len,
     uint8_t *out)
 {
     size_t consumed = 0;
@@ -48,7 +48,7 @@ static ossl_inline void slh_bytes_to_nibbles(const uint8_t *in, size_t in_len,
  * This is effectively a cutdown version of Algorithm 7: steps 3 to 6
  * which does a complicated base2^b(tobyte()) operation.
  */
-static ossl_inline void compute_checksum_nibbles(const uint8_t *in, size_t in_len,
+static inline void compute_checksum_nibbles(const uint8_t *in, size_t in_len,
     uint8_t *out)
 {
     size_t i;

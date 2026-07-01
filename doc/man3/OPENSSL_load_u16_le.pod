@@ -13,29 +13,29 @@ Read and write unsigned 16, 32 and 64-bit integers in a specific byte order
 
     #include <openssl/byteorder.h>
 
-    static ossl_inline unsigned char *OPENSSL_store_u16_le(
+    static inline unsigned char *OPENSSL_store_u16_le(
         unsigned char *out, uint16_t val);
-    static ossl_inline unsigned char *OPENSSL_store_u16_be(
+    static inline unsigned char *OPENSSL_store_u16_be(
         unsigned char *out, uint16_t val);
-    static ossl_inline unsigned char *OPENSSL_store_u32_le(
+    static inline unsigned char *OPENSSL_store_u32_le(
         unsigned char *out, uint32_t val);
-    static ossl_inline unsigned char *OPENSSL_store_u32_be(
+    static inline unsigned char *OPENSSL_store_u32_be(
         unsigned char *out, uint32_t val);
-    static ossl_inline unsigned char *OPENSSL_store_u64_le(
+    static inline unsigned char *OPENSSL_store_u64_le(
         unsigned char *out, uint64_t val);
-    static ossl_inline unsigned char *OPENSSL_store_u64_be(
+    static inline unsigned char *OPENSSL_store_u64_be(
         unsigned char *out, uint64_t val);
-    static ossl_inline const unsigned char *OPENSSL_load_u16_le(
+    static inline const unsigned char *OPENSSL_load_u16_le(
         uint16_t *val, const unsigned char *in);
-    static ossl_inline const unsigned char *OPENSSL_load_u16_be(
+    static inline const unsigned char *OPENSSL_load_u16_be(
         uint16_t *val, const unsigned char *in);
-    static ossl_inline const unsigned char *OPENSSL_load_u32_le(
+    static inline const unsigned char *OPENSSL_load_u32_le(
         uint32_t *val, const unsigned char *in);
-    static ossl_inline const unsigned char *OPENSSL_load_u32_be(
+    static inline const unsigned char *OPENSSL_load_u32_be(
         uint32_t *val, const unsigned char *in);
-    static ossl_inline const unsigned char *OPENSSL_load_u64_le(
+    static inline const unsigned char *OPENSSL_load_u64_le(
         uint64_t *val, const unsigned char *in);
-    static ossl_inline const unsigned char *OPENSSL_load_u64_be(
+    static inline const unsigned char *OPENSSL_load_u64_be(
         uint64_t *val, const unsigned char *in);
 
 =head1 DESCRIPTION

@@ -113,7 +113,7 @@ typedef struct quic_conn_id_st {
 #endif
 } QUIC_CONN_ID;
 
-static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
+static ossl_unused inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
                                                         const QUIC_CONN_ID *b);
 
 /* New functions */

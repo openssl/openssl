@@ -36,7 +36,7 @@
  *
  * Returns 0 if v exceeds OSSL_QUIC_VLINT_MAX.
  */
-static ossl_unused ossl_inline size_t ossl_quic_vlint_encode_len(uint64_t v)
+static ossl_unused inline size_t ossl_quic_vlint_encode_len(uint64_t v)
 {
     if (v < OSSL_QUIC_VLINT_2B_MIN)
         return 1;
@@ -94,7 +94,7 @@ void ossl_quic_vlint_encode_n(unsigned char *buf, uint64_t v, int n);
  * the number of bytes comprising the encoded integer, including the first
  * byte.
  */
-static ossl_unused ossl_inline size_t ossl_quic_vlint_decode_len(uint8_t first_byte)
+static ossl_unused inline size_t ossl_quic_vlint_decode_len(uint8_t first_byte)
 {
     return (size_t)(1U << ((first_byte & 0xC0) >> 6));
 }

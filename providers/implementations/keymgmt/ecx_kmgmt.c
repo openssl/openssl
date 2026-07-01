@@ -98,7 +98,7 @@ static void *s390x_ecd_keygen448(struct ecx_gen_ctx *gctx);
 static int ecd_fips140_pairwise_test(const ECX_KEY *ecx, int type, int self_test);
 #endif /* FIPS_MODULE */
 
-static ossl_inline int ecx_key_type_is_ed(ECX_KEY_TYPE type)
+static inline int ecx_key_type_is_ed(ECX_KEY_TYPE type)
 {
     return type == ECX_KEY_TYPE_ED25519 || type == ECX_KEY_TYPE_ED448;
 }

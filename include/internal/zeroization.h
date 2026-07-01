@@ -27,7 +27,7 @@
 #include <openssl/crypto.h>
 #include <openssl/e_os2.h>
 
-static ossl_unused ossl_inline void
+static ossl_unused inline void
 ossl_public_param_free(void *ptr, size_t size)
 {
 #ifdef OPENSSL_PEDANTIC_ZEROIZATION
@@ -37,7 +37,7 @@ ossl_public_param_free(void *ptr, size_t size)
 #endif
 }
 
-static ossl_unused ossl_inline void
+static ossl_unused inline void
 ossl_public_bn_free(BIGNUM *bn)
 {
 #ifdef OPENSSL_PEDANTIC_ZEROIZATION

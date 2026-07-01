@@ -229,7 +229,7 @@ static void impl_free(IMPLEMENTATION *impl)
     }
 }
 
-static ossl_inline void impl_cache_free_unlinked(QUERY *elem)
+static inline void impl_cache_free_unlinked(QUERY *elem)
 {
     if (elem != NULL) {
         ossl_method_free(&elem->method);
@@ -938,7 +938,7 @@ int ossl_method_store_cache_flush_all(OSSL_METHOD_STORE *store)
     return 1;
 }
 
-static ossl_inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+static inline int ossl_method_store_cache_get_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, STORED_ALGORITHMS *sa, void **method)
 {
     QUERY *r = NULL;
@@ -987,7 +987,7 @@ static int ossl_method_store_atomic_archive(STORED_ALGORITHMS *sa, QUERY *old)
     return 1;
 }
 
-static ossl_inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, QUERY *old)
+static inline int ossl_method_store_put_in_archive(STORED_ALGORITHMS *sa, QUERY *old)
 {
     /*
      * point the item we're removing's next pointer to the top of the archive list
@@ -1197,7 +1197,7 @@ out:
     return ret;
 }
 
-static ossl_inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
+static inline int ossl_method_store_cache_set_atomic(OSSL_METHOD_STORE *store, OSSL_PROVIDER *prov,
     int nid, const char *prop_query, STORED_ALGORITHMS *sa, void *method,
     int (*method_up_ref)(void *),
     void (*method_destruct)(void *))

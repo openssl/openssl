@@ -681,7 +681,7 @@ static void felem_reduce_ref(felem out, const widefelem in)
         out[i] = acc[i];
 }
 
-static ossl_inline void felem_square_reduce_ref(felem out, const felem in)
+static inline void felem_square_reduce_ref(felem out, const felem in)
 {
     widefelem tmp;
 
@@ -689,7 +689,7 @@ static ossl_inline void felem_square_reduce_ref(felem out, const felem in)
     felem_reduce_ref(out, tmp);
 }
 
-static ossl_inline void felem_mul_reduce_ref(felem out, const felem in1, const felem in2)
+static inline void felem_mul_reduce_ref(felem out, const felem in1, const felem in2)
 {
     widefelem tmp;
 

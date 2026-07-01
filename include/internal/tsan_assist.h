@@ -138,14 +138,14 @@
 #define tsan_load(ptr) (*(ptr))
 #define tsan_store(ptr, val) (*(ptr) = (val))
 
-static ossl_inline ossl_unused int64_t tsan_add_fallback64(int64_t *ptr, int64_t n)
+static inline ossl_unused int64_t tsan_add_fallback64(int64_t *ptr, int64_t n)
 {
     int64_t old = *ptr;
     *ptr = old + n;
     return old;
 }
 
-static ossl_inline ossl_unused int32_t tsan_add_fallback32(int32_t *ptr, int32_t n)
+static inline ossl_unused int32_t tsan_add_fallback32(int32_t *ptr, int32_t n)
 {
     int32_t old = *ptr;
     *ptr = old + n;

@@ -39,15 +39,15 @@ NON_EMPTY_TRANSLATION_UNIT
 #define NUMBER_OF_REGISTERS(digits_num, register_size) \
     (((digits_num) * 64 + (register_size) - 1) / (register_size))
 
-static ossl_inline uint64_t get_digit(const uint8_t *in, int in_len);
-static ossl_inline void put_digit(uint8_t *out, int out_len, uint64_t digit);
+static inline uint64_t get_digit(const uint8_t *in, int in_len);
+static inline void put_digit(uint8_t *out, int out_len, uint64_t digit);
 static void to_words52(BN_ULONG *out, int out_len, const BN_ULONG *in,
     int in_bitsize);
 static void from_words52(BN_ULONG *bn_out, int out_bitsize, const BN_ULONG *in);
-static ossl_inline void set_bit(BN_ULONG *a, int idx);
+static inline void set_bit(BN_ULONG *a, int idx);
 
 /* Number of |digit_size|-bit digits in |bitsize|-bit value */
-static ossl_inline int number_of_digits(int bitsize, int digit_size)
+static inline int number_of_digits(int bitsize, int digit_size)
 {
     return (bitsize + digit_size - 1) / digit_size;
 }
@@ -573,7 +573,7 @@ err:
     return ret;
 }
 
-static ossl_inline uint64_t get_digit(const uint8_t *in, int in_len)
+static inline uint64_t get_digit(const uint8_t *in, int in_len)
 {
     uint64_t digit = 0;
 
@@ -634,7 +634,7 @@ static void to_words52(BN_ULONG *out, int out_len,
     memset(out, 0, out_len * sizeof(BN_ULONG));
 }
 
-static ossl_inline void put_digit(uint8_t *out, int out_len, uint64_t digit)
+static inline void put_digit(uint8_t *out, int out_len, uint64_t digit)
 {
     assert(out != NULL);
     assert(out_len <= 8);
@@ -692,7 +692,7 @@ static void from_words52(BN_ULONG *out, int out_bitsize, const BN_ULONG *in)
  * It does not do any boundaries checks, make sure the index is valid before
  * calling the function.
  */
-static ossl_inline void set_bit(BN_ULONG *a, int idx)
+static inline void set_bit(BN_ULONG *a, int idx)
 {
     assert(a != NULL);
 

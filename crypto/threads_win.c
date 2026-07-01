@@ -181,7 +181,7 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 }
 
 /* Read side acquisition of the current qp */
-static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
+static inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 {
     uint32_t qp_idx;
     uint32_t tmp;

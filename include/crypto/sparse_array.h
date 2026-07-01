@@ -20,74 +20,74 @@ extern "C" {
 
 #define SPARSE_ARRAY_OF(type) struct sparse_array_st_##type
 
-#define DEFINE_SPARSE_ARRAY_OF_INTERNAL(type, ctype)                                                               \
-    SPARSE_ARRAY_OF(type);                                                                                         \
-    typedef void (*sa_##type##_leaffunc)(ossl_uintmax_t idx, type *t);                                             \
-    typedef void (*sa_##type##_leaffunc_arg)(ossl_uintmax_t idx, type *t, void *arg);                              \
-    static ossl_unused ossl_inline SPARSE_ARRAY_OF(type) * ossl_sa_##type##_new(void)                              \
-    {                                                                                                              \
-        return (SPARSE_ARRAY_OF(type) *)ossl_sa_new();                                                             \
-    }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
-    ossl_sa_##type##_free(SPARSE_ARRAY_OF(type) * sa)                                                              \
-    {                                                                                                              \
-        ossl_sa_free((OPENSSL_SA *)sa);                                                                            \
-    }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
-    ossl_sa_##type##_free_leaves(SPARSE_ARRAY_OF(type) * sa)                                                       \
-    {                                                                                                              \
-        ossl_sa_free_leaves((OPENSSL_SA *)sa);                                                                     \
-    }                                                                                                              \
-    static ossl_unused ossl_inline size_t                                                                          \
-    ossl_sa_##type##_num(const SPARSE_ARRAY_OF(type) * sa)                                                         \
-    {                                                                                                              \
-        return ossl_sa_num((OPENSSL_SA *)sa);                                                                      \
-    }                                                                                                              \
-    static ossl_unused void                                                                                        \
-    ossl_sa_##type##_doall_thunk(ossl_uintmax_t idx, void *leaf, void *arg)                                        \
-    {                                                                                                              \
-        sa_##type##_leaffunc fn = *(sa_##type##_leaffunc *)arg;                                                    \
-        (*fn)(idx, (type *)leaf);                                                                                  \
-    }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
-    ossl_sa_##type##_doall(const SPARSE_ARRAY_OF(type) * sa,                                                       \
-        void (*leaf)(ossl_uintmax_t, type *))                                                                      \
-    {                                                                                                              \
-        ossl_sa_doall_arg((OPENSSL_SA *)sa, ossl_sa_##type##_doall_thunk, &leaf);                                  \
-    }                                                                                                              \
-    struct ossl_sa_##type##_doall_thunk {                                                                          \
-        sa_##type##_leaffunc_arg fn;                                                                               \
-        void *arg;                                                                                                 \
-    };                                                                                                             \
-    static ossl_unused void                                                                                        \
-    ossl_sa_##type##_doall_arg_thunk(ossl_uintmax_t idx, void *leaf, void *arg)                                    \
-    {                                                                                                              \
-        struct ossl_sa_##type##_doall_thunk *t = arg;                                                              \
-                                                                                                                   \
-        (*t->fn)(idx, (type *)leaf, t->arg);                                                                       \
-    }                                                                                                              \
-    static ossl_unused ossl_inline void                                                                            \
-    ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) * sa,                                                   \
-        void (*leaf)(ossl_uintmax_t, type *, void *),                                                              \
-        void *arg)                                                                                                 \
-    {                                                                                                              \
-        struct ossl_sa_##type##_doall_thunk t;                                                                     \
-                                                                                                                   \
-        t.fn = leaf;                                                                                               \
-        t.arg = arg;                                                                                               \
-        ossl_sa_doall_arg((OPENSSL_SA *)sa,                                                                        \
-            ossl_sa_##type##_doall_arg_thunk, &t);                                                                 \
-    }                                                                                                              \
-    static ossl_unused ossl_inline ctype *ossl_sa_##type##_get(const SPARSE_ARRAY_OF(type) * sa, ossl_uintmax_t n) \
-    {                                                                                                              \
-        return (type *)ossl_sa_get((OPENSSL_SA *)sa, n);                                                           \
-    }                                                                                                              \
-    static ossl_unused ossl_inline int                                                                             \
-    ossl_sa_##type##_set(SPARSE_ARRAY_OF(type) * sa,                                                               \
-        ossl_uintmax_t n, ctype *val)                                                                              \
-    {                                                                                                              \
-        return ossl_sa_set((OPENSSL_SA *)sa, n, (void *)val);                                                      \
-    }                                                                                                              \
+#define DEFINE_SPARSE_ARRAY_OF_INTERNAL(type, ctype)                                                          \
+    SPARSE_ARRAY_OF(type);                                                                                    \
+    typedef void (*sa_##type##_leaffunc)(ossl_uintmax_t idx, type *t);                                        \
+    typedef void (*sa_##type##_leaffunc_arg)(ossl_uintmax_t idx, type *t, void *arg);                         \
+    static ossl_unused inline SPARSE_ARRAY_OF(type) * ossl_sa_##type##_new(void)                              \
+    {                                                                                                         \
+        return (SPARSE_ARRAY_OF(type) *)ossl_sa_new();                                                        \
+    }                                                                                                         \
+    static ossl_unused inline void                                                                            \
+    ossl_sa_##type##_free(SPARSE_ARRAY_OF(type) * sa)                                                         \
+    {                                                                                                         \
+        ossl_sa_free((OPENSSL_SA *)sa);                                                                       \
+    }                                                                                                         \
+    static ossl_unused inline void                                                                            \
+    ossl_sa_##type##_free_leaves(SPARSE_ARRAY_OF(type) * sa)                                                  \
+    {                                                                                                         \
+        ossl_sa_free_leaves((OPENSSL_SA *)sa);                                                                \
+    }                                                                                                         \
+    static ossl_unused inline size_t                                                                          \
+    ossl_sa_##type##_num(const SPARSE_ARRAY_OF(type) * sa)                                                    \
+    {                                                                                                         \
+        return ossl_sa_num((OPENSSL_SA *)sa);                                                                 \
+    }                                                                                                         \
+    static ossl_unused void                                                                                   \
+    ossl_sa_##type##_doall_thunk(ossl_uintmax_t idx, void *leaf, void *arg)                                   \
+    {                                                                                                         \
+        sa_##type##_leaffunc fn = *(sa_##type##_leaffunc *)arg;                                               \
+        (*fn)(idx, (type *)leaf);                                                                             \
+    }                                                                                                         \
+    static ossl_unused inline void                                                                            \
+    ossl_sa_##type##_doall(const SPARSE_ARRAY_OF(type) * sa,                                                  \
+        void (*leaf)(ossl_uintmax_t, type *))                                                                 \
+    {                                                                                                         \
+        ossl_sa_doall_arg((OPENSSL_SA *)sa, ossl_sa_##type##_doall_thunk, &leaf);                             \
+    }                                                                                                         \
+    struct ossl_sa_##type##_doall_thunk {                                                                     \
+        sa_##type##_leaffunc_arg fn;                                                                          \
+        void *arg;                                                                                            \
+    };                                                                                                        \
+    static ossl_unused void                                                                                   \
+    ossl_sa_##type##_doall_arg_thunk(ossl_uintmax_t idx, void *leaf, void *arg)                               \
+    {                                                                                                         \
+        struct ossl_sa_##type##_doall_thunk *t = arg;                                                         \
+                                                                                                              \
+        (*t->fn)(idx, (type *)leaf, t->arg);                                                                  \
+    }                                                                                                         \
+    static ossl_unused inline void                                                                            \
+    ossl_sa_##type##_doall_arg(const SPARSE_ARRAY_OF(type) * sa,                                              \
+        void (*leaf)(ossl_uintmax_t, type *, void *),                                                         \
+        void *arg)                                                                                            \
+    {                                                                                                         \
+        struct ossl_sa_##type##_doall_thunk t;                                                                \
+                                                                                                              \
+        t.fn = leaf;                                                                                          \
+        t.arg = arg;                                                                                          \
+        ossl_sa_doall_arg((OPENSSL_SA *)sa,                                                                   \
+            ossl_sa_##type##_doall_arg_thunk, &t);                                                            \
+    }                                                                                                         \
+    static ossl_unused inline ctype *ossl_sa_##type##_get(const SPARSE_ARRAY_OF(type) * sa, ossl_uintmax_t n) \
+    {                                                                                                         \
+        return (type *)ossl_sa_get((OPENSSL_SA *)sa, n);                                                      \
+    }                                                                                                         \
+    static ossl_unused inline int                                                                             \
+    ossl_sa_##type##_set(SPARSE_ARRAY_OF(type) * sa,                                                          \
+        ossl_uintmax_t n, ctype *val)                                                                         \
+    {                                                                                                         \
+        return ossl_sa_set((OPENSSL_SA *)sa, n, (void *)val);                                                 \
+    }                                                                                                         \
     SPARSE_ARRAY_OF(type)
 
 #define DEFINE_SPARSE_ARRAY_OF(type) \

@@ -41,7 +41,7 @@ void *ossl_malloc_align(size_t num, size_t alignment, void **freeptr,
  * pre-defines the library to ERR_LIB_CRYPTO, and avoids emitting an error
  * if both file set to NULL and line set to 0.
  */
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 ossl_report_alloc_err_ex(const char *const file, const int line,
     const int reason)
 {
@@ -57,21 +57,21 @@ ossl_report_alloc_err_ex(const char *const file, const int line,
 }
 
 /* Report a memory allocation failure. */
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 ossl_report_alloc_err(const char *const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, ERR_R_MALLOC_FAILURE);
 }
 
 /* Report an integer overflow during allocation size calculation. */
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 ossl_report_alloc_err_of(const char *const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, CRYPTO_R_INTEGER_OVERFLOW);
 }
 
 /* Report invalid memory allocation call arguments. */
-static ossl_inline ossl_unused void
+static inline ossl_unused void
 ossl_report_alloc_err_inv(const char *const file, const int line)
 {
     ossl_report_alloc_err_ex(file, line, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -82,7 +82,7 @@ ossl_report_alloc_err_inv(const char *const file, const int line)
  * and set error if it is the case;  return true if there was no overflow,
  * false if there was.
  */
-static ossl_inline ossl_unused bool
+static inline ossl_unused bool
 ossl_size_mul(const size_t num, const size_t size, size_t *bytes,
     const char *const file, const int line)
 {
@@ -103,7 +103,7 @@ ossl_size_mul(const size_t num, const size_t size, size_t *bytes,
  * and set error if it is the case;  returns true if there was no overflow,
  * false if there was.
  */
-static ossl_inline ossl_unused bool
+static inline ossl_unused bool
 ossl_size_add(const size_t size1, const size_t size2, size_t *bytes,
     const char *const file, const int line)
 {

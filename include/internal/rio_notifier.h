@@ -61,7 +61,7 @@ int ossl_rio_notifier_unsignal(RIO_NOTIFIER *nfy);
  * Returns an OS socket handle (FD or Win32 SOCKET) which can be polled for
  * readability to determine when the notifier has been signalled.
  */
-static ossl_inline ossl_unused int ossl_rio_notifier_as_fd(RIO_NOTIFIER *nfy)
+static inline ossl_unused int ossl_rio_notifier_as_fd(RIO_NOTIFIER *nfy)
 {
     return nfy->rfd;
 }

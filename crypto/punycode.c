@@ -57,7 +57,7 @@ static int adapt(unsigned int delta, unsigned int numpoints,
     return k + (((base - tmin + 1) * delta) / (delta + skew));
 }
 
-static ossl_inline int is_basic(unsigned int a)
+static inline int is_basic(unsigned int a)
 {
     return (a < 0x80) ? 1 : 0;
 }
@@ -69,7 +69,7 @@ static ossl_inline int is_basic(unsigned int a)
  * 61..7A (a-z) =  0 to 25, respectively
  * 30..39 (0-9) = 26 to 35, respectively
  */
-static ossl_inline int digit_decoded(const unsigned char a)
+static inline int digit_decoded(const unsigned char a)
 {
     if (a >= 0x41 && a <= 0x5A)
         return a - 0x41;

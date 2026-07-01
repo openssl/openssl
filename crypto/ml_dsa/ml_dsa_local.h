@@ -121,7 +121,7 @@ int ossl_ml_dsa_poly_decode_expand_mask(POLY *out,
  *
  * @returns the difference in the range 0..q-1
  */
-static ossl_inline ossl_unused __owur uint32_t reduce_once(uint32_t x)
+static inline ossl_unused __owur uint32_t reduce_once(uint32_t x)
 {
     const uint32_t subtracted = x - ML_DSA_Q;
     uint32_t mask = constish_time_true(subtracted >> 31);
@@ -140,7 +140,7 @@ static ossl_inline ossl_unused __owur uint32_t reduce_once(uint32_t x)
  * @param b The subtracthend assumed to be in the range 0..q-1.
  * @returns The value (q + a - b) mod q
  */
-static ossl_inline ossl_unused uint32_t mod_sub(uint32_t a, uint32_t b)
+static inline ossl_unused uint32_t mod_sub(uint32_t a, uint32_t b)
 {
     return reduce_once(ML_DSA_Q + a - b);
 }
@@ -149,7 +149,7 @@ static ossl_inline ossl_unused uint32_t mod_sub(uint32_t a, uint32_t b)
  * @brief Returns the absolute value in constant time.
  * i.e.  return is_negative(x) ? -x : x;
  */
-static ossl_inline ossl_unused uint32_t abs_signed(uint32_t x)
+static inline ossl_unused uint32_t abs_signed(uint32_t x)
 {
     uint32_t mask = 0u - (x >> 31);
 
@@ -160,7 +160,7 @@ static ossl_inline ossl_unused uint32_t abs_signed(uint32_t x)
  * @brief Returns the absolute value modulo q in constant time
  * i.e return x <= (q-1)/2 ? x : q - x;
  */
-static ossl_inline ossl_unused uint32_t abs_mod_prime(uint32_t x)
+static inline ossl_unused uint32_t abs_mod_prime(uint32_t x)
 {
     uint32_t mask = x - ML_DSA_Q_MINUS1_DIV2;
 
@@ -172,7 +172,7 @@ static ossl_inline ossl_unused uint32_t abs_mod_prime(uint32_t x)
  * @brief Returns the maximum of two values in constant time.
  * i.e return x < y ? y : x;
  */
-static ossl_inline ossl_unused uint32_t maximum(uint32_t x, uint32_t y)
+static inline ossl_unused uint32_t maximum(uint32_t x, uint32_t y)
 {
     uint32_t mask = x - y;
     mask = 0u - (mask >> 31);

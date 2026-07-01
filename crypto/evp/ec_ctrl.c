@@ -20,7 +20,7 @@
  * keys.
  */
 
-static ossl_inline int evp_pkey_ctx_getset_ecdh_param_checks(const EVP_PKEY_CTX *ctx)
+static inline int evp_pkey_ctx_getset_ecdh_param_checks(const EVP_PKEY_CTX *ctx)
 {
     if (ctx == NULL || !EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_COMMAND_NOT_SUPPORTED);

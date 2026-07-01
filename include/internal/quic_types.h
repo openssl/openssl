@@ -35,7 +35,7 @@ enum {
     QUIC_PN_SPACE_NUM /* Must be the ultimate entry */
 };
 
-static ossl_unused ossl_inline uint32_t
+static ossl_unused inline uint32_t
 ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
 {
     switch (enc_level) {
@@ -56,17 +56,17 @@ ossl_quic_enc_level_to_pn_space(uint32_t enc_level)
 typedef uint64_t QUIC_PN;
 #define QUIC_PN_INVALID UINT64_MAX
 
-static ossl_unused ossl_inline QUIC_PN ossl_quic_pn_max(QUIC_PN a, QUIC_PN b)
+static ossl_unused inline QUIC_PN ossl_quic_pn_max(QUIC_PN a, QUIC_PN b)
 {
     return a > b ? a : b;
 }
 
-static ossl_unused ossl_inline QUIC_PN ossl_quic_pn_min(QUIC_PN a, QUIC_PN b)
+static ossl_unused inline QUIC_PN ossl_quic_pn_min(QUIC_PN a, QUIC_PN b)
 {
     return a < b ? a : b;
 }
 
-static ossl_unused ossl_inline int ossl_quic_pn_valid(QUIC_PN pn)
+static ossl_unused inline int ossl_quic_pn_valid(QUIC_PN pn)
 {
     return pn < (((QUIC_PN)1) << 62);
 }
@@ -79,7 +79,7 @@ typedef struct quic_conn_id_st {
     unsigned char id_len, id[QUIC_MAX_CONN_ID_LEN];
 } QUIC_CONN_ID;
 
-static ossl_unused ossl_inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
+static ossl_unused inline int ossl_quic_conn_id_eq(const QUIC_CONN_ID *a,
     const QUIC_CONN_ID *b)
 {
     if (a->id_len != b->id_len || a->id_len > QUIC_MAX_CONN_ID_LEN)
