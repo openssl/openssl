@@ -37,9 +37,8 @@ int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
     if (rf == NULL)
         return 0;
 
-    size_t max = a->dmax + b->dmax;
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 1, max);
+    size_t ctx_size = OSSL_FN_mul_ctx_size(rf, a->data, b->data);
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx_size(ctx, ctx_size);
     if (fnctx == NULL) {
         bn_release(r, r->top);
         return 0;
