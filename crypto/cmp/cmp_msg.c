@@ -1273,11 +1273,6 @@ int i2d_OSSL_CMP_MSG(const OSSL_CMP_MSG *msg, unsigned char **out)
         ASN1_ITEM_rptr(OSSL_CMP_MSG));
 }
 
-static int i2d_OSSL_CMP_MSG_thunk(const void *msg, unsigned char **out)
-{
-    return i2d_OSSL_CMP_MSG((OSSL_CMP_MSG *)msg, out);
-}
-
 OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 {
     OSSL_LIB_CTX *libctx = NULL;
@@ -1294,7 +1289,7 @@ OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 
 int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)
 {
-    return ASN1_i2d_bio(i2d_OSSL_CMP_MSG_thunk, bio, msg);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(OSSL_CMP_MSG), bio, msg);
 }
 
 int ossl_cmp_is_error_with_waiting(const OSSL_CMP_MSG *msg)
