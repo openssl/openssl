@@ -33,30 +33,28 @@ OpenSSL Releases
 
  * EC key point format simplification.
 
-   The point conversion form (compressed, uncompressed, or
-   hybrid) was kept both on the `EC_KEY` and its `EC_group`, and
-   the two could disagree -- a key imported as compressed could
-   re-encode as uncompressed.  The group is now the single source
-   of truth, and the point form round-trips unchanged through
-   import and export.
+   The point conversion form (compressed, uncompressed, or hybrid)
+   is now a single value on the `EC_GROUP` and round-trips
+   unchanged through import and export of `EC_KEY` objects.
 
-   The point-format option at key generation is now a documented
-   no-op (it had had no effect for several releases).  Imported
-   keys still keep their form.  `EVP_PKEY_fromdata()` and openssl
-   pkey -text now report the form a loaded EC key actually has,
-   and re-encoding via PEM or DER preserves it.
+   Freshly generated keys have their public point encoded in
+   uncompressed form.  A `point-format` supplied at key generation
+   time via `OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT` is
+   validated (an invalid value is rejected) but otherwise ignored
+   on the generated key.  EC parameter generation continues to
+   honour the requested form on the group's generator; imported
+   keys keep their form.
 
-   The `ec_point_formats` extension has been decoupled from TLS 1.2
-   X.509 selection and acceptance.  TLS 1.3 disregards the
-   extension already, and we now accept EC certificates in any
-   point form we support, or send any EC certificate we have
-   regardless of its point form also in TLS 1.2.
+   The `ec_point_formats` extension no longer affects TLS 1.2
+   X.509 certificate selection or acceptance.  OpenSSL now
+   accepts an EC certificate in any point form it can decode,
+   and sends any EC certificate it has regardless of point form.
+   TLS 1.3 disregards the extension entirely.
 
    The RFC 4492/8422 section 5.1.2 requirement that the peer's
-   point format contain "uncompressed" used to be enforced on the
-   client side only.  It is now also enforced by the server.
-   Both sides enforce the restriction only when an ECC TLS 1.2
-   ciphersuite has been negotiated, so a missing "uncompressed"
+   point-format list contain "uncompressed" is now enforced on
+   both sides (previously client-only), and only when an ECC
+   TLS 1.2 ciphersuite is negotiated -- a missing "uncompressed"
    is ignored under TLS 1.3 or with a non-ECC cipher.
 
    *Viktor Dukhovni*
