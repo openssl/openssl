@@ -39,7 +39,6 @@ struct ossl_prioq_st {
  * Basic sanity checking of the data structure.
  *
  *  ASSERT_USED(pq, idx)      -- the node at heap[idx] knows it is at idx.
- *                               this queue at the position it claims.
  */
 #define ASSERT_USED(pq, idx)                    \
     do {                                        \
