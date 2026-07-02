@@ -2043,9 +2043,9 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
         || (mdctx = EVP_MD_CTX_new()) == NULL) {
         (void)RAND_bytes_ex(key->libctx, shared_secret,
             ML_KEM_SHARED_SECRET_BYTES, vinfo->secbits);
-        }
         return 0;
     }
+}
     /*
      * Data derived from |s| and |z| defaults secret, and to avoid side-channel
      * leaks should not influence control flow.
