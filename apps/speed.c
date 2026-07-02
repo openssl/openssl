@@ -113,7 +113,7 @@ typedef struct openssl_speed_sec_st {
 
 static volatile int run = 0;
 
-static int mr = 0; /* machine-readeable output format to merge fork results */
+static int mr = 0; /* machine-readable output format to merge fork results */
 static int usertime = 1;
 
 static double Time_F(int s);
@@ -123,7 +123,21 @@ static void pkey_print_message(const char *str, const char *str2,
 static void kskey_print_message(const char *str, const char *str2, int tm);
 static void print_result(int alg, int run_no, int count, double time_used);
 #ifndef NO_FORK
-static int do_multi(int multi, int size_num);
+static int do_multi(int multi, int size_num,
+    uint8_t doit[], int doit_size,
+    uint8_t rsa_doit[], int rsa_doit_size,
+#ifndef OPENSSL_NO_DSA
+    uint8_t dsa_doit[], int dsa_doit_size,
+#endif
+#ifndef OPENSSL_NO_EC
+    uint8_t ecdsa_doit[], int ecdsa_doit_size,
+    uint8_t ecdh_doit[], int ecdh_doit_size,
+#endif
+#ifndef OPENSSL_NO_DH
+    uint8_t ffdh_doit[], int ffdh_doit_size,
+#endif
+    uint8_t kems_doit[], int kems_doit_size, uint8_t *do_kems_p,
+    uint8_t sigs_doit[], int sigs_doit_size, uint8_t *do_sigs_p);
 #endif
 
 static int domlock = 0;
@@ -2427,9 +2441,19 @@ int speed_main(int argc, char **argv)
     }
 
 #ifndef NO_FORK
-    if (multi && do_multi(multi, size_num))
-        goto show_res;
+    if (multi && do_multi(multi, size_num, doit, sizeof(doit), rsa_doit, sizeof(rsa_doit),
+#ifndef OPENSSL_NO_DSA
+            dsa_doit, sizeof(dsa_doit),
 #endif
+#ifndef OPENSSL_NO_EC
+            ecdsa_doit, sizeof(ecdsa_doit), ecdh_doit, sizeof(ecdh_doit),
+#endif
+#ifndef OPENSSL_NO_DH
+            ffdh_doit, sizeof(ffdh_doit),
+#endif
+            kems_doit, sizeof(kems_doit), &do_kems, sigs_doit, sizeof(sigs_doit), &do_sigs))
+        goto show_res;
+#endif /* NO_FORK */
 
     for (i = 0; i < loopargs_len; ++i) {
         if (domlock) {
@@ -4467,7 +4491,21 @@ static int strtoint(const char *str, const int min_val, const int upper_val,
     }
 }
 
-static int do_multi(int multi, int size_num)
+static int do_multi(int multi, int size_num,
+    uint8_t doit[], int doit_size,
+    uint8_t rsa_doit[], int rsa_doit_size,
+#ifndef OPENSSL_NO_DSA
+    uint8_t dsa_doit[], int dsa_doit_size,
+#endif
+#ifndef OPENSSL_NO_EC
+    uint8_t ecdsa_doit[], int ecdsa_doit_size,
+    uint8_t ecdh_doit[], int ecdh_doit_size,
+#endif
+#ifndef OPENSSL_NO_DH
+    uint8_t ffdh_doit[], int ffdh_doit_size,
+#endif
+    uint8_t kems_doit[], int kems_doit_size, uint8_t *do_kems_p,
+    uint8_t sigs_doit[], int sigs_doit_size, uint8_t *do_sigs_p)
 {
     int n;
     int fd[2];
@@ -4517,6 +4555,31 @@ static int do_multi(int multi, int size_num)
             OPENSSL_free(fds);
             return 1;
         }
+        /*
+         * When the '-multi' option is given, the parent process does not
+         * measure speed; instead, it receives and accumulates the successful
+         * results from the child processes and shows the final summary.
+         *
+         * To show the summary of results succeeded in the child processes,
+         * the parent resets its *doit[]'s and do_(kems|sigs) and
+         * reconstructs them from the results of the n child processes.
+         */
+        memset(doit, 0, doit_size);
+        memset(rsa_doit, 0, rsa_doit_size);
+#ifndef OPENSSL_NO_DSA
+        memset(dsa_doit, 0, dsa_doit_size);
+#endif
+#ifndef OPENSSL_NO_EC
+        memset(ecdsa_doit, 0, ecdsa_doit_size);
+        memset(ecdh_doit, 0, ecdh_doit_size);
+#endif
+#ifndef OPENSSL_NO_DH
+        memset(ffdh_doit, 0, ffdh_doit_size);
+#endif
+        memset(kems_doit, 0, kems_doit_size);
+        *do_kems_p = 0;
+        memset(sigs_doit, 0, sigs_doit_size);
+        *do_sigs_p = 0;
         while (fgets(buf, sizeof(buf), f)) {
             p = strchr(buf, '\n');
             if (p)
@@ -4537,6 +4600,7 @@ static int do_multi(int multi, int size_num)
                     sstrsep(&p, sep);
                     for (j = 0; j < size_num; ++j)
                         results[alg][j] += atof(sstrsep(&p, sep));
+                    doit[alg]++;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F2:")) {
                 tk = sstrsep(&p, sep);
@@ -4554,6 +4618,8 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     rsa_results[k][3] += d;
+
+                    rsa_doit[k]++;
                 }
 #ifndef OPENSSL_NO_DSA
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F3:")) {
@@ -4566,6 +4632,8 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     dsa_results[k][1] += d;
+
+                    dsa_doit[k]++;
                 }
 #endif /* OPENSSL_NO_DSA */
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F4:")) {
@@ -4578,6 +4646,8 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     ecdsa_results[k][1] += d;
+
+                    ecdsa_doit[k]++;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F5:")) {
                 tk = sstrsep(&p, sep);
@@ -4586,6 +4656,8 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     ecdh_results[k][0] += d;
+
+                    ecdh_doit[k]++;
                 }
 #ifndef OPENSSL_NO_DH
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F7:")) {
@@ -4595,6 +4667,8 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     ffdh_results[k][0] += d;
+
+                    ffdh_doit[k]++;
                 }
 #endif /* OPENSSL_NO_DH */
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F8:")) {
@@ -4608,6 +4682,9 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     kems_results[k][2] += d;
+
+                    kems_doit[k]++;
+                    (*do_kems_p)++;
                 }
             } else if (CHECK_AND_SKIP_PREFIX(p, "+F9:")) {
                 tk = sstrsep(&p, sep);
@@ -4620,6 +4697,9 @@ static int do_multi(int multi, int size_num)
 
                     d = atof(sstrsep(&p, sep));
                     sigs_results[k][2] += d;
+
+                    sigs_doit[k]++;
+                    (*do_sigs_p)++;
                 }
             } else if (!HAS_PREFIX(buf, "+H:")) {
                 BIO_printf(bio_err, "Unknown type '%s' from child %d\n", buf,
@@ -4633,7 +4713,7 @@ static int do_multi(int multi, int size_num)
     for (n = 0; n < multi; ++n) {
         while (wait(&status) == -1)
             if (errno != EINTR) {
-                BIO_printf(bio_err, "Waitng for child failed with 0x%x\n",
+                BIO_printf(bio_err, "Waiting for child failed with 0x%x\n",
                     errno);
                 return 1;
             }
