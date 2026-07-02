@@ -25,7 +25,7 @@
 static ossl_unused int rej_ntt_poly_mb(const uint8_t *seeds[ML_DSA_SHAKE_X4_BATCH_SIZE],
     const size_t seed_len, POLY *outs[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t count)
 {
-    KECCAK1600_X4_CTX ctx;
+    KECCAK1600_X4_AVX512VL_CTX ctx;
     uint8_t blocks[ML_DSA_SHAKE_X4_BATCH_SIZE][SHAKE128_BLOCKSIZE];
     int coeff_idx[ML_DSA_SHAKE_X4_BATCH_SIZE] = { 0, 0, 0, 0 };
     size_t done_mask = 0;
@@ -34,12 +34,12 @@ static ossl_unused int rej_ntt_poly_mb(const uint8_t *seeds[ML_DSA_SHAKE_X4_BATC
     for (lane = count; lane < ML_DSA_SHAKE_X4_BATCH_SIZE; lane++)
         done_mask |= ((size_t)1 << lane);
 
-    ossl_sha3_shake128_x4_inc_init(&ctx);
-    ossl_sha3_shake128_x4_inc_absorb(&ctx, seeds[0], seeds[1],
+    ossl_sha3_shake128_x4_inc_init_avx512vl(&ctx);
+    ossl_sha3_shake128_x4_inc_absorb_avx512vl(&ctx, seeds[0], seeds[1],
         seeds[2], seeds[3], seed_len);
 
     while (done_mask != ML_DSA_SHAKE_X4_DONE_MASK) {
-        ossl_sha3_shake128_x4_inc_squeeze(blocks[0], blocks[1],
+        ossl_sha3_shake128_x4_inc_squeeze_avx512vl(blocks[0], blocks[1],
             blocks[2], blocks[3], SHAKE128_BLOCKSIZE, &ctx);
 
         for (lane = 0; lane < ML_DSA_SHAKE_X4_BATCH_SIZE; lane++) {
@@ -92,7 +92,7 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
             derived_seeds[b][ML_DSA_RHO_PRIME_BYTES + 1] = (index >> 8) & 0xFF;
         }
 
-        ossl_sha3_shake256_x4(buffers[0], buffers[1], buffers[2], buffers[3], buf_size,
+        ossl_sha3_shake256_x4_avx512vl(buffers[0], buffers[1], buffers[2], buffers[3], buf_size,
             derived_seeds[0], derived_seeds[1], derived_seeds[2], derived_seeds[3], seed_len);
 
         ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 0], buffers[0], buf_size, gamma1);
@@ -118,7 +118,7 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
             derived_seeds[b][ML_DSA_RHO_PRIME_BYTES + 1] = (uint8_t)(index >> 8);
         }
 
-        ossl_sha3_shake256_x4(buffers[0], buffers[1], buffers[2], buffers[3], buf_size,
+        ossl_sha3_shake256_x4_avx512vl(buffers[0], buffers[1], buffers[2], buffers[3], buf_size,
             derived_seeds[0], derived_seeds[1], derived_seeds[2], derived_seeds[3], seed_len);
 
         ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 0], buffers[0], buf_size, gamma1);
@@ -137,7 +137,7 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
     const uint8_t *seeds[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t seed_len,
     POLY *outs[ML_DSA_SHAKE_X4_BATCH_SIZE], const size_t count)
 {
-    KECCAK1600_X4_CTX ctx;
+    KECCAK1600_X4_AVX512VL_CTX ctx;
     uint8_t blocks[ML_DSA_SHAKE_X4_BATCH_SIZE][SHAKE256_BLOCKSIZE];
     int coeff_idx[ML_DSA_SHAKE_X4_BATCH_SIZE] = { 0, 0, 0, 0 };
     size_t done_mask = 0;
@@ -146,12 +146,12 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
     for (lane = count; lane < ML_DSA_SHAKE_X4_BATCH_SIZE; lane++)
         done_mask |= ((size_t)1 << lane);
 
-    ossl_sha3_shake256_x4_inc_init(&ctx);
-    ossl_sha3_shake256_x4_inc_absorb(&ctx, seeds[0], seeds[1],
+    ossl_sha3_shake256_x4_inc_init_avx512vl(&ctx);
+    ossl_sha3_shake256_x4_inc_absorb_avx512vl(&ctx, seeds[0], seeds[1],
         seeds[2], seeds[3], seed_len);
 
     while (done_mask != ML_DSA_SHAKE_X4_DONE_MASK) {
-        ossl_sha3_shake256_x4_inc_squeeze(blocks[0], blocks[1],
+        ossl_sha3_shake256_x4_inc_squeeze_avx512vl(blocks[0], blocks[1],
             blocks[2], blocks[3], SHAKE256_BLOCKSIZE, &ctx);
 
         for (lane = 0; lane < ML_DSA_SHAKE_X4_BATCH_SIZE; lane++) {
@@ -185,7 +185,7 @@ static ossl_unused int rej_bounded_poly_mb(COEFF_FROM_NIBBLE_FUNC *coef_from_nib
     }
 
     OPENSSL_cleanse(blocks, sizeof(blocks));
-    ossl_sha3_shake256_x4_inc_cleanup(&ctx);
+    ossl_sha3_shake256_x4_inc_cleanup_avx512vl(&ctx);
     return 1;
 }
 

@@ -73,15 +73,15 @@ extern void SHA3_shake256_x4_avx512vl(
  * SHAKE-128 x4 Implementation
  */
 
-void ossl_sha3_shake128_x4_inc_init(KECCAK1600_X4_CTX *ctx)
+void ossl_sha3_shake128_x4_inc_init_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
     memset(ctx->A, 0, sizeof(ctx->A));
     ctx->rate = SHA3_BLOCKSIZE(128);
     ctx->finalized = 0;
 }
 
-void ossl_sha3_shake128_x4_inc_absorb(
-    KECCAK1600_X4_CTX *ctx,
+void ossl_sha3_shake128_x4_inc_absorb_avx512vl(
+    KECCAK1600_X4_AVX512VL_CTX *ctx,
     const void *in0, const void *in1,
     const void *in2, const void *in3,
     size_t inlen)
@@ -95,12 +95,12 @@ void ossl_sha3_shake128_x4_inc_absorb(
         ctx->A, in0, in1, in2, in3, inlen);
 }
 
-void ossl_sha3_shake128_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx)
+void ossl_sha3_shake128_x4_inc_cleanup_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
-    ossl_sha3_shake128_x4_inc_init(ctx);
+    ossl_sha3_shake128_x4_inc_init_avx512vl(ctx);
 }
 
-static void ossl_sha3_shake128_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
+static void ossl_sha3_shake128_x4_inc_finalize_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
     if (ctx->finalized) {
         return; /* Already finalized */
@@ -110,15 +110,15 @@ static void ossl_sha3_shake128_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
     ctx->finalized = 1;
 }
 
-void ossl_sha3_shake128_x4_inc_squeeze(
+void ossl_sha3_shake128_x4_inc_squeeze_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
-    KECCAK1600_X4_CTX *ctx)
+    KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
     if (!ctx->finalized) {
         /* Auto-finalize on first squeeze */
-        ossl_sha3_shake128_x4_inc_finalize(ctx);
+        ossl_sha3_shake128_x4_inc_finalize_avx512vl(ctx);
     }
 
     SHA3_shake128_x4_inc_squeeze_avx512vl(
@@ -129,15 +129,15 @@ void ossl_sha3_shake128_x4_inc_squeeze(
  * SHAKE-256 x4 Implementation
  */
 
-void ossl_sha3_shake256_x4_inc_init(KECCAK1600_X4_CTX *ctx)
+void ossl_sha3_shake256_x4_inc_init_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
     memset(ctx->A, 0, sizeof(ctx->A));
     ctx->rate = SHA3_BLOCKSIZE(256);
     ctx->finalized = 0;
 }
 
-void ossl_sha3_shake256_x4_inc_absorb(
-    KECCAK1600_X4_CTX *ctx,
+void ossl_sha3_shake256_x4_inc_absorb_avx512vl(
+    KECCAK1600_X4_AVX512VL_CTX *ctx,
     const void *in0, const void *in1,
     const void *in2, const void *in3,
     size_t inlen)
@@ -151,12 +151,12 @@ void ossl_sha3_shake256_x4_inc_absorb(
         ctx->A, in0, in1, in2, in3, inlen);
 }
 
-void ossl_sha3_shake256_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx)
+void ossl_sha3_shake256_x4_inc_cleanup_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
-    ossl_sha3_shake256_x4_inc_init(ctx);
+    ossl_sha3_shake256_x4_inc_init_avx512vl(ctx);
 }
 
-static void ossl_sha3_shake256_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
+static void ossl_sha3_shake256_x4_inc_finalize_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
     if (ctx->finalized) {
         return; /* Already finalized */
@@ -166,15 +166,15 @@ static void ossl_sha3_shake256_x4_inc_finalize(KECCAK1600_X4_CTX *ctx)
     ctx->finalized = 1;
 }
 
-void ossl_sha3_shake256_x4_inc_squeeze(
+void ossl_sha3_shake256_x4_inc_squeeze_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
-    KECCAK1600_X4_CTX *ctx)
+    KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
     if (!ctx->finalized) {
         /* Auto-finalize on first squeeze */
-        ossl_sha3_shake256_x4_inc_finalize(ctx);
+        ossl_sha3_shake256_x4_inc_finalize_avx512vl(ctx);
     }
 
     SHA3_shake256_x4_inc_squeeze_avx512vl(
@@ -185,7 +185,7 @@ void ossl_sha3_shake256_x4_inc_squeeze(
  * Single-call wrapper APIs
  */
 
-void ossl_sha3_shake128_x4(
+void ossl_sha3_shake128_x4_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
@@ -197,7 +197,7 @@ void ossl_sha3_shake128_x4(
         in0, in1, in2, in3, inlen);
 }
 
-void ossl_sha3_shake256_x4(
+void ossl_sha3_shake256_x4_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,

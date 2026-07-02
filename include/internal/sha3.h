@@ -81,44 +81,44 @@ typedef struct {
     uint64_t A[(25 * 4) + 1];
     size_t rate; /* Rate in bytes: 168 (SHAKE-128) or 136 (SHAKE-256) */
     unsigned finalized; /* Has finalize been called? 0=no, 1=yes */
-} KECCAK1600_X4_CTX;
+} KECCAK1600_X4_AVX512VL_CTX;
 
 /* SHAKE-128 x4 incremental API */
-void ossl_sha3_shake128_x4_inc_init(KECCAK1600_X4_CTX *ctx);
+void ossl_sha3_shake128_x4_inc_init_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx);
 
-void ossl_sha3_shake128_x4_inc_absorb(
-    KECCAK1600_X4_CTX *ctx,
+void ossl_sha3_shake128_x4_inc_absorb_avx512vl(
+    KECCAK1600_X4_AVX512VL_CTX *ctx,
     const void *in0, const void *in1,
     const void *in2, const void *in3,
     size_t inlen);
 
-void ossl_sha3_shake128_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx);
+void ossl_sha3_shake128_x4_inc_cleanup_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx);
 
-void ossl_sha3_shake128_x4_inc_squeeze(
+void ossl_sha3_shake128_x4_inc_squeeze_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
-    KECCAK1600_X4_CTX *ctx);
+    KECCAK1600_X4_AVX512VL_CTX *ctx);
 
 /* SHAKE-256 x4 incremental API */
-void ossl_sha3_shake256_x4_inc_init(KECCAK1600_X4_CTX *ctx);
+void ossl_sha3_shake256_x4_inc_init_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx);
 
-void ossl_sha3_shake256_x4_inc_absorb(
-    KECCAK1600_X4_CTX *ctx,
+void ossl_sha3_shake256_x4_inc_absorb_avx512vl(
+    KECCAK1600_X4_AVX512VL_CTX *ctx,
     const void *in0, const void *in1,
     const void *in2, const void *in3,
     size_t inlen);
 
-void ossl_sha3_shake256_x4_inc_cleanup(KECCAK1600_X4_CTX *ctx);
+void ossl_sha3_shake256_x4_inc_cleanup_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx);
 
-void ossl_sha3_shake256_x4_inc_squeeze(
+void ossl_sha3_shake256_x4_inc_squeeze_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
-    KECCAK1600_X4_CTX *ctx);
+    KECCAK1600_X4_AVX512VL_CTX *ctx);
 
 /* Single-call SHAKE x4 APIs (wrapper functions) */
-void ossl_sha3_shake128_x4(
+void ossl_sha3_shake128_x4_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
@@ -126,7 +126,7 @@ void ossl_sha3_shake128_x4(
     const void *in2, const void *in3,
     size_t inlen);
 
-void ossl_sha3_shake256_x4(
+void ossl_sha3_shake256_x4_avx512vl(
     void *out0, void *out1,
     void *out2, void *out3,
     size_t outlen,
