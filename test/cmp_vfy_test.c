@@ -68,7 +68,6 @@ static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
         X509_STORE_free(ts);
         return NULL;
     }
-    X509_VERIFY_PARAM_set_time(X509_STORE_get0_param(ts), test_time_valid);
     X509_STORE_set_verify_cb(ts, X509_STORE_CTX_print_verify_cb);
     return fixture;
 }
@@ -135,7 +134,13 @@ static int test_verify_popo_bad(void)
 /* indirectly checks also OSSL_CMP_validate_msg() */
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
-    int res = TEST_int_eq(fixture->expected,
+    X509_STORE *ts = OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx);
+    int res;
+
+    if (ts != NULL)
+        X509_VERIFY_PARAM_set_time(X509_STORE_get0_param(ts),
+            fixture->expected ? test_time_valid : test_time_after_expiration);
+    res = TEST_int_eq(fixture->expected,
         ossl_cmp_msg_check_update(fixture->cmp_ctx,
             fixture->msg, NULL, 0));
     X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(fixture->cmp_ctx);
@@ -238,8 +243,6 @@ static int test_validate_msg_signature_partial_chain(int expired)
         X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
 
         X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
-        if (expired)
-            X509_VERIFY_PARAM_set_time(vpm, test_time_after_expiration);
     }
     EXECUTE_TEST(execute_validate_msg_test, tear_down);
     return result;
@@ -634,7 +637,7 @@ int setup_tests(void)
     ts.tm_mon = 1; /* February */
     ts.tm_mday = 18; /* 18th */
     test_time_valid = mktime(&ts); /* February 18th 2018 */
-    ts.tm_year += 10; /* February 18th 2028 */
+    ts.tm_year = 9998; /* used for expiration check */
     test_time_after_expiration = mktime(&ts);
 
     if (!test_skip_common_options()) {
