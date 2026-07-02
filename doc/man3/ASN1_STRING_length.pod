@@ -3,8 +3,9 @@
 =head1 NAME
 
 ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
-ASN1_STRING_type, ASN1_STRING_get0_data,
-ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
+ASN1_STRING_type, ASN1_STRING_get0_data, ASN1_STRING_to_UTF8,
+ASN1_OCTET_STRING_cmp, ASN1_OCTET_STRING_set
+- ASN1_STRING utility functions
 
 =head1 SYNOPSIS
 
@@ -22,6 +23,11 @@ ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
  int ASN1_STRING_type(const ASN1_STRING *x);
 
  int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
+
+ int ASN1_OCTET_STRING_cmp(const ASN1_OCTET_STRING *a,
+                           const ASN1_OCTET_STRING *b);
+ int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *str,
+                           const unsigned char *data, int len);
 
 =head1 DESCRIPTION
 
@@ -49,6 +55,10 @@ ASN1_STRING_to_UTF8() converts the string I<in> to UTF8 format, the
 converted data is allocated in a buffer in I<*out>. The length of
 I<out> is returned or a negative error code. The buffer I<*out>
 should be freed using OPENSSL_free().
+
+ASN1_OCTET_STRING_cmp() and ASN1_OCTET_STRING_set() are equivalent to the
+corresponding ASN1_STRING functions. They are provided for type safety when
+working with B<ASN1_OCTET_STRING> values.
 
 =head1 NOTES
 
