@@ -88,3 +88,74 @@ int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a)
 
     return 1;
 }
+
+/*
+ * In respect to shift factor the execution time is invariant of
+ * |n % OSSL_FN_BITS|, but not |n / OSSL_FN_BITS|. Or in other words
+ * pre-condition for constant-time-ness for sufficiently[!] zero-padded
+ * inputs is |n < OSSL_FN_BITS| or |n / OSSL_FN_BITS| being non-secret.
+ */
+int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n)
+{
+    size_t i, nw;
+    unsigned int lb, rb;
+    const OSSL_FN_ULONG *ap = a->d;
+    OSSL_FN_ULONG *rp = r->d;
+    size_t rl = (size_t)r->dsize;
+    size_t al = (size_t)a->dsize;
+
+    if (n < 0) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_INVALID_SHIFT);
+        return 0;
+    }
+
+    nw = (size_t)n / OSSL_FN_BITS;
+    rb = (unsigned int)n % OSSL_FN_BITS;
+    lb = OSSL_FN_BITS - rb;
+
+    /*
+     * Work from the low end to support r == a.  Each result limb only
+     * depends on the corresponding source limb and the limb just above it,
+     * neither of which has been overwritten yet when walking upward.
+     */
+    for (i = 0; i < rl; i++) {
+        size_t src_idx = i + nw;
+        OSSL_FN_ULONG limb = 0;
+
+        if (src_idx < al) {
+            limb = ap[src_idx] >> rb;
+            if (rb != 0 && src_idx + 1 < al)
+                limb |= (ap[src_idx + 1] << lb) & OSSL_FN_MASK;
+        }
+        rp[i] = limb;
+    }
+
+    return 1;
+}
+
+int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a)
+{
+    OSSL_FN_ULONG *rp = r->d;
+    const OSSL_FN_ULONG *ap = a->d;
+    size_t rl = (size_t)r->dsize;
+    size_t al = (size_t)a->dsize;
+    size_t i;
+
+    /*
+     * Work from the low end to support r == a.  Each result limb only
+     * depends on the corresponding source limb and the limb just above it,
+     * neither of which has been overwritten yet when walking upward.
+     */
+    for (i = 0; i < rl; i++) {
+        OSSL_FN_ULONG limb = 0;
+
+        if (i < al) {
+            limb = ap[i] >> 1;
+            if (i + 1 < al)
+                limb |= (ap[i + 1] << (OSSL_FN_BITS - 1)) & OSSL_FN_MASK;
+        }
+        rp[i] = limb;
+    }
+
+    return 1;
+}
