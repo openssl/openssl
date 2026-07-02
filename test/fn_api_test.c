@@ -461,6 +461,10 @@ static const OSSL_FN_ULONG ex_rshift_num2_limb[] = {
 #else
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
+/* Expected all-zero result for shifts beyond the operand's width. */
+static const OSSL_FN_ULONG ex_rshift_zero[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
 
 static int test_sub_common(struct test_case_st test_case)
 {
@@ -838,6 +842,26 @@ static int test_rshift_common(int i, int use_rshift1, int alias)
         check_limbs = r_limbs;
         shift = 0;
         break;
+    case 7:
+        /* Shifting by more than the operand's width must yield zero. */
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(num2) + 2;
+        ex_words = ex_rshift_zero;
+        check_limbs = LIMBSOF(num2);
+        shift = OSSL_FN_BYTES * 8 * (LIMBSOF(num2) + 1);
+        break;
+    case 8:
+        /* Exact-fit destination (no padding) with a non-zero shift. */
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(ex_rshift_num2_4);
+        ex_words = ex_rshift_num2_4;
+        check_limbs = LIMBSOF(ex_rshift_num2_4);
+        shift = 4;
+        break;
     default:
         return 0;
     }
@@ -887,6 +911,12 @@ static int test_rshift(int i)
     return test_rshift_common(i, 0, 0);
 }
 
+/*
+ * In-place (r == a) coverage: rshift1 (case 0), rshift by 1 (case 1),
+ * by 4 (case 2), and by a full limb width (case 3).  The low-to-high
+ * walk makes in-place safe for any shift, so this exercises the
+ * multi-limb carry path under aliasing beyond shift-by-1.
+ */
 static int test_rshift_alias(int i)
 {
     return test_rshift_common(i, i == 0, 1);
@@ -1450,8 +1480,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
     ADD_ALL_TESTS(test_rshift1, 2);
-    ADD_ALL_TESTS(test_rshift, 7);
-    ADD_ALL_TESTS(test_rshift_alias, 2);
+    ADD_ALL_TESTS(test_rshift, 9);
+    ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
     ADD_ALL_TESTS(test_mul, OSSL_NELEM(test_mul_cases));
