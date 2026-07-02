@@ -227,17 +227,6 @@ sub load_tweaks_d {
     return $ret;
 }
 
-sub load_tweaks_pred {
-    my (@preds) = @_;
-    my $ret = "";
-
-    for (my $i = 0; $i < @preds; $i++) {
-        $ret .= "    ld1b    {$twk[$i].b}, $preds[$i]/z, [sp, #$i, mul vl]\n";
-    }
-
-    return $ret;
-}
-
 sub load_data {
     my (@preds) = @_;
     my $ret = "";
@@ -248,39 +237,6 @@ sub load_data {
         my $tweak = $twk[$i];
         $ret .= "    ld1b    {$data[$i].b}, $pred/z, [x0, #$i, mul vl]\n";
         $ret .= "    eor     $dat.d, $dat.d, $tweak.d\n";
-    }
-
-    return $ret;
-}
-
-sub load_data_for {
-    my ($data_ref, $twk_ref, $pred_ref) = @_;
-    my @regs = @$data_ref;
-    my @tweaks = @$twk_ref;
-    my @preds = @$pred_ref;
-    my $ret = "";
-
-    for (my $i = 0; $i < @regs; $i++) {
-        $ret .= "    ld1b    {$regs[$i].b}, $preds[$i]/z, [x0, #$i, mul vl]\n";
-        $ret .= "    eor     $regs[$i].d, $regs[$i].d, $tweaks[$i].d\n";
-    }
-
-    return $ret;
-}
-
-sub aes_rounds_for {
-    my ($op, $mc, $key, $rounds, $data_ref) = @_;
-    my @regs = @$data_ref;
-    my $ret = "";
-
-    for (my $r = 0; $r < $rounds; $r++) {
-        $ret .= load_round_key($key, $r, "z26");
-        foreach my $z (@regs) {
-            $ret .= "    $op    $z.b, $z.b, z26.b\n";
-            if ($r < $rounds - 1) {
-                $ret .= "    $mc   $z.b, $z.b\n";
-            }
-        }
     }
 
     return $ret;
@@ -359,167 +315,6 @@ ___
     return $ret;
 }
 
-sub small_exact_case {
-    my ($label, $nvecs, $op, $mc, $rounds) = @_;
-    my @regs = @data[0..($nvecs - 1)];
-    my @tweaks = @twk[0..($nvecs - 1)];
-    my @preds = ("p0") x $nvecs;
-    my $ret = "$label:\n";
-
-    $ret .= load_tweaks_pred(@preds);
-    $ret .= load_data_for(\@regs, \@tweaks, \@preds);
-    $ret .= aes_rounds_for($op, $mc, "x3", $rounds, \@regs);
-    $ret .= load_round_key("x3", $rounds, "z26");
-    $ret .= final_xor_and_store_for("z26", \@regs, \@tweaks, \@preds);
-    $ret .= <<___;
-    addvl   sp, sp, #$num_vecs
-    ret
-
-___
-
-    return $ret;
-}
-
-sub asimd_aes_rounds_for {
-    my ($dst, $key, $op, $mc, $rounds, $keyreg) = @_;
-    my $ret = "";
-
-    for (my $r = 0; $r < $rounds - 1; $r++) {
-        my $off = $r * 16;
-        $ret .= "    ldr     q$keyreg, [$key, #$off]\n";
-        $ret .= "    $op     v$dst.16b, v$keyreg.16b\n";
-        $ret .= "    $mc     v$dst.16b, v$dst.16b\n";
-    }
-
-    my $penultimate = ($rounds - 1) * 16;
-    my $last = $rounds * 16;
-    $ret .= "    ldr     q$keyreg, [$key, #$penultimate]\n";
-    $ret .= "    $op     v$dst.16b, v$keyreg.16b\n";
-    $ret .= "    ldr     q$keyreg, [$key, #$last]\n";
-    $ret .= "    eor     v$dst.16b, v$dst.16b, v$keyreg.16b\n";
-
-    return $ret;
-}
-
-sub asimd_one_block_case {
-    my ($label, $op, $mc, $rounds) = @_;
-    my $ret = <<___;
-$label:
-    ldr     q18, [x5]
-___
-
-    $ret .= asimd_aes_rounds_for(18, "x4", "aese", "aesmc", $rounds, 30);
-    $ret .= <<___;
-    ldr     q0, [x0]
-    eor     v0.16b, v0.16b, v18.16b
-___
-    $ret .= asimd_aes_rounds_for(0, "x3", $op, $mc, $rounds, 26);
-    $ret .= <<___;
-    eor     v0.16b, v0.16b, v18.16b
-    str     q0, [x1]
-    ret
-
-___
-
-    return $ret;
-}
-
-sub advance_tweak_gpr {
-    return <<___;
-    extr    x15, x13, x13, #32
-    and     w15, w14, w15, asr #31
-    extr    x13, x13, x12, #63
-    eor     x12, x15, x12, lsl #1
-___
-}
-
-sub asimd_tweak_to_q {
-    my ($q) = @_;
-    my $ret = <<___;
-    fmov    d$q, x12
-    fmov    v$q.d[1], x13
-___
-    $ret .= advance_tweak_gpr();
-    return $ret;
-}
-
-sub asimd_aes_rounds_multi {
-    my ($op, $mc, $rounds, $regs) = @_;
-    my $ret = "";
-
-    for (my $r = 0; $r < $rounds - 1; $r++) {
-        my $off = $r * 16;
-        $ret .= "    ldr     q30, [x3, #$off]\n";
-        foreach my $reg (@$regs) {
-            $ret .= "    $op     v$reg.16b, v30.16b\n";
-            $ret .= "    $mc     v$reg.16b, v$reg.16b\n";
-        }
-    }
-
-    my $penultimate = ($rounds - 1) * 16;
-    $ret .= "    ldr     q30, [x3, #$penultimate]\n";
-    foreach my $reg (@$regs) {
-        $ret .= "    $op     v$reg.16b, v30.16b\n";
-    }
-
-    return $ret;
-}
-
-sub asimd_256_group {
-    my ($base, $blocks, $op, $mc, $rounds) = @_;
-    my @regs = (0..($blocks - 1));
-    my @twks = (16..(16 + $blocks - 1));
-    my $ret = "";
-
-    foreach my $twk (@twks) {
-        $ret .= asimd_tweak_to_q($twk);
-    }
-
-    for (my $i = 0; $i < @regs; $i++) {
-        my $off = $base + $i * 16;
-        $ret .= "    ldr     q$regs[$i], [x0, #$off]\n";
-        $ret .= "    eor     v$regs[$i].16b, v$regs[$i].16b, v$twks[$i].16b\n";
-    }
-
-    $ret .= asimd_aes_rounds_multi($op, $mc, $rounds, \@regs);
-
-    my $last = $rounds * 16;
-    $ret .= "    ldr     q30, [x3, #$last]\n";
-    for (my $i = 0; $i < @regs; $i++) {
-        my $off = $base + $i * 16;
-        $ret .= "    eor     v$regs[$i].16b, v$regs[$i].16b, v30.16b\n";
-        $ret .= "    eor     v$regs[$i].16b, v$regs[$i].16b, v$twks[$i].16b\n";
-        $ret .= "    str     q$regs[$i], [x1, #$off]\n";
-    }
-
-    return $ret;
-}
-
-sub asimd_256_case {
-    my ($label, $op, $mc, $rounds) = @_;
-    my $ret = <<___;
-$label:
-    ldr     q24, [x5]
-___
-
-    $ret .= asimd_aes_rounds_for(24, "x4", "aese", "aesmc", $rounds, 30);
-    $ret .= <<___;
-    fmov    x12, d24
-    fmov    x13, v24.d[1]
-    mov     x14, #0x87
-___
-    $ret .= asimd_256_group(0, 4, $op, $mc, $rounds);
-    $ret .= asimd_256_group(64, 4, $op, $mc, $rounds);
-    $ret .= asimd_256_group(128, 4, $op, $mc, $rounds);
-    $ret .= asimd_256_group(192, 4, $op, $mc, $rounds);
-    $ret .= <<___;
-    ret
-
-___
-
-    return $ret;
-}
-
 sub sve2_512_exact_case {
     my ($label, $op, $mc, $rounds) = @_;
     my @preds = ("p0") x $num_vecs;
@@ -570,125 +365,6 @@ ___
     return $ret;
 }
 
-sub native_decrypt_256_case {
-    my ($label) = @_;
-
-    return <<___;
-$label:
-    stp     x19, x20, [sp, #-64]!
-    stp     x21, x22, [sp, #48]
-    stp     d8, d9, [sp, #32]
-    stp     d10, d11, [sp, #16]
-    mov     x21, xzr
-    mov     x2, #240
-    mov     x8, #16
-    b       aes_v8_xts_decrypt+0x11c
-
-___
-}
-
-sub small_path_body {
-    my ($L, $op, $mc, $rounds, $direction) = @_;
-    my $ret = <<___;
-$L\_small:
-    ptrue   p0.b, ALL
-    cntb    x11, ALL
-
-    // T0 = AES_encrypt(iv, tweak_key).
-    ld1rqb  {z18.b}, p0/z, [x5]
-___
-
-    $ret .= encrypt_initial_tweak($rounds);
-    $ret .= <<___;
-    fmov    x12, d18
-    fmov    x13, v18.d[1]
-    mov     x14, #0x87
-
-    // For 32..256B, each SVE z register holds two AES blocks. Build only the
-    // compact tweak table needed by the packet, not a full hot-loop table.
-    addvl   sp, sp, #-$num_vecs
-    mov     x9, sp
-    lsr     x8, x2, #4
-$L\_small_tweak_loop:
-___
-    $ret .= store_tweak_gpr("x9", "x12", "x13", "x14", "x15");
-    $ret .= <<___;
-    subs    x8, x8, #1
-    b.ne    $L\_small_tweak_loop
-
-___
-
-    $ret .= <<___;
-    cmp     x2, #256
-    b.eq    ${L}_small_exact_256
-    cmp     x2, #128
-    b.eq    ${L}_small_exact_128
-    cmp     x2, #64
-    b.eq    ${L}_small_exact_64
-    cmp     x2, #32
-    b.eq    ${L}_small_exact_32
-___
-
-    $ret .= tail_predicates();
-    $ret .= "    b       ${L}_small_dispatch\n";
-
-    $ret .= asimd_one_block_case("$L\_small_16", $op, $mc, $rounds);
-    if ($direction eq "encrypt") {
-        $ret .= asimd_256_case("$L\_small_256", $op, $mc, $rounds);
-    } else {
-        $ret .= native_decrypt_256_case("$L\_small_256");
-    }
-    $ret .= sve2_512_exact_case("$L\_small_512", $op, $mc, $rounds);
-
-    $ret .= small_exact_case("${L}_small_exact_32", 1, $op, $mc, $rounds);
-    $ret .= small_exact_case("${L}_small_exact_64", 2, $op, $mc, $rounds);
-    $ret .= small_exact_case("${L}_small_exact_128", 4, $op, $mc, $rounds);
-    $ret .= small_exact_case("${L}_small_exact_256", 8, $op, $mc, $rounds);
-
-    $ret .= "$L\_small_dispatch:\n";
-
-    my @cases = (
-        [32,  1, "one"],
-        [64,  2, "two"],
-        [128, 4, "four"],
-        [256, 8, "eight"],
-    );
-
-    for (my $i = 0; $i < @cases; $i++) {
-        my ($limit, $nvecs, $suffix) = @{$cases[$i]};
-        my $label = "${L}_small_${suffix}";
-        my $next_suffix = $i == $#cases ? undef : $cases[$i + 1]->[2];
-        my $next = defined($next_suffix) ? "${L}_small_${next_suffix}" : undef;
-        my @regs = @data[0..($nvecs - 1)];
-        my @tweaks = @twk[0..($nvecs - 1)];
-        my @preds = map("p$_", 0..($nvecs - 1));
-
-        if ($i == 0) {
-            $ret .= "    cmp     x2, #$limit\n";
-            $ret .= "    b.hi    $next\n";
-        } elsif ($i != $#cases) {
-            $ret .= "$label:\n";
-            $ret .= "    cmp     x2, #$limit\n";
-            $ret .= "    b.hi    $next\n";
-        } else {
-            $ret .= "$label:\n";
-        }
-
-        $ret .= load_tweaks_pred(@preds);
-        $ret .= load_data_for(\@regs, \@tweaks, \@preds);
-        $ret .= aes_rounds_for($op, $mc, "x3", $rounds, \@regs);
-        $ret .= load_round_key("x3", $rounds, "z26");
-        $ret .= final_xor_and_store_for("z26", \@regs, \@tweaks, \@preds);
-        $ret .= <<___;
-    addvl   sp, sp, #$num_vecs
-    ret
-
-___
-    }
-
-    return $ret;
-}
-
 $code .= <<___;
 #include "arch/arm_arch.h"
 .text
@@ -701,8 +377,6 @@ sub emit_xts_func {
     my $ossl_name = "aes_v8_sve2_xts_${bits}_${direction}";
     my $L = ".L${bits}_${direction}";
     my $fallback = $direction eq "encrypt" ? "aes_v8_xts_encrypt" : "aes_v8_xts_decrypt";
-    my $xts256_target = $direction eq "encrypt" ? "${L}_small_256" :
-                         $bits == 256 ? "${L}_small_256" : $fallback;
     my $xts512_target = $bits == 128 ? $fallback : "${L}_small_512";
 
     $code .= <<___;
@@ -715,15 +389,11 @@ ___
     $code .= <<___;
     tst     x2, #15
     b.ne    $fallback
+    cbz     x2, ${L}_ret
     cmp     x2, #256
-    b.eq    $xts256_target
+    b.ls    $fallback
     cmp     x2, #512
     b.eq    $xts512_target
-    cmp     x2, #16
-    b.eq    ${L}_small_16
-    cbz     x2, ${L}_ret
-    cmp     x2, #$hot_bytes
-    b.ls    ${L}_small
     ptrue   p0.b, ALL
 
     // Temporary tweak buffer plus saved Z registers used by the hot loop.
@@ -830,8 +500,8 @@ ${L}_ret:
     ret
 .size   $ossl_name,.-$ossl_name
 ___
-
-    $code .= small_path_body($L, $op, $mc, $rounds, $direction);
+    $code .= sve2_512_exact_case("${L}_small_512", $op, $mc, $rounds)
+        if $bits != 128;
 }
 
 emit_xts_func(128, "encrypt", "aese", "aesmc", 10);

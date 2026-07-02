@@ -211,25 +211,25 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
                 || ctx->stream == HWAES_xts_decrypt)) {
             if (ctx->base.keylen == 32 && ctx->base.enc)
                 aes_v8_sve2_xts_128_encrypt(in, out, inl, ctx->xts.key1,
-                                            ctx->xts.key2, ctx->base.iv);
+                    ctx->xts.key2, ctx->base.iv);
             else if (ctx->base.keylen == 32)
                 aes_v8_sve2_xts_128_decrypt(in, out, inl, ctx->xts.key1,
-                                            ctx->xts.key2, ctx->base.iv);
+                    ctx->xts.key2, ctx->base.iv);
             else if (ctx->base.keylen == 64 && ctx->base.enc)
                 aes_v8_sve2_xts_256_encrypt(in, out, inl, ctx->xts.key1,
-                                            ctx->xts.key2, ctx->base.iv);
+                    ctx->xts.key2, ctx->base.iv);
             else if (ctx->base.keylen == 64)
                 aes_v8_sve2_xts_256_decrypt(in, out, inl, ctx->xts.key1,
-                                            ctx->xts.key2, ctx->base.iv);
+                    ctx->xts.key2, ctx->base.iv);
             else
                 (*ctx->stream)(in, out, inl, ctx->xts.key1, ctx->xts.key2,
-                               ctx->base.iv);
+                    ctx->base.iv);
         } else
-native_stream:
+        native_stream:
 #endif
-        (*ctx->stream)(in, out, inl, ctx->xts.key1, ctx->xts.key2, ctx->base.iv);
+            (*ctx->stream)(in, out, inl, ctx->xts.key1, ctx->xts.key2, ctx->base.iv);
     } else if (CRYPTO_xts128_encrypt(&ctx->xts, ctx->base.iv, in, out, inl,
-                 ctx->base.enc))
+                   ctx->base.enc))
         return 0;
 
     *outl = inl;
