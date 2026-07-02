@@ -80,7 +80,8 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test
+          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test \
+          merkle_tree_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -194,6 +195,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sha_test]=sha_test.c
   INCLUDE[sha_test]=../include ../apps/include
   DEPEND[sha_test]=../libcrypto libtestutil.a
+
+  SOURCE[merkle_tree_test]=merkle_tree_test.c
+  INCLUDE[merkle_tree_test]=../include ../apps/include
+  DEPEND[merkle_tree_test]=../libcrypto.a libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
