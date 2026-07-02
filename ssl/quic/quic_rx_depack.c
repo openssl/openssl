@@ -1500,15 +1500,16 @@ int ossl_quic_handle_frames(QUIC_CHANNEL *ch, OSSL_QRX_PKT *qpacket)
     else
         ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, dgram_len);
 
+    int ok = 1;
     /* Now that special cases are out of the way, parse frames */
     if (!PACKET_buf_init(&pkt, qpacket->hdr->data, qpacket->hdr->len)
         || !depack_process_frames(ch, &pkt, qpacket,
             enc_level,
             qpacket->time,
             &ackm_data))
-        return 0;
+        ok = 0;
 
     ossl_ackm_on_rx_packet(ch->ackm, &ackm_data);
 
-    return 1;
+    return ok;
 }
