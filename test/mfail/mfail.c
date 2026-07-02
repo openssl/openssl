@@ -38,6 +38,9 @@ static struct {
     int single_point;
     int start_point;
     int env_count;
+    int count_only;
+    int count_only_env;
+    int sample_count;
     int slow_threshold;
     int print_bt;
     int mode;
@@ -155,11 +158,13 @@ int mfail_install(int optional)
     mf.single_point = env_int("OPENSSL_TEST_MFAIL_POINT", -1);
     mf.start_point = env_int("OPENSSL_TEST_MFAIL_START", 0);
     mf.env_count = env_int("OPENSSL_TEST_MFAIL_COUNT", 0);
+    mf.count_only_env = env_is_true("OPENSSL_TEST_MFAIL_COUNT_ONLY");
     mf.slow_threshold = env_int("OPENSSL_TEST_MFAIL_SLOW", 1000);
     mf.print_bt = env_is_true("OPENSSL_TEST_MFAIL_BACKTRACE");
 
     /* if optional and nothing configured, then no point installing hooks */
-    if (optional && mf.env_count <= 0 && mf.single_point < 0)
+    if (optional && mf.env_count <= 0 && mf.single_point < 0
+        && !mf.count_only_env)
         return 0;
 
     if (!CRYPTO_set_mem_functions(mf_malloc, mf_realloc, mf_free))
@@ -209,6 +214,11 @@ static int compute_point(int i, int total, int n, int seq, int start)
 
 void mfail_init(int seq, int flags)
 {
+    mfail_init_ex(seq, flags, 0);
+}
+
+void mfail_init_ex(int seq, int flags, int count)
+{
     mf.seq = seq;
     mf.iter_index = 0;
     mf.n = 0;
@@ -221,10 +231,13 @@ void mfail_init(int seq, int flags)
     mf.counting = 0;
     mf.slow_skipped = 0;
     mf.no_check = flags & MFAIL_FLAG_NO_CHECK;
+    mf.count_only = mf.count_only_env || (flags & MFAIL_FLAG_COUNT_ONLY) != 0;
+    /* env count overrides the requested per-test sample count */
+    mf.sample_count = mf.env_count > 0 ? mf.env_count : count;
 
     if (mf.single_point >= 0) {
         mf.mode = MFAIL_MODE_SINGLE;
-    } else if ((flags & MFAIL_FLAG_COUNT) && mf.env_count > 0) {
+    } else if ((flags & MFAIL_FLAG_COUNT) && mf.sample_count > 0) {
         mf.mode = MFAIL_MODE_SAMPLED;
     } else {
         mf.mode = MFAIL_MODE_EXHAUSTIVE;
@@ -240,7 +253,13 @@ int mfail_has_next(void)
         switch (mf.phase) {
         case MFAIL_PHASE_COUNTING:
             mf.total = mf.alloc_count;
-            if (mf.skip_slow && mf.total > mf.slow_threshold) {
+            if (mf.count_only) {
+                mf.phase = MFAIL_PHASE_DONE;
+                break;
+            }
+            /* sampled runs are bounded, so slow-skip only applies otherwise */
+            if (mf.skip_slow && mf.mode != MFAIL_MODE_SAMPLED
+                && mf.total > mf.slow_threshold) {
                 mf.slow_skipped = 1;
                 mf.phase = MFAIL_PHASE_DONE;
                 break;
@@ -256,7 +275,7 @@ int mfail_has_next(void)
                     mf.phase = MFAIL_PHASE_DONE;
                 }
             } else { /* mf.mode is MFAIL_MODE_SAMPLED */
-                mf.n = mf.env_count;
+                mf.n = mf.sample_count;
                 if (mf.n > mf.total)
                     mf.n = mf.total;
                 if (mf.n > 0 && mf.total > mf.start_point) {
@@ -334,6 +353,11 @@ int mfail_was_triggered(void)
 int mfail_was_slow_skipped(void)
 {
     return mf.slow_skipped;
+}
+
+int mfail_is_count_only(void)
+{
+    return mf.count_only;
 }
 
 int mfail_get_count(void)
