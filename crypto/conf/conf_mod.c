@@ -644,12 +644,12 @@ void CONF_module_set_usr_data(CONF_MODULE *pmod, void *usr_data)
 /* Return default config file name */
 char *CONF_get1_default_config_file(void)
 {
-    const char *t;
+    const char *t, *env_file;
     char *file, *sep = "";
     size_t size;
 
-    if ((file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
-        return OPENSSL_strdup(file);
+    if ((env_file = ossl_safe_getenv("OPENSSL_CONF")) != NULL)
+        return OPENSSL_strdup(env_file);
 
     t = X509_get_default_cert_area();
     /*

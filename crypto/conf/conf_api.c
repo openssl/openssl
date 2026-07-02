@@ -72,7 +72,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
     if (name == NULL)
         return NULL;
     if (conf == NULL)
-        return ossl_safe_getenv(name);
+        return OSSL_LIB_CTX_safe_getenv_default(name, OPENSSL_FILE, OPENSSL_LINE);
     if (conf->data == NULL)
         return NULL;
     if (section != NULL) {
@@ -82,7 +82,7 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         if (v != NULL)
             return v->value;
         if (strcmp(section, "ENV") == 0) {
-            p = ossl_safe_getenv(name);
+            p = OSSL_LIB_CTX_safe_getenv_default(name, OPENSSL_FILE, OPENSSL_LINE);
             if (p != NULL)
                 return p;
         }
