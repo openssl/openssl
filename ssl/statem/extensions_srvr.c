@@ -245,30 +245,6 @@ int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 }
 #endif
 
-int tls_parse_ctos_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context,
-    X509 *x, size_t chainidx)
-{
-    PACKET ec_point_format_list;
-
-    if (!PACKET_as_length_prefixed_1(pkt, &ec_point_format_list)
-        || PACKET_remaining(&ec_point_format_list) == 0) {
-        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-        return 0;
-    }
-
-    if (!s->hit) {
-        if (!PACKET_memdup(&ec_point_format_list,
-                &s->ext.peer_ecpointformats,
-                &s->ext.peer_ecpointformats_len)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
-        }
-    }
-
-    return 1;
-}
-
 int tls_parse_ctos_session_ticket(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx)
@@ -1685,13 +1661,28 @@ EXT_RETURN tls_construct_stoc_ec_pt_formats(SSL_CONNECTION *s, WPACKET *pkt,
 {
     unsigned long alg_k = s->s3.tmp.new_cipher->algorithm_mkey;
     unsigned long alg_a = s->s3.tmp.new_cipher->algorithm_auth;
-    int using_ecc = ((alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA))
-        && (s->ext.peer_ecpointformats != NULL);
+    int using_ecc = (alg_k & SSL_kECDHE) || (alg_a & SSL_aECDSA);
     const unsigned char *plist;
     size_t plistlen;
 
-    if (!using_ecc)
+    /*
+     * The extension is irrelevant unless we're negotiating an ECC
+     * ciphersuite at TLS 1.2 or below, and the peer sent a list.  This
+     * is the first point at which the chosen ciphersuite is known, so
+     * the RFC 4492/8422 section 5.1.2 check for the required
+     * 'uncompressed' codepoint also happens here.
+     */
+    if (!using_ecc || s->ext.peer_ecpointformats == NULL)
         return EXT_RETURN_NOT_SENT;
+
+    if (memchr(s->ext.peer_ecpointformats,
+            TLSEXT_ECPOINTFORMAT_uncompressed,
+            s->ext.peer_ecpointformats_len)
+        == NULL) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER,
+            SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST);
+        return EXT_RETURN_FAIL;
+    }
 
     tls1_get_formatlist(s, &plist, &plistlen);
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_ec_point_formats)

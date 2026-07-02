@@ -12,6 +12,7 @@
 #ifndef OSSL_SSL_LOCAL_H
 #define OSSL_SSL_LOCAL_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
@@ -1039,10 +1040,6 @@ struct ssl_ctx_st {
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
 
-        /* EC extension values inherited by SSL structure */
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats;
-
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
 
@@ -1653,8 +1650,6 @@ struct ssl_connection_st {
         unsigned char *scts;
         /* Length of raw extension data, if seen */
         uint16_t scts_len;
-        /* Expect OCSP CertificateStatus message */
-        int status_expected;
 
         struct {
             /* OCSP status request only */
@@ -1666,15 +1661,16 @@ struct ssl_connection_st {
             STACK_OF(OCSP_RESPONSE) *resp_ex;
         } ocsp;
 
-        /* RFC4507 session ticket expected to be received or sent */
-        int ticket_expected;
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
 
-        /* our list */
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats;
-        /* peer's list */
+        /*
+         * Peer's advertised ec_point_formats list (TLS 1.2 and below),
+         * retained as received so SSL_get0_ec_point_formats() can return
+         * it verbatim.  Point format no longer influences cert selection
+         * or acceptance; the parse hook validates RFC 4492/8422 section
+         * 5.1.2 ("uncompressed" must be present) inline.
+         */
         size_t peer_ecpointformats_len;
         unsigned char *peer_ecpointformats;
 
@@ -1719,19 +1715,12 @@ struct ssl_connection_st {
         /* The available PSK key exchange modes */
         int psk_kex_mode;
 
-        /* Set to one if we have negotiated ETM */
-        int use_etm;
-
         /* Are we expecting to receive early data? */
         int early_data;
-        /* Is the session suitable for early data? */
-        int early_data_ok;
 
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;
         size_t tls13_cookie_len;
-        /* Have we received a cookie from the client? */
-        int cookieok;
 
         /*
          * Maximum Fragment Length as per RFC 4366.
@@ -1753,8 +1742,6 @@ struct ssl_connection_st {
 
         /* This is the list of algorithms the peer supports that we also support */
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
-        /* indicate that we sent the extension, so we'll accept it */
-        int compress_certificate_sent;
 
         uint8_t client_cert_type;
         uint8_t client_cert_type_ctos;
@@ -1767,7 +1754,27 @@ struct ssl_connection_st {
 
         /* RFC 8701 GREASE */
         uint8_t grease_seed[OSSL_GREASE_LAST_INDEX + 1];
-        int grease_seeded;
+
+        /* "bool" fields go last, for slightly better packing */
+        bool grease_seeded;
+
+        /* Expect OCSP CertificateStatus message */
+        bool status_expected;
+
+        /* RFC4507 session ticket expected to be received or sent */
+        bool ticket_expected;
+
+        /* Set to one if we have negotiated ETM */
+        bool use_etm;
+
+        /* Is the session suitable for early data? */
+        bool early_data_ok;
+
+        /* Have we received a cookie from the client? */
+        bool cookieok;
+
+        /* indicate that we sent the extension, so we'll accept it */
+        bool compress_certificate_sent;
     } ext;
 
     /*

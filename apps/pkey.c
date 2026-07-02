@@ -72,7 +72,7 @@ const OPTIONS pkey_options[] = {
     { "ec_conv_form", OPT_EC_CONV_FORM, 's',
         "Specifies the EC point conversion form in the encoding" },
     { "ec_param_enc", OPT_EC_PARAM_ENC, 's',
-        "Specifies the way the EC parameters are encoded" },
+        "Selects between named_curve and explicit EC parameter encoding" },
 
     { NULL }
 };
