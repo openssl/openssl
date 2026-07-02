@@ -565,6 +565,36 @@ int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
 int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
 
 /**
+ * Calculate the greatest common divisor of two OSSL_FN numbers.  Truncates
+ * the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for four temporary OSSL_FNs, max(a->dsize, b->dsize) + 1 limbs
+ * each, plus one frame.
+ */
+int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_gcd() needs.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_gcd().
+ */
+size_t OSSL_FN_gcd_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
  * Add two OSSL_FN numbers.
  *
  * @param[out]          r       The OSSL_FN for the result
