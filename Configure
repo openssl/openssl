@@ -1671,8 +1671,13 @@ unless ($disabled{asan} || defined $detected_sanitizers{asan}) {
         $config{target} =~ /^VC-/ ? "/fsanitize=address" : "-fsanitize=address";
 }
 
+my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
+
 unless ($disabled{ubsan} || defined $detected_sanitizers{ubsan}) {
     push @{$config{cflags}}, "-fsanitize=undefined", "-fno-sanitize-recover=all", "-DPEDANTIC";
+    if ($predefined_C{__clang__}) {
+        push @{$config{cflags}}, "-fno-sanitize=function";
+    }
 }
 
 unless ($disabled{msan} || defined $detected_sanitizers{msan}) {
@@ -1752,7 +1757,6 @@ if ($target{sys_id} ne "")
         push @{$config{openssl_sys_defines}}, "OPENSSL_SYS_$target{sys_id}";
         }
 
-my %predefined_C = compiler_predefined($config{CROSS_COMPILE}.$config{CC});
 my %predefined_CXX = $config{CXX}
     ? compiler_predefined($config{CROSS_COMPILE}.$config{CXX})
     : ();
