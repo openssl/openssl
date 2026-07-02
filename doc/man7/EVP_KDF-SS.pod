@@ -55,9 +55,13 @@ This parameter is ignored for KMAC.
 
 These parameters work as described in L<EVP_KDF(3)/PARAMETERS>.
 
-=item "key" (B<OSSL_KDF_PARAM_SECRET>) <octet string>
+=item "key" (B<OSSL_KDF_PARAM_KEY>) <octet string>
 
-This parameter set the shared secret that is used for key derivation.
+This parameter sets the shared secret that is used for key derivation.
+
+=item "secret" (B<OSSL_KDF_PARAM_SECRET>) <octet string>
+
+This parameter sets the shared secret that is used for key derivation.
 
 =item "info" (B<OSSL_KDF_PARAM_INFO>) <octet string>
 
@@ -140,7 +144,7 @@ fixedinfo value "label" and salt "salt":
                                          SN_hmac, strlen(SN_hmac));
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_DIGEST,
                                          SN_sha256, strlen(SN_sha256));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", (size_t)6);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", (size_t)5);
@@ -167,7 +171,7 @@ fixedinfo value "label", salt of "salt" and KMAC outlen of 20:
 
  *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KDF_PARAM_MAC,
                                          SN_kmac128, strlen(SN_kmac128));
- *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_SECRET,
+ *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_KEY,
                                           "secret", (size_t)6);
  *p++ = OSSL_PARAM_construct_octet_string(OSSL_KDF_PARAM_INFO,
                                           "label", (size_t)5);
@@ -201,7 +205,7 @@ This functionality was added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2024 The OpenSSL Project Authors. All Rights Reserved.  Copyright
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.  Copyright
 (c) 2019, Oracle and/or its affiliates.  All rights reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
