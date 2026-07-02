@@ -435,9 +435,9 @@ static const OSSL_FN_ULONG ex_rshift_num8_limb[] = {
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
 #if OSSL_FN_BYTES == 4
-/* $num8 >> 35 == 0x0000000000202468 */
+/* $num8 >> 35 == 0x00000000202468ac */
 static const OSSL_FN_ULONG ex_rshift_num8_limb_3[] = {
-    OSSL_FN_ULONG_C(0x00202468),
+    OSSL_FN_ULONG_C(0x202468ac),
 };
 #elif OSSL_FN_BYTES == 8
 /* $num8 >> 67 == 0x0000000000000000 */
@@ -447,9 +447,20 @@ static const OSSL_FN_ULONG ex_rshift_num8_limb_3[] = {
 #else
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
-static const OSSL_FN_ULONG ex_rshift_zero[] = {
+#if OSSL_FN_BYTES == 4
+/* $num2 >> 32 == 0x01234567 */
+static const OSSL_FN_ULONG ex_rshift_num2_limb[] = {
+    OSSL_FN_ULONG_C(0x01234567),
+    OSSL_FN_ULONG_C(0x00000000),
+};
+#elif OSSL_FN_BYTES == 8
+/* $num2 >> 64 == 0x0000000000000000 */
+static const OSSL_FN_ULONG ex_rshift_num2_limb[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
 };
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
 
 static int test_sub_common(struct test_case_st test_case)
 {
@@ -813,9 +824,9 @@ static int test_rshift_common(int i, int use_rshift1, int alias)
         a_words = num2;
         a_limbs = LIMBSOF(num2);
         a_live_limbs = LIMBSOF(num2);
-        r_limbs = LIMBSOF(ex_rshift_zero) + 2;
-        ex_words = ex_rshift_zero;
-        check_limbs = LIMBSOF(ex_rshift_zero);
+        r_limbs = LIMBSOF(ex_rshift_num2_limb) + 2;
+        ex_words = ex_rshift_num2_limb;
+        check_limbs = LIMBSOF(ex_rshift_num2_limb);
         shift = OSSL_FN_BYTES * 8;
         break;
     case 6:
