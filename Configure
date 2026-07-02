@@ -564,6 +564,7 @@ my @disablables_features = (
     "sm2-precomp",
     "sock",
     "sse2",
+    "ssl-test-functions",
     "ssl-trace",
     "static-vcruntime",
     "stdio",
@@ -575,8 +576,8 @@ my @disablables_features = (
     "trace",
     "ts",
     "ubsan",
+    "unit-tests",
     "ui-console",
-    "unit-test",
     "uplink",
     "weak-ssl-ciphers",
     "zlib-dynamic",
@@ -614,6 +615,7 @@ my %deprecated_disablables = (
     "ssl" => undef,
     "ssl3" => undef,
     "ssl3-method" => undef,
+    "unit-test" => "ssl-test-functions",
     );
 
 # All of the following are disabled by default:
@@ -647,13 +649,14 @@ our %disabled = ( # "what"         => "comment"
                   "msan"                => "default",
                   "rc5"                 => "default",
                   "sctp"                => "default",
+                  "ssl-test-functions"  => "default",
                   "sslkeylog"           => "default",
                   "static-vcruntime"    => "default",
                   "tfo"                 => "default",
                   "tls-deprecated-ec"   => "default",
                   "trace"               => "default",
                   "ubsan"               => "default",
-                  "unit-test"           => "default",
+                  "unit-tests"          => "default",
                   "weak-ssl-ciphers"    => "default",
                   "zlib"                => "default",
                   "zlib-dynamic"        => "default",
@@ -723,10 +726,10 @@ my @disable_cascades = (
 
     "stdio"             => [ "apps", "egd" ],
     "apps"              => [ "tests" ],
-    "tests"             => [ "external-tests" ],
+    "tests"             => [ "external-tests", "unit-tests" ],
     "comp"              => [ "zlib", "brotli", "zstd" ],
     "sm3"               => [ "sm2" ],
-    sub { !$disabled{"unit-test"} } => [ "heartbeats" ],
+    sub { !$disabled{"ssl-test-functions"} } => [ "heartbeats" ],
 
     sub { !$disabled{"msan"} } => [ "asm" ],
 
@@ -1114,6 +1117,14 @@ while (@argvcopy)
                 elsif (/^--with-fuzzer-include=(.*)$/)
                         {
                         $withargs{fuzzer_include}=$1;
+                        }
+                elsif (/^--with-cmocka-lib=(.*)$/)
+                        {
+                        $withargs{cmocka_lib}=$1;
+                        }
+                elsif (/^--with-cmocka-include=(.*)$/)
+                        {
+                        $withargs{cmocka_include}=$1;
                         }
                 elsif (/^--with-rand-seed=(.*)$/)
                         {
@@ -1913,6 +1924,18 @@ unless ($disabled{winstore}) {
 
 push @{$config{openssl_other_defines}}, "OPENSSL_NO_KTLS" if ($disabled{ktls});
 
+unless ($disabled{"unit-tests"}) {
+    if ($target =~ /^linux/ || $target =~ /^BSD/) {
+        $config{cmocka_includes} =
+            $withargs{cmocka_include} ? [$withargs{cmocka_include}] : [];
+        $config{cmocka_libs} = $withargs{cmocka_lib}
+            ? "-L$withargs{cmocka_lib} -lcmocka"
+            : "-lcmocka";
+    } else {
+        disable('no-wrap-support', 'unit-tests');
+    }
+}
+
 # Get the extra flags used when building shared libraries and modules.  We
 # do this late because some of them depend on %disabled.
 
@@ -2137,6 +2160,7 @@ if ($builder eq "unified") {
         my %includes = ();
         my %defines = ();
         my %depends = ();
+        my %wraps = ();
         my %generate = ();
         my %imagedocs = ();
         my %htmldocs = ();
@@ -2392,6 +2416,11 @@ if ($builder eq "unified") {
                                 \$attributes{depends}, $+{ATTRIBS},
                                 tokenize($expand_variables->($+{VALUE})))
                          if !@skip || $skip[$#skip] > 0; },
+            qr/^\s* WRAP ${index_re} \s* = \s* ${value_re} \s* $/x
+            => sub { $push_to->(\%wraps, $expand_variables->($+{INDEX}),
+                                undef, undef,
+                                tokenize($expand_variables->($+{VALUE})))
+             if !@skip || $skip[$#skip] > 0; },
             qr/^\s* GENERATE ${index_re} ${attribs_re} \s* = \s* ${value_re} \s* $/x
             => sub { $push_to->(\%generate, $expand_variables->($+{INDEX}),
                                 \$attributes{generate}, $+{ATTRIBS},
@@ -2675,6 +2704,13 @@ if ($builder eq "unified") {
                         if grep { $v eq $_ } @{$config{defines}};
                     push @{$config{defines}}, $v;
                 }
+            }
+        }
+
+        foreach my $dest (keys %wraps) {
+            my $ddest = cleanfile($buildd, $dest, $blddir);
+            foreach my $fn (@{$wraps{$dest}}) {
+                push @{$unified_info{wraps}->{$ddest}}, $fn;
             }
         }
 
@@ -3007,6 +3043,14 @@ EOF
                     $product;
             }
         }
+    }
+}
+
+# Add cmocka include path to all targets that use WRAP
+if (!$disabled{"unit-tests"} && @{$config{cmocka_includes} // []}) {
+    foreach my $dest (keys %{$unified_info{wraps} // {}}) {
+        push @{$unified_info{includes}->{$dest}},
+             @{$config{cmocka_includes}};
     }
 }
 

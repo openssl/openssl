@@ -2432,7 +2432,7 @@ static ossl_inline void tls1_get_peer_groups(SSL_CONNECTION *s,
     *pgroupslen = s->ext.peer_supportedgroups_len;
 }
 
-#ifndef OPENSSL_UNIT_TEST
+#ifndef OPENSSL_SSL_TEST_FUNCTIONS
 
 __owur int ossl_ssl_init(SSL *ssl, SSL_CTX *ctx, const SSL_METHOD *method,
     int type);
@@ -2950,7 +2950,7 @@ int ssl_srp_server_param_with_username_intern(SSL_CONNECTION *s, int *ad);
 
 void ssl_session_calculate_timeout(SSL_SESSION *ss);
 
-#else /* OPENSSL_UNIT_TEST */
+#else /* OPENSSL_SSL_TEST_FUNCTIONS */
 
 #define ssl_init_wbio_buffer SSL_test_functions()->p_ssl_init_wbio_buffer
 
