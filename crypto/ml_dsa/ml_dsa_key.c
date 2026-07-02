@@ -497,7 +497,7 @@ int ossl_ml_dsa_generate_key(ML_DSA_KEY *out)
         ret = keygen_internal(out);
     } else {
         if ((ret = keygen_internal(out)) != 0
-            && memcmp(out->priv_encoding, sk, out->params->sk_len) != 0) {
+            && CRYPTO_memcmp(out->priv_encoding, sk, out->params->sk_len) != 0) {
             ret = 0;
             ossl_ml_dsa_key_reset(out);
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_KEY,
