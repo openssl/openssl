@@ -59,16 +59,15 @@ const OPTIONS mac_options[] = {
 static char *alloc_mac_algorithm_name(STACK_OF(OPENSSL_STRING) **optp,
     const char *name, const char *arg)
 {
-    size_t len = strlen(name) + strlen(arg) + 2;
-    char *res;
+    char *res = NULL;
 
     if (*optp == NULL)
         *optp = sk_OPENSSL_STRING_new_null();
     if (*optp == NULL)
         return NULL;
 
-    res = app_malloc(len, "algorithm name");
-    BIO_snprintf(res, len, "%s:%s", name, arg);
+    if (OPENSSL_asprintf(&res, "%s:%s", name, arg) < 0)
+        return NULL;
     if (sk_OPENSSL_STRING_push(*optp, res))
         return res;
     OPENSSL_free(res);
