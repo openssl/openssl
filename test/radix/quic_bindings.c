@@ -52,6 +52,7 @@ typedef struct radix_obj_st {
     SSL *ssl; /* owns one reference */
     unsigned int registered : 1; /* in LHASH? */
     unsigned int active : 1; /* tick? */
+    CRYPTO_MUTEX *mx;
 } RADIX_OBJ;
 
 DEFINE_LHASH_OF_EX(RADIX_OBJ);
@@ -104,11 +105,11 @@ typedef struct radix_thread_st {
 DEFINE_STACK_OF(RADIX_THREAD)
 
 /* ssl reference is transferred. name is copied and is required. */
-static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
+static RADIX_OBJ *RADIX_OBJ_new_empty(const char *name)
 {
     RADIX_OBJ *obj;
 
-    if (!TEST_ptr(name) || !TEST_ptr(ssl))
+    if (!TEST_ptr(name))
         return NULL;
 
     if (!TEST_ptr(obj = OPENSSL_zalloc(sizeof(*obj))))
@@ -119,7 +120,28 @@ static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
         return NULL;
     }
 
+    obj->mx = ossl_crypto_mutex_new();
+    if (obj->mx == NULL) {
+        OPENSSL_free(obj->name);
+        OPENSSL_free(obj);
+    }
+
+    return obj;
+}
+
+static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
+{
+    RADIX_OBJ *obj;
+
+    if (!TEST_ptr(ssl))
+        return NULL;
+
+    obj = RADIX_OBJ_new_empty(name);
+    if (!TEST_ptr(obj))
+        return NULL;
+
     obj->ssl = ssl;
+
     return obj;
 }
 
@@ -132,6 +154,7 @@ static void RADIX_OBJ_free(RADIX_OBJ *obj)
 
     SSL_free(obj->ssl);
     OPENSSL_free(obj->name);
+    ossl_crypto_mutex_free(&obj->mx);
     OPENSSL_free(obj);
 }
 
@@ -444,6 +467,9 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
     const char *name, RADIX_OBJ *obj)
 {
     RADIX_OBJ *existing;
+    SSL *existing_ssl;
+    RADIX_THREAD *rt;
+    int i, j;
 
     if (obj != NULL && !TEST_false(obj->registered))
         return 0;
@@ -455,12 +481,31 @@ static int RADIX_PROCESS_set_obj(RADIX_PROCESS *rp,
 
         lh_RADIX_OBJ_delete(rp->objs, existing);
         existing->registered = 0;
+        existing_ssl = existing->ssl;
         RADIX_OBJ_free(existing);
+    } else {
+        existing = NULL;
     }
 
     if (obj != NULL) {
         lh_RADIX_OBJ_insert(rp->objs, obj);
         obj->registered = 1;
+    }
+
+    /*
+     * update also slot so it does not keep a stale pointer.
+     * do it for all threads.
+     */
+    if (existing != NULL) {
+        for (i = 0; i < sk_RADIX_THREAD_num(rp->threads); i++) {
+            rt = (RADIX_THREAD *)sk_RADIX_THREAD_value(rp->threads, i);
+            for (j = 0; j < NUM_SLOTS; j++) {
+                if (rt->slot[j] == existing)
+                    rt->slot[j] = obj;
+                if (rt->ssl[j] == existing_ssl)
+                    rt->ssl[j] = (obj == NULL) ? NULL : obj->ssl;
+            }
+        }
     }
 
     return 1;
@@ -650,8 +695,10 @@ ossl_unused static void radix_skip_time(OSSL_TIME t)
 
 static void per_op_tick_obj(RADIX_OBJ *obj)
 {
-    if (obj->active)
+    ossl_crypto_mutex_lock(obj->mx);
+    if (obj->active && obj->ssl)
         SSL_handle_events(obj->ssl);
+    ossl_crypto_mutex_unlock(obj->mx);
 }
 
 static int do_per_op(TERP *terp, void *arg)

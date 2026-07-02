@@ -27,6 +27,24 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_bind)
+{
+    const char *name;
+    RADIX_OBJ *empty_obj;
+
+    F_POP(name);
+
+    empty_obj = RADIX_OBJ_new_empty(name);
+    if (empty_obj == NULL)
+        return 0;
+
+    RADIX_PROCESS_set_obj(RP(), name, empty_obj);
+
+    return 1;
+err:
+    return 0;
+}
+
 static int ssl_ctx_select_alpn(SSL *ssl,
     const unsigned char **out, unsigned char *out_len,
     const unsigned char *in, unsigned int in_len,
@@ -248,27 +266,53 @@ err:
     return ok;
 }
 
+/*
+ * currently when test needs to accept/create more than
+ * one stream it has two options, use unique variable
+ * for each stream it creates:
+ *    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+ *    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+ *    OP_ACCEPT_STREAM_WAIT(C, Cc, 0);
+ * or use unbind to free SSL object attached to variable:
+ *    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+ *    OP_UNBIND(Ca);
+ *    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+ *    OP_UNBIND(Ca);
+ *    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+ *    OP_UNBIND(Ca);
+ *
+ */
+#define OP_F_REPLACE_STREAM 0x8000000000000000
+#define OP_F_MASK 0x7fffffffffffffff
+
 DEF_FUNC(hf_new_stream)
 {
     int ok = 0;
+    int replace;
+    RADIX_OBJ *stream_obj;
     const char *stream_name;
-    SSL *conn, *stream;
+    SSL *conn, *stream, *old;
     uint64_t flags, do_accept;
 
     F_POP2(flags, do_accept);
     F_POP(stream_name);
     REQUIRE_SSL(conn);
+    replace = ((OP_F_REPLACE_STREAM & flags) != 0);
 
-    if (!TEST_ptr_null(RADIX_PROCESS_get_obj(RP(), stream_name)))
+    stream_obj = RADIX_PROCESS_get_obj(RP(), stream_name);
+    if (replace == 0) {
+        if (!TEST_ptr_null(stream_obj))
+            goto err;
+    } else if (TEST_ptr_null(stream_obj))
         goto err;
 
     if (do_accept) {
-        stream = SSL_accept_stream(conn, flags);
+        stream = SSL_accept_stream(conn, flags & OP_F_MASK);
 
         if (stream == NULL)
             F_SPIN_AGAIN();
     } else {
-        stream = SSL_new_stream(conn, flags);
+        stream = SSL_new_stream(conn, flags & OP_F_MASK);
     }
 
     if (!TEST_ptr(stream))
@@ -276,8 +320,27 @@ DEF_FUNC(hf_new_stream)
 
     /* TODO(QUIC RADIX): Implement wait behaviour */
 
-    if (stream != NULL
-        && !TEST_true(RADIX_PROCESS_set_ssl(RP(), stream_name, stream))) {
+    if (stream_obj != NULL) {
+        /*
+         * OP_UNBIND() and all functions which call RP_PROCESS_{get,set}_ssl()
+         * are not thread safe. Those functions race with 'ticker' (do_per_op())
+         * functions which walks the ->objs to tick all SSL objects. Trying to
+         * add lock to do_per_op() and lock to RADIX_PROCESS_{get,set)_ssl() ends up
+         * with deadlock (may be just slow progress) making tests to timeout.
+         *
+         * Allowing test script to replace existing ?stream? ssl object with
+         * new instance created here avoids the frequent execution of remove/insert
+         * operations on hashtable. The objects to be found in hashtable
+         * are replaced under the per-object lock. Should be fine if hashtable
+         * is populated first before threads are spawned.
+         */
+        ossl_crypto_mutex_lock(stream_obj->mx);
+        old = stream_obj->ssl;
+        stream_obj->ssl = stream;
+        stream = NULL;
+        ossl_crypto_mutex_unlock(stream_obj->mx);
+        SSL_free(old);
+    } else if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), stream_name, stream))) {
         SSL_free(stream);
         goto err;
     }
@@ -927,6 +990,10 @@ err:
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
+
+#define OP_BIND(name)   \
+    (OP_PUSH_PZ(#name), \
+        OP_FUNC(hf_bind))
 
 #define OP_SELECT_SSL(slot, name) \
     (OP_PUSH_U64(slot),           \
