@@ -125,6 +125,17 @@ my $CLEAR_HKEYS_STORAGE_ON_EXIT = 1;
 # ; Currently disabled, as this check is handled outside.
 my $CHECK_FUNCTION_ARGUMENTS = 0;
 
+# ; Preload AES round keys 0-3 into dedicated ZMM registers for the >=704-byte
+# ; 16-/32-block hot loops, instead of reloading them from memory each
+# ; iteration. This is the optimization currently under evaluation: on some
+# ; microarchitectures its benefit is negligible, and it forces aliasing the
+# ; ADDBE counter constants onto AES-key registers (see the counter-setup
+# ; invariants in GHASH_16_ENCRYPT_16_PARALLEL / _N_GHASH_N / INITIAL_BLOCKS_16).
+# ; Set to 0 to disable it (round keys are then reloaded from memory). The
+# ; OPENSSL_AESGCM_NO_KEYPRELOAD build-time environment variable overrides this
+# ; to 0, so both variants can be built from a single source for A/B evaluation.
+my $PRELOAD_AES_ROUND_KEYS = $ENV{OPENSSL_AESGCM_NO_KEYPRELOAD} ? 0 : 1;
+
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 # ;;; Global constants
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -2351,9 +2362,38 @@ ___
         jae               .L_16_blocks_overflow_${label_suffix}
 ___
 
-  &ZMM_OPCODE3_DSTR_SRC1R_SRC2R_BLOCKS_0_16(
-    $NUM_BLOCKS, "vpaddd", $B00_03, $B04_07,     $B08_11,    $B12_15,    $CTR_BE,
-    $B00_03,     $B04_07,  $B08_11, $ADDBE_1234, $ADDBE_4x4, $ADDBE_4x4, $ADDBE_4x4);
+  # ;; INVARIANT (do not break): the counter increments below MUST use the
+  # ;; ddq_addbe_*(%rip) memory constants and MUST NOT reference the
+  # ;; $ADDBE_4x4 / $ADDBE_1234 register arguments (args 34/35).
+  # ;;
+  # ;; Rationale: the large-message callers in GCM_ENC_DEC (the 16-block hot
+  # ;; loop and the 32-block big loop) deliberately alias those two ZMM
+  # ;; registers (%zmm27/%zmm28) to preloaded AES round keys and may pass them
+  # ;; in here only as dead placeholders. If a counter addend were emitted from
+  # ;; $ADDBE_4x4 / $ADDBE_1234 it would add AES key bytes to the CTR block,
+  # ;; corrupting the keystream and causing catastrophic keystream/nonce reuse
+  # ;; (CWE-323). Whole-ZMM adds are used unconditionally (the unused upper
+  # ;; lanes are harmless), mirroring the overflow branch below.
+  my $ctr_setup_code = "        vpaddd            ddq_addbe_1234(%rip),$CTR_BE,$B00_03\n";
+  if ($NUM_BLOCKS > 4) {
+    $ctr_setup_code .= "        vpaddd            ddq_addbe_4444(%rip),$B00_03,$B04_07\n";
+  }
+  if ($NUM_BLOCKS > 8) {
+    $ctr_setup_code .= "        vpaddd            ddq_addbe_4444(%rip),$B04_07,$B08_11\n";
+  }
+  if ($NUM_BLOCKS > 12) {
+    $ctr_setup_code .= "        vpaddd            ddq_addbe_4444(%rip),$B08_11,$B12_15\n";
+  }
+
+  # ;; Build-time enforcement of the invariant documented above.
+  if ($ctr_setup_code =~ /\Q$ADDBE_4x4\E\b/ || $ctr_setup_code =~ /\Q$ADDBE_1234\E\b/) {
+    die "GHASH_16_ENCRYPT_N_GHASH_N: counter setup must not reference the "
+      . "ADDBE register args ($ADDBE_4x4/$ADDBE_1234); use ddq_addbe_*(%rip). "
+      . "Callers alias these registers to preloaded AES round keys, so this "
+      . "would corrupt the CTR keystream (keystream/nonce reuse).\n";
+  }
+
+  $code .= $ctr_setup_code;
   $code .= <<___;
         jmp               .L_16_blocks_ok_${label_suffix}
 
@@ -4119,10 +4159,12 @@ sub GCM_ENC_DEC {
   # ; Unused in the small packet path
   my $ADDBE_4x4  = "%zmm27";
   my $ADDBE_1234 = "%zmm28";
-  my $PRELOADED_AES_KEY0 = "%zmm9";
-  my $PRELOADED_AES_KEY1 = "%zmm23";
-  my $PRELOADED_AES_KEY2 = "%zmm27";
-  my $PRELOADED_AES_KEY3 = "%zmm28";
+  # ; Empty when key preloading is disabled => the stitched macros reload the
+  # ; round keys from memory (see $PRELOAD_AES_ROUND_KEYS).
+  my $PRELOADED_AES_KEY0 = $PRELOAD_AES_ROUND_KEYS ? "%zmm9"  : "";
+  my $PRELOADED_AES_KEY1 = $PRELOAD_AES_ROUND_KEYS ? "%zmm23" : "";
+  my $PRELOADED_AES_KEY2 = $PRELOAD_AES_ROUND_KEYS ? "%zmm27" : "";
+  my $PRELOADED_AES_KEY3 = $PRELOAD_AES_ROUND_KEYS ? "%zmm28" : "";
 
   my $MASKREG = "%k1";
 
@@ -4225,10 +4267,12 @@ ___
 ___
 
   # ;; preload AES round keys 0 and 1 (only msg >= 704; 4/8-block path reloads from $AES_KEYS)
-  $code .= <<___;
+  if ($PRELOAD_AES_ROUND_KEYS) {
+    $code .= <<___;
         vbroadcastf64x2   `(16 * 0)`($AES_KEYS),$PRELOADED_AES_KEY0
         vbroadcastf64x2   `(16 * 1)`($AES_KEYS),$PRELOADED_AES_KEY1
 ___
+  }
 
   # ;; ==== AES-CTR - first 16 blocks
   my $aesout_offset      = ($STACK_LOCAL_OFFSET + (0 * 16));
@@ -4261,8 +4305,10 @@ ___
   $code .= "mov     \$1,$HKEYS_READY\n";
 
   # ;; Preload extra AES round keys (overwrites ADDBE registers)
+  if ($PRELOAD_AES_ROUND_KEYS) {
     $code .= "        vbroadcastf64x2   `(16 * 2)`($AES_KEYS),$PRELOADED_AES_KEY2\n";
     $code .= "        vbroadcastf64x2   `(16 * 3)`($AES_KEYS),$PRELOADED_AES_KEY3\n";
+  }
 
   $code .= <<___;
         add               \$`(16 * 16)`,$DATA_OFFSET
@@ -4670,8 +4716,10 @@ ___
   $code .= "mov     \$1,$HKEYS_READY\n";
 
   # ;; Overwrite ADDBE registers with preloaded AES round keys 2 and 3
-  $code .= "        vbroadcastf64x2   `(16 * 2)`($AES_KEYS),$PRELOADED_AES_KEY2\n";
-  $code .= "        vbroadcastf64x2   `(16 * 3)`($AES_KEYS),$PRELOADED_AES_KEY3\n";
+  if ($PRELOAD_AES_ROUND_KEYS) {
+    $code .= "        vbroadcastf64x2   `(16 * 2)`($AES_KEYS),$PRELOADED_AES_KEY2\n";
+    $code .= "        vbroadcastf64x2   `(16 * 3)`($AES_KEYS),$PRELOADED_AES_KEY3\n";
+  }
 
   $code .= <<___;
         add               \$`(32 * 16)`,$DATA_OFFSET
@@ -4917,16 +4965,40 @@ sub INITIAL_BLOCKS_16 {
   my $label_suffix = $label_count++;
 
   my $stack_offset = $BLK_OFFSET;
+
+  # ;; INVARIANT (do not break): the counter increments in the non-overflow path
+  # ;; MUST use the ddq_addbe_*(%rip) memory constants and MUST NOT reference the
+  # ;; $ADDBE_4x4 / $ADDBE_1234 register arguments (args 8/7).
+  # ;;
+  # ;; Rationale: the large-message callers in GCM_ENC_DEC deliberately alias
+  # ;; those two ZMM registers (%zmm27/%zmm28) to preloaded AES round keys. Even
+  # ;; though this macro currently runs before that aliasing, emitting a counter
+  # ;; addend from $ADDBE_4x4 / $ADDBE_1234 would add AES key bytes to the CTR
+  # ;; block if the call order ever changed, corrupting the keystream and causing
+  # ;; catastrophic keystream/nonce reuse (CWE-323). The register args are
+  # ;; therefore intentionally unused here; the build-time check below enforces it.
+  my $ctr_setup_code = <<___;
+        vpaddd            ddq_addbe_1234(%rip),$CTR,$B00_03
+        vpaddd            ddq_addbe_4444(%rip),$B00_03,$B04_07
+        vpaddd            ddq_addbe_4444(%rip),$B04_07,$B08_11
+        vpaddd            ddq_addbe_4444(%rip),$B08_11,$B12_15
+___
+  if ($ctr_setup_code =~ /\Q$ADDBE_4x4\E\b/ || $ctr_setup_code =~ /\Q$ADDBE_1234\E\b/) {
+    die "INITIAL_BLOCKS_16: counter setup must not reference the "
+      . "ADDBE register args ($ADDBE_4x4/$ADDBE_1234); use ddq_addbe_*(%rip). "
+      . "Callers alias these registers to preloaded AES round keys, so this "
+      . "would corrupt the CTR keystream (keystream/nonce reuse).\n";
+  }
+
   $code .= <<___;
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;; prepare counter blocks
 
         cmpb              \$`(256 - 16)`,@{[BYTE($CTR_CHECK)]}
         jae               .L_next_16_overflow_${label_suffix}
-        vpaddd            $ADDBE_1234,$CTR,$B00_03
-        vpaddd            $ADDBE_4x4,$B00_03,$B04_07
-        vpaddd            $ADDBE_4x4,$B04_07,$B08_11
-        vpaddd            $ADDBE_4x4,$B08_11,$B12_15
+___
+  $code .= $ctr_setup_code;
+  $code .= <<___;
         jmp               .L_next_16_ok_${label_suffix}
 .L_next_16_overflow_${label_suffix}:
         vpshufb           $SHUF_MASK,$CTR,$CTR
