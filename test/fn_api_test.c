@@ -499,6 +499,34 @@ static const OSSL_FN_ULONG gcd_num_mixed_b[] = {
 static const OSSL_FN_ULONG gcd_ex_mixed[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0xffffffff),
 };
+/*
+ * gcd(1, a) = 1, for any a.  Exercises a unit operand, which the
+ * Bernstein-Yang loop reduces to a no-op (it never eliminates past 1).
+ */
+static const OSSL_FN_ULONG gcd_num_one[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+static const OSSL_FN_ULONG gcd_ex_one[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+/*
+ * 2^96 + 1 and 3 * (2^96 + 1).  Their gcd is 2^96 + 1, a value spanning
+ * two limbs on 64-bit and four on 32-bit, with a non-zero low limb.  Used for
+ * a real truncation test: the destination is one limb narrower than the
+ * result, so a non-zero top limb is dropped on both platforms.
+ */
+static const OSSL_FN_ULONG gcd_num_2p96p1_a[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+    OSSL_FN_ULONG64_C(0x00000001, 0x00000000),
+};
+static const OSSL_FN_ULONG gcd_num_2p96p1_b[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000003),
+    OSSL_FN_ULONG64_C(0x00000003, 0x00000000),
+};
+static const OSSL_FN_ULONG gcd_ex_2p96p1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+    OSSL_FN_ULONG64_C(0x00000001, 0x00000000),
+};
 
 static int test_sub_common(struct test_case_st test_case)
 {
@@ -1065,8 +1093,13 @@ static struct test_case_st test_gcd_cases[] = {
         EXTENDED_LIMB_ZERO),
     GCD_CASE(num2, num2, num2, LIMBSOF(num2) + 2, LIMBSOF(num2),
         EXTENDED_LIMB_ZERO),
-    GCD_CASE(num2, num4, num2, LIMBSOF(num2) - 1, LIMBSOF(num2) - 1,
+    /* Destination one limb narrower than the result; drops a non-zero top limb. */
+    GCD_CASE(gcd_num_2p96p1_a, gcd_num_2p96p1_b, gcd_ex_2p96p1,
+        LIMBSOF(gcd_ex_2p96p1) - 1, LIMBSOF(gcd_ex_2p96p1) - 1,
         EXTENDED_LIMB_ZERO),
+    /* gcd(1, a) = 1 */
+    GCD_CASE(gcd_num_one, num2, gcd_ex_one, LIMBSOF(gcd_ex_one) + 2,
+        LIMBSOF(gcd_ex_one), EXTENDED_LIMB_ZERO),
 };
 
 static int test_gcd(int i)
@@ -1074,9 +1107,23 @@ static int test_gcd(int i)
     return test_gcd_common(test_gcd_cases[i], 0);
 }
 
+/*
+ * Alias r == a and r == b, on both a single-limb result (case 3) and a
+ * multi-limb result (case 5, the shared-powers-of-two case).
+ */
 static int test_gcd_alias(int i)
 {
-    return test_gcd_common(test_gcd_cases[3], i + 1);
+    static const struct {
+        size_t cas;
+        int alias;
+    } aliases[] = {
+        { 3, 1 },
+        { 3, 2 },
+        { 5, 1 },
+        { 5, 2 },
+    };
+
+    return test_gcd_common(test_gcd_cases[aliases[i].cas], aliases[i].alias);
 }
 
 /* A set of expected results, also in OSSL_FN_ULONG array form */
@@ -1620,7 +1667,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
-    ADD_ALL_TESTS(test_gcd_alias, 2);
+    ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
     ADD_ALL_TESTS(test_mul, OSSL_NELEM(test_mul_cases));
     ADD_ALL_TESTS(test_mul_truncated, OSSL_NELEM(test_mul_truncate_cases));
