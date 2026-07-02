@@ -15,6 +15,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/crypto.h>
 #include "crypto/x509.h" /* x509_st definition */
 #include "testutil.h"
 
@@ -117,6 +118,235 @@ static int test_x509_verify_with_new(void)
     EVP_PKEY_free(pkey);
     return ret;
 }
+
+static int add_name_entry(X509_NAME *name, int nid, const char *value)
+{
+    return X509_NAME_add_entry_by_NID(name, nid, MBSTRING_ASC,
+        (const unsigned char *)value,
+        -1, -1, 0);
+}
+
+static X509_NAME *make_store_test_name(const char *common_name)
+{
+    X509_NAME *name = NULL;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(add_name_entry(name, NID_commonName, common_name))) {
+        X509_NAME_free(name);
+        return NULL;
+    }
+
+    return name;
+}
+
+static X509 *make_store_test_cert(const X509_NAME *name, long serial)
+{
+    X509 *x = NULL;
+
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_int_eq(X509_set_version(x, X509_VERSION_3), 1)
+        || !TEST_int_eq(ASN1_INTEGER_set(X509_get_serialNumber(x), serial), 1)
+        || !TEST_int_eq(X509_set_subject_name(x, name), 1)
+        || !TEST_int_eq(X509_set_issuer_name(x, name), 1)
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 24 * 3600))
+        || !TEST_int_eq(X509_set_pubkey(x, pubkey), 1)
+        || !TEST_int_gt(X509_sign(x, privkey, signmd), 0)) {
+        X509_free(x);
+        return NULL;
+    }
+
+    return x;
+}
+
+static X509_CRL *roundtrip_crl(X509_CRL *crl)
+{
+    unsigned char *der = NULL;
+    const unsigned char *q = NULL;
+    int derlen;
+    X509_CRL *ret = NULL;
+
+    derlen = i2d_X509_CRL(crl, &der);
+    if (derlen <= 0 || der == NULL)
+        goto end;
+
+    q = der;
+    ret = d2i_X509_CRL(NULL, &q, derlen);
+
+end:
+    OPENSSL_free(der);
+    X509_CRL_free(crl);
+    return ret;
+}
+
+static X509_CRL *make_store_test_crl(const X509_NAME *issuer, int number)
+{
+    X509_CRL *crl = NULL, *ret = NULL;
+    ASN1_INTEGER *crl_number = NULL;
+    ASN1_TIME *last_update = NULL;
+    ASN1_TIME *next_update = NULL;
+
+    if (!TEST_ptr(crl = X509_CRL_new())
+        || !TEST_ptr(crl_number = ASN1_INTEGER_new())
+        || !TEST_ptr(last_update = ASN1_TIME_new())
+        || !TEST_ptr(next_update = ASN1_TIME_new())
+        || !TEST_int_eq(ASN1_INTEGER_set(crl_number, number), 1)
+        || !TEST_int_eq(ASN1_TIME_set_string(last_update, "20240101000000Z"), 1)
+        || !TEST_int_eq(ASN1_TIME_set_string(next_update, "20250101000000Z"), 1)
+        || !TEST_int_eq(X509_CRL_set_version(crl, X509_CRL_VERSION_2), 1)
+        || !TEST_int_eq(X509_CRL_set_issuer_name(crl, issuer), 1)
+        || !TEST_int_eq(X509_CRL_set1_lastUpdate(crl, last_update), 1)
+        || !TEST_int_eq(X509_CRL_set1_nextUpdate(crl, next_update), 1)
+        || !TEST_int_eq(X509_CRL_add1_ext_i2d(crl, NID_crl_number,
+                            crl_number, 0, 0),
+            1)
+        || !TEST_int_gt(X509_CRL_sign(crl, privkey, signmd), 0))
+        goto err;
+
+    ret = roundtrip_crl(crl);
+    crl = NULL;
+
+err:
+    X509_CRL_free(crl);
+    ASN1_INTEGER_free(crl_number);
+    ASN1_TIME_free(last_update);
+    ASN1_TIME_free(next_update);
+    return ret;
+}
+
+static int check_store_object_count(X509_STORE *store, int expected_certs,
+    int expected_crls)
+{
+    int i, certs = 0, crls = 0, ret = 0;
+    STACK_OF(X509_OBJECT) *objs = NULL;
+
+    if (!TEST_ptr(objs = X509_STORE_get1_objects(store)))
+        goto err;
+
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+        const X509_OBJECT *obj = sk_X509_OBJECT_value(objs, i);
+
+        switch (X509_OBJECT_get_type(obj)) {
+        case X509_LU_X509:
+            certs++;
+            break;
+        case X509_LU_CRL:
+            crls++;
+            break;
+        default:
+            break;
+        }
+    }
+
+    ret = TEST_int_eq(certs, expected_certs)
+        && TEST_int_eq(crls, expected_crls)
+        && TEST_int_eq(sk_X509_OBJECT_num(objs), expected_certs + expected_crls);
+
+err:
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    return ret;
+}
+
+static int test_x509_store_add_duplicate_crls(void)
+{
+    int i, ret = 0;
+    X509_STORE *store = NULL;
+    X509_NAME *issuer = NULL;
+    X509 *cert = NULL;
+    X509_CRL *crls[4] = { NULL, NULL, NULL, NULL };
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(issuer = make_store_test_name("Store Test Issuer"))
+        || !TEST_ptr(cert = make_store_test_cert(issuer, 1)))
+        goto err;
+
+    for (i = 0; i < 4; i++)
+        if (!TEST_ptr(crls[i] = make_store_test_crl(issuer, i + 1)))
+            goto err;
+
+    if (!TEST_true(X509_STORE_add_crl(store, crls[0]))
+        || !TEST_true(X509_STORE_add_cert(store, cert))
+        || !TEST_true(X509_STORE_add_crl(store, crls[1]))
+        || !TEST_true(X509_STORE_add_crl(store, crls[2]))
+        || !TEST_true(X509_STORE_add_crl(store, crls[3]))
+        || !check_store_object_count(store, 1, 4))
+        goto err;
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(X509_STORE_add_crl(store, crls[i]))
+            || !check_store_object_count(store, 1, 4))
+            goto err;
+    }
+
+    ret = 1;
+
+err:
+    X509_STORE_free(store);
+    X509_NAME_free(issuer);
+    X509_free(cert);
+    for (i = 0; i < 4; i++)
+        X509_CRL_free(crls[i]);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+/*
+ * X509_STORE_get0_objects() switches the store to the legacy global object
+ * stack. Verify get1_certs/get1_crls still filter by subject/issuer there and
+ * do not return objects with other names.
+ */
+static int test_x509_store_get1_by_name_after_get0_objects(void)
+{
+    int ret = 0;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_NAME *name1 = NULL, *name2 = NULL;
+    X509 *cert1 = NULL, *cert2 = NULL;
+    X509_CRL *crl1 = NULL, *crl2 = NULL;
+    STACK_OF(X509_OBJECT) *objs = NULL;
+    STACK_OF(X509) *certs = NULL;
+    STACK_OF(X509_CRL) *crls = NULL;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_ptr(name1 = make_store_test_name("A Store Test Issuer"))
+        || !TEST_ptr(name2 = make_store_test_name("Z Store Test Issuer"))
+        || !TEST_ptr(cert1 = make_store_test_cert(name1, 11))
+        || !TEST_ptr(cert2 = make_store_test_cert(name2, 12))
+        || !TEST_ptr(crl1 = make_store_test_crl(name1, 11))
+        || !TEST_ptr(crl2 = make_store_test_crl(name2, 12)))
+        goto err;
+
+    /* Force the deprecated global-stack representation. */
+    if (!TEST_ptr(objs = X509_STORE_get0_objects(store))
+        || !TEST_int_eq(sk_X509_OBJECT_num(objs), 0)
+        || !TEST_true(X509_STORE_add_cert(store, cert1))
+        || !TEST_true(X509_STORE_add_cert(store, cert2))
+        || !TEST_true(X509_STORE_add_crl(store, crl1))
+        || !TEST_true(X509_STORE_add_crl(store, crl2))
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, NULL, NULL))
+        || !TEST_ptr(certs = X509_STORE_CTX_get1_certs(ctx, name1))
+        || !TEST_int_eq(sk_X509_num(certs), 1)
+        || !TEST_ptr(crls = X509_STORE_CTX_get1_crls(ctx, name1))
+        || !TEST_int_eq(sk_X509_CRL_num(crls), 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_STACK_OF_X509_free(certs);
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_NAME_free(name1);
+    X509_NAME_free(name2);
+    X509_free(cert1);
+    X509_free(cert2);
+    X509_CRL_free(crl1);
+    X509_CRL_free(crl2);
+    return ret;
+}
+#endif
 
 /*
  * Test for Regression discussed in PR #19388
@@ -591,6 +821,10 @@ int setup_tests(void)
     ADD_TEST(test_drop_empty_csr_keyids);
     ADD_TEST(test_rsaesoaep_spki);
     ADD_TEST(test_x509_verify_with_new);
+    ADD_TEST(test_x509_store_add_duplicate_crls);
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+    ADD_TEST(test_x509_store_get1_by_name_after_get0_objects);
+#endif
     return 1;
 }
 

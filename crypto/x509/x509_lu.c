@@ -524,6 +524,8 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
 
     if (store->objs_ht != NULL) {
         objs = ossl_x509_store_ht_get_by_name(store, xn);
+        if (objs != NULL)
+            sk_X509_OBJECT_sort(objs);
         if (objs != NULL && X509_OBJECT_retrieve_match(objs, obj)) {
             ret = 1;
         } else {
@@ -531,6 +533,7 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
             ret = added != 0;
         }
     } else {
+        sk_X509_OBJECT_sort(store->objs);
         if (X509_OBJECT_retrieve_match(store->objs, obj)) {
             ret = 1;
         } else {
@@ -900,10 +903,12 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
     sk = sk_X509_new_null();
     if (idx < 0 || sk == NULL)
         goto end;
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
-        x = obj->data.x509;
         if (obj->type != X509_LU_X509)
+            continue;
+        x = obj->data.x509;
+        if (X509_NAME_cmp(X509_get_subject_name(x), nm) != 0)
             continue;
         if (X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF) == 0) {
             X509_STORE_unlock(store);
@@ -950,10 +955,12 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
     if (idx < 0)
         goto end;
 
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
-        x = obj->data.crl;
         if (obj->type != X509_LU_CRL)
+            continue;
+        x = obj->data.crl;
+        if (X509_NAME_cmp(X509_CRL_get_issuer(x), nm) != 0)
             continue;
         if (!X509_CRL_up_ref(x)) {
             X509_STORE_unlock(store);
