@@ -1075,9 +1075,10 @@ static int fix_dh_paramgen_type(enum state state,
     if (ctx->action_type != OSSL_ACTION_SET)
         return 0;
 
-    if (state == PRE_CTRL_STR_TO_PARAMS) {
-        if ((ctx->p2 = (char *)ossl_dh_gen_type_id2name(atoi(ctx->p2)))
-            == NULL) {
+    if (state == PRE_CTRL_TO_PARAMS || state == PRE_CTRL_STR_TO_PARAMS) {
+        int gen_type = state == PRE_CTRL_TO_PARAMS ? ctx->p1 : atoi(ctx->p2);
+
+        if ((ctx->p2 = (char *)ossl_dh_gen_type_id2name(gen_type)) == NULL) {
             ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_VALUE);
             return 0;
         }
