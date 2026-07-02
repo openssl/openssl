@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_pkey");
 
-plan tests => 6;
+plan tests => 7;
 
 my @app = ('openssl', 'pkey');
 
@@ -182,4 +182,38 @@ subtest "=== pkey EC point conversion form ===" => sub {
 
     ok(!run(app([@app, '-in', $in_key, '-ec_conv_form', 'compressed', '-noout'])),
        "-ec_conv_form on a non-EC key fails");
+};
+
+subtest "=== pkey EC parameter encoding ===" => sub {
+    plan skip_all => "EC not supported in this build" if disabled("ec");
+    plan tests => 6;
+
+    my $ec_key = 'ec_p256_enc.pem';
+    ok(run(app(['openssl', 'genpkey', '-algorithm', 'EC',
+                '-pkeyopt', 'ec_paramgen_curve:P-256', '-out', $ec_key])),
+       "generate P-256 EC key");
+
+    # A named_curve encoding identifies the group by its OID (prime256v1),
+    # whereas an explicit encoding inlines the full curve parameters, which
+    # asn1parse shows via the field-type OID (prime-field).
+    my $named = 'pub_named.der';
+    ok(run(app([@app, '-in', $ec_key, '-pubout', '-ec_param_enc', 'named_curve',
+                '-outform', 'DER', '-out', $named])),
+       "write public key with named_curve parameters");
+    ok((grep /prime256v1/,
+        run(app(['openssl', 'asn1parse', '-in', $named, '-inform', 'DER']),
+            capture => 1)),
+       "named_curve encoding references the curve by OID");
+
+    my $explicit = 'pub_explicit.der';
+    ok(run(app([@app, '-in', $ec_key, '-pubout', '-ec_param_enc', 'explicit',
+                '-outform', 'DER', '-out', $explicit])),
+       "write public key with explicit parameters");
+    ok((grep /prime-field/,
+        run(app(['openssl', 'asn1parse', '-in', $explicit, '-inform', 'DER']),
+            capture => 1)),
+       "explicit encoding inlines the curve parameters");
+
+    ok(!run(app([@app, '-in', $in_key, '-ec_param_enc', 'explicit', '-noout'])),
+       "-ec_param_enc on a non-EC key fails");
 };
