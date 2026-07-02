@@ -16,10 +16,10 @@
 
 int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx)
 {
-    return OSSL_FN_sqr_limbs(r, a, (size_t)a->dsize, ctx);
+    return ossl_fn_sqr_limbs(r, a, (size_t)a->dsize, ctx);
 }
 
-int OSSL_FN_sqr_limbs(OSSL_FN *r, const OSSL_FN *a, size_t al,
+int ossl_fn_sqr_limbs(OSSL_FN *r, const OSSL_FN *a, size_t al,
     OSSL_FN_CTX *ctx)
 {
     const void *token = OSSL_FN_CTX_start(ctx);

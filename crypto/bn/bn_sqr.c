@@ -42,7 +42,7 @@ int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
         return 0;
     }
 
-    int ret = OSSL_FN_sqr_limbs(rf, a->data, al, fnctx);
+    int ret = ossl_fn_sqr_limbs(rf, a->data, al, fnctx);
     bn_release(r, (int)top);
     r->neg = 0;
 

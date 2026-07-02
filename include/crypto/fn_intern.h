@@ -46,6 +46,14 @@ bool ossl_fn_is_negative(const OSSL_FN *f);
 bool ossl_fn_is_dynamically_allocated(const OSSL_FN *f);
 bool ossl_fn_is_securely_allocated(const OSSL_FN *f);
 
+/*
+ * Internal helper for callers that already know a non-secret active limb count,
+ * such as BN_sqr().  The public OSSL_FN_sqr() operation squares the full fixed
+ * width.
+ */
+int ossl_fn_sqr_limbs(OSSL_FN *r, const OSSL_FN *a, size_t al,
+    OSSL_FN_CTX *ctx);
+
 #ifdef __cplusplus
 }
 #endif
