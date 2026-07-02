@@ -299,6 +299,25 @@ int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n);
 int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a);
 
 /**
+ * Shift an OSSL_FN number right by n bits.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
+
+/**
+ * Shift an OSSL_FN number right by one bit.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
  * Add two OSSL_FN numbers.
  *
  * @param[out]          r       The OSSL_FN for the result
