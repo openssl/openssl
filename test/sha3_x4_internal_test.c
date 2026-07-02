@@ -16,7 +16,7 @@
  * equivalent result produced by the scalar ossl_sha3_* API.
  *
  * Tests cover:
- *   - Single-call (ossl_sha3_shake{128,256}_x4) for many (inlen, outlen) pairs
+ *   - Single-call (ossl_sha3_shake{128,256}_x4_avx512vl) for many (inlen, outlen) pairs
  *   - Incremental init/absorb/squeeze for the same (inlen, outlen) pairs
  *   - Multi-absorb: input split at every possible block boundary
  *   - Multi-squeeze: output produced in two successive squeeze calls
@@ -29,7 +29,7 @@
  * KECCAK1600_ASM is only added to the library compilation flags by the build
  * system, not to test binaries. Since the x4 declarations in internal/sha3.h
  * are guarded by that macro, we define it here before the include so that the
- * KECCAK1600_X4_CTX type and function prototypes are visible.
+ * KECCAK1600_X4_AVX512VL_CTX type and function prototypes are visible.
  * The symbols themselves live in libcrypto and are always present.
  * We additionally gate all x4 code on x86_64 (GCC/Clang: __x86_64__,
  * MSVC: _M_AMD64/_M_X64) and !OPENSSL_NO_ASM so that the test still
@@ -132,11 +132,11 @@ static int test_shake_x4_oneshot(const unsigned int bitlen, const int n)
 
     /* x4 single-call */
     if (bitlen == 128)
-        ossl_sha3_shake128_x4(x4_out[0], x4_out[1], x4_out[2], x4_out[3],
+        ossl_sha3_shake128_x4_avx512vl(x4_out[0], x4_out[1], x4_out[2], x4_out[3],
             outlen,
             in[0], in[1], in[2], in[3], inlen);
     else
-        ossl_sha3_shake256_x4(x4_out[0], x4_out[1], x4_out[2], x4_out[3],
+        ossl_sha3_shake256_x4_avx512vl(x4_out[0], x4_out[1], x4_out[2], x4_out[3],
             outlen,
             in[0], in[1], in[2], in[3], inlen);
 
@@ -174,7 +174,7 @@ static int test_shake_x4_incremental(const unsigned int bitlen, const int n)
     const unsigned char *in[NUM_LANES];
     unsigned char x4_out[NUM_LANES][MAX_OUT];
     unsigned char ref_out[NUM_LANES][MAX_OUT];
-    KECCAK1600_X4_CTX ctx;
+    KECCAK1600_X4_AVX512VL_CTX ctx;
     int i;
 
     decode_idx(n, &inlen, &outlen);
@@ -187,16 +187,16 @@ static int test_shake_x4_incremental(const unsigned int bitlen, const int n)
 
     /* x4 incremental */
     if (bitlen == 128) {
-        ossl_sha3_shake128_x4_inc_init(&ctx);
-        ossl_sha3_shake128_x4_inc_absorb(&ctx, in[0], in[1], in[2], in[3],
+        ossl_sha3_shake128_x4_inc_init_avx512vl(&ctx);
+        ossl_sha3_shake128_x4_inc_absorb_avx512vl(&ctx, in[0], in[1], in[2], in[3],
             inlen);
-        ossl_sha3_shake128_x4_inc_squeeze(x4_out[0], x4_out[1],
+        ossl_sha3_shake128_x4_inc_squeeze_avx512vl(x4_out[0], x4_out[1],
             x4_out[2], x4_out[3], outlen, &ctx);
     } else {
-        ossl_sha3_shake256_x4_inc_init(&ctx);
-        ossl_sha3_shake256_x4_inc_absorb(&ctx, in[0], in[1], in[2], in[3],
+        ossl_sha3_shake256_x4_inc_init_avx512vl(&ctx);
+        ossl_sha3_shake256_x4_inc_absorb_avx512vl(&ctx, in[0], in[1], in[2], in[3],
             inlen);
-        ossl_sha3_shake256_x4_inc_squeeze(x4_out[0], x4_out[1],
+        ossl_sha3_shake256_x4_inc_squeeze_avx512vl(x4_out[0], x4_out[1],
             x4_out[2], x4_out[3], outlen, &ctx);
     }
 
@@ -243,7 +243,7 @@ static int test_shake_x4_multi_absorb(const unsigned int bitlen, const int n)
     const unsigned char *in[NUM_LANES];
     unsigned char x4_out[NUM_LANES][MAX_OUT];
     unsigned char ref_out[NUM_LANES][MAX_OUT];
-    KECCAK1600_X4_CTX ctx;
+    KECCAK1600_X4_AVX512VL_CTX ctx;
     int i;
 
     if (split > total)
@@ -257,22 +257,22 @@ static int test_shake_x4_multi_absorb(const unsigned int bitlen, const int n)
 
     /* x4 split absorb */
     if (bitlen == 128) {
-        ossl_sha3_shake128_x4_inc_init(&ctx);
-        ossl_sha3_shake128_x4_inc_absorb(&ctx,
+        ossl_sha3_shake128_x4_inc_init_avx512vl(&ctx);
+        ossl_sha3_shake128_x4_inc_absorb_avx512vl(&ctx,
             in[0], in[1], in[2], in[3], split);
-        ossl_sha3_shake128_x4_inc_absorb(&ctx,
+        ossl_sha3_shake128_x4_inc_absorb_avx512vl(&ctx,
             in[0] + split, in[1] + split, in[2] + split, in[3] + split,
             total - split);
-        ossl_sha3_shake128_x4_inc_squeeze(x4_out[0], x4_out[1],
+        ossl_sha3_shake128_x4_inc_squeeze_avx512vl(x4_out[0], x4_out[1],
             x4_out[2], x4_out[3], outlen, &ctx);
     } else {
-        ossl_sha3_shake256_x4_inc_init(&ctx);
-        ossl_sha3_shake256_x4_inc_absorb(&ctx,
+        ossl_sha3_shake256_x4_inc_init_avx512vl(&ctx);
+        ossl_sha3_shake256_x4_inc_absorb_avx512vl(&ctx,
             in[0], in[1], in[2], in[3], split);
-        ossl_sha3_shake256_x4_inc_absorb(&ctx,
+        ossl_sha3_shake256_x4_inc_absorb_avx512vl(&ctx,
             in[0] + split, in[1] + split, in[2] + split, in[3] + split,
             total - split);
-        ossl_sha3_shake256_x4_inc_squeeze(x4_out[0], x4_out[1],
+        ossl_sha3_shake256_x4_inc_squeeze_avx512vl(x4_out[0], x4_out[1],
             x4_out[2], x4_out[3], outlen, &ctx);
     }
 
@@ -319,7 +319,7 @@ static int test_shake_x4_multi_squeeze(const unsigned int bitlen, const int n)
     unsigned char x4_a[NUM_LANES][MAX_OUT]; /* first chunk              */
     unsigned char x4_b[NUM_LANES][MAX_OUT]; /* second chunk             */
     unsigned char ref_out[NUM_LANES][MAX_OUT];
-    KECCAK1600_X4_CTX ctx;
+    KECCAK1600_X4_AVX512VL_CTX ctx;
     int i;
 
     if (!TEST_size_t_le(total, MAX_OUT))
@@ -332,22 +332,22 @@ static int test_shake_x4_multi_squeeze(const unsigned int bitlen, const int n)
 
     /* x4 two-shot squeeze */
     if (bitlen == 128) {
-        ossl_sha3_shake128_x4_inc_init(&ctx);
-        ossl_sha3_shake128_x4_inc_absorb(&ctx, in[0], in[1], in[2], in[3],
+        ossl_sha3_shake128_x4_inc_init_avx512vl(&ctx);
+        ossl_sha3_shake128_x4_inc_absorb_avx512vl(&ctx, in[0], in[1], in[2], in[3],
             inlen);
         /* first squeeze */
-        ossl_sha3_shake128_x4_inc_squeeze(x4_a[0], x4_a[1], x4_a[2], x4_a[3],
+        ossl_sha3_shake128_x4_inc_squeeze_avx512vl(x4_a[0], x4_a[1], x4_a[2], x4_a[3],
             chunk1, &ctx);
         /* second squeeze – context carries state from previous call */
-        ossl_sha3_shake128_x4_inc_squeeze(x4_b[0], x4_b[1], x4_b[2], x4_b[3],
+        ossl_sha3_shake128_x4_inc_squeeze_avx512vl(x4_b[0], x4_b[1], x4_b[2], x4_b[3],
             chunk2, &ctx);
     } else {
-        ossl_sha3_shake256_x4_inc_init(&ctx);
-        ossl_sha3_shake256_x4_inc_absorb(&ctx, in[0], in[1], in[2], in[3],
+        ossl_sha3_shake256_x4_inc_init_avx512vl(&ctx);
+        ossl_sha3_shake256_x4_inc_absorb_avx512vl(&ctx, in[0], in[1], in[2], in[3],
             inlen);
-        ossl_sha3_shake256_x4_inc_squeeze(x4_a[0], x4_a[1], x4_a[2], x4_a[3],
+        ossl_sha3_shake256_x4_inc_squeeze_avx512vl(x4_a[0], x4_a[1], x4_a[2], x4_a[3],
             chunk1, &ctx);
-        ossl_sha3_shake256_x4_inc_squeeze(x4_b[0], x4_b[1], x4_b[2], x4_b[3],
+        ossl_sha3_shake256_x4_inc_squeeze_avx512vl(x4_b[0], x4_b[1], x4_b[2], x4_b[3],
             chunk2, &ctx);
     }
 
