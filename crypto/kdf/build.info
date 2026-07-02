@@ -1,2 +1,2 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=kdf_err.c
+SOURCE[../../libcrypto]=kdf_err.c kdf_helper.c
