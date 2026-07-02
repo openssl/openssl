@@ -41,7 +41,7 @@ EXT_RETURN tls_construct_ctos_renegotiate(SSL_CONNECTION *s, WPACKET *pkt,
                 || (ssl_security(s, SSL_SECOP_VERSION, 0, TLS1_VERSION, NULL)
                     && s->min_proto_version <= TLS1_VERSION))) {
             /*
-             * For TLS <= 1.0 SCSV is used instead, and for TLS 1.3 this
+             * For TLSv1.0 SCSV is used instead, and for TLS 1.3 this
              * extension isn't used at all.
              */
             return EXT_RETURN_NOT_SENT;

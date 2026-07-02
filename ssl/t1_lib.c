@@ -3171,7 +3171,7 @@ SSL_TICKET_STATUS tls_get_ticket_from_client(SSL_CONNECTION *s,
      * (e.g. TLSv1.3) behave as if no ticket present to permit stateful
      * resumption.
      */
-    if (s->version <= SSL3_VERSION || !tls_use_ticket(s))
+    if (!tls_use_ticket(s))
         return SSL_TICKET_NONE;
 
     ticketext = &hello->pre_proc_exts[TLSEXT_IDX_session_ticket];

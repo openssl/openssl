@@ -505,8 +505,7 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
         const EVP_CIPHER *evp = NULL;
 
         if (use_etm
-            || s->ssl_version >> 8 != TLS1_VERSION_MAJOR
-            || s->ssl_version < TLS1_VERSION)
+            || s->ssl_version >> 8 != TLS1_VERSION_MAJOR)
             return 1;
 
         if (c->algorithm_enc == SSL_RC4
