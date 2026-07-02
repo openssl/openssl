@@ -1726,6 +1726,7 @@ struct ssl_connection_st {
         int early_data;
         /* Is the session suitable for early data? */
         int early_data_ok;
+        int early_data_suppressed;
 
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;
@@ -1750,6 +1751,15 @@ struct ssl_connection_st {
          * selected.
          */
         int tick_identity;
+
+        /*
+         * Cached result of the resumption ticket age/lifetime check for the
+         * ClientHello under construction. Time-dependent, double-checked
+         * within the same flight (see tls13_check_tick_lifetime_hint()).
+         */
+        int tick_age_checked;
+        int tick_age_ok;
+        uint32_t tick_age_ms;
 
         /* This is the list of algorithms the peer supports that we also support */
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
