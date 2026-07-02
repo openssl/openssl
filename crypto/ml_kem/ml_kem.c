@@ -2296,11 +2296,13 @@ int ossl_ml_kem_decap(uint8_t *shared_secret, size_t slen,
 #endif
 
     /* Need a private key here */
-    if (!ossl_ml_kem_have_prvkey(key))
+    if (!ossl_ml_kem_have_prvkey(key)
+        || shared_secret == NULL
+        || slen < ML_KEM_SHARED_SECRET_BYTES)
         return 0;
     vinfo = key->vinfo;
 
-    if (shared_secret == NULL || slen != ML_KEM_SHARED_SECRET_BYTES
+    if (slen != ML_KEM_SHARED_SECRET_BYTES
         || ctext == NULL || clen != vinfo->ctext_bytes
         || (mdctx = EVP_MD_CTX_new()) == NULL) {
         (void)RAND_bytes_ex(key->libctx, shared_secret,
