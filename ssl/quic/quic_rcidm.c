@@ -8,7 +8,7 @@
  */
 
 #include "internal/quic_rcidm.h"
-#include "internal/priority_queue.h"
+#include "internal/prioq.h"
 #include "internal/list.h"
 #include "internal/common.h"
 
@@ -75,7 +75,7 @@ static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
  *   PENDING
  *     Invariants:
  *       rcid->state == RCID_STATE_PENDING;
- *       rcid->pq_idx != SIZE_MAX (debug assert only);
+ *       ossl_prioq_node_in_queue(&rcid->pqn) (debug assert only);
  *       the RCID is not the current RCID, rcidm->cur_rcid != rcid;
  *       the RCID is in the priority queue;
  *       the RCID is not in the retiring_list.
@@ -83,7 +83,7 @@ static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
  *   CURRENT
  *     Invariants:
  *       rcid->state == RCID_STATE_CUR;
- *       rcid->pq_idx == SIZE_MAX (debug assert only);
+ *       !ossl_prioq_node_in_queue(&rcid->pqn) (debug assert only);
  *       the RCID is the current RCID, rcidm->cur_rcid == rcid;
  *       the RCID is not in the priority queue;
  *       the RCID is not in the retiring_list.
@@ -91,7 +91,7 @@ static void rcidm_set_preferred_rcid(QUIC_RCIDM *rcidm,
  *   RETIRING
  *     Invariants:
  *       rcid->state == RCID_STATE_RETIRING;
- *       rcid->pq_idx == SIZE_MAX (debug assert only);
+ *       !ossl_prioq_node_in_queue(&rcid->pqn) (debug assert only);
  *       the RCID is not the current RCID, rcidm->cur_rcid != rcid;
  *       the RCID is not in the priority queue;
  *       the RCID is in the retiring_list.
@@ -125,15 +125,14 @@ enum {
 
 typedef struct rcid_st {
     OSSL_LIST_MEMBER(retiring, struct rcid_st); /* valid iff RETIRING */
+    OSSL_PRIOQ_NODE pqn; /* embedded priority-queue node (valid iff PENDING) */
 
     QUIC_CONN_ID cid; /* The actual CID string for this RCID */
     uint64_t seq_num;
-    size_t pq_idx; /* Index of entry into priority queue */
     unsigned int state : 2; /* RCID_STATE_* */
     unsigned int type : 2; /* RCID_TYPE_* */
 } RCID;
 
-DEFINE_PRIORITY_QUEUE_OF(RCID);
 DEFINE_LIST_OF(retiring, RCID);
 
 /*
@@ -191,7 +190,7 @@ struct quic_rcidm_st {
     uint64_t retire_prior_to;
 
     /* (SORT BY seq_num ASC) -> (RCID *) */
-    PRIORITY_QUEUE_OF(RCID) * rcids;
+    OSSL_PRIOQ *rcids;
 
     /*
      * Current RCID object we are using. This may differ from the first item in
@@ -253,7 +252,7 @@ static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
         || rcid->state == RCID_STATE_CUR
         || rcid->state == RCID_STATE_RETIRING);
     assert((rcid->state == RCID_STATE_PENDING)
-        == (rcid->pq_idx != SIZE_MAX));
+        == ossl_prioq_node_in_queue(&rcid->pqn));
     assert((rcid->state == RCID_STATE_CUR)
         == (rcidm->cur_rcid == rcid));
     assert((ossl_list_retiring_next(rcid) != NULL
@@ -270,16 +269,28 @@ static void rcidm_check_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
     assert(rcid->state != RCID_STATE_RETIRING || rcidm->num_retiring > 0);
 }
 
-static int rcid_cmp(const void *av, const void *bv)
+static int rcid_cmp(const OSSL_PRIOQ_NODE *a, const OSSL_PRIOQ_NODE *b)
 {
-    const RCID *a = av;
-    const RCID *b = bv;
+    const RCID *ra = CONTAINER_OF_CONST(a, RCID, pqn);
+    const RCID *rb = CONTAINER_OF_CONST(b, RCID, pqn);
 
-    if (a->seq_num < b->seq_num)
+    if (ra->seq_num < rb->seq_num)
         return -1;
-    if (a->seq_num > b->seq_num)
+    if (ra->seq_num > rb->seq_num)
         return 1;
     return 0;
+}
+
+static ossl_inline RCID *rcid_peek(OSSL_PRIOQ *pq)
+{
+    OSSL_PRIOQ_NODE *n = ossl_prioq_peek(pq);
+
+    return n != NULL ? CONTAINER_OF(n, RCID, pqn) : NULL;
+}
+
+static void rcid_free_node(OSSL_PRIOQ_NODE *n)
+{
+    OPENSSL_free(CONTAINER_OF(n, RCID, pqn));
 }
 
 QUIC_RCIDM *ossl_quic_rcidm_new(const QUIC_CONN_ID *initial_odcid)
@@ -289,7 +300,7 @@ QUIC_RCIDM *ossl_quic_rcidm_new(const QUIC_CONN_ID *initial_odcid)
     if ((rcidm = OPENSSL_zalloc(sizeof(*rcidm))) == NULL)
         return NULL;
 
-    if ((rcidm->rcids = ossl_pqueue_RCID_new(rcid_cmp)) == NULL) {
+    if ((rcidm->rcids = ossl_prioq_new(rcid_cmp)) == NULL) {
         OPENSSL_free(rcidm);
         return NULL;
     }
@@ -311,13 +322,11 @@ void ossl_quic_rcidm_free(QUIC_RCIDM *rcidm)
         return;
 
     OPENSSL_free(rcidm->cur_rcid);
-    while ((rcid = ossl_pqueue_RCID_pop(rcidm->rcids)) != NULL)
-        OPENSSL_free(rcid);
+    ossl_prioq_pop_free(rcidm->rcids, rcid_free_node);
 
     OSSL_LIST_FOREACH_DELSAFE(rcid, rnext, retiring, &rcidm->retiring_list)
     OPENSSL_free(rcid);
 
-    ossl_pqueue_RCID_free(rcidm->rcids);
     OPENSSL_free(rcidm);
 }
 
@@ -350,7 +359,7 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
 
     if (cid->id_len < 1 || cid->id_len > QUIC_MAX_CONN_ID_LEN
         || seq_num > OSSL_QUIC_VLINT_MAX
-        || ossl_pqueue_RCID_num(rcidm->rcids) + rcidm->num_retiring
+        || ossl_prioq_num(rcidm->rcids) + rcidm->num_retiring
             > MAX_NUMBERED_RCIDS)
         return NULL;
 
@@ -360,18 +369,19 @@ static RCID *rcidm_create_rcid(QUIC_RCIDM *rcidm, uint64_t seq_num,
     rcid->seq_num = seq_num;
     rcid->cid = *cid;
     rcid->type = type;
+    /* zalloc gave posn = 0, a valid heap index; mark the node as detached. */
+    ossl_prioq_node_init(&rcid->pqn);
 
     if (rcid->seq_num >= rcidm->retire_prior_to) {
         rcid->state = RCID_STATE_PENDING;
 
-        if (!ossl_pqueue_RCID_push(rcidm->rcids, rcid, &rcid->pq_idx)) {
+        if (!ossl_prioq_push(rcidm->rcids, &rcid->pqn)) {
             OPENSSL_free(rcid);
             return NULL;
         }
     } else {
         /* RCID is immediately retired upon creation. */
         rcid->state = RCID_STATE_RETIRING;
-        rcid->pq_idx = SIZE_MAX;
         ossl_list_retiring_insert_tail(&rcidm->retiring_list, rcid);
         ++rcidm->num_retiring;
     }
@@ -395,10 +405,8 @@ static void rcidm_transition_rcid(QUIC_RCIDM *rcidm, RCID *rcid,
         assert(rcidm->cur_rcid == NULL);
     }
 
-    if (old_state == RCID_STATE_PENDING) {
-        ossl_pqueue_RCID_remove(rcidm->rcids, rcid->pq_idx);
-        rcid->pq_idx = SIZE_MAX;
-    }
+    if (old_state == RCID_STATE_PENDING)
+        ossl_prioq_remove(rcidm->rcids, &rcid->pqn);
 
     rcid->state = state;
 
@@ -424,7 +432,7 @@ static void rcidm_free_rcid(QUIC_RCIDM *rcidm, RCID *rcid)
 
     switch (rcid->state) {
     case RCID_STATE_PENDING:
-        ossl_pqueue_RCID_remove(rcidm->rcids, rcid->pq_idx);
+        ossl_prioq_remove(rcidm->rcids, &rcid->pqn);
         break;
     case RCID_STATE_CUR:
         rcidm->cur_rcid = NULL;
@@ -460,7 +468,7 @@ static void rcidm_handle_retire_prior_to(QUIC_RCIDM *rcidm,
      * queue, so just stop once we see a higher sequence number exceeding the
      * threshold.
      */
-    while ((rcid = ossl_pqueue_RCID_peek(rcidm->rcids)) != NULL
+    while ((rcid = rcid_peek(rcidm->rcids)) != NULL
         && rcid->seq_num < retire_prior_to)
         rcidm_transition_rcid(rcidm, rcid, RCID_STATE_RETIRING);
 
@@ -476,7 +484,7 @@ static void rcidm_roll(QUIC_RCIDM *rcidm)
 {
     RCID *rcid;
 
-    if ((rcid = ossl_pqueue_RCID_peek(rcidm->rcids)) == NULL)
+    if ((rcid = rcid_peek(rcidm->rcids)) == NULL)
         return;
 
     rcidm_transition_rcid(rcidm, rcid, RCID_STATE_CUR);
@@ -498,7 +506,7 @@ static void rcidm_update(QUIC_RCIDM *rcidm)
      * If we have no current numbered RCID but have one or more pending, use it.
      */
     if (rcidm->cur_rcid == NULL
-        && (rcid = ossl_pqueue_RCID_peek(rcidm->rcids)) != NULL) {
+        && (rcid = rcid_peek(rcidm->rcids)) != NULL) {
         rcidm_transition_rcid(rcidm, rcid, RCID_STATE_CUR);
         assert(rcidm->cur_rcid != NULL);
     }
@@ -681,7 +689,7 @@ int ossl_quic_rcidm_get_preferred_tx_dcid_changed(QUIC_RCIDM *rcidm,
 
 size_t ossl_quic_rcidm_get_num_active(const QUIC_RCIDM *rcidm)
 {
-    return ossl_pqueue_RCID_num(rcidm->rcids)
+    return ossl_prioq_num(rcidm->rcids)
         + (rcidm->cur_rcid != NULL ? 1 : 0)
         + ossl_quic_rcidm_get_num_retiring(rcidm);
 }

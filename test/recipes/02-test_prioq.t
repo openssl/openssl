@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -9,11 +9,8 @@
 use OpenSSL::Test;
 use OpenSSL::Test::Utils;
 
-setup("test_priority_queue");
-
-plan skip_all => "No priority queues tests without QUIC"
-    if disabled("quic");
+setup("test_prioq");
 
 plan tests => 1;
 
-ok(run(test(["priority_queue_test"])));
+ok(run(test(["prioq_test"])));
