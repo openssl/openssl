@@ -40,11 +40,12 @@
 /*-
  * Initialize an HTTP server, setting up its listening BIO
  * prog: the name of the current app
+ * host: the host to connect to
  * port: the port to listen on
  * verbosity: the level of verbosity to use, or -1 for default: LOG_INFO
  * returns a BIO for accepting requests, NULL on error
  */
-BIO *http_server_init(const char *prog, const char *port, int verbosity);
+BIO *http_server_init(const char *prog, const char *host, const char *port, int family, int verbosity);
 
 /*-
  * Accept an ASN.1-formatted HTTP request
