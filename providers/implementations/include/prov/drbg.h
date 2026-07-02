@@ -23,10 +23,6 @@
 /* How many times to read the TSC as a randomness source. */
 #define TSC_READ_COUNT 4
 
-/* Maximum reseed intervals */
-#define MAX_RESEED_INTERVAL (1 << 24)
-#define MAX_RESEED_TIME_INTERVAL (1 << 20) /* approx. 12 days */
-
 /* Default reseed intervals */
 #define RESEED_INTERVAL (1 << 8)
 #define TIME_INTERVAL (60 * 60) /* 1 hour */
@@ -45,13 +41,6 @@
 #define DRBG_DEFAULT_PERS_STRING "\x4f\x70\x65\x6e\x53\x53\x4c\x20\x4e\x49\x53\x54\x20\x53\x50\x20\x38\x30\x30\x2d\x39\x30\x41\x20\x44\x52\x42\x47"
 
 typedef struct prov_drbg_st PROV_DRBG;
-
-/* DRBG status values */
-typedef enum drbg_status_e {
-    DRBG_UNINITIALISED,
-    DRBG_READY,
-    DRBG_ERROR
-} DRBG_STATUS;
 
 /*
  * The state of all types of DRBGs.
@@ -149,7 +138,11 @@ struct prov_drbg_st {
     unsigned int parent_reseed_counter;
 
     size_t seedlen;
-    DRBG_STATUS state;
+    /*
+     * state is one of: EVP_RAND_STATE_UNINITIALISED, EVP_RAND_STATE_ERROR,
+     * EVP_RAND_STATE_READY.
+     */
+    int state;
 
     /* DRBG specific data */
     void *data;
