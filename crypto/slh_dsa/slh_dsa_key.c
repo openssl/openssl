@@ -58,6 +58,7 @@ static int slh_dsa_key_hash_init(SLH_DSA_KEY *key)
     key->hash_func = ossl_slh_get_hash_fn(is_shake, security_category);
     return 1;
 err:
+    EVP_MD_free(key->md);
     return 0;
 }
 
