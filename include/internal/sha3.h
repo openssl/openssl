@@ -64,5 +64,9 @@ int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t o
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);
+size_t ossl_keccak1600_absorb_p12(uint64_t A[5][5],
+    const unsigned char *inp, size_t len, size_t r);
+void ossl_keccak1600_squeeze_p12(uint64_t A[5][5], unsigned char *out,
+    size_t len, size_t r, int next);
 
 #endif /* OSSL_INTERNAL_SHA3_H */

@@ -28,6 +28,11 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
+  * TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
+
+  * cSHAKE now accepts the documented 512-byte maximum customization string
+    length.
+
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
 
@@ -2469,6 +2474,7 @@ OpenSSL 0.9.x
 [RFC 8422]: https://datatracker.ietf.org/doc/html/rfc8422
 [RFC 8998]: https://datatracker.ietf.org/doc/html/rfc8998#name-iana-considerations
 [RFC 9849]: https://datatracker.ietf.org/doc/html/rfc9849
+[RFC 9861]: https://datatracker.ietf.org/doc/html/rfc9861
 [SP 800-185]: https://csrc.nist.gov/pubs/sp/800/185/final
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [issue tracker]: https://github.com/openssl/openssl/issues
