@@ -146,7 +146,12 @@ static const OSSL_ALGORITHM deflt_digests[] = {
 
 #ifndef OPENSSL_NO_SM3
     { PROV_NAMES_SM3, "provider=default", ossl_sm3_functions },
-#endif /* OPENSSL_NO_SM3 */
+#endif
+#ifndef OPENSSL_NO_ASCON
+    { PROV_NAMES_ASCON_HASH256, "provider=default", ossl_ascon_hash256_functions },
+    { PROV_NAMES_ASCON_XOF128, "provider=default", ossl_ascon_xof128_functions },
+    { PROV_NAMES_ASCON_CXOF128, "provider=default", ossl_ascon_cxof128_functions },
+#endif /* OPENSSL_NO_ASCON */
 
 #ifndef OPENSSL_NO_MD5
     { PROV_NAMES_MD5, "provider=default", ossl_md5_functions },
@@ -205,6 +210,7 @@ static const OSSL_ALGORITHM_CAPABLE deflt_ciphers[] = {
     ALG(PROV_NAMES_AES_192_GCM_SIV, ossl_aes192gcm_siv_functions),
     ALG(PROV_NAMES_AES_256_GCM_SIV, ossl_aes256gcm_siv_functions),
 #endif /* OPENSSL_NO_SIV */
+    ALG(PROV_NAMES_ASCON_AEAD128, ossl_ascon_aead128_functions),
     ALG(PROV_NAMES_AES_256_GCM, ossl_aes256gcm_functions),
     ALG(PROV_NAMES_AES_192_GCM, ossl_aes192gcm_functions),
     ALG(PROV_NAMES_AES_128_GCM, ossl_aes128gcm_functions),

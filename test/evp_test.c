@@ -711,6 +711,9 @@ typedef struct digest_data_st {
     /* Size for variable output length but non-XOF */
     size_t digest_size;
     STACK_OF(OPENSSL_STRING) *controls; /* collection of controls */
+    /* Customization string (for CXOF) */
+    unsigned char *custom;
+    size_t custom_len;
 } DIGEST_DATA;
 
 static int digest_test_init(EVP_TEST *t, const char *alg)
@@ -748,6 +751,7 @@ static void digest_test_cleanup(EVP_TEST *t)
     OPENSSL_free(mdat->output);
     EVP_MD_free(mdat->digest);
     ctrlfree(mdat->controls);
+    OPENSSL_free(mdat->custom);
 }
 
 static int digest_test_parse(EVP_TEST *t,
@@ -778,6 +782,8 @@ static int digest_test_parse(EVP_TEST *t,
     }
     if (strcmp(keyword, "Ctrl") == 0)
         return ctrladd(mdata->controls, value);
+    if (strcmp(keyword, "Custom") == 0)
+        return parse_bin(value, &mdata->custom, &mdata->custom_len);
     return 0;
 }
 
@@ -846,6 +852,9 @@ static int digest_test_run(EVP_TEST *t)
     if (expected->pad_type > 0)
         *p++ = OSSL_PARAM_construct_int(OSSL_DIGEST_PARAM_PAD_TYPE,
             &expected->pad_type);
+    if (expected->custom != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string("custom",
+            expected->custom, expected->custom_len);
     *p++ = OSSL_PARAM_construct_end();
 
     if (!EVP_DigestInit_ex2(mctx, expected->digest, params)) {
