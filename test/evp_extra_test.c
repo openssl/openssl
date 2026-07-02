@@ -6012,6 +6012,14 @@ static int test_evp_aead_tag_direction(int idx)
     tagparams[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
         tag, info->taglen);
     tagparams[1] = OSSL_PARAM_construct_end();
+
+    /* set a tag so the get below is exercised with one present */
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec, tagparams))) {
+        errmsg = "DEC_SET_TAG_REJECTED";
+        goto err;
+    }
+
+    /* but a tag must never be readable back while decrypting */
     ERR_set_mark();
     if (!TEST_false(EVP_CIPHER_CTX_get_params(ctx_dec, tagparams))) {
         ERR_clear_last_mark();
