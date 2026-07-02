@@ -275,6 +275,59 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
     return test_encrypt_decrypt(EVP_aes_256_gcm());
 }
 
+static int test_encrypt_decrypt_no_matching_recipient(void)
+{
+    int testresult = 0;
+    STACK_OF(X509) *certstack = sk_X509_new_null();
+    const char *msg = "Hello world";
+    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
+    BIO *outmsgbio = BIO_new(BIO_s_mem());
+    CMS_ContentInfo *content = NULL;
+    const EVP_CIPHER *cipher = EVP_aes_128_cbc();
+    X509 *cert2 = NULL;
+    ASN1_INTEGER *sn = NULL;
+    unsigned long err = 0;
+
+    if (!TEST_ptr(certstack) || !TEST_ptr(msgbio) || !TEST_ptr(outmsgbio))
+        goto end;
+
+    if (!TEST_int_gt(sk_X509_push(certstack, cert), 0))
+        goto end;
+
+    content = CMS_encrypt(certstack, msgbio, cipher, CMS_TEXT);
+    if (!TEST_ptr(content))
+        goto end;
+
+    /* Create a certificate with a different serial number */
+    if (!TEST_ptr(cert2 = X509_dup(cert))
+        || !TEST_ptr(sn = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(sn, 100)) /* assuming 100 is different */
+        || !TEST_true(X509_set1_serialNumber(cert2, sn)))
+        goto end;
+
+    /* This decryption should fail because of cert mismatch */
+    if (!TEST_false(CMS_decrypt(content, privkey, cert2, NULL, outmsgbio, CMS_TEXT)))
+        goto end;
+
+    err = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_CMS)
+        || !TEST_int_eq(ERR_GET_REASON(err), CMS_R_NO_MATCHING_RECIPIENT))
+        goto end;
+
+    testresult = 1;
+    ERR_clear_error();
+end:
+    ASN1_INTEGER_free(sn);
+    X509_free(cert2);
+    sk_X509_free(certstack);
+    BIO_free(msgbio);
+    BIO_free(outmsgbio);
+    CMS_ContentInfo_free(content);
+
+    return testresult;
+}
+
+
 static int test_CMS_add1_cert(void)
 {
     CMS_ContentInfo *cms = NULL;
@@ -785,6 +838,7 @@ int setup_tests(void)
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_192_gcm);
     ADD_TEST(test_encrypt_decrypt_aes_256_gcm);
+    ADD_TEST(test_encrypt_decrypt_no_matching_recipient);
     ADD_TEST(test_non_aead_on_auth_envelope_enc);
     ADD_TEST(test_non_aead_on_auth_envelope_dec);
     ADD_TEST(test_short_mac_on_auth_envelope_data);
