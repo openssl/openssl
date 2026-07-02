@@ -466,6 +466,40 @@ static const OSSL_FN_ULONG ex_rshift_zero[] = {
     OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
 };
 
+static const OSSL_FN_ULONG gcd_num48[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000030),
+};
+static const OSSL_FN_ULONG gcd_num72[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000048),
+};
+static const OSSL_FN_ULONG gcd_ex24[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000018),
+};
+static const OSSL_FN_ULONG gcd_ex15[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x0000000f),
+};
+static const OSSL_FN_ULONG gcd_num_pow2_a[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x10000000, 0x00000000),
+};
+static const OSSL_FN_ULONG gcd_num_pow2_b[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x18000000, 0x00000000),
+};
+static const OSSL_FN_ULONG gcd_ex_pow2[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0x08000000, 0x00000000),
+};
+static const OSSL_FN_ULONG gcd_num_mixed_a[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0xffffffff),
+};
+static const OSSL_FN_ULONG gcd_num_mixed_b[] = {
+    OSSL_FN_ULONG64_C(0xffffffff, 0x00000000),
+};
+static const OSSL_FN_ULONG gcd_ex_mixed[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0xffffffff),
+};
+
 static int test_sub_common(struct test_case_st test_case)
 {
     const OSSL_FN_ULONG *n1 = test_case.op1;
@@ -941,6 +975,108 @@ err:
     OSSL_FN_free(a);
     OSSL_FN_free(r);
     return ret;
+}
+
+static int test_gcd_common(struct test_case_st test_case, int alias)
+{
+    const OSSL_FN_ULONG *n1 = test_case.op1;
+    size_t n1_limbs = test_case.op1_size;
+    const OSSL_FN_ULONG *n2 = test_case.op2;
+    size_t n2_limbs = test_case.op2_size;
+    const OSSL_FN_ULONG *ex = test_case.ex;
+    size_t n1_new_limbs = test_case.op1_live_size;
+    size_t n2_new_limbs = test_case.op2_live_size;
+    size_t res_limbs = test_case.res_live_size;
+    size_t check_limbs = test_case.check_size;
+    OSSL_FN_ULONG extended_value = test_case.extended_limb_value;
+    OSSL_FN *fn1 = NULL, *fn2 = NULL, *res = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    size_t max = n1_new_limbs > n2_new_limbs ? n1_new_limbs : n2_new_limbs;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 1, 4, (max + 1) * 4))
+        || !TEST_ptr(fn1 = OSSL_FN_new_limbs(n1_new_limbs))
+        || !TEST_ptr(fn2 = OSSL_FN_new_limbs(n2_new_limbs))
+        || !TEST_true(ossl_fn_set_words(fn1, n1, n1_limbs))
+        || !TEST_true(ossl_fn_set_words(fn2, n2, n2_limbs)))
+        goto err;
+
+    if (alias == 1) {
+        res = fn1;
+        res_limbs = n1_new_limbs;
+    } else if (alias == 2) {
+        res = fn2;
+        res_limbs = n2_new_limbs;
+    } else if (!TEST_ptr(res = OSSL_FN_new_limbs(res_limbs))
+        || !TEST_true(pollute(res, 0, res_limbs))) {
+        goto err;
+    }
+
+    if (!TEST_true(OSSL_FN_gcd(res, fn1, fn2, ctx))
+        || !TEST_ptr(u = ossl_fn_get_words(res))
+        || !TEST_mem_eq(u, check_limbs * OSSL_FN_BYTES,
+            ex, check_limbs * OSSL_FN_BYTES)
+        || !TEST_true(check_limbs_value(res, check_limbs, res_limbs,
+            extended_value)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    if (res != fn1 && res != fn2)
+        OSSL_FN_free(res);
+    OSSL_FN_free(fn1);
+    OSSL_FN_free(fn2);
+    return ret;
+}
+
+#define GCD_CASE(op1, op2, ex, rsize, check, ext) \
+    {                                             \
+        /* op1 */ op1,                            \
+        /* op1_size */ LIMBSOF(op1),              \
+        /* op2 */ op2,                            \
+        /* op2_size */ LIMBSOF(op2),              \
+        /* ex */ ex,                              \
+        /* ex_size */ LIMBSOF(ex),                \
+        /* op1_live_size */ LIMBSOF(op1) + 1,     \
+        /* op2_live_size */ LIMBSOF(op2) + 2,     \
+        /* res_live_size */ (rsize),              \
+        /* check_size */ (check),                 \
+        /* extended_limb_value */ (ext),          \
+    }
+
+static struct test_case_st test_gcd_cases[] = {
+    GCD_CASE(num4, num4, num4, LIMBSOF(num4) + 2, LIMBSOF(num4),
+        EXTENDED_LIMB_ZERO),
+    GCD_CASE(num2, num4, num2, LIMBSOF(num2) + 2, LIMBSOF(num2),
+        EXTENDED_LIMB_ZERO),
+    GCD_CASE(num4, num2, num2, LIMBSOF(num2) + 2, LIMBSOF(num2),
+        EXTENDED_LIMB_ZERO),
+    GCD_CASE(gcd_num48, gcd_num72, gcd_ex24, LIMBSOF(gcd_ex24) + 2,
+        LIMBSOF(gcd_ex24), EXTENDED_LIMB_ZERO),
+    GCD_CASE(num2, num3, gcd_ex15, LIMBSOF(gcd_ex15) + 2,
+        LIMBSOF(gcd_ex15), EXTENDED_LIMB_ZERO),
+    GCD_CASE(gcd_num_pow2_a, gcd_num_pow2_b, gcd_ex_pow2,
+        LIMBSOF(gcd_ex_pow2) + 2, LIMBSOF(gcd_ex_pow2),
+        EXTENDED_LIMB_ZERO),
+    GCD_CASE(gcd_num_mixed_a, gcd_num_mixed_b, gcd_ex_mixed,
+        LIMBSOF(gcd_ex_mixed) + 2, LIMBSOF(gcd_ex_mixed),
+        EXTENDED_LIMB_ZERO),
+    GCD_CASE(num2, num2, num2, LIMBSOF(num2) + 2, LIMBSOF(num2),
+        EXTENDED_LIMB_ZERO),
+    GCD_CASE(num2, num4, num2, LIMBSOF(num2) - 1, LIMBSOF(num2) - 1,
+        EXTENDED_LIMB_ZERO),
+};
+
+static int test_gcd(int i)
+{
+    return test_gcd_common(test_gcd_cases[i], 0);
+}
+
+static int test_gcd_alias(int i)
+{
+    return test_gcd_common(test_gcd_cases[3], i + 1);
 }
 
 /* A set of expected results, also in OSSL_FN_ULONG array form */
@@ -1483,6 +1619,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rshift, 9);
     ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
+    ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
+    ADD_ALL_TESTS(test_gcd_alias, 2);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
     ADD_ALL_TESTS(test_mul, OSSL_NELEM(test_mul_cases));
     ADD_ALL_TESTS(test_mul_truncated, OSSL_NELEM(test_mul_truncate_cases));
