@@ -600,91 +600,115 @@ int BN_gcd(BIGNUM *r, const BIGNUM *in_a, const BIGNUM *in_b, BN_CTX *ctx)
     bn_check_top(in_a);
     bn_check_top(in_b);
 
-    BN_CTX_start(ctx);
-    temp = BN_CTX_get(ctx);
-    g = BN_CTX_get(ctx);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || in_a->data == NULL || in_b->data == NULL) {
+        BN_CTX_start(ctx);
+        temp = BN_CTX_get(ctx);
+        g = BN_CTX_get(ctx);
 
-    /* make r != 0, g != 0 even, so BN_rshift is not a potential nop */
-    if (g == NULL
-        || !BN_lshift1(g, in_b)
-        || !BN_lshift1(r, in_a))
-        goto err;
-
-    /* find shared powers of two, i.e. "shifts" >= 1 */
-    pow2_flag = 1;
-    pow2_shifts = 0;
-    pow2_numbits = 0;
-    for (i = 0; i < r->dmax && i < g->dmax; i++) {
-        pow2_numbits_temp = r->d[i] | g->d[i];
-        pow2_condition_mask = constant_time_is_zero_bn(pow2_flag);
-        pow2_flag &= constant_time_is_zero_bn(pow2_numbits_temp);
-        pow2_shifts += (int)pow2_flag;
-        pow2_numbits = constant_time_select_bn(pow2_condition_mask,
-            pow2_numbits, pow2_numbits_temp);
-    }
-    pow2_numbits = ~pow2_numbits;
-    pow2_shifts *= BN_BITS2;
-    pow2_flag = 1;
-    for (j = 0; j < BN_BITS2; j++) {
-        pow2_flag &= pow2_numbits;
-        pow2_shifts += (int)pow2_flag;
-        pow2_numbits >>= 1;
-    }
-
-    /* subtract shared powers of two; shifts >= 1 */
-    if (!BN_rshift(r, r, pow2_shifts)
-        || !BN_rshift(g, g, pow2_shifts))
-        goto err;
-
-    /* expand to biggest nword, with room for a possible extra word */
-    top = 1 + ((r->top >= g->top) ? r->top : g->top);
-    if (bn_wexpand(r, top) == NULL
-        || bn_wexpand(g, top) == NULL
-        || bn_wexpand(temp, top) == NULL)
-        goto err;
-
-    /* re arrange inputs s.t. r is odd */
-    BN_consttime_swap((~r->d[0]) & 1, r, g, top);
-
-    /* compute the number of iterations */
-    rlen = BN_num_bits(r);
-    glen = BN_num_bits(g);
-    m = 4 + 3 * ((rlen >= glen) ? rlen : glen);
-
-    for (i = 0; i < m; i++) {
-        /* conditionally flip signs if delta is positive and g is odd */
-        cond = ((unsigned int)-delta >> (8 * sizeof(delta) - 1))
-            & (unsigned int)g->d[0] & 1
-            /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
-            & (~((unsigned int)(g->top - 1) >> (sizeof(g->top) * 8 - 1)));
-        delta = (-cond & -delta) | ((cond - 1) & delta);
-        r->neg ^= cond;
-        /* swap */
-        BN_consttime_swap(cond, r, g, top);
-
-        /* elimination step */
-        delta++;
-        if (!BN_add(temp, g, r))
+        /* make r != 0, g != 0 even, so BN_rshift is not a potential nop */
+        if (g == NULL
+            || !BN_lshift1(g, in_b)
+            || !BN_lshift1(r, in_a))
             goto err;
-        BN_consttime_swap((unsigned int)g->d[0] & 1 /* g is odd */
+
+        /* find shared powers of two, i.e. "shifts" >= 1 */
+        pow2_flag = 1;
+        pow2_shifts = 0;
+        pow2_numbits = 0;
+        for (i = 0; i < r->dmax && i < g->dmax; i++) {
+            pow2_numbits_temp = r->d[i] | g->d[i];
+            pow2_condition_mask = constant_time_is_zero_bn(pow2_flag);
+            pow2_flag &= constant_time_is_zero_bn(pow2_numbits_temp);
+            pow2_shifts += (int)pow2_flag;
+            pow2_numbits = constant_time_select_bn(pow2_condition_mask,
+                pow2_numbits, pow2_numbits_temp);
+        }
+        pow2_numbits = ~pow2_numbits;
+        pow2_shifts *= BN_BITS2;
+        pow2_flag = 1;
+        for (j = 0; j < BN_BITS2; j++) {
+            pow2_flag &= pow2_numbits;
+            pow2_shifts += (int)pow2_flag;
+            pow2_numbits >>= 1;
+        }
+
+        /* subtract shared powers of two; shifts >= 1 */
+        if (!BN_rshift(r, r, pow2_shifts)
+            || !BN_rshift(g, g, pow2_shifts))
+            goto err;
+
+        /* expand to biggest nword, with room for a possible extra word */
+        top = 1 + ((r->top >= g->top) ? r->top : g->top);
+        if (bn_wexpand(r, top) == NULL
+            || bn_wexpand(g, top) == NULL
+            || bn_wexpand(temp, top) == NULL)
+            goto err;
+
+        /* re arrange inputs s.t. r is odd */
+        BN_consttime_swap((~r->d[0]) & 1, r, g, top);
+
+        /* compute the number of iterations */
+        rlen = BN_num_bits(r);
+        glen = BN_num_bits(g);
+        m = 4 + 3 * ((rlen >= glen) ? rlen : glen);
+
+        for (i = 0; i < m; i++) {
+            /* conditionally flip signs if delta is positive and g is odd */
+            cond = ((unsigned int)-delta >> (8 * sizeof(delta) - 1))
+                & (unsigned int)g->d[0] & 1
                 /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
-                & (~((unsigned int)(g->top - 1) >> (sizeof(g->top) * 8 - 1))),
-            g, temp, top);
-        if (!BN_rshift1(g, g))
+                & (~((unsigned int)(g->top - 1) >> (sizeof(g->top) * 8 - 1)));
+            delta = (-cond & -delta) | ((cond - 1) & delta);
+            r->neg ^= cond;
+            /* swap */
+            BN_consttime_swap(cond, r, g, top);
+
+            /* elimination step */
+            delta++;
+            if (!BN_add(temp, g, r))
+                goto err;
+            BN_consttime_swap((unsigned int)g->d[0] & 1 /* g is odd */
+                    /* make sure g->top > 0 (i.e. if top == 0 then g == 0 always) */
+                    & (~((unsigned int)(g->top - 1) >> (sizeof(g->top) * 8 - 1))),
+                g, temp, top);
+            if (!BN_rshift1(g, g))
+                goto err;
+        }
+
+        /* remove possible negative sign */
+        r->neg = 0;
+        /* add powers of 2 removed, then correct the artificial shift */
+        if (!BN_lshift(r, r, pow2_shifts)
+            || !BN_rshift1(r, r))
             goto err;
+
+        ret = 1;
+
+    err:
+        BN_CTX_end(ctx);
+        bn_check_top(r);
+        return ret;
     }
 
-    /* remove possible negative sign */
+    top = in_a->top < in_b->top ? in_a->top : in_b->top;
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, top);
+    if (rf == NULL)
+        return 0;
+
+    size_t max = in_a->dmax > in_b->dmax ? in_a->dmax : in_b->dmax;
+    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 4,
+        (max + 1) * 4);
+    if (fnctx == NULL) {
+        bn_release(r, r->top);
+        return 0;
+    }
+
+    ret = OSSL_FN_gcd(rf, in_a->data, in_b->data, fnctx);
+    bn_release(r, top);
     r->neg = 0;
-    /* add powers of 2 removed, then correct the artificial shift */
-    if (!BN_lshift(r, r, pow2_shifts)
-        || !BN_rshift1(r, r))
-        goto err;
 
-    ret = 1;
-
-err:
-    BN_CTX_end(ctx);
+    bn_ctx_release_ossl_fn_ctx(ctx);
     bn_check_top(r);
     return ret;
 }

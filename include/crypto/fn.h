@@ -299,6 +299,46 @@ int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n);
 int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a);
 
 /**
+ * Shift an OSSL_FN number right by n bits.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
+
+/**
+ * Shift an OSSL_FN number right by one bit.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
+ * Calculate the greatest common divisor of two OSSL_FN numbers.  Truncates
+ * the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for four temporary OSSL_FNs, max(a->dsize, b->dsize) + 1 limbs
+ * each, plus one frame (currently 32 bytes).
+ *
+ * TODO(FIXNUM): Add an OSSL_FN_gcd context-sizing helper when the generic
+ * support code for operation context sizing is available.
+ */
+int OSSL_FN_gcd(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_CTX *ctx);
+
+/**
  * Add two OSSL_FN numbers.
  *
  * @param[out]          r       The OSSL_FN for the result
