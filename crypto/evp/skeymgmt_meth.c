@@ -134,8 +134,7 @@ static int evp_skeymgmt_up_ref(void *s)
     EVP_SKEYMGMT *skeymgmt = (EVP_SKEYMGMT *)s;
     int ref = 0;
 
-    CRYPTO_UP_REF(&skeymgmt->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&skeymgmt->refcnt, &ref);
 }
 
 static void evp_skeymgmt_free(void *s)

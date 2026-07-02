@@ -22,8 +22,7 @@ static int evp_kdf_up_ref(void *vkdf)
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    CRYPTO_UP_REF(&kdf->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&kdf->refcnt, &ref);
 }
 
 static void evp_kdf_free(void *vkdf)
