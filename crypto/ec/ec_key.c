@@ -69,7 +69,7 @@ void EC_KEY_free(EC_KEY *r)
 {
     int i;
 
-    if (r == NULL || CRYPTO_DOWN_REF(&r->references, &i))
+    if (r == NULL || !CRYPTO_DOWN_REF(&r->references, &i))
         return;
 
     REF_PRINT_COUNT("EC_KEY", i, r);
