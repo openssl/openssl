@@ -417,6 +417,8 @@ ___
 # ;;; And cleanup stack.
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub EPILOG {
+  # ; $payload_len is retained for call-site compatibility but is intentionally
+  # ; unused (see the note in the hkeys-cleanup block below).
   my ($hkeys_storage_on_stack, $payload_len) = @_;
 
   my $label_suffix = $label_count++;
@@ -3755,6 +3757,10 @@ sub GHASH_4_ENCRYPT_4 {
 
   my $label_suffix = $label_count++;
 
+  # ;; 240 = 256 - 16: take the overflow-safe (LE add + byte-swap) path whenever
+  # ;; the low counter byte is within 16 of wrapping. Conservative for a 4-block
+  # ;; step (only +4 is needed) but reuses the threshold of the 8/16-block paths
+  # ;; and keeps the common fast path a single branch.
   $code .= <<___;
         cmpb              \$240,@{[BYTE($CTR_CHECK)]}
         jae               .L_4blk_overflow_${label_suffix}
@@ -4533,6 +4539,8 @@ ___
   my $aes4_data   = $ZTMP12;
 
   # ;; ── Preamble: encrypt first 4 blocks (no GHASH) ──
+  # ;; 240 = 256 - 16: see the GHASH_4_ENCRYPT_4 note; conservative 4-block
+  # ;; overflow threshold shared with the 8/16-block counter setups.
   $code .= <<___;
         cmpb              \$240,@{[BYTE($CTR_CHECK)]}
         jae               .L_4blk_preamble_overflow_${label_suffix}
