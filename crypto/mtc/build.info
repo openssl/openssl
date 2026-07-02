@@ -1,2 +1,2 @@
 LIBS=../../libcrypto
-SOURCE[../../libcrypto]=merkle_tree.c
+SOURCE[../../libcrypto]=merkle_tree.c mtc_cert.c
