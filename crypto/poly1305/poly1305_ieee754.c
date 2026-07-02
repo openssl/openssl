@@ -46,7 +46,7 @@
  * SPARC T4             16.1
  */
 
-#if !(defined(__GNUC__) && __GNUC__ >= 2)
+#if !defined(__GNUC__)
 #error "this is gcc-specific template"
 #endif
 
