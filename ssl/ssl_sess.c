@@ -869,9 +869,9 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 {
     int i;
 
-    if (ss == NULL)
+    if (ss == NULL || !CRYPTO_DOWN_REF(&ss->references, &i))
         return;
-    CRYPTO_DOWN_REF(&ss->references, &i);
+
     REF_PRINT_COUNT("SSL_SESSION", i, ss);
     if (i > 0)
         return;

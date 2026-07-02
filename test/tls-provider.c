@@ -705,13 +705,7 @@ static void xor_freekey(void *keydata)
     XORKEY *key = (XORKEY *)keydata;
     int refcnt;
 
-    if (key == NULL)
-        return;
-
-    if (CRYPTO_DOWN_REF(&key->references, &refcnt) <= 0)
-        return;
-
-    if (refcnt > 0)
+    if (key == NULL || !CRYPTO_DOWN_REF(&key->references, &refcnt) || refcnt > 0)
         return;
     assert(refcnt == 0);
 

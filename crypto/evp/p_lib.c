@@ -1749,10 +1749,8 @@ void EVP_PKEY_free(EVP_PKEY *x)
 {
     int i;
 
-    if (x == NULL)
+    if (x == NULL || !CRYPTO_DOWN_REF(&x->references, &i))
         return;
-
-    CRYPTO_DOWN_REF(&x->references, &i);
     REF_PRINT_COUNT("EVP_PKEY", i, x);
     if (i > 0)
         return;

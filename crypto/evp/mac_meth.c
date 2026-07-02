@@ -30,11 +30,7 @@ static void evp_mac_free(void *vmac)
     EVP_MAC *mac = vmac;
     int ref = 0;
 
-    if (mac == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&mac->refcnt, &ref);
-    if (ref > 0)
+    if (mac == NULL || !CRYPTO_DOWN_REF(&mac->refcnt, &ref) || ref > 0)
         return;
     OPENSSL_free(mac->type_name);
     ossl_provider_free(mac->prov);

@@ -972,7 +972,8 @@ static void qc_set_default_xso_keep_ref(QUIC_CONNECTION *qc, QUIC_XSO *xso,
              */
             assert(*old_xso == NULL);
 
-            CRYPTO_DOWN_REF(&qc->obj.ssl.references, &refs);
+            if (!ossl_assert(CRYPTO_DOWN_REF(&qc->obj.ssl.references, &refs)))
+                return;
             assert(refs > 0);
         }
     }

@@ -31,11 +31,7 @@ static void evp_kdf_free(void *vkdf)
     EVP_KDF *kdf = (EVP_KDF *)vkdf;
     int ref = 0;
 
-    if (kdf == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&kdf->refcnt, &ref);
-    if (ref > 0)
+    if (kdf == NULL || !CRYPTO_DOWN_REF(&kdf->refcnt, &ref) || ref > 0)
         return;
     OPENSSL_free(kdf->type_name);
     ossl_provider_free(kdf->prov);

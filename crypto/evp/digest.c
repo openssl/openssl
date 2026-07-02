@@ -986,11 +986,8 @@ static void evp_md_free(void *m)
     EVP_MD *md = (EVP_MD *)m;
     int i;
 
-    if (md == NULL || md->origin != EVP_ORIG_DYNAMIC)
-        return;
-
-    CRYPTO_DOWN_REF(&md->refcnt, &i);
-    if (i > 0)
+    if (md == NULL || md->origin != EVP_ORIG_DYNAMIC || !CRYPTO_DOWN_REF(&md->refcnt, &i)
+        || i > 0)
         return;
 
     OPENSSL_free(md->type_name);
