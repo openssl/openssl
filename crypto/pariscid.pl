@@ -219,7 +219,7 @@ L\$done2
 ___
 }
 
-if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
+if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1`
 	=~ /GNU assembler/) {
     $gnuas = 1;
 }
