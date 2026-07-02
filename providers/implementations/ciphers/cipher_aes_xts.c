@@ -180,7 +180,8 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
     } else
 #endif
     {
-        if (ctx->xts.key1 == NULL || ctx->xts.key2 == NULL)
+        if (ctx->xts.key1 == NULL || ctx->xts.key2 == NULL
+            || !ctx->base.iv_set)
             return 0;
     }
 
