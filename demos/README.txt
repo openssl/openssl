@@ -36,8 +36,11 @@ guide:                   Sample code from the OpenSSL Guide tutorials. See
 quic-client-block.c:     A simple blocking QUIC client
 quic-client-non-block.c: A simple non-blocking QUIC client
 quic-multi-stream.c:     A simple QUIC client using multiple streams
+quic-server-block.c:     A simple blocking QUIC server
+quic-server-non-block.c: A simple non-blocking QUIC server
 tls-client-block.c:      A simple blocking SSL/TLS client
 tls-client-non-block.c:  A simple non-blocking SSL/TLS client
+tls-server-block.c:      A simple blocking SSL/TLS server
 
 http3:                 Demonstration of how to use OpenSSL's QUIC capabilities
                        for HTTP/3.
@@ -81,4 +84,5 @@ rsa_pss_hash.c            Compute and verify an RSA-PSS signature over a buffer
 smime:                 Demonstrations related to S/MIME
 
 sslecho:
+echecho.c              Simple SSL/TLS echo client/server that uses ECH.
 main.c                 Simple SSL/TLS echo client/server.

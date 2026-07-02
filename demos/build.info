@@ -1,4 +1,4 @@
-SUBDIRS=bio cipher digest info keyexch mac kdf pkey signature \
+SUBDIRS=bio cipher digest info keyexch mac kdf pkcs12 pkey signature \
         encrypt encode sslecho
 
 IF[{- !$disabled{"h3demo"} -}]
