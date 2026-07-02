@@ -63,31 +63,45 @@ int BN_rshift1(BIGNUM *r, const BIGNUM *a)
     bn_check_top(r);
     bn_check_top(a);
 
-    if (BN_is_zero(a)) {
-        BN_zero(r);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL) {
+        if (BN_is_zero(a)) {
+            BN_zero(r);
+            return 1;
+        }
+        i = a->top;
+        ap = a->d;
+        if (a != r) {
+            if (bn_wexpand(r, i) == NULL)
+                return 0;
+            r->neg = a->neg;
+        }
+        rp = r->d;
+        t = ap[--i];
+        rp[i] = t >> 1;
+        c = t << (BN_BITS2 - 1);
+        bn_set_top(r, i + (t > 1));
+        while (i > 0) {
+            t = ap[--i];
+            rp[i] = ((t >> 1) & BN_MASK2) | c;
+            c = t << (BN_BITS2 - 1);
+        }
+        if (!r->top)
+            r->neg = 0; /* don't allow negative zero */
+        bn_check_top(r);
         return 1;
     }
-    i = a->top;
-    ap = a->d;
-    if (a != r) {
-        if (bn_wexpand(r, i) == NULL)
-            return 0;
-        r->neg = a->neg;
-    }
-    rp = r->d;
-    t = ap[--i];
-    rp[i] = t >> 1;
-    c = t << (BN_BITS2 - 1);
-    bn_set_top(r, i + (t > 1));
-    while (i > 0) {
-        t = ap[--i];
-        rp[i] = ((t >> 1) & BN_MASK2) | c;
-        c = t << (BN_BITS2 - 1);
-    }
-    if (!r->top)
-        r->neg = 0; /* don't allow negative zero */
-    bn_check_top(r);
-    return 1;
+
+    int neg = a->neg;
+    size_t top = a->top;
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    if (rf == NULL)
+        return 0;
+    int ret = OSSL_FN_rshift1(rf, a->data);
+    bn_release(r, (int)top);
+
+    BN_set_negative(r, ret && neg);
+    return ret;
 }
 
 int BN_lshift(BIGNUM *r, const BIGNUM *a, int n)
@@ -187,11 +201,26 @@ int BN_rshift(BIGNUM *r, const BIGNUM *a, int n)
     bn_check_top(r);
     bn_check_top(a);
 
-    ret = bn_rshift_fixed_top(r, a, n);
+    /* TODO(FIXNUM): TO BE REMOVED */
+    if (r->data == NULL || a->data == NULL) {
+        ret = bn_rshift_fixed_top(r, a, n);
 
-    bn_correct_top(r);
-    bn_check_top(r);
+        bn_correct_top(r);
+        bn_check_top(r);
 
+        return ret;
+    }
+
+    int neg = a->neg;
+    size_t nw = (size_t)n / BN_BITS2;
+    size_t top = nw >= (size_t)a->top ? 0 : (size_t)a->top - nw;
+    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
+    if (rf == NULL)
+        return 0;
+    ret = OSSL_FN_rshift(rf, a->data, n);
+    bn_release(r, (int)top);
+
+    BN_set_negative(r, ret && neg);
     return ret;
 }
 
