@@ -54,7 +54,7 @@ sub test_ocsp {
                   $title); });
 }
 
-plan tests => 13;
+plan tests => 14;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
@@ -230,6 +230,12 @@ subtest "=== OCSP API TESTS===" => sub {
 
     ok(run(test(["ocspapitest", $cert, $key])),
                  "running ocspapitest");
+};
+
+subtest "=== OCSP VERIFICATION TESTS ===" => sub {
+    plan tests => 1;
+
+    ok(run(test(["ocsptest"])), "running ocsptest");
 };
 
 subtest "=== UNTRUSTED ISSUER HINTS ===" => sub {
