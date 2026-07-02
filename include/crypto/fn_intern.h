@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -35,6 +35,7 @@ extern "C" {
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
 
+OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely);
 int ossl_fn_set_words(OSSL_FN *f, const OSSL_FN_ULONG *words, size_t limbs);
 const OSSL_FN_ULONG *ossl_fn_get_words(const OSSL_FN *f);
 

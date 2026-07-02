@@ -1,5 +1,5 @@
 /*
- * Copyright 2014-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2014-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,12 +11,17 @@
 #define OSSL_CRYPTO_BN_H
 #pragma once
 
+#include <stdbool.h>
 #include <openssl/bn.h>
 #include <limits.h>
 #include "types.h"
 
+BIGNUM *bn_new_internal(size_t limbs, bool securely);
 BIGNUM *bn_wexpand(BIGNUM *a, int words);
 BIGNUM *bn_expand2(BIGNUM *a, int words);
+BIGNUM *bn_copy_resized(BIGNUM *a, const BIGNUM *b);
+/* Makes a static data BIGNUM with the given OSSL_FN inside */
+void bn_from_ossl_fn(BIGNUM *bn, OSSL_FN *fn);
 
 void bn_correct_top(BIGNUM *a);
 

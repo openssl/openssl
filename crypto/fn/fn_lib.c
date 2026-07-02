@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@
 #include "fn_local.h"
 #include "internal/constant_time.h"
 
-static OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
+OSSL_FN *ossl_fn_new_internal(size_t limbs, bool securely)
 {
     /* Total size of the whole OSSL_FN, in bytes */
     size_t totalsize = ossl_fn_totalsize(limbs);
@@ -220,4 +220,45 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
     }
 
     return a;
+}
+
+static int hex_to_nibble(char c)
+{
+    if (c >= '0' && c <= '9')
+        return c - '0';
+    if (c >= 'a' && c <= 'f')
+        return c - 'a' + 10;
+    if (c >= 'A' && c <= 'F')
+        return c - 'A' + 10;
+    return -1;
+}
+
+int OSSL_FN_hex2fn(OSSL_FN *r, const char *hex)
+{
+    size_t len, i, limb, shift;
+    int v;
+
+    if (r == NULL || hex == NULL || *hex == '-')
+        return 0;
+
+    len = strlen(hex);
+
+    if ((size_t)r->dsize < ossl_fn_bytes_to_limbs((len + 1) / 2))
+        return 0;
+
+    memset(r->d, 0, r->dsize * sizeof(OSSL_FN_ULONG));
+    for (i = len, shift = 0, limb = 0; i > 0;) {
+        v = hex_to_nibble(hex[--i]);
+        if (v < 0)
+            return 0;
+
+        r->d[limb] |= (OSSL_FN_ULONG)v << shift;
+        shift += 4;
+        if (shift == OSSL_FN_BYTES * 8) {
+            shift = 0;
+            limb++;
+        }
+    }
+
+    return 1;
 }
