@@ -1,0 +1,167 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright (c) 2026 Intel Corporation. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# Run AVX512-specific tests under Intel SDE.
+#
+# GitHub Actions runners currently do not have AVX512 hardware.
+# Intel SDE emulates AVX512 instructions and spoofs CPUID,
+# so AVX512 code paths are exercised.
+#
+# To update Intel SDE: find the new mirror ID and file date from
+# https://www.intel.com/content/www/us/en/download/684897
+# and update the three env vars below.
+
+name: AVX512 tests via Intel SDE
+
+on:
+  schedule:
+    - cron: '30 02 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  SDE_VERSION: 10.8.0
+  SDE_DATE: 2026-03-15
+  SDE_MIRROR_ID: 915934
+
+jobs:
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: install NASM
+        run: sudo apt-get install -y nasm
+
+      - name: install Intel SDE
+        run: |
+          SDE_URL="https://downloadmirror.intel.com/${SDE_MIRROR_ID}/sde-external-${SDE_VERSION}-${SDE_DATE}-lin.tar.xz"
+          SDE_SHA256="50b320cd226acef7a491f5b321fc1be3c3c7984f9e27a456e64894b5b0979dd3"
+          curl -fsSL -o /tmp/sde.tar.xz "$SDE_URL"
+          echo "$SDE_SHA256  /tmp/sde.tar.xz" | sha256sum -c -
+          mkdir /tmp/sde
+          tar -xf /tmp/sde.tar.xz -C /tmp/sde/
+          sudo mv /tmp/sde/sde-external-${SDE_VERSION}-${SDE_DATE}-lin /opt/sde
+          echo "/opt/sde" >> "$GITHUB_PATH"
+
+      - name: config
+        run: |
+          ./config --banner=Configured --strict-warnings no-shared enable-fips
+
+      - name: build
+        run: make -j4
+
+      - name: show CPU and OpenSSL build info
+        run: |
+          cat /proc/cpuinfo | grep -m1 "model name"
+          sde64 -icx -- ./apps/openssl version -c
+
+      - name: ml_dsa_internal_test (AVX512 via SDE)
+        run: sde64 -icx -- ./test/ml_dsa_internal_test
+
+      - name: sha3_x4_internal_test (AVX512 via SDE)
+        run: sde64 -icx -- ./test/sha3_x4_internal_test
+
+      - name: fipsinstall (FIPS KAT via SDE)
+        run: sde64 -icx -- ./apps/openssl fipsinstall -module ./providers/fips.so -out /tmp/fipsmodule.cnf -provider_name fips
+
+  windows:
+    runs-on: windows-2022
+    env:
+      VCVARS: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: install nasm
+        if: github.repository == 'openssl/openssl'
+        run: |
+          $installer = "nasm-3.01-installer-x64.exe"
+          Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+          $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+          $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+          Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+          "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      - name: install nasm (forks)
+        if: github.repository != 'openssl/openssl'
+        run: |
+          $installer = "nasm-3.01-installer-x64.exe"
+          Invoke-WebRequest -Uri "https://www.nasm.us/pub/nasm/releasebuilds/3.01/win64/$installer" -OutFile $installer
+          Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+          "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+
+      - name: install jom
+        if: github.repository == 'openssl/openssl'
+        run: |
+          mkdir C:\jom
+          Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+          $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+          $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+          "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+      - name: install jom (forks)
+        if: github.repository != 'openssl/openssl'
+        run: |
+          mkdir C:\jom
+          Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+          Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+          "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+
+      - name: install Intel SDE
+        run: |
+          $url = "https://downloadmirror.intel.com/$env:SDE_MIRROR_ID/sde-external-$env:SDE_VERSION-$env:SDE_DATE-win.tar.xz"
+          $expected = "176F87C80EB42BB91B73E1428F4A0FD067DF322F901F9B4359B20B86B92C2BAE"
+          curl.exe -fsSL -o sde-win.tar.xz $url
+          $actual = (Get-FileHash sde-win.tar.xz -Algorithm SHA256).Hash
+          if ($actual -ne $expected) { throw "SDE SHA256 mismatch: got $actual" }
+          & "C:\Program Files\7-Zip\7z.exe" x sde-win.tar.xz -so | & "C:\Program Files\7-Zip\7z.exe" x -si -ttar -o"C:\sde"
+          $sdeRoot = "C:\sde\sde-external-$env:SDE_VERSION-$env:SDE_DATE-win"
+          if (-not (Test-Path "$sdeRoot\sde.exe")) { throw "sde.exe not found in $sdeRoot" }
+          "$sdeRoot" | Out-File -FilePath $env:GITHUB_PATH -Append
+
+      - name: prepare build directory
+        run: mkdir _build
+
+      - name: config
+        working-directory: _build
+        shell: cmd
+        run: |
+          call "%VCVARS%"
+          perl ..\Configure --banner=Configured --strict-warnings no-shared enable-fips no-makedepend
+
+      - name: build
+        working-directory: _build
+        shell: cmd
+        run: |
+          call "%VCVARS%"
+          jom /j4 /S
+
+      - name: show CPU and OpenSSL build info
+        working-directory: _build
+        run: sde -icx -- apps\openssl.exe version -c
+
+      - name: ml_dsa_internal_test (AVX512 via SDE)
+        working-directory: _build
+        shell: cmd
+        run: sde -icx -- test\ml_dsa_internal_test.exe
+
+      - name: sha3_x4_internal_test (AVX512 via SDE)
+        working-directory: _build
+        shell: cmd
+        run: sde -icx -- test\sha3_x4_internal_test.exe
+
+      - name: fipsinstall (FIPS KAT via SDE)
+        working-directory: _build
+        shell: cmd
+        run: sde -icx -- apps\openssl.exe fipsinstall -module providers\fips.dll -out fipsmodule.cnf -provider_name fips
