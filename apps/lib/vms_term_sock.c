@@ -230,6 +230,7 @@ int TerminalSocket(int FunctionCode, int *ReturnSocket)
             LogMessage("TerminalSocket: SYS$QIO () - %08X", status);
             close(TerminalSocketPair[0]);
             close(TerminalSocketPair[1]);
+            sys$dassgn(TerminalDeviceChan);
             return TERM_SOCK_FAILURE;
         }
 
@@ -248,6 +249,7 @@ int TerminalSocket(int FunctionCode, int *ReturnSocket)
             LogMessage("TerminalSocket: SYS$CANCEL () - %08X", status);
             close(TerminalSocketPair[0]);
             close(TerminalSocketPair[1]);
+            sys$dassgn(TerminalDeviceChan);
             return TERM_SOCK_FAILURE;
         }
 
