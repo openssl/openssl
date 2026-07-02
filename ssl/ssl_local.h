@@ -971,6 +971,8 @@ struct ssl_ctx_st {
 
     /* Default generate session ID callback. */
     GEN_SESSION_CB generate_session_id;
+    /* Optional callback for external session-id collision checks. */
+    GEN_SESSION_COLLISION_CB session_id_collision_cb;
 
     X509_VERIFY_PARAM *param;
 
@@ -1574,6 +1576,8 @@ struct ssl_connection_st {
     size_t psksession_id_len;
     /* Default generate session ID callback. */
     GEN_SESSION_CB generate_session_id;
+    /* Optional callback for external session-id collision checks. */
+    GEN_SESSION_COLLISION_CB session_id_collision_cb;
     /*
      * The temporary TLSv1.3 session id. This isn't really a session id at all
      * but is a random value sent in the legacy session id field.
