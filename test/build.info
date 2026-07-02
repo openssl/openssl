@@ -61,7 +61,7 @@ IF[{- !$disabled{tests} -}]
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          servername_test ocspapitest fatalerrtest tls13ccstest \
+          servername_test ocspapitest ocsptest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
@@ -351,6 +351,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[crltest]=crltest.c
   INCLUDE[crltest]=../include ../apps/include
   DEPEND[crltest]=../libcrypto libtestutil.a
+
+  SOURCE[ocsptest]=ocsptest.c
+  INCLUDE[ocsptest]=../include ../apps/include
+  DEPEND[ocsptest]=../libcrypto libtestutil.a
 
   SOURCE[v3ext]=v3ext.c
   INCLUDE[v3ext]=../include ../apps/include
