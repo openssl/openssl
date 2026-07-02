@@ -1530,6 +1530,15 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.ticket_expected = 1;
             continue;
         }
+        /*
+         * TLSv1.3 allows PSK resumption with any ciphersuite using the same
+         * hash. Early data is stricter: the 0-RTT parameters are those
+         * associated with the PSK, so the server must not accept early data if
+         * it selected a different ciphersuite.
+         */
+        if (s->ext.early_data_ok
+            && sess->cipher->id != s->s3.tmp.new_cipher->id)
+            s->ext.early_data_ok = 0;
         break;
     }
 
