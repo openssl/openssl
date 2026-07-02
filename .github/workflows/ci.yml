@@ -238,7 +238,7 @@ jobs:
       uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee #v1.30.0
       with:
         operating_system: freebsd
-        version: "13.4"
+        version: "14.4"
         shutdown_vm: false
         run: |
           sudo pkg install -y gcc perl5
@@ -247,21 +247,21 @@ jobs:
       uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee #v1.30.0
       with:
         operating_system: freebsd
-        version: "13.4"
+        version: "14.4"
         shutdown_vm: false
         run: ./configdata.pm --dump
     - name: make
       uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee #v1.30.0
       with:
         operating_system: freebsd
-        version: "13.4"
+        version: "14.4"
         shutdown_vm: false
         run: make -j4
     - name: make test
       uses: cross-platform-actions/action@5ea7e8e4677bd726033a10b094ba1c5762b15dee #v1.30.0
       with:
         operating_system: freebsd
-        version: "13.4"
+        version: "14.4"
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
