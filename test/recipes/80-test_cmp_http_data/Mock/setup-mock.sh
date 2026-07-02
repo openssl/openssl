@@ -6,7 +6,7 @@
 # You can obtain a copy in the file LICENSE in the source distribution
 # or at https://www.openssl.org/source/license.html
 #
-# Script to set up mock certificates for CMP server and signer
+# Script to set up credentials for CMP mock server and tested client (signer)
 # Usage: ./setup-mock.sh [PQC]
 # Using the optional parameter "PQC" will generate certificates using PQC algorithms,
 # otherwise classic algorithms are used.
@@ -41,7 +41,7 @@ if [[ ${USE_PQC+set} ]]; then
     alg2="SLH-DSA-SHAKE-192s" 
 else
     alg="rsa"
-    alg2="rsa"
+    alg2=$alg
 fi
     # algorithms for server certificate chain
     server_rootca_keyalg=$alg
@@ -53,11 +53,13 @@ fi
     signer_rootca_keyalg=$alg
     signer_interca_keyalg=$alg
     signer_subinterca_keyalg=$alg
+    # signer leaf uses alg2 to exercise algorithm diversity in the chain;
+    # for PQC mode, alg2 is SLH-DSA which is a signature-only algorithm
     signer_leaf_keyalg=$alg2
 
 # CMP server certificate
 rename_serverfiles() {
-    echo "Renaming server files"
+    echo "Removing intermediate files and renaming mock server files"
     # removing unneeded files
     rm server_root-key.pem server_root-pubkey.pem newWithNew-key.pem newWithNew-pubkey.pem
     mv server_root-cert.pem server_root.crt
