@@ -270,6 +270,7 @@ crypto/ml_dsa/ml_dsa_ntt.c
 crypto/ml_dsa/ml_dsa_params.c
 crypto/ml_dsa/ml_dsa_poly.h
 crypto/ml_dsa/ml_dsa_sample.c
+crypto/ml_dsa/ml_dsa_sample_hw_x86_64.inc
 crypto/ml_dsa/ml_dsa_sign.c
 crypto/ml_dsa/ml_dsa_sign.h
 crypto/ml_dsa/ml_dsa_vector.h
@@ -359,6 +360,7 @@ crypto/sha/asm/keccak1600-ppc64.pl
 crypto/sha/asm/keccak1600-s390x.pl
 crypto/sha/asm/keccak1600-x86_64.pl
 crypto/sha/asm/keccak1600p8-ppc.pl
+crypto/sha/asm/keccak1600x4-avx512vl.pl
 crypto/sha/asm/sha1-586.pl
 crypto/sha/asm/sha1-alpha.pl
 crypto/sha/asm/sha1-armv4-large.pl
@@ -401,6 +403,7 @@ crypto/sha/sha1dgst.c
 crypto/sha/sha256.c
 crypto/sha/sha3.c
 crypto/sha/sha3_encode.c
+crypto/sha/sha3_x4_avx512vl.c
 crypto/sha/sha512.c
 crypto/sha/sha_local.h
 crypto/slh_dsa/slh_adrs.c
