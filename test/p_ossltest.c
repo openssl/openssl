@@ -1753,6 +1753,84 @@ static const OSSL_ALGORITHM ossltest_rands[] = {
     { NULL, NULL, NULL }
 };
 
+/*
+ * The implementations for the p_ossltest provider decoder/encoder/store objects
+ * are defined below, but they are dummy implementations and do nothing.  They exist
+ * for the sole purpose of returning algorithms from this provider so that we can test if
+ * object creation and refcounting work when a provider requests no caching of the algorithm.
+ */
+
+static int ossl_test_decode(void *ctx, OSSL_CORE_BIO *in, int selection,
+    OSSL_CALLBACK *cb, void *cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pb, void *pbarg)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH ossl_test_decoder_functions[] = {
+    { OSSL_FUNC_DECODER_DECODE, (void (*)(void))ossl_test_decode },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM ossl_test_decoders[] = {
+    ALG("p_ossltest_decoder", ossl_test_decoder_functions),
+    { NULL, NULL, NULL }
+};
+
+static int ossl_test_encode(void *ctx, OSSL_CORE_BIO *out, const void *obj,
+    const OSSL_PARAM obj_abstract[],
+    int selection, OSSL_PASSPHRASE_CALLBACK *pb,
+    void *pbarg)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH ossl_test_encoder_functions[] = {
+    { OSSL_FUNC_ENCODER_ENCODE, (void (*)(void))ossl_test_encode },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM ossl_test_encoders[] = {
+    ALG("p_ossltest_encoder", ossl_test_encoder_functions),
+    { NULL, NULL, NULL }
+};
+
+static int dummy_store_value = 0;
+
+static void *ossl_test_store_open(void *provctx, const char *uri)
+{
+    return (void *)&dummy_store_value;
+}
+
+static int ossl_test_store_load(void *ctx, OSSL_CALLBACK *object_fn, void *cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pb, void *pbarg)
+{
+    return 0;
+}
+
+static int ossl_test_store_eof(void *ctx)
+{
+    return 1;
+}
+
+static int ossl_test_store_close(void *ctx)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH ossl_test_store_functions[] = {
+    { OSSL_FUNC_STORE_OPEN, (void (*)(void))ossl_test_store_open },
+    { OSSL_FUNC_STORE_LOAD, (void (*)(void))ossl_test_store_load },
+    { OSSL_FUNC_STORE_EOF, (void (*)(void))ossl_test_store_eof },
+    { OSSL_FUNC_STORE_CLOSE, (void (*)(void))ossl_test_store_close },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM ossl_test_stores[] = {
+    ALG("p_ossltest_store", ossl_test_store_functions),
+    { NULL, NULL, NULL }
+};
+
 /**
  * @brief Implement ossltest query.
  *
@@ -1777,6 +1855,12 @@ static const OSSL_ALGORITHM *ossltest_query(void *provctx, int operation_id,
         return ossltest_ciphers;
     case OSSL_OP_RAND:
         return ossltest_rands;
+    case OSSL_OP_DECODER:
+        return ossl_test_decoders;
+    case OSSL_OP_ENCODER:
+        return ossl_test_encoders;
+    case OSSL_OP_STORE:
+        return ossl_test_stores;
     }
     return NULL;
 }
