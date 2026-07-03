@@ -40,10 +40,31 @@
 #include <openssl/types.h>
 
 /**
- * @struct ossl_mtc_ca_st
- * @brief The identity core of a trusted Merkle Tree CA (section 7.1).
+ * @struct ossl_mtc_cosigner_st
+ * @brief A configured cosigner: a (cosigner ID, public key) pair with its
+ * signature algorithm (sections 5.3 and 7.1).
  *
- * Owns its storage: ca_id is a copy and a reference is held on cosigner_pkey.
+ * This is a cosigner the relying party is configured to recognise, distinct
+ * from an OSSL_MTC_COSIGNATURE (a signature parsed from an MTCProof).  Owns its
+ * storage: id and sig_name are copies and a reference is held on pkey.
+ *
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+typedef struct ossl_mtc_cosigner_st {
+    uint8_t *id; /**< cosigner ID: a TrustAnchorID, i.e. relative-OID bytes (5.3) */
+    size_t id_len;
+    char *sig_name; /**< cosigner signature algorithm name (5.3.3) */
+    EVP_PKEY *pkey; /**< cosigner public key (5.3) */
+} OSSL_MTC_COSIGNER;
+
+/**
+ * @struct ossl_mtc_ca_st
+ * @brief The identity core of a trusted Merkle Tree CA (section 7.1), plus the
+ * additional cosigners the relying party recognises.
+ *
+ * Owns its storage: ca_id is a copy, a reference is held on cosigner_pkey, and
+ * the cosigners list is owned.  The CA cosigner (section 5.4) is the identity
+ * core here (its ID is ca_id); cosigners holds the other recognised cosigners.
  *
  * A CRYPTO_RWLOCK (lock) guards concurrent access to the CA's mutable
  * configuration: callers reading the CA take a read lock and callers modifying
@@ -58,6 +79,8 @@ typedef struct ossl_mtc_ca_st {
     uint64_t min_serial; /**< the CA's minimum allowed serial number (5.5) */
     EVP_PKEY *cosigner_pkey; /**< CA cosigner public key (5.4) */
     CRYPTO_RWLOCK *lock; /**< guards concurrent access to the CA's mutable state */
+    OSSL_MTC_COSIGNER *cosigners; /**< additional recognised cosigners (7.1) */
+    size_t cosigner_count;
 } OSSL_MTC_CA;
 
 /**
@@ -83,6 +106,25 @@ OSSL_MTC_CA *ossl_mtc_ca_new(const uint8_t *ca_id, size_t ca_id_len,
  * @param ca the CA to free
  */
 void ossl_mtc_ca_free(OSSL_MTC_CA *ca);
+
+/**
+ * @brief Add a recognised cosigner to a CA (sections 5.3, 7.1).
+ *
+ * The id bytes are copied and a reference is taken on pkey; the caller retains
+ * ownership of both inputs.  Cosigner IDs must be distinct (section 5.3), so
+ * this fails if id duplicates an already-added cosigner or the CA's own ID (the
+ * CA cosigner's ID, section 5.4).
+ *
+ * @param ca the CA to add to
+ * @param id the cosigner ID (TrustAnchorID relative-OID bytes)
+ * @param id_len the length of id
+ * @param sig_name the cosigner signature algorithm name (for example "ML-DSA-44")
+ * @param pkey the cosigner public key
+ * @returns 1 on success, 0 on error or duplicate ID.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_add_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
+    const char *sig_name, EVP_PKEY *pkey);
 
 /**
  * @brief Return the CA's identifier (a TrustAnchorID, i.e. relative-OID bytes).
