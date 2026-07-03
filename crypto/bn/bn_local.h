@@ -136,13 +136,6 @@ struct bignum_st {
     /* Some of these flags are replicated in OSSL_FN, some are not */
     int flags;
 
-    /*
-     * TODO(FIXNUM) The fields that follow ARE TO BE REMOVED when all relevant
-     * BN_ functions have transitioned to be wrappers around OSSL_FN_ functions.
-     * All of this is maintained by bn_expand and BIGNUM allocators and
-     * deallocators.
-     */
-
     BN_ULONG *d; /* Pointer to |data->d| */
     int top; /* Index of last used d +1. */
     /* The next are internal book keeping for bn_expand. */

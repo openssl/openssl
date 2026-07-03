@@ -193,7 +193,6 @@ int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words)
     /* TODO(FIXNUM): In the future, we'll use an OSSL_FN function on a->data */
     memcpy(a->d, words, sizeof(BN_ULONG) * num_words);
 
-    /* TODO(FIXNUM): The following two lines are TO BE REMOVED */
     bn_set_top(a, num_words);
     bn_correct_top(a);
     return 1;
