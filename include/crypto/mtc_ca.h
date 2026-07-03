@@ -37,6 +37,7 @@
 #include <stdint.h>
 
 #include <openssl/crypto.h>
+#include <openssl/safestack.h>
 #include <openssl/types.h>
 
 /**
@@ -71,6 +72,50 @@ typedef struct ossl_mtc_serial_range_st {
 } OSSL_MTC_SERIAL_RANGE;
 
 /**
+ * @struct ossl_mtc_trusted_subtree_st
+ * @brief A subtree of one of the CA's issuance logs, active in that log's
+ * landmark window (sections 6.4 and 7.4).
+ *
+ * A landmark update names the subtrees that cover each active landmark's
+ * batch of leaves (section 6.4.3); each is recorded here as a (landmark,
+ * subtree) pair, initially without a hash.  The hash is filled in separately,
+ * once obtained from a source trusted to have vetted it (section 7.4); a
+ * subtree is usable for landmark-relative verification only once it is both
+ * active and has a hash.  The containing issuance log is implied by the
+ * OSSL_MTC_LOG this belongs to, so it is not stored here.  Owns its hash
+ * storage.
+ *
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+typedef struct ossl_mtc_trusted_subtree_st {
+    uint64_t landmark; /**< active landmark this subtree covers (6.4.1) */
+    uint64_t start; /**< first leaf index covered, inclusive */
+    uint64_t end; /**< one past the last leaf index, exclusive */
+    uint8_t *hash; /**< the subtree hash (hash_len bytes), or NULL until vetted */
+    size_t hash_len;
+} OSSL_MTC_TRUSTED_SUBTREE;
+DEFINE_STACK_OF(OSSL_MTC_TRUSTED_SUBTREE)
+
+/**
+ * @struct ossl_mtc_log_st
+ * @brief One of a CA's issuance logs (section 5.2) and its active landmark
+ * window.
+ *
+ * subtrees holds the subtrees covering the log's currently active landmarks,
+ * kept sorted by (start, end); last_landmark is the newest landmark the log
+ * has published.  A landmark update (section 6.4.3) replaces the window
+ * wholesale.  Owns its subtrees.
+ *
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+typedef struct ossl_mtc_log_st {
+    uint64_t log_number; /**< the issuance log number (5.2) */
+    uint64_t last_landmark; /**< newest published landmark for this log (6.4) */
+    STACK_OF(OSSL_MTC_TRUSTED_SUBTREE) *subtrees; /**< active window, sorted */
+} OSSL_MTC_LOG;
+DEFINE_STACK_OF(OSSL_MTC_LOG)
+
+/**
  * @struct ossl_mtc_ca_st
  * @brief The identity core of a trusted Merkle Tree CA (section 7.1), plus the
  * additional cosigners the relying party recognises.
@@ -96,6 +141,7 @@ typedef struct ossl_mtc_ca_st {
     size_t cosigner_count;
     OSSL_MTC_SERIAL_RANGE *revoked; /**< revoked serial ranges (7.5) */
     size_t revoked_count;
+    STACK_OF(OSSL_MTC_LOG) *logs; /**< issuance logs, sorted by log number (5.2) */
 } OSSL_MTC_CA;
 
 /**
@@ -150,8 +196,8 @@ int ossl_mtc_ca_add_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
  * Ranges may overlap each other and the implied [0, min_serial) range; they are
  * neither merged nor required to be disjoint, as revocation is a membership test
  * (a serial is revoked if it falls in any range).  The draft places no
- * ordering or disjointness requirement on revoked ranges; revisit this
- * should a later draft impose one.
+ * ordering requirement on revoked ranges nor requires them to be disjoint;
+ * revisit this should a later draft impose one.
  *
  * @param ca the CA to add to
  * @param start the first revoked serial (inclusive)
@@ -174,6 +220,72 @@ int ossl_mtc_ca_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start,
  * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
  */
 int ossl_mtc_ca_serial_is_revoked(const OSSL_MTC_CA *ca, uint64_t serial);
+
+/**
+ * @brief Replace an issuance log's active landmark window from a published
+ * landmark description (sections 6.4.3 and 7.4).
+ *
+ * Reads the log's landmark description in the section 6.4.3 format from in
+ * and replaces the log's window with the subtrees covering those landmarks'
+ * leaves, leaving out landmarks that expired before cutoff; INT64_MIN leaves
+ * out none.  A subtree still present keeps any hash already added to it; one
+ * no longer active is dropped; a newly active subtree is recorded without a
+ * hash.  The log is created if it does not yet exist.  The CA is left
+ * unchanged on any failure.
+ *
+ * @param ca the CA
+ * @param log_number the issuance log to update
+ * @param in the landmark description to read
+ * @param cutoff the POSIX time before which expired landmarks are not loaded
+ * @returns 1 on success, 0 on parse error, inconsistent input, or allocation
+ *          failure.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in,
+    int64_t cutoff);
+
+/**
+ * @brief Record the vetted hash of an active subtree (section 7.4).
+ *
+ * The subtree with bounds (start, end) must already be in log_number's active
+ * window, hash_len must equal the log hash's output length, and the hash bytes
+ * are copied.  A subtree's hash is immutable once set: supplying the value it
+ * already holds succeeds and changes nothing, a different value fails.
+ * Consistency of the hash is assumed to have been established externally: adding
+ * it is the act of trusting it (section 7.4).
+ *
+ * @param ca the CA
+ * @param log_number, start, end the active subtree's coordinates
+ * @param hash, hash_len the subtree hash (copied in) and its length in bytes
+ * @returns 1 on success, 0 if the subtree is not active, hash_len is wrong, a
+ *          different hash is already recorded, or on allocation failure.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
+    uint64_t start, uint64_t end, const uint8_t *hash, size_t hash_len);
+
+/**
+ * @brief Test whether a subtree is trusted and its hash matches (section 7.4).
+ *
+ * Looks up the subtree by (log_number, start, end) in the log's active window.
+ * A trusted subtree is one that is active and has a hash; if the subtree is
+ * trusted, sets *found to 1 and returns whether its hash equals hash.  A
+ * subtree that is active but has no hash is not trusted: *found is 0, and the
+ * caller falls back to the cosignatures (section 7.2 step 12).  This performs
+ * the section 7.2 step 11 check under the read lock without exposing internal
+ * storage.
+ *
+ * @param ca the CA
+ * @param log_number, start, end the subtree coordinates to look up
+ * @param hash, hash_len the expected subtree hash and its length in bytes
+ * @param found set to 1 if a subtree with those coordinates is active and has
+ *        a hash, 0 otherwise
+ * @returns 1 if such a subtree exists and its hash matches, 0 otherwise.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_trusted_subtree_matches(const OSSL_MTC_CA *ca,
+    uint64_t log_number, uint64_t start, uint64_t end, const uint8_t *hash,
+    size_t hash_len, int *found);
 
 /**
  * @brief Return the CA's identifier (a TrustAnchorID, i.e. relative-OID bytes).
