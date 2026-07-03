@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 
 #include "crypto/mtc_ca.h"
@@ -197,6 +198,278 @@ err:
     return ret;
 }
 
+/* Find a CA's issuance log by number (white-box helper for the tests). */
+static OSSL_MTC_LOG *ca_log(OSSL_MTC_CA *ca, uint64_t n)
+{
+    int i;
+
+    for (i = 0; i < sk_OSSL_MTC_LOG_num(ca->logs); i++) {
+        OSSL_MTC_LOG *l = sk_OSSL_MTC_LOG_value(ca->logs, i);
+
+        if (l->log_number == n)
+            return l;
+    }
+    return NULL;
+}
+
+/* Number of subtrees held for a CA's log (0 if the log is absent). */
+static int ca_log_count(OSSL_MTC_CA *ca, uint64_t n)
+{
+    OSSL_MTC_LOG *l = ca_log(ca, n);
+
+    return l == NULL ? 0 : sk_OSSL_MTC_TRUSTED_SUBTREE_num(l->subtrees);
+}
+
+/* The idx'th subtree (sorted by (start, end)) held for a CA's log. */
+static OSSL_MTC_TRUSTED_SUBTREE *ca_log_subtree(OSSL_MTC_CA *ca, uint64_t n,
+    int idx)
+{
+    OSSL_MTC_LOG *l = ca_log(ca, n);
+
+    return l == NULL ? NULL
+                     : sk_OSSL_MTC_TRUSTED_SUBTREE_value(l->subtrees, idx);
+}
+
+/* Whether the subtree [start, end) is in a CA log's active window. */
+static int ca_log_has_subtree(OSSL_MTC_CA *ca, uint64_t n, uint64_t start,
+    uint64_t end)
+{
+    int i;
+
+    for (i = 0; i < ca_log_count(ca, n); i++) {
+        OSSL_MTC_TRUSTED_SUBTREE *ts = ca_log_subtree(ca, n, i);
+
+        if (ts->start == start && ts->end == end)
+            return 1;
+    }
+    return 0;
+}
+
+/*
+ * A landmark update establishes the active window's subtrees (without hashes),
+ * add_subtree_hash then makes a subtree usable, and a fresh update carries the
+ * hash forward for a still-active subtree while dropping one that aged out.
+ */
+static int test_ca_load_landmarks(void)
+{
+    EVP_PKEY *ca_key = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    BIO *bio = NULL;
+    static const uint8_t hash[32] = { 0x5a };
+    static const uint8_t other[32] = { 0xa5 };
+    /*
+     * latest_landmark 3, then tree sizes and expiries for landmarks 3, 2, 1:
+     * 8 6 3, the last bounding landmark 2.  Landmark 3 covers [6, 8), landmark
+     * 2 covers
+     * [3, 6).  Per section 4.5, find_subtrees([6,8)) = {[6,7), [7,8)} and
+     * find_subtrees([3,6)) = {[3,4), [4,6)}: four active subtrees in all.
+     */
+    int found = 0, i, ret = 0;
+
+    if (!TEST_ptr(ca_key = gen_cosigner_key())
+        || !TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+                         ca_key))
+        || !TEST_ptr(bio = BIO_new_mem_buf("3\n8 100\n6 100\n3 50\n", -1))
+        || !TEST_true(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN)))
+        goto err;
+
+    /* Four landmark subtrees are active: [3,4), [4,6), [6,7), [7,8). */
+    if (!TEST_int_eq(ca_log_count(ca, 1), 4))
+        goto err;
+
+    /* The window is held sorted ascending by (start, end). */
+    for (i = 1; i < ca_log_count(ca, 1); i++) {
+        OSSL_MTC_TRUSTED_SUBTREE *prev = ca_log_subtree(ca, 1, i - 1);
+        OSSL_MTC_TRUSTED_SUBTREE *cur = ca_log_subtree(ca, 1, i);
+
+        if (!TEST_true(prev->start < cur->start
+                || (prev->start == cur->start && prev->end < cur->end)))
+            goto err;
+    }
+
+    /* The log records the newest landmark the description named. */
+    if (!TEST_uint64_t_eq(ca_log(ca, 1)->last_landmark, 3))
+        goto err;
+
+    /* Active but unhashed: not a trusted subtree, so not found. */
+    if (!TEST_true(ca_log_has_subtree(ca, 1, 7, 8))
+        || !TEST_int_eq(ossl_mtc_ca_trusted_subtree_matches(ca, 1, 7, 8, hash,
+                            sizeof(hash), &found),
+            0)
+        || !TEST_int_eq(found, 0))
+        goto err;
+
+    /* A subtree outside the window cannot be hashed. */
+    if (!TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 0, 2, hash,
+            sizeof(hash)))
+        /* Wrong hash length is rejected. */
+        || !TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, hash, 16))
+        /* Hashing an active subtree succeeds and makes it match. */
+        || !TEST_true(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, hash,
+            sizeof(hash))))
+        goto err;
+    if (!TEST_int_eq(ossl_mtc_ca_trusted_subtree_matches(ca, 1, 7, 8, hash,
+                         sizeof(hash), &found),
+            1))
+        goto err;
+
+    /* Hashed, but asked about a different hash: found, and does not match. */
+    if (!TEST_int_eq(ossl_mtc_ca_trusted_subtree_matches(ca, 1, 7, 8, other,
+                         sizeof(other), &found),
+            0)
+        || !TEST_int_eq(found, 1))
+        goto err;
+
+    /* The hash is immutable: same value is a no-op, a different value fails. */
+    if (!TEST_true(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, hash,
+            sizeof(hash)))
+        || !TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, other,
+            sizeof(other))))
+        goto err;
+
+    /*
+     * A newer update: latest_landmark 4, sizes 10 8 6 for landmarks 4, 3, 2.
+     * Landmark 4 covers [8,10) = {[8,9), [9,10)}; landmark 3 still covers
+     * [6,8) = {[6,7), [7,8)}, so [7,8) stays active and keeps its hash.  The
+     * subtrees of landmark 2 ([3,4), [4,6)) age out.
+     */
+    BIO_free(bio);
+    if (!TEST_ptr(bio = BIO_new_mem_buf("4\n10 100\n8 100\n6 50\n", -1))
+        || !TEST_true(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN)))
+        goto err;
+
+    /*
+     * [7,8) survived with its hash; [4,6) is gone; the window is four again and
+     * the newest landmark advanced.  The window is the only retention bound:
+     * a subtree and its hash live exactly as long as the window holds them.
+     */
+    if (!TEST_int_eq(ca_log_count(ca, 1), 4)
+        || !TEST_uint64_t_eq(ca_log(ca, 1)->last_landmark, 4)
+        || !TEST_int_eq(ossl_mtc_ca_trusted_subtree_matches(ca, 1, 7, 8, hash,
+                            sizeof(hash), &found),
+            1))
+        goto err;
+    if (!TEST_false(ca_log_has_subtree(ca, 1, 4, 6)))
+        goto err;
+
+    /* An aged-out subtree cannot be re-hashed: it is no longer in the window. */
+    if (!TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 4, 6, hash,
+            sizeof(hash))))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free(bio);
+    ossl_mtc_ca_free(ca);
+    EVP_PKEY_free(ca_key);
+    return ret;
+}
+
+/*
+ * A cutoff ends the description at the first landmark that expired before it:
+ * that landmark and everything after it are not loaded, and the lines after it
+ * are not read.
+ */
+static int test_ca_load_landmarks_cutoff(void)
+{
+    static const char desc[] = "5\n10 300\n8 200\n6 100\n3 50\ngarbage\n";
+    EVP_PKEY *ca_key = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    BIO *bio = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ca_key = gen_cosigner_key())
+        || !TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+                         ca_key)))
+        goto err;
+
+    /* Read to the end, the garbage line is rejected. */
+    if (!TEST_ptr(bio = BIO_new_mem_buf(desc, -1))
+        || !TEST_false(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN)))
+        goto err;
+    BIO_free(bio);
+
+    /*
+     * With cutoff 150, landmark 3 (expiry 100) ends the description: landmark
+     * 5 covers [8, 10) with the subtrees [8, 9) and [9, 10), landmark 4 covers
+     * [6, 8) with [6, 7) and [7, 8), and landmark 3's [3, 4) and [4, 6) are
+     * not loaded.
+     */
+    if (!TEST_ptr(bio = BIO_new_mem_buf(desc, -1))
+        || !TEST_true(ossl_mtc_ca_load_landmarks(ca, 1, bio, 150))
+        || !TEST_int_eq(ca_log_count(ca, 1), 4)
+        || !TEST_true(ca_log_has_subtree(ca, 1, 8, 9))
+        || !TEST_true(ca_log_has_subtree(ca, 1, 7, 8))
+        || !TEST_false(ca_log_has_subtree(ca, 1, 4, 6)))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free(bio);
+    ossl_mtc_ca_free(ca);
+    EVP_PKEY_free(ca_key);
+    return ret;
+}
+
+/* Malformed or inconsistent landmark descriptions are rejected wholesale. */
+static int test_ca_load_landmarks_bad(void)
+{
+    EVP_PKEY *ca_key = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    BIO *bio = NULL;
+    size_t i;
+    int ret = 0;
+    static const char *bad[] = {
+        "garbage\n", /* not a number */
+        "3\n", /* no landmarks */
+        "3 2\n8 100\n6 100\n3 50\n", /* more than latest_landmark on line 1 */
+        "1\n8 100\n6 100\n3 50\n", /* more landmarks than latest_landmark */
+        "3\n8 100\n6 100\n6 50\n", /* tree sizes not strictly decreasing */
+        "3\n8 100\n6 200\n3 50\n", /* expiries increasing */
+        "3\n8 100\n6 100\n3 50\nextra\n", /* trailing garbage */
+        "3\n8 100\n6 100\n3 50", /* missing final newline */
+        "3\n8 100\n6 100\n3\n", /* missing expiry */
+        "-3\n8 100\n6 100\n3 50\n", /* sign */
+        "+3\n8 100\n6 100\n3 50\n", /* sign */
+        " 3\n8 100\n6 100\n3 50\n", /* leading space */
+        "03\n8 100\n6 100\n3 50\n", /* leading zero */
+        "3\n08 100\n6 100\n3 50\n", /* leading zero */
+        "3\n8 100\n6 100\n3 50 \n", /* trailing space */
+        "3\n8  100\n6 100\n3 50\n", /* two spaces */
+        "3\n8 100\r\n6 100\n3 50\n", /* carriage return */
+        "281474976710656\n8 100\n6 100\n3 50\n", /* latest_landmark >= 2^48 */
+        "3\n281474976710656 100\n6 100\n3 50\n", /* tree size >= 2^48 */
+        "3\n8 9223372036854775808\n6 100\n3 50\n", /* expiry > INT64_MAX */
+    };
+
+    if (!TEST_ptr(ca_key = gen_cosigner_key())
+        || !TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+                         ca_key)))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(bad); i++) {
+        if (!TEST_ptr(bio = BIO_new_mem_buf(bad[i], -1)))
+            goto err;
+        if (!TEST_false(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN))) {
+            TEST_info("input %zu should have failed: %s", i, bad[i]);
+            goto err;
+        }
+        BIO_free(bio);
+        bio = NULL;
+    }
+
+    /* Every rejection left the CA with no window installed. */
+    if (!TEST_int_eq(ca_log_count(ca, 1), 0))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free(bio);
+    ossl_mtc_ca_free(ca);
+    EVP_PKEY_free(ca_key);
+    return ret;
+}
+
 /* ossl_mtc_ca_free(NULL) must be a no-op. */
 static int test_ca_free_null(void)
 {
@@ -210,6 +483,9 @@ int setup_tests(void)
     ADD_TEST(test_ca_add_cosigners);
     ADD_TEST(test_ca_add_cosigner_duplicate);
     ADD_TEST(test_ca_revoked_ranges);
+    ADD_TEST(test_ca_load_landmarks);
+    ADD_TEST(test_ca_load_landmarks_cutoff);
+    ADD_TEST(test_ca_load_landmarks_bad);
     ADD_TEST(test_ca_free_null);
     return 1;
 }
