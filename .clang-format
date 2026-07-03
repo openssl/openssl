@@ -1370,6 +1370,7 @@ StatementMacros:
   - "ASN1_SEQUENCE_END_enc"
   - "ASN1_SEQUENCE_END_name"
   - "ASN1_SEQUENCE_END_ref"
+  - "k2d_NOCTX"
   - "make_dh"
   - "make_dh_bn"
   - "static_ASN1_CHOICE_END"
