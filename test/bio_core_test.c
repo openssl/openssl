@@ -108,6 +108,38 @@ err:
     return testresult;
 }
 
+static int test_bio_vprintf_boundary(void)
+{
+    BIO *bio = NULL;
+    char *data;
+    long len;
+    int w;
+    int testresult = 0;
+
+    /*
+     * At width 512, vsnprintf() reports 512 bytes excluding the NUL,
+     * so BIO_vprintf() must use its realloc path.
+     */
+    for (w = 511; w <= 513; w++) {
+        bio = BIO_new(BIO_s_mem());
+        if (!TEST_ptr(bio))
+            goto err;
+        if (!TEST_int_eq(BIO_printf(bio, "%*d", w, 0), w))
+            goto err;
+        len = BIO_get_mem_data(bio, &data);
+        if (!TEST_long_eq(len, w)
+            || !TEST_char_eq(data[w - 1], '0')
+            || !TEST_char_eq(data[0], ' '))
+            goto err;
+        BIO_free(bio);
+        bio = NULL;
+    }
+    testresult = 1;
+err:
+    BIO_free(bio);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -116,5 +148,6 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_bio_core);
+    ADD_TEST(test_bio_vprintf_boundary);
     return 1;
 }
