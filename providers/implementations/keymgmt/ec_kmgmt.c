@@ -979,8 +979,9 @@ struct ec_gen_ctx {
     int selection;
     int ecdh_mode;
     EC_GROUP *gen_group;
-    unsigned char *dhkem_ikm;
-    size_t dhkem_ikmlen;
+    unsigned char *ikm;
+    size_t ikmlen;
+    int ikm_derivemode;
     OSSL_FIPS_IND_DECLARE
 };
 
@@ -1118,9 +1119,9 @@ static int ec_gen_set_params(void *genctx, const OSSL_PARAM params[])
     COPY_OCTET_PARAM(params, OSSL_PKEY_PARAM_EC_GENERATOR, gctx->gen,
         gctx->gen_len);
 
-    COPY_OCTET_PARAM(params, OSSL_PKEY_PARAM_DHKEM_IKM, gctx->dhkem_ikm,
-        gctx->dhkem_ikmlen);
-
+    COPY_OCTET_PARAM(params, OSSL_PKEY_PARAM_IKM, gctx->ikm,
+        gctx->ikmlen);
+    COPY_INT_PARAM(params, OSSL_PKEY_PARAM_IKM_DERIVEMODE, gctx->ikm_derivemode);
     ret = 1;
 err:
     return ret;
@@ -1219,7 +1220,8 @@ static const OSSL_PARAM *ec_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_ORDER, NULL, 0),
         OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_COFACTOR, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, NULL, 0),
-        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM, NULL, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_IKM, NULL, 0),
+        OSSL_PARAM_int(OSSL_PKEY_PARAM_IKM_DERIVEMODE, NULL),
         OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_PKEY_PARAM_FIPS_KEY_CHECK)
             OSSL_PARAM_END
     };
@@ -1304,8 +1306,8 @@ static void *ec_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /* Whether you want it or not, you get a keypair, not just one half */
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0) {
 #ifndef FIPS_MODULE
-        if (gctx->dhkem_ikm != NULL && gctx->dhkem_ikmlen != 0)
-            ret = ret && ossl_ec_generate_key_dhkem(ec, gctx->dhkem_ikm, gctx->dhkem_ikmlen);
+        if (gctx->ikm != NULL && gctx->ikmlen != 0)
+            ret = ret && ossl_ec_derive_key(ec, gctx->ikm, gctx->ikmlen, gctx->ikm_derivemode);
         else
 #endif
             ret = ret && EC_KEY_generate_key(ec);
@@ -1396,7 +1398,7 @@ static void ec_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
-    OPENSSL_clear_free(gctx->dhkem_ikm, gctx->dhkem_ikmlen);
+    OPENSSL_clear_free(gctx->ikm, gctx->ikmlen);
     EC_GROUP_free(gctx->gen_group);
     BN_free(gctx->p);
     BN_free(gctx->a);

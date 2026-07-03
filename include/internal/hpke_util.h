@@ -12,14 +12,14 @@
 #pragma once
 
 #include <stdint.h>
-
+#include <stdbool.h>
 #include <openssl/hpke.h>
 #include <openssl/types.h>
 
 /* Constants from RFC 9180 Section 7.1 and 7.3 */
 #define OSSL_HPKE_MAX_SECRET 64
-#define OSSL_HPKE_MAX_PUBLIC 133
-#define OSSL_HPKE_MAX_PRIVATE 66
+#define OSSL_HPKE_MAX_PUBLIC 133 /* Currently only used by EC DHKEM */
+#define OSSL_HPKE_MAX_PRIVATE 66 /* Currently only used by EC/ECX DHKEM */
 #define OSSL_HPKE_MAX_KDF_INPUTLEN 64
 
 /*
@@ -41,8 +41,12 @@ typedef struct {
     size_t Nsecret; /* size of secrets */
     size_t Nenc; /* length of encapsulated key */
     size_t Npk; /* length of public key */
-    size_t Nsk; /* length of raw private key */
+    size_t Nsk; /* length of private key for EC and ECX */
+    size_t derivekey_seedlen; /* length of seed for MLKEM & Hybrid MLKEM*/
     uint8_t bitmask;
+    bool auth; /* Supports authentication */
+    bool pq;
+    size_t recommended_ikmlen;
 } OSSL_HPKE_KEM_INFO;
 
 /*
@@ -97,6 +101,12 @@ int ossl_hpke_labeled_expand(EVP_KDF_CTX *kctx,
     const unsigned char *suiteid, size_t suiteidlen,
     const char *label,
     const unsigned char *info, size_t infolen);
+
+int ossl_hpke_labeled_derive_xof(uint8_t *out, size_t outlen, EVP_MD *md_xof,
+    uint16_t kemid, const char *label, const uint8_t *ikm, size_t ikmlen,
+    const uint8_t *context, size_t contextlen);
+int ossl_hpke_keypair_derive_xof(uint8_t *out, size_t outlen,
+    EVP_MD *md_xof, uint16_t kemid, const uint8_t *ikm, size_t ikmlen);
 
 EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     OSSL_LIB_CTX *libctx, const char *propq);
