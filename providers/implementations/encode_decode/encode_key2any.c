@@ -171,6 +171,8 @@ static X509_PUBKEY *key_to_pubkey(const void *key, int key_nid,
         ERR_raise(ERR_LIB_PROV, ERR_R_X509_LIB);
         X509_PUBKEY_free(xpk);
         OPENSSL_free(der);
+        /* |params| is only consumed on success */
+        free_asn1_data(params_type, params);
         xpk = NULL;
     }
 
@@ -356,8 +358,6 @@ static int key_to_spki_pem_pub_bio(BIO *out, const void *key,
 
     if (xpk != NULL)
         ret = PEM_write_bio_X509_PUBKEY(out, xpk);
-    else
-        free_asn1_data(strtype, str);
 
     /* Also frees |str| */
     X509_PUBKEY_free(xpk);
