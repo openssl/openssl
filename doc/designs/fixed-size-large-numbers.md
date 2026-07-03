@@ -11,9 +11,7 @@ Fixed size large numbers
 In this design, we explore and define how OpenSSL's `BIGNUM` library can
 be remodelled for constant-size calculations. Furthermore, we explore and
 define a fixed size large number library, which never changes the in-memory
-size of a number once it has been allocated. Finally, we define how `BIGNUM`
-functions with corresponding fixed size large number functions can be remade
-into wrappers around the latter.
+size of a number once it has been allocated.
 </p>
 
 </center>
@@ -30,10 +28,8 @@ into wrappers around the latter.
     - [The `OSSL_FN_CTX` type, without frames][]
   - [The `BIGNUM` type][]
   - [Mutability][]
-  - [Dropping `top` from `BIGNUM`][]
   - [Memory functionality for `OSSL_FN`][]
   - [Memory functionality for `OSSL_FN_CTX`][]
-  - [Wrapping an `OSSL_FN` function with a `BIGNUM` function][]
   - [Failures][]
 - [Repurposing existing code][]
 - [How to apply `OSSL_FN`][]
@@ -100,14 +96,13 @@ The included sub-goals are:
   size adjustments of the large numbers once their individual size has been
   established
 * To define that large number type and API in such a way it's compatible
-  with and can be used by the `BIGNUM` API through easy transition to the
-  new type.
+  with the `BIGNUM` type, so that a `BIGNUM` may use an `OSSL_FN` as its
+  backing storage and selected call sites may acquire an `OSSL_FN` view of
+  a `BIGNUM`.
 * To ensure that the new large number API is constant-size
 * To repurpose as much as possible of our current `BIGNUM` code for the new
   large number API, especially our assembler code (with the assumption that
   everything that doesn't change the `BIGNUM` sizes can be repurposed as is)
-* To replace the public `BIGNUM` API that has been repurposed as wrappers
-  around the new large number API
 * To replace all security critical large number calculations so that they
   are not just constant-size in themselves, but that the whole set of
   calculations remains constant-size, within OpenSSL code
@@ -147,14 +142,26 @@ separate yet castable back and forth.
 To allow a stricter or more explicit way to remedy the flexibility of the C
 language, this design therefore defines a `OSSL_FN` which is separate from
 the `BIGNUM`, yet compatible with BIGNUM insofar that the `BIGNUM` type
-wraps around the `OSSL_FN` type, and `BIGNUM` functions wrap around
-corresponding `OSSL_FN` functions when there are any.
+wraps around the `OSSL_FN` type.
 
-The idea is that a `BIGNUM` (`BN_`) function may call an `OSSL_FN` function,
-but not the other way around, i.e. when an `OSSL_FN` function is called, an
-"`OSSL_FN` only" bubble is entered, and such a function must therefore only
-in turn call other `OSSL_FN` functions for large number operations, rather
-than `BIGNUM` functions.
+The compatibility is primarily at the storage and acquisition boundary.  A
+`BIGNUM` may use an `OSSL_FN` as its backing storage, and selected internal
+crypto call sites that already receive `BIGNUM` values may acquire the
+embedded `OSSL_FN` and perform security-critical calculations with `OSSL_FN`
+functions.
+
+This does not mean that ordinary `BIGNUM` (`BN_`) operation functions are
+wrappers around corresponding `OSSL_FN` operation functions.  `BN_`
+functions retain their dynamic `BIGNUM` semantics.  Conversely, once
+execution has entered an `OSSL_FN` operation, that operation must remain
+inside the "`OSSL_FN` only" bubble and must not call functions that take
+`BIGNUM` arguments.
+
+This restriction does not apply to low-level helpers that operate only on
+`BN_ULONG` arrays or primitive limb values, such as existing `bn_` word
+functions.  `BN_ULONG` and `OSSL_FN_ULONG` are compatible, so such helpers
+may be reused by `OSSL_FN` code as long as they do not allocate, resize, or
+otherwise operate on `BIGNUM` objects.
 
 The overall design also defines new associated types to replace their
 `BIGNUM` counterparts: `OSSL_FN_CTX`, `OSSL_FN_BLINDING`, `OSSL_FN_MONT_CTX`,
@@ -175,8 +182,9 @@ The `OSSL_FN` type
 
 The `OSSL_FN` type would be a structure derived from the existing `BIGNUM`
 type, retaining a minimum amount of data.  Just as was previously with
-`BIGNUM`, the absolute value of the number is stored in a `BN_ULONG` array,
-and a flag indicates if the number is positive or negative.
+`BIGNUM`, the absolute value of the number is stored in a `BN_ULONG` array.
+`OSSL_FN` itself is unsigned; sign handling remains with `BIGNUM` when
+`BIGNUM` values are used as carriers.
 
 ```c
 typedef struct ossl_fn_st OSSL_FN;
@@ -186,10 +194,6 @@ struct ossl_fn_st {
     unsigned int is_dynamically_allocated : 1;
     /* Flag: alloced with OSSL_FN_secure_new() */
     unsigned int is_securely_allocated : 1;
-    /* Flag: the caller holds a pointer to this OSSL_FN as well as the BIGNUM that wraps it */
-    unsigned int is_acquired : 1;
-    /* Flag: the number is negative */
-    unsigned int is_negative : 1;
 
     /*
      * The d array, with its size in number of BN_ULONG.
@@ -199,11 +203,6 @@ struct ossl_fn_st {
     BN_ULONG d[];
 };
 ```
-
-To be noted is that current cryptosystems never use negative numbers, so
-it's possible that the `is_negative` flag will never be used.  Therefore, it
-is possible that it will never exist in actual implementation.  It is
-retained in this design, though, to keep that option open.
 
 The `OSSL_FN_CTX` type
 ----------------------
@@ -342,19 +341,30 @@ The `BIGNUM` type
 
 [The `BIGNUM` type]: #the-bignum-type
 
-The `BIGNUM` type is changed to include a `OSSL_FN` for its data, and other
-fields that are only of interest for `BIGNUM`s:
+The `BIGNUM` type is changed to include a `OSSL_FN` for its data, while
+retaining the fields that support the dynamic `BIGNUM` semantics:
 
 ```c
 struct bignum_st {
     OSSL_FN *data;
     /* Some of these flags are replicated in OSSL_FN, some are not */
     int flags;
+
+    BN_ULONG *d; /* Pointer to |data->d| */
+    int top; /* Index of last used d +1. */
+    int dmax; /* Copy of |data->dsize| */
+    int neg; /* One if the number is negative */
 };
 ```
 
-When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`,
-as well as to wrap an `OSSL_FN` in a `BIGNUM`:
+In normal public use, `data` is non-NULL and `d` points at `data->d`.
+Certain internal or otherwise special `BIGNUM`s may still have `data` set to
+NULL, in which case `d` points directly at a `BN_ULONG` array.  Such cases
+must not be forced to grow an `OSSL_FN` backing object solely to fit this
+structure.  How `OSSL_FN` code should use the `BN_ULONG` data from such
+`BIGNUM`s remains an implementation detail.
+
+When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`:
 
 ```c
 /*
@@ -365,49 +375,20 @@ as well as to wrap an `OSSL_FN` in a `BIGNUM`:
  */
 OSSL_FN *BN_acquire_fn(BIGNUM *a, size_t bits)
 {
-    if (a->data->is_acquired)
-        return NULL; /* only one acquisition at a time */
     if ((bn_expand(a, bits)) <= 0)
         return NULL;
-    a->data->is_acquired = 1;
+    /* Implementation may do further acquisition bookkeeping here. */
     return a->data;
 }
 void BN_release_fn(BIGNUM *a)
 {
-    a->data->is_acquired = 0;
+    /* Implementation may do further release bookkeeping here. */
 }
 ```
 
-Note that these functions are not designed to be thread-safe, nor do they
-support multiple suímultaneous acquisitions.  By design, holding pointers to
-a `BIGNUM` and its wrapped `OSSL_FN` at the same time should only happen in
-a very short term.
-
-If there's a need, it would also be possible to wrap an `OSSL_FN` with a
-`BIGNUM`:
-
-``` C
-/*
- * When wrapping an OSSL_FN in a BIGNUM, the OSSL_FN is considered acquired
- * until the caller decides to release it.
- */
-BIGNUM *BN_wrap_fn(OSSL_FN *a)
-{
-    BIGNUM *r = OPENSSL_zalloc(sizeof(BIGNUM));
-
-    if (r != NULL) {
-        r->data = a;
-        r->flags |= (a->is_dynamically_allocated ? BN_FLG_MALLOCED);
-        r->flags |= (a->is_securely_allocated ? BN_FLG_SECURE);
-        a->is_acquired = 1;
-    }
-
-    return r;
-}
-```
-
-This should be avoided, but we retain this possibility just in case its use
-is unavoidable.
+Note that these functions are not designed to be thread-safe.  By design,
+holding pointers to a `BIGNUM` and its wrapped `OSSL_FN` at the same time
+should only happen in a very short term.
 
 Mutability
 ----------
@@ -416,31 +397,18 @@ Mutability
 
 The understanding is that within a `OSSL_FN` API, `dsize` is immutable as
 soon as a `OSSL_FN` has been allocated to its target size, except for when
-the `OSSL_FN` instance is freed. However, when accessed through the `BIGNUM`
-type (i.e. by the `BIGNUM` API), the `OSSL_FN` size may be reallocated to
-allow a larger size than initially allocated, and `dsize` may be modified
-accordingly.
+the `OSSL_FN` instance is freed.
+
+When accessed through the `BIGNUM` type (i.e. by the `BIGNUM` API), the
+`OSSL_FN` size may be reallocated to allow a larger size than initially
+allocated, and `dsize` may be modified accordingly.  The exception is an
+acquired `OSSL_FN` view.  Once a caller has acquired the backing `OSSL_FN`
+from a `BIGNUM`, that backing size must be treated as immutable until
+release.  The owning `BIGNUM` must not simultaneously be used through `BN_`
+operations that could resize or otherwise reinterpret the same storage.
 
 The `OSSL_FN_CTX`  API is much more strict.  The size of an `OSSL_FN_CTX`
 instance is immutable after it has been allocated, except when it is freed.
-
-In the case where an `OSSL_FN` is "acquired" (i.e. the calling code holds a
-pointer to a `OSSL_FN` and to a `BIGNUM` that wraps it), `BIGNUM` must
-consider the `OSSL_FN` size as immutable.
-
-Dropping `top` from `BIGNUM`
-----------------------------
-
-[Dropping `top` from `BIGNUM`]: #dropping-top-from-bignum
-
-With this design, the `top` field is dropped, meaning that a `BIGNUM` will
-no longer be able to diminish its memory footprint. The reason is that the
-`OSSL_FN` functionality would need to update it, but that runs counter to
-the ideas behind the `OSSL_FN` functionality in terms of mutability.
-
-This may come at a performance cost for users calling the `BIGNUM`
-API. However, it's our judgement that this is acceptable to get better
-overall safety.
 
 Memory functionality for `OSSL_FN`
 ----------------------------------
@@ -483,62 +451,6 @@ int OSSL_FN_CTX_start(OSSL_FN_CTX *ctx);
 int OSSL_FN_CTX_end(OSSL_FN_CTX *ctx);
 ```
 
-Wrapping an `OSSL_FN` function with a `BIGNUM` function
--------------------------------------------------------
-
-[Wrapping an `OSSL_FN` function with a `BIGNUM` function]: #wrapping-an-ossl_fn-function-with-a-bignum-function
-
-This is one example of what that would look like. This assumes that there is
-a function `OSSL_FN_add()`:
-
-```c
-int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
-{
-    /*
-     * Code from the current BN_add() goes here, without the part that touches
-     * top and dmax (top doesn't exist in this design, but it does exist in
-     * current OpenSSL code)
-     */
-}
-
-int BN_add(BIGNUM *r, BIGNUM *a, BIGNUM *b)
-{
-    int ret;
-
-    if (!r->data.is_acquired) {
-        size_t max_size = a->data.dsize; /* number of sizeof(BN_ULONG) limbs */
-        BN_ULONG n = a->data->d[max_size-1];
-
-        if (b->data.dsize > max_size) {
-            max_size = b->data->dsize;
-            n = b->data->d[max_size-1];
-        }
-
-        /*
-         * If the highest limb in the biggest number is non-zero and they are
-         * both positive or both negative, it's assumed that the resulting
-         * bignum may grow by one limb.
-         */
-        if (n != 0 && a->data->is_negative == b->data->is_negative)
-            max_size++;
-
-        if ((ret = bn_expand(r, max_size * BN_BITS2)) <= 0)
-            return ret;
-    }
-
-    /*
-     * It's not necessary to "acquire" the OSSL_FNs here, because it's
-     * assumed that the call of OSSL_FN_add() enters a "OSSL_FN only" bubble.
-     */
-    ret = OSSL_FN_add(r->data, a->data, b->data);
-
-    return ret;
-}
-```
-
-*(This is not perfect and tested code, it's just an example.  Actual code
-should be more perfect, and of course, tested)*
-
 Failures
 --------
 
@@ -562,12 +474,14 @@ separately, and are already essentially operating on fixed size numbers.
 This design assumes that such functions can be repurposed for `OSSL_FN`
 functionality with zero change, apart from function name changes.
 
-Furthermore, this design assumes that the remaining functions, which do
-manipulate the size of the `BIGNUM`, or are public facing `BIGNUM`
-functions, can be rewritten in the same way as [the `BN_add()` example
-above](#wrapping-an-ossl_fn-function-with-a-bignum-function), thereby
-functionally separating the dynamic properties of `BIGNUM`s from the less
-dynamic properties of  `OSSL_FN`s.
+Furthermore, the remaining functions, which do manipulate the size of the
+`BIGNUM`, or are public facing `BIGNUM` functions, retain their current
+`BIGNUM` functionality, including size manipulation within the `BIGNUM`
+"bubble".  They are not wrapped around `OSSL_FN` functions; conversion
+between `BIGNUM` and `OSSL_FN` happens at top-level crypto call sites,
+where the embedded `OSSL_FN` is acquired and passed to `OSSL_FN`
+functions, during whose execution the `OSSL_FN` size is immutable (see
+[Mutability][]).
 
 How to apply `OSSL_FN`
 ======================
@@ -663,9 +577,7 @@ fixed number size.
 It should also prove interesting to collect timing statistics for a set of
 operations using `BIGNUM` in previous OpenSSL versions and compare them with
 similar timing statistics using `BIGNUM` when reimplemented according to this
-design.  It is *assumed* that the new statistics will show a higher degree
-of constant time, [due to `top` being dropped](#dropping-top-from-bignum),
-even though not as much as pure `OSSL_FN` operations.
+design.
 
 Appendix
 ========
