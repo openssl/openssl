@@ -81,7 +81,7 @@ IF[{- !$disabled{tests} -}]
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
           engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test \
-          merkle_tree_test mtc_cert_test
+          merkle_tree_test mtc_cert_test mtc_ca_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -203,6 +203,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[mtc_cert_test]=mtc_cert_test.c
   INCLUDE[mtc_cert_test]=../include ../apps/include
   DEPEND[mtc_cert_test]=../libcrypto.a libtestutil.a
+
+  SOURCE[mtc_ca_test]=mtc_ca_test.c
+  INCLUDE[mtc_ca_test]=../include ../apps/include
+  DEPEND[mtc_ca_test]=../libcrypto.a libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include
