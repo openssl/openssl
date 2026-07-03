@@ -721,7 +721,7 @@ static int test_hpke_grease(void)
         overallresult = 0;
     }
     /* reset to work */
-    g_pub_len = OSSL_HPKE_TSTSIZE;
+    g_pub_len = sizeof(g_pub);
     if (!TEST_true(OSSL_HPKE_get_grease_value(NULL, &g_suite,
             g_pub, &g_pub_len,
             g_cipher, g_cipher_len,
