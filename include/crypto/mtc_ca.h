@@ -58,6 +58,19 @@ typedef struct ossl_mtc_cosigner_st {
 } OSSL_MTC_COSIGNER;
 
 /**
+ * @struct ossl_mtc_serial_range_st
+ * @brief A half-open range [start, end) of revoked serial numbers (section 7.5).
+ *
+ * A serial number combines a log number and a log index
+ * (serial = (log_number << 48) | index), so a range can revoke entries within a
+ * log and whole logs alike.
+ */
+typedef struct ossl_mtc_serial_range_st {
+    uint64_t start; /**< first revoked serial (inclusive) */
+    uint64_t end; /**< first serial past the range (exclusive) */
+} OSSL_MTC_SERIAL_RANGE;
+
+/**
  * @struct ossl_mtc_ca_st
  * @brief The identity core of a trusted Merkle Tree CA (section 7.1), plus the
  * additional cosigners the relying party recognises.
@@ -81,6 +94,8 @@ typedef struct ossl_mtc_ca_st {
     CRYPTO_RWLOCK *lock; /**< guards concurrent access to the CA's mutable state */
     OSSL_MTC_COSIGNER *cosigners; /**< additional recognised cosigners (7.1) */
     size_t cosigner_count;
+    OSSL_MTC_SERIAL_RANGE *revoked; /**< revoked serial ranges (7.5) */
+    size_t revoked_count;
 } OSSL_MTC_CA;
 
 /**
@@ -125,6 +140,40 @@ void ossl_mtc_ca_free(OSSL_MTC_CA *ca);
  */
 int ossl_mtc_ca_add_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
     const char *sig_name, EVP_PKEY *pkey);
+
+/**
+ * @brief Add a revoked range of serial numbers to a CA (section 7.5).
+ *
+ * The range is half-open, [start, end); it must be non-empty.  The range
+ * [0, min_serial) is already implied by the CA and need not be added.
+ *
+ * Ranges may overlap each other and the implied [0, min_serial) range; they are
+ * neither merged nor required to be disjoint, as revocation is a membership test
+ * (a serial is revoked if it falls in any range).  The draft places no
+ * ordering or disjointness requirement on revoked ranges; revisit this
+ * should a later draft impose one.
+ *
+ * @param ca the CA to add to
+ * @param start the first revoked serial (inclusive)
+ * @param end the first serial past the range (exclusive)
+ * @returns 1 on success, 0 on error or if start >= end.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start,
+    uint64_t end);
+
+/**
+ * @brief Report whether a serial number is revoked for a CA (section 7.5).
+ *
+ * A serial is revoked if it is below the CA's min_serial (the implied
+ * [0, min_serial) range) or falls in any added revoked range.
+ *
+ * @param ca the CA
+ * @param serial the serial number to test
+ * @returns 1 if revoked, 0 otherwise.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_serial_is_revoked(const OSSL_MTC_CA *ca, uint64_t serial);
 
 /**
  * @brief Return the CA's identifier (a TrustAnchorID, i.e. relative-OID bytes).

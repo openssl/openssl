@@ -144,6 +144,59 @@ err:
     return ret;
 }
 
+/*
+ * Revoked ranges (section 7.5): the implied [0, min_serial) range applies, added
+ * half-open ranges are honoured at their boundaries, and empty/inverted ranges
+ * are rejected without changing the list.
+ */
+static int test_ca_revoked_ranges(void)
+{
+    EVP_PKEY *ca_key = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ca_key = gen_cosigner_key()))
+        goto err;
+
+    /* min_serial = 5, so serials 0..4 are revoked by implication. */
+    if (!TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 5,
+                      ca_key)))
+        goto err;
+
+    if (!TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 0), 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 4), 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 5), 0))
+        goto err;
+
+    /* Add [10, 20): 9 out, 10 and 19 in, 20 out. */
+    if (!TEST_true(ossl_mtc_ca_add_revoked_range(ca, 10, 20))
+        || !TEST_size_t_eq(ca->revoked_count, 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 9), 0)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 10), 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 19), 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 20), 0))
+        goto err;
+
+    /* A second, disjoint range is also honoured. */
+    if (!TEST_true(ossl_mtc_ca_add_revoked_range(ca, 100, 101))
+        || !TEST_size_t_eq(ca->revoked_count, 2)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 100), 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 101), 0))
+        goto err;
+
+    /* Empty and inverted ranges are rejected, list unchanged. */
+    if (!TEST_false(ossl_mtc_ca_add_revoked_range(ca, 30, 30))
+        || !TEST_false(ossl_mtc_ca_add_revoked_range(ca, 40, 30))
+        || !TEST_size_t_eq(ca->revoked_count, 2))
+        goto err;
+
+    ret = 1;
+err:
+    ossl_mtc_ca_free(ca);
+    EVP_PKEY_free(ca_key);
+    return ret;
+}
+
 /* ossl_mtc_ca_free(NULL) must be a no-op. */
 static int test_ca_free_null(void)
 {
@@ -156,6 +209,7 @@ int setup_tests(void)
     ADD_TEST(test_ca_roundtrip);
     ADD_TEST(test_ca_add_cosigners);
     ADD_TEST(test_ca_add_cosigner_duplicate);
+    ADD_TEST(test_ca_revoked_ranges);
     ADD_TEST(test_ca_free_null);
     return 1;
 }

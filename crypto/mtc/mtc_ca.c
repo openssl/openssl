@@ -66,6 +66,7 @@ void ossl_mtc_ca_free(OSSL_MTC_CA *ca)
         EVP_PKEY_free(ca->cosigners[i].pkey);
     }
     OPENSSL_free(ca->cosigners);
+    OPENSSL_free(ca->revoked);
     OPENSSL_free(ca->ca_id);
     EVP_MD_free(ca->hash);
     EVP_PKEY_free(ca->cosigner_pkey);
@@ -125,6 +126,56 @@ out:
     OPENSSL_free(sig_copy);
     CRYPTO_THREAD_unlock(ca->lock);
     return ret;
+}
+
+int ossl_mtc_ca_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end)
+{
+    OSSL_MTC_SERIAL_RANGE *tmp;
+    int ret = 0;
+
+    if (start >= end) /* the half-open range must be non-empty */
+        return 0;
+
+    if (!CRYPTO_THREAD_write_lock(ca->lock))
+        return 0;
+
+    tmp = OPENSSL_realloc_array(ca->revoked, ca->revoked_count + 1,
+        sizeof(*ca->revoked));
+    if (tmp == NULL)
+        goto out;
+    ca->revoked = tmp;
+
+    ca->revoked[ca->revoked_count].start = start;
+    ca->revoked[ca->revoked_count].end = end;
+    ca->revoked_count++;
+    ret = 1;
+out:
+    CRYPTO_THREAD_unlock(ca->lock);
+    return ret;
+}
+
+int ossl_mtc_ca_serial_is_revoked(const OSSL_MTC_CA *ca, uint64_t serial)
+{
+    size_t i;
+    int revoked = 0;
+
+    /* If the lock cannot be taken, fail closed by reporting revoked. */
+    if (!CRYPTO_THREAD_read_lock(ca->lock))
+        return 1;
+
+    if (serial < ca->min_serial) { /* implied revoked range [0, min_serial) */
+        revoked = 1;
+    } else {
+        for (i = 0; i < ca->revoked_count; i++) {
+            if (serial >= ca->revoked[i].start && serial < ca->revoked[i].end) {
+                revoked = 1;
+                break;
+            }
+        }
+    }
+
+    CRYPTO_THREAD_unlock(ca->lock);
+    return revoked;
 }
 
 const uint8_t *ossl_mtc_ca_id(const OSSL_MTC_CA *ca, size_t *len)
