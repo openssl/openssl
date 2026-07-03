@@ -408,7 +408,7 @@ static int test_construct_ch_hrr(void)
 
 /* DTLS happy-path / cookie / random-reuse tests */
 
-#ifndef OPENSSL_NO_DTLS
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_DTLS1_2)
 static int test_construct_ch_dtls(void)
 {
     CH_CONFIG cfg = { 1, 0, 0, 0 };
@@ -715,7 +715,7 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_CACHED_FETCH */
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
-#ifndef OPENSSL_NO_DTLS
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_DTLS1_2)
     ADD_TEST(test_construct_ch_dtls);
     ADD_TEST(test_construct_ch_dtls_cookie);
     ADD_TEST(test_construct_ch_dtls_client_random);
