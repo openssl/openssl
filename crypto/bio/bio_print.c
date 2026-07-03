@@ -111,7 +111,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
      */
     sz = vsnprintf(buf, sizeof(buf), format, args);
     if (sz >= 0) {
-        if ((size_t)sz > sizeof(buf)) {
+        if ((size_t)sz >= sizeof(buf)) {
             sz += 1;
             abuf = (char *)OPENSSL_malloc(sz);
             if (abuf == NULL) {
