@@ -353,8 +353,19 @@ inner_loader_fetch(struct loader_data_st *methdata,
              */
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, scheme);
-            ossl_method_store_cache_set(store, prov, id, propq, method,
-                up_ref_loader, free_loader);
+            if (id != 0 && methdata->tmp_store == NULL) {
+                ossl_method_store_cache_set(store, prov, id, propq, method,
+                    up_ref_loader, free_loader);
+            } else {
+                /*
+                 * Like with EVP methods, if the provider requests no caching we need
+                 * to take an extra refcount here so that the tmp_stored loader
+                 * lives beyond the freeing of that tmp_store
+                 */
+#ifndef OPENSSL_NO_CACHED_FETCH
+                OSSL_STORE_LOADER_up_ref((OSSL_STORE_LOADER *)method);
+#endif
+            }
         }
 
         /*

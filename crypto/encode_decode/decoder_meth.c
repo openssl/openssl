@@ -406,9 +406,19 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
              */
             if (id == 0 && name != NULL)
                 id = ossl_namemap_name2num(namemap, name);
-            if (id != 0)
+            if (id != 0 && methdata->tmp_store == NULL) {
                 ossl_method_store_cache_set(store, prov, id, propq, method,
                     ossl_decoder_up_ref, ossl_decoder_free);
+            } else {
+                /*
+                 * Like with EVP methods, if the provider requests no caching we need
+                 * to take an extra refcount here so that the tmp_stored decoder
+                 * lives beyond the freeing of that tmp_store
+                 */
+#ifndef OPENSSL_NO_CACHED_FETCH
+                OSSL_DECODER_up_ref((OSSL_DECODER *)method);
+#endif
+            }
         }
 
         /*
