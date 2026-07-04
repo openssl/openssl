@@ -111,7 +111,7 @@ static const uint64_t iotas[] = {
 /*
  * This is straightforward or "maximum clarity" implementation aiming
  * to resemble section 3.2 of the FIPS PUB 202 "SHA-3 Standard:
- * Permutation-Based Hash and Extendible-Output Functions" as much as
+ * Permutation-Based Hash and Extendable-Output Functions" as much as
  * possible. With one caveat. Because of the way C stores matrices,
  * references to A[x,y] in the specification are presented as A[y][x].
  * Implementation unrolls inner x-loops so that modulo 5 operations are

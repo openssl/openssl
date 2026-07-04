@@ -424,7 +424,7 @@ This should be called for a packet before attempting to process its contents.
 Failure to do so may may result in processing a duplicated packet in violation
 of the RFC.
 
-The returrn value of this function transitions from 1 to 0 for a given PN once
+The return value of this function transitions from 1 to 0 for a given PN once
 that PN is passed to ossl_ackm_on_rx_packet, thus this function must be used
 before calling `ossl_ackm_on_rx_packet`.
 

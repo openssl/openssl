@@ -1134,7 +1134,7 @@ static int provider_init(OSSL_PROVIDER *prov)
         prov->error_strings[0].error = ERR_PACK(prov->error_lib, 0, 0);
         prov->error_strings[0].string = prov->name;
         /*
-         * Copy reasonstrings item 0..cnt-1 to prov->error_trings positions
+         * Copy reasonstrings item 0..cnt-1 to prov->error_strings positions
          * 1..cnt.
          */
         for (cnt2 = 1; cnt2 <= cnt; cnt2++) {

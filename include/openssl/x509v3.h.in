@@ -933,7 +933,7 @@ DECLARE_ASN1_FUNCTIONS(IPAddressChoice)
 DECLARE_ASN1_FUNCTIONS(IPAddressFamily)
 
 /*
- * API tag for elements of the ASIdentifer SEQUENCE.
+ * API tag for elements of the ASIdentifier SEQUENCE.
  */
 #define V3_ASID_ASNUM 0
 #define V3_ASID_RDI 1

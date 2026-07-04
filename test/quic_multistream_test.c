@@ -4559,7 +4559,7 @@ static int script_68_inject_handshake(struct helper *h, unsigned char *msg,
     return 1;
 }
 
-/* Send a CerticateRequest message post-handshake */
+/* Send a CertificateRequest message post-handshake */
 static const struct script_op script_68[] = {
     OP_S_SET_INJECT_HANDSHAKE(script_68_inject_handshake),
     OP_C_SET_ALPN("ossltest"),
