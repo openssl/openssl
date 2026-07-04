@@ -8,10 +8,11 @@
  */
 
 /*
- * Direct tests for tls_construct_client_hello(): prime a client SSL_CONNECTION
- * enough to call the construct function without a full handshake, then check
- * the result structurally and by round-tripping it through the server parser.
- * OOM branches are covered with mfail tests.
+ * Direct tests for the client state-machine construct functions in
+ * statem_clnt.c: prime a client SSL_CONNECTION enough to call a construct
+ * function without a full handshake, then check the result structurally and,
+ * where useful, by round-tripping it through the server parser.  OOM branches
+ * are covered with mfail tests.
  */
 
 #include <openssl/ssl.h>
@@ -41,8 +42,8 @@
 #endif
 
 /*
- * Helpers down to prime_ssl() are generic and reusable by tests for any
- * statem_clnt construct function; the ClientHello-specific code follows.
+ * Helpers down to finish_msg() are generic and reusable by tests for any
+ * statem_clnt construct function; the per-message code follows.
  */
 
 /* Connection configuration shared by the construct tests. */
@@ -743,6 +744,301 @@ static int test_construct_eoed_bad_state(void)
 }
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
+/*
+ * ===========================================================================
+ * tls_construct_client_certificate
+ * ===========================================================================
+ */
+
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+/* Self-signed client cert + signing-capable key; regenerate with the
+ * statem_clnt_construct_test ossl-test-tools subcommand. */
+static const char *kClientCert[] = {
+    "-----BEGIN CERTIFICATE-----\n",
+    "MIIDvzCCAqegAwIBAgICAQAwDQYJKoZIhvcNAQELBQAwgYExCzAJBgNVBAYTAlVT\n",
+    "MRAwDgYDVQQIDAdXeW9taW5nMREwDwYDVQQHDAhDaGV5ZW5uZTEVMBMGA1UECgwM\n",
+    "T3BlblNTTCBUZXN0MRQwEgYDVQQLDAtzdGF0ZW1fY2xudDEgMB4GA1UEAwwXc3Rh\n",
+    "dGVtX2NsbnQgdGVzdCBjbGllbnQwHhcNMjYwMTAxMDAwMDAwWhcNNDYwMTAxMDAw\n",
+    "MDAwWjCBgTELMAkGA1UEBhMCVVMxEDAOBgNVBAgMB1d5b21pbmcxETAPBgNVBAcM\n",
+    "CENoZXllbm5lMRUwEwYDVQQKDAxPcGVuU1NMIFRlc3QxFDASBgNVBAsMC3N0YXRl\n",
+    "bV9jbG50MSAwHgYDVQQDDBdzdGF0ZW1fY2xudCB0ZXN0IGNsaWVudDCCASIwDQYJ\n",
+    "KoZIhvcNAQEBBQADggEPADCCAQoCggEBAMnUvJvluB2ZUoQNQlW4wgv0qceITB5X\n",
+    "cHQe60H1CMTapaRi32dpwEzoEMnMjULcrZshcTAkdke6J1ubJ6qviGp7n1kVYH18\n",
+    "rGYYk6VT+GPb/SZnjMX3+e5WEpH+53UEGVvBPHl/med0AzklOOf/0hDlMFzMBejA\n",
+    "z+T++88QIT19BoIwfilcMDZxE0uXbq3QLpugADGd93zLSCwM1vxd9Vi0EwyMpy7Q\n",
+    "Ot9eIR/+ML0HESXZ1AvVcLjvuhqm+xkNiR9qil68zqgJk+dUpK5hCpLBi7cfBpk7\n",
+    "jLultF09up6G3Y5KiXd8wS9upwJZXA9+9OKHTf05w4xWAA/kpp9gt0MCAwEAAaM/\n",
+    "MD0wDAYDVR0TAQH/BAIwADAOBgNVHQ8BAf8EBAMCB4AwHQYDVR0OBBYEFM9Nespo\n",
+    "NSyfQO8jPjRl4JfH5kOsMA0GCSqGSIb3DQEBCwUAA4IBAQBtTgy5ePCHR+iu3Ign\n",
+    "wlJzL5+zkWOkQsbAzJsbWrvzqwx2shXr1adM7OJy7tCkmDgwHsXjTTO2qAZrlmYQ\n",
+    "ktGA/UAtttIqgiiYcyGdrZas2vXUWLUps5YzMm4YdY8YNTvqQl3LCziUhO5YREDP\n",
+    "teXy4FF6ijGUDe84CYsmKvtbIn34LtZ2Vo3gsiRHvdiaxHavH30UqED9k4NjKnFx\n",
+    "XM6eMw+bs0Yl1vi/Dz5tHPRaAnsGvnKcEveSAdAoSWmodw8n8W5t8ZvPoPCoKz88\n",
+    "DOGzUvLma/kVL+3HLiSn6XFiQ2NLfO9ceUgDsSzcRo76XZHJnfGsK6Iewgje3NrB\n",
+    "WnZs\n",
+    "-----END CERTIFICATE-----\n",
+    NULL
+};
+
+static const char *kClientKey[] = {
+    "-----BEGIN RSA PRIVATE KEY-----\n",
+    "MIIEowIBAAKCAQEAydS8m+W4HZlShA1CVbjCC/Spx4hMHldwdB7rQfUIxNqlpGLf\n",
+    "Z2nATOgQycyNQtytmyFxMCR2R7onW5snqq+IanufWRVgfXysZhiTpVP4Y9v9JmeM\n",
+    "xff57lYSkf7ndQQZW8E8eX+Z53QDOSU45//SEOUwXMwF6MDP5P77zxAhPX0GgjB+\n",
+    "KVwwNnETS5durdAum6AAMZ33fMtILAzW/F31WLQTDIynLtA6314hH/4wvQcRJdnU\n",
+    "C9VwuO+6Gqb7GQ2JH2qKXrzOqAmT51SkrmEKksGLtx8GmTuMu6W0XT26nobdjkqJ\n",
+    "d3zBL26nAllcD3704odN/TnDjFYAD+Smn2C3QwIDAQABAoIBAGAjkzIJczG6MmmP\n",
+    "bU0q5FfQk7zlaii7yuetQK/a2fH3GpbauALpBz46/qA5bQJv3sw52lIt1B+nhw7m\n",
+    "MbdmxKrANy+2dI9hvzckttO2U2exxvyvr4kvbWB/pHnhu3vsV23y9m0DgJqVEuH6\n",
+    "Hoi4PWZp3aceUiRED+NLKERCMSs5lPSSWR7sUkzHku4x5fZXZppcQW4leo+Z/kNC\n",
+    "I36CGF4pI9FJXwcuRhbv3NsFMVl/Ng4hWgzgu7zwJEPw2OSKyhdwHV53qGQWyMnJ\n",
+    "7SawyQfyspKlMZnjWxplFZ5tgaV6O63zZZPEOC2mZNeiZKWC9Lut/wyriLs+W4w7\n",
+    "9BBX3q0CgYEA94sgemr3rGY2R+9kiPV/TC08IUflMJ7kt0epDDRnojWqobinJzQG\n",
+    "Nq25i5vZHbjn9g7l2hNmOcHVZZmCYZitmjwWr4ibthftU7+H6WkvcBvH6b6EmHQm\n",
+    "5IGtOxYPmtf2Ghnj1uQmsBe9vRYcqx7B8/anqRi3lQhebykkII0MLR8CgYEA0LnV\n",
+    "vXaFAwLOta4Kn43mXC6sVRRMt316d70zRpVRsSQ64TdhtwArmKq3RUmLH2r3ysRL\n",
+    "6+mxEGJriL7JERH3Jlm0YGsUUQvQWxCddccuTQRc16+UVt7+xzfhzJZNTD4+t0aA\n",
+    "jsVLpPQHzXI8Yqzh1p83oC4XV4hCYZNLlfleTV0CgYBWIG/yZ9k4gG+OY7pk9JWP\n",
+    "2YU8Rxl06zPEmQg2GN2d0HJHxklSGIW47ITMEDNgZf8+2zwZvfopSkmHCfwVHNv5\n",
+    "98Ik3LDgkD6gjtko2tIIfYH2z7SunmsRwhSVpD1VsKINvshI8iSLzBbV/SWIXDE7\n",
+    "Qqxe5xyom7rPjk7ljG2aHQKBgB36oxV8YWxmSdRUdBgopG6XEY+Cw+YS8rUiCqxX\n",
+    "pA0iXAafErzbHGfoFTyxbHcNwRtxiEoRHapxyGoypOR7xRjQB5VVq+xcGwgJYeRZ\n",
+    "wG+1cbRU9qRnkQaCIz9kUyPhSNbAHJTlB5Fgr4I1pzCxDhrqcW3jUNz0qDwlkNSw\n",
+    "pXfNAoGBAKlFbbPEzFonlkHVtdUuk6Chsi5k/ddrWsGxwUw5F5BSu0UaseolVls5\n",
+    "TyDVa8FEfDnUZRxl8HSfC/Qp/kAdveGKyhNaex22L5G8m20rXjsQBMFHMOy2Mho1\n",
+    "hgs0/emKuVyCs+wnYOqJlWZ8Vf/qGcUtDF3r4aEZ1JUDhUBAVEpo\n",
+    "-----END RSA PRIVATE KEY-----\n",
+    NULL
+};
+
+static int load_cert_and_key(SSL *ssl)
+{
+    X509 *cert = NULL;
+    EVP_PKEY *pkey = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cert = X509_from_strings(kClientCert))
+        || !TEST_ptr(pkey = PKEY_from_strings(kClientKey))
+        || !TEST_int_eq(SSL_use_certificate(ssl, cert), 1)
+        || !TEST_int_eq(SSL_use_PrivateKey(ssl, pkey), 1))
+        goto err;
+    ret = 1;
+err:
+    X509_free(cert);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/*
+ * Run tls_construct_client_certificate() under mfail; prep installs the cert
+ * material.  For TLS 1.3 the method is swapped in (IS_TLS13 keys off it) and
+ * middlebox compat cleared to skip the write-key change.
+ */
+static int mfail_construct_cert(int is_tls13, int (*prep)(SSL_CONNECTION *s))
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int ok = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx)))
+        goto err;
+    if (is_tls13)
+        SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CERTIFICATE))
+        goto err;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    if (is_tls13)
+        ssl->method = tlsv1_3_client_method();
+#endif
+
+    if (prep != NULL && !prep(s)) {
+        WPACKET_cleanup(&pkt);
+        goto err;
+    }
+
+    MFAIL_start();
+    ok = (tls_construct_client_certificate(s, &pkt) == CON_FUNC_SUCCESS);
+    MFAIL_end();
+
+    WPACKET_cleanup(&pkt);
+
+    ret = ok ? 1 : 0;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+#endif /* TLS 1.2 or usable TLS 1.3 */
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/* x509 over TLS 1.3; NO_AUTO_CHAIN avoids best-effort verify swallowing OOM. */
+static int prep_cert_x509(SSL_CONNECTION *s)
+{
+    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+
+    SSL_set_mode(ssl, SSL_MODE_NO_AUTO_CHAIN);
+    return load_cert_and_key(ssl);
+}
+
+static int mfail_construct_cert_x509(void)
+{
+    return mfail_construct_cert(1, prep_cert_x509);
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
+#ifndef OPENSSL_NO_TLS1_2
+/* RPK derived from the certificate public key over TLS 1.2 (tls_output_rpk). */
+static int prep_cert_rpk(SSL_CONNECTION *s)
+{
+    if (!load_cert_and_key(SSL_CONNECTION_GET_SSL(s)))
+        return 0;
+    s->ext.client_cert_type = TLSEXT_cert_type_rpk;
+    return 1;
+}
+
+static int mfail_construct_cert_rpk(void)
+{
+    return mfail_construct_cert(0, prep_cert_rpk);
+}
+#endif /* OPENSSL_NO_TLS1_2 */
+
+/* Deterministic error branches that mfail (allocation-only) cannot reach. */
+
+/* An unrecognized certificate type is rejected. */
+static int test_construct_cert_bad_type(void)
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CERTIFICATE))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    s->ext.client_cert_type = 0xff;
+
+    if (!TEST_int_eq(tls_construct_client_certificate(s, &pkt), CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * With middlebox compat on, the TLS 1.3 path changes the write keys; without a
+ * negotiated cipher that fails rather than succeeding.
+ */
+static int test_construct_cert_change_cipher_fail(void)
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CERTIFICATE))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    ssl->method = tlsv1_3_client_method();
+
+    if (!TEST_int_eq(tls_construct_client_certificate(s, &pkt), CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+/*
+ * A WPACKET failure while writing the TLS 1.3 certificate_request_context
+ * yields CON_FUNC_ERROR.  with_pha exercises the non-empty-context branch.
+ */
+static int do_construct_cert_ctx_small_buf(int with_pha)
+{
+    CH_CONFIG cfg = { 0, 0, 0, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    unsigned char buf[16];
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx)))
+        goto err;
+    SSL_set_connect_state(ssl);
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    if (!TEST_ptr(s)
+        || !TEST_ptr(s->init_buf = BUF_MEM_new())
+        || !TEST_true(BUF_MEM_grow(s->init_buf, SSL3_RT_MAX_PLAIN_LENGTH))
+        || !TEST_true(tls_setup_handshake(s)))
+        goto err;
+    ssl->method = tlsv1_3_client_method();
+
+    if (with_pha) {
+        if (!TEST_ptr(s->pha_context = OPENSSL_malloc(4)))
+            goto err;
+        s->pha_context_len = 4;
+    }
+
+    /* Only the handshake header fits, so the context write overflows. */
+    if (!TEST_true(WPACKET_init_static_len(&pkt, buf, hdr_len(&cfg), 0)))
+        goto err;
+    have_pkt = 1;
+    if (!TEST_true(ssl_set_handshake_header(s, &pkt, SSL3_MT_CERTIFICATE)))
+        goto err;
+
+    if (!TEST_int_eq(tls_construct_client_certificate(s, &pkt), CON_FUNC_ERROR))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+static int test_construct_cert_ctx_small_buf(void)
+{
+    return do_construct_cert_ctx_small_buf(0);
+}
+
+static int test_construct_cert_pha_ctx_small_buf(void)
+{
+    return do_construct_cert_ctx_small_buf(1);
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
 int setup_tests(void)
 {
     ADD_TEST(test_construct_ch_small_buf);
@@ -787,5 +1083,19 @@ int setup_tests(void)
 #endif
     ADD_MFAIL_TEST(mfail_construct_ch_ech);
 #endif /* OSSL_NO_USABLE_ECH */
+
+    /* tls_construct_client_certificate: OOM coverage of the output functions. */
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_MFAIL_TEST(mfail_construct_cert_x509);
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_MFAIL_TEST(mfail_construct_cert_rpk);
+#endif
+    ADD_TEST(test_construct_cert_bad_type);
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_TEST(test_construct_cert_change_cipher_fail);
+    ADD_TEST(test_construct_cert_ctx_small_buf);
+    ADD_TEST(test_construct_cert_pha_ctx_small_buf);
+#endif
     return 1;
 }
