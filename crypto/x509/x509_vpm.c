@@ -35,7 +35,7 @@ static X509_BUFFER *buffer_from_bytes(const uint8_t *bytes, size_t length)
 {
     X509_BUFFER *buf;
 
-    if ((buf = OPENSSL_zalloc(sizeof *buf)) != NULL
+    if ((buf = OPENSSL_zalloc(sizeof(*buf))) != NULL
         && (buf->data = OPENSSL_memdup(bytes, length)) != NULL) {
         buf->len = length;
     } else {
@@ -56,7 +56,7 @@ static X509_BUFFER *buffer_from_string(const uint8_t *bytes, size_t length)
     X509_BUFFER *buf, *ret = NULL;
     uint8_t *data = NULL;
 
-    if ((buf = OPENSSL_zalloc(sizeof *buf)) == NULL)
+    if ((buf = OPENSSL_zalloc(sizeof(*buf))) == NULL)
         goto err;
 
     if ((data = (uint8_t *)OPENSSL_strndup((char *)bytes, length)) == NULL)

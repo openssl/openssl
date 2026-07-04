@@ -385,10 +385,10 @@ static int pkcs7_inner_content_verify_test(void)
         0x2D, 0x6F, 0x81
     };
 
-    if (!TEST_ptr(bio = BIO_new_mem_buf(sig_der, sizeof sig_der)))
+    if (!TEST_ptr(bio = BIO_new_mem_buf(sig_der, sizeof(sig_der))))
         goto end;
 
-    ret = TEST_ptr(x509_bio = BIO_new_mem_buf(smroot_der, sizeof smroot_der))
+    ret = TEST_ptr(x509_bio = BIO_new_mem_buf(smroot_der, sizeof(smroot_der)))
         && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
         && TEST_int_eq(ERR_peek_error(), 0)
         && TEST_ptr(store = X509_STORE_new())
