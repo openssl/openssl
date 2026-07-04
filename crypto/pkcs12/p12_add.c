@@ -219,6 +219,6 @@ STACK_OF(PKCS7) *PKCS12_unpack_authsafes(const PKCS12 *p12)
     }
     return p7s;
 err:
-    sk_PKCS7_free(p7s);
+    sk_PKCS7_pop_free(p7s, PKCS7_free);
     return NULL;
 }
