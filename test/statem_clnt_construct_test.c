@@ -88,10 +88,11 @@ static SSL_CTX *new_ctx(const CH_CONFIG *cfg, const SSL_METHOD *meth)
 /*
  * Set up the init_buf and handshake state the write state machine would have
  * established before calling a construct function.  For the client a WPACKET
- * with the handshake header is emitted into init_buf.  initbuf_len of 0 means
- * full size; a small value exercises WPACKET failures.
+ * with the handshake header for message type mt is emitted into init_buf.
+ * initbuf_len of 0 means full size; a small value exercises WPACKET failures.
  */
-static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt)
+static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt,
+    int mt)
 {
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -115,10 +116,24 @@ static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt)
 
     if (pkt != NULL
         && (!TEST_true(WPACKET_init(pkt, s->init_buf))
-            || !TEST_true(ssl_set_handshake_header(s, pkt,
-                SSL3_MT_CLIENT_HELLO))))
+            || !TEST_true(ssl_set_handshake_header(s, pkt, mt))))
         return 0;
 
+    return 1;
+}
+
+/* Finalize a constructed message and return its bytes (header + body). */
+static int finish_msg(SSL *ssl, WPACKET *pkt, int mt, unsigned char **msg,
+    size_t *msglen)
+{
+    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (!TEST_true(ssl_close_construct_packet(s, pkt, mt))
+        || !TEST_true(WPACKET_get_total_written(pkt, msglen))
+        || !TEST_true(WPACKET_finish(pkt)))
+        return 0;
+
+    *msg = (unsigned char *)s->init_buf->data;
     return 1;
 }
 
@@ -127,21 +142,6 @@ static int prime_ssl(SSL *ssl, int is_client, size_t initbuf_len, WPACKET *pkt)
  * tls_construct_client_hello
  * ===========================================================================
  */
-
-/* Finalize the constructed message and return its bytes (header + body). */
-static int finish_ch(SSL *ssl, WPACKET *pkt, unsigned char **msg,
-    size_t *msglen)
-{
-    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
-
-    if (!TEST_true(ssl_close_construct_packet(s, pkt, SSL3_MT_CLIENT_HELLO))
-        || !TEST_true(WPACKET_get_total_written(pkt, msglen))
-        || !TEST_true(WPACKET_finish(pkt)))
-        return 0;
-
-    *msg = (unsigned char *)s->init_buf->data;
-    return 1;
-}
 
 /* Recover the session_id length, the main branching difference in construct. */
 static int get_ch_sessid_len(const CH_CONFIG *cfg, const unsigned char *msg,
@@ -190,7 +190,7 @@ static int roundtrip_process_ch(const CH_CONFIG *cfg, const unsigned char *msg,
         || !TEST_ptr(ssl = SSL_new(sctx)))
         goto err;
 
-    if (!prime_ssl(ssl, 0, 0, NULL))
+    if (!prime_ssl(ssl, 0, 0, NULL, SSL3_MT_CLIENT_HELLO))
         goto err;
     s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -233,7 +233,7 @@ static int do_construct_ch(const CH_CONFIG *cfg,
     if (cfg->clear_midbox)
         SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
 
-    if (!prime_ssl(ssl, 1, 0, &pkt))
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -246,7 +246,7 @@ static int do_construct_ch(const CH_CONFIG *cfg,
         WPACKET_cleanup(&pkt);
         goto err;
     }
-    if (!finish_ch(ssl, &pkt, &msg, &msglen))
+    if (!finish_msg(ssl, &pkt, SSL3_MT_CLIENT_HELLO, &msg, &msglen))
         goto err;
 
     if (!get_ch_sessid_len(cfg, msg, msglen, &sidlen)
@@ -294,7 +294,7 @@ static int do_construct_ch_expect_fail(const CH_CONFIG *cfg,
         (void)r2;
     }
 
-    if (!prime_ssl(ssl, 1, initbuf_len, &pkt))
+    if (!prime_ssl(ssl, 1, initbuf_len, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     have_pkt = 1;
     s = SSL_CONNECTION_FROM_SSL(ssl);
@@ -534,7 +534,7 @@ static int mfail_construct_ch_common(const CH_CONFIG *cfg,
     if (cfg->clear_midbox)
         SSL_clear_options(ssl, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
 
-    if (!prime_ssl(ssl, 1, 0, &pkt))
+    if (!prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     s = SSL_CONNECTION_FROM_SSL(ssl);
 
@@ -625,14 +625,14 @@ static int test_construct_ch_ech(void)
     if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
         || !TEST_ptr(cssl = SSL_new(cctx))
         || !TEST_true(SSL_set1_echstore(cssl, es))
-        || !prime_ssl(cssl, 1, 0, &pkt))
+        || !prime_ssl(cssl, 1, 0, &pkt, SSL3_MT_CLIENT_HELLO))
         goto err;
     cs = SSL_CONNECTION_FROM_SSL(cssl);
     if (!TEST_int_eq(tls_construct_client_hello(cs, &pkt), CON_FUNC_SUCCESS)) {
         WPACKET_cleanup(&pkt);
         goto err;
     }
-    if (!finish_ch(cssl, &pkt, &msg, &msglen)
+    if (!finish_msg(cssl, &pkt, SSL3_MT_CLIENT_HELLO, &msg, &msglen)
         || !get_ch_sessid_len(&cfg, msg, msglen, &sidlen)
         || !TEST_size_t_eq(sidlen, SSL_MAX_SSL_SESSION_ID_LENGTH))
         goto err;
@@ -641,7 +641,7 @@ static int test_construct_ch_ech(void)
     if (!TEST_ptr(sctx = new_ctx(&cfg, server_method(&cfg)))
         || !TEST_ptr(sssl = SSL_new(sctx))
         || !TEST_true(SSL_set1_echstore(sssl, es))
-        || !prime_ssl(sssl, 0, 0, NULL))
+        || !prime_ssl(sssl, 0, 0, NULL, SSL3_MT_CLIENT_HELLO))
         goto err;
     ss = SSL_CONNECTION_FROM_SSL(sssl);
     if (!TEST_true(PACKET_buf_init(&rpkt, msg + hdr_len(&cfg),
