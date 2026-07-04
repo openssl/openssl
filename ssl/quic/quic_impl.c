@@ -5588,7 +5588,6 @@ long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
             &ctx.qc->obj.ssl);
         /* This callback also needs to be set on the internal SSL object */
         return ssl3_callback_ctrl(ctx.qc->tls, cmd, fp);
-        ;
 
     default:
         /* Probably a TLS related ctrl. Defer to our internal SSL object */
