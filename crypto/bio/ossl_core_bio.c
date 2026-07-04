@@ -42,13 +42,10 @@ int ossl_core_bio_free(OSSL_CORE_BIO *cb)
 {
     int ref = 0, res = 1;
 
-    if (cb != NULL) {
-        CRYPTO_DOWN_REF(&cb->ref_cnt, &ref);
-        if (ref <= 0) {
-            res = BIO_free(cb->bio);
-            CRYPTO_FREE_REF(&cb->ref_cnt);
-            OPENSSL_free(cb);
-        }
+    if (cb != NULL && CRYPTO_DOWN_REF(&cb->ref_cnt, &ref) && ref <= 0) {
+        res = BIO_free(cb->bio);
+        CRYPTO_FREE_REF(&cb->ref_cnt);
+        OPENSSL_free(cb);
     }
     return res;
 }

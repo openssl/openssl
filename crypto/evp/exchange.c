@@ -24,10 +24,7 @@ static void evp_keyexch_free(void *data)
     EVP_KEYEXCH *exchange = (EVP_KEYEXCH *)data;
     int i;
 
-    if (exchange == NULL)
-        return;
-    CRYPTO_DOWN_REF(&exchange->refcnt, &i);
-    if (i > 0)
+    if (exchange == NULL || !CRYPTO_DOWN_REF(&exchange->refcnt, &i) || i > 0)
         return;
     OPENSSL_free(exchange->type_name);
     ossl_provider_free(exchange->prov);

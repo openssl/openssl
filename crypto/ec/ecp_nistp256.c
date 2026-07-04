@@ -1861,10 +1861,9 @@ void EC_nistp256_pre_comp_free(NISTP256_PRE_COMP *pre)
 {
     int i;
 
-    if (pre == NULL)
+    if (pre == NULL || !CRYPTO_DOWN_REF(&pre->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&pre->references, &i);
     REF_PRINT_COUNT("EC_nistp256", i, pre);
     if (i > 0)
         return;

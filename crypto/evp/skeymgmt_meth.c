@@ -144,11 +144,8 @@ static void evp_skeymgmt_free(void *s)
     EVP_SKEYMGMT *skeymgmt = (EVP_SKEYMGMT *)s;
     int ref = 0;
 
-    if (skeymgmt == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&skeymgmt->refcnt, &ref);
-    if (ref > 0)
+    if (skeymgmt == NULL || !CRYPTO_DOWN_REF(&skeymgmt->refcnt, &ref)
+        || ref > 0)
         return;
     OPENSSL_free(skeymgmt->type_name);
     ossl_provider_free(skeymgmt->prov);

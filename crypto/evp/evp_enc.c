@@ -1355,11 +1355,8 @@ static void evp_cipher_free(void *c)
     EVP_CIPHER *cipher = (EVP_CIPHER *)c;
     int i;
 
-    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
-        return;
-
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC
+        || !CRYPTO_DOWN_REF(&cipher->refcnt, &i) || i > 0)
         return;
     evp_cipher_free_int(cipher);
 }

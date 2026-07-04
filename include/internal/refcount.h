@@ -14,6 +14,8 @@
 #include <openssl/trace.h>
 #include <openssl/err.h>
 
+#include <stdbool.h>
+
 #if defined(OPENSSL_THREADS) && !defined(OPENSSL_DEV_NO_ATOMICS)
 #if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L \
     && !defined(__STDC_NO_ATOMICS__)
@@ -52,7 +54,7 @@ static inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
  * to mutable members doesn't have to be serialized anymore, which would
  * otherwise imply an acquire fence. Hence conditional acquire fence...
  */
-static inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+static inline bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
 #ifdef OSSL_TSAN_BUILD
     /*
@@ -65,7 +67,7 @@ static inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     if (*ret == 0)
         atomic_thread_fence(memory_order_acquire);
 #endif
-    return 1;
+    return true;
 }
 
 static inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
@@ -88,12 +90,12 @@ static __inline__ int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-static __inline__ int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+static __inline__ bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = __atomic_fetch_sub(&refcnt->val, 1, __ATOMIC_RELEASE) - 1;
     if (*ret == 0)
         __atomic_thread_fence(__ATOMIC_ACQUIRE);
-    return 1;
+    return true;
 }
 
 static __inline__ int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
@@ -115,10 +117,10 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+static __inline bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = _InterlockedExchangeAdd((void *)&refcnt->val, -1) - 1;
-    return 1;
+    return true;
 }
 
 static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
@@ -147,10 +149,10 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+static __inline bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = _InterlockedExchangeAdd(&refcnt->val, -1) - 1;
-    return 1;
+    return true;
 }
 
 static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
@@ -168,10 +170,10 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
-static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+static __inline bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = _InterlockedExchangeAdd(&refcnt->val, -1) - 1;
-    return 1;
+    return true;
 }
 
 static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
@@ -207,7 +209,7 @@ static ossl_unused ossl_inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
     return CRYPTO_atomic_add(&refcnt->val, 1, ret, refcnt->lock);
 }
 
-static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
+static ossl_unused ossl_inline bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     return CRYPTO_atomic_add(&refcnt->val, -1, ret, refcnt->lock);
@@ -247,12 +249,12 @@ static ossl_unused ossl_inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt,
     return 1;
 }
 
-static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
+static ossl_unused ossl_inline bool CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     refcnt->val--;
     *ret = refcnt->val;
-    return 1;
+    return true;
 }
 
 static ossl_unused ossl_inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt,

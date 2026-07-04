@@ -166,8 +166,7 @@ And here's the implementation of the FOO method fetcher:
         if (foo != NULL) {
             OSSL_PROVIDER *prov = foo->prov;
 
-            CRYPTO_DOWN_REF(&foo->refcnt, &i);
-            if (i > 0)
+            if (!CRYPTO_DOWN_REF(&foo->refcnt, &i) || i > 0)
                 return;
 
             CRYPTO_FREE_REF(&foo->refcnt);

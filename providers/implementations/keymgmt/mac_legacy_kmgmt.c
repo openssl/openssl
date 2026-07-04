@@ -82,11 +82,7 @@ void ossl_mac_key_free(MAC_KEY *mackey)
 {
     int ref = 0;
 
-    if (mackey == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&mackey->refcnt, &ref);
-    if (ref > 0)
+    if (mackey == NULL || !CRYPTO_DOWN_REF(&mackey->refcnt, &ref) || ref > 0)
         return;
 
     OPENSSL_secure_clear_free(mackey->priv_key, mackey->priv_key_len);

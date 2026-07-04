@@ -134,10 +134,9 @@ void OSSL_COMP_CERT_free(OSSL_COMP_CERT *cc)
 {
     int i;
 
-    if (cc == NULL)
+    if (cc == NULL || !CRYPTO_DOWN_REF(&cc->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&cc->references, &i);
     REF_PRINT_COUNT("OSSL_COMP_CERT", i, cc);
     if (i > 0)
         return;

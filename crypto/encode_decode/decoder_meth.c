@@ -29,11 +29,8 @@ static void ossl_decoder_free(void *data)
     OSSL_DECODER *decoder = (OSSL_DECODER *)data;
     int ref = 0;
 
-    if (decoder == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&decoder->base.refcnt, &ref);
-    if (ref > 0)
+    if (decoder == NULL || !CRYPTO_DOWN_REF(&decoder->base.refcnt, &ref)
+        || ref > 0)
         return;
     OPENSSL_free(decoder->base.name);
     ossl_property_free(decoder->base.parsed_propdef);

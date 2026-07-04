@@ -66,10 +66,7 @@ static void evp_rand_free(void *vrand)
     EVP_RAND *rand = (EVP_RAND *)vrand;
     int ref = 0;
 
-    if (rand == NULL)
-        return;
-    CRYPTO_DOWN_REF(&rand->refcnt, &ref);
-    if (ref > 0)
+    if (rand == NULL || !CRYPTO_DOWN_REF(&rand->refcnt, &ref) || ref > 0)
         return;
     OPENSSL_free(rand->type_name);
     ossl_provider_free(rand->prov);
@@ -398,11 +395,7 @@ void EVP_RAND_CTX_free(EVP_RAND_CTX *ctx)
     int ref = 0;
     EVP_RAND_CTX *parent;
 
-    if (ctx == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&ctx->refcnt, &ref);
-    if (ref > 0)
+    if (ctx == NULL || !CRYPTO_DOWN_REF(&ctx->refcnt, &ref) || ref > 0)
         return;
     parent = ctx->parent;
     ctx->meth->freectx(ctx->algctx);

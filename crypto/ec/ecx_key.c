@@ -65,10 +65,9 @@ void ossl_ecx_key_free(ECX_KEY *key)
 {
     int i;
 
-    if (key == NULL)
+    if (key == NULL || !CRYPTO_DOWN_REF(&key->references, &i))
         return;
 
-    CRYPTO_DOWN_REF(&key->references, &i);
     REF_PRINT_COUNT("ECX_KEY", i, key);
     if (i > 0)
         return;
