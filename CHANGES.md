@@ -4103,7 +4103,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
  * Fixed a bug in the function `OCSP_basic_verify` that verifies the signer
    certificate on an OCSP response. The bug caused the function in the case
-   where the (non-default) flag OCSP_NOCHECKS is used to return a postivie
+   where the (non-default) flag OCSP_NOCHECKS is used to return a positive
    response (meaning a successful verification) even in the case where the
    response signing certificate fails to verify.
 
@@ -19901,7 +19901,7 @@ s-cbc           3624.96k     5258.21k     5530.91k     5624.30k     5628.26k
    The new configuration file reading functions are:
 
            NCONF_new, NCONF_free, NCONF_load, NCONF_load_fp, NCONF_load_bio,
-           NCONF_get_section, NCONF_get_string, NCONF_get_numbre
+           NCONF_get_section, NCONF_get_string, NCONF_get_number
 
            NCONF_default, NCONF_WIN32
 

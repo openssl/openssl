@@ -870,7 +870,7 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
     EVP_CIPHER_CTX *cctx = NULL;
     int ok = 0, l = 0, l2 = 0, wpkt_valid = 0;
     WPACKET wpkt;
-    /* Worst case length of the Retry Psuedo-Packet header is 68 bytes. */
+    /* Worst case length of the Retry Pseudo-Packet header is 68 bytes. */
     unsigned char buf[128];
     QUIC_PKT_HDR hdr2;
     size_t hdr_enc_len = 0;
@@ -892,7 +892,7 @@ int ossl_quic_calculate_retry_integrity_tag(OSSL_LIB_CTX *libctx,
     hdr2 = *hdr;
     hdr2.len = 0;
 
-    /* Assemble retry psuedo-packet. */
+    /* Assemble retry pseudo-packet. */
     if (!WPACKET_init_static_len(&wpkt, buf, sizeof(buf), 0)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;

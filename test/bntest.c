@@ -1238,7 +1238,7 @@ static int file_sum(STANZA *s)
     /*
      * Test that the functions work when |r| and |a| point to the same BIGNUM,
      * or when |r| and |b| point to the same BIGNUM.
-     * There is no test for all of |r|, |a|, and |b| pointint to the same BIGNUM.
+     * There is no test for all of |r|, |a|, and |b| pointing to the same BIGNUM.
      */
     if (!TEST_true(BN_copy(ret, a))
         || !TEST_true(BN_add(ret, ret, b))
@@ -1277,7 +1277,7 @@ static int file_sum(STANZA *s)
         /*
          * Test that the functions work when |r| and |a| point to the same
          * BIGNUM, or when |r| and |b| point to the same BIGNUM.
-         * There is no test for all of |r|, |a|, and |b| pointint to the same
+         * There is no test for all of |r|, |a|, and |b| pointing to the same
          * BIGNUM.
          */
         if (!TEST_true(BN_copy(ret, a))

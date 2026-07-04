@@ -2411,7 +2411,7 @@ static struct ec_der_pub_keys_st {
  * Tests the range of the decoded EC char2 public point.
  * See ec_GF2m_simple_oct2point().
  */
-static int test_invalide_ec_char2_pub_range_decode(int id)
+static int test_invalid_ec_char2_pub_range_decode(int id)
 {
     int ret = 0;
     EVP_PKEY *pkey;
@@ -8994,7 +8994,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
     ADD_TEST(test_X509_PUBKEY_dup);
-    ADD_ALL_TESTS(test_invalide_ec_char2_pub_range_decode,
+    ADD_ALL_TESTS(test_invalid_ec_char2_pub_range_decode,
         OSSL_NELEM(ec_der_pub_keys));
 #endif
 #ifndef OPENSSL_NO_DSA
