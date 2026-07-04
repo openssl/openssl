@@ -753,12 +753,11 @@ end:
  * Trigger an overlap-detection error partway through the linear
  * merge.  The first V3EXT_TEST_LARGE_N / 2 entries are adjacent and
  * mergeable; entry K is a duplicate of entry K-1 (overlap).  The
- * canonize call must return 0, and the caller's normal teardown of
- * the choice must safely free the stack -- some slots hold merged
- * results, some hold NULL (from earlier merges), and some hold
- * originals that the loop never reached.  ASan / UBSan-instrumented
- * builds will catch any double-free or use-after-free in the
- * teardown that the mixed-state-on-error invariant claims to avoid.
+ * canonize call must return 0, and the resulting object must remain
+ * valid: the failed canonize must leave the stack partially
+ * canonicalized but hole-free, so that inspecting it, retrying
+ * canonize, and freeing it are all safe.  ASan / UBSan-instrumented
+ * builds will catch any double-free or use-after-free in those walks.
  */
 static int test_asid_canonize_error_midsweep(void)
 {
@@ -801,9 +800,18 @@ static int test_asid_canonize_error_midsweep(void)
         goto err;
 
     /*
-     * Successful return below relies on ASIdentifiers_free walking
-     * the partially-compacted stack without UAF or double-free.
-     * Under ASan / UBSan that walk is the actual test.
+     * The object must also be safe to inspect and to retry, not only
+     * to free: both calls walk (and the second re-sorts) the stack,
+     * so they would crash on any NULL slot left by the mid-sweep merge.
+     */
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 0)
+        || !TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /*
+     * Successful return below relies on ASIdentifiers_free walking the
+     * partially-canonicalized, hole-free stack without UAF or
+     * double-free.  Under ASan / UBSan that walk is the actual test.
      */
     testresult = 1;
 err:
@@ -817,13 +825,11 @@ err:
  * in IPAddressOrRanges_canonize.  Construct a list whose first half is
  * adjacent and mergeable, with a duplicate at position k that hits the
  * overlap check after a series of merges has driven write < read.
- * The canonize call must return 0, and the family's normal teardown
- * (sk_IPAddressFamily_pop_free) must safely walk the partially
- * compacted stack -- ASan / UBSan catches any double-free or UAF the
- * mixed-state-on-error invariant would otherwise miss.  Because the
- * v3_addr.c canonize uses direct `return 0` rather than a `done:`
- * cleanup label, the teardown invariant for this file is different
- * from the asid path and warrants its own coverage.
+ * The canonize call must return 0, and the resulting object must
+ * remain valid: the failed canonize must leave the stack partially
+ * canonicalized but hole-free, so that inspecting it, retrying
+ * canonize, and freeing it are all safe.  ASan / UBSan catches any
+ * double-free or UAF in those walks.
  */
 static int test_addr_canonize_error_midsweep(void)
 {
@@ -861,10 +867,116 @@ static int test_addr_canonize_error_midsweep(void)
         goto end;
 
     /*
-     * Successful return below relies on sk_IPAddressFamily_pop_free
-     * walking the partially-compacted aors stack without UAF or
-     * double-free.  Under ASan / UBSan that walk is the actual test.
+     * The object must also be safe to inspect and to retry, not only
+     * to free: both calls walk (and the second re-sorts) the stack,
+     * so they would crash on any NULL slot left by the mid-sweep merge.
      */
+    if (!TEST_int_eq(X509v3_addr_is_canonical(addr), 0)
+        || !TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
+    /*
+     * Successful return below relies on sk_IPAddressFamily_pop_free
+     * walking the partially-canonicalized, hole-free aors stack
+     * without UAF or double-free.  Under ASan / UBSan that walk is
+     * the actual test.
+     */
+    testresult = 1;
+end:
+    sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
+    return testresult;
+}
+
+/*
+ * Verify that an ASIdentifiers object remains safe to inspect and to
+ * retry after a canonize() call fails.  The input [1, 2, 2] fails
+ * because 2 overlaps the merged [1, 2] range; the merge of 1 and 2
+ * runs first, so the failure happens mid-sweep.  canonize() must
+ * return 0 and leave the object in a state where is_canonical() and
+ * a second canonize() both run without crashing and return 0.
+ */
+static int test_asid_canonize_failure_then_inspect(void)
+{
+    ASIdentifiers *asid = NULL;
+    ASN1_INTEGER *val = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(asid = ASIdentifiers_new()))
+        goto err;
+
+    if (!TEST_ptr(val = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val, 1))
+        || !TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+            val, NULL)))
+        goto err;
+    val = NULL;
+    if (!TEST_ptr(val = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val, 2))
+        || !TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+            val, NULL)))
+        goto err;
+    val = NULL;
+    if (!TEST_ptr(val = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set_int64(val, 2))
+        || !TEST_true(X509v3_asid_add_id_or_range(asid, V3_ASID_ASNUM,
+            val, NULL)))
+        goto err;
+    val = NULL;
+
+    /* canonize must reject the overlap. */
+    if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /* The object must be safe to inspect and to retry after the failure. */
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 0))
+        goto err;
+    if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    ASN1_INTEGER_free(val);
+    ASIdentifiers_free(asid);
+    return testresult;
+}
+
+/*
+ * Verify that an IPAddrBlocks object remains safe to inspect and to
+ * retry after a canonize() call fails.  The input
+ * [1.0.0.0/32, 1.0.0.1/32, 1.0.0.1/32] fails because the third
+ * prefix overlaps the merged range of the first two; that merge runs
+ * first, so the failure happens mid-sweep.  canonize() must return 0
+ * and leave the object in a state where is_canonical() and a second
+ * canonize() both run without crashing and return 0.
+ */
+static int test_addr_canonize_failure_then_inspect(void)
+{
+    IPAddrBlocks *addr = NULL;
+    unsigned char ip0[4] = { 1, 0, 0, 0 };
+    unsigned char ip1[4] = { 1, 0, 0, 1 };
+    int testresult = 0;
+
+    if (!TEST_ptr(addr = sk_IPAddressFamily_new_null()))
+        goto end;
+
+    if (!TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+            ip0, 32))
+        || !TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+            ip1, 32))
+        || !TEST_true(X509v3_addr_add_prefix(addr, IANA_AFI_IPV4, NULL,
+            ip1, 32)))
+        goto end;
+
+    /* canonize must reject the overlap. */
+    if (!TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
+    /* The object must be safe to inspect and to retry after the failure. */
+    if (!TEST_int_eq(X509v3_addr_is_canonical(addr), 0))
+        goto end;
+    if (!TEST_int_eq(X509v3_addr_canonize(addr), 0))
+        goto end;
+
     testresult = 1;
 end:
     sk_IPAddressFamily_pop_free(addr, IPAddressFamily_free);
@@ -943,9 +1055,10 @@ err:
  * well-formed adjacent integers; entry k is an explicitly inverted
  * range (min = 1000, max = 100).  X509v3_asid_add_id_or_range does
  * not validate min <= max for ranges, so the bad entry is admitted
- * into the list, and canonize must detect it on the sweep.  The
- * teardown under ASan / UBSan verifies that the early-exit path
- * leaves the asIdsOrRanges stack in a freeable state.
+ * into the list, and canonize must detect it on the sweep.  Like the
+ * overlap case, the failure happens after earlier merges have run, so
+ * canonize must return 0 and leave the object safe to inspect, retry,
+ * and free.
  *
  * The addr-side counterpart of this branch (v3_addr.c:849) is not
  * reachable through the public API: make_addressRange refuses to
@@ -995,6 +1108,15 @@ static int test_asid_canonize_inverted_midsweep(void)
 
     /* canonize must reject the inverted entry. */
     if (!TEST_int_eq(X509v3_asid_canonize(asid), 0))
+        goto err;
+
+    /*
+     * The object must also be safe to inspect and to retry, not only
+     * to free: both calls walk (and the second re-sorts) the stack,
+     * so they would crash on any NULL slot left by the mid-sweep merge.
+     */
+    if (!TEST_int_eq(X509v3_asid_is_canonical(asid), 0)
+        || !TEST_int_eq(X509v3_asid_canonize(asid), 0))
         goto err;
 
     testresult = 1;
@@ -1076,6 +1198,8 @@ int setup_tests(void)
     ADD_TEST(test_addr_interleaved_canonize);
     ADD_TEST(test_asid_canonize_error_midsweep);
     ADD_TEST(test_addr_canonize_error_midsweep);
+    ADD_TEST(test_asid_canonize_failure_then_inspect);
+    ADD_TEST(test_addr_canonize_failure_then_inspect);
     ADD_TEST(test_asid_range_merge_canonize);
     ADD_TEST(test_asid_canonize_inverted_midsweep);
 #endif /* OPENSSL_NO_RFC3779 */
