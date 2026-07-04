@@ -1084,7 +1084,7 @@ err:
     OPENSSL_clear_free(priv, privlen);
     OPENSSL_free(pub);
     EC_PRIVATEKEY_free(priv_key);
-    return (ok ? ret : 0);
+    return ok ? ret : 0;
 }
 
 int i2d_ECParameters(const EC_KEY *a, unsigned char **out)

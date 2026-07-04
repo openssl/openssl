@@ -1035,7 +1035,7 @@ static int wait_for_activity(SSL *ssl)
      * "select" (with updated timeouts).
      */
 
-    return (select(sock + 1, &read_fd, &write_fd, NULL, tvp));
+    return select(sock + 1, &read_fd, &write_fd, NULL, tvp);
 }
 
 /* Main loop for server to accept QUIC connections. */
