@@ -177,7 +177,7 @@ end:
  * Test 1: Attempt to free buffers after only a partial record header has been
  *         received
  * Test 2: Attempt to free buffers after a full record header but no record body
- * Test 3: Attempt to free buffers after a full record hedaer and partial record
+ * Test 3: Attempt to free buffers after a full record header and partial record
  *         body
  */
 static int test_free_buffers(int test)

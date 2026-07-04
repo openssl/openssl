@@ -170,7 +170,7 @@ key agreement, but the certificate exchange is avoided.
 Most servers, including this one, do not solicit client certificates.  We
 therefore do not need a "trust store" and allow the handshake to complete even
 when the client does not present a certificate.  Note: Even if a client did
-present a trusted ceritificate, for it to be useful, the server application
+present a trusted certificate, for it to be useful, the server application
 would still need custom code to use the verified identity to grant nondefault
 access to that particular client.  Some servers grant access to all clients
 with certificates from a private CA, this then requires processing of

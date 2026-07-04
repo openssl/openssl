@@ -26,7 +26,7 @@ The keys that are recognised are:
 
 The three parts of OpenSSL's 3 numbered version number, MAJOR.MINOR.PATCH.
 These are used to compose the values for the C macros B<OPENSSL_VERSION_MAJOR>,
-B<OPENSSL_VERSION_MINOR>, B<OPENSSL_VERSION_PACTH>.
+B<OPENSSL_VERSION_MINOR>, B<OPENSSL_VERSION_PATCH>.
 
 =item B<PRE_RELEASE_TAG>
 

@@ -424,7 +424,7 @@ int ossl_quic_wire_encode_frame_conn_close(WPACKET *pkt,
 
 /*
  * Encodes a QUIC HANDSHAKE_DONE frame to the packet writer. This frame type
- * takes no arguiments.
+ * takes no arguments.
  */
 int ossl_quic_wire_encode_frame_handshake_done(WPACKET *pkt);
 
