@@ -4906,7 +4906,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     ossl_quic_channel_set_msg_callback_arg(qc->ch, ql->obj.ssl.ctx->msg_callback_arg);
 
     /*
-     * We deliberately pass NULL for engine and port, because we don't want to
+     * We deliberately pass NULL for engine and port, because we don't want
      * to turn QCSO we create here into an event leader, nor port leader.
      * Both those roles are occupied already by listener (`ssl`) we use
      * to create a new QCSO here.

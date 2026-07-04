@@ -52,7 +52,7 @@ STACK_OF(CONF_VALUE) *i2v_ASN1_BIT_STRING(X509V3_EXT_METHOD *method,
     for (bnam = method->usr_data; bnam->lname; bnam++) {
         /*
          * If the bitnumber did not change from the last iteration, this entry
-         * is an an alias for the previous bit; treat the first result as
+         * is an alias for the previous bit; treat the first result as
          * canonical and ignore the rest.
          */
         if (last_seen_bit == bnam->bitnum)

@@ -1148,7 +1148,7 @@ static __owur int gencbd_vector_ntt(scalar *out, CBD_FUNC cbd, uint8_t *counter,
  * |A| (our key->m, with the public key holding an expanded (16-bit per scalar
  * coefficient) key->t vector).
  *
- * Caller passes storage in |tmp| for for two temporary vectors.
+ * Caller passes storage in |tmp| for two temporary vectors.
  */
 static __owur int encrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
     const uint8_t message[DEGREE / 8],

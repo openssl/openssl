@@ -476,7 +476,7 @@ static int posix_time_test(void)
 
     /*
      * Frequently platform conversions can not deal with one second before the
-     * the Unix epoch, due to inheriting terrible API design and knocking this
+     * Unix epoch, due to inheriting terrible API design and knocking this
      * time value out as an error return.
      *
      * We should do better.
