@@ -98,7 +98,7 @@ static int test_idea_cfb64(void)
     IDEA_set_decrypt_key(&eks, &dks);
     memcpy(cfb_tmp, cfb_iv, sizeof(cfb_tmp));
     n = 0;
-    IDEA_cfb64_encrypt(plain, cfb_buf1, (long)12, &eks,
+    IDEA_cfb64_encrypt(plain, cfb_buf1, 12, &eks,
         cfb_tmp, &n, IDEA_ENCRYPT);
     IDEA_cfb64_encrypt(&plain[12], &cfb_buf1[12],
         (long)CFB_TEST_SIZE - 12, &eks,
@@ -107,7 +107,7 @@ static int test_idea_cfb64(void)
         return 0;
     memcpy(cfb_tmp, cfb_iv, sizeof(cfb_tmp));
     n = 0;
-    IDEA_cfb64_encrypt(cfb_buf1, cfb_buf2, (long)13, &eks,
+    IDEA_cfb64_encrypt(cfb_buf1, cfb_buf2, 13, &eks,
         cfb_tmp, &n, IDEA_DECRYPT);
     IDEA_cfb64_encrypt(&cfb_buf1[13], &cfb_buf2[13],
         (long)CFB_TEST_SIZE - 13, &eks,
