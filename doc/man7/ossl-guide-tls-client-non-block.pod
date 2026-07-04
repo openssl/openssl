@@ -140,7 +140,7 @@ from the underlying socket but the data has not yet arrived from the peer).
 
 L<SSL_read_ex(3)> and L<SSL_write_ex(3)> will return 0 to indicate an error and
 L<SSL_read(3)> and L<SSL_write(3)> will return 0 or a negative value to indicate
-an error. L<SSL_shutdown(3)> will return a negative value to incidate an error.
+an error. L<SSL_shutdown(3)> will return a negative value to indicate an error.
 
 In the event of an error an application should call L<SSL_get_error(3)> to find
 out what type of error has occurred. If the error is non-fatal and can be
