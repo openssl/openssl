@@ -470,6 +470,93 @@ err:
     return ret;
 }
 
+/*
+ * A stack of trusted CAs keeps borrowed CAs sorted by CA ID: adds land in order
+ * regardless of insertion sequence, lookups hit by CA ID and miss otherwise, a
+ * duplicate CA ID is rejected, and freeing the stack leaves the CAs intact.
+ */
+static int test_ca_stack(void)
+{
+    EVP_PKEY *k0 = NULL, *k1 = NULL, *k2 = NULL;
+    OSSL_MTC_CA *ca0 = NULL, *ca1 = NULL, *ca2 = NULL, *dup = NULL;
+    STACK_OF(OSSL_MTC_CA) *cas = NULL;
+    const uint8_t *id = NULL;
+    size_t idlen = 0;
+    /* A CA ID that is not in the stack: 32473.9. */
+    static const uint8_t absent_id[] = { 0x81, 0xfd, 0x59, 0x09 };
+    int ret = 0;
+
+    if (!TEST_ptr(k0 = gen_cosigner_key())
+        || !TEST_ptr(k1 = gen_cosigner_key())
+        || !TEST_ptr(k2 = gen_cosigner_key()))
+        goto err;
+
+    if (!TEST_ptr(ca0 = ossl_mtc_ca_new(cosigner0_id, sizeof(cosigner0_id),
+                      EVP_sha256(), 0, k0))
+        || !TEST_ptr(ca1 = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(),
+                         0, k1))
+        || !TEST_ptr(ca2 = ossl_mtc_ca_new(cosigner2_id, sizeof(cosigner2_id),
+                         EVP_sha256(), 0, k2)))
+        goto err;
+
+    if (!TEST_ptr(cas = sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp)))
+        goto err;
+
+    /* Add out of order; the stack must sort by CA ID (32473.0/.1/.2). */
+    if (!TEST_true(ossl_mtc_ca_stack_add(cas, ca1))
+        || !TEST_true(ossl_mtc_ca_stack_add(cas, ca2))
+        || !TEST_true(ossl_mtc_ca_stack_add(cas, ca0))
+        || !TEST_int_eq(sk_OSSL_MTC_CA_num(cas), 3))
+        goto err;
+
+    if (!TEST_ptr_eq(sk_OSSL_MTC_CA_value(cas, 0), ca0)
+        || !TEST_ptr_eq(sk_OSSL_MTC_CA_value(cas, 1), ca1)
+        || !TEST_ptr_eq(sk_OSSL_MTC_CA_value(cas, 2), ca2))
+        goto err;
+
+    /* Lookups hit by CA ID and return the borrowed CA. */
+    if (!TEST_ptr_eq(ossl_mtc_ca_stack_lookup(cas, cosigner0_id,
+                         sizeof(cosigner0_id)),
+            ca0)
+        || !TEST_ptr_eq(ossl_mtc_ca_stack_lookup(cas, ca_id, sizeof(ca_id)),
+            ca1)
+        || !TEST_ptr_eq(ossl_mtc_ca_stack_lookup(cas, cosigner2_id,
+                            sizeof(cosigner2_id)),
+            ca2))
+        goto err;
+
+    /* A CA ID that is not present misses. */
+    if (!TEST_ptr_null(ossl_mtc_ca_stack_lookup(cas, absent_id,
+            sizeof(absent_id))))
+        goto err;
+
+    /* A second CA with a duplicate CA ID is rejected and not added. */
+    if (!TEST_ptr(dup = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+                      k1))
+        || !TEST_false(ossl_mtc_ca_stack_add(cas, dup))
+        || !TEST_int_eq(sk_OSSL_MTC_CA_num(cas), 3))
+        goto err;
+
+    /* Freeing the stack container leaves the borrowed CAs usable. */
+    sk_OSSL_MTC_CA_free(cas);
+    cas = NULL;
+    id = ossl_mtc_ca_id(ca1, &idlen);
+    if (!TEST_mem_eq(id, idlen, ca_id, sizeof(ca_id)))
+        goto err;
+
+    ret = 1;
+err:
+    sk_OSSL_MTC_CA_free(cas);
+    ossl_mtc_ca_free(ca0);
+    ossl_mtc_ca_free(ca1);
+    ossl_mtc_ca_free(ca2);
+    ossl_mtc_ca_free(dup);
+    EVP_PKEY_free(k0);
+    EVP_PKEY_free(k1);
+    EVP_PKEY_free(k2);
+    return ret;
+}
+
 /* ossl_mtc_ca_free(NULL) must be a no-op. */
 static int test_ca_free_null(void)
 {
@@ -486,6 +573,7 @@ int setup_tests(void)
     ADD_TEST(test_ca_load_landmarks);
     ADD_TEST(test_ca_load_landmarks_cutoff);
     ADD_TEST(test_ca_load_landmarks_bad);
+    ADD_TEST(test_ca_stack);
     ADD_TEST(test_ca_free_null);
     return 1;
 }
