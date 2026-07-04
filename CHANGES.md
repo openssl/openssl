@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
+   protocol from an earlier connection after a resumption negotiated a
+   different protocol (or none), on both the server and the client,
+   which could otherwise affect a later 0-RTT decision.
+
+   *Daniel Kubec and Viktor Dukhovni*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 8446 section 4.2.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early

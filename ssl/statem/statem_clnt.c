@@ -3220,6 +3220,34 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
     s->session->session_id_length = sess_len;
     s->session->not_resumable = 0;
 
+    /*
+     * Refresh the session's recollection of the negotiated ALPN protocol to
+     * match this connection, rather than leaving it as whatever the session
+     * (or the session it was duplicated from, on a resumption) previously
+     * carried. Without this, a connection that resumes a session but
+     * negotiates no ALPN (or a different one) leaves the stale protocol
+     * name in place, and a later 0-RTT attempt against this ticket can
+     * incorrectly trip the "inconsistent early data alpn" check -- or, if
+     * the client happens to offer that same stale protocol again by
+     * coincidence, incorrectly appear consistent. This mirrors, on the
+     * client, the server-side fix for issue #11197 in
+     * tls_construct_new_session_ticket().
+     */
+    OPENSSL_free(s->session->ext.alpn_selected);
+    if (s->s3.alpn_selected != NULL) {
+        s->session->ext.alpn_selected = OPENSSL_memdup(s->s3.alpn_selected,
+            s->s3.alpn_selected_len);
+        if (s->session->ext.alpn_selected == NULL) {
+            s->session->ext.alpn_selected_len = 0;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+            goto err;
+        }
+        s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
+    } else {
+        s->session->ext.alpn_selected = NULL;
+        s->session->ext.alpn_selected_len = 0;
+    }
+
     /* This is a standalone message in TLSv1.3, so there is no more to read */
     if (SSL_CONNECTION_IS_TLS13(s)) {
         const EVP_MD *md = ssl_handshake_md(s);
