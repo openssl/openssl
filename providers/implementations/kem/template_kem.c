@@ -166,7 +166,7 @@ static int template_decapsulate(void *vctx, unsigned char *out, size_t *outlen,
 
     if (out == NULL) {
         if (outlen != NULL)
-            debug_print("decaps outlen set to %zu \n", *outlen);
+            debug_print("decaps outlen set to %zu\n", *outlen);
         return 1;
     }
 
