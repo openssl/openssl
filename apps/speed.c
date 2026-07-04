@@ -2945,7 +2945,7 @@ int speed_main(int argc, char **argv)
                                 &outlen, loopargs[k].buf,
                                 lengths[testnum])) {
                             BIO_puts(bio_err,
-                                "\nFailed to to encrypt the data\n");
+                                "\nFailed to encrypt the data\n");
                             dofail();
                             exit(1);
                         }

@@ -344,7 +344,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
     bio_module = (*st->bio_new_file_cb)(st->module_filename, "rb");
 
     /* This section can be called on demand and that could race with deferred
-     * tests being executed in another thread, so we use use helpers to get
+     * tests being executed in another thread, so we use helpers to get
      * proper locking around this critical section */
 
     if (SELF_TEST_lock_deferred(fips_global)) {
