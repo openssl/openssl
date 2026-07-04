@@ -185,9 +185,9 @@ static int test_unicode_range(void)
                                      "\xff\xff\xff\xff";
     int ok = 1;
 
-    if (!test_unicode(univ_ok, sizeof univ_ok - 1, V_ASN1_UTF8STRING))
+    if (!test_unicode(univ_ok, sizeof(univ_ok) - 1, V_ASN1_UTF8STRING))
         ok = 0;
-    if (!test_unicode(univ_bad, sizeof univ_bad - 1, -1))
+    if (!test_unicode(univ_bad, sizeof(univ_bad) - 1, -1))
         ok = 0;
     return ok;
 }
