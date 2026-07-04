@@ -351,10 +351,17 @@ int X509v3_asid_is_canonical(ASIdentifiers *asid)
  * After the initial sort, the merge runs as a single linear sweep
  * over the list using a write index.  Each entry is examined once;
  * adjacent / mergeable entries extend the previous output's upper
- * bound in O(1) and the source slot is left NULL so the asn1 free
- * machinery does not double-free on a subsequent abort.  Total cost
- * is O(N log N) sort + O(N) merge, with no stack deletes inside the
- * loop.
+ * bound in O(1) and the consumed source slot is recorded as NULL.
+ * Total cost is O(N log N) sort + O(N) merge, with no stack deletes
+ * inside the loop.
+ *
+ * The NULL slots are closed up by a single compaction pass at the end,
+ * which runs whether the sweep succeeded or failed.  This guarantees
+ * the live stack is always left hole-free, with every occupied slot
+ * non-NULL, so on error the caller may safely inspect, print, encode,
+ * free, or retry canonize on the object.  The sort comparator
+ * dereferences every slot with no NULL guard, and is_canonical's call
+ * to extract_min_max would hit its ossl_assert(aor != NULL) on a hole.
  */
 static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 {
@@ -470,8 +477,10 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
                 }
                 ASIdOrRange_free(cur);
                 /*
-                 * NULL the source slot so any later teardown does not
-                 * walk a freed pointer.  We do not advance `write`.
+                 * Record the consumed source slot as NULL; the epilogue
+                 * compacts NULLs out of the live stack so it is left
+                 * hole-free whether we succeed or fail.  We do not
+                 * advance `write`.
                  */
                 (void)sk_ASIdOrRange_set(choice->u.asIdsOrRanges, read, NULL);
                 continue;
@@ -494,15 +503,35 @@ static int ASIdentifierChoice_canonize(ASIdentifierChoice *choice)
 
 done:
     /*
-     * On success every slot at [write..n-1] is NULL, so popping the
-     * tail leaves the canonicalised list at [0..write-1].  On error we
-     * leave the tail untouched; the slots are either NULL (from earlier
-     * iterations) or original entries the loop never reached, both of
-     * which the caller's ASIdentifierChoice_free path handles safely.
+     * The sweep above NULLs source slots as it folds entries.  Whether
+     * we succeeded or bailed out on an error, the stack must be left
+     * hole-free, with every occupied slot non-NULL, so that the caller
+     * may inspect, print, encode, free, or even retry canonize on the
+     * object without dereferencing NULL (the sort comparator in
+     * particular has no NULL guard).  Slide every non-NULL slot forward
+     * to close the holes, then pop the vacated tail.  On success this
+     * collapses [write..n-1] (all NULL) to length `write`; on error it
+     * drops the NULLs scattered across the swept region while preserving
+     * the merged results in [0..write-1] and the untouched originals
+     * beyond the failure point.
      */
-    if (ret) {
-        while (sk_ASIdOrRange_num(choice->u.asIdsOrRanges) > write)
+    {
+        int w = 0, r;
+
+        for (r = 0; r < sk_ASIdOrRange_num(choice->u.asIdsOrRanges); r++) {
+            ASIdOrRange *v = sk_ASIdOrRange_value(choice->u.asIdsOrRanges, r);
+
+            if (v != NULL) {
+                if (w != r)
+                    (void)sk_ASIdOrRange_set(choice->u.asIdsOrRanges, w, v);
+                w++;
+            }
+        }
+        while (sk_ASIdOrRange_num(choice->u.asIdsOrRanges) > w)
             (void)sk_ASIdOrRange_pop(choice->u.asIdsOrRanges);
+    }
+
+    if (ret) {
         /* Paranoia */
         if (!ossl_assert(ASIdentifierChoice_is_canonical(choice)))
             ret = 0;

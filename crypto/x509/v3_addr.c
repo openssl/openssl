@@ -819,39 +819,42 @@ int X509v3_addr_is_canonical(IPAddrBlocks *addr)
  * After the initial sort, the merge runs as a single linear sweep
  * over the list using a write index.  Adjacent entries are folded
  * into the previous output by replacing it with a freshly built
- * merged range; both old entries are then freed and the source slot
- * is left NULL so the asn1 free machinery does not double-free on a
- * subsequent abort.  Total cost is O(N log N) sort + O(N) merge,
- * with no stack deletes inside the loop.
+ * merged range; both old entries are then freed and the consumed
+ * source slot is recorded as NULL.  Total cost is O(N log N) sort +
+ * O(N) merge, with no stack deletes inside the loop.
+ *
+ * The NULL slots are closed up by a single compaction pass at the end,
+ * which runs whether the sweep succeeded or failed.  This guarantees
+ * the live stack is always left hole-free, with every occupied slot
+ * non-NULL, so on error the caller may safely inspect, print, encode,
+ * free, or retry canonize on the object.  The sort comparator
+ * dereferences every slot with no NULL guard, so a retry (which
+ * re-sorts) would crash on a hole.  is_canonical tolerates NULL by
+ * returning non-canonical, but the object is still structurally
+ * invalid.
  */
 static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
     const unsigned afi)
 {
     int length = length_from_afi(afi);
     int read, write = 0, n;
+    int ret = 0;
 
     sk_IPAddressOrRange_sort(aors);
     n = sk_IPAddressOrRange_num(aors);
 
-    /*
-     * Error paths below all `return 0` directly.  Slots at
-     * [write..read-1] are NULL (from earlier iterations) and slots at
-     * [read..n-1] still hold their original entries; the caller's
-     * normal teardown walks the whole stack and frees each non-NULL
-     * slot safely, so leaving the stack in this mixed state is sound.
-     */
     for (read = 0; read < n; read++) {
         IPAddressOrRange *cur = sk_IPAddressOrRange_value(aors, read);
         unsigned char c_min[ADDR_RAW_BUF_LEN], c_max[ADDR_RAW_BUF_LEN];
 
         if (!extract_min_max(cur, c_min, c_max, length))
-            return 0;
+            goto done;
 
         /*
          * Punt inverted range.
          */
         if (memcmp(c_min, c_max, length) > 0)
-            return 0;
+            goto done;
 
         if (write > 0) {
             IPAddressOrRange *prev = sk_IPAddressOrRange_value(aors,
@@ -861,13 +864,13 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
             int j;
 
             if (!extract_min_max(prev, p_min, p_max, length))
-                return 0;
+                goto done;
 
             /*
              * Reject overlap with the previous accepted entry.
              */
             if (memcmp(p_max, c_min, length) >= 0)
-                return 0;
+                goto done;
 
             /*
              * Adjacency test: does c_min - 1 equal p_max?  Work on a
@@ -883,11 +886,12 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
                 IPAddressOrRange *merged;
 
                 if (!make_addressRange(&merged, p_min, c_max, length))
-                    return 0;
+                    goto done;
                 /*
                  * Replace prev with merged, free the originals, and
-                 * NULL the source slot so the stack does not retain a
-                 * second reference to cur.
+                 * record the consumed source slot as NULL; the epilogue
+                 * compacts NULLs out of the live stack so it is left
+                 * hole-free whether we succeed or fail.
                  */
                 (void)sk_IPAddressOrRange_set(aors, write - 1, merged);
                 IPAddressOrRange_free(prev);
@@ -909,13 +913,38 @@ static int IPAddressOrRanges_canonize(IPAddressOrRanges *aors,
         write++;
     }
 
+    ret = 1;
+
+done:
     /*
-     * Compaction succeeded: every slot at [write..n-1] is NULL, so
-     * popping the tail leaves the canonicalised list at [0..write-1].
+     * The sweep above NULLs source slots as it folds entries.  Whether
+     * we succeeded or bailed out on an error, the stack must be left
+     * hole-free, with every occupied slot non-NULL, so that the caller
+     * may inspect, print, encode, free, or even retry canonize on the
+     * object without dereferencing NULL.  Slide every non-NULL slot
+     * forward to close the holes, then pop the vacated tail.  On success
+     * this collapses [write..n-1] (all NULL) to length `write`; on error
+     * it drops the NULLs scattered across the swept region while
+     * preserving the merged results in [0..write-1] and the untouched
+     * originals beyond the failure point.
      */
-    while (sk_IPAddressOrRange_num(aors) > write)
-        (void)sk_IPAddressOrRange_pop(aors);
-    return 1;
+    {
+        int w = 0, r;
+
+        for (r = 0; r < sk_IPAddressOrRange_num(aors); r++) {
+            IPAddressOrRange *v = sk_IPAddressOrRange_value(aors, r);
+
+            if (v != NULL) {
+                if (w != r)
+                    (void)sk_IPAddressOrRange_set(aors, w, v);
+                w++;
+            }
+        }
+        while (sk_IPAddressOrRange_num(aors) > w)
+            (void)sk_IPAddressOrRange_pop(aors);
+    }
+
+    return ret;
 }
 
 /*
