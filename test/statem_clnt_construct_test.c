@@ -678,6 +678,71 @@ static int mfail_construct_ch_ech(void)
 }
 #endif /* OSSL_NO_USABLE_ECH */
 
+/*
+ * ===========================================================================
+ * tls_construct_end_of_early_data
+ * ===========================================================================
+ */
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/*
+ * EndOfEarlyData carries no body and only advances early_data_state; it is
+ * valid only from the WRITE_RETRY/FINISHED_WRITING states.
+ */
+static int do_construct_eoed(int state, CON_FUNC_RETURN expect)
+{
+    CH_CONFIG cfg = { 0, TLS1_3_VERSION, TLS1_3_VERSION, 0 };
+    SSL_CTX *cctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *s;
+    WPACKET pkt;
+    unsigned char *msg = NULL;
+    size_t msglen = 0;
+    int have_pkt = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(cctx = new_ctx(&cfg, client_method(&cfg)))
+        || !TEST_ptr(ssl = SSL_new(cctx))
+        || !prime_ssl(ssl, 1, 0, &pkt, SSL3_MT_END_OF_EARLY_DATA))
+        goto err;
+    have_pkt = 1;
+    s = SSL_CONNECTION_FROM_SSL(ssl);
+    s->early_data_state = state;
+
+    if (!TEST_int_eq(tls_construct_end_of_early_data(s, &pkt), expect))
+        goto err;
+
+    if (expect == CON_FUNC_SUCCESS) {
+        /* State advances and the body is empty (only the header is written). */
+        if (!TEST_int_eq(s->early_data_state, SSL_EARLY_DATA_FINISHED_WRITING)
+            || !finish_msg(ssl, &pkt, SSL3_MT_END_OF_EARLY_DATA, &msg, &msglen))
+            goto err;
+        have_pkt = 0;
+        if (!TEST_size_t_eq(msglen, hdr_len(&cfg)))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+static int test_construct_eoed(void)
+{
+    return do_construct_eoed(SSL_EARLY_DATA_WRITE_RETRY, CON_FUNC_SUCCESS);
+}
+
+static int test_construct_eoed_bad_state(void)
+{
+    /* Called from an unexpected state: CON_FUNC_ERROR, nothing written. */
+    return do_construct_eoed(SSL_EARLY_DATA_NONE, CON_FUNC_ERROR);
+}
+#endif /* OSSL_NO_USABLE_TLS1_3 */
+
 int setup_tests(void)
 {
     ADD_TEST(test_construct_ch_small_buf);
@@ -693,10 +758,8 @@ int setup_tests(void)
     ADD_TEST(test_construct_ch_tls13);
     ADD_TEST(test_construct_ch_tls13_no_middlebox);
     ADD_TEST(test_construct_ch_hrr);
-    /*
-     * The non-cached mfail run takes too long and does not test too much extra
-     * so better to skip it.
-     */
+    ADD_TEST(test_construct_eoed);
+    ADD_TEST(test_construct_eoed_bad_state);
 #if defined(OPENSSL_NO_ECX)
     /*
      * Without ECX the key_share falls back to EC keygen, which makes a
