@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
+   protocol from an earlier connection after a resumption negotiated a
+   different protocol (or none), on both the server and the client,
+   which could otherwise affect a later 0-RTT decision.
+
+   *Daniel Kubec and Viktor Dukhovni*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 
