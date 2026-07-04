@@ -574,3 +574,55 @@ int ossl_mtc_ca_trusted_subtree_matches(const OSSL_MTC_CA *ca,
     CRYPTO_THREAD_unlock(ca->lock);
     return ret;
 }
+
+/* Order trusted CAs ascending by CA ID: shorter first, then lexicographic. */
+static int ca_id_order(const uint8_t *a, size_t alen, const uint8_t *b,
+    size_t blen)
+{
+    if (alen != blen)
+        return alen < blen ? -1 : 1;
+    return memcmp(a, b, alen);
+}
+
+int ossl_mtc_ca_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b)
+{
+    size_t alen, blen;
+    const uint8_t *aid = ossl_mtc_ca_id(*a, &alen);
+    const uint8_t *bid = ossl_mtc_ca_id(*b, &blen);
+
+    return ca_id_order(aid, alen, bid, blen);
+}
+
+int ossl_mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, OSSL_MTC_CA *ca)
+{
+    int idx = 0;
+
+    if (sk_OSSL_MTC_CA_num(cas) > 0) {
+        size_t alen, blen;
+        const uint8_t *aid, *bid;
+        int c;
+
+        idx = sk_OSSL_MTC_CA_find_ex(cas, ca);
+        aid = ossl_mtc_ca_id(sk_OSSL_MTC_CA_value(cas, idx), &alen);
+        bid = ossl_mtc_ca_id(ca, &blen);
+        c = ca_id_order(aid, alen, bid, blen);
+        if (c == 0)
+            return 0; /* duplicate CA ID */
+        if (c < 0)
+            idx++;
+    }
+    return sk_OSSL_MTC_CA_insert(cas, ca, idx) > 0;
+}
+
+OSSL_MTC_CA *ossl_mtc_ca_stack_lookup(const STACK_OF(OSSL_MTC_CA) *cas,
+    const uint8_t *ca_id, size_t ca_id_len)
+{
+    OSSL_MTC_CA key;
+    int idx;
+
+    memset(&key, 0, sizeof(key));
+    key.ca_id = (uint8_t *)ca_id;
+    key.ca_id_len = ca_id_len;
+    idx = sk_OSSL_MTC_CA_find(cas, &key);
+    return idx < 0 ? NULL : sk_OSSL_MTC_CA_value(cas, idx);
+}

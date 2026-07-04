@@ -143,6 +143,7 @@ typedef struct ossl_mtc_ca_st {
     size_t revoked_count;
     STACK_OF(OSSL_MTC_LOG) *logs; /**< issuance logs, sorted by log number (5.2) */
 } OSSL_MTC_CA;
+DEFINE_STACK_OF(OSSL_MTC_CA)
 
 /**
  * @brief Create a trusted Merkle Tree CA record from its configured fields.
@@ -308,5 +309,46 @@ const EVP_MD *ossl_mtc_ca_hash(const OSSL_MTC_CA *ca);
  * @returns the cosigner's public key, owned by ca.
  */
 EVP_PKEY *ossl_mtc_ca_cosigner_pkey(const OSSL_MTC_CA *ca);
+
+/*-
+ * A set of trusted MTC CAs is a STACK_OF(OSSL_MTC_CA) kept sorted by CA ID for
+ * binary-search lookup.  The stack holds *borrowed* references: it does not own
+ * the CAs (the application owns them and must keep them alive).  Create it with
+ * sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp) and free it with sk_OSSL_MTC_CA_free(),
+ * which frees the container, not the CAs.
+ */
+
+/**
+ * @brief Order two trusted MTC CAs by CA ID; the comparison function for a
+ * sorted stack of them.
+ * @param a, b the CAs to compare
+ * @returns <0, 0 or >0 ordering a before, with, or after b by CA ID: shorter
+ *          first, then lexicographic.
+ */
+int ossl_mtc_ca_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b);
+
+/**
+ * @brief Add a trusted CA to a stack, keeping it sorted by CA ID.
+ *
+ * The CA is stored by reference (not owned, not copied).  Fails if a CA with
+ * the same CA ID is already present.
+ *
+ * @param cas the stack of trusted CAs
+ * @param ca the CA to add (borrowed; caller retains ownership)
+ * @returns 1 on success, 0 on error or duplicate CA ID.
+ */
+int ossl_mtc_ca_stack_add(STACK_OF(OSSL_MTC_CA) *cas, OSSL_MTC_CA *ca);
+
+/**
+ * @brief Look up a trusted CA by its CA ID (section 5.1).
+ *
+ * @param cas the stack of trusted CAs
+ * @param ca_id the CA identifier to find
+ * @param ca_id_len the length of ca_id
+ * @returns the matching CA (borrowed), or NULL if none matches.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+OSSL_MTC_CA *ossl_mtc_ca_stack_lookup(const STACK_OF(OSSL_MTC_CA) *cas,
+    const uint8_t *ca_id, size_t ca_id_len);
 
 #endif /* defined(OSSL_CRYPTO_MTC_CA_H) */
