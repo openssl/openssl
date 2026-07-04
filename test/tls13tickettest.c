@@ -61,6 +61,7 @@ struct stats {
     unsigned int sh_has_psk;
     unsigned int sh_has_supported_versions;
     unsigned int ee_has_early_data;
+    unsigned int ee_has_alpn;
 };
 
 struct tls13_endpoint {
@@ -195,9 +196,13 @@ static void parse_ee_exts(const unsigned char *buf, size_t len, struct stats *x)
         case TLSEXT_TYPE_early_data:
             x->ee_has_early_data = 1;
             break;
+        case TLSEXT_TYPE_application_layer_protocol_negotiation:
+            x->ee_has_alpn = 1;
+            break;
         }
     }
-    TEST_info("ee extensions: early_data=%d", x->ee_has_early_data);
+    TEST_info("ee extensions: early_data=%d alpn=%d",
+        x->ee_has_early_data, x->ee_has_alpn);
 }
 
 static void msg_cb(int write_p, int version, int content_type,
@@ -282,6 +287,120 @@ static int ticket_disable(SSL_CTX *ctx)
 }
 
 /*
+ * The server offers a single protocol via server_alpn and selects it when the
+ * client advertises it. The client advertises a protocol using the
+ * length-prefixed wire form expected by SSL_set_alpn_protos().
+ */
+static const char *server_alpn = NULL;
+
+static int alpn_select_cb(SSL *ssl, const unsigned char **out,
+    unsigned char *outlen, const unsigned char *in,
+    unsigned int inlen, void *arg)
+{
+    unsigned int protlen = 0;
+    const unsigned char *prot;
+
+    if (server_alpn == NULL)
+        return SSL_TLSEXT_ERR_NOACK;
+
+    for (prot = in; prot < in + inlen; prot += protlen) {
+        protlen = *prot++;
+        if (in + inlen < prot + protlen)
+            return SSL_TLSEXT_ERR_NOACK;
+        if (protlen == strlen(server_alpn)
+            && memcmp(prot, server_alpn, protlen) == 0) {
+            *out = prot;
+            *outlen = protlen;
+            return SSL_TLSEXT_ERR_OK;
+        }
+    }
+    return SSL_TLSEXT_ERR_NOACK;
+}
+
+static int alpn_server_enable(SSL_CTX *ctx, const char *proto)
+{
+    server_alpn = proto;
+    SSL_CTX_set_alpn_select_cb(ctx, alpn_select_cb, NULL);
+    return 1;
+}
+
+/* Change which protocol the server selects for the next handshake. */
+static int alpn_server_select(const char *proto)
+{
+    server_alpn = proto;
+    return 1;
+}
+
+/* Append protocol proto (length-prefixed) to the wire buffer at *n. */
+static int alpn_wire_add(unsigned char *wire, size_t cap, unsigned int *n,
+    const char *proto)
+{
+    unsigned int plen = (unsigned int)strlen(proto);
+
+    if (plen == 0 || plen > 255 || *n + 1 + plen > cap)
+        return 0;
+    wire[(*n)++] = (unsigned char)plen;
+    memcpy(wire + *n, proto, plen);
+    *n += plen;
+    return 1;
+}
+
+static int alpn_client_offer(SSL *ssl, const char *proto)
+{
+    unsigned char wire[256];
+    unsigned int n = 0;
+
+    if (!alpn_wire_add(wire, sizeof(wire), &n, proto))
+        return 0;
+    /* SSL_set_alpn_protos() returns 0 on success. */
+    return SSL_set_alpn_protos(ssl, wire, n) == 0;
+}
+
+static int alpn_client_offer2(SSL *ssl, const char *p1, const char *p2)
+{
+    unsigned char wire[256];
+    unsigned int n = 0;
+
+    if (!alpn_wire_add(wire, sizeof(wire), &n, p1)
+        || !alpn_wire_add(wire, sizeof(wire), &n, p2))
+        return 0;
+    /* SSL_set_alpn_protos() returns 0 on success. */
+    return SSL_set_alpn_protos(ssl, wire, n) == 0;
+}
+
+/* Returns 1 if the connection negotiated exactly the given ALPN protocol. */
+static int alpn_conn_selected_is(SSL *ssl, const char *proto)
+{
+    const unsigned char *alpn = NULL;
+    unsigned int alpnlen = 0;
+
+    SSL_get0_alpn_selected(ssl, &alpn, &alpnlen);
+    return alpn != NULL
+        && alpnlen == strlen(proto)
+        && memcmp(alpn, proto, alpnlen) == 0;
+}
+
+/* Returns 1 if the connection negotiated no ALPN protocol. */
+static int alpn_conn_selected_none(SSL *ssl)
+{
+    const unsigned char *alpn = NULL;
+    unsigned int alpnlen = 0;
+
+    SSL_get0_alpn_selected(ssl, &alpn, &alpnlen);
+    return alpn == NULL && alpnlen == 0;
+}
+
+/* Returns 1 if the session stores no ALPN protocol. */
+static int alpn_sess_selected_none(SSL *ssl)
+{
+    const unsigned char *alpn = NULL;
+    size_t alpnlen = 0;
+
+    SSL_SESSION_get0_alpn_selected(SSL_get_session(ssl), &alpn, &alpnlen);
+    return alpn == NULL && alpnlen == 0;
+}
+
+/*
  * RFC 5077 3.1: The server sends an empty SessionTicket extension to indicate
  * that it will send a new session ticket using the NewSessionTicket handshake
  * message.
@@ -301,7 +420,7 @@ static int test_tls12_ticket_enable(void)
         && TEST_true(ticket_enable(s))
         && TEST_true(ticket_enable(c))
         && TEST_true(tls_channel_init(c, s, &initial))
-        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
         && TEST_true(tls_shutdown(&initial))
         && TEST_uint_eq(initial.s.stats.nst_msgs, 1)
         && TEST_uint_eq(initial.c.stats.nst_msgs, 1)
@@ -316,7 +435,7 @@ static int test_tls12_ticket_enable(void)
         && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
         && TEST_true(tls_channel_init(c, s, &resumed))
         && TEST_true(SSL_set_session(resumed.c.ssl, sess))
-        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
         && TEST_true(SSL_session_reused(resumed.c.ssl))
         && TEST_uint_eq(resumed.s.stats.nst_msgs, 0)
         && TEST_uint_eq(resumed.c.stats.nst_msgs, 0)
@@ -758,6 +877,176 @@ static int test_tls13_ticket_early_data_accepted(void)
     return test;
 }
 
+/*
+ * TLS 1.3 stale ALPN cleared from a resumption ticket
+ *
+ * A session that negotiated ALPN is resumed on a connection that negotiates no
+ * ALPN at all (the client advertises none). The NewSessionTicket issued for the
+ * resumed session must not retain the ALPN protocol from the original session;
+ * otherwise a later 0-RTT attempt using that ticket would incorrectly assume
+ * that protocol had been negotiated.
+ *
+ * Regression test for GitHub issue #11197: tls_construct_new_session_ticket()
+ * copied s->s3.alpn_selected into the session only when an ALPN protocol was
+ * negotiated, but failed to clear s->session->ext.alpn_selected when it wasn't.
+ */
+static int test_tls13_ticket_alpn_cleared(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(alpn_server_enable(s, "goodalpn"))
+        /*
+         * Connection 1: the client advertises "goodalpn", the server selects
+         * it, and the negotiated protocol is stored in the session.
+         */
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(alpn_client_offer(initial.c.ssl, "goodalpn"))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(alpn_conn_selected_is(initial.s.ssl, "goodalpn"))
+        && TEST_true(alpn_conn_selected_is(initial.c.ssl, "goodalpn"))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ee_has_alpn, 1)
+        && TEST_uint_eq(initial.c.stats.ee_has_alpn, 1)
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        /*
+         * Connection 2: resume the session, but the client advertises no ALPN
+         * this time so nothing is negotiated. The server issues a fresh
+         * NewSessionTicket for the resumed session; its stored ALPN must be
+         * cleared rather than inheriting "goodalpn" from the original session.
+         */
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.c.stats.tickets, 1)
+        && TEST_uint_eq(resumed.s.stats.tickets, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ee_has_alpn, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_alpn, 0)
+        /* No ALPN was negotiated on the resumption handshake ... */
+        && TEST_true(alpn_conn_selected_none(resumed.s.ssl))
+        && TEST_true(alpn_conn_selected_none(resumed.c.ssl))
+        /* ... so the session written into the new ticket must carry none. */
+        && TEST_true(alpn_sess_selected_none(resumed.s.ssl));
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    server_alpn = NULL;
+    return test;
+}
+
+/*
+ * TLS 1.3 ALPN mismatch 0-RTT rejection
+ *
+ * The session negotiated ALPN "goodalpn". On resumption the client still offers
+ * "goodalpn" (so it is willing to send early data) alongside "otheralpn", and
+ * the server selects "otheralpn" instead. Because the ALPN selected for the
+ * resumption handshake differs from the one associated with the ticket, the
+ * server must reject 0-RTT while still completing the (resumed) handshake.
+ *
+ * RFC 8446 4.2.10: In order to accept early data, the server MUST have accepted
+ * a PSK cipher suite and selected the first key offered in the client's
+ * "pre_shared_key" extension. In addition, it MUST verify that the following
+ * values are the same as those associated with the selected PSK: TLS version
+ * number, selected cipher suite, and selected ALPN (RFC 7301) protocol, if any.
+ */
+static int test_tls13_ticket_alpn_mismatch_reject_early_data(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t w = 0, r = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY) != 0)
+        && TEST_true(alpn_server_enable(s, "goodalpn"))
+        /* Connection 1: negotiate ALPN "goodalpn" and store it in the ticket. */
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(alpn_client_offer(initial.c.ssl, "goodalpn"))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(alpn_conn_selected_is(initial.s.ssl, "goodalpn"))
+        && TEST_true(alpn_conn_selected_is(initial.c.ssl, "goodalpn"))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        /*
+         * Connection 2: attempt 0-RTT. The client offers "goodalpn" (matching
+         * the ticket, so it is willing to send early data) plus "otheralpn";
+         * the server selects "otheralpn", which mismatches the ticket's ALPN.
+         */
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(alpn_client_offer2(resumed.c.ssl, "goodalpn", "otheralpn"))
+        && TEST_true(alpn_server_select("otheralpn"))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        /* The server skips the early data: nothing is delivered to the app. */
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl),
+            SSL_EARLY_DATA_REJECTED)
+        /* PSK resumption still succeeds, only 0-RTT is refused. */
+        && TEST_true(SSL_session_reused(resumed.c.ssl))
+        && TEST_true(alpn_conn_selected_is(resumed.s.ssl, "otheralpn"))
+        && TEST_true(alpn_conn_selected_is(resumed.c.ssl, "otheralpn"))
+        /* ALPN was negotiated, but the server did not accept early_data. */
+        && TEST_uint_eq(resumed.s.stats.ee_has_alpn, 1)
+        && TEST_uint_eq(resumed.c.stats.ee_has_alpn, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    server_alpn = NULL;
+    return test;
+}
+
 enum endpoint_state {
     ENDPOINT_WRITE_EARLY_DATA,
     ENDPOINT_READ_EARLY_DATA,
@@ -1082,6 +1371,8 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_resumed_set_num_tickets_zero);
     ADD_TEST(test_tls13_ticket_disable_server);
     ADD_TEST(test_tls13_ticket_no_decrypt);
+    ADD_TEST(test_tls13_ticket_alpn_cleared);
+    ADD_TEST(test_tls13_ticket_alpn_mismatch_reject_early_data);
     ADD_TEST(test_tls13_ticket_early_data_accepted);
     ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_retry);
     ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_outer);
