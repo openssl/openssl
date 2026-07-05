@@ -3643,7 +3643,7 @@ static int test_quic_handshake_multipkt_mfail(void)
         quic_advance_time(clientssl, serverssl);
     }
     if (!TEST_int_lt(i, 10)) {
-        ret = -1;
+        TEST_info("No connection advancement after 10 tries, failing test");
         goto err;
     }
 
