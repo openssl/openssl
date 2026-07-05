@@ -79,6 +79,12 @@ typedef struct xorkey_st {
     int hasprivkey;
     int haspubkey;
     char *tls_name;
+    /*
+     * Optional group/parameter set the key is bound to. Only used by the
+     * XORSIGALG256_KEYTYPE_NAME key type, whose sigalgs share one key type
+     * OID and are distinguished by this group, RFC 9367 GOST style.
+     */
+    char *group_name;
     CRYPTO_REF_COUNT references;
 } XORKEY;
 
@@ -295,6 +301,23 @@ struct tls_sigalg_st {
 #define XORSIGALG_HASH_OID "1.3.6.1.4.1.16604.998888.2"
 #define XORSIGALG12_NAME "xorhmacsig12"
 #define XORSIGALG12_OID "1.3.6.1.4.1.16604.998888.3"
+/*
+ * Two additional signature schemes that share a single key type, in the
+ * style of the RFC 9367 GOST schemes: the key type OID is the same for both
+ * and the schemes are told apart by the group/parameter set the key is
+ * bound to. The group OID is carried in the AlgorithmIdentifier parameters
+ * of encoded keys, like the GOST paramset.
+ */
+#define XORSIGALG256_KEYTYPE_NAME "xorhmacsig256"
+#define XORSIGALG256_KEYTYPE_OID "1.3.6.1.4.1.16604.998888.4"
+#define XORSIGALG256A_NAME "xorhmacsig256a"
+#define XORSIGALG256A_OID "1.3.6.1.4.1.16604.998888.5"
+#define XORSIGALG256B_NAME "xorhmacsig256b"
+#define XORSIGALG256B_OID "1.3.6.1.4.1.16604.998888.6"
+#define XORGROUP256A_NAME "xorgroup256a"
+#define XORGROUP256A_OID "1.3.6.1.4.1.16604.998888.7"
+#define XORGROUP256B_NAME "xorgroup256b"
+#define XORGROUP256B_OID "1.3.6.1.4.1.16604.998888.8"
 
 static struct tls_sigalg_st xor_sigalg = {
     0, /* alg id, set by randomize_tls_alg_id() */
@@ -315,6 +338,20 @@ static struct tls_sigalg_st xor_sigalg12 = {
     128, /* secbits */
     TLS1_2_VERSION, /* mintls */
     TLS1_2_VERSION, /* maxtls */
+};
+
+static struct tls_sigalg_st xor_sigalg256a = {
+    0, /* alg id, set by randomize_tls_alg_id() */
+    128, /* secbits */
+    TLS1_3_VERSION, /* mintls */
+    0, /* maxtls */
+};
+
+static struct tls_sigalg_st xor_sigalg256b = {
+    0, /* alg id, set by randomize_tls_alg_id() */
+    128, /* secbits */
+    TLS1_3_VERSION, /* mintls */
+    0, /* maxtls */
 };
 
 static const OSSL_PARAM xor_sig_nohash_params[] = {
@@ -376,6 +413,60 @@ static const OSSL_PARAM xor_sig_12_params[] = {
     OSSL_PARAM_END
 };
 
+static const OSSL_PARAM xor_sig_256a_params[] = {
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,
+        XORSIGALG256A_NAME, sizeof(XORSIGALG256A_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,
+        XORSIGALG256A_NAME,
+        sizeof(XORSIGALG256A_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,
+        XORSIGALG256A_OID, sizeof(XORSIGALG256A_OID)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE,
+        XORSIGALG256_KEYTYPE_NAME,
+        sizeof(XORSIGALG256_KEYTYPE_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID,
+        XORSIGALG256_KEYTYPE_OID,
+        sizeof(XORSIGALG256_KEYTYPE_OID)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP,
+        XORGROUP256A_NAME, sizeof(XORGROUP256A_NAME)),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,
+        &xor_sigalg256a.code_point),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,
+        &xor_sigalg256a.secbits),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,
+        &xor_sigalg256a.mintls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
+        &xor_sigalg256a.maxtls),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM xor_sig_256b_params[] = {
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,
+        XORSIGALG256B_NAME, sizeof(XORSIGALG256B_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_NAME,
+        XORSIGALG256B_NAME,
+        sizeof(XORSIGALG256B_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_OID,
+        XORSIGALG256B_OID, sizeof(XORSIGALG256B_OID)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE,
+        XORSIGALG256_KEYTYPE_NAME,
+        sizeof(XORSIGALG256_KEYTYPE_NAME)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID,
+        XORSIGALG256_KEYTYPE_OID,
+        sizeof(XORSIGALG256_KEYTYPE_OID)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP,
+        XORGROUP256B_NAME, sizeof(XORGROUP256B_NAME)),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,
+        &xor_sigalg256b.code_point),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,
+        &xor_sigalg256b.secbits),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS,
+        &xor_sigalg256b.mintls),
+    OSSL_PARAM_int(OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS,
+        &xor_sigalg256b.maxtls),
+    OSSL_PARAM_END
+};
+
 static int tls_prov_get_capabilities(void *provctx, const char *capability,
     OSSL_CALLBACK *cb, void *arg)
 {
@@ -425,6 +516,8 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
         ret = cb(xor_sig_nohash_params, arg);
         ret &= cb(xor_sig_hash_params, arg);
         ret &= cb(xor_sig_12_params, arg);
+        ret &= cb(xor_sig_256a_params, arg);
+        ret &= cb(xor_sig_256b_params, arg);
     }
     return ret;
 }
@@ -717,6 +810,8 @@ static void xor_freekey(void *keydata)
 
     OPENSSL_free(key->tls_name);
     key->tls_name = NULL;
+    OPENSSL_free(key->group_name);
+    key->group_name = NULL;
     CRYPTO_FREE_REF(&key->references);
     OPENSSL_free(key);
 }
@@ -775,6 +870,8 @@ static void *xor_dup(const void *vfromkey, int selection)
         }
         if (fromkey->tls_name != NULL)
             tokey->tls_name = OPENSSL_strdup(fromkey->tls_name);
+        if (fromkey->group_name != NULL)
+            tokey->group_name = OPENSSL_strdup(fromkey->group_name);
     }
     if (!ok) {
         xor_freekey(tokey);
@@ -806,6 +903,11 @@ static ossl_inline int xor_get_params(void *vkey, OSSL_PARAM params[])
             memcpy(p->data, key->pubkey, XOR_KEY_SIZE);
     }
 
+    if (key->group_name != NULL
+        && (p = OSSL_PARAM_locate(params, OSSL_PKEY_PARAM_GROUP_NAME)) != NULL
+        && !OSSL_PARAM_set_utf8_string(p, key->group_name))
+        return 0;
+
     return 1;
 }
 
@@ -813,6 +915,7 @@ static const OSSL_PARAM xor_params[] = {
     OSSL_PARAM_int(OSSL_PKEY_PARAM_BITS, NULL),
     OSSL_PARAM_int(OSSL_PKEY_PARAM_SECURITY_BITS, NULL),
     OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY, NULL, 0),
+    OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, NULL, 0),
     OSSL_PARAM_END
 };
 
@@ -917,6 +1020,8 @@ static const OSSL_PARAM *xor_settable_params(void *provctx)
 struct xor_gen_ctx {
     int selection;
     OSSL_LIB_CTX *libctx;
+    /* group/parameter set for XORSIGALG256_KEYTYPE_NAME keygen */
+    char group_name[64];
 };
 
 static void *xor_gen_init(void *provctx, int selection,
@@ -950,10 +1055,16 @@ static int xor_gen_set_params(void *genctx, const OSSL_PARAM params[])
 
     p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (p != NULL) {
-        if (p->data_type != OSSL_PARAM_UTF8_STRING
-            || (strcmp(p->data, XORGROUP_NAME_INTERNAL) != 0
-                && strcmp(p->data, XORKEMGROUP_NAME_INTERNAL) != 0))
+        if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
+        if (strcmp(p->data, XORGROUP256A_NAME) == 0
+            || strcmp(p->data, XORGROUP256B_NAME) == 0) {
+            OPENSSL_strlcpy(gctx->group_name, p->data,
+                sizeof(gctx->group_name));
+        } else if (strcmp(p->data, XORGROUP_NAME_INTERNAL) != 0
+            && strcmp(p->data, XORKEMGROUP_NAME_INTERNAL) != 0) {
+            return 0;
+        }
     }
 
     return 1;
@@ -1142,6 +1253,31 @@ static void *xor_xorhmacsha2sig_gen(void *genctx, OSSL_CALLBACK *osslcb, void *c
     return k;
 }
 
+static void *xor_xorhmacsig256_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)
+{
+    struct xor_gen_ctx *gctx = genctx;
+    XORKEY *k;
+
+    /*
+     * The group/parameter set is mandatory for this key type, like the
+     * paramset is for GOST keys: without it the key cannot be bound to
+     * one of the sigalgs sharing the key type.
+     */
+    if (gctx == NULL || gctx->group_name[0] == '\0')
+        return NULL;
+
+    k = xor_gen(genctx, osslcb, cbarg);
+    if (k == NULL)
+        return NULL;
+    k->tls_name = OPENSSL_strdup(XORSIGALG256_KEYTYPE_NAME);
+    k->group_name = OPENSSL_strdup(gctx->group_name);
+    if (k->tls_name == NULL || k->group_name == NULL) {
+        xor_freekey(k);
+        return NULL;
+    }
+    return k;
+}
+
 static const OSSL_DISPATCH xor_xorhmacsig_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))xor_newkey },
     { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))xor_gen_init },
@@ -1190,6 +1326,30 @@ static const OSSL_DISPATCH xor_xorhmacsha2sig_keymgmt_functions[] = {
     OSSL_DISPATCH_END
 };
 
+static const OSSL_DISPATCH xor_xorhmacsig256_keymgmt_functions[] = {
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))xor_newkey },
+    { OSSL_FUNC_KEYMGMT_GEN_INIT, (void (*)(void))xor_gen_init },
+    { OSSL_FUNC_KEYMGMT_GEN_SET_PARAMS, (void (*)(void))xor_gen_set_params },
+    { OSSL_FUNC_KEYMGMT_GEN_SETTABLE_PARAMS,
+        (void (*)(void))xor_gen_settable_params },
+    { OSSL_FUNC_KEYMGMT_GEN, (void (*)(void))xor_xorhmacsig256_gen },
+    { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))xor_gen_cleanup },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))xor_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))xor_gettable_params },
+    { OSSL_FUNC_KEYMGMT_SET_PARAMS, (void (*)(void))xor_set_params },
+    { OSSL_FUNC_KEYMGMT_SETTABLE_PARAMS, (void (*)(void))xor_settable_params },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))xor_has },
+    { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))xor_dup },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))xor_freekey },
+    { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))xor_import },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))xor_import_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))xor_export },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))xor_export_types },
+    { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))xor_load },
+    { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))xor_match },
+    OSSL_DISPATCH_END
+};
+
 typedef enum {
     KEY_OP_PUBLIC,
     KEY_OP_PRIVATE,
@@ -1204,13 +1364,24 @@ static XORKEY *xor_key_op(const X509_ALGOR *palg,
 {
     XORKEY *key = NULL;
     int nid = NID_undef;
+    int group_nid = NID_undef;
 
     if (palg != NULL) {
         int ptype;
+        const void *pval;
 
-        /* Algorithm parameters must be absent */
-        X509_ALGOR_get0(NULL, &ptype, NULL, palg);
-        if (ptype != V_ASN1_UNDEF || palg->algorithm == NULL) {
+        /*
+         * Algorithm parameters must either be absent, or carry the OID of
+         * the group/parameter set the key is bound to (GOST paramset style).
+         */
+        X509_ALGOR_get0(NULL, &ptype, &pval, palg);
+        if (ptype == V_ASN1_OBJECT) {
+            group_nid = OBJ_obj2nid((const ASN1_OBJECT *)pval);
+            if (group_nid == NID_undef) {
+                ERR_raise(ERR_LIB_USER, XORPROV_R_INVALID_ENCODING);
+                return 0;
+            }
+        } else if (ptype != V_ASN1_UNDEF || palg->algorithm == NULL) {
             ERR_raise(ERR_LIB_USER, XORPROV_R_INVALID_ENCODING);
             return 0;
         }
@@ -1244,6 +1415,12 @@ static XORKEY *xor_key_op(const X509_ALGOR *palg,
     key->tls_name = OPENSSL_strdup(OBJ_nid2sn(nid));
     if (key->tls_name == NULL)
         goto err;
+
+    if (group_nid != NID_undef) {
+        key->group_name = OPENSSL_strdup(OBJ_nid2sn(group_nid));
+        if (key->group_name == NULL)
+            goto err;
+    }
     return key;
 
 err:
@@ -1303,6 +1480,9 @@ static const OSSL_ALGORITHM tls_prov_keymgmt[] = {
     { XORSIGALG_HASH_NAME,
         "provider=tls-provider,fips=yes",
         xor_xorhmacsha2sig_keymgmt_functions },
+    { XORSIGALG256_KEYTYPE_NAME,
+        "provider=tls-provider,fips=yes",
+        xor_xorhmacsig256_keymgmt_functions },
     { NULL, NULL, NULL }
 };
 
@@ -1356,7 +1536,7 @@ static PKCS8_PRIV_KEY_INFO *key_to_p8info(const void *key, int key_nid,
     if ((p8info = PKCS8_PRIV_KEY_INFO_new()) == NULL
         || (derlen = k2d(key, &der)) <= 0
         || !PKCS8_pkey_set0(p8info, OBJ_nid2obj(key_nid), 0,
-            V_ASN1_UNDEF, NULL,
+            params_type, params,
             der, derlen)) {
         ERR_raise(ERR_LIB_USER, ERR_R_MALLOC_FAILURE);
         PKCS8_PRIV_KEY_INFO_free(p8info);
@@ -1418,7 +1598,7 @@ static X509_PUBKEY *xorx_key_to_pubkey(const void *key, int key_nid,
     if ((xpk = X509_PUBKEY_new()) == NULL
         || (derlen = k2d(key, &der)) <= 0
         || !X509_PUBKEY_set0_param(xpk, OBJ_nid2obj(key_nid),
-            V_ASN1_UNDEF, NULL,
+            params_type, params,
             der, derlen)) {
         ERR_raise(ERR_LIB_USER, ERR_R_MALLOC_FAILURE);
         X509_PUBKEY_free(xpk);
@@ -1633,16 +1813,25 @@ static int prepare_xorx_params(const void *xorxkey, int nid, int save,
         return 0;
     }
 
-    params = OBJ_nid2obj(nid);
-
-    if (params == NULL || OBJ_length(params) == 0) {
-        /* unexpected error */
-        ERR_raise(ERR_LIB_USER, XORPROV_R_MISSING_OID);
-        ASN1_OBJECT_free(params);
-        return 0;
+    /*
+     * Keys bound to a group/parameter set carry the group OID in the
+     * AlgorithmIdentifier parameters, like GOST keys carry their paramset.
+     * All other keys use absent parameters as before.
+     */
+    if (k->group_name != NULL) {
+        params = OBJ_txt2obj(k->group_name, 0);
+        if (params == NULL || OBJ_length(params) == 0) {
+            ERR_raise(ERR_LIB_USER, XORPROV_R_MISSING_OID);
+            ASN1_OBJECT_free(params);
+            return 0;
+        }
+        *pstr = params;
+        *pstrtype = V_ASN1_OBJECT;
+        return 1;
     }
-    *pstr = params;
-    *pstrtype = V_ASN1_OBJECT;
+
+    *pstr = NULL;
+    *pstrtype = V_ASN1_UNDEF;
     return 1;
 }
 
@@ -1711,6 +1900,9 @@ static int xorx_pki_priv_to_der(const void *vecxkey, unsigned char **pder)
 #define xorhmacsha2sig_evp_type 0
 #define xorhmacsha2sig_input_type XORSIGALG_HASH_NAME
 #define xorhmacsha2sig_pem_type XORSIGALG_HASH_NAME
+#define xorhmacsig256_evp_type 0
+#define xorhmacsig256_input_type XORSIGALG256_KEYTYPE_NAME
+#define xorhmacsig256_pem_type XORSIGALG256_KEYTYPE_NAME
 
 /* ---------------------------------------------------------------------- */
 
@@ -2027,6 +2219,12 @@ MAKE_ENCODER(xorhmacsha2sig, xorx, PrivateKeyInfo, der);
 MAKE_ENCODER(xorhmacsha2sig, xorx, PrivateKeyInfo, pem);
 MAKE_ENCODER(xorhmacsha2sig, xorx, SubjectPublicKeyInfo, der);
 MAKE_ENCODER(xorhmacsha2sig, xorx, SubjectPublicKeyInfo, pem);
+MAKE_ENCODER(xorhmacsig256, xorx, EncryptedPrivateKeyInfo, der);
+MAKE_ENCODER(xorhmacsig256, xorx, EncryptedPrivateKeyInfo, pem);
+MAKE_ENCODER(xorhmacsig256, xorx, PrivateKeyInfo, der);
+MAKE_ENCODER(xorhmacsig256, xorx, PrivateKeyInfo, pem);
+MAKE_ENCODER(xorhmacsig256, xorx, SubjectPublicKeyInfo, der);
+MAKE_ENCODER(xorhmacsig256, xorx, SubjectPublicKeyInfo, pem);
 
 static const OSSL_ALGORITHM tls_prov_encoder[] = {
 #define ENCODER_PROVIDER "tls-provider"
@@ -2090,6 +2288,18 @@ static const OSSL_ALGORITHM tls_prov_encoder[] = {
     ENCODER_w_structure(XORSIGALG_HASH_NAME, xorhmacsha2sig,
         der, SubjectPublicKeyInfo),
     ENCODER_w_structure(XORSIGALG_HASH_NAME, xorhmacsha2sig,
+        pem, SubjectPublicKeyInfo),
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+        der, PrivateKeyInfo),
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+        pem, PrivateKeyInfo),
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+        der, EncryptedPrivateKeyInfo),
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+        pem, EncryptedPrivateKeyInfo),
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+        der, SubjectPublicKeyInfo),
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
         pem, SubjectPublicKeyInfo),
 #undef ENCODER_PROVIDER
     { NULL, NULL, NULL }
@@ -2534,6 +2744,8 @@ MAKE_DECODER(XORSIGALG_NAME, xorhmacsig, xor, PrivateKeyInfo);
 MAKE_DECODER(XORSIGALG_NAME, xorhmacsig, xor, SubjectPublicKeyInfo);
 MAKE_DECODER(XORSIGALG_HASH_NAME, xorhmacsha2sig, xor, PrivateKeyInfo);
 MAKE_DECODER(XORSIGALG_HASH_NAME, xorhmacsha2sig, xor, SubjectPublicKeyInfo);
+MAKE_DECODER(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256, xor, PrivateKeyInfo);
+MAKE_DECODER(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256, xor, SubjectPublicKeyInfo);
 
 static const OSSL_ALGORITHM tls_prov_decoder[] = {
 #define DECODER_PROVIDER "tls-provider"
@@ -2560,6 +2772,8 @@ static const OSSL_ALGORITHM tls_prov_decoder[] = {
     DECODER_w_structure(XORSIGALG_NAME, der, SubjectPublicKeyInfo, xorhmacsig),
     DECODER_w_structure(XORSIGALG_HASH_NAME, der, PrivateKeyInfo, xorhmacsha2sig),
     DECODER_w_structure(XORSIGALG_HASH_NAME, der, SubjectPublicKeyInfo, xorhmacsha2sig),
+    DECODER_w_structure(XORSIGALG256_KEYTYPE_NAME, der, PrivateKeyInfo, xorhmacsig256),
+    DECODER_w_structure(XORSIGALG256_KEYTYPE_NAME, der, SubjectPublicKeyInfo, xorhmacsig256),
 #undef DECODER_PROVIDER
     { NULL, NULL, NULL }
 };
@@ -3111,6 +3325,14 @@ static const OSSL_ALGORITHM tls_prov_signature[] = {
         xor_signature_functions },
     { XORSIGALG12_NAME, "provider=tls-provider,fips=yes",
         xor_signature_functions },
+    /*
+     * The two RFC 9367 style sigalgs share one implementation, which is
+     * also reachable under the common key type name so that certificate
+     * signing via X509_sign() can fetch it.
+     */
+    { XORSIGALG256_KEYTYPE_NAME ":" XORSIGALG256A_NAME ":" XORSIGALG256B_NAME,
+        "provider=tls-provider,fips=yes",
+        xor_signature_functions },
     { NULL, NULL, NULL }
 };
 
@@ -3213,6 +3435,8 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     xor_kemgroup.group_id = randomize_tls_alg_id(libctx);
     xor_sigalg.code_point = randomize_tls_alg_id(libctx);
     xor_sigalg_hash.code_point = randomize_tls_alg_id(libctx);
+    xor_sigalg256a.code_point = randomize_tls_alg_id(libctx);
+    xor_sigalg256b.code_point = randomize_tls_alg_id(libctx);
 
     /* Retrieve registration functions */
     for (; in->function_id != 0; in++) {
@@ -3254,6 +3478,26 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     }
 
     if (!c_obj_add_sigid(handle, XORSIGALG_HASH_OID, XORSIGALG_HASH, XORSIGALG_HASH_OID)) {
+        ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
+        goto err;
+    }
+
+    /*
+     * RFC 9367 style setup: one key type OID shared by two sigalgs, plus
+     * an OID for each group/parameter set a key can be bound to.
+     */
+    if (!c_obj_create(handle, XORSIGALG256_KEYTYPE_OID,
+            XORSIGALG256_KEYTYPE_NAME, XORSIGALG256_KEYTYPE_NAME)
+        || !c_obj_create(handle, XORSIGALG256A_OID, XORSIGALG256A_NAME, NULL)
+        || !c_obj_create(handle, XORSIGALG256B_OID, XORSIGALG256B_NAME, NULL)
+        || !c_obj_create(handle, XORGROUP256A_OID, XORGROUP256A_NAME, NULL)
+        || !c_obj_create(handle, XORGROUP256B_OID, XORGROUP256B_NAME, NULL)) {
+        ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
+        goto err;
+    }
+
+    if (!c_obj_add_sigid(handle, XORSIGALG256_KEYTYPE_OID, "",
+            XORSIGALG256_KEYTYPE_OID)) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
         goto err;
     }

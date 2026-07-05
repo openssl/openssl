@@ -776,6 +776,20 @@ Otherwise, it's assumed to already exist in the object database, possibly
 done by the provider with the core_obj_create() upcall.
 This value is optional.
 
+=item "key-type-group" (B<OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP>) <UTF8 string>
+
+The name of the group/parameter set that binds this signature algorithm to a
+specific class of keys when several signature algorithms share the same
+"key-type", for example the GOST signature schemes from RFC 9367 which are
+distinguished only by the parameter set of the key. The name must resolve to
+a NID in the object database, possibly registered by the provider with the
+core_obj_create() upcall. When given, a certificate is assigned to this
+signature algorithm's certificate slot only if the group name of its public
+key (as reported by EVP_PKEY_get_group_name(3)) matches this value. When
+omitted, certificates are assigned by "key-type" alone with the historic
+first-match behaviour.
+This value is optional.
+
 =item "sec-bits" (B<OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS>) <unsigned integer>
 
 The number of bits of security offered by keys of this algorithm. The number
