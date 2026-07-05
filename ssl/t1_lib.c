@@ -2921,24 +2921,42 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         return -1;
     }
 
-    /*
-     * Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. Check key type
-     * is consistent with signature: RSA keys can be used for RSA-PSS
-     */
-    if ((SSL_CONNECTION_IS_TLS13(s)
-            && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
-        || (pkeyid != lu->sig
-            && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
+    /* Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. */
+    if (SSL_CONNECTION_IS_TLS13(s)
+        && (lu->hash == NID_sha1 || lu->hash == NID_sha224)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    /* Check the sigalg is consistent with the key OID */
-    if (!ssl_cert_lookup_by_nid(
-            (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
-            &cidx, SSL_CONNECTION_GET_CTX(s))
-        || lu->sig_idx != (int)cidx) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
-        return 0;
+    if (lu->sig_idx >= SSL_PKEY_NUM) {
+        /*
+         * Provider-defined sigalg: lu->sig is the NID of the combined
+         * signature scheme while pkeyid is the key type NID, so the two can
+         * legitimately differ (for example the RFC 9367 GOST schemes).
+         * Instead check the key against the sigalg's own certificate slot.
+         * This also honours any group/parameter set binding of the slot, so
+         * a key whose parameter set does not match this sigalg is rejected.
+         */
+        const SSL_CERT_LOOKUP *scl = ssl_cert_lookup_by_pkey(pkey, &cidx,
+            SSL_CONNECTION_GET_CTX(s));
+
+        if (scl == NULL || lu->sig_idx != (int)cidx) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+    } else {
+        if (pkeyid != lu->sig
+            && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+        /* Check the sigalg is consistent with the key OID */
+        if (!ssl_cert_lookup_by_nid(
+                (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
+                &cidx, SSL_CONNECTION_GET_CTX(s))
+            || lu->sig_idx != (int)cidx) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
     }
 
     if (pkeyid == EVP_PKEY_EC) {

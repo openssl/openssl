@@ -11391,6 +11391,159 @@ end:
 
     return testresult;
 }
+
+/*
+ * Like create_cert_key() but for the "xorhmacsig256" key type whose keys
+ * must be bound to a group/parameter set (RFC 9367 GOST style).
+ */
+static int create_cert_key_with_group(const char *group, char *certfilename,
+    char *privkeyfilename)
+{
+    EVP_PKEY_CTX *evpctx = EVP_PKEY_CTX_new_from_name(libctx,
+        "xorhmacsig256", NULL);
+    EVP_PKEY *pkey = NULL;
+    X509 *x509 = X509_new();
+    X509_NAME *name = NULL;
+    BIO *keybio = NULL, *certbio = NULL;
+    int ret = 1;
+
+    if (!TEST_ptr(evpctx)
+        || !TEST_int_gt(EVP_PKEY_keygen_init(evpctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_group_name(evpctx, group), 0)
+        || !TEST_true(EVP_PKEY_generate(evpctx, &pkey))
+        || !TEST_ptr(pkey)
+        || !TEST_ptr(x509)
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x509), 1))
+        || !TEST_true(X509_gmtime_adj(X509_getm_notBefore(x509), 0))
+        || !TEST_true(X509_gmtime_adj(X509_getm_notAfter(x509), 31536000L))
+        || !TEST_true(X509_set_pubkey(x509, pkey))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC,
+            (unsigned char *)"CH", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC,
+            (unsigned char *)"test.org", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (unsigned char *)"localhost", -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(x509, name))
+        || !TEST_true(X509_set_issuer_name(x509, name))
+        || !TEST_true(X509_sign(x509, pkey, EVP_sha1()))
+        || !TEST_ptr(keybio = BIO_new_file(privkeyfilename, "wb"))
+        || !TEST_true(PEM_write_bio_PrivateKey(keybio, pkey, NULL, NULL, 0, NULL, NULL))
+        || !TEST_ptr(certbio = BIO_new_file(certfilename, "wb"))
+        || !TEST_true(PEM_write_bio_X509(certbio, x509)))
+        ret = 0;
+
+    EVP_PKEY_free(pkey);
+    X509_free(x509);
+    X509_NAME_free(name);
+    EVP_PKEY_CTX_free(evpctx);
+    BIO_free(keybio);
+    BIO_free(certbio);
+    return ret;
+}
+
+/*
+ * Test the RFC 9367 GOST style setup where several provider signature
+ * schemes share a single key type OID and are told apart by the
+ * group/parameter set the key is bound to:
+ * - certificate/key loading must give each scheme its own certificate slot
+ *   (previously the second load would overwrite the first), and
+ * - a full TLS 1.3 handshake must select the certificate matching the
+ *   sigalg the client offered, sign CertificateVerify with it and have the
+ *   peer verify it.
+ * Test 0: client offers "xorhmacsig256a", expects the group-a certificate
+ * Test 1: client offers "xorhmacsig256b", expects the group-b certificate
+ */
+static int test_pluggable_sigalg_group_disambiguation(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+    OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
+    char *certfilename_a = "tls-prov-cert256a.pem";
+    char *privkeyfilename_a = "tls-prov-key256a.pem";
+    char *certfilename_b = "tls-prov-cert256b.pem";
+    char *privkeyfilename_b = "tls-prov-key256b.pem";
+    const char *offered_sigalg = (idx == 0) ? "xorhmacsig256a"
+                                            : "xorhmacsig256b";
+    const char *expected_certfile = (idx == 0) ? certfilename_a
+                                               : certfilename_b;
+    const char *sigalg_name = NULL;
+    X509 *expected_cert = NULL;
+    X509 *peer_cert = NULL;
+
+    if (!TEST_ptr(tlsprov)
+        || !TEST_true(create_cert_key_with_group("xorgroup256a",
+            certfilename_a,
+            privkeyfilename_a))
+        || !TEST_true(create_cert_key_with_group("xorgroup256b",
+            certfilename_b,
+            privkeyfilename_b)))
+        goto end;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION,
+            TLS1_3_VERSION,
+            &sctx, &cctx, NULL, NULL)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, certfilename_a,
+                         SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, privkeyfilename_a,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, certfilename_b,
+                         SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, privkeyfilename_b,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /* This is necessary to pass minimal setup w/o other groups configured */
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "xorgroup"))
+        || !TEST_true(SSL_set1_groups_list(clientssl, "xorgroup")))
+        goto end;
+
+    if (!TEST_true(SSL_set1_sigalgs_list(clientssl, offered_sigalg)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_true(SSL_get0_peer_signature_name(clientssl, &sigalg_name))
+        || !TEST_str_eq(sigalg_name, offered_sigalg))
+        goto end;
+
+    if (!TEST_ptr(expected_cert = load_cert_pem(expected_certfile, libctx))
+        || !TEST_ptr(peer_cert = SSL_get0_peer_certificate(clientssl))
+        || !TEST_int_eq(X509_cmp(peer_cert, expected_cert), 0))
+        goto end;
+
+    testresult = 1;
+
+end:
+    X509_free(expected_cert);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+    OSSL_PROVIDER_unload(defaultprov);
+
+    return testresult;
+}
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
@@ -15211,6 +15364,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_TLS1_3
     ADD_ALL_TESTS(test_pluggable_group, 2);
     ADD_ALL_TESTS(test_pluggable_signature, 6);
+    ADD_ALL_TESTS(test_pluggable_sigalg_group_disambiguation, 2);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
