@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,8 +19,15 @@ plan skip_all => "needs ECX enabled"
     if disabled("ecx");
 
 
-plan tests => 1;
+plan tests => 2;
 
 ok(run(test(["tls13groupselection_test", srctop_file("apps", "server.pem"),
              srctop_file("apps", "server.pem")])),
    "running tls13groupselection_test");
+
+SKIP: {
+    skip "EC is disabled", 1 if disabled("ec");
+
+    ok(run(test(["groups_list_struct_test"])),
+       "running groups_list_struct_test");
+}

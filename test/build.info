@@ -1183,6 +1183,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[algorithmid_test]=algorithmid_test.c
     INCLUDE[algorithmid_test]=../include ../apps/include
     DEPEND[algorithmid_test]=../libcrypto.a libtestutil.a
+
+    PROGRAMS{noinst}=groups_list_struct_test
+    SOURCE[groups_list_struct_test]=groups_list_struct_test.c
+    INCLUDE[groups_list_struct_test]=.. ../include ../apps/include
+    DEPEND[groups_list_struct_test]=../libcrypto.a ../libssl.a libtestutil.a
   ENDIF
 
   PROGRAMS{noinst}=asn1_time_test
