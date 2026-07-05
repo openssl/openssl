@@ -9,6 +9,7 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <limits.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
@@ -292,46 +293,69 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         break;
     case BIO_C_SET_BUFF_READ_DATA:
+        if (num < 0)
+            return 0;
+#if LONG_MAX > INT_MAX
+        if (num > INT_MAX)
+            return 0;
+#endif
+        if (num > 0 && ptr == NULL)
+            return 0;
         if (num > ctx->ibuf_size) {
-            if (num <= 0)
-                return 0;
             p1 = OPENSSL_malloc((size_t)num);
             if (p1 == NULL)
                 return 0;
             OPENSSL_free(ctx->ibuf);
             ctx->ibuf = p1;
+            ctx->ibuf_size = (int)num;
         }
         ctx->ibuf_off = 0;
         ctx->ibuf_len = (int)num;
-        memcpy(ctx->ibuf, ptr, (int)num);
+        if (num > 0)
+            memcpy(ctx->ibuf, ptr, (size_t)num);
         ret = 1;
         break;
     case BIO_C_SET_BUFF_SIZE:
         if (ptr != NULL) {
             ip = (int *)ptr;
             if (*ip == 0) {
+                if (num < 0)
+                    return 0;
+#if LONG_MAX > INT_MAX
+                if (num > INT_MAX)
+                    return 0;
+#endif
                 ibs = (int)num;
                 obs = ctx->obuf_size;
             } else { /* if (*ip == 1) */
-
+                if (num < 0)
+                    return 0;
+#if LONG_MAX > INT_MAX
+                if (num > INT_MAX)
+                    return 0;
+#endif
                 ibs = ctx->ibuf_size;
                 obs = (int)num;
             }
         } else {
+            if (num < 0)
+                return 0;
+#if LONG_MAX > INT_MAX
+            if (num > INT_MAX)
+                return 0;
+#endif
             ibs = (int)num;
             obs = (int)num;
         }
         p1 = ctx->ibuf;
         p2 = ctx->obuf;
         if ((ibs > DEFAULT_BUFFER_SIZE) && (ibs != ctx->ibuf_size)) {
-            if (num <= 0)
-                return 0;
-            p1 = OPENSSL_malloc((size_t)num);
+            p1 = OPENSSL_malloc((size_t)ibs);
             if (p1 == NULL)
                 return 0;
         }
         if ((obs > DEFAULT_BUFFER_SIZE) && (obs != ctx->obuf_size)) {
-            p2 = OPENSSL_malloc((size_t)num);
+            p2 = OPENSSL_malloc((size_t)obs);
             if (p2 == NULL) {
                 if (p1 != ctx->ibuf)
                     OPENSSL_free(p1);
@@ -395,6 +419,12 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             ret = 0;
         break;
     case BIO_CTRL_PEEK:
+        if (num < 0)
+            return 0;
+        if (num > 0 && ptr == NULL)
+            return 0;
+        if (num == 0)
+            return 0;
         /* Ensure there's stuff in the input buffer */
         {
             char fake_buf[1];
@@ -402,7 +432,7 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         if (num > ctx->ibuf_len)
             num = ctx->ibuf_len;
-        memcpy(ptr, &(ctx->ibuf[ctx->ibuf_off]), num);
+        memcpy(ptr, &(ctx->ibuf[ctx->ibuf_off]), (size_t)num);
         ret = num;
         break;
     default:
