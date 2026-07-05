@@ -121,11 +121,13 @@ static RADIX_OBJ *RADIX_OBJ_new_empty(const char *name)
     }
 
     obj->mx = ossl_crypto_mutex_new();
+#if !defined(OPENSSL_THREADS_NONE)
     if (obj->mx == NULL) {
         OPENSSL_free(obj->name);
         OPENSSL_free(obj);
         return NULL;
     }
+#endif
 
     return obj;
 }
