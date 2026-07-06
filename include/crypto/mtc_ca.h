@@ -130,7 +130,7 @@ DEFINE_STACK_OF(OSSL_MTC_LOG)
  *
  * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
  */
-typedef struct ossl_mtc_ca_st {
+struct ossl_mtc_ca_st {
     uint8_t *ca_id; /**< CA ID: a TrustAnchorID, i.e. relative-OID bytes (5.1) */
     size_t ca_id_len;
     EVP_MD *hash; /**< issuance-log hash (7.1) */
@@ -142,7 +142,7 @@ typedef struct ossl_mtc_ca_st {
     OSSL_MTC_SERIAL_RANGE *revoked; /**< revoked serial ranges (7.5) */
     size_t revoked_count;
     STACK_OF(OSSL_MTC_LOG) *logs; /**< issuance logs, sorted by log number (5.2) */
-} OSSL_MTC_CA;
+};
 DEFINE_STACK_OF(OSSL_MTC_CA)
 
 /**

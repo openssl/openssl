@@ -20,7 +20,9 @@
 
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/mtc.h>
 
 #include "crypto/mtc.h"
 #include "crypto/ctype.h"
@@ -625,4 +627,77 @@ OSSL_MTC_CA *ossl_mtc_ca_stack_lookup(const STACK_OF(OSSL_MTC_CA) *cas,
     key.ca_id_len = ca_id_len;
     idx = sk_OSSL_MTC_CA_find(cas, &key);
     return idx < 0 ? NULL : sk_OSSL_MTC_CA_value(cas, idx);
+}
+
+/* Public API. */
+
+OSSL_MTC_CA *OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len,
+    const EVP_MD *hash, uint64_t min_serial, EVP_PKEY *cosigner_pkey)
+{
+    if (ca_id == NULL || hash == NULL || cosigner_pkey == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    return ossl_mtc_ca_new(ca_id, ca_id_len, hash, min_serial, cosigner_pkey);
+}
+
+void OSSL_MTC_CA_free(OSSL_MTC_CA *ca)
+{
+    ossl_mtc_ca_free(ca);
+}
+
+int OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
+    const char *sig_name, EVP_PKEY *pkey)
+{
+    if (ca == NULL || id == NULL || sig_name == NULL || pkey == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ossl_mtc_ca_add_cosigner(ca, id, id_len, sig_name, pkey);
+}
+
+int OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end)
+{
+    if (ca == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ossl_mtc_ca_add_revoked_range(ca, start, end);
+}
+
+int OSSL_MTC_CA_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in,
+    int64_t cutoff)
+{
+    if (ca == NULL || in == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ossl_mtc_ca_load_landmarks(ca, log_number, in, cutoff);
+}
+
+int OSSL_MTC_CA_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
+    uint64_t start, uint64_t end, const uint8_t *hash, size_t hash_len)
+{
+    if (ca == NULL || hash == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return ossl_mtc_ca_add_subtree_hash(ca, log_number, start, end, hash,
+        hash_len);
+}
+
+int OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca, const uint8_t **out_id,
+    size_t *out_id_len)
+{
+    if (ca == NULL || out_id == NULL || out_id_len == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    *out_id = ossl_mtc_ca_id(ca, out_id_len);
+    return 1;
+}
+
+uint64_t OSSL_MTC_serial(uint16_t log_number, uint64_t index)
+{
+    return ((uint64_t)log_number << 48) | index;
 }
