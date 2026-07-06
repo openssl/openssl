@@ -64,8 +64,8 @@ static ossl_unused int rej_ntt_poly_mb(const uint8_t *seeds[ML_DSA_SHAKE_X4_BATC
     return 1;
 }
 
-static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
-    const size_t rho_prime_len, const uint32_t kappa, const uint32_t gamma1,
+static void vector_expand_mask_mb(VECTOR *out,
+    const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], const uint32_t kappa, const uint32_t gamma1,
     EVP_MD_CTX *h_ctx, const EVP_MD *md)
 {
     size_t i;
@@ -75,7 +75,6 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
     const size_t buf_size = ML_DSA_EXPAND_MASK_BUF_SIZE(gamma1);
     uint8_t buffers[ML_DSA_SHAKE_X4_BATCH_SIZE][ML_DSA_EXPAND_MASK_BUF_SIZE_GAMMA1_19];
 
-    (void)rho_prime_len;
     (void)h_ctx;
     (void)md;
 
@@ -130,6 +129,7 @@ static void vector_expand_mask_mb(VECTOR *out, const uint8_t *rho_prime,
             ossl_ml_dsa_poly_decode_expand_mask(&out->poly[i + 2], buffers[2], buf_size, gamma1);
     }
 
+    OPENSSL_cleanse(buffers, sizeof(buffers));
     OPENSSL_cleanse(derived_seeds, sizeof(derived_seeds));
 }
 

@@ -165,13 +165,14 @@ static int rej_bounded_poly(EVP_MD_CTX *h_ctx, const EVP_MD *md,
     COEFF_FROM_NIBBLE_FUNC *coef_from_nibble,
     const uint8_t *seed, size_t seed_len, POLY *out)
 {
+    int ret = 0;
     int j = 0;
     uint32_t z0, z1;
     uint8_t blocks[SHAKE256_BLOCKSIZE], *b, *end = blocks + sizeof(blocks);
 
     /* Instead of just squeezing 1 byte at a time, we grab a whole block */
     if (!shake_xof(h_ctx, md, seed, seed_len, blocks, sizeof(blocks)))
-        return 0;
+        goto err;
 
     while (1) {
         for (b = blocks; b < end; b++) {
@@ -179,15 +180,22 @@ static int rej_bounded_poly(EVP_MD_CTX *h_ctx, const EVP_MD *md,
             z1 = *b >> 4; /* high nibble of byte */
 
             if (coef_from_nibble(z0, &out->coeff[j])
-                && ++j >= ML_DSA_NUM_POLY_COEFFICIENTS)
-                return 1;
+                && ++j >= ML_DSA_NUM_POLY_COEFFICIENTS) {
+                ret = 1;
+                goto err;
+            }
             if (coef_from_nibble(z1, &out->coeff[j])
-                && ++j >= ML_DSA_NUM_POLY_COEFFICIENTS)
-                return 1;
+                && ++j >= ML_DSA_NUM_POLY_COEFFICIENTS) {
+                ret = 1;
+                goto err;
+            }
         }
         if (!EVP_DigestSqueeze(h_ctx, blocks, sizeof(blocks)))
-            return 0;
+            goto err;
     }
+err:
+    OPENSSL_cleanse(blocks, sizeof(blocks));
+    return ret;
 }
 
 /**
@@ -279,6 +287,7 @@ static int vector_expand_S_scalar(EVP_MD_CTX *h_ctx, const EVP_MD *md, int eta,
     }
     ret = 1;
 err:
+    OPENSSL_cleanse(derived_seed, sizeof(derived_seed));
     return ret;
 }
 
@@ -289,9 +298,11 @@ int ossl_ml_dsa_poly_expand_mask(POLY *out, const uint8_t *seed, size_t seed_len
 {
     uint8_t buf[32 * 20];
     size_t buf_len = 32 * (gamma1 == ML_DSA_GAMMA1_TWO_POWER_19 ? 20 : 18);
-
-    return shake_xof(h_ctx, md, seed, seed_len, buf, buf_len)
+    int ret = shake_xof(h_ctx, md, seed, seed_len, buf, buf_len)
         && ossl_ml_dsa_poly_decode_expand_mask(out, buf, buf_len, gamma1);
+
+    OPENSSL_cleanse(buf, sizeof(buf));
+    return ret;
 }
 
 /*
@@ -381,14 +392,12 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
     return 1;
 }
 
-static void vector_expand_mask_scalar(VECTOR *out, const uint8_t *rho_prime,
-    size_t rho_prime_len, uint32_t kappa, uint32_t gamma1,
+static void vector_expand_mask_scalar(VECTOR *out,
+    const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], uint32_t kappa, uint32_t gamma1,
     EVP_MD_CTX *h_ctx, const EVP_MD *md)
 {
     size_t i;
     uint8_t derived_seed[ML_DSA_RHO_PRIME_BYTES + 2];
-
-    (void)rho_prime_len;
 
     memcpy(derived_seed, rho_prime, ML_DSA_RHO_PRIME_BYTES);
 
@@ -400,6 +409,7 @@ static void vector_expand_mask_scalar(VECTOR *out, const uint8_t *rho_prime,
         poly_expand_mask(out->poly + i, derived_seed, sizeof(derived_seed),
             gamma1, h_ctx, md);
     }
+    OPENSSL_cleanse(derived_seed, sizeof(derived_seed));
 }
 
 static const OSSL_ML_DSA_SAMPLE_OPS ml_dsa_sample_generic_meth = {

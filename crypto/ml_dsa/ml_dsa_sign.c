@@ -268,7 +268,7 @@ static int ml_dsa_sign_internal(const ML_DSA_KEY *priv,
         VECTOR *ct0 = &w1;
         uint32_t z_max, r0_max, ct0_max, h_ones;
 
-        sample_ops->vector_expand_mask(&y, rho_prime, sizeof(rho_prime),
+        sample_ops->vector_expand_mask(&y, rho_prime,
             (uint32_t)kappa, gamma1, md_ctx, priv->shake256_md);
         vector_copy(y_ntt, &y);
         vector_ntt(y_ntt);

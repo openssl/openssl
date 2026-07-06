@@ -18,6 +18,7 @@
  */
 
 #include "internal/sha3.h"
+#include <openssl/crypto.h>
 #include <string.h>
 
 #if defined(KECCAK1600_ASM)                                                               \
@@ -97,7 +98,7 @@ void ossl_sha3_shake128_x4_inc_absorb_avx512vl(
 
 void ossl_sha3_shake128_x4_inc_cleanup_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
-    ossl_sha3_shake128_x4_inc_init_avx512vl(ctx);
+    OPENSSL_cleanse(ctx, sizeof(*ctx));
 }
 
 static void ossl_sha3_shake128_x4_inc_finalize_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
@@ -153,7 +154,7 @@ void ossl_sha3_shake256_x4_inc_absorb_avx512vl(
 
 void ossl_sha3_shake256_x4_inc_cleanup_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)
 {
-    ossl_sha3_shake256_x4_inc_init_avx512vl(ctx);
+    OPENSSL_cleanse(ctx, sizeof(*ctx));
 }
 
 static void ossl_sha3_shake256_x4_inc_finalize_avx512vl(KECCAK1600_X4_AVX512VL_CTX *ctx)

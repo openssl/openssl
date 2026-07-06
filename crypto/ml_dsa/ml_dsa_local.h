@@ -63,8 +63,8 @@ typedef int(ML_DSA_MATRIX_EXPAND_A_FN)(EVP_MD_CTX *g_ctx, const EVP_MD *md,
     const uint8_t *rho, MATRIX *out);
 typedef int(ML_DSA_VECTOR_EXPAND_S_FN)(EVP_MD_CTX *h_ctx, const EVP_MD *md,
     int eta, const uint8_t *seed, VECTOR *s1, VECTOR *s2);
-typedef void(ML_DSA_VECTOR_EXPAND_MASK_FN)(VECTOR *out, const uint8_t *rho_prime,
-    size_t rho_prime_len, uint32_t kappa, uint32_t gamma1,
+typedef void(ML_DSA_VECTOR_EXPAND_MASK_FN)(VECTOR *out,
+    const uint8_t rho_prime[ML_DSA_RHO_PRIME_BYTES], uint32_t kappa, uint32_t gamma1,
     EVP_MD_CTX *h_ctx, const EVP_MD *md);
 
 typedef struct ossl_ml_dsa_sample_ops_st {
