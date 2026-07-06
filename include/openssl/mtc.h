@@ -1,0 +1,84 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#if !defined(OPENSSL_MTC_H)
+#define OPENSSL_MTC_H
+
+#include <stddef.h>
+#include <stdint.h>
+#include <openssl/types.h>
+
+#if defined(__cplusplus)
+extern "C" {
+#endif
+
+/*-
+ * Provisional public API to configure a trusted Merkle Tree Certificate CA
+ * (sections 5 and 7.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ */
+
+/**
+ * @brief Create a trusted Merkle Tree Certificate CA from configured fields.
+ * @see OSSL_MTC_CA_new(3), OSSL_MTC_CA_free(3)
+ */
+OSSL_MTC_CA *OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len,
+    const EVP_MD *hash, uint64_t min_serial, EVP_PKEY *cosigner_pkey);
+
+/**
+ * @brief Free a trusted Merkle Tree Certificate CA.
+ * @see OSSL_MTC_CA_free(3), OSSL_MTC_CA_new(3)
+ */
+void OSSL_MTC_CA_free(OSSL_MTC_CA *ca);
+
+/**
+ * @brief Add a recognised cosigner to a trusted MTC CA.
+ * @see OSSL_MTC_CA_add1_cosigner(3)
+ */
+int OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
+    const char *sig_name, EVP_PKEY *pkey);
+
+/**
+ * @brief Add a revoked serial-number range to a trusted MTC CA.
+ * @see OSSL_MTC_CA_add_revoked_range(3)
+ */
+int OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end);
+
+/**
+ * @brief Replace an issuance log's active landmark window from a published
+ * landmark description.
+ * @see OSSL_MTC_CA_load_landmarks(3)
+ */
+int OSSL_MTC_CA_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in,
+    int64_t cutoff);
+
+/**
+ * @brief Record the vetted hash of an active subtree of a trusted MTC CA.
+ * @see OSSL_MTC_CA_add_subtree_hash(3)
+ */
+int OSSL_MTC_CA_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
+    uint64_t start, uint64_t end, const uint8_t *hash, size_t hash_len);
+
+/**
+ * @brief Get a trusted MTC CA's identifier (a TrustAnchorID).
+ * @see OSSL_MTC_CA_get0_id(3)
+ */
+int OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca, const uint8_t **out_id,
+    size_t *out_id_len);
+
+/**
+ * @brief Compute an MTC serial number from a log number and log index.
+ * @see OSSL_MTC_serial(3)
+ */
+uint64_t OSSL_MTC_serial(uint16_t log_number, uint64_t index);
+
+#if defined(__cplusplus)
+}
+#endif
+#endif /* defined(OPENSSL_MTC_H) */

@@ -9,6 +9,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/evp.h>
+#include <openssl/mtc.h>
 
 #include "crypto/mtc_ca.h"
 #include "testutil.h"
@@ -42,7 +43,7 @@ static int test_ca_roundtrip(void)
     if (!TEST_ptr(pkey = gen_cosigner_key()))
         goto err;
 
-    if (!TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 5,
+    if (!TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 5,
                       pkey)))
         goto err;
 
@@ -50,17 +51,38 @@ static int test_ca_roundtrip(void)
     EVP_PKEY_free(pkey);
     pkey = NULL;
 
-    got_id = ossl_mtc_ca_id(ca, &got_len);
-    if (!TEST_mem_eq(got_id, got_len, ca_id, sizeof(ca_id))
+    if (!TEST_true(OSSL_MTC_CA_get0_id(ca, &got_id, &got_len))
+        || !TEST_mem_eq(got_id, got_len, ca_id, sizeof(ca_id))
         || !TEST_ptr_ne(got_id, ca_id)
         || !TEST_ptr_eq(ossl_mtc_ca_hash(ca), EVP_sha256())
-        || !TEST_true(EVP_PKEY_is_a(ossl_mtc_ca_cosigner_pkey(ca), "ML-DSA-44"))
+        || !TEST_true(EVP_PKEY_is_a(ossl_mtc_ca_cosigner_pkey(ca),
+            "ML-DSA-44"))
         || !TEST_uint64_t_eq(ca->min_serial, 5))
         goto err;
 
     ret = 1;
 err:
-    ossl_mtc_ca_free(ca);
+    OSSL_MTC_CA_free(ca);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+
+/* A NULL hash is rejected. */
+static int test_ca_null_hash(void)
+{
+    EVP_PKEY *pkey = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pkey = gen_cosigner_key()))
+        goto err;
+    if (!TEST_ptr_null(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), NULL, 0,
+                           pkey)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_MTC_CA_free(ca);
     EVP_PKEY_free(pkey);
     return ret;
 }
@@ -80,13 +102,13 @@ static int test_ca_add_cosigners(void)
         || !TEST_ptr(k2 = gen_cosigner_key()))
         goto err;
 
-    if (!TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+    if (!TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
                       ca_key)))
         goto err;
 
-    if (!TEST_true(ossl_mtc_ca_add_cosigner(ca, cosigner0_id,
+    if (!TEST_true(OSSL_MTC_CA_add1_cosigner(ca, cosigner0_id,
             sizeof(cosigner0_id), "ML-DSA-44", k0))
-        || !TEST_true(ossl_mtc_ca_add_cosigner(ca, cosigner2_id,
+        || !TEST_true(OSSL_MTC_CA_add1_cosigner(ca, cosigner2_id,
             sizeof(cosigner2_id), "ML-DSA-44", k2))
         || !TEST_size_t_eq(ca->cosigner_count, 2))
         goto err;
@@ -103,7 +125,7 @@ static int test_ca_add_cosigners(void)
 
     ret = 1;
 err:
-    ossl_mtc_ca_free(ca);
+    OSSL_MTC_CA_free(ca);
     EVP_PKEY_free(ca_key);
     EVP_PKEY_free(k0);
     EVP_PKEY_free(k2);
@@ -124,22 +146,22 @@ static int test_ca_add_cosigner_duplicate(void)
         || !TEST_ptr(k0 = gen_cosigner_key()))
         goto err;
 
-    if (!TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+    if (!TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
                       ca_key)))
         goto err;
 
-    if (!TEST_true(ossl_mtc_ca_add_cosigner(ca, cosigner0_id,
+    if (!TEST_true(OSSL_MTC_CA_add1_cosigner(ca, cosigner0_id,
             sizeof(cosigner0_id), "ML-DSA-44", k0))
-        || !TEST_false(ossl_mtc_ca_add_cosigner(ca, cosigner0_id,
+        || !TEST_false(OSSL_MTC_CA_add1_cosigner(ca, cosigner0_id,
             sizeof(cosigner0_id), "ML-DSA-44", k0))
-        || !TEST_false(ossl_mtc_ca_add_cosigner(ca, ca_id, sizeof(ca_id),
+        || !TEST_false(OSSL_MTC_CA_add1_cosigner(ca, ca_id, sizeof(ca_id),
             "ML-DSA-44", k0))
         || !TEST_size_t_eq(ca->cosigner_count, 1))
         goto err;
 
     ret = 1;
 err:
-    ossl_mtc_ca_free(ca);
+    OSSL_MTC_CA_free(ca);
     EVP_PKEY_free(ca_key);
     EVP_PKEY_free(k0);
     return ret;
@@ -159,41 +181,56 @@ static int test_ca_revoked_ranges(void)
     if (!TEST_ptr(ca_key = gen_cosigner_key()))
         goto err;
 
-    /* min_serial = 5, so serials 0..4 are revoked by implication. */
-    if (!TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 5,
-                      ca_key)))
+    /* Serials are index 5 onward of log 1; indices 0..4 are revoked by
+     * implication. */
+    if (!TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(),
+                      OSSL_MTC_serial(1, 5), ca_key)))
         goto err;
 
-    if (!TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 0), 1)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 4), 1)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 5), 0))
+    if (!TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 0)), 1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 4)),
+            1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 5)),
+            0))
         goto err;
 
-    /* Add [10, 20): 9 out, 10 and 19 in, 20 out. */
-    if (!TEST_true(ossl_mtc_ca_add_revoked_range(ca, 10, 20))
+    /* Add log 1 indices [10, 20): 9 out, 10 and 19 in, 20 out. */
+    if (!TEST_true(OSSL_MTC_CA_add_revoked_range(ca, OSSL_MTC_serial(1, 10),
+            OSSL_MTC_serial(1, 20)))
         || !TEST_size_t_eq(ca->revoked_count, 1)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 9), 0)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 10), 1)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 19), 1)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 20), 0))
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 9)),
+            0)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 10)),
+            1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 19)),
+            1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 20)),
+            0))
         goto err;
 
     /* A second, disjoint range is also honoured. */
-    if (!TEST_true(ossl_mtc_ca_add_revoked_range(ca, 100, 101))
+    if (!TEST_true(OSSL_MTC_CA_add_revoked_range(ca, OSSL_MTC_serial(1, 100),
+            OSSL_MTC_serial(1, 101)))
         || !TEST_size_t_eq(ca->revoked_count, 2)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 100), 1)
-        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, 101), 0))
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca,
+                            OSSL_MTC_serial(1, 100)),
+            1)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca,
+                            OSSL_MTC_serial(1, 101)),
+            0))
         goto err;
 
     /* Empty and inverted ranges are rejected, list unchanged. */
-    if (!TEST_false(ossl_mtc_ca_add_revoked_range(ca, 30, 30))
-        || !TEST_false(ossl_mtc_ca_add_revoked_range(ca, 40, 30))
+    if (!TEST_false(OSSL_MTC_CA_add_revoked_range(ca, OSSL_MTC_serial(1, 30),
+            OSSL_MTC_serial(1, 30)))
+        || !TEST_false(OSSL_MTC_CA_add_revoked_range(ca, OSSL_MTC_serial(1, 40),
+            OSSL_MTC_serial(1, 30)))
         || !TEST_size_t_eq(ca->revoked_count, 2))
         goto err;
 
     ret = 1;
 err:
-    ossl_mtc_ca_free(ca);
+    OSSL_MTC_CA_free(ca);
     EVP_PKEY_free(ca_key);
     return ret;
 }
@@ -267,10 +304,10 @@ static int test_ca_load_landmarks(void)
     int found = 0, i, ret = 0;
 
     if (!TEST_ptr(ca_key = gen_cosigner_key())
-        || !TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+        || !TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
                          ca_key))
         || !TEST_ptr(bio = BIO_new_mem_buf("3\n8 100\n6 100\n3 50\n", -1))
-        || !TEST_true(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN)))
+        || !TEST_true(OSSL_MTC_CA_load_landmarks(ca, 1, bio, INT64_MIN)))
         goto err;
 
     /* Four landmark subtrees are active: [3,4), [4,6), [6,7), [7,8). */
@@ -300,12 +337,12 @@ static int test_ca_load_landmarks(void)
         goto err;
 
     /* A subtree outside the window cannot be hashed. */
-    if (!TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 0, 2, hash,
+    if (!TEST_false(OSSL_MTC_CA_add_subtree_hash(ca, 1, 0, 2, hash,
             sizeof(hash)))
         /* Wrong hash length is rejected. */
-        || !TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, hash, 16))
+        || !TEST_false(OSSL_MTC_CA_add_subtree_hash(ca, 1, 7, 8, hash, 16))
         /* Hashing an active subtree succeeds and makes it match. */
-        || !TEST_true(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, hash,
+        || !TEST_true(OSSL_MTC_CA_add_subtree_hash(ca, 1, 7, 8, hash,
             sizeof(hash))))
         goto err;
     if (!TEST_int_eq(ossl_mtc_ca_trusted_subtree_matches(ca, 1, 7, 8, hash,
@@ -321,9 +358,9 @@ static int test_ca_load_landmarks(void)
         goto err;
 
     /* The hash is immutable: same value is a no-op, a different value fails. */
-    if (!TEST_true(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, hash,
+    if (!TEST_true(OSSL_MTC_CA_add_subtree_hash(ca, 1, 7, 8, hash,
             sizeof(hash)))
-        || !TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 7, 8, other,
+        || !TEST_false(OSSL_MTC_CA_add_subtree_hash(ca, 1, 7, 8, other,
             sizeof(other))))
         goto err;
 
@@ -335,7 +372,7 @@ static int test_ca_load_landmarks(void)
      */
     BIO_free(bio);
     if (!TEST_ptr(bio = BIO_new_mem_buf("4\n10 100\n8 100\n6 50\n", -1))
-        || !TEST_true(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN)))
+        || !TEST_true(OSSL_MTC_CA_load_landmarks(ca, 1, bio, INT64_MIN)))
         goto err;
 
     /*
@@ -353,14 +390,14 @@ static int test_ca_load_landmarks(void)
         goto err;
 
     /* An aged-out subtree cannot be re-hashed: it is no longer in the window. */
-    if (!TEST_false(ossl_mtc_ca_add_subtree_hash(ca, 1, 4, 6, hash,
+    if (!TEST_false(OSSL_MTC_CA_add_subtree_hash(ca, 1, 4, 6, hash,
             sizeof(hash))))
         goto err;
 
     ret = 1;
 err:
     BIO_free(bio);
-    ossl_mtc_ca_free(ca);
+    OSSL_MTC_CA_free(ca);
     EVP_PKEY_free(ca_key);
     return ret;
 }
@@ -443,14 +480,14 @@ static int test_ca_load_landmarks_bad(void)
     };
 
     if (!TEST_ptr(ca_key = gen_cosigner_key())
-        || !TEST_ptr(ca = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+        || !TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
                          ca_key)))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(bad); i++) {
         if (!TEST_ptr(bio = BIO_new_mem_buf(bad[i], -1)))
             goto err;
-        if (!TEST_false(ossl_mtc_ca_load_landmarks(ca, 1, bio, INT64_MIN))) {
+        if (!TEST_false(OSSL_MTC_CA_load_landmarks(ca, 1, bio, INT64_MIN))) {
             TEST_info("input %zu should have failed: %s", i, bad[i]);
             goto err;
         }
@@ -465,7 +502,7 @@ static int test_ca_load_landmarks_bad(void)
     ret = 1;
 err:
     BIO_free(bio);
-    ossl_mtc_ca_free(ca);
+    OSSL_MTC_CA_free(ca);
     EVP_PKEY_free(ca_key);
     return ret;
 }
@@ -491,11 +528,11 @@ static int test_ca_stack(void)
         || !TEST_ptr(k2 = gen_cosigner_key()))
         goto err;
 
-    if (!TEST_ptr(ca0 = ossl_mtc_ca_new(cosigner0_id, sizeof(cosigner0_id),
+    if (!TEST_ptr(ca0 = OSSL_MTC_CA_new(cosigner0_id, sizeof(cosigner0_id),
                       EVP_sha256(), 0, k0))
-        || !TEST_ptr(ca1 = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(),
+        || !TEST_ptr(ca1 = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(),
                          0, k1))
-        || !TEST_ptr(ca2 = ossl_mtc_ca_new(cosigner2_id, sizeof(cosigner2_id),
+        || !TEST_ptr(ca2 = OSSL_MTC_CA_new(cosigner2_id, sizeof(cosigner2_id),
                          EVP_sha256(), 0, k2)))
         goto err;
 
@@ -531,7 +568,7 @@ static int test_ca_stack(void)
         goto err;
 
     /* A second CA with a duplicate CA ID is rejected and not added. */
-    if (!TEST_ptr(dup = ossl_mtc_ca_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+    if (!TEST_ptr(dup = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
                       k1))
         || !TEST_false(ossl_mtc_ca_stack_add(cas, dup))
         || !TEST_int_eq(sk_OSSL_MTC_CA_num(cas), 3))
@@ -540,33 +577,34 @@ static int test_ca_stack(void)
     /* Freeing the stack container leaves the borrowed CAs usable. */
     sk_OSSL_MTC_CA_free(cas);
     cas = NULL;
-    id = ossl_mtc_ca_id(ca1, &idlen);
-    if (!TEST_mem_eq(id, idlen, ca_id, sizeof(ca_id)))
+    if (!TEST_true(OSSL_MTC_CA_get0_id(ca1, &id, &idlen))
+        || !TEST_mem_eq(id, idlen, ca_id, sizeof(ca_id)))
         goto err;
 
     ret = 1;
 err:
     sk_OSSL_MTC_CA_free(cas);
-    ossl_mtc_ca_free(ca0);
-    ossl_mtc_ca_free(ca1);
-    ossl_mtc_ca_free(ca2);
-    ossl_mtc_ca_free(dup);
+    OSSL_MTC_CA_free(ca0);
+    OSSL_MTC_CA_free(ca1);
+    OSSL_MTC_CA_free(ca2);
+    OSSL_MTC_CA_free(dup);
     EVP_PKEY_free(k0);
     EVP_PKEY_free(k1);
     EVP_PKEY_free(k2);
     return ret;
 }
 
-/* ossl_mtc_ca_free(NULL) must be a no-op. */
+/* OSSL_MTC_CA_free(NULL) must be a no-op. */
 static int test_ca_free_null(void)
 {
-    ossl_mtc_ca_free(NULL);
+    OSSL_MTC_CA_free(NULL);
     return 1;
 }
 
 int setup_tests(void)
 {
     ADD_TEST(test_ca_roundtrip);
+    ADD_TEST(test_ca_null_hash);
     ADD_TEST(test_ca_add_cosigners);
     ADD_TEST(test_ca_add_cosigner_duplicate);
     ADD_TEST(test_ca_revoked_ranges);

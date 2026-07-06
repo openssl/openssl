@@ -6245,3 +6245,11 @@ OSSL_KDF_PURPOSE_server_cipher_key      ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_iv              ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_key             ?	4_2_0	EXIST::VARIABLE:
 OSSL_KDF_PURPOSE_server_mac_key         ?	4_2_0	EXIST::VARIABLE:
+OSSL_MTC_CA_new                         ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_free                        ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_add1_cosigner               ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_add_revoked_range           ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_get0_id                     ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_serial                         ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_load_landmarks              ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_add_subtree_hash            ?	4_2_0	EXIST::FUNCTION:
