@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/evp.h>
+#include <openssl/mtc.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
@@ -21,6 +23,7 @@
 #include "crypto/x509.h"
 #include "crypto/evp.h"
 #include "../crypto/asn1/asn1_local.h"
+#include "../crypto/x509/x509_local.h"
 
 /**********************************************************************
  *
@@ -1421,6 +1424,81 @@ err:
     return ret;
 }
 
+/* Trust anchor identifiers 32473.0 and 32473.1, in relative-OID bytes. */
+static const uint8_t mtc_ca_id0[] = { 0x81, 0xfd, 0x59, 0x00 };
+static const uint8_t mtc_ca_id1[] = { 0x81, 0xfd, 0x59, 0x01 };
+
+/*
+ * Trusting an MTC CA in an X509_STORE stores it (borrowed) by CA ID: a
+ * duplicate ID is rejected, NULL arguments fail, and freeing the store frees
+ * the container but leaves the borrowed CAs intact.
+ */
+static int test_x509_store_trust_mtc_ca(void)
+{
+    EVP_PKEY *k0 = NULL, *k1 = NULL;
+    OSSL_MTC_CA *ca0 = NULL, *ca1 = NULL, *dup = NULL;
+    X509_STORE *store = NULL;
+    const uint8_t *id = NULL;
+    size_t id_len = 0;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_ML_DSA)
+    return TEST_skip("ML-DSA is disabled");
+#endif /* defined(OPENSSL_NO_ML_DSA) */
+
+    if (!TEST_ptr(k0 = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44"))
+        || !TEST_ptr(k1 = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44")))
+        goto err;
+
+    if (!TEST_ptr(ca0 = OSSL_MTC_CA_new(mtc_ca_id0, sizeof(mtc_ca_id0),
+                      EVP_sha256(), 0, k0))
+        || !TEST_ptr(ca1 = OSSL_MTC_CA_new(mtc_ca_id1, sizeof(mtc_ca_id1),
+                         EVP_sha256(), 0, k1))
+        || !TEST_ptr(dup = OSSL_MTC_CA_new(mtc_ca_id0, sizeof(mtc_ca_id0),
+                         EVP_sha256(), 0, k0)))
+        goto err;
+
+    if (!TEST_ptr(store = X509_STORE_new()))
+        goto err;
+
+    /* NULL arguments are rejected. */
+    if (!TEST_false(X509_STORE_trust_mtc_ca(NULL, ca0))
+        || !TEST_false(X509_STORE_trust_mtc_ca(store, NULL)))
+        goto err;
+
+    /* Two distinct CAs are trusted; a duplicate CA ID is rejected. */
+    if (!TEST_true(X509_STORE_trust_mtc_ca(store, ca0))
+        || !TEST_true(X509_STORE_trust_mtc_ca(store, ca1))
+        || !TEST_false(X509_STORE_trust_mtc_ca(store, dup)))
+        goto err;
+
+    /* Both are in the store, found by CA ID as the same borrowed pointers. */
+    if (!TEST_ptr_eq(ossl_mtc_ca_stack_lookup(store->mtc_cas, mtc_ca_id0,
+                         sizeof(mtc_ca_id0)),
+            ca0)
+        || !TEST_ptr_eq(ossl_mtc_ca_stack_lookup(store->mtc_cas, mtc_ca_id1,
+                            sizeof(mtc_ca_id1)),
+            ca1))
+        goto err;
+
+    /* Freeing the store leaves the borrowed CAs usable. */
+    X509_STORE_free(store);
+    store = NULL;
+    if (!TEST_true(OSSL_MTC_CA_get0_id(ca0, &id, &id_len))
+        || !TEST_mem_eq(id, id_len, mtc_ca_id0, sizeof(mtc_ca_id0)))
+        goto err;
+
+    ret = 1;
+err:
+    X509_STORE_free(store);
+    OSSL_MTC_CA_free(ca0);
+    OSSL_MTC_CA_free(ca1);
+    OSSL_MTC_CA_free(dup);
+    EVP_PKEY_free(k0);
+    EVP_PKEY_free(k1);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
@@ -1440,6 +1518,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
     ADD_ALL_TESTS(test_x509_attribute_bit_string, 2);
+    ADD_TEST(test_x509_store_trust_mtc_ca);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5

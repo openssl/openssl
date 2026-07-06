@@ -16,6 +16,7 @@
 #include "internal/hashtable.h"
 
 #include <crypto/asn1.h>
+#include <crypto/mtc_ca.h>
 
 #define X509V3_conf_add_error_name_value(val) \
     ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
@@ -177,6 +178,7 @@ struct x509_store_st {
     CRYPTO_EX_DATA ex_data;
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
+    STACK_OF(OSSL_MTC_CA) *mtc_cas;
 };
 
 typedef struct lookup_dir_hashes_st BY_DIR_HASH;

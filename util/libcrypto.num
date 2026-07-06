@@ -5755,3 +5755,4 @@ OSSL_MTC_CA_get0_id                     ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_serial                         ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_load_landmarks              ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_add_subtree_hash            ?	4_2_0	EXIST::FUNCTION:
+X509_STORE_trust_mtc_ca                 ?	4_2_0	EXIST::FUNCTION:
