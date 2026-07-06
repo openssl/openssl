@@ -1,0 +1,54 @@
+=pod
+
+=head1 NAME
+
+X509_STORE_trust_mtc_ca
+- trust a Merkle Tree Certificate CA in an X509_STORE
+
+=head1 SYNOPSIS
+
+ #include <openssl/x509_vfy.h>
+
+ int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca);
+
+=head1 DESCRIPTION
+
+X509_STORE_trust_mtc_ca() adds I<ca> to I<store> as a trusted Merkle Tree
+Certificate CA
+(L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>).
+A Merkle Tree Certificate
+is accepted during verification if it is issued by one of the store's trusted
+MTC CAs; the store's MTC CAs are consulted through the X509_STORE that the
+verifying X509_STORE_CTX references.
+
+I<ca> is stored as a borrowed reference: the store neither copies nor frees it,
+so the caller retains ownership and must keep I<ca> valid for as long as the
+store references it. A CA whose identifier matches one already trusted by I<store>
+is rejected.
+
+=head1 RETURN VALUES
+
+X509_STORE_trust_mtc_ca() returns 1 on success and 0 on error, including when
+I<ca>'s identifier duplicates a CA already trusted by I<store>.
+
+=head1 SEE ALSO
+
+L<OSSL_MTC_CA_new(3)>, L<X509_verify_cert(3)>, L<X509_STORE_new(3)>
+
+The Merkle Tree Certificates draft:
+L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>
+
+=head1 HISTORY
+
+This function was added in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut

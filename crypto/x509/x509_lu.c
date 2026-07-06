@@ -277,6 +277,7 @@ void X509_STORE_free(X509_STORE *xs)
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, xs, &xs->ex_data);
     X509_VERIFY_PARAM_free(xs->param);
+    sk_OSSL_MTC_CA_free(xs->mtc_cas); /* borrowed CAs: free the container */
     CRYPTO_THREAD_lock_free(xs->lock);
     CRYPTO_FREE_REF(&xs->references);
     ossl_ht_free(xs->objs_ht);
@@ -598,6 +599,25 @@ int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
         return 0;
     }
     return 1;
+}
+
+int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca)
+{
+    int ret = 0;
+
+    if (store == NULL || ca == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509_STORE_lock(store))
+        return 0;
+    if (store->mtc_cas == NULL
+        && (store->mtc_cas = sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp)) == NULL)
+        goto out;
+    ret = ossl_mtc_ca_stack_add(store->mtc_cas, ca);
+out:
+    X509_STORE_unlock(store);
+    return ret;
 }
 
 int X509_OBJECT_up_ref_count(X509_OBJECT *a)
