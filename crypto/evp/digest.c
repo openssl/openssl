@@ -494,7 +494,8 @@ int EVP_MD_CTX_copy_ex(EVP_MD_CTX *out, const EVP_MD_CTX *in)
         return 0;
     }
 
-    if (out->digest == in->digest && in->digest->copyctx != NULL) {
+    if (out->digest == in->digest && in->digest->copyctx != NULL
+        && out->algctx != NULL && in->algctx != NULL) {
 
         in->digest->copyctx(out->algctx, in->algctx);
 
