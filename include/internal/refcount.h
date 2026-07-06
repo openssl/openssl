@@ -68,6 +68,12 @@ static inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
+static inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+{
+    *ret = atomic_load_explicit(&refcnt->val, memory_order_acquire);
+    return 1;
+}
+
 #elif defined(__GNUC__) && defined(__ATOMIC_RELAXED) && __GCC_ATOMIC_INT_LOCK_FREE > 0
 
 #define HAVE_ATOMICS 1
@@ -90,6 +96,12 @@ static __inline__ int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
+static __inline__ int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+{
+    *ret = __atomic_load_n(&refcnt->val, __ATOMIC_RELAXED);
+    return 1;
+}
+
 #elif defined(__ICL) && defined(_WIN32)
 #define HAVE_ATOMICS 1
 
@@ -106,6 +118,12 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = _InterlockedExchangeAdd((void *)&refcnt->val, -1) - 1;
+    return 1;
+}
+
+static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+{
+    *ret = _InterlockedExchangeAdd((void *)&refcnt->val, 0);
     return 1;
 }
 
@@ -135,6 +153,12 @@ static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
     return 1;
 }
 
+static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+{
+    *ret = _InterlockedExchangeAdd_acq((void *)&refcnt->val, 0);
+    return 1;
+}
+
 #else
 #pragma intrinsic(_InterlockedExchangeAdd)
 
@@ -147,6 +171,12 @@ static __inline int CRYPTO_UP_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 static __inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
 {
     *ret = _InterlockedExchangeAdd(&refcnt->val, -1) - 1;
+    return 1;
+}
+
+static __inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt, int *ret)
+{
+    *ret = _InterlockedExchangeAdd(&refcnt->val, 0);
     return 1;
 }
 
@@ -183,6 +213,12 @@ static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
     return CRYPTO_atomic_add(&refcnt->val, -1, ret, refcnt->lock);
 }
 
+static ossl_unused ossl_inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt,
+    int *ret)
+{
+    return CRYPTO_atomic_load_int(&refcnt->val, ret, refcnt->lock);
+}
+
 #define CRYPTO_NEW_FREE_DEFINED 1
 static ossl_unused ossl_inline int CRYPTO_NEW_REF(CRYPTO_REF_COUNT *refcnt, int n)
 {
@@ -215,6 +251,13 @@ static ossl_unused ossl_inline int CRYPTO_DOWN_REF(CRYPTO_REF_COUNT *refcnt,
     int *ret)
 {
     refcnt->val--;
+    *ret = refcnt->val;
+    return 1;
+}
+
+static ossl_unused ossl_inline int CRYPTO_GET_REF(CRYPTO_REF_COUNT *refcnt,
+    int *ret)
+{
     *ret = refcnt->val;
     return 1;
 }
