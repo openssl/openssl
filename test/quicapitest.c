@@ -3643,7 +3643,9 @@ static int test_quic_handshake_multipkt_mfail(void)
         quic_advance_time(clientssl, serverssl);
     }
     if (!TEST_int_lt(i, 10)) {
-        ret = -1;
+        ret = is_fips && fips_provider_version_match(libctx, ">=3.5.0 <4.1.0")
+            ? 0
+            : -1;
         goto err;
     }
 
