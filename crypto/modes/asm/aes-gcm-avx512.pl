@@ -133,6 +133,20 @@ my $CHECK_FUNCTION_ARGUMENTS = 0;
 my $AES_BLOCK_SIZE = 16;
 
 # Storage capacity in elements
+#
+# GHASH uses hash-key powers H^i (H = E_K(0)). This pipeline needs up to 32 of
+# them: the GCM128_CONTEXT holds 16 (HKEYS_CONTEXT_CAPACITY) and up to 32 are
+# materialised on the stack frame (HKEYS_STORAGE_CAPACITY) for the 32-block big
+# loop.
+#
+# INVARIANT (do not break): no code path ever weights a block by a power above
+# H^32. In particular the 32-block big-loop drain reduces its 32 pending blocks
+# as a single GHASH chain -- slot0 weighted H^32..H^17, slot1 weighted
+# H^16..H^1 -- BEFORE hashing any remaining tail, so the combined pending+tail
+# window never needs H^33 or higher. That is exactly what makes 32 stored keys
+# sufficient (a naive drain of pending+tail together would need H^(32+n) and was
+# the source of an earlier tag-forgery bug). See the drain in GCM_ENC_DEC
+# (.L_no_more_big_nblocks / .L_tail_gt_16_blocks).
 my $HKEYS_STORAGE_CAPACITY = 32;
 my $LOCAL_STORAGE_CAPACITY = 32;
 my $HKEYS_CONTEXT_CAPACITY = 16;
@@ -4038,6 +4052,43 @@ sub GCM_ENC_DEC {
 
   my $HKEYS_READY = $IA7;
 
+  # ; ---------------------------------------------------------------------
+  # ; ZMM register map for the hot (bulk encrypt/decrypt) loop
+  # ; ---------------------------------------------------------------------
+  # ; All 32 ZMM registers are in play once we reach the wide loops. Two
+  # ; registers carry state that must survive across the whole routine (and
+  # ; across successive Update calls, via GCM_INIT / GCM_COMPLETE); the rest
+  # ; are freely-clobbered scratch or hold loop-invariant constants.
+  # ;
+  # ;   Live across the whole routine (do NOT reuse as scratch):
+  # ;     zmm2        CTR_BLOCKz  - running big-endian counter block
+  # ;                               (hardcoded in GCM_INIT)
+  # ;     zmm14       AAD_HASHz   - running GHASH accumulator
+  # ;                               (hardcoded in GCM_COMPLETE)
+  # ;
+  # ;   Loop-invariant constants (set once, read-only in the loop):
+  # ;     zmm29       SHUF_MASK   - big-endian <-> little-endian byte swap
+  # ;     zmm27       ADDBE_4x4   - +4 counter increment (BE), unused on the
+  # ;                               small-packet path
+  # ;     zmm28       ADDBE_1234  - +1,+2,+3,+4 counter increments (BE), ditto
+  # ;
+  # ;   GHASH partial products (accumulated hi/lo/mid, then reduced):
+  # ;     zmm24       GH          - high 128-bit products
+  # ;     zmm25       GL          - low 128-bit products
+  # ;     zmm26       GM          - middle 128-bit products
+  # ;
+  # ;   General scratch (ZTMP0..ZTMP22 - keystream, data, GHASH inputs):
+  # ;     zmm0 ZTMP0    zmm3 ZTMP1    zmm4 ZTMP2    zmm5 ZTMP3
+  # ;     zmm6 ZTMP4    zmm7 ZTMP5    zmm10 ZTMP6   zmm11 ZTMP7
+  # ;     zmm12 ZTMP8   zmm13 ZTMP9   zmm15 ZTMP10  zmm16 ZTMP11
+  # ;     zmm17 ZTMP12  zmm19 ZTMP13  zmm20 ZTMP14  zmm21 ZTMP15
+  # ;     zmm30 ZTMP16  zmm31 ZTMP17  zmm1  ZTMP18  zmm18 ZTMP19
+  # ;     zmm8  ZTMP20  zmm22 ZTMP21  zmm23 ZTMP22
+  # ;
+  # ;   zmm9 is not allocated here; hash-key powers (HKEYS) are streamed from
+  # ;   the context in memory rather than being pinned to a fixed ZMM.
+  # ; ---------------------------------------------------------------------
+
   my $CTR_BLOCKz = "%zmm2";
   my $CTR_BLOCKx = "%xmm2";
 
@@ -4121,6 +4172,14 @@ sub GCM_ENC_DEC {
   # ;;; halves per iteration (GHASH of the first half overlaps the AES-CTR of
   # ;;; the second) with the polynomial reduction deferred to the 32-block
   # ;;; boundary, then drains 32/16/N-block tails as the length winds down.
+  # ;;;
+  # ;;; The crossovers are empirical break-evens (measured, not arbitrary),
+  # ;;; encoded below as block counts: 64 B, 192 B, 44*16 = 704 B and
+  # ;;; 112*16 = 1792 B. They were tuned and cross-checked on both AMD (Zen 5)
+  # ;;; and Intel (Ice Lake) VAES parts, so they are not machine-specific magic
+  # ;;; numbers; re-tuning for a new microarchitecture only shifts these
+  # ;;; thresholds, it does not affect correctness (any length is handled
+  # ;;; correctly by whichever loop it lands in).
   # ;;; ===========================================================================
 
   if ($win64) {
@@ -4158,6 +4217,9 @@ sub GCM_ENC_DEC {
         je                .L_enc_dec_done_${label_suffix}
 ___
 
+  # ;; First dispatch: messages < 64 B (< 4 blocks) take the masked small/
+  # ;; partial path; 64 B and above set up the big-endian counter and fall
+  # ;; through to the length-based loop selection below.
   $code .= <<___;
         cmp               \$64,$LENGTH
         jb               .L_message_below_equal_16_blocks_${label_suffix}
@@ -5008,7 +5070,16 @@ $code .= ".text\n";
   # ;       (const void *aes_keys,
   # ;        void *gcm128ctx)
   # ;
-  # ; Precomputes hashkey table for GHASH optimization.
+  # ; Precomputes the GHASH hash-key table in the context.
+  # ;
+  # ; POSTCONDITION (changed from the original eager precompute): only H^1..H^8
+  # ; are computed and stored in the context by this function. H^9..H^16 are left
+  # ; ZEROED and are computed lazily on first use -- and cached back into the
+  # ; context -- by precompute_hkeys_on_stack(). Callers must therefore NOT
+  # ; assume the context holds valid H^9..H^16 immediately after init. (H^17..H^32,
+  # ; needed only by the 32-block path, are materialised per-call on the stack
+  # ; frame, never in the context.)
+  # ;
   # ; Leaf function (does not allocate stack space, does not use non-volatile registers).
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
   $code .= <<___;
