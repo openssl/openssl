@@ -332,10 +332,10 @@ static int alpn_server_select(const char *proto)
 }
 
 /* Append protocol proto (length-prefixed) to the wire buffer at *n. */
-static int alpn_wire_add(unsigned char *wire, size_t cap, size_t *n,
+static int alpn_wire_add(unsigned char *wire, size_t cap, unsigned int *n,
     const char *proto)
 {
-    size_t plen = strlen(proto);
+    unsigned int plen = (unsigned int)strlen(proto);
 
     if (plen == 0 || plen > 255 || *n + 1 + plen > cap)
         return 0;
@@ -348,7 +348,7 @@ static int alpn_wire_add(unsigned char *wire, size_t cap, size_t *n,
 static int alpn_client_offer(SSL *ssl, const char *proto)
 {
     unsigned char wire[256];
-    size_t n = 0;
+    unsigned int n = 0;
 
     if (!alpn_wire_add(wire, sizeof(wire), &n, proto))
         return 0;
@@ -359,7 +359,7 @@ static int alpn_client_offer(SSL *ssl, const char *proto)
 static int alpn_client_offer2(SSL *ssl, const char *p1, const char *p2)
 {
     unsigned char wire[256];
-    size_t n = 0;
+    unsigned int n = 0;
 
     if (!alpn_wire_add(wire, sizeof(wire), &n, p1)
         || !alpn_wire_add(wire, sizeof(wire), &n, p2))
@@ -913,6 +913,16 @@ static int test_tls13_ticket_alpn_cleared(void)
         && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
         && TEST_true(alpn_conn_selected_is(initial.s.ssl, "goodalpn"))
         && TEST_true(alpn_conn_selected_is(initial.c.ssl, "goodalpn"))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
         && TEST_uint_eq(initial.s.stats.ee_has_alpn, 1)
         && TEST_uint_eq(initial.c.stats.ee_has_alpn, 1)
         && TEST_true(tls_shutdown(&initial))
@@ -927,8 +937,18 @@ static int test_tls13_ticket_alpn_cleared(void)
         && TEST_true(SSL_set_session(resumed.c.ssl, sess))
         && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
         && TEST_true(SSL_session_reused(resumed.c.ssl))
-        && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
         && TEST_uint_eq(resumed.c.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.c.stats.tickets, 1)
+        && TEST_uint_eq(resumed.s.stats.tickets, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0)
         && TEST_uint_eq(resumed.s.stats.ee_has_alpn, 0)
         && TEST_uint_eq(resumed.c.stats.ee_has_alpn, 0)
         /* No ALPN was negotiated on the resumption handshake ... */
