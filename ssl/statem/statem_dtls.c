@@ -822,8 +822,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             goto err;
 
         frag = dtls1_hm_fragment_new(frag_len, 0);
-        if (frag == NULL)
+        if (frag == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
 
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 
@@ -841,8 +843,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         }
 
         item = pitem_new(seq64be, frag);
-        if (item == NULL)
+        if (item == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
             goto err;
+        }
 
         item = pqueue_insert(s->d1->buffered_messages, item);
         /*
@@ -853,8 +857,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
          * have been processed with |dtls1_reassemble_fragment|, above, or
          * the record will have been discarded.
          */
-        if (!ossl_assert(item != NULL))
+        if (!ossl_assert(item != NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
     }
 
     return DTLS1_HM_FRAGMENT_RETRY;
