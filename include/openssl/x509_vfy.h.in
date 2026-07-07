@@ -339,6 +339,14 @@ void X509_STORE_CTX_set_depth(X509_STORE_CTX *ctx, int depth);
 
 #define X509_V_ERR_DUPLICATE_EXTENSION 104
 
+/* Merkle Tree Certificate errors */
+#define X509_V_ERR_MTC_NOT_MTC 105
+#define X509_V_ERR_MTC_BAD_PROOF 106
+#define X509_V_ERR_MTC_UNTRUSTED_CA 107
+#define X509_V_ERR_MTC_REVOKED 108
+#define X509_V_ERR_MTC_INCLUSION_FAILED 109
+#define X509_V_ERR_MTC_NOT_TRUSTED 110
+
 /* Certificate verify flags */
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0
 #define X509_V_FLAG_CB_ISSUER_CHECK 0x0 /* Deprecated */
