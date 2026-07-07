@@ -10,16 +10,6 @@
 #include "internal/cryptlib.h"
 #include "bn_local.h"
 
-static size_t calculate_max_top(const BIGNUM *a, const BIGNUM *b)
-{
-    return (a->top > b->top) ? a->top : b->top;
-}
-
-static bool is_highest_bit_set(const BIGNUM *a)
-{
-    return a->top > 0 && (a->d[a->top - 1] & OSSL_FN_HIGH_BIT_MASK) != 0;
-}
-
 /* signed add of b to a. */
 int BN_add(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
@@ -82,9 +72,8 @@ int BN_sub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     return ret;
 }
 
-/* TODO(FIXNUM): TO BE REMOVED */
-/* pure BIGNUM unsigned add of b to a, r can be equal to a or b. */
-static int bn_uadd_legacy(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+/* unsigned add of b to a, r can be equal to a or b. */
+int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
     int max, min, dif;
     const BN_ULONG *ap, *bp;
@@ -132,38 +121,8 @@ static int bn_uadd_legacy(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     return 1;
 }
 
-/* unsigned add of b to a, r can be equal to a or b. */
-int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
-{
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (r->data == NULL || a->data == NULL || b->data == NULL)
-        return bn_uadd_legacy(r, a, b);
-
-    bn_check_top(a);
-    bn_check_top(b);
-
-    size_t top = calculate_max_top(a, b);
-
-    /*
-     * If either operands have the highest bit set the result may become
-     * one limb larger.
-     */
-    if (is_highest_bit_set(a) || is_highest_bit_set(b))
-        top++;
-
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
-    if (rf == NULL)
-        return 0;
-
-    int ret = OSSL_FN_add(rf, a->data, b->data);
-    bn_release(r, (int)top);
-
-    return ret;
-}
-
-/* TODO(FIXNUM): TO BE REMOVED */
-/* pure BIGNUM unsigned subtraction of b from a, a must be larger than b. */
-static int bn_usub_legacy(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
+/* unsigned subtraction of b from a, a must be larger than b. */
+int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
 {
     int max, min, dif;
     BN_ULONG t1, t2, borrow, *rp;
@@ -207,31 +166,4 @@ static int bn_usub_legacy(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     r->neg = 0;
 
     return 1;
-}
-
-/* unsigned subtraction of b from a, a must be larger than b. */
-int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
-{
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (r->data == NULL || a->data == NULL || b->data == NULL)
-        return bn_usub_legacy(r, a, b);
-
-    bn_check_top(a);
-    bn_check_top(b);
-
-    if (a->top < b->top) { /* hmm... should not be happening */
-        ERR_raise(ERR_LIB_BN, BN_R_ARG2_LT_ARG3);
-        return 0;
-    }
-
-    size_t top = calculate_max_top(a, b);
-
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
-    if (rf == NULL)
-        return 0;
-
-    int ret = OSSL_FN_sub(rf, a->data, b->data);
-    bn_release(r, (int)top);
-
-    return ret;
 }
