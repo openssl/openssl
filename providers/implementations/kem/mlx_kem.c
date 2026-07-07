@@ -25,6 +25,18 @@
 #include "prov/providercommon.h"
 #include "providers/implementations/kem/mlx_kem.inc"
 
+/*
+ * Rather that deriving from a single seed, for some reason the test
+ * vectors pass ikme as 32 bytes of ikme for MLKEM followed by
+ * entropy required for the traditional key. For P256 this is the input
+ * to RandomScalar() which SHOULD be 128 bytes.
+ * (Note that the tests pass 32 bytes less)
+ */
+#define MLKEM_ENTROPY_LEN  32  /* Used to set the IKME for MLKEM */
+#define ECP256_ENTROPY_LEN 128 /* (RandomScalar() passes multiple blocks in case of failure) */
+#define TEST_ENTROPY_LEN (MLKEM_ENTROPY_LEN + ECP256_ENTROPY_LEN)
+#define ENCAP_SHA3_LEN 32
+
 static OSSL_FUNC_kem_newctx_fn mlx_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn mlx_kem_freectx;
 static OSSL_FUNC_kem_encapsulate_init_fn mlx_kem_encapsulate_init;
@@ -38,7 +50,7 @@ typedef struct {
     OSSL_LIB_CTX *libctx;
     MLX_KEY *key;
     int op;
-    uint8_t entropy[256]; /* This is used for testing purposes */
+    uint8_t entropy[TEST_ENTROPY_LEN]; /* This is used for testing purposes */
     size_t entropy_len;
 } PROV_MLX_KEM_CTX;
 
@@ -70,8 +82,7 @@ static void mlx_kem_freectx(void *vctx)
     OPENSSL_free(vctx);
 }
 
-static int mlx_kem_init(void *vctx, int op, void *key,
-    ossl_unused const OSSL_PARAM params[])
+static int mlx_kem_init(void *vctx, int op, void *key, const OSSL_PARAM params[])
 {
     PROV_MLX_KEM_CTX *ctx = vctx;
 
@@ -124,7 +135,14 @@ static int mlx_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (p.ikme != NULL) {
         void *vp = ctx->entropy;
         size_t len = sizeof(ctx->entropy);
-        size_t need = 32 + (ctx->key->xinfo->ec_nSeed > 0 ? ctx->key->xinfo->ec_nSeed : ctx->key->xinfo->prvkey_bytes);
+        /*
+         * Rather that deriving from a single seed, for some reason the test
+         * vectors pass ikme as 32 bytes for MLKEM followed by entropy required
+         * for the traditional key. For EC P-256 this is the input to
+         * RandomScalar() input which should be 128 bytes, but in the tests they
+         * use 32 bytes less.
+         */
+        size_t need = MLKEM_ENTROPY_LEN + (ctx->key->xinfo->ec_nSeed > 0 ? ctx->key->xinfo->ec_nSeed : ctx->key->xinfo->prvkey_bytes);
 
         /* Unfortunately there is currently a test vector that is 32 bytes less */
         if (ctx->key->xinfo->ml_kem_variant == EVP_PKEY_ML_KEM_768)
@@ -207,7 +225,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     if (hpke_mode) {
         if (sizeof(ss_tmp) < combined_encap_slen)
             return 0;
-        encap_slen = 32; /* SHA3_256 output size */
+        encap_slen = ENCAP_SHA3_LEN; /* SHA3_256 output size */
         ss = ss_tmp; /* writes to a temporary buffer */
     } else {
         ss = shsec; /* writes directly to the output buffer */
@@ -255,7 +273,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
 
     if (mlxctx->entropy_len > 0) {
         prms = params;
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME, mlxctx->entropy, 32);
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME, mlxctx->entropy, MLKEM_ENTROPY_LEN);
         *p = OSSL_PARAM_construct_end();
     }
     /* ML-KEM encapsulation */
@@ -301,7 +319,8 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     if (mlxctx->entropy_len > 0) {
         mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
         p = params;
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, mlxctx->entropy + 32, mlxctx->entropy_len - 32);
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM,
+            mlxctx->entropy + MLKEM_ENTROPY_LEN, mlxctx->entropy_len - MLKEM_ENTROPY_LEN);
         *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_IKM_DERIVEMODE, &mode);
         *p = OSSL_PARAM_construct_end();
     }
@@ -379,7 +398,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     if (hpke_mode) {
         if (sizeof(ss_tmp) < combined_decap_slen)
             return 0;
-        decap_slen = 32; /* SHA3_256 output size */
+        decap_slen = ENCAP_SHA3_LEN; /* SHA3_256 output size */
         ss = ss_tmp; /* writes to a temporary buffer */
     } else {
         ss = shsec; /* writes directly to the output buffer */

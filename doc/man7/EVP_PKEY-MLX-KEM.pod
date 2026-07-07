@@ -93,7 +93,7 @@ must not be set. This parameter is only used by HPKE algorithms.
 
 =item "seed" (B<OSSL_PKEY_PARAM_SEED> <octet string>
 
-Used for testing purposes purposes to deterministically set the raw seed used
+Used for testing purposes to deterministically set the raw seed used to
 generate a keypair. If this is set B<OSSL_PKEY_PARAM_IKM> must not be set.
 This parameter is only used by HPKE algorithms.
 
