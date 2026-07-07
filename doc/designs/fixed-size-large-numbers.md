@@ -400,17 +400,18 @@ Mutability
 
 The understanding is that within a `OSSL_FN` API, `dsize` is immutable as
 soon as a `OSSL_FN` has been allocated to its target size, except for when
-the `OSSL_FN` instance is freed. However, when accessed through the `BIGNUM`
-type (i.e. by the `BIGNUM` API), the `OSSL_FN` size may be reallocated to
-allow a larger size than initially allocated, and `dsize` may be modified
-accordingly.
+the `OSSL_FN` instance is freed.
+
+When accessed through the `BIGNUM` type (i.e. by the `BIGNUM` API), the
+`OSSL_FN` size may be reallocated to allow a larger size than initially
+allocated, and `dsize` may be modified accordingly.  The exception is an
+acquired `OSSL_FN` view.  Once a caller has acquired the backing `OSSL_FN`
+from a `BIGNUM`, that backing size must be treated as immutable until
+release.  The owning `BIGNUM` must not simultaneously be used through `BN_`
+operations that could resize or otherwise reinterpret the same storage.
 
 The `OSSL_FN_CTX`  API is much more strict.  The size of an `OSSL_FN_CTX`
 instance is immutable after it has been allocated, except when it is freed.
-
-In the case where an `OSSL_FN` is "acquired" (i.e. the calling code holds a
-pointer to a `OSSL_FN` and to a `BIGNUM` that wraps it), `BIGNUM` must
-consider the `OSSL_FN` size as immutable.
 
 Memory functionality for `OSSL_FN`
 ----------------------------------
