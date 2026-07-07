@@ -21,6 +21,37 @@ BIGNUM *bn_expand2(BIGNUM *a, int words);
 void bn_correct_top(BIGNUM *a);
 
 /*
+ * bn_acquire_ossl_fn() and bn_release() work in tandem, and are
+ * most useful at call sites that temporarily operate on a BIGNUM's
+ * fixed-width OSSL_FN representation.
+ */
+
+/**
+ * Acquire the OSSL_FN from a BIGNUM.  The BIGNUM should no longer be
+ * used until bn_release() is called.
+ *
+ * @param[in]   b       The BIGNUM instance to get an OSSL_FN from
+ * @param[in]   limbs   The minimum number of limbs 'b' should be expanded to.
+ *                      Note that this doesn't set 'top', that's done by
+ *                      bn_release().
+ * @returns     the OSSL_FN instance of the BIGNUM, if there is one
+ * @pre         b must not be NULL
+ */
+OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs);
+
+/**
+ * Release the BIGNUM from which the OSSL_FN was acquired.  This will
+ * adjust the BIGNUM to what was done with its OSSL_FN, and the BIGNUM
+ * can again be used with BN_ functions.
+ *
+ * @param[in]   b       The BIGNUM instance to release
+ * @param[in]   limbs   The maximum number of significant limbs.  This sets
+ *                      'top'.
+ * @pre         b and b->data must not be NULL
+ */
+void bn_release(BIGNUM *b, int limbs);
+
+/*
  * Determine the modified width-(w+1) Non-Adjacent Form (wNAF) of 'scalar'.
  * This is an array r[] of values that are either zero or odd with an
  * absolute value less than 2^w satisfying scalar = \sum_j r[j]*2^j where at
