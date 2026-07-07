@@ -181,8 +181,9 @@ The `OSSL_FN` type
 
 The `OSSL_FN` type would be a structure derived from the existing `BIGNUM`
 type, retaining a minimum amount of data.  Just as was previously with
-`BIGNUM`, the absolute value of the number is stored in a `BN_ULONG` array,
-and a flag indicates if the number is positive or negative.
+`BIGNUM`, the absolute value of the number is stored in a `BN_ULONG` array.
+`OSSL_FN` itself is unsigned; sign handling remains with `BIGNUM` when
+`BIGNUM` values are used as carriers.
 
 ```c
 typedef struct ossl_fn_st OSSL_FN;
@@ -192,10 +193,6 @@ struct ossl_fn_st {
     unsigned int is_dynamically_allocated : 1;
     /* Flag: alloced with OSSL_FN_secure_new() */
     unsigned int is_securely_allocated : 1;
-    /* Flag: the caller holds a pointer to this OSSL_FN as well as the BIGNUM that wraps it */
-    unsigned int is_acquired : 1;
-    /* Flag: the number is negative */
-    unsigned int is_negative : 1;
 
     /*
      * The d array, with its size in number of BN_ULONG.
@@ -205,11 +202,6 @@ struct ossl_fn_st {
     BN_ULONG d[];
 };
 ```
-
-To be noted is that current cryptosystems never use negative numbers, so
-it's possible that the `is_negative` flag will never be used.  Therefore, it
-is possible that it will never exist in actual implementation.  It is
-retained in this design, though, to keep that option open.
 
 The `OSSL_FN_CTX` type
 ----------------------
@@ -375,23 +367,20 @@ When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`:
  */
 OSSL_FN *BN_acquire_fn(BIGNUM *a, size_t bits)
 {
-    if (a->data->is_acquired)
-        return NULL; /* only one acquisition at a time */
     if ((bn_expand(a, bits)) <= 0)
         return NULL;
-    a->data->is_acquired = 1;
+    /* Implementation may do further acquisition bookkeeping here. */
     return a->data;
 }
 void BN_release_fn(BIGNUM *a)
 {
-    a->data->is_acquired = 0;
+    /* Implementation may do further release bookkeeping here. */
 }
 ```
 
-Note that these functions are not designed to be thread-safe, nor do they
-support multiple suímultaneous acquisitions.  By design, holding pointers to
-a `BIGNUM` and its wrapped `OSSL_FN` at the same time should only happen in
-a very short term.
+Note that these functions are not designed to be thread-safe.  By design,
+holding pointers to a `BIGNUM` and its wrapped `OSSL_FN` at the same time
+should only happen in a very short term.
 
 Mutability
 ----------
