@@ -118,6 +118,10 @@ DEPEND[man/man1/openssl-gendsa.1]=man1/openssl-gendsa.pod
 GENERATE[man/man1/openssl-gendsa.1]=man1/openssl-gendsa.pod
 DEPEND[man1/openssl-gendsa.pod]{pod}=man1/openssl-gendsa.pod.in
 GENERATE[man1/openssl-gendsa.pod]=man1/openssl-gendsa.pod.in
+DEPEND[html/man1/openssl-generate_tai_chain.html]=man1/openssl-generate_tai_chain.pod
+GENERATE[html/man1/openssl-generate_tai_chain.html]=man1/openssl-generate_tai_chain.pod
+DEPEND[man/man1/openssl-generate_tai_chain.1]=man1/openssl-generate_tai_chain.pod
+GENERATE[man/man1/openssl-generate_tai_chain.1]=man1/openssl-generate_tai_chain.pod
 DEPEND[html/man1/openssl-genpkey.html]=man1/openssl-genpkey.pod
 GENERATE[html/man1/openssl-genpkey.html]=man1/openssl-genpkey.pod
 DEPEND[man/man1/openssl-genpkey.1]=man1/openssl-genpkey.pod
@@ -365,6 +369,7 @@ html/man1/openssl-errstr.html \
 html/man1/openssl-fipsinstall.html \
 html/man1/openssl-format-options.html \
 html/man1/openssl-gendsa.html \
+html/man1/openssl-generate_tai_chain.html \
 html/man1/openssl-genpkey.html \
 html/man1/openssl-genrsa.html \
 html/man1/openssl-info.html \
@@ -427,6 +432,7 @@ man/man1/openssl-errstr.1 \
 man/man1/openssl-fipsinstall.1 \
 man/man1/openssl-format-options.1 \
 man/man1/openssl-gendsa.1 \
+man/man1/openssl-generate_tai_chain.1 \
 man/man1/openssl-genpkey.1 \
 man/man1/openssl-genrsa.1 \
 man/man1/openssl-info.1 \
@@ -1823,6 +1829,10 @@ DEPEND[html/man3/OSSL_PARAM_print_to_bio.html]=man3/OSSL_PARAM_print_to_bio.pod
 GENERATE[html/man3/OSSL_PARAM_print_to_bio.html]=man3/OSSL_PARAM_print_to_bio.pod
 DEPEND[man/man3/OSSL_PARAM_print_to_bio.3]=man3/OSSL_PARAM_print_to_bio.pod
 GENERATE[man/man3/OSSL_PARAM_print_to_bio.3]=man3/OSSL_PARAM_print_to_bio.pod
+DEPEND[html/man3/OSSL_PROOF_verify.html]=man3/OSSL_PROOF_verify.pod
+GENERATE[html/man3/OSSL_PROOF_verify.html]=man3/OSSL_PROOF_verify.pod
+DEPEND[man/man3/OSSL_PROOF_verify.3]=man3/OSSL_PROOF_verify.pod
+GENERATE[man/man3/OSSL_PROOF_verify.3]=man3/OSSL_PROOF_verify.pod
 DEPEND[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 GENERATE[html/man3/OSSL_PROVIDER.html]=man3/OSSL_PROVIDER.pod
 DEPEND[man/man3/OSSL_PROVIDER.3]=man3/OSSL_PROVIDER.pod
@@ -3543,6 +3553,7 @@ html/man3/OSSL_PARAM_allocate_from_text.html \
 html/man3/OSSL_PARAM_dup.html \
 html/man3/OSSL_PARAM_int.html \
 html/man3/OSSL_PARAM_print_to_bio.html \
+html/man3/OSSL_PROOF_verify.html \
 html/man3/OSSL_PROVIDER.html \
 html/man3/OSSL_QUIC_client_method.html \
 html/man3/OSSL_SELF_TEST_new.html \
@@ -4227,6 +4238,7 @@ man/man3/OSSL_PARAM_allocate_from_text.3 \
 man/man3/OSSL_PARAM_dup.3 \
 man/man3/OSSL_PARAM_int.3 \
 man/man3/OSSL_PARAM_print_to_bio.3 \
+man/man3/OSSL_PROOF_verify.3 \
 man/man3/OSSL_PROVIDER.3 \
 man/man3/OSSL_QUIC_client_method.3 \
 man/man3/OSSL_SELF_TEST_new.3 \
