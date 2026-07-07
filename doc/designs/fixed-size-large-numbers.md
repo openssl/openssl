@@ -356,6 +356,13 @@ struct bignum_st {
 };
 ```
 
+In normal public use, `data` is non-NULL and `d` points at `data->d`.
+Certain internal or otherwise special `BIGNUM`s may still have `data` set to
+NULL, in which case `d` points directly at a `BN_ULONG` array.  Such cases
+must not be forced to grow an `OSSL_FN` backing object solely to fit this
+structure.  How `OSSL_FN` code should use the `BN_ULONG` data from such
+`BIGNUM`s remains an implementation detail.
+
 When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`:
 
 ```c
