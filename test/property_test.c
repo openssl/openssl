@@ -747,6 +747,123 @@ err:
     return res;
 }
 
+/* Memory-failure coverage for store creation. */
+static int test_query_store_new_mfail(void)
+{
+    OSSL_METHOD_STORE *store;
+    int rc;
+
+    MFAIL_start();
+    store = ossl_method_store_new(NULL);
+    MFAIL_end();
+
+    rc = store != NULL ? 1 : 0;
+    ossl_method_store_free(store);
+    return rc;
+}
+
+/* Memory-failure coverage for method registration. */
+static int test_query_store_add_mfail(void)
+{
+    static OSSL_PROVIDER prov = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "add-mfail-provider"
+    };
+    OSSL_METHOD_STORE *store = NULL;
+    int refs = 0;
+    int rc = -1;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL)))
+        goto end;
+
+    MFAIL_start();
+    rc = ossl_method_store_add(store, &prov, 1, "", &refs,
+             counted_up_ref, counted_down_ref)
+        ? 1
+        : 0;
+    MFAIL_end();
+
+end:
+    ossl_method_store_free(store);
+    if (rc >= 0 && !TEST_int_eq(refs, 0))
+        rc = -1;
+    return rc;
+}
+
+/* A NULL method archives the matching entry instead of caching a new one. */
+static int test_query_cache_set_null(void)
+{
+    static OSSL_PROVIDER prov = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "null-set-provider"
+    };
+    OSSL_METHOD_STORE *store = NULL;
+    int refs = 0;
+    void *result = NULL;
+    int res = 0;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !TEST_true(ossl_method_store_add(store, &prov, 1, "", &refs,
+            counted_up_ref, counted_down_ref))
+        || !TEST_true(ossl_method_store_cache_set(store, &prov, 1, "", &refs,
+            counted_up_ref, counted_down_ref))
+        || !TEST_true(ossl_method_store_cache_set(store, &prov, 1, "", NULL,
+            counted_up_ref, counted_down_ref))
+        || !TEST_false(ossl_method_store_cache_get(store, &prov, 1, "",
+            &result)))
+        goto err;
+
+    res = 1;
+
+err:
+    ossl_method_store_free(store);
+    if (!TEST_int_eq(refs, 0))
+        res = 0;
+    return res;
+}
+
+/* Memory-failure coverage for the cache set and providerless lookup. */
+static int test_query_cache_set_mfail(void)
+{
+    static OSSL_PROVIDER prov = {
+        .flag_initialized = 1,
+        .flag_activated = 1,
+        .name = "mfail-provider"
+    };
+    OSSL_METHOD_STORE *store = NULL;
+    int refs = 0;
+    void *result = NULL;
+    int rc = -1;
+
+    if (!TEST_ptr(store = ossl_method_store_new(NULL))
+        || !TEST_true(ossl_method_store_add(store, &prov, 1, "", &refs,
+            counted_up_ref, counted_down_ref)))
+        goto end;
+
+    /* Cache the method, then resolve it via the "any provider" (NULL) lookup. */
+    MFAIL_start();
+    rc = ossl_method_store_cache_set(store, &prov, 1, "", &refs,
+             counted_up_ref, counted_down_ref)
+            && ossl_method_store_cache_get(store, NULL, 1, "", &result)
+            && result == &refs
+        ? 1
+        : 0;
+    MFAIL_end();
+
+#ifdef OPENSSL_NO_CACHED_FETCH
+    if (result != NULL)
+        counted_down_ref(result);
+#endif
+
+end:
+    ossl_method_store_free(store);
+    if (rc >= 0 && !TEST_int_eq(refs, 0))
+        rc = -1;
+    return rc;
+}
+
 static int test_fips_mode(void)
 {
     int ret = 0;
@@ -861,6 +978,10 @@ int setup_tests(void)
     ADD_TEST(test_query_cache_stochastic);
     ADD_TEST(test_query_cache_set_duplicate);
     ADD_TEST(test_query_cache_provider_order);
+    ADD_TEST(test_query_cache_set_null);
+    ADD_MFAIL_TEST(test_query_store_new_mfail);
+    ADD_MFAIL_TEST(test_query_store_add_mfail);
+    ADD_MFAIL_TEST(test_query_cache_set_mfail);
     ADD_TEST(test_fips_mode);
     ADD_ALL_TESTS(test_property_list_to_string, OSSL_NELEM(to_string_tests));
     ADD_TEST(test_property_list_to_string_bounds);
