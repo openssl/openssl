@@ -18,7 +18,7 @@ use Cwd qw(abs_path);
 
 setup("test_dgst");
 
-plan tests => 25;
+plan tests => 26;
 
 sub tsignverify {
     my $testtext = shift;
@@ -422,6 +422,19 @@ subtest "signing with xoflen is not supported `dgst` CLI" => sub {
                  '-out', 'test.sig',
                  srctop_file('test', 'data.bin')])),
                  "Generating signature with xoflen should fail");
+};
+
+subtest "Listing supported digests with `dgst` CLI" => sub {
+    plan tests => 3;
+
+    my @listdata = run(app(['openssl', 'dgst', '-list']), capture => 1);
+    chomp(@listdata);
+    my $listing = join("\n", @listdata);
+
+    ok($listing =~ /Supported digests:/, "LIST: Check header is printed");
+    # Only check digests that are always present, each printed as "-<name>"
+    ok($listing =~ /-sha256\b/, "LIST: Check sha256 is listed");
+    ok($listing =~ /-sha512\b/, "LIST: Check sha512 is listed");
 };
 
 subtest "signing using the nonce-type sigopt" => sub {
