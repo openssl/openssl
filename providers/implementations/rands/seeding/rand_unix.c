@@ -394,7 +394,7 @@ static ssize_t syscall_random(void *buf, size_t buflen)
     return getrandom(buf, buflen, 0);
 #elif (defined(__FreeBSD__) || defined(__NetBSD__)) && defined(KERN_ARND)
     return sysctl_random(buf, buflen);
-#elif defined(__wasi__)
+#elif defined(__wasi__) || defined(__EMSCRIPTEN__)
     if (getentropy(buf, buflen) == 0)
         return (ssize_t)buflen;
     return -1;
