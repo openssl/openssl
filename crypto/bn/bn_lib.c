@@ -333,6 +333,33 @@ BIGNUM *bn_expand2(BIGNUM *b, int words)
     return b;
 }
 
+OSSL_FN *bn_acquire_ossl_fn(BIGNUM *b, int limbs)
+{
+    if (ossl_unlikely(b == NULL))
+        return NULL;
+
+    if (bn_wexpand(b, limbs) == NULL)
+        return NULL;
+    /* TODO(FIXNUM): should we add a flag bit for this in b->flags ? */
+    return b->data;
+}
+
+void bn_release(BIGNUM *b, int limbs)
+{
+    if (ossl_unlikely(b == NULL || b->data == NULL))
+        return;
+
+    int fixed_top = (b->flags & BN_FLG_FIXED_TOP) != 0;
+
+    bn_set_top(b, limbs);
+
+    /* Don't correct top if BN_FLG_FIXED_TOP was set */
+    if (fixed_top)
+        return;
+
+    bn_correct_top(b);
+}
+
 BIGNUM *BN_dup(const BIGNUM *a)
 {
     BIGNUM *t;
