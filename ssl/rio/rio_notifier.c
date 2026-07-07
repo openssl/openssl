@@ -10,7 +10,6 @@
 #include "internal/sockets.h"
 #include <openssl/bio.h>
 #include <openssl/err.h>
-#include "internal/thread_once.h"
 #include "internal/rio_notifier.h"
 
 #if !defined(OPENSSL_SYS_WINDOWS) || RIO_NOTIFIER_METHOD == RIO_NOTIFIER_METHOD_SOCKETPAIR
