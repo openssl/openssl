@@ -490,6 +490,25 @@ int ossl_x509_verify_mtc(X509_STORE_CTX *ctx);
  *          ctx->error.
  */
 int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx);
+/**
+ * @brief Return the trusted Merkle Tree Certificate CAs configured on a store.
+ *
+ * These are the CAs added with X509_STORE_trust_mtc_ca().  The returned stack
+ * is borrowed from the store (not reference-counted) and may be NULL if none
+ * have been configured.  It is intended to let libssl advertise the configured
+ * CA identifiers in the TLS trust_anchors extension
+ * (https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/); a
+ * Merkle Tree Certificate CA ID serves as the trust anchor ID (section 8.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ *
+ * The caller must not mutate the store concurrently, matching the other get0
+ * store accessors: the trusted-CA set is expected to be configured before the
+ * store is shared across handshakes.
+ *
+ * @param store the certificate store
+ * @returns the stack of trusted MTC CAs, or NULL if none are configured.
+ */
+STACK_OF(OSSL_MTC_CA) *ossl_x509_store_get0_mtc_cas(const X509_STORE *store);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);

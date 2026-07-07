@@ -786,6 +786,7 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_compress_certificate,
     TLSEXT_IDX_early_data,
     TLSEXT_IDX_certificate_authorities,
+    TLSEXT_IDX_trust_anchors,
     TLSEXT_IDX_ech,
     TLSEXT_IDX_outer_extensions,
     TLSEXT_IDX_grease1,

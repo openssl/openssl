@@ -8,12 +8,15 @@
  */
 
 #include <openssl/ocsp.h>
+#include <openssl/mtc.h>
 #include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/tlsgroups.h"
 #include "statem_local.h"
+#include "crypto/mtc_ca.h"
+#include "crypto/x509.h"
 #ifndef OPENSSL_NO_ECH
 #include "internal/ech_helpers.h"
 #endif
@@ -1739,6 +1742,71 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
 #else
     return EXT_RETURN_NOT_SENT;
 #endif
+}
+
+EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context,
+    ossl_unused X509 *x,
+    ossl_unused size_t chainidx)
+{
+    X509_STORE *store;
+    STACK_OF(OSSL_MTC_CA) *cas;
+    int i, num;
+
+    /*
+     * Send the trust_anchors extension (section 5 of
+     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/) as
+     * a RequestedTrustAnchorList: the identifiers of the trusted Merkle Tree
+     * Certificate CAs configured on the store we verify against, so
+     * the peer can select a matching standalone certificate.  A trust anchor ID
+     * is a CA ID (section 8.1 of
+     * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+     *
+     * We only ever request in the ClientHello.  The extension shares one
+     * context with the CertificateRequest/EncryptedExtensions/Certificate forms
+     * we accept on receipt, and this constructor is also reached when the client
+     * builds its own Certificate message (client authentication), so guard on
+     * the message here.  The extension is sent only when MTC CAs are configured.
+     * The store is resolved exactly as in ssl_verify_cert_chain().  A landmark-
+     * relative advertisement (section 8.2.1 of the Merkle Tree Certificates draft)
+     * is not yet supported: the CA does not track landmark numbers.  We ignore
+     * any reply from the server for now.
+     */
+    if ((context & SSL_EXT_CLIENT_HELLO) == 0)
+        return EXT_RETURN_NOT_SENT;
+
+    store = s->cert->verify_store != NULL
+        ? s->cert->verify_store
+        : SSL_CONNECTION_GET_CTX(s)->cert_store;
+    cas = ossl_x509_store_get0_mtc_cas(store);
+    num = sk_OSSL_MTC_CA_num(cas);
+    if (num <= 0)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    for (i = 0; i < num; i++) {
+        const uint8_t *id;
+        size_t id_len;
+
+        if (!OSSL_MTC_CA_get0_id(sk_OSSL_MTC_CA_value(cas, i), &id, &id_len)
+            || !WPACKET_sub_memcpy_u8(pkt, id, id_len)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
 }
 
 /*
