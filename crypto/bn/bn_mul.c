@@ -13,45 +13,11 @@
 
 int BN_mul(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx)
 {
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (r->data == NULL || a->data == NULL || b->data == NULL) {
-        int ret = bn_mul_fixed_top(r, a, b, ctx);
+    int ret = bn_mul_fixed_top(r, a, b, ctx);
 
-        bn_correct_top(r);
-        bn_check_top(r);
-
-        return ret;
-    }
-
-    bn_check_top(a);
-    bn_check_top(b);
+    bn_correct_top(r);
     bn_check_top(r);
 
-    /*
-     * Acquiring rf may make r larger.
-     * If r == a, then a will also become larger.  Therefore, max must
-     * be calculated after rf has been acquired.
-     */
-    size_t top = a->top + b->top;
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
-    if (rf == NULL)
-        return 0;
-
-    size_t max = a->dmax + b->dmax;
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 1, max);
-    if (fnctx == NULL) {
-        bn_release(r, r->top);
-        return 0;
-    }
-
-    int ret = OSSL_FN_mul(rf, a->data, b->data, fnctx);
-    bn_release(r, (int)top);
-
-    if (ret && !BN_is_zero(r))
-        r->neg = a->neg ^ b->neg;
-
-    bn_ctx_release_ossl_fn_ctx(ctx);
     return ret;
 }
 
