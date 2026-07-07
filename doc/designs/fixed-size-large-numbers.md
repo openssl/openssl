@@ -143,11 +143,24 @@ language, this design therefore defines a `OSSL_FN` which is separate from
 the `BIGNUM`, yet compatible with BIGNUM insofar that the `BIGNUM` type
 wraps around the `OSSL_FN` type.
 
-The idea is that a `BIGNUM` (`BN_`) function may call an `OSSL_FN` function,
-but not the other way around, i.e. when an `OSSL_FN` function is called, an
-"`OSSL_FN` only" bubble is entered, and such a function must therefore only
-in turn call other `OSSL_FN` functions for large number operations, rather
-than `BIGNUM` functions.
+The compatibility is primarily at the storage and acquisition boundary.  A
+`BIGNUM` may use an `OSSL_FN` as its backing storage, and selected internal
+crypto call sites that already receive `BIGNUM` values may acquire the
+embedded `OSSL_FN` and perform security-critical calculations with `OSSL_FN`
+functions.
+
+This does not mean that ordinary `BIGNUM` (`BN_`) operation functions are
+wrappers around corresponding `OSSL_FN` operation functions.  `BN_`
+functions retain their dynamic `BIGNUM` semantics.  Conversely, once
+execution has entered an `OSSL_FN` operation, that operation must remain
+inside the "`OSSL_FN` only" bubble and must not call functions that take
+`BIGNUM` arguments.
+
+This restriction does not apply to low-level helpers that operate only on
+`BN_ULONG` arrays or primitive limb values, such as existing `bn_` word
+functions.  `BN_ULONG` and `OSSL_FN_ULONG` are compatible, so such helpers
+may be reused by `OSSL_FN` code as long as they do not allocate, resize, or
+otherwise operate on `BIGNUM` objects.
 
 The overall design also defines new associated types to replace their
 `BIGNUM` counterparts: `OSSL_FN_CTX`, `OSSL_FN_BLINDING`, `OSSL_FN_MONT_CTX`,
@@ -335,14 +348,19 @@ The `BIGNUM` type
 
 [The `BIGNUM` type]: #the-bignum-type
 
-The `BIGNUM` type is changed to include a `OSSL_FN` for its data, and other
-fields that are only of interest for `BIGNUM`s:
+The `BIGNUM` type is changed to include a `OSSL_FN` for its data, while
+retaining the fields that support the dynamic `BIGNUM` semantics:
 
 ```c
 struct bignum_st {
     OSSL_FN *data;
     /* Some of these flags are replicated in OSSL_FN, some are not */
     int flags;
+
+    BN_ULONG *d; /* Pointer to |data->d| */
+    int top; /* Index of last used d +1. */
+    int dmax; /* Copy of |data->dsize| */
+    int neg; /* One if the number is negative */
 };
 ```
 
