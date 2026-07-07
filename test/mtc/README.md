@@ -31,6 +31,18 @@ and entry 1 the leaf; landmark 1 is at tree size 8.  Each file is a
   cosigner's (parses; rejecting it is a verification-time concern, not a
   parsing one).
 
+Standalone over a landmark subtree (derived)
+--------------------------------------------
+
+Derived from `mtc-landmark.pem` by appending to its MTCProof's empty
+signatures list one CA cosignature (cosigner 32473.1, the demo configuration's
+ML-DSA-44 key) over its subtree [0, 4) and that subtree's hash, and re-wrapping
+the enclosing DER.  The CERTIFICATE PROPERTIES block is `mtc-landmark.pem`'s.
+
+- `mtc-landmark-standalone.pem` — standalone leaf whose subtree [0, 4) is also
+  a landmark 1 subtree, so it verifies either via that subtree's hash or, when
+  the subtree is active but has no hash, via its cosignature.
+
 Malformed cosignature lists (generated)
 ---------------------------------------
 

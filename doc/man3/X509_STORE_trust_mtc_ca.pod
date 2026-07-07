@@ -17,9 +17,9 @@ X509_STORE_trust_mtc_ca() adds I<ca> to I<store> as a trusted Merkle Tree
 Certificate CA
 (L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>).
 A Merkle Tree Certificate
-is accepted during verification if it is issued by one of the store's trusted
-MTC CAs; the store's MTC CAs are consulted through the X509_STORE that the
-verifying X509_STORE_CTX references.
+is accepted by L<OSSL_PROOF_verify(3)> if it is issued by one of the store's
+trusted MTC CAs; the store's MTC CAs are consulted through the X509_STORE of
+the verifying B<OSSL_PROOF_TRUST>.
 
 I<ca> is stored as a borrowed reference: the store neither copies nor frees it,
 so the caller retains ownership and must keep I<ca> valid for as long as the
@@ -33,7 +33,7 @@ I<ca>'s identifier duplicates a CA already trusted by I<store>.
 
 =head1 SEE ALSO
 
-L<OSSL_MTC_CA_new(3)>, L<X509_verify_cert(3)>, L<X509_STORE_new(3)>
+L<OSSL_MTC_CA_new(3)>, L<OSSL_PROOF_verify(3)>, L<X509_STORE_new(3)>
 
 The Merkle Tree Certificates draft:
 L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>
