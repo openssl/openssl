@@ -366,7 +366,7 @@ $code.=<<___;
 .type .Lord_div_2,\@object
 .Lord_div_2:
 .dword	0xa9ddfa049ceaa092,0xb901efb590e30295,0xffffffffffffffff,0x7fffffff7fffffff
-
+.previous
 
 // void bn_rshift1(BN_ULONG *a);
 .globl	bn_rshift1
