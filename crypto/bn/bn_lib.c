@@ -183,34 +183,26 @@ static ossl_inline int bn_num_bits_consttime(const BIGNUM *a)
 
 int BN_num_bits(const BIGNUM *a)
 {
+    int i = a->top - 1;
     bn_check_top(a);
 
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (a->data == NULL) {
-        int i = a->top - 1;
-
-        if (a->flags & BN_FLG_CONSTTIME) {
-            /*
-             * We assume that BIGNUMs flagged as CONSTTIME have also been expanded
-             * so that a->dmax is not leaking secret information.
-             *
-             * In other words, it's the caller's responsibility to ensure `a` has
-             * been preallocated in advance to a public length if we hit this
-             * branch.
-             *
-             */
-            return bn_num_bits_consttime(a);
-        }
-
-        if (ossl_unlikely(BN_is_zero(a)))
-            return 0;
-
-        return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
+    if (a->flags & BN_FLG_CONSTTIME) {
+        /*
+         * We assume that BIGNUMs flagged as CONSTTIME have also been expanded
+         * so that a->dmax is not leaking secret information.
+         *
+         * In other words, it's the caller's responsibility to ensure `a` has
+         * been preallocated in advance to a public length if we hit this
+         * branch.
+         *
+         */
+        return bn_num_bits_consttime(a);
     }
 
-    size_t bits = OSSL_FN_num_bits(a->data);
+    if (ossl_unlikely(BN_is_zero(a)))
+        return 0;
 
-    return bits > INT_MAX ? INT_MAX : (int)bits;
+    return ((i * BN_BITS2) + BN_num_bits_word(a->d[i]));
 }
 
 static void bn_free_d(BIGNUM *a, bool clear)
@@ -744,49 +736,46 @@ int BN_signed_bn2native(const BIGNUM *a, unsigned char *to, int tolen)
 
 int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
 {
+    int i;
+    BN_ULONG t1, t2, *ap, *bp;
+
+    ap = a->d;
+    bp = b->d;
+
+    if (BN_get_flags(a, BN_FLG_CONSTTIME)
+        && a->top == b->top) {
+        int res = 0;
+
+        for (i = 0; i < b->top; i++) {
+            res = constant_time_select_int((int)constant_time_lt_bn(ap[i], bp[i]),
+                -1, res);
+            res = constant_time_select_int((int)constant_time_lt_bn(bp[i], ap[i]),
+                1, res);
+        }
+        return res;
+    }
+
     bn_check_top(a);
     bn_check_top(b);
 
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (a->data == NULL || b->data == NULL) {
-        int i;
-        BN_ULONG t1, t2, *ap, *bp;
+    i = a->top - b->top;
+    if (i != 0)
+        return i;
 
-        ap = a->d;
-        bp = b->d;
-
-        if (BN_get_flags(a, BN_FLG_CONSTTIME)
-            && a->top == b->top) {
-            int res = 0;
-
-            for (i = 0; i < b->top; i++) {
-                res = constant_time_select_int((int)constant_time_lt_bn(ap[i], bp[i]),
-                    -1, res);
-                res = constant_time_select_int((int)constant_time_lt_bn(bp[i], ap[i]),
-                    1, res);
-            }
-            return res;
-        }
-
-        i = a->top - b->top;
-        if (i != 0)
-            return i;
-
-        for (i = a->top - 1; i >= 0; i--) {
-            t1 = ap[i];
-            t2 = bp[i];
-            if (t1 != t2)
-                return ((t1 > t2) ? 1 : -1);
-        }
-        return 0;
+    for (i = a->top - 1; i >= 0; i--) {
+        t1 = ap[i];
+        t2 = bp[i];
+        if (t1 != t2)
+            return ((t1 > t2) ? 1 : -1);
     }
-
-    return OSSL_FN_cmp(a->data, b->data);
+    return 0;
 }
 
 int BN_cmp(const BIGNUM *a, const BIGNUM *b)
 {
+    int i;
     int gt, lt;
+    BN_ULONG t1, t2;
 
     if ((a == NULL) || (b == NULL)) {
         if (a != NULL)
@@ -814,31 +803,17 @@ int BN_cmp(const BIGNUM *a, const BIGNUM *b)
         lt = 1;
     }
 
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (a->data == NULL || b->data == NULL) {
-        int i;
-        BN_ULONG t1, t2;
-
-        if (a->top > b->top)
-            return gt;
-        if (a->top < b->top)
-            return lt;
-        for (i = a->top - 1; i >= 0; i--) {
-            t1 = a->d[i];
-            t2 = b->d[i];
-            if (t1 > t2)
-                return gt;
-            if (t1 < t2)
-                return lt;
-        }
-        return 0;
-    }
-
-    switch (OSSL_FN_cmp(a->data, b->data)) {
-    case 1:
+    if (a->top > b->top)
         return gt;
-    case -1:
+    if (a->top < b->top)
         return lt;
+    for (i = a->top - 1; i >= 0; i--) {
+        t1 = a->d[i];
+        t2 = b->d[i];
+        if (t1 > t2)
+            return gt;
+        if (t1 < t2)
+            return lt;
     }
     return 0;
 }
