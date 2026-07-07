@@ -364,8 +364,7 @@ struct bignum_st {
 };
 ```
 
-When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`,
-as well as to wrap an `OSSL_FN` in a `BIGNUM`:
+When structured this way, it's easy to get an `OSSL_FN` out of a `BIGNUM`:
 
 ```c
 /*
@@ -393,32 +392,6 @@ Note that these functions are not designed to be thread-safe, nor do they
 support multiple suímultaneous acquisitions.  By design, holding pointers to
 a `BIGNUM` and its wrapped `OSSL_FN` at the same time should only happen in
 a very short term.
-
-If there's a need, it would also be possible to wrap an `OSSL_FN` with a
-`BIGNUM`:
-
-``` C
-/*
- * When wrapping an OSSL_FN in a BIGNUM, the OSSL_FN is considered acquired
- * until the caller decides to release it.
- */
-BIGNUM *BN_wrap_fn(OSSL_FN *a)
-{
-    BIGNUM *r = OPENSSL_zalloc(sizeof(BIGNUM));
-
-    if (r != NULL) {
-        r->data = a;
-        r->flags |= (a->is_dynamically_allocated ? BN_FLG_MALLOCED);
-        r->flags |= (a->is_securely_allocated ? BN_FLG_SECURE);
-        a->is_acquired = 1;
-    }
-
-    return r;
-}
-```
-
-This should be avoided, but we retain this possibility just in case its use
-is unavoidable.
 
 Mutability
 ----------
