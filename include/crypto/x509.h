@@ -449,6 +449,47 @@ int ossl_x509_compare_asn1_time(const X509_VERIFY_PARAM *vpm,
     const ASN1_TIME *time, int *comparison);
 /* No error callback if depth < 0 */
 int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth);
+/**
+ * @brief Return a certificate's cached TBSCertificate DER encoding.
+ *
+ * Returns the encoding of the signed part captured when x was parsed, so it is
+ * available without re-encoding and without modifying x.  It fails if x has no
+ * cached encoding, that is, if x was modified or built in memory rather than
+ * parsed from DER.
+ *
+ * This is a stopgap that reaches into X509's internal cached encoding.  It
+ * should go away once accessing the single cached TBSCertificate copy directly,
+ * without a copy, is a first-class API.
+ *
+ * @param x the certificate
+ * @param tbs set to the cached TBSCertificate bytes, owned by x
+ * @param tbs_len set to the length of the bytes
+ * @returns 1 on success, 0 if no cached encoding is available.
+ * @see https://github.com/openssl/openssl/issues/30162
+ */
+int ossl_x509_get0_tbs(const X509 *x, const uint8_t **tbs, size_t *tbs_len);
+/**
+ * @brief Verify cert as a Merkle Tree Certificate: the proof (section 7.2) and
+ *        the generic X.509 leaf checks.
+ * @param ctx the verification context (the certificate, the trusted MTC CAs on
+ *        its store, and the verification parameters)
+ * @returns 1 if verified, 0 otherwise, with the reason in ctx->error.
+ */
+int ossl_x509_verify_mtc(X509_STORE_CTX *ctx);
+/**
+ * @brief Apply the generic X.509 leaf checks a Merkle Tree Certificate is
+ *        subject to: validity times, the identity and purpose the caller asked
+ *        for, and the certificate's own well-formedness.
+ *
+ * ossl_x509_verify_mtc() calls this once the proof has been verified; it is
+ * separate so that these checks can be exercised on their own.
+ *
+ * @param ctx the verification context (the certificate and the verification
+ *        parameters; the store and the trusted CAs are not consulted)
+ * @returns 1 if the certificate passes, 0 otherwise, with the reason in
+ *          ctx->error.
+ */
+int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);
