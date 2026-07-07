@@ -446,6 +446,36 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_certificate_authorities,
         NULL,
     },
+    {
+        /*
+         * Trust Anchor Identifiers, per section 5 of
+         * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+         * That section makes the extension valid in the ClientHello,
+         * EncryptedExtensions, CertificateRequest and Certificate messages of
+         * TLS 1.3.  We only construct it in the ClientHello, where
+         * it carries the identifiers of the configured Merkle Tree Certificate
+         * CAs (a trust anchor ID is a CA ID; section 8.1 of
+         * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+         * On selecting a trust anchor the server replies with a non-empty list
+         * in EncryptedExtensions and an empty marker in the first
+         * CertificateEntry (section 4.2); a server requesting client
+         * authentication may also send it in the CertificateRequest.  We must
+         * accept all of these, so their contexts are listed here, but we ignore
+         * the contents for now (no parse_stoc): the selection is reflected in
+         * the certificate the server sends.
+         */
+        TLSEXT_TYPE_trust_anchors,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS
+            | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST | SSL_EXT_TLS1_3_CERTIFICATE
+            | SSL_EXT_TLS1_3_ONLY,
+        OSSL_ECH_HANDLING_COMPRESS,
+        NULL,
+        NULL,
+        NULL,
+        NULL,
+        tls_construct_ctos_trust_anchors,
+        NULL,
+    },
 #ifndef OPENSSL_NO_ECH
     { TLSEXT_TYPE_ech,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY | SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
