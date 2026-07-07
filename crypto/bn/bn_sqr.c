@@ -16,42 +16,11 @@
  */
 int BN_sqr(BIGNUM *r, const BIGNUM *a, BN_CTX *ctx)
 {
-    /* TODO(FIXNUM): TO BE REMOVED */
-    if (r->data == NULL || a->data == NULL) {
-        int ret = bn_sqr_fixed_top(r, a, ctx);
+    int ret = bn_sqr_fixed_top(r, a, ctx);
 
-        bn_correct_top(r);
-        bn_check_top(r);
-
-        return ret;
-    }
-
-    bn_check_top(a);
+    bn_correct_top(r);
     bn_check_top(r);
 
-    /*
-     * Acquiring rf may make r larger.
-     * If r == a, then a will also become larger.  Therefore, max must
-     * be calculated after rf has been acquired.
-     */
-    size_t top = a->top * 2;
-    OSSL_FN *rf = bn_acquire_ossl_fn(r, (int)top);
-    if (rf == NULL)
-        return 0;
-
-    size_t max = a->dmax * 2;
-
-    OSSL_FN_CTX *fnctx = bn_ctx_acquire_ossl_fn_ctx(ctx, 1, 2, max * 4);
-    if (fnctx == NULL) {
-        bn_release(r, r->top);
-        return 0;
-    }
-
-    int ret = OSSL_FN_sqr(rf, a->data, fnctx);
-    bn_release(r, (int)top);
-    r->neg = 0;
-
-    bn_ctx_release_ossl_fn_ctx(ctx);
     return ret;
 }
 
