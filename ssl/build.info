@@ -28,6 +28,11 @@ SHARED_SOURCE[../libssl]=\
         ../crypto/packet.c ../crypto/quic_vlint.c ../crypto/time.c \
         ../crypto/rbtree/rbtree.c
 
+# For shared builds libssl also needs its own copy of the internal
+# libcrypto functions it calls, which libcrypto does not export.
+SHARED_SOURCE[../libssl]=\
+        ../crypto/x509/x509_tai.c
+
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../libssl]=ssl_rsa_legacy.c
 ENDIF

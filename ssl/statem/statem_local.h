@@ -509,6 +509,20 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
+/**
+ * @brief Construct the client's trust_anchors extension: the identifiers of
+ * the configured Merkle Tree Certificate CAs, sent in the TLS 1.3 ClientHello.
+ * @param s the SSL connection
+ * @param pkt the WPACKET the extension is written to
+ * @param context the extension context (the message being constructed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; unused here
+ * @returns EXT_RETURN_SENT when written, EXT_RETURN_NOT_SENT when no MTC CAs
+ * are configured, EXT_RETURN_FAIL on error.
+ */
+EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
 
 int tls_parse_stoc_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
