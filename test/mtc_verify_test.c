@@ -80,19 +80,30 @@ static EVP_PKEY *cosigner_key(const uint8_t *seed, size_t seed_len)
     return pkey;
 }
 
+/* Give the landmark leaf's log its active landmarks, with no subtree hashes. */
+static int load_landmark_window(OSSL_MTC_CA *ca)
+{
+    BIO *bio = BIO_new_mem_buf(landmark_desc, -1);
+    int ret;
+
+    ret = bio != NULL
+        && OSSL_MTC_CA_load_landmarks(ca, landmark_log, bio, INT64_MIN);
+    BIO_free(bio);
+    return ret;
+}
+
 /*
  * Build a trusted CA matching the fixture.  Its ML-DSA-44 cosigner key is
  * derived from seed.  If hash is non-NULL the landmark leaf's log is given its
  * active landmarks and hash is recorded for the subtree that leaf proves into,
  * which is what lets a signatureless certificate verify; passing a hash other
- * than the true one leaves the subtree active but not matching.
+ * than the true one leaves the subtree trusted but not matching.
  */
 static OSSL_MTC_CA *make_ca(const uint8_t *id, size_t id_len,
     const uint8_t *seed, size_t seed_len, const uint8_t *hash)
 {
     EVP_PKEY *pkey = cosigner_key(seed, seed_len);
     OSSL_MTC_CA *ca = NULL;
-    BIO *bio = NULL;
 
     if (pkey == NULL)
         return NULL;
@@ -101,15 +112,29 @@ static OSSL_MTC_CA *make_ca(const uint8_t *id, size_t id_len,
     if (ca == NULL || hash == NULL)
         return ca;
 
-    if ((bio = BIO_new_mem_buf(landmark_desc, -1)) == NULL
-        || !OSSL_MTC_CA_load_landmarks(ca, landmark_log, bio, INT64_MIN)
+    if (!load_landmark_window(ca)
         || !OSSL_MTC_CA_add_subtree_hash(ca, landmark_log, landmark_start,
             landmark_end, hash, sizeof(subtree_hash))) {
-        BIO_free(bio);
         OSSL_MTC_CA_free(ca);
         return NULL;
     }
-    BIO_free(bio);
+    return ca;
+}
+
+/*
+ * make_ca() with the landmark leaf's log given its active landmarks but no
+ * subtree hash, the state between OSSL_MTC_CA_load_landmarks() and
+ * OSSL_MTC_CA_add_subtree_hash().
+ */
+static OSSL_MTC_CA *make_ca_unhashed(void)
+{
+    OSSL_MTC_CA *ca = make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed),
+        NULL);
+
+    if (ca != NULL && !load_landmark_window(ca)) {
+        OSSL_MTC_CA_free(ca);
+        return NULL;
+    }
     return ca;
 }
 
@@ -173,6 +198,43 @@ static int test_signatureless_no_subtree(void)
 static int test_wrong_subtree_hash(void)
 {
     return check("mtc-landmark.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed),
+            wrong_subtree_hash),
+        0, X509_V_ERR_MTC_NOT_TRUSTED);
+}
+
+/* A signatureless MTC over an active subtree with no hash is not trusted. */
+static int test_signatureless_unhashed_subtree(void)
+{
+    return check("mtc-landmark.pem", make_ca_unhashed(), 0,
+        X509_V_ERR_MTC_NOT_TRUSTED);
+}
+
+/*
+ * A standalone MTC whose subtree is active but has no hash is not over a
+ * trusted subtree (7.4), so it verifies via its CA cosignature (7.2 step 12).
+ */
+static int test_standalone_unhashed_subtree(void)
+{
+    return check("mtc-landmark-standalone.pem", make_ca_unhashed(), 1,
+        X509_V_OK);
+}
+
+/* The same standalone MTC also verifies against the subtree's true hash. */
+static int test_standalone_trusted_subtree(void)
+{
+    return check("mtc-landmark-standalone.pem",
+        make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed), subtree_hash),
+        1, X509_V_OK);
+}
+
+/*
+ * A trusted subtree whose hash differs from the reconstructed one is rejected
+ * even when the CA cosignature over the subtree is valid.
+ */
+static int test_standalone_wrong_subtree_hash(void)
+{
+    return check("mtc-landmark-standalone.pem",
         make_ca(ca_id, sizeof(ca_id), ca_seed, sizeof(ca_seed),
             wrong_subtree_hash),
         0, X509_V_ERR_MTC_NOT_TRUSTED);
@@ -755,6 +817,10 @@ int setup_tests(void)
     ADD_TEST(test_signatureless_trusted_subtree);
     ADD_TEST(test_signatureless_no_subtree);
     ADD_TEST(test_wrong_subtree_hash);
+    ADD_TEST(test_signatureless_unhashed_subtree);
+    ADD_TEST(test_standalone_unhashed_subtree);
+    ADD_TEST(test_standalone_trusted_subtree);
+    ADD_TEST(test_standalone_wrong_subtree_hash);
     ADD_TEST(test_standalone_cosignature);
     ADD_TEST(test_standalone_wrong_key);
     ADD_TEST(test_three_cosigners);
