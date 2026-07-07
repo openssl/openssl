@@ -74,7 +74,9 @@ SSL_CTX_set_client_cert_cb() if no certificate is provided at initialization.
 
 SSL_verify_client_post_handshake() causes a CertificateRequest message to be
 sent by a server on the given B<ssl> connection. The SSL_VERIFY_PEER flag must
-be set; the SSL_VERIFY_POST_HANDSHAKE flag is optional.
+be set; the SSL_VERIFY_POST_HANDSHAKE flag is optional. The
+SSL_VERIFY_FAIL_IF_NO_PEER_CERT flag is also applicable and has the same
+effect as with the client authentication during the handshake.
 
 =head1 NOTES
 
