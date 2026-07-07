@@ -1254,25 +1254,21 @@ static int prompt_info(X509_REQ *req,
 
                 if (!join(buf, sizeof(buf), type, "_value", "Name"))
                     goto err;
-                ;
                 value = app_conf_try_string(req_conf, attr_sect, buf);
 
                 if (!join(buf, sizeof(buf), type, "_min", "Name"))
                     goto err;
-                ;
                 if (!app_conf_try_number(req_conf, attr_sect, buf, &n_min))
                     n_min = -1;
 
                 if (!join(buf, sizeof(buf), type, "_max", "Name"))
                     goto err;
-                ;
                 if (!app_conf_try_number(req_conf, attr_sect, buf, &n_max))
                     n_max = -1;
                 if (!add_attribute_object(req,
                         v->value, def, value, nid, n_min,
                         n_max, chtype))
                     goto err;
-                ;
             }
         }
     } else {
