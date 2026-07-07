@@ -12925,6 +12925,51 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+
+static int un_ext_add_cb(SSL *s, unsigned int ext_type,
+    unsigned int context, const unsigned char **out, size_t *outlen, X509 *x,
+    size_t chainidx, int *al, void *add_arg)
+{
+    static const unsigned char data[] = { 0xaa };
+    *out = data;
+    *outlen = sizeof(data);
+    return 1;
+}
+
+static int un_ext_parse_cb(SSL *s, unsigned int ext_type,
+    unsigned int context, const unsigned char *in, size_t inlen, X509 *x,
+    size_t chainidx, int *al, void *parse_arg)
+{
+    return 1;
+}
+
+/*
+ * Test that a handshake succeeds when the peer sends an extension type we do
+ * not recognise. The client registers a custom extension in its ClientHello
+ * that the server knows nothing about, so on the server tls_collect_extensions()
+ * takes the "unknown extension" branch.
+ */
+static int test_tls13_unknown_extension(void)
+{
+    SSL_CTX *s = NULL, *c = NULL;
+    SSL *s_ssl = NULL, *c_ssl = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+               TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, privkey))
+        && TEST_true(SSL_CTX_add_custom_ext(c, 0xfefe, SSL_EXT_CLIENT_HELLO,
+            un_ext_add_cb, NULL, NULL, un_ext_parse_cb, NULL))
+        && TEST_true(create_ssl_objects(s, c, &s_ssl, &c_ssl, NULL, NULL))
+        /* The server must tolerate the unknown extension and complete. */
+        && TEST_true(create_ssl_connection(s_ssl, c_ssl, SSL_ERROR_NONE));
+
+    SSL_free(s_ssl);
+    SSL_free(c_ssl);
+    SSL_CTX_free(s);
+    SSL_CTX_free(c);
+    return test;
+}
+
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
 static int check_version_string(SSL *s, int version)
@@ -15164,6 +15209,7 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_read_ahead_key_change);
     ADD_ALL_TESTS(test_tls13_record_padding, 6);
+    ADD_TEST(test_tls13_unknown_extension);
 #endif
 #if !defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_ALL_TESTS(test_serverinfo_custom, 4);
