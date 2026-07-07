@@ -63,7 +63,7 @@ IF[{- !$disabled{tests} -}]
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
           servername_test ocspapitest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
-          context_internal_test aesgcmtest aesgcm_avx512_test params_test evp_pkey_dparams_test \
+          context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
           bio_readbuffer_test user_property_test pkcs7_test upcallstest \
           provfetchtest prov_config_test libctx_config_test rand_test \
@@ -908,6 +908,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
+                     aesgcm_avx512_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
@@ -1219,7 +1220,9 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[aesgcm_avx512_test]=aesgcm_avx512_test.c
   INCLUDE[aesgcm_avx512_test]=../include ../apps/include
-  DEPEND[aesgcm_avx512_test]=../libcrypto libtestutil.a
+  # Linked against the static libcrypto so the test can read the internal
+  # OPENSSL_ia32cap_P (the effective dispatch vector); see the noinst block.
+  DEPEND[aesgcm_avx512_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c
