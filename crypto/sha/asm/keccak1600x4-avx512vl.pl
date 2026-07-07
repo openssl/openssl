@@ -1732,6 +1732,7 @@ $code.=<<___;
     vmovdqa64   %ymm16, %ymm30
     vmovdqa64   %ymm16, %ymm31
 .Lshake256_absorb_epilogue:
+    vzeroall
 ___
 $code .= <<___ if ($win64);
     vmovups 0(%rsp),   %xmm6
@@ -1760,7 +1761,6 @@ $code.=<<___;
 .cfi_pop    %rbx
     pop %rbp
 .cfi_pop    %rbp
-    vzeroall
     ret
 .cfi_endproc
 .size   SHA3_shake256_x4_inc_absorb_avx512vl,.-SHA3_shake256_x4_inc_absorb_avx512vl
