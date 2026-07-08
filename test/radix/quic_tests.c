@@ -1579,8 +1579,106 @@ DEF_SCRIPT(script_20, "Multiple threads accept stream with socket forcibly close
     OP_TRIGGER_COUNTER(1);
 }
 
-DEF_SCRIPT(script_21, "place holder for multistrem script_21")
+/* 21. Fault injection - unknown frame in 1-RTT packet */
+static int script_21_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[21];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != fault->word0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1)))
+        goto err;
+
+    switch (fault->word1) {
+    case OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE:
+    case OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE:
+    case OSSL_QUIC_FRAME_TYPE_RETIRE_CONN_ID:
+        if (!TEST_true(WPACKET_put_bytes_u64(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_MAX_DATA:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI:
+    case OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_UNI:
+    case OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED:
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STOP_SENDING:
+    case OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA:
+    case OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED:
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_RESET_STREAM:
+    case OSSL_QUIC_FRAME_TYPE_CONN_CLOSE_APP:
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_TOKEN:
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)1))
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0)))
+            goto err;
+        break;
+    case OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID:
+        /* seq number */
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0))
+            /* retire prior to */
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, (uint64_t)0))
+            /* Connection id length, arbitrary at 1 bytes */
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)1))
+            /* The connection id */
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, (uint8_t)0))
+            /* 16 bytes total for the stateless reset token */
+            || !TEST_true(WPACKET_memset(&wpkt, 0, 16)))
+            goto err;
+
+        break;
+    }
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_21, "Fault injection - unknown frame in 1-RTT packet")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_21_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(QUIC_PKT_TYPE_1RTT, OSSL_QUIC_VLINT_MAX);
+
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_22, "place holder for multistrem script_22")
