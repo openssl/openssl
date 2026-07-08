@@ -17,7 +17,7 @@ use File::Compare qw/compare_text compare/;
 
 setup("test_pkeyutl");
 
-plan tests => 32;
+plan tests => 33;
 
 # For the tests below we use the cert itself as the TBS file
 
@@ -185,6 +185,42 @@ SKIP: {
                     srctop_file("test","testrsapub.pem"),
                     "-rawin", "-digest", "sha256",
                     "-pkeyopt", "rsa_padding_mode:pss");
+    };
+
+    subtest "pkeyutl -rev reverses the input buffer" => sub {
+        plan tests => 4;
+
+        my $key = srctop_file("test", "testrsa.pem");
+        my $in = "rev_in.bin";
+        my $in_rev = "rev_in_reversed.bin";
+
+        # A non-palindromic input, short enough to be signed as a raw digest.
+        my $data = "0123456789abcdefghijklmnopqrstuv";
+        open(my $fh, '>:raw', $in) or die "cannot create $in: $!";
+        print $fh $data;
+        close($fh);
+        open($fh, '>:raw', $in_rev) or die "cannot create $in_rev: $!";
+        print $fh scalar reverse $data;
+        close($fh);
+
+        # RSA signing is deterministic, so signing with -rev must match signing
+        # the manually reversed input.
+        ok(run(app(['openssl', 'pkeyutl', '-sign', '-inkey', $key,
+                    '-rev', '-in', $in, '-out', 'rev.sig'])),
+           "Sign with -rev");
+        ok(run(app(['openssl', 'pkeyutl', '-sign', '-inkey', $key,
+                    '-in', $in_rev, '-out', 'rev_manual.sig'])),
+           "Sign the manually reversed input");
+        is(compare('rev.sig', 'rev_manual.sig'), 0,
+           "-rev signature matches signing the reversed input");
+
+        # -rev is rejected together with raw input.
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                ok(run(app(['openssl', 'pkeyutl', '-sign', '-inkey', $key,
+                            '-rawin', '-digest', 'sha256', '-rev', '-in', $in])),
+                   "-rev cannot be used with -rawin");
+            });
     };
 
 }
