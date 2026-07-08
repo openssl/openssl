@@ -137,13 +137,18 @@ my $AES_BLOCK_SIZE = 16;
 # GHASH uses hash-key powers H^i (H = E_K(0)). This pipeline needs up to 32 of
 # them: the GCM128_CONTEXT holds 16 (HKEYS_CONTEXT_CAPACITY) and up to 32 are
 # materialised on the stack frame (HKEYS_STORAGE_CAPACITY) for the 32-block big
-# loop.
+# loop. A parallel "folded" table (hi^lo of each power, HKEYS_FOLDED_STORAGE) is
+# kept next to them on the stack for the Karatsuba GHASH middle term.
 #
 # Storage layout (both context and stack store powers highest-first, so the
 # highest power sits at the lowest offset):
 #     offset(H^i) = base + 16 * (CAPACITY - i)
-#   - CONTEXT.Htable : 16 slots / 256 B  ->  H^16 at offset 0 ... H^1 at 240
-#   - STACK HKEYS    : 32 slots / 512 B  ->  H^32 at offset 0 ... H^1 at 496
+#   - CONTEXT.Htable    : 16 slots / 256 B ->  H^16 at offset 0 ... H^1 at 240
+#   - STACK HKEYS       : 32 slots / 512 B ->  H^32 at offset 0 ... H^1 at 496
+#   - STACK HKEYS_FOLDED: 32 slots / 512 B ->  folded (hi^lo) mirror of STACK
+#         HKEYS with the identical index scheme; holds (H^i.hi ^ H^i.lo) for the
+#         Karatsuba GHASH middle term. Precomputed once per call next to the
+#         plain powers and allocated whenever STACK HKEYS is.
 #
 # Step-by-step schedule:
 #   1. init (ossl_aes_gcm_init_avx512): compute H^1..H^8 into the context and
@@ -179,18 +184,29 @@ my $HKEYS_CONTEXT_CAPACITY = 16;
 # (2) -> +8-byte space for 16-byte alignment of XMM storage
 # (3) -> Frame pointer (%RBP)
 # (4) -> +160-byte XMM storage (Windows only, zero on Linux)
-# (5) -> +48-byte space for 64-byte alignment of %RSP from p.8
+# (5) -> +48-byte space for 64-byte alignment of %RSP from p.9
 # (6) -> +512-byte LOCAL storage (optional, can be omitted in some functions)
-# (7) -> +512-byte HKEYS storage
-# (8) -> Stack pointer (%RSP) aligned on 64-byte boundary
+# (7) -> +512-byte HKEYS_FOLDED storage (folded hi^lo keys; allocated together
+#        with HKEYS, so present whenever HKEYS is)
+# (8) -> +512-byte HKEYS storage
+# (9) -> Stack pointer (%RSP) aligned on 64-byte boundary
+#
+# Ascending %rsp offsets: HKEYS at 0, HKEYS_FOLDED at 512, LOCAL at 1024.
 
 my $GP_STORAGE  = $win64 ? 8 * 8     : 8 * 6;    # ; space for saved non-volatile GP registers (pushed on stack)
 my $XMM_STORAGE = $win64 ? (10 * 16) : 0;        # ; space for saved XMM registers
 my $HKEYS_STORAGE = ($HKEYS_STORAGE_CAPACITY * $AES_BLOCK_SIZE);    # ; space for HKeys^i, i=1..32
+# ; Folded (hi^lo) hash keys for the Karatsuba GHASH middle term. Precomputed
+# ; once per call alongside the plain powers; mirrors the plain table 1:1 (same
+# ; index scheme), so a folded load reuses HashKeyByIdx arithmetic. Allocated
+# ; whenever the plain HKEYS stack storage is (incl. the AAD/IV paths, which use
+# ; the Karatsuba GHASH_16), hence it sits between HKEYS and LOCAL.
+my $HKEYS_FOLDED_STORAGE = ($HKEYS_STORAGE_CAPACITY * $AES_BLOCK_SIZE);
 my $LOCAL_STORAGE = ($LOCAL_STORAGE_CAPACITY * $AES_BLOCK_SIZE);    # ; space for up to 32 AES blocks
 
-my $STACK_HKEYS_OFFSET = 0;
-my $STACK_LOCAL_OFFSET = ($STACK_HKEYS_OFFSET + $HKEYS_STORAGE);
+my $STACK_HKEYS_OFFSET        = 0;
+my $STACK_HKEYS_FOLDED_OFFSET = ($STACK_HKEYS_OFFSET + $HKEYS_STORAGE);
+my $STACK_LOCAL_OFFSET        = ($STACK_HKEYS_FOLDED_OFFSET + $HKEYS_FOLDED_STORAGE);
 
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 # ;;; Function arguments abstraction
@@ -335,6 +351,18 @@ sub HashKeyByIdx {
   return "$offset($base)";
 }
 
+# ; Provides memory location of the folded (hi^lo) HashKey power. Stack frame
+# ; only; laid out identically to the plain table but based at the folded region.
+sub HashKeyFoldedByIdx {
+  my ($idx, $base) = @_;
+  die "HashKeyFoldedByIdx: only frame ('%rsp') storage is supported; base = $base"
+    if ($base ne "%rsp");
+  die "HashKeyFoldedByIdx: idx out of bounds (1..$HKEYS_STORAGE_CAPACITY)! idx = $idx\n"
+    if ($idx > $HKEYS_STORAGE_CAPACITY || $idx < 1);
+  my $offset = $STACK_HKEYS_FOLDED_OFFSET + ($AES_BLOCK_SIZE * ($HKEYS_STORAGE_CAPACITY - $idx));
+  return "$offset($base)";
+}
+
 # ; Provides offset (in bytes) of corresponding HashKey power from the highest key in the storage
 sub HashKeyOffsetByIdx {
   my ($idx, $base) = @_;
@@ -364,7 +392,7 @@ sub PROLOG {
   my $DYNAMIC_STACK_ALLOC_ALIGNMENT_SPACE = $win64 ? 48 : 52;
 
   if ($need_hkeys_stack_storage) {
-    $DYNAMIC_STACK_ALLOC_SIZE += $HKEYS_STORAGE;
+    $DYNAMIC_STACK_ALLOC_SIZE += $HKEYS_STORAGE + $HKEYS_FOLDED_STORAGE;
   }
 
   if ($need_aes_stack_storage) {
@@ -470,7 +498,9 @@ sub EPILOG {
     # ; IV handled by setiv), so a small $payload_len no longer implies an
     # ; untouched storage. $payload_len is therefore unused here now.
     $code .= "vpxor             %xmm0,%xmm0,%xmm0\n";
-    for (my $i = 0; $i < int($HKEYS_STORAGE / 64); $i++) {
+    # ; Clear both the plain and the folded hash-key regions (adjacent on the
+    # ; frame); the folded keys are derived from the secret H and must not leak.
+    for (my $i = 0; $i < int(($HKEYS_STORAGE + $HKEYS_FOLDED_STORAGE) / 64); $i++) {
       $code .= "vmovdqa64         %zmm0,`$STACK_HKEYS_OFFSET + 64*$i`(%rsp)\n";
     }
   }
@@ -579,7 +609,10 @@ sub clear_scratch_gps_asm {
 # ;;                                   H^1..H^16 are already on the stack).
 # ;;   Clobbers: ZTMP0..ZTMP6, the mask register %k1, and EFLAGS.
 # ;;   Postcondition:
-# ;;     - The requested stack range is initialised.
+# ;;     - The requested stack range is initialised, in BOTH the plain H^i table
+# ;;       and its folded (hi^lo) mirror in HKEYS_FOLDED (Karatsuba middle term);
+# ;;       the fold covers exactly the range materialised here (first16 ->
+# ;;       H^1..H^16, mid16 -> H^17..H^32, first32 -> H^1..H^32).
 # ;;     - For "first16"/"first32": H^9..H^16 in the CONTEXT are valid; if they
 # ;;       were uncomputed they are computed here (= H^1..H^8 * H^8) and cached
 # ;;       back into the context so later calls take the fast path.
@@ -691,6 +724,27 @@ ___
     }
   }
 
+  # ;; Precompute folded hash keys (hi^lo, packed 4-per-ZMM) for the Karatsuba
+  # ;; middle term. Fold exactly the range this call materialised, so the folded
+  # ;; table is populated wherever the plain one is: first16 -> H^1..H^16,
+  # ;; mid16 -> H^17..H^32, first32 -> H^1..H^32. One vpsrldq+vpxorq folds all
+  # ;; four 128-bit lanes of a ZMM at once.
+  my @fold_idx;
+  if ($HKEYS_RANGE eq "first16") {
+    @fold_idx = (4, 8, 12, 16);
+  } elsif ($HKEYS_RANGE eq "mid16") {
+    @fold_idx = (20, 24, 28, 32);
+  } else {    # first32
+    @fold_idx = (4, 8, 12, 16, 20, 24, 28, 32);
+  }
+  foreach my $fi (@fold_idx) {
+    $code .= <<___;
+        vmovdqu64         @{[HashKeyByIdx($fi,"%rsp")]},$ZTMP0
+        vpsrldq           \$8,$ZTMP0,$ZTMP1
+        vpxorq            $ZTMP0,$ZTMP1,$ZTMP1
+        vmovdqu64         $ZTMP1,@{[HashKeyFoldedByIdx($fi,"%rsp")]}
+___
+  }
 
   $code .= ".L_skip_hkeys_precomputation_${label_suffix}:\n";
 }
@@ -949,7 +1003,11 @@ ___
 }
 
 # ;; ===========================================================================
-# ;; schoolbook multiply of 16 blocks (16 x 16 bytes)
+# ;; Karatsuba multiply of 16 blocks (16 x 16 bytes)
+# ;; - middle term via one folded vpclmulqdq per 4-block group (3 clmul total,
+# ;;   vs 4 for schoolbook); the true middle is recovered at reduction time as
+# ;;   Mk ^ GH ^ GL. GH/GM/GL therefore use the SAME representation as
+# ;;   GHASH_16_ENCRYPT_16_PARALLEL, so the two may share a reduction chain.
 # ;; - it is assumed that data read from $INPTR is already shuffled and
 # ;;   $INPTR address is 64 byte aligned
 # ;; - there is an option to pass ready blocks through ZMM registers too.
@@ -1011,8 +1069,10 @@ sub GHASH_16 {
         vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+0*64))]},$ZTMP8
         vpclmulqdq        \$0x11,$ZTMP8,$ZTMP9,$ZTMP0      # ; T0H = a1*b1
         vpclmulqdq        \$0x00,$ZTMP8,$ZTMP9,$ZTMP1      # ; T0L = a0*b0
-        vpclmulqdq        \$0x01,$ZTMP8,$ZTMP9,$ZTMP2      # ; T0M1 = a1*b0
-        vpclmulqdq        \$0x10,$ZTMP8,$ZTMP9,$ZTMP3      # ; T0M2 = a0*b1
+        vpsrldq           \$8,$ZTMP9,$ZTMP3
+        vpxorq            $ZTMP9,$ZTMP3,$ZTMP3             # ; (a1^a0)
+        vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+0*64+$STACK_HKEYS_FOLDED_OFFSET))]},$ZTMP2  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$ZTMP2,$ZTMP3,$ZTMP2      # ; T0Mk = (a1^a0)*(b1^b0)
 ___
 
   # ;; ghash blocks 4-7
@@ -1025,24 +1085,24 @@ ___
         vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+1*64))]},$ZTMP8
         vpclmulqdq        \$0x11,$ZTMP8,$ZTMP9,$ZTMP4      # ; T1H = a1*b1
         vpclmulqdq        \$0x00,$ZTMP8,$ZTMP9,$ZTMP5      # ; T1L = a0*b0
-        vpclmulqdq        \$0x01,$ZTMP8,$ZTMP9,$ZTMP6      # ; T1M1 = a1*b0
-        vpclmulqdq        \$0x10,$ZTMP8,$ZTMP9,$ZTMP7      # ; T1M2 = a0*b1
+        vpsrldq           \$8,$ZTMP9,$ZTMP7
+        vpxorq            $ZTMP9,$ZTMP7,$ZTMP7             # ; (a1^a0)
+        vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+1*64+$STACK_HKEYS_FOLDED_OFFSET))]},$ZTMP6  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$ZTMP6,$ZTMP7,$ZTMP6      # ; T1Mk = (a1^a0)*(b1^b0)
 ___
 
   # ;; update sums
   if ($start_ghash != 0) {
     $code .= <<___;
-        vpxorq            $ZTMP6,$ZTMP2,$GM             # ; GM = T0M1 + T1M1
+        vpxorq            $ZTMP6,$ZTMP2,$GM             # ; GM = T0Mk + T1Mk
         vpxorq            $ZTMP4,$ZTMP0,$GH             # ; GH = T0H + T1H
         vpxorq            $ZTMP5,$ZTMP1,$GL             # ; GL = T0L + T1L
-        vpternlogq        \$0x96,$ZTMP7,$ZTMP3,$GM      # ; GM = T0M2 + T1M1
 ___
   } else {    # ;; mid, end, end_reduce
     $code .= <<___;
-        vpternlogq        \$0x96,$ZTMP6,$ZTMP2,$GM      # ; GM += T0M1 + T1M1
+        vpternlogq        \$0x96,$ZTMP6,$ZTMP2,$GM      # ; GM += T0Mk + T1Mk
         vpternlogq        \$0x96,$ZTMP4,$ZTMP0,$GH      # ; GH += T0H + T1H
         vpternlogq        \$0x96,$ZTMP5,$ZTMP1,$GL      # ; GL += T0L + T1L
-        vpternlogq        \$0x96,$ZTMP7,$ZTMP3,$GM      # ; GM += T0M2 + T1M1
 ___
   }
 
@@ -1056,8 +1116,10 @@ ___
         vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+2*64))]},$ZTMP8
         vpclmulqdq        \$0x11,$ZTMP8,$ZTMP9,$ZTMP0      # ; T0H = a1*b1
         vpclmulqdq        \$0x00,$ZTMP8,$ZTMP9,$ZTMP1      # ; T0L = a0*b0
-        vpclmulqdq        \$0x01,$ZTMP8,$ZTMP9,$ZTMP2      # ; T0M1 = a1*b0
-        vpclmulqdq        \$0x10,$ZTMP8,$ZTMP9,$ZTMP3      # ; T0M2 = a0*b1
+        vpsrldq           \$8,$ZTMP9,$ZTMP3
+        vpxorq            $ZTMP9,$ZTMP3,$ZTMP3             # ; (a1^a0)
+        vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+2*64+$STACK_HKEYS_FOLDED_OFFSET))]},$ZTMP2  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$ZTMP2,$ZTMP3,$ZTMP2      # ; T0Mk = (a1^a0)*(b1^b0)
 ___
 
   # ;; ghash blocks 12-15
@@ -1070,17 +1132,19 @@ ___
         vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+3*64))]},$ZTMP8
         vpclmulqdq        \$0x11,$ZTMP8,$ZTMP9,$ZTMP4      # ; T1H = a1*b1
         vpclmulqdq        \$0x00,$ZTMP8,$ZTMP9,$ZTMP5      # ; T1L = a0*b0
-        vpclmulqdq        \$0x01,$ZTMP8,$ZTMP9,$ZTMP6      # ; T1M1 = a1*b0
-        vpclmulqdq        \$0x10,$ZTMP8,$ZTMP9,$ZTMP7      # ; T1M2 = a0*b1
-        # ;; update sums
-        vpternlogq        \$0x96,$ZTMP6,$ZTMP2,$GM         # ; GM += T0M1 + T1M1
+        vpsrldq           \$8,$ZTMP9,$ZTMP7
+        vpxorq            $ZTMP9,$ZTMP7,$ZTMP7             # ; (a1^a0)
+        vmovdqu64         @{[EffectiveAddress($HKPTR,$HKOFF,($HKDIS+3*64+$STACK_HKEYS_FOLDED_OFFSET))]},$ZTMP6  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$ZTMP6,$ZTMP7,$ZTMP6      # ; T1Mk = (a1^a0)*(b1^b0)
+        # ;; update sums (Karatsuba: H, L, Mk)
+        vpternlogq        \$0x96,$ZTMP6,$ZTMP2,$GM         # ; GM += T0Mk + T1Mk
         vpternlogq        \$0x96,$ZTMP4,$ZTMP0,$GH         # ; GH += T0H + T1H
         vpternlogq        \$0x96,$ZTMP5,$ZTMP1,$GL         # ; GL += T0L + T1L
-        vpternlogq        \$0x96,$ZTMP7,$ZTMP3,$GM         # ; GM += T0M2 + T1M1
 ___
   if ($do_reduction != 0) {
     $code .= <<___;
-        # ;; integrate GM into GH and GL
+        # ;; Karatsuba: recover true middle = Mk ^ GH ^ GL, then integrate
+        vpternlogq        \$0x96,$GH,$GL,$GM
         vpsrldq           \$8,$GM,$ZTMP0
         vpslldq           \$8,$GM,$ZTMP1
         vpxorq            $ZTMP0,$GH,$GH
@@ -3017,6 +3081,17 @@ sub GHASH_16_ENCRYPT_16_PARALLEL {
   my $GHDAT1 = $ZT21;
   my $GHDAT2 = $ZT22;
 
+  # ;; Karatsuba GHASH: the middle term is computed as one vpclmulqdq of the
+  # ;; folded operands (hi^lo) instead of the two schoolbook cross products
+  # ;; (a1*b0, a0*b1). This drops one vpclmulqdq per 4-block group (4->3),
+  # ;; relieving FP-port pressure that bounds AES-256 large-bulk throughput on
+  # ;; Zen 5. The schoolbook "T" (second cross-product) accumulators are unused
+  # ;; here, so their registers are recycled as the fold scratch. The true
+  # ;; middle is recovered once at reduction time via M = Kar ^ GH ^ GL (all
+  # ;; XOR, linear across the reduction window).
+  my $FOLDK = $GH1T;    # ; scratch: folded hash key (hi^lo)
+  my $FOLDD = $GH2T;    # ; scratch: folded data    (hi^lo)
+
   my $label_suffix = $label_count++;
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3085,11 +3160,13 @@ ___
   $code .= <<___;
 
         # ;;==================================================
-        # ;; GHASH 4 blocks (15 to 12)
-        vpclmulqdq        \$0x11,$GHKEY1,$GHDAT1,$GH1H      # ; a1*b1
-        vpclmulqdq        \$0x00,$GHKEY1,$GHDAT1,$GH1L      # ; a0*b0
-        vpclmulqdq        \$0x01,$GHKEY1,$GHDAT1,$GH1M      # ; a1*b0
-        vpclmulqdq        \$0x10,$GHKEY1,$GHDAT1,$GH1T      # ; a0*b1
+        # ;; GHASH 4 blocks (15 to 12) - Karatsuba
+        vpclmulqdq        \$0x11,$GHKEY1,$GHDAT1,$GH1H      # ; H = a1*b1
+        vpclmulqdq        \$0x00,$GHKEY1,$GHDAT1,$GH1L      # ; L = a0*b0
+        vpsrldq           \$8,$GHDAT1,$FOLDD
+        vpxorq            $GHDAT1,$FOLDD,$FOLDD             # ; (a1^a0)
+        vmovdqu64         @{[HashKeyFoldedByIdx(($HASHKEY_OFFSET - (0*4)),"%rsp")]},$FOLDK  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$FOLDK,$FOLDD,$GH1M        # ; Mk = (a1^a0)*(b1^b0)
         vmovdqu64         @{[HashKeyByIdx(($HASHKEY_OFFSET - (2*4)),"%rsp")]},$GHKEY1
         vmovdqa64         `$GHASHIN_BLK_OFFSET + (2*64)`(%rsp),$GHDAT1
 
@@ -3104,11 +3181,13 @@ ___
   $code .= <<___;
 
         # ;; =================================================
-        # ;; GHASH 4 blocks (11 to 8)
-        vpclmulqdq        \$0x10,$GHKEY2,$GHDAT2,$GH2M      # ; a0*b1
-        vpclmulqdq        \$0x01,$GHKEY2,$GHDAT2,$GH2T      # ; a1*b0
-        vpclmulqdq        \$0x11,$GHKEY2,$GHDAT2,$GH2H      # ; a1*b1
-        vpclmulqdq        \$0x00,$GHKEY2,$GHDAT2,$GH2L      # ; a0*b0
+        # ;; GHASH 4 blocks (11 to 8) - Karatsuba
+        vpclmulqdq        \$0x11,$GHKEY2,$GHDAT2,$GH2H      # ; H = a1*b1
+        vpclmulqdq        \$0x00,$GHKEY2,$GHDAT2,$GH2L      # ; L = a0*b0
+        vpsrldq           \$8,$GHDAT2,$FOLDD
+        vpxorq            $GHDAT2,$FOLDD,$FOLDD             # ; (a1^a0)
+        vmovdqu64         @{[HashKeyFoldedByIdx(($HASHKEY_OFFSET - (1*4)),"%rsp")]},$FOLDK  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$FOLDK,$FOLDD,$GH2M        # ; Mk = (a1^a0)*(b1^b0)
         vmovdqu64         @{[HashKeyByIdx(($HASHKEY_OFFSET - (3*4)),"%rsp")]},$GHKEY2
         vmovdqa64         `$GHASHIN_BLK_OFFSET + (3*64)`(%rsp),$GHDAT2
 
@@ -3121,11 +3200,13 @@ ___
         vbroadcastf64x2    `(16 * 4)`($AES_KEYS),$AESKEY1
 
         # ;; =================================================
-        # ;; GHASH 4 blocks (7 to 4)
-        vpclmulqdq        \$0x10,$GHKEY1,$GHDAT1,$GH3M      # ; a0*b1
-        vpclmulqdq        \$0x01,$GHKEY1,$GHDAT1,$GH3T      # ; a1*b0
-        vpclmulqdq        \$0x11,$GHKEY1,$GHDAT1,$GH3H      # ; a1*b1
-        vpclmulqdq        \$0x00,$GHKEY1,$GHDAT1,$GH3L      # ; a0*b0
+        # ;; GHASH 4 blocks (7 to 4) - Karatsuba
+        vpclmulqdq        \$0x11,$GHKEY1,$GHDAT1,$GH3H      # ; H = a1*b1
+        vpclmulqdq        \$0x00,$GHKEY1,$GHDAT1,$GH3L      # ; L = a0*b0
+        vpsrldq           \$8,$GHDAT1,$FOLDD
+        vpxorq            $GHDAT1,$FOLDD,$FOLDD             # ; (a1^a0)
+        vmovdqu64         @{[HashKeyFoldedByIdx(($HASHKEY_OFFSET - (2*4)),"%rsp")]},$FOLDK  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$FOLDK,$FOLDD,$GH3M        # ; Mk = (a1^a0)*(b1^b0)
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;; AES rounds 3
         vaesenc           $R3_KEY,$B00_03,$B00_03
@@ -3135,10 +3216,9 @@ ___
         vbroadcastf64x2    `(16 * 5)`($AES_KEYS),$AESKEY2
 
         # ;; =================================================
-        # ;; Gather (XOR) GHASH for 12 blocks
+        # ;; Gather (XOR) GHASH for 12 blocks (Karatsuba: H, L, Mk only)
         vpternlogq        \$0x96,$GH3H,$GH2H,$GH1H
         vpternlogq        \$0x96,$GH3L,$GH2L,$GH1L
-        vpternlogq        \$0x96,$GH3T,$GH2T,$GH1T
         vpternlogq        \$0x96,$GH3M,$GH2M,$GH1M
 
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -3165,11 +3245,13 @@ ___
         vbroadcastf64x2    `(16 * 7)`($AES_KEYS),$AESKEY2
 
         # ;; =================================================
-        # ;; GHASH 4 blocks (3 to 0)
-        vpclmulqdq        \$0x10,$GHKEY2,$GHDAT2,$GH2M      # ; a0*b1
-        vpclmulqdq        \$0x01,$GHKEY2,$GHDAT2,$GH2T      # ; a1*b0
-        vpclmulqdq        \$0x11,$GHKEY2,$GHDAT2,$GH2H      # ; a1*b1
-        vpclmulqdq        \$0x00,$GHKEY2,$GHDAT2,$GH2L      # ; a0*b0
+        # ;; GHASH 4 blocks (3 to 0) - Karatsuba
+        vpclmulqdq        \$0x11,$GHKEY2,$GHDAT2,$GH2H      # ; H = a1*b1
+        vpclmulqdq        \$0x00,$GHKEY2,$GHDAT2,$GH2L      # ; L = a0*b0
+        vpsrldq           \$8,$GHDAT2,$FOLDD
+        vpxorq            $GHDAT2,$FOLDD,$FOLDD             # ; (a1^a0)
+        vmovdqu64         @{[HashKeyFoldedByIdx(($HASHKEY_OFFSET - (3*4)),"%rsp")]},$FOLDK  # ; (b1^b0) precomputed
+        vpclmulqdq        \$0x00,$FOLDK,$FOLDD,$GH2M        # ; Mk = (a1^a0)*(b1^b0)
         # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
         # ;; AES round 6
         vaesenc           $AESKEY1,$B00_03,$B00_03
@@ -3183,26 +3265,25 @@ ___
   # ;; gather GHASH in GH1L (low) and GH1H (high)
   if ($DO_REDUCTION eq "first_time") {
     $code .= <<___;
-        vpternlogq        \$0x96,$GH2T,$GH1T,$GH1M      # ; TM
-        vpxorq            $GH2M,$GH1M,$TO_REDUCE_M      # ; TM
-        vpxorq            $GH2H,$GH1H,$TO_REDUCE_H      # ; TH
-        vpxorq            $GH2L,$GH1L,$TO_REDUCE_L      # ; TL
+        vpxorq            $GH2M,$GH1M,$TO_REDUCE_M      # ; Mk sum
+        vpxorq            $GH2H,$GH1H,$TO_REDUCE_H      # ; H sum
+        vpxorq            $GH2L,$GH1L,$TO_REDUCE_L      # ; L sum
 ___
   }
   if ($DO_REDUCTION eq "no_reduction") {
     $code .= <<___;
-        vpternlogq        \$0x96,$GH2T,$GH1T,$GH1M             # ; TM
-        vpternlogq        \$0x96,$GH2M,$GH1M,$TO_REDUCE_M      # ; TM
-        vpternlogq        \$0x96,$GH2H,$GH1H,$TO_REDUCE_H      # ; TH
-        vpternlogq        \$0x96,$GH2L,$GH1L,$TO_REDUCE_L      # ; TL
+        vpternlogq        \$0x96,$GH2M,$GH1M,$TO_REDUCE_M      # ; Mk sum
+        vpternlogq        \$0x96,$GH2H,$GH1H,$TO_REDUCE_H      # ; H sum
+        vpternlogq        \$0x96,$GH2L,$GH1L,$TO_REDUCE_L      # ; L sum
 ___
   }
   if ($DO_REDUCTION eq "final_reduction") {
     $code .= <<___;
-        # ;; phase 1: add mid products together
-        # ;; also load polynomial constant for reduction
-        vpternlogq        \$0x96,$GH2T,$GH1T,$GH1M      # ; TM
-        vpternlogq        \$0x96,$GH2M,$TO_REDUCE_M,$GH1M
+        # ;; Karatsuba: fold window totals, then recover TM = Mk ^ H ^ L
+        vpternlogq        \$0x96,$GH2M,$TO_REDUCE_M,$GH1M   # ; total Mk
+        vpternlogq        \$0x96,$GH2H,$TO_REDUCE_H,$GH1H   # ; total H
+        vpternlogq        \$0x96,$GH2L,$TO_REDUCE_L,$GH1L   # ; total L
+        vpternlogq        \$0x96,$GH1H,$GH1L,$GH1M          # ; TM = Mk ^ H ^ L
 
         vpsrldq           \$8,$GH1M,$GH2M
         vpslldq           \$8,$GH1M,$GH1M
@@ -3212,9 +3293,11 @@ ___
   }
   if ($DO_REDUCTION eq "first_time_reduction") {
     $code .= <<___;
-        # ;; combined first_time + reduction: no previous TO_REDUCE to merge
-        vpternlogq        \$0x96,$GH2T,$GH1T,$GH1M      # ; TM
-        vpxorq            $GH2M,$GH1M,$GH1M              # ; TM = GH1M ^ GH2M
+        # ;; combined first_time + reduction (Karatsuba, no previous TO_REDUCE)
+        vpxorq            $GH2M,$GH1M,$GH1M                 # ; total Mk
+        vpxorq            $GH2H,$GH1H,$GH1H                 # ; total H
+        vpxorq            $GH2L,$GH1L,$GH1L                 # ; total L
+        vpternlogq        \$0x96,$GH1H,$GH1L,$GH1M          # ; TM = Mk ^ H ^ L
 
         vpsrldq           \$8,$GH1M,$GH2M
         vpslldq           \$8,$GH1M,$GH1M
@@ -3235,19 +3318,11 @@ ___
 
   # ;; =================================================
   # ;; Add mid product to high and low
-  if ($DO_REDUCTION eq "final_reduction") {
+  if ($DO_REDUCTION eq "final_reduction" || $DO_REDUCTION eq "first_time_reduction") {
     $code .= <<___;
-        vpternlogq        \$0x96,$GH2M,$GH2H,$GH1H      # ; TH = TH1 + TH2 + TM>>64
-        vpxorq            $TO_REDUCE_H,$GH1H,$GH1H
-        vpternlogq        \$0x96,$GH1M,$GH2L,$GH1L      # ; TL = TL1 + TL2 + TM<<64
-        vpxorq            $TO_REDUCE_L,$GH1L,$GH1L
-___
-  }
-  if ($DO_REDUCTION eq "first_time_reduction") {
-    $code .= <<___;
-        # ;; no TO_REDUCE merge needed
-        vpternlogq        \$0x96,$GH2M,$GH2H,$GH1H      # ; TH = TH1 + TH2 + TM>>64
-        vpternlogq        \$0x96,$GH1M,$GH2L,$GH1L      # ; TL = TL1 + TL2 + TM<<64
+        # ;; integrate middle into (already-folded) H and L totals
+        vpxorq            $GH2M,$GH1H,$GH1H      # ; TH ^= TM>>64
+        vpxorq            $GH1M,$GH1L,$GH1L      # ; TL ^= TM<<64
 ___
   }
 
