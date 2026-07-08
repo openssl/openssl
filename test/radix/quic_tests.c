@@ -1449,8 +1449,134 @@ DEF_SCRIPT(script_19, "Key update test - artificially triggered")
     OP_CHECK_KEY_UPDATE_GE(C, 1);
 }
 
-DEF_SCRIPT(script_20, "place holder for multistrem script_20")
+/* 20. Multiple threads accept stream with socket forcibly closed (error test) */
+DEF_SCRIPT(script_20_child_0,
+    "child: accept stream, read, signal ready, wait, expect read failure")
 {
+    OP_ACCEPT_STREAM_WAIT(C, Ca, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_READ_EXPECT_B(Ca, "foo");
+
+    OP_TRIGGER_COUNTER(0);
+    OP_WAIT_COUNTER(1, 1);
+
+    OP_READ_FAIL_WAIT(Ca);
+    OP_EXPECT_SSL_ERR(Ca, SSL_ERROR_SYSCALL);
+
+    OP_UNBIND(Ca);
+}
+
+DEF_SCRIPT(script_20_child_1,
+    "child: accept stream, read, signal ready, wait, expect read failure")
+{
+    OP_ACCEPT_STREAM_WAIT(C, Cb, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_READ_EXPECT_B(Cb, "foo");
+
+    OP_TRIGGER_COUNTER(0);
+    OP_WAIT_COUNTER(1, 1);
+
+    OP_READ_FAIL_WAIT(Cb);
+    OP_EXPECT_SSL_ERR(Cb, SSL_ERROR_SYSCALL);
+
+    OP_UNBIND(Cb);
+}
+
+DEF_SCRIPT(script_20_child_2,
+    "child: accept stream, read, signal ready, wait, expect read failure")
+{
+    OP_ACCEPT_STREAM_WAIT(C, Cc, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_READ_EXPECT_B(Cc, "foo");
+
+    OP_TRIGGER_COUNTER(0);
+    OP_WAIT_COUNTER(1, 1);
+
+    OP_READ_FAIL_WAIT(Cc);
+    OP_EXPECT_SSL_ERR(Cc, SSL_ERROR_SYSCALL);
+
+    OP_UNBIND(Cc);
+}
+
+DEF_SCRIPT(script_20_child_3,
+    "child: accept stream, read, signal ready, wait, expect read failure")
+{
+    OP_ACCEPT_STREAM_WAIT(C, Cd, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_READ_EXPECT_B(Cd, "foo");
+
+    OP_TRIGGER_COUNTER(0);
+    OP_WAIT_COUNTER(1, 1);
+
+    OP_READ_FAIL_WAIT(Cd);
+    OP_EXPECT_SSL_ERR(Cd, SSL_ERROR_SYSCALL);
+
+    OP_UNBIND(Cd);
+}
+
+DEF_SCRIPT(script_20_child_4,
+    "child: accept stream, read, signal ready, wait, expect read failure")
+{
+    OP_ACCEPT_STREAM_WAIT(C, Ce, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_READ_EXPECT_B(Ce, "foo");
+
+    OP_TRIGGER_COUNTER(0);
+    OP_WAIT_COUNTER(1, 1);
+
+    OP_READ_FAIL_WAIT(Ce);
+    OP_EXPECT_SSL_ERR(Ce, SSL_ERROR_SYSCALL);
+
+    OP_UNBIND(Ce);
+}
+
+DEF_SCRIPT(script_20, "Multiple threads accept stream with socket forcibly closed (error test)")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_BIND(Ca);
+    OP_BIND(Cb);
+    OP_BIND(Cc);
+    OP_BIND(Cd);
+    OP_BIND(Ce);
+    OP_BIND(Sa);
+    OP_BIND(Sb);
+    OP_BIND(Sc);
+    OP_BIND(Sd);
+    OP_BIND(Se);
+
+    OP_SPAWN_THREAD(script_20_child_0);
+    OP_SPAWN_THREAD(script_20_child_1);
+    OP_SPAWN_THREAD(script_20_child_2);
+    OP_SPAWN_THREAD(script_20_child_3);
+    OP_SPAWN_THREAD(script_20_child_4);
+
+    OP_NEW_STREAM(S, Sa, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_WRITE_B(Sa, "foo");
+    OP_CONCLUDE(Sa);
+    OP_UNBIND(Sa);
+
+    OP_NEW_STREAM(S, Sb, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_WRITE_B(Sb, "foo");
+    OP_CONCLUDE(Sb);
+    OP_UNBIND(Sb);
+
+    OP_NEW_STREAM(S, Sc, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_WRITE_B(Sc, "foo");
+    OP_CONCLUDE(Sc);
+    OP_UNBIND(Sc);
+
+    OP_NEW_STREAM(S, Sd, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_WRITE_B(Sd, "foo");
+    OP_CONCLUDE(Sd);
+    OP_UNBIND(Sd);
+
+    OP_NEW_STREAM(S, Se, OP_F_REPLACE_STREAM /* bidirectional */);
+    OP_WRITE_B(Se, "foo");
+    OP_CONCLUDE(Se);
+    OP_UNBIND(Se);
+
+    OP_WAIT_COUNTER(0, 5);
+
+    OP_CLOSE_SOCKET(C);
+
+    OP_TRIGGER_COUNTER(1);
 }
 
 DEF_SCRIPT(script_21, "place holder for multistrem script_21")
