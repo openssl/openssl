@@ -230,6 +230,19 @@ err:
     return ret;
 }
 
+/* Trigger memory failures while parsing a PEM certificate. */
+static int test_x509_pem_read_mfail(void)
+{
+    X509 *cert;
+
+    MFAIL_start();
+    cert = X509_from_strings(cn_cert1);
+    MFAIL_end();
+
+    X509_free(cert);
+    return 1;
+}
+
 OPT_TEST_DECLARE_USAGE("cert.pem [crl.pem]\n")
 
 int setup_tests(void)
@@ -247,6 +260,7 @@ int setup_tests(void)
 
     ADD_TEST(test_load_cert_file);
     ADD_TEST(test_load_same_cn_certs);
+    ADD_MFAIL_NO_CHECK_TEST(test_x509_pem_read_mfail);
     ADD_MFAIL_TEST(test_x509_store_add_mfail);
     ADD_MFAIL_TEST(test_x509_get1_objects_mfail);
 
