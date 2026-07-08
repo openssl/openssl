@@ -322,17 +322,10 @@ const OPTIONS *test_get_options(void);
  */
 
 #define PRINTF_FORMAT(a, b)
-#if defined(__GNUC__) && defined(__STDC_VERSION__)    \
-    && !defined(__MINGW32__) && !defined(__MINGW64__) \
+#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__MINGW64__) \
     && !defined(__APPLE__)
-/*
- * Because we support the 'z' modifier, which made its appearance in C99,
- * we can't use __attribute__ with pre C99 dialects.
- */
-#if __STDC_VERSION__ >= 199901L
 #undef PRINTF_FORMAT
 #define PRINTF_FORMAT(a, b) __attribute__((format(printf, a, b)))
-#endif
 #endif
 
 #define DECLARE_COMPARISON(type, name, opname)    \
