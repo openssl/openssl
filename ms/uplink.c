@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#if (defined(_WIN64) || defined(_WIN32_WCE)) && !defined(UNICODE)
+#if defined(_WIN64) && !defined(UNICODE)
 #define UNICODE
 #endif
 #if defined(UNICODE) && !defined(_UNICODE)
