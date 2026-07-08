@@ -485,7 +485,7 @@ int ossl_ml_dsa_generate_key(ML_DSA_KEY *out)
         if ((out->seed = OPENSSL_secure_malloc(seed_len)) == NULL)
             return 0;
         if (RAND_priv_bytes_ex(out->libctx, out->seed, seed_len, 0) <= 0) {
-            OPENSSL_secure_free(out->seed);
+            OPENSSL_secure_clear_free(out->seed);
             out->seed = NULL;
             return 0;
         }
