@@ -29,20 +29,21 @@ err:
 
 DEF_FUNC(hf_bind)
 {
+    int ok = 0;
     const char *name;
     RADIX_OBJ *empty_obj;
 
     F_POP(name);
 
-    empty_obj = RADIX_OBJ_new_empty(name);
-    if (empty_obj == NULL)
-        return 0;
+    if (!TEST_ptr(empty_obj = RADIX_OBJ_new_empty(name))
+        || !TEST_true(RADIX_PROCESS_set_obj(RP(), name, empty_obj))) {
+        RADIX_OBJ_free(empty_obj);
+        goto err;
+    }
 
-    RADIX_PROCESS_set_obj(RP(), name, empty_obj);
-
-    return 1;
+    ok = 1;
 err:
-    return 0;
+    return ok;
 }
 
 static int ssl_ctx_select_alpn(SSL *ssl,
@@ -292,8 +293,9 @@ DEF_FUNC(hf_new_stream)
     if (replace == 0) {
         if (!TEST_ptr_null(stream_obj))
             goto err;
-    } else if (TEST_ptr_null(stream_obj))
+    } else if (TEST_ptr_null(stream_obj)) {
         goto err;
+    }
 
     if (do_accept) {
         stream = SSL_accept_stream(conn, flags & OP_F_MASK);
@@ -1049,6 +1051,62 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_close_socket)
+{
+    int ok = 0;
+    SSL *ssl;
+    BIO *bio;
+    int fd = -1;
+
+    REQUIRE_SSL(ssl);
+
+    bio = SSL_get_rbio(ssl);
+    if (!TEST_ptr(bio) || !TEST_true(BIO_get_fd(bio, &fd)) || !TEST_int_ge(fd, 0))
+        goto err;
+
+    BIO_closesocket(fd);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+/* Process-global counters (RP()->counter[idx]), used for cross-thread sync. */
+DEF_FUNC(hf_trigger_counter)
+{
+    int ok = 0;
+    uint64_t idx;
+
+    F_POP(idx);
+
+    ossl_crypto_mutex_lock(RP()->gm);
+    ++RP()->counter[idx];
+    ossl_crypto_mutex_unlock(RP()->gm);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_wait_counter)
+{
+    int ok = 0;
+    uint64_t idx, threshold, current;
+
+    F_POP2(idx, threshold);
+
+    ossl_crypto_mutex_lock(RP()->gm);
+    current = RP()->counter[idx];
+    ossl_crypto_mutex_unlock(RP()->gm);
+
+    if (current < threshold)
+        F_SPIN_AGAIN();
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -1295,3 +1353,16 @@ err:
     (OP_SELECT_SSL(0, name),                     \
         OP_PUSH_U64(update_type),                \
         OP_FUNC(hf_trigger_key_update))
+
+#define OP_CLOSE_SOCKET(name) \
+    (OP_SELECT_SSL(0, name),  \
+        OP_FUNC(hf_close_socket))
+
+#define OP_TRIGGER_COUNTER(idx) \
+    (OP_PUSH_U64(idx),          \
+        OP_FUNC(hf_trigger_counter))
+
+#define OP_WAIT_COUNTER(idx, threshold) \
+    (OP_PUSH_U64(idx),                  \
+        OP_PUSH_U64(threshold),         \
+        OP_FUNC(hf_wait_counter))
