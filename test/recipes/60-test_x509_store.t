@@ -13,13 +13,17 @@ use warnings;
 use File::Copy;
 use File::Spec::Functions qw/:DEFAULT canonpath/;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test::Utils;
 
 setup("test_x509_store");
 
-#If "openssl rehash -help" fails it's most likely because we're on a platform
-#that doesn't support the rehash command (e.g. Windows)
-plan skip_all => "test_rehash is not available on this platform"
-    unless run(app(["openssl", "rehash", "-help"]));
+plan tests => 4;
+
+SKIP: {
+    skip "EC is not supported by this OpenSSL build", 1 if disabled("ec");
+
+    ok(run(test(["x509_store"])), "running x509_store");
+}
 
 # We use 'openssl verify' for these tests, as it contains everything
 # we need to conduct these tests.  The tests here are a subset of the
@@ -36,18 +40,23 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 3;
+SKIP: {
+    # If "openssl rehash -help" fails it's most likely because we're on a
+    # platform that doesn't support the rehash command (e.g. Windows).
+    skip "test_rehash is not available on this platform", 3
+        unless run(app(["openssl", "rehash", "-help"]));
 
-indir "60-test_x509_store" => sub {
-    for (("root-cert")) {
-        copy(srctop_file("test", "certs", "$_.pem"), curdir());
-    }
-    ok(run(app([qw(openssl rehash), curdir()])), "Rehashing");
+    indir "60-test_x509_store" => sub {
+        for (("root-cert")) {
+            copy(srctop_file("test", "certs", "$_.pem"), curdir());
+        }
+        ok(run(app([qw(openssl rehash), curdir()])), "Rehashing");
 
-    # Canonical success
-    ok(verify("ee-cert", "sslserver", curdir(), ["ca-cert"], "-show_chain"),
-       "verify ee-cert");
+        # Canonical success
+        ok(verify("ee-cert", "sslserver", curdir(), ["ca-cert"], "-show_chain"),
+           "verify ee-cert");
 
-    # Failure because root cert not present in CApath
-    ok(!verify("ca-root2", "any", curdir(), [], "-show_chain"));
-}, create => 1, cleanup => 1;
+        # Failure because root cert not present in CApath
+        ok(!verify("ca-root2", "any", curdir(), [], "-show_chain"));
+    }, create => 1, cleanup => 1;
+}

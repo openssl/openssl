@@ -180,6 +180,67 @@ static int x509_object_cmp(const X509_OBJECT *const *a,
         /* abort(); */
         return 0;
     }
+
+    /* A hashless object is a partial (type, name) lookup key. */
+    if (ret != 0 || !(*a)->store_hash_valid || !(*b)->store_hash_valid)
+        return ret;
+    return memcmp((*a)->store_hash, (*b)->store_hash, sizeof((*a)->store_hash));
+}
+
+static int x509_object_to_der(const X509_OBJECT *obj, unsigned char **der)
+{
+    switch (obj->type) {
+    case X509_LU_X509:
+        return i2d_X509(obj->data.x509, der);
+    case X509_LU_CRL:
+        return i2d_X509_CRL(obj->data.crl, der);
+    case X509_LU_NONE:
+    default:
+        return -1;
+    }
+}
+
+static int x509_object_prepare_store_hash(X509_OBJECT *obj)
+{
+    const unsigned char *cached_hash = NULL;
+    unsigned char *der = NULL;
+    int ret = 0;
+
+    if (obj->store_hash_valid)
+        return 1;
+
+    switch (obj->type) {
+    case X509_LU_X509:
+        if ((obj->data.x509->ex_flags & EXFLAG_SET) != 0
+            && (obj->data.x509->ex_flags & EXFLAG_NO_FINGERPRINT) == 0)
+            cached_hash = obj->data.x509->sha1_hash;
+        break;
+    case X509_LU_CRL:
+        if ((obj->data.crl->flags & EXFLAG_SET) != 0
+            && (obj->data.crl->flags & EXFLAG_NO_FINGERPRINT) == 0)
+            cached_hash = obj->data.crl->sha1_hash;
+        break;
+    case X509_LU_NONE:
+    default:
+        return 0;
+    }
+
+    if (cached_hash != NULL) {
+        memcpy(obj->store_hash, cached_hash, sizeof(obj->store_hash));
+    } else {
+        int derlen = x509_object_to_der(obj, &der);
+
+        if (derlen <= 0)
+            goto end;
+        if (!EVP_Q_digest(NULL, "SHA1", NULL, der, (size_t)derlen,
+                obj->store_hash, NULL))
+            goto end;
+    }
+    obj->store_hash_valid = 1;
+    ret = 1;
+
+end:
+    OPENSSL_free(der);
     return ret;
 }
 
@@ -366,7 +427,7 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_name_objs_get(const X509_STORE *store,
 
 /*
  * Returning 0 means the store did not take ownership of |obj|,
- * so it is still the caller's to free.
+ * so it is still the caller's responsibility to free it.
  */
 static int x509_store_name_objs_new(const X509_STORE *store, const X509_NAME *xn,
     X509_OBJECT *obj)
@@ -405,6 +466,98 @@ err:
     return 0;
 }
 
+/**
+ * @brief Compare two store objects by their DER encodings.
+ *
+ * This resolves the exceptionally rare case where two objects have the same
+ * type, name, and SHA-1 store key.
+ *
+ * @param a first store object
+ * @param b second store object
+ * @param match receives 1 for an exact match or 0 for distinct encodings
+ * @returns 1 on success or 0 on an encoding error
+ */
+static int x509_object_der_match(const X509_OBJECT *a, const X509_OBJECT *b,
+    int *match)
+{
+    unsigned char *ader = NULL, *bder = NULL;
+    int alen, blen, ret = 1;
+
+    *match = 0;
+    if (a->type != b->type)
+        goto end;
+    if ((a->type == X509_LU_X509 && a->data.x509 == b->data.x509)
+        || (a->type == X509_LU_CRL && a->data.crl == b->data.crl)) {
+        *match = 1;
+        goto end;
+    }
+    alen = x509_object_to_der(a, &ader);
+    blen = x509_object_to_der(b, &bder);
+    if (alen <= 0 || blen <= 0) {
+        ret = 0;
+        goto end;
+    }
+    *match = alen == blen && memcmp(ader, bder, (size_t)alen) == 0;
+
+end:
+    OPENSSL_free(ader);
+    OPENSSL_free(bder);
+    return ret;
+}
+
+/**
+ * @brief Find an exact duplicate in a sorted store object stack.
+ *
+ * Binary-searches for the first object with the same type, name, and SHA-1
+ * store key, then compares the DER encodings of all objects in that equal-key
+ * run. All objects must have a valid store hash.
+ *
+ * @param objs store object stack sorted by x509_object_cmp()
+ * @param obj store object to find
+ * @param dup receives a non-owning pointer to the duplicate, or NULL
+ * @param ins receives an insertion position that preserves the ordering
+ * @returns 1 on a successful search or 0 on an encoding error
+ */
+static int x509_objs_find_dup(STACK_OF(X509_OBJECT) *objs, X509_OBJECT *obj,
+    X509_OBJECT **dup, int *ins)
+{
+    int i, lo = 0, hi = sk_X509_OBJECT_num(objs), mid, c;
+    X509_OBJECT *cur;
+
+    *dup = NULL;
+    while (lo < hi) {
+        mid = lo + (hi - lo) / 2;
+        cur = sk_X509_OBJECT_value(objs, mid);
+        c = x509_object_cmp((const X509_OBJECT **)&cur,
+            (const X509_OBJECT **)&obj);
+        if (c < 0)
+            lo = mid + 1;
+        else
+            hi = mid;
+    }
+    *ins = lo;
+
+    for (i = lo; i < sk_X509_OBJECT_num(objs); i++) {
+        X509_OBJECT *candidate = sk_X509_OBJECT_value(objs, i);
+        int match;
+
+        match = x509_object_cmp((const X509_OBJECT **)&candidate,
+            (const X509_OBJECT **)&obj);
+        if (match != 0)
+            break;
+        if (!x509_object_der_match(candidate, obj, &match))
+            return 0;
+        if (match) {
+            *dup = candidate;
+            return 1;
+        }
+    }
+
+    /* Equal hashes compare alike, so insertion after their run stays sorted. */
+    *ins = i;
+    return 1;
+}
+
 static int obj_ht_foreach_certs(HT_VALUE *v, void *arg)
 {
     STACK_OF(X509) **sk = arg;
@@ -439,7 +592,7 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
 {
     X509_STORE *store = ctx->store;
     X509_LOOKUP *lu;
-    X509_OBJECT stmp, *tmp = NULL;
+    X509_OBJECT stmp = { 0 }, *tmp = NULL;
     STACK_OF(X509_OBJECT) *objs;
     int i, j;
 
@@ -497,7 +650,8 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
 static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
 {
     const X509_NAME *xn;
-    int ret = 0, added = 0;
+    X509_OBJECT *dup = NULL;
+    int ret = 0, added = 0, ins = 0;
 
     if (obj->type == X509_LU_CRL)
         xn = obj->data.crl->crl.issuer;
@@ -521,6 +675,9 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
         return 0;
     }
 
+    if (!x509_object_prepare_store_hash(obj))
+        goto end;
+
     if (store->objs_ht != NULL) {
         STACK_OF(X509_OBJECT) *objs = NULL;
 
@@ -528,20 +685,28 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
         if (objs == NULL) {
             added = x509_store_name_objs_new(store, xn, obj);
             ret = added != 0;
-        } else if (X509_OBJECT_retrieve_match(objs, obj) != NULL) {
-            ret = 1;
         } else {
-            added = sk_X509_OBJECT_push(objs, obj);
-            ret = added != 0;
+            if (!x509_objs_find_dup(objs, obj, &dup, &ins)) {
+                goto end;
+            } else if (dup != NULL) {
+                ret = 1; /* duplicate */
+            } else {
+                added = sk_X509_OBJECT_insert(objs, obj, ins);
+                ret = added != 0;
+            }
         }
     } else {
-        if (X509_OBJECT_retrieve_match(store->objs, obj)) {
-            ret = 1;
+        if (!x509_objs_find_dup(store->objs, obj, &dup, &ins)) {
+            goto end;
+        } else if (dup != NULL) {
+            ret = 1; /* duplicate */
         } else {
-            added = sk_X509_OBJECT_push(store->objs, obj);
+            added = sk_X509_OBJECT_insert(store->objs, obj, ins);
             ret = added != 0;
         }
     }
+
+end:
     X509_STORE_unlock(store);
 
     if (added == 0) /* obj not pushed */
@@ -670,6 +835,8 @@ int X509_OBJECT_set1_X509(X509_OBJECT *a, X509 *obj)
     x509_object_free_internal(a);
     a->type = X509_LU_X509;
     a->data.x509 = obj;
+    a->store_hash_valid = 0;
+
     return 1;
 }
 
@@ -681,6 +848,8 @@ int X509_OBJECT_set1_X509_CRL(X509_OBJECT *a, X509_CRL *obj)
     x509_object_free_internal(a);
     a->type = X509_LU_CRL;
     a->data.crl = obj;
+    a->store_hash_valid = 0;
+
     return 1;
 }
 
@@ -694,7 +863,7 @@ void X509_OBJECT_free(X509_OBJECT *a)
 static int x509_object_idx_cnt(STACK_OF(X509_OBJECT) *h, X509_LOOKUP_TYPE type,
     const X509_NAME *name, int *pnmatch)
 {
-    X509_OBJECT stmp;
+    X509_OBJECT stmp = { 0 };
     X509 x509_s;
     X509_CRL crl_s;
 
@@ -745,6 +914,8 @@ static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
 
     ret->type = obj->type;
     ret->data = obj->data;
+    ret->store_hash_valid = obj->store_hash_valid;
+    memcpy(ret->store_hash, obj->store_hash, sizeof(obj->store_hash));
 
     if (!X509_OBJECT_up_ref_count(ret)) {
         OPENSSL_free(ret);
@@ -754,7 +925,7 @@ static X509_OBJECT *x509_object_dup(const X509_OBJECT *obj)
     return ret;
 }
 
-static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
+static int obj_ht_foreach_unordered(HT_VALUE *v, void *arg)
 {
     STACK_OF(X509_OBJECT) **sk = arg;
     STACK_OF(X509_OBJECT) *objs = v->value;
@@ -763,6 +934,7 @@ static int obj_ht_foreach_object(HT_VALUE *v, void *arg)
 
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
         obj = sk_X509_OBJECT_value(objs, i);
+
         dup = x509_object_dup(obj);
         if (dup == NULL)
             goto err;
@@ -781,12 +953,41 @@ err:
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_4_0
+
+static int obj_ht_foreach_move_objects(HT_VALUE *v, void *arg)
+{
+    STACK_OF(X509_OBJECT) **sk = arg;
+    STACK_OF(X509_OBJECT) *objs = v->value;
+    X509_OBJECT *obj;
+    int i;
+
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+        obj = sk_X509_OBJECT_value(objs, i);
+
+        if (sk_X509_OBJECT_push(*sk, obj) == 0)
+            goto err;
+
+        /* Ownership moved to the legacy global stack. */
+        (void)sk_X509_OBJECT_set(objs, i, NULL);
+    }
+
+    return 1;
+
+err:
+    sk_X509_OBJECT_pop_free(*sk, X509_OBJECT_free);
+    *sk = NULL;
+
+    return 0;
+}
+
 STACK_OF(X509_OBJECT) *X509_STORE_get0_objects(const X509_STORE *xs)
 {
     X509_STORE *store = (X509_STORE *)xs;
 
     if (xs->objs_ht != NULL) {
-        ossl_ht_foreach_until(xs->objs_ht, obj_ht_foreach_object, &store->objs);
+        ossl_ht_foreach_until(xs->objs_ht, obj_ht_foreach_move_objects, &store->objs);
+        /* Restore the (type, name, fingerprint) total order in one pass. */
+        sk_X509_OBJECT_sort(store->objs);
         ossl_ht_free(xs->objs_ht);
         store->objs_ht = NULL;
     }
@@ -812,7 +1013,7 @@ STACK_OF(X509_OBJECT) *X509_STORE_get1_objects(X509_STORE *store)
             X509_STORE_unlock(store);
             return NULL;
         }
-        ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_object, &objs);
+        ossl_ht_foreach_until(store->objs_ht, obj_ht_foreach_unordered, &objs);
     } else {
         objs = sk_X509_OBJECT_deep_copy(store->objs, x509_object_dup,
             X509_OBJECT_free);
@@ -910,11 +1111,9 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
     sk = sk_X509_new_null();
     if (idx < 0 || sk == NULL)
         goto end;
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
-        obj = sk_X509_OBJECT_value(objs, i);
+    for (i = 0; i < cnt; i++, idx++) {
+        obj = sk_X509_OBJECT_value(objs, idx);
         x = obj->data.x509;
-        if (obj->type != X509_LU_X509)
-            continue;
         if (X509_add_cert(sk, x, X509_ADD_FLAG_UP_REF) == 0) {
             X509_STORE_unlock(store);
             OSSL_STACK_OF_X509_free(sk);
@@ -960,11 +1159,9 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
     if (idx < 0)
         goto end;
 
-    for (i = idx; i < sk_X509_OBJECT_num(objs); i++) {
-        obj = sk_X509_OBJECT_value(objs, i);
+    for (i = 0; i < cnt; i++, idx++) {
+        obj = sk_X509_OBJECT_value(objs, idx);
         x = obj->data.crl;
-        if (obj->type != X509_LU_CRL)
-            continue;
         if (!X509_CRL_up_ref(x)) {
             X509_STORE_unlock(store);
             sk_X509_CRL_pop_free(sk, X509_CRL_free);

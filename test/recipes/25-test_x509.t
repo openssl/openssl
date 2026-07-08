@@ -735,7 +735,7 @@ ok(run(app(["openssl", "x509", "-req", "-text",
 && get_not_after_date($b_cert) eq $enddate);
 
 SKIP: {
-    skip "EC is not supported by this OpenSSL build", 1
+    skip "EC is not supported by this OpenSSL build", 2
         if disabled("ec");
     my $psscert = srctop_file(@certs, "ee-self-signed-pss.pem");
 
