@@ -1107,6 +1107,198 @@ err:
     return ok;
 }
 
+/*
+ * Fault injection: intercepts a QUIC channel's outgoing packet in plaintext,
+ * before it is encrypted, so a script can tamper with its frames.
+ */
+typedef struct radix_fault_st RADIX_FAULT;
+
+typedef int (*radix_fault_plain_cb)(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len);
+
+static ossl_inline void *radix_fault_plain_cb_to_ptr(radix_fault_plain_cb cb)
+{
+    union {
+        radix_fault_plain_cb cb;
+        void *ptr;
+    } u;
+
+    u.cb = cb;
+    return u.ptr;
+}
+
+static ossl_inline radix_fault_plain_cb radix_fault_ptr_to_plain_cb(void *ptr)
+{
+    union {
+        radix_fault_plain_cb cb;
+        void *ptr;
+    } u;
+
+    u.ptr = ptr;
+    return u.cb;
+}
+
+struct radix_fault_st {
+    QUIC_PKT_HDR hdr;
+    OSSL_QTX_IOVEC io;
+    size_t buf_alloc;
+    radix_fault_plain_cb cb;
+    uint64_t word0, word1;
+};
+
+/* Fault injection against one channel at a time. */
+static RADIX_FAULT radix_fault;
+
+static int radix_fault_mutate(const QUIC_PKT_HDR *hdrin,
+    const OSSL_QTX_IOVEC *iovecin, size_t numin,
+    QUIC_PKT_HDR **hdrout,
+    const OSSL_QTX_IOVEC **iovecout,
+    size_t *numout,
+    void *arg)
+{
+    RADIX_FAULT *fault = arg;
+    size_t i, bufsz = 0;
+    unsigned char *cur;
+    int grow_allowance;
+
+    for (i = 0; i < numin; i++)
+        bufsz += iovecin[i].buf_len;
+
+    fault->io.buf_len = bufsz;
+
+    /*
+     * 1200 is the length of the QUIC payload used by the record layer, bufsz is
+     * what we got from the txp, 16 is the AEAD tag length and 14 is the
+     * long header allowance (assume zero token length).
+     */
+    grow_allowance = 1200 - (int)bufsz - 16 - 14;
+    grow_allowance -= hdrin->dst_conn_id.id_len;
+    grow_allowance -= hdrin->src_conn_id.id_len;
+    if (!TEST_int_ge(grow_allowance, 0))
+        return 0;
+    bufsz += grow_allowance;
+
+    OPENSSL_free((unsigned char *)fault->io.buf);
+    fault->io.buf = cur = OPENSSL_malloc(bufsz);
+    if (cur == NULL) {
+        fault->io.buf_len = 0;
+        fault->buf_alloc = 0;
+        return 0;
+    }
+    fault->buf_alloc = bufsz;
+
+    for (i = 0; i < numin; i++) {
+        memcpy(cur, iovecin[i].buf, iovecin[i].buf_len);
+        cur += iovecin[i].buf_len;
+    }
+
+    fault->hdr = *hdrin;
+
+    if (fault->cb != NULL
+        && !fault->cb(fault, &fault->hdr, (unsigned char *)fault->io.buf,
+            fault->io.buf_len))
+        return 0;
+
+    *hdrout = &fault->hdr;
+    *iovecout = &fault->io;
+    *numout = 1;
+
+    return 1;
+}
+
+static void radix_fault_finish(void *arg)
+{
+    RADIX_FAULT *fault = arg;
+
+    OPENSSL_free((unsigned char *)fault->io.buf);
+    fault->io.buf = NULL;
+    fault->io.buf_len = 0;
+    fault->buf_alloc = 0;
+}
+
+/* To be called from a radix_fault_plain_cb callback. */
+static int radix_fault_resize_plain_packet(RADIX_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->io.buf_len;
+
+    if (fault->buf_alloc == 0 || newlen > fault->buf_alloc)
+        return 0;
+
+    buf = (unsigned char *)fault->io.buf;
+
+    if (newlen > oldlen)
+        memset(buf + oldlen, 0, newlen - oldlen);
+
+    fault->io.buf_len = newlen;
+    fault->hdr.len = newlen;
+
+    return 1;
+}
+
+/*
+ * Prepend frame data into a packet. To be called from a
+ * radix_fault_plain_cb callback.
+ */
+static int radix_fault_prepend_frame(RADIX_FAULT *fault,
+    const unsigned char *frame, size_t frame_len)
+{
+    unsigned char *buf;
+    size_t old_len;
+
+    if (fault->buf_alloc == 0)
+        return 0;
+
+    /* Cast below is safe because we allocated the buffer. */
+    buf = (unsigned char *)fault->io.buf;
+    old_len = fault->io.buf_len;
+
+    if (!radix_fault_resize_plain_packet(fault, old_len + frame_len))
+        return 0;
+
+    memmove(buf + frame_len, buf, old_len);
+    memcpy(buf, frame, frame_len);
+
+    return 1;
+}
+
+DEF_FUNC(hf_set_inject_plain)
+{
+    int ok = 0;
+    SSL *ssl;
+    void *cbptr;
+    QUIC_CHANNEL *ch;
+
+    F_POP(cbptr);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_ptr(ch = ossl_quic_conn_get_channel(ssl)))
+        goto err;
+
+    OPENSSL_free((unsigned char *)radix_fault.io.buf);
+    memset(&radix_fault, 0, sizeof(radix_fault));
+    radix_fault.cb = radix_fault_ptr_to_plain_cb(cbptr);
+
+    if (!TEST_true(ossl_quic_channel_set_mutator(ch, radix_fault_mutate,
+            radix_fault_finish, &radix_fault)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_inject_word)
+{
+    int ok = 0;
+
+    F_POP2(radix_fault.word0, radix_fault.word1);
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
@@ -1366,3 +1558,13 @@ err:
     (OP_PUSH_U64(idx),                  \
         OP_PUSH_U64(threshold),         \
         OP_FUNC(hf_wait_counter))
+
+#define OP_SET_INJECT_PLAIN(name, cb)               \
+    (OP_SELECT_SSL(0, name),                        \
+        OP_PUSH_P(radix_fault_plain_cb_to_ptr(cb)), \
+        OP_FUNC(hf_set_inject_plain))
+
+#define OP_SET_INJECT_WORD(word0, word1) \
+    (OP_PUSH_U64(word0),                 \
+        OP_PUSH_U64(word1),              \
+        OP_FUNC(hf_set_inject_word))
