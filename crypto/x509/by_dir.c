@@ -232,7 +232,7 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
     int i, j, k;
     unsigned long h;
     BUF_MEM *b = NULL;
-    X509_OBJECT stmp, *tmp = NULL;
+    X509_OBJECT stmp = { 0 }, *tmp = NULL;
     const char *postfix = "";
 
     if (name == NULL)

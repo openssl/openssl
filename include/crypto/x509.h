@@ -311,6 +311,9 @@ struct x509_object_st {
         X509 *x509;
         X509_CRL *crl;
     } data;
+    /* Stable key used to order objects in an X509_STORE. */
+    unsigned char store_hash[SHA_DIGEST_LENGTH];
+    unsigned int store_hash_valid : 1;
 };
 
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
