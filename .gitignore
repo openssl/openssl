@@ -123,9 +123,6 @@ providers/implementations/kem/ec_kem.inc
 providers/implementations/kem/ecx_kem.inc
 providers/implementations/kem/ml_kem_kem.inc
 providers/implementations/kem/rsa_kem.inc
-providers/implementations/keymgmt/ml_dsa_kmgmt.inc
-providers/implementations/keymgmt/ml_kem_kmgmt.inc
-providers/implementations/keymgmt/mlx_kmgmt.inc
 providers/implementations/signature/dsa_sig.inc
 providers/implementations/signature/ecdsa_sig.inc
 providers/implementations/keymgmt/dh_kmgmt.inc
