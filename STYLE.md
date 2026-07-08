@@ -294,7 +294,7 @@ The following sample illustrates the convention:
  * @param y integer input value
  * @returns the maximum of x and y
  */
-#define MAX(x, y) (x > y ? x : y)
+#define MAX(x, y) ((x) > (y) ? (x) : (y))
 
 /**
  * @struct foo_st
@@ -307,14 +307,14 @@ typedef struct foo_st {
 } FOO;
 
 /**
- * @brief Describe the function add briefly.
+ * @brief Describe the function ossl_add briefly.
  * Add a more detailed description here, like sums two inputs and
  * returns the result.
  * @param a input integer to add
  * @param b input integer to add
  * @returns the sum of a and b
  */
-int add(int a, int b);
+int ossl_add(int a, int b);
 ```
 
 #### Spec-mirroring variables
@@ -332,10 +332,16 @@ each spec-derived variable:
  * - Calvin: input to be transmogrified
  * - Hobbes: transmogrified output (caller-allocated)
  *
+ * @param Calvin pointer to the input bytes to transmogrify
+ * @param Calvin_len the number of bytes available at Calvin
+ * @param Hobbes pointer to the caller-allocated output buffer
+ * @param Hobbes_len the number of bytes available at Hobbes
+ * @returns 1 on success, 0 on failure
  * @see https://www.example.org/rfc/rfc31337.html#section-1.2.3
+ * @see https://calvinandhobbes.fandom.com/wiki/Transmogrifier
  */
-int transmogrify(const uint8_t *Calvin, size_t Calvin_len,
-                 uint8_t *Hobbes, size_t Hobbes_len);
+int ossl_transmogrify(const uint8_t *Calvin, size_t Calvin_len,
+    uint8_t *Hobbes, size_t Hobbes_len);
 ```
 
 #### Public functions: link the manual page
@@ -497,7 +503,7 @@ form rather than `#pragma once`, which is non-standard:
 
 ```c
 #if !defined(OPENSSL_FOO_H)
-# define OPENSSL_FOO_H
+#define OPENSSL_FOO_H
 
 /* ... header contents ... */
 
@@ -550,11 +556,11 @@ the stubs:
 
 ```c
 #if defined(OPENSSL_NO_FOO)
-static ossl_inline int foo_init(void) { return 1; }
-static ossl_inline void foo_cleanup(void) {}
+static ossl_inline int ossl_foo_init(void) { return 1; }
+static ossl_inline void ossl_foo_cleanup(void) { }
 #else
-int foo_init(void);
-void foo_cleanup(void);
+int ossl_foo_init(void);
+void ossl_foo_cleanup(void);
 #endif /* defined(OPENSSL_NO_FOO) */
 ```
 
@@ -605,7 +611,7 @@ the expansion evaluates correctly inside larger expressions. For
 example:
 
 ```c
-#define BOB(blah) ((blah) + 42 - 23 / (blah))
+#define BOB(blah) ((blah) + 42 - 23)
 ```
 
 ### Multi-statement macros
@@ -663,18 +669,31 @@ Do not put code in a file and include it inline:
 Either make a function out of the code and call it, or put the code
 in place.
 
-### Avoid macros that evaluate arguments multiple times
+### Be careful with macro arguments that have side effects
 
-Be cautious with arguments that may have side effects, since they
-may be evaluated more than once during macro expansion, with
+Be careful when writing a function-like macro that could be called
+with arguments that have side effects. Because a macro may expand an
+argument more than once, a side-effecting argument (`n++`, a function
+call, a volatile access) can then be evaluated more than once, with
 unexpected results:
 
 ```c
 #define SQUARE(x) ((x) * (x))
 
 int n = 1;
-int result = SQUARE(n++);   /* expands to ((n++) * (n++)) -- evaluates twice */
+int result = SQUARE(n++); /* expands to ((n++) * (n++)) -- evaluates twice */
 ```
+
+Where it can reasonably be avoided, prefer a form that expands each
+argument exactly once -- a function, or an `ossl_inline` function
+for a fixed type. If there is any doubt that your function-like
+macro could be called with arguments that have side effects, treat
+that as a sign to follow the advice in
+[Avoid function-like macros](#avoid-function-like-macros) and make
+it a real function. Some macros cannot avoid it: a type-generic macro
+such as `MAX` must name each operand and so evaluates it more than
+once. When that is unavoidable, say so at the definition and avoid
+passing side-effecting expressions at the call site.
 
 ### Avoid macros that depend on magic names
 
@@ -682,7 +701,7 @@ Do not write macros that rely on a particular variable name being
 in scope at the call site:
 
 ```c
-#define FOO(val) bar(index, (val))   /* requires `index' to exist */
+#define FOO(val) bar(index, (val)) /* requires `index' to exist */
 ```
 
 This is confusing to the reader and prone to breakage from
@@ -695,7 +714,7 @@ Do not write a macro that expands to something assignable:
 ```c
 #define FIELD(p) (((struct foo *)(p))->field)
 
-FIELD(x) = y;   /* legal C, but the macro hides the assignment */
+FIELD(x) = y; /* legal C, but the macro hides the assignment */
 ```
 
 Use an accessor function or expose the field directly through a
@@ -712,9 +731,9 @@ a loop:
 ```c
 #define RETURN_IF_NULL(p) do { if ((p) == NULL) return -1; } while (0)
 
-int f(void *p)
+int ossl_frobnicate(void *p)
 {
-    RETURN_IF_NULL(p);   /* may return from f() -- not visible at the call site */
+    RETURN_IF_NULL(p); /* may return from ossl_frobnicate() -- not visible at the call site */
     /* ... */
 }
 ```
@@ -839,7 +858,7 @@ signal success/failure and output an integer. For example:
  * @param out_thingamabob pointer to a thingamabob to store the output
  * @returns 1 if a thingamabob was snuffled and stored, 0 otherwise.
  */
-int ossl_snuffle_thingamabob(uint8_t *input, size_t input_len,
+int ossl_snuffle_thingamabob(const uint8_t *input, size_t input_len,
     int *out_err, thingamabob *out_thingamabob);
 ```
 
@@ -912,7 +931,7 @@ to do. The rationale:
 For example:
 
 ```c
-int do_thing(const uint8_t *in, size_t in_len)
+int ossl_do_thing(const uint8_t *in, size_t in_len)
 {
     int ret = 0;
     uint8_t *buf = OPENSSL_malloc(in_len);
@@ -920,9 +939,9 @@ int do_thing(const uint8_t *in, size_t in_len)
     if (buf == NULL)
         return 0;
 
-    if (!step1(in, in_len, buf))
+    if (!ossl_step1(in, in_len, buf))
         goto out;
-    if (!step2(buf, in_len))
+    if (!ossl_step2(buf, in_len))
         goto out;
 
     ret = 1;
@@ -1025,9 +1044,9 @@ last with `\n\t` to properly indent the next instruction in the
 assembly output:
 
 ```c
-asm ("magic %reg1, #42\n\t"
-     "more_magic %reg2, %reg3"
-     : /* outputs */ : /* inputs */ : /* clobbers */);
+asm("magic %reg1, #42\n\t"
+    "more_magic %reg2, %reg3"
+    : /* outputs */ : /* inputs */ : /* clobbers */);
 ```
 
 Large, non-trivial assembly functions go in pure assembly
