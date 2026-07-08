@@ -75,8 +75,6 @@ struct bignum_ctx {
     int flags;
     /* The library context */
     OSSL_LIB_CTX *libctx;
-    /* OSSL_FN_CTX for OSSL_FN wrapper functions */
-    OSSL_FN_CTX *fn_ctx;
 };
 
 #ifndef FIPS_MODULE
@@ -181,7 +179,6 @@ void BN_CTX_free(BN_CTX *ctx)
 #endif
     BN_STACK_finish(&ctx->stack);
     BN_POOL_finish(&ctx->pool);
-    OSSL_FN_CTX_free(ctx->fn_ctx);
     OPENSSL_free(ctx);
 }
 
@@ -241,49 +238,6 @@ BIGNUM *BN_CTX_get(BN_CTX *ctx)
     ctx->used++;
     CTXDBG("LEAVE BN_CTX_get()", ctx);
     return ret;
-}
-
-OSSL_FN_CTX *bn_ctx_acquire_ossl_fn_ctx(BN_CTX *ctx, size_t max_n_frames,
-    size_t max_n_numbers, size_t max_n_limbs)
-{
-    size_t needed;
-
-    if (ctx == NULL)
-        return NULL;
-
-    needed = ossl_fn_ctx_calculate_arena_size(max_n_frames, max_n_numbers,
-        max_n_limbs);
-
-    if (ctx->fn_ctx != NULL) {
-        if (ctx->fn_ctx->msize >= needed) {
-            /*
-             * Existing context is large enough.  Ensure no frames are
-             * outstanding (callers are expected to have ended them).
-             */
-            assert(ctx->fn_ctx->last_frame == NULL);
-            return ctx->fn_ctx;
-        }
-        /* Too small, free and recreate */
-        OSSL_FN_CTX_free(ctx->fn_ctx);
-        ctx->fn_ctx = NULL;
-    }
-
-    if (ctx->flags & BN_FLG_SECURE)
-        ctx->fn_ctx = OSSL_FN_CTX_secure_new(ctx->libctx, max_n_frames,
-            max_n_numbers, max_n_limbs);
-    else
-        ctx->fn_ctx = OSSL_FN_CTX_new(ctx->libctx, max_n_frames,
-            max_n_numbers, max_n_limbs);
-
-    return ctx->fn_ctx;
-}
-
-void bn_ctx_release_ossl_fn_ctx(BN_CTX *ctx)
-{
-    if (ctx == NULL || ctx->fn_ctx == NULL)
-        return;
-
-    assert(ctx->fn_ctx->last_frame == NULL);
 }
 
 OSSL_LIB_CTX *ossl_bn_get_libctx(BN_CTX *ctx)
