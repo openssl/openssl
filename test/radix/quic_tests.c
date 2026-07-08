@@ -1681,8 +1681,33 @@ DEF_SCRIPT(script_21, "Fault injection - unknown frame in 1-RTT packet")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_22, "place holder for multistrem script_22")
+/* 22. Fault injection - non-zero packet header reserved bits */
+static int script_22_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    if (fault->word0 == 0)
+        return 1;
+
+    hdr->reserved = 1;
+    return 1;
+}
+
+DEF_SCRIPT(script_22, "Fault injection - non-zero packet header reserved bits")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_22_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0);
+
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
 DEF_SCRIPT(script_23, "place holder for multistrem script_23")
