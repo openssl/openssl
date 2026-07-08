@@ -3331,8 +3331,16 @@ ___
         # ;; per-lane Barrett result in ZMM; GH1H = GH1H ^ RED_T1 ^ RED_T2
         vpternlogq        \$0x96,$RED_T1,$RED_T2,$GH1H
 ___
-    # ;; horizontal XOR of 4x128 Barrett result to final 128-bit GHASH
-    &VHPXORI4x128_FAST($GH1H, $RED_T1, $RED_T2, $RED_P1);
+    # ;; Horizontal XOR of the 4x128 Barrett result to the final 128-bit GHASH.
+    # ;; Loop-adaptive: the 32-block big loop (final_reduction) is throughput-
+    # ;; bound at large sizes, so use the serial VHPXORI4x128 (fewer uops, less
+    # ;; FP-port pressure); the 16-block loop (first_time_reduction) is
+    # ;; latency-bound, so keep the shorter-critical-path FAST variant.
+    if ($DO_REDUCTION eq "final_reduction") {
+      &VHPXORI4x128($GH1H, $RED_T1);
+    } else {
+      &VHPXORI4x128_FAST($GH1H, $RED_T1, $RED_T2, $RED_P1);
+    }
   }
 
   # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
