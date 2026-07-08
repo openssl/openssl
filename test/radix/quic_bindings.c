@@ -68,6 +68,7 @@ typedef struct radix_process_st {
     CRYPTO_MUTEX *gm; /* global mutex */
     LHASH_OF(RADIX_OBJ) *objs; /* protected by gm */
     BIO *keylog_out; /* protected by gm */
+    uint64_t counter[2]; /* protected by gm */
 
     CRYPTO_MUTEX *time_m;
     OSSL_TIME base_time; /* set once at init, constant thereafter */
@@ -107,7 +108,7 @@ typedef struct radix_thread_st {
 
 DEFINE_STACK_OF(RADIX_THREAD)
 
-/* ssl reference is transferred. name is copied and is required. */
+/* name is copied and is required. Created with no SSL object bound yet. */
 static RADIX_OBJ *RADIX_OBJ_new_empty(const char *name)
 {
     RADIX_OBJ *obj;
@@ -135,6 +136,7 @@ static RADIX_OBJ *RADIX_OBJ_new_empty(const char *name)
     return obj;
 }
 
+/* ssl reference is transferred. name is copied and is required. */
 static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
 {
     RADIX_OBJ *obj;
@@ -142,8 +144,7 @@ static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
     if (!TEST_ptr(ssl))
         return NULL;
 
-    obj = RADIX_OBJ_new_empty(name);
-    if (!TEST_ptr(obj))
+    if (!TEST_ptr(obj = RADIX_OBJ_new_empty(name)))
         return NULL;
 
     obj->ssl = ssl;
@@ -712,7 +713,7 @@ static void radix_skip_time(OSSL_TIME t)
 static void per_op_tick_obj(RADIX_OBJ *obj)
 {
     ossl_crypto_mutex_lock(obj->mx);
-    if (obj->active && obj->ssl)
+    if (obj->active && obj->ssl != NULL)
         SSL_handle_events(obj->ssl);
     ossl_crypto_mutex_unlock(obj->mx);
 }
