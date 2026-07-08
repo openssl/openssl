@@ -340,7 +340,7 @@ X509_OBJECT *X509_STORE_CTX_get_obj_by_subject(X509_STORE_CTX *ctx,
     return ret;
 }
 
-STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
+STACK_OF(X509_OBJECT) *ossl_x509_store_name_objs_get(const X509_STORE *store,
     const X509_NAME *xn)
 {
     HT_VALUE *v;
@@ -364,17 +364,17 @@ STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     return v->value;
 }
 
-static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn,
-    STACK_OF(X509_OBJECT) *objs, X509_OBJECT *obj)
+/*
+ * Returning 0 means the store did not take ownership of |obj|,
+ * so it is still the caller's to free.
+ */
+static int x509_store_name_objs_new(const X509_STORE *store, const X509_NAME *xn,
+    X509_OBJECT *obj)
 {
     int ret = 0, added = 0;
     OBJS_KEY key;
     HT_VALUE val = { 0 };
-
-    if (objs != NULL) {
-        added = sk_X509_OBJECT_push(objs, obj) != 0;
-        return added;
-    }
+    STACK_OF(X509_OBJECT) *objs = NULL;
 
     if (xn->canon_enc == NULL || xn->modified) {
         ret = i2d_X509_NAME((X509_NAME *)xn, NULL);
@@ -387,22 +387,22 @@ static int x509_name_objs_ht_insert(const X509_STORE *store, const X509_NAME *xn
         return 0;
 
     added = sk_X509_OBJECT_push(objs, obj) != 0;
-    if (added == 0) {
-        sk_X509_OBJECT_free(objs);
-        return 0;
-    }
+    if (added == 0)
+        goto err;
 
     HT_INIT_KEY(&key);
     HT_SET_KEY_FIELD(&key, xn_canon, xn->canon_enc);
     HT_SET_KEY_FIELD(&key, xn_canon_enclen, xn->canon_enclen);
     val.value = (void *)objs;
     ret = ossl_ht_insert(store->objs_ht, TO_HT_KEY(&key), &val, NULL);
-    if (ret != 1) {
-        sk_X509_OBJECT_free(objs);
-        return 0;
-    }
+    if (ret != 1)
+        goto err;
 
     return 1;
+
+err:
+    sk_X509_OBJECT_free(objs);
+    return 0;
 }
 
 static int obj_ht_foreach_certs(HT_VALUE *v, void *arg)
@@ -452,7 +452,7 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
     if (!ossl_x509_store_read_lock(store))
         return 0;
     if (store->objs_ht != NULL) {
-        objs = ossl_x509_store_ht_get_by_name(store, name);
+        objs = ossl_x509_store_name_objs_get(store, name);
         if (objs != NULL)
             tmp = X509_OBJECT_retrieve_by_subject(objs, type, name);
     } else {
@@ -497,7 +497,6 @@ int X509_STORE_CTX_get_by_subject(const X509_STORE_CTX *ctx,
 static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
 {
     const X509_NAME *xn;
-    STACK_OF(X509_OBJECT) *objs = NULL;
     int ret = 0, added = 0;
 
     if (obj->type == X509_LU_CRL)
@@ -523,11 +522,16 @@ static int x509_store_add_obj(X509_STORE *store, X509_OBJECT *obj)
     }
 
     if (store->objs_ht != NULL) {
-        objs = ossl_x509_store_ht_get_by_name(store, xn);
-        if (objs != NULL && X509_OBJECT_retrieve_match(objs, obj)) {
+        STACK_OF(X509_OBJECT) *objs = NULL;
+
+        objs = ossl_x509_store_name_objs_get(store, xn);
+        if (objs == NULL) {
+            added = x509_store_name_objs_new(store, xn, obj);
+            ret = added != 0;
+        } else if (X509_OBJECT_retrieve_match(objs, obj) != NULL) {
             ret = 1;
         } else {
-            added = x509_name_objs_ht_insert(store, xn, objs, obj);
+            added = sk_X509_OBJECT_push(objs, obj);
             ret = added != 0;
         }
     } else {
@@ -875,7 +879,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
         return NULL;
 
     if (store->objs_ht != NULL) {
-        objs = ossl_x509_store_ht_get_by_name(store, nm);
+        objs = ossl_x509_store_name_objs_get(store, nm);
         if (objs != NULL)
             idx = x509_object_idx_cnt(objs, X509_LU_X509, nm, &cnt);
     } else {
@@ -894,7 +898,7 @@ STACK_OF(X509) *X509_STORE_CTX_get1_certs(const X509_STORE_CTX *ctx,
         if (!ossl_x509_store_read_lock(store))
             return NULL;
         if (store->objs_ht != NULL) {
-            objs = ossl_x509_store_ht_get_by_name(store, nm);
+            objs = ossl_x509_store_name_objs_get(store, nm);
             if (objs == NULL)
                 goto end;
         } else {
@@ -946,7 +950,7 @@ STACK_OF(X509_CRL) *X509_STORE_CTX_get1_crls(const X509_STORE_CTX *ctx,
         return NULL;
     }
     if (store->objs_ht) {
-        objs = ossl_x509_store_ht_get_by_name(store, nm);
+        objs = ossl_x509_store_name_objs_get(store, nm);
         if (objs == NULL)
             goto end;
     } else {
