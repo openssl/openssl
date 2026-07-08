@@ -165,11 +165,6 @@ err:
     return st;
 }
 
-static OSSL_FN_CTX *new_mul_ctx(int nlimbs)
-{
-    return OSSL_FN_CTX_new(NULL, 1, 1, nlimbs * 2);
-}
-
 static int file_product(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *product = NULL, *ret = NULL;
@@ -195,7 +190,8 @@ static int file_product(STANZA *s)
         || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(ctx = new_mul_ctx(nlimbs)))
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mul_ctx_size(rf, af, bf))))
         goto err;
 
     if (!TEST_true(OSSL_FN_mul(rf, af, bf, ctx)))
@@ -218,11 +214,6 @@ err:
     return st;
 }
 
-static OSSL_FN_CTX *new_sqr_ctx(int nlimbs)
-{
-    return OSSL_FN_CTX_new(NULL, 1, 2, nlimbs * 4);
-}
-
 static int file_square(STANZA *s)
 {
     BIGNUM *a = NULL, *square = NULL, *ret = NULL;
@@ -243,7 +234,8 @@ static int file_square(STANZA *s)
         || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
         goto err;
     r_acq = 1;
-    if (!TEST_ptr(ctx = new_sqr_ctx(nlimbs)))
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_sqr_ctx_size(rf, af))))
         goto err;
 
     if (!TEST_true(OSSL_FN_sqr(rf, af, ctx)))
