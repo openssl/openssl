@@ -96,8 +96,9 @@ The included sub-goals are:
   size adjustments of the large numbers once their individual size has been
   established
 * To define that large number type and API in such a way it's compatible
-  with and can be used by the `BIGNUM` API through easy transition to the
-  new type.
+  with the `BIGNUM` type, so that a `BIGNUM` may use an `OSSL_FN` as its
+  backing storage and selected call sites may acquire an `OSSL_FN` view of
+  a `BIGNUM`.
 * To ensure that the new large number API is constant-size
 * To repurpose as much as possible of our current `BIGNUM` code for the new
   large number API, especially our assembler code (with the assumption that
