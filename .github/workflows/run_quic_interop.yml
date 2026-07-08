@@ -105,7 +105,7 @@ jobs:
         with:
           version: "28.1.1"
       - name: Set up docker compose
-        uses: docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746 # v1.2.0
+        uses: docker/setup-compose-action@4eb059ff7f16592f9c84d5ca339c53cb7c5064e2 # v2.3.0
         with:
           version: "v2.36.2"
       - name: Check docker version
@@ -163,7 +163,7 @@ jobs:
         with:
           version: "28.1.1"
       - name: Set up docker compose
-        uses: docker/setup-compose-action@364cc21a5de5b1ee4a7f5f9d3fa374ce0ccde746 # v1.2.0
+        uses: docker/setup-compose-action@4eb059ff7f16592f9c84d5ca339c53cb7c5064e2 # v2.3.0
         with:
           version: "v2.36.2"
       - name: Check docker version
