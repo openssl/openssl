@@ -2201,31 +2201,8 @@ static const struct script_op script_21[] = {
 };
 
 /* 22. Fault injection - non-zero packet header reserved bits */
-static int script_22_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    if (h->inject_word0 == 0)
-        return 1;
-
-    hdr->reserved = 1;
-    return 1;
-}
-
 static const struct script_op script_22[] = {
-    OP_S_SET_INJECT_PLAIN(script_22_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, 0),
-
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
