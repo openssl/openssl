@@ -179,7 +179,11 @@ end:
     return ret;
 }
 
-static X509_CRL *make_store_test_crl(const X509_NAME *issuer, int number)
+/*
+ * Build and sign a CRL without serializing it: no cached DER encoding and
+ * no cached SHA1 fingerprint.
+ */
+static X509_CRL *make_store_test_crl_raw(const X509_NAME *issuer, int number)
 {
     X509_CRL *crl = NULL, *ret = NULL;
     ASN1_INTEGER *crl_number = NULL;
@@ -203,7 +207,7 @@ static X509_CRL *make_store_test_crl(const X509_NAME *issuer, int number)
         || !TEST_int_gt(X509_CRL_sign(crl, privkey, signmd), 0))
         goto err;
 
-    ret = roundtrip_crl(crl);
+    ret = crl;
     crl = NULL;
 
 err:
@@ -214,13 +218,21 @@ err:
     return ret;
 }
 
+static X509_CRL *make_store_test_crl(const X509_NAME *issuer, int number)
+{
+    X509_CRL *crl = make_store_test_crl_raw(issuer, number);
+
+    return crl != NULL ? roundtrip_crl(crl) : NULL;
+}
+
 static int check_store_object_count(X509_STORE *store, int expected_certs,
     int expected_crls)
 {
     int i, certs = 0, crls = 0, ret = 0;
     STACK_OF(X509_OBJECT) *objs = NULL;
 
-    if (!TEST_ptr(objs = X509_STORE_get1_objects(store)))
+    if (!TEST_ptr(objs = X509_STORE_get1_objects(store))
+        || !TEST_true(sk_X509_OBJECT_is_sorted(objs)))
         goto err;
 
     for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
@@ -289,6 +301,325 @@ err:
     return ret;
 }
 
+/*
+ * A cert taken straight from the builder carries no cached DER encoding, while
+ * the same cert decoded from its DER does. Both live in the default,
+ * SHA1-capable library context, so they are fingerprinted and X509_cmp() folds
+ * them. The store must fold them too, regardless of add order: its content
+ * ordering must not treat encoding availability as a key, or one genuine cert
+ * ends up stored as two objects.
+ */
+static int test_x509_store_dup_cert_cached_vs_uncached(void)
+{
+    int ret = 0;
+    X509 *built = NULL, *decoded = NULL;
+    X509_NAME *name = NULL;
+    X509_STORE *store = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int derlen;
+
+    if (!TEST_ptr(name = make_store_test_name("Store Test Subject"))
+        || !TEST_ptr(built = make_store_test_cert(name, 1))
+        || !TEST_int_gt(derlen = i2d_X509(built, &der), 0))
+        goto err;
+    p = der;
+    if (!TEST_ptr(decoded = d2i_X509(NULL, &p, derlen)))
+        goto err;
+
+    (void)X509_check_purpose(built, -1, 0);
+    (void)X509_check_purpose(decoded, -1, 0);
+
+    /* Both are fingerprinted and identical: OpenSSL's canonical cmp folds them. */
+    if (!TEST_int_eq(built->ex_flags & EXFLAG_NO_FINGERPRINT, 0)
+        || !TEST_int_eq(decoded->ex_flags & EXFLAG_NO_FINGERPRINT, 0)
+        || !TEST_int_eq(X509_cmp(built, decoded), 0))
+        goto err;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, built))
+        || !TEST_true(X509_STORE_add_cert(store, decoded))
+        || !check_store_object_count(store, 1, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_STORE_free(store);
+    X509_free(decoded);
+    X509_free(built);
+    OPENSSL_free(der);
+    X509_NAME_free(name);
+    return ret;
+}
+
+/*
+ * CRLs that were never DER-serialized have no cached SHA1 fingerprint (and
+ * no EXFLAG_NO_FINGERPRINT either) and no cached encoding. The store must
+ * still tell distinct CRLs apart via their signature bits instead of
+ * silently dropping them as duplicates, while re-adding the same object is
+ * still detected as a duplicate.
+ */
+static int test_x509_store_distinct_crls_no_enc_cache(void)
+{
+    int i, ret = 0;
+    X509_STORE *store = NULL;
+    X509_NAME *issuer = NULL;
+    X509_CRL *crls[3] = { NULL, NULL, NULL };
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(issuer = make_store_test_name("Store Test Issuer")))
+        goto err;
+
+    for (i = 0; i < 3; i++)
+        if (!TEST_ptr(crls[i] = make_store_test_crl_raw(issuer, i + 1))
+            || !TEST_true(X509_STORE_add_crl(store, crls[i])))
+            goto err;
+
+    if (!check_store_object_count(store, 0, 3))
+        goto err;
+
+    for (i = 0; i < 3; i++)
+        if (!TEST_true(X509_STORE_add_crl(store, crls[i]))
+            || !check_store_object_count(store, 0, 3))
+            goto err;
+
+    ret = 1;
+
+err:
+    X509_STORE_free(store);
+    X509_NAME_free(issuer);
+    for (i = 0; i < 3; i++)
+        X509_CRL_free(crls[i]);
+    return ret;
+}
+
+/*
+ * Two X509 objects with identical DER but living in different library
+ * contexts: one in the default (SHA1-capable) context and one in a context
+ * with only the "base" provider loaded, so its SHA1 fingerprint cannot be
+ * computed and EXFLAG_NO_FINGERPRINT is set.
+ */
+static int test_x509_store_dup_cert_mixed_libctx(void)
+{
+    int ret = 0;
+    OSSL_LIB_CTX *no_sha1_ctx = NULL;
+    OSSL_PROVIDER *base = NULL;
+    X509 *normal = NULL, *no_sha1 = NULL;
+    X509_STORE *store = NULL;
+    const unsigned char *p;
+
+    if (!TEST_ptr(no_sha1_ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(base = OSSL_PROVIDER_load(no_sha1_ctx, "base")))
+        goto err;
+
+    p = certdata;
+    if (!TEST_ptr(normal = d2i_X509(NULL, &p, sizeof(certdata)))
+        || !TEST_ptr(no_sha1 = X509_new_ex(no_sha1_ctx, NULL)))
+        goto err;
+    p = certdata;
+    if (!TEST_ptr(d2i_X509(&no_sha1, &p, sizeof(certdata))))
+        goto err;
+
+    /* Populate the extension/fingerprint cache in each object's libctx. */
+    (void)X509_check_purpose(no_sha1, -1, 0);
+    (void)X509_check_purpose(normal, -1, 0);
+
+    /*
+     * The base-only context cannot hash, so no fingerprint is cached for
+     * no_sha1, whereas normal has one.
+     */
+    if (!TEST_int_ne(no_sha1->ex_flags & EXFLAG_NO_FINGERPRINT, 0)
+        || !TEST_int_eq(normal->ex_flags & EXFLAG_NO_FINGERPRINT, 0))
+        goto err;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, no_sha1))
+        || !TEST_true(X509_STORE_add_cert(store, normal))
+        || !check_store_object_count(store, 1, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_STORE_free(store);
+    X509_free(no_sha1);
+    X509_free(normal);
+    OSSL_PROVIDER_unload(base);
+    OSSL_LIB_CTX_free(no_sha1_ctx);
+    return ret;
+}
+
+/*
+ * As test_x509_store_dup_cert_mixed_libctx, but with a per-name object list
+ * deep enough for the binary-search duplicate detection to actually branch.
+ *
+ * X509_cmp() orders two fingerprinted certs by their SHA1 hash yet falls back
+ * to the DER encoding as soon as one cert lacks a fingerprint. Mixing the two
+ * orderings is not transitive: a fingerprinted cert A and its fingerprint-less
+ * duplicate A' encode identically (A == A'), while a third fingerprinted cert B
+ * can satisfy A < B by hash but B < A' by encoding. With only two objects the
+ * search never compares against a third cert and the inconsistency stays
+ * hidden; here many certs share one subject name, so the sorted bucket is deep
+ * enough that a fingerprint-less duplicate can be stepped past and added twice.
+ * Regression test for PR #31909.
+ */
+static int test_x509_store_dup_cert_mixed_libctx_bucket(void)
+{
+#define STORE_MIXED_CERTS 48
+    int i, ret = 0;
+    OSSL_LIB_CTX *no_sha1_ctx = NULL;
+    OSSL_PROVIDER *base = NULL;
+    X509_NAME *name = NULL;
+    X509 *normal[STORE_MIXED_CERTS] = { NULL };
+    X509 *no_sha1[STORE_MIXED_CERTS] = { NULL };
+    X509_STORE *store = NULL;
+
+    if (!TEST_ptr(no_sha1_ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(base = OSSL_PROVIDER_load(no_sha1_ctx, "base"))
+        || !TEST_ptr(name = make_store_test_name("Store Test Subject")))
+        goto err;
+
+    /*
+     * All certs share one subject name (only the serial differs) so they land
+     * in a single per-name object list, but each has distinct DER. Decode a
+     * fingerprinted copy in the default context and a fingerprint-less copy in
+     * the base-only context from the same DER.
+     */
+    for (i = 0; i < STORE_MIXED_CERTS; i++) {
+        X509 *tmp = NULL;
+        unsigned char *der = NULL;
+        const unsigned char *p;
+        int derlen = 0, ok;
+
+        ok = TEST_ptr(tmp = make_store_test_cert(name, i + 1))
+            && TEST_int_gt(derlen = i2d_X509(tmp, &der), 0);
+        if (ok) {
+            p = der;
+            ok = TEST_ptr(normal[i] = d2i_X509(NULL, &p, derlen))
+                && TEST_ptr(no_sha1[i] = X509_new_ex(no_sha1_ctx, NULL));
+        }
+        if (ok) {
+            p = der;
+            ok = TEST_ptr(d2i_X509(&no_sha1[i], &p, derlen));
+        }
+        X509_free(tmp);
+        OPENSSL_free(der);
+        if (!ok)
+            goto err;
+
+        (void)X509_check_purpose(normal[i], -1, 0);
+        (void)X509_check_purpose(no_sha1[i], -1, 0);
+        if (!TEST_int_eq(normal[i]->ex_flags & EXFLAG_NO_FINGERPRINT, 0)
+            || !TEST_int_ne(no_sha1[i]->ex_flags & EXFLAG_NO_FINGERPRINT, 0))
+            goto err;
+    }
+
+    /* Fill the bucket with the fingerprinted certs. */
+    if (!TEST_ptr(store = X509_STORE_new()))
+        goto err;
+    for (i = 0; i < STORE_MIXED_CERTS; i++)
+        if (!TEST_true(X509_STORE_add_cert(store, normal[i])))
+            goto err;
+    if (!check_store_object_count(store, STORE_MIXED_CERTS, 0))
+        goto err;
+
+    /*
+     * Each fingerprint-less copy duplicates a cert already in the bucket, so
+     * the object count must stay unchanged. A duplicate that slips past the
+     * search is still added (X509_STORE_add_cert() reports success either way),
+     * so only the count exposes the miss.
+     */
+    for (i = 0; i < STORE_MIXED_CERTS; i++)
+        if (!TEST_true(X509_STORE_add_cert(store, no_sha1[i])))
+            goto err;
+    if (!check_store_object_count(store, STORE_MIXED_CERTS, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_STORE_free(store);
+    for (i = 0; i < STORE_MIXED_CERTS; i++) {
+        X509_free(normal[i]);
+        X509_free(no_sha1[i]);
+    }
+    X509_NAME_free(name);
+    OSSL_PROVIDER_unload(base);
+    OSSL_LIB_CTX_free(no_sha1_ctx);
+    return ret;
+#undef STORE_MIXED_CERTS
+}
+
+/*
+ * The CRL counterpart of test_x509_store_dup_cert_mixed_libctx: the same CRL
+ * DER decoded in the default (SHA1-capable) context and in a base-only context
+ * that cannot compute its SHA1 fingerprint (EXFLAG_NO_FINGERPRINT). Unlike
+ * X509_cmp(), X509_CRL_match() does not fall back and reports -2 when a
+ * fingerprint is missing, so the store's ordering must use the cached encoding
+ * to still fold the two identical CRLs into a single object. Regression test
+ * for PR #31909.
+ */
+static int test_x509_store_dup_crl_mixed_libctx(void)
+{
+    int ret = 0;
+    OSSL_LIB_CTX *no_sha1_ctx = NULL;
+    OSSL_PROVIDER *base = NULL;
+    X509_NAME *issuer = NULL;
+    X509_CRL *raw = NULL, *sha1_crl = NULL, *no_sha1_crl = NULL;
+    X509_STORE *store = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int derlen;
+
+    if (!TEST_ptr(no_sha1_ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(base = OSSL_PROVIDER_load(no_sha1_ctx, "base"))
+        || !TEST_ptr(issuer = make_store_test_name("Store Test Issuer"))
+        || !TEST_ptr(raw = make_store_test_crl_raw(issuer, 1))
+        || !TEST_int_gt(derlen = i2d_X509_CRL(raw, &der), 0))
+        goto err;
+
+    p = der;
+    if (!TEST_ptr(sha1_crl = d2i_X509_CRL(NULL, &p, derlen))
+        || !TEST_ptr(no_sha1_crl = X509_CRL_new_ex(no_sha1_ctx, NULL)))
+        goto err;
+    p = der;
+    if (!TEST_ptr(d2i_X509_CRL(&no_sha1_crl, &p, derlen)))
+        goto err;
+    ERR_clear_error();
+
+    /*
+     * The fingerprint is cached at decode time, so the base-only context
+     * leaves no_sha1_crl without one whereas sha1_crl has one.
+     */
+    if (!TEST_int_ne(no_sha1_crl->flags & EXFLAG_NO_FINGERPRINT, 0)
+        || !TEST_int_eq(sha1_crl->flags & EXFLAG_NO_FINGERPRINT, 0))
+        goto err;
+
+    /* X509_CRL_match() cannot compare them and returns its error value. */
+    if (!TEST_int_eq(X509_CRL_match(no_sha1_crl, sha1_crl), -2))
+        goto err;
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_crl(store, sha1_crl))
+        || !TEST_true(X509_STORE_add_crl(store, no_sha1_crl))
+        || !check_store_object_count(store, 0, 1))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_STORE_free(store);
+    X509_CRL_free(no_sha1_crl);
+    X509_CRL_free(sha1_crl);
+    X509_CRL_free(raw);
+    OPENSSL_free(der);
+    X509_NAME_free(issuer);
+    OSSL_PROVIDER_unload(base);
+    OSSL_LIB_CTX_free(no_sha1_ctx);
+    return ret;
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_4_0
 /*
  * X509_STORE_get0_objects() switches the store to the legacy global object
@@ -344,6 +675,64 @@ err:
     X509_free(cert2);
     X509_CRL_free(crl1);
     X509_CRL_free(crl2);
+    return ret;
+}
+
+/*
+ * X509_STORE_get0_objects() merges the per-name object lists into the legacy
+ * global stack and re-sorts it with the (type, name) comparator. Duplicate
+ * detection on later additions must still work on that stack, in particular
+ * within runs of objects sharing a subject name, whose relative order the
+ * re-sort need not preserve. Use several names, each with several certs, so
+ * the merged stack is not already sorted and the re-sort actually runs.
+ */
+static int test_x509_store_no_dups_after_get0_objects(void)
+{
+#define STORE_TEST_NAMES 8
+#define STORE_TEST_CERTS_PER_NAME 8
+#define STORE_TEST_CERTS (STORE_TEST_NAMES * STORE_TEST_CERTS_PER_NAME)
+    int i, j, ret = 0;
+    char cn[sizeof("Store Test Subject 00")];
+    X509_STORE *store = NULL;
+    X509_NAME *names[STORE_TEST_NAMES] = { NULL };
+    X509 *certs[STORE_TEST_CERTS] = { NULL };
+
+    if (!TEST_ptr(store = X509_STORE_new()))
+        goto err;
+
+    for (i = 0; i < STORE_TEST_NAMES; i++) {
+        BIO_snprintf(cn, sizeof(cn), "Store Test Subject %02d", i);
+        if (!TEST_ptr(names[i] = make_store_test_name(cn)))
+            goto err;
+        for (j = 0; j < STORE_TEST_CERTS_PER_NAME; j++) {
+            X509 **cert = &certs[i * STORE_TEST_CERTS_PER_NAME + j];
+
+            if (!TEST_ptr(*cert = make_store_test_cert(names[i],
+                              i * 1000 + j + 1))
+                || !TEST_true(X509_STORE_add_cert(store, *cert)))
+                goto err;
+        }
+    }
+    if (!check_store_object_count(store, STORE_TEST_CERTS, 0))
+        goto err;
+
+    /* Switch to the global-stack representation. */
+    if (!TEST_ptr(X509_STORE_get0_objects(store)))
+        goto err;
+
+    /* Re-adding every cert must be detected as a duplicate. */
+    for (i = 0; i < STORE_TEST_CERTS; i++)
+        if (!TEST_true(X509_STORE_add_cert(store, certs[i])))
+            goto err;
+
+    ret = check_store_object_count(store, STORE_TEST_CERTS, 0);
+
+err:
+    X509_STORE_free(store);
+    for (i = 0; i < STORE_TEST_NAMES; i++)
+        X509_NAME_free(names[i]);
+    for (i = 0; i < STORE_TEST_CERTS; i++)
+        X509_free(certs[i]);
     return ret;
 }
 #endif
@@ -919,8 +1308,14 @@ int setup_tests(void)
     ADD_TEST(test_nc_empty_dirname_excluded);
     ADD_TEST(test_nc_empty_dirname_permitted);
     ADD_TEST(test_x509_store_add_duplicate_crls);
+    ADD_TEST(test_x509_store_dup_cert_cached_vs_uncached);
+    ADD_TEST(test_x509_store_distinct_crls_no_enc_cache);
+    ADD_TEST(test_x509_store_dup_cert_mixed_libctx);
+    ADD_TEST(test_x509_store_dup_cert_mixed_libctx_bucket);
+    ADD_TEST(test_x509_store_dup_crl_mixed_libctx);
 #ifndef OPENSSL_NO_DEPRECATED_4_0
     ADD_TEST(test_x509_store_get1_by_name_after_get0_objects);
+    ADD_TEST(test_x509_store_no_dups_after_get0_objects);
 #endif
     return 1;
 }
