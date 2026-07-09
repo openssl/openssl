@@ -410,7 +410,12 @@ static int ascon_aead128_get_ctx_params(void *vctx, OSSL_PARAM params[])
     }
 
     if (p.tag != NULL) {
-        if (!ctx->is_tag_set) {
+        /*
+         * reject the tag read in two cases:
+         * - decrypting, a tag is an input to be verified, never an output
+         * - encrypting, but final has not yet generated (set) the tag
+         */
+        if (ctx->direction != ENCRYPTION || !ctx->is_tag_set) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
