@@ -411,6 +411,54 @@ end:
 }
 #endif /* OPENSSL_NO_EC */
 
+static int pkcs7_stream_enveloped_no_content_test(void)
+{
+    int ret = 0;
+    PKCS7 *p7 = NULL;
+    BIO *sink = NULL;
+    BIO *bio = NULL;
+
+    const unsigned char data_enveloped_no_body[] = { 0x30, 0x0b, 0x06, 0x09,
+        0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x03 };
+    const unsigned char *ptr_env_no_body = data_enveloped_no_body;
+
+    ret = TEST_ptr(p7 = d2i_PKCS7(NULL, &ptr_env_no_body,
+                       sizeof(data_enveloped_no_body)))
+        && TEST_ptr(sink = BIO_new(BIO_s_null()))
+        && TEST_ptr_null(bio = BIO_new_PKCS7(sink, p7))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PKCS7_R_NO_CONTENT);
+
+    BIO_free(bio);
+    BIO_free(sink);
+    PKCS7_free(p7);
+    return ret;
+}
+
+static int pkcs7_stream_enveloped_signed_no_content_test(void)
+{
+    int ret = 0;
+    PKCS7 *p7 = NULL;
+    BIO *sink = NULL;
+    BIO *bio = NULL;
+
+    const unsigned char data_enveloped_signed_no_body[] = { 0x30, 0x0b, 0x06,
+        0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x04 };
+    const unsigned char *ptr_env_signed_no_body = data_enveloped_signed_no_body;
+
+    ret = TEST_ptr(p7 = d2i_PKCS7(NULL, &ptr_env_signed_no_body,
+                       sizeof(data_enveloped_signed_no_body)))
+        && TEST_ptr(sink = BIO_new(BIO_s_null()))
+        && TEST_ptr_null(bio = BIO_new_PKCS7(sink, p7))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PKCS7_R_NO_CONTENT);
+
+    BIO_free(bio);
+    BIO_free(sink);
+    PKCS7_free(p7);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(pkcs7_issuer_and_serial_negative_idx_test);
@@ -418,5 +466,7 @@ int setup_tests(void)
     ADD_TEST(pkcs7_verify_test);
     ADD_TEST(pkcs7_inner_content_verify_test);
 #endif /* OPENSSL_NO_EC */
+    ADD_TEST(pkcs7_stream_enveloped_no_content_test);
+    ADD_TEST(pkcs7_stream_enveloped_signed_no_content_test);
     return 1;
 }
