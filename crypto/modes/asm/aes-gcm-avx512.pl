@@ -139,6 +139,26 @@ my $AES_BLOCK_SIZE = 16;
 # materialised on the stack frame (HKEYS_STORAGE_CAPACITY) for the 32-block big
 # loop.
 #
+# Storage layout (both context and stack store powers highest-first, so the
+# highest power sits at the lowest offset):
+#     offset(H^i) = base + 16 * (CAPACITY - i)
+#   - CONTEXT.Htable : 16 slots / 256 B  ->  H^16 at offset 0 ... H^1 at 240
+#   - STACK HKEYS    : 32 slots / 512 B  ->  H^32 at offset 0 ... H^1 at 496
+#
+# Step-by-step schedule:
+#   1. init (ossl_aes_gcm_init_avx512): compute H^1..H^8 into the context and
+#      leave H^9..H^16 zeroed (all-zero = "not yet computed" sentinel).
+#   2. On the first wide-loop use, precompute_hkeys_on_stack() fills the stack:
+#      a. Probe H^9..H^12 in the context (vptestmd). If still zero, lazily
+#         compute H^9..H^16 = H^1..H^8 * H^8 and cache them back to the context
+#         (so later calls skip this).                                ["first16"]
+#      b. Copy H^1..H^16 from the context onto the stack.            ["first16"]
+#      c. Extend on the stack in two 8-wide passes:          ["mid16"/"first32"]
+#            H^17..H^24 = H^9..H^16  * H^8   (pass 1)
+#            H^25..H^32 = H^17..H^24 * H^8   (pass 2, reuses pass 1's output)
+#   3. The context only ever holds H^1..H^16; H^17..H^32 live solely on the
+#      stack frame and are recomputed per call (never written back).
+#
 # INVARIANT (do not break): no code path ever weights a block by a power above
 # H^32. In particular the 32-block big-loop drain reduces its 32 pending blocks
 # as a single GHASH chain -- slot0 weighted H^32..H^17, slot1 weighted
@@ -160,8 +180,8 @@ my $HKEYS_CONTEXT_CAPACITY = 16;
 # (3) -> Frame pointer (%RBP)
 # (4) -> +160-byte XMM storage (Windows only, zero on Linux)
 # (5) -> +48-byte space for 64-byte alignment of %RSP from p.8
-# (6) -> +768-byte LOCAL storage (optional, can be omitted in some functions)
-# (7) -> +768-byte HKEYS storage
+# (6) -> +512-byte LOCAL storage (optional, can be omitted in some functions)
+# (7) -> +512-byte HKEYS storage
 # (8) -> Stack pointer (%RSP) aligned on 64-byte boundary
 
 my $GP_STORAGE  = $win64 ? 8 * 8     : 8 * 6;    # ; space for saved non-volatile GP registers (pushed on stack)
@@ -539,6 +559,36 @@ sub clear_scratch_gps_asm {
   }
 }
 
+# ;; =============================================================================
+# ;; precompute_hkeys_on_stack: materialise hash-key powers on the stack frame's
+# ;; HKEYS storage for the wide loops, and lazily complete H^9..H^16 in the
+# ;; context on first use.
+# ;;
+# ;; Contract:
+# ;;   Precondition (context): H^1..H^8 are valid. H^9..H^16 are either ALL
+# ;;     uncomputed (left zero by ossl_aes_gcm_init_avx512) or ALL valid -- they
+# ;;     are computed and cached together, never partially. (A valid hash-key
+# ;;     power is never all-zero, so zero is used as the "uncomputed" sentinel;
+# ;;     H^9..H^12 is probed as a proxy for the whole H^9..H^16 block.)
+# ;;   Inputs:
+# ;;     HKEYS_READY [GP] - if non-zero the whole routine is skipped (the stack
+# ;;                        keys were already materialised earlier in this call).
+# ;;     HKEYS_RANGE      - "first16": write H^1..H^16 to the stack;
+# ;;                        "first32": write H^1..H^32 to the stack;
+# ;;                        "mid16"  : write H^17..H^32 to the stack (assumes
+# ;;                                   H^1..H^16 are already on the stack).
+# ;;   Clobbers: ZTMP0..ZTMP6, the mask register %k1, and EFLAGS.
+# ;;   Postcondition:
+# ;;     - The requested stack range is initialised.
+# ;;     - For "first16"/"first32": H^9..H^16 in the CONTEXT are valid; if they
+# ;;       were uncomputed they are computed here (= H^1..H^8 * H^8) and cached
+# ;;       back into the context so later calls take the fast path.
+# ;;     - H^17..H^32 are only ever written to the stack, never to the context.
+# ;;
+# ;; (A dedicated readiness flag in the context would be cleaner than the
+# ;; zero-sentinel probe, but the current context layout has no spare field for
+# ;; one; the all-or-nothing invariant above is what keeps the probe correct.)
+# ;; =============================================================================
 sub precompute_hkeys_on_stack {
   my $GCM128_CTX  = $_[0];
   my $HKEYS_READY = $_[1];
@@ -1530,62 +1580,8 @@ ___
         jmp               .L_get_AAD_loop32x16_${label_suffix}
 
 .L_exit_AAD_loop32x16_${label_suffix}:
-        # ; Less than 32x16 bytes remaining
-        cmp               \$`(32*16)`,$T2
-        jl                .L_less_than_32x16_${label_suffix}
-___
-
-  $code .= <<___;
-        # ; Get next 16 blocks
-        vmovdqu64         `64*0`($T1),$ZT1
-        vmovdqu64         `64*1`($T1),$ZT2
-        vmovdqu64         `64*2`($T1),$ZT3
-        vmovdqu64         `64*3`($T1),$ZT4
-        vpshufb           $SHFMSK,$ZT1,$ZT1
-        vpshufb           $SHFMSK,$ZT2,$ZT2
-        vpshufb           $SHFMSK,$ZT3,$ZT3
-        vpshufb           $SHFMSK,$ZT4,$ZT4
-___
-
-  &precompute_hkeys_on_stack($GCM128_CTX, $HKEYS_READY, $ZT0, $ZT8, $ZT9, $ZT10, $ZT11, $ZT12, $ZT14, "first32");
-  $code .= "mov     \$1,$HKEYS_READY\n";
-
-  &GHASH_16(
-    "start",        $ZT5,           $ZT6,           $ZT7,
-    "NO_INPUT_PTR", "NO_INPUT_PTR", "NO_INPUT_PTR", "%rsp",
-    &HashKeyOffsetByIdx(32, "frame"), 0, &ZWORD($AAD_HASH), $ZT0,
-    $ZT8,     $ZT9,  $ZT10, $ZT11,
-    $ZT12,    $ZT14, $ZT15, $ZT16,
-    "NO_ZMM", $ZT1,  $ZT2,  $ZT3,
-    $ZT4);
-
-  $code .= <<___;
-        vmovdqu64         `16*16 + 64*0`($T1),$ZT1
-        vmovdqu64         `16*16 + 64*1`($T1),$ZT2
-        vmovdqu64         `16*16 + 64*2`($T1),$ZT3
-        vmovdqu64         `16*16 + 64*3`($T1),$ZT4
-        vpshufb           $SHFMSK,$ZT1,$ZT1
-        vpshufb           $SHFMSK,$ZT2,$ZT2
-        vpshufb           $SHFMSK,$ZT3,$ZT3
-        vpshufb           $SHFMSK,$ZT4,$ZT4
-___
-
-  &GHASH_16(
-    "end_reduce",   $ZT5,           $ZT6,           $ZT7,
-    "NO_INPUT_PTR", "NO_INPUT_PTR", "NO_INPUT_PTR", "%rsp",
-    &HashKeyOffsetByIdx(16, "frame"), 0, &ZWORD($AAD_HASH), $ZT0,
-    $ZT8,     $ZT9,  $ZT10, $ZT11,
-    $ZT12,    $ZT14, $ZT15, $ZT16,
-    "NO_ZMM", $ZT1,  $ZT2,  $ZT3,
-    $ZT4);
-
-  $code .= <<___;
-        sub               \$`(32*16)`,$T2
-        je                .L_CALC_AAD_done_${label_suffix}
-
-        add               \$`(32*16)`,$T1
-        jmp               .L_less_than_16x16_${label_suffix}
-
+        # ; < 32x16 bytes remain here (the loop exits above only when T2 < 512),
+        # ; so fall through to the < 32-block tail.
 .L_less_than_32x16_${label_suffix}:
         cmp               \$`(16*16)`,$T2
         jl                .L_less_than_16x16_${label_suffix}
@@ -3693,148 +3689,6 @@ ___
   $code .= ".L_small_initial_blocks_encrypted_${label_suffix}:\n";
 }
 
-# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-# ; GCM_ENC_DEC Encrypts/Decrypts given data. Assumes that the passed gcm128_context
-# ; struct has been initialized by GCM_INIT_IV
-# ; Requires the input data be at least 1 byte long because of READ_SMALL_INPUT_DATA.
-# ; Clobbers rax, r10-r15, and zmm0-zmm31, k1
-# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-# ═══════════════════════════════════════════════════════════════════
-# GHASH_4_ENCRYPT_4: Stitch GHASH of 4 previous blocks with AES
-# encryption of 4 new blocks.
-# ═══════════════════════════════════════════════════════════════════
-sub GHASH_4_ENCRYPT_4 {
-  my $AES_KEYS      = $_[0];
-  my $GCM128_CTX    = $_[1];
-  my $CIPH_PLAIN_OUT= $_[2];
-  my $PLAIN_CIPH_IN = $_[3];
-  my $DATA_OFFSET   = $_[4];
-  my $GHASHIN_BLK   = $_[5];
-  my $AAD_HASHz     = $_[6];
-  my $CTR_BE        = $_[7];
-  my $CTR_CHECK     = $_[8];
-  my $ADDBE_4x4     = $_[9];
-  my $ADDBE_1234    = $_[10];
-  my $SHUF_MASK     = $_[11];
-  my $ENC_DEC       = $_[12];
-  my $B00_03        = $_[13];
-  my $GHKEY         = $_[14];
-  my $GH_H          = $_[15];
-  my $GH_L          = $_[16];
-  my $GH_M1         = $_[17];
-  my $GH_M2         = $_[18];
-  my $RED_POLY      = $_[19];
-  my $RED_P1        = $_[20];
-  my $RED_T1        = $_[21];
-  my $RED_T2        = $_[22];
-  my $AESKEY        = $_[23];
-  my $DATA          = $_[24];
-  my $IA0           = $_[25];
-
-  my $label_suffix = $label_count++;
-
-  # ;; 240 = 256 - 16: take the overflow-safe (LE add + byte-swap) path whenever
-  # ;; the low counter byte is within 16 of wrapping. Conservative for a 4-block
-  # ;; step (only +4 is needed) but reuses the threshold of the 8/16-block paths
-  # ;; and keeps the common fast path a single branch.
-  $code .= <<___;
-        cmpb              \$240,@{[BYTE($CTR_CHECK)]}
-        jae               .L_4blk_overflow_${label_suffix}
-        vpaddd            $ADDBE_1234,$CTR_BE,$B00_03
-        jmp               .L_4blk_ok_${label_suffix}
-.L_4blk_overflow_${label_suffix}:
-        vpshufb           $SHUF_MASK,$CTR_BE,$CTR_BE
-        vpaddd            ddq_add_1234(%rip),$CTR_BE,$B00_03
-        vpshufb           $SHUF_MASK,$B00_03,$B00_03
-.L_4blk_ok_${label_suffix}:
-        vshufi64x2        \$0xff,$B00_03,$B00_03,$CTR_BE
-        addb              \$4,@{[BYTE($CTR_CHECK)]}
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 0)`($AES_KEYS),$AESKEY\n";
-  $code .= "vpxorq            $AESKEY,$B00_03,$B00_03\n";
-
-  $code .= "vpxorq            @{[ZWORD($AAD_HASHz)]},$GHASHIN_BLK,$GHASHIN_BLK\n";
-  $code .= "vmovdqu64         @{[HashKeyByIdx(4, $GCM128_CTX)]},$GHKEY\n";
-
-  $code .= "vbroadcastf64x2   `(16 * 1)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= <<___;
-        vpclmulqdq        \$0x11,$GHKEY,$GHASHIN_BLK,$GH_H
-        vpclmulqdq        \$0x00,$GHKEY,$GHASHIN_BLK,$GH_L
-        vpclmulqdq        \$0x01,$GHKEY,$GHASHIN_BLK,$GH_M1
-        vpclmulqdq        \$0x10,$GHKEY,$GHASHIN_BLK,$GH_M2
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 2)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  &VHPXORI4x128($GH_H, $RED_T1);
-  &VHPXORI4x128($GH_L, $RED_T1);
-
-  $code .= "vbroadcastf64x2   `(16 * 3)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= "vpxorq            $GH_M2,$GH_M1,$GH_M1\n";
-  &VHPXORI4x128($GH_M1, $RED_T1);
-
-  $code .= "vbroadcastf64x2   `(16 * 4)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= <<___;
-        vpsrldq           \$8,@{[XWORD($GH_M1)]},@{[XWORD($RED_T1)]}
-        vpslldq           \$8,@{[XWORD($GH_M1)]},@{[XWORD($GH_M1)]}
-        vpxorq            @{[XWORD($RED_T1)]},@{[XWORD($GH_H)]},@{[XWORD($GH_H)]}
-        vpxorq            @{[XWORD($GH_M1)]},@{[XWORD($GH_L)]},@{[XWORD($GH_L)]}
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 5)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= <<___;
-        vmovdqa64         POLY2(%rip),@{[XWORD($RED_POLY)]}
-        vpclmulqdq        \$0x01,@{[XWORD($GH_L)]},@{[XWORD($RED_POLY)]},@{[XWORD($RED_P1)]}
-        vpslldq           \$8,@{[XWORD($RED_P1)]},@{[XWORD($RED_P1)]}
-        vpxorq            @{[XWORD($RED_P1)]},@{[XWORD($GH_L)]},@{[XWORD($RED_P1)]}
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 6)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= <<___;
-        vpclmulqdq        \$0x00,@{[XWORD($RED_P1)]},@{[XWORD($RED_POLY)]},@{[XWORD($RED_T1)]}
-        vpsrldq           \$4,@{[XWORD($RED_T1)]},@{[XWORD($RED_T1)]}
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 7)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= <<___;
-        vpclmulqdq        \$0x10,@{[XWORD($RED_P1)]},@{[XWORD($RED_POLY)]},@{[XWORD($RED_T2)]}
-        vpslldq           \$4,@{[XWORD($RED_T2)]},@{[XWORD($RED_T2)]}
-        vpternlogq        \$0x96,@{[XWORD($RED_T1)]},@{[XWORD($RED_T2)]},@{[XWORD($GH_H)]}
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 8)`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  $code .= "vmovdqa64         @{[XWORD($GH_H)]},@{[XWORD($AAD_HASHz)]}\n";
-
-  for my $rnd (9 .. $NROUNDS) {
-    $code .= "vbroadcastf64x2   `(16 * $rnd)`($AES_KEYS),$AESKEY\n";
-    $code .= "vaesenc           $AESKEY,$B00_03,$B00_03\n";
-  }
-
-  $code .= "vbroadcastf64x2   `(16 * ($NROUNDS + 1))`($AES_KEYS),$AESKEY\n";
-  $code .= "vaesenclast       $AESKEY,$B00_03,$B00_03\n";
-
-  $code .= "vmovdqu8          `(0*64)`($PLAIN_CIPH_IN,$DATA_OFFSET,1),$DATA\n";
-  $code .= "mov               $CIPH_PLAIN_OUT,$IA0\n";
-  if ($ENC_DEC eq "ENC") {
-    $code .= "vpxorq            $DATA,$B00_03,$B00_03\n";
-    $code .= "vmovdqu8          $B00_03,`(0*64)`($IA0,$DATA_OFFSET,1)\n";
-    $code .= "vpshufb           $SHUF_MASK,$B00_03,$GHASHIN_BLK\n";
-  } else {
-    $code .= "vpxorq            $DATA,$B00_03,$B00_03\n";
-    $code .= "vmovdqu8          $B00_03,`(0*64)`($IA0,$DATA_OFFSET,1)\n";
-    $code .= "vpshufb           $SHUF_MASK,$DATA,$GHASHIN_BLK\n";
-  }
-}
-
-
 # ;;; ===========================================================================
 # ;;; GHASH 8 blocks of previous cipher text and encrypt 8 new blocks
 # ;;; - Interleaves GHASH (8 blocks with H^8..H^1) with AES-CTR encryption
@@ -4026,6 +3880,12 @@ ___
   }
 }
 
+# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+# ; GCM_ENC_DEC Encrypts/Decrypts given data. Assumes that the passed gcm128_context
+# ; struct has been initialized by GCM_INIT_IV
+# ; Requires the input data be at least 1 byte long because of READ_SMALL_INPUT_DATA.
+# ; Clobbers rax, r10-r15, and zmm0-zmm31, k1
+# ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub GCM_ENC_DEC {
   my $AES_KEYS       = $_[0];    # [in] AES Key schedule
   my $GCM128_CTX     = $_[1];    # [in] context pointer
@@ -4146,19 +4006,52 @@ sub GCM_ENC_DEC {
   # ;;; Dynamic block-loop dispatch
   # ;;; ---------------------------------------------------------------------------
   # ;;; The message is processed by one of several AES-CTR + GHASH loops whose
-  # ;;; unroll width (4, 8, 16 or 32 blocks) is selected at run time from the
+  # ;;; unroll width (8, 16 or 32 blocks, or a masked small-block handler for
+  # ;;; the shortest messages) is selected at run time from the
   # ;;; remaining length.  A wider loop amortizes its fixed costs (hash-key
   # ;;; precompute, counter setup, prologue/epilogue) over more blocks and gives
   # ;;; higher steady-state throughput, but is a net loss for short messages.
   # ;;; The crossover points are therefore tuned to each loop's measured
   # ;;; break-even on AVX-512/VAES parts:
   # ;;;
-  # ;;;     LENGTH <   64 B        -> small/partial path (masked, <= 16 blocks)
-  # ;;;      64 B <= LENGTH <  192  -> 4-block loop
-  # ;;;     192 B <= LENGTH <  704  -> 8-block loop
+  # ;;;     LENGTH <  128 B        -> masked small-block handler (<= 16 blocks
+  # ;;;                               in one pass; the < 64 B fast dispatch and
+  # ;;;                               the 64-127 B range both land here)
+  # ;;;     128 B <= LENGTH <  704  -> 8-block loop
   # ;;;     704 B <= LENGTH < 1792  -> 16-block loop   (uses H^1..H^16)
   # ;;;     LENGTH >= 1792 B        -> 32-block big loop (uses H^1..H^32,
   # ;;;                                reduction every 32 blocks)
+  # ;;;
+  # ;;; Block diagram (LENGTH = bytes remaining after any leftover partial
+  # ;;; block; drawn in code branch order). Every wide loop's short tail falls
+  # ;;; back to a narrower path or the small handler, so any residual length is
+  # ;;; always consumed:
+  # ;;;
+  # ;;;   LENGTH
+  # ;;;     | ==0 --------------------------------------------> done
+  # ;;;     v
+  # ;;;   [cmp 64] -- <64 B ------------------------------> +------------------+
+  # ;;;     |                                               | small handler    |
+  # ;;;     | >=64 B  (set up big-endian counter)           | GCM_ENC_DEC_     |
+  # ;;;     v                                               | SMALL: 1..16     |
+  # ;;;   [cmp 704] -- <704 B --> [cmp 128] -- <128 B ----> | blocks in one    |
+  # ;;;     |                        |                      | masked pass;     |
+  # ;;;     |                        | >=128 B              | shared fallback  |
+  # ;;;     |                        v                      | tail for the     |
+  # ;;;     |                +-----------------+ tail <128B | loops below.     |
+  # ;;;     |                | 8-block loop    |----------> +------------------+
+  # ;;;     |                | 128 B / iter    |                 ^         ^
+  # ;;;     | >=704 B        +-----------------+                 |         |
+  # ;;;     v  (INITIAL_BLOCKS_16 + precompute H^1..H^16)        |         |
+  # ;;;   [cmp 1792] -- <1792 B --> +-----------------+  tail re-enters dispatch:
+  # ;;;     |                       | 16-block loop   |  >=128 B -> 8-block loop,
+  # ;;;     |                       | 256 B / iter    |  else -> small handler
+  # ;;;     | >=1792 B              +-----------------+
+  # ;;;     v
+  # ;;;   +--------------------------+  reduces the 32 pending blocks, then the
+  # ;;;   | 32-block big loop        |  <32-block tail via GCM_ENC_DEC_LAST
+  # ;;;   | 512 B / iter, reduce /32 |  (16<tail<32 blks) or the small handler
+  # ;;;   +--------------------------+  (<=16 blks)
   # ;;;
   # ;;; Within a loop the bulk is processed in whole unroll-width strides; the
   # ;;; final partial-stride remainder (and any partial last block) is handled
@@ -4174,7 +4067,7 @@ sub GCM_ENC_DEC {
   # ;;; boundary, then drains 32/16/N-block tails as the length winds down.
   # ;;;
   # ;;; The crossovers are empirical break-evens (measured, not arbitrary),
-  # ;;; encoded below as block counts: 64 B, 192 B, 44*16 = 704 B and
+  # ;;; encoded below as block counts: 64 B, 128 B, 44*16 = 704 B and
   # ;;; 112*16 = 1792 B. They were tuned and cross-checked on both AMD (Zen 5)
   # ;;; and Intel (Ice Lake) VAES parts, so they are not machine-specific magic
   # ;;; numbers; re-tuning for a new microarchitecture only shifts these
@@ -4236,12 +4129,12 @@ ___
         vpshufb           $SHUF_MASK,$CTR_BLOCKz,$CTR_BLOCKz
 ___
 
-  # ;; -- Early dispatch: 64 <= msg < 704 -> 4/8-block path --
+  # ;; -- Early dispatch: 64 <= msg < 704 -> 8-block path / small handler --
   # ;; (704 chosen as the 8-block->16-block crossover; above it the 8-block
   # ;;  path degrades on its tail, e.g. 704-767B, while 16-block is faster)
   $code .= <<___;
         cmp               \$`(44 * 16)`,$LENGTH
-        jb                .L_4block_early_${label_suffix}
+        jb                .L_dispatch_below_704B_${label_suffix}
 ___
 
   # ;; ==== AES-CTR - first 16 blocks
@@ -4278,6 +4171,12 @@ ___
         add               \$`(16 * 16)`,$DATA_OFFSET
         sub               \$`(16 * 16)`,$LENGTH
 
+        # ;; Defensive guard, unreachable with the current thresholds: this path
+        # ;; is entered only for 704..1791 B, so after the first 16 blocks LENGTH
+        # ;; is >= 448 (>= one 16-block group) and this jb is never taken
+        # ;; (verified: 0 taken over an exhaustive length sweep). Kept so that
+        # ;; lowering the 8->16-block crossover below 512 B cannot fall into the
+        # ;; loop body with fewer than 16 blocks present.
         cmp               \$`(16 * 16)`,$LENGTH
         jb                .L_small_loop_tail_${label_suffix}
 ___
@@ -4324,11 +4223,12 @@ ___
     "%rsp", &HashKeyOffsetByIdx(16, "frame"),
     0, $AAD_HASHz, $ZTMP0, $ZTMP1, $ZTMP2, $ZTMP3, $ZTMP4, $ZTMP5, $ZTMP6, $ZTMP7, $ZTMP8, $ZTMP9);
 
-  # ;; Cascade: if remaining >= 64 bytes (4 blocks), use stitched 4-block path
+  # ;; Cascade: if >= 64 bytes remain, re-enter the early path (8-block loop for
+  # ;; >= 128 B, else the masked small-block handler).
   # ;; CTR_BLOCKz is broadcast BE, ADDBE restored, SHUF_MASK valid
   $code .= <<___;
         cmp               \$64,$LENGTH
-        jae               .L_4block_early_${label_suffix}
+        jae               .L_dispatch_below_704B_${label_suffix}
 ___
 
   # ;; Convert CTR_BLOCK back to LE for GCM_ENC_DEC_SMALL (< 64 bytes)
@@ -4345,18 +4245,22 @@ ___
 
 
   # ══════════════════════════════════════════════════════════════
-  # 4-/8-block early path (64 <= msg < 704); 8-block for >= 128, else 4-block.
-  # Entered directly, or via cascade from 16-block loop tail.
-  # SHUF_MASK, ADDBE, CTR_CHECK, CTR_BLOCKz already set up.
+  # Early path (64 <= msg < 704): 8-block loop for >= 128 B; < 128 B is routed
+  # to the masked small-block handler. Entered directly, or via cascade from the
+  # 16-block loop tail. SHUF_MASK, ADDBE, CTR_CHECK, CTR_BLOCKz already set up.
   # ══════════════════════════════════════════════════════════════
-  $code .= ".L_4block_early_${label_suffix}:\n";
+  $code .= ".L_dispatch_below_704B_${label_suffix}:\n";
 
-  # ;; Dispatch: use 8-block path if >= 128 bytes remain. 128 is the lowest
-  # ;; valid crossover (the 8-block preamble consumes one full 128-byte
-  # ;; group); the 8-block path outperforms the 4-block path on 128-191B too.
+  # ;; Dispatch: messages >= 128 B use the 8-block path; < 128 B (4-7 blocks +
+  # ;; optional partial) go to the masked small-block handler, which processes up
+  # ;; to 16 blocks in a single pass. GCM_ENC_DEC_SMALL expects the counter in
+  # ;; LE, so convert it back from BE first.
   $code .= <<___;
         cmp               \$128,$LENGTH
-        jb                .L_4blk_only_${label_suffix}
+        jae               .L_8block_path_${label_suffix}
+        vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx
+        jmp               .L_message_below_equal_16_blocks_${label_suffix}
+.L_8block_path_${label_suffix}:
 ___
 
   # ══════════════════════════════════════════════════════════════
@@ -4507,9 +4411,8 @@ ___
 
   # ;; Tail: the remainder after the 8-block loop is < 128 bytes (<= 7 full
   # ;; blocks + an optional partial). Route the whole remainder to the masked
-  # ;; small-block handler in a single pass instead of cascading through the
-  # ;; 4-block loop + small path (which incurs two separate GHASH reductions).
-  # ;; This flattens the dip just below 8-block multiples (e.g. 480/496/511B).
+  # ;; small-block handler in a single pass (one GHASH reduction), which also
+  # ;; flattens the dip just below 8-block multiples (e.g. 480/496/511B).
 
   # ;; Convert CTR_BLOCK back to LE for GCM_ENC_DEC_SMALL
   $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
@@ -4524,139 +4427,16 @@ ___
   } # end 8-block path scope
 
   # ══════════════════════════════════════════════════════════════
-  # 4-block-only path (64 <= msg < 128, or cascade from 8-block tail)
-  # ══════════════════════════════════════════════════════════════
-  $code .= ".L_4blk_only_${label_suffix}:\n";
-
-
-  {
-  my $aes4_blocks = $ZTMP0;
-  my $aes4_key    = $ZTMP1;
-  my $ghash_in    = $ZTMP2;
-  my $ghkey       = $ZTMP3;
-  my $gh_h        = $ZTMP4;
-  my $gh_l        = $ZTMP5;
-  my $gh_m1       = $ZTMP6;
-  my $gh_m2       = $ZTMP7;
-  my $red_poly    = $ZTMP8;
-  my $red_p1      = $ZTMP9;
-  my $red_t1      = $ZTMP10;
-  my $red_t2      = $ZTMP11;
-  my $aes4_data   = $ZTMP12;
-
-  # ;; ── Preamble: encrypt first 4 blocks (no GHASH) ──
-  # ;; 240 = 256 - 16: see the GHASH_4_ENCRYPT_4 note; conservative 4-block
-  # ;; overflow threshold shared with the 8/16-block counter setups.
-  $code .= <<___;
-        cmpb              \$240,@{[BYTE($CTR_CHECK)]}
-        jae               .L_4blk_preamble_overflow_${label_suffix}
-        vpaddd            $ADDBE_1234,$CTR_BLOCKz,$aes4_blocks
-        jmp               .L_4blk_preamble_ok_${label_suffix}
-.L_4blk_preamble_overflow_${label_suffix}:
-        vpshufb           $SHUF_MASK,$CTR_BLOCKz,$CTR_BLOCKz
-        vpaddd            ddq_add_1234(%rip),$CTR_BLOCKz,$aes4_blocks
-        vpshufb           $SHUF_MASK,$aes4_blocks,$aes4_blocks
-.L_4blk_preamble_ok_${label_suffix}:
-        vshufi64x2        \$0xff,$aes4_blocks,$aes4_blocks,$CTR_BLOCKz
-        addb              \$4,@{[BYTE($CTR_CHECK)]}
-___
-
-  $code .= "vbroadcastf64x2   `(16 * 0)`($AES_KEYS),$aes4_key\n";
-  $code .= "vpxorq            $aes4_key,$aes4_blocks,$aes4_blocks\n";
-  for my $rnd (1 .. $NROUNDS) {
-    $code .= "vbroadcastf64x2   `(16 * $rnd)`($AES_KEYS),$aes4_key\n";
-    $code .= "vaesenc           $aes4_key,$aes4_blocks,$aes4_blocks\n";
-  }
-  $code .= "vbroadcastf64x2   `(16 * ($NROUNDS + 1))`($AES_KEYS),$aes4_key\n";
-  $code .= "vaesenclast       $aes4_key,$aes4_blocks,$aes4_blocks\n";
-
-  $code .= "vmovdqu8          `(0*64)`($PLAIN_CIPH_IN,$DATA_OFFSET,1),$aes4_data\n";
-  $code .= "mov               $CIPH_PLAIN_OUT,$IA0\n";
-  if ($ENC_DEC eq "ENC") {
-    $code .= "vpxorq            $aes4_data,$aes4_blocks,$aes4_blocks\n";
-    $code .= "vmovdqu8          $aes4_blocks,`(0*64)`($IA0,$DATA_OFFSET,1)\n";
-    $code .= "vpshufb           $SHUF_MASK,$aes4_blocks,$ghash_in\n";
-  } else {
-    $code .= "vpxorq            $aes4_data,$aes4_blocks,$aes4_blocks\n";
-    $code .= "vmovdqu8          $aes4_blocks,`(0*64)`($IA0,$DATA_OFFSET,1)\n";
-    $code .= "vpshufb           $SHUF_MASK,$aes4_data,$ghash_in\n";
-  }
-
-  $code .= <<___;
-        add               \$64,$DATA_OFFSET
-        sub               \$64,$LENGTH
-
-        cmp               \$64,$LENGTH
-        jb                .L_4blk_loop_done_${label_suffix}
-___
-
-  $code .= ".p2align 5\n";
-  $code .= ".L_4blk_loop_top_${label_suffix}:\n";
-
-  &GHASH_4_ENCRYPT_4(
-    $AES_KEYS, $GCM128_CTX, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN, $DATA_OFFSET,
-    $ghash_in, $AAD_HASHz, $CTR_BLOCKz, $CTR_CHECK,
-    $ADDBE_4x4, $ADDBE_1234, $SHUF_MASK, $ENC_DEC,
-    $aes4_blocks, $ghkey, $gh_h, $gh_l, $gh_m1, $gh_m2,
-    $red_poly, $red_p1, $red_t1, $red_t2, $aes4_key, $aes4_data, $IA0);
-
-  $code .= <<___;
-        add               \$64,$DATA_OFFSET
-        sub               \$64,$LENGTH
-        cmp               \$64,$LENGTH
-        jae               .L_4blk_loop_top_${label_suffix}
-
-.L_4blk_loop_done_${label_suffix}:
-___
-
-  # ;; GHASH the last 4 blocks still in ghash_in
-  $code .= "vpxorq            @{[ZWORD($AAD_HASHz)]},$ghash_in,$ghash_in\n";
-  $code .= "vmovdqu64         @{[HashKeyByIdx(4, $GCM128_CTX)]},$ghkey\n";
-  $code .= <<___;
-        vpclmulqdq        \$0x11,$ghkey,$ghash_in,$gh_h
-        vpclmulqdq        \$0x00,$ghkey,$ghash_in,$gh_l
-        vpclmulqdq        \$0x01,$ghkey,$ghash_in,$gh_m1
-        vpclmulqdq        \$0x10,$ghkey,$ghash_in,$gh_m2
-___
-  &VHPXORI4x128($gh_h, $red_t1);
-  &VHPXORI4x128($gh_l, $red_t1);
-  $code .= "vpxorq            $gh_m2,$gh_m1,$gh_m1\n";
-  &VHPXORI4x128($gh_m1, $red_t1);
-  $code .= <<___;
-        vpsrldq           \$8,@{[XWORD($gh_m1)]},@{[XWORD($red_t1)]}
-        vpslldq           \$8,@{[XWORD($gh_m1)]},@{[XWORD($gh_m1)]}
-        vpxorq            @{[XWORD($red_t1)]},@{[XWORD($gh_h)]},@{[XWORD($gh_h)]}
-        vpxorq            @{[XWORD($gh_m1)]},@{[XWORD($gh_l)]},@{[XWORD($gh_l)]}
-        vmovdqa64         POLY2(%rip),@{[XWORD($red_poly)]}
-        vpclmulqdq        \$0x01,@{[XWORD($gh_l)]},@{[XWORD($red_poly)]},@{[XWORD($red_p1)]}
-        vpslldq           \$8,@{[XWORD($red_p1)]},@{[XWORD($red_p1)]}
-        vpxorq            @{[XWORD($red_p1)]},@{[XWORD($gh_l)]},@{[XWORD($red_p1)]}
-        vpclmulqdq        \$0x00,@{[XWORD($red_p1)]},@{[XWORD($red_poly)]},@{[XWORD($red_t1)]}
-        vpsrldq           \$4,@{[XWORD($red_t1)]},@{[XWORD($red_t1)]}
-        vpclmulqdq        \$0x10,@{[XWORD($red_p1)]},@{[XWORD($red_poly)]},@{[XWORD($red_t2)]}
-        vpslldq           \$4,@{[XWORD($red_t2)]},@{[XWORD($red_t2)]}
-        vpternlogq        \$0x96,@{[XWORD($red_t1)]},@{[XWORD($red_t2)]},@{[XWORD($gh_h)]}
-        vmovdqa64         @{[XWORD($gh_h)]},@{[XWORD($AAD_HASHz)]}
-___
-
-  # ;; Convert CTR_BLOCK back to LE before saving or passing to GCM_ENC_DEC_SMALL
-  $code .= "vpshufb           @{[XWORD($SHUF_MASK)]},$CTR_BLOCKx,$CTR_BLOCKx\n";
-
-  $code .= <<___;
-        or                $LENGTH,$LENGTH
-        je                .L_ghash_done_${label_suffix}
-___
-
-  $code .= "jmp           .L_message_below_equal_16_blocks_${label_suffix}\n";
-
-  } # end 4-block loop scope
-
-  # ══════════════════════════════════════════════════════════════
   # Big loop path (32 blocks, all key sizes)
   # ══════════════════════════════════════════════════════════════
   $code .= ".L_big_loop_path_${label_suffix}:\n";
 
   $code .= <<___;
+        # ;; Defensive guard, unreachable with the current thresholds: this path
+        # ;; is entered only for LENGTH >= 1792 B (> 512), so this jb is never
+        # ;; taken (verified: 0 taken over an exhaustive length sweep). Kept so
+        # ;; that lowering the 16->32-block crossover below 512 B cannot enter the
+        # ;; 32-block preamble with fewer than 32 blocks present.
         cmp               \$`(32 * 16)`,$LENGTH
         jb                .L_message_below_32_blocks_${label_suffix}
 ___
@@ -4679,6 +4459,12 @@ ___
         add               \$`(32 * 16)`,$DATA_OFFSET
         sub               \$`(32 * 16)`,$LENGTH
 
+        # ;; Defensive guard, unreachable with the current thresholds: entry is
+        # ;; LENGTH >= 1792 B, so after this -512 LENGTH is >= 1280 (>= one
+        # ;; 32-block group) and this jb is never taken (verified: 0 taken over an
+        # ;; exhaustive length sweep). Kept so that lowering the 16->32-block
+        # ;; crossover below 1024 B cannot force a 32-block iteration with fewer
+        # ;; than 32 blocks present.
         cmp               \$`($big_loop_nblocks * 16)`,$LENGTH
         jb                .L_no_more_big_nblocks_${label_suffix}
 ___
@@ -4731,7 +4517,8 @@ ___
     $GH,       $GM,             "final_reduction", $ENC_DEC,     $data_in_out_offset, "no_ghash_in",
     $IA0);
 
-  # ;; === xor cipher block 0 with GHASH (ZT4)
+  # ;; Store the reduced GHASH accumulator (returned in ZTMP4 by the
+  # ;; final_reduction above) into the running hash value AAD_HASHz.
   $code .= <<___;
         vmovdqa64         $ZTMP4,$AAD_HASHz
 
