@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, SSL_get_security_level, SSL_CTX_set_security_callback, SSL_set_security_callback, SSL_CTX_get_security_callback, SSL_get_security_callback, SSL_CTX_set0_security_ex_data, SSL_set0_security_ex_data, SSL_CTX_get0_security_ex_data, SSL_get0_security_ex_data - SSL/TLS security framework
+SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, SSL_get_security_level, SSL_CTX_set_security_callback, SSL_set_security_callback, SSL_CTX_get_security_callback, SSL_get_security_callback, SSL_CTX_set0_security_ex_data, SSL_set0_security_ex_data, SSL_CTX_get0_security_ex_data, SSL_get0_security_ex_data, SSL_default_security_callback - SSL/TLS security framework
 
 =head1 SYNOPSIS
 
@@ -36,6 +36,9 @@ SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, 
  void *SSL_CTX_get0_security_ex_data(const SSL_CTX *ctx);
  void *SSL_get0_security_ex_data(const SSL *s);
 
+ int SSL_default_security_callback(const SSL *s, const SSL_CTX *ctx, int op,
+                                   int bits, int nid, void *other, void *ex);
+
 =head1 DESCRIPTION
 
 The functions SSL_CTX_set_security_level() and SSL_set_security_level() set
@@ -50,6 +53,12 @@ SSL_CTX_get_security_callback() and SSL_get_security_callback() get or set
 the security callback associated with B<ctx> or B<s>. If not set a default
 security callback is used. The meaning of the parameters and the behaviour
 of the default callbacks is described below.
+
+SSL_default_security_callback() is the security callback that is used if the
+application does not install one of its own. It is exposed so that an
+application-defined callback can defer to the default behaviour for any
+operation it does not wish to handle itself, by calling it with the same
+arguments the callback received.
 
 SSL_CTX_set0_security_ex_data(), SSL_set0_security_ex_data(),
 SSL_CTX_get0_security_ex_data() and SSL_get0_security_ex_data() set the
@@ -169,6 +178,9 @@ to the security callback or NULL if the callback is not set.
 SSL_CTX_get0_security_ex_data() and SSL_get0_security_ex_data() return the extra
 data pointer or NULL if the ex data is not set.
 
+SSL_default_security_callback() returns 1 if the operation is permitted and 0
+otherwise.
+
 =head1 SEE ALSO
 
 L<ssl(7)>
@@ -176,6 +188,8 @@ L<ssl(7)>
 =head1 HISTORY
 
 These functions were added in OpenSSL 1.1.0.
+
+SSL_default_security_callback() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
