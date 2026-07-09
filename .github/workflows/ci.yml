@@ -89,6 +89,17 @@ jobs:
       run: sudo locale-gen tr_TR.UTF-8
     - name: cmocka
       run: sudo apt-get -y install libcmocka-dev
+    - name: install dependencies for perl Net::Curl
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libcurl4-openssl-dev cpanminus build-essential
+    - name: install Net::Curl
+      run: |
+        url=https://cpan.metacpan.org/authors/id/S/SY/SYP/Net-Curl-0.58.tar.gz
+        sha=37c1585cc70e21579c7c733e306e97a46adc093a3777af6d8ba37d73986d7f5a
+        curl -fsSL "$url" -o Net-Curl.tar.gz
+        echo "$sha  Net-Curl.tar.gz" | sha256sum -c -
+        sudo cpanm --notest ./Net-Curl.tar.gz
     - name: fipsvendor
       # Make one fips build use a customized FIPS vendor
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
