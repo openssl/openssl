@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * The `tsget` utility now uses `Net::Curl::Easy` (from the `Net-Curl` CPAN
+   distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who relied
+   on `tsget` must install `Net::Curl::Easy` before upgrading.
+
+   *Shreenidhi Shedi*
+
  * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
    list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
    available in the active providers are advertised.  `PKCS7_sign_add_signer()`

@@ -11,13 +11,13 @@ use strict;
 use IO::Handle;
 use Getopt::Std;
 use File::Basename;
-use WWW::Curl::Easy;
+use Net::Curl::Easy qw(:constants);
 
 use vars qw(%options);
 
 # Callback for reading the body.
 sub read_body {
-    my ($maxlength, $state) = @_;
+    my ($easy, $maxlength, $state) = @_;
     my $return_data = "";
     my $data_len = length ${$state->{data}};
     if ($state->{bytes} < $data_len) {
@@ -31,7 +31,7 @@ sub read_body {
 
 # Callback for writing the body into a variable.
 sub write_body {
-    my ($data, $pointer) = @_;
+    my ($easy, $data, $pointer) = @_;
     ${$pointer} .= $data;
     return length($data);
 }
@@ -41,7 +41,7 @@ sub create_curl {
     my $url = shift;
 
     # Create Curl object.
-    my $curl = WWW::Curl::Easy::new();
+    my $curl = Net::Curl::Easy->new();
 
     # Error-handling related options.
     $curl->setopt(CURLOPT_VERBOSE, 1) if $options{d};
@@ -56,7 +56,7 @@ sub create_curl {
         ["Content-Type: application/timestamp-query",
         "Accept: application/timestamp-reply,application/timestamp-response"]);
     $curl->setopt(CURLOPT_READFUNCTION, \&read_body);
-    $curl->setopt(CURLOPT_HEADERFUNCTION, sub { return length($_[0]); });
+    $curl->setopt(CURLOPT_HEADERFUNCTION, sub { return length($_[1]); });
 
     # Options for getting the result.
     $curl->setopt(CURLOPT_WRITEFUNCTION, \&write_body);
@@ -84,10 +84,6 @@ sub get_timestamp {
     my $curl = shift;
     my $body = shift;
     my $ts_body;
-    local $::error_buf;
-
-    # Error-handling related options.
-    $curl->setopt(CURLOPT_ERRORBUFFER, "::error_buf");
 
     # Options for POST method.
     $curl->setopt(CURLOPT_INFILE, {data => $body, bytes => 0});
@@ -97,14 +93,13 @@ sub get_timestamp {
     $curl->setopt(CURLOPT_FILE, \$ts_body);
 
     # Send the request...
-    my $error_code = $curl->perform();
     my $error_string;
-    if ($error_code != 0) {
+    eval { $curl->perform(); };
+    if ($@) {
         my $http_code = $curl->getinfo(CURLINFO_HTTP_CODE);
         $error_string = "could not get timestamp";
         $error_string .= ", http code: $http_code" unless $http_code == 0;
-        $error_string .= ", curl code: $error_code";
-        $error_string .= " ($::error_buf)" if defined($::error_buf);
+        $error_string .= ": $@";
     } else {
         my $ct = $curl->getinfo(CURLINFO_CONTENT_TYPE);
         if (lc($ct) ne "application/timestamp-reply"
@@ -197,4 +192,3 @@ REQUEST: foreach (@ARGV) {
     }
     STDERR->printflush(", $output written.\n") if $options{v};
 }
-$curl->cleanup();
