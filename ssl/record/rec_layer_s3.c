@@ -1592,6 +1592,20 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
         }
     }
 
+    /*
+     * For DTLS listener-created connections the peer address must be applied
+     * to every record layer as it is created (including the encrypted layers
+     * built during the handshake). SSL_set1_initial_peer_addr() only updates
+     * the record layers that exist when it is called, so writes on a later
+     * layer would otherwise fall back to BIO_write() on the shared listener
+     * BIO instead of BIO_sendmmsg() to the peer.
+     */
+    if (SSL_CONNECTION_IS_DTLS(s)
+        && s->d1 != NULL
+        && meth->set1_peer != NULL
+        && BIO_ADDR_family(&s->d1->peer_addr) != AF_UNSPEC)
+        meth->set1_peer(newrl, &s->d1->peer_addr);
+
     *thisrl = newrl;
     *thismethod = meth;
 
