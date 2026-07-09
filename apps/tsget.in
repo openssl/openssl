@@ -16,14 +16,25 @@ use Net::Curl::Easy qw(:constants);
 
 use vars qw(%options);
 
+sub usage {
+    print STDERR "usage: $0 -h <server_url> [-e <extension>] [-o <output>] ";
+    print STDERR "[-v] [-d] [-k <private_key.pem>] [-p <key_password>] ";
+    print STDERR "[-c <client_cert.pem>] [-C <CA_certs.pem>] [-P <CA_path>] ";
+    print STDERR "[-r <file:file...>] [-g <EGD_socket>] [<request>]...\n";
+    exit 1;
+}
+
+sub progress {
+    return unless $options{v};
+    STDERR->printflush(@_);
+}
+
 # Initialise a new Curl object.
 sub create_curl {
-    my $url = shift;
+    my ($url) = @_;
 
-    # Create Curl object.
     my $curl = Net::Curl::Easy->new();
 
-    # Error-handling related options.
     $curl->setopt(CURLOPT_VERBOSE, 1) if $options{d};
     $curl->setopt(CURLOPT_FAILONERROR, 1);
     $curl->setopt(CURLOPT_USERAGENT,
@@ -48,7 +59,6 @@ sub create_curl {
     eval { $curl->setopt(CURLOPT_RANDOM_FILE, $options{r}) if defined($options{r}); };
     eval { $curl->setopt(CURLOPT_EGDSOCKET, $options{g}) if defined($options{g}); };
 
-    # Setting destination.
     $curl->setopt(CURLOPT_URL, $url);
 
     return $curl;
@@ -93,57 +103,37 @@ sub send_request {
     return undef;
 }
 
-# Print usage information and exists.
-sub usage {
+my $getopt_arg = "h:e:o:vdk:p:c:C:P:r:g:";
 
-    print STDERR "usage: $0 -h <server_url> [-e <extension>] [-o <output>] ";
-    print STDERR "[-v] [-d] [-k <private_key.pem>] [-p <key_password>] ";
-    print STDERR "[-c <client_cert.pem>] [-C <CA_certs.pem>] [-P <CA_path>] ";
-    print STDERR "[-r <file:file...>] [-g <EGD_socket>] [<request>]...\n";
-    exit 1;
-}
-
-# ----------------------------------------------------------------------
-#   Main program
-# ----------------------------------------------------------------------
-
-# Getting command-line options (default comes from TSGET environment variable).
-my $getopt_arg =  "h:e:o:vdk:p:c:C:P:r:g:";
 if (exists $ENV{TSGET}) {
-    my @old_argv = @ARGV;
+    my @saved_argv = @ARGV;
     @ARGV = split /\s+/, $ENV{TSGET};
     getopts($getopt_arg, \%options) or usage;
-    @ARGV = @old_argv;
+    @ARGV = @saved_argv;
 }
 getopts($getopt_arg, \%options) or usage;
 
-# Checking argument consistency.
-if (!exists($options{h}) || (@ARGV == 0 && !exists($options{o}))
-    || (@ARGV > 1 && exists($options{o}))) {
+if (!defined($options{h}) || (@ARGV == 0 && !defined($options{o}))
+    || (@ARGV > 1 && defined($options{o}))) {
     print STDERR "Inconsistent command line options.\n";
     usage;
 }
-# Setting defaults.
-@ARGV = ("-") unless @ARGV != 0;
+@ARGV = ("-") unless @ARGV;
 $options{e} = ".tsr" unless defined($options{e});
 
-# Processing requests.
-my $curl = create_curl $options{h};
-undef $/;   # For reading whole files.
-REQUEST: foreach (@ARGV) {
-    my $input = $_;
-    my ($base, $path) = fileparse($input, '\.[^.]*');
-    my $output_base = $base . $options{e};
-    my $output = defined($options{o}) ? $options{o} : $path . $output_base;
+my $curl = create_curl($options{h});
+undef $/;
 
-    STDERR->printflush("$input: ") if $options{v};
-    # Read request.
+REQUEST: for my $input (@ARGV) {
+    my ($base, $path) = fileparse($input, '\.[^.]*');
+    my $output = defined($options{o}) ? $options{o} : $path . $base . $options{e};
+
+    progress("$input: ");
     my $body;
     if ($input eq "-") {
         binmode STDIN;
         $body = <STDIN>;
     } else {
-        # Read the request from file.
         open my $in, '<', $input
             or warn("$input: could not open input file: $!\n"), next REQUEST;
         binmode $in;
@@ -152,13 +142,12 @@ REQUEST: foreach (@ARGV) {
             or warn("$input: could not close input file: $!\n"), next REQUEST;
     }
 
-    # Send request.
-    STDERR->printflush("sending request") if $options{v};
+    progress("sending request");
 
     my $error = send_request($curl, $body, $output);
     if (defined($error)) {
         die "$input: fatal error: $error\n";
     }
-    STDERR->printflush(", reply received") if $options{v};
-    STDERR->printflush(", $output written.\n") if $options{v};
+    progress(", reply received");
+    progress(", $output written.\n");
 }
