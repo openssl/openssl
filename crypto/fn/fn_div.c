@@ -9,10 +9,13 @@
 
 #include <assert.h>
 #include <openssl/err.h>
+#include "internal/safe_math.h"
 #include "crypto/cryptlib.h"
 #include "crypto/fnerr.h"
 #include "../bn/bn_local.h" /* For using the low level bignum functions */
 #include "fn_local.h"
+
+OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
 #if !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) \
     && !defined(PEDANTIC) && !defined(BN_DIV3W)
@@ -211,6 +214,32 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
 
     return quo;
 #endif /* !BN_DIV3W */
+}
+
+size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d)
+{
+    if ((q == NULL && r == NULL) || n == NULL || d == NULL)
+        return 0;
+
+    size_t nl = n->dsize;
+    size_t dl = d->dsize;
+    size_t snuml, tmp;
+    int err = 0;
+
+    snuml = safe_add_size_t(nl > dl ? nl : dl, 1, &err);
+    tmp = safe_add_size_t(dl, 1, &err);
+
+    size_t max_ql = nl == 0 ? 1 : nl;
+    size_t ql = (q == NULL || (size_t)q->dsize < max_ql) ? max_ql : 0;
+    size_t max_n_numbers = 3 + (ql != 0);
+    size_t max_n_limbs;
+
+    max_n_limbs = safe_add_size_t(snuml, dl, &err);
+    max_n_limbs = safe_add_size_t(max_n_limbs, tmp, &err);
+    max_n_limbs = safe_add_size_t(max_n_limbs, ql, &err);
+
+    return err == 0 ? OSSL_FN_CTX_size(1, max_n_numbers, max_n_limbs) : 0;
 }
 
 /* Trivia: this function implements Knuth's algorithm D */
