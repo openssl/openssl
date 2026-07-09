@@ -2899,7 +2899,7 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
              * In that case leave the state alone so the handshake can complete
              * normally without 0-RTT.
              */
-            if (sc->early_data_state == SSL_EARLY_DATA_CONNECTING)
+            if (!sc->ext.early_data_suppressed)
                 sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
             return 0;
         }

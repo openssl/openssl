@@ -1083,10 +1083,11 @@ static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
 }
 
 /*
- * Mirrors the gating checks in tls_construct_ctos_psk() so that early_data
- * is only advertised when the PSK will actually be sent.
+ * Mirrors the ticket-resumption gating checks in tls_construct_ctos_psk() so
+ * that early_data is only advertised when the resumption PSK will actually
+ * be sent.
  */
-static int tls13_check_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
+static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const EVP_MD *mdres;
@@ -1237,7 +1238,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
      * The PSK used to encrypt the early data MUST be the first PSK listed in
      * the client's "pre_shared_key" extension.
      */
-    edok = (tls13_check_psk(s, handmd) && s->session->ext.max_early_data != 0);
+    edok = (tls13_check_resumption_psk(s, handmd) && s->session->ext.max_early_data != 0);
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || (edok == 0 && (psksess == NULL || psksess->ext.max_early_data == 0))) {
         s->max_early_data = 0;
