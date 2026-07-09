@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 130;
+plan tests => 131;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -520,6 +520,34 @@ subtest "generating certificate with -set_serial" => sub {
                  "-set_serial", "12345", "-set_serial", "67890",
                  "-out", $cert])),
        "Supplying -set_serial twice fails");
+};
+
+subtest "generating certificate requests with -pkeyopt" => sub {
+    plan tests => 3;
+
+    SKIP: {
+        skip "EC is not supported by this OpenSSL build", 3 if disabled("ec");
+
+        my $key = "testreq-pkeyopt-key.pem";
+        my $req = "testreq-pkeyopt.pem";
+        my $text = "testreq-pkeyopt.txt";
+
+        ok(run(app(["openssl", "req", "-new",
+                    "-config", srctop_file("test", "test.cnf"),
+                    "-newkey", "ec", "-pkeyopt", "ec_paramgen_curve:P-384",
+                    "-nodes", "-keyout", $key, "-out", $req])),
+           "Generating request with -pkeyopt ec_paramgen_curve:P-384");
+
+        run(app(["openssl", "req", "-in", $req, "-noout", "-text",
+                 "-out", $text]));
+        test_file_contains("request", $text, "ASN1 OID: secp384r1", 1);
+
+        ok(!run(app(["openssl", "req", "-new",
+                     "-config", srctop_file("test", "test.cnf"),
+                     "-newkey", "ec", "-pkeyopt", "bogus_opt:1",
+                     "-nodes", "-keyout", $key, "-out", $req])),
+           "Supplying an unknown -pkeyopt fails");
+    }
 };
 
 my @openssl_args = ("req", "-config", srctop_file("apps", "openssl.cnf"));
