@@ -550,20 +550,18 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
                 }
             }
 
+            /*
+             * 0-RTT keys off the frozen slot-0 PSK (candidate_at(0)), which
+             * may be the external psksession rather than s->session.
+             */
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
-                && s->max_early_data > 0
-                && s->session->ext.max_early_data == 0) {
-                /*
-                 * If we are attempting to send early data, and we've decided to
-                 * actually do it but max_early_data in s->session is 0 then we
-                 * must be using an external PSK.
-                 */
-                if (!ossl_assert(s->psksession != NULL
-                        && s->max_early_data == s->psksession->ext.max_early_data)) {
+                && s->ext.early_data_session != NULL) {
+                if (!ossl_assert(s->max_early_data
+                        == s->ext.early_data_session->ext.max_early_data)) {
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                     goto err;
                 }
-                sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+                sslcipher = SSL_SESSION_get0_cipher(s->ext.early_data_session);
             }
             if (sslcipher == NULL) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
@@ -921,9 +919,8 @@ int tls13_export_keying_material_early(SSL_CONNECTION *s,
     if (ctx == NULL || !ossl_statem_export_early_allowed(s))
         goto err;
 
-    if (!s->server && s->max_early_data > 0
-        && s->session->ext.max_early_data == 0)
-        sslcipher = SSL_SESSION_get0_cipher(s->psksession);
+    if (!s->server && s->ext.early_data_session != NULL)
+        sslcipher = SSL_SESSION_get0_cipher(s->ext.early_data_session);
     else
         sslcipher = SSL_SESSION_get0_cipher(s->session);
 

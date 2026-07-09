@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/ssl.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
@@ -57,8 +58,10 @@ struct stats {
     unsigned int ch_has_psk;
     unsigned int ch_has_psk_kex_modes;
     unsigned int ch_has_session_ticket;
+    unsigned int ch_has_early_data;
     unsigned int sh_has_psk;
     unsigned int sh_has_supported_versions;
+    unsigned int ee_has_early_data;
 };
 
 struct tls13_endpoint {
@@ -137,10 +140,15 @@ static void parse_ch_exts(const unsigned char *buf, size_t len, struct stats *x)
         case TLSEXT_TYPE_session_ticket:
             x->ch_has_session_ticket = 1;
             break;
+        case TLSEXT_TYPE_early_data:
+            x->ch_has_early_data = 1;
+            break;
         }
     }
-    TEST_info("ch extensions: psk=%d psk_kex_modes=%d session_ticket=%d",
-        x->ch_has_psk, x->ch_has_psk_kex_modes, x->ch_has_session_ticket);
+    TEST_info("ch extensions: psk=%d psk_kex_modes=%d session_ticket=%d"
+              " early_data=%d",
+        x->ch_has_psk, x->ch_has_psk_kex_modes, x->ch_has_session_ticket,
+        x->ch_has_early_data);
 }
 
 static void parse_sh_exts(const unsigned char *buf, size_t len, struct stats *x)
@@ -171,6 +179,28 @@ static void parse_sh_exts(const unsigned char *buf, size_t len, struct stats *x)
         x->sh_has_psk, x->sh_has_supported_versions);
 }
 
+static void parse_ee_exts(const unsigned char *buf, size_t len, struct stats *x)
+{
+    PACKET pkt, e, ex;
+    unsigned int v;
+
+    if (!PACKET_buf_init(&pkt, buf, len)
+        || !PACKET_forward(&pkt, 4)
+        || !PACKET_as_length_prefixed_2(&pkt, &e))
+        return;
+
+    while (PACKET_remaining(&e) > 0) {
+        if (!PACKET_get_net_2(&e, &v) || !PACKET_get_length_prefixed_2(&e, &ex))
+            return;
+        switch (v) {
+        case TLSEXT_TYPE_early_data:
+            x->ee_has_early_data = 1;
+            break;
+        }
+    }
+    TEST_info("ee extensions: early_data=%d", x->ee_has_early_data);
+}
+
 static void msg_cb(int write_p, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg)
 {
@@ -185,6 +215,8 @@ static void msg_cb(int write_p, int version, int content_type,
             parse_ch_exts(buf, len, stats);
         if (mt == SSL3_MT_SERVER_HELLO && stats != NULL)
             parse_sh_exts(buf, len, stats);
+        if (mt == SSL3_MT_ENCRYPTED_EXTENSIONS && stats != NULL)
+            parse_ee_exts(buf, len, stats);
     }
 }
 
@@ -247,6 +279,95 @@ static int ticket_disable(SSL_CTX *ctx)
 {
     SSL_CTX_set_options(ctx, SSL_OP_NO_TICKET);
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_OFF);
+    return 1;
+}
+
+/*
+ * A fixed, 0-RTT-capable external PSK (RFC 8446), offered via the
+ * psk_use_session (client) and psk_find_session (server) callbacks. Used to
+ * exercise 0-RTT keyed off an external PSK while a retired resumption ticket is
+ * also present: the external PSK is the first offered identity (slot 0).
+ */
+static const unsigned char ext_psk_id[] = {
+    'e', 'x', 't', '-', 'p', 's', 'k'
+};
+static const unsigned char ext_psk_key[32] = {
+    0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07, 0x08,
+    0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f, 0x10,
+    0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18,
+    0x19, 0x1a, 0x1b, 0x1c, 0x1d, 0x1e, 0x1f, 0x20
+};
+
+static SSL_SESSION *ext_psk_session(SSL *ssl)
+{
+    static const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+    SSL_SESSION *sess = SSL_SESSION_new();
+    const SSL_CIPHER *cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+
+    if (sess == NULL
+        || cipher == NULL
+        || !SSL_SESSION_set1_master_key(sess, ext_psk_key, sizeof(ext_psk_key))
+        || !SSL_SESSION_set_cipher(sess, cipher)
+        || !SSL_SESSION_set_protocol_version(sess, TLS1_3_VERSION)
+        || !SSL_SESSION_set_max_early_data(sess, SSL3_RT_MAX_PLAIN_LENGTH)) {
+        SSL_SESSION_free(sess);
+        return NULL;
+    }
+    return sess;
+}
+
+static int ext_psk_use_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
+    size_t *idlen, SSL_SESSION **sess)
+{
+    (void)md;
+    if ((*sess = ext_psk_session(ssl)) == NULL)
+        return 0;
+    *id = ext_psk_id;
+    *idlen = sizeof(ext_psk_id);
+    return 1;
+}
+
+static int ext_psk_find_cb(SSL *ssl, const unsigned char *id, size_t idlen,
+    SSL_SESSION **sess)
+{
+    if (idlen != sizeof(ext_psk_id) || memcmp(id, ext_psk_id, idlen) != 0) {
+        *sess = NULL;
+        return 1;
+    }
+    return (*sess = ext_psk_session(ssl)) != NULL;
+}
+
+static int enable_external_psk(SSL *cssl, SSL *sssl)
+{
+    SSL_set_psk_use_session_callback(cssl, ext_psk_use_cb);
+    SSL_set_psk_find_session_callback(sssl, ext_psk_find_cb);
+    return 1;
+}
+
+/*
+ * A client psk_use_session callback that hands back a single shared
+ * SSL_SESSION on every call (up-ref'd, as the API permits) so we can check
+ * that connection-local sid_ctx provenance is not written into it.
+ */
+static SSL_SESSION *shared_psk_sess = NULL;
+
+static int shared_psk_use_cb(SSL *ssl, const EVP_MD *md, const unsigned char **id,
+    size_t *idlen, SSL_SESSION **sess)
+{
+    (void)ssl;
+    (void)md;
+    if (shared_psk_sess == NULL || !SSL_SESSION_up_ref(shared_psk_sess))
+        return 0;
+    *sess = shared_psk_sess;
+    *id = ext_psk_id;
+    *idlen = sizeof(ext_psk_id);
+    return 1;
+}
+
+static int enable_shared_psk(SSL *cssl, SSL *sssl)
+{
+    SSL_set_psk_use_session_callback(cssl, shared_psk_use_cb);
+    SSL_set_psk_find_session_callback(sssl, ext_psk_find_cb);
     return 1;
 }
 
@@ -652,7 +773,529 @@ static int test_tls13_ticket_no_decrypt(void)
     return test;
 }
 
+/*
+ * TLS 1.3 0-RTT early_data accepted
+ *
+ * Complements the suppression/rejection tests above: with a fresh resumption
+ * ticket the client advertises both pre_shared_key and early_data, the server
+ * accepts 0-RTT.
+ */
+static int test_tls13_ticket_early_data_accepted(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t w = 0, r = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY) != 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_SUCCESS)
+        && TEST_mem_eq(buf, r, m, sizeof(m))
+        && TEST_int_gt(SSL_connect(resumed.c.ssl), 0)
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_int_eq(SSL_get_early_data_status(resumed.s.ssl), SSL_EARLY_DATA_ACCEPTED)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_ACCEPTED)
+        && TEST_true(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.c.stats.tickets, 1)
+        && TEST_uint_eq(resumed.s.stats.tickets, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 1)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 1);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+enum endpoint_state {
+    ENDPOINT_WRITE_EARLY_DATA,
+    ENDPOINT_READ_EARLY_DATA,
+    ENDPOINT_HANDSHAKE,
+    ENDPOINT_READ_APP_DATA,
+    ENDPOINT_DONE,
+    ENDPOINT_ERROR
+};
+
+/* Retry logic switch extracted from s_client. */
+static int is_retryable(SSL *ssl, int ret)
+{
+    switch (SSL_get_error(ssl, ret)) {
+    case SSL_ERROR_WANT_WRITE:
+    case SSL_ERROR_WANT_ASYNC:
+    case SSL_ERROR_WANT_READ:
+        return 1;
+    default:
+        return 0;
+    }
+}
+
+/*
+ * The client follows the s_client retry loop; the server skips early data and
+ * completes the handshake.
+ *
+ * SSL_write_early_data() states the call behaves like SSL_write_ex(): if it
+ * fails, the caller must consult SSL_get_error() and, while it reports a
+ * retryable WANT_READ/WANT_WRITE condition, keep calling SSL_write_early_data()
+ * with the same arguments until it succeeds. This helper encodes that decision.
+ */
+static int tls_early_data_retry(struct tls13_channel *x)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    enum endpoint_state c = ENDPOINT_WRITE_EARLY_DATA;
+    enum endpoint_state s = ENDPOINT_READ_EARLY_DATA;
+    size_t w = SIZE_MAX, r = SIZE_MAX;
+
+    for (int i = 0; i < 100 && (c != ENDPOINT_DONE || s != ENDPOINT_DONE); i++) {
+        if (c == ENDPOINT_WRITE_EARLY_DATA) {
+            if (SSL_write_early_data(x->c.ssl, m, sizeof(m), &w) > 0)
+                c = ENDPOINT_DONE;
+            else if (!is_retryable(x->c.ssl, 0))
+                c = ENDPOINT_ERROR;
+        }
+        if (s == ENDPOINT_READ_EARLY_DATA) {
+            switch (SSL_read_early_data(x->s.ssl, buf, sizeof(buf), &r)) {
+            case SSL_READ_EARLY_DATA_FINISH:
+                s = ENDPOINT_HANDSHAKE;
+                break;
+            default:
+                s = ENDPOINT_ERROR;
+            }
+        }
+        if (s == ENDPOINT_HANDSHAKE) {
+            if (SSL_is_init_finished(x->s.ssl))
+                s = ENDPOINT_DONE;
+            else if (SSL_accept(x->s.ssl) <= 0 && !is_retryable(x->s.ssl, 0))
+                s = ENDPOINT_ERROR;
+        }
+        if (c == ENDPOINT_ERROR || s == ENDPOINT_ERROR)
+            break;
+    }
+
+    return TEST_int_eq(c, ENDPOINT_DONE)
+        && TEST_int_eq(s, ENDPOINT_DONE)
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_size_t_eq(r, 0);
+}
+
+/*
+ * TLS 1.3 Client-side Ticket Age Mismatch 0-RTT Rejection (API retry test)
+ *
+ * This test exercises the case where the client does not send a PSK due to a
+ * ticket age mismatch, and verifies that the client suppresses the early_data
+ * as a result.
+ *
+ * RFC 8446 4.2.10: When a PSK is used and early data is allowed for that PSK,
+ * the client can send Application Data in its first flight of messages. If the
+ * client opts to do so, it MUST supply both the "pre_shared_key" and
+ * "early_data" extensions. The PSK used to encrypt the early data MUST be the
+ * first PSK listed in the client's "pre_shared_key" extension.
+ *
+ * RFC 8446 4.2.11.1: Clients MUST NOT attempt to use tickets which have ages
+ * greater than the "ticket_lifetime" value which was provided with the ticket.
+ */
+static int test_tls13_ticket_client_age_mismatch_reject_early_data_retry(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(tls_early_data_retry(&resumed))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED)
+        && TEST_false(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 0)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.c.stats.tickets, 0)
+        && TEST_uint_eq(resumed.s.stats.tickets, 2)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * TLS 1.3 Server-side Ticket Age Mismatch 0-RTT Rejection
+ *
+ * Exercises the server-side ticket age validation. The client considers the
+ * ticket fresh and proceeds with PSK + 0-RTT, but the transmitted
+ * obfuscated_ticket_age indicates a ticket roughly 10s old. Since the apparent
+ * ticket age exceeds TICKET_AGE_ALLOWANCE, the server rejects early data.
+ *
+ * RFC 8446 4.2.10: For PSKs provisioned via NewSessionTicket, a server MUST
+ * validate that the ticket age for the selected PSK identity is within a small
+ * tolerance of the time since the ticket was issued. If it is not, the server
+ * SHOULD proceed with the handshake but reject 0-RTT.
+ */
+static int test_tls13_ticket_server_age_mismatch_reject_early_data(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t w = 0, r = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY) != 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED)
+        && TEST_true(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
+        && TEST_uint_eq(resumed.c.stats.tickets, 1)
+        && TEST_uint_eq(resumed.s.stats.tickets, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * TLS 1.3 Client-side Ticket Age Mismatch 0-RTT Rejection (outer test)
+ */
+static int test_tls13_ticket_client_age_mismatch_reject_early_data_outer(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t r = 0, w = 0;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_uint_eq(initial.c.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(initial.c.stats.tickets, 2)
+        && TEST_uint_eq(initial.s.stats.tickets, 2)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(initial.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(initial.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(tls_early_data_retry(&resumed))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED)
+        && TEST_false(SSL_session_reused(resumed.c.ssl))
+        && TEST_uint_eq(resumed.c.stats.nst_msgs, 0)
+        && TEST_uint_eq(resumed.s.stats.nst_msgs, 2)
+        && TEST_uint_eq(resumed.c.stats.tickets, 0)
+        && TEST_uint_eq(resumed.s.stats.tickets, 2)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0)
+        /*
+         * While the application is still in the early data write sequence,
+         * further suppressed SSL_write_early_data() calls keep succeeding.
+         */
+        && TEST_size_t_eq((w = SIZE_MAX), SIZE_MAX)
+        && TEST_true(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        /* Ordinary application I/O ends that sequence. */
+        && TEST_size_t_eq((w = SIZE_MAX), SIZE_MAX)
+        && TEST_int_gt(SSL_write_ex(resumed.c.ssl, m, sizeof(m), &w), 0)
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_size_t_eq((r = SIZE_MAX), SIZE_MAX)
+        && TEST_int_gt(SSL_read_ex(resumed.s.ssl, buf, sizeof(buf), &r), 0)
+        && TEST_size_t_eq(r, sizeof(m))
+        && TEST_mem_eq(buf, r, m, sizeof(m))
+        && TEST_size_t_eq((w = SIZE_MAX), SIZE_MAX)
+        && TEST_int_gt(SSL_write_ex(resumed.s.ssl, m, sizeof(m), &w), 0)
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_size_t_eq((r = SIZE_MAX), SIZE_MAX)
+        && TEST_int_gt(SSL_read_ex(resumed.c.ssl, buf, sizeof(buf), &r), 0)
+        && TEST_size_t_eq(r, sizeof(m))
+        && TEST_mem_eq(buf, r, m, sizeof(m))
+        /*
+         * Having left the early data write sequence, a further
+         * SSL_write_early_data() reports the normal error rather than masking
+         * the application's state-machine mistake as success.
+         */
+        && TEST_size_t_eq((w = SIZE_MAX), SIZE_MAX)
+        && TEST_false(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_int_eq(SSL_get_error(resumed.c.ssl, 0), SSL_ERROR_SSL)
+        && TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED)
+        && TEST_size_t_eq(w, SIZE_MAX);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 OPT_TEST_DECLARE_USAGE("\n")
+
+/*
+ * TLS 1.3 0-RTT keyed off an external PSK past a retired resumption ticket.
+ *
+ * The client holds a 0-RTT-capable resumption ticket that has aged past its
+ * lifetime, so tls_construct_ctos_psk() does not offer it; an external PSK
+ * from the psk_use_session callback therefore occupies identity 0 and keys the
+ * early data. The keying sites must follow that slot-0 PSK, not the retired
+ * ticket (whose max_early_data is still non-zero) -- otherwise client and
+ * server derive different CLIENT_EARLY_TRAFFIC_SECRET values and the server
+ * fails with a bad record MAC. Regression test for the mixed aged-ticket +
+ * external-PSK 0-RTT keying bug.
+ */
+static int test_tls13_aged_ticket_external_psk_early_data(void)
+{
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    size_t w = 0, r = 0;
+    unsigned char ceed[32], seed[32];
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        /*
+         * Pin the ciphersuite to the external PSK's committed cipher so the
+         * negotiated cipher matches it; 0-RTT on an external PSK requires that
+         * (RFC 8446 4.2.10). Orthogonal to the bug under test, which is about
+         * which PSK's secret keys the early data, not the cipher.
+         */
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY) != 0)
+        /* Short ticket lifetime so the backdated ticket ages out client-side
+         * and is not offered, leaving the external PSK at slot 0. */
+        && TEST_true(SSL_CTX_set_timeout(s, 1) > 0)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, 0))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        /* Retire the (0-RTT-capable) ticket so it is not offered at slot 0. */
+        && TEST_int_gt((int)SSL_SESSION_set_time_ex(sess, time(NULL) - 10), 0)
+        && TEST_true(tls_channel_init(c, s, &resumed))
+        && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+        && TEST_true(enable_external_psk(resumed.c.ssl, resumed.s.ssl))
+        && TEST_true(SSL_write_early_data(resumed.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_SUCCESS)
+        && TEST_mem_eq(buf, r, m, sizeof(m))
+        && TEST_int_gt(SSL_connect(resumed.c.ssl), 0)
+        && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_int_eq(SSL_get_early_data_status(resumed.s.ssl),
+            SSL_EARLY_DATA_ACCEPTED)
+        && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl),
+            SSL_EARLY_DATA_ACCEPTED)
+        /*
+         * The early exporter secret must match on both ends -- an independent
+         * check (separate from the decrypted early data) that both sides keyed
+         * 0-RTT from the same slot-0 PSK.
+         */
+        && TEST_int_eq(SSL_export_keying_material_early(resumed.c.ssl, ceed,
+                           sizeof(ceed), "label", 5, (const unsigned char *)"ctx", 3),
+            1)
+        && TEST_int_eq(SSL_export_keying_material_early(resumed.s.ssl, seed,
+                           sizeof(seed), "label", 5, (const unsigned char *)"ctx", 3),
+            1)
+        && TEST_mem_eq(ceed, sizeof(ceed), seed, sizeof(seed))
+        /* The external PSK (slot 0) keyed 0-RTT, not the retired ticket. */
+        && TEST_uint_eq(resumed.c.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+        && TEST_uint_eq(resumed.c.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.s.stats.ch_has_early_data, 1)
+        && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 1)
+        && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 1);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * TLS 1.3 external-PSK sid_ctx must not mutate a callback-shared session.
+ *
+ * The psk_use_session callback is entitled to return the same SSL_SESSION on
+ * every call (up-ref'd). When the client resumes via that PSK it stamps its
+ * connection-local sid_ctx onto the session; it must do so on a private
+ * duplicate, never on the shared object, or the sid_ctx bleeds across
+ * connections (and races under concurrency). After a handshake with a
+ * non-empty client sid_ctx, the shared session's sid_ctx must be untouched.
+ */
+static int test_tls13_external_psk_sid_ctx_not_shared(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    static const unsigned char sidctx[] = { 'S', 'I', 'D' };
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(tls_channel_init(c, s, &conn))
+        && TEST_ptr(shared_psk_sess = ext_psk_session(conn.c.ssl))
+        && TEST_true(SSL_set_session_id_context(conn.c.ssl, sidctx, sizeof(sidctx)))
+        && TEST_true(enable_shared_psk(conn.c.ssl, conn.s.ssl))
+        && TEST_true(create_ssl_connection(conn.s.ssl, conn.c.ssl, 0))
+        && TEST_true(SSL_session_reused(conn.c.ssl))
+        /* Our sid_ctx must not have been written into the shared session. */
+        && TEST_size_t_eq(shared_psk_sess->sid_ctx_length, 0);
+
+    SSL_SESSION_free(shared_psk_sess);
+    shared_psk_sess = NULL;
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
 
 int setup_tests(void)
 {
@@ -674,6 +1317,12 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_resumed_set_num_tickets_zero);
     ADD_TEST(test_tls13_ticket_disable_server);
     ADD_TEST(test_tls13_ticket_no_decrypt);
+    ADD_TEST(test_tls13_ticket_early_data_accepted);
+    ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_retry);
+    ADD_TEST(test_tls13_ticket_client_age_mismatch_reject_early_data_outer);
+    ADD_TEST(test_tls13_ticket_server_age_mismatch_reject_early_data);
+    ADD_TEST(test_tls13_aged_ticket_external_psk_early_data);
+    ADD_TEST(test_tls13_external_psk_sid_ctx_not_shared);
 
     return 1;
 }
