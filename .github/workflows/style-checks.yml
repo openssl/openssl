@@ -14,6 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v6
       - name: "Get changed files"
         env:
@@ -26,5 +28,7 @@ jobs:
             echo EOF
           } >> "$GITHUB_ENV"
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd #v3.0.1
+        env:
+          DOC_COMMENTS_RANGE: "${{ github.event.pull_request.base.sha }}...HEAD"
         with:
           extra_args: "--files $CHANGED_FILES"
