@@ -140,14 +140,15 @@ REQUEST: foreach (@ARGV) {
     # Read request.
     my $body;
     if ($input eq "-") {
-        # Read the request from STDIN;
+        binmode STDIN;
         $body = <STDIN>;
     } else {
         # Read the request from file.
-        open INPUT, "<" . $input
+        open my $in, '<', $input
             or warn("$input: could not open input file: $!\n"), next REQUEST;
-        $body = <INPUT>;
-        close INPUT
+        binmode $in;
+        $body = <$in>;
+        close $in
             or warn("$input: could not close input file: $!\n"), next REQUEST;
     }
 
