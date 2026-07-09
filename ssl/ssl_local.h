@@ -12,6 +12,7 @@
 #ifndef OSSL_SSL_LOCAL_H
 #define OSSL_SSL_LOCAL_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
@@ -1743,6 +1744,23 @@ struct ssl_connection_st {
          */
         int tick_identity;
 
+        /*
+         * Cached result of the resumption ticket age/lifetime check for the
+         * ClientHello under construction. Time-dependent, double-checked
+         * within the same flight (see tls13_check_tick_lifetime_hint()).
+         */
+        uint32_t tick_age_ms;
+
+        /*
+         * The first-offered PSK, the one that keys any 0-RTT, recorded while
+         * the ClientHello is built -- the resumption session when we offer it,
+         * else the external psksession; NULL when no 0-RTT is offered. Held
+         * (up-ref'd) so it stays valid across the post-ServerHello swap, and
+         * read by the binder, the early-key derivation, the early exporter and
+         * the byte-budget lookup. Freed at handshake reset and connection free.
+         */
+        SSL_SESSION *early_data_session;
+
         /* This is the list of algorithms the peer supports that we also support */
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
         /* indicate that we sent the extension, so we'll accept it */
@@ -1756,6 +1774,19 @@ struct ssl_connection_st {
 #ifndef OPENSSL_NO_ECH
         OSSL_ECH_CONN ech;
 #endif
+
+        /* "bool" fields go last, for slightly better packing */
+
+        /* Was the session found unsuitable for early data? */
+        bool early_data_suppressed;
+
+        /*
+         * Cached result of the resumption ticket age/lifetime check for the
+         * ClientHello under construction. Time-dependent, double-checked
+         * within the same flight (see tls13_check_tick_lifetime_hint()).
+         */
+        bool tick_age_checked;
+        bool tick_age_ok;
     } ext;
 
     /*

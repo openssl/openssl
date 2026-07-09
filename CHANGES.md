@@ -32,6 +32,20 @@ OpenSSL 4.0
 
 ### Changes between 4.0.3 and 4.0.4 [xx XXX xxxx]
 
+ * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
+   PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
+   ticket has aged out and an external PSK is offered in its place. The early
+   data was being encrypted with the retired ticket's secret rather than the
+   external PSK's, causing the server to reject it with a bad record MAC.
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 servers to reject early data when a resumed PSK's
+   ticket age is outside tolerance, per RFC 9846, instead of accepting
+   0-RTT data from a ticket that has aged out.
+
+   *Daniel Kubec*
+
  * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
    differs from the ciphersuite associated with the selected PSK. Same-hash
    PSK resumption can still continue without accepting 0-RTT data.
