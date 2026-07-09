@@ -9,11 +9,6 @@
 use strict;
 use OpenSSL::Test;              # get 'plan'
 use OpenSSL::Test::Simple;
-use OpenSSL::Test::Utils;
-
 setup("test_fn_api");
-
-plan skip_all => "This test is unsupported in a shared library build on Windows"
-    if $^O eq 'MSWin32' && !disabled("shared");
 
 simple_test("test_fn_api", "fn_api_test");
