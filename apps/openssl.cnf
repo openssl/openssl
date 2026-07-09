@@ -83,7 +83,7 @@ default = default_sect
 
 # Provider Configuration Directory
 # To aid in deployment of providers, place configuration snippets
-# in this directory. Each snipped must include the [ provider_sect ]
+# in this directory. Each snippet must include the [ provider_sect ]
 # and its own provider section. Note that if providers are configured,
 # the default provider may need to be enabled (see above).
 # .include ./providers.d
