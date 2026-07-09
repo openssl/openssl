@@ -586,6 +586,11 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->error = 0;
     sc->hit = 0;
     sc->shutdown = 0;
+    sc->ext.early_data_suppressed = 0;
+    SSL_SESSION_free(sc->ext.early_data_session);
+    sc->ext.early_data_session = NULL;
+    sc->ext.tick_age_checked = 0;
+    sc->ext.tick_age_ms = 0;
 
     if (sc->renegotiate) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -1510,6 +1515,7 @@ void ossl_ssl_connection_free(SSL *ssl)
         SSL_SESSION_free(s->session);
     }
     SSL_SESSION_free(s->psksession);
+    SSL_SESSION_free(s->ext.early_data_session);
     OPENSSL_free(s->psksession_id);
 
     ssl_cert_free(s->cert);
@@ -2858,6 +2864,32 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
 
     switch (sc->early_data_state) {
     case SSL_EARLY_DATA_NONE:
+        /*
+         * tls_construct_ctos_early_data() decided not to advertise the
+         * early_data extension.
+         *
+         * Succeed and report num bytes as written so the handshake can
+         * continue without 0-RTT; early data rejection can be detected via
+         * SSL_get_early_data_status().
+         */
+        if (!sc->server && sc->ext.early_data_suppressed && !SSL_in_before(s)) {
+            /*
+             * 0-RTT was suppressed. Complete the handshake behind the scenes
+             * and report success so the application's early data write loop
+             * finishes. Run the internal SSL_connect() in the CONNECTING state,
+             * as the non-suppressed path does, so ossl_statem_check_finish_init()
+             * does not mistake it for the application leaving the early data
+             * write sequence.
+             */
+            sc->early_data_state = SSL_EARLY_DATA_CONNECTING;
+            ret = SSL_connect(s);
+            sc->early_data_state = SSL_EARLY_DATA_NONE;
+            if (ret <= 0)
+                return 0;
+            *written = num;
+            return 1;
+        }
+
         if (sc->server
             || !SSL_in_before(s)
             || ((sc->session == NULL || sc->session->ext.max_early_data == 0)
@@ -2872,9 +2904,24 @@ int SSL_write_early_data(SSL *s, const void *buf, size_t num, size_t *written)
         sc->early_data_state = SSL_EARLY_DATA_CONNECTING;
         ret = SSL_connect(s);
         if (ret <= 0) {
-            /* NBIO or error */
-            sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
+            /*
+             * NBIO or error. Normally we stamp the state back to
+             * SSL_EARLY_DATA_CONNECT_RETRY so the next SSL_write_early_data()
+             * call resumes here. However tls_construct_ctos_early_data() may
+             * have reset early_data_state to SSL_EARLY_DATA_NONE because it
+             * decided not to send the early_data extension.
+             *
+             * In that case leave the state alone so the handshake can complete
+             * normally without 0-RTT.
+             */
+            if (!sc->ext.early_data_suppressed)
+                sc->early_data_state = SSL_EARLY_DATA_CONNECT_RETRY;
             return 0;
+        }
+        if (sc->early_data_state == SSL_EARLY_DATA_NONE
+            && sc->ext.early_data_suppressed) {
+            *written = num;
+            return 1;
         }
         /* fall through */
 

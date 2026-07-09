@@ -1885,8 +1885,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
 
     if (external
         && s->early_data_state == SSL_EARLY_DATA_CONNECTING
-        && s->session->ext.max_early_data == 0
-        && sess->ext.max_early_data > 0)
+        && sess == s->ext.early_data_session)
         usepskfored = 1;
 
     if (external) {
