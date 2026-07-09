@@ -129,6 +129,11 @@ struct ossl_ackm_tx_pkt_st {
 };
 
 int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt);
+
+/*
+ * Records transmission of a packet containing only ACK frames.
+ */
+int ossl_ackm_on_tx_ack_only_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt);
 int ossl_ackm_on_rx_datagram(OSSL_ACKM *ackm, size_t num_bytes);
 
 #define OSSL_ACKM_ECN_NONE 0
