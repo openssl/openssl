@@ -431,6 +431,24 @@ int OSSL_FN_div(OSSL_FN *q, OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx);
 
 /**
+ * Calculate the arena payload size that OSSL_FN_div() needs.
+ *
+ * @param[in]           q       The OSSL_FN for the quotient, or NULL when
+ *                              only the remainder is of interest.
+ * @param[in]           r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_div().
+ * When q is NULL, the size is computed for the modulo case, i.e. as if
+ * only the remainder is produced.
+ */
+size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d);
+
+/**
  * Calculate modulo of two OSSL_FN numbers.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the remainder
@@ -447,6 +465,25 @@ static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
     OSSL_FN_CTX *ctx)
 {
     return OSSL_FN_div(NULL, r, n, d, ctx);
+}
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the remainder
+ * @param[in]           n       The first operand (numerator)
+ * @param[in]           d       The second operand (denominator)
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod().
+ * This is a thin wrapper around OSSL_FN_div_ctx_size() with a NULL
+ * quotient, since OSSL_FN_mod() is itself a wrapper around OSSL_FN_div().
+ */
+static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
+    const OSSL_FN *n, const OSSL_FN *d)
+{
+    return OSSL_FN_div_ctx_size(NULL, r, n, d);
 }
 
 /**
