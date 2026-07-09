@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 152;
+plan tests => 153;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -568,6 +568,61 @@ ok(get_issuer($b_cert) =~ /CN=ca.example.com/);
 has_version($b_cert, 3);
 has_SKID($b_cert, 1);
 has_AKID($b_cert, 1);
+
+subtest "signing with -sigopt and verifying a CSR with -vfyopt" => sub {
+    plan tests => 6;
+
+    # -sigopt is passed to the signature algorithm; force RSA-PSS padding
+    # and check it ends up in the issued certificate.
+    my $pss_cert = "sigopt-pss.pem";
+    ok(run(app(["openssl", "x509", "-req", "-CAcreateserial",
+                "-CA", $ca_cert, "-CAkey", $ca_key,
+                "-sigopt", "rsa_padding_mode:pss",
+                "-in", $b_csr, "-out", $pss_cert])),
+       "sign cert from CSR with -sigopt rsa_padding_mode:pss");
+    cert_contains($pss_cert, "Signature Algorithm: rsassaPss", 1,
+                  "issued cert is signed with PSS as selected via -sigopt");
+
+    # An unknown -sigopt must abort signing.
+    ok(!run(app(["openssl", "x509", "-req", "-CAcreateserial",
+                 "-CA", $ca_cert, "-CAkey", $ca_key,
+                 "-sigopt", "bogus:1",
+                 "-in", $b_csr, "-out", "sigopt-bogus.pem"])),
+       "an unknown -sigopt makes signing fail");
+
+    # An unknown -vfyopt must abort CSR verification.
+    ok(!run(app(["openssl", "x509", "-req", "-CAcreateserial",
+                 "-CA", $ca_cert, "-CAkey", $ca_key,
+                 "-vfyopt", "bogus:1",
+                 "-in", $b_csr, "-out", "vfyopt-bogus.pem"])),
+       "an unknown -vfyopt makes CSR verification fail");
+
+    SKIP: {
+        skip "SM2 is not supported by this OpenSSL build", 2 if disabled("sm2");
+
+        # -vfyopt is used to verify the CSR self-signature. Sign an SM2 CSR
+        # with a non-default distinguishing id so that the id must be supplied
+        # via -vfyopt for verification to succeed.
+        my $sm2_key = "sm2-vfyopt-key.pem";
+        my $sm2_csr = "sm2-vfyopt.csr";
+        my $distid = "0102030405060708";
+        run(app(["openssl", "req", "-new", "-newkey", "sm2",
+                 "-keyout", $sm2_key, "-out", $sm2_csr, "-nodes",
+                 "-config", $cnf, "-subj", "/CN=SM2",
+                 "-sigopt", "distid:$distid"]));
+
+        ok(run(app(["openssl", "x509", "-req", "-CAcreateserial",
+                    "-CA", $ca_cert, "-CAkey", $ca_key,
+                    "-vfyopt", "distid:$distid",
+                    "-in", $sm2_csr, "-out", "sm2-vfyopt.pem"])),
+           "SM2 CSR verifies when its distid is given via -vfyopt");
+
+        ok(!run(app(["openssl", "x509", "-req", "-CAcreateserial",
+                     "-CA", $ca_cert, "-CAkey", $ca_key,
+                     "-in", $sm2_csr, "-out", "sm2-novfyopt.pem"])),
+           "SM2 CSR fails to verify without the matching -vfyopt distid");
+    }
+};
 
 # Tests for https://github.com/openssl/openssl/issues/10442 (fixed in 1.1.1a)
 # (incorrect default `-CAcreateserial` if `-CA` path has a dot in it)
