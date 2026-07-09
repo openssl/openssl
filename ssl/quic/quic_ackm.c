@@ -1135,6 +1135,38 @@ int ossl_ackm_on_tx_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
     return 1;
 }
 
+int ossl_ackm_on_tx_ack_only_packet(OSSL_ACKM *ackm, OSSL_ACKM_TX_PKT *pkt)
+{
+    struct tx_pkt_history_st *h;
+    unsigned int pkt_space;
+
+    if (pkt == NULL || pkt->pkt_space >= QUIC_PN_SPACE_NUM)
+        return 0;
+
+    /*
+     * A packet containing only an ACK frame must not be treated as
+     * in-flight or ack-eliciting; if it were, ossl_ackm_on_tx_packet()
+     * below would (correctly) perform bytes-in-flight/timer/CC bookkeeping
+     * for a packet we are about to discard from history, which would be
+     * incorrect.
+     */
+    if (pkt->is_inflight || pkt->is_ack_eliciting)
+        return 0;
+
+    pkt_space = pkt->pkt_space;
+
+    /*
+     * No one can expect ACK for packet which carries ACK frames only
+     * (ack_only packet). The ACKM does not need to keep record for ack_only
+     * packet. For ack_only packet the ACKM manager must be updated by the
+     * highest packet number which got sent.
+     */
+    h = get_tx_history(ackm, pkt_space);
+    h->highest_sent = pkt->pkt_num;
+
+    return 1;
+}
+
 int ossl_ackm_on_rx_datagram(OSSL_ACKM *ackm, size_t num_bytes)
 {
     /* No-op on the client. */
