@@ -4273,20 +4273,13 @@ ___
   my $ghashin_offset_16 = ($STACK_LOCAL_OFFSET + (0 * 16));
 
     &GHASH_16_ENCRYPT_16_PARALLEL(
-      $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,
-      $CTR_CHECK,
-      16,        $aesout_offset,  $ghashin_offset_16, $SHUF_MASK, $ZTMP0,
-      $ZTMP1,
-      $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,
-      $ZTMP7,
-      $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,
-      $ZTMP13,
-      $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
-      $ZTMP19,
-      $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
-      $GL,
-      $GH,       $GM,             "first_time_reduction", $ENC_DEC, $data_in_out_offset,
-      $AAD_HASHz,
+      $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,         $DATA_OFFSET, $CTR_BLOCKz,         $CTR_CHECK,
+      16,        $aesout_offset,  $ghashin_offset_16,     $SHUF_MASK,   $ZTMP0,              $ZTMP1,
+      $ZTMP2,    $ZTMP3,          $ZTMP4,                 $ZTMP5,       $ZTMP6,              $ZTMP7,
+      $ZTMP8,    $ZTMP9,          $ZTMP10,                $ZTMP11,      $ZTMP12,             $ZTMP13,
+      $ZTMP14,   $ZTMP15,         $ZTMP16,                $ZTMP17,      $ZTMP18,             $ZTMP19,
+      $ZTMP20,   $ZTMP21,         $ZTMP22,                $ADDBE_4x4,   $ADDBE_1234,         $GL,
+      $GH,       $GM,             "first_time_reduction", $ENC_DEC,     $data_in_out_offset, $AAD_HASHz,
       $IA0);
 
   $code .= <<___;
@@ -4565,18 +4558,12 @@ ___
   $data_in_out_offset = (0 * 16);
   $ghashin_offset = ($STACK_LOCAL_OFFSET + (0 * 16));
   &GHASH_16_ENCRYPT_16_PARALLEL(
-    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,
-    $CTR_CHECK,
-    32,        $aesout_offset,  $ghashin_offset, $SHUF_MASK,   $ZTMP0,
-    $ZTMP1,
-    $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,
-    $ZTMP7,
-    $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,
-    $ZTMP13,
-    $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
-    $ZTMP19,
-    $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
-    $GL,
+    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,         $CTR_CHECK,
+    32,        $aesout_offset,  $ghashin_offset, $SHUF_MASK,   $ZTMP0,              $ZTMP1,
+    $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,              $ZTMP7,
+    $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,             $ZTMP13,
+    $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,             $ZTMP19,
+    $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,         $GL,
     $GH,       $GM,             "first_time",    $ENC_DEC,     $data_in_out_offset, $AAD_HASHz,
     $IA0);
 
@@ -4585,18 +4572,12 @@ ___
   $data_in_out_offset = (16 * 16);
   $ghashin_offset     = ($STACK_LOCAL_OFFSET + (16 * 16));
   &GHASH_16_ENCRYPT_16_PARALLEL(
-    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,    $DATA_OFFSET, $CTR_BLOCKz,
-      $CTR_CHECK,
-    16,        $aesout_offset,  $ghashin_offset,   $SHUF_MASK,   $ZTMP0,
-      $ZTMP1,
-    $ZTMP2,    $ZTMP3,          $ZTMP4,            $ZTMP5,       $ZTMP6,
-      $ZTMP7,
-    $ZTMP8,    $ZTMP9,          $ZTMP10,           $ZTMP11,      $ZTMP12,
-      $ZTMP13,
-    $ZTMP14,   $ZTMP15,         $ZTMP16,           $ZTMP17,      $ZTMP18,
-      $ZTMP19,
-    $ZTMP20,   $ZTMP21,         $ZTMP22,           $ADDBE_4x4,   $ADDBE_1234,
-      $GL,
+    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,    $DATA_OFFSET, $CTR_BLOCKz,         $CTR_CHECK,
+    16,        $aesout_offset,  $ghashin_offset,   $SHUF_MASK,   $ZTMP0,              $ZTMP1,
+    $ZTMP2,    $ZTMP3,          $ZTMP4,            $ZTMP5,       $ZTMP6,              $ZTMP7,
+    $ZTMP8,    $ZTMP9,          $ZTMP10,           $ZTMP11,      $ZTMP12,             $ZTMP13,
+    $ZTMP14,   $ZTMP15,         $ZTMP16,           $ZTMP17,      $ZTMP18,             $ZTMP19,
+    $ZTMP20,   $ZTMP21,         $ZTMP22,           $ADDBE_4x4,   $ADDBE_1234,         $GL,
     $GH,       $GM,             "final_reduction", $ENC_DEC,     $data_in_out_offset, "no_ghash_in",
     $IA0);
 
@@ -4660,18 +4641,12 @@ ___
   $ghashin_offset     = ($STACK_LOCAL_OFFSET + (0 * 16));
   $data_in_out_offset = (0 * 16);
   &GHASH_16_ENCRYPT_16_PARALLEL(
-    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,
-    $CTR_CHECK,
-    32,        $aesout_offset,  $ghashin_offset, $SHUF_MASK,   $ZTMP0,
-    $ZTMP1,
-    $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,
-    $ZTMP7,
-    $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,
-    $ZTMP13,
-    $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,
-    $ZTMP19,
-    $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,
-    $GL,
+    $AES_KEYS, $CIPH_PLAIN_OUT, $PLAIN_CIPH_IN,  $DATA_OFFSET, $CTR_BLOCKz,         $CTR_CHECK,
+    32,        $aesout_offset,  $ghashin_offset, $SHUF_MASK,   $ZTMP0,              $ZTMP1,
+    $ZTMP2,    $ZTMP3,          $ZTMP4,          $ZTMP5,       $ZTMP6,              $ZTMP7,
+    $ZTMP8,    $ZTMP9,          $ZTMP10,         $ZTMP11,      $ZTMP12,             $ZTMP13,
+    $ZTMP14,   $ZTMP15,         $ZTMP16,         $ZTMP17,      $ZTMP18,             $ZTMP19,
+    $ZTMP20,   $ZTMP21,         $ZTMP22,         $ADDBE_4x4,   $ADDBE_1234,         $GL,
     $GH,       $GM,             "first_time",    $ENC_DEC,     $data_in_out_offset, $AAD_HASHz,
     $IA0);
 
