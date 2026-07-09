@@ -360,6 +360,14 @@ void bn_release(BIGNUM *b, int limbs)
     bn_correct_top(b);
 }
 
+OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn)
+{
+    if (ossl_unlikely(bn == NULL))
+        return NULL;
+
+    return bn->data;
+}
+
 BIGNUM *BN_dup(const BIGNUM *a)
 {
     BIGNUM *t;
