@@ -17,3 +17,11 @@ repos:
                   crypto/objects/obj_xref.h|
                   include/openssl/obj_mac.h
                  )$
+  - repo: local
+    hooks:
+      - id: "doc-comments"
+        name: "documentation comments on new function declarations"
+        entry: "perl util/check-doc-comments.pl"
+        language: "system"
+        files: '\.h(\.in)?$'
+        require_serial: true
