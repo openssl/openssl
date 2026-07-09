@@ -6055,6 +6055,134 @@ err:
 }
 
 /*
+ * With AEAD ciphers, associated data must precede the payload. Once plaintext
+ * or ciphertext processing has begun, a further AAD update (out == NULL) must
+ * be rejected, and the rejection must be reported the same way across every
+ * AEAD: ERR_LIB_PROV / PROV_R_UPDATE_CALL_OUT_OF_ORDER. The invariant is
+ * checked in both the encrypt and decrypt directions.
+ */
+static int test_evp_aead_late_aad(int idx)
+{
+    const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
+    EVP_CIPHER_CTX *ctx_enc = NULL; /* late AAD after plaintext: must fail */
+    EVP_CIPHER_CTX *ctx_dec = NULL; /* late AAD after ciphertext: must fail */
+
+    unsigned char key[EVP_MAX_KEY_LENGTH] = { 0 };
+    unsigned char iv[EVP_MAX_IV_LENGTH] = { 0 };
+    unsigned char aad[] = "aad";
+    unsigned char msg[] = "message";
+    unsigned char out[sizeof(msg) + EVP_MAX_BLOCK_LENGTH];
+
+    int i = 0, len = 0, testresult = 0, expected = 0;
+    char *errmsg = NULL;
+    unsigned long err_code = 0;
+
+    if (info->taglen == 0 /* skip non-AEAD */
+        || info->mode == EVP_CIPH_GCM_MODE /* rejects, raises 102 PROV_R_CIPHER_OPERATION_FAILED */
+        || info->mode == EVP_CIPH_CCM_MODE /* fails at first AAD */
+        || info->mode == EVP_CIPH_OCB_MODE /* accepts late AAD */
+        || info->mode == EVP_CIPH_GCM_SIV_MODE /* accepts late AAD */
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA1")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA256")
+        /* skip TLS stitched MTE cipher */
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256"))
+        return 1;
+
+    for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xB0 + i);
+
+    /* encrypt: aad, then plaintext, then a late aad update must be rejected */
+    if (!TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())) {
+        errmsg = "ENC_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx_enc, info->ciph, key, iv, NULL))) {
+        errmsg = "ENC_INIT";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))) {
+        errmsg = "ENC_AAD";
+        goto err;
+    }
+    if (!TEST_true(EVP_EncryptUpdate(ctx_enc, out, &len, msg, sizeof(msg)))) {
+        errmsg = "ENC_PLAINTEXT";
+        goto err;
+    }
+    ERR_set_mark();
+    if (!TEST_false(EVP_EncryptUpdate(ctx_enc, NULL, &len, aad, sizeof(aad)))) {
+        ERR_clear_last_mark();
+        errmsg = "ENC_LATE_AAD_NOT_REJECTED";
+        goto err;
+    }
+    err_code = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
+        || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        ERR_clear_last_mark();
+        expected = PROV_R_UPDATE_CALL_OUT_OF_ORDER;
+        errmsg = "ENC_LATE_AAD_WRONG_REASON";
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    /* decrypt: same sequence, late aad after ciphertext must be rejected */
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())) {
+        errmsg = "DEC_ALLOC";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx_dec, info->ciph, key, iv, NULL))) {
+        errmsg = "DEC_INIT";
+        goto err;
+    }
+    if (!TEST_true(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))) {
+        errmsg = "DEC_AAD";
+        goto err;
+    }
+    /* the ciphertext content is irrelevant; the tag is never finalized here */
+    if (!TEST_true(EVP_DecryptUpdate(ctx_dec, out, &len, msg, sizeof(msg)))) {
+        errmsg = "DEC_CIPHERTEXT";
+        goto err;
+    }
+    ERR_set_mark();
+    if (!TEST_false(EVP_DecryptUpdate(ctx_dec, NULL, &len, aad, sizeof(aad)))) {
+        ERR_clear_last_mark();
+        errmsg = "DEC_LATE_AAD_NOT_REJECTED";
+        goto err;
+    }
+    err_code = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
+        || !TEST_int_eq(ERR_GET_REASON(err_code), PROV_R_UPDATE_CALL_OUT_OF_ORDER)) {
+        ERR_clear_last_mark();
+        expected = PROV_R_UPDATE_CALL_OUT_OF_ORDER;
+        errmsg = "DEC_LATE_AAD_WRONG_REASON";
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    testresult = 1;
+
+err:
+    if (errmsg != NULL) {
+        if (expected != 0)
+            TEST_info("test_evp_aead_late_aad %d, %s: %s"
+                      " (expected reason %d, got %d)",
+                idx, errmsg, info->name,
+                expected, ERR_GET_REASON(err_code));
+        else
+            TEST_info("test_evp_aead_late_aad %d, %s: %s",
+                idx, errmsg, info->name);
+    }
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    return testresult;
+}
+
+/*
  * Verify stale key is not being used after providing a new key in multiple steps.
  * This test performs a full round of encryption and then changes the
  * key and then the IV in a multi-step init.
@@ -7761,30 +7889,6 @@ err:
     return ret;
 }
 
-#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
-static int test_chacha20_poly1305_late_aad(void)
-{
-    EVP_CIPHER_CTX *ctx = NULL;
-    EVP_CIPHER *c = NULL;
-    unsigned char key[32] = { 0 };
-    unsigned char iv[12] = { 0 };
-    unsigned char aad[4] = "aad";
-    unsigned char msg[8] = "message";
-    unsigned char out[32];
-    int len, test;
-
-    test = TEST_ptr(ctx = EVP_CIPHER_CTX_new())
-        && TEST_ptr(c = EVP_CIPHER_fetch(testctx, "ChaCha20-Poly1305", testpropq))
-        && TEST_true(EVP_EncryptInit_ex2(ctx, c, key, iv, NULL))
-        && TEST_true(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)))
-        && TEST_true(EVP_EncryptUpdate(ctx, out, &len, msg, sizeof(msg)))
-        && TEST_false(EVP_EncryptUpdate(ctx, NULL, &len, aad, sizeof(aad)));
-
-    EVP_CIPHER_free(c);
-    EVP_CIPHER_CTX_free(ctx);
-    return test;
-}
-#endif
 /*
  * AES-SIV reuse-without-rekey:
  *   msg1: legit non-empty CT, tag verifies, final_ret=0
@@ -9078,7 +9182,6 @@ int setup_tests(void)
 #endif
 #if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
     ADD_TEST(test_decrypt_null_chunks);
-    ADD_TEST(test_chacha20_poly1305_late_aad);
 #endif
 #ifndef OPENSSL_NO_DH
     ADD_TEST(test_DH_priv_pub);
@@ -9122,6 +9225,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_decrypt_roundtrip_multistep, cipher_list_n);
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, cipher_list_n);
     ADD_ALL_TESTS(test_evp_aead_tag_direction, cipher_list_n);
+    ADD_ALL_TESTS(test_evp_aead_late_aad, cipher_list_n);
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
