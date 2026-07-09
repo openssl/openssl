@@ -15,27 +15,6 @@ use Net::Curl::Easy qw(:constants);
 
 use vars qw(%options);
 
-# Callback for reading the body.
-sub read_body {
-    my ($easy, $maxlength, $state) = @_;
-    my $return_data = "";
-    my $data_len = length ${$state->{data}};
-    if ($state->{bytes} < $data_len) {
-        $data_len = $data_len - $state->{bytes};
-        $data_len = $maxlength if $data_len > $maxlength;
-        $return_data = substr ${$state->{data}}, $state->{bytes}, $data_len;
-        $state->{bytes} += $data_len;
-    }
-    return $return_data;
-}
-
-# Callback for writing the body into a variable.
-sub write_body {
-    my ($easy, $data, $pointer) = @_;
-    ${$pointer} .= $data;
-    return length($data);
-}
-
 # Initialise a new Curl object.
 sub create_curl {
     my $url = shift;
@@ -49,17 +28,9 @@ sub create_curl {
     $curl->setopt(CURLOPT_USERAGENT,
         "OpenTSA tsget.pl/openssl-{- $config{full_version} -}");
 
-    # Options for POST method.
-    $curl->setopt(CURLOPT_UPLOAD, 1);
-    $curl->setopt(CURLOPT_CUSTOMREQUEST, "POST");
     $curl->setopt(CURLOPT_HTTPHEADER,
         ["Content-Type: application/timestamp-query",
         "Accept: application/timestamp-reply,application/timestamp-response"]);
-    $curl->setopt(CURLOPT_READFUNCTION, \&read_body);
-    $curl->setopt(CURLOPT_HEADERFUNCTION, sub { return length($_[1]); });
-
-    # Options for getting the result.
-    $curl->setopt(CURLOPT_WRITEFUNCTION, \&write_body);
 
     # SSL related options.
     $curl->setopt(CURLOPT_SSLKEYTYPE, "PEM");
@@ -79,36 +50,43 @@ sub create_curl {
     return $curl;
 }
 
-# Send a request and returns the body back.
-sub get_timestamp {
-    my $curl = shift;
-    my $body = shift;
-    my $ts_body;
+# Send a request and write the response to output.
+sub send_request {
+    my ($curl, $body, $output) = @_;
 
-    # Options for POST method.
-    $curl->setopt(CURLOPT_INFILE, {data => $body, bytes => 0});
-    $curl->setopt(CURLOPT_INFILESIZE, length(${$body}));
+    open my $out, '>', $output
+        or return "could not open output file: $!";
 
-    # Options for getting the result.
-    $curl->setopt(CURLOPT_FILE, \$ts_body);
+    binmode $out;
 
-    # Send the request...
-    my $error_string;
-    eval { $curl->perform(); };
-    if ($@) {
-        my $http_code = $curl->getinfo(CURLINFO_HTTP_CODE);
-        $error_string = "could not get timestamp";
-        $error_string .= ", http code: $http_code" unless $http_code == 0;
-        $error_string .= ": $@";
-    } else {
-        my $ct = $curl->getinfo(CURLINFO_CONTENT_TYPE);
-        if (lc($ct) ne "application/timestamp-reply"
-            && lc($ct) ne "application/timestamp-response") {
-            $error_string = "unexpected content type returned: $ct";
-        }
+    $curl->setopt(CURLOPT_POST, 1);
+    $curl->setopt(CURLOPT_POSTFIELDS, $body);
+    $curl->setopt(CURLOPT_POSTFIELDSIZE, length($body));
+    $curl->setopt(CURLOPT_WRITEDATA, $out);
+
+    my $ok = eval { $curl->perform(); 1; };
+
+    if (!$ok) {
+        my $err = $@;
+        eval {
+            my $curl_err = $curl->error();
+            $err = $curl_err if defined($curl_err) && length($curl_err);
+        };
+        close $out;
+        unlink $output;
+        return $err;
     }
-    return ($ts_body, $error_string);
 
+    close $out
+        or return "could not close output file: $!";
+
+    my $size = -s $output;
+    if (!defined($size) || $size == 0) {
+        unlink $output;
+        return "empty response received";
+    }
+
+    return undef;
 }
 
 # Print usage information and exists.
@@ -172,23 +150,10 @@ REQUEST: foreach (@ARGV) {
     # Send request.
     STDERR->printflush("sending request") if $options{v};
 
-    my ($ts_body, $error) = get_timestamp $curl, \$body;
+    my $error = send_request($curl, $body, $output);
     if (defined($error)) {
         die "$input: fatal error: $error\n";
     }
     STDERR->printflush(", reply received") if $options{v};
-
-    # Write response.
-    if ($output eq "-") {
-        # Write to STDOUT.
-        print $ts_body;
-    } else {
-        # Write to file.
-        open OUTPUT, ">", $output
-            or warn("$output: could not open output file: $!\n"), next REQUEST;
-        print OUTPUT $ts_body;
-        close OUTPUT
-            or warn("$output: could not close output file: $!\n"), next REQUEST;
-    }
     STDERR->printflush(", $output written.\n") if $options{v};
 }
