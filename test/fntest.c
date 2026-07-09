@@ -12,8 +12,8 @@
 #include <string.h>
 #include <openssl/bn.h>
 #include <openssl/crypto.h>
-#include "crypto/bn.h"
 #include "crypto/fn.h"
+#include "crypto/bn.h"
 #include "crypto/fn_intern.h"
 #include "internal/nelem.h"
 #include "testutil.h"
@@ -257,6 +257,92 @@ err:
     return st;
 }
 
+static int file_quotient(STANZA *s)
+{
+    BIGNUM *a = NULL, *b = NULL, *quotient = NULL, *remainder = NULL;
+    BIGNUM *qret = NULL, *rret = NULL, *mret = NULL;
+    OSSL_FN *af = NULL, *bf = NULL, *qf = NULL, *rf = NULL, *mf = NULL;
+    OSSL_FN_CTX *ctx = NULL, *mod_ctx = NULL;
+    int a_neg = 0, b_neg = 0, q_neg = 0, r_neg = 0, st = 0;
+    int q_acq = 0, r_acq = 0, m_acq = 0;
+    int q_limbs = 0, r_limbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(b = getBN(s, "B"))
+        || !TEST_ptr(quotient = getBN(s, "Quotient"))
+        || !TEST_ptr(remainder = getBN(s, "Remainder"))
+        || !TEST_ptr(qret = BN_new())
+        || !TEST_ptr(rret = BN_new())
+        || !TEST_ptr(mret = BN_new()))
+        goto err;
+
+    a_neg = BN_is_negative(a);
+    b_neg = BN_is_negative(b);
+    q_neg = a_neg ^ b_neg;
+    r_neg = a_neg;
+    q_limbs = limbs(quotient);
+    r_limbs = limbs(remainder);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fn(b))
+        || !TEST_ptr(qf = bn_acquire_ossl_fn(qret, q_limbs)))
+        goto err;
+    q_acq = 1;
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(rret, r_limbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_ptr(mf = bn_acquire_ossl_fn(mret, r_limbs)))
+        goto err;
+    m_acq = 1;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_div_ctx_size(qf, rf, af, bf)))
+        || !TEST_ptr(mod_ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_mod_ctx_size(mf, af, bf))))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_div(qf, rf, af, bf, ctx)))
+        goto err;
+    bn_release(qret, q_limbs);
+    if (!BN_is_zero(qret))
+        BN_set_negative(qret, q_neg);
+    q_acq = 0;
+    bn_release(rret, r_limbs);
+    if (!BN_is_zero(rret))
+        BN_set_negative(rret, r_neg);
+    r_acq = 0;
+    if (!equalBN("A / B", quotient, qret)
+        || !equalBN("A % B", remainder, rret))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod(mf, af, bf, mod_ctx)))
+        goto err;
+    bn_release(mret, r_limbs);
+    if (!BN_is_zero(mret))
+        BN_set_negative(mret, r_neg);
+    m_acq = 0;
+    if (!equalBN("A % B (mod)", remainder, mret))
+        goto err;
+
+    st = 1;
+err:
+    if (m_acq)
+        bn_release(mret, r_limbs);
+    if (r_acq)
+        bn_release(rret, r_limbs);
+    if (q_acq)
+        bn_release(qret, q_limbs);
+    OSSL_FN_CTX_free(mod_ctx);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(b);
+    BN_free(quotient);
+    BN_free(remainder);
+    BN_free(qret);
+    BN_free(rret);
+    BN_free(mret);
+    return st;
+}
+
 static int file_lshift1(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift1 = NULL, *ret = NULL;
@@ -343,7 +429,7 @@ static FILETEST filetests[] = {
     { "RShift", NULL, 0 },
     { "Square", file_square, 0 },
     { "Product", file_product, 0 },
-    { "Quotient", NULL, 0 },
+    { "Quotient", file_quotient, 0 },
     { "ModMul", NULL, 0 },
     { "ModSqr", NULL, 0 },
     { "ModExp", NULL, 0 },
