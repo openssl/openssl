@@ -8,6 +8,7 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
+use warnings;
 use IO::Handle;
 use Getopt::Std;
 use File::Basename;
@@ -41,8 +42,11 @@ sub create_curl {
     $curl->setopt(CURLOPT_SSLCERT, $options{c}) if defined($options{c});
     $curl->setopt(CURLOPT_CAINFO, $options{C}) if defined($options{C});
     $curl->setopt(CURLOPT_CAPATH, $options{P}) if defined($options{P});
-    $curl->setopt(CURLOPT_RANDOM_FILE, $options{r}) if defined($options{r});
-    $curl->setopt(CURLOPT_EGDSOCKET, $options{g}) if defined($options{g});
+
+    # CURLOPT_RANDOM_FILE and CURLOPT_EGDSOCKET were removed from libcurl;
+    # wrap in eval so we fail gracefully on newer versions.
+    eval { $curl->setopt(CURLOPT_RANDOM_FILE, $options{r}) if defined($options{r}); };
+    eval { $curl->setopt(CURLOPT_EGDSOCKET, $options{g}) if defined($options{g}); };
 
     # Setting destination.
     $curl->setopt(CURLOPT_URL, $url);
