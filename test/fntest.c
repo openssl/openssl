@@ -385,7 +385,7 @@ err:
 static int file_lshift(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *rf = NULL;
+    OSSL_FN *af = NULL, *lf = NULL, *rf = NULL;
     int a_neg = 0, n = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -400,6 +400,7 @@ static int file_lshift(STANZA *s)
     nlimbs = limbs(lshift);
 
     if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(lf = bn_get_ossl_fn(lshift))
         || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
         goto err;
     r_acq = 1;
@@ -412,6 +413,18 @@ static int file_lshift(STANZA *s)
     if (!equalBN("A << N", lshift, ret))
         goto err;
 
+    /* Round-trip: shift the result back and recover A */
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_true(OSSL_FN_rshift(rf, lf, n)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("A >> N", a, ret))
+        goto err;
+
     st = 1;
 err:
     if (r_acq)
@@ -422,11 +435,65 @@ err:
     return st;
 }
 
+static int file_rshift(STANZA *s)
+{
+    BIGNUM *a = NULL, *rshift = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *rf = NULL;
+    int a_neg = 0, n = 0, st = 0;
+    int r_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(rshift = getBN(s, "RShift"))
+        || !TEST_ptr(ret = BN_new())
+        || !getint(s, &n, "N"))
+        goto err;
+
+    a_neg = BN_is_negative(a);
+    nlimbs = limbs(rshift);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_true(OSSL_FN_rshift(rf, af, n)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("A >> N", rshift, ret))
+        goto err;
+
+    /* If N == 1, try with rshift1 as well */
+    if (n == 1) {
+        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+            goto err;
+        r_acq = 1;
+        if (!TEST_true(OSSL_FN_rshift1(rf, af)))
+            goto err;
+        bn_release(ret, nlimbs);
+        BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+        r_acq = 0;
+        if (!equalBN("A >> 1 (rshift1)", rshift, ret))
+            goto err;
+    }
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    BN_free(a);
+    BN_free(rshift);
+    BN_free(ret);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
     { "LShift", file_lshift, 0 },
-    { "RShift", NULL, 0 },
+    { "RShift", file_rshift, 0 },
     { "Square", file_square, 0 },
     { "Product", file_product, 0 },
     { "Quotient", file_quotient, 0 },
