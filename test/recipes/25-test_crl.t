@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 11;
+plan tests => 12;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -83,6 +83,73 @@ subtest 'crl signature verification' => sub {
                     "-CApath", $capath])),
            "verify CRL signature with -CApath");
     }
+};
+
+# Cover -gendelta (delta CRL generation), which is the only code path in the
+# crl app using the -key and -keyform options.
+subtest 'crl delta generation with -gendelta, -key and -keyform' => sub {
+    plan tests => 5;
+
+    # copy the CA cert and key in locally so the config uses plain paths
+    my $cacert = "gendelta-ca-cert.pem";
+    my $cakey = "gendelta-ca-key.pem";
+    copy(srctop_file("test", "certs", "ca-cert.pem"), $cacert);
+    copy(srctop_file("test", "certs", "ca-key.pem"), $cakey);
+
+    open my $cfg, '>', "gencrl.cnf" or die "Could not create gencrl.cnf: $!";
+    print $cfg <<"EOF";
+[ca]
+default_ca = CA_default
+[CA_default]
+database = index.txt
+certificate = $cacert
+private_key = $cakey
+crlnumber = crlnumber
+default_md = sha256
+default_crl_days = 30
+EOF
+    close $cfg;
+    open my $db, '>', "index.txt" or die "Could not create index.txt: $!";
+    close $db; # empty CA database
+    open my $num, '>', "crlnumber" or die "Could not create crlnumber: $!";
+    print $num "1000\n";
+    close $num;
+
+    run(app(["openssl", "ca", "-gencrl", "-config", "gencrl.cnf",
+             "-out", "delta-base.crl"]));
+    run(app(["openssl", "ca", "-gencrl", "-config", "gencrl.cnf",
+             "-out", "delta-newer.crl"]));
+
+    # -gendelta with a PEM signing key (the default -keyform)
+    ok(run(app(["openssl", "crl", "-in", "delta-base.crl",
+                "-gendelta", "delta-newer.crl",
+                "-key", $cakey, "-out", "delta.crl"])),
+       "generate delta CRL with -gendelta and a PEM -key");
+
+    run(app(["openssl", "crl", "-in", "delta.crl", "-noout", "-text",
+             "-out", "delta.txt"]));
+    test_file_contains("delta CRL", "delta.txt", "Delta CRL Indicator", 1);
+
+    # The same, loading the signing key from DER via -keyform DER
+    run(app(["openssl", "pkey", "-in", $cakey, "-outform", "DER",
+             "-out", "ca-key.der"]));
+    ok(run(app(["openssl", "crl", "-in", "delta-base.crl",
+                "-gendelta", "delta-newer.crl",
+                "-key", "ca-key.der", "-keyform", "DER",
+                "-out", "delta-der.crl"])),
+       "generate delta CRL with a DER -key and -keyform DER");
+
+    # -keyform must match the key encoding: a DER key read as PEM fails.
+    ok(!run(app(["openssl", "crl", "-in", "delta-base.crl",
+                 "-gendelta", "delta-newer.crl",
+                 "-key", "ca-key.der", "-keyform", "PEM",
+                 "-out", "delta-bad.crl"])),
+       "wrong -keyform for the signing key makes -gendelta fail");
+
+    # -gendelta requires a signing key.
+    ok(!run(app(["openssl", "crl", "-in", "delta-base.crl",
+                 "-gendelta", "delta-newer.crl", "-out", "delta-nokey.crl"])),
+       "-gendelta without -key fails");
 };
 
 sub compare1stline {
