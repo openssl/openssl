@@ -674,6 +674,52 @@ err:
     BN_free(ret);
     return st;
 }
+static int file_gcd(STANZA *s)
+{
+    BIGNUM *a = NULL, *b = NULL, *gcd = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *bf = NULL, *rf = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    int st = 0;
+    int r_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(b = getBN(s, "B"))
+        || !TEST_ptr(gcd = getBN(s, "GCD"))
+        || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    nlimbs = limbs(gcd);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fn(b))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_gcd_ctx_size(af, bf))))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_gcd(rf, af, bf, ctx)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, 0);
+    r_acq = 0;
+    if (!equalBN("gcd(A,B)", gcd, ret))
+        goto err;
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(b);
+    BN_free(gcd);
+    BN_free(ret);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
@@ -687,7 +733,7 @@ static FILETEST filetests[] = {
     { "ModExp", NULL, 0 },
     { "Exp", NULL, 0 },
     { "ModSqrt", NULL, 0 },
-    { "GCD", NULL, 0 },
+    { "GCD", file_gcd, 0 },
 };
 
 static int file_test_run(STANZA *s)
