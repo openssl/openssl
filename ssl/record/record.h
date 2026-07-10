@@ -39,10 +39,10 @@ typedef struct tls_record_st {
     size_t length;
     /* Offset into the data buffer where to start reading */
     size_t off;
-    /* epoch number. DTLS only */
-    uint16_t epoch;
+    /* Serialized DTLS epoch */
+    uint64_t epoch;
     /* sequence number. DTLS only */
-    unsigned char seq_num[SEQ_NUM_SIZE];
+    uint64_t seq_num;
 #ifndef OPENSSL_NO_SCTP
     struct bio_dgram_sctp_rcvinfo recordinfo;
 #endif
@@ -50,12 +50,12 @@ typedef struct tls_record_st {
 
 typedef struct dtls_record_layer_st {
     /*
-     * The current data and handshake epoch.  This is initially
+     * The current data and handshake epoch. This is initially
      * undefined, and starts at zero once the initial handshake is
      * completed
      */
-    uint16_t r_epoch;
-    uint16_t w_epoch;
+    uint64_t r_conn_epoch;
+    uint64_t w_conn_epoch;
 
     /*
      * Buffered application records. Only for records between CCS and
@@ -127,6 +127,8 @@ typedef struct record_layer_st {
     /* Record layer data to be processed */
     TLS_RECORD tlsrecs[SSL_MAX_PIPELINES];
 
+    /* DTLS epoch zero write sequence number */
+    uint64_t wlayer_epoch_zero_sequence;
 } RECORD_LAYER;
 
 /*****************************************************************************
@@ -162,8 +164,9 @@ __owur int dtls1_write_bytes(SSL_CONNECTION *s, uint8_t type, const void *buf,
     size_t len, size_t *written);
 int do_dtls1_write(SSL_CONNECTION *s, uint8_t type, const unsigned char *buf,
     size_t len, size_t *written);
-void dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
-uint16_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
+int dtls1_increment_epoch(SSL_CONNECTION *s, int rw);
+uint64_t dtls1_get_epoch(SSL_CONNECTION *s, int rw);
+uint64_t dtls1_get_record_sequence_number(SSL_CONNECTION *s);
 int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
 #define HANDLE_RLAYER_READ_RETURN(s, ret) \
@@ -178,9 +181,11 @@ int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int direction, int level,
     unsigned char *secret, size_t secretlen,
+    unsigned char *snkey,
     unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph, size_t taglen,
     int mactype, const EVP_MD *md,
     const SSL_COMP *comp, const EVP_MD *kdfdigest);
@@ -194,5 +199,16 @@ OSSL_CORE_MAKE_FUNC(void, rlayer_msg_callback, (int write_p, int version, int co
 OSSL_CORE_MAKE_FUNC(int, rlayer_security, (void *cbarg, int op, int bits, int nid, void *other))
 #define OSSL_FUNC_RLAYER_PADDING 4
 OSSL_CORE_MAKE_FUNC(size_t, rlayer_padding, (void *cbarg, int type, size_t len))
+
+/*
+ * Callback for listener-based connections to read data from their receive
+ * queue. Used by DTLS listener connections (and future TLS listener).
+ * Returns 1 on success with data/len set, 0 if no data available.
+ * The caller must call the release callback when done with the data.
+ */
+#define OSSL_FUNC_RLAYER_GET_URXE_PACKET 5
+OSSL_CORE_MAKE_FUNC(int, rlayer_get_urxe_packet, (void *cbarg, unsigned char **data, size_t *len, void **packet_handle))
+#define OSSL_FUNC_RLAYER_RELEASE_URXE_PACKET 6
+OSSL_CORE_MAKE_FUNC(void, rlayer_release_urxe_packet, (void *cbarg, void *packet_handle))
 
 #endif /* !defined(OSSL_SSL_RECORD_RECORD_H) */

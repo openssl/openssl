@@ -19,8 +19,8 @@
 typedef struct dtls_bitmap_st {
     /* Track 64 packets */
     uint64_t map;
-    /* Max record number seen so far, 64-bit value in big-endian encoding */
-    unsigned char max_seq_num[SEQ_NUM_SIZE];
+    /* Max record number seen so far */
+    uint64_t max_seq_num;
 } DTLS_BITMAP;
 
 typedef struct ssl_mac_buf_st {
@@ -75,10 +75,10 @@ typedef struct tls_rl_record_st {
     unsigned char *comp;
     /* epoch number, needed by DTLS1 */
     /* r */
-    uint16_t epoch;
+    uint64_t epoch;
     /* sequence number, needed by DTLS1 */
     /* r */
-    unsigned char seq_num[SEQ_NUM_SIZE];
+    uint64_t seq_num;
 } TLS_RL_RECORD;
 
 /* Macros/functions provided by the TLS_RL_RECORD component */
@@ -100,9 +100,11 @@ struct record_functions_st {
      * alternative record layer.
      */
     int (*set_crypto_state)(OSSL_RECORD_LAYER *rl, int level,
+        unsigned char *snkey,
         unsigned char *key, size_t keylen,
         unsigned char *iv, size_t ivlen,
         unsigned char *mackey, size_t mackeylen,
+        const EVP_CIPHER *snciph,
         const EVP_CIPHER *ciph,
         size_t taglen,
         int mactype,
@@ -220,7 +222,7 @@ struct ossl_record_layer_st {
     int level;
     const EVP_MD *md;
     /* DTLS only */
-    uint16_t epoch;
+    uint64_t epoch;
 
     /*
      * A BIO containing any data read in the previous epoch that was destined
@@ -272,7 +274,7 @@ struct ossl_record_layer_st {
     size_t packet_length;
 
     /* Sequence number for the next record */
-    unsigned char sequence[SEQ_NUM_SIZE];
+    uint64_t sequence;
 
     /* Alert code to be used if an error occurs */
     int alert;
@@ -293,6 +295,8 @@ struct ossl_record_layer_st {
 
     /* cryptographic state */
     EVP_CIPHER_CTX *enc_ctx;
+    /* cryptographic state for DTLS 1.3 encrypted sequence numbers */
+    EVP_CIPHER_CTX *sn_enc_ctx;
 
     /* TLSv1.3 MAC ctx, only used with integrity-only cipher */
     EVP_MAC_CTX *mac_ctx;
@@ -344,18 +348,43 @@ struct ossl_record_layer_st {
     size_t taglen;
 
     /* DTLS received handshake records (processed and unprocessed) */
-    struct pqueue_st *unprocessed_rcds;
-    struct pqueue_st *processed_rcds;
+    pqueue unprocessed_rcds;
+    pqueue processed_rcds;
 
     /* records being received in the current epoch */
     DTLS_BITMAP bitmap;
-    /* renegotiation starts a new set of sequence numbers */
-    DTLS_BITMAP next_bitmap;
+
+    /* DTLS curr mtu size */
+    size_t curr_mtu;
+
+#ifndef OPENSSL_NO_SOCK
+    /*
+     * DTLS peer address for writes. When set (family != AF_UNSPEC), the
+     * record layer will use BIO_sendmmsg() with this address instead of
+     * BIO_write(). This is used by listener-created connections that share
+     * the listener's network BIO.
+     */
+    BIO_ADDR peer;
+#endif
+
+    /*
+     * Use URXE queue for reading instead of BIO. Only set for listener-created
+     * DTLS connections where s->d1->rx exists.
+     */
+    unsigned int use_urxe : 1;
 
     /*
      * Whether we are currently in a handshake or not. Only maintained for DTLS
      */
     int in_init;
+
+    /*
+     * DTLSv1.3 uses encrypted sequence numbers in epoch 1 and beyond.
+     * For records that are buffered we need to put a priority on the
+     * buffered records.
+     */
+    int dtls13_epoch_1_seq;
+    int dtls13_epoch_2_seq;
 
     /* Callbacks */
     void *cbarg;
@@ -363,6 +392,8 @@ struct ossl_record_layer_st {
     OSSL_FUNC_rlayer_msg_callback_fn *msg_callback;
     OSSL_FUNC_rlayer_security_fn *security;
     OSSL_FUNC_rlayer_padding_fn *padding;
+    OSSL_FUNC_rlayer_get_urxe_packet_fn *get_urxe_packet;
+    OSSL_FUNC_rlayer_release_urxe_packet_fn *release_urxe_packet;
 
     size_t max_pipelines;
 
@@ -381,6 +412,7 @@ extern const struct record_functions_st tls_1_funcs;
 extern const struct record_functions_st tls_1_3_funcs;
 extern const struct record_functions_st tls_any_funcs;
 extern const struct record_functions_st dtls_1_funcs;
+extern const struct record_functions_st dtls_1_3_funcs;
 extern const struct record_functions_st dtls_any_funcs;
 
 void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
@@ -398,9 +430,6 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
     || (rl)->version == DTLS1_VERSION                               \
     || (rl)->version == DTLS1_2_VERSION)
 
-void ossl_tls_rl_record_set_seq_num(TLS_RL_RECORD *r,
-    const unsigned char *seq_num);
-
 int ossl_set_tls_provider_parameters(OSSL_RECORD_LAYER *rl,
     EVP_CIPHER_CTX *ctx,
     const EVP_CIPHER *ciph,
@@ -413,6 +442,26 @@ int tls_free_buffers(OSSL_RECORD_LAYER *rl);
 int tls_default_read_n(OSSL_RECORD_LAYER *rl, size_t n, size_t max, int extend,
     int clearold, size_t *readbytes);
 int tls_get_more_records(OSSL_RECORD_LAYER *rl);
+
+/* Returns true if the unified header fixed bits are set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
+
+/* Returns true if the unified header connection id bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
+
+/* Returns true if the unified header sequence number bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
+
+/* Returns true if the unified header length bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
+
+size_t dtls_get_rec_header_size(uint8_t hdr_first_byte);
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
+    unsigned char *rec_data);
 int dtls_get_more_records(OSSL_RECORD_LAYER *rl);
 
 int dtls_prepare_record_header(OSSL_RECORD_LAYER *rl,
@@ -428,6 +477,7 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
 
 int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_default_validate_record_header(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *re);
+size_t tls_get_record_header_len(OSSL_RECORD_LAYER *rl);
 int tls_do_compress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *wr);
 int tls_do_uncompress(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
 int tls_default_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec);
@@ -452,11 +502,14 @@ int tls_write_records(OSSL_RECORD_LAYER *rl, OSSL_RECORD_TEMPLATE *templates,
 int tls_retry_write_records(OSSL_RECORD_LAYER *rl);
 int tls_get_alert_code(OSSL_RECORD_LAYER *rl);
 int tls_set1_bio(OSSL_RECORD_LAYER *rl, BIO *bio);
+#ifndef OPENSSL_NO_SOCK
+int tls_set1_peer(OSSL_RECORD_LAYER *rl, const BIO_ADDR *peer);
+#endif
+void tls_set_use_urxe(OSSL_RECORD_LAYER *rl, int use_urxe);
 int tls_read_record(OSSL_RECORD_LAYER *rl, void **rechandle, int *rversion,
     uint8_t *type, const unsigned char **data, size_t *datalen,
-    uint16_t *epoch, unsigned char *seq_num);
+    uint64_t *epoch, uint64_t *seq_num);
 int tls_release_record(OSSL_RECORD_LAYER *rl, void *rechandle, size_t length);
-int tls_default_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 int tls_set_protocol_version(OSSL_RECORD_LAYER *rl, int version);
 void tls_set_plain_alerts(OSSL_RECORD_LAYER *rl, int allow);
 void tls_set_first_handshake(OSSL_RECORD_LAYER *rl, int first);
@@ -480,6 +533,8 @@ size_t tls_get_max_records_default(OSSL_RECORD_LAYER *rl, uint8_t type,
 size_t tls_get_max_records_multiblock(OSSL_RECORD_LAYER *rl, uint8_t type,
     size_t len, size_t maxfrag,
     size_t *preffrag);
+size_t tls_get_record_body_alignment_offset(OSSL_RECORD_LAYER *rl,
+    const unsigned char *rec);
 int tls_allocate_write_buffers_default(OSSL_RECORD_LAYER *rl,
     OSSL_RECORD_TEMPLATE *templates,
     size_t numtempl, size_t *prefix);

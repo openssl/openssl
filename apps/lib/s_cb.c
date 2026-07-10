@@ -576,6 +576,8 @@ static STRINT_PAIR ssl_versions[] = {
     { "TLS 1.2", TLS1_2_VERSION },
     { "TLS 1.3", TLS1_3_VERSION },
     { "DTLS 1.0", DTLS1_VERSION },
+    { "DTLS 1.2", DTLS1_2_VERSION },
+    { "DTLS 1.3", DTLS1_3_VERSION },
     { "DTLS 1.0 (bad)", DTLS1_BAD_VER },
     { NULL }
 };
@@ -653,12 +655,13 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     const char *str_version, *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char *bp = buf;
 
-    if (version == TLS1_VERSION || version == TLS1_1_VERSION || version == TLS1_2_VERSION || version == TLS1_3_VERSION || version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
+    if (version == TLS1_VERSION || version == TLS1_1_VERSION || version == TLS1_2_VERSION || version == TLS1_3_VERSION || version == DTLS1_VERSION || version == DTLS1_2_VERSION || version == DTLS1_3_VERSION ||version == DTLS1_BAD_VER) {
         str_version = lookup(version, ssl_versions, "???");
         switch (content_type) {
         case SSL3_RT_CHANGE_CIPHER_SPEC:
             /* type 20 */
-            str_content_type = ", ChangeCipherSpec";
+            if (version != DTLS1_3_VERSION)
+                str_content_type = ", ChangeCipherSpec";
             break;
         case SSL3_RT_ALERT:
             /* type 21 */
@@ -687,6 +690,11 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             /* type 23 */
             str_content_type = ", ApplicationData";
             break;
+        case SSL3_RT_ACK:
+            /* type 26 */
+            if (version == DTLS1_3_VERSION)
+                str_content_type = ", ACK";
+            break;
         case SSL3_RT_HEADER:
             /* type 256 */
             str_content_type = ", RecordHeader";
@@ -696,6 +704,10 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             str_content_type = ", InnerContent";
             break;
         default:
+            break;
+        }
+
+        if (str_content_type[0] == '\0') {
             BIO_snprintf(tmpbuf, sizeof(tmpbuf) - 1, ", Unknown (content_type=%d)", content_type);
             str_content_type = tmpbuf;
         }

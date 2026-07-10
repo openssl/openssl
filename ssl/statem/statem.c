@@ -404,7 +404,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         s->server = server;
         if (cb != NULL) {
-            if (SSL_IS_FIRST_HANDSHAKE(s) || !SSL_CONNECTION_IS_TLS13(s))
+            if (SSL_IS_FIRST_HANDSHAKE(s) || !SSL_CONNECTION_IS_VERSION13(s))
                 cb(ussl, SSL_CB_HANDSHAKE_START, 1);
         }
 
@@ -453,14 +453,18 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         /*
          * Ok, we now need to push on a buffering BIO ...but not with
-         * SCTP
+         * SCTP. For DTLSv1.3 we also skip this for post-handshake messages
+         * (e.g. NewSessionTicket, KeyUpdate) since we are not in the initial
+         * handshake and re-initialising the write buffer is not appropriate.
          */
 #ifndef OPENSSL_NO_SCTP
         if (!SSL_CONNECTION_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
 #endif
-            if (!ssl_init_wbio_buffer(s)) {
-                SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
-                goto end;
+            if (!SSL_CONNECTION_IS_DTLS13(s) && st->hand_state != TLS_ST_OK) {
+                if (!ssl_init_wbio_buffer(s)) {
+                    SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
+                    goto end;
+                }
             }
 
         if ((SSL_in_before(ssl))
@@ -484,6 +488,8 @@ static int state_machine(SSL_CONNECTION *s, int server)
             if (ssret == SUB_STATE_FINISHED) {
                 st->state = MSG_FLOW_WRITING;
                 init_write_state_machine(s);
+            } else if (ssret == SUB_STATE_END_HANDSHAKE) {
+                st->state = MSG_FLOW_FINISHED;
             } else {
                 /* NBIO or error */
                 goto end;
@@ -615,6 +621,20 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
             }
 
             if (ret == 0) {
+                /*
+                 * If we're in DTLSv1.3 and in state TLS_ST_OK, then we must
+                 * have received a post-handshake message. If we subsequently
+                 * try to receive that message and get nothing back (and did not
+                 * encounter a fatal error), then that message must have been
+                 * dropped, so we need to end the handshake now, and return to
+                 * reading app data.
+                 */
+                if (SSL_CONNECTION_IS_DTLS13(s)
+                    && st->hand_state == TLS_ST_OK
+                    && s->statem.state != MSG_FLOW_ERROR) {
+                    ossl_statem_set_in_init(s, 0);
+                    return SUB_STATE_END_HANDSHAKE;
+                }
                 /* Could be non-blocking IO */
                 return SUB_STATE_ERROR;
             }
@@ -739,17 +759,28 @@ static SUB_STATE_RETURN read_state_machine(SSL_CONNECTION *s)
  */
 static int statem_do_write(SSL_CONNECTION *s)
 {
+    int record_type;
     OSSL_STATEM *st = &s->statem;
 
-    if (st->hand_state == TLS_ST_CW_CHANGE
-        || st->hand_state == TLS_ST_SW_CHANGE) {
-        if (SSL_CONNECTION_IS_DTLS(s))
-            return dtls1_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
-        else
-            return ssl3_do_write(s, SSL3_RT_CHANGE_CIPHER_SPEC);
-    } else {
+    switch (st->hand_state) {
+    case TLS_ST_CW_CHANGE:
+    case TLS_ST_SW_CHANGE:
+        record_type = SSL3_RT_CHANGE_CIPHER_SPEC;
+
+        break;
+    case TLS_ST_CW_ACK:
+    case TLS_ST_SW_ACK:
+        record_type = SSL3_RT_ACK;
+
+        break;
+    default:
         return ssl_do_write(s);
     }
+
+    if (SSL_CONNECTION_IS_DTLS(s))
+        return dtls1_do_write(s, record_type);
+    else
+        return ssl3_do_write(s, record_type);
 }
 
 /*
@@ -804,6 +835,7 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
         CON_FUNC_RETURN (**confunc)(SSL_CONNECTION *s,
             WPACKET *pkt),
         int *mt);
+    int (*dtls_use_timer)(SSL_CONNECTION *s);
     void (*cb)(const SSL *ssl, int type, int val) = NULL;
     CON_FUNC_RETURN (*confunc)(SSL_CONNECTION *s, WPACKET *pkt);
     int mt;
@@ -817,11 +849,13 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
         pre_work = ossl_statem_server_pre_work;
         post_work = ossl_statem_server_post_work;
         get_construct_message_f = ossl_statem_server_construct_message;
+        dtls_use_timer = ossl_statem_dtls_server_use_timer;
     } else {
         transition = ossl_statem_client_write_transition;
         pre_work = ossl_statem_client_pre_work;
         post_work = ossl_statem_client_post_work;
         get_construct_message_f = ossl_statem_client_construct_message;
+        dtls_use_timer = ossl_statem_dtls_client_use_timer;
     }
 
     while (1) {
@@ -914,9 +948,9 @@ static SUB_STATE_RETURN write_state_machine(SSL_CONNECTION *s)
             /* Fall through */
 
         case WRITE_STATE_SEND:
-            if (SSL_CONNECTION_IS_DTLS(s) && st->use_timer) {
+            if (SSL_CONNECTION_IS_DTLS(s) && dtls_use_timer(s))
                 dtls1_start_timer(s);
-            }
+
             ret = statem_do_write(s);
             if (ret <= 0) {
                 return SUB_STATE_ERROR;

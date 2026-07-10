@@ -228,7 +228,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
        * to indicate to the client the complete list of groups supported
        * by the server, with the server instead just indicating the
        * selected group for this connection in the ServerKeyExchange
-       * message.  TLS 1.3 adds a scheme for the server to indicate
+       * message. (D)TLS 1.3 adds a scheme for the server to indicate
        * to the client its list of supported groups in the
        * EncryptedExtensions message, but none of the relevant
        * specifications permit sending supported_groups in the ServerHello.
@@ -238,7 +238,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
        * ServerHello anyway.  Up to and including the 1.1.0 release,
        * we did not check for the presence of nonpermitted extensions,
        * so to avoid a regression, we must permit this extension in the
-       * TLS 1.2 ServerHello as well.
+       * (D)TLS 1.2 ServerHello as well.
        *
        * Note that there is no tls_parse_stoc_supported_groups function,
        * so we do not perform any additional parsing, validation, or
@@ -377,7 +377,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_ctos_sig_algs, final_sig_algs },
     { TLSEXT_TYPE_supported_versions,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
-            | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST | SSL_EXT_TLS_IMPLEMENTATION_ONLY,
+            | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST,
         OSSL_ECH_HANDLING_COMPRESS,
         NULL,
         /* Processed inline as part of version selection */
@@ -385,8 +385,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         tls_construct_stoc_supported_versions,
         tls_construct_ctos_supported_versions, final_supported_versions },
     { TLSEXT_TYPE_psk_kex_modes,
-        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS_IMPLEMENTATION_ONLY
-            | SSL_EXT_TLS1_3_ONLY,
+        SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_COMPRESS,
         init_psk_kex_modes, tls_parse_ctos_psk_kex_modes, NULL, NULL,
         tls_construct_ctos_psk_kex_modes, NULL },
@@ -396,7 +395,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
        */
         TLSEXT_TYPE_key_share,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
-            | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST | SSL_EXT_TLS_IMPLEMENTATION_ONLY
+            | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
             | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_COMPRESS,
         NULL, tls_parse_ctos_key_share, tls_parse_stoc_key_share,
@@ -405,7 +404,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
     { /* Must be after key_share */
         TLSEXT_TYPE_cookie,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
-            | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
+            | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_COMPRESS,
         NULL, tls_parse_ctos_cookie, tls_parse_stoc_cookie,
         tls_construct_stoc_cookie, tls_construct_ctos_cookie, NULL },
@@ -421,7 +420,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL, NULL, NULL, tls_construct_stoc_cryptopro_bug, NULL, NULL },
     { TLSEXT_TYPE_compress_certificate,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE_REQUEST
-            | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
+            | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_COMPRESS,
         tls_init_compress_certificate,
         tls_parse_compress_certificate, tls_parse_compress_certificate,
@@ -484,10 +483,10 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         /* We send this, but don't read it */
         NULL, NULL, NULL, tls_construct_ctos_padding, NULL },
-    { /* Required by the TLSv1.3 spec to always be the last extension */
+    { /* Required by the (D)TLSv1.3 spec to always be the last extension */
         TLSEXT_TYPE_psk,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
-            | SSL_EXT_TLS_IMPLEMENTATION_ONLY | SSL_EXT_TLS1_3_ONLY,
+            | SSL_EXT_TLS1_3_ONLY,
         OSSL_ECH_HANDLING_CALL_BOTH,
         NULL, tls_parse_ctos_psk, tls_parse_stoc_psk, tls_construct_stoc_psk,
         tls_construct_ctos_psk, final_psk }
@@ -756,31 +755,31 @@ static int verify_extension(SSL_CONNECTION *s, unsigned int context,
 int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
     unsigned int thisctx)
 {
-    int is_tls13;
+    int is_version13;
 
     /*
      * For HRR we haven't selected the version yet but we know it will be
-     * TLSv1.3
+     * (D)TLSv1.3
      */
     if ((thisctx & SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST) != 0)
-        is_tls13 = 1;
+        is_version13 = 1;
     else
-        is_tls13 = SSL_CONNECTION_IS_TLS13(s);
+        is_version13 = SSL_CONNECTION_IS_VERSION13(s);
 
     if ((SSL_CONNECTION_IS_DTLS(s)
             && (extctx & SSL_EXT_TLS_IMPLEMENTATION_ONLY) != 0)
         /*
-         * Note that SSL_IS_TLS13() means "TLS 1.3 has been negotiated",
+         * Note that is_version13 means "(D)TLS 1.3 has been negotiated",
          * which is never true when generating the ClientHello.
          * However, version negotiation *has* occurred by the time the
          * ClientHello extensions are being parsed.
-         * Be careful to allow TLS 1.3-only extensions when generating
+         * Be careful to allow (D)TLS 1.3-only extensions when generating
          * the ClientHello.
          */
-        || (is_tls13 && (extctx & SSL_EXT_TLS1_2_AND_BELOW_ONLY) != 0)
-        || (!is_tls13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0
+        || (is_version13 && (extctx & SSL_EXT_TLS1_2_AND_BELOW_ONLY) != 0)
+        || (!is_version13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) == 0)
-        || (s->server && !is_tls13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0)
+        || (s->server && !is_version13 && (extctx & SSL_EXT_TLS1_3_ONLY) != 0)
         || (s->hit && (extctx & SSL_EXT_IGNORE_ON_RESUMPTION) != 0))
         return 0;
     return 1;
@@ -1026,6 +1025,8 @@ int tls_parse_all_extensions(SSL_CONNECTION *s, int context,
 int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
     unsigned int thisctx, int max_version)
 {
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+
     /* Skip if not relevant for our context */
     if ((extctx & thisctx) == 0)
         return 0;
@@ -1034,7 +1035,7 @@ int should_add_extension(SSL_CONNECTION *s, unsigned int extctx,
     if (!extension_is_relevant(s, extctx, thisctx)
         || ((extctx & SSL_EXT_TLS1_3_ONLY) != 0
             && (thisctx & SSL_EXT_CLIENT_HELLO) != 0
-            && (SSL_CONNECTION_IS_DTLS(s) || max_version < TLS1_3_VERSION)))
+            && ssl_version_cmp(s, max_version, version1_3) < 0))
         return 0;
 
     return 1;
@@ -1064,7 +1065,7 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         /*
          * If extensions are of zero length then we don't even add the
          * extensions length bytes to a ClientHello/ServerHello
-         * (for non-TLSv1.3).
+         * (for non-(D)TLSv1.3).
          */
         || ((context & (SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_2_SERVER_HELLO)) != 0
             && !WPACKET_set_flags(pkt,
@@ -1345,8 +1346,8 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
         return 0;
 
     case SSL_TLSEXT_ERR_ALERT_WARNING:
-        /* TLSv1.3 doesn't have warning alerts so we suppress this */
-        if (!SSL_CONNECTION_IS_TLS13(s))
+        /* (D)TLSv1.3 doesn't have warning alerts so we suppress this */
+        if (!SSL_CONNECTION_IS_VERSION13(s))
             ssl3_send_alert(s, SSL3_AL_WARNING, altmp);
         s->servername_done = 0;
         return 1;
@@ -1456,15 +1457,15 @@ static int final_alpn(SSL_CONNECTION *s, unsigned int context, int sent)
     if (!s->server && !sent && s->session->ext.alpn_selected != NULL)
         s->ext.early_data_ok = 0;
 
-    if (!s->server || !SSL_CONNECTION_IS_TLS13(s))
+    if (!s->server || !SSL_CONNECTION_IS_VERSION13(s))
         return 1;
 
     /*
      * Call alpn_select callback if needed.  Has to be done after SNI and
-     * cipher negotiation (HTTP/2 restricts permitted ciphers). In TLSv1.3
+     * cipher negotiation (HTTP/2 restricts permitted ciphers). In (D)TLSv1.3
      * we also have to do this before we decide whether to accept early_data.
-     * In TLSv1.3 we've already negotiated our cipher so we do this call now.
-     * For < TLSv1.3 we defer it until after cipher negotiation.
+     * In (D)TLSv1.3 we've already negotiated our cipher so we do this call now.
+     * For < (D)TLSv1.3 we defer it until after cipher negotiation.
      *
      * On failure SSLfatal() already called.
      */
@@ -1615,7 +1616,7 @@ static int init_srtp(SSL_CONNECTION *s, unsigned int context)
 
 static int final_sig_algs(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-    if (!sent && SSL_CONNECTION_IS_TLS13(s) && !s->hit) {
+    if (!sent && SSL_CONNECTION_IS_VERSION13(s) && !s->hit) {
         SSLfatal(s, TLS13_AD_MISSING_EXTENSION,
             SSL_R_MISSING_SIGALGS_EXTENSION);
         return 0;
@@ -1638,8 +1639,8 @@ static int final_supported_versions(SSL_CONNECTION *s, unsigned int context,
 
 static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
 {
-#if !defined(OPENSSL_NO_TLS1_3)
-    if (!SSL_CONNECTION_IS_TLS13(s))
+#if !(defined(OPENSSL_NO_TLS1_3) && defined(OPENSSL_NO_DTLS1_3))
+    if (!SSL_CONNECTION_IS_VERSION13(s))
         return 1;
 
     /* Nothing to do for key_share in an HRR */
@@ -1774,7 +1775,7 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
             return 0;
         }
     }
-#endif /* !defined(OPENSSL_NO_TLS1_3) */
+#endif /* !defined(OPENSSL_NO_TLS1_3) && !defined(OPENSSL_NO_DTLS1_3) */
     return 1;
 }
 
@@ -1799,8 +1800,8 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     static const unsigned char resumption_label[] = "\x72\x65\x73\x20\x62\x69\x6E\x64\x65\x72";
     /* ASCII: "ext binder", in hex for EBCDIC compatibility */
     static const unsigned char external_label[] = "\x65\x78\x74\x20\x62\x69\x6E\x64\x65\x72";
-    const unsigned char *label;
-    size_t bindersize, labelsize, hashsize;
+    const unsigned char *label, *msgbodystart;
+    size_t bindersize, labelsize, hashsize, msgbodylen;
     int hashsizei = EVP_MD_get_size(md);
     int ret = -1;
     int usepskfored = 0;
@@ -1885,7 +1886,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
     if (s->hello_retry_request == SSL_HRR_PENDING) {
         size_t hdatalen;
         long hdatalen_l;
-        void *hdata;
+        unsigned char *hdata;
 
 #ifndef OPENSSL_NO_ECH
         /* handle the hashing as per ECH needs (on client) */
@@ -1905,32 +1906,89 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
         }
 #endif
 
-        /*
-         * For servers the handshake buffer data will include the second
-         * ClientHello - which we don't want - so we need to take that bit off.
-         */
-        if (s->server) {
+        if (s->negotiated_version == DTLS1_3_VERSION) {
             PACKET hashprefix, msg;
+            unsigned long dtlsbodylen;
+            unsigned int dtls_offset = DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH;
 
-            /* Find how many bytes are left after the first two messages */
+            /*
+             * RFC 9147 states that for DTLS 1.3 all transcripts should be
+             * calculated without the message_seq, fragment_offset and
+             * fragment_length values. See Section 5.2
+             *
+             * Since the data is coming from handshake_buffer it hasn't
+             * been processed in ssl3_finish_mac where these values are
+             * removed. Therefore for both the server and client we will
+             * need to not supply them to the Digest Update
+             */
             if (!PACKET_buf_init(&hashprefix, hdata, hdatalen)
                 || !PACKET_forward(&hashprefix, 1)
                 || !PACKET_get_length_prefixed_3(&hashprefix, &msg)
                 || !PACKET_forward(&hashprefix, 1)
-                || !PACKET_get_length_prefixed_3(&hashprefix, &msg)) {
+                || !PACKET_get_net_3(&hashprefix, &dtlsbodylen)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;
             }
-            hdatalen -= PACKET_remaining(&hashprefix);
-        }
 
-        if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            goto err;
+            hdatalen -= PACKET_remaining(&hashprefix);
+
+            if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+
+            /*
+             * Now skip the four bytes for the part of the DTLS header to not
+             * include in the transcript.
+             */
+            if (EVP_DigestUpdate(mctx, hdata + hdatalen + dtls_offset, dtlsbodylen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
+        } else {
+            /*
+             * For servers the handshake buffer data will include the second
+             * ClientHello - which we don't want - so we need to take that bit off.
+             */
+            if (s->server) {
+                PACKET hashprefix, msg;
+
+                /* Find how many bytes are left after the first two messages */
+                if (!PACKET_buf_init(&hashprefix, hdata, hdatalen)
+                    || !PACKET_forward(&hashprefix, 1)
+                    || !PACKET_get_length_prefixed_3(&hashprefix, &msg)
+                    || !PACKET_forward(&hashprefix, 1)
+                    || !PACKET_get_length_prefixed_3(&hashprefix, &msg)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    goto err;
+                }
+                hdatalen -= PACKET_remaining(&hashprefix);
+            }
+
+            if (EVP_DigestUpdate(mctx, hdata, hdatalen) <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                goto err;
+            }
         }
     }
 
-    if (EVP_DigestUpdate(mctx, msgstart, binderoffset) <= 0
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        msgbodystart = msgstart + DTLS1_HM_HEADER_LENGTH;
+        msgbodylen = binderoffset - DTLS1_HM_HEADER_LENGTH;
+    } else {
+        msgbodystart = msgstart + SSL3_HM_HEADER_LENGTH;
+        msgbodylen = binderoffset - SSL3_HM_HEADER_LENGTH;
+    }
+
+    /*
+     * RFC9147 (DTLSv1.3)
+     * The transcript consists of complete TLS Handshake messages
+     * (reassembled as necessary). Note that this requires removing the
+     * message_seq, fragment_offset, and fragment_length fields to create
+     * the Handshake structure.
+     */
+    if (EVP_DigestUpdate(mctx, msgstart, SSL3_HM_HEADER_LENGTH) <= 0
+        || EVP_DigestUpdate(mctx, msgbodystart, msgbodylen) <= 0
         || EVP_DigestFinal_ex(mctx, hash, NULL) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;

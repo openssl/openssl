@@ -457,8 +457,47 @@ int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 1;
 }
 
+int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+    const EVP_CIPHER **enc)
+{
+    int i = ssl_cipher_info_lookup(ssl_cipher_table_cipher, sslc->algorithm_enc);
+
+    if (i == -1) {
+        *enc = NULL;
+    } else {
+        if (i == SSL_ENC_NULL_IDX) {
+            /*
+             * We assume we don't care about this coming from an ENGINE so
+             * just do a normal EVP_CIPHER_fetch instead of
+             * ssl_evp_cipher_fetch()
+             */
+            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
+        } else {
+            int ecbnid = NID_undef;
+
+            *enc = NULL;
+
+            if ((sslc->algorithm_enc & SSL_AES128_ANY) != 0)
+                ecbnid = NID_aes_128_ecb;
+            else if ((sslc->algorithm_enc & SSL_AES256_ANY) != 0)
+                ecbnid = NID_aes_256_ecb;
+            else if (ossl_assert((sslc->algorithm_enc & SSL_CHACHA20) != 0))
+                ecbnid = NID_chacha20;
+
+            if (ecbnid != NID_undef)
+                *enc = ssl_evp_cipher_fetch(ctx->libctx, OBJ_nid2sn(ecbnid), ctx->propq);
+        }
+
+        if (*enc == NULL)
+            return 0;
+    }
+    return 1;
+}
+
 int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
-    const EVP_CIPHER **enc, const EVP_MD **md,
+    const EVP_CIPHER **snenc,
+    const EVP_CIPHER **enc,
+    const EVP_MD **md,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm)
 {
@@ -488,12 +527,18 @@ int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     if ((enc == NULL) || (md == NULL))
         return 0;
 
-    if (!ssl_cipher_get_evp_cipher(ctx, c, enc))
+    if (!ssl_cipher_get_evp_cipher(ctx, c, enc)
+        || (snenc != NULL
+            && !ssl_cipher_get_evp_cipher_sn(ctx, c, snenc)))
         return 0;
 
     if (!ssl_cipher_get_evp_md_mac(ctx, c, md, mac_pkey_type,
             mac_secret_size)) {
         ssl_evp_cipher_free(*enc);
+
+        if (snenc != NULL)
+            ssl_evp_cipher_free(*snenc);
+
         return 0;
     }
 
@@ -1314,15 +1359,23 @@ static int update_cipher_list(SSL_CTX *ctx,
         return 0;
 
     /*
-     * Delete any existing TLSv1.3 ciphersuites. These are always first in the
+     * Delete any existing (D)TLSv1.3 ciphersuites. These are always first in the
      * list.
      */
-    while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0
-        && sk_SSL_CIPHER_value(tmp_cipher_list, 0)->min_tls
-            == TLS1_3_VERSION)
-        (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
 
-    /* Insert the new TLSv1.3 ciphersuites */
+    while (sk_SSL_CIPHER_num(tmp_cipher_list) > 0) {
+        const SSL_CIPHER *cipher = sk_SSL_CIPHER_value(tmp_cipher_list, 0);
+        const int version1_3 = SSL_CTX_IS_DTLS(ctx) ? DTLS1_3_VERSION
+                                                    : TLS1_3_VERSION;
+        const int minversion = SSL_CTX_IS_DTLS(ctx) ? cipher->min_dtls
+                                                    : cipher->min_tls;
+
+        if (minversion != version1_3)
+            break;
+        (void)sk_SSL_CIPHER_delete(tmp_cipher_list, 0);
+    }
+
+    /* Insert the new (D)TLSv1.3 ciphersuites */
     for (i = sk_SSL_CIPHER_num(tls13_ciphersuites) - 1; i >= 0; i--) {
         const SSL_CIPHER *sslc = sk_SSL_CIPHER_value(tls13_ciphersuites, i);
 
@@ -2294,7 +2347,8 @@ int ssl_cipher_list_to_bytes(SSL_CONNECTION *s, STACK_OF(SSL_CIPHER) *sk,
             int minproto = SSL_CONNECTION_IS_DTLS(s) ? c->min_dtls : c->min_tls;
             int maxproto = SSL_CONNECTION_IS_DTLS(s) ? c->max_dtls : c->max_tls;
 
-            if (ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
+            if (maxproto > 0 && minproto > 0
+                && ssl_version_cmp(s, maxproto, s->s3.tmp.max_ver) >= 0
                 && ssl_version_cmp(s, minproto, s->s3.tmp.max_ver) <= 0)
                 maxverok = 1;
         }

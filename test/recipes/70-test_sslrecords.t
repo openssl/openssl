@@ -277,12 +277,13 @@ sub run_tests
 
     SKIP: {
         skip "DTLS only record tests", 1 if $run_test_as_dtls != 1;
+        skip "EC and DH disabled", 1 if disabled("ec") || disabled("dh");
         #Test 17: We should ignore empty app data records
         $proxy->clear();
+        $proxy->clientflags("-groups ?X25519:?P-256:?ffdh2048");
         $proxy->filter(\&empty_app_data);
         $proxy->start();
         ok(TLSProxy::Message->success(), "Empty app data in DTLS");
-
     }
 }
 
@@ -303,6 +304,7 @@ sub add_empty_recs_filter
         if ($isdtls == 1) {
             $record = TLSProxy::Record->new_dtls(
                 0,
+                0,
                 $content_type,
                 TLSProxy::Record::VERS_DTLS_1_2,
                 0,
@@ -315,6 +317,7 @@ sub add_empty_recs_filter
             );
         } else {
             $record = TLSProxy::Record->new(
+                0,
                 0,
                 $content_type,
                 TLSProxy::Record::VERS_TLS_1_2,
@@ -345,6 +348,7 @@ sub add_frag_alert_filter
     $byte = pack('C', TLSProxy::Message::AL_LEVEL_FATAL);
     my $record = TLSProxy::Record->new(
         0,
+        0,
         TLSProxy::Record::RT_ALERT,
         TLSProxy::Record::VERS_TLS_1_2,
         1,
@@ -358,6 +362,7 @@ sub add_frag_alert_filter
     # And finally the description (Unexpected message) in a third record
     $byte = pack('C', TLSProxy::Message::AL_DESC_UNEXPECTED_MESSAGE);
     $record = TLSProxy::Record->new(
+        0,
         0,
         TLSProxy::Record::RT_ALERT,
         TLSProxy::Record::VERS_TLS_1_2,
@@ -374,6 +379,8 @@ sub add_unknown_record_type
 {
     my $proxy = shift;
     my $records = $proxy->record_list;
+    my $lastmessage =  @{$proxy->message_list}[-1];
+    my $isserver = $lastmessage->server;
     my $isdtls = $proxy->isdtls;
     state $added_record;
 
@@ -390,6 +397,7 @@ sub add_unknown_record_type
 
     if ($isdtls) {
         $record = TLSProxy::Record->new_dtls(
+            $isserver,
             1,
             TLSProxy::Record::RT_UNKNOWN,
             @{$records}[-1]->version(),
@@ -403,6 +411,7 @@ sub add_unknown_record_type
         );
     } else {
         $record = TLSProxy::Record->new(
+            $isserver,
             1,
             TLSProxy::Record::RT_UNKNOWN,
             @{$records}[-1]->version(),
@@ -544,6 +553,7 @@ sub not_on_record_boundary
         #KeyUpdates must end on a record boundary
 
         my $record = TLSProxy::Record->new(
+            @{$proxy->{message_list}}[-1]->server,
             1,
             TLSProxy::Record::RT_APPLICATION_DATA,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -571,8 +581,10 @@ sub not_on_record_boundary
     } else {
         return if @{$proxy->{message_list}}[-1]->{mt}
                   != TLSProxy::Message::MT_FINISHED;
+        my $isserver = @{$proxy->{message_list}}[-1]->server;
 
         my $record = TLSProxy::Record->new(
+            $isserver,
             1,
             TLSProxy::Record::RT_APPLICATION_DATA,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -597,6 +609,7 @@ sub not_on_record_boundary
         if ($boundary_test_type == DATA_BETWEEN_KEY_UPDATE) {
             #Now add an app data record
             $record = TLSProxy::Record->new(
+                $isserver,
                 1,
                 TLSProxy::Record::RT_APPLICATION_DATA,
                 TLSProxy::Record::VERS_TLS_1_2,
@@ -617,6 +630,7 @@ sub not_on_record_boundary
 
         #Now add the rest of the KeyUpdate message
         $record = TLSProxy::Record->new(
+            $isserver,
             1,
             TLSProxy::Record::RT_APPLICATION_DATA,
             TLSProxy::Record::VERS_TLS_1_2,
@@ -651,30 +665,21 @@ sub empty_app_data
         return;
     }
 
-    my $data = pack "C52",
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
-        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, #IV
-        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f,
-        0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, 0x0f, #One block of empty padded data
-        0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-        0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f,
-        0x10, 0x11, 0x12, 0x13; #MAC, assume to be 20 bytes
+    # Find the client application record
+    my $client_application_record;
+    for (my $i = @{$proxy->record_list} - 1; $i >= 0; $i--) {
+        if ($proxy->record_list->[$i]->serverissender() == 0
+            && $proxy->record_list->[$i]->content_type() == TLSProxy::Record::RT_APPLICATION_DATA) {
+            $client_application_record = $proxy->record_list->[$i];
+            last;
+        }
+    }
 
-    # Add a zero length app data record at the end
-    # This will have the same sequence number as the subsequent app data record
-    # that s_client will send - which will cause that second record to be
-    # dropped. But that isn't important for this test.
-    my $record = TLSProxy::Record->new_dtls(
-        4,
-        TLSProxy::Record::RT_APPLICATION_DATA,
-        TLSProxy::Record::VERS_DTLS_1_2,
-        1,
-        1,
-        length($data),
-        length($data),
-        0,
-        $data,
-        ""
-    );
-    push @{$proxy->record_list}, $record;
+    # If we didn't find the Client Application Data record, just return
+    if (!defined $client_application_record) {
+        return;
+    }
+
+    $client_application_record->decrypt_data("");
+    $client_application_record->decrypt_len(0);
 }

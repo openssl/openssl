@@ -54,7 +54,8 @@ my $is_default_tls = (!disabled("tls1") && !disabled("tls1_1") &&
 	              !disabled("tls1_2") && !disabled("tls1_3") &&
 		      (!disabled("ec") || !disabled("dh")));
 
-my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2"));
+my $is_default_dtls = (!disabled("dtls1") && !disabled("dtls1_2") &&
+                        !disabled("dtls1_3"));
 
 my @all_pre_tls1_3 = ("tls1", "tls1_1", "tls1_2");
 my $no_tls = alldisabled(available_protocols("tls"));
@@ -85,7 +86,7 @@ my %conf_dependent_tests = (
   "05-sni.cnf" => disabled("tls1_1"),
   "07-dtls-protocol-version.cnf" => !$is_default_dtls || !disabled("sctp"),
   "10-resumption.cnf" => !$is_default_tls || $no_ec,
-  "11-dtls_resumption.cnf" => !$is_default_dtls || !disabled("sctp"),
+  "11-dtls_resumption.cnf" => !$is_default_dtls || $no_ec || !disabled("sctp"),
   "14-curves.cnf" => disabled("tls-deprecated-ec") || $no_ecx || $no_sm2 || $no_ml_kem,
   "16-dtls-certstatus.cnf" => !$is_default_dtls || !disabled("sctp"),
   "17-renegotiate.cnf" => disabled("tls1_2"),

@@ -291,6 +291,7 @@ providers/implementations/rands/test_rng.inc
 /demos/smime/smsign2
 /demos/smime/smver
 /demos/sslecho/sslecho
+/demos/dtlsecho/dtlsecho
 
 # Certain files that get created by tests on the fly
 /test-runs

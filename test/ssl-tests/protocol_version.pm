@@ -67,6 +67,9 @@ sub max_prot_enabled {
         if (!$is_disabled[$i]
                 && ($protocols[$i] ne "TLSv1.3"
                     || !disabled("ec")
+                    || !disabled("dh"))
+                && ($protocols[$i] ne "DTLSv1.3"
+                    || !disabled("ec")
                     || !disabled("dh"))) {
             $max_enabled = $i;
         }
@@ -80,16 +83,16 @@ $min_tls_enabled_fips = min_prot_enabled(\@tls_protocols_fips, \@is_tls_disabled
 $max_tls_enabled_fips = max_prot_enabled(\@tls_protocols_fips, \@is_tls_disabled_fips);
 
 
-my @dtls_protocols = ("DTLSv1", "DTLSv1.2");
-my @dtls_protocols_fips = ("DTLSv1.2");
+my @dtls_protocols = ("DTLSv1", "DTLSv1.2", "DTLSv1.3");
+my @dtls_protocols_fips = ("DTLSv1.2", "DTLSv1.3");
 # undef stands for "no limit".
-my @min_dtls_protocols = (undef, "DTLSv1", "DTLSv1.2");
-my @min_dtls_protocols_fips = (undef, "DTLSv1.2");
-my @max_dtls_protocols = ("DTLSv1", "DTLSv1.2", undef);
-my @max_dtls_protocols_fips = ("DTLSv1.2", undef);
+my @min_dtls_protocols = (undef, "DTLSv1", "DTLSv1.2", "DTLSv1.3");
+my @min_dtls_protocols_fips = (undef, "DTLSv1.2", "DTLSv1.3");
+my @max_dtls_protocols = ("DTLSv1", "DTLSv1.2", "DTLSv1.3", undef);
+my @max_dtls_protocols_fips = ("DTLSv1.2", "DTLSv1.3", undef);
 
-my @is_dtls_disabled = anydisabled("dtls1", "dtls1_2");
-my @is_dtls_disabled_fips = anydisabled("dtls1_2");
+my @is_dtls_disabled = anydisabled("dtls1", "dtls1_2", "dtls1_3");
+my @is_dtls_disabled_fips = anydisabled("dtls1_2", "dtls1_3");
 
 my $min_dtls_enabled; my $max_dtls_enabled;
 my $min_dtls_enabled_fips; my $max_dtls_enabled_fips;
@@ -104,9 +107,9 @@ $max_dtls_enabled_fips = max_prot_enabled(\@dtls_protocols_fips, \@is_dtls_disab
 sub no_tests {
     my ($dtls, $fips) = @_;
     if ($dtls && $fips) {
-        return disabled("dtls1_2");
+        return alldisabled("dtls1_2", "dtls1_3");
     }
-    return $dtls ? alldisabled("dtls1", "dtls1_2") :
+    return $dtls ? alldisabled("dtls1", "dtls1_2",  "dtls1_3") :
       alldisabled("tls1", "tls1_1", "tls1_2", "tls1_3");
 }
 
@@ -152,7 +155,7 @@ sub generate_version_tests {
                     foreach my $s_max ($s_max_min..$#max_protocols) {
                         my ($result, $protocol) =
                             expected_result($c_min, $c_max, $s_min, $s_max,
-                                            $min_enabled, $max_enabled,
+                                            $min_enabled, $max_enabled, $sctp,
                                             \@protocols);
                         push @tests, {
                             "name" => "version-negotiation",
@@ -178,42 +181,82 @@ sub generate_version_tests {
             }
         }
     }
-    return @tests
-        if disabled("tls1_3")
-           || disabled("tls1_2")
-           || (disabled("ec") && disabled("dh"))
-           || $dtls;
 
-    #Add some version/ciphersuite sanity check tests
-    push @tests, {
-        "name" => "ciphersuite-sanity-check-client",
-        "client" => {
-            #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
-            "CipherString" => "AES128-SHA",
-            "Ciphersuites" => "",
-        },
-        "server" => {
-            "MaxProtocol" => "TLSv1.2"
-        },
-        "test" => {
-            "ExpectedResult" => "ClientFail",
-        }
-    };
-    push @tests, {
-        "name" => "ciphersuite-sanity-check-server",
-        "client" => {
-            "CipherString" => "AES128-SHA",
-            "MaxProtocol" => "TLSv1.2"
-        },
-        "server" => {
-            #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
-            "CipherString" => "AES128-SHA",
-            "Ciphersuites" => "",
-        },
-        "test" => {
-            "ExpectedResult" => "ServerFail",
-        }
-    };
+    if (!$dtls && !(disabled("tls1_3")
+                    || disabled("tls1_2")
+                    || (disabled("ec") && disabled("dh"))))
+    {
+        #Add some version/ciphersuite sanity check tests
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-tls-client",
+            "client" => {
+                #Offering only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "server" => {
+                "MaxProtocol" => "TLSv1.2"
+            },
+            "test"   => {
+                "Method"         => "TLS",
+                "ExpectedResult" => "ClientFail",
+            }
+        };
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-tls-server",
+            "client" => {
+                "CipherString" => "AES128-SHA",
+                "MaxProtocol"  => "TLSv1.2"
+            },
+            "server" => {
+                #Allowing only <=TLSv1.2 ciphersuites with TLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "test"   => {
+                "Method"         => "TLS",
+                "ExpectedResult" => "ServerFail",
+            }
+        };
+    }
+
+    if ($dtls && !(disabled("dtls1_3")
+                   || disabled("dtls1_2")
+                   || (disabled("ec") && disabled("dh"))))
+    {
+        #Add some version/ciphersuite sanity check tests
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-dtls-client",
+            "client" => {
+                #Offering only <=DTLSv1.2 ciphersuites with DTLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "server" => {
+                "MaxProtocol" => "DTLSv1.2"
+            },
+            "test"   => {
+                "Method"         => "DTLS",
+                "ExpectedResult" => "ClientFail",
+            }
+        };
+        push @tests, {
+            "name"   => "ciphersuite-sanity-check-dtls-server",
+            "client" => {
+                "CipherString" => "AES128-SHA",
+                "MaxProtocol"  => "DTLSv1.2"
+            },
+            "server" => {
+                #Allowing only <=DTLSv1.2 ciphersuites with DTLSv1.3 should fail
+                "CipherString" => "AES128-SHA",
+                "Ciphersuites" => "",
+            },
+            "test"   => {
+                "Method"         => "DTLS",
+                "ExpectedResult" => "ServerFail",
+            }
+        };
+    }
 
     return @tests;
 }
@@ -252,16 +295,10 @@ sub generate_resumption_tests {
         # Upgrade or downgrade the server/client max version support and test
         # that it upgrades, downgrades or resumes the session as well.
         foreach my $resume_protocol($min_enabled..$max_enabled) {
-            my $resumption_expected;
-            # We should only resume on exact version match.
-            if ($original_protocol eq $resume_protocol) {
-                $resumption_expected = "Yes";
-            } else {
-                $resumption_expected = "No";
-            }
-
             for (my $sctp = 0; $sctp < ($dtls && !disabled("sctp") ? 2 : 1);
                  $sctp++) {
+                my ($expected_resume_protocol, $expected_result, $resumption_expected) = expected_resume_result($original_protocol, $resume_protocol, $sctp, \@protocols);
+
                 foreach my $ticket ("SessionTicket", "-SessionTicket") {
                     # Client is flexible, server upgrades/downgrades.
                     push @server_tests, {
@@ -281,13 +318,16 @@ sub generate_resumption_tests {
                             "Options" => $ticket,
                         },
                         "test" => {
-                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "ExpectedProtocol" => $protocols[$expected_resume_protocol],
                             "Method" => $method,
                             "HandshakeMode" => "Resume",
                             "ResumptionExpected" => $resumption_expected,
                         }
                     };
-                    $server_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    if ($sctp) {
+                        $server_tests[-1]{"test"}{"ExpectedResult"} = $expected_result;
+                        $server_tests[-1]{"test"}{"UseSCTP"} = "Yes";
+                    }
                     # Server is flexible, client upgrades/downgrades.
                     push @client_tests, {
                         "name" => "resumption",
@@ -305,13 +345,16 @@ sub generate_resumption_tests {
                             "MaxProtocol" => $protocols[$resume_protocol],
                         },
                         "test" => {
-                            "ExpectedProtocol" => $protocols[$resume_protocol],
+                            "ExpectedProtocol" => $protocols[$expected_resume_protocol],
                             "Method" => $method,
                             "HandshakeMode" => "Resume",
                             "ResumptionExpected" => $resumption_expected,
                         }
                     };
-                    $client_tests[-1]{"test"}{"UseSCTP"} = "Yes" if $sctp;
+                    if ($sctp) {
+                        $client_tests[-1]{"test"}{"ExpectedResult"} = $expected_result;
+                        $client_tests[-1]{"test"}{"UseSCTP"} = "Yes";
+                    }
                 }
             }
         }
@@ -319,7 +362,7 @@ sub generate_resumption_tests {
 
     if (!disabled("tls1_3") && (!disabled("ec") || !disabled("dh")) && !$dtls) {
         push @client_tests, {
-            "name" => "resumption-with-hrr",
+            "name" => "tls13-resumption-with-hrr",
             "client" => {
             },
             "server" => {
@@ -336,13 +379,46 @@ sub generate_resumption_tests {
         };
     }
 
+    if (!disabled("dtls1_3") && (!disabled("ec") || !disabled("dh")) && $dtls) {
+        push @client_tests, {
+            "name" => "dtls13-resumption-with-hrr",
+            "client" => {
+            },
+            "server" => {
+                "Curves" => disabled("ec") ? "ffdhe3072" : "P-256"
+            },
+            "resume_client" => {
+            },
+            "test" => {
+                "ExpectedProtocol" => "DTLSv1.3",
+                "Method" => "DTLS",
+                "HandshakeMode" => "Resume",
+                "ResumptionExpected" => "Yes",
+            }
+        };
+    }
+
     return (@server_tests, @client_tests);
 }
 
 sub expected_result {
-    my ($c_min, $c_max, $s_min, $s_max, $min_enabled, $max_enabled,
+    my ($c_min, $c_max, $s_min, $s_max, $min_enabled, $max_enabled, $sctp,
         $protocols) = @_;
     my @prots = @$protocols;
+
+    # For DTLS over SCTP, DTLSv1.3 is not supported. Cap max_enabled to the
+    # highest SCTP-compatible protocol (DTLSv1.2 or below).
+    if ($sctp) {
+        my $sctp_max_enabled = $max_enabled;
+        for (my $i = $max_enabled; $i >= 0; $i--) {
+            if ($prots[$i] ne "DTLSv1.3") {
+                $sctp_max_enabled = $i;
+                last;
+            }
+        }
+        $c_max = min $c_max, $sctp_max_enabled;
+        $s_max = min $s_max, $sctp_max_enabled;
+    }
 
     my $orig_c_max = $c_max;
     # Adjust for "undef" (no limit).
@@ -362,7 +438,11 @@ sub expected_result {
             || ($orig_c_max != scalar @$protocols
                 && $prots[$orig_c_max] eq "TLSv1.3"
                 && $c_max != $orig_c_max
-                && !disabled("tls1_3"))) {
+                && !disabled("tls1_3"))
+            || ($orig_c_max != scalar @$protocols
+                && $prots[$orig_c_max] eq "DTLSv1.3"
+                && $c_max != $orig_c_max
+                && !disabled("dtls1_3"))) {
         # Client should fail to even send a hello.
         return ("ClientFail", undef);
     } elsif ($s_min > $s_max) {
@@ -372,7 +452,8 @@ sub expected_result {
         # Server doesn't support the client range.
         return ("ServerFail", undef);
     } elsif ($c_min > $s_max) {
-        if ($prots[$c_max] eq "TLSv1.3") {
+        if ($prots[$c_max] eq "TLSv1.3"
+                || $prots[$c_max] eq "DTLSv1.3") {
             # Client will have sent supported_versions, so server will know
             # that there are no overlapping versions.
             return ("ServerFail", undef);
@@ -386,6 +467,37 @@ sub expected_result {
         my $max_common = $s_max < $c_max ? $s_max : $c_max;
         return ("Success", $protocols->[$max_common]);
     }
+}
+
+sub expected_resume_result {
+    my ($original_protocol, $max_resume_enabled, $sctp, $protocols) = @_;
+    my @prots = @$protocols;
+    my $expected_max_enabled = $max_resume_enabled;
+    my $resumption_expected;
+    my $expected_result = "Success";
+
+    # For DTLS over SCTP, DTLSv1.3 is not supported. Cap max_enabled to the
+    # highest SCTP-compatible protocol (DTLSv1.2 or below).
+    if ($sctp) {
+        for (my $i = $max_resume_enabled; $i >= 0; $i--) {
+            if ($prots[$i] ne "DTLSv1.3") {
+                $expected_max_enabled = $i;
+                last;
+            }
+        }
+        if ($prots[$original_protocol] eq "DTLSv1.3") {
+            $expected_result = "FirstHandshakeFailed";
+        }
+    }
+
+    # We should only resume on exact version match.
+    if ($original_protocol eq $expected_max_enabled) {
+        $resumption_expected = "Yes";
+    } else {
+        $resumption_expected = "No";
+    }
+
+    return ($expected_max_enabled, $expected_result, $resumption_expected);
 }
 
 1;
