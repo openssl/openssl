@@ -97,6 +97,8 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
         return 0;
 
     r->top = max;
+    if (max == 0)
+        goto end;
 
     ap = a->d;
     bp = b->d;
@@ -116,6 +118,7 @@ int BN_uadd(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     *rp = carry;
     r->top += (int)carry;
 
+end:
     r->neg = 0;
     bn_check_top(r);
     return 1;
