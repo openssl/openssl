@@ -12,7 +12,7 @@ use warnings;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 setup("test_fn");
 
-my @files = qw( bnmul.txt bnshift.txt bnsum.txt bnmod.txt );
+my @files = qw( bnmul.txt bnshift.txt bnsum.txt bnmod.txt bngcd.txt );
 
 plan tests => scalar(@files);
 
