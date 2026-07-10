@@ -690,6 +690,21 @@ int OSSL_FN_mod_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
+ * Calculate the arena payload size that OSSL_FN_mod_add() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_add().
+ */
+size_t OSSL_FN_mod_add_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b, const OSSL_FN *m);
+
+/**
  * Add two OSSL_FN numbers modulo m.  This is a quick variant that may be
  * used if both a and b are less than m.
  *
@@ -720,6 +735,21 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  */
 int OSSL_FN_mod_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_sub() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_sub().
+ */
+size_t OSSL_FN_mod_sub_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b, const OSSL_FN *m);
 
 /**
  * Subtract two OSSL_FN numbers modulo m.  This is a quick variant that may
@@ -755,6 +785,21 @@ int OSSL_FN_mod_mul(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     const OSSL_FN *m, OSSL_FN_CTX *ctx);
 
 /**
+ * Calculate the arena payload size that OSSL_FN_mod_mul() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_mul().
+ */
+size_t OSSL_FN_mod_mul_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b, const OSSL_FN *m);
+
+/**
  * Square an OSSL_FN number modulo m.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -773,6 +818,20 @@ int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
 
 /**
+ * Calculate the arena payload size that OSSL_FN_mod_sqr() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_sqr().
+ */
+size_t OSSL_FN_mod_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *m);
+
+/**
  * Left shift an OSSL_FN number by 1 bit, modulo m.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -788,6 +847,21 @@ int OSSL_FN_mod_sqr(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
  */
 int OSSL_FN_mod_lshift1(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_lshift1() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by
+ * OSSL_FN_mod_lshift1().
+ */
+size_t OSSL_FN_mod_lshift1_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *m);
 
 /**
  * Left shift an OSSL_FN number by 1 bit, modulo m.  This is a quick
@@ -817,6 +891,21 @@ int OSSL_FN_mod_lshift1_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *m);
  */
 int OSSL_FN_mod_lshift(OSSL_FN *r, const OSSL_FN *a, int n, const OSSL_FN *m,
     OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_lshift() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_lshift().
+ */
+size_t OSSL_FN_mod_lshift_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    int n, const OSSL_FN *m);
 
 /**
  * Left shift an OSSL_FN number by n bits, modulo m.  This is a quick
@@ -854,8 +943,8 @@ static inline int OSSL_FN_mod(OSSL_FN *r, const OSSL_FN *n, const OSSL_FN *d,
  * Calculate the arena payload size that OSSL_FN_mod() needs.
  *
  * @param[in]           r       The OSSL_FN for the remainder
- * @param[in]           n       The first operand (numerator)
- * @param[in]           d       The second operand (denominator)
+ * @param[in]           n       The numerator
+ * @param[in]           d       The denominator
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
