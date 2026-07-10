@@ -422,6 +422,115 @@ err:
     return st;
 }
 
+static int file_modmul(STANZA *s)
+{
+    BIGNUM *a = NULL, *b = NULL, *m = NULL, *mod_mul = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *bf = NULL, *rf = NULL, *mf = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    int a_neg = 0, b_neg = 0, st = 0;
+    int r_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(b = getBN(s, "B"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(mod_mul = getBN(s, "ModMul"))
+        || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    a_neg = BN_is_negative(a);
+    b_neg = BN_is_negative(b);
+    nlimbs = limbs(m);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(bf = bn_get_ossl_fn(b))
+        || !TEST_ptr(mf = bn_get_ossl_fn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_mul_ctx_size(rf, af, bf, mf))))
+        goto err;
+
+    /*
+     * OSSL_FN is unsigned, so the multiplication is on absolute values.
+     * If the operands have different signs, the non-negative modular
+     * residue of A * B is M - ((|A| * |B|) mod M), unless that is zero.
+     */
+    if (!TEST_true(OSSL_FN_mod_mul(rf, af, bf, mf, ctx)))
+        goto err;
+    bn_release(ret, nlimbs);
+    r_acq = 0;
+    if ((a_neg ^ b_neg) && !BN_is_zero(ret)) {
+        if (!TEST_true(BN_sub(ret, m, ret)))
+            goto err;
+    }
+    if (!equalBN("A * B (mod M)", mod_mul, ret))
+        goto err;
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(b);
+    BN_free(m);
+    BN_free(mod_mul);
+    BN_free(ret);
+    return st;
+}
+
+static int file_modsqr(STANZA *s)
+{
+    BIGNUM *a = NULL, *m = NULL, *mod_sqr = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *rf = NULL, *mf = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    int st = 0;
+    int r_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(mod_sqr = getBN(s, "ModSqr"))
+        || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    nlimbs = limbs(m);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(mf = bn_get_ossl_fn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_sqr_ctx_size(rf, af, mf))))
+        goto err;
+
+    /*
+     * Squaring is always non-negative, so no sign fixup is needed.
+     */
+    if (!TEST_true(OSSL_FN_mod_sqr(rf, af, mf, ctx)))
+        goto err;
+    bn_release(ret, nlimbs);
+    r_acq = 0;
+    if (!equalBN("A^2 (mod M)", mod_sqr, ret))
+        goto err;
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(m);
+    BN_free(mod_sqr);
+    BN_free(ret);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
@@ -430,8 +539,8 @@ static FILETEST filetests[] = {
     { "Square", file_square, 0 },
     { "Product", file_product, 0 },
     { "Quotient", file_quotient, 0 },
-    { "ModMul", NULL, 0 },
-    { "ModSqr", NULL, 0 },
+    { "ModMul", file_modmul, 0 },
+    { "ModSqr", file_modsqr, 0 },
     { "ModExp", NULL, 0 },
     { "Exp", NULL, 0 },
     { "ModSqrt", NULL, 0 },
