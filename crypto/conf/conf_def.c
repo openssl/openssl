@@ -641,7 +641,8 @@ static void clear_comments(CONF *conf, char *p)
 static int str_copy(CONF *conf, char *section, char **pto, char *from)
 {
     int q, r, rr = 0, to = 0;
-    char *s, *e, *rp, *p, *rrp, *np, *cp, v;
+    char *s, *e, *rp, *rrp, *np, *cp, v;
+    const char *p;
     BUF_MEM *buf;
 
     if ((buf = BUF_MEM_new()) == NULL)

@@ -41,6 +41,7 @@ BIO_lookup_type                         datatype
 CRYPTO_malloc_fn                        datatype
 CRYPTO_realloc_fn                       datatype
 CRYPTO_free_fn                          datatype
+CRYPTO_safe_getenv_fn                   datatype
 CRYPTO_EX_dup                           datatype
 CRYPTO_EX_free                          datatype
 CRYPTO_EX_new                           datatype

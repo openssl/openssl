@@ -351,6 +351,8 @@ typedef void *(*CRYPTO_malloc_fn)(size_t num, const char *file, int line);
 typedef void *(*CRYPTO_realloc_fn)(void *addr, size_t num, const char *file,
     int line);
 typedef void (*CRYPTO_free_fn)(void *addr, const char *file, int line);
+typedef const char *(*CRYPTO_safe_getenv_fn)(const char *env, const char *file,
+    int line);
 int CRYPTO_set_mem_functions(CRYPTO_malloc_fn malloc_fn,
     CRYPTO_realloc_fn realloc_fn,
     CRYPTO_free_fn free_fn);
@@ -594,6 +596,13 @@ void OSSL_LIB_CTX_set_conf_diagnostics(OSSL_LIB_CTX *ctx, int value);
 void OSSL_sleep(uint64_t millis);
 
 void *OSSL_LIB_CTX_get_data(OSSL_LIB_CTX *ctx, int index);
+
+/* Secure env functions */
+
+void OSSL_LIB_CTX_set_safe_getenv_function(OSSL_LIB_CTX *libctx,
+    CRYPTO_safe_getenv_fn safe_getenv_fn);
+void OSSL_LIB_CTX_get_safe_getenv_function(const OSSL_LIB_CTX *libctx,
+    CRYPTO_safe_getenv_fn *safe_getenv_fn);
 
 #ifdef __cplusplus
 }

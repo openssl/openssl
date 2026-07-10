@@ -5724,3 +5724,7 @@ OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_kdf                    ?	4_1_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_set_safe_getenv_function   ?	4_1_0	EXIST::FUNCTION:
+OSSL_LIB_CTX_get_safe_getenv_function   ?	4_1_0	EXIST::FUNCTION:
+ossl_lib_ctx_safe_getenv                ?	4_1_0	EXIST::FUNCTION:
+ossl_lib_ctx_safe_getenv_default        ?	4_1_0	EXIST::FUNCTION:
