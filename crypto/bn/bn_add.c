@@ -146,6 +146,9 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     if (bn_wexpand(r, max) == NULL)
         return 0;
 
+    if (max == 0)
+        goto end;
+
     ap = a->d;
     bp = b->d;
     rp = r->d;
@@ -165,6 +168,7 @@ int BN_usub(BIGNUM *r, const BIGNUM *a, const BIGNUM *b)
     while (max && *--rp == 0)
         max--;
 
+end:
     r->top = max;
     r->neg = 0;
     bn_pollute(r);
