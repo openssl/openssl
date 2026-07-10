@@ -1,0 +1,368 @@
+version = 1
+
+[[annotations]]
+path = [
+  "**",
+]
+SPDX-FileCopyrightText = "The OpenSSL Project Authors. All rights reserved"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "NEWS.md",
+  "CONTRIBUTING.md",
+  "NOTES-VALGRIND.md",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "The OpenSSL Project Authors. All rights reserved"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/mkwraps.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "test/mlkem_parse.py",
+  "test/lms_parse.py",
+  "test/slhdsa_parse.py",
+  "test/mldsa_wycheproof_parse.py",
+  "test/mldsa_parse.py",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2025 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/find-doc-nits",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2002-2025 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/mkerr.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1999-2026 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "crypto/asn1/charmap.pl",
+  "crypto/objects/objects.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2000-2021 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "crypto/objects/obj_dat.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1995-2024 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "crypto/objects/objxref.pl",
+  "crypto/bn/bn_prime.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1998-2021 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "apps/progs.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1995-2025 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "fuzz/mkfuzzoids.pl",
+  "crypto/conf/keysets.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1995-2021 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/mkrc.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2006-2020 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "doc/man7/EVP_KDF-SS.pod",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2019-2024 The OpenSSL Project Authors. All Rights Reserved.",
+  "2019 Oracle and/or its affiliates. All rights reserved.",
+]
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "doc/internal/man3/OPENSSL_SA.pod",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2019-2021 The OpenSSL Project Authors. All Rights Reserved.",
+  "2019 Oracle and/or its affiliates. All rights reserved.",
+]
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "external/perl/Text-Template-1.56/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2013 Mark Jason Dominus <mjd@cpan.org>"
+SPDX-License-Identifier = "GPL-1.0-or-later OR Artistic-1.0"
+
+[[annotations]]
+path = [
+  "crypto/poly1305/asm/poly1305-armv9-sve2.pl",
+]
+SPDX-License-Identifier = "Apache-2.0 AND LicenseRef-Cryptogams"
+
+[[annotations]]
+path = [
+  "crypto/modes/asm/aes-gcm-armv8_64.pl",
+  "crypto/poly1305/asm/poly1305-ppc.pl",
+  "crypto/rc4/asm/rc4-md5-x86_64.pl",
+  "crypto/aes/asm/aes-586.pl",
+  "crypto/aes/asm/aes-armv4.pl",
+  "crypto/aes/asm/aes-c64xplus.pl",
+  "crypto/aes/asm/aes-mips.pl",
+  "crypto/aes/asm/aes-parisc.pl",
+  "crypto/aes/asm/aes-ppc.pl",
+  "crypto/aes/asm/aes-s390x.pl",
+  "crypto/aes/asm/aes-x86_64.pl",
+  "crypto/aes/asm/aesfx-sparcv9.pl",
+  "crypto/aes/asm/aesni-mb-x86_64.pl",
+  "crypto/aes/asm/aesni-sha1-x86_64.pl",
+  "crypto/aes/asm/aesni-sha256-x86_64.pl",
+  "crypto/aes/asm/aesni-x86_64.pl",
+  "crypto/aes/asm/aesni-x86.pl",
+  "crypto/aes/asm/aesp8-ppc.pl",
+  "crypto/aes/asm/aesv8-armx.pl",
+  "crypto/aes/asm/bsaes-armv7.pl",
+  "crypto/bn/asm/alpha-mont.pl",
+  "crypto/bn/asm/armv4-gf2m.pl",
+  "crypto/bn/asm/armv4-mont.pl",
+  "crypto/bn/asm/armv8-mont.pl",
+  "crypto/bn/asm/c64xplus-gf2m.pl",
+  "crypto/bn/asm/ia64-mont.pl",
+  "crypto/bn/asm/mips-mont.pl",
+  "crypto/bn/asm/parisc-mont.pl",
+  "crypto/bn/asm/ppc-mont.pl",
+  "crypto/bn/asm/ppc64-mont.pl",
+  "crypto/bn/asm/s390x-gf2m.pl",
+  "crypto/bn/asm/s390x-mont.pl",
+  "crypto/bn/asm/sparcv9-gf2m.pl",
+  "crypto/bn/asm/sparcv9-mont.pl",
+  "crypto/bn/asm/sparcv9a-mont.pl",
+  "crypto/bn/asm/via-mont.pl",
+  "crypto/bn/asm/vis3-mont.pl",
+  "crypto/bn/asm/x86_64-gf2m.pl",
+  "crypto/bn/asm/x86_64-mont.pl",
+  "crypto/bn/asm/x86_64-mont5.pl",
+  "crypto/bn/asm/x86-gf2m.pl",
+  "crypto/bn/asm/x86-mont.pl",
+  "crypto/chacha/asm/chacha-armv4.pl",
+  "crypto/chacha/asm/chacha-armv8.pl",
+  "crypto/chacha/asm/chacha-c64xplus.pl",
+  "crypto/chacha/asm/chacha-ppc.pl",
+  "crypto/chacha/asm/chacha-s390x.pl",
+  "crypto/chacha/asm/chacha-x86_64.pl",
+  "crypto/chacha/asm/chacha-x86.pl",
+  "crypto/chacha/asm/chachap10-ppc.pl",
+  "crypto/ec/asm/ecp_nistz256-armv4.pl",
+  "crypto/ec/asm/ecp_nistz256-armv8.pl",
+  "crypto/ec/asm/ecp_nistz256-ppc64.pl",
+  "crypto/ec/asm/ecp_nistz256-sparcv9.pl",
+  "crypto/ec/asm/ecp_nistz256-x86.pl",
+  "crypto/ec/asm/x25519-ppc64.pl",
+  "crypto/ec/asm/x25519-x86_64.pl",
+  "crypto/md5/asm/md5-sparcv9.pl",
+  "crypto/modes/asm/aesni-gcm-x86_64.pl",
+  "crypto/modes/asm/ghash-alpha.pl",
+  "crypto/modes/asm/ghash-armv4.pl",
+  "crypto/modes/asm/ghash-c64xplus.pl",
+  "crypto/modes/asm/ghash-ia64.pl",
+  "crypto/modes/asm/ghash-parisc.pl",
+  "crypto/modes/asm/ghash-s390x.pl",
+  "crypto/modes/asm/ghash-sparcv9.pl",
+  "crypto/modes/asm/ghash-x86_64.pl",
+  "crypto/modes/asm/ghash-x86.pl",
+  "crypto/modes/asm/ghashp8-ppc.pl",
+  "crypto/modes/asm/ghashv8-armx.pl",
+  "crypto/poly1305/asm/poly1305-armv4.pl",
+  "crypto/poly1305/asm/poly1305-armv8.pl",
+  "crypto/poly1305/asm/poly1305-c64xplus.pl",
+  "crypto/poly1305/asm/poly1305-mips.pl",
+  "crypto/poly1305/asm/poly1305-ppcfp.pl",
+  "crypto/poly1305/asm/poly1305-s390x.pl",
+  "crypto/poly1305/asm/poly1305-sparcv9.pl",
+  "crypto/poly1305/asm/poly1305-x86_64.pl",
+  "crypto/poly1305/asm/poly1305-x86.pl",
+  "crypto/rc4/asm/rc4-586.pl",
+  "crypto/rc4/asm/rc4-c64xplus.pl",
+  "crypto/rc4/asm/rc4-parisc.pl",
+  "crypto/rc4/asm/rc4-s390x.pl",
+  "crypto/rc4/asm/rc4-x86_64.pl",
+  "crypto/sha/asm/keccak1600-armv4.pl",
+  "crypto/sha/asm/keccak1600-armv8.pl",
+  "crypto/sha/asm/keccak1600-avx2.pl",
+  "crypto/sha/asm/keccak1600-avx512.pl",
+  "crypto/sha/asm/keccak1600-avx512vl.pl",
+  "crypto/sha/asm/keccak1600-c64x.pl",
+  "crypto/sha/asm/keccak1600-mmx.pl",
+  "crypto/sha/asm/keccak1600-ppc64.pl",
+  "crypto/sha/asm/keccak1600-s390x.pl",
+  "crypto/sha/asm/keccak1600-x86_64.pl",
+  "crypto/sha/asm/keccak1600p8-ppc.pl",
+  "crypto/sha/asm/sha1-586.pl",
+  "crypto/sha/asm/sha1-alpha.pl",
+  "crypto/sha/asm/sha1-armv4-large.pl",
+  "crypto/sha/asm/sha1-armv8.pl",
+  "crypto/sha/asm/sha1-c64xplus.pl",
+  "crypto/sha/asm/sha1-ia64.pl",
+  "crypto/sha/asm/sha1-mb-x86_64.pl",
+  "crypto/sha/asm/sha1-mips.pl",
+  "crypto/sha/asm/sha1-parisc.pl",
+  "crypto/sha/asm/sha1-ppc.pl",
+  "crypto/sha/asm/sha1-s390x.pl",
+  "crypto/sha/asm/sha1-sparcv9.pl",
+  "crypto/sha/asm/sha1-sparcv9a.pl",
+  "crypto/sha/asm/sha1-thumb.pl",
+  "crypto/sha/asm/sha1-x86_64.pl",
+  "crypto/sha/asm/sha256-586.pl",
+  "crypto/sha/asm/sha256-armv4.pl",
+  "crypto/sha/asm/sha256-c64xplus.pl",
+  "crypto/sha/asm/sha256-mb-x86_64.pl",
+  "crypto/sha/asm/sha512-586.pl",
+  "crypto/sha/asm/sha512-armv4.pl",
+  "crypto/sha/asm/sha512-armv8.pl",
+  "crypto/sha/asm/sha512-c64xplus.pl",
+  "crypto/sha/asm/sha512-ia64.pl",
+  "crypto/sha/asm/sha512-mips.pl",
+  "crypto/sha/asm/sha512-parisc.pl",
+  "crypto/sha/asm/sha512-ppc.pl",
+  "crypto/sha/asm/sha512-s390x.pl",
+  "crypto/sha/asm/sha512-sparcv9.pl",
+  "crypto/sha/asm/sha512p8-ppc.pl",
+]
+SPDX-License-Identifier = "Apache-2.0 OR LicenseRef-Cryptogams"
+
+[[annotations]]
+path = [
+  "crypto/x509/v3_pci.c",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2004-2026 The OpenSSL Project Authors. All Rights Reserved.",
+  "2004 Kungliga Tekniska Högskolan (Royal Institute of Technology, Stockholm, Sweden). All rights reserved.",
+]
+SPDX-License-Identifier = "Apache-2.0 OR BSD-3-Clause"
+
+[[annotations]]
+path = [
+  "crypto/x509/v3_pcia.c",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2004-2016 The OpenSSL Project Authors. All Rights Reserved.",
+  "2004 Kungliga Tekniska Högskolan (Royal Institute of Technology, Stockholm, Sweden). All rights reserved.",
+]
+SPDX-License-Identifier = "Apache-2.0 OR BSD-3-Clause"
+
+[[annotations]]
+path = [
+  "crypto/aes/asm/aes-riscv32-zkn.pl",
+  "crypto/aes/asm/aes-riscv64-zkn.pl",
+  "crypto/aes/asm/aes-riscv64-zvbb-zvkg-zvkned.pl",
+  "crypto/aes/asm/aes-riscv64-zvkb-zvkned.pl",
+  "crypto/aes/asm/aes-riscv64-zvkned.pl",
+  "crypto/chacha/asm/chacha-riscv64-v-zbb.pl",
+  "crypto/chacha/chacha_riscv.c",
+  "crypto/LPdir_nyi.c",
+  "crypto/LPdir_unix.c",
+  "crypto/LPdir_vms.c",
+  "crypto/LPdir_win.c",
+  "crypto/LPdir_win32.c",
+  "crypto/md5/asm/md5-riscv64-zbb.pl",
+  "crypto/modes/asm/aes-gcm-riscv64-zvkb-zvkg-zvkned.pl",
+  "crypto/modes/asm/ghash-riscv64-zvkb-zvbc.pl",
+  "crypto/modes/asm/ghash-riscv64-zvkg.pl",
+  "crypto/modes/asm/ghash-riscv64.pl",
+  "crypto/perlasm/riscv.pm",
+  "crypto/sha/asm/sha256-loongarch64.pl",
+  "crypto/sha/asm/sha256-riscv64-zbb.pl",
+  "crypto/sha/asm/sha256-riscv64-zvkb-zvknha_or_zvknhb.pl",
+  "crypto/sha/asm/sha512-loongarch64.pl",
+  "crypto/sha/asm/sha512-riscv64-zbb.pl",
+  "crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl",
+  "crypto/sm3/asm/sm3-riscv64-zbb.pl",
+  "crypto/sm3/asm/sm3-riscv64-zvksh.pl",
+  "crypto/sm4/asm/sm4-riscv64-zvksed.pl",
+  "include/internal/o_dir.h",
+]
+SPDX-License-Identifier = "Apache-2.0 OR BSD-2-Clause"
+
+[[annotations]]
+path = [
+  "crypto/camellia/asm/cmllt4-sparcv9.pl",
+  "crypto/des/asm/dest4-sparcv9.pl",
+  "crypto/aes/asm/aest4-sparcv9.pl",
+  "crypto/bn/asm/sparct4-mont.pl",
+]
+SPDX-License-Identifier = "Apache-2.0 AND BSD-2-Clause"
+
+[[annotations]]
+path = [
+  "crypto/modes/asm/aes-gcm-armv8-unroll8_64.pl",
+]
+SPDX-License-Identifier = "Apache-2.0 OR BSD-3-Clause"
+
+[[annotations]]
+path = [
+  "include/openssl/seed.h",
+  "crypto/seed/seed_local.h",
+  "crypto/seed/seed.c",
+]
+SPDX-License-Identifier = "Apache-2.0 AND LicenseRef-KISA-BSD-Source-Code"
+
+[[annotations]]
+path = [
+  "crypto/camellia/asm/cmll-x86_64.pl",
+  "crypto/camellia/asm/cmll-x86.pl",
+]
+SPDX-License-Identifier = "Apache-2.0 AND (GPL-2.0-or-later OR LGPL-2.1-or-later OR MPL-1.1 OR BSD-3-Clause)"
+
+[[annotations]]
+path = [
+  "ssl/d1_srtp.c",
+]
+precedence = "override"
+SPDX-FileCopyrightText = [
+  "2011-2025 The OpenSSL Project Authors. All Rights Reserved.",
+  "2006, Network Resonance, Inc.",
+  "2011, RTFM, Inc.",
+]
+SPDX-License-Identifier = "Apache-2.0"
