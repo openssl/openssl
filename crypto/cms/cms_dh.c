@@ -13,7 +13,6 @@
 #include <openssl/err.h>
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
-#include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
 
@@ -239,9 +238,9 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         ASN1_INTEGER_free(pubk);
         if (penclen <= 0)
             goto err;
-        ASN1_STRING_set0(pubkey, penc, penclen);
-        ossl_asn1_bit_string_set_unused_bits(pubkey, 0);
-
+        if (!ASN1_BIT_STRING_set1(pubkey, penc, penclen, 0))
+            goto err;
+        OPENSSL_free(penc);
         penc = NULL;
         (void)X509_ALGOR_set0(talg, OBJ_nid2obj(NID_dhpublicnumber),
             V_ASN1_UNDEF, NULL); /* cannot fail */

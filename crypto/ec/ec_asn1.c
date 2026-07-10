@@ -18,8 +18,8 @@
 #include <openssl/err.h>
 #include <openssl/asn1t.h>
 #include <openssl/objects.h>
-#include "internal/nelem.h"
 #include "crypto/asn1.h"
+#include "internal/nelem.h"
 #include "crypto/asn1_dsa.h"
 
 #ifndef FIPS_MODULE
@@ -349,7 +349,7 @@ static int ec_asn1_group2curve(const EC_GROUP *group, X9_62_CURVE *curve)
                 goto err;
             }
         if (!ASN1_BIT_STRING_set1(curve->seed, group->seed,
-                (int)group->seed_len, 0)) {
+                group->seed_len, 0)) {
             ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
             goto err;
         }
@@ -1070,8 +1070,11 @@ int i2d_ECPrivateKey(const EC_KEY *a, unsigned char **out)
             goto err;
         }
 
-        ossl_asn1_bit_string_set_unused_bits(priv_key->publicKey, 0);
-        ASN1_STRING_set0(priv_key->publicKey, pub, (int)publen);
+        if (!ASN1_BIT_STRING_set1(priv_key->publicKey, pub, publen, 0)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        OPENSSL_free(pub);
         pub = NULL;
     }
 

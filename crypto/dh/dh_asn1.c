@@ -21,8 +21,6 @@
 #include <openssl/asn1t.h>
 #include "crypto/dh.h"
 
-#include <crypto/asn1.h>
-
 /* Override the default free and new methods */
 static int dh_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
@@ -119,8 +117,9 @@ DH *d2i_DHxparams(DH **a, const unsigned char **pp, long length)
     if (dhx->vparams != NULL) {
         /* The counter has a maximum value of 4 * numbits(p) - 1 */
         int counter = (int)BN_get_word(dhx->vparams->counter);
-        ossl_ffc_params_set_validate_params(params, dhx->vparams->seed->data,
-            dhx->vparams->seed->length,
+        ossl_ffc_params_set_validate_params(params,
+            ASN1_STRING_get0_data(dhx->vparams->seed),
+            ASN1_STRING_length(dhx->vparams->seed),
             counter);
         ASN1_BIT_STRING_free(dhx->vparams->seed);
         BN_free(dhx->vparams->counter);
@@ -139,7 +138,8 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
     int ret = 0;
     int_dhx942_dh dhx;
     int_dhvparams dhv = { NULL, NULL };
-    ASN1_BIT_STRING seed;
+    ASN1_BIT_STRING *seed = NULL;
+    unsigned char *seed_data = NULL;
     size_t seedlen = 0;
     const FFC_PARAMS *params = &dh->params;
     int counter;
@@ -147,15 +147,17 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
     ossl_ffc_params_get0_pqg(params, (const BIGNUM **)&dhx.p,
         (const BIGNUM **)&dhx.q, (const BIGNUM **)&dhx.g);
     dhx.j = params->j;
-    ossl_ffc_params_get_validate_params(params, &seed.data, &seedlen, &counter);
-    seed.length = (int)seedlen;
+    ossl_ffc_params_get_validate_params(params, &seed_data, &seedlen, &counter);
 
-    if (counter != -1 && seed.data != NULL && seed.length > 0) {
-        seed.flags = ASN1_STRING_FLAG_BITS_LEFT;
-        dhv.seed = &seed;
+    if (counter != -1 && seed_data != NULL && seedlen > 0) {
+        if ((seed = ASN1_BIT_STRING_new()) == NULL)
+            return 0;
+        if (!ASN1_BIT_STRING_set1(seed, seed_data, seedlen, 0))
+            goto err;
+        dhv.seed = seed;
         dhv.counter = BN_new();
         if (dhv.counter == NULL)
-            return 0;
+            goto err;
         if (!BN_set_word(dhv.counter, (BN_ULONG)counter))
             goto err;
         dhx.vparams = &dhv;
@@ -165,5 +167,6 @@ int i2d_DHxparams(const DH *dh, unsigned char **pp)
     ret = i2d_int_dhx(&dhx, pp);
 err:
     BN_free(dhv.counter);
+    ASN1_BIT_STRING_free(seed);
     return ret;
 }
