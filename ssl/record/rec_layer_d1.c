@@ -652,8 +652,7 @@ int do_dtls1_write(SSL_CONNECTION *sc, uint8_t type, const unsigned char *buf,
      * haven't decided which version to use yet send back using version 1.0
      * header: otherwise some clients will ignore it.
      */
-    if (s->method->version == DTLS_ANY_VERSION
-        && sc->max_proto_version != DTLS1_BAD_VER)
+    if (s->method->version == DTLS_ANY_VERSION)
         tmpl.version = DTLS1_VERSION;
     else
         tmpl.version = sc->version;

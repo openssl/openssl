@@ -1055,7 +1055,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
         if (statem_flush(s) != 1)
             return WORK_MORE_A;
         /* HelloVerifyRequest resets Finished MAC */
-        if (s->version != DTLS1_BAD_VER && !ssl3_init_finished_mac(s)) {
+        if (!ssl3_init_finished_mac(s)) {
             /* SSLfatal() already called */
             return WORK_ERROR;
         }
@@ -3325,15 +3325,10 @@ static int tls_process_cke_rsa(SSL_CONNECTION *s, PACKET *pkt)
         return 0;
     }
 
-    /* pre-standard DTLS omits the length bytes. */
-    if (s->version == DTLS1_BAD_VER) {
-        enc_premaster = *pkt;
-    } else {
-        if (!PACKET_get_length_prefixed_2(pkt, &enc_premaster)
-            || PACKET_remaining(pkt) != 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
-            return 0;
-        }
+    if (!PACKET_get_length_prefixed_2(pkt, &enc_premaster)
+        || PACKET_remaining(pkt) != 0) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
+        return 0;
     }
 
     outlen = SSL_MAX_MASTER_KEY_LENGTH;

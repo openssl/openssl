@@ -131,11 +131,6 @@ will choose following its own preferences.
 Use of the old but somewhat misleading name SSL_OP_CIPHER_SERVER_PREFERENCE
 is still possible but discouraged.
 
-=item SSL_OP_CISCO_ANYCONNECT
-
-Use Cisco's version identifier of DTLS_BAD_VER when establishing a DTLSv1
-connection. Only available when using the deprecated DTLSv1_client_method() API.
-
 =item SSL_OP_CLEANSE_PLAINTEXT
 
 By default TLS and QUIC SSL objects keep a copy of received plaintext
@@ -609,6 +604,8 @@ whether these macros are defined or not.
 As of OpenSSL 3.6, use of the B<SSL_OP_CIPHER_SERVER_PREFERENCE> constant
 is discouraged and its semantics became available using the more aptly named
 B<SSL_OP_SERVER_PREFERENCE> constant.
+
+B<SSL_OP_CISCO_ANYCONNECT> was removed in OpenSSL 5.0.
 
 =head1 COPYRIGHT
 

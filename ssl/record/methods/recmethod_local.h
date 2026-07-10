@@ -394,7 +394,6 @@ void ossl_rlayer_fatal(OSSL_RECORD_LAYER *rl, int al, int reason,
 
 #define RLAYER_USE_EXPLICIT_IV(rl) ((rl)->version == TLS1_1_VERSION \
     || (rl)->version == TLS1_2_VERSION                              \
-    || (rl)->version == DTLS1_BAD_VER                               \
     || (rl)->version == DTLS1_VERSION                               \
     || (rl)->version == DTLS1_2_VERSION)
 

@@ -673,7 +673,6 @@ dtls_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
         break;
     case DTLS1_2_VERSION:
     case DTLS1_VERSION:
-    case DTLS1_BAD_VER:
         (*retrl)->funcs = &dtls_1_funcs;
         break;
     default:

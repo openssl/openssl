@@ -452,11 +452,9 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
     int minisdtls = 0, maxisdtls = 0;
 
     /* Figure out if we're doing DTLS versions or TLS versions */
-    if (min_version == DTLS1_BAD_VER
-        || min_version >> 8 == DTLS1_VERSION_MAJOR)
+    if (min_version >> 8 == DTLS1_VERSION_MAJOR)
         minisdtls = 1;
-    if (max_version == DTLS1_BAD_VER
-        || max_version >> 8 == DTLS1_VERSION_MAJOR)
+    if (max_version >> 8 == DTLS1_VERSION_MAJOR)
         maxisdtls = 1;
     /* A wildcard version of 0 could be DTLS or TLS. */
     if ((minisdtls && !maxisdtls && max_version != 0)
@@ -468,7 +466,6 @@ static int ssl_check_allowed_versions(int min_version, int max_version)
     if (minisdtls || maxisdtls) {
         /* Do DTLS version checks. */
         if (min_version == 0)
-            /* Ignore DTLS1_BAD_VER */
             min_version = DTLS1_VERSION;
         if (max_version == 0)
             max_version = DTLS1_2_VERSION;
@@ -4041,8 +4038,7 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
     if (sc == NULL)
         return -1;
 
-    if (sc->session == NULL
-        || (sc->version < TLS1_VERSION && sc->version != DTLS1_BAD_VER))
+    if (sc->session == NULL || sc->version < TLS1_VERSION)
         return -1;
 
     return sc->ssl.method->ssl3_enc->export_keying_material(sc, out, olen, label,
@@ -5274,9 +5270,6 @@ const char *ssl_protocol_to_string(int version)
 
     case SSL3_VERSION:
         return "SSLv3";
-
-    case DTLS1_BAD_VER:
-        return "DTLSv0.9";
 
     case DTLS1_VERSION:
         return "DTLSv1";
