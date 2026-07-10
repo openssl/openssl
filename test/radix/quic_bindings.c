@@ -13,6 +13,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_error.h"
+#include "internal/quic_thread_assist.h"
 
 /*
  * RADIX 6D QUIC Test Framework
