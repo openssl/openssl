@@ -15,7 +15,7 @@
 
 /*
  * Recover the containing struct from a pointer to one of its embedded
- * fields.  The workhorse macro for intrusive data structures.
+ * fields.
  *
  *     struct foo {
  *         int        bar;
@@ -29,8 +29,8 @@
  * Use CONTAINER_OF_CONST if you need const preserved.
  */
 #define CONTAINER_OF(ptr, type, member) \
-    ((type *)(void *)((char *)(ptr) - offsetof(type, member)))
+    ((type *)((char *)(ptr) - offsetof(type, member)))
 #define CONTAINER_OF_CONST(ptr, type, member) \
-    ((const type *)(void *)((char *)(ptr) - offsetof(type, member)))
+    (const type *)CONTAINER_OF(ptr, type, member)
 
 #endif
