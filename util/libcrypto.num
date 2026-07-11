@@ -5727,3 +5727,6 @@ EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_data                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_string                  ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_length_ex                   ?	4_1_0	EXIST::FUNCTION:
+OSSL_CRAU_enter                         ?	4_1_0	EXIST::FUNCTION:
+OSSL_CRAU_data                          ?	4_1_0	EXIST::FUNCTION:
+OSSL_CRAU_leave                         ?	4_1_0	EXIST::FUNCTION:

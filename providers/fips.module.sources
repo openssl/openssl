@@ -132,6 +132,7 @@ crypto/core_algorithm.c
 crypto/core_fetch.c
 crypto/core_namemap.c
 crypto/cpuid.c
+crypto/crau.c
 crypto/cryptlib.c
 crypto/ctype.c
 crypto/der_writer.c
