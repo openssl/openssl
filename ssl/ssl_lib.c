@@ -32,6 +32,7 @@
 #include "internal/ktls.h"
 #include "internal/to_hex.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/usdt.h"
 #include "quic/quic_local.h"
 
 #ifndef OPENSSL_NO_SSLKEYLOG
@@ -1612,6 +1613,8 @@ void ossl_ssl_connection_free(SSL *ssl)
             ssl->method->ssl_deinit(ssl);
         return;
     }
+
+    OSSL_USDT_release_context(s);
 
     if (s->d1 != NULL && s->rlayer.wrl != NULL)
         dtls1_clear_current_wrl_from_sent_buffer(s);
