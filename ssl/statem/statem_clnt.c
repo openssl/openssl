@@ -29,6 +29,7 @@
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/ocsp.h>
+#include "internal/usdt.h"
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions);
@@ -1799,6 +1800,8 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
     }
     s->s3.tmp.new_cipher = c;
 
+    OSSL_USDT_data({ "tls::ciphersuite", OSSL_USDT_WORD(c->id) });
+
     return 1;
 }
 
@@ -2024,6 +2027,9 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+
+        OSSL_USDT_data(
+            { "tls::protocol_version", OSSL_USDT_WORD(s->version) });
     }
 
     if (SSL_CONNECTION_IS_VERSION13(s) || hrr) {
@@ -2613,6 +2619,9 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * set. The *documented* interface remains the same.
      */
     ERR_set_mark();
+
+    OSSL_USDT_new_context("tls::verify_cert_chain");
+
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
     if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
         ERR_clear_last_mark();

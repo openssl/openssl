@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/rand.h>
+#include "internal/usdt.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include <assert.h>
@@ -389,6 +390,10 @@ static int state_machine(SSL_CONNECTION *s, int server)
     cb = get_callback(s);
 
     st->in_handshake++;
+
+    OSSL_USDT_new_context_with_data("tls::handshake",
+        { "tls::role", OSSL_USDT_STRING(s->server ? "server" : "client") });
+
     if (!SSL_in_init(ssl) || SSL_in_before(ssl)) {
         /*
          * If we are stateless then we already called SSL_clear() - don't do

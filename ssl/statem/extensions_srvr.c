@@ -16,6 +16,7 @@
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #endif
+#include "internal/usdt.h"
 
 #define COOKIE_STATE_FORMAT_VERSION 1
 
@@ -2078,6 +2079,9 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
+
+    OSSL_USDT_new_context_with_data("tls::key_exchange",
+        { "tls::group", OSSL_USDT_WORD(ginf->group_id) });
 
     if (!ginf->is_kem) {
         /* Regular KEX */
