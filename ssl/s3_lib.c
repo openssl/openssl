@@ -22,6 +22,7 @@
 #include <openssl/core_names.h>
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
+#include "internal/usdt.h"
 #include <openssl/ocsp.h>
 
 #define TLS13_NUM_CIPHERS OSSL_NELEM(tls13_ciphers)
@@ -5502,6 +5503,8 @@ int ssl_derive(SSL_CONNECTION *s, EVP_PKEY *privkey, EVP_PKEY *pubkey, int gense
 
     pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, privkey, sctx->propq);
 
+    OSSL_USDT_new_child(s, pctx);
+
     if (EVP_PKEY_derive_init(pctx) <= 0
         || EVP_PKEY_derive_set_peer(pctx, pubkey) <= 0
         || EVP_PKEY_derive(pctx, NULL, &pmslen) <= 0) {
@@ -5561,6 +5564,8 @@ int ssl_decapsulate(SSL_CONNECTION *s, EVP_PKEY *privkey,
 
     pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, privkey, sctx->propq);
 
+    OSSL_USDT_new_child(s, pctx);
+
     if (EVP_PKEY_decapsulate_init(pctx, NULL) <= 0
         || EVP_PKEY_decapsulate(pctx, NULL, &pmslen, ct, ctlen) <= 0) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -5611,6 +5616,8 @@ int ssl_encapsulate(SSL_CONNECTION *s, EVP_PKEY *pubkey,
     }
 
     pctx = EVP_PKEY_CTX_new_from_pkey(sctx->libctx, pubkey, sctx->propq);
+
+    OSSL_USDT_new_child(s, pctx);
 
     if (EVP_PKEY_encapsulate_init(pctx, NULL) <= 0
         || EVP_PKEY_encapsulate(pctx, NULL, &ctlen, NULL, &pmslen) <= 0
