@@ -279,8 +279,17 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *sess = ssl_session_dup_intern(src, ticket);
 
-    if (sess != NULL)
+    if (sess != NULL) {
         sess->not_resumable = 0;
+        /*
+         * A duplicate (e.g. one being split off for a fresh ticket) is no
+         * longer "just resolved via an external PSK callback this instant" --
+         * it's a session in its own right going forward, and should get the
+         * ordinary sid_ctx treatment on any future resumption. See the field
+         * comment in ssl_local.h.
+         */
+        sess->psk_external = 0;
+    }
 
     return sess;
 }
@@ -648,7 +657,14 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err; /* treat like cache miss */
     }
 
-    if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
+    /*
+     * sid_ctx exists to keep multiple services that happen to share one
+     * session cache from resuming each other's sessions.  This check is
+     * not relevant to sessions that were just resolved via an external
+     * PSK identity.  See the psk_external field comment in ssl_local.h.
+     */
+    if (!ret->psk_external
+        && (s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
         /*
          * We can't be sure if this session is being used out of context,
          * which is especially important for SSL_VERIFY_PEER. The application

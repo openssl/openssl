@@ -518,6 +518,24 @@ struct ssl_session_st {
      * to disable session caching and tickets.
      */
     int not_resumable;
+    /*
+     * Set when this session's master key was resolved from an external PSK
+     * identity (RFC 9258 static/dynamic candidates, psk_find_session_cb(),
+     * or the legacy psk_server_callback()) rather than from a real ticket or
+     * session-cache lookup. ssl_get_prev_session() uses this to exempt such
+     * sessions from sid_ctx checks that only make sense for a real cache
+     * lookup -- there is no cache-partitioning ambiguity to guard against
+     * when the identity was just resolved, out of band, by the application's
+     * own callback.
+     *
+     * Deliberately not part of the SSL_SESSION ASN.1 encoding: it must not
+     * survive a real ticket round-trip (a session reconstructed by
+     * d2i_SSL_SESSION() from a genuine, previously-issued ticket is by
+     * definition not an external-PSK match, and should get the ordinary
+     * sid_ctx treatment). ssl_session_dup() resets it to 0 on every copy,
+     * mirroring not_resumable just above, for the same reason.
+     */
+    int psk_external;
     /* Peer raw public key, if available */
     EVP_PKEY *peer_rpk;
     /* This is the cert and type for the other end. */

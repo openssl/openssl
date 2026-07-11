@@ -712,17 +712,20 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * session tickets or resumption (e.g. new_session_count = 0 or
          * resumption_count = 0), this implementation does not currently
          * interpret or enforce those parameters.
+         *
+         * Also skip issuance when SSL_VERIFY_PEER is set with no sid_ctx
+         * configured: any ticket minted here would be rejected by
+         * ssl_get_prev_session() in that configuration.
          */
-        if (((s->options & SSL_OP_NO_TICKET) != 0
+        if (s->num_tickets <= s->sent_tickets
+            || ((s->options & SSL_OP_NO_TICKET) != 0
                 && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
-            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE) {
+            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
+            || ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0))
             st->hand_state = TLS_ST_OK;
-        } else if (s->num_tickets > s->sent_tickets) {
+        else
             st->hand_state = TLS_ST_SW_SESSION_TICKET;
-        } else {
-            st->hand_state = TLS_ST_OK;
-        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:

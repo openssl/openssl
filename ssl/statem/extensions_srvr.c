@@ -1413,6 +1413,14 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              */
             memcpy(sess->sid_ctx, s->sid_ctx, s->sid_ctx_length);
             sess->sid_ctx_length = s->sid_ctx_length;
+            /*
+             * Resolved just now via psk_find_session_cb()/psk_server_callback(),
+             * not from a real ticket or cache lookup -- exempt from the
+             * sid_ctx checks in ssl_get_prev_session() that don't apply here.
+             * Must be set after the ssl_session_dup() above, which always
+             * resets it back to 0.
+             */
+            sess->psk_external = 1;
             ext = 1;
             if (id == 0)
                 s->ext.early_data_ok = 1;
@@ -1484,6 +1492,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  */
                 s->ext.early_data_ok = 1;
             }
+            /* This PSK is not external, use the correct binder label, ... */
+            ext = 0;
         }
 
         md = ssl_md(sctx, sess->cipher->algorithm2);
@@ -1760,7 +1770,15 @@ EXT_RETURN tls_construct_stoc_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-    if (!s->ext.ticket_expected || !tls_use_ticket(s)) {
+    /*
+     * Don't tell the client to expect a NewSessionTicket when any
+     * ticket we'd mint would be rejected by ssl_get_prev_session()
+     * whenever SSL_VERIFY_PEER is set with no sid_ctx configured (see
+     * the checks there).  In TLS 1.2, once promised the ticket MUST
+     * be sent.
+     */
+    if (!s->ext.ticket_expected || !tls_use_ticket(s)
+        || ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0)) {
         s->ext.ticket_expected = 0;
         return EXT_RETURN_NOT_SENT;
     }
