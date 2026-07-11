@@ -31,6 +31,30 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
+   protocol from an earlier connection after a resumption negotiated a
+   different protocol (or none), on both the server and the client,
+   which could otherwise affect a later 0-RTT decision.
+
+   *Daniel Kubec and Viktor Dukhovni*
+
+ * Fixed TLS 1.3 servers to reject early data when a resumed PSK's
+   ticket age is outside tolerance, per RFC 8446, instead of accepting
+   0-RTT data from a ticket that has aged out.
+
+   *Daniel Kubec*
+
+ * Fixed external TLS 1.3 PSK connections being wrongly rejected when
+   the client sets a non-empty session ID context.
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 PSK connections, both session tickets and external
+   PSKs, being wrongly rejected by a server that requests client
+   certificate verification but has no session ID context configured.
+
+   *Viktor Dukhovni*
+
  * EC key point format simplification.
 
    The point conversion form (compressed, uncompressed, or hybrid)

@@ -889,13 +889,42 @@ static int test_tls13_ticket_early_data_accepted(void)
  * Regression test for GitHub issue #11197: tls_construct_new_session_ticket()
  * copied s->s3.alpn_selected into the session only when an ALPN protocol was
  * negotiated, but failed to clear s->session->ext.alpn_selected when it wasn't.
+ *
+ * A third connection then resumes the now-ALPN-cleared ticket and negotiates
+ * "goodalpn" again -- the same, non-empty protocol as the original session,
+ * coincidentally. Since the ticket being resumed carries no ALPN, 0-RTT must
+ * still be rejected: the client's SSL_write_early_data() appears to succeed
+ * (the data is sent before the server's response is known), but a post hoc
+ * SSL_get_early_data_status() check confirms the server never accepted it.
+ *
+ * A fourth connection resumes that same ALPN-cleared ticket a second time --
+ * anti-replay is disabled for this test, so reusing it twice is not itself a
+ * reason for rejection -- but this time advertises no ALPN, consistent with
+ * what the ticket actually recorded. 0-RTT must now be accepted. Without this
+ * case, the rejection asserted for connection 3 would be unfalsifiable: it
+ * would look identical if early data were simply never being accepted here
+ * for any reason at all.
+ *
+ * The fourth connection resumes from an independent SSL_SESSION_dup() copy
+ * of the ticket (taken before connection 3 uses the original), rather than
+ * the original SSL_SESSION object itself: completing a handshake from a
+ * resumed session marks that SSL_SESSION object not-resumable on the client
+ * side as a single-use safeguard, independent of (and in addition to) the
+ * server's SSL_OP_NO_ANTI_REPLAY setting. Resuming the literal object a
+ * second time would therefore quietly fall back to a full, non-PSK
+ * handshake instead of testing the intended 0-RTT path.
  */
 static int test_tls13_ticket_alpn_cleared(void)
 {
+    const unsigned char m[] = "message";
+    unsigned char buf[256];
     SSL_CTX *c = NULL, *s = NULL;
     struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
     struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
-    SSL_SESSION *sess = NULL;
+    struct tls13_channel resumed2 = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed3 = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *sess2 = NULL, *sess2b = NULL;
+    size_t w = 0, r = 0;
     int test;
 
     test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
@@ -903,6 +932,8 @@ static int test_tls13_ticket_alpn_cleared(void)
         && TEST_true(set_ctx_callbacks(c, s))
         && TEST_true(ticket_enable(s))
         && TEST_true(ticket_enable(c))
+        && TEST_true(SSL_CTX_set_max_early_data(s, SSL3_RT_MAX_PLAIN_LENGTH))
+        && TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY) != 0)
         && TEST_true(alpn_server_enable(s, "goodalpn"))
         /*
          * Connection 1: the client advertises "goodalpn", the server selects
@@ -955,11 +986,84 @@ static int test_tls13_ticket_alpn_cleared(void)
         && TEST_true(alpn_conn_selected_none(resumed.s.ssl))
         && TEST_true(alpn_conn_selected_none(resumed.c.ssl))
         /* ... so the session written into the new ticket must carry none. */
-        && TEST_true(alpn_sess_selected_none(resumed.s.ssl));
+        && TEST_true(alpn_sess_selected_none(resumed.s.ssl))
+        && TEST_true(tls_shutdown(&resumed))
+        && TEST_ptr(sess2 = SSL_get1_session(resumed.c.ssl))
+        /*
+         * Connection 3 is about to resume sess2 and, since 0-RTT is attempted
+         * on it, the client will mark sess2 not-resumable once that attempt
+         * completes (this happens on any full handshake completed from a
+         * resumed session, independent of the server's anti-replay setting --
+         * it is a client-side single-use restriction on the SSL_SESSION
+         * object itself). Take an independent copy now, while sess2 is still
+         * untouched, so connection 4 below has its own unconsumed ticket to
+         * resume from.
+         */
+        && TEST_ptr(sess2b = SSL_SESSION_dup(sess2))
+        /*
+         * Connection 3: resume the ALPN-cleared ticket from connection 2, but
+         * this time negotiate "goodalpn" again -- the same protocol as the
+         * original session, purely by coincidence. The ticket being resumed
+         * has no ALPN of its own, so 0-RTT must be rejected regardless of
+         * this match.
+         */
+        && TEST_true(tls_channel_init(c, s, &resumed2))
+        && TEST_true(alpn_client_offer(resumed2.c.ssl, "goodalpn"))
+        && TEST_true(SSL_set_session(resumed2.c.ssl, sess2))
+        && TEST_true(SSL_write_early_data(resumed2.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        /* The server skips the early data: nothing is delivered to the app. */
+        && TEST_int_eq(SSL_read_early_data(resumed2.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_true(create_ssl_connection(resumed2.s.ssl, resumed2.c.ssl, 0))
+        && TEST_true(SSL_session_reused(resumed2.c.ssl))
+        && TEST_true(alpn_conn_selected_is(resumed2.s.ssl, "goodalpn"))
+        && TEST_true(alpn_conn_selected_is(resumed2.c.ssl, "goodalpn"))
+        && TEST_uint_eq(resumed2.s.stats.ee_has_alpn, 1)
+        && TEST_uint_eq(resumed2.c.stats.ee_has_alpn, 1)
+        && TEST_uint_eq(resumed2.s.stats.ee_has_early_data, 0)
+        && TEST_uint_eq(resumed2.c.stats.ee_has_early_data, 0)
+        /* Post hoc: the write appeared to succeed, but nothing was accepted. */
+        && TEST_int_eq(SSL_get_early_data_status(resumed2.c.ssl),
+            SSL_EARLY_DATA_REJECTED)
+        && TEST_true(tls_shutdown(&resumed2))
+        /*
+         * Connection 4: resume the same ticket from connection 2 again, via
+         * the untouched copy (sess2b) taken before connection 3 consumed
+         * sess2 -- anti-replay is off, so a second use of that ticket is not
+         * itself rejected -- but this time advertise no ALPN, matching what
+         * the ticket recorded. 0-RTT must be accepted, proving connection 3
+         * was rejected for the ALPN mismatch specifically, not because early
+         * data never works.
+         */
+        && TEST_true(tls_channel_init(c, s, &resumed3))
+        && TEST_true(SSL_set_session(resumed3.c.ssl, sess2b))
+        && TEST_true(SSL_write_early_data(resumed3.c.ssl, m, sizeof(m), &w))
+        && TEST_size_t_eq(w, sizeof(m))
+        && TEST_int_eq(SSL_read_early_data(resumed3.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_SUCCESS)
+        && TEST_mem_eq(buf, r, m, sizeof(m))
+        && TEST_int_gt(SSL_connect(resumed3.c.ssl), 0)
+        && TEST_int_eq(SSL_read_early_data(resumed3.s.ssl, buf, sizeof(buf), &r),
+            SSL_READ_EARLY_DATA_FINISH)
+        && TEST_size_t_eq(r, 0)
+        && TEST_int_eq(SSL_get_early_data_status(resumed3.s.ssl), SSL_EARLY_DATA_ACCEPTED)
+        && TEST_true(create_ssl_connection(resumed3.s.ssl, resumed3.c.ssl, 0))
+        && TEST_int_eq(SSL_get_early_data_status(resumed3.c.ssl), SSL_EARLY_DATA_ACCEPTED)
+        && TEST_true(SSL_session_reused(resumed3.c.ssl))
+        && TEST_true(alpn_conn_selected_none(resumed3.s.ssl))
+        && TEST_true(alpn_conn_selected_none(resumed3.c.ssl))
+        && TEST_uint_eq(resumed3.s.stats.ee_has_alpn, 0)
+        && TEST_uint_eq(resumed3.c.stats.ee_has_alpn, 0);
 
     SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess2);
+    SSL_SESSION_free(sess2b);
     tls_channel_fini(&initial);
     tls_channel_fini(&resumed);
+    tls_channel_fini(&resumed2);
+    tls_channel_fini(&resumed3);
     SSL_CTX_free(c);
     SSL_CTX_free(s);
     server_alpn = NULL;
