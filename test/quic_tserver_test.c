@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -60,7 +60,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     BIO *c_pair_own = NULL, *s_pair_own = NULL;
     QUIC_TSERVER_ARGS tserver_args = { 0 };
     QUIC_TSERVER *tserver = NULL;
-    BIO_ADDR *s_addr_ = NULL;
+    BIO_ADDR *s_addr_ = NULL, *c_addr_ = NULL;
     struct in_addr ina = { 0 };
     union BIO_sock_info_u s_info = { 0 };
     SSL_CTX *c_ctx = NULL;
@@ -85,31 +85,57 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     ina.s_addr = htonl(0x7f000001UL);
 
     /* Setup test server. */
-    s_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ge(s_fd, 0))
-        goto err;
-
-    if (!TEST_true(BIO_socket_nbio(s_fd, 1)))
-        goto err;
-
     if (!TEST_ptr(s_addr_ = BIO_ADDR_new()))
         goto err;
 
     if (!TEST_true(BIO_ADDR_rawmake(s_addr_, AF_INET, &ina, sizeof(ina), 0)))
         goto err;
 
-    if (!TEST_true(BIO_bind(s_fd, s_addr_, 0)))
-        goto err;
+    if (use_fake_time) {
+        /*
+         * Keep accelerated fake time independent of OS network scheduling.
+         * Other iterations retain real UDP socket coverage.
+         */
+        if (!TEST_true(BIO_new_bio_dgram_pair(&c_net_bio_own, 0,
+                &s_net_bio_own, 0)))
+            goto err;
 
-    s_info.addr = s_addr_;
-    if (!TEST_true(BIO_sock_info(s_fd, BIO_SOCK_INFO_ADDRESS, &s_info)))
-        goto err;
+        c_net_bio = c_net_bio_own;
+        s_net_bio = s_net_bio_own;
 
-    if (!TEST_int_gt(BIO_ADDR_rawport(s_addr_), 0))
-        goto err;
+        if (!TEST_true(BIO_dgram_set_caps(c_net_bio,
+                BIO_DGRAM_CAP_HANDLES_DST_ADDR))
+            || !TEST_true(BIO_dgram_set_caps(s_net_bio,
+                BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
+            goto err;
 
-    if (!TEST_ptr(s_net_bio = s_net_bio_own = BIO_new_dgram(s_fd, 0)))
-        goto err;
+        if (!TEST_ptr(c_addr_ = BIO_ADDR_new())
+            || !TEST_true(BIO_ADDR_rawmake(c_addr_, AF_INET, &ina,
+                sizeof(ina), 0))
+            || !TEST_true(BIO_dgram_set0_local_addr(c_net_bio, c_addr_)))
+            goto err;
+        c_addr_ = NULL;
+    } else {
+        s_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+        if (!TEST_int_ge(s_fd, 0))
+            goto err;
+
+        if (!TEST_true(BIO_socket_nbio(s_fd, 1)))
+            goto err;
+
+        if (!TEST_true(BIO_bind(s_fd, s_addr_, 0)))
+            goto err;
+
+        s_info.addr = s_addr_;
+        if (!TEST_true(BIO_sock_info(s_fd, BIO_SOCK_INFO_ADDRESS, &s_info)))
+            goto err;
+
+        if (!TEST_int_gt(BIO_ADDR_rawport(s_addr_), 0))
+            goto err;
+
+        if (!TEST_ptr(s_net_bio = s_net_bio_own = BIO_new_dgram(s_fd, 0)))
+            goto err;
+    }
 
     if (!BIO_up_ref(s_net_bio))
         goto err;
@@ -144,18 +170,20 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     }
 
     /* Setup test client. */
-    c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ge(c_fd, 0))
-        goto err;
+    if (!use_fake_time) {
+        c_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+        if (!TEST_int_ge(c_fd, 0))
+            goto err;
 
-    if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
-        goto err;
+        if (!TEST_true(BIO_socket_nbio(c_fd, 1)))
+            goto err;
 
-    if (!TEST_ptr(c_net_bio = c_net_bio_own = BIO_new_dgram(c_fd, 0)))
-        goto err;
+        if (!TEST_ptr(c_net_bio = c_net_bio_own = BIO_new_dgram(c_fd, 0)))
+            goto err;
 
-    if (!BIO_dgram_set_peer(c_net_bio, s_addr_))
-        goto err;
+        if (!BIO_dgram_set_peer(c_net_bio, s_addr_))
+            goto err;
+    }
 
     if (!TEST_ptr(c_ctx = SSL_CTX_new(use_thread_assist
                           ? OSSL_QUIC_client_thread_method()
@@ -165,9 +193,12 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
     if (!TEST_ptr(c_ssl = SSL_new(c_ctx)))
         goto err;
 
-    if (use_fake_time)
+    if (use_fake_time) {
+        if (!TEST_true(SSL_set1_initial_peer_addr(c_ssl, s_addr_)))
+            goto err;
         if (!TEST_true(ossl_quic_set_override_now_cb(c_ssl, fake_now, NULL)))
             goto err;
+    }
 
     /* 0 is a success for SSL_set_alpn_protos() */
     if (!TEST_false(SSL_set_alpn_protos(c_ssl, alpn, sizeof(alpn))))
@@ -397,7 +428,7 @@ static int do_test(int use_thread_assist, int use_fake_time, int use_inject)
 
             for (;;) {
                 /*
-                 * Manually spoonfeed received datagrams from the real BIO_dgram
+                 * Manually spoonfeed received datagrams from the network BIO
                  * into QUIC via the injection interface, thereby testing the
                  * injection interface.
                  */
@@ -421,6 +452,7 @@ err:
     SSL_CTX_free(c_ctx);
     ossl_quic_tserver_free(tserver);
     BIO_ADDR_free(s_addr_);
+    BIO_ADDR_free(c_addr_);
     BIO_free(s_net_bio_own);
     BIO_free(c_net_bio_own);
     BIO_free(c_pair_own);
