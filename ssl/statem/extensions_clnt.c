@@ -2456,6 +2456,15 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
         || s->psksession->ext.max_early_data == 0)
         memcpy(s->early_secret, s->psksession->early_secret, EVP_MAX_MD_SIZE);
 
+    /*
+     * s->psksession was built by psk_use_session_cb()/psk_client_callback(),
+     * not via ssl_get_new_session(), so, unlike an ordinary session, it
+     * was never stamped with our own sid_ctx.  We must do so now, to avoid
+     * rejection of the PSK session in ssl_get_prev_session().
+     */
+    memcpy(s->psksession->sid_ctx, s->sid_ctx, s->sid_ctx_length);
+    s->psksession->sid_ctx_length = s->sid_ctx_length;
+
     SSL_SESSION_free(s->session);
     s->session = s->psksession;
     s->psksession = NULL;
