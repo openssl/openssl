@@ -17,6 +17,7 @@
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/rand.h>
+#include <openssl/crau.h>
 #include "../ssl_local.h"
 #include "statem_local.h"
 #include <assert.h>
@@ -215,10 +216,31 @@ int ossl_statem_get_in_handshake(SSL_CONNECTION *s)
 
 void ossl_statem_set_in_handshake(SSL_CONNECTION *s, int inhand)
 {
-    if (inhand)
+    if (inhand) {
         s->statem.in_handshake++;
-    else
+
+#ifndef OPENSSL_NO_CRAU
+        static char role_server[] = "server";
+        OSSL_PARAM server_params[] = {
+            OSSL_PARAM_utf8_string("tls::role", &role_server, sizeof(role_server)),
+            OSSL_PARAM_END
+        };
+        static char role_client[] = "client";
+        OSSL_PARAM client_params[] = {
+            OSSL_PARAM_utf8_string("tls::role", &role_client, sizeof(role_client)),
+            OSSL_PARAM_END
+        };
+
+        OSSL_CRAU_enter(SSL_CONNECTION_GET_CTX(s)->libctx, "tls::handshake",
+            s->server ? server_params : client_params);
+#endif
+    } else {
         s->statem.in_handshake--;
+
+#ifndef OPENSSL_NO_CRAU
+        OSSL_CRAU_leave(SSL_CONNECTION_GET_CTX(s)->libctx);
+#endif
+    }
 }
 
 /* Are we in a sensible state to skip over unreadable early data? */
