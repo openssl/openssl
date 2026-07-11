@@ -2415,6 +2415,7 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
     size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
+    SSL_SESSION *sesstmp;
     unsigned int identity;
 
     if (!PACKET_get_net_2(pkt, &identity) || PACKET_remaining(pkt) != 0) {
@@ -2455,6 +2456,25 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
         || s->session->ext.max_early_data > 0
         || s->psksession->ext.max_early_data == 0)
         memcpy(s->early_secret, s->psksession->early_secret, EVP_MAX_MD_SIZE);
+
+    /*
+     * The psk_use_session_cb()/psk_client_callback() may reuse
+     * the session across connections we can't mutate it directly.
+     */
+    if ((sesstmp = ssl_session_dup(s->psksession, 0)) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    SSL_SESSION_free(s->psksession);
+    s->psksession = sesstmp;
+
+    /*
+     * s->psksession (now our private copy) was built by the callback, not via
+     * ssl_get_new_session(), so it was never stamped with our own sid_ctx. Do
+     * so now, to avoid rejection of the PSK session in tls_process_server_hello().
+     */
+    memcpy(s->psksession->sid_ctx, s->sid_ctx, s->sid_ctx_length);
+    s->psksession->sid_ctx_length = s->sid_ctx_length;
 
     SSL_SESSION_free(s->session);
     s->session = s->psksession;

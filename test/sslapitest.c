@@ -6546,6 +6546,165 @@ end:
     return testresult;
 }
 
+/*
+ * A server with SSL_VERIFY_PEER set but no session ID context configured
+ * must still accept a TLS 1.3 external PSK connection: the session was
+ * just resolved via the application's own callback for this identity, not
+ * read back out of a shared cache, so the sid_ctx check that guards
+ * against cross-context cache reuse does not apply to it.
+ */
+static int test_tls13_psk_verify_peer_no_sid_ctx(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0, &sctx, &cctx, NULL, NULL))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256")))
+        goto end;
+
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+
+    SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+    SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
+    srvid = pskid;
+    use_session_cb_cnt = 0;
+    find_session_cb_cnt = 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    clientpsk = create_a_psk(clientssl, SHA256_DIGEST_LENGTH);
+    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+        goto end;
+    serverpsk = clientpsk;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_true(SSL_session_reused(clientssl))
+        || !TEST_true(SSL_session_reused(serverssl)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A server with SSL_VERIFY_PEER set but no session ID context configured
+ * must not issue a session ticket after a full (non-PSK) handshake: any
+ * such ticket would be a poison pill, since resuming it would hit exactly
+ * the sid_ctx check that a fresh external PSK is exempted from above.
+ */
+static int test_tls13_psk_verify_peer_no_ticket(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_SESSION *sess = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0, &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    sess = SSL_get1_session(clientssl);
+    if (!TEST_ptr(sess) || !TEST_false(SSL_SESSION_has_ticket(sess)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * A client with its own session ID context configured must still be able
+ * to resume a TLS 1.3 external PSK obtained via the legacy
+ * psk_use_session_cb()/psk_client_callback() callbacks. s->psksession is
+ * never routed through ssl_get_new_session(), so, unlike an ordinary
+ * session, it was never stamped with the client's own sid_ctx; without
+ * that stamp tls_process_server_hello()'s own sid_ctx self-consistency
+ * check fatally rejects marking it reused.
+ *
+ * Test 0: new style callback (psk_use_session_cb()/psk_find_session_cb()).
+ * Test 1: old style callback (psk_client_callback()/psk_server_callback()).
+ */
+static int test_tls13_psk_client_sid_ctx(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int sess_id_ctx = 1;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0, &sctx, &cctx, NULL, NULL))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_session_id_context(cctx,
+            (void *)&sess_id_ctx, sizeof(sess_id_ctx))))
+        goto end;
+
+    srvid = pskid;
+    if (idx == 0) {
+        SSL_CTX_set_psk_use_session_callback(cctx, use_session_cb);
+        SSL_CTX_set_psk_find_session_callback(sctx, find_session_cb);
+        use_session_cb_cnt = 0;
+        find_session_cb_cnt = 0;
+    }
+#ifndef OPENSSL_NO_PSK
+    else {
+        SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
+        SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
+        psk_client_cb_cnt = 0;
+        psk_server_cb_cnt = 0;
+    }
+#endif
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    clientpsk = create_a_psk(clientssl, SHA256_DIGEST_LENGTH);
+    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+        goto end;
+    serverpsk = clientpsk;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE))
+        || !TEST_true(SSL_session_reused(clientssl))
+        || !TEST_true(SSL_session_reused(serverssl)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 #ifndef OSSL_NO_USABLE_TLS1_3
 /*
  * Test TLS1.3 connection establishment succeeds with various configurations of
@@ -15325,9 +15484,13 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_tls13_ciphersuite, 4);
 #ifdef OPENSSL_NO_PSK
     ADD_ALL_TESTS(test_tls13_psk, 1);
+    ADD_ALL_TESTS(test_tls13_psk_client_sid_ctx, 1);
 #else
     ADD_ALL_TESTS(test_tls13_psk, 4);
+    ADD_ALL_TESTS(test_tls13_psk_client_sid_ctx, 2);
 #endif /* OPENSSL_NO_PSK */
+    ADD_TEST(test_tls13_psk_verify_peer_no_sid_ctx);
+    ADD_TEST(test_tls13_psk_verify_peer_no_ticket);
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_tls13_no_dhe_kex, 8);
 #endif /* OSSL_NO_USABLE_TLS1_3 */
