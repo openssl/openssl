@@ -181,6 +181,7 @@ sub init
         server_port => 0,
         serverpid => 0,
         clientpid => 0,
+        clientexit => 0,
         execute => $execute,
         cert => $cert,
         debug => $debug,
@@ -219,6 +220,7 @@ sub clearClient
     $self->{clientflags} = "";
     $self->{sessionfile} = undef;
     $self->{clientpid} = 0;
+    $self->{clientexit} = 0;
     $is_tls13 = 0;
     $ciphersuite = undef;
 
@@ -604,6 +606,7 @@ sub clientstart
     $pid = $self->{clientpid};
     print "Waiting for s_client process to close: $pid...\n";
     waitpid($pid, 0);
+    $self->{clientexit} = $?;
 
     return $success;
 }
@@ -740,6 +743,11 @@ sub clientpid
 {
     my $self = shift;
     return $self->{clientpid};
+}
+sub clientexit
+{
+    my $self = shift;
+    return $self->{clientexit};
 }
 
 #Read/write accessors
