@@ -204,6 +204,11 @@ DEF_FUNC(hf_new_ssl)
     if (!is_domain && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
         goto err;
 
+    if (!TEST_true(ossl_quic_set_override_now_cb(ssl, get_time, NULL))) {
+        SSL_free(ssl);
+        goto err;
+    }
+
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), name, ssl))) {
         SSL_free(ssl);
         goto err;
@@ -342,6 +347,7 @@ DEF_FUNC(hf_accept_conn)
         SSL_free(conn);
         goto err;
     }
+    radix_activate_obj(RADIX_PROCESS_get_obj(RP(), conn_name));
 
     ok = 1;
 err:
