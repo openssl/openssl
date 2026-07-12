@@ -1028,5 +1028,6 @@ int ossl_statem_export_early_allowed(SSL_CONNECTION *s)
      * as we have sent early_data.
      */
     return s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
-        || (!s->server && s->ext.early_data != SSL_EARLY_DATA_NOT_SENT);
+        || (!s->server && !s->ext.early_data_suppressed
+            && s->ext.early_data != SSL_EARLY_DATA_NOT_SENT);
 }
