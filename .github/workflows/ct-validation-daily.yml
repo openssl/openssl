@@ -100,7 +100,7 @@ jobs:
       - name: Set ia32cap
         # Pin the runtime CPU-capability vector so a specific x86_64 asm
         # ladder is exercised regardless of the runner's actual CPU.
-        # 
+        #
         # Note that it is only possible to *hide* capabilities of the host CPU,
         # not add new capabilities. Attempting to run code depending on a
         # capability not actually possessed by the host CPU would SIGILL.
@@ -133,7 +133,7 @@ jobs:
         # util/wrap.pl -> util/shlib_wrap.sh sets LD_LIBRARY_PATH first, so
         # the shared libraries are found correctly.
         #
-        # Algorithms & implementation covered:
+        # Algorithms & implementations covered:
         # - memcmp: test_crypto_memcmp
         #     - x86_64 asm
         #     - x86_64 no-asm
@@ -144,13 +144,16 @@ jobs:
         #     - x86_64 no-asm
         #     - aarch64 asm
         #     - aarch64 no-asm
-        # - x25519: test_internal_curve25519
+        # - x25519: test_evp_ct
         #     - x86_64 asm ADX/BMI2 (fe64 asm)
         #     - x86_64 asm no-ADX/no-BMI2 (fe51 asm)
         #     - x86_64 no-asm (fe51 C)
         #     - aarch64 no-asm (fe51 C)
         #     - FUTURE: x86 (fe C)
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_internal_curve25519" \
+          make TESTS="test_internal_ml_kem \
+                      test_internal_ml_dsa \
+                      test_crypto_memcmp \
+                      test_evp_ct" \
                OSSL_VALGRIND_CT=yes \
                test
