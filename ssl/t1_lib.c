@@ -1255,6 +1255,17 @@ static const char prefixes[] = { TUPLE_DELIMITER_CHARACTER,
  * Those callback functions are (indirectly) called by CONF_parse_list with
  * different separators (nominally ':' or '/'), a variable based on gid_cb_st
  * is used to keep track of the parsing results between the various calls
+ *
+ * Bookkeeping invariants maintained throughout parsing (see gid_cb_st below):
+ *  - gid_arr[0..gidcnt) is the flat list of groups, partitioned into tuples in
+ *    order: tuple t occupies a contiguous run of tuplcnt_arr[t] entries.
+ *  - The per-tuple counts therefore sum to the group count:
+ *        sum(tuplcnt_arr[0..tplcnt]) == gidcnt
+ *    (indices 0..tplcnt-1 are closed tuples, index tplcnt is the active one).
+ *  - ksid_arr[0..ksidcnt) holds keyshare group IDs; each is one of the groups
+ *    in gid_arr and they appear in the same relative order as their groups.
+ * Every add/remove path must preserve these; an OOB read in the remove path
+ * (GitHub #31315) was a symptom of the first invariant being violated.
  */
 
 typedef struct {
@@ -1542,9 +1553,16 @@ static int gid_cb(const char *elem, int len, void *arg)
              * Otherwise, iterate through the tuple check whether any keyshares
              * remain *after* the index of the group we're removing.  The first
              * of these, if any, is at index `k+1` in the keyshare list, which
-             * is the only slow we need to check.
+             * is the only slot we need to check.
+             *
+             * If the removal emptied the tuple (tuplcnt_arr[j] == 0 after the
+             * decrement above) there is no remaining group to float onto:
+             * gid_arr[tpl_start_idx] would now name a group belonging to the
+             * next tuple (or be past gid_arr entirely).  Drop the keyshare in
+             * that case too.
              */
-            drop_ks = ks_check_idx > tpl_start_idx || j >= garg->tplcnt;
+            drop_ks = ks_check_idx > tpl_start_idx || j >= garg->tplcnt
+                || garg->tuplcnt_arr[j] == 0;
 
             if (!drop_ks) {
                 size_t end; /* End index of affected tuple */
@@ -1573,11 +1591,19 @@ static int gid_cb(const char *elem, int len, void *arg)
          * Adjust closed or current tuple's group count, if a closed tuple
          * count reaches zero excise the resulting empty tuple.  The current
          * (not yet closed) tuple at the end of the list stays even if empty.
+         *
+         * The active tuple lives at index tplcnt, so the slots in use are
+         * tuplcnt_arr[0..tplcnt] (tplcnt + 1 entries).  Excising closed tuple
+         * j must therefore shift the closed tuples j+1..tplcnt-1 *and* the
+         * active tuple at index tplcnt down by one, i.e. (tplcnt - j) entries
+         * counted with the pre-decrement tplcnt.  Decrement tplcnt only after
+         * the move so the active-tuple slot is not left behind (which would
+         * inflate the per-tuple counts and desynchronise them from gid_arr).
          */
         if (garg->tuplcnt_arr[j] == 0 && j < garg->tplcnt) {
-            garg->tplcnt--;
             memmove(garg->tuplcnt_arr + j, garg->tuplcnt_arr + j + 1,
                 (garg->tplcnt - j) * sizeof(size_t));
+            garg->tplcnt--;
         }
     } else { /* Processing addition of a single new group */
 
