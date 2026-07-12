@@ -401,6 +401,19 @@ static int alpn_sess_selected_none(SSL *ssl)
 }
 
 /*
+ * Early (0-RTT) TLS exporter wrapper with a fixed label and context, so that
+ * client and server derivations are directly comparable.
+ */
+static int early_export(SSL *ssl, unsigned char *out, size_t olen)
+{
+    const char label[] = "test early exporter";
+    const unsigned char ctx[] = "test early context";
+
+    return SSL_export_keying_material_early(ssl, out, olen, label,
+        sizeof(label) - 1, ctx, sizeof(ctx) - 1);
+}
+
+/*
  * RFC 5077 3.1: The server sends an empty SessionTicket extension to indicate
  * that it will send a new session ticket using the NewSessionTicket handshake
  * message.
@@ -813,6 +826,7 @@ static int test_tls13_ticket_early_data_accepted(void)
 {
     const unsigned char m[] = "message";
     unsigned char buf[256];
+    unsigned char cexp[32], sexp[32];
     SSL_CTX *c = NULL, *s = NULL;
     struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
     struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
@@ -848,6 +862,15 @@ static int test_tls13_ticket_early_data_accepted(void)
         && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
             SSL_READ_EARLY_DATA_SUCCESS)
         && TEST_mem_eq(buf, r, m, sizeof(m))
+        /*
+         * Both endpoints have derived the early exporter secret by now: the
+         * client when it started writing 0-RTT data, the server when it
+         * accepted it. RFC 8446 7.5: the early exporter must be available
+         * and both derivations must agree.
+         */
+        && TEST_int_eq(early_export(resumed.c.ssl, cexp, sizeof(cexp)), 1)
+        && TEST_int_eq(early_export(resumed.s.ssl, sexp, sizeof(sexp)), 1)
+        && TEST_mem_eq(cexp, sizeof(cexp), sexp, sizeof(sexp))
         && TEST_int_gt(SSL_connect(resumed.c.ssl), 0)
         && TEST_int_eq(SSL_read_early_data(resumed.s.ssl, buf, sizeof(buf), &r),
             SSL_READ_EARLY_DATA_FINISH)
@@ -1240,6 +1263,7 @@ static int tls_early_data_retry(struct tls13_channel *x)
  */
 static int test_tls13_ticket_client_age_mismatch_reject_early_data_retry(void)
 {
+    unsigned char buf[256];
     SSL_CTX *c = NULL, *s = NULL;
     struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
     struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
@@ -1273,6 +1297,9 @@ static int test_tls13_ticket_client_age_mismatch_reject_early_data_retry(void)
         && TEST_true(tls_early_data_retry(&resumed))
         && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED)
         && TEST_false(SSL_session_reused(resumed.c.ssl))
+        /* early_data was suppressed, so no early secrets were ever derived. */
+        && TEST_int_eq(early_export(resumed.c.ssl, buf, 32), 0)
+        && TEST_int_eq(early_export(resumed.s.ssl, buf, 32), 0)
         && TEST_uint_eq(resumed.c.stats.nst_msgs, 0)
         && TEST_uint_eq(resumed.s.stats.nst_msgs, 2)
         && TEST_uint_eq(resumed.c.stats.tickets, 0)
@@ -1350,6 +1377,8 @@ static int test_tls13_ticket_server_age_mismatch_reject_early_data(void)
         && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, 0))
         && TEST_int_eq(SSL_get_early_data_status(resumed.c.ssl), SSL_EARLY_DATA_REJECTED)
         && TEST_true(SSL_session_reused(resumed.c.ssl))
+        && TEST_int_eq(early_export(resumed.c.ssl, buf, 32), 1)
+        && TEST_int_eq(early_export(resumed.s.ssl, buf, 32), 0)
         && TEST_uint_eq(resumed.c.stats.nst_msgs, 1)
         && TEST_uint_eq(resumed.s.stats.nst_msgs, 1)
         && TEST_uint_eq(resumed.c.stats.tickets, 1)
@@ -1424,6 +1453,9 @@ static int test_tls13_ticket_client_age_mismatch_reject_early_data_outer(void)
         && TEST_uint_eq(resumed.s.stats.ch_has_psk_kex_modes, 1)
         && TEST_uint_eq(resumed.s.stats.ee_has_early_data, 0)
         && TEST_uint_eq(resumed.c.stats.ee_has_early_data, 0)
+        /* early_data was suppressed, so no early secrets were ever derived. */
+        && TEST_int_eq(early_export(resumed.c.ssl, buf, 32), 0)
+        && TEST_int_eq(early_export(resumed.s.ssl, buf, 32), 0)
         && TEST_size_t_eq((w = SIZE_MAX), SIZE_MAX)
         && TEST_int_gt(SSL_write_ex(resumed.c.ssl, m, sizeof(m), &w), 0)
         && TEST_size_t_eq(w, sizeof(m))
