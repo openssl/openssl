@@ -130,6 +130,48 @@ void OSSL_FN_clear_free(OSSL_FN *f);
 void OSSL_FN_clear(OSSL_FN *f);
 
 /**
+ * Set an OSSL_FN to a single-limb word value.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @param[in]   w       The OSSL_FN_ULONG word
+ * @returns     1 on success, 0 on error
+ *
+ * @note Sets a->d[0] to @p w and zeroes the remaining limbs, so the full
+ *       dsize array reflects the value @p w.  If a->dsize is 0 there is no
+ *       limb to write and the call fails with
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL (OSSL_FN is fixed-size, so the
+ *       destination cannot be grown).  The operation is constant-time with
+ *       respect to @p w's value; the only branch is on the operand's public
+ *       width (dsize).
+ */
+int OSSL_FN_set_word(OSSL_FN *a, OSSL_FN_ULONG w);
+
+/**
+ * Set an OSSL_FN to one.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @returns     1 on success, 0 on error
+ *
+ * @note Equivalent to OSSL_FN_set_word(a, 1), provided as a named function
+ *       for readability at call sites.  Leak profile as for
+ *       OSSL_FN_set_word().
+ */
+int OSSL_FN_one(OSSL_FN *a);
+
+/**
+ * Set an OSSL_FN to zero.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @returns     1 on success, 0 on error
+ *
+ * @note This is a plain value assignment, not a secure wipe; use
+ *       OSSL_FN_clear() when the limbs may hold secret data and must be wiped
+ *       irreversibly.  Equivalent to OSSL_FN_set_word(a, 0).  Leak profile as
+ *       for OSSL_FN_set_word().
+ */
+int OSSL_FN_zero(OSSL_FN *a);
+
+/**
  * Copy the contents of one OSSL_FN instance to another.
  *
  * @param[out]  a       The destination OSSL_FN
