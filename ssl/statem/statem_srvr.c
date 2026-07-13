@@ -33,6 +33,7 @@
 #include <openssl/comp.h>
 #include "internal/comp.h"
 #include <openssl/ocsp.h>
+#include <openssl/crau.h>
 
 #define TICKET_NONCE_SIZE 8
 
@@ -1933,6 +1934,16 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, protverr);
         goto err;
     }
+
+#ifndef OPENSSL_NO_CRAU
+    {
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_DEFN("tls::protocol_version", OSSL_PARAM_UNSIGNED_INTEGER, &s->version, sizeof(s->version)),
+            OSSL_PARAM_END
+        };
+        OSSL_CRAU_data(sctx->libctx, params);
+    }
+#endif
 
     /* TLSv1.3 specifies that a ClientHello must end on a record boundary */
     if (SSL_CONNECTION_IS_TLS13(s)
