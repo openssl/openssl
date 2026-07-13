@@ -91,6 +91,19 @@ Equivalently, the generic B<-provider-path> command-line option may be used.
 
 This variable is considered a security-sensitive environment variable.
 
+=item B<OPENSSL_RUNNING_UNIT_TESTS>
+
+This environment variable is used to flag the fact that unit tests are being run
+(i.e. C<make test>).
+It is used to detect when the OpenSSL should behave in a special manner during
+unit tests (i.e. when unit tests are being run on fuzzing builds).
+It should generally not be set by users.
+
+This variable is available only when OpenSSL is built
+with C<-DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION>.
+
+This variable is not considered security-sensitive.
+
 =item B<OPENSSL_SEC_MEM>
 
 Initializes the secure memory at the beginning of the application which makes
@@ -129,13 +142,6 @@ This output usually makes sense only if you know OpenSSL internals well.
 
 The value of this environment variable is a comma-separated list of names,
 with the following available:
-
-=item B<OPENSSL_RUNNING_UNIT_TESTS>
-
-This environment variable is used to flag the fact that unit tests are being run
-(i.e. `make test`).  It is used to detect when the OpenSSL should behave in a special
-manner during unit tests (i.e. when unit tests are being run on fuzzing builds).  It should
-generally not be set by users.
 
 =over 4
 
