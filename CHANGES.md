@@ -32,6 +32,25 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added a `seed_strict` option to the `random` configuration section
+   which makes the configured random seed source strictly enforced when
+   a provider (such as the FIPS provider) requests entropy or a nonce.
+
+   When a provider requests seeding material before the primary DRBG has
+   been created, the request falls back to the operating system entropy
+   sources, because the seed source only comes into existence as a side
+   effect of creating the primary DRBG.  Whether a configured seed source
+   is used therefore depends on operation order.  With `seed_strict`
+   enabled, the seed source is instead instantiated on demand and an
+   error is reported if it cannot be used.  The option is off by default
+   with two exceptions: the `JITTER` seed source seeds strictly unless
+   the option disables it and `enable-fips-jitter` builds always seed
+   strictly.  Additionally, the property query used to fetch the default
+   seed source can now be set at build time with
+   `-DOPENSSL_DEFAULT_SEED_PROPQ`.
+
+   *Jakub Zelenka*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,

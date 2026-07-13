@@ -723,3 +723,35 @@ int CONF_parse_list(const char *list_, int sep, int nospc,
         lstart = p + 1;
     }
 }
+
+/*
+ * Parse a boolean configuration value: 1, yes, true or on (in lower or
+ * uppercase) enables, 0, no, false or off disables.  Returns 0 when the
+ * value is missing or not recognised, without raising an error.
+ */
+int ossl_conf_parse_bool(const char *value, int *result)
+{
+    if (value == NULL)
+        return 0;
+    if (strcmp(value, "1") == 0
+        || strcmp(value, "yes") == 0
+        || strcmp(value, "YES") == 0
+        || strcmp(value, "true") == 0
+        || strcmp(value, "TRUE") == 0
+        || strcmp(value, "on") == 0
+        || strcmp(value, "ON") == 0) {
+        *result = 1;
+        return 1;
+    }
+    if (strcmp(value, "0") == 0
+        || strcmp(value, "no") == 0
+        || strcmp(value, "NO") == 0
+        || strcmp(value, "false") == 0
+        || strcmp(value, "FALSE") == 0
+        || strcmp(value, "off") == 0
+        || strcmp(value, "OFF") == 0) {
+        *result = 0;
+        return 1;
+    }
+    return 0;
+}

@@ -16,12 +16,14 @@ use Cwd qw(abs_path);
 plan tests => 6;
 setup("test_rand");
 
-ok(run(test(["rand_test", srctop_file("test", "default.cnf")])));
+ok(run(test(["rand_test", srctop_file("test", "default.cnf"),
+             srctop_file("test", "rand_strict.cnf")])));
 
 SKIP: {
     skip "Skipping FIPS test in this build", 1 if disabled('fips');
 
-    ok(run(test(["rand_test", srctop_file("test", "fips.cnf")])));
+    ok(run(test(["rand_test", srctop_file("test", "fips.cnf"),
+                 srctop_file("test", "rand_strict.cnf")])));
 }
 
 ok(run(test(["drbgtest"])));
