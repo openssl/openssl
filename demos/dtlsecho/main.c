@@ -21,6 +21,7 @@
 #include <netinet/in.h>
 
 #define SOCKET int
+#define INVALID_SOCKET -1
 #define closesocket(s) close(s)
 
 #else
@@ -47,7 +48,7 @@ static SOCKET create_socket(flag isServer)
     struct sockaddr_in addr;
 
     s = socket(AF_INET, SOCK_DGRAM, 0);
-    if (s < 0) {
+    if (s == INVALID_SOCKET) {
         perror("Unable to create socket");
         exit(EXIT_FAILURE);
     }
@@ -144,8 +145,8 @@ static void usage(void)
 {
     printf("Usage: dtlsecho s\n");
     printf("       --or--\n");
-    printf("       dtlsecho c ip\n");
-    printf("       c=client, s=server, ip=dotted ip of server\n");
+    printf("       dtlsecho c hostname\n");
+    printf("       c=client, s=server, hostname=hostname of server\n");
     exit(EXIT_FAILURE);
 }
 
@@ -158,8 +159,8 @@ int main(int argc, char **argv)
     SSL_CTX *ssl_ctx = NULL;
     SSL *ssl = NULL;
 
-    SOCKET server_skt = -1;
-    SOCKET client_skt = -1;
+    SOCKET server_skt = INVALID_SOCKET;
+    SOCKET client_skt = INVALID_SOCKET;
 
     /* used by fgets */
     char buffer[BUFFERSIZE];
@@ -169,7 +170,7 @@ int main(int argc, char **argv)
     size_t rxcap = sizeof(rxbuf);
     int rxlen;
 
-    char *rem_server_ip = NULL;
+    char *rem_server_name = NULL;
 
     struct sockaddr_in addr;
     int received_new_session_ack = 0;
@@ -189,13 +190,13 @@ int main(int argc, char **argv)
         /* NOTREACHED */
     }
     isServer = (argv[1][0] == 's') ? true : false;
-    /* If client get remote server address (could be 127.0.0.1) */
+    /* If client get remote server hostname */
     if (!isServer) {
         if (argc != 3) {
             usage();
             /* NOTREACHED */
         }
-        rem_server_ip = argv[2];
+        rem_server_name = argv[2];
     }
 
     /* Create context used by both client and server */
@@ -212,6 +213,10 @@ int main(int argc, char **argv)
 
         /* Create server socket; will bind to server port */
         server_skt = create_socket(true);
+        if (server_skt == INVALID_SOCKET) {
+            perror("Unable to create server socket");
+            exit(EXIT_FAILURE);
+        }
 
         printf("Waiting for DTLS connection...\n");
 
@@ -289,11 +294,15 @@ int main(int argc, char **argv)
 
         /* Create "bare" UDP socket */
         client_skt = create_socket(false);
+        if (client_skt == INVALID_SOCKET) {
+            perror("Unable to accept");
+            exit(EXIT_FAILURE);
+        }
 
         /* Set up server address */
         memset(&addr, 0, sizeof(addr));
         addr.sin_family = AF_INET;
-        inet_pton(AF_INET, rem_server_ip, &addr.sin_addr.s_addr);
+        inet_pton(AF_INET, rem_server_name, &addr.sin_addr.s_addr);
         addr.sin_port = htons(server_port);
 
         /* Connect the UDP socket to the server (sets default peer address) */
@@ -310,8 +319,6 @@ int main(int argc, char **argv)
             ERR_print_errors_fp(stderr);
             goto exit;
         }
-        /* Tell the BIO the socket is connected and set the peer address */
-        BIO_ctrl(bio, BIO_CTRL_DGRAM_SET_CONNECTED, 0, &addr);
 
         /* Create client SSL structure and attach the BIO */
         ssl = SSL_new(ssl_ctx);
@@ -323,7 +330,7 @@ int main(int argc, char **argv)
         SSL_set_bio(ssl, bio, bio);
 
         /* Configure server hostname check */
-        if (!SSL_set1_host(ssl, rem_server_ip)) {
+        if (!SSL_set1_dnsname(ssl, rem_server_name)) {
             ERR_print_errors_fp(stderr);
             goto exit;
         }
@@ -382,9 +389,9 @@ exit:
     }
     SSL_CTX_free(ssl_ctx);
 
-    if (client_skt != -1)
+    if (client_skt != INVALID_SOCKET)
         closesocket(client_skt);
-    if (server_skt != -1)
+    if (server_skt != INVALID_SOCKET)
         closesocket(server_skt);
 
     printf("dtlsecho exiting\n");

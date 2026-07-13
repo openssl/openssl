@@ -1089,10 +1089,17 @@ redo:
         && s->statem.hand_state != TLS_ST_OK
         && msg_hdr.type == SSL3_MT_HELLO_REQUEST) {
         /*
-         * The server may always send 'Hello Request' messages -- we are
+         * HelloRequest is reserved in DTLS 1.3 (like TLS 1.3). For earlier
+         * versions, the server may send 'Hello Request' messages -- we are
          * doing a handshake anyway now, so ignore them if their format is
          * correct. Does not count for 'Finished' MAC.
          */
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            /* DTLS 1.3 reserves message type 0, reject HelloRequest */
+            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_UNEXPECTED_MESSAGE);
+            goto f_err;
+        }
+
         if (msg_hdr.msg_len == 0) {
             if (s->msg_callback)
                 s->msg_callback(0, s->version, SSL3_RT_HANDSHAKE,
