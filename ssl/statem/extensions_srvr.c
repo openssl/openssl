@@ -16,6 +16,7 @@
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #endif
+#include <openssl/crau.h>
 
 #define COOKIE_STATE_FORMAT_VERSION 1
 
@@ -2034,6 +2035,14 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_DEFN("tls::group", OSSL_PARAM_UNSIGNED_INTEGER, (void *)&ginf->group_id, sizeof(ginf->group_id)),
+        OSSL_PARAM_END
+    };
+    OSSL_CRAU_enter(SSL_CONNECTION_GET_CTX(s)->libctx, "tls::key_exchange", params);
+#endif
+
     if (!ginf->is_kem) {
         /* Regular KEX */
         skey = ssl_generate_pkey(s, ckey);
@@ -2105,6 +2114,9 @@ err:
     EVP_PKEY_free(skey);
     OPENSSL_free(encoded_pubkey);
     OPENSSL_free(ct);
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(SSL_CONNECTION_GET_CTX(s)->libctx);
+#endif
     return ret;
 #else
     return EXT_RETURN_FAIL;
