@@ -513,7 +513,9 @@ list is tedious and error-prone, so the helper script `util/mkwraps.pl`
 generates a first draft from the `build.info` declaration. It reads the
 `WRAP[<target>]` list, searches the headers under the target's `INCLUDE[]`
 directories for each function's prototype, and emits matching wrap functions
-and expectation helpers.
+and expectation helpers. Functions not found there (typically libc/POSIX
+functions such as `read` or `socket`) are looked up under the compiler's
+default system include paths, and emitted with angle-bracket includes.
 
 ```console
 $ ./util/mkwraps.pl --build-info test/unit/build.info \
@@ -526,6 +528,10 @@ Useful options:
     `expect_*` helpers, or both (the default).
   * `--include DIR`: add an extra header search directory beyond those in
     `INCLUDE[]`. Cumulative.
+  * `--cc NAME`: C compiler queried for the system include paths (default
+    `$CC` or `cc`).
+  * `--no-system`: do not fall back to the compiler's system include
+    directories for functions missing from the project headers.
   * `--output FILE`: write to a file instead of standard output.
   * `--verbose`: report progress and where each prototype was found.
 
