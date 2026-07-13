@@ -1085,12 +1085,187 @@ DEF_SCRIPT(script_12, "Many threads initiated on the same client connection")
     OP_SLEEP(10);
 }
 
-DEF_SCRIPT(script_13, "place holder for multistrem script_13")
+/* 13. Many threads accepted on the same client connection (stress test) */
+DEF_SCRIPT(script_13_child_1,
+    "child: 10x accept stream from C, read, expect FIN, free")
 {
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_ACCEPT_STREAM_WAIT(C, C1, OP_F_REPLACE_STREAM);
+        OP_READ_EXPECT_B(C1, "foo");
+        OP_EXPECT_FIN(C1);
+    }
 }
 
-DEF_SCRIPT(script_14, "place holder for multistrem script_14")
+DEF_SCRIPT(script_13_child_2,
+    "child: 10x accept stream from C, read, expect FIN, free")
 {
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_ACCEPT_STREAM_WAIT(C, C2, OP_F_REPLACE_STREAM);
+        OP_READ_EXPECT_B(C2, "foo");
+        OP_EXPECT_FIN(C2);
+    }
+}
+
+DEF_SCRIPT(script_13_child_3,
+    "child: 10x accept stream from C, read, expect FIN, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_ACCEPT_STREAM_WAIT(C, C3, OP_F_REPLACE_STREAM);
+        OP_READ_EXPECT_B(C3, "foo");
+        OP_EXPECT_FIN(C3);
+    }
+}
+
+DEF_SCRIPT(script_13_child_4,
+    "child: 10x accept stream from C, read, expect FIN, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_ACCEPT_STREAM_WAIT(C, C4, OP_F_REPLACE_STREAM);
+        OP_READ_EXPECT_B(C4, "foo");
+        OP_EXPECT_FIN(C4);
+    }
+}
+
+DEF_SCRIPT(script_13_child_5,
+    "child: 10x accept stream from C, read, expect FIN, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_ACCEPT_STREAM_WAIT(C, C5, OP_F_REPLACE_STREAM);
+        OP_READ_EXPECT_B(C5, "foo");
+        OP_EXPECT_FIN(C5);
+    }
+}
+
+DEF_SCRIPT(script_13,
+    "Many threads accepted on same client connection (stress test)")
+{
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    /*
+     * put empty objects to radix process cache.
+     * objects C1 - C5 are going to be used for
+     * SSL streams in _child_1 - _child_5 threads.
+     */
+    OP_BIND(C1);
+    OP_BIND(C2);
+    OP_BIND(C3);
+    OP_BIND(C4);
+    OP_BIND(C5);
+    OP_BIND(Sa);
+
+    OP_SPAWN_THREAD(script_13_child_1);
+    OP_SPAWN_THREAD(script_13_child_2);
+    OP_SPAWN_THREAD(script_13_child_3);
+    OP_SPAWN_THREAD(script_13_child_4);
+    OP_SPAWN_THREAD(script_13_child_5);
+
+    for (i = 0; i < 50; ++i) {
+        OP_NEW_STREAM(S, Sa, OP_F_REPLACE_STREAM);
+        OP_WRITE_B(Sa, "foo");
+        OP_CONCLUDE(Sa);
+    }
+}
+
+/* 14. Many threads initiating on the same client connection (stress test) */
+DEF_SCRIPT(script_14_child_1,
+    "child: 10x create stream on C, write, conclude, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_NEW_STREAM(C, C1, OP_F_REPLACE_STREAM);
+        OP_WRITE_B(C1, "foo");
+        OP_CONCLUDE(C1);
+    }
+}
+
+DEF_SCRIPT(script_14_child_2,
+    "child: 10x create stream on C, write, conclude, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_NEW_STREAM(C, C2, OP_F_REPLACE_STREAM);
+        OP_WRITE_B(C2, "foo");
+        OP_CONCLUDE(C2);
+    }
+}
+
+DEF_SCRIPT(script_14_child_3,
+    "child: 10x create stream on C, write, conclude, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_NEW_STREAM(C, C3, OP_F_REPLACE_STREAM);
+        OP_WRITE_B(C3, "foo");
+        OP_CONCLUDE(C3);
+    }
+}
+
+DEF_SCRIPT(script_14_child_4,
+    "child: 10x create stream on C, write, conclude, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_NEW_STREAM(C, C4, OP_F_REPLACE_STREAM);
+        OP_WRITE_B(C4, "foo");
+        OP_CONCLUDE(C4);
+    }
+}
+
+DEF_SCRIPT(script_14_child_5,
+    "child: 10x create stream on C, write, conclude, free")
+{
+    size_t i;
+
+    for (i = 0; i < 10; i++) {
+        OP_NEW_STREAM(C, C5, OP_F_REPLACE_STREAM);
+        OP_WRITE_B(C5, "foo");
+        OP_CONCLUDE(C5);
+    }
+}
+
+DEF_SCRIPT(script_14,
+    "Many threads initiating on same client connection (stress test)")
+{
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_BIND(C1);
+    OP_BIND(C2);
+    OP_BIND(C3);
+    OP_BIND(C4);
+    OP_BIND(C5);
+    OP_BIND(Sa);
+
+    OP_SPAWN_THREAD(script_14_child_1);
+    OP_SPAWN_THREAD(script_14_child_2);
+    OP_SPAWN_THREAD(script_14_child_3);
+    OP_SPAWN_THREAD(script_14_child_4);
+    OP_SPAWN_THREAD(script_14_child_5);
+
+    for (i = 0; i < 50; ++i) {
+        OP_ACCEPT_STREAM_WAIT(S, Sa, OP_F_REPLACE_STREAM);
+        OP_READ_EXPECT_B(Sa, "foo");
+        OP_EXPECT_FIN(Sa);
+    }
 }
 
 DEF_SCRIPT(script_15, "place holder for multistrem script_15")
