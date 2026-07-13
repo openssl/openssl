@@ -184,6 +184,25 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
     return res;
 }
 
+/*-
+ * Returns bit |n| of |a|.  An out-of-range index (n < 0 or n >= the
+ * operand's width in bits) reads as 0.  The only control flow branches on
+ * the operand's public width (dsize); the returned value is the bit itself,
+ * which is the information the caller asked for.
+ */
+int OSSL_FN_is_bit_set(const OSSL_FN *a, int n)
+{
+    size_t limb, off;
+
+    if (n < 0)
+        return 0;
+    limb = (size_t)n / OSSL_FN_BITS;
+    off = (size_t)n % OSSL_FN_BITS;
+    if (limb >= (size_t)a->dsize)
+        return 0;
+    return (a->d[limb] >> off) & OSSL_FN_ULONG_C(1);
+}
+
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 {
     if (ossl_unlikely(a == b))
