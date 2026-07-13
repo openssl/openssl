@@ -133,8 +133,8 @@ static void usage(void)
 {
     printf("Usage: sslecho s\n");
     printf("       --or--\n");
-    printf("       sslecho c ip\n");
-    printf("       c=client, s=server, ip=dotted ip of server\n");
+    printf("       sslecho c hostname\n");
+    printf("       c=client, s=server, hostname=hostname of server\n");
     exit(EXIT_FAILURE);
 }
 
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
     size_t rxcap = sizeof(rxbuf);
     int rxlen;
 
-    char *rem_server_ip = NULL;
+    char *rem_server_name = NULL;
 
     struct sockaddr_in addr;
 #if defined(OPENSSL_SYS_CYGWIN) || defined(OPENSSL_SYS_WINDOWS)
@@ -182,13 +182,13 @@ int main(int argc, char **argv)
         /* NOTREACHED */
     }
     isServer = (argv[1][0] == 's') ? true : false;
-    /* If client get remote server address (could be 127.0.0.1) */
+    /* If client get remote server hostname */
     if (!isServer) {
         if (argc != 3) {
             usage();
             /* NOTREACHED */
         }
-        rem_server_ip = argv[2];
+        rem_server_name = argv[2];
     }
 
     /* Create context used by both client and server */
@@ -291,7 +291,7 @@ int main(int argc, char **argv)
         client_skt = create_socket(false);
         /* Set up connect address */
         addr.sin_family = AF_INET;
-        inet_pton(AF_INET, rem_server_ip, &addr.sin_addr.s_addr);
+        inet_pton(AF_INET, rem_server_name, &addr.sin_addr.s_addr);
         addr.sin_port = htons(server_port);
         /* Do TCP connect with server */
         if (connect(client_skt, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
@@ -308,9 +308,9 @@ int main(int argc, char **argv)
             goto exit;
         }
         /* Set hostname for SNI */
-        SSL_set_tlsext_host_name(ssl, rem_server_ip);
+        SSL_set_tlsext_host_name(ssl, rem_server_name);
         /* Configure server hostname check */
-        if (!SSL_set1_dnsname(ssl, rem_server_ip)) {
+        if (!SSL_set1_dnsname(ssl, rem_server_name)) {
             ERR_print_errors_fp(stderr);
             goto exit;
         }
