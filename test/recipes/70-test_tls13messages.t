@@ -57,147 +57,154 @@ plan skip_all => "$test_name needs EC enabled"
     [0, 0]
 );
 
-@extensions = (
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::SERVER_NAME_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    (disabled("tls1_2") ? () :
-        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+sub setup_extensions
+{
+    my $run_test_as_dtls = shift;
+    my $v12_enabled = ($run_test_as_dtls == 0 && !disabled("tls1_2"))
+                   || ($run_test_as_dtls == 1 && !disabled("dtls1_2"));
+
+    @extensions = (
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
             TLSProxy::Message::CLIENT,
-            checkhandshake::DEFAULT_EXTENSIONS]),
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::ALPN_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::SCT_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::PSK_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-
-    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
-        TLSProxy::Message::SERVER,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
-        TLSProxy::Message::SERVER,
-        checkhandshake::KEY_SHARE_HRR_EXTENSION],
-
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::SERVER_NAME_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    (disabled("tls1_2") ? () :
-        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+            checkhandshake::SERVER_NAME_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
             TLSProxy::Message::CLIENT,
-            checkhandshake::DEFAULT_EXTENSIONS]),
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::ALPN_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::SCT_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::PSK_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
-    [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
-        TLSProxy::Message::CLIENT,
-        checkhandshake::DEFAULT_EXTENSIONS],
+            checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        ($v12_enabled ?
+            [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+                TLSProxy::Message::CLIENT,
+                checkhandshake::DEFAULT_EXTENSIONS] : ()),
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::ALPN_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::SCT_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::PSK_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
 
-    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
-        TLSProxy::Message::SERVER,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
-        TLSProxy::Message::SERVER,
-        checkhandshake::DEFAULT_EXTENSIONS],
-    [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
-        TLSProxy::Message::SERVER,
-        checkhandshake::PSK_SRV_EXTENSION],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+            TLSProxy::Message::SERVER,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+            TLSProxy::Message::SERVER,
+            checkhandshake::KEY_SHARE_HRR_EXTENSION],
 
-    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SERVER_NAME,
-        TLSProxy::Message::SERVER,
-        checkhandshake::SERVER_NAME_SRV_EXTENSION],
-    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_ALPN,
-        TLSProxy::Message::SERVER,
-        checkhandshake::ALPN_SRV_EXTENSION],
-    [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
-        TLSProxy::Message::SERVER,
-        checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SERVER_NAME,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::SERVER_NAME_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_STATUS_REQUEST,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::STATUS_REQUEST_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        ($v12_enabled ?
+            [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EC_POINT_FORMATS,
+                TLSProxy::Message::CLIENT,
+                checkhandshake::DEFAULT_EXTENSIONS] : ()),
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SIG_ALGS,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ALPN,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::ALPN_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SCT,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::SCT_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_ENCRYPT_THEN_MAC,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_EXTENDED_MASTER_SECRET,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SESSION_TICKET,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK_KEX_MODES,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_PSK,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::PSK_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_POST_HANDSHAKE_AUTH,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::POST_HANDSHAKE_AUTH_CLI_EXTENSION],
+        [TLSProxy::Message::MT_CLIENT_HELLO, TLSProxy::Message::EXT_RENEGOTIATE,
+            TLSProxy::Message::CLIENT,
+            checkhandshake::DEFAULT_EXTENSIONS],
 
-    [TLSProxy::Message::MT_CERTIFICATE_REQUEST, TLSProxy::Message::EXT_SIG_ALGS,
-        TLSProxy::Message::SERVER,
-        checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_SUPPORTED_VERSIONS,
+            TLSProxy::Message::SERVER,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_KEY_SHARE,
+            TLSProxy::Message::SERVER,
+            checkhandshake::DEFAULT_EXTENSIONS],
+        [TLSProxy::Message::MT_SERVER_HELLO, TLSProxy::Message::EXT_PSK,
+            TLSProxy::Message::SERVER,
+            checkhandshake::PSK_SRV_EXTENSION],
 
-    [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_STATUS_REQUEST,
-        TLSProxy::Message::SERVER,
-        checkhandshake::STATUS_REQUEST_SRV_EXTENSION],
-    [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_SCT,
-        TLSProxy::Message::SERVER,
-        checkhandshake::SCT_SRV_EXTENSION],
+        [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SERVER_NAME,
+            TLSProxy::Message::SERVER,
+            checkhandshake::SERVER_NAME_SRV_EXTENSION],
+        [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_ALPN,
+            TLSProxy::Message::SERVER,
+            checkhandshake::ALPN_SRV_EXTENSION],
+        [TLSProxy::Message::MT_ENCRYPTED_EXTENSIONS, TLSProxy::Message::EXT_SUPPORTED_GROUPS,
+            TLSProxy::Message::SERVER,
+            checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION],
 
-    [0,0,0,0]
-);
+        [TLSProxy::Message::MT_CERTIFICATE_REQUEST, TLSProxy::Message::EXT_SIG_ALGS,
+            TLSProxy::Message::SERVER,
+            checkhandshake::DEFAULT_EXTENSIONS],
+
+        [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_STATUS_REQUEST,
+            TLSProxy::Message::SERVER,
+            checkhandshake::STATUS_REQUEST_SRV_EXTENSION],
+        [TLSProxy::Message::MT_CERTIFICATE, TLSProxy::Message::EXT_SCT,
+            TLSProxy::Message::SERVER,
+            checkhandshake::SCT_SRV_EXTENSION],
+
+        [0,0,0,0]
+    );
+}
 
 $ENV{OPENSSL_MODULES} = abs_path(bldtop_dir("test"));
 
@@ -218,8 +225,6 @@ SKIP: {
 SKIP: {
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
-    # TODO(DTLS1.3): The DTLS run currently fails. Skipped pending investigation.
-    skip "TODO(DTLS1.3): test fails for DTLS, needs investigation", $testcount;
     run_tests(1);
 }
 
@@ -227,6 +232,9 @@ sub run_tests
 {
     my $run_test_as_dtls = shift;
     my $proxy_start_success = 0;
+
+    # Setup extensions based on whether we're testing TLS or DTLS
+    setup_extensions($run_test_as_dtls);
 
     (undef, my $session) = tempfile();
     my $proxy;
@@ -462,11 +470,9 @@ sub run_tests
                    | checkhandshake::SUPPORTED_GROUPS_SRV_EXTENSION,
                     "Acceptable but non preferred key_share");
 
-    # TODO(DTLS1.3): These tests currently fail (including for TLS). Skipped
-    # pending investigation.
     SKIP: {
-        skip "TODO(DTLS1.3): test fails, needs investigation", 2;
-
+        skip "TLSProxy does not support partial messages for dtls", 1
+            if $run_test_as_dtls == 1;
         #Test 18: HelloRequest is reserved in TLSv1.3
         $proxy->clear();
         $fatal_alert = 0;
@@ -477,30 +483,26 @@ sub run_tests
         $proxy->clientflags("-no_rx_cert_comp");
         $proxy->start();
         ok($fatal_alert, "HelloRequest rejected in TLSv1.3");
+    }
 
-        #Test 19: A HelloRequest received after selecting TLSv1.2 in the initial
-        #         handshake is still ignored, confirming the legacy skip path is
-        #         preserved even when TLSv1.3 was initially enabled.
-        SKIP: {
-            skip "TLSv1.2 disabled", 1 if disabled("tls1_2") && !$run_test_as_dtls;
-            skip "DTLSv1.2 disabled", 1 if disabled("dtls1_2") && $run_test_as_dtls;
-
-            $proxy->clear();
-            $fatal_alert = 0;
-            $hello_request_added = 0;
-            $hello_request_after_server_hello = 1;
-            $proxy->filter(\&inject_hello_request);
-            $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
-            $proxy->clientflags("-no_rx_cert_comp");
-            if ($run_test_as_dtls) {
-                $proxy->serverflags("-no_dtls1_3");
-            } else {
-                $proxy->serverflags("-no_tls1_3");
-            }
-            $proxy->start();
-            ok(TLSProxy::Message->success() && !$fatal_alert,
-            "HelloRequest ignored in (D)TLSv1.2");
-        }
+    #Test 19: A HelloRequest received after selecting TLSv1.2 in the initial
+    #         handshake is still ignored, confirming the legacy skip path is
+    #         preserved even when TLSv1.3 was initially enabled.
+    SKIP: {
+        skip "TLSv1.2 disabled", 1 if disabled("tls1_2");
+        skip "TLSProxy does not support partial messages for dtls", 1
+            if $run_test_as_dtls == 1;
+        $proxy->clear();
+        $fatal_alert = 0;
+        $hello_request_added = 0;
+        $hello_request_after_server_hello = 1;
+        $proxy->filter(\&inject_hello_request);
+        $proxy->cipherc("DEFAULT:\@SECLEVEL=2");
+        $proxy->clientflags("-no_rx_cert_comp");
+        $proxy->serverflags("-no_tls1_3");
+        $proxy->start();
+        ok(TLSProxy::Message->success() && !$fatal_alert,
+        "HelloRequest ignored in TLSv1.2");
     }
 
     unlink $session;
@@ -527,6 +529,7 @@ sub inject_hello_request
     $hello_request = pack("C4", TLSProxy::Message::MT_HELLO_REQUEST,
                           0, 0, 0);
     $record = TLSProxy::Record->new(
+        1,
         1,
         TLSProxy::Record::RT_HANDSHAKE,
         TLSProxy::Record::VERS_TLS_1_2,
