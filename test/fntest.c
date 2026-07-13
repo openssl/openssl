@@ -781,6 +781,70 @@ err:
     return st;
 }
 
+static int file_modexp(STANZA *s)
+{
+    BIGNUM *a = NULL, *e = NULL, *m = NULL, *mod_exp = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *ef = NULL, *rf = NULL, *mf = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    int a_neg = 0, e_odd = 0, st = 0;
+    int r_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(e = getBN(s, "E"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(mod_exp = getBN(s, "ModExp"))
+        || !TEST_ptr(ret = BN_new()))
+        goto err;
+
+    /*
+     * OSSL_FN_mod_exp() is unsigned: the base is exponentiated as its
+     * absolute value, so a negative base with an odd exponent yields
+     * M - (|A|^E mod M)  (unless that is zero), as for modular
+     * multiplication; an even exponent leaves the residue non-negative.
+     * The bnmod.txt vectors currently use no negative base or exponent,
+     * so the fixup is a no-op there but is kept for forward safety.
+     */
+    a_neg = BN_is_negative(a);
+    e_odd = BN_is_odd(e);
+    nlimbs = limbs(m);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(ef = bn_get_ossl_fn(e))
+        || !TEST_ptr(mf = bn_get_ossl_fn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_exp_ctx_size(rf, af, ef, mf))))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_exp(rf, af, ef, mf, ctx)))
+        goto err;
+    bn_release(ret, nlimbs);
+    r_acq = 0;
+    BN_set_negative(ret, 0);
+    if (a_neg && e_odd && !BN_is_zero(ret)) {
+        if (!TEST_true(BN_sub(ret, m, ret)))
+            goto err;
+    }
+    if (!equalBN("A ^ E (mod M)", mod_exp, ret))
+        goto err;
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(e);
+    BN_free(m);
+    BN_free(mod_exp);
+    BN_free(ret);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
@@ -791,7 +855,7 @@ static FILETEST filetests[] = {
     { "Quotient", file_quotient, 0 },
     { "ModMul", file_modmul, 0 },
     { "ModSqr", file_modsqr, 0 },
-    { "ModExp", NULL, 0 },
+    { "ModExp", file_modexp, 0 },
     { "Exp", NULL, 0 },
     { "ModSqrt", NULL, 0 },
     { "GCD", NULL, 0 },
