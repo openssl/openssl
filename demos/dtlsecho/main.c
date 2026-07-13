@@ -21,6 +21,7 @@
 #include <netinet/in.h>
 
 #define SOCKET int
+#define INVALID_SOCKET -1
 #define closesocket(s) close(s)
 
 #else
@@ -47,7 +48,7 @@ static SOCKET create_socket(flag isServer)
     struct sockaddr_in addr;
 
     s = socket(AF_INET, SOCK_DGRAM, 0);
-    if (s < 0) {
+    if (s == INVALID_SOCKET) {
         perror("Unable to create socket");
         exit(EXIT_FAILURE);
     }
@@ -158,8 +159,8 @@ int main(int argc, char **argv)
     SSL_CTX *ssl_ctx = NULL;
     SSL *ssl = NULL;
 
-    SOCKET server_skt = -1;
-    SOCKET client_skt = -1;
+    SOCKET server_skt = INVALID_SOCKET;
+    SOCKET client_skt = INVALID_SOCKET;
 
     /* used by fgets */
     char buffer[BUFFERSIZE];
@@ -212,6 +213,10 @@ int main(int argc, char **argv)
 
         /* Create server socket; will bind to server port */
         server_skt = create_socket(true);
+        if (server_skt == INVALID_SOCKET) {
+            perror("Unable to create server socket");
+            exit(EXIT_FAILURE);
+        }
 
         printf("Waiting for DTLS connection...\n");
 
@@ -289,6 +294,10 @@ int main(int argc, char **argv)
 
         /* Create "bare" UDP socket */
         client_skt = create_socket(false);
+        if (client_skt == INVALID_SOCKET) {
+            perror("Unable to accept");
+            exit(EXIT_FAILURE);
+        }
 
         /* Set up server address */
         memset(&addr, 0, sizeof(addr));
@@ -380,9 +389,9 @@ exit:
     }
     SSL_CTX_free(ssl_ctx);
 
-    if (client_skt != -1)
+    if (client_skt != INVALID_SOCKET)
         closesocket(client_skt);
-    if (server_skt != -1)
+    if (server_skt != INVALID_SOCKET)
         closesocket(server_skt);
 
     printf("dtlsecho exiting\n");

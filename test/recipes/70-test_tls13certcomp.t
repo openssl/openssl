@@ -337,12 +337,16 @@ sub run_tests
         "Send but not accept compressed certificates");
 
     #Test 9: Excessive uncompressed certificate length in CompressedCertificate
-    $proxy->clear();
-    $proxy->filter(\&excessive_uncompressed_len_filter);
-    $proxy->serverflags("-cert_comp");
-    $proxy->start();
-    ok(is_alert_message(TLSProxy::Message::AL_DESC_BAD_CERTIFICATE),
-        "Excessive uncompressed certificate length rejected");
+    SKIP: {
+        skip "TLSProxy does not support modifying fragmented encrypted messages for dtls", 1
+            if $run_test_as_dtls == 1;
+        $proxy->clear();
+        $proxy->filter(\&excessive_uncompressed_len_filter);
+        $proxy->serverflags("-cert_comp");
+        $proxy->start();
+        ok(is_alert_message(TLSProxy::Message::AL_DESC_BAD_CERTIFICATE),
+            "Excessive uncompressed certificate length rejected");
+    }
 }
 
 my $done = 0;
