@@ -701,6 +701,114 @@ err:
     return ret;
 }
 
+/*-
+ * Focused tests for the OSSL_FN introspection predicates: is_word, is_zero,
+ * is_one, is_odd.  Covers plain values, fixed-top zero-padding (a value
+ * whose high limbs are zero limbs by dsize rather than by trimming), and the
+ * dsize == 0 (zero-limb) degenerate case.
+ */
+static int test_introspection(void)
+{
+    int ret = 0;
+    OSSL_FN *z = NULL; /* dsize 2, value 0 */
+    OSSL_FN *z_wide = NULL; /* dsize 4, value 0 (fixed-top zero padding) */
+    OSSL_FN *z_empty = NULL; /* dsize 0, value 0 */
+    OSSL_FN *one = NULL; /* dsize 2, value 1 */
+    OSSL_FN *one_wide = NULL; /* dsize 4, value 1 (fixed-top zero padding) */
+    OSSL_FN *w5 = NULL; /* dsize 2, value 5 */
+    OSSL_FN *w5_wide = NULL; /* dsize 4, value 5 (fixed-top zero padding) */
+    OSSL_FN *even = NULL; /* dsize 2, value 0x...76543210 (even) */
+    OSSL_FN *odd = NULL; /* dsize 2, value 0x...01234567 (odd) */
+    OSSL_FN *two_limbs = NULL; /* dsize 2, value 0x...76543210 fedcba98 (nonzero high limb) */
+    OSSL_FN_ULONG one_word = OSSL_FN_ULONG_C(1);
+    OSSL_FN_ULONG five_word = OSSL_FN_ULONG_C(5);
+    OSSL_FN_ULONG even_word = OSSL_FN_ULONG_C(0x76543210);
+    OSSL_FN_ULONG odd_word = OSSL_FN_ULONG_C(0x01234567);
+    const OSSL_FN_ULONG two_limbs_words[] = {
+        OSSL_FN_ULONG_C(0x76543210),
+        OSSL_FN_ULONG_C(0xfedcba98)
+    };
+
+    if (!TEST_ptr(z = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(z_wide = OSSL_FN_new_limbs(4))
+        || !TEST_ptr(z_empty = OSSL_FN_new_limbs(0))
+        || !TEST_ptr(one = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(one_wide = OSSL_FN_new_limbs(4))
+        || !TEST_ptr(w5 = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(w5_wide = OSSL_FN_new_limbs(4))
+        || !TEST_ptr(even = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(odd = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(two_limbs = OSSL_FN_new_limbs(2)))
+        goto err;
+
+    /* All fresh allocations are zero-initialised, so z, z_wide, z_empty are 0. */
+    if (!TEST_true(ossl_fn_set_words(one, &one_word, 1))
+        || !TEST_true(ossl_fn_set_words(one_wide, &one_word, 1))
+        || !TEST_true(ossl_fn_set_words(w5, &five_word, 1))
+        || !TEST_true(ossl_fn_set_words(w5_wide, &five_word, 1))
+        || !TEST_true(ossl_fn_set_words(even, &even_word, 1))
+        || !TEST_true(ossl_fn_set_words(odd, &odd_word, 1))
+        || !TEST_true(ossl_fn_set_words(two_limbs, two_limbs_words,
+            LIMBSOF(two_limbs_words))))
+        goto err;
+
+    /* OSSL_FN_is_zero */
+    if (!TEST_int_eq(OSSL_FN_is_zero(z), 1)
+        || !TEST_int_eq(OSSL_FN_is_zero(z_wide), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_zero(z_empty), 1) /* dsize == 0 */
+        || !TEST_int_eq(OSSL_FN_is_zero(one), 0)
+        || !TEST_int_eq(OSSL_FN_is_zero(w5_wide), 0))
+        goto err;
+
+    /* OSSL_FN_is_one */
+    if (!TEST_int_eq(OSSL_FN_is_one(one), 1)
+        || !TEST_int_eq(OSSL_FN_is_one(one_wide), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_one(z), 0)
+        || !TEST_int_eq(OSSL_FN_is_one(w5), 0)
+        || !TEST_int_eq(OSSL_FN_is_one(z_empty), 0))
+        goto err;
+
+    /* OSSL_FN_is_word -- value equality against a single-limb word */
+    if (!TEST_int_eq(OSSL_FN_is_word(z, 0), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(z_wide, 0), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_word(z_empty, 0), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(z, 1), 0)
+        || !TEST_int_eq(OSSL_FN_is_word(one, 1), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(one_wide, 1), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_word(one, 0), 0)
+        || !TEST_int_eq(OSSL_FN_is_word(w5, 5), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(w5_wide, 5), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_word(w5, 1), 0)
+        /* A value whose high limb is nonzero is not equal to a single word. */
+        || !TEST_int_eq(OSSL_FN_is_word(two_limbs, even_word), 0)
+        || !TEST_int_eq(OSSL_FN_is_word(two_limbs, 0), 0))
+        goto err;
+
+    /* OSSL_FN_is_odd */
+    if (!TEST_int_eq(OSSL_FN_is_odd(one), 1)
+        || !TEST_int_eq(OSSL_FN_is_odd(odd), 1)
+        || !TEST_int_eq(OSSL_FN_is_odd(w5), 1)
+        || !TEST_int_eq(OSSL_FN_is_odd(z), 0)
+        || !TEST_int_eq(OSSL_FN_is_odd(z_wide), 0)
+        || !TEST_int_eq(OSSL_FN_is_odd(z_empty), 0)
+        || !TEST_int_eq(OSSL_FN_is_odd(even), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(z);
+    OSSL_FN_free(z_wide);
+    OSSL_FN_free(z_empty);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_wide);
+    OSSL_FN_free(w5);
+    OSSL_FN_free(w5_wide);
+    OSSL_FN_free(even);
+    OSSL_FN_free(odd);
+    OSSL_FN_free(two_limbs);
+    return ret;
+}
+
 static int test_lshift_common(int i, int use_lshift1)
 {
     const OSSL_FN_ULONG *a_words = NULL;
@@ -2138,6 +2246,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sub_truncated, 18);
     ADD_TEST(test_num_bits);
     ADD_TEST(test_cmp);
+    ADD_TEST(test_introspection);
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
     ADD_ALL_TESTS(test_rshift1, 2);
