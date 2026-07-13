@@ -14,6 +14,7 @@
 #include <openssl/evp.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
+#include <openssl/crypto.h>
 #include "crypto/x509.h" /* x509_st definition */
 #include "testutil.h"
 
@@ -299,6 +300,173 @@ err:
     return ret;
 }
 
+static int add_name_entry(X509_NAME *name, const char *field,
+    const char *value)
+{
+    return X509_NAME_add_entry_by_txt(name, field, MBSTRING_ASC,
+        (const unsigned char *)value, -1, -1, 0);
+}
+
+static X509_NAME *make_store_test_name(void)
+{
+    X509_NAME *name = X509_NAME_new();
+
+    if (name == NULL)
+        return NULL;
+    if (!add_name_entry(name, "C", "CN")
+        || !add_name_entry(name, "O", "OpenSSL X509_STORE Test")
+        || !add_name_entry(name, "CN", "Shared Test Issuer")) {
+        X509_NAME_free(name);
+        return NULL;
+    }
+    return name;
+}
+
+static X509 *make_store_test_cert(X509_NAME *name)
+{
+    X509 *cert = X509_new();
+
+    if (cert == NULL)
+        return NULL;
+    if (!X509_set_version(cert, 2)
+        || !ASN1_INTEGER_set(X509_get_serialNumber(cert), 1)
+        || !X509_set_subject_name(cert, name)
+        || !X509_set_issuer_name(cert, name)
+        || X509_gmtime_adj(X509_getm_notBefore(cert), 0) == NULL
+        || X509_gmtime_adj(X509_getm_notAfter(cert), 365 * 24 * 60 * 60) == NULL
+        || !X509_set_pubkey(cert, privkey)
+        || !X509_sign(cert, privkey, signmd)) {
+        X509_free(cert);
+        return NULL;
+    }
+    return cert;
+}
+
+static X509_CRL *roundtrip_crl(X509_CRL *crl)
+{
+    unsigned char *der = NULL;
+    const unsigned char *q = NULL;
+    int derlen;
+    X509_CRL *ret = NULL;
+
+    derlen = i2d_X509_CRL(crl, &der);
+    if (derlen <= 0 || der == NULL)
+        goto end;
+
+    q = der;
+    ret = d2i_X509_CRL(NULL, &q, derlen);
+
+end:
+    OPENSSL_free(der);
+    X509_CRL_free(crl);
+    return ret;
+}
+
+static X509_CRL *make_store_test_crl(X509_NAME *issuer, int number)
+{
+    X509_CRL *crl = NULL;
+    ASN1_INTEGER *crl_number = NULL;
+    ASN1_TIME *last_update = NULL;
+    ASN1_TIME *next_update = NULL;
+
+    crl = X509_CRL_new();
+    crl_number = ASN1_INTEGER_new();
+    last_update = ASN1_TIME_new();
+    next_update = ASN1_TIME_new();
+    if (crl == NULL || crl_number == NULL || last_update == NULL
+        || next_update == NULL)
+        goto err;
+
+    if (!ASN1_INTEGER_set(crl_number, number)
+        || !ASN1_TIME_set_string(last_update, "20240101000000Z")
+        || !ASN1_TIME_set_string(next_update, "20250101000000Z")
+        || !X509_CRL_set_version(crl, 1)
+        || !X509_CRL_set_issuer_name(crl, issuer)
+        || !X509_CRL_set1_lastUpdate(crl, last_update)
+        || !X509_CRL_set1_nextUpdate(crl, next_update)
+        || !X509_CRL_add1_ext_i2d(crl, NID_crl_number, crl_number, 0, 0)
+        || !X509_CRL_sign(crl, privkey, signmd))
+        goto err;
+
+    ASN1_INTEGER_free(crl_number);
+    ASN1_TIME_free(last_update);
+    ASN1_TIME_free(next_update);
+
+    return roundtrip_crl(crl);
+
+err:
+    X509_CRL_free(crl);
+    ASN1_INTEGER_free(crl_number);
+    ASN1_TIME_free(last_update);
+    ASN1_TIME_free(next_update);
+    return NULL;
+}
+
+static int count_store_objects(X509_STORE *store, X509_LOOKUP_TYPE type)
+{
+    STACK_OF(X509_OBJECT) *objs = X509_STORE_get1_objects(store);
+    int i, count = 0;
+
+    if (objs == NULL)
+        return -1;
+
+    for (i = 0; i < sk_X509_OBJECT_num(objs); i++) {
+        X509_OBJECT *obj = sk_X509_OBJECT_value(objs, i);
+
+        if (type == X509_LU_NONE || X509_OBJECT_get_type(obj) == type)
+            count++;
+    }
+    sk_X509_OBJECT_pop_free(objs, X509_OBJECT_free);
+    return count;
+}
+
+static int test_x509_store_add_duplicate_crls(void)
+{
+    int ret = 0, i;
+    X509_STORE *store = NULL;
+    X509_NAME *name = NULL;
+    X509 *cert = NULL;
+    X509_CRL *crls[4] = { NULL, NULL, NULL, NULL };
+
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_ptr(name = make_store_test_name())
+        || !TEST_ptr(cert = make_store_test_cert(name)))
+        goto err;
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_ptr(crls[i] = make_store_test_crl(name, i + 1)))
+            goto err;
+    }
+
+    if (!TEST_true(X509_STORE_add_crl(store, crls[0]))
+        || !TEST_true(X509_STORE_add_cert(store, cert))
+        || !TEST_true(X509_STORE_add_crl(store, crls[1]))
+        || !TEST_true(X509_STORE_add_crl(store, crls[2]))
+        || !TEST_true(X509_STORE_add_crl(store, crls[3]))
+        || !TEST_int_eq(count_store_objects(store, X509_LU_NONE), 5)
+        || !TEST_int_eq(count_store_objects(store, X509_LU_X509), 1)
+        || !TEST_int_eq(count_store_objects(store, X509_LU_CRL), 4))
+        goto err;
+
+    for (i = 0; i < 4; i++) {
+        if (!TEST_true(X509_STORE_add_crl(store, crls[i]))
+            || !TEST_int_eq(count_store_objects(store, X509_LU_NONE), 5)
+            || !TEST_int_eq(count_store_objects(store, X509_LU_X509), 1)
+            || !TEST_int_eq(count_store_objects(store, X509_LU_CRL), 4))
+            goto err;
+    }
+
+    ret = 1;
+
+err:
+    for (i = 0; i < 4; i++)
+        X509_CRL_free(crls[i]);
+    X509_free(cert);
+    X509_NAME_free(name);
+    X509_STORE_free(store);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -337,6 +505,7 @@ int setup_tests(void)
     ADD_TEST(test_x509_crl_delete_last_extension);
     ADD_TEST(test_x509_revoked_delete_last_extension);
     ADD_TEST(test_x509_verify_with_new);
+    ADD_TEST(test_x509_store_add_duplicate_crls);
     return 1;
 }
 
