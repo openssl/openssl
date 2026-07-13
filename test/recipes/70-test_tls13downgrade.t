@@ -53,8 +53,6 @@ SKIP: {
     skip "DTLS 1.2 or 1.3 is disabled", $testcount if disabled("dtls1_3")
                                                       || disabled("dtls1_2");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
-    # TODO(DTLS1.3): The DTLS run currently fails. Skipped pending investigation.
-    skip "TODO(DTLS1.3): test fails for DTLS, needs investigation", $testcount;
     run_tests(1);
 }
 
@@ -88,7 +86,11 @@ sub run_tests
 
     if ($run_test_as_dtls == 1) {
         # TLSProxy does not handle partial messages for DTLS.
-        $client_flags = $client_flags." -groups DEFAULT:-?X25519MLKEM768";
+        if (disabled("ec")) {
+            $client_flags = $client_flags." -groups ffdhe2048:ffdhe3072";
+        } else {
+            $client_flags = $client_flags." -groups P-256:P-384";
+        }
     }
 
     #Test 1: Downgrade from (D)TLSv1.3 to (D)TLSv1.2
@@ -119,7 +121,11 @@ sub run_tests
     $client_flags = "-min_protocol ".$proto1_1." -cipher DEFAULT:\@SECLEVEL=0";
     if ($run_test_as_dtls == 1) {
         # TLSProxy does not handle partial messages for DTLS.
-        $client_flags = $client_flags." -groups DEFAULT:-?X25519MLKEM768";
+        if (disabled("ec")) {
+            $client_flags = $client_flags." -groups ffdhe2048:ffdhe3072";
+        } else {
+            $client_flags = $client_flags." -groups P-256:P-384";
+        }
     }
     my $server_flags = "-min_protocol ".$proto1_1;
     my $ciphers = "AES128-SHA:\@SECLEVEL=0";
@@ -203,7 +209,9 @@ sub downgrade_filter
     # DTLS1.2 handshake in which case the client will send a second ClientHello
     my $dtls12hs = $proxy->isdtls && ($testtype == FALLBACK_FROM_TLS_1_3
                                       || $testtype == DOWNGRADE_TO_TLS_1_2_WITH_TLS_1_1_SIGNAL
-                                      || $testtype == DOWNGRADE_TO_TLS_1_1_WITH_TLS_1_2_SIGNAL);
+                                      || $testtype == DOWNGRADE_TO_TLS_1_1_WITH_TLS_1_2_SIGNAL
+                                      || $testtype == DOWNGRADE_TO_TLS_1_1
+                                      || $testtype == DOWNGRADE_TO_TLS_1_2);
     my $client_hello = $proxy->flight == 0 || ($dtls12hs && $proxy->flight == 2);
     my $server_hello = ($dtls12hs && $proxy->flight == 3)
                         || (!$dtls12hs && $proxy->flight == 1);

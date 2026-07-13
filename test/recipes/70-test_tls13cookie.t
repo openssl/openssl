@@ -42,8 +42,6 @@ SKIP: {
 SKIP: {
     skip "DTLS 1.3 is disabled", $testcount if disabled("dtls1_3");
     skip "DTLSProxy does not work on Windows", $testcount if $^O =~ /^(MSWin32)$/;
-    # TODO(DTLS1.3): The DTLS run currently fails. Skipped pending investigation.
-    skip "TODO(DTLS1.3): test fails for DTLS, needs investigation", $testcount;
     run_tests(1);
 }
 

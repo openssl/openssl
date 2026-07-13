@@ -1600,11 +1600,13 @@ int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
      * layer would otherwise fall back to BIO_write() on the shared listener
      * BIO instead of BIO_sendmmsg() to the peer.
      */
+#ifndef OPENSSL_NO_SOCK
     if (SSL_CONNECTION_IS_DTLS(s)
         && s->d1 != NULL
         && meth->set1_peer != NULL
         && BIO_ADDR_family(&s->d1->peer_addr) != AF_UNSPEC)
         meth->set1_peer(newrl, &s->d1->peer_addr);
+#endif
 
     *thisrl = newrl;
     *thismethod = meth;

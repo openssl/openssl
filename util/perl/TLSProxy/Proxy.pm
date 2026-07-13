@@ -553,9 +553,27 @@ sub clientstart
             last if TLSProxy::Message->success()
                     && $self->handshake_complete() == 1;
         }
+
+        # For DTLS, check exit conditions BEFORE calling can_read/sysread
+        # to avoid blocking on a socket where the peer has closed.
+        # Once we have the session ticket and have seen the end of the
+        # message stream (close_notify), we're done.
+        if ($self->{isdtls}) {
+            my $success_flag = TLSProxy::Message->success();
+            my $handshake_done = $self->handshake_complete();
+            my $msg_end = TLSProxy::Message->end();
+            if (($success_flag && $handshake_done == 1) || ($handshake_done == 1 && $msg_end)) {
+                last;
+            }
+        }
+
         if (!(@ready = $fdset->can_read(1))) {
-            last if TLSProxy::Message->success()
-                && $self->handshake_complete() == 1;
+            my $success_flag = TLSProxy::Message->success();
+            my $handshake_done = $self->handshake_complete();
+            my $msg_end = TLSProxy::Message->end();
+            if ($success_flag && $handshake_done == 1) {
+                last;
+            }
             $ctr++;
             next;
         }
@@ -563,22 +581,52 @@ sub clientstart
             if ($hand == $server_sock) {
                 if ($server_sock->sysread($indata, 16384)) {
                     if ($indata = $self->process_packet(1, $indata)) {
-                        $client_sock->syswrite($indata) or goto END;
+                        if (!$client_sock->syswrite($indata)) {
+                            # For DTLS/UDP, syswrite failure after handshake completion
+                            # is not necessarily an error - the client may have already
+                            # sent close_notify and exited. Unlike TCP, UDP is
+                            # connectionless so we can't rely on socket state.
+                            if (!$self->{isdtls} || $self->handshake_complete() != 1) {
+                                goto END;
+                            }
+                        }
                     }
                     $ctr = 0;
                 } else {
-                    $fdset->remove($server_sock);
-                    $client_sock->shutdown(SHUT_WR);
+                    # For DTLS/UDP, sysread returning 0 doesn't mean the connection
+                    # is closed like it does for TCP. For TCP, 0 means EOF/FIN
+                    # received. For UDP, it may just mean no data available.
+                    # Skip the shutdown logic for DTLS to avoid prematurely
+                    # closing the connection.
+                    if (!$self->{isdtls}) {
+                        $fdset->remove($server_sock);
+                        $client_sock->shutdown(SHUT_WR);
+                    }
                 }
             } elsif ($hand == $client_sock) {
                 if ($client_sock->sysread($indata, 16384)) {
                     if ($indata = $self->process_packet(0, $indata)) {
-                        $server_sock->syswrite($indata) or goto END;
+                        if (!$server_sock->syswrite($indata)) {
+                            # For DTLS/UDP, syswrite failure after handshake completion
+                            # is not necessarily an error - the server may have already
+                            # sent close_notify and exited. Unlike TCP, UDP is
+                            # connectionless so we can't rely on socket state.
+                            if (!$self->{isdtls} || $self->handshake_complete() != 1) {
+                                goto END;
+                            }
+                        }
                     }
                     $ctr = 0;
                 } else {
-                    $fdset->remove($client_sock);
-                    $server_sock->shutdown(SHUT_WR);
+                    # For DTLS/UDP, sysread returning 0 doesn't mean the connection
+                    # is closed like it does for TCP. For TCP, 0 means EOF/FIN
+                    # received. For UDP, it may just mean no data available.
+                    # Skip the shutdown logic for DTLS to avoid prematurely
+                    # closing the connection.
+                    if (!$self->{isdtls}) {
+                        $fdset->remove($client_sock);
+                        $server_sock->shutdown(SHUT_WR);
+                    }
                 }
             } else {
                 kill(3, $self->{real_serverpid});
