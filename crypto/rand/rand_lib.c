@@ -522,6 +522,24 @@ static void rand_delete_thread_state(void *arg)
 }
 
 #if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
+/*
+ * Return 1 if a seed source was explicitly requested: either at runtime
+ * via the [random] configuration section or RAND_set_seed_source_type(),
+ * or at build time by overriding OPENSSL_DEFAULT_SEED_SRC or enabling
+ * fips-jitter.  An explicitly requested seed source must be used and
+ * never silently substituted by the operating system entropy sources.
+ */
+static int rand_seed_source_configured(ossl_unused RAND_GLOBAL *dgbl)
+{
+#ifdef OPENSSL_NO_FIPS_JITTER
+    return dgbl->seed_name != NULL
+        || strcmp(OPENSSL_SEED_SRC_NAME, "SEED-SRC") != 0;
+#else /* !OPENSSL_NO_FIPS_JITTER */
+    /* enable-fips-jitter builds hard-wire the JITTER seed source */
+    return 1;
+#endif /* OPENSSL_NO_FIPS_JITTER */
+}
+
 static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
     EVP_RAND *rand;
@@ -535,12 +553,15 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
     if (dgbl == NULL)
         return NULL;
     propq = dgbl->seed_propq;
-    if (dgbl->seed_name != NULL) {
+#ifdef OPENSSL_DEFAULT_SEED_PROPQ
+    if (propq == NULL)
+        propq = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_PROPQ);
+#endif /* OPENSSL_DEFAULT_SEED_PROPQ */
+    fallback = !rand_seed_source_configured(dgbl);
+    if (dgbl->seed_name != NULL)
         name = dgbl->seed_name;
-    } else {
-        fallback = 1;
+    else
         name = OPENSSL_SEED_SRC_NAME;
-    }
 #else /* !OPENSSL_NO_FIPS_JITTER */
     name = OPENSSL_SEED_SRC_NAME;
     propq = "";
@@ -620,6 +641,22 @@ EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx)
     ret = dgbl->seed;
     CRYPTO_THREAD_unlock(dgbl->lock);
     return ret;
+}
+
+EVP_RAND_CTX *ossl_rand_get0_seed(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    if (dgbl == NULL)
+        return NULL;
+    return rand_get0_seed(ctx, dgbl);
+}
+
+int ossl_rand_seed_source_configured(OSSL_LIB_CTX *ctx)
+{
+    RAND_GLOBAL *dgbl = rand_get_global(ctx);
+
+    return dgbl != NULL && rand_seed_source_configured(dgbl);
 }
 #endif /* !FIPS_MODULE */
 
