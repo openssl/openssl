@@ -22,6 +22,7 @@
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "providers/implementations/kem/mlx_kem.inc"
+#include "internal/usdt.h"
 
 static OSSL_FUNC_kem_newctx_fn mlx_kem_newctx;
 static OSSL_FUNC_kem_freectx_fn mlx_kem_freectx;
@@ -202,6 +203,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
     sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, key->propq);
+    OSSL_USDT_new_child(vctx, ctx);
     if (ctx == NULL
         || EVP_PKEY_encapsulate_init(ctx, NULL) <= 0
         || EVP_PKEY_encapsulate(ctx, cbuf, &encap_clen, sbuf, &encap_slen) <= 0)
@@ -237,6 +239,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     cbuf = ctext + (1 - ml_kem_slot) * key->minfo->ctext_bytes;
     encap_clen = key->xinfo->pubkey_bytes;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->xkey, key->propq);
+    OSSL_USDT_new_child(vctx, ctx);
     if (ctx == NULL
         || EVP_PKEY_keygen_init(ctx) <= 0
         || EVP_PKEY_keygen(ctx, &xkey) <= 0
@@ -256,6 +259,7 @@ static int mlx_kem_encapsulate(void *vctx, unsigned char *ctext, size_t *clen,
     encap_slen = key->xinfo->shsec_bytes;
     sbuf = shsec + (1 - ml_kem_slot) * ML_KEM_SHARED_SECRET_BYTES;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, xkey, key->propq);
+    OSSL_USDT_new_child(vctx, ctx);
     if (ctx == NULL
         || EVP_PKEY_derive_init(ctx) <= 0
         || EVP_PKEY_derive_set_peer(ctx, key->xkey) <= 0
@@ -327,6 +331,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     cbuf = ctext + ml_kem_slot * key->xinfo->pubkey_bytes;
     sbuf = shsec + ml_kem_slot * key->xinfo->shsec_bytes;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->mkey, key->propq);
+    OSSL_USDT_new_child(vctx, ctx);
     if (ctx == NULL
         || EVP_PKEY_decapsulate_init(ctx, NULL) <= 0
         || EVP_PKEY_decapsulate(ctx, sbuf, &decap_slen, cbuf, decap_clen) <= 0)
@@ -345,6 +350,7 @@ static int mlx_kem_decapsulate(void *vctx, uint8_t *shsec, size_t *slen,
     cbuf = ctext + (1 - ml_kem_slot) * key->minfo->ctext_bytes;
     sbuf = shsec + (1 - ml_kem_slot) * ML_KEM_SHARED_SECRET_BYTES;
     ctx = EVP_PKEY_CTX_new_from_pkey(key->libctx, key->xkey, key->propq);
+    OSSL_USDT_new_child(vctx, ctx);
     if (ctx == NULL
         || (xkey = EVP_PKEY_new()) == NULL
         || EVP_PKEY_copy_parameters(xkey, key->xkey) <= 0
