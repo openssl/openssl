@@ -90,6 +90,34 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
     return 1;
 }
 
+/*-
+ * Adds the single-limb word |w| to |a| in place, propagating the carry
+ * through |a|'s limbs and truncating any carry out past a->dsize (OSSL_FN is
+ * fixed-size, so a carry past the last limb is discarded rather than grown
+ * into).  The degenerate w == 0 case is a no-op.
+ *
+ * Not constant-time: the carry-propagation loop stops early once the carry
+ * is exhausted, so the number of limbs touched depends on the operand's
+ * value.
+ */
+int OSSL_FN_add_word(OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t i;
+    size_t dsize = (size_t)a->dsize;
+
+    if (w == 0)
+        return 1;
+
+    for (i = 0; i < dsize && w != 0; i++) {
+        OSSL_FN_ULONG l = (a->d[i] + w) & OSSL_FN_MASK;
+
+        a->d[i] = l;
+        w = (w > l);
+    }
+    /* Any remaining carry out past dsize is truncated. */
+    return 1;
+}
+
 /* unsigned subtraction of b from a */
 int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
 {
@@ -158,5 +186,37 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b)
         borrow &= (t1 == 0);
     }
 
+    return 1;
+}
+
+/*-
+ * Subtracts the single-limb word |w| from |a| in place, propagating the
+ * borrow through |a|'s limbs.  If the borrow runs past a->dsize (i.e. the
+ * unsigned value of |a| is less than |w|), the result is the 2's-complement
+ * wrap-around truncated to dsize, per OSSL_FN's fixed-size unsigned
+ * semantics: there is no sign to record, so the wrapped value is kept.  The
+ * degenerate w == 0 case is a no-op.
+ *
+ * Not constant-time: the borrow-propagation loop returns early once the
+ * borrow is repaid, so the number of limbs touched depends on the operand's
+ * value.
+ */
+int OSSL_FN_sub_word(OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t i;
+    size_t dsize = (size_t)a->dsize;
+
+    if (w == 0)
+        return 1;
+
+    for (i = 0; i < dsize; i++) {
+        if (a->d[i] >= w) {
+            a->d[i] -= w;
+            return 1; /* borrow repaid */
+        }
+        a->d[i] = (a->d[i] - w) & OSSL_FN_MASK;
+        w = 1;
+    }
+    /* Borrow out past dsize is truncated (2's complement). */
     return 1;
 }
