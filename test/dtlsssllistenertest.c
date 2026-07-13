@@ -1235,7 +1235,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
         poll_item.events = SSL_POLL_EVENT_IC;
         poll_item.revents = 0;
         poll_timeout.tv_sec = 0;
-        poll_timeout.tv_usec = 0;
+        poll_timeout.tv_usec = 100000;
 
         if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0, &poll_result)))
             goto end;
