@@ -106,6 +106,54 @@ void OSSL_FN_clear(OSSL_FN *f)
     OPENSSL_cleanse(f->d, limbssize);
 }
 
+/*-
+ * Sets a->d[0] to |w| and zeroes the remaining limbs, so the full dsize
+ * array reflects the value |w|.  OSSL_FN is fixed-size: if a->dsize is 0
+ * there is no limb to write and the call fails with
+ * OSSL_FN_R_RESULT_ARG_TOO_SMALL (the same reason ossl_fn_set_words() raises
+ * for an undersized destination).
+ *
+ * Constant-time with respect to |w|'s value: there is no value-dependent
+ * control flow, since the full dsize array always holds the value.  The only
+ * branch is on the operand's public width (dsize).
+ */
+int OSSL_FN_set_word(OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t dsize = (size_t)a->dsize;
+
+    if (ossl_unlikely(dsize < 1)) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+
+    a->d[0] = w;
+    if (dsize > 1)
+        memset(&a->d[1], 0, sizeof(OSSL_FN_ULONG) * (dsize - 1));
+    return 1;
+}
+
+/*-
+ * Equivalent to OSSL_FN_set_word(a, 1).  Kept as a named function rather
+ * than a macro or static inline, consistent with the rest of
+ * crypto/fn/fn_lib.c.  Leak profile as for OSSL_FN_set_word().
+ */
+int OSSL_FN_one(OSSL_FN *a)
+{
+    return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(1));
+}
+
+/*-
+ * Equivalent to OSSL_FN_set_word(a, 0).  This is a plain value assignment,
+ * not a secure wipe: the compiler may optimise the writes away if the value
+ * is not subsequently observed.  Use OSSL_FN_clear() (which calls
+ * OPENSSL_cleanse()) when the limbs may hold secret data and must be wiped
+ * irreversibly.  Leak profile as for OSSL_FN_set_word().
+ */
+int OSSL_FN_zero(OSSL_FN *a)
+{
+    return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
+}
+
 static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
 {
     OSSL_FN_ULONG x, mask;
