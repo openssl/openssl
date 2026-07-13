@@ -823,6 +823,121 @@ static int test_sub_word(int i)
         OSSL_FN_sub_word, OSSL_FN_sub);
 }
 
+/*-
+ * Focused tests for the assignment helpers: OSSL_FN_set_word(), OSSL_FN_one(),
+ * OSSL_FN_zero().  set_word is cross-checked against the internal
+ * ossl_fn_set_words() (an independent setter) and pollutes the destination
+ * first so that zeroing of high limbs is verified rather than assumed.
+ */
+struct set_word_case_st {
+    size_t dsize; /* allocated dsize */
+    OSSL_FN_ULONG w;
+    int expect_err; /* 1 if the call should fail (dsize == 0) */
+};
+
+static const struct set_word_case_st set_word_cases[] = {
+    { 1, OSSL_FN_ULONG_C(5), 0 }, /* minimal dsize */
+    { 1, OSSL_FN_ULONG_C(0), 0 }, /* zero, minimal dsize */
+    { 4, OSSL_FN_ULONG_C(0x01234567), 0 }, /* high limbs must be zeroed */
+    { 4, OSSL_FN_ULONG_C(0), 0 }, /* zero, high limbs zeroed */
+    { 2, OSSL_FN_ULONG_C(0xffffffff), 0 }, /* all-ones word */
+    { 0, OSSL_FN_ULONG_C(5), 1 }, /* dsize 0 -> error */
+};
+
+static int test_set_word(int i)
+{
+    const struct set_word_case_st *tc = &set_word_cases[i];
+    OSSL_FN *a = NULL, *ref = NULL;
+    const OSSL_FN_ULONG *u = NULL, *r = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(tc->dsize))
+        || !TEST_ptr(ref = OSSL_FN_new_limbs(tc->dsize)))
+        goto err;
+
+    /* Pollute both so that zeroing of untouched limbs is detectable. */
+    if (tc->dsize > 0) {
+        if (!TEST_true(pollute(a, 0, tc->dsize))
+            || !TEST_true(pollute(ref, 0, tc->dsize)))
+            goto err;
+    }
+
+    if (tc->expect_err) {
+        if (!TEST_false(OSSL_FN_set_word(a, tc->w)))
+            goto err;
+        /* ossl_fn_set_words() with 1 limb also fails on dsize 0. */
+        if (!TEST_false(ossl_fn_set_words(ref, &tc->w, 1)))
+            goto err;
+        ret = 1;
+        goto err;
+    }
+
+    if (!TEST_true(OSSL_FN_set_word(a, tc->w))
+        || !TEST_true(ossl_fn_set_words(ref, &tc->w, 1)))
+        goto err;
+
+    u = ossl_fn_get_words(a);
+    r = ossl_fn_get_words(ref);
+    if (!TEST_mem_eq(u, tc->dsize * OSSL_FN_BYTES,
+            r, tc->dsize * OSSL_FN_BYTES))
+        goto err;
+    /* High limbs beyond limb 1 must be zero. */
+    if (tc->dsize > 1
+        && !TEST_true(check_limbs_value(a, 1, tc->dsize, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(ref);
+    return ret;
+}
+
+static int test_one(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    size_t dsize = 4;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(dsize))
+        || !TEST_true(pollute(a, 0, dsize))
+        || !TEST_true(OSSL_FN_one(a)))
+        goto err;
+
+    u = ossl_fn_get_words(a);
+    if (!TEST_int_eq((int)u[0], 1)
+        || !TEST_true(check_limbs_value(a, 1, dsize, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    return ret;
+}
+
+static int test_zero(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    size_t dsize = 4;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(dsize))
+        || !TEST_true(pollute(a, 0, dsize))
+        || !TEST_true(OSSL_FN_zero(a)))
+        goto err;
+
+    /* OSSL_FN_is_zero() (added in the introspection commit) reads the result. */
+    if (!TEST_int_eq(OSSL_FN_is_zero(a), 1)
+        || !TEST_true(check_limbs_value(a, 0, dsize, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    return ret;
+}
+
 static int test_lshift_common(int i, int use_lshift1)
 {
     const OSSL_FN_ULONG *a_words = NULL;
@@ -1467,6 +1582,9 @@ int setup_tests(void)
     ADD_TEST(test_introspection);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
+    ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
+    ADD_TEST(test_one);
+    ADD_TEST(test_zero);
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
