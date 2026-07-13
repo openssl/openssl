@@ -17,18 +17,8 @@ jobs:
         with:
           fetch-depth: 0
       - uses: actions/setup-python@v6
-      - name: "Get changed files"
-        env:
-          NUMBER: ${{ github.event.pull_request.number }}
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          {
-            echo 'CHANGED_FILES<<EOF'
-            gh pr view $NUMBER --json files --jq '.files.[].path'
-            echo EOF
-          } >> "$GITHUB_ENV"
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd #v3.0.1
-        env:
-          DOC_COMMENTS_RANGE: "${{ github.event.pull_request.base.sha }}...HEAD"
         with:
-          extra_args: "--files $CHANGED_FILES"
+          extra_args: >-
+            --from-ref ${{ github.event.pull_request.base.sha }}
+            --to-ref HEAD
