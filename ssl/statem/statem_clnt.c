@@ -29,6 +29,7 @@
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/ocsp.h>
+#include <openssl/crau.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions);
@@ -1917,6 +1918,16 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+
+#ifndef OPENSSL_NO_CRAU
+        {
+            OSSL_PARAM params[] = {
+                OSSL_PARAM_DEFN("tls::protocol_version", OSSL_PARAM_UNSIGNED_INTEGER, &s->version, sizeof(s->version)),
+                OSSL_PARAM_END
+            };
+            OSSL_CRAU_data(SSL_CONNECTION_GET_CTX(s)->libctx, params);
+        }
+#endif
     }
 
     if (SSL_CONNECTION_IS_TLS13(s) || hrr) {
