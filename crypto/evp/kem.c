@@ -11,9 +11,11 @@
 #include <stdlib.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
+#include <openssl/crau.h>
 #include "internal/cryptlib.h"
 #include "internal/provider.h"
 #include "internal/core.h"
+#include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -242,6 +244,8 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
     unsigned char *out, size_t *outlen,
     unsigned char *secret, size_t *secretlen)
 {
+    int ret;
+
     if (ctx == NULL)
         return 0;
 
@@ -258,8 +262,27 @@ int EVP_PKEY_encapsulate(EVP_PKEY_CTX *ctx,
     if (out != NULL && secret == NULL)
         return 0;
 
-    return ctx->op.encap.kem->encapsulate(ctx->op.encap.algctx,
+#ifndef OPENSSL_NO_CRAU
+    if (out != NULL) {
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_utf8_string("pk::algorithm",
+                (char *)EVP_PKEY_get0_type_name(ctx->pkey),
+                OSSL_MAX_NAME_SIZE),
+            OSSL_PARAM_END
+        };
+
+        OSSL_CRAU_enter(ctx->libctx, "pk::encapsulate", params);
+    }
+#endif
+
+    ret = ctx->op.encap.kem->encapsulate(ctx->op.encap.algctx,
         out, outlen, secret, secretlen);
+
+#ifndef OPENSSL_NO_CRAU
+    if (out != NULL)
+        OSSL_CRAU_leave(ctx->libctx);
+#endif
+    return ret;
 }
 
 int EVP_PKEY_decapsulate_init(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
@@ -279,6 +302,8 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
     unsigned char *secret, size_t *secretlen,
     const unsigned char *in, size_t inlen)
 {
+    int ret;
+
     if (ctx == NULL
         || (in == NULL || inlen == 0)
         || (secret == NULL && secretlen == NULL))
@@ -293,8 +318,28 @@ int EVP_PKEY_decapsulate(EVP_PKEY_CTX *ctx,
         ERR_raise(ERR_LIB_EVP, EVP_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE);
         return -2;
     }
-    return ctx->op.encap.kem->decapsulate(ctx->op.encap.algctx,
+
+#ifndef OPENSSL_NO_CRAU
+    if (secret != NULL) {
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_utf8_string("pk::algorithm",
+                (char *)EVP_PKEY_get0_type_name(ctx->pkey),
+                OSSL_MAX_NAME_SIZE),
+            OSSL_PARAM_END
+        };
+
+        OSSL_CRAU_enter(ctx->libctx, "pk::decapsulate", params);
+    }
+#endif
+
+    ret = ctx->op.encap.kem->decapsulate(ctx->op.encap.algctx,
         secret, secretlen, in, inlen);
+
+#ifndef OPENSSL_NO_CRAU
+    if (secret != NULL)
+        OSSL_CRAU_leave(ctx->libctx);
+#endif
+    return ret;
 }
 
 static EVP_KEM *evp_kem_new(OSSL_PROVIDER *prov)
