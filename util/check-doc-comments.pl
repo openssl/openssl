@@ -78,6 +78,8 @@ sub nit {
 sub is_public { return $_[0] =~ m{(?:^|/)include/openssl/}; }
 
 sub diff_range {
+    return "$ENV{PRE_COMMIT_FROM_REF}...$ENV{PRE_COMMIT_TO_REF}"
+        if $ENV{PRE_COMMIT_FROM_REF} && $ENV{PRE_COMMIT_TO_REF};
     return $ENV{DOC_COMMENTS_RANGE} if $ENV{DOC_COMMENTS_RANGE};
     my $staged = `git diff --cached --name-only 2>/dev/null`;
     return '--cached' if length $staged;
