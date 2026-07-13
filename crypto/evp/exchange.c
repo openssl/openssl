@@ -16,6 +16,7 @@
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
+#include "internal/usdt.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -371,6 +372,9 @@ int EVP_PKEY_derive_init_ex(EVP_PKEY_CTX *ctx, const OSSL_PARAM params[])
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         goto err;
     }
+
+    OSSL_USDT_new_child(ctx, ctx->op.kex.algctx);
+
     ret = exchange->init(ctx->op.kex.algctx, provkey, params);
 
     EVP_KEYMGMT_free(tmp_keymgmt);
