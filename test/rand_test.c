@@ -15,6 +15,13 @@
 #include "crypto/rand.h"
 #include "testutil.h"
 
+/* For builds where OPENSSL_DEFAULT_SEED_SRC is explicitly set. */
+/* clang-format off */
+#ifndef OPENSSL_DEFAULT_SEED_SRC
+#define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
+#endif
+/* clang-format on */
+
 static char *configfile;
 
 static int test_rand(void)
@@ -312,7 +319,11 @@ static int test_rand_bytes_mfail(int idx)
         goto end;
     /* The default seed source may be unavailable in some configurations */
     ERR_set_mark();
-    seed = EVP_RAND_fetch(ctx, "SEED-SRC", NULL);
+#if !defined(OPENSSL_NO_FIPS_JITTER)
+    seed = EVP_RAND_fetch(ctx, "JITTER", NULL);
+#else
+    seed = EVP_RAND_fetch(ctx, OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC), NULL);
+#endif
     ERR_pop_to_mark();
 
     MFAIL_start();
