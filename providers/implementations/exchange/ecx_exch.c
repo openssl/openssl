@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include "internal/cryptlib.h"
+#include "internal/usdt.h"
 #include "crypto/ecx.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -90,6 +91,8 @@ static int ecx_init(void *vecxctx, void *vkey, const char *algname)
 
     ossl_ecx_key_free(ecxctx->key);
     ecxctx->key = key;
+
+    OSSL_USDT_new_context_with_data(vecxctx, "pk::derive", { "pk::curve", OSSL_USDT_STRING(algname) });
 
 #ifdef FIPS_MODULE
     if (!ossl_FIPS_IND_callback(key->libctx, algname, "Init"))

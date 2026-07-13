@@ -31,6 +31,7 @@
 #include "internal/numbers.h"
 #include "internal/provider.h"
 #include "internal/common.h"
+#include "internal/usdt.h"
 #include "evp_local.h"
 
 #ifndef FIPS_MODULE
@@ -210,14 +211,18 @@ void evp_pkey_ctx_free_old_ops(EVP_PKEY_CTX *ctx)
         ctx->op.sig.algctx = NULL;
         ctx->op.sig.signature = NULL;
     } else if (EVP_PKEY_CTX_IS_DERIVE_OP(ctx)) {
-        if (ctx->op.kex.algctx != NULL && ctx->op.kex.exchange != NULL)
+        if (ctx->op.kex.algctx != NULL && ctx->op.kex.exchange != NULL) {
+            OSSL_USDT_release_context(ctx->op.kex.algctx);
             ctx->op.kex.exchange->freectx(ctx->op.kex.algctx);
+        }
         EVP_KEYEXCH_free(ctx->op.kex.exchange);
         ctx->op.kex.algctx = NULL;
         ctx->op.kex.exchange = NULL;
     } else if (EVP_PKEY_CTX_IS_KEM_OP(ctx)) {
-        if (ctx->op.encap.algctx != NULL && ctx->op.encap.kem != NULL)
+        if (ctx->op.encap.algctx != NULL && ctx->op.encap.kem != NULL) {
+            OSSL_USDT_release_context(ctx->op.encap.algctx);
             ctx->op.encap.kem->freectx(ctx->op.encap.algctx);
+        }
         EVP_KEM_free(ctx->op.encap.kem);
         ctx->op.encap.algctx = NULL;
         ctx->op.encap.kem = NULL;
