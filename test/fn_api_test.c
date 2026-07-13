@@ -809,6 +809,118 @@ err:
     return ret;
 }
 
+/*-
+ * Focused tests for OSSL_FN_add_word() / OSSL_FN_sub_word().  Each case is
+ * cross-checked against OSSL_FN_add() / OSSL_FN_sub() with a single-limb
+ * operand, an independent oracle that exercises the exact fixed-size
+ * truncation / 2's-complement semantics the word variants must match.
+ *
+ * OSSL_FN_add_word()/OSSL_FN_sub_word() take the word by value; the earlier
+ * pointer-typed declaration had no implementation and no callers, and is
+ * corrected together with the implementation landing here.
+ */
+struct word_op_case_st {
+    const OSSL_FN_ULONG *a_words;
+    size_t a_limbs; /* significant limbs of a */
+    size_t a_dsize; /* allocated dsize (>= a_limbs; exercises padding) */
+    OSSL_FN_ULONG w;
+};
+
+static const OSSL_FN_ULONG w_zero[] = { OSSL_FN_ULONG_C(0) };
+static const OSSL_FN_ULONG w_5[] = { OSSL_FN_ULONG_C(5) };
+static const OSSL_FN_ULONG w_01234567[] = { OSSL_FN_ULONG_C(0x01234567) };
+static const OSSL_FN_ULONG w_FFFFFFFF[] = { OSSL_FN_ULONG_C(0xffffffff) };
+static const OSSL_FN_ULONG w_FFFFFFFE[] = { OSSL_FN_ULONG_C(0xfffffffe) };
+static const OSSL_FN_ULONG w_7FFFFFFF[] = { OSSL_FN_ULONG_C(0x7fffffff) };
+static const OSSL_FN_ULONG w_0_1[] = { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(1) };
+static const OSSL_FN_ULONG w_0_0[] = { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(0) };
+static const OSSL_FN_ULONG w_FF_FF[] = { OSSL_FN_ULONG_C(0xffffffff),
+    OSSL_FN_ULONG_C(0xffffffff) };
+static const OSSL_FN_ULONG w_FE_FF[] = { OSSL_FN_ULONG_C(0xfffffffe),
+    OSSL_FN_ULONG_C(0xffffffff) };
+static const OSSL_FN_ULONG w_67_89[] = { OSSL_FN_ULONG_C(0x01234567),
+    OSSL_FN_ULONG_C(0x89abcdef) };
+
+static const struct word_op_case_st add_word_cases[] = {
+    { w_zero, 1, 2, OSSL_FN_ULONG_C(5) }, /* a == 0 */
+    { w_01234567, 1, 2, OSSL_FN_ULONG_C(1) }, /* no carry */
+    { w_FFFFFFFF, 1, 2, OSSL_FN_ULONG_C(1) }, /* carry into next limb */
+    { w_FF_FF, 2, 2, OSSL_FN_ULONG_C(1) }, /* carry out truncated */
+    { w_FE_FF, 2, 2, OSSL_FN_ULONG_C(2) }, /* carry propagates one limb */
+    { w_67_89, 2, 2, OSSL_FN_ULONG_C(0) }, /* w == 0 noop */
+    { w_FFFFFFFF, 1, 1, OSSL_FN_ULONG_C(1) }, /* dsize 1, carry truncated */
+    { w_7FFFFFFF, 1, 1, OSSL_FN_ULONG_C(0x7fffffff) }, /* no carry, near boundary */
+};
+
+static const struct word_op_case_st sub_word_cases[] = {
+    { w_zero, 1, 2, OSSL_FN_ULONG_C(5) }, /* borrow out -> 2's complement */
+    { w_01234567, 1, 2, OSSL_FN_ULONG_C(1) }, /* no borrow */
+    { w_0_1, 2, 2, OSSL_FN_ULONG_C(1) }, /* borrow repaid at limb 1 */
+    { w_0_0, 2, 2, OSSL_FN_ULONG_C(1) }, /* borrow out truncated */
+    { w_67_89, 2, 2, OSSL_FN_ULONG_C(0) }, /* w == 0 noop */
+    { w_zero, 1, 1, OSSL_FN_ULONG_C(1) }, /* dsize 1, borrow truncated */
+    { w_5, 1, 1, OSSL_FN_ULONG_C(5) }, /* exact, no borrow */
+    { w_FFFFFFFE, 1, 2, OSSL_FN_ULONG_C(0xffffffff) }, /* borrow through to limb 1 */
+};
+
+/*
+ * Cross-check OSSL_FN_<op>_word(a, w) against OSSL_FN_<op>(r, a_ref, b) where
+ * b is a single-limb operand holding w.  The two-limb/general operation and
+ * the word variant must agree on the full dsize, including truncation and
+ * 2's-complement wrap behaviour.
+ */
+static int test_word_op_common(int i,
+    const struct word_op_case_st *cases, size_t ncases,
+    int (*word_op)(OSSL_FN *, OSSL_FN_ULONG),
+    int (*ref_op)(OSSL_FN *, const OSSL_FN *,
+        const OSSL_FN *))
+{
+    const struct word_op_case_st *tc = &cases[i];
+    OSSL_FN *a = NULL, *a_ref = NULL, *b = NULL, *res = NULL;
+    const OSSL_FN_ULONG *u = NULL, *r = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(tc->a_dsize))
+        || !TEST_ptr(a_ref = OSSL_FN_new_limbs(tc->a_dsize))
+        || !TEST_ptr(b = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(res = OSSL_FN_new_limbs(tc->a_dsize))
+        || !TEST_true(ossl_fn_set_words(a, tc->a_words, tc->a_limbs))
+        || !TEST_true(ossl_fn_set_words(a_ref, tc->a_words, tc->a_limbs))
+        || !TEST_true(ossl_fn_set_words(b, &tc->w, 1))
+        || !TEST_true(pollute(res, 0, tc->a_dsize)))
+        goto err;
+
+    if (!TEST_true(word_op(a, tc->w))
+        || !TEST_true(ref_op(res, a_ref, b)))
+        goto err;
+
+    u = ossl_fn_get_words(a);
+    r = ossl_fn_get_words(res);
+    if (!TEST_mem_eq(u, tc->a_dsize * OSSL_FN_BYTES,
+            r, tc->a_dsize * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(a_ref);
+    OSSL_FN_free(b);
+    OSSL_FN_free(res);
+    return ret;
+}
+
+static int test_add_word(int i)
+{
+    return test_word_op_common(i, add_word_cases, OSSL_NELEM(add_word_cases),
+        OSSL_FN_add_word, OSSL_FN_add);
+}
+
+static int test_sub_word(int i)
+{
+    return test_word_op_common(i, sub_word_cases, OSSL_NELEM(sub_word_cases),
+        OSSL_FN_sub_word, OSSL_FN_sub);
+}
+
 static int test_lshift_common(int i, int use_lshift1)
 {
     const OSSL_FN_ULONG *a_words = NULL;
@@ -2247,6 +2359,8 @@ int setup_tests(void)
     ADD_TEST(test_num_bits);
     ADD_TEST(test_cmp);
     ADD_TEST(test_introspection);
+    ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
+    ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
     ADD_ALL_TESTS(test_rshift1, 2);

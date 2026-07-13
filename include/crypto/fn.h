@@ -441,7 +441,7 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
  * @param[in]           w       The OSSL_FN_ULONG word
  * @returns             1 on success, 0 on error
  */
-int OSSL_FN_add_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+int OSSL_FN_add_word(OSSL_FN *a, OSSL_FN_ULONG w);
 
 /**
  * Subtract two OSSL_FN numbers.
@@ -460,7 +460,7 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
  * @param[in]           w       The OSSL_FN_ULONG word
  * @returns             1 on success, 0 on error
  */
-int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+int OSSL_FN_sub_word(OSSL_FN *a, OSSL_FN_ULONG w);
 
 /**
  * Multiply two OSSL_FN numbers.  Truncates the result to fit in r.
