@@ -1125,6 +1125,11 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[ssl_old_test]=.. ../include ../apps/include
     DEPEND[ssl_old_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+    PROGRAMS{noinst}=tls_groups_list_test
+    SOURCE[tls_groups_list_test]=tls_groups_list_test.c
+    INCLUDE[tls_groups_list_test]=.. ../include ../apps/include
+    DEPEND[tls_groups_list_test]=../libcrypto.a ../libssl.a libtestutil.a
+
     PROGRAMS{noinst}=ext_internal_test
     SOURCE[ext_internal_test]=ext_internal_test.c
     INCLUDE[ext_internal_test]=.. ../include ../apps/include
