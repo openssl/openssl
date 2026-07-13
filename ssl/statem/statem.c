@@ -374,7 +374,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
     cb = get_callback(s);
 
-    st->in_handshake++;
+    ossl_statem_set_in_handshake(s, 1);
     if (!SSL_in_init(ssl) || SSL_in_before(ssl)) {
         /*
          * If we are stateless then we already called SSL_clear() - don't do
@@ -390,7 +390,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
          * identifier other than 0.
          */
         BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
-            st->in_handshake, NULL);
+            ossl_statem_get_in_handshake(s), NULL);
     }
 #endif
 
@@ -510,7 +510,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
     ret = 1;
 
 end:
-    st->in_handshake--;
+    ossl_statem_set_in_handshake(s, 0);
 
 #ifndef OPENSSL_NO_SCTP
     if (SSL_CONNECTION_IS_DTLS(s) && BIO_dgram_is_sctp(SSL_get_wbio(ssl))) {
@@ -519,7 +519,7 @@ end:
          * identifier other than 0.
          */
         BIO_ctrl(SSL_get_wbio(ssl), BIO_CTRL_DGRAM_SCTP_SET_IN_HANDSHAKE,
-            st->in_handshake, NULL);
+            ossl_statem_get_in_handshake(s), NULL);
     }
 #endif
 
