@@ -10,6 +10,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
+#include "internal/usdt.h"
 #include "crypto/ecx.h"
 #include "internal/common.h" /* for ossl_assert() */
 
@@ -146,6 +147,8 @@ int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
+        OSSL_USDT_new_context_with_data("pk::derive",
+            { "pk::group", OSSL_USDT_STRING("x25519") });
     } else {
 #ifdef S390X_EC_ASM
         if (OPENSSL_s390xcap_P.pcc[1]
@@ -160,6 +163,8 @@ int ossl_ecx_compute_key(ECX_KEY *peer, ECX_KEY *priv, size_t keylen,
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_DURING_DERIVATION);
             return 0;
         }
+        OSSL_USDT_new_context_with_data("pk::derive",
+            { "pk::group", OSSL_USDT_STRING("x448") });
     }
     *secretlen = keylen;
     return 1;
