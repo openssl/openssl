@@ -203,6 +203,62 @@ int OSSL_FN_is_bit_set(const OSSL_FN *a, int n)
     return (a->d[limb] >> off) & OSSL_FN_ULONG_C(1);
 }
 
+/*-
+ * Returns 1 if the unsigned value of |a| equals the single-limb word |w|.
+ * Control flow branches only on the operand's public width (dsize); limb
+ * values are combined with constant-time selects, so the number of limbs
+ * inspected depends only on the public width, not on the operand's value.
+ * The returned value is the equality test the caller asked for.
+ */
+int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t i;
+    size_t dsize = (size_t)a->dsize;
+    int res;
+
+    if (dsize == 0)
+        return w == 0;
+
+    res = constant_time_select_int(
+        (unsigned int)constant_time_eq_bn(a->d[0], w), 1, 0);
+    for (i = 1; i < dsize; i++)
+        res = constant_time_select_int(
+            (unsigned int)constant_time_is_zero_bn(a->d[i]), res, 0);
+    return res;
+}
+
+/*-
+ * Equivalent to OSSL_FN_is_word(a, 0), kept as a named predicate for
+ * readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ * branches only on the operand's public width (dsize).
+ */
+int OSSL_FN_is_zero(const OSSL_FN *a)
+{
+    return OSSL_FN_is_word(a, 0);
+}
+
+/*-
+ * Equivalent to OSSL_FN_is_word(a, 1), kept as a named predicate for
+ * readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ * branches only on the operand's public width (dsize).
+ */
+int OSSL_FN_is_one(const OSSL_FN *a)
+{
+    return OSSL_FN_is_word(a, 1);
+}
+
+/*-
+ * Returns the least significant bit of |a|, which is the information the
+ * caller asked for.  The only control flow branches on the operand's public
+ * width (dsize), not on limb values.
+ */
+int OSSL_FN_is_odd(const OSSL_FN *a)
+{
+    if (a->dsize <= 0)
+        return 0;
+    return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
+}
+
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
 {
     if (ossl_unlikely(a == b))

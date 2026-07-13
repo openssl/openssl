@@ -338,6 +338,55 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
 int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
 
 /**
+ * Test whether the unsigned value of @p a equals the single-limb word @p w.
+ *
+ * @param[in]           a       The operand
+ * @param[in]           w       The OSSL_FN_ULONG word to compare against
+ * @returns             1 if the unsigned value of @p a equals @p w, 0 otherwise
+ *
+ * @note Control flow branches only on the operand's public width (its dsize),
+ *       not on limb values; the returned value is the equality test the caller
+ *       asked for.
+ */
+int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w);
+
+/**
+ * Test whether @p a is zero.
+ *
+ * @param[in]           a       The operand
+ * @returns             1 if @p a is zero, 0 otherwise
+ *
+ * @note Equivalent to OSSL_FN_is_word(a, 0), provided as a named predicate for
+ *       readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ *       branches only on the operand's public width (its dsize).
+ */
+int OSSL_FN_is_zero(const OSSL_FN *a);
+
+/**
+ * Test whether @p a is one.
+ *
+ * @param[in]           a       The operand
+ * @returns             1 if @p a is one, 0 otherwise
+ *
+ * @note Equivalent to OSSL_FN_is_word(a, 1), provided as a named predicate for
+ *       readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ *       branches only on the operand's public width (its dsize).
+ */
+int OSSL_FN_is_one(const OSSL_FN *a);
+
+/**
+ * Test whether @p a is odd.
+ *
+ * @param[in]           a       The operand
+ * @returns             the least significant bit of @p a (1 if odd, 0 if even)
+ *
+ * @note The only control flow branches on the operand's public width (its
+ *       dsize), not on limb values; the returned value is the bit itself,
+ *       which is the information the caller asked for.
+ */
+int OSSL_FN_is_odd(const OSSL_FN *a);
+
+/**
  * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
