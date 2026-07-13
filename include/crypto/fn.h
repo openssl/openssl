@@ -958,6 +958,50 @@ static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
 }
 
 /**
+ * Calculate  a^p mod m  (modular exponentiation) with a sliding-window
+ * algorithm.  Odd moduli use the Montgomery sliding-window path; even
+ * moduli fall through to the simple sliding-window path.  See the
+ * implementation in crypto/fn/fn_exp.c for the constant-time profile and
+ * the dispatcher scaffold (the word-base fast path and even-modulus
+ * reciprocal remaindering are not wired in yet).
+ *
+ * @param[out]          r       The OSSL_FN for the result.  As for all OSSL_FN
+ *                              operations, the destination width is the
+ *                              caller's choice: if smaller than the modulus,
+ *                              the result is truncated; if larger, it is
+ *                              zero-padded.  |r| must not alias |m|.
+ * @param[in]           a       The base.
+ * @param[in]           p       The exponent.
+ * @param[in]           m       The modulus.  Must be non-zero.
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error.
+ *
+ * @note This function currently requires that the OSSL_FN_CTX is sized per
+ *       OSSL_FN_mod_exp_ctx_size().
+ */
+int OSSL_FN_mod_exp(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
+    const OSSL_FN *m, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The base
+ * @param[in]           p       The exponent
+ * @param[in]           m       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_exp().
+ * It covers both the Montgomery (odd modulus) and simple (even modulus)
+ * sliding-window paths, sizing the arena for whichever path the modulus
+ * selects; see fn_exp.c.
+ */
+size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *p, const OSSL_FN *m);
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result

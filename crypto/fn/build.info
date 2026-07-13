@@ -3,7 +3,7 @@ $LIBFIPS=../../providers/libfips.a
 LIBS=$LIBCRYPTO
 
 $COMMON=fn_err.c fn_lib.c fn_ctx.c fn_intern.c fn_addsub.c fn_shift.c fn_mul.c \
-        fn_sqr.c fn_div.c fn_mod.c fn_rand.c fn_mont.c
+        fn_sqr.c fn_div.c fn_mod.c fn_exp.c fn_rand.c fn_mont.c
 
 SOURCE[$LIBCRYPTO]=$COMMON
 SOURCE[$LIBFIPS]=$COMMON
