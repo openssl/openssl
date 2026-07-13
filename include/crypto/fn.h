@@ -324,6 +324,20 @@ size_t OSSL_FN_num_bits(const OSSL_FN *a);
 int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Test whether bit @p n is set in @p a.
+ *
+ * @param[in]           a       The operand
+ * @param[in]           n       The bit index (0 = least significant)
+ * @returns             1 if bit @p n of @p a is set, 0 otherwise.
+ *
+ * @note An out-of-range index (n < 0 or n >= the operand's width in bits)
+ *       reads as 0.  The only control flow branches on the operand's public
+ *       width (its dsize), not on limb values; the returned value is the bit
+ *       itself, which is the information the caller asked for.
+ */
+int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
+
+/**
  * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
