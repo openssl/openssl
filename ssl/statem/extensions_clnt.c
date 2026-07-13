@@ -17,6 +17,7 @@
 #include <openssl/rand.h>
 #include "internal/ech_helpers.h"
 #endif
+#include <openssl/crau.h>
 
 /* Used in the negotiate_dhe function */
 typedef enum {
@@ -2301,6 +2302,14 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         return 0;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_DEFN("tls::group", OSSL_PARAM_UNSIGNED_INTEGER, &group_id, sizeof(group_id)),
+        OSSL_PARAM_END
+    };
+    OSSL_CRAU_enter(SSL_CONNECTION_GET_CTX(s)->libctx, "tls::key_exchange", params);
+#endif
+
     if (!ginf->is_kem) {
         /* Regular KEX */
         skey = EVP_PKEY_new();
@@ -2337,6 +2346,9 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
 
 err:
     EVP_PKEY_free(skey);
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(SSL_CONNECTION_GET_CTX(s)->libctx);
+#endif
     return ret;
 #else
     return 1;
