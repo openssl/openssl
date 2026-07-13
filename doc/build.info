@@ -1675,6 +1675,10 @@ DEPEND[html/man3/OSSL_CORE_MAKE_FUNC.html]=man3/OSSL_CORE_MAKE_FUNC.pod
 GENERATE[html/man3/OSSL_CORE_MAKE_FUNC.html]=man3/OSSL_CORE_MAKE_FUNC.pod
 DEPEND[man/man3/OSSL_CORE_MAKE_FUNC.3]=man3/OSSL_CORE_MAKE_FUNC.pod
 GENERATE[man/man3/OSSL_CORE_MAKE_FUNC.3]=man3/OSSL_CORE_MAKE_FUNC.pod
+DEPEND[html/man3/OSSL_CRAU_enter.html]=man3/OSSL_CRAU_enter.pod
+GENERATE[html/man3/OSSL_CRAU_enter.html]=man3/OSSL_CRAU_enter.pod
+DEPEND[man/man3/OSSL_CRAU_enter.3]=man3/OSSL_CRAU_enter.pod
+GENERATE[man/man3/OSSL_CRAU_enter.3]=man3/OSSL_CRAU_enter.pod
 DEPEND[html/man3/OSSL_CRMF_MSG_get0_tmpl.html]=man3/OSSL_CRMF_MSG_get0_tmpl.pod
 GENERATE[html/man3/OSSL_CRMF_MSG_get0_tmpl.html]=man3/OSSL_CRMF_MSG_get0_tmpl.pod
 DEPEND[man/man3/OSSL_CRMF_MSG_get0_tmpl.3]=man3/OSSL_CRMF_MSG_get0_tmpl.pod
@@ -3474,6 +3478,7 @@ html/man3/OSSL_CMP_exec_certreq.html \
 html/man3/OSSL_CMP_log_open.html \
 html/man3/OSSL_CMP_validate_msg.html \
 html/man3/OSSL_CORE_MAKE_FUNC.html \
+html/man3/OSSL_CRAU_enter.html \
 html/man3/OSSL_CRMF_MSG_get0_tmpl.html \
 html/man3/OSSL_CRMF_MSG_set0_validity.html \
 html/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.html \
@@ -4150,6 +4155,7 @@ man/man3/OSSL_CMP_exec_certreq.3 \
 man/man3/OSSL_CMP_log_open.3 \
 man/man3/OSSL_CMP_validate_msg.3 \
 man/man3/OSSL_CORE_MAKE_FUNC.3 \
+man/man3/OSSL_CRAU_enter.3 \
 man/man3/OSSL_CRMF_MSG_get0_tmpl.3 \
 man/man3/OSSL_CRMF_MSG_set0_validity.3 \
 man/man3/OSSL_CRMF_MSG_set1_regCtrl_regToken.3 \
