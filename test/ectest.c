@@ -1127,16 +1127,16 @@ static int group_field_test(void)
     EC_GROUP *secp521r1_group = NULL;
     EC_GROUP *sect163r2_group = NULL;
 
-    BN_hex2bn(&secp521r1_field,
-        "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
-        "FFFF");
-
-    BN_hex2bn(&sect163r2_field,
-        "08000000000000000000000000000000"
-        "00000000C9");
+    if (!TEST_true(BN_hex2bn(&secp521r1_field,
+            "01FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+            "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF"
+            "FFFF"))
+        || !TEST_true(BN_hex2bn(&sect163r2_field,
+            "08000000000000000000000000000000"
+            "00000000C9")))
+        return 0;
 
     secp521r1_group = EC_GROUP_new_by_curve_name(NID_secp521r1);
     if (BN_cmp(secp521r1_field, EC_GROUP_get0_field(secp521r1_group)))
