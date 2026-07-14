@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
 #define VX_COMPILER_SUPPORT_VEC128
 #include <vecintrin.h>
 #endif
@@ -901,7 +901,7 @@ static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalia
  *       out[2i+1] ≡ lhs[2i]*rhs[2i+1] + lhs[2i+1]*rhs[2i]             (mod q)
  *       for each i in [0, 128).
  */
-void scalar_mult_vec128(scalar *out, const scalar *lhs, const scalar *rhs)
+static void scalar_mult_vec128(scalar *out, const scalar *lhs, const scalar *rhs)
 {
     vec_int16_t *curr = (vec_int16_t *)out->c, *end = curr + VECTOR_DEGREE;
     const vec_int16_noalias_t *lhs_coeffs = (vec_int16_noalias_t *)lhs->c;
@@ -1078,7 +1078,7 @@ static ossl_inline void scalar_mult_add_montgomery_vec128(scalar *out,
  * Post: Every coefficient of out is in [0, q) and equals
  *       sum_j (lhs[j] (*) rhs[j])[i] mod q.
  */
-void inner_product_vec128(scalar *out, const scalar *lhs, const scalar *rhs,
+static void inner_product_vec128(scalar *out, const scalar *lhs, const scalar *rhs,
     int rank)
 {
     scalar_mult_montgomery_vec128(out, lhs, rhs);

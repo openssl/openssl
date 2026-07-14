@@ -120,6 +120,14 @@ jobs:
             target: linux64-s390x,
             fips: no
           }, {
+            # Build-only: verify no-asm does not produce undefined references to
+            # OPENSSL_s390xcap_P (which is only compiled when asm is enabled).
+            arch: s390x-linux-gnu,
+            libs: libc6-dev-s390x-cross,
+            target: no-shared no-asm linux64-s390x,
+            fips: no,
+            tests: none
+          }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
             target: no-async linux-latomic,

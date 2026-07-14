@@ -1830,6 +1830,38 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS' && !$predefined_
     }
 }
 
+# On s390x, <vecintrin.h> (used for vector intrinsics) requires -fzvector
+# with Clang.  GCC accepts the header without it.  Probe for this early so
+# that downstream build.info checks and C sources see a consistent set of
+# flags.  We only attempt the probe when asm is enabled (the vector path is
+# disabled by no-asm) and the target really is s390x.
+if (!$disabled{asm} && ($predefined_C{__s390x__} // 0)) {
+    my $cc  = $config{CROSS_COMPILE} . $config{CC};
+    my $tf  = "vx_probe_$$.c";
+    my $obj = "vx_probe_$$.o";
+    # Collect all current flags so the probe uses the same -march etc.
+    my @all_cflags = (
+        (ref($target{cflags}) ? @{$target{cflags}} : ($target{cflags} // ())),
+        @{$config{cflags}},
+    );
+    my $flagstr = join(' ', @all_cflags);
+
+    open(my $fh, '>', $tf) or die "Cannot write $tf: $!";
+    print $fh "#include <vecintrin.h>\n";
+    close($fh);
+
+    # First try: current flags only
+    my $rc = system("$cc $flagstr -c -o $obj $tf 2>/dev/null");
+    if ($rc != 0) {
+        # Second try: add -fzvector
+        $rc = system("$cc $flagstr -fzvector -c -o $obj $tf 2>/dev/null");
+        if ($rc == 0) {
+            push @{$config{cflags}}, "-fzvector";
+        }
+    }
+    unlink($tf, $obj);
+}
+
 # Deal with bn_ops ###################################################
 
 $config{bn_ll}                  =0;
