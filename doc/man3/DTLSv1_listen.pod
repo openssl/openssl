@@ -16,7 +16,7 @@ DTLSv1_listen
 =head1 DESCRIPTION
 
 SSL_stateless() statelessly listens for new incoming TLSv1.3 connections.
-DTLSv1_listen() statelessly listens for new incoming DTLS DTLS 1.0 and DTLS 1.2
+DTLSv1_listen() statelessly listens for new incoming DTLS 1.0 and DTLS 1.2
 connections. B<DTLSv1_listen() does not support DTLS 1.3>; for DTLS 1.3 server
 applications, use L<SSL_new_listener(3)> instead. If a ClientHello is received 
 that does not contain a cookie, then they respond with a request for a new
