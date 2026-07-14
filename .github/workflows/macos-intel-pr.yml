@@ -1,0 +1,42 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+# TEMPORARY: run only the darwin64-x86_64 (macos-15-intel) build that the
+# os-zoo workflow otherwise runs on schedule, so the keccak1600x4-avx512vl
+# link fix for #31941 can be verified directly on the pull request.
+# This file MUST be removed before merge.
+name: macOS x86_64 (PR verify)
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  macos-15-intel:
+    if: github.repository == 'openssl/openssl'
+    runs-on: macos-15-intel
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+      - name: checkout fuzz/corpora submodule
+        run: git submodule update --init --depth 1 fuzz/corpora
+      - name: config
+        run: ./config --strict-warnings --banner=Configured enable-fips enable-demos enable-h3demo
+      - name: config dump
+        run: ./configdata.pm --dump
+      - name: make
+        run: make -s -j4
+      - name: get cpu info
+        run: |
+          sysctl machdep.cpu
+          ./util/opensslwrap.sh version -c
+      - name: make test
+        run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
