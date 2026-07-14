@@ -26,7 +26,7 @@ my @formats = qw(seed-priv priv-only seed-only oqskeypair bare-seed bare-priv);
 plan skip_all => "ML-DSA isn't supported in this build"
     if disabled("ml-dsa");
 
-plan tests => @algs * (26 + 10 * @formats);
+plan tests => @algs * (27 + 13 * @formats);
 my $seed = join ("", map {sprintf "%02x", $_} (0..31));
 my $weed = join ("", map {sprintf "%02x", $_} (1..32));
 my $ikme = join ("", map {sprintf "%02x", $_} (0..31));
@@ -45,6 +45,12 @@ foreach my $alg (@algs) {
     my $der0 = sprintf("pub-%s.%d.der", $alg, $i++);
     ok(run(app(['openssl', 'pkey', '-pubin', '-in', $in0,
                 '-outform', 'DER', '-out', $der0])));
+
+    # Default encoding (no -encopt) is seed-priv; used as a control below.
+    my $plain = sprintf("prv-%s.plain.pem", $alg);
+    ok(run(app(['openssl', 'pkey', '-in', data_file($formats{'seed-priv'}),
+                '-out', $plain])),
+        sprintf("pkey default re-encode: %s", $alg));
     foreach my $f (keys %formats) {
         my $kf = $formats{$f};
         my %pruned = %formats;
@@ -71,6 +77,20 @@ foreach my $alg (@algs) {
                      '-provparam', "ml-dsa.input_formats=$f"])));
         ok(!run(app(['openssl', 'pkey', '-in', $in, '-noout',
                      '-provparam', "ml-dsa.input_formats=$rest"])));
+
+        # Re-encode the seed-priv key into format $f via 'pkey -encopt' and
+        # check it matches the reference; the control asserts the match is due
+        # to -encopt, i.e. it differs from the default for every non-seed-priv
+        # format (and equals it for seed-priv).
+        my $enc = sprintf("prv-%s-%s.enc.pem", $alg, $f);
+        ok(run(app(['openssl', 'pkey', '-in', data_file($formats{'seed-priv'}),
+                    '-encopt', "output_formats:$f", '-out', $enc])),
+            sprintf("pkey -encopt re-encode: %s, %s", $alg, $f));
+        ok(!compare_text($in, $enc),
+            sprintf("pkey -encopt output_formats match: %s, %s", $alg, $f));
+        ok($f eq 'seed-priv' ? compare_text($plain, $enc) == 0
+                             : compare_text($plain, $enc) != 0,
+            sprintf("pkey -encopt changed the encoding: %s, %s", $alg, $f));
     }
 
     # (1 + 2 * @formats) tests
