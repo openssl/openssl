@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
-plan tests => 16;
+plan tests => 17;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -26,6 +26,53 @@ ok(run(test(["rsa_test"])), "running rsatest");
 run_rsa_tests("pkey");
 
 run_rsa_tests("rsa");
+
+SKIP: {
+    skip "RSA is not supported in this build", 1 if disabled("rsa");
+
+    subtest "rsa -text prints the key in text form" => sub {
+        plan tests => 6;
+
+        # The modulus (n) and private exponent (d) of the committed
+        # testrsa.pem keypair.  -text prints them as colon-separated hex; we
+        # strip the formatting and compare against the known values so the
+        # actual key material, not just the labels, is verified.
+        my $modulus = "AADB7AA92E464F15711996166B4FF8BBE2301DFEE9D8B3596DC3"
+            . "C1A7DFCE7C87180170509FC84EFD17B5BB02CA5DD0A3228686B380CB746F"
+            . "3CAE4CDFC8AE5D3D";
+        my $priv_exp = "677727CDA1D733F6F119A479091D51AC3D6A1410157E840588E1"
+            . "FDB8F26031AA00BA84048AC3C755C64329C3AFE30120EBF4C89C02170671"
+            . "2282DAAF473BB2A1";
+
+        my @priv = run(app(['openssl', 'rsa', '-text', '-noout',
+                            '-in', srctop_file("test", "testrsa.pem")],
+                           stderr => undef),
+                       capture => 1);
+        chomp @priv;
+        my $priv_blob = uc join('', @priv);
+        $priv_blob =~ s/[^0-9A-F]//g;
+        ok(grep(/^Private-Key: \(512 bit, 2 primes\)$/, @priv),
+           "-text prints the private key header");
+        ok(index($priv_blob, $modulus) >= 0,
+           "-text prints the expected modulus for a private key");
+        ok(index($priv_blob, $priv_exp) >= 0,
+           "-text prints the expected private exponent");
+
+        my @pub = run(app(['openssl', 'rsa', '-pubin', '-text', '-noout',
+                           '-in', srctop_file("test", "testrsapub.pem")],
+                          stderr => undef),
+                      capture => 1);
+        chomp @pub;
+        my $pub_blob = uc join('', @pub);
+        $pub_blob =~ s/[^0-9A-F]//g;
+        ok(grep(/^Public-Key: \(512 bit\)$/, @pub),
+           "-text prints the public key header");
+        ok(index($pub_blob, $modulus) >= 0,
+           "-text prints the expected modulus for a public key");
+        ok(!grep(/privateExponent/, @pub),
+           "-text does not print a private exponent for a public key");
+    };
+}
 
 sub run_rsa_tests {
     my $cmd = shift;
