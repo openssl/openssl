@@ -172,28 +172,84 @@ static const vec_uchar_t perm_interleave_pairs_high __attribute__((aligned(16)))
 
 /* ===== Group 7: Large root arrays (each 256 bytes, separate cache lines) ===== */
 /*
- * Twiddle factor tables.  All roots derive from 17, a primitive 512th root of
- * unity in Z_q (17^512 ≡ 1 (mod q), 17^256 ≡ -1 (mod q)).
+ * Twiddle factor tables.  All roots derive from 17, a primitive 256th root of
+ * unity in Z_q (17^256 ≡ 1 (mod q), 17^128 ≡ -1 (mod q)).
  *
  * Let bitrev7(i) denote the 7-bit reversal of i (e.g. bitrev7(1) = 64).
  *
- * Standard-form twiddles:
- *   nttRoots[i]    = 17^bitrev7(i)                    mod q,  i in [0, 128)
- *   invNTTRoots[i] = (17^(q-2) mod q)^bitrev7(i)      mod q  (inverse roots)
- *   modRoots[i]    = 17^(2*bitrev7(i)+1)              mod q  (base-mult moduli)
+ * Standard-form twiddles (formula order, i in [0, 128)):
+ *   nttRoots[i]    = 17^bitrev7(i)               mod q
+ *   invNTTRoots[i] = 17^(-bitrev7(i))            mod q  (inverse roots)
+ *   modRoots[i]    = 17^(2*bitrev7(i)+1)         mod q  (base-mult moduli)
  *
- * Montgomery-form twiddles stored in kNTTRoots_montgomery / kInverseNTTRoots_montgomery:
- *   nttRoots_mont[i]    = nttRoots[i]    * 2285 mod q
- *   invNTTRoots_mont[i] = invNTTRoots[i] * 2285 mod q
- *
- * Key identity: MontMulRaw(a, zeta_mont) ≡ a * zeta_std (mod q), because
- *   MontMulRaw(a, zeta*2285) ≡ a * zeta * 2285 * R_M^{-1} ≡ a * zeta (mod q)
- * since 2285 * R_M^{-1} ≡ 1 (mod q)  (2285 = R_M mod q).
+ * Montgomery-form twiddle: for any standard-form root z,
+ *   z_mont = z * 2285 mod q
+ * Key identity: MontMulRaw(a, z_mont) ≡ a * z (mod q), because
+ *   MontMulRaw(a, z*2285) ≡ a * z * 2285 * R_M^{-1} ≡ a * z (mod q)
+ * since 2285 = R_M mod q, so 2285 * R_M^{-1} ≡ 1 (mod q).
  * This lets each butterfly twiddle multiply be a single MontMulRaw call.
  *
- * Index 0 in both montgomery arrays holds 2285 (= R_M mod q), which is the
- * Montgomery constant used in demontgomerization, not a twiddle factor.
- * Root consumption in both NTT and INTT starts at index 1.
+ * kNTTRoots_montgomery:
+ * Stored in formula order: kNTTRoots_montgomery[i] = nttRoots[i] * 2285 mod q.
+ * Both loops use pre-increment (++roots_ptr before reading), so index 0 is
+ * never consumed.  kNTTRoots_montgomery[0] = 2285 happens to equal the
+ * trivial root nttRoots[0] * 2285 = 17^0 * 2285, but it is unused padding.
+ * The NTT consumes indices 1..127 in natural order across its seven layers:
+ *   layer 7 (offset 64): index 1           1 root   (17^bitrev7(1)  * 2285)
+ *   layer 6 (offset 32): indices 2..3      2 roots
+ *   layer 5 (offset 16): indices 4..7      4 roots
+ *   layer 4 (offset  8): indices 8..15     8 roots
+ *   layer 3 (offset  4): indices 16..31   16 roots
+ *   layer 2 (offset  2): indices 32..63   32 roots
+ *   layer 1 (offset  1): indices 64..127  64 roots
+ *
+ * kInverseNTTRoots_montgomery:
+ * The INTT is the mirror of the NTT: it processes the deepest layer first.
+ * Therefore the 127 twiddles are stored in reversed-layer order rather than
+ * formula order.  Define:
+ *   invNTTRoots_formula[i] = invNTTRoots[i] * 2285 mod q  (i in [0, 128))
+ * Then kInverseNTTRoots_montgomery is laid out as follows:
+ *   index 0           : 2285  (= invNTTRoots_formula[0]; unused padding)
+ *   indices   1.. 64  : invNTTRoots_formula[64..127]   INTT layer 1 (offset  2)
+ *   indices  65.. 96  : invNTTRoots_formula[32..63]    INTT layer 2 (offset  4)
+ *   indices  97..112  : invNTTRoots_formula[16..31]    INTT layer 3 (offset  8)
+ *   indices 113..120  : invNTTRoots_formula[8..15]     INTT layer 4 (offset 16)
+ *   indices 121..124  : invNTTRoots_formula[4..7]      INTT layer 5 (offset 32)
+ *   indices 125..126  : invNTTRoots_formula[2..3]      INTT layer 6 (offset 64)
+ *   index  127        : invNTTRoots_formula[1]         INTT layer 7 (offset128)
+ * Like the NTT, the INTT loop uses pre-increment, so index 0 is never read.
+ * Index 0 is unused padding (demontgomerization uses the separate constants
+ * demontgomerize_const and demontgomerize_const_twist, not these arrays).
+ *
+ * The following Python snippet generates and cross-checks all four arrays:
+ *
+ *   p, R = 3329, 2285           # prime and Montgomery constant R_M mod q
+ *   q_inv = -3327               # q * q_inv ≡ 1 (mod 2^16)
+ *
+ *   def bitrev7(i):
+ *       r = 0
+ *       for _ in range(7):
+ *           r = (r << 1) | (i & 1); i >>= 1
+ *       return r
+ *
+ *   def to_int16(x): x &= 0xFFFF; return x - 0x10000 if x >= 0x8000 else x
+ *
+ *   ntt  = [(pow(17,  bitrev7(i), p) * R) % p for i in range(128)]
+ *   intt_f = [(pow(17, -bitrev7(i), p) * R) % p for i in range(128)]
+ *
+ *   # kInverseNTTRoots_montgomery: reversed-layer layout
+ *   intt = ([intt_f[0]]
+ *           + intt_f[64:128] + intt_f[32:64] + intt_f[16:32]
+ *           + intt_f[8:16]  + intt_f[4:8]   + intt_f[2:4]
+ *           + [intt_f[1]])
+ *
+ *   ntt_tw  = [to_int16(v * q_inv) for v in ntt]   # kNTTRoots_twisted
+ *   intt_tw = [to_int16(v * q_inv) for v in intt]  # kInverseNTTRoots_twisted
+ *
+ *   assert ntt   == list(kNTTRoots_montgomery)
+ *   assert intt  == list(kInverseNTTRoots_montgomery)
+ *   assert ntt_tw  == list(kNTTRoots_twisted)
+ *   assert intt_tw == list(kInverseNTTRoots_twisted)
  *
  * Twisted-form arrays (kNTTRoots_twisted, kInverseNTTRoots_twisted):
  *   twisted[i] = montgomery[i] * q_inv mod 2^16  (signed 16-bit)
@@ -366,30 +422,68 @@ static __owur ossl_inline vec_int16_t reduce_fully(vec_int16_t a)
  * using a caller-supplied precomputed twist.
  *
  * Algorithm (Seiler 2018, Algorithm 3):
- *   k      = (a_twist * b) mod 2^16   -- low-word product (uses precomputed twist)
- *   c      = mulh(k, q)               -- high word of k*q
- *   z_high = mulh(a, b)               -- high word of a*b
- *   r      = z_high - c
  *
- * The twist a_twist = a * q_inv mod 2^16 (where q_inv = -3327,
- * q * q_inv ≡ 1 mod 2^16) is precomputed by the caller so that it can be
- * broadcast once across the entire scalar loop, replacing the per-call
- * low-word multiply.
+ *   k    = (a_twist * b) mod 2^16
+ *   c    = mulh(k, q)
+ *   z_hi = mulh(a, b)
+ *   r    = z_hi - c
  *
- * Congruence: r ≡ a[i] * b[i] * R_M^{-1} (mod q).
- * This holds for any int16 values of a and b, not just the bounded case,
- * which is what justifies calling this function inside the NTT where b may
- * be up to 8q in magnitude, and the lsum_twist shortcut in
- * multiply_Fq2_montgomery_unreduced where (l0+l1) may exceed q.
+ * where
  *
- * Pre:  Every lane of a satisfies 0 <= a[i] < q.
- *       Every lane of a_twist satisfies a_twist[i] = a[i] * q_inv mod 2^16.
- *       Every lane of b is a signed 16-bit integer.
- * Post: Every lane of the result r satisfies -(C-1) <= r <= C
- *       with C = 1834 (z_hi in [-169,169], c = mulh(k,q) in [-1665,1664],
- *       giving r = z_hi - c in [-1833, 1834]) and
- *       r ≡ a[i] * b[i] * R_M^{-1} (mod q).
- *       No canonical reduction to [0, q) is performed.
+ *   a_twist = a * q_inv mod 2^16,
+ *   q_inv   = -3327,
+ *   q * q_inv ≡ 1 (mod 2^16).
+ *
+ * The twist is precomputed by the caller so that a single broadcasted value
+ * can be reused across an entire scalar loop, eliminating the per-call
+ * multiply by q_inv.
+ *
+ * Correctness
+ * ===========
+ * For every lane,
+ *   r ≡ a[i] * b[i] * R_M^{-1} (mod q),
+ * where R_M = 2^16.
+ *
+ * No canonical reduction to [0,q) is performed.
+ *
+ * Preconditions
+ * =============
+ *   0 <= a[i] < q
+ *   a_twist[i] = a[i] * q_inv mod 2^16
+ *   b[i] is interpreted as a signed 16-bit integer
+ *
+ * Range bounds
+ * ============
+ * Write
+ *   z_hi = mulh(a,b),
+ *   c    = mulh(k,q).
+ * Since k is a signed 16-bit value and q = 3329,
+ *   |c| <= floor((3329 * 2^15) / 2^16) = 1664.
+ * The bound on z_hi depends on the ranges of both a and b.
+ *
+ * Case 1: a,b ∈ [0,q)
+ *   max(a) = max(b) = q-1 = 3328
+ *   |z_hi| <= floor(3328^2 / 2^16) = 169.
+ *   Therefore |r| <= 169 + 1664 = 1833 < q.
+ *
+ * Case 2: a ∈ [0,q), b ∈ [-8q,8q]
+ *   max(a) = 3328,
+ *   max(|b|) = 8q = 26632
+ *   |z_hi| <= floor((3328 * 26632) / 2^16) = 1352.
+ *   Therefore |r| <= 1352 + 1664 = 3016 < q.
+ *
+ *   This is the range relevant to NTT twiddle multiplication.
+ *
+ * Case 3: a ∈ [0,q), arbitrary signed int16_t b
+ *   max(a) = 3328,
+ *   max(|b|) = 32768
+ *   |z_hi| <= floor((3328 * 32768) / 2^16) = 1664.
+ *   Therefore |r| <= 1664 + 1664 = 3328 < q.
+ *
+ * Case 4: a,b ∈ [0,2q-2]
+ *   max(a) = max(b) = 2q-2 = 6656
+ *   |z_hi| <= floor(6656^2 / 2^16) = 676.
+ *   Therefore |r| <= 676 + 1664 = 2340 < q.
  */
 static __owur ossl_inline vec_int16_t multiply_montgomery_unreduced(vec_int16_t b,
     vec_int16_t a,
@@ -417,7 +511,7 @@ static __owur ossl_inline vec_int16_t multiply_montgomery_unreduced(vec_int16_t 
  * since (R_M^{-1})^2 * 1353 ≡ 1 (mod q)  (i.e. 1353 = (R_M^{-1})^{-2} mod q
  * = R_M^2 mod q = 2285^2 mod q).
  *
- * Pre:  Every lane of a satisfies 0 <= a[i] < q.
+ * Pre:  Every lane of a satisfies |a[i]| <= 8 * q.
  * Post: Every lane of the result is in [0, q) and equals the logical
  *       coefficient x[i] such that a[i] ≡ x[i] * R_M^{-1} (mod q).
  */
@@ -432,7 +526,7 @@ static __owur ossl_inline vec_int16_t demontgomerize_vec128(vec_int16_t a)
  *
  * Applies demontgomerize_vec128 to each 8-lane vector chunk of out->c.
  *
- * Pre:  Every coefficient out->c[i] satisfies 0 <= out->c[i] < q.
+ * Pre:  Every coefficient out->c[i] satisfies |out->c[i]| < 8 * q.
  * Post: Every coefficient out->c[i] is replaced by the standard-form value
  *       x such that the old out->c[i] ≡ x * R_M^{-1} (mod q), with
  *       0 <= out->c[i] < q.
@@ -528,11 +622,11 @@ static ossl_inline void scalar_mult_const_512_vec128(scalar *s)
  *
  * Butterfly (lazy Cooley-Tukey, used in all 7 layers):
  *   Given even, odd in Z with twiddle zeta_mont = NTTRoots_montgomery[idx]:
- *     t        = MontMulRaw(odd, zeta_mont)     -- t in (-q, q)
+ *     t        = MontMulRaw(odd, zeta_mont)  -- t in [-3016, 3016] subset [-q,q]
  *     new_even = even + t
  *     new_odd  = even - t
- *   Pre:  |even|, |odd| < B*q for the current layer bound B.
- *   Post: |new_even|, |new_odd| < (B+1)*q  (bound grows by 1 per layer).
+ *   Pre:  |even|, |odd| < B*q <= 8*q for the current layer bound B.
+ *   Post: |new_even|, |new_odd| < (B+1)*q <= 9*q (bound grows by 1 per layer).
  *   Congruence: new_even ≡ even + odd * zeta_std (mod q)
  *               new_odd  ≡ even - odd * zeta_std (mod q)
  *   where zeta_std = nttRoots[idx] is the standard-form twiddle, and the
@@ -542,7 +636,7 @@ static ossl_inline void scalar_mult_const_512_vec128(scalar *s)
  * Overflow analysis:
  *   Starting bound B = 1 (input in [0, q)).  After each of the 7 lazy layers
  *   B increases by 1, giving B = 8 after layer 7.
- *   8 * q = 8 * 3329 = 26632 < 2^15, so no signed 16-bit overflow occurs
+ *   9 * q = 9 * 3329 = 29961 < 2^15, so no signed 16-bit overflow occurs
  *   across all 7 layers.
  *
  * The final layer (Stage 3, offset == 2) applies reduce_fully to each output,
@@ -666,12 +760,12 @@ void ossl_ml_kem_scalar_ntt_vec128(scalar *s)
  * Butterfly (lazy Gentleman-Sande, used in all 7 layers):
  *   Given even, odd in Z with twiddle zeta_mont = InvNTTRoots_montgomery[idx]:
  *     new_even = even + odd
- *     t        = even - odd
- *     new_odd  = MontMulRaw(zeta_mont, t)        -- new_odd in (-q, q)
+ *     t        = even - odd                      -- |t| < (2B+1)q <= 9q < 2^15
+ *     new_odd  = MontMulRaw(zeta_mont, t)        -- |new_odd| in (-q, q)
  *   Pre:  |even|, |odd| < B*q for the current layer bound B.
  *   Post: |new_even| < 2*B*q  (sum — bound doubles each layer).
  *         |new_odd|  < q      (MontMulRaw resets the twiddle term to (-q, q)).
- *   Congruence: new_even ≡ even + odd             (mod q)
+ *   Congruence: new_even ≡ even + odd              (mod q)
  *               new_odd  ≡ zeta_std * (even - odd) (mod q)
  *   where zeta_std = InvNTTRoots[idx].
  *
@@ -831,11 +925,11 @@ static ossl_inline void scalar_inverse_ntt_vec128_demontgomerize(scalar *s)
  * Let (l0, l1) and (r0, r1) be the even- and odd-indexed coefficients
  * extracted from the two lhs/rhs vector pairs.  The algorithm computes:
  *
- *   P  = MontMulRaw(l0 + l1, r0 + r1)
- *   P0 = MontMulRaw(l0, r0)
- *   P1 = MontMulRaw(l1, r1)
- *   result_odd  = P - (P0 + P1)               (Karatsuba cross term)
- *   result_even = P0 + MontMulRaw(P1, root)
+ *   P  = MontMulRaw(l0 + l1, r0 + r1)  -- l0 + l1, r0 + r1 in [0,2q-2] => |P| <= 2340
+ *   P0 = MontMulRaw(l0, r0)            -- l0, r0 in [0,q) => |P0| <= 1833
+ *   P1 = MontMulRaw(l1, r1)            -- l1, r1 in [0,q) => |P1| <= 1833
+ *   result_odd  = P - (P0 + P1)        -- |result_odd| <= 2340 + 2*1833 = 6006
+ *   result_even = P0 + MontMulRaw(P1, root)  -- |result_even| <= 2*1833 = 3666
  *
  * Correctness:
  *   result_even ≡ (l0*r0 + l1*r1 * root * 169) * 169  (mod q)
@@ -850,9 +944,8 @@ static ossl_inline void scalar_inverse_ntt_vec128_demontgomerize(scalar *s)
  *       roots_twisted[i] = roots[i] * q_inv mod 2^16 (kModRoots_twisted_vec).
  * Post: *result_even and *result_odd contain the even and odd output
  *       coefficients in inverse-Montgomery form.
- *       Let C = 1834 (tight MontMulRaw bound); then P, P0, P1 in [-C+1, C],
- *       result_odd  in [-3*C, 3*C] = [-5502, 5502],
- *       result_even in [-2*C, 2*C] = [-3668, 3668].
+ *       result_odd  in [-6006, 6006]
+ *       result_even in [-3666, 3666].
  */
 static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalias_t *lhs_coeffs,
     const vec_int16_noalias_t *rhs_coeffs,
@@ -877,13 +970,10 @@ static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalia
     vec_int16_t l1_twist = (vec_int16_t)((vec_uint16_t)l1_vec * q_inv);
     vec_int16_t lsum_twist = l0_twist + l1_twist;
 
-    /* P, P0, P1 in [-C+1, C] = [-1833, 1834] */
     vec_int16_t P = multiply_montgomery_unreduced(r0_vec + r1_vec, l0_vec + l1_vec, lsum_twist);
     vec_int16_t P0 = multiply_montgomery_unreduced(r0_vec, l0_vec, l0_twist);
     vec_int16_t P1 = multiply_montgomery_unreduced(r1_vec, l1_vec, l1_twist);
-    /* result_odd in [-3*C, 3*C] = [-5502, 5502] */
     *result_odd = P - (P0 + P1);
-    /* result_even in [-2*C, 2*C] = [-3668, 3668] */
     *result_even = P0 + multiply_montgomery_unreduced(P1, roots, roots_twisted);
 }
 
@@ -980,14 +1070,14 @@ static ossl_inline void scalar_mult_montgomery_vec128(scalar *out,
  *
  * Adds the twisted-Karatsuba raw output (multiply_Fq2_montgomery_unreduced result) to out
  * without any reduction or demontgomerization.  Each individual twisted-Karatsuba
- * term satisfies |term[i]| <= 3*C with C = 1834 (the result_odd worst case
+ * term satisfies |term[i]| <= 6006 (the result_odd worst case
  * from multiply_Fq2_montgomery_unreduced).  For ML-KEM's rank k <= 4, the
- * accumulated sum satisfies |out[i]| <= k * 3*C = 4 * 3 * 1834 = 22008 < 2^15,
+ * accumulated sum satisfies |out[i]| <= k * 6006 <= 4 * 6006 = 24024 < 2^15,
  * so no 16-bit signed overflow occurs.
  *
  * Pre:  Every coefficient of lhs and rhs is in [0, q)  (standard NTT-domain form).
  *       Every existing coefficient of out is a partial inverse-Montgomery sum
- *       with |out[i]| <= j * 3 * C (C = 1834), where j is the number of products
+ *       with |out[i]| <= j * 6006, where j is the number of products
  *       accumulated so far and j + 1 <= k <= 4.
  * Post: out[i] += (lhs (*) rhs)[i] in inverse-Montgomery form; no reduction is
  *       applied.  The caller must call demontgomerize_scalar_vec128() once all
@@ -1030,8 +1120,8 @@ static ossl_inline void scalar_mult_add_montgomery_vec128(scalar *out,
  * value in inverse-Montgomery form.
  *
  * Pre:  Same as inner_product_vec128.
- * Post: Every coefficient of out satisfies |out[i]| <= rank * 3*C
- *       (C = 1834) and represents the inner-product coefficient in
+ * Post: Every coefficient of out satisfies |out[i]| <= rank * 6006
+ *       and represents the inner-product coefficient in
  *       inverse-Montgomery form.
  *       The caller must pass out to scalar_inverse_ntt_demontgomerize_vec128()
  *       rather than scalar_inverse_ntt_vec128().
@@ -1055,7 +1145,7 @@ void ossl_ml_kem_inner_product_montgomery_vec128(scalar *out, const scalar *lhs,
  * (scalar_inverse_ntt_vec128_raw), then multiplies by 512
  * (scalar_mult_const_512_vec128) for normalization.
  *
- * Pre:  Every coefficient s->c[i] satisfies |s->c[i]| < q and represents a
+ * Pre:  Every coefficient s->c[i] satisfies |s->c[i]| <= 4*6006 < 8*q and represents a
  *       logical value in inverse-Montgomery form (value * R_M^{-1} mod q).
  * Post: Every coefficient s->c[i] is in [0, q) and equals INTT(s_std)[i],
  *       where s_std is the NTT-domain scalar encoded by the input.

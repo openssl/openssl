@@ -512,7 +512,7 @@ static __owur uint16_t reduce_once(uint16_t x)
 static __owur uint16_t reduce(uint32_t x)
 {
     uint64_t product = (uint64_t)x * kBarrettMultiplier;
-    /* with kBarrettShift == 32, this could be optimized with mul-high */
+    /* with kBarrettShift == 32, this can be optimized using mul-high */
     uint32_t quotient = (uint32_t)(product >> kBarrettShift);
     uint32_t remainder = x - quotient * kPrime;
 
@@ -839,7 +839,7 @@ static __owur uint16_t compress(uint16_t x, int bits)
 {
     uint32_t shifted = (uint32_t)x << bits;
     uint64_t product = (uint64_t)shifted * kBarrettMultiplier;
-    /* with kBarrettShift == 32, this could be optimized with mul-high */
+    /* with kBarrettShift == 32, this can be optimized using mul-high */
     uint32_t quotient = (uint32_t)(product >> kBarrettShift);
     uint32_t remainder = shifted - quotient * kPrime;
 
