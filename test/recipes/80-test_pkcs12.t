@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 64 + ($no_fips ? 0 : 5);
+plan tests => 65 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -321,6 +321,50 @@ with({ exit_checker => sub { return shift == 1; } },
 
     delete $ENV{OPENSSL_CONF}
 }
+
+# Test -clcerts/-cacerts cert filtering and the -name friendly name.
+subtest "pkcs12 -clcerts/-cacerts filtering and -name" => sub {
+    plan tests => 7;
+
+    # A PKCS#12 with a key + matching EE cert (gets a localKeyID) and a CA
+    # cert added via -certfile (no localKeyID), plus a friendly name.
+    my $mixed = "mixed.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-inkey", srctop_file(@path, "ee-key.pem"),
+                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-certfile", srctop_file(@path, "ca-cert.pem"),
+                "-name", "Friendly Client",
+                "-passout", "pass:", "-out", $mixed])),
+       "export a PKCS#12 with a client cert, a CA cert and a friendly name");
+
+    # -name sets the friendly name, visible in -info output.
+    my @info = run(app(["openssl", "pkcs12", "-in", $mixed, "-info", "-nokeys",
+                        "-passin", "pass:"]), capture => 1);
+    ok(grep(/friendlyName: Friendly Client/, @info) == 1,
+       "the -name friendly name is present in the output");
+
+    # Without filtering both certificates are dumped.
+    my @all = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys",
+                       "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @all) == 2,
+       "both certificates are output without filtering");
+
+    # -clcerts outputs only the client (leaf) certificate.
+    my @cl = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys", "-clcerts",
+                      "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @cl) == 1,
+       "-clcerts outputs a single certificate");
+    ok(grep(/subject=CN\s*=\s*server\.example/, @cl) == 1,
+       "-clcerts outputs the client certificate");
+
+    # -cacerts outputs only the CA certificate.
+    my @ca = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys", "-cacerts",
+                      "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @ca) == 1,
+       "-cacerts outputs a single certificate");
+    ok(grep(/subject=CN\s*=\s*CA\b/, @ca) == 1,
+       "-cacerts outputs the CA certificate");
+};
 
 # Tests for pkcs12_parse
 ok(run(test(["pkcs12_api_test",
