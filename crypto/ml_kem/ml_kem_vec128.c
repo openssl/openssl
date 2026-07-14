@@ -14,6 +14,8 @@
 #include <vecintrin.h>
 #endif
 
+#include "ml_kem_local.h"
+
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 #include <openssl/byteorder.h>
 #include <openssl/rand.h>
@@ -548,7 +550,7 @@ static ossl_inline void scalar_mult_const_512_vec128(scalar *s)
  * The intermediate layers (Stages 1 and 2) do not reduce, relying on the
  * overflow analysis above.
  */
-void scalar_ntt_vec128(scalar *s)
+void ossl_ml_kem_scalar_ntt_vec128(scalar *s)
 {
     int offset = DEGREE / 2;
 
@@ -805,7 +807,7 @@ static void scalar_inverse_ntt_vec128_raw(scalar *s)
     } while ((offset <<= 1) < DEGREE);
 }
 
-void scalar_inverse_ntt_vec128(scalar *s)
+void ossl_ml_kem_scalar_inverse_ntt_vec128(scalar *s)
 {
     scalar_inverse_ntt_vec128_raw(s);
     scalar_mult_const_512_vec128(s);
@@ -944,7 +946,7 @@ static void scalar_mult_vec128(scalar *out, const scalar *lhs, const scalar *rhs
  * Post: Every coefficient of out is in [0, q) and equals
  *       reduce_once(old_out[i] + (lhs (*) rhs)[i]).
  */
-void scalar_mult_add_vec128(scalar *out, const scalar *lhs, const scalar *rhs)
+void ossl_ml_kem_scalar_mult_add_vec128(scalar *out, const scalar *lhs, const scalar *rhs)
 {
     vec_int16_t *curr = (vec_int16_t *)out->c, *end = curr + VECTOR_DEGREE;
     const vec_int16_noalias_t *lhs_coeffs = (vec_int16_noalias_t *)lhs->c;
@@ -1104,8 +1106,8 @@ static void inner_product_vec128(scalar *out, const scalar *lhs, const scalar *r
  *       The caller must pass out to scalar_inverse_ntt_demontgomerize_vec128()
  *       rather than scalar_inverse_ntt_vec128().
  */
-void inner_product_montgomery_vec128(scalar *out, const scalar *lhs, const scalar *rhs,
-    int rank)
+void ossl_ml_kem_inner_product_montgomery_vec128(scalar *out, const scalar *lhs,
+    const scalar *rhs, int rank)
 {
     scalar_mult_montgomery_vec128(out, lhs, rhs);
     while (--rank > 0)
@@ -1128,7 +1130,7 @@ void inner_product_montgomery_vec128(scalar *out, const scalar *lhs, const scala
  * Post: Every coefficient s->c[i] is in [0, q) and equals INTT(s_std)[i],
  *       where s_std is the NTT-domain scalar encoded by the input.
  */
-void scalar_inverse_ntt_demontgomerize_vec128(scalar *s)
+void ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128(scalar *s)
 {
     scalar_inverse_ntt_vec128_demontgomerize(s);
 }
@@ -1149,7 +1151,8 @@ void scalar_inverse_ntt_demontgomerize_vec128(scalar *s)
  * Post: Every coefficient of out[i] is in [0, q) and equals
  *       INTT(sum_j m[i*rank+j] (*) a[j])[coeff] mod q.
  */
-void matrix_mult_intt_vec128(scalar *out, const scalar *m, const scalar *a, int rank)
+void ossl_ml_kem_matrix_mult_intt_vec128(scalar *out, const scalar *m, const scalar *a,
+    int rank)
 {
     const scalar *ar;
     int i, j;
@@ -1161,7 +1164,7 @@ void matrix_mult_intt_vec128(scalar *out, const scalar *m, const scalar *a, int 
             scalar_mult_add_montgomery_vec128(out, m++, ++ar);
         /* do the lazy reduction */
         demontgomerize_scalar_vec128(out);
-        scalar_inverse_ntt_vec128(out);
+        ossl_ml_kem_scalar_inverse_ntt_vec128(out);
     }
 }
 

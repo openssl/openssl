@@ -11,6 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
+#include "ml_kem_local.h"
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
 
@@ -413,12 +414,9 @@ typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
 typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
 typedef void (*ml_kem_scalar_inverse_ntt_demontgomerize_fn)(scalar *p);
 
-void scalar_ntt_generic(scalar *p);
-void scalar_inverse_ntt_generic(scalar *p);
-
-static ml_kem_scalar_ntt_fn scalar_ntt = scalar_ntt_generic;
-static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = scalar_inverse_ntt_generic;
-static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_generic;
+static ml_kem_scalar_ntt_fn scalar_ntt = ossl_ml_kem_scalar_ntt_generic;
+static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_generic;
+static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
 
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 /*
@@ -440,13 +438,6 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 #include "arch/s390x_arch.h"
-
-void scalar_ntt_vec128(scalar *s);
-void scalar_inverse_ntt_vec128(scalar *s);
-void scalar_inverse_ntt_demontgomerize_vec128(scalar *s);
-void scalar_mult_add_vec128(scalar *out, const scalar *lhs, const scalar *rhs);
-void inner_product_montgomery_vec128(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
-void matrix_mult_intt_vec128(scalar *out, const scalar *m, const scalar *a, int rank);
 #endif
 
 /* Function pointer types for scalar multiplication dispatch */
@@ -487,12 +478,12 @@ static void ml_kem_ntt_init(void)
  * */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
     if (S390X_VX_CAPABLE) {
-        scalar_ntt = scalar_ntt_vec128;
-        scalar_inverse_ntt = scalar_inverse_ntt_vec128;
-        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_demontgomerize_vec128;
-        scalar_mult_add = scalar_mult_add_vec128;
-        inner_product_montgomery = inner_product_montgomery_vec128;
-        matrix_mult_intt = matrix_mult_intt_vec128;
+        scalar_ntt = ossl_ml_kem_scalar_ntt_vec128;
+        scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_vec128;
+        scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128;
+        scalar_mult_add = ossl_ml_kem_scalar_mult_add_vec128;
+        inner_product_montgomery = ossl_ml_kem_inner_product_montgomery_vec128;
+        matrix_mult_intt = ossl_ml_kem_matrix_mult_intt_vec128;
     }
 #endif
 }
@@ -548,7 +539,7 @@ static void scalar_mult_const(scalar *s, uint16_t a)
  * elements in GF(3329^2), with the coefficients of the elements being
  * consecutive entries in |s->c|.
  */
-void scalar_ntt_generic(scalar *s)
+void ossl_ml_kem_scalar_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -580,7 +571,7 @@ void scalar_ntt_generic(scalar *s)
  * iFFT to account for the fact that 3329 does not have a 512th root of unity,
  * using the precomputed 128 roots of unity stored in InverseNTTRoots.
  */
-void scalar_inverse_ntt_generic(scalar *s)
+void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kInverseNTTRoots;
     uint16_t *end = s->c + DEGREE;
