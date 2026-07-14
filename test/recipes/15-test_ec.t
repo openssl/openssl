@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 18;
+plan tests => 19;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -150,6 +150,55 @@ subtest 'EC parameter encoding (-param_enc)' => sub {
     ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
                  '-param_enc', 'bogus'])),
        "an invalid parameter encoding is rejected");
+};
+
+subtest 'ec -text prints the key in text form' => sub {
+    plan tests => 7;
+
+    my $priv_key = srctop_file("test", "testec-p256.pem");
+    my $pub_key = srctop_file("test", "testecpub-p256.pem");
+
+    # The private (priv) and public (pub) values of the committed
+    # testec-p256.pem / testecpub-p256.pem keypair.  -text prints them as
+    # colon-separated hex; we strip the formatting and compare against the
+    # known values so the actual key material, not just the labels, is checked.
+    my $priv_hex = "36045F6C909612570C8C0113071FC809F6788084289C6AB003C60A"
+        . "17B2D5ADAD";
+    my $pub_hex = "04257C007484E23C571252C6912369E5CD33519FEFAAE85DFC5EB1FC"
+        . "9BCB1FDBC0D0FB63A86F9494CEF823552D1EEF4A48A87E9B4970E03DCF262AD"
+        . "4ACF598B6E9";
+
+    # ec -text on the private key.
+    my @priv = run(app(['openssl', 'ec', '-text', '-noout', '-in', $priv_key],
+                       stderr => undef),
+                   capture => 1);
+    chomp @priv;
+    my $priv_blob = uc join('', @priv);
+    $priv_blob =~ s/[^0-9A-F]//g;
+    ok(grep(/^Private-Key: \(256 bit field, 128 bit security level\)$/, @priv),
+       "ec -text prints the private key header");
+    ok(index($priv_blob, $priv_hex) >= 0,
+       "ec -text prints the expected private value");
+    ok(index($priv_blob, $pub_hex) >= 0,
+       "ec -text prints the expected public value");
+    ok(grep(/^ASN1 OID: prime256v1$/, @priv)
+       && grep(/^NIST CURVE: P-256$/, @priv),
+       "ec -text prints the curve identification");
+
+    # ec -text on the public key.
+    my @pub = run(app(['openssl', 'ec', '-pubin', '-text', '-noout',
+                       '-in', $pub_key],
+                      stderr => undef),
+                  capture => 1);
+    chomp @pub;
+    my $pub_blob = uc join('', @pub);
+    $pub_blob =~ s/[^0-9A-F]//g;
+    ok(grep(/^Public-Key: \(256 bit field, 128 bit security level\)$/, @pub),
+       "ec -text prints the public key header");
+    ok(index($pub_blob, $pub_hex) >= 0,
+       "ec -text prints the expected public value for a public key");
+    ok(!grep(/^priv:/, @pub),
+       "ec -text does not print a private component for a public key");
 };
 
 subtest 'Check loading of fips and non-fips keys' => sub {
