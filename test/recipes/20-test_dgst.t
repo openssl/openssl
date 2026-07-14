@@ -18,7 +18,7 @@ use Cwd qw(abs_path);
 
 setup("test_dgst");
 
-plan tests => 26;
+plan tests => 27;
 
 sub tsignverify {
     my $testtext = shift;
@@ -435,6 +435,40 @@ subtest "Listing supported digests with `dgst` CLI" => sub {
     # Only check digests that are always present, each printed as "-<name>"
     ok($listing =~ /-sha256\b/, "LIST: Check sha256 is listed");
     ok($listing =~ /-sha512\b/, "LIST: Check sha512 is listed");
+};
+
+subtest "signing and verifying with DER `-keyform` `dgst` CLI" => sub {
+    if (disabled("rsa")) {
+        plan tests => 1;
+        ok(1, "Skipped (RSA not supported)");
+        return;
+    }
+    plan tests => 4;
+
+    my $data_to_sign = srctop_file('test', 'data.bin');
+    my $privkey_pem = srctop_file("test", "testrsa.pem");
+    my $pubkey_pem = srctop_file("test", "testrsapub.pem");
+    my $privkey_der = "testrsa-keyform.der";
+    my $pubkey_der = "testrsapub-keyform.der";
+    my $sigfile = "testrsa-keyform.sig";
+
+    # Convert the keys to DER so the `-keyform DER` code path can be exercised.
+    ok(run(app(['openssl', 'pkey', '-in', $privkey_pem,
+                '-outform', 'DER', '-out', $privkey_der])),
+       "Convert private key to DER");
+    ok(run(app(['openssl', 'pkey', '-in', $pubkey_pem, '-pubin',
+                '-outform', 'DER', '-pubout', '-out', $pubkey_der])),
+       "Convert public key to DER");
+
+    ok(run(app(['openssl', 'dgst', '-sign', $privkey_der, '-keyform', 'DER',
+                '-out', $sigfile,
+                $data_to_sign])),
+       "Generating signature with DER private key via -keyform");
+
+    ok(run(app(['openssl', 'dgst', '-verify', $pubkey_der, '-keyform', 'DER',
+                '-signature', $sigfile,
+                $data_to_sign])),
+       "Verify signature with DER public key via -keyform");
 };
 
 subtest "signing using the nonce-type sigopt" => sub {
