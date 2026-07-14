@@ -40,6 +40,7 @@
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
+#include <openssl/decoder.h>
 #include "s_apps.h"
 #include "apps.h"
 
@@ -605,20 +606,33 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
     int suppress_decode_errors)
 {
     EVP_PKEY *params = NULL;
+    OSSL_DECODER_CTX *dctx = NULL;
+    BIO *file_bio = BIO_new_file(uri, "r+");
 
     if (desc == NULL)
         desc = "key parameters";
-    (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc,
-        suppress_decode_errors,
-        NULL, NULL, &params, NULL, NULL, NULL, NULL, NULL);
-    if (params != NULL && keytype != NULL && !EVP_PKEY_is_a(params, keytype)) {
-        ERR_print_errors(bio_err);
-        BIO_printf(bio_err,
-            "Unable to load %s from %s (unexpected parameters type)\n",
-            desc, uri);
-        EVP_PKEY_free(params);
-        params = NULL;
+    if (file_bio == NULL) {
+        (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc,
+            suppress_decode_errors,
+            NULL, NULL, &params, NULL, NULL, NULL, NULL, NULL);
+        if (params != NULL && keytype != NULL && !EVP_PKEY_is_a(params, keytype)) {
+            ERR_print_errors(bio_err);
+            BIO_printf(bio_err,
+                "Unable to load %s from %s (unexpected parameters type)\n",
+                desc, uri);
+            EVP_PKEY_free(params);
+            params = NULL;
+        }
+    } else {
+        dctx = OSSL_DECODER_CTX_new_for_pkey(&params, NULL, NULL, keytype,
+            OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
+            NULL, NULL);
+        if (dctx != NULL)
+            OSSL_DECODER_from_bio(dctx, file_bio);
     }
+
+    BIO_free(file_bio);
+    OSSL_DECODER_CTX_free(dctx);
     return params;
 }
 
