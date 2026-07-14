@@ -108,6 +108,7 @@ static const OSSL_FN_ULONG num8[] = {
  * All sizes are in number of limbs, the LIMBSOF() macro is there to help
  */
 #define LIMBSOF(num) ((sizeof(num) + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES)
+#define OSSL_FN_BITS (OSSL_FN_BYTES * 8)
 struct test_case_st {
     /* Two operands and expected full result (possibly two numbers) */
     const OSSL_FN_ULONG *op1;
@@ -2465,6 +2466,274 @@ static int test_div_quotient_only_truncated(int i)
     return test_div_quotient_only_common(test_div_truncate_cases[i]);
 }
 
+/*-
+ * Focused tests for OSSL_FN_rand() / OSSL_FN_priv_rand() and the range
+ * variants.  Random values cannot be compared against a fixed oracle, so
+ * these tests verify the mathematical contract the functions guarantee:
+ * the result fits in |bits|, the |top| and |bottom| bit constraints hold,
+ * the destination's high limbs are zeroed, and range results satisfy
+ * 0 <= r < range.  The byte-to-limb shaping is exercised through
+ * non-limb-multiple bit counts and wider-than-needed destinations.
+ */
+struct rand_bits_case_st {
+    int bits;
+    int top;
+    int bottom;
+};
+
+static const struct rand_bits_case_st rand_bits_cases[] = {
+    /* bit counts that are not limb multiples, to stress the top-byte mask */
+    { 1, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { 1, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ANY },
+    { 7, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { 7, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ODD },
+    { 7, OSSL_FN_RAND_TOP_TWO, OSSL_FN_RAND_BOTTOM_ODD },
+    { OSSL_FN_BITS - 1, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { OSSL_FN_BITS - 1, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ODD },
+    { OSSL_FN_BITS, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { OSSL_FN_BITS, OSSL_FN_RAND_TOP_TWO, OSSL_FN_RAND_BOTTOM_ODD },
+    { OSSL_FN_BITS + 1, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { OSSL_FN_BITS + 1, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ANY },
+    { 3 * OSSL_FN_BITS, OSSL_FN_RAND_TOP_TWO, OSSL_FN_RAND_BOTTOM_ODD },
+};
+
+static int test_rand_bits(int i)
+{
+    int ret = 0, bits = rand_bits_cases[i].bits;
+    int top = rand_bits_cases[i].top;
+    int bottom = rand_bits_cases[i].bottom;
+    /* Destination sized with one extra limb to check zero-padding above bits. */
+    size_t limbs_needed = (bits + OSSL_FN_BITS - 1) / OSSL_FN_BITS;
+    size_t dst_limbs = limbs_needed + 1;
+    OSSL_FN *r = NULL;
+    const OSSL_FN_ULONG *words = NULL;
+    size_t dsize, j;
+
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(dst_limbs))
+        || !TEST_true(pollute(r, 0, dst_limbs))
+        /* Use the private pool; the public one is exercised by test_rand below. */
+        || !TEST_true(OSSL_FN_priv_rand(r, bits, top, bottom, 0, NULL)))
+        goto err;
+
+    /* The result must fit in |bits| bits. */
+    if (!TEST_size_t_le(OSSL_FN_num_bits(r), (size_t)bits))
+        goto err;
+
+    /* top constraint: the requested high bit(s) must be set. */
+    if (top == OSSL_FN_RAND_TOP_ONE
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1))
+        goto err;
+    if (top == OSSL_FN_RAND_TOP_TWO) {
+        if (!TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1)
+            || !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 2), 1))
+            goto err;
+    }
+
+    /* bottom constraint: the low bit must be set when ODD is requested. */
+    if (bottom == OSSL_FN_RAND_BOTTOM_ODD
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, 0), 1))
+        goto err;
+
+    /*
+     * Limbs above those needed for |bits| must be zeroed.  bytes =
+     * (bits+7)/8, so limbs covering the bytes are (bytes + BYTES - 1) / BYTES;
+     * anything above that is padding.
+     */
+    words = ossl_fn_get_words(r);
+    dsize = ossl_fn_get_dsize(r);
+    for (j = limbs_needed; j < dsize; j++)
+        if (!TEST_size_t_eq(words[j], 0))
+            goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* The public-pool variant (OSSL_FN_rand) must satisfy the same contract. */
+static int test_rand(int i)
+{
+    int ret = 0, bits = rand_bits_cases[i].bits;
+    int top = rand_bits_cases[i].top;
+    int bottom = rand_bits_cases[i].bottom;
+    size_t limbs_needed = (bits + OSSL_FN_BITS - 1) / OSSL_FN_BITS;
+    OSSL_FN *r = NULL;
+
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(limbs_needed))
+        || !TEST_true(pollute(r, 0, limbs_needed))
+        || !TEST_true(OSSL_FN_rand(r, bits, top, bottom, 0, NULL)))
+        goto err;
+    if (!TEST_size_t_le(OSSL_FN_num_bits(r), (size_t)bits))
+        goto err;
+    if (top == OSSL_FN_RAND_TOP_ONE
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1))
+        goto err;
+    if (top == OSSL_FN_RAND_TOP_TWO
+        && (!TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1)
+            || !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 2), 1)))
+        goto err;
+    if (bottom == OSSL_FN_RAND_BOTTOM_ODD
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, 0), 1))
+        goto err;
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* A destination too small for |bits| is an error, not an expansion. */
+static int test_rand_result_too_small(void)
+{
+    int ret = 0;
+    OSSL_FN *r = NULL;
+
+    /* bits needs 2 limbs on every platform; one-limb destination is too small. */
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(1))
+        || !TEST_true(pollute(r, 0, 1))
+        || !TEST_false(OSSL_FN_priv_rand(r, 2 * OSSL_FN_BITS,
+            OSSL_FN_RAND_TOP_ANY,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_RESULT_ARG_TOO_SMALL))
+        goto err;
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* bits == 0 with top/bottom set, or bits == 1 with top > 0, are BITS_TOO_SMALL errors. */
+static int test_rand_bits_too_small(void)
+{
+    int ret = 0;
+    OSSL_FN *r = NULL;
+
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(2)))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(OSSL_FN_priv_rand(r, 0, OSSL_FN_RAND_TOP_ONE,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_BITS_TOO_SMALL))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(OSSL_FN_priv_rand(r, 1, OSSL_FN_RAND_TOP_TWO,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_BITS_TOO_SMALL))
+        goto err;
+
+    /* bits == 0 with ANY/ANY is the one legal zero-bit case: result is zero. */
+    if (!TEST_true(OSSL_FN_priv_rand(r, 0, OSSL_FN_RAND_TOP_ANY,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_true(OSSL_FN_is_zero(r)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/*
+ * Range variants: 0 <= r < range must hold.  Covers both range shapes
+ * (range = 100..._2 and range = 11..._2 / 101..._2) and the n == 1 case.
+ */
+static const OSSL_FN_ULONG range_words[][4] = {
+    { OSSL_FN_ULONG_C(1) }, /* range == 1 */
+    { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(1) }, /* 2^BITS: 100..._2 */
+    { OSSL_FN_ULONG_C(3) }, /* 11_2 */
+    { OSSL_FN_ULONG_C(5) }, /* 101_2 */
+    { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(3) }, /* 3 * 2^BITS: 11..._2 */
+    { OSSL_FN_ULONG_C(2), OSSL_FN_ULONG_C(1) }, /* 2^BITS + 2: 101..._2 */
+};
+
+static int test_rand_range(int i)
+{
+    int ret = 0;
+    const OSSL_FN_ULONG *rw = range_words[i];
+    size_t range_limbs = OSSL_NELEM(range_words[i]);
+    OSSL_FN *range = NULL, *r = NULL;
+
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(range_limbs))
+        || !TEST_true(ossl_fn_set_words(range, rw, range_limbs))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(range_limbs + 1))
+        || !TEST_true(pollute(r, 0, range_limbs + 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_priv_rand_range(r, range, 0, NULL)))
+        goto err;
+
+    /* 0 <= r < range (OSSL_FN is unsigned, so the lower bound is implicit). */
+    if (!TEST_int_lt(OSSL_FN_cmp(r, range), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* A zero range is rejected as INVALID_RANGE. */
+static int test_rand_range_zero(void)
+{
+    int ret = 0;
+    OSSL_FN *range = NULL, *r = NULL;
+
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(2))
+        || !TEST_true(OSSL_FN_zero(range))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(2))
+        || !TEST_true(pollute(r, 0, 2))
+        || !TEST_false(OSSL_FN_rand_range(r, range, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_INVALID_RANGE))
+        goto err;
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/*
+ * Regression test for an exactly-sized destination with a sparse range
+ * (range = 100..._2): the optimized path draws n + 1 bits and needs room for
+ * them, so an |r| sized to hold exactly num_bits(range) bits must fall back to
+ * standard n-bit rejection sampling rather than fail with
+ * OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ */
+static int test_rand_range_exactly_sized(void)
+{
+    int ret = 0;
+    OSSL_FN_ULONG rw[1] = { OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1) };
+    OSSL_FN *range = NULL, *r = NULL;
+
+    /* range = 2^(BITS-1) = 100..._2, so num_bits(range) == BITS (1 limb). */
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(1))
+        || !TEST_true(ossl_fn_set_words(range, rw, 1))
+        /* r sized to hold exactly BITS bits: one limb, no slack for n + 1. */
+        || !TEST_ptr(r = OSSL_FN_new_limbs(1))
+        || !TEST_true(pollute(r, 0, 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_priv_rand_range(r, range, 0, NULL)))
+        goto err;
+
+    /* 0 <= r < range. */
+    if (!TEST_int_lt(OSSL_FN_cmp(r, range), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -2501,6 +2770,13 @@ int setup_tests(void)
         OSSL_NELEM(test_div_cases));
     ADD_ALL_TESTS(test_div_quotient_only_truncated,
         OSSL_NELEM(test_div_truncate_cases));
+    ADD_ALL_TESTS(test_rand_bits, OSSL_NELEM(rand_bits_cases));
+    ADD_ALL_TESTS(test_rand, OSSL_NELEM(rand_bits_cases));
+    ADD_TEST(test_rand_result_too_small);
+    ADD_TEST(test_rand_bits_too_small);
+    ADD_ALL_TESTS(test_rand_range, OSSL_NELEM(range_words));
+    ADD_TEST(test_rand_range_zero);
+    ADD_TEST(test_rand_range_exactly_sized);
 
     return 1;
 }
