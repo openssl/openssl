@@ -256,7 +256,7 @@ OpenSSL Releases
    *Dimitri John Ledkov*
 
  * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
-   (or other architectures with 128 bit vector registers).
+   (with potential reuse for other architectures with 128 bit vector registers).
 
    *Timo Keller*
 
