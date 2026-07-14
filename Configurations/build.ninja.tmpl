@@ -249,7 +249,7 @@
          FIPSMODULE => $fipsmodule,
          INCLUDEDIR => "include",
          INSTALLTOP => $prefix,
-         LDLIBS => $lib_ex_libs,
+         LDLIBS => join(' ', @{$config{LDLIBS}}),
          LIBDIR => $libdir,
          LIB_EX_LIBS => $lib_ex_libs,
          LIB_CFLAGS => $lib_cflags,
@@ -286,6 +286,7 @@
      $bin_cxxflags = expand_makevars($bin_cxxflags);
      $bin_lflags = expand_makevars($bin_lflags);
      $bin_ex_libs = expand_makevars($bin_ex_libs);
+     $makevars{LIB_EX_LIBS} = $lib_ex_libs;
 
      sub command_args {
          return join('', map { ' '.expand_makevars($_) } @_);
@@ -376,7 +377,7 @@ rule cc_nodep
 rule ar
   command = $perl "$srcdir/util/ninja-ar.pl" --ar "$ar" --arflags "$arflags" --ranlib "$ranlib" --out "$out" --rsp "$out.rsp"
   rspfile = $out.rsp
-  rspfile_content = $in
+  rspfile_content = $objs
   description = AR $out
 
 rule link
@@ -585,6 +586,90 @@ build reconfigure reconf: run_console
                                  'uninstall_html_docs' ],
                                [], [], 'UNINSTALL DOCS');
 
+     # Developer targets (Unix only)
+     $out .= run_console_build('generate_apps',
+                               $action->('generate_apps'),
+                               [], [], [], 'GENERATE apps');
+     $out .= run_console_build('generate_crypto_bn',
+                               $action->('generate_crypto_bn'),
+                               [], [], [], 'GENERATE crypto/bn');
+     $out .= run_console_build('generate_crypto_objects',
+                               $action->('generate_crypto_objects'),
+                               [], [], [], 'GENERATE crypto/objects');
+     $out .= run_console_build('generate_crypto_conf',
+                               $action->('generate_crypto_conf'),
+                               [], [], [], 'GENERATE crypto/conf');
+     $out .= run_console_build('generate_crypto_asn1',
+                               $action->('generate_crypto_asn1'),
+                               [], [], [], 'GENERATE crypto/asn1');
+     $out .= run_console_build('generate_fuzz_oids',
+                               $action->('generate_fuzz_oids'),
+                               [ 'generate_crypto_objects' ], [], [],
+                               'GENERATE fuzz/oids.txt');
+     $out .= $target->('generate', 'generate_apps', 'generate_crypto_bn',
+                       'generate_crypto_objects', 'generate_crypto_conf',
+                       'generate_crypto_asn1', 'generate_fuzz_oids');
+     $out .= run_console_build('generate_doc_buildinfo',
+                               $action->('generate_doc_buildinfo'),
+                               [], [], [], 'GENERATE doc/build.info');
+     $out .= $target->('generate_buildinfo', 'generate_doc_buildinfo');
+     $out .= run_console_build('errors', $action->('errors'),
+                               [], [], [], 'UPDATE errors');
+     $out .= run_console_build('ordinals', $action->('ordinals'),
+                               [ 'build_generated' ], [], [],
+                               'UPDATE ordinals');
+     $out .= run_console_build('renumber', $action->('renumber'),
+                               [ 'build_generated' ], [], [],
+                               'RENUMBER ordinals');
+     # The update action preserves the serial order used by the Make target.
+     $out .= run_console_build('update', $action->('update'),
+                               [ 'build_generated' ], [], [],
+                               'UPDATE generated sources');
+     $out .= run_console_build('doc-nits', $action->('doc_nits'),
+                               [ 'build_generated_pods' ], [], [],
+                               'CHECK documentation');
+     $out .= run_console_build('md-nits', $action->('md_nits'),
+                               [], [], [], 'CHECK markdown');
+     $out .= run_console_build('lint', $action->('lint'),
+                               [], [], [], 'LINT command');
+     $out .= run_console_build('check-clang-format-diff-cmd',
+                               $action->('check_format_cmd'),
+                               [], [], [], 'CHECK clang-format-diff');
+     $out .= run_console_build('check-format', $action->('check_format'),
+                               [ 'check-clang-format-diff-cmd' ], [], [],
+                               'CHECK format');
+     $out .= run_console_build('test_ordinals',
+                               $action->('test_ordinals'),
+                               [ 'build_generated',
+                                 'build_programs_nodep',
+                                 'build_modules_nodep', 'link-utils' ],
+                               [], [], 'TEST ordinals');
+     $out .= $target->('FORCE');
+     $out .= run_console_build([ 'tags', 'TAGS' ], $action->('tags'),
+                               [ 'FORCE', 'build_generated' ], [], [], 'TAGS');
+     $out .= run_console_build('providers/fips.module.sources.new',
+                               $action->('generate_fips_sources'),
+                               [ 'configdata.pm' ], [], [],
+                               'GENERATE FIPS sources');
+     $out .= $target->('generate_fips_sources',
+                       'providers/fips.module.sources.new');
+     $out .= run_console_build('providers/fips.checksum.new',
+                               $action->('fips_checksums'),
+                               [ 'providers/fips.module.sources.new' ],
+                               [], [], 'GENERATE FIPS checksums');
+     $out .= $target->('fips-checksums',
+                       'providers/fips.checksum.new');
+     $out .= run_console_build('update-fips-checksums',
+                               $action->('update_fips_checksums'),
+                               [ 'providers/fips.checksum.new' ], [], [],
+                               'UPDATE FIPS checksums');
+     $out .= run_console_build('diff-fips-checksums',
+                               $action->('diff_fips_checksums'),
+                               [ 'fips-checksums' ], [], [],
+                               'DIFF FIPS checksums');
+     $out .= run_console_build('tar', $action->('tar'),
+                               [], [], [], 'TAR');
+
      if (@utils) {
          foreach my $pair ([ catfile("util", "opensslwrap.sh"),
                              catfile($config{sourcedir}, "util", "opensslwrap.sh"),
@@ -597,7 +682,7 @@ build reconfigure reconf: run_console
                                'mkdir -p '.cmd_quote($dir)
                                .' && ln -sf '.cmd_quote("../$src")
                                .' '.cmd_quote($dst),
-                               [ 'build.ninja' ], [ $src ], [], "LN $dst");
+                               [], [ $src ], [ 'build.ninja' ], "LN $dst");
          }
      }
 
@@ -832,7 +917,7 @@ build reconfigure reconf: run_console
                              in => \@deps,
                              order => \@order,
                              vars => { srcs => $srcs,
-                                       cmd => $rc,
+                                       cmd => cmd_quote($rc),
                                        cmdflags => join(' ', @{$config{RCFLAGS}},
                                                         $target{shared_rcflag}),
                                        cmdcompile => '',
@@ -898,7 +983,8 @@ build reconfigure reconf: run_console
       return ninja_build(out => $lib, rule => 'ar', in => \@objs,
                          vars => { ar => $ar,
                                    arflags => join(' ', @{$config{ARFLAGS}}),
-                                   ranlib => $ranlib });
+                                   ranlib => $ranlib,
+                                   objs => join(' ', map { cmd_quote($_) } @objs) });
   }
 
   sub obj2shlib {

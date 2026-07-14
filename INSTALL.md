@@ -1750,8 +1750,12 @@ described here.  Examine the Makefiles themselves for the full list.
 Running Selected Tests
 ----------------------
 
-You can specify a set of tests to be performed
-using the `make` variable `TESTS`.
+You can specify a set of tests to be performed using the `make` variable
+`TESTS`.  With Ninja, set `TESTS` in the environment instead.  For example:
+
+    $ TESTS=test_cmp_http ninja test                 # Unix
+    $ set TESTS=test_cmp_http                        # Windows
+    $ ninja test                                     # Windows
 
 See the section [Running Selected Tests of
 test/README.md](test/README.md#running-selected-tests).

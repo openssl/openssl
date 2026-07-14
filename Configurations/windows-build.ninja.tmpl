@@ -815,7 +815,7 @@ build reconfigure reconf: run_console
           return ninja_build(out => $res, rule => 'rc', in => \@deps,
                              order => \@order,
                              vars => { srcs => $srcs,
-                                       cmd => $rc,
+                                       cmd => wq($rc),
                                        cmdflags => join(' ', @{$config{RCFLAGS}}),
                                        rcoutflag => $rcoutflag });
       }
@@ -825,13 +825,13 @@ build reconfigure reconf: run_console
           return ninja_build(out => $obj, rule => 'asm', in => \@deps,
                              order => \@order,
                              vars => { srcs => $srcs,
-                                       cmd => $as,
+                                       cmd => wq($as),
                                        cmdflags => $asflags,
                                        asoutflag => $asoutflag });
       } elsif ($srcs[0] =~ /\.S$/) {
-          my $cmd = cmd_c($cc.' /EP -D__ASSEMBLER__ '.$cflags.$defs.' '
+          my $cmd = cmd_c(wq($cc).' /EP -D__ASSEMBLER__ '.$cflags.$defs.' '
                           .$srcs.' > '.wq("$obj.asm")
-                          .' && '.$as.' '.$asflags.' '.$asoutflag.wq($obj)
+                          .' && '.wq($as).' '.$asflags.' '.$asoutflag.wq($obj)
                           .' '.wq("$obj.asm"));
           return run_build($obj, $cmd, \@deps, [], \@order, "ASM $obj");
       }
@@ -843,7 +843,7 @@ build reconfigure reconf: run_console
                          in => \@deps,
                          order => \@order,
                          vars => { srcs => $srcs,
-                                   cmd => $cc,
+                                   cmd => wq($cc),
                                    cmdflags => $cflags,
                                    coutflag => $coutflag,
                                    defs => $defs });
