@@ -1053,6 +1053,37 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
 
 /**
+ * Compute the Kronecker symbol (a/b).
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 if a is a quadratic residue mod b, -1 if not, 0 if
+ *                      not coprime.
+ * @retval              -2      on error (-1, 0, and 1 are all valid results).
+ *
+ * Uses Cohen's algorithm 1.4.10 (Jacobi/Kronecker symbol).  OSSL_FN is
+ * unsigned, so sign stays at the BIGNUM boundary.  Not constant-time:
+ * branches on values throughout, as needed by mod-sqrt's non-residue search.
+ */
+int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_kronecker() needs.
+ *
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by
+ * OSSL_FN_kronecker().  Two temporaries of max(a, b) limbs are needed,
+ * plus the nested OSSL_FN_mod() call in the loop body.
+ */
+size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
