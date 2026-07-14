@@ -15,6 +15,7 @@
 #include "internal/deprecated.h"
 
 #include <openssl/evp.h>
+#include <openssl/proverr.h>
 #include <internal/endian.h>
 #include <prov/implementations.h>
 #include "cipher_aes_gcm_siv.h"
@@ -151,8 +152,6 @@ static int aes_gcm_siv_encrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     DECLARE_IS_ENDIAN;
 
     ctx->generated_tag = 0;
-    if (!ctx->speed && ctx->used_enc)
-        return 0;
     /* need to check the size of the input! */
     if (len64 > ((int64_t)1 << 36))
         return 0;
@@ -212,8 +211,6 @@ static int aes_gcm_siv_decrypt(PROV_AES_GCM_SIV_CTX *ctx, const unsigned char *i
     DECLARE_IS_ENDIAN;
 
     ctx->generated_tag = 0;
-    if (!ctx->speed && ctx->used_dec)
-        return 0;
     /* need to check the size of the input! */
     if (len64 > ((int64_t)1 << 36))
         return 0;
@@ -284,6 +281,18 @@ static int aes_gcm_siv_cipher(void *vctx, unsigned char *out,
     /* EncryptFinal or DecryptFinal */
     if (in == NULL)
         return aes_gcm_siv_finish(ctx);
+
+    /*
+     * SIV derives the CTR IV from the tag, which depends on the whole plaintext,
+     * so the payload cannot be streamed.
+     * Payload must arrive in a single update, after which the tag is fixed.
+     * Any later AAD or payload update is therefore out of order and errors out.
+     * The speed benchmark test is exempt.
+     */
+    if (!ctx->speed && (ctx->used_enc || ctx->used_dec)) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+        return 0;
+    }
 
     /* Deal with associated data */
     if (out == NULL)
