@@ -888,49 +888,6 @@ static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalia
 }
 
 /*
- * scalar_mult_vec128: pointwise multiplication of two NTT-domain scalars.
- *
- * Computes out = lhs (*) rhs coefficient-wise in the NTT domain.  Each pair of
- * coefficients (lhs[2i], lhs[2i+1]) and (rhs[2i], rhs[2i+1]) is multiplied in
- * GF(q)[X]/(X^2 - modRoot[i]), where modRoot[i] = 17^{2*bitrev7(i)+1} mod q.
- * The implementation uses twisted Karatsuba (multiply_Fq2_montgomery_unreduced) followed by
- * demontgomerize_vec128 on each output pair.
- *
- * Pre:  Every coefficient of lhs and rhs is in [0, q)  (standard NTT-domain form).
- *       out must not alias lhs or rhs.
- * Post: Every coefficient of out is in [0, q) and satisfies:
- *       out[2i]   ≡ lhs[2i]*rhs[2i] + lhs[2i+1]*rhs[2i+1]*modRoot[i]  (mod q)
- *       out[2i+1] ≡ lhs[2i]*rhs[2i+1] + lhs[2i+1]*rhs[2i]             (mod q)
- *       for each i in [0, 128).
- */
-static void scalar_mult_vec128(scalar *out, const scalar *lhs, const scalar *rhs)
-{
-    vec_int16_t *curr = (vec_int16_t *)out->c, *end = curr + VECTOR_DEGREE;
-    const vec_int16_noalias_t *lhs_coeffs = (vec_int16_noalias_t *)lhs->c;
-    const vec_int16_noalias_t *rhs_coeffs = (vec_int16_noalias_t *)rhs->c;
-    const vec_int16_t *roots_vec_ptr = kModRoots_montgomery_vec;
-    const vec_int16_t *roots_twisted_vec_ptr = kModRoots_twisted_vec;
-
-    do {
-        vec_int16_t roots = *roots_vec_ptr++;
-        vec_int16_t roots_twisted = *roots_twisted_vec_ptr++;
-        vec_int16_noalias_t result_even, result_odd;
-
-        multiply_Fq2_montgomery_unreduced(lhs_coeffs, rhs_coeffs, roots, roots_twisted,
-            &result_even, &result_odd);
-        lhs_coeffs += 2;
-        rhs_coeffs += 2;
-
-        result_even = demontgomerize_vec128(result_even);
-        result_odd = demontgomerize_vec128(result_odd);
-
-        curr[0] = vec_perm(result_even, result_odd, perm_interleave_low);
-        curr[1] = vec_perm(result_even, result_odd, perm_interleave_high);
-        curr += 2;
-    } while (curr < end);
-}
-
-/*
  * scalar_mult_add_vec128: pointwise multiply-accumulate of two NTT-domain
  * scalars.
  *
@@ -1061,33 +1018,6 @@ static ossl_inline void scalar_mult_add_montgomery_vec128(scalar *out,
 
         curr += 2;
     } while (curr < end);
-}
-
-/*
- * inner_product_vec128: vectorized inner product of two NTT-domain scalar
- * vectors.
- *
- * Computes out = sum_{j=0}^{rank-1} lhs[j] (*) rhs[j] by accumulating raw
- * Montgomery products via scalar_mult_montgomery_vec128 /
- * scalar_mult_add_montgomery_vec128, then demontgomerizing once at the end.
- *
- * Pre:  rank >= 1.
- *       Every coefficient of lhs[j] and rhs[j] is in [0, q) for all j < rank.
- *       rank <= 4 so that the intermediate accumulation satisfies
- *       |partial_sum[i]| <= rank * 3*C = 4 * 3 * 1834 = 22008 < 2^15 (no overflow),
- *       where C = 1834 is the tight MontMulRaw bound.
- *       out must not alias any element of lhs[] or rhs[].
- * Post: Every coefficient of out is in [0, q) and equals
- *       sum_j (lhs[j] (*) rhs[j])[i] mod q.
- */
-static void inner_product_vec128(scalar *out, const scalar *lhs, const scalar *rhs,
-    int rank)
-{
-    scalar_mult_montgomery_vec128(out, lhs, rhs);
-    while (--rank > 0)
-        scalar_mult_add_montgomery_vec128(out, ++lhs, ++rhs);
-    /* do the lazy reduction */
-    demontgomerize_scalar_vec128(out);
 }
 
 /*
