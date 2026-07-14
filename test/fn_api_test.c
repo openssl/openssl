@@ -4477,6 +4477,289 @@ err:
     return ret;
 }
 
+/*-
+ * Focused tests for OSSL_FN_kronecker(), the Kronecker/Jacobi symbol.
+ *
+ * Two test strategies:
+ *   1. test_kronecker: a table of hand-verified (a, b, expected) triples
+ *      for small inputs, covering edge cases (B==0, both even, even B, the
+ *      tab[] lookup for (a, 2)).
+ *   2. test_kronecker_legendre: the Euler criterion cross-check — for odd
+ *      prime p, kronecker(a, p) == legendre(a, p) == a^((p-1)/2) mod p,
+ *      mapped to {-1, 0, 1}.  OSSL_FN_mod_exp() is the independent oracle.
+ */
+struct kronecker_case_st {
+    OSSL_FN_ULONG a;
+    OSSL_FN_ULONG b;
+    int expected;
+};
+
+static const struct kronecker_case_st kronecker_cases[] = {
+    { 0, 0, 0 }, /* B==0, A!=1 → 0 */
+    { 1, 0, 1 }, /* B==0, A==1 → 1 */
+    { 0, 1, 1 }, /* A==0, B==1 → 1 */
+    { 2, 2, 0 }, /* both even → 0 */
+    { 1, 2, 1 }, /* tab[1&7] = 1 */
+    { 3, 2, -1 }, /* tab[3&7] = -1 */
+    { 5, 2, -1 }, /* tab[5&7] = -1 */
+    { 7, 2, 1 }, /* tab[7&7] = 1 */
+    { 2, 3, -1 }, /* 2 is non-residue mod 3 */
+    { 1, 3, 1 },
+    { 4, 3, 1 }, /* 4 ≡ 1 mod 3 */
+    { 2, 5, -1 }, /* 2 is non-residue mod 5 */
+    { 4, 5, 1 }, /* 4 = 2^2 */
+    { 3, 5, -1 },
+    { 2, 7, 1 }, /* 2 is residue mod 7 */
+    { 3, 7, -1 },
+    { 1, 7, 1 },
+    { 3, 4, 1 }, /* odd a, B = 2^2 → (a/2)^2 = 1 */
+};
+
+static int test_kronecker(int i)
+{
+    int ret = 0;
+    OSSL_FN *fa = NULL, *fb = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN_ULONG aw = kronecker_cases[i].a;
+    OSSL_FN_ULONG bw = kronecker_cases[i].b;
+    int expected = kronecker_cases[i].expected;
+    size_t L = 1; /* all table entries are single-limb */
+
+    if (!TEST_ptr(fa = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(fb = OSSL_FN_new_limbs(L))
+        || !TEST_true(OSSL_FN_set_word(fa, aw))
+        || !TEST_true(OSSL_FN_set_word(fb, bw)))
+        goto err;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_kronecker_ctx_size(fa, fb))))
+        goto err;
+
+    if (!TEST_int_eq(OSSL_FN_kronecker(fa, fb, ctx), expected))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fb);
+    OSSL_FN_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Euler criterion cross-check: for odd prime p,
+ *   kronecker(a, p) == a^((p-1)/2) mod p  (mapped to {-1, 0, 1}).
+ * OSSL_FN_mod_exp() is the independent oracle.  Tested with a range of
+ * a values for each prime, including a == 0, a == 1, and a >= p.
+ */
+static const OSSL_FN_ULONG legendre_primes[] = {
+    3, 5, 7, 11, 13, 17, 19, 23
+};
+
+/* p + 1, for an a > p case (a is reduced mod p on both sides). */
+static const OSSL_FN_ULONG kron_a_p_plus_1[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+    OSSL_FN_ULONG64_C(0xfffffffe, 0x00000000),
+};
+/* 3 * 2^130: the trailing-zero scan must cross a limb boundary. */
+static const OSSL_FN_ULONG kron_a_3_shl_130[] = {
+    OSSL_FN_ULONG_C(0),
+    OSSL_FN_ULONG_C(0),
+    OSSL_FN_ULONG_C(0),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG_C(0),
+#endif
+    OSSL_FN_ULONG_C(0xc),
+};
+
+static int test_kronecker_legendre(int i)
+{
+    int ret = 0;
+    OSSL_FN_ULONG p = legendre_primes[i];
+    OSSL_FN *fa = NULL, *fp = NULL, *exp = NULL, *r = NULL, *p_minus_1 = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN_ULONG a;
+    size_t L = 1;
+
+    if (!TEST_ptr(fa = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(fp = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(exp = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(p_minus_1 = OSSL_FN_new_limbs(L))
+        || !TEST_true(OSSL_FN_set_word(fp, p)))
+        goto err;
+
+    /* exp = (p - 1) / 2 ;  p_minus_1 = p - 1 */
+    if (!TEST_true(OSSL_FN_set_word(exp, p))
+        || !TEST_true(OSSL_FN_sub_word(exp, 1))
+        || !TEST_true(OSSL_FN_rshift(exp, exp, 1))
+        || !TEST_true(OSSL_FN_set_word(p_minus_1, p))
+        || !TEST_true(OSSL_FN_sub_word(p_minus_1, 1)))
+        goto err;
+
+    /*
+     * ctx must hold both kronecker's and mod_exp's scratch needs.
+     * Size for the larger of the two (mod_exp typically needs more).
+     * OSSL_FN_mod_exp_ctx_size() is value-dependent on |a| (a reduction
+     * frame is budgeted when a >= m), so fa is pre-set to p; the loop
+     * below never uses a larger value than p + 1, which sizes the same.
+     *
+     * TODO(FIXNUM): the value dependence shouldn't be necessary; a
+     * reduction should generally always be budgeted.  Reconsider if the
+     * mont functions are ever made value-agnostic.
+     */
+    if (!TEST_true(OSSL_FN_set_word(fa, p)))
+        goto err;
+    size_t ksz = OSSL_FN_kronecker_ctx_size(fa, fp);
+    size_t esz = OSSL_FN_mod_exp_ctx_size(r, fa, exp, fp);
+    size_t sz = ksz > esz ? ksz : esz;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
+        goto err;
+
+    for (a = 0; a <= p + 1; a++) {
+        int kr, legendre;
+
+        if (!TEST_true(OSSL_FN_set_word(fa, a)))
+            goto err;
+
+        kr = OSSL_FN_kronecker(fa, fp, ctx);
+        if (!TEST_int_ge(kr, -1))
+            goto err;
+
+        /* legendre = a^((p-1)/2) mod p, mapped to {-1, 0, 1} */
+        if (!TEST_true(OSSL_FN_mod_exp(r, fa, exp, fp, ctx)))
+            goto err;
+
+        if (OSSL_FN_is_zero(r)) {
+            legendre = 0;
+        } else if (OSSL_FN_is_one(r)) {
+            legendre = 1;
+        } else if (OSSL_FN_cmp(r, p_minus_1) == 0) {
+            legendre = -1;
+        } else {
+            TEST_info("a=%lu, p=%lu: unexpected mod_exp result",
+                (unsigned long)a, (unsigned long)p);
+            goto err;
+        }
+
+        if (!TEST_int_eq(kr, legendre)) {
+            TEST_info("kronecker(%lu, %lu) = %d, legendre = %d",
+                (unsigned long)a, (unsigned long)p, kr, legendre);
+            goto err;
+        }
+    }
+
+    ret = 1;
+err:
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(exp);
+    OSSL_FN_free(r);
+    OSSL_FN_free(p_minus_1);
+    OSSL_FN_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * Multi-limb Euler criterion cross-check, against the 128-bit secp128r1
+ * prime.  The single-limb kronecker tests never exercise the loop's real
+ * multi-limb OSSL_FN_mod() division; these cases do, along with the A/B
+ * swap across iterations and ctx sizing with mismatched widths.  The a
+ * values include small words, wide constants, a == p (legendre 0), a > p,
+ * a value wider than p, and 3 * 2^130 so the trailing-zero scan crosses a
+ * limb boundary.
+ */
+static const struct {
+    const OSSL_FN_ULONG *a;
+    size_t a_size;
+} kronecker_wide_cases[] = {
+    { exp_a2, LIMBSOF(exp_a2) },
+    { num2, LIMBSOF(num2) },
+    { num5, LIMBSOF(num5) },
+    { num8, LIMBSOF(num8) },
+    { mod_secp128r1_x2, LIMBSOF(mod_secp128r1_x2) },
+    { mod_secp128r1_p, LIMBSOF(mod_secp128r1_p) }, /* a == p */
+    { kron_a_p_plus_1, LIMBSOF(kron_a_p_plus_1) }, /* a > p */
+    { exp_p256, LIMBSOF(exp_p256) }, /* wider than p */
+    { kron_a_3_shl_130, LIMBSOF(kron_a_3_shl_130) },
+};
+
+static int test_kronecker_legendre_wide(int i)
+{
+    int ret = 0;
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t a_size = kronecker_wide_cases[i].a_size;
+    size_t L = a_size > m_size ? a_size : m_size;
+    OSSL_FN *fa = NULL, *fp = NULL, *exp = NULL, *r = NULL, *p_minus_1 = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t ksz, esz, sz;
+    int kr, legendre;
+
+    if (!TEST_ptr(fa = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(fp = OSSL_FN_new_limbs(m_size))
+        || !TEST_ptr(exp = OSSL_FN_new_limbs(m_size))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(m_size))
+        || !TEST_ptr(p_minus_1 = OSSL_FN_new_limbs(m_size))
+        || !TEST_true(ossl_fn_set_words(fp, mod_secp128r1_p, m_size))
+        || !TEST_true(ossl_fn_set_words(fa, kronecker_wide_cases[i].a, a_size)))
+        goto err;
+
+    /* exp = (p - 1) / 2 ;  p_minus_1 = p - 1 */
+    if (!TEST_true(ossl_fn_set_words(exp, mod_secp128r1_p, m_size))
+        || !TEST_true(OSSL_FN_sub_word(exp, 1))
+        || !TEST_true(OSSL_FN_rshift(exp, exp, 1))
+        || !TEST_true(ossl_fn_set_words(p_minus_1, mod_secp128r1_p, m_size))
+        || !TEST_true(OSSL_FN_sub_word(p_minus_1, 1)))
+        goto err;
+
+    /*
+     * ctx must hold both kronecker's and mod_exp's scratch needs.
+     * Size for the larger of the two (mod_exp typically needs more).
+     */
+    ksz = OSSL_FN_kronecker_ctx_size(fa, fp);
+    esz = OSSL_FN_mod_exp_ctx_size(r, fa, exp, fp);
+    sz = ksz > esz ? ksz : esz;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
+        goto err;
+
+    kr = OSSL_FN_kronecker(fa, fp, ctx);
+    if (!TEST_int_ge(kr, -1))
+        goto err;
+
+    /* legendre = a^((p-1)/2) mod p, mapped to {-1, 0, 1} */
+    if (!TEST_true(OSSL_FN_mod_exp(r, fa, exp, fp, ctx)))
+        goto err;
+
+    if (OSSL_FN_is_zero(r)) {
+        legendre = 0;
+    } else if (OSSL_FN_is_one(r)) {
+        legendre = 1;
+    } else if (OSSL_FN_cmp(r, p_minus_1) == 0) {
+        legendre = -1;
+    } else {
+        TEST_info("case %d: unexpected mod_exp result", i);
+        goto err;
+    }
+
+    if (!TEST_int_eq(kr, legendre)) {
+        TEST_info("case %d: kronecker = %d, legendre = %d", i, kr, legendre);
+        goto err;
+    }
+
+    ret = 1;
+err:
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(exp);
+    OSSL_FN_free(r);
+    OSSL_FN_free(p_minus_1);
+    OSSL_FN_CTX_free(ctx);
+    return ret;
+}
+
+/*-
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -4542,6 +4825,9 @@ int setup_tests(void)
     ADD_TEST(test_mod_exp_mont_in_mont);
     ADD_TEST(test_mod_exp_mont_in_mont_mismatch);
     ADD_TEST(test_mod_exp_mont_ctx_size);
+    ADD_ALL_TESTS(test_kronecker, OSSL_NELEM(kronecker_cases));
+    ADD_ALL_TESTS(test_kronecker_legendre, OSSL_NELEM(legendre_primes));
+    ADD_ALL_TESTS(test_kronecker_legendre_wide, OSSL_NELEM(kronecker_wide_cases));
 
     return 1;
 }
