@@ -444,17 +444,13 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 void scalar_ntt_vec128(scalar *s);
 void scalar_inverse_ntt_vec128(scalar *s);
 void scalar_inverse_ntt_demontgomerize_vec128(scalar *s);
-void scalar_mult_vec128(scalar *out, const scalar *lhs, const scalar *rhs);
 void scalar_mult_add_vec128(scalar *out, const scalar *lhs, const scalar *rhs);
-void inner_product_vec128(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 void inner_product_montgomery_vec128(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 void matrix_mult_intt_vec128(scalar *out, const scalar *m, const scalar *a, int rank);
 #endif
 
 /* Function pointer types for scalar multiplication dispatch */
-typedef void (*ml_kem_scalar_mult_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
 typedef void (*ml_kem_scalar_mult_add_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
-typedef void (*ml_kem_inner_product_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 typedef void (*ml_kem_inner_product_montgomery_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 typedef void (*ml_kem_matrix_mult_intt_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
 
