@@ -6144,7 +6144,6 @@ static int test_evp_aead_late_aad(int idx)
         || info->mode == EVP_CIPH_GCM_MODE /* rejects, raises 102 PROV_R_CIPHER_OPERATION_FAILED */
         || info->mode == EVP_CIPH_CCM_MODE /* fails at first AAD */
         || info->mode == EVP_CIPH_OCB_MODE /* accepts late AAD */
-        || info->mode == EVP_CIPH_GCM_SIV_MODE /* accepts late AAD */
         /* skip TLS stitched MTE cipher */
         || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
         /* skip TLS stitched MTE cipher */
