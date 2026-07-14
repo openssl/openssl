@@ -955,11 +955,11 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
     condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
 
-    t = (a->top ^ b->top) & condition;
+    t = (a->top ^ b->top) & value_barrier_bn(condition);
     a->top ^= t;
     b->top ^= t;
 
-    t = (a->neg ^ b->neg) & condition;
+    t = (a->neg ^ b->neg) & value_barrier_bn(condition);
     a->neg ^= t;
     b->neg ^= t;
 
@@ -987,13 +987,13 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
 #define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
 
-    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition;
+    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & value_barrier_bn(condition);
     a->flags ^= t;
     b->flags ^= t;
 
     /* conditionally swap the data */
     for (i = 0; i < nwords; i++) {
-        t = (a->d[i] ^ b->d[i]) & condition;
+        t = (a->d[i] ^ b->d[i]) & value_barrier_bn(condition);
         a->d[i] ^= t;
         b->d[i] ^= t;
     }
