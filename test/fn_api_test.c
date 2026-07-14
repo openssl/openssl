@@ -4327,6 +4327,139 @@ err:
 }
 
 /*-
+ * Focused smoke test for OSSL_FN_mod_sqrt().  For each small prime p (chosen
+ * to exercise all three e paths: e==1 when p==3 mod 4, e==2 when p==5 mod 8,
+ * e>2 otherwise), and each a in [0, p), compute sqrt(a) and verify:
+ *   - if a is a quadratic residue (kronecker(a,p)==1, or a==0), then
+ *     ret^2 == a mod p;
+ *   - if a is a non-residue (kronecker(a,p)==-1), then OSSL_FN_mod_sqrt
+ *     returns 0 with OSSL_FN_R_NOT_A_SQUARE.
+ * OSSL_FN_kronecker() predicts residue/non-residue; OSSL_FN_mod_sqr() is the
+ * independent verifier.
+ */
+static const OSSL_FN_ULONG mod_sqrt_primes[] = {
+    3, /* e==1: p == 3 mod 4 */
+    5, /* e==2: p == 5 mod 8 */
+    7, /* e>2 */
+    11, /* e==1: 11 mod 4 == 3 */
+    13, /* e==2: 13 mod 8 == 5 */
+    17, /* e>2 */
+    23, /* e==1 */
+    41, /* e>2: 41-1=40=2^3*5 */
+};
+
+static int test_mod_sqrt(int i)
+{
+    int ret = 0;
+    OSSL_FN_ULONG p = mod_sqrt_primes[i];
+    OSSL_FN *fa = NULL, *fp = NULL, *r = NULL, *r2 = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN_ULONG a;
+    size_t L = 1;
+
+    if (!TEST_ptr(fa = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(fp = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(L))
+        || !TEST_ptr(r2 = OSSL_FN_new_limbs(L))
+        || !TEST_true(OSSL_FN_set_word(fp, p)))
+        goto err;
+
+    {
+        size_t sz = OSSL_FN_mod_sqrt_ctx_size(r, fa, fp);
+
+        if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
+            goto err;
+    }
+
+    for (a = 0; a < p; a++) {
+        int kr, sqrt_ok;
+
+        if (!TEST_true(OSSL_FN_set_word(fa, a)))
+            goto err;
+
+        kr = OSSL_FN_kronecker(fa, fp, ctx);
+        if (!TEST_int_ge(kr, -1))
+            goto err;
+
+        ERR_clear_error();
+        sqrt_ok = OSSL_FN_mod_sqrt(r, fa, fp, ctx);
+
+        if (a == 0) {
+            /* a==0 -> ret==0 */
+            if (!TEST_true(sqrt_ok) || !TEST_true(OSSL_FN_is_zero(r)))
+                goto err;
+        } else if (kr == 1) {
+            /* residue: must succeed and ret^2 == a mod p */
+            if (!TEST_true(sqrt_ok))
+                goto err;
+            if (!TEST_true(OSSL_FN_mod_sqr(r2, r, fp, ctx)))
+                goto err;
+            if (!TEST_int_eq(OSSL_FN_cmp(r2, fa), 0))
+                goto err;
+        } else {
+            /* non-residue: must fail with NOT_A_SQUARE */
+            if (!TEST_false(sqrt_ok))
+                goto err;
+            if (!TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+                    OSSL_FN_R_NOT_A_SQUARE))
+                goto err;
+        }
+    }
+
+    ret = 1;
+err:
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(r);
+    OSSL_FN_free(r2);
+    OSSL_FN_CTX_free(ctx);
+    return ret;
+}
+
+static const OSSL_FN_ULONG mod_sqrt_wide_prime[] = {
+    OSSL_FN_ULONG_C(13),
+#if OSSL_FN_BYTES == 4
+    OSSL_FN_ULONG_C(0),
+#endif
+    OSSL_FN_ULONG_C(1),
+};
+
+static int test_mod_sqrt_result_truncation(void)
+{
+    int ret = 0;
+    OSSL_FN *fa = NULL, *fp = NULL, *r = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t p_limbs = OSSL_NELEM(mod_sqrt_wide_prime);
+    size_t r_limbs = 1;
+    size_t sz;
+
+    if (!TEST_ptr(fa = OSSL_FN_new_limbs(p_limbs))
+        || !TEST_ptr(fp = OSSL_FN_new_limbs(p_limbs))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(r_limbs))
+        || !TEST_true(OSSL_FN_set_word(fa, 4))
+        || !TEST_true(ossl_fn_set_words(fp, mod_sqrt_wide_prime, p_limbs)))
+        goto err;
+
+    sz = OSSL_FN_mod_sqrt_ctx_size(r, fa, fp);
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, sz)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_sqrt(r, fa, fp, ctx)))
+        goto err;
+
+    /* sqrt(4) is either 2 or p - 2; truncated to one limb, p - 2 is 11. */
+    if (!TEST_true(OSSL_FN_is_word(r, 2) || OSSL_FN_is_word(r, 11)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(r);
+    OSSL_FN_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -4387,6 +4520,8 @@ int setup_tests(void)
     ADD_TEST(test_mod_exp_mont_ctx_size);
     ADD_ALL_TESTS(test_kronecker, OSSL_NELEM(kronecker_cases));
     ADD_ALL_TESTS(test_kronecker_legendre, OSSL_NELEM(legendre_primes));
+    ADD_ALL_TESTS(test_mod_sqrt, OSSL_NELEM(mod_sqrt_primes));
+    ADD_TEST(test_mod_sqrt_result_truncation);
 
     return 1;
 }

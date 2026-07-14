@@ -893,6 +893,8 @@ OSSL_FN_R_DIV_BY_ZERO:101:div by zero
 OSSL_FN_R_INPUT_NOT_REDUCED:103:input not reduced
 OSSL_FN_R_INVALID_RANGE:106:invalid range
 OSSL_FN_R_INVALID_SHIFT:102:invalid shift
+OSSL_FN_R_NOT_A_SQUARE:108:not a square
+OSSL_FN_R_P_IS_NOT_PRIME:109:p is not prime
 OSSL_FN_R_RESULT_ARG_TOO_SMALL:100:result arg too small
 OSSL_FN_R_TOO_MANY_ITERATIONS:107:too many iterations
 OSSL_STORE_R_AMBIGUOUS_CONTENT_TYPE:107:ambiguous content type

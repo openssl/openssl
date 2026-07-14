@@ -1084,6 +1084,45 @@ int OSSL_FN_kronecker(const OSSL_FN *a, const OSSL_FN *b, OSSL_FN_CTX *ctx);
 size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Compute a square root of @p a modulo @p p.
+ *
+ * @param[out]          ret     The OSSL_FN for the result (caller-sized,
+ *                              non-NULL).
+ * @param[in]           a       The operand.
+ * @param[in]           p       The prime modulus.
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error.
+ *
+ * Computes @p ret such that ret^2 == a (mod p) using the Tonelli/Shanks
+ * algorithm.  @p p must be prime, otherwise an error or an incorrect result
+ * is returned.  OSSL_FN is unsigned, so @p p is |p| and @p a is reduced by
+ * OSSL_FN_mod(); sign stays at the BIGNUM boundary.  Not constant-time:
+ * branches on values throughout, including mod-sqrt's non-residue search.
+ *
+ * @note OSSL_FN requires a non-NULL writable @p ret.  The computed root is
+ *       truncated or zero-padded into the caller-sized destination.
+ */
+int OSSL_FN_mod_sqrt(OSSL_FN *ret, const OSSL_FN *a, const OSSL_FN *p,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_sqrt() needs.
+ *
+ * @param[in]           ret     The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           p       The prime modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_sqrt().
+ * Seven temporaries of p->dsize limbs are needed, plus the nested calls
+ * (mod_exp, mod_sqr, mod_mul, mod_lshift1, mod, kronecker).
+ */
+size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
+    const OSSL_FN *p);
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
