@@ -845,6 +845,104 @@ err:
     return st;
 }
 
+static int file_modsqrt(STANZA *s)
+{
+    BIGNUM *a = NULL, *p = NULL, *mod_sqrt = NULL, *ret = NULL, *ret2 = NULL;
+    OSSL_FN *af = NULL, *pf = NULL, *rf = NULL, *r2f = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    BN_CTX *bnctx = NULL;
+    int r_acq = 0, r2_acq = 0;
+    int nlimbs = 0;
+    int st = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(p = getBN(s, "P"))
+        || !TEST_ptr(mod_sqrt = getBN(s, "ModSqrt"))
+        || !TEST_ptr(ret = BN_new())
+        || !TEST_ptr(ret2 = BN_new())
+        || !TEST_ptr(bnctx = BN_CTX_new()))
+        goto err;
+
+    /*
+     * BN_mod_sqrt() reduces a into [0, p) up front via BN_nnmod(); OSSL_FN is
+     * unsigned, so that reduction belongs here at the BIGNUM boundary rather
+     * than inside OSSL_FN_mod_sqrt() (which only sees the magnitude).  Passing
+     * the raw magnitude for a negative a would feed sqrt() the wrong residue
+     * (e.g. a = -5, p = 7 reduces to 2, not 5).
+     */
+    if (!TEST_true(BN_nnmod(a, a, p, bnctx)))
+        goto err;
+
+    nlimbs = limbs(p);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(pf = bn_get_ossl_fn(p))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_ptr(r2f = bn_acquire_ossl_fn(ret2, nlimbs)))
+        goto err;
+    r2_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_sqrt_ctx_size(rf, af, pf))))
+        goto err;
+
+    /*
+     * A negative ModSqrt value marks a negative testcase (mirroring bntest's
+     * file_modsqrt, which keys on BN_is_negative(mod_sqrt)): the input is not
+     * a square mod p (or p is not prime), and OSSL_FN_mod_sqrt() must fail.
+     * OSSL_FN is unsigned and the operands are taken as magnitudes; the
+     * negative marker only selects the failure expectation, it carries no
+     * sign into the computation.
+     */
+    if (BN_is_negative(mod_sqrt)) {
+        if (!TEST_false(OSSL_FN_mod_sqrt(rf, af, pf, ctx)))
+            goto err;
+
+        st = 1;
+        goto err;
+    }
+
+    if (!TEST_true(OSSL_FN_mod_sqrt(rf, af, pf, ctx)))
+        goto err;
+
+    /* The other root is p - ret; both are valid answers. */
+    if (!TEST_true(OSSL_FN_sub(r2f, pf, rf)))
+        goto err;
+
+    bn_release(ret, nlimbs);
+    r_acq = 0;
+    BN_set_negative(ret, 0);
+    bn_release(ret2, nlimbs);
+    r2_acq = 0;
+    BN_set_negative(ret2, 0);
+
+    /*
+     * Accept either root, as in bntest.  Use BN_cmp() for the first check so
+     * a mismatch on the wrong root does not emit a spurious equalBN diagnostic.
+     */
+    if (BN_cmp(ret2, mod_sqrt) != 0
+        && !equalBN("sqrt(A) (mod P)", mod_sqrt, ret))
+        goto err;
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    if (r2_acq)
+        bn_release(ret2, nlimbs);
+    OSSL_FN_CTX_free(ctx);
+    BN_CTX_free(bnctx);
+    BN_free(a);
+    BN_free(p);
+    BN_free(mod_sqrt);
+    BN_free(ret);
+    BN_free(ret2);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
@@ -857,7 +955,7 @@ static FILETEST filetests[] = {
     { "ModSqr", file_modsqr, 0 },
     { "ModExp", file_modexp, 0 },
     { "Exp", NULL, 0 },
-    { "ModSqrt", NULL, 0 },
+    { "ModSqrt", file_modsqrt, 0 },
     { "GCD", NULL, 0 },
 };
 
