@@ -2083,6 +2083,117 @@ static int test_tls13_external_psk_no_master_key(void)
     return test;
 }
 
+/*
+ * A server psk_find_session callback whose result is chosen by badsess_kind,
+ * to exercise the server-side vetting in tls_parse_ctos_psk():
+ *   0: a TLS 1.3 session with no ciphersuite -- its NULL cipher must not be
+ *      dereferenced (rejected by the guard);
+ *   1: a valid TLS 1.3 cipher but a foreign (TLS 1.2) protocol version --
+ *      rejected downstream by ssl_get_prev_session(), not by the guard;
+ *   2: a well-formed TLS 1.3 session -- the positive control, which resumes;
+ *   3: a TLS 1.2 ciphersuite (matching SHA-256 digest) tagged with a TLS 1.3
+ *      version -- slips past the version and digest checks, so only the guard's
+ *      min_tls test rejects it.
+ * Every kind but the control (2) must be ignored, falling back to a full
+ * (certificate) handshake rather than crashing or resuming.
+ */
+static int badsess_kind = 0;
+
+static int badsess_psk_find_cb(SSL *ssl, const unsigned char *id, size_t idlen,
+    SSL_SESSION **sess)
+{
+    static const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
+    SSL_SESSION *ns;
+
+    if (idlen != sizeof(ext_psk_id) || memcmp(id, ext_psk_id, idlen) != 0) {
+        *sess = NULL;
+        return 1;
+    }
+    if ((ns = SSL_SESSION_new()) == NULL
+        || !SSL_SESSION_set1_master_key(ns, ext_psk_key, sizeof(ext_psk_key))) {
+        SSL_SESSION_free(ns);
+        return 0;
+    }
+    if (badsess_kind == 0) {
+        /* TLS 1.3 version but no ciphersuite. */
+        if (!SSL_SESSION_set_protocol_version(ns, TLS1_3_VERSION)) {
+            SSL_SESSION_free(ns);
+            return 0;
+        }
+    } else if (badsess_kind == 3) {
+        /*
+         * A TLS 1.2 ciphersuite whose handshake digest (SHA-256) matches the
+         * negotiated TLS 1.3 one, paired with a TLS 1.3 version. This slips
+         * past ssl_get_prev_session()'s version check and the digest-compat
+         * check, and its binder even matches -- so only the min_tls guard
+         * distinguishes it. It must be rejected.
+         */
+        static const unsigned char tls12_aes128gcmsha256_id[] = { 0x00, 0x9c };
+        const SSL_CIPHER *c12 = SSL_CIPHER_find(ssl, tls12_aes128gcmsha256_id);
+
+        if (c12 == NULL
+            || !SSL_SESSION_set_cipher(ns, c12)
+            || !SSL_SESSION_set_protocol_version(ns, TLS1_3_VERSION)) {
+            SSL_SESSION_free(ns);
+            return 0;
+        }
+    } else {
+        /*
+         * A valid TLS 1.3 cipher, paired with either a foreign (TLS 1.2)
+         * protocol version (kind 1, must be rejected) or the correct one
+         * (kind 2, the positive control that must resume).
+         */
+        const SSL_CIPHER *cipher = SSL_CIPHER_find(ssl, tls13_aes128gcmsha256_id);
+        int version = badsess_kind == 1 ? TLS1_2_VERSION : TLS1_3_VERSION;
+
+        if (cipher == NULL
+            || !SSL_SESSION_set_cipher(ns, cipher)
+            || !SSL_SESSION_set_protocol_version(ns, version)) {
+            SSL_SESSION_free(ns);
+            return 0;
+        }
+    }
+    *sess = ns;
+    return 1;
+}
+
+/*
+ * The client offers a well-formed external PSK; the server's find_session
+ * callback resolves it to a malformed session (see badsess_psk_find_cb). The
+ * server must reject the PSK and complete a full handshake (not resume, not
+ * crash).
+ */
+static int test_tls13_psk_bad_server_session(int idx)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel conn = { .c.ssl = NULL, .s.ssl = NULL };
+    int test;
+
+    badsess_kind = idx;
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(),
+               TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+               &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(SSL_CTX_set_ciphersuites(s, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(SSL_CTX_set_ciphersuites(c, "TLS_AES_128_GCM_SHA256"))
+        && TEST_true(tls_channel_init(c, s, &conn))
+        && TEST_true((SSL_set_psk_use_session_callback(conn.c.ssl,
+                          ext_psk_use_cb),
+            1))
+        && TEST_true((SSL_set_psk_find_session_callback(conn.s.ssl,
+                          badsess_psk_find_cb),
+            1))
+        && TEST_true(create_ssl_connection(conn.s.ssl, conn.c.ssl,
+            SSL_ERROR_NONE))
+        /* Only the well-formed control (idx 2) resumes; the rest fall back. */
+        && TEST_int_eq(SSL_session_reused(conn.c.ssl), idx == 2);
+
+    tls_channel_fini(&conn);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -2118,6 +2229,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_cipher_retire_full_handshake);
     ADD_TEST(test_tls13_external_psk_digest_not_offered);
     ADD_TEST(test_tls13_external_psk_no_master_key);
+    ADD_ALL_TESTS(test_tls13_psk_bad_server_session, 4);
 
     return 1;
 }
