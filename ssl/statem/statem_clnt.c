@@ -1697,6 +1697,17 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
     }
     s->s3.tmp.new_cipher = c;
 
+#ifndef OPENSSL_NO_CRAU
+    {
+        uint16_t cipher_id = c->id & 0xffff;
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+            OSSL_PARAM_END
+        };
+        OSSL_CRAU_data(sctx->libctx, params);
+    }
+#endif
+
     return 1;
 }
 
