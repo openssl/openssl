@@ -56,7 +56,7 @@ my ($no_des, $no_dh, $no_dsa, $no_ec, $no_ec2m, $no_rc2, $no_zlib)
 
 $no_rc2 = 1 if disabled("legacy");
 
-plan tests => 40;
+plan tests => 41;
 
 ok(run(test(["pkcs7_test"])), "test pkcs7");
 
@@ -1067,6 +1067,29 @@ subtest "CMS decrypt authEnvelopedData with authenticated attributes\n" => sub {
        "reject authEnvelopedData with tampered authAttrs");
     ok(!-s "bad_authattrs.txt",
        "tampered authEnvelopedData leaks no plaintext to -out");
+};
+
+subtest "CMS parse authenticatedData authAttrs and unauthAttrs\n" => sub {
+    plan tests => 3;
+
+    # BouncyCastle authenticatedData (HMAC-SHA256, KEK) carrying both an
+    # authenticated and an unauthenticated attribute. Per RFC 5652 these are
+    # SET OF Attribute, so with the CMS_AuthenticatedData template fixed to use
+    # X509_ATTRIBUTE they are rendered as attributes (object:/set:) rather than
+    # as an X509_ALGOR (algorithm:/parameter:) they were misparsed into before.
+    my $exit = 0;
+    my $dump = join "\n",
+               run(app(["openssl", "cms", @defaultprov, "-cmsout", "-noout",
+                        "-print", "-inform", "PEM",
+                        "-in", catfile($datadir, "authenticated_attrs.pem")]),
+                   capture => 1,
+                   statusvar => $exit);
+
+    is($exit, 0, "parse authenticatedData with attributes");
+    ok($dump =~ /authAttrs:.*?object:.*?1\.3\.6\.1\.4\.1\.5949\.99\.1.*?UTF8STRING:auth-attr-value/s,
+       "authAttrs parsed as SET OF Attribute");
+    ok($dump =~ /unauthAttrs:.*?object:.*?1\.3\.6\.1\.4\.1\.5949\.99\.2.*?UTF8STRING:unauth-attr-value/s,
+       "unauthAttrs parsed as SET OF Attribute");
 };
 
 subtest "CAdES <=> CAdES consistency tests\n" => sub {
