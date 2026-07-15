@@ -121,6 +121,7 @@
    fun:malloc
    ...
    fun:OSSL_provider_init
+   fun:provider_init
    fun:provider_activate
    ...
 }
