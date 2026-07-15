@@ -11,11 +11,14 @@
 #include "internal/cryptlib.h"
 #include <openssl/evp.h>
 #include <openssl/objects.h>
+#include <openssl/rsa.h>
 #include "crypto/evp.h"
 #include "internal/provider.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
 #include "internal/common.h"
+#include "internal/sizes.h"
 #include "evp_local.h"
+#include <openssl/crau.h>
 
 /*
  * If we get the "NULL" md then the name comes back as "UNDEF". We want to use
@@ -399,6 +402,77 @@ int EVP_DigestVerifyUpdate(EVP_MD_CTX *ctx, const void *data, size_t dsize)
     return ret;
 }
 
+#ifndef OPENSSL_NO_CRAU
+static void populate_crau_params(EVP_MD_CTX *ctx,
+    OSSL_PARAM params[],
+    size_t params_sz)
+{
+    EVP_PKEY_CTX *pctx = ctx->pctx;
+    const char *pname = EVP_PKEY_get0_type_name(pctx->pkey);
+    const char *mname = EVP_MD_CTX_get0_name(ctx);
+    int bits = EVP_PKEY_get_bits(pctx->pkey);
+    size_t n = 0;
+
+    OSSL_PARAM base_params[] = {
+        OSSL_PARAM_utf8_string("pk::algorithm", (char *)pname, 0),
+        OSSL_PARAM_utf8_string("pk::hash", (char *)mname, 0),
+        OSSL_PARAM_int("pk::bits", &bits)
+    };
+
+    if (!ossl_assert(params_sz >= OSSL_NELEM(base_params)))
+        return;
+    memcpy(params, base_params, sizeof(OSSL_PARAM) * OSSL_NELEM(base_params));
+    params_sz -= OSSL_NELEM(base_params);
+    n += OSSL_NELEM(base_params);
+
+    if (EVP_PKEY_CTX_is_a(pctx, "EC")) {
+        char gname[OSSL_MAX_NAME_SIZE];
+        size_t gname_len;
+
+        if (!ossl_assert(params_sz >= 1))
+            return;
+
+        if (EVP_PKEY_get_group_name(pctx->pkey, gname, sizeof(gname), &gname_len))
+            params[n] = OSSL_PARAM_construct_utf8_string("pk::group", gname, gname_len);
+        params_sz--;
+        n++;
+    }
+
+    if (EVP_PKEY_CTX_is_a(pctx, "RSA")
+        || EVP_PKEY_CTX_is_a(pctx, "RSA-PSS")) {
+        int pad_mode;
+        const char *rsa_padding = NULL;
+
+        if (!ossl_assert(params_sz >= 1))
+            return;
+
+        if (EVP_PKEY_CTX_get_rsa_padding(pctx, &pad_mode) > 0) {
+            switch (pad_mode) {
+            case RSA_PKCS1_PADDING:
+                rsa_padding = "pkcs1-v1_5";
+                break;
+            case RSA_PKCS1_PSS_PADDING:
+                rsa_padding = "pss";
+                break;
+            default:
+                break;
+            }
+        }
+
+        if (rsa_padding != NULL)
+            params[n] = OSSL_PARAM_construct_utf8_string("pk::rsa_padding", (char *)rsa_padding, 0);
+
+        params_sz--;
+        n++;
+    }
+
+    if (!ossl_assert(params_sz >= 1))
+        return;
+
+    params[n] = OSSL_PARAM_construct_end();
+}
+#endif
+
 int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
     size_t *siglen)
 {
@@ -435,6 +509,14 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
             pctx = dctx;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    if (sigret != NULL) {
+        OSSL_PARAM params[15]; /* CRAU_MAX_DATA_ELEMS - 1 + OSSL_PARAM_END */
+        populate_crau_params(ctx, params, OSSL_NELEM(params));
+        OSSL_CRAU_enter(pctx->libctx, "pk::sign", params);
+    }
+#endif
+
     ERR_set_mark();
     r = signature->digest_sign_final(pctx->op.sig.algctx, sigret, siglen,
         sigret == NULL ? 0 : *siglen);
@@ -442,6 +524,12 @@ int EVP_DigestSignFinal(EVP_MD_CTX *ctx, unsigned char *sigret,
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s digest_sign_final:%s", signature->type_name, desc);
     ERR_clear_last_mark();
+
+#ifndef OPENSSL_NO_CRAU
+    if (sigret != NULL)
+        OSSL_CRAU_leave(pctx->libctx);
+#endif
+
     if (dctx == NULL && sigret != NULL)
         ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
     else
@@ -527,12 +615,23 @@ int EVP_DigestVerifyFinal(EVP_MD_CTX *ctx, const unsigned char *sig,
             pctx = dctx;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    OSSL_PARAM params[15]; /* CRAU_MAX_DATA_ELEMS - 1 + OSSL_PARAM_END */
+    populate_crau_params(ctx, params, OSSL_NELEM(params));
+    OSSL_CRAU_enter(pctx->libctx, "pk::verify", params);
+#endif
+
     ERR_set_mark();
     r = signature->digest_verify_final(pctx->op.sig.algctx, sig, siglen);
     if (!r && ERR_count_to_mark() == 0)
         ERR_raise_data(ERR_LIB_EVP, EVP_R_PROVIDER_SIGNATURE_FAILURE,
             "%s digest_verify_final:%s", signature->type_name, desc);
     ERR_clear_last_mark();
+
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(pctx->libctx);
+#endif
+
     if (dctx == NULL)
         ctx->flags |= EVP_MD_CTX_FLAG_FINALISED;
     else
