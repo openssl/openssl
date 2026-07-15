@@ -25,11 +25,11 @@
 #include "internal/provider.h"
 #include "internal/common.h"
 
-/* clang-format off */
-#ifndef OPENSSL_DEFAULT_SEED_SRC
-#define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
+#ifdef OPENSSL_DEFAULT_SEED_SRC
+#define OPENSSL_SEED_SRC_NAME OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC)
+#else
+#define OPENSSL_SEED_SRC_NAME "SEED-SRC"
 #endif
-/* clang-format on */
 
 typedef struct rand_global_st {
     /*
@@ -545,7 +545,7 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         name = dgbl->seed_name;
     } else {
         fallback = 1;
-        name = OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC);
+        name = OPENSSL_SEED_SRC_NAME;
     }
 #else /* !OPENSSL_NO_FIPS_JITTER */
     name = "JITTER";
