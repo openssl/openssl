@@ -607,11 +607,17 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
 {
     EVP_PKEY *params = NULL;
     OSSL_DECODER_CTX *dctx = NULL;
-    BIO *file_bio = BIO_new_file(uri, "r+");
+    BIO *file_bio = BIO_new_file(uri, "rb");
+    OSSL_LIB_CTX *libctx = app_get0_libctx();
+    const char *propq = app_get0_propq();
 
     if (desc == NULL)
         desc = "key parameters";
-    if (file_bio == NULL) {
+    /*
+     * Use the store lookup path for anything that is not DER/ASN1 format
+     * Or if we are unable to opens the uri as a file.
+     */
+    if (format != FORMAT_ASN1 || file_bio == NULL) {
         (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc,
             suppress_decode_errors,
             NULL, NULL, &params, NULL, NULL, NULL, NULL, NULL);
@@ -626,9 +632,16 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
     } else {
         dctx = OSSL_DECODER_CTX_new_for_pkey(&params, NULL, NULL, keytype,
             OSSL_KEYMGMT_SELECT_ALL_PARAMETERS,
-            NULL, NULL);
-        if (dctx != NULL)
-            OSSL_DECODER_from_bio(dctx, file_bio);
+            libctx, propq);
+        if (dctx == NULL) {
+            ERR_print_errors(bio_err);
+            BIO_printf(bio_err, "Unable to allocate decoder context\n");
+        } else {
+            if (!OSSL_DECODER_from_bio(dctx, file_bio)) {
+                ERR_print_errors(bio_err);
+                BIO_printf(bio_err, "Unable to decode file %s\n", uri);
+            }
+        }
     }
 
     BIO_free(file_bio);
