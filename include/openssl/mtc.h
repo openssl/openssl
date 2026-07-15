@@ -66,6 +66,12 @@ int OSSL_MTC_CA_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
     uint64_t start, uint64_t end, const uint8_t *hash, size_t hash_len);
 
 /**
+ * @brief Set the highest serial number a trusted MTC CA will accept.
+ * @see OSSL_MTC_CA_set_max_serial(3)
+ */
+int OSSL_MTC_CA_set_max_serial(OSSL_MTC_CA *ca, uint64_t max_serial);
+
+/**
  * @brief Get a trusted MTC CA's identifier (a TrustAnchorID).
  * @see OSSL_MTC_CA_get0_id(3)
  */
