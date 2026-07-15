@@ -174,7 +174,7 @@ int BIO_vsnprintf(char *buf, size_t n, const char *format, va_list args)
 }
 
 /* Remove this once we can use vsnprintf like it's 1999 */
-static int vsnprintf_because_we_cant_let_go_of_msvc2013(char *buf, size_t n, const char *fmt, va_list args)
+static int vsnprintf_only_for_msvc2013(char *buf, size_t n, const char *fmt, va_list args)
 {
 #if defined(_MSC_VER) && _MSC_VER < 1900
     int count;
@@ -196,29 +196,33 @@ static int vsnprintf_because_we_cant_let_go_of_msvc2013(char *buf, size_t n, con
 #endif
 }
 
-int ossl_vasprintf_internal(char **str, const char *format, va_list args)
+static int ossl_vasprintf_internal(char **str, const char *format, va_list args)
 {
     char *candidate = NULL;
     size_t candidate_len = 64;
+    size_t tmp_len = 0;
+    char *tmp = NULL;
     int ret;
 
     if ((candidate = OPENSSL_malloc(candidate_len)) == NULL)
         goto err;
     va_list args_copy;
     va_copy(args_copy, args);
-    ret = vsnprintf_because_we_cant_let_go_of_msvc2013(candidate, candidate_len, format, args_copy);
+    ret = vsnprintf_only_for_msvc2013(candidate, candidate_len, format, args_copy);
     va_end(args_copy);
     if (ret < 0)
         goto err;
     if ((size_t)ret >= candidate_len) {
         /*  Too big to fit in allocation. */
-        char *tmp;
 
-        candidate_len = (size_t)ret + 1;
-        if ((tmp = OPENSSL_realloc(candidate, candidate_len)) == NULL)
+        tmp_len = (size_t)ret + 1;
+        if ((tmp = OPENSSL_malloc(tmp_len)) == NULL)
             goto err;
+        OPENSSL_clear_free(candidate, candidate_len);
         candidate = tmp;
-        ret = vsnprintf_because_we_cant_let_go_of_msvc2013(candidate, candidate_len, format, args);
+        candidate_len = tmp_len;
+        tmp = NULL;
+        ret = vsnprintf_only_for_msvc2013(candidate, candidate_len, format, args);
     }
     /* At this point this should not happen unless vsnprintf is insane. */
     if (ret < 0 || (size_t)ret >= candidate_len)
@@ -227,9 +231,9 @@ int ossl_vasprintf_internal(char **str, const char *format, va_list args)
     return ret;
 
 err:
-    OPENSSL_free(candidate);
+    OPENSSL_clear_free(candidate, candidate_len);
+    OPENSSL_clear_free(tmp, tmp_len);
     *str = NULL;
-    errno = ENOMEM;
     return -1;
 }
 
