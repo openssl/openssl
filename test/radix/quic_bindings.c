@@ -618,6 +618,9 @@ static int bindings_process_finish(int testresult_main)
     radix_thread_cleanup(); /* cleanup main thread */
     RADIX_PROCESS_cleanup(&radix_process);
 
+    if (!TEST_true(CRYPTO_THREAD_cleanup_local(&radix_thread)))
+        testresult = 0;
+
     if (testresult)
         BIO_printf(bio_err, "==> OK\n\n");
     else
