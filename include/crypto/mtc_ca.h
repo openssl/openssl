@@ -135,6 +135,7 @@ struct ossl_mtc_ca_st {
     size_t ca_id_len;
     EVP_MD *hash; /**< issuance-log hash (7.1) */
     uint64_t min_serial; /**< the CA's minimum allowed serial number (5.5) */
+    uint64_t max_serial; /**< highest accepted serial; implies revoked (max, 2^64) (7.5) */
     EVP_PKEY *cosigner_pkey; /**< CA cosigner public key (5.4) */
     CRYPTO_RWLOCK *lock; /**< guards concurrent access to the CA's mutable state */
     OSSL_MTC_COSIGNER *cosigners; /**< additional recognised cosigners (7.1) */
@@ -212,8 +213,9 @@ int ossl_mtc_ca_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start,
 /**
  * @brief Report whether a serial number is revoked for a CA (section 7.5).
  *
- * A serial is revoked if it is below the CA's min_serial (the implied
- * [0, min_serial) range) or falls in any added revoked range.
+ * A serial is revoked if it is below the CA's min_serial or above its
+ * max_serial (the implied [0, min_serial) and (max_serial, 2^64) ranges) or
+ * falls in any added revoked range.
  *
  * @param ca the CA
  * @param serial the serial number to test
@@ -221,6 +223,19 @@ int ossl_mtc_ca_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start,
  * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
  */
 int ossl_mtc_ca_serial_is_revoked(const OSSL_MTC_CA *ca, uint64_t serial);
+
+/**
+ * @brief Set the highest serial number a CA will accept (section 7.5).
+ *
+ * Implies the revoked range (max_serial, 2^64).  The default is 2^64-1, i.e. no
+ * upper revoked range.
+ *
+ * @param ca the CA
+ * @param max_serial the highest accepted serial number
+ * @returns 1 on success, 0 on error.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_set_max_serial(OSSL_MTC_CA *ca, uint64_t max_serial);
 
 /**
  * @brief Replace an issuance log's active landmark window from a published
