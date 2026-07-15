@@ -23,6 +23,7 @@
 #include <openssl/x509.h>
 #include <openssl/trace.h>
 #include <openssl/encoder.h>
+#include <openssl/crau.h>
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -354,6 +355,14 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    OSSL_PARAM cparams[] = {
+        OSSL_PARAM_DEFN("tls::signature_algorithm", OSSL_PARAM_UNSIGNED_INTEGER, (void *)&lu->sigalg, sizeof(lu->sigalg)),
+        OSSL_PARAM_END
+    };
+    OSSL_CRAU_enter(sctx->libctx, "tls::sign", cparams);
+#endif
+
     /*
      * To avoid problems with older RSA providers we must also pass the digest
      * name when passing any other parameters.
@@ -423,6 +432,9 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
 err:
     OPENSSL_free(sig);
     EVP_MD_CTX_free(mctx);
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(sctx->libctx);
+#endif
     return ret;
 }
 
@@ -525,6 +537,14 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
         md == NULL ? "n/a" : EVP_MD_get0_name(md));
 
+#ifndef OPENSSL_NO_CRAU
+    OSSL_PARAM cparams[] = {
+        OSSL_PARAM_DEFN("tls::signature_algorithm", OSSL_PARAM_UNSIGNED_INTEGER, (void *)&s->s3.tmp.peer_sigalg->sigalg, sizeof(s->s3.tmp.peer_sigalg->sigalg)),
+        OSSL_PARAM_END
+    };
+    OSSL_CRAU_enter(sctx->libctx, "tls::verify", cparams);
+#endif
+
     /*
      * To avoid problems with older RSA providers we must also pass the digest
      * name when passing any other parameters.
@@ -595,6 +615,9 @@ err:
     EVP_MD_CTX_free(mctx);
 #ifndef OPENSSL_NO_GOST
     OPENSSL_free(gost_data);
+#endif
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(sctx->libctx);
 #endif
     return ret;
 }
