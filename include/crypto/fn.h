@@ -1002,6 +1002,57 @@ size_t OSSL_FN_mod_exp_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m);
 
 /**
+ * Calculate  a^p mod m  with the Montgomery sliding-window algorithm.
+ * This is the Montgomery entry point that OSSL_FN_mod_exp() dispatches to for
+ * odd moduli; callers that perform many exponentiations against the same
+ * modulus may call it directly and pass a reused OSSL_FN_MONT_CTX to amortise
+ * the RR / n0 setup, mirroring BN_mod_exp_mont().
+ *
+ * @param[out]          r       The OSSL_FN for the result.  Destination width
+ *                              is the caller's choice: if smaller than the
+ *                              modulus, the result is truncated; if larger,
+ *                              zero-padded.  |r| must not alias |m|.
+ * @param[in]           a       The base.
+ * @param[in]           p       The exponent.
+ * @param[in]           m       The modulus.  Must be odd and non-zero.
+ * @param[in]           ctx     A context to get temporary OSSL_FN instances
+ *                              from, sized per OSSL_FN_mod_exp_ctx_size().
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to have this function build and free its own.
+ *                              When non-NULL it is borrowed (used as-is, never
+ *                              freed here) and its modulus must be |m|.
+ * @returns             1 on success, 0 on error.
+ *
+ * @note This path is not constant-time per se; do not use it for secret
+ *       exponents.  See the implementation in crypto/fn/fn_exp.c.
+ */
+int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
+    const OSSL_FN *m, OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *in_mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp_mont() needs.
+ *
+ * Sizes only the Montgomery sliding-window path; the arena also serves a
+ * call that passes NULL |in_mont| (the function builds and frees its own
+ * context then), since the operand modelling makes the two cases the same
+ * size.  Pass a non-NULL |in_mont| to keep the sizing signature parallel to
+ * OSSL_FN_mod_exp_mont().
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The base
+ * @param[in]           p       The exponent
+ * @param[in]           m       The modulus
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to model the function-owned context
+ *                              OSSL_FN_mod_exp_mont() builds when called
+ *                              with in_mont == NULL.
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result

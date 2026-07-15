@@ -4007,6 +4007,164 @@ err:
     return ret;
 }
 
+/*
+ * OSSL_FN_mod_exp_mont() with a caller-supplied, reused OSSL_FN_MONT_CTX:
+ * exercise the in_mont != NULL path (borrowed context, not freed here) across
+ * two exponentiations against the same modulus, and confirm the result
+ * matches the reference oracle.  Also verifies the NULL in_mont path produces
+ * the same value, so the two entry points agree.
+ */
+static int test_mod_exp_mont_in_mont(void)
+{
+    /* num5 ^ exp_p256 mod secp128r1 prime, window 5. */
+    size_t a_size = LIMBSOF(num5);
+    size_t p_size = LIMBSOF(exp_p256);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > m_size ? a_size : m_size;
+    OSSL_FN_CTX *ctx_fn = NULL, *ctx_ref = NULL;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN *fa = NULL, *fp = NULL, *fm = NULL, *r = NULL, *r_ref = NULL;
+    size_t size;
+    int ret = 0;
+
+    fa = OSSL_FN_new_limbs(L);
+    fp = OSSL_FN_new_limbs(p_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    r_ref = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fp) || !TEST_ptr(fm)
+        || !TEST_ptr(r) || !TEST_ptr(r_ref))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fp, exp_p256, p_size))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
+        goto err;
+
+    /* Build a reusable Montgomery context for this modulus. */
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm)))
+        goto err;
+
+    /* Size the arena for the mont path with the reused context.  The NULL
+     * in_mont case is the same size (see mod_exp_mont_nested()), so the NULL
+     * call below fits this arena too. */
+    size = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, mont);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
+        || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 16, 16 * m_size + 16)))
+        goto err;
+
+    /* First call with the borrowed context. */
+    if (!TEST_true(pollute(r, 0, m_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp_mont(r, fa, fp, fm, ctx_fn, mont)))
+        goto err;
+    if (!TEST_true(mod_exp_reference(r_ref, fa, fp, fm, ctx_ref)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    /*
+     * Second call reusing the same |mont| with a fresh arena frame: confirms
+     * the borrowed context is not freed by the first call and still works.
+     * Vary the exponent to force a different window walk.
+     */
+    if (!TEST_true(ossl_fn_set_words(fp, exp_p30, LIMBSOF(exp_p30))))
+        goto err;
+    /* exp_p30 (30 bits) is smaller than the modulus; resize is fine. */
+    if (!TEST_true(pollute(r, 0, m_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp_mont(r, fa, fp, fm, ctx_fn, mont)))
+        goto err;
+    if (!TEST_true(mod_exp_reference(r_ref, fa, fp, fm, ctx_ref)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    /* The NULL in_mont path must agree with the reused-context path. */
+    if (!TEST_true(ossl_fn_set_words(fp, exp_p256, p_size)))
+        goto err;
+    if (!TEST_true(pollute(r, 0, m_size)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp_mont(r, fa, fp, fm, ctx_fn, NULL)))
+        goto err;
+    if (!TEST_true(mod_exp_reference(r_ref, fa, fp, fm, ctx_ref)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_CTX_free(ctx_ref);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(r_ref);
+    return ret;
+}
+
+/*
+ * OSSL_FN_mod_exp_mont_ctx_size(): the mont-only size must be positive, must
+ * equal the dispatcher size or be smaller (dispatcher also budgets the
+ * simple-path loop mul), and must not depend on whether in_mont is NULL or a
+ * real reused context (the operand modelling makes them the same).
+ */
+static int test_mod_exp_mont_ctx_size(void)
+{
+    /* num5 ^ exp_p256 mod secp128r1 prime, window 5. */
+    size_t a_size = LIMBSOF(num5);
+    size_t p_size = LIMBSOF(exp_p256);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > m_size ? a_size : m_size;
+    OSSL_FN_MONT_CTX *mont = NULL;
+    OSSL_FN *fa = NULL, *fp = NULL, *fm = NULL, *r = NULL;
+    size_t sz_null, sz_mont, sz_disp;
+    int ret = 0;
+
+    fa = OSSL_FN_new_limbs(L);
+    fp = OSSL_FN_new_limbs(p_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fp) || !TEST_ptr(fm) || !TEST_ptr(r))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fp, exp_p256, p_size))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
+        goto err;
+
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_new(fm)))
+        goto err;
+
+    sz_null = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, NULL);
+    sz_mont = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, mont);
+    sz_disp = OSSL_FN_mod_exp_ctx_size(r, fa, fp, fm);
+    if (!TEST_size_t_ne(sz_null, 0)
+        || !TEST_size_t_ne(sz_mont, 0)
+        || !TEST_size_t_ne(sz_disp, 0))
+        goto err;
+    /* NULL and real in_mont produce the same arena size. */
+    if (!TEST_size_t_eq(sz_null, sz_mont))
+        goto err;
+    /* Mont-only is at most the dispatcher size (which also budgets the
+     * simple-path loop mul); it can be smaller. */
+    if (!TEST_size_t_ge(sz_disp, sz_mont))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_MONT_CTX_free(mont);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -4063,6 +4221,8 @@ int setup_tests(void)
     ADD_TEST(test_mod_exp_modulus_zero_exp_zero);
     ADD_ALL_TESTS(test_mod_exp_result_size, 2);
     ADD_TEST(test_mod_exp_ctx_size);
+    ADD_TEST(test_mod_exp_mont_in_mont);
+    ADD_TEST(test_mod_exp_mont_ctx_size);
 
     return 1;
 }
