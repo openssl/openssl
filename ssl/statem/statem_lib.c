@@ -324,6 +324,7 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
     const SIGALG_LOOKUP *lu = s->s3.tmp.sigalg;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     OSSL_PARAM params[3], *p = params;
+    CON_FUNC_RETURN ret = CON_FUNC_ERROR;
 
     if (lu == NULL || s->s3.tmp.cert == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -418,13 +419,11 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
-    OPENSSL_free(sig);
-    EVP_MD_CTX_free(mctx);
-    return CON_FUNC_SUCCESS;
+    ret = CON_FUNC_SUCCESS;
 err:
     OPENSSL_free(sig);
     EVP_MD_CTX_free(mctx);
-    return CON_FUNC_ERROR;
+    return ret;
 }
 
 MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
