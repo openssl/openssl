@@ -695,6 +695,7 @@ static const OSSL_DISPATCH ossl_testaes128_cbc_functions[] = {
 typedef struct {
     OSSL_LIB_CTX *libctx;
     EVP_CIPHER_CTX *sub_ctx;
+    int tls1_aad;
 } PROV_EVP_AES128_GCM_CTX;
 
 /**
@@ -838,10 +839,16 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
     size_t inl)
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
-    int ret, soutl;
-    uint8_t *inbuf;
+    int ret = 0, soutl = 0;
+    uint8_t *inbuf = NULL;
 
-    inbuf = OPENSSL_memdup(in, inl);
+    *outl = 0;
+
+    if (in != NULL && inl > 0) {
+        inbuf = OPENSSL_memdup(in, inl);
+        if (inbuf == NULL)
+            goto end;
+    }
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx))
         ret = EVP_EncryptUpdate(ctx->sub_ctx, (unsigned char *)out,
@@ -849,16 +856,31 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
     else
         ret = EVP_DecryptUpdate(ctx->sub_ctx, (unsigned char *)out,
             &soutl, in, (int)inl);
-    *outl = soutl;
 
     /*
      * Once the cipher is complete, throw it away and use the
      * plaintext as our output
      */
-    if (inbuf != NULL && out != NULL)
-        memcpy(out, inbuf, inl);
-    OPENSSL_free(inbuf);
+    if (ret > 0 && inbuf != NULL && out != NULL) {
+        if (ctx->tls1_aad && EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx)) {
+            if (inl < EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN) {
+                ret = 0;
+                goto end;
+            }
 
+            memcpy(out + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                inbuf + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                inl - EVP_GCM_TLS_EXPLICIT_IV_LEN - EVP_GCM_TLS_TAG_LEN);
+        } else {
+            memcpy(out, inbuf, inl);
+        }
+    }
+
+    *outl = soutl;
+
+end:
+    ctx->tls1_aad = 0;
+    OPENSSL_free(inbuf);
     return ret;
 }
 
@@ -955,8 +977,15 @@ static int ossl_test_aes128gcm_get_ctx_params(void *vprovctx, OSSL_PARAM params[
 static int ossl_test_aes128gcm_set_ctx_params(void *vprovctx, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
+    int tls1_aad;
+    int ret;
 
-    return EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
+    tls1_aad = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD) != NULL;
+    ret = EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
+    if (ret)
+        ctx->tls1_aad = tls1_aad;
+
+    return ret;
 }
 
 /**
