@@ -2031,6 +2031,17 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             goto err;
         }
         s->s3.tmp.new_cipher = cipher;
+
+#ifndef OPENSSL_NO_CRAU
+        {
+            uint16_t cipher_id = cipher->id & 0xffff;
+            OSSL_PARAM params[] = {
+                OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+                OSSL_PARAM_END
+            };
+            OSSL_CRAU_data(sctx->libctx, params);
+        }
+#endif
     }
 
     /* We need to do this before getting the session */
@@ -2543,6 +2554,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                     goto err;
                 }
                 s->s3.tmp.new_cipher = cipher;
+
+#ifndef OPENSSL_NO_CRAU
+                {
+                    uint16_t cipher_id = cipher->id & 0xffff;
+                    OSSL_PARAM params[] = {
+                        OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+                        OSSL_PARAM_END
+                    };
+                    OSSL_CRAU_data(SSL_CONNECTION_GET_CTX(s)->libctx, params);
+                }
+#endif
             }
             if (!s->hit) {
                 if (!tls_choose_sigalg(s, 1)) {
@@ -2562,6 +2584,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
         } else {
             /* Session-id reuse */
             s->s3.tmp.new_cipher = s->session->cipher;
+
+#ifndef OPENSSL_NO_CRAU
+            {
+                uint16_t cipher_id = s->s3.tmp.new_cipher->id & 0xffff;
+                OSSL_PARAM params[] = {
+                    OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+                    OSSL_PARAM_END
+                };
+                OSSL_CRAU_data(SSL_CONNECTION_GET_CTX(s)->libctx, params);
+            }
+#endif
         }
 
         /*
