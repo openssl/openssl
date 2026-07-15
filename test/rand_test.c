@@ -16,11 +16,11 @@
 #include "testutil.h"
 
 /* For builds where OPENSSL_DEFAULT_SEED_SRC is explicitly set. */
-/* clang-format off */
-#ifndef OPENSSL_DEFAULT_SEED_SRC
-#define OPENSSL_DEFAULT_SEED_SRC SEED-SRC
+#ifdef OPENSSL_DEFAULT_SEED_SRC
+#define OPENSSL_SEED_SRC_NAME OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC)
+#else
+#define OPENSSL_SEED_SRC_NAME "SEED-SRC"
 #endif
-/* clang-format on */
 
 static char *configfile;
 
@@ -322,7 +322,7 @@ static int test_rand_bytes_mfail(int idx)
 #if !defined(OPENSSL_NO_FIPS_JITTER)
     seed = EVP_RAND_fetch(ctx, "JITTER", NULL);
 #else
-    seed = EVP_RAND_fetch(ctx, OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC), NULL);
+    seed = EVP_RAND_fetch(ctx, OPENSSL_SEED_SRC_NAME, NULL);
 #endif
     ERR_pop_to_mark();
 
