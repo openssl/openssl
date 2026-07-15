@@ -228,6 +228,21 @@ static int test_ca_revoked_ranges(void)
         || !TEST_size_t_eq(ca->revoked_count, 2))
         goto err;
 
+    /*
+     * An upper bound: (max_serial, 2^64) is revoked by implication.  Index 200
+     * is accepted until max_serial is set to it; index 201 is then revoked.
+     */
+    if (!TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca, OSSL_MTC_serial(1, 200)),
+            0)
+        || !TEST_true(OSSL_MTC_CA_set_max_serial(ca, OSSL_MTC_serial(1, 200)))
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca,
+                            OSSL_MTC_serial(1, 200)),
+            0)
+        || !TEST_int_eq(ossl_mtc_ca_serial_is_revoked(ca,
+                            OSSL_MTC_serial(1, 201)),
+            1))
+        goto err;
+
     ret = 1;
 err:
     OSSL_MTC_CA_free(ca);

@@ -6,6 +6,7 @@ OSSL_MTC_CA_new,
 OSSL_MTC_CA_free,
 OSSL_MTC_CA_add1_cosigner,
 OSSL_MTC_CA_add_revoked_range,
+OSSL_MTC_CA_set_max_serial,
 OSSL_MTC_CA_get0_id,
 OSSL_MTC_serial
 - configure a trusted Merkle Tree Certificate CA
@@ -24,6 +25,7 @@ OSSL_MTC_serial
                                const char *sig_name, EVP_PKEY *pkey);
  int OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca,
                                    uint64_t start, uint64_t end);
+ int OSSL_MTC_CA_set_max_serial(OSSL_MTC_CA *ca, uint64_t max_serial);
 
  int OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca,
                          const uint8_t **out_id, size_t *out_id_len);
@@ -65,6 +67,10 @@ OSSL_MTC_CA_add_revoked_range() marks the half-open range of serial numbers
 [I<start>, I<end>) as revoked. The range must be nonempty. The range
 [0, I<min_serial>) established at construction need not be added.
 
+OSSL_MTC_CA_set_max_serial() sets I<max_serial>, the highest serial number the
+CA will accept; the range (I<max_serial>, 2^64) is revoked by implication. The
+default is 2^64-1, so no upper range is revoked unless this is called.
+
 The trusted subtrees that let a relying party accept landmark-relative
 certificates are configured separately; see
 L<OSSL_MTC_CA_load_landmarks(3)>.
@@ -85,8 +91,9 @@ of OSSL_MTC_CA_add_revoked_range().
 
 =head1 NOTES
 
-A single B<OSSL_MTC_CA> may be shared between threads. OSSL_MTC_CA_add1_cosigner()
-and OSSL_MTC_CA_add_revoked_range() are internally synchronised, so a CA may
+A single B<OSSL_MTC_CA> may be shared between threads. OSSL_MTC_CA_add1_cosigner(),
+OSSL_MTC_CA_add_revoked_range(), and OSSL_MTC_CA_set_max_serial() are
+internally synchronised, so a CA may
 be reconfigured concurrently, including while it is being used for certificate
 verification; callers need no external locking for these. OSSL_MTC_CA_get0_id()
 returns the identifier fixed at construction and is likewise safe to call
@@ -101,8 +108,9 @@ OSSL_MTC_CA_new() returns the new CA, or NULL on error.
 
 OSSL_MTC_CA_free() does not return a value.
 
-OSSL_MTC_CA_add1_cosigner(), OSSL_MTC_CA_add_revoked_range(), and
-OSSL_MTC_CA_get0_id() return 1 on success and 0 on error.
+OSSL_MTC_CA_add1_cosigner(), OSSL_MTC_CA_add_revoked_range(),
+OSSL_MTC_CA_set_max_serial(), and OSSL_MTC_CA_get0_id() return 1 on success and
+0 on error.
 
 OSSL_MTC_serial() returns the computed serial number.
 
