@@ -552,7 +552,7 @@ static int MOD_EXP_CTIME_COPY_FROM_PREBUF(BIGNUM *b, int top,
             BN_ULONG acc = 0;
 
             for (j = 0; j < width; j++) {
-                acc |= table[j] & ((BN_ULONG)0 - (constant_time_eq_int(j, idx) & 1));
+                acc |= table[j] & value_barrier_bn((BN_ULONG)0 - (constant_time_eq_int(j, idx) & 1));
             }
 
             b->d[i] = acc;
