@@ -1385,7 +1385,6 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
          */
         if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns) {
             /* Cap reached - reject new connection */
-            ossl_crypto_mutex_unlock(dl->mutex);
             dtls_listener_connection_free(conn_ssl);
             goto release;
         }
