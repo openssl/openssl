@@ -212,17 +212,18 @@ struct set_name_fn {
     const char *name;
     int host;
     int email;
+    int subject; /* name is in the subject DN, so needs ALWAYS_CHECK_SUBJECT */
 };
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
 OSSL_BEGIN_ALLOW_DEPRECATED
 static const struct set_name_fn name_fns[] = {
-    { set_cn1, "set CN", 1, 0 },
-    { set_email1, "set emailAddress", 0, 1 },
-    { set_altname_dns, "set dnsName", 1, 0 },
-    { set_altname_dns2, "set dnsName", 1, 0 },
-    { set_altname_email, "set rfc822Name", 0, 1 },
-    { set_altname_email2, "set rfc822Name", 0, 1 },
+    { set_cn1, "set CN", 1, 0, 1 },
+    { set_email1, "set emailAddress", 0, 1, 1 },
+    { set_altname_dns, "set dnsName", 1, 0, 0 },
+    { set_altname_dns2, "set dnsName", 1, 0, 0 },
+    { set_altname_email, "set rfc822Name", 0, 1, 0 },
+    { set_altname_email2, "set rfc822Name", 0, 1, 0 },
 };
 
 static X509 *make_cert(void)
@@ -259,6 +260,7 @@ static int run_cert(X509 *crt, const char *nameincert,
 {
     const char *const *pname = names;
     int failed = 0;
+    unsigned int subj = fn->subject ? X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT : 0;
 
     for (; *pname != NULL; ++pname) {
         int samename = OPENSSL_strcasecmp(nameincert, *pname) == 0;
@@ -271,7 +273,7 @@ static int run_cert(X509 *crt, const char *nameincert,
         memcpy(name, *pname, namelen + 1);
 
         match = -1;
-        if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen, 0, NULL),
+        if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen, subj, NULL),
                 0)) {
             failed = 1;
         } else if (fn->host) {
@@ -286,7 +288,7 @@ static int run_cert(X509 *crt, const char *nameincert,
 
         match = -1;
         if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen,
-                             X509_CHECK_FLAG_NO_WILDCARDS,
+                             X509_CHECK_FLAG_NO_WILDCARDS | subj,
                              NULL),
                 0)) {
             failed = 1;
@@ -302,7 +304,7 @@ static int run_cert(X509 *crt, const char *nameincert,
             failed = 1;
 
         match = -1;
-        ret = X509_check_email(crt, name, namelen, 0);
+        ret = X509_check_email(crt, name, namelen, subj);
         if (fn->email) {
             if (ret && !samename)
                 match = 1;

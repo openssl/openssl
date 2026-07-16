@@ -172,6 +172,15 @@ OpenSSL Releases
 
    *Marcel Cornu and Tomasz Kantecki*
 
+ * X509 certificate verification no longer consults the subject
+   distinguished name by default.  Previously, when a certificate
+   contained no subject alternative name of the type being checked, the
+   subject commonName (for host name checks) or emailAddress (for email
+   checks) was matched instead.  This fallback now happens only when the
+   `X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT` flag is set.
+
+   *Bob Beck*
+
  * Changed the output of the -disabled option for the list command.
    Displaying disabled features, protocols, and algorithms, in relevant sections.
    Disabled features are now generated at configuration time.
