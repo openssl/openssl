@@ -2499,7 +2499,17 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * set. The *documented* interface remains the same.
      */
     ERR_set_mark();
+
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_enter(SSL_CONNECTION_GET_CTX(s)->libctx, "tls::verify_cert_chain", NULL);
+#endif
+
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
+
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(SSL_CONNECTION_GET_CTX(s)->libctx);
+#endif
+
     if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
         ERR_clear_last_mark();
         SSLfatal(s, ssl_x509err2alert(s->verify_result),
