@@ -4122,7 +4122,17 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         }
     } else {
         EVP_PKEY *pkey;
+
+#ifndef OPENSSL_NO_CRAU
+        OSSL_CRAU_enter(sctx->libctx, "tls::verify_cert_chain", NULL);
+#endif
+
         i = ssl_verify_cert_chain(s, sk);
+
+#ifndef OPENSSL_NO_CRAU
+        OSSL_CRAU_leave(sctx->libctx);
+#endif
+
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
