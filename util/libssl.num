@@ -628,3 +628,5 @@ SSL_get0_sigalg                         627	4_0_0	EXIST::FUNCTION:
 SSL_get0_shared_sigalg                  628	4_0_0	EXIST::FUNCTION:
 SSL_listener_set_pending_timeout        ?	4_1_0	EXIST::FUNCTION:
 SSL_listener_get_pending_timeout        ?	4_1_0	EXIST::FUNCTION:
+SSL_listener_set_max_pending_conns      ?	4_1_0	EXIST::FUNCTION:
+SSL_listener_get_max_pending_conns      ?	4_1_0	EXIST::FUNCTION:
