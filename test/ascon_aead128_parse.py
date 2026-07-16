@@ -25,7 +25,11 @@
 #     AAD = ...
 #     Tag = ... (last 16 bytes of CT)
 #     Ciphertext = ... (CT without the last 16 bytes)
-#     Result = TAG_VALUE_MISMATCH (only if Result started with "invalid")
+#     Operation = DECRYPT (only if Result text started with "invalid")
+#     Result = CIPHERFINAL_ERROR (only if Result text started with "invalid")
+#     Reason = bad decrypt (only if Result text started with "invalid")
+#
+# NB "bad decrypt" = PROV_R_BAD_DECRYPT
 
 import hashlib
 import os
@@ -157,10 +161,9 @@ def format_output(vectors, input_file):
 
         # Negative test: Result starts with "invalid"
         if result.lower().startswith('invalid'):
-            if len(pt) != len(ciphertext_hex):
-                output_lines.append("Result = VALUE_MISMATCH")
-            else:
-                output_lines.append("Result = TAG_VALUE_MISMATCH")
+            output_lines.append("Operation = DECRYPT")
+            output_lines.append("Result = CIPHERFINAL_ERROR")
+            output_lines.append("Reason = bad decrypt")
 
         output_lines.append("")  # Blank line between vectors
 

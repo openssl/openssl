@@ -17555,7 +17555,9 @@ Plaintext = F2
 AAD = 26
 Tag = D7E1DF2D82F2D65D40E1ABC0574380BE
 Ciphertext = 46
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # valid message size 1
 Cipher = ascon-aead128
@@ -17574,7 +17576,9 @@ Plaintext = 78
 AAD = C6
 Tag = 172248997933301CDA71DBA22C39DAFC
 Ciphertext = 41
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid message size 484
 Cipher = ascon-aead128
@@ -17584,7 +17588,9 @@ Plaintext = B6CEF3CCF7DEFEA7634B5670FBCAD0EB5C7D2785601F3B79AA6DE3B5B3D7F7BFB522
 AAD = 
 Tag = FA37ACD3C1D8F1C0723B341E1F7D6F5D
 Ciphertext = 0C8CD7D37A379C2B76B6B37F0768B3EE24A9A519E15049AD0B532CB387B70010959CDCEC930788166CBF50A26FD3F41E2C6223B1E2DC64DE16602E0202B574D0BD5F1F5E5A9F6B99CFC0BD7BD8E34C7253D92A57BE953B689EA1BF402FAA6D2AEDF2F435C23C495579B3B8A3640981402390030EF7C93367526081522AC98B9F81A67C3820AAF4A07B362F5481978D8A847D9E54F8C357C79C7B9A6E89896604B8590BA8E673490C80E6F2F187B1898E9DAD95838BC052E39E84CC6E89A3538DB1E2071281A406DE978FBEE1691A5526D62C1D3B55DED246750525705E76DAA960C921288B76338BC414B63E3E1019A285733FD2A36D3E7D5A981B92DA90383274B020406B3B35B1ABB627398F73C142363C0AEFC1A03FD013ABD1AB498772C09F9E7E02BD1EEF57A55EF5E87FA01A166F814F3E4E5B9C741DCB0CD8E4FD824D708B6A034DB6915F1200F13552A538BE93EED757935491320800BF8229C4ECF49920DD761270966FCF24DD69B9794DE3DBAA77FFFED55CC587CCCC29605D3479697CA8DC67930B98B879EB4D327FFCAE3F2DB554AAE53CF3544EF6F83C1696D916DDFA819FCAAEC0363982E44258BF863CC3AEF6C6509EF33FD551D29211EDA27098D2572FA4771CBBA2B85F20B80C46AC1D3C42607FD0FAB7EE28899F704BAA0D1233CF
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # valid message size 2
 Cipher = ascon-aead128
@@ -18130,7 +18136,9 @@ Plaintext =
 AAD = 
 Tag = 00000000000000000000000000000000
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 1
 Cipher = ascon-aead128
@@ -18140,7 +18148,9 @@ Plaintext =
 AAD = 
 Tag = FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all lsbs changed in tag
 Cipher = ascon-aead128
@@ -18150,7 +18160,9 @@ Plaintext =
 AAD = 
 Tag = 7554C8CFBFEC169370C4DBEB3C080699
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all msbs changed in tag
 Cipher = ascon-aead128
@@ -18160,7 +18172,9 @@ Plaintext =
 AAD = 
 Tag = F4D5494E3E6D9712F1455A6ABD898718
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 0 modified in tag
 Cipher = ascon-aead128
@@ -18170,7 +18184,9 @@ Plaintext =
 AAD = 
 Tag = 7555C9CEBEED179271C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 7 modified in tag
 Cipher = ascon-aead128
@@ -18180,7 +18196,9 @@ Plaintext =
 AAD = 
 Tag = F455C9CEBEED179271C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 8 modified in tag
 Cipher = ascon-aead128
@@ -18190,7 +18208,9 @@ Plaintext =
 AAD = 
 Tag = 7454C9CEBEED179271C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 24 modified in tag
 Cipher = ascon-aead128
@@ -18200,7 +18220,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CFBEED179271C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 31 modified in tag
 Cipher = ascon-aead128
@@ -18210,7 +18232,9 @@ Plaintext =
 AAD = 
 Tag = 7455C94EBEED179271C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 56 modified in tag
 Cipher = ascon-aead128
@@ -18220,7 +18244,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED179371C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 63 modified in tag
 Cipher = ascon-aead128
@@ -18230,7 +18256,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED171271C5DAEA3D090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 96 modified in tag
 Cipher = ascon-aead128
@@ -18240,7 +18268,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED179271C5DAEA3C090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 103 modified in tag
 Cipher = ascon-aead128
@@ -18250,7 +18280,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED179271C5DAEABD090798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 119 modified in tag
 Cipher = ascon-aead128
@@ -18260,7 +18292,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED179271C5DAEA3D098798
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 120 modified in tag
 Cipher = ascon-aead128
@@ -18270,7 +18304,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED179271C5DAEA3D090799
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 127 modified in tag
 Cipher = ascon-aead128
@@ -18280,7 +18316,9 @@ Plaintext =
 AAD = 
 Tag = 7455C9CEBEED179271C5DAEA3D090718
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 0
 Cipher = ascon-aead128
@@ -18290,7 +18328,9 @@ Plaintext =
 AAD = 
 Tag = 00000000000000000000000000000000
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 1
 Cipher = ascon-aead128
@@ -18300,7 +18340,9 @@ Plaintext =
 AAD = 
 Tag = FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all lsbs changed in tag
 Cipher = ascon-aead128
@@ -18310,7 +18352,9 @@ Plaintext =
 AAD = 
 Tag = A1ED8B128B313BC3B54A35881EE7576F
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all msbs changed in tag
 Cipher = ascon-aead128
@@ -18320,7 +18364,9 @@ Plaintext =
 AAD = 
 Tag = 206C0A930AB0BA4234CBB4099F66D6EE
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 0 modified in tag
 Cipher = ascon-aead128
@@ -18330,7 +18376,9 @@ Plaintext =
 AAD = 
 Tag = A1EC8A138A303AC2B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 7 modified in tag
 Cipher = ascon-aead128
@@ -18340,7 +18388,9 @@ Plaintext =
 AAD = 
 Tag = 20EC8A138A303AC2B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 8 modified in tag
 Cipher = ascon-aead128
@@ -18350,7 +18400,9 @@ Plaintext =
 AAD = 
 Tag = A0ED8A138A303AC2B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 24 modified in tag
 Cipher = ascon-aead128
@@ -18360,7 +18412,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A128A303AC2B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 31 modified in tag
 Cipher = ascon-aead128
@@ -18370,7 +18424,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A938A303AC2B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 56 modified in tag
 Cipher = ascon-aead128
@@ -18380,7 +18436,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303AC3B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 63 modified in tag
 Cipher = ascon-aead128
@@ -18390,7 +18448,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303A42B44B34891FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 96 modified in tag
 Cipher = ascon-aead128
@@ -18400,7 +18460,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303AC2B44B34891EE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 103 modified in tag
 Cipher = ascon-aead128
@@ -18410,7 +18472,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303AC2B44B34899FE6566E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 119 modified in tag
 Cipher = ascon-aead128
@@ -18420,7 +18484,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303AC2B44B34891FE6D66E
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 120 modified in tag
 Cipher = ascon-aead128
@@ -18430,7 +18496,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303AC2B44B34891FE6566F
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 127 modified in tag
 Cipher = ascon-aead128
@@ -18440,7 +18508,9 @@ Plaintext =
 AAD = 
 Tag = A0EC8A138A303AC2B44B34891FE656EE
 Ciphertext = 71D964088D05D8006D6DDD2C2D227AC6
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 0
 Cipher = ascon-aead128
@@ -18450,7 +18520,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = 00000000000000000000000000000000
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 1
 Cipher = ascon-aead128
@@ -18460,7 +18532,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all lsbs changed in tag
 Cipher = ascon-aead128
@@ -18470,7 +18544,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D421CE166A020D66F2B04B58F4E2CEEE
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all msbs changed in tag
 Cipher = ascon-aead128
@@ -18480,7 +18556,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = 55A04F97EB838CE77331CAD975634F6F
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 0 modified in tag
 Cipher = ascon-aead128
@@ -18490,7 +18568,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D420CF176B030C67F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 7 modified in tag
 Cipher = ascon-aead128
@@ -18500,7 +18580,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = 5520CF176B030C67F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 8 modified in tag
 Cipher = ascon-aead128
@@ -18510,7 +18592,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D521CF176B030C67F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 24 modified in tag
 Cipher = ascon-aead128
@@ -18520,7 +18604,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF166B030C67F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 31 modified in tag
 Cipher = ascon-aead128
@@ -18530,7 +18616,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF976B030C67F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 56 modified in tag
 Cipher = ascon-aead128
@@ -18540,7 +18628,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030C66F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 63 modified in tag
 Cipher = ascon-aead128
@@ -18550,7 +18640,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030CE7F3B14A59F5E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 96 modified in tag
 Cipher = ascon-aead128
@@ -18560,7 +18652,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030C67F3B14A59F4E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 103 modified in tag
 Cipher = ascon-aead128
@@ -18570,7 +18664,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030C67F3B14A5975E3CFEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 119 modified in tag
 Cipher = ascon-aead128
@@ -18580,7 +18676,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030C67F3B14A59F5E34FEF
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 120 modified in tag
 Cipher = ascon-aead128
@@ -18590,7 +18688,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030C67F3B14A59F5E3CFEE
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 127 modified in tag
 Cipher = ascon-aead128
@@ -18600,7 +18700,9 @@ Plaintext =
 AAD = 2CD43A0628DFD0EC72B96466B91CD77E
 Tag = D520CF176B030C67F3B14A59F5E3CF6F
 Ciphertext = 
-Result = TAG_VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 0
 Cipher = ascon-aead128
@@ -18610,7 +18712,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 00000000000000000000000000000000
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid tag changed to all 1
 Cipher = ascon-aead128
@@ -18620,7 +18724,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = FFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all lsbs changed in tag
 Cipher = ascon-aead128
@@ -18630,7 +18736,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3696C06E205055124206C596AB546FD2
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid all msbs changed in tag
 Cipher = ascon-aead128
@@ -18640,7 +18748,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = B71741EFA1D1D493C38744172AD5EE53
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 0 modified in tag
 Cipher = ascon-aead128
@@ -18650,7 +18760,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3697C16F215154134307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 7 modified in tag
 Cipher = ascon-aead128
@@ -18660,7 +18772,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = B797C16F215154134307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 8 modified in tag
 Cipher = ascon-aead128
@@ -18670,7 +18784,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3796C16F215154134307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 24 modified in tag
 Cipher = ascon-aead128
@@ -18680,7 +18796,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16E215154134307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 31 modified in tag
 Cipher = ascon-aead128
@@ -18690,7 +18808,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C1EF215154134307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 56 modified in tag
 Cipher = ascon-aead128
@@ -18700,7 +18820,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154124307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 63 modified in tag
 Cipher = ascon-aead128
@@ -18710,7 +18832,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154934307C497AA556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 96 modified in tag
 Cipher = ascon-aead128
@@ -18720,7 +18844,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154134307C497AB556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 103 modified in tag
 Cipher = ascon-aead128
@@ -18730,7 +18856,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154134307C4972A556ED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 119 modified in tag
 Cipher = ascon-aead128
@@ -18740,7 +18868,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154134307C497AA55EED3
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 120 modified in tag
 Cipher = ascon-aead128
@@ -18750,7 +18880,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154134307C497AA556ED2
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # invalid bit 127 modified in tag
 Cipher = ascon-aead128
@@ -18760,7 +18892,9 @@ Plaintext =
 AAD = AC726EDA3EC7F951BB7F6094C5495807
 Tag = 3797C16F215154134307C497AA556E53
 Ciphertext = 6E89105F803A2CB613DC876AB9034099
-Result = VALUE_MISMATCH
+Operation = DECRYPT
+Result = CIPHERFINAL_ERROR
+Reason = bad decrypt
 
 # TestCount: 121
 
