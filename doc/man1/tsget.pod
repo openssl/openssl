@@ -186,7 +186,7 @@ example:
 
 L<openssl(1)>,
 L<openssl-ts(1)>,
-L<Net::Curl::Easy>
+L<Net::Curl::Easy>,
 L<https://www.rfc-editor.org/rfc/rfc3161.html>
 
 =head1 COPYRIGHT

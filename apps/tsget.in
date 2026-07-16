@@ -64,19 +64,15 @@ sub create_curl {
     return $curl;
 }
 
-# Send a request and write the response to output.
+# Send a request, writing the response to the given filehandle.
+# Returns an error string on network/protocol failure, undef on success.
 sub send_request {
-    my ($curl, $body, $output) = @_;
-
-    open my $out, '>', $output
-        or return "could not open output file: $!";
-
-    binmode $out;
+    my ($curl, $body, $out_fh) = @_;
 
     $curl->setopt(CURLOPT_POST, 1);
     $curl->setopt(CURLOPT_POSTFIELDS, $body);
     $curl->setopt(CURLOPT_POSTFIELDSIZE, length($body));
-    $curl->setopt(CURLOPT_WRITEDATA, $out);
+    $curl->setopt(CURLOPT_WRITEDATA, $out_fh);
 
     my $ok = eval { $curl->perform(); 1; };
 
@@ -86,18 +82,14 @@ sub send_request {
             my $curl_err = $curl->error();
             $err = $curl_err if defined($curl_err) && length($curl_err);
         };
-        close $out;
-        unlink $output;
         return $err;
     }
 
-    close $out
-        or return "could not close output file: $!";
-
-    my $size = -s $output;
-    if (!defined($size) || $size == 0) {
-        unlink $output;
-        return "empty response received";
+    my $ct = $curl->getinfo(CURLINFO_CONTENT_TYPE);
+    if (defined($ct)
+            && lc($ct) ne "application/timestamp-reply"
+            && lc($ct) ne "application/timestamp-response") {
+        return "unexpected content type returned: $ct";
     }
 
     return undef;
@@ -144,10 +136,31 @@ REQUEST: for my $input (@ARGV) {
 
     progress("sending request");
 
-    my $error = send_request($curl, $body, $output);
-    if (defined($error)) {
+    my $out_fh;
+    if ($output eq "-") {
+        # Write to STDOUT.
+        $out_fh = \*STDOUT;
+        binmode STDOUT;
+    } else {
+        open $out_fh, '>', $output
+            or warn("$output: could not open output file: $!\n"), next REQUEST;
+        binmode $out_fh;
+    }
+
+    my $error = send_request($curl, $body, $out_fh);
+
+    if ($output ne "-") {
+        if (defined($error)) {
+            close $out_fh;
+            unlink $output;
+            die "$input: fatal error: $error\n";
+        }
+        close $out_fh
+            or warn("$output: could not close output file: $!\n"), next REQUEST;
+    } elsif (defined($error)) {
         die "$input: fatal error: $error\n";
     }
+
     progress(", reply received");
     progress(", $output written.\n");
 }
