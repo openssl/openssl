@@ -737,17 +737,21 @@ static void run_client(char *rem_server_name, int dtls_version)
                 break;
             }
 
-            /* Wait for the echo */
+            /* Wait for the echo - if not immediately available, let poll handle it */
             ret = SSL_read_ex(client, recv_buf, sizeof(recv_buf) - 1, &readbytes);
             if (ret != 1) {
                 err = SSL_get_error(client, ret);
                 if (err == SSL_ERROR_ZERO_RETURN) {
                     printf("Server closed connection\n");
-                } else if (err != SSL_ERROR_WANT_READ) {
+                    break;
+                } else if (err == SSL_ERROR_WANT_READ) {
+                    /* Echo not ready yet, let poll loop handle it */
+                    continue;
+                } else {
                     fprintf(stderr, "Failed to read echo response\n");
                     ERR_print_errors_fp(stderr);
+                    break;
                 }
-                break;
             }
 
             recv_buf[readbytes] = '\0';
