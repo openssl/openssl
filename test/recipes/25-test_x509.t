@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 153;
+plan tests => 155;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -120,6 +120,14 @@ ok(run(app(["openssl", "x509", "-in", $ca, "-addreject", "emailProtection",
             "-out", "ca-rejected.pem"])));
 cert_contains("ca-rejected.pem", "Rejected Uses: E-mail Protection",
               1, 'rejected use - E-mail Protection');
+
+my $check_trust_err = "x509-check-trust.err";
+ok(run(app(["openssl", "x509", "-noout", "-text", "-in", $ca],
+           stderr => $check_trust_err, stdout => undef)),
+   "x509 -text does not fail on a trusted certificate");
+test_file_contains("x509 -text diagnostics", $check_trust_err,
+                   "invalid trust", 0);
+unlink $check_trust_err;
 
 subtest 'x509 -- x.509 v1 certificate' => sub {
     tconversion( -type => 'x509', -prefix => 'x509v1',
