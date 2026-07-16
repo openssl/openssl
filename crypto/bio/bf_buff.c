@@ -530,6 +530,7 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
     size_t *msgs_processed)
 {
+#ifndef OPENSSL_NO_SOCK
     BIO_F_BUFFER_CTX *ctx;
     int ret;
 
@@ -564,4 +565,8 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 
     *msgs_processed = 1;
     return 1;
+#else
+    *msgs_processed = 0;
+    return 0;
+#endif
 }
