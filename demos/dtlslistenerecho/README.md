@@ -1,4 +1,5 @@
-# OpenSSL DTLS Listener Server/Client
+OpenSSL DTLS Listener Server/Client
+===================================
 
 This project implements a simple echo application utilizing DTLS SSL Listener.
 
@@ -13,7 +14,8 @@ the pattern established in `test/dtls_multithread_test.c`.
 The client will send application data to the server and the server will simply
 respond to the client with an echo of that data.
 
-## Features
+Features
+--------
 
 - Up to 10 concurrent DTLS client connections (MAX_CONNECTIONS)
 - Thread-per-connection architecture using OpenSSL's internal thread APIs
@@ -23,13 +25,15 @@ respond to the client with an echo of that data.
 - Active shutdown signaling for clean thread termination
 - Server-wide shutdown via "killall" command
 
-## Limitations
+Limitations
+-----------
 
 - Maximum 10 concurrent client connections (defined by MAX_CONNECTIONS)
 - Additional connection attempts while at capacity will be rejected with an
   error message printed to the server console
 
-## The code demonstrates
+The code demonstrates
+---------------------
 
 - DTLS Server using SSL Listener APIs to establish Connections
 - DTLS Server validating Clients via HRR/HVR
@@ -42,7 +46,8 @@ respond to the client with an echo of that data.
 - Active thread shutdown via signaling mechanism
 - Graceful server shutdown with client disconnection
 
-## Running
+Running
+-------
 
 ### Start the Server
 
@@ -77,7 +82,8 @@ You can optionally specify the DTLS protocol version for the client:
 ./dtlslistenerecho c localhost
 ```
 
-## Special Commands
+Special Commands
+----------------
 
 - Type "kill" in a client to disconnect that client only (server continues running)
 - Type "killall" in a client to disconnect all clients and shutdown the server gracefully
