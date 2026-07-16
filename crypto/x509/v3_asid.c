@@ -511,9 +511,9 @@ done:
      * particular has no NULL guard).  Slide every non-NULL slot forward
      * to close the holes, then pop the vacated tail.  On success this
      * collapses [write..n-1] (all NULL) to length `write`; on error it
-     * drops the NULLs scattered across the swept region while preserving
-     * the merged results in [0..write-1] and the untouched originals
-     * beyond the failure point.
+     * removes the possibly empty contiguous run of NULL slots in
+     * [write, read), preserving the processed output in [0, write) and
+     * the untouched original entries in [read, n).
      */
     {
         int w = 0, r;
