@@ -30,7 +30,6 @@
 #include <winsock2.h>
 #include <ws2tcpip.h>
 #include <conio.h>
-#include <io.h>
 #endif
 
 static const int server_port = 4433;
@@ -94,7 +93,7 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
     }
 
     /* Set socket to non-blocking mode */
-    if (!BIO_socket_nbio(*server_fd, 1)) {
+    if (!BIO_socket_nbio((int)*server_fd, 1)) {
         perror("Unable to set socket to non-blocking");
         goto err;
     }
@@ -113,14 +112,14 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
     }
 
     /* Bind the socket to the address */
-    if (!BIO_bind(*server_fd, server_addr, 0)) {
+    if (!BIO_bind((int)*server_fd, server_addr, 0)) {
         perror("Unable to bind socket");
         goto err;
     }
 
     /* Get the actual bound address (useful if port was 0 for ephemeral) */
     info.addr = server_addr;
-    if (!BIO_sock_info(*server_fd, BIO_SOCK_INFO_ADDRESS, &info)) {
+    if (!BIO_sock_info((int)*server_fd, BIO_SOCK_INFO_ADDRESS, &info)) {
         perror("Unable to get socket info");
         goto err;
     }
@@ -128,7 +127,7 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
     printf("Server bound to port %d\n", ntohs(BIO_ADDR_rawport(server_addr)));
 
     /* Create a datagram BIO and attach the socket */
-    listener_bio = BIO_new_dgram(*server_fd, BIO_NOCLOSE);
+    listener_bio = BIO_new_dgram((int)*server_fd, BIO_NOCLOSE);
     if (listener_bio == NULL) {
         perror("Unable to create datagram BIO");
         goto err;
@@ -162,7 +161,7 @@ err:
         SSL_free(*listener);
         *listener = NULL;
         if (*server_fd != INVALID_SOCKET)
-            BIO_closesocket(*server_fd);
+            BIO_closesocket((int)*server_fd);
         *server_fd = INVALID_SOCKET;
     }
     return ret;
@@ -455,8 +454,8 @@ err:
 
     SSL_free(listener);
     SSL_CTX_free(ssl_ctx);
-    if (server_fd >= 0)
-        BIO_closesocket(server_fd);
+    if (server_fd != INVALID_SOCKET)
+        BIO_closesocket((int)server_fd);
 }
 
 /*
@@ -482,7 +481,7 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
     }
 
     /* Set socket to non-blocking mode */
-    if (!BIO_socket_nbio(*client_fd, 1)) {
+    if (!BIO_socket_nbio((int)*client_fd, 1)) {
         perror("Unable to set socket to non-blocking");
         goto err;
     }
@@ -501,7 +500,7 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
     }
 
     /* Create a datagram BIO and attach the socket */
-    client_bio = BIO_new_dgram(*client_fd, BIO_NOCLOSE);
+    client_bio = BIO_new_dgram((int)*client_fd, BIO_NOCLOSE);
     if (client_bio == NULL) {
         perror("Unable to create datagram BIO");
         goto err;
@@ -539,7 +538,7 @@ err:
         SSL_free(*client);
         *client = NULL;
         if (*client_fd != INVALID_SOCKET)
-            BIO_closesocket(*client_fd);
+            BIO_closesocket((int)*client_fd);
         *client_fd = INVALID_SOCKET;
     }
     return ret;
@@ -598,16 +597,17 @@ static void run_client(char *rem_server_name, int dtls_version)
     char recv_buf[1500];
     size_t written, readbytes;
     int ret, err;
+    int has_server_data = 0;
+    int has_user_input = 0;
 #if !defined(OPENSSL_SYS_WINDOWS)
     struct pollfd pfds[2];
     BIO *rbio;
     BIO_POLL_DESCRIPTOR rdesc;
+    int ssl_fd;
 #else
     fd_set read_fds;
-#endif
-    SSL_POLL_ITEM item;
     struct timeval timeout;
-    size_t result_count;
+#endif
 
     ssl_ctx = create_context(false);
 
@@ -634,8 +634,6 @@ static void run_client(char *rem_server_name, int dtls_version)
     printf("Connected! Type messages to send (or 'kill' to disconnect, 'killall' to shutdown server):\n");
 
 #if !defined(OPENSSL_SYS_WINDOWS)
-    int ssl_fd;
-
     /* Get the SSL socket fd for polling */
     rbio = SSL_get_rbio(client);
     if (rbio == NULL || !BIO_get_rpoll_descriptor(rbio, &rdesc)
@@ -650,9 +648,14 @@ static void run_client(char *rem_server_name, int dtls_version)
     pfds[0].events = POLLIN;
     pfds[1].fd = ssl_fd;
     pfds[1].events = POLLIN;
+#endif
 
     /* Main loop: poll on both stdin and SSL connection */
     while (1) {
+        has_server_data = 0;
+        has_user_input = 0;
+
+#if !defined(OPENSSL_SYS_WINDOWS)
         pfds[0].revents = 0;
         pfds[1].revents = 0;
 
@@ -662,8 +665,31 @@ static void run_client(char *rem_server_name, int dtls_version)
             break;
         }
 
+        has_server_data = (pfds[1].revents & POLLIN) != 0;
+        has_user_input = (pfds[0].revents & POLLIN) != 0;
+#else
+        /*
+         * Windows: use select() for socket and _kbhit() for console input.
+         * We can't easily poll stdin and a socket together on Windows, so we
+         * use a short timeout on select() and check for keyboard input.
+         */
+        FD_ZERO(&read_fds);
+        FD_SET(client_fd, &read_fds);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 100000; /* 100ms */
+
+        ret = select(0, &read_fds, NULL, NULL, &timeout);
+        if (ret < 0) {
+            fprintf(stderr, "select failed\n");
+            break;
+        }
+
+        has_server_data = (ret > 0 && FD_ISSET(client_fd, &read_fds));
+        has_user_input = _kbhit();
+#endif
+
         /* Check for server data/shutdown first */
-        if (pfds[1].revents & POLLIN) {
+        if (has_server_data) {
             ret = SSL_read_ex(client, recv_buf, sizeof(recv_buf) - 1, &readbytes);
             if (ret != 1) {
                 err = SSL_get_error(client, ret);
@@ -684,119 +710,12 @@ static void run_client(char *rem_server_name, int dtls_version)
         }
 
         /* Check for user input */
-        if (pfds[0].revents & POLLIN) {
+        if (has_user_input) {
             if (fgets(input_buf, sizeof(input_buf), stdin) == NULL) {
                 printf("EOF received, exiting\n");
                 break;
             }
 
-            /* Send to server */
-            if (!SSL_write_ex(client, input_buf, strlen(input_buf), &written)) {
-                fprintf(stderr, "Failed to send data\n");
-                ERR_print_errors_fp(stderr);
-                break;
-            }
-
-            /* Check if we sent the kill command */
-            if (strcmp(input_buf, "kill\n") == 0) {
-                printf("Sent kill command, disconnecting\n");
-                break;
-            }
-
-            /* Check if we sent the killall command */
-            if (strcmp(input_buf, "killall\n") == 0) {
-                printf("Sent killall command, server will shutdown\n");
-                break;
-            }
-
-            /* Wait for echo response using SSL_poll */
-            item.desc = SSL_as_poll_descriptor(client);
-            item.events = SSL_POLL_EVENT_R;
-            item.revents = 0;
-
-            timeout.tv_sec = POLL_TIMEOUT_SEC;
-            timeout.tv_usec = 0;
-
-            if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
-                fprintf(stderr, "SSL_poll failed waiting for echo\n");
-                ERR_print_errors_fp(stderr);
-                break;
-            }
-
-            if (result_count == 0 || (item.revents & SSL_POLL_EVENT_R) == 0) {
-                fprintf(stderr, "Timeout waiting for echo from server\n");
-                continue;
-            }
-
-            /* Read the echo response */
-            ret = SSL_read_ex(client, recv_buf, sizeof(recv_buf) - 1, &readbytes);
-            if (ret != 1) {
-                err = SSL_get_error(client, ret);
-                if (err == SSL_ERROR_ZERO_RETURN) {
-                    printf("Server closed connection\n");
-                } else if (err != SSL_ERROR_WANT_READ) {
-                    fprintf(stderr, "Failed to read echo response\n");
-                    ERR_print_errors_fp(stderr);
-                }
-                break;
-            }
-
-            recv_buf[readbytes] = '\0';
-            printf("Echo: %s", recv_buf);
-        }
-    }
-#else
-    /*
-     * Windows version: use select() for socket and _kbhit() for console input.
-     * We can't easily poll stdin and a socket together on Windows, so we use
-     * a short timeout on select() and check for keyboard input with _kbhit().
-     */
-    while (1) {
-        int has_input = 0;
-
-        /* Check for pending server data using select with short timeout */
-        FD_ZERO(&read_fds);
-        FD_SET(client_fd, &read_fds);
-        timeout.tv_sec = 0;
-        timeout.tv_usec = 100000; /* 100ms */
-
-        ret = select(0, &read_fds, NULL, NULL, &timeout);
-        if (ret < 0) {
-            fprintf(stderr, "select failed\n");
-            break;
-        }
-
-        /* Check for server data */
-        if (ret > 0 && FD_ISSET(client_fd, &read_fds)) {
-            ret = SSL_read_ex(client, recv_buf, sizeof(recv_buf) - 1, &readbytes);
-            if (ret != 1) {
-                err = SSL_get_error(client, ret);
-                if (err == SSL_ERROR_ZERO_RETURN) {
-                    printf("Server closed connection\n");
-                    break;
-                } else if (err == SSL_ERROR_WANT_READ) {
-                    /* No actual data ready, continue */
-                } else {
-                    fprintf(stderr, "Read error from server\n");
-                    ERR_print_errors_fp(stderr);
-                    break;
-                }
-            } else {
-                recv_buf[readbytes] = '\0';
-                printf("Server: %s", recv_buf);
-            }
-        }
-
-        /* Check for user input using _kbhit() */
-        if (_kbhit()) {
-            if (fgets(input_buf, sizeof(input_buf), stdin) == NULL) {
-                printf("EOF received, exiting\n");
-                break;
-            }
-            has_input = 1;
-        }
-
-        if (has_input) {
             /* Send to server */
             if (!SSL_write_ex(client, input_buf, strlen(input_buf), &written)) {
                 fprintf(stderr, "Failed to send data\n");
@@ -818,26 +737,7 @@ static void run_client(char *rem_server_name, int dtls_version)
                 break;
             }
 
-            /* Wait for echo response using SSL_poll */
-            item.desc = SSL_as_poll_descriptor(client);
-            item.events = SSL_POLL_EVENT_R;
-            item.revents = 0;
-
-            timeout.tv_sec = POLL_TIMEOUT_SEC;
-            timeout.tv_usec = 0;
-
-            if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
-                fprintf(stderr, "SSL_poll failed waiting for echo\n");
-                ERR_print_errors_fp(stderr);
-                break;
-            }
-
-            if (result_count == 0 || (item.revents & SSL_POLL_EVENT_R) == 0) {
-                fprintf(stderr, "Timeout waiting for echo from server\n");
-                continue;
-            }
-
-            /* Read the echo response */
+            /* Wait for the echo */
             ret = SSL_read_ex(client, recv_buf, sizeof(recv_buf) - 1, &readbytes);
             if (ret != 1) {
                 err = SSL_get_error(client, ret);
@@ -854,13 +754,12 @@ static void run_client(char *rem_server_name, int dtls_version)
             printf("Echo: %s", recv_buf);
         }
     }
-#endif
 
 err:
     SSL_free(client);
     SSL_CTX_free(ssl_ctx);
     if (client_fd != INVALID_SOCKET)
-        BIO_closesocket(client_fd);
+        BIO_closesocket((int)client_fd);
 }
 
 static void usage(void)
