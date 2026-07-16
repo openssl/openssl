@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 153;
+plan tests => 154;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -501,6 +501,44 @@ ok(run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "iso_8601",
 ok(!run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "invalid_format",
 	     "-in", srctop_file("test/certs", "ca-cert.pem")])),
    "Run with invalid -dateopt format");
+
+# Cover the informational print options that operate on any certificate:
+# -serial, -next_serial, the subject/issuer name hashes and -fingerprint.
+# ca-cert.pem is a stable committed cert, so the expected values are fixed.
+sub x509_print_contains {
+    my ($cert, $pattern, @opts) = @_;
+    my $out = "x509-print.out";
+    run(app(["openssl", "x509", "-in", $cert, "-noout", @opts],
+            stdout => $out));
+    return test_file_contains("x509 @opts", $out, $pattern, 1);
+}
+
+subtest "printing certificate identification info" => sub {
+    plan tests => 9;
+
+    my $idcert = srctop_file(@certs, "ca-cert.pem");
+    # SHA-1 and SHA-256 fingerprints are the digests of the DER encoding.
+    my $sha1_fp = "SHA1 Fingerprint="
+        . "1F:BF:59:FA:EA:EE:B2:9C:1E:27:4C:C2:C4:90:42:40:21:0B:16:C3";
+    my $sha256_fp = "sha256 Fingerprint="
+        . "C8:31:AD:BE:F6:5E:EF:44:71:FE:08:0F:DD:DD:01:4F:9C:7E:9F:0A:"
+        . "74:DF:CA:E9:D0:06:84:57:79:C2:8F:18";
+
+    x509_print_contains($idcert, "^serial=02\\b", "-serial");
+    x509_print_contains($idcert, "^03\\b", "-next_serial"); # serial + 1
+    x509_print_contains($idcert, "^56c899cd\\b", "-subject_hash");
+    x509_print_contains($idcert, "^56c899cd\\b", "-hash"); # -hash is an alias
+    x509_print_contains($idcert, "^8489a545\\b", "-issuer_hash");
+    x509_print_contains($idcert, $sha1_fp, "-fingerprint");
+    x509_print_contains($idcert, $sha256_fp, "-fingerprint", "-sha256");
+
+    SKIP: {
+        skip "MD5 disabled", 2 if disabled("md5");
+
+        x509_print_contains($idcert, "^d74339c5\\b", "-subject_hash_old");
+        x509_print_contains($idcert, "^bec651d6\\b", "-issuer_hash_old");
+    }
+};
 
 my $ca_cert = srctop_file(@certs, "ca-cert.pem");
 my $goodcn2_chain = srctop_file(@certs, "goodcn2-chain.pem");
