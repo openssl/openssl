@@ -6,6 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# Run the utility, maintenance, and installation actions used by Ninja builds.
+
 use strict;
 use warnings;
 

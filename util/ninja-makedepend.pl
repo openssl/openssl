@@ -6,6 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# Generate a Ninja depfile by rewriting makedepend output for a given target.
+
 use strict;
 use warnings;
 

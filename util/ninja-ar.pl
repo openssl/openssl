@@ -6,6 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
+# Build a static archive in chunks from a Ninja response file.
+
 use strict;
 use warnings;
 
