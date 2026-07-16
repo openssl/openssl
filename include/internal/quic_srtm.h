@@ -11,6 +11,7 @@
 #define OSSL_INTERNAL_QUIC_SRTM_H
 #pragma once
 
+#include <stdint.h>
 #include "internal/e_os.h"
 #include "internal/time.h"
 #include "internal/quic_types.h"
@@ -69,11 +70,22 @@ void ossl_quic_srtm_free(QUIC_SRTM *srtm);
 int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     const QUIC_STATELESS_RESET_TOKEN *token);
 
-/*
- * Removes an entry by identifying it via its (opaque, seq_num) tuple.
- * Returns 1 if the entry was found and removed, and 0 if it was not found.
+/**
+ * \brief Removes an entry identified by its (opaque, seq_num) tuple.
+ *
+ * The absence of a matching entry is not an error.
+ *
+ * \param srtm     SRTM instance to remove the entry from.
+ * \param opaque   Opaque pointer identifying the entry.
+ * \param seq_num  Sequence number identifying the entry.
+ * \param match    If non-NULL, \c *match is set to 1 if a matching entry was
+ *                 found or to 0 if not. May be NULL if this information is not
+ *                 required.
+ *
+ * \return 1 on success and 0 on internal error.
  */
-int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num);
+int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
+    uint8_t *match);
 
 /*
  * Removes all entries (opaque, *) with the given opaque pointer.

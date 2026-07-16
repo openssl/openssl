@@ -88,7 +88,7 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
                 continue; /* just stop */
 
             if (ossl_quic_srtm_remove(srtm, (void *)(uintptr_t)arg_opaque,
-                    arg_seq_num))
+                    arg_seq_num, NULL))
                 ossl_quic_srtm_check(srtm);
             break;
 
