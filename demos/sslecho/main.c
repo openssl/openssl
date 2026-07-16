@@ -302,7 +302,7 @@ int main(int argc, char **argv)
         server_addr = BIO_ADDRINFO_address(res);
 
         /* Do TCP connect with server */
-        if (!BIO_connect(client_skt, server_addr, 0)) {
+        if (!BIO_connect((int)client_skt, server_addr, 0)) {
             perror("Unable to TCP connect to server");
             BIO_ADDRINFO_free(res);
             goto exit;

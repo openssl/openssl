@@ -1,5 +1,4 @@
-OpenSSL DTLS Listener Server/Client
-=================================
+# OpenSSL DTLS Listener Server/Client
 
 This project implements a simple echo application utilizing DTLS SSL Listener.
 
