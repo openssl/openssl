@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 153;
+plan tests => 154;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -490,6 +490,18 @@ SKIP: {
     ok(test_errors("Unable to load Public Key", "sm2.pem", '-text'),
        "error loading unsupported sm2 cert");
 }
+
+# Printing info about a plain cert must not emit anything on stderr.
+subtest "no spurious errors when printing certificate info" => sub {
+    plan tests => 2;
+
+    my $errfile = "x509-print.err";
+    ok(run(app(["openssl", "x509", "-noout", "-serial",
+                "-in", srctop_file(@certs, "ca-cert.pem")],
+               stderr => $errfile)),
+       "x509 -serial succeeds");
+    ok(-z $errfile, "x509 -serial produces no output on stderr");
+};
 
 # 3 tests for -dateopts formats
 ok(run(app(["openssl", "x509", "-noout", "-dates", "-dateopt", "rfc_822",
