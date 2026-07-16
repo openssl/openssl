@@ -88,12 +88,9 @@ X509_VERIFY_PARAM_get_purpose() returns the purpose in I<param>.
 
 X509_VERIFY_PARAM_set_trust() sets the trust selector in I<param> to
 I<trust>, which must be one of the B<X509_TRUST_*> identifiers defined
-in F<openssl/x509_vfy.h> (such as B<X509_TRUST_SSL_SERVER>,
-B<X509_TRUST_SSL_CLIENT>, B<X509_TRUST_EMAIL>, or B<X509_TRUST_OBJECT_SIGN>).
-The trust selector determines how explicit trust settings recorded on
-trust-anchor certificates are matched against the verification operation;
-see the TRUST SETTINGS section of L<openssl-x509(1)>. There is no
-public getter for the trust selector.
+in F<openssl/x509_vfy.h>. This is a legacy mechanism that most
+applications should not use; see L</BUGS>. There is no public getter
+for the trust selector.
 
 X509_VERIFY_PARAM_set_time() sets the verification time in I<param> to
 I<t>, which is then used as the reference time for certificate and CRL
@@ -373,6 +370,15 @@ maintained.
 If CRL checking is enabled, CRLs are expected to be available in the
 corresponding B<X509_STORE> structure. No attempt is made to download
 CRLs from the CRL distribution points extension.
+
+The B<X509_TRUST_*> selectors used by X509_VERIFY_PARAM_set_trust() are
+deceptively named: although each mirrors a PKIX extended key usage, the
+selector does not check that B<extKeyUsage>. It matches only auxiliary
+trust information that is never carried in the certificate itself but
+must be attached to the in-memory B<X509> object by the application;
+absent that, the selector has no effect. Use
+X509_VERIFY_PARAM_set_purpose() to constrain a certificate by its
+extended key usage instead.
 
 =head1 EXAMPLES
 
