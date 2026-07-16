@@ -85,6 +85,11 @@ sub send_request {
         return $err;
     }
 
+    my $downloaded = $curl->getinfo(CURLINFO_SIZE_DOWNLOAD);
+    if (!defined($downloaded) || $downloaded == 0) {
+        return "empty response received";
+    }
+
     my $ct = $curl->getinfo(CURLINFO_CONTENT_TYPE);
     if (defined($ct)
             && lc($ct) ne "application/timestamp-reply"

@@ -88,7 +88,13 @@ jobs:
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
     - name: cmocka
-      run: sudo apt-get -y install libcmocka-dev libnet-curl-perl
+      run: sudo apt-get -y install libcmocka-dev
+    - name: install dependencies for perl Net::Curl
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libcurl4-openssl-dev cpanminus build-essential
+    - name: install Net::Curl
+      run: sudo cpanm --notest Net::Curl
     - name: fipsvendor
       # Make one fips build use a customized FIPS vendor
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
