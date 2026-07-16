@@ -377,6 +377,7 @@ static int ts_check_status_info(TS_RESP *response)
     TS_STATUS_INFO *info = response->status_info;
     long status = ASN1_INTEGER_get(info->status);
     const char *status_text = NULL;
+    const char *mfail_msg = NULL;
     char *embedded_status_text = NULL;
     char *failure_text = NULL;
     uint32_t mask;
@@ -408,13 +409,14 @@ static int ts_check_status_info(TS_RESP *response)
                ts_failure_sep(mask, 6), ts_failure_text(mask, 6),
                ts_failure_sep(mask, 7), ts_failure_text(mask, 7))
             < 0)
-        failure_text = NULL;
+        mfail_msg = "unable to display, malloc failed";
 
     ERR_raise_data(ERR_LIB_TS, TS_R_NO_TIME_STAMP_TOKEN,
         "status code: %s, status text: %s, failure codes: %s",
         status_text,
         embedded_status_text != NULL ? embedded_status_text : "unspecified",
-        failure_text != NULL ? failure_text : "unspecified");
+        failure_text != NULL ? failure_text : mfail_msg != NULL ? mfail_msg
+                                                                : "unspecified");
     OPENSSL_free(embedded_status_text);
     OPENSSL_free(failure_text);
 
