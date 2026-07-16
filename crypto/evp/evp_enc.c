@@ -153,24 +153,6 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
-        && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0) {
-        /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
-         *
-         * AEAD ciphers never use padding and the provider ignores the setting,
-         * so skip the redundant OSSL_PARAM round-trip for them on the init hot
-         * path (e.g. AES-GCM re-init). This covers all AEAD ciphers, e.g.
-         * AES-GCM, AES-CCM, AES-OCB, AES-SIV, AES-GCM-SIV, ARIA-GCM/CCM,
-         * SM4-GCM/CCM and ChaCha20-Poly1305. We check the cipher's own AEAD
-         * flag, so all other ciphers (block, stream and custom-provider) keep
-         * the original behaviour.
-         */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
-            return 0;
-    }
-
 #ifndef FIPS_MODULE
     /*
      * Fix for CVE-2023-5363
@@ -180,27 +162,52 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
      * The FIPS provider's internal library context is used in a manner
      * such that this is not an issue.
      */
-    if (params != NULL) {
-        OSSL_PARAM param_lens[3] = { OSSL_PARAM_END, OSSL_PARAM_END,
-            OSSL_PARAM_END };
+
+    /*
+     * If this ctx was already set up for no padding then we need to tell the
+     * new cipher about it. AEAD ciphers never use padding and the provider
+     * ignores the setting, so skip it for them on the init hot path (e.g.
+     * AES-GCM re-init); otherwise it is folded into the batched set_params
+     * round-trip below rather than issued as a separate call.
+     *
+     * This propagation is not needed inside the FIPS module: its internal
+     * callers either never request no-padding or set it explicitly after
+     * (re-)init, so they never rely on it being carried across an init.
+     */
+    int set_pad = (ctx->flags & EVP_CIPH_NO_PADDING) != 0
+        && (EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) == 0;
+
+    if (params != NULL || set_pad) {
+        OSSL_PARAM param_lens[4] = { OSSL_PARAM_END, OSSL_PARAM_END,
+            OSSL_PARAM_END, OSSL_PARAM_END };
         OSSL_PARAM *q = param_lens;
         const OSSL_PARAM *p;
+        unsigned int pd = 0;
+        int have_len;
 
-        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
-        if (p != NULL)
-            memcpy(q++, p, sizeof(*q));
+        if (params != NULL) {
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_KEYLEN);
+            if (p != NULL)
+                memcpy(q++, p, sizeof(*q));
 
-        /*
-         * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for
-         * OSSL_CIPHER_PARAM_IVLEN so both are covered here.
-         */
-        p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
-        if (p != NULL)
-            memcpy(q++, p, sizeof(*q));
+            /*
+             * Note that OSSL_CIPHER_PARAM_AEAD_IVLEN is a synonym for
+             * OSSL_CIPHER_PARAM_IVLEN so both are covered here.
+             */
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_IVLEN);
+            if (p != NULL)
+                memcpy(q++, p, sizeof(*q));
+        }
+
+        /* Only a key/IV length param can fail with a length error. */
+        have_len = (q != param_lens);
+
+        if (set_pad)
+            *q++ = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
 
         if (q != param_lens) {
             if (!EVP_CIPHER_CTX_set_params(ctx, param_lens)) {
-                ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_LENGTH);
+                ERR_raise(ERR_LIB_EVP, have_len ? EVP_R_INVALID_LENGTH : EVP_R_CANNOT_SET_PARAMETERS);
                 return 0;
             }
         }
