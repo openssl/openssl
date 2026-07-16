@@ -39,6 +39,16 @@
 /*
  * Defines related to seed sources
  */
+
+/* Name of the seed source used to seed the primary DRBG. */
+#ifndef OPENSSL_NO_FIPS_JITTER
+#define OPENSSL_SEED_SRC_NAME "JITTER"
+#elif defined(OPENSSL_DEFAULT_SEED_SRC)
+#define OPENSSL_SEED_SRC_NAME OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC)
+#else
+#define OPENSSL_SEED_SRC_NAME "SEED-SRC"
+#endif
+
 #ifndef DEVRANDOM
 /*
  * set this to a comma-separated list of 'random' device files to try out. By
