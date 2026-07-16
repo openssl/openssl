@@ -277,14 +277,14 @@ checks are performed. Configuring a list for a given name type implicitly
 enables the corresponding check; clearing it (by passing NULL or the
 empty string to the C<set1_> form) disables it.
 
-Unless suppressed by the host flags, the configured hostnames are also
-matched against the B<commonName> attribute of the certificate's subject
-distinguished name, and the configured RFC 822 email addresses against the
-subject B<emailAddress> attribute. SMTPUTF8 email and IP addresses have no
-subject distinguished name counterpart and are matched only against the
-subject alternative name extension. See L<X509_VERIFY_PARAM_set_hostflags(3)>
-and L<X509_check_host(3)> for the flags that govern whether and when the
-subject distinguished name is consulted.
+By default only the subject alternative name extension is consulted. When
+B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> is set, the configured hostnames
+are also matched against the B<commonName> attribute of the certificate's
+subject distinguished name, and the configured RFC 822 email addresses
+against the subject B<emailAddress> attribute. SMTPUTF8 email and IP
+addresses have no subject distinguished name counterpart and are always
+matched only against the subject alternative name extension. See
+L<X509_VERIFY_PARAM_set_hostflags(3)> and L<X509_check_host(3)>.
 
 =head1 SEE ALSO
 
