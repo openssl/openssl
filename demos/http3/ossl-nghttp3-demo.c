@@ -108,9 +108,10 @@ static int on_end_stream(nghttp3_conn *h3conn, int64_t stream_id,
 
 static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const char *path)
 {
+    int ret = 0;
     nghttp3_nv nva[16];
     size_t num_nv = 0;
-    struct stream_user_data *sdata;
+    struct stream_user_data *sdata = NULL;
 
     /* Build HTTP headers. */
     make_nv(&nva[num_nv++], ":method", "GET");
@@ -121,18 +122,19 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
 
     sdata = OPENSSL_malloc(sizeof(*sdata));
     if (sdata == NULL)
-        return 0;
+        goto err;
     sdata->outpath = NULL;
     sdata->fp = NULL;
     if (OPENSSL_asprintf(&sdata->outpath, "%s/%s", dlpath, path) < 0) {
-        OPENSSL_free(sdata);
-        return 0;
+        fprintf(stderr, "Cannot construct HTTP/3 request\n");
+        goto err;
     }
+
     fprintf(stderr, "Requesting %s\n", sdata->outpath);
     /* Submit request. */
     if (!OSSL_DEMO_H3_CONN_submit_request(conn, nva, num_nv, NULL, sdata)) {
         fprintf(stderr, "Cannot submit HTTP/3 request\n");
-        return 0;
+        goto err;
     }
 
     /* Wait for request to complete. */
@@ -140,16 +142,19 @@ static int try_conn(OSSL_DEMO_H3_CONN *conn, const char *bare_hostname, const ch
     while (!done) {
         if (!OSSL_DEMO_H3_CONN_handle_events(conn)) {
             fprintf(stderr, "Cannot handle events\n");
-            return 0;
+            goto err;
         }
     }
     if (sdata->fp != NULL) {
         fclose(sdata->fp);
         fprintf(stderr, "Closing local FILE pointer for %s\n", sdata->outpath);
     }
+    ret = 1;
+
+err:
     OPENSSL_free(sdata->outpath);
     OPENSSL_free(sdata);
-    return 1;
+    return ret;
 }
 
 int main(int argc, char **argv)
