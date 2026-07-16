@@ -300,6 +300,7 @@ sub generate_doc_buildinfo {
     unix_developer_action();
     my $buildinfo = srcpath(catfile('doc', 'build.info'));
     my $new = "$buildinfo.new";
+    chdir $blddir or die "Cannot change directory to $blddir: $!\n";
     capture_to_file($new, $config{PERL}, "-I$blddir", '-Mconfigdata',
                     srcpath(catfile('util', 'dofile.pl')), '-o', $buildfile,
                     srcpath(catfile('doc', 'build.info.in')));
