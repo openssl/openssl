@@ -14,6 +14,8 @@
 # Initial release.
 #
 
+use File::Spec;
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -38,8 +40,9 @@ if (!$avxifma && `$ENV{CC} -v 2>&1`
     $avxifma = ($ver>=16.0);
 }
 
-if (!$avxifma && `$ENV{CC} -x c /dev/null -dM -E|grep __clang_major__`
-    =~ /#define __clang_major__.([0-9]+)/) {
+my $devnull = File::Spec->devnull();
+if (!$avxifma && $ENV{CC} && `$ENV{CC} -x c -dM -E - <$devnull 2>$devnull`
+    =~ /^#define[ \t]+__clang_major__[ \t]+([0-9]+)\b/m) {
     if ($1) {
         $avxifma = ($1>=16);
     }
