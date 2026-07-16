@@ -183,7 +183,6 @@ err:
 static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 {
     int i;
-    size_t len;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     PKCS7_SIGNER_INFO *sitmp;
     const ASN1_OCTET_STRING *osdig = NULL;
@@ -200,13 +199,15 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
         }
     }
 
-    len = ASN1_STRING_length_ex(osdig);
-    if (len > INT_MAX)
-        return 0;
-
-    if (osdig != NULL)
+    if (osdig != NULL) {
+        size_t len;
+        len = ASN1_STRING_length_ex(osdig);
+        if (len > INT_MAX)
+            goto err;
         return PKCS7_add1_attrib_digest(si, ASN1_STRING_get0_data(osdig), (int)len);
+    }
 
+err:
     ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_MATCHING_DIGEST_TYPE_FOUND);
     return 0;
 }
