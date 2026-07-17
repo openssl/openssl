@@ -131,45 +131,33 @@ sub run_tests
         ok($fatal_alert, "Fragmented alert records test");
    }
     #Unrecognised record type tests
+    #Note: DTLS unrecognised record type tests are in dtlstest.c.
+    #      Skip here to avoid TLSProxy socket cleanup timing issues.
 
-    #Test 5: Sending an unrecognised record type in TLS1.2 should fail
-    $fatal_alert = 0;
-    $proxy->clear();
-    if ($run_test_as_dtls == 1) {
-        $proxy->serverflags("-min_protocol DTLSv1.2 -max_protocol DTLSv1.2");
-        $proxy->clientflags("-max_protocol DTLSv1.2");
-    } else {
+    SKIP: {
+        skip "DTLS unrecognized records tested in dtlstest", 1 if $run_test_as_dtls == 1;
+
+        #Test 5: Sending an unrecognised record type in TLS1.2 should fail
+        $fatal_alert = 0;
+        $proxy->clear();
         $proxy->serverflags("-tls1_2");
         $proxy->clientflags("-no_tls1_3");
-    }
-    $proxy->filter(\&add_unknown_record_type);
-    $proxy_start_success = $proxy->start();
-
-    if ($run_test_as_dtls == 1) {
-        ok($proxy_start_success == 0, "Unrecognised record type in DTLS1.2");
-    } else {
+        $proxy->filter(\&add_unknown_record_type);
+        $proxy->start();
         ok($fatal_alert, "Unrecognised record type in TLS1.2");
     }
 
     SKIP: {
-        skip "TLSv1.1 or DTLSv1 disabled", 1 if ($run_test_as_dtls == 0 && disabled("tls1_1"))
-                                                 || ($run_test_as_dtls == 1 && disabled("dtls1"));
+        skip "TLSv1.1 disabled", 1 if $run_test_as_dtls == 0 && disabled("tls1_1");
+        skip "DTLS unrecognized records tested in dtlstest", 1 if $run_test_as_dtls == 1;
 
         #Test 6: Sending an unrecognised record type in TLS1.1 should fail
         $fatal_alert = 0;
         $proxy->clear();
-        if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-min_protocol DTLSv1 -max_protocol DTLSv1 -cipher DEFAULT:\@SECLEVEL=0");
-        } else {
-            $proxy->clientflags("-tls1_1 -cipher DEFAULT:\@SECLEVEL=0");
-        }
+        $proxy->clientflags("-tls1_1 -cipher DEFAULT:\@SECLEVEL=0");
         $proxy->ciphers("AES128-SHA:\@SECLEVEL=0");
-        $proxy_start_success = $proxy->start();
-        if ($run_test_as_dtls == 1) {
-            ok($proxy_start_success == 0, "Unrecognised record type in DTLSv1");
-        } else {
-            ok($fatal_alert, "Unrecognised record type in TLSv1.1");
-        }
+        $proxy->start();
+        ok($fatal_alert, "Unrecognised record type in TLSv1.1");
     }
 
     SKIP: {
