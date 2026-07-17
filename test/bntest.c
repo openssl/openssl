@@ -1830,6 +1830,49 @@ err:
     return st;
 }
 
+static int file_modinv(STANZA *s)
+{
+    BIGNUM *a = NULL, *m = NULL, *ainv_check = NULL, *ainv = NULL;
+    int st = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(ainv_check = getBN(s, "ModInv")))
+        goto err;
+
+    if (BN_is_negative(ainv_check)) {
+        /* a negative testcase */
+        ERR_set_mark();
+        if (!TEST_ptr_null(BN_mod_inverse(NULL, a, m, ctx))
+            || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_BN)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                BN_R_NO_INVERSE))
+            goto err;
+        ERR_pop_to_mark();
+
+        st = 1;
+        goto err;
+    }
+
+    /* the inverse is unique in [1,M) */
+    if (!TEST_ptr(ainv = BN_mod_inverse(NULL, a, m, ctx))
+        || !equalBN("inv(A) (mod M)", ainv_check, ainv))
+        goto err;
+
+    /* verify A * ainv == 1 (mod M) */
+    if (!TEST_true(BN_mod_mul(ainv, a, ainv, m, ctx))
+        || !TEST_true(BN_is_one(ainv)))
+        goto err;
+
+    st = 1;
+err:
+    BN_free(a);
+    BN_free(m);
+    BN_free(ainv_check);
+    BN_free(ainv);
+    return st;
+}
+
 static int file_gcd(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *gcd = NULL, *ret = NULL;
@@ -3324,6 +3367,7 @@ static int file_test_run(STANZA *s)
         { "ModExp", file_modexp },
         { "Exp", file_exp },
         { "ModSqrt", file_modsqrt },
+        { "ModInv", file_modinv },
         { "GCD", file_gcd },
     };
     int numtests = OSSL_NELEM(filetests);
