@@ -794,6 +794,29 @@ err:
 }
 
 /*
+ * Re-encode *px to DER and parse it back, so that *px becomes a freshly parsed
+ * certificate reflecting the extensions last set on it.
+ */
+static int x509_roundtrip(X509 **px)
+{
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    X509 *out;
+    int len = i2d_X509(*px, &der);
+
+    if (len <= 0)
+        return 0;
+    p = der;
+    out = d2i_X509(NULL, &p, len);
+    OPENSSL_free(der);
+    if (out == NULL)
+        return 0;
+    X509_free(*px);
+    *px = out;
+    return 1;
+}
+
+/*
  * This test checks for a duplicate extension with an undefined NID, where the
  * duplicate is detected via OID.
  */
@@ -818,7 +841,6 @@ static int tests_x509_check_ext_duplicity_nid_undef(void)
         && TEST_ptr(x509s = sk_X509_new_null())
         && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
         && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
-        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))
         && TEST_ptr(obj1 = OBJ_txt2obj(unknown_oid, 1))
         && TEST_ptr(oct1 = ASN1_OCTET_STRING_new())
         && TEST_int_eq(ASN1_OCTET_STRING_set(oct1, data, sizeof(data)), 1)
@@ -835,6 +857,16 @@ static int tests_x509_check_ext_duplicity_nid_undef(void)
     if (!TEST_true(sk_X509_push(x509s, root)))
         goto err;
     root = NULL;
+
+    /*
+     * Re-encode and re-parse the leaf so it is a genuinely parsed certificate
+     * carrying the duplicate extension, then verify that.
+     */
+    if (!TEST_true(x509_roundtrip(&leaf))
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))) {
+        test = 0;
+        goto err;
+    }
 
     X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
     X509_VERIFY_PARAM_set_depth(param, 16);
@@ -892,7 +924,6 @@ static int tests_x509_check_ext_duplicity_nid_dynamic(void)
         && TEST_ptr(x509s = sk_X509_new_null())
         && TEST_ptr((root = X509_from_strings(kRootMendelsonAKIDKeyNULL)))
         && TEST_ptr((leaf = X509_from_strings(kLeafMendelsonAKIDKeyNULL)))
-        && TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))
         && TEST_true((nid = OBJ_create(oid, sn, ln)) != NID_undef)
         && TEST_ptr(obj1 = OBJ_nid2obj(nid))
         && TEST_ptr(oct1 = ASN1_OCTET_STRING_new())
@@ -910,6 +941,16 @@ static int tests_x509_check_ext_duplicity_nid_dynamic(void)
     if (!TEST_true(sk_X509_push(x509s, root)))
         goto err;
     root = NULL;
+
+    /*
+     * Re-encode and re-parse the leaf so it is a genuinely parsed certificate
+     * carrying the duplicate extension, then verify that.
+     */
+    if (!TEST_true(x509_roundtrip(&leaf))
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, NULL))) {
+        test = 0;
+        goto err;
+    }
 
     X509_STORE_CTX_set0_trusted_stack(ctx, x509s);
     X509_VERIFY_PARAM_set_depth(param, 16);
