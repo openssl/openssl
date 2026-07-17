@@ -16,6 +16,7 @@
 #include "crypto/bn.h"
 #include "crypto/fn_intern.h"
 #include "internal/nelem.h"
+#include "crypto/fnerr.h"
 #include "testutil.h"
 
 /*
@@ -674,6 +675,106 @@ err:
     BN_free(ret);
     return st;
 }
+
+static int file_modinv(STANZA *s)
+{
+    BIGNUM *a = NULL, *m = NULL, *ainv_check = NULL, *ret = NULL, *prod = NULL;
+    OSSL_FN *af = NULL, *rf = NULL, *mf = NULL, *pf = NULL;
+    OSSL_FN_CTX *ctx = NULL, *mul_ctx = NULL;
+    int a_neg = 0, st = 0;
+    int r_acq = 0, p_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(m = getBN(s, "M"))
+        || !TEST_ptr(ainv_check = getBN(s, "ModInv"))
+        || !TEST_ptr(ret = BN_new())
+        || !TEST_ptr(prod = BN_new()))
+        goto err;
+
+    a_neg = BN_is_negative(a);
+    nlimbs = limbs(m);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(mf = bn_get_ossl_fn(m))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_ptr(pf = bn_acquire_ossl_fn(prod, nlimbs)))
+        goto err;
+    p_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_inverse_ctx_size(rf, af, mf))))
+        goto err;
+
+    if (BN_is_negative(ainv_check)) {
+        /*
+         * Negative test: A has no inverse mod M (this covers the
+         * degenerate moduli M = 0 and M = 1, a == 0, and non-coprime pairs).
+         */
+        ERR_set_mark();
+        if (!TEST_false(OSSL_FN_mod_inverse(rf, af, mf, ctx))
+            || !TEST_int_eq(ERR_GET_LIB(ERR_peek_last_error()), ERR_LIB_OSSL_FN)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                OSSL_FN_R_NO_INVERSE))
+            goto err;
+        ERR_pop_to_mark();
+
+        st = 1;
+        goto err;
+    }
+
+    /* The inverse is unique in [1, M). */
+    if (!TEST_true(OSSL_FN_mod_inverse(rf, af, mf, ctx)))
+        goto err;
+
+    /*
+     * Verify the unsigned identity |A| * r == 1 (mod M) natively, before the
+     * sign fixup below consumes r.  OSSL_FN_mod_mul() needs its own sized
+     * arena, so a second context is allocated (the file_quotient idiom); pf
+     * is a distinct destination so r survives for the sign fixup and the
+     * corpus comparison below.
+     */
+    if (!TEST_ptr(mul_ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_mul_ctx_size(pf, af, rf, mf)))
+        || !TEST_true(OSSL_FN_mod_mul(pf, af, rf, mf, mul_ctx))
+        || !TEST_true(OSSL_FN_is_one(pf)))
+        goto err;
+
+    bn_release(prod, nlimbs);
+    p_acq = 0;
+    bn_release(ret, nlimbs);
+    r_acq = 0;
+
+    /*
+     * OSSL_FN is unsigned, so OSSL_FN_mod_inverse() computed the inverse of
+     * |A|.  For negative A the inverse of A is M - r (r is never zero for a
+     * valid inverse in [1, M)).
+     */
+    if (a_neg) {
+        if (!TEST_true(BN_sub(ret, m, ret)))
+            goto err;
+    }
+    if (!equalBN("inv(A) (mod M)", ainv_check, ret))
+        goto err;
+
+    st = 1;
+err:
+    if (p_acq)
+        bn_release(prod, nlimbs);
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    OSSL_FN_CTX_free(mul_ctx);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(m);
+    BN_free(ainv_check);
+    BN_free(prod);
+    BN_free(ret);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
@@ -684,6 +785,7 @@ static FILETEST filetests[] = {
     { "Quotient", file_quotient, 0 },
     { "ModMul", file_modmul, 0 },
     { "ModSqr", file_modsqr, 0 },
+    { "ModInv", file_modinv, 0 },
     { "ModExp", NULL, 0 },
     { "Exp", NULL, 0 },
     { "ModSqrt", NULL, 0 },
@@ -753,7 +855,6 @@ static int run_file_tests(int i)
 }
 
 OPT_TEST_DECLARE_USAGE("file...\n")
-
 
 /*
  * Standalone modular-inverse test.  Exercises OSSL_FN_mod_inverse() through
@@ -839,8 +940,6 @@ err:
     BN_free(expected);
     return st;
 }
-
-
 
 int setup_tests(void)
 {
