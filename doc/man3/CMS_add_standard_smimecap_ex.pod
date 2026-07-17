@@ -1,0 +1,87 @@
+=pod
+
+=head1 NAME
+
+CMS_add_standard_smimecap_ex, CMS_add_standard_smimecap,
+CMS_add_smimecap, CMS_add_simple_smimecap
+- CMS SMIMECapabilities attribute utilities
+
+=head1 SYNOPSIS
+
+ #include <openssl/cms.h>
+
+ int CMS_add_standard_smimecap_ex(STACK_OF(X509_ALGOR) **smcap,
+                                  OSSL_LIB_CTX *libctx, const char *propq);
+ int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap);
+
+ int CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs);
+ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
+                             int algnid, int keysize);
+
+=head1 DESCRIPTION
+
+CMS_add_standard_smimecap_ex() populates B<*smcap> with the set of
+algorithms that should be advertised in an SMIMECapabilities signed
+attribute.  Only algorithms that are available in the providers
+associated with B<libctx> and the property query string B<propq> are
+included, so the list accurately reflects what the caller can actually
+use.  If B<libctx> is NULL the default library context is used.  If
+B<*smcap> is NULL a new B<STACK_OF(X509_ALGOR)> is allocated; otherwise
+entries are appended to the existing stack.
+
+The candidate algorithms, listed in preference order, are: AES-256-CBC,
+GOST R 34.11-2012 (256-bit), GOST R 34.11-2012 (512-bit), GOST R
+34.11-94, GOST 28147-89, AES-192-CBC, AES-128-CBC, DES-EDE3-CBC,
+RC2-CBC (128-bit key), RC2-CBC (64-bit key), DES-CBC, and RC2-CBC
+(40-bit key).  Algorithms not available in the active providers
+(for example, RC2 and DES when only the default provider is loaded)
+are silently omitted.
+
+CMS_add_standard_smimecap() is a deprecated wrapper that calls
+CMS_add_standard_smimecap_ex() with a NULL library context and NULL
+property query string.
+
+CMS_add_smimecap() adds a pre-built stack of algorithm identifiers
+B<algs> as the SMIMECapabilities signed attribute on the
+B<CMS_SignerInfo> B<si>.
+
+CMS_add_simple_smimecap() appends a single algorithm entry to B<*algs>.
+B<algnid> is the NID of the algorithm and B<keysize> is the key size in
+bits, or -1 if the algorithm does not use a variable key size.
+
+=head1 NOTES
+
+Applications that need accurate capability advertisements should use
+CMS_add_standard_smimecap_ex(), passing the same B<libctx> and B<propq>
+used for the rest of the CMS operation.  This ensures that only
+algorithms genuinely available to the application are listed.
+
+CMS_add1_signer() calls CMS_add_standard_smimecap_ex() internally using
+the library context associated with the CMS_ContentInfo structure, so
+applications that use CMS_add1_signer() without B<CMS_NOSMIMECAP> do not
+need to call these functions directly.
+
+=head1 RETURN VALUES
+
+All functions return 1 for success or 0 for failure.
+
+=head1 SEE ALSO
+
+L<CMS_add1_signer(3)>, L<CMS_sign(3)>, L<OSSL_LIB_CTX(3)>
+
+=head1 HISTORY
+
+CMS_add_standard_smimecap_ex() was added in OpenSSL 4.1.
+
+CMS_add_standard_smimecap() was deprecated in OpenSSL 4.1.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
