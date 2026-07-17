@@ -43,7 +43,7 @@ IF[{- !$disabled{tests} -}]
   PROGRAMS{noinst}= \
           confdump \
           versions \
-          aborttest test_test pkcs12_format_test pkcs12_api_test \
+          aborttest asprintf_test test_test pkcs12_format_test pkcs12_api_test \
           sanitytest time_test rsa_complex exdatatest bntest \
           ecstresstest gmdifftest pbelutest \
           destest mdc2test sha_test \
@@ -172,6 +172,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[sha_test]=sha_test.c
   INCLUDE[sha_test]=../include ../apps/include
   DEPEND[sha_test]=../libcrypto libtestutil.a
+
+  SOURCE[asprintf_test]=asprintf_test.c
+  INCLUDE[asprintf_test]=../include ../apps/include
+  DEPEND[asprintf_test]=../libcrypto libtestutil.a
 
   SOURCE[exptest]=exptest.c
   INCLUDE[exptest]=../include ../apps/include

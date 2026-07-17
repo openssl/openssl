@@ -3960,9 +3960,8 @@ char *process_additional_mac_key_arguments(const char *arg)
             BIO_printf(bio_err, "No environment variable %s\n", arg);
             return NULL;
         }
-        outbuf = app_malloc(strlen("key:") + strlen(val) + 1, "MACOPT KEYENV");
-        strcpy(outbuf, "key:");
-        strcat(outbuf, val);
+        if (OPENSSL_asprintf(&outbuf, "key:%s", val) < 0)
+            outbuf = NULL;
         return outbuf;
     }
 
@@ -3976,9 +3975,8 @@ char *process_additional_mac_key_arguments(const char *arg)
             BIO_printf(bio_err, "No environment variable %s\n", arg);
             return NULL;
         }
-        outbuf = app_malloc(strlen("hexkey:") + strlen(val) + 1, "MACOPT KEYENVHEX");
-        strcpy(outbuf, "hexkey:");
-        strcat(outbuf, val);
+        if (OPENSSL_asprintf(&outbuf, "hexkey:%s", val) < 0)
+            outbuf = NULL;
         return outbuf;
     }
 
@@ -4030,9 +4028,8 @@ char *process_additional_mac_key_arguments(const char *arg)
             clear_free(inbuf);
             return NULL;
         }
-        outbuf = app_malloc(strlen("key:") + strlen(inbuf) + 1, "MACOPT KEYSTDIN");
-        strcpy(outbuf, "key:");
-        strcat(outbuf, inbuf);
+        if (OPENSSL_asprintf(&outbuf, "key:%s", inbuf) < 0)
+            outbuf = NULL;
         clear_free(inbuf);
         return outbuf;
     }

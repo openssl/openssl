@@ -307,20 +307,13 @@ int BIO_accept(int sock, char **ip_port)
     if (ip_port != NULL) {
         char *host = BIO_ADDR_hostname_string(&res, 1);
         char *port = BIO_ADDR_service_string(&res, 1);
-        if (host != NULL && port != NULL) {
-            *ip_port = OPENSSL_zalloc(strlen(host) + strlen(port) + 2);
-        } else {
+
+        if (host == NULL || port == NULL
+            || OPENSSL_asprintf(ip_port, "%s:%s", host, port) < 0) {
             *ip_port = NULL;
             ERR_raise(ERR_LIB_BIO, ERR_R_BIO_LIB);
-        }
-
-        if (*ip_port == NULL) {
             BIO_closesocket(ret);
             ret = (int)INVALID_SOCKET;
-        } else {
-            strcpy(*ip_port, host);
-            strcat(*ip_port, ":");
-            strcat(*ip_port, port);
         }
         OPENSSL_free(host);
         OPENSSL_free(port);
