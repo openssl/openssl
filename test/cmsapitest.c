@@ -275,6 +275,44 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
     return test_encrypt_decrypt(EVP_aes_256_gcm());
 }
 
+static int smimecap_has_nid(STACK_OF(X509_ALGOR) *smcap, int nid)
+{
+    int i;
+
+    for (i = 0; i < sk_X509_ALGOR_num(smcap); i++) {
+        X509_ALGOR *alg = sk_X509_ALGOR_value(smcap, i);
+        if (OBJ_obj2nid(alg->algorithm) == nid)
+            return 1;
+    }
+    return 0;
+}
+
+static int test_CMS_add_standard_smimecap_ex(void)
+{
+    STACK_OF(X509_ALGOR) *smcap = NULL;
+    int ret = 0;
+
+    if (!TEST_true(CMS_add_standard_smimecap_ex(&smcap, NULL, NULL)))
+        goto end;
+
+    /* AES ciphers must be present with the default provider */
+    if (!TEST_true(smimecap_has_nid(smcap, NID_aes_256_cbc))
+        || !TEST_true(smimecap_has_nid(smcap, NID_aes_192_cbc))
+        || !TEST_true(smimecap_has_nid(smcap, NID_aes_128_cbc)))
+        goto end;
+
+    /* RC2, DES, and GOST must NOT be present with just the default provider */
+    if (!TEST_false(smimecap_has_nid(smcap, NID_rc2_cbc))
+        || !TEST_false(smimecap_has_nid(smcap, NID_des_cbc))
+        || !TEST_false(smimecap_has_nid(smcap, NID_id_Gost28147_89)))
+        goto end;
+
+    ret = 1;
+end:
+    sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
+    return ret;
+}
+
 static int test_CMS_add1_cert(void)
 {
     CMS_ContentInfo *cms = NULL;
@@ -788,6 +826,7 @@ int setup_tests(void)
     ADD_TEST(test_non_aead_on_auth_envelope_enc);
     ADD_TEST(test_non_aead_on_auth_envelope_dec);
     ADD_TEST(test_short_mac_on_auth_envelope_data);
+    ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);

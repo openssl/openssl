@@ -31,6 +31,16 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
+   list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
+   available in the active providers are advertised.  The existing
+   `CMS_add_standard_smimecap()` is deprecated in favor of the new function.
+   `PKCS7_sign_add_signer()` was updated in the same way, so that legacy
+   ciphers such as RC2 and DES are no longer included in SMIMECapabilities
+   by default when only the default provider is loaded.
+
+   *Todd Short*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 

@@ -3313,7 +3313,7 @@ CMS_SignerInfo_verify_content           3311	4_0_0	EXIST::FUNCTION:CMS
 CMS_SignedData_verify                   3312	4_0_0	EXIST::FUNCTION:CMS
 CMS_add_smimecap                        3313	4_0_0	EXIST::FUNCTION:CMS
 CMS_add_simple_smimecap                 3314	4_0_0	EXIST::FUNCTION:CMS
-CMS_add_standard_smimecap               3315	4_0_0	EXIST::FUNCTION:CMS
+CMS_add_standard_smimecap               3315	4_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_4_1
 CMS_signed_get_attr_count               3316	4_0_0	EXIST::FUNCTION:CMS
 CMS_signed_get_attr_by_NID              3317	4_0_0	EXIST::FUNCTION:CMS
 CMS_signed_get_attr_by_OBJ              3318	4_0_0	EXIST::FUNCTION:CMS
@@ -5727,3 +5727,4 @@ EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_data                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_string                  ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_length_ex                   ?	4_1_0	EXIST::FUNCTION:
+CMS_add_standard_smimecap_ex            ?	4_1_0	EXIST::FUNCTION:CMS

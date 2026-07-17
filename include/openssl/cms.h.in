@@ -312,7 +312,11 @@ BIO *CMS_SignedData_verify(CMS_SignedData *sd, BIO *detached_data,
 int CMS_add_smimecap(CMS_SignerInfo *si, STACK_OF(X509_ALGOR) *algs);
 int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     int algnid, int keysize);
-int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap);
+int CMS_add_standard_smimecap_ex(STACK_OF(X509_ALGOR) **smcap,
+    OSSL_LIB_CTX *libctx, const char *propq);
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+OSSL_DEPRECATEDIN_4_1 int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap);
+#endif
 
 int CMS_signed_get_attr_count(const CMS_SignerInfo *si);
 int CMS_signed_get_attr_by_NID(const CMS_SignerInfo *si, int nid,

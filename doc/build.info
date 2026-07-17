@@ -827,6 +827,10 @@ DEPEND[html/man3/CMS_add1_signer.html]=man3/CMS_add1_signer.pod
 GENERATE[html/man3/CMS_add1_signer.html]=man3/CMS_add1_signer.pod
 DEPEND[man/man3/CMS_add1_signer.3]=man3/CMS_add1_signer.pod
 GENERATE[man/man3/CMS_add1_signer.3]=man3/CMS_add1_signer.pod
+DEPEND[html/man3/CMS_add_standard_smimecap_ex.html]=man3/CMS_add_standard_smimecap_ex.pod
+GENERATE[html/man3/CMS_add_standard_smimecap_ex.html]=man3/CMS_add_standard_smimecap_ex.pod
+DEPEND[man/man3/CMS_add_standard_smimecap_ex.3]=man3/CMS_add_standard_smimecap_ex.pod
+GENERATE[man/man3/CMS_add_standard_smimecap_ex.3]=man3/CMS_add_standard_smimecap_ex.pod
 DEPEND[html/man3/CMS_compress.html]=man3/CMS_compress.pod
 GENERATE[html/man3/CMS_compress.html]=man3/CMS_compress.pod
 DEPEND[man/man3/CMS_compress.3]=man3/CMS_compress.pod
@@ -3262,6 +3266,7 @@ html/man3/CMS_EnvelopedData_create.html \
 html/man3/CMS_add0_cert.html \
 html/man3/CMS_add1_recipient_cert.html \
 html/man3/CMS_add1_signer.html \
+html/man3/CMS_add_standard_smimecap_ex.html \
 html/man3/CMS_compress.html \
 html/man3/CMS_data_create.html \
 html/man3/CMS_decrypt.html \
@@ -3938,6 +3943,7 @@ man/man3/CMS_EnvelopedData_create.3 \
 man/man3/CMS_add0_cert.3 \
 man/man3/CMS_add1_recipient_cert.3 \
 man/man3/CMS_add1_signer.3 \
+man/man3/CMS_add_standard_smimecap_ex.3 \
 man/man3/CMS_compress.3 \
 man/man3/CMS_data_create.3 \
 man/man3/CMS_decrypt.3 \
