@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
+   list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
+   available in the active providers are advertised.  `PKCS7_sign_add_signer()`
+   was updated in the same way, so that legacy ciphers such as RC2 and DES are
+   no longer included in SMIMECapabilities by default when only the default
+   provider is loaded.
+
+   *Todd Short*
+
  * Added various optimizations for the Elbrus2000 architecture in the
    cryptographic and BN code.
 
