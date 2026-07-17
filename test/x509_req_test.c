@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/core_names.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -74,11 +75,16 @@ static int test_x509_req_add_exts(void)
     EVP_PKEY *pkey = NULL;
     int ret = 0;
     int nid = NID_undef;
+    OSSL_PARAM params[2];
+    size_t bits = 2048;
+
+    params[0] = OSSL_PARAM_construct_size_t(OSSL_PKEY_PARAM_RSA_BITS, &bits);
+    params[1] = OSSL_PARAM_construct_end();
 
     ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
     if (ctx == NULL
         || EVP_PKEY_keygen_init(ctx) <= 0
-        || EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, 2048) <= 0
+        || EVP_PKEY_CTX_set_params(ctx, params) <= 0
         || EVP_PKEY_keygen(ctx, &pkey) <= 0
         || (x = X509_REQ_new()) == NULL
         || X509_REQ_set_pubkey(x, pkey) <= 0)
