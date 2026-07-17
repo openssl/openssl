@@ -431,11 +431,13 @@ int OSSL_FN_is_odd(const OSSL_FN *a);
 /*-
  * Top/bottom selectors for OSSL_FN_rand() / OSSL_FN_priv_rand().  These are
  * caller-chosen public parameters (not secrets); OSSL_FN_rand() branches on
- * them to shape the top and bottom bits of the result.
+ * them to shape the top and bottom bits of the result.  Each TOP_* value is
+ * the number of high bits to force to 1 (0 = unconstrained, 1, 2), matching
+ * the BOTTOM_* numbering (0 = unconstrained, 1 = force the low bit).
  */
-#define OSSL_FN_RAND_TOP_ANY (-1)
-#define OSSL_FN_RAND_TOP_ONE 0
-#define OSSL_FN_RAND_TOP_TWO 1
+#define OSSL_FN_RAND_TOP_ANY 0
+#define OSSL_FN_RAND_TOP_ONE 1
+#define OSSL_FN_RAND_TOP_TWO 2
 #define OSSL_FN_RAND_BOTTOM_ANY 0
 #define OSSL_FN_RAND_BOTTOM_ODD 1
 
