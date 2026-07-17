@@ -50,6 +50,13 @@ IF[{- $config{target} =~ /^(?:linux|BSD)/ -}]
   DEPEND[crypto/bio/test_bss_fd]=../../libcrypto.a
   WRAP[crypto/bio/test_bss_fd]=read write lseek close
 
+  PROGRAMS{noinst}=crypto/bio/test_bss_file
+  SOURCE[crypto/bio/test_bss_file]=crypto/bio/test_bss_file.c
+  INCLUDE[crypto/bio/test_bss_file]=../../include ../../crypto/bio
+  DEPEND[crypto/bio/test_bss_file]=../../libcrypto.a
+  WRAP[crypto/bio/test_bss_file]=openssl_fopen fread fwrite fseek ftell feof \
+      ferror fclose fflush fgets
+
   PROGRAMS{noinst}=crypto/bio/test_bss_sock
   SOURCE[crypto/bio/test_bss_sock]=crypto/bio/test_bss_sock.c
   WRAP[crypto/bio/test_bss_sock]=read write BIO_closesocket
@@ -64,4 +71,20 @@ IF[{- $config{target} =~ /^VC-/ -}]
   INCLUDE[crypto/bio/test_bss_dgram_win]=../../include ../../include/internal \
       ../../crypto/bio
   DEPEND[crypto/bio/test_bss_dgram_win]=../../libcrypto
+
+  # On uplink builds the test must see the same BIO_FLAGS_UPLINK_INTERNAL
+  # value as libcrypto, and needs applink so UP_* calls dispatch into the
+  # test executable, where the detours intercept them.
+  IF[{- !$disabled{uplink} -}]
+    $INITSRC=../../ms/applink.c
+    $UPLINKDEF=OPENSSL_USE_APPLINK
+  ENDIF
+
+  PROGRAMS{noinst}=crypto/bio/test_bss_file_win
+  SOURCE[crypto/bio/test_bss_file_win]=crypto/bio/test_bss_file_win.c $INITSRC
+  DEFINE[crypto/bio/test_bss_file_win]=$UPLINKDEF
+  UNIT_TEST[crypto/bio/test_bss_file_win]=cmocka detours
+  INCLUDE[crypto/bio/test_bss_file_win]=../../include ../../include/internal \
+      ../../crypto/bio ../..
+  DEPEND[crypto/bio/test_bss_file_win]=../../libcrypto
 ENDIF
