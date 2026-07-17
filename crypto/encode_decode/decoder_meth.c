@@ -415,7 +415,10 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
                  * lives beyond the freeing of that tmp_store
                  */
 #ifndef OPENSSL_NO_CACHED_FETCH
-                OSSL_DECODER_up_ref((OSSL_DECODER *)method);
+                if (!OSSL_DECODER_up_ref((OSSL_DECODER *)method)) {
+                    ossl_decoder_free(method);
+                    method = NULL;
+                }
 #endif
             }
         }
