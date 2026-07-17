@@ -66,7 +66,8 @@ static int ossl_fn_rand(enum ossl_fn_rand_flag flag, OSSL_FN *rnd, size_t bits,
             goto toosmall;
         return OSSL_FN_zero(rnd);
     }
-    if (bits == 1 && top > 0)
+    /* TOP_TWO forces two high bits, so it needs at least two bits. */
+    if (top == OSSL_FN_RAND_TOP_TWO && bits < 2)
         goto toosmall;
 
     limbs_needed = bits / OSSL_FN_BITS;
@@ -111,14 +112,14 @@ static int ossl_fn_rand(enum ossl_fn_rand_flag flag, OSSL_FN *rnd, size_t bits,
         rnd->d[top_limb] &= (OSSL_FN_ULONG_C(1) << (bits % OSSL_FN_BITS)) - 1;
 
     /* Set the requested top bit(s); |bits| >= 2 is guaranteed for TOP_TWO. */
-    if (top >= 0) {
+    if (top != OSSL_FN_RAND_TOP_ANY) {
         ossl_fn_set_bit(rnd, bits - 1);
-        if (top) /* OSSL_FN_RAND_TOP_TWO */
+        if (top == OSSL_FN_RAND_TOP_TWO)
             ossl_fn_set_bit(rnd, bits - 2);
     }
 
     /* Set the bottom bit if requested. */
-    if (bottom) /* OSSL_FN_RAND_BOTTOM_ODD */
+    if (bottom == OSSL_FN_RAND_BOTTOM_ODD)
         rnd->d[0] |= OSSL_FN_ULONG_C(1);
 
     return 1;
