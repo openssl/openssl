@@ -1639,25 +1639,24 @@ SSL_R_TLSV1_BAD_CERTIFICATE_STATUS_RESPONSE:1113:\
 SSL_R_TLSV1_CERTIFICATE_UNOBTAINABLE:1111:tlsv1 certificate unobtainable
 SSL_R_TLSV1_UNRECOGNIZED_NAME:1112:tlsv1 unrecognized name
 SSL_R_TLSV1_UNSUPPORTED_EXTENSION:1110:tlsv1 unsupported extension
-SSL_R_TLS_ALERT_BAD_CERTIFICATE:1042:ssl/tls alert bad certificate
-SSL_R_TLS_ALERT_BAD_RECORD_MAC:1020:ssl/tls alert bad record mac
-SSL_R_TLS_ALERT_CERTIFICATE_EXPIRED:1045:ssl/tls alert certificate expired
-SSL_R_TLS_ALERT_CERTIFICATE_REVOKED:1044:ssl/tls alert certificate revoked
-SSL_R_TLS_ALERT_CERTIFICATE_UNKNOWN:1046:ssl/tls alert certificate unknown
-SSL_R_TLS_ALERT_DECOMPRESSION_FAILURE:1030:ssl/tls alert decompression failure
-SSL_R_TLS_ALERT_HANDSHAKE_FAILURE:1040:ssl/tls alert handshake failure
-SSL_R_TLS_ALERT_ILLEGAL_PARAMETER:1047:ssl/tls alert illegal parameter
-SSL_R_TLS_ALERT_NO_CERTIFICATE:1041:ssl/tls alert no certificate
-SSL_R_TLS_ALERT_UNEXPECTED_MESSAGE:1010:ssl/tls alert unexpected message
-SSL_R_TLS_ALERT_UNSUPPORTED_CERTIFICATE:1043:\
-	ssl/tls alert unsupported certificate
+SSL_R_TLS_ALERT_BAD_CERTIFICATE:1042:tls alert bad certificate
+SSL_R_TLS_ALERT_BAD_RECORD_MAC:1020:tls alert bad record mac
+SSL_R_TLS_ALERT_CERTIFICATE_EXPIRED:1045:tls alert certificate expired
+SSL_R_TLS_ALERT_CERTIFICATE_REVOKED:1044:tls alert certificate revoked
+SSL_R_TLS_ALERT_CERTIFICATE_UNKNOWN:1046:tls alert certificate unknown
+SSL_R_TLS_ALERT_DECOMPRESSION_FAILURE:1030:tls alert decompression failure
+SSL_R_TLS_ALERT_HANDSHAKE_FAILURE:1040:tls alert handshake failure
+SSL_R_TLS_ALERT_ILLEGAL_PARAMETER:1047:tls alert illegal parameter
+SSL_R_TLS_ALERT_NO_CERTIFICATE:1041:tls alert no certificate
+SSL_R_TLS_ALERT_UNEXPECTED_MESSAGE:1010:tls alert unexpected message
+SSL_R_TLS_ALERT_UNSUPPORTED_CERTIFICATE:1043:tls alert unsupported certificate
 SSL_R_TLS_EXT_INVALID_MAX_FRAGMENT_LENGTH:232:\
-	ssl3 ext invalid max fragment length
-SSL_R_TLS_EXT_INVALID_SERVERNAME:319:ssl3 ext invalid servername
-SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE:320:ssl3 ext invalid servername type
+	tls ext invalid max fragment length
+SSL_R_TLS_EXT_INVALID_SERVERNAME:319:tls ext invalid servername
+SSL_R_TLS_EXT_INVALID_SERVERNAME_TYPE:320:tls ext invalid servername type
 SSL_R_TLS_ILLEGAL_EXPORTER_LABEL:367:tls illegal exporter label
 SSL_R_TLS_INVALID_ECPOINTFORMAT_LIST:157:tls invalid ecpointformat list
-SSL_R_TLS_SESSION_ID_TOO_LONG:300:ssl3 session id too long
+SSL_R_TLS_SESSION_ID_TOO_LONG:300:tls session id too long
 SSL_R_TOO_MANY_KEY_UPDATES:132:too many key updates
 SSL_R_TOO_MANY_WARN_ALERTS:409:too many warn alerts
 SSL_R_TOO_MUCH_EARLY_DATA:164:too much early data
