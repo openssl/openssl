@@ -19,6 +19,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
+#include <openssl/core_names.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
@@ -32,6 +33,93 @@ static void cms_env_set_version(CMS_EnvelopedData *env);
 
 #define CMS_ENVELOPED_STANDARD 1
 #define CMS_ENVELOPED_AUTH 2
+
+static int process_unprotected(EVP_CIPHER_CTX *ctx, int is_decrypt, STACK_OF(X509_ATTRIBUTE) *unprotected_attrs)
+{
+    int i, ret = 0;
+    void *data = NULL;
+    size_t size = 0;
+    OSSL_PARAM params[2] = {
+        OSSL_PARAM_END, OSSL_PARAM_END
+    };
+
+    if (is_decrypt) {
+        size_t der_len = 0;
+        unsigned char *der_data = NULL;
+
+        for (i = 0; i < sk_X509_ATTRIBUTE_num(unprotected_attrs); i++) {
+            X509_ATTRIBUTE *attr = sk_X509_ATTRIBUTE_value(unprotected_attrs, i);
+            int len = i2d_X509_ATTRIBUTE(attr, NULL);
+            if (len < 0) {
+                return 0;
+            }
+            der_len += len;
+        }
+
+        if (der_len) {
+            der_data = OPENSSL_malloc(der_len);
+            unsigned char *p;
+
+            if (der_data == NULL) {
+                return 0;
+            }
+
+            p = der_data;
+            for (i = 0; i < sk_X509_ATTRIBUTE_num(unprotected_attrs); i++) {
+                X509_ATTRIBUTE *attr = sk_X509_ATTRIBUTE_value(unprotected_attrs, i);
+                int len = i2d_X509_ATTRIBUTE(attr, &p);
+
+                if (len < 0) {
+                    OPENSSL_free(der_data);
+                    return 0;
+                }
+            }
+        }
+
+        data = der_data;
+        size = der_len;
+    }
+
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_PROCESS_UNPROTECTED, data, size);
+
+    if (is_decrypt) {
+        ret = EVP_CIPHER_CTX_set_params(ctx, params);
+    } else {
+        ret = EVP_CIPHER_CTX_get_params(ctx, params);
+    }
+
+    if (!is_decrypt && ret == 1) {
+        const unsigned char *der_data = params[0].data;
+        const unsigned char *p_der_data = params[0].data;
+        size_t der_len = params[0].return_size;
+
+        while (der_len > 0) {
+            X509_ATTRIBUTE *attr = d2i_X509_ATTRIBUTE(NULL, &p_der_data, (long)der_len);
+            STACK_OF(X509_ATTRIBUTE) *tmp_stack;
+
+            if (attr == NULL) {
+                OPENSSL_free(params[0].data);
+                return 0;
+            }
+
+            tmp_stack = X509at_add1_attr(&unprotected_attrs, attr);
+            X509_ATTRIBUTE_free(attr);
+            if (!tmp_stack) {
+                OPENSSL_free(params[0].data);
+                return 0;
+            }
+
+            der_len -= (p_der_data - der_data);
+        }
+    }
+
+    OPENSSL_free(params[0].data);
+
+    if (ret == 0)
+        ERR_raise(ERR_LIB_EVP, EVP_R_CTRL_OPERATION_NOT_IMPLEMENTED);
+
+    return ret;
+}
 
 static int cms_get_enveloped_type_simple(const CMS_ContentInfo *cms)
 {
@@ -115,14 +203,18 @@ cms_auth_enveloped_data_init(CMS_ContentInfo *cms)
 int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
 {
     EVP_PKEY *pkey;
+    EVP_PKEY_CTX *pctx;
     int i;
 
     switch (ri->type) {
     case CMS_RECIPINFO_TRANS:
         pkey = ri->d.ktri->pkey;
+        pctx = ri->d.ktri->pctx;
+        if (pkey == NULL)
+            return 0;
         break;
     case CMS_RECIPINFO_AGREE: {
-        EVP_PKEY_CTX *pctx = ri->d.kari->pctx;
+        pctx = ri->d.kari->pctx;
 
         if (pctx == NULL)
             return 0;
@@ -144,18 +236,62 @@ int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     else if (EVP_PKEY_is_a(pkey, "RSA"))
         return ossl_cms_rsa_envelope(ri, cmd);
 
-    /* Something else? We'll give engines etc a chance to handle this */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return 1;
-    i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
-    if (i == -2) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
+    /* Now give engines, providers, etc a chance to handle this */
+    if (pkey->ameth != NULL && pkey->ameth->pkey_ctrl != NULL) {
+        i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
+        if (i == -2) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
+            return 0;
+        }
+        if (i <= 0) {
+            ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
+            return 0;
+        }
+    } else {
+        X509_ALGOR *alg;
+        if (!CMS_RecipientInfo_ktri_get0_algs(ri, NULL, NULL, &alg))
+            return 0;
+
+        if (pctx == NULL)
+            return 0;
+
+        OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+        if (cmd) { /* dec */
+            unsigned char *aid = NULL;
+            int aid_len = i2d_X509_ALGOR(alg, &aid);
+
+            if (aid_len <= 0)
+                return 0;
+
+            params[0] = OSSL_PARAM_construct_octet_string(
+                OSSL_ASYM_CIPHER_PARAM_KEY_ENC_ALGORITHM_ID,
+                aid, aid_len);
+
+            if (!EVP_PKEY_CTX_set_params(pctx, params)) {
+                OPENSSL_free(aid);
+                return 0;
+            }
+            OPENSSL_free(aid);
+        } else { /* enc */
+            unsigned char aid[OSSL_MAX_ALGORITHM_ID_SIZE];
+            const unsigned char *pp = aid;
+            size_t aid_len = 0;
+
+            params[0] = OSSL_PARAM_construct_octet_string(
+                OSSL_ASYM_CIPHER_PARAM_KEY_ENC_ALGORITHM_ID,
+                aid, sizeof(aid));
+
+            if (EVP_PKEY_CTX_get_params(pctx, params) <= 0)
+                return 0;
+            if ((aid_len = params[0].return_size) == 0) {
+                ERR_raise(ERR_LIB_CMS, ASN1_R_DIGEST_AND_KEY_TYPE_NOT_SUPPORTED);
+                return 0;
+            }
+            if (d2i_X509_ALGOR(&alg, &pp, (long)aid_len) == NULL)
+                return 0;
+        }
     }
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
-        return 0;
-    }
+
     return 1;
 }
 
@@ -1179,9 +1315,7 @@ static BIO *cms_EnvelopedData_Decryption_init_bio(CMS_ContentInfo *cms)
     if ((EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
             & EVP_CIPH_FLAG_CIPHER_WITH_MAC)
             != 0
-        && EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_PROCESS_UNPROTECTED, 0,
-               cms->d.envelopedData->unprotectedAttrs)
-            <= 0) {
+        && process_unprotected(ctx, 1, cms->d.envelopedData->unprotectedAttrs) <= 0) {
         BIO_free(contentBio);
         return NULL;
     }
@@ -1345,9 +1479,7 @@ int ossl_cms_EnvelopedData_final(CMS_ContentInfo *cms, BIO *chain)
             return 0;
         }
 
-        if (EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_PROCESS_UNPROTECTED,
-                1, env->unprotectedAttrs)
-            <= 0) {
+        if (process_unprotected(ctx, 0, env->unprotectedAttrs) <= 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
             return 0;
         }
