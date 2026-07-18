@@ -1293,32 +1293,28 @@ uint32_t X509_get_extended_key_usage(const X509 *x)
 
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return x->skid;
 }
 
 const ASN1_OCTET_STRING *X509_get0_authority_key_id(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->keyid : NULL);
 }
 
 const GENERAL_NAMES *X509_get0_authority_issuer(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->issuer : NULL);
 }
 
 const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->serial : NULL);
 }
