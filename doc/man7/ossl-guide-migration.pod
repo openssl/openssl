@@ -2428,8 +2428,11 @@ See L</Deprecated low-level encryption functions>
 
 RSA_private_encrypt(), RSA_public_decrypt()
 
-This is equivalent to doing sign and verify recover operations (with a padding
-mode of none). See L</Deprecated low-level signing functions>.
+These are equivalent to L<EVP_PKEY_sign(3)> and
+L<EVP_PKEY_verify_recover(3)> operations, respectively. For compatibility
+with the legacy low-level operations, do not configure a signature digest and
+use the same padding mode as the legacy call (B<RSA_PKCS1_PADDING> or
+B<RSA_NO_PADDING>). See L</Deprecated low-level signing functions>.
 
 =item *
 
