@@ -1273,8 +1273,6 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
 
 uint32_t X509_get_extension_flags(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(x, -1, 0);
     return x->ex_flags;
 }
 
