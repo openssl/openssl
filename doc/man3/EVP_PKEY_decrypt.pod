@@ -17,12 +17,13 @@ EVP_PKEY_decrypt - decrypt using a public key algorithm
 
 =head1 DESCRIPTION
 
-The EVP_PKEY_decrypt_init() function initializes a public key algorithm
-context using key I<pkey> for a decryption operation.
+The EVP_PKEY_decrypt_init() function initializes the public key algorithm
+context I<ctx> for a decryption operation.  A key must already be associated
+with I<ctx>; this is normally done by creating it with
+L<EVP_PKEY_CTX_new(3)> or L<EVP_PKEY_CTX_new_from_pkey(3)>.
 
-The EVP_PKEY_decrypt_init_ex() function initializes a public key algorithm
-context using key I<pkey> for a decryption operation and sets the
-algorithm specific I<params>.
+The EVP_PKEY_decrypt_init_ex() function is the same as
+EVP_PKEY_decrypt_init() but additionally sets the algorithm-specific I<params>.
 
 The EVP_PKEY_decrypt() function performs a public key decryption operation
 using I<ctx>. The data to be decrypted is specified using the I<in> and
@@ -88,7 +89,7 @@ Decrypt data using OAEP (for RSA keys):
   * NB: assumes key, in, inlen are already set up
   * and that key is an RSA private key
   */
- ctx = EVP_PKEY_CTX_new(key, NULL);
+ ctx = EVP_PKEY_CTX_new_from_pkey(NULL, key, NULL);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_decrypt_init(ctx) <= 0)
@@ -125,7 +126,7 @@ These functions were added in OpenSSL 1.0.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
