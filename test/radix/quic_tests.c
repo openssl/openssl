@@ -1825,8 +1825,23 @@ DEF_SCRIPT(script_25, "Fault injection - excess value of MAX_STREAMS_UNI")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_26, "place holder for multistrem script_26")
+/* 26. Fault injection - excess value of STREAMS_BLOCKED_BIDI */
+DEF_SCRIPT(script_26, "Fault injection - excess value of STREAMS_BLOCKED_BIDI")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_24_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI);
+
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_LIMIT_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_27, "place holder for multistrem script_27")
