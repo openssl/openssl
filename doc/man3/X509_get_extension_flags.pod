@@ -161,6 +161,11 @@ in the B<X509> structure. If the flags returned do not provide sufficient
 information an application should examine extension values directly
 for example using X509_get_ext_d2i().
 
+These functions read cached information that is populated only when the
+certificate is finalized, that is parsed or signed; see L<x509(7)>. They are
+meaningful only for a finalized certificate and do not reflect changes made to
+a certificate after it was finalized.
+
 If the key usage or extended key usage extension is absent then typically usage
 is unrestricted. For this reason X509_get_key_usage() and
 X509_get_extended_key_usage() return B<UINT32_MAX> when the corresponding
