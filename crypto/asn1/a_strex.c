@@ -142,6 +142,10 @@ static int do_buf(const unsigned char *buf, int buflen,
     const unsigned char *p, *q;
     uint32_t c;
 
+    if (buflen < 0)
+        return -1;
+    if (buflen == 0)
+        return 0;
     p = buf;
     q = buf + buflen;
     outlen = 0;
@@ -236,6 +240,10 @@ static int do_hex_dump(char_io *io_ch, void *arg, unsigned char *buf,
     unsigned char *p, *q;
     char hextmp[2];
 
+    if (buflen < 0)
+        return -1;
+    if (buflen == 0)
+        return 0;
     if (arg) {
         p = buf;
         q = buf + buflen;
