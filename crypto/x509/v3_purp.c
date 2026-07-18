@@ -862,7 +862,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 int X509_check_ca(const X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
-    if (!ossl_x509v3_cache_extensions(x))
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
 
     return check_ca(x);
@@ -1180,9 +1180,8 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid, subject->akid, and subject->ex_flags */
-    if (!ossl_x509v3_cache_extensions(issuer)
-        || !ossl_x509v3_cache_extensions(subject))
+    if ((issuer->ex_flags & EXFLAG_INVALID) != 0
+        || (subject->ex_flags & EXFLAG_INVALID) != 0)
         return X509_V_ERR_UNSPECIFIED;
 
     if (issuer == subject
