@@ -404,7 +404,7 @@ static int asn1_string_canon(ASN1_STRING *out, const ASN1_STRING *in)
 
     out->type = V_ASN1_UTF8STRING;
     out->length = ASN1_STRING_to_UTF8(&out->data, in);
-    if (out->length == -1)
+    if (out->length <= 0)
         return 0;
 
     to = out->data;
