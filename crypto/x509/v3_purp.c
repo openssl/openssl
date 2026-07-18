@@ -1277,16 +1277,14 @@ uint32_t X509_get_extension_flags(const X509 *x)
 
 uint32_t X509_get_key_usage(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
     return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
 
 uint32_t X509_get_extended_key_usage(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
     return (x->ex_flags & EXFLAG_XKUSAGE) != 0 ? x->ex_xkusage : UINT32_MAX;
 }
@@ -1321,8 +1319,7 @@ const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x)
 
 long X509_get_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
+    if ((x->ex_flags & EXFLAG_INVALID) != 0
         || (x->ex_flags & EXFLAG_BCONS) == 0)
         return -1;
     return x->ex_pathlen;
@@ -1330,8 +1327,7 @@ long X509_get_pathlen(const X509 *x)
 
 long X509_get_proxy_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
+    if ((x->ex_flags & EXFLAG_INVALID) != 0
         || (x->ex_flags & EXFLAG_PROXY) == 0)
         return -1;
     return x->ex_pcpathlen;
