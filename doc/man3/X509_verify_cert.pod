@@ -29,6 +29,12 @@ chain construction, verification parameters such as flags and a verification
 purpose, an optional verification callback, and, after a call, the verification
 outcome.
 
+All certificates involved in the verification -- the target, the untrusted
+certificates, and the trusted certificates in the store -- must be finalized,
+that is parsed or signed and not modified since; see L<x509(7)>. Verification
+relies on cached extension information that is populated only when a certificate
+is finalized.
+
 A B<X509_STORE_CTX> can be used for only one verification. Calling
 X509_verify_cert() a second time on the same context without reinitialising it
 fails with a negative return value, and L<X509_STORE_CTX_get_error(3)>
