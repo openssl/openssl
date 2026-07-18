@@ -1923,8 +1923,30 @@ DEF_SCRIPT(script_28, "Fault injection - received RESET_STREAM for send-only str
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_29, "place holder for multistrem script_29")
+/* 29. Fault injection - received RESET_STREAM for nonexistent send-only stream */
+DEF_SCRIPT(script_29, "Fault injection - received RESET_STREAM for nonexistent send-only stream")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "orange", 6);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "orange", 6);
+
+    OP_NEW_STREAM(C, Cb, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Cb, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+    OP_READ_EXPECT(Sb, "apple", 5);
+
+    OP_SET_INJECT_WORD(C_UNI_ID(1) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM);
+    OP_WRITE(Sa, "fruit", 5);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_30, "place holder for multistrem script_30")
