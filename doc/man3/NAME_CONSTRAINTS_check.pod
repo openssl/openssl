@@ -23,6 +23,8 @@ and B<excludedSubtrees>) and a candidate certificate, decide whether the
 certificate's names fall within the permitted subtrees and outside the
 excluded subtrees.
 
+The certificate I<x> must be finalized (parsed or signed); see L<x509(7)>.
+
 The names considered by NAME_CONSTRAINTS_check() are:
 
 =over 4

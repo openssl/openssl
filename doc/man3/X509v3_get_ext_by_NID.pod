@@ -149,6 +149,10 @@ In the case of X509v3_add_extensions() any previous instance of the same
 extension is deleted, so the call is not necessarily without side-effects in
 that case.
 
+Modifying the extensions of a certificate with X509_add_ext() or
+X509_delete_ext() after it has been parsed or signed does not update the
+certificate's cached extension data; see L<x509(7)>.
+
 =head1 RETURN VALUES
 
 X509v3_get_ext_count() returns the extension count or 0 for failure.

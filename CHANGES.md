@@ -223,6 +223,14 @@ OpenSSL 4.1
 
    *Bob Beck*
 
+ * The information derived from a certificate's X.509v3 extensions is now
+   cached when the certificate is parsed or signed rather than on first use.
+   The extension accessors and certificate verification are meaningful only
+   for such a finalized certificate; modifying a certificate after it has been
+   finalized leaves this cached information stale. See x509(7).
+
+   *Bob Beck*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*

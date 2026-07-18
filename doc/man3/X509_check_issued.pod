@@ -22,8 +22,9 @@ I<subject>, as far as present, with the respective B<subjectKeyIdentifier>,
 serial number, and issuer fields of I<issuer>, as far as present. It also checks
 if the I<subject> signature algorithm matches the I<issuer> public key algorithm
 and if any B<keyUsage> field given in I<issuer> allows certificate signing.
-It does not actually check the certificate signature. An error is returned
-if the I<issuer> or the I<subject> are incomplete certificates.
+It does not actually check the certificate signature. The I<issuer> and
+I<subject> must be finalized, that is parsed or signed (see L<x509(7)>); an
+error is returned otherwise.
 
 X509_check_akid() is a more low-level function.
 It assumes that various internal fields of I<issuer> have already been filled in,
