@@ -1863,8 +1863,64 @@ DEF_SCRIPT(script_27, "Fault injection - excess value of STREAMS_BLOCKED_UNI")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_LIMIT_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_28, "place holder for multistrem script_28")
+/* 28. Fault injection - received RESET_STREAM for send-only stream */
+static int inject_stream_frame_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[32];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+            fault->word0 - 1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 123))
+        || (fault->word1 == OSSL_QUIC_FRAME_TYPE_RESET_STREAM
+            && !TEST_true(WPACKET_quic_write_vlint(&wpkt, 5))) /* final size */
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_28, "Fault injection - received RESET_STREAM for send-only stream")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "orange", 6);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "orange", 6);
+
+    OP_NEW_STREAM(C, Cb, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Cb, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sb, 0);
+    OP_READ_EXPECT(Sb, "apple", 5);
+
+    OP_SET_INJECT_WORD(C_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_RESET_STREAM);
+    OP_WRITE(Sa, "fruit", 5);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_29, "place holder for multistrem script_29")
