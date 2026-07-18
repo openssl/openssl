@@ -2,14 +2,14 @@
 
 =head1 NAME
 
-x509v3_cache_extensions
+ossl_x509v3_cache_extensions
 - cache info on various X.509v3 extensions and further derived certificate data
 
 =head1 SYNOPSIS
 
- #include <openssl/x509v3.h>
+ #include "crypto/x509.h"
 
- int x509v3_cache_extensions(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+ int ossl_x509v3_cache_extensions(const X509 *x);
 
 =head1 DESCRIPTION
 
@@ -21,7 +21,10 @@ and property query string and stores the result in x->sha1_hash,
 or on failure sets B<EXFLAG_NO_FINGERPRINT> in x->flags.
 It sets B<X509_SIG_INFO_VALID> in x->flags if x->siginf was filled successfully,
 which may not be possible if a referenced algorithm is unknown or not available.
-Many OpenSSL functions that use an X509 object call this function implicitly.
+This function is called when a certificate is finalized, that is after it is
+parsed with a B<d2i_X509> function or signed, to populate the cache. It is
+idempotent: once the cache has been populated it returns the cached validity
+without reprocessing. See L<x509(7)> for the caching contract.
 
 =head1 RETURN VALUES
 

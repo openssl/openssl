@@ -45,6 +45,27 @@ B<X509_ATTRIBUTE_>I<XXX> functions handle certificate attributes.
 
 B<X509_EXTENSION_>I<XXX> functions handle certificate extensions.
 
+=head1 CACHED CERTIFICATE INFORMATION
+
+Some information derived from a certificate's extensions is computed once and
+cached within the B<X509> object rather than recomputed on each access, for
+instance the values reported by L<X509_get_extension_flags(3)> and related
+accessors.
+
+This cached information is populated when a certificate becomes I<finalized>:
+when it is parsed from its ASN.1 encoding with a B<d2i_X509> function, or
+signed with L<X509_sign(3)> or X509_sign_ctx(). It reflects the certificate as
+it was at that point. The extension accessors and the certificate verification
+functions rely on this cached information and are therefore meaningful only for
+a finalized certificate.
+
+Modifying a certificate after it has been finalized, for example by adding or
+removing an extension with L<X509_add_ext(3)>, does not update the cached
+information, which then no longer reflects the certificate's contents. Such a
+certificate must be encoded and parsed again, or signed again, before its
+cached information is valid. Retrieving cached information from a certificate
+that has been modified since it was finalized has undefined results.
+
 =head1 SEE ALSO
 
 L<X509_NAME_ENTRY_get_object(3)>,
