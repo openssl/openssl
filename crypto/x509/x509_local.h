@@ -194,9 +194,30 @@ int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TY
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
 STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     const X509_NAME *xn);
-int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,
+/**
+ * @brief Check whether a certificate matches an RFC 822 email address.
+ * Compares chk against the email addresses asserted by certificate x,
+ * following the matching rules of X509_check_email().
+ * @param x the certificate to check
+ * @param chk the email address to match against
+ * @param chklen length of chk in bytes, or 0 to use strlen(chk)
+ * @param flags bitwise OR of X509_CHECK_FLAG_* values controlling matching
+ * @returns 1 if the certificate matches, 0 otherwise
+ */
+int ossl_x509_check_rfc822(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
-int ossl_x509_check_smtputf8(X509 *x, const char *chk, size_t chklen,
+/**
+ * @brief Check whether a certificate matches a SmtpUTF8Mailbox address.
+ * Compares chk against the id-on-SmtpUTF8Mailbox otherName addresses
+ * (RFC 8398) asserted by certificate x, following the matching rules of
+ * X509_check_email().
+ * @param x the certificate to check
+ * @param chk the UTF-8 email address to match against
+ * @param chklen length of chk in bytes, or 0 to use strlen(chk)
+ * @param flags bitwise OR of X509_CHECK_FLAG_* values controlling matching
+ * @returns 1 if the certificate matches, 0 otherwise
+ */
+int ossl_x509_check_smtputf8(const X509 *x, const char *chk, size_t chklen,
     unsigned int flags);
 
 #endif /* !defined(OSSL_LIBCRYPTO_X509_X509_LOCAL_H) */
