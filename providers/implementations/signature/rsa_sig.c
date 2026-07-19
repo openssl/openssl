@@ -1015,7 +1015,13 @@ static int rsa_verify_recover(void *vprsactx,
         }
         ret = RSA_public_decrypt((int)siglen, sig, rout, prsactx->rsa,
             prsactx->pad_mode);
-        if (ret <= 0) {
+        /*
+         * RSA_public_decrypt() returns -1 on error and otherwise the number
+         * of recovered bytes, which may legitimately be zero for a raw
+         * PKCS#1 v1.5 signature that encodes an empty payload.  Treat only
+         * a negative result as an error.
+         */
+        if (ret < 0) {
             ERR_raise(ERR_LIB_PROV, ERR_R_RSA_LIB);
             return 0;
         }

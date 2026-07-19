@@ -3571,6 +3571,76 @@ done:
     return ret;
 }
 
+/*
+ * A raw RSA PKCS#1 v1.5 signature whose recovered data is empty must be
+ * recovered successfully with a length of zero, not rejected as an error.
+ */
+static int test_RSA_verify_recover_empty_payload(void)
+{
+    int ret = 0;
+    int recovered_cap = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *sign_ctx = NULL, *verify_ctx = NULL;
+    unsigned char *sig = NULL, *recovered = NULL;
+    size_t sig_len = 0, recovered_len = 0;
+    /*
+     * The signed input has zero length, but a valid non-null address is still
+     * passed so the result does not depend on how lower layers treat NULL for
+     * zero-length data.
+     */
+    const unsigned char empty[] = { 0 };
+
+    if (OSSL_PROVIDER_available(testctx, "fips"))
+        return TEST_skip("Test skipped for FIPS provider");
+
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(sign_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_sign_init(sign_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(sign_ctx, RSA_PKCS1_PADDING), 0)
+        /*
+         * Deliberately do not configure a signature digest so that the raw
+         * PKCS#1 v1.5 sign and verify-recover paths are exercised.
+         */
+        || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, NULL, &sig_len, empty, 0), 0)
+        || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
+        || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, sig, &sig_len, empty, 0), 0)
+        || !TEST_int_gt(recovered_cap = EVP_PKEY_get_size(pkey), 0)
+        || !TEST_ptr(recovered = OPENSSL_malloc(recovered_cap))
+        || !TEST_ptr(verify_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_verify_recover_init(verify_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(verify_ctx, RSA_PKCS1_PADDING),
+            0))
+        goto done;
+
+    /* Size-query call must succeed. */
+    recovered_len = (size_t)recovered_cap;
+    if (!TEST_int_gt(EVP_PKEY_verify_recover(verify_ctx, NULL,
+                         &recovered_len, sig, sig_len),
+            0))
+        goto done;
+
+    /*
+     * The actual recovery call is essential: a NULL output buffer would only
+     * run the size-query path, which never decodes the signature and so would
+     * not reproduce the regression.
+     */
+    recovered_len = (size_t)recovered_cap;
+    if (!TEST_int_gt(EVP_PKEY_verify_recover(verify_ctx, recovered,
+                         &recovered_len, sig, sig_len),
+            0)
+        || !TEST_size_t_eq(recovered_len, 0))
+        goto done;
+
+    ret = 1;
+done:
+    EVP_PKEY_CTX_free(sign_ctx);
+    EVP_PKEY_CTX_free(verify_ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(sig);
+    OPENSSL_free(recovered);
+    return ret;
+}
+
 static int test_RSA_encrypt(void)
 {
     int ret = 0;
@@ -7013,6 +7083,7 @@ int setup_tests(void)
     ADD_TEST(test_RSA_OAEP_set_get_params);
     ADD_TEST(test_RSA_OAEP_set_null_label);
     ADD_TEST(test_RSA_verify_recover_rejects_short_buffer);
+    ADD_TEST(test_RSA_verify_recover_empty_payload);
     ADD_TEST(test_RSA_encrypt);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
