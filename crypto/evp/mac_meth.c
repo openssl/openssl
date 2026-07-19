@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,8 @@ static void evp_mac_free(void *vmac)
     if (ref > 0)
         return;
     OPENSSL_free(mac->type_name);
+    if (mac->no_store != 0)
+        OPENSSL_free((char *)mac->description);
     ossl_provider_free(mac->prov);
     CRYPTO_FREE_REF(&mac->refcnt);
     OPENSSL_free(mac);
@@ -72,7 +74,12 @@ static void *evp_mac_from_algorithm(int name_id,
     if ((mac->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
 
-    mac->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        mac->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (mac->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

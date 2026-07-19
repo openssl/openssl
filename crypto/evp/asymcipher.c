@@ -1,5 +1,5 @@
 /*
- * Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -28,6 +28,8 @@ static void evp_asym_cipher_free(void *data)
     if (i > 0)
         return;
     OPENSSL_free(cipher->type_name);
+    if (cipher->no_store != 0)
+        OPENSSL_free((char *)cipher->description);
     ossl_provider_free(cipher->prov);
     CRYPTO_FREE_REF(&cipher->refcnt);
     OPENSSL_free(cipher);
@@ -358,7 +360,12 @@ static void *evp_asym_cipher_from_algorithm(int name_id,
     cipher->no_store = no_store;
     if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
-    cipher->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        cipher->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (cipher->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

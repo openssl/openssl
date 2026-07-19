@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,8 @@ static void ossl_encoder_free(void *data)
     if (ref > 0)
         return;
     OPENSSL_free(encoder->base.name);
+    OPENSSL_free(encoder->base.propdef);
+    OPENSSL_free(encoder->base.description);
     ossl_property_free(encoder->base.parsed_propdef);
     ossl_provider_free(encoder->base.prov);
     CRYPTO_FREE_REF(&encoder->base.refcnt);
@@ -235,9 +237,19 @@ static void *encoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         ossl_encoder_free(encoder);
         return NULL;
     }
-    encoder->base.algodef = algodef;
+    if (no_store == 0) {
+        encoder->base.algodef = algodef;
+    } else {
+        if ((algodef->property_definition != NULL
+                && (encoder->base.propdef = OPENSSL_strdup(algodef->property_definition)) == NULL)
+            || (algodef->algorithm_description != NULL
+                && (encoder->base.description = OPENSSL_strdup(algodef->algorithm_description)) == NULL)) {
+            ossl_encoder_free(encoder);
+            return NULL;
+        }
+    }
     if ((encoder->base.parsed_propdef
-            = ossl_parse_property(libctx, algodef->property_definition))
+            = ossl_parse_property(libctx, no_store == 0 ? algodef->property_definition : encoder->base.propdef))
         == NULL) {
         ossl_encoder_free(encoder);
         return NULL;
@@ -495,7 +507,9 @@ const char *OSSL_ENCODER_get0_properties(const OSSL_ENCODER *encoder)
         return 0;
     }
 
-    return encoder->base.algodef->property_definition;
+    return encoder->base.algodef != NULL
+        ? encoder->base.algodef->property_definition
+        : encoder->base.propdef;
 }
 
 const OSSL_PROPERTY_LIST *
@@ -526,7 +540,9 @@ const char *OSSL_ENCODER_get0_name(const OSSL_ENCODER *encoder)
 
 const char *OSSL_ENCODER_get0_description(const OSSL_ENCODER *encoder)
 {
-    return encoder->base.algodef->algorithm_description;
+    return encoder->base.algodef != NULL
+        ? encoder->base.algodef->algorithm_description
+        : encoder->base.description;
 }
 
 int OSSL_ENCODER_is_a(const OSSL_ENCODER *encoder, const char *name)

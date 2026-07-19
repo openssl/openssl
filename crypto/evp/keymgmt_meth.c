@@ -29,6 +29,8 @@ static void evp_keymgmt_free(void *data)
     if (ref > 0)
         return;
     OPENSSL_free(keymgmt->type_name);
+    if (keymgmt->no_store != 0)
+        OPENSSL_free((char *)keymgmt->description);
     ossl_provider_free(keymgmt->prov);
     CRYPTO_FREE_REF(&keymgmt->refcnt);
     OPENSSL_free(keymgmt);
@@ -98,7 +100,13 @@ static void *keymgmt_from_algorithm(int name_id,
         evp_keymgmt_free(keymgmt);
         return NULL;
     }
-    keymgmt->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        keymgmt->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (keymgmt->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        evp_keymgmt_free(keymgmt);
+        return NULL;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

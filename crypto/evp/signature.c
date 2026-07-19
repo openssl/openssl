@@ -31,6 +31,8 @@ static void evp_signature_free(void *data)
     if (i > 0)
         return;
     OPENSSL_free(signature->type_name);
+    if (signature->no_store != 0)
+        OPENSSL_free((char *)signature->description);
     ossl_provider_free(signature->prov);
     CRYPTO_FREE_REF(&signature->refcnt);
     OPENSSL_free(signature);
@@ -88,7 +90,12 @@ static void *evp_signature_from_algorithm(int name_id,
     signature->no_store = no_store;
     if ((signature->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
-    signature->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        signature->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (signature->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
     desc = signature->description != NULL ? signature->description : "";
 
     for (; fns->function_id != 0; fns++) {

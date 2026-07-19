@@ -30,6 +30,8 @@ static void evp_keyexch_free(void *data)
     if (i > 0)
         return;
     OPENSSL_free(exchange->type_name);
+    if (exchange->no_store != 0)
+        OPENSSL_free((char *)exchange->description);
     ossl_provider_free(exchange->prov);
     CRYPTO_FREE_REF(&exchange->refcnt);
     OPENSSL_free(exchange);
@@ -79,7 +81,12 @@ static void *evp_keyexch_from_algorithm(int name_id,
     exchange->no_store = no_store;
     if ((exchange->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
-    exchange->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        exchange->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (exchange->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

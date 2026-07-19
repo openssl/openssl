@@ -457,6 +457,27 @@ static void collect_all_decoders(OSSL_DECODER *decoder, void *arg)
         OSSL_DECODER_free(decoder);
 }
 
+static int decoder_same_algorithm(const OSSL_DECODER *a, const OSSL_DECODER *b)
+{
+    if (a == b)
+        return 1;
+
+    if (a->base.algodef != NULL && b->base.algodef != NULL)
+        return a->base.algodef == b->base.algodef;
+
+    if (a->base.prov != b->base.prov || a->base.id == 0
+        || a->base.id != b->base.id)
+        return 0;
+
+    /* Property definitions are unordered, so require them to match both ways. */
+    return ossl_property_match_count(a->base.parsed_propdef,
+               b->base.parsed_propdef)
+        >= 0
+        && ossl_property_match_count(b->base.parsed_propdef,
+               a->base.parsed_propdef)
+        >= 0;
+}
+
 static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
 {
     struct collect_extra_decoder_data_st *data = arg;
@@ -488,7 +509,7 @@ static void collect_extra_decoder(OSSL_DECODER *decoder, void *arg)
         for (j = data->w_prev_start; j < data->w_new_end; j++) {
             OSSL_DECODER_INSTANCE *check_inst = sk_OSSL_DECODER_INSTANCE_value(data->ctx->decoder_insts, j);
 
-            if (decoder->base.algodef == check_inst->decoder->base.algodef) {
+            if (decoder_same_algorithm(decoder, check_inst->decoder)) {
                 /* We found it, so don't do anything more */
                 OSSL_TRACE_BEGIN(DECODER)
                 {

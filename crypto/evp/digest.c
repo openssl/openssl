@@ -860,7 +860,12 @@ static void *evp_md_from_algorithm(int name_id,
     if ((md->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
 
-    md->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        md->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (md->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -998,6 +1003,8 @@ static void evp_md_free(void *m)
         return;
 
     OPENSSL_free(md->type_name);
+    if ((md->flags & EVP_MD_FLAG_NO_STORE) != 0)
+        OPENSSL_free((char *)md->description);
     ossl_provider_free(md->prov);
     CRYPTO_FREE_REF(&md->refcnt);
     OPENSSL_free(md);
