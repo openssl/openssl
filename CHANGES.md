@@ -283,6 +283,14 @@ OpenSSL Releases
 
    *Dimitri John Ledkov*
 
+ * `libcrypto` and `libssl` are instrumented with eBPF probes to trace
+   TLS and crypto usage, in a compatible manner with the
+   [crypto-auditing](https://github.com/latchset/crypto-auditing)
+   project. This is enabled by default if the system has a usable
+   `<sys/sdt.h>` header. Use `no-crau` to disable the support.
+
+   *Daiki Ueno and Clemens Lang*
+
 OpenSSL 4.0
 -----------
 
