@@ -67,7 +67,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth);
 static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey);
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
-static int check_curve(X509 *cert);
+static int check_curve(const X509 *cert);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     unsigned int *preasons, X509_CRL *crl, X509 *x);
@@ -78,7 +78,7 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
+static int crl_crldp_check(const X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
@@ -545,7 +545,7 @@ static STACK_OF(X509) *lookup_certs_sk(const X509_STORE_CTX *ctx, const X509_NAM
  * auxiliary trust can be used to override EKU-restrictions.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
-static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
+static int check_purpose(X509_STORE_CTX *ctx, const X509 *x, int purpose, int depth,
     int must_be_ca)
 {
     int tr_ok = X509_TRUST_UNTRUSTED;
@@ -927,7 +927,7 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
     return verify_cb_cert(ctx, ctx->cert, 0, errcode);
 }
 
-static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_hosts(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     const uint8_t *name;
     int n = sk_X509_BUFFER_num(vpm->hosts);
@@ -947,7 +947,7 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
     return n <= 0;
 }
 
-static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_email(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     const uint8_t *name;
     int nasc = sk_X509_BUFFER_num(vpm->rfc822s);
@@ -968,7 +968,7 @@ static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
     return nasc <= 0 && nutf <= 0;
 }
 
-static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_ips(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     const uint8_t *name;
     int n = sk_X509_BUFFER_num(vpm->ips);
@@ -1931,7 +1931,7 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 }
 
 /* Check CRLDP and IDP */
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
+static int crl_crldp_check(const X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {
     int i;
@@ -4104,7 +4104,7 @@ static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert)
  *
  * Returns 1 on success, 0 if check fails, -1 for other errors.
  */
-static int check_curve(X509 *cert)
+static int check_curve(const X509 *cert)
 {
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
     int ret, val;
