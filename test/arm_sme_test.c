@@ -1,0 +1,139 @@
+/*
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You may obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+#include "internal/deprecated.h"
+#include "testutil.h"
+
+#if defined(__aarch64__) && !defined(OPENSSL_NO_ASM)
+
+# include <string.h>
+# include <openssl/aes.h>
+# include "arch/arm_arch.h"
+# include "crypto/modes.h"
+# include "crypto/aes_platform.h"
+# include "internal/cryptlib.h"
+
+uint64_t _armv9_sme_get_svl_bytes(void);
+
+static const unsigned char key[] = {
+    0x2b, 0x7e, 0x15, 0x16, 0x28, 0xae, 0xd2, 0xa6,
+    0xab, 0xf7, 0x15, 0x88, 0x09, 0xcf, 0x4f, 0x3c
+};
+static const unsigned char ctr[] = {
+    0xf0, 0xf1, 0xf2, 0xf3, 0xf4, 0xf5, 0xf6, 0xf7,
+    0xf8, 0xf9, 0xfa, 0xfb, 0xfc, 0xfd, 0xfe, 0xff
+};
+static const unsigned char plaintext[] = {
+    0x6b, 0xc1, 0xbe, 0xe2, 0x2e, 0x40, 0x9f, 0x96,
+    0xe9, 0x3d, 0x7e, 0x11, 0x73, 0x93, 0x17, 0x2a,
+    0xae, 0x2d, 0x8a, 0x57, 0x1e, 0x03, 0xac, 0x9c,
+    0x9e, 0xb7, 0x6f, 0xac, 0x45, 0xaf, 0x8e, 0x51,
+    0x30, 0xc8, 0x1c, 0x46, 0xa3, 0x5c, 0xe4, 0x11,
+    0xe5, 0xfb, 0xc1, 0x19, 0x1a, 0x0a, 0x52, 0xef,
+    0xf6, 0x9f, 0x24, 0x45, 0xdf, 0x4f, 0x9b, 0x17,
+    0xad, 0x2b, 0x41, 0x7b, 0xe6, 0x6c, 0x37, 0x10
+};
+static const unsigned char ctr_ciphertext[] = {
+    0x87, 0x4d, 0x61, 0x91, 0xb6, 0x20, 0xe3, 0x26,
+    0x1b, 0xef, 0x68, 0x64, 0x99, 0x0d, 0xb6, 0xce,
+    0x90, 0x49, 0x23, 0x76, 0x09, 0x52, 0x82, 0x73,
+    0xd3, 0x2c, 0x5b, 0xb1, 0xac, 0xe0, 0x91, 0xd3,
+    0x26, 0x5e, 0x5a, 0xbe, 0xf9, 0x79, 0x25, 0xa1,
+    0x96, 0xc5, 0x39, 0x49, 0xe3, 0x2b, 0xb0, 0x55,
+    0x98, 0x96, 0xb9, 0x0c, 0x74, 0x84, 0x77, 0x80,
+    0xaf, 0x86, 0xf7, 0xc7, 0xb5, 0x2e, 0x77, 0xfb
+};
+static const unsigned char cbc_iv[] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+    0x08, 0x09, 0x0a, 0x0b, 0x0c, 0x0d, 0x0e, 0x0f
+};
+static const unsigned char cbc_ciphertext[] = {
+    0x76, 0x49, 0xab, 0xac, 0x81, 0x19, 0xb2, 0x46,
+    0xce, 0xe9, 0x8e, 0x9b, 0x12, 0xe9, 0x19, 0x7d,
+    0x49, 0x56, 0x07, 0x47, 0xd3, 0x35, 0x5b, 0x5a,
+    0x4f, 0xe9, 0x24, 0x65, 0x4d, 0x36, 0x55, 0x45,
+    0x58, 0xf5, 0x8a, 0x0e, 0x2d, 0xcf, 0x95, 0x30,
+    0x6b, 0xbc, 0x21, 0x26, 0xa1, 0x6e, 0xac, 0x65,
+    0x86, 0x1d, 0xca, 0x84, 0x5a, 0xaa, 0x15, 0x74,
+    0x62, 0x39, 0xa3, 0x89, 0x6b, 0x38, 0x00, 0x3b
+};
+
+static int test_sme_capability(void)
+{
+    int sme = (OPENSSL_armcap_P & ARMV9_SME) != 0;
+    int sme_aes = (OPENSSL_armcap_P & ARMV9_SME_AES) != 0;
+    uint64_t svl;
+
+    if (!TEST_true(sme) || !TEST_true(sme_aes)
+        || !TEST_true(AES_SME_CAPABLE))
+        return 0;
+
+    svl = _armv9_sme_get_svl_bytes();
+    TEST_info("SME AES enabled with a %u-bit streaming vector length",
+              (unsigned)(svl * 8));
+    return TEST_true(svl >= 16 && (svl % 16) == 0
+                     && (svl & (svl - 1)) == 0);
+}
+
+static int test_sme_ctr32(void)
+{
+    AES_KEY aes_key;
+    unsigned char out[sizeof(plaintext)];
+
+    if (!TEST_int_eq(AES_set_encrypt_key(key, 128, &aes_key), 0))
+        return 0;
+
+    /* Regression: zero blocks must return before SMSTART and the prologue. */
+    memset(out, 0xa5, sizeof(out));
+    aes_v8_sme_ctr32_encrypt_blocks(NULL, NULL, 0, NULL, NULL);
+    aes_v8_sme_ctr32_encrypt_blocks(plaintext, out, sizeof(plaintext) / 16,
+                                    &aes_key, ctr);
+    return TEST_mem_eq(out, sizeof(out), ctr_ciphertext,
+                       sizeof(ctr_ciphertext));
+}
+
+static int test_sme_cbc_decrypt(void)
+{
+    AES_KEY aes_key;
+    unsigned char out[sizeof(plaintext)];
+    unsigned char iv[sizeof(cbc_iv)];
+
+    if (!TEST_int_eq(AES_set_decrypt_key(key, 128, &aes_key), 0))
+        return 0;
+    memcpy(iv, cbc_iv, sizeof(iv));
+    aes_v8_sme_cbc_decrypt(cbc_ciphertext, out, sizeof(cbc_ciphertext),
+                           &aes_key, iv);
+    return TEST_mem_eq(out, sizeof(out), plaintext, sizeof(plaintext))
+        && TEST_mem_eq(iv, sizeof(iv),
+                       cbc_ciphertext + sizeof(cbc_ciphertext) - sizeof(iv),
+                       sizeof(iv));
+}
+
+int setup_tests(void)
+{
+    OPENSSL_cpuid_setup();
+    if (!(OPENSSL_armcap_P & ARMV9_SME))
+        return TEST_skip("SME is not available on this hardware");
+    if (!(OPENSSL_armcap_P & ARMV9_SME_AES))
+        return TEST_skip("streaming SVE AES is not available on this hardware");
+
+    ADD_TEST(test_sme_capability);
+    ADD_TEST(test_sme_ctr32);
+    ADD_TEST(test_sme_cbc_decrypt);
+    return 1;
+}
+
+#else
+
+int setup_tests(void)
+{
+    return TEST_skip("ARM SME tests require an AArch64 assembly build");
+}
+
+#endif

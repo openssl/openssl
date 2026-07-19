@@ -320,13 +320,11 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_armcap_P |= sysctl_query("hw.optional.arm.FEAT_SME", ARMV9_SME);
 
         /*
-         * FEAT_SSVE_AES: SVE AES z-register instructions in Streaming SVE mode.
-         * macOS does not expose a dedicated sysctl for FEAT_SSVE_AES; on Apple
-         * Silicon, FEAT_SSVE_AES is present whenever FEAT_SME is present, so
-         * use the conservative "SME + ARMV8_AES" heuristic.
+         * macOS has no FEAT_SSVE_AES sysctl.  In particular, FEAT_SME plus
+         * scalar FEAT_AES does not imply that AES is available in streaming
+         * SVE mode, so leave ARMV9_SME_AES clear until the OS provides a
+         * capability that can distinguish it.
          */
-        if ((OPENSSL_armcap_P & ARMV9_SME) && (OPENSSL_armcap_P & ARMV8_AES))
-            OPENSSL_armcap_P |= ARMV9_SME_AES;
     }
 #endif /* __aarch64__ */
 
@@ -434,13 +432,10 @@ void OPENSSL_cpuid_setup(void)
     OPENSSL_armcap_P |= arm_probe_for(_armv8_rng_probe, ARMV8_RNG);
     OPENSSL_armcap_P |= arm_probe_for(_armv9_sme_probe, ARMV9_SME);
     /*
-     * For FEAT_SSVE_AES in the SIGILL path, conservatively require both
-     * FEAT_SME and the ARMV8 AES crypto extension (ARMV8_AES) to be present.
-     * We cannot safely probe AESE in streaming SVE mode via SIGILL since
-     * SMSTART/SMSTOP would be needed around it.
+     * Do not infer FEAT_SSVE_AES from scalar FEAT_AES.  A streaming-mode
+     * probe cannot safely longjmp out of SIGILL without first executing
+     * SMSTOP, so the generic probe fallback leaves this optional bit clear.
      */
-    if ((OPENSSL_armcap_P & ARMV9_SME) && (OPENSSL_armcap_P & ARMV8_AES))
-        OPENSSL_armcap_P |= ARMV9_SME_AES;
 #endif
 
     /*

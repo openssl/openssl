@@ -180,7 +180,7 @@ ___
 # Now emit the assembly source
 # ====================================================================
 
-my $code = "#include \"arm_arch.h\"\n";
+my $code = "#include \"arch/arm_arch.h\"\n";
 $code .= ".arch\tarmv9-a\n";
 $code .= ".text\n";
 $code .= ".arch_extension\tsve2-aes\n";
@@ -208,7 +208,7 @@ $code .= <<___;
 .align	5
 aes_v8_sme_ctr32_encrypt_blocks:
 	AARCH64_VALID_CALL_TARGET
-	cbz	x2, .Lsme_ctr32_done
+	cbz	x2, .Lsme_ctr32_ret
 
 	stp	x29, x30, [sp, #-16]!
 	mov	x29, sp
@@ -346,6 +346,7 @@ ___
 $code .= smstop_sm();
 $code .= <<"___";
 	ldp	x29, x30, [sp], #16
+.Lsme_ctr32_ret:
 	ret
 .size	aes_v8_sme_ctr32_encrypt_blocks,.-aes_v8_sme_ctr32_encrypt_blocks
 
