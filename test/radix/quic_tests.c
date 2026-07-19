@@ -2156,8 +2156,87 @@ DEF_SCRIPT(script_31, "Fault injection - received STOP_SENDING for nonexistent r
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_32, "place holder for multistrem script_32")
+/* 32. Fault injection - STREAM frame for nonexistent stream */
+static int inject_stream_data_frame_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t written;
+    uint64_t type = OSSL_QUIC_FRAME_TYPE_STREAM_OFF_LEN, offset, flen, i;
+
+    if (hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    switch (fault->word1) {
+    default:
+        return 0;
+    case 0:
+        return 1;
+    case 1:
+        offset = 0;
+        flen = 0;
+        break;
+    case 2:
+        offset = (((uint64_t)1) << 62) - 1;
+        flen = 5;
+        break;
+    case 3:
+        offset = 1 * 1024 * 1024 * 1024; /* 1G */
+        flen = 5;
+        break;
+    case 4:
+        offset = 0;
+        flen = 1;
+        break;
+    }
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /* stream ID */
+            fault->word0 - 1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, flen)))
+        goto err;
+
+    for (i = 0; i < flen; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_32, "Fault injection - STREAM frame for nonexistent stream")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_data_frame_plain);
+
+    OP_NEW_STREAM(S, Sa, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(C_UNI_ID(0) + 1, 1);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_33, "place holder for multistrem script_33")
