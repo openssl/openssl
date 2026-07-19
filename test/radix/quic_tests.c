@@ -2272,8 +2272,24 @@ DEF_SCRIPT(script_32, "Fault injection - STREAM frame for nonexistent stream")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_33, "place holder for multistrem script_33")
+/* 33. Fault injection - STREAM frame with illegal offset */
+DEF_SCRIPT(script_33, "Fault injection - STREAM frame with illegal offset")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_data_frame_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(C_BIDI_ID(0) + 1, 2);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_34, "place holder for multistrem script_34")
