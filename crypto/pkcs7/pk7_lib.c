@@ -28,7 +28,7 @@ long PKCS7_ctrl(PKCS7 *p7, int cmd, long larg, char *parg)
     /* NOTE(emilia): does not support detached digested data. */
     case PKCS7_OP_SET_DETACHED_SIGNATURE:
         if (nid == NID_pkcs7_signed) {
-            if (p7->d.sign == NULL) {
+            if (p7->d.sign == NULL || p7->d.sign->contents == NULL) {
                 ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
                 ret = 0;
                 break;
