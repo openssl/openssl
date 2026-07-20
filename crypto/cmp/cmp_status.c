@@ -214,7 +214,7 @@ static char *snprint_PKIStatusInfo_parts(int status, int fail_info,
         for (i = 0; i < n_status_strings; i++) {
             text = sk_ASN1_UTF8STRING_value(status_strings, i);
             printed_chars = BIO_snprintf(write_ptr, bufsize, "\"%.*s\"%s",
-                (int)ASN1_STRING_length_ex(text),
+                (int)ASN1_STRING_get_length(text),
                 ASN1_STRING_get0_data(text),
                 i < n_status_strings - 1 ? ", " : "");
             ADVANCE_BUFFER;

@@ -239,7 +239,7 @@ ECX_KEY *ossl_ecx_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     } else {
         size_t tmp;
         p = ASN1_STRING_get0_data(oct);
-        tmp = ASN1_STRING_length_ex(oct);
+        tmp = ASN1_STRING_get_length(oct);
         if (tmp > INT_MAX)
             goto err;
         plen = (int)tmp;

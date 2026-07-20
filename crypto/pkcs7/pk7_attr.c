@@ -30,7 +30,7 @@ int PKCS7_add_attrib_smimecap(PKCS7_SIGNER_INFO *si,
     }
     seq->length = ASN1_item_i2d((ASN1_VALUE *)cap, &seq->data,
         ASN1_ITEM_rptr(X509_ALGORS));
-    if (ASN1_STRING_length_ex(seq) == 0 || ASN1_STRING_get0_data(seq) == NULL) {
+    if (ASN1_STRING_get_length(seq) == 0 || ASN1_STRING_get0_data(seq) == NULL) {
         ASN1_STRING_free(seq);
         return 1;
     }
@@ -52,7 +52,7 @@ STACK_OF(X509_ALGOR) *PKCS7_get_smimecap(PKCS7_SIGNER_INFO *si)
     if (cap == NULL || (cap->type != V_ASN1_SEQUENCE))
         return NULL;
     p = ASN1_STRING_get0_data(cap->value.sequence);
-    len = ASN1_STRING_length_ex(cap->value.sequence);
+    len = ASN1_STRING_get_length(cap->value.sequence);
     if (len > INT_MAX)
         return NULL;
     return (STACK_OF(X509_ALGOR) *)

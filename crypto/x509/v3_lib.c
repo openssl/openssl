@@ -175,7 +175,7 @@ void *X509V3_EXT_d2i(const X509_EXTENSION *ext)
         return NULL;
     extvalue = X509_EXTENSION_get_data(ext);
     p = ASN1_STRING_get0_data(extvalue);
-    extlen = ASN1_STRING_length_ex(extvalue);
+    extlen = ASN1_STRING_get_length(extvalue);
     if (extlen > INT_MAX)
         return NULL;
     if (method->it)

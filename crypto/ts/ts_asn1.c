@@ -231,7 +231,7 @@ TS_TST_INFO *PKCS7_to_TS_TST_INFO(PKCS7 *token)
     }
     tst_info_der = tst_info_wrapper->value.octet_string;
     p = ASN1_STRING_get0_data(tst_info_der);
-    len = ASN1_STRING_length_ex(tst_info_der);
+    len = ASN1_STRING_get_length(tst_info_der);
     if (len > INT_MAX) {
         ERR_raise(ERR_LIB_TS, TS_R_BAD_TYPE);
         return NULL;
