@@ -24,6 +24,7 @@ plan skip_all => "OCSP is not supported by this OpenSSL build"
     if disabled("ocsp");
 
 my $ocspdir=srctop_dir("test", "ocsp-tests");
+my $certsdir=srctop_dir("test", "certs");
 # 17 December 2012 so we don't get certificate expiry errors.
 my @check_time=("-attime", "1355875200");
 
@@ -244,6 +245,45 @@ subtest "=== UNTRUSTED ISSUER HINTS ===" => sub {
     test_ocsp("NON-DELEGATED; invalid issuer via -issuer",
               "ND1.ors", "ND1_Cross_Root.pem",
               "ISIC_ND1_Issuer_ICA.pem", 1, 0, "-issuer");
+};
+
+subtest "=== OCSP response -rcid preserves serial ===" => sub {
+    plan tests => 4;
+
+    my $serial = "73C8A0894488809AFE972FE0BAD3460318D1CCBF";
+    my $respout = "rcid-sha256.der";
+    my $ca = catfile($certsdir, "ca-cert.pem");
+    my @response = run(app(["openssl", "ocsp",
+                            "-index", catfile($ocspdir, "index.txt"),
+                            "-rsigner", $ca,
+                            "-rkey", catfile($certsdir, "ca-key.pem"),
+                            "-CA", $ca,
+                            "-sha256",
+                            "-issuer", $ca,
+                            "-serial", "0x$serial",
+                            "-no_nonce",
+                            "-rcid", "sha256",
+                            "-resp_text",
+                            "-respout", $respout]),
+                       capture => 1, statusvar => \my $created);
+
+    ok($created, "created OCSP response with -rcid");
+    ok(grep(/Hash Algorithm: sha256/, @response),
+       "response CertID uses requested digest");
+    ok(grep(/Serial Number: $serial/, @response),
+       "response CertID serial preserves request serial, not 0x00");
+
+    my @status = run(app(["openssl", "ocsp",
+                          "-sha256",
+                          "-issuer", $ca,
+                          "-serial", "0x$serial",
+                          "-no_nonce",
+                          "-respin", $respout,
+                          "-noverify"]),
+                     capture => 1, statusvar => \my $matched);
+
+    ok($matched && grep(/^0x$serial: good/, @status),
+       "client finds status from -rcid response");
 };
 
 subtest "=== OCSP handling of identical input and output files ===" => sub {
