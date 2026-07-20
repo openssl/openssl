@@ -660,8 +660,8 @@ clean: libclean ## Clean the workspace, keep the configuration
 	           -o -path './python-ecdsa' \
 	           -o -path './tlsfuzzer' \
 	           -o -path './tlslite-ng' \
-	           -o -path './wycheproof' \
-	           -prune \) \
+	           -o -path './wycheproof' \) \
+	        -prune \
 	        -o \! -type d \
 	           \( -name '*{- platform->depext() -}' \
 	              -o -name '*{- platform->objext() -}' \
