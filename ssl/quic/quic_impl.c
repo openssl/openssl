@@ -2150,6 +2150,23 @@ struct quic_wait_for_stream_args {
 };
 
 QUIC_NEEDS_LOCK
+static QUIC_STREAM *quic_get_incoming_default_stream(QUIC_CONNECTION *qc,
+    uint64_t expect_id)
+{
+    QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(qc->ch);
+    QUIC_STREAM *qs;
+
+    qs = ossl_quic_stream_map_get_by_id(qsm,
+        expect_id | QUIC_STREAM_DIR_BIDI);
+    if (qs == NULL)
+        qs = ossl_quic_stream_map_get_by_id(qsm,
+            expect_id | QUIC_STREAM_DIR_UNI);
+
+    /* Auto-rejected streams remain in the map until garbage collection. */
+    return qs != NULL && qs->accept_node.next != NULL ? qs : NULL;
+}
+
+QUIC_NEEDS_LOCK
 static int quic_wait_for_stream(void *arg)
 {
     struct quic_wait_for_stream_args *args = arg;
@@ -2160,11 +2177,7 @@ static int quic_wait_for_stream(void *arg)
         return -1;
     }
 
-    args->qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(args->qc->ch),
-        args->expect_id | QUIC_STREAM_DIR_BIDI);
-    if (args->qs == NULL)
-        args->qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(args->qc->ch),
-            args->expect_id | QUIC_STREAM_DIR_UNI);
+    args->qs = quic_get_incoming_default_stream(args->qc, args->expect_id);
 
     if (args->qs != NULL)
         return 1; /* stream now exists */
@@ -2201,17 +2214,12 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek)
         ? QUIC_STREAM_INITIATOR_CLIENT
         : QUIC_STREAM_INITIATOR_SERVER;
 
-    qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-        expect_id | QUIC_STREAM_DIR_BIDI);
-    if (qs == NULL)
-        qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-            expect_id | QUIC_STREAM_DIR_UNI);
+    qs = quic_get_incoming_default_stream(qc, expect_id);
 
     if (qs == NULL) {
         qctx_maybe_autotick(ctx);
 
-        qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-            expect_id);
+        qs = quic_get_incoming_default_stream(qc, expect_id);
     }
 
     if (qs == NULL) {
