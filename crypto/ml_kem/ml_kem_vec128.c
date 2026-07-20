@@ -947,8 +947,8 @@ static ossl_inline void scalar_inverse_ntt_vec128_demontgomerize(scalar *s)
  *       result_odd  in [-6006, 6006]
  *       result_even in [-3666, 3666].
  */
-static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalias_t *lhs_coeffs,
-    const vec_int16_noalias_t *rhs_coeffs,
+static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_t *lhs_coeffs,
+    const vec_int16_t *rhs_coeffs,
     vec_int16_t roots,
     vec_int16_t roots_twisted,
     vec_int16_noalias_t *result_even,
@@ -996,8 +996,8 @@ static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalia
 void ossl_ml_kem_scalar_mult_add_vec128(scalar *out, const scalar *lhs, const scalar *rhs)
 {
     vec_int16_t *curr = (vec_int16_t *)out->c, *end = curr + VECTOR_DEGREE;
-    const vec_int16_noalias_t *lhs_coeffs = (vec_int16_noalias_t *)lhs->c;
-    const vec_int16_noalias_t *rhs_coeffs = (vec_int16_noalias_t *)rhs->c;
+    const vec_int16_t *lhs_coeffs = (vec_int16_t *)lhs->c;
+    const vec_int16_t *rhs_coeffs = (vec_int16_t *)rhs->c;
     const vec_int16_t *roots_vec_ptr = kModRoots_montgomery_vec;
     const vec_int16_t *roots_twisted_vec_ptr = kModRoots_twisted_vec;
 
@@ -1043,8 +1043,8 @@ static ossl_inline void scalar_mult_montgomery_vec128(scalar *out,
     const scalar *rhs)
 {
     vec_int16_t *curr = (vec_int16_t *)out->c, *end = curr + VECTOR_DEGREE;
-    const vec_int16_noalias_t *lhs_coeffs = (vec_int16_noalias_t *)lhs->c;
-    const vec_int16_noalias_t *rhs_coeffs = (vec_int16_noalias_t *)rhs->c;
+    const vec_int16_t *lhs_coeffs = (vec_int16_t *)lhs->c;
+    const vec_int16_t *rhs_coeffs = (vec_int16_t *)rhs->c;
     const vec_int16_t *roots_vec_ptr = kModRoots_montgomery_vec;
     const vec_int16_t *roots_twisted_vec_ptr = kModRoots_twisted_vec;
 
@@ -1088,8 +1088,8 @@ static ossl_inline void scalar_mult_add_montgomery_vec128(scalar *out,
     const scalar *rhs)
 {
     vec_int16_t *curr = (vec_int16_t *)out->c, *end = curr + VECTOR_DEGREE;
-    const vec_int16_noalias_t *lhs_coeffs = (vec_int16_noalias_t *)lhs->c;
-    const vec_int16_noalias_t *rhs_coeffs = (vec_int16_noalias_t *)rhs->c;
+    const vec_int16_t *lhs_coeffs = (vec_int16_t *)lhs->c;
+    const vec_int16_t *rhs_coeffs = (vec_int16_t *)rhs->c;
     const vec_int16_t *roots_vec_ptr = kModRoots_montgomery_vec;
     const vec_int16_t *roots_twisted_vec_ptr = kModRoots_twisted_vec;
 
