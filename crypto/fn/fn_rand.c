@@ -148,12 +148,14 @@ int OSSL_FN_priv_rand(OSSL_FN *rnd, size_t bits, int top, int bottom,
  * libctx comes directly as an argument, as in ossl_fn_rand(); sign is never
  * considered, since OSSL_FN is unsigned.
  *
- * The leak profile: the loop iteration count leaks the magnitude of |range|
- * (via OSSL_FN_num_bits) and the rejection probability.
+ * The leak profile: control flow branches on |range|'s top bit pattern and on
+ * |r|'s width (both public), and the loop iteration count leaks the magnitude
+ * of |range| (via OSSL_FN_num_bits) and the rejection probability.
  *
- * The destination |r| must be sized to hold |num_bits(range) + 1| bits; the
- * "range = 100..._2" path draws n + 1 bits, and OSSL_FN cannot grow to fit,
- * so the caller must size |r| up front.
+ * The destination |r| must be sized to hold at least |num_bits(range)| bits.
+ * The "range = 100..._2" path draws n + 1 bits and is taken only when |r|
+ * has room for them; an exactly-sized |r| (room for exactly n bits) uses the
+ * standard n-bit rejection path instead.
  */
 static int ossl_fn_rand_range(enum ossl_fn_rand_flag flag, OSSL_FN *r,
     const OSSL_FN *range, size_t strength,
@@ -179,10 +181,13 @@ static int ossl_fn_rand_range(enum ossl_fn_rand_flag flag, OSSL_FN *r,
     if (n == 1) {
         return OSSL_FN_zero(r);
     } else if (!OSSL_FN_is_bit_set(range, (int)(n - 2))
-        && !OSSL_FN_is_bit_set(range, (int)(n - 3))) {
+        && !OSSL_FN_is_bit_set(range, (int)(n - 3))
+        && n < (size_t)r->dsize * OSSL_FN_BITS) {
         /*
          * range = 100..._2, so 3*range (= 11..._2) is exactly one bit longer
-         * than range
+         * than range.  This draws n + 1 bits, so it is taken only when |r| has
+         * room for them; an exactly-sized |r| (room for exactly n bits) falls
+         * through to the standard n-bit rejection path below.
          */
         do {
             if (!ossl_fn_rand(flag, r, n + 1, OSSL_FN_RAND_TOP_ANY,

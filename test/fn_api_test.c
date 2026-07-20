@@ -1806,6 +1806,41 @@ err:
     return ret;
 }
 
+/*
+ * Regression test for an exactly-sized destination with a sparse range
+ * (range = 100..._2): the optimized path draws n + 1 bits and needs room for
+ * them, so an |r| sized to hold exactly num_bits(range) bits must fall back to
+ * standard n-bit rejection sampling rather than fail with
+ * OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ */
+static int test_rand_range_exactly_sized(void)
+{
+    int ret = 0;
+    OSSL_FN_ULONG rw[1] = { OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1) };
+    OSSL_FN *range = NULL, *r = NULL;
+
+    /* range = 2^(BITS-1) = 100..._2, so num_bits(range) == BITS (1 limb). */
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(1))
+        || !TEST_true(ossl_fn_set_words(range, rw, 1))
+        /* r sized to hold exactly BITS bits: one limb, no slack for n + 1. */
+        || !TEST_ptr(r = OSSL_FN_new_limbs(1))
+        || !TEST_true(pollute(r, 0, 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_priv_rand_range(r, range, 0, NULL)))
+        goto err;
+
+    /* 0 <= r < range. */
+    if (!TEST_int_lt(OSSL_FN_cmp(r, range), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -1834,6 +1869,7 @@ int setup_tests(void)
     ADD_TEST(test_rand_bits_too_small);
     ADD_ALL_TESTS(test_rand_range, OSSL_NELEM(range_words));
     ADD_TEST(test_rand_range_zero);
+    ADD_TEST(test_rand_range_exactly_sized);
 
     return 1;
 }

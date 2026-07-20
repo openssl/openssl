@@ -500,10 +500,13 @@ int OSSL_FN_priv_rand(OSSL_FN *rnd, size_t bits, int top, int bottom,
  * rejection is performed.  The loop iteration count leaks the magnitude of
  * @p range via OSSL_FN_num_bits() and the rejection probability.
  *
- * The destination @p r must be sized to hold OSSL_FN_num_bits(@p range) + 1
- * bits: the "range = 100..._2" path draws that many bits, and OSSL_FN
- * cannot grow to fit, so the caller must size @p r up front.  A too-small
- * @p r fails the draw with OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ * The destination @p r must be sized to hold at least
+ * OSSL_FN_num_bits(@p range) bits.  Sizing @p r to hold one extra bit
+ * (OSSL_FN_num_bits(@p range) + 1) additionally enables the optimized
+ * "range = 100..._2" path, which draws n + 1 bits; an exactly-sized @p r
+ * (room for exactly OSSL_FN_num_bits(@p range) bits) uses standard n-bit
+ * rejection sampling instead.  An @p r too small for
+ * OSSL_FN_num_bits(@p range) bits fails with OSSL_FN_R_RESULT_ARG_TOO_SMALL.
  */
 int OSSL_FN_rand_range(OSSL_FN *r, const OSSL_FN *range, size_t strength,
     OSSL_LIB_CTX *libctx);
@@ -517,9 +520,8 @@ int OSSL_FN_rand_range(OSSL_FN *r, const OSSL_FN *range, size_t strength,
  * @param[in]           libctx  The OpenSSL library context (for the DRBG)
  * @returns             1 on success, 0 on error
  *
- * Draws from the private DRBG pool.  Leak profile as for
- * OSSL_FN_rand_range().  The destination @p r must be sized to hold
- * OSSL_FN_num_bits(@p range) + 1 bits, as for OSSL_FN_rand_range().
+ * Draws from the private DRBG pool.  Leak profile and destination sizing
+ * as for OSSL_FN_rand_range().
  */
 int OSSL_FN_priv_rand_range(OSSL_FN *r, const OSSL_FN *range,
     size_t strength, OSSL_LIB_CTX *libctx);
