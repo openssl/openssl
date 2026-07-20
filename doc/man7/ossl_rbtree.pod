@@ -1,0 +1,196 @@
+=pod
+
+=head1 NAME
+
+OSSL_RBT_PROTO_type, OSSL_RBT_PROTOTYPE_STATIC, OSSL_RBT_GENERATE,
+OSSL_RBT_GENERATE_STATIC, OSSL_RBT_ENTRY, OSSL_RBT_HEAD, OSSL_RBT_INITIALIZER,
+OSSL_RBT_ROOT, OSSL_RBT_EMPTY, OSSL_RBT_NEXT, OSSL_RBT_PREV, OSSL_RBT_MIN,
+OSSL_RBT_MAX, OSSL_RBT_FIND, OSSL_RBT_NFIND, OSSL_RBT_LEFT, OSSL_RBT_RIGHT,
+OSSL_RBT_PARENT, OSSL_RBT_FOREACH, OSSL_RBT_FOREACH_SAFE,
+OSSL_RBT_FOREACH_REVERSE, OSSL_RBT_FOREACH_REVERSE_SAFE, OSSL_RBT_INIT,
+OSSL_RBT_INSERT, OSSL_RBT_REMOVE, ossl_rbtree - implementation of red-black tree
+
+=head1 SYNOPSIS
+
+ #include "internal/ossl_rbtree.h"
+
+ OSSL_RBT_PROTO_type(NAME, TYPE, FIELD, CMP);
+
+ OSSL_RBT_PROTO_type_STATIC(NAME, TYPE, FIELD, CMP);
+
+ OSSL_RBT_GENERATE(NAME, _type, FIELD, CMP);
+
+ OSSL_RBT_GENERATE_STATIC(NAME, _type, FIELD, CMP);
+
+ OSSL_RBT_ENTRY(_type);
+
+ OSSL_RBT_HEAD(HEADNAME, _type);
+
+ OSSL_RBT_INITIALIZER(OSSL_RBT_HEAD *head);
+
+ struct _type * OSSL_RBT_ROOT(OSSL_RBT_HEAD *head);
+
+ int OSSL_RBT_EMPTY(OSSL_RBT_HEAD *head);
+
+ struct _type * OSSL_RBT_NEXT(NAME, OSSL_RBT_HEAD *head, struct _type *elm);
+
+ struct _type * OSSL_RBT_PREV(NAME, OSSL_RBT_HEAD *head, struct _type *elm);
+
+ struct _type * OSSL_RBT_MIN(NAME, OSSL_RBT_HEAD *head);
+
+ struct _type * OSSL_RBT_MAX(NAME, OSSL_RBT_HEAD *head);
+
+ struct _type * OSSL_RBT_FIND(NAME, OSSL_RBT_HEAD *head, struct _type *elm);
+
+ struct _type * OSSL_RBT_NFIND(NAME, OSSL_RBT_HEAD *head, struct _type *elm);
+
+ struct _type * OSSL_RBT_LEFT(struct _type *elm, OSSL_RBT_ENTRY NAME);
+
+ struct _type * OSSL_RBT_RIGHT(struct _type *elm, OSSL_RBT_ENTRY NAME);
+
+ struct _type * OSSL_RBT_PARENT(struct _type *elm, OSSL_RBT_ENTRY NAME);
+
+ OSSL_RBT_FOREACH(VARNAME, NAME, OSSL_RBT_HEAD *head);
+
+ OSSL_RBT_FOREACH_SAFE(VARNAME, NAME, OSSL_RBT_HEAD *head, TEMP_VARNAME);
+
+ OSSL_RBT_FOREACH_REVERSE(VARNAME, NAME, OSSL_RBT_HEAD *head);
+
+ OSSL_RBT_FOREACH_REVERSE_SAFE(VARNAME, NAME, OSSL_RBT_HEAD *head, TEMP_VARNAME);
+
+ void OSSL_RBT_INIT(OSSL_RBT_HEAD *head);
+
+ struct _type * OSSL_RBT_INSERT(NAME, OSSL_RBT_HEAD *head, struct _type *elm);
+
+ struct _type * OSSL_RBT_REMOVE(NAME, OSSL_RBT_HEAD *head, struct _type *elm);
+
+=head1 DESCRIPTION
+
+These macros define data structures for red-black tree.
+
+In the macro definitions, B<_type> is the name tag of a user defined
+structure that must contain a field named B<FIELD>, of type B<OSSL_RBT_ENTRY>.
+The argument B<HEADNAME> is the name tag of a user defined
+structure that must be declared using the macro OSSL_RBT_HEAD().
+The argument NAME has to be a unique name prefix for every
+tree that is defined.
+
+The function prototypes are declared with B<OSSL_RBT_PROTOTYPE>,
+B<OSSL_RBT_GENERATE>.  See the examples below for further
+explanation of how these macros are used.
+
+A red-black tree is a binary search tree with the node color as an extra
+attribute. It fulfills a set of conditions:
+
+=over 4
+
+=item 1. every search path from the root to a leaf consists of the same
+number of black nodes,
+
+=item 2. each red node (except for the root) has a black parent,
+
+=item 3. each leaf node is black.
+
+=back
+
+Every operation on a red-black tree is bounded as O(lg n). The maximum
+height of a red-black tree is 2lg (n+1).
+
+A red-black tree is headed by a structure defined by the B<OSSL_RBT_HEAD()> macro.
+A B<OSSL_RBT_HEAD> structure is declared as follows:
+
+ OSSL_RBT_HEAD(HEADNAME, _type) head;
+
+where B<HEADNAME> is the name of the structure to be defined, and B<struct
+_type> is the type of the elements to be inserted into the tree.
+
+The B<OSSL_RBT_ENTRY()> macro declares a structure that allows elements to be
+connected in the tree.
+
+In order to use the functions that manipulate the tree structure, their
+prototypes need to be declared with the B<OSSL_RBT_PROTO_type()> macro,
+where B<NAME> is a unique identifier for this
+particular tree.  The B<_type> argument is the type of the structure that is
+being managed by the tree. The B<FIELD> argument is the name of the element
+defined by B<OSSL_RBT_ENTRY()>.
+
+The function bodies are generated with the B<OSSL_RBT_GENERATE()> macro.
+These macros take the same arguments as the
+B<OSSL_RBT_PROTOTYPE()> macro, but should be used only once.
+
+Finally, the B<CMP> argument is the name of a function used to compare
+trees' nodes with each other.  The function takes two arguments of type
+B<struct _type *>.  If the first argument is smaller than the second, the
+function returns a value smaller than zero.  If they are equal, the
+function returns zero.  Otherwise, it should return a value greater than
+zero.  The compare function defines the order of the tree elements.
+
+The B<OSSL_RBT_INIT()> macro initializes the tree referenced by head.
+
+The red-black tree can also be initialized statically by using the
+B<OSSL_RBT_INITIALIZER()> macro like this:
+
+ OSSL_RBT_HEAD(HEADNAME, _type) head = OSSL_RBT_INITIALIZER(&head);
+
+The B<OSSL_RBT_INSERT()> macro inserts the new element elm into the tree.  Upon
+success, NULL is returned. If a matching element already exists in the
+tree, the insertion is aborted, and a pointer to the existing element is
+returned.
+
+The B<OSSL_RBT_REMOVE()> macro removes the element elm from the tree pointed by
+head. B<OSSL_RBT_REMOVE()> returns elm.
+
+The B<OSSL_RBT_FIND()> and B<OSSL_RBT_NFIND()> macros can be used to find a particular
+element in the tree.  B<OSSL_RBT_FIND()> finds the node with the same key as elm.
+B<OSSL_RBT_NFIND()> finds the first node greater than or equal to the search key.
+
+ struct _type find, *res;
+ find.key = 30;
+ res = OSSL_RBT_FIND(NAME, &head, &find);
+
+The B<OSSL_RBT_ROOT()>, B<OSSL_RBT_MIN()>, B<OSSL_RBT_MAX()>, B<OSSL_RBT_NEXT()>, and
+B<OSSL_RBT_PREV()> macros can be used to traverse the tree:
+
+ for (np = OSSL_RBT_MIN(NAME, &head); np != NULL; np = OSSL_RBT_NEXT(NAME, &head, np))
+
+Or, for simplicity, one can use the B<OSSL_RBT_FOREACH()> or B<OSSL_RBT_FOREACH_REVERSE()>
+macros:
+
+ OSSL_RBT_FOREACH(np, NAME, &head)
+
+The macros B<OSSL_RBT_FOREACH_SAFE()> and B<OSSL_RBT_FOREACH_REVERSE_SAFE()> traverse the
+tree referenced by head in a forward or reverse direction respectively,
+assigning each element in turn to np.  However, unlike their unsafe
+counterparts, they permit both the removal of np as well as freeing it
+from within the loop safely without interfering with the traversal.
+
+The B<OSSL_RBT_EMPTY()> macro should be used to check whether a red-black tree is
+empty.
+
+=head1 HISTORY
+
+The rb-tree implementation comes from David Gwynne. It can be found
+here L<https://github.com/dgwynne/data-structures>. OpenSSL project
+obtained a permission from David Gwynne to license his work under
+Apache License 2.0
+
+Apart from B<OSSL_RBT_> prefix the API is compatible with implementation
+done by Neils Provos for OpenBSD.
+
+The text in this manual page comes from C<tree(3)> in OpenBSD, the text was
+authored by Neils Provos (according to commit history)
+
+=head1 COPYRIGHT
+
+Copyright 2002 Niels Provos <provos@citi.umich.edu>
+All rights reserved.
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
