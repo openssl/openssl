@@ -462,6 +462,10 @@ static int decoder_same_algorithm(const OSSL_DECODER *a, const OSSL_DECODER *b)
     if (a == b)
         return 1;
 
+    /*
+     * algodef is retained only for cacheable query results, where its pointer
+     * remains a stable identity.  No-store methods leave algodef NULL.
+     */
     if (a->base.algodef != NULL && b->base.algodef != NULL)
         return a->base.algodef == b->base.algodef;
 

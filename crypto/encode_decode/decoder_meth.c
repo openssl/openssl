@@ -244,6 +244,11 @@ void *ossl_decoder_from_algorithm(int id, const OSSL_ALGORITHM *algodef,
         ossl_decoder_free(decoder);
         return NULL;
     }
+    /*
+     * Cacheable query data remains valid until provider teardown and may be
+     * retained.  For a no-store result, leave algodef NULL and copy below the
+     * metadata needed after unquery.
+     */
     if (no_store == 0) {
         decoder->base.algodef = algodef;
     } else {
