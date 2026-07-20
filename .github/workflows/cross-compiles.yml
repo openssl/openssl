@@ -44,6 +44,14 @@ jobs:
         #                this string will be used as content for the OpenSSL
         #                capabilities variable.
         #   ppa:   Launchpad PPA repository to download packages from.
+        #   compiler: optional; set to "clang" to build with Clang instead of
+        #             GCC.  The cross-compile prefix is still used for the
+        #             binutils (assembler, linker, nm …).
+        #   nm_check: optional; when set, a post-build step verifies that the
+        #             six ML-KEM VX vector-entry-point symbols are present as
+        #             text symbols in the ml_kem_vec128.o object file.
+        #   label: optional; used as the artifact name suffix in place of
+        #          arch, to disambiguate matrix jobs that share the same arch.
         platform: [
           {
             arch: i386-pc-msdosdjgpp,
@@ -128,6 +136,65 @@ jobs:
             fips: no,
             tests: none
           }, {
+            # GCC / z14 / VX enabled (FIPS).
+            # Compiles ml_kem_vec128.c with -mvx -mzvector (via linux64-s390x
+            # target defaults, __ARCH__>=12, __VX__).  QEMU emulates a z14 so
+            # the vector facility is available at runtime.  OPENSSL_s390xcap is
+            # set to "z14" so S390X_VX_CAPABLE (VX && VXE) is true and the six
+            # vec128 entry points are selected at runtime.  The nm_check step
+            # asserts all six text symbols are present in ml_kem_vec128.o.
+            arch: s390x-linux-gnu,
+            libs: libc6-dev-s390x-cross,
+            target: linux64-s390x,
+            qemucpu: z14,
+            opensslcapsname: s390xcap,
+            opensslcaps: z14,
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
+            nm_check: "yes",
+            label: s390x-gcc-z14-vx-on-fips
+          }, {
+            # GCC / z14 / VX masked off (no FIPS).
+            # Same build as above but OPENSSL_s390xcap is set to "z13" (VX
+            # present, VXE absent) so S390X_VX_CAPABLE is false and the
+            # generic scalar path is exercised on the same binary.
+            arch: s390x-linux-gnu,
+            libs: libc6-dev-s390x-cross,
+            target: linux64-s390x,
+            fips: no,
+            qemucpu: z14,
+            opensslcapsname: s390xcap,
+            opensslcaps: z13,
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
+            label: s390x-gcc-z14-vx-off
+          }, {
+            # Clang / z14 / VX enabled (FIPS).
+            # Mirrors the GCC VX-on entry above but compiled with Clang using
+            # --target=s390x-linux-gnu.  Verifies that Clang also emits all
+            # six ML-KEM VX vector entry points.
+            arch: s390x-linux-gnu,
+            libs: libc6-dev-s390x-cross,
+            target: linux64-s390x,
+            compiler: clang,
+            qemucpu: z14,
+            opensslcapsname: s390xcap,
+            opensslcaps: z14,
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
+            nm_check: "yes",
+            label: s390x-clang-z14-vx-on-fips
+          }, {
+            # Clang / z14 / VX masked off (no FIPS).
+            # Mirrors the GCC VX-off entry above but compiled with Clang.
+            arch: s390x-linux-gnu,
+            libs: libc6-dev-s390x-cross,
+            target: linux64-s390x,
+            fips: no,
+            compiler: clang,
+            qemucpu: z14,
+            opensslcapsname: s390xcap,
+            opensslcaps: z13,
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
+            label: s390x-clang-z14-vx-off
+          }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
             target: no-async linux-latomic,
@@ -174,11 +241,20 @@ jobs:
       if: matrix.platform.ppa != ''
       run: |
         sudo add-apt-repository ppa:${{ matrix.platform.ppa }}
-    - name: install packages
+    - name: install packages (GCC)
+      if: matrix.platform.compiler != 'clang'
       run: |
         sudo apt-get update
         sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             gcc-${{ matrix.platform.arch }} \
+            ${{ matrix.platform.libs }}
+    - name: install packages (Clang)
+      if: matrix.platform.compiler == 'clang'
+      run: |
+        sudo apt-get update
+        sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
+            clang \
+            binutils-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
     - uses: actions/checkout@v6
       with:
@@ -186,14 +262,30 @@ jobs:
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
-    - name: config with FIPS
-      if: matrix.platform.fips != 'no'
+    - name: config with FIPS (GCC)
+      if: matrix.platform.fips != 'no' && matrix.platform.compiler != 'clang'
       run: |
         ./config --banner=Configured --strict-warnings enable-fips enable-lms \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
                  ${{ matrix.platform.target }}
-    - name: config without FIPS
-      if: matrix.platform.fips == 'no'
+    - name: config without FIPS (GCC)
+      if: matrix.platform.fips == 'no' && matrix.platform.compiler != 'clang'
+      run: |
+        ./config --banner=Configured --strict-warnings enable-lms \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config with FIPS (Clang)
+      if: matrix.platform.fips != 'no' && matrix.platform.compiler == 'clang'
+      env:
+        CC: clang --target=${{ matrix.platform.arch }}
+      run: |
+        ./config --banner=Configured --strict-warnings enable-fips enable-lms \
+                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
+                 ${{ matrix.platform.target }}
+    - name: config without FIPS (Clang)
+      if: matrix.platform.fips == 'no' && matrix.platform.compiler == 'clang'
+      env:
+        CC: clang --target=${{ matrix.platform.arch }}
       run: |
         ./config --banner=Configured --strict-warnings enable-lms \
                  --cross-compile-prefix=${{ matrix.platform.arch }}- \
@@ -203,6 +295,14 @@ jobs:
 
     - name: make
       run: make -s -j4
+
+    - name: check ML-KEM VX vector symbols
+      if: matrix.platform.nm_check != ''
+      run: |
+        ${{ matrix.platform.arch }}-nm crypto/ml_kem/libcrypto-lib-ml_kem_vec128.o \
+          | awk '$2 == "T"' \
+          | grep -cE ' (ossl_ml_kem_scalar_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128|ossl_ml_kem_scalar_mult_add_vec128|ossl_ml_kem_inner_product_montgomery_vec128|ossl_ml_kem_matrix_mult_intt_vec128)$' \
+          | grep -q '^6$'
 
     - name: install qemu
       if: matrix.platform.tests != 'none'
@@ -244,6 +344,6 @@ jobs:
       if: success() || failure()
       uses: actions/upload-artifact@v5
       with:
-        name: "cross-compiles@${{ matrix.platform.arch }}"
+        name: "cross-compiles@${{ matrix.platform.label || matrix.platform.arch }}"
         path: artifacts.tar.gz
         if-no-files-found: ignore

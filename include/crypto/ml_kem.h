@@ -17,7 +17,8 @@
 #include <crypto/evp.h>
 #include "internal/common.h"
 
-#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
+/* z13 supports VX, z14 supports VXE; z14 means __ARCH__ == 12 */
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
 #define VX_COMPILER_SUPPORT_VEC128
 #endif
 

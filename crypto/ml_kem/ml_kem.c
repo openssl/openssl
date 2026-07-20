@@ -1581,7 +1581,7 @@ end:
  *     OPENSSL_secure_clear_free(key->s_freeptr, prvalloc + 15).
  */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-# define SCALAR_ALIGN 16
+#define SCALAR_ALIGN 16
 
 static scalar *alloc_pub_aligned(size_t puballoc, void **freeptr)
 {
@@ -1814,28 +1814,28 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         break;
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-        {
-            scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
+    {
+        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
 
-            if (pub != NULL)
-                memcpy(pub, key->t, key->vinfo->puballoc);
-            ok = add_storage(pub, NULL, 0, 1, ret);
-        }
+        if (pub != NULL)
+            memcpy(pub, key->t, key->vinfo->puballoc);
+        ok = add_storage(pub, NULL, 0, 1, ret);
+    }
 #else
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, 1, ret);
 #endif
-        break;
+    break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
         /* Frees both and returns 0 if either is NULL */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-        {
-            scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
-            scalar *priv = alloc_prv_aligned(key->vinfo->prvalloc, &ret->s_freeptr);
+    {
+        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
+        scalar *priv = alloc_prv_aligned(key->vinfo->prvalloc, &ret->s_freeptr);
 
-            if (pub != NULL)
-                memcpy(pub, key->t, key->vinfo->puballoc);
-            ok = add_storage(pub, priv, 1, 1, ret);
-        }
+        if (pub != NULL)
+            memcpy(pub, key->t, key->vinfo->puballoc);
+        ok = add_storage(pub, priv, 1, 1, ret);
+    }
 #else
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc),
             OPENSSL_secure_malloc(key->vinfo->prvalloc), 1, 1, ret);

@@ -1830,16 +1830,15 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS' && !$predefined_
     }
 }
 
-# On s390x, <vecintrin.h> (used for vector intrinsics) requires -fzvector
-# with Clang.  GCC accepts the header without it.  Probe for this early so
-# that downstream build.info checks and C sources see a consistent set of
-# flags.  We only attempt the probe when asm is enabled (the vector path is
-# disabled by no-asm) and the target really is s390x.
+# On s390x, <vecintrin.h> (included by both ml_kem_vec128.c and
+# ml_dsa_ntt_vec128.c) requires -fzvector with Clang; GCC accepts it
+# without that flag.  Probe for this early so both vector files see a
+# consistent flag set.  We only attempt the probe when asm is enabled
+# and the target really is s390x.
 if (!$disabled{asm} && ($predefined_C{__s390x__} // 0)) {
     my $cc  = $config{CROSS_COMPILE} . $config{CC};
     my $tf  = "vx_probe_$$.c";
     my $obj = "vx_probe_$$.o";
-    # Collect all current flags so the probe uses the same -march etc.
     my @all_cflags = (
         (ref($target{cflags}) ? @{$target{cflags}} : ($target{cflags} // ())),
         @{$config{cflags}},
@@ -1847,13 +1846,23 @@ if (!$disabled{asm} && ($predefined_C{__s390x__} // 0)) {
     my $flagstr = join(' ', @all_cflags);
 
     open(my $fh, '>', $tf) or die "Cannot write $tf: $!";
-    print $fh "#include <vecintrin.h>\n";
+    print $fh <<'END_PROBE';
+#include <vecintrin.h>
+#include <stdint.h>
+typedef int16_t  vec_i16 __attribute__((vector_size(16), __may_alias__));
+typedef uint8_t  vec_u8  __attribute__((vector_size(16)));
+static vec_i16 probe(int16_t a, int16_t b) {
+    vec_u8 perm = vec_splats((uint8_t)0);
+    return (vec_i16)vec_perm((vec_i16)vec_splats(a),
+                             (vec_i16)vec_splats(b), perm);
+}
+int main(void) { vec_i16 v = probe(1, 2); return (int)v[0]; }
+END_PROBE
     close($fh);
 
-    # First try: current flags only
+    # Current flags first; add -fzvector on the retry if Clang needs it.
     my $rc = system("$cc $flagstr -c -o $obj $tf 2>/dev/null");
     if ($rc != 0) {
-        # Second try: add -fzvector
         $rc = system("$cc $flagstr -fzvector -c -o $obj $tf 2>/dev/null");
         if ($rc == 0) {
             push @{$config{cflags}}, "-fzvector";
