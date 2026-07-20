@@ -208,7 +208,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
-            if (!ASN1_STRING_set_string(qual->d.cpsuri, cnf->value)) {
+            if (!ASN1_STRING_set1_string(qual->d.cpsuri, cnf->value)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
@@ -324,7 +324,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
             if (tag_len != 0)
                 value += tag_len + 1;
             len = (int)strlen(value);
-            if (!ASN1_STRING_set_data(not->exptext, (uint8_t *)value, len)) {
+            if (!ASN1_STRING_set1_data(not->exptext, (uint8_t *)value, len)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
@@ -343,7 +343,7 @@ static POLICYQUALINFO *notice_section(X509V3_CTX *ctx,
                 nref->organization->type = V_ASN1_IA5STRING;
             else
                 nref->organization->type = V_ASN1_VISIBLESTRING;
-            if (!ASN1_STRING_set_string(nref->organization, cnf->value)) {
+            if (!ASN1_STRING_set1_string(nref->organization, cnf->value)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }

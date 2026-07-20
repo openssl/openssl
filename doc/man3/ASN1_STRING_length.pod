@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ASN1_STRING_set_data, ASN1_STRING_set_string, ASN1_STRING_get_length,
+ASN1_STRING_set1_data, ASN1_STRING_set1_string, ASN1_STRING_get_length,
 ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
 ASN1_STRING_type, ASN1_STRING_get0_data,
 ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
@@ -21,9 +21,9 @@ ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
 
  int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in);
 
- int ASN1_STRING_set_data(ASN1_STRING *str, const uint8_t *data, size_t len);
+ int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len);
 
- int ASN1_STRING_set_string(ASN1_STRING *str, const char *data);
+ int ASN1_STRING_set1_string(ASN1_STRING *str, const char *data);
 
  size_t ASN1_STRING_get_length(const ASN1_STRING *x);
 
@@ -56,13 +56,13 @@ freed or re-used.  If I<data> is not NULL, I<len> bytes are copied
 from the memory pointed to by I<data> to I<str>. If I<len> is -1 then
 the length is determined by strlen(data).
 
-ASN1_STRING_set_data() allocates memory for string I<str> to hold
+ASN1_STRING_set1_data() allocates memory for string I<str> to hold
 I<len> bytes of data. Any previously allocated memory owned by I<str>
 will be freed or re-used.  If I<data> is not NULL, I<len> bytes are
 copied from the memory pointed to by I<data> to I<str>. It is an error
 to use this function on a string of type B<ASN1_BIT_STRING>.
 
-ASN1_STRING_set_string() allocates memory for the string I<str> and makes
+ASN1_STRING_set1_string() allocates memory for the string I<str> and makes
 a copy of the characters from I<cstring>. Any previously
 allocated memory owned by I<str> will be freed or re-used.  I<cstring>
 must point to a valid NUL-terminated C string, and must not be
@@ -99,8 +99,8 @@ be ASCII, for a BMPString two bytes per character in big endian
 format, and for a UTF8String it will be in UTF8 format.
 
 Similar care should be taken to ensure the data is in the correct
-format when calling ASN1_STRING_set(), ASN1_STRING_set_data(), or
-ASN1_STRING_set_string().
+format when calling ASN1_STRING_set(), ASN1_STRING_set1_data(), or
+ASN1_STRING_set1_string().
 
 =head1 RETURN VALUES
 
@@ -115,8 +115,8 @@ error occurred.
 ASN1_STRING_cmp() returns an integer greater than, equal to, or less than 0,
 according to whether I<a> is greater than, equal to, or less than I<b>.
 
-ASN1_STRING_set(), ASN1_STRING_set_data(), and
-ASN1_STRING_set_string() return 1 on success or 0 on error or failure.
+ASN1_STRING_set(), ASN1_STRING_set1_data(), and
+ASN1_STRING_set1_string() return 1 on success or 0 on error or failure.
 
 ASN1_STRING_type() returns the type of I<x>.
 
@@ -129,7 +129,7 @@ L<ERR_get_error(3)>
 
 =head1 HISTORY
 
-ASN1_STRING_set_data(), ASN1_STRING_set_string(), and ASN1_STRING_get_length()
+ASN1_STRING_set1_data(), ASN1_STRING_set1_string(), and ASN1_STRING_get_length()
 were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT

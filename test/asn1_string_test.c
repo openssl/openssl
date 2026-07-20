@@ -410,7 +410,7 @@ asn1_string_new_not_owned_test(void)
     if (!TEST_ptr(tmp = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, data, sizeof(data))))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set_string(tmp, "muppet")))
+    if (!TEST_true(ASN1_STRING_set1_string(tmp, "muppet")))
         goto err;
 
     if (!TEST_mem_eq(data, sizeof(data), data2, sizeof(data2)))
@@ -484,16 +484,16 @@ asn1_string_set_data_test(void)
     if (!TEST_ptr(str = ASN1_STRING_new()))
         goto err;
 
-    if (!TEST_false(ASN1_STRING_set_data(str, (uint8_t *)"hoobla", -1)))
+    if (!TEST_false(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", -1)))
         goto err;
 
-    if (!TEST_false(ASN1_STRING_set_data(str, (uint8_t *)"hoobla", (size_t)INT_MAX + 1)))
+    if (!TEST_false(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", (size_t)INT_MAX + 1)))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set_data(str, NULL, 10)))
+    if (!TEST_true(ASN1_STRING_set1_data(str, NULL, 10)))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set_data(str, (uint8_t *)"hoobla", strlen("hoobla"))))
+    if (!TEST_true(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", strlen("hoobla"))))
         goto err;
 
     data = ASN1_STRING_get0_data(str);
@@ -504,7 +504,7 @@ asn1_string_set_data_test(void)
     if (!TEST_int_eq(memcmp("hoobla", data, strlen("hoobla")), 0))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set_data(str, (uint8_t *)"hoobla", strlen("hoobla") + 1)))
+    if (!TEST_true(ASN1_STRING_set1_data(str, (uint8_t *)"hoobla", strlen("hoobla") + 1)))
         goto err;
 
     data = ASN1_STRING_get0_data(str);
@@ -531,13 +531,13 @@ asn1_string_set_string_test(void)
     if (!TEST_ptr(str = ASN1_STRING_new()))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set_string(str, "foo")))
+    if (!TEST_true(ASN1_STRING_set1_string(str, "foo")))
         goto err;
 
     if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 3))
         goto err;
 
-    if (!TEST_true(ASN1_STRING_set_string(str, "hoob\0la")))
+    if (!TEST_true(ASN1_STRING_set1_string(str, "hoob\0la")))
         goto err;
 
     if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 4))

@@ -132,7 +132,7 @@ int PKCS7_add1_attrib_digest(PKCS7_SIGNER_INFO *si,
     os = ASN1_OCTET_STRING_new();
     if (os == NULL)
         return 0;
-    if (!ASN1_STRING_set_data(os, md, mdlen)
+    if (!ASN1_STRING_set1_data(os, md, mdlen)
         || !PKCS7_add_signed_attribute(si, NID_pkcs9_messageDigest,
             V_ASN1_OCTET_STRING, os)) {
         ASN1_OCTET_STRING_free(os);

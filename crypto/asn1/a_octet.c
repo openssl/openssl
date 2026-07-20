@@ -30,6 +30,6 @@ int ASN1_OCTET_STRING_set(ASN1_OCTET_STRING *x, const unsigned char *d,
         return 0;
     }
     if (len == -1)
-        return ASN1_STRING_set_string(x, (const char *)d);
-    return ASN1_STRING_set_data(x, d, len);
+        return ASN1_STRING_set1_string(x, (const char *)d);
+    return ASN1_STRING_set1_data(x, d, len);
 }
