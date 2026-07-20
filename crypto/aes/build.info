@@ -131,7 +131,6 @@ GENERATE[aes-parisc.s]=asm/aes-parisc.pl
 GENERATE[aes-mips.S]=asm/aes-mips.pl
 INCLUDE[aes-mips.o]=..
 
-GENERATE[aes-riscv64.s]=asm/aes-riscv64.pl
 GENERATE[aes-riscv64-zkn.s]=asm/aes-riscv64-zkn.pl
 GENERATE[aes-riscv32-zkn.s]=asm/aes-riscv32-zkn.pl
 GENERATE[aes-riscv64-zvkb-zvkned.s]=asm/aes-riscv64-zvkb-zvkned.pl
