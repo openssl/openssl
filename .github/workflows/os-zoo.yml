@@ -36,7 +36,7 @@ jobs:
     steps:
     - name: install packages
       run: apk --no-cache add build-base perl linux-headers ${{ matrix.cc }}
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: config
@@ -88,7 +88,7 @@ jobs:
     runs-on: ubuntu-latest
     container: ${{ matrix.zoo.image }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: install packages
@@ -114,7 +114,7 @@ jobs:
         os: [macos-14, macos-15, macos-15-intel]
     runs-on: ${{ matrix.os }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -144,7 +144,7 @@ jobs:
             vcvars: C:\Program Files\Microsoft Visual Studio\18\Enterprise\VC\Auxiliary\Build\vcvars64.bat
     runs-on: ${{ matrix.platform.os }}
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
@@ -201,7 +201,7 @@ jobs:
   linux-arm64:
     runs-on: ubuntu-24.04-arm
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: config
@@ -218,7 +218,7 @@ jobs:
   linux-x86:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: run container
@@ -260,7 +260,7 @@ jobs:
     runs-on: linux-ppc64le
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: config
@@ -280,7 +280,7 @@ jobs:
     runs-on: linux-s390x
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: config
@@ -300,7 +300,7 @@ jobs:
     runs-on: linux-riscv64
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: config
@@ -320,7 +320,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
     - name: config
@@ -359,7 +359,7 @@ jobs:
     runs-on: ubuntu-latest
     if: github.repository == 'openssl/openssl'
     steps:
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
     - name: config
       uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
       with:

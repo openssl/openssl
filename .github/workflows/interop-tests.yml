@@ -26,7 +26,7 @@ jobs:
     env:
       COMPONENT: ${{ matrix.COMPONENT }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           persist-credentials: false
       - name: Display environment
@@ -84,7 +84,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq install autoconf zlib1g-dev
-    - uses: actions/checkout@v6
+    - uses: actions/checkout@v7
       with:
         persist-credentials: false
         repository: openssh/openssh-portable
