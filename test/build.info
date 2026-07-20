@@ -1335,6 +1335,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[trace_api_test]=.. ../include ../apps/include
   DEPEND[trace_api_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=endecode_api_test
+  SOURCE[endecode_api_test]=endecode_api_test.c $INITSRC
+  INCLUDE[endecode_api_test]=../include ../apps/include
+  DEPEND[endecode_api_test]=../libcrypto libtestutil.a
+
   PROGRAMS{noinst}=endecode_test
   SOURCE[endecode_test]=endecode_test.c helpers/predefined_dhparams.c
   INCLUDE[endecode_test]=.. ../include ../apps/include
