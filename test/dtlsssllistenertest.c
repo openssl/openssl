@@ -3676,6 +3676,201 @@ end:
     return testresult;
 }
 
+/*
+ * Test DTLS 1.3 SSL Listener handshake message buffering.
+ *
+ * This test verifies that when a DTLS 1.3 SSL Listener sends handshake
+ * messages, multiple records are buffered into a single datagram
+ * rather than being sent as separate datagrams.
+ *
+ * Expected behavior with buffering:
+ *   - At least one datagram contains multiple DTLS records
+ *
+ * Without buffering (the bug this tests for):
+ *   - Each record would be in its own datagram
+ */
+static int test_dtls13_listener_msg_buffering(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO_ADDR *client_addr = NULL;
+    int testresult = 0;
+    int retc, rets, err_code;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result;
+    int abortctr = 0;
+    unsigned char buf[16384];
+    size_t datagram_len;
+    BIO_MSG msg;
+    size_t msgs_processed;
+    int record_count, max_records_in_datagram = 0;
+    BIO *client_rbio;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    /*
+     * Set NO_QUERY_MTU on the context so connections inherit it.
+     * This prevents the MTU from being queried before we can set it.
+     */
+    SSL_CTX_set_options(sctx, SSL_OP_NO_QUERY_MTU);
+
+    if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &clientssl, &client_addr)))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+
+    retc = SSL_connect(clientssl);
+    err_code = SSL_get_error(clientssl, retc);
+    if (!TEST_true(retc <= 0
+            && (err_code == SSL_ERROR_WANT_READ
+                || err_code == SSL_ERROR_WANT_WRITE)))
+        goto end;
+
+    while (serverssl == NULL) {
+        if (!TEST_int_le(++abortctr, 100))
+            goto end;
+
+        poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+        poll_item.desc.value.ssl = listener;
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+        poll_timeout.tv_sec = 0;
+        poll_timeout.tv_usec = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item),
+                &poll_timeout, 0, &poll_result)))
+            goto end;
+
+        if (poll_result > 0 && (poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            serverssl = SSL_accept_connection(listener,
+                SSL_ACCEPT_CONNECTION_NO_BLOCK);
+    }
+
+    if (!TEST_ptr(serverssl))
+        goto end;
+
+    /* Set a large MTU to prevent message fragmentation */
+    SSL_set_mtu(serverssl, 1500);
+
+    abortctr = 0;
+    while (1) {
+        if (!TEST_int_le(++abortctr, 100))
+            goto end;
+
+        rets = SSL_do_handshake(serverssl);
+        err_code = SSL_get_error(serverssl, rets);
+
+        if (rets > 0)
+            break;
+
+        if (err_code == SSL_ERROR_WANT_READ)
+            break;
+
+        if (!TEST_int_eq(err_code, SSL_ERROR_WANT_WRITE))
+            goto end;
+    }
+
+    /*
+     * The server has sent its flight, which should be buffered into one or
+     * more datagrams. We read each datagram and count the DTLS records
+     * within it. With proper buffering, at least one datagram should
+     * contain multiple records.
+     */
+    client_rbio = SSL_get_rbio(clientssl);
+    if (!TEST_ptr(client_rbio))
+        goto end;
+
+    /* Read all available datagrams */
+    while (1) {
+        memset(&msg, 0, sizeof(msg));
+        msg.data = buf;
+        msg.data_len = sizeof(buf);
+
+        if (!BIO_recvmmsg(client_rbio, &msg, sizeof(msg), 1, 0, &msgs_processed)
+            || msgs_processed == 0)
+            break;
+
+        datagram_len = msg.data_len;
+
+        /* Count DTLS records in this datagram */
+        record_count = 0;
+        {
+            size_t offset = 0;
+
+            while (offset < datagram_len) {
+                unsigned char hdr = buf[offset];
+                size_t rec_len, hdr_len;
+
+                /*
+                 * Check that the first three bits are set to 001 to verify
+                 * that the DTLS 1.3 Unified Header is present. Otherwise,
+                 * assume DTLS 1.2 record format.
+                 */
+                if ((hdr & 0xE0) == 0x20) {
+                    /* DTLS 1.3 unified header */
+                    if (offset + 4 > datagram_len)
+                        break;
+
+                    if (hdr & 0x04) {
+                        /* Length field present */
+                        hdr_len = 1 + ((hdr & 0x08) ? 2 : 1);
+                        if (offset + hdr_len + 2 > datagram_len)
+                            break;
+                        rec_len = (buf[offset + hdr_len] << 8)
+                            | buf[offset + hdr_len + 1];
+                        hdr_len += 2;
+                    } else {
+                        /* No length field - record extends to end of datagram */
+                        rec_len = datagram_len - offset - 1
+                            - ((hdr & 0x08) ? 2 : 1);
+                        hdr_len = 1 + ((hdr & 0x08) ? 2 : 1);
+                    }
+
+                    offset += hdr_len + rec_len;
+                } else if (hdr >= 20 && hdr <= 25) {
+                    /* DTLS 1.2 style record header (13 bytes) */
+                    if (offset + 13 > datagram_len)
+                        break;
+                    rec_len = (buf[offset + 11] << 8) | buf[offset + 12];
+                    offset += 13 + rec_len;
+                } else {
+                    break;
+                }
+
+                record_count++;
+            }
+        }
+
+        if (record_count > max_records_in_datagram)
+            max_records_in_datagram = record_count;
+    }
+
+    /*
+     * The key assertion: with buffering enabled, at least one datagram should
+     * contain multiple records.
+     */
+    if (!TEST_int_gt(max_records_in_datagram, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(client_addr);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -3744,6 +3939,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_listener_multiple_events);
     ADD_TEST(test_dtls_poll_conn_event_ec);
     ADD_TEST(test_dtls_poll_null_item);
+
+    /* Message buffering test */
+    ADD_TEST(test_dtls13_listener_msg_buffering);
 #endif /* OPENSSL_NO_DTLS1_3 */
 
     /* Time callback tests */
