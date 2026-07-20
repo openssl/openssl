@@ -10,29 +10,7 @@ IF[{- !$disabled{asm} -}]
 
   IF[{- ($target{perlasm_scheme} // '') ne '31' -}]
     $MLKEM_VX_s390x=ml_kem_vec128.c
-    # Only define OPENSSL_ML_KEM_S390X when the compiler can actually
-    # compile <vecintrin.h> with the current flag set.  This is a stricter
-    # guard than a -march name-table lookup: it catches compilers (e.g.
-    # Clang) that accept a qualifying -march but still refuse to include
-    # <vecintrin.h> unless -fzvector is present.  Configure already probes
-    # for -fzvector and adds it to $config{cflags} when required, so by
-    # the time this Perl code runs the flags are complete and a single
-    # try-compile is sufficient.
-    IF[{- my @all_cflags = (ref($target{cflags}) ? @{$target{cflags}}
-                                                  : ($target{cflags} // ())),
-                            @{$config{cflags}};
-          my $cc      = $config{CROSS_COMPILE} . $config{CC};
-          my $flagstr = join(' ', @all_cflags);
-          my $tf      = "vx_kem_probe_$$.c";
-          my $obj     = "vx_kem_probe_$$.o";
-          open(my $fh, '>', $tf) or die "Cannot write $tf: $!";
-          print $fh "#include <vecintrin.h>\nint main(void){return 0;}\n";
-          close($fh);
-          my $ok = (system("$cc $flagstr -c -o $obj $tf 2>/dev/null") == 0);
-          unlink($tf, $obj);
-          $ok -}]
-      $MLKEMDEF_s390x=OPENSSL_ML_KEM_S390X
-    ENDIF
+    $MLKEMDEF_s390x=OPENSSL_ML_KEM_S390X
   ENDIF
 
   # Now that we have defined all the arch specific variables, use the

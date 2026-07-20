@@ -9,7 +9,7 @@
 
 #include <stdint.h>
 
-#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
 #define VX_COMPILER_SUPPORT_VEC128
 #include <vecintrin.h>
 #endif
@@ -471,7 +471,7 @@ static __owur ossl_inline vec_int16_t reduce_fully(vec_int16_t a)
  *   max(|b|) = 8q = 26632
  *   |z_hi| <= floor((3328 * 26632) / 2^16) = 1352.
  *   Therefore |r| <= 1352 + 1665 = 3017 < q.
- * 
+ *
  * Case 2b: a ∈ [0,q), b ∈ [-9q,9q]
  *   |r| <= 1522 < q.
  *
