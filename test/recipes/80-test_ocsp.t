@@ -54,7 +54,7 @@ sub test_ocsp {
                   $title); });
 }
 
-plan tests => 14;
+plan tests => 15;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
