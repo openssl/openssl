@@ -986,6 +986,10 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ctx->iv_len = -1;
         break;
     case EVP_CTRL_AEAD_SET_IV_FIXED:
+        /* arg=-1 is a valid sentinel meaning "use full ivlen"; anything
+         * below that would wrap to a huge size_t and overflow on memcpy. */
+        if (arg < -1)
+            return 0;
         params[0] = OSSL_PARAM_construct_octet_string(
             OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, ptr, sz);
         break;
