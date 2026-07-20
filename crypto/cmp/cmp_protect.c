@@ -206,7 +206,7 @@ static X509_ALGOR *pbmac_algor(const OSSL_CMP_CTX *ctx)
         goto err;
     if ((pbm_der_len = i2d_OSSL_CRMF_PBMPARAMETER(pbm, &pbm_der)) < 0)
         goto err;
-    if (!ASN1_STRING_set_data(pbm_str, pbm_der, pbm_der_len))
+    if (!ASN1_STRING_set1_data(pbm_str, pbm_der, pbm_der_len))
         goto err;
     alg = ossl_X509_ALGOR_from_nid(NID_id_PasswordBasedMAC,
         V_ASN1_SEQUENCE, pbm_str);
