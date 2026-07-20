@@ -489,7 +489,7 @@ static __owur ossl_inline vec_int16_t multiply_montgomery_unreduced(vec_int16_t 
     vec_int16_t a,
     vec_int16_t a_twist)
 {
-    vec_int16_t k = a_twist * b;
+    vec_int16_t k = (vec_int16_t)((vec_uint16_t)a_twist * (vec_uint16_t)b);
     vec_int16_t c = vec_mulh((vec_int16_noalias_t)k, (vec_int16_noalias_t)vec_q);
     vec_int16_t z_high = vec_mulh((vec_int16_noalias_t)a, (vec_int16_noalias_t)b);
     vec_int16_t r = z_high - c;
@@ -555,7 +555,7 @@ static ossl_inline void demontgomerize_scalar_vec128(scalar *out)
 static __owur ossl_inline vec_int16_t multiply_512_montgomery_unreduced(vec_int16_t b)
 {
     /* Multiply by 512 = 2^9 using shift, then compute high part >> 7 */
-    vec_int16_t k = b << 9;
+    vec_int16_t k = (vec_int16_t)((vec_uint16_t)b << 9);
     vec_int16_t c = vec_mulh((vec_int16_noalias_t)k, (vec_int16_noalias_t)vec_q);
     vec_int16_t z_high = (vec_int16_noalias_t)b >> 7;
     vec_int16_t r = z_high - c;
@@ -968,7 +968,7 @@ static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_noalia
      */
     vec_int16_t l0_twist = (vec_int16_t)((vec_uint16_t)l0_vec * q_inv);
     vec_int16_t l1_twist = (vec_int16_t)((vec_uint16_t)l1_vec * q_inv);
-    vec_int16_t lsum_twist = l0_twist + l1_twist;
+    vec_int16_t lsum_twist = (vec_int16_t)((vec_uint16_t)l0_twist + (vec_uint16_t)l1_twist);
 
     vec_int16_t P = multiply_montgomery_unreduced(r0_vec + r1_vec, l0_vec + l1_vec, lsum_twist);
     vec_int16_t P0 = multiply_montgomery_unreduced(r0_vec, l0_vec, l0_twist);
