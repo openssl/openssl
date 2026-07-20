@@ -24,7 +24,7 @@ permissions:
 
 jobs:
   report:
-    # Only /ci dispatches carry routing metadata; skip schedule/manual/review.
+    # Only /ci dispatches need reporting here; other paths report natively.
     if: github.event.workflow_run.event == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:

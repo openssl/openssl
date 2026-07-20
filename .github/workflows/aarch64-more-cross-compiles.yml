@@ -9,7 +9,8 @@ name: Cross Compile for AArch64 Extensions
 
 on:
   pull_request:
-    types: [opened, reopened, edited, synchronize]
+    # 'labeled' carries the auto-on-approval trigger (see the job guard).
+    types: [opened, reopened, edited, synchronize, labeled]
   push:
   schedule:
     - cron: '05 03 * * *'
@@ -27,9 +28,6 @@ on:
         description: 'Check-run id to report into (set by the /ci controller)'
         required: false
         default: ''
-  # Run automatically when a committer approves the PR.
-  pull_request_review:
-    types: [submitted]
 
 run-name: "${{ (github.event_name == 'workflow_dispatch' && inputs.pr != '') && format('{0} · /ci PR #{1} · {2} · check:{3}', github.workflow, inputs.pr, inputs.head_sha, inputs.check_run_id) || github.workflow }}"
 
@@ -44,12 +42,14 @@ jobs:
   authorize:
     uses: ./.github/workflows/ci-authorize.yml
   cross-compilation-aarch64:
-    # PR runs when the title/body opts in; push runs on the '[aarch64 ci]'
-    # marker; schedule/manual/approval always run, subject to the authorize gate.
+    # Ordinary PR runs on title/body opt-in; the 'approval: done' label auto-runs
+    # regardless; push on the '[aarch64 ci]' marker; schedule/manual always run.
     needs: authorize
     if: >-
       needs.authorize.outputs.run == 'true' &&
-      ( ( github.event_name == 'pull_request' &&
+      ( ( github.event_name == 'pull_request' && github.event.action == 'labeled'
+          && github.event.label.name == 'approval: done' )
+        || ( github.event_name == 'pull_request' && github.event.action != 'labeled' &&
           ( contains(github.event.pull_request.title, 'aarch64')
             || contains(github.event.pull_request.title, 'AArch64')
             || contains(github.event.pull_request.title, 'arm64')
@@ -57,8 +57,7 @@ jobs:
         || ( github.event_name == 'push' &&
              contains(github.event.head_commit.message, '[aarch64 ci]') )
         || github.event_name == 'schedule'
-        || github.event_name == 'workflow_dispatch'
-        || github.event_name == 'pull_request_review' )
+        || github.event_name == 'workflow_dispatch' )
     strategy:
       fail-fast: false
       matrix:
@@ -221,9 +220,8 @@ jobs:
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      # Approval / manual-dispatch runs must still run the EVP tests, or a
-      # compile-only green would be misleading.
-      if: (github.event_name == 'pull_request' || github.event_name == 'pull_request_review' || github.event_name == 'workflow_dispatch') && matrix.platform.tests != 'none'
+      # PR and /ci dispatch runs must run EVP tests, else a compile-only green misleads.
+      if: (github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch') && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \

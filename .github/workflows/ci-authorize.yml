@@ -39,16 +39,25 @@ jobs:
             const eventName = context.eventName;
             const repoOk = `${context.repo.owner}/${context.repo.repo}` === 'openssl/openssl';
             let run = false, ref = '', pr = '', headSha = '', checkRunId = '', meta = false;
-            const isCommitter = async (login) => {
-              if (!login) return false;
-              const { data } = await github.rest.repos.getCollaboratorPermissionLevel(
-                { owner: context.repo.owner, repo: context.repo.repo, username: login });
-              return data.permission === 'write' || data.permission === 'admin';
-            };
             if (eventName === 'schedule') {
               run = repoOk;
-            } else if (eventName === 'push' || eventName === 'pull_request') {
+            } else if (eventName === 'push') {
               run = true;
+            } else if (eventName === 'pull_request') {
+              if (context.payload.action === 'labeled') {
+                // Auto-run on the 2-approval 'approval: done' label; scope to
+                // base branches whose protection dismisses stale approvals.
+                const prObj = context.payload.pull_request;
+                const label = context.payload.label && context.payload.label.name;
+                const base = prObj.base.ref;
+                const baseOk = base === 'master' || base.startsWith('feature/')
+                  || base.startsWith('openssl-');
+                if (repoOk && label === 'approval: done' && baseOk) {
+                  run = true; ref = prObj.head.sha;
+                }
+              } else {
+                run = true;
+              }
             } else if (eventName === 'workflow_dispatch') {
               const i = context.payload.inputs || {};
               if (!i.pr) {
@@ -60,17 +69,6 @@ jobs:
                 }
                 run = repoOk; ref = i.head_sha; pr = i.pr; headSha = i.head_sha;
                 checkRunId = i.check_run_id; meta = run;
-              }
-            } else if (eventName === 'pull_request_review') {
-              const rv = context.payload.review, prObj = context.payload.pull_request;
-              const base = prObj.base.ref;
-              // Only base branches whose protection dismisses stale approvals.
-              const baseOk = base === 'master' || base.startsWith('feature/')
-                || base.startsWith('openssl-');
-              if (repoOk && rv.state === 'approved' && baseOk
-                  && rv.commit_id === prObj.head.sha && await isCommitter(rv.user.login)) {
-                run = true; ref = rv.commit_id; headSha = rv.commit_id;
-                pr = String(prObj.number);
               }
             }
             if (meta) {

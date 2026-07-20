@@ -53,9 +53,9 @@ on:
         description: 'Check-run id to report into (set by the /ci controller)'
         required: false
         default: ''
-  # Run automatically when a committer approves the PR.
-  pull_request_review:
-    types: [submitted]
+  # Auto-run on the 2-approval 'approval: done' label.
+  pull_request:
+    types: [labeled]
 
 run-name: "${{ (github.event_name == 'workflow_dispatch' && inputs.pr != '') && format('{0} · /ci PR #{1} · {2} · check:{3}', github.workflow, inputs.pr, inputs.head_sha, inputs.check_run_id) || github.workflow }}"
 
