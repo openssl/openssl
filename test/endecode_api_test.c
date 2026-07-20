@@ -119,6 +119,13 @@ static int inter2pem_encode(void *vctx, OSSL_CORE_BIO *cout,
         || memcmp(p->data, STRUCTURE_NAME, p->data_size) != 0)
         return 0;
 
+    /* Likewise the data type, naming the encoder that produced the data */
+    p = OSSL_PARAM_locate_const(obj_abstract, OSSL_OBJECT_PARAM_DATA_TYPE);
+    if (p == NULL || p->data_type != OSSL_PARAM_UTF8_STRING
+        || p->data == NULL || p->data_size != strlen(KEY_NAME)
+        || memcmp(p->data, KEY_NAME, p->data_size) != 0)
+        return 0;
+
     p = OSSL_PARAM_locate_const(obj_abstract, OSSL_OBJECT_PARAM_DATA);
     if (p == NULL || p->data_type != OSSL_PARAM_OCTET_STRING)
         return 0;
