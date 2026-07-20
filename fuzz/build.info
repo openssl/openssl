@@ -50,6 +50,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
     PROGRAMS{noinst}=dtlsclient dtlsserver
   ENDIF
 
+  IF[{- !$disabled{"ech"} -}]
+    PROGRAMS{noinst}=echconfiglist_parser
+  ENDIF
+
   SOURCE[asn1]=asn1.c driver.c fuzz_rand.c
   INCLUDE[asn1]=../include {- $ex_inc -}
   DEPEND[asn1]=../libcrypto ../libssl {- $ex_lib -}
@@ -105,6 +109,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[dtlsserver]=dtlsserver.c driver.c fuzz_rand.c
   INCLUDE[dtlsserver]=../include {- $ex_inc -}
   DEPEND[dtlsserver]=../libcrypto ../libssl {- $ex_lib -}
+
+  SOURCE[echconfiglist_parser]=echconfiglist_parser.c driver.c
+  INCLUDE[echconfiglist_parser]=../include {- $ex_inc -}
+  DEPEND[echconfiglist_parser]=../libcrypto ../libssl {- $ex_lib -}
 
   SOURCE[pem]=pem.c driver.c
   INCLUDE[pem]=../include {- $ex_inc -}
@@ -220,6 +228,10 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=dtlsclient-test dtlsserver-test
   ENDIF
 
+  IF[{- !$disabled{"ech"} -}]
+    PROGRAMS{noinst}=echconfiglist_parser-test
+  ENDIF
+
   SOURCE[asn1-test]=asn1.c $FUZZTESTSRC fuzz_rand.c
   INCLUDE[asn1-test]=../include ../test/mfail
   DEPEND[asn1-test]=../libcrypto.a ../libssl.a
@@ -287,6 +299,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[dtlsserver-test]=dtlsserver.c $FUZZTESTSRC fuzz_rand.c
   INCLUDE[dtlsserver-test]=../include ../test/mfail
   DEPEND[dtlsserver-test]=../libcrypto.a ../libssl.a
+
+  SOURCE[echconfiglist_parser-test]=echconfiglist_parser.c $FUZZTESTSRC
+  INCLUDE[echconfiglist_parser-test]=../include ../test/mfail
+  DEPEND[echconfiglist_parser-test]=../libcrypto.a ../libssl.a
 
   SOURCE[pem-test]=pem.c $FUZZTESTSRC
   INCLUDE[pem-test]=../include ../test/mfail
