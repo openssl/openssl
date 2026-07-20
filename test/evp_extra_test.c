@@ -6245,6 +6245,108 @@ err:
 }
 
 /*
+ * Verify that a failing TLS record operation through the provider TLS
+ * fast path (EVP_CTRL_AEAD_TLS1_AAD + EVP_CipherUpdate) reports an error
+ * on the error queue. The record layer and applications drive AEAD TLS
+ * ciphers through this path, and gcm_tls_cipher() failures (here a tag
+ * verification failure, i.e. a bad record MAC) must not be silent.
+ */
+static int test_evp_gcm_tls_error_reporting(void)
+{
+    EVP_CIPHER *ciph = NULL;
+    EVP_CIPHER_CTX *ctx_enc = NULL, *ctx_dec = NULL;
+
+    unsigned char key[16];
+    unsigned char fixed_iv[EVP_GCM_TLS_FIXED_IV_LEN];
+    unsigned char aad[EVP_AEAD_TLS1_AAD_LEN];
+    unsigned char rec[EVP_GCM_TLS_EXPLICIT_IV_LEN + 24 + EVP_GCM_TLS_TAG_LEN];
+
+    const size_t payload_len = 24;
+    size_t i, reclen = sizeof(rec);
+    int len = 0, testresult = 0;
+    unsigned long err_code = 0;
+
+    for (i = 0; i < sizeof(key); i++)
+        key[i] = (unsigned char)(0xA0 + i);
+    for (i = 0; i < sizeof(fixed_iv); i++)
+        fixed_iv[i] = (unsigned char)(0xB0 + i);
+
+    /* Encrypt one TLS1.2 style record: explicit IV | payload | tag */
+    if (!TEST_ptr(ciph = EVP_CIPHER_fetch(testctx, "AES-128-GCM", testpropq))
+        || !TEST_ptr(ctx_enc = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_CipherInit_ex(ctx_enc, ciph, NULL, key, NULL, 1))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_GCM_SET_IV_FIXED,
+                            (int)sizeof(fixed_iv), fixed_iv),
+            0))
+        goto err;
+
+    /* TLS1.2 AAD: sequence number(8) | type(1) | version(2) | length(2) */
+    memset(aad, 0, sizeof(aad));
+    aad[8] = 23; /* application data */
+    aad[9] = 0x03;
+    aad[10] = 0x03;
+    /* On encrypt the length field covers the explicit IV and the payload */
+    aad[11] = (unsigned char)((EVP_GCM_TLS_EXPLICIT_IV_LEN + payload_len) >> 8);
+    aad[12] = (unsigned char)((EVP_GCM_TLS_EXPLICIT_IV_LEN + payload_len) & 0xff);
+    if (!TEST_int_eq(EVP_CIPHER_CTX_ctrl(ctx_enc, EVP_CTRL_AEAD_TLS1_AAD,
+                         EVP_AEAD_TLS1_AAD_LEN, aad),
+            EVP_GCM_TLS_TAG_LEN))
+        goto err;
+
+    memset(rec, 0, sizeof(rec));
+    for (i = 0; i < payload_len; i++)
+        rec[EVP_GCM_TLS_EXPLICIT_IV_LEN + i] = (unsigned char)i;
+    /* TLS records are en/decrypted in place */
+    if (!TEST_int_gt(EVP_CipherUpdate(ctx_enc, rec, &len, rec, (int)reclen), 0)
+        || !TEST_int_eq(len, (int)reclen))
+        goto err;
+
+    /* Corrupt the tag to force a bad record MAC on decrypt */
+    rec[reclen - 1] ^= 0xff;
+
+    if (!TEST_ptr(ctx_dec = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_CipherInit_ex(ctx_dec, ciph, NULL, key, NULL, 0))
+        || !TEST_int_gt(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_GCM_SET_IV_FIXED,
+                            (int)sizeof(fixed_iv), fixed_iv),
+            0))
+        goto err;
+
+    /* On decrypt the length field covers the full record */
+    aad[11] = (unsigned char)(reclen >> 8);
+    aad[12] = (unsigned char)(reclen & 0xff);
+    if (!TEST_int_eq(EVP_CIPHER_CTX_ctrl(ctx_dec, EVP_CTRL_AEAD_TLS1_AAD,
+                         EVP_AEAD_TLS1_AAD_LEN, aad),
+            EVP_GCM_TLS_TAG_LEN))
+        goto err;
+
+    ERR_set_mark();
+    if (!TEST_false(EVP_CipherUpdate(ctx_dec, rec, &len, rec, (int)reclen))) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    /* The failure must be visible on the error queue */
+    if (!TEST_int_gt(ERR_count_to_mark(), 0)) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    err_code = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err_code), ERR_LIB_PROV)
+        || !TEST_int_eq(ERR_GET_REASON(err_code),
+            PROV_R_CIPHER_OPERATION_FAILED)) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_enc);
+    EVP_CIPHER_CTX_free(ctx_dec);
+    EVP_CIPHER_free(ciph);
+    return testresult;
+}
+
+/*
  * Verify stale key is not being used after providing a new key in multiple steps.
  * This test performs a full round of encryption and then changes the
  * key and then the IV in a multi-step init.
@@ -9288,6 +9390,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, cipher_list_n);
     ADD_ALL_TESTS(test_evp_aead_tag_direction, cipher_list_n);
     ADD_ALL_TESTS(test_evp_aead_late_aad, cipher_list_n);
+    ADD_TEST(test_evp_gcm_tls_error_reporting);
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
