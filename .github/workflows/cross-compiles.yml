@@ -139,15 +139,17 @@ jobs:
             # GCC / z14 / VX enabled (FIPS).
             # -march=z14 sets __ARCH__=12 and __VX__, enabling VX_COMPILER_SUPPORT_VEC128
             # in ml_kem_vec128.c so all six entry points are compiled in.
-            # QEMU emulates z14-base (VX+VXE present, no IBM Z crypto HW required).
-            # OPENSSL_s390xcap=z14 makes S390X_VX_CAPABLE (VX && VXE) true so
-            # the six vec128 entry points are selected at runtime.
+            # QEMU_CPU=z13,vxeh=on: z13 provides VX; vxeh activates the VXE
+            # (Vector Enhancements) facility so S390X_VX_CAPABLE (VX && VXE) is
+            # true and the vec128 path is exercised.  Using z13+vxeh avoids the
+            # IBM Z hardware-crypto subfunctions that z14/z14-base require and
+            # that are unavailable on x86 GitHub Actions runners (exit 1).
             # The nm_check step asserts all six text symbols are present in
             # ml_kem_vec128.o.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
             target: -march=z14 linux64-s390x,
-            qemucpu: z14-base,
+            qemucpu: "z13,vxeh=on",
             opensslcapsname: s390xcap,
             opensslcaps: z14,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -158,11 +160,12 @@ jobs:
             # Same build as above (-march=z14) but OPENSSL_s390xcap is set to
             # "z13" (VX present, VXE absent) so S390X_VX_CAPABLE is false and
             # the generic scalar path is exercised on the same binary.
+            # z13 QEMU suffices; the VX/VXE code path is never entered.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
             target: -march=z14 linux64-s390x,
             fips: no,
-            qemucpu: z14-base,
+            qemucpu: z13,
             opensslcapsname: s390xcap,
             opensslcaps: z13,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -176,7 +179,7 @@ jobs:
             libs: libc6-dev-s390x-cross,
             target: -march=z14 linux64-s390x,
             compiler: clang,
-            qemucpu: z14-base,
+            qemucpu: "z13,vxeh=on",
             opensslcapsname: s390xcap,
             opensslcaps: z14,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -185,12 +188,13 @@ jobs:
           }, {
             # Clang / z14 / VX masked off (no FIPS).
             # Mirrors the GCC VX-off entry above but compiled with Clang.
+            # z13 QEMU suffices; the VX/VXE code path is never entered.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
             target: -march=z14 linux64-s390x,
             fips: no,
             compiler: clang,
-            qemucpu: z14-base,
+            qemucpu: z13,
             opensslcapsname: s390xcap,
             opensslcaps: z13,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
