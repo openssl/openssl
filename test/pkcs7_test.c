@@ -387,11 +387,64 @@ end:
 }
 #endif /* OPENSSL_NO_EC */
 
+/*
+ * Regression test for the NULL p7->d.<sign|digest>->contents handling fixed
+ * by PR #30351 and this commit. PKCS7_set_content(p7, NULL) is a public API
+ * that legitimately produces this state; the affected functions used to
+ * dereference NULL via PKCS7_get_octet_string -> PKCS7_type_is_data. They
+ * must now return cleanly with PKCS7_R_NO_CONTENT.
+ */
+static int pkcs7_null_contents_test(void)
+{
+    PKCS7 *p7 = NULL;
+    int ret = 0;
+
+    /* PKCS7_dataInit, NID_pkcs7_signed */
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_set_content(p7, NULL))
+        || !TEST_ptr_null(PKCS7_dataInit(p7, NULL)))
+        goto end;
+    PKCS7_free(p7);
+    p7 = NULL;
+
+    /* PKCS7_dataInit, NID_pkcs7_digest */
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_digest))
+        || !TEST_true(PKCS7_set_content(p7, NULL))
+        || !TEST_ptr_null(PKCS7_dataInit(p7, NULL)))
+        goto end;
+    PKCS7_free(p7);
+    p7 = NULL;
+
+    /* PKCS7_dataDecode, NID_pkcs7_signed */
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_set_content(p7, NULL))
+        || !TEST_ptr_null(PKCS7_dataDecode(p7, NULL, NULL, NULL)))
+        goto end;
+    PKCS7_free(p7);
+    p7 = NULL;
+
+    /* PKCS7_set_detached -> PKCS7_ctrl OP_SET_DETACHED_SIGNATURE */
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_set_content(p7, NULL))
+        || !TEST_int_eq(PKCS7_set_detached(p7, 1), 0))
+        goto end;
+
+    ret = 1;
+end:
+    PKCS7_free(p7);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_EC
     ADD_TEST(pkcs7_verify_test);
     ADD_TEST(pkcs7_inner_content_verify_test);
 #endif /* OPENSSL_NO_EC */
+    ADD_TEST(pkcs7_null_contents_test);
     return 1;
 }
