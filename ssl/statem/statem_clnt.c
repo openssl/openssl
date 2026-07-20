@@ -1963,6 +1963,7 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
     }
     if (SSL_CONNECTION_IS_TLS13(s)
         && !tls_validate_no_unknown_extensions(s, &extpkt, context))
+        /* SSLfatal() already called */
         goto err;
 
     s->hit = 0;
