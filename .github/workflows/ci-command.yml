@@ -6,19 +6,8 @@
 # https://www.openssl.org/source/license.html
 
 name: CI command
-# On-demand PR CI controller (openssl/project#2027).
-#
-# A committer comments `/ci <jobs>` on a pull request to run selected
-# time-consuming / non-PR workflows against that PR's code. This controller:
-#   * refuses non-committers (repository write/admin only);
-#   * pins the PR head SHA at command time (immutable, never refs/pull/N/head);
-#   * creates a pending check-run per requested workflow on that SHA; and
-#   * dispatches each workflow with the pinned {pr, head_sha, check_run_id}.
-# Results are completed by the companion `ci-report.yml` on workflow_run.
-#
-# This is a privileged, default-branch event: it NEVER checks out PR code and
-# the comment body is never interpolated into a shell `run:` — it is parsed in
-# github-script and passed through the API only.
+# A committer comments `/ci <jobs>` on a PR to run selected workflows against
+# its code. Results are completed by ci-report.yml. Never checks out PR code.
 
 on:
   issue_comment:
@@ -32,7 +21,6 @@ permissions:
 
 jobs:
   dispatch:
-    # Only PR comments starting with `/ci`.
     if: >-
       github.repository == 'openssl/openssl' &&
       github.event.issue.pull_request &&
@@ -45,15 +33,12 @@ jobs:
             const crypto = require('crypto');
             const { owner, repo } = context.repo;
 
-            // Eligible on-demand workflows: friendly name -> {file, cost (compute-min)}.
-            // Gradual rollout (openssl/project#2027): pilot with a small subset;
-            // add the remaining wired workflows here (and to ci-report.yml's
-            // `workflows:` list, plus re-wire their triggers) as they graduate.
+            // Friendly name -> { workflow file, approx compute-minutes }.
             const WORKFLOWS = {
               'ct-validation':     { file: 'ct-validation-daily.yml',         cost: 12 },
               'aarch64':           { file: 'aarch64-more-cross-compiles.yml', cost: 20 },
             };
-            const NONCE_TTL_MS = 60 * 60 * 1000; // /ci all confirmation window
+            const NONCE_TTL_MS = 60 * 60 * 1000;
 
             const prNum = context.payload.issue.number;
             const comment = context.payload.comment;
@@ -63,7 +48,6 @@ jobs:
             const jobList = () => Object.entries(WORKFLOWS)
               .map(([k, v]) => `- \`${k}\` (~${v.cost} min)`).join('\n');
 
-            // --- Committer gate (repository write/admin) -----------------------
             let level = 'none';
             try {
               const { data } = await github.rest.repos.getCollaboratorPermissionLevel(
@@ -76,9 +60,7 @@ jobs:
               return;
             }
 
-            // --- Parse `/ci <args>` --------------------------------------------
-            // Take the first line only; require the command to be exactly `/ci`
-            // (so `/cite`, `/ci-foo`, … are ignored rather than acted on).
+            // Match `/ci` exactly on the first line, so `/cite` etc. are ignored.
             const line = comment.body.split(/\r?\n/, 1)[0].trim();
             const tokens = line.split(/\s+/);
             if (tokens[0] !== '/ci') return;
@@ -90,7 +72,7 @@ jobs:
               return;
             }
 
-            // --- Pin the PR head SHA at command time ---------------------------
+            // Pin the head SHA now; the run always builds this immutable commit.
             let head_sha;
             try {
               const { data: prData } = await github.rest.pulls.get(
@@ -102,7 +84,7 @@ jobs:
               return;
             }
 
-            // --- `/ci all` cost guard (nonce two-step) -------------------------
+            // `/ci all` is costly, so require a nonce round-trip to confirm.
             const marker = (n) => `ci-all-confirm nonce=${n}`;
             let selected;
             if (args[0] === 'all') {
@@ -117,16 +99,14 @@ jobs:
                   + `<!-- ${marker(nonce)} pr=${prNum} sha=${head_sha} by=${commenter} exp=${exp} -->`);
                 return;
               }
-              // Validate the confirmation nonce against a prior bot warning.
               const nonce = args[2] || '';
               if (!/^[0-9a-f]{16}$/.test(nonce)) {
                 await reply(`@${commenter}: \`/ci all confirm\` needs the nonce from the `
                   + `warning above, e.g. \`/ci all confirm <nonce>\`.`);
                 return;
               }
-              // "List issue comments" is oldest-first; paginate so a warning on
-              // a long PR thread is not missed, then search newest-first. The
-              // trailing space pins the exact nonce (avoids prefix matches).
+              // Paginate (listComments is oldest-first) and match the exact nonce
+              // via its trailing space to avoid prefix matches.
               const comments = await github.paginate(
                 github.rest.issues.listComments,
                 { owner, repo, issue_number: prNum, per_page: 100 });
@@ -153,7 +133,6 @@ jobs:
               selected = [...new Set(args)];
             }
 
-            // --- Create a check per job and dispatch on the pinned SHA ---------
             const dispatched = [];
             for (const key of selected) {
               const { file } = WORKFLOWS[key];
@@ -169,8 +148,6 @@ jobs:
                 },
               });
               try {
-                // return_run_details (GitHub, 2026-02-19) surfaces the run id/url
-                // synchronously so the check can link straight to the run.
                 const res = await github.rest.actions.createWorkflowDispatch({
                   owner, repo, workflow_id: file, ref: 'master',
                   inputs: { pr: String(prNum), head_sha, check_run_id: String(cr.id) },

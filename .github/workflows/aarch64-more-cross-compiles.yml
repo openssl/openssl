@@ -27,7 +27,7 @@ on:
         description: 'Check-run id to report into (set by the /ci controller)'
         required: false
         default: ''
-  # Auto-on-approval (openssl/project#2027): run when a committer approves.
+  # Run automatically when a committer approves the PR.
   pull_request_review:
     types: [submitted]
 
@@ -41,18 +41,9 @@ permissions:
   contents: read
 
 jobs:
-  # ---------------------------------------------------------------------------
-  # PR CI gate (openssl/project#2027) — metadata only, NEVER checks out PR code.
-  # Decides whether the build jobs run and which commit they check out for the
-  # on-demand (/ci workflow_dispatch) and auto-on-approval (pull_request_review)
-  # paths, leaving schedule/push/pull_request/ordinary-dispatch behaviour
-  # unchanged. On a /ci dispatch it also records the routing metadata that
-  # ci-report.yml uses to complete the check-run.
-  #
-  # SECURITY: do not add `secrets:` or `permissions:` beyond `contents: read`
-  # here or to any build job this gates, and never check out PR code in this
-  # job. "Safe by discipline" — see openssl/project#2027 open item 3.
-  # ---------------------------------------------------------------------------
+  # Decides whether the build jobs run and which commit they build, and records
+  # routing metadata for a /ci dispatch. Metadata only: keep it at
+  # `contents: read` with no secrets, and never check out PR code here.
   authorize:
     runs-on: ubuntu-latest
     permissions:
@@ -118,9 +109,8 @@ jobs:
           path: ci-report-meta.json
           if-no-files-found: error
   cross-compilation-aarch64:
-    # Native opt-in preserved: PR runs when the title/body opts in; push runs on
-    # the '[aarch64 ci]' marker. schedule/manual/approval always run (subject to
-    # the authorize gate, openssl/project#2027).
+    # PR runs when the title/body opts in; push runs on the '[aarch64 ci]'
+    # marker; schedule/manual/approval always run, subject to the authorize gate.
     needs: authorize
     if: >-
       needs.authorize.outputs.run == 'true' &&
@@ -296,8 +286,8 @@ jobs:
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      # §4b: cross-compile-only runs (approval / manual dispatch) must still run
-      # the EVP tests, or a compile-only green would be misleading.
+      # Approval / manual-dispatch runs must still run the EVP tests, or a
+      # compile-only green would be misleading.
       if: (github.event_name == 'pull_request' || github.event_name == 'pull_request_review' || github.event_name == 'workflow_dispatch') && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
