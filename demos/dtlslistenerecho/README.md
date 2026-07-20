@@ -49,6 +49,12 @@ The code demonstrates
 Running
 -------
 
+First, change to the demo directory:
+
+```console
+cd demos/dtlslistenerecho
+```
+
 ### Start the Server
 
 ```console
