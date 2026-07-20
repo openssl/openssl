@@ -1564,6 +1564,45 @@ end:
 }
 
 /*
+ * Aligned allocation helpers for the VX path.
+ *
+ * On s390x with VX support the scalar type carries ALIGN16 but both
+ * OPENSSL_malloc and OPENSSL_secure_malloc may return only 8-byte-aligned
+ * storage.  We therefore:
+ *
+ *   - Allocate the public-key buffer (t + m) via OPENSSL_aligned_alloc so
+ *     that the returned pointer is guaranteed 16-byte aligned.  The raw
+ *     malloc pointer is saved in key->t_freeptr for later OPENSSL_free().
+ *
+ *   - Allocate the private-key buffer (s + z + d) via OPENSSL_secure_malloc
+ *     with an extra 15 bytes of headroom, then advance the pointer to the
+ *     nearest 16-byte boundary.  The original secure-malloc pointer is saved
+ *     in key->s_freeptr; it is freed with
+ *     OPENSSL_secure_clear_free(key->s_freeptr, prvalloc + 15).
+ */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+# define SCALAR_ALIGN 16
+
+static scalar *alloc_pub_aligned(size_t puballoc, void **freeptr)
+{
+    return (scalar *)OPENSSL_aligned_alloc(puballoc, SCALAR_ALIGN, freeptr);
+}
+
+static scalar *alloc_prv_aligned(size_t prvalloc, void **freeptr)
+{
+    uint8_t *raw = OPENSSL_secure_malloc(prvalloc + (SCALAR_ALIGN - 1));
+    uintptr_t addr;
+
+    *freeptr = raw;
+    if (raw == NULL)
+        return NULL;
+    addr = (uintptr_t)raw;
+    addr = (addr + (SCALAR_ALIGN - 1)) & ~(uintptr_t)(SCALAR_ALIGN - 1);
+    return (scalar *)(void *)addr;
+}
+#endif /* VX_COMPILER_SUPPORT_VEC128 */
+
+/*
  * After allocating storage for public or private key data, update the key
  * component pointers to reference that storage.
  *
@@ -1580,8 +1619,16 @@ static __owur int add_storage(scalar *pub, scalar *priv,
          * One of these could be allocated correctly. It is legal to call free with a NULL
          * pointer, so always attempt to free both allocations here
          */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+        OPENSSL_free(key->t_freeptr);
+        if (priv != NULL)
+            OPENSSL_secure_clear_free(key->s_freeptr,
+                key->vinfo->prvalloc + (SCALAR_ALIGN - 1));
+        key->t_freeptr = key->s_freeptr = NULL;
+#else
         OPENSSL_free(pub);
         OPENSSL_secure_free(priv);
+#endif
         return 0;
     }
 
@@ -1633,9 +1680,21 @@ void ossl_ml_kem_key_reset(ML_KEM_KEY *key)
      *   secret |z|, and seed |d|, we can cleanse all three in one call.
      */
     if (key->t != NULL) {
-        if (ossl_ml_kem_have_prvkey(key))
+        if (ossl_ml_kem_have_prvkey(key)) {
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+            OPENSSL_secure_clear_free(key->s_freeptr,
+                key->vinfo->prvalloc + (SCALAR_ALIGN - 1));
+            key->s_freeptr = NULL;
+#else
             OPENSSL_secure_clear_free(key->s, key->vinfo->prvalloc);
+#endif
+        }
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+        OPENSSL_free(key->t_freeptr);
+        key->t_freeptr = NULL;
+#else
         OPENSSL_free(key->t);
+#endif
     }
     key->d = key->z = key->seedbuf = key->encoded_dk = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
@@ -1704,6 +1763,9 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = key->seedbuf = NULL;
     key->s = key->m = key->t = NULL;
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    key->t_freeptr = key->s_freeptr = NULL;
+#endif
     key->shake128_md = key->shake256_md = key->sha3_256_md = key->sha3_512_md = NULL;
     if (ossl_ml_kem_key_fetch_digest(key, properties))
         return key;
@@ -1734,6 +1796,9 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
 
     ret->d = ret->z = ret->rho = ret->pkhash = NULL;
     ret->s = ret->m = ret->t = NULL;
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    ret->t_freeptr = ret->s_freeptr = NULL;
+#endif
 
     /* Clear selection bits we can't fulfill */
     if (!ossl_ml_kem_have_pubkey(key))
@@ -1748,12 +1813,33 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         ok = 1;
         break;
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+        {
+            scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
+
+            if (pub != NULL)
+                memcpy(pub, key->t, key->vinfo->puballoc);
+            ok = add_storage(pub, NULL, 0, 1, ret);
+        }
+#else
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, 1, ret);
+#endif
         break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
         /* Frees both and returns 0 if either is NULL */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+        {
+            scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
+            scalar *priv = alloc_prv_aligned(key->vinfo->prvalloc, &ret->s_freeptr);
+
+            if (pub != NULL)
+                memcpy(pub, key->t, key->vinfo->puballoc);
+            ok = add_storage(pub, priv, 1, 1, ret);
+        }
+#else
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc),
             OPENSSL_secure_malloc(key->vinfo->prvalloc), 1, 1, ret);
+#endif
         if (ok) {
             memcpy(ret->s, key->s, key->vinfo->prvalloc);
 
@@ -1873,7 +1959,12 @@ int ossl_ml_kem_parse_public_key(const uint8_t *in, size_t len, ML_KEM_KEY *key)
         || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc, &key->t_freeptr),
+            NULL, 0, 0, key))
+#else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc), NULL, 0, 0, key))
+#endif
         ret = parse_pubkey(in, mdctx, key);
 
     if (!ret)
@@ -1904,8 +1995,13 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
     /* Clear any unused seed */
     ossl_ml_kem_key_reset(key);
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc, &key->t_freeptr),
+            alloc_prv_aligned(vinfo->prvalloc, &key->s_freeptr), 1, 0, key))
+#else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
+#endif
         ret = parse_prvkey(in, mdctx, key);
 
     if (!ret)
@@ -1953,8 +2049,13 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
      */
     CONSTTIME_SECRET(seed, ML_KEM_SEED_BYTES);
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc, &key->t_freeptr),
+            alloc_prv_aligned(vinfo->prvalloc, &key->s_freeptr), 1, 0, key))
+#else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
+#endif
         ret = genkey(seed, mdctx, pubenc, key);
     OPENSSL_cleanse(seed, sizeof(seed));
 
