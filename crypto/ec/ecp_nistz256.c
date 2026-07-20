@@ -631,6 +631,13 @@ __owur static int ecp_nistz256_windowed_mul(const EC_GROUP *group,
     for (i = 0; i < num; i++) {
         P256_POINT *row = table[i];
 
+        /*
+         * we treat NULL scalars as 0, and NULL points as points at infinity,
+         * i.e., they contribute nothing to the linear combination
+         */
+        if (scalar[i] == NULL)
+            continue;
+
         /* This is an unusual input, we don't guarantee constant-timeness. */
         if ((BN_num_bits(scalar[i]) > 256) || BN_is_negative(scalar[i])) {
             BIGNUM *mod;
