@@ -381,7 +381,7 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
     str->length = len;
 }
 
-int ASN1_STRING_set_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
+int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
 {
     if (str->type == V_ASN1_BIT_STRING) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_ILLEGAL_BITSTRING_FORMAT);
@@ -395,9 +395,9 @@ int ASN1_STRING_set_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
     return ossl_asn1_string_set_internal(str, data, (int)len_in, /*add_nul_byte=*/0);
 }
 
-int ASN1_STRING_set_string(ASN1_STRING *str, const char *c_string)
+int ASN1_STRING_set1_string(ASN1_STRING *str, const char *c_string)
 {
-    return ASN1_STRING_set_data(str, (const uint8_t *)c_string,
+    return ASN1_STRING_set1_data(str, (const uint8_t *)c_string,
         strlen(c_string));
 }
 

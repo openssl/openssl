@@ -5724,6 +5724,6 @@ OPENSSL_sk_set_copy_thunks              ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_new_not_owned               ?	4_1_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get0_kdf                    ?	4_1_0	EXIST::FUNCTION:
 EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
-ASN1_STRING_set_data                    ?	4_1_0	EXIST::FUNCTION:
-ASN1_STRING_set_string                  ?	4_1_0	EXIST::FUNCTION:
+ASN1_STRING_set1_data                   ?	4_1_0	EXIST::FUNCTION:
+ASN1_STRING_set1_string                 ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_get_length                  ?	4_1_0	EXIST::FUNCTION:
