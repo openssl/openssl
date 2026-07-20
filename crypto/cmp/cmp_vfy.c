@@ -730,7 +730,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                 "expected sender", expected_sender)) {
             str = X509_NAME_oneline(actual_sender, NULL, 0);
             ERR_raise_data(ERR_LIB_CMP, CMP_R_UNEXPECTED_SENDER,
-                str != NULL ? str : "<unknown>");
+                "%s", str != NULL ? str : "<unknown>");
             OPENSSL_free(str);
             return 0;
         }
