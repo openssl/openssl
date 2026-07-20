@@ -137,6 +137,18 @@ err:
     return ok;
 }
 
+/* Attaches bio as both rbio and wbio, consuming the caller's reference. */
+static int ssl_attach_bio(SSL *ssl, BIO *bio)
+{
+    SSL_set0_rbio(ssl, bio);
+    if (!TEST_true(BIO_up_ref(bio)))
+        return 0;
+
+    SSL_set0_wbio(ssl, bio);
+
+    return 1;
+}
+
 static int ssl_attach_bio_dgram(SSL *ssl,
     uint16_t local_port, uint16_t *actual_port)
 {
@@ -151,13 +163,7 @@ static int ssl_attach_bio_dgram(SSL *ssl,
         return 0;
     }
 
-    SSL_set0_rbio(ssl, bio);
-    if (!TEST_true(BIO_up_ref(bio)))
-        return 0;
-
-    SSL_set0_wbio(ssl, bio);
-
-    return 1;
+    return ssl_attach_bio(ssl, bio);
 }
 
 DEF_FUNC(hf_new_ssl)
@@ -168,22 +174,52 @@ DEF_FUNC(hf_new_ssl)
     const SSL_METHOD *method;
     SSL *ssl;
     uint64_t flags;
-    int is_server, is_domain;
+    int is_server, is_domain, is_fake_time, is_ta, is_no_bio;
 
     F_POP2(name, flags);
 
     is_domain = ((flags & 2) != 0);
     is_server = ((flags & 1) != 0);
+    is_ta = ((flags & 4) != 0);
+    is_fake_time = ((flags & 8) != 0);
+    is_no_bio = ((flags & 16) != 0);
 
-    method = is_server ? OSSL_QUIC_server_method() : OSSL_QUIC_client_method();
+    if (is_server)
+        method = OSSL_QUIC_server_method();
+    else if (is_ta)
+        method = OSSL_QUIC_client_thread_method();
+    else
+        method = OSSL_QUIC_client_method();
+
     if (!TEST_ptr(ctx = SSL_CTX_new(method)))
         goto err;
 
+#if defined(OPENSSL_NO_QUIC_THREAD_ASSIST) || !defined(OPENSSL_THREADS)
+    if (is_ta) {
+        TEST_skip("thread assisted mode not available");
+        F_SKIP_REST();
+    }
+#endif
+
 #if defined(OPENSSL_THREADS)
-    if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
-            SSL_DOMAIN_FLAG_MULTI_THREAD
-                | SSL_DOMAIN_FLAG_BLOCKING)))
+    if (is_ta) {
+        uint64_t domain_flags = 0;
+
+        /*
+         * Rely on the OSSL_QUIC_client_thread_method() domain flag defaults
+         * rather than setting them so the method's defaulting stays covered.
+         */
+        if (!TEST_true(SSL_CTX_get_domain_flags(ctx, &domain_flags))
+            || !TEST_uint64_t_eq(domain_flags,
+                SSL_DOMAIN_FLAG_MULTI_THREAD
+                    | SSL_DOMAIN_FLAG_THREAD_ASSISTED
+                    | SSL_DOMAIN_FLAG_BLOCKING))
+            goto err;
+    } else if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
+                   SSL_DOMAIN_FLAG_MULTI_THREAD
+                       | SSL_DOMAIN_FLAG_BLOCKING))) {
         goto err;
+    }
 #endif
 
     if (!TEST_true(ssl_ctx_configure(ctx, is_server)))
@@ -201,7 +237,13 @@ DEF_FUNC(hf_new_ssl)
             goto err;
     }
 
-    if (!is_domain && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
+    if (!is_domain && !is_no_bio
+        && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
+        goto err;
+
+    /* Use optionally the radix clock so OP_SKIP_TIME advances timers. */
+    if (is_fake_time
+        && !TEST_true(ossl_quic_set_override_now_cb(ssl, get_time, NULL)))
         goto err;
 
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), name, ssl))) {
@@ -903,6 +945,62 @@ err:
     return ok;
 }
 
+/*
+ * Link a client and a listener with an in-memory datagram BIO pair. Fake-time
+ * tests need this: a datagram sitting in the OS UDP path while fake time skips
+ * ahead could arrive only after a deadline it preceded in fake time.
+ */
+DEF_FUNC(hf_link_dgram_pair)
+{
+    int ok = 0;
+    SSL *c_ssl, *l_ssl;
+    BIO *c_bio = NULL, *l_bio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+
+    REQUIRE_SSL_2(c_ssl, l_ssl);
+
+    if (!TEST_true(BIO_new_bio_dgram_pair(&c_bio, 0, &l_bio, 0)))
+        goto err;
+
+    if (!TEST_true(BIO_dgram_set_caps(c_bio, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
+        || !TEST_true(BIO_dgram_set_caps(l_bio,
+            BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
+        goto err;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_ptr(addr = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina), 0)))
+        goto err;
+
+    /* There are no real ports; a stable dummy address is all that is needed. */
+    if (!TEST_true(SSL_set1_initial_peer_addr(c_ssl, addr)))
+        goto err;
+
+    if (!TEST_true(BIO_dgram_set0_local_addr(c_bio, addr)))
+        goto err;
+    addr = NULL;
+
+    if (!ssl_attach_bio(c_ssl, c_bio)) {
+        c_bio = NULL;
+        goto err;
+    }
+    c_bio = NULL;
+
+    if (!ssl_attach_bio(l_ssl, l_bio)) {
+        l_bio = NULL;
+        goto err;
+    }
+    l_bio = NULL;
+
+    ok = 1;
+err:
+    BIO_free(c_bio);
+    BIO_free(l_bio);
+    BIO_ADDR_free(addr);
+    return ok;
+}
+
 DEF_FUNC(hf_set_peer_addr_from)
 {
     int ok = 0;
@@ -952,6 +1050,80 @@ DEF_FUNC(hf_sleep)
     F_POP(ms);
 
     OSSL_sleep(ms);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_tick_active)
+{
+    int ok = 0;
+    uint64_t active;
+    const char *name;
+    RADIX_OBJ *obj;
+
+    F_POP2(name, active);
+    if (!TEST_ptr(obj = RADIX_PROCESS_get_obj(RP(), name)))
+        goto err;
+
+    obj->active = (active != 0);
+    ok = 1;
+err:
+    return ok;
+}
+
+/*
+ * Skip fake time and wait for the assist thread to catch up. It waits on real
+ * time internally, so wake it and spin until the event timeout is back in the
+ * future, meaning everything due up to now (any keepalive) has been serviced.
+ */
+DEF_FUNC(hf_skip_time_wait)
+{
+    int ok = 0;
+    uint64_t ms;
+    SSL *ssl;
+    struct timeval tv;
+    int is_infinite;
+
+    REQUIRE_SSL(ssl);
+    F_POP(ms);
+
+    if (RT()->scratch0 == 0) {
+        /* Skip once; extend the watchdog so the jump keeps real budget. */
+        radix_skip_time(ossl_ms2time(ms));
+        fctx->terp->deadline_time
+            = ossl_time_add(fctx->terp->deadline_time, ossl_ms2time(ms));
+        RT()->scratch0 = 1;
+    }
+
+    ossl_quic_conn_force_assist_thread_wake(ssl);
+
+    if (!TEST_true(SSL_get_event_timeout(ssl, &tv, &is_infinite)))
+        goto err;
+
+    /* {0,0} (subtract saturates) means an event is still pending. */
+    if (!is_infinite && tv.tv_sec == 0 && tv.tv_usec == 0)
+        F_SPIN_AGAIN();
+
+    RT()->scratch0 = 0; /* done; not reset at err, as spins pass through it */
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_expect_connected)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    REQUIRE_SSL(ssl);
+    if (!TEST_ptr(ch = ossl_quic_conn_get_channel(ssl)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_channel_is_active(ch)))
+        goto err;
 
     ok = 1;
 err:
@@ -1184,3 +1356,39 @@ err:
 #define OP_SLEEP(ms)  \
     (OP_PUSH_U64(ms), \
         OP_FUNC(hf_sleep))
+
+/* Thread-assisted client, fake time, no socket (link a BIO pair instead). */
+#define OP_NEW_SSL_C_TA_FT_MEM(name) \
+    (OP_PUSH_PZ(#name),              \
+        OP_PUSH_U64(4 | 8 | 16),     \
+        OP_FUNC(hf_new_ssl))
+
+/* Listener, fake time, no socket; accepted conns inherit the engine clock. */
+#define OP_NEW_SSL_L_FT_MEM(name) \
+    (OP_PUSH_PZ(#name),           \
+        OP_PUSH_U64(1 | 8 | 16),  \
+        OP_FUNC(hf_new_ssl))
+
+#define OP_LINK_DGRAM_PAIR(client_name, listener_name) \
+    (OP_SELECT_SSL(0, client_name),                    \
+        OP_SELECT_SSL(1, listener_name),               \
+        OP_FUNC(hf_link_dgram_pair))
+
+#define OP_TICK_DISABLE(name) \
+    (OP_PUSH_PZ(#name),       \
+        OP_PUSH_U64(0),       \
+        OP_FUNC(hf_set_tick_active))
+
+#define OP_TICK_ENABLE(name) \
+    (OP_PUSH_PZ(#name),      \
+        OP_PUSH_U64(1),      \
+        OP_FUNC(hf_set_tick_active))
+
+#define OP_SKIP_TIME_WAIT(name, ms) \
+    (OP_SELECT_SSL(0, name),        \
+        OP_PUSH_U64(ms),            \
+        OP_FUNC(hf_skip_time_wait))
+
+#define OP_EXPECT_CONNECTED(name) \
+    (OP_SELECT_SSL(0, name),      \
+        OP_FUNC(hf_expect_connected))

@@ -765,6 +765,42 @@ DEF_SCRIPT(check_ctx_cbks, "Check new_pending and client_hello callbacks")
     OP_FUNC(check_pending);
 }
 
+/*
+ * With client ticking disabled only its assist thread can act, so skipping fake
+ * time past the 30s idle timeout keeps the server up only if the assist thread
+ * keeps sending keepalives.
+ */
+DEF_SCRIPT(check_thread_assisted_idle,
+    "thread-assisted mode keeps an idle connection alive")
+{
+    size_t i;
+
+    OP_NEW_SSL_L_FT_MEM(L);
+    OP_NEW_SSL_C_TA_FT_MEM(C);
+    OP_LINK_DGRAM_PAIR(C, L);
+    OP_LISTEN(L);
+    OP_CONNECT_WAIT(C);
+
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+    OP_ACCEPT_CONN_NONE(L);
+
+    /* Tick the server so its idle timeout is enforced. */
+    OP_TICK_ENABLE(Sa);
+
+    OP_WRITE_B(C, "apple");
+    OP_READ_EXPECT_B(Sa, "apple");
+
+    OP_TICK_DISABLE(C);
+
+    /* Step well below the keepalive interval so due PINGs can be serviced. */
+    for (i = 0; i < 40; ++i) {
+        OP_SKIP_TIME_WAIT(C, 1000);
+        OP_EXPECT_CONNECTED(Sa);
+    }
+
+    OP_TICK_ENABLE(C);
+}
+
 DEF_FUNC(check_stream_reset_5)
 {
     int ok = 0;
@@ -1474,6 +1510,7 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_cwm),
     USE(check_pc_flood),
     USE(check_ctx_cbks),
+    USE(check_thread_assisted_idle),
     USE(script_5),
     USE(script_6),
     USE(script_7),
