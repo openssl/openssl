@@ -964,10 +964,14 @@ static ossl_inline void multiply_Fq2_montgomery_unreduced(const vec_int16_t *lhs
     vec_int16_noalias_t *result_odd)
 {
     static const vec_uint16_noalias_t q_inv = REPEAT_EIGHT_TIMES((uint16_t)kPrime_inverse);
-    vec_int16_t l0_vec = vec_perm(lhs_coeffs[0], lhs_coeffs[1], perm_even);
-    vec_int16_t l1_vec = vec_perm(lhs_coeffs[0], lhs_coeffs[1], perm_odd);
-    vec_int16_t r0_vec = vec_perm(rhs_coeffs[0], rhs_coeffs[1], perm_even);
-    vec_int16_t r1_vec = vec_perm(rhs_coeffs[0], rhs_coeffs[1], perm_odd);
+    vec_int16_noalias_t lhs0 = (vec_int16_noalias_t)lhs_coeffs[0];
+    vec_int16_noalias_t lhs1 = (vec_int16_noalias_t)lhs_coeffs[1];
+    vec_int16_noalias_t rhs0 = (vec_int16_noalias_t)rhs_coeffs[0];
+    vec_int16_noalias_t rhs1 = (vec_int16_noalias_t)rhs_coeffs[1];
+    vec_int16_t l0_vec = vec_perm(lhs0, lhs1, perm_even);
+    vec_int16_t l1_vec = vec_perm(lhs0, lhs1, perm_odd);
+    vec_int16_t r0_vec = vec_perm(rhs0, rhs1, perm_even);
+    vec_int16_t r1_vec = vec_perm(rhs0, rhs1, perm_odd);
 
     /*
      * Twisted Karatsuba: 3 Montgomery multiplications.

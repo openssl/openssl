@@ -137,16 +137,17 @@ jobs:
             tests: none
           }, {
             # GCC / z14 / VX enabled (FIPS).
-            # Compiles ml_kem_vec128.c with -mvx -mzvector (via linux64-s390x
-            # target defaults, __ARCH__>=12, __VX__).  QEMU emulates a z14 so
-            # the vector facility is available at runtime.  OPENSSL_s390xcap is
-            # set to "z14" so S390X_VX_CAPABLE (VX && VXE) is true and the six
-            # vec128 entry points are selected at runtime.  The nm_check step
-            # asserts all six text symbols are present in ml_kem_vec128.o.
+            # -march=z14 sets __ARCH__=12 and __VX__, enabling VX_COMPILER_SUPPORT_VEC128
+            # in ml_kem_vec128.c so all six entry points are compiled in.
+            # QEMU emulates z14-base (VX+VXE present, no IBM Z crypto HW required).
+            # OPENSSL_s390xcap=z14 makes S390X_VX_CAPABLE (VX && VXE) true so
+            # the six vec128 entry points are selected at runtime.
+            # The nm_check step asserts all six text symbols are present in
+            # ml_kem_vec128.o.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x,
-            qemucpu: z14,
+            target: -march=z14 linux64-s390x,
+            qemucpu: z14-base,
             opensslcapsname: s390xcap,
             opensslcaps: z14,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -154,14 +155,14 @@ jobs:
             label: s390x-gcc-z14-vx-on-fips
           }, {
             # GCC / z14 / VX masked off (no FIPS).
-            # Same build as above but OPENSSL_s390xcap is set to "z13" (VX
-            # present, VXE absent) so S390X_VX_CAPABLE is false and the
-            # generic scalar path is exercised on the same binary.
+            # Same build as above (-march=z14) but OPENSSL_s390xcap is set to
+            # "z13" (VX present, VXE absent) so S390X_VX_CAPABLE is false and
+            # the generic scalar path is exercised on the same binary.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x,
+            target: -march=z14 linux64-s390x,
             fips: no,
-            qemucpu: z14,
+            qemucpu: z14-base,
             opensslcapsname: s390xcap,
             opensslcaps: z13,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -173,9 +174,9 @@ jobs:
             # six ML-KEM VX vector entry points.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x,
+            target: -march=z14 linux64-s390x,
             compiler: clang,
-            qemucpu: z14,
+            qemucpu: z14-base,
             opensslcapsname: s390xcap,
             opensslcaps: z14,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -186,10 +187,10 @@ jobs:
             # Mirrors the GCC VX-off entry above but compiled with Clang.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: linux64-s390x,
+            target: -march=z14 linux64-s390x,
             fips: no,
             compiler: clang,
-            qemucpu: z14,
+            qemucpu: z14-base,
             opensslcapsname: s390xcap,
             opensslcaps: z13,
             tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
@@ -256,6 +257,10 @@ jobs:
             clang \
             binutils-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
+        # Detect sysroot: Ubuntu <=22.04 uses .../sys-root, 24.04+ installs directly.
+        SYSROOT=/usr/${{ matrix.platform.arch }}/sys-root
+        [ -d "$SYSROOT" ] || SYSROOT=/usr/${{ matrix.platform.arch }}
+        echo "CROSS_SYSROOT=$SYSROOT" >> $GITHUB_ENV
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
@@ -277,18 +282,22 @@ jobs:
     - name: config with FIPS (Clang)
       if: matrix.platform.fips != 'no' && matrix.platform.compiler == 'clang'
       env:
-        CC: clang --target=${{ matrix.platform.arch }}
+        CC: clang --target=${{ matrix.platform.arch }} --sysroot=${{ env.CROSS_SYSROOT }}
+        AR: ${{ matrix.platform.arch }}-ar
+        RANLIB: ${{ matrix.platform.arch }}-ranlib
+        AS: ${{ matrix.platform.arch }}-as
       run: |
         ./config --banner=Configured --strict-warnings enable-fips enable-lms \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
                  ${{ matrix.platform.target }}
     - name: config without FIPS (Clang)
       if: matrix.platform.fips == 'no' && matrix.platform.compiler == 'clang'
       env:
-        CC: clang --target=${{ matrix.platform.arch }}
+        CC: clang --target=${{ matrix.platform.arch }} --sysroot=${{ env.CROSS_SYSROOT }}
+        AR: ${{ matrix.platform.arch }}-ar
+        RANLIB: ${{ matrix.platform.arch }}-ranlib
+        AS: ${{ matrix.platform.arch }}-as
       run: |
         ./config --banner=Configured --strict-warnings enable-lms \
-                 --cross-compile-prefix=${{ matrix.platform.arch }}- \
                  ${{ matrix.platform.target }}
     - name: config dump
       run: ./configdata.pm --dump
