@@ -78,7 +78,7 @@ int ossl_sm2_plaintext_size(const unsigned char *ct, size_t ct_size,
         return 0;
     }
 
-    *pt_size = ASN1_STRING_length_ex(sm2_ctext->C2);
+    *pt_size = ASN1_STRING_get_length(sm2_ctext->C2);
     SM2_Ciphertext_free(sm2_ctext);
 
     return 1;
@@ -326,11 +326,11 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    msg_len = ASN1_STRING_length_ex(sm2_ctext->C2);
+    msg_len = ASN1_STRING_get_length(sm2_ctext->C2);
     if (msg_len > INT_MAX)
         goto done;
 
-    c3_len = ASN1_STRING_length_ex(sm2_ctext->C3);
+    c3_len = ASN1_STRING_get_length(sm2_ctext->C3);
     if (c3_len > INT_MAX || c3_len != (size_t)hash_size) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_ENCODING);
         goto done;

@@ -43,7 +43,7 @@ static int dh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
         goto err;
 
     /* Get public key */
-    plen = ASN1_STRING_length_ex(pubkey);
+    plen = ASN1_STRING_get_length(pubkey);
     if (plen > INT_MAX)
         goto err;
     p = ASN1_STRING_get0_data(pubkey);
@@ -121,7 +121,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
 
     p = ASN1_STRING_get0_data(parameter);
-    plen = ASN1_STRING_length_ex(parameter);
+    plen = ASN1_STRING_get_length(parameter);
     if (plen > INT_MAX)
         goto err;
     kekalg = d2i_X509_ALGOR(NULL, &p, (int)plen);
@@ -153,7 +153,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         goto err;
 
     if (ukm != NULL) {
-        dukmlen = ASN1_STRING_length_ex(ukm);
+        dukmlen = ASN1_STRING_get_length(ukm);
         if (dukmlen > INT_MAX)
             goto err;
         dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), (int)dukmlen);
@@ -307,7 +307,7 @@ static int dh_cms_encrypt(CMS_RecipientInfo *ri)
         goto err;
 
     if (ukm != NULL) {
-        dukmlen = ASN1_STRING_length_ex(ukm);
+        dukmlen = ASN1_STRING_get_length(ukm);
         if (dukmlen > INT_MAX)
             goto err;
         dukm = OPENSSL_memdup(ASN1_STRING_get0_data(ukm), dukmlen);

@@ -201,7 +201,7 @@ static int pkcs7_copy_existing_digest(PKCS7 *p7, PKCS7_SIGNER_INFO *si)
 
     if (osdig != NULL) {
         size_t len;
-        len = ASN1_STRING_length_ex(osdig);
+        len = ASN1_STRING_get_length(osdig);
         if (len > INT_MAX)
             goto err;
         return PKCS7_add1_attrib_digest(si, ASN1_STRING_get0_data(osdig), (int)len);

@@ -162,7 +162,7 @@ static int test_a2i_ipaddress(int idx)
         }
     } else {
         if (!TEST_ptr(ip)
-            || !TEST_size_t_eq(ASN1_STRING_length_ex(ip), len)
+            || !TEST_size_t_eq(ASN1_STRING_get_length(ip), len)
             || !TEST_mem_eq(ASN1_STRING_get0_data(ip), len,
                 a2i_ipaddress_tests[idx].data, len)) {
             good = 0;

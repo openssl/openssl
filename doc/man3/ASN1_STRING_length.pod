@@ -2,7 +2,7 @@
 
 =head1 NAME
 
-ASN1_STRING_set_data, ASN1_STRING_set_string, ASN1_STRING_length_ex,
+ASN1_STRING_set_data, ASN1_STRING_set_string, ASN1_STRING_get_length,
 ASN1_STRING_dup, ASN1_STRING_cmp, ASN1_STRING_set, ASN1_STRING_length,
 ASN1_STRING_type, ASN1_STRING_get0_data,
 ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
@@ -25,7 +25,7 @@ ASN1_STRING_to_UTF8 - ASN1_STRING utility functions
 
  int ASN1_STRING_set_string(ASN1_STRING *str, const char *data);
 
- size_t ASN1_STRING_length_ex(const ASN1_STRING *x);
+ size_t ASN1_STRING_get_length(const ASN1_STRING *x);
 
 The following functions have been deprecated since OpenSSL 4.1, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -129,7 +129,7 @@ L<ERR_get_error(3)>
 
 =head1 HISTORY
 
-ASN1_STRING_set_data(), ASN1_STRING_set_string(), and ASN1_STRING_length_ex()
+ASN1_STRING_set_data(), ASN1_STRING_set_string(), and ASN1_STRING_get_length()
 were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT

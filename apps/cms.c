@@ -1584,7 +1584,7 @@ static void receipt_request_print(CMS_ContentInfo *cms)
             CMS_ReceiptRequest_get0_values(rr, &scid, &allorfirst,
                 &rlist, &rto);
             BIO_puts(bio_err, "  Signed Content ID:\n");
-            idlen = ASN1_STRING_length_ex(scid);
+            idlen = ASN1_STRING_get_length(scid);
             if (idlen > INT_MAX)
                 idlen = INT_MAX;
             id = (const char *)ASN1_STRING_get0_data(scid);

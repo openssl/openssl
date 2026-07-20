@@ -163,7 +163,7 @@ TS_VERIFY_CTX *TS_REQ_to_TS_VERIFY_CTX(TS_REQ *req, TS_VERIFY_CTX *ctx)
     if ((ret->md_alg = X509_ALGOR_dup(md_alg)) == NULL)
         goto err;
     msg = imprint->hashed_msg;
-    tmp = ASN1_STRING_length_ex(msg);
+    tmp = ASN1_STRING_get_length(msg);
     if (tmp > INT_MAX)
         goto err;
     ret->imprint_len = (unsigned int)tmp;

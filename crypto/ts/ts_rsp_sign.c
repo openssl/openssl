@@ -487,7 +487,7 @@ static int ts_RESP_check_request(TS_RESP_CTX *ctx)
         return 0;
     }
     digest = msg_imprint->hashed_msg;
-    if (ASN1_STRING_length_ex(digest) != (size_t)md_size) {
+    if (ASN1_STRING_get_length(digest) != (size_t)md_size) {
         TS_RESP_CTX_set_status_info(ctx, TS_STATUS_REJECTION,
             "Bad message digest.");
         TS_RESP_CTX_add_failure_info(ctx, TS_INFO_BAD_DATA_FORMAT);

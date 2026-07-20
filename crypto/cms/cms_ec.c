@@ -106,7 +106,7 @@ static int ecdh_cms_set_peerkey(EVP_PKEY_CTX *pctx,
             goto err;
     }
     /* We have parameters now set public key */
-    plen = ASN1_STRING_length_ex(pubkey);
+    plen = ASN1_STRING_get_length(pubkey);
     if (plen > INT_MAX)
         goto err;
     p = ASN1_STRING_get0_data(pubkey);
@@ -189,7 +189,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
         return 0;
 
     p = ASN1_STRING_get0_data(parameter);
-    plen = ASN1_STRING_length_ex(parameter);
+    plen = ASN1_STRING_get_length(parameter);
     if (plen > INT_MAX)
         goto err;
     kekalg = d2i_X509_ALGOR(NULL, &p, (int)plen);

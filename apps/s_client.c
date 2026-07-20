@@ -3082,7 +3082,7 @@ re_start:
             BIO_puts(bio_err, "ASN1_generate_nconf failed\n");
             goto end;
         }
-        ssl_request_len = ASN1_STRING_length_ex(atyp->value.sequence);
+        ssl_request_len = ASN1_STRING_get_length(atyp->value.sequence);
         if (ssl_request_len > INT_MAX) {
             NCONF_free(cnf);
             ASN1_TYPE_free(atyp);

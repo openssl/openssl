@@ -90,7 +90,7 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
         }
 
         label = ASN1_STRING_get0_data(parameter);
-        labellen = ASN1_STRING_length_ex(parameter);
+        labellen = ASN1_STRING_get_length(parameter);
         if (labellen > INT_MAX)
             goto err;
     }
