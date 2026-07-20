@@ -40,13 +40,112 @@ on:
   schedule:
     - cron: '45 03 * * *'
   workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number (set by the /ci controller; empty for an ordinary manual run)'
+        required: false
+        default: ''
+      head_sha:
+        description: 'PR head SHA to build, 40-hex (set by the /ci controller)'
+        required: false
+        default: ''
+      check_run_id:
+        description: 'Check-run id to report into (set by the /ci controller)'
+        required: false
+        default: ''
+  # Auto-on-approval (openssl/project#2027): run when a committer approves.
+  pull_request_review:
+    types: [submitted]
+
+run-name: "${{ (github.event_name == 'workflow_dispatch' && inputs.pr != '') && format('{0} · /ci PR #{1} · {2} · check:{3}', github.workflow, inputs.pr, inputs.head_sha, inputs.check_run_id) || github.workflow }}"
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name }}-${{ github.event.pull_request.number || github.event.inputs.pr || github.ref }}
+  cancel-in-progress: ${{ github.event_name != 'schedule' }}
 
 permissions:
   contents: read
 
 jobs:
+  # ---------------------------------------------------------------------------
+  # PR CI gate (openssl/project#2027) — metadata only, NEVER checks out PR code.
+  # Decides whether the build jobs run and which commit they check out for the
+  # on-demand (/ci workflow_dispatch) and auto-on-approval (pull_request_review)
+  # paths, leaving schedule/push/pull_request/ordinary-dispatch behaviour
+  # unchanged. On a /ci dispatch it also records the routing metadata that
+  # ci-report.yml uses to complete the check-run.
+  #
+  # SECURITY: do not add `secrets:` or `permissions:` beyond `contents: read`
+  # here or to any build job this gates, and never check out PR code in this
+  # job. "Safe by discipline" — see openssl/project#2027 open item 3.
+  # ---------------------------------------------------------------------------
+  authorize:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      run: ${{ steps.gate.outputs.run }}
+      ref: ${{ steps.gate.outputs.ref }}
+    steps:
+      - uses: actions/github-script@v8
+        id: gate
+        with:
+          script: |
+            const fs = require('fs');
+            const eventName = context.eventName;
+            const repoOk = `${context.repo.owner}/${context.repo.repo}` === 'openssl/openssl';
+            let run = false, ref = '', pr = '', headSha = '', checkRunId = '', meta = false;
+            const isCommitter = async (login) => {
+              if (!login) return false;
+              const { data } = await github.rest.repos.getCollaboratorPermissionLevel(
+                { owner: context.repo.owner, repo: context.repo.repo, username: login });
+              return data.permission === 'write' || data.permission === 'admin';
+            };
+            if (eventName === 'schedule') {
+              run = repoOk;
+            } else if (eventName === 'push' || eventName === 'pull_request') {
+              run = true;
+            } else if (eventName === 'workflow_dispatch') {
+              const i = context.payload.inputs || {};
+              if (!i.pr) {
+                run = true;                       // ordinary manual dispatch
+              } else {                            // /ci on-demand dispatch
+                if (!/^\d+$/.test(i.pr) || !/^[0-9a-f]{40}$/.test(i.head_sha)
+                    || !/^\d+$/.test(i.check_run_id)) {
+                  core.setFailed('Invalid /ci dispatch inputs'); return;
+                }
+                run = repoOk; ref = i.head_sha; pr = i.pr; headSha = i.head_sha;
+                checkRunId = i.check_run_id; meta = run;
+              }
+            } else if (eventName === 'pull_request_review') {
+              const rv = context.payload.review, prObj = context.payload.pull_request;
+              const base = prObj.base.ref;
+              // Only base branches whose protection dismisses stale approvals.
+              const baseOk = base === 'master' || base.startsWith('feature/')
+                || base.startsWith('openssl-');
+              if (repoOk && rv.state === 'approved' && baseOk
+                  && rv.commit_id === prObj.head.sha && await isCommitter(rv.user.login)) {
+                run = true; ref = rv.commit_id; headSha = rv.commit_id;
+                pr = String(prObj.number);
+              }
+            }
+            if (meta) {
+              fs.writeFileSync('ci-report-meta.json',
+                JSON.stringify({ pr, head_sha: headSha, check_run_id: checkRunId }));
+            }
+            core.setOutput('run', String(run));
+            core.setOutput('ref', ref);
+            core.setOutput('meta', String(meta));
+      - name: Upload routing metadata
+        if: steps.gate.outputs.meta == 'true'
+        uses: actions/upload-artifact@v5
+        with:
+          name: ci-report-meta
+          path: ci-report-meta.json
+          if-no-files-found: error
   ct-validation:
-    if: github.repository == 'openssl/openssl'
+    needs: authorize
+    if: github.repository == 'openssl/openssl' && needs.authorize.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -77,6 +176,7 @@ jobs:
     steps:
       - uses: actions/checkout@v6
         with:
+          ref: ${{ needs.authorize.outputs.ref }}
           persist-credentials: false
 
       - name: Install valgrind

@@ -1,0 +1,113 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the file LICENSE in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: CI result reporter
+# Completes the pending check-runs created by `ci-command.yml` for the
+# on-demand `/ci` path (openssl/project#2027).
+#
+# `issue_comment`-dispatched runs execute in default-branch context and do not
+# attach to the PR head SHA, so a reporter is required (the auto-on-approval
+# `pull_request_review` path surfaces natively in the Checks tab and needs no
+# reporter). Each dispatched workflow carries its routing metadata — {pr,
+# head_sha, check_run_id} — in a `ci-report-meta` artifact written by its
+# trusted `authorize` job, and redundantly in the trusted `run-name` set at
+# dispatch. This reporter runs on workflow_run.completed, so it always fires
+# with the authoritative conclusion (even on cancellation); if the run was
+# cancelled while still queued (no artifact yet), it recovers check_run_id from
+# the run-name so the check never hangs.
+#
+# NEVER checks out or executes PR code.
+
+on:
+  workflow_run:
+    # Gradual rollout (openssl/project#2027): only the piloted workflows are
+    # listed here. Add a workflow's `name:` when it graduates from pilot (and
+    # add it to ci-command.yml's WORKFLOWS map + re-wire its triggers).
+    workflows:
+      - "Constant-time validation (daily)"
+      - "Cross Compile for AArch64 Extensions"
+    types:
+      - completed
+
+permissions:
+  checks: write
+  actions: read
+
+jobs:
+  report:
+    # Only report on-demand (/ci) runs; ordinary schedule/manual dispatches and
+    # the native pull_request_review runs carry no routing artifact.
+    if: github.event.workflow_run.event == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download routing metadata
+        id: meta
+        continue-on-error: true
+        uses: actions/download-artifact@v6.0.0
+        with:
+          name: ci-report-meta
+          run-id: ${{ github.event.workflow_run.id }}
+          github-token: ${{ github.token }}
+          path: meta
+
+      - name: Complete the check-run
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const run = context.payload.workflow_run;
+
+            // Primary: routing metadata from the trusted `authorize` job's
+            // artifact. Fallback: the trusted `run-name` (display_title) set at
+            // dispatch, so a run cancelled while still queued — before
+            // `authorize` ran and uploaded the artifact — is still mapped back
+            // to its check and completed (openssl/project#2027 §5, orphan case).
+            let meta = {};
+            try {
+              meta = JSON.parse(fs.readFileSync('meta/ci-report-meta.json', 'utf8'));
+            } catch (e) {
+              core.info(`No ci-report-meta.json artifact (${e}); falling back to run-name.`);
+            }
+            const title = run.display_title || run.name || '';
+            let checkRunId = Number(meta.check_run_id);
+            if (!Number.isInteger(checkRunId) || checkRunId <= 0) {
+              const m = /check:(\d+)/.exec(title);
+              if (m) checkRunId = Number(m[1]);
+            }
+            if (!Number.isInteger(checkRunId) || checkRunId <= 0) {
+              core.info('No valid check_run_id from artifact or run-name; nothing to report.');
+              return;
+            }
+            const prMatch = /\/ci PR #(\d+)/.exec(title);
+            const pr = meta.pr || (prMatch && prMatch[1]) || '?';
+            const shaMatch = /· ([0-9a-f]{40}) ·/.exec(title);
+            const headSha = meta.head_sha || (shaMatch && shaMatch[1]) || '';
+
+            // Map every workflow_run conclusion to a settable check conclusion so
+            // no check ever hangs. `stale` is not client-settable; null/unknown
+            // are a defensive neutral.
+            const SETTABLE = new Set([
+              'success', 'failure', 'cancelled', 'timed_out',
+              'neutral', 'skipped', 'action_required',
+            ]);
+            const conclusion = SETTABLE.has(run.conclusion) ? run.conclusion : 'neutral';
+
+            await github.rest.checks.update({
+              owner, repo,
+              check_run_id: checkRunId,
+              status: 'completed',
+              conclusion,
+              details_url: run.html_url,
+              output: {
+                title: `${run.name}: ${run.conclusion || 'unknown'}`,
+                summary: `On-demand run for PR #${pr}`
+                  + (headSha ? ` (\`${String(headSha).slice(0, 12)}\`)` : '')
+                  + ` completed with conclusion \`${run.conclusion || 'unknown'}\`.\n\n`
+                  + `[View run](${run.html_url})`,
+              },
+            });
