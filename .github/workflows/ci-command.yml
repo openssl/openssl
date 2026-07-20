@@ -27,7 +27,7 @@ jobs:
       startsWith(github.event.comment.body, '/ci')
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/github-script@v8
+      - uses: actions/github-script@v9.0.0
         with:
           script: |
             const crypto = require('crypto');
