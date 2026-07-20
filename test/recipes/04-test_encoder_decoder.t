@@ -25,7 +25,7 @@ my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 my $rsa_key = srctop_file("test", "certs", "ee-key.pem");
 my $pss_key = srctop_file("test", "certs", "ca-pss-key.pem");
 
-plan tests => ($no_fips ? 0 : 5) + 2;     # FIPS install test + test
+plan tests => ($no_fips ? 0 : 5) + 3;     # FIPS install test + test
 
 my $conf = srctop_file("test", "default.cnf");
 
@@ -44,6 +44,8 @@ sub find_line_file {
     close($in);
     return 0;
 }
+
+ok(run(test(["endecode_api_test"])));
 
 ok(run(test(["endecode_test", "-rsa", $rsa_key,
                               "-pss", $pss_key,
