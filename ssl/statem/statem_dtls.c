@@ -781,8 +781,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     size_t readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len)
+    if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto err;
+    }
 
     /* Try to find item in queue, to prevent duplicate entries */
     memset(seq64be, 0, sizeof(seq64be));
@@ -818,8 +820,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             return dtls1_reassemble_fragment(s, msg_hdr);
         }
 
-        if (frag_len > dtls1_max_handshake_message_len(s))
+        if (frag_len > dtls1_max_handshake_message_len(s)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
             goto err;
+        }
 
         frag = dtls1_hm_fragment_new(frag_len, 0);
         if (frag == NULL) {
