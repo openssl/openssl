@@ -143,7 +143,7 @@ static void *ocsp_nonce_new(void)
 static int i2d_ocsp_nonce(const void *a, unsigned char **pp)
 {
     const ASN1_OCTET_STRING *os = a;
-    if (pp && os->length > 0) {
+    if (pp != NULL && os->length > 0) {
         memcpy(*pp, os->data, os->length);
         *pp += os->length;
     }
