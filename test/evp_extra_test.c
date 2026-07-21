@@ -6245,6 +6245,104 @@ err:
 }
 
 /*
+ * A decrypt with a wrong tag must be rejected by EVP_DecryptFinal_ex().
+ * Negative test for the rejection, as well as the expected error reason.
+ * Does ct / aad / ct + aad variants.
+ */
+static int test_evp_aead_tag_reject(int idx)
+{
+    const EVP_CIPHER_TEST_INFO *info = &cipher_list[idx];
+    EVP_CIPHER_CTX *ctx_ct = NULL;
+    EVP_CIPHER_CTX *ctx_aad = NULL;
+    EVP_CIPHER_CTX *ctx_ct_aad = NULL;
+    unsigned char key[EVP_MAX_KEY_LENGTH];
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned char aad[] = "aad";
+    unsigned char ct[] = "ciphertext";
+    unsigned char out[sizeof(ct) + EVP_MAX_BLOCK_LENGTH];
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = {0xd0};
+    OSSL_PARAM params[2];
+    int i, len = 0, testresult = 0;
+    unsigned long err_code;
+
+    if (info->taglen == 0 /* skip non-AEAD */
+        || info->mode == EVP_CIPH_CCM_MODE /* verifies at update, not final */
+        /* skip TLS stitched MTE ciphers */
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA1")
+        || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA256")
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256"))
+        return 1;
+
+    for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(0x11 + i);
+    for (i = 0; i < info->ivlen && i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0x22 + i);
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG,
+        tag, info->taglen);
+    params[1] = OSSL_PARAM_construct_end();
+
+    /* ciphertext only */
+    ERR_set_mark();
+    if (!TEST_ptr(ctx_ct = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_ct, info->ciph, key, iv, params))
+        || !TEST_true(EVP_DecryptUpdate(ctx_ct, out, &len, ct, sizeof(ct)))
+        || !TEST_int_le(EVP_DecryptFinal_ex(ctx_ct, out + len, &len), 0)) {
+        ERR_pop_to_mark();
+        goto err;
+    }
+    err_code = ERR_peek_last_error();
+    ERR_pop_to_mark();
+    if (!TEST_ulong_eq(err_code, 0)) {
+        TEST_info("test_evp_aead_tag_reject %s (ct): reason=%d",
+            info->name, ERR_GET_REASON(err_code));
+        goto err;
+    }
+
+    /* AAD only */
+    ERR_set_mark();
+    if (!TEST_ptr(ctx_aad = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_aad, info->ciph, key, iv, params))
+        || !TEST_true(EVP_DecryptUpdate(ctx_aad, NULL, &len, aad, sizeof(aad)))
+        || !TEST_int_le(EVP_DecryptFinal_ex(ctx_aad, out, &len), 0)) {
+        ERR_pop_to_mark();
+        goto err;
+    }
+    err_code = ERR_peek_last_error();
+    ERR_pop_to_mark();
+    if (!TEST_ulong_eq(err_code, 0)) {
+        TEST_info("test_evp_aead_tag_reject %s (aad): reason=%d",
+            info->name, ERR_GET_REASON(err_code));
+        goto err;
+    }
+
+    /* ciphertext + AAD */
+    ERR_set_mark();
+    if (!TEST_ptr(ctx_ct_aad = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_ct_aad, info->ciph, key, iv, params))
+        || !TEST_true(EVP_DecryptUpdate(ctx_ct_aad, NULL, &len, aad, sizeof(aad)))
+        || !TEST_true(EVP_DecryptUpdate(ctx_ct_aad, out, &len, ct, sizeof(ct)))
+        || !TEST_int_le(EVP_DecryptFinal_ex(ctx_ct_aad, out + len, &len), 0)) {
+        ERR_pop_to_mark();
+        goto err;
+    }
+    err_code = ERR_peek_last_error();
+    ERR_pop_to_mark();
+    if (!TEST_ulong_eq(err_code, 0)) {
+        TEST_info("test_evp_aead_tag_reject %s (ct+aad): reason=%d",
+            info->name, ERR_GET_REASON(err_code));
+        goto err;
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx_ct);
+    EVP_CIPHER_CTX_free(ctx_aad);
+    EVP_CIPHER_CTX_free(ctx_ct_aad);
+    return testresult;
+}
+
+/*
  * Verify stale key is not being used after providing a new key in multiple steps.
  * This test performs a full round of encryption and then changes the
  * key and then the IV in a multi-step init.
@@ -9288,6 +9386,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_evp_oneshot_aead_zerolen, cipher_list_n);
     ADD_ALL_TESTS(test_evp_aead_tag_direction, cipher_list_n);
     ADD_ALL_TESTS(test_evp_aead_late_aad, cipher_list_n);
+    ADD_ALL_TESTS(test_evp_aead_tag_reject, cipher_list_n);
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
