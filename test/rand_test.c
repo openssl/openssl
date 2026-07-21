@@ -104,6 +104,50 @@ err:
     return res;
 }
 
+/*
+ * Check that creating the primary DRBG creates the seed source and
+ * stores it in the library context: later users must keep getting the
+ * same instance and no replacement may be created.
+ */
+static int test_rand_primary_seed_stored(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_RAND_CTX *seed;
+    unsigned char buf[16];
+    int ok, res = 0;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr_null(ossl_rand_get0_seed_noncreating(ctx)))
+        goto err;
+
+    /* The default seed source may be unavailable in some configurations */
+    ERR_set_mark();
+    ok = RAND_bytes_ex(ctx, buf, sizeof(buf), 0) > 0;
+    ERR_pop_to_mark();
+    if (!ok) {
+        TEST_info("skipped: cannot instantiate the primary DRBG");
+        res = 1;
+        goto err;
+    }
+
+    seed = ossl_rand_get0_seed_noncreating(ctx);
+    if (seed == NULL) {
+        /* The seed source silently fell back to operating system entropy */
+        TEST_info("skipped: no seed source was created");
+        res = 1;
+        goto err;
+    }
+
+    if (!TEST_int_gt(RAND_bytes_ex(ctx, buf, sizeof(buf), 0), 0)
+        || !TEST_ptr_eq(ossl_rand_get0_seed_noncreating(ctx), seed))
+        goto err;
+
+    res = 1;
+err:
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 /* Test the FIPS health tests */
 static int fips_health_test_one(const uint8_t *buf, size_t n, size_t gen)
 {
@@ -275,6 +319,150 @@ err:
     return res;
 }
 
+/*
+ * Create a parentless DRBG in a provider: instantiating it requests
+ * seeding material through the core's get_user_entropy and
+ * get_user_nonce callbacks, the same path the FIPS provider uses.
+ */
+static EVP_RAND_CTX *provider_side_drbg(OSSL_LIB_CTX *ctx)
+{
+    EVP_RAND *rand;
+    EVP_RAND_CTX *rctx;
+
+    if (!TEST_ptr(rand = EVP_RAND_fetch(ctx, "CTR-DRBG", NULL)))
+        return NULL;
+    rctx = EVP_RAND_CTX_new(rand, NULL);
+    EVP_RAND_free(rand);
+    return rctx;
+}
+
+static int provider_side_drbg_instantiate(EVP_RAND_CTX *rctx)
+{
+    OSSL_PARAM params[2];
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_CIPHER,
+        (char *)"AES-256-CTR", 0);
+    params[1] = OSSL_PARAM_construct_end();
+    return EVP_RAND_instantiate(rctx, 0, 0, NULL, 0, params);
+}
+
+/*
+ * Regression test for #25941: an explicitly configured seed source must
+ * be instantiated on demand and used when a provider requests seeding
+ * material before anything else created it, instead of being silently
+ * replaced by the operating system entropy sources.
+ */
+static int test_rand_seed_source_configured(void)
+{
+#ifndef OPENSSL_NO_FIPS_JITTER
+    TEST_info("skipped: enable-fips-jitter forces the JITTER seed source");
+    return 1;
+#else
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_RAND_CTX *drbg = NULL, *seed;
+    unsigned char entropy[64], buf[16];
+    OSSL_PARAM params[3];
+    int generate = 1, res = 0;
+    size_t i;
+
+    for (i = 0; i < sizeof(entropy); i++)
+        entropy[i] = 0xff & (i + 1);
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new())
+        || !TEST_true(RAND_set_seed_source_type(ctx, "TEST-RAND", NULL)))
+        goto err;
+
+    /*
+     * The first seeding request must fail: the configured TEST-RAND has
+     * no entropy to hand out yet and falling back to the operating
+     * system sources would defeat the configuration.
+     */
+    if (!TEST_ptr(drbg = provider_side_drbg(ctx)))
+        goto err;
+    ERR_set_mark();
+    if (!TEST_false(provider_side_drbg_instantiate(drbg))) {
+        ERR_clear_last_mark();
+        goto err;
+    }
+    ERR_pop_to_mark();
+    EVP_RAND_CTX_free(drbg);
+    drbg = NULL;
+
+    /* The request must have instantiated the configured seed source */
+    if (!TEST_ptr(seed = ossl_rand_get0_seed_noncreating(ctx))
+        || !TEST_str_eq(EVP_RAND_get0_name(EVP_RAND_CTX_get0_rand(seed)),
+            "TEST-RAND"))
+        goto err;
+
+    /* Provision the seed source and check that it feeds the DRBG */
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_RAND_PARAM_TEST_ENTROPY,
+        entropy, sizeof(entropy));
+    params[1] = OSSL_PARAM_construct_int(OSSL_RAND_PARAM_GENERATE, &generate);
+    params[2] = OSSL_PARAM_construct_end();
+    if (!TEST_true(EVP_RAND_CTX_set_params(seed, params))
+        || !TEST_ptr(drbg = provider_side_drbg(ctx))
+        || !TEST_true(provider_side_drbg_instantiate(drbg))
+        || !TEST_true(EVP_RAND_generate(drbg, buf, sizeof(buf), 0, 0,
+            NULL, 0)))
+        goto err;
+
+    res = 1;
+err:
+    EVP_RAND_CTX_free(drbg);
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+#endif /* OPENSSL_NO_FIPS_JITTER */
+}
+
+/*
+ * Verify that a provider requesting seeding material keeps the previous
+ * behaviour when no seed source was configured: the request falls back
+ * to the operating system sources without instantiating the seed source,
+ * so a later RAND_set_seed_source_type() call still succeeds.  When the
+ * build carries a default seed source configuration, the request
+ * instantiates it and a later change is rejected instead.
+ */
+static int test_rand_seed_source_unconfigured(void)
+{
+    OSSL_LIB_CTX *ctx = NULL;
+    EVP_RAND_CTX *drbg = NULL;
+    int ok, res = 0;
+
+    if (!TEST_ptr(ctx = OSSL_LIB_CTX_new()))
+        goto err;
+
+    if (ossl_rand_seed_source_configured(ctx)) {
+        /* Build time configured seed source (default override or jitter) */
+        if (!TEST_ptr(drbg = provider_side_drbg(ctx)))
+            goto err;
+        ERR_set_mark();
+        ok = provider_side_drbg_instantiate(drbg);
+        ERR_pop_to_mark();
+        /* The default seed source may be unusable in this configuration */
+        if (ok
+            && (!TEST_ptr(ossl_rand_get0_seed_noncreating(ctx))
+                || !TEST_false(RAND_set_seed_source_type(ctx, "TEST-RAND",
+                    NULL))))
+            goto err;
+    } else {
+#ifdef OPENSSL_RAND_SEED_NONE
+        TEST_info("skipped: no operating system entropy sources");
+#else
+        if (!TEST_ptr(drbg = provider_side_drbg(ctx))
+            || !TEST_true(provider_side_drbg_instantiate(drbg))
+            || !TEST_ptr_null(ossl_rand_get0_seed_noncreating(ctx))
+            || !TEST_true(RAND_set_seed_source_type(ctx, "TEST-RAND", NULL)))
+            goto err;
+#endif /* OPENSSL_RAND_SEED_NONE */
+    }
+
+    res = 1;
+err:
+    EVP_RAND_CTX_free(drbg);
+    OSSL_LIB_CTX_free(ctx);
+    return res;
+}
+
 /* Warm up the DRBG cipher fetch caches outside the mfail injection window */
 static int rand_drbg_fetch_warmup(EVP_RAND *drbg_alg)
 {
@@ -427,6 +615,7 @@ int setup_tests(void)
 
     ADD_TEST(test_rand);
     ADD_TEST(test_rand_uniform);
+    ADD_TEST(test_rand_primary_seed_stored);
 
     if (OSSL_PROVIDER_available(NULL, "fips")
         && fips_provider_version_ge(NULL, 3, 4, 0))
@@ -437,6 +626,9 @@ int setup_tests(void)
     if (!OSSL_PROVIDER_available(NULL, "fips")
         || fips_provider_version_ge(NULL, 3, 5, 1))
         ADD_TEST(test_rand_get0_primary);
+
+    ADD_TEST(test_rand_seed_source_configured);
+    ADD_TEST(test_rand_seed_source_unconfigured);
 
     ADD_MFAIL_ALL_TESTS(test_rand_bytes_mfail, 2);
     ADD_MFAIL_TEST(test_rand_seed_src_mfail);

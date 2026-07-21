@@ -153,6 +153,8 @@ int ossl_pool_add_nonce_data(RAND_POOL *pool);
 EVP_RAND_CTX *ossl_rand_get0_private_noncreating(OSSL_LIB_CTX *ctx);
 #else
 EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx);
+EVP_RAND_CTX *ossl_rand_get0_seed(OSSL_LIB_CTX *ctx);
+int ossl_rand_seed_source_configured(OSSL_LIB_CTX *ctx);
 #endif
 
 /* Generate a uniformly distributed random integer in the interval [0, upper) */

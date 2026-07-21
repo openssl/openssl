@@ -31,6 +31,22 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * An explicitly configured random seed source is now always honoured when
+   a provider (such as the FIPS provider) requests entropy or a nonce.
+
+   Previously, when a provider requested seeding material before the
+   primary DRBG had been created, the request silently fell back to the
+   operating system entropy sources, ignoring a seed source configured
+   via the `random` configuration section, `RAND_set_seed_source_type()`
+   or the build time `OPENSSL_DEFAULT_SEED_SRC` define.  The configured
+   seed source is now instantiated on demand in this situation and an
+   error is reported if it cannot be used, instead of falling back.
+   Unconfigured contexts keep the previous behaviour.  Additionally,
+   the property query used to fetch the default seed source can now be
+   set at build time with `-DOPENSSL_DEFAULT_SEED_PROPQ`.
+
+   *Jakub Zelenka*
+
  * Added AVX512 optimized SHAKE x4 operations for ML-DSA on x86_64.
 
    *Marcel Cornu and Tomasz Kantecki*

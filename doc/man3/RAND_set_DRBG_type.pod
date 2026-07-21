@@ -39,11 +39,17 @@ These functions must be called before the random bit generators are first
 created in the library context.  They will return an error if the call
 is made too late.
 
+Note that a provider (for example the FIPS provider) requesting entropy
+or a nonce can instantiate the seed source before the application's first
+use of it, if one was configured via the B<random> configuration section
+or at build time.  RAND_set_seed_source_type() fails once this happens.
+
 The default DRBG is "CTR-DRBG" using the "AES-256-CTR" cipher.
 
 The default seed source can be configured when OpenSSL is compiled by
 setting B<-DOPENSSL_DEFAULT_SEED_SRC=SEED-SRC>. If not set then
-"SEED-SRC" is used.
+"SEED-SRC" is used.  The property query used when fetching the default
+seed source can similarly be set with B<-DOPENSSL_DEFAULT_SEED_PROPQ>.
 
 =head1 EXAMPLES
 
