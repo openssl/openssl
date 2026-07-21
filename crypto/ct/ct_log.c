@@ -339,6 +339,9 @@ const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
 {
     int i;
 
+    if (store == NULL)
+        return NULL;
+
     for (i = 0; i < sk_CTLOG_num(store->logs); ++i) {
         const CTLOG *log = sk_CTLOG_value(store->logs, i);
         if (memcmp(log->log_id, log_id, log_id_len) == 0)
