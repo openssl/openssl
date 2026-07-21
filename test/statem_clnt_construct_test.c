@@ -129,7 +129,8 @@ static int finish_msg(SSL *ssl, WPACKET *pkt, int mt, unsigned char **msg,
 {
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
 
-    if (!TEST_true(ssl_close_construct_packet(s, pkt, mt))
+    if (!TEST_ptr(s)
+        || !TEST_true(ssl_close_construct_packet(s, pkt, mt))
         || !TEST_true(WPACKET_get_total_written(pkt, msglen))
         || !TEST_true(WPACKET_finish(pkt)))
         return 0;
