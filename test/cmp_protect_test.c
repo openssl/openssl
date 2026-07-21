@@ -185,6 +185,38 @@ static int test_cmp_calc_protection_pbmac(void)
     EXECUTE_TEST(execute_calc_protection_pbmac_test, tear_down);
     return result;
 }
+
+/*
+ * Regression test for the ossl_cmp_calc_protection() protectionAlg
+ * type-confusion DoS: a PKIMessage whose protectionAlg has the
+ * id-PasswordBasedMAC OID but carries a BOOLEAN parameter instead of the
+ * expected PBMParameter SEQUENCE. X509_ALGOR_get0() then returns the boolean's
+ * union member (0xff) via ppval; the unpatched code took the non-NULL ppval as
+ * a valid ASN1_STRING * and dereferenced 0xff, crashing with a near-NULL
+ * access.  The fixed code must reject the malformed parameter and return NULL.
+ */
+static int test_cmp_calc_protection_pbmac_bad_alg_param(void)
+{
+    unsigned char sec_insta[] = { 'i', 'n', 's', 't', 'a' };
+    X509_ALGOR *alg = NULL;
+
+    SETUP_TEST_FIXTURE(CMP_PROTECT_TEST_FIXTURE, set_up);
+    if (!TEST_true(OSSL_CMP_CTX_set1_secretValue(fixture->cmp_ctx,
+            sec_insta, sizeof(sec_insta)))
+        || !TEST_ptr(fixture->msg = load_pkimsg(ip_PBM_f, libctx))
+        || !TEST_ptr(alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set0(alg, OBJ_nid2obj(NID_id_PasswordBasedMAC),
+            V_ASN1_BOOLEAN, (void *)1))) {
+        X509_ALGOR_free(alg);
+        tear_down(fixture);
+        fixture = NULL;
+    } else {
+        X509_ALGOR_free(fixture->msg->header->protectionAlg);
+        fixture->msg->header->protectionAlg = alg;
+    }
+    EXECUTE_TEST(execute_calc_protection_fails_test, tear_down);
+    return result;
+}
 static int execute_MSG_protect_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     return TEST_int_eq(fixture->expected,
@@ -609,6 +641,7 @@ int setup_tests(void)
     ADD_TEST(test_cmp_calc_protection_pkey_Ed);
 #endif
     ADD_TEST(test_cmp_calc_protection_pbmac);
+    ADD_TEST(test_cmp_calc_protection_pbmac_bad_alg_param);
 
     ADD_TEST(test_MSG_protect_with_msg_sig_alg_protection_plus_rsa_key);
     ADD_TEST(test_MSG_protect_with_certificate_and_key);
