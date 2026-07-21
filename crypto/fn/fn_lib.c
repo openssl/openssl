@@ -106,6 +106,54 @@ void OSSL_FN_clear(OSSL_FN *f)
     OPENSSL_cleanse(f->d, limbssize);
 }
 
+/*-
+ * Sets a->d[0] to |w| and zeroes the remaining limbs, so the full dsize
+ * array reflects the value |w|.  OSSL_FN is fixed-size: if a->dsize is 0
+ * there is no limb to write and the call fails with
+ * OSSL_FN_R_RESULT_ARG_TOO_SMALL (the same reason ossl_fn_set_words() raises
+ * for an undersized destination).
+ *
+ * Constant-time with respect to |w|'s value: there is no value-dependent
+ * control flow, since the full dsize array always holds the value.  The only
+ * branch is on the operand's public width (dsize).
+ */
+int OSSL_FN_set_word(OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t dsize = (size_t)a->dsize;
+
+    if (ossl_unlikely(dsize < 1)) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+
+    a->d[0] = w;
+    if (dsize > 1)
+        memset(&a->d[1], 0, sizeof(OSSL_FN_ULONG) * (dsize - 1));
+    return 1;
+}
+
+/*-
+ * Equivalent to OSSL_FN_set_word(a, 1).  Kept as a named function rather
+ * than a macro or static inline, consistent with the rest of
+ * crypto/fn/fn_lib.c.  Leak profile as for OSSL_FN_set_word().
+ */
+int OSSL_FN_one(OSSL_FN *a)
+{
+    return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(1));
+}
+
+/*-
+ * Equivalent to OSSL_FN_set_word(a, 0).  This is a plain value assignment,
+ * not a secure wipe: the compiler may optimise the writes away if the value
+ * is not subsequently observed.  Use OSSL_FN_clear() (which calls
+ * OPENSSL_cleanse()) when the limbs may hold secret data and must be wiped
+ * irreversibly.  Leak profile as for OSSL_FN_set_word().
+ */
+int OSSL_FN_zero(OSSL_FN *a)
+{
+    return OSSL_FN_set_word(a, OSSL_FN_ULONG_C(0));
+}
+
 static size_t ossl_fn_num_bits_word(OSSL_FN_ULONG l)
 {
     OSSL_FN_ULONG x, mask;
@@ -182,6 +230,81 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b)
     }
 
     return res;
+}
+
+/*-
+ * Returns bit |n| of |a|.  An out-of-range index (n < 0 or n >= the
+ * operand's width in bits) reads as 0.  The only control flow branches on
+ * the operand's public width (dsize); the returned value is the bit itself,
+ * which is the information the caller asked for.
+ */
+int OSSL_FN_is_bit_set(const OSSL_FN *a, int n)
+{
+    size_t limb, off;
+
+    if (n < 0)
+        return 0;
+    limb = (size_t)n / OSSL_FN_BITS;
+    off = (size_t)n % OSSL_FN_BITS;
+    if (limb >= (size_t)a->dsize)
+        return 0;
+    return (a->d[limb] >> off) & OSSL_FN_ULONG_C(1);
+}
+
+/*-
+ * Returns 1 if the unsigned value of |a| equals the single-limb word |w|.
+ * Control flow branches only on the operand's public width (dsize); limb
+ * values are combined with constant-time selects, so the number of limbs
+ * inspected depends only on the public width, not on the operand's value.
+ * The returned value is the equality test the caller asked for.
+ */
+int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t i;
+    size_t dsize = (size_t)a->dsize;
+    int res;
+
+    if (dsize == 0)
+        return w == 0;
+
+    res = constant_time_select_int(
+        (unsigned int)constant_time_eq_bn(a->d[0], w), 1, 0);
+    for (i = 1; i < dsize; i++)
+        res = constant_time_select_int(
+            (unsigned int)constant_time_is_zero_bn(a->d[i]), res, 0);
+    return res;
+}
+
+/*-
+ * Equivalent to OSSL_FN_is_word(a, 0), kept as a named predicate for
+ * readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ * branches only on the operand's public width (dsize).
+ */
+int OSSL_FN_is_zero(const OSSL_FN *a)
+{
+    return OSSL_FN_is_word(a, 0);
+}
+
+/*-
+ * Equivalent to OSSL_FN_is_word(a, 1), kept as a named predicate for
+ * readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ * branches only on the operand's public width (dsize).
+ */
+int OSSL_FN_is_one(const OSSL_FN *a)
+{
+    return OSSL_FN_is_word(a, 1);
+}
+
+/*-
+ * Returns the least significant bit of |a|, which is the information the
+ * caller asked for.  The only control flow branches on the operand's public
+ * width (dsize), not on limb values.
+ */
+int OSSL_FN_is_odd(const OSSL_FN *a)
+{
+    if (a->dsize <= 0)
+        return 0;
+    return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
 }
 
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
