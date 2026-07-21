@@ -262,9 +262,9 @@ static int vaes_gcm_aadupdate(PROV_GCM_CTX *ctx,
     unsigned int ares;
     size_t i, lenBlks;
 
-    /* Bad sequence: call of AAD update after message processing */
+    /* Bad sequence: AAD update after message processing (out of order) */
     if (gcmctx->len.u[1] > 0)
-        return 0;
+        return -2;
 
     alen += aad_len;
     /* AAD is limited by 2^64 bits, thus 2^61 bytes */
