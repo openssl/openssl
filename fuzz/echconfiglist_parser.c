@@ -45,12 +45,15 @@ int FuzzerInitialize(int *argc, char ***argv)
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
     uint8_t *fixed_buf = NULL;
+    int bio_len;
+    uint16_t outer_len, inner_len;
 
     if (len > INT_MAX)
         return 0;
+    bio_len = (int)len;
 
     /* Target raw without any fixup */
-    parse_one(buf, len);
+    parse_one(buf, bio_len);
 
     /*
      * ech_decode_and_flatten has a strict size check:
@@ -59,17 +62,19 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
      */
     if (len < OSSL_ECH_MIN_ECHCONFIG_LEN || len >= OSSL_ECH_MAX_ECHCONFIG_LEN)
         goto end;
+    outer_len = (uint16_t)(len - 2);
+    inner_len = (uint16_t)(len - 6);
 
     fixed_buf = OPENSSL_memdup(buf, len);
     if (fixed_buf == NULL)
         goto end;
 
     /* Fix up to pass initial checks*/
-    OPENSSL_store_u16_be(fixed_buf, len - 2);
+    OPENSSL_store_u16_be(fixed_buf, outer_len);
     OPENSSL_store_u16_be(fixed_buf + 2, OSSL_ECH_RFC9849_VERSION);
-    OPENSSL_store_u16_be(fixed_buf + 4, len - 6);
+    OPENSSL_store_u16_be(fixed_buf + 4, inner_len);
 
-    parse_one(fixed_buf, len);
+    parse_one(fixed_buf, bio_len);
 
 end:
     OPENSSL_free(fixed_buf);
