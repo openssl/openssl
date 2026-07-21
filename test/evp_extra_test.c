@@ -6141,7 +6141,6 @@ static int test_evp_aead_late_aad(int idx)
     unsigned long err_code = 0;
 
     if (info->taglen == 0 /* skip non-AEAD */
-        || info->mode == EVP_CIPH_GCM_MODE /* rejects, raises 102 PROV_R_CIPHER_OPERATION_FAILED */
         || info->mode == EVP_CIPH_CCM_MODE /* fails at first AAD */
         || info->mode == EVP_CIPH_OCB_MODE /* accepts late AAD */
         /* skip TLS stitched MTE cipher */
