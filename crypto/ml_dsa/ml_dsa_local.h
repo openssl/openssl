@@ -77,10 +77,11 @@ void ossl_ml_dsa_poly_ntt_inverse(POLY *s);
 void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
 
 /* Optimization for s390x */
-/* z13 supports VX, z14 supports VXE; z14 means __ARCH__ == 12 */
-#if defined(OPENSSL_ML_DSA_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
+/* z13 supports VX; VX_COMPILER_SUPPORT_VEC128 is defined by ml_dsa_ntt_vec128.c
+ * before including this header so that the pragma GCC target has already taken
+ * effect and __VX__ is visible when the prototypes are needed. */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
 #include "arch/s390x_arch.h"
-#define VX_COMPILER_SUPPORT_VEC128
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
 void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out);

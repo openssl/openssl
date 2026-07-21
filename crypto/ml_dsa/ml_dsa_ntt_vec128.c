@@ -7,12 +7,29 @@
  * https://www.openssl.org/source/license.html
  */
 
+/*
+ * Scope the VX instruction set to this translation unit only.
+ * GCC: #pragma GCC target sets the arch/feature flags for this file; the rest
+ *      of libcrypto is compiled without -mvx and stays safe on pre-z13 CPUs.
+ * Clang: does not honour #pragma GCC target for <vecintrin.h> inclusion; it
+ *        requires -fzvector at the command line (added globally by Configure
+ *        when needed, but that flag only unlocks vecintrin.h and does NOT
+ *        change the code-generation architecture).
+ */
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target("arch=z13,vx")
+#endif
+
+/* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
+#if defined(OPENSSL_ML_DSA_S390X) && defined(__s390x__) && defined(__VX__)
+#define VX_COMPILER_SUPPORT_VEC128
+#include <vecintrin.h>
+#endif
+
 #include "ml_dsa_local.h"
 #include "ml_dsa_poly.h"
 
-#if defined(OPENSSL_ML_DSA_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
-
-#include <vecintrin.h>
+#if defined(VX_COMPILER_SUPPORT_VEC128)
 
 #include <stdint.h>
 
@@ -361,7 +378,7 @@ static ossl_inline
 {
     const int32_t v_scalar = 1074791296;
     const vec_int32_alias_t v = { v_scalar, v_scalar, v_scalar, v_scalar };
-    vec_int32_t t = vec_mulh((vec_int32_alias_t)a, v) >> 21;
+    vec_int32_t t = (vec_int32_t)(vec_mulh((vec_int32_alias_t)a, v) >> 21);
     t *= ML_DSA_Q;
     vec_int32_t r = a - t; /* in [0, q] */
     return reduce_once_signed(r);
@@ -690,4 +707,4 @@ void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p)
     }
 }
 
-#endif
+#endif /* VX_COMPILER_SUPPORT_VEC128 */

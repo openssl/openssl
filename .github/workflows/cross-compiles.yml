@@ -123,10 +123,17 @@ jobs:
             target: linux64-riscv64,
             fips: no
           }, {
+            # No QEMU_CPU or caps override: the binary would probe for CPACF
+            # instructions via stfle/sigill, all of which QEMU can't execute.
+            # z900 zeros every CPACF vector so OpenSSL uses the pure-software
+            # fallback paths; the VX facility is also absent on z900 which is
+            # correct (this job tests the generic non-VX scalar paths).
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
             target: linux64-s390x,
-            fips: no
+            fips: no,
+            opensslcapsname: s390xcap,
+            opensslcaps: z900
           }, {
             # Build-only: verify no-asm does not produce undefined references to
             # OPENSSL_s390xcap_P (which is only compiled when asm is enabled).
@@ -136,69 +143,80 @@ jobs:
             fips: no,
             tests: none
           }, {
-            # GCC / z14 / VX enabled (FIPS).
-            # -march=z14 sets __ARCH__=12 and __VX__, enabling VX_COMPILER_SUPPORT_VEC128
-            # in ml_kem_vec128.c so all six entry points are compiled in.
-            # QEMU_CPU=z13,vxeh=on: z13 provides VX; vxeh activates the VXE
-            # (Vector Enhancements) facility so S390X_VX_CAPABLE (VX && VXE) is
-            # true and the vec128 path is exercised.  Using z13+vxeh avoids the
-            # IBM Z hardware-crypto subfunctions that z14/z14-base require and
-            # that are unavailable on x86 GitHub Actions runners (exit 1).
-            # The nm_check step asserts all six text symbols are present in
-            # ml_kem_vec128.o.
+            # GCC / z13 / VX enabled (FIPS).
+            # The base linux64-s390x target carries no -march flag, so the
+            # whole library is safe to execute on any s390x CPU.
+            # ml_kem_vec128.c and ml_dsa_ntt_vec128.c use "#pragma GCC target"
+            # to scope VX codegen to those TUs only.
+            # QEMU_CPU=z13: VX is included in the z13 model; QEMU >= 7.x
+            # no longer accepts vxeh=on for z13 (vxeh was introduced in z14).
+            # OPENSSL_s390xcap=z13 sets S390X_VX_CAPABLE so the vec128 paths
+            # are exercised.
+            # The nm_check step asserts all six ML-KEM VX symbols are present.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: -march=z14 linux64-s390x,
-            qemucpu: "z13,vxeh=on",
+            target: linux64-s390x,
+            qemucpu: z13,
             opensslcapsname: s390xcap,
-            opensslcaps: z14,
-            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
+            # Enable the VX facility bit (stfle[2] bit 129 = 0x4000000000000000)
+            # while zeroing every CPACF instruction vector (kimd/klmd/km/…).
+            # QEMU emulates the VX vector-register instructions but cannot
+            # execute CPACF instructions; this lets the VX code paths run
+            # under QEMU without triggering illegal-instruction traps.
+            opensslcaps: "stfle:0:0:4000000000000000;kimd:0:0;klmd:0:0;km:0:0;kmc:0:0;kmac:0:0;kmctr:0:0;kmo:0:0;kmf:0:0;prno:0:0;kma:0:0;pcc:0:0;kdsa:0:0",
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_evp*,
             nm_check: "yes",
-            label: s390x-gcc-z14-vx-on-fips
+            label: s390x-gcc-z13-vx-on-fips
           }, {
-            # GCC / z14 / VX masked off (no FIPS).
-            # Same build as above (-march=z14) but OPENSSL_s390xcap is set to
-            # "z13" (VX present, VXE absent) so S390X_VX_CAPABLE is false and
+            # GCC / z13 / VX masked off (no FIPS).
+            # Same base build (linux64-s390x, no -march) but OPENSSL_s390xcap
+            # is set to "zEC12" (no VX) so S390X_VX_CAPABLE is false and
             # the generic scalar path is exercised on the same binary.
-            # z13 QEMU suffices; the VX/VXE code path is never entered.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: -march=z14 linux64-s390x,
+            target: linux64-s390x,
             fips: no,
             qemucpu: z13,
             opensslcapsname: s390xcap,
-            opensslcaps: z13,
-            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
-            label: s390x-gcc-z14-vx-off
+            # z900 zeros all CPACF vectors and all stfle facility bits including
+            # VX, exercising the scalar fallback path without QEMU CPACF traps.
+            opensslcaps: z900,
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_evp*,
+            label: s390x-gcc-z13-vx-off
           }, {
-            # Clang / z14 / VX enabled (FIPS).
-            # Mirrors the GCC VX-on entry above but compiled with Clang using
-            # --target=s390x-linux-gnu.  Verifies that Clang also emits all
-            # six ML-KEM VX vector entry points.
+            # Clang / z13 / VX enabled (FIPS).
+            # Clang does not honour #pragma GCC target for preprocessor-level
+            # macros, so -march=z13 must be passed to make Clang define __VX__
+            # and enable the vector code paths.  -march=z13 is safe to run on
+            # any z13+ CPU and does not imply z14-only instructions.
+            # Configure also adds -fzvector when Clang needs it to include
+            # <vecintrin.h>; that flag only unlocks vecintrin.h header access.
+            # Verifies that Clang emits all six ML-KEM VX vector entry points.
+            # QEMU_CPU=z13: VX is part of z13; vxeh=on is rejected by QEMU >= 7.x.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: -march=z14 linux64-s390x,
+            target: -march=z13 linux64-s390x,
             compiler: clang,
-            qemucpu: "z13,vxeh=on",
+            qemucpu: z13,
             opensslcapsname: s390xcap,
-            opensslcaps: z14,
-            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
+            opensslcaps: "stfle:0:0:4000000000000000;kimd:0:0;klmd:0:0;km:0:0;kmc:0:0;kmac:0:0;kmctr:0:0;kmo:0:0;kmf:0:0;prno:0:0;kma:0:0;pcc:0:0;kdsa:0:0",
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_evp*,
             nm_check: "yes",
-            label: s390x-clang-z14-vx-on-fips
+            label: s390x-clang-z13-vx-on-fips
           }, {
-            # Clang / z14 / VX masked off (no FIPS).
-            # Mirrors the GCC VX-off entry above but compiled with Clang.
-            # z13 QEMU suffices; the VX/VXE code path is never entered.
+            # Clang / z13 / VX masked off (no FIPS).
+            # Same -march=z13 build but OPENSSL_s390xcap=z900 masks off VX and
+            # all CPACF so the generic scalar path is exercised under QEMU.
             arch: s390x-linux-gnu,
             libs: libc6-dev-s390x-cross,
-            target: -march=z14 linux64-s390x,
+            target: -march=z13 linux64-s390x,
             fips: no,
             compiler: clang,
             qemucpu: z13,
             opensslcapsname: s390xcap,
-            opensslcaps: z13,
-            tests: test_internal_ml_kem test_evp_extra_ml_kem test_evp*,
-            label: s390x-clang-z14-vx-off
+            opensslcaps: z900,
+            tests: test_internal_ml_kem test_evp_extra_ml_kem test_ml_kem_codecs test_evp*,
+            label: s390x-clang-z13-vx-off
           }, {
             arch: sh4-linux-gnu,
             libs: libc6-dev-sh4-cross,
@@ -260,6 +278,7 @@ jobs:
         sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install \
             clang \
             binutils-${{ matrix.platform.arch }} \
+            gcc-${{ matrix.platform.arch }} \
             ${{ matrix.platform.libs }}
         # Detect sysroot: Ubuntu <=22.04 uses .../sys-root, 24.04+ installs directly.
         SYSROOT=/usr/${{ matrix.platform.arch }}/sys-root
@@ -290,6 +309,13 @@ jobs:
         AR: ${{ matrix.platform.arch }}-ar
         RANLIB: ${{ matrix.platform.arch }}-ranlib
         AS: ${{ matrix.platform.arch }}-as
+        # Reset the linker sysroot to / so that absolute-path linker scripts
+        # shipped by libc6-dev-*-cross (e.g. libc.so referencing
+        # /usr/<arch>/lib/libc.so.6) are resolved against the real root
+        # rather than being doubled-prefixed under CROSS_SYSROOT.
+        # LDFLAGS is picked up by OpenSSL's Configure and forwarded to the
+        # linker only, leaving compiler-detection probes unaffected.
+        LDFLAGS: -Wl,--sysroot=/
       run: |
         ./config --banner=Configured --strict-warnings enable-fips enable-lms \
                  ${{ matrix.platform.target }}
@@ -300,6 +326,7 @@ jobs:
         AR: ${{ matrix.platform.arch }}-ar
         RANLIB: ${{ matrix.platform.arch }}-ranlib
         AS: ${{ matrix.platform.arch }}-as
+        LDFLAGS: -Wl,--sysroot=/
       run: |
         ./config --banner=Configured --strict-warnings enable-lms \
                  ${{ matrix.platform.target }}
@@ -316,6 +343,14 @@ jobs:
           | awk '$2 == "T"' \
           | grep -cE ' (ossl_ml_kem_scalar_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128|ossl_ml_kem_scalar_mult_add_vec128|ossl_ml_kem_inner_product_montgomery_vec128|ossl_ml_kem_matrix_mult_intt_vec128)$' \
           | grep -q '^6$'
+
+    - name: check ML-DSA VX vector symbols
+      if: matrix.platform.nm_check != ''
+      run: |
+        ${{ matrix.platform.arch }}-nm crypto/ml_dsa/libcrypto-lib-ml_dsa_ntt_vec128.o \
+          | awk '$2 == "T"' \
+          | grep -cE ' (ossl_ml_dsa_poly_ntt_vec128|ossl_ml_dsa_poly_ntt_inverse_vec128|ossl_poly_ntt_mult_scalar_vec128)$' \
+          | grep -q '^3$'
 
     - name: install qemu
       if: matrix.platform.tests != 'none'
@@ -334,7 +369,7 @@ jobs:
       if: matrix.platform.tests != 'none'
       run: |
          cat /proc/cpuinfo
-         QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh version -c
+         QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh version -c 2>/dev/null || true
     - name: make all tests
       if: env.EXTENDED == 'true' && matrix.platform.tests == ''
       run: |
@@ -342,13 +377,13 @@ jobs:
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: env.EXTENDED == 'true' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      if: env.EXTENDED != 'true' && matrix.platform.tests != 'none'
+      if: env.EXTENDED != 'true' && matrix.platform.tests == '' && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \

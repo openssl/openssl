@@ -17,8 +17,8 @@
 #include <crypto/evp.h>
 #include "internal/common.h"
 
-/* z13 supports VX, z14 supports VXE; z14 means __ARCH__ == 12 */
-#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
+/* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
 #define VX_COMPILER_SUPPORT_VEC128
 #endif
 
@@ -205,23 +205,6 @@ typedef struct ossl_ml_kem_key_st {
     uint8_t *z; /* Private key FO failure secret */
     uint8_t *d; /* Private key seed */
     int prov_flags; /* prefer/retain seed and PCT flags */
-#if defined(VX_COMPILER_SUPPORT_VEC128)
-    /*
-     * On s390x with VX support, scalar coefficients carry an ALIGN16
-     * attribute but OPENSSL_malloc / OPENSSL_secure_malloc may return only
-     * 8-byte aligned storage.  Both the public and private key buffers are
-     * therefore allocated with 16-byte alignment and the raw (unaligned)
-     * allocation pointers are saved here for freeing.
-     *
-     * t_freeptr - raw pointer returned by OPENSSL_aligned_alloc for the
-     *             public-key scalar buffer (t + m).  Free with OPENSSL_free.
-     * s_freeptr - raw pointer returned by the over-allocated secure malloc
-     *             used for the private-key scalar buffer (s + z + d).
-     *             Free with OPENSSL_secure_clear_free(..., prvalloc + 15).
-     */
-    void *t_freeptr;
-    void *s_freeptr;
-#endif
 
     /*
      * Fixed-size built-in buffer, which holds the |rho| and the public key

@@ -1830,11 +1830,17 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS' && !$predefined_
     }
 }
 
-# On s390x, <vecintrin.h> (included by both ml_kem_vec128.c and
+# On s390x, <vecintrin.h> (included by ml_kem_vec128.c and
 # ml_dsa_ntt_vec128.c) requires -fzvector with Clang; GCC accepts it
 # without that flag.  Probe for this early so both vector files see a
 # consistent flag set.  We only attempt the probe when asm is enabled
 # and the target really is s390x.
+#
+# Note: -fzvector only gates access to <vecintrin.h>; it does NOT change
+# the code-generation architecture for the whole library.  The vector
+# source files additionally use "#pragma GCC target("arch=z13,vx")" to
+# scope VX code generation to those translation units only under GCC,
+# so no -march=z* flag is needed globally or in the Configure invocation.
 if (!$disabled{asm} && ($predefined_C{__s390x__} // 0)) {
     my $cc  = $config{CROSS_COMPILE} . $config{CC};
     my $tf  = "vx_probe_$$.c";

@@ -9,7 +9,21 @@
 
 #include <stdint.h>
 
-#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && (__ARCH__ >= 12) && defined(__VX__)
+/*
+ * Scope the VX instruction set to this translation unit only.
+ * GCC: #pragma GCC target sets the arch/feature flags for this file; the rest
+ *      of libcrypto is compiled without -mvx and stays safe on pre-z13 CPUs.
+ * Clang: does not honour #pragma GCC target for <vecintrin.h> inclusion; it
+ *        requires -fzvector at the command line (added globally by Configure
+ *        when needed, but that flag only unlocks vecintrin.h and does NOT
+ *        change the code-generation architecture).
+ */
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC target("arch=z13,vx")
+#endif
+
+/* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
 #define VX_COMPILER_SUPPORT_VEC128
 #include <vecintrin.h>
 #endif
@@ -49,7 +63,7 @@ typedef unsigned char vec_uchar_t __attribute__((vector_size(VECTOR_REG_WIDTH_BY
 /*
  * Remainders modulo `kPrime`, for sufficiently small inputs, are computed in
  * constant time via Barrett reduction, and a final call to reduce_once(),
- * which reduces inputs that are at most 2*kPrime and is also constant-time.
+ * which reduces inputs that are in [0,2*kPrime) and is also constant-time.
  */
 static const uint16_t kPrime = ML_KEM_PRIME;
 /* q_inv = -3327, satisfying q * q_inv ≡ 1 (mod 2^16) */
@@ -195,13 +209,13 @@ static const vec_uchar_t perm_interleave_pairs_high __attribute__((aligned(16)))
  * never consumed.  kNTTRoots_montgomery[0] = 2285 happens to equal the
  * trivial root nttRoots[0] * 2285 = 17^0 * 2285, but it is unused padding.
  * The NTT consumes indices 1..127 in natural order across its seven layers:
- *   layer 7 (offset 64): index 1           1 root   (17^bitrev7(1)  * 2285)
- *   layer 6 (offset 32): indices 2..3      2 roots
- *   layer 5 (offset 16): indices 4..7      4 roots
- *   layer 4 (offset  8): indices 8..15     8 roots
- *   layer 3 (offset  4): indices 16..31   16 roots
- *   layer 2 (offset  2): indices 32..63   32 roots
- *   layer 1 (offset  1): indices 64..127  64 roots
+ *   layer 7 (offset 128): index 1           1 root   (17^bitrev7(1)  * 2285)
+ *   layer 6 (offset  64): indices 2..3      2 roots
+ *   layer 5 (offset  32): indices 4..7      4 roots
+ *   layer 4 (offset  16): indices 8..15     8 roots
+ *   layer 3 (offset   8): indices 16..31   16 roots
+ *   layer 2 (offset   4): indices 32..63   32 roots
+ *   layer 1 (offset   2): indices 64..127  64 roots
  *
  * kInverseNTTRoots_montgomery:
  * The INTT is the mirror of the NTT: it processes the deepest layer first.
@@ -375,7 +389,7 @@ static const vec_int16_t kModRoots_twisted_vec[16] = {
  */
 static __owur ossl_inline vec_int16_t reduce_once_vec128(vec_int16_t a)
 {
-    vec_uint16_noalias_t b = (vec_uint16_t)a - (vec_uint16_t)vec_q;
+    vec_uint16_noalias_t b = (vec_uint16_noalias_t)a - (vec_uint16_noalias_t)vec_q;
     return (vec_int16_t)vec_min((vec_uint16_noalias_t)a, b);
 }
 
@@ -389,7 +403,7 @@ static __owur ossl_inline vec_int16_t reduce_once_vec128(vec_int16_t a)
  */
 static __owur ossl_inline vec_int16_t nonnegative_residue_class(vec_int16_t a)
 {
-    vec_uint16_noalias_t b = (vec_uint16_t)a + (vec_uint16_t)vec_q;
+    vec_uint16_noalias_t b = (vec_uint16_noalias_t)a + (vec_uint16_noalias_t)vec_q;
     return (vec_int16_t)vec_min((vec_uint16_noalias_t)a, b);
 }
 
@@ -399,12 +413,12 @@ static const vec_int16_noalias_t v_reduce_fully = REPEAT_EIGHT_TIMES(20158);
 /*
  * reduce_fully: vectorized Barrett reduction for signed values.
  *
- * Pre:  Every lane of a is a signed 16-bit integer with -2^16 < a[i] < 2^16.
+ * Pre:  Every lane of a is a signed 16-bit integer with -8q <= a[i] <= 8q.
  * Post: Every lane of the result is in [0, q) and congruent to a[i] mod q.
  *
  * Algorithm:
  *   v := 20158 = floor(2^(floor(log_2(q))-1) * 2^16 / q)
- *   t := mulh(a, v) >> 10    -- approximates floor(a[i] / q), t in [-64, 64]
+ *   t := mulh(a, v) >> 10    -- approximates floor(a[i] / q), t in [-8, 8)
  *   u := a - t * q           -- u in (-q, 2q)
  *   r := nonnegative_residue_class(u)  -- r in [0, 2q)
  *   result := reduce_once_vec128(r)    -- result in [0, q)
@@ -448,7 +462,7 @@ static __owur ossl_inline vec_int16_t reduce_fully(vec_int16_t a)
  *
  * Preconditions
  * =============
- *   0 <= a[i] < q (or 0 <= a[i] <= 2*q-2 in Case 4)
+ *   0 <= a[i] < q (or 0 <= a[i] <= 2*q-2 in Case 3)
  *   a_twist[i] = a[i] * q_inv mod 2^16
  *   b[i] is interpreted as a signed 16-bit integer
  *
@@ -466,14 +480,11 @@ static __owur ossl_inline vec_int16_t reduce_fully(vec_int16_t a)
  *   |z_hi| <= floor(3328^2 / 2^16) = 169.
  *   Therefore |r| <= 169 + 1665 = 1834 < q.
  *
- * Case 2a: a ∈ [0,q), b ∈ [-8q,8q]
+ * Case 2: a ∈ [0,q), b ∈ [-8q,8q]
  *   max(a) = 3328,
  *   max(|b|) = 8q = 26632
- *   |z_hi| <= floor((3328 * 26632) / 2^16) = 1352.
- *   Therefore |r| <= 1352 + 1665 = 3017 < q.
- *
- * Case 2b: a ∈ [0,q), b ∈ [-9q,9q]
- *   |r| <= 1522 < q.
+ *   |z_hi| <= floor((3328 * 26632) / 2^16) = 1353.
+ *   Therefore |r| <= 1353 + 1665 = 3018 < q.
  *
  *   This is the range relevant to NTT twiddle multiplication.
  *
@@ -513,7 +524,7 @@ static __owur ossl_inline vec_int16_t multiply_montgomery_unreduced(vec_int16_t 
  *       coefficient x[i] such that a[i] ≡ x[i] * R_M^{-1} (mod q).
  *
  * Implementation note: The MontMulRaw result satisfies
- *   |unreduced_product| <= 1352 + 1664 = 3016 < q   (Case 2 bound).
+ *   |unreduced_product| <= 3018 < q   (Case 2 bound).
  * Because the unreduced product is already in (-q, q), nonnegative_residue_class
  * suffices to reach [0, q) without a further reduce_once_vec128 call:
  *   nonnegative_residue_class(unreduced) ∈ [0, q)
@@ -550,7 +561,7 @@ static ossl_inline void demontgomerize_scalar_vec128(scalar *out)
  * The high-word z_hi = mulh(512, b) simplifies to b >> 7 since
  * mulh(2^9, b) = floor(2^9 * b / 2^16) = b >> 7.
  *
- * Pre:  Every lane of b satisfies |b[i]| < q.
+ * Pre:  Every lane of b satisfies |b[i]| < 2q.
  * Post: Every lane of the result r satisfies -q < r < q and
  *       r ≡ b[i] * 512 * R_M^{-1} (mod q).
  *       No canonical reduction to [0, q) is performed.
@@ -629,8 +640,8 @@ static ossl_inline void scalar_mult_const_512_vec128(scalar *s)
  *     t        = MontMulRaw(odd, zeta_mont)  -- t in [-3016, 3016] subset [-q,q]
  *     new_even = even + t
  *     new_odd  = even - t
- *   Pre:  |even|, |odd| < B*q <= 8*q for the current layer bound B.
- *   Post: |new_even|, |new_odd| < (B+1)*q <= 9*q (bound grows by 1 per layer).
+ *   Pre:  |even|, |odd| < B*q <= 7*q for the current layer bound B.
+ *   Post: |new_even|, |new_odd| <= 8*q (bound grows by 1 per layer).
  *   Congruence: new_even ≡ even + odd * zeta_std (mod q)
  *               new_odd  ≡ even - odd * zeta_std (mod q)
  *   where zeta_std = nttRoots[idx] is the standard-form twiddle, and the
@@ -640,7 +651,7 @@ static ossl_inline void scalar_mult_const_512_vec128(scalar *s)
  * Overflow analysis:
  *   Starting bound B = 1 (input in [0, q)).  After each of the 7 lazy layers
  *   B increases by 1, giving B = 8 after layer 7.
- *   9 * q = 9 * 3329 = 29961 < 2^15, so no signed 16-bit overflow occurs
+ *   8q < 2^15, so no signed 16-bit overflow occurs
  *   across all 7 layers.
  *
  * The final layer (Stage 3, offset == 2) applies reduce_fully to each output,
@@ -757,8 +768,10 @@ void ossl_ml_kem_scalar_ntt_vec128(scalar *s)
  * unity; the 128 relevant inverse roots are stored in kInverseNTTRoots_montgomery.
  *
  * Pre:  Every coefficient s->c[i] is in [0, q)  (NTTScalar / standard form).
- * Post: Even-indexed output coefficients satisfy |s->c[i]| < 2q, odd-indexed
- *       coefficients satisfy |s->c[i]| < q; uniformly |s->c[i]| < 2q.
+ * Post: After the final offset-128 layer, lower-half outputs (s->c[0..127],
+ *       the new_even branch) satisfy |s->c[i]| < 2q, and upper-half outputs
+ *       (s->c[128..255], the new_odd branch) satisfy |s->c[i]| < q;
+ *       uniformly |s->c[i]| < 2q.
  *       The output encodes INTT(s_in) scaled by (n/2) = 128.  The caller must
  *       multiply by (n/2)^{-1} mod q = 3303, which scalar_mult_const_512_vec128
  *       achieves as 512 * R_M^{-1} mod q and which accepts |s->c[i]| < 2q.
@@ -766,7 +779,7 @@ void ossl_ml_kem_scalar_ntt_vec128(scalar *s)
  * Butterfly (lazy Gentleman-Sande, used in all 7 layers):
  *   Given even, odd in Z with twiddle zeta_mont = InvNTTRoots_montgomery[idx]:
  *     new_even = even + odd
- *     t        = even - odd                      -- |t| < (2B+1)q <= 9q < 2^15
+ *     t        = even - odd                      -- |t| <= 8q < 2^15
  *     new_odd  = MontMulRaw(zeta_mont, t)        -- |new_odd| in (-q, q)
  *   Pre:  |even|, |odd| < B*q for the current layer bound B.
  *   Post: |new_even| < 2*B*q  (sum — bound doubles each layer).
@@ -798,7 +811,7 @@ void ossl_ml_kem_scalar_ntt_vec128(scalar *s)
  *     Layer  7 (offset 128): B_in = 1 -> |new_even| < 2q < 2^15, safe.
  *       No reduce_fully here; scalar_mult_const_512_vec128 (the mandatory
  *       next step) handles inputs with |b| < 2q correctly via its shift-based
- *       z_hi = b >> 7, giving |r| <= floor(6657/128) + 1664 = 1716 < q.
+ *       z_hi = b >> 7, giving |r| < q.
  *
  *   new_odd is always in (-q, q) after MontMulRaw, so it never overflows.
  *   The reduce_fully calls on new_odd are NOT present; only new_even is reduced.
@@ -937,21 +950,23 @@ static ossl_inline void scalar_inverse_ntt_vec128_demontgomerize(scalar *s)
  *   P  = MontMulRaw(l0 + l1, r0 + r1)  -- l0 + l1, r0 + r1 in [0,2q-2] => |P| <= 2340
  *   P0 = MontMulRaw(l0, r0)            -- l0, r0 in [0,q) => |P0| <= 1833
  *   P1 = MontMulRaw(l1, r1)            -- l1, r1 in [0,q) => |P1| <= 1833
- *   result_odd  = P - (P0 + P1)        -- |result_odd| <= 2341 + 2*1833 = 6007
- *   result_even = P0 + MontMulRaw(P1, root)  -- |result_even| <= 2*1833 = 3666
+ *   result_odd  = P - (P0 + P1)              -- |result_odd| <= 2341 + 2*1833 = 6007
+ *   result_even = P0 + MontMulRaw(P1, root_mont)  -- |result_even| <= 2*1833 = 3666
  *
- * Correctness:
- *   result_even ≡ (l0*r0 + l1*r1 * root * 169) * 169  (mod q)
+ * Correctness (where 169 = R_M^{-1} mod q):
+ *   result_even ≡ (l0*r0 + l1*r1 * root_std) * 169^2  (mod q)
  *   result_odd  ≡ (l0*r1 + l1*r0) * 169               (mod q)
  * Both outputs are in inverse-Montgomery form; a subsequent
  * demontgomerize_vec128 call recovers the standard-form product.
  *
  * Pre:  lhs_coeffs[0..1] and rhs_coeffs[0..1] hold two consecutive 8-lane
  *       vector registers whose coefficients are in [0, q).
- *       roots[i] = modRoot[i/2] in standard form (kModRoots_montgomery_vec
- *       stores these as Montgomery-encoded twiddles with 0 <= roots[i] < q).
- *       roots_twisted[i] = roots[i] * q_inv mod 2^16 (kModRoots_twisted_vec).
- * Post: *result_even and *result_odd contain the even and odd output
+ *       root_mont[lane] = modRoots[8 * vector_index + lane] * R_M mod q
+ *         (stored in kModRoots_montgomery_vec; 0 <= root_mont[lane] < q).
+ *       root_std[lane]  = modRoots[8 * vector_index + lane]  (standard form).
+ *       roots_twisted[lane] = root_mont[lane] * q_inv mod 2^16
+ *         (stored in kModRoots_twisted_vec).
+ * Post: *result_even and *result_odd contain the lower and upper output
  *       coefficients in inverse-Montgomery form.
  *       result_odd  in [-6007, 6007]
  *       result_even in [-3666, 3666].
@@ -1047,7 +1062,7 @@ void ossl_ml_kem_scalar_mult_add_vec128(scalar *out, const scalar *lhs, const sc
  *
  * Pre:  Every coefficient of lhs and rhs is in [0, q)  (standard NTT-domain form).
  *       out must not alias lhs or rhs.
- * Post: Every coefficient of out is in (-q, q) and represents
+ * Post: Every coefficient of out is in [-6007, 6007] and represents
  *       (lhs (*) rhs)[i] * R_M^{-1} mod q  (inverse-Montgomery form).
  *       The caller is responsible for eventual demontgomerization.
  */

@@ -37,9 +37,26 @@
 #define DEGREE ML_KEM_DEGREE
 #define INVERSE_DEGREE (ML_KEM_PRIME - 2 * 13)
 /*
- * It is enough that BARRETT_SHIFT >= 2 * LOG2PRIME (== 2 * 12),
- * and BARRETT_SHIFT == 32 allows to optimize an int64 multiplication
- * to an int32 high multiplication.
+ * Barrett reduction approximates (x mod q) without a division instruction.
+ * It pre-computes m = floor(2^BARRETT_SHIFT / q) and then estimates:
+ *
+ *   quotient = (x * m) >> BARRETT_SHIFT
+ *   remainder = x - quotient * q         (corrected by reduce_once())
+ *
+ * Correctness requires BARRETT_SHIFT >= 2 * LOG2PRIME (== 2 * 12 == 24),
+ * because the inputs to reduce() are products of two already-reduced values,
+ * each less than q < 2^12, so x < q^2 < 2^24.  A shift of at least 24 bits
+ * keeps the approximation error in the quotient bounded to at most 1.
+ *
+ * Choosing BARRETT_SHIFT == 32 (over the minimum of 24) aligns the shift to
+ * a 32-bit word boundary, so the >> 32 extraction is equivalent to simply
+ * taking the upper 32-bit half of a 64-bit product.  This is a single native
+ * "multiply-high" instruction on all major ISAs (x86-64: upper half of MUL;
+ * AArch64: UMULH; RISC-V: MULHU) and maps directly to SIMD lane-wide mul-high
+ * operations.  With BARRETT_SHIFT == 24 the result would straddle the 32-bit
+ * boundary (bits [55:24] of the product), requiring a separate bit-shift after
+ * the multiply.  The multiplier m = floor(2^32 / 3329) = 1290167 still fits
+ * comfortably in 32 bits, so there is no cost to the larger shift value.
  */
 #define BARRETT_SHIFT 32
 
@@ -408,14 +425,58 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 #endif
 
 /*
- * Function pointer types for NTT dispatch
+ * Function pointer types for NTT dispatch.
+ *
+ * Three NTT-related entry points are dispatched at runtime:
+ *
+ *  scalar_ntt
+ *      Forward NTT.  Converts a polynomial from standard into NTT domain.
+ *
+ *  scalar_inverse_ntt
+ *      Full inverse NTT: butterfly stages followed by multiplication by
+ *      INVERSE_DEGREE = (n/2)^-1 mod q.  Used inside matrix_mult_intt where
+ *      each result row is immediately transformed back to standard form.
+ *
+ *  scalar_inverse_ntt_demontgomerize
+ *      Inverse NTT whose input may still carry a Montgomery factor R from a
+ *      preceding inner_product_montgomery call.  On the generic and PPC paths
+ *      the two pointers are identical (both point at the same fully-reduced
+ *      implementation), because the generic inner_product already produces
+ *      fully-reduced outputs via Barrett reduction.  On the s390x/vec128 path
+ *      the two are distinct:
+ *        - inner_product_montgomery_vec128 accumulates the dot-product using
+ *          Montgomery arithmetic and intentionally leaves each coefficient
+ *          scaled by R (= 2^16 mod q), deferring the final division to save
+ *          a per-coefficient multiply.
+ *        - scalar_inverse_ntt_demontgomerize_vec128 performs the normal inverse
+ *          NTT butterfly stages and, in the final normalisation step, folds the
+ *          Montgomery de-scaling (multiply by R^-1) into the INVERSE_DEGREE
+ *          multiply so that both adjustments are paid in a single pass.
+ *
+ * The net effect is that callers always see a fully-reduced standard-form
+ * polynomial after the (inner_product_montgomery, scalar_inverse_ntt_demontgomerize)
+ * pair, regardless of which backend is active.
  */
 typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
 typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
 typedef void (*ml_kem_scalar_inverse_ntt_demontgomerize_fn)(scalar *p);
 
+/* Forward declarations */
+static void ossl_ml_kem_scalar_ntt_generic(scalar *s);
+static void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s);
+
 static ml_kem_scalar_ntt_fn scalar_ntt = ossl_ml_kem_scalar_ntt_generic;
+/*
+ * scalar_inverse_ntt: used by matrix_mult_intt, where inputs are already fully
+ * reduced (no deferred Montgomery factor).
+ */
 static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_generic;
+/*
+ * scalar_inverse_ntt_demontgomerize: used after inner_product_montgomery.  On
+ * generic/PPC this is the same function as scalar_inverse_ntt.  On s390x it is
+ * a specialised variant that also removes the Montgomery factor R left by
+ * inner_product_montgomery_vec128.
+ */
 static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
 
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
@@ -440,7 +501,34 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 #include "arch/s390x_arch.h"
 #endif
 
-/* Function pointer types for scalar multiplication dispatch */
+/*
+ * Function pointer types for scalar multiplication dispatch.
+ *
+ *  scalar_mult_add
+ *      Pointwise-multiply two NTT-domain scalars and accumulate the result
+ *      into an existing scalar (out += lhs * rhs).
+ *
+ *  inner_product_montgomery
+ *      Computes the dot-product of two rank-element NTT-domain vectors and
+ *      stores the result in *out.  The name "montgomery" signals the output
+ *      representation contract:
+ *        - On the generic path the function uses Barrett reduction throughout
+ *          and the output is fully reduced in [0, q).
+ *        - On the s390x/vec128 path the function uses Montgomery multiplication
+ *          internally and the output coefficients are left scaled by R
+ *          (= 2^16 mod q).  Callers MUST immediately follow this call with
+ *          scalar_inverse_ntt_demontgomerize, which converts back to standard
+ *          form while performing the inverse NTT.  Splitting the Montgomery
+ *          de-scaling from the inner product and merging it with the inverse
+ *          NTT avoids a full extra pass over the 256-element array.
+ *
+ *  matrix_mult_intt
+ *      Computes out[i] = sum_j m[i*rank+j] * a[j] for each row i, and then
+ *      immediately applies scalar_inverse_ntt to each result row.  Because
+ *      this path uses scalar_inverse_ntt (not scalar_inverse_ntt_demontgomerize),
+ *      the intermediate per-row inner products must be in standard form. The
+ *      s390x implementation ensures this within matrix_mult_intt_vec128.
+ */
 typedef void (*ml_kem_scalar_mult_add_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
 typedef void (*ml_kem_inner_product_montgomery_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
 typedef void (*ml_kem_matrix_mult_intt_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
@@ -453,6 +541,11 @@ static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar 
 
 /* Function pointers for dispatch */
 static ml_kem_scalar_mult_add_fn scalar_mult_add = scalar_mult_add_generic;
+/*
+ * Produces the NTT-domain dot-product of two vectors.  Result is in Montgomery
+ * form on s390x (must be followed by scalar_inverse_ntt_demontgomerize), and
+ * fully reduced on all other platforms.
+ */
 static ml_kem_inner_product_montgomery_fn inner_product_montgomery = inner_product_generic;
 static ml_kem_matrix_mult_intt_fn matrix_mult_intt = matrix_mult_intt_generic;
 
@@ -474,8 +567,22 @@ static void ml_kem_ntt_init(void)
 
 /*
  * Initialize NTT and scalar and matrix multiplication function pointers to
- * s390x implementation if available.
- * */
+ * the s390x/vec128 implementation if available.
+ *
+ * On s390x three pointers differ from the generic ones in a coordinated way:
+ *   - scalar_inverse_ntt and scalar_inverse_ntt_demontgomerize point to two
+ *     DIFFERENT functions.  scalar_inverse_ntt_demontgomerize_vec128 is always
+ *     paired with inner_product_montgomery_vec128: the latter leaves each
+ *     coefficient in Montgomery form (scaled by R = 2^16 mod q), and the
+ *     former performs the inverse NTT butterflies while simultaneously removing
+ *     the Montgomery factor in the final normalisation multiply.
+ *   - inner_product_montgomery_vec128 deliberately omits the final
+ *     Montgomery-to-standard conversion; callers must use
+ *     scalar_inverse_ntt_demontgomerize (not scalar_inverse_ntt) afterward.
+ *   - matrix_mult_intt_vec128 uses scalar_inverse_ntt_vec128 internally
+ *     (not the demontgomerize variant), because it manages its own reduction
+ *     strategy without a deferred Montgomery factor.
+ */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
     if (S390X_VX_CAPABLE) {
         scalar_ntt = ossl_ml_kem_scalar_ntt_vec128;
@@ -1568,37 +1675,62 @@ end:
  *
  * On s390x with VX support the scalar type carries ALIGN16 but both
  * OPENSSL_malloc and OPENSSL_secure_malloc may return only 8-byte-aligned
- * storage.  We therefore:
+ * storage.  Both the public-key buffer (t + m) and the private-key buffer
+ * (s + z + d) are therefore allocated with 16-byte alignment using a
+ * self-describing header-word technique:
  *
- *   - Allocate the public-key buffer (t + m) via OPENSSL_aligned_alloc so
- *     that the returned pointer is guaranteed 16-byte aligned.  The raw
- *     malloc pointer is saved in key->t_freeptr for later OPENSSL_free().
+ *   - Over-allocate by sizeof(void *) + (SCALAR_ALIGN - 1) bytes.
+ *   - Advance the pointer to the next SCALAR_ALIGN boundary that is at least
+ *     sizeof(void *) bytes past the raw allocation, so there is always room
+ *     for a void * header even when raw is already SCALAR_ALIGN-aligned.
+ *   - Store the original raw pointer in the sizeof(void *) bytes of slack
+ *     immediately before the aligned pointer.
+ *   - To free: read back the raw pointer from that header slot.
  *
- *   - Allocate the private-key buffer (s + z + d) via OPENSSL_secure_malloc
- *     with an extra 15 bytes of headroom, then advance the pointer to the
- *     nearest 16-byte boundary.  The original secure-malloc pointer is saved
- *     in key->s_freeptr; it is freed with
- *     OPENSSL_secure_clear_free(key->s_freeptr, prvalloc + 15).
+ * This is safe because sizeof(void *) <= 8 <= SCALAR_ALIGN = 16 on all
+ * supported platforms.  No raw-pointer field is needed in ML_KEM_KEY, so the
+ * struct layout is identical regardless of whether VX support is compiled in.
  */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 #define SCALAR_ALIGN 16
 
-static scalar *alloc_pub_aligned(size_t puballoc, void **freeptr)
+static scalar *alloc_pub_aligned(size_t puballoc)
 {
-    return (scalar *)OPENSSL_aligned_alloc(puballoc, SCALAR_ALIGN, freeptr);
-}
-
-static scalar *alloc_prv_aligned(size_t prvalloc, void **freeptr)
-{
-    uint8_t *raw = OPENSSL_secure_malloc(prvalloc + (SCALAR_ALIGN - 1));
+    uint8_t *raw = OPENSSL_malloc(puballoc + sizeof(void *) + (SCALAR_ALIGN - 1));
     uintptr_t addr;
 
-    *freeptr = raw;
     if (raw == NULL)
         return NULL;
-    addr = (uintptr_t)raw;
-    addr = (addr + (SCALAR_ALIGN - 1)) & ~(uintptr_t)(SCALAR_ALIGN - 1);
+    addr = ((uintptr_t)raw + sizeof(void *) + (SCALAR_ALIGN - 1)) & ~(uintptr_t)(SCALAR_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
     return (scalar *)(void *)addr;
+}
+
+static void free_pub_aligned(scalar *p)
+{
+    if (p == NULL)
+        return;
+    OPENSSL_free(*(void **)((uint8_t *)p - sizeof(void *)));
+}
+
+static scalar *alloc_prv_aligned(size_t prvalloc)
+{
+    uint8_t *raw = OPENSSL_secure_malloc(prvalloc + sizeof(void *) + (SCALAR_ALIGN - 1));
+    uintptr_t addr;
+
+    if (raw == NULL)
+        return NULL;
+    addr = ((uintptr_t)raw + sizeof(void *) + (SCALAR_ALIGN - 1)) & ~(uintptr_t)(SCALAR_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+    return (scalar *)(void *)addr;
+}
+
+static void free_prv_aligned(scalar *p, size_t prvalloc)
+{
+    if (p == NULL)
+        return;
+    OPENSSL_secure_clear_free(*(void **)((uint8_t *)p - sizeof(void *)),
+        prvalloc + sizeof(void *) + (SCALAR_ALIGN - 1));
 }
 #endif /* VX_COMPILER_SUPPORT_VEC128 */
 
@@ -1620,11 +1752,8 @@ static __owur int add_storage(scalar *pub, scalar *priv,
          * pointer, so always attempt to free both allocations here
          */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-        OPENSSL_free(key->t_freeptr);
-        if (priv != NULL)
-            OPENSSL_secure_clear_free(key->s_freeptr,
-                key->vinfo->prvalloc + (SCALAR_ALIGN - 1));
-        key->t_freeptr = key->s_freeptr = NULL;
+        free_pub_aligned(pub);
+        free_prv_aligned(priv, key->vinfo->prvalloc);
 #else
         OPENSSL_free(pub);
         OPENSSL_secure_free(priv);
@@ -1682,16 +1811,13 @@ void ossl_ml_kem_key_reset(ML_KEM_KEY *key)
     if (key->t != NULL) {
         if (ossl_ml_kem_have_prvkey(key)) {
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-            OPENSSL_secure_clear_free(key->s_freeptr,
-                key->vinfo->prvalloc + (SCALAR_ALIGN - 1));
-            key->s_freeptr = NULL;
+            free_prv_aligned(key->s, key->vinfo->prvalloc);
 #else
             OPENSSL_secure_clear_free(key->s, key->vinfo->prvalloc);
 #endif
         }
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-        OPENSSL_free(key->t_freeptr);
-        key->t_freeptr = NULL;
+        free_pub_aligned(key->t);
 #else
         OPENSSL_free(key->t);
 #endif
@@ -1763,9 +1889,6 @@ ML_KEM_KEY *ossl_ml_kem_key_new(OSSL_LIB_CTX *libctx, const char *properties,
     key->prov_flags = ML_KEM_KEY_PROV_FLAGS_DEFAULT;
     key->d = key->z = key->rho = key->pkhash = key->encoded_dk = key->seedbuf = NULL;
     key->s = key->m = key->t = NULL;
-#if defined(VX_COMPILER_SUPPORT_VEC128)
-    key->t_freeptr = key->s_freeptr = NULL;
-#endif
     key->shake128_md = key->shake256_md = key->sha3_256_md = key->sha3_512_md = NULL;
     if (ossl_ml_kem_key_fetch_digest(key, properties))
         return key;
@@ -1796,9 +1919,6 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
 
     ret->d = ret->z = ret->rho = ret->pkhash = NULL;
     ret->s = ret->m = ret->t = NULL;
-#if defined(VX_COMPILER_SUPPORT_VEC128)
-    ret->t_freeptr = ret->s_freeptr = NULL;
-#endif
 
     /* Clear selection bits we can't fulfill */
     if (!ossl_ml_kem_have_pubkey(key))
@@ -1815,7 +1935,7 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
 #if defined(VX_COMPILER_SUPPORT_VEC128)
     {
-        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
+        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc);
 
         if (pub != NULL)
             memcpy(pub, key->t, key->vinfo->puballoc);
@@ -1829,8 +1949,8 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         /* Frees both and returns 0 if either is NULL */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
     {
-        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc, &ret->t_freeptr);
-        scalar *priv = alloc_prv_aligned(key->vinfo->prvalloc, &ret->s_freeptr);
+        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc);
+        scalar *priv = alloc_prv_aligned(key->vinfo->prvalloc);
 
         if (pub != NULL)
             memcpy(pub, key->t, key->vinfo->puballoc);
@@ -1960,7 +2080,7 @@ int ossl_ml_kem_parse_public_key(const uint8_t *in, size_t len, ML_KEM_KEY *key)
         return 0;
 
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-    if (add_storage(alloc_pub_aligned(vinfo->puballoc, &key->t_freeptr),
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc),
             NULL, 0, 0, key))
 #else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc), NULL, 0, 0, key))
@@ -1996,8 +2116,8 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
     ossl_ml_kem_key_reset(key);
 
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-    if (add_storage(alloc_pub_aligned(vinfo->puballoc, &key->t_freeptr),
-            alloc_prv_aligned(vinfo->prvalloc, &key->s_freeptr), 1, 0, key))
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc),
+            alloc_prv_aligned(vinfo->prvalloc), 1, 0, key))
 #else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
@@ -2050,8 +2170,8 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
     CONSTTIME_SECRET(seed, ML_KEM_SEED_BYTES);
 
 #if defined(VX_COMPILER_SUPPORT_VEC128)
-    if (add_storage(alloc_pub_aligned(vinfo->puballoc, &key->t_freeptr),
-            alloc_prv_aligned(vinfo->prvalloc, &key->s_freeptr), 1, 0, key))
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc),
+            alloc_prv_aligned(vinfo->prvalloc), 1, 0, key))
 #else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
