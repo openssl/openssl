@@ -1380,7 +1380,6 @@ static int test_hpke_oddcalls(void)
     char giant_pskid[OSSL_HPKE_MAX_PARMLEN + 10];
     unsigned char info[OSSL_HPKE_TSTSIZE];
     OSSL_HPKE_SUITE suite, retrieved;
-    size_t kemind, kdfind, aeadind, mind;
 
     /* many of the calls below are designed to get better test coverage */
 
