@@ -130,6 +130,48 @@ void OSSL_FN_clear_free(OSSL_FN *f);
 void OSSL_FN_clear(OSSL_FN *f);
 
 /**
+ * Set an OSSL_FN to a single-limb word value.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @param[in]   w       The OSSL_FN_ULONG word
+ * @returns     1 on success, 0 on error
+ *
+ * @note Sets a->d[0] to @p w and zeroes the remaining limbs, so the full
+ *       dsize array reflects the value @p w.  If a->dsize is 0 there is no
+ *       limb to write and the call fails with
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL (OSSL_FN is fixed-size, so the
+ *       destination cannot be grown).  The operation is constant-time with
+ *       respect to @p w's value; the only branch is on the operand's public
+ *       width (dsize).
+ */
+int OSSL_FN_set_word(OSSL_FN *a, OSSL_FN_ULONG w);
+
+/**
+ * Set an OSSL_FN to one.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @returns     1 on success, 0 on error
+ *
+ * @note Equivalent to OSSL_FN_set_word(a, 1), provided as a named function
+ *       for readability at call sites.  Leak profile as for
+ *       OSSL_FN_set_word().
+ */
+int OSSL_FN_one(OSSL_FN *a);
+
+/**
+ * Set an OSSL_FN to zero.
+ *
+ * @param[out]  a       The destination OSSL_FN
+ * @returns     1 on success, 0 on error
+ *
+ * @note This is a plain value assignment, not a secure wipe; use
+ *       OSSL_FN_clear() when the limbs may hold secret data and must be wiped
+ *       irreversibly.  Equivalent to OSSL_FN_set_word(a, 0).  Leak profile as
+ *       for OSSL_FN_set_word().
+ */
+int OSSL_FN_zero(OSSL_FN *a);
+
+/**
  * Copy the contents of one OSSL_FN instance to another.
  *
  * @param[out]  a       The destination OSSL_FN
@@ -324,6 +366,167 @@ size_t OSSL_FN_num_bits(const OSSL_FN *a);
 int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Test whether bit @p n is set in @p a.
+ *
+ * @param[in]           a       The operand
+ * @param[in]           n       The bit index (0 = least significant)
+ * @returns             1 if bit @p n of @p a is set, 0 otherwise.
+ *
+ * @note An out-of-range index (n < 0 or n >= the operand's width in bits)
+ *       reads as 0.  The only control flow branches on the operand's public
+ *       width (its dsize), not on limb values; the returned value is the bit
+ *       itself, which is the information the caller asked for.
+ */
+int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
+
+/**
+ * Test whether the unsigned value of @p a equals the single-limb word @p w.
+ *
+ * @param[in]           a       The operand
+ * @param[in]           w       The OSSL_FN_ULONG word to compare against
+ * @returns             1 if the unsigned value of @p a equals @p w, 0 otherwise
+ *
+ * @note Control flow branches only on the operand's public width (its dsize),
+ *       not on limb values; the returned value is the equality test the caller
+ *       asked for.
+ */
+int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w);
+
+/**
+ * Test whether @p a is zero.
+ *
+ * @param[in]           a       The operand
+ * @returns             1 if @p a is zero, 0 otherwise
+ *
+ * @note Equivalent to OSSL_FN_is_word(a, 0), provided as a named predicate for
+ *       readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ *       branches only on the operand's public width (its dsize).
+ */
+int OSSL_FN_is_zero(const OSSL_FN *a);
+
+/**
+ * Test whether @p a is one.
+ *
+ * @param[in]           a       The operand
+ * @returns             1 if @p a is one, 0 otherwise
+ *
+ * @note Equivalent to OSSL_FN_is_word(a, 1), provided as a named predicate for
+ *       readability at call sites.  Leak profile as for OSSL_FN_is_word():
+ *       branches only on the operand's public width (its dsize).
+ */
+int OSSL_FN_is_one(const OSSL_FN *a);
+
+/**
+ * Test whether @p a is odd.
+ *
+ * @param[in]           a       The operand
+ * @returns             the least significant bit of @p a (1 if odd, 0 if even)
+ *
+ * @note The only control flow branches on the operand's public width (its
+ *       dsize), not on limb values; the returned value is the bit itself,
+ *       which is the information the caller asked for.
+ */
+int OSSL_FN_is_odd(const OSSL_FN *a);
+
+/*-
+ * Top/bottom selectors for OSSL_FN_rand() / OSSL_FN_priv_rand().  These are
+ * caller-chosen public parameters (not secrets); OSSL_FN_rand() branches on
+ * them to shape the top and bottom bits of the result.  Each TOP_* value is
+ * the number of high bits to force to 1 (0 = unconstrained, 1, 2), matching
+ * the BOTTOM_* numbering (0 = unconstrained, 1 = force the low bit).
+ */
+#define OSSL_FN_RAND_TOP_ANY 0
+#define OSSL_FN_RAND_TOP_ONE 1
+#define OSSL_FN_RAND_TOP_TWO 2
+#define OSSL_FN_RAND_BOTTOM_ANY 0
+#define OSSL_FN_RAND_BOTTOM_ODD 1
+
+/**
+ * Fill @p rnd with @p bits random bits.
+ *
+ * @param[out]          rnd     The OSSL_FN for the result
+ * @param[in]           bits    The number of random bits to generate
+ * @param[in]           top     Top-bit selector (OSSL_FN_RAND_TOP_*)
+ * @param[in]           bottom  Bottom-bit selector (OSSL_FN_RAND_BOTTOM_*)
+ * @param[in]           strength The private strength of the generated bytes
+ * @param[in]           libctx  The OpenSSL library context (for the DRBG)
+ * @returns             1 on success, 0 on error
+ *
+ * Draws from the public DRBG pool via RAND_bytes_ex().  The library context
+ * is taken directly as @p libctx.  The random bytes are drawn straight into
+ * rnd->d (no intermediate buffer) and the top/bottom/mask constraints are
+ * applied as limb value operations; a @p rnd too small for @p bits is
+ * reported as OSSL_FN_R_RESULT_ARG_TOO_SMALL rather than grown.  Leak
+ * profile as for OSSL_FN_priv_rand().
+ */
+int OSSL_FN_rand(OSSL_FN *rnd, size_t bits, int top, int bottom,
+    size_t strength, OSSL_LIB_CTX *libctx);
+
+/**
+ * Fill @p rnd with @p bits random bits from the private DRBG pool.
+ *
+ * @param[out]          rnd     The OSSL_FN for the result
+ * @param[in]           bits    The number of random bits to generate
+ * @param[in]           top     Top-bit selector (OSSL_FN_RAND_TOP_*)
+ * @param[in]           bottom  Bottom-bit selector (OSSL_FN_RAND_BOTTOM_*)
+ * @param[in]           strength The private strength of the generated bytes
+ * @param[in]           libctx  The OpenSSL library context (for the DRBG)
+ * @returns             1 on success, 0 on error
+ *
+ * Draws from the private (non-forward-linkable) DRBG pool via
+ * RAND_priv_bytes_ex().  This is the private counterpart of OSSL_FN_rand();
+ * the public/private pool selection is exposed as separate functions rather
+ * than a flag argument.  Control flow branches only on @p bits, @p top,
+ * @p bottom (all caller-chosen, public) and on the byte-draw return value,
+ * never on the random bytes themselves; the returned value is the random
+ * number the caller asked for.
+ *
+ * @note See ossl_fn_rand() in crypto/fn/fn_rand.c for the byte-to-limb
+ *       shaping mechanics.
+ */
+int OSSL_FN_priv_rand(OSSL_FN *rnd, size_t bits, int top, int bottom,
+    size_t strength, OSSL_LIB_CTX *libctx);
+
+/**
+ * Generate 0 <= r < range.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           range   The exclusive upper bound (must be non-zero)
+ * @param[in]           strength The private strength of the generated bytes
+ * @param[in]           libctx  The OpenSSL library context (for the DRBG)
+ * @returns             1 on success, 0 on error
+ *
+ * Draws from the public DRBG pool.  OSSL_FN is unsigned, so no sign
+ * rejection is performed.  The loop iteration count leaks the magnitude of
+ * @p range via OSSL_FN_num_bits() and the rejection probability.
+ *
+ * The destination @p r must be sized to hold at least
+ * OSSL_FN_num_bits(@p range) bits.  Sizing @p r to hold one extra bit
+ * (OSSL_FN_num_bits(@p range) + 1) additionally enables the optimized
+ * "range = 100..._2" path, which draws n + 1 bits; an exactly-sized @p r
+ * (room for exactly OSSL_FN_num_bits(@p range) bits) uses standard n-bit
+ * rejection sampling instead.  An @p r too small for
+ * OSSL_FN_num_bits(@p range) bits fails with OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ */
+int OSSL_FN_rand_range(OSSL_FN *r, const OSSL_FN *range, size_t strength,
+    OSSL_LIB_CTX *libctx);
+
+/**
+ * Generate 0 <= r < range from the private DRBG pool.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           range   The exclusive upper bound (must be non-zero)
+ * @param[in]           strength The private strength of the generated bytes
+ * @param[in]           libctx  The OpenSSL library context (for the DRBG)
+ * @returns             1 on success, 0 on error
+ *
+ * Draws from the private DRBG pool.  Leak profile and destination sizing
+ * as for OSSL_FN_rand_range().
+ */
+int OSSL_FN_priv_rand_range(OSSL_FN *r, const OSSL_FN *range,
+    size_t strength, OSSL_LIB_CTX *libctx);
+
+/**
  * Shift an OSSL_FN number left by n bits.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -343,6 +546,25 @@ int OSSL_FN_lshift(OSSL_FN *r, const OSSL_FN *a, int n);
 int OSSL_FN_lshift1(OSSL_FN *r, const OSSL_FN *a);
 
 /**
+ * Shift an OSSL_FN number right by n bits.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The number of bits to shift
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_rshift(OSSL_FN *r, const OSSL_FN *a, int n);
+
+/**
+ * Shift an OSSL_FN number right by one bit.  Truncates the result to fit in r.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_rshift1(OSSL_FN *r, const OSSL_FN *a);
+
+/**
  * Add two OSSL_FN numbers.
  *
  * @param[out]          r       The OSSL_FN for the result
@@ -359,7 +581,7 @@ int OSSL_FN_add(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
  * @param[in]           w       The OSSL_FN_ULONG word
  * @returns             1 on success, 0 on error
  */
-int OSSL_FN_add_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+int OSSL_FN_add_word(OSSL_FN *a, OSSL_FN_ULONG w);
 
 /**
  * Subtract two OSSL_FN numbers.
@@ -378,7 +600,7 @@ int OSSL_FN_sub(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b);
  * @param[in]           w       The OSSL_FN_ULONG word
  * @returns             1 on success, 0 on error
  */
-int OSSL_FN_sub_word(OSSL_FN *a, const OSSL_FN_ULONG *w);
+int OSSL_FN_sub_word(OSSL_FN *a, OSSL_FN_ULONG w);
 
 /**
  * Multiply two OSSL_FN numbers.  Truncates the result to fit in r.

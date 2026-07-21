@@ -345,25 +345,65 @@ err:
 
 static int file_lshift1(STANZA *s)
 {
-    BIGNUM *a = NULL, *lshift1 = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *rf = NULL;
+    BIGNUM *a = NULL, *lshift1 = NULL, *two = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *lf = NULL, *tf = NULL, *rf = NULL;
+    OSSL_FN_CTX *ctx = NULL;
     int a_neg = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
 
     if (!TEST_ptr(a = getBN(s, "A"))
         || !TEST_ptr(lshift1 = getBN(s, "LShift1"))
+        || !TEST_ptr(two = BN_new())
         || !TEST_ptr(ret = BN_new()))
         goto err;
 
     a_neg = BN_is_negative(a);
     nlimbs = limbs(lshift1);
+    BN_set_word(two, 2);
 
     if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(lf = bn_get_ossl_fn(lshift1))
+        || !TEST_ptr(tf = bn_get_ossl_fn(two))
         || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
         goto err;
     r_acq = 1;
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mul_ctx_size(rf, af, tf))))
+        goto err;
 
+    /* A + A == LShift1 */
+    if (!TEST_true(OSSL_FN_add(rf, af, af)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("A + A", lshift1, ret))
+        goto err;
+
+    /* A * 2 == LShift1 */
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_true(OSSL_FN_mul(rf, af, tf, ctx)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("A * 2", lshift1, ret))
+        goto err;
+
+    /*
+     * TODO(FIXNUM): bntest.c also checks the division/modulus identities
+     *   LShift1 / 2 == A   ("LShift1 / 2")
+     *   LShift1 % 2 == 0   ("LShift1 % 2")
+     * using BN_div().  These cannot be ported yet: there is no OSSL_FN_div().
+     */
+
+    /* A << 1 == LShift1 */
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
     if (!TEST_true(OSSL_FN_lshift1(rf, af)))
         goto err;
     bn_release(ret, nlimbs);
@@ -372,12 +412,49 @@ static int file_lshift1(STANZA *s)
     if (!equalBN("A << 1", lshift1, ret))
         goto err;
 
+    /*
+     * Round-trip: LShift1 >> 1 == A, done twice to match bntest.c's
+     * double-check structure.
+     *
+     * TODO(FIXNUM): bntest.c's second iteration forces the LSB of LShift1
+     * to 1 (BN_set_bit(lshift1, 0)) and then checks
+     *   (LShift1 | 1) / 2 == A   ("(LShift1 | 1) / 2")
+     *   (LShift | 1) >> 1 == A   ("(LShift | 1) >> 1")
+     * to exercise rshift1's flooring of an odd operand.  This cannot be
+     * ported yet: there is no OSSL_FN_set_bit(), and the division variant
+     * also needs OSSL_FN_div().  For now we just repeat the even case to
+     * preserve the two-iteration shape.
+     */
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_true(OSSL_FN_rshift1(rf, lf)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("LShift >> 1", a, ret))
+        goto err;
+
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_true(OSSL_FN_rshift1(rf, lf)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("LShift >> 1", a, ret))
+        goto err;
+
     st = 1;
 err:
     if (r_acq)
         bn_release(ret, nlimbs);
+    OSSL_FN_CTX_free(ctx);
     BN_free(a);
     BN_free(lshift1);
+    BN_free(two);
     BN_free(ret);
     return st;
 }
@@ -385,7 +462,7 @@ err:
 static int file_lshift(STANZA *s)
 {
     BIGNUM *a = NULL, *lshift = NULL, *ret = NULL;
-    OSSL_FN *af = NULL, *rf = NULL;
+    OSSL_FN *af = NULL, *lf = NULL, *rf = NULL;
     int a_neg = 0, n = 0, st = 0;
     int r_acq = 0;
     int nlimbs = 0;
@@ -400,6 +477,7 @@ static int file_lshift(STANZA *s)
     nlimbs = limbs(lshift);
 
     if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(lf = bn_get_ossl_fn(lshift))
         || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
         goto err;
     r_acq = 1;
@@ -410,6 +488,18 @@ static int file_lshift(STANZA *s)
     BN_set_negative(ret, a_neg);
     r_acq = 0;
     if (!equalBN("A << N", lshift, ret))
+        goto err;
+
+    /* Round-trip: shift the result back and recover A */
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+    if (!TEST_true(OSSL_FN_rshift(rf, lf, n)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("A >> N", a, ret))
         goto err;
 
     st = 1;
@@ -531,11 +621,65 @@ err:
     return st;
 }
 
+static int file_rshift(STANZA *s)
+{
+    BIGNUM *a = NULL, *rshift = NULL, *ret = NULL;
+    OSSL_FN *af = NULL, *rf = NULL;
+    int a_neg = 0, n = 0, st = 0;
+    int r_acq = 0;
+    int nlimbs = 0;
+
+    if (!TEST_ptr(a = getBN(s, "A"))
+        || !TEST_ptr(rshift = getBN(s, "RShift"))
+        || !TEST_ptr(ret = BN_new())
+        || !getint(s, &n, "N"))
+        goto err;
+
+    a_neg = BN_is_negative(a);
+    nlimbs = limbs(rshift);
+
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_true(OSSL_FN_rshift(rf, af, n)))
+        goto err;
+    bn_release(ret, nlimbs);
+    BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+    r_acq = 0;
+    if (!equalBN("A >> N", rshift, ret))
+        goto err;
+
+    /* If N == 1, try with rshift1 as well */
+    if (n == 1) {
+        if (!TEST_ptr(rf = bn_acquire_ossl_fn(ret, nlimbs)))
+            goto err;
+        r_acq = 1;
+        if (!TEST_true(OSSL_FN_rshift1(rf, af)))
+            goto err;
+        bn_release(ret, nlimbs);
+        BN_set_negative(ret, a_neg && !BN_is_zero(ret));
+        r_acq = 0;
+        if (!equalBN("A >> 1 (rshift1)", rshift, ret))
+            goto err;
+    }
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(ret, nlimbs);
+    BN_free(a);
+    BN_free(rshift);
+    BN_free(ret);
+    return st;
+}
+
 static FILETEST filetests[] = {
     { "Sum", file_sum, 0 },
     { "LShift1", file_lshift1, 0 },
     { "LShift", file_lshift, 0 },
-    { "RShift", NULL, 0 },
+    { "RShift", file_rshift, 0 },
     { "Square", file_square, 0 },
     { "Product", file_product, 0 },
     { "Quotient", file_quotient, 0 },

@@ -15,6 +15,7 @@
  * for introspection.
  */
 
+#include <openssl/err.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
 #include "crypto/fn.h"
@@ -108,6 +109,7 @@ static const OSSL_FN_ULONG num8[] = {
  * All sizes are in number of limbs, the LIMBSOF() macro is there to help
  */
 #define LIMBSOF(num) ((sizeof(num) + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES)
+#define OSSL_FN_BITS (OSSL_FN_BYTES * 8)
 struct test_case_st {
     /* Two operands and expected full result (possibly two numbers) */
     const OSSL_FN_ULONG *op1;
@@ -447,6 +449,64 @@ static const OSSL_FN_ULONG ex_lshift_num2_limb_3[] = {
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
 
+/* $num2 >> 1 == 0x0091a2b3c4d5e6f7 */
+static const OSSL_FN_ULONG ex_rshift1_num2[] = {
+    OSSL_FN_ULONG64_C(0x0091a2b3, 0xc4d5e6f7),
+};
+/* $num8 >> 1 == 0x000000008091a2b3c4d5e6f7 */
+static const OSSL_FN_ULONG ex_rshift1_num8[] = {
+    OSSL_FN_ULONG64_C(0x8091a2b3, 0xc4d5e6f7),
+};
+/* $num2 >> 4 == 0x00123456789abcde */
+static const OSSL_FN_ULONG ex_rshift_num2_4[] = {
+    OSSL_FN_ULONG64_C(0x00123456, 0x789abcde),
+};
+#if OSSL_FN_BYTES == 4
+/* $num8 >> 32 == 0x0000000101234567 */
+static const OSSL_FN_ULONG ex_rshift_num8_limb[] = {
+    OSSL_FN_ULONG_C(0x01234567),
+    OSSL_FN_ULONG_C(0x00000001),
+};
+#elif OSSL_FN_BYTES == 8
+/* $num8 >> 64 == 0x0000000000000001 */
+static const OSSL_FN_ULONG ex_rshift_num8_limb[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000001),
+};
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
+#if OSSL_FN_BYTES == 4
+/* $num8 >> 35 == 0x00000000202468ac */
+static const OSSL_FN_ULONG ex_rshift_num8_limb_3[] = {
+    OSSL_FN_ULONG_C(0x202468ac),
+};
+#elif OSSL_FN_BYTES == 8
+/* $num8 >> 67 == 0x0000000000000000 */
+static const OSSL_FN_ULONG ex_rshift_num8_limb_3[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
+#if OSSL_FN_BYTES == 4
+/* $num2 >> 32 == 0x01234567 */
+static const OSSL_FN_ULONG ex_rshift_num2_limb[] = {
+    OSSL_FN_ULONG_C(0x01234567),
+    OSSL_FN_ULONG_C(0x00000000),
+};
+#elif OSSL_FN_BYTES == 8
+/* $num2 >> 64 == 0x0000000000000000 */
+static const OSSL_FN_ULONG ex_rshift_num2_limb[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+#else
+#error "OpenSSL doesn't support large numbers on this platform"
+#endif
+/* Expected all-zero result for shifts beyond the operand's width. */
+static const OSSL_FN_ULONG ex_rshift_zero[] = {
+    OSSL_FN_ULONG64_C(0x00000000, 0x00000000),
+};
+
 static int test_sub_common(struct test_case_st test_case)
 {
     const OSSL_FN_ULONG *n1 = test_case.op1;
@@ -653,6 +713,341 @@ err:
     return ret;
 }
 
+/*-
+ * Focused tests for the OSSL_FN introspection predicates: is_word, is_zero,
+ * is_one, is_odd.  Covers plain values, fixed-top zero-padding (a value
+ * whose high limbs are zero limbs by dsize rather than by trimming), and the
+ * dsize == 0 (zero-limb) degenerate case.
+ */
+static int test_introspection(void)
+{
+    int ret = 0;
+    OSSL_FN *z = NULL; /* dsize 2, value 0 */
+    OSSL_FN *z_wide = NULL; /* dsize 4, value 0 (fixed-top zero padding) */
+    OSSL_FN *z_empty = NULL; /* dsize 0, value 0 */
+    OSSL_FN *one = NULL; /* dsize 2, value 1 */
+    OSSL_FN *one_wide = NULL; /* dsize 4, value 1 (fixed-top zero padding) */
+    OSSL_FN *w5 = NULL; /* dsize 2, value 5 */
+    OSSL_FN *w5_wide = NULL; /* dsize 4, value 5 (fixed-top zero padding) */
+    OSSL_FN *even = NULL; /* dsize 2, value 0x...76543210 (even) */
+    OSSL_FN *odd = NULL; /* dsize 2, value 0x...01234567 (odd) */
+    OSSL_FN *two_limbs = NULL; /* dsize 2, value 0x...76543210 fedcba98 (nonzero high limb) */
+    OSSL_FN_ULONG one_word = OSSL_FN_ULONG_C(1);
+    OSSL_FN_ULONG five_word = OSSL_FN_ULONG_C(5);
+    OSSL_FN_ULONG even_word = OSSL_FN_ULONG_C(0x76543210);
+    OSSL_FN_ULONG odd_word = OSSL_FN_ULONG_C(0x01234567);
+    const OSSL_FN_ULONG two_limbs_words[] = {
+        OSSL_FN_ULONG_C(0x76543210),
+        OSSL_FN_ULONG_C(0xfedcba98)
+    };
+
+    if (!TEST_ptr(z = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(z_wide = OSSL_FN_new_limbs(4))
+        || !TEST_ptr(z_empty = OSSL_FN_new_limbs(0))
+        || !TEST_ptr(one = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(one_wide = OSSL_FN_new_limbs(4))
+        || !TEST_ptr(w5 = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(w5_wide = OSSL_FN_new_limbs(4))
+        || !TEST_ptr(even = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(odd = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(two_limbs = OSSL_FN_new_limbs(2)))
+        goto err;
+
+    /* All fresh allocations are zero-initialised, so z, z_wide, z_empty are 0. */
+    if (!TEST_true(ossl_fn_set_words(one, &one_word, 1))
+        || !TEST_true(ossl_fn_set_words(one_wide, &one_word, 1))
+        || !TEST_true(ossl_fn_set_words(w5, &five_word, 1))
+        || !TEST_true(ossl_fn_set_words(w5_wide, &five_word, 1))
+        || !TEST_true(ossl_fn_set_words(even, &even_word, 1))
+        || !TEST_true(ossl_fn_set_words(odd, &odd_word, 1))
+        || !TEST_true(ossl_fn_set_words(two_limbs, two_limbs_words,
+            LIMBSOF(two_limbs_words))))
+        goto err;
+
+    /* OSSL_FN_is_zero */
+    if (!TEST_int_eq(OSSL_FN_is_zero(z), 1)
+        || !TEST_int_eq(OSSL_FN_is_zero(z_wide), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_zero(z_empty), 1) /* dsize == 0 */
+        || !TEST_int_eq(OSSL_FN_is_zero(one), 0)
+        || !TEST_int_eq(OSSL_FN_is_zero(w5_wide), 0))
+        goto err;
+
+    /* OSSL_FN_is_one */
+    if (!TEST_int_eq(OSSL_FN_is_one(one), 1)
+        || !TEST_int_eq(OSSL_FN_is_one(one_wide), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_one(z), 0)
+        || !TEST_int_eq(OSSL_FN_is_one(w5), 0)
+        || !TEST_int_eq(OSSL_FN_is_one(z_empty), 0))
+        goto err;
+
+    /* OSSL_FN_is_word -- value equality against a single-limb word */
+    if (!TEST_int_eq(OSSL_FN_is_word(z, 0), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(z_wide, 0), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_word(z_empty, 0), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(z, 1), 0)
+        || !TEST_int_eq(OSSL_FN_is_word(one, 1), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(one_wide, 1), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_word(one, 0), 0)
+        || !TEST_int_eq(OSSL_FN_is_word(w5, 5), 1)
+        || !TEST_int_eq(OSSL_FN_is_word(w5_wide, 5), 1) /* fixed-top zero padding */
+        || !TEST_int_eq(OSSL_FN_is_word(w5, 1), 0)
+        /* A value whose high limb is nonzero is not equal to a single word. */
+        || !TEST_int_eq(OSSL_FN_is_word(two_limbs, even_word), 0)
+        || !TEST_int_eq(OSSL_FN_is_word(two_limbs, 0), 0))
+        goto err;
+
+    /* OSSL_FN_is_odd */
+    if (!TEST_int_eq(OSSL_FN_is_odd(one), 1)
+        || !TEST_int_eq(OSSL_FN_is_odd(odd), 1)
+        || !TEST_int_eq(OSSL_FN_is_odd(w5), 1)
+        || !TEST_int_eq(OSSL_FN_is_odd(z), 0)
+        || !TEST_int_eq(OSSL_FN_is_odd(z_wide), 0)
+        || !TEST_int_eq(OSSL_FN_is_odd(z_empty), 0)
+        || !TEST_int_eq(OSSL_FN_is_odd(even), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(z);
+    OSSL_FN_free(z_wide);
+    OSSL_FN_free(z_empty);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_wide);
+    OSSL_FN_free(w5);
+    OSSL_FN_free(w5_wide);
+    OSSL_FN_free(even);
+    OSSL_FN_free(odd);
+    OSSL_FN_free(two_limbs);
+    return ret;
+}
+
+/*-
+ * Focused tests for OSSL_FN_add_word() / OSSL_FN_sub_word().  Each case is
+ * cross-checked against OSSL_FN_add() / OSSL_FN_sub() with a single-limb
+ * operand, an independent oracle that exercises the exact fixed-size
+ * truncation / 2's-complement semantics the word variants must match.
+ *
+ * OSSL_FN_add_word()/OSSL_FN_sub_word() take the word by value; the earlier
+ * pointer-typed declaration had no implementation and no callers, and is
+ * corrected together with the implementation landing here.
+ */
+struct word_op_case_st {
+    const OSSL_FN_ULONG *a_words;
+    size_t a_limbs; /* significant limbs of a */
+    size_t a_dsize; /* allocated dsize (>= a_limbs; exercises padding) */
+    OSSL_FN_ULONG w;
+};
+
+static const OSSL_FN_ULONG w_zero[] = { OSSL_FN_ULONG_C(0) };
+static const OSSL_FN_ULONG w_5[] = { OSSL_FN_ULONG_C(5) };
+static const OSSL_FN_ULONG w_01234567[] = { OSSL_FN_ULONG_C(0x01234567) };
+static const OSSL_FN_ULONG w_FFFFFFFF[] = { OSSL_FN_ULONG_C(0xffffffff) };
+static const OSSL_FN_ULONG w_FFFFFFFE[] = { OSSL_FN_ULONG_C(0xfffffffe) };
+static const OSSL_FN_ULONG w_7FFFFFFF[] = { OSSL_FN_ULONG_C(0x7fffffff) };
+static const OSSL_FN_ULONG w_0_1[] = { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(1) };
+static const OSSL_FN_ULONG w_0_0[] = { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(0) };
+static const OSSL_FN_ULONG w_FF_FF[] = { OSSL_FN_ULONG_C(0xffffffff),
+    OSSL_FN_ULONG_C(0xffffffff) };
+static const OSSL_FN_ULONG w_FE_FF[] = { OSSL_FN_ULONG_C(0xfffffffe),
+    OSSL_FN_ULONG_C(0xffffffff) };
+static const OSSL_FN_ULONG w_67_89[] = { OSSL_FN_ULONG_C(0x01234567),
+    OSSL_FN_ULONG_C(0x89abcdef) };
+
+static const struct word_op_case_st add_word_cases[] = {
+    { w_zero, 1, 2, OSSL_FN_ULONG_C(5) }, /* a == 0 */
+    { w_01234567, 1, 2, OSSL_FN_ULONG_C(1) }, /* no carry */
+    { w_FFFFFFFF, 1, 2, OSSL_FN_ULONG_C(1) }, /* carry into next limb */
+    { w_FF_FF, 2, 2, OSSL_FN_ULONG_C(1) }, /* carry out truncated */
+    { w_FE_FF, 2, 2, OSSL_FN_ULONG_C(2) }, /* carry propagates one limb */
+    { w_67_89, 2, 2, OSSL_FN_ULONG_C(0) }, /* w == 0 noop */
+    { w_FFFFFFFF, 1, 1, OSSL_FN_ULONG_C(1) }, /* dsize 1, carry truncated */
+    { w_7FFFFFFF, 1, 1, OSSL_FN_ULONG_C(0x7fffffff) }, /* no carry, near boundary */
+};
+
+static const struct word_op_case_st sub_word_cases[] = {
+    { w_zero, 1, 2, OSSL_FN_ULONG_C(5) }, /* borrow out -> 2's complement */
+    { w_01234567, 1, 2, OSSL_FN_ULONG_C(1) }, /* no borrow */
+    { w_0_1, 2, 2, OSSL_FN_ULONG_C(1) }, /* borrow repaid at limb 1 */
+    { w_0_0, 2, 2, OSSL_FN_ULONG_C(1) }, /* borrow out truncated */
+    { w_67_89, 2, 2, OSSL_FN_ULONG_C(0) }, /* w == 0 noop */
+    { w_zero, 1, 1, OSSL_FN_ULONG_C(1) }, /* dsize 1, borrow truncated */
+    { w_5, 1, 1, OSSL_FN_ULONG_C(5) }, /* exact, no borrow */
+    { w_FFFFFFFE, 1, 2, OSSL_FN_ULONG_C(0xffffffff) }, /* borrow through to limb 1 */
+};
+
+/*
+ * Cross-check OSSL_FN_<op>_word(a, w) against OSSL_FN_<op>(r, a_ref, b) where
+ * b is a single-limb operand holding w.  The two-limb/general operation and
+ * the word variant must agree on the full dsize, including truncation and
+ * 2's-complement wrap behaviour.
+ */
+static int test_word_op_common(int i,
+    const struct word_op_case_st *cases, size_t ncases,
+    int (*word_op)(OSSL_FN *, OSSL_FN_ULONG),
+    int (*ref_op)(OSSL_FN *, const OSSL_FN *,
+        const OSSL_FN *))
+{
+    const struct word_op_case_st *tc = &cases[i];
+    OSSL_FN *a = NULL, *a_ref = NULL, *b = NULL, *res = NULL;
+    const OSSL_FN_ULONG *u = NULL, *r = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(tc->a_dsize))
+        || !TEST_ptr(a_ref = OSSL_FN_new_limbs(tc->a_dsize))
+        || !TEST_ptr(b = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(res = OSSL_FN_new_limbs(tc->a_dsize))
+        || !TEST_true(ossl_fn_set_words(a, tc->a_words, tc->a_limbs))
+        || !TEST_true(ossl_fn_set_words(a_ref, tc->a_words, tc->a_limbs))
+        || !TEST_true(ossl_fn_set_words(b, &tc->w, 1))
+        || !TEST_true(pollute(res, 0, tc->a_dsize)))
+        goto err;
+
+    if (!TEST_true(word_op(a, tc->w))
+        || !TEST_true(ref_op(res, a_ref, b)))
+        goto err;
+
+    u = ossl_fn_get_words(a);
+    r = ossl_fn_get_words(res);
+    if (!TEST_mem_eq(u, tc->a_dsize * OSSL_FN_BYTES,
+            r, tc->a_dsize * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(a_ref);
+    OSSL_FN_free(b);
+    OSSL_FN_free(res);
+    return ret;
+}
+
+static int test_add_word(int i)
+{
+    return test_word_op_common(i, add_word_cases, OSSL_NELEM(add_word_cases),
+        OSSL_FN_add_word, OSSL_FN_add);
+}
+
+static int test_sub_word(int i)
+{
+    return test_word_op_common(i, sub_word_cases, OSSL_NELEM(sub_word_cases),
+        OSSL_FN_sub_word, OSSL_FN_sub);
+}
+
+/*-
+ * Focused tests for the assignment helpers: OSSL_FN_set_word(), OSSL_FN_one(),
+ * OSSL_FN_zero().  set_word is cross-checked against the internal
+ * ossl_fn_set_words() (an independent setter) and pollutes the destination
+ * first so that zeroing of high limbs is verified rather than assumed.
+ */
+struct set_word_case_st {
+    size_t dsize; /* allocated dsize */
+    OSSL_FN_ULONG w;
+    int expect_err; /* 1 if the call should fail (dsize == 0) */
+};
+
+static const struct set_word_case_st set_word_cases[] = {
+    { 1, OSSL_FN_ULONG_C(5), 0 }, /* minimal dsize */
+    { 1, OSSL_FN_ULONG_C(0), 0 }, /* zero, minimal dsize */
+    { 4, OSSL_FN_ULONG_C(0x01234567), 0 }, /* high limbs must be zeroed */
+    { 4, OSSL_FN_ULONG_C(0), 0 }, /* zero, high limbs zeroed */
+    { 2, OSSL_FN_ULONG_C(0xffffffff), 0 }, /* all-ones word */
+    { 0, OSSL_FN_ULONG_C(5), 1 }, /* dsize 0 -> error */
+};
+
+static int test_set_word(int i)
+{
+    const struct set_word_case_st *tc = &set_word_cases[i];
+    OSSL_FN *a = NULL, *ref = NULL;
+    const OSSL_FN_ULONG *u = NULL, *r = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(tc->dsize))
+        || !TEST_ptr(ref = OSSL_FN_new_limbs(tc->dsize)))
+        goto err;
+
+    /* Pollute both so that zeroing of untouched limbs is detectable. */
+    if (tc->dsize > 0) {
+        if (!TEST_true(pollute(a, 0, tc->dsize))
+            || !TEST_true(pollute(ref, 0, tc->dsize)))
+            goto err;
+    }
+
+    if (tc->expect_err) {
+        if (!TEST_false(OSSL_FN_set_word(a, tc->w)))
+            goto err;
+        /* ossl_fn_set_words() with 1 limb also fails on dsize 0. */
+        if (!TEST_false(ossl_fn_set_words(ref, &tc->w, 1)))
+            goto err;
+        ret = 1;
+        goto err;
+    }
+
+    if (!TEST_true(OSSL_FN_set_word(a, tc->w))
+        || !TEST_true(ossl_fn_set_words(ref, &tc->w, 1)))
+        goto err;
+
+    u = ossl_fn_get_words(a);
+    r = ossl_fn_get_words(ref);
+    if (!TEST_mem_eq(u, tc->dsize * OSSL_FN_BYTES,
+            r, tc->dsize * OSSL_FN_BYTES))
+        goto err;
+    /* High limbs beyond limb 1 must be zero. */
+    if (tc->dsize > 1
+        && !TEST_true(check_limbs_value(a, 1, tc->dsize, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(ref);
+    return ret;
+}
+
+static int test_one(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    size_t dsize = 4;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(dsize))
+        || !TEST_true(pollute(a, 0, dsize))
+        || !TEST_true(OSSL_FN_one(a)))
+        goto err;
+
+    u = ossl_fn_get_words(a);
+    if (!TEST_int_eq((int)u[0], 1)
+        || !TEST_true(check_limbs_value(a, 1, dsize, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    return ret;
+}
+
+static int test_zero(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    size_t dsize = 4;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(dsize))
+        || !TEST_true(pollute(a, 0, dsize))
+        || !TEST_true(OSSL_FN_zero(a)))
+        goto err;
+
+    /* OSSL_FN_is_zero() (added in the introspection commit) reads the result. */
+    if (!TEST_int_eq(OSSL_FN_is_zero(a), 1)
+        || !TEST_true(check_limbs_value(a, 0, dsize, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    return ret;
+}
+
 static int test_lshift_common(int i, int use_lshift1)
 {
     const OSSL_FN_ULONG *a_words = NULL;
@@ -758,6 +1153,180 @@ static int test_lshift1(int i)
 static int test_lshift(int i)
 {
     return test_lshift_common(i, 0);
+}
+
+static int test_rshift_common(int i, int use_rshift1, int alias)
+{
+    const OSSL_FN_ULONG *a_words = NULL;
+    const OSSL_FN_ULONG *ex_words = NULL;
+    OSSL_FN *a = NULL, *r = NULL;
+    size_t a_limbs = 0, a_live_limbs = 0, r_limbs = 0, check_limbs = 0;
+    int shift = 0, ret = 0;
+    const OSSL_FN_ULONG *u = NULL;
+
+    switch (i) {
+    case 0:
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(ex_rshift1_num2) + 2;
+        ex_words = ex_rshift1_num2;
+        check_limbs = LIMBSOF(ex_rshift1_num2);
+        shift = 1;
+        break;
+    case 1:
+        a_words = num8;
+        a_limbs = LIMBSOF(num8);
+        a_live_limbs = LIMBSOF(num8);
+        r_limbs = LIMBSOF(ex_rshift1_num8) + 2;
+        ex_words = ex_rshift1_num8;
+        check_limbs = LIMBSOF(ex_rshift1_num8);
+        shift = 1;
+        break;
+    case 2:
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(ex_rshift_num2_4) + 2;
+        ex_words = ex_rshift_num2_4;
+        check_limbs = LIMBSOF(ex_rshift_num2_4);
+        shift = 4;
+        break;
+    case 3:
+        a_words = num8;
+        a_limbs = LIMBSOF(num8);
+        a_live_limbs = LIMBSOF(num8);
+        r_limbs = LIMBSOF(ex_rshift_num8_limb) + 2;
+        ex_words = ex_rshift_num8_limb;
+        check_limbs = LIMBSOF(ex_rshift_num8_limb);
+        shift = OSSL_FN_BYTES * 8;
+        break;
+    case 4:
+        a_words = num8;
+        a_limbs = LIMBSOF(num8);
+        a_live_limbs = LIMBSOF(num8);
+        r_limbs = LIMBSOF(ex_rshift_num8_limb_3) + 2;
+        ex_words = ex_rshift_num8_limb_3;
+        check_limbs = LIMBSOF(ex_rshift_num8_limb_3);
+        shift = OSSL_FN_BYTES * 8 + 3;
+        break;
+    case 5:
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(ex_rshift_num2_limb) + 2;
+        ex_words = ex_rshift_num2_limb;
+        check_limbs = LIMBSOF(ex_rshift_num2_limb);
+        shift = OSSL_FN_BYTES * 8;
+        break;
+    case 6:
+        a_words = num8;
+        a_limbs = LIMBSOF(num8);
+        a_live_limbs = LIMBSOF(num8);
+        r_limbs = LIMBSOF(num8) - 1;
+        ex_words = num8;
+        check_limbs = r_limbs;
+        shift = 0;
+        break;
+    case 7:
+        /* Shifting by more than the operand's width must yield zero. */
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(num2) + 2;
+        ex_words = ex_rshift_zero;
+        check_limbs = LIMBSOF(num2);
+        shift = OSSL_FN_BYTES * 8 * (LIMBSOF(num2) + 1);
+        break;
+    case 8:
+        /* Exact-fit destination (no padding) with a non-zero shift. */
+        a_words = num2;
+        a_limbs = LIMBSOF(num2);
+        a_live_limbs = LIMBSOF(num2);
+        r_limbs = LIMBSOF(ex_rshift_num2_4);
+        ex_words = ex_rshift_num2_4;
+        check_limbs = LIMBSOF(ex_rshift_num2_4);
+        shift = 4;
+        break;
+    default:
+        return 0;
+    }
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(a_live_limbs))
+        || !TEST_true(ossl_fn_set_words(a, a_words, a_limbs)))
+        goto err;
+
+    if (alias) {
+        r = a;
+    } else if (!TEST_ptr(r = OSSL_FN_new_limbs(r_limbs))
+        || !TEST_true(pollute(r, 0, r_limbs))) {
+        goto err;
+    }
+
+    if (use_rshift1) {
+        if (!TEST_int_eq(shift, 1)
+            || !TEST_true(OSSL_FN_rshift1(r, a)))
+            goto err;
+    } else {
+        if (!TEST_true(OSSL_FN_rshift(r, a, shift)))
+            goto err;
+    }
+
+    if (!TEST_ptr(u = ossl_fn_get_words(r))
+        || !TEST_mem_eq(u, check_limbs * OSSL_FN_BYTES,
+            ex_words, check_limbs * OSSL_FN_BYTES)
+        || !TEST_true(check_limbs_value(r, check_limbs, r_limbs,
+            EXTENDED_LIMB_ZERO)))
+        goto err;
+
+    ret = 1;
+err:
+    if (!alias)
+        OSSL_FN_free(r);
+    OSSL_FN_free(a);
+    return ret;
+}
+
+static int test_rshift1(int i)
+{
+    return test_rshift_common(i, 1, 0);
+}
+
+static int test_rshift(int i)
+{
+    return test_rshift_common(i, 0, 0);
+}
+
+/*
+ * In-place (r == a) coverage: rshift1 (case 0), rshift by 1 (case 1),
+ * by 4 (case 2), and by a full limb width (case 3).  The low-to-high
+ * walk makes in-place safe for any shift, so this exercises the
+ * multi-limb carry path under aliasing beyond shift-by-1.
+ */
+static int test_rshift_alias(int i)
+{
+    return test_rshift_common(i, i == 0, 1);
+}
+
+static int test_rshift_invalid_shift(void)
+{
+    OSSL_FN *a = NULL, *r = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(LIMBSOF(num2)))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(LIMBSOF(num2)))
+        || !TEST_true(ossl_fn_set_words(a, num2, LIMBSOF(num2))))
+        goto err;
+
+    if (!TEST_false(OSSL_FN_rshift(r, a, -1)))
+        goto err;
+
+    ERR_clear_error();
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(r);
+    return ret;
 }
 
 /* A set of expected results, also in OSSL_FN_ULONG array form */
@@ -2646,6 +3215,274 @@ err:
     return ret;
 }
 
+/*-
+ * Focused tests for OSSL_FN_rand() / OSSL_FN_priv_rand() and the range
+ * variants.  Random values cannot be compared against a fixed oracle, so
+ * these tests verify the mathematical contract the functions guarantee:
+ * the result fits in |bits|, the |top| and |bottom| bit constraints hold,
+ * the destination's high limbs are zeroed, and range results satisfy
+ * 0 <= r < range.  The byte-to-limb shaping is exercised through
+ * non-limb-multiple bit counts and wider-than-needed destinations.
+ */
+struct rand_bits_case_st {
+    int bits;
+    int top;
+    int bottom;
+};
+
+static const struct rand_bits_case_st rand_bits_cases[] = {
+    /* bit counts that are not limb multiples, to stress the top-byte mask */
+    { 1, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { 1, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ANY },
+    { 7, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { 7, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ODD },
+    { 7, OSSL_FN_RAND_TOP_TWO, OSSL_FN_RAND_BOTTOM_ODD },
+    { OSSL_FN_BITS - 1, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { OSSL_FN_BITS - 1, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ODD },
+    { OSSL_FN_BITS, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { OSSL_FN_BITS, OSSL_FN_RAND_TOP_TWO, OSSL_FN_RAND_BOTTOM_ODD },
+    { OSSL_FN_BITS + 1, OSSL_FN_RAND_TOP_ANY, OSSL_FN_RAND_BOTTOM_ANY },
+    { OSSL_FN_BITS + 1, OSSL_FN_RAND_TOP_ONE, OSSL_FN_RAND_BOTTOM_ANY },
+    { 3 * OSSL_FN_BITS, OSSL_FN_RAND_TOP_TWO, OSSL_FN_RAND_BOTTOM_ODD },
+};
+
+static int test_rand_bits(int i)
+{
+    int ret = 0, bits = rand_bits_cases[i].bits;
+    int top = rand_bits_cases[i].top;
+    int bottom = rand_bits_cases[i].bottom;
+    /* Destination sized with one extra limb to check zero-padding above bits. */
+    size_t limbs_needed = (bits + OSSL_FN_BITS - 1) / OSSL_FN_BITS;
+    size_t dst_limbs = limbs_needed + 1;
+    OSSL_FN *r = NULL;
+    const OSSL_FN_ULONG *words = NULL;
+    size_t dsize, j;
+
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(dst_limbs))
+        || !TEST_true(pollute(r, 0, dst_limbs))
+        /* Use the private pool; the public one is exercised by test_rand below. */
+        || !TEST_true(OSSL_FN_priv_rand(r, bits, top, bottom, 0, NULL)))
+        goto err;
+
+    /* The result must fit in |bits| bits. */
+    if (!TEST_size_t_le(OSSL_FN_num_bits(r), (size_t)bits))
+        goto err;
+
+    /* top constraint: the requested high bit(s) must be set. */
+    if (top == OSSL_FN_RAND_TOP_ONE
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1))
+        goto err;
+    if (top == OSSL_FN_RAND_TOP_TWO) {
+        if (!TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1)
+            || !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 2), 1))
+            goto err;
+    }
+
+    /* bottom constraint: the low bit must be set when ODD is requested. */
+    if (bottom == OSSL_FN_RAND_BOTTOM_ODD
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, 0), 1))
+        goto err;
+
+    /*
+     * Limbs above those needed for |bits| must be zeroed.  bytes =
+     * (bits+7)/8, so limbs covering the bytes are (bytes + BYTES - 1) / BYTES;
+     * anything above that is padding.
+     */
+    words = ossl_fn_get_words(r);
+    dsize = ossl_fn_get_dsize(r);
+    for (j = limbs_needed; j < dsize; j++)
+        if (!TEST_size_t_eq(words[j], 0))
+            goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* The public-pool variant (OSSL_FN_rand) must satisfy the same contract. */
+static int test_rand(int i)
+{
+    int ret = 0, bits = rand_bits_cases[i].bits;
+    int top = rand_bits_cases[i].top;
+    int bottom = rand_bits_cases[i].bottom;
+    size_t limbs_needed = (bits + OSSL_FN_BITS - 1) / OSSL_FN_BITS;
+    OSSL_FN *r = NULL;
+
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(limbs_needed))
+        || !TEST_true(pollute(r, 0, limbs_needed))
+        || !TEST_true(OSSL_FN_rand(r, bits, top, bottom, 0, NULL)))
+        goto err;
+    if (!TEST_size_t_le(OSSL_FN_num_bits(r), (size_t)bits))
+        goto err;
+    if (top == OSSL_FN_RAND_TOP_ONE
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1))
+        goto err;
+    if (top == OSSL_FN_RAND_TOP_TWO
+        && (!TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 1), 1)
+            || !TEST_int_eq(OSSL_FN_is_bit_set(r, bits - 2), 1)))
+        goto err;
+    if (bottom == OSSL_FN_RAND_BOTTOM_ODD
+        && !TEST_int_eq(OSSL_FN_is_bit_set(r, 0), 1))
+        goto err;
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* A destination too small for |bits| is an error, not an expansion. */
+static int test_rand_result_too_small(void)
+{
+    int ret = 0;
+    OSSL_FN *r = NULL;
+
+    /* bits needs 2 limbs on every platform; one-limb destination is too small. */
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(1))
+        || !TEST_true(pollute(r, 0, 1))
+        || !TEST_false(OSSL_FN_priv_rand(r, 2 * OSSL_FN_BITS,
+            OSSL_FN_RAND_TOP_ANY,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_RESULT_ARG_TOO_SMALL))
+        goto err;
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* bits == 0 with top/bottom set, or bits == 1 with top > 0, are BITS_TOO_SMALL errors. */
+static int test_rand_bits_too_small(void)
+{
+    int ret = 0;
+    OSSL_FN *r = NULL;
+
+    if (!TEST_ptr(r = OSSL_FN_new_limbs(2)))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(OSSL_FN_priv_rand(r, 0, OSSL_FN_RAND_TOP_ONE,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_BITS_TOO_SMALL))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(OSSL_FN_priv_rand(r, 1, OSSL_FN_RAND_TOP_TWO,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_BITS_TOO_SMALL))
+        goto err;
+
+    /* bits == 0 with ANY/ANY is the one legal zero-bit case: result is zero. */
+    if (!TEST_true(OSSL_FN_priv_rand(r, 0, OSSL_FN_RAND_TOP_ANY,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, NULL))
+        || !TEST_true(OSSL_FN_is_zero(r)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/*
+ * Range variants: 0 <= r < range must hold.  Covers both range shapes
+ * (range = 100..._2 and range = 11..._2 / 101..._2) and the n == 1 case.
+ */
+static const OSSL_FN_ULONG range_words[][4] = {
+    { OSSL_FN_ULONG_C(1) }, /* range == 1 */
+    { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(1) }, /* 2^BITS: 100..._2 */
+    { OSSL_FN_ULONG_C(3) }, /* 11_2 */
+    { OSSL_FN_ULONG_C(5) }, /* 101_2 */
+    { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(3) }, /* 3 * 2^BITS: 11..._2 */
+    { OSSL_FN_ULONG_C(2), OSSL_FN_ULONG_C(1) }, /* 2^BITS + 2: 101..._2 */
+};
+
+static int test_rand_range(int i)
+{
+    int ret = 0;
+    const OSSL_FN_ULONG *rw = range_words[i];
+    size_t range_limbs = OSSL_NELEM(range_words[i]);
+    OSSL_FN *range = NULL, *r = NULL;
+
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(range_limbs))
+        || !TEST_true(ossl_fn_set_words(range, rw, range_limbs))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(range_limbs + 1))
+        || !TEST_true(pollute(r, 0, range_limbs + 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_priv_rand_range(r, range, 0, NULL)))
+        goto err;
+
+    /* 0 <= r < range (OSSL_FN is unsigned, so the lower bound is implicit). */
+    if (!TEST_int_lt(OSSL_FN_cmp(r, range), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/* A zero range is rejected as INVALID_RANGE. */
+static int test_rand_range_zero(void)
+{
+    int ret = 0;
+    OSSL_FN *range = NULL, *r = NULL;
+
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(2))
+        || !TEST_true(OSSL_FN_zero(range))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(2))
+        || !TEST_true(pollute(r, 0, 2))
+        || !TEST_false(OSSL_FN_rand_range(r, range, 0, NULL))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            OSSL_FN_R_INVALID_RANGE))
+        goto err;
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
+/*
+ * Regression test for an exactly-sized destination with a sparse range
+ * (range = 100..._2): the optimized path draws n + 1 bits and needs room for
+ * them, so an |r| sized to hold exactly num_bits(range) bits must fall back to
+ * standard n-bit rejection sampling rather than fail with
+ * OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ */
+static int test_rand_range_exactly_sized(void)
+{
+    int ret = 0;
+    OSSL_FN_ULONG rw[1] = { OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1) };
+    OSSL_FN *range = NULL, *r = NULL;
+
+    /* range = 2^(BITS-1) = 100..._2, so num_bits(range) == BITS (1 limb). */
+    if (!TEST_ptr(range = OSSL_FN_new_limbs(1))
+        || !TEST_true(ossl_fn_set_words(range, rw, 1))
+        /* r sized to hold exactly BITS bits: one limb, no slack for n + 1. */
+        || !TEST_ptr(r = OSSL_FN_new_limbs(1))
+        || !TEST_true(pollute(r, 0, 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_priv_rand_range(r, range, 0, NULL)))
+        goto err;
+
+    /* 0 <= r < range. */
+    if (!TEST_int_lt(OSSL_FN_cmp(r, range), 0))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(range);
+    OSSL_FN_free(r);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -2654,8 +3491,18 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_sub_truncated, 18);
     ADD_TEST(test_num_bits);
     ADD_TEST(test_cmp);
+    ADD_TEST(test_introspection);
+    ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
+    ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
+    ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
+    ADD_TEST(test_one);
+    ADD_TEST(test_zero);
     ADD_ALL_TESTS(test_lshift1, 2);
     ADD_ALL_TESTS(test_lshift, 6);
+    ADD_ALL_TESTS(test_rshift1, 2);
+    ADD_ALL_TESTS(test_rshift, 9);
+    ADD_ALL_TESTS(test_rshift_alias, 4);
+    ADD_TEST(test_rshift_invalid_shift);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
     ADD_ALL_TESTS(test_mul, OSSL_NELEM(test_mul_cases));
     ADD_ALL_TESTS(test_mul_truncated, OSSL_NELEM(test_mul_truncate_cases));
@@ -2677,6 +3524,13 @@ int setup_tests(void)
     ADD_TEST(test_mod_quick_wide_operands);
     ADD_TEST(test_mod_sub_general_wide_operands);
     ADD_ALL_TESTS(test_mod_ops_result_size, 3);
+    ADD_ALL_TESTS(test_rand_bits, OSSL_NELEM(rand_bits_cases));
+    ADD_ALL_TESTS(test_rand, OSSL_NELEM(rand_bits_cases));
+    ADD_TEST(test_rand_result_too_small);
+    ADD_TEST(test_rand_bits_too_small);
+    ADD_ALL_TESTS(test_rand_range, OSSL_NELEM(range_words));
+    ADD_TEST(test_rand_range_zero);
+    ADD_TEST(test_rand_range_exactly_sized);
 
     return 1;
 }
