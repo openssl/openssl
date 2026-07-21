@@ -6260,7 +6260,7 @@ static int test_evp_aead_tag_reject(int idx)
     unsigned char aad[] = "aad";
     unsigned char ct[] = "ciphertext";
     unsigned char out[sizeof(ct) + EVP_MAX_BLOCK_LENGTH];
-    unsigned char tag[EVPTEST_TAG_LEN_MAX] = {0xd0};
+    unsigned char tag[EVPTEST_TAG_LEN_MAX] = { 0xd0 };
     OSSL_PARAM params[2];
     int i, len = 0, testresult = 0;
     unsigned long err_code;
