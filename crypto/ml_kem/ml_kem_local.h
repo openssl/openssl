@@ -13,10 +13,6 @@
 
 #include "crypto/ml_kem.h"
 
-/* scalar_ntt_generic / scalar_inverse_ntt_generic (ml_kem.c) */
-void ossl_ml_kem_scalar_ntt_generic(scalar *s);
-void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s);
-
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 /* s390x vectorised entry points (ml_kem_vec128.c) */
 void ossl_ml_kem_scalar_ntt_vec128(scalar *s);

@@ -1843,11 +1843,25 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS' && !$predefined_
     }
 }
 
-# On s390x, <vecintrin.h> (included by both ml_kem_vec128.c and
+# On s390x, <vecintrin.h> (included by ml_kem_vec128.c and
 # ml_dsa_ntt_vec128.c) requires -fzvector with Clang; GCC accepts it
-# without that flag.  Probe for this early so both vector files see a
-# consistent flag set.  We only attempt the probe when asm is enabled
-# and the target really is s390x.
+# without that flag.  We probe for this and store the result in
+# $config{s390x_vector_cflags} so it is applied ONLY to those two
+# translation units, not to the whole library.
+#
+# GCC: "#pragma GCC target("arch=z13,vx")" inside each vec128 file scopes
+#      VX code generation to that TU; no global -march is needed.
+#      GCC also does not require -fzvector, so $config{s390x_vector_cflags}
+#      will be empty for GCC builds.
+# Clang: does not honour #pragma GCC target for preprocessor macros; it
+#        requires -march=z13 (passed per-file via the Makefile wrapper rule
+#        generated from $config{s390x_vector_cflags} and the explicit
+#        -march=z13 -mvx flags).  -fzvector is additionally needed on older
+#        Clang versions to make <vecintrin.h> available.
+#
+# $config{s390x_vector_cflags} is consumed by Configurations/unix-Makefile.tmpl
+# to emit a S390X_VEC_CFLAGS Makefile variable and to append it (alongside
+# -march=z13 -mvx) to the per-object compile command for the two vec128 files.
 if (!$disabled{asm} && ($predefined_C{__s390x__} // 0)) {
     my $cc  = $config{CROSS_COMPILE} . $config{CC};
     my $tf  = "vx_probe_$$.c";
@@ -1873,12 +1887,16 @@ int main(void) { vec_i16 v = probe(1, 2); return (int)v[0]; }
 END_PROBE
     close($fh);
 
-    # Current flags first; add -fzvector on the retry if Clang needs it.
+    # First try without any extra flags (GCC works without -fzvector).
+    # If that fails, retry with -fzvector (Clang needs it for <vecintrin.h>).
+    # Store the result in s390x_vector_cflags — NOT in the global cflags —
+    # so only the two vec128 TUs see it.
+    $config{s390x_vector_cflags} = "";
     my $rc = system("$cc $flagstr -c -o $obj $tf 2>/dev/null");
     if ($rc != 0) {
         $rc = system("$cc $flagstr -fzvector -c -o $obj $tf 2>/dev/null");
         if ($rc == 0) {
-            push @{$config{cflags}}, "-fzvector";
+            $config{s390x_vector_cflags} = "-fzvector";
         }
     }
     unlink($tf, $obj);
