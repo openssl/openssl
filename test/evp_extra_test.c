@@ -6172,8 +6172,8 @@ static int late_aad_rejected(const EVP_CIPHER_TEST_INFO *info, int enc,
 
     /* payload */
     if (!TEST_true(payload_via_cipher
-            ? EVP_Cipher(ctx, out, msg, sizeof(msg)) >= 0
-            : EVP_CipherUpdate(ctx, out, &len, msg, sizeof(msg)))) {
+                ? EVP_Cipher(ctx, out, msg, sizeof(msg)) >= 0
+                : EVP_CipherUpdate(ctx, out, &len, msg, sizeof(msg)))) {
         *why = "PAYLOAD";
         goto err;
     }
