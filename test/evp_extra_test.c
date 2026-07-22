@@ -6171,16 +6171,11 @@ static int late_aad_rejected(const EVP_CIPHER_TEST_INFO *info, int enc,
     }
 
     /* payload */
-    if (payload_via_cipher) {
-        if (!TEST_int_ge(EVP_Cipher(ctx, out, msg, sizeof(msg)), 0)) {
-            *why = "PAYLOAD";
-            goto err;
-        }
-    } else {
-        if (!TEST_true(EVP_CipherUpdate(ctx, out, &len, msg, sizeof(msg)))) {
-            *why = "PAYLOAD";
-            goto err;
-        }
+    if (!TEST_true(payload_via_cipher
+            ? EVP_Cipher(ctx, out, msg, sizeof(msg)) >= 0
+            : EVP_CipherUpdate(ctx, out, &len, msg, sizeof(msg)))) {
+        *why = "PAYLOAD";
+        goto err;
     }
 
     /* the late AAD must be rejected */
