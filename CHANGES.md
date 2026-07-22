@@ -47,7 +47,7 @@ OpenSSL 3.6
 
  * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
 
-   Previously we would allocate a buffer large engough to hold the full size of
+   Previously we would allocate a buffer large enough to hold the full size of
    an incoming handshake message as advertised by the peer. This could be quite
    large (although it is bounded). If the peer then fails to send the full
    handshake message then the endpoint is left waiting for the message to arrive
