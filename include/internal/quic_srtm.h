@@ -71,18 +71,18 @@ int ossl_quic_srtm_add(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     const QUIC_STATELESS_RESET_TOKEN *token);
 
 /**
- * \brief Removes an entry identified by its (opaque, seq_num) tuple.
+ * @brief Removes an entry identified by its (opaque, seq_num) tuple.
  *
  * The absence of a matching entry is not an error.
  *
- * \param srtm     SRTM instance to remove the entry from.
- * \param opaque   Opaque pointer identifying the entry.
- * \param seq_num  Sequence number identifying the entry.
- * \param match    If non-NULL, \c *match is set to 1 if a matching entry was
+ * @param srtm     SRTM instance to remove the entry from.
+ * @param opaque   Opaque pointer identifying the entry.
+ * @param seq_num  Sequence number identifying the entry.
+ * @param match    If non-NULL, @c *match is set to 1 if a matching entry was
  *                 found or to 0 if not. May be NULL if this information is not
  *                 required.
  *
- * \return 1 on success and 0 on internal error.
+ * @returns 1 on success and 0 on internal error.
  */
 int ossl_quic_srtm_remove(QUIC_SRTM *srtm, void *opaque, uint64_t seq_num,
     uint8_t *match);
