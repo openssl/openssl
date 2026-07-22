@@ -46,9 +46,9 @@ breaking changes, and mappings for the large list of deprecated functions.
 
  * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
 
-   The init_buf is used to buffer a handshake message from the peer. Previously
-   we would allocate the full size of the advertised handshake message. This
-   could be quite large. If the peer then fails to send the rest of the
+   Previously we would allocate a buffer large engough to hold the full size of
+   an incoming handshake message as advertised by the peer. This could be quite
+   large (although it is bounded). If the peer then fails to send the full
    handshake message then the endpoint is left waiting for the message to arrive
    and the memory is still allocated (i.e. a Slowloris attack). To prevent this
    we incrementally grow the buffer as we receive the data.
