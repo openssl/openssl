@@ -15,6 +15,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/evp.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/x509.h"
@@ -980,6 +981,84 @@ err:
     return test;
 }
 
+/*
+ * Reading a certificate builds its extension cache, including the cached
+ * SHA-1 fingerprint. Mutating the certificate and signing it again must
+ * discard that cache and rebuild it, so the fingerprint reported afterwards
+ * reflects the re-signed certificate rather than the stale cached value.
+ */
+static int test_resign_rebuilds_cached_hash(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL;
+    X509_NAME *name = NULL;
+    X509_EXTENSION *ext = NULL;
+    ASN1_OBJECT *obj = NULL;
+    ASN1_OCTET_STRING *oct = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len;
+    unsigned char h1[EVP_MAX_MD_SIZE], h2[EVP_MAX_MD_SIZE];
+    unsigned int n1 = 0, n2 = 0;
+    static const unsigned char data[] = { 0x04, 0x03, 0x41, 0x42, 0x43 };
+
+    /* A signing key and a minimal self-signed certificate. */
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = X509_new())
+        || !TEST_true(X509_set_version(cert, X509_VERSION_3))
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(cert), 1))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
+        || !TEST_true(X509_set_pubkey(cert, key)))
+        goto err;
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)"resign test", -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(cert, name))
+        || !TEST_true(X509_set_issuer_name(cert, name))
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0))
+        goto err;
+
+    /* Re-parse it so we exercise a genuinely parsed cert (cache built here). */
+    if (!TEST_int_gt(len = i2d_X509(cert, &der), 0))
+        goto err;
+    p = der;
+    if (!TEST_ptr(parsed = d2i_X509(NULL, &p, len))
+        || !TEST_true(X509_digest(parsed, EVP_sha1(), h1, &n1)))
+        goto err;
+
+    /* Mutate the parsed certificate by adding an extension. */
+    if (!TEST_ptr(obj = OBJ_txt2obj("1.2.3.4.5.6.7.8.9", 1))
+        || !TEST_ptr(oct = ASN1_OCTET_STRING_new())
+        || !TEST_int_eq(ASN1_OCTET_STRING_set(oct, data, sizeof(data)), 1)
+        || !TEST_ptr(ext = X509_EXTENSION_create_by_OBJ(NULL, obj, 0, oct))
+        || !TEST_int_eq(X509_add_ext(parsed, ext, -1), 1))
+        goto err;
+
+    /* Re-sign: this must discard and rebuild the cached extension data. */
+    if (!TEST_int_gt(X509_sign(parsed, key, EVP_sha256()), 0)
+        || !TEST_true(X509_digest(parsed, EVP_sha1(), h2, &n2)))
+        goto err;
+
+    /* The cached fingerprint must now reflect the re-signed certificate. */
+    if (!TEST_int_eq(n1, n2)
+        || !TEST_int_ne(memcmp(h1, h2, n1), 0))
+        goto err;
+
+    ret = 1;
+err:
+    ASN1_OBJECT_free(obj);
+    ASN1_OCTET_STRING_free(oct);
+    X509_EXTENSION_free(ext);
+    OPENSSL_free(der);
+    X509_NAME_free(name);
+    X509_free(parsed);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -992,6 +1071,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+    ADD_TEST(test_resign_rebuilds_cached_hash);
 
     return 1;
 }
