@@ -44,6 +44,19 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 ### Changes between 3.0.20 and 3.0.21 [9 Jun 2026]
 
+ * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
+
+   The init_buf is used to buffer a handshake message from the peer. Previously
+   we would allocate the full size of the advertised handshake message. This
+   could be quite large. If the peer then fails to send the rest of the
+   handshake message then the endpoint is left waiting for the message to arrive
+   and the memory is still allocated (i.e. a Slowloris attack). To prevent this
+   we incrementally grow the buffer as we receive the data.
+
+   This issue was reported to us by Okta Red Team.
+
+   *Matt Caswell*
+
  * Fixed heap use-after-free in `PKCS7_verify()`.
 
    Severity: High
