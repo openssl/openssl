@@ -224,6 +224,7 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
         ret = x509_name_canon(a);
         if (!ret)
             return -1;
+        a->modified = 0;
     }
     ret = (int)a->bytes->length;
     if (out != NULL) {
@@ -241,8 +242,8 @@ static int x509_name_encode(X509_NAME *a)
     } intname = {
         NULL
     };
-    int len;
-    unsigned char *p;
+    int len, outlen;
+    unsigned char *p, *start;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry;
     int i, set = -1;
@@ -267,16 +268,20 @@ static int x509_name_encode(X509_NAME *a)
     }
     len = ASN1_item_ex_i2d(&intname.a, NULL,
         ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+    if (len < 0)
+        goto err;
     if (!BUF_MEM_grow(a->bytes, len)) {
         ERR_raise(ERR_LIB_ASN1, ERR_R_BUF_LIB);
         goto err;
     }
     p = (unsigned char *)a->bytes->data;
-    ASN1_item_ex_i2d(&intname.a,
+    start = p;
+    outlen = ASN1_item_ex_i2d(&intname.a,
         &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
+    if (outlen != len || p != start + len)
+        goto err;
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
         local_sk_X509_NAME_ENTRY_free);
-    a->modified = 0;
     return len;
 cerr:
     ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
@@ -310,14 +315,15 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
 
 static int x509_name_canon(X509_NAME *a)
 {
-    unsigned char *p;
+    unsigned char *buf = NULL, *p, *start;
     STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
-    int i, set = -1, ret = 0, len;
+    int i, set = -1, ret = 0, len, outlen;
 
     OPENSSL_free(a->canon_enc);
     a->canon_enc = NULL;
+    a->canon_enclen = 0;
     /* Special case: empty X509_NAME => null encoding */
     if (sk_X509_NAME_ENTRY_num(a->entries) == 0) {
         a->canon_enclen = 0;
@@ -364,19 +370,24 @@ static int x509_name_canon(X509_NAME *a)
     len = i2d_name_canon(intname, NULL);
     if (len < 0)
         goto err;
-    a->canon_enclen = len;
 
-    p = OPENSSL_malloc(a->canon_enclen);
-    if (p == NULL)
+    buf = OPENSSL_malloc(len);
+    if (buf == NULL)
+        goto err;
+    p = buf;
+    start = p;
+
+    outlen = i2d_name_canon(intname, &p);
+    if (outlen != len || p != start + len)
         goto err;
 
-    a->canon_enc = p;
-
-    i2d_name_canon(intname, &p);
-
+    a->canon_enc = buf;
+    a->canon_enclen = len;
+    buf = NULL;
     ret = 1;
 
 err:
+    OPENSSL_free(buf);
     X509_NAME_ENTRY_free(tmpentry);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname,
         local_sk_X509_NAME_ENTRY_pop_free);
