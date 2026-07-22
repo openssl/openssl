@@ -1251,17 +1251,18 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             psk, sizeof(psk));
 
         if (psklen > PSK_MAX_PSK_LEN) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, ERR_R_INTERNAL_ERROR);
+        pccfail:
+            OPENSSL_cleanse(psk, sizeof(psk));
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
-        } else if (psklen > 0) {
+        }
+        if (psklen > 0) {
             const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
             const SSL_CIPHER *cipher;
 
             idlen = strlen(identity);
-            if (idlen > PSK_MAX_IDENTITY_LEN) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
+            if (idlen > PSK_MAX_IDENTITY_LEN)
+                goto pccfail;
             id = (unsigned char *)identity;
 
             /*
@@ -1270,19 +1271,16 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
              */
             cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
                 tls13_aes128gcmsha256_id);
-            if (cipher == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
+            if (cipher == NULL)
+                goto pccfail;
 
             psksess = SSL_SESSION_new();
             if (psksess == NULL
                 || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                 || !SSL_SESSION_set_cipher(psksess, cipher)
                 || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                OPENSSL_cleanse(psk, psklen);
-                return EXT_RETURN_FAIL;
+                SSL_SESSION_free(psksess);
+                goto pccfail;
             }
             OPENSSL_cleanse(psk, psklen);
         }
