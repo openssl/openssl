@@ -2253,6 +2253,10 @@ DEPEND[html/man3/SSL_CTX_add1_chain_cert.html]=man3/SSL_CTX_add1_chain_cert.pod
 GENERATE[html/man3/SSL_CTX_add1_chain_cert.html]=man3/SSL_CTX_add1_chain_cert.pod
 DEPEND[man/man3/SSL_CTX_add1_chain_cert.3]=man3/SSL_CTX_add1_chain_cert.pod
 GENERATE[man/man3/SSL_CTX_add1_chain_cert.3]=man3/SSL_CTX_add1_chain_cert.pod
+DEPEND[html/man3/SSL_CTX_add1_credential.html]=man3/SSL_CTX_add1_credential.pod
+GENERATE[html/man3/SSL_CTX_add1_credential.html]=man3/SSL_CTX_add1_credential.pod
+DEPEND[man/man3/SSL_CTX_add1_credential.3]=man3/SSL_CTX_add1_credential.pod
+GENERATE[man/man3/SSL_CTX_add1_credential.3]=man3/SSL_CTX_add1_credential.pod
 DEPEND[html/man3/SSL_CTX_add_extra_chain_cert.html]=man3/SSL_CTX_add_extra_chain_cert.pod
 GENERATE[html/man3/SSL_CTX_add_extra_chain_cert.html]=man3/SSL_CTX_add_extra_chain_cert.pod
 DEPEND[man/man3/SSL_CTX_add_extra_chain_cert.3]=man3/SSL_CTX_add_extra_chain_cert.pod
@@ -3659,6 +3663,7 @@ html/man3/SSL_CONF_CTX_set_ssl_ctx.html \
 html/man3/SSL_CONF_cmd.html \
 html/man3/SSL_CONF_cmd_argv.html \
 html/man3/SSL_CTX_add1_chain_cert.html \
+html/man3/SSL_CTX_add1_credential.html \
 html/man3/SSL_CTX_add_extra_chain_cert.html \
 html/man3/SSL_CTX_add_session.html \
 html/man3/SSL_CTX_config.html \
@@ -4344,6 +4349,7 @@ man/man3/SSL_CONF_CTX_set_ssl_ctx.3 \
 man/man3/SSL_CONF_cmd.3 \
 man/man3/SSL_CONF_cmd_argv.3 \
 man/man3/SSL_CTX_add1_chain_cert.3 \
+man/man3/SSL_CTX_add1_credential.3 \
 man/man3/SSL_CTX_add_extra_chain_cert.3 \
 man/man3/SSL_CTX_add_session.3 \
 man/man3/SSL_CTX_config.3 \
