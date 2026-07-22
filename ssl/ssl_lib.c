@@ -600,6 +600,10 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->ext.early_data_session = NULL;
     sc->ext.tick_age_checked = 0;
     sc->ext.tick_age_ms = 0;
+    OPENSSL_free(sc->ext.peer_requested_trust_anchors);
+    sc->ext.peer_requested_trust_anchors = NULL;
+    sc->ext.peer_requested_trust_anchors_len = 0;
+    sc->ext.peer_sent_trust_anchors = 0;
 
     if (sc->renegotiate) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -1624,6 +1628,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.keyshares);
     OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
+    OPENSSL_free(s->ext.peer_requested_trust_anchors);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 
 #ifndef OPENSSL_NO_OCSP

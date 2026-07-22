@@ -1774,6 +1774,17 @@ struct ssl_connection_st {
         size_t peer_supportedgroups_len;
         uint16_t *peer_supportedgroups;
 
+        /*
+         * The peer's RequestedTrustAnchorList from the trust_anchors
+         * extension, as wire-format u8-length-prefixed trust anchor IDs, for
+         * certificate selection.  The list may legitimately be empty:
+         * peer_sent_trust_anchors distinguishes an absent extension from a
+         * present, empty list.
+         */
+        size_t peer_requested_trust_anchors_len;
+        uint8_t *peer_requested_trust_anchors;
+        int peer_sent_trust_anchors;
+
         /* key shares */
         size_t keyshares_len;
         uint16_t *keyshares;

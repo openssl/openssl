@@ -523,6 +523,19 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
 EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
+/**
+ * @brief Parse the peer's trust_anchors extension from the ClientHello,
+ * saving the requested trust anchor IDs for certificate selection.
+ * @param s the SSL connection
+ * @param pkt the PACKET holding the extension contents
+ * @param context the extension context (the message being parsed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; unused here
+ * @returns 1 on success, 0 on error (a fatal alert has been scheduled).
+ */
+int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
 
 int tls_parse_stoc_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
