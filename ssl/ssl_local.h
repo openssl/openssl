@@ -2876,6 +2876,7 @@ __owur int ssl_handshake_hash(SSL_CONNECTION *s,
     unsigned char *out, size_t outlen,
     size_t *hashlen);
 __owur const EVP_MD *ssl_md(SSL_CTX *ctx, int idx);
+__owur int ssl_cipher_get_handshake_digest_nid(const SSL_CIPHER *c);
 int ssl_get_md_idx(int md_nid);
 __owur const EVP_MD *ssl_handshake_md(SSL_CONNECTION *s);
 __owur const EVP_MD *ssl_prf_md(SSL_CONNECTION *s);
