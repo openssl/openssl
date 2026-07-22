@@ -281,9 +281,7 @@ int main(int argc, char **argv)
     }
     /* Else client */
     else {
-        BIO_ADDRINFO *res = NULL;
-        char port_str[6];
-        const BIO_ADDR *server_addr;
+
         printf("We are the client\n\n");
 
         /* Configure client context so we verify the server correctly */
@@ -291,24 +289,17 @@ int main(int argc, char **argv)
 
         /* Create "bare" socket */
         client_skt = create_socket(false);
-
-        /* Resolve server hostname or IP address */
-        BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
-        if (!BIO_lookup(rem_server_name, port_str, BIO_LOOKUP_CLIENT,
-                AF_INET, SOCK_STREAM, &res)) {
-            fprintf(stderr, "Unable to resolve server: %s\n", rem_server_name);
-            goto exit;
-        }
-        server_addr = BIO_ADDRINFO_address(res);
-
+        /* Set up connect address */
+        addr.sin_family = AF_INET;
+        inet_pton(AF_INET, rem_server_name, &addr.sin_addr.s_addr);
+        addr.sin_port = htons(server_port);
         /* Do TCP connect with server */
-        if (!BIO_connect((int)client_skt, server_addr, 0)) {
+        if (connect(client_skt, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
             perror("Unable to TCP connect to server");
-            BIO_ADDRINFO_free(res);
             goto exit;
+        } else {
+            printf("TCP connection to server successful\n");
         }
-        BIO_ADDRINFO_free(res);
-        printf("TCP connection to server successful\n");
 
         /* Create client SSL structure using dedicated client socket */
         ssl = SSL_new(ssl_ctx);
