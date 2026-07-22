@@ -153,10 +153,15 @@ int X509_cmp(const X509 *a, const X509 *b)
     if (a == b) /* for efficiency */
         return 0;
 
-    /* attempt to compute and compare cert hashes */
+    /*
+     * Try to compare by digest, this will compute
+     * a digest only on a not-finalized certificate.
+     */
+    ERR_set_mark();
     if (X509_digest(a, EVP_sha1(), ah, NULL)
         && X509_digest(b, EVP_sha1(), bh, NULL))
         rv = memcmp(ah, bh, SHA_DIGEST_LENGTH);
+    ERR_pop_to_mark();
     if (rv != 0)
         return rv < 0 ? -1 : 1;
 
