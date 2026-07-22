@@ -225,8 +225,8 @@ const OPTIONS cms_options[] = {
     OPT_R_OPTIONS,
 
     OPT_SECTION("Encryption and decryption"),
-    { "originator", OPT_ORIGINATOR, 's', "Originator certificate file" },
-    { "recip", OPT_RECIP, '<', "Recipient cert file" },
+    { "originator", OPT_ORIGINATOR, 's', "Originator certificate" },
+    { "recip", OPT_RECIP, '<', "Recipient cert" },
     { "cert...", OPT_PARAM, '.',
         "Recipient certs (optional; used only when encrypting)" },
     { "", OPT_CIPHER, '-',
@@ -246,7 +246,7 @@ const OPTIONS cms_options[] = {
 
     OPT_SECTION("Signing"),
     { "md", OPT_MD, 's', "Digest algorithm to use" },
-    { "signer", OPT_SIGNER, 's', "Signer certificate input file" },
+    { "signer", OPT_SIGNER, 's', "Signer certificate input" },
     { "certfile", OPT_CERTFILE, '<',
         "Extra signer and intermediate CA certificates to include when signing" },
     { OPT_MORE_STR, 0, 0,
@@ -507,7 +507,7 @@ int cms_main(int argc, char **argv)
             flags |= CMS_NO_SIGNER_CERT_VERIFY;
             break;
         case OPT_NOCERTS:
-            flags |= CMS_NOCERTS;
+            flags |= CMS_NOCERTS; /* note that this does on affect "other" certs */
             break;
         case OPT_NOATTR:
             flags |= CMS_NOATTR;
@@ -976,7 +976,7 @@ int cms_main(int argc, char **argv)
 
         for (; *argv != NULL; argv++) {
             cert = load_cert(*argv, FORMAT_UNDEF,
-                "recipient certificate file");
+                "recipient certificate");
             if (cert == NULL)
                 goto end;
             if (!sk_X509_push(encerts, cert))
@@ -986,7 +986,7 @@ int cms_main(int argc, char **argv)
     }
 
     if (certfile != NULL
-        && !load_certs(certfile, 0, &other, NULL, "certificate file"))
+        && !load_certs(certfile, 0, &other, NULL, "extra certificates"))
         goto end;
 
     if (recipfile != NULL && (operation == SMIME_DECRYPT)
