@@ -1268,6 +1268,47 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
+/*
+ * Parse the peer's trust_anchors extension from the ClientHello (section 4 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/): a
+ * RequestedTrustAnchorList of the trust anchor IDs the relying party
+ * supports, each a nonempty u8-length-prefixed string of at most 255 bytes.
+ * The list MAY be empty.  It is saved for certificate selection, an empty
+ * list meaning the peer supports the extension but disclosed no IDs.
+ */
+int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET id_list, ids, id;
+
+    if (!PACKET_as_length_prefixed_2(pkt, &id_list)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    ids = id_list;
+    while (PACKET_remaining(&ids) > 0) {
+        if (!PACKET_get_length_prefixed_1(&ids, &id)
+            || PACKET_remaining(&id) == 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+    }
+
+    OPENSSL_free(s->ext.peer_requested_trust_anchors);
+    s->ext.peer_requested_trust_anchors = NULL;
+    s->ext.peer_requested_trust_anchors_len = 0;
+    s->ext.peer_sent_trust_anchors = 1;
+    if (PACKET_remaining(&id_list) > 0
+        && !PACKET_memdup(&id_list, &s->ext.peer_requested_trust_anchors,
+            &s->ext.peer_requested_trust_anchors_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
 int tls_parse_ctos_ems(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
