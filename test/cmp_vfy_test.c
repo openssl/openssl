@@ -572,6 +572,55 @@ static int test_msg_check_recipient_nonce_bad(void)
 }
 #endif
 
+/* Regression test for CVE-2026-63073 */
+static int execute_msg_check_update_malicious_sender(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    const char *data = NULL;
+    unsigned long err;
+
+    if (!TEST_int_eq(ossl_cmp_msg_check_update(fixture->cmp_ctx, fixture->msg, NULL, 0), 0)
+        || !TEST_int_ne((err = ERR_peek_last_error_all(NULL, NULL, NULL, &data, NULL)), 0)
+        || !TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_CMP)
+        || !TEST_int_eq(ERR_GET_REASON(err), CMP_R_UNEXPECTED_SENDER)
+        || !TEST_ptr(data)
+        || !TEST_str_eq(data, "/CN=%n"))
+        return 0;
+    return 1;
+}
+
+static int test_msg_check_update_malicious_sender(void)
+{
+    OSSL_CMP_PKIHEADER *hdr;
+    X509_NAME *expected = X509_NAME_new();
+    X509_NAME *actual = X509_NAME_new();
+
+    if (expected == NULL || actual == NULL) {
+        X509_NAME_free(expected);
+        return 0;
+    }
+
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
+        || !TEST_ptr(hdr = OSSL_CMP_MSG_get0_header(fixture->msg))
+        || !TEST_int_eq(X509_NAME_add_entry_by_txt(expected, "CN", MBSTRING_ASC,
+                            (unsigned char *)"%n", -1, -1, 0),
+            1)
+        || !TEST_int_eq(X509_NAME_add_entry_by_txt(actual, "CN", MBSTRING_ASC,
+                            (unsigned char *)"actual", -1, -1, 0),
+            1)
+        || !TEST_int_eq(ossl_cmp_hdr_set1_sender(hdr, expected), 1)
+        || !TEST_int_eq(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, actual), 1)) {
+        X509_NAME_free(expected);
+        X509_NAME_free(actual);
+        tear_down(fixture);
+        return 0;
+    }
+    EXECUTE_TEST(execute_msg_check_update_malicious_sender, tear_down);
+    X509_NAME_free(expected);
+    X509_NAME_free(actual);
+    return result;
+}
+
 void cleanup_tests(void)
 {
     X509_free(srvcert);
@@ -712,6 +761,7 @@ int setup_tests(void)
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
+    ADD_TEST(test_msg_check_update_malicious_sender);
 
     return 1;
 
