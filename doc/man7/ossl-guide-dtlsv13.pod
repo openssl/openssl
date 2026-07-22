@@ -119,9 +119,6 @@ For DTLSv1.3 server applications, use L<SSL_new_listener(3)> with the
 B<SSL_LISTENER_FLAG_REQUIRE_HRR> flag to enable HelloRetryRequest cookie validation.
 This provides connection demultiplexing for multiple clients on a single UDP socket.
 
-Alternatively, L<SSL_stateless(3)> can be used for HelloRetryRequest cookie exchange
-in simpler scenarios.
-
 Note that L<DTLSv1_listen(3)> only supports DTLS 1.0/1.2 with HelloVerifyRequest and
 cannot be used with DTLSv1.3.
 
