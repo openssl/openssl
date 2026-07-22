@@ -1973,6 +1973,12 @@ int s_client_main(int argc, char **argv)
     if (bio_c_out == NULL) {
         if (c_quiet && !c_debug) {
             bio_c_out = BIO_new(BIO_s_null());
+
+            if (bio_c_out == NULL) {
+                BIO_puts(bio_err, "Out of memory\n");
+                goto end;
+            }
+
             if (c_msg && bio_c_msg == NULL) {
                 bio_c_msg = dup_bio_out(FORMAT_TEXT);
                 if (bio_c_msg == NULL) {
