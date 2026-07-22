@@ -611,20 +611,20 @@ typedef OSSL_HTTP_bio_cb_t OSSL_CMP_http_cb_t;
         return OSSL_CMP_CTX_##GETN##_##FIELD(ctx, ARG);                   \
     }
 
-#define DEFINE_SET_GET1_STR_FN(SETN, FIELD)                                                \
-    static int OSSL_CMP_CTX_##SETN##_##FIELD##_str(CMP_CTX *ctx, char *val)                \
-    {                                                                                      \
-        return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, (unsigned char *)val,                    \
-            (int)strlen(val));                                                             \
-    }                                                                                      \
-                                                                                           \
-    static char *OSSL_CMP_CTX_get1_##FIELD##_str(const CMP_CTX *ctx)                       \
-    {                                                                                      \
-        const ASN1_OCTET_STRING *bytes = NULL;                                             \
-                                                                                           \
-        RET_IF_NULL_ARG(ctx, NULL);                                                        \
-        bytes = ctx->FIELD;                                                                \
-        return bytes == NULL ? NULL : OPENSSL_strndup((char *)bytes->data, bytes->length); \
+#define DEFINE_SET_GET1_STR_FN(SETN, FIELD)                                                                                   \
+    static int OSSL_CMP_CTX_##SETN##_##FIELD##_str(CMP_CTX *ctx, char *val)                                                   \
+    {                                                                                                                         \
+        return OSSL_CMP_CTX_##SETN##_##FIELD(ctx, (unsigned char *)val,                                                       \
+            (int)strlen(val));                                                                                                \
+    }                                                                                                                         \
+                                                                                                                              \
+    static char *OSSL_CMP_CTX_get1_##FIELD##_str(const CMP_CTX *ctx)                                                          \
+    {                                                                                                                         \
+        const ASN1_OCTET_STRING *bytes = NULL;                                                                                \
+                                                                                                                              \
+        RET_IF_NULL_ARG(ctx, NULL);                                                                                           \
+        bytes = ctx->FIELD;                                                                                                   \
+        return bytes == NULL ? NULL : OPENSSL_strndup((const char *)ASN1_STRING_get0_data(bytes), ASN1_STRING_length(bytes)); \
     }
 
 #define push 0
