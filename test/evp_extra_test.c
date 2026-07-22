@@ -6136,16 +6136,6 @@ err:
  *   - payload API:      EVP_CipherUpdate() / EVP_Cipher()
  *   - late AAD API:     EVP_CipherUpdate() / EVP_Cipher()
  */
-static int aad_update(EVP_CIPHER_CTX *ctx, int via_cipher,
-    const unsigned char *aad, size_t aad_len)
-{
-    int len = 0;
-
-    if (via_cipher)
-        return EVP_Cipher(ctx, NULL, aad, (unsigned int)aad_len) >= 0;
-    return EVP_CipherUpdate(ctx, NULL, &len, aad, (int)aad_len);
-}
-
 static int late_aad_rejected(const EVP_CIPHER_TEST_INFO *info, int enc,
     int early_aad, int payload_via_cipher, int aad_via_cipher,
     const char **why)
@@ -6195,7 +6185,9 @@ static int late_aad_rejected(const EVP_CIPHER_TEST_INFO *info, int enc,
 
     /* the late AAD must be rejected */
     ERR_set_mark();
-    if (!TEST_false(aad_update(ctx, aad_via_cipher, aad, sizeof(aad)))) {
+    if (!TEST_false(aad_via_cipher
+                ? EVP_Cipher(ctx, NULL, aad, (unsigned int)sizeof(aad)) >= 0
+                : EVP_CipherUpdate(ctx, NULL, &len, aad, (int)sizeof(aad)))) {
         ERR_clear_last_mark();
         *why = "LATE_AAD_NOT_REJECTED";
         goto err;
