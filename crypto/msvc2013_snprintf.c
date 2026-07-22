@@ -19,13 +19,12 @@
  * the standard library already provides these symbols.
  *
  * IMPORTANT: This translation unit MUST define snprintf and vsnprintf
- * and nothing else.  A duplicate copy of this file exists at
- * apps/lib/msvc2013_snprintf.c to serve the apps build.  Because each
- * definition lives in its own .obj, the linker's archive-search rule
- * ensures only one copy is pulled into any final binary.  Defining any
- * additional symbol here would risk pulling both copies and producing a
- * duplicate-symbol link error.  Keep both files in sync; any change
- * here MUST be mirrored in apps/lib/msvc2013_snprintf.c.
+ * and nothing else.  This single file is compiled directly into libcrypto,
+ * libssl, and the apps; each references it from its own build.info rather
+ * than keeping a copy.  Because each definition lives in its own .obj, the
+ * linker's archive-search rule ensures only one copy is pulled into any
+ * final binary.  Defining any additional symbol here would risk pulling
+ * multiple copies and producing a duplicate-symbol link error.
  */
 
 #include <stdio.h>
