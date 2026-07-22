@@ -1407,6 +1407,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                 sizeof(pskdata));
             OPENSSL_free(pskid);
             if (pskdatalen > PSK_MAX_PSK_LEN) {
+                OPENSSL_cleanse(pskdata, sizeof(pskdata));
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return 0;
             } else if (pskdatalen > 0) {

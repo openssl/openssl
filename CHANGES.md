@@ -42,6 +42,21 @@ OpenSSL 4.1
 
    *Shane Lontis and Paul Dale*
 
+ * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
+   only when it can actually be used. A resumption ticket or external PSK is
+   offered only if some offered ciphersuite shares its handshake digest, and
+   0-RTT is attempted only if the first offered PSK's exact ciphersuite and,
+   where recorded, its ALPN protocol are offered and, for a ticket, it has not
+   aged out. When 0-RTT is not viable the client keeps the PSK for a 1-RTT
+   handshake. In particular a client-detected ALPN inconsistency now suppresses
+   0-RTT rather than failing with `SSL_R_INCONSISTENT_EARLY_DATA_ALPN`.
+
+   Fixed TLS 1.3 clients to reject a `psk_use_session` callback PSK whose master
+   key is empty, with `SSL_R_BAD_PSK`, instead of failing later in binder
+   computation.
+
+   *Viktor Dukhovni*
+
  * Added support for DTLS 1.3 ([RFC 9147]).
    Refer to the `ossl-guide-dtlsv13(7)` manual page for details.
 
