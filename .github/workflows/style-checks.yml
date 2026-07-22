@@ -20,5 +20,5 @@ jobs:
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd #v3.0.1
         with:
           extra_args: >-
-            --from-ref ${{ github.event.pull_request.base.sha }}
+            --from-ref $(git merge-base HEAD^1 HEAD^2)
             --to-ref HEAD
