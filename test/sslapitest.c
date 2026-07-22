@@ -4684,9 +4684,29 @@ static int early_data_skip_helper(int testtype, int cipher, int idx)
         SSL_CTX_set_security_level(cctx, 0);
     }
 
-    if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, ciphersuites[cipher]))
-        || !TEST_true(SSL_CTX_set_ciphersuites(cctx, ciphersuites[cipher])))
+    if (!TEST_true(SSL_CTX_set_ciphersuites(sctx, ciphersuites[cipher])))
         goto end;
+    if (idx == 2) {
+        /*
+         * The external PSK (see create_a_psk) is stamped with a fixed
+         * ciphersuite that need not be the one under test.  For the client to
+         * offer 0-RTT that ciphersuite must be among those it offers, so offer
+         * it alongside the ciphersuite under test.  The server offers only the
+         * ciphersuite under test, so the one it selects differs from the PSK's
+         * whenever the two are not the same.
+         */
+        char clientsuites[128];
+
+        BIO_snprintf(clientsuites, sizeof(clientsuites), "%s:%s",
+            ciphersuites[cipher],
+            (cipher == 2 || cipher == 6)
+                ? "TLS_AES_256_GCM_SHA384"
+                : "TLS_AES_128_GCM_SHA256");
+        if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, clientsuites)))
+            goto end;
+    } else if (!TEST_true(SSL_CTX_set_ciphersuites(cctx, ciphersuites[cipher]))) {
+        goto end;
+    }
 
     if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
             &serverssl, &sess, idx,
@@ -4981,7 +5001,7 @@ static int test_early_data_psk(int idx)
 #define BADALPNLEN 8
 #define GOODALPN (alpnlist)
 #define BADALPN (alpnlist + GOODALPNLEN)
-    int err = 0;
+    int err = 0, suppressed = 0;
     unsigned char buf[20];
     size_t readbytes, written;
     int readearlyres = SSL_READ_EARLY_DATA_SUCCESS, connectres = 1;
@@ -5011,8 +5031,12 @@ static int test_early_data_psk(int idx)
         break;
 
     case 1:
-        /* Set inconsistent ALPN (early client detection) */
-        err = SSL_R_INCONSISTENT_EARLY_DATA_ALPN;
+        /*
+         * Inconsistent ALPN, detected by the client before it sends: the
+         * offered ALPN cannot include the session's, so the client suppresses
+         * 0-RTT and completes a full handshake instead of failing.
+         */
+        suppressed = 1;
         /* SSL_set_alpn_protos returns 0 for success and 1 for failure */
         if (!TEST_true(SSL_SESSION_set1_alpn_selected(sess, GOODALPN,
                 GOODALPNLEN))
@@ -5112,6 +5136,25 @@ static int test_early_data_psk(int idx)
                 &written))
             || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_SSL)
             || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), err))
+            goto end;
+    } else if (suppressed) {
+        /*
+         * The client suppresses 0-RTT: the first SSL_write_early_data() writes
+         * the ClientHello (without early data) and reports "retry".  The server
+         * sees no early data, and both ends complete a full handshake with the
+         * early data reported as rejected on the client.
+         */
+        if (!TEST_false(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+                &written))
+            || !TEST_int_eq(SSL_get_error(clientssl, 0), SSL_ERROR_WANT_READ)
+            || !TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                                &readbytes),
+                SSL_READ_EARLY_DATA_FINISH)
+            || !TEST_size_t_eq(readbytes, 0)
+            || !TEST_true(create_ssl_connection(serverssl, clientssl,
+                SSL_ERROR_NONE))
+            || !TEST_int_eq(SSL_get_early_data_status(clientssl),
+                SSL_EARLY_DATA_REJECTED))
             goto end;
     } else {
         OSSL_TIME timer = ossl_time_now();
@@ -5319,11 +5362,14 @@ static int test_early_data_psk_cipher_mismatch(void)
         goto end;
 
     /*
-     * The PSK is bound to AES-128-GCM (SHA256 digest), but both ends can
-     * only negotiate ChaCha20-Poly1305 -- same digest, different cipher.
+     * The PSK is bound to AES-128-GCM (SHA256 digest).  The client offers
+     * both AES-128-GCM and ChaCha20-Poly1305, so it can (and does) send 0-RTT
+     * keyed with the PSK's cipher; the server offers only ChaCha20-Poly1305.
+     * The server therefore selects a different cipher than the one that keyed
+     * the early data -- same digest -- and rejects the early data.
      */
     if (!TEST_true(SSL_set_ciphersuites(clientssl,
-            "TLS_CHACHA20_POLY1305_SHA256"))
+            "TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"))
         || !TEST_true(SSL_set_ciphersuites(serverssl,
             "TLS_CHACHA20_POLY1305_SHA256")))
         goto end;

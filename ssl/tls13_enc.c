@@ -551,8 +551,8 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             }
 
             /*
-             * 0-RTT keys off the frozen slot-0 PSK (candidate_at(0)), which
-             * may be the external psksession rather than s->session.
+             * 0-RTT keys off the recorded first-offered PSK, which may be the
+             * external psksession rather than s->session.
              */
             if (s->early_data_state == SSL_EARLY_DATA_CONNECTING
                 && s->ext.early_data_session != NULL) {
