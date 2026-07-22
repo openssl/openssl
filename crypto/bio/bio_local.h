@@ -97,9 +97,8 @@ typedef struct bio_f_buffer_ctx_struct {
     int obuf_len; /* how many bytes are in it */
     int obuf_off; /* write/read offset */
 #ifndef OPENSSL_NO_SOCK
-    BIO_ADDR peer; /* peer address for Listener */
+    BIO_ADDR *peer;
 #endif
-    int peer_addr_set; /* peer address has been set */
 } BIO_F_BUFFER_CTX;
 
 struct bio_st {

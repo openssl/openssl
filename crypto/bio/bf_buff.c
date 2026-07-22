@@ -84,6 +84,9 @@ static int buffer_free(BIO *a)
     b = (BIO_F_BUFFER_CTX *)a->ptr;
     OPENSSL_free(b->ibuf);
     OPENSSL_free(b->obuf);
+#ifndef OPENSSL_NO_SOCK
+    BIO_ADDR_free(b->peer);
+#endif
     OPENSSL_free(a->ptr);
     a->ptr = NULL;
     a->init = 0;
@@ -498,14 +501,14 @@ static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
     const char *data, int len)
 {
 #ifndef OPENSSL_NO_SOCK
-    if (ctx->peer_addr_set) {
+    if (ctx->peer != NULL) {
         BIO_MSG msg;
         size_t processed = 0;
 
         memset(&msg, 0, sizeof(msg));
         msg.data = (void *)data;
         msg.data_len = (size_t)len;
-        msg.peer = &ctx->peer;
+        msg.peer = ctx->peer;
 
         /* Datagrams are all-or-nothing: either the whole chunk goes or none. */
         if (!BIO_sendmmsg(b->next_bio, &msg, sizeof(msg), 1, 0, &processed)
@@ -546,11 +549,15 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     /*
      * Record the peer address so the flush path knows where to send the
      * accumulated data. There is one buffer BIO per SSL connection, so the
-     * peer is constant for this BIO's lifetime; setting it on every call is
-     * harmless.
+     * peer is constant for this BIO's lifetime.
      */
-    ctx->peer_addr_set = 1;
-    ctx->peer = *msg->peer;
+    if (ctx->peer == NULL) {
+        ctx->peer = BIO_ADDR_new();
+        if (ctx->peer == NULL)
+            return 0;
+    }
+    if (!BIO_ADDR_copy(ctx->peer, msg->peer))
+        return 0;
 
     /*
      * Buffer the message data. buffer_write() takes an int length, so guard
