@@ -142,7 +142,9 @@ int OSSL_FN_mod_add_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
         r->d[i] = 0;
 
     if (tp != storage)
-        OPENSSL_free(tp);
+        OPENSSL_clear_free(tp, 2 * ml * sizeof(OSSL_FN_ULONG));
+    else
+        OPENSSL_cleanse(storage, sizeof(storage));
 
     return 1;
 }
@@ -273,7 +275,9 @@ int OSSL_FN_mod_sub_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
         r->d[i] = 0;
 
     if (tp != storage)
-        OPENSSL_free(tp);
+        OPENSSL_clear_free(tp, ml * sizeof(OSSL_FN_ULONG));
+    else
+        OPENSSL_cleanse(storage, sizeof(storage));
 
     return 1;
 }
