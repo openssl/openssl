@@ -185,12 +185,15 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
             const ASN1_VALUE **pseqval;
+            int tmplen;
+
             seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
                 return 0;
             pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
-            /* FIXME: check for errors in enhanced version */
-            asn1_template_ex_i2d(pseqval, out, seqtt, -1, aclass);
+            tmplen = asn1_template_ex_i2d(pseqval, out, seqtt, -1, aclass);
+            if (tmplen < 0)
+                return -1;
         }
         if (ndef == 2)
             ASN1_put_eoc(out);
@@ -324,8 +327,9 @@ static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* SET or SEQUENCE and IMPLICIT tag */
         ASN1_put_object(out, ndef, skcontlen, sktag, skaclass);
         /* And the stuff itself */
-        asn1_set_seq_out(sk, out, skcontlen, ASN1_ITEM_ptr(tt->item),
-            isset, iclass);
+        if (!asn1_set_seq_out(sk, out, skcontlen, ASN1_ITEM_ptr(tt->item),
+                isset, iclass))
+            return -1;
         if (ndef == 2) {
             ASN1_put_eoc(out);
             if (flags & ASN1_TFLG_EXPTAG)
@@ -417,7 +421,8 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
     if (!do_sort) {
         for (i = 0; i < sk_const_ASN1_VALUE_num(sk); i++) {
             skitem = sk_const_ASN1_VALUE_value(sk, i);
-            ASN1_item_ex_i2d(&skitem, out, item, -1, iclass);
+            if (ASN1_item_ex_i2d(&skitem, out, item, -1, iclass) < 0)
+                return 0;
         }
         return 1;
     }
@@ -428,6 +433,8 @@ static int asn1_set_seq_out(STACK_OF(const_ASN1_VALUE) *sk,
         skitem = sk_const_ASN1_VALUE_value(sk, i);
         tder->data = p;
         tder->length = ASN1_item_ex_i2d(&skitem, &p, item, -1, iclass);
+        if (tder->length < 0)
+            goto err;
         tder->field = skitem;
     }
 
