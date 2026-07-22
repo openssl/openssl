@@ -37,6 +37,20 @@ TLS 1.3 RFC). For the client, the F<early_exporter_master_secret> is only
 available when the client attempts to send 0-RTT data. For the server, it is
 only available when the server accepts 0-RTT data.
 
+Calling SSL_write_early_data() does not by itself make the client's
+F<early_exporter_master_secret> available.
+If the PSK that would key the early data cannot be used for 0-RTT then the
+client sends no early data, derives no F<early_exporter_master_secret>, and
+SSL_export_keying_material_early() fails.
+L<SSL_get_early_data_status(3)> reports SSL_EARLY_DATA_REJECTED in that
+case, just as it does for early data that the server declined; but early data
+the server declined was nevertheless sent, so there the secret was derived and
+the export succeeds.
+The secret is likewise unavailable while an SSL_write_early_data() call is
+still incomplete: one that returned a retryable error, such as
+SSL_ERROR_WANT_WRITE on a large ClientHello, must first be retried through to
+success.
+
 An application may need to securely establish the context within which this
 keying material will be used. For example this may include identifiers for the
 application session, application algorithms or parameters, or the lifetime of
@@ -73,7 +87,7 @@ SSL_export_keying_material_early() returns 0 on failure or 1 on success.
 
 =head1 SEE ALSO
 
-L<ssl(7)>
+L<ssl(7)>, L<SSL_read_early_data(3)>
 
 =head1 HISTORY
 
