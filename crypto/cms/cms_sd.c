@@ -1620,10 +1620,7 @@ int CMS_add_standard_smimecap_ex(STACK_OF(X509_ALGOR) **smcap,
         || !cms_add_cipher_smcap(smcap, NID_aes_192_cbc, -1, libctx, propq)
         || !cms_add_cipher_smcap(smcap, NID_aes_128_cbc, -1, libctx, propq)
         || !cms_add_cipher_smcap(smcap, NID_des_ede3_cbc, -1, libctx, propq)
-        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 128, libctx, propq)
-        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 64, libctx, propq)
-        || !cms_add_cipher_smcap(smcap, NID_des_cbc, -1, libctx, propq)
-        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 40, libctx, propq))
+        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 128, libctx, propq))
         return 0;
     return 1;
 }
