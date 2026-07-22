@@ -13,6 +13,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/asn1.h>
 #include <openssl/evp.h>
+#include <openssl/pkcs7.h>
 #include <openssl/rsa.h>
 #include <openssl/pem.h>
 #include "crypto/x509.h" /* x509_st definition */
@@ -701,6 +702,137 @@ static int test_nc_empty_dirname_permitted(void)
         sizeof(nc_permitted_empty_dirname), X509_V_OK);
 }
 
+static int test_x509_name_canon_failure_cache(void)
+{
+    static const unsigned char invalid_utf8[] = { 0xc0, 0xaf };
+    int ret = 0, hash_ok = 1;
+    X509 *cert = NULL;
+    X509_NAME *empty = NULL;
+    X509_STORE *store = NULL;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_ptr(empty = X509_NAME_new())
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(cert->cert_info.subject,
+            "CN", V_ASN1_UTF8STRING, invalid_utf8, sizeof(invalid_utf8), -1,
+            0))
+        /*
+         * The first attempt populates DER before canonicalization fails. A
+         * retry must not reuse that partial cache.
+         */
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
+        || !TEST_int_eq(X509_NAME_cmp(cert->cert_info.subject, empty), -2)
+        || !TEST_ulong_eq(X509_NAME_hash_ex(cert->cert_info.subject, NULL,
+                              NULL, &hash_ok),
+            0)
+        || !TEST_false(hash_ok)
+        || !TEST_false(X509_STORE_add_cert(store, cert)))
+        goto end;
+
+    ret = 1;
+
+end:
+    ERR_clear_error();
+    X509_STORE_free(store);
+    X509_NAME_free(empty);
+    X509_free(cert);
+    return ret;
+}
+
+static int test_x509_name_multivalued_rdn_mfail(void)
+{
+    X509_NAME *name = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (unsigned char *)"Alice", -1, -1, 0))
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "OU", MBSTRING_ASC,
+            (unsigned char *)"Engineering", -1, -1, -1)))
+        goto end;
+
+    MFAIL_start();
+    ret = i2d_X509_NAME(name, NULL) > 0;
+    MFAIL_end();
+
+end:
+    X509_NAME_free(name);
+    return ret;
+}
+
+static int test_x509_attribute_i2d_mfail(void)
+{
+    static const unsigned char value1[] = "first";
+    static const unsigned char value2[] = "second";
+    X509_ATTRIBUTE *attr = NULL;
+    unsigned char *der = NULL;
+    int len, ret = -1;
+
+    if (!TEST_ptr(attr = X509_ATTRIBUTE_create_by_NID(NULL, NID_commonName,
+                      V_ASN1_UTF8STRING, value1, sizeof(value1) - 1))
+        || !TEST_true(X509_ATTRIBUTE_set1_data(attr, V_ASN1_UTF8STRING,
+            value2, sizeof(value2) - 1)))
+        goto end;
+
+    MFAIL_start();
+    len = i2d_X509_ATTRIBUTE(attr, &der);
+    MFAIL_end();
+
+    if (len <= 0)
+        ret = der == NULL ? 0 : -1;
+    else
+        ret = der != NULL ? 1 : -1;
+
+end:
+    OPENSSL_free(der);
+    X509_ATTRIBUTE_free(attr);
+    return ret;
+}
+
+static int test_pkcs7_digest_set_i2d_mfail(void)
+{
+    PKCS7 *p7 = NULL;
+    X509_ALGOR *alg = NULL;
+    unsigned char *der = NULL, *p;
+    int len, outlen, ret = -1;
+
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_content_new(p7, NID_pkcs7_data))
+        || !TEST_ptr(alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set_md(alg, EVP_sha256()))
+        || !TEST_int_gt(sk_X509_ALGOR_push(p7->d.sign->md_algs, alg), 0))
+        goto end;
+    alg = NULL;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new())
+        || !TEST_true(X509_ALGOR_set_md(alg, EVP_sha384()))
+        || !TEST_int_gt(sk_X509_ALGOR_push(p7->d.sign->md_algs, alg), 0))
+        goto end;
+    alg = NULL;
+
+    len = i2d_PKCS7(p7, NULL);
+    if (!TEST_int_gt(len, 0) || !TEST_ptr(der = OPENSSL_malloc(len)))
+        goto end;
+    p = der;
+
+    MFAIL_start();
+    outlen = i2d_PKCS7(p7, &p);
+    MFAIL_end();
+
+    if (outlen <= 0)
+        ret = 0;
+    else
+        ret = outlen == len && p == der + len ? 1 : -1;
+
+end:
+    X509_ALGOR_free(alg);
+    OPENSSL_free(der);
+    PKCS7_free(p7);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -746,6 +878,10 @@ int setup_tests(void)
     ADD_TEST(test_x509_verify_with_new);
     ADD_TEST(test_nc_empty_dirname_excluded);
     ADD_TEST(test_nc_empty_dirname_permitted);
+    ADD_TEST(test_x509_name_canon_failure_cache);
+    ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
+    ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
+    ADD_MFAIL_TEST(test_pkcs7_digest_set_i2d_mfail);
     return 1;
 }
 
