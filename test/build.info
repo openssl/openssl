@@ -1017,7 +1017,8 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asprintf_test \
                      asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest ssl_cred_test wpackettest ctype_internal_test \
+                     tls13encryptiontest ssl_cred_test ssl_trust_anchors_test \
+                     wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
@@ -1130,6 +1131,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[ssl_cred_test]=ssl_cred_test.c
     INCLUDE[ssl_cred_test]=.. ../include ../apps/include
     DEPEND[ssl_cred_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    SOURCE[ssl_trust_anchors_test]=ssl_trust_anchors_test.c
+    INCLUDE[ssl_trust_anchors_test]=.. ../include ../apps/include
+    DEPEND[ssl_trust_anchors_test]=../libcrypto.a ../libssl.a libtestutil.a
 
     SOURCE[ideatest]=ideatest.c
     INCLUDE[ideatest]=../include ../apps/include
