@@ -227,6 +227,24 @@ CERT *ssl_cert_dup(CERT *cert)
             goto err;
     }
 #endif
+
+    /* The credentials are shared: the copy takes a reference on each. */
+    if (cert->credentials != NULL) {
+        int num = sk_SSL_CREDENTIAL_num(cert->credentials);
+        int k;
+
+        ret->credentials = sk_SSL_CREDENTIAL_new_reserve(NULL, num);
+        if (ret->credentials == NULL)
+            goto err;
+        for (k = 0; k < num; k++) {
+            SSL_CREDENTIAL *cred = sk_SSL_CREDENTIAL_value(cert->credentials, k);
+
+            if (!SSL_CREDENTIAL_up_ref(cred))
+                goto err;
+            /* Cannot fail: the stack was reserved above. */
+            sk_SSL_CREDENTIAL_push(ret->credentials, cred);
+        }
+    }
     return ret;
 
 err:
@@ -291,6 +309,7 @@ void ssl_cert_free(CERT *c)
 #ifndef OPENSSL_NO_PSK
     OPENSSL_free(c->psk_identity_hint);
 #endif
+    sk_SSL_CREDENTIAL_pop_free(c->credentials, SSL_CREDENTIAL_free);
     OPENSSL_free(c->pkeys);
     CRYPTO_FREE_REF(&c->references);
     OPENSSL_free(c);

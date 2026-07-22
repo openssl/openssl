@@ -992,7 +992,7 @@ IF[{- !$disabled{tests} -}]
   # are always available.
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
-                     tls13encryptiontest wpackettest ctype_internal_test \
+                     tls13encryptiontest ssl_cred_test wpackettest ctype_internal_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
@@ -1097,6 +1097,10 @@ IF[{- !$disabled{tests} -}]
     SOURCE[tls13encryptiontest]=tls13encryptiontest.c
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
     DEPEND[tls13encryptiontest]=../libcrypto.a ../libssl.a libtestutil.a
+
+    SOURCE[ssl_cred_test]=ssl_cred_test.c
+    INCLUDE[ssl_cred_test]=.. ../include ../apps/include
+    DEPEND[ssl_cred_test]=../libcrypto.a ../libssl.a libtestutil.a
 
     SOURCE[ideatest]=ideatest.c
     INCLUDE[ideatest]=../include ../apps/include

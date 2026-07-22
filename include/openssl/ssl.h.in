@@ -2914,6 +2914,25 @@ int SSL_set_quic_tls_transport_params(SSL *s,
 
 int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled);
 
+/**
+ * @brief Release a reference to a credential.
+ * @see SSL_CREDENTIAL_free(3), SSL_CTX_add1_credential(3)
+ */
+void SSL_CREDENTIAL_free(SSL_CREDENTIAL *cred);
+
+/**
+ * @brief Take an additional reference to a credential.
+ * @see SSL_CREDENTIAL_up_ref(3), SSL_CTX_add1_credential(3)
+ */
+__owur int SSL_CREDENTIAL_up_ref(SSL_CREDENTIAL *cred);
+
+/**
+ * @brief Append a credential to the context's credentials, in preference
+ * order.
+ * @see SSL_CTX_add1_credential(3)
+ */
+__owur int SSL_CTX_add1_credential(SSL_CTX *ctx, SSL_CREDENTIAL *cred);
+
 #ifdef __cplusplus
 }
 #endif
