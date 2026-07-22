@@ -2115,13 +2115,22 @@ int ssl_get_md_idx(int md_nid)
     return -1;
 }
 
-const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
+int ssl_cipher_get_handshake_digest_nid(const SSL_CIPHER *c)
 {
     int idx = c->algorithm2 & SSL_HANDSHAKE_MAC_MASK;
 
     if (idx < 0 || idx >= SSL_MD_NUM_IDX)
+        return NID_undef;
+    return ssl_cipher_table_mac[idx].nid;
+}
+
+const EVP_MD *SSL_CIPHER_get_handshake_digest(const SSL_CIPHER *c)
+{
+    int nid = ssl_cipher_get_handshake_digest_nid(c);
+
+    if (nid == NID_undef)
         return NULL;
-    return EVP_get_digestbynid(ssl_cipher_table_mac[idx].nid);
+    return EVP_get_digestbynid(nid);
 }
 
 int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
