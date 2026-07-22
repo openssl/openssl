@@ -100,6 +100,8 @@ This release incorporates the following bug fixes and mitigations:
     and AES-SIV modes.
     ([CVE-2026-45446])
 
+  * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
+
   * Fixed a regression introduced in 4.0.0 that led to a `openssl pkey`
     command crash when it was invoked to encrypt a private key with password
     being provided interactively.
