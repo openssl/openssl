@@ -93,6 +93,8 @@ typedef struct validation_token {
  */
 #define ENCRYPTED_TOKEN_MAX_LEN (MARSHALLED_TOKEN_MAX_LEN + 16 + 12)
 
+#define DEFAULT_MAX_PENDING_CONNS 256
+
 DEFINE_LIST_OF_IMPL(ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(incoming_ch, QUIC_CHANNEL);
 DEFINE_LIST_OF_IMPL(port, QUIC_PORT);
@@ -110,6 +112,7 @@ QUIC_PORT *ossl_quic_port_new(const QUIC_PORT_ARGS *args)
     port->validate_addr = args->do_addr_validation;
     port->get_conn_user_ssl = args->get_conn_user_ssl;
     port->user_ssl_arg = args->user_ssl_arg;
+    port->max_pending_channels = DEFAULT_MAX_PENDING_CONNS;
 
     if (!port_init(port)) {
         OPENSSL_free(port);
@@ -1581,6 +1584,9 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
     if (hdr.type != QUIC_PKT_TYPE_INITIAL)
         goto undesirable;
 
+    if (port->max_pending_channels > 0 && ossl_list_incoming_ch_num(&port->incoming_channel_list) >= port->max_pending_channels)
+        goto undesirable;
+
     odcid.id_len = 0;
 
     /*
@@ -1759,4 +1765,14 @@ void ossl_quic_port_restore_err_state(const QUIC_PORT *port)
 {
     ERR_clear_error();
     OSSL_ERR_STATE_restore(port->err_state);
+}
+
+uint64_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port)
+{
+    return port->max_pending_channels;
+}
+
+void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, uint64_t max_pending_channels)
+{
+    port->max_pending_channels = max_pending_channels;
 }

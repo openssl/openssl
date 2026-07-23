@@ -118,6 +118,7 @@ struct quic_port_st {
 
     /* AES-256 GCM context for token encryption */
     EVP_CIPHER_CTX *token_ctx;
+    uint64_t max_pending_channels;
 };
 
 #endif
