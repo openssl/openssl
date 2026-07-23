@@ -134,32 +134,30 @@
     (SSL_aRSA | SSL_aDSS | SSL_aECDSA | SSL_aGOST01 | SSL_aGOST12)
 
 /* Bits for algorithm_enc (symmetric encryption) */
-/* #define SSL_DES 0x00000001U no longer used, retained for number sequence */
-#define SSL_3DES 0x00000002U
-#define SSL_RC4 0x00000004U
-/* #define SSL_RC2 0x00000008U no longer used, retained for number sequence */
-#define SSL_IDEA 0x00000010U
-#define SSL_eNULL 0x00000020U
-#define SSL_AES128 0x00000040U
-#define SSL_AES256 0x00000080U
-#define SSL_CAMELLIA128 0x00000100U
-#define SSL_CAMELLIA256 0x00000200U
-#define SSL_eGOST2814789CNT 0x00000400U
-#define SSL_SEED 0x00000800U
-#define SSL_AES128GCM 0x00001000U
-#define SSL_AES256GCM 0x00002000U
-#define SSL_AES128CCM 0x00004000U
-#define SSL_AES256CCM 0x00008000U
-#define SSL_AES128CCM8 0x00010000U
-#define SSL_AES256CCM8 0x00020000U
-#define SSL_eGOST2814789CNT12 0x00040000U
-#define SSL_CHACHA20POLY1305 0x00080000U
-#define SSL_ARIA128GCM 0x00100000U
-#define SSL_ARIA256GCM 0x00200000U
-#define SSL_MAGMA 0x00400000U
-#define SSL_KUZNYECHIK 0x00800000U
-#define SSL_SM4GCM 0x01000000U
-#define SSL_SM4CCM 0x02000000U
+#define SSL_3DES 1U
+#define SSL_RC4 (1U << 1)
+#define SSL_IDEA (1U << 2)
+#define SSL_eNULL (1U << 3)
+#define SSL_AES128 (1U << 4)
+#define SSL_AES256 (1U << 5)
+#define SSL_CAMELLIA128 (1U << 6)
+#define SSL_CAMELLIA256 (1U << 7)
+#define SSL_eGOST2814789CNT (1U << 8)
+#define SSL_SEED (1U << 9)
+#define SSL_AES128GCM (1U << 10)
+#define SSL_AES256GCM (1U << 11)
+#define SSL_AES128CCM (1U << 12)
+#define SSL_AES256CCM (1U << 13)
+#define SSL_AES128CCM8 (1U << 14)
+#define SSL_AES256CCM8 (1U << 15)
+#define SSL_eGOST2814789CNT12 (1U << 16)
+#define SSL_CHACHA20POLY1305 (1U << 17)
+#define SSL_ARIA128GCM (1U << 18)
+#define SSL_ARIA256GCM (1U << 19)
+#define SSL_MAGMA (1U << 20)
+#define SSL_KUZNYECHIK (1U << 21)
+#define SSL_SM4GCM (1U << 22)
+#define SSL_SM4CCM (1U << 23)
 #define SSL_ENC_NUM_IDX 24
 
 #define SSL_AESGCM (SSL_AES128GCM | SSL_AES256GCM)
