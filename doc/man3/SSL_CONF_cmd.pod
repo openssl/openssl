@@ -143,6 +143,9 @@ provided).
 Suite B modes (enabled via B<SSL_CERT_FLAG_SUITEB_128_LOS> or
 B<SSL_CERT_FLAG_SUITEB_192_LOS>) always imply strict mode.
 
+Credentials added with L<SSL_CTX_add1_credential(3)> are not used in strict
+mode.
+
 =item B<-sigalgs> I<algs>
 
 This sets the supported signature algorithms for (D)TLSv1.2 and (D)TLSv1.3.
