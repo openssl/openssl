@@ -12,13 +12,53 @@ on:
   schedule:
     - cron: '30 02 * * *'
   workflow_dispatch:
+    inputs:
+      pr:
+        description: 'PR number (leave empty for a bare manual run against the default branch)'
+        required: false
+        type: string
+      head_sha:
+        description: 'Exact commit SHA to check out (required when pr is set)'
+        required: false
+        type: string
+      check_run_id:
+        description: 'Check-run id to report completion back to (required when pr is set)'
+        required: false
+        type: string
+
+# Pinned run-name contract with images/openssl-ci-bot/main.py's format_run_name()/
+# parse_run_name() -- the completed-run handler parses check_run_id back out of
+# this exact format string, so keep both sides identical on any change.
+run-name: >-
+  ${{ github.event.inputs.pr && format('ci-dispatch pr={0} head={1} check_run_id={2}', github.event.inputs.pr, github.event.inputs.head_sha, github.event.inputs.check_run_id) || github.workflow }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.pr || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  validate-dispatch-inputs:
+    # Defense-in-depth on the untrusted-code boundary, in addition to the
+    # dispatching service's own validation: fail closed on malformed inputs
+    # before anything checks out a ref or runs.
+    if: github.repository == 'openssl/openssl' && github.event.inputs.pr != ''
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pr / head_sha / check_run_id
+        run: |
+          [[ "${{ github.event.inputs.pr }}" =~ ^[0-9]+$ ]] || { echo "::error::pr must be numeric"; exit 1; }
+          [[ "${{ github.event.inputs.check_run_id }}" =~ ^[0-9]+$ ]] || { echo "::error::check_run_id must be numeric"; exit 1; }
+          [[ "${{ github.event.inputs.head_sha }}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::head_sha must be a 40-character hex commit SHA"; exit 1; }
+
   run-checker:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -139,6 +179,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -155,12 +196,17 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   run-checker-sctp:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Install Dependencies for sctp option
@@ -197,7 +243,11 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_brotli_dynamic:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: install brotli
@@ -208,6 +258,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -222,7 +273,11 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_zstd_dynamic:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: install zstd
@@ -233,6 +288,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -247,7 +303,11 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_brotli_and_zstd_dynamic:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: install brotli and zstd
@@ -259,6 +319,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -273,13 +334,18 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   malloc_failure_testing:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: checkout openssl
       uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: Adjust ASLR for sanitizer
       run: |
         sudo cat /proc/sys/vm/mmap_rnd_bits
@@ -298,7 +364,11 @@ jobs:
         make TESTS="test_memfail" test
 
   enable_brotli_and_asan_ubsan:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: install brotli
@@ -309,6 +379,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
@@ -327,7 +398,11 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   enable_zstd_and_asan_ubsan:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - name: install zstd
@@ -338,6 +413,7 @@ jobs:
       uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
@@ -356,7 +432,11 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   enable_tfo:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       matrix:
         os: [ubuntu-latest, macos-15, macos-15-intel]
@@ -365,6 +445,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -377,12 +458,17 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   enable_buildtest:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -397,12 +483,17 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
   memory_sanitizer_slh_dsa:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: Adjust ASLR for sanitizer
@@ -422,11 +513,16 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} OPENSSL_TEST_RAND_ORDER=0
 
   bn_debug:
+    needs: [validate-dispatch-inputs]
+    if: |
+      always() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       run: ./config --debug --strict-warnings -DBN_DEBUG --banner=Configured -DOPENSSL_NO_SECURE_MEMORY && perl configdata.pm --dump
     - name: make
