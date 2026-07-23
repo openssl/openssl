@@ -1078,6 +1078,13 @@ IF[{- !$disabled{tests} -}]
       DEPEND[cmactest]=../libcrypto.a libtestutil.a
     ENDIF
 
+    IF[{- !$disabled{ml-kem} && !$disabled{ecx}-}]
+      PROGRAMS{noinst}=xwing_test
+      SOURCE[xwing_test]=xwing_test.c
+      INCLUDE[xwing_test]=../include ../apps/include
+      DEPEND[xwing_test]=../libcrypto.a libtestutil.a
+    ENDIF
+
     SOURCE[siphash_internal_test]=siphash_internal_test.c
     INCLUDE[siphash_internal_test]=.. ../include ../apps/include
     DEPEND[siphash_internal_test]=../libcrypto.a libtestutil.a
