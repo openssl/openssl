@@ -66,6 +66,10 @@ typedef struct prov_cipher_hw_caprise_st {
 /* Function declarations */
 const PROV_CIPHER_HW *ossl_prov_cipher_hw_caprise(size_t keybits);
 
+/* Gettable/settable ctx params prototypes (defined via macros in .inc) */
+const OSSL_PARAM *caprise_gettable_ctx_params(void *cctx, void *provctx);
+const OSSL_PARAM *caprise_settable_ctx_params(void *cctx, void *provctx);
+
 OSSL_FUNC_cipher_encrypt_init_fn ossl_caprise_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_caprise_dinit;
 void ossl_caprise_initctx(PROV_CAPRISE_CTX *ctx);
