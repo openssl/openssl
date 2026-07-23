@@ -52,6 +52,21 @@ err:
     return ok;
 }
 
+DEF_FUNC(check_want_read)
+{
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+    if (!TEST_int_eq(SSL_get_error(ssl, 0), SSL_ERROR_WANT_READ)
+        || !TEST_int_eq(SSL_want(ssl), SSL_READING))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 /*
  * Multi-stream test
  */
@@ -144,6 +159,20 @@ DEF_SCRIPT(multi_stream, "multi stream test")
      * (see SSL_set_incoming_stream_policy(3ossl) for details).
      */
     OP_FUNC(check_rejected);
+}
+
+/*
+ * Reject an incoming stream before a default stream has been established.
+ */
+DEF_SCRIPT(reject_before_default_stream, "reject before default stream")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_SET_INCOMING_STREAM_POLICY(C, SSL_INCOMING_STREAM_POLICY_REJECT, 42);
+    OP_WRITE_B(S, "unseen");
+    OP_SLEEP(100);
+    OP_READ_FAIL(C);
+    OP_FUNC(check_want_read);
 }
 
 /*
@@ -1804,6 +1833,7 @@ DEF_SCRIPT(script_106, "place holder for multistrem script_106")
 static SCRIPT_INFO *const scripts[] = {
     USE(simple_stream),
     USE(multi_stream),
+    USE(reject_before_default_stream),
     USE(simple_conn),
     USE(simple_thread),
     USE(ssl_poll),
