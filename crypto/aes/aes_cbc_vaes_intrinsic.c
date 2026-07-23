@@ -80,8 +80,6 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
 
 OPENSSL_TARGET_VAES512
 
-#define AES_BLOCK_SIZE 16
-
 /* ------------------------------------------------------------------ */
 /* AES decryption helpers: 1x, 2x, 4x parallel 512-bit blocks         */
 /* Each 512-bit register holds 4 independent 128-bit AES blocks.      */
