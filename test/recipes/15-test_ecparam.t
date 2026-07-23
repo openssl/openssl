@@ -30,7 +30,7 @@ if (disabled("sm2")) {
     @valid = grep { !/sm2-.*\.pem/} @valid;
 }
 
-plan tests => 16;
+plan tests => 18;
 
 sub checkload {
     my $files = shift; # List of files
@@ -222,6 +222,61 @@ subtest "Check ecparam -param_enc converts between named and explicit" => sub {
     ok(!run(app(['openssl', 'ecparam', '-in', $named, '-noout',
                  '-param_enc', 'bogus'])),
        "an invalid parameter encoding is rejected");
+};
+
+subtest "Check ecparam -inform and -outform handling" => sub {
+    plan tests => 4;
+
+    my $named = data_file('valid', 'secp384r1-named.pem');
+
+    my $der = 'param.der';
+    ok(run(app(['openssl', 'ecparam', '-in', $named, '-outform', 'DER',
+                '-out', $der])),
+       "write DER-encoded parameters");
+    my $pem = 'param-der.pem';
+    ok(run(app(['openssl', 'ecparam', '-inform', 'DER', '-in', $der,
+                '-out', $pem]))
+       && !compare($pem, $named),
+       "parameters survive a PEM -> DER -> PEM roundtrip");
+
+    ok(!run(app(['openssl', 'ecparam', '-in', $der, '-noout'])),
+       "DER input without -inform is rejected as the default is PEM");
+
+    ok(!run(app(['openssl', 'ecparam', '-in', $named, '-outform', 'MSBLOB',
+                 '-out', 'param.tmp'])),
+       "-outform is limited to PEM and DER");
+};
+
+subtest "Check ecparam -conv_form selects the generator point encoding" => sub {
+    plan tests => 5;
+
+    my $named = data_file('valid', 'secp384r1-named.pem');
+    my $explicit = data_file('valid', 'secp384r1-explicit.pem');
+
+    # Only explicit parameters encode the generator point; the reference file
+    # uses the default uncompressed form.
+    my $comp = 'param-comp.pem';
+    ok(run(app(['openssl', 'ecparam', '-in', $explicit, '-conv_form',
+                'compressed', '-out', $comp])),
+       "write explicit parameters with a compressed generator");
+    ok((-s $comp) < (-s $explicit),
+       "compressed generator encoding is smaller than uncompressed");
+
+    my $back = 'param-unc.pem';
+    ok(run(app(['openssl', 'ecparam', '-in', $comp, '-conv_form',
+                'uncompressed', '-out', $back]))
+       && !compare($back, $explicit),
+       "converting back to uncompressed matches the reference file");
+
+    my $namedout = 'param-named-conv.pem';
+    ok(run(app(['openssl', 'ecparam', '-in', $named, '-conv_form',
+                'compressed', '-out', $namedout]))
+       && !compare($namedout, $named),
+       "-conv_form does not change named curve parameters");
+
+    ok(!run(app(['openssl', 'ecparam', '-in', $named, '-noout',
+                 '-conv_form', 'bogus'])),
+       "an invalid conversion form is rejected");
 };
 
 subtest "Check ecparam -text prints the parameters in text form" => sub {
