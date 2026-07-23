@@ -37,32 +37,30 @@ typedef struct {
 
 /* Table of NIDs for each cipher */
 static const ssl_cipher_table ssl_cipher_table_cipher[SSL_ENC_NUM_IDX] = {
-    { SSL_DES, NID_des_cbc }, /* SSL_ENC_DES_IDX 0 */
-    { SSL_3DES, NID_des_ede3_cbc }, /* SSL_ENC_3DES_IDX 1 */
-    { SSL_RC4, NID_rc4 }, /* SSL_ENC_RC4_IDX 2 */
-    { SSL_RC2, NID_rc2_cbc }, /* SSL_ENC_RC2_IDX 3 */
-    { SSL_IDEA, NID_idea_cbc }, /* SSL_ENC_IDEA_IDX 4 */
-    { SSL_eNULL, NID_undef }, /* SSL_ENC_NULL_IDX 5 */
-    { SSL_AES128, NID_aes_128_cbc }, /* SSL_ENC_AES128_IDX 6 */
-    { SSL_AES256, NID_aes_256_cbc }, /* SSL_ENC_AES256_IDX 7 */
-    { SSL_CAMELLIA128, NID_camellia_128_cbc }, /* SSL_ENC_CAMELLIA128_IDX 8 */
-    { SSL_CAMELLIA256, NID_camellia_256_cbc }, /* SSL_ENC_CAMELLIA256_IDX 9 */
-    { SSL_eGOST2814789CNT, NID_gost89_cnt }, /* SSL_ENC_GOST89_IDX 10 */
-    { SSL_SEED, NID_seed_cbc }, /* SSL_ENC_SEED_IDX 11 */
-    { SSL_AES128GCM, NID_aes_128_gcm }, /* SSL_ENC_AES128GCM_IDX 12 */
-    { SSL_AES256GCM, NID_aes_256_gcm }, /* SSL_ENC_AES256GCM_IDX 13 */
-    { SSL_AES128CCM, NID_aes_128_ccm }, /* SSL_ENC_AES128CCM_IDX 14 */
-    { SSL_AES256CCM, NID_aes_256_ccm }, /* SSL_ENC_AES256CCM_IDX 15 */
-    { SSL_AES128CCM8, NID_aes_128_ccm }, /* SSL_ENC_AES128CCM8_IDX 16 */
-    { SSL_AES256CCM8, NID_aes_256_ccm }, /* SSL_ENC_AES256CCM8_IDX 17 */
-    { SSL_eGOST2814789CNT12, NID_gost89_cnt_12 }, /* SSL_ENC_GOST8912_IDX 18 */
-    { SSL_CHACHA20POLY1305, NID_chacha20_poly1305 }, /* SSL_ENC_CHACHA_IDX 19 */
-    { SSL_ARIA128GCM, NID_aria_128_gcm }, /* SSL_ENC_ARIA128GCM_IDX 20 */
-    { SSL_ARIA256GCM, NID_aria_256_gcm }, /* SSL_ENC_ARIA256GCM_IDX 21 */
-    { SSL_MAGMA, NID_magma_ctr_acpkm }, /* SSL_ENC_MAGMA_IDX 22 */
-    { SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm }, /* SSL_ENC_KUZNYECHIK_IDX 23 */
-    { SSL_SM4GCM, NID_sm4_gcm }, /* SSL_ENC_SM4GCM_IDX 24 */
-    { SSL_SM4CCM, NID_sm4_ccm }, /* SSL_ENC_SM4CCM_IDX 25 */
+    { SSL_3DES, NID_des_ede3_cbc },
+    { SSL_RC4, NID_rc4 },
+    { SSL_IDEA, NID_idea_cbc },
+    { SSL_eNULL, NID_undef },
+    { SSL_AES128, NID_aes_128_cbc },
+    { SSL_AES256, NID_aes_256_cbc },
+    { SSL_CAMELLIA128, NID_camellia_128_cbc },
+    { SSL_CAMELLIA256, NID_camellia_256_cbc },
+    { SSL_eGOST2814789CNT, NID_gost89_cnt },
+    { SSL_SEED, NID_seed_cbc },
+    { SSL_AES128GCM, NID_aes_128_gcm },
+    { SSL_AES256GCM, NID_aes_256_gcm },
+    { SSL_AES128CCM, NID_aes_128_ccm },
+    { SSL_AES256CCM, NID_aes_256_ccm },
+    { SSL_AES128CCM8, NID_aes_128_ccm },
+    { SSL_AES256CCM8, NID_aes_256_ccm },
+    { SSL_eGOST2814789CNT12, NID_gost89_cnt_12 },
+    { SSL_CHACHA20POLY1305, NID_chacha20_poly1305 },
+    { SSL_ARIA128GCM, NID_aria_128_gcm },
+    { SSL_ARIA256GCM, NID_aria_256_gcm },
+    { SSL_MAGMA, NID_magma_ctr_acpkm },
+    { SSL_KUZNYECHIK, NID_kuznyechik_ctr_acpkm },
+    { SSL_SM4GCM, NID_sm4_gcm },
+    { SSL_SM4CCM, NID_sm4_ccm },
 };
 
 /* NB: make sure indices in this table matches values above */
@@ -152,7 +150,6 @@ static const int default_mac_pkey_id[SSL_MD_NUM_IDX] = {
 typedef struct cipher_order_st {
     const SSL_CIPHER *cipher;
     int active;
-    int dead;
     struct cipher_order_st *next, *prev;
 } CIPHER_ORDER;
 
@@ -219,7 +216,6 @@ static const SSL_CIPHER cipher_aliases[] = {
     /* symmetric encryption aliases */
     { 0, SSL_TXT_3DES, NULL, 0, 0, 0, SSL_3DES },
     { 0, SSL_TXT_RC4, NULL, 0, 0, 0, SSL_RC4 },
-    { 0, SSL_TXT_RC2, NULL, 0, 0, 0, SSL_RC2 },
     { 0, SSL_TXT_IDEA, NULL, 0, 0, 0, SSL_IDEA },
     { 0, SSL_TXT_SEED, NULL, 0, 0, 0, SSL_SEED },
     { 0, SSL_TXT_eNULL, NULL, 0, 0, 0, SSL_eNULL },
@@ -283,15 +279,20 @@ int ssl_load_ciphers(SSL_CTX *ctx)
 
     ctx->disabled_enc_mask = 0;
     for (i = 0, t = ssl_cipher_table_cipher; i < SSL_ENC_NUM_IDX; i++, t++) {
-        if (t->nid != NID_undef) {
-            const EVP_CIPHER *cipher = ssl_evp_cipher_fetch(ctx->libctx,
-                OBJ_nid2sn(t->nid),
-                ctx->propq);
+        const EVP_CIPHER *cipher = NULL;
+        const char *sn = NULL;
 
-            ctx->ssl_cipher_methods[i] = cipher;
-            if (cipher == NULL)
-                ctx->disabled_enc_mask |= t->mask;
-        }
+        if (t->mask == SSL_eNULL)
+            sn = "NULL";
+        else if (ossl_assert(t->nid != NID_undef))
+            sn = OBJ_nid2sn(t->nid);
+
+        if (sn != NULL)
+            cipher = ssl_evp_cipher_fetch(ctx->libctx, sn, ctx->propq);
+
+        ctx->ssl_cipher_methods[i] = cipher;
+        if (cipher == NULL)
+            ctx->disabled_enc_mask |= t->mask;
     }
     ctx->disabled_mac_mask = 0;
     for (i = 0, t = ssl_cipher_table_mac; i < SSL_MD_NUM_IDX; i++, t++) {
@@ -410,22 +411,12 @@ int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     if (i == -1) {
         *enc = NULL;
     } else {
-        if (i == SSL_ENC_NULL_IDX) {
-            /*
-             * This does not need any special handling. Use EVP_CIPHER_fetch()
-             * directly.
-             */
-            *enc = EVP_CIPHER_fetch(ctx->libctx, "NULL", ctx->propq);
-            if (*enc == NULL)
-                return 0;
-        } else {
-            const EVP_CIPHER *cipher = ctx->ssl_cipher_methods[i];
+        const EVP_CIPHER *cipher = ctx->ssl_cipher_methods[i];
 
-            if (cipher == NULL
-                || !ssl_evp_cipher_up_ref(cipher))
-                return 0;
-            *enc = ctx->ssl_cipher_methods[i];
-        }
+        if (cipher == NULL
+            || !ssl_evp_cipher_up_ref(cipher))
+            return 0;
+        *enc = ctx->ssl_cipher_methods[i];
     }
     return 1;
 }
@@ -1728,17 +1719,11 @@ char *SSL_CIPHER_description(const SSL_CIPHER *cipher, char *buf, int len)
     }
 
     switch (alg_enc) {
-    case SSL_DES:
-        enc = "DES(56)";
-        break;
     case SSL_3DES:
         enc = "3DES(168)";
         break;
     case SSL_RC4:
         enc = "RC4(128)";
-        break;
-    case SSL_RC2:
-        enc = "RC2(128)";
         break;
     case SSL_IDEA:
         enc = "IDEA(128)";
