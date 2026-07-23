@@ -8009,6 +8009,94 @@ err:
     return ret;
 }
 
+static int test_aes_siv_ctx_dec_retval(void)
+{
+    unsigned char key[32] = { 7 };
+    unsigned char in[6] = "input";
+    unsigned char ct[6] = { 0 };
+
+    unsigned char tagbuf[16], out[16] = { 0 };
+    int len, ret = 0;
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+    EVP_CIPHER_CTX *dec_ctx = NULL;
+
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-SIV", NULL);
+
+    if (cipher == NULL)
+        return TEST_skip("AES-128-SIV cipher is not available");
+
+    enc_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(enc_ctx)
+        || !TEST_true(EVP_EncryptInit_ex(enc_ctx, cipher, NULL, key, NULL))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(enc_ctx, EVP_CTRL_AEAD_GET_TAG, sizeof(tagbuf), tagbuf))
+        || !TEST_true(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len)))
+        goto err;
+
+    dec_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(dec_ctx)
+        || !TEST_true(EVP_DecryptInit_ex(dec_ctx, cipher, NULL, key, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(dec_ctx, EVP_CTRL_AEAD_SET_TAG,
+            sizeof(tagbuf), tagbuf))
+        || !TEST_true(EVP_DecryptUpdate(dec_ctx, out, &len, ct, sizeof(in)))
+        || !TEST_true(EVP_DecryptFinal_ex(dec_ctx, out + len, &len))
+        || !TEST_true(0 == memcmp(out, in, sizeof(in)))) {
+        goto err;
+    }
+
+    /*
+     * Positive usecase successful,
+     * provoke the error, by repeating decrypt on same context.
+     */
+    if (!TEST_false(EVP_DecryptUpdate(dec_ctx, out, &len, ct, sizeof(ct)))
+        || (!TEST_false(EVP_DecryptFinal_ex(dec_ctx, out + len, &len))))
+        goto err;
+
+    ret = 1;
+
+err:
+    EVP_CIPHER_CTX_free(dec_ctx);
+    EVP_CIPHER_CTX_free(enc_ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+static int test_aes_siv_ctx_enc_retval(void)
+{
+    unsigned char key[32] = { 7 };
+    unsigned char in[6] = "input";
+    unsigned char ct[6] = { 0 };
+
+    unsigned char tagbuf[16];
+    int len, ret = 0;
+    EVP_CIPHER_CTX *enc_ctx = NULL;
+
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(NULL, "AES-128-SIV", NULL);
+
+    if (cipher == NULL)
+        return TEST_skip("AES-128-SIV cipher is not available");
+
+    enc_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(enc_ctx)
+        || !TEST_true(EVP_EncryptInit_ex(enc_ctx, cipher, NULL, key, NULL))
+        || !TEST_true(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(enc_ctx, EVP_CTRL_AEAD_GET_TAG, sizeof(tagbuf), tagbuf))
+        || !TEST_true(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len)))
+        goto err;
+
+    /*
+     * Encryption is fine, provoke error by repeating encrypt on same context. */
+    if (!TEST_false(EVP_EncryptUpdate(enc_ctx, ct, &len, in, sizeof(in)))
+        || !TEST_false(EVP_EncryptFinal_ex(enc_ctx, ct + len, &len)))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(enc_ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 static int test_invalid_ctx_for_digest(void)
 {
     int ret;
@@ -9319,6 +9407,8 @@ int setup_tests(void)
     /* Test cases for CVE-2026-45446 */
     ADD_TEST(test_aes_gcm_siv_empty_data);
     ADD_TEST(test_aes_siv_ctx_reuse);
+    ADD_TEST(test_aes_siv_ctx_dec_retval);
+    ADD_TEST(test_aes_siv_ctx_enc_retval);
 
     ADD_TEST(test_invalid_ctx_for_digest);
 
