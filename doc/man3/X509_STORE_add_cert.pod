@@ -3,7 +3,9 @@
 =head1 NAME
 
 X509_STORE,
-X509_STORE_add_cert, X509_STORE_add_crl, X509_STORE_set_depth,
+X509_STORE_add_cert, X509_STORE_add_crl,
+X509_STORE_add_untrusted_cert, X509_STORE_get1_untrusted_certs,
+X509_STORE_set_depth,
 X509_STORE_set_flags, X509_STORE_set_purpose, X509_STORE_set_trust,
 X509_STORE_add_lookup,
 X509_STORE_load_file_ex, X509_STORE_load_file, X509_STORE_load_path,
@@ -20,6 +22,8 @@ X509_STORE_load_locations_ex, X509_STORE_load_locations
 
  int X509_STORE_add_cert(X509_STORE *xs, const X509 *x);
  int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x);
+ int X509_STORE_add_untrusted_cert(X509_STORE *xs, const X509 *x);
+ STACK_OF(X509) *X509_STORE_get1_untrusted_certs(const X509_STORE *xs);
  int X509_STORE_set_depth(X509_STORE *store, int depth);
  int X509_STORE_set_flags(X509_STORE *xs, unsigned long flags);
  int X509_STORE_set_purpose(X509_STORE *xs, int purpose);
@@ -84,6 +88,23 @@ added in this way.  The added object's reference count is incremented by one,
 hence the caller retains ownership of the object and needs to free it when it
 is no longer needed.
 
+X509_STORE_add_untrusted_cert() adds certificate I<x> to a separate set of
+B<untrusted> certificates held by the B<X509_STORE>.  During any verification
+performed against the store, these are available as candidate issuers for
+chain construction, similarly to the untrusted certificates passed to an
+individual B<X509_STORE_CTX>.  Adding a certificate to this set does not make
+it trusted: it is used only to help build the chain, even under
+B<X509_V_FLAG_PARTIAL_CHAIN>.  Such certificates also remain invisible to
+trust-store lookup and enumeration such as X509_STORE_get1_all_certs().
+This function is suitable for preloading known intermediate CA certificates so
+that peers presenting an incomplete chain can still be verified.  The caller
+retains ownership of I<x> and needs to free it when it is no longer needed.
+
+X509_STORE_get1_untrusted_certs() returns a snapshot of the untrusted
+certificates previously added with X509_STORE_add_untrusted_cert().  A new
+stack is returned with the reference count of each certificate incremented by
+one; the caller must free it with OSSL_STACK_OF_X509_free().
+
 X509_STORE_set_depth(), X509_STORE_set_flags(), X509_STORE_set_purpose(),
 X509_STORE_set_trust(), and X509_STORE_set1_param() set the default values
 for the corresponding values used in certificate chain validation.  Their
@@ -141,7 +162,8 @@ context I<libctx> and property query I<propq>.
 
 =head1 RETURN VALUES
 
-X509_STORE_add_cert(), X509_STORE_add_crl(), X509_STORE_set_depth(),
+X509_STORE_add_cert(), X509_STORE_add_crl(),
+X509_STORE_add_untrusted_cert(), X509_STORE_set_depth(),
 X509_STORE_set_flags(), X509_STORE_set_purpose(), X509_STORE_set_trust(),
 X509_STORE_load_file_ex(), X509_STORE_load_file(),
 X509_STORE_load_path(),
@@ -152,6 +174,9 @@ return 1 on success or 0 on failure.
 
 X509_STORE_add_lookup() returns the found or created
 L<X509_LOOKUP(3)>, or NULL on error.
+
+X509_STORE_get1_untrusted_certs() returns a newly allocated stack of
+certificates, which is empty if none have been added, or NULL on error.
 
 =head1 SEE ALSO
 
@@ -166,6 +191,9 @@ L<X509_STORE_get0_param(3)>
 The functions X509_STORE_set_default_paths_ex(),
 X509_STORE_load_file_ex(), X509_STORE_load_store_ex() and
 X509_STORE_load_locations_ex() were added in OpenSSL 3.0.
+
+The functions X509_STORE_add_untrusted_cert() and
+X509_STORE_get1_untrusted_certs() were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

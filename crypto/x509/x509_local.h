@@ -147,6 +147,11 @@ struct x509_store_st {
      * compatibility.
      */
     STACK_OF(X509_OBJECT) *objs;
+    /*
+     * Certificates available as candidate issuers for chain building during
+     * verification, but never usable as trust anchors.
+     */
+    STACK_OF(X509) *untrusted;
     /* These are external lookup methods */
     STACK_OF(X509_LOOKUP) *get_cert_methods;
     X509_VERIFY_PARAM *param;
@@ -192,6 +197,7 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
+int ossl_x509_store_get1_untrusted(X509_STORE *xs, STACK_OF(X509) **out);
 STACK_OF(X509_OBJECT) *ossl_x509_store_ht_get_by_name(const X509_STORE *store,
     const X509_NAME *xn);
 int ossl_x509_check_rfc822(X509 *x, const char *chk, size_t chklen,

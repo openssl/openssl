@@ -274,6 +274,7 @@ void X509_STORE_free(X509_STORE *xs)
     }
     sk_X509_LOOKUP_free(sk);
     sk_X509_OBJECT_pop_free(xs->objs, X509_OBJECT_free);
+    sk_X509_pop_free(xs->untrusted, X509_free);
 
     CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509_STORE, xs, &xs->ex_data);
     X509_VERIFY_PARAM_free(xs->param);
@@ -598,6 +599,70 @@ int X509_STORE_add_crl(X509_STORE *xs, X509_CRL *x)
         return 0;
     }
     return 1;
+}
+
+int X509_STORE_add_untrusted_cert(X509_STORE *xs, const X509 *x)
+{
+    int ret;
+
+    if (xs == NULL || x == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (!X509_STORE_lock(xs)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    if (xs->untrusted == NULL
+        && (xs->untrusted = sk_X509_new_null()) == NULL) {
+        X509_STORE_unlock(xs);
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    ret = X509_add_cert(xs->untrusted, x, X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP);
+    X509_STORE_unlock(xs);
+    if (!ret)
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+    return ret;
+}
+
+int ossl_x509_store_get1_untrusted(X509_STORE *xs, STACK_OF(X509) **out)
+{
+    STACK_OF(X509) *sk = NULL;
+
+    *out = NULL;
+    if (!ossl_x509_store_read_lock(xs)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    if (sk_X509_num(xs->untrusted) > 0) {
+        if ((sk = sk_X509_new_null()) == NULL
+            || !X509_add_certs(sk, xs->untrusted, X509_ADD_FLAG_UP_REF)) {
+            X509_STORE_unlock(xs);
+            sk_X509_pop_free(sk, X509_free);
+            ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+            return 0;
+        }
+    }
+    X509_STORE_unlock(xs);
+    *out = sk;
+    return 1;
+}
+
+STACK_OF(X509) *X509_STORE_get1_untrusted_certs(const X509_STORE *xs)
+{
+    STACK_OF(X509) *sk = NULL;
+
+    if (xs == NULL) {
+        ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if (!ossl_x509_store_get1_untrusted((X509_STORE *)xs, &sk))
+        return NULL;
+
+    if (sk == NULL && (sk = sk_X509_new_null()) == NULL)
+        ERR_raise(ERR_LIB_X509, ERR_R_CRYPTO_LIB);
+    return sk;
 }
 
 int X509_OBJECT_up_ref_count(X509_OBJECT *a)
