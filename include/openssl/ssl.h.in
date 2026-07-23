@@ -2914,6 +2914,12 @@ int SSL_set_quic_tls_transport_params(SSL *s,
 
 int SSL_set_quic_tls_early_data_enabled(SSL *s, int enabled);
 
+/* clang-format off */
+{-
+    generate_stack_macros("SSL_CREDENTIAL");
+-}
+/* clang-format on */
+
 /**
  * @brief Release a reference to a credential.
  * @see SSL_CREDENTIAL_free(3), SSL_CTX_add1_credential(3)
@@ -2932,6 +2938,31 @@ __owur int SSL_CREDENTIAL_up_ref(SSL_CREDENTIAL *cred);
  * @see SSL_CTX_add1_credential(3)
  */
 __owur int SSL_CTX_add1_credential(SSL_CTX *ctx, SSL_CREDENTIAL *cred);
+
+/**
+ * @brief Parse PEM certificates carrying certificate property lists into
+ * credentials.
+ * @see SSL_parse_certificates_with_properties(3)
+ */
+__owur int SSL_parse_certificates_with_properties(BIO *in,
+    STACK_OF(EVP_PKEY) *keys, STACK_OF(SSL_CREDENTIAL) *out_credentials);
+
+/**
+ * @brief Compare two credentials by their on-the-wire size.
+ *
+ * Suitable as a STACK_OF(SSL_CREDENTIAL) comparison function: install it with
+ * sk_SSL_CREDENTIAL_set_cmp_func() and call sk_SSL_CREDENTIAL_sort() to order
+ * credentials smallest first.
+ * @see SSL_CREDENTIAL_size_cmp(3), SSL_parse_certificates_with_properties(3)
+ */
+int SSL_CREDENTIAL_size_cmp(const SSL_CREDENTIAL *const *a,
+    const SSL_CREDENTIAL *const *b);
+
+/**
+ * @brief Parse PEM private keys into a stack.
+ * @see SSL_parse_private_keys(3), SSL_parse_certificates_with_properties(3)
+ */
+__owur int SSL_parse_private_keys(BIO *in, STACK_OF(EVP_PKEY) *out_keys);
 
 #ifdef __cplusplus
 }
