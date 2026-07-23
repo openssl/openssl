@@ -465,7 +465,6 @@ static int drbg_hash_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
     if (!ossl_prov_digest_load_from_params(&hash->digest, params, libctx))
         return 0;
-
     md = ossl_prov_digest_md(&hash->digest);
     if (md != NULL) {
         if ((EVP_MD_get_flags(md) & EVP_MD_FLAG_XOF) != 0) {

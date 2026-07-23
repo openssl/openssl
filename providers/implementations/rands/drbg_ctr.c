@@ -681,8 +681,14 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         != NULL) {
         if (p->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
-        propquery = (const char *)p->data;
     }
+
+#ifndef FIPS_MODULE
+    propquery = "provider=default";
+    if (p != NULL
+        && p->data_type == OSSL_PARAM_UTF8_STRING)
+        propquery = (const char *)p->data;
+#endif
 
     if ((p = OSSL_PARAM_locate_const(params, OSSL_DRBG_PARAM_CIPHER)) != NULL) {
         const char *base = (const char *)p->data;
@@ -703,6 +709,12 @@ static int drbg_ctr_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         strcpy(ecb + p->data_size - ecb_str_len, "ECB");
         EVP_CIPHER_free(ctr->cipher_ecb);
         EVP_CIPHER_free(ctr->cipher_ctr);
+        ctr->cipher_ctr = NULL;
+        ctr->cipher_ecb = NULL;
+        /*
+         * Try to fetch algorithms from our own provider code, fallback
+         * to generic fetch only if that fails
+         */
         ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
         ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
         OPENSSL_free(ecb);
