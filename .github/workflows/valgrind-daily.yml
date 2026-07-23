@@ -51,9 +51,10 @@ jobs:
     check-valgrind-suppressions:
       needs: [validate-dispatch-inputs]
       if: |
-        github.repository == 'openssl/openssl' &&
         !cancelled() &&
-        (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+        (needs.validate-dispatch-inputs.result == 'success' ||
+         (needs.validate-dispatch-inputs.result == 'skipped' &&
+          inputs.pr == '' && inputs.head_sha == '' && inputs.check_run_id == ''))
       runs-on: ubuntu-latest
       steps:
         - uses: actions/checkout@v6
