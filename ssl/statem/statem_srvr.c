@@ -600,8 +600,10 @@ OCSP_RESPONSE *ossl_get_ocsp_response(SSL_CONNECTION *s, int chainidx)
 static int do_compressed_cert(SSL_CONNECTION *sc)
 {
     /* If we negotiated RPK, we won't attempt to compress it */
+    /* A negotiated credential is sent uncompressed. */
     return sc->ext.server_cert_type == TLSEXT_cert_type_x509
-        && get_compressed_certificate_alg(sc) != TLSEXT_comp_cert_none;
+        && get_compressed_certificate_alg(sc) != TLSEXT_comp_cert_none
+        && sc->s3.tmp.credential == NULL;
 }
 
 /*
@@ -4436,11 +4438,6 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
 {
     CERT_PKEY *cpk = s->s3.tmp.cert;
 
-    if (cpk == NULL) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return CON_FUNC_ERROR;
-    }
-
     /*
      * In TLSv1.3 the certificate chain is always preceded by a 0 length context
      * for the server Certificate message
@@ -4449,6 +4446,24 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
+
+    /*
+     * When a credential was negotiated (e.g. by trust anchor identifiers) its
+     * chain is served directly and the legacy certificate path is skipped.
+     */
+    if (s->s3.tmp.credential != NULL) {
+        if (!ssl3_output_cred_chain(s, pkt, s->s3.tmp.credential)) {
+            /* SSLfatal() already called */
+            return CON_FUNC_ERROR;
+        }
+        return CON_FUNC_SUCCESS;
+    }
+
+    if (cpk == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return CON_FUNC_ERROR;
+    }
+
     switch (s->ext.server_cert_type) {
     case TLSEXT_cert_type_rpk:
         if (!tls_output_rpk(s, pkt, cpk)) {

@@ -1309,6 +1309,32 @@ int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
+EXT_RETURN tls_construct_stoc_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context, X509 *x,
+    size_t chainidx)
+{
+    /*
+     * Acknowledge a trust anchor negotiation only when we served a matching
+     * credential, and only in the first CertificateEntry, per
+     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+     * This extension shares its definition with the ClientHello request and
+     * the EncryptedExtensions form, so the Certificate context is required
+     * here.  The acknowledgement is an empty extension.
+     */
+    if (context != SSL_EXT_TLS1_3_CERTIFICATE
+        || s->s3.tmp.credential == NULL || chainidx != 0)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
+}
+
 int tls_parse_ctos_ems(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx)
 {
