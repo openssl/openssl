@@ -12,6 +12,7 @@ SSL_VALUE_CLASS_FEATURE_REQUEST, SSL_VALUE_CLASS_FEATURE_PEER_REQUEST,
 SSL_VALUE_CLASS_FEATURE_NEGOTIATED, SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL,
 SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL, SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL,
 SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL, SSL_VALUE_QUIC_IDLE_TIMEOUT,
+SSL_VALUE_QUIC_MAX_PENDING_CONNS,
 SSL_VALUE_EVENT_HANDLING_MODE,
 SSL_VALUE_EVENT_HANDLING_MODE_INHERIT,
 SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT,
@@ -45,6 +46,7 @@ manage negotiable features and configuration values for an SSL object
  #define SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL
  #define SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL
  #define SSL_VALUE_QUIC_IDLE_TIMEOUT
+ #define SSL_VALUE_QUIC_MAX_PENDING_CONNS
 
  #define SSL_VALUE_EVENT_HANDLING_MODE
  #define SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
@@ -167,6 +169,16 @@ changed.
 
 This release of OpenSSL uses a default value of 30 seconds. This default value
 may change between releases of OpenSSL.
+
+=item B<SSL_VALUE_QUIC_MAX_PENDING_CONNS> (listener object)
+
+Generic value, sets the limit on channels (connection objects) which a QUIC server can
+insert into the list of pending connections. A pending connection is a connection
+which the local application needs to accept (L<SSL_accept_connection(3)>) in order to retrieve
+an SSL connection object. The connection is removed from the pending queue by a call
+to L<SSL_accept_connection(3)>. The default limit for pending connections is 256. An INITIAL
+QUIC packet, which is received by a QUIC server with a full pending connections
+queue, is silently discarded. Setting the value to zero disables the limit.
 
 =item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL> (connection object)
 
@@ -335,11 +347,15 @@ time.
 L<SSL_ctrl(3)>, L<SSL_get_accept_stream_queue_len(3)>,
 L<SSL_get_stream_read_state(3)>, L<SSL_get_stream_write_state(3)>,
 L<SSL_get_stream_read_error_code(3)>, L<SSL_get_stream_write_error_code(3)>,
-L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>
+L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>,
+L<SSL_accept_connection(3)>
 
 =head1 HISTORY
 
-These functions were added in OpenSSL 3.3.
+The value SSL_VALUE_QUIC_MAX_PENDING_CONNS has been added in OpenSSL 4.1
+and ported to older releases 4.0.2, 3.6.4 and 3.5.8.
+
+The remaining functions and values described here were all added in OpenSSL 3.3.
 
 =head1 COPYRIGHT
 
