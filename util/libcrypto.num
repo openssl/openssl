@@ -5727,3 +5727,5 @@ EVP_KDF_CTX_get1_kdf                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_data                    ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set_string                  ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_length_ex                   ?	4_1_0	EXIST::FUNCTION:
+X509_STORE_add_untrusted_cert           ?	4_1_0	EXIST::FUNCTION:
+X509_STORE_get1_untrusted_certs         ?	4_1_0	EXIST::FUNCTION:

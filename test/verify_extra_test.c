@@ -25,6 +25,7 @@ static char *bad_f = NULL;
 static char *req_f = NULL;
 static char *sroot_cert = NULL;
 static char *ca_cert = NULL;
+static char *ca_expired_cert = NULL;
 static char *ee_cert = NULL;
 
 #define load_cert_from_file(file) load_cert_pem(file, NULL)
@@ -766,6 +767,224 @@ static int test_purpose_any(void)
     return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
+/*
+ * Verify ee-cert against a store, exercising X509_STORE_add_untrusted_cert().
+ * add_root:          add sroot-cert (the trust anchor) to the trust store.
+ * store_untrusted_f: cert added via X509_STORE_add_untrusted_cert (or NULL).
+ * peer_untrusted_f:  cert presented as a ctx-level untrusted cert (or NULL).
+ * flags:             extra verify flags (e.g. X509_V_FLAG_PARTIAL_CHAIN).
+ * expected:          expected X509_verify_cert() return.
+ * expected_err:      expected error, checked only on failure (else X509_V_OK).
+ */
+static int do_test_store_untrusted(int add_root, const char *store_untrusted_f,
+    const char *peer_untrusted_f,
+    unsigned long flags, int expected,
+    int expected_err)
+{
+    int ret = 0, npeer;
+    X509 *root = NULL, *store_ca = NULL, *peer_ca = NULL, *ee = NULL;
+    STACK_OF(X509) *peer = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+
+    if (!TEST_ptr(ee = load_cert_from_file(ee_cert))
+        || !TEST_ptr(store = X509_STORE_new()))
+        goto err;
+
+    if (add_root) {
+        if (!TEST_ptr(root = load_cert_from_file(sroot_cert))
+            || !TEST_true(X509_STORE_add_cert(store, root)))
+            goto err;
+    }
+
+    if (store_untrusted_f != NULL) {
+        if (!TEST_ptr(store_ca = load_cert_from_file(store_untrusted_f))
+            || !TEST_true(X509_STORE_add_untrusted_cert(store, store_ca)))
+            goto err;
+    }
+
+    if (peer_untrusted_f != NULL) {
+        if (!TEST_ptr(peer = sk_X509_new_null())
+            || !TEST_ptr(peer_ca = load_cert_from_file(peer_untrusted_f))
+            || !TEST_true(sk_X509_push(peer, peer_ca)))
+            goto err;
+        peer_ca = NULL;
+    }
+
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, ee, peer)))
+        goto err;
+
+    if (flags != 0)
+        X509_STORE_CTX_set_flags(ctx, flags);
+
+    npeer = sk_X509_num(peer);
+    if (!TEST_int_eq(X509_verify_cert(ctx), expected)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            expected == 1 ? X509_V_OK : expected_err))
+        goto err;
+
+    /* The merge must not leak store certs onto the ctx untrusted stack. */
+    if (!TEST_ptr_eq(X509_STORE_CTX_get0_untrusted(ctx), peer)
+        || !TEST_int_eq(sk_X509_num(peer), npeer))
+        goto err;
+
+    ret = 1;
+err:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    OSSL_STACK_OF_X509_free(peer);
+    X509_free(ee);
+    X509_free(root);
+    X509_free(store_ca);
+    X509_free(peer_ca);
+    return ret;
+}
+
+/* Leaf-only chain fails when the intermediate is not available anywhere. */
+static int test_store_untrusted_missing(void)
+{
+    return do_test_store_untrusted(1, NULL, NULL, 0, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
+}
+
+/* Adding the intermediate via the new API completes the chain. */
+static int test_store_untrusted_added(void)
+{
+    return do_test_store_untrusted(1, ca_cert, NULL, 0, 1, X509_V_OK);
+}
+
+/* Store-level untrusted intermediate present, but the root is not trusted. */
+static int test_store_untrusted_no_root(void)
+{
+    return do_test_store_untrusted(0, ca_cert, NULL, 0, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
+}
+
+/*
+ * Key negative test: a store-level untrusted cert must never act as a trust
+ * anchor, so it must not terminate a chain even under PARTIAL_CHAIN.
+ */
+static int test_store_untrusted_no_root_partial(void)
+{
+    return do_test_store_untrusted(0, ca_cert, NULL, X509_V_FLAG_PARTIAL_CHAIN,
+        0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY);
+}
+
+/*
+ * Peer presents an expired intermediate; the store holds a valid
+ * same-subject/same-key reissue, which the builder prefers over the expired
+ * one when selecting ee-cert's issuer.
+ */
+static int test_store_untrusted_reissued(void)
+{
+    return do_test_store_untrusted(1, ca_cert, ca_expired_cert, 0, 1,
+        X509_V_OK);
+}
+
+/* Without the valid reissue, only the expired peer intermediate is available. */
+static int test_store_untrusted_reissued_missing(void)
+{
+    return do_test_store_untrusted(1, NULL, ca_expired_cert, 0, 0,
+        X509_V_ERR_CERT_HAS_EXPIRED);
+}
+
+/* Getter round-trip: get1 semantics, empty store, and post-add contents. */
+static int test_store_untrusted_getter(void)
+{
+    int ret = 0;
+    X509 *ca = NULL, *ee = NULL;
+    X509_STORE *store = NULL;
+    STACK_OF(X509) *got = NULL, *all = NULL;
+
+    if (!TEST_ptr(store = X509_STORE_new()))
+        goto err;
+
+    /* An empty store yields an empty stack, not NULL. */
+    if (!TEST_ptr(got = X509_STORE_get1_untrusted_certs(store))
+        || !TEST_int_eq(sk_X509_num(got), 0))
+        goto err;
+    sk_X509_pop_free(got, X509_free);
+    got = NULL;
+
+    if (!TEST_ptr(ca = load_cert_from_file(ca_cert))
+        || !TEST_ptr(ee = load_cert_from_file(ee_cert))
+        || !TEST_true(X509_STORE_add_untrusted_cert(store, ca))
+        || !TEST_true(X509_STORE_add_untrusted_cert(store, ee)))
+        goto err;
+
+    if (!TEST_ptr(got = X509_STORE_get1_untrusted_certs(store))
+        || !TEST_int_eq(sk_X509_num(got), 2)
+        || !TEST_int_ge(sk_X509_find(got, ca), 0)
+        || !TEST_int_ge(sk_X509_find(got, ee), 0))
+        goto err;
+
+    /* Untrusted certs must stay invisible to trust-store enumeration. */
+    if (!TEST_ptr(all = X509_STORE_get1_all_certs(store))
+        || !TEST_int_eq(sk_X509_num(all), 0))
+        goto err;
+
+    ret = 1;
+err:
+    sk_X509_pop_free(got, X509_free);
+    OSSL_STACK_OF_X509_free(all);
+    X509_STORE_free(store);
+    X509_free(ca);
+    X509_free(ee);
+    return ret;
+}
+
+/*
+ * A cert added to the shared store after a ctx has been created is picked up
+ * by subsequent verifications using that store.
+ */
+static int test_store_untrusted_add_after_ctx(void)
+{
+    int ret = 0;
+    X509 *root = NULL, *ca = NULL, *ee = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+
+    if (!TEST_ptr(ee = load_cert_from_file(ee_cert))
+        || !TEST_ptr(root = load_cert_from_file(sroot_cert))
+        || !TEST_ptr(ca = load_cert_from_file(ca_cert))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, root)))
+        goto err;
+
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, ee, NULL)))
+        goto err;
+
+    /* Without the intermediate, verification fails. */
+    if (!TEST_int_eq(X509_verify_cert(ctx), 0)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY))
+        goto err;
+
+    /* Add the intermediate to the shared store after ctx creation. */
+    if (!TEST_true(X509_STORE_add_untrusted_cert(store, ca)))
+        goto err;
+
+    /* A subsequent verification against the same store now succeeds. */
+    X509_STORE_CTX_free(ctx);
+    ctx = NULL;
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, ee, NULL))
+        || !TEST_int_eq(X509_verify_cert(ctx), 1))
+        goto err;
+
+    ret = 1;
+err:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    X509_free(ee);
+    X509_free(root);
+    X509_free(ca);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -785,6 +1004,7 @@ int setup_tests(void)
         || !TEST_ptr(req_f = test_mk_file_path(certs_dir, "sm2-csr.pem"))
         || !TEST_ptr(sroot_cert = test_mk_file_path(certs_dir, "sroot-cert.pem"))
         || !TEST_ptr(ca_cert = test_mk_file_path(certs_dir, "ca-cert.pem"))
+        || !TEST_ptr(ca_expired_cert = test_mk_file_path(certs_dir, "ca-expired.pem"))
         || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem")))
         goto err;
 
@@ -800,6 +1020,14 @@ int setup_tests(void)
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
+    ADD_TEST(test_store_untrusted_missing);
+    ADD_TEST(test_store_untrusted_added);
+    ADD_TEST(test_store_untrusted_no_root);
+    ADD_TEST(test_store_untrusted_no_root_partial);
+    ADD_TEST(test_store_untrusted_reissued);
+    ADD_TEST(test_store_untrusted_reissued_missing);
+    ADD_TEST(test_store_untrusted_getter);
+    ADD_TEST(test_store_untrusted_add_after_ctx);
     return 1;
 err:
     cleanup_tests();
@@ -815,5 +1043,6 @@ void cleanup_tests(void)
     OPENSSL_free(req_f);
     OPENSSL_free(sroot_cert);
     OPENSSL_free(ca_cert);
+    OPENSSL_free(ca_expired_cert);
     OPENSSL_free(ee_cert);
 }

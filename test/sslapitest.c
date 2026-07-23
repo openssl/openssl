@@ -661,6 +661,95 @@ end:
     return testresult;
 }
 
+/*
+ * Verify that intermediate certificates preloaded into the client's cert store
+ * with X509_STORE_add_untrusted_cert() can be used to complete an incomplete
+ * server chain during a TLS handshake.
+ */
+static int test_store_add_untrusted_tls(void)
+{
+    /* server key and (leaf-only) cert, plus the missing intermediates */
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
+    char *int2 = test_mk_file_path(certsdir, "subinterCA.pem");
+    char *int1 = test_mk_file_path(certsdir, "interCA.pem");
+    char *root = test_mk_file_path(certsdir, "rootCA.pem");
+    X509 *crt1 = NULL, *crt2 = NULL;
+    X509_STORE *cstore = NULL;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, NULL, NULL)))
+        goto end;
+
+    /* The server presents only its leaf certificate (an incomplete chain). */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(sctx, leaf), 1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, skey,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+
+    /* The client trusts only the root and requires server verification. */
+    if (!TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL)))
+        goto end;
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, NULL);
+
+    /* Without the intermediates the chain cannot be built, so it fails. */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_int_eq(SSL_get_verify_result(clientssl),
+            X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY))
+        goto end;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    serverssl = clientssl = NULL;
+
+    /* Preload the missing intermediates into the client's cert store. */
+    if (!TEST_ptr(cstore = SSL_CTX_get_cert_store(cctx))
+        || !TEST_ptr((crt1 = load_cert_pem(int1, libctx)))
+        || !TEST_ptr((crt2 = load_cert_pem(int2, libctx)))
+        || !TEST_true(X509_STORE_add_untrusted_cert(cstore, crt1))
+        || !TEST_true(X509_STORE_add_untrusted_cert(cstore, crt2)))
+        goto end;
+
+    /* The handshake now succeeds with the chain completed via the store. */
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    /* The verified chain must include both intermediates and the root. */
+    if (!TEST_int_eq(sk_X509_num(SSL_get0_verified_chain(clientssl)), 4))
+        goto end;
+
+    testresult = 1;
+
+end:
+    X509_free(crt1);
+    X509_free(crt2);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    OPENSSL_free(skey);
+    OPENSSL_free(leaf);
+    OPENSSL_free(int2);
+    OPENSSL_free(int1);
+    OPENSSL_free(root);
+
+    return testresult;
+}
+
 static int test_ssl_build_cert_chain(void)
 {
     int ret = 0;
@@ -15452,6 +15541,7 @@ int setup_tests(void)
     ADD_TEST(test_keylog_no_master_key);
 #endif
     ADD_TEST(test_client_cert_verify_cb);
+    ADD_TEST(test_store_add_untrusted_tls);
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2

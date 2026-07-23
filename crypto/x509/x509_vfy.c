@@ -3674,6 +3674,7 @@ static int build_chain(X509_STORE_CTX *ctx)
     SSL_DANE *dane = ctx->dane;
     int num = sk_X509_num(ctx->chain);
     STACK_OF(X509) *sk_untrusted = NULL;
+    STACK_OF(X509) *sk_store_untrusted = NULL;
     unsigned int search;
     int may_trusted = 0;
     int may_alternate = 0;
@@ -3690,6 +3691,17 @@ static int build_chain(X509_STORE_CTX *ctx)
 #define S_DOUNTRUSTED (1 << 0) /* Search untrusted chain */
 #define S_DOTRUSTED (1 << 1) /* Search trusted store */
 #define S_DOALTERNATE (1 << 2) /* Retry with pruned alternate chain */
+
+    /*
+     * Snapshot store-level untrusted certificates to use as chain candidates,
+     * in addition to the ctx-level untrusted stack.
+     */
+    if (ctx->store != NULL
+        && !ossl_x509_store_get1_untrusted(ctx->store, &sk_store_untrusted)) {
+        ctx->error = X509_V_ERR_STORE_LOOKUP;
+        return -1;
+    }
+
     /*
      * Set up search policy, untrusted if possible, trusted-first if enabled,
      * which is the default.
@@ -3698,7 +3710,9 @@ static int build_chain(X509_STORE_CTX *ctx)
      * and alternate chains are not disabled, try building an alternate chain
      * if no luck with untrusted first.
      */
-    search = ctx->untrusted != NULL ? S_DOUNTRUSTED : 0;
+    search = (ctx->untrusted != NULL || sk_X509_num(sk_store_untrusted) > 0)
+        ? S_DOUNTRUSTED
+        : 0;
     if (DANETLS_HAS_PKIX(dane) || !DANETLS_HAS_DANE(dane)) {
         if (search == 0 || (ctx->param->flags & X509_V_FLAG_TRUSTED_FIRST) != 0)
             search |= S_DOTRUSTED;
@@ -3729,6 +3743,15 @@ static int build_chain(X509_STORE_CTX *ctx)
      * multiple passes over it, while free to remove elements as we go.
      */
     if (!X509_add_certs(sk_untrusted, ctx->untrusted, X509_ADD_FLAG_DEFAULT)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto memerr;
+    }
+
+    /*
+     * Append the store-level untrusted certificates after the peer-presented
+     * ones, so ctx-level candidates are tried first.
+     */
+    if (!X509_add_certs(sk_untrusted, sk_store_untrusted, X509_ADD_FLAG_DEFAULT)) {
         ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
         goto memerr;
     }
@@ -3949,6 +3972,7 @@ static int build_chain(X509_STORE_CTX *ctx)
         }
     }
     sk_X509_free(sk_untrusted);
+    sk_X509_pop_free(sk_store_untrusted, X509_free);
 
     if (trust < 0) /* internal error */
         return trust;
@@ -4004,11 +4028,13 @@ int_err:
     ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
     ctx->error = X509_V_ERR_UNSPECIFIED;
     sk_X509_free(sk_untrusted);
+    sk_X509_pop_free(sk_store_untrusted, X509_free);
     return -1;
 
 memerr:
     ctx->error = X509_V_ERR_OUT_OF_MEM;
     sk_X509_free(sk_untrusted);
+    sk_X509_pop_free(sk_store_untrusted, X509_free);
     return -1;
 }
 
@@ -4039,7 +4065,7 @@ STACK_OF(X509) *X509_build_chain(const X509 *target, STACK_OF(X509) *certs,
     }
     ctx->num_untrusted = 1;
 
-    if (!build_chain(ctx) && finish_chain)
+    if (build_chain(ctx) <= 0 && finish_chain)
         goto err;
 
     /* result list to store the up_ref'ed certificates */
