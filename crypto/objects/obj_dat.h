@@ -20,7 +20,7 @@
 #include <crypto/asn1.h>
 
 /* Serialized OID's */
-static const unsigned char so[9582] = {
+static const unsigned char so[9598] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,                 /* [    0] OBJ_rsadsi */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,            /* [    6] OBJ_pkcs */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x02,0x02,       /* [   13] OBJ_md2 */
@@ -1364,9 +1364,11 @@ static const unsigned char so[9582] = {
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x0D,  /* [ 9549] OBJ_id_smime_ori */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x0D,0x03,  /* [ 9559] OBJ_id_smime_ori_kem */
     0x2A,0x86,0x48,0x86,0xF7,0x0D,0x01,0x09,0x10,0x03,0x11,  /* [ 9570] OBJ_id_alg_hss_lms_hashsig */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x19,0x01,       /* [ 9581] OBJ_id_rdna_unsigned */
+    0x2B,0x06,0x01,0x05,0x05,0x07,0x06,0x24,       /* [ 9589] OBJ_id_alg_unsigned */
 };
 
-#define NUM_NID 1502
+#define NUM_NID 1504
 static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"UNDEF", "undefined", NID_undef},
     {"rsadsi", "RSA Data Security, Inc.", NID_rsadsi, 6, &so[0]},
@@ -2870,9 +2872,11 @@ static const ASN1_OBJECT nid_objs[NUM_NID] = {
     {"id-smime-ori", "id-smime-ori", NID_id_smime_ori, 10, &so[9549]},
     {"id-smime-ori-kem", "id-smime-ori-kem", NID_id_smime_ori_kem, 11, &so[9559]},
     {"id-alg-hss-lms-hashsig", "id-alg-hss-lms-hashsig", NID_id_alg_hss_lms_hashsig, 11, &so[9570]},
+    {"id-rdna-unsigned", "id-rdna-unsigned", NID_id_rdna_unsigned, 8, &so[9581]},
+    {"id-alg-unsigned", "id-alg-unsigned", NID_id_alg_unsigned, 8, &so[9589]},
 };
 
-#define NUM_SN 1493
+#define NUM_SN 1495
 static const unsigned int sn_objs[NUM_SN] = {
      364,    /* "AD_DVCS" */
      419,    /* "AES-128-CBC" */
@@ -3510,6 +3514,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1454,    /* "id-alg-ml-kem-512" */
     1455,    /* "id-alg-ml-kem-768" */
      324,    /* "id-alg-noSignature" */
+    1503,    /* "id-alg-unsigned" */
      907,    /* "id-camellia128-wrap" */
      908,    /* "id-camellia192-wrap" */
      909,    /* "id-camellia256-wrap" */
@@ -3661,6 +3666,7 @@ static const unsigned int sn_objs[NUM_SN] = {
      259,    /* "id-qt" */
      164,    /* "id-qt-cps" */
      165,    /* "id-qt-unotice" */
+    1502,    /* "id-rdna-unsigned" */
      313,    /* "id-regCtrl" */
     1259,    /* "id-regCtrl-algId" */
     1258,    /* "id-regCtrl-altCertTemplate" */
@@ -4369,7 +4375,7 @@ static const unsigned int sn_objs[NUM_SN] = {
     1289,    /* "zstd" */
 };
 
-#define NUM_LN 1493
+#define NUM_LN 1495
 static const unsigned int ln_objs[NUM_LN] = {
      363,    /* "AD Time Stamping" */
      405,    /* "ANSI X9.62" */
@@ -5200,6 +5206,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      325,    /* "id-alg-dh-sig-hmac-sha1" */
     1501,    /* "id-alg-hss-lms-hashsig" */
      324,    /* "id-alg-noSignature" */
+    1503,    /* "id-alg-unsigned" */
      907,    /* "id-camellia128-wrap" */
      908,    /* "id-camellia192-wrap" */
      909,    /* "id-camellia256-wrap" */
@@ -5305,6 +5312,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      267,    /* "id-qcs" */
      359,    /* "id-qcs-pkixQCSyntax-v1" */
      259,    /* "id-qt" */
+    1502,    /* "id-rdna-unsigned" */
      313,    /* "id-regCtrl" */
     1259,    /* "id-regCtrl-algId" */
     1258,    /* "id-regCtrl-altCertTemplate" */
@@ -5866,7 +5874,7 @@ static const unsigned int ln_objs[NUM_LN] = {
      125,    /* "zlib compression" */
 };
 
-#define NUM_OBJ 1350
+#define NUM_OBJ 1352
 static const unsigned int obj_objs[NUM_OBJ] = {
        0,    /* OBJ_undef                        0 */
      181,    /* OBJ_iso                          1 */
@@ -6695,6 +6703,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      324,    /* OBJ_id_alg_noSignature           1 3 6 1 5 5 7 6 2 */
      325,    /* OBJ_id_alg_dh_sig_hmac_sha1      1 3 6 1 5 5 7 6 3 */
      326,    /* OBJ_id_alg_dh_pop                1 3 6 1 5 5 7 6 4 */
+    1503,    /* OBJ_id_alg_unsigned              1 3 6 1 5 5 7 6 36 */
      327,    /* OBJ_id_cmc_statusInfo            1 3 6 1 5 5 7 7 1 */
      328,    /* OBJ_id_cmc_identification        1 3 6 1 5 5 7 7 2 */
      329,    /* OBJ_id_cmc_identityProof         1 3 6 1 5 5 7 7 3 */
@@ -6742,6 +6751,7 @@ static const unsigned int obj_objs[NUM_OBJ] = {
      664,    /* OBJ_id_ppl_anyLanguage           1 3 6 1 5 5 7 21 0 */
      665,    /* OBJ_id_ppl_inheritAll            1 3 6 1 5 5 7 21 1 */
      667,    /* OBJ_Independent                  1 3 6 1 5 5 7 21 2 */
+    1502,    /* OBJ_id_rdna_unsigned             1 3 6 1 5 5 7 25 1 */
      178,    /* OBJ_ad_OCSP                      1 3 6 1 5 5 7 48 1 */
      179,    /* OBJ_ad_ca_issuers                1 3 6 1 5 5 7 48 2 */
      363,    /* OBJ_ad_timeStamping              1 3 6 1 5 5 7 48 3 */
