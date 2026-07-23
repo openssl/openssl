@@ -1,0 +1,37 @@
+# Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+#
+# Licensed under the Apache License 2.0 (the "License").  You may not use
+# this file except in compliance with the License.  You can obtain a copy
+# in the LICENSE file in the source distribution or at
+# https://www.openssl.org/source/license.html
+
+name: Validate CI bot dispatch inputs
+
+on:
+  workflow_call:
+    inputs:
+      pr:
+        required: true
+        type: string
+      head_sha:
+        required: true
+        type: string
+      check_run_id:
+        required: true
+        type: string
+
+permissions: {}
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate pr / head_sha / check_run_id
+        env:
+          PR: ${{ inputs.pr }}
+          HEAD_SHA: ${{ inputs.head_sha }}
+          CHECK_RUN_ID: ${{ inputs.check_run_id }}
+        run: |
+          [[ "$PR" =~ ^[1-9][0-9]*$ ]] || { echo "::error::pr must be a positive integer"; exit 1; }
+          [[ "$CHECK_RUN_ID" =~ ^[1-9][0-9]*$ ]] || { echo "::error::check_run_id must be a positive integer"; exit 1; }
+          [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::head_sha must be a 40-character lowercase hex commit SHA"; exit 1; }
