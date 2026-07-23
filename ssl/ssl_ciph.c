@@ -471,7 +471,7 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
         else
             return 0;
 
-        *enc = ssl_evp_cipher_fetch(ctx->libctx, sn, ctx->propq);
+        *enc = EVP_CIPHER_fetch(ctx->libctx, sn, ctx->propq);
 
         if (*enc == NULL)
             return 0;
