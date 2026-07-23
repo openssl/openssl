@@ -24,11 +24,10 @@
 #include <openssl/opensslconf.h>
 #include "internal/cryptlib.h"
 #include <openssl/aes.h>
-#include "aes_local.h"
+#include "crypto/modes.h"
+#include "crypto/aes_platform.h"
 
-#if (defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) || defined(_M_X64)) && !defined(OPENSSL_NO_ASM)
-#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) \
-    || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
+#if VAES_CBC_ELIGIBLE
 
 /* Function prototypes */
 void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
@@ -389,5 +388,4 @@ OPENSSL_UNTARGET_VAES512
 #undef STRINGIFY_
 #undef OSSL_FUNC_ALWAYS_INLINE
 #undef OSSL_FUNC_NOINLINE
-#endif /* GCC >= 8 || Clang >= 7 || MSVC */
-#endif /* __x86_64__ || _M_AMD64 && !OPENSSL_NO_ASM */
+#endif /* VAES_CBC_ELIGIBLE */

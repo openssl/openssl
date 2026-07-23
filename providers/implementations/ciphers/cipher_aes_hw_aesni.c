@@ -68,22 +68,6 @@ static const PROV_CIPHER_HW aesni_cbc = {
     ossl_cipher_aes_copyctx
 };
 
-/*
- * The VAES CBC decrypt path is implemented with AVX-512 C intrinsics
- * (crypto/aes/aes_cbc_vaes_intrinsic.c) and therefore requires both a
- * 64-bit x86 target and a toolchain new enough to support those intrinsics.
- * Keep this guard in sync with the one protecting the implementation.
- */
-#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
-    && !defined(OPENSSL_NO_ASM)                                                        \
-    && ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8))                  \
-        || (defined(__clang__) && (__clang_major__ >= 7))                              \
-        || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
-#define VAES_CBC_ELIGIBLE 1
-#else
-#define VAES_CBC_ELIGIBLE 0
-#endif
-
 #if VAES_CBC_ELIGIBLE
 /*
  * CBC decryption is fully parallel, so VAES accelerates it; CBC encryption is

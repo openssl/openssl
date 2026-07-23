@@ -211,8 +211,23 @@ void ossl_aes_cfb128_vaes_dec(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *ks,
     const unsigned char ivec[16], ossl_ssize_t *num);
 
-#if ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8)) \
-    || (defined(__clang__) && (__clang_major__ >= 7)) || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
+/*
+ * VAES CBC decrypt (AVX-512 intrinsics) needs a 64-bit x86 target and a
+ * new-enough toolchain; the 64-bit check is repeated as this block is also
+ * entered for i386.  Defined next to ossl_aes_cbc_vaes_decrypt() to keep the
+ * guards in sync.
+ */
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
+    && !defined(OPENSSL_NO_ASM)                                                        \
+    && ((defined(__GNUC__) && !defined(__clang__) && (__GNUC__ >= 8))                  \
+        || (defined(__clang__) && (__clang_major__ >= 7))                              \
+        || (defined(_MSC_VER) && (_MSC_VER >= 1927)))
+#define VAES_CBC_ELIGIBLE 1
+#else
+#define VAES_CBC_ELIGIBLE 0
+#endif
+
+#if VAES_CBC_ELIGIBLE
 
 void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key, unsigned char ivec[16], int enc);
