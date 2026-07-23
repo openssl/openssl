@@ -1307,9 +1307,19 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         return X509_V_ERR_OCSP_NO_RESPONSE;
 
     if ((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, ctx->error_depth)) == NULL
-        || (bs = OCSP_response_get1_basic(resp)) == NULL
-        || (num = OCSP_resp_count(bs)) < 1)
+        || (bs = OCSP_response_get1_basic(resp)) == NULL)
         return X509_V_ERR_OCSP_NO_RESPONSE;
+
+    /*
+     * OCSP_response_get1_basic() returns an owning reference, so once bs is
+     * non-NULL it must be released via the end: cleanup label. Route an empty
+     * BasicResponse (no single responses) through end: rather than returning
+     * directly, otherwise bs leaks.
+     */
+    if ((num = OCSP_resp_count(bs)) < 1) {
+        ret = X509_V_ERR_OCSP_NO_RESPONSE;
+        goto end;
+    }
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         OCSP_BASICRESP_free(bs);
