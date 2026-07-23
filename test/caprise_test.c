@@ -417,7 +417,7 @@ static int test_caprise_dimensions(void)
         outlen = 0;
         tmplen = 0;
         if (!TEST_true(EVP_CipherUpdate(enc_ctx, ciphertext, &outlen,
-                                       plaintext, data_len)))
+                                       plaintext, (int)data_len)))
             goto cleanup_loop;
         if (!TEST_true(EVP_CipherFinal(enc_ctx, ciphertext + outlen, &tmplen)))
             goto cleanup_loop;
@@ -443,7 +443,7 @@ static int test_caprise_dimensions(void)
         outlen = 0;
         tmplen = 0;
         if (!TEST_true(EVP_CipherUpdate(dec_ctx, decrypted, &outlen,
-                                       ciphertext, data_len)))
+                                       ciphertext, (int)data_len)))
             goto cleanup_loop;
         if (!TEST_true(EVP_CipherFinal(dec_ctx, decrypted + outlen, &tmplen)))
             goto cleanup_loop;
