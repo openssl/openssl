@@ -5948,6 +5948,19 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s)
     return ctx.qc->ch;
 }
 
+QUIC_PORT *ossl_quic_listener_get_port(SSL *s)
+{
+    QCTX ctx;
+
+    /*
+     * expect listerner only
+     */
+    if (!expect_quic_listener(s, &ctx))
+        return NULL;
+
+    return ctx.ql->port;
+}
+
 int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title)
 {
 #ifndef OPENSSL_NO_QLOG
