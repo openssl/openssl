@@ -115,9 +115,71 @@ finished sending Early Data.
 
 =head1 HELLO RETRY REQUEST
 
-To utilize HelloRetryRequest and cookie exchange to validate the client in DTLSv1.3,
-use the L<SSL_stateless(3)> function. L<DTLSv1_listen(3)> will still use HelloVerifyRequest to
-validate the client.
+For DTLSv1.3 server applications, use L<SSL_new_listener(3)> with the
+B<SSL_LISTENER_FLAG_REQUIRE_HRR> flag to enable HelloRetryRequest cookie validation.
+This provides connection demultiplexing for multiple clients on a single UDP socket.
+
+Note that L<DTLSv1_listen(3)> only supports DTLS 1.0/1.2 with HelloVerifyRequest and
+cannot be used with DTLSv1.3.
+
+=head1 DTLS LISTENER API
+
+For DTLSv1.3 server applications that need to handle multiple clients on a single
+UDP socket, the SSL Listener API provides connection demultiplexing and address
+validation. Unlike L<DTLSv1_listen(3)> which only supports DTLS 1.0/1.2 with
+HelloVerifyRequest, the listener API fully supports DTLSv1.3 with HelloRetryRequest
+cookie validation.
+
+Create a DTLS listener using L<SSL_new_listener(3)> with an SSL_CTX configured
+for DTLS. The following flags control listener behavior:
+
+=over 4
+
+=item B<SSL_LISTENER_FLAG_NO_VALIDATE>
+
+Disables all address validation. The listener will not send HelloVerifyRequest
+(for DTLS 1.0/1.2) or HelloRetryRequest with cookie (for DTLSv1.3). This is
+faster but provides no protection against amplification attacks. Not recommended
+for use in untrusted network environments.
+
+=item B<SSL_LISTENER_FLAG_REQUIRE_HVR>
+
+Requires HelloVerifyRequest (HVR) cookie exchange for DTLS 1.0 and DTLS 1.2
+connections. This provides protection against amplification attacks for pre-1.3
+DTLS versions.
+
+=item B<SSL_LISTENER_FLAG_REQUIRE_HRR>
+
+Requires HelloRetryRequest (HRR) cookie exchange for DTLSv1.3 connections. This
+provides protection against amplification attacks for DTLSv1.3. Both
+B<SSL_LISTENER_FLAG_REQUIRE_HVR> and B<SSL_LISTENER_FLAG_REQUIRE_HRR> may be
+specified together to enable address validation for all supported DTLS versions.
+
+=item B<SSL_LISTENER_FLAG_SINGLE_THREAD>
+
+Specifies that the DTLS listener will operate in single-threaded mode. When this
+flag is set, the listener and all connections accepted from it should only be
+used from a single thread. This avoids the overhead of internal synchronization
+mechanisms.
+
+=back
+
+By default (when B<SSL_LISTENER_FLAG_SINGLE_THREAD> is not set), the listener
+initializes internal synchronization mechanisms that allow connections accepted
+from the listener to be safely used from multiple threads concurrently. This
+includes a notifier mechanism that enables efficient polling across threads.
+
+After attaching a UDP socket BIO with L<SSL_set_bio(3)> and calling L<SSL_listen(3)>,
+use L<SSL_accept_connection(3)> to accept incoming connections. Each accepted
+connection has completed cookie validation (if required) but still requires
+L<SSL_do_handshake(3)> or L<SSL_accept(3)> to complete the TLS handshake before
+application data can be exchanged.
+
+Pending connections that do not complete their handshake within the timeout period
+(default 30 seconds) are automatically cleaned up. Use
+L<SSL_listener_set_pending_timeout(3)> to adjust this timeout.
+
+See L<SSL_new_listener(3)> for complete API documentation.
 
 =head1 APPLICATION DATA
 
