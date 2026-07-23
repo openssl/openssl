@@ -39,6 +39,7 @@ jobs:
           no-bulk,
           no-cached-fetch,
           no-camellia,
+          no-caprise,
           no-cast,
           no-chacha,
           no-cmac,

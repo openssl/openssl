@@ -455,6 +455,7 @@ my @disablables_algorithms = (
     "blake2",
     "brotli",
     "camellia",
+    "caprise",
     "cast",
     "chacha",
     "cmac",

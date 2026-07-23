@@ -45,6 +45,7 @@ jobs:
           no-dtls,
           no-ec,
           no-ecx,
+          no-caprise,
           no-ml-dsa,
           no-ml-kem,
           no-http,

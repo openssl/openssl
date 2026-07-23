@@ -220,5 +220,7 @@ IF[{- !$disabled{chacha} -}]
  ENDIF
 ENDIF
 
-SOURCE[$CAPRISE_GOAL]=\
-      cipher_caprise.c
+IF[{- !$disabled{caprise} -}]
+  SOURCE[$CAPRISE_GOAL]=\
+        cipher_caprise.c
+ENDIF

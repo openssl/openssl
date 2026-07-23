@@ -65,7 +65,7 @@ IF[{- !$disabled{tests} -}]
           x509_time_test x509_dup_cert_test x509_check_cert_pkey_test \
           recordlentest drbgtest rand_status_test sslbuffertest \
           time_offset_test pemtest ssl_cert_table_internal_test ciphername_test \
-          caprise_test servername_test ocspapitest fatalerrtest tls13ccstest \
+          servername_test ocspapitest ocsptest fatalerrtest tls13ccstest \
           sysdefaulttest errtest ssl_ctx_test build_wincrypt_test \
           context_internal_test aesgcmtest params_test evp_pkey_dparams_test \
           keymgmt_internal_test hexstr_test provider_status_test defltfips_test \
@@ -564,9 +564,12 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cipherlist_test]=../include ../apps/include
   DEPEND[cipherlist_test]=../libcrypto ../libssl libtestutil.a
 
-  SOURCE[caprise_test]=caprise_test.c
-  INCLUDE[caprise_test]=../include ../apps/include
-  DEPEND[caprise_test]=../libcrypto libtestutil.a
+  IF[{- !$disabled{caprise} -}]
+    PROGRAMS{noinst}=caprise_test
+    SOURCE[caprise_test]=caprise_test.c
+    INCLUDE[caprise_test]=../include ../apps/include
+    DEPEND[caprise_test]=../libcrypto libtestutil.a
+  ENDIF
 
   INCLUDE[helpers/ssl_test_ctx.o]=../include
   INCLUDE[helpers/handshake.o]=.. ../include

@@ -6,7 +6,11 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-
+use strict;
+use OpenSSL::Test;              # get 'plan'
 use OpenSSL::Test::Simple;
+use OpenSSL::Test::Utils;
 
-simple_test("test_caprise", "caprise_test");
+setup("test_caprise");
+
+simple_test("test_caprise", "caprise_test", "caprise");
