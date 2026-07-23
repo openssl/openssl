@@ -264,6 +264,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     unsigned char *out = NULL;
     int outlen = 0;
     int rv = 0;
+    size_t outsize;
 
     if (keklen > sizeof(kek)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
@@ -282,7 +283,13 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     /* obtain output length of ciphered key */
     if (!EVP_CipherUpdate(kemri->ctx, NULL, &outlen, in, (int)inlen))
         goto err;
-    out = OPENSSL_malloc(outlen);
+    /*
+     * On its integrity-failure paths that primitive writes and cleanses up to
+     * inlen bytes of the output buffer. Size the buffer for that worst case so
+     * a failed unwrap cannot write past the allocation.
+     */
+    outsize = (size_t)outlen < inlen ? inlen : (size_t)outlen;
+    out = OPENSSL_malloc(outsize);
     if (out == NULL)
         goto err;
     if (!EVP_CipherUpdate(kemri->ctx, out, &outlen, in, (int)inlen))
