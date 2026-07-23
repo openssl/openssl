@@ -8336,6 +8336,11 @@ int SSL_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return ossl_quic_get_value_uint(s, class_, id, value);
 #endif
 
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(s))
+        return ossl_dtls_get_value_uint(s, class_, id, value);
+#endif
+
     ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_PROTOCOL);
     return 0;
 }
@@ -8346,6 +8351,11 @@ int SSL_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
         return ossl_quic_set_value_uint(s, class_, id, value);
+#endif
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+    if (IS_DTLS_LISTENER(s))
+        return ossl_dtls_set_value_uint(s, class_, id, value);
 #endif
 
     ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_PROTOCOL);
@@ -8466,60 +8476,6 @@ int SSL_listen(SSL *ssl)
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
     if (IS_DTLS(ssl))
         return ossl_dtls_listen(ssl);
-#endif
-
-    return 0;
-}
-
-int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms)
-{
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (IS_DTLS(ssl)) {
-        OSSL_TIME timeout;
-
-        if (timeout_ms == UINT64_MAX)
-            timeout = ossl_time_infinite();
-        else
-            timeout = ossl_ms2time(timeout_ms);
-
-        return ossl_dtls_listener_set_pending_timeout(ssl, timeout);
-    }
-#endif
-
-    return 0;
-}
-
-uint64_t SSL_listener_get_pending_timeout(const SSL *ssl)
-{
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (IS_DTLS(ssl)) {
-        OSSL_TIME timeout = ossl_dtls_listener_get_pending_timeout(ssl);
-
-        if (ossl_time_is_infinite(timeout))
-            return UINT64_MAX;
-
-        return ossl_time2ms(timeout);
-    }
-#endif
-
-    return 0;
-}
-
-int SSL_listener_set_max_pending_conns(SSL *ssl, size_t max_conns)
-{
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (IS_DTLS(ssl))
-        return ossl_dtls_listener_set_max_pending_conns(ssl, max_conns);
-#endif
-
-    return 0;
-}
-
-size_t SSL_listener_get_max_pending_conns(const SSL *ssl)
-{
-#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
-    if (IS_DTLS(ssl))
-        return ossl_dtls_listener_get_max_pending_conns(ssl);
 #endif
 
     return 0;

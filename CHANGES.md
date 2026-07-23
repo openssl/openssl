@@ -31,6 +31,20 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * DTLS listeners created by SSL_new_listener() now expose their tunables
+   through SSL_get_value_uint() / SSL_set_value_uint(). Two values are
+   defined:
+
+   - SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS caps the number of pending
+     (handshake-in-progress) connections. Default 1000. Setting the
+     value to 0 is rejected. Datagrams from novel peers are silently
+     dropped once the cap is reached.
+   - SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT sets the reap timeout for
+     pending connections, in milliseconds. Default 30000. UINT64_MAX
+     disables the timeout.
+
+   *Ryan Hooper*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
