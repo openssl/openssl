@@ -122,12 +122,180 @@ err:
     return ret;
 }
 
+/* 32473.{123-456}.{789-}, the example of section 5.3.1. */
+#define EXAMPLE_PATTERN "\x81\xfd\x59\x81\xfd\x59\x7b\x83\x48\x86\x15\x80"
+/* 32473.{2^64+1 - 2^64+3}. */
+#define LARGE_PATTERN                                                  \
+    "\x81\xfd\x59\x81\xfd\x59\x82\x80\x80\x80\x80\x80\x80\x80\x80\x01" \
+    "\x82\x80\x80\x80\x80\x80\x80\x80\x80\x03"
+/* 32473.1.2.1.{3-}: CA 32473.1's landmark groups for log 1, landmark 3 on. */
+#define LANDMARK_PATTERN \
+    "\x81\xfd\x59\x81\xfd\x59\x01\x01\x02\x02\x01\x01\x03\x80"
+
+/*
+ * Trust anchor ID pattern test vectors: those of section 5.3.1 and Appendix A
+ * of https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/,
+ * then a landmark group pattern.
+ */
+static const struct {
+    const char *pattern;
+    size_t pattern_len;
+    const char *id;
+    size_t id_len;
+    int contains;
+} pattern_tests[] = {
+    /* 32473.123.789 */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x7b\x86\x15", 6, 1 },
+    /* 32473.300.900 */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x82\x2c\x87\x04", 7, 1 },
+    /* 32473.456.99999 */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x83\x48\x86\x8d\x1f", 8, 1 },
+    /* 32473.456.(2^64-1) */
+    { EXAMPLE_PATTERN, 12,
+        "\x81\xfd\x59\x83\x48\x81\xff\xff\xff\xff\xff\xff\xff\xff\x7f", 15, 1 },
+    /* 32473.456.(2^64) */
+    { EXAMPLE_PATTERN, 12,
+        "\x81\xfd\x59\x83\x48\x82\x80\x80\x80\x80\x80\x80\x80\x80\x00", 15, 1 },
+    /* 32473.123, too few components */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x7b", 4, 0 },
+    /* 32473.123.789.0, too many components */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x7b\x86\x15\x00", 7, 0 },
+    /* 32474.123.789, first component out of range */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x5a\x7b\x86\x15", 6, 0 },
+    /* 32473.500.789, second component out of range */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x83\x74\x86\x15", 7, 0 },
+    /* 32473.123.700, third component out of range */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x7b\x85\x3c", 6, 0 },
+    /* invalid ID, not minimally encoded */
+    { EXAMPLE_PATTERN, 12, "\x80\x81\xfd\x59\x7b\x86\x15", 7, 0 },
+    /* invalid ID, component truncated */
+    { EXAMPLE_PATTERN, 12, "\x81\xfd\x59\x7b\x86\x95", 6, 0 },
+    /* 32473.(2^64+1) */
+    { LARGE_PATTERN, 26,
+        "\x81\xfd\x59\x82\x80\x80\x80\x80\x80\x80\x80\x80\x01", 13, 1 },
+    /* 32473.(2^64+2) */
+    { LARGE_PATTERN, 26,
+        "\x81\xfd\x59\x82\x80\x80\x80\x80\x80\x80\x80\x80\x02", 13, 1 },
+    /* 32473.(2^64+3) */
+    { LARGE_PATTERN, 26,
+        "\x81\xfd\x59\x82\x80\x80\x80\x80\x80\x80\x80\x80\x03", 13, 1 },
+    /* 32473.2 */
+    { LARGE_PATTERN, 26, "\x81\xfd\x59\x02", 4, 0 },
+    /* 32473.(2^64) */
+    { LARGE_PATTERN, 26,
+        "\x81\xfd\x59\x82\x80\x80\x80\x80\x80\x80\x80\x80\x00", 13, 0 },
+    /* 32473.(2^64+4) */
+    { LARGE_PATTERN, 26,
+        "\x81\xfd\x59\x82\x80\x80\x80\x80\x80\x80\x80\x80\x04", 13, 0 },
+    /* invalid pattern, odd number of values */
+    { "\x81\xfd\x59", 3, "\x81\xfd\x59", 3, 0 },
+    /* invalid pattern, truncated min */
+    { "\x81\xfd", 2, "\x81\xfd\x59", 3, 0 },
+    /* invalid pattern, truncated max */
+    { "\x81\xfd\x59\x81\xff\xff", 6, "\x81\xfd\x59", 3, 0 },
+    /* invalid pattern, min of infinity */
+    { "\x80\x42", 2, "\x00", 1, 0 },
+    /* 32473.1.2.1.3 */
+    { LANDMARK_PATTERN, 14, "\x81\xfd\x59\x01\x02\x01\x03", 7, 1 },
+    /* 32473.1.2.1.200 */
+    { LANDMARK_PATTERN, 14, "\x81\xfd\x59\x01\x02\x01\x81\x48", 8, 1 },
+    /* 32473.1.2.1.2, below the landmark */
+    { LANDMARK_PATTERN, 14, "\x81\xfd\x59\x01\x02\x01\x02", 7, 0 },
+    /* 32473.1.2.2.3, another log */
+    { LANDMARK_PATTERN, 14, "\x81\xfd\x59\x01\x02\x02\x03", 7, 0 },
+    /* an empty pattern contains no ID */
+    { "", 0, "\x01", 1, 0 },
+};
+
+static int test_pattern_contains(int idx)
+{
+    return TEST_int_eq(ossl_ssl_trust_anchor_pattern_contains(
+                           (const uint8_t *)pattern_tests[idx].pattern,
+                           pattern_tests[idx].pattern_len,
+                           (const uint8_t *)pattern_tests[idx].id,
+                           pattern_tests[idx].id_len),
+        pattern_tests[idx].contains);
+}
+
+/* 32473.1.2.{0-}.{0-}: every MTC landmark group of CA 32473.1. */
+#define STANDALONE_PATTERN \
+    "\x81\xfd\x59\x81\xfd\x59\x01\x01\x02\x02\x00\x80\x00\x80"
+
+/*
+ * Requested-list vectors for credential matching.  The credential under test
+ * has trust anchor ID 32473.1 and the group pattern STANDALONE_PATTERN.
+ */
+static const struct {
+    const uint8_t *ids;
+    size_t ids_len;
+    int matches;
+} match_tests[] = {
+    /* 32473.1 requested: an exact trust anchor ID match. */
+    { (const uint8_t *)"\x04\x81\xfd\x59\x01", 5, 1 },
+    /* An unrelated ID. */
+    { (const uint8_t *)"\x02\xaa\xbb", 3, 0 },
+    /* 32473.1.2.1.3, log 1 to landmark 3: matched by the group pattern. */
+    { (const uint8_t *)"\x07\x81\xfd\x59\x01\x02\x01\x03", 8, 1 },
+    /* The matching ID need not be first. */
+    { (const uint8_t *)"\x02\xaa\xbb\x07\x81\xfd\x59\x01\x02\x01\x03", 11, 1 },
+    /* A multi-byte landmark number, 32473.1.2.1.200. */
+    { (const uint8_t *)"\x08\x81\xfd\x59\x01\x02\x01\x81\x48", 9, 1 },
+    /* A multi-byte log number, 32473.1.2.200.3. */
+    { (const uint8_t *)"\x08\x81\xfd\x59\x01\x02\x81\x48\x03", 9, 1 },
+    /* An individual landmark ID, 32473.1.1.1.3. */
+    { (const uint8_t *)"\x07\x81\xfd\x59\x01\x01\x01\x03", 8, 0 },
+    /* Too few components: 32473.1.2.1. */
+    { (const uint8_t *)"\x06\x81\xfd\x59\x01\x02\x01", 7, 0 },
+    /* Too many: 32473.1.2.1.3.4. */
+    { (const uint8_t *)"\x08\x81\xfd\x59\x01\x02\x01\x03\x04", 9, 0 },
+    /* A non-minimally-encoded component is rejected. */
+    { (const uint8_t *)"\x08\x81\xfd\x59\x01\x02\x01\x80\x03", 9, 0 },
+    /* An unterminated final component is rejected. */
+    { (const uint8_t *)"\x07\x81\xfd\x59\x01\x02\x01\x81", 8, 0 },
+    /* An empty request matches nothing. */
+    { (const uint8_t *)"", 0, 0 },
+};
+
+static int test_credential_matches(int idx)
+{
+    static const uint8_t tai_id[] = { 0x81, 0xfd, 0x59, 0x01 };
+    SSL_CREDENTIAL *cred = NULL, *bare = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cred = ossl_ssl_credential_new(SSL_CREDENTIAL_TYPE_X509))
+        || !TEST_true(ossl_ssl_credential_set1_trust_anchor_id(cred, tai_id,
+            sizeof(tai_id)))
+        || !TEST_true(ossl_ssl_credential_add1_trust_anchor_group(cred,
+            (const uint8_t *)STANDALONE_PATTERN,
+            sizeof(STANDALONE_PATTERN) - 1)))
+        goto err;
+
+    if (!TEST_int_eq(ossl_ssl_credential_matches_request(cred,
+                         match_tests[idx].ids, match_tests[idx].ids_len),
+            match_tests[idx].matches))
+        goto err;
+
+    /* A credential with no trust anchor ID and no groups matches nothing. */
+    if (!TEST_ptr(bare = ossl_ssl_credential_new(SSL_CREDENTIAL_TYPE_X509))
+        || !TEST_false(ossl_ssl_credential_matches_request(bare,
+            match_tests[idx].ids, match_tests[idx].ids_len)))
+        goto err;
+
+    ret = 1;
+err:
+    SSL_CREDENTIAL_free(cred);
+    SSL_CREDENTIAL_free(bare);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(server_ctx = SSL_CTX_new(TLS_server_method())))
         return 0;
     ADD_ALL_TESTS(test_parse_trust_anchors, OSSL_NELEM(parse_tests));
     ADD_TEST(test_clear_peer_trust_anchors);
+    ADD_ALL_TESTS(test_pattern_contains, OSSL_NELEM(pattern_tests));
+    ADD_ALL_TESTS(test_credential_matches, OSSL_NELEM(match_tests));
     return 1;
 }
 
