@@ -68,6 +68,35 @@ static const PROV_CIPHER_HW aesni_cbc = {
     ossl_cipher_aes_copyctx
 };
 
+#if VAES_CBC_ELIGIBLE
+/*
+ * CBC decryption is fully parallel, so VAES accelerates it; CBC encryption is
+ * inherently serial and stays on the aesni_cbc_encrypt assembly routine.  VAES
+ * is only worthwhile once the payload is large enough to amortize the per-call
+ * key broadcast, so small buffers also fall back to the assembly routine.
+ */
+static int aes_cbc_vaes_wrapper(
+    PROV_CIPHER_CTX *ctx,
+    unsigned char *out,
+    const unsigned char *in,
+    size_t len)
+{
+    if (!ctx->enc && len >= 256) {
+        ossl_aes_cbc_vaes_decrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+        return 1;
+    }
+
+    aesni_cbc_encrypt(in, out, len, ctx->ks, ctx->iv, ctx->enc);
+    return 1;
+}
+
+static const PROV_CIPHER_HW aesni_vaes_cbc = {
+    cipher_hw_aesni_initkey,
+    aes_cbc_vaes_wrapper,
+    ossl_cipher_aes_copyctx
+};
+#endif /* VAES_CBC_ELIGIBLE */
+
 #if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 /* active in 64-bit builds when AES-NI, AVX512F, and VAES are detected */
 #define VAES_CFB128_ELIGIBLE 1
@@ -146,6 +175,10 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aesni(enum aes_modes mode)
         case AES_MODE_ECB:
             return &aesni_ecb;
         case AES_MODE_CBC:
+#if VAES_CBC_ELIGIBLE
+            if (ossl_aes_cbc_vaes_eligible())
+                return &aesni_vaes_cbc;
+#endif
             return &aesni_cbc;
         case AES_MODE_CFB128:
 #if VAES_CFB128_ELIGIBLE
