@@ -473,7 +473,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         tls_parse_ctos_trust_anchors,
         NULL,
-        NULL,
+        tls_construct_stoc_trust_anchors,
         tls_construct_ctos_trust_anchors,
         NULL,
     },
