@@ -1504,6 +1504,12 @@ struct ssl_connection_st {
             STACK_OF(X509) *pending_peer_chain;
             EVP_PKEY *pending_peer_rpk;
             /*
+             * The credential we use, when a negotiation mechanism such as
+             * trust anchor identifiers selects one.  When NULL the legacy
+             * CERT_PKEY path above is used instead.
+             */
+            SSL_CREDENTIAL *credential;
+            /*
              * signature algorithms peer reports: e.g. supported signature
              * algorithms extension for server or as part of a certificate
              * request for client.
@@ -2714,6 +2720,13 @@ struct ssl_credential_st {
      */
     SSL_TRUST_ANCHOR_PATTERN *groups;
     size_t group_count;
+    /*
+     * Digest and key type NIDs of the leaf certificate's signature, from
+     * X509_get_signature_info().  Both are NID_undef when there is no leaf,
+     * the leaf does not parse, or its signature algorithm is not known.
+     */
+    int leaf_sig_mdnid;
+    int leaf_sig_pknid;
     CRYPTO_REF_COUNT references;
 };
 DEFINE_STACK_OF(SSL_CREDENTIAL)
@@ -3305,6 +3318,20 @@ __owur int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf,
 void ssl3_free_digest_list(SSL_CONNECTION *s);
 __owur unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
     CERT_PKEY *cpk, int for_comp);
+/**
+ * @brief Write a credential's certificate chain into a TLS 1.3 Certificate
+ * message, each entry followed by its certificate extensions.
+ *
+ * The chain is written as stored on the credential, without building or
+ * verifying a path; SSLfatal() is called on failure.
+ *
+ * @param s the connection whose Certificate message is being constructed
+ * @param pkt the packet to write the chain into
+ * @param cred the credential supplying the chain
+ * @returns 1 on success, 0 on error.
+ */
+__owur unsigned long ssl3_output_cred_chain(SSL_CONNECTION *s, WPACKET *pkt,
+    SSL_CREDENTIAL *cred);
 __owur const SSL_CIPHER *ssl3_choose_cipher(SSL_CONNECTION *s,
     STACK_OF(SSL_CIPHER) *clnt,
     STACK_OF(SSL_CIPHER) *srvr);
