@@ -5291,6 +5291,76 @@ end:
 }
 
 /*
+ * Locks in the requirement that a resumed PSK's exact ciphersuite, not
+ * merely a shared digest, must match the negotiated one before 0-RTT data
+ * is accepted: the client encrypts its early data with the AEAD bound to
+ * its own PSK session before it can know what cipher the server will
+ * negotiate, so a same-digest-but-different-cipher negotiation must fall
+ * back to an ordinary connection rather than attempt decryption with the
+ * wrong cipher.
+ */
+static int test_early_data_psk_cipher_mismatch(void)
+{
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+    SSL_SESSION *sess = NULL;
+    unsigned char buf[20];
+    size_t readbytes, written;
+
+    if (is_fips) {
+        testresult = TEST_skip("CHACHA is not supported in FIPS");
+        return 1;
+    }
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+            &serverssl, &sess, 2, SHA256_DIGEST_LENGTH)))
+        goto end;
+
+    /*
+     * The PSK is bound to AES-128-GCM (SHA256 digest), but both ends can
+     * only negotiate ChaCha20-Poly1305 -- same digest, different cipher.
+     */
+    if (!TEST_true(SSL_set_ciphersuites(clientssl,
+            "TLS_CHACHA20_POLY1305_SHA256"))
+        || !TEST_true(SSL_set_ciphersuites(serverssl,
+            "TLS_CHACHA20_POLY1305_SHA256")))
+        goto end;
+
+    SSL_set_connect_state(clientssl);
+    if (!TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+            &written)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_read_early_data(serverssl, buf, sizeof(buf),
+                         &readbytes),
+            SSL_READ_EARLY_DATA_FINISH)
+        || !TEST_int_eq(SSL_get_early_data_status(serverssl),
+            SSL_EARLY_DATA_REJECTED))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+#else
+    return 1;
+#endif
+}
+
+/*
  * Test that a server that doesn't try to read early data can handle a
  * client sending some.
  */
@@ -15473,6 +15543,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_early_data_not_sent, 3);
     ADD_ALL_TESTS(test_early_data_psk, 8);
     ADD_ALL_TESTS(test_early_data_psk_with_all_ciphers, 7);
+    ADD_TEST(test_early_data_psk_cipher_mismatch);
     ADD_ALL_TESTS(test_early_data_not_expected, 3);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_ALL_TESTS(test_early_data_tls1_2, 3);
