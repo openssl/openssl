@@ -629,3 +629,6 @@ SSL_get0_shared_sigalg                  628	4_0_0	EXIST::FUNCTION:
 SSL_CREDENTIAL_free                     ?	4_1_0	EXIST::FUNCTION:
 SSL_CREDENTIAL_up_ref                   ?	4_1_0	EXIST::FUNCTION:
 SSL_CTX_add1_credential                 ?	4_1_0	EXIST::FUNCTION:
+SSL_parse_certificates_with_properties  ?	4_1_0	EXIST::FUNCTION:
+SSL_CREDENTIAL_size_cmp                 ?	4_1_0	EXIST::FUNCTION:
+SSL_parse_private_keys                  ?	4_1_0	EXIST::FUNCTION:

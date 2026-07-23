@@ -1471,6 +1471,7 @@ SSL_R_INSUFFICIENT_SECURITY:241:insufficient security
 SSL_R_INVALID_ALERT:205:invalid alert
 SSL_R_INVALID_CCS_MESSAGE:260:invalid ccs message
 SSL_R_INVALID_CERTIFICATE_OR_ALG:238:invalid certificate or alg
+SSL_R_INVALID_CERTIFICATE_PROPERTY_LIST:427:invalid certificate property list
 SSL_R_INVALID_COMMAND:280:invalid command
 SSL_R_INVALID_COMPRESSION_ALGORITHM:341:invalid compression algorithm
 SSL_R_INVALID_CONFIG:283:invalid config
@@ -1532,6 +1533,7 @@ SSL_R_NO_COMPRESSION_SPECIFIED:187:no compression specified
 SSL_R_NO_COOKIE_CALLBACK_SET:287:no cookie callback set
 SSL_R_NO_GOST_CERTIFICATE_SENT_BY_PEER:330:\
 	Peer haven't sent GOST certificate, required for selected ciphersuite
+SSL_R_NO_MATCHING_PRIVATE_KEY:428:no matching private key
 SSL_R_NO_METHOD_SPECIFIED:188:no method specified
 SSL_R_NO_PEM_EXTENSIONS:389:no pem extensions
 SSL_R_NO_PRIVATE_KEY_ASSIGNED:190:no private key assigned
@@ -1675,6 +1677,7 @@ SSL_R_UNEXPECTED_CCS_MESSAGE:262:unexpected ccs message
 SSL_R_UNEXPECTED_END_OF_EARLY_DATA:178:unexpected end of early data
 SSL_R_UNEXPECTED_EOF_WHILE_READING:294:unexpected eof while reading
 SSL_R_UNEXPECTED_MESSAGE:244:unexpected message
+SSL_R_UNEXPECTED_PEM_BLOCK:429:unexpected pem block
 SSL_R_UNEXPECTED_RECORD:245:unexpected record
 SSL_R_UNINITIALIZED:276:uninitialized
 SSL_R_UNKNOWN_ALERT_TYPE:246:unknown alert type
