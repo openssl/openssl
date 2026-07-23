@@ -7,6 +7,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 #include "internal/sockets.h"
 
 #ifdef OPENSSL_NO_SOCK

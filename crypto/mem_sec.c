@@ -15,6 +15,10 @@
  * For details on that implementation, see below (look for uppercase
  * "SECURE HEAP IMPLEMENTATION").
  */
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE /* make sure MAP_ANON is declared */
+#endif
+
 #include "internal/e_os.h"
 #include <openssl/crypto.h>
 #include <openssl/err.h>
