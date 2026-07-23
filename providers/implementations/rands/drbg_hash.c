@@ -517,7 +517,6 @@ static int drbg_hash_set_ctx_params_locked(void *vctx, const OSSL_PARAM params[]
 
     if (!ossl_prov_digest_load_from_params(&hash->digest, params, libctx))
         return 0;
-
     md = ossl_prov_digest_md(&hash->digest);
     if (md != NULL) {
         if (!ossl_drbg_verify_digest(ctx, libctx, md))
