@@ -16,9 +16,14 @@ plan skip_all => "CMS is disabled in this build" if disabled("cms");
 
 plan tests => 1;
 
+my @ed448_args = disabled("ecx") ? () : (
+    srctop_file("test", "certs", "server-ed448-cert.pem"),
+    srctop_file("test", "certs", "server-ed448-key.pem"));
+
 ok(run(test(["cmsapitest", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "certs", "serverkey.pem"),
              srctop_file("test", "recipes", "80-test_cmsapi_data", "encryptedData.der"),
              srctop_file("test", "recipes", "80-test_cmsapi_data", "encDataWithTooLongIV.pem"),
-             srctop_file("test", "recipes", "80-test_cmsapi_data", "cms_pwri_kek_oob.der")])),
+             srctop_file("test", "recipes", "80-test_cmsapi_data", "cms_pwri_kek_oob.der"),
+             @ed448_args])),
              "running cmsapitest");
