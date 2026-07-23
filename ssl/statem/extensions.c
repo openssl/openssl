@@ -473,7 +473,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         NULL,
         tls_parse_ctos_trust_anchors,
         NULL,
-        NULL,
+        tls_construct_stoc_trust_anchors,
         tls_construct_ctos_trust_anchors,
         NULL,
     },
@@ -1226,7 +1226,13 @@ int tls_construct_extensions(SSL_CONNECTION *s, WPACKET *pkt,
         /* On the server side with initialise during ClientHello parsing */
         custom_ext_init(&s->cert->custext);
 #endif
-    if (!custom_ext_add(s, context, pkt, x, chainidx, max_version)) {
+    /*
+     * Custom extensions are not supported in the Certificate message of a
+     * credential, whose certificates are sent as encoded and never parsed.
+     */
+    if (((context & SSL_EXT_TLS1_3_CERTIFICATE) == 0
+            || s->s3.tmp.credential == NULL)
+        && !custom_ext_add(s, context, pkt, x, chainidx, max_version)) {
         /* SSLfatal() already called */
         return 0;
     }

@@ -536,6 +536,21 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
 int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
+/**
+ * @brief Construct the server's trust_anchors acknowledgement, an empty
+ * extension sent in the first CertificateEntry when a negotiated credential
+ * was served.
+ * @param s the SSL connection
+ * @param pkt the WPACKET to write the extension to
+ * @param context the extension context (the message being constructed)
+ * @param x the certificate for per-certificate extensions; unused here
+ * @param chainidx the certificate chain index; the acknowledgement is sent
+ * only when this is zero
+ * @returns an EXT_RETURN value indicating whether the extension was sent
+ */
+EXT_RETURN tls_construct_stoc_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
+    unsigned int context,
+    X509 *x, size_t chainidx);
 
 int tls_parse_stoc_renegotiate(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,

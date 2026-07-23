@@ -325,11 +325,22 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     OSSL_PARAM params[3], *p = params;
 
-    if (lu == NULL || s->s3.tmp.cert == NULL) {
+    if (lu == NULL) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    pkey = s->s3.tmp.cert->privatekey;
+    /*
+     * When a credential was negotiated it supplies the signing key; otherwise
+     * the key comes from the legacy selected certificate.
+     */
+    if (s->s3.tmp.credential != NULL) {
+        pkey = s->s3.tmp.credential->pkey;
+    } else if (s->s3.tmp.cert != NULL) {
+        pkey = s->s3.tmp.cert->privatekey;
+    } else {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
 
     if (pkey == NULL || !tls1_lookup_md(sctx, lu, &md)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1402,6 +1413,50 @@ unsigned long ssl3_output_cert_chain(SSL_CONNECTION *s, WPACKET *pkt,
     if (!WPACKET_close(pkt)) {
         if (!for_comp)
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
+
+/*
+ * Output the certificate_list of a negotiated credential.  The credential's
+ * chain is a stack of encoded certificates held in CRYPTO_BUFFERs, and is
+ * sent exactly as configured, leaf first.  When the credential matched a
+ * trust anchor the client requested, the draft requires the certificate_list
+ * to be the complete, correctly ordered path for that trust anchor with no
+ * extraneous certificates, and an empty trust_anchors extension in the first
+ * CertificateEntry acknowledges the match; see
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+ * TLS 1.3 only.
+ */
+unsigned long ssl3_output_cred_chain(SSL_CONNECTION *s, WPACKET *pkt,
+    SSL_CREDENTIAL *cred)
+{
+    int i, num = sk_CRYPTO_BUFFER_num(cred->chain);
+
+    if (!WPACKET_start_sub_packet_u24(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    for (i = 0; i < num; i++) {
+        CRYPTO_BUFFER *buf = sk_CRYPTO_BUFFER_value(cred->chain, i);
+
+        if (!WPACKET_sub_memcpy_u24(pkt, CRYPTO_BUFFER_data(buf),
+                CRYPTO_BUFFER_len(buf))) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!tls_construct_extensions(s, pkt, SSL_EXT_TLS1_3_CERTIFICATE, NULL,
+                (size_t)i)) {
+            /* SSLfatal() already called */
+            return 0;
+        }
+    }
+
+    if (!WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
 
