@@ -42,21 +42,19 @@ on:
   workflow_dispatch:
     inputs:
       pr:
-        description: 'PR number (leave empty for a bare manual run against the default branch)'
+        description: 'Internal: openssl-ci-bot PR number. Leave empty for a normal manual run.'
         required: false
         type: string
       head_sha:
-        description: 'Exact commit SHA to check out (required when pr is set)'
+        description: 'Internal: openssl-ci-bot commit SHA. Leave empty for a normal manual run.'
         required: false
         type: string
       check_run_id:
-        description: 'Check-run id to report completion back to (required when pr is set)'
+        description: 'Internal: openssl-ci-bot check-run ID. Leave empty for a normal manual run.'
         required: false
         type: string
 
-# Pinned run-name contract with images/openssl-ci-bot/main.py's format_run_name()/
-# parse_run_name() -- the completed-run handler parses check_run_id back out of
-# this exact format string, so keep both sides identical on any change.
+# Keep in sync with openssl-ci-bot's run-name parser.
 run-name: >-
   ${{ github.event.inputs.pr && format('ci-dispatch pr={0} head={1} check_run_id={2}', github.event.inputs.pr, github.event.inputs.head_sha, github.event.inputs.check_run_id) || github.workflow }}
 
@@ -69,17 +67,14 @@ permissions:
 
 jobs:
   validate-dispatch-inputs:
-    # Defense-in-depth on the untrusted-code boundary, in addition to the
-    # dispatching service's own validation: fail closed on malformed inputs
-    # before anything checks out a ref or runs.
-    if: github.repository == 'openssl/openssl' && github.event.inputs.pr != ''
-    runs-on: ubuntu-latest
-    steps:
-      - name: Validate pr / head_sha / check_run_id
-        run: |
-          [[ "${{ github.event.inputs.pr }}" =~ ^[0-9]+$ ]] || { echo "::error::pr must be numeric"; exit 1; }
-          [[ "${{ github.event.inputs.check_run_id }}" =~ ^[0-9]+$ ]] || { echo "::error::check_run_id must be numeric"; exit 1; }
-          [[ "${{ github.event.inputs.head_sha }}" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::head_sha must be a 40-character hex commit SHA"; exit 1; }
+    if: |
+      github.repository == 'openssl/openssl' &&
+      (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
+    uses: ./.github/workflows/validate-dispatch-inputs.yml
+    with:
+      pr: ${{ inputs.pr }}
+      head_sha: ${{ inputs.head_sha }}
+      check_run_id: ${{ inputs.check_run_id }}
 
   ct-validation:
     needs: [validate-dispatch-inputs]
@@ -118,8 +113,6 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
-          # Bare-manual/schedule triggers omit head_sha, in which case checkout
-          # falls back to its own default (github.sha) unchanged.
           ref: ${{ github.event.inputs.head_sha || github.sha }}
 
       - name: Install valgrind
