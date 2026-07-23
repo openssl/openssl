@@ -52,7 +52,7 @@ jobs:
       needs: [validate-dispatch-inputs]
       if: |
         github.repository == 'openssl/openssl' &&
-        always() &&
+        !cancelled() &&
         (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
       runs-on: ubuntu-latest
       steps:
