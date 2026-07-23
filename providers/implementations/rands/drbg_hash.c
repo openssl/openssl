@@ -534,10 +534,12 @@ static int drbg_fetch_digest_from_prov(const struct drbg_set_ctx_params_st *p,
     if (digest == NULL)
         return 0;
 
+#ifndef FIPS_MODULE
     if (p->prov == NULL || p->prov->data_type != OSSL_PARAM_UTF8_STRING)
         return 0;
     if ((prov = ossl_provider_find(libctx, (const char *)p->prov->data, 1)) == NULL)
         return 0;
+#endif
 
     if (p->digest == NULL) {
         ret = 1;
@@ -547,13 +549,16 @@ static int drbg_fetch_digest_from_prov(const struct drbg_set_ctx_params_st *p,
     if (p->digest->data_type != OSSL_PARAM_UTF8_STRING)
         goto done;
 
+#ifndef FIPS_MODULE
     md = evp_digest_fetch_from_prov(prov, (const char *)p->digest->data, NULL);
+#else
+    md = EVP_MD_fetch(libctx, p->digest->data, NULL);
+#endif
     if (md) {
         EVP_MD_free(*digest);
         *digest = md;
         ret = 1;
     }
-
 done:
     ossl_provider_free(prov);
     return ret;

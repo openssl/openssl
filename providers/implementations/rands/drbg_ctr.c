@@ -743,14 +743,16 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
         propquery = (const char *)p->propq->data;
     }
 
+#ifndef FIPS_MODULE
     if (p->prov != NULL) {
         if (p->prov->data_type != OSSL_PARAM_UTF8_STRING)
             return 0;
         if ((prov = ossl_provider_find(libctx,
-                 (const char *)p->prov->data, 1))
+                 p->prov->data, 1))
             == NULL)
             return 0;
     }
+#endif
 
     if (p->cipher != NULL) {
         const char *base = (const char *)p->cipher->data;
@@ -774,12 +776,16 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
         strcpy(ecb + p->cipher->data_size - ecb_str_len, "ECB");
         EVP_CIPHER_free(ctr->cipher_ecb);
         EVP_CIPHER_free(ctr->cipher_ctr);
+        ctr->cipher_ctr = NULL;
+        ctr->cipher_ecb = NULL;
         /*
          * Try to fetch algorithms from our own provider code, fallback
          * to generic fetch only if that fails
          */
         (void)ERR_set_mark();
+#ifndef FIPS_MODULE
         ctr->cipher_ctr = evp_cipher_fetch_from_prov(prov, base, NULL);
+#endif
         if (ctr->cipher_ctr == NULL) {
             (void)ERR_pop_to_mark();
             ctr->cipher_ctr = EVP_CIPHER_fetch(libctx, base, propquery);
@@ -787,7 +793,9 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
             (void)ERR_clear_last_mark();
         }
         (void)ERR_set_mark();
+#ifndef FIPS_MODULE
         ctr->cipher_ecb = evp_cipher_fetch_from_prov(prov, ecb, NULL);
+#endif
         if (ctr->cipher_ecb == NULL) {
             (void)ERR_pop_to_mark();
             ctr->cipher_ecb = EVP_CIPHER_fetch(libctx, ecb, propquery);
