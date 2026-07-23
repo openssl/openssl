@@ -2616,7 +2616,7 @@ struct ssl_credential_st {
     size_t group_count;
     CRYPTO_REF_COUNT references;
 };
-DEFINE_STACK_OF(SSL_CREDENTIAL)
+/* STACK_OF(SSL_CREDENTIAL) is declared publicly in <openssl/ssl.h.in>. */
 
 /**
  * @brief Create an empty credential of the given form.
@@ -2679,6 +2679,25 @@ int ossl_ssl_credential_set1_trust_anchor_id(SSL_CREDENTIAL *cred,
  */
 int ossl_ssl_credential_add1_trust_anchor_group(SSL_CREDENTIAL *cred,
     const uint8_t *pattern, size_t pattern_len);
+
+/**
+ * @brief Apply an encoded CertificatePropertyList to a credential.
+ *
+ * Parses the property list and sets the credential's trust anchor ID and
+ * trust anchor group patterns from the trust_anchor_id and
+ * trust_anchor_groups properties; see section 7 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
+ * Properties must be numerically sorted by type with no duplicates, and the
+ * trust_anchor_negotiation property must be empty; unknown property types are
+ * ignored but must be well formed.
+ *
+ * @param cred the credential to populate
+ * @param props the encoded CertificatePropertyList
+ * @param props_len the length of props in bytes
+ * @return 1 on success, 0 on a malformed property list
+ */
+int ossl_ssl_credential_set1_certificate_properties(SSL_CREDENTIAL *cred,
+    const uint8_t *props, size_t props_len);
 
 /**
  * @brief Check whether a trust anchor ID pattern contains a trust anchor ID.

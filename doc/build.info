@@ -2785,6 +2785,10 @@ DEPEND[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 GENERATE[html/man3/SSL_new_stream.html]=man3/SSL_new_stream.pod
 DEPEND[man/man3/SSL_new_stream.3]=man3/SSL_new_stream.pod
 GENERATE[man/man3/SSL_new_stream.3]=man3/SSL_new_stream.pod
+DEPEND[html/man3/SSL_parse_certificates_with_properties.html]=man3/SSL_parse_certificates_with_properties.pod
+GENERATE[html/man3/SSL_parse_certificates_with_properties.html]=man3/SSL_parse_certificates_with_properties.pod
+DEPEND[man/man3/SSL_parse_certificates_with_properties.3]=man3/SSL_parse_certificates_with_properties.pod
+GENERATE[man/man3/SSL_parse_certificates_with_properties.3]=man3/SSL_parse_certificates_with_properties.pod
 DEPEND[html/man3/SSL_pending.html]=man3/SSL_pending.pod
 GENERATE[html/man3/SSL_pending.html]=man3/SSL_pending.pod
 DEPEND[man/man3/SSL_pending.3]=man3/SSL_pending.pod
@@ -3796,6 +3800,7 @@ html/man3/SSL_new.html \
 html/man3/SSL_new_domain.html \
 html/man3/SSL_new_listener.html \
 html/man3/SSL_new_stream.html \
+html/man3/SSL_parse_certificates_with_properties.html \
 html/man3/SSL_pending.html \
 html/man3/SSL_poll.html \
 html/man3/SSL_read.html \
@@ -4482,6 +4487,7 @@ man/man3/SSL_new.3 \
 man/man3/SSL_new_domain.3 \
 man/man3/SSL_new_listener.3 \
 man/man3/SSL_new_stream.3 \
+man/man3/SSL_parse_certificates_with_properties.3 \
 man/man3/SSL_pending.3 \
 man/man3/SSL_poll.3 \
 man/man3/SSL_read.3 \
