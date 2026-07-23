@@ -34,11 +34,13 @@ static int tls_dump_puts(BIO *bp, const char *str);
 #define BIO_TYPE_MEMPACKET_TEST 0x81
 #define BIO_TYPE_ALWAYS_RETRY 0x82
 #define BIO_TYPE_MAYBE_RETRY (0x83 | BIO_TYPE_FILTER)
+#define BIO_TYPE_NO_RETRY_ZERO (0x84 | BIO_TYPE_FILTER)
 
 static BIO_METHOD *method_tls_dump = NULL;
 static BIO_METHOD *meth_mem = NULL;
 static BIO_METHOD *meth_always_retry = NULL;
 static BIO_METHOD *meth_maybe_retry = NULL;
+static BIO_METHOD *meth_no_retry_zero = NULL;
 static int retry_err = -1;
 
 /* Note: Not thread safe! */
@@ -1011,6 +1013,10 @@ static int maybe_retry_new(BIO *bi);
 static int maybe_retry_free(BIO *a);
 static int maybe_retry_write(BIO *b, const char *in, int inl);
 static long maybe_retry_ctrl(BIO *b, int cmd, long num, void *ptr);
+static int no_retry_zero_new(BIO *bi);
+static int no_retry_zero_free(BIO *a);
+static int no_retry_zero_write(BIO *b, const char *in, int inl);
+static long no_retry_zero_ctrl(BIO *b, int cmd, long num, void *ptr);
 
 const BIO_METHOD *bio_s_maybe_retry(void)
 {
@@ -1094,6 +1100,61 @@ static long maybe_retry_ctrl(BIO *bio, int cmd, long num, void *ptr)
         /* fall through */
     default:
         return BIO_ctrl(BIO_next(bio), cmd, num, ptr);
+    }
+}
+
+const BIO_METHOD *bio_s_no_retry_zero(void)
+{
+    if (meth_no_retry_zero == NULL) {
+        if (!TEST_ptr(meth_no_retry_zero = BIO_meth_new(BIO_TYPE_NO_RETRY_ZERO,
+                          "No Retry Zero"))
+            || !TEST_true(BIO_meth_set_write(meth_no_retry_zero,
+                no_retry_zero_write))
+            || !TEST_true(BIO_meth_set_ctrl(meth_no_retry_zero,
+                no_retry_zero_ctrl))
+            || !TEST_true(BIO_meth_set_create(meth_no_retry_zero,
+                no_retry_zero_new))
+            || !TEST_true(BIO_meth_set_destroy(meth_no_retry_zero,
+                no_retry_zero_free)))
+            return NULL;
+    }
+    return meth_no_retry_zero;
+}
+
+void bio_s_no_retry_zero_free(void)
+{
+    BIO_meth_free(meth_no_retry_zero);
+}
+
+static int no_retry_zero_new(BIO *bio)
+{
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int no_retry_zero_free(BIO *bio)
+{
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+    return 1;
+}
+
+static int no_retry_zero_write(BIO *bio, const char *in, int inl)
+{
+    BIO_clear_retry_flags(bio);
+    return 0;
+}
+
+static long no_retry_zero_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    BIO *next = BIO_next(bio);
+
+    switch (cmd) {
+    case BIO_CTRL_FLUSH:
+        return next == NULL ? 1 : BIO_ctrl(next, cmd, num, ptr);
+
+    default:
+        return next == NULL ? 0 : BIO_ctrl(next, cmd, num, ptr);
     }
 }
 
