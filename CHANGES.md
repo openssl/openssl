@@ -31,6 +31,17 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed a QUIC reactor hang caused by leaked blocking-section references
+   on the `SSL_poll()` early-abort path.
+
+   When `SSL_poll()` found a QUIC poll item already ready, `poll_translate()`
+   returned without releasing the reactor blocking-section references it had
+   taken for the items translated so far. `QUIC_REACTOR.cur_blocking_waiters`
+   then never returned to zero, and a subsequent thread notification blocked
+   indefinitely, hanging all QUIC activity on the affected `SSL_CTX`.
+
+   *John Buckman*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 
