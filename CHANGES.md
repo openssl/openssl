@@ -283,6 +283,13 @@ OpenSSL Releases
 
    *Dimitri John Ledkov*
 
+ * Added `X509_STORE_add_untrusted_cert()` and
+   `X509_STORE_get1_untrusted_certs()`.  This allows adding untrusted
+   intermediate certificates to a certificate store to help with building
+   chains to an existing trust anchor.
+
+   *Tim Perry*
+
 OpenSSL 4.0
 -----------
 
