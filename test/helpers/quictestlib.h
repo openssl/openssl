@@ -289,3 +289,7 @@ const BIO_METHOD *bio_f_pkt_split_dgram_filter(void);
 
 /* Free the BIO filter method object */
 void bio_f_pkt_split_dgram_filter_free(void);
+
+int create_quic_ctx_pair(OSSL_LIB_CTX *libctx, SSL_CTX **c_sctx_p, SSL_CTX **s_sctx_p, const char *certfile, const char *keyfile);
+int create_quic_conn_objects(SSL_CTX *c_sctx, SSL_CTX *s_ctx, SSL **c_ssl_p, SSL **s_ssl_p);
+SSL *create_quic_client(SSL_CTX *c_sctx, BIO *c_bio);
