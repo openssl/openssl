@@ -2122,10 +2122,11 @@ err:
 }
 
 /*
- * Test SSL_listener_set_pending_timeout basic functionality.
+ * Test SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT basic functionality.
  *
  * This test verifies that:
- * 1. The pending timeout can be set and retrieved on a DTLS listener
+ * 1. The pending timeout can be set and retrieved on a DTLS listener via
+ *    SSL_set_value_uint() / SSL_get_value_uint()
  * 2. Different timeout values can be set
  * 3. UINT64_MAX can be used to disable timeout
  */
@@ -2143,35 +2144,46 @@ static int test_dtls_listener_pending_timeout_basic(void)
         goto err;
 
     /* Default timeout should be 30 seconds (30000 ms) */
-    retrieved = SSL_listener_get_pending_timeout(listener);
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
+        goto err;
     if (!TEST_uint64_t_eq(retrieved, 30000))
         goto err;
 
     /* Set a custom timeout of 60 seconds (60000 ms) */
     timeout = 60000;
-    if (!TEST_true(SSL_listener_set_pending_timeout(listener, timeout)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
     /* Verify the timeout was set */
-    retrieved = SSL_listener_get_pending_timeout(listener);
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
+        goto err;
     if (!TEST_uint64_t_eq(retrieved, timeout))
         goto err;
 
     /* Set timeout to UINT64_MAX (disable) */
-    if (!TEST_true(SSL_listener_set_pending_timeout(listener, UINT64_MAX)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, UINT64_MAX)))
         goto err;
 
     /* Verify infinite timeout */
-    retrieved = SSL_listener_get_pending_timeout(listener);
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
+        goto err;
     if (!TEST_uint64_t_eq(retrieved, UINT64_MAX))
         goto err;
 
     /* Set a very short timeout (1 second = 1000 ms) */
     timeout = 1000;
-    if (!TEST_true(SSL_listener_set_pending_timeout(listener, timeout)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
-    retrieved = SSL_listener_get_pending_timeout(listener);
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
+        goto err;
     if (!TEST_uint64_t_eq(retrieved, timeout))
         goto err;
 
@@ -2183,12 +2195,12 @@ err:
 }
 
 /*
- * Test SSL_listener_set_pending_timeout with invalid arguments.
+ * Test SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT with invalid arguments.
  *
- * This test verifies that the function handles invalid arguments gracefully:
- * 1. NULL SSL pointer should return 0
- * 2. Non-listener SSL should return 0
- * 3. Get on NULL/non-listener should return 0
+ * This test verifies that the underlying dispatch handles invalid arguments
+ * gracefully:
+ * 1. Non-listener SSL should fail
+ * 2. Get on non-listener should fail
  */
 static int test_dtls_listener_pending_timeout_invalid(void)
 {
@@ -2196,6 +2208,7 @@ static int test_dtls_listener_pending_timeout_invalid(void)
     SSL *ssl = NULL;
     SSL *listener = NULL;
     uint64_t timeout;
+    uint64_t retrieved;
     int success = 0;
 
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
@@ -2207,27 +2220,22 @@ static int test_dtls_listener_pending_timeout_invalid(void)
 
     timeout = 60000;
 
-    /* Setting timeout on NULL should fail */
-    if (!TEST_false(SSL_listener_set_pending_timeout(NULL, timeout)))
-        goto err;
-
     /* Setting timeout on a non-listener SSL should fail */
-    if (!TEST_false(SSL_listener_set_pending_timeout(ssl, timeout)))
+    if (!TEST_false(SSL_set_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
-    /* Get on NULL should return zero */
-    if (!TEST_uint64_t_eq(SSL_listener_get_pending_timeout(NULL), 0))
-        goto err;
-
-    /* Get on non-listener should return zero */
-    if (!TEST_uint64_t_eq(SSL_listener_get_pending_timeout(ssl), 0))
+    /* Get on non-listener should fail */
+    if (!TEST_false(SSL_get_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
         goto err;
 
     /* Verify that a listener succeeds for contrast */
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
-    if (!TEST_true(SSL_listener_set_pending_timeout(listener, timeout)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
     success = 1;
@@ -3006,7 +3014,8 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
             &listener, &clientssl, &client_addr)))
         goto end;
 
-    if (!TEST_true(SSL_listener_set_pending_timeout(listener, 1000)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 1000)))
         goto end;
 
     /*
@@ -3692,7 +3701,7 @@ static int test_dtls_listener_max_pending_conns_api(void)
 {
     SSL_CTX *ctx = NULL;
     SSL *listener = NULL;
-    size_t max_conns, retrieved_max_conns;
+    uint64_t max_conns, retrieved_max_conns;
     int testresult = 0;
 
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
@@ -3702,24 +3711,32 @@ static int test_dtls_listener_max_pending_conns_api(void)
         goto end;
 
     /* Retrieve default maximum pending connections (1000) */
-    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
+        goto end;
 
-    if (!TEST_size_t_eq(retrieved_max_conns, 1000))
+    if (!TEST_uint64_t_eq(retrieved_max_conns, 1000))
         goto end;
 
     max_conns = 10;
-    if (!TEST_true(SSL_listener_set_max_pending_conns(listener, max_conns)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, max_conns)))
         goto end;
 
-    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
-    if (!TEST_size_t_eq(retrieved_max_conns, max_conns))
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
+        goto end;
+    if (!TEST_uint64_t_eq(retrieved_max_conns, max_conns))
         goto end;
 
-    if (!TEST_false(SSL_listener_set_max_pending_conns(listener, 0)))
+    if (!TEST_false(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 0)))
         goto end;
 
-    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
-    if (!TEST_size_t_eq(retrieved_max_conns, max_conns))
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
+        goto end;
+    if (!TEST_uint64_t_eq(retrieved_max_conns, max_conns))
         goto end;
 
     testresult = 1;
@@ -3733,8 +3750,9 @@ end:
 static int test_dtls_listener_max_pending_conns_invalid(void)
 {
     SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
     SSL *listener = NULL;
-    size_t retrieved_max_conns;
+    uint64_t retrieved_max_conns;
     int testresult = 0;
 
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
@@ -3744,29 +3762,40 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
         goto end;
 
     /* Retrieve default maximum pending connections (1000) */
-    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
+        goto end;
 
-    if (!TEST_size_t_eq(retrieved_max_conns, 1000))
+    if (!TEST_uint64_t_eq(retrieved_max_conns, 1000))
         goto end;
 
     /* Setting the cap to 0 must fail - the cap cannot be disabled */
-    if (!TEST_false(SSL_listener_set_max_pending_conns(listener, 0)))
+    if (!TEST_false(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 0)))
         goto end;
 
-    retrieved_max_conns = SSL_listener_get_max_pending_conns(listener);
-    if (!TEST_size_t_eq(retrieved_max_conns, 1000))
+    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
+        goto end;
+    if (!TEST_uint64_t_eq(retrieved_max_conns, 1000))
         goto end;
 
-    if (!TEST_false(SSL_listener_set_max_pending_conns(NULL, 100)))
+    /* Setting on a non-listener SSL should fail */
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto end;
+    if (!TEST_false(SSL_set_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 100)))
         goto end;
 
-    /* Get on NULL should return 0 */
-    if (!TEST_size_t_eq(SSL_listener_get_max_pending_conns(NULL), 0))
+    /* Get on non-listener should fail */
+    if (!TEST_false(SSL_get_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
     testresult = 1;
 
 end:
+    SSL_free(ssl);
     SSL_free(listener);
     SSL_CTX_free(ctx);
     return testresult;
@@ -3864,12 +3893,19 @@ static int test_pending_conn_cap_enforcement(void)
         goto err;
 
     /* Set the pending connection cap to 3 */
-    if (!TEST_true(SSL_listener_set_max_pending_conns(listener, PENDING_CAP_TEST_LIMIT)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, PENDING_CAP_TEST_LIMIT)))
         goto err;
 
     /* Verify the cap was set */
-    if (!TEST_size_t_eq(SSL_listener_get_max_pending_conns(listener), PENDING_CAP_TEST_LIMIT))
-        goto err;
+    {
+        uint64_t v;
+        if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+                SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &v)))
+            goto err;
+        if (!TEST_uint64_t_eq(v, PENDING_CAP_TEST_LIMIT))
+            goto err;
+    }
 
     /*
      * Create 5 clients and have each send their ClientHello.
@@ -3950,14 +3986,22 @@ static int test_pending_cap_with_timeout(void)
         goto err;
 
     /* Set the pending connection cap to 3 */
-    if (!TEST_true(SSL_listener_set_max_pending_conns(listener, PENDING_CAP_TEST_LIMIT)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, PENDING_CAP_TEST_LIMIT)))
         goto err;
 
     /* Verify the cap was set */
-    if (!TEST_size_t_eq(SSL_listener_get_max_pending_conns(listener), PENDING_CAP_TEST_LIMIT))
-        goto err;
+    {
+        uint64_t v;
+        if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+                SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &v)))
+            goto err;
+        if (!TEST_uint64_t_eq(v, PENDING_CAP_TEST_LIMIT))
+            goto err;
+    }
 
-    if (!TEST_true(SSL_listener_set_pending_timeout(listener, 1000)))
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 1000)))
         goto err;
 
     timeout_test_fake_time = ossl_time_from_time_t(1700000000);
@@ -4024,6 +4068,312 @@ err:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return testresult;
+}
+
+/*
+ * ============================================================================
+ * new_pending_conn_cb tests
+ * ============================================================================
+ *
+ * These tests exercise SSL_CTX_set_new_pending_conn_cb() on the DTLS listener
+ * path. The callback fires from dtls_listener_packet_handler() after the
+ * max_pending_conns cap check but before the new pending connection is
+ * registered in the listener's pending_conns table. A callback return of 0
+ * causes the listener to discard the newly-allocated conn_ssl; a non-zero
+ * return admits it as a normal pending connection.
+ *
+ * Scenarios covered:
+ *   1. Callback allows every connection (small workload, cap not a factor).
+ *   2. Callback rejects every connection (small workload, cap not a factor).
+ *   3. Cap set to LIMIT; callback always allows; more than LIMIT clients
+ *      attempt to connect. The cap must win: exactly LIMIT connections are
+ *      admitted, and the callback is invoked at most LIMIT times (because
+ *      the cap is checked first and short-circuits before the callback).
+ *   4. Cap set well above the client count; callback rejects everything.
+ *      No pending connections are admitted; the cap is not the reason.
+ */
+
+/* --- Callback helpers ---------------------------------------------------- */
+
+static int new_pending_cb_call_count;
+static int new_pending_cb_allow_remaining;
+static SSL_CTX *new_pending_cb_expected_ctx;
+static void *new_pending_cb_expected_arg;
+static int new_pending_cb_ctx_matched;
+static int new_pending_cb_arg_matched;
+static SSL *new_pending_cb_last_ssl;
+
+/*
+ * Reset the file-scope callback state before registering the callback for
+ * a new scenario. These globals persist across tests, so leftover values
+ * from a previous run would corrupt this run's assertions (e.g. an
+ * inflated call_count or a sticky ctx_matched == 0).
+ *
+ * ctx             - SSL_CTX the caller is about to register the callback
+ *                   on; stored so the callback can verify it is passed
+ *                   back unchanged.
+ * arg             - opaque cookie the caller will pass to
+ *                   SSL_CTX_set_new_pending_conn_cb(); same round-trip
+ *                   check.
+ * allow_remaining - number of admissions the callback should grant before
+ *                   it starts denying. 0 means "always deny". Pass a
+ *                   value comfortably larger than the number of clients
+ *                   to mean "always allow". Each admission decrements
+ *                   this counter until it reaches 0.
+ */
+static void new_pending_cb_reset(SSL_CTX *ctx, void *arg, int allow_remaining)
+{
+    new_pending_cb_call_count = 0;
+    new_pending_cb_allow_remaining = allow_remaining;
+    new_pending_cb_expected_ctx = ctx;
+    new_pending_cb_expected_arg = arg;
+    new_pending_cb_ctx_matched = 1;
+    new_pending_cb_arg_matched = 1;
+    new_pending_cb_last_ssl = NULL;
+}
+
+static int new_pending_cb_fn(SSL_CTX *ctx, SSL *new_ssl, void *arg)
+{
+    new_pending_cb_call_count++;
+    new_pending_cb_last_ssl = new_ssl;
+    if (ctx != new_pending_cb_expected_ctx)
+        new_pending_cb_ctx_matched = 0;
+    if (arg != new_pending_cb_expected_arg)
+        new_pending_cb_arg_matched = 0;
+    if (new_pending_cb_allow_remaining > 0) {
+        new_pending_cb_allow_remaining--;
+        return 1;
+    }
+    return 0;
+}
+
+/*
+ * Common test body for the new_pending_conn_cb DTLS listener tests.
+ *
+ * Sets up a DTLS 1.3 listener, applies the given max_pending_conns cap,
+ * registers new_pending_cb_fn on the SSL_CTX, drives ClientHellos through
+ * the listener from num_clients distinct peers, then asserts that the
+ * listener's pending_conns table and the callback invocation counter
+ * match the caller's expectations.
+ *
+ * Parameters:
+ *   max_pending
+ *       Value written to SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS on the
+ *       listener before any traffic is driven. Governs when the cap
+ *       check short-circuits ahead of the callback.
+ *
+ *   allow_remaining
+ *       Initial admission budget for the callback. Each callback
+ *       invocation that returns 1 decrements this counter; once it
+ *       reaches 0, subsequent invocations return 0. Pass a value
+ *       comfortably larger than num_clients (e.g. 100) for "always
+ *       allow"; pass 0 for "always deny"; pass 1..num_clients-1 for
+ *       "admit the first N then deny the rest".
+ *
+ *   num_clients
+ *       Number of distinct DTLS clients the helper creates and drives
+ *       through cap_test_send_clienthello(). Must not exceed
+ *       PENDING_CAP_TEST_CLIENTS (the compile-time size of the internal
+ *       clients[] / client_fds[] arrays); the helper asserts this at
+ *       runtime.
+ *
+ *   expected_pending
+ *       Number of entries expected in the listener's pending_conns
+ *       after all ClientHellos have been driven.
+ *
+ *   expected_calls
+ *       Expected number of new_pending_cb_fn invocations. Interpretation
+ *       depends on strict_cb_count.
+ *
+ *   strict_cb_count
+ *       0 -> assert (call_count >= expected_calls); use this whenever
+ *            the callback ever denies, because denied peers do not
+ *            receive an HVR and their DTLS retransmit timer can produce
+ *            extra callback invocations during the drain window.
+ *       Non-zero -> assert (call_count == expected_calls); safe only
+ *            when either (a) every callback invocation admits (HVR
+ *            quiets the peer, no retransmits), or (b) the cap
+ *            short-circuits ahead of the callback for excess peers.
+ *
+ * Returns 1 on success, 0 on any assertion failure. All resources
+ * (clients, sockets, listener, contexts) are freed on both paths.
+ */
+static int run_new_pending_cb_scenario(uint64_t max_pending, int allow_remaining,
+    int num_clients, int expected_pending,
+    int expected_calls, int strict_cb_count)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL;
+    SSL *clients[PENDING_CAP_TEST_CLIENTS] = { NULL };
+    int client_fds[PENDING_CAP_TEST_CLIENTS] = { -1, -1, -1, -1, -1 };
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1;
+    int testresult = 0;
+    int cb_arg_marker = 0;
+    int i;
+
+    if (!TEST_int_le(num_clients, PENDING_CAP_TEST_CLIENTS))
+        return 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
+                | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto err;
+
+    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, max_pending)))
+        goto err;
+
+    new_pending_cb_reset(sctx, &cb_arg_marker, allow_remaining);
+    SSL_CTX_set_new_pending_conn_cb(sctx, new_pending_cb_fn, &cb_arg_marker);
+
+    for (i = 0; i < num_clients; i++)
+        if (!TEST_true(cap_test_send_clienthello(cctx, server_addr, listener,
+                &clients[i], &client_fds[i])))
+            goto err;
+
+    /* Verify the number of pending connections matches expectation. */
+    if (!TEST_size_t_eq(ossl_dgram_conn_lookup_num_items(
+                            ((DTLS_LISTENER *)listener)->pending_conns),
+            (size_t)expected_pending))
+        goto err;
+
+    /*
+     * Verify the callback was invoked as expected.
+     *
+     * Strict counts are only meaningful when we know retransmits cannot
+     * reach the callback (either because we sent an HVR to quiet the
+     * client, or because the cap short-circuits ahead of the callback).
+     * Otherwise assert only the lower bound.
+     */
+    if (strict_cb_count) {
+        if (!TEST_int_eq(new_pending_cb_call_count, expected_calls))
+            goto err;
+    } else {
+        if (!TEST_int_ge(new_pending_cb_call_count, expected_calls))
+            goto err;
+    }
+
+    /* Verify ctx and arg were passed through correctly on every call. */
+    if (!TEST_true(new_pending_cb_ctx_matched))
+        goto err;
+    if (!TEST_true(new_pending_cb_arg_matched))
+        goto err;
+
+    testresult = 1;
+
+err:
+    /* Clear callback so nothing else re-enters new_pending_cb_fn. */
+    if (sctx != NULL)
+        SSL_CTX_set_new_pending_conn_cb(sctx, NULL, NULL);
+
+    for (i = 0; i < num_clients; i++) {
+        SSL_free(clients[i]);
+        if (client_fds[i] >= 0)
+            BIO_closesocket(client_fds[i]);
+    }
+
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
+ * Scenario 1: Callback allows every connection; cap is high enough that it
+ * never fires.
+ *
+ * Sends 3 ClientHellos, expects 3 pending connections registered, expects
+ * the callback to have been invoked exactly 3 times (once per novel peer;
+ * HVR keeps clients from retransmitting during the drain window).
+ */
+static int test_new_pending_cb_allow_all(void)
+{
+    return run_new_pending_cb_scenario(100, 100, 3, 3, 3, 1);
+}
+
+/*
+ * Scenario 2: Callback rejects every connection; cap is high enough that it
+ * never fires.
+ *
+ * Sends 3 ClientHellos, expects 0 pending connections registered, expects
+ * the callback to have been invoked at least 3 times. On rejection no HVR
+ * is sent, so the client's DTLS retransmit timer may re-fire the callback
+ * during the drain window - we can only assert a lower bound.
+ */
+static int test_new_pending_cb_reject_all(void)
+{
+    return run_new_pending_cb_scenario(100, 0, 3, 0, 3, 0);
+}
+
+/*
+ * Scenario 3: Cap set to LIMIT (3); callback always allows; 5 clients try to
+ * connect.
+ *
+ * The cap is checked before the callback, so after the LIMIT-th pending
+ * connection is registered the cap short-circuits subsequent packets and
+ * the callback is not invoked for them (this holds even under retransmits).
+ *
+ * Expected:
+ *   - exactly PENDING_CAP_TEST_LIMIT (3) pending connections registered
+ *   - callback invoked exactly PENDING_CAP_TEST_LIMIT (3) times
+ */
+static int test_new_pending_cb_blocked_by_cap(void)
+{
+    return run_new_pending_cb_scenario(PENDING_CAP_TEST_LIMIT, 100,
+        PENDING_CAP_TEST_CLIENTS,
+        PENDING_CAP_TEST_LIMIT,
+        PENDING_CAP_TEST_LIMIT, 1);
+}
+
+/*
+ * Scenario 4: Cap set well above the client count; callback rejects every
+ * connection.
+ *
+ * Verifies that callback-side rejection alone is sufficient to keep
+ * pending_conns empty, even when the cap is not a factor. Sends 5
+ * ClientHellos, expects 0 pending connections registered, expects the
+ * callback to have been invoked at least 5 times (retransmits may inflate
+ * the count - see scenario 2 for the rationale on the lower bound).
+ */
+static int test_new_pending_cb_all_denied_under_cap(void)
+{
+    return run_new_pending_cb_scenario(100, 0, PENDING_CAP_TEST_CLIENTS,
+        0, PENDING_CAP_TEST_CLIENTS, 0);
+}
+
+/*
+ * Scenario 5: Callback allows the first invocation and denies the rest.
+ *
+ * Verifies that the callback's return value is honored per-invocation
+ * rather than cached from the first call. Sends 2 ClientHellos with a
+ * high cap so the callback is always reached:
+ *   - client 1: callback returns 1, pending connection is registered,
+ *     an HVR is sent (so this client does not retransmit and re-enter
+ *     the callback).
+ *   - client 2: callback returns 0, connection is discarded silently;
+ *     retransmits from client 2 may re-invoke the callback (all
+ *     subsequent returns are also 0).
+ *
+ * Expected:
+ *   - exactly 1 pending connection registered
+ *   - callback invoked at least 2 times (lower-bound: retransmits from
+ *     the denied client can inflate this)
+ */
+static int test_new_pending_cb_alternate(void)
+{
+    return run_new_pending_cb_scenario(100, 1, 2, 1, 2, 0);
 }
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -4119,5 +4469,12 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_max_pending_conns_invalid);
     ADD_TEST(test_pending_conn_cap_enforcement);
     ADD_TEST(test_pending_cap_with_timeout);
+
+    /* new_pending_conn_cb tests (DTLS listener) */
+    ADD_TEST(test_new_pending_cb_allow_all);
+    ADD_TEST(test_new_pending_cb_reject_all);
+    ADD_TEST(test_new_pending_cb_blocked_by_cap);
+    ADD_TEST(test_new_pending_cb_all_denied_under_cap);
+    ADD_TEST(test_new_pending_cb_alternate);
     return 1;
 }
