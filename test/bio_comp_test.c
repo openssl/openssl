@@ -132,6 +132,99 @@ static int test_brotli(int n)
 {
     return do_bio_comp(BIO_f_brotli(), n);
 }
+
+static int test_brotli_wpending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[512];
+    int ret = 0;
+
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_brotli()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bcomp)))
+        goto err;
+    if (!TEST_int_eq(BIO_wpending(bcomp), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bmem);
+    return ret;
+}
+
+static int test_brotli_wpending_nonzero(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bpair = NULL;
+    BIO *bpeer = NULL;
+    unsigned char buf[8192];
+    int ret = 0;
+
+    if (!TEST_int_gt(RAND_bytes(buf, sizeof(buf)), 0))
+        goto err;
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_brotli()))
+        || !TEST_true(BIO_new_bio_pair(&bpair, 16, &bpeer, sizeof(buf))))
+        goto err;
+    BIO_push(bcomp, bpair);
+    /* The small pair cannot drain the compressed output, so it stays pending */
+    if (!TEST_int_gt(BIO_write(bcomp, buf, (int)sizeof(buf)), 0))
+        goto err;
+    if (!TEST_int_gt(BIO_wpending(bcomp), 1))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bpair);
+    BIO_free(bpeer);
+    return ret;
+}
+
+static int test_brotli_pending(void)
+{
+    BIO *bcomp = NULL;
+    BIO *bdec = NULL;
+    BIO *bmem = NULL;
+    unsigned char buf[8192];
+    unsigned char slice[16];
+    int ret = 0;
+
+    /* Compressible: the decoder still holds output after avail_in hits zero */
+    memset(buf, 'A', sizeof(buf));
+    if (!TEST_ptr(bcomp = BIO_new(BIO_f_brotli()))
+        || !TEST_ptr(bmem = BIO_new(BIO_s_mem())))
+        goto err;
+    BIO_push(bcomp, bmem);
+    if (!TEST_int_eq(BIO_write(bcomp, buf, (int)sizeof(buf)), (int)sizeof(buf))
+        || !TEST_true(BIO_flush(bcomp)))
+        goto err;
+    BIO_free(bcomp);
+    bcomp = NULL;
+
+    if (!TEST_ptr(bdec = BIO_new(BIO_f_brotli())))
+        goto err;
+    BIO_push(bdec, bmem);
+    if (!TEST_int_gt(BIO_read(bdec, slice, (int)sizeof(slice)), 0))
+        goto err;
+    /* Output is still buffered in the decoder, so pending must not be zero */
+    if (!TEST_int_gt(BIO_pending(bdec), 0))
+        goto err;
+    /* Once drained, pending must report zero */
+    while (BIO_read(bdec, slice, (int)sizeof(slice)) > 0)
+        continue;
+    if (!TEST_int_eq(BIO_pending(bdec), 0))
+        goto err;
+    ret = 1;
+err:
+    BIO_free(bcomp);
+    BIO_free(bdec);
+    BIO_free(bmem);
+    return ret;
+}
 #endif
 #ifndef OPENSSL_NO_ZLIB
 static int test_zlib(int n)
@@ -147,6 +240,9 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_BROTLI
     ADD_ALL_TESTS(test_brotli, NUM_SIZES * 4);
+    ADD_TEST(test_brotli_wpending);
+    ADD_TEST(test_brotli_wpending_nonzero);
+    ADD_TEST(test_brotli_pending);
 #endif
 #ifndef OPENSSL_NO_ZSTD
     ADD_ALL_TESTS(test_zstd, NUM_SIZES * 4);
