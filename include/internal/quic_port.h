@@ -241,6 +241,10 @@ uint64_t ossl_quic_port_get_net_bio_epoch(const QUIC_PORT *port);
 void ossl_quic_port_raise_net_error(QUIC_PORT *port,
     QUIC_CHANNEL *triggering_ch);
 
+size_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port);
+
+void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, size_t max_pending_channels);
+
 #endif
 
 #endif

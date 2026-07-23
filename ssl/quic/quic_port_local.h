@@ -135,6 +135,7 @@ struct quic_port_st {
     uint64_t active_conn_id_limit;
     unsigned char ack_delay_exponent;
     unsigned char disable_active_migration;
+    size_t max_pending_channels;
 };
 
 #endif
