@@ -98,7 +98,7 @@ static double gaussian_random(OSSL_LIB_CTX *libctx,
 {
     unsigned char hash1[EVP_MAX_MD_SIZE], hash2[EVP_MAX_MD_SIZE];
     size_t hash_len;
-    double u1, u2, z0;
+    double u1, u2, z0 = 0.0;
     EVP_MAC *mac = NULL;
     EVP_MAC_CTX *mctx = NULL;
     int ret = 0;
