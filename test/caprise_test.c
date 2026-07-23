@@ -203,7 +203,6 @@ static int test_caprise_distance_preservation(void)
 
     double ec1[CAPRISE_TEST_DIM];
     double ec2[CAPRISE_TEST_DIM];
-    double ec3[CAPRISE_TEST_DIM];
     double ecq[CAPRISE_TEST_DIM];
 
     double d_eq_e1, d_eq_e2;
