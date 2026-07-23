@@ -52,7 +52,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
@@ -194,7 +194,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -241,7 +241,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -271,7 +271,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -301,7 +301,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -332,7 +332,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -362,7 +362,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -396,7 +396,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -430,7 +430,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       matrix:
@@ -456,7 +456,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -481,7 +481,7 @@ jobs:
     needs: [validate-dispatch-inputs]
     if: |
       github.repository == 'openssl/openssl' &&
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
@@ -510,7 +510,7 @@ jobs:
   bn_debug:
     needs: [validate-dispatch-inputs]
     if: |
-      always() &&
+      !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
