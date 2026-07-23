@@ -232,8 +232,21 @@ static int poll_translate(SSL_POLL_ITEM *items,
                         abort_blocking))
                     FAIL_ITEM(i);
 
-                if (*abort_blocking)
+                if (*abort_blocking) {
+                    /*
+                     * We are abandoning the blocking wait because an item is
+                     * already ready. Release the blocking-section references
+                     * taken for the items translated so far, exactly as the
+                     * failure path below does. Item i has already released its
+                     * own reference, so the correct bound is i.
+                     *
+                     * Without this, every such call leaks references and
+                     * QUIC_REACTOR.cur_blocking_waiters never returns to zero,
+                     * which later deadlocks rtor_notify_other_threads().
+                     */
+                    postpoll_translation_cleanup(items, i, stride, wctx);
                     return 1;
+                }
 
                 if (!SSL_get_event_timeout(ssl, &timeout, &is_infinite))
                     FAIL_ITEM(i++); /* need to clean up this item too */
