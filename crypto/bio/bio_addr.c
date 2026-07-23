@@ -11,6 +11,10 @@
 #define _GNU_SOURCE
 #endif
 
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
+
 /*
  * VC configurations may define UNICODE, to indicate to the C RTL that
  * WCHAR functions are preferred.
