@@ -22,6 +22,7 @@
 #include "../ssl/quic/quic_channel_local.h"
 #include "internal/quic_error.h"
 #include "internal/quic_ssl.h"
+#include "internal/quic_port.h"
 
 static OSSL_LIB_CTX *libctx = NULL;
 static char *propq = NULL;
@@ -3840,6 +3841,115 @@ err:
     return ret;
 }
 
+static int test_pending_limit(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl_listener = NULL, *serverssl = NULL;
+    SSL *extra_clients[5] = { 0 };
+    BIO *bio;
+    unsigned int i, watchdog;
+    int done;
+    int testresult = 0;
+    QUIC_PORT *port;
+    size_t pending_connections = 0;
+
+    if (!TEST_true(create_quic_ctx_pair(libctx, &cctx, &sctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_quic_conn_objects(cctx, sctx, &clientssl, &serverssl_listener)))
+        goto end;
+
+    testresult = SSL_set_feature_request_uint(serverssl_listener,
+        SSL_VALUE_QUIC_MAX_PENDING_CHANNELS, 5);
+    if (!TEST_true(testresult)) {
+        TEST_info("%s call to SSL_get_feature_request_uint"
+                  "(SSL_VALUE_QUIC_MAX_PENDING_CHANNELS failed",
+            __func__);
+        goto end;
+    }
+
+    if (!TEST_true(SSL_listen(serverssl_listener))) {
+        TEST_info("%s SSL_listen() failed", __func__);
+        goto end;
+    }
+
+    port = ossl_quic_listener_get_port(serverssl_listener);
+    if (!TEST_ptr(port))
+        goto end;
+
+    bio = SSL_get_rbio(clientssl);
+    if (!TEST_ptr(bio))
+        goto end;
+
+    if (!TEST_ptr_eq(bio, SSL_get_wbio(clientssl)))
+        goto end;
+
+    for (i = 0; i < 5; i++) {
+        extra_clients[i] = create_quic_client(cctx, bio);
+        if (!TEST_ptr(extra_clients[i]))
+            goto end;
+    }
+
+    watchdog = 0;
+    done = 0;
+    while (!done && watchdog++ < 1000) {
+        /*
+         * connections are never accepted by the server. The SSL_connect()
+         * for non-blocking client returns -1 to keep connect retrying
+         */
+        for (i = 0; i < 5; i++)
+            if (!TEST_int_lt(SSL_connect(extra_clients[i]), 0))
+                goto end;
+        SSL_handle_events(serverssl_listener);
+
+        pending_connections = ossl_quic_port_get_num_incoming_channels(port);
+        done = pending_connections >= 5;
+    }
+    if (!TEST_size_t_eq(pending_connections, 5))
+        goto end;
+
+    /*
+     * initiate yet another connection. The connection must not be inserted
+     * to pending queue. The pending_connections must be 5.
+     */
+    for (i = 0; i < 10; i++) {
+        if (!TEST_int_lt(SSL_connect(extra_clients[i]), 0))
+            goto end;
+        SSL_handle_events(serverssl_listener);
+    }
+    pending_connections = ossl_quic_port_get_num_incoming_channels(port);
+    if (!TEST_size_t_eq(pending_connections, 5))
+        goto end;
+
+    /*
+     * accept one connection and check the length of the queue dropped to 4.
+     */
+    done = 0;
+    watchdog = 0;
+    while (!done && watchdog++ < 1000) {
+        if (!TEST_int_lt(SSL_connect(extra_clients[i]), 0))
+            goto end;
+        SSL_handle_events(serverssl_listener);
+        serverssl = SSL_accept_connection(serverssl_listener, 0);
+        done = (serverssl != NULL);
+    }
+    pending_connections = ossl_quic_port_get_num_incoming_channels(port);
+    if (!TEST_size_t_eq(pending_connections, 4))
+        goto end;
+
+    testresult = 1;
+end:
+    for (i = 0; i < 5; i++)
+        SSL_free(extra_clients[i]);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_free(serverssl_listener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
 /***********************************************************************************/
 OPT_TEST_DECLARE_USAGE("provider config certsdir datadir\n")
 
@@ -3955,6 +4065,7 @@ int setup_tests(void)
     ADD_TEST(test_ech);
     ADD_TEST(test_quic_resize_txe);
     ADD_MFAIL_TEST(test_ssl_new_mfail);
+    ADD_TEST(test_pending_limit);
 
     return 1;
 err:

@@ -3992,6 +3992,37 @@ err:
 }
 
 QUIC_TAKES_LOCK
+static int qc_getset_max_pending_channels(QCTX *ctx, uint32_t class_,
+    uint64_t *p_value_out, uint64_t *p_value_in)
+{
+    int ret = 0;
+    uint64_t value_out = 0, value_in;
+
+    qctx_lock(ctx);
+
+    if (class_ == SSL_VALUE_CLASS_FEATURE_REQUEST && ctx->is_listener) {
+        value_out = ossl_quic_port_get_max_pending_channels(ctx->ql->port);
+        if (p_value_in != NULL) {
+            value_in = *p_value_in;
+            value_in = (value_in > SIZE_MAX) ? SIZE_MAX : value_in;
+            ossl_quic_port_set_max_pending_channels(ctx->ql->port,
+                (size_t)value_in);
+        }
+        ret = 1;
+    } else {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS, NULL);
+        ret = 0;
+    }
+
+    qctx_unlock(ctx);
+
+    if (ret && p_value_out != NULL)
+        *p_value_out = value_out;
+
+    return ret;
+}
+
+QUIC_TAKES_LOCK
 static int qc_get_stream_avail(QCTX *ctx, uint32_t class_,
     int is_uni, int is_remote,
     uint64_t *value)
@@ -4133,6 +4164,7 @@ static int expect_quic_for_value(SSL *s, QCTX *ctx, uint32_t id)
     case SSL_VALUE_QUIC_WINDOWUSTR:
     case SSL_VALUE_QUIC_ACK_DELAY_EXPONENT:
     case SSL_VALUE_QUIC_ACK_DELAY_MAX:
+    case SSL_VALUE_QUIC_MAX_PENDING_CHANNELS:
         return expect_quic_cl(s, ctx);
     default:
         return expect_quic_conn_only(s, ctx);
@@ -4225,6 +4257,8 @@ int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_ack_delay_exponent(&ctx, class_, NULL, &value);
     case SSL_VALUE_QUIC_ACK_DELAY_MAX:
         return qc_getset_max_ack_delay(&ctx, class_, NULL, &value);
+    case SSL_VALUE_QUIC_MAX_PENDING_CHANNELS:
+        return qc_getset_max_pending_channels(&ctx, class_, NULL, &value);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
@@ -5914,6 +5948,19 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s)
         return NULL;
 
     return ctx.qc->ch;
+}
+
+QUIC_PORT *ossl_quic_listener_get_port(SSL *s)
+{
+    QCTX ctx;
+
+    /*
+     * expect listerner only
+     */
+    if (!expect_quic_listener(s, &ctx))
+        return NULL;
+
+    return ctx.ql->port;
 }
 
 int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title)

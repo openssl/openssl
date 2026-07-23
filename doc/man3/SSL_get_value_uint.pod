@@ -15,6 +15,7 @@ SSL_VALUE_QUIC_STREAM_UNI_REMOTE_AVAIL, SSL_VALUE_QUIC_IDLE_TIMEOUT,
 SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_WINDOWCON,
 SSL_VALUE_QUIC_WINDOWBSTR, SSL_VALUE_QUIC_WINDOWUSTR,
 SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, SSL_VALUE_QUIC_ACK_DELAY_MAX,
+SSL_VALUE_QUIC_MAX_PENDING_CHANNELS,
 SSL_VALUE_EVENT_HANDLING_MODE,
 SSL_VALUE_EVENT_HANDLING_MODE_INHERIT,
 SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT,
@@ -54,6 +55,7 @@ manage negotiable features and configuration values for an SSL object
  #define SSL_VALUE_QUIC_WINDOWUSTR
  #define SSL_VALUE_QUIC_ACK_DELAY_EXPONENT
  #define SSL_VALUE_QUIC_ACK_DELAY_MAX
+ #define SSL_VALUE_QUIC_MAX_PENDING_CHANNELS
 
  #define SSL_VALUE_EVENT_HANDLING_MODE
  #define SSL_VALUE_EVENT_HANDLING_MODE_INHERIT
@@ -236,6 +238,15 @@ peer in the transport parameters.
 This release of OpenSSL uses a default value of 25 milliseconds. This default
 value may change between releases of OpenSSL.
 
+=item B<SSL_VALUE_QUIC_MAX_PENDING_CHANNELS> (listener object)
+
+This sets the limit on channels (connection objects) which QUIC server can
+insert into list of pending connections. The pending connection is connection
+which local application needs to accept (L<SSL_accept_connection(3)>) in order to retrieve
+SSL connection object. The connection is removed from pending queue by call
+to L<SSL_accept_connection(3)>. The default limit for pending connections is 32. The INITIAL
+QUIC packet which exceeds the limit is silently discarded.
+
 =item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL> (connection object)
 
 Generic read-only statistical value. The number of bidirectional,
@@ -403,7 +414,8 @@ time.
 L<SSL_ctrl(3)>, L<SSL_get_accept_stream_queue_len(3)>,
 L<SSL_get_stream_read_state(3)>, L<SSL_get_stream_write_state(3)>,
 L<SSL_get_stream_read_error_code(3)>, L<SSL_get_stream_write_error_code(3)>,
-L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>
+L<SSL_set_default_stream_mode(3)>, L<SSL_set_incoming_stream_policy(3)>,
+L<SSL_accept_connection(3)>
 
 =head1 HISTORY
 
