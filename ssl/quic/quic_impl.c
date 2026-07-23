@@ -410,6 +410,11 @@ static int expect_quic_cs(const SSL *s, QCTX *ctx)
     return expect_quic_as(s, ctx, QCTX_C | QCTX_S);
 }
 
+static int expect_quic_cl(const SSL *s, QCTX *ctx)
+{
+    return expect_quic_as(s, ctx, QCTX_C | QCTX_L);
+}
+
 static int expect_quic_csl(const SSL *s, QCTX *ctx)
 {
     return expect_quic_as(s, ctx, QCTX_C | QCTX_S | QCTX_L);
@@ -3689,6 +3694,33 @@ err:
 }
 
 QUIC_TAKES_LOCK
+static int qc_getset_max_pending_channels(QCTX *ctx, uint32_t class_,
+    uint64_t *p_value_out, uint64_t *p_value_in)
+{
+    int ret = 0;
+    uint64_t value_out = 0;
+
+    qctx_lock(ctx);
+
+    if (class_ == SSL_VALUE_CLASS_GENERIC && ctx->is_listener) {
+        value_out = ossl_quic_port_get_max_pending_channels(ctx->ql->port);
+        if (p_value_in != NULL)
+            ossl_quic_port_set_max_pending_channels(ctx->ql->port, *p_value_in);
+        ret = 1;
+    } else {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS, NULL);
+        ret = 0;
+    }
+
+    qctx_unlock(ctx);
+
+    if (ret && p_value_out != NULL)
+        *p_value_out = value_out;
+
+    return ret;
+}
+
+QUIC_TAKES_LOCK
 static int qc_get_stream_avail(QCTX *ctx, uint32_t class_,
     int is_uni, int is_remote,
     uint64_t *value)
@@ -3823,6 +3855,8 @@ static int expect_quic_for_value(SSL *s, QCTX *ctx, uint32_t id)
     case SSL_VALUE_STREAM_WRITE_BUF_USED:
     case SSL_VALUE_STREAM_WRITE_BUF_AVAIL:
         return expect_quic_cs(s, ctx);
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
+        return expect_quic_cl(s, ctx);
     default:
         return expect_quic_conn_only(s, ctx);
     }
@@ -3844,6 +3878,8 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
     switch (id) {
     case SSL_VALUE_QUIC_IDLE_TIMEOUT:
         return qc_getset_idle_timeout(&ctx, class_, value, NULL);
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
+        return qc_getset_max_pending_channels(&ctx, class_, value, NULL);
 
     case SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL:
         return qc_get_stream_avail(&ctx, class_, /*uni=*/0, /*remote=*/0, value);
@@ -3890,6 +3926,8 @@ int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
 
     case SSL_VALUE_EVENT_HANDLING_MODE:
         return qc_getset_event_handling(&ctx, class_, NULL, &value);
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
+        return qc_getset_max_pending_channels(&ctx, class_, NULL, &value);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
