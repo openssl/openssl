@@ -3894,7 +3894,7 @@ static int test_pending_limit(void)
     done = 0;
     while (!done && watchdog++ < 1000) {
         /*
-         * connections are never accepted server the SSL_connect()
+         * connections are never accepted by the server. The SSL_connect()
          * for non-blocking client returns -1 to keep connect retrying
          */
         for (i = 0; i < 5; i++)
@@ -3903,7 +3903,7 @@ static int test_pending_limit(void)
         SSL_handle_events(serverssl_listener);
 
         pending_connections = ossl_quic_port_get_num_incoming_channels(port);
-        done = pending_connections <= 5;
+        done = pending_connections >= 5;
     }
     if (!TEST_size_t_eq(pending_connections, 5))
         goto end;
