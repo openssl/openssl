@@ -15,6 +15,9 @@
 #ifndef _GNU_SOURCE
 #define _GNU_SOURCE /* make sure dladdr is declared */
 #endif
+#if defined(__APPLE__) && !defined(_DARWIN_C_SOURCE)
+#define _DARWIN_C_SOURCE
+#endif
 
 #include "dso_local.h"
 #include "internal/e_os.h"
