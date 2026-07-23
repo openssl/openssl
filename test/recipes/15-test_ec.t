@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 19;
+plan tests => 20;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -199,6 +199,30 @@ subtest 'ec -text prints the key in text form' => sub {
        "ec -text prints the expected public value for a public key");
     ok(!grep(/^priv:/, @pub),
        "ec -text does not print a private component for a public key");
+};
+
+subtest 'ec -check reports the key consistency' => sub {
+    plan tests => 4;
+
+    # ec -check prints the verdict on stderr and always exits successfully,
+    # so check the printed message instead of the exit status.
+    my $valid_err = 'ec-check-valid.err';
+    ok(run(app(['openssl', 'ec', '-check', '-noout',
+                '-in', srctop_file("test", "testec-p256.pem")],
+               stderr => $valid_err)),
+       "ec -check runs on a valid key");
+    test_file_contains("ec -check of a valid key", $valid_err,
+                       "EC Key valid");
+
+    # The invalid key is testec-p256.pem with the group generator as the
+    # public key, which is on the curve but fails the pairwise check.
+    my $invalid_err = 'ec-check-invalid.err';
+    ok(run(app(['openssl', 'ec', '-check', '-noout',
+                '-in', data_file('ec-check-invalid.pem')],
+               stderr => $invalid_err)),
+       "ec -check runs on an invalid key");
+    test_file_contains("ec -check of an invalid key", $invalid_err,
+                       "EC Key Invalid");
 };
 
 subtest 'Check loading of fips and non-fips keys' => sub {
