@@ -2674,6 +2674,37 @@ int ossl_ssl_credential_set1_trust_anchor_id(SSL_CREDENTIAL *cred,
 int ossl_ssl_credential_add1_trust_anchor_group(SSL_CREDENTIAL *cred,
     const uint8_t *pattern, size_t pattern_len);
 
+/**
+ * @brief Check whether a trust anchor ID pattern contains a trust anchor ID.
+ *
+ * Follows the containment procedure of section 5.3.1 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/, so a
+ * malformed pattern or ID contains nothing.
+ *
+ * @param pattern the trust anchor ID pattern's byte representation
+ * @param pattern_len the length of pattern in bytes
+ * @param id the trust anchor ID as TrustAnchorID relative-OID bytes
+ * @param id_len the length of id in bytes
+ * @return 1 if the pattern contains id, 0 otherwise
+ */
+int ossl_ssl_trust_anchor_pattern_contains(const uint8_t *pattern,
+    size_t pattern_len, const uint8_t *id, size_t id_len);
+
+/**
+ * @brief Check whether a credential matches a requested trust anchor list.
+ *
+ * The credential matches when its trust anchor ID equals a requested ID, or
+ * when one of its trust anchor group patterns contains a requested ID.
+ *
+ * @param cred the credential
+ * @param ids the peer's requested trust anchor IDs, as the wire-format list
+ * of u8-length-prefixed IDs saved by tls_parse_ctos_trust_anchors()
+ * @param ids_len the length of ids in bytes
+ * @return 1 if the credential matches a requested ID, 0 otherwise
+ */
+int ossl_ssl_credential_matches_request(const SSL_CREDENTIAL *cred,
+    const uint8_t *ids, size_t ids_len);
+
 typedef struct cert_st {
     /* Current active set */
     /*
