@@ -920,7 +920,7 @@ DEF_FUNC(hf_clear)
     RADIX_THREAD *rt = RT();
     size_t i;
 
-    ossl_crypto_mutex_lock(RP()->gm);
+    ossl_crypto_mutex_lock(RP()->objs_m);
 
     lh_RADIX_OBJ_doall(RP()->objs, cleanup_one);
     lh_RADIX_OBJ_flush(RP()->objs);
@@ -930,7 +930,7 @@ DEF_FUNC(hf_clear)
         rt->ssl[i] = NULL;
     }
 
-    ossl_crypto_mutex_unlock(RP()->gm);
+    ossl_crypto_mutex_unlock(RP()->objs_m);
     return 1;
 }
 
