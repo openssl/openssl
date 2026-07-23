@@ -23,6 +23,9 @@ static long buffer_callback_ctrl(BIO *h, int cmd, BIO_info_cb *fp);
 static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
     size_t *msgs_processed);
+static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
+    const char *data, int len);
+
 #define DEFAULT_BUFFER_SIZE 4096
 
 static const BIO_METHOD methods_buffer = {
@@ -81,6 +84,9 @@ static int buffer_free(BIO *a)
     b = (BIO_F_BUFFER_CTX *)a->ptr;
     OPENSSL_free(b->ibuf);
     OPENSSL_free(b->obuf);
+#ifndef OPENSSL_NO_SOCK
+    BIO_ADDR_free(b->peer);
+#endif
     OPENSSL_free(a->ptr);
     a->ptr = NULL;
     a->init = 0;
@@ -191,7 +197,7 @@ start:
         }
         /* we now have a full buffer needing flushing */
         for (;;) {
-            i = BIO_write(b->next_bio, &(ctx->obuf[ctx->obuf_off]),
+            i = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
                 ctx->obuf_len);
             if (i <= 0) {
                 BIO_copy_next_retry(b);
@@ -215,7 +221,7 @@ start:
 
     /* we now have inl bytes to write */
     while (inl >= ctx->obuf_size) {
-        i = BIO_write(b->next_bio, in, inl);
+        i = buffer_send_next(b, ctx, in, inl);
         if (i <= 0) {
             BIO_copy_next_retry(b);
             if (i < 0)
@@ -377,8 +383,8 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         for (;;) {
             BIO_clear_retry_flags(b);
             if (ctx->obuf_len > 0) {
-                r = BIO_write(b->next_bio,
-                    &(ctx->obuf[ctx->obuf_off]), ctx->obuf_len);
+                r = buffer_send_next(b, ctx, &(ctx->obuf[ctx->obuf_off]),
+                    ctx->obuf_len);
                 BIO_copy_next_retry(b);
                 if (r <= 0)
                     return (long)r;
@@ -482,36 +488,92 @@ static int buffer_puts(BIO *b, const char *str)
 }
 
 /*
- * buffer_sendmmsg - send multiple messages through the buffer BIO.
+ * buffer_send_next - write one chunk of buffered output to the next BIO.
+ *
+ * For listener-created datagram connections a peer address has been recorded
+ * such connections share a single network BIO, so the data must be sent with
+ * BIO_sendmmsg() carrying the explicit peer address rather than BIO_write()
+ *
+ * Returns the number of bytes sent - the full len for the datagram case, which
+ * is all-or-nothing - or 0 / a negative value on a transient or fatal error.
+ */
+static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
+    const char *data, int len)
+{
+#ifndef OPENSSL_NO_SOCK
+    if (ctx->peer != NULL) {
+        BIO_MSG msg;
+        size_t processed = 0;
+
+        memset(&msg, 0, sizeof(msg));
+        msg.data = (void *)data;
+        msg.data_len = (size_t)len;
+        msg.peer = ctx->peer;
+
+        /* Datagrams are all-or-nothing: either the whole chunk goes or none. */
+        if (!BIO_sendmmsg(b->next_bio, &msg, sizeof(msg), 1, 0, &processed)
+            || processed != 1)
+            return -1;
+        return len;
+    }
+#endif
+    return BIO_write(b->next_bio, data, len);
+}
+
+/*
+ * buffer_sendmmsg - accumulate a message into the buffer BIO.
+ *
+ * Listener-created DTLS connections share a single network BIO and so cannot
+ * use BIO_write(). Instead the record layer sends each record via BIO_sendmmsg(),
+ * which lands here. We record the peer address and then buffer the data exactly
+ * like buffer_write() does, so that multiple handshake records accumulate and are
+ * packed into a single datagram when the state machine flushes
  */
 static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
     size_t *msgs_processed)
 {
+#ifndef OPENSSL_NO_SOCK
     BIO_F_BUFFER_CTX *ctx;
+    int ret;
 
     *msgs_processed = 0;
 
-    /*
-     * TODO: DTLS1.3 Look at actually buffering the messages and
-     * this function may then be removed
-     */
     if (b == NULL || b->next_bio == NULL)
         return 0;
 
     ctx = (BIO_F_BUFFER_CTX *)b->ptr;
-    if (ctx == NULL)
+    if (ctx == NULL || msg == NULL || msg->peer == NULL)
         return 0;
 
     /*
-     * Flush any buffered output data before sending messages.
-     * This ensures proper ordering of data on the wire.
+     * Record the peer address so the flush path knows where to send the
+     * accumulated data. There is one buffer BIO per SSL connection, so the
+     * peer is constant for this BIO's lifetime.
      */
-    if (ctx->obuf_len > 0) {
-        if (buffer_ctrl(b, BIO_CTRL_FLUSH, 0, NULL) <= 0)
+    if (ctx->peer == NULL) {
+        ctx->peer = BIO_ADDR_new();
+        if (ctx->peer == NULL)
             return 0;
     }
+    if (!BIO_ADDR_copy(ctx->peer, msg->peer))
+        return 0;
 
-    /* Forward the sendmmsg call to the next BIO */
-    return BIO_sendmmsg(b->next_bio, msg, stride, num_msg, flags, msgs_processed);
+    /*
+     * Buffer the message data. buffer_write() takes an int length, so guard
+     * against an oversized datagram (this mirrors buffer_puts()).
+     */
+    if (msg->data_len > INT_MAX)
+        return 0;
+
+    ret = buffer_write(b, msg->data, (int)msg->data_len);
+    if (ret <= 0)
+        return 0;
+
+    *msgs_processed = 1;
+    return 1;
+#else
+    *msgs_processed = 0;
+    return 0;
+#endif
 }
