@@ -76,7 +76,7 @@ static int test_rbt_insert(void)
         node_rbt->rbt_data = test_data[i - 1];
         found_rbt = OSSL_RBT_INSERT(ossl_rbt, &rbt_head, node_rbt);
         if (!TEST_ptr_eq(found_rbt, NULL)) {
-            TEST_info("%s %p(%s) found already %p(%s) @ %un", __func__,
+            TEST_info("%s %p(%s) found already %p(%s) @ %un", OPENSSL_FUNC,
                 (void *)node_rbt, node_rbt->rbt_data,
                 (void *)found_rbt, found_rbt->rbt_data, i);
             return 0;
@@ -97,14 +97,14 @@ static int test_rbt_min(void)
 
     node_rbt = OSSL_RBT_MIN(ossl_rbt, &rbt_head);
     if (!TEST_ptr(node_rbt)) {
-        TEST_info("%s OSSL_RBT_MIN() returns NULL", __func__);
+        TEST_info("%s OSSL_RBT_MIN() returns NULL", OPENSSL_FUNC);
         return 0;
     }
 
     for (i = 0; i < 26; i++) {
         match = strcmp(node_rbt->rbt_data, test_data[i]);
         if (!TEST_int_eq(match, 0)) {
-            TEST_info("%s %s != %s @ %u", __func__,
+            TEST_info("%s %s != %s @ %u", OPENSSL_FUNC,
                 node_rbt->rbt_data, test_data[i], i);
             return 0;
         }
@@ -112,7 +112,7 @@ static int test_rbt_min(void)
     }
 
     if (!TEST_ptr_eq(node_rbt, NULL)) {
-        TEST_info("%s OSSL_RBT_NEXT() is not NULL", __func__);
+        TEST_info("%s OSSL_RBT_NEXT() is not NULL", OPENSSL_FUNC);
         return 0;
     }
 
@@ -130,14 +130,14 @@ static int test_rbt_max(void)
 
     node_rbt = OSSL_RBT_MAX(ossl_rbt, &rbt_head);
     if (!TEST_ptr(node_rbt)) {
-        TEST_info("%s OSSL_RBT_MIN() returns NULL", __func__);
+        TEST_info("%s OSSL_RBT_MIN() returns NULL", OPENSSL_FUNC);
         return 0;
     }
 
     for (i = 26; i > 0; i--) {
         match = strcmp(node_rbt->rbt_data, test_data[i - 1]);
         if (!TEST_int_eq(match, 0)) {
-            TEST_info("%s %s != %s @ %u", __func__,
+            TEST_info("%s %s != %s @ %u", OPENSSL_FUNC,
                 node_rbt->rbt_data, test_data[i - 1], i);
             return 0;
         }
@@ -145,7 +145,7 @@ static int test_rbt_max(void)
     }
 
     if (!TEST_ptr_eq(node_rbt, NULL)) {
-        TEST_info("%s OSSL_RBT_PREV() is not NULL", __func__);
+        TEST_info("%s OSSL_RBT_PREV() is not NULL", OPENSSL_FUNC);
         return 0;
     }
 
@@ -165,27 +165,27 @@ static int test_rbt_find_remove(void)
         key_rbt.rbt_data = test_data[i];
         node_rbt = OSSL_RBT_FIND(ossl_rbt, &rbt_head, &key_rbt);
         if (!TEST_ptr(node_rbt)) {
-            TEST_info("%s %s not found in tree @ %u", __func__,
+            TEST_info("%s %s not found in tree @ %u", OPENSSL_FUNC,
                 key_rbt.rbt_data, i);
             return 0;
         }
         removed_rbt = OSSL_RBT_REMOVE(ossl_rbt, &rbt_head, node_rbt);
         if (!TEST_ptr_eq(node_rbt, removed_rbt)) {
             TEST_info("%s node_rbt(%p) != removed_rbt(%p) @ %u",
-                __func__, (void *)node_rbt, (void *)removed_rbt, i);
+                OPENSSL_FUNC, (void *)node_rbt, (void *)removed_rbt, i);
             return 0;
         }
 
         node_rbt = OSSL_RBT_FIND(ossl_rbt, &rbt_head, &key_rbt);
         if (!TEST_ptr_eq(node_rbt, NULL)) {
             TEST_info("%s %s(%p) still found after being removed @ %u",
-                __func__, node_rbt->rbt_data, (void *)node_rbt, i);
+                OPENSSL_FUNC, node_rbt->rbt_data, (void *)node_rbt, i);
             return 0;
         }
     }
 
     if (!TEST_int_ne(OSSL_RBT_EMPTY(ossl_rbt, &rbt_head), 0)) {
-        TEST_info("%s rbt is not empty", __func__);
+        TEST_info("%s rbt is not empty", OPENSSL_FUNC);
         return 0;
     }
 
@@ -206,14 +206,14 @@ static int test_rbt_dup_insert(void)
         insert_rbt.rbt_data = test_data[i];
         conflict_rbt = OSSL_RBT_INSERT(ossl_rbt, &rbt_head, &insert_rbt);
         if (!TEST_ptr(conflict_rbt)) {
-            TEST_info("%s %s not found in tree @ %u", __func__,
+            TEST_info("%s %s not found in tree @ %u", OPENSSL_FUNC,
                 insert_rbt.rbt_data, i);
             return 0;
         }
         match = strcmp(conflict_rbt->rbt_data, insert_rbt.rbt_data);
         if (!TEST_int_eq(match, 0)) {
             TEST_info("%s insert(%s) != conflict(%s) @ %u",
-                __func__, insert_rbt.rbt_data, conflict_rbt->rbt_data, i);
+                OPENSSL_FUNC, insert_rbt.rbt_data, conflict_rbt->rbt_data, i);
             return 0;
         }
     }
@@ -236,7 +236,7 @@ static int test_rbt_foreach(void)
         match = strcmp(walk_rbt->rbt_data, test_data[i]);
         if (!TEST_int_eq(match, 0)) {
             TEST_info("%s expected: %s got: %s @ %u",
-                __func__, walk_rbt->rbt_data, test_data[i], i);
+                OPENSSL_FUNC, walk_rbt->rbt_data, test_data[i], i);
             return 0;
         }
         i++;
@@ -248,7 +248,7 @@ static int test_rbt_foreach(void)
         match = strcmp(walk_rbt->rbt_data, test_data[i]);
         if (!TEST_int_eq(match, 0)) {
             TEST_info("%s expected: %s got: %s @ %u",
-                __func__, walk_rbt->rbt_data, test_data[i], i);
+                OPENSSL_FUNC, walk_rbt->rbt_data, test_data[i], i);
             return 0;
         }
         OSSL_RBT_REMOVE(ossl_rbt, &rbt_head, walk_rbt);
@@ -256,7 +256,7 @@ static int test_rbt_foreach(void)
     }
 
     if (!TEST_int_ne(OSSL_RBT_EMPTY(ossl_rbt, &rbt_head), 0)) {
-        TEST_info("%s rbt is not empty", __func__);
+        TEST_info("%s rbt is not empty", OPENSSL_FUNC);
         return 0;
     }
 
