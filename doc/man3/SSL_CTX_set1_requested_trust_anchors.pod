@@ -33,9 +33,11 @@ connection and overrides the context's setting for that connection.
 
 If neither is called, a client advertises by default the identifiers of every
 trust anchor it is configured to verify against that has trust anchor
-identifier information associated with it (currently only Merkle Tree
-Certificate CAs; see L<X509_STORE_trust_mtc_ca(3)>), and sends nothing if there
-are none. Calling either function replaces that default with the supplied list.
+identifier information associated with it, and sends nothing if there are none.
+This covers Merkle Tree Certificate CAs (see L<X509_STORE_trust_mtc_ca(3)>) and
+any conventional CA loaded from a file in which the certificate was preceded by
+a B<CERTIFICATE PROPERTIES> PEM block carrying a trust anchor ID. Calling either
+function replaces that default with the supplied list.
 
 These functions only control what is advertised to the peer; they do not affect
 certificate verification, which proceeds as usual against the configured trust

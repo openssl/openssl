@@ -1752,6 +1752,8 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const uint8_t *ids = NULL;
     size_t ids_len = 0;
+    const uint8_t *ta_ids = NULL;
+    size_t ta_ids_len = 0;
     X509_STORE *store;
     STACK_OF(OSSL_MTC_CA) *cas;
     int i, num, explicit_list = 0;
@@ -1767,11 +1769,12 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
      * this connection with SSL_set1_requested_trust_anchors(), else the list
      * configured on the SSL_CTX with SSL_CTX_set1_requested_trust_anchors(),
      * else, by default, the identifiers of every trust anchor on the store we
-     * verify against that has trust anchor identifier information associated
-     * (currently only Merkle Tree Certificate CAs).  An explicitly configured
-     * list is sent verbatim even when empty (signalling retry support without
-     * naming a trust anchor); the default is sent only when at least one such
-     * trust anchor exists.
+     * verify against that has trust anchor identifier information associated:
+     * the Merkle Tree Certificate CAs, plus any conventional CA loaded with a
+     * CERTIFICATE PROPERTIES block carrying a trust anchor ID.  An explicitly
+     * configured list is sent verbatim even when empty (signalling retry
+     * support without naming a trust anchor); the default is sent only when at
+     * least one such trust anchor exists.
      *
      * We only ever request in the ClientHello.  The extension shares one
      * context with the CertificateRequest/EncryptedExtensions/Certificate forms
@@ -1807,13 +1810,18 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_SENT;
     }
 
-    /* Default: advertise the configured MTC CAs, if any. */
+    /*
+     * Default: advertise the store's trust anchors that carry an ID.  The MTC
+     * CA IDs are emitted one at a time; the conventional-CA IDs are already
+     * stored as a run of u8-length-prefixed IDs, so they are appended verbatim.
+     */
     store = s->cert->verify_store != NULL
         ? s->cert->verify_store
         : sctx->cert_store;
     cas = ossl_x509_store_get0_mtc_cas(store);
     num = sk_OSSL_MTC_CA_num(cas);
-    if (num <= 0)
+    ossl_x509_store_get0_trust_anchor_ids(store, &ta_ids, &ta_ids_len);
+    if (num <= 0 && ta_ids_len == 0)
         return EXT_RETURN_NOT_SENT;
 
     if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
@@ -1834,7 +1842,8 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
         }
     }
 
-    if (!WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+    if (!WPACKET_memcpy(pkt, ta_ids, ta_ids_len)
+        || !WPACKET_close(pkt) || !WPACKET_close(pkt)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return EXT_RETURN_FAIL;
     }
