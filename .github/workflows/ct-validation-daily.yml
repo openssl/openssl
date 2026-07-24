@@ -40,13 +40,48 @@ on:
   schedule:
     - cron: '45 03 * * *'
   workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Internal: openssl-ci-bot PR number. Leave empty for a normal manual run.'
+        required: false
+        type: string
+      head_sha:
+        description: 'Internal: openssl-ci-bot commit SHA. Leave empty for a normal manual run.'
+        required: false
+        type: string
+      check_run_id:
+        description: 'Internal: openssl-ci-bot check-run ID. Leave empty for a normal manual run.'
+        required: false
+        type: string
+
+# Keep in sync with openssl-ci-bot's run-name parser.
+run-name: >-
+  ${{ github.event.inputs.pr && format('ci-dispatch pr={0} head={1} check_run_id={2}', github.event.inputs.pr, github.event.inputs.head_sha, github.event.inputs.check_run_id) || github.workflow }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.pr || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  validate-dispatch-inputs:
+    if: |
+      github.repository == 'openssl/openssl' &&
+      (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
+    uses: ./.github/workflows/validate-dispatch-inputs.yml
+    with:
+      pr: ${{ inputs.pr }}
+      head_sha: ${{ inputs.head_sha }}
+      check_run_id: ${{ inputs.check_run_id }}
+
   ct-validation:
-    if: github.repository == 'openssl/openssl'
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -78,6 +113,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           persist-credentials: false
+          ref: ${{ github.event.inputs.head_sha || github.sha }}
 
       - name: Install valgrind
         # On Debian/Ubuntu the main 'valgrind' package includes
