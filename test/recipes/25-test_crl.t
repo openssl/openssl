@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 12;
+plan tests => 13;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -44,6 +44,31 @@ ok(compare1stline_stdin([qw{openssl crl -hash -noout}],
                         srctop_file("test","testcrl.pem"),
                         '106cd822'),
    "crl piped input test");
+
+# Cover the -crlnumber and -issuer print options.
+subtest 'crl -crlnumber and -issuer' => sub {
+    plan tests => 4;
+
+    my $crl_num =
+        srctop_file("test/certs", "delta-crl-as-complete-delta.pem");
+    my $crl_nonum = srctop_file("test", "testcrl.pem");
+    my $issuer_num = "issuer=CN=Delta CRL as Complete Test CA";
+    my $issuer_nonum = "issuer=C=US, O=RSA Data Security, Inc.,"
+        . " OU=Secure Server Certification Authority";
+
+    ok(compare1stline([qw{openssl crl -noout -crlnumber -in}, $crl_num],
+                      'crlNumber=0x2000'),
+       "-crlnumber prints the CRL Number");
+    ok(compare1stline([qw{openssl crl -noout -crlnumber -in}, $crl_nonum],
+                      'crlNumber=<NONE>'),
+       "-crlnumber prints <NONE> when the CRL has no CRL Number");
+    ok(compare1stline([qw{openssl crl -noout -issuer -in}, $crl_num],
+                      $issuer_num),
+       "-issuer prints the CRL issuer DN");
+    ok(compare1stline([qw{openssl crl -noout -issuer -in}, $crl_nonum],
+                      $issuer_nonum),
+       "-issuer prints another CRL issuer DN");
+};
 
 ok(!run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "DER",
              "-out", $out, "-nameopt", "utf8"])));
