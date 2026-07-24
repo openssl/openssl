@@ -456,10 +456,17 @@ static int mutcbk_inject_frames(const QUIC_PKT_HDR *hdrin,
     /*
      * make injection callback a one shot event,
      * callback is invoked for every packet we
-     * want to modify only one packet here.
+     * want to modify only one packet here. Returning 0 tells the QTX the
+     * packet send itself failed (tearing down the connection), so once
+     * we're done mutating we must pass subsequent packets through
+     * unmodified instead.
      */
-    if (mutctx->mutctx_done)
-        return 0;
+    if (mutctx->mutctx_done) {
+        *hdrout = (QUIC_PKT_HDR *)hdrin;
+        *iovecout = iovecin;
+        *numout = numin;
+        return 1;
+    }
 
     mutctx->mutctx_done = 1;
 
