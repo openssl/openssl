@@ -168,6 +168,9 @@ char *next_item(char *opt); /* in list separated by comma and/or space */
 /* Install trust anchor decorated chains from a file or directory. */
 int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
     const char *keys_path);
+
+/* Trust the Merkle Tree Certificate CAs in a file; the caller frees them. */
+STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file);
 char *process_additional_mac_key_arguments(const char *arg);
 char *get_str_from_file(const char *filename);
 int load_cert_certs(const char *uri,

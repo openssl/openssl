@@ -44,6 +44,7 @@ typedef unsigned int u_int;
 #include <openssl/bn.h>
 #include <openssl/trace.h>
 #include <openssl/async.h>
+#include <openssl/mtc.h>
 #ifndef OPENSSL_NO_CT
 #include <openssl/ct.h>
 #endif
@@ -579,6 +580,7 @@ typedef enum OPTION_choice {
     OPT_NOCASTORE,
     OPT_CHAINCASTORE,
     OPT_VERIFYCASTORE,
+    OPT_MTC_CAS,
     OPT_SERVERINFO,
     OPT_STARTTLS,
     OPT_SERVERNAME,
@@ -693,6 +695,8 @@ const OPTIONS s_client_options[] = {
     { "CAfile", OPT_CAFILE, '<', "File in PEM format with trusted CA certs" },
     { "CApath", OPT_CAPATH, '/', "Dir with trusted CA cert files in PEM format" },
     { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
+    { "mtc_cas", OPT_MTC_CAS, '<',
+        "File of Merkle Tree Certificate CA certs to trust and request" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
@@ -1010,6 +1014,8 @@ int s_client_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
+    const char *mtc_cas_file = NULL;
+    STACK_OF(OSSL_MTC_CA) *mtc_cas = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
     char *proxystr = NULL, *proxyuser = NULL;
     char *proxypassarg = NULL, *proxypass = NULL;
@@ -1611,6 +1617,9 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_CASTORE:
             CAstore = opt_arg();
+            break;
+        case OPT_MTC_CAS:
+            mtc_cas_file = opt_arg();
             break;
         case OPT_NOCASTORE:
             noCAstore = 1;
@@ -2243,6 +2252,17 @@ int s_client_main(int argc, char **argv)
     }
 
     ssl_ctx_add_crls(ctx, crls, crl_download);
+
+    /*
+     * Trust the Merkle Tree Certificate CAs from -mtc_cas.  Adding them to the
+     * verify store both lets the client verify MTC certificates against them
+     * and advertises their trust anchor IDs in the trust_anchors extension.
+     * The store borrows the CAs, so mtc_cas is kept alive until after the
+     * SSL_CTX is freed.
+     */
+    if (mtc_cas_file != NULL
+        && (mtc_cas = load_mtc_cas(ctx, mtc_cas_file)) == NULL)
+        goto end;
 
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
@@ -3609,6 +3629,8 @@ end:
     OPENSSL_free(next_proto.data);
 #endif
     SSL_CTX_free(ctx);
+    /* Freed after the store that borrowed them. */
+    sk_OSSL_MTC_CA_pop_free(mtc_cas, OSSL_MTC_CA_free);
     set_keylog_file(NULL, NULL);
     X509_free(cert);
     sk_X509_CRL_pop_free(crls, X509_CRL_free);

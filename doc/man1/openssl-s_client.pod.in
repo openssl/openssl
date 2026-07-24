@@ -27,6 +27,7 @@ B<openssl> B<s_client>
 [B<-verify_return_error>]
 [B<-verify_quiet>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
+[B<-mtc_cas> I<filename>]
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<filename>|I<uri>]
@@ -333,6 +334,14 @@ overridden by B<-verifyCAfile>, B<-verifyCApath>, or B<-verifyCAstore> options.
 They are also used as trust anchors when attempting
 to build the client certificate chain provided to the server unless
 overridden by B<-chainCAfile>, B<-chainCApath>, or B<-chainCAstore> options.
+
+=item B<-mtc_cas> I<filename>
+
+A file in PEM format containing one or more Merkle Tree Certificate CA
+certificates (draft-ietf-plants-merkle-tree-certs) to trust. Their trust anchor
+identifiers are requested from the server in the B<trust_anchors> extension, and
+they are trusted when verifying a Merkle Tree Certificate returned by the
+server.
 
 =item B<-verifyCAfile> I<filename>
 

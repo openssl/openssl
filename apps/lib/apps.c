@@ -38,6 +38,7 @@
 #include <openssl/rand.h>
 #include <openssl/bn.h>
 #include "internal/o_dir.h" /* for OPENSSL_DIR_read */
+#include <openssl/mtc.h>
 #include <openssl/ssl.h>
 #include <openssl/core_names.h>
 #include <openssl/encoder.h>
@@ -813,6 +814,42 @@ err:
     sk_SSL_CREDENTIAL_pop_free(creds, SSL_CREDENTIAL_free);
     sk_EVP_PKEY_pop_free(keys, EVP_PKEY_free);
     return ret;
+}
+
+/*
+ * Trust the Merkle Tree Certificate CAs in file, adding each to ctx's verify
+ * store.  This both lets the certificates they issue be verified and puts
+ * their trust anchor IDs in what we request of the peer.  The store borrows
+ * the CAs, so the returned stack must outlive ctx; free it with
+ * sk_OSSL_MTC_CA_pop_free(stack, OSSL_MTC_CA_free).  Returns NULL on failure.
+ */
+STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file)
+{
+    STACK_OF(OSSL_MTC_CA) *cas = NULL;
+    X509_STORE *store = SSL_CTX_get_cert_store(ctx);
+    BIO *in = BIO_new_file(file, "r");
+    int i, ok = 0;
+
+    if (in != NULL
+        && (cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)) != NULL
+        && OSSL_MTC_CA_parse_certificates(app_get0_libctx(), app_get0_propq(),
+            in, cas)) {
+        ok = 1;
+        for (i = 0; i < sk_OSSL_MTC_CA_num(cas); i++) {
+            if (!X509_STORE_trust_mtc_ca(store,
+                    sk_OSSL_MTC_CA_value(cas, i))) {
+                ok = 0;
+                break;
+            }
+        }
+    }
+    BIO_free(in);
+    if (!ok) {
+        BIO_printf(bio_err, "Error loading MTC CAs from %s\n", file);
+        sk_OSSL_MTC_CA_pop_free(cas, OSSL_MTC_CA_free);
+        return NULL;
+    }
+    return cas;
 }
 
 char *next_item(char *opt) /* in list separated by comma and/or spaces */
