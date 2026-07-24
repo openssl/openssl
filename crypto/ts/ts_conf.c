@@ -358,14 +358,26 @@ int TS_CONF_set_accuracy(CONF *conf, const char *section, TS_RESP_CTX *ctx)
     for (i = 0; i < sk_CONF_VALUE_num(list); ++i) {
         CONF_VALUE *val = sk_CONF_VALUE_value(list, i);
         if (strcmp(val->name, ENV_VALUE_SECS) == 0) {
-            if (val->value)
-                secs = atoi(val->value);
+            if (val->value != NULL
+                && (!ossl_strtoint(val->value, NULL, 10, &secs)
+                    || secs < 0)) {
+                ts_CONF_invalid(section, ENV_ACCURACY);
+                goto err;
+            }
         } else if (strcmp(val->name, ENV_VALUE_MILLISECS) == 0) {
-            if (val->value)
-                millis = atoi(val->value);
+            if (val->value != NULL
+                && (!ossl_strtoint(val->value, NULL, 10, &millis)
+                    || millis < 0)) {
+                ts_CONF_invalid(section, ENV_ACCURACY);
+                goto err;
+            }
         } else if (strcmp(val->name, ENV_VALUE_MICROSECS) == 0) {
-            if (val->value)
-                micros = atoi(val->value);
+            if (val->value != NULL
+                && (!ossl_strtoint(val->value, NULL, 10, &micros)
+                    || micros < 0)) {
+                ts_CONF_invalid(section, ENV_ACCURACY);
+                goto err;
+            }
         } else {
             ts_CONF_invalid(section, ENV_ACCURACY);
             goto err;

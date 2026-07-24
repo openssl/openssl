@@ -475,10 +475,9 @@ static int evp_test_buffer_ncopy(const char *value,
     EVP_TEST_BUFFER *db;
     unsigned char *tbuf, *p;
     size_t tbuflen;
-    int ncopy = atoi(value);
-    int i;
+    int ncopy = 0, i;
 
-    if (ncopy <= 0)
+    if (!test_strtoint(value, &ncopy) || ncopy <= 0)
         return 0;
     if (sk == NULL || sk_EVP_TEST_BUFFER_num(sk) == 0)
         return 0;
@@ -501,9 +500,9 @@ static int evp_test_buffer_set_count(const char *value,
     STACK_OF(EVP_TEST_BUFFER) *sk)
 {
     EVP_TEST_BUFFER *db;
-    int count = atoi(value);
+    int count = 0;
 
-    if (count <= 0)
+    if (!test_strtoint(value, &count) || count <= 0)
         return 0;
 
     if (sk == NULL || sk_EVP_TEST_BUFFER_num(sk) == 0)
@@ -764,14 +763,13 @@ static int digest_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Ncopy") == 0)
         return evp_test_buffer_ncopy(value, mdata->input);
     if (strcmp(keyword, "Padding") == 0)
-        return (mdata->pad_type = atoi(value)) > 0;
+        return test_strtoint(value, &mdata->pad_type) && mdata->pad_type > 0;
     if (strcmp(keyword, "XOF") == 0)
-        return (mdata->xof = atoi(value)) > 0;
+        return test_strtoint(value, &mdata->xof) && mdata->xof > 0;
     if (strcmp(keyword, "OutputSize") == 0) {
         int sz;
 
-        sz = atoi(value);
-        if (sz < 0)
+        if (!test_strtoint(value, &sz))
             return -1;
         mdata->digest_size = sz;
         return 1;
@@ -1065,8 +1063,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     if (strcmp(keyword, "Key") == 0)
         return parse_bin(value, &cdat->key, &cdat->key_len);
     if (strcmp(keyword, "Rounds") == 0) {
-        i = atoi(value);
-        if (i < 0)
+        if (!test_strtoint(value, &i))
             return -1;
         cdat->rounds = (unsigned int)i;
         return 1;
@@ -1080,8 +1077,7 @@ static int cipher_test_parse(EVP_TEST *t, const char *keyword,
     if (strcmp(keyword, "Ciphertext") == 0)
         return parse_bin(value, &cdat->ciphertext, &cdat->ciphertext_len);
     if (strcmp(keyword, "KeyBits") == 0) {
-        i = atoi(value);
-        if (i < 0)
+        if (!test_strtoint(value, &i))
             return -1;
         cdat->key_bits = (size_t)i;
         return 1;
@@ -1838,14 +1834,12 @@ static int mac_test_parse(EVP_TEST *t,
     if (strcmp(keyword, "Ctrl") == 0)
         return ctrladd(mdata->controls, value);
     if (strcmp(keyword, "OutputSize") == 0) {
-        mdata->output_size = atoi(value);
-        if (mdata->output_size < 0)
+        if (!test_strtoint(value, &mdata->output_size))
             return -1;
         return 1;
     }
     if (strcmp(keyword, "BlockSize") == 0) {
-        mdata->block_size = atoi(value);
-        if (mdata->block_size < 0)
+        if (!test_strtoint(value, &mdata->block_size))
             return -1;
         return 1;
     }
@@ -3451,8 +3445,7 @@ static int pbkdf2_test_parse(EVP_TEST *t,
     PBE_DATA *pdata = t->data;
 
     if (strcmp(keyword, "iter") == 0) {
-        pdata->iter = atoi(value);
-        if (pdata->iter <= 0)
+        if (!test_strtoint(value, &pdata->iter) || pdata->iter <= 0)
             return -1;
         return 1;
     }
@@ -3471,8 +3464,7 @@ static int pkcs12_test_parse(EVP_TEST *t,
     PBE_DATA *pdata = t->data;
 
     if (strcmp(keyword, "id") == 0) {
-        pdata->id = atoi(value);
-        if (pdata->id <= 0)
+        if (!test_strtoint(value, &pdata->id) || pdata->id <= 0)
             return -1;
         return 1;
     }
@@ -3901,7 +3893,8 @@ static int rand_test_parse(EVP_TEST *t,
     int n;
 
     if ((p = strchr(keyword, '.')) != NULL) {
-        n = atoi(++p);
+        if (!test_strtoint(++p, &n))
+            return 0;
         if (n >= MAX_RAND_REPEATS)
             return 0;
         if (n > rdata->n)
@@ -3935,17 +3928,21 @@ static int rand_test_parse(EVP_TEST *t,
         if (strcmp(keyword, "Digest") == 0)
             return TEST_ptr(rdata->digest = OPENSSL_strdup(value));
         if (strcmp(keyword, "DerivationFunction") == 0) {
-            rdata->use_df = atoi(value) != 0;
+            n = 0;
+            (void)test_strtoint(value, &n);
+            rdata->use_df = n != 0;
             return 1;
         }
         if (strcmp(keyword, "GenerateBits") == 0) {
-            if ((n = atoi(value)) <= 0 || n % 8 != 0)
+            if (!test_strtoint(value, &n) || n <= 0 || n % 8 != 0)
                 return 0;
             rdata->generate_bits = (unsigned int)n;
             return 1;
         }
         if (strcmp(keyword, "PredictionResistance") == 0) {
-            rdata->prediction_resistance = atoi(value) != 0;
+            n = 0;
+            (void)test_strtoint(value, &n);
+            rdata->prediction_resistance = n != 0;
             return 1;
         }
         if (strcmp(keyword, "CtrlInit") == 0)
@@ -5612,7 +5609,10 @@ start:
             }
             t->reason = take_value(pp);
         } else if (strcmp(pp->key, "Threads") == 0) {
-            if (OSSL_set_max_threads(libctx, atoi(pp->value)) == 0) {
+            int nthreads = 0;
+
+            (void)test_strtoint(pp->value, &nthreads);
+            if (OSSL_set_max_threads(libctx, nthreads) == 0) {
                 TEST_info("skipping, '%s' threads not available: %s:%d",
                     pp->value, t->s.test_file, t->s.start);
                 t->skip = 1;
@@ -5630,8 +5630,9 @@ start:
                 TEST_info("Line %d: multiple security category lines", t->s.curr);
                 return 0;
             }
-            t->security_category = atoi(pp->value);
-            if (t->security_category < 0 || t->security_category > 5) {
+            t->security_category = 0;
+            if (!test_strtoint(pp->value, &t->security_category)
+                || t->security_category > 5) {
                 TEST_info("Line %d: invalid security category, should be 0..5",
                     t->s.curr);
                 return 0;

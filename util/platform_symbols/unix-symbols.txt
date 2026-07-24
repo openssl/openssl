@@ -1,7 +1,6 @@
 abort
 accept
 aligned_alloc
-atoi
 bcmp
 bind
 calloc

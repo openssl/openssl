@@ -17,8 +17,10 @@
 
 #include <string.h>
 #include <stdio.h>
+#include <limits.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/crypto.h>
 #include <openssl/rsa.h>
 #include <openssl/core_names.h>
 #include <openssl/pem.h>
@@ -253,7 +255,13 @@ int main(int argc, char **argv)
     }
 
     if (argc > 1) {
-        bits_i = atoi(argv[1]);
+        unsigned long ul;
+
+        if (!OPENSSL_strtoul(argv[1], NULL, 10, &ul) || ul > INT_MAX) {
+            fprintf(stderr, "Invalid RSA key size\n");
+            return EXIT_FAILURE;
+        }
+        bits_i = (int)ul;
         if (bits_i < 512) {
             fprintf(stderr, "Invalid RSA key size\n");
             return EXIT_FAILURE;

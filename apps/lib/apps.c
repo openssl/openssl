@@ -252,10 +252,8 @@ static char *app_get_pass(const char *arg, int keepbio)
         } else if (CHECK_AND_SKIP_PREFIX(arg, "fd:")) {
             BIO *btmp;
 
-            i = atoi(arg);
-            if (i >= 0)
-                pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
-            if ((i < 0) || pwdbio == NULL) {
+            if (!opt_int(arg, &i) || i < 0
+                || (pwdbio = BIO_new_fd(i, BIO_NOCLOSE)) == NULL) {
                 BIO_printf(bio_err, "Can't access file descriptor %s\n", arg);
                 return NULL;
             }

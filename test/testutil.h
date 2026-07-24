@@ -712,6 +712,14 @@ STACK_OF(X509) *load_certs_pem(const char *file);
 X509_REQ *load_csr_der(const char *file, OSSL_LIB_CTX *libctx);
 int test_asn1_string_to_time_t(const char *asn1_string, time_t *out_time_t);
 int compare_with_reference_file(BIO *membio, const char *reffile);
+
+/*
+ * Parse a non-negative decimal integer from |value| into |*result|.  Returns 1
+ * on success, 0 on failure (NULL/empty/non-numeric/negative/overflowing input,
+ * or trailing garbage).  Test binaries link only against the public ABI, so
+ * this wraps OPENSSL_strtoul() rather than the libcrypto-internal helpers.
+ */
+int test_strtoint(const char *value, int *result);
 /*
  * Create an X509 from an array of strings.
  */

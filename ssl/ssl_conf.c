@@ -9,6 +9,7 @@
 
 #include "internal/e_os.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include "ssl_local.h"
 #include <openssl/conf.h>
@@ -723,9 +724,11 @@ out:
 static int cmd_NumTickets(SSL_CONF_CTX *cctx, const char *value)
 {
     int rv = 0;
-    int num_tickets = atoi(value);
+    unsigned long ul;
 
-    if (num_tickets >= 0) {
+    if (OPENSSL_strtoul(value, NULL, 10, &ul) && ul <= INT_MAX) {
+        int num_tickets = (int)ul;
+
         if (cctx->ctx)
             rv = SSL_CTX_set_num_tickets(cctx->ctx, num_tickets);
         if (cctx->ssl)

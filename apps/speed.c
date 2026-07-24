@@ -3946,11 +3946,15 @@ int speed_main(int argc, char **argv)
             }
 
             if (strncmp(sig_name, "dsa", 3) == 0) {
+                int dsa_nbits = 0;
+
+                if (!opt_int(sig_name + 3, &dsa_nbits))
+                    goto sig_err_break;
                 ctx_params = EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL);
                 if (ctx_params == NULL
                     || EVP_PKEY_paramgen_init(ctx_params) <= 0
                     || EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx_params,
-                           atoi(sig_name + 3))
+                           dsa_nbits)
                         <= 0
                     || EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0
                     || (sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL

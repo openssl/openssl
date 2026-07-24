@@ -590,14 +590,16 @@ static int setup_num_workers(void)
     char *lhash_workers = getenv("LHASH_WORKERS");
     /* If we have HARNESS_JOBS set, don't eat more than a quarter */
     if (harness_jobs != NULL) {
-        int jobs = atoi(harness_jobs);
-        if (jobs > 0)
+        int jobs;
+
+        if (test_strtoint(harness_jobs, &jobs) && jobs > 0)
             num_workers = jobs / 4;
     }
     /* But if we have explicitly set LHASH_WORKERS use that */
     if (lhash_workers != NULL) {
-        int jobs = atoi(lhash_workers);
-        if (jobs > 0)
+        int jobs;
+
+        if (test_strtoint(lhash_workers, &jobs) && jobs > 0)
             num_workers = jobs;
     }
 
