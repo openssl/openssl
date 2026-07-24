@@ -164,6 +164,10 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
     const char *keytype, const char *desc,
     int suppress_decode_errors);
 char *next_item(char *opt); /* in list separated by comma and/or space */
+
+/* Install trust anchor decorated chains from a file or directory. */
+int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
+    const char *keys_path);
 char *process_additional_mac_key_arguments(const char *arg);
 char *get_str_from_file(const char *filename);
 int load_cert_certs(const char *uri,

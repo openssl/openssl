@@ -1191,6 +1191,8 @@ typedef enum OPTION_choice {
     OPT_KEYFORM,
     OPT_PASS,
     OPT_CERT_CHAIN,
+    OPT_TAI_CHAINS,
+    OPT_TAI_KEYS,
     OPT_DHPARAM,
     OPT_DCERTFORM,
     OPT_DCERT,
@@ -1361,6 +1363,12 @@ const OPTIONS s_server_options[] = {
         "Server certificate file format (PEM/DER/P12); has no effect" },
     { "cert_chain", OPT_CERT_CHAIN, '<',
         "Server certificate chain file in PEM format" },
+    { "tai_chains", OPT_TAI_CHAINS, 's',
+        "PEM file, or directory of PEM files, of trust anchor decorated"
+        " certificate chains served when a client requests their trust anchor" },
+    { "tai_keys", OPT_TAI_KEYS, 's',
+        "PEM file, or directory of PEM files, of further private keys for"
+        " -tai_chains certificates" },
     { "build_chain", OPT_BUILD_CHAIN, '-', "Build server certificate chain" },
     { "serverinfo", OPT_SERVERINFO, 's',
         "PEM serverinfo file for certificate" },
@@ -1736,6 +1744,7 @@ int s_server_main(int argc, char *argv[])
     int s_server_session_id_context = 1; /* anything will do */
     const char *s_cert_file = TEST_CERT, *s_key_file = NULL, *s_chain_file = NULL;
     const char *s_cert_file2 = TEST_CERT2, *s_key_file2 = NULL;
+    const char *tai_chains_file = NULL, *tai_keys_file = NULL;
     char *s_dcert_file = NULL, *s_dkey_file = NULL, *s_dchain_file = NULL;
 #ifndef OPENSSL_NO_OCSP
     int s_tlsextstatus = 0;
@@ -1946,6 +1955,12 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_CERT_CHAIN:
             s_chain_file = opt_arg();
+            break;
+        case OPT_TAI_CHAINS:
+            tai_chains_file = opt_arg();
+            break;
+        case OPT_TAI_KEYS:
+            tai_keys_file = opt_arg();
             break;
         case OPT_DHPARAM:
             dhfile = opt_arg();
@@ -2963,6 +2978,10 @@ int s_server_main(int argc, char *argv[])
     }
 
     if (!set_cert_key_stuff(ctx, s_cert, s_key, s_chain, build_chain))
+        goto end;
+
+    if (tai_chains_file != NULL
+        && !load_tai_credentials(ctx, tai_chains_file, tai_keys_file))
         goto end;
 
     if (s_serverinfo_file != NULL
