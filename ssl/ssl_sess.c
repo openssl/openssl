@@ -997,10 +997,15 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
 
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
-    OSSL_TIME new_timeout = ossl_seconds2time(t);
+    OSSL_TIME new_timeout;
 
-    if (s == NULL || t < 0)
+    if (s == NULL)
         return 0;
+    /* A negative |t| selects an unlimited ("infinite") session lifetime. */
+    if (t < 0)
+        new_timeout = ossl_time_infinite();
+    else
+        new_timeout = ossl_seconds2time(t);
     if (s->owner != NULL) {
         if (!CRYPTO_THREAD_write_lock(s->owner->lock))
             return 0;
@@ -1019,6 +1024,8 @@ long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 {
     if (s == NULL)
         return 0;
+    if (ossl_time_is_infinite(s->timeout))
+        return -1;
     return (long)ossl_time_to_time_t(s->timeout);
 }
 
@@ -1199,8 +1206,14 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 
     if (s == NULL)
         return 0;
-    l = (long)ossl_time2seconds(s->session_timeout);
-    s->session_timeout = ossl_seconds2time(t);
+    if (ossl_time_is_infinite(s->session_timeout))
+        l = -1;
+    else
+        l = (long)ossl_time2seconds(s->session_timeout);
+    if (t < 0)
+        s->session_timeout = ossl_time_infinite();
+    else
+        s->session_timeout = ossl_seconds2time(t);
     return l;
 }
 
@@ -1208,6 +1221,8 @@ long SSL_CTX_get_timeout(const SSL_CTX *s)
 {
     if (s == NULL)
         return 0;
+    if (ossl_time_is_infinite(s->session_timeout))
+        return -1;
     return (long)ossl_time2seconds(s->session_timeout);
 }
 
