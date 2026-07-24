@@ -119,6 +119,8 @@ int bn_set_words(BIGNUM *a, const BN_ULONG *words, int num_words);
  */
 int bn_mul_mont_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     BN_MONT_CTX *mont, BN_CTX *ctx);
+int bn_mul_mont(BN_ULONG *rp, const BN_ULONG *ap, const BN_ULONG *bp,
+    const BN_ULONG *np, const BN_ULONG *n0, int num);
 int bn_mod_exp_mont_fixed_top(BIGNUM *rr, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx,
     BN_MONT_CTX *in_mont);
@@ -128,6 +130,8 @@ int bn_from_mont_fixed_top(BIGNUM *r, const BIGNUM *a, BN_MONT_CTX *mont,
     BN_CTX *ctx);
 int bn_mod_add_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     const BIGNUM *m);
+BN_ULONG bn_mul_add_words(BN_ULONG *rp, const BN_ULONG *ap, int num,
+    BN_ULONG w);
 int bn_mod_sub_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b,
     const BIGNUM *m);
 int bn_mul_fixed_top(BIGNUM *r, const BIGNUM *a, const BIGNUM *b, BN_CTX *ctx);

@@ -219,7 +219,7 @@ static inline OSSL_FN_ULONG div_words(OSSL_FN_ULONG *wnumtop, OSSL_FN_ULONG *wnu
 size_t OSSL_FN_div_ctx_size(const OSSL_FN *q, const OSSL_FN *r,
     const OSSL_FN *n, const OSSL_FN *d)
 {
-    if ((q == NULL && r == NULL) || n == NULL || d == NULL)
+    if (n == NULL || d == NULL)
         return 0;
 
     size_t nl = n->dsize;

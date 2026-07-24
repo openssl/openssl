@@ -985,6 +985,184 @@ int OSSL_FN_sqr(OSSL_FN *r, const OSSL_FN *a, OSSL_FN_CTX *ctx);
  */
 size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
 
+/**
+ * Initialize a Montgomery context for modulus mod.
+ * @param[in]           mod     The modulus
+ * @returns             An allocated OSSL_FN_MONT_CTX, or NULL on error.
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
+
+/**
+ * Free a Montgomery context.
+ *
+ * @param[in]   ctx     The context to be freed. This may be NULL.
+ */
+void OSSL_FN_MONT_CTX_free(OSSL_FN_MONT_CTX *ctx);
+
+/**
+ * Make a copy of a Montgomery context
+ *
+ * @param[in]   ctx     The context to be duplicated.
+ * @returns     a copy of this context, or NULL on error.
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx);
+
+/**
+ * Fulfil the Montgomery multiplication.
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that the OSSL_FN_CTX
+ * has free space for 2 frame, 7 numbers, and
+ * 7 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
+ * Note that this provides an upper bound.  Actual use of the arena may be
+ * smaller - see OSSL_FN_mul_mont_ctx_size() for an exact, conditional value.
+ *
+ * A timing side-channel may leak limb-size misalignment or whether the input
+ * operands exceed the modulus. However, this leakage is non-critical and
+ * acceptable from a security perspective.
+ */
+int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mul_mont() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result (can be NULL)
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           mont    The Montgomery context
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mul_mont().
+ * If `r == NULL`, the returned size is calculated as if @p r has the same size
+ * as the modulus.
+ *
+ * A timing side-channel may leak limb-size misalignment or whether the input
+ * operands exceed the modulus. However, this leakage is non-critical and
+ * acceptable from a security perspective.
+ */
+size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Fulfil the Montgomery multiplication. This is a quick variant that may be
+ * used if @p r, @p a, @p b, and @p mont->N are of the same size, and
+ * @p a and @p b are less than @p mont->N
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function currently requires that @p ctx has free space for
+ * one temporary OSSL_FN with @p mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mul_mont_quick() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The first operand
+ * @param[in]           b       The second operand
+ * @param[in]           mont    The Montgomery context
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by
+ * OSSL_FN_mul_mont_quick().
+ * All parameters except @p mont can be NULL.
+ */
+size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *b, OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Convert a number to Montgomery representation: r = a * R mod N,
+ * where R = 2^(length of libm in bits).
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function requires that @p r and @p mont->N are of
+ * the same size and that the OSSL_FN_CTX has free space for 2 frame,
+ * 5 numbers, and 5 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
+ * Note that this provides an upper bound.  Actual use of the arena may be
+ * smaller - see OSSL_FN_to_mont_ctx_size() for an exact, conditional value.
+ *
+ * A timing side-channel may leak limb-size misalignment or whether @p a
+ * exceeds the modulus. However, this leakage is non-critical and acceptable
+ * from a security perspective.
+ */
+int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_to_mont() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result (can be NULL)
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_to_mont().
+ * If `r == NULL`, the returned size is calculated as if @p r has the same
+ * size as the modulus.
+ *
+ * A timing side-channel may leak limb-size misalignment or whether @p a
+ * exceeds the modulus. However, this leakage is non-critical and acceptable
+ * from a security perspective.
+ */
+size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Convert a number from Montgomery representation: r = a * R^(-1) mod N,
+ * where R = 2^(length of libm in bits).
+ *
+ * @param[out]          r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           mont    The Montgomery context
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error
+ *
+ * @note This function requires that @p r, @p a, and @p mont->N are of
+ * the same size, @p a is less than @p mont->N, @p ctx has free space for
+ * one temporary OSSL_FN with mont->N->dsize+2 limbs, plus one frame.
+ */
+int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_from_mont() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result (can be NULL)
+ * @param[in]           a       The operand (can be NULL)
+ * @param[in]           mont    The Montgomery context
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_from_mont().
+ */
+size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
+    OSSL_FN_MONT_CTX *mont);
 #ifdef __cplusplus
 }
 #endif
