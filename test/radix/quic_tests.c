@@ -475,7 +475,7 @@ static int mutcbk_inject_frames(const QUIC_PKT_HDR *hdrin,
     grow_allowance -= (hdrin->src_conn_id.id_len < grow_allowance) ? hdrin->src_conn_id.id_len : grow_allowance;
 
     if (grow_allowance == 0) {
-        TEST_info("%s not enough space to inject", __func__);
+        TEST_info("%s not enough space to inject", OPENSSL_FUNC);
         return 0;
     }
     bufsz += grow_allowance;
@@ -486,7 +486,7 @@ static int mutcbk_inject_frames(const QUIC_PKT_HDR *hdrin,
     /* discard const */
     buf = (char *)mutctx->mutctx_iov.buf;
     if (buf == NULL) {
-        TEST_info("%s OPENSSL_malloc() failed", __func__);
+        TEST_info("%s OPENSSL_malloc() failed", OPENSSL_FUNC);
         return 0;
     }
 
