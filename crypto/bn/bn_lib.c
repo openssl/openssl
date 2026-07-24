@@ -964,12 +964,15 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
     b->neg ^= t;
 
     /*-
-     * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
-     * is actually to treat it as it's read-only data, and some (if not most)
-     * of it does reside in read-only segment. In other words observation of
-     * BN_FLG_STATIC_DATA in BN_consttime_swap should be treated as fatal
-     * condition. It would either cause SEGV or effectively cause data
-     * corruption.
+     * BN_FLG_STATIC_DATA: indicates that d points to a buffer that this
+     * BIGNUM does not own, so it must never be reallocated or freed through
+     * the BIGNUM. The flag by itself does not forbid writing to the words,
+     * but much of the data marked this way is compiled-in and does reside in
+     * a read-only segment. Since BN_consttime_swap writes to d, observing
+     * BN_FLG_STATIC_DATA here should be treated as a fatal condition: it
+     * would either cause SEGV or effectively cause data corruption. The flag
+     * is therefore never swapped, as it describes the storage of each d
+     * buffer, which is not exchanged.
      *
      * BN_FLG_MALLOCED: refers to BN structure itself, and hence must be
      * preserved.
