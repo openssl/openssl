@@ -645,6 +645,44 @@ static int test_nc_empty_dirname_permitted(void)
         sizeof(nc_permitted_empty_dirname), X509_V_OK);
 }
 
+static int test_x509_name_canon_failure_cache(void)
+{
+    static const unsigned char invalid_utf8[] = { 0xc0, 0xaf };
+    int ret = 0, hash_ok = 1;
+    X509 *cert = NULL;
+    X509_NAME *empty = NULL;
+    X509_STORE *store = NULL;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_ptr(empty = X509_NAME_new())
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(cert->cert_info.subject,
+            "CN", V_ASN1_UTF8STRING, invalid_utf8, sizeof(invalid_utf8), -1,
+            0))
+        /*
+         * The first attempt populates DER before canonicalization fails. A
+         * retry must not reuse that partial cache.
+         */
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
+        || !TEST_int_lt(i2d_X509_NAME(cert->cert_info.subject, NULL), 0)
+        || !TEST_int_ne(X509_NAME_cmp(cert->cert_info.subject, empty), 0)
+        || !TEST_ulong_eq(X509_NAME_hash_ex(cert->cert_info.subject, NULL,
+                              NULL, &hash_ok),
+            0)
+        || !TEST_false(hash_ok)
+        || !TEST_false(X509_STORE_add_cert(store, cert)))
+        goto end;
+
+    ret = 1;
+
+end:
+    ERR_clear_error();
+    X509_STORE_free(store);
+    X509_NAME_free(empty);
+    X509_free(cert);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -688,6 +726,7 @@ int setup_tests(void)
     ADD_TEST(test_x509_verify_with_new);
     ADD_TEST(test_nc_empty_dirname_excluded);
     ADD_TEST(test_nc_empty_dirname_permitted);
+    ADD_TEST(test_x509_name_canon_failure_cache);
     return 1;
 }
 

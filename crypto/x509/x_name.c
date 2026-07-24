@@ -224,6 +224,7 @@ static int x509_name_ex_i2d(const ASN1_VALUE **val, unsigned char **out,
         ret = x509_name_canon(a);
         if (!ret)
             return -1;
+        a->modified = 0;
     }
     ret = (int)a->bytes->length;
     if (out != NULL) {
@@ -276,7 +277,6 @@ static int x509_name_encode(X509_NAME *a)
         &p, ASN1_ITEM_rptr(X509_NAME_INTERNAL), -1, -1);
     sk_STACK_OF_X509_NAME_ENTRY_pop_free(intname.s,
         local_sk_X509_NAME_ENTRY_free);
-    a->modified = 0;
     return len;
 cerr:
     ERR_raise(ERR_LIB_ASN1, ERR_R_CRYPTO_LIB);
