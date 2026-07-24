@@ -451,6 +451,7 @@ foreach my $proto ((@tls, @dtls))
 my @disablables_algorithms = (
     "argon2",
     "aria",
+    "ascon128",
     "bf",
     "blake2",
     "brotli",
@@ -668,7 +669,7 @@ our %disabled = ( # "what"         => "comment"
 my @disable_cascades = (
     # "what"            => [ "cascade", ... ]
     "bulk"              => [ "shared", "dso",
-                             "argon2", "aria", "async", "autoload-config",
+                             "argon2", "aria", "ascon128", "async", "autoload-config",
                              "blake2", "bf", "camellia", "cast", "chacha",
                              "cmac", "cms", "cmp", "comp", "ct",
                              "des", "dgram", "dh", "dsa",
@@ -2039,6 +2040,7 @@ foreach my $what (sort keys %disabled) {
         # fix-up crypto/directory name(s)
         $skipdir = "ripemd" if $what eq "rmd160";
         $skipdir = "whrlpool" if $what eq "whirlpool";
+        $skipdir = "ascon" if $what eq "ascon128";
 
         my $macro = $disabled_info{$what}->{macro} = "OPENSSL_NO_$WHAT";
         push @{$config{openssl_feature_defines}}, $macro;
