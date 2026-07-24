@@ -772,6 +772,12 @@ static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
     return DTLS1_RT_HEADER_LENGTH + rl->eivlen + blocksize + rl->taglen;
 }
 
+static int dtls_set_sequence(OSSL_RECORD_LAYER *rl, const unsigned char *sequence)
+{
+    memcpy(rl->sequence, sequence, SEQ_NUM_SIZE);
+    return 1;
+}
+
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -796,6 +802,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_set_max_frag_len,
     dtls_get_max_record_overhead,
     tls_increment_sequence_ctr,
+    dtls_set_sequence,
     tls_alloc_buffers,
     tls_free_buffers
 };

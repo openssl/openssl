@@ -789,7 +789,11 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     s->d1->handshake_read_seq = 1;
     s->d1->handshake_write_seq = 1;
     s->d1->next_handshake_write_seq = 1;
-    s->rlayer.wrlmethod->increment_sequence_ctr(s->rlayer.wrl);
+    if (s->rlayer.wrlmethod->set_sequence == NULL
+        || !s->rlayer.wrlmethod->set_sequence(s->rlayer.wrl, seq)) {
+        ret = -1;
+        goto end;
+    }
 
     /*
      * We are doing cookie exchange, so make sure we set that option in the
