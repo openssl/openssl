@@ -180,45 +180,9 @@ static int set_cn1(X509 *crt, const char *name)
     return set_cn(crt, NID_commonName, name, 0);
 }
 
-static int set_cn_and_email(X509 *crt, const char *name)
-{
-    return set_cn(crt, NID_commonName, name,
-        NID_pkcs9_emailAddress, "dummy@example.com", 0);
-}
-
-static int set_cn2(X509 *crt, const char *name)
-{
-    return set_cn(crt, NID_commonName, "dummy value",
-        NID_commonName, name, 0);
-}
-
-static int set_cn3(X509 *crt, const char *name)
-{
-    return set_cn(crt, NID_commonName, name,
-        NID_commonName, "dummy value", 0);
-}
-
 static int set_email1(X509 *crt, const char *name)
 {
     return set_cn(crt, NID_pkcs9_emailAddress, name, 0);
-}
-
-static int set_email2(X509 *crt, const char *name)
-{
-    return set_cn(crt, NID_pkcs9_emailAddress, "dummy@example.com",
-        NID_pkcs9_emailAddress, name, 0);
-}
-
-static int set_email3(X509 *crt, const char *name)
-{
-    return set_cn(crt, NID_pkcs9_emailAddress, name,
-        NID_pkcs9_emailAddress, "dummy@example.com", 0);
-}
-
-static int set_email_and_cn(X509 *crt, const char *name)
-{
-    return set_cn(crt, NID_pkcs9_emailAddress, name,
-        NID_commonName, "www.example.org", 0);
 }
 
 static int set_altname_dns(X509 *crt, const char *name)
@@ -226,9 +190,19 @@ static int set_altname_dns(X509 *crt, const char *name)
     return set_altname(crt, GEN_DNS, name, 0);
 }
 
+static int set_altname_dns2(X509 *crt, const char *name)
+{
+    return set_altname(crt, GEN_DNS, "dummy.example.org", GEN_DNS, name, 0);
+}
+
 static int set_altname_email(X509 *crt, const char *name)
 {
     return set_altname(crt, GEN_EMAIL, name, 0);
+}
+
+static int set_altname_email2(X509 *crt, const char *name)
+{
+    return set_altname(crt, GEN_EMAIL, "dummy@example.com", GEN_EMAIL, name, 0);
 }
 OSSL_END_ALLOW_DEPRECATED
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
@@ -238,21 +212,18 @@ struct set_name_fn {
     const char *name;
     int host;
     int email;
+    int subject; /* name is in the subject DN, so needs ALWAYS_CHECK_SUBJECT */
 };
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
 OSSL_BEGIN_ALLOW_DEPRECATED
 static const struct set_name_fn name_fns[] = {
-    { set_cn1, "set CN", 1, 0 },
-    { set_cn2, "set CN", 1, 0 },
-    { set_cn3, "set CN", 1, 0 },
-    { set_cn_and_email, "set CN", 1, 0 },
-    { set_email1, "set emailAddress", 0, 1 },
-    { set_email2, "set emailAddress", 0, 1 },
-    { set_email3, "set emailAddress", 0, 1 },
-    { set_email_and_cn, "set emailAddress", 0, 1 },
-    { set_altname_dns, "set dnsName", 1, 0 },
-    { set_altname_email, "set rfc822Name", 0, 1 },
+    { set_cn1, "set CN", 1, 0, 1 },
+    { set_email1, "set emailAddress", 0, 1, 1 },
+    { set_altname_dns, "set dnsName", 1, 0, 0 },
+    { set_altname_dns2, "set dnsName", 1, 0, 0 },
+    { set_altname_email, "set rfc822Name", 0, 1, 0 },
+    { set_altname_email2, "set rfc822Name", 0, 1, 0 },
 };
 
 static X509 *make_cert(void)
@@ -289,6 +260,7 @@ static int run_cert(X509 *crt, const char *nameincert,
 {
     const char *const *pname = names;
     int failed = 0;
+    unsigned int subj = fn->subject ? X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT : 0;
 
     for (; *pname != NULL; ++pname) {
         int samename = OPENSSL_strcasecmp(nameincert, *pname) == 0;
@@ -301,7 +273,7 @@ static int run_cert(X509 *crt, const char *nameincert,
         memcpy(name, *pname, namelen + 1);
 
         match = -1;
-        if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen, 0, NULL),
+        if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen, subj, NULL),
                 0)) {
             failed = 1;
         } else if (fn->host) {
@@ -316,7 +288,7 @@ static int run_cert(X509 *crt, const char *nameincert,
 
         match = -1;
         if (!TEST_int_ge(ret = X509_check_host(crt, name, namelen,
-                             X509_CHECK_FLAG_NO_WILDCARDS,
+                             X509_CHECK_FLAG_NO_WILDCARDS | subj,
                              NULL),
                 0)) {
             failed = 1;
@@ -332,7 +304,7 @@ static int run_cert(X509 *crt, const char *nameincert,
             failed = 1;
 
         match = -1;
-        ret = X509_check_email(crt, name, namelen, 0);
+        ret = X509_check_email(crt, name, namelen, subj);
         if (fn->email) {
             if (ret && !samename)
                 match = 1;
@@ -363,6 +335,139 @@ static int call_run_cert(int i)
             failed = 1;
         X509_free(crt);
     }
+    return failed == 0;
+}
+
+/*
+ * name64 is a well-formed dNSName exactly 64 bytes long; name68 is the same
+ * 64 bytes followed by a further label, so it too is a well-formed dNSName
+ * but 68 bytes long. The 64-byte prefix of name68 is thus a valid, distinct
+ * name -- a check that only compared the first 64 bytes would wrongly treat
+ * the two as equal.
+ */
+static const char name64[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com";
+static const char name68[] = "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example.com.net";
+
+static int test_long_names(void)
+{
+    X509 *crt = NULL;
+    int failed = 0;
+
+    /*
+     * A dNSName may exceed 64 bytes. Each name matches itself but not the
+     * other: the 64-byte name must not match the 68-byte certificate, nor
+     * vice versa (no truncation to 64 bytes).
+     */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_altname_dns(crt, name68))
+        || !TEST_int_eq(X509_check_host(crt, name68, 0, 0, NULL), 1)
+        || !TEST_int_eq(X509_check_host(crt, name64, 0, 0, NULL), 0))
+        failed = 1;
+    X509_free(crt);
+    crt = NULL;
+
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_altname_dns(crt, name64))
+        || !TEST_int_eq(X509_check_host(crt, name64, 0, 0, NULL), 1)
+        || !TEST_int_eq(X509_check_host(crt, name68, 0, 0, NULL), 0))
+        failed = 1;
+    X509_free(crt);
+    crt = NULL;
+
+    /*
+     * The 64-byte name can be a commonName and is matched when subject
+     * checking is requested; the 68-byte name, which shares its first 64
+     * bytes, must not match it.
+     */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_cn1(crt, name64))
+        || !TEST_int_eq(X509_check_host(crt, name64, 0,
+                            X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, NULL),
+            1)
+        || !TEST_int_eq(X509_check_host(crt, name68, 0,
+                            X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, NULL),
+            0))
+        failed = 1;
+    X509_free(crt);
+
+    return failed == 0;
+}
+
+/*
+ * The subject commonName / emailAddress is consulted during verification
+ * only when X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT is set, and never when
+ * X509_CHECK_FLAG_NEVER_CHECK_SUBJECT is set -- whether or not a subject
+ * alternative name of the corresponding type is present. (The default,
+ * flags == 0, is exercised by the "set CN" / "set emailAddress" entries in
+ * the main matrix.)
+ */
+static int test_check_subject_flags(void)
+{
+    X509 *crt = NULL;
+    int failed = 0;
+
+    /* Subject commonName, no SAN. */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_cn1(crt, "example.com"))
+        || !TEST_int_eq(X509_check_host(crt, "example.com", 0,
+                            X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, NULL),
+            1)
+        || !TEST_int_eq(X509_check_host(crt, "example.com", 0,
+                            X509_CHECK_FLAG_NEVER_CHECK_SUBJECT, NULL),
+            0))
+        failed = 1;
+    X509_free(crt);
+    crt = NULL;
+
+    /*
+     * A non-matching dNSName SAN alongside a matching commonName: the SAN
+     * matches its own name, the requested name does not match the SAN, and
+     * the commonName is consulted only under ALWAYS_CHECK_SUBJECT -- never
+     * by default, despite a SAN being present.
+     */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_cn1(crt, "example.com"))
+        || !TEST_true(set_altname_dns(crt, "san.example.net"))
+        || !TEST_int_eq(X509_check_host(crt, "san.example.net", 0, 0, NULL), 1)
+        || !TEST_int_eq(X509_check_host(crt, "example.com", 0, 0, NULL), 0)
+        || !TEST_int_eq(X509_check_host(crt, "example.com", 0,
+                            X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, NULL),
+            1)
+        || !TEST_int_eq(X509_check_host(crt, "example.com", 0,
+                            X509_CHECK_FLAG_NEVER_CHECK_SUBJECT, NULL),
+            0))
+        failed = 1;
+    X509_free(crt);
+    crt = NULL;
+
+    /* Subject emailAddress, no SAN. */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_email1(crt, "user@example.com"))
+        || !TEST_int_eq(X509_check_email(crt, "user@example.com", 0,
+                            X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT),
+            1)
+        || !TEST_int_eq(X509_check_email(crt, "user@example.com", 0,
+                            X509_CHECK_FLAG_NEVER_CHECK_SUBJECT),
+            0))
+        failed = 1;
+    X509_free(crt);
+    crt = NULL;
+
+    /* A non-matching rfc822Name SAN alongside a matching subject emailAddress. */
+    if (!TEST_ptr(crt = make_cert())
+        || !TEST_true(set_email1(crt, "user@example.com"))
+        || !TEST_true(set_altname_email(crt, "san@example.net"))
+        || !TEST_int_eq(X509_check_email(crt, "san@example.net", 0, 0), 1)
+        || !TEST_int_eq(X509_check_email(crt, "user@example.com", 0, 0), 0)
+        || !TEST_int_eq(X509_check_email(crt, "user@example.com", 0,
+                            X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT),
+            1)
+        || !TEST_int_eq(X509_check_email(crt, "user@example.com", 0,
+                            X509_CHECK_FLAG_NEVER_CHECK_SUBJECT),
+            0))
+        failed = 1;
+    X509_free(crt);
+
     return failed == 0;
 }
 OSSL_END_ALLOW_DEPRECATED
@@ -668,6 +773,8 @@ int setup_tests(void)
 {
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
     ADD_ALL_TESTS(call_run_cert, OSSL_NELEM(name_fns));
+    ADD_TEST(test_long_names);
+    ADD_TEST(test_check_subject_flags);
 #endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
     ADD_TEST(test_GENERAL_NAME_cmp);
     return 1;
