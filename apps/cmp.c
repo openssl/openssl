@@ -189,7 +189,10 @@ static int opt_use_mock_srv = 0;
 
 /* mock server */
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+static char *opt_host = NULL;
+static char *default_host = "*";
 static char *opt_port = NULL;
+static int opt_family = BIO_FAMILY_IPANY;
 static int opt_max_msgs = 0;
 #endif
 static char *opt_srv_ref = NULL;
@@ -270,6 +273,8 @@ typedef enum OPTION_choice {
     OPT_SERVER,
     OPT_PROXY,
     OPT_NO_PROXY,
+    OPT_4,
+    OPT_6,
 #endif
     OPT_RECIPIENT,
     OPT_PATH,
@@ -336,6 +341,7 @@ typedef enum OPTION_choice {
     OPT_USE_MOCK_SRV,
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+    OPT_HOST,
     OPT_PORT,
     OPT_MAX_MSGS,
 #endif
@@ -483,6 +489,8 @@ const OPTIONS cmp_options[] = {
         "List of servers not to use HTTP(S) proxy for" },
     { OPT_MORE_STR, 0, 0,
         "Default from environment variable 'no_proxy', else 'NO_PROXY', else none" },
+    { "4", OPT_4, '-', "Use IPv4 only" },
+    { "6", OPT_6, '-', "Use IPv6 only" },
 #endif
     { "recipient", OPT_RECIPIENT, 's',
         "DN of CA. Default: subject of -srvcert, -issuer, issuer of -oldcert or -cert" },
@@ -630,6 +638,8 @@ const OPTIONS cmp_options[] = {
     { OPT_MORE_STR, 0, 0,
         "NOTE: -port and -max_msgs not supported due to no-sock/no-http build" },
 #else
+    { "host", OPT_HOST, 's',
+        "Act as HTTP-based mock server to connect to" },
     { "port", OPT_PORT, 's',
         "Act as HTTP-based mock server listening on given port" },
     { "max_msgs", OPT_MAX_MSGS, 'N',
@@ -732,6 +742,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
     { &opt_server }, { &opt_proxy }, { &opt_no_proxy },
+    { (char **)&opt_family }, { (char **)&opt_family },
 #endif
     { &opt_recipient }, { &opt_path }, { (char **)&opt_keep_alive },
     { (char **)&opt_msg_timeout }, { (char **)&opt_total_timeout },
@@ -766,7 +777,7 @@ static varref cmp_vars[] = { /* must be in same order as enumerated above! */
 
     { (char **)&opt_use_mock_srv },
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-    { &opt_port }, { (char **)&opt_max_msgs },
+    { &opt_host }, { &opt_port }, { (char **)&opt_max_msgs },
 #endif
     { &opt_srv_ref }, { &opt_srv_secret },
     { &opt_srv_cert }, { &opt_srv_key }, { &opt_srv_keypass },
@@ -2935,6 +2946,12 @@ static int get_opts(int argc, char **argv)
         case OPT_NO_PROXY:
             opt_no_proxy = opt_str();
             break;
+        case OPT_4:
+            opt_family = BIO_FAMILY_IPV4;
+            break;
+        case OPT_6:
+            opt_family = BIO_FAMILY_IPV6;
+            break;
 #endif
         case OPT_RECIPIENT:
             opt_recipient = opt_str();
@@ -3220,8 +3237,13 @@ static int get_opts(int argc, char **argv)
             break;
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
+        case OPT_HOST:
+            opt_host = opt_str();
+            break;
         case OPT_PORT:
             opt_port = opt_str();
+            if (opt_host == NULL)
+                opt_host = default_host;
             break;
         case OPT_MAX_MSGS:
             opt_max_msgs = opt_int_arg();
@@ -3336,7 +3358,7 @@ static int cmp_server(OSSL_CMP_CTX *srv_cmp_ctx)
     int retry = 1;
     int ret = 1;
 
-    if ((acbio = http_server_init(prog, opt_port, opt_verbosity)) == NULL)
+    if ((acbio = http_server_init(prog, opt_host, opt_port, opt_family, opt_verbosity)) == NULL)
         return 0;
     while (opt_max_msgs <= 0 || msgs < opt_max_msgs) {
         char *path = NULL;
@@ -3827,6 +3849,7 @@ int cmp_main(int argc, char **argv)
         CMP_warn("Ignoring -tls_used option since -server is not given or -use_mock_srv is given");
         opt_tls_used = 0;
     }
+    OSSL_CMP_CTX_set_family(cmp_ctx, opt_family);
 
 #endif
 
@@ -3859,7 +3882,7 @@ int cmp_main(int argc, char **argv)
             (void)OSSL_CMP_CTX_set_option(srv_cmp_ctx, OSSL_CMP_OPT_NO_CACHE_EXTRACERTS, 1);
 
 #if !defined(OPENSSL_NO_SOCK) && !defined(OPENSSL_NO_HTTP)
-        if (opt_port != NULL) { /* act as very basic CMP HTTP server only */
+        if (opt_port != NULL && opt_host != NULL) { /* act as very basic CMP HTTP server only */
             ret = cmp_server(srv_cmp_ctx);
             goto err;
         }

@@ -32,6 +32,8 @@
 #include <openssl/evp.h>
 #include <openssl/bn.h>
 #include <openssl/x509v3.h>
+#include <log.h>
+#include <openssl/bio.h>
 
 #if defined(OPENSSL_SYS_VXWORKS)
 /* not supported */
@@ -85,6 +87,8 @@ typedef enum OPTION_choice {
     OPT_URL,
     OPT_HOST,
     OPT_PORT,
+    OPT_4,
+    OPT_6,
 #ifndef OPENSSL_NO_SOCK
     OPT_PROXY,
     OPT_NO_PROXY,
@@ -161,6 +165,11 @@ const OPTIONS ocsp_options[] = {
         "Do not load certificates from the default certificates directory" },
     { "no-CAstore", OPT_NOCASTORE, '-',
         "Do not load certificates from the default certificates store" },
+    { "url", OPT_URL, 's', "Responder URL" },
+    { "host", OPT_HOST, 's', "TCP/IP hostname to connect to" },
+    { "port", OPT_PORT, 'N', "Port to run responder on" },
+    { "4", OPT_4, '-', "Use IPv4 only" },
+    { "6", OPT_6, '-', "Use IPv6 only" },
 
     OPT_SECTION("Responder"),
     { "timeout", OPT_TIMEOUT, 'p',
@@ -196,9 +205,6 @@ const OPTIONS ocsp_options[] = {
     { "", OPT_MD, '-', "Any supported digest algorithm (sha1,sha256, ... )" },
 
     OPT_SECTION("Client"),
-    { "url", OPT_URL, 's', "Responder URL" },
-    { "host", OPT_HOST, 's', "TCP/IP hostname:port to connect to" },
-    { "port", OPT_PORT, 'N', "Port to run responder on" },
     { "path", OPT_PATH, 's', "Path to use in OCSP request" },
 #ifndef OPENSSL_NO_SOCK
     { "proxy", OPT_PROXY, 's',
@@ -276,6 +282,8 @@ int ocsp_main(int argc, char **argv)
     const char *CAfile = NULL, *CApath = NULL, *CAstore = NULL;
     char *header, *value, *respdigname = NULL;
     char *host = NULL, *port = NULL, *path = "/", *outfile = NULL;
+    char *default_host = "*";
+    int family = BIO_FAMILY_IPANY;
 #ifndef OPENSSL_NO_SOCK
     char *opt_proxy = NULL;
     char *opt_no_proxy = NULL;
@@ -340,8 +348,16 @@ int ocsp_main(int argc, char **argv)
         case OPT_HOST:
             host = opt_arg();
             break;
+        case OPT_4:
+            family = BIO_FAMILY_IPV4;
+            break;
+        case OPT_6:
+            family = BIO_FAMILY_IPV6;
+            break;
         case OPT_PORT:
             port = opt_arg();
+            if (host == NULL)
+                host = default_host;
             break;
         case OPT_PATH:
             path = opt_arg();
@@ -612,9 +628,9 @@ int ocsp_main(int argc, char **argv)
         }
     }
 
-    if (req == NULL && port != NULL) {
+    if (req == NULL && host != NULL && port != NULL) {
 #ifndef OPENSSL_NO_SOCK
-        acbio = http_server_init(prog, port, -1);
+        acbio = http_server_init(prog, host, port, family, LOG_INFO);
         if (acbio == NULL)
             goto end;
 #else

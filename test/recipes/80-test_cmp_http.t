@@ -201,6 +201,7 @@ sub print_file_prefixed {
 indir data_dir() => sub {
     plan tests => 1 + @server_configurations * @all_aspects
         - (grep(/^Mock$/, @server_configurations)
+        +  grep(/^localhost$/, @server_configurations)
            && grep(/^certstatus$/, @all_aspects));
 
     foreach my $server_name (@server_configurations) {
