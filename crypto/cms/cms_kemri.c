@@ -270,6 +270,9 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
         return 0;
     }
 
+    if (inlen > INT_MAX)
+        return 0;
+
     if (!kdf_derive(kek, keklen, ss, sslen, kemri))
         goto err;
 
