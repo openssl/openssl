@@ -22,5 +22,9 @@ README.md  This file
         Overviews; start with crypto.pod and ssl.pod, for example
         Algorithm specific EVP_PKEY documentation.
 
+Directories above should contain the public API and documentation.
+For internal documentation (like an API included with headers in
+include/internal), use [internal/](internal/) directory.
+
 Formatted versions of the manpages (apps,ssl,crypto) can be found at
         <https://docs.openssl.org/master/>
