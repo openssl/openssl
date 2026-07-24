@@ -1,7 +1,7 @@
 /*
  * {- join("\n * ", @autowarntext) -}
  *
- * Copyright 2016-2020 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -178,7 +178,8 @@ sct_version_t SCT_get_version(const SCT *sct);
 
 /*
  * Set the version of an SCT.
- * Returns 1 on success, 0 if the version is unrecognized.
+ * Returns 1 on success, 0 if the version is unrecognized or the current
+ * LogID is incompatible with the version.
  */
 __owur int SCT_set_version(SCT *sct, sct_version_t version);
 
@@ -202,13 +203,17 @@ size_t SCT_get0_log_id(const SCT *sct, unsigned char **log_id);
 
 /*
  * Set the log ID of an SCT to point directly to the *log_id specified.
- * The SCT takes ownership of the specified pointer.
+ * If log_id is not NULL, log_id_len must be CT_V1_HASHLEN.
+ * The SCT takes ownership of the specified pointer on success.
+ * Passing NULL clears the LogID and log_id_len is ignored.
  * Returns 1 on success, 0 otherwise.
  */
 __owur int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len);
 
 /*
  * Set the log ID of an SCT.
+ * If log_id is not NULL, log_id_len must be CT_V1_HASHLEN.
+ * Passing NULL clears the LogID and log_id_len is ignored.
  * This makes a copy of the log_id.
  * Returns 1 on success, 0 otherwise.
  */
@@ -509,6 +514,7 @@ __owur int CTLOG_STORE_add0_log(CTLOG_STORE *store, CTLOG *log);
 
 /*
  * Finds a CT log in the store based on its log ID.
+ * The log_id_len must be CT_V1_HASHLEN.
  * Returns the CT log, or NULL if no match is found.
  */
 const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,

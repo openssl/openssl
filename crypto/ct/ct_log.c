@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -339,9 +339,12 @@ const CTLOG *CTLOG_STORE_get0_log_by_id(const CTLOG_STORE *store,
 {
     int i;
 
+    if (store == NULL || log_id == NULL || log_id_len != CT_V1_HASHLEN)
+        return NULL;
+
     for (i = 0; i < sk_CTLOG_num(store->logs); ++i) {
         const CTLOG *log = sk_CTLOG_value(store->logs, i);
-        if (memcmp(log->log_id, log_id, log_id_len) == 0)
+        if (memcmp(log->log_id, log_id, CT_V1_HASHLEN) == 0)
             return log;
     }
 
