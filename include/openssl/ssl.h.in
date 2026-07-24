@@ -2964,6 +2964,21 @@ int SSL_CREDENTIAL_size_cmp(const SSL_CREDENTIAL *const *a,
  */
 __owur int SSL_parse_private_keys(BIO *in, STACK_OF(EVP_PKEY) *out_keys);
 
+/**
+ * @brief Set the trust anchors a client requests, overriding the default of
+ * advertising the configured Merkle Tree Certificate CAs.
+ * @see SSL_CTX_set1_requested_trust_anchors(3)
+ */
+__owur int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx,
+    const uint8_t *ids, size_t ids_len);
+
+/**
+ * @brief Set the trust anchors a client requests on a single connection.
+ * @see SSL_CTX_set1_requested_trust_anchors(3)
+ */
+__owur int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
+    size_t ids_len);
+
 #ifdef __cplusplus
 }
 #endif

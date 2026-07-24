@@ -1175,6 +1175,16 @@ struct ssl_ctx_st {
 #endif
 
         unsigned char cookie_hmac_key[SHA256_DIGEST_LENGTH];
+
+        /*
+         * The default RequestedTrustAnchorList advertised by clients created
+         * from this context, as wire-format u8-length-prefixed trust anchor
+         * IDs.  See the matching fields in the SSL_CONNECTION extension state;
+         * set with SSL_CTX_set1_requested_trust_anchors().
+         */
+        size_t requested_trust_anchors_len;
+        uint8_t *requested_trust_anchors;
+        int requested_trust_anchors_set;
 #ifndef OPENSSL_NO_ECH
         OSSL_ECH_CTX ech;
 #endif
@@ -1790,6 +1800,18 @@ struct ssl_connection_st {
         size_t peer_requested_trust_anchors_len;
         uint8_t *peer_requested_trust_anchors;
         int peer_sent_trust_anchors;
+
+        /*
+         * The RequestedTrustAnchorList this client advertises, as wire-format
+         * u8-length-prefixed trust anchor IDs.  When requested_trust_anchors_set
+         * is 0 the list has not been configured and the trusted MTC CAs are
+         * advertised by default; when 1 this list is sent verbatim, even when
+         * empty.  Set with SSL_set1_requested_trust_anchors(); inherited from
+         * the SSL_CTX when not set here.
+         */
+        size_t requested_trust_anchors_len;
+        uint8_t *requested_trust_anchors;
+        int requested_trust_anchors_set;
 
         /* key shares */
         size_t keyshares_len;

@@ -1749,35 +1749,68 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     ossl_unused X509 *x,
     ossl_unused size_t chainidx)
 {
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const uint8_t *ids = NULL;
+    size_t ids_len = 0;
     X509_STORE *store;
     STACK_OF(OSSL_MTC_CA) *cas;
-    int i, num;
+    int i, num, explicit_list = 0;
 
     /*
      * Send the trust_anchors extension (section 5 of
      * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/) as
-     * a RequestedTrustAnchorList: the identifiers of the trusted Merkle Tree
-     * Certificate CAs configured on the store we verify against, so
-     * the peer can select a matching standalone certificate.  A trust anchor ID
-     * is a CA ID (section 8.1 of
+     * a RequestedTrustAnchorList, so the peer can select a matching
+     * certificate.  A trust anchor ID is a CA ID (section 8.1 of
      * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+     *
+     * The list advertised is, in order of precedence: the list configured on
+     * this connection with SSL_set1_requested_trust_anchors(), else the list
+     * configured on the SSL_CTX with SSL_CTX_set1_requested_trust_anchors(),
+     * else, by default, the identifiers of every trust anchor on the store we
+     * verify against that has trust anchor identifier information associated
+     * (currently only Merkle Tree Certificate CAs).  An explicitly configured
+     * list is sent verbatim even when empty (signalling retry support without
+     * naming a trust anchor); the default is sent only when at least one such
+     * trust anchor exists.
      *
      * We only ever request in the ClientHello.  The extension shares one
      * context with the CertificateRequest/EncryptedExtensions/Certificate forms
      * we accept on receipt, and this constructor is also reached when the client
      * builds its own Certificate message (client authentication), so guard on
-     * the message here.  The extension is sent only when MTC CAs are configured.
-     * The store is resolved exactly as in ssl_verify_cert_chain().  A landmark-
-     * relative advertisement (section 8.2.1 of the Merkle Tree Certificates draft)
-     * is not yet supported: the CA does not track landmark numbers.  We ignore
-     * any reply from the server for now.
+     * the message here.  The store is resolved exactly as in
+     * ssl_verify_cert_chain().  A landmark-relative advertisement (section 8.2
+     * of the Merkle Tree Certificates draft) is not yet supported: the CA does
+     * not track landmark numbers.  We ignore any reply from the server for now.
      */
     if ((context & SSL_EXT_CLIENT_HELLO) == 0)
         return EXT_RETURN_NOT_SENT;
 
+    if (s->ext.requested_trust_anchors_set) {
+        ids = s->ext.requested_trust_anchors;
+        ids_len = s->ext.requested_trust_anchors_len;
+        explicit_list = 1;
+    } else if (sctx->ext.requested_trust_anchors_set) {
+        ids = sctx->ext.requested_trust_anchors;
+        ids_len = sctx->ext.requested_trust_anchors_len;
+        explicit_list = 1;
+    }
+
+    if (explicit_list) {
+        /* Send the configured RequestedTrustAnchorList verbatim. */
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u16(pkt, ids, ids_len)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        return EXT_RETURN_SENT;
+    }
+
+    /* Default: advertise the configured MTC CAs, if any. */
     store = s->cert->verify_store != NULL
         ? s->cert->verify_store
-        : SSL_CONNECTION_GET_CTX(s)->cert_store;
+        : sctx->cert_store;
     cas = ossl_x509_store_get0_mtc_cas(store);
     num = sk_OSSL_MTC_CA_num(cas);
     if (num <= 0)

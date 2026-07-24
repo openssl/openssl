@@ -288,6 +288,109 @@ err:
     return ret;
 }
 
+/* A one-entry RequestedTrustAnchorList: the ID 32473.1. */
+static const uint8_t req_good[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+
+/* The client's requested-trust-anchors list is validated and stored. */
+static int test_requested_ta_setter(void)
+{
+    static const uint8_t bad_trunc[] = { 0x04, 0x81, 0xfd }; /* claims 4 */
+    static const uint8_t bad_zero[] = { 0x00 }; /* empty ID */
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ssl)))
+        goto err;
+
+    if (!TEST_true(SSL_set1_requested_trust_anchors(ssl, req_good,
+            sizeof(req_good)))
+        || !TEST_true(sc->ext.requested_trust_anchors_set)
+        || !TEST_mem_eq(sc->ext.requested_trust_anchors,
+            sc->ext.requested_trust_anchors_len, req_good, sizeof(req_good)))
+        goto err;
+
+    /* Malformed lists are rejected. */
+    if (!TEST_false(SSL_set1_requested_trust_anchors(ssl, bad_trunc,
+            sizeof(bad_trunc)))
+        || !TEST_false(SSL_set1_requested_trust_anchors(ssl, bad_zero,
+            sizeof(bad_zero))))
+        goto err;
+    ERR_clear_error();
+
+    /* An empty list is accepted and marks the list as set. */
+    if (!TEST_true(SSL_set1_requested_trust_anchors(ssl, NULL, 0))
+        || !TEST_true(sc->ext.requested_trust_anchors_set)
+        || !TEST_size_t_eq(sc->ext.requested_trust_anchors_len, 0)
+        || !TEST_ptr_null(sc->ext.requested_trust_anchors))
+        goto err;
+
+    /* The CTX-level setter stores on the context. */
+    if (!TEST_true(SSL_CTX_set1_requested_trust_anchors(ctx, req_good,
+            sizeof(req_good)))
+        || !TEST_true(ctx->ext.requested_trust_anchors_set))
+        goto err;
+
+    ret = 1;
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * An explicitly set list is advertised verbatim in the ClientHello, while a
+ * client with nothing configured and no MTC CAs sends no extension.
+ */
+static int test_requested_ta_construct(void)
+{
+    static const uint8_t expect[] = { 0xca, 0x34, 0x00, 0x07, 0x00, 0x05, 0x04,
+        0x81, 0xfd, 0x59, 0x01 };
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL, *plain = NULL;
+    SSL_CONNECTION *sc, *psc;
+    WPACKET pkt;
+    uint8_t buf[64];
+    size_t written = 0;
+    int have_pkt = 0, ret = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ssl))
+        || !TEST_true(SSL_set1_requested_trust_anchors(ssl, req_good,
+            sizeof(req_good)))
+        || !TEST_true(WPACKET_init_static_len(&pkt, buf, sizeof(buf), 0)))
+        goto err;
+    have_pkt = 1;
+
+    if (!TEST_int_eq(tls_construct_ctos_trust_anchors(sc, &pkt,
+                         SSL_EXT_CLIENT_HELLO, NULL, 0),
+            EXT_RETURN_SENT)
+        || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+        || !TEST_mem_eq(buf, written, expect, sizeof(expect)))
+        goto err;
+
+    /* A connection with nothing configured and no MTC CAs sends nothing. */
+    if (!TEST_ptr(plain = SSL_new(ctx))
+        || !TEST_ptr(psc = SSL_CONNECTION_FROM_SSL(plain))
+        || !TEST_int_eq(tls_construct_ctos_trust_anchors(psc, &pkt,
+                            SSL_EXT_CLIENT_HELLO, NULL, 0),
+            EXT_RETURN_NOT_SENT))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_free(plain);
+    SSL_CTX_free(ctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(server_ctx = SSL_CTX_new(TLS_server_method())))
@@ -296,6 +399,8 @@ int setup_tests(void)
     ADD_TEST(test_clear_peer_trust_anchors);
     ADD_ALL_TESTS(test_pattern_contains, OSSL_NELEM(pattern_tests));
     ADD_ALL_TESTS(test_credential_matches, OSSL_NELEM(match_tests));
+    ADD_TEST(test_requested_ta_setter);
+    ADD_TEST(test_requested_ta_construct);
     return 1;
 }
 
