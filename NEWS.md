@@ -89,6 +89,8 @@ This release incorporates the following bug fixes and mitigations:
     and AES-SIV modes.
     ([CVE-2026-45446])
 
+  * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
+
 ### Major changes between OpenSSL 3.6.1 and OpenSSL 3.6.2 [7 Apr 2026]
 
 OpenSSL 3.6.2 is a security patch release. The most severe CVE fixed in this
