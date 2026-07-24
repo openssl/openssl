@@ -220,16 +220,14 @@ static int rc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(rc2)
-OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0),
-    CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(rc2)
-
-        CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(rc2)
-            OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+CIPHER_DEFAULT_GETTABLE_CTX_PARAMS(rc2,
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0),
-    CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(rc2)
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0))
+
+CIPHER_DEFAULT_SETTABLE_CTX_PARAMS(rc2,
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0))
 
 #define IMPLEMENT_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits, blkbits,              \
     ivbits, typ)                                                                         \
@@ -280,8 +278,8 @@ OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
         OSSL_DISPATCH_END                                                                \
     };
 
-    /* ossl_rc2128ecb_functions */
-    IMPLEMENT_cipher(rc2, RC2, ecb, ECB, RC2_FLAGS, 128, 64, 0, block)
+/* ossl_rc2128ecb_functions */
+IMPLEMENT_cipher(rc2, RC2, ecb, ECB, RC2_FLAGS, 128, 64, 0, block)
 /* ossl_rc2128cbc_functions */
 IMPLEMENT_cipher(rc2, RC2, cbc, CBC, RC2_FLAGS, 128, 64, 64, block)
 /* ossl_rc240cbc_functions */
