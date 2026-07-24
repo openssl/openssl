@@ -1263,6 +1263,10 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 
     EVP_MD_CTX_reset(mctx);
 
+    if (siglen > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ASN1_STRING_set0(si->signature, abuf, (int)siglen);
 
     return 1;

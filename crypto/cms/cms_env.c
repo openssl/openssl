@@ -570,6 +570,10 @@ static int cms_RecipientInfo_ktri_encrypt(const CMS_ContentInfo *cms,
     if (EVP_PKEY_encrypt(pctx, NULL, &eklen, ec->key, ec->keylen) <= 0)
         goto err;
 
+    if (eklen > INT_MAX) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     ek = OPENSSL_malloc(eklen);
     if (ek == NULL)
         goto err;
@@ -913,6 +917,10 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
 
+    if (ec->keylen > INT_MAX - 8) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_INTERNAL_ERROR);
+        goto err;
+    }
     /* 8 byte prefix for AES wrap ciphers */
     wkey = OPENSSL_malloc(ec->keylen + 8);
     if (wkey == NULL)
