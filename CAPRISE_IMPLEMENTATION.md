@@ -1,6 +1,8 @@
-# CAPRISE Implementation for OpenSSL
+CAPRISE Implementation for OpenSSL
+====================================
 
-## Overview
+Overview
+--------
 
 This implementation adds the **CAPRISE** (Conditional Approximate Distance-Comparison-Preserving Symmetric Encryption) algorithm to OpenSSL as a provider-based symmetric cipher. CAPRISE is a novel encryption scheme designed for privacy-preserving Retrieval-Augmented Generation (RAG) systems.
 
@@ -16,20 +18,23 @@ This implementation adds the **CAPRISE** (Conditional Approximate Distance-Compa
   - `β` (beta, security parameter): Default 0.2
   - `dim` (embedding dimension): Default 768 (configurable)
 
-## Algorithm Summary
+Algorithm Summary
+-----------------
 
 CAPRISE is based on the paper: "Efficient Privacy-Preserving Retrieval Augmented Generation with Distance-Preserving Encryption" (arXiv:2601.12331)
 
 ### Encryption Process
 
 **For Database Embeddings (Enc_db):**
-```
+
+```text
 λ_e = (3/8) * (n * s * β / ||n||) * (u)^(1/d)
 e' = s * e + λ_e
 ```
 
 **For Query Embeddings (Enc_q):**
-```
+
+```text
 η_e = (1/8) * (n * s * β / ||n||) * (u)^(1/d)
 e' = s * e + η_e
 ```
@@ -48,24 +53,29 @@ Where:
 2. **Vector Structure Obscuration**: Distance comparisons between database embeddings are NOT preserved, preventing vector analysis attacks
 3. **Vec2Text Defense**: The added noise disrupts embedding inversion attacks
 
-## Files Created
+Files Created
+-------------
 
 ### Source Files
+
 - `providers/implementations/ciphers/cipher_caprise.h` - Header with algorithm definitions
 - `providers/implementations/ciphers/cipher_caprise.c` - Core implementation
 - `providers/implementations/ciphers/cipher_caprise.inc` - Parameter tables
 
 ### Test Files
+
 - `test/caprise_test.c` - Comprehensive test suite
 
 ### Modified Files
+
 - `providers/defltprov.c` - Registered CAPRISE with default provider
 - `providers/implementations/ciphers/build.info` - Added to build system
 - `providers/implementations/include/prov/names.h` - Added algorithm name
 - `providers/implementations/include/prov/implementations.h` - Added function declarations
 - `test/build.info` - Added test to build system
 
-## Usage
+Usage
+-----
 
 ### Basic Encryption/Decryption
 
@@ -157,7 +167,8 @@ EVP_CipherFinal(q_ctx, q_ciphertext + len, &tmplen);
 results = cloud_search(q_ciphertext);
 ```
 
-## Building and Testing
+Building and Testing
+--------------------
 
 ### Build OpenSSL with CAPRISE
 
@@ -189,13 +200,15 @@ The CAPRISE cipher will be automatically built as part of the default provider.
 3. **test_caprise_dimensions**: Tests various embedding dimensions (2, 4, 8, 16)
 4. **test_caprise_parameters**: Tests different parameter combinations (s, β values)
 
-## Performance Considerations
+Performance Considerations
+--------------------------
 
 - **Throughput**: CAPRISE achieves ~2,339 vectors/second for 768-dim embeddings (9× faster than PHE-based alternatives)
 - **Overhead**: Encryption overhead is < 19% of embedding computation time
 - **Memory**: O(d) space complexity where d is embedding dimension
 
-## Security Considerations
+Security Considerations
+-----------------------
 
 ### Recommendations
 
@@ -213,11 +226,12 @@ The CAPRISE cipher will be automatically built as part of the default provider.
 2. **Floating-Point Precision**: Uses double-precision arithmetic; consider precision requirements for your use case
 3. **Dimension Limits**: Maximum supported dimension is 4096 (configurable)
 
-## Integration with RAG Systems
+Integration with RAG Systems
+-----------------------------
 
 ### Typical Workflow
 
-```
+```text
 1. Setup Phase (One-time):
    - Generate random key K (32 bytes)
    - Choose security parameters (s, β)
@@ -239,19 +253,22 @@ The CAPRISE cipher will be automatically built as part of the default provider.
    g. Use retrieved documents for LLM augmentation
 ```
 
-## References
+References
+----------
 
 - Paper: "Efficient Privacy-Preserving Retrieval Augmented Generation with Distance-Preserving Encryption"
   - arXiv: 2601.12331
-  - https://arxiv.org/abs/2601.12331
+  - <https://arxiv.org/abs/2601.12331>
 - ADCPE: "Approximate Distance-Comparison-Preserving Encryption" (Fuchsbauer et al.)
 - Vec2Text Attack: Morris et al.
 
-## License
+License
+-------
 
 This implementation is licensed under the Apache License 2.0, consistent with the OpenSSL project.
 
-## Contributing
+Contributing
+------------
 
 To extend or modify this implementation:
 
@@ -260,7 +277,8 @@ To extend or modify this implementation:
 3. **Add modes**: Extend the mode parameter for different encryption schemes
 4. **Optimize performance**: The current implementation uses OpenSSL's HMAC; consider hardware acceleration for production
 
-## Future Enhancements
+Future Enhancements
+-------------------
 
 - [ ] SIMD optimization for vector operations
 - [ ] Hardware acceleration support (AVX, ARM NEON)
