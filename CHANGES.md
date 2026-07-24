@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added CAPRISE (distance-preserving encryption) cipher implementation.
+   CAPRISE enables approximate nearest-neighbor search on encrypted
+   embeddings while preserving distance relationships. The feature is
+   enabled by default and can be disabled with `no-caprise`.
+
+   *Paul Yang*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 
