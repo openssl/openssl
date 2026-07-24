@@ -230,6 +230,24 @@ static int handle_symlink(const char *filename, const char *fullpath)
 }
 
 /*
+ * check if pem file has a valid format.
+ */
+static int check_pem_file_validity(BIO *bio)
+{
+    char *name = NULL, *header = NULL;
+    unsigned char *data = NULL;
+    long len = 0;
+
+    int ret = PEM_read_bio(bio, &name, &header, &data, &len);
+
+    OPENSSL_free(name);
+    OPENSSL_free(header);
+    OPENSSL_free(data);
+
+    return ret;
+}
+
+/*
  * process a file, return number of errors.
  */
 static int do_file(const char *filename, const char *fullpath, enum Hash h)
@@ -260,6 +278,22 @@ static int do_file(const char *filename, const char *fullpath, enum Hash h)
         errs++;
         goto end;
     }
+
+    int pem_file_valid = check_pem_file_validity(b);
+
+    if (!pem_file_valid) {
+        BIO_printf(bio_err, "%s has an invalid PEM format.\n", filename);
+        ++errs;
+        goto end;
+    }
+
+    /* rewind to re-read from the start */
+    if (BIO_seek(b, 0) < 0) {
+        BIO_printf(bio_err, "%s: failed to rewind file\n", filename);
+        ++errs;
+        goto end;
+    }
+
     inf = PEM_X509_INFO_read_bio(b, NULL, NULL, NULL);
     BIO_free(b);
     if (inf == NULL)
