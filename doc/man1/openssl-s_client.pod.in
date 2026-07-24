@@ -28,6 +28,8 @@ B<openssl> B<s_client>
 [B<-verify_quiet>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 [B<-mtc_cas> I<filename>]
+[B<-mtc_landmarks> I<id>:I<log>:I<filename>]
+[B<-mtc_subtrees> I<filename>]
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<filename>|I<uri>]
@@ -342,6 +344,38 @@ certificates (draft-ietf-plants-merkle-tree-certs) to trust. Their trust anchor
 identifiers are requested from the server in the B<trust_anchors> extension, and
 they are trusted when verifying a Merkle Tree Certificate returned by the
 server.
+
+=item B<-mtc_landmarks> I<id>:I<log>:I<filename>
+
+The active landmarks of one issuance log of one B<-mtc_cas> CA. I<id> is the
+CA's trust anchor ID as a dotted relative object identifier (for example
+C<32473.1>), I<log> is the decimal log number, and I<filename> holds the
+landmark description that CA publishes for that log, in the format of section
+6.4.3 of draft-ietf-plants-merkle-tree-certs. This option may be given more than
+once, for further logs or CAs. When B<-attime> is given, landmarks that expired
+before that time are not loaded.
+
+Loading a description replaces that log's active window, which selects the
+subtrees a landmark-relative certificate may be verified against, and determines
+the landmark group requested from the server in the B<trust_anchors> extension.
+The subtrees themselves are only usable once their hashes are supplied with
+B<-mtc_subtrees>.
+
+=item B<-mtc_subtrees> I<filename>
+
+A file of vetted subtree hashes for the B<-mtc_landmarks> logs, needed to verify
+landmark-relative (signatureless) Merkle Tree Certificates. Each line describes
+one subtree as five space-separated fields:
+
+ <id> <log> <start> <end> <hash>
+
+I<id> is the CA's trust anchor ID as a dotted relative object identifier (for
+example C<32473.1>), matching one of the B<-mtc_cas> CAs; I<log> is the log
+number; I<start> and I<end> are the subtree bounds, which must be those of a
+subtree active in that log's window; and I<hash> is the base64 SHA-256 hash of
+the subtree. Lines beginning with C<#> are ignored. Obtaining and validating
+these hashes is an out-of-band process (see section 7.4 of the draft); this
+option only installs already-vetted values.
 
 =item B<-verifyCAfile> I<filename>
 

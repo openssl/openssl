@@ -852,6 +852,126 @@ STACK_OF(OSSL_MTC_CA) *load_mtc_cas(SSL_CTX *ctx, const char *file)
     return cas;
 }
 
+/*
+ * Load one MTC log's active landmarks from "id:log:file", where id is the CA's
+ * trust anchor ID in dotted text, log is the decimal log number, and file holds
+ * the landmark description the CA publishes for that log (section 6.4.3 of
+ * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+ * This sets which subtrees are active; their hashes are supplied separately.
+ * Landmarks that expired before the verification time of vpm, when one is
+ * set (-attime), are not loaded.
+ */
+int load_mtc_landmarks(STACK_OF(OSSL_MTC_CA) *cas, const char *spec,
+    const X509_VERIFY_PARAM *vpm)
+{
+    char *dup = NULL, *colon1, *colon2, *end;
+    const char *file;
+    BIO *in = NULL;
+    OSSL_MTC_CA *ca;
+    unsigned long long log;
+    int64_t cutoff = INT64_MIN;
+    int ret = 0;
+
+    if ((X509_VERIFY_PARAM_get_flags(vpm) & X509_V_FLAG_USE_CHECK_TIME) != 0)
+        cutoff = (int64_t)X509_VERIFY_PARAM_get_time(vpm);
+    if ((dup = OPENSSL_strdup(spec)) == NULL)
+        return 0;
+    colon1 = strchr(dup, ':');
+    colon2 = colon1 == NULL ? NULL : strchr(colon1 + 1, ':');
+    if (colon2 == NULL) {
+        BIO_printf(bio_err,
+            "-mtc_landmarks needs id:log:file, not '%s'\n", spec);
+        goto err;
+    }
+    *colon1 = '\0';
+    *colon2 = '\0';
+    file = colon2 + 1;
+
+    errno = 0;
+    log = strtoull(colon1 + 1, &end, 10);
+    if (errno != 0 || *end != '\0' || end == colon1 + 1) {
+        BIO_printf(bio_err, "Invalid log number in '%s'\n", spec);
+        goto err;
+    }
+
+    if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, dup)) == NULL) {
+        BIO_printf(bio_err, "No -mtc_cas CA matches trust anchor ID '%s'\n",
+            dup);
+        goto err;
+    }
+    if ((in = BIO_new_file(file, "r")) == NULL) {
+        BIO_printf(bio_err, "Error opening MTC landmarks file %s\n", file);
+        goto err;
+    }
+    if (!OSSL_MTC_CA_load_landmarks(ca, log, in, cutoff)) {
+        BIO_printf(bio_err, "Failed to load MTC landmarks from %s\n", file);
+        goto err;
+    }
+    ret = 1;
+err:
+    BIO_free(in);
+    OPENSSL_free(dup);
+    return ret;
+}
+
+/*
+ * Read vetted subtree hashes for the loaded MTC CAs from a file, one per line as
+ * "id log start end hash", where id is the CA's trust anchor ID in dotted text,
+ * log/start/end are decimal, and hash is the base64 SHA-256 subtree hash.  Each
+ * hash is applied to the -mtc_cas CA whose trust anchor ID matches id, and the
+ * subtree must be active there, so -mtc_landmarks is loaded first.
+ */
+int load_mtc_subtrees(STACK_OF(OSSL_MTC_CA) *cas, const char *file)
+{
+    BIO *in = BIO_new_file(file, "r");
+    char line[512];
+    int ret = 0;
+
+    if (in == NULL) {
+        BIO_printf(bio_err, "Error opening MTC subtrees file %s\n", file);
+        return 0;
+    }
+    while (BIO_gets(in, line, sizeof(line)) > 0) {
+        char oid[64], hashb64[128];
+        unsigned long long log, start, end;
+        uint8_t hash[128];
+        OSSL_MTC_CA *ca;
+        int declen;
+
+        if (line[0] == '#' || line[0] == '\n' || line[0] == '\r'
+            || line[0] == '\0')
+            continue;
+        if (sscanf(line, "%63s %llu %llu %llu %127s", oid, &log, &start, &end,
+                hashb64)
+            != 5) {
+            BIO_printf(bio_err, "Malformed MTC subtree line: %s", line);
+            goto err;
+        }
+        if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, oid)) == NULL) {
+            BIO_printf(bio_err,
+                "No -mtc_cas CA matches trust anchor ID '%s'\n", oid);
+            goto err;
+        }
+        declen = EVP_DecodeBlock(hash, (const uint8_t *)hashb64,
+            (int)strlen(hashb64));
+        if (declen < 32) {
+            BIO_printf(bio_err, "Bad subtree hash for '%s'\n", oid);
+            goto err;
+        }
+        if (!OSSL_MTC_CA_add_subtree_hash(ca, log, start, end, hash, 32)) {
+            BIO_printf(bio_err,
+                "Failed to add subtree hash for '%s' (is [%llu, %llu) an"
+                " active landmark subtree of log %llu?)\n",
+                oid, start, end, log);
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    BIO_free(in);
+    return ret;
+}
+
 char *next_item(char *opt) /* in list separated by comma and/or spaces */
 {
     /* advance to separator (comma or whitespace), if any */

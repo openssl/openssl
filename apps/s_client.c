@@ -581,6 +581,8 @@ typedef enum OPTION_choice {
     OPT_CHAINCASTORE,
     OPT_VERIFYCASTORE,
     OPT_MTC_CAS,
+    OPT_MTC_LANDMARKS,
+    OPT_MTC_SUBTREES,
     OPT_SERVERINFO,
     OPT_STARTTLS,
     OPT_SERVERNAME,
@@ -697,6 +699,12 @@ const OPTIONS s_client_options[] = {
     { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
     { "mtc_cas", OPT_MTC_CAS, '<',
         "File of Merkle Tree Certificate CA certs to trust and request" },
+    { "mtc_landmarks", OPT_MTC_LANDMARKS, 's',
+        "Active landmarks of one -mtc_cas log, as id:log:file, where file holds"
+        " the CA's published landmark description (may be given more than once)" },
+    { "mtc_subtrees", OPT_MTC_SUBTREES, '<',
+        "File of vetted subtree hashes for the -mtc_landmarks logs"
+        " (landmark-relative MTC)" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
@@ -1014,7 +1022,8 @@ int s_client_main(int argc, char **argv)
     STACK_OF(X509_CRL) *crls = NULL;
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
-    const char *mtc_cas_file = NULL;
+    const char *mtc_cas_file = NULL, *mtc_subtrees_file = NULL;
+    STACK_OF(OPENSSL_STRING) *mtc_landmarks = NULL;
     STACK_OF(OSSL_MTC_CA) *mtc_cas = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
     char *proxystr = NULL, *proxyuser = NULL;
@@ -1620,6 +1629,16 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTC_CAS:
             mtc_cas_file = opt_arg();
+            break;
+        case OPT_MTC_LANDMARKS:
+            if (mtc_landmarks == NULL
+                && (mtc_landmarks = sk_OPENSSL_STRING_new_null()) == NULL)
+                goto end;
+            if (!sk_OPENSSL_STRING_push(mtc_landmarks, opt_arg()))
+                goto end;
+            break;
+        case OPT_MTC_SUBTREES:
+            mtc_subtrees_file = opt_arg();
             break;
         case OPT_NOCASTORE:
             noCAstore = 1;
@@ -2263,6 +2282,32 @@ int s_client_main(int argc, char **argv)
     if (mtc_cas_file != NULL
         && (mtc_cas = load_mtc_cas(ctx, mtc_cas_file)) == NULL)
         goto end;
+
+    /*
+     * Set the active landmark windows of the loaded MTC CAs, then the vetted
+     * hashes of subtrees in those windows (landmark-relative MTC).  The windows
+     * come first: a hash is accepted only for a subtree that is active.
+     */
+    if (mtc_landmarks != NULL) {
+        if (mtc_cas == NULL) {
+            BIO_printf(bio_err, "-mtc_landmarks requires -mtc_cas\n");
+            goto end;
+        }
+        for (i = 0; i < sk_OPENSSL_STRING_num(mtc_landmarks); i++) {
+            if (!load_mtc_landmarks(mtc_cas,
+                    sk_OPENSSL_STRING_value(mtc_landmarks, i), vpm))
+                goto end;
+        }
+    }
+
+    if (mtc_subtrees_file != NULL) {
+        if (mtc_cas == NULL) {
+            BIO_printf(bio_err, "-mtc_subtrees requires -mtc_cas\n");
+            goto end;
+        }
+        if (!load_mtc_subtrees(mtc_cas, mtc_subtrees_file))
+            goto end;
+    }
 
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
         goto end;
@@ -3630,6 +3675,7 @@ end:
 #endif
     SSL_CTX_free(ctx);
     /* Freed after the store that borrowed them. */
+    sk_OPENSSL_STRING_free(mtc_landmarks);
     sk_OSSL_MTC_CA_pop_free(mtc_cas, OSSL_MTC_CA_free);
     set_keylog_file(NULL, NULL);
     X509_free(cert);
