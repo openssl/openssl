@@ -37,10 +37,6 @@
 #endif
 #endif
 
-static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
-    int op, int bits, int nid, void *other,
-    void *ex);
-
 static CRYPTO_ONCE ssl_x509_store_ctx_once = CRYPTO_ONCE_STATIC_INIT;
 static volatile int ssl_x509_store_ctx_idx = -1;
 
@@ -80,7 +76,7 @@ CERT *ssl_cert_new(size_t ssl_pkey_num)
     }
 
     ret->key = &(ret->pkeys[SSL_PKEY_RSA]);
-    ret->sec_cb = ssl_security_default_callback;
+    ret->sec_cb = SSL_default_security_callback;
     ret->sec_level = OPENSSL_TLS_SECURITY_LEVEL;
     ret->sec_ex = NULL;
     if (!CRYPTO_NEW_REF(&ret->references, 1)) {
@@ -1244,7 +1240,7 @@ int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp)
     return minbits_table[level];
 }
 
-static int ssl_security_default_callback(const SSL *s, const SSL_CTX *ctx,
+int SSL_default_security_callback(const SSL *s, const SSL_CTX *ctx,
     int op, int bits, int nid, void *other,
     void *ex)
 {

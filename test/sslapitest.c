@@ -727,6 +727,49 @@ end:
     return ret;
 }
 
+static int test_default_security_callback(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method())))
+        return 0;
+
+    SSL_CTX_set_security_level(ctx, 2);
+
+    /* Check callback is callable & behaves as expected for level 2 with ctx: */
+    if (!TEST_int_eq(SSL_default_security_callback(NULL, ctx, SSL_SECOP_EE_KEY,
+                         80, 0, NULL, NULL),
+            0)
+        || !TEST_int_eq(SSL_default_security_callback(NULL, ctx, SSL_SECOP_EE_KEY,
+                            128, 0, NULL, NULL),
+            1))
+        goto end;
+
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto end;
+
+    /* Check callback is callable & behaves as expected for level 2 with ssl: */
+    if (!TEST_int_eq(SSL_default_security_callback(ssl, NULL, SSL_SECOP_EE_KEY,
+                         80, 0, NULL, NULL),
+            0))
+        goto end;
+
+    /* Check the same 80-bit object is now permitted once level 0 is set: */
+    SSL_set_security_level(ssl, 0);
+    if (!TEST_int_eq(SSL_default_security_callback(ssl, NULL, SSL_SECOP_EE_KEY,
+                         80, 0, NULL, NULL),
+            1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 #ifndef OPENSSL_NO_TLS1_2
 static int full_client_hello_callback(SSL *s, int *al, void *arg)
 {
@@ -15454,6 +15497,7 @@ int setup_tests(void)
     ADD_TEST(test_client_cert_verify_cb);
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
+    ADD_TEST(test_default_security_callback);
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_client_hello_cb);
     ADD_TEST(test_no_ems);

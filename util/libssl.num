@@ -626,3 +626,4 @@ SSL_CTX_ech_set1_outer_alpn_protos      625	4_0_0	EXIST::FUNCTION:ECH
 SSL_set1_ech_config_list                626	4_0_0	EXIST::FUNCTION:ECH
 SSL_get0_sigalg                         627	4_0_0	EXIST::FUNCTION:
 SSL_get0_shared_sigalg                  628	4_0_0	EXIST::FUNCTION:
+SSL_default_security_callback           ?	4_1_0	EXIST::FUNCTION:

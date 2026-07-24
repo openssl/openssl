@@ -283,6 +283,12 @@ OpenSSL Releases
 
    *Dimitri John Ledkov*
 
+ * Added SSL_default_security_callback(), to expose the default security
+   callback. Applications that install their own security callback can use
+   this to fall back to the default behaviour.
+
+   *Tim Perry*
+
 OpenSSL 4.0
 -----------
 
