@@ -325,6 +325,25 @@ Example:
 
  issuerAltName = issuer:copy
 
+=head2 Signing Tool of Issuer (issuerSignTool)
+
+This multi-valued extension (OID 1.2.643.100.112) is used with qualified
+certificates in the Russian Federation.  Each entry is a field name and value
+pair.  The supported names are B<signTool>, B<cATool>, B<signToolCert>, and
+B<cAToolCert>; values are UTF-8 strings.
+
+Short form:
+
+ issuerSignTool = signTool:my signing tool,cATool:my CA tool
+
+If a value contains a comma, use the long form with a separate section:
+
+ issuerSignTool = @ist
+
+ [ist]
+ signTool = my signing tool
+ cATool = my CA tool
+
 =head2 Authority Info Access
 
 This extension gives details about how to retrieve information that
