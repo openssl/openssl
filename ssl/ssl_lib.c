@@ -1629,6 +1629,8 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
     OPENSSL_free(s->ext.peer_requested_trust_anchors);
+    OPENSSL_free(s->ext.requested_trust_anchors);
+    OPENSSL_free(s->ext.added_trust_anchors);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 
 #ifndef OPENSSL_NO_OCSP
@@ -4126,6 +4128,127 @@ int SSL_set_alpn_protos(SSL *ssl, const unsigned char *protos,
 }
 
 /*
+ * Check that |ids| is a RequestedTrustAnchorList in wire format: a series of
+ * non-empty, 8-bit length-prefixed trust anchor IDs.  An empty list (|ids_len|
+ * zero) is well formed.
+ */
+static int requested_trust_anchors_valid(const uint8_t *ids, size_t ids_len)
+{
+    PACKET pkt, id;
+
+    if (ids_len == 0)
+        return 1;
+    if (ids == NULL || !PACKET_buf_init(&pkt, ids, ids_len)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+    while (PACKET_remaining(&pkt) > 0) {
+        if (!PACKET_get_length_prefixed_1(&pkt, &id)
+            || PACKET_remaining(&id) == 0) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+    }
+    return 1;
+}
+
+/*
+ * Validate and store a RequestedTrustAnchorList.  An empty list (|ids_len|
+ * zero) is accepted and marks the list as explicitly set, so the
+ * trust_anchors extension is still sent.
+ */
+static int set1_requested_trust_anchors(uint8_t **field, size_t *field_len,
+    int *field_set, const uint8_t *ids, size_t ids_len)
+{
+    uint8_t *copy = NULL;
+
+    if (!requested_trust_anchors_valid(ids, ids_len))
+        return 0;
+    if (ids_len > 0 && (copy = OPENSSL_memdup(ids, ids_len)) == NULL)
+        return 0;
+    OPENSSL_free(*field);
+    *field = copy;
+    *field_len = ids_len;
+    *field_set = 1;
+    return 1;
+}
+
+int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx, const uint8_t *ids,
+    size_t ids_len)
+{
+    return set1_requested_trust_anchors(&ctx->ext.requested_trust_anchors,
+        &ctx->ext.requested_trust_anchors_len,
+        &ctx->ext.requested_trust_anchors_set, ids, ids_len);
+}
+
+int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
+    size_t ids_len)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+
+    if (sc == NULL)
+        return 0;
+    return set1_requested_trust_anchors(&sc->ext.requested_trust_anchors,
+        &sc->ext.requested_trust_anchors_len,
+        &sc->ext.requested_trust_anchors_set, ids, ids_len);
+}
+
+/*
+ * Validate a RequestedTrustAnchorList and append it to the trust anchor IDs
+ * added to the default.  An empty list (|ids_len| zero) is accepted and marks
+ * the field as set, so the trust_anchors extension is still sent.
+ */
+static int add1_requested_trust_anchors(uint8_t **field, size_t *field_len,
+    int *field_set, const uint8_t *ids, size_t ids_len)
+{
+    uint8_t *tmp;
+
+    if (!requested_trust_anchors_valid(ids, ids_len))
+        return 0;
+    if (ids_len > 0) {
+        if (ids_len > SIZE_MAX - *field_len) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+            return 0;
+        }
+        if ((tmp = OPENSSL_realloc(*field, *field_len + ids_len)) == NULL)
+            return 0;
+        memcpy(tmp + *field_len, ids, ids_len);
+        *field = tmp;
+        *field_len += ids_len;
+    }
+    *field_set = 1;
+    return 1;
+}
+
+int SSL_CTX_add1_requested_trust_anchors(SSL_CTX *ctx, const uint8_t *ids,
+    size_t ids_len)
+{
+    if (ctx == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    return add1_requested_trust_anchors(&ctx->ext.added_trust_anchors,
+        &ctx->ext.added_trust_anchors_len, &ctx->ext.added_trust_anchors_set,
+        ids, ids_len);
+}
+
+int SSL_add1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
+    size_t ids_len)
+{
+    SSL_CONNECTION *sc;
+
+    if (ssl == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if ((sc = SSL_CONNECTION_FROM_SSL(ssl)) == NULL)
+        return 0;
+    return add1_requested_trust_anchors(&sc->ext.added_trust_anchors,
+        &sc->ext.added_trust_anchors_len, &sc->ext.added_trust_anchors_set,
+        ids, ids_len);
+}
+
+/*
  * SSL_CTX_set_get0_protos gets the ALPN protocol list on |ctx| to |protos|.
  */
 void SSL_CTX_get0_alpn_protos(SSL_CTX *ctx, const unsigned char **protos,
@@ -4796,6 +4919,8 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.keyshares);
     OPENSSL_free(a->ext.tuples);
     OPENSSL_free(a->ext.alpn);
+    OPENSSL_free(a->ext.requested_trust_anchors);
+    OPENSSL_free(a->ext.added_trust_anchors);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
     for (j = 0; j < SSL_ENC_NUM_IDX; j++)
