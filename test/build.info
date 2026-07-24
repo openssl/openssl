@@ -907,6 +907,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
+                     aesgcm_avx512_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
@@ -1238,6 +1239,12 @@ IF[{- !$disabled{tests} -}]
   SOURCE[aesgcmtest]=aesgcmtest.c
   INCLUDE[aesgcmtest]=../include ../apps/include
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
+
+  SOURCE[aesgcm_avx512_test]=aesgcm_avx512_test.c
+  INCLUDE[aesgcm_avx512_test]=../include ../apps/include
+  # Linked against the static libcrypto so the test can read the internal
+  # OPENSSL_ia32cap_P (the effective dispatch vector); see the noinst block.
+  DEPEND[aesgcm_avx512_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c
