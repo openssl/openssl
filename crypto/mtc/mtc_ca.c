@@ -597,7 +597,7 @@ static int ca_id_order(const uint8_t *a, size_t alen, const uint8_t *b,
     return memcmp(a, b, alen);
 }
 
-int ossl_mtc_ca_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b)
+int OSSL_MTC_CA_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b)
 {
     size_t alen, blen;
     const uint8_t *aid = ossl_mtc_ca_id(*a, &alen);
@@ -674,6 +674,33 @@ int OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end)
         return 0;
     }
     return ossl_mtc_ca_add_revoked_range(ca, start, end);
+}
+
+OSSL_MTC_CA *OSSL_MTC_CA_find(STACK_OF(OSSL_MTC_CA) *cas, const uint8_t *ca_id,
+    size_t ca_id_len, const char *ca_id_str)
+{
+    OSSL_MTC_CA *ca;
+    uint8_t *wire = NULL;
+    size_t wire_len = 0;
+
+    if (cas == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    if (ca_id_str != NULL) {
+        /* A malformed dotted-decimal string simply matches no CA. */
+        if (!ossl_mtc_reloid_from_text(ca_id_str, strlen(ca_id_str), &wire,
+                &wire_len))
+            return NULL;
+        ca = ossl_mtc_ca_stack_lookup(cas, wire, wire_len);
+        OPENSSL_free(wire);
+        return ca;
+    }
+    if (ca_id == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return NULL;
+    }
+    return ossl_mtc_ca_stack_lookup(cas, ca_id, ca_id_len);
 }
 
 int OSSL_MTC_CA_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in,

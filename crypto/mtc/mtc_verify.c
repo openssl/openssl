@@ -54,6 +54,81 @@ static int mtc_obj_is(const ASN1_OBJECT *obj, const uint8_t *oid, size_t oid_len
 }
 
 /**
+ * @brief Encode an ASCII dotted-decimal string as RELATIVE-OID content octets.
+ *
+ * Each arc is written big-endian base-128 with the continuation bit set on all
+ * but its final octet.  Arc values are limited to uint64.
+ *
+ * @param pkt the packet the encoded octets are appended to
+ * @param text the dotted-decimal string
+ * @param len the length of text
+ * @returns 1 on success, 0 on malformed input or arc overflow.
+ */
+static int mtc_wpacket_put_reloid_from_text(WPACKET *pkt, const char *text,
+    size_t len)
+{
+    size_t i = 0;
+
+    if (len == 0)
+        return 0;
+    while (i < len) {
+        uint8_t tmp[10];
+        uint64_t v = 0;
+        size_t n = 0;
+
+        if (!ossl_isdigit(text[i]))
+            return 0;
+        while (i < len && ossl_isdigit(text[i])) {
+            if (v > (UINT64_MAX - 9) / 10)
+                return 0; /* arc overflow */
+            v = v * 10 + (uint64_t)(text[i] - '0');
+            i++;
+        }
+        do {
+            tmp[n++] = (uint8_t)(v & 0x7f);
+            v >>= 7;
+        } while (v != 0);
+        while (n-- > 0)
+            if (!WPACKET_put_bytes_u8(pkt, tmp[n] | (n != 0 ? 0x80 : 0)))
+                return 0;
+        if (i < len) {
+            if (text[i] != '.')
+                return 0;
+            if (++i == len)
+                return 0; /* trailing dot */
+        }
+    }
+    return 1;
+}
+
+int ossl_mtc_reloid_from_text(const char *text, size_t len, uint8_t **out,
+    size_t *out_len)
+{
+    WPACKET pkt;
+    BUF_MEM *buf = NULL;
+    size_t written = 0;
+    int have_pkt = 0, ok = 0;
+
+    if ((buf = BUF_MEM_new()) == NULL || !WPACKET_init(&pkt, buf))
+        goto err;
+    have_pkt = 1;
+    if (!mtc_wpacket_put_reloid_from_text(&pkt, text, len)
+        || !WPACKET_get_total_written(&pkt, &written)
+        || !WPACKET_finish(&pkt))
+        goto err;
+    have_pkt = 0;
+    if ((*out = OPENSSL_memdup(buf->data, written)) == NULL)
+        goto err;
+    *out_len = written;
+    ok = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    BUF_MEM_free(buf);
+    return ok;
+}
+
+/**
  * @brief Decode RELATIVE-OID content octets to a dotted-decimal string.
  *
  * Arc values are limited to uint64.

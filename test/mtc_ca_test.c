@@ -10,6 +10,9 @@
 #include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/mtc.h>
+#include <openssl/objects.h>
+#include <openssl/pem.h>
+#include <openssl/x509.h>
 
 #include "crypto/mtc_ca.h"
 #include "testutil.h"
@@ -298,6 +301,147 @@ static int ca_log_has_subtree(OSSL_MTC_CA *ca, uint64_t n, uint64_t start,
 }
 
 /*
+ * OSSL_MTC_CA_find locates a CA in a stack by CA ID given either as wire-form
+ * relative-OID bytes or as a dotted-decimal string; a malformed string or an
+ * absent ID matches nothing.
+ */
+static int test_ca_find(void)
+{
+    EVP_PKEY *k0 = NULL, *k1 = NULL;
+    OSSL_MTC_CA *ca0 = NULL, *ca1 = NULL;
+    STACK_OF(OSSL_MTC_CA) *cas = NULL;
+    /* 32473.9, not in the stack. */
+    static const uint8_t absent_id[] = { 0x81, 0xfd, 0x59, 0x09 };
+    int ret = 0;
+
+    if (!TEST_ptr(k0 = gen_cosigner_key())
+        || !TEST_ptr(k1 = gen_cosigner_key())
+        || !TEST_ptr(ca0 = OSSL_MTC_CA_new(cosigner0_id, sizeof(cosigner0_id),
+                         EVP_sha256(), 0, k0))
+        || !TEST_ptr(ca1 = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(),
+                         0, k1))
+        || !TEST_ptr(cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp))
+        || !TEST_true(ossl_mtc_ca_stack_add(cas, ca0))
+        || !TEST_true(ossl_mtc_ca_stack_add(cas, ca1)))
+        goto err;
+
+    /* Wire form (ca_id_str NULL) and dotted-decimal find the same CA. */
+    if (!TEST_ptr_eq(OSSL_MTC_CA_find(cas, ca_id, sizeof(ca_id), NULL), ca1)
+        || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, NULL, 0, "32473.1"), ca1)
+        || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, NULL, 0, "32473.0"), ca0))
+        goto err;
+
+    /* Absent ID, and a malformed dotted-decimal string, both miss. */
+    if (!TEST_ptr_null(OSSL_MTC_CA_find(cas, absent_id, sizeof(absent_id),
+            NULL))
+        || !TEST_ptr_null(OSSL_MTC_CA_find(cas, NULL, 0, "32473.9"))
+        || !TEST_ptr_null(OSSL_MTC_CA_find(cas, NULL, 0, "not.an.oid")))
+        goto err;
+
+    ret = 1;
+err:
+    sk_OSSL_MTC_CA_free(cas);
+    OSSL_MTC_CA_free(ca0);
+    OSSL_MTC_CA_free(ca1);
+    EVP_PKEY_free(k0);
+    EVP_PKEY_free(k1);
+    return ret;
+}
+
+/*
+ * OSSL_MTC_CA_find over a stack of several CAs: each is found by either form of
+ * its ID, and an absent ID misses wherever it would fall.
+ */
+static int test_ca_find_ordering(void)
+{
+    /* 32473.0, 32473.1, 32473.2 and 32474.1, then 32473.1.5 and 32473.200. */
+    static const uint8_t id_32473_0[] = { 0x81, 0xfd, 0x59, 0x00 };
+    static const uint8_t id_32473_1[] = { 0x81, 0xfd, 0x59, 0x01 };
+    static const uint8_t id_32473_2[] = { 0x81, 0xfd, 0x59, 0x02 };
+    static const uint8_t id_32474_1[] = { 0x81, 0xfd, 0x5a, 0x01 };
+    static const uint8_t id_32473_1_5[] = { 0x81, 0xfd, 0x59, 0x01, 0x05 };
+    static const uint8_t id_32473_200[] = { 0x81, 0xfd, 0x59, 0x81, 0x48 };
+    static const struct {
+        const uint8_t *id;
+        size_t id_len;
+        const char *text;
+    } ids[] = {
+        { id_32473_0, sizeof(id_32473_0), "32473.0" },
+        { id_32473_1, sizeof(id_32473_1), "32473.1" },
+        { id_32473_2, sizeof(id_32473_2), "32473.2" },
+        { id_32474_1, sizeof(id_32474_1), "32474.1" },
+        { id_32473_1_5, sizeof(id_32473_1_5), "32473.1.5" },
+        { id_32473_200, sizeof(id_32473_200), "32473.200" },
+    };
+    /*
+     * Absent IDs: shorter than every CA in the stack, in the gap between two of
+     * the four-byte ones, one component on from a five-byte one, and longer
+     * than all of them.
+     */
+    static const uint8_t short_id[] = { 0x81, 0xfd, 0x59 };
+    static const uint8_t gap_id[] = { 0x81, 0xfd, 0x59, 0x09 };
+    static const uint8_t next_id[] = { 0x81, 0xfd, 0x59, 0x01, 0x06 };
+    static const uint8_t long_id[] = { 0x81, 0xfd, 0x59, 0x01, 0x05, 0x07 };
+    static const struct {
+        const uint8_t *id;
+        size_t id_len;
+    } absent[] = {
+        { short_id, sizeof(short_id) },
+        { gap_id, sizeof(gap_id) },
+        { next_id, sizeof(next_id) },
+        { long_id, sizeof(long_id) },
+    };
+    /* The order the CAs are added in, so that it is not the sorted order. */
+    static const int added[] = { 4, 1, 5, 0, 3, 2 };
+    EVP_PKEY *key = NULL;
+    OSSL_MTC_CA *cas_by_id[OSSL_NELEM(ids)] = { NULL };
+    STACK_OF(OSSL_MTC_CA) *cas = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(key = gen_cosigner_key())
+        || !TEST_ptr(cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(ids); i++)
+        if (!TEST_ptr(cas_by_id[i] = OSSL_MTC_CA_new(ids[i].id, ids[i].id_len,
+                          EVP_sha256(), 0, key)))
+            goto err;
+
+    for (i = 0; i < OSSL_NELEM(added); i++)
+        if (!TEST_true(ossl_mtc_ca_stack_add(cas, cas_by_id[added[i]])))
+            goto err;
+
+    /* The stack is in CA ID order however the CAs arrived. */
+    if (!TEST_int_eq(sk_OSSL_MTC_CA_num(cas), (int)OSSL_NELEM(ids)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(ids); i++)
+        if (!TEST_ptr_eq(sk_OSSL_MTC_CA_value(cas, (int)i), cas_by_id[i]))
+            goto err;
+
+    /* Each CA is found by its wire-form ID and by its dotted-decimal one. */
+    for (i = 0; i < OSSL_NELEM(ids); i++)
+        if (!TEST_ptr_eq(OSSL_MTC_CA_find(cas, ids[i].id, ids[i].id_len, NULL),
+                cas_by_id[i])
+            || !TEST_ptr_eq(OSSL_MTC_CA_find(cas, NULL, 0, ids[i].text),
+                cas_by_id[i]))
+            goto err;
+
+    for (i = 0; i < OSSL_NELEM(absent); i++)
+        if (!TEST_ptr_null(OSSL_MTC_CA_find(cas, absent[i].id,
+                absent[i].id_len, NULL)))
+            goto err;
+
+    ret = 1;
+err:
+    sk_OSSL_MTC_CA_free(cas);
+    for (i = 0; i < OSSL_NELEM(ids); i++)
+        OSSL_MTC_CA_free(cas_by_id[i]);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
  * A landmark update establishes the active window's subtrees (without hashes),
  * add_subtree_hash then makes a subtree usable, and a fresh update carries the
  * hash forward for a still-active subtree while dropping one that aged out.
@@ -551,7 +695,7 @@ static int test_ca_stack(void)
                          EVP_sha256(), 0, k2)))
         goto err;
 
-    if (!TEST_ptr(cas = sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp)))
+    if (!TEST_ptr(cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)))
         goto err;
 
     /* Add out of order; the stack must sort by CA ID (32473.0/.1/.2). */
@@ -616,6 +760,179 @@ static int test_ca_free_null(void)
     return 1;
 }
 
+/*
+ * The value of an experimental id-pe-mtcCertificationAuthority-SHA256
+ * extension:
+ * MTCCertificationAuthority SEQUENCE {
+ *   sigAlg    AlgorithmIdentifier = ecdsa-with-SHA256,
+ *   minSerial INTEGER 2^48,
+ *   maxSerial INTEGER 2^48 + 100 }
+ */
+static const uint8_t ca_ext_der[] = {
+    0x30, 0x1e, 0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04,
+    0x03, 0x02, 0x02, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+    0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64
+};
+/* The same with minSerial 0 and maxSerial 100, both below mtcMinSerial. */
+static const uint8_t ca_ext_low_serial_der[] = {
+    0x30, 0x12, 0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04,
+    0x03, 0x02, 0x02, 0x01, 0x00, 0x02, 0x01, 0x64
+};
+/* The same with minSerial 2^48 + 100 and maxSerial 2^48: inverted bounds. */
+static const uint8_t ca_ext_inverted_der[] = {
+    0x30, 0x1e, 0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04,
+    0x03, 0x02, 0x02, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0x02,
+    0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+};
+/* ca_ext_der followed by a byte the value does not account for. */
+static const uint8_t ca_ext_trailing_der[] = {
+    0x30, 0x1e, 0x30, 0x0a, 0x06, 0x08, 0x2a, 0x86, 0x48, 0xce, 0x3d, 0x04,
+    0x03, 0x02, 0x02, 0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02,
+    0x07, 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x64, 0x00
+};
+/* 32473.1 as TrustAnchorID relative-OID bytes. */
+static const uint8_t expect_ca_id[] = { 0x81, 0xfd, 0x59, 0x01 };
+/* A component with a leading zero continuation byte: not minimal. */
+static const uint8_t nonminimal_ca_id[] = { 0x80, 0x81, 0xfd, 0x59, 0x01 };
+/* A final component with its continuation bit set: truncated. */
+static const uint8_t truncated_ca_id[] = { 0x81, 0xfd, 0x59, 0x81 };
+
+/* The universal tag of a RELATIVE-OID, the type of the CA ID attribute. */
+#define TEST_ASN1_RELATIVE_OID 13
+
+/*
+ * Write to a new memory BIO a certificate representing an MTC CA whose
+ * subject is the single trustAnchorID attribute (id, id_len) of the given
+ * type, carrying the extension ext, marked critical when critical is set.
+ */
+static BIO *ca_cert_bio(int type, const uint8_t *id, size_t id_len,
+    const uint8_t *ext, size_t ext_len, int critical)
+{
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL;
+    X509_NAME *name = NULL;
+    ASN1_OBJECT *ext_obj = NULL;
+    ASN1_OCTET_STRING *ext_data = NULL;
+    X509_EXTENSION *x509_ext = NULL;
+    BIO *bio = NULL, *ret = NULL;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(cert = X509_new())
+        || !TEST_true(X509_set_version(cert, X509_VERSION_3))
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(cert), 1))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(cert), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(cert), 3600))
+        || !TEST_true(X509_set_pubkey(cert, key))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name,
+            "1.3.6.1.4.1.44363.47.3", type, id, (int)id_len, -1, 0))
+        || !TEST_true(X509_set_subject_name(cert, name))
+        || !TEST_true(X509_set_issuer_name(cert, name)))
+        goto err;
+
+    if (!TEST_ptr(ext_obj = OBJ_txt2obj("1.3.6.1.4.1.44363.47.4", 1))
+        || !TEST_ptr(ext_data = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(ext_data, ext, (int)ext_len))
+        || !TEST_ptr(x509_ext = X509_EXTENSION_create_by_OBJ(NULL, ext_obj,
+                         critical, ext_data))
+        || !TEST_true(X509_add_ext(cert, x509_ext, -1))
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0))
+        goto err;
+
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_true(PEM_write_bio_X509(bio, cert)))
+        goto err;
+    ret = bio;
+    bio = NULL;
+err:
+    BIO_free(bio);
+    X509_EXTENSION_free(x509_ext);
+    ASN1_OCTET_STRING_free(ext_data);
+    ASN1_OBJECT_free(ext_obj);
+    X509_NAME_free(name);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * Build a certificate representing an MTC CA and parse it back; then check
+ * that certificates with serial bounds below mtcMinSerial or inverted, a CA
+ * extension that is not critical or has trailing bytes, a CA ID attribute
+ * that is not a RELATIVE-OID, or a malformed CA ID are rejected.
+ */
+static int test_ca_parse_certificate(void)
+{
+    static const struct {
+        const char *desc;
+        int type;
+        const uint8_t *id;
+        size_t id_len;
+        const uint8_t *ext;
+        size_t ext_len;
+        int critical;
+    } bad[] = {
+        { "serials below 2^48", TEST_ASN1_RELATIVE_OID, expect_ca_id,
+            sizeof(expect_ca_id), ca_ext_low_serial_der,
+            sizeof(ca_ext_low_serial_der), 1 },
+        { "minSerial above maxSerial", TEST_ASN1_RELATIVE_OID, expect_ca_id,
+            sizeof(expect_ca_id), ca_ext_inverted_der,
+            sizeof(ca_ext_inverted_der), 1 },
+        { "non-critical CA extension", TEST_ASN1_RELATIVE_OID, expect_ca_id,
+            sizeof(expect_ca_id), ca_ext_der, sizeof(ca_ext_der), 0 },
+        { "trailing byte in CA extension", TEST_ASN1_RELATIVE_OID,
+            expect_ca_id, sizeof(expect_ca_id), ca_ext_trailing_der,
+            sizeof(ca_ext_trailing_der), 1 },
+        { "UTF8String CA ID", V_ASN1_UTF8STRING,
+            (const uint8_t *)"32473.1", 7, ca_ext_der, sizeof(ca_ext_der), 1 },
+        { "non-minimal CA ID", TEST_ASN1_RELATIVE_OID, nonminimal_ca_id,
+            sizeof(nonminimal_ca_id), ca_ext_der, sizeof(ca_ext_der), 1 },
+        { "truncated CA ID", TEST_ASN1_RELATIVE_OID, truncated_ca_id,
+            sizeof(truncated_ca_id), ca_ext_der, sizeof(ca_ext_der), 1 }
+    };
+    BIO *bio = NULL;
+    STACK_OF(OSSL_MTC_CA) *cas = NULL;
+    OSSL_MTC_CA *ca;
+    const uint8_t *id;
+    size_t id_len, i;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC)
+    return TEST_skip("EC is disabled");
+#endif /* defined(OPENSSL_NO_EC) */
+
+    if (!TEST_ptr(bio = ca_cert_bio(TEST_ASN1_RELATIVE_OID, expect_ca_id,
+                      sizeof(expect_ca_id), ca_ext_der, sizeof(ca_ext_der), 1))
+        || !TEST_ptr(cas = sk_OSSL_MTC_CA_new_null()))
+        goto err;
+
+    if (!TEST_true(OSSL_MTC_CA_parse_certificates(NULL, NULL, bio, cas))
+        || !TEST_int_eq(sk_OSSL_MTC_CA_num(cas), 1))
+        goto err;
+    ca = sk_OSSL_MTC_CA_value(cas, 0);
+    if (!TEST_true(OSSL_MTC_CA_get0_id(ca, &id, &id_len))
+        || !TEST_mem_eq(id, id_len, expect_ca_id, sizeof(expect_ca_id)))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(bad); i++) {
+        BIO_free(bio);
+        if (!TEST_ptr(bio = ca_cert_bio(bad[i].type, bad[i].id,
+                          bad[i].id_len, bad[i].ext, bad[i].ext_len,
+                          bad[i].critical)))
+            goto err;
+        if (!TEST_false(OSSL_MTC_CA_parse_certificates(NULL, NULL, bio, cas))
+            || !TEST_int_eq(sk_OSSL_MTC_CA_num(cas), 1)) {
+            TEST_info("case: %s", bad[i].desc);
+            goto err;
+        }
+    }
+    ret = 1;
+err:
+    sk_OSSL_MTC_CA_pop_free(cas, OSSL_MTC_CA_free);
+    BIO_free(bio);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_ca_roundtrip);
@@ -623,10 +940,13 @@ int setup_tests(void)
     ADD_TEST(test_ca_add_cosigners);
     ADD_TEST(test_ca_add_cosigner_duplicate);
     ADD_TEST(test_ca_revoked_ranges);
+    ADD_TEST(test_ca_find);
+    ADD_TEST(test_ca_find_ordering);
     ADD_TEST(test_ca_load_landmarks);
     ADD_TEST(test_ca_load_landmarks_cutoff);
     ADD_TEST(test_ca_load_landmarks_bad);
     ADD_TEST(test_ca_stack);
+    ADD_TEST(test_ca_parse_certificate);
     ADD_TEST(test_ca_free_null);
     return 1;
 }
