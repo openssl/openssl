@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Changed `DirName` output produced by X.509 v3 extension printing. It now
+   uses the readable comma-separated form and emits UTF-8 characters directly,
+   instead of the legacy slash-separated ASCII form produced by `X509_NAME_oneline()`.
+
+   *Nikola Pajkovsky*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 
