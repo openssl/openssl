@@ -614,6 +614,7 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     const unsigned char *data;
     unsigned char *buf = NULL, *wbuf;
     size_t fragoff, fraglen, msglen;
+    uint64_t record_sequence = 0;
     unsigned int rectype, versmajor, versminor, msgseq, msgtype, clientvers, cookielen;
     BIO *rbio, *wbio;
     BIO_ADDR *tmpclient = NULL;
@@ -774,6 +775,12 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
             ERR_raise(ERR_LIB_SSL, SSL_R_UNEXPECTED_MESSAGE);
             goto end;
         }
+        record_sequence = ((uint64_t)seq[2]) << 40;
+        record_sequence |= ((uint64_t)seq[3]) << 32;
+        record_sequence |= ((uint64_t)seq[4]) << 24;
+        record_sequence |= ((uint64_t)seq[5]) << 16;
+        record_sequence |= ((uint64_t)seq[6]) << 8;
+        record_sequence |= ((uint64_t)seq[7]);
 
         /* Get a pointer to the raw message for the later callback */
         data = PACKET_data(&msgpkt);
@@ -1028,7 +1035,13 @@ int DTLSv1_listen(SSL *ssl, BIO_ADDR *client)
     s->d1->handshake_read_seq = 1;
     s->d1->handshake_write_seq = 1;
     s->d1->next_handshake_write_seq = 1;
-    s->rlayer.wrlmethod->increment_sequence_ctr(s->rlayer.wrl);
+    if (s->rlayer.wrlmethod->set_sequence == NULL
+        || !s->rlayer.wrlmethod->set_sequence(s->rlayer.wrl,
+            record_sequence)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+        ret = -1;
+        goto end;
+    }
 
     /*
      * We are doing cookie exchange, so make sure we set that option in the

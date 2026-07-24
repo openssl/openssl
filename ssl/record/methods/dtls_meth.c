@@ -15,6 +15,8 @@
 
 OSSL_SAFE_MATH_UNSIGNED(uint64_t, uint64_t)
 
+static int dtls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl);
+
 /* mod 128 saturating subtract of two 64-bit values */
 static int satsub64(uint64_t l1, uint64_t l2)
 {
@@ -944,7 +946,21 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
         return 0;
     }
 
-    return tls_increment_sequence_ctr(rl);
+    return dtls_increment_sequence_ctr(rl);
+}
+
+static int dtls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
+{
+    if (rl->version == DTLS1_3_VERSION)
+        return tls_increment_sequence_ctr(rl);
+
+    if (rl->sequence >= 0xffffffffffffULL) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
+        return 0;
+    }
+
+    rl->sequence++;
+    return 1;
 }
 
 static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
@@ -1041,7 +1057,7 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_compression,
     tls_set_max_frag_len,
     dtls_get_max_record_overhead,
-    tls_increment_sequence_ctr,
+    dtls_increment_sequence_ctr,
     dtls_get_sequence_number,
     dtls_set_sequence_number,
     dtls_get_epoch,
