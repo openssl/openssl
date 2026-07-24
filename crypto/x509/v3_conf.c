@@ -66,12 +66,18 @@ X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid,
 {
     int crit;
     int ext_type;
+    X509V3_CTX tmpctx;
+
+    if (ctx == NULL) {
+        X509V3_set_ctx_test(&tmpctx);
+        X509V3_set_nconf(&tmpctx, conf);
+    }
 
     crit = v3_check_critical(&value);
     if ((ext_type = v3_check_generic(&value)))
         return v3_generic_extension(OBJ_nid2sn(ext_nid),
-            value, crit, ext_type, ctx);
-    return do_ext_nconf(conf, ctx, ext_nid, crit, value);
+            value, crit, ext_type, ctx ? ctx : &tmpctx);
+    return do_ext_nconf(conf, ctx ? ctx : &tmpctx, ext_nid, crit, value);
 }
 
 /* CONF *conf:  Config file    */
