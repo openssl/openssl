@@ -1083,7 +1083,7 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  *
  * The returned size includes any frame budget needed by
  * OSSL_FN_mul_mont_quick().
- * All poarameters except @p mont can be NULL.
+ * All parameters except @p mont can be NULL.
  */
 size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *b, OSSL_FN_MONT_CTX *mont);
@@ -1159,7 +1159,7 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
  *
- * The returned size includes any frame budget needed by OSSL_FN_to_mont().
+ * The returned size includes any frame budget needed by OSSL_FN_from_mont().
  */
 size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);

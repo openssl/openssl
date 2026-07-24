@@ -186,6 +186,7 @@ struct ossl_fn_mont_ctx_st {
                           possibly zero-padded */
     OSSL_FN_ULONG n0[2]; /* least significant word(s) of Ni */
     int ri; /* number of bits in R */
+    unsigned int is_securely_allocated : 1; /* Flag: alloced securely */
     OSSL_FN_ULONG memory[];
 };
 #endif
