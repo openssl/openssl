@@ -36,7 +36,7 @@
  */
 struct ossl_rbt_type {
     int (*t_compare)(const void *, const void *);
-    unsigned int t_offset; /* offset of ossl_rbt_entry in type */
+    uintptr_t t_offset; /* offset of ossl_rbt_entry in type */
 };
 
 struct ossl_rbt_tree {
