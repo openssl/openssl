@@ -211,7 +211,7 @@
             ((type *)lh->omega)->ossl_list_##name.next = lt->alpha;                           \
         }                                                                                     \
         OSSL_LIST_DBG(for (_p = (type *)lt->alpha;                                            \
-                          assert(_p->ossl_list_##name.list == lh), _p != NULL;                \
+                          assert(_p == NULL || _p->ossl_list_##name.list == lt), _p != NULL;  \
                           _p = _p->ossl_list_##name.next)                                     \
                           _p->ossl_list_##name.list                                           \
             = lh);                                                                            \
