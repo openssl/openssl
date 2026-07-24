@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -37,6 +37,8 @@ static void evp_kdf_free(void *vkdf)
     if (ref > 0)
         return;
     OPENSSL_free(kdf->type_name);
+    if (kdf->no_store != 0)
+        OPENSSL_free((char *)kdf->description);
     ossl_provider_free(kdf->prov);
     CRYPTO_FREE_REF(&kdf->refcnt);
     OPENSSL_free(kdf);
@@ -72,7 +74,12 @@ static void *evp_kdf_from_algorithm(int name_id,
     if ((kdf->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
 
-    kdf->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        kdf->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (kdf->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

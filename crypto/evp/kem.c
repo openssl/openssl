@@ -29,6 +29,8 @@ static void evp_kem_free(void *data)
     if (i > 0)
         return;
     OPENSSL_free(kem->type_name);
+    if (kem->no_store != 0)
+        OPENSSL_free((char *)kem->description);
     ossl_provider_free(kem->prov);
     CRYPTO_FREE_REF(&kem->refcnt);
     OPENSSL_free(kem);
@@ -333,7 +335,12 @@ static void *evp_kem_from_algorithm(int name_id, const OSSL_ALGORITHM *algodef,
 
     if ((kem->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
-    kem->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        kem->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (kem->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {

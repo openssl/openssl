@@ -115,7 +115,7 @@ provider-base
  int provider_get_params(void *provctx, OSSL_PARAM params[]);
  const OSSL_ALGORITHM *provider_query_operation(void *provctx,
                                                 int operation_id,
-                                                const int *no_store);
+                                                int *no_store);
  void provider_unquery_operation(void *provctx, int operation_id,
                                  const OSSL_ALGORITHM *algs);
  const OSSL_ITEM *provider_get_reason_strings(void *provctx);
@@ -438,16 +438,24 @@ can handle.
 provider_get_params() should process the L<OSSL_PARAM(3)> array
 I<params>, setting the values of the parameters it understands.
 
-provider_query_operation() should return a constant L<OSSL_ALGORITHM(3)>
-that corresponds to the given I<operation_id>.
+provider_query_operation() should return an array of L<OSSL_ALGORITHM(3)>
+entries corresponding to the given I<operation_id>.
 It should indicate if the core may store a reference to this array by
 setting I<*no_store> to 0 (core may store a reference) or 1 (core may
-not store a reference).
+not store a reference).  If I<*no_store> is set to 0, the returned array
+and its associated strings and dispatch tables must remain valid until
+provider_teardown() is called.  If I<*no_store> is set to 1, the core will
+not access the returned array or its associated data after calling
+provider_unquery_operation(), and the provider may release them in that call.
 
 provider_unquery_operation() informs the provider that the result of a
-provider_query_operation() is no longer directly required and that the function
-pointers have been copied.  The I<operation_id> should match that passed to
-provider_query_operation() and I<algs> should be its return value.
+provider_query_operation() is no longer directly required for the current
+query.  When I<*no_store> was set to 1 for that result, the core has copied the
+information and function pointers that it needs and will no longer access the
+returned array or its associated data.  When I<*no_store> was set to 0, this
+notification does not shorten the lifetime requirement described above.  The
+I<operation_id> should match that passed to provider_query_operation(), and
+I<algs> should be its return value.
 
 provider_get_reason_strings() should return a constant L<OSSL_ITEM(3)>
 array that provides reason strings for reason codes the provider may

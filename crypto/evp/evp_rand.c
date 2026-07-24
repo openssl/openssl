@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -72,9 +72,29 @@ static void evp_rand_free(void *vrand)
     if (ref > 0)
         return;
     OPENSSL_free(rand->type_name);
+    if (rand->no_store != 0) {
+        OPENSSL_free((char *)rand->description);
+        OPENSSL_free((OSSL_DISPATCH *)rand->dispatch);
+    }
     ossl_provider_free(rand->prov);
     CRYPTO_FREE_REF(&rand->refcnt);
     OPENSSL_free(rand);
+}
+
+static OSSL_DISPATCH *evp_rand_dup_dispatch(const OSSL_DISPATCH *fns)
+{
+    const OSSL_DISPATCH *p = fns;
+    size_t n;
+
+    for (; p->function_id != 0; p++)
+        continue;
+
+    n = (size_t)(p - fns) + 1;
+    if (n > SIZE_MAX / sizeof(*fns)) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_MALLOC_FAILURE);
+        return NULL;
+    }
+    return OPENSSL_memdup(fns, n * sizeof(*fns));
 }
 
 static void *evp_rand_new(void)
@@ -136,8 +156,22 @@ static void *evp_rand_from_algorithm(int name_id,
         evp_rand_free(rand);
         return NULL;
     }
-    rand->description = algodef->algorithm_description;
-    rand->dispatch = fns;
+    if (no_store == 0) {
+        rand->description = algodef->algorithm_description;
+        rand->dispatch = fns;
+    } else {
+        if (algodef->algorithm_description != NULL
+            && (rand->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+            evp_rand_free(rand);
+            return NULL;
+        }
+        if ((rand->dispatch = evp_rand_dup_dispatch(fns)) == NULL) {
+            evp_rand_free(rand);
+            return NULL;
+        }
+        fns = rand->dispatch;
+    }
+
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
         case OSSL_FUNC_RAND_NEWCTX:
