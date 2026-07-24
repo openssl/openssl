@@ -20,6 +20,8 @@
 struct poly_st {
 #if defined(VX_COMPILER_SUPPORT_VEC128)
     ALIGN16 uint32_t coeff[ML_DSA_NUM_POLY_COEFFICIENTS];
+#elif defined(_ARCH_PPC64)
+    ALIGN16 uint32_t coeff[ML_DSA_NUM_POLY_COEFFICIENTS];
 #else
     uint32_t coeff[ML_DSA_NUM_POLY_COEFFICIENTS];
 #endif
