@@ -200,15 +200,15 @@ static int test_append(void)
     ossl_list_int_append(NULL, NULL);
 
     ossl_list_int_append(NULL, &l_t);
-    if (!TEST_int_eq(ossl_list_int_num(&l_t), OSSL_NELEM(elem_t)))
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_t), OSSL_NELEM(elem_t)))
         return 0;
 
     ossl_list_int_append(&l_h, NULL);
-    if (!TEST_int_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h)))
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h)))
         return 0;
 
     ossl_list_int_append(&l_h, &l_t);
-    if (!TEST_int_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h) + OSSL_NELEM(elem_t)))
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h) + OSSL_NELEM(elem_t)))
         return 0;
 
     if (!TEST_true(ossl_list_int_is_empty(&l_t)))
