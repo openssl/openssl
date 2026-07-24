@@ -27,6 +27,7 @@ use OpenSSL::stackhash qw(generate_stack_macros);
 #include <openssl/bio.h>
 #include <openssl/core.h>
 #include <openssl/x509.h>
+#include <openssl/evp.h>
 #include <openssl/pkcs12err.h>
 #ifndef OPENSSL_NO_STDIO
 #include <stdio.h>
@@ -125,6 +126,8 @@ X509 *PKCS12_SAFEBAG_get1_cert_ex(const PKCS12_SAFEBAG *bag, OSSL_LIB_CTX *libct
 X509 *PKCS12_SAFEBAG_get1_cert(const PKCS12_SAFEBAG *bag);
 X509_CRL *PKCS12_SAFEBAG_get1_crl_ex(const PKCS12_SAFEBAG *bag, OSSL_LIB_CTX *libctx, const char *propq);
 X509_CRL *PKCS12_SAFEBAG_get1_crl(const PKCS12_SAFEBAG *bag);
+EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
+    OSSL_LIB_CTX *libctx, const char *propq);
 const STACK_OF(PKCS12_SAFEBAG) *
 PKCS12_SAFEBAG_get0_safes(const PKCS12_SAFEBAG *bag);
 const PKCS8_PRIV_KEY_INFO *PKCS12_SAFEBAG_get0_p8inf(const PKCS12_SAFEBAG *bag);
@@ -163,6 +166,9 @@ PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_skey_ex(const PKCS12_SAFEBAG *bag,
     const char *pass, int passlen,
     OSSL_LIB_CTX *ctx,
     const char *propq);
+PKCS8_PRIV_KEY_INFO *PKCS12_decrypt_secretbag(const PKCS12_SAFEBAG *bag,
+    const char *pass, int passlen,
+    OSSL_LIB_CTX *ctx, const char *propq);
 X509_SIG *PKCS8_encrypt(int pbe_nid, const EVP_CIPHER *cipher,
     const char *pass, int passlen, unsigned char *salt,
     int saltlen, int iter, PKCS8_PRIV_KEY_INFO *p8);
@@ -300,8 +306,24 @@ DECLARE_ASN1_ITEM(PKCS12_SAFEBAGS)
 DECLARE_ASN1_ITEM(PKCS12_AUTHSAFES)
 
 void PKCS12_PBE_add(void);
+
+typedef struct pkcs12_parse_ctx_st PKCS12_PARSE_CTX;
+PKCS12_PARSE_CTX *PKCS12_PARSE_CTX_new(void);
+void PKCS12_PARSE_CTX_free(PKCS12_PARSE_CTX *ctx);
+void PKCS12_PARSE_CTX_set_pkey(PKCS12_PARSE_CTX *ctx, EVP_PKEY **pkey);
+void PKCS12_PARSE_CTX_set_cert(PKCS12_PARSE_CTX *ctx, X509 **cert);
+void PKCS12_PARSE_CTX_set_ca(PKCS12_PARSE_CTX *ctx, STACK_OF(X509) **ca);
+void PKCS12_PARSE_CTX_set_skey(PKCS12_PARSE_CTX *ctx, EVP_SKEY **skey);
+
+int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
+    PKCS12_PARSE_CTX *ctx,
+    OSSL_LIB_CTX *libctx, const char *propq);
+
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+OSSL_DEPRECATEDIN_4_1
 int PKCS12_parse(PKCS12 *p12, const char *pass, EVP_PKEY **pkey, X509 **cert,
     STACK_OF(X509) **ca);
+#endif
 typedef int PKCS12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg);
 PKCS12 *PKCS12_create(const char *pass, const char *name, EVP_PKEY *pkey,
     X509 *cert, STACK_OF(X509) *ca, int nid_key, int nid_cert,
