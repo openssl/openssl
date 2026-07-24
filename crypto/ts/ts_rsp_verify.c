@@ -213,7 +213,7 @@ static ESS_SIGNING_CERT *ossl_ess_get_signing_cert(const PKCS7_SIGNER_INFO *si)
     if (attr == NULL || attr->type != V_ASN1_SEQUENCE)
         return NULL;
     p = ASN1_STRING_get0_data(attr->value.sequence);
-    len = ASN1_STRING_length_ex(attr->value.sequence);
+    len = ASN1_STRING_get_length(attr->value.sequence);
     if (len > INT_MAX)
         return NULL;
     return d2i_ESS_SIGNING_CERT(NULL, &p, (int)len);
@@ -229,7 +229,7 @@ static ESS_SIGNING_CERT_V2 *ossl_ess_get_signing_cert_v2(const PKCS7_SIGNER_INFO
     if (attr == NULL || attr->type != V_ASN1_SEQUENCE)
         return NULL;
     p = ASN1_STRING_get0_data(attr->value.sequence);
-    len = ASN1_STRING_length_ex(attr->value.sequence);
+    len = ASN1_STRING_get_length(attr->value.sequence);
     if (len > INT_MAX)
         return NULL;
     return d2i_ESS_SIGNING_CERT_V2(NULL, &p, (int)len);
@@ -504,7 +504,7 @@ static int ts_check_imprints(X509_ALGOR *algor_a,
             goto err;
     }
 
-    len = ASN1_STRING_length_ex(b->hashed_msg);
+    len = ASN1_STRING_get_length(b->hashed_msg);
     if (len > INT_MAX)
         goto err;
 

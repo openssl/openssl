@@ -335,9 +335,9 @@ int X509_NAME_ENTRY_set_data(X509_NAME_ENTRY *ne, int type,
     if (len < -1)
         return 0;
     if (len == -1)
-        i = ASN1_STRING_set_string(ne->value, (const char *)bytes);
+        i = ASN1_STRING_set1_string(ne->value, (const char *)bytes);
     else
-        i = ASN1_STRING_set_data(ne->value, bytes, (size_t)len);
+        i = ASN1_STRING_set1_data(ne->value, bytes, (size_t)len);
     if (!i)
         return 0;
     if (type != V_ASN1_UNDEF) {

@@ -142,8 +142,8 @@ OpenSSL Releases
    *Bob Beck*
 
  *  `ASN1_STRING_set()` and `ASN1_STRING_length()` have been
-    deprecated. The replacement functions `ASN1_STRING_set_data()` or
-    `ASN1_STRING_set_string()`, and `ASN1_STRING_length_ex()` should be
+    deprecated. The replacement functions `ASN1_STRING_set1_data()` or
+    `ASN1_STRING_set1_string()`, and `ASN1_STRING_get_length()` should be
     used in their place. This prepares the ASN1_STRING type to support
     modern size_t length values in the future.
 

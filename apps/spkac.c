@@ -155,7 +155,7 @@ int spkac_main(int argc, char **argv)
         if (spki == NULL)
             goto end;
         if (challenge != NULL
-            && !ASN1_STRING_set_string(spki->spkac->challenge,
+            && !ASN1_STRING_set1_string(spki->spkac->challenge,
                 challenge))
             goto end;
         if (!NETSCAPE_SPKI_set_pubkey(spki, pkey)) {

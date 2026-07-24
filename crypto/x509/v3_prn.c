@@ -80,7 +80,7 @@ int X509V3_EXT_print(BIO *out, const X509_EXTENSION *ext, unsigned long flag,
 
     extoct = X509_EXTENSION_get_data(ext);
     p = ASN1_STRING_get0_data(extoct);
-    extlen = ASN1_STRING_length_ex(extoct);
+    extlen = ASN1_STRING_get_length(extoct);
     if (extlen > INT_MAX)
         return 0;
 

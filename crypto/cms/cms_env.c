@@ -286,7 +286,7 @@ BIO *CMS_EnvelopedData_decrypt(CMS_EnvelopedData *env, BIO *detached_data,
     }
 
     if (secret != NULL
-        && (secret_len = ASN1_STRING_length_ex(secret)) > INT_MAX)
+        && (secret_len = ASN1_STRING_get_length(secret)) > INT_MAX)
         return NULL;
 
     if ((ci = CMS_ContentInfo_new_ex(libctx, propq)) == NULL
