@@ -158,7 +158,7 @@ static int check(const char *cert_name, OSSL_MTC_CA *ca, int expect_ret,
         || !TEST_ptr(path = test_mk_file_path(certs_dir, cert_name))
         || !TEST_ptr(cert = load_cert_pem(path, NULL))
         || !TEST_int_gt(tbs_len = i2d_re_X509_tbs(cert, &tbs), 0)
-        || !TEST_ptr(cas = sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp))
+        || !TEST_ptr(cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp))
         || !TEST_int_eq(ossl_mtc_ca_stack_add(cas, ca), 1))
         goto err;
     X509_get0_signature(&sig, &alg, cert); /* the MTCProof is the signatureValue */
