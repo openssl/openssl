@@ -18,8 +18,8 @@
  * David Gwynne agrees to include modified version to OpenSSL and ship it
  * under OpenSSL Apache 2.0 license.
  */
-#ifndef _OSSL_RBTREE_H_
-#define _OSSL_RBTREE_H_
+#ifndef _OSSL_INTERNAL_RBTREE_H_
+#define _OSSL_INTERNAL_RBTREE_H_
 
 #include "internal/e_os.h"
 
@@ -84,8 +84,6 @@ void *ossl_rbt_parent(const struct ossl_rbt_type *, void *);
 void ossl_rbt_set_left(const struct ossl_rbt_type *, void *, void *);
 void ossl_rbt_set_right(const struct ossl_rbt_type *, void *, void *);
 void ossl_rbt_set_parent(const struct ossl_rbt_type *, void *, void *);
-void ossl_rbt_poison(const struct ossl_rbt_type *, void *, unsigned long);
-int ossl_rbt_check(const struct ossl_rbt_type *, void *, unsigned long);
 
 #define OSSL_RBT_INITIALIZER(_head) \
     {                               \
@@ -253,4 +251,4 @@ int ossl_rbt_check(const struct ossl_rbt_type *, void *, unsigned long);
         (_e) != NULL && ((_n) = OSSL_RBT_PREV(_name, (_e)), 1); \
         (_e) = (_n))
 
-#endif /* _OSSL_RBTREE_H_ */
+#endif /* _OSSL_INTERNAL_RBTREE_H_ */

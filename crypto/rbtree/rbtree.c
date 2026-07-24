@@ -24,15 +24,15 @@
 #define OSSL_RBT_BLACK 0
 #define OSSL_RBT_RED 1
 
-static inline struct ossl_rbt_entry *
-ossl_rbt_n2e(const struct ossl_rbt_type *t, void *node)
+static struct ossl_rbt_entry *
+rbt_n2e(const struct ossl_rbt_type *t, void *node)
 {
     uintptr_t addr = (uintptr_t)node;
 
     return ((struct ossl_rbt_entry *)(addr + t->t_offset));
 }
 
-static inline void *
+static void *
 rb_e2n(const struct ossl_rbt_type *t, struct ossl_rbt_entry *rbe)
 {
     uintptr_t addr = (uintptr_t)rbe;
@@ -324,7 +324,7 @@ color:
 void *
 ossl_rbt_remove(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *elm)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, elm);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, elm);
     struct ossl_rbt_entry *old;
 
     old = rbe_remove(t, rbt, rbe);
@@ -335,7 +335,7 @@ ossl_rbt_remove(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *
 void *
 ossl_rbt_insert(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *elm)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, elm);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, elm);
     struct ossl_rbt_entry *tmp;
     struct ossl_rbt_entry *parent = NULL;
     void *node;
@@ -419,7 +419,7 @@ ossl_rbt_nfind(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, const v
 void *
 ossl_rbt_next(const struct ossl_rbt_type *t, void *elm)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, elm);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, elm);
 
     if (OSSL_RBE_RIGHT(rbe) != NULL) {
         rbe = OSSL_RBE_RIGHT(rbe);
@@ -441,7 +441,7 @@ ossl_rbt_next(const struct ossl_rbt_type *t, void *elm)
 void *
 ossl_rbt_prev(const struct ossl_rbt_type *t, void *elm)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, elm);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, elm);
 
     if (OSSL_RBE_LEFT(rbe)) {
         rbe = OSSL_RBE_LEFT(rbe);
@@ -499,7 +499,7 @@ ossl_rbt_max(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt)
 void *
 ossl_rbt_left(const struct ossl_rbt_type *t, void *node)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, node);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
     rbe = OSSL_RBE_LEFT(rbe);
     return (rbe == NULL ? NULL : rb_e2n(t, rbe));
 }
@@ -507,7 +507,7 @@ ossl_rbt_left(const struct ossl_rbt_type *t, void *node)
 void *
 ossl_rbt_right(const struct ossl_rbt_type *t, void *node)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, node);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
     rbe = OSSL_RBE_RIGHT(rbe);
     return (rbe == NULL ? NULL : rb_e2n(t, rbe));
 }
@@ -515,31 +515,31 @@ ossl_rbt_right(const struct ossl_rbt_type *t, void *node)
 void *
 ossl_rbt_parent(const struct ossl_rbt_type *t, void *node)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, node);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
     rbe = OSSL_RBE_PARENT(rbe);
     return (rbe == NULL ? NULL : rb_e2n(t, rbe));
 }
 
 void ossl_rbt_set_left(const struct ossl_rbt_type *t, void *node, void *left)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, node);
-    struct ossl_rbt_entry *rbl = (left == NULL) ? NULL : ossl_rbt_n2e(t, left);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
+    struct ossl_rbt_entry *rbl = (left == NULL) ? NULL : rbt_n2e(t, left);
 
     OSSL_RBE_LEFT(rbe) = rbl;
 }
 
 void ossl_rbt_set_right(const struct ossl_rbt_type *t, void *node, void *right)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, node);
-    struct ossl_rbt_entry *rbr = (right == NULL) ? NULL : ossl_rbt_n2e(t, right);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
+    struct ossl_rbt_entry *rbr = (right == NULL) ? NULL : rbt_n2e(t, right);
 
     OSSL_RBE_RIGHT(rbe) = rbr;
 }
 
 void ossl_rbt_set_parent(const struct ossl_rbt_type *t, void *node, void *parent)
 {
-    struct ossl_rbt_entry *rbe = ossl_rbt_n2e(t, node);
-    struct ossl_rbt_entry *rbp = (parent == NULL) ? NULL : ossl_rbt_n2e(t, parent);
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
+    struct ossl_rbt_entry *rbp = (parent == NULL) ? NULL : rbt_n2e(t, parent);
 
     OSSL_RBE_PARENT(rbe) = rbp;
 }

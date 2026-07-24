@@ -1442,7 +1442,7 @@ ENDIF
 
   SOURCE[engine_stubs_test]=engine_stubs_test.c
   INCLUDE[engine_stubs_test]=../include ../apps/include
-  DEPEND[engine_stubs_test]=../libcrypto.a libtestutil.a
+  DEPEND[engine_stubs_test]=../libcrypto libtestutil.a
 
   SOURCE[ossl_rbtree_test]=ossl_rbtree_test.c
   INCLUDE[ossl_rbtree_test]=../include ../apps/include
