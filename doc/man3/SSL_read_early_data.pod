@@ -86,10 +86,11 @@ If the session cannot be used then this function will return 0. Otherwise it
 will return the maximum number of early data bytes that can be sent.
 
 The function SSL_SESSION_set_max_early_data() sets the maximum number of early
-data bytes that can be sent for a session. This would typically be used when
-creating a PSK session file (see L<SSL_CTX_set_psk_use_session_callback(3)>). If
-using a ticket based PSK then this is set automatically to the value provided by
-the server.
+data bytes that can be sent for a session.
+This would typically be used when creating a PSK session (see
+L<SSL_CTX_set_psk_use_session_callback(3)>).
+If using a ticket based PSK then this is set automatically to the value provided
+by the server.
 
 A client uses the function SSL_write_early_data() to send early data. This
 function is similar to the L<SSL_write_ex(3)> function, but with the following
@@ -116,6 +117,10 @@ complete the handshake by calling a function such as L<SSL_connect(3)> or
 L<SSL_do_handshake(3)>. Alternatively you can call a standard write function
 such as L<SSL_write_ex(3)>, which will transparently complete the connection and
 write the requested data.
+Once the client has completed the handshake or written ordinary application
+data, it has left the early data write sequence, and a subsequent
+SSL_write_early_data() call fails; calling it at that point is a programming
+error.
 
 A server may choose to ignore early data that has been sent to it. Once the
 connection has been completed you can determine whether the server accepted or
@@ -123,6 +128,10 @@ rejected the early data by calling SSL_get_early_data_status(). This will return
 SSL_EARLY_DATA_ACCEPTED if the data was accepted, SSL_EARLY_DATA_REJECTED if it
 was rejected or SSL_EARLY_DATA_NOT_SENT if no early data was sent. This function
 may be called by either the client or the server.
+A client cannot distinguish early data that it declined to send locally (for
+example because 0-RTT was not viable for the offered PSK; see L</NOTES>) from
+early data that the server rejected.
+Both cases are reported as SSL_EARLY_DATA_REJECTED.
 
 A server uses the SSL_read_early_data() function to receive early data on a
 connection for which early data has been enabled using
@@ -195,7 +204,7 @@ connection attempt. By default the server does not accept early data; a
 server may indicate support for early data by calling
 SSL_CTX_set_max_early_data() or
 SSL_set_max_early_data() to set it for the whole SSL_CTX or an individual SSL
-object respectively. The B<max_early_data> parameter specifies the maximum
+object respectively. The I<max_early_data> parameter specifies the maximum
 amount of early data in bytes that is permitted to be sent on a single
 connection. Similarly the SSL_CTX_get_max_early_data() and
 SSL_get_max_early_data() functions can be used to obtain the current maximum
@@ -207,25 +216,32 @@ early data setting for a server is nonzero then replay protection is
 automatically enabled (see L</REPLAY PROTECTION> below).
 
 If the server rejects the early data sent by a client then it will skip over
-the data that is sent. The maximum amount of received early data that is skipped
-is controlled by the recv_max_early_data setting. If a client sends more than
-this then the connection will abort. This value can be set by calling
-SSL_CTX_set_recv_max_early_data() or SSL_set_recv_max_early_data(). The current
-value for this setting can be obtained by calling
-SSL_CTX_get_recv_max_early_data() or SSL_get_recv_max_early_data(). The default
-value for this setting is 16,384 bytes.
+the data that is sent.
+The maximum amount of received early data that is skipped is controlled by the
+I<recv_max_early_data> setting.
+This setting only affects a server; it has no effect on a client.
+If a client sends more than this then the connection will abort.
+This value can be set by calling SSL_CTX_set_recv_max_early_data() or
+SSL_set_recv_max_early_data().
+The current value for this setting can be obtained by calling
+SSL_CTX_get_recv_max_early_data() or SSL_get_recv_max_early_data().
+The default value for this setting is 16,384 bytes.
 
-The recv_max_early_data value also has an impact on early data that is accepted.
+The I<recv_max_early_data> value also has an impact on early data that is
+accepted.
 The amount of data that is accepted will always be the lower of the
-max_early_data for the session and the recv_max_early_data setting for the
-server. If a client sends more data than this then the connection will abort.
+I<max_early_data> for the session and the I<recv_max_early_data> setting for the
+server.
+If a client sends more data than this then the connection will abort.
 
-The configured value for max_early_data on a server may change over time as
-required. However, clients may have tickets containing the previously configured
-max_early_data value. The recv_max_early_data should always be equal to or
-higher than any recently configured max_early_data value in order to avoid
-aborted connections. The recv_max_early_data should never be set to less than
-the current configured max_early_data value.
+The configured value for I<max_early_data> on a server may change over time as
+required.
+However, clients may have tickets containing the previously configured
+I<max_early_data> value.
+The I<recv_max_early_data> should always be equal to or higher than any recently
+configured I<max_early_data> value in order to avoid aborted connections.
+The I<recv_max_early_data> should never be set to less than the current
+configured I<max_early_data> value.
 
 Some server applications may wish to have more control over whether early data
 is accepted or not, for example to mitigate replay risks (see L</REPLAY PROTECTION>
@@ -272,6 +288,22 @@ In many operating systems the TCP_NODELAY socket option is available to disable
 Nagle's algorithm. If an application opts to disable Nagle's algorithm
 consideration should be given to turning it back on again after the handshake is
 complete if appropriate.
+
+On the client side, early data is sent only when the PSK that would key it can
+actually be used for 0-RTT.
+Early data is protected with the ciphersuite of the first PSK the client offers,
+so it is sent only if that PSK's exact ciphersuite is among those the client
+offers; if an ALPN protocol was recorded on the PSK's session then it too must
+be among those offered; and a resumption ticket is not offered at all once its
+age exceeds the ticket lifetime.
+When the PSK remains usable for the handshake but 0-RTT specifically is not
+viable, the client silently omits the early data and completes an ordinary
+1-RTT handshake; SSL_get_early_data_status() then reports
+SSL_EARLY_DATA_REJECTED.
+When more than one PSK is available, the maximum early data value that applies
+is that of this first-offered PSK.
+Note that even when the client does send early data the server may still reject
+it, for example if it selects a different ciphersuite or ALPN protocol.
 
 In rare circumstances, it may be possible for a client to have a session that
 reports a max early data value greater than 0, but where the server does not

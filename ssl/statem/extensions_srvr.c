@@ -1328,6 +1328,9 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         unsigned long ticket_agel;
         size_t idlen;
 
+        /* Reset for each fresh iteration. */
+        sess = NULL;
+
         if (!PACKET_get_length_prefixed_2(&identities, &identity)
             || !PACKET_get_net_4(&identities, &ticket_agel)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
@@ -1491,6 +1494,26 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             ext = 0;
         }
 
+        /*
+         * The binder below, and the 0-RTT gate, both key off sess->cipher --
+         * specifically its handshake digest (algorithm2), which is only
+         * meaningful for a TLS 1.3 (or later) ciphersuite. A
+         * psk_find_session_cb() may return a session with no cipher, or a
+         * pre-TLS-1.3 one; ignore it and fall back to a full handshake rather
+         * than dereference a NULL cipher or misread algorithm2.
+         *
+         * The protocol version is deliberately not checked here:
+         * ssl_get_prev_session() vets it the moment we return and discards any
+         * mismatch, freeing the session so nothing leaks into a ticket or cache.
+         */
+        if (sess->cipher == NULL || sess->cipher->min_tls < TLS1_3_VERSION) {
+            SSL_SESSION_free(sess);
+            sess = NULL;
+            s->ext.early_data_ok = 0;
+            s->ext.ticket_expected = 1;
+            continue;
+        }
+
         md = ssl_md(sctx, sess->cipher->algorithm2);
         if (md == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -1511,6 +1534,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.ticket_expected = 1;
             continue;
         }
+        /*
+         * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK
+         * resumption, but RFC 8446 Section 4.2.10 requires the selected
+         * ciphersuite to match the selected PSK before accepting early data.
+         */
+        if (sess->cipher->id != s->s3.tmp.new_cipher->id)
+            s->ext.early_data_ok = 0;
         break;
     }
 

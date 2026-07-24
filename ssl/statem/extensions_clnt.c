@@ -8,13 +8,13 @@
  */
 
 #include <openssl/ocsp.h>
+#include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/tlsgroups.h"
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
-#include <openssl/rand.h>
 #include "internal/ech_helpers.h"
 #endif
 
@@ -1032,6 +1032,158 @@ end:
     return ret;
 }
 
+static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
+{
+    OSSL_TIME t;
+    uint32_t agesec;
+
+    if (s->ext.tick_age_checked)
+        return s->ext.tick_age_ok;
+    s->ext.tick_age_ok = 1;
+
+    /*
+     * Technically the C standard just says time() returns a time_t and says
+     * nothing about the encoding of that type. In practice most
+     * implementations follow POSIX which holds it as an integral type in
+     * seconds since epoch. We've already made the assumption that we can do
+     * this in multiple places in the code, so portability shouldn't be an
+     * issue.
+     */
+    t = ossl_time_subtract(ossl_time_now(), s->session->time);
+    agesec = (uint32_t)ossl_time2seconds(t);
+
+    /*
+     * We calculate the age in seconds but the server may work in ms. Due to
+     * rounding errors we could overestimate the age by up to 1s. It is
+     * better to underestimate it. Otherwise, if the RTT is very short, when
+     * the server calculates the age reported by the client it could be
+     * bigger than the age calculated on the server - which should never
+     * happen.
+     */
+    if (agesec > 0)
+        agesec--;
+
+    /*
+     * Calculate age in ms. We're just doing it to nearest second. Should be
+     * good enough.
+     */
+    s->ext.tick_age_ms = agesec * (uint32_t)1000;
+
+    /*
+     * Ticket is too old. Ignore it. Overflow. Shouldn't happen unless this is a
+     * *really* old session. If so we just ignore it.
+     */
+    if (s->session->ext.tick_lifetime_hint < agesec)
+        s->ext.tick_age_ok = 0;
+    else if (agesec != 0 && s->ext.tick_age_ms / (uint32_t)1000 != agesec)
+        s->ext.tick_age_ok = 0;
+
+    s->ext.tick_age_checked = 1;
+    return s->ext.tick_age_ok;
+}
+
+/*
+ * True if a TLS 1.3 ciphersuite carrying the same handshake digest as |cipher|
+ * is being offered on this handshake. |cipher| must itself be a TLS 1.3 cipher:
+ * the algorithm2 handshake-MAC bits read here mean something else in a TLS 1.2
+ * suite, so a non-TLS-1.3 cipher (e.g. a bogus callback PSK) is never viable.
+ */
+static int tls13_digest_offered(SSL_CONNECTION *s, const SSL_CIPHER *cipher)
+{
+    STACK_OF(SSL_CIPHER) *ciphers;
+    int i, n, want;
+
+    if (cipher == NULL || cipher->min_tls <= TLS1_2_VERSION)
+        return 0;
+    want = ssl_cipher_get_handshake_digest_nid(cipher);
+    if (want == NID_undef)
+        return 0;
+    ciphers = ssl_get_ciphers_by_id(s);
+    n = sk_SSL_CIPHER_num(ciphers);
+    for (i = 0; i < n; i++) {
+        const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+
+        if (c->min_tls > TLS1_2_VERSION
+            && ssl_cipher_get_handshake_digest_nid(c) == want
+            && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK))
+            return 1;
+    }
+    return 0;
+}
+
+/*
+ * Mirrors the ticket-resumption gating checks in tls_construct_ctos_psk() so
+ * that early_data is only advertised when the resumption PSK will actually
+ * be sent.
+ */
+static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const EVP_MD *mdres;
+
+    if (s->session == NULL
+        || s->session->ssl_version != TLS1_3_VERSION
+        || s->session->ext.ticklen == 0
+        || s->session->cipher == NULL)
+        return 0;
+
+    mdres = ssl_md(sctx, s->session->cipher->algorithm2);
+    if (mdres == NULL)
+        return 0;
+    if (s->hello_retry_request == SSL_HRR_PENDING && mdres != handmd)
+        return 0;
+    /* An offered TLS 1.3 ciphersuite must carry the ticket's digest. */
+    if (!tls13_digest_offered(s, s->session->cipher))
+        return 0;
+    if (tls13_check_tick_lifetime_hint(s) == 0)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * 0-RTT early data is protected with the PSK's own cipher, and per RFC
+ * 8446 section 4.2.10 the server accepts it only if it negotiates that exact
+ * cipher. So if we are not even offering that cipher on this handshake, 0-RTT
+ * cannot be accepted and early data must be suppressed -- the client-side
+ * mirror of the server's cipher-commitment check. The PSK is still offered for
+ * 1-RTT resumption, which needs only a digest-compatible cipher.
+ */
+static int tls13_early_cipher_offered(SSL_CONNECTION *s, const SSL_SESSION *sess)
+{
+    const SSL_CIPHER *c = sess->cipher;
+
+    return c != NULL
+        && !ssl_cipher_disabled(s, c, SSL_SECOP_CIPHER_CHECK)
+        && sk_SSL_CIPHER_find(ssl_get_ciphers_by_id(s), c) >= 0;
+}
+
+/*
+ * 0-RTT is bound to the session's ALPN protocol, and the server accepts
+ * it only if it negotiates that protocol. So early data is viable only if that
+ * protocol is among the ones we offer -- we cannot know which the server will
+ * pick, so being present in our list is enough. A session with no ALPN imposes
+ * no constraint; a session with one while we offer none cannot match. ALPN
+ * affects 0-RTT only: resumption itself permits an ALPN change after the
+ * transition.
+ */
+static int tls13_early_alpn_offered(SSL_CONNECTION *s, const SSL_SESSION *sess)
+{
+    PACKET prots, alpnpkt;
+
+    if (sess->ext.alpn_selected == NULL)
+        return 1;
+    if (s->ext.alpn == NULL
+        || !PACKET_buf_init(&prots, s->ext.alpn, s->ext.alpn_len))
+        return 0;
+    while (PACKET_get_length_prefixed_1(&prots, &alpnpkt)) {
+        if (PACKET_equal(&alpnpkt, sess->ext.alpn_selected,
+                sess->ext.alpn_selected_len))
+            return 1;
+    }
+    return 0;
+}
+
 EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
@@ -1045,6 +1197,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+
+    s->ext.tick_age_checked = 0;
 
 #ifndef OPENSSL_NO_ECH
     /*
@@ -1079,7 +1233,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     if (s->psk_use_session_cb != NULL
         && (!s->psk_use_session_cb(ussl, handmd, &id, &idlen, &psksess)
             || (psksess != NULL
-                && psksess->ssl_version != TLS1_3_VERSION))) {
+                && (psksess->ssl_version != TLS1_3_VERSION
+                    || psksess->master_key_length == 0)))) {
         SSL_SESSION_free(psksess);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
@@ -1096,17 +1251,18 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
             psk, sizeof(psk));
 
         if (psklen > PSK_MAX_PSK_LEN) {
-            SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, ERR_R_INTERNAL_ERROR);
+        pccfail:
+            OPENSSL_cleanse(psk, sizeof(psk));
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
-        } else if (psklen > 0) {
+        }
+        if (psklen > 0) {
             const unsigned char tls13_aes128gcmsha256_id[] = { 0x13, 0x01 };
             const SSL_CIPHER *cipher;
 
             idlen = strlen(identity);
-            if (idlen > PSK_MAX_IDENTITY_LEN) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
+            if (idlen > PSK_MAX_IDENTITY_LEN)
+                goto pccfail;
             id = (unsigned char *)identity;
 
             /*
@@ -1115,24 +1271,32 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
              */
             cipher = SSL_CIPHER_find(SSL_CONNECTION_GET_SSL(s),
                 tls13_aes128gcmsha256_id);
-            if (cipher == NULL) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
+            if (cipher == NULL)
+                goto pccfail;
 
             psksess = SSL_SESSION_new();
             if (psksess == NULL
                 || !SSL_SESSION_set1_master_key(psksess, psk, psklen)
                 || !SSL_SESSION_set_cipher(psksess, cipher)
                 || !SSL_SESSION_set_protocol_version(psksess, TLS1_3_VERSION)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                OPENSSL_cleanse(psk, psklen);
-                return EXT_RETURN_FAIL;
+                SSL_SESSION_free(psksess);
+                goto pccfail;
             }
             OPENSSL_cleanse(psk, psklen);
         }
     }
 #endif /* OPENSSL_NO_PSK */
+
+    /*
+     * If no offered ciphersuite carries the callback PSK's digest -- or its
+     * cipher isn't a TLS 1.3 cipher -- it can never be used, so drop it here and
+     * proceed as if the callback had returned no PSK. Every later s->psksession
+     * check then handles it for free.
+     */
+    if (psksess != NULL && !tls13_digest_offered(s, psksess->cipher)) {
+        SSL_SESSION_free(psksess);
+        psksess = NULL;
+    }
 
     SSL_SESSION_free(s->psksession);
     s->psksession = psksess;
@@ -1147,14 +1311,67 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         s->psksession_id_len = idlen;
     }
 
+    /*
+     * Suppress early_data unless a PSK is available and will be sent.
+     *
+     * RFC 8446 4.2.10: When a PSK is used and early data is allowed for that
+     * PSK, the client can send Application Data in its first flight of
+     * messages. If the client opts to do so, it MUST supply both the
+     * "pre_shared_key" and "early_data" extensions.
+     *
+     * The PSK used to encrypt the early data MUST be the first PSK listed in
+     * the client's "pre_shared_key" extension.
+     */
+    /*
+     * The first PSK identity we offer is the only one that can key 0-RTT: the
+     * resumption session when we are offering it, else the external psksession.
+     * Offer early_data only when that first PSK is itself 0-RTT-capable; never
+     * key it off a PSK offered later.
+     */
+    edsess = tls13_check_resumption_psk(s, handmd) ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
-        || (s->session->ext.max_early_data == 0
-            && (psksess == NULL || psksess->ext.max_early_data == 0))) {
+        || edsess == NULL
+        || edsess->ext.max_early_data == 0
+        || !tls13_early_cipher_offered(s, edsess)
+        || !tls13_early_alpn_offered(s, edsess)) {
         s->max_early_data = 0;
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+            s->ext.early_data_suppressed = 1;
+            s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+            /*
+             * We report REJECTED (not NOT_SENT), so
+             * SSL_export_keying_material_early() stays callable as it is for a
+             * server-rejected attempt -- but no early exporter secret was
+             * derived here. Randomise it so any such export yields a harmless
+             * per-connection orphan, not an all-zero (predictable) or stale
+             * (prior-handshake) value.
+             */
+            if (RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
+                    s->early_exporter_master_secret,
+                    sizeof(s->early_exporter_master_secret), 0)
+                <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+        }
+        s->early_data_state = SSL_EARLY_DATA_NONE;
         return EXT_RETURN_NOT_SENT;
     }
-    edsess = s->session->ext.max_early_data != 0 ? s->session : psksess;
     s->max_early_data = edsess->ext.max_early_data;
+    /*
+     * Record the first-offered PSK so the binder, the early-key derivation, the
+     * early exporter, the byte-budget lookup and the post-ServerHello fixup all
+     * key off it rather than guessing the source from
+     * s->session->ext.max_early_data. Held (up-ref'd) so it stays valid across
+     * the swap that later folds a selected psksession into s->session.
+     */
+    SSL_SESSION_free(s->ext.early_data_session);
+    s->ext.early_data_session = edsess;
+    if (!SSL_SESSION_up_ref(edsess)) {
+        s->ext.early_data_session = NULL;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
 
     if (edsess->ext.hostname != NULL) {
         if (s->ext.hostname == NULL
@@ -1162,37 +1379,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
                 && strcmp(s->ext.hostname, edsess->ext.hostname) != 0)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR,
                 SSL_R_INCONSISTENT_EARLY_DATA_SNI);
-            return EXT_RETURN_FAIL;
-        }
-    }
-
-    if ((s->ext.alpn == NULL && edsess->ext.alpn_selected != NULL)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
-        return EXT_RETURN_FAIL;
-    }
-
-    /*
-     * Verify that we are offering an ALPN protocol consistent with the early
-     * data.
-     */
-    if (edsess->ext.alpn_selected != NULL) {
-        PACKET prots, alpnpkt;
-        int found = 0;
-
-        if (!PACKET_buf_init(&prots, s->ext.alpn, s->ext.alpn_len)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        while (PACKET_get_length_prefixed_1(&prots, &alpnpkt)) {
-            if (PACKET_equal(&alpnpkt, edsess->ext.alpn_selected,
-                    edsess->ext.alpn_selected_len)) {
-                found = 1;
-                break;
-            }
-        }
-        if (!found) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
-                SSL_R_INCONSISTENT_EARLY_DATA_ALPN);
             return EXT_RETURN_FAIL;
         }
     }
@@ -1313,14 +1499,13 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    uint32_t agesec, agems = 0;
+    uint32_t agems = 0;
     size_t binderoffset, msglen;
     int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    OSSL_TIME t;
 
     s->ext.tick_identity = 0;
 
@@ -1377,46 +1562,13 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         }
 #endif
 
-        /*
-         * Technically the C standard just says time() returns a time_t and says
-         * nothing about the encoding of that type. In practice most
-         * implementations follow POSIX which holds it as an integral type in
-         * seconds since epoch. We've already made the assumption that we can do
-         * this in multiple places in the code, so portability shouldn't be an
-         * issue.
-         */
-        t = ossl_time_subtract(ossl_time_now(), s->session->time);
-        agesec = (uint32_t)ossl_time2seconds(t);
-
-        /*
-         * We calculate the age in seconds but the server may work in ms. Due to
-         * rounding errors we could overestimate the age by up to 1s. It is
-         * better to underestimate it. Otherwise, if the RTT is very short, when
-         * the server calculates the age reported by the client it could be
-         * bigger than the age calculated on the server - which should never
-         * happen.
-         */
-        if (agesec > 0)
-            agesec--;
-
-        if (s->session->ext.tick_lifetime_hint < agesec) {
-            /* Ticket is too old. Ignore it. */
+        /* An offered TLS 1.3 ciphersuite must carry the ticket's digest. */
+        if (!tls13_digest_offered(s, s->session->cipher))
             goto dopsksess;
-        }
-
-        /*
-         * Calculate age in ms. We're just doing it to nearest second. Should be
-         * good enough.
-         */
-        agems = agesec * (uint32_t)1000;
-
-        if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
-            /*
-             * Overflow. Shouldn't happen unless this is a *really* old session.
-             * If so we just ignore it.
-             */
+        if (tls13_check_tick_lifetime_hint(s) == 0)
             goto dopsksess;
-        }
+        /* tls13_check_tick_lifetime_hint() updates the tick_age_ms value. */
+        agems = s->ext.tick_age_ms;
 
         /*
          * Obfuscate the age. Overflow here is fine, this addition is supposed
@@ -2453,8 +2605,7 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
      */
     if ((s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING)
-        || s->session->ext.max_early_data > 0
-        || s->psksession->ext.max_early_data == 0)
+        || s->ext.early_data_session != s->psksession)
         memcpy(s->early_secret, s->psksession->early_secret, EVP_MAX_MD_SIZE);
 
     /*
