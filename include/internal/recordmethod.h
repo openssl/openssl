@@ -305,6 +305,12 @@ struct ossl_record_method_st {
     int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
 
     /*
+     * Set the record sequence number to a specific value. For DTLS this is the
+     * 6-byte network-order uint48 sequence number, excluding the epoch.
+     */
+    int (*set_sequence)(OSSL_RECORD_LAYER *rl, const unsigned char *sequence);
+
+    /*
      * Allocate read or write buffers. Does nothing if already allocated.
      * Assumes default buffer length and 1 pipeline.
      */

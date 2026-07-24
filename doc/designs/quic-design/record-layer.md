@@ -274,8 +274,11 @@ configuration, or it may be negotiated during the handshake.
 
 `increment_sequence_ctr()`: force the record layer to increment its sequence
 counter. In most cases the record layer will entirely manage its own sequence
-counters. However in the DTLSv1_listen() corner case, libssl needs to initialise
-the record layer with an incremented sequence counter.
+counters.
+
+`set_sequence()`: force the record layer to set its record sequence number to a
+specific value. For DTLS this is used by `DTLSv1_listen()` to continue the
+handshake with the record sequence number from the cookie-bearing ClientHello.
 
 `alloc_buffers()`: called by libssl to request that the record layer allocate
 its buffers. This is a hint only and the record layer is expected to manage its
@@ -588,6 +591,12 @@ struct ossl_record_method_st {
      * Increment the record sequence number
      */
     int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
+
+    /*
+     * Set the record sequence number to a specific value. For DTLS this is the
+     * 6-byte network-order uint48 sequence number, excluding the epoch.
+     */
+    int (*set_sequence)(OSSL_RECORD_LAYER *rl, const unsigned char *sequence);
 
     /*
      * Allocate read or write buffers. Does nothing if already allocated.
