@@ -42,6 +42,21 @@
 #include <openssl/evp.h>
 
 /**
+ * @brief Encode an ASCII dotted-decimal string as RELATIVE-OID content octets.
+ *
+ * The result is the binary TrustAnchorID form (section 4 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).
+ *
+ * @param text the dotted-decimal string (e.g. "32473.1")
+ * @param len the length of text in bytes
+ * @param out set to the newly allocated content octets (caller frees)
+ * @param out_len set to the length of the octets
+ * @returns 1 on success, 0 on malformed input or allocation failure.
+ */
+int ossl_mtc_reloid_from_text(const char *text, size_t len, uint8_t **out,
+    size_t *out_len);
+
+/**
  * @struct ossl_mtc_subtree_st
  * @brief A range of leaves in a Merkle tree, the half-open interval
  * [start, end).
