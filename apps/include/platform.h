@@ -29,4 +29,16 @@ char **copy_argv(int *argc, char *argv[]);
 void win32_utf8argv(int *argc, char **argv[]);
 #endif
 
+/*
+ * MSVC versions earlier than Visual Studio 2015 (_MSC_VER < 1900) do not
+ * declare or define C99 snprintf or vsnprintf.  Definitions are supplied
+ * by apps/lib/msvc2013_snprintf.c, which is built only on the matching
+ * Configure target variants.
+ */
+#if defined(_MSC_VER) && _MSC_VER < 1900
+#include <stdarg.h>
+int snprintf(char *buf, size_t n, const char *fmt, ...);
+int vsnprintf(char *buf, size_t n, const char *fmt, va_list args);
+#endif
+
 #endif

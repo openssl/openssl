@@ -386,7 +386,7 @@ static void RADIX_PROCESS_report_thread_results(RADIX_PROCESS *rp, BIO *bio)
                         "Result for child thread with index %zu:\n",
             rp->node_idx, rp->process_idx, rt->thread_idx, rt->thread_idx);
 
-        BIO_snprintf(pfx_buf, sizeof(pfx_buf), "#  -T-%2zu:\t# ", rt->thread_idx);
+        snprintf(pfx_buf, sizeof(pfx_buf), "#  -T-%2zu:\t# ", rt->thread_idx);
         BIO_set_prefix(bio_err, pfx_buf);
 
         l = BIO_get_mem_data(rt->debug_bio, &p);

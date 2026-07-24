@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <stdio.h>
+
 #include <openssl/trace.h>
 #include "apps.h"
 #include "log.h"
@@ -49,7 +51,7 @@ static void log_with_prefix(const char *prog, const char *fmt, va_list ap)
     if (pre == NULL)
         return;
 
-    (void)BIO_snprintf(prefix, sizeof(prefix), "%s: ", prog);
+    (void)snprintf(prefix, sizeof(prefix), "%s: ", prog);
     (void)BIO_set_prefix(pre, prefix);
     bio = BIO_push(pre, bio_err);
     (void)BIO_vprintf(bio, fmt, ap);

@@ -1622,17 +1622,18 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         int r;
 
 #ifdef OPENSSL_SYS_VMS
-        r = BIO_snprintf(filepath, sizeof(filepath), "%s%s", thedir, thisfile);
+        r = snprintf(filepath, sizeof(filepath), "%s%s", thedir, thisfile);
 #else
-        r = BIO_snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
+        r = snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
 #endif
+        if (r < 0 || (size_t)r >= sizeof(filepath))
+            continue;
         if (app_isdir(filepath) > 0) {
             if (s_debug)
                 BIO_printf(bio_err, "Skipping directory: %s\n", filepath);
             continue;
         }
-        if (r < 0
-            || (in = BIO_new_file(filepath, "r")) == NULL
+        if ((in = BIO_new_file(filepath, "r")) == NULL
             || OSSL_ECHSTORE_read_pem(es, in, for_retry) != 1) {
             BIO_printf(bio_err, "Failed reading from: %s\n", filepath);
             continue;

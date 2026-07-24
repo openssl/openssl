@@ -186,7 +186,11 @@ static int test_check_overflow(void)
     char max[(sizeof(long) * 8) / 3 + 3];
     char *p;
 
-    p = max + BIO_snprintf(max, sizeof(max), "0%ld", LONG_MAX) - 1;
+    int n = snprintf(max, sizeof(max), "0%ld", LONG_MAX);
+
+    if (!TEST_true(n > 0 && (size_t)n < sizeof(max)))
+        return 0;
+    p = max + n - 1;
     setenv("FNORD", max, 1);
     if (!TEST_true(NCONF_get_number(NULL, "missing", "FNORD", &val))
         || !TEST_long_eq(val, LONG_MAX))
