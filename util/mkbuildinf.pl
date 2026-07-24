@@ -10,9 +10,11 @@ use strict;
 use warnings;
 
 my $platform = pop @ARGV;
+my $cc = shift @ARGV;
+($cc) = $cc =~ /([^\/]+)$/;
 my $cflags = join(' ', @ARGV);
 $cflags =~ s(\\)(\\\\)g;
-$cflags = "compiler: $cflags";
+$cflags = "compiler: $cc $cflags";
 
 # Use the value of the envvar SOURCE_DATE_EPOCH, even if it's
 # zero or the empty string.
