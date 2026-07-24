@@ -17,7 +17,7 @@ use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
-plan tests => 17;
+plan tests => 18;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -28,7 +28,32 @@ run_rsa_tests("pkey");
 run_rsa_tests("rsa");
 
 SKIP: {
-    skip "RSA is not supported in this build", 1 if disabled("rsa");
+    skip "RSA is not supported in this build", 2 if disabled("rsa");
+
+    subtest "rsa -modulus prints the RSA modulus" => sub {
+        plan tests => 2;
+
+        # The modulus (n) of the committed testrsa.pem / testrsapub.pem keypair.
+        my $expected = "Modulus=AADB7AA92E464F15711996166B4FF8BBE2301DFEE9D8"
+            . "B3596DC3C1A7DFCE7C87180170509FC84EFD17B5BB02CA5DD0A3228686B38"
+            . "0CB746F3CAE4CDFC8AE5D3D";
+
+        my @priv = run(app(['openssl', 'rsa', '-modulus', '-noout',
+                            '-in', srctop_file("test", "testrsa.pem")],
+                           stderr => undef),
+                       capture => 1);
+        chomp @priv;
+        ok(grep(/^\Q$expected\E$/, @priv),
+           "-modulus prints the expected modulus for a private key");
+
+        my @pub = run(app(['openssl', 'rsa', '-pubin', '-modulus', '-noout',
+                           '-in', srctop_file("test", "testrsapub.pem")],
+                          stderr => undef),
+                      capture => 1);
+        chomp @pub;
+        ok(grep(/^\Q$expected\E$/, @pub),
+           "-modulus prints the expected modulus for a public key");
+    };
 
     subtest "rsa -text prints the key in text form" => sub {
         plan tests => 6;
