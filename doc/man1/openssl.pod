@@ -148,6 +148,10 @@ FIPS configuration installation.
 Generation of DSA Private Key from Parameters. Superseded by
 L<openssl-genpkey(1)> and L<openssl-pkey(1)>.
 
+=item B<generate_tai_chain>
+
+Decorate a certificate chain with trust anchor properties.
+
 =item B<genpkey>
 
 Generation of Private Key or Parameters.
@@ -698,6 +702,7 @@ L<openssl-ecparam(1)>,
 L<openssl-enc(1)>,
 L<openssl-errstr(1)>,
 L<openssl-gendsa(1)>,
+L<openssl-generate_tai_chain(1)>,
 L<openssl-genpkey(1)>,
 L<openssl-genrsa(1)>,
 L<openssl-kdf(1)>,
