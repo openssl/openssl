@@ -677,7 +677,8 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
         if (!(flags & CMS_NOSMIMECAP)) {
             STACK_OF(X509_ALGOR) *smcap = NULL;
 
-            i = CMS_add_standard_smimecap(&smcap);
+            i = CMS_add_standard_smimecap_ex(&smcap, ossl_cms_ctx_get0_libctx(ctx),
+                ossl_cms_ctx_get0_propq(ctx));
             if (i)
                 i = CMS_add_smimecap(si, smcap);
             sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
@@ -1584,34 +1585,49 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
 }
 
 /* Check to see if a cipher exists and if so add S/MIME capabilities */
-static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg)
+static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
-    if (EVP_get_cipherbynid(nid))
+    EVP_CIPHER *cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
+
+    if (cipher != NULL) {
+        EVP_CIPHER_free(cipher);
         return CMS_add_simple_smimecap(sk, nid, arg);
+    }
     return 1;
 }
 
-static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg)
+static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
-    if (EVP_get_digestbynid(nid))
+    EVP_MD *md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
+
+    if (md != NULL) {
+        EVP_MD_free(md);
         return CMS_add_simple_smimecap(sk, nid, arg);
+    }
     return 1;
 }
 
-int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap)
+int CMS_add_standard_smimecap_ex(STACK_OF(X509_ALGOR) **smcap,
+    OSSL_LIB_CTX *libctx, const char *propq)
 {
-    if (!cms_add_cipher_smcap(smcap, NID_aes_256_cbc, -1)
-        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_2012_256, -1)
-        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_2012_512, -1)
-        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_94, -1)
-        || !cms_add_cipher_smcap(smcap, NID_id_Gost28147_89, -1)
-        || !cms_add_cipher_smcap(smcap, NID_aes_192_cbc, -1)
-        || !cms_add_cipher_smcap(smcap, NID_aes_128_cbc, -1)
-        || !cms_add_cipher_smcap(smcap, NID_des_ede3_cbc, -1)
-        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 128)
-        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 64)
-        || !cms_add_cipher_smcap(smcap, NID_des_cbc, -1)
-        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 40))
+    if (!cms_add_cipher_smcap(smcap, NID_aes_256_cbc, -1, libctx, propq)
+        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_2012_256, -1, libctx, propq)
+        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_2012_512, -1, libctx, propq)
+        || !cms_add_digest_smcap(smcap, NID_id_GostR3411_94, -1, libctx, propq)
+        || !cms_add_cipher_smcap(smcap, NID_id_Gost28147_89, -1, libctx, propq)
+        || !cms_add_cipher_smcap(smcap, NID_aes_192_cbc, -1, libctx, propq)
+        || !cms_add_cipher_smcap(smcap, NID_aes_128_cbc, -1, libctx, propq)
+        || !cms_add_cipher_smcap(smcap, NID_des_ede3_cbc, -1, libctx, propq)
+        || !cms_add_cipher_smcap(smcap, NID_rc2_cbc, 128, libctx, propq))
         return 0;
     return 1;
 }
+
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap)
+{
+    return CMS_add_standard_smimecap_ex(smcap, NULL, NULL);
+}
+#endif

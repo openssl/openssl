@@ -58,7 +58,8 @@ $no_rc2 = 1 if disabled("legacy");
 
 plan tests => 40;
 
-ok(run(test(["pkcs7_test"])), "test pkcs7");
+ok(run(test(["pkcs7_test", srctop_file("test", "certs", "servercert.pem"),
+             srctop_file("test", "certs", "serverkey.pem")])), "test pkcs7");
 
 unless ($no_fips) {
     my $provconf = srctop_file("test", "fips-and-base.cnf");
