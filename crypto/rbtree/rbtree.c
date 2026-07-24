@@ -47,7 +47,7 @@ rb_e2n(const struct ossl_rbt_type *t, struct ossl_rbt_entry *rbe)
 
 #define OSSL_RBH_ROOT(_rbt) (_rbt)->rb_root
 
-static inline void
+static void
 rbe_set(struct ossl_rbt_entry *rbe, struct ossl_rbt_entry *parent)
 {
     OSSL_RBE_PARENT(rbe) = parent;
@@ -55,16 +55,15 @@ rbe_set(struct ossl_rbt_entry *rbe, struct ossl_rbt_entry *parent)
     OSSL_RBE_COLOR(rbe) = OSSL_RBT_RED;
 }
 
-static inline void
+static void
 rbe_set_blackred(struct ossl_rbt_entry *black, struct ossl_rbt_entry *red)
 {
     OSSL_RBE_COLOR(black) = OSSL_RBT_BLACK;
     OSSL_RBE_COLOR(red) = OSSL_RBT_RED;
 }
 
-static inline void
-rbe_rotate_left(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
-    struct ossl_rbt_entry *rbe)
+static void
+rbe_rotate_left(struct ossl_rbt_tree *rbt, struct ossl_rbt_entry *rbe)
 {
     struct ossl_rbt_entry *parent;
     struct ossl_rbt_entry *tmp;
@@ -88,9 +87,8 @@ rbe_rotate_left(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
     OSSL_RBE_PARENT(rbe) = tmp;
 }
 
-static inline void
-rbe_rotate_right(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
-    struct ossl_rbt_entry *rbe)
+static void
+rbe_rotate_right(struct ossl_rbt_tree *rbt, struct ossl_rbt_entry *rbe)
 {
     struct ossl_rbt_entry *parent;
     struct ossl_rbt_entry *tmp;
@@ -114,9 +112,8 @@ rbe_rotate_right(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
     OSSL_RBE_PARENT(rbe) = tmp;
 }
 
-static inline void
-rbe_insert_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
-    struct ossl_rbt_entry *rbe)
+static void
+rbe_insert_color(struct ossl_rbt_tree *rbt, struct ossl_rbt_entry *rbe)
 {
     struct ossl_rbt_entry *parent, *gparent, *tmp;
 
@@ -133,14 +130,14 @@ rbe_insert_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
             }
 
             if (OSSL_RBE_RIGHT(parent) == rbe) {
-                rbe_rotate_left(t, rbt, parent);
+                rbe_rotate_left(rbt, parent);
                 tmp = parent;
                 parent = rbe;
                 rbe = tmp;
             }
 
             rbe_set_blackred(parent, gparent);
-            rbe_rotate_right(t, rbt, gparent);
+            rbe_rotate_right(rbt, gparent);
         } else {
             tmp = OSSL_RBE_LEFT(gparent);
             if (tmp != NULL && OSSL_RBE_COLOR(tmp) == OSSL_RBT_RED) {
@@ -151,22 +148,22 @@ rbe_insert_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
             }
 
             if (OSSL_RBE_LEFT(parent) == rbe) {
-                rbe_rotate_right(t, rbt, parent);
+                rbe_rotate_right(rbt, parent);
                 tmp = parent;
                 parent = rbe;
                 rbe = tmp;
             }
 
             rbe_set_blackred(parent, gparent);
-            rbe_rotate_left(t, rbt, gparent);
+            rbe_rotate_left(rbt, gparent);
         }
     }
 
     OSSL_RBE_COLOR(OSSL_RBH_ROOT(rbt)) = OSSL_RBT_BLACK;
 }
 
-static inline void
-rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
+static void
+rbe_remove_color(struct ossl_rbt_tree *rbt,
     struct ossl_rbt_entry *parent, struct ossl_rbt_entry *rbe)
 {
     struct ossl_rbt_entry *tmp;
@@ -176,7 +173,7 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
             tmp = OSSL_RBE_RIGHT(parent);
             if (OSSL_RBE_COLOR(tmp) == OSSL_RBT_RED) {
                 rbe_set_blackred(tmp, parent);
-                rbe_rotate_left(t, rbt, parent);
+                rbe_rotate_left(rbt, parent);
                 tmp = OSSL_RBE_RIGHT(parent);
             }
             if ((OSSL_RBE_LEFT(tmp) == NULL || OSSL_RBE_COLOR(OSSL_RBE_LEFT(tmp)) == OSSL_RBT_BLACK) && (OSSL_RBE_RIGHT(tmp) == NULL || OSSL_RBE_COLOR(OSSL_RBE_RIGHT(tmp)) == OSSL_RBT_BLACK)) {
@@ -192,7 +189,7 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
                         OSSL_RBE_COLOR(oleft) = OSSL_RBT_BLACK;
 
                     OSSL_RBE_COLOR(tmp) = OSSL_RBT_RED;
-                    rbe_rotate_right(t, rbt, tmp);
+                    rbe_rotate_right(rbt, tmp);
                     tmp = OSSL_RBE_RIGHT(parent);
                 }
 
@@ -201,7 +198,7 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
                 if (OSSL_RBE_RIGHT(tmp))
                     OSSL_RBE_COLOR(OSSL_RBE_RIGHT(tmp)) = OSSL_RBT_BLACK;
 
-                rbe_rotate_left(t, rbt, parent);
+                rbe_rotate_left(rbt, parent);
                 rbe = OSSL_RBH_ROOT(rbt);
                 break;
             }
@@ -209,7 +206,7 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
             tmp = OSSL_RBE_LEFT(parent);
             if (OSSL_RBE_COLOR(tmp) == OSSL_RBT_RED) {
                 rbe_set_blackred(tmp, parent);
-                rbe_rotate_right(t, rbt, parent);
+                rbe_rotate_right(rbt, parent);
                 tmp = OSSL_RBE_LEFT(parent);
             }
 
@@ -226,7 +223,7 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
                         OSSL_RBE_COLOR(oright) = OSSL_RBT_BLACK;
 
                     OSSL_RBE_COLOR(tmp) = OSSL_RBT_RED;
-                    rbe_rotate_left(t, rbt, tmp);
+                    rbe_rotate_left(rbt, tmp);
                     tmp = OSSL_RBE_LEFT(parent);
                 }
 
@@ -235,7 +232,7 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
                 if (OSSL_RBE_LEFT(tmp) != NULL)
                     OSSL_RBE_COLOR(OSSL_RBE_LEFT(tmp)) = OSSL_RBT_BLACK;
 
-                rbe_rotate_right(t, rbt, parent);
+                rbe_rotate_right(rbt, parent);
                 rbe = OSSL_RBH_ROOT(rbt);
                 break;
             }
@@ -246,8 +243,8 @@ rbe_remove_color(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt,
         OSSL_RBE_COLOR(rbe) = OSSL_RBT_BLACK;
 }
 
-static inline struct ossl_rbt_entry *
-rbe_remove(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, struct ossl_rbt_entry *rbe)
+static struct ossl_rbt_entry *
+rbe_remove(struct ossl_rbt_tree *rbt, struct ossl_rbt_entry *rbe)
 {
     struct ossl_rbt_entry *child, *parent, *old = rbe;
     unsigned int color;
@@ -308,7 +305,7 @@ rbe_remove(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, struct ossl
         OSSL_RBH_ROOT(rbt) = child;
 color:
     if (color == OSSL_RBT_BLACK)
-        rbe_remove_color(t, rbt, parent, child);
+        rbe_remove_color(rbt, parent, child);
 
 #ifndef NDEBUG
     if (old != NULL) {
@@ -327,7 +324,7 @@ ossl_rbt_remove(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *
     struct ossl_rbt_entry *rbe = rbt_n2e(t, elm);
     struct ossl_rbt_entry *old;
 
-    old = rbe_remove(t, rbt, rbe);
+    old = rbe_remove(rbt, rbe);
 
     return (old == NULL ? NULL : rb_e2n(t, old));
 }
@@ -365,7 +362,7 @@ ossl_rbt_insert(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *
     } else
         OSSL_RBH_ROOT(rbt) = rbe;
 
-    rbe_insert_color(t, rbt, rbe);
+    rbe_insert_color(rbt, rbe);
 
     return (NULL);
 }
