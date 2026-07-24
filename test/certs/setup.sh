@@ -437,6 +437,17 @@ NC="excluded;otherName:SRVName;UTF8STRING:foo@example.org" ./mkcert.sh genca \
     nccaothername-key nccaothername-cert \
     "otherName.1 = SRVName;UTF8STRING:foo@example.org"
 
+# NC CA excluding rfc822Name=".test"; leaves carrying u@evil.test in both
+# rfc822Name and SmtpUTF8Mailbox SAN forms must be rejected.
+NC="critical,excluded;email:.test" ./mkcert.sh genca \
+    "Test NC EAI CA" nc-eai-ica-key nc-eai-ica root-key root-cert
+./mkcert.sh req nc-eai-leaf-key "CN = NC EAI utf8 leaf" | \
+    ./mkcert.sh geneealt nc-eai-leaf-key nc-eai-leaf nc-eai-ica-key nc-eai-ica \
+    "otherName.1 = id-on-SmtpUTF8Mailbox;UTF8:u@evil.test"
+./mkcert.sh req nc-eai-leaf-key "CN = NC EAI rfc822 leaf" | \
+    ./mkcert.sh geneealt nc-eai-leaf-key nc-eai-leaf-rfc822 nc-eai-ica-key nc-eai-ica \
+    "email.1 = u@evil.test"
+
 # RSA-PSS signatures
 # SHA1
 ./mkcert.sh genee PSS-SHA1 ee-key ee-pss-sha1-cert ca-key ca-cert \
