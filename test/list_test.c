@@ -182,7 +182,6 @@ static int test_append(void)
     INTL elem_h[20];
     INTL elem_t[20];
     int i;
-    int n = 1;
 
     ossl_list_int_init(&l_h);
     for (i = 0; i < (int)OSSL_NELEM(elem_h); i++) {
