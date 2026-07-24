@@ -179,6 +179,13 @@ struct x509_store_st {
     CRYPTO_REF_COUNT references;
     CRYPTO_RWLOCK *lock;
     STACK_OF(OSSL_MTC_CA) *mtc_cas;
+    /*
+     * Trust anchor IDs collected from the CertificatePropertyList of loaded
+     * certificates, in the wire form of a RequestedTrustAnchorList's contents
+     * (a run of u8-length-prefixed IDs).  Grown as certificates are added.
+     */
+    uint8_t *trust_anchor_ids;
+    size_t trust_anchor_ids_len;
 };
 
 typedef struct lookup_dir_hashes_st BY_DIR_HASH;

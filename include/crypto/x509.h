@@ -227,6 +227,14 @@ struct x509_st {
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
 
+    /*
+     * The certificate's CertificatePropertyList, captured from an accompanying
+     * CERTIFICATE PROPERTIES block at load time (see
+     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).
+     * In-memory state only; not part of the certificate encoding.
+     */
+    ASN1_OCTET_STRING *properties;
+
     OSSL_LIB_CTX *libctx;
     char *propq;
 } /* X509 */;
@@ -337,6 +345,12 @@ struct x509_object_st {
 int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
+
+/* In-memory CertificatePropertyList carried on a loaded certificate. */
+int ossl_x509_set1_certificate_properties(X509 *x, const uint8_t *props,
+    size_t props_len);
+int ossl_x509_get0_certificate_properties(const X509 *x, const uint8_t **props,
+    size_t *props_len);
 int ossl_x509v3_cache_extensions(const X509 *x);
 
 /**
@@ -509,6 +523,14 @@ int ossl_x509_mtc_leaf_checks(X509_STORE_CTX *ctx);
  * @returns the stack of trusted MTC CAs, or NULL if none are configured.
  */
 STACK_OF(OSSL_MTC_CA) *ossl_x509_store_get0_mtc_cas(const X509_STORE *store);
+
+/*
+ * Return the trust anchor IDs collected from loaded certificates'
+ * CertificatePropertyLists, as the wire contents of a RequestedTrustAnchorList
+ * (a run of u8-length-prefixed IDs).  Borrowed from the store; may be NULL.
+ */
+int ossl_x509_store_get0_trust_anchor_ids(const X509_STORE *store,
+    const uint8_t **ids, size_t *ids_len);
 int ossl_x509_check_crl_time(X509_STORE_CTX *ctx, X509_CRL *crl, int notify);
 int ossl_posix_to_asn1_time(int64_t posix_time, ASN1_TIME **out_time);
 void ossl_x509_verify_param_set_time_posix(X509_VERIFY_PARAM *param, int64_t t);

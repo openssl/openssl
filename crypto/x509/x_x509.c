@@ -54,6 +54,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        ASN1_OCTET_STRING_free(ret->properties);
 
         /* fall through */
 
@@ -75,6 +76,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->rfc3779_asid = NULL;
 #endif
         ret->distinguishing_id = NULL;
+        ret->properties = NULL;
         ret->aux = NULL;
         ret->crldp = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
@@ -95,6 +97,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ASIdentifiers_free(ret->rfc3779_asid);
 #endif
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
+        ASN1_OCTET_STRING_free(ret->properties);
         OPENSSL_free(ret->propq);
         break;
 

@@ -12,8 +12,10 @@
 #include <stdio.h>
 #include <string.h>
 
+#include <openssl/bio.h>
 #include <openssl/evp.h>
 #include <openssl/mtc.h>
+#include <openssl/pem.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
@@ -1499,6 +1501,99 @@ err:
     return ret;
 }
 
+/*
+ * A certificate's CertificatePropertyList round-trips through the accessors,
+ * and a CERTIFICATE PROPERTIES block accompanying a certificate in a PEM file
+ * is captured onto the loaded certificate.
+ */
+static int test_x509_cert_properties(void)
+{
+    static const uint8_t cpl[] = { 0x00, 0x08, 0x00, 0x00, 0x00, 0x04, 0x81,
+        0xfd, 0x59, 0x01 };
+    /* The trust anchor ID 32473.1 in RequestedTrustAnchorList wire form. */
+    static const uint8_t taid_wire[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    const char *path = "test_cert_props.pem";
+    EVP_PKEY *key = NULL;
+    X509 *x = NULL;
+    X509_NAME *nm = NULL;
+    X509_STORE *store = NULL;
+    STACK_OF(X509) *certs = NULL;
+    BIO *out = NULL;
+    const uint8_t *got = NULL;
+    size_t got_len = 0;
+    int ret = 0, have_file = 0;
+
+#if defined(OPENSSL_NO_EC)
+    return TEST_skip("EC is disabled");
+#endif /* defined(OPENSSL_NO_EC) */
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "EC", "P-256"))
+        || !TEST_ptr(x = X509_new())
+        || !TEST_true(X509_set_version(x, X509_VERSION_3))
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x), 1))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 3600))
+        || !TEST_true(X509_set_pubkey(x, key))
+        || !TEST_ptr(nm = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
+            (const unsigned char *)"props", -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(x, nm))
+        || !TEST_true(X509_set_issuer_name(x, nm))
+        || !TEST_int_gt(X509_sign(x, key, EVP_sha256()), 0))
+        goto err;
+
+    /* Accessor round-trip: absent, then set, then get. */
+    if (!TEST_false(ossl_x509_get0_certificate_properties(x, &got, &got_len))
+        || !TEST_true(ossl_x509_set1_certificate_properties(x, cpl,
+            sizeof(cpl)))
+        || !TEST_true(ossl_x509_get0_certificate_properties(x, &got, &got_len))
+        || !TEST_mem_eq(got, got_len, cpl, sizeof(cpl)))
+        goto err;
+
+    /* Write a PEM file: a CERTIFICATE PROPERTIES block, then the cert. */
+    if (!TEST_ptr(out = BIO_new_file(path, "w")))
+        goto err;
+    have_file = 1;
+    if (!TEST_true(PEM_write_bio(out, "CERTIFICATE PROPERTIES", "",
+            (unsigned char *)cpl, sizeof(cpl)))
+        || !TEST_true(PEM_write_bio_X509(out, x)))
+        goto err;
+    BIO_free(out);
+    out = NULL;
+
+    /* Load it; the loaded certificate should carry the property list. */
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_load_file(store, path))
+        || !TEST_ptr(certs = X509_STORE_get1_all_certs(store))
+        || !TEST_int_eq(sk_X509_num(certs), 1))
+        goto err;
+    got = NULL;
+    got_len = 0;
+    if (!TEST_true(ossl_x509_get0_certificate_properties(
+            sk_X509_value(certs, 0), &got, &got_len))
+        || !TEST_mem_eq(got, got_len, cpl, sizeof(cpl)))
+        goto err;
+
+    /* The store recorded the trust anchor ID in RequestedTrustAnchorList form. */
+    got = NULL;
+    got_len = 0;
+    if (!TEST_true(ossl_x509_store_get0_trust_anchor_ids(store, &got, &got_len))
+        || !TEST_mem_eq(got, got_len, taid_wire, sizeof(taid_wire)))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_file)
+        remove(path);
+    sk_X509_pop_free(certs, X509_free);
+    X509_STORE_free(store);
+    BIO_free(out);
+    X509_NAME_free(nm);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sign_caches_encoding);
@@ -1519,6 +1614,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
     ADD_ALL_TESTS(test_x509_attribute_bit_string, 2);
     ADD_TEST(test_x509_store_trust_mtc_ca);
+    ADD_TEST(test_x509_cert_properties);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
 #ifndef OPENSSL_NO_MD5
