@@ -356,9 +356,8 @@ static ossl_inline
     vec_int32_t
     montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
 {
-    vec_uint32_t k = (vec_uint32_t)a_twist * (vec_uint32_t)b;
-    vec_uint32_t c_u = vec_mulh((vec_uint32_alias_t)k, (vec_uint32_alias_t)vec_q);
-    vec_int32_t c = (vec_int32_t)c_u;
+    vec_int32_t k = a_twist * b;
+    vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
     vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
     vec_int32_t r = z_high - c;
     return reduce_twice_signed(r);
