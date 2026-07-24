@@ -34,4 +34,4 @@ jobs:
         run: |
           [[ "$PR" =~ ^[1-9][0-9]*$ ]] || { echo "::error::pr must be a positive integer"; exit 1; }
           [[ "$CHECK_RUN_ID" =~ ^[1-9][0-9]*$ ]] || { echo "::error::check_run_id must be a positive integer"; exit 1; }
-          [[ "$HEAD_SHA" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::head_sha must be a 40-character lowercase hex commit SHA"; exit 1; }
+          [[ "$HEAD_SHA" =~ ^[0-9a-fA-F]{40}$ ]] || { echo "::error::head_sha must be a 40-character hex commit SHA"; exit 1; }
