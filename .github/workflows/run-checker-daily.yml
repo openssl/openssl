@@ -443,3 +443,59 @@ jobs:
       with:
         name: "ci@bn_debug"
         path: artifacts.tar.gz
+
+  # Regression guard for the <wincrypt.h> / OpenSSL header symbol collision
+  # (https://github.com/openssl/openssl/issues/31514).
+  wincrypt-collision:
+    strategy:
+      fail-fast: false
+      matrix:
+        sdk:
+          - 10.0.19041.0
+          - 10.0.22621.0
+          - 10.0.26100.0
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: install jom
+      if: github.repository == 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+        Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config + generate headers
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 ${{ matrix.sdk }}
+        echo Active Windows SDK: %WindowsSDKVersion%
+        if /I not "%WindowsSDKVersion%"=="${{ matrix.sdk }}\" (echo ERROR: expected SDK ${{ matrix.sdk }} but got "%WindowsSDKVersion%" -- vcvarsall fell back, regression guard would be meaningless & exit /b 1)
+        perl ..\Configure --banner=Configured no-makedepend no-asm no-fips -DOSSL_WINCTX=openssl
+        perl configdata.pm --dump
+        jom /j4 build_generated
+    - name: compile a consumer WITHOUT WIN32_LEAN_AND_MEAN (regression guard)
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsall.bat" x64 ${{ matrix.sdk }}
+        echo Active Windows SDK: %WindowsSDKVersion%
+        if /I not "%WindowsSDKVersion%"=="${{ matrix.sdk }}\" (echo ERROR: expected SDK ${{ matrix.sdk }} but got "%WindowsSDKVersion%" -- vcvarsall fell back, regression guard would be meaningless & exit /b 1)
+        rem A downstream consumer includes <openssl/...> without first defining
+        rem WIN32_LEAN_AND_MEAN / NOCRYPT. Do NOT add either here -- that is the point:
+        rem this must compile, and on an unfixed tree + SDK < 10.0.26100 it fails with
+        rem C2059 in <openssl/types.h> (X509_NAME / OCSP_RESPONSE vs <wincrypt.h>).
+        cl /nologo /W3 /c /I include /I ..\include ..\test\build_wincrypt_test.c
