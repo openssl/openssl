@@ -754,6 +754,94 @@ static int run_file_tests(int i)
 
 OPT_TEST_DECLARE_USAGE("file...\n")
 
+
+/*
+ * Standalone modular-inverse test.  Exercises OSSL_FN_mod_inverse() through
+ * the BIGNUM/OSSL_FN bridge (bn_acquire_ossl_fn() / bn_release()) with a
+ * known coprime pair: 5193817943 ^-1 mod 3259122431 == 2609653924.
+ *
+ * The r == n aliasing case is expected to succeed: OSSL_FN_mod_inverse()
+ * captures the modulus into a scratch temporary before writing the result,
+ * and OSSL_FN_div() captures the denominator before writing the remainder,
+ * so overwriting the modulus operand with the result is safe.
+ */
+static int test_mod_inverse(void)
+{
+    BIGNUM *a = NULL, *n = NULL, *r = NULL, *expected = NULL;
+    OSSL_FN *af = NULL, *nf = NULL, *rf = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    int r_acq = 0, n_acq = 0;
+    int nlimbs = 0;
+    int st = 0;
+
+    if (!TEST_true(BN_dec2bn(&a, "5193817943"))
+        || !TEST_true(BN_dec2bn(&n, "3259122431"))
+        || !TEST_true(BN_dec2bn(&expected, "2609653924"))
+        || !TEST_ptr(r = BN_new()))
+        goto err;
+
+    nlimbs = limbs(n);
+
+    /* Distinct result: r = a^-1 mod n. */
+    if (!TEST_ptr(af = bn_get_ossl_fn(a))
+        || !TEST_ptr(nf = bn_get_ossl_fn(n))
+        || !TEST_ptr(rf = bn_acquire_ossl_fn(r, nlimbs)))
+        goto err;
+    r_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_inverse_ctx_size(rf, af, nf))))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_inverse(rf, af, nf, ctx)))
+        goto err;
+    bn_release(r, nlimbs);
+    r_acq = 0;
+    BN_set_negative(r, 0);
+    if (!equalBN("a^-1 mod n", expected, r))
+        goto err;
+
+    /*
+     * Alias the result with the modulus: write the inverse back into n.
+     * Re-acquire n as the writable result; rf now aliases the modulus, so it
+     * is passed as both the result and the modulus.
+     */
+    OSSL_FN_CTX_free(ctx);
+    ctx = NULL;
+    BN_free(r);
+    r = NULL;
+    if (!TEST_ptr(rf = bn_acquire_ossl_fn(n, nlimbs)))
+        goto err;
+    n_acq = 1;
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                      OSSL_FN_mod_inverse_ctx_size(rf, af, rf))))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_inverse(rf, af, rf, ctx)))
+        goto err;
+    bn_release(n, nlimbs);
+    n_acq = 0;
+    BN_set_negative(n, 0);
+    if (!equalBN("a^-1 mod n (r == n)", expected, n))
+        goto err;
+
+    st = 1;
+err:
+    if (r_acq)
+        bn_release(r, nlimbs);
+    if (n_acq)
+        bn_release(n, nlimbs);
+    OSSL_FN_CTX_free(ctx);
+    BN_free(a);
+    BN_free(n);
+    BN_free(r);
+    BN_free(expected);
+    return st;
+}
+
+
+
 int setup_tests(void)
 {
     size_t n = test_get_argument_count();
@@ -761,6 +849,7 @@ int setup_tests(void)
     if (!TEST_size_t_gt(n, 0))
         return 0;
 
+    ADD_TEST(test_mod_inverse);
     ADD_ALL_TESTS(run_file_tests, (int)n);
     return 1;
 }
