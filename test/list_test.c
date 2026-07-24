@@ -177,7 +177,6 @@ static int test_insert(void)
 
 static int test_append(void)
 {
-    INTL *c, *d;
     OSSL_LIST(int)
     l_h, l_t;
     INTL elem_h[20];
