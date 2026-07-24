@@ -36,6 +36,10 @@ B<DEFINE[>I<items>B<]=> I<name>[B<=>I<value>] ...
 
 B<INCLUDE[>I<items>B<]=> I<dir> ...
 
+B<WRAP[>I<item>B<]=> I<function> ...
+
+B<UNIT_TEST[>I<item>B<]=> I<library> ...
+
 B<$>I<VARIABLE>B<=>I<value>
 
 =head1 DESCRIPTION
@@ -562,6 +566,44 @@ C<.c> file is built into an object file.
 Collects inclusion directories that will be used when building the
 I<items> components (object files and whatever else).  This is used at
 the discretion of the build file generators.
+
+=item B<WRAP[>I<item>B<]> B<=> I<function> ...
+
+Collects function names that should be wrapped when linking I<item>, which
+must be a program.  Each I<function> adds a C<-Wl,--wrap=>I<function> flag
+to the link command, so that references to I<function> resolve to a
+C<__wrap_>I<function> symbol provided by I<item> while the original is
+still reachable as C<__real_>I<function>.  This depends on the C<--wrap>
+feature of the GNU and BSD linkers, so B<WRAP> is only available on those
+platforms (Linux and the BSDs).  The Windows unit tests cannot use it and
+intercept their functions in C code with Microsoft Detours instead,
+selecting that support library with B<UNIT_TEST> (see below).
+
+B<WRAP> is used by the cmocka-based unit tests and implies the B<cmocka>
+unit-test link set (see B<UNIT_TEST> below), so it also adds the cmocka
+inclusion directory and link library to I<item>; a separate B<UNIT_TEST>
+statement is therefore not needed alongside it.
+
+=item B<UNIT_TEST[>I<item>B<]> B<=> I<library> ...
+
+Declares that I<item>, which must be a program, is a unit test, and
+selects the unit-test support libraries it is linked against.  Each
+I<library> is one of the recognised keywords B<cmocka> or B<detours>; any
+other value is an error.
+
+For each selected library, the corresponding inclusion directory and link
+library are added to I<item>.  These are configured with the
+B<--with->I<library>B<-include> and B<--with->I<library>B<-lib> options;
+without them, the library is expected on the compiler's and linker's
+default search paths.
+
+The B<cmocka> link set is implied by B<WRAP>, so a test that uses B<WRAP>
+does not need a B<UNIT_TEST> statement.  An explicit B<UNIT_TEST> statement
+is used when a test links a support library without B<WRAP>, most notably
+the Windows tests, which combine B<cmocka> with B<detours> to intercept
+calls at run time in place of the linker's C<--wrap> option:
+
+    UNIT_TEST[crypto/bio/test_bss_dgram_win]=cmocka detours
 
 =back
 
