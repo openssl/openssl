@@ -297,7 +297,7 @@ SKIP: {
 
         plan tests => 2;
 
-        my $destfips = srctop_file("test-runs", "test_cli_fips", platform->dso("fips-identity"));
+        my $destfips = bldtop_file("test-runs", "test_cli_fips", platform->dso("fips-identity"));
         copy($fipsmodule, $destfips) or die("Couldn't copy file");
         $ENV{OPENSSL_CONF} = $identityconf;
         $ENV{OPENSSL_MODULES} = bldtop_dir("test-runs", "test_cli_fips");
