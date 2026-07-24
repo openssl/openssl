@@ -22,6 +22,7 @@ Therefore, it is useful to be able to look up more information about a log
 
 CTLOG_STORE_get0_log_by_id() provides a way to do this. It will find a CTLOG
 in a CTLOG_STORE that has a given LogID.
+If the CTLOG_STORE is NULL, it is treated as empty and no match is found.
 
 =head1 RETURN VALUES
 

@@ -550,6 +550,30 @@ end:
     return result;
 }
 
+static int test_sct_validate_no_log_store(void)
+{
+    const unsigned char log_id[CT_V1_HASHLEN] = { 0 };
+    SCT *sct = NULL;
+    CT_POLICY_EVAL_CTX *ct_policy_ctx = NULL;
+    int result = 0;
+
+    if (!TEST_ptr(sct = SCT_new())
+        || !TEST_true(SCT_set_version(sct, SCT_VERSION_V1))
+        || !TEST_true(SCT_set1_log_id(sct, log_id, sizeof(log_id)))
+        || !TEST_ptr(ct_policy_ctx = CT_POLICY_EVAL_CTX_new())
+        || !TEST_int_eq(SCT_validate(sct, ct_policy_ctx), 0)
+        || !TEST_int_eq(SCT_get_validation_status(sct),
+            SCT_VALIDATION_STATUS_UNKNOWN_LOG))
+        goto end;
+
+    result = 1;
+
+end:
+    SCT_free(sct);
+    CT_POLICY_EVAL_CTX_free(ct_policy_ctx);
+    return result;
+}
+
 static int test_ctlog_store_add0_log_validates_sct(void)
 {
     CTLOG_STORE *store = NULL;
@@ -654,6 +678,7 @@ int setup_tests(void)
     ADD_TEST(test_default_ct_policy_eval_ctx_time_is_now);
     ADD_TEST(test_ctlog_from_base64);
     ADD_TEST(test_ctlog_store_add0_log);
+    ADD_TEST(test_sct_validate_no_log_store);
     ADD_TEST(test_ctlog_store_add0_log_validates_sct);
     ADD_TEST(test_ctlog_store_add0_log_null);
 #else
