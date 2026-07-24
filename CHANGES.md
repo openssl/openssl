@@ -31,6 +31,11 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Enforce the CT v1 LogID length (`CT_V1_HASHLEN`) in the public SCT and
+   CT log-store APIs, fixing over-reads from short or oversized LogIDs.
+
+   *Mounir IDRASSI*
+
  * Repeated fields in the `basicConstraints`, `basicAttConstraints`,
    and `policyConstraints` X.509v3 extension configurations are now rejected
    instead of silently using the last value.
