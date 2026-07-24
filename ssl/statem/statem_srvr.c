@@ -33,6 +33,7 @@
 #include <openssl/comp.h>
 #include "internal/comp.h"
 #include <openssl/ocsp.h>
+#include <openssl/crau.h>
 
 #define TICKET_NONCE_SIZE 8
 
@@ -1934,6 +1935,16 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         goto err;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    {
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_DEFN("tls::protocol_version", OSSL_PARAM_UNSIGNED_INTEGER, &s->version, sizeof(s->version)),
+            OSSL_PARAM_END
+        };
+        OSSL_CRAU_data(sctx->libctx, params);
+    }
+#endif
+
     /* TLSv1.3 specifies that a ClientHello must end on a record boundary */
     if (SSL_CONNECTION_IS_TLS13(s)
         && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
@@ -2020,6 +2031,17 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
             goto err;
         }
         s->s3.tmp.new_cipher = cipher;
+
+#ifndef OPENSSL_NO_CRAU
+        {
+            uint16_t cipher_id = cipher->id & 0xffff;
+            OSSL_PARAM params[] = {
+                OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+                OSSL_PARAM_END
+            };
+            OSSL_CRAU_data(sctx->libctx, params);
+        }
+#endif
     }
 
     /* We need to do this before getting the session */
@@ -2532,6 +2554,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
                     goto err;
                 }
                 s->s3.tmp.new_cipher = cipher;
+
+#ifndef OPENSSL_NO_CRAU
+                {
+                    uint16_t cipher_id = cipher->id & 0xffff;
+                    OSSL_PARAM params[] = {
+                        OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+                        OSSL_PARAM_END
+                    };
+                    OSSL_CRAU_data(SSL_CONNECTION_GET_CTX(s)->libctx, params);
+                }
+#endif
             }
             if (!s->hit) {
                 if (!tls_choose_sigalg(s, 1)) {
@@ -2551,6 +2584,17 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
         } else {
             /* Session-id reuse */
             s->s3.tmp.new_cipher = s->session->cipher;
+
+#ifndef OPENSSL_NO_CRAU
+            {
+                uint16_t cipher_id = s->s3.tmp.new_cipher->id & 0xffff;
+                OSSL_PARAM params[] = {
+                    OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+                    OSSL_PARAM_END
+                };
+                OSSL_CRAU_data(SSL_CONNECTION_GET_CTX(s)->libctx, params);
+            }
+#endif
         }
 
         /*
@@ -4078,7 +4122,17 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         }
     } else {
         EVP_PKEY *pkey;
+
+#ifndef OPENSSL_NO_CRAU
+        OSSL_CRAU_enter(sctx->libctx, "tls::verify_cert_chain", NULL);
+#endif
+
         i = ssl_verify_cert_chain(s, sk);
+
+#ifndef OPENSSL_NO_CRAU
+        OSSL_CRAU_leave(sctx->libctx);
+#endif
+
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);

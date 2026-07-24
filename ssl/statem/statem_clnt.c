@@ -29,6 +29,7 @@
 #include "internal/comp.h"
 #include "internal/ssl_unwrap.h"
 #include <openssl/ocsp.h>
+#include <openssl/crau.h>
 
 static MSG_PROCESS_RETURN tls_process_as_hello_retry_request(SSL_CONNECTION *s,
     RAW_EXTENSION *extensions);
@@ -1696,6 +1697,17 @@ static int set_client_ciphersuite(SSL_CONNECTION *s,
     }
     s->s3.tmp.new_cipher = c;
 
+#ifndef OPENSSL_NO_CRAU
+    {
+        uint16_t cipher_id = c->id & 0xffff;
+        OSSL_PARAM params[] = {
+            OSSL_PARAM_DEFN("tls::ciphersuite", OSSL_PARAM_UNSIGNED_INTEGER, &cipher_id, sizeof(cipher_id)),
+            OSSL_PARAM_END
+        };
+        OSSL_CRAU_data(sctx->libctx, params);
+    }
+#endif
+
     return 1;
 }
 
@@ -1919,6 +1931,16 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
             /* SSLfatal() already called */
             goto err;
         }
+
+#ifndef OPENSSL_NO_CRAU
+        {
+            OSSL_PARAM params[] = {
+                OSSL_PARAM_DEFN("tls::protocol_version", OSSL_PARAM_UNSIGNED_INTEGER, &s->version, sizeof(s->version)),
+                OSSL_PARAM_END
+            };
+            OSSL_CRAU_data(SSL_CONNECTION_GET_CTX(s)->libctx, params);
+        }
+#endif
     }
 
     if (SSL_CONNECTION_IS_TLS13(s) || hrr) {
@@ -2483,7 +2505,17 @@ WORK_STATE tls_post_process_server_certificate(SSL_CONNECTION *s,
      * set. The *documented* interface remains the same.
      */
     ERR_set_mark();
+
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_enter(SSL_CONNECTION_GET_CTX(s)->libctx, "tls::verify_cert_chain", NULL);
+#endif
+
     i = ssl_verify_cert_chain(s, s->session->peer_chain);
+
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(SSL_CONNECTION_GET_CTX(s)->libctx);
+#endif
+
     if (i <= 0 && s->verify_mode != SSL_VERIFY_NONE) {
         ERR_clear_last_mark();
         SSLfatal(s, ssl_x509err2alert(s->verify_result),

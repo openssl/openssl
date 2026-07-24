@@ -1,0 +1,179 @@
+=pod
+
+=head1 NAME
+
+OSSL_CRAU_enter, OSSL_CRAU_data, OSSL_CRAU_leave
+- crypto-auditing context and event management functions
+
+=head1 SYNOPSIS
+
+ #include <openssl/crau.h>
+
+ void OSSL_CRAU_enter(OSSL_LIB_CTX *libctx, const char *name,
+                      const OSSL_PARAM params[]);
+
+ void OSSL_CRAU_data(OSSL_LIB_CTX *libctx, const OSSL_PARAM params[]);
+
+ void OSSL_CRAU_leave(OSSL_LIB_CTX *libctx);
+
+=head1 DESCRIPTION
+
+These functions provide support for instrumenting OpenSSL library operations
+with USDT (Userland Statically Defined Tracing) probes compatible with
+L<crypto-auditing|https://github.com/latchset/crypto-auditing/>.
+They enable tracing of cryptographically-relevant events through eBPF
+for security auditing and observability purposes.
+
+OSSL_CRAU_enter() creates a new hierarchical crypto-auditing context with
+the given I<name> and optional I<params>. The context is associated with the
+current thread and maintains a parent-child relationship with any existing
+context. The I<name> parameter identifies the operation being traced (e.g.,
+"pk::sign", "pk::encrypt", etc.). The I<params> array contains key-value pairs
+representing event attributes, which must be terminated with OSSL_PARAM_END.
+
+When USDT support is enabled, this function emits a C<crypto_auditing::new_context_with_data>
+probe that includes:
+
+=over 4
+
+=item *
+
+A unique context identifier derived from the current thread ID and virtual
+memory address
+
+=item *
+
+The parent context identifier for hierarchical event tracking
+
+=item *
+
+An array of event data structures containing the provided parameters plus
+the context name
+
+=back
+
+OSSL_CRAU_data() emits additional event data for the current crypto-auditing
+context. This function allows instrumenting code to report intermediate or
+supplementary information during an operation without creating a new context.
+The I<params> array contains key-value pairs to be logged, terminated with
+OSSL_PARAM_END.
+
+When USDT support is enabled, this function emits a C<crypto_auditing::data>
+probe associated with the current context.
+
+OSSL_CRAU_leave() exits the current crypto-auditing context, restoring the
+parent context. This function should be called to properly close a context
+opened with OSSL_CRAU_enter(). Contexts must be closed in a properly nested
+manner (last in, first out order).
+
+=head1 NOTES
+
+These functions are designed to have minimal performance impact when
+USDT support is enabled at compile time but no tracing happening at run
+time. In this configuration, the USDT probes compile to a NOP
+instruction.
+
+The I<params> arrays passed to OSSL_CRAU_enter() and OSSL_CRAU_data() support
+the following OSSL_PARAM data types:
+
+=over 4
+
+=item B<OSSL_PARAM_INTEGER>
+
+Signed integer values, extracted using OSSL_PARAM_get_int(). The value is
+encoded as a machine word in the trace event.
+
+=item B<OSSL_PARAM_UNSIGNED_INTEGER>
+
+Unsigned integer values up to INT_MAX, extracted using OSSL_PARAM_get_uint().
+The value is encoded as a machine word in the trace event.
+
+=item B<OSSL_PARAM_UTF8_STRING>
+
+NUL-terminated UTF-8 strings. The string pointer is passed directly to the
+trace event.
+
+=item B<OSSL_PARAM_OCTET_STRING>
+
+Binary data with an explicit size. Both the data pointer and size are
+included in the trace event.
+
+=back
+
+A maximum of 15 parameters can be provided to OSSL_CRAU_enter() (one slot
+is reserved for the context name). OSSL_CRAU_data() supports up to 16
+parameters.
+
+Context management is thread-local. Each thread maintains its own context
+stack, and contexts are automatically associated with the calling thread's ID.
+
+=head1 RETURN VALUES
+
+These functions do not return a value.
+
+=head1 EXAMPLES
+
+Instrumenting a public key signing operation with crypto-auditing:
+
+ OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_get0_global_default();
+ OSSL_PARAM params[3];
+
+ params[0] = OSSL_PARAM_construct_utf8_string("pk::algorithm", "RSA-PSS", 0);
+ params[1] = OSSL_PARAM_construct_uint("pk::bits", 2048);
+ params[2] = OSSL_PARAM_construct_end();
+
+ OSSL_CRAU_enter(libctx, "pk::sign", params);
+
+ /* Perform the signing operation */
+ /* ... */
+
+ /* Optionally emit additional data during the operation */
+ params[0] = OSSL_PARAM_construct_utf8_string("pk::hash", "SHA-256", 0);
+ params[1] = OSSL_PARAM_construct_end();
+ OSSL_CRAU_data(libctx, params);
+
+ /* ... complete the operation ... */
+
+ OSSL_CRAU_leave(libctx);
+
+Nesting contexts for hierarchical tracing:
+
+ OSSL_PARAM params[3];
+
+ params[0] = OSSL_PARAM_construct_utf8_string("tls::role", "server", 0);
+ params[1] = OSSL_PARAM_construct_end();
+ OSSL_CRAU_enter(libctx, "tls::handshake", params);
+
+ /* During handshake, trace key exchange */
+ params[0] = OSSL_PARAM_construct_uint("tls::group", 4588); /* X25519MLKEM768 */
+ params[1] = OSSL_PARAM_construct_end();
+ OSSL_CRAU_enter(libctx, "tls::key_exchange", params);
+
+ /* ... key exchange ... */
+
+ OSSL_CRAU_leave(libctx);  /* Leave key exchange context */
+
+ /* ... continue handshake ... */
+
+ OSSL_CRAU_leave(libctx);  /* Leave handshake context */
+
+=head1 SEE ALSO
+
+L<OSSL_LIB_CTX(3)>,
+L<OSSL_PARAM(3)>,
+L<OSSL_PARAM_construct_utf8_string(3)>
+
+=head1 HISTORY
+
+These functions were added in OpenSSL 4.1.0.
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
