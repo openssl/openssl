@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added client-side TLS session caching support. Applications can now
+   set a per-connection cache identifier via `SSL_set1_cache_id()`, which
+   the session cache uses instead of the server-provided session ID.  This
+   allows clients to reliably resume sessions when connecting to server
+   pools or load-balanced endpoints that rotate session IDs.  The cache
+   identifier can be retrieved with `SSL_SESSION_get1_cache_id()`.
+
+   *Todd Short*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 
