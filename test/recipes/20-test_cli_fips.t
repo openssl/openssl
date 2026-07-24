@@ -26,11 +26,12 @@ use platform;
 my $no_check = disabled("fips") || disabled('fips-securitychecks');
 plan skip_all => "Test only supported in a fips build with security checks"
     if $no_check;
-plan tests => 12;
+plan tests => 13;
 
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
+my $identityconf = srctop_file("test" ,"fips-identity.cnf");
 my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
@@ -279,6 +280,41 @@ SKIP: {
 
         tsignverify($testtext_prefix, $fips_key, $fips_pub_key, $nonfips_key,
                     $nonfips_pub_key);
+    };
+}
+
+SKIP: {
+    skip "FIPS RSA tests because of no rsa in this build", 1
+        if disabled("rsa");
+
+    subtest RSA_identity => sub {
+        my $testtext_prefix = 'RSA';
+        my $fips_key = $testtext_prefix.'.fips.priv.pem';
+        my $fips_pub_key = $testtext_prefix.'.fips.pub.pem';
+        my $nonfips_key = $testtext_prefix.'.nonfips.priv.pem';
+        my $nonfips_pub_key = $testtext_prefix.'.nonfips.pub.pem';
+        my $testtext = '';
+
+        plan tests => 2;
+
+        my $destfips = srctop_file("test-runs", "test_cli_fips", platform->dso("fips-identity"));
+        copy($fipsmodule, $destfips) or die("Couldn't copy file");
+        $ENV{OPENSSL_CONF} = $identityconf;
+        $ENV{OPENSSL_MODULES} = bldtop_dir("test-runs", "test_cli_fips");
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with a non-FIPS algorithm with the default provider';
+        print "Running genpkey";
+        ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
+                    '-pkeyopt', 'rsa_keygen_bits:512',
+                    '-out', $nonfips_key])),
+           $testtext);
+
+        $testtext = $testtext_prefix.': '.
+            'Generate a key with a FIPS algorithm';
+        ok(run(app(['openssl', 'genpkey', '-algorithm', 'RSA',
+                    '-pkeyopt', 'rsa_keygen_bits:2048',
+                    '-out', $fips_key])),
+           $testtext);
     };
 }
 
