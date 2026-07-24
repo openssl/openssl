@@ -194,6 +194,62 @@ err:
     return ret;
 }
 
+/* Load the self-signed certificate passed on the command line. */
+static X509 *load_arg_cert(void)
+{
+    const char *certfile;
+    BIO *bio;
+    X509 *x509;
+
+    if ((certfile = test_get_argument(0)) == NULL
+        || (bio = BIO_new_file(certfile, "r")) == NULL)
+        return NULL;
+    x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+    BIO_free(bio);
+    return x509;
+}
+
+/* Trigger memory failures during certificate self-signature verification. */
+static int test_x509_asn1_item_verify_mfail(void)
+{
+    X509 *x509;
+    EVP_PKEY *pkey;
+    const ASN1_BIT_STRING *sig = NULL;
+    const X509_ALGOR *alg = NULL;
+
+    if (!TEST_ptr(x509 = load_arg_cert())
+        || !TEST_ptr(pkey = X509_get0_pubkey(x509))) {
+        X509_free(x509);
+        return -1;
+    }
+    X509_get0_signature(&sig, &alg, x509);
+
+    MFAIL_start();
+    (void)ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), alg, sig,
+        &x509->cert_info, pkey);
+    MFAIL_end();
+
+    X509_free(x509);
+    return 1;
+}
+
+/* Trigger memory failures while hashing the issuer name. */
+static int test_x509_issuer_name_hash_mfail(void)
+{
+    X509 *x509;
+    int ret = -1;
+
+    if (!TEST_ptr(x509 = load_arg_cert()))
+        return -1;
+
+    MFAIL_start();
+    ret = X509_issuer_name_hash(x509) != 0 ? 1 : 0;
+    MFAIL_end();
+
+    X509_free(x509);
+    return ret;
+}
+
 static int test_x509_delete_last_extension(void)
 {
     int ret = 0;
@@ -679,6 +735,8 @@ int setup_tests(void)
     ADD_TEST(test_x509_tbs_cache);
     ADD_TEST(test_x509_crl_tbs_cache);
     ADD_TEST(test_asn1_item_verify);
+    ADD_MFAIL_NO_CHECK_TEST(test_x509_asn1_item_verify_mfail);
+    ADD_MFAIL_TEST(test_x509_issuer_name_hash_mfail);
     ADD_TEST(test_x509_delete_last_extension);
     ADD_TEST(test_x509_crl_delete_last_extension);
     ADD_TEST(test_x509_revoked_delete_last_extension);
