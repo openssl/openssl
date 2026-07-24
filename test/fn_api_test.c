@@ -3541,6 +3541,370 @@ err:
     return ret;
 }
 
+
+/*
+ * ------------------------------------------------------------------
+ * OSSL_FN_mod_inverse
+ *
+ * The tests are self-checking: the defining property  r * a == 1 (mod n)
+ * is the oracle, so no precomputed inverse table is needed.  Coprime pairs
+ * must succeed and satisfy the property; non-coprime pairs (and a==0, n==0)
+ * must fail with OSSL_FN_R_NO_INVERSE.
+ */
+
+struct mod_inv_test_st {
+    const OSSL_FN_ULONG *a;
+    size_t a_size;
+    const OSSL_FN_ULONG *n;
+    size_t n_size;
+    int expect_inverse; /* 1 = inverse exists, 0 = NO_INVERSE expected */
+};
+
+/* Small operands / moduli. */
+static const OSSL_FN_ULONG inv_a0[] = { OSSL_FN_ULONG_C(0) };
+static const OSSL_FN_ULONG inv_a2[] = { OSSL_FN_ULONG_C(2) };
+static const OSSL_FN_ULONG inv_a3[] = { OSSL_FN_ULONG_C(3) };
+static const OSSL_FN_ULONG inv_a5[] = { OSSL_FN_ULONG_C(5) };
+static const OSSL_FN_ULONG inv_a6[] = { OSSL_FN_ULONG_C(6) };
+static const OSSL_FN_ULONG inv_a7[] = { OSSL_FN_ULONG_C(7) };
+static const OSSL_FN_ULONG inv_n0[] = { OSSL_FN_ULONG_C(0) };
+static const OSSL_FN_ULONG inv_n1[] = { OSSL_FN_ULONG_C(1) };
+static const OSSL_FN_ULONG inv_n4[] = { OSSL_FN_ULONG_C(4) };
+static const OSSL_FN_ULONG inv_n5[] = { OSSL_FN_ULONG_C(5) };
+static const OSSL_FN_ULONG inv_n7[] = { OSSL_FN_ULONG_C(7) };
+static const OSSL_FN_ULONG inv_n9[] = { OSSL_FN_ULONG_C(9) };
+static const OSSL_FN_ULONG inv_n11[] = { OSSL_FN_ULONG_C(11) };
+
+static struct mod_inv_test_st test_mod_inverse_cases[] = {
+    /* coprime: inverse exists, verified by r*a == 1 (mod n) */
+    { inv_a3, LIMBSOF(inv_a3), inv_n7, LIMBSOF(inv_n7), 1 }, /* 3^-1 mod 7  */
+    { inv_a5, LIMBSOF(inv_a5), inv_n11, LIMBSOF(inv_n11), 1 }, /* 5^-1 mod 11 */
+    { inv_a2, LIMBSOF(inv_a2), inv_n7, LIMBSOF(inv_n7), 1 }, /* 2^-1 mod 7  */
+    { inv_a7, LIMBSOF(inv_a7), inv_n5, LIMBSOF(inv_n5), 1 }, /* a >= n: 7^-1 mod 5 == 3 */
+    /* wide coprime: a < secp128r1 field prime (prime modulus => coprime) */
+    { num5, LIMBSOF(num5), mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), 1 },
+    /* n == 1: degenerate modulus, no inverse (short-circuited) */
+    { inv_a3, LIMBSOF(inv_a3), inv_n1, LIMBSOF(inv_n1), 0 },
+    /* not coprime: no inverse */
+    { inv_a2, LIMBSOF(inv_a2), inv_n4, LIMBSOF(inv_n4), 0 }, /* gcd(2,4)=2 */
+    { inv_a3, LIMBSOF(inv_a3), inv_n9, LIMBSOF(inv_n9), 0 }, /* gcd(3,9)=3 */
+    { inv_a6, LIMBSOF(inv_a6), inv_n9, LIMBSOF(inv_n9), 0 }, /* gcd(6,9)=3 */
+    { inv_a0, LIMBSOF(inv_a0), inv_n5, LIMBSOF(inv_n5), 0 }, /* a==0: no inverse */
+    /* n == 0: no inverse (short-circuited) */
+    { inv_a3, LIMBSOF(inv_a3), inv_n0, LIMBSOF(inv_n0), 0 },
+};
+
+static int test_mod_inverse(int i)
+{
+    struct mod_inv_test_st *tc = &test_mod_inverse_cases[i];
+    size_t n_size = tc->n_size;
+    size_t a_size = tc->a_size;
+    /* Working width: max of a and n, as in OSSL_FN_mod_inverse_ctx_size(). */
+    size_t L = a_size > n_size ? a_size : n_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fn = NULL, *r = NULL;
+    OSSL_FN *one = NULL, *one_mod = NULL, *tmp = NULL;
+    int ret = 0;
+    OSSL_FN_ULONG one_word = 1;
+
+    ctx = OSSL_FN_CTX_new(NULL, 8, 16, 16 * L + 16);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(L);
+    fn = OSSL_FN_new_limbs(n_size);
+    r = OSSL_FN_new_limbs(n_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fn) || !TEST_ptr(r))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, tc->a, tc->a_size))
+        || !TEST_true(ossl_fn_set_words(fn, tc->n, tc->n_size)))
+        goto err;
+
+    if (!TEST_true(pollute(r, 0, n_size)))
+        goto err;
+
+    if (tc->expect_inverse) {
+        if (!TEST_true(OSSL_FN_mod_inverse(r, fa, fn, ctx)))
+            goto err;
+
+        /*
+         * Verify the defining property:  r * a == 1  (mod n).
+         * Compute 1 mod n  (which is 1 for n > 1, and 0 for n == 1) and
+         * compare against  (r * a) mod n.
+         */
+        one = OSSL_FN_new_limbs(n_size);
+        one_mod = OSSL_FN_new_limbs(n_size);
+        tmp = OSSL_FN_new_limbs(n_size);
+        if (!TEST_ptr(one) || !TEST_ptr(one_mod) || !TEST_ptr(tmp))
+            goto err;
+        if (!TEST_true(ossl_fn_set_words(one, &one_word, 1)))
+            goto err;
+        if (!TEST_true(OSSL_FN_mod(one_mod, one, fn, ctx)))
+            goto err;
+        if (!TEST_true(OSSL_FN_mod_mul(tmp, r, fa, fn, ctx)))
+            goto err;
+        if (!TEST_mem_eq(ossl_fn_get_words(tmp), n_size * OSSL_FN_BYTES,
+                ossl_fn_get_words(one_mod), n_size * OSSL_FN_BYTES))
+            goto err;
+    } else {
+        if (!TEST_false(OSSL_FN_mod_inverse(r, fa, fn, ctx)))
+            goto err;
+        if (!TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                OSSL_FN_R_NO_INVERSE))
+            goto err;
+    }
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(r);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_mod);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+/* r aliases a, and separately r aliases n.  The defining property must hold. */
+static int test_mod_inverse_alias(int alias_n)
+{
+    /* 3^-1 mod 7 == 5; uses a small coprime pair so aliasing is exact. */
+    size_t a_size = LIMBSOF(inv_a3);
+    size_t n_size = LIMBSOF(inv_n7);
+    size_t L = a_size > n_size ? a_size : n_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fn = NULL, *fn_save = NULL, *r_alias = NULL;
+    OSSL_FN *one = NULL, *one_mod = NULL, *tmp = NULL, *check = NULL;
+    OSSL_FN_ULONG one_word = 1;
+    int ret = 0;
+
+    ctx = OSSL_FN_CTX_new(NULL, 8, 16, 16 * L + 16);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(L);
+    fn = OSSL_FN_new_limbs(L);
+    fn_save = OSSL_FN_new_limbs(n_size);
+    one = OSSL_FN_new_limbs(n_size);
+    one_mod = OSSL_FN_new_limbs(n_size);
+    tmp = OSSL_FN_new_limbs(n_size);
+    check = OSSL_FN_new_limbs(n_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fn) || !TEST_ptr(fn_save)
+        || !TEST_ptr(one) || !TEST_ptr(one_mod)
+        || !TEST_ptr(tmp) || !TEST_ptr(check))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, inv_a3, a_size))
+        || !TEST_true(ossl_fn_set_words(fn, inv_n7, n_size))
+        || !TEST_true(ossl_fn_set_words(fn_save, inv_n7, n_size))
+        || !TEST_true(ossl_fn_set_words(one, &one_word, 1)))
+        goto err;
+
+    if (alias_n) {
+        /* r aliases n: write the result into fn (the modulus). */
+        r_alias = fn;
+    } else {
+        /* r aliases a: write the result into fa (the operand). */
+        r_alias = fa;
+    }
+
+    if (!TEST_true(OSSL_FN_mod_inverse(r_alias, fa, fn, ctx)))
+        goto err;
+
+    /*
+     * Verify the defining property  r * a == 1 (mod n), using fn_save as the
+     * modulus: fn (or fa) now holds the result, not the original modulus.
+     */
+    if (!TEST_true(OSSL_FN_mod(one_mod, one, fn_save, ctx)))
+        goto err;
+    if (alias_n) {
+        /* r (=fn, overwritten) * (original a=3) mod n */
+        if (!TEST_true(ossl_fn_set_words(check, inv_a3, a_size)))
+            goto err;
+        if (!TEST_true(OSSL_FN_mod_mul(tmp, r_alias, check, fn_save, ctx)))
+            goto err;
+    } else {
+        /* r (=fa, overwritten) * (original a=3) mod n */
+        if (!TEST_true(ossl_fn_set_words(check, inv_a3, a_size)))
+            goto err;
+        if (!TEST_true(OSSL_FN_mod_mul(tmp, r_alias, check, fn_save, ctx)))
+            goto err;
+    }
+    if (!TEST_mem_eq(ossl_fn_get_words(tmp), n_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(one_mod), n_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(fn_save);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_mod);
+    OSSL_FN_free(tmp);
+    OSSL_FN_free(check);
+    return ret;
+}
+
+static int test_mod_inverse_alias_a(void)
+{
+    return test_mod_inverse_alias(0);
+}
+
+static int test_mod_inverse_alias_n(void)
+{
+    return test_mod_inverse_alias(1);
+}
+
+/*
+ * Result-width variations: r larger than n (must zero-pad high limbs), and
+ * r exactly n-sized for the wide secp128r1 case.  The defining property is
+ * the oracle in both cases; for the oversized case we additionally check the
+ * high limbs are zero.
+ */
+static int test_mod_inverse_result_size(int i)
+{
+    /* Wide coprime pair: num5 under the secp128r1 field prime. */
+    size_t a_size = LIMBSOF(num5);
+    size_t n_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > n_size ? a_size : n_size;
+    size_t r_size = i == 0 ? n_size : n_size + 2; /* exact, then oversized */
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fn = NULL, *r = NULL;
+    OSSL_FN *one = NULL, *one_mod = NULL, *tmp = NULL;
+    OSSL_FN_ULONG one_word = 1;
+    int ret = 0;
+
+    ctx = OSSL_FN_CTX_new(NULL, 8, 16, 16 * L + 16);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    fa = OSSL_FN_new_limbs(L);
+    fn = OSSL_FN_new_limbs(n_size);
+    r = OSSL_FN_new_limbs(r_size);
+    one = OSSL_FN_new_limbs(n_size);
+    one_mod = OSSL_FN_new_limbs(n_size);
+    tmp = OSSL_FN_new_limbs(n_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fn) || !TEST_ptr(r)
+        || !TEST_ptr(one) || !TEST_ptr(one_mod) || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fn, mod_secp128r1_p, n_size))
+        || !TEST_true(ossl_fn_set_words(one, &one_word, 1)))
+        goto err;
+
+    if (!TEST_true(pollute(r, 0, r_size)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_inverse(r, fa, fn, ctx)))
+        goto err;
+
+    /* Defining property: r * a == 1 (mod n). */
+    if (!TEST_true(OSSL_FN_mod(one_mod, one, fn, ctx))
+        || !TEST_true(OSSL_FN_mod_mul(tmp, r, fa, fn, ctx)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(tmp), n_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(one_mod), n_size * OSSL_FN_BYTES))
+        goto err;
+
+    /* Oversized result: high limbs beyond n_size must be zero-padded. */
+    if (r_size > n_size)
+        if (!TEST_true(check_limbs_value(r, n_size, r_size, 0)))
+            goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(r);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_mod);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
+/*
+ * Validate OSSL_FN_mod_inverse_ctx_size(): allocate the ctx from the helper
+ * and confirm the operation succeeds and the peak usage stays within budget.
+ * Uses the wide secp128r1 case so the estimate is exercised non-trivially.
+ */
+static int test_mod_inverse_ctx_size(void)
+{
+    size_t a_size = LIMBSOF(num5);
+    size_t n_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > n_size ? a_size : n_size;
+    OSSL_FN_CTX *ctx = NULL;
+    OSSL_FN *fa = NULL, *fn = NULL, *r = NULL;
+    OSSL_FN *one = NULL, *one_mod = NULL, *tmp = NULL;
+    OSSL_FN_ULONG one_word = 1;
+    size_t size, peak_frames, peak_numbers, peak_limbs;
+    int ret = 0;
+
+    fa = OSSL_FN_new_limbs(L);
+    fn = OSSL_FN_new_limbs(n_size);
+    r = OSSL_FN_new_limbs(n_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fn) || !TEST_ptr(r))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(fa, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fn, mod_secp128r1_p, n_size)))
+        goto err;
+
+    /* Size the ctx from the actual operands via the helper. */
+    size = OSSL_FN_mod_inverse_ctx_size(r, fa, fn);
+    if (!TEST_size_t_ne(size, 0))
+        goto err;
+
+    ctx = OSSL_FN_CTX_new_size(NULL, size);
+    if (!TEST_ptr(ctx))
+        goto err;
+
+    one = OSSL_FN_new_limbs(n_size);
+    one_mod = OSSL_FN_new_limbs(n_size);
+    tmp = OSSL_FN_new_limbs(n_size);
+    if (!TEST_ptr(one) || !TEST_ptr(one_mod) || !TEST_ptr(tmp))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(one, &one_word, 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_mod_inverse(r, fa, fn, ctx)))
+        goto err;
+
+    /* The arena must not have been exhausted: peak usage within budget. */
+    OSSL_FN_CTX_peak_usage(ctx, &peak_frames, &peak_numbers, &peak_limbs);
+    if (!TEST_size_t_gt(peak_frames, 0))
+        goto err;
+
+    /* Defining property: r * a == 1 (mod n). */
+    if (!TEST_true(OSSL_FN_mod(one_mod, one, fn, ctx))
+        || !TEST_true(OSSL_FN_mod_mul(tmp, r, fa, fn, ctx)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(tmp), n_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(one_mod), n_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fn);
+    OSSL_FN_free(r);
+    OSSL_FN_free(one);
+    OSSL_FN_free(one_mod);
+    OSSL_FN_free(tmp);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -3593,6 +3957,11 @@ int setup_tests(void)
     ADD_TEST(test_mod_quick_wide_operands);
     ADD_TEST(test_mod_sub_general_wide_operands);
     ADD_ALL_TESTS(test_mod_ops_result_size, 3);
+    ADD_ALL_TESTS(test_mod_inverse, OSSL_NELEM(test_mod_inverse_cases));
+    ADD_TEST(test_mod_inverse_alias_a);
+    ADD_TEST(test_mod_inverse_alias_n);
+    ADD_ALL_TESTS(test_mod_inverse_result_size, 2);
+    ADD_TEST(test_mod_inverse_ctx_size);
 
     return 1;
 }

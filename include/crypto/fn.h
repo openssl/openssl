@@ -959,6 +959,45 @@ static inline size_t OSSL_FN_mod_ctx_size(const OSSL_FN *r,
 }
 
 /**
+ * Calculate the modular multiplicative inverse of |a| modulo |n|, i.e. a
+ * value |r| such that  r * a == 1  (mod n), with 0 <= r < n.
+ *
+ * The call fails with OSSL_FN_R_NO_INVERSE when |a| and |n| are not
+ * coprime, or when |n| is degenerate (0 or 1): modulo 0 the relation
+ * r * a == 1 is never satisfiable, and modulo 1 the multiplicative
+ * identity is not representable as a residue in [0, n).
+ *
+ * @param[out]          r       The OSSL_FN for the result.  Truncates high
+ *                              limbs if too small, zero-pads if too large.
+ * @param[in]           a       The operand.
+ * @param[in]           n       The modulus.  Must be greater than 1.
+ * @param[in]           ctx     A context to get temporary OSSL_FN
+ *                              instances from.
+ * @returns             1 on success, 0 on error.
+ *
+ * @note This function currently requires that the OSSL_FN_CTX has free
+ * space for seven temporary OSSL_FNs with max(a->dsize, n->dsize) limbs
+ * each, plus the requirements of OSSL_FN_div() (the loop-body division
+ * and the initial/final reductions), plus one frame (currently 32 bytes).
+ */
+int OSSL_FN_mod_inverse(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *n,
+    OSSL_FN_CTX *ctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_inverse() needs.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a       The operand
+ * @param[in]           n       The modulus
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by OSSL_FN_mod_inverse().
+ */
+size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *n);
+
+/**
  * Calculate the square of one OSSL_FN number.  Truncates the result to fit in r.
  *
  * @param[out]          r       The OSSL_FN for the result
