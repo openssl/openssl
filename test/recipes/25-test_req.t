@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 131;
+plan tests => 132;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -319,6 +319,24 @@ subtest "generating certificate requests" => sub {
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
                 "-verify", "-in", "testreq.pem", "-noout"])),
        "Verifying signature on request");
+};
+
+subtest "modifying the subject of an existing certificate request" => sub {
+    plan tests => 3;
+
+    my $req_in = srctop_file("test", "testreq2.pem");
+    my $req_out = "testreq-modified-subj.pem";
+    my $subj_out = "testreq-modified-subj.txt";
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-in", $req_in, "-subj", "/CN=Modified Subject",
+                "-out", $req_out])),
+       "Modifying subject of certificate request");
+
+    run(app(["openssl", "req", "-in", $req_out, "-noout", "-subject",
+             "-out", $subj_out]));
+    test_file_contains("modified request", $subj_out, "CN=Modified Subject", 1);
+    test_file_contains("modified request", $subj_out, "CN=cn4", 0);
 };
 
 subtest "generating SM2 certificate requests" => sub {
