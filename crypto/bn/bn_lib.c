@@ -89,6 +89,7 @@ const BIGNUM *BN_value_one(void)
     return &const_one;
 }
 
+#ifndef __e2k__
 int BN_num_bits_word(BN_ULONG l)
 {
     BN_ULONG x, mask;
@@ -133,6 +134,20 @@ int BN_num_bits_word(BN_ULONG l)
 
     return bits;
 }
+#else /* __e2k__ */
+#include <x86gprintrin.h>
+int BN_num_bits_word(BN_ULONG l)
+{
+    /* clz(0) is well-defined on e2k, hence no if (l == 0) return 0;
+     * is required here.
+     */
+#if BN_BITS2 > 32
+    return 64 - __builtin_clzll(l);
+#else
+    return 32 - __builtin_clz(l);
+#endif
+}
+#endif /* __e2k__ */
 
 /*
  * This function still leaks `a->dmax`: it's caller's responsibility to
