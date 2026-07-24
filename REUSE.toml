@@ -1,0 +1,113 @@
+version = 1
+
+[[annotations]]
+path = [
+  "**",
+]
+SPDX-FileCopyrightText = "The OpenSSL Project Authors. All rights reserved"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "NEWS.md",
+  "CONTRIBUTING.md",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "The OpenSSL Project Authors. All rights reserved"
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/mkwraps.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "test/mlkem_parse.py",
+  "test/lms_parse.py",
+  "test/slhdsa_parse.py",
+  "test/mldsa_wycheproof_parse.py",
+  "test/mldsa_parse.py",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2025 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+
+[[annotations]]
+path = [
+  "util/find-doc-nits",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2002-2025 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/mkerr.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1999-2026 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "crypto/asn1/charmap.pl",
+  "crypto/objects/objects.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2000-2021 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "crypto/objects/obj_dat.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1995-2024 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "crypto/objects/objxref.pl",
+  "crypto/bn/bn_prime.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1998-2021 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "apps/progs.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1995-2025 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "fuzz/mkfuzzoids.pl",
+  "crypto/conf/keysets.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "1995-2021 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "util/mkrc.pl",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2006-2020 The OpenSSL Project Authors. All Rights Reserved."
+SPDX-License-Identifier = "Apache-2.0"
+
+[[annotations]]
+path = [
+  "doc/man7/EVP_KDF-SS.pod",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2019-2024 The OpenSSL Project Authors. All Rights Reserved. 2019 Oracle and/or its affiliates. All rights reserved."
+SPDX-License-Identifier = "Apache-2.0"
