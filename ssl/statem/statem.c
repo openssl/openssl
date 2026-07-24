@@ -420,7 +420,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
                 goto end;
             }
         } else {
-            if ((s->version >> 8) != SSL3_VERSION_MAJOR) {
+            if ((s->version >> 8) != TLS1_VERSION_MAJOR) {
                 SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
                 goto end;
             }
