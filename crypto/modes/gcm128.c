@@ -713,6 +713,12 @@ void CRYPTO_gcm128_setiv(GCM128_CONTEXT *ctx, const unsigned char *iv,
         ctx->Yi.d[3] = ctr;
 }
 
+/*
+ * Returns:
+ * -  0: success
+ * - -1: error, AAD length overflow
+ * - -2: error, AAD follows the payload -> out of order
+ */
 int CRYPTO_gcm128_aad(GCM128_CONTEXT *ctx, const unsigned char *aad,
     size_t len)
 {
