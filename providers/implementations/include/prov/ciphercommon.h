@@ -106,6 +106,8 @@ struct prov_cipher_hw_st {
 };
 
 void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx);
+int ossl_cipher_generic_dupctx_tlsmac(PROV_CIPHER_CTX *dst,
+    const PROV_CIPHER_CTX *src);
 OSSL_FUNC_cipher_encrypt_init_fn ossl_cipher_generic_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_cipher_generic_dinit;
 OSSL_FUNC_cipher_update_fn ossl_cipher_generic_block_update;
