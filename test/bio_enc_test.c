@@ -327,6 +327,28 @@ end:
     return ret;
 }
 
+static int test_bio_enc_dup(void)
+{
+    BIO *b = NULL, *dup = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(b = BIO_new(BIO_f_cipher()))
+        || !TEST_int_gt(BIO_get_cipher_ctx(b, &ctx), 0)
+        || !TEST_true(EVP_CipherInit_ex(ctx, EVP_aes_256_cbc(), NULL,
+            KEY, IV, ENCRYPT)))
+        goto err;
+
+    if (!TEST_ptr(dup = BIO_dup_chain(b)))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free_all(dup);
+    BIO_free_all(b);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_bio_enc_aes_128_cbc, 2);
@@ -340,5 +362,6 @@ int setup_tests(void)
 #endif
 #endif
     ADD_TEST(test_bio_enc_eof_read_flush);
+    ADD_TEST(test_bio_enc_dup);
     return 1;
 }
