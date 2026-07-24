@@ -37,7 +37,7 @@ static void *
 rb_e2n(const struct ossl_rbt_type *t, struct ossl_rbt_entry *rbe)
 {
     /* uintptr_t addr = (uintptr_t)rbe; */
-	unsigned long addr = (unsigned long)e;
+	unsigned long addr = (unsigned long)rbe;
 
     return ((void *)(addr - t->t_offset));
 }
