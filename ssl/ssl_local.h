@@ -2233,6 +2233,11 @@ typedef struct dtls1_state_st {
 DEFINE_STACK_OF(SSL)
 
 /*
+ * Default maximum number of pending connections for DTLS listeners.
+ */
+#define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 1000
+
+/*
  * DTLS listener SSL object type. This implements the API personality
  * layer for DTLS listener objects, providing server-side connection
  * demultiplexing for DTLS 1.3.
@@ -2307,6 +2312,15 @@ typedef struct dtls_listener_st {
      * Default: 30 seconds. Set to ossl_time_infinite() to disable.
      */
     OSSL_TIME pending_timeout;
+
+    /*
+     * Maximum number of pending connections allowed.
+     * When this limit is reached, new connection attempts are rejected.
+     *
+     * Default: DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS
+     * This limit cannot be disabled.
+     */
+    size_t max_pending_conns;
 
     CRYPTO_CONDVAR *notifier_cv;
 
@@ -2984,8 +2998,9 @@ size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl);
 int ossl_dtls_listener_set_override_now_cb(SSL *s,
     OSSL_TIME (*now_cb)(void *arg),
     void *now_cb_arg);
-int ossl_dtls_listener_set_pending_timeout(SSL *s, OSSL_TIME timeout);
-OSSL_TIME ossl_dtls_listener_get_pending_timeout(const SSL *s);
+
+int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *value);
+int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t value);
 
 /* DTLS poll event functions - used by SSL_poll() */
 int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,

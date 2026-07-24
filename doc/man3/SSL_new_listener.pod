@@ -5,7 +5,6 @@
 SSL_new_listener, SSL_new_listener_from, SSL_is_listener, SSL_get0_listener,
 SSL_listen, SSL_listen_ex,
 SSL_accept_connection, SSL_get_accept_connection_queue_len,
-SSL_listener_set_pending_timeout, SSL_listener_get_pending_timeout,
 SSL_new_from_listener,
 SSL_ACCEPT_CONNECTION_NO_BLOCK,
 SSL_LISTENER_FLAG_NO_VALIDATE,
@@ -37,9 +36,6 @@ acceptance
  SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
 
  size_t SSL_get_accept_connection_queue_len(SSL *ssl);
-
- int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms);
- uint64_t SSL_listener_get_pending_timeout(const SSL *ssl);
 
  SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);
 
@@ -179,18 +175,13 @@ next pending connection, removing it from the queue. The returned connection
 count is a point-in-time value, the actual number of connections that will
 ultimately be returned may be different.
 
-The SSL_listener_set_pending_timeout() function sets the timeout in milliseconds
-for pending connections on a DTLS listener. Pending connections are those that
-have begun the handshake but have not yet completed it. If a pending connection
-does not complete its handshake within the specified timeout, it will be
-automatically cleaned up to prevent resource exhaustion from abandoned or slow
-connections. The I<timeout_ms> parameter specifies the timeout in milliseconds.
-A value of B<UINT64_MAX> disables timeout checking. The default timeout is 30
-seconds. Returns 1 on success, 0 on failure.
-
-The SSL_listener_get_pending_timeout() function returns the current pending
-connection timeout in milliseconds for a DTLS listener. Returns B<UINT64_MAX>
-if timeout checking is disabled, or 0 if the SSL object is not a DTLS listener.
+For DTLS listeners, two per-listener tunables control pending-connection
+tracking. Both are configured through L<SSL_get_value_uint(3)> /
+L<SSL_set_value_uint(3)> using the values
+B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (cap, default 1000, cannot be
+disabled) and B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> (millisecond reap
+timeout, default 30000, B<UINT64_MAX> disables). See L<SSL_get_value_uint(3)>
+for details.
 
 Currently, listener SSL objects are supported for QUIC server usage via
 L<OSSL_QUIC_server_method(3)>, QUIC client-only usage via
@@ -358,13 +349,6 @@ on failure. On success, the caller assumes ownership of the reference.
 SSL_get_accept_connection_queue_len() returns a nonnegative value, or 0 if the
 queue is empty, or called on an unsupported SSL object type.
 
-SSL_listener_set_pending_timeout() returns 1 on success, or 0 on failure (if
-the SSL object is not a DTLS listener).
-
-SSL_listener_get_pending_timeout() returns the timeout in milliseconds,
-B<UINT64_MAX> if timeout checking is disabled, or 0 if the SSL object is not a
-DTLS listener.
-
 SSL_new_from_listener() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
 
@@ -403,7 +387,8 @@ L<SSL_free(3)>, L<SSL_set_bio(3)>, L<SSL_handle_events(3)>,
 L<SSL_get_rpoll_descriptor(3)>, L<SSL_set_blocking_mode(3)>,
 L<SSL_CTX_set_cookie_generate_cb(3)>, L<SSL_CTX_set_cookie_verify_cb(3)>,
 L<SSL_CTX_set_stateless_cookie_generate_cb(3)>,
-L<SSL_CTX_set_stateless_cookie_verify_cb(3)>
+L<SSL_CTX_set_stateless_cookie_verify_cb(3)>,
+L<SSL_get_value_uint(3)>
 
 =head1 HISTORY
 
@@ -414,6 +399,11 @@ SSL_listen_ex() was added in OpenSSL 4.0.
 DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR>,
 B<SSL_LISTENER_FLAG_REQUIRE_HRR> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 flags) was added in OpenSSL 4.1.
+
+The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>
+and B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>, accessed via
+L<SSL_get_value_uint(3)> and L<SSL_set_value_uint(3)>, were added in
+OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

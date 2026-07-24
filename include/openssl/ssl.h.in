@@ -2330,8 +2330,6 @@ __owur SSL *SSL_new_from_listener(SSL *ssl, uint64_t flags);
 __owur SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
 __owur size_t SSL_get_accept_connection_queue_len(SSL *ssl);
 __owur int SSL_listen(SSL *ssl);
-__owur int SSL_listener_set_pending_timeout(SSL *ssl, uint64_t timeout_ms);
-__owur uint64_t SSL_listener_get_pending_timeout(const SSL *ssl);
 
 __owur int SSL_is_domain(SSL *s);
 __owur SSL *SSL_get0_domain(SSL *s);
@@ -2456,6 +2454,9 @@ __owur int SSL_get_conn_close_info(SSL *ssl,
 #define SSL_VALUE_QUIC_WINDOWUSTR 13
 #define SSL_VALUE_QUIC_ACK_DELAY_EXPONENT 14
 #define SSL_VALUE_QUIC_ACK_DELAY_MAX 15
+
+#define SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS 17
+#define SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT 18
 
 #define SSL_VALUE_EVENT_HANDLING_MODE_INHERIT 0
 #define SSL_VALUE_EVENT_HANDLING_MODE_IMPLICIT 1
