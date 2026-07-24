@@ -596,6 +596,7 @@ my %params = (
     'OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME' =>         "tls-sigalg-hash-name",
     'OSSL_CAPABILITY_TLS_SIGALG_HASH_OID' =>          "tls-sigalg-hash-oid",
     'OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE' =>           "tls-sigalg-keytype",
+    'OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP' =>     "tls-sigalg-keytype-group",
     'OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID' =>       "tls-sigalg-keytype-oid",
     'OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS' =>     "tls-sigalg-sec-bits",
     'OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS' =>           "tls-min-tls",

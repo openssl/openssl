@@ -1345,9 +1345,43 @@ int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx)
     return 0;
 }
 
+static int ssl_pkey_group_nid(const EVP_PKEY *pk)
+{
+    char gname[256];
+
+    if (pk == NULL
+        || !EVP_PKEY_get_group_name(pk, gname, sizeof(gname), NULL))
+        return NID_undef;
+    return OBJ_txt2nid(gname);
+}
+
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_CTX *ctx)
 {
     size_t i;
+    int pk_group_nid = NID_undef;
+
+    /*
+     * Provider slots bound to the key's group/parameter set take priority
+     * over everything else: the built-in table below may contain entries
+     * with the same key type NIDs (for example the built-in GOST slots vs
+     * the RFC 9367 provider sigalgs) which would otherwise shadow the
+     * provider slots and make them unreachable.
+     */
+    if (ctx->sigalg_list_len > 0)
+        pk_group_nid = ssl_pkey_group_nid(pk);
+    if (pk_group_nid != NID_undef) {
+        for (i = 0; i < ctx->sigalg_list_len; i++) {
+            SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
+
+            if (tmp_lu->group_nid == pk_group_nid
+                && (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
+                    || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid)))) {
+                if (pidx != NULL)
+                    *pidx = SSL_PKEY_NUM + i;
+                return tmp_lu;
+            }
+        }
+    }
 
     /* check classic pk types */
     for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
@@ -1360,15 +1394,23 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
             return tmp_lu;
         }
     }
-    /* check provider-loaded pk types */
+
+    /*
+     * Check provider-loaded pk types. Slots bound to a group were already
+     * tried above; a slot without a group binding keeps the legacy
+     * first-match-by-key-type behaviour.
+     */
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
+
+        if (tmp_lu->group_nid != NID_undef)
+            continue;
 
         if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
             || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid))) {
             if (pidx != NULL)
                 *pidx = SSL_PKEY_NUM + i;
-            return &ctx->ssl_cert_info[i];
+            return tmp_lu;
         }
     }
 
