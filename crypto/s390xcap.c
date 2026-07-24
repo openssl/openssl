@@ -82,7 +82,8 @@ void OPENSSL_vx_probe(void);
 #endif
 
 static const char *env;
-static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex);
+static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex,
+    unsigned int *cex_min_bits);
 
 void OPENSSL_s390x_facilities(void);
 void OPENSSL_s390x_functions(void);
@@ -92,6 +93,7 @@ struct OPENSSL_s390xcap_st OPENSSL_s390xcap_P;
 #ifdef S390X_MOD_EXP
 int OPENSSL_s390xcex;
 int OPENSSL_s390xcex_nodev;
+unsigned int OPENSSL_s390xcex_min_bits;
 
 #if defined(__GNUC__)
 __attribute__((visibility("hidden")))
@@ -117,6 +119,7 @@ void OPENSSL_cpuid_setup(void)
 {
     struct OPENSSL_s390xcap_st cap;
     int cex = 1;
+    unsigned int cex_min_bits = S390X_CEX_MIN_BITS_DEFAULT;
 
     if (OPENSSL_s390xcap_P.stfle[0])
         return;
@@ -177,7 +180,7 @@ void OPENSSL_cpuid_setup(void)
 
     env = getenv("OPENSSL_s390xcap");
     if (env != NULL) {
-        if (!parse_env(&cap, &cex))
+        if (!parse_env(&cap, &cex, &cex_min_bits))
             env = NULL;
     }
 
@@ -223,10 +226,12 @@ void OPENSSL_cpuid_setup(void)
         OPENSSL_s390xcex = open("/dev/z90crypt", O_RDWR | O_CLOEXEC);
     }
     OPENSSL_s390xcex_nodev = 0;
+    OPENSSL_s390xcex_min_bits = cex_min_bits;
 #endif
 }
 
-static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex)
+static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex,
+    unsigned int *cex_min_bits)
 {
     /* clang-format off */
     /*-
@@ -831,6 +836,7 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex)
 
     char *tok_begin, *tok_end, *buff, tok[S390X_STFLE_MAX][LEN + 1];
     int rc, off, i, n;
+    unsigned int val;
 
     buff = malloc(strlen(env) + 1);
     if (buff == NULL)
@@ -892,6 +898,12 @@ static int parse_env(struct OPENSSL_s390xcap_st *cap, int *cex)
                      tok[0], tok[1]) == 1
             && !strcmp(tok[0], "nocex")) {
             *cex = 0;
+        }
+
+        /* cex_min_bits to deactivate cex support for small key sizes */
+        else if (sscanf(tok_begin, " cex_min_bits : %u %" STR(LEN) "s ",
+                     &val, tok[0]) == 1) {
+            *cex_min_bits = val;
         }
 
         /* whitespace(ignored) or invalid tokens */
