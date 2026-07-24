@@ -23,6 +23,11 @@ Therefore, it is useful to be able to look up more information about a log
 CTLOG_STORE_get0_log_by_id() provides a way to do this. It will find a CTLOG
 in a CTLOG_STORE that has a given LogID.
 
+The LogID of a v1 CT log is a fixed-length SHA-256 hash (see RFC 6962),
+so B<log_id_len> must be B<CT_V1_HASHLEN> (32) bytes for a lookup to
+succeed.  Any other length, or a NULL B<store> or B<log_id>, is rejected
+and the function returns NULL without performing a lookup.
+
 =head1 RETURN VALUES
 
 B<CTLOG_STORE_get0_log_by_id> returns a CTLOG with the given LogID, if it
@@ -39,7 +44,7 @@ The CTLOG_STORE_get0_log_by_id() function was added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

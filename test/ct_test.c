@@ -21,6 +21,7 @@
 #include <openssl/crypto.h>
 
 #ifndef OPENSSL_NO_CT
+#include "../crypto/ct/ct_local.h" /* for struct sct_st */
 
 /* Used when declaring buffers to read text files into */
 #define CT_TEST_MAX_FILE_SIZE 8096
@@ -633,6 +634,180 @@ end:
     CTLOG_free(log);
     return result;
 }
+
+static int test_ctlog_store_get0_log_by_id_length(void)
+{
+    CTLOG_STORE *store = NULL;
+    CTLOG *log = NULL;
+    const uint8_t *log_id = NULL;
+    size_t log_id_len = 0;
+    unsigned char oversized_id[CT_V1_HASHLEN + 1];
+    int result = 0;
+    const char pkey_base64[] = "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEmXg8sUUzwBYaWrRb+V0IopzQ6o3U"
+                               "yEJ04r5ZrRXGdpYM8K+hB0pXrGRLI0eeWz+3skXrS0IO83AhA3GpRL6s6w==";
+
+    if (!TEST_ptr(store = CTLOG_STORE_new()))
+        goto end;
+    if (!TEST_true(CTLOG_new_from_base64(&log, pkey_base64, "test")))
+        goto end;
+
+    CTLOG_get0_log_id(log, &log_id, &log_id_len);
+    if (!TEST_size_t_eq(log_id_len, CT_V1_HASHLEN))
+        goto end;
+
+    memcpy(oversized_id, log_id, CT_V1_HASHLEN);
+    oversized_id[CT_V1_HASHLEN] = 0;
+
+    if (!TEST_true(CTLOG_STORE_add0_log(store, log)))
+        goto end;
+    log = NULL;
+
+    /* A correctly-sized lookup must still match. */
+    if (!TEST_ptr(CTLOG_STORE_get0_log_by_id(store, log_id, log_id_len)))
+        goto end;
+
+    /* An oversized length must not read past the stored 32-byte log_id. */
+    if (!TEST_ptr_null(CTLOG_STORE_get0_log_by_id(store, oversized_id,
+            sizeof(oversized_id))))
+        goto end;
+
+    /* A zero length must not match the first stored log. */
+    if (!TEST_ptr_null(CTLOG_STORE_get0_log_by_id(store, log_id, 0)))
+        goto end;
+
+    /* A short length must not produce a prefix match. */
+    if (!TEST_ptr_null(CTLOG_STORE_get0_log_by_id(store, log_id,
+            CT_V1_HASHLEN / 2)))
+        goto end;
+
+    /* A NULL log_id must not be dereferenced. */
+    if (!TEST_ptr_null(CTLOG_STORE_get0_log_by_id(store, NULL,
+            CT_V1_HASHLEN)))
+        goto end;
+
+    /* A NULL store must return NULL. */
+    if (!TEST_ptr_null(CTLOG_STORE_get0_log_by_id(NULL, log_id, log_id_len)))
+        goto end;
+
+    result = 1;
+
+end:
+    CTLOG_STORE_free(store);
+    CTLOG_free(log);
+    return result;
+}
+
+static int test_sct_log_id_setters_enforce_length(void)
+{
+    SCT *sct = NULL;
+    unsigned char valid_id[CT_V1_HASHLEN];
+    unsigned char oversized_id[CT_V1_HASHLEN + 1];
+    unsigned char short_id = 0xAB;
+    unsigned char *heap_id = NULL;
+    unsigned char *log_id = NULL;
+    int result = 0;
+
+    memset(oversized_id, 0, sizeof(oversized_id));
+    memset(valid_id, 0, sizeof(valid_id));
+
+    if (!TEST_ptr(sct = SCT_new()))
+        goto end;
+
+    if (!TEST_false(SCT_set1_log_id(sct, &short_id, sizeof(short_id)))
+        || !TEST_size_t_eq(SCT_get0_log_id(sct, &log_id), 0)
+        || !TEST_ptr_null(log_id))
+        goto end;
+
+    heap_id = OPENSSL_memdup(oversized_id, sizeof(oversized_id));
+    if (!TEST_ptr(heap_id))
+        goto end;
+    if (!TEST_false(SCT_set0_log_id(sct, heap_id, sizeof(oversized_id)))) {
+        heap_id = NULL; /* ownership transferred unexpectedly */
+        goto end;
+    }
+    OPENSSL_free(heap_id);
+    heap_id = NULL;
+
+    if (!TEST_size_t_eq(SCT_get0_log_id(sct, &log_id), 0)
+        || !TEST_ptr_null(log_id))
+        goto end;
+
+    if (!TEST_true(SCT_set1_log_id(sct, valid_id, sizeof(valid_id)))
+        || !TEST_size_t_eq(SCT_get0_log_id(sct, &log_id), sizeof(valid_id))
+        || !TEST_mem_eq(log_id, CT_V1_HASHLEN, valid_id, sizeof(valid_id))
+        || !TEST_true(SCT_set_version(sct, SCT_VERSION_V1)))
+        goto end;
+
+    if (!TEST_false(SCT_set1_log_id(sct, oversized_id, sizeof(oversized_id)))
+        || !TEST_size_t_eq(SCT_get0_log_id(sct, &log_id), sizeof(valid_id))
+        || !TEST_mem_eq(log_id, CT_V1_HASHLEN, valid_id, sizeof(valid_id)))
+        goto end;
+
+    if (!TEST_ptr(heap_id = OPENSSL_memdup(&short_id, sizeof(short_id))))
+        goto end;
+    if (!TEST_false(SCT_set0_log_id(sct, heap_id, sizeof(short_id)))) {
+        heap_id = NULL; /* ownership transferred unexpectedly */
+        goto end;
+    }
+    OPENSSL_free(heap_id);
+    heap_id = NULL;
+
+    if (!TEST_size_t_eq(SCT_get0_log_id(sct, &log_id), sizeof(valid_id))
+        || !TEST_mem_eq(log_id, CT_V1_HASHLEN, valid_id, sizeof(valid_id)))
+        goto end;
+
+    if (!TEST_true(SCT_set1_log_id(sct, NULL, 0))
+        || !TEST_size_t_eq(SCT_get0_log_id(sct, &log_id), 0)
+        || !TEST_ptr_null(log_id))
+        goto end;
+
+    result = 1;
+
+end:
+    OPENSSL_free(heap_id);
+    SCT_free(sct);
+    return result;
+}
+
+static int test_sct_log_id_length_sink_guards(void)
+{
+    SCT *sct = NULL;
+    unsigned char short_id = 0x42;
+    unsigned char sigbuf[4] = { 1, 2, 3, 4 };
+    unsigned char *out = NULL;
+    int result = 0;
+
+    if (!TEST_ptr(sct = SCT_new()))
+        goto end;
+
+    sct->log_id = OPENSSL_memdup(&short_id, sizeof(short_id));
+    if (!TEST_ptr(sct->log_id))
+        goto end;
+    sct->log_id_len = sizeof(short_id);
+
+    if (!TEST_false(SCT_set_version(sct, SCT_VERSION_V1))
+        || !TEST_int_eq(SCT_get_version(sct), SCT_VERSION_NOT_SET))
+        goto end;
+
+    /*
+     * Simulate an internal construction path that bypassed the public
+     * setters. i2o_SCT() must refuse the SCT before its fixed CT_V1_HASHLEN
+     * memcpy.
+     */
+    sct->version = SCT_VERSION_V1;
+    if (!TEST_true(SCT_set_signature_nid(sct, NID_sha256WithRSAEncryption))
+        || !TEST_true(SCT_set1_signature(sct, sigbuf, sizeof(sigbuf)))
+        || !TEST_int_eq(i2o_SCT(sct, &out), -1)
+        || !TEST_ptr_null(out))
+        goto end;
+
+    result = 1;
+
+end:
+    OPENSSL_free(out);
+    SCT_free(sct);
+    return result;
+}
 #endif
 
 int setup_tests(void)
@@ -656,6 +831,9 @@ int setup_tests(void)
     ADD_TEST(test_ctlog_store_add0_log);
     ADD_TEST(test_ctlog_store_add0_log_validates_sct);
     ADD_TEST(test_ctlog_store_add0_log_null);
+    ADD_TEST(test_ctlog_store_get0_log_by_id_length);
+    ADD_TEST(test_sct_log_id_setters_enforce_length);
+    ADD_TEST(test_sct_log_id_length_sink_guards);
 #else
     printf("No CT support\n");
 #endif
