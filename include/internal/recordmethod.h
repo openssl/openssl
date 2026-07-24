@@ -305,6 +305,11 @@ struct ossl_record_method_st {
     int (*increment_sequence_ctr)(OSSL_RECORD_LAYER *rl);
 
     /*
+     * Set the sequence number to a specific value
+     */
+    int (*set_sequence)(OSSL_RECORD_LAYER *rl, const unsigned char *sequence);
+
+    /*
      * Allocate read or write buffers. Does nothing if already allocated.
      * Assumes default buffer length and 1 pipeline.
      */

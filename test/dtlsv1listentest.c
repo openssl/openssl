@@ -13,6 +13,11 @@
 #include <openssl/err.h>
 #include <openssl/conf.h>
 #include "internal/nelem.h"
+#include "../ssl/ssl_local.h"
+#ifndef SSL_CONNECTION_FROM_SSL_ONLY
+#include "internal/ssl_unwrap.h"
+#endif
+#include "../ssl/record/methods/recmethod_local.h"
 #include "testutil.h"
 
 #ifndef OPENSSL_NO_SOCK
@@ -347,12 +352,78 @@ err:
     OPENSSL_free(peer);
     return success;
 }
+
+static int dtls_listen_write_seq_test(void)
+{
+    static const unsigned char expected_seq[SEQ_NUM_SIZE] = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02
+    };
+    unsigned char inbuf[sizeof(clienthello_cookie)];
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc = NULL;
+    BIO *outbio = NULL;
+    BIO *inbio = NULL;
+    BIO_ADDR *peer = NULL;
+    char *data;
+    long datalen;
+    int ret, success = 0;
+
+    memcpy(inbuf, clienthello_cookie, sizeof(inbuf));
+
+    /* DTLS record header bytes 3..10 are epoch and sequence number. */
+    memcpy(inbuf + 3, expected_seq, sizeof(expected_seq));
+
+    /*
+     * The ClientHello carrying the cookie is the second handshake message,
+     * following the HelloVerifyRequest.
+     */
+    inbuf[DTLS1_RT_HEADER_LENGTH + 4] = 0x00;
+    inbuf[DTLS1_RT_HEADER_LENGTH + 5] = 0x01;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
+        || !TEST_ptr(peer = BIO_ADDR_new()))
+        goto err;
+    SSL_CTX_set_cookie_generate_cb(ctx, cookie_gen);
+    SSL_CTX_set_cookie_verify_cb(ctx, cookie_verify);
+
+    if (!TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(outbio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(inbio = BIO_new_mem_buf(inbuf, sizeof(inbuf))))
+        goto err;
+
+    SSL_set0_wbio(ssl, outbio);
+    BIO_set_mem_eof_return(inbio, -1);
+    SSL_set0_rbio(ssl, inbio);
+
+    if (!TEST_int_eq(ret = DTLSv1_listen(ssl, peer), 1)
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl)))
+        goto err;
+
+    datalen = BIO_get_mem_data(outbio, &data);
+    if (!TEST_long_eq(datalen, 0)
+        || !TEST_mem_eq(sc->rlayer.wrl->sequence, SEQ_NUM_SIZE,
+            expected_seq, sizeof(expected_seq)))
+        goto err;
+
+    inbio = NULL;
+    SSL_set0_rbio(ssl, NULL);
+    success = 1;
+
+err:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    BIO_free(inbio);
+    OPENSSL_free(peer);
+    return success;
+}
 #endif
 
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_SOCK
     ADD_ALL_TESTS(dtls_listen_test, (int)OSSL_NELEM(testpackets));
+    ADD_TEST(dtls_listen_write_seq_test);
 #endif
     return 1;
 }
