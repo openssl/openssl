@@ -24,6 +24,8 @@ B<openssl> B<s_server>
 [B<-cert2> I<infile>]
 [B<-certform> B<DER>|B<PEM>|B<P12>]
 [B<-cert_chain> I<infile>]
+[B<-tai_chains> I<path>]
+[B<-tai_keys> I<path>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
@@ -226,6 +228,23 @@ certificate chain related to the certificate specified via the B<-cert> option.
 These untrusted certificates are sent to clients and used for generating
 certificate status (aka OCSP stapling) requests.
 The input can be in PEM, DER, or PKCS#12 format.
+
+=item B<-tai_chains> I<path>
+
+A PEM file, or a directory of PEM files, of trust anchor decorated certificate
+chains. Each chain is a B<CERTIFICATE PROPERTIES> block carrying a trust anchor
+ID (see L<openssl-generate_tai_chain(1)>) followed by the chain's certificates,
+leaf first. Each is installed as a credential the server serves only when the
+client requests that trust anchor in the B<trust_anchors> extension. From a
+file, the chains keep their file order, which is their preference order; from a
+directory, they are used in ascending on-the-wire size, so the smallest chain
+is preferred.
+
+=item B<-tai_keys> I<path>
+
+A PEM file, or a directory of PEM files, of private keys for the B<-tai_chains>
+certificates. Each chain's key is matched by its public key among these keys
+and any in the chain's own file.
 
 =item B<-build_chain>
 
