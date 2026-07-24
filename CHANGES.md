@@ -210,6 +210,14 @@ OpenSSL Releases
 
    *Tim Perry*
 
+ * Added optional external session ID collision callbacks via
+   `SSL_CTX_set_session_id_collision_cb()` and
+   `SSL_set_session_id_collision_cb()` to allow applications using external
+   session caches to check for resumable session ID collisions during session
+   ID generation.
+
+   *Amit N.*
+
  * Dropped `no-ecdsa` and `no-ecdh` options from `Configure` as these options
    did not really disable the implementations. Use `no-ec` to disable the
    elliptic curve support.
