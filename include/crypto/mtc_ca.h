@@ -37,6 +37,7 @@
 #include <stdint.h>
 
 #include <openssl/crypto.h>
+#include <openssl/mtc.h>
 #include <openssl/safestack.h>
 #include <openssl/types.h>
 
@@ -144,7 +145,7 @@ struct ossl_mtc_ca_st {
     size_t revoked_count;
     STACK_OF(OSSL_MTC_LOG) *logs; /**< issuance logs, sorted by log number (5.2) */
 };
-DEFINE_STACK_OF(OSSL_MTC_CA)
+/* STACK_OF(OSSL_MTC_CA) is declared publicly in <openssl/mtc.h>. */
 
 /**
  * @brief Create a trusted Merkle Tree CA record from its configured fields.
@@ -329,18 +330,9 @@ EVP_PKEY *ossl_mtc_ca_cosigner_pkey(const OSSL_MTC_CA *ca);
  * A set of trusted MTC CAs is a STACK_OF(OSSL_MTC_CA) kept sorted by CA ID for
  * binary-search lookup.  The stack holds *borrowed* references: it does not own
  * the CAs (the application owns them and must keep them alive).  Create it with
- * sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp) and free it with sk_OSSL_MTC_CA_free(),
+ * sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp) and free it with sk_OSSL_MTC_CA_free(),
  * which frees the container, not the CAs.
  */
-
-/**
- * @brief Order two trusted MTC CAs by CA ID; the comparison function for a
- * sorted stack of them.
- * @param a, b the CAs to compare
- * @returns <0, 0 or >0 ordering a before, with, or after b by CA ID: shorter
- *          first, then lexicographic.
- */
-int ossl_mtc_ca_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b);
 
 /**
  * @brief Add a trusted CA to a stack, keeping it sorted by CA ID.

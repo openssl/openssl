@@ -612,7 +612,7 @@ int X509_STORE_trust_mtc_ca(X509_STORE *store, OSSL_MTC_CA *ca)
     if (!X509_STORE_lock(store))
         return 0;
     if (store->mtc_cas == NULL
-        && (store->mtc_cas = sk_OSSL_MTC_CA_new(ossl_mtc_ca_cmp)) == NULL)
+        && (store->mtc_cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)) == NULL)
         goto out;
     ret = ossl_mtc_ca_stack_add(store->mtc_cas, ca);
 out:

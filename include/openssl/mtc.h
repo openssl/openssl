@@ -24,12 +24,22 @@ extern "C" {
  * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
  */
 
+DEFINE_STACK_OF(OSSL_MTC_CA)
+
 /**
  * @brief Create a trusted Merkle Tree Certificate CA from configured fields.
  * @see OSSL_MTC_CA_new(3), OSSL_MTC_CA_free(3)
  */
 OSSL_MTC_CA *OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len,
     const EVP_MD *hash, uint64_t min_serial, EVP_PKEY *cosigner_pkey);
+
+/**
+ * @brief Parse PEM certificates representing Merkle Tree Certificate CAs into
+ * trusted CA objects.
+ * @see OSSL_MTC_CA_parse_certificates(3)
+ */
+int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
+    BIO *in, STACK_OF(OSSL_MTC_CA) *out_cas);
 
 /**
  * @brief Free a trusted Merkle Tree Certificate CA.
@@ -49,6 +59,20 @@ int OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca, const uint8_t *id, size_t id_len,
  * @see OSSL_MTC_CA_add_revoked_range(3)
  */
 int OSSL_MTC_CA_add_revoked_range(OSSL_MTC_CA *ca, uint64_t start, uint64_t end);
+
+/**
+ * @brief Order two trusted MTC CAs by CA ID; the comparison function for a
+ * sorted stack of them.
+ * @see OSSL_MTC_CA_cmp(3)
+ */
+int OSSL_MTC_CA_cmp(const OSSL_MTC_CA *const *a, const OSSL_MTC_CA *const *b);
+
+/**
+ * @brief Find a trusted MTC CA in a stack by its CA ID.
+ * @see OSSL_MTC_CA_find(3)
+ */
+OSSL_MTC_CA *OSSL_MTC_CA_find(STACK_OF(OSSL_MTC_CA) *cas, const uint8_t *ca_id,
+    size_t ca_id_len, const char *ca_id_str);
 
 /**
  * @brief Replace an issuance log's active landmark window from a published

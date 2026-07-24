@@ -3,11 +3,14 @@
 =head1 NAME
 
 OSSL_MTC_CA_new,
+OSSL_MTC_CA_parse_certificates,
 OSSL_MTC_CA_free,
 OSSL_MTC_CA_add1_cosigner,
 OSSL_MTC_CA_add_revoked_range,
 OSSL_MTC_CA_set_max_serial,
 OSSL_MTC_CA_get0_id,
+OSSL_MTC_CA_cmp,
+OSSL_MTC_CA_find,
 OSSL_MTC_serial
 - configure a trusted Merkle Tree Certificate CA
 
@@ -18,6 +21,8 @@ OSSL_MTC_serial
  OSSL_MTC_CA *OSSL_MTC_CA_new(const uint8_t *ca_id, size_t ca_id_len,
                               const EVP_MD *hash,
                               uint64_t min_serial, EVP_PKEY *cosigner_pkey);
+ int OSSL_MTC_CA_parse_certificates(OSSL_LIB_CTX *libctx, const char *propq,
+                                    BIO *in, STACK_OF(OSSL_MTC_CA) *out_cas);
  void OSSL_MTC_CA_free(OSSL_MTC_CA *ca);
 
  int OSSL_MTC_CA_add1_cosigner(OSSL_MTC_CA *ca,
@@ -29,6 +34,12 @@ OSSL_MTC_serial
 
  int OSSL_MTC_CA_get0_id(const OSSL_MTC_CA *ca,
                          const uint8_t **out_id, size_t *out_id_len);
+
+ int OSSL_MTC_CA_cmp(const OSSL_MTC_CA *const *a,
+                     const OSSL_MTC_CA *const *b);
+ OSSL_MTC_CA *OSSL_MTC_CA_find(STACK_OF(OSSL_MTC_CA) *cas,
+                               const uint8_t *ca_id, size_t ca_id_len,
+                               const char *ca_id_str);
 
  uint64_t OSSL_MTC_serial(uint16_t log_number, uint64_t index);
 
@@ -51,6 +62,23 @@ lowest serial number the CA will accept; the range [0, I<min_serial>) is revoked
 by implication. The I<ca_id> bytes are copied and additional references are
 held on I<hash> and I<cosigner_pkey>; the caller retains ownership of its
 inputs.
+
+OSSL_MTC_CA_parse_certificates() reads PEM certificates from the B<BIO> I<in>,
+each representing a CA as described in section 5.5 of the draft, and appends a
+configured B<OSSL_MTC_CA> for each to I<out_cas>. It uses the experimental
+encoding: the CA identifier is a subject attribute (1.3.6.1.4.1.44363.47.3)
+whose value is a relative object identifier, and the cosigner signature
+algorithm and serial-number bounds are taken from the
+id-pe-mtcCertificationAuthority-SHA256 extension (1.3.6.1.4.1.44363.47.4),
+which must be marked critical and whose identifier also fixes the hash
+algorithm to SHA-256. Both serial-number bounds must be at least 2^48 and the
+lower no greater than the upper. The cosigner public key is the certificate's
+subject public key. Only these static parameters come from the certificate;
+trusted subtrees and additional cosigners are configured separately. I<libctx>
+and I<propq> are used to decode the certificates and to fetch the SHA-256
+implementation, and either may be NULL to select the defaults. The call is
+all-or-nothing: on any failure no CAs are added to I<out_cas>. The caller owns
+the CAs added to I<out_cas> and must free each with OSSL_MTC_CA_free().
 
 OSSL_MTC_CA_free() frees I<ca>. If I<ca> is NULL, nothing is done.
 
@@ -79,6 +107,16 @@ OSSL_MTC_CA_get0_id() stores in I<*out_id> a pointer to the CA identifier bytes
 and in I<*out_id_len> their length. The pointer is owned by I<ca>, remains valid
 only for as long as I<ca> is, and must not be freed by the caller.
 
+OSSL_MTC_CA_cmp() orders two trusted CAs by their CA IDs. It is the comparison
+function for a sorted stack of them, so a stack passed to OSSL_MTC_CA_find()
+must be created with it, as in C<sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp)>.
+
+OSSL_MTC_CA_find() returns the CA in I<cas> with the requested CA ID. If
+I<ca_id_str> is non-NULL it gives the CA ID as a NUL-terminated dotted-decimal
+string (for example C<"32473.1">); otherwise I<ca_id> of length I<ca_id_len>
+gives it in wire form. The returned CA is borrowed from I<cas> and must not be
+freed.
+
 OSSL_MTC_serial() is a convenience function that returns the serial number
 formed from issuance log number I<log_number> and zero-based log index
 I<index>, that is
@@ -106,11 +144,18 @@ of the CA; a CA must not be freed while another thread may still be using it.
 
 OSSL_MTC_CA_new() returns the new CA, or NULL on error.
 
+OSSL_MTC_CA_parse_certificates() returns 1 on success and 0 on error.
+
 OSSL_MTC_CA_free() does not return a value.
 
 OSSL_MTC_CA_add1_cosigner(), OSSL_MTC_CA_add_revoked_range(),
 OSSL_MTC_CA_set_max_serial(), and OSSL_MTC_CA_get0_id() return 1 on success and
 0 on error.
+
+OSSL_MTC_CA_cmp() returns a negative value, zero, or a positive value according
+as the CA I<a> sorts before, with, or after the CA I<b>.
+
+OSSL_MTC_CA_find() returns the matching CA, or NULL if none matches.
 
 OSSL_MTC_serial() returns the computed serial number.
 
@@ -151,10 +196,56 @@ C<81 fd 59 00> is 32473.0.
  err:
     OSSL_MTC_CA_free(ca);
 
+Load every MTC CA certificate in a directory and add the CAs to an
+B<X509_STORE>, skipping any file that does not parse with a warning naming the
+file and the reason.  L<X509_STORE_trust_mtc_ca(3)> borrows the CA objects
+rather than taking ownership, which lets the same CAs be shared across several
+stores or other contexts; the stack returned here must therefore outlive every
+store that uses them, and the CAs are freed only once nothing borrows them.
+
+    STACK_OF(OSSL_MTC_CA) *cas = sk_OSSL_MTC_CA_new(OSSL_MTC_CA_cmp);
+    const char *cadir = "/some/where/mtc-cas";
+    char path[PATH_MAX];
+    struct dirent *ent;
+    DIR *dir;
+    int i;
+
+    dir = opendir(cadir);
+    while ((ent = readdir(dir)) != NULL) {
+        BIO *in;
+
+        if (ent->d_name[0] == '.')
+            continue;
+        snprintf(path, sizeof(path), "%s/%s", cadir, ent->d_name);
+        in = BIO_new_file(path, "r");
+        if (in == NULL
+                || !OSSL_MTC_CA_parse_certificates(libctx, NULL, in, cas))
+            fprintf(stderr, "skipping CA file %s: %s\n", path,
+                    ERR_reason_error_string(ERR_get_error()));
+        ERR_clear_error();
+        BIO_free(in);
+    }
+    closedir(dir);
+
+    /* The store borrows each CA, so cas must outlive store. */
+    for (i = 0; i < sk_OSSL_MTC_CA_num(cas); i++)
+        X509_STORE_trust_mtc_ca(store, sk_OSSL_MTC_CA_value(cas, i));
+
+    /* ... use store for certificate verification ... */
+
+    X509_STORE_free(store);
+
+    /*
+     * Freeing this store does not free the CAs: they were only borrowed, and
+     * other stores or contexts may still be using them.  Free the CAs only
+     * once nothing borrows them any longer.
+     */
+    sk_OSSL_MTC_CA_pop_free(cas, OSSL_MTC_CA_free);
+
 =head1 SEE ALSO
 
 L<EVP_PKEY(3)>, L<EVP_MD_fetch(3)>, L<OSSL_LIB_CTX(3)>, L<property(7)>,
-L<OSSL_MTC_CA_load_landmarks(3)>
+L<OSSL_MTC_CA_load_landmarks(3)>, L<X509_STORE_trust_mtc_ca(3)>
 
 The Merkle Tree Certificates draft:
 L<https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/>

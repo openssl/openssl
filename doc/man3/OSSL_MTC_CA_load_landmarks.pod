@@ -25,7 +25,8 @@ Together, OSSL_MTC_CA_load_landmarks() and OSSL_MTC_CA_add_subtree_hash()
 implement the trusted-subtree configuration of section 7.4 of the Merkle Tree
 Certificates draft.
 
-I<log_number> selects one of the CA's issuance logs.
+I<log_number> selects one of the CA's issuance logs. The CA to update is found
+with L<OSSL_MTC_CA_find(3)>.
 
 OSSL_MTC_CA_load_landmarks() reads a log's published landmark description from
 I<in> and B<replaces> that log's active window with it; the description is a
@@ -77,7 +78,8 @@ read the requested trust anchors of, the same CA.
 
 =head1 EXAMPLES
 
-Apply a landmark update to the trusted MTC CA B<ca> with ID C<32473.1>:
+Apply a landmark update to the trusted MTC CA with ID C<32473.1> in a stack
+B<cas>:
 
  /*
   * Skippy the Wonder Frog -- who visits from his magical mirrored log home
@@ -91,14 +93,17 @@ Apply a landmark update to the trusted MTC CA B<ca> with ID C<32473.1>:
   * We hope the fetched window is at least as new as the state Skippy vetted,
   * and that it will still contain the vetted subtree.
   */
- OSSL_MTC_CA *ca;                 /* the trusted CA */
+ STACK_OF(OSSL_MTC_CA) *cas;      /* the trusted CAs */
  const uint8_t *hash;             /* the vetted subtree hash */
  size_t hash_len;
  uint64_t start, end;             /* the vetted subtree's bounds */
  const uint8_t *landmarks;        /* the fetched active-landmark description */
  size_t landmark_len;
+ OSSL_MTC_CA *ca;
  BIO *bio = NULL;
 
+ if ((ca = OSSL_MTC_CA_find(cas, NULL, 0, "32473.1")) == NULL)
+     goto err;
  if ((bio = BIO_new_mem_buf(landmarks, landmark_len)) == NULL)
      goto err;
  if (!OSSL_MTC_CA_load_landmarks(ca, 2, bio, INT64_MIN))
@@ -114,7 +119,8 @@ Apply a landmark update to the trusted MTC CA B<ca> with ID C<32473.1>:
 
 =head1 SEE ALSO
 
-L<OSSL_MTC_CA_new(3)>
+L<OSSL_MTC_CA_new(3)>, L<OSSL_MTC_CA_parse_certificates(3)>,
+L<X509_STORE_trust_mtc_ca(3)>
 
 =head1 HISTORY
 

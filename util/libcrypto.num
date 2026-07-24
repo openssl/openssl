@@ -5775,3 +5775,6 @@ OSSL_PROOF_OUTPUT_get0_x509_chain       ?	4_2_0	EXIST::FUNCTION:
 OSSL_PROOF_OUTPUT_get0_x509_peername    ?	4_2_0	EXIST::FUNCTION:
 OSSL_PROOF_OUTPUT_get0_x509_policy_tree ?	4_2_0	EXIST::FUNCTION:
 OSSL_MTC_CA_set_max_serial              ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_parse_certificates          ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_cmp                         ?	4_2_0	EXIST::FUNCTION:
+OSSL_MTC_CA_find                        ?	4_2_0	EXIST::FUNCTION:
