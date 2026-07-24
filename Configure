@@ -2655,7 +2655,7 @@ if ($builder eq "unified") {
                 # $i = full module path in source directory
                 # $i2 = full module path in build directory
                 my $i; my $i2; my $m; my $d; my $d2;
-                if ($unified_info{generate}->{$ddest}
+                if (($unified_info{generate}->{$ddest} || $generate{$dest})
                     && $f =~ m/^(.*?)\|(.*)$/) {
                     $i = $1;
                     $m = $2;
