@@ -14,30 +14,56 @@
  * sections 3.8 and 4.2 in http://security.ece.orst.edu/koc/papers/r01rsasw.pdf
  */
 
+/* TODO(FIXNUM): functions in this file are currently not constant-time */
+
 #include "crypto/fn.h"
 #include "crypto/bn.h"
 #include "internal/safe_math.h"
 #include "fn_local.h"
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
+OSSL_SAFE_MATH_MULU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
+OSSL_SAFE_MATH_MULS(int, int, OSSL_SAFE_MATH_MINS(int), OSSL_SAFE_MATH_MAXS(int))
 
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod)
 {
     size_t i, j;
+    int err = 0;
 
     if (mod == NULL || mod->dsize <= 0 || (mod->d[0] & OSSL_FN_ULONG_C(1)) == 0)
         return NULL;
 
-    size_t mod_size = sizeof(OSSL_FN) + mod->dsize * sizeof(OSSL_FN_ULONG);
-    size_t ctx_size = sizeof(OSSL_FN_MONT_CTX) + 2 * mod_size;
-    OSSL_FN_MONT_CTX *ctx = OPENSSL_zalloc(ctx_size);
+    size_t mod_size = safe_mul_size_t(mod->dsize, sizeof(OSSL_FN_ULONG), &err);
+    mod_size = safe_add_size_t(mod_size, sizeof(OSSL_FN), &err);
+    size_t ctx_size = safe_mul_size_t(2, mod_size, &err);
+    ctx_size = safe_add_size_t(ctx_size, sizeof(OSSL_FN_MONT_CTX), &err);
+    int ri = safe_mul_int(mod->dsize, OSSL_FN_BYTES * 8, &err);
+    if (err)
+        return NULL;
+    OSSL_FN_MONT_CTX *ctx;
+    if (mod->is_securely_allocated)
+        ctx = OPENSSL_secure_zalloc(ctx_size);
+    else
+        ctx = OPENSSL_zalloc(ctx_size);
     if (ctx == NULL)
         return NULL;
+    ctx->is_securely_allocated = mod->is_securely_allocated;
 
-    ctx->ri = mod->dsize * OSSL_FN_BYTES * 8;
+    /*
+     * OSSL_FN embeds a flexible array member of type OSSL_FN_ULONG, so its
+     * alignment is at least alignof(OSSL_FN_ULONG) and sizeof(OSSL_FN) is
+     * therefore a multiple of sizeof(OSSL_FN_ULONG).
+     * Hence mod_size is an exact multiple of sizeof(OSSL_FN_ULONG),
+     * so the RR offset below (mod_size / sizeof(OSSL_FN_ULONG)) divides evenly
+     * and the N and RR sub-blocks never overlap.
+     */
     OSSL_FN *N = (OSSL_FN *)ctx->memory;
     OSSL_FN *RR = (OSSL_FN *)(ctx->memory + mod_size / sizeof(OSSL_FN_ULONG));
     N->dsize = RR->dsize = mod->dsize;
+    ctx->N = N;
+    ctx->RR = RR;
+
+    ctx->ri = ri;
 
     uint64_t tmod; /* The lower 64 bits of the module */
     if (ossl_unlikely(mod->dsize == 1))
@@ -66,6 +92,10 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod)
 #error "OpenSSL doesn't support large numbers on this platform"
 #endif
 
+    /*
+     * There is no need to use safe_mul_size_t() here,
+     * the absence of overflow was checked when calculating mod_size.
+     */
     memcpy(N->d, mod->d, mod->dsize * sizeof(OSSL_FN_ULONG));
 
     size_t mod_len = OSSL_FN_num_bits(mod);
@@ -91,16 +121,21 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod)
         OSSL_FN_sub(RR, RR, mod);
     }
 
-    ctx->N = N;
-    ctx->RR = RR;
-
     return ctx;
 }
 
 void OSSL_FN_MONT_CTX_free(OSSL_FN_MONT_CTX *ctx)
 {
-    if (ctx != NULL)
+    if (ctx == NULL)
+        return;
+
+    if (ctx->is_securely_allocated) {
+        size_t mod_size = sizeof(OSSL_FN) + ctx->N->dsize * sizeof(OSSL_FN_ULONG);
+        size_t ctx_size = sizeof(OSSL_FN_MONT_CTX) + 2 * mod_size;
+        OPENSSL_secure_clear_free(ctx, ctx_size);
+    } else {
         OPENSSL_free(ctx);
+    }
 }
 
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx)
@@ -109,15 +144,16 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_dup(OSSL_FN_MONT_CTX *ctx)
         return NULL;
     size_t mod_size = sizeof(OSSL_FN) + ctx->N->dsize * sizeof(OSSL_FN_ULONG);
     size_t ctx_size = sizeof(OSSL_FN_MONT_CTX) + 2 * mod_size;
-    OSSL_FN_MONT_CTX *ret = OPENSSL_zalloc(ctx_size);
+    OSSL_FN_MONT_CTX *ret;
+    if (ctx->is_securely_allocated)
+        ret = OPENSSL_secure_malloc(ctx_size);
+    else
+        ret = OPENSSL_malloc(ctx_size);
     if (ret == NULL)
         return NULL;
+    memcpy(ret, ctx, ctx_size);
     ret->N = (OSSL_FN *)ret->memory;
     ret->RR = (OSSL_FN *)(ret->memory + mod_size / sizeof(OSSL_FN_ULONG));
-
-    ret->ri = ctx->ri;
-    memcpy(ret->n0, ctx->n0, 2 * sizeof(OSSL_FN_ULONG));
-    memcpy(ret->memory, ctx->memory, 2 * mod_size);
     return ret;
 }
 
@@ -155,7 +191,7 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     if (token == NULL)
         return 0;
 
-    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, len + 2);
+    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, (size_t)len + 2);
     if (T == NULL)
         goto end;
     OSSL_FN_clear(T);
@@ -215,6 +251,9 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
 
     if (r != NULL && r->dsize != len)
         num++;
+
+    if (ossl_unlikely(num > 0 && (size_t)len > SIZE_MAX / num))
+        return 0;
 
     tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
     if (tmp > ret)
@@ -300,6 +339,9 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     if (r != NULL && r->dsize != len)
         num++;
 
+    if (ossl_unlikely(num > 0 && (size_t)len > SIZE_MAX / num))
+        return 0;
+
     tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
     if (tmp > ret)
         ret = tmp;
@@ -345,7 +387,7 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
     if (token == NULL)
         return 0;
 
-    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, len + 2);
+    OSSL_FN *T = OSSL_FN_CTX_get_limbs(ctx, (size_t)len + 2);
     if (T == NULL)
         goto end;
 
