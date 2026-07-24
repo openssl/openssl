@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,6 +8,7 @@
  */
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "internal/cryptlib.h"
 #include <openssl/objects.h>
 #include <openssl/x509.h>
@@ -22,7 +23,41 @@
 
 #define NAME_ONELINE_MAX (1024 * 1024)
 
-char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
+#ifndef CHARSET_EBCDIC
+# define NAME_ONELINE_DEL 127
+#else
+# define NAME_ONELINE_DEL 7
+#endif
+
+/*
+ * Return 1 if the process locale codeset appears to be UTF-8.
+ * Inspect LC_ALL, then LC_CTYPE, then LANG (first one that is set wins).
+ */
+static int name_oneline_locale_is_utf8(void)
+{
+    static const char *const env_vars[] = {
+        "LC_ALL", "LC_CTYPE", "LANG", NULL
+    };
+    const char *const *var;
+
+    for (var = env_vars; *var != NULL; var++) {
+        const char *val = getenv(*var);
+
+        if (val != NULL)
+            return HAS_CASE_SUFFIX(val, ".UTF-8")
+                || HAS_CASE_SUFFIX(val, ".utf8");
+    }
+    return 0;
+}
+
+/*
+ * Print X509_NAME |a| into |buf|.
+ * If |escape_non_ascii| is non-zero, bytes outside the printable ASCII range
+ * are hex-escaped.  If it is zero, UTF8String values keep non-ASCII UTF-8
+ * bytes unescaped (control characters and DEL are still escaped).
+ */
+static char *x509_name_oneline_int(const X509_NAME *a, char *buf, int len,
+                                   int escape_non_ascii)
 {
     const X509_NAME_ENTRY *ne;
     int i;
@@ -61,6 +96,8 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     len--; /* space for '\0' */
     l = 0;
     for (i = 0; i < sk_X509_NAME_ENTRY_num(a->entries); i++) {
+        int do_escape = escape_non_ascii;
+
         ne = sk_X509_NAME_ENTRY_value(a->entries, i);
         n = OBJ_obj2nid(ne->object);
         if ((n == NID_undef) || ((s = OBJ_nid2sn(n)) == NULL)) {
@@ -70,6 +107,10 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         l1 = (int)strlen(s);
 
         type = ne->value->type;
+        /* Only UTF8String may keep non-ASCII bytes unescaped. */
+        if (!do_escape && type != V_ASN1_UTF8STRING)
+            do_escape = 1;
+
         num = ne->value->length;
         if (num > NAME_ONELINE_MAX) {
             ERR_raise(ERR_LIB_X509, X509_R_NAME_TOO_LONG);
@@ -77,7 +118,11 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
         }
         q = ne->value->data;
 #ifdef CHARSET_EBCDIC
-        if (type == V_ASN1_GENERALSTRING || type == V_ASN1_VISIBLESTRING || type == V_ASN1_PRINTABLESTRING || type == V_ASN1_TELETEXSTRING || type == V_ASN1_IA5STRING) {
+        if (type == V_ASN1_GENERALSTRING ||
+            type == V_ASN1_VISIBLESTRING ||
+            type == V_ASN1_PRINTABLESTRING ||
+            type == V_ASN1_TELETEXSTRING ||
+            type == V_ASN1_IA5STRING) {
             if (num > (int)sizeof(ebcdic_buf))
                 num = sizeof(ebcdic_buf);
             ascii2ebcdic(ebcdic_buf, q, num);
@@ -97,8 +142,9 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 gs_doit[0] = gs_doit[1] = gs_doit[2] = 0;
                 gs_doit[3] = 1;
             }
-        } else
+        } else {
             gs_doit[0] = gs_doit[1] = gs_doit[2] = gs_doit[3] = 1;
+        }
 
         for (l2 = j = 0; j < num; j++) {
             if (!gs_doit[j & 3])
@@ -106,7 +152,10 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             l2++;
             if (q[j] == '/' || q[j] == '+')
                 l2++; /* char needs to be escaped */
-            else if ((ossl_toascii(q[j]) < ossl_toascii(' ')) || (ossl_toascii(q[j]) > ossl_toascii('~')))
+            else if (ossl_toascii(q[j]) < ossl_toascii(' ') ||
+                     ossl_toascii(q[j]) == ossl_toascii(NAME_ONELINE_DEL) ||
+                     (do_escape &&
+                      ossl_toascii(q[j]) > ossl_toascii('~')))
                 l2 += 3;
         }
 
@@ -122,10 +171,11 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
             p = &(b->data[lold]);
         } else if (l > len) {
             break;
-        } else
+        } else {
             p = &(buf[lold]);
+        }
         *(p++) = prev_set == ne->set ? '+' : '/';
-        memcpy(p, s, (unsigned int)l1);
+        memcpy(p, s, (size_t)l1);
         p += l1;
         *(p++) = '=';
 
@@ -138,18 +188,20 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
                 continue;
 #ifndef CHARSET_EBCDIC
             n = q[j];
-            if ((n < ' ') || (n > '~')) {
+            if (n < ' ' || n == NAME_ONELINE_DEL ||
+                (do_escape && n > '~')) {
                 *(p++) = '\\';
                 *(p++) = 'x';
                 p += ossl_to_hex(p, n);
             } else {
                 if (n == '/' || n == '+')
                     *(p++) = '\\';
-                *(p++) = n;
+                *(p++) = (char)n;
             }
 #else
             n = os_toascii[q[j]];
-            if ((n < os_toascii[' ']) || (n > os_toascii['~'])) {
+            if (n < os_toascii[' '] || n == os_toascii[NAME_ONELINE_DEL] ||
+                (do_escape && n > os_toascii['~'])) {
                 *(p++) = '\\';
                 *(p++) = 'x';
                 p += ossl_to_hex(p, n);
@@ -166,8 +218,9 @@ char *X509_NAME_oneline(const X509_NAME *a, char *buf, int len)
     if (b != NULL) {
         p = b->data;
         OPENSSL_free(b);
-    } else
+    } else {
         p = buf;
+    }
     if (i == 0)
         *p = '\0';
     return p;
@@ -176,4 +229,19 @@ buferr:
 end:
     BUF_MEM_free(b);
     return NULL;
+}
+
+char *X509_NAME_oneline(const X509_NAME *a, char *buf, int size)
+{
+    return x509_name_oneline_int(a, buf, size, 1);
+}
+
+/*
+ * Like X509_NAME_oneline(), but when the locale codeset is UTF-8, do not
+ * hex-escape non-ASCII bytes in UTF8String NAME entries.
+ */
+char *X509_NAME_oneline_for_locale(const X509_NAME *a, char *buf, int size)
+{
+    return x509_name_oneline_int(a, buf, size,
+                                 name_oneline_locale_is_utf8() ? 0 : 1);
 }

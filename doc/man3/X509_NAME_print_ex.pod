@@ -3,7 +3,7 @@
 =head1 NAME
 
 X509_NAME_print_ex, X509_NAME_print_ex_fp, X509_NAME_print,
-X509_NAME_oneline - X509_NAME printing routines
+X509_NAME_oneline, X509_NAME_oneline_for_locale - X509_NAME printing routines
 
 =head1 SYNOPSIS
 
@@ -14,6 +14,7 @@ X509_NAME_oneline - X509_NAME printing routines
  int X509_NAME_print_ex_fp(FILE *fp, const X509_NAME *nm,
                            int indent, unsigned long flags);
  char *X509_NAME_oneline(const X509_NAME *a, char *buf, int size);
+ char *X509_NAME_oneline_for_locale(const X509_NAME *a, char *buf, int size);
  int X509_NAME_print(BIO *bp, const X509_NAME *name, int obase);
 
 =head1 DESCRIPTION
@@ -27,17 +28,24 @@ except the output is written to FILE pointer I<fp>.
 
 X509_NAME_oneline() prints an ASCII version of I<a> to I<buf>.
 This supports multi-valued RDNs and escapes B</> and B<+> characters in values.
+Non-ASCII bytes are always hex-escaped.
 If I<buf> is B<NULL> then a buffer is dynamically allocated and returned, and
 I<size> is ignored.
 Otherwise, at most I<size> bytes will be written, including the ending '\0',
 and I<buf> is returned.
+
+X509_NAME_oneline_for_locale() behaves like X509_NAME_oneline(), except that
+when the process locale codeset is UTF-8 (as indicated by B<LC_ALL>,
+B<LC_CTYPE> or B<LANG> ending in C<.UTF-8> or C<.utf8>) and a NAME entry
+value is of type UTF8String, non-ASCII UTF-8 bytes are not hex-escaped.
 
 X509_NAME_print() prints out I<name> to I<bp> on a single line.
 The I<obase> parameter is ignored and retained only for API compatibility.
 
 =head1 NOTES
 
-The functions X509_NAME_oneline() and X509_NAME_print()
+The functions X509_NAME_oneline(), X509_NAME_oneline_for_locale() and
+X509_NAME_print()
 produce a non standard output form, they don't handle multi-character fields and
 have various quirks and inconsistencies.
 Their use is strongly discouraged in new applications and they could
@@ -107,7 +115,8 @@ in fact it calls X509_NAME_print() internally.
 
 =head1 RETURN VALUES
 
-X509_NAME_oneline() returns a valid string on success or NULL on error.
+X509_NAME_oneline() and X509_NAME_oneline_for_locale() return a valid string on
+success or NULL on error.
 
 X509_NAME_print() returns 1 on success or 0 on error.
 
@@ -119,9 +128,13 @@ Otherwise, it returns -1 on error or other values on success.
 
 L<ASN1_STRING_print_ex(3)>
 
+=head1 HISTORY
+
+X509_NAME_oneline_for_locale() was added in OpenSSL 4.1.0.
+
 =head1 COPYRIGHT
 
-Copyright 2002-2020 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
