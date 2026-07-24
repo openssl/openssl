@@ -157,6 +157,7 @@ jobs:
             #   crypto/chacha/chacha_riscv.c (with ZVKB)
             #   crypto/modes/gcm128.c (with ZVKG/ZVKB)
             #   crypto/sm3/asm/sm3-riscv64-zvksh.pl
+            #   crypto/sm4/asm/sm4-riscv64-zvbb-zvkg-zvksed.pl
             #   crypto/sm4/asm/sm4-riscv64-zvksed.pl
             #   crypto/aes/asm/aes-riscv64-zvbb-zvkg-zvkned.pl
             #   crypto/aes/asm/aes-riscv64-zvkb-zvkned.pl
@@ -172,6 +173,19 @@ jobs:
             qemucpu: "rv64,zba=true,zbb=true,zbc=true,zbs=true,zbkb=true,zbkc=true,zbkx=true,zknd=true,zkne=true,zknh=true,zksed=true,zksh=true,zkr=true,zkt=true,v=true,vlen=128,zvbb=true,zvbc=true,zvkb=true,zvkg=true,zvkned=true,zvknha=true,zvknhb=true,zvksed=true,zvksh=true",
             opensslcapsname: riscvcap, # OPENSSL_riscvcap
             opensslcaps: "rv64gc_zba_zbb_zbc_zbs_zbkb_zbkc_zbkx_zknd_zkne_zknh_zksed_zksh_zkr_zkt_v_zvbb_zvbc_zvkb_zvkg_zvkned_zvknha_zvknhb_zvksed_zvksh"
+          }, {
+            # RV64GC with ZVKB and ZVKSED 
+            #   crypto/sm4/asm/sm4-riscv64-zvksed.pl
+            arch: riscv64-linux-gnu,
+            libs: libc6-dev-riscv64-cross,
+            target: linux64-riscv64,
+            fips: no,
+            # do not use zvkb flag for qemucpu as ubuntu-latest (24.04) uses QEMU 8.2.2
+            # see https://lists.nongnu.org/archive/html/qemu-devel/2024-05/msg02231.html
+            # Should be zvkb=true,zvksed=true
+            qemucpu: "rv64,v=true,vlen=128,zvbb=true,zvksed=true",
+            opensslcapsname: riscvcap, # OPENSSL_riscvcap
+            opensslcaps: "rv64gc_zvkb_zvksed"
           }, {
             # RV64GC with all currently OpenSSL-supported extensions, with zvl256
             #   crypto/sha/asm/sha512-riscv64-zvkb-zvknhb.pl
