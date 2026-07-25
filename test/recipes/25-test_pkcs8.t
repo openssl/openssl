@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips is_nofips/;
 
 setup("test_pkcs8");
 
-plan tests => 19;
+plan tests => 20;
 
 my $pc5_key = srctop_file('test', 'certs', 'pc5-key.pem');
 
@@ -158,6 +158,23 @@ subtest 'PKCS#8 DER inform/outform round trip' => sub {
                 '-inform', 'DER', '-in', 'p8-enc.der',
                 '-out', 'p8-dec.pem', '-passin', 'pass:password'])),
        "read encrypted PKCS#8 from DER form");
+};
+
+subtest 'PKCS#8 -nocrypt reads an unencrypted PKCS#8 PEM' => sub {
+    plan tests => 3;
+
+    # Write an unencrypted PKCS#8 (PrivateKeyInfo) in PEM form.
+    my $p8_pem = 'p8-nocrypt-pem.pem';
+    ok(run(app(['openssl', 'pkcs8', '-topk8', '-nocrypt',
+                '-in', $pc5_key, '-out', $p8_pem])),
+       "write unencrypted PKCS#8 in PEM form");
+    # Read it back with -nocrypt from PEM (the default input format).
+    my $recovered = 'p8-nocrypt-pem-read.pem';
+    ok(run(app(['openssl', 'pkcs8', '-nocrypt',
+                '-in', $p8_pem, '-out', $recovered])),
+       "read unencrypted PKCS#8 from PEM form");
+    is(compare_text($pc5_key, $recovered), 0,
+       "recovered key matches the original");
 };
 
 SKIP: {
