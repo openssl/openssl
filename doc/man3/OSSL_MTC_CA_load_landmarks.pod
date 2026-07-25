@@ -20,7 +20,7 @@ OSSL_MTC_CA_load_landmarks, OSSL_MTC_CA_add_subtree_hash
 
 These functions keep a trusted Merkle Tree Certificate CA current with the
 landmark information published for its issuance logs, so that landmark-relative
-certificates can be accepted.
+certificates can be accepted and requested by trust anchor identifier group.
 Together, OSSL_MTC_CA_load_landmarks() and OSSL_MTC_CA_add_subtree_hash()
 implement the trusted-subtree configuration of section 7.4 of the Merkle Tree
 Certificates draft.
@@ -58,6 +58,12 @@ active window, and I<hash_len> must equal the output length of the log's hash
 algorithm. A subtree's hash is immutable once set: supplying the value it already
 holds succeeds and changes nothing, but supplying a different value fails. The
 bytes of I<hash> are copied.
+
+Once these functions have added a landmark subtree with a verified hash to a CA,
+any TLS handshake subsequently performed with an X509_STORE that trusts the CA
+will by default send the correct trust anchor identifier group in the
+B<trust_anchors> extension, requesting the corresponding landmark-relative
+certificates.
 
 =head1 RETURN VALUES
 

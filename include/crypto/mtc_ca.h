@@ -41,6 +41,8 @@
 #include <openssl/safestack.h>
 #include <openssl/types.h>
 
+#include "internal/packet.h"
+
 /**
  * @struct ossl_mtc_cosigner_st
  * @brief A configured cosigner: a (cosigner ID, public key) pair with its
@@ -98,6 +100,13 @@ typedef struct ossl_mtc_trusted_subtree_st {
 DEFINE_STACK_OF(OSSL_MTC_TRUSTED_SUBTREE)
 
 /**
+ * The largest CA ID whose advertised trust anchor IDs always fit their u8
+ * length prefix: a landmark group ID appends three relative-OID components of
+ * at most ten bytes each to the CA ID (section 8.2.1).
+ */
+#define OSSL_MTC_CA_ID_MAX (255 - 3 * 10)
+
+/**
  * @struct ossl_mtc_log_st
  * @brief One of a CA's issuance logs (section 5.2) and its active landmark
  * window.
@@ -144,6 +153,12 @@ struct ossl_mtc_ca_st {
     OSSL_MTC_SERIAL_RANGE *revoked; /**< revoked serial ranges (7.5) */
     size_t revoked_count;
     STACK_OF(OSSL_MTC_LOG) *logs; /**< issuance logs, sorted by log number (5.2) */
+    uint8_t *advertised_ids; /**< the trust anchor IDs this CA contributes to a
+                                  trust_anchors request (8.2.1), precomputed as a
+                                  run of u8-length-prefixed IDs.  Sized for one
+                                  ID per log: grown only when a log is added,
+                                  repacked in place on update */
+    size_t advertised_ids_len; /**< bytes used of advertised_ids */
 };
 /* STACK_OF(OSSL_MTC_CA) is declared publicly in <openssl/mtc.h>. */
 
@@ -152,7 +167,9 @@ struct ossl_mtc_ca_st {
  *
  * The ca_id bytes are copied and a reference is taken on hash and on
  * cosigner_pkey, each released when the CA is freed.  The caller retains
- * ownership of its inputs.
+ * ownership of its inputs.  ca_id must be non-empty and at most
+ * OSSL_MTC_CA_ID_MAX bytes, so that the CA's advertised trust anchor IDs
+ * always fit their u8 length prefix (see ossl_mtc_ca_put_advertised_ids()).
  *
  * @param ca_id the CA identifier (TrustAnchorID relative-OID bytes)
  * @param ca_id_len the length of ca_id
@@ -303,6 +320,28 @@ int ossl_mtc_ca_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
 int ossl_mtc_ca_trusted_subtree_matches(const OSSL_MTC_CA *ca,
     uint64_t log_number, uint64_t start, uint64_t end, const uint8_t *hash,
     size_t hash_len, int *found);
+
+/**
+ * @brief Append the trust anchor IDs a relying party advertises for a CA to a
+ * packet (section 8.2.1 of the Merkle Tree Certificates draft).
+ *
+ * The IDs are precomputed: whenever an update changes the CA's landmark
+ * state, its advertisement is repacked under the write lock, so a handshake
+ * only copies the stored bytes here under the read lock.  The run holds one
+ * u8-length-prefixed landmark group ID per issuance log with at least one
+ * vetted landmark subtree: the CA ID with the components 2, the log number,
+ * and the newest vetted landmark appended.  A group signals support for
+ * standalone certificates too (it contains the CA ID itself), so only a CA
+ * with no such log falls back to its bare CA ID.  Subtrees added directly
+ * (outside the landmark window) carry no landmark number and never
+ * contribute a group.
+ *
+ * @param ca the CA
+ * @param pkt the packet the run of u8-length-prefixed IDs is appended to
+ * @returns 1 on success, 0 on error.
+ * @see https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/
+ */
+int ossl_mtc_ca_put_advertised_ids(const OSSL_MTC_CA *ca, WPACKET *pkt);
 
 /**
  * @brief Return the CA's identifier (a TrustAnchorID, i.e. relative-OID bytes).
