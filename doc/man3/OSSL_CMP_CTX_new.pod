@@ -565,8 +565,8 @@ length I<len> in the given I<ctx> or clears it if the I<ref> argument is NULL.
 When provided, the value is placed in senderKID when using MAC-based protection.
 When not provided, the commonName of the sender field is taken as the fallback value.
 Conversely, when provided, the value is also taken as the commonName of the sender
-field when using of MAC-based protection (as specified in RFC 9483 section 3.1),
-while for signature-base protection it is just taken as the ultimate fallback value.
+field when using MAC-based protection (as specified in RFC 9483 section 3.1),
+while for signature-based protection it is just taken as the ultimate fallback value.
 According to RFC 9810 section 5.1.1, if no value for the sender field in CMP message
 headers can be determined then the sender field will contain the NULL-DN.
 This can only happen if there is no CMP signer certificate, no certificate to be
