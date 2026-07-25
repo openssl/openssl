@@ -229,6 +229,8 @@ const char *X509_verify_cert_error_string(long n)
         return "Authority Key Identifier issuer and serial number must be paired";
     case X509_V_ERR_DUPLICATE_EXTENSION:
         return "Certificate includes more than one instance of a particular extension";
+    case X509_V_ERR_NEGATIVE_CRL_NUMBER:
+        return "CRL Number or Base CRL Number is negative";
 
         /*
          * Entries must be kept consistent with include/openssl/x509_vfy.h.in
