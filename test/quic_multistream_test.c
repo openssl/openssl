@@ -2068,98 +2068,8 @@ static const struct script_op script_19[] = {
 };
 
 /* 20. Multiple threads accept stream with socket forcibly closed (error test) */
-static int script_20_trigger(struct helper *h, volatile uint64_t *counter)
-{
-#if defined(OPENSSL_THREADS)
-    ossl_crypto_mutex_lock(h->misc_m);
-    ++*counter;
-    ossl_crypto_condvar_broadcast(h->misc_cv);
-    ossl_crypto_mutex_unlock(h->misc_m);
-#endif
-    return 1;
-}
-
-static int script_20_wait(struct helper *h, volatile uint64_t *counter, uint64_t threshold)
-{
-#if defined(OPENSSL_THREADS)
-    int stop = 0;
-
-    ossl_crypto_mutex_lock(h->misc_m);
-    while (!stop) {
-        stop = (*counter >= threshold);
-        if (stop)
-            break;
-
-        ossl_crypto_condvar_wait(h->misc_cv, h->misc_m);
-    }
-
-    ossl_crypto_mutex_unlock(h->misc_m);
-#endif
-    return 1;
-}
-
-static int script_20_trigger1(struct helper *h, struct helper_local *hl)
-{
-    return script_20_trigger(h, &h->scratch0);
-}
-
-static int script_20_wait1(struct helper *h, struct helper_local *hl)
-{
-    return script_20_wait(h, &h->scratch0, hl->check_op->arg2);
-}
-
-static int script_20_trigger2(struct helper *h, struct helper_local *hl)
-{
-    return script_20_trigger(h, &h->scratch1);
-}
-
-static int script_20_wait2(struct helper *h, struct helper_local *hl)
-{
-    return script_20_wait(h, &h->scratch1, hl->check_op->arg2);
-}
-
-static const struct script_op script_20_child[] = {
-    OP_C_ACCEPT_STREAM_WAIT(a),
-    OP_C_READ_EXPECT(a, "foo", 3),
-
-    OP_CHECK(script_20_trigger1, 0),
-    OP_CHECK(script_20_wait2, 1),
-
-    OP_C_READ_FAIL_WAIT(a),
-    OP_C_EXPECT_SSL_ERR(a, SSL_ERROR_SYSCALL),
-
-    OP_EXPECT_ERR_LIB(ERR_LIB_SSL),
-    OP_EXPECT_ERR_REASON(SSL_R_PROTOCOL_IS_SHUTDOWN),
-
-    OP_POP_ERR(),
-    OP_EXPECT_ERR_LIB(ERR_LIB_SSL),
-    OP_EXPECT_ERR_REASON(SSL_R_QUIC_NETWORK_ERROR),
-
-    OP_C_FREE_STREAM(a),
-
-    OP_END
-};
-
 static const struct script_op script_20[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_NEW_THREAD(5, script_20_child),
-
-    OP_BEGIN_REPEAT(5),
-
-    OP_S_NEW_STREAM_BIDI(a, ANY_ID),
-    OP_S_WRITE(a, "foo", 3),
-    OP_S_UNBIND_STREAM_ID(a),
-
-    OP_END_REPEAT(),
-
-    OP_CHECK(script_20_wait1, 5),
-
-    OP_C_CLOSE_SOCKET(),
-    OP_CHECK(script_20_trigger2, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
@@ -2286,102 +2196,19 @@ err:
 }
 
 static const struct script_op script_21[] = {
-    OP_S_SET_INJECT_PLAIN(script_21_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(QUIC_PKT_TYPE_1RTT, OSSL_QUIC_VLINT_MAX),
-
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
 /* 22. Fault injection - non-zero packet header reserved bits */
-static int script_22_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    if (h->inject_word0 == 0)
-        return 1;
-
-    hdr->reserved = 1;
-    return 1;
-}
-
 static const struct script_op script_22[] = {
-    OP_S_SET_INJECT_PLAIN(script_22_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, 0),
-
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
 /* 23. Fault injection - empty NEW_TOKEN */
-static int script_23_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    WPACKET wpkt;
-    unsigned char frame_buf[16];
-    size_t written;
-
-    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
-        return 1;
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
-            sizeof(frame_buf), 0)))
-        return 0;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_TOKEN))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 0)))
-        goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    return ok;
-}
-
 static const struct script_op script_23[] = {
-    OP_S_SET_INJECT_PLAIN(script_23_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, 0),
-
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
@@ -2421,20 +2248,7 @@ err:
 }
 
 static const struct script_op script_24[] = {
-    OP_S_SET_INJECT_PLAIN(script_24_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_MAX_STREAMS_BIDI),
-
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
