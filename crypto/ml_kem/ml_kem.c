@@ -11,7 +11,7 @@
 #include <openssl/rand.h>
 #include <openssl/proverr.h>
 #include "crypto/ml_kem.h"
-#include "internal/common.h"
+#include "ml_kem_local.h"
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
 
@@ -36,8 +36,29 @@
  */
 #define DEGREE ML_KEM_DEGREE
 #define INVERSE_DEGREE (ML_KEM_PRIME - 2 * 13)
-#define LOG2PRIME 12
-#define BARRETT_SHIFT (2 * LOG2PRIME)
+/*
+ * Barrett reduction approximates (x mod q) without a division instruction.
+ * It pre-computes m = floor(2^BARRETT_SHIFT / q) and then estimates:
+ *
+ *   quotient = (x * m) >> BARRETT_SHIFT
+ *   remainder = x - quotient * q         (corrected by reduce_once())
+ *
+ * Correctness requires BARRETT_SHIFT >= 2 * LOG2PRIME (== 2 * 12 == 24),
+ * because the inputs to reduce() are products of two already-reduced values,
+ * each less than q < 2^12, so x < q^2 < 2^24.  A shift of at least 24 bits
+ * keeps the approximation error in the quotient bounded to at most 1.
+ *
+ * Choosing BARRETT_SHIFT == 32 (over the minimum of 24) aligns the shift to
+ * a 32-bit word boundary, so the >> 32 extraction is equivalent to simply
+ * taking the upper 32-bit half of a 64-bit product.  This is a single native
+ * "multiply-high" instruction on all major ISAs (x86-64: upper half of MUL;
+ * AArch64: UMULH; RISC-V: MULHU) and maps directly to SIMD lane-wide mul-high
+ * operations.  With BARRETT_SHIFT == 24 the result would straddle the 32-bit
+ * boundary (bits [55:24] of the product), requiring a separate bit-shift after
+ * the multiply.  The multiplier m = floor(2^32 / 3329) = 1290167 still fits
+ * comfortably in 32 bits, so there is no cost to the larger shift value.
+ */
+#define BARRETT_SHIFT 32
 
 #ifdef SHA3_BLOCKSIZE
 #define SHAKE128_BLOCKSIZE SHA3_BLOCKSIZE(128)
@@ -57,14 +78,6 @@
 #else
 #define SCALAR_SAMPLING_BUFSIZE 168
 #endif
-
-/*
- * Structure of keys
- */
-typedef struct ossl_ml_kem_scalar_st {
-    /* On every function entry and exit, 0 <= c[i] < ML_KEM_PRIME. */
-    uint16_t c[ML_KEM_DEGREE];
-} scalar;
 
 /* Key material allocation layout */
 #define DECLARE_ML_KEM_PUBKEYDATA(name, rank)                  \
@@ -185,7 +198,7 @@ static const ML_KEM_VINFO vinfo_map[3] = {
  */
 static const int kPrime = ML_KEM_PRIME;
 static const unsigned int kBarrettShift = BARRETT_SHIFT;
-static const size_t kBarrettMultiplier = (1 << BARRETT_SHIFT) / ML_KEM_PRIME;
+static const size_t kBarrettMultiplier = (1ull << BARRETT_SHIFT) / ML_KEM_PRIME;
 static const uint16_t kHalfPrime = (ML_KEM_PRIME - 1) / 2;
 static const uint16_t kInverseDegree = INVERSE_DEGREE;
 
@@ -411,19 +424,65 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
 #include "arch/ppc_arch.h"
 #endif
 
+/*
+ * Function pointer types for NTT dispatch.
+ *
+ * Three NTT-related entry points are dispatched at runtime:
+ *
+ *  scalar_ntt
+ *      Forward NTT.  Converts a polynomial from standard into NTT domain.
+ *
+ *  scalar_inverse_ntt
+ *      Full inverse NTT: butterfly stages followed by multiplication by
+ *      INVERSE_DEGREE = (n/2)^-1 mod q.  Used inside matrix_mult_intt where
+ *      each result row is immediately transformed back to standard form.
+ *
+ *  scalar_inverse_ntt_demontgomerize
+ *      Inverse NTT whose input may still carry a Montgomery factor R from a
+ *      preceding inner_product_montgomery call.  On the generic and PPC paths
+ *      the two pointers are identical (both point at the same fully-reduced
+ *      implementation), because the generic inner_product already produces
+ *      fully-reduced outputs via Barrett reduction.  On the s390x/vec128 path
+ *      the two are distinct:
+ *        - inner_product_montgomery_vec128 accumulates the dot-product using
+ *          Montgomery arithmetic and intentionally leaves each coefficient
+ *          scaled by R (= 2^16 mod q), deferring the final division to save
+ *          a per-coefficient multiply.
+ *        - scalar_inverse_ntt_demontgomerize_vec128 performs the normal inverse
+ *          NTT butterfly stages and, in the final normalisation step, folds the
+ *          Montgomery de-scaling (multiply by R^-1) into the INVERSE_DEGREE
+ *          multiply so that both adjustments are paid in a single pass.
+ *
+ * The net effect is that callers always see a fully-reduced standard-form
+ * polynomial after the (inner_product_montgomery, scalar_inverse_ntt_demontgomerize)
+ * pair, regardless of which backend is active.
+ */
+typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
+typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
+typedef void (*ml_kem_scalar_inverse_ntt_demontgomerize_fn)(scalar *p);
+
+/* Forward declarations */
+static void ossl_ml_kem_scalar_ntt_generic(scalar *s);
+static void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s);
+
+static ml_kem_scalar_ntt_fn scalar_ntt = ossl_ml_kem_scalar_ntt_generic;
+/*
+ * scalar_inverse_ntt: used by matrix_mult_intt, where inputs are already fully
+ * reduced (no deferred Montgomery factor).
+ */
+static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_generic;
+/*
+ * scalar_inverse_ntt_demontgomerize: used after inner_product_montgomery.  On
+ * generic/PPC this is the same function as scalar_inverse_ntt.  On s390x it is
+ * a specialised variant that also removes the Montgomery factor R left by
+ * inner_product_montgomery_vec128.
+ */
+static ml_kem_scalar_inverse_ntt_demontgomerize_fn scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_generic;
+
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 /*
  * PPC64LE Platform supports.
  */
-typedef void (*ml_kem_scalar_ntt_fn)(scalar *p);
-typedef void (*ml_kem_scalar_inverse_ntt_fn)(scalar *p);
-
-static void scalar_ntt_generic(scalar *p);
-static void scalar_inverse_ntt_generic(scalar *p);
-
-static ml_kem_scalar_ntt_fn scalar_ntt = scalar_ntt_generic;
-static ml_kem_scalar_inverse_ntt_fn scalar_inverse_ntt = scalar_inverse_ntt_generic;
-
 void mlkem_ntt_ppc(uint16_t *c);
 void mlkem_inverse_ntt_ppc(uint16_t *c);
 
@@ -436,24 +495,103 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 {
     mlkem_inverse_ntt_ppc(s->c);
 }
-#else
-#define scalar_ntt_generic scalar_ntt
-#define scalar_inverse_ntt_generic scalar_inverse_ntt
 #endif
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+#include "arch/s390x_arch.h"
+#endif
+
+/*
+ * Function pointer types for scalar multiplication dispatch.
+ *
+ *  scalar_mult_add
+ *      Pointwise-multiply two NTT-domain scalars and accumulate the result
+ *      into an existing scalar (out += lhs * rhs).
+ *
+ *  inner_product_montgomery
+ *      Computes the dot-product of two rank-element NTT-domain vectors and
+ *      stores the result in *out.  The name "montgomery" signals the output
+ *      representation contract:
+ *        - On the generic path the function uses Barrett reduction throughout
+ *          and the output is fully reduced in [0, q).
+ *        - On the s390x/vec128 path the function uses Montgomery multiplication
+ *          internally and the output coefficients are left scaled by R
+ *          (= 2^16 mod q).  Callers MUST immediately follow this call with
+ *          scalar_inverse_ntt_demontgomerize, which converts back to standard
+ *          form while performing the inverse NTT.  Splitting the Montgomery
+ *          de-scaling from the inner product and merging it with the inverse
+ *          NTT avoids a full extra pass over the 256-element array.
+ *
+ *  matrix_mult_intt
+ *      Computes out[i] = sum_j m[i*rank+j] * a[j] for each row i, and then
+ *      immediately applies scalar_inverse_ntt to each result row.  Because
+ *      this path uses scalar_inverse_ntt (not scalar_inverse_ntt_demontgomerize),
+ *      the intermediate per-row inner products must be in standard form. The
+ *      s390x implementation ensures this within matrix_mult_intt_vec128.
+ */
+typedef void (*ml_kem_scalar_mult_add_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
+typedef void (*ml_kem_inner_product_montgomery_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+typedef void (*ml_kem_matrix_mult_intt_fn)(scalar *out, const scalar *m, const scalar *a, int rank);
+
+/* Forward declarations */
+static void scalar_mult_generic(scalar *out, const scalar *lhs, const scalar *rhs);
+static void scalar_mult_add_generic(scalar *out, const scalar *lhs, const scalar *rhs);
+static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs, int rank);
+static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar *a, int rank);
+
+/* Function pointers for dispatch */
+static ml_kem_scalar_mult_add_fn scalar_mult_add = scalar_mult_add_generic;
+/*
+ * Produces the NTT-domain dot-product of two vectors.  Result is in Montgomery
+ * form on s390x (must be followed by scalar_inverse_ntt_demontgomerize), and
+ * fully reduced on all other platforms.
+ */
+static ml_kem_inner_product_montgomery_fn inner_product_montgomery = inner_product_generic;
+static ml_kem_matrix_mult_intt_fn matrix_mult_intt = matrix_mult_intt_generic;
+
+static void ml_kem_ntt_init(void)
+{
 /*
  * Initialize NTT function pointers to PPC64le implementations if available.
  * Scalar implementations are used by default.
  */
-static void ml_kem_ntt_init(void)
-{
 #if defined(MLKEM_NTT_PPC_ASM) && defined(_ARCH_PPC64)
 #if defined(__LITTLE_ENDIAN__) || (__BYTE_ORDER__ == __ORDER_LITTLE_ENDIAN__)
     if (OPENSSL_ppccap_P & PPC_CRYPTO207) {
         scalar_ntt = scalar_ntt_ppc;
         scalar_inverse_ntt = scalar_inverse_ntt_ppc;
+        scalar_inverse_ntt_demontgomerize = scalar_inverse_ntt_ppc;
     }
 #endif
+#endif
+
+/*
+ * Initialize NTT and scalar and matrix multiplication function pointers to
+ * the s390x/vec128 implementation if available.
+ *
+ * On s390x three pointers differ from the generic ones in a coordinated way:
+ *   - scalar_inverse_ntt and scalar_inverse_ntt_demontgomerize point to two
+ *     DIFFERENT functions.  scalar_inverse_ntt_demontgomerize_vec128 is always
+ *     paired with inner_product_montgomery_vec128: the latter leaves each
+ *     coefficient in Montgomery form (scaled by R = 2^16 mod q), and the
+ *     former performs the inverse NTT butterflies while simultaneously removing
+ *     the Montgomery factor in the final normalisation multiply.
+ *   - inner_product_montgomery_vec128 deliberately omits the final
+ *     Montgomery-to-standard conversion; callers must use
+ *     scalar_inverse_ntt_demontgomerize (not scalar_inverse_ntt) afterward.
+ *   - matrix_mult_intt_vec128 uses scalar_inverse_ntt_vec128 internally
+ *     (not the demontgomerize variant), because it manages its own reduction
+ *     strategy without a deferred Montgomery factor.
+ */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (S390X_VX_CAPABLE) {
+        scalar_ntt = ossl_ml_kem_scalar_ntt_vec128;
+        scalar_inverse_ntt = ossl_ml_kem_scalar_inverse_ntt_vec128;
+        scalar_inverse_ntt_demontgomerize = ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128;
+        scalar_mult_add = ossl_ml_kem_scalar_mult_add_vec128;
+        inner_product_montgomery = ossl_ml_kem_inner_product_montgomery_vec128;
+        matrix_mult_intt = ossl_ml_kem_matrix_mult_intt_vec128;
+    }
 #endif
 }
 
@@ -481,6 +619,7 @@ static __owur uint16_t reduce_once(uint16_t x)
 static __owur uint16_t reduce(uint32_t x)
 {
     uint64_t product = (uint64_t)x * kBarrettMultiplier;
+    /* with kBarrettShift == 32, this can be optimized using mul-high */
     uint32_t quotient = (uint32_t)(product >> kBarrettShift);
     uint32_t remainder = x - quotient * kPrime;
 
@@ -507,7 +646,7 @@ static void scalar_mult_const(scalar *s, uint16_t a)
  * elements in GF(3329^2), with the coefficients of the elements being
  * consecutive entries in |s->c|.
  */
-static void scalar_ntt_generic(scalar *s)
+void ossl_ml_kem_scalar_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -539,7 +678,7 @@ static void scalar_ntt_generic(scalar *s)
  * iFFT to account for the fact that 3329 does not have a 512th root of unity,
  * using the precomputed 128 roots of unity stored in InverseNTTRoots.
  */
-static void scalar_inverse_ntt_generic(scalar *s)
+void ossl_ml_kem_scalar_inverse_ntt_generic(scalar *s)
 {
     const uint16_t *roots = kInverseNTTRoots;
     uint16_t *end = s->c + DEGREE;
@@ -593,7 +732,8 @@ static void scalar_sub(scalar *lhs, const scalar *rhs)
  * two reduced numbers together, so we need some intermediate reduction steps,
  * even if an uint64_t could hold 3 multiplied numbers.
  */
-static void scalar_mult(scalar *out, const scalar *lhs,
+
+static void scalar_mult_generic(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;
@@ -611,7 +751,7 @@ static void scalar_mult(scalar *out, const scalar *lhs,
 }
 
 /* Above, but add the result to an existing scalar */
-static ossl_inline void scalar_mult_add(scalar *out, const scalar *lhs,
+static ossl_inline void scalar_mult_add_generic(scalar *out, const scalar *lhs,
     const scalar *rhs)
 {
     uint16_t *curr = out->c, *end = curr + DEGREE;
@@ -806,6 +946,7 @@ static __owur uint16_t compress(uint16_t x, int bits)
 {
     uint32_t shifted = (uint32_t)x << bits;
     uint64_t product = (uint64_t)shifted * kBarrettMultiplier;
+    /* with kBarrettShift == 32, this can be optimized using mul-high */
     uint32_t quotient = (uint32_t)(product >> kBarrettShift);
     uint32_t remainder = shifted - quotient * kPrime;
 
@@ -931,28 +1072,27 @@ static void vector_compress(scalar *a, int bits, int rank)
 }
 
 /* The output scalar must not overlap with the inputs */
-static void inner_product(scalar *out, const scalar *lhs, const scalar *rhs,
+static void inner_product_generic(scalar *out, const scalar *lhs, const scalar *rhs,
     int rank)
 {
-    scalar_mult(out, lhs, rhs);
+    scalar_mult_generic(out, lhs, rhs);
     while (--rank > 0)
-        scalar_mult_add(out, ++lhs, ++rhs);
+        scalar_mult_add_generic(out, ++lhs, ++rhs);
 }
 
 /*
  * Here, the output vector must not overlap with the inputs, the result is
  * directly subjected to inverse NTT.
  */
-static void
-matrix_mult_intt(scalar *out, const scalar *m, const scalar *a, int rank)
+static void matrix_mult_intt_generic(scalar *out, const scalar *m, const scalar *a, int rank)
 {
     const scalar *ar;
     int i, j;
 
     for (i = rank; i-- > 0; ++out) {
-        scalar_mult(out, m++, ar = a);
+        scalar_mult_generic(out, m++, ar = a);
         for (j = rank - 1; j > 0; --j)
-            scalar_mult_add(out, m++, ++ar);
+            scalar_mult_add_generic(out, m++, ++ar);
         scalar_inverse_ntt(out);
     }
 }
@@ -1172,8 +1312,8 @@ static __owur int encrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
     if (!gencbd_vector_ntt(y, cbd_1, &counter, r, rank, mdctx, key))
         return 0;
     /* FIPS 203 "v" scalar */
-    inner_product(&v, key->t, y, rank);
-    scalar_inverse_ntt(&v);
+    inner_product_montgomery(&v, key->t, y, rank);
+    scalar_inverse_ntt_demontgomerize(&v);
     /* FIPS 203 "u" vector */
     matrix_mult_intt(u, key->m, y, rank);
 
@@ -1214,8 +1354,8 @@ decrypt_cpa(uint8_t out[ML_KEM_SHARED_SECRET_BYTES],
     vector_decode_decompress_ntt(u, ctext, du, rank);
     scalar_decode(&v, ctext + vinfo->u_vector_bytes, dv);
     scalar_decompress(&v, dv);
-    inner_product(&mask, key->s, u, rank);
-    scalar_inverse_ntt(&mask);
+    inner_product_montgomery(&mask, key->s, u, rank);
+    scalar_inverse_ntt_demontgomerize(&mask);
     scalar_sub(&v, &mask);
     scalar_compress(&v, 1);
     scalar_encode_1(out, &v);
@@ -1531,6 +1671,70 @@ end:
 }
 
 /*
+ * Aligned allocation helpers for the VX path.
+ *
+ * On s390x with VX support the scalar type carries ALIGN16 but both
+ * OPENSSL_malloc and OPENSSL_secure_malloc may return only 8-byte-aligned
+ * storage.  Both the public-key buffer (t + m) and the private-key buffer
+ * (s + z + d) are therefore allocated with 16-byte alignment using a
+ * self-describing header-word technique:
+ *
+ *   - Over-allocate by sizeof(void *) + (SCALAR_ALIGN - 1) bytes.
+ *   - Advance the pointer to the next SCALAR_ALIGN boundary that is at least
+ *     sizeof(void *) bytes past the raw allocation, so there is always room
+ *     for a void * header even when raw is already SCALAR_ALIGN-aligned.
+ *   - Store the original raw pointer in the sizeof(void *) bytes of slack
+ *     immediately before the aligned pointer.
+ *   - To free: read back the raw pointer from that header slot.
+ *
+ * This is safe because sizeof(void *) <= 8 <= SCALAR_ALIGN = 16 on all
+ * supported platforms.  No raw-pointer field is needed in ML_KEM_KEY, so the
+ * struct layout is identical regardless of whether VX support is compiled in.
+ */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+#define SCALAR_ALIGN 16
+
+static scalar *alloc_pub_aligned(size_t puballoc)
+{
+    uint8_t *raw = OPENSSL_malloc(puballoc + sizeof(void *) + (SCALAR_ALIGN - 1));
+    uintptr_t addr;
+
+    if (raw == NULL)
+        return NULL;
+    addr = ((uintptr_t)raw + sizeof(void *) + (SCALAR_ALIGN - 1)) & ~(uintptr_t)(SCALAR_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+    return (scalar *)(void *)addr;
+}
+
+static void free_pub_aligned(scalar *p)
+{
+    if (p == NULL)
+        return;
+    OPENSSL_free(*(void **)((uint8_t *)p - sizeof(void *)));
+}
+
+static scalar *alloc_prv_aligned(size_t prvalloc)
+{
+    uint8_t *raw = OPENSSL_secure_malloc(prvalloc + sizeof(void *) + (SCALAR_ALIGN - 1));
+    uintptr_t addr;
+
+    if (raw == NULL)
+        return NULL;
+    addr = ((uintptr_t)raw + sizeof(void *) + (SCALAR_ALIGN - 1)) & ~(uintptr_t)(SCALAR_ALIGN - 1);
+    *(void **)((uint8_t *)(void *)addr - sizeof(void *)) = raw;
+    return (scalar *)(void *)addr;
+}
+
+static void free_prv_aligned(scalar *p, size_t prvalloc)
+{
+    if (p == NULL)
+        return;
+    OPENSSL_secure_clear_free(*(void **)((uint8_t *)p - sizeof(void *)),
+        prvalloc + sizeof(void *) + (SCALAR_ALIGN - 1));
+}
+#endif /* VX_COMPILER_SUPPORT_VEC128 */
+
+/*
  * After allocating storage for public or private key data, update the key
  * component pointers to reference that storage.
  *
@@ -1547,8 +1751,13 @@ static __owur int add_storage(scalar *pub, scalar *priv,
          * One of these could be allocated correctly. It is legal to call free with a NULL
          * pointer, so always attempt to free both allocations here
          */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+        free_pub_aligned(pub);
+        free_prv_aligned(priv, key->vinfo->prvalloc);
+#else
         OPENSSL_free(pub);
         OPENSSL_secure_free(priv);
+#endif
         return 0;
     }
 
@@ -1600,9 +1809,18 @@ void ossl_ml_kem_key_reset(ML_KEM_KEY *key)
      *   secret |z|, and seed |d|, we can cleanse all three in one call.
      */
     if (key->t != NULL) {
-        if (ossl_ml_kem_have_prvkey(key))
+        if (ossl_ml_kem_have_prvkey(key)) {
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+            free_prv_aligned(key->s, key->vinfo->prvalloc);
+#else
             OPENSSL_secure_clear_free(key->s, key->vinfo->prvalloc);
+#endif
+        }
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+        free_pub_aligned(key->t);
+#else
         OPENSSL_free(key->t);
+#endif
     }
     key->d = key->z = key->seedbuf = key->encoded_dk = (uint8_t *)(key->s = key->m = key->t = NULL);
 }
@@ -1715,12 +1933,33 @@ ML_KEM_KEY *ossl_ml_kem_key_dup(const ML_KEM_KEY *key, int selection)
         ok = 1;
         break;
     case OSSL_KEYMGMT_SELECT_PUBLIC_KEY:
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    {
+        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc);
+
+        if (pub != NULL)
+            memcpy(pub, key->t, key->vinfo->puballoc);
+        ok = add_storage(pub, NULL, 0, 1, ret);
+    }
+#else
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc), NULL, 0, 1, ret);
-        break;
+#endif
+    break;
     case OSSL_KEYMGMT_SELECT_PRIVATE_KEY:
         /* Frees both and returns 0 if either is NULL */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    {
+        scalar *pub = alloc_pub_aligned(key->vinfo->puballoc);
+        scalar *priv = alloc_prv_aligned(key->vinfo->prvalloc);
+
+        if (pub != NULL)
+            memcpy(pub, key->t, key->vinfo->puballoc);
+        ok = add_storage(pub, priv, 1, 1, ret);
+    }
+#else
         ok = add_storage(OPENSSL_memdup(key->t, key->vinfo->puballoc),
             OPENSSL_secure_malloc(key->vinfo->prvalloc), 1, 1, ret);
+#endif
         if (ok) {
             memcpy(ret->s, key->s, key->vinfo->prvalloc);
 
@@ -1840,7 +2079,12 @@ int ossl_ml_kem_parse_public_key(const uint8_t *in, size_t len, ML_KEM_KEY *key)
         || (mdctx = EVP_MD_CTX_new()) == NULL)
         return 0;
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc),
+            NULL, 0, 0, key))
+#else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc), NULL, 0, 0, key))
+#endif
         ret = parse_pubkey(in, mdctx, key);
 
     if (!ret)
@@ -1871,8 +2115,13 @@ int ossl_ml_kem_parse_private_key(const uint8_t *in, size_t len,
     /* Clear any unused seed */
     ossl_ml_kem_key_reset(key);
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc),
+            alloc_prv_aligned(vinfo->prvalloc), 1, 0, key))
+#else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
+#endif
         ret = parse_prvkey(in, mdctx, key);
 
     if (!ret)
@@ -1920,8 +2169,13 @@ int ossl_ml_kem_genkey(uint8_t *pubenc, size_t publen, ML_KEM_KEY *key)
      */
     CONSTTIME_SECRET(seed, ML_KEM_SEED_BYTES);
 
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    if (add_storage(alloc_pub_aligned(vinfo->puballoc),
+            alloc_prv_aligned(vinfo->prvalloc), 1, 0, key))
+#else
     if (add_storage(OPENSSL_malloc(vinfo->puballoc),
             OPENSSL_secure_malloc(vinfo->prvalloc), 1, 0, key))
+#endif
         ret = genkey(seed, mdctx, pubenc, key);
     OPENSSL_cleanse(seed, sizeof(seed));
 

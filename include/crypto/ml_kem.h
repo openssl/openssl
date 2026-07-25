@@ -15,6 +15,12 @@
 #include <openssl/bio.h>
 #include <openssl/core_dispatch.h>
 #include <crypto/evp.h>
+#include "internal/common.h"
+
+/* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
+#define VX_COMPILER_SUPPORT_VEC128
+#endif
 
 #define ML_KEM_DEGREE 256
 /*
@@ -24,6 +30,18 @@
  * implement efficient multiplication in the ring R_q via the "NTT" transform.
  */
 #define ML_KEM_PRIME (ML_KEM_DEGREE * 13 + 1)
+
+/*
+ * Structure of keys
+ */
+typedef struct ossl_ml_kem_scalar_st {
+    /* On every function entry and exit, 0 <= c[i] < ML_KEM_PRIME. */
+#if defined(VX_COMPILER_SUPPORT_VEC128)
+    ALIGN16 uint16_t c[ML_KEM_DEGREE];
+#else
+    uint16_t c[ML_KEM_DEGREE];
+#endif
+} scalar;
 
 /*
  * Various ML-KEM primitives need random input, 32-bytes at a time.  Key

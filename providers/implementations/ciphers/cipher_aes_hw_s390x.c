@@ -852,7 +852,7 @@ static int cipher_hw_aes_xts_s390x_initkey(PROV_CIPHER_CTX *ctx,
 {
     PROV_AES_XTS_CTX *xctx = (PROV_AES_XTS_CTX *)ctx;
     S390X_KM_XTS_PARAMS *km = &xctx->plat.s390x.param.km;
-    unsigned int fc, offs;
+    unsigned int fc, offs = 0;
     unsigned int dec = 0;
     int supported = 0;
 
@@ -876,7 +876,7 @@ static int cipher_hw_aes_xts_s390x_initkey(PROV_CIPHER_CTX *ctx,
     }
 
     if (fc != 0)
-        supported = (OPENSSL_s390xcap_P.km[1] && S390X_CAPBIT(fc));
+        supported = (OPENSSL_s390xcap_P.km[1] & S390X_CAPBIT(fc));
     if (!supported) {
         xctx->plat.s390x.fc = 0;
         xctx->plat.s390x.offset = 0;
@@ -930,11 +930,11 @@ const PROV_CIPHER_HW *ossl_prov_cipher_hw_aes_xts_s390x(size_t keybits)
 {
     switch (keybits) {
     case (128 * 2):
-        if (OPENSSL_s390xcap_P.km[1] && S390X_CAPBIT(S390X_XTS_AES_128_MSA10))
+        if (OPENSSL_s390xcap_P.km[1] & S390X_CAPBIT(S390X_XTS_AES_128_MSA10))
             return &aes_xts_s390x;
         break;
     case (256 * 2):
-        if (OPENSSL_s390xcap_P.km[1] && S390X_CAPBIT(S390X_XTS_AES_256_MSA10))
+        if (OPENSSL_s390xcap_P.km[1] & S390X_CAPBIT(S390X_XTS_AES_256_MSA10))
             return &aes_xts_s390x;
         break;
     default:
