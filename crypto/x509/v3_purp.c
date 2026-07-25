@@ -862,7 +862,7 @@ void X509_set_proxy_pathlen(X509 *x, long l)
 int X509_check_ca(const X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
-    if (!ossl_x509v3_cache_extensions(x))
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
 
     return check_ca(x);
@@ -1180,9 +1180,8 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid, subject->akid, and subject->ex_flags */
-    if (!ossl_x509v3_cache_extensions(issuer)
-        || !ossl_x509v3_cache_extensions(subject))
+    if ((issuer->ex_flags & EXFLAG_INVALID) != 0
+        || (subject->ex_flags & EXFLAG_INVALID) != 0)
         return X509_V_ERR_UNSPECIFIED;
 
     if (issuer == subject
@@ -1273,63 +1272,54 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
 
 uint32_t X509_get_extension_flags(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(x, -1, 0);
     return x->ex_flags;
 }
 
 uint32_t X509_get_key_usage(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
     return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
 
 uint32_t X509_get_extended_key_usage(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
     return (x->ex_flags & EXFLAG_XKUSAGE) != 0 ? x->ex_xkusage : UINT32_MAX;
 }
 
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return x->skid;
 }
 
 const ASN1_OCTET_STRING *X509_get0_authority_key_id(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->keyid : NULL);
 }
 
 const GENERAL_NAMES *X509_get0_authority_issuer(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->issuer : NULL);
 }
 
 const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->serial : NULL);
 }
 
 long X509_get_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
+    if ((x->ex_flags & EXFLAG_INVALID) != 0
         || (x->ex_flags & EXFLAG_BCONS) == 0)
         return -1;
     return x->ex_pathlen;
@@ -1337,8 +1327,7 @@ long X509_get_pathlen(const X509 *x)
 
 long X509_get_proxy_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
+    if ((x->ex_flags & EXFLAG_INVALID) != 0
         || (x->ex_flags & EXFLAG_PROXY) == 0)
         return -1;
     return x->ex_pcpathlen;

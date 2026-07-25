@@ -73,6 +73,8 @@ certificate B<x>. The NID of the signing digest is written to B<*mdnid>,
 the public key algorithm to B<*pknid>, the effective security bits to
 B<*secbits> and flag details to B<*flags>. Any of the parameters can
 be set to B<NULL> if the information is not required.
+This function reads cached information that is populated only when the
+certificate is finalized, that is parsed or signed; see L<x509(7)>.
 
 X509_SIG_INFO_get() and X509_SIG_INFO_set() get and set information
 about a signature in an B<X509_SIG_INFO> structure. They are only

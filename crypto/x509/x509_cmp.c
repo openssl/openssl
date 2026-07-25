@@ -142,27 +142,26 @@ unsigned long X509_subject_name_hash_old(const X509 *x)
 #endif
 
 /*
- * Compare two certificates: they must be identical for this to work. NB:
- * Although "cmp" operations are generally prototyped to take "const"
- * arguments (eg. for use in STACKs), the way X509 handling is - these
- * operations may involve ensuring the hashes are up-to-date and ensuring
- * certain cert information is cached. So this is the point where the
- * "depth-first" constification tree has to halt with an evil cast.
+ * Compare two certificates: they must be identical for this to work.
  */
 int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv = 0;
+    unsigned char ah[SHA_DIGEST_LENGTH];
+    unsigned char bh[SHA_DIGEST_LENGTH];
 
     if (a == b) /* for efficiency */
         return 0;
 
-    /* attempt to compute cert hash */
-    (void)X509_check_purpose((X509 *)a, -1, 0);
-    (void)X509_check_purpose((X509 *)b, -1, 0);
-
-    if ((a->ex_flags & EXFLAG_NO_FINGERPRINT) == 0
-        && (b->ex_flags & EXFLAG_NO_FINGERPRINT) == 0)
-        rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
+    /*
+     * Try to compare by digest, this will compute
+     * a digest only on a not-finalized certificate.
+     */
+    ERR_set_mark();
+    if (X509_digest(a, EVP_sha1(), ah, NULL)
+        && X509_digest(b, EVP_sha1(), bh, NULL))
+        rv = memcmp(ah, bh, SHA_DIGEST_LENGTH);
+    ERR_pop_to_mark();
     if (rv != 0)
         return rv < 0 ? -1 : 1;
 
