@@ -561,6 +561,98 @@ err:
     return ret;
 }
 
+/* Emit a CA's advertised IDs and compare them against the expected bytes. */
+static int advertised_ids_are(OSSL_MTC_CA *ca, const uint8_t *expect,
+    size_t expect_len)
+{
+    WPACKET pkt;
+    uint8_t buf[128];
+    size_t written = 0;
+    int ok;
+
+    if (!TEST_true(WPACKET_init_static_len(&pkt, buf, sizeof(buf), 0)))
+        return 0;
+    ok = TEST_true(ossl_mtc_ca_put_advertised_ids(ca, &pkt))
+        && TEST_true(WPACKET_get_total_written(&pkt, &written))
+        && TEST_mem_eq(buf, written, expect, expect_len);
+    WPACKET_cleanup(&pkt);
+    return ok;
+}
+
+/*
+ * Advertised trust anchor IDs (section 8.2.1) are precomputed on the CA and
+ * repacked on each update: a CA without landmark state advertises its bare CA
+ * ID; once a log has a hashed landmark subtree it advertises that log's
+ * landmark group ID (CA ID . 2 . log . newest landmark) instead;
+ * directly-added subtrees never contribute a group.  Each emitted ID carries
+ * a u8 length prefix.
+ */
+static int test_ca_advertised_ids(void)
+{
+    EVP_PKEY *ca_key = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    BIO *bio = NULL;
+    static const uint8_t hash[32] = { 0x5a };
+    /* The bare CA ID 32473.1, length-prefixed. */
+    static const uint8_t bare[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    /* 32473.1.2.1.2 and 32473.1.2.1.3: the log-1 groups for landmarks 2, 3. */
+    static const uint8_t group_l2[] = { 0x07, 0x81, 0xfd, 0x59, 0x01, 0x02,
+        0x01, 0x02 };
+    static const uint8_t group_l3[] = { 0x07, 0x81, 0xfd, 0x59, 0x01, 0x02,
+        0x01, 0x03 };
+    /* Log 1's group followed by log 2's, 32473.1.2.2.5; logs are sorted. */
+    static const uint8_t two_groups[] = { 0x07, 0x81, 0xfd, 0x59, 0x01, 0x02,
+        0x01, 0x03, 0x07, 0x81, 0xfd, 0x59, 0x01, 0x02, 0x02, 0x05 };
+    int ret = 0;
+
+    if (!TEST_ptr(ca_key = gen_cosigner_key())
+        || !TEST_ptr(ca = OSSL_MTC_CA_new(ca_id, sizeof(ca_id), EVP_sha256(), 0,
+                         ca_key)))
+        goto err;
+
+    /* No landmark state at all: the bare CA ID. */
+    if (!advertised_ids_are(ca, bare, sizeof(bare)))
+        goto err;
+
+    /* A window with no vetted hashes still advertises only the bare CA ID. */
+    if (!TEST_ptr(bio = BIO_new_mem_buf("3\n8 100\n6 100\n3 50\n", -1))
+        || !TEST_true(OSSL_MTC_CA_load_landmarks(ca, 1, bio, INT64_MIN))
+        || !advertised_ids_are(ca, bare, sizeof(bare)))
+        goto err;
+
+    /* Hash [3,4) (landmark 2): the group for landmark 2 replaces the CA ID. */
+    if (!TEST_true(OSSL_MTC_CA_add_subtree_hash(ca, 1, 3, 4, hash,
+            sizeof(hash)))
+        || !advertised_ids_are(ca, group_l2, sizeof(group_l2)))
+        goto err;
+
+    /* Hash [7,8) (landmark 3): the newest hashed landmark wins. */
+    if (!TEST_true(OSSL_MTC_CA_add_subtree_hash(ca, 1, 7, 8, hash,
+            sizeof(hash)))
+        || !advertised_ids_are(ca, group_l3, sizeof(group_l3)))
+        goto err;
+
+    /*
+     * A second log with its own landmark state contributes its own group, after
+     * the first log's: landmark 5 of log 2 is tree size 4, covered by [0,2) and
+     * [2,4), and hashing [0,2) makes log 2 advertise 32473.1.2.2.5.
+     */
+    BIO_free(bio);
+    if (!TEST_ptr(bio = BIO_new_mem_buf("5\n4 100\n0 50\n", -1))
+        || !TEST_true(OSSL_MTC_CA_load_landmarks(ca, 2, bio, INT64_MIN))
+        || !TEST_true(OSSL_MTC_CA_add_subtree_hash(ca, 2, 0, 2, hash,
+            sizeof(hash)))
+        || !advertised_ids_are(ca, two_groups, sizeof(two_groups)))
+        goto err;
+
+    ret = 1;
+err:
+    BIO_free(bio);
+    OSSL_MTC_CA_free(ca);
+    EVP_PKEY_free(ca_key);
+    return ret;
+}
+
 /*
  * A cutoff ends the description at the first landmark that expired before it:
  * that landmark and everything after it are not loaded, and the lines after it
@@ -944,6 +1036,7 @@ int setup_tests(void)
     ADD_TEST(test_ca_find_ordering);
     ADD_TEST(test_ca_load_landmarks);
     ADD_TEST(test_ca_load_landmarks_cutoff);
+    ADD_TEST(test_ca_advertised_ids);
     ADD_TEST(test_ca_load_landmarks_bad);
     ADD_TEST(test_ca_stack);
     ADD_TEST(test_ca_parse_certificate);

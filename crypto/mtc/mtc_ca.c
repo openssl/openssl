@@ -30,23 +30,37 @@
 
 static void subtree_free(OSSL_MTC_TRUSTED_SUBTREE *ts);
 static void log_free(OSSL_MTC_LOG *log);
+static void advertised_ids_repack(OSSL_MTC_CA *ca);
+
+/*
+ * The room one issuance log needs in the CA's advertisement buffer: its
+ * u8-length-prefixed landmark group ID, the CA ID with three relative-OID
+ * components of at most ten bytes each appended (section 8.2.1).  Also fits the
+ * bare CA ID.
+ */
+#define MTC_ADVERTISED_ID_SLOT (1 + OSSL_MTC_CA_ID_MAX + 3 * 10)
 
 OSSL_MTC_CA *ossl_mtc_ca_new(const uint8_t *ca_id, size_t ca_id_len,
     const EVP_MD *hash, uint64_t min_serial, EVP_PKEY *cosigner_pkey)
 {
-    OSSL_MTC_CA *ca = OPENSSL_zalloc(sizeof(*ca));
+    OSSL_MTC_CA *ca;
 
-    if (ca == NULL)
+    /* Advertised IDs derived from the CA ID must fit their u8 length prefix. */
+    if (ca_id_len == 0 || ca_id_len > OSSL_MTC_CA_ID_MAX)
+        return NULL;
+
+    if ((ca = OPENSSL_zalloc(sizeof(*ca))) == NULL)
         return NULL;
 
     ca->lock = CRYPTO_THREAD_lock_new();
     ca->ca_id = OPENSSL_memdup(ca_id, ca_id_len);
+    ca->advertised_ids = OPENSSL_malloc(MTC_ADVERTISED_ID_SLOT);
     /*
      * The references on hash and cosigner_pkey are taken last, so that until
      * they are recorded below there is nothing for ossl_mtc_ca_free() to
      * release.
      */
-    if (ca->lock == NULL || ca->ca_id == NULL
+    if (ca->lock == NULL || ca->ca_id == NULL || ca->advertised_ids == NULL
         || !EVP_MD_up_ref((EVP_MD *)hash)) {
         ossl_mtc_ca_free(ca);
         return NULL;
@@ -61,6 +75,8 @@ OSSL_MTC_CA *ossl_mtc_ca_new(const uint8_t *ca_id, size_t ca_id_len,
     ca->min_serial = min_serial;
     ca->max_serial = UINT64_MAX;
     ca->cosigner_pkey = cosigner_pkey;
+    /* With no landmark state yet, the CA advertises its bare CA ID. */
+    advertised_ids_repack(ca);
     return ca;
 }
 
@@ -78,6 +94,7 @@ void ossl_mtc_ca_free(OSSL_MTC_CA *ca)
     OPENSSL_free(ca->cosigners);
     OPENSSL_free(ca->revoked);
     sk_OSSL_MTC_LOG_pop_free(ca->logs, log_free);
+    OPENSSL_free(ca->advertised_ids);
     OPENSSL_free(ca->ca_id);
     EVP_MD_free(ca->hash);
     EVP_PKEY_free(ca->cosigner_pkey);
@@ -258,6 +275,7 @@ static OSSL_MTC_LOG *find_log(const OSSL_MTC_CA *ca, uint64_t log_number)
 static OSSL_MTC_LOG *find_or_create_log(OSSL_MTC_CA *ca, uint64_t log_number)
 {
     OSSL_MTC_LOG *log = find_log(ca, log_number);
+    uint8_t *tmp;
 
     if (log != NULL)
         return log;
@@ -265,6 +283,19 @@ static OSSL_MTC_LOG *find_or_create_log(OSSL_MTC_CA *ca, uint64_t log_number)
     if (ca->logs == NULL
         && (ca->logs = sk_OSSL_MTC_LOG_new(log_cmp)) == NULL)
         return NULL;
+
+    /*
+     * Grow the CA's advertisement buffer to cover the new log, so that
+     * repacking it after any later update cannot fail.  Growing here
+     * piggybacks on the allocation that adding a log already is; a failure
+     * leaves the CA unchanged (and a larger buffer is harmless if a later
+     * step fails).
+     */
+    tmp = OPENSSL_realloc(ca->advertised_ids,
+        (size_t)(sk_OSSL_MTC_LOG_num(ca->logs) + 1) * MTC_ADVERTISED_ID_SLOT);
+    if (tmp == NULL)
+        return NULL;
+    ca->advertised_ids = tmp;
 
     if ((log = OPENSSL_zalloc(sizeof(*log))) == NULL)
         return NULL;
@@ -509,7 +540,11 @@ int ossl_mtc_ca_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in,
         }
     }
 
-    /* Install the new window. */
+    /*
+     * Install the new window (creating the log only now, on success) and
+     * repack the CA's precomputed advertisement to match; the repack cannot
+     * fail.
+     */
     if ((log = find_or_create_log(ca, log_number)) == NULL)
         goto err;
     old_subtrees = log->subtrees;
@@ -517,6 +552,7 @@ int ossl_mtc_ca_load_landmarks(OSSL_MTC_CA *ca, uint64_t log_number, BIO *in,
     new_subtrees = NULL;
     log->last_landmark = last_landmark;
     sk_OSSL_MTC_TRUSTED_SUBTREE_pop_free(old_subtrees, subtree_free);
+    advertised_ids_repack(ca);
     ret = 1;
 err:
     if (locked)
@@ -556,10 +592,101 @@ int ossl_mtc_ca_add_subtree_hash(OSSL_MTC_CA *ca, uint64_t log_number,
         goto out;
     ts->hash = hash_copy;
     ts->hash_len = hash_len;
+    /*
+     * The new hash may change which landmark the CA advertises, so repack its
+     * precomputed advertisement; the repack cannot fail.
+     */
+    advertised_ids_repack(ca);
     ret = 1;
 out:
     CRYPTO_THREAD_unlock(ca->lock);
     return ret;
+}
+
+/*
+ * Append one relative-OID component to pkt: big-endian base 128 with the
+ * continuation bit set on all but the final octet.
+ */
+static int wpacket_put_reloid_component(WPACKET *pkt, uint64_t v)
+{
+    uint8_t tmp[10];
+    size_t n = 0;
+
+    do {
+        tmp[n++] = (uint8_t)(v & 0x7f);
+        v >>= 7;
+    } while (v != 0);
+    while (n-- > 0)
+        if (!WPACKET_put_bytes_u8(pkt, tmp[n] | (n != 0 ? 0x80 : 0)))
+            return 0;
+    return 1;
+}
+
+/*
+ * Repack the CA's precomputed advertisement (section 8.2.1) in place: one
+ * u8-length-prefixed landmark group ID (the CA ID with 2, the log number, and
+ * the newest vetted landmark appended) per log with a vetted landmark
+ * subtree, or the bare CA ID when there is none.  The buffer is
+ * grown when a log is added and the constructor bounds the CA ID, so the
+ * packet operations cannot run out of room; their checks guard the
+ * impossible, emptying the advertisement rather than leaving it stale.  The
+ * caller holds the CA's write lock.
+ */
+static void advertised_ids_repack(OSSL_MTC_CA *ca)
+{
+    WPACKET pkt;
+    size_t capacity, written = 0;
+    int i, j, nlogs, groups = 0;
+
+    nlogs = sk_OSSL_MTC_LOG_num(ca->logs); /* -1 when the stack is NULL */
+    if (nlogs < 1)
+        nlogs = 1; /* room for the bare CA ID */
+    capacity = (size_t)nlogs * MTC_ADVERTISED_ID_SLOT;
+
+    ca->advertised_ids_len = 0;
+    if (!WPACKET_init_static_len(&pkt, ca->advertised_ids, capacity, 0))
+        return;
+
+    for (i = 0; i < sk_OSSL_MTC_LOG_num(ca->logs); i++) {
+        OSSL_MTC_LOG *log = sk_OSSL_MTC_LOG_value(ca->logs, i);
+        uint64_t newest = 0;
+        int vetted = 0;
+
+        for (j = 0; j < sk_OSSL_MTC_TRUSTED_SUBTREE_num(log->subtrees); j++) {
+            OSSL_MTC_TRUSTED_SUBTREE *ts = sk_OSSL_MTC_TRUSTED_SUBTREE_value(log->subtrees, j);
+
+            if (ts->hash == NULL)
+                continue;
+            if (!vetted || ts->landmark > newest)
+                newest = ts->landmark;
+            vetted = 1;
+        }
+        if (!vetted) /* nothing usable in this log yet */
+            continue;
+
+        if (!WPACKET_start_sub_packet_u8(&pkt)
+            || !WPACKET_memcpy(&pkt, ca->ca_id, ca->ca_id_len)
+            || !wpacket_put_reloid_component(&pkt, 2)
+            || !wpacket_put_reloid_component(&pkt, log->log_number)
+            || !wpacket_put_reloid_component(&pkt, newest)
+            || !WPACKET_close(&pkt))
+            goto err;
+        groups++;
+    }
+
+    /*
+     * A group advertises standalone support too (it contains the CA ID
+     * itself); only a CA with no group falls back to its bare CA ID.
+     */
+    if (groups == 0 && !WPACKET_sub_memcpy_u8(&pkt, ca->ca_id, ca->ca_id_len))
+        goto err;
+
+    if (!WPACKET_get_total_written(&pkt, &written) || !WPACKET_finish(&pkt))
+        goto err;
+    ca->advertised_ids_len = written;
+    return;
+err:
+    WPACKET_cleanup(&pkt);
 }
 
 int ossl_mtc_ca_trusted_subtree_matches(const OSSL_MTC_CA *ca,

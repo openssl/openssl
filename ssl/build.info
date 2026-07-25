@@ -32,6 +32,7 @@ SHARED_SOURCE[../libssl]=\
 # libcrypto functions it calls, which libcrypto does not export.
 SHARED_SOURCE[../libssl]=\
         ../crypto/x509/x509_tai.c \
+        ../crypto/mtc/mtc_ca_adv.c \
         ../crypto/pool/pool.c \
         ../crypto/siphash/siphash.c
 

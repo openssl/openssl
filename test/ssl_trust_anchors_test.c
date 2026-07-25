@@ -11,6 +11,9 @@
 
 #include <string.h>
 
+#include <openssl/bio.h>
+#include <openssl/evp.h>
+#include <openssl/mtc.h>
 #include <openssl/ssl.h>
 
 #include "../ssl/ssl_local.h"
@@ -391,6 +394,74 @@ err:
     return ret;
 }
 
+/*
+ * The default advertisement for a trusted MTC CA with landmark state is its
+ * landmark group ID (section 8.2.1 of the Merkle Tree Certificates draft), not
+ * its bare CA ID: with log 1 current to landmark 3, the client sends
+ * 32473.1.2.1.3.
+ */
+static int test_default_ta_construct_landmarks(void)
+{
+    /* 32473.1 as TrustAnchorID relative-OID bytes. */
+    static const uint8_t mtc_ca_id[] = { 0x81, 0xfd, 0x59, 0x01 };
+    static const uint8_t hash[32] = { 0x5a };
+    /* The extension: one ID, the group 32473.1.2.1.3. */
+    static const uint8_t expect[] = { 0xca, 0x34, 0x00, 0x0a, 0x00, 0x08, 0x07,
+        0x81, 0xfd, 0x59, 0x01, 0x02, 0x01, 0x03 };
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL_CONNECTION *sc;
+    EVP_PKEY *ca_key = NULL;
+    OSSL_MTC_CA *ca = NULL;
+    BIO *bio = NULL;
+    WPACKET pkt;
+    uint8_t buf[64];
+    size_t written = 0;
+    int have_pkt = 0, ret = 0;
+
+#if defined(OPENSSL_NO_ML_DSA)
+    return TEST_skip("ML-DSA is disabled");
+#endif /* defined(OPENSSL_NO_ML_DSA) */
+
+    if (!TEST_ptr(ca_key = EVP_PKEY_Q_keygen(NULL, NULL, "ML-DSA-44"))
+        || !TEST_ptr(ca = OSSL_MTC_CA_new(mtc_ca_id, sizeof(mtc_ca_id),
+                         EVP_sha256(), 0, ca_key)))
+        goto err;
+
+    /* Log 1 current to landmark 3, with the landmark-3 subtree [7,8) vetted. */
+    if (!TEST_ptr(bio = BIO_new_mem_buf("3\n8 100\n6 100\n3 50\n", -1))
+        || !TEST_true(OSSL_MTC_CA_load_landmarks(ca, 1, bio, INT64_MIN))
+        || !TEST_true(OSSL_MTC_CA_add_subtree_hash(ca, 1, 7, 8, hash,
+            sizeof(hash))))
+        goto err;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(TLS_client_method()))
+        || !TEST_true(X509_STORE_trust_mtc_ca(SSL_CTX_get_cert_store(ctx), ca))
+        || !TEST_ptr(ssl = SSL_new(ctx))
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ssl))
+        || !TEST_true(WPACKET_init_static_len(&pkt, buf, sizeof(buf), 0)))
+        goto err;
+    have_pkt = 1;
+
+    if (!TEST_int_eq(tls_construct_ctos_trust_anchors(sc, &pkt,
+                         SSL_EXT_CLIENT_HELLO, NULL, 0),
+            EXT_RETURN_SENT)
+        || !TEST_true(WPACKET_get_total_written(&pkt, &written))
+        || !TEST_mem_eq(buf, written, expect, sizeof(expect)))
+        goto err;
+
+    ret = 1;
+err:
+    if (have_pkt)
+        WPACKET_cleanup(&pkt);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    OSSL_MTC_CA_free(ca); /* the store borrows the CA; we own it */
+    EVP_PKEY_free(ca_key);
+    BIO_free(bio);
+    return ret;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(server_ctx = SSL_CTX_new(TLS_server_method())))
@@ -401,6 +472,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_credential_matches, OSSL_NELEM(match_tests));
     ADD_TEST(test_requested_ta_setter);
     ADD_TEST(test_requested_ta_construct);
+    ADD_TEST(test_default_ta_construct_landmarks);
     return 1;
 }
 

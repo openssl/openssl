@@ -1780,10 +1780,11 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
      * context with the CertificateRequest/EncryptedExtensions/Certificate forms
      * we accept on receipt, and this constructor is also reached when the client
      * builds its own Certificate message (client authentication), so guard on
-     * the message here.  The store is resolved exactly as in
-     * ssl_verify_cert_chain().  A landmark-relative advertisement (section 8.2
-     * of the Merkle Tree Certificates draft) is not yet supported: the CA does
-     * not track landmark numbers.  We ignore any reply from the server for now.
+     * the message here.  The store is chosen exactly as in
+     * ssl_verify_cert_chain().  An MTC CA with landmark state advertises its
+     * landmark groups (section 8.2.1 of the Merkle Tree Certificates draft)
+     * instead of its bare CA ID; the group signals support for standalone
+     * certificates as well.  We ignore any reply from the server for now.
      */
     if ((context & SSL_EXT_CLIENT_HELLO) == 0)
         return EXT_RETURN_NOT_SENT;
@@ -1811,9 +1812,12 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     /*
-     * Default: advertise the store's trust anchors that carry an ID.  The MTC
-     * CA IDs are emitted one at a time; the conventional-CA IDs are already
-     * stored as a run of u8-length-prefixed IDs, so they are appended verbatim.
+     * Default: advertise the store's trust anchors that carry an ID.  Each MTC
+     * CA holds its advertisement precomputed (one landmark group ID per
+     * issuance log with landmark state, or its bare CA ID when none has any)
+     * as a run of u8-length-prefixed IDs, repacked whenever the CA is updated;
+     * the conventional-CA IDs are stored the same way on the store.  Both are
+     * appended verbatim.
      */
     store = s->cert->verify_store != NULL
         ? s->cert->verify_store
@@ -1832,11 +1836,8 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     }
 
     for (i = 0; i < num; i++) {
-        const uint8_t *id;
-        size_t id_len;
-
-        if (!OSSL_MTC_CA_get0_id(sk_OSSL_MTC_CA_value(cas, i), &id, &id_len)
-            || !WPACKET_sub_memcpy_u8(pkt, id, id_len)) {
+        if (!ossl_mtc_ca_put_advertised_ids(sk_OSSL_MTC_CA_value(cas, i),
+                pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
