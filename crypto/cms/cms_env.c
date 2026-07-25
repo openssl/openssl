@@ -20,6 +20,8 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/evp.h>
+#include <openssl/rsa.h>
+#include <openssl/params.h>
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
 #include "crypto/asn1.h"
@@ -591,6 +593,35 @@ err:
 
 /* Decrypt content key from KTRI */
 
+/* Check whether reporting a key length mismatch cannot act as an MMA oracle */
+static int cms_ktri_harderr_ok(EVP_PKEY_CTX *pctx, EVP_PKEY *pkey)
+{
+    int pad_mode;
+    unsigned int implicit_rejection = 0;
+    OSSL_PARAM params[2];
+
+    if (!EVP_PKEY_is_a(pkey, "RSA")
+        || EVP_PKEY_CTX_get_rsa_padding(pctx, &pad_mode) <= 0)
+        return 0;
+
+    /* An RSA-OAEP decryption failure is safe to reveal */
+    if (pad_mode == RSA_PKCS1_OAEP_PADDING)
+        return 1;
+    if (pad_mode != RSA_PKCS1_PADDING)
+        return 0;
+
+    /* For PKCS#1 v1.5 it is only safe with implicit rejection in effect */
+    params[0] = OSSL_PARAM_construct_uint(
+        OSSL_ASYM_CIPHER_PARAM_IMPLICIT_REJECTION,
+        &implicit_rejection);
+    params[1] = OSSL_PARAM_construct_end();
+    if (EVP_PKEY_CTX_get_params(pctx, params) <= 0
+        || !OSSL_PARAM_modified(&params[0]))
+        return 0;
+
+    return implicit_rejection != 0;
+}
+
 static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     CMS_RecipientInfo *ri)
 {
@@ -648,6 +679,17 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
 
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;
+
+    /*
+     * Check whether a decryption failure or a key length mismatch can be
+     * reported without MMA risk.  This must be determined before the
+     * decryption is attempted so a failure of the decryption itself (only
+     * possible for a publicly invalid ciphertext when implicit rejection
+     * is in effect, or a padding check failure with RSA-OAEP) is reported
+     * as well.
+     */
+    if (!ec->havenocert && !ec->debug)
+        ec->harderr = cms_ktri_harderr_ok(ktri->pctx, pkey);
 
     if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, fixlen,
             ktri->encryptedKey->data,
