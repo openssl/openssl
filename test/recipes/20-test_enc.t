@@ -41,7 +41,7 @@ my @ciphers =
                      |rc2|rc4|seed)/x} @ciphers
     if disabled("legacy");
 
-plan tests => 6 + (scalar @ciphers)*2;
+plan tests => 10 + (scalar @ciphers)*2;
 
  SKIP: {
      skip "Problems getting ciphers...", 1 + scalar(@ciphers)
@@ -102,4 +102,76 @@ plan tests => 6 + (scalar @ciphers)*2;
                  "-out", "key_from_uri.enc" ]))
         && File::Compare::compare("key_from_cmdline.enc", "key_from_uri.enc") == 0,
         "Check that key from URI gives an equal result comparing to the explicit one");
+
+     # -P prints the salt/key/iv and exits.  With a fixed salt and PBKDF2 the
+     # derived key and iv are deterministic, so the whole output can be checked.
+     subtest "-P prints the derived key material" => sub {
+         plan tests => 5;
+
+         my @pout = run(app([$cmd, "enc", "-aes-128-cbc", "-pbkdf2",
+                             "-S", "0102030405060708", "-P",
+                             "-pass", "pass:password"]), capture => 1);
+         chomp(@pout);
+         is($pout[0], "salt=0102030405060708", "-P prints the expected salt");
+         is($pout[1], "key=F550F3F36CA07658588CBEA7D3B646C6",
+            "-P prints the expected key");
+         is($pout[2], "iv =4080F8E5384C695DB2F79E46195168B8",
+            "-P prints the expected iv");
+
+         # With -nosalt no salt is used, so no salt line is printed and the
+         # derived key/iv differ from the salted case above.
+         my @pout_nosalt = run(app([$cmd, "enc", "-aes-128-cbc", "-pbkdf2",
+                                    "-nosalt", "-P",
+                                    "-pass", "pass:password"]), capture => 1);
+         chomp(@pout_nosalt);
+         is($pout_nosalt[0], "key=E11244295150E6713CD76E9A51123470",
+            "-P with -nosalt prints no salt line");
+         is($pout_nosalt[1], "iv =93BDB6ACBF0C8021ABAE29881130B210",
+            "-P with -nosalt prints the expected iv");
+     };
+
+     subtest "-nosalt encrypt/decrypt round-trip" => sub {
+         plan tests => 3;
+
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-nosalt", "-e", "-k", "test",
+                     "-in", $test, "-out", "nosalt.cipher"])),
+            "encrypt with -nosalt");
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-nosalt", "-d", "-k", "test",
+                     "-in", "nosalt.cipher", "-out", "nosalt.clear"])),
+            "decrypt with -nosalt");
+         ok(compare_text($test, "nosalt.clear") == 0,
+            "decrypted output matches the original");
+     };
+
+     subtest "-md selects the key derivation digest" => sub {
+         plan tests => 4;
+
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-md", "sha1", "-e", "-k", "test",
+                     "-in", $test, "-out", "md.cipher"])),
+            "encrypt with -md sha1");
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-md", "sha1", "-d", "-k", "test",
+                     "-in", "md.cipher", "-out", "md.clear"])),
+            "decrypt with -md sha1");
+         ok(compare_text($test, "md.clear") == 0,
+            "decrypted output matches the original");
+         ok(!run(app([$cmd, "enc", "-aes-128-cbc", "-md", "sha256", "-d", "-k", "test",
+                      "-in", "md.cipher", "-out", "md_mismatch.clear"])),
+            "decrypt fails when -md does not match the one used to encrypt");
+     };
+
+     subtest "-iter sets the PBKDF2 iteration count" => sub {
+         plan tests => 4;
+
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-iter", "5", "-e", "-k", "test",
+                     "-in", $test, "-out", "iter.cipher"])),
+            "encrypt with -iter 5");
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-iter", "5", "-d", "-k", "test",
+                     "-in", "iter.cipher", "-out", "iter.clear"])),
+            "decrypt with -iter 5");
+         ok(compare_text($test, "iter.clear") == 0,
+            "decrypted output matches the original");
+         ok(!run(app([$cmd, "enc", "-aes-128-cbc", "-iter", "6", "-d", "-k", "test",
+                      "-in", "iter.cipher", "-out", "iter_mismatch.clear"])),
+            "decrypt fails when -iter does not match the one used to encrypt");
+     };
 }
