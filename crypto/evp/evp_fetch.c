@@ -274,6 +274,9 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
     uint32_t meth_id = 0;
     void *method = NULL;
     int unsupported, name_id;
+    int set_in_cache = 1;
+    void *tmp_method;
+    const OSSL_PROVIDER *tmp_prov = prov;
 
     if (store == NULL || namemap == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -364,7 +367,34 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                  * cached end up in ->tmp_store when provider asks not
                  * to cache the result (see ossl_method_construct_reserve_store())
                  */
-                if (meth_id != 0 && methdata->tmp_store == NULL) {
+                if (meth_id != 0) {
+                    /*
+                     * If the method doesn't exist in the tmp_store, either the tmp_store doesn't exist
+                     * or the algorithm doesn't exist there, in either case, this is a cacheable entry
+                     */
+                    if (!ossl_method_store_fetch(methdata->tmp_store, meth_id, propq, &tmp_prov, &tmp_method)) {
+                        set_in_cache = 1;
+                    } else {
+                        /*
+                         * We found a matching method in the temp store, don't cache this entry
+                         */
+                        if (tmp_method == method) {
+                            set_in_cache = 0;
+                        } else {
+                            set_in_cache = 1;
+                        }
+
+#ifdef OPENSSL_NO_CACHED_FETCH
+                        /*
+                         * ossl_method_store_fetch takes a reference on the fetched method
+                         * when using NO_CACHED_FETCH, so we need to free it here
+                         */
+                        free_method(tmp_method);
+#endif
+                    }
+                }
+
+                if (set_in_cache == 1) {
                     ossl_method_store_cache_set(store, prov, meth_id, propq,
                         method, up_ref_method, free_method);
                 } else {
