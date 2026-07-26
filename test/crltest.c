@@ -1587,7 +1587,7 @@ static X509_CRL *make_signed_delta_crl(X509 *issuer, EVP_PKEY *pkey,
     X509_CRL *crl = NULL, *decoded = NULL;
     ASN1_TIME *last = NULL, *next = NULL;
     ASN1_INTEGER *num = NULL, *base_num = NULL;
-    X509_EXTENSION *akid_ext = NULL;
+    const X509_EXTENSION *akid_ext = NULL;
     unsigned char *der = NULL;
     const unsigned char *p;
     int derlen, idx;
