@@ -2045,8 +2045,7 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
     ctx->current_crl = crl;
 
     /*
-     * RFC 5280 5.2.3 / 5.2.4: CRLNumber and BaseCRLNumber are INTEGER (0..MAX).
-     * Only enforce under X509_V_FLAG_X509_STRICT.
+     * Reject negative CRLNumber / BaseCRLNumber under X509_V_FLAG_X509_STRICT.
      */
     if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
         && ((crl->crl_number != NULL

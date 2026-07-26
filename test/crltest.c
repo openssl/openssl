@@ -1615,7 +1615,7 @@ static X509_CRL *make_signed_delta_crl(X509 *issuer, EVP_PKEY *pkey,
         || !TEST_int_gt(X509_CRL_add1_ext_i2d(crl, NID_crl_number, num, 0, 0), 0)
         || !TEST_ptr(base_num = ASN1_INTEGER_new())
         || !TEST_true(ASN1_INTEGER_set(base_num, base_number))
-        /* deltaCRLIndicator is critical per RFC 5280 5.2.4 */
+        /* deltaCRLIndicator is typically marked critical */
         || !TEST_int_gt(X509_CRL_add1_ext_i2d(crl, NID_delta_crl, base_num, 1, 0),
                         0)
         || !TEST_int_gt(X509_CRL_sign(crl, pkey, EVP_sha256()), 0)
@@ -1637,8 +1637,8 @@ err:
 }
 
 /*
- * RFC 5280 requires a non-negative cRLNumber. OpenSSL only enforces this during
- * certificate verification when X509_V_FLAG_X509_STRICT is set.
+ * Negative cRLNumber values are rejected during certificate verification when
+ * X509_V_FLAG_X509_STRICT is set.
  */
 static int test_crl_negative_number(void)
 {
