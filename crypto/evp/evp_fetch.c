@@ -383,6 +383,14 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                         } else {
                             set_in_cache = 1;
                         }
+
+#ifdef OPENSSL_NO_CACHED_FETCH
+                        /*
+                         * ossl_method_store_fetch takes a reference on the fetched method
+                         * when using NO_CACHED_FETCH, so we need to free it here
+                         */
+                        free_method(tmp_method);
+#endif
                     }
                 }
 
