@@ -380,16 +380,16 @@ inner_evp_generic_fetch(struct evp_method_data_st *methdata,
                          */
                         if (tmp_method == method) {
                             set_in_cache = 0;
-                            goto non_cached_entry;
                         } else {
                             set_in_cache = 1;
                         }
                     }
-                    if (set_in_cache == 1)
-                        ossl_method_store_cache_set(store, prov, meth_id, propq,
-                            method, up_ref_method, free_method);
+                }
+
+                if (set_in_cache == 1) {
+                    ossl_method_store_cache_set(store, prov, meth_id, propq,
+                        method, up_ref_method, free_method);
                 } else {
-                non_cached_entry:
 #ifndef OPENSSL_NO_CACHED_FETCH
                     /*
                      * There is a corner case we need to handle here.  IF:
