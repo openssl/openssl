@@ -8,7 +8,7 @@ ossl_list_TYPE_is_empty, ossl_list_TYPE_num,
 ossl_list_TYPE_head, ossl_list_TYPE_tail,
 ossl_list_TYPE_next, ossl_list_TYPE_prev,
 ossl_list_TYPE_remove, ossl_list_TYPE_insert_head, ossl_list_TYPE_insert_tail,
-ossl_list_TYPE_insert_before, ossl_list_TYPE_after
+ossl_list_TYPE_insert_before, ossl_list_TYPE_after, ossl_list_TYPE_append
 - doubly linked list
 
 =head1 SYNOPSIS
@@ -38,6 +38,7 @@ ossl_list_TYPE_insert_before, ossl_list_TYPE_after
  void ossl_list_TYPE_insert_before(OSSL_LIST(name) *list, type *existing,
                                    type *elem);
  void ossl_list_TYPE_insert_after(OSSL_LIST(name) *list, type *existing, type *elem);
+ void ossl_list_TYPE_append(OSSL_LIST(name) *lh, OSSL_LIST(name) *lt);
 
 =head1 DESCRIPTION
 
@@ -89,6 +90,9 @@ I<existing> element.
 B<ossl_list_I<TYPE>_insert_after>() inserts the element I<elem>,
 which must not be in the list, into the I<list> immediately after the
 I<existing> element.
+
+B<ossl_list_I<TYPE>_append<() appends list B<lt> to list <lh>. List B<lt>
+becomes empty as all B<lt> members are part of B<lh> after function returns.
 
 =head1 RETURN VALUES
 
