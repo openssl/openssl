@@ -738,6 +738,9 @@ static int drbg_ctr_set_ctx_params_locked(PROV_DRBG *ctx,
 
 #ifndef FIPS_MODULE
     propquery = "provider=default";
+    if (p->propq != NULL
+        && p->propq->data_type == OSSL_PARAM_UTF8_STRING)
+        propquery = (const char *)p->propq->data;
 #endif
 
     if (p->cipher != NULL) {
