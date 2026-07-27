@@ -46,14 +46,15 @@ OpenSSL 3.5
 
  * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
 
-   Previously we would allocate a buffer large enough to hold the full size of
+   Previously, we would allocate a buffer large enough to hold the full size of
    an incoming handshake message as advertised by the peer. This could be quite
-   large (although it is bounded). If the peer then fails to send the full
-   handshake message then the endpoint is left waiting for the message to arrive
-   and the memory is still allocated (i.e. a Slowloris attack). To prevent this
-   we incrementally grow the buffer as we receive the data.
+   large (although it is bounded, e.g. for ClientHello this is approximately
+   128 KiB). If the peer then fails to send the full handshake message, then the
+   endpoint is left waiting for the remainder of the message to arrive and the
+   memory is still allocated (i.e. a Slowloris attack). To prevent this, we
+   incrementally grow the buffer as we receive the data.
 
-   This issue was reported to us by Okta Red Team.
+   This issue was reported by Okta Red Team.
 
    *Matt Caswell*
 
