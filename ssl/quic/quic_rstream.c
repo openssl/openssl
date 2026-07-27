@@ -29,14 +29,14 @@ static void print_foo(void *f, ...)
 #define DEBUG_PRINT print_foo
 
 QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
-    OSSL_STATM *statm)
+    OSSL_STATM *statm, QUIC_RSTREAM_QPARM *rsqp)
 {
     QUIC_RSTREAM *ret = OPENSSL_zalloc(sizeof(*ret));
 
     if (ret == NULL)
         return NULL;
 
-    ossl_sframe_set_init(&ret->fs);
+    ossl_sframe_set_init(&ret->fs, rsqp);
     ret->rxfc = rxfc;
     ret->statm = statm;
     return ret;
