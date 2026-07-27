@@ -133,8 +133,8 @@ static void usage(void)
 {
     printf("Usage: sslecho s\n");
     printf("       --or--\n");
-    printf("       sslecho c ip\n");
-    printf("       c=client, s=server, ip=dotted ip of server\n");
+    printf("       sslecho c server\n");
+    printf("       c=client, s=server, server=hostname of server\n");
     exit(EXIT_FAILURE);
 }
 
@@ -158,7 +158,7 @@ int main(int argc, char **argv)
     size_t rxcap = sizeof(rxbuf);
     int rxlen;
 
-    char *rem_server_ip = NULL;
+    char *rem_server_name = NULL;
 
     struct sockaddr_in addr;
 #if defined(OPENSSL_SYS_CYGWIN) || defined(OPENSSL_SYS_WINDOWS)
@@ -188,7 +188,7 @@ int main(int argc, char **argv)
             usage();
             /* NOTREACHED */
         }
-        rem_server_ip = argv[2];
+        rem_server_name = argv[2];
     }
 
     /* Create context used by both client and server */
@@ -281,6 +281,9 @@ int main(int argc, char **argv)
     }
     /* Else client */
     else {
+        BIO_ADDRINFO *res = NULL;
+        char port_str[6];
+        const BIO_ADDR *server_addr;
 
         printf("We are the client\n\n");
 
@@ -289,17 +292,25 @@ int main(int argc, char **argv)
 
         /* Create "bare" socket */
         client_skt = create_socket(false);
-        /* Set up connect address */
-        addr.sin_family = AF_INET;
-        inet_pton(AF_INET, rem_server_ip, &addr.sin_addr.s_addr);
-        addr.sin_port = htons(server_port);
-        /* Do TCP connect with server */
-        if (connect(client_skt, (struct sockaddr *)&addr, sizeof(addr)) != 0) {
-            perror("Unable to TCP connect to server");
+
+        /* Resolve server hostname or IP address and connect */
+        BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
+        if (!BIO_lookup(rem_server_name, port_str, BIO_LOOKUP_CLIENT,
+                AF_INET, SOCK_STREAM, &res)) {
+            fprintf(stderr, "Unable to resolve server: %s\n", rem_server_name);
             goto exit;
-        } else {
-            printf("TCP connection to server successful\n");
         }
+        server_addr = BIO_ADDRINFO_address(res);
+
+        /* Do TCP connect with server */
+        if (!BIO_connect((int)client_skt, server_addr, BIO_SOCK_NODELAY)) {
+            perror("Unable to TCP connect to server");
+            BIO_ADDRINFO_free(res);
+            goto exit;
+        }
+
+        BIO_ADDRINFO_free(res);
+        printf("TCP connection to server successful\n");
 
         /* Create client SSL structure using dedicated client socket */
         ssl = SSL_new(ssl_ctx);
@@ -308,9 +319,9 @@ int main(int argc, char **argv)
             goto exit;
         }
         /* Set hostname for SNI */
-        SSL_set_tlsext_host_name(ssl, rem_server_ip);
+        SSL_set_tlsext_host_name(ssl, rem_server_name);
         /* Configure server hostname check */
-        if (!SSL_set1_dnsname(ssl, rem_server_ip)) {
+        if (!SSL_set1_dnsname(ssl, rem_server_name)) {
             ERR_print_errors_fp(stderr);
             goto exit;
         }
