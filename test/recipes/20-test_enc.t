@@ -156,8 +156,8 @@ plan tests => 10 + (scalar @ciphers)*2;
             "decrypted output matches the original");
          # A mismatching digest derives a different key.  The decryption
          # usually fails on the padding check, but with a random salt the
-         # garbage last block carries valid padding roughly once in 256 runs,
-         # in which case it succeeds and produces garbage instead.
+         # garbage last block occasionally happens to look like valid
+         # padding, in which case it succeeds and produces garbage instead.
          ok(!run(app([$cmd, "enc", "-aes-128-cbc", "-md", "sha256", "-d", "-k", "test",
                       "-in", "md.cipher", "-out", "md_mismatch.clear"]))
             || compare_text($test, "md_mismatch.clear") != 0,
@@ -177,7 +177,8 @@ plan tests => 10 + (scalar @ciphers)*2;
             "decrypted output matches the original");
          # As with -md above, a mismatching iteration count derives a
          # different key, so the decryption either fails on the padding check
-         # or, for about one salt in 256, succeeds and yields garbage.
+         # or, when the garbage happens to look like valid padding, succeeds
+         # and yields garbage.
          ok(!run(app([$cmd, "enc", "-aes-128-cbc", "-iter", "6", "-d", "-k", "test",
                       "-in", "iter.cipher", "-out", "iter_mismatch.clear"]))
             || compare_text($test, "iter_mismatch.clear") != 0,
