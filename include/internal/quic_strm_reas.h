@@ -31,12 +31,13 @@ typedef struct sframe_set_t {
     /* Cleanse data on release? */
     int cleanse;
     int move_buffers;
+    QUIC_RSTREAM_QPARM *rsqp;
 } SFRAME_SET;
 
 /*
  * Initializes the stream frame list fs.
  */
-void ossl_sframe_set_init(SFRAME_SET *fs);
+void ossl_sframe_set_init(SFRAME_SET *fs, QUIC_RSTREAM_QPARM *rsqp);
 
 /*
  * Destroys the stream frame list fs releasing any data
