@@ -1625,9 +1625,7 @@ int CMS_add_standard_smimecap_ex(STACK_OF(X509_ALGOR) **smcap,
     return 1;
 }
 
-#ifndef OPENSSL_NO_DEPRECATED_4_1
 int CMS_add_standard_smimecap(STACK_OF(X509_ALGOR) **smcap)
 {
     return CMS_add_standard_smimecap_ex(smcap, NULL, NULL);
 }
-#endif

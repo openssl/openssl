@@ -37,7 +37,7 @@ RC2-CBC (128-bit key), RC2-CBC (64-bit key), DES-CBC, and RC2-CBC
 (for example, RC2 and DES when only the default provider is loaded)
 are silently omitted.
 
-CMS_add_standard_smimecap() is a deprecated wrapper that calls
+CMS_add_standard_smimecap() is a wrapper that calls
 CMS_add_standard_smimecap_ex() with a NULL library context and NULL
 property query string.
 
@@ -72,8 +72,6 @@ L<CMS_add1_signer(3)>, L<CMS_sign(3)>, L<OSSL_LIB_CTX(3)>
 =head1 HISTORY
 
 CMS_add_standard_smimecap_ex() was added in OpenSSL 4.1.
-
-CMS_add_standard_smimecap() was deprecated in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
