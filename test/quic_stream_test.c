@@ -10,6 +10,7 @@
 
 #include "internal/packet.h"
 #include "internal/quic_stream.h"
+#include "internal/nelem.h"
 #include "testutil.h"
 
 static int compare_iov(const unsigned char *ref, size_t ref_len,
@@ -372,97 +373,6 @@ static int test_single_copy_read(QUIC_RSTREAM *qrs,
     return 1;
 }
 
-static const unsigned char simple_data[] = "Hello world! And thank you for all the fish!";
-
-static int test_rstream_simple(int idx)
-{
-    QUIC_RSTREAM *rstream = NULL;
-    int ret = 0;
-    unsigned char buf[sizeof(simple_data)];
-    size_t readbytes = 0, avail = 0;
-    int fin = 0;
-    int use_sc = idx % 2;
-    int (*read_fn)(QUIC_RSTREAM *, unsigned char *, size_t, size_t *,
-        int *)
-        = use_sc ? test_single_copy_read
-                 : ossl_quic_rstream_read;
-
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
-        goto err;
-
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 5,
-            simple_data + 5, 10, 0))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            sizeof(simple_data) - 1,
-            simple_data + sizeof(simple_data) - 1,
-            1, 1))
-        || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
-            &readbytes, &fin))
-        || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 0)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            sizeof(simple_data) - 10,
-            simple_data + sizeof(simple_data) - 10,
-            10, 1))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0,
-            simple_data, 1, 0))
-        || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
-            &readbytes, &fin))
-        || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 1)
-        || !TEST_mem_eq(buf, 1, simple_data, 1)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            0, simple_data,
-            10, 0))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            sizeof(simple_data),
-            NULL,
-            0, 1))
-        || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
-            &readbytes, &fin))
-        || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 15)
-        || !TEST_mem_eq(buf, 15, simple_data, 15)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            15,
-            simple_data + 15,
-            sizeof(simple_data) - 15, 1))
-        || !TEST_true(ossl_quic_rstream_available(rstream, &avail, &fin))
-        || !TEST_true(fin)
-        || !TEST_size_t_eq(avail, sizeof(simple_data))
-        || !TEST_true(read_fn(rstream, buf, 2, &readbytes, &fin))
-        || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 2)
-        || !TEST_mem_eq(buf, 2, simple_data, 2)
-        || !TEST_true(read_fn(rstream, buf + 2, 12, &readbytes, &fin))
-        || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 12)
-        || !TEST_mem_eq(buf + 2, 12, simple_data + 2, 12)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            sizeof(simple_data),
-            NULL,
-            0, 1))
-        || !TEST_true(read_fn(rstream, buf + 14, 5, &readbytes, &fin))
-        || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 5)
-        || !TEST_mem_eq(buf, 14 + 5, simple_data, 14 + 5)
-        || !TEST_true(read_fn(rstream, buf + 14 + 5, sizeof(buf) - 14 - 5,
-            &readbytes, &fin))
-        || !TEST_true(fin)
-        || !TEST_size_t_eq(readbytes, sizeof(buf) - 14 - 5)
-        || !TEST_mem_eq(buf, sizeof(buf), simple_data, sizeof(simple_data))
-        || !TEST_true(read_fn(rstream, buf, sizeof(buf), &readbytes, &fin))
-        || !TEST_true(fin)
-        || !TEST_size_t_eq(readbytes, 0))
-        goto err;
-
-    ret = 1;
-
-err:
-    ossl_quic_rstream_free(rstream);
-    return ret;
-}
-
 static int test_rstream_random(int idx)
 {
     unsigned char *bulk_data = NULL;
@@ -588,19 +498,22 @@ typedef struct test_stream_chunk {
     const unsigned char *tsc_data;
     uint64_t tsc_off; /* start == offset */
     uint64_t tsc_len; /* end = offset + len */
+    int tsc_fin;
+    size_t tsc_chunks_exp;
+    size_t tsc_ranges_exp;
 } TEST_STREAM_CHUNK_T;
 
 static int test_rstream_chunk_partial_overlap(void)
 {
     unsigned char data[4096];
     unsigned char read_buf[4096];
-    TEST_STREAM_CHUNK_T tsc_buf[6];
+    TEST_STREAM_CHUNK_T tsc_buf[7];
     TEST_STREAM_CHUNK_T *tsc;
     QUIC_RSTREAM *rstream;
     size_t readbytes;
     unsigned int i;
-    unsigned int send_order[6];
-    int fin;
+    unsigned int send_order[7];
+    int fin = 0;
     int ok = 0;
 
     rstream = ossl_quic_rstream_new(NULL, NULL);
@@ -622,52 +535,108 @@ static int test_rstream_chunk_partial_overlap(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 32;
-    send_order[4] = 0;
+    tsc->tsc_chunks_exp = 5;
+    tsc->tsc_ranges_exp = 1;
+    send_order[6] = 0;
 
     tsc = &tsc_buf[1];
     tsc->tsc_data = &data[24];
     tsc->tsc_off = 24;
     tsc->tsc_len = 48;
-    send_order[3] = 1;
+    tsc->tsc_chunks_exp = 5;
+    tsc->tsc_ranges_exp = 1;
+    send_order[4] = 1;
 
     tsc = &tsc_buf[2];
     tsc->tsc_data = &data[44];
     tsc->tsc_off = 44;
     tsc->tsc_len = 20;
-    send_order[2] = 2;
+    tsc->tsc_chunks_exp = 4;
+    tsc->tsc_ranges_exp = 1;
+    send_order[3] = 2;
 
     tsc = &tsc_buf[3];
     tsc->tsc_data = &data[55];
     tsc->tsc_off = 55;
     tsc->tsc_len = 50;
+    tsc->tsc_chunks_exp = 1;
+    tsc->tsc_ranges_exp = 1;
     send_order[0] = 3;
 
     tsc = &tsc_buf[4];
     tsc->tsc_data = &data[100];
     tsc->tsc_off = 100;
-    tsc->tsc_len = 20;
-    send_order[1] = 4;
+    tsc->tsc_len = 19;
+    tsc->tsc_chunks_exp = 3;
+    tsc->tsc_ranges_exp = 1;
+    send_order[2] = 4;
+
+    tsc = &tsc_buf[5];
+    tsc->tsc_data = &data[119];
+    tsc->tsc_off = 119;
+    tsc->tsc_len = 1;
+    tsc->tsc_fin = 1;
+    tsc->tsc_chunks_exp = 2;
+    tsc->tsc_ranges_exp = 2;
+    send_order[1] = 5;
 
     /*
      * add duplicate chunk, the chunk range 48, 64 exists already
      * in the range, thus no additional stream chunk will be created.
      */
-    tsc = &tsc_buf[5];
+    tsc = &tsc_buf[6];
     tsc->tsc_data = &data[49];
     tsc->tsc_off = 48;
     tsc->tsc_len = 16;
-    send_order[5] = 5;
+    tsc->tsc_chunks_exp = 5;
+    tsc->tsc_ranges_exp = 1;
+    send_order[5] = 6;
 
-    for (i = 0; i < 6; i++) {
+    /*
+     * send everything except offset 0.
+     */
+    for (i = 0; i < OSSL_NELEM(tsc_buf) - 1; i++) {
         tsc = &tsc_buf[send_order[i]];
         if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin))) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
             goto err;
+        }
+
         /*
-         * all chunks are supposed to be found in single range.
+         * check our assumptions about about reassemble process internals.
          */
-        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
             goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        /*
+         * the offset 0 chunk is not transmitted in loop here,
+         * make sure the stream does not become readable.
+         */
+        if (!TEST_true(ossl_quic_rstream_peek(rstream, read_buf,
+                sizeof(read_buf), &readbytes, &fin))) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_false(fin)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(readbytes, 0)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
     }
 
     /*
@@ -677,6 +646,17 @@ static int test_rstream_chunk_partial_overlap(void)
     if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 5))
         goto err;
 
+    /*
+     * send offset 0 chunk, and try to read from stream.
+     */
+    tsc = &tsc_buf[0];
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, tsc->tsc_fin)))
+        goto err;
+
+    /*
+     * writing chunk offset 0 makes stream readable
+     */
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
             sizeof(read_buf), &readbytes, &fin)))
         goto err;
@@ -685,6 +665,12 @@ static int test_rstream_chunk_partial_overlap(void)
      * we expect to read 120 bytes
      */
     if (!TEST_uint64_t_eq(readbytes, 120))
+        goto err;
+
+    /*
+     * the fin written by loop should be signaled too.
+     */
+    if (!TEST_true(fin))
         goto err;
 
     if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
@@ -701,12 +687,12 @@ static int test_rstream_chunk_full_overlap(void)
 {
     unsigned char data[4096];
     unsigned char read_buf[4096];
-    TEST_STREAM_CHUNK_T tsc_buf[6];
+    TEST_STREAM_CHUNK_T tsc_buf[5];
     TEST_STREAM_CHUNK_T *tsc;
     QUIC_RSTREAM *rstream;
     size_t readbytes;
     unsigned int i;
-    unsigned int send_order[6];
+    unsigned int send_order[5];
     int fin;
     int ok = 0;
 
@@ -729,54 +715,69 @@ static int test_rstream_chunk_full_overlap(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 256;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[4] = 0;
 
     tsc = &tsc_buf[1];
     tsc->tsc_data = &data[24];
     tsc->tsc_off = 24;
     tsc->tsc_len = 48;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 4;
     send_order[3] = 1;
 
     tsc = &tsc_buf[2];
     tsc->tsc_data = &data[44];
     tsc->tsc_off = 44;
     tsc->tsc_len = 20;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 3;
     send_order[2] = 2;
 
     tsc = &tsc_buf[3];
     tsc->tsc_data = &data[55];
     tsc->tsc_off = 55;
     tsc->tsc_len = 50;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[0] = 3;
 
     tsc = &tsc_buf[4];
     tsc->tsc_data = &data[100];
     tsc->tsc_off = 100;
     tsc->tsc_len = 20;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
     send_order[1] = 4;
 
-    for (i = 0; i < 5; i++) {
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
         tsc = &tsc_buf[send_order[i]];
         if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
                 tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
             goto err;
-        /*
-         * all chunks are supposed to be found in single range.
-         */
-        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-            goto err;
-    }
 
-    /*
-     * although only 5 chunks were inserted, we expect to find 6 chunks
-     * in range, The chunk number 5 which overlaps entire range got split
-     * to two chunks, see (sandwich_chunk() in ssl/quic/quic_strm_reas.c)
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 1))
-        goto err;
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
 
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
             sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_false(fin))
         goto err;
 
     /*
@@ -825,46 +826,36 @@ static int test_rstream_range_overlap(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
 
     tsc = &tsc_buf[1];
     tsc->tsc_data = &data[128];
     tsc->tsc_off = 128;
     tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 2;
+    tsc->tsc_chunks_exp = 2;
 
     tsc = &tsc_buf[2];
     tsc->tsc_data = &data[256];
     tsc->tsc_off = 256;
     tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 3;
+    tsc->tsc_chunks_exp = 3;
 
     tsc = &tsc_buf[3];
     tsc->tsc_data = &data[384];
     tsc->tsc_off = 384;
     tsc->tsc_len = 64;
+    tsc->tsc_ranges_exp = 4;
+    tsc->tsc_chunks_exp = 4;
 
     tsc = &tsc_buf[4];
     tsc->tsc_data = &data[512];
     tsc->tsc_off = 512;
     tsc->tsc_len = 64;
-
-    for (i = 0; i < 5; i++) {
-        tsc = &tsc_buf[i];
-        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-            goto err;
-    }
-
-    /*
-     * 5 chunks with zero overlap got inserted to rstream so far.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 5))
-        goto err;
-
-    /*
-     * there are gaps between chunks, hence each chunk creates its own
-     * range.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 5))
-        goto err;
+    tsc->tsc_ranges_exp = 5;
+    tsc->tsc_chunks_exp = 5;
 
     /*
      * chunk 6 appends data to last range
@@ -873,9 +864,8 @@ static int test_rstream_range_overlap(void)
     tsc->tsc_data = &data[548];
     tsc->tsc_off = 548;
     tsc->tsc_len = 220;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
+    tsc->tsc_ranges_exp = 5;
+    tsc->tsc_chunks_exp = 6;
 
     /*
      * chunk 7 prepends data to last range
@@ -884,21 +874,8 @@ static int test_rstream_range_overlap(void)
     tsc->tsc_data = &data[480];
     tsc->tsc_off = 480;
     tsc->tsc_len = 64;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
-
-    /*
-     * there should two more chunks now
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 7))
-        goto err;
-
-    /*
-     * but the same number of ranges.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 5))
-        goto err;
+    tsc->tsc_chunks_exp = 7;
+    tsc->tsc_ranges_exp = 5;
 
     /*
      * chunk 8 fully covers range 4 and partially
@@ -908,10 +885,6 @@ static int test_rstream_range_overlap(void)
     tsc->tsc_data = &data[364];
     tsc->tsc_off = 364;
     tsc->tsc_len = 500;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
-
     /*
      * note the expected number of chunks actually decreases!!!
      * here is what happened:
@@ -939,14 +912,8 @@ static int test_rstream_range_overlap(void)
      * where not touched so far, each of them contain one range, this
      * makes total 6 ranges.
      */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 4))
-        goto err;
-
-    /*
-     * range number 5 is gone, there are 4 ranges left.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 4))
-        goto err;
+    tsc->tsc_chunks_exp = 4;
+    tsc->tsc_ranges_exp = 4;
 
     /*
      * chunk 9 partially overlaps with the first and
@@ -956,25 +923,36 @@ static int test_rstream_range_overlap(void)
     tsc->tsc_data = &data[32];
     tsc->tsc_off = 32;
     tsc->tsc_len = 500;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
+    tsc->tsc_chunks_exp = 3;
+    tsc->tsc_ranges_exp = 1;
 
-    /*
-     * for the same reasons chunks disappear when there is a full overlap
-     * between ranges. After merge is done we are shorter by one chunk,
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 3))
-        goto err;
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        tsc = &tsc_buf[i];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
 
-    /*
-     * all what's left is one continuous range.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-        goto err;
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
 
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
             sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_false(fin))
         goto err;
 
     /*
@@ -1030,74 +1008,81 @@ static int test_rstream_prepend_byte_chunks(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 1;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[4] = 0;
 
     tsc = &tsc_buf[1];
     tsc->tsc_data = &data[1];
     tsc->tsc_off = 1;
     tsc->tsc_len = 2;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[3] = 1;
 
     tsc = &tsc_buf[2];
     tsc->tsc_data = &data[3];
     tsc->tsc_off = 3;
     tsc->tsc_len = 5;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[2] = 2;
 
     tsc = &tsc_buf[3];
     tsc->tsc_data = &data[8];
     tsc->tsc_off = 8;
     tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[1] = 3;
 
     tsc = &tsc_buf[4];
     tsc->tsc_data = &data[12];
     tsc->tsc_off = 12;
     tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[0] = 4;
 
-    for (i = 0; i < 5; i++) {
-        tsc = &tsc_buf[send_order[i]];
-        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-            goto err;
-        /*
-         * all chunks are supposed to be found in single range.
-         */
-        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-            goto err;
-    }
-    /*
-     * although 5 chunks were inserted, we expect to find only 1 chunks
-     * in range, because all short chunks could fit to single stream chunk.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 1))
-        goto err;
-    /*
-     * this chunk partially overlaps. It does not fit to stream chunk buffer
-     * created by for() loop above, therefore a new stream chunk will be created.
-     */
     tsc = &tsc_buf[5];
     tsc->tsc_data = &data[12];
     tsc->tsc_off = 12;
     tsc->tsc_len = 12;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
+    tsc->tsc_ranges_exp = 1;
     /*
-     * verify no new range got created.
+     * this chunk partially overlaps. It does not fit to stream chunk buffer
+     * created earlier, therefore a new stream chunk will be created.
      */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-        goto err;
+    tsc->tsc_chunks_exp = 2;
+    send_order[5] = 5;
 
-    /*
-     * there should be two stream chunks now.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 2))
-        goto err;
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
 
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
             sizeof(read_buf), &readbytes, &fin)))
+        goto err;
+
+    if (!TEST_false(fin))
         goto err;
 
     /*
@@ -1153,71 +1138,75 @@ static int test_rstream_append_byte_chunks(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 1;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[0] = 0;
 
     tsc = &tsc_buf[1];
     tsc->tsc_data = &data[1];
     tsc->tsc_off = 1;
     tsc->tsc_len = 2;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[1] = 1;
 
     tsc = &tsc_buf[2];
     tsc->tsc_data = &data[3];
     tsc->tsc_off = 3;
     tsc->tsc_len = 5;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[2] = 2;
 
     tsc = &tsc_buf[3];
     tsc->tsc_data = &data[8];
     tsc->tsc_off = 8;
     tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[3] = 3;
 
     tsc = &tsc_buf[4];
     tsc->tsc_data = &data[12];
     tsc->tsc_off = 12;
     tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[4] = 4;
 
-    for (i = 0; i < 5; i++) {
-        tsc = &tsc_buf[send_order[i]];
-        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-            goto err;
-        /*
-         * all chunks are supposed to be found in single range.
-         */
-        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-            goto err;
-    }
-    /*
-     * although 5 chunks were inserted, we expect to find only 1 chunks
-     * in range, because all short chunks could fit to single stream chunk.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 1))
-        goto err;
-    /*
-     * this chunk partially overlaps. It does not fit to stream chunk buffer
-     * created by for() loop above, therefore a new stream chunk will be created.
-     */
     tsc = &tsc_buf[5];
     tsc->tsc_data = &data[12];
     tsc->tsc_off = 12;
     tsc->tsc_len = 12;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
     /*
-     * verify no new range got created.
+     * this chunk partially overlaps. It does not fit to stream chunk buffer
+     * created by for() loop above, therefore a new stream chunk will be created.
      */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-        goto err;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
+    send_order[5] = 5;
 
-    /*
-     * there should be two stream chunks now.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 2))
-        goto err;
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
 
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
             sizeof(read_buf), &readbytes, &fin)))
@@ -1227,6 +1216,9 @@ static int test_rstream_append_byte_chunks(void)
      * we expect to read 24 bytes
      */
     if (!TEST_uint64_t_eq(readbytes, 24))
+        goto err;
+
+    if (!TEST_false(fin))
         goto err;
 
     if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
@@ -1275,6 +1267,8 @@ static int test_rstream_mix_chunks(void)
     tsc->tsc_data = &data[8];
     tsc->tsc_off = 8;
     tsc->tsc_len = 4;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[0] = 0;
 
     /*
@@ -1285,6 +1279,8 @@ static int test_rstream_mix_chunks(void)
     tsc->tsc_data = &data[7];
     tsc->tsc_off = 7;
     tsc->tsc_len = 3;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[1] = 1;
 
     /*
@@ -1295,6 +1291,8 @@ static int test_rstream_mix_chunks(void)
     tsc->tsc_data = &data[10];
     tsc->tsc_off = 10;
     tsc->tsc_len = 3;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[2] = 2;
 
     /*
@@ -1306,25 +1304,9 @@ static int test_rstream_mix_chunks(void)
     tsc->tsc_data = &data[6];
     tsc->tsc_off = 6;
     tsc->tsc_len = 8;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 1;
     send_order[3] = 3;
-
-    /*
-     * all nibbles we've sent so far must fit to single range.
-     */
-    for (i = 0; i < 4; i++) {
-        tsc = &tsc_buf[send_order[i]];
-        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-            goto err;
-        /*
-         * all chunks are supposed to be found in single range.
-         */
-        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-            goto err;
-
-        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 1))
-            goto err;
-    }
 
     /*
      * prepend the nibble which starts yet another range.
@@ -1333,41 +1315,21 @@ static int test_rstream_mix_chunks(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 1;
+    tsc->tsc_ranges_exp = 2;
+    tsc->tsc_chunks_exp = 2;
     send_order[4] = 4;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
-    /*
-     * the new range also gets a new chunk. so there are two ranges
-     * and two chunks now.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 2))
-        goto err;
-
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 2))
-        goto err;
 
     /*
-     * send nibble that appends to right range. the range count must not
-     * change as new data still fit to dstorage. the range count
-     * must still be 2
+     * nibble here appends bytes to right range. the range count and chunk
+     * count must not change as new data still fit to dstorage.
      */
     tsc = &tsc_buf[5];
     tsc->tsc_data = &data[14];
     tsc->tsc_off = 14;
     tsc->tsc_len = 3;
+    tsc->tsc_ranges_exp = 2;
+    tsc->tsc_chunks_exp = 2;
     send_order[5] = 5;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
-    /*
-     * the new data must fit to dstorage in second range. there
-     * still must be two ranges and two chunks.
-     */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 2))
-        goto err;
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 2))
-        goto err;
 
     /*
      * send chunk that overlaps everything
@@ -1376,23 +1338,43 @@ static int test_rstream_mix_chunks(void)
     tsc->tsc_data = &data[0];
     tsc->tsc_off = 0;
     tsc->tsc_len = 24;
+    tsc->tsc_ranges_exp = 1;
+    tsc->tsc_chunks_exp = 2;
     send_order[6] = 6;
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-            tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
-        goto err;
+
     /*
-     * there is one range with 3 chunks.
+     * all nibbles we've sent so far must fit to single range.
      */
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream), 1))
-        goto err;
-    if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream), 2))
-        goto err;
+    for (i = 0; i < OSSL_NELEM(tsc_buf); i++) {
+        tsc = &tsc_buf[send_order[i]];
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                tsc->tsc_off, tsc->tsc_data, tsc->tsc_len, 0)))
+            goto err;
+
+        /*
+         * check our assumptions about about reassemble process internals.
+         */
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_range_count(rstream),
+                tsc->tsc_ranges_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+
+        if (!TEST_size_t_eq(ossl_quic_rstream_get_chunk_count(rstream),
+                tsc->tsc_chunks_exp)) {
+            TEST_info("%s failing iteration %u", OPENSSL_FUNC, i);
+            goto err;
+        }
+    }
 
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf,
             sizeof(read_buf), &readbytes, &fin)))
         goto err;
 
     if (!TEST_uint64_t_eq(readbytes, 24))
+        goto err;
+
+    if (!TEST_false(fin))
         goto err;
 
     if (!TEST_mem_eq(read_buf, readbytes, data, readbytes))
@@ -1409,7 +1391,6 @@ int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
-    ADD_ALL_TESTS(test_rstream_simple, 4);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_chunk_partial_overlap);
     ADD_TEST(test_rstream_chunk_full_overlap);

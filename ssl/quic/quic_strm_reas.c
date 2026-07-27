@@ -63,6 +63,7 @@ DEFINE_LIST_OF(sc, struct stream_chunk_t);
 
 #define SCHUNK_SIZE(_sc) ((_sc)->sc_range.end - (_sc)->sc_range.start)
 #define SRANGE_SIZE(_sr) ((_sr)->sr_range.end - (_sr)->sr_range.start)
+#define SCHUNK_OVERHEAD(_pkt, _sc) ((_pkt)->datagram_len - SCHUNK_SIZE(sc))
 
 /*
  * Stream range keeps list of continuous stream chunks. The range
@@ -119,26 +120,12 @@ static int keep_schunk_data_on_packet(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
     UINT_RANGE *r)
 {
     /*
-     * the function decides whether stream data should be moved
-     * from packet buffer to stream buffer or if data can stay
-     * at packet buffer.
-     *
-     * Keeping the data at packet saves yet another buffer
-     * allocation at heap (+ data transfer). On the other hand
-     * it opens door to malicious peer to force stack to use more
-     * memory than necessary.
-     *
-     * The function here should asses a current stream quality:
-     *   how many stream chunks are there
-     *   the time elapsed since the arrival of earlier chunk
-     *   the time elapsed since the application consumed the data
-     *   the size of the chunk compared with the whole packet size
-     *   the size of chunk with respect to DIRECT_STORAGE_SZ
-     *   ...
-     * the code to collect those parameters is still missing, once
-     * this gap will be filled this function will be able to
-     * make the decision.
+     * maximal allocation overhead in packet buffers is ~64kB for
+     * every stream. If stream exceeds ~64kB limit, the newly received
+     * chunks are moved from packet buffer to stream buffer.
      */
+    if (fs->pkt_buf_overhead_sz > (64 * 1024))
+        return 0;
 
     return 1;
 }
@@ -163,6 +150,7 @@ static struct stream_chunk_t *new_schunk(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
         ossl_qrx_pkt_up_ref(pkt);
         sc->sc_data = data;
         sc->sc_range = *r;
+        fs->pkt_buf_overhead_sz += UINT64_TO_SIZE_T(SCHUNK_OVERHEAD(pkt, sc));
     } else if (pkt != NULL || fs->move_buffers) {
         rsize = r->end - r->start;
         if (rsize <= DIRECT_STORAGE_SZ) {
@@ -205,6 +193,8 @@ static void destroy_schunk(SFRAME_SET *fs, struct stream_chunk_t *sc)
 
     switch (sc->sc_st) {
     case ST_TYPE_PKT:
+        fs->pkt_buf_overhead_sz -= UINT64_TO_SIZE_T(
+            SCHUNK_OVERHEAD(sc->sc_pkt, sc));
         ossl_qrx_pkt_release(sc->sc_pkt);
         break;
     case ST_TYPE_HEAP:
@@ -298,7 +288,7 @@ static int try_dstorage(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
     assert(tail_sc != NULL);
 
     /*
-     * full overlap of direct storage can be treated when range contaisn
+     * full overlap of direct storage can be treated when range contains
      * exactly one chunl.
      */
     if (head_sc == tail_sc
@@ -983,6 +973,8 @@ int ossl_fset_move_chunks(SFRAME_SET *fs)
                     memcpy(sc->sc_dstorage, sc->sc_data,
                         UINT64_TO_SIZE_T(SCHUNK_SIZE(sc)));
                     sc->sc_st = ST_TYPE_DIRECT;
+                    fs->pkt_buf_overhead_sz -= UINT64_TO_SIZE_T(
+                        SCHUNK_OVERHEAD(sc->sc_pkt, sc));
                     ossl_qrx_pkt_release(sc->sc_pkt);
                     sc->sc_data_w = sc->sc_dstorage;
                 } else {
@@ -991,6 +983,8 @@ int ossl_fset_move_chunks(SFRAME_SET *fs)
                         return 0;
                     memcpy(buf, sc->sc_data, UINT64_TO_SIZE_T(SCHUNK_SIZE(sc)));
                     sc->sc_st = ST_TYPE_HEAP;
+                    fs->pkt_buf_overhead_sz -= UINT64_TO_SIZE_T(
+                        SCHUNK_OVERHEAD(sc->sc_pkt, sc));
                     ossl_qrx_pkt_release(sc->sc_pkt);
                     sc->sc_buf = buf;
                     sc->sc_data_w = buf;
@@ -1040,6 +1034,8 @@ static int flatten_range(SFRAME_SET *fs, struct stream_range_t *sr)
      */
     switch (sc->sc_st) {
     case ST_TYPE_PKT:
+        fs->pkt_buf_overhead_sz -= UINT64_TO_SIZE_T(
+            SCHUNK_OVERHEAD(sc->sc_pkt, sc));
         ossl_qrx_pkt_release(sc->sc_pkt);
         sc->sc_st = ST_TYPE_HEAP;
         sc->sc_buf = buf;
