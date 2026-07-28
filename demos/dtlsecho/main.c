@@ -25,7 +25,7 @@
 #define closesocket(s) close(s)
 
 #else
-#include <winsock.h>
+#include <winsock2.h>
 #include <ws2tcpip.h>
 #endif
 
@@ -43,35 +43,49 @@ static volatile flag server_running = true;
 
 static SOCKET create_socket(flag isServer)
 {
-    SOCKET s;
-    int optval = 1;
-    struct sockaddr_in addr;
+    SOCKET s = INVALID_SOCKET;
+    BIO_ADDRINFO *res = NULL;
+    const BIO_ADDR *addr;
+    char port_str[6];
 
-    s = socket(AF_INET, SOCK_DGRAM, 0);
+    /*
+     * Resolve the wildcard address for our port. Requesting AF_INET6 gives a
+     * single socket that, BIO_listen will clear IPV6_V6ONLY below, and the
+     * socket accepts both IPv6 and IPv4 clients.
+     */
+    BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
+    if (!BIO_lookup_ex(NULL, port_str, BIO_LOOKUP_SERVER, AF_INET6,
+            SOCK_DGRAM, 0, &res)) {
+        fprintf(stderr, "Unable to resolve local address\n");
+        ERR_print_errors_fp(stderr);
+        exit(EXIT_FAILURE);
+    }
+    addr = BIO_ADDRINFO_address(res);
+
+    s = BIO_socket(BIO_ADDRINFO_family(res), SOCK_DGRAM, 0, 0);
     if (s == INVALID_SOCKET) {
-        perror("Unable to create socket");
+        fprintf(stderr, "Unable to create socket\n");
+        ERR_print_errors_fp(stderr);
+        BIO_ADDRINFO_free(res);
         exit(EXIT_FAILURE);
     }
 
     if (isServer) {
-        addr.sin_family = AF_INET;
-        addr.sin_port = htons(server_port);
-        addr.sin_addr.s_addr = INADDR_ANY;
-
-        /* Reuse the address; good for quick restarts */
-        if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, (void *)&optval,
-                sizeof(optval))
-            < 0) {
-            perror("setsockopt(SO_REUSEADDR) failed");
-            exit(EXIT_FAILURE);
-        }
-
-        if (bind(s, (struct sockaddr *)&addr, sizeof(addr)) < 0) {
-            perror("Unable to bind");
+        /*
+         * BIO_listen binds with SO_REUSEADDR and, since we do not pass
+         * BIO_SOCK_V6_ONLY, clears IPV6_V6ONLY to give us a dual-stack socket
+         * that serves both IPv6 and IPv4 clients.
+         */
+        if (!BIO_listen((int)s, addr, BIO_SOCK_REUSEADDR)) {
+            fprintf(stderr, "Unable to bind\n");
+            ERR_print_errors_fp(stderr);
+            BIO_closesocket((int)s);
+            BIO_ADDRINFO_free(res);
             exit(EXIT_FAILURE);
         }
     }
 
+    BIO_ADDRINFO_free(res);
     return s;
 }
 
@@ -172,7 +186,6 @@ int main(int argc, char **argv)
 
     char *rem_server_name = NULL;
 
-    struct sockaddr_in addr;
     int received_new_session_ack = 0;
 
 #if !defined(OPENSSL_SYS_WINDOWS)
@@ -287,44 +300,45 @@ int main(int argc, char **argv)
     else {
         BIO *bio;
         BIO_ADDRINFO *res = NULL;
+        const BIO_ADDRINFO *ai = NULL;
         char port_str[6];
-        const BIO_ADDR *server_addr;
 
         printf("We are the client\n\n");
 
         /* Configure client context so we verify the server correctly */
         configure_client_context(ssl_ctx);
 
-        /* Create "bare" UDP socket */
-        client_skt = create_socket(false);
-        if (client_skt == INVALID_SOCKET) {
-            perror("Unable to accept");
-            exit(EXIT_FAILURE);
-        }
-
-        /* Resolve server hostname or IP address and connect */
+        /* Resolve server hostname or IP address (IPv4 or IPv6) */
         BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
         if (!BIO_lookup(rem_server_name, port_str, BIO_LOOKUP_CLIENT,
-                AF_INET, SOCK_DGRAM, &res)) {
+                AF_UNSPEC, SOCK_DGRAM, &res)) {
             fprintf(stderr, "Unable to resolve server: %s\n", rem_server_name);
-            goto exit;
-        }
-        server_addr = BIO_ADDRINFO_address(res);
-
-        /* Connect the UDP socket to the server (sets default peer address) */
-        if (!BIO_connect((int)client_skt, server_addr, 0)) {
-            perror("Unable to UDP connect to server");
-            BIO_ADDRINFO_free(res);
+            ERR_print_errors_fp(stderr);
             goto exit;
         }
 
-        /* Copy the address for later use with BIO_ctrl */
-        memset(&addr, 0, sizeof(addr));
-        addr.sin_family = BIO_ADDR_family(server_addr);
-        BIO_ADDR_rawaddress(server_addr, &addr.sin_addr, NULL);
-        addr.sin_port = BIO_ADDR_rawport(server_addr);
-
+        /*
+         * Iterate over the resolved addresses and connect to the first one
+         * that works, creating a UDP socket of the matching address family for
+         * each attempt. For UDP, BIO_connect just sets the default peer address.
+         */
+        for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
+            client_skt = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_DGRAM, 0, 0);
+            if (client_skt == INVALID_SOCKET)
+                continue;
+            if (BIO_connect((int)client_skt, BIO_ADDRINFO_address(ai), 0))
+                break;
+            BIO_closesocket((int)client_skt);
+            client_skt = INVALID_SOCKET;
+        }
         BIO_ADDRINFO_free(res);
+
+        if (client_skt == INVALID_SOCKET) {
+            fprintf(stderr, "Unable to UDP connect to server: %s\n",
+                rem_server_name);
+            ERR_print_errors_fp(stderr);
+            goto exit;
+        }
         printf("UDP connection to server successful\n");
 
         /* Create a datagram BIO for the connected socket */
