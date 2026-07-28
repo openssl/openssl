@@ -1120,7 +1120,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
 /**
  * Convert a number to Montgomery representation: r = a * R mod N,
- * where R = 2^(length of libm in bits).
+ * where R = 2^(length of limb in bits).
  *
  * @param[out]          r       The OSSL_FN for the result
  * @param[in]           a       The operand
@@ -1131,7 +1131,7 @@ size_t OSSL_FN_mul_mont_quick_ctx_size(OSSL_FN *r, const OSSL_FN *a,
  *
  * @note This function requires that @p r and @p mont->N are of
  * the same size and that the OSSL_FN_CTX has free space for 2 frame,
- * 5 numbers, and 5 * max(a->dsize, b->dsize, mont->N->dsize) + 2 limbs.
+ * 5 numbers, and 5 * max(a->dsize, mont->N->dsize) + 2 limbs.
  * Note that this provides an upper bound.  Actual use of the arena may be
  * smaller - see OSSL_FN_to_mont_ctx_size() for an exact, conditional value.
  *
@@ -1164,7 +1164,7 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
 /**
  * Convert a number from Montgomery representation: r = a * R^(-1) mod N,
- * where R = 2^(length of libm in bits).
+ * where R = 2^(length of limb in bits).
  *
  * @param[out]          r       The OSSL_FN for the result
  * @param[in]           a       The operand

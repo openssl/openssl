@@ -16,9 +16,9 @@
 
 #include "crypto/fn.h"
 #include "crypto/fnerr.h"
-#include "crypto/bn.h"
 #include "internal/safe_math.h"
 #include "fn_local.h"
+#include "../bn/bn_local.h"
 #include <openssl/err.h>
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
@@ -250,7 +250,8 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont, OSSL_FN_CTX *ctx)
 {
     if (!ossl_assert(r != NULL) || !ossl_assert(a != NULL)
-        || !ossl_assert(b != NULL) || !ossl_assert(mont != NULL)) {
+        || !ossl_assert(b != NULL) || !ossl_assert(mont != NULL)
+        || !ossl_assert(ctx != NULL)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
@@ -265,7 +266,7 @@ int OSSL_FN_mul_mont_quick(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     }
 
 #if defined(OPENSSL_BN_ASM_MONT)
-    if (len > 1)
+    if (len > 1 && len <= BN_SOFT_LIMIT)
         if (bn_mul_mont(r->d, a->d, b->d, mont->N->d, mont->n0, len) != 0)
             return 1;
 #endif
@@ -327,7 +328,7 @@ end:
  * Arena payload size needed by OSSL_FN_mul_mont().
  *
  * Constant-time profile:
- *   - This function is NOT fully constand-time.
+ *   - This function is NOT fully constant-time.
  *   - What leaks: the a->dsize != len and OSSL_FN_cmp(a, N) >= 0 tests (and
  *     the same for b) branch on the operand values to choose how many scratch
  *     limbs to budget, so both the branch taken and the returned size reveal
@@ -352,14 +353,16 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
 
     if (a->dsize != len || OSSL_FN_cmp(a, mont->N) >= 0) {
         num++;
-        tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N);
+        if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
+            return 0;
         if (tmp > ret)
             ret = tmp;
     }
 
     if (b->dsize != len || OSSL_FN_cmp(b, mont->N) >= 0) {
         num++;
-        tmp = OSSL_FN_mod_ctx_size(NULL, b, mont->N);
+        if ((tmp = OSSL_FN_mod_ctx_size(NULL, b, mont->N)) == 0)
+            return 0;
         if (tmp > ret)
             ret = tmp;
     }
@@ -370,7 +373,8 @@ size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     if (ossl_unlikely(num > 0 && (size_t)len > SIZE_MAX / num))
         return 0;
 
-    tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
+    if ((tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)) == 0)
+        return 0;
     if (tmp > ret)
         ret = tmp;
 
@@ -480,7 +484,8 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 
     if (a->dsize != len || OSSL_FN_cmp(a, mont->N) >= 0) {
         num++;
-        tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N);
+        if ((tmp = OSSL_FN_mod_ctx_size(NULL, a, mont->N)) == 0)
+            return 0;
         if (tmp > ret)
             ret = tmp;
     }
@@ -491,7 +496,8 @@ size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     if (ossl_unlikely(num > 0 && (size_t)len > SIZE_MAX / num))
         return 0;
 
-    tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont);
+    if ((tmp = OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, mont)) == 0)
+        return 0;
     if (tmp > ret)
         ret = tmp;
 
