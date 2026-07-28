@@ -271,6 +271,11 @@ int ASN1_item_sign_ctx(const ASN1_ITEM *it, X509_ALGOR *algor1,
         goto err;
     }
     outl = outll;
+    if (outl > INT_MAX) {
+        outl = 0;
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
+        goto err;
+    }
     buf_out = OPENSSL_malloc(outll);
     if (buf_in == NULL || buf_out == NULL) {
         outl = 0;
