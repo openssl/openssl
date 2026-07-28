@@ -4,7 +4,7 @@
 
 SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors,
 SSL_get0_peer_available_trust_anchors, SSL_peer_matched_trust_anchor
-- set the trust anchors a TLS client requests
+- set the trust anchors requested of a TLS peer
 
 =head1 SYNOPSIS
 
@@ -21,9 +21,10 @@ SSL_get0_peer_available_trust_anchors, SSL_peer_matched_trust_anchor
 
 =head1 DESCRIPTION
 
-These functions set the list of trust anchors a client requests from the server
-in the B<trust_anchors> extension, so the server can select a certificate
-issued by one of them (see
+These functions set the list of trust anchors requested of the peer in the
+B<trust_anchors> extension, so the peer can select a certificate issued by one
+of them: a client requests in the ClientHello, and a server asking for a client
+certificate requests in the CertificateRequest (see
 L<https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/>).
 
 I<ids> is the list in wire format: a series of nonempty, 8-bit
@@ -36,8 +37,8 @@ SSL_CTX_set1_requested_trust_anchors() configures the default for connections
 created from I<ctx>. SSL_set1_requested_trust_anchors() configures a single
 connection and overrides the context's setting for that connection.
 
-If neither is called, a client advertises by default the identifiers of every
-trust anchor it is configured to verify against that has trust anchor
+If neither is called, the identifiers advertised are by default those of every
+trust anchor the endpoint is configured to verify against that has trust anchor
 identifier information associated with it, and sends nothing if there are none.
 This covers Merkle Tree Certificate CAs (see L<X509_STORE_trust_mtc_ca(3)>) and
 any conventional CA loaded from a file in which the certificate was preceded by

@@ -1749,107 +1749,17 @@ EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     ossl_unused X509 *x,
     ossl_unused size_t chainidx)
 {
-    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    const uint8_t *ids = NULL;
-    size_t ids_len = 0;
-    const uint8_t *ta_ids = NULL;
-    size_t ta_ids_len = 0;
-    X509_STORE *store;
-    STACK_OF(OSSL_MTC_CA) *cas;
-    int i, num, explicit_list = 0;
-
     /*
-     * Send the trust_anchors extension (section 5 of
-     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/) as
-     * a RequestedTrustAnchorList, so the peer can select a matching
-     * certificate.  A trust anchor ID is a CA ID (section 8.1 of
-     * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
-     *
-     * The list advertised is, in order of precedence: the list configured on
-     * this connection with SSL_set1_requested_trust_anchors(), else the list
-     * configured on the SSL_CTX with SSL_CTX_set1_requested_trust_anchors(),
-     * else, by default, the identifiers of every trust anchor on the store we
-     * verify against that has trust anchor identifier information associated:
-     * the Merkle Tree Certificate CAs, plus any conventional CA loaded with a
-     * CERTIFICATE PROPERTIES block carrying a trust anchor ID.  An explicitly
-     * configured list is sent verbatim even when empty (signalling retry
-     * support without naming a trust anchor); the default is sent only when at
-     * least one such trust anchor exists.
-     *
-     * We only ever request in the ClientHello.  The extension shares one
-     * context with the CertificateRequest/EncryptedExtensions/Certificate forms
-     * we accept on receipt, and this constructor is also reached when the client
-     * builds its own Certificate message (client authentication), so guard on
-     * the message here.  The store is chosen exactly as in
-     * ssl_verify_cert_chain().  An MTC CA with landmark state advertises its
-     * landmark groups (section 8.2.1 of the Merkle Tree Certificates draft)
-     * instead of its bare CA ID; the group signals support for standalone
-     * certificates as well.  We ignore any reply from the server for now.
+     * A client requests trust anchors in the ClientHello.  The extension
+     * shares one context with the CertificateRequest, EncryptedExtensions and
+     * Certificate forms we accept on receipt, and this constructor is also
+     * reached when the client builds its own Certificate message (client
+     * authentication), so guard on the message here.
      */
     if ((context & SSL_EXT_CLIENT_HELLO) == 0)
         return EXT_RETURN_NOT_SENT;
 
-    if (s->ext.requested_trust_anchors_set) {
-        ids = s->ext.requested_trust_anchors;
-        ids_len = s->ext.requested_trust_anchors_len;
-        explicit_list = 1;
-    } else if (sctx->ext.requested_trust_anchors_set) {
-        ids = sctx->ext.requested_trust_anchors;
-        ids_len = sctx->ext.requested_trust_anchors_len;
-        explicit_list = 1;
-    }
-
-    if (explicit_list) {
-        /* Send the configured RequestedTrustAnchorList verbatim. */
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
-            || !WPACKET_start_sub_packet_u16(pkt)
-            || !WPACKET_sub_memcpy_u16(pkt, ids, ids_len)
-            || !WPACKET_close(pkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        return EXT_RETURN_SENT;
-    }
-
-    /*
-     * Default: advertise the store's trust anchors that carry an ID.  Each MTC
-     * CA holds its advertisement precomputed (one landmark group ID per
-     * issuance log with landmark state, or its bare CA ID when none has any)
-     * as a run of u8-length-prefixed IDs, repacked whenever the CA is updated;
-     * the conventional-CA IDs are stored the same way on the store.  Both are
-     * appended verbatim.
-     */
-    store = s->cert->verify_store != NULL
-        ? s->cert->verify_store
-        : sctx->cert_store;
-    cas = ossl_x509_store_get0_mtc_cas(store);
-    num = sk_OSSL_MTC_CA_num(cas);
-    ossl_x509_store_get0_trust_anchor_ids(store, &ta_ids, &ta_ids_len);
-    if (num <= 0 && ta_ids_len == 0)
-        return EXT_RETURN_NOT_SENT;
-
-    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
-        || !WPACKET_start_sub_packet_u16(pkt)
-        || !WPACKET_start_sub_packet_u16(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    for (i = 0; i < num; i++) {
-        if (!ossl_mtc_ca_put_advertised_ids(sk_OSSL_MTC_CA_value(cas, i),
-                pkt)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-    }
-
-    if (!WPACKET_memcpy(pkt, ta_ids, ta_ids_len)
-        || !WPACKET_close(pkt) || !WPACKET_close(pkt)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    return EXT_RETURN_SENT;
+    return ossl_tls_construct_requested_trust_anchors(s, pkt);
 }
 
 /*
@@ -3140,13 +3050,40 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
  * EncryptedExtensions it is the AvailableTrustAnchorList: the trust anchors
  * the server has a certification path for, in its preference order, kept for
  * the application, which may use it to try again with one the server has.
- * Unlike the request form, that list may not be empty.  In the Certificate
- * message it is the marker described below.
+ * Unlike the request form, that list may not be empty.  In the
+ * CertificateRequest it is what the server will accept for a client
+ * certificate, and in the Certificate message it is the marker described
+ * below.
  */
 int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx)
 {
     PACKET id_list;
+
+    /*
+     * In the CertificateRequest it is the server's RequestedTrustAnchorList,
+     * kept in the same place the server keeps a client's, for choosing the
+     * certificate we send back.  The list may be empty.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST) {
+        if (!PACKET_as_length_prefixed_2(pkt, &id_list)
+            || !ossl_tls_valid_trust_anchor_list(&id_list)) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+
+        OPENSSL_free(s->ext.peer_requested_trust_anchors);
+        s->ext.peer_requested_trust_anchors = NULL;
+        s->ext.peer_requested_trust_anchors_len = 0;
+        s->ext.peer_sent_trust_anchors = 1;
+        if (PACKET_remaining(&id_list) > 0
+            && !PACKET_memdup(&id_list, &s->ext.peer_requested_trust_anchors,
+                &s->ext.peer_requested_trust_anchors_len)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        return 1;
+    }
 
     /*
      * In the Certificate message the extension is the peer's marker that the

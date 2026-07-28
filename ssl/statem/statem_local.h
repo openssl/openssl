@@ -527,6 +527,13 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
  */
 int ossl_tls_valid_trust_anchor_list(const PACKET *list);
 
+/*
+ * Write a trust_anchors extension holding the trust anchors this end requests
+ * of its peer, as the ClientHello and CertificateRequest forms both do.
+ */
+EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
+    WPACKET *pkt);
+
 int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx);
 EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
