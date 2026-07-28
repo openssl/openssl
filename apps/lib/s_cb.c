@@ -781,6 +781,7 @@ static const STRINT_PAIR tlsext_types[] = {
     { "psk", TLSEXT_TYPE_psk },
     { "psk kex modes", TLSEXT_TYPE_psk_kex_modes },
     { "certificate authorities", TLSEXT_TYPE_certificate_authorities },
+    { "trust anchors", TLSEXT_TYPE_trust_anchors },
     { "post handshake auth", TLSEXT_TYPE_post_handshake_auth },
     { "early_data", TLSEXT_TYPE_early_data },
 #ifndef OPENSSL_NO_ECH
