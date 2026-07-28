@@ -17,6 +17,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <inttypes.h>
 #include <string.h>
 #include <sys/types.h>
 #ifndef OPENSSL_NO_POSIX_IO
@@ -970,6 +971,40 @@ int load_mtc_subtrees(STACK_OF(OSSL_MTC_CA) *cas, const char *file)
 err:
     BIO_free(in);
     return ret;
+}
+
+char *app_reloid_to_text(const unsigned char *id, size_t id_len)
+{
+    char *out, *p;
+    size_t i = 0, room;
+
+    /* An arc contributes at least one byte and at most twenty digits. */
+    room = id_len * 21 + 1;
+    if (id_len == 0 || (out = OPENSSL_malloc(room)) == NULL)
+        return NULL;
+
+    p = out;
+    while (i < id_len) {
+        uint64_t v = 0;
+        int n;
+
+        for (;;) {
+            if (i == id_len || v > (UINT64_MAX >> 7))
+                goto err; /* truncated or overlong arc */
+            v = (v << 7) | (id[i] & 0x7f);
+            if ((id[i++] & 0x80) == 0)
+                break;
+        }
+        n = snprintf(p, room - (size_t)(p - out), "%s%ju",
+            p == out ? "" : ".", (uintmax_t)v);
+        if (n < 0 || (size_t)n >= room - (size_t)(p - out))
+            goto err;
+        p += n;
+    }
+    return out;
+err:
+    OPENSSL_free(out);
+    return NULL;
 }
 
 char *next_item(char *opt) /* in list separated by comma and/or spaces */

@@ -3856,6 +3856,8 @@ static void print_ech_status(BIO *bio, SSL *s, int estat)
 
 static void print_stuff(BIO *bio, SSL *s, int full)
 {
+    const uint8_t *tas = NULL;
+    size_t tas_len = 0;
     X509 *peer = NULL;
     STACK_OF(X509) *sk;
     const SSL_CIPHER *c;
@@ -4074,6 +4076,35 @@ static void print_stuff(BIO *bio, SSL *s, int full)
         verify_result = SSL_get_verify_result(s);
         BIO_printf(bio, "Verify return code: %ld (%s)\n", verify_result,
             X509_verify_cert_error_string(verify_result));
+
+        /*
+         * The trust anchors the server said it has certification paths for, if
+         * it sent any.  An application that did not trust what it was served
+         * would choose one of these and connect again asking only for it; we
+         * report them so an operator can see what was on offer.
+         */
+        SSL_get0_peer_available_trust_anchors(s, &tas, &tas_len);
+        if (tas_len > 0) {
+            size_t off = 0;
+
+            BIO_puts(bio, "Available trust anchor IDs:\n");
+            while (off < tas_len) {
+                size_t idlen = tas[off++];
+                char *text;
+
+                if (idlen == 0 || idlen > tas_len - off)
+                    break;
+                if ((text = app_reloid_to_text(tas + off, idlen)) != NULL) {
+                    BIO_printf(bio, "    %s\n", text);
+                    OPENSSL_free(text);
+                } else {
+                    /* Not a relative OID after all; show what arrived. */
+                    BIO_hex_string(bio, 4, (int)idlen, tas + off, (int)idlen);
+                    BIO_puts(bio, "\n");
+                }
+                off += idlen;
+            }
+        }
     } else {
         /* In TLSv1.3 we do this on arrival of a NewSessionTicket */
         SSL_SESSION_print(bio, SSL_get_session(s));

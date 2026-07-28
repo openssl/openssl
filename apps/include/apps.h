@@ -164,6 +164,12 @@ EVP_PKEY *load_keyparams_suppress(const char *uri, int format, int maybe_stdin,
     const char *keytype, const char *desc,
     int suppress_decode_errors);
 char *next_item(char *opt); /* in list separated by comma and/or space */
+/*
+ * Decode a relative OID, as trust anchor identifiers are carried on the wire,
+ * into dotted decimal.  Returns a string the caller frees, or NULL if the
+ * bytes are not a well-formed relative OID.
+ */
+char *app_reloid_to_text(const unsigned char *id, size_t id_len);
 
 /* Install trust anchor decorated chains from a file or directory. */
 int load_tai_credentials(SSL_CTX *ssl_ctx, const char *chains_path,
