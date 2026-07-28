@@ -1099,7 +1099,7 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[tls13encryptiontest]=.. ../include ../apps/include
     DEPEND[tls13encryptiontest]=../libcrypto.a ../libssl.a libtestutil.a
 
-    SOURCE[ssl_cred_test]=ssl_cred_test.c
+    SOURCE[ssl_cred_test]=ssl_cred_test.c helpers/ssltestlib.c
     INCLUDE[ssl_cred_test]=.. ../include ../apps/include
     DEPEND[ssl_cred_test]=../libcrypto.a ../libssl.a libtestutil.a
 

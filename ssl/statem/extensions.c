@@ -113,6 +113,17 @@ static int tls_parse_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 
+int ossl_tls_valid_trust_anchor_list(const PACKET *list)
+{
+    PACKET ids = *list, id;
+
+    while (PACKET_remaining(&ids) > 0)
+        if (!PACKET_get_length_prefixed_1(&ids, &id)
+            || PACKET_remaining(&id) == 0)
+            return 0;
+    return 1;
+}
+
 /* Structure to define a built-in extension */
 typedef struct extensions_definition_st {
     /* The defined type for the extension */
@@ -456,13 +467,13 @@ static const EXTENSION_DEFINITION ext_defs[] = {
          * it carries the identifiers of the configured Merkle Tree Certificate
          * CAs (a trust anchor ID is a CA ID; section 8.1 of
          * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
-         * On selecting a trust anchor the server replies with a non-empty list
-         * in EncryptedExtensions and an empty marker in the first
-         * CertificateEntry (section 4.2); a server requesting client
-         * authentication may also send it in the CertificateRequest.  We must
-         * accept all of these, so their contexts are listed here, but we ignore
-         * the contents for now (no parse_stoc): the selection is reflected in
-         * the certificate the server sends.  As a server we parse the
+         * A server that has any trust anchor to offer replies with a non-empty
+         * list in EncryptedExtensions, which we keep for the application, and
+         * marks a certificate it selected for the request with an empty
+         * extension in the first CertificateEntry (section 5.5), which we do
+         * not yet read.  A server requesting client authentication may also
+         * send it in the CertificateRequest.  We must accept all of these, so
+         * their contexts are listed here.  As a server we parse the
          * ClientHello list and save it for certificate selection.
          */
         TLSEXT_TYPE_trust_anchors,
@@ -472,7 +483,7 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         OSSL_ECH_HANDLING_COMPRESS,
         NULL,
         tls_parse_ctos_trust_anchors,
-        NULL,
+        tls_parse_stoc_trust_anchors,
         tls_construct_stoc_trust_anchors,
         tls_construct_ctos_trust_anchors,
         NULL,
