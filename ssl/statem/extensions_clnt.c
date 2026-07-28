@@ -1747,14 +1747,30 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
 EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     ossl_unused X509 *x,
-    ossl_unused size_t chainidx)
+    size_t chainidx)
 {
     /*
-     * A client requests trust anchors in the ClientHello.  The extension
-     * shares one context with the CertificateRequest, EncryptedExtensions and
-     * Certificate forms we accept on receipt, and this constructor is also
-     * reached when the client builds its own Certificate message (client
-     * authentication), so guard on the message here.
+     * In its own Certificate message a client marks a certificate it chose for
+     * a trust anchor the server asked for, with an empty extension in the
+     * first entry only.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE) {
+        if (s->s3.tmp.credential == NULL || chainidx != 0)
+            return EXT_RETURN_NOT_SENT;
+
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        return EXT_RETURN_SENT;
+    }
+
+    /*
+     * Otherwise a client requests trust anchors, in the ClientHello.  The
+     * extension shares one context with the CertificateRequest and
+     * EncryptedExtensions forms we accept on receipt, so guard on the message.
      */
     if ((context & SSL_EXT_CLIENT_HELLO) == 0)
         return EXT_RETURN_NOT_SENT;
