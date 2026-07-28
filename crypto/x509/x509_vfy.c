@@ -1309,7 +1309,7 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
     if ((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, ctx->error_depth)) == NULL
         || (bs = OCSP_response_get1_basic(resp)) == NULL)
         return X509_V_ERR_OCSP_NO_RESPONSE;
-    
+
     if ((num = OCSP_resp_count(bs)) < 1) {
         OCSP_BASICRESP_free(bs);
         return X509_V_ERR_OCSP_NO_RESPONSE;
