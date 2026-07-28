@@ -26,6 +26,9 @@ B<openssl> B<s_server>
 [B<-cert_chain> I<infile>]
 [B<-tai_chains> I<path>]
 [B<-tai_keys> I<path>]
+[B<-mtc_cas> I<filename>]
+[B<-mtc_landmarks> I<id>:I<log>:I<filename>]
+[B<-mtc_subtrees> I<filename>]
 [B<-build_chain>]
 [B<-serverinfo> I<val>]
 [B<-key> I<filename>|I<uri>]
@@ -245,6 +248,25 @@ is preferred.
 A PEM file, or a directory of PEM files, of private keys for the B<-tai_chains>
 certificates. Each chain's key is matched by its public key among these keys
 and any in the chain's own file.
+
+=item B<-mtc_cas> I<filename>
+
+A file in PEM format containing one or more Merkle Tree Certificate CA
+certificates (draft-ietf-plants-merkle-tree-certs) to trust. Their trust anchor
+identifiers are requested of the client in the B<trust_anchors> extension of the
+CertificateRequest, and they are trusted when verifying a Merkle Tree
+Certificate the client sends.
+
+=item B<-mtc_landmarks> I<id>:I<log>:I<filename>
+
+The active landmarks of one issuance log of one B<-mtc_cas> CA, in the format
+described for L<openssl-s_client(1)>. This option may be given more than once.
+
+=item B<-mtc_subtrees> I<filename>
+
+A file of vetted subtree hashes for the B<-mtc_landmarks> logs, in the format
+described for L<openssl-s_client(1)>, needed to verify landmark-relative
+(signatureless) Merkle Tree Certificates.
 
 =item B<-build_chain>
 

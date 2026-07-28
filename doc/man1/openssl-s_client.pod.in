@@ -30,6 +30,8 @@ B<openssl> B<s_client>
 [B<-mtc_cas> I<filename>]
 [B<-mtc_landmarks> I<id>:I<log>:I<filename>]
 [B<-mtc_subtrees> I<filename>]
+[B<-tai_chains> I<path>]
+[B<-tai_keys> I<path>]
 [B<-verifyCAfile> I<filename>]
 [B<-verifyCApath> I<dir>]
 [B<-verifyCAstore> I<filename>|I<uri>]
@@ -376,6 +378,25 @@ subtree active in that log's window; and I<hash> is the base64 SHA-256 hash of
 the subtree. Lines beginning with C<#> are ignored. Obtaining and validating
 these hashes is an out-of-band process (see section 7.4 of the draft); this
 option only installs already-vetted values.
+
+=item B<-tai_chains> I<path>
+
+A PEM file, or a directory of PEM files, of trust anchor decorated certificate
+chains to send when the server asks for a client certificate. Each chain is a
+B<CERTIFICATE PROPERTIES> block carrying a trust anchor ID (see
+L<openssl-generate_tai_chain(1)>) followed by the chain's certificates, leaf
+first. Each is installed as a credential sent only when the server requests
+that trust anchor in the B<trust_anchors> extension of its CertificateRequest;
+the B<-cert> certificate remains the fallback for a server that does not.
+From a file, the chains keep their file order, which is their preference order;
+from a directory, they are used in ascending on-the-wire size, so the smallest
+chain is preferred.
+
+=item B<-tai_keys> I<path>
+
+A PEM file, or a directory of PEM files, of private keys for the B<-tai_chains>
+certificates. Each chain's key is matched by its public key among these keys
+and any in the chain's own file.
 
 =item B<-verifyCAfile> I<filename>
 

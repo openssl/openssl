@@ -583,6 +583,8 @@ typedef enum OPTION_choice {
     OPT_MTC_CAS,
     OPT_MTC_LANDMARKS,
     OPT_MTC_SUBTREES,
+    OPT_TAI_CHAINS,
+    OPT_TAI_KEYS,
     OPT_SERVERINFO,
     OPT_STARTTLS,
     OPT_SERVERNAME,
@@ -705,6 +707,12 @@ const OPTIONS s_client_options[] = {
     { "mtc_subtrees", OPT_MTC_SUBTREES, '<',
         "File of vetted subtree hashes for the -mtc_landmarks logs"
         " (landmark-relative MTC)" },
+    { "tai_chains", OPT_TAI_CHAINS, 's',
+        "PEM file, or directory of PEM files, of trust anchor decorated"
+        " certificate chains sent when a server requests their trust anchor" },
+    { "tai_keys", OPT_TAI_KEYS, 's',
+        "PEM file, or directory of PEM files, of further private keys for"
+        " -tai_chains certificates" },
     { "no-CAfile", OPT_NOCAFILE, '-',
         "Do not load the default certificates file" },
     { "no-CApath", OPT_NOCAPATH, '-',
@@ -1023,6 +1031,7 @@ int s_client_main(int argc, char **argv)
     const SSL_METHOD *meth = TLS_client_method();
     const char *CApath = NULL, *CAfile = NULL, *CAstore = NULL;
     const char *mtc_cas_file = NULL, *mtc_subtrees_file = NULL;
+    const char *tai_chains_file = NULL, *tai_keys_file = NULL;
     STACK_OF(OPENSSL_STRING) *mtc_landmarks = NULL;
     STACK_OF(OSSL_MTC_CA) *mtc_cas = NULL;
     char *cbuf = NULL, *sbuf = NULL, *mbuf = NULL;
@@ -1639,6 +1648,12 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTC_SUBTREES:
             mtc_subtrees_file = opt_arg();
+            break;
+        case OPT_TAI_CHAINS:
+            tai_chains_file = opt_arg();
+            break;
+        case OPT_TAI_KEYS:
+            tai_keys_file = opt_arg();
             break;
         case OPT_NOCASTORE:
             noCAstore = 1;
@@ -2310,6 +2325,15 @@ int s_client_main(int argc, char **argv)
     }
 
     if (!set_cert_key_stuff(ctx, cert, key, chain, build_chain))
+        goto end;
+
+    /*
+     * Client certificates for -tai_chains are negotiation gated: one is sent
+     * only when the server asks for a client certificate from a trust anchor
+     * it matches, and -cert is what we fall back on otherwise.
+     */
+    if (tai_chains_file != NULL
+        && !load_tai_credentials(ctx, tai_chains_file, tai_keys_file))
         goto end;
 
     if (!noservername) {
