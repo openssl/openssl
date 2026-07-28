@@ -694,13 +694,16 @@ OSSL_DEPRECATEDIN_3_0 __owur int SRP_Calc_A_param(SSL *s);
 #define SSL_MAX_CERT_LIST_DEFAULT (1024 * 100)
 
 /*
- * Maximum aggregate bytes for DTLS handshake message reassembly state.
- * Each buffered fragment can hold up to ~115 KB. With up to 11 concurrent
- * slots (1 in-order + 10 future), this budget caps the total at ~1.3 MB
- * per SSL connection. Exceeding the budget causes new fragments to be
- * dropped, preventing memory exhaustion attacks.
+ * Maximum aggregate bytes for DTLS handshake message reassembly state
+ * per SSL connection. Set to 4x the default max certificate list size
+ * (~400 KB), allowing approximately 3-4 concurrent full-size fragments.
+ * This is well above legitimate usage (typically 1-2 concurrent fragments
+ * under network reordering) but significantly below the worst-case attack
+ * ceiling of 11 fragments (~1.3 MB). Combined with the existing
+ * sequence-number window limit of 11 slots, this provides defense-in-depth
+ * against memory exhaustion attacks.
  */
-#define DTLS_MAX_REASSEMBLY_BUDGET (115200 * 11)
+#define DTLS_MAX_REASSEMBLY_BUDGET (SSL_MAX_CERT_LIST_DEFAULT * 4)
 
 #define SSL_SESSION_CACHE_MAX_SIZE_DEFAULT (1024 * 20)
 

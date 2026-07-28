@@ -134,7 +134,7 @@ void dtls1_clear_sent_buffer(SSL_CONNECTION *s)
             frag->msg_header.saved_retransmit_state.wrlmethod->free(frag->msg_header.saved_retransmit_state.wrl);
         }
 
-        dtls1_hm_fragment_free(s, frag);
+        dtls1_hm_fragment_free(NULL, frag);
         pitem_free(item);
     }
 }

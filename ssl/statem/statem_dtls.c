@@ -697,12 +697,22 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
 
     if (item == NULL) {
         size_t new_bytes = msg_hdr->msg_len + RSMBLY_BITMASK_SIZE(msg_hdr->msg_len);
-        if (s->d1->reassembly_bytes + new_bytes > DTLS_MAX_REASSEMBLY_BUDGET)
-            goto err;
+        if (s->d1->reassembly_bytes + new_bytes > DTLS_MAX_REASSEMBLY_BUDGET) {
+            unsigned char devnull[256];
+            while (frag_len) {
+                size_t to_read = frag_len > sizeof(devnull) ? sizeof(devnull) : frag_len;
+                i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
+                    devnull, to_read, 0, &readbytes);
+                if (i <= 0)
+                    goto err;
+                frag_len -= readbytes;
+            }
+            return DTLS1_HM_FRAGMENT_RETRY;
+        }
         frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
         if (frag == NULL)
             goto err;
-        s->d1->reassembly_bytes += new_bytes;
+        s->d1->reassembly_bytes += frag->alloc_bytes;
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
         frag->msg_header.frag_len = frag->msg_header.msg_len;
         frag->msg_header.frag_off = 0;
@@ -833,9 +843,24 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         if (frag_len > dtls1_max_handshake_message_len(s))
             goto err;
 
+        if (s->d1->reassembly_bytes + frag_len > DTLS_MAX_REASSEMBLY_BUDGET) {
+            unsigned char devnull[256];
+            while (frag_len) {
+                size_t to_read = frag_len > sizeof(devnull) ? sizeof(devnull) : frag_len;
+                i = ssl->method->ssl_read_bytes(ssl, SSL3_RT_HANDSHAKE, NULL,
+                    devnull, to_read, 0, &readbytes);
+                if (i <= 0)
+                    goto err;
+                frag_len -= readbytes;
+            }
+            return DTLS1_HM_FRAGMENT_RETRY;
+        }
+
         frag = dtls1_hm_fragment_new(frag_len, 0);
         if (frag == NULL)
             goto err;
+
+        s->d1->reassembly_bytes += frag->alloc_bytes;
 
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 
@@ -1240,12 +1265,12 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
         /* For DTLS1_BAD_VER the header length is non-standard */
         if (!ossl_assert(s->d1->w_msg_hdr.msg_len + ((s->version == DTLS1_BAD_VER) ? 3 : DTLS1_CCS_HEADER_LENGTH)
                 == (unsigned int)s->init_num)) {
-            dtls1_hm_fragment_free(s, frag);
+            dtls1_hm_fragment_free(NULL, frag);
             return 0;
         }
     } else {
         if (!ossl_assert(s->d1->w_msg_hdr.msg_len + DTLS1_HM_HEADER_LENGTH == (unsigned int)s->init_num)) {
-            dtls1_hm_fragment_free(s, frag);
+            dtls1_hm_fragment_free(NULL, frag);
             return 0;
         }
     }
@@ -1270,12 +1295,12 @@ int dtls1_buffer_message(SSL_CONNECTION *s, int is_ccs)
 
     item = pitem_new(seq64be, frag);
     if (item == NULL) {
-        dtls1_hm_fragment_free(s, frag);
+        dtls1_hm_fragment_free(NULL, frag);
         return 0;
     }
 
     if (pqueue_insert(s->d1->sent_messages, item) == NULL) {
-        dtls1_hm_fragment_free(s, frag);
+        dtls1_hm_fragment_free(NULL, frag);
         pitem_free(item);
         return 0;
     }
