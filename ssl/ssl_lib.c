@@ -604,6 +604,9 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->ext.peer_requested_trust_anchors = NULL;
     sc->ext.peer_requested_trust_anchors_len = 0;
     sc->ext.peer_sent_trust_anchors = 0;
+    OPENSSL_free(sc->ext.peer_available_trust_anchors);
+    sc->ext.peer_available_trust_anchors = NULL;
+    sc->ext.peer_available_trust_anchors_len = 0;
 
     if (sc->renegotiate) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -1630,6 +1633,7 @@ void ossl_ssl_connection_free(SSL *ssl)
     OPENSSL_free(s->ext.tuples);
     OPENSSL_free(s->ext.peer_supportedgroups);
     OPENSSL_free(s->ext.peer_requested_trust_anchors);
+    OPENSSL_free(s->ext.peer_available_trust_anchors);
     OPENSSL_free(s->ext.requested_trust_anchors);
     sk_X509_EXTENSION_pop_free(s->ext.ocsp.exts, X509_EXTENSION_free);
 
@@ -4181,6 +4185,15 @@ int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
     return set1_requested_trust_anchors(&sc->ext.requested_trust_anchors,
         &sc->ext.requested_trust_anchors_len,
         &sc->ext.requested_trust_anchors_set, ids, ids_len);
+}
+
+void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+    const uint8_t **out_ids, size_t *out_ids_len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    *out_ids = sc == NULL ? NULL : sc->ext.peer_available_trust_anchors;
+    *out_ids_len = sc == NULL ? 0 : sc->ext.peer_available_trust_anchors_len;
 }
 
 /*

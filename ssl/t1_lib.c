@@ -4854,6 +4854,11 @@ static const SIGALG_LOOKUP *find_sig_alg_for_credential(SSL_CONNECTION *s,
     return NULL;
 }
 
+int ossl_tls_credential_usable(SSL_CONNECTION *s, const SSL_CREDENTIAL *cred)
+{
+    return find_sig_alg_for_credential(s, cred) != NULL;
+}
+
 /*
  * When the peer requested particular trust anchors, try to select a
  * configured credential that satisfies the request.  Returns 1 and sets

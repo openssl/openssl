@@ -1279,20 +1279,12 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
 int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx)
 {
-    PACKET id_list, ids, id;
+    PACKET id_list;
 
-    if (!PACKET_as_length_prefixed_2(pkt, &id_list)) {
+    if (!PACKET_as_length_prefixed_2(pkt, &id_list)
+        || !ossl_tls_valid_trust_anchor_list(&id_list)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         return 0;
-    }
-
-    ids = id_list;
-    while (PACKET_remaining(&ids) > 0) {
-        if (!PACKET_get_length_prefixed_1(&ids, &id)
-            || PACKET_remaining(&id) == 0) {
-            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
-            return 0;
-        }
     }
 
     OPENSSL_free(s->ext.peer_requested_trust_anchors);
@@ -1309,18 +1301,100 @@ int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     return 1;
 }
 
+/*
+ * Collect the trust anchors this connection could serve, in preference order,
+ * into found (which must have room for every configured credential).  A
+ * credential qualifies if it has a trust anchor ID and a signature algorithm
+ * usable here; the list names each trust anchor once, so a credential whose
+ * identifier a qualifying credential already contributed is skipped.  Returns
+ * how many were collected.
+ */
+static int collect_available_trust_anchors(SSL_CONNECTION *s,
+    const SSL_CREDENTIAL **found)
+{
+    int i, j, n = 0;
+
+    for (i = 0; i < sk_SSL_CREDENTIAL_num(s->cert->credentials); i++) {
+        const SSL_CREDENTIAL *cred
+            = sk_SSL_CREDENTIAL_value(s->cert->credentials, i);
+
+        if (cred->trust_anchor_id == NULL
+            || !ossl_tls_credential_usable(s, cred))
+            continue;
+        for (j = 0; j < n; j++)
+            if (found[j]->trust_anchor_id_len == cred->trust_anchor_id_len
+                && memcmp(found[j]->trust_anchor_id, cred->trust_anchor_id,
+                       cred->trust_anchor_id_len)
+                    == 0)
+                break;
+        if (j == n)
+            found[n++] = cred;
+    }
+    return n;
+}
+
+/*
+ * The AvailableTrustAnchorList: the trust anchors of the certification paths
+ * we have, sent when the client asked for trust anchors at all, so that a
+ * client whose request went unmatched can pick one and retry (section 5.6 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  The
+ * list may not be empty, so the extension is omitted when nothing qualifies.
+ */
+static EXT_RETURN construct_stoc_available_trust_anchors(SSL_CONNECTION *s,
+    WPACKET *pkt)
+{
+    const SSL_CREDENTIAL **found = NULL;
+    int i, n, configured;
+
+    if (!s->ext.peer_sent_trust_anchors)
+        return EXT_RETURN_NOT_SENT;
+    if ((configured = sk_SSL_CREDENTIAL_num(s->cert->credentials)) <= 0)
+        return EXT_RETURN_NOT_SENT;
+
+    if ((found = OPENSSL_malloc_array(configured, sizeof(*found))) == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
+        return EXT_RETURN_FAIL;
+    }
+    n = collect_available_trust_anchors(s, found);
+    if (n == 0) {
+        OPENSSL_free(found);
+        return EXT_RETURN_NOT_SENT;
+    }
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_start_sub_packet_u16(pkt))
+        goto err;
+    for (i = 0; i < n; i++)
+        if (!WPACKET_sub_memcpy_u8(pkt, found[i]->trust_anchor_id,
+                found[i]->trust_anchor_id_len))
+            goto err;
+    if (!WPACKET_close(pkt) || !WPACKET_close(pkt))
+        goto err;
+
+    OPENSSL_free(found);
+    return EXT_RETURN_SENT;
+err:
+    OPENSSL_free(found);
+    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+    return EXT_RETURN_FAIL;
+}
+
 EXT_RETURN tls_construct_stoc_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
     /*
-     * Acknowledge a trust anchor negotiation only when we served a matching
-     * credential, and only in the first CertificateEntry, per
+     * This extension shares its definition with the ClientHello request form.
+     * In EncryptedExtensions it lists the trust anchors we have; in the
+     * Certificate message it acknowledges that the certificate we served
+     * matched what the client asked for, which is an empty extension in the
+     * first CertificateEntry only.  See
      * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
-     * This extension shares its definition with the ClientHello request and
-     * the EncryptedExtensions form, so the Certificate context is required
-     * here.  The acknowledgement is an empty extension.
      */
+    if (context == SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
+        return construct_stoc_available_trust_anchors(s, pkt);
+
     if (context != SSL_EXT_TLS1_3_CERTIFICATE
         || s->s3.tmp.credential == NULL || chainidx != 0)
         return EXT_RETURN_NOT_SENT;

@@ -2,7 +2,8 @@
 
 =head1 NAME
 
-SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors
+SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors,
+SSL_get0_peer_available_trust_anchors
 - set the trust anchors a TLS client requests
 
 =head1 SYNOPSIS
@@ -13,6 +14,9 @@ SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors
                                           const uint8_t *ids, size_t ids_len);
  int SSL_set1_requested_trust_anchors(SSL *ssl,
                                       const uint8_t *ids, size_t ids_len);
+ void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+                                            const uint8_t **out_ids,
+                                            size_t *out_ids_len);
 
 =head1 DESCRIPTION
 
@@ -43,10 +47,22 @@ These functions only control what is advertised to the peer; they do not affect
 certificate verification, which proceeds as usual against the configured trust
 anchors.
 
+SSL_get0_peer_available_trust_anchors() reports the trust anchors the peer said
+it has a certification path for. It sets I<*out_ids> and I<*out_ids_len> to a
+list in the same wire format, belonging to I<ssl> and valid until the handshake
+completes. Only servers send available trust anchor IDs, so this outputs a list
+only when I<ssl> is a client; otherwise, and when the peer sent no list,
+I<*out_ids_len> is set to zero. A client that was sent a certificate it does not
+trust can choose an identifier from this list and try again on a new
+connection, requesting only that one.
+
 =head1 RETURN VALUES
 
-These functions return 1 on success and 0 on error, including when I<ids> is
-not a well-formed list.
+SSL_CTX_set1_requested_trust_anchors() and SSL_set1_requested_trust_anchors()
+return 1 on success and 0 on error, including when I<ids> is not a well-formed
+list.
+
+SSL_get0_peer_available_trust_anchors() does not return a value.
 
 =head1 NOTES
 

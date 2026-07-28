@@ -2973,8 +2973,16 @@ __owur int SSL_CTX_set1_requested_trust_anchors(SSL_CTX *ctx,
     const uint8_t *ids, size_t ids_len);
 
 /**
+ * @brief Get the trust anchors the server said it has paths for.
+ * @see SSL_get0_peer_available_trust_anchors(3)
+ */
+void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
+    const uint8_t **out_ids, size_t *out_ids_len);
+
+/**
  * @brief Set the trust anchors a client requests on a single connection.
- * @see SSL_CTX_set1_requested_trust_anchors(3)
+ * @see SSL_set1_requested_trust_anchors(3),
+ *      SSL_CTX_set1_requested_trust_anchors(3)
  */
 __owur int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
     size_t ids_len);

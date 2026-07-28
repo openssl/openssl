@@ -520,6 +520,15 @@ EXT_RETURN tls_construct_ctos_post_handshake_auth(SSL_CONNECTION *s, WPACKET *pk
  * @returns EXT_RETURN_SENT when written, EXT_RETURN_NOT_SENT when no MTC CAs
  * are configured, EXT_RETURN_FAIL on error.
  */
+/*
+ * Whether a trust anchor list holds only well-formed identifiers: a series of
+ * non-empty u8-length-prefixed strings filling it exactly.  An empty list is
+ * well formed; whether it is allowed depends on the message it came in.
+ */
+int ossl_tls_valid_trust_anchor_list(const PACKET *list);
+
+int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx);
 EXT_RETURN tls_construct_ctos_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);

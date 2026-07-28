@@ -3133,3 +3133,40 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
 
     return EXT_RETURN_SENT;
 }
+
+/*
+ * The AvailableTrustAnchorList the server sends in EncryptedExtensions: the
+ * trust anchors it has a certification path for, in its preference order
+ * (section 4.3 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  The
+ * list is kept for the application, which may use it to try again with a trust
+ * anchor the server actually has.  Unlike the request form, this list may not
+ * be empty.
+ */
+int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
+    unsigned int context, X509 *x, size_t chainidx)
+{
+    PACKET id_list;
+
+    if (context != SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
+        return 1;
+
+    /* This list, unlike the request form, may not be empty. */
+    if (!PACKET_as_length_prefixed_2(pkt, &id_list)
+        || PACKET_remaining(&id_list) == 0
+        || !ossl_tls_valid_trust_anchor_list(&id_list)) {
+        SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+        return 0;
+    }
+
+    OPENSSL_free(s->ext.peer_available_trust_anchors);
+    s->ext.peer_available_trust_anchors = NULL;
+    s->ext.peer_available_trust_anchors_len = 0;
+    if (!PACKET_memdup(&id_list, &s->ext.peer_available_trust_anchors,
+            &s->ext.peer_available_trust_anchors_len)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    return 1;
+}
