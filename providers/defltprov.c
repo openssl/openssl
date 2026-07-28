@@ -435,6 +435,9 @@ static const OSSL_ALGORITHM deflt_rands[] = {
     { PROV_NAMES_HASH_DRBG, "provider=default", ossl_drbg_hash_functions },
     { PROV_NAMES_HMAC_DRBG, "provider=default", ossl_drbg_ossl_hmac_functions },
     { PROV_NAMES_SEED_SRC, "provider=default", ossl_seed_src_functions },
+#ifndef OPENSSL_NO_CPURNG
+    { PROV_NAMES_CPURNG, "provider=default", ossl_cpurng_functions },
+#endif
 #ifndef OPENSSL_NO_JITTER
     { PROV_NAMES_JITTER, "provider=default", ossl_jitter_functions },
 #endif

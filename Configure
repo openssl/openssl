@@ -521,6 +521,7 @@ my @disablables_features = (
     "cached-fetch",
     "dgram",
     "winstore",
+    "cpurng",
     "crypto-mdebug",
     "allocfail-tests",
     "ct",
@@ -543,6 +544,7 @@ my @disablables_features = (
     "fips-securitychecks",
     "fips-post",
     "fips-jitter",
+    "fips-cpurng",
     "fuzz-afl",
     "fuzz-libfuzzer",
     "integrity-only-ciphers",
@@ -622,8 +624,10 @@ my %deprecated_disablables = (
 
 our %disabled = ( # "what"         => "comment"
                   "atexit"              => "default",
+                  "cpurng"              => "default",
                   "fips"                => "default",
                   "fips-jitter"         => "default",
+                  "fips-cpurng"         => "default",
                   "asan"                => "default",
                   "brotli"              => "default",
                   "brotli-dynamic"      => "default",
@@ -739,7 +743,7 @@ my @disable_cascades = (
     "cmp"               => [ "crmf" ],
 
     "fips"              => [ "fips-securitychecks", "fips-post", "acvp-tests",
-                             "fips-jitter" ],
+                             "fips-jitter", "fips-cpurng" ],
 
     "threads"           => [ "thread-pool" ],
     "thread-pool"       => [ "default-thread-pool" ],
@@ -876,6 +880,8 @@ my %deprecated_options = ();
 # If you change this, update apps/version.c
 my @known_seed_sources = qw(getrandom devrandom os egd none rdcpu);
 my @seed_sources = ();
+my @known_cpurng_behaviors = qw(validated conservative relaxed);
+my $cpurng_behavior = "conservative";
 while (@argvcopy)
         {
         $_ = shift @argvcopy;
@@ -1003,6 +1009,12 @@ while (@argvcopy)
                         {
                         delete $disabled{"fips"};
                         delete $disabled{"jitter"};
+                        }
+                elsif ($1 eq "fips-cpurng")
+                        {
+                        delete $disabled{"fips"};
+                        delete $disabled{"cpurng"};
+                        push @seed_sources, "rdcpu";
                         }
                 elsif (exists $deprecated_disablables{$1})
                         {
@@ -1146,6 +1158,12 @@ while (@argvcopy)
                                 if ! grep { $x eq $_ } @known_seed_sources;
                             push @seed_sources, $x;
                             }
+                        }
+                elsif (/^--with-cpurng-behavior=(.*)$/)
+                        {
+                        die "Unknown --with-cpurng-behavior choice $1\n"
+                            if ! grep { $1 eq $_ } @known_cpurng_behaviors;
+                        $cpurng_behavior = $1;
                         }
                 elsif (/^--fips-key=(.*)$/)
                         {
@@ -1429,6 +1447,10 @@ _____
 push @{$config{openssl_feature_defines}},
      map { (my $x = $_) =~ tr|[\-a-z]|[_A-Z]|; "OPENSSL_RAND_SEED_$x" }
         @seed_sources;
+
+my $BEHAVIOR = uc $cpurng_behavior;
+push @{$config{openssl_feature_defines}}, "OPENSSL_CPURNG_$BEHAVIOR";
+
 
 my $provider_string = $disabled{"fips-post"} ? "non-compliant FIPS Provider" : "FIPS Provider";
 
