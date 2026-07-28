@@ -962,6 +962,81 @@ err:
     return ret;
 }
 
+static int accept_any_cert(ossl_unused int ok, ossl_unused X509_STORE_CTX *ctx)
+{
+    return 1;
+}
+
+/*
+ * Asked for a client certificate from a trust anchor it has a credential for,
+ * a client sends that credential rather than a certificate from the legacy
+ * slots, and the server receives it.
+ */
+static int test_client_credential_selected(void)
+{
+    static const uint8_t requested[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_CREDENTIAL *cred = NULL;
+    SSL_CONNECTION *csc;
+    X509 *x = NULL, *cx = NULL, *peer;
+    EVP_PKEY *key = NULL, *ckey = NULL;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    /* One certificate for the server, another for the client to send. */
+    if (!TEST_true(make_cert_and_key(&x, &key))
+        || !TEST_true(make_cert_and_key(&cx, &ckey))
+        || !TEST_ptr(cred = make_served_credential(cx, ckey, tai_id,
+                         sizeof(tai_id))))
+        goto err;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
+        || !TEST_ptr(cctx = SSL_CTX_new_ex(NULL, NULL, TLS_client_method()))
+        || !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_use_certificate(sctx, x))
+        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key))
+        || !TEST_true(SSL_CTX_set1_requested_trust_anchors(sctx, requested,
+            sizeof(requested)))
+        || !TEST_true(SSL_CTX_add1_credential(cctx, cred)))
+        goto err;
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, accept_any_cert);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto err;
+
+    /*
+     * The client chose the credential, the server got its certificate, and the
+     * client marked it as chosen for a trust anchor the server asked for.
+     */
+    if (!TEST_ptr(csc = SSL_CONNECTION_FROM_SSL(clientssl))
+        || !TEST_ptr(csc->s3.tmp.credential)
+        || !TEST_ptr(peer = SSL_get0_peer_certificate(serverssl))
+        || !TEST_int_eq(X509_cmp(peer, cx), 0)
+        || !TEST_int_eq(SSL_peer_matched_trust_anchor(serverssl), 1))
+        goto err;
+
+    ret = 1;
+err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CREDENTIAL_free(cred);
+    X509_free(x);
+    X509_free(cx);
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(ckey);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_credential_object);
@@ -979,5 +1054,6 @@ int setup_tests(void)
     ADD_TEST(test_available_trust_anchors_unasked);
     ADD_TEST(test_matched_trust_anchor);
     ADD_TEST(test_requested_trust_anchors_from_server);
+    ADD_TEST(test_client_credential_selected);
     return 1;
 }

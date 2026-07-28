@@ -4870,7 +4870,7 @@ static int choose_credential(SSL_CONNECTION *s)
 {
     int i;
 
-    /* Only negotiate credentials when the client requested trust anchors. */
+    /* Only negotiate credentials when the peer requested trust anchors. */
     if (!s->ext.peer_sent_trust_anchors || s->cert->credentials == NULL)
         return 0;
 
@@ -4904,12 +4904,13 @@ int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs)
     s->s3.tmp.sigalg = NULL;
 
     /*
-     * On a (D)TLS 1.3 server, divert to a negotiated credential if one
-     * matches the trust anchors the client requested.  On success the legacy
-     * path below is skipped entirely; otherwise s->s3.tmp.credential stays
-     * NULL and we fall back to the certificate slots as usual.
+     * In (D)TLS 1.3, divert to a negotiated credential if one matches the
+     * trust anchors the peer requested: of a server in the ClientHello, or of a
+     * client in the CertificateRequest.  On success the legacy path below is
+     * skipped entirely; otherwise s->s3.tmp.credential stays NULL and we fall
+     * back to the certificate slots as usual.
      */
-    if (SSL_CONNECTION_IS_VERSION13(s) && s->server && choose_credential(s))
+    if (SSL_CONNECTION_IS_VERSION13(s) && choose_credential(s))
         return 1;
 
     if (SSL_CONNECTION_IS_VERSION13(s)) {

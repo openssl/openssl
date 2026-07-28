@@ -1269,17 +1269,32 @@ int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
 }
 
 /*
- * Parse the peer's trust_anchors extension from the ClientHello (section 4 of
- * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/): a
- * RequestedTrustAnchorList of the trust anchor IDs the relying party
- * supports, each a nonempty u8-length-prefixed string of at most 255 bytes.
- * The list MAY be empty.  It is saved for certificate selection, an empty
- * list meaning the peer supports the extension but disclosed no IDs.
+ * Parse the peer's trust_anchors extension (section 5 of
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  From
+ * the ClientHello it is a RequestedTrustAnchorList of the trust anchor IDs the
+ * relying party supports, each a nonempty u8-length-prefixed string of at most
+ * 255 bytes.  The list MAY be empty.  It is saved for certificate selection,
+ * an empty list meaning the peer supports the extension but disclosed no IDs.
+ * From the client's Certificate message it is the marker described below.
  */
 int tls_parse_ctos_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx)
 {
     PACKET id_list;
+
+    /*
+     * In the client's Certificate message the extension is its marker that the
+     * certificate matched what we asked for: empty, and only in the first
+     * entry.  An extension we did not ask for is refused before we are called.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE) {
+        if (PACKET_remaining(pkt) != 0 || chainidx != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        s->ext.peer_matched_trust_anchor = 1;
+        return 1;
+    }
 
     if (!PACKET_as_length_prefixed_2(pkt, &id_list)
         || !ossl_tls_valid_trust_anchor_list(&id_list)) {
