@@ -717,18 +717,49 @@ err:
     return ret;
 }
 
+/* A custom extension for the Certificate message, counting its add calls. */
+#define TEST_CERT_EXT_TYPE 0xff00
+
+static int cert_ext_add_count;
+
+static int cert_ext_add_cb(ossl_unused SSL *s, ossl_unused unsigned int ext_type,
+    unsigned int context, const unsigned char **out, size_t *outlen,
+    ossl_unused X509 *x, ossl_unused size_t chainidx, ossl_unused int *al,
+    ossl_unused void *add_arg)
+{
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE)
+        cert_ext_add_count++;
+    *out = NULL;
+    *outlen = 0;
+    return 1;
+}
+
+static int cert_ext_parse_cb(ossl_unused SSL *s,
+    ossl_unused unsigned int ext_type, ossl_unused unsigned int context,
+    ossl_unused const unsigned char *in, ossl_unused size_t inlen,
+    ossl_unused X509 *x, ossl_unused size_t chainidx, ossl_unused int *al,
+    ossl_unused void *parse_arg)
+{
+    return 1;
+}
+
 /*
  * Hand-shake a client and a server holding |creds|, with the client requesting
  * |requested| (a wire-format list, sent even when empty) unless |requested| is
  * NULL, in which case it asks for no trust anchors at all.  The available trust
  * anchor list the client was sent is copied to *out (which the caller frees)
  * and *out_len; the list belongs to the connection, which does not outlive
- * this call.
+ * this call.  *matched reports whether the server marked the certificate it
+ * sent as chosen for a requested trust anchor.  Both sides register a custom
+ * extension for the Certificate message, which the server adds to its default
+ * certificate and not to a credential.
  */
 static int available_trust_anchors(SSL_CREDENTIAL **creds, size_t ncreds,
     const uint8_t *requested, size_t requested_len, uint8_t **out,
-    size_t *out_len)
+    size_t *out_len, int *matched)
 {
+    static const unsigned int ext_context
+        = SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_CERTIFICATE;
     const uint8_t *ids = NULL;
     size_t ids_len = 0;
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -738,6 +769,7 @@ static int available_trust_anchors(SSL_CREDENTIAL **creds, size_t ncreds,
     size_t i;
     int ret = 0;
 
+    cert_ext_add_count = 0;
     if (!TEST_true(make_cert_and_key(&x, &key)))
         goto err;
 
@@ -746,7 +778,12 @@ static int available_trust_anchors(SSL_CREDENTIAL **creds, size_t ncreds,
         || !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
         || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
         || !TEST_true(SSL_CTX_use_certificate(sctx, x))
-        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key)))
+        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key))
+        || !TEST_true(SSL_CTX_add_custom_ext(sctx, TEST_CERT_EXT_TYPE,
+            ext_context, cert_ext_add_cb, NULL, NULL, cert_ext_parse_cb, NULL))
+        || !TEST_true(SSL_CTX_add_custom_ext(cctx, TEST_CERT_EXT_TYPE,
+            ext_context, cert_ext_add_cb, NULL, NULL, cert_ext_parse_cb,
+            NULL)))
         goto err;
     for (i = 0; i < ncreds; i++)
         if (!TEST_true(SSL_CTX_add1_credential(sctx, creds[i])))
@@ -766,6 +803,9 @@ static int available_trust_anchors(SSL_CREDENTIAL **creds, size_t ncreds,
     if (ids_len != 0 && !TEST_ptr(*out = OPENSSL_memdup(ids, ids_len)))
         goto err;
     *out_len = ids_len;
+    *matched = SSL_peer_matched_trust_anchor(clientssl);
+    if (!TEST_int_eq(cert_ext_add_count, *matched ? 0 : 1))
+        goto err;
     ret = 1;
 err:
     SSL_free(serverssl);
@@ -792,7 +832,7 @@ static int test_available_trust_anchors(void)
     X509 *x = NULL;
     EVP_PKEY *key = NULL;
     size_t got_len = 0, i;
-    int ret = 0;
+    int matched = 0, ret = 0;
 
 #if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
     return TEST_skip("EC or TLS 1.3 is disabled");
@@ -810,9 +850,12 @@ static int test_available_trust_anchors(void)
         goto err;
 
     if (!TEST_true(available_trust_anchors(creds, OSSL_NELEM(creds),
-            (const uint8_t *)"", 0, &got, &got_len)))
+            (const uint8_t *)"", 0, &got, &got_len, &matched)))
         goto err;
     if (!TEST_mem_eq(got, got_len, expected, sizeof(expected)))
+        goto err;
+    /* An empty request matches nothing, so nothing is marked. */
+    if (!TEST_int_eq(matched, 0))
         goto err;
 
     ret = 1;
@@ -833,7 +876,7 @@ static int test_available_trust_anchors_unasked(void)
     X509 *x = NULL;
     EVP_PKEY *key = NULL;
     size_t got_len = 0;
-    int ret = 0;
+    int matched = 0, ret = 0;
 
 #if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
     return TEST_skip("EC or TLS 1.3 is disabled");
@@ -844,9 +887,49 @@ static int test_available_trust_anchors_unasked(void)
                          sizeof(tai_id))))
         goto err;
 
-    if (!TEST_true(available_trust_anchors(&cred, 1, NULL, 0, &got, &got_len)))
+    if (!TEST_true(available_trust_anchors(&cred, 1, NULL, 0, &got, &got_len,
+            &matched)))
         goto err;
-    if (!TEST_size_t_eq(got_len, 0))
+    if (!TEST_size_t_eq(got_len, 0)
+        || !TEST_int_eq(matched, 0))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(got);
+    SSL_CREDENTIAL_free(cred);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * A server that serves a credential for a requested trust anchor marks it in
+ * the Certificate message, and the client reports the match.
+ */
+static int test_matched_trust_anchor(void)
+{
+    static const uint8_t requested[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    SSL_CREDENTIAL *cred = NULL;
+    uint8_t *got = NULL;
+    X509 *x = NULL;
+    EVP_PKEY *key = NULL;
+    size_t got_len = 0;
+    int matched = 0, ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    if (!TEST_true(make_cert_and_key(&x, &key))
+        || !TEST_ptr(cred = make_served_credential(x, key, tai_id,
+                         sizeof(tai_id))))
+        goto err;
+
+    if (!TEST_true(available_trust_anchors(&cred, 1, requested,
+            sizeof(requested), &got, &got_len, &matched)))
+        goto err;
+    if (!TEST_int_eq(matched, 1))
         goto err;
 
     ret = 1;
@@ -873,5 +956,6 @@ int setup_tests(void)
     ADD_TEST(test_parse_private_keys);
     ADD_TEST(test_available_trust_anchors);
     ADD_TEST(test_available_trust_anchors_unasked);
+    ADD_TEST(test_matched_trust_anchor);
     return 1;
 }
