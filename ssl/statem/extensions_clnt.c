@@ -3135,18 +3135,32 @@ EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
 }
 
 /*
- * The AvailableTrustAnchorList the server sends in EncryptedExtensions: the
- * trust anchors it has a certification path for, in its preference order
- * (section 4.3 of
- * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  The
- * list is kept for the application, which may use it to try again with a trust
- * anchor the server actually has.  Unlike the request form, this list may not
- * be empty.
+ * The trust_anchors extension as a client receives it, in two forms (see
+ * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/).  In
+ * EncryptedExtensions it is the AvailableTrustAnchorList: the trust anchors
+ * the server has a certification path for, in its preference order, kept for
+ * the application, which may use it to try again with one the server has.
+ * Unlike the request form, that list may not be empty.  In the Certificate
+ * message it is the marker described below.
  */
 int tls_parse_stoc_trust_anchors(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context, X509 *x, size_t chainidx)
 {
     PACKET id_list;
+
+    /*
+     * In the Certificate message the extension is the peer's marker that the
+     * certificate matched what we asked for: empty, and only in the first
+     * entry.  An extension we did not ask for is refused before we are called.
+     */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE) {
+        if (PACKET_remaining(pkt) != 0 || chainidx != 0) {
+            SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
+            return 0;
+        }
+        s->ext.peer_matched_trust_anchor = 1;
+        return 1;
+    }
 
     if (context != SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
         return 1;

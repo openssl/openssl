@@ -1814,6 +1814,15 @@ struct ssl_connection_st {
         uint8_t *peer_available_trust_anchors;
 
         /*
+         * Set when the peer marked the certificate it sent as one it chose for
+         * a trust anchor we asked for: the empty trust_anchors extension in
+         * the first CertificateEntry.  The certificate_list is then a complete
+         * path from that trust anchor, so a relying party may validate it as
+         * given rather than building a path.
+         */
+        int peer_matched_trust_anchor;
+
+        /*
          * The RequestedTrustAnchorList this client advertises, as wire-format
          * u8-length-prefixed trust anchor IDs.  When requested_trust_anchors_set
          * is 0 the list has not been configured and the trusted MTC CAs are

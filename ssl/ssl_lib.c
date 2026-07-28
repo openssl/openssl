@@ -607,6 +607,7 @@ int ossl_ssl_connection_reset(SSL *s)
     OPENSSL_free(sc->ext.peer_available_trust_anchors);
     sc->ext.peer_available_trust_anchors = NULL;
     sc->ext.peer_available_trust_anchors_len = 0;
+    sc->ext.peer_matched_trust_anchor = 0;
 
     if (sc->renegotiate) {
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
@@ -4185,6 +4186,13 @@ int SSL_set1_requested_trust_anchors(SSL *ssl, const uint8_t *ids,
     return set1_requested_trust_anchors(&sc->ext.requested_trust_anchors,
         &sc->ext.requested_trust_anchors_len,
         &sc->ext.requested_trust_anchors_set, ids, ids_len);
+}
+
+int SSL_peer_matched_trust_anchor(const SSL *ssl)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    return sc != NULL && sc->ext.peer_matched_trust_anchor;
 }
 
 void SSL_get0_peer_available_trust_anchors(const SSL *ssl,

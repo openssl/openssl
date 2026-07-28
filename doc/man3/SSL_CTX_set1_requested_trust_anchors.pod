@@ -3,7 +3,7 @@
 =head1 NAME
 
 SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors,
-SSL_get0_peer_available_trust_anchors
+SSL_get0_peer_available_trust_anchors, SSL_peer_matched_trust_anchor
 - set the trust anchors a TLS client requests
 
 =head1 SYNOPSIS
@@ -17,6 +17,7 @@ SSL_get0_peer_available_trust_anchors
  void SSL_get0_peer_available_trust_anchors(const SSL *ssl,
                                             const uint8_t **out_ids,
                                             size_t *out_ids_len);
+ int SSL_peer_matched_trust_anchor(const SSL *ssl);
 
 =head1 DESCRIPTION
 
@@ -56,6 +57,14 @@ I<*out_ids_len> is set to zero. A client that was sent a certificate it does not
 trust can choose an identifier from this list and try again on a new
 connection, requesting only that one.
 
+SSL_peer_matched_trust_anchor() reports whether the peer said the certificate
+it sent was chosen for one of the trust anchors requested on I<ssl>. When it
+did, the certificate list it sent is a complete certification path from that
+trust anchor, correctly ordered and with nothing extraneous, so the caller may
+validate it as given rather than building a path. The value is available once
+the peer's certificate has been received, so a certificate verification
+callback may consult it.
+
 =head1 RETURN VALUES
 
 SSL_CTX_set1_requested_trust_anchors() and SSL_set1_requested_trust_anchors()
@@ -63,6 +72,9 @@ return 1 on success and 0 on error, including when I<ids> is not a well-formed
 list.
 
 SSL_get0_peer_available_trust_anchors() does not return a value.
+
+SSL_peer_matched_trust_anchor() returns 1 if the peer reported such a match and
+0 otherwise.
 
 =head1 NOTES
 

@@ -635,3 +635,4 @@ SSL_parse_private_keys                  ?	4_1_0	EXIST::FUNCTION:
 SSL_CTX_set1_requested_trust_anchors    ?	4_1_0	EXIST::FUNCTION:
 SSL_set1_requested_trust_anchors        ?	4_1_0	EXIST::FUNCTION:
 SSL_get0_peer_available_trust_anchors   ?	4_1_0	EXIST::FUNCTION:
+SSL_peer_matched_trust_anchor           ?	4_1_0	EXIST::FUNCTION:
