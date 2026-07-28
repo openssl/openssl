@@ -18,6 +18,8 @@
 #include "internal/ssl_unwrap.h"
 #include "../ssl_local.h"
 #include "statem_local.h"
+#include "crypto/mtc_ca.h"
+#include "crypto/x509.h"
 #include <openssl/ocsp.h>
 #include <openssl/core_names.h>
 
@@ -122,6 +124,106 @@ int ossl_tls_valid_trust_anchor_list(const PACKET *list)
             || PACKET_remaining(&id) == 0)
             return 0;
     return 1;
+}
+
+EXT_RETURN ossl_tls_construct_requested_trust_anchors(SSL_CONNECTION *s,
+    WPACKET *pkt)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const uint8_t *ids = NULL;
+    size_t ids_len = 0;
+    X509_STORE *store;
+    STACK_OF(OSSL_MTC_CA) *cas;
+    int i, num, explicit_list = 0;
+
+    /*
+     * Send the trust_anchors extension (section 5 of
+     * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/) as
+     * a RequestedTrustAnchorList, so the peer can select a matching
+     * certificate.  A trust anchor ID is a CA ID (section 8.1 of
+     * https://datatracker.ietf.org/doc/draft-ietf-plants-merkle-tree-certs-06/).
+     *
+     * The list advertised is, in order of precedence: the list configured on
+     * this connection with SSL_set1_requested_trust_anchors(), else the list
+     * configured on the SSL_CTX with SSL_CTX_set1_requested_trust_anchors(),
+     * else the default list: the IDs of the Merkle Tree Certificate CAs on
+     * the verification store, followed by the IDs added on the SSL_CTX with
+     * SSL_CTX_add1_requested_trust_anchors() and then on this connection with
+     * SSL_add1_requested_trust_anchors(), not deduplicated.  An explicitly
+     * configured list is sent verbatim even when empty (signalling retry
+     * support without naming a trust anchor); the default list is sent when
+     * the store has an MTC CA or either add function has been called, even if
+     * it is empty.
+     *
+     * The store is chosen exactly as in
+     * ssl_verify_cert_chain().  An MTC CA with landmark state advertises its
+     * landmark groups (section 8.2.1 of the Merkle Tree Certificates draft)
+     * instead of its bare CA ID; the group signals support for standalone
+     * certificates as well.
+     */
+    if (s->ext.requested_trust_anchors_set) {
+        ids = s->ext.requested_trust_anchors;
+        ids_len = s->ext.requested_trust_anchors_len;
+        explicit_list = 1;
+    } else if (sctx->ext.requested_trust_anchors_set) {
+        ids = sctx->ext.requested_trust_anchors;
+        ids_len = sctx->ext.requested_trust_anchors_len;
+        explicit_list = 1;
+    }
+
+    if (explicit_list) {
+        /* Send the configured RequestedTrustAnchorList verbatim. */
+        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+            || !WPACKET_start_sub_packet_u16(pkt)
+            || !WPACKET_sub_memcpy_u16(pkt, ids, ids_len)
+            || !WPACKET_close(pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+        return EXT_RETURN_SENT;
+    }
+
+    /*
+     * Default: advertise the store's MTC CAs, then the added IDs.  Each MTC CA
+     * holds its advertisement precomputed (one landmark group ID per issuance
+     * log with landmark state, or its bare CA ID when none has any) as a run
+     * of u8-length-prefixed IDs, repacked whenever the CA is updated.  The
+     * added IDs are stored the same way.  All are appended verbatim.
+     */
+    store = s->cert->verify_store != NULL
+        ? s->cert->verify_store
+        : sctx->cert_store;
+    cas = ossl_x509_store_get0_mtc_cas(store);
+    num = sk_OSSL_MTC_CA_num(cas);
+    if (num <= 0 && !sctx->ext.added_trust_anchors_set
+        && !s->ext.added_trust_anchors_set)
+        return EXT_RETURN_NOT_SENT;
+
+    if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_trust_anchors)
+        || !WPACKET_start_sub_packet_u16(pkt)
+        || !WPACKET_start_sub_packet_u16(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    for (i = 0; i < num; i++) {
+        if (!ossl_mtc_ca_put_advertised_ids(sk_OSSL_MTC_CA_value(cas, i),
+                pkt)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return EXT_RETURN_FAIL;
+        }
+    }
+
+    if (!WPACKET_memcpy(pkt, sctx->ext.added_trust_anchors,
+            sctx->ext.added_trust_anchors_len)
+        || !WPACKET_memcpy(pkt, s->ext.added_trust_anchors,
+            s->ext.added_trust_anchors_len)
+        || !WPACKET_close(pkt) || !WPACKET_close(pkt)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
+
+    return EXT_RETURN_SENT;
 }
 
 /* Structure to define a built-in extension */
