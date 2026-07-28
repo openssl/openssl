@@ -5,7 +5,7 @@
 SSL_CTX_set1_requested_trust_anchors, SSL_set1_requested_trust_anchors,
 SSL_CTX_add1_requested_trust_anchors, SSL_add1_requested_trust_anchors,
 SSL_get0_peer_available_trust_anchors, SSL_peer_matched_trust_anchor
-- set the trust anchors a TLS client requests
+- set the trust anchors requested of a TLS peer
 
 =head1 SYNOPSIS
 
@@ -26,9 +26,10 @@ SSL_get0_peer_available_trust_anchors, SSL_peer_matched_trust_anchor
 
 =head1 DESCRIPTION
 
-These functions set the list of trust anchors a client requests from the server
-in the B<trust_anchors> extension, so the server can select a certificate
-issued by one of them (see
+These functions set the list of trust anchors requested of the peer in the
+B<trust_anchors> extension, so the peer can select a certificate issued by one
+of them: a client requests in the ClientHello, and a server asking for a client
+certificate requests in the CertificateRequest (see
 L<https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids/>).
 
 I<ids> is the list in wire format: a series of nonempty, 8-bit
@@ -42,7 +43,7 @@ created from I<ctx>. SSL_set1_requested_trust_anchors() configures a single
 connection and overrides the context's setting for that connection.
 
 If neither is called, the default list is advertised. It holds the identifiers
-of the Merkle Tree Certificate CAs the client is configured to verify against
+of the Merkle Tree Certificate CAs the endpoint is configured to verify against
 (see L<X509_STORE_trust_mtc_ca(3)>), followed by any identifiers added with
 SSL_CTX_add1_requested_trust_anchors() and then
 SSL_add1_requested_trust_anchors(). Calling SSL_CTX_set1_requested_trust_anchors()
