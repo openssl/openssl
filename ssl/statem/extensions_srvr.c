@@ -1387,13 +1387,18 @@ EXT_RETURN tls_construct_stoc_trust_anchors(SSL_CONNECTION *s, WPACKET *pkt,
     /*
      * This extension shares its definition with the ClientHello request form.
      * In EncryptedExtensions it lists the trust anchors we have; in the
-     * Certificate message it acknowledges that the certificate we served
-     * matched what the client asked for, which is an empty extension in the
-     * first CertificateEntry only.  See
+     * CertificateRequest it asks for a client certificate from trust anchors
+     * we accept; in the Certificate message it acknowledges that the
+     * certificate we served matched what the client asked for, which is an
+     * empty extension in the first CertificateEntry only.  See
      * https://datatracker.ietf.org/doc/draft-ietf-tls-trust-anchor-ids-05/.
      */
     if (context == SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
         return construct_stoc_available_trust_anchors(s, pkt);
+
+    /* Asking for a client certificate, we are the relying party. */
+    if (context == SSL_EXT_TLS1_3_CERTIFICATE_REQUEST)
+        return ossl_tls_construct_requested_trust_anchors(s, pkt);
 
     if (context != SSL_EXT_TLS1_3_CERTIFICATE
         || s->s3.tmp.credential == NULL || chainidx != 0)

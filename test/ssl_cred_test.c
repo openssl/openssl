@@ -22,6 +22,7 @@
 #include "internal/pool.h"
 #include "../ssl/ssl_local.h"
 #include "helpers/ssltestlib.h"
+#include "internal/ssl_unwrap.h"
 #include "testutil.h"
 
 /* 32473.1 as TrustAnchorID relative-OID bytes */
@@ -903,6 +904,64 @@ err:
     return ret;
 }
 
+/*
+ * A server that asks for a client certificate sends the trust anchors it will
+ * accept in the CertificateRequest, and the client keeps them for choosing
+ * what to send back.  Read from the connection: the list is not public API.
+ */
+static int test_requested_trust_anchors_from_server(void)
+{
+    static const uint8_t requested[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_CONNECTION *csc;
+    X509 *x = NULL;
+    EVP_PKEY *key = NULL;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    if (!TEST_true(make_cert_and_key(&x, &key)))
+        goto err;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
+        || !TEST_ptr(cctx = SSL_CTX_new_ex(NULL, NULL, TLS_client_method()))
+        || !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_use_certificate(sctx, x))
+        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key))
+        || !TEST_true(SSL_CTX_set1_requested_trust_anchors(sctx, requested,
+            sizeof(requested))))
+        goto err;
+    /* Ask for a client certificate, without requiring one. */
+    SSL_CTX_set_verify(sctx, SSL_VERIFY_PEER, NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto err;
+
+    if (!TEST_ptr(csc = SSL_CONNECTION_FROM_SSL(clientssl))
+        || !TEST_int_eq(csc->ext.peer_sent_trust_anchors, 1)
+        || !TEST_mem_eq(csc->ext.peer_requested_trust_anchors,
+            csc->ext.peer_requested_trust_anchors_len, requested,
+            sizeof(requested)))
+        goto err;
+
+    ret = 1;
+err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_credential_object);
@@ -919,5 +978,6 @@ int setup_tests(void)
     ADD_TEST(test_available_trust_anchors);
     ADD_TEST(test_available_trust_anchors_unasked);
     ADD_TEST(test_matched_trust_anchor);
+    ADD_TEST(test_requested_trust_anchors_from_server);
     return 1;
 }
