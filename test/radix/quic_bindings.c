@@ -66,7 +66,7 @@ typedef struct radix_process_st {
 
     /* Process-global state. */
     CRYPTO_MUTEX *gm; /* global mutex */
-    LHASH_OF(RADIX_OBJ) *objs; /* protected by gm */
+    LHASH_OF(RADIX_OBJ) *objs;
     BIO *keylog_out; /* protected by gm */
     uint64_t counter[2]; /* protected by gm */
 
@@ -892,8 +892,6 @@ DEF_FUNC(hf_clear)
     RADIX_THREAD *rt = RT();
     size_t i;
 
-    ossl_crypto_mutex_lock(RP()->gm);
-
     lh_RADIX_OBJ_doall(RP()->objs, cleanup_one);
     lh_RADIX_OBJ_flush(RP()->objs);
 
@@ -902,7 +900,6 @@ DEF_FUNC(hf_clear)
         rt->ssl[i] = NULL;
     }
 
-    ossl_crypto_mutex_unlock(RP()->gm);
     return 1;
 }
 
