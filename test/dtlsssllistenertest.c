@@ -3710,12 +3710,12 @@ static int test_dtls_listener_max_pending_conns_api(void)
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto end;
 
-    /* Retrieve default maximum pending connections (1000) */
+    /* Retrieve default maximum pending connections (256) */
     if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
-    if (!TEST_uint64_t_eq(retrieved_max_conns, 1000))
+    if (!TEST_uint64_t_eq(retrieved_max_conns, 256))
         goto end;
 
     max_conns = 10;
@@ -3761,12 +3761,12 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto end;
 
-    /* Retrieve default maximum pending connections (1000) */
+    /* Retrieve default maximum pending connections (256) */
     if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
-    if (!TEST_uint64_t_eq(retrieved_max_conns, 1000))
+    if (!TEST_uint64_t_eq(retrieved_max_conns, 256))
         goto end;
 
     /* Setting the cap to 0 must fail - the cap cannot be disabled */
@@ -3777,7 +3777,7 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
     if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
-    if (!TEST_uint64_t_eq(retrieved_max_conns, 1000))
+    if (!TEST_uint64_t_eq(retrieved_max_conns, 256))
         goto end;
 
     /* Setting on a non-listener SSL should fail */

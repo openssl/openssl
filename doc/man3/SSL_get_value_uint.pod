@@ -241,6 +241,17 @@ peer in the transport parameters.
 This release of OpenSSL uses a default value of 25 milliseconds. This default
 value may change between releases of OpenSSL.
 
+=item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL> (connection object)
+
+Generic read-only statistical value. The number of bidirectional,
+locally-initiated streams available to be created (but not yet created). For
+example, a value of 100 would mean that L<SSL_new_stream(3)> could be called 100
+times to create 100 bidirectional streams before L<SSL_new_stream(3)> would
+block or fail due to backpressure.
+
+Can be queried using the convenience macro
+SSL_get_quic_stream_bidi_local_avail().
+
 =item B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (DTLS listener object)
 
 Feature request value. Limits the number of pending
@@ -250,7 +261,7 @@ from novel peers are silently dropped; existing pending connections may
 still complete their handshake and enter the accept queue, and stale
 entries age out via B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>.
 
-The default limit is 1000. Setting the value to 0 is rejected: unlike
+The default limit is 256. Setting the value to 0 is rejected: unlike
 the pending timeout, this cap cannot be disabled, as doing so would
 expose the listener to Denial of Service attacks from spoofed-source
 UDP floods. Values larger than B<SIZE_MAX> are clamped to B<SIZE_MAX>.
@@ -265,15 +276,6 @@ B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> quota.
 
 The default is 30000 (30 seconds). Setting the value to B<UINT64_MAX>
 disables the timeout (pending connections are never expired).
-
-Generic read-only statistical value. The number of bidirectional,
-locally-initiated streams available to be created (but not yet created). For
-example, a value of 100 would mean that L<SSL_new_stream(3)> could be called 100
-times to create 100 bidirectional streams before L<SSL_new_stream(3)> would
-block or fail due to backpressure.
-
-Can be queried using the convenience macro
-SSL_get_quic_stream_bidi_local_avail().
 
 =item B<SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL> (connection object)
 

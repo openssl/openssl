@@ -36,7 +36,7 @@ OpenSSL Releases
    defined:
 
    - SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS caps the number of pending
-     (handshake-in-progress) connections. Default 1000. Setting the
+     (handshake-in-progress) connections. Default 256. Setting the
      value to 0 is rejected. Datagrams from novel peers are silently
      dropped once the cap is reached.
    - SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT sets the reap timeout for

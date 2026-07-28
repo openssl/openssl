@@ -2235,7 +2235,7 @@ DEFINE_STACK_OF(SSL)
 /*
  * Default maximum number of pending connections for DTLS listeners.
  */
-#define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 1000
+#define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 256
 
 /*
  * DTLS listener SSL object type. This implements the API personality
