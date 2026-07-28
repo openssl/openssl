@@ -150,7 +150,7 @@ static hm_fragment *dtls1_hm_fragment_new(size_t frag_len, int reassembly)
     }
 
     frag->reassembly = bitmask;
-    frag->alloc_bytes = frag_len + RSMBLY_BITMASK_SIZE(frag_len);
+    frag->alloc_bytes = frag_len + (reassembly ? RSMBLY_BITMASK_SIZE(frag_len) : 0);
 
     return frag;
 }
@@ -699,10 +699,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
         size_t new_bytes = msg_hdr->msg_len + RSMBLY_BITMASK_SIZE(msg_hdr->msg_len);
         if (s->d1->reassembly_bytes + new_bytes > DTLS_MAX_REASSEMBLY_BUDGET)
             goto err;
-        s->d1->reassembly_bytes += new_bytes;
         frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
         if (frag == NULL)
             goto err;
+        s->d1->reassembly_bytes += new_bytes;
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
         frag->msg_header.frag_len = frag->msg_header.msg_len;
         frag->msg_header.frag_off = 0;
