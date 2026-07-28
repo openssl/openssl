@@ -21,6 +21,7 @@
 #include "internal/nelem.h"
 #include "internal/pool.h"
 #include "../ssl/ssl_local.h"
+#include "helpers/ssltestlib.h"
 #include "testutil.h"
 
 /* 32473.1 as TrustAnchorID relative-OID bytes */
@@ -680,6 +681,319 @@ err:
     return ret;
 }
 
+/* A second CA ID, 32473.2, for a credential with a different trust anchor. */
+static const uint8_t tai_id2[] = { 0x81, 0xfd, 0x59, 0x02 };
+
+/* A credential for |x| and |key|, offered for the trust anchor |id|. */
+static SSL_CREDENTIAL *make_served_credential(X509 *x, EVP_PKEY *key,
+    const uint8_t *id, size_t id_len)
+{
+    SSL_CREDENTIAL *cred = NULL, *ret = NULL;
+    STACK_OF(CRYPTO_BUFFER) *chain = NULL;
+    CRYPTO_BUFFER *buf = NULL;
+    unsigned char *der = NULL;
+    int der_len;
+
+    if (!TEST_int_gt(der_len = i2d_X509(x, &der), 0)
+        || !TEST_ptr(cred = ossl_ssl_credential_new(SSL_CREDENTIAL_TYPE_X509))
+        || !TEST_ptr(chain = sk_CRYPTO_BUFFER_new_null())
+        || !TEST_ptr(buf = CRYPTO_BUFFER_new(der, (size_t)der_len, NULL))
+        || !TEST_true(sk_CRYPTO_BUFFER_push(chain, buf)))
+        goto err;
+    buf = NULL;
+    if (!TEST_true(ossl_ssl_credential_set1_cert_chain(cred, chain))
+        || !TEST_true(ossl_ssl_credential_set1_private_key(cred, key))
+        || !TEST_true(ossl_ssl_credential_set1_trust_anchor_id(cred, id,
+            id_len)))
+        goto err;
+
+    ret = cred;
+    cred = NULL;
+err:
+    SSL_CREDENTIAL_free(cred);
+    sk_CRYPTO_BUFFER_pop_free(chain, CRYPTO_BUFFER_free);
+    CRYPTO_BUFFER_free(buf);
+    OPENSSL_free(der);
+    return ret;
+}
+
+/*
+ * Hand-shake a client and a server holding |creds|, with the client requesting
+ * |requested| (a wire-format list, sent even when empty) unless |requested| is
+ * NULL, in which case it asks for no trust anchors at all.  The available trust
+ * anchor list the client was sent is copied to *out (which the caller frees)
+ * and *out_len; the list belongs to the connection, which does not outlive
+ * this call.
+ */
+static int available_trust_anchors(SSL_CREDENTIAL **creds, size_t ncreds,
+    const uint8_t *requested, size_t requested_len, uint8_t **out,
+    size_t *out_len)
+{
+    const uint8_t *ids = NULL;
+    size_t ids_len = 0;
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    X509 *x = NULL;
+    EVP_PKEY *key = NULL;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_true(make_cert_and_key(&x, &key)))
+        goto err;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
+        || !TEST_ptr(cctx = SSL_CTX_new_ex(NULL, NULL, TLS_client_method()))
+        || !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_use_certificate(sctx, x))
+        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key)))
+        goto err;
+    for (i = 0; i < ncreds; i++)
+        if (!TEST_true(SSL_CTX_add1_credential(sctx, creds[i])))
+            goto err;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL)))
+        goto err;
+    if (requested != NULL
+        && !TEST_true(SSL_set1_requested_trust_anchors(clientssl, requested,
+            requested_len)))
+        goto err;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto err;
+
+    SSL_get0_peer_available_trust_anchors(clientssl, &ids, &ids_len);
+    if (ids_len != 0 && !TEST_ptr(*out = OPENSSL_memdup(ids, ids_len)))
+        goto err;
+    *out_len = ids_len;
+    ret = 1;
+err:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * A server that has credentials to offer lists their trust anchors in
+ * EncryptedExtensions, in configured order and naming each one once, for a
+ * client that asked for trust anchors at all -- here an empty request, which is
+ * how a client asks what the server has.
+ */
+static int test_available_trust_anchors(void)
+{
+    static const uint8_t expected[] = { 0x04, 0x81, 0xfd, 0x59, 0x01, 0x04,
+        0x81, 0xfd, 0x59, 0x02 };
+    SSL_CREDENTIAL *creds[3] = { NULL, NULL, NULL };
+    uint8_t *got = NULL;
+    X509 *x = NULL;
+    EVP_PKEY *key = NULL;
+    size_t got_len = 0, i;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    if (!TEST_true(make_cert_and_key(&x, &key)))
+        goto err;
+    /* The third credential repeats the first one's trust anchor. */
+    if (!TEST_ptr(creds[0] = make_served_credential(x, key, tai_id,
+                      sizeof(tai_id)))
+        || !TEST_ptr(creds[1] = make_served_credential(x, key, tai_id2,
+                         sizeof(tai_id2)))
+        || !TEST_ptr(creds[2] = make_served_credential(x, key, tai_id,
+                         sizeof(tai_id))))
+        goto err;
+
+    if (!TEST_true(available_trust_anchors(creds, OSSL_NELEM(creds),
+            (const uint8_t *)"", 0, &got, &got_len)))
+        goto err;
+    if (!TEST_mem_eq(got, got_len, expected, sizeof(expected)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(got);
+    for (i = 0; i < OSSL_NELEM(creds); i++)
+        SSL_CREDENTIAL_free(creds[i]);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/* A signature_algorithms_cert list for set_peer_cert_sigalgs_cb(). */
+struct cert_sigalgs {
+    const uint16_t *sigalgs;
+    size_t sigalgs_len;
+};
+
+/*
+ * A server ClientHello callback that records the cert_sigalgs list in arg as
+ * the client's signature_algorithms_cert.  libssl's client does not send that
+ * extension.
+ */
+static int set_peer_cert_sigalgs_cb(SSL *s, ossl_unused int *al, void *arg)
+{
+    const struct cert_sigalgs *cs = arg;
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    uint16_t *copy;
+
+    if (sc == NULL
+        || (copy = OPENSSL_memdup(cs->sigalgs,
+                cs->sigalgs_len * sizeof(*copy)))
+            == NULL)
+        return SSL_CLIENT_HELLO_ERROR;
+    OPENSSL_free(sc->s3.tmp.peer_cert_sigalgs);
+    sc->s3.tmp.peer_cert_sigalgs = copy;
+    sc->s3.tmp.peer_cert_sigalgslen = cs->sigalgs_len;
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+/*
+ * The client's signature_algorithms_cert for test_credential_cert_sigalgs(),
+ * and whether the credential is served.  The credential's leaf is self-signed
+ * with ECDSA and SHA-384, or with RSA-PSS and SHA-256 when pss is set.  Every
+ * list names ECDSA with SHA-256, the signature of the default certificate.
+ */
+static const struct {
+    int pss;
+    uint16_t sigalgs[2];
+    size_t sigalgs_len;
+    int served;
+} cert_sigalgs_tests[] = {
+    { 0, { TLSEXT_SIGALG_ecdsa_secp256r1_sha256 }, 1, 0 },
+    { 0,
+        { TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+            TLSEXT_SIGALG_ecdsa_secp384r1_sha384 },
+        2, 1 },
+    { 1, { TLSEXT_SIGALG_ecdsa_secp256r1_sha256 }, 1, 0 },
+    { 1,
+        { TLSEXT_SIGALG_ecdsa_secp256r1_sha256,
+            TLSEXT_SIGALG_rsa_pss_pss_sha256 },
+        2, 1 }
+};
+
+/*
+ * A credential is served, and its trust anchor listed, only when the client's
+ * signature_algorithms_cert names its leaf's signature; otherwise the default
+ * certificate is served and no trust anchor is listed.
+ */
+static int test_credential_cert_sigalgs(int idx)
+{
+    static const uint8_t requested[] = { 0x04, 0x81, 0xfd, 0x59, 0x01 };
+    struct cert_sigalgs cs = { cert_sigalgs_tests[idx].sigalgs,
+        cert_sigalgs_tests[idx].sigalgs_len };
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    SSL_CREDENTIAL *cred = NULL;
+    X509 *x = NULL, *cred_cert = NULL, *peer = NULL;
+    EVP_PKEY *key = NULL, *cred_key = NULL;
+    const uint8_t *ids = NULL;
+    size_t ids_len = 0;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    if (!TEST_true(make_cert_and_key(&x, &key))
+        || !TEST_true(make_cert_and_key(&cred_cert, &cred_key)))
+        goto err;
+    if (cert_sigalgs_tests[idx].pss) {
+        EVP_PKEY_free(cred_key);
+        if (!TEST_ptr(cred_key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA-PSS",
+                          (size_t)2048))
+            || !TEST_true(X509_set_pubkey(cred_cert, cred_key))
+            || !TEST_int_gt(X509_sign(cred_cert, cred_key, EVP_sha256()), 0))
+            goto err;
+    } else if (!TEST_int_gt(X509_sign(cred_cert, cred_key, EVP_sha384()), 0)) {
+        goto err;
+    }
+    if (!TEST_ptr(cred = make_served_credential(cred_cert, cred_key, tai_id,
+                      sizeof(tai_id))))
+        goto err;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(NULL, NULL, TLS_server_method()))
+        || !TEST_ptr(cctx = SSL_CTX_new_ex(NULL, NULL, TLS_client_method()))
+        || !TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_use_certificate(sctx, x))
+        || !TEST_true(SSL_CTX_use_PrivateKey(sctx, key))
+        || !TEST_true(SSL_CTX_add1_credential(sctx, cred)))
+        goto err;
+    SSL_CTX_set_client_hello_cb(sctx, set_peer_cert_sigalgs_cb, &cs);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl, NULL,
+            NULL))
+        || !TEST_true(SSL_set1_requested_trust_anchors(clientssl, requested,
+            sizeof(requested)))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(peer = SSL_get1_peer_certificate(clientssl)))
+        goto err;
+
+    SSL_get0_peer_available_trust_anchors(clientssl, &ids, &ids_len);
+    if (!cert_sigalgs_tests[idx].served) {
+        if (!TEST_size_t_eq(ids_len, 0)
+            || !TEST_int_eq(X509_cmp(peer, x), 0))
+            goto err;
+    } else if (!TEST_mem_eq(ids, ids_len, requested, sizeof(requested))
+        || !TEST_int_eq(X509_cmp(peer, cred_cert), 0)) {
+        goto err;
+    }
+
+    ret = 1;
+err:
+    X509_free(peer);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CREDENTIAL_free(cred);
+    X509_free(x);
+    X509_free(cred_cert);
+    EVP_PKEY_free(key);
+    EVP_PKEY_free(cred_key);
+    return ret;
+}
+
+/* A client that asked for no trust anchors is told of none. */
+static int test_available_trust_anchors_unasked(void)
+{
+    SSL_CREDENTIAL *cred = NULL;
+    uint8_t *got = NULL;
+    X509 *x = NULL;
+    EVP_PKEY *key = NULL;
+    size_t got_len = 0;
+    int ret = 0;
+
+#if defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3)
+    return TEST_skip("EC or TLS 1.3 is disabled");
+#endif /* defined(OPENSSL_NO_EC) || defined(OPENSSL_NO_TLS1_3) */
+
+    if (!TEST_true(make_cert_and_key(&x, &key))
+        || !TEST_ptr(cred = make_served_credential(x, key, tai_id,
+                         sizeof(tai_id))))
+        goto err;
+
+    if (!TEST_true(available_trust_anchors(&cred, 1, NULL, 0, &got, &got_len)))
+        goto err;
+    if (!TEST_size_t_eq(got_len, 0))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(got);
+    SSL_CREDENTIAL_free(cred);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_credential_object);
@@ -693,5 +1007,8 @@ int setup_tests(void)
     ADD_TEST(test_parse_encrypted_key);
     ADD_TEST(test_compare_size);
     ADD_TEST(test_parse_private_keys);
+    ADD_TEST(test_available_trust_anchors);
+    ADD_ALL_TESTS(test_credential_cert_sigalgs, OSSL_NELEM(cert_sigalgs_tests));
+    ADD_TEST(test_available_trust_anchors_unasked);
     return 1;
 }

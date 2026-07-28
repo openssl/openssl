@@ -94,7 +94,7 @@ err:
 
 /*
  * SSL_clear() forgets what the peer sent in trust_anchors: the flag and list
- * from a parsed ClientHello extension.
+ * from a parsed ClientHello extension, and the available list a server sent.
  */
 static int test_clear_peer_trust_anchors(void)
 {
@@ -102,6 +102,8 @@ static int test_clear_peer_trust_anchors(void)
     SSL *ssl = NULL;
     SSL_CONNECTION *s;
     PACKET pkt;
+    const uint8_t *ids;
+    size_t ids_len;
     int ret = 0;
 
     if (!TEST_ptr(ssl = SSL_new(server_ctx))
@@ -112,11 +114,20 @@ static int test_clear_peer_trust_anchors(void)
         || !TEST_true(s->ext.peer_sent_trust_anchors)
         || !TEST_ptr(s->ext.peer_requested_trust_anchors))
         goto err;
+    /* What a server's EncryptedExtensions would have left behind. */
+    s->ext.peer_available_trust_anchors = OPENSSL_memdup(list + 2,
+        sizeof(list) - 2);
+    if (!TEST_ptr(s->ext.peer_available_trust_anchors))
+        goto err;
+    s->ext.peer_available_trust_anchors_len = sizeof(list) - 2;
 
     if (!TEST_true(SSL_clear(ssl))
         || !TEST_false(s->ext.peer_sent_trust_anchors)
         || !TEST_ptr_null(s->ext.peer_requested_trust_anchors)
         || !TEST_size_t_eq(s->ext.peer_requested_trust_anchors_len, 0))
+        goto err;
+    SSL_get0_peer_available_trust_anchors(ssl, &ids, &ids_len);
+    if (!TEST_ptr_null(ids) || !TEST_size_t_eq(ids_len, 0))
         goto err;
 
     ret = 1;
