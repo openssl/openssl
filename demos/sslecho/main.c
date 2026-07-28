@@ -74,10 +74,10 @@ static SOCKET create_socket(flag isServer)
          * NOT pass BIO_SOCK_V6_ONLY, clears IPV6_V6ONLY to give us a dual-stack
          * listener, portably handling the platform default differences.
          */
-        if (!BIO_listen(s, addr, BIO_SOCK_REUSEADDR)) {
+        if (!BIO_listen((int)s, addr, BIO_SOCK_REUSEADDR)) {
             fprintf(stderr, "Unable to bind/listen\n");
             ERR_print_errors_fp(stderr);
-            BIO_closesocket(s);
+            BIO_closesocket((int)s);
             BIO_ADDRINFO_free(res);
             exit(EXIT_FAILURE);
         }
@@ -320,7 +320,7 @@ int main(int argc, char **argv)
             if (BIO_connect((int)client_skt, BIO_ADDRINFO_address(ai),
                     BIO_SOCK_NODELAY))
                 break;
-            BIO_closesocket(client_skt);
+            BIO_closesocket((int)client_skt);
             client_skt = INVALID_SOCKET;
         }
         BIO_ADDRINFO_free(res);
