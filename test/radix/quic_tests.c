@@ -225,7 +225,7 @@ DEF_FUNC(ssl_poll_check)
 {
     int ok = 0;
     SSL *La, *Lax[4];
-    SSL_POLL_ITEM items[6] = { 0 }, expected_items[6] = { 0 };
+    SSL_POLL_ITEM items[7] = { 0 }, expected_items[7] = { 0 };
     size_t result_count = 0, i;
     const struct timeval z_timeout = { 0 }, *p_timeout = &z_timeout;
     struct timeval timeout = { 0 };
@@ -247,6 +247,11 @@ DEF_FUNC(ssl_poll_check)
     }
 
     items[5].desc = SSL_as_poll_descriptor(SSL_get0_listener(La));
+
+    /* NONE items are ignored and have revents reported as 0. */
+    items[6].desc.type = BIO_POLL_DESCRIPTOR_TYPE_NONE;
+    items[6].events = UINT64_MAX;
+    items[6].revents = UINT64_MAX;
 
     switch (mode) {
     case 0: /* Nothing ready */
@@ -286,12 +291,14 @@ DEF_FUNC(ssl_poll_check)
     /* Zero-timeout call. */
     result_count = SIZE_MAX;
     time_before = ossl_time_now();
+    ERR_clear_error();
     if (!TEST_true(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
             p_timeout, 0, &result_count)))
         goto err;
 
     time_after = ossl_time_now();
-    if (!TEST_size_t_eq(result_count, expected_result_count))
+    if (!TEST_size_t_eq(result_count, expected_result_count)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
         goto err;
 
     for (i = 0; i < OSSL_NELEM(items); ++i)
