@@ -1332,7 +1332,9 @@ providers/fips.module.sources.new: configdata.pm
 		   crypto/sha/asm/*.pl \
 		   crypto/slh_dsa/asm/*.pl \
 		   crypto/*cpuid.pl crypto/*cpuid.S \
-		   crypto/*cap.c; do \
+		   crypto/*cap.c \
+		   crypto/ml_kem/ml_kem_vec128.c \
+		   crypto/ml_dsa/ml_dsa_ntt_vec128.c; do \
 	    test -e "$$x" && echo "$$x"; \
 	  done \
 	) | grep -v sm2p256 | sort | uniq > providers/fips.module.sources.new

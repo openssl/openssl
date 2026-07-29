@@ -366,14 +366,33 @@ static ossl_inline
  * @param a_twist is (int32)((uint32)a * ML_DSA_Q_INV).
  * @param b is the second factor.
  * @returns The Montgomery product of a and b in the range
- *          [0, q).
+ *          -q+1..q-1.
+ *
+ * Implementation note: the low-word product k = a_twist * b must be computed
+ * as an *unsigned* 32-bit lane multiply.  a_twist holds precomputed values
+ * from zetas_montgomery_twisted[] such as 1830765815; multiplying those by
+ * even small values of b overflows int32_t, which is undefined behaviour and
+ * caught immediately by UBSan (signed integer overflow).
+ *
+ * The fix mirrors the ML-KEM version (multiply_montgomery_unreduced in
+ * ml_kem_vec128.c): cast both operands to the unsigned __may_alias__ type
+ * (vec_uint32_t) before multiplying so that wrapping is well-defined, then
+ * reinterpret the low 32 bits back as vec_int32_t.  The cast is a pure
+ * reinterpretation at the register level; the generated VX instruction
+ * (vml / vmlo) is identical for both signed and unsigned 32-bit lanes.
+ *
+ * Using the non-alias cast (vec_uint32_alias_t) for the low multiply instead
+ * of vec_uint32_t fails under Clang: the difference in __may_alias__ between
+ * the inlined call-site type and the parameter type confuses the Clang alias
+ * analyser across inlining boundaries, producing wrong code.  The __may_alias__
+ * unsigned type (vec_uint32_t) is therefore required for both operands of the
+ * low multiply, matching the ML-KEM pattern exactly.
  */
-
 static ossl_inline
     vec_int32_t
     montgomery_multiplication_vectorized(vec_int32_t a, vec_int32_t a_twist, vec_int32_t b)
 {
-    vec_int32_t k = a_twist * b;
+    vec_int32_t k = (vec_int32_t)((vec_uint32_t)a_twist * (vec_uint32_t)b);
     vec_int32_t c = vec_mulh((vec_int32_alias_t)k, (vec_int32_alias_t)vec_q);
     vec_int32_t z_high = vec_mulh((vec_int32_alias_t)a, (vec_int32_alias_t)b);
     vec_int32_t r = z_high - c;

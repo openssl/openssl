@@ -17,8 +17,24 @@
 #include <crypto/evp.h>
 #include "internal/common.h"
 
-/* z13 introduced VX (facility bit 129); z14 adds VXE.  Only VX is needed. */
-#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__) && defined(__VX__)
+/*
+ * VX_COMPILER_SUPPORT_VEC128 must be visible in every translation unit that
+ * includes this header on an s390x build with the VX object enabled — in
+ * particular in ml_kem.c (the dispatcher) and in ml_kem_vec128.c (the
+ * implementation).
+ *
+ * OPENSSL_ML_KEM_S390X is injected by the build system for all asm-enabled
+ * s390x targets, so it is present in both TUs.  Using it as the guard (rather
+ * than checking __VX__ here) ensures that the dispatcher in ml_kem.c sees the
+ * declarations and the dispatch block even though ml_kem.c is compiled without
+ * -march=z13/-mvx and therefore never has __VX__ defined.
+ *
+ * ml_kem_vec128.c also defines VX_COMPILER_SUPPORT_VEC128 itself (after
+ * applying #pragma GCC target / -march=z13 to enable __VX__), but that
+ * definition is redundant — it is consistent with this one because both
+ * evaluate to "defined" whenever OPENSSL_ML_KEM_S390X is set on s390x.
+ */
+#if defined(OPENSSL_ML_KEM_S390X) && defined(__s390x__)
 #define VX_COMPILER_SUPPORT_VEC128
 #endif
 

@@ -438,20 +438,21 @@ static CRYPTO_ONCE ml_kem_ntt_once = CRYPTO_ONCE_STATIC_INIT;
  *      each result row is immediately transformed back to standard form.
  *
  *  scalar_inverse_ntt_demontgomerize
- *      Inverse NTT whose input may still carry a Montgomery factor R from a
- *      preceding inner_product_montgomery call.  On the generic and PPC paths
- *      the two pointers are identical (both point at the same fully-reduced
- *      implementation), because the generic inner_product already produces
- *      fully-reduced outputs via Barrett reduction.  On the s390x/vec128 path
- *      the two are distinct:
+ *      Inverse NTT whose input may still carry an inverse-Montgomery factor
+ *      R^-1 from a preceding inner_product_montgomery call.  On the generic
+ *      and PPC paths the two pointers are identical (both point at the same
+ *      fully-reduced implementation), because the generic inner_product
+ *      already produces fully-reduced outputs via Barrett reduction.  On the
+ *      s390x/vec128 path the two are distinct:
  *        - inner_product_montgomery_vec128 accumulates the dot-product using
  *          Montgomery arithmetic and intentionally leaves each coefficient
- *          scaled by R (= 2^16 mod q), deferring the final division to save
- *          a per-coefficient multiply.
- *        - scalar_inverse_ntt_demontgomerize_vec128 performs the normal inverse
- *          NTT butterfly stages and, in the final normalisation step, folds the
- *          Montgomery de-scaling (multiply by R^-1) into the INVERSE_DEGREE
- *          multiply so that both adjustments are paid in a single pass.
+ *          scaled by R^-1 (= 169 mod q), deferring the final conversion to
+ *          save a per-coefficient multiply.
+ *        - scalar_inverse_ntt_demontgomerize_vec128 first calls
+ *          demontgomerize_scalar_vec128 to convert coefficients from
+ *          inverse-Montgomery form to standard form, then runs the raw
+ *          inverse NTT butterfly stages, and finally multiplies by
+ *          INVERSE_DEGREE via scalar_mult_const_512_vec128.
  *
  * The net effect is that callers always see a fully-reduced standard-form
  * polynomial after the (inner_product_montgomery, scalar_inverse_ntt_demontgomerize)
@@ -497,6 +498,12 @@ static void scalar_inverse_ntt_ppc(scalar *s)
 }
 #endif
 
+/*
+ * VX_COMPILER_SUPPORT_VEC128 is now defined (via include/crypto/ml_kem.h)
+ * whenever OPENSSL_ML_KEM_S390X && __s390x__, without requiring __VX__.
+ * This ensures the S390X_VX_CAPABLE macro and the vec128 function prototypes
+ * are visible here even though ml_kem.c is compiled without -march=z13.
+ */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
 #include "arch/s390x_arch.h"
 #endif
@@ -515,12 +522,11 @@ static void scalar_inverse_ntt_ppc(scalar *s)
  *        - On the generic path the function uses Barrett reduction throughout
  *          and the output is fully reduced in [0, q).
  *        - On the s390x/vec128 path the function uses Montgomery multiplication
- *          internally and the output coefficients are left scaled by R
- *          (= 2^16 mod q).  Callers MUST immediately follow this call with
- *          scalar_inverse_ntt_demontgomerize, which converts back to standard
- *          form while performing the inverse NTT.  Splitting the Montgomery
- *          de-scaling from the inner product and merging it with the inverse
- *          NTT avoids a full extra pass over the 256-element array.
+ *          internally and the output coefficients are left scaled by R^-1
+ *          (= 169 mod q).  Callers MUST immediately follow this call with
+ *          scalar_inverse_ntt_demontgomerize, which demontgomerizes the
+ *          coefficients, runs the inverse NTT butterflies, and then applies
+ *          the INVERSE_DEGREE normalization.
  *
  *  matrix_mult_intt
  *      Computes out[i] = sum_j m[i*rank+j] * a[j] for each row i, and then
@@ -569,15 +575,21 @@ static void ml_kem_ntt_init(void)
  * Initialize NTT and scalar and matrix multiplication function pointers to
  * the s390x/vec128 implementation if available.
  *
+ * VX_COMPILER_SUPPORT_VEC128 is defined (via include/crypto/ml_kem.h) for
+ * every s390x TU that has OPENSSL_ML_KEM_S390X set, regardless of whether
+ * __VX__ is defined in this TU.  The runtime S390X_VX_CAPABLE check
+ * (facility bit 129) ensures the vector functions are only called when the
+ * hardware actually supports VX.
+ *
  * On s390x three pointers differ from the generic ones in a coordinated way:
  *   - scalar_inverse_ntt and scalar_inverse_ntt_demontgomerize point to two
  *     DIFFERENT functions.  scalar_inverse_ntt_demontgomerize_vec128 is always
  *     paired with inner_product_montgomery_vec128: the latter leaves each
- *     coefficient in Montgomery form (scaled by R = 2^16 mod q), and the
- *     former performs the inverse NTT butterflies while simultaneously removing
- *     the Montgomery factor in the final normalisation multiply.
+ *     coefficient in inverse-Montgomery form (scaled by R^-1 = 169 mod q),
+ *     and the former demontgomerizes the result first, then runs the inverse
+ *     NTT butterflies, and finally applies the INVERSE_DEGREE normalization.
  *   - inner_product_montgomery_vec128 deliberately omits the final
- *     Montgomery-to-standard conversion; callers must use
+ *     inverse-Montgomery-to-standard conversion; callers must use
  *     scalar_inverse_ntt_demontgomerize (not scalar_inverse_ntt) afterward.
  *   - matrix_mult_intt_vec128 uses scalar_inverse_ntt_vec128 internally
  *     (not the demontgomerize variant), because it manages its own reduction

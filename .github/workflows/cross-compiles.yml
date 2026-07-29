@@ -384,6 +384,26 @@ jobs:
           | grep -cE ' (ossl_ml_kem_scalar_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128|ossl_ml_kem_scalar_mult_add_vec128|ossl_ml_kem_inner_product_montgomery_vec128|ossl_ml_kem_matrix_mult_intt_vec128)$' \
           | grep -q '^6$'
 
+    - name: check ML-KEM dispatcher references VX symbols
+      # Verify that ml_kem.o (the dispatcher) has unresolved external
+      # references (U-type) to all six vec128 functions and also references
+      # OPENSSL_s390xcap_P.  This proves that the dispatch block in
+      # ml_kem_ntt_init() was compiled in — the standalone vec128 object
+      # check above only verifies that the symbols exist in the vec128 file,
+      # not that the dispatcher actually calls them at runtime.
+      # Note: 'nm' omits the address column for undefined symbols, so
+      # undefined entries look like "                 U symbol_name" and
+      # $1 == "U" is the correct awk field (not $2).
+      if: matrix.platform.nm_check != ''
+      run: |
+        ${{ matrix.platform.arch }}-nm crypto/ml_kem/libcrypto-lib-ml_kem.o \
+          | awk '$1 == "U"' \
+          | grep -cE ' (ossl_ml_kem_scalar_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_vec128|ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128|ossl_ml_kem_scalar_mult_add_vec128|ossl_ml_kem_inner_product_montgomery_vec128|ossl_ml_kem_matrix_mult_intt_vec128)$' \
+          | grep -q '^6$'
+        ${{ matrix.platform.arch }}-nm crypto/ml_kem/libcrypto-lib-ml_kem.o \
+          | awk '$1 == "U"' \
+          | grep -q ' OPENSSL_s390xcap_P$'
+
     - name: check ML-DSA VX vector symbols
       if: matrix.platform.nm_check != ''
       run: |
