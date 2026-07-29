@@ -184,13 +184,17 @@ static int test_append(void)
     int i;
 
     ossl_list_int_init(&l_h);
+    ossl_list_int_init(&l_t);
+    ossl_list_int_append(&l_h, &l_t);
+    if (!TEST_size_t_eq(ossl_list_int_num(&l_t), 0))
+        return 0;
+
     for (i = 0; i < (int)OSSL_NELEM(elem_h); i++) {
         ossl_list_int_init_elem(&elem_h[i]);
         elem_h[i].n = i;
         ossl_list_int_insert_head(&l_h, &elem_h[i]);
     }
 
-    ossl_list_int_init(&l_t);
     for (i = 0; i < (int)OSSL_NELEM(elem_t); i++) {
         ossl_list_int_init_elem(&elem_t[i]);
         elem_t[i].n = i + 10;
