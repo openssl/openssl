@@ -4099,6 +4099,8 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     EVP_PKEY *pkey;
     int i;
 
+    (void)wst;
+
     if (sk == NULL || sk_X509_num(sk) <= 0) {
         /* Fail only if we required a certificate */
         if ((s->verify_mode & SSL_VERIFY_PEER)
