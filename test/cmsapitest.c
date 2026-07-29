@@ -22,6 +22,7 @@ static EVP_PKEY *privkey = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
+static char *pwri_kek_no_iv_in = NULL;
 
 /*
  * This is our bad cms data, it contains an AuthEnvelopedData field
@@ -739,7 +740,40 @@ end:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer\n")
+static int test_pwri_kek_unwrap_no_iv_key(void)
+{
+    BIO *in = NULL;
+    CMS_ContentInfo *cms = NULL;
+    unsigned long err = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_file(pwri_kek_no_iv_in, "rb"))
+        || !TEST_ptr(cms = d2i_CMS_bio(in, NULL)))
+        goto end;
+
+    /*
+     * Due to the missing IV, the unwrap must fail with
+     * CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR.
+     */
+    if (!TEST_false(CMS_decrypt_set1_password(cms,
+            (unsigned char *)"password", -1)))
+        goto end;
+
+    err = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_CMS)
+        || !TEST_int_eq(ERR_GET_REASON(err),
+            CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR))
+        goto end;
+
+    ERR_clear_error();
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(in);
+    return ret;
+}
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIV\n")
 
 int setup_tests(void)
 {
@@ -755,7 +789,8 @@ int setup_tests(void)
         || !TEST_ptr(privkeyin = test_get_argument(1))
         || !TEST_ptr(derin = test_get_argument(2))
         || !TEST_ptr(too_long_iv_cms_in = test_get_argument(3))
-        || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4)))
+        || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4))
+        || !TEST_ptr(pwri_kek_no_iv_in = test_get_argument(5)))
         return 0;
 
     certbio = BIO_new_file(certin, "r");
@@ -796,6 +831,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
+    ADD_TEST(test_pwri_kek_unwrap_no_iv_key);
     return 1;
 }
 
