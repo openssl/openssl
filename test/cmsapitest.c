@@ -19,6 +19,8 @@
 
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
+static X509 *cert2 = NULL;
+static EVP_PKEY *privkey2 = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
@@ -273,6 +275,50 @@ static int test_encrypt_decrypt_aes_192_gcm(void)
 static int test_encrypt_decrypt_aes_256_gcm(void)
 {
     return test_encrypt_decrypt(EVP_aes_256_gcm());
+}
+
+static int test_decrypt_with_wrong_key(void)
+{
+    int testresult = 0;
+    STACK_OF(X509) *certstack = sk_X509_new_null();
+    const char *msg = "Hello world";
+    BIO *msgbio = BIO_new_mem_buf(msg, (int)strlen(msg));
+    BIO *outmsgbio;
+    CMS_ContentInfo *content = NULL;
+    BIO *contentbio = NULL;
+    const EVP_CIPHER *cipher = EVP_aes_128_cbc();
+
+    if (!TEST_ptr(certstack) || !TEST_ptr(msgbio))
+        goto end;
+
+    if (!TEST_int_gt(sk_X509_push(certstack, cert), 0))
+        goto end;
+
+    content = CMS_encrypt(certstack, msgbio, cipher, 0);
+    if (!TEST_ptr(content))
+        goto end;
+
+    for (int i = 0; i < 1000; ++i) {
+        outmsgbio = BIO_new(BIO_s_mem());
+        if (!TEST_false(CMS_decrypt(content, privkey2, cert, NULL, outmsgbio,
+                            0)
+                == 1)) {
+            BIO_free(outmsgbio);
+            goto end;
+        }
+        BIO_free(outmsgbio);
+    }
+
+    ERR_clear_error();
+
+    testresult = 1;
+end:
+    BIO_free(contentbio);
+    sk_X509_free(certstack);
+    BIO_free(msgbio);
+    CMS_ContentInfo_free(content);
+
+    return testresult;
 }
 
 static int test_CMS_add1_cert(void)
@@ -739,12 +785,46 @@ end:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer\n")
+static int load_certificate(const char *certin, X509 **certout)
+{
+    BIO *certbio = BIO_new_file(certin, "r");
+    if (!TEST_ptr(certbio))
+        return 0;
+    if (!TEST_true(PEM_read_bio_X509(certbio, certout, NULL, NULL))) {
+        BIO_free(certbio);
+        return 0;
+    }
+    BIO_free(certbio);
+
+    return 1;
+}
+
+static int load_private_key(const char *privkeyin, EVP_PKEY **privkeyout)
+{
+    BIO *privkeybio = BIO_new_file(privkeyin, "r");
+    if (!TEST_ptr(privkeybio)) {
+        X509_free(cert);
+        cert = NULL;
+        return 0;
+    }
+    if (!TEST_true(PEM_read_bio_PrivateKey(privkeybio, privkeyout, NULL, NULL))) {
+        BIO_free(privkeybio);
+        X509_free(cert);
+        cert = NULL;
+        return 0;
+    }
+    BIO_free(privkeybio);
+
+    return 1;
+}
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer"
+                       " certfile2 privkeyfile2\n")
 
 int setup_tests(void)
 {
     char *certin = NULL, *privkeyin = NULL;
-    BIO *certbio = NULL, *privkeybio = NULL;
+    char *certin2 = NULL, *privkeyin2 = NULL;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
@@ -755,31 +835,23 @@ int setup_tests(void)
         || !TEST_ptr(privkeyin = test_get_argument(1))
         || !TEST_ptr(derin = test_get_argument(2))
         || !TEST_ptr(too_long_iv_cms_in = test_get_argument(3))
-        || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4)))
+        || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4))
+        || !TEST_ptr(certin2 = test_get_argument(5))
+        || !TEST_ptr(privkeyin2 = test_get_argument(6)))
         return 0;
 
-    certbio = BIO_new_file(certin, "r");
-    if (!TEST_ptr(certbio))
-        return 0;
-    if (!TEST_true(PEM_read_bio_X509(certbio, &cert, NULL, NULL))) {
-        BIO_free(certbio);
+    if (!load_certificate(certin, &cert)) {
         return 0;
     }
-    BIO_free(certbio);
-
-    privkeybio = BIO_new_file(privkeyin, "r");
-    if (!TEST_ptr(privkeybio)) {
-        X509_free(cert);
-        cert = NULL;
+    if (!load_private_key(privkeyin, &privkey)) {
         return 0;
     }
-    if (!TEST_true(PEM_read_bio_PrivateKey(privkeybio, &privkey, NULL, NULL))) {
-        BIO_free(privkeybio);
-        X509_free(cert);
-        cert = NULL;
+    if (!load_certificate(certin2, &cert2)) {
         return 0;
     }
-    BIO_free(privkeybio);
+    if (!load_private_key(privkeyin2, &privkey2)) {
+        return 0;
+    }
 
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
@@ -788,6 +860,7 @@ int setup_tests(void)
     ADD_TEST(test_non_aead_on_auth_envelope_enc);
     ADD_TEST(test_non_aead_on_auth_envelope_dec);
     ADD_TEST(test_short_mac_on_auth_envelope_data);
+    ADD_TEST(test_decrypt_with_wrong_key);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
@@ -803,4 +876,6 @@ void cleanup_tests(void)
 {
     X509_free(cert);
     EVP_PKEY_free(privkey);
+    X509_free(cert2);
+    EVP_PKEY_free(privkey2);
 }

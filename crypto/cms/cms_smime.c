@@ -760,6 +760,7 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
         ec->keylen = 0;
+        ec->harderr = 0;
     }
 
     if (ris != NULL && ec != NULL)
@@ -887,6 +888,7 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
         ec->keylen = 0;
+        ec->harderr = 0;
     }
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
