@@ -747,7 +747,13 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
             break;
         }
-        os = p7->d.sign->contents->d.data;
+
+        if (!PKCS7_type_is_data(p7->d.sign->contents)) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+            break;
+        }
+
+        os = PKCS7_get_octet_string(p7->d.sign->contents);
         break;
 
     default:
