@@ -668,6 +668,8 @@ static int server_verify_retry_cb(X509_STORE_CTX *ctx, void *arg)
     int idx = SSL_get_ex_data_X509_STORE_CTX_idx();
     SSL *ssl;
 
+    (void)arg;
+
     if (idx < 0 || (ssl = X509_STORE_CTX_get_ex_data(ctx, idx)) == NULL)
         return 0;
 
