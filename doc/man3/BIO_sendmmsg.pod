@@ -132,6 +132,11 @@ always process at most one message at a time, for example when OS-level
 functionality to transmit or receive multiple messages at a time is not
 available.
 
+The thread-safety guarantee stated above does not extend to all BIO types.
+The buffering BIO returned by L<BIO_f_buffer(3)> is one example: its
+BIO_sendmmsg() implementation is not thread-safe and its semantics differ
+significantly from those described here; see L<BIO_f_buffer(3)> for details.
+
 =head1 RETURN VALUES
 
 On success, the functions BIO_sendmmsg() and BIO_recvmmsg() return 1 and write
@@ -219,7 +224,7 @@ These functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2000-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2000-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -398,6 +398,10 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         }
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
         BIO_copy_next_retry(b);
+#ifndef OPENSSL_NO_SOCK
+        BIO_ADDR_free(ctx->peer);
+        ctx->peer = NULL;
+#endif
         break;
     case BIO_CTRL_DUP:
         dbio = (BIO *)ptr;
@@ -535,7 +539,7 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
 {
 #ifndef OPENSSL_NO_SOCK
     BIO_F_BUFFER_CTX *ctx;
-    int ret;
+    size_t i;
 
     *msgs_processed = 0;
 
@@ -543,35 +547,46 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         return 0;
 
     ctx = (BIO_F_BUFFER_CTX *)b->ptr;
-    if (ctx == NULL || msg == NULL || msg->peer == NULL)
+    if (ctx == NULL || msg == NULL)
         return 0;
 
     /*
-     * Record the peer address so the flush path knows where to send the
-     * accumulated data. There is one buffer BIO per SSL connection, so the
-     * peer is constant for this BIO's lifetime.
+     * Record the peer address on the first write so the flush path knows
+     * where to send the accumulated data. The address is cleared after each
+     * flush so it can be set again for the next batch.
      */
     if (ctx->peer == NULL) {
+        if (msg->peer == NULL)
+            return 0;
         ctx->peer = BIO_ADDR_new();
         if (ctx->peer == NULL)
             return 0;
+        if (!BIO_ADDR_copy(ctx->peer, msg->peer)) {
+            BIO_ADDR_free(ctx->peer);
+            ctx->peer = NULL;
+            return 0;
+        }
     }
-    if (!BIO_ADDR_copy(ctx->peer, msg->peer))
-        return 0;
 
-    /*
-     * Buffer the message data. buffer_write() takes an int length, so guard
-     * against an oversized datagram (this mirrors buffer_puts()).
-     */
-    if (msg->data_len > INT_MAX)
-        return 0;
+    for (i = 0; i < num_msg; i++) {
+        BIO_MSG *m = (BIO_MSG *)((char *)msg + i * stride);
+        int ret;
 
-    ret = buffer_write(b, msg->data, (int)msg->data_len);
-    if (ret <= 0)
-        return 0;
+        /*
+         * Buffer the message data. buffer_write() takes an int length, so
+         * guard against an oversized datagram (this mirrors buffer_puts()).
+         */
+        if (m->data_len > INT_MAX)
+            break;
 
-    *msgs_processed = 1;
-    return 1;
+        ret = buffer_write(b, m->data, (int)m->data_len);
+        if (ret <= 0)
+            break;
+
+        ++(*msgs_processed);
+    }
+
+    return (*msgs_processed > 0) ? 1 : 0;
 #else
     *msgs_processed = 0;
     return 0;
