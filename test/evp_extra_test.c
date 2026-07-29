@@ -6993,6 +6993,102 @@ err:
     return testresult;
 }
 
+static const char *const aes_cbc_decrypt_ciphers[] = {
+    "AES-128-CBC", "AES-192-CBC", "AES-256-CBC"
+};
+
+/*
+ * Lengths (in bytes, all block-aligned) chosen so that the block count modulo
+ * the 16-block main loop hits every tail path in the bulk CBC decrypt routine:
+ * exact multiple of 16 blocks, the 1/2/3-block lookahead variants, and the
+ * 8-block, 4-block and 1-3 block remainder paths.
+ */
+static const int aes_cbc_decrypt_lengths[] = {
+    256, /* 16 blocks: main loop once, no lookahead                */
+    272, /* 17 blocks: lookahead rem==1, 1-block tail             */
+    288, /* 18 blocks: lookahead rem==2, 2-block tail             */
+    304, /* 19 blocks: lookahead rem==3, 3-block tail             */
+    320, /* 20 blocks: 4-block path                               */
+    384, /* 24 blocks: 8-block path                               */
+    448, /* 28 blocks: 8-block + nested lookahead + 4-block       */
+    496, /* 31 blocks: 8 + 4 + 3-block tail                       */
+    512 /* 32 blocks: main loop twice                            */
+};
+
+#define AES_CBC_DECRYPT_MAXLEN 512
+
+/*
+ * For each length, decrypt the ciphertext in a single call (the >= 256 byte
+ * length exercises the bulk/VAES CBC decrypt path) and again one block at a
+ * time (keeping every call below the bulk threshold, i.e. an independent
+ * reference decrypt).  The bulk output must match both the original plaintext
+ * and the reference, for AES-128/192/256 and across all length branches.
+ */
+static int test_aes_cbc_decrypt(int idx)
+{
+    const char *ciphername = aes_cbc_decrypt_ciphers[idx];
+    unsigned char key[32], iv[16], pt[AES_CBC_DECRYPT_MAXLEN];
+    unsigned char ct[AES_CBC_DECRYPT_MAXLEN];
+    unsigned char bulk_out[AES_CBC_DECRYPT_MAXLEN];
+    unsigned char ref_out[AES_CBC_DECRYPT_MAXLEN];
+    int testresult = 0, i, outl, tmpl, off;
+    size_t li;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+
+    for (i = 0; i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(i + 1);
+    for (i = 0; i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xf0 ^ i);
+    for (i = 0; i < AES_CBC_DECRYPT_MAXLEN; i++)
+        pt[i] = (unsigned char)(i * 7 + 3);
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, ciphername, testpropq))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    for (li = 0; li < OSSL_NELEM(aes_cbc_decrypt_lengths); li++) {
+        int buflen = aes_cbc_decrypt_lengths[li];
+
+        /* Reference encrypt (block-aligned input, padding disabled). */
+        if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
+            || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
+            || !TEST_true(EVP_EncryptUpdate(ctx, ct, &outl, pt, buflen))
+            || !TEST_int_eq(outl, buflen))
+            goto err;
+
+        /* One-shot decrypt: exercises the bulk path for this length. */
+        if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv))
+            || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
+            || !TEST_true(EVP_DecryptUpdate(ctx, bulk_out, &outl, ct, buflen))
+            || !TEST_int_eq(outl, buflen))
+            goto err;
+
+        /* Reference decrypt: one block per call bypasses the bulk path. */
+        if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv))
+            || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0)))
+            goto err;
+        for (off = 0; off < buflen; off += 16) {
+            if (!TEST_true(EVP_DecryptUpdate(ctx, ref_out + off, &tmpl,
+                    ct + off, 16))
+                || !TEST_int_eq(tmpl, 16))
+                goto err;
+        }
+
+        if (!TEST_mem_eq(bulk_out, buflen, pt, buflen)
+            || !TEST_mem_eq(bulk_out, buflen, ref_out, buflen)) {
+            TEST_info("%s failed at length %d", ciphername, buflen);
+            goto err;
+        }
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return testresult;
+}
+
 typedef struct {
     const char *cipher;
     int enc;
@@ -9362,6 +9458,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
+    ADD_ALL_TESTS(test_aes_cbc_decrypt, OSSL_NELEM(aes_cbc_decrypt_ciphers));
     ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
