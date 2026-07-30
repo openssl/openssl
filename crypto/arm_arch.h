@@ -106,6 +106,7 @@ extern unsigned int OPENSSL_armv8_rsa_neonized;
 #define HISI_CPU_PART_KP920 0xD01
 #define ARM_CPU_PART_V2 0xD4F
 #define ARM_CPU_PART_N3 0xD8E
+#define ARM_CPU_PART_V3_AE 0xD83
 #define ARM_CPU_PART_V3 0xD84
 
 #define APPLE_CPU_PART_M1_ICESTORM 0x022
