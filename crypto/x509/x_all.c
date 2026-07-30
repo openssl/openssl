@@ -229,11 +229,15 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
         pkey, md, x->libctx, x->propq);
     if (ret > 0) {
+        int ok;
+
         ERR_set_mark();
         x509_reset_ext_cache(x);
-        (void)ossl_x509v3_cache_extensions(x);
+        ok = ossl_x509v3_cache_extensions(x);
         ERR_pop_to_mark();
-        x->ex_flags |= EXFLAG_SET; /* finalize: the freshly signed cert */
+        if (!ok) /* the cache could not be published; report failure */
+            return 0;
+        x->ex_flags |= EXFLAG_SET; /* finalize the freshly signed cert */
     }
     return ret;
 }
@@ -257,11 +261,15 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
     if (ret > 0) {
+        int ok;
+
         ERR_set_mark();
         x509_reset_ext_cache(x);
-        (void)ossl_x509v3_cache_extensions(x);
+        ok = ossl_x509v3_cache_extensions(x);
         ERR_pop_to_mark();
-        x->ex_flags |= EXFLAG_SET; /* finalize: the freshly signed cert */
+        if (!ok) /* the cache could not be published; report failure */
+            return 0;
+        x->ex_flags |= EXFLAG_SET; /* finalize the freshly signed cert */
     }
     return ret;
 }

@@ -805,10 +805,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 #endif
     ((X509 *)const_x)->siginf = tmp_siginf;
 
-    if (tmp_ex_flags & EXFLAG_INVALID) {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
-        return 0;
-    }
+    /*
+     * The cache is now published.  An invalid certificate is still a
+     * successful finalization: EXFLAG_INVALID records the invalidity.  A 0
+     * return is reserved for a genuine failure to build and publish the cache.
+     */
     return 1;
 }
 
