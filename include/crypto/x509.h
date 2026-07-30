@@ -322,6 +322,24 @@ int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
 int ossl_x509v3_cache_extensions(const X509 *x);
+/**
+ * @brief Discard the cached v3 extension data so a rebuild recomputes it.
+ *
+ * Clears EXFLAG_SET and the cached scalar fields so the next
+ * ossl_x509v3_cache_extensions() call rebuilds every certificate-derived
+ * object (including the policy cache) and recomputes siginf and the SHA-1
+ * fingerprint.  Caller-supplied state is left untouched: the ex_proxy_user
+ * assertion, and ex_pcpathlen (carried forward if user-set, otherwise
+ * re-derived from an extension).
+ *
+ * @param x the certificate whose cached extension data is discarded
+ *
+ * @warning Use only on a certificate the caller exclusively owns, before any
+ * get0 accessor such as X509_get0_subject_key_id() could have returned an
+ * internal pointer: the rebuild frees and reallocates the cached objects,
+ * invalidating any such pointer.
+ */
+void ossl_x509_reset_ext_cache(X509 *x);
 /* True if the certificate is a proxy cert, whether derived or caller-asserted. */
 int ossl_x509_is_proxy(const X509 *x);
 int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
