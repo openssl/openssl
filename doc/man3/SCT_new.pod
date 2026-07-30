@@ -90,7 +90,9 @@ it using:
 
 SCT_set_version() to set the SCT version.
 
-Only SCT_VERSION_V1 is currently supported.
+Only B<SCT_VERSION_V1> is currently supported.
+If an incompatible LogID has already been set (see B<SCT_set0_log_id>
+below), the call fails and leaves the SCT version unchanged.
 
 =item *
 
@@ -104,6 +106,8 @@ B<CT_LOG_ENTRY_TYPE_PRECERT> for a pre-certificate.
 SCT_set0_log_id() or SCT_set1_log_id() to set the LogID of the CT log that the SCT came from.
 
 The former takes ownership, whereas the latter makes a copy.
+If B<log_id> is not NULL, B<log_id_len> must be B<CT_V1_HASHLEN> (32) bytes.
+Passing NULL clears the LogID and B<log_id_len> is ignored.
 See RFC 6962, Section 3.2 for the definition of LogID.
 
 =item *
@@ -190,12 +194,15 @@ SCT_set_source() will not refuse unknown values.
 =head1 RETURN VALUES
 
 SCT_set_version() returns 1 if the specified version is supported, 0 otherwise.
+It also returns 0 if the current LogID is incompatible with the requested
+version, leaving the version unchanged.
 
 SCT_set_log_entry_type() returns 1 if the specified log entry type is supported, 0 otherwise.
 
-SCT_set0_log_id() and B<SCT_set1_log_id> return 1 if the specified LogID is a
-valid SHA-256 hash, 0 otherwise. Additionally, B<SCT_set1_log_id> returns 0 if
-malloc fails.
+B<SCT_set0_log_id> and B<SCT_set1_log_id> return 1 on success and 0 on
+failure.  If B<log_id> is not NULL, B<log_id_len> must be B<CT_V1_HASHLEN>.
+Passing NULL clears the LogID and B<log_id_len> is ignored.  Additionally,
+B<SCT_set1_log_id> returns 0 if malloc fails.
 
 B<SCT_set_signature_nid> returns 1 if the specified NID is supported, 0 otherwise.
 
@@ -216,7 +223,7 @@ These functions were added in OpenSSL 1.1.0.
 
 =head1 COPYRIGHT
 
-Copyright 2016-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

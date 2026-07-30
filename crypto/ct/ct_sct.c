@@ -1,5 +1,5 @@
 /*
- * Copyright 2016-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2016-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -54,6 +54,12 @@ int SCT_set_version(SCT *sct, sct_version_t version)
         ERR_raise(ERR_LIB_CT, CT_R_UNSUPPORTED_VERSION);
         return 0;
     }
+    if ((sct->log_id == NULL && sct->log_id_len != 0)
+        || (sct->log_id != NULL
+            && sct->log_id_len != CT_V1_HASHLEN)) {
+        ERR_raise(ERR_LIB_CT, CT_R_INVALID_LOG_ID_LENGTH);
+        return 0;
+    }
     sct->version = version;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     return 1;
@@ -77,21 +83,21 @@ int SCT_set_log_entry_type(SCT *sct, ct_log_entry_type_t entry_type)
 
 int SCT_set0_log_id(SCT *sct, unsigned char *log_id, size_t log_id_len)
 {
-    if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
+    if (log_id != NULL && log_id_len != CT_V1_HASHLEN) {
         ERR_raise(ERR_LIB_CT, CT_R_INVALID_LOG_ID_LENGTH);
         return 0;
     }
 
     OPENSSL_free(sct->log_id);
     sct->log_id = log_id;
-    sct->log_id_len = log_id_len;
+    sct->log_id_len = (log_id != NULL) ? log_id_len : 0;
     sct->validation_status = SCT_VALIDATION_STATUS_NOT_SET;
     return 1;
 }
 
 int SCT_set1_log_id(SCT *sct, const unsigned char *log_id, size_t log_id_len)
 {
-    if (sct->version == SCT_VERSION_V1 && log_id_len != CT_V1_HASHLEN) {
+    if (log_id != NULL && log_id_len != CT_V1_HASHLEN) {
         ERR_raise(ERR_LIB_CT, CT_R_INVALID_LOG_ID_LENGTH);
         return 0;
     }
@@ -239,7 +245,16 @@ int SCT_is_complete(const SCT *sct)
     case SCT_VERSION_NOT_SET:
         return 0;
     case SCT_VERSION_V1:
-        return sct->log_id != NULL && SCT_signature_is_complete(sct);
+        /*
+         * i2o_SCT() copies a fixed CT_V1_HASHLEN bytes from sct->log_id, so a
+         * v1 SCT is only complete when the LogID is present and exactly
+         * CT_V1_HASHLEN bytes long.  This protects the serializer sink against
+         * future construction paths or partial mutation even if the setters
+         * and SCT_set_version() guards are bypassed.
+         */
+        return sct->log_id != NULL
+            && sct->log_id_len == CT_V1_HASHLEN
+            && SCT_signature_is_complete(sct);
     default:
         return sct->sct != NULL; /* Just need cached encoding */
     }
