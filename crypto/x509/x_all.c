@@ -188,14 +188,20 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
     return 0;
 }
 
-/* Discard the cached v3 extension data so re-signing rebuilds it. */
+/*
+ * Discard the cached v3 extension data so re-signing rebuilds it.  Clearing
+ * EXFLAG_SET makes ossl_x509v3_cache_extensions() run again, which frees and
+ * rebuilds every certificate-derived object (including the policy cache) and
+ * recomputes siginf and the SHA-1 fingerprint.  Caller-supplied state is left
+ * untouched: the ex_proxy_user assertion, and ex_pcpathlen (the rebuild
+ * carries a user-set value forward and re-derives an extension-supplied one).
+ */
 static void x509_reset_ext_cache(X509 *x)
 {
     x->ex_cached = 0;
     x->ex_flags = 0;
     x->ex_kusage = 0;
     x->ex_nscert = 0;
-    x->ex_pcpathlen = -1;
 }
 
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)

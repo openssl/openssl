@@ -19,11 +19,11 @@
  * POLICY_MAPPINGS structure
  */
 
-int ossl_policy_cache_set_mapping(X509 *x, POLICY_MAPPINGS *maps)
+int ossl_policy_cache_set_mapping(X509_POLICY_CACHE *cache,
+    POLICY_MAPPINGS *maps)
 {
     POLICY_MAPPING *map;
     X509_POLICY_DATA *data;
-    X509_POLICY_CACHE *cache = x->policy_cache;
     int i;
     int ret = 0;
     if (sk_POLICY_MAPPING_num(maps) == 0) {
