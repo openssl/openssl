@@ -132,10 +132,12 @@ always process at most one message at a time, for example when OS-level
 functionality to transmit or receive multiple messages at a time is not
 available.
 
-The thread-safety guarantee stated above does not extend to all BIO types.
-The buffering BIO returned by L<BIO_f_buffer(3)> is one example: its
-BIO_sendmmsg() implementation is not thread-safe and its semantics differ
-significantly from those described here; see L<BIO_f_buffer(3)> for details.
+The thread-safety guarantee stated above is the default for all BIO types
+that support BIO_sendmmsg() unless stated otherwise in the documentation
+for the BIO. The buffering BIO returned by L<BIO_f_buffer(3)> is one example
+where this guarantee does not apply: its BIO_sendmmsg() implementation is
+not thread-safe and its semantics differ significantly from those described here;
+see L<BIO_f_buffer(3)> for details.
 
 =head1 RETURN VALUES
 

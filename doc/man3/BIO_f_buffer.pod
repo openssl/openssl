@@ -92,13 +92,6 @@ first message of the first call after a flush. It remains fixed for the entire
 flush cycle and is cleared automatically after each successful flush so that
 subsequent calls may supply a new peer address.
 
-B<Intended use.> This behaviour is specific to DTLS 1.3 SSL listener
-connections, where multiple SSL objects share a single underlying network BIO
-and must therefore transmit datagrams with an explicit destination address.
-Coalescing the outgoing records reduces the number of datagrams on the wire and
-ensures that all records belonging to a single flight are packed into one
-datagram where possible.
-
 B<Thread safety.> The general BIO_sendmmsg() documentation states that
 concurrent readers and writers on the same BIO are permitted. That guarantee
 does B<not> apply to the buffering BIO implementation. BIO_sendmmsg() on a

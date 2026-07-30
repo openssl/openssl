@@ -453,9 +453,7 @@ static int state_machine(SSL_CONNECTION *s, int server)
 
         /*
          * Ok, we now need to push on a buffering BIO ...but not with
-         * SCTP. For DTLSv1.3 we also skip this for post-handshake messages
-         * (e.g. NewSessionTicket, KeyUpdate) since we are not in the initial
-         * handshake and re-initialising the write buffer is not appropriate.
+         * SCTP
          */
 #ifndef OPENSSL_NO_SCTP
         if (!SSL_CONNECTION_IS_DTLS(s) || !BIO_dgram_is_sctp(SSL_get_wbio(ssl)))
