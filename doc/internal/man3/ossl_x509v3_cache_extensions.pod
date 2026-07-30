@@ -16,21 +16,23 @@ ossl_x509v3_cache_extensions
 This function processes any X509v3 extensions present in an X509 object I<x>
 and caches the result of that processing as well as further derived info,
 for instance whether the certificate is self-issued or has version X.509v1.
-It computes the SHA1 digest of the certificate using the default library context
-and property query string and stores the result in x->sha1_hash,
+It computes the SHA1 digest of the certificate using the certificate's library
+context and property query string and stores the result in x->sha1_hash,
 or on failure sets B<EXFLAG_NO_FINGERPRINT> in x->flags.
 It sets B<X509_SIG_INFO_VALID> in x->flags if x->siginf was filled successfully,
 which may not be possible if a referenced algorithm is unknown or not available.
-This function is called when a certificate is finalized, that is after it is
-parsed with a B<d2i_X509> function or signed, to populate the cache. It is
-idempotent: once the cache has been populated it returns the cached validity
-without reprocessing. See L<x509(7)> for the caching contract.
+This function builds the cache and rebuilds it on every call; it does not
+finalize the certificate. Certificates are finalized by the B<d2i_X509> parsing
+functions and by L<X509_sign(3)> and X509_sign_ctx(). This function must not be
+called on an already-finalized certificate; doing so is a programming error that
+returns 0. See L<x509(7)> for the caching contract.
 
 =head1 RETURN VALUES
 
-This function returns 0 if the extensions or other portions of the certificate
-are invalid or an error occurred.
-Otherwise it returns 1.
+This function returns 1 if the cache was built, including for a certificate whose
+extensions are invalid, in which case B<EXFLAG_INVALID> is set in x->flags.
+It returns 0 if the cache could not be built, for example on an allocation
+failure or if I<x> is already finalized.
 
 =head1 COPYRIGHT
 
