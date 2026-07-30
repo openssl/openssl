@@ -158,6 +158,10 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (x != NULL) {
+        int changed = x->libctx != libctx
+            || (x->propq == NULL) != (propq == NULL)
+            || (propq != NULL && strcmp(x->propq, propq) != 0);
+
         x->libctx = libctx;
         OPENSSL_free(x->propq);
         x->propq = NULL;
@@ -165,6 +169,24 @@ int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
             x->propq = OPENSSL_strdup(propq);
             if (x->propq == NULL)
                 return 0;
+        }
+
+        /*
+         * The SHA-1 fingerprint and siginf are computed under libctx/propq, so
+         * a certificate already finalized under a different context (typically
+         * one embedded in a CMS or PKCS7 container and finalized during decode)
+         * must be rebuilt under the new one.
+         */
+        if (changed && (x->ex_flags & EXFLAG_SET) != 0) {
+            int ok;
+
+            ERR_set_mark();
+            ossl_x509_reset_ext_cache(x);
+            ok = ossl_x509v3_cache_extensions(x);
+            ERR_pop_to_mark();
+            if (!ok)
+                return 0;
+            x->ex_flags |= EXFLAG_SET;
         }
     }
     return 1;
