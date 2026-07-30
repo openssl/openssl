@@ -56,15 +56,22 @@ This cached information is populated when a certificate becomes I<finalized>:
 when it is parsed from its ASN.1 encoding with a B<d2i_X509> function, or
 signed with L<X509_sign(3)> or X509_sign_ctx(). It reflects the certificate as
 it was at that point. The extension accessors and the certificate verification
-functions rely on this cached information and are therefore meaningful only for
-a finalized certificate.
+functions rely on this cached information and require a finalized certificate.
+Calling an accessor on a certificate that has not been finalized is a
+programming error: it returns the accessor's failure value (such as B<NULL>, 0,
+or -1) and raises an error, rather than reporting information from an unfinalized
+certificate.
 
 Modifying a certificate after it has been finalized, for example by adding or
 removing an extension with L<X509_add_ext(3)>, does not update the cached
 information, which then no longer reflects the certificate's contents. Such a
 certificate must be encoded and parsed again, or signed again, before its
-cached information is valid. Retrieving cached information from a certificate
-that has been modified since it was finalized has undefined results.
+cached information is valid. Re-finalizing in this way frees and rebuilds the
+internal cache, so any pointer that a B<get0> accessor such as
+L<X509_get0_subject_key_id(3)> returned from the earlier finalization becomes
+invalid; only re-finalize a previously finalized certificate when you can be
+certain no such pointer is still in use. Retrieving cached information from a
+certificate that has been modified since it was finalized has undefined results.
 
 =head1 SEE ALSO
 
@@ -80,6 +87,16 @@ L<d2i_X509_CRL(3)>,
 L<d2i_X509_NAME(3)>,
 L<d2i_X509_REQ(3)>,
 L<d2i_X509_SIG(3)>,
+L<X509_check_ca(3)>,
+L<X509_check_purpose(3)>,
+L<X509_get0_authority_issuer(3)>,
+L<X509_get0_authority_key_id(3)>,
+L<X509_get0_authority_serial(3)>,
+L<X509_get0_subject_key_id(3)>,
+L<X509_get_extended_key_usage(3)>,
+L<X509_get_key_usage(3)>,
+L<X509_get_pathlen(3)>,
+L<X509_get_proxy_pathlen(3)>,
 L<crypto(7)>
 
 =head1 COPYRIGHT
