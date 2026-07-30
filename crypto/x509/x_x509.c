@@ -80,18 +80,24 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             return 0;
         break;
 
-    case ASN1_OP_D2I_POST:
+    case ASN1_OP_D2I_POST: {
+        int ok;
+
         /*
          * Cache the v3 extensions of the freshly decoded certificate. Invalid
          * extensions set EXFLAG_INVALID but do not fail the parse; the mark
          * keeps a successful parse from leaving errors on the queue, which
-         * verification re-raises as needed.
+         * verification re-raises as needed.  A failure to publish the cache,
+         * for example an allocation failure, does fail the parse.
          */
         ERR_set_mark();
-        (void)ossl_x509v3_cache_extensions(ret);
+        ok = ossl_x509v3_cache_extensions(ret);
         ERR_pop_to_mark();
+        if (!ok)
+            return 0;
         ret->ex_flags |= EXFLAG_SET; /* finalize: the parsed cert is immutable */
         break;
+    }
 
     case ASN1_OP_FREE_POST:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
