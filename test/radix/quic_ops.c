@@ -1309,6 +1309,7 @@ struct radix_fault_st {
     OSSL_QTX_IOVEC io;
     size_t buf_alloc;
     radix_fault_plain_cb cb;
+    QUIC_CHANNEL *ch;
     uint64_t word0, word1;
 };
 
@@ -1444,6 +1445,7 @@ DEF_FUNC(hf_set_inject_plain)
     OPENSSL_free((unsigned char *)radix_fault.io.buf);
     memset(&radix_fault, 0, sizeof(radix_fault));
     radix_fault.cb = radix_fault_ptr_to_plain_cb(cbptr);
+    radix_fault.ch = ch;
 
     if (!TEST_true(ossl_quic_channel_set_mutator(ch, radix_fault_mutate,
             radix_fault_finish, &radix_fault)))
