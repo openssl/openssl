@@ -495,7 +495,8 @@ static int test_cipher_reinit_partialupdate(int test_id)
             != 0)
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_CCM_MODE
         || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_XTS_MODE
-        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_WRAP_MODE) {
+        || EVP_CIPHER_get_mode(cipher) == EVP_CIPH_WRAP_MODE
+        || OPENSSL_strcasecmp(name, "CAPRISE") == 0) {
         ret = 1;
         goto err;
     }

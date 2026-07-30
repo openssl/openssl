@@ -19,6 +19,7 @@
 #include <openssl/params.h>
 
 #include "internal/nelem.h"
+#include "internal/endian.h"
 #include "testutil.h"
 
 /* Test constants */
@@ -26,22 +27,49 @@
 #define CAPRISE_TEST_VECTORS 3
 #define CAPRISE_KEY_LEN 32
 #define CAPRISE_IV_LEN 16
+#define CAPRISE_NONCE_LEN 16
+/* Ciphertext for one vector: nonce + dim*sizeof(double) */
+#define CAPRISE_CT_RECORD_LEN (CAPRISE_NONCE_LEN + sizeof(double) * CAPRISE_TEST_DIM)
 
-/* Helper function to convert byte array to double vector */
+/* Helper function to convert byte array (LE doubles) to double vector */
 static void bytes_to_vector(const unsigned char *bytes, double *vector, size_t dim)
 {
+    DECLARE_IS_ENDIAN;
     size_t i;
-    for (i = 0; i < dim; i++) {
-        memcpy(&vector[i], bytes + i * sizeof(double), sizeof(double));
+
+    if (IS_LITTLE_ENDIAN) {
+        for (i = 0; i < dim; i++)
+            memcpy(&vector[i], bytes + i * sizeof(double), sizeof(double));
+    } else {
+        for (i = 0; i < dim; i++) {
+            unsigned char tmp[8];
+            int j;
+
+            for (j = 0; j < 8; j++)
+                tmp[j] = bytes[i * sizeof(double) + 7 - j];
+            memcpy(&vector[i], tmp, sizeof(double));
+        }
     }
 }
 
-/* Helper function to convert double vector to byte array */
+/* Helper function to convert double vector to byte array (LE doubles) */
 static void vector_to_bytes(const double *vector, unsigned char *bytes, size_t dim)
 {
+    DECLARE_IS_ENDIAN;
     size_t i;
-    for (i = 0; i < dim; i++) {
-        memcpy(bytes + i * sizeof(double), &vector[i], sizeof(double));
+
+    if (IS_LITTLE_ENDIAN) {
+        for (i = 0; i < dim; i++)
+            memcpy(bytes + i * sizeof(double), &vector[i], sizeof(double));
+    } else {
+        for (i = 0; i < dim; i++) {
+            unsigned char tmp[8];
+            int j;
+
+            memcpy(tmp, &vector[i], sizeof(double));
+            for (j = 0; j < 8; j++)
+                bytes[i * sizeof(double) + j] = tmp[7 - j];
+        }
     }
 }
 
@@ -78,7 +106,7 @@ static int test_caprise_basic(void)
     unsigned char key[CAPRISE_KEY_LEN];
     unsigned char iv[CAPRISE_IV_LEN];
     unsigned char plaintext[sizeof(double) * CAPRISE_TEST_DIM];
-    unsigned char ciphertext[sizeof(double) * CAPRISE_TEST_DIM];
+    unsigned char ciphertext[CAPRISE_CT_RECORD_LEN];
     unsigned char decrypted[sizeof(double) * CAPRISE_TEST_DIM];
     int outlen, tmplen;
     int ret = 0;
@@ -127,8 +155,8 @@ static int test_caprise_basic(void)
         goto err;
     outlen += tmplen;
 
-    /* Verify ciphertext length */
-    if (!TEST_int_eq(outlen, sizeof(plaintext)))
+    /* Verify ciphertext length: nonce + vector bytes */
+    if (!TEST_int_eq(outlen, (int)CAPRISE_CT_RECORD_LEN))
         goto err;
 
     /* Create decryption context */
@@ -154,7 +182,7 @@ static int test_caprise_basic(void)
     outlen = 0;
     tmplen = 0;
     if (!TEST_true(EVP_CipherUpdate(dec_ctx, decrypted, &outlen,
-                                   ciphertext, sizeof(ciphertext))))
+                                   ciphertext, (int)CAPRISE_CT_RECORD_LEN)))
         goto err;
     if (!TEST_true(EVP_CipherFinal(dec_ctx, decrypted + outlen, &tmplen)))
         goto err;
@@ -196,10 +224,10 @@ static int test_caprise_distance_preservation(void)
     unsigned char p3[sizeof(double) * CAPRISE_TEST_DIM];
     unsigned char pq[sizeof(double) * CAPRISE_TEST_DIM];
 
-    unsigned char c1[sizeof(double) * CAPRISE_TEST_DIM];
-    unsigned char c2[sizeof(double) * CAPRISE_TEST_DIM];
-    unsigned char c3[sizeof(double) * CAPRISE_TEST_DIM];
-    unsigned char cq[sizeof(double) * CAPRISE_TEST_DIM];
+    unsigned char c1[CAPRISE_CT_RECORD_LEN];
+    unsigned char c2[CAPRISE_CT_RECORD_LEN];
+    unsigned char c3[CAPRISE_CT_RECORD_LEN];
+    unsigned char cq[CAPRISE_CT_RECORD_LEN];
 
     double ec1[CAPRISE_TEST_DIM];
     double ec2[CAPRISE_TEST_DIM];
@@ -313,9 +341,10 @@ static int test_caprise_distance_preservation(void)
     }
 
     /* Convert ciphertexts back to vectors for distance computation */
-    bytes_to_vector(c1, ec1, CAPRISE_TEST_DIM);
-    bytes_to_vector(c2, ec2, CAPRISE_TEST_DIM);
-    bytes_to_vector(cq, ecq, CAPRISE_TEST_DIM);
+    /* Skip the per-vector nonce prefix (CAPRISE_NONCE_LEN bytes) */
+    bytes_to_vector(c1 + CAPRISE_NONCE_LEN, ec1, CAPRISE_TEST_DIM);
+    bytes_to_vector(c2 + CAPRISE_NONCE_LEN, ec2, CAPRISE_TEST_DIM);
+    bytes_to_vector(cq + CAPRISE_NONCE_LEN, ecq, CAPRISE_TEST_DIM);
 
     /* Compute encrypted distances */
     d_cq_c1 = vector_distance(ecq, ec1, CAPRISE_TEST_DIM);
@@ -379,6 +408,7 @@ static int test_caprise_dimensions(void)
     for (i = 0; i < num_dims; i++) {
         size_t dim = dims[i];
         size_t data_len = dim * sizeof(double);
+        size_t ct_len = CAPRISE_NONCE_LEN + data_len;  /* nonce + encrypted vector */
         unsigned char *plaintext = NULL;
         unsigned char *ciphertext = NULL;
         unsigned char *decrypted = NULL;
@@ -386,15 +416,18 @@ static int test_caprise_dimensions(void)
         size_t j;
 
         plaintext = OPENSSL_malloc(data_len);
-        ciphertext = OPENSSL_malloc(data_len);
+        ciphertext = OPENSSL_malloc(ct_len);
         decrypted = OPENSSL_malloc(data_len);
         if (!TEST_ptr(plaintext) || !TEST_ptr(ciphertext) || !TEST_ptr(decrypted))
             goto cleanup_loop;
 
         /* Create test vector */
-        for (j = 0; j < dim; j++) {
-            double val = (double)(j + 1);
-            memcpy(plaintext + j * sizeof(double), &val, sizeof(double));
+        {
+            double tmp_vec[16]; /* max dim in this test is 16 */
+
+            for (j = 0; j < dim; j++)
+                tmp_vec[j] = (double)(j + 1);
+            vector_to_bytes(tmp_vec, plaintext, dim);
         }
 
         /* Create encryption context */
@@ -423,6 +456,10 @@ static int test_caprise_dimensions(void)
             goto cleanup_loop;
         outlen += tmplen;
 
+        /* Verify ciphertext includes nonce */
+        if (!TEST_int_eq(outlen, (int)ct_len))
+            goto cleanup_loop;
+
         /* Create decryption context */
         dec_ctx = EVP_CIPHER_CTX_new();
         if (!TEST_ptr(dec_ctx))
@@ -439,11 +476,11 @@ static int test_caprise_dimensions(void)
                 goto cleanup_loop;
         }
 
-        /* Decrypt */
+        /* Decrypt - input is ciphertext with nonce prefix */
         outlen = 0;
         tmplen = 0;
         if (!TEST_true(EVP_CipherUpdate(dec_ctx, decrypted, &outlen,
-                                       ciphertext, (int)data_len)))
+                                       ciphertext, (int)ct_len)))
             goto cleanup_loop;
         if (!TEST_true(EVP_CipherFinal(dec_ctx, decrypted + outlen, &tmplen)))
             goto cleanup_loop;
@@ -504,7 +541,7 @@ static int test_caprise_parameters(void)
             double s = s_values[i];
             double beta = beta_values[j];
             unsigned char plaintext[sizeof(double) * CAPRISE_TEST_DIM];
-            unsigned char ciphertext[sizeof(double) * CAPRISE_TEST_DIM];
+            unsigned char ciphertext[CAPRISE_CT_RECORD_LEN];
             unsigned char decrypted[sizeof(double) * CAPRISE_TEST_DIM];
             int outlen, tmplen;
             size_t k;
@@ -514,9 +551,12 @@ static int test_caprise_parameters(void)
                 goto cleanup_params;
 
             /* Create test vector */
-            for (k = 0; k < CAPRISE_TEST_DIM; k++) {
-                double val = (double)(k + 1);
-                memcpy(plaintext + k * sizeof(double), &val, sizeof(double));
+            {
+                double tmp_vec[CAPRISE_TEST_DIM];
+
+                for (k = 0; k < CAPRISE_TEST_DIM; k++)
+                    tmp_vec[k] = (double)(k + 1);
+                vector_to_bytes(tmp_vec, plaintext, CAPRISE_TEST_DIM);
             }
 
             /* Set custom parameters */
@@ -593,11 +633,97 @@ err:
     return ret;
 }
 
+/* Test using EVP_Cipher() single-shot API (exercises OSSL_FUNC_CIPHER_CIPHER) */
+static int test_caprise_evp_cipher(void)
+{
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *enc_ctx = NULL, *dec_ctx = NULL;
+    unsigned char key[CAPRISE_KEY_LEN];
+    unsigned char iv[CAPRISE_IV_LEN];
+    double test_vector[CAPRISE_TEST_DIM] = { 1.0, 2.0, 3.0, 4.0 };
+    unsigned char plaintext[sizeof(double) * CAPRISE_TEST_DIM];
+    unsigned char ciphertext[CAPRISE_CT_RECORD_LEN];
+    unsigned char decrypted[sizeof(double) * CAPRISE_TEST_DIM];
+    int ret = 0;
+
+    /* Generate random key and IV */
+    if (!TEST_int_eq(RAND_bytes(key, sizeof(key)), 1))
+        goto err;
+    if (!TEST_int_eq(RAND_bytes(iv, sizeof(iv)), 1))
+        goto err;
+
+    /* Convert vector to bytes */
+    vector_to_bytes(test_vector, plaintext, CAPRISE_TEST_DIM);
+
+    /* Fetch CAPRISE cipher */
+    cipher = EVP_CIPHER_fetch(NULL, "CAPRISE", NULL);
+    if (!TEST_ptr(cipher))
+        goto err;
+
+    /* Encrypt using EVP_Cipher (single-shot) */
+    enc_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(enc_ctx))
+        goto err;
+    if (!TEST_true(EVP_CipherInit_ex(enc_ctx, cipher, NULL, key, iv, 1)))
+        goto err;
+
+    {
+        size_t dim = CAPRISE_TEST_DIM;
+        OSSL_PARAM params[2];
+        params[0] = OSSL_PARAM_construct_size_t("caprise_dim", &dim);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(enc_ctx, params)))
+            goto err;
+    }
+
+    if (!TEST_int_gt(EVP_Cipher(enc_ctx, ciphertext, plaintext,
+                                sizeof(plaintext)), 0))
+        goto err;
+
+    /* Verify ciphertext differs from plaintext (skip nonce, compare vector part) */
+    if (!TEST_true(memcmp(ciphertext + CAPRISE_NONCE_LEN, plaintext,
+                          sizeof(plaintext)) != 0))
+        goto err;
+
+    /* Decrypt using EVP_Cipher (single-shot) */
+    dec_ctx = EVP_CIPHER_CTX_new();
+    if (!TEST_ptr(dec_ctx))
+        goto err;
+    if (!TEST_true(EVP_CipherInit_ex(dec_ctx, cipher, NULL, key, iv, 0)))
+        goto err;
+
+    {
+        size_t dim = CAPRISE_TEST_DIM;
+        OSSL_PARAM params[2];
+        params[0] = OSSL_PARAM_construct_size_t("caprise_dim", &dim);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!TEST_true(EVP_CIPHER_CTX_set_params(dec_ctx, params)))
+            goto err;
+    }
+
+    if (!TEST_int_gt(EVP_Cipher(dec_ctx, decrypted, ciphertext,
+                                CAPRISE_CT_RECORD_LEN), 0))
+        goto err;
+
+    /* Verify decryption recovered original data */
+    if (!TEST_mem_eq(decrypted, sizeof(decrypted), plaintext, sizeof(plaintext)))
+        goto err;
+
+    ret = 1;
+
+err:
+    EVP_CIPHER_CTX_free(enc_ctx);
+    EVP_CIPHER_CTX_free(dec_ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_caprise_basic);
     ADD_TEST(test_caprise_distance_preservation);
     ADD_TEST(test_caprise_dimensions);
     ADD_TEST(test_caprise_parameters);
+    ADD_TEST(test_caprise_evp_cipher);
     return 1;
 }

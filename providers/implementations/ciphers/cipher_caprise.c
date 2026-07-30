@@ -24,14 +24,27 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
+#include "internal/endian.h"
 #include "providers/implementations/ciphers/cipher_caprise.inc"
 
 #define CAPRISE_MAX_DIM    4096  /* Maximum supported embedding dimension */
 #define CAPRISE_KEY_SIZE   32     /* PRF key size in bytes */
 #define CAPRISE_IV_SIZE    16     /* IV/nonce size */
-#define CAPRISE_BLKSIZE    8      /* Block size for double precision vectors */
+/*
+ * CAPRISE has no fixed block size: the minimum valid input unit is
+ * dim * sizeof(double), where dim is a runtime parameter. Using 1 signals
+ * "stream cipher" to the EVP layer, preventing it from buffering partial
+ * 8-byte chunks and attempting to pass them individually to caprise_update.
+ *
+ * TODO: The proper long-term fix is to add EVP_CIPH_FLAG_CUSTOM_CIPHER to
+ * CAPRISE_FLAGS and remove the UPDATE/FINAL dispatch entries so the EVP
+ * layer routes all calls through OSSL_FUNC_CIPHER_CIPHER exclusively. This
+ * avoids all EVP buffering and outsize estimation issues. It requires callers
+ * to use EVP_Cipher() instead of EVP_CipherUpdate()/EVP_CipherFinal().
+ */
+#define CAPRISE_BLKSIZE    1
 
-#define CAPRISE_FLAGS      (PROV_CIPHER_FLAG_CUSTOM_IV | PROV_CIPHER_FLAG_CTS)
+#define CAPRISE_FLAGS      (PROV_CIPHER_FLAG_CUSTOM_IV)
 
 static OSSL_FUNC_cipher_newctx_fn caprise_newctx;
 static OSSL_FUNC_cipher_freectx_fn caprise_freectx;
@@ -40,18 +53,40 @@ static OSSL_FUNC_cipher_get_params_fn caprise_get_params;
 static OSSL_FUNC_cipher_get_ctx_params_fn caprise_get_ctx_params;
 static OSSL_FUNC_cipher_set_ctx_params_fn caprise_set_ctx_params;
 
-/* Helper function to read double values from byte array */
+/* Helper function to read a double from little-endian byte array */
 static double bytes_to_double(const unsigned char *bytes)
 {
+    DECLARE_IS_ENDIAN;
     double value;
-    memcpy(&value, bytes, sizeof(double));
+
+    if (IS_LITTLE_ENDIAN) {
+        memcpy(&value, bytes, sizeof(double));
+    } else {
+        unsigned char tmp[8];
+        int i;
+
+        for (i = 0; i < 8; i++)
+            tmp[i] = bytes[7 - i];
+        memcpy(&value, tmp, sizeof(double));
+    }
     return value;
 }
 
-/* Helper function to write double values to byte array */
+/* Helper function to write a double to little-endian byte array */
 static void double_to_bytes(double value, unsigned char *bytes)
 {
-    memcpy(bytes, &value, sizeof(double));
+    DECLARE_IS_ENDIAN;
+
+    if (IS_LITTLE_ENDIAN) {
+        memcpy(bytes, &value, sizeof(double));
+    } else {
+        unsigned char tmp[8];
+        int i;
+
+        memcpy(tmp, &value, sizeof(double));
+        for (i = 0; i < 8; i++)
+            bytes[i] = tmp[7 - i];
+    }
 }
 
 /* Helper function to compute vector norm */
@@ -193,6 +228,13 @@ static int generate_noise_vector_prf(OSSL_LIB_CTX *libctx,
 
     /* Generate Gaussian vector n */
     for (i = 0; i < dim; i++) {
+        unsigned char idx[4];
+
+        idx[0] = (unsigned char)(i & 0xFF);
+        idx[1] = (unsigned char)((i >> 8) & 0xFF);
+        idx[2] = (unsigned char)((i >> 16) & 0xFF);
+        idx[3] = (unsigned char)((i >> 24) & 0xFF);
+
         EVP_MAC_CTX_free(mctx);
         mctx = EVP_MAC_CTX_new(mac);
         if (mctx == NULL)
@@ -201,7 +243,7 @@ static int generate_noise_vector_prf(OSSL_LIB_CTX *libctx,
             goto err;
         if (!EVP_MAC_update(mctx, nonce, nonce_len))
             goto err;
-        if (!EVP_MAC_update(mctx, (unsigned char *)&i, sizeof(i)))
+        if (!EVP_MAC_update(mctx, idx, sizeof(idx)))
             goto err;
         hash_len = sizeof(hash);
         if (!EVP_MAC_final(mctx, hash, &hash_len, sizeof(hash)))
@@ -636,6 +678,7 @@ int ossl_caprise_einit(void *vctx, const unsigned char *key, size_t keylen,
             }
             ctx->r_len = CAPRISE_NONCE_LEN;
         }
+        ctx->base.iv_set = 1;
     }
 
     /* Allocate temporary buffer for vector operations */
@@ -677,53 +720,101 @@ static int caprise_cipher(void *vctx, unsigned char *out,
     double *input_vector = NULL;
     double *output_vector = NULL;
     size_t dim;
+    size_t vec_bytes;
+    size_t record_bytes;
     size_t i;
     int ret = 0;
+    unsigned char nonce[CAPRISE_NONCE_LEN];
 
     if (ctx == NULL)
         return 0;
 
     dim = ctx->dim;
+    vec_bytes = dim * sizeof(double);
 
     if (!ctx->base.key_set || !ctx->base.iv_set) {
         ERR_raise(ERR_LIB_PROV, PROV_R_NO_KEY_SET);
         return 0;
     }
 
-    /* Check input length matches one or more complete vectors */
-    if (len == 0 || len % (dim * sizeof(double)) != 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
-        return 0;
-    }
-
-    input_vector = OPENSSL_malloc(dim * sizeof(double));
-    output_vector = OPENSSL_malloc(dim * sizeof(double));
-    if (input_vector == NULL || output_vector == NULL)
-        goto err;
-
-    /* Process each vector in the input buffer */
-    while (len > 0) {
-        for (i = 0; i < dim; i++)
-            input_vector[i] = bytes_to_double(in + i * sizeof(double));
-
-        if (ctx->base.enc) {
-            if (!caprise_encrypt_vector(ctx->base.libctx, input_vector, dim,
-                                        &ctx->key, ctx->mode,
-                                        ctx->r, ctx->r_len, output_vector))
-                goto err;
-        } else {
-            if (!caprise_decrypt_vector(ctx->base.libctx, input_vector, dim,
-                                        &ctx->key, ctx->mode,
-                                        ctx->r, ctx->r_len, output_vector))
-                goto err;
+    if (ctx->base.enc) {
+        /*
+         * Encryption input: one or more raw vectors (each dim * sizeof(double))
+         * Encryption output: for each vector, nonce || encrypted_vector
+         * Per Algorithm 1 (ENC_DB/ENC_Q), each vector gets a fresh random r.
+         */
+        if (len == 0 || len % vec_bytes != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+            return 0;
         }
 
-        for (i = 0; i < dim; i++)
-            double_to_bytes(output_vector[i], out + i * sizeof(double));
+        input_vector = OPENSSL_malloc(dim * sizeof(double));
+        output_vector = OPENSSL_malloc(dim * sizeof(double));
+        if (input_vector == NULL || output_vector == NULL)
+            goto err;
 
-        in += dim * sizeof(double);
-        out += dim * sizeof(double);
-        len -= dim * sizeof(double);
+        while (len > 0) {
+            /* Generate fresh nonce r for this vector */
+            if (RAND_bytes_ex(ctx->base.libctx, nonce,
+                              CAPRISE_NONCE_LEN, 0) != 1)
+                goto err;
+
+            for (i = 0; i < dim; i++)
+                input_vector[i] = bytes_to_double(in + i * sizeof(double));
+
+            if (!caprise_encrypt_vector(ctx->base.libctx, input_vector, dim,
+                                        &ctx->key, ctx->mode,
+                                        nonce, CAPRISE_NONCE_LEN,
+                                        output_vector))
+                goto err;
+
+            /* Output format: nonce || encrypted_vector */
+            memcpy(out, nonce, CAPRISE_NONCE_LEN);
+            out += CAPRISE_NONCE_LEN;
+            for (i = 0; i < dim; i++)
+                double_to_bytes(output_vector[i], out + i * sizeof(double));
+
+            in += vec_bytes;
+            out += vec_bytes;
+            len -= vec_bytes;
+        }
+    } else {
+        /*
+         * Decryption input: one or more records (each nonce || encrypted_vector)
+         * Decryption output: raw vectors
+         */
+        record_bytes = CAPRISE_NONCE_LEN + vec_bytes;
+        if (len == 0 || len % record_bytes != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+            return 0;
+        }
+
+        input_vector = OPENSSL_malloc(dim * sizeof(double));
+        output_vector = OPENSSL_malloc(dim * sizeof(double));
+        if (input_vector == NULL || output_vector == NULL)
+            goto err;
+
+        while (len > 0) {
+            /* Read per-vector nonce from ciphertext */
+            memcpy(nonce, in, CAPRISE_NONCE_LEN);
+            in += CAPRISE_NONCE_LEN;
+
+            for (i = 0; i < dim; i++)
+                input_vector[i] = bytes_to_double(in + i * sizeof(double));
+
+            if (!caprise_decrypt_vector(ctx->base.libctx, input_vector, dim,
+                                        &ctx->key, ctx->mode,
+                                        nonce, CAPRISE_NONCE_LEN,
+                                        output_vector))
+                goto err;
+
+            for (i = 0; i < dim; i++)
+                double_to_bytes(output_vector[i], out + i * sizeof(double));
+
+            in += vec_bytes;
+            out += vec_bytes;
+            len -= record_bytes;
+        }
     }
 
     ret = 1;
@@ -734,7 +825,7 @@ err:
     return ret;
 }
 
-/* Update function (same as cipher for this stream cipher) */
+/* Update function */
 static int caprise_update(void *vctx, unsigned char *out,
                           size_t *outl, size_t outsize,
                           const unsigned char *in, size_t inl)
@@ -752,15 +843,35 @@ static int caprise_update(void *vctx, unsigned char *out,
         return 1;
     }
 
-    if (outsize < inl || inl % vecbytes != 0) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
-        return 0;
+    if (ctx->base.enc) {
+        /*
+         * Encryption: input is raw vectors, output includes per-vector nonce.
+         * Output size is num_vectors * (CAPRISE_NONCE_LEN + vecbytes), which
+         * is larger than the input. The EVP layer computes outsize as
+         * inl + block_size, which underestimates the expansion, so we do not
+         * guard on outsize here. The caller must allocate a sufficient buffer.
+         */
+        if (inl % vecbytes != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+            return 0;
+        }
+    } else {
+        /* Decryption: input includes per-vector nonce, output is raw vectors */
+        size_t record_bytes = CAPRISE_NONCE_LEN + vecbytes;
+
+        if (inl % record_bytes != 0) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_DATA);
+            return 0;
+        }
     }
 
     if (!caprise_cipher(vctx, out, in, inl))
         return 0;
 
-    *outl = inl;
+    if (ctx->base.enc)
+        *outl = (inl / vecbytes) * (CAPRISE_NONCE_LEN + vecbytes);
+    else
+        *outl = (inl / (CAPRISE_NONCE_LEN + vecbytes)) * vecbytes;
     return 1;
 }
 
@@ -771,11 +882,12 @@ static int caprise_final(void *vctx, unsigned char *out, size_t *outl, size_t ou
     return 1;
 }
 
-/* Cipher function */
+/* Cipher function (same signature as update per provider ABI) */
 static int caprise_do_cipher(void *vctx, unsigned char *out,
-                           const unsigned char *in, size_t len)
+                             size_t *outl, size_t outsize,
+                             const unsigned char *in, size_t inl)
 {
-    return caprise_cipher(vctx, out, in, len);
+    return caprise_update(vctx, out, outl, outsize, in, inl);
 }
 
 /* Dispatch table */
