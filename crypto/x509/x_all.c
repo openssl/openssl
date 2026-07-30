@@ -198,7 +198,6 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
  */
 static void x509_reset_ext_cache(X509 *x)
 {
-    x->ex_cached = 0;
     x->ex_flags = 0;
     x->ex_kusage = 0;
     x->ex_nscert = 0;
@@ -234,6 +233,7 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
         x509_reset_ext_cache(x);
         (void)ossl_x509v3_cache_extensions(x);
         ERR_pop_to_mark();
+        x->ex_flags |= EXFLAG_SET; /* finalize: the freshly signed cert */
     }
     return ret;
 }
@@ -261,6 +261,7 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         x509_reset_ext_cache(x);
         (void)ossl_x509v3_cache_extensions(x);
         ERR_pop_to_mark();
+        x->ex_flags |= EXFLAG_SET; /* finalize: the freshly signed cert */
     }
     return ret;
 }

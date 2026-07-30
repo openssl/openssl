@@ -57,7 +57,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         /* fall through */
 
     case ASN1_OP_NEW_POST:
-        ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
         ret->ex_nscert = 0;
@@ -91,6 +90,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ERR_set_mark();
         (void)ossl_x509v3_cache_extensions(ret);
         ERR_pop_to_mark();
+        ret->ex_flags |= EXFLAG_SET; /* finalize: the parsed cert is immutable */
         break;
 
     case ASN1_OP_FREE_POST:

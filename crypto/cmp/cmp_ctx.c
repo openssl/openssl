@@ -591,7 +591,8 @@ DEFINE_OSSL_CMP_CTX_get1_certs(caPubs)
         return 1;                                                     \
     }
 
-#define X509_invalid(cert) (!ossl_x509v3_cache_extensions(cert))
+#define X509_invalid(cert) \
+    ((X509_get_extension_flags(cert) & EXFLAG_INVALID) != 0)
 #define EVP_PKEY_invalid(key) 0
 
 #define DEFINE_OSSL_set1_up_ref(PREFIX, FIELD, TYPE)                             \

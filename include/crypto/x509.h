@@ -207,7 +207,6 @@ struct x509_st {
     unsigned char sha1_hash[SHA_DIGEST_LENGTH];
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
-    volatile int ex_cached;
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
