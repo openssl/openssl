@@ -131,6 +131,7 @@ static int rsakem_init(void *vprsactx, void *vrsa,
     const char *desc)
 {
     PROV_RSA_CTX *prsactx = (PROV_RSA_CTX *)vprsactx;
+    const BIGNUM *e = NULL;
     int protect = 0;
 
     if (!ossl_prov_is_running())
@@ -145,6 +146,18 @@ static int rsakem_init(void *vprsactx, void *vrsa,
         return 0;
     RSA_free(prsactx->rsa);
     prsactx->rsa = vrsa;
+
+    /*
+     * Reject the trivial public exponent e <= 1. The FIPS module enforces the
+     * full SP 800-56B §6.4.1.1 constraints via ossl_fips_ind_rsa_key_check()
+     * below; non-FIPS callers wanting the complete §6.4.2 vetting can use
+     * EVP_PKEY_public_check().
+     */
+    RSA_get0_key(prsactx->rsa, NULL, &e, NULL);
+    if (e == NULL || BN_cmp(e, BN_value_one()) <= 0) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_KEY);
+        return 0;
+    }
 
     OSSL_FIPS_IND_SET_APPROVED(prsactx)
     if (!rsakem_set_ctx_params(prsactx, params))

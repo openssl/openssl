@@ -567,7 +567,6 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     if (BN_bin2bn(from, (int)flen, f) == NULL)
         goto err;
 
-#ifdef FIPS_MODULE
     /*
      * See SP800-56Br2, section 7.1.2.1
      * RSADP: 1 < f < (n – 1)
@@ -588,9 +587,7 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
             ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
             goto err;
         }
-    } else
-#endif
-    {
+    } else {
         if (BN_ucmp(f, rsa->n) >= 0) {
             ERR_raise(ERR_LIB_RSA, RSA_R_DATA_TOO_LARGE_FOR_MODULUS);
             goto err;
