@@ -15,6 +15,7 @@
 #include "crypto/x509.h"
 #include "internal/tsan_assist.h"
 #include "x509_local.h"
+#include "pcy_local.h"
 #include "crypto/objects/obj_dat.h"
 #include "internal/hashfunc.h"
 
@@ -548,6 +549,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     STACK_OF(GENERAL_NAME) *tmp_altname;
     NAME_CONSTRAINTS *tmp_nc;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
+    X509_POLICY_CACHE *tmp_policy_cache = NULL;
     X509_SIG_INFO tmp_siginf;
 
 #ifdef tsan_ld_acq
@@ -569,6 +571,24 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     ERR_set_mark();
+
+    /*
+     * Build the policy cache from the certificate's policy extensions.  A NULL
+     * return is an allocation failure, which fails finalization; invalid policy
+     * extensions are not fatal and only set EXFLAG_INVALID_POLICY.
+     */
+    {
+        int policy_inval = 0;
+
+        tmp_policy_cache = ossl_policy_cache_new(const_x, &policy_inval);
+        if (tmp_policy_cache == NULL) {
+            ERR_pop_to_mark();
+            CRYPTO_THREAD_unlock(const_x->lock);
+            return 0;
+        }
+        if (policy_inval)
+            tmp_ex_flags |= EXFLAG_INVALID_POLICY;
+    }
 
     /* Cache the SHA1 digest of the cert */
     if (!X509_digest(const_x, EVP_sha1(), tmp_sha1_hash, NULL))
@@ -784,6 +804,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->nc = tmp_nc;
     sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
     ((X509 *)const_x)->crldp = tmp_crldp;
+    ossl_policy_cache_free(((X509 *)const_x)->policy_cache);
+    ((X509 *)const_x)->policy_cache = tmp_policy_cache;
 #ifndef OPENSSL_NO_RFC3779
     sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
     ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
