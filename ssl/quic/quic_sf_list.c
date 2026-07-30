@@ -60,11 +60,19 @@ void ossl_sframe_list_destroy(SFRAME_LIST *fl)
     }
 }
 
+static int sframe_list_too_fragmented(const SFRAME_LIST *fl)
+{
+    return fl->num_frames >= SFRAME_LIST_MAX_FRAGMENTATION;
+}
+
 static int append_frame(SFRAME_LIST *fl, UINT_RANGE *range,
     OSSL_QRX_PKT *pkt,
     const unsigned char *data)
 {
     STREAM_FRAME *new_frame;
+
+    if (sframe_list_too_fragmented(fl))
+        return 0;
 
     if ((new_frame = stream_frame_new(range, pkt, data)) == NULL)
         return 0;
@@ -150,17 +158,23 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         stream_frame_free(fl, drop_frame);
     }
 
-    if (next_frame != NULL) {
-        /* check whether the new_frame is redundant because there is no gap */
-        if (prev_frame != NULL
-            && next_frame->range.start <= prev_frame->range.end) {
-            stream_frame_free(fl, new_frame);
-            goto end;
-        }
-        next_frame->prev = new_frame;
-    } else {
-        fl->tail = new_frame;
+    /* check whether the new_frame is redundant because there is no gap */
+    if (next_frame != NULL && prev_frame != NULL
+        && next_frame->range.start <= prev_frame->range.end) {
+        stream_frame_free(fl, new_frame);
+        goto end;
     }
+
+    /* the frame count only grows past this point */
+    if (sframe_list_too_fragmented(fl)) {
+        stream_frame_free(fl, new_frame);
+        return 0;
+    }
+
+    if (next_frame != NULL)
+        next_frame->prev = new_frame;
+    else
+        fl->tail = new_frame;
 
     new_frame->next = next_frame;
     new_frame->prev = prev_frame;

@@ -37,6 +37,20 @@
  */
 #ifndef OPENSSL_NO_QUIC
 
+/*
+ * A stream is too fragmented once its frame list holds this many entries.
+ * Contiguous frames are merged when their data is copied out of the packets,
+ * so a stream received in order keeps a single entry however many frames it
+ * arrived in, and reaching this limit means the data received so far has about
+ * this many gaps in it. Both inserting a frame before the tail and copying the
+ * data out walk the list, so without a limit a peer sending small frames with
+ * a gap between each of them makes reassembly cost quadratic.
+ *
+ * ngtcp2 rejects the same condition, which it calls a heavily fragmented
+ * reorder buffer, once it holds 4000 gaps.
+ */
+#define SFRAME_LIST_MAX_FRAGMENTATION 4000
+
 typedef struct stream_frame_st STREAM_FRAME;
 
 typedef struct sframe_list_st {
