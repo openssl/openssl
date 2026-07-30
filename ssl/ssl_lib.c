@@ -5447,6 +5447,34 @@ SSL *SSL_dup(SSL *s)
         || !dup_ca_names(&retsc->client_ca_names, sc->client_ca_names))
         goto err;
 
+    if (sc->server_cert_type != NULL) {
+        retsc->server_cert_type = OPENSSL_memdup(sc->server_cert_type,
+            sc->server_cert_type_len);
+        if (retsc->server_cert_type == NULL)
+            goto err;
+        retsc->server_cert_type_len = sc->server_cert_type_len;
+    }
+
+    if (sc->client_cert_type != NULL) {
+        retsc->client_cert_type = OPENSSL_memdup(sc->client_cert_type,
+            sc->client_cert_type_len);
+        if (retsc->client_cert_type == NULL)
+            goto err;
+        retsc->client_cert_type_len = sc->client_cert_type_len;
+    }
+
+#ifndef OPENSSL_NO_CT
+    retsc->ct_validation_callback = sc->ct_validation_callback;
+    /*
+     * application that uses SSL_dup() must understand the `callback` must
+     * not free arg. The arg becomes shared between all SSL connection objects
+     * entangled by SSL_dup().
+     */
+    retsc->ct_validation_callback_arg = sc->ct_validation_callback_arg;
+#endif
+
+    retsc->ext.status_type = sc->ext.status_type;
+
     return ret;
 
 err:
