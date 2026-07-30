@@ -48,6 +48,19 @@ static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT *pkt,
 void ossl_sframe_list_init(SFRAME_LIST *fl)
 {
     memset(fl, 0, sizeof(*fl));
+    fl->max_frames = SFRAME_LIST_MAX_MAX_FRAMES;
+}
+
+void ossl_sframe_list_set_rx_window(SFRAME_LIST *fl, uint64_t window)
+{
+    uint64_t max_frames = window / SFRAME_LIST_MIN_AVG_FRAME_LEN;
+
+    if (max_frames < SFRAME_LIST_MIN_MAX_FRAMES)
+        max_frames = SFRAME_LIST_MIN_MAX_FRAMES;
+    else if (max_frames > SFRAME_LIST_MAX_MAX_FRAMES)
+        max_frames = SFRAME_LIST_MAX_MAX_FRAMES;
+
+    fl->max_frames = (size_t)max_frames;
 }
 
 void ossl_sframe_list_destroy(SFRAME_LIST *fl)
@@ -65,6 +78,9 @@ static int append_frame(SFRAME_LIST *fl, UINT_RANGE *range,
     const unsigned char *data)
 {
     STREAM_FRAME *new_frame;
+
+    if (fl->num_frames >= fl->max_frames)
+        return 0;
 
     if ((new_frame = stream_frame_new(range, pkt, data)) == NULL)
         return 0;
@@ -150,17 +166,23 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         stream_frame_free(fl, drop_frame);
     }
 
-    if (next_frame != NULL) {
-        /* check whether the new_frame is redundant because there is no gap */
-        if (prev_frame != NULL
-            && next_frame->range.start <= prev_frame->range.end) {
-            stream_frame_free(fl, new_frame);
-            goto end;
-        }
-        next_frame->prev = new_frame;
-    } else {
-        fl->tail = new_frame;
+    /* check whether the new_frame is redundant because there is no gap */
+    if (next_frame != NULL && prev_frame != NULL
+        && next_frame->range.start <= prev_frame->range.end) {
+        stream_frame_free(fl, new_frame);
+        goto end;
     }
+
+    /* the frame count only grows past this point */
+    if (fl->num_frames >= fl->max_frames) {
+        stream_frame_free(fl, new_frame);
+        return 0;
+    }
+
+    if (next_frame != NULL)
+        next_frame->prev = new_frame;
+    else
+        fl->tail = new_frame;
 
     new_frame->next = next_frame;
     new_frame->prev = prev_frame;

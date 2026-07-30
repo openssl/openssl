@@ -37,6 +37,16 @@
  */
 #ifndef OPENSSL_NO_QUIC
 
+/*
+ * Insertion scans the list linearly, so an unbounded list lets a peer sending
+ * many small frames out of order make reassembly cost quadratic. The list is
+ * limited to one frame per SFRAME_LIST_MIN_AVG_FRAME_LEN bytes the peer is
+ * able to buffer, clamped to the range below.
+ */
+#define SFRAME_LIST_MIN_AVG_FRAME_LEN 64
+#define SFRAME_LIST_MIN_MAX_FRAMES 1024
+#define SFRAME_LIST_MAX_MAX_FRAMES 16384
+
 typedef struct stream_frame_st STREAM_FRAME;
 
 typedef struct sframe_list_st {
@@ -45,6 +55,8 @@ typedef struct sframe_list_st {
     unsigned int fin;
     /* Number of stream frames in the list. */
     size_t num_frames;
+    /* Maximum number of stream frames allowed in the list. */
+    size_t max_frames;
     /* Offset of data not yet dropped */
     uint64_t offset;
     /* Is head locked ? */
@@ -63,6 +75,12 @@ void ossl_sframe_list_init(SFRAME_LIST *fl);
  * still present inside it.
  */
 void ossl_sframe_list_destroy(SFRAME_LIST *fl);
+
+/*
+ * Derives the maximum number of buffered frames from window, which is the
+ * largest amount of data the peer can ever have in flight for the stream.
+ */
+void ossl_sframe_list_set_rx_window(SFRAME_LIST *fl, uint64_t window);
 
 /*
  * Insert a stream frame data into the list.
