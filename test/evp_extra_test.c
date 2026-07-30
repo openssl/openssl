@@ -8833,6 +8833,135 @@ end:
     return testresult;
 }
 
+/*
+ * RSASVE (SP 800-56B 7.2) must reject mathematically degenerate inputs:
+ * a public exponent e <= 1, and a ciphertext c in {0, 1, n - 1}.  Outside
+ * the FIPS module these were previously accepted; the checks now apply to
+ * every build, so exercise them in the default provider.
+ */
+
+/*
+ * With e <= 1 the RSA public operation is the identity (or worse), so
+ * encapsulation setup must reject the key with PROV_R_INVALID_KEY.  idx
+ * selects the exponent: 0 or 1.
+ */
+static int test_rsasve_degenerate_exponent(int idx)
+{
+    EVP_PKEY *rsakey = NULL;
+    EVP_PKEY *pubkey = NULL;
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    BIGNUM *n = NULL;
+    BIGNUM *e = NULL;
+    int testresult = 0;
+
+    /* Borrow a real modulus; only the exponent is degenerate. */
+    if (!TEST_ptr(rsakey = load_example_rsa_key())
+        || !TEST_true(EVP_PKEY_get_bn_param(rsakey, OSSL_PKEY_PARAM_RSA_N, &n)))
+        goto err;
+
+    if (!TEST_ptr(e = BN_new())
+        || !TEST_true(BN_set_word(e, (BN_ULONG)idx))) /* idx is 0 or 1 */
+        goto err;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(genctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(genctx, &pubkey, EVP_PKEY_PUBLIC_KEY,
+                            params),
+            0))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pubkey, NULL))
+        || !TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_INVALID_KEY))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(genctx);
+    EVP_PKEY_free(pubkey);
+    EVP_PKEY_free(rsakey);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    BN_free(e);
+    BN_free(n);
+    return testresult;
+}
+
+/*
+ * A ciphertext c in {0, 1, n - 1} is a fixed point or trivial case of RSADP,
+ * so RSASVE recovery must reject it.  idx selects the ciphertext: 0, 1, or
+ * n - 1.  The ciphertext length must equal the modulus length.
+ */
+static int test_rsasve_degenerate_ciphertext(int idx)
+{
+    EVP_PKEY *rsakey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    BIGNUM *n = NULL;
+    unsigned char *ct = NULL;
+    unsigned char *secret = NULL;
+    size_t ctlen = 0;
+    size_t secretlen = 0;
+    int expected_reason = 0;
+    int testresult = 0;
+
+    if (!TEST_ptr(rsakey = load_example_rsa_key())
+        || !TEST_true(EVP_PKEY_get_bn_param(rsakey, OSSL_PKEY_PARAM_RSA_N, &n)))
+        goto err;
+
+    ctlen = secretlen = (size_t)EVP_PKEY_get_size(rsakey);
+    if (!TEST_ptr(ct = OPENSSL_zalloc(ctlen))
+        || !TEST_ptr(secret = OPENSSL_malloc(secretlen)))
+        goto err;
+
+    switch (idx) {
+    case 0: /* c = 0 */
+        expected_reason = RSA_R_DATA_TOO_SMALL;
+        break;
+    case 1: /* c = 1 */
+        ct[ctlen - 1] = 1;
+        expected_reason = RSA_R_DATA_TOO_SMALL;
+        break;
+    case 2: /* c = n - 1 */
+        if (!TEST_true(BN_sub_word(n, 1))
+            || !TEST_int_eq(BN_bn2binpad(n, ct, (int)ctlen), (int)ctlen))
+            goto err;
+        expected_reason = RSA_R_DATA_TOO_LARGE_FOR_MODULUS;
+        break;
+    default:
+        goto err;
+    }
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, rsakey, NULL))
+        || !TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, "RSASVE"), 1))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret, &secretlen, ct, ctlen), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), expected_reason))
+        goto err;
+
+    testresult = 1;
+err:
+    OPENSSL_free(secret);
+    OPENSSL_free(ct);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(rsakey);
+    BN_free(n);
+    return testresult;
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 static int sign_hits = 0;
@@ -9491,6 +9620,9 @@ int setup_tests(void)
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
     ADD_TEST(test_evp_cipher_pipeline);
+
+    ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
+    ADD_ALL_TESTS(test_rsasve_degenerate_ciphertext, 3);
 
 #ifndef OPENSSL_NO_ML_KEM
     ADD_ALL_TESTS(test_ml_kem_seed_only, 2);
