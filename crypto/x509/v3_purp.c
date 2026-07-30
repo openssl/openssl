@@ -849,7 +849,7 @@ static int check_ca(const X509 *x)
 void X509_set_proxy_flag(X509 *x)
 {
     if (CRYPTO_THREAD_write_lock(x->lock)) {
-        x->ex_flags |= EXFLAG_PROXY;
+        x->ex_proxy_user = 1;
         CRYPTO_THREAD_unlock(x->lock);
     }
 }
@@ -1219,7 +1219,7 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
  */
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
 {
-    if ((subject->ex_flags & EXFLAG_PROXY) != 0) {
+    if (ossl_x509_is_proxy(subject)) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
             return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
     } else if (ku_reject(issuer, KU_KEY_CERT_SIGN)) {
@@ -1270,9 +1270,15 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
     return X509_V_OK;
 }
 
+int ossl_x509_is_proxy(const X509 *x)
+{
+    return (x->ex_flags & EXFLAG_PROXY) != 0 || x->ex_proxy_user;
+}
+
 uint32_t X509_get_extension_flags(const X509 *x)
 {
-    return x->ex_flags;
+    /* EXFLAG_PROXY may be caller-asserted rather than derived; synthesise it. */
+    return x->ex_flags | (x->ex_proxy_user ? EXFLAG_PROXY : 0);
 }
 
 uint32_t X509_get_key_usage(const X509 *x)
@@ -1337,7 +1343,7 @@ long X509_get_pathlen(const X509 *x)
 long X509_get_proxy_pathlen(const X509 *x)
 {
     if ((x->ex_flags & EXFLAG_INVALID) != 0
-        || (x->ex_flags & EXFLAG_PROXY) == 0)
+        || !ossl_x509_is_proxy(x))
         return -1;
     return x->ex_pcpathlen;
 }

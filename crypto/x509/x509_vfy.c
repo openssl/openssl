@@ -634,7 +634,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
-        CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
+        CB_FAIL_IF(!allow_proxy_certs && ossl_x509_is_proxy(x),
             ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
         ret = X509_check_ca(x);
         switch (must_be_ca) {
@@ -752,7 +752,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
          * must be another proxy certificate or a EE certificate.  If not,
          * the next certificate must be a CA certificate.
          */
-        if (x->ex_flags & EXFLAG_PROXY) {
+        if (ossl_x509_is_proxy(x)) {
             /*
              * RFC3820, 4.1.3 (b)(1) stipulates that if pCPathLengthConstraint
              * is less than max_path_length, the former should be copied to
@@ -801,7 +801,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
          * added.
          * (RFC 3820: 3.4, 4.1.3 (a)(4))
          */
-        if ((x->ex_flags & EXFLAG_PROXY) != 0) {
+        if (ossl_x509_is_proxy(x)) {
             const X509_NAME *tmpsubject = X509_get_subject_name(x);
             const X509_NAME *tmpissuer = X509_get_issuer_name(x);
             X509_NAME *tmpsubject2;
@@ -1405,7 +1405,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     /* skip if cert is apparently self-signed */
     if (ctx->current_cert->ex_flags & EXFLAG_SS)
         return 1;
-    if ((x->ex_flags & EXFLAG_PROXY) != 0)
+    if (ossl_x509_is_proxy(x))
         return 1;
 
     while (ctx->current_reasons != CRLDP_ALL_REASONS) {

@@ -63,6 +63,7 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->ex_xkusage = 0;
         ret->ex_nscert = 0;
         ret->ex_flags = 0;
+        ret->ex_proxy_user = 0;
         ret->ex_pathlen = -1;
         ret->ex_pcpathlen = -1;
         ret->skid = NULL;
