@@ -500,6 +500,11 @@ int ossl_ml_dsa_generate_key(ML_DSA_KEY *out)
     if (sk == NULL) {
         ret = keygen_internal(out);
     } else {
+        /*
+         * A constant-time comparison is unnecessary here since this check
+         * is only performed during key generation and is not exposed to
+         * timing attacks.
+         */
         if ((ret = keygen_internal(out)) != 0
             && memcmp(out->priv_encoding, sk, out->params->sk_len) != 0) {
             ret = 0;
