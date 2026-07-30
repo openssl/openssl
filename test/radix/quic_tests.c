@@ -452,6 +452,7 @@ DEF_FUNC(check_poll_abort_blocking)
     size_t result_count = SIZE_MAX, waiters_before, waiters_after;
     struct poll_abort_test_ctx ctx;
     const struct timeval z_timeout = { 0 };
+    const struct timeval timeout = { 5, 0 };
 
     /*
      * C0 and Cb0 are streams of two independent client connections, and so
@@ -495,11 +496,11 @@ DEF_FUNC(check_poll_abort_blocking)
 
     result_count = SIZE_MAX;
     /*
-     * No timeout: if the abort_blocking case were instead to actually block,
-     * this call would hang forever rather than fail fast.
+     * Bound this call so a failed readiness injection cannot hang the entire
+     * test job.
      */
     ok = TEST_true(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
-        NULL, 0, &result_count));
+        &timeout, 0, &result_count));
 
     ossl_quic_poll_translate_test_step_cb = NULL;
     ossl_quic_poll_translate_test_step_cb_arg = NULL;
