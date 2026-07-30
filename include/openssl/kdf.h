@@ -41,7 +41,7 @@ const EVP_KDF *EVP_KDF_CTX_get0_kdf(const EVP_KDF_CTX *ctx);
 EVP_KDF *EVP_KDF_CTX_get1_kdf(const EVP_KDF_CTX *ctx);
 
 #if !defined(OPENSSL_NO_DEPRECATED_4_1)
-OSSL_DEPRECATEDIN_4_1_FOR("Use EVP_KDF_CTX_get0_kdf")
+OSSL_DEPRECATEDIN_4_1_FOR("use EVP_KDF_CTX_get0_kdf()")
 const EVP_KDF *EVP_KDF_CTX_kdf(const EVP_KDF_CTX *ctx);
 #endif /* !OPENSSL_NO_DEPRECATED_4_1 */
 
