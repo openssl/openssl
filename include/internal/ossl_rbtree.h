@@ -195,6 +195,11 @@ void ossl_rbt_set_parent(const struct ossl_rbt_type *, void *, void *);
     _name##_OSSL_RBT_SET_PARENT(struct _type *elm, struct _type *parent)     \
     {                                                                        \
         ossl_rbt_set_parent(_name##_OSSL_RBT_TYPE, elm, parent);             \
+    }                                                                        \
+    ossl_unused static inline void                                           \
+    _name##_OSSL_RBT_INIT_RBE(struct _type *elm, struct _type *parent)       \
+    {                                                                        \
+        ossl_rbt_init_rbe(_name##_OSSL_RBT_TYPE, elm);                       \
     }
 
 #define OSSL_RBT_GENERATE_INTERNAL(_name, _type, _field, _cmp)   \
@@ -230,6 +235,11 @@ void ossl_rbt_set_parent(const struct ossl_rbt_type *, void *, void *);
 #define OSSL_RBT_SET_LEFT(_name, _elm, _l) _name##_OSSL_RBT_SET_LEFT(_elm, _l)
 #define OSSL_RBT_SET_RIGHT(_name, _elm, _r) _name##_OSSL_RBT_SET_RIGHT(_elm, _r)
 #define OSSL_RBT_SET_PARENT(_name, _elm, _p) _name##_OSSL_RBT_SET_PARENT(_elm, _p)
+#ifdef NDEBUG
+#define OSSL_RBT_INIT_RBE(_name, _elm) _name##_OSSL_RBT_INIT_RBE(_elm)
+#else
+#define OSSL_RBT_INIT_RBE(_name, _elm) (void)(0)
+#endif
 
 #define OSSL_RBT_FOREACH(_e, _name, _head)    \
     for ((_e) = OSSL_RBT_MIN(_name, (_head)); \
