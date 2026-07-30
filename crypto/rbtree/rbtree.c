@@ -338,6 +338,12 @@ ossl_rbt_insert(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *
     void *node;
     int comp = 0;
 
+#if NDEBUG
+    assert(rbe->rb_parent == NULL);
+    assert(rbe->rb_left == NULL);
+    assert(rbe->rb_right == NULL);
+#endif
+
     tmp = OSSL_RBH_ROOT(rbt);
     while (tmp != NULL) {
         parent = tmp;
@@ -539,4 +545,13 @@ void ossl_rbt_set_parent(const struct ossl_rbt_type *t, void *node, void *parent
     struct ossl_rbt_entry *rbp = (parent == NULL) ? NULL : rbt_n2e(t, parent);
 
     OSSL_RBE_PARENT(rbe) = rbp;
+}
+
+void ossl_rbt_init_rbe(const struct ossl_rbt_type *t, void *node)
+{
+    struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
+
+    OSSL_RBE_PARENT(rbe) = NULL;
+    OSSL_RBE_LEFT(rbe) = NULL;
+    OSSL_RBE_RIGHT(rbe) = NULL;
 }
