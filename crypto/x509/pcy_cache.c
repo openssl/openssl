@@ -18,16 +18,22 @@ static int policy_data_cmp(const X509_POLICY_DATA *const *a,
     const X509_POLICY_DATA *const *b);
 static int policy_cache_set_int(long *out, ASN1_INTEGER *value);
 
-/*
- * Set cache entry according to CertificatePolicies extension. Note: this
- * destroys the passed CERTIFICATEPOLICIES structure.
+/**
+ * @brief Populate a policy cache from the CertificatePolicies extension.
+ *
+ * Adds one policy data entry per policy, rejecting duplicate policy OIDs.  The
+ * passed CERTIFICATEPOLICIES structure is consumed (freed) by this call.
+ *
+ * @param cache the policy cache to populate
+ * @param policies the decoded CertificatePolicies extension, consumed here
+ * @param crit non-zero if the extension is marked critical
+ * @param inval set to 1 if the policies are invalid, e.g. duplicate OIDs
+ * @returns 1 on success, 0 if no policies were cached, -1 if they are invalid
  */
-
-static int policy_cache_create(X509 *x,
-    CERTIFICATEPOLICIES *policies, int crit)
+static int policy_cache_create(X509_POLICY_CACHE *cache,
+    CERTIFICATEPOLICIES *policies, int crit, int *inval)
 {
     int i, num, ret = 0;
-    X509_POLICY_CACHE *cache = x->policy_cache;
     X509_POLICY_DATA *data = NULL;
     POLICYINFO *policy;
 
@@ -69,7 +75,7 @@ static int policy_cache_create(X509 *x,
 
 bad_policy:
     if (ret == -1)
-        x->ex_flags |= EXFLAG_INVALID_POLICY;
+        *inval = 1;
     ossl_policy_data_free(data);
 just_cleanup:
     sk_POLICYINFO_pop_free(policies, POLICYINFO_free);
@@ -80,7 +86,7 @@ just_cleanup:
     return ret;
 }
 
-static int policy_cache_new(X509 *x)
+X509_POLICY_CACHE *ossl_policy_cache_new(const X509 *x, int *inval)
 {
     X509_POLICY_CACHE *cache;
     ASN1_INTEGER *ext_any = NULL;
@@ -89,18 +95,14 @@ static int policy_cache_new(X509 *x)
     POLICY_MAPPINGS *ext_pmaps = NULL;
     int i;
 
-    if (x->policy_cache != NULL)
-        return 1;
     cache = OPENSSL_malloc(sizeof(*cache));
     if (cache == NULL)
-        return 0;
+        return NULL;
     cache->anyPolicy = NULL;
     cache->data = NULL;
     cache->any_skip = -1;
     cache->explicit_skip = -1;
     cache->map_skip = -1;
-
-    x->policy_cache = cache;
 
     /*
      * Handle requireExplicitPolicy *first*. Need to process this even if we
@@ -135,16 +137,13 @@ static int policy_cache_new(X509 *x)
         if (i != -1)
             goto bad_cache;
         POLICY_CONSTRAINTS_free(ext_pcons);
-        return 1;
+        return cache;
     }
 
-    i = policy_cache_create(x, ext_cpols, i);
-
-    /* NB: ext_cpols freed by policy_cache_set_policies */
-
-    if (i <= 0) {
+    /* NB: ext_cpols freed by policy_cache_create */
+    if (policy_cache_create(cache, ext_cpols, i, inval) <= 0) {
         POLICY_CONSTRAINTS_free(ext_pcons);
-        return i;
+        return cache;
     }
 
     ext_pmaps = X509_get_ext_d2i(x, NID_policy_mappings, &i, NULL);
@@ -154,8 +153,7 @@ static int policy_cache_new(X509 *x)
         if (i != -1)
             goto bad_cache;
     } else {
-        i = ossl_policy_cache_set_mapping(x, ext_pmaps);
-        if (i <= 0)
+        if (ossl_policy_cache_set_mapping(cache, ext_pmaps) <= 0)
             goto bad_cache;
     }
 
@@ -169,12 +167,12 @@ static int policy_cache_new(X509 *x)
     goto just_cleanup;
 
 bad_cache:
-    x->ex_flags |= EXFLAG_INVALID_POLICY;
+    *inval = 1;
 
 just_cleanup:
     POLICY_CONSTRAINTS_free(ext_pcons);
     ASN1_INTEGER_free(ext_any);
-    return 1;
+    return cache;
 }
 
 void ossl_policy_cache_free(X509_POLICY_CACHE *cache)
@@ -188,13 +186,14 @@ void ossl_policy_cache_free(X509_POLICY_CACHE *cache)
 
 const X509_POLICY_CACHE *ossl_policy_cache_set(X509 *x)
 {
-
-    if (x->policy_cache == NULL) {
-        if (!CRYPTO_THREAD_write_lock(x->lock))
-            return NULL;
-        policy_cache_new(x);
-        CRYPTO_THREAD_unlock(x->lock);
-    }
+    /*
+     * The policy cache is built once, when the certificate is finalized by
+     * ossl_x509v3_cache_extensions().  A NULL here means the certificate was
+     * never finalized (EXFLAG_SET is clear), which is a caller error: policy
+     * checking must only run on finalized certificates.
+     */
+    if ((x->ex_flags & EXFLAG_SET) == 0)
+        return NULL;
 
     return x->policy_cache;
 }
