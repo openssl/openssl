@@ -203,7 +203,11 @@ sub preceding_block {
         $i--;
     }
     my $doxy = ($blk[0] // '') =~ m{/\*\*} ? 1 : 0;
-    return (join("\n", @blk), $doxy);
+    # Strip the leading " * " from each comment line so a tag that spans lines
+    # (e.g. a multi-line @see list) can be matched without the '*' at the start
+    # of a continuation line interfering.
+    (my $text = join("\n", @blk)) =~ s/^\s*\*\s?//gm;
+    return ($text, $doxy);
 }
 
 # Return arrayref of prototypes: { name, start, end, ret_void, params,
