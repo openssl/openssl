@@ -28,7 +28,7 @@ static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
     unsigned char *psk,
     unsigned int max_psk_len)
 {
-    BIO_snprintf(ident, max_ident_len, "psk");
+    snprintf(ident, max_ident_len, "psk");
 
     if (max_psk_len > 20)
         max_psk_len = 20;

@@ -83,6 +83,13 @@ OpenSSL Releases
 
    *Jakub Zelenka*
 
+ * Deprecated BIO_snprintf() and BIO_vsnprintf(). C99 snprintf() is now
+   universally available, and the wrappers return -1 on truncation rather
+   than the would-have-been length, so callers reaching for the standard
+   idiom by reflex produce bugs. Use snprintf() and vsnprintf() directly.
+
+   *Bob Beck*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
@@ -91,6 +98,12 @@ OpenSSL Releases
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
 
    *Adriano Sela Aviles*
+
+ * Add a build target to provide MSVC 2013 hacks in a c99 world.
+   The build target adds internal functions to provide c99 functions
+   that are not present with MSVC 2013.
+
+   *Bob Beck*
 
  * SubjectPublicKeyInfo blobs whose AlgorithmIdentifier uses id-RSAES-OAEP
    (`NID_rsaesOaep`, 1.2.840.113549.1.1.7) with a plain RSAPublicKey body
