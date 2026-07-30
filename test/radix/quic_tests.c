@@ -2352,8 +2352,25 @@ DEF_SCRIPT(script_36, "Fault injection - MAX_STREAM_DATA for nonexistent stream"
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_37, "place holder for multistrem script_37")
+/* 37. Fault injection - STREAM_DATA_BLOCKED for send-only stream */
+DEF_SCRIPT(script_37, "Fault injection - STREAM_DATA_BLOCKED for send-only stream")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(C, Ca, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_NEW_STREAM(S, Sb, SSL_STREAM_FLAG_UNI);
+    OP_SET_INJECT_WORD(C_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED);
+    OP_WRITE(Sb, "orange", 5);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_38, "place holder for multistrem script_38")
