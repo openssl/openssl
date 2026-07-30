@@ -599,6 +599,18 @@ static int drbg_ctr_init(PROV_DRBG *drbg)
     drbg->strength = (unsigned int)(keylen * 8);
     drbg->seedlen = keylen + 16;
 
+#ifdef FIPS_MODULE
+    /*
+     * FIPS requires that we use a derivation function since our
+     * entropy source is outside the fips boundary
+     */
+    if (ctr->use_df == 0) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_DERIVATION_FUNCTION_INIT_FAILED,
+            "FIPS requires the use of a derivation function\n");
+        goto err;
+    }
+#endif
+
     if (ctr->use_df) {
         /* df initialisation */
         static const unsigned char df_key[32] = {

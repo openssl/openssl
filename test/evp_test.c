@@ -5430,6 +5430,7 @@ static int parse(EVP_TEST *t)
     KEY_LIST *key, **klist;
     EVP_PKEY *pkey;
     PAIR *pp;
+    const char *alg_name = NULL;
     int i, j, skipped = 0;
 
     fips_indicator_callback_unapproved_count = 0;
@@ -5572,6 +5573,7 @@ start:
     /* Find the test, based on first keyword. */
     if (!TEST_ptr(t->meth = find_test(pp->key)))
         return 0;
+    alg_name = pp->value;
     if (!t->meth->init(t, pp->value)) {
         TEST_error("unknown %s: %s\n", pp->key, pp->value);
         return 0;
@@ -5656,6 +5658,16 @@ start:
             }
             if (t->skip)
                 return 0;
+        }
+    }
+    if (t->meth->parse == rand_test_parse) {
+        if (OSSL_PROVIDER_available(libctx, "fips")
+            && !strcmp(alg_name, "CTR-DRBG")) {
+            if (((RAND_DATA *)t->data)->use_df == 0) {
+                TEST_info("Skipping %s:%d as fips requires a derivation function\n", t->s.test_file, t->s.curr);
+                t->skip = 1;
+                return 0;
+            }
         }
     }
 
