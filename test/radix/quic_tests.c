@@ -485,14 +485,20 @@ DEF_FUNC(check_poll_abort_blocking)
     size_t result_count = SIZE_MAX, waiters_before, waiters_after;
     struct poll_abort_test_ctx ctx;
     const struct timeval z_timeout = { 0 };
+    const struct timeval timeout = { 5, 0 };
 
     /*
      * C0 and Cb0 are streams of two independent client connections, and so
-     * belong to two independent QUIC_REACTORs. poll_abort_test_step_cb() below
-     * forces Cb0 ready by ticking its reactor directly, on this thread, while
-     * C0's blocking section is still open. Ticking a reactor with a nonzero
-     * cur_blocking_waiters calls rtor_notify_other_threads(), which waits for
-     * another thread to clear the notifier signal.
+     * belong to two independent QUIC_REACTORs. The bug being tested for does
+     * not actually require this: it reproduces just as well if all items
+     * share one reactor. What needs two reactors is poll_abort_test_step_cb()
+     * below, which forces Cb0 ready by ticking its reactor directly, on this
+     * thread, while C0's blocking section is still open. Doing that on C0's
+     * own (shared) reactor would deadlock: ossl_quic_reactor_tick() would see
+     * a nonzero cur_blocking_waiters left over from C0 and call
+     * rtor_notify_other_threads(), which waits on a condvar for some *other*
+     * thread to clear the notifier signal - a thread that doesn't exist here.
+     * Using Cb0's own, still-untouched reactor keeps that tick a no-op.
      */
     REQUIRE_SSL_4(C, C0, Cb0, Lb0);
 
@@ -523,11 +529,11 @@ DEF_FUNC(check_poll_abort_blocking)
 
     result_count = SIZE_MAX;
     /*
-     * No timeout: if the abort_blocking case were instead to actually block,
-     * this call would hang forever rather than fail fast.
+     * Bound this call so a failed readiness injection cannot hang the entire
+     * test job.
      */
     ok = TEST_true(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
-        NULL, 0, &result_count));
+        &timeout, 0, &result_count));
 
     ossl_quic_poll_translate_test_step_cb = NULL;
     ossl_quic_poll_translate_test_step_cb_arg = NULL;
