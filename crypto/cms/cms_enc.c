@@ -17,6 +17,7 @@
 #include "crypto/evp.h"
 #include "crypto/asn1.h"
 #include "cms_local.h"
+#include "internal/sizes.h"
 
 /* CMS EncryptedData Utilities */
 
@@ -65,9 +66,13 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     if (cipher != NULL) {
         fetched_ciph = EVP_CIPHER_fetch(libctx, EVP_CIPHER_get0_name(cipher),
             propq);
-        if (fetched_ciph != NULL)
-            cipher = fetched_ciph;
+    } else {
+        char txtoid[OSSL_MAX_NAME_SIZE];
+        if (OBJ_obj2txt(txtoid, sizeof(txtoid), calg->algorithm, 1) > 0)
+            fetched_ciph = EVP_CIPHER_fetch(libctx, txtoid, propq);
     }
+    if (fetched_ciph != NULL)
+        cipher = fetched_ciph;
     if (cipher == NULL) {
         (void)ERR_clear_last_mark();
         ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_CIPHER);
@@ -81,8 +86,14 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     }
 
     if (enc) {
+        (void)ERR_set_mark();
         calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_get_type(ctx));
-        if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef) {
+        (void)ERR_pop_to_mark();
+
+        if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef)
+            calg->algorithm = OBJ_txt2obj(EVP_CIPHER_get0_name(cipher), 0);
+
+        if (calg->algorithm == NULL || OBJ_length(calg->algorithm) == 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_ENCRYPTION_ALGORITHM);
             goto err;
         }

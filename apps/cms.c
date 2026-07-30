@@ -1148,7 +1148,7 @@ int cms_main(int argc, char **argv)
 
             res = EVP_PKEY_CTX_ctrl(pctx, -1, -1,
                 EVP_PKEY_CTRL_CIPHER,
-                EVP_CIPHER_get_nid(cipher), NULL);
+                EVP_CIPHER_get_nid(cipher), cipher);
             if (res <= 0 && res != -2)
                 goto end;
 
