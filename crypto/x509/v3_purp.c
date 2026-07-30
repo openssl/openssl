@@ -1279,12 +1279,21 @@ uint32_t X509_get_key_usage(const X509 *x)
 {
     if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
+    /*
+     * If the certificate has not been finalized the cached flags are not
+     * yet meaningful; fail safe by reporting no permitted usage rather than
+     * UINT32_MAX (unrestricted).
+     */
+    if ((x->ex_flags & EXFLAG_SET) == 0)
+        return 0;
     return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
 
 uint32_t X509_get_extended_key_usage(const X509 *x)
 {
     if ((x->ex_flags & EXFLAG_INVALID) != 0)
+        return 0;
+    if ((x->ex_flags & EXFLAG_SET) == 0)    /* not finalized: fail safe */
         return 0;
     return (x->ex_flags & EXFLAG_XKUSAGE) != 0 ? x->ex_xkusage : UINT32_MAX;
 }
