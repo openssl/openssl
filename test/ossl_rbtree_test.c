@@ -68,11 +68,11 @@ static int test_rbt_insert(void)
     unsigned int i;
     TEST_RBT_T *found_rbt, *node_rbt;
 
-    memset(nodes_rbt, 0, sizeof(nodes_rbt));
     OSSL_RBT_INIT(ossl_rbt, &rbt_head);
 
     for (i = 26; i != 0; i--) {
         node_rbt = &nodes_rbt[i - 1];
+        OSSL_RBT_INIT_RBE(ossl_rbt, node_rbt);
         node_rbt->rbt_data = test_data[i - 1];
         found_rbt = OSSL_RBT_INSERT(ossl_rbt, &rbt_head, node_rbt);
         if (!TEST_ptr_eq(found_rbt, NULL)) {
