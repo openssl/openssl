@@ -185,6 +185,12 @@ struct x509_st {
     long ex_pathlen;
     long ex_pcpathlen;
     uint32_t ex_flags;
+    /*
+     * Proxy status asserted by X509_set_proxy_flag() rather than derived from
+     * a proxyCertInfo extension.  Kept out of ex_flags so the derived-flag
+     * cache can be rebuilt without losing this caller-supplied state.
+     */
+    int ex_proxy_user;
     uint32_t ex_kusage;
     uint32_t ex_xkusage;
     uint32_t ex_nscert;
@@ -317,6 +323,8 @@ int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
 int ossl_x509v3_cache_extensions(const X509 *x);
+/* True if the certificate is a proxy cert, whether derived or caller-asserted. */
+int ossl_x509_is_proxy(const X509 *x);
 int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
