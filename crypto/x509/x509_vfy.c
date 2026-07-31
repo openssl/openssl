@@ -753,6 +753,8 @@ static int check_extensions(X509_STORE_CTX *ctx)
          * the next certificate must be a CA certificate.
          */
         if (ossl_x509_is_proxy(x)) {
+            long proxy_pathlen = ossl_x509_get_proxy_pathlen(x);
+
             /*
              * RFC3820, 4.1.3 (b)(1) stipulates that if pCPathLengthConstraint
              * is less than max_path_length, the former should be copied to
@@ -764,10 +766,10 @@ static int check_extensions(X509_STORE_CTX *ctx)
              * and copy the latter to the former if it is, and finally,
              * increment proxy_path_length.
              */
-            if (x->ex_pcpathlen != -1) {
-                CB_FAIL_IF(proxy_path_length > x->ex_pcpathlen,
+            if (proxy_pathlen != -1) {
+                CB_FAIL_IF(proxy_path_length > proxy_pathlen,
                     ctx, x, i, X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED);
-                proxy_path_length = x->ex_pcpathlen;
+                proxy_path_length = proxy_pathlen;
             }
             proxy_path_length++;
             must_be_ca = 0;

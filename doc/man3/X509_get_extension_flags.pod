@@ -148,11 +148,15 @@ This is for the users who need to mark non-RFC3820 proxy certificates as
 such, as OpenSSL only detects RFC3820 compliant ones.
 
 X509_set_proxy_pathlen() sets the proxy certificate path length for the given
-certificate B<x>.  This is for the users who need to mark non-RFC3820 proxy
-certificates as such, as OpenSSL only detects RFC3820 compliant ones.
+certificate B<x>, overriding any path length from the certificate's
+B<proxyCertInfo> extension.  This is for the users who need to mark
+non-RFC3820 proxy certificates as such, as OpenSSL only detects RFC3820
+compliant ones.
 
 X509_get_proxy_pathlen() returns the proxy certificate path length for the
-given certificate B<x> if it is a proxy certificate.
+given certificate B<x> if it is a proxy certificate.  A value set with
+X509_set_proxy_pathlen() takes precedence over one from the certificate's
+B<proxyCertInfo> extension.
 
 =head1 NOTES
 
