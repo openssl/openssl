@@ -14,8 +14,11 @@
  * ../crypto/fn/fn_local.h, such as introspection.
  */
 
+#include <openssl/bn.h>
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
+#include "crypto/bn.h"
+#include "crypto/bn_dh.h"
 #include "fn_local.h"
 #include "testutil.h"
 
@@ -442,6 +445,51 @@ end:
     return ret;
 }
 
+/*
+ * bn_get_ossl_fn() on global BN_FLG_STATIC_DATA constants must return their
+ * OSSL_FN backing directly.  These are defined with the OSSL_FN_STATIC_*
+ * machinery; the test verifies the BIGNUM views resolve to usable OSSL_FN
+ * operands.
+ */
+static int test_static_const_views(void)
+{
+    const OSSL_FN *f1 = NULL;
+    const OSSL_FN *f2 = NULL;
+    const OSSL_FN *fp = NULL;
+    const OSSL_FN *fs = NULL;
+
+    /* The literal 1: 1 limb, value 1, one shared storage object */
+    if (!TEST_ptr(f1 = OSSL_FN_value_one())
+        || !TEST_size_t_eq(ossl_fn_get_dsize(f1), 1)
+        || !TEST_true(OSSL_FN_is_word(f1, 1))
+        || !TEST_ptr_eq(bn_get_ossl_fn(BN_value_one()), f1))
+        return 0;
+
+    /* The literal 2: 1 limb, value 2 */
+    if (!TEST_ptr(f2 = bn_get_ossl_fn(&ossl_bignum_const_2))
+        || !TEST_size_t_eq(ossl_fn_get_dsize(f2), 1)
+        || !TEST_true(OSSL_FN_is_word(f2, 2)))
+        return 0;
+
+    /* A group prime: BIGNUM and OSSL_FN views carry the same value */
+    if (!TEST_ptr(fp = bn_get_ossl_fn(&ossl_bignum_ffdhe2048_p))
+        || !TEST_size_t_eq(ossl_fn_get_dsize(fp), OSSL_FN_BYTES == 8 ? 32 : 64)
+        || !TEST_size_t_eq(OSSL_FN_num_bits(fp),
+            (size_t)BN_num_bits(&ossl_bignum_ffdhe2048_p))
+        || !TEST_int_eq(OSSL_FN_cmp(fp, fp), 0)
+        || !TEST_false(OSSL_FN_is_zero(fp)))
+        return 0;
+
+    /* inv_sqrt_2: non-NULL, non-zero, 4 limbs on 64-bit / 8 on 32-bit */
+    if (!TEST_ptr(fs = bn_get_ossl_fn(&ossl_bn_inv_sqrt_2))
+        || !TEST_size_t_eq(ossl_fn_get_dsize(fs),
+            OSSL_FN_BYTES == 8 ? 4 : 8)
+        || !TEST_false(OSSL_FN_is_zero(fs)))
+        return 0;
+
+    return 1;
+}
+
 static int test_ctx_size_compose(void)
 {
     size_t s1 = 42, s2 = 100;
@@ -479,6 +527,7 @@ int setup_tests(void)
     ADD_TEST(test_secure_ctx);
     ADD_TEST(test_secure_ctx_size);
     ADD_TEST(test_ctx_peak_used);
+    ADD_TEST(test_static_const_views);
     ADD_TEST(test_ctx_size_compose);
 
     return 1;
