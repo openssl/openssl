@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added an aggregate reassembly byte budget for DTLS handshake state.
+   The DTLS reassembly path lacked an aggregate byte limit per SSL
+   connection, allowing an attacker to retain up to ~1.3 MB of
+   reassembly state per connection across many connections for
+   unauthenticated memory exhaustion. A configurable
+   `DTLS_MAX_REASSEMBLY_BUDGET` now caps the total.
+
+   *Saksham Kapoor*
+
  * Fixed TLS 1.3 external PSK connections being wrongly rejected when
    the client sets a non-empty session ID context.
 
