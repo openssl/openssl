@@ -200,6 +200,9 @@
         OSSL_LIST_DBG(type * _p); /* local variable '_p' when debug */                        \
         if (lt == NULL || lh == NULL || lt->num_elems == 0 || lh == lt)                       \
             return;                                                                           \
+        /*                                                                                    \
+         * let's be optimistic about size_t overflow here: it can not happen.                 \
+         */                                                                                   \
         lh->num_elems += lt->num_elems;                                                       \
         if (lh->omega == NULL) {                                                              \
             assert(lh->alpha == NULL);                                                        \
