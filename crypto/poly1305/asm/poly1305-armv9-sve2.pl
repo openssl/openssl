@@ -304,6 +304,7 @@ poly1305_lazy_reduce_sve2:
 //  a VLA risc-v implementation in https://github.com/dot-asm/cryptogams.
 //
 .globl	poly1305_blocks_sve2
+.hidden	poly1305_blocks_sve2
 .type	poly1305_blocks_sve2,%function
 .align	5
 poly1305_blocks_sve2:
