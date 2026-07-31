@@ -835,6 +835,13 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
 
     if (!match_ri)
         ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
+    else
+        /*
+         * Recipients of the right key type exist but none matched the
+         * provided certificate. Raise a meaningful error so callers can
+         * determine the reason for failure via ERR_get_error().
+         */
+        ERR_raise(ERR_LIB_CMS, CMS_R_NO_MATCHING_RECIPIENT);
     return 0;
 }
 

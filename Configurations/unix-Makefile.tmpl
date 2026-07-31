@@ -1176,7 +1176,7 @@ uninstall_image_docs:
 
 # It's important that generate_buildinfo comes after ordinals, as ordinals
 # is sensitive to build.info changes.
-update: generate errors ordinals generate_buildinfo ## Update errors, ordinals and build info
+update: generate errors ordinals generate_buildinfo update_doc_nits ## Update errors, ordinals and build info
 
 .PHONY: generate generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
@@ -1185,6 +1185,10 @@ generate: generate_apps generate_crypto_bn generate_crypto_objects \
 
 .PHONY: generate_buildinfo generate_doc_buildinfo
 generate_buildinfo: generate_doc_buildinfo
+
+.PHONY: update_doc_nits
+update_doc_nits:
+	$(PERL) $(SRCDIR)/util/find-doc-nits -U
 
 .PHONY: doc-nits md-nits
 doc-nits: build_generated_pods ## Evaluate OpenSSL documentation
