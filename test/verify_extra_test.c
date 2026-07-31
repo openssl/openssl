@@ -26,6 +26,11 @@ static char *req_f = NULL;
 static char *sroot_cert = NULL;
 static char *ca_cert = NULL;
 static char *ee_cert = NULL;
+static char *root_cert = NULL;
+static char *ee_client_cert = NULL;
+static char *pc1_cert = NULL;
+static char *pc2_cert = NULL;
+static char *bad_pc4_cert = NULL;
 
 #define load_cert_from_file(file) load_cert_pem(file, NULL)
 
@@ -766,6 +771,98 @@ static int test_purpose_any(void)
     return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
+static int do_test_proxy_pathlen(const char *leaf_file, int assert_pathlen,
+    long pathlen, int expected)
+{
+    X509 *leaf = load_cert_from_file(leaf_file); /* may result in NULL */
+    X509 *pc1 = load_cert_from_file(pc1_cert);
+    X509 *eeclient = load_cert_from_file(ee_client_cert);
+    X509 *cacert = load_cert_from_file(ca_cert);
+    X509 *rootcert = load_cert_from_file(root_cert);
+    STACK_OF(X509) *trusted = sk_X509_new_null();
+    STACK_OF(X509) *untrusted = sk_X509_new_null();
+    X509_STORE_CTX *ctx = X509_STORE_CTX_new();
+    int testresult = 0;
+
+    if (!TEST_ptr(leaf)
+        || !TEST_ptr(pc1)
+        || !TEST_ptr(eeclient)
+        || !TEST_ptr(cacert)
+        || !TEST_ptr(rootcert)
+        || !TEST_ptr(trusted)
+        || !TEST_ptr(untrusted)
+        || !TEST_ptr(ctx))
+        goto err;
+
+    if (assert_pathlen) {
+        X509_set_proxy_flag(pc1);
+        X509_set_proxy_pathlen(pc1, pathlen);
+        if (!TEST_long_eq(X509_get_proxy_pathlen(pc1), pathlen))
+            goto err;
+    }
+
+    if (!TEST_true(sk_X509_push(trusted, rootcert)))
+        goto err;
+    rootcert = NULL;
+    if (!TEST_true(sk_X509_push(untrusted, pc1)))
+        goto err;
+    pc1 = NULL;
+    if (!TEST_true(sk_X509_push(untrusted, eeclient)))
+        goto err;
+    eeclient = NULL;
+    if (!TEST_true(sk_X509_push(untrusted, cacert)))
+        goto err;
+    cacert = NULL;
+
+    if (!TEST_true(X509_STORE_CTX_init(ctx, NULL, leaf, untrusted)))
+        goto err;
+
+    X509_STORE_CTX_set_flags(ctx, X509_V_FLAG_ALLOW_PROXY_CERTS);
+    /* Despite the set0 name, we still have to free trusted ourselves. */
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+
+    if (!TEST_int_eq(X509_verify_cert(ctx), expected))
+        goto err;
+
+    /* A rejected chain here is always rejected for its proxy path length. */
+    if (expected != 1
+        && !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED))
+        goto err;
+
+    testresult = 1;
+err:
+    OSSL_STACK_OF_X509_free(trusted);
+    OSSL_STACK_OF_X509_free(untrusted);
+    X509_STORE_CTX_free(ctx);
+    X509_free(leaf);
+    X509_free(pc1);
+    X509_free(eeclient);
+    X509_free(cacert);
+    X509_free(rootcert);
+    return testresult;
+}
+
+static int test_proxy_pathlen_from_extension(void)
+{
+    return do_test_proxy_pathlen(pc2_cert, 0, 0, 1);
+}
+
+static int test_proxy_pathlen_from_extension_exceeded(void)
+{
+    return do_test_proxy_pathlen(bad_pc4_cert, 0, 0, 0);
+}
+
+static int test_proxy_pathlen_asserted_exceeded(void)
+{
+    return do_test_proxy_pathlen(pc2_cert, 1, 0, 0);
+}
+
+static int test_proxy_pathlen_asserted_allows(void)
+{
+    return do_test_proxy_pathlen(bad_pc4_cert, 1, 2, 1);
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -785,7 +882,12 @@ int setup_tests(void)
         || !TEST_ptr(req_f = test_mk_file_path(certs_dir, "sm2-csr.pem"))
         || !TEST_ptr(sroot_cert = test_mk_file_path(certs_dir, "sroot-cert.pem"))
         || !TEST_ptr(ca_cert = test_mk_file_path(certs_dir, "ca-cert.pem"))
-        || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem")))
+        || !TEST_ptr(ee_cert = test_mk_file_path(certs_dir, "ee-cert.pem"))
+        || !TEST_ptr(root_cert = test_mk_file_path(certs_dir, "root-cert.pem"))
+        || !TEST_ptr(ee_client_cert = test_mk_file_path(certs_dir, "ee-client.pem"))
+        || !TEST_ptr(pc1_cert = test_mk_file_path(certs_dir, "pc1-cert.pem"))
+        || !TEST_ptr(pc2_cert = test_mk_file_path(certs_dir, "pc2-cert.pem"))
+        || !TEST_ptr(bad_pc4_cert = test_mk_file_path(certs_dir, "bad-pc4-cert.pem")))
         goto err;
 
     ADD_TEST(test_alt_chains_cert_forgery);
@@ -800,6 +902,10 @@ int setup_tests(void)
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
+    ADD_TEST(test_proxy_pathlen_from_extension);
+    ADD_TEST(test_proxy_pathlen_from_extension_exceeded);
+    ADD_TEST(test_proxy_pathlen_asserted_exceeded);
+    ADD_TEST(test_proxy_pathlen_asserted_allows);
     return 1;
 err:
     cleanup_tests();
@@ -816,4 +922,9 @@ void cleanup_tests(void)
     OPENSSL_free(sroot_cert);
     OPENSSL_free(ca_cert);
     OPENSSL_free(ee_cert);
+    OPENSSL_free(root_cert);
+    OPENSSL_free(ee_client_cert);
+    OPENSSL_free(pc1_cert);
+    OPENSSL_free(pc2_cert);
+    OPENSSL_free(bad_pc4_cert);
 }

@@ -564,7 +564,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         return 0;
     }
     tmp_ex_flags = const_x->ex_flags;
-    tmp_ex_pcpathlen = const_x->ex_pcpathlen;
     tmp_ex_kusage = const_x->ex_kusage;
     tmp_ex_nscert = const_x->ex_nscert;
 
@@ -619,6 +618,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Handle proxy certificates */
+    tmp_ex_pcpathlen = -1;
     if ((pci = X509_get_ext_d2i(const_x, NID_proxyCertInfo, &i, NULL)) != NULL) {
         if ((tmp_ex_flags & EXFLAG_CA) != 0
             || X509_get_ext_by_NID(const_x, NID_subject_alt_name, -1) >= 0
@@ -863,7 +863,7 @@ void X509_set_proxy_flag(X509 *x)
 
 void X509_set_proxy_pathlen(X509 *x, long l)
 {
-    x->ex_pcpathlen = l;
+    x->ex_proxy_pathlen = l;
 }
 
 int X509_check_ca(const X509 *x)
@@ -1293,6 +1293,11 @@ int ossl_x509_is_proxy(const X509 *x)
     return (x->ex_flags & EXFLAG_PROXY) != 0 || x->ex_proxy_user;
 }
 
+long ossl_x509_get_proxy_pathlen(const X509 *x)
+{
+    return x->ex_proxy_user ? x->ex_proxy_pathlen : x->ex_pcpathlen;
+}
+
 uint32_t X509_get_extension_flags(const X509 *x)
 {
     /* EXFLAG_PROXY may be caller-asserted rather than derived; synthesise it. */
@@ -1386,5 +1391,5 @@ long X509_get_proxy_pathlen(const X509 *x)
     if ((x->ex_flags & EXFLAG_INVALID) != 0
         || !ossl_x509_is_proxy(x))
         return -1;
-    return x->ex_pcpathlen;
+    return ossl_x509_get_proxy_pathlen(x);
 }

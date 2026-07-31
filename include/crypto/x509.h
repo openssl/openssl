@@ -186,11 +186,13 @@ struct x509_st {
     long ex_pcpathlen;
     uint32_t ex_flags;
     /*
-     * Proxy status asserted by X509_set_proxy_flag() rather than derived from
-     * a proxyCertInfo extension.  Kept out of ex_flags so the derived-flag
-     * cache can be rebuilt without losing this caller-supplied state.
+     * Proxy status and path length asserted by X509_set_proxy_flag() and
+     * X509_set_proxy_pathlen() rather than derived from a proxyCertInfo
+     * extension.  Kept out of ex_flags and ex_pcpathlen so the derived cache
+     * can be rebuilt without losing this caller-supplied state.
      */
     int ex_proxy_user;
+    long ex_proxy_pathlen;
     uint32_t ex_kusage;
     uint32_t ex_xkusage;
     uint32_t ex_nscert;
@@ -329,8 +331,8 @@ int ossl_x509v3_cache_extensions(const X509 *x);
  * ossl_x509v3_cache_extensions() call rebuilds every certificate-derived
  * object (including the policy cache) and recomputes siginf and the SHA-1
  * fingerprint.  Caller-supplied state is left untouched: the ex_proxy_user
- * assertion, and ex_pcpathlen (carried forward if user-set, otherwise
- * re-derived from an extension).
+ * assertion and ex_proxy_pathlen; the derived ex_pcpathlen is rebuilt from the
+ * proxyCertInfo extension.
  *
  * @param x the certificate whose cached extension data is discarded
  *
@@ -342,6 +344,12 @@ int ossl_x509v3_cache_extensions(const X509 *x);
 void ossl_x509_reset_ext_cache(X509 *x);
 /* True if the certificate is a proxy cert, whether derived or caller-asserted. */
 int ossl_x509_is_proxy(const X509 *x);
+/**
+ * @brief Proxy path length of a certificate, caller-asserted or derived.
+ * @param x the certificate to report the proxy path length of
+ * @returns the proxy path length, or -1 if it is unconstrained
+ */
+long ossl_x509_get_proxy_pathlen(const X509 *x);
 int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
