@@ -2483,11 +2483,6 @@ int speed_main(int argc, char **argv)
         memset(loopargs[i].buf2_malloc, 0, buflen);
     }
 
-    /*
-     * TBD:
-     *   Should this be placed near the loop "for (; *argv; argv++)"
-     *   for easier maintenance?
-     */
     /* No parameters; turn on everything. */
     if (argc == 0 && !doit[D_EVP] && !doit[D_HMAC]
         && !doit[D_EVP_CMAC] && !do_kems && !do_sigs) {
