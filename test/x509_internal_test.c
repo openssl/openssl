@@ -1448,6 +1448,249 @@ err:
     return ret;
 }
 
+/* The top error must be the "called on an unfinalized certificate" marker. */
+static int expect_unfinalized_error(void)
+{
+    unsigned long e = ERR_peek_error();
+
+    return TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_X509V3)
+        && TEST_int_eq(ERR_GET_REASON(e), ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+}
+
+/* Add an authorityKeyIdentifier carrying a key id, an issuer and a serial. */
+static int cache_test_add_akid(X509 *x, unsigned char keyid_byte, long serial)
+{
+    AUTHORITY_KEYID *akid = NULL;
+    GENERAL_NAME *gn = NULL;
+    X509_NAME *iname = NULL;
+    unsigned char id[20];
+    int ret = 0;
+
+    memset(id, keyid_byte, sizeof(id));
+    if (!TEST_ptr(akid = AUTHORITY_KEYID_new())
+        || !TEST_ptr(akid->keyid = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(akid->keyid, id, sizeof(id)))
+        || !TEST_ptr(akid->serial = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(akid->serial, serial))
+        || !TEST_ptr(iname = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(iname, "CN", MBSTRING_ASC,
+            (const unsigned char *)"cache-issuer", -1, -1, 0))
+        || !TEST_ptr(gn = GENERAL_NAME_new())
+        || !TEST_ptr(akid->issuer = GENERAL_NAMES_new()))
+        goto err;
+    GENERAL_NAME_set0_value(gn, GEN_DIRNAME, iname);
+    iname = NULL;
+    if (!TEST_true(sk_GENERAL_NAME_push(akid->issuer, gn)))
+        goto err;
+    gn = NULL;
+    ret = TEST_int_eq(X509_add1_ext_i2d(x, NID_authority_key_identifier, akid,
+                          0, X509V3_ADD_REPLACE),
+        1);
+err:
+    X509_NAME_free(iname);
+    GENERAL_NAME_free(gn);
+    AUTHORITY_KEYID_free(akid);
+    return ret;
+}
+
+/*
+ * Every public accessor that reads the extension cache must, on an unfinalized
+ * certificate, return its failure value (raising a diagnostic for the gated
+ * ones, staying quiet for the two that merely report cached state), and must
+ * report the finalized values once a completely different certificate has been
+ * decoded into it.
+ */
+/*
+ * Populate x with a full, self-consistent extension set: basicConstraints
+ * (CA, pathlen), keyUsage (ku_bit1 plus ku_bit2 if non-negative), extended
+ * keyUsage (eku_nid), subjectKeyIdentifier and authorityKeyIdentifier.
+ */
+static int cache_test_add_exts(X509 *x, unsigned char skid_byte,
+    unsigned char akid_byte, long serial, long pathlen, int ku_bit1,
+    int ku_bit2, int eku_nid)
+{
+    ASN1_OCTET_STRING *skid = NULL;
+    ASN1_BIT_STRING *ku = NULL;
+    EXTENDED_KEY_USAGE *eku = NULL;
+    BASIC_CONSTRAINTS *bc = NULL;
+    unsigned char id[20];
+    int ret = 0;
+
+    memset(id, skid_byte, sizeof(id));
+    if (!TEST_ptr(bc = BASIC_CONSTRAINTS_new()))
+        goto err;
+    bc->ca = 1;
+    if (!TEST_ptr(bc->pathlen = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(bc->pathlen, pathlen))
+        || !TEST_int_eq(X509_add1_ext_i2d(x, NID_basic_constraints, bc, 1,
+                            X509V3_ADD_REPLACE),
+            1)
+        || !TEST_ptr(ku = ASN1_BIT_STRING_new())
+        || !TEST_true(ASN1_BIT_STRING_set_bit(ku, ku_bit1, 1)))
+        goto err;
+    if (ku_bit2 >= 0 && !TEST_true(ASN1_BIT_STRING_set_bit(ku, ku_bit2, 1)))
+        goto err;
+    if (!TEST_int_eq(X509_add1_ext_i2d(x, NID_key_usage, ku, 1,
+                         X509V3_ADD_REPLACE),
+            1)
+        || !TEST_ptr(eku = sk_ASN1_OBJECT_new_null())
+        || !TEST_true(sk_ASN1_OBJECT_push(eku, OBJ_nid2obj(eku_nid)))
+        || !TEST_int_eq(X509_add1_ext_i2d(x, NID_ext_key_usage, eku, 0,
+                            X509V3_ADD_REPLACE),
+            1)
+        || !TEST_ptr(skid = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(skid, id, sizeof(id)))
+        || !TEST_int_eq(X509_add1_ext_i2d(x, NID_subject_key_identifier, skid,
+                            0, X509V3_ADD_REPLACE),
+            1)
+        || !cache_test_add_akid(x, akid_byte, serial))
+        goto err;
+    ret = 1;
+err:
+    BASIC_CONSTRAINTS_free(bc);
+    ASN1_BIT_STRING_free(ku);
+    sk_ASN1_OBJECT_free(eku);
+    ASN1_OCTET_STRING_free(skid);
+    return ret;
+}
+
+static int test_cache_accessors_finalization(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *a = NULL, *b = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    const ASN1_OCTET_STRING *oct;
+    const ASN1_INTEGER *serial;
+    const GENERAL_NAMES *gens;
+    unsigned char idbuf[20];
+    int len, mdnid = 0, pknid = 0;
+
+    /*
+     * An unfinalized certificate populated with its own, completely different
+     * extension values (CA pathlen 3, digitalSignature, clientAuth, SKID 0xAA,
+     * AKID 0xBB).  It is never signed, so its cache is never built.
+     */
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(a = cache_test_make_cert(key, "unfinalized"))
+        || !cache_test_add_exts(a, 0xAA, 0xBB, 0x1111, 3, 0, -1,
+            NID_client_auth))
+        goto err;
+
+    /* Gated accessors: failure value plus the unfinalized diagnostic. */
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_check_purpose(a, -1, 0), -1)
+        || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_check_ca(a), 0) || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_uint_eq(X509_get_key_usage(a), 0) || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_uint_eq(X509_get_extended_key_usage(a), 0)
+        || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_ptr_null(X509_get0_subject_key_id(a))
+        || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_ptr_null(X509_get0_authority_key_id(a))
+        || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_ptr_null(X509_get0_authority_issuer(a))
+        || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_ptr_null(X509_get0_authority_serial(a))
+        || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_long_eq(X509_get_pathlen(a), -1) || !expect_unfinalized_error())
+        goto err;
+    ERR_clear_error();
+    if (!TEST_long_eq(X509_get_proxy_pathlen(a), -1)
+        || !expect_unfinalized_error())
+        goto err;
+
+    /*
+     * These two report cache state without raising: get_extension_flags
+     * returns the raw flag word (here EXFLAG_SET is clear, as A is
+     * unfinalized), and get_signature_info truthfully reports that no
+     * signature information is available before finalization.
+     */
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_get_extension_flags(a) & EXFLAG_SET, 0)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_get_signature_info(a, &mdnid, &pknid, NULL, NULL), 0)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+
+    /*
+     * A completely different, signed certificate B (CA pathlen 7,
+     * keyCertSign|cRLSign, serverAuth, SKID 0xCC, AKID 0xDD).
+     */
+    if (!TEST_ptr(b = cache_test_make_cert(key, "finalized"))
+        || !cache_test_add_exts(b, 0xCC, 0xDD, 0x4242, 7, 5, 6, NID_server_auth)
+        || !TEST_int_gt(X509_sign(b, key, EVP_sha256()), 0)
+        || !TEST_int_gt(len = i2d_X509(b, &der), 0))
+        goto err;
+
+    /* Finalize A by decoding B into it (d2i reuse). */
+    p = der;
+    if (!TEST_ptr(a = d2i_X509(&a, &p, len)))
+        goto err;
+
+    /* Gated accessors now return B's finalized values. */
+    if (!TEST_int_eq(X509_check_purpose(a, -1, 0), 1)
+        || !TEST_int_eq(X509_check_ca(a), 1)
+        || !TEST_uint_eq(X509_get_key_usage(a), KU_KEY_CERT_SIGN | KU_CRL_SIGN)
+        || !TEST_uint_eq(X509_get_extended_key_usage(a), XKU_SSL_SERVER)
+        || !TEST_long_eq(X509_get_pathlen(a), 7)
+        || !TEST_long_eq(X509_get_proxy_pathlen(a), -1))
+        goto err;
+
+    memset(idbuf, 0xCC, sizeof(idbuf));
+    if (!TEST_ptr(oct = X509_get0_subject_key_id(a))
+        || !TEST_mem_eq(ASN1_STRING_get0_data(oct), ASN1_STRING_get_length(oct),
+            idbuf, sizeof(idbuf)))
+        goto err;
+    memset(idbuf, 0xDD, sizeof(idbuf));
+    if (!TEST_ptr(oct = X509_get0_authority_key_id(a))
+        || !TEST_mem_eq(ASN1_STRING_get0_data(oct), ASN1_STRING_get_length(oct),
+            idbuf, sizeof(idbuf)))
+        goto err;
+    if (!TEST_ptr(gens = X509_get0_authority_issuer(a))
+        || !TEST_int_eq(sk_GENERAL_NAME_num(gens), 1)
+        || !TEST_ptr(serial = X509_get0_authority_serial(a))
+        || !TEST_long_eq(ASN1_INTEGER_get(serial), 0x4242))
+        goto err;
+
+    /* Ungated accessors now report the finalized state. */
+    if (!TEST_int_ne(X509_get_extension_flags(a) & EXFLAG_SET, 0)
+        || !TEST_int_ne(X509_get_extension_flags(a) & EXFLAG_CA, 0))
+        goto err;
+    mdnid = pknid = 0;
+    if (!TEST_int_eq(X509_get_signature_info(a, &mdnid, &pknid, NULL, NULL), 1)
+        || !TEST_int_eq(mdnid, NID_sha256)
+        || !TEST_int_eq(pknid, NID_rsaEncryption))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(der);
+    X509_free(b);
+    X509_free(a);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -1468,6 +1711,7 @@ int setup_tests(void)
     ADD_TEST(test_proxy_pathlen_not_stale);
     ADD_TEST(test_invalid_ext_raises);
     ADD_TEST(test_invalid_policy_flag);
+    ADD_TEST(test_cache_accessors_finalization);
 
     return 1;
 }
