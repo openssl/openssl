@@ -576,17 +576,13 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
      * return is an allocation failure, which fails finalization; invalid policy
      * extensions are not fatal and only set EXFLAG_INVALID_POLICY.
      */
-    {
-        int policy_inval = 0;
-
-        tmp_policy_cache = ossl_policy_cache_new(const_x, &policy_inval);
-        if (tmp_policy_cache == NULL) {
-            ERR_pop_to_mark();
-            return 0;
-        }
-        if (policy_inval)
-            tmp_ex_flags |= EXFLAG_INVALID_POLICY;
+    tmp_policy_cache = ossl_policy_cache_new(const_x);
+    if (tmp_policy_cache == NULL) {
+        ERR_pop_to_mark();
+        return 0;
     }
+    if (tmp_policy_cache->invalid)
+        tmp_ex_flags |= EXFLAG_INVALID_POLICY;
 
     /* Cache the SHA1 digest of the cert */
     if (!X509_digest(const_x, EVP_sha1(), tmp_sha1_hash, NULL))
