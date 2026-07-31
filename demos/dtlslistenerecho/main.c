@@ -10,10 +10,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 #include <openssl/bio.h>
-#include "internal/thread_arch.h"
+#include <openssl/crypto.h>
 
 #if !defined(OPENSSL_SYS_WINDOWS)
 #include <unistd.h>
@@ -21,6 +22,7 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <poll.h>
+#include <pthread.h>
 
 #define SOCKET int
 #define INVALID_SOCKET (-1)
@@ -32,10 +34,18 @@
 #include <conio.h>
 #endif
 
+#if defined(OPENSSL_SYS_WINDOWS)
+typedef HANDLE thread_t;
+#else
+typedef pthread_t thread_t;
+#endif
+
 static const int server_port = 4433;
 
 #define MAX_CONNECTIONS 10
 #define POLL_TIMEOUT_SEC 5
+/* Abandon a connection whose client sends nothing for 30 seconds. */
+#define CLIENT_IDLE_TIMEOUT_SEC 30
 
 /*
  * Per-thread state for connection handlers
@@ -43,8 +53,8 @@ static const int server_port = 4433;
 struct connection_thread_args {
     SSL *conn;
     int thread_idx;
-    CRYPTO_THREAD *thread;
-    int result;
+    thread_t thread;
+    int active;
     int shutdown_requested;
     int finished;
     int *server_shutdown;
@@ -53,6 +63,8 @@ struct connection_thread_args {
 typedef unsigned char flag;
 #define true 1
 #define false 0
+
+static CRYPTO_RWLOCK *atomic_lock = NULL;
 
 static SSL_CTX *create_context(flag isServer)
 {
@@ -65,7 +77,7 @@ static SSL_CTX *create_context(flag isServer)
     }
 
     if (ctx == NULL) {
-        perror("Unable to create SSL context");
+        fprintf(stderr, "Unable to create SSL context\n");
         ERR_print_errors_fp(stderr);
         exit(EXIT_FAILURE);
     }
@@ -77,66 +89,61 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
     SSL **listener, SOCKET *server_fd)
 {
     BIO *listener_bio = NULL;
-    BIO_ADDR *server_addr = NULL;
-    struct in_addr ina;
-    union BIO_sock_info_u info;
+    BIO_ADDRINFO *res = NULL;
+    const BIO_ADDR *addr;
+    char port_str[6];
     int ret = 0;
 
     *listener = NULL;
     *server_fd = INVALID_SOCKET;
 
-    /* Create and bind server UDP socket */
-    *server_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    /*
+     * Resolve the wildcard address for our port. Requesting AF_INET6 gives a
+     * single socket that, since we do not pass BIO_SOCK_V6_ONLY to BIO_listen,
+     * serves both IPv6 and IPv4 clients.
+     */
+    BIO_snprintf(port_str, sizeof(port_str), "%d", port);
+    if (!BIO_lookup_ex(NULL, port_str, BIO_LOOKUP_SERVER, AF_INET6,
+            SOCK_DGRAM, 0, &res)) {
+        fprintf(stderr, "Unable to resolve local address\n");
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+    addr = BIO_ADDRINFO_address(res);
+
+    *server_fd = BIO_socket(BIO_ADDRINFO_family(res), SOCK_DGRAM, 0, 0);
     if (*server_fd == INVALID_SOCKET) {
-        perror("Unable to create UDP socket");
+        fprintf(stderr, "Unable to create UDP socket\n");
+        ERR_print_errors_fp(stderr);
         goto err;
     }
 
-    /* Set socket to non-blocking mode */
-    if (!BIO_socket_nbio((int)*server_fd, 1)) {
-        perror("Unable to set socket to non-blocking");
+    /*
+     * BIO_listen binds the socket. Pass BIO_SOCK_NONBLOCK so the listener is
+     * non-blocking. Omitting BIO_SOCK_V6_ONLY clears IPV6_V6ONLY, giving a
+     * dual-stack socket that serves both IPv6 and IPv4 clients.
+     */
+    if (!BIO_listen((int)*server_fd, addr,
+            BIO_SOCK_REUSEADDR | BIO_SOCK_NONBLOCK)) {
+        fprintf(stderr, "Unable to bind socket\n");
+        ERR_print_errors_fp(stderr);
         goto err;
     }
 
-    /* Create address for binding - use INADDR_ANY to listen on all interfaces */
-    server_addr = BIO_ADDR_new();
-    if (server_addr == NULL) {
-        perror("Unable to allocate BIO_ADDR");
-        goto err;
-    }
-
-    ina.s_addr = htonl(INADDR_ANY);
-    if (!BIO_ADDR_rawmake(server_addr, AF_INET, &ina, sizeof(ina), htons(port))) {
-        perror("Unable to create server address");
-        goto err;
-    }
-
-    /* Bind the socket to the address */
-    if (!BIO_bind((int)*server_fd, server_addr, 0)) {
-        perror("Unable to bind socket");
-        goto err;
-    }
-
-    /* Get the actual bound address (useful if port was 0 for ephemeral) */
-    info.addr = server_addr;
-    if (!BIO_sock_info((int)*server_fd, BIO_SOCK_INFO_ADDRESS, &info)) {
-        perror("Unable to get socket info");
-        goto err;
-    }
-
-    printf("Server bound to port %d\n", ntohs(BIO_ADDR_rawport(server_addr)));
+    printf("Server bound to port %d\n", port);
 
     /* Create a datagram BIO and attach the socket */
     listener_bio = BIO_new_dgram((int)*server_fd, BIO_NOCLOSE);
     if (listener_bio == NULL) {
-        perror("Unable to create datagram BIO");
+        fprintf(stderr, "Unable to create datagram BIO\n");
+        ERR_print_errors_fp(stderr);
         goto err;
     }
 
     /* Create the DTLS listener with HVR (DTLS 1.2) and HRR (DTLS 1.3) cookie validation */
     *listener = SSL_new_listener(ssl_ctx, SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR);
     if (*listener == NULL) {
-        perror("Unable to create DTLS listener");
+        fprintf(stderr, "Unable to create DTLS listener\n");
         ERR_print_errors_fp(stderr);
         goto err;
     }
@@ -147,7 +154,7 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
 
     /* Start listening for incoming connections */
     if (SSL_listen(*listener) != 1) {
-        perror("SSL_listen failed");
+        fprintf(stderr, "SSL_listen failed\n");
         ERR_print_errors_fp(stderr);
         goto err;
     }
@@ -156,7 +163,7 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
 
 err:
     BIO_free(listener_bio);
-    BIO_ADDR_free(server_addr);
+    BIO_ADDRINFO_free(res);
     if (ret == 0) {
         SSL_free(*listener);
         *listener = NULL;
@@ -168,27 +175,27 @@ err:
 }
 
 /*
- * Thread function: handles a single DTLS connection.
- * Completes the handshake, then reads data and echoes it back.
- * Returns 1 if "killall" command was received, 0 otherwise.
+ * Thread worker: handles a single DTLS connection. Completes the handshake,
+ * then reads data and echoes it back until the peer disconnects, a shutdown is
+ * requested, or the client goes idle.
  */
-static unsigned int server_connection_thread(void *arg)
+static void handle_connection(struct connection_thread_args *conn_args)
 {
-    struct connection_thread_args *conn_args = arg;
     SSL_POLL_ITEM item;
     struct timeval timeout;
     size_t result_count, readbytes, written;
     char buf[1500];
     int ret, err;
-
-    conn_args->result = 0;
-    conn_args->finished = 0;
+    int shutdown_requested = 0;
+    time_t idle_deadline;
 
     printf("Thread %d: Starting connection handler\n", conn_args->thread_idx);
 
     /* Complete the handshake */
     while ((ret = SSL_accept(conn_args->conn)) != 1) {
-        if (conn_args->shutdown_requested) {
+        CRYPTO_atomic_load_int(&conn_args->shutdown_requested,
+            &shutdown_requested, atomic_lock);
+        if (shutdown_requested) {
             printf("Thread %d: Shutdown requested during handshake\n", conn_args->thread_idx);
             goto done;
         }
@@ -196,6 +203,26 @@ static unsigned int server_connection_thread(void *arg)
         if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
             printf("Thread %d: Handshake failed\n", conn_args->thread_idx);
             ERR_print_errors_fp(stderr);
+            goto done;
+        }
+
+        /*
+         * Wait for the socket to become ready rather than busy-looping, and
+         * abandon the connection if the client goes quiet mid-handshake.
+         */
+        item.desc = SSL_as_poll_descriptor(conn_args->conn);
+        item.events = (err == SSL_ERROR_WANT_READ) ? SSL_POLL_EVENT_R
+                                                   : SSL_POLL_EVENT_W;
+        item.revents = 0;
+        timeout.tv_sec = POLL_TIMEOUT_SEC;
+        timeout.tv_usec = 0;
+        if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
+            printf("Thread %d: SSL_poll failed during handshake\n", conn_args->thread_idx);
+            ERR_print_errors_fp(stderr);
+            goto done;
+        }
+        if (result_count == 0) {
+            printf("Thread %d: Handshake timed out, abandoning\n", conn_args->thread_idx);
             goto done;
         }
     }
@@ -206,8 +233,10 @@ static unsigned int server_connection_thread(void *arg)
     item.desc = SSL_as_poll_descriptor(conn_args->conn);
     item.events = SSL_POLL_EVENT_R;
 
+    idle_deadline = time(NULL) + CLIENT_IDLE_TIMEOUT_SEC;
+
     /* Main read/echo loop */
-    while (!conn_args->shutdown_requested) {
+    while (!shutdown_requested) {
         item.revents = 0;
         timeout.tv_sec = POLL_TIMEOUT_SEC;
         timeout.tv_usec = 0;
@@ -219,14 +248,21 @@ static unsigned int server_connection_thread(void *arg)
         }
 
         /* Check shutdown after poll returns */
-        if (conn_args->shutdown_requested) {
+        CRYPTO_atomic_load_int(&conn_args->shutdown_requested,
+            &shutdown_requested, atomic_lock);
+        if (shutdown_requested) {
             printf("Thread %d: Shutdown requested\n", conn_args->thread_idx);
             break;
         }
 
-        /* Timeout - no data, loop again */
-        if (result_count == 0 || (item.revents & SSL_POLL_EVENT_R) == 0)
+        /* No data this round; abandon if the client has been idle too long. */
+        if (result_count == 0 || (item.revents & SSL_POLL_EVENT_R) == 0) {
+            if (time(NULL) >= idle_deadline) {
+                printf("Thread %d: Client idle timeout, abandoning\n", conn_args->thread_idx);
+                break;
+            }
             continue;
+        }
 
         ret = SSL_read_ex(conn_args->conn, buf, sizeof(buf) - 1, &readbytes);
         if (ret != 1) {
@@ -242,17 +278,21 @@ static unsigned int server_connection_thread(void *arg)
 
         buf[readbytes] = '\0';
 
+        /* Received data: the client is alive, so push out the idle deadline. */
+        idle_deadline = time(NULL) + CLIENT_IDLE_TIMEOUT_SEC;
+
         /* Check for kill command - exits this thread only */
-        if (strcmp(buf, "kill\n") == 0) {
+        if (strcmp(buf, "kill\n") == 0 || strcmp(buf, "kill\r\n") == 0) {
             printf("Thread %d: Kill command received, disconnecting\n", conn_args->thread_idx);
             break;
         }
 
         /* Check for killall command - signals server-wide shutdown */
-        if (strcmp(buf, "killall\n") == 0) {
+        if (strcmp(buf, "killall\n") == 0 || strcmp(buf, "killall\r\n") == 0) {
             printf("Thread %d: Killall command received, initiating server shutdown\n", conn_args->thread_idx);
             if (conn_args->server_shutdown != NULL)
-                *conn_args->server_shutdown = 1;
+                CRYPTO_atomic_store_int(conn_args->server_shutdown, 1,
+                    atomic_lock);
             break;
         }
 
@@ -266,17 +306,71 @@ static unsigned int server_connection_thread(void *arg)
         }
     }
 
-    conn_args->result = 1;
-
 done:
     /* Send graceful shutdown to client */
     printf("Thread %d: Sending shutdown to client\n", conn_args->thread_idx);
     SSL_shutdown(conn_args->conn);
 
     printf("Thread %d: Exiting\n", conn_args->thread_idx);
-    conn_args->finished = 1;
+    CRYPTO_atomic_store_int(&conn_args->finished, 1, atomic_lock);
+}
+
+/*
+ * Platform thread glue. handle_connection() does the real work; these wrappers
+ * adapt it to the native thread entry-point signature and start/join threads.
+ */
+#if defined(OPENSSL_SYS_WINDOWS)
+
+static DWORD WINAPI thread_run(LPVOID arg)
+{
+    handle_connection(arg);
+    /*
+     * When linked against the static OpenSSL libraries each thread must stop
+     * itself so its per-thread state is released (see OPENSSL_thread_stop(3)).
+     */
+    OPENSSL_thread_stop();
     return 0;
 }
+
+static int run_thread(thread_t *t, void *arg)
+{
+    *t = CreateThread(NULL, 0, thread_run, arg, 0, NULL);
+    return *t != NULL;
+}
+
+static int wait_for_thread(thread_t thread)
+{
+    int ok = WaitForSingleObject(thread, INFINITE) == 0;
+
+    /* Release the handle so a long-running server does not leak them. */
+    CloseHandle(thread);
+    return ok;
+}
+
+#else
+
+static void *thread_run(void *arg)
+{
+    handle_connection(arg);
+    /*
+     * When linked against the static OpenSSL libraries each thread must stop
+     * itself so its per-thread state is released (see OPENSSL_thread_stop(3)).
+     */
+    OPENSSL_thread_stop();
+    return NULL;
+}
+
+static int run_thread(thread_t *t, void *arg)
+{
+    return pthread_create(t, NULL, thread_run, arg) == 0;
+}
+
+static int wait_for_thread(thread_t thread)
+{
+    return pthread_join(thread, NULL) == 0;
+}
+
+#endif
 
 /*
  * Find a free slot in the thread array.
@@ -287,7 +381,7 @@ static int find_free_thread_slot(struct connection_thread_args *threads)
     int i;
 
     for (i = 0; i < MAX_CONNECTIONS; i++) {
-        if (threads[i].thread == NULL)
+        if (!threads[i].active)
             return i;
     }
     return -1;
@@ -303,11 +397,14 @@ static void cleanup_finished_threads(struct connection_thread_args *threads)
     int i;
 
     for (i = 0; i < MAX_CONNECTIONS; i++) {
-        if (threads[i].thread != NULL && threads[i].finished) {
-            ossl_crypto_thread_native_join(threads[i].thread, NULL);
-            ossl_crypto_thread_native_clean(threads[i].thread);
+        int finished = 0;
+
+        if (threads[i].active)
+            CRYPTO_atomic_load_int(&threads[i].finished, &finished, atomic_lock);
+        if (threads[i].active && finished) {
+            wait_for_thread(threads[i].thread);
             SSL_free(threads[i].conn);
-            threads[i].thread = NULL;
+            threads[i].active = 0;
             threads[i].conn = NULL;
             threads[i].finished = 0;
             printf("Main: Cleaned up thread %d\n", i);
@@ -325,17 +422,17 @@ static void shutdown_all_threads(struct connection_thread_args *threads)
 
     /* Signal all threads to terminate */
     for (i = 0; i < MAX_CONNECTIONS; i++) {
-        if (threads[i].thread != NULL)
-            threads[i].shutdown_requested = 1;
+        if (threads[i].active)
+            CRYPTO_atomic_store_int(&threads[i].shutdown_requested, 1,
+                atomic_lock);
     }
 
     /* Join and clean up all threads */
     for (i = 0; i < MAX_CONNECTIONS; i++) {
-        if (threads[i].thread != NULL) {
-            ossl_crypto_thread_native_join(threads[i].thread, NULL);
-            ossl_crypto_thread_native_clean(threads[i].thread);
+        if (threads[i].active) {
+            wait_for_thread(threads[i].thread);
             SSL_free(threads[i].conn);
-            threads[i].thread = NULL;
+            threads[i].active = 0;
             threads[i].conn = NULL;
             printf("Main: Shut down thread %d\n", i);
         }
@@ -349,6 +446,7 @@ static void run_server(void)
     SSL *new_conn = NULL;
     SOCKET server_fd = INVALID_SOCKET;
     int server_shutdown = 0;
+    int shutdown_seen = 0;
     struct connection_thread_args conn_threads[MAX_CONNECTIONS];
     SSL_POLL_ITEM listener_item;
     struct timeval timeout;
@@ -357,6 +455,12 @@ static void run_server(void)
 
     /* Initialize thread array */
     memset(conn_threads, 0, sizeof(conn_threads));
+
+    atomic_lock = CRYPTO_THREAD_lock_new();
+    if (atomic_lock == NULL) {
+        fprintf(stderr, "Unable to create lock\n");
+        goto err;
+    }
 
     ssl_ctx = create_context(true);
 
@@ -383,7 +487,7 @@ static void run_server(void)
     listener_item.desc = SSL_as_poll_descriptor(listener);
     listener_item.events = SSL_POLL_EVENT_IC;
 
-    while (!server_shutdown) {
+    while (!shutdown_seen) {
         /* Clean up any finished threads first */
         cleanup_finished_threads(conn_threads);
 
@@ -399,7 +503,8 @@ static void run_server(void)
         }
 
         /* Check if shutdown was requested by a connection thread */
-        if (server_shutdown) {
+        CRYPTO_atomic_load_int(&server_shutdown, &shutdown_seen, atomic_lock);
+        if (shutdown_seen) {
             printf("Main: Server shutdown requested\n");
             break;
         }
@@ -428,18 +533,16 @@ static void run_server(void)
         /* Initialize thread args and spawn thread */
         conn_threads[slot].conn = new_conn;
         conn_threads[slot].thread_idx = slot;
-        conn_threads[slot].result = 0;
         conn_threads[slot].shutdown_requested = 0;
         conn_threads[slot].finished = 0;
         conn_threads[slot].server_shutdown = &server_shutdown;
 
-        conn_threads[slot].thread = ossl_crypto_thread_native_start(
-            server_connection_thread, &conn_threads[slot], 1);
-
-        if (conn_threads[slot].thread == NULL) {
+        conn_threads[slot].active = 1;
+        if (!run_thread(&conn_threads[slot].thread, &conn_threads[slot])) {
             fprintf(stderr, "Failed to start thread for slot %d\n", slot);
             SSL_free(new_conn);
             conn_threads[slot].conn = NULL;
+            conn_threads[slot].active = 0;
             continue;
         }
 
@@ -452,6 +555,7 @@ err:
     /* Signal all threads to shut down and clean up */
     shutdown_all_threads(conn_threads);
 
+    CRYPTO_THREAD_lock_free(atomic_lock);
     SSL_free(listener);
     SSL_CTX_free(ssl_ctx);
     if (server_fd != INVALID_SOCKET)
@@ -465,57 +569,67 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
     SSL **client, SOCKET *client_fd)
 {
     BIO *client_bio = NULL;
-    BIO_ADDR *server_addr = NULL;
     BIO_ADDRINFO *res = NULL;
+    const BIO_ADDRINFO *ai;
     char port_str[6];
     int ret = 0;
 
     *client = NULL;
     *client_fd = INVALID_SOCKET;
 
-    /* Create UDP socket */
-    *client_fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
+    /*
+     * Resolve the server address (IPv4 or IPv6) and connect a UDP socket of the
+     * matching family to the first address that works. For UDP, BIO_connect
+     * just records the default peer.
+     */
+    BIO_snprintf(port_str, sizeof(port_str), "%d", port);
+    if (!BIO_lookup(server_name, port_str, BIO_LOOKUP_CLIENT, AF_UNSPEC,
+            SOCK_DGRAM, &res)) {
+        fprintf(stderr, "Unable to resolve server: %s\n", server_name);
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+
+    for (ai = res; ai != NULL; ai = BIO_ADDRINFO_next(ai)) {
+        *client_fd = BIO_socket(BIO_ADDRINFO_family(ai), SOCK_DGRAM, 0, 0);
+        if (*client_fd == INVALID_SOCKET)
+            continue;
+        if (BIO_connect((int)*client_fd, BIO_ADDRINFO_address(ai), 0))
+            break;
+        BIO_closesocket((int)*client_fd);
+        *client_fd = INVALID_SOCKET;
+    }
+    BIO_ADDRINFO_free(res);
+    res = NULL;
     if (*client_fd == INVALID_SOCKET) {
-        perror("Unable to create UDP socket");
+        fprintf(stderr, "Unable to UDP connect to server: %s\n", server_name);
+        ERR_print_errors_fp(stderr);
         goto err;
     }
 
     /* Set socket to non-blocking mode */
     if (!BIO_socket_nbio((int)*client_fd, 1)) {
-        perror("Unable to set socket to non-blocking");
+        fprintf(stderr, "Unable to set socket to non-blocking\n");
+        ERR_print_errors_fp(stderr);
         goto err;
     }
 
-    /* Resolve server hostname or IP address */
-    BIO_snprintf(port_str, sizeof(port_str), "%d", port);
-    if (!BIO_lookup(server_name, port_str, BIO_LOOKUP_CLIENT, AF_INET, SOCK_DGRAM, &res)) {
-        fprintf(stderr, "Unable to resolve server: %s\n", server_name);
-        goto err;
-    }
-    server_addr = BIO_ADDR_dup(BIO_ADDRINFO_address(res));
-    BIO_ADDRINFO_free(res);
-    if (server_addr == NULL) {
-        perror("Unable to allocate BIO_ADDR");
-        goto err;
-    }
-
-    /* Create a datagram BIO and attach the socket */
+    /*
+     * Create the datagram BIO. Because the socket is already connected, the BIO
+     * auto-detects the peer (via getpeername), so no BIO_dgram_set_peer call is
+     * needed.
+     */
     client_bio = BIO_new_dgram((int)*client_fd, BIO_NOCLOSE);
     if (client_bio == NULL) {
-        perror("Unable to create datagram BIO");
-        goto err;
-    }
-
-    /* Set the peer address */
-    if (!BIO_dgram_set_peer(client_bio, server_addr)) {
-        perror("Unable to set peer address");
+        fprintf(stderr, "Unable to create datagram BIO\n");
+        ERR_print_errors_fp(stderr);
         goto err;
     }
 
     /* Create the SSL client */
     *client = SSL_new(ssl_ctx);
     if (*client == NULL) {
-        perror("Unable to create SSL client");
+        fprintf(stderr, "Unable to create SSL client\n");
         ERR_print_errors_fp(stderr);
         goto err;
     }
@@ -533,7 +647,7 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
 
 err:
     BIO_free(client_bio);
-    BIO_ADDR_free(server_addr);
+    BIO_ADDRINFO_free(res);
     if (ret == 0) {
         SSL_free(*client);
         *client = NULL;
@@ -588,6 +702,36 @@ static int do_client_handshake(SSL *client)
     return 1;
 }
 
+/*
+ * Send one line of user input to the server. Returns 1 to keep the client loop
+ * running, or 0 when the client should stop.
+ */
+static int process_line(SSL *client, const char *line, size_t len)
+{
+    size_t written;
+
+    if (!SSL_write_ex(client, line, len, &written)) {
+        fprintf(stderr, "Failed to send data\n");
+        ERR_print_errors_fp(stderr);
+        return 0;
+    }
+
+    if ((len == sizeof("kill\n") - 1 && memcmp(line, "kill\n", len) == 0)
+        || (len == sizeof("kill\r\n") - 1 && memcmp(line, "kill\r\n", len) == 0)) {
+        printf("Sent kill command, disconnecting\n");
+        return 0;
+    }
+
+    if ((len == sizeof("killall\n") - 1 && memcmp(line, "killall\n", len) == 0)
+        || (len == sizeof("killall\r\n") - 1
+            && memcmp(line, "killall\r\n", len) == 0)) {
+        printf("Sent killall command, server will shutdown\n");
+        return 0;
+    }
+
+    return 1;
+}
+
 static void run_client(char *rem_server_name, int dtls_version)
 {
     SSL_CTX *ssl_ctx = NULL;
@@ -595,7 +739,7 @@ static void run_client(char *rem_server_name, int dtls_version)
     SOCKET client_fd = INVALID_SOCKET;
     char input_buf[1500];
     char recv_buf[1500];
-    size_t written, readbytes;
+    size_t readbytes;
     int ret, err;
     int has_server_data = 0;
     int has_user_input = 0;
@@ -604,6 +748,9 @@ static void run_client(char *rem_server_name, int dtls_version)
     BIO *rbio;
     BIO_POLL_DESCRIPTOR rdesc;
     int ssl_fd;
+    size_t input_used = 0;
+    ssize_t n;
+    char *nl;
 #else
     fd_set read_fds;
     struct timeval timeout;
@@ -613,10 +760,21 @@ static void run_client(char *rem_server_name, int dtls_version)
 
     /* Apply DTLS version constraint if specified */
     if (dtls_version != 0) {
-        SSL_CTX_set_min_proto_version(ssl_ctx, dtls_version);
-        SSL_CTX_set_max_proto_version(ssl_ctx, dtls_version);
+        if (!SSL_CTX_set_min_proto_version(ssl_ctx, dtls_version)
+            || !SSL_CTX_set_max_proto_version(ssl_ctx, dtls_version)) {
+            ERR_print_errors_fp(stderr);
+            goto err;
+        }
         printf("Forcing %s\n",
             dtls_version == DTLS1_2_VERSION ? "DTLS 1.2" : "DTLS 1.3");
+    }
+
+    /* Abort the handshake if the server certificate cannot be verified. */
+    SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
+
+    if (!SSL_CTX_load_verify_locations(ssl_ctx, "cert.pem", NULL)) {
+        ERR_print_errors_fp(stderr);
+        goto err;
     }
 
     /* Create DTLS client connection */
@@ -711,51 +869,42 @@ static void run_client(char *rem_server_name, int dtls_version)
 
         /* Check for user input */
         if (has_user_input) {
+#if !defined(OPENSSL_SYS_WINDOWS)
+            n = read(STDIN_FILENO, input_buf + input_used,
+                sizeof(input_buf) - input_used);
+            if (n <= 0) {
+                if (n == 0)
+                    printf("EOF received, exiting\n");
+                else
+                    perror("Failed to read from stdin");
+                break;
+            }
+            input_used += (size_t)n;
+
+            while ((nl = memchr(input_buf, '\n', input_used)) != NULL) {
+                size_t linelen = (size_t)(nl - input_buf) + 1;
+                int keep_going = process_line(client, input_buf, linelen);
+
+                memmove(input_buf, input_buf + linelen, input_used - linelen);
+                input_used -= linelen;
+                if (!keep_going)
+                    goto err;
+            }
+
+            /* A single line that fills the buffer without a newline */
+            if (input_used == sizeof(input_buf)) {
+                if (!process_line(client, input_buf, input_used))
+                    goto err;
+                input_used = 0;
+            }
+#else
             if (fgets(input_buf, sizeof(input_buf), stdin) == NULL) {
                 printf("EOF received, exiting\n");
                 break;
             }
-
-            /* Send to server */
-            if (!SSL_write_ex(client, input_buf, strlen(input_buf), &written)) {
-                fprintf(stderr, "Failed to send data\n");
-                ERR_print_errors_fp(stderr);
+            if (!process_line(client, input_buf, strlen(input_buf)))
                 break;
-            }
-
-            /* Check if we sent the kill command */
-            if (strcmp(input_buf, "kill\n") == 0
-                || strcmp(input_buf, "kill\r\n") == 0) {
-                printf("Sent kill command, disconnecting\n");
-                break;
-            }
-
-            /* Check if we sent the killall command */
-            if (strcmp(input_buf, "killall\n") == 0
-                || strcmp(input_buf, "killall\r\n") == 0) {
-                printf("Sent killall command, server will shutdown\n");
-                break;
-            }
-
-            /* Wait for the echo - if not immediately available, let poll handle it */
-            ret = SSL_read_ex(client, recv_buf, sizeof(recv_buf) - 1, &readbytes);
-            if (ret != 1) {
-                err = SSL_get_error(client, ret);
-                if (err == SSL_ERROR_ZERO_RETURN) {
-                    printf("Server closed connection\n");
-                    break;
-                } else if (err == SSL_ERROR_WANT_READ) {
-                    /* Echo not ready yet, let poll loop handle it */
-                    continue;
-                } else {
-                    fprintf(stderr, "Failed to read echo response\n");
-                    ERR_print_errors_fp(stderr);
-                    break;
-                }
-            }
-
-            recv_buf[readbytes] = '\0';
-            printf("Echo: %s", recv_buf);
+#endif
         }
     }
 

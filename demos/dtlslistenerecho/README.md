@@ -8,8 +8,8 @@ of operation (client or server). Start it with no parameters to see usage.
 
 The server code utilizes the SSL Listener to setup a DTLS Server object that
 can handle multiple client connections using a thread-per-connection model.
-Each accepted connection is handled in its own dedicated thread, following
-the pattern established in `test/dtls_multithread_test.c`.
+Each accepted connection is handled in its own dedicated thread using the
+platform's native threads.
 
 The client will send application data to the server and the server will simply
 respond to the client with an echo of that data.
@@ -18,7 +18,7 @@ Features
 --------
 
 - Up to 10 concurrent DTLS client connections (MAX_CONNECTIONS)
-- Thread-per-connection architecture using OpenSSL's internal thread APIs
+- Thread-per-connection architecture using native OS threads
 - Non-blocking I/O using SSL_poll() within each connection thread
 - Supports both DTLS 1.2 (HelloVerifyRequest) and DTLS 1.3 (HelloRetryRequest)
 - Client option to specify DTLS protocol version (dtls12 or dtls13)

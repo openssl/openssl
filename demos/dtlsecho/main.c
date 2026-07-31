@@ -41,7 +41,7 @@ typedef unsigned char flag;
  */
 static volatile flag server_running = true;
 
-static SOCKET create_socket(flag isServer)
+static SOCKET create_socket(void)
 {
     SOCKET s = INVALID_SOCKET;
     BIO_ADDRINFO *res = NULL;
@@ -70,19 +70,17 @@ static SOCKET create_socket(flag isServer)
         exit(EXIT_FAILURE);
     }
 
-    if (isServer) {
-        /*
-         * BIO_listen binds with SO_REUSEADDR and, since we do not pass
-         * BIO_SOCK_V6_ONLY, clears IPV6_V6ONLY to give us a dual-stack socket
-         * that serves both IPv6 and IPv4 clients.
-         */
-        if (!BIO_listen((int)s, addr, BIO_SOCK_REUSEADDR)) {
-            fprintf(stderr, "Unable to bind\n");
-            ERR_print_errors_fp(stderr);
-            BIO_closesocket((int)s);
-            BIO_ADDRINFO_free(res);
-            exit(EXIT_FAILURE);
-        }
+    /*
+     * BIO_listen binds with SO_REUSEADDR and, since we do not pass
+     * BIO_SOCK_V6_ONLY, clears IPV6_V6ONLY to give us a dual-stack socket
+     * that serves both IPv6 and IPv4 clients.
+     */
+    if (!BIO_listen((int)s, addr, BIO_SOCK_REUSEADDR)) {
+        fprintf(stderr, "Unable to bind\n");
+        ERR_print_errors_fp(stderr);
+        BIO_closesocket((int)s);
+        BIO_ADDRINFO_free(res);
+        exit(EXIT_FAILURE);
     }
 
     BIO_ADDRINFO_free(res);
@@ -225,7 +223,7 @@ int main(int argc, char **argv)
         configure_server_context(ssl_ctx);
 
         /* Create server socket; will bind to server port */
-        server_skt = create_socket(true);
+        server_skt = create_socket();
         if (server_skt == INVALID_SOCKET) {
             perror("Unable to create server socket");
             exit(EXIT_FAILURE);
