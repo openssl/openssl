@@ -14,7 +14,7 @@ ossl_rbtree - implementation of red-black tree
 
  #include "internal/ossl_rbtree.h"
 
- OSSL_RBT_PROTO_type(NAME, TYPE, FIELD, CMP);
+ OSSL_RBT_PROTOTYPE(NAME, TYPE, FIELD, CMP);
 
  OSSL_RBT_GENERATE(NAME, _type, FIELD, CMP);
 
