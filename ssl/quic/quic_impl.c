@@ -6019,7 +6019,8 @@ void ossl_quic_enter_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
 }
 
 QUIC_TAKES_LOCK
-void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
+void ossl_quic_deregister_blocking_section(SSL *ssl,
+    QUIC_REACTOR_WAIT_CTX *wctx)
 {
     QCTX ctx;
     QUIC_REACTOR *rtor;
@@ -6029,7 +6030,7 @@ void ossl_quic_leave_blocking_section(SSL *ssl, QUIC_REACTOR_WAIT_CTX *wctx)
 
     qctx_lock(&ctx);
     rtor = ossl_quic_obj_get0_reactor(ctx.obj);
-    ossl_quic_reactor_wait_ctx_leave(wctx, rtor);
+    ossl_quic_reactor_wait_ctx_deregister(wctx, rtor);
     qctx_unlock(&ctx);
 }
 
