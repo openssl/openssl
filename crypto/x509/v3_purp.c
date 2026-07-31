@@ -41,6 +41,8 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf);
 static int check_name_constraints(const NAME_CONSTRAINTS *nc);
+static int check_akid(const X509 *issuer, const ASN1_OCTET_STRING *skid,
+    const AUTHORITY_KEYID *akid);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
@@ -726,7 +728,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
          * decided against it for efficiency reasons and according to RFC 5280,
          * CA certs MUST have an SKID and non-root certs MUST have an AKID.
          */
-        if (X509_check_akid(const_x, tmp_akid) == X509_V_OK
+        if (check_akid(const_x, tmp_skid, tmp_akid) == X509_V_OK
             && check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK) {
             /*
              * Assume self-signed if the signature alg matches the pkey alg and
@@ -1239,17 +1241,18 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
 
 /*
  * check if all sub-fields of the authority key identifier information akid,
- * as far as present, match the respective subjectKeyIdentifier extension (if
- * present in issuer), serialNumber field, and issuer fields of issuer.
+ * as far as present, match the given subjectKeyIdentifier skid, and the
+ * serialNumber and issuer fields of issuer.
  * returns X509_V_OK also if akid is NULL because this means no restriction.
  */
-int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
+static int check_akid(const X509 *issuer, const ASN1_OCTET_STRING *skid,
+    const AUTHORITY_KEYID *akid)
 {
     if (akid == NULL)
         return X509_V_OK;
 
     /* Check key ids (if present) */
-    if (akid->keyid && issuer->skid && ASN1_OCTET_STRING_cmp(akid->keyid, issuer->skid))
+    if (akid->keyid && skid && ASN1_OCTET_STRING_cmp(akid->keyid, skid))
         return X509_V_ERR_AKID_SKID_MISMATCH;
     /* Check serial number */
     if (akid->serial && ASN1_INTEGER_cmp(X509_get0_serialNumber(issuer), akid->serial))
@@ -1277,6 +1280,12 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
             return X509_V_ERR_AKID_ISSUER_SERIAL_MISMATCH;
     }
     return X509_V_OK;
+}
+
+/* Match akid against issuer's own subjectKeyIdentifier. */
+int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
+{
+    return check_akid(issuer, issuer->skid, akid);
 }
 
 int ossl_x509_is_proxy(const X509 *x)
