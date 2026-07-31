@@ -194,7 +194,16 @@ void gcm_ghash_v8(uint64_t Xi[2], const u128 Htable[16], const uint8_t *inp, siz
 #define VAES512_ELIGIBLE 0
 #endif
 
+#define VAES_CTR_ELIGIBLE VAES512_ELIGIBLE
 #define VAES_CBC_ELIGIBLE VAES512_ELIGIBLE
+
+#if VAES_CTR_ELIGIBLE
+void ossl_aes_ctr_vaes(const unsigned char *in, unsigned char *out,
+    size_t length, const AES_KEY *key,
+    unsigned char *counter,
+    unsigned char *ecount_buf, unsigned int *num);
+int ossl_aes_ctr_vaes_eligible(void);
+#endif
 
 #if VAES_CBC_ELIGIBLE
 void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
