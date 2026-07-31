@@ -1137,6 +1137,11 @@ IF[{- !$disabled{tests} -}]
     INCLUDE[fn_api_test]=.. ../include ../crypto/fn ../apps/include
     DEPEND[fn_api_test]=../libcrypto.a libtestutil.a
 
+    PROGRAMS{noinst}=fn_cross_bn_test
+    SOURCE[fn_cross_bn_test]=fn_cross_bn_test.c
+    INCLUDE[fn_cross_bn_test]=.. ../include ../crypto/fn ../apps/include
+    DEPEND[fn_cross_bn_test]=../libcrypto.a libtestutil.a
+
     PROGRAMS{noinst}=fntest
     SOURCE[fntest]=fntest.c
     INCLUDE[fntest]=.. ../include ../crypto/fn ../apps/include
