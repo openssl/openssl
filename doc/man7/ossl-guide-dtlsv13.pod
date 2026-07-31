@@ -240,7 +240,7 @@ of the OpenSSL source distribution:
 
 =item B<demos/dtlsecho>
 
-A simple DTLSv1.3 echo client and server built on a single L<SSL(3)> object per
+A simple DTLSv1.3 echo client and server built on a single B<SSL> object per
 connection. The complete source code is available in the B<demos/dtlsecho>
 directory of the OpenSSL source distribution in the file B<main.c>. It is also
 available online at
