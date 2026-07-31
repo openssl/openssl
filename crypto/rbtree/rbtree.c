@@ -21,6 +21,10 @@
 
 #include "internal/ossl_rbtree.h"
 
+#ifndef NDEBUG
+#include <assert.h>
+#endif
+
 #define OSSL_RBT_BLACK 0
 #define OSSL_RBT_RED 1
 
@@ -547,7 +551,7 @@ void ossl_rbt_set_parent(const struct ossl_rbt_type *t, void *node, void *parent
     OSSL_RBE_PARENT(rbe) = rbp;
 }
 
-void ossl_rbt_init_rbe(const struct ossl_rbt_type *t, void *node)
+void ossl_rbt_init_rbe(struct ossl_rbt_type *t, void *node)
 {
     struct ossl_rbt_entry *rbe = rbt_n2e(t, node);
 

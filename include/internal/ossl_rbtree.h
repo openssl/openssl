@@ -84,6 +84,7 @@ void *ossl_rbt_parent(const struct ossl_rbt_type *, void *);
 void ossl_rbt_set_left(const struct ossl_rbt_type *, void *, void *);
 void ossl_rbt_set_right(const struct ossl_rbt_type *, void *, void *);
 void ossl_rbt_set_parent(const struct ossl_rbt_type *, void *, void *);
+void ossl_rbt_init_rbe(struct ossl_rbt_type *, void *);
 
 #define OSSL_RBT_INITIALIZER(_head) \
     {                               \
