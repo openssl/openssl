@@ -203,6 +203,7 @@ static int test_rbt_dup_insert(void)
         return 0;
 
     for (i = 0; i < 26; i++) {
+        OSSL_RBT_INIT_RBE(&insert_rbt);
         insert_rbt.rbt_data = test_data[i];
         conflict_rbt = OSSL_RBT_INSERT(ossl_rbt, &rbt_head, &insert_rbt);
         if (!TEST_ptr(conflict_rbt)) {
