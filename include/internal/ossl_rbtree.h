@@ -236,7 +236,7 @@ void ossl_rbt_init_rbe(const struct ossl_rbt_type *, void *);
 #define OSSL_RBT_SET_LEFT(_name, _elm, _l) _name##_OSSL_RBT_SET_LEFT(_elm, _l)
 #define OSSL_RBT_SET_RIGHT(_name, _elm, _r) _name##_OSSL_RBT_SET_RIGHT(_elm, _r)
 #define OSSL_RBT_SET_PARENT(_name, _elm, _p) _name##_OSSL_RBT_SET_PARENT(_elm, _p)
-#ifdef NDEBUG
+#ifndef NDEBUG
 #define OSSL_RBT_INIT_RBE(_name, _elm) _name##_OSSL_RBT_INIT_RBE(_elm)
 #else
 #define OSSL_RBT_INIT_RBE(_name, _elm) (void)(0)
