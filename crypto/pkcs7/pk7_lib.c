@@ -445,11 +445,12 @@ static STACK_OF(PKCS7_RECIP_INFO) *pkcs7_get_recipient_info(const PKCS7 *p7)
 
 /*
  * Set up the library context into any loaded structure that needs it.
- * i.e loaded X509 objects.
+ * i.e loaded X509 objects.  Returns 1 on success and 0 on failure.
  */
-void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
+int ossl_pkcs7_resolve_libctx(PKCS7 *p7)
 {
     int i;
+    int ret = 1;
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
     OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
     const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
@@ -458,19 +459,21 @@ void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
     STACK_OF(X509) *certs;
 
     if (ctx == NULL || p7->d.ptr == NULL)
-        return;
+        return 1;
 
     rinfos = pkcs7_get_recipient_info(p7);
     sinfos = PKCS7_get_signer_info(p7);
     certs = pkcs7_get0_certificates(p7);
 
     for (i = 0; i < sk_X509_num(certs); i++)
-        ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
+        if (!ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq))
+            ret = 0;
 
     for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
         PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);
 
-        ossl_x509_set0_libctx(ri->cert, libctx, propq);
+        if (!ossl_x509_set0_libctx(ri->cert, libctx, propq))
+            ret = 0;
     }
 
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
@@ -479,6 +482,7 @@ void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
         if (si != NULL)
             si->ctx = ctx;
     }
+    return ret;
 }
 
 const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7)
@@ -511,8 +515,7 @@ int ossl_pkcs7_ctx_propagate(const PKCS7 *from, PKCS7 *to)
     if (!ossl_pkcs7_set1_propq(to, from->ctx.propq))
         return 0;
 
-    ossl_pkcs7_resolve_libctx(to);
-    return 1;
+    return ossl_pkcs7_resolve_libctx(to);
 }
 
 OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx)
