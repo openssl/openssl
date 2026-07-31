@@ -606,7 +606,7 @@ static int drbg_ctr_init(PROV_DRBG *drbg)
      */
     if (ctr->use_df == 0) {
         ERR_raise_data(ERR_LIB_PROV, PROV_R_DERIVATION_FUNCTION_INIT_FAILED,
-            "FIPS requires the use of a derivation function\n");
+            "FIPS requires the use of a derivation function");
         goto err;
     }
 #endif
