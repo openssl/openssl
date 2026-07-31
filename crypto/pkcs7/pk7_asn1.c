@@ -81,8 +81,12 @@ PKCS7 *d2i_PKCS7(PKCS7 **a, const unsigned char **in, long len)
 
     ret = (PKCS7 *)ASN1_item_d2i_ex((ASN1_VALUE **)a, in, len, ASN1_ITEM_rptr(PKCS7),
         libctx, propq);
-    if (ret != NULL)
-        ossl_pkcs7_resolve_libctx(ret);
+    if (ret != NULL && !ossl_pkcs7_resolve_libctx(ret)) {
+        if (a != NULL && *a == ret)
+            *a = NULL;
+        PKCS7_free(ret);
+        ret = NULL;
+    }
     return ret;
 }
 
