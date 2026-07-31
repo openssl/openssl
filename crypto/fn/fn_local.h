@@ -35,6 +35,19 @@
 #define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS / 2)) - 1)
 #define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BITS / 2))
 
+/* maximum precomputation table size for *variable* sliding windows */
+#define TABLE_SIZE 32
+
+/*
+ * Sliding-window size selection: a function of the exponent bit count (a
+ * public magnitude), capped at 6, so TABLE_SIZE == 1 << 5 always suffices.
+ */
+#define OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
+    ((b) > 671 ? 6 : (b) > 239 ? 5               \
+            : (b) > 79         ? 4               \
+            : (b) > 23         ? 3               \
+                               : 1)
+
 struct ossl_fn_st {
     /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */
     unsigned int is_dynamically_allocated : 1;
