@@ -76,7 +76,7 @@ static int test_rbt_insert(void)
         node_rbt->rbt_data = test_data[i - 1];
         found_rbt = OSSL_RBT_INSERT(ossl_rbt, &rbt_head, node_rbt);
         if (!TEST_ptr_eq(found_rbt, NULL)) {
-            TEST_info("%s %p(%s) found already %p(%s) @ %un", OPENSSL_FUNC,
+            TEST_info("%s %p(%s) found already %p(%s) @ %u\n", OPENSSL_FUNC,
                 (void *)node_rbt, node_rbt->rbt_data,
                 (void *)found_rbt, found_rbt->rbt_data, i);
             return 0;
