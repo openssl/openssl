@@ -17,6 +17,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/crypto.h>
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
 #include "crypto/fnerr.h"
@@ -1071,6 +1072,67 @@ static int test_set_word(int i)
 err:
     OSSL_FN_free(a);
     OSSL_FN_free(ref);
+    return ret;
+}
+
+static int test_clear_bit(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    size_t dsize = 4, i;
+    OSSL_FN_ULONG expect;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(dsize)))
+        goto err;
+
+    /* All bits set: clear the lowest bit, a limb-boundary bit, a high bit. */
+    /* Constness deliberately violated here, as in pollute() */
+    memset((OSSL_FN_ULONG *)ossl_fn_get_words(a), 0xff, dsize * OSSL_FN_BYTES);
+
+    if (!TEST_true(OSSL_FN_clear_bit(a, 0))
+        || !TEST_false(OSSL_FN_is_bit_set(a, 0))
+        || !TEST_true(OSSL_FN_is_bit_set(a, 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_clear_bit(a, OSSL_FN_BITS))
+        || !TEST_false(OSSL_FN_is_bit_set(a, OSSL_FN_BITS)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_clear_bit(a, (int)(dsize * OSSL_FN_BITS - 1)))
+        || !TEST_false(OSSL_FN_is_bit_set(a, (int)(dsize * OSSL_FN_BITS - 1))))
+        goto err;
+
+    /* Clearing an already-clear bit succeeds and changes nothing. */
+    if (!TEST_true(OSSL_FN_clear_bit(a, 0))
+        || !TEST_false(OSSL_FN_is_bit_set(a, 0)))
+        goto err;
+
+    /* Every other bit must still be set. */
+    u = ossl_fn_get_words(a);
+    for (i = 0; i < dsize; i++) {
+        expect = ~OSSL_FN_ULONG_C(0);
+        if (i == 0)
+            expect &= ~OSSL_FN_ULONG_C(1);
+        if (i == 1)
+            expect &= ~OSSL_FN_ULONG_C(1);
+        if (i == dsize - 1)
+            expect &= ~(OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1));
+        if (!TEST_true(u[i] == expect))
+            goto err;
+    }
+
+    /* Out-of-range indexes fail and leave the operand unchanged. */
+    if (!TEST_false(OSSL_FN_clear_bit(a, -1))
+        || !TEST_false(OSSL_FN_clear_bit(a, (int)(dsize * OSSL_FN_BITS)))
+        || !TEST_false(OSSL_FN_clear_bit(a, (int)(dsize * OSSL_FN_BITS + 7))))
+        goto err;
+    if (!TEST_false(OSSL_FN_is_bit_set(a, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
     return ret;
 }
 
@@ -4857,6 +4919,80 @@ err:
 }
 
 /*
+ * OSSL_FN_MONT_CTX_set_locked(): lazy init fills the cache slot, a repeat
+ * call returns the same pointer, and the cached context is usable for
+ * OSSL_FN_mod_exp_mont() (compared against the reference oracle).
+ */
+static int test_mont_ctx_set_locked(void)
+{
+    size_t a_size = LIMBSOF(num5);
+    size_t p_size = LIMBSOF(exp_p256);
+    size_t m_size = LIMBSOF(mod_secp128r1_p);
+    size_t L = a_size > m_size ? a_size : m_size;
+    CRYPTO_RWLOCK *lock = NULL;
+    OSSL_FN_MONT_CTX *cached = NULL, *mont = NULL;
+    OSSL_FN_CTX *ctx_fn = NULL, *ctx_ref = NULL;
+    OSSL_FN *fa = NULL, *fp = NULL, *fm = NULL, *r = NULL, *r_ref = NULL;
+    size_t size;
+    int ret = 0;
+
+    fa = OSSL_FN_new_limbs(L);
+    fp = OSSL_FN_new_limbs(p_size);
+    fm = OSSL_FN_new_limbs(m_size);
+    r = OSSL_FN_new_limbs(m_size);
+    r_ref = OSSL_FN_new_limbs(m_size);
+    if (!TEST_ptr(fa) || !TEST_ptr(fp) || !TEST_ptr(fm)
+        || !TEST_ptr(r) || !TEST_ptr(r_ref))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(fa, num5, a_size))
+        || !TEST_true(ossl_fn_set_words(fp, exp_p256, p_size))
+        || !TEST_true(ossl_fn_set_words(fm, mod_secp128r1_p, m_size)))
+        goto err;
+    if (!TEST_ptr(lock = CRYPTO_THREAD_lock_new()))
+        goto err;
+
+    /* Lazy init: the empty slot is filled. */
+    if (!TEST_ptr(mont = OSSL_FN_MONT_CTX_set_locked(&cached, lock, fm)))
+        goto err;
+    if (!TEST_ptr_eq(cached, mont))
+        goto err;
+
+    /* A repeat call returns the cached context unchanged. */
+    if (!TEST_ptr_eq(OSSL_FN_MONT_CTX_set_locked(&cached, lock, fm), mont))
+        goto err;
+    if (!TEST_ptr_eq(cached, mont))
+        goto err;
+
+    /* The cached context is usable for modular exponentiation. */
+    size = OSSL_FN_mod_exp_mont_ctx_size(r, fa, fp, fm, mont);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx_fn = OSSL_FN_CTX_new_size(NULL, size))
+        || !TEST_ptr(ctx_ref = OSSL_FN_CTX_new(NULL, 8, 16, 16 * m_size + 16)))
+        goto err;
+    if (!TEST_true(OSSL_FN_mod_exp_mont(r, fa, fp, fm, ctx_fn, mont)))
+        goto err;
+    if (!TEST_true(mod_exp_reference(r_ref, fa, fp, fm, ctx_ref)))
+        goto err;
+    if (!TEST_mem_eq(ossl_fn_get_words(r), m_size * OSSL_FN_BYTES,
+            ossl_fn_get_words(r_ref), m_size * OSSL_FN_BYTES))
+        goto err;
+
+    ret = 1;
+err:
+    /* The cached context is owned by the slot; free it once, directly. */
+    OSSL_FN_MONT_CTX_free(cached);
+    CRYPTO_THREAD_lock_free(lock);
+    OSSL_FN_CTX_free(ctx_fn);
+    OSSL_FN_CTX_free(ctx_ref);
+    OSSL_FN_free(fa);
+    OSSL_FN_free(fp);
+    OSSL_FN_free(fm);
+    OSSL_FN_free(r);
+    OSSL_FN_free(r_ref);
+    return ret;
+}
+
+/*
  * OSSL_FN_mod_exp_mont_ctx_size(): the mont-only size must be positive, must
  * equal the dispatcher size or be smaller (dispatcher also budgets the
  * simple-path loop mul), and must not depend on whether in_mont is NULL or a
@@ -5337,6 +5473,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
+    ADD_TEST(test_clear_bit);
     ADD_TEST(test_one);
     ADD_TEST(test_zero);
     ADD_ALL_TESTS(test_lshift1, 2);
@@ -5395,6 +5532,7 @@ int setup_tests(void)
     ADD_TEST(test_mod_exp_ctx_size);
     ADD_TEST(test_mod_exp_mont_in_mont);
     ADD_TEST(test_mod_exp_mont_in_mont_mismatch);
+    ADD_TEST(test_mont_ctx_set_locked);
     ADD_TEST(test_mod_exp_mont_ctx_size);
     ADD_ALL_TESTS(test_kronecker, OSSL_NELEM(kronecker_cases));
     ADD_ALL_TESTS(test_kronecker_legendre, OSSL_NELEM(legendre_primes));
