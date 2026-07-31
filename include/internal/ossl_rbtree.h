@@ -84,7 +84,7 @@ void *ossl_rbt_parent(const struct ossl_rbt_type *, void *);
 void ossl_rbt_set_left(const struct ossl_rbt_type *, void *, void *);
 void ossl_rbt_set_right(const struct ossl_rbt_type *, void *, void *);
 void ossl_rbt_set_parent(const struct ossl_rbt_type *, void *, void *);
-void ossl_rbt_init_rbe(struct ossl_rbt_type *, void *);
+void ossl_rbt_init_rbe(const struct ossl_rbt_type *, void *);
 
 #define OSSL_RBT_INITIALIZER(_head) \
     {                               \
@@ -198,7 +198,7 @@ void ossl_rbt_init_rbe(struct ossl_rbt_type *, void *);
         ossl_rbt_set_parent(_name##_OSSL_RBT_TYPE, elm, parent);             \
     }                                                                        \
     ossl_unused static inline void                                           \
-    _name##_OSSL_RBT_INIT_RBE(struct _type *elm, struct _type *parent)       \
+    _name##_OSSL_RBT_INIT_RBE(struct _type *elm)                             \
     {                                                                        \
         ossl_rbt_init_rbe(_name##_OSSL_RBT_TYPE, elm);                       \
     }
