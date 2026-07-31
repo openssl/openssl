@@ -37,7 +37,7 @@ rbt_n2e(const struct ossl_rbt_type *t, void *node)
 }
 
 static void *
-rb_e2n(const struct ossl_rbt_type *t, struct ossl_rbt_entry *rbe)
+rbt_e2n(const struct ossl_rbt_type *t, struct ossl_rbt_entry *rbe)
 {
     uintptr_t addr = (uintptr_t)rbe;
 
