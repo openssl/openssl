@@ -62,6 +62,15 @@ programming error: it returns the accessor's failure value (such as B<NULL>, 0,
 or -1) and raises an error, rather than reporting information from an unfinalized
 certificate.
 
+Some of the cached data depends on the library context and property query in
+effect for the certificate: the SHA-1 fingerprint and the signature
+information reported by L<X509_get_signature_info(3)> are computed at
+finalization using that configuration. A certificate finalized while a
+needed algorithm is unavailable -- for example under a temporarily
+restricted default property query -- caches that outcome and does not
+recompute it later. A certificate should be finalized under a configuration
+compatible with the one under which it will be used.
+
 Modifying a certificate after it has been finalized, for example by adding or
 removing an extension with L<X509_add_ext(3)>, does not update the cached
 information, which then no longer reflects the certificate's contents. Such a
