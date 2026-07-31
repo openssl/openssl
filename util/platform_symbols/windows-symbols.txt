@@ -127,6 +127,8 @@ _time64
 _wfopen
 calloc
 clearerr
+cos
+exp
 fclose
 feof
 ferror
@@ -142,6 +144,7 @@ fwrite
 getenv
 isdigit
 isspace
+log
 malloc
 memchr
 memcmp
@@ -154,6 +157,7 @@ realloc
 setbuf
 setvbuf
 signal
+sqrt
 strcat_s
 strchr
 strcmp

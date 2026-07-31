@@ -28,6 +28,9 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
+  * Added CAPRISE distance-preserving encryption cipher for encrypted
+    nearest-neighbor search on vector embeddings.
+
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
 

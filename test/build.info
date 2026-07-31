@@ -564,6 +564,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[cipherlist_test]=../include ../apps/include
   DEPEND[cipherlist_test]=../libcrypto ../libssl libtestutil.a
 
+  IF[{- !$disabled{caprise} -}]
+    PROGRAMS{noinst}=caprise_test
+    SOURCE[caprise_test]=caprise_test.c
+    INCLUDE[caprise_test]=../include ../apps/include
+    DEPEND[caprise_test]=../libcrypto libtestutil.a
+  ENDIF
+
   INCLUDE[helpers/ssl_test_ctx.o]=../include
   INCLUDE[helpers/handshake.o]=.. ../include
   INCLUDE[helpers/pkcs12.o]=.. ../include
