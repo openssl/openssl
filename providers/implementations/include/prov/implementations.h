@@ -359,15 +359,18 @@ extern const OSSL_DISPATCH ossl_ml_kem_1024_keymgmt_functions[];
 #ifndef OPENSSL_NO_EC
 #ifndef OPENSSL_NO_ECX
 extern const OSSL_DISPATCH ossl_mlx_x25519_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_x25519_hpke_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_x448_kem_kmgmt_functions[];
-#endif
+#endif /* OPENSSL_NO_ECX */
 extern const OSSL_DISPATCH ossl_mlx_p256_kem_kmgmt_functions[];
 extern const OSSL_DISPATCH ossl_mlx_p384_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_p256_hpke_kem_kmgmt_functions[];
+extern const OSSL_DISPATCH ossl_mlx_p384_hpke_kem_kmgmt_functions[];
 #ifndef OPENSSL_NO_SM2
 extern const OSSL_DISPATCH ossl_mlx_curve_sm2_kem_kmgmt_functions[];
-#endif
-#endif
-#endif
+#endif /* OPENSSL_NO_SM2 */
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_ML_KEM */
 #ifndef OPENSSL_NO_SLH_DSA
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128s_keymgmt_functions[];
 extern const OSSL_DISPATCH ossl_slh_dsa_sha2_128f_keymgmt_functions[];

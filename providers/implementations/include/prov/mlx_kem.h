@@ -24,6 +24,8 @@ typedef struct ecdh_vinfo_st {
     size_t shsec_bytes;
     int ml_kem_slot;
     int ml_kem_variant;
+    size_t ec_nSeed; /* Used for HPKE keygen entropy length, zero for TLS use cases */
+    const char *label;
 } ECDH_VINFO;
 
 typedef struct mlx_key_st {
@@ -34,6 +36,7 @@ typedef struct mlx_key_st {
     EVP_PKEY *mkey;
     EVP_PKEY *xkey;
     unsigned int state;
+    int kemid;
 } MLX_KEY;
 
 #define MLX_HAVE_NOKEYS 0

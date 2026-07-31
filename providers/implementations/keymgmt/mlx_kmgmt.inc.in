@@ -11,7 +11,7 @@
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
-{- produce_param_decoder('ml_kem_import_export',
+{- produce_param_decoder('mlx_kem_import_export',
                          (['OSSL_PKEY_PARAM_PRIV_KEY', 'privkey', 'octet_string'],
                           ['OSSL_PKEY_PARAM_PUB_KEY',  'pubkey',  'octet_string'],
                          )); -}
@@ -21,7 +21,8 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',      'secbits',  'int'],
                           ['OSSL_PKEY_PARAM_MAX_SIZE',           'maxsize',  'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_CATEGORY',  'seccat',   'int'],
-                          ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'pub',      'octet_string'],
+                          ['OSSL_PKEY_PARAM_ENCODED_PUBLIC_KEY', 'encpubkey','octet_string'],
+                          ['OSSL_PKEY_PARAM_PUB_KEY',            'pub',      'octet_string'],
                           ['OSSL_PKEY_PARAM_PRIV_KEY',           'priv',     'octet_string'],
                          )); -}
 
@@ -32,4 +33,6 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 
 {- produce_param_decoder('mlx_gen_set_params',
                          (['OSSL_PKEY_PARAM_PROPERTIES', 'propq', 'utf8_string'],
+                          ['OSSL_PKEY_PARAM_IKM',        'ikm',   'octet_string'],
+                          ['OSSL_PKEY_PARAM_SEED',       'seed',   'octet_string'],
                          )); -}

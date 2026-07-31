@@ -82,10 +82,10 @@ OSSL_HPKE_CTX_get_seq, OSSL_HPKE_CTX_set_seq
 =head1 DESCRIPTION
 
 These functions provide an API for using the form of Hybrid Public Key
-Encryption (HPKE) defined in RFC9180. Understanding the HPKE specification
-is likely required before using these APIs.  HPKE is used by various
-other IETF specifications, including the TLS Encrypted Client
-Hello (ECH) specification and others.
+Encryption (HPKE) defined in RFC9180 as well as Post Quantum algorithms.
+Understanding the HPKE specification is likely required before using these APIs.
+HPKE is used by various other IETF specifications, including the TLS Encrypted
+Client Hello (ECH) specification and others.
 
 HPKE is a standardised, highly flexible construct for encrypting "to" a public
 key that supports combinations of a key encapsulation method (KEM), a key
@@ -123,6 +123,18 @@ The KEM identifier I<kem_id> is one of the following:
 =item 0x20 B<OSSL_HPKE_KEM_ID_X25519>
 
 =item 0x21 B<OSSL_HPKE_KEM_ID_X448>
+
+=item 0x40 B<OSSL_HPKE_KEM_ID_ML_KEM_512>
+
+=item 0x41 B<OSSL_HPKE_KEM_ID_ML_KEM_768>
+
+=item 0x42 B<OSSL_HPKE_KEM_ID_ML_KEM_1024>
+
+=item 0x50 B<OSSL_HPKE_KEM_ID_MLKEM768_P256>
+
+=item 0x51 B<OSSL_HPKE_KEM_ID_MLKEM1024_P384>
+
+=item 0x647A B<OSSL_HPKE_KEM_ID_XWING>
 
 =back
 
@@ -164,7 +176,7 @@ HPKE supports the following variants of Authentication using a mode Identifier:
 
 =item B<OSSL_HPKE_MODE_BASE>, 0x00
 
-Authentication is not used.
+Authentication is not used. Post Quantum algorithms only use this mode.
 
 =item B<OSSL_HPKE_MODE_PSK>, 0x01
 
@@ -556,13 +568,30 @@ OSSL_HPKE_CTX_set1_ikme() or OSSL_HPKE_keygen()) creates the potential for
 leaking keys (or IKM values). Only use that if really needed and if you
 understand how keys or IKM values could be abused.
 
-=head1 SEE ALSO
+=head1 CONFORMING TO
 
-The RFC9180 specification: https://datatracker.ietf.org/doc/rfc9180/
+=over 4
+
+=item https://datatracker.ietf.org/doc/rfc9180/
+
+=item https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-hybrid-kems-11
+
+=item https://datatracker.ietf.org/doc/draft-ietf-hpke-pq/04/
+
+=item https://datatracker.ietf.org/doc/draft-connolly-cfrg-xwing-kem/
+
+=item https://datatracker.ietf.org/doc/html/draft-irtf-cfrg-concrete-hybrid-kems-03
+
+=back
 
 =head1 HISTORY
 
 This functionality described here was added in OpenSSL 3.2.
+
+Support for Post Quantum algorithms B<OSSL_HPKE_KEM_ID_ML_KEM_512>,
+B<OSSL_HPKE_KEM_ID_ML_KEM_768>, B<OSSL_HPKE_KEM_ID_ML_KEM_1024>,
+B<OSSL_HPKE_KEM_ID_MLKEM768_P256>, B<OSSL_HPKE_KEM_ID_MLKEM1024_P384> and
+B<OSSL_HPKE_KEM_ID_XWING> were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

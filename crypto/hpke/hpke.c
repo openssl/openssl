@@ -493,10 +493,8 @@ static int hpke_encap(OSSL_HPKE_CTX *ctx, unsigned char *enc, size_t *enclen,
     *p++ = OSSL_PARAM_construct_utf8_string(OSSL_KEM_PARAM_OPERATION,
         OSSL_KEM_PARAM_OPERATION_DHKEM,
         0);
-    if (ctx->ikme != NULL) {
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME,
-            ctx->ikme, ctx->ikmelen);
-    }
+    if (ctx->ikme != NULL)
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_KEM_PARAM_IKME, ctx->ikme, ctx->ikmelen);
     *p = OSSL_PARAM_construct_end();
     if (ctx->mode == OSSL_HPKE_MODE_AUTH
         || ctx->mode == OSSL_HPKE_MODE_PSKAUTH) {
@@ -824,9 +822,14 @@ OSSL_HPKE_CTX *OSSL_HPKE_CTX_new(int mode, OSSL_HPKE_SUITE suite, int role,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return NULL;
     }
+    if (!kem_info->auth && (mode == OSSL_HPKE_MODE_AUTH || mode == OSSL_HPKE_MODE_PSKAUTH)) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "%s does not support Authentication modes", kem_info->keytype);
+        return NULL;
+    }
     if (role != OSSL_HPKE_ROLE_SENDER && role != OSSL_HPKE_ROLE_RECEIVER) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
-        return 0;
+        return NULL;
     }
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
@@ -932,10 +935,12 @@ int OSSL_HPKE_CTX_set1_ikme(OSSL_HPKE_CTX *ctx,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (ikmelen == 0 || ikmelen > OSSL_HPKE_MAX_PARMLEN) {
+    if (ikmelen == 0
+        || ikmelen > (size_t)(ctx->kem_info->pq ? OSSL_HPKE_MAX_PQIKMLEN : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
+
     if (ctx->role != OSSL_HPKE_ROLE_SENDER) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
@@ -1311,6 +1316,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     EVP_PKEY *skR = NULL;
     const OSSL_HPKE_KEM_INFO *kem_info = NULL;
     OSSL_PARAM params[3], *p = params;
+    uint8_t seed[64], *pSeed = NULL;
 
     if (pub == NULL || publen == NULL || *publen == 0 || priv == NULL) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
@@ -1322,7 +1328,7 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     }
     if ((ikmlen > 0 && ikm == NULL)
         || (ikmlen == 0 && ikm != NULL)
-        || ikmlen > OSSL_HPKE_MAX_PARMLEN) {
+        || ikmlen > (size_t)(kem_info->pq ? OSSL_HPKE_MAX_PQIKMLEN : OSSL_HPKE_MAX_PARMLEN)) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
@@ -1339,9 +1345,30 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    if (ikm != NULL)
-        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM,
-            (char *)ikm, ikmlen);
+    if (ikm != NULL) {
+        if (OSSL_PARAM_locate_const(EVP_PKEY_CTX_settable_params(pctx), OSSL_PKEY_PARAM_IKM) != NULL) {
+            *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, (char *)ikm, ikmlen);
+        } else {
+            /*
+             * In order to support ML-KEM in older FIPS providers we do the
+             * derivekey code here rather than in the key manager
+             */
+            size_t seedlen = kem_info->derivekey_seedlen; /* Note this value is 32 or 64 */
+            EVP_MD *md_xof;
+            int rv;
+
+            if (seedlen > sizeof(seed))
+                goto err;
+            md_xof = EVP_MD_fetch(libctx, SN_shake256, propq);
+            rv = ossl_hpke_keypair_derive_xof(seed, seedlen, md_xof,
+                kem_info->kem_id, ikm, ikmlen);
+            EVP_MD_free(md_xof);
+            if (rv != 1)
+                goto err;
+            pSeed = seed;
+            *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_SEED, seed, seedlen);
+        }
+    }
     *p = OSSL_PARAM_construct_end();
     if (EVP_PKEY_CTX_set_params(pctx, params) <= 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
@@ -1363,6 +1390,9 @@ int OSSL_HPKE_keygen(OSSL_HPKE_SUITE suite,
     erv = 1;
 
 err:
+    if (pSeed != NULL)
+        OPENSSL_cleanse(pSeed, sizeof(seed));
+
     if (erv != 1)
         EVP_PKEY_free(skR);
     EVP_PKEY_CTX_free(pctx);
@@ -1474,5 +1504,5 @@ size_t OSSL_HPKE_get_recommended_ikmelen(OSSL_HPKE_SUITE suite)
     if (kem_info == NULL)
         return 0;
 
-    return kem_info->Nsk;
+    return kem_info->recommended_ikmlen;
 }

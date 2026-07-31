@@ -19,6 +19,9 @@
 
 #ifndef OPENSSL_NO_EC
 
+#define OSSL_EC_KEYDERIVE_MODE_DHKEM 0
+#define OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID 1
+
 /* RFC 9180 Labels used for Extract and Expand operations */
 
 /* ASCII: "eae_prk", in hex for EBCDIC compatibility */

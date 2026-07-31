@@ -17,8 +17,10 @@
 #include <openssl/self_test.h>
 #include "internal/nelem.h"
 #include "internal/param_build_set.h"
+#include "internal/hpke_util.h"
 #include "prov/implementations.h"
 #include "prov/mlx_kem.h"
+#include "prov/ecx.h"
 #include "prov/provider_ctx.h"
 #include "prov/providercommon.h"
 #include "prov/securitycheck.h"
@@ -59,6 +61,15 @@ static const ECDH_VINFO hybrid_vtable[] = {
 #else
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
+#if !defined(FIPS_MODULE)
+    { "EC", "P-256", 65, 32, 32, 0, EVP_PKEY_ML_KEM_768, 128, "MLKEM768-P256" },
+    { "EC", "P-384", 97, 48, 48, 0, EVP_PKEY_ML_KEM_1024, 48, "MLKEM1024-P384" },
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768, 32, "\x5c\x2e\x2f\x2f\x5e\x5c" },
+#else
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
+#endif
 };
 
 typedef struct mlx_kem_gen_ctx_st {
@@ -66,6 +77,11 @@ typedef struct mlx_kem_gen_ctx_st {
     char *propq;
     int selection;
     unsigned int evp_type;
+    /* deterministic optional input key material in seed or ikm form */
+    uint8_t ikm_or_seed[128];
+    size_t ikm_or_seed_len;
+    bool is_ikm;
+    int kemid;
 } PROV_ML_KEM_GEN_CTX;
 
 static void mlx_kem_key_free(void *vkey)
@@ -82,7 +98,7 @@ static void mlx_kem_key_free(void *vkey)
 
 /* Takes ownership of propq */
 static void *
-mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
+mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq, int kemid)
 {
     MLX_KEY *key = NULL;
     unsigned int ml_kem_variant;
@@ -99,11 +115,124 @@ mlx_kem_key_new(unsigned int v, OSSL_LIB_CTX *libctx, char *propq)
     key->xkey = key->mkey = NULL;
     key->state = MLX_HAVE_NOKEYS;
     key->propq = propq;
+    key->kemid = kemid;
     return key;
 
 err:
     OPENSSL_free(propq);
     return NULL;
+}
+
+static int mlx_kem_key_gen(MLX_KEY *key,
+    const uint8_t *ikm_or_seed, size_t ikm_or_seedlen, bool is_ikm)
+{
+    int ret = 0;
+    uint8_t seed_buf[128];
+    EVP_MD *shakemd = NULL;
+    EVP_PKEY_CTX *mctx = NULL;
+    EVP_PKEY_CTX *xctx = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    OSSL_PARAM params[4], *p = params, *prms = NULL;
+#ifndef FIPS_MODULE
+    size_t seed_len = 32;
+    int hpke_mode = key->xinfo->ec_nSeed > 0;
+    int mode;
+
+    /*
+     * For the TLS use case we just do a normal keygen for both components
+     *
+     * For the HPKE use case the generated key uses expandKey(seed).
+     *
+     * Where expandKey(seed) is defined as
+     *  seed_full = SHAKE256(seed, KEM.Nseed + Group.Nseed)
+     *  seed_PQ = seed_full[0 : KEM.Nseed]
+     *  seed_T = seed_full[KEM.Nseed : KEM.Nseed + Group.Nseed]
+     *
+     *  ML-KEM.KeyGen_internal(seed_PQ)
+     *
+     * The EC or X25519 Keymanager's keygen() handles this next part...
+     *  dk_T = Group.RandomScalar(seed_T)
+     *  ek_T = Group.Exp(Group.G, dk_T)
+     *
+     * For X25519 dk_T = seed_T
+     * For EC RandomScalar() iterates over blocks of seed_T until it finds
+     * a value that is less than the group order.
+     */
+    if (hpke_mode) {
+        prms = params;
+        shakemd = EVP_MD_fetch(key->libctx, SN_shake256, key->propq);
+        if (shakemd == NULL)
+            return 0;
+        if (ikm_or_seed == NULL || ikm_or_seedlen == 0) {
+            if (RAND_priv_bytes_ex(key->libctx, seed_buf, seed_len, 0) <= 0)
+                goto err;
+        } else {
+            if (is_ikm) {
+                /* derive seed data from an ikm */
+                if (!ossl_hpke_keypair_derive_xof(seed_buf, seed_len, shakemd,
+                        key->kemid, ikm_or_seed, ikm_or_seedlen))
+                    goto err;
+            } else {
+                /* Just use a raw input seed */
+                if (ikm_or_seedlen != 32)
+                    goto err;
+                memcpy(seed_buf, ikm_or_seed, ikm_or_seedlen);
+            }
+        }
+        mdctx = EVP_MD_CTX_new();
+        if (mdctx == NULL
+            || !EVP_DigestInit_ex2(mdctx, shakemd, NULL)
+            || !EVP_DigestUpdate(mdctx, seed_buf, seed_len)
+            || !EVP_DigestSqueeze(mdctx, seed_buf, 64))
+            goto err;
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_ML_KEM_SEED, seed_buf, 64);
+        *p = OSSL_PARAM_construct_end();
+    }
+#endif
+    mctx = EVP_PKEY_CTX_new_from_name(key->libctx, key->minfo->algorithm_name, key->propq);
+    if (mctx == NULL
+        || EVP_PKEY_keygen_init(mctx) != 1
+        || !EVP_PKEY_CTX_set_params(mctx, prms)
+        || EVP_PKEY_generate(mctx, &key->mkey) != 1)
+        goto err;
+
+    prms = NULL;
+    p = params;
+    if (key->xinfo->group_name != NULL) {
+        prms = params;
+        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME,
+            (char *)key->xinfo->group_name, 0);
+    }
+#ifndef FIPS_MODULE
+    if (hpke_mode) {
+        prms = params;
+        mode = OSSL_EC_KEYDERIVE_MODE_MLKEM_HYBRID;
+        if (!EVP_DigestSqueeze(mdctx, seed_buf, key->xinfo->ec_nSeed))
+            goto err;
+        *p++ = OSSL_PARAM_construct_octet_string(OSSL_PKEY_PARAM_IKM, seed_buf, key->xinfo->ec_nSeed);
+        *p++ = OSSL_PARAM_construct_int(OSSL_PKEY_PARAM_IKM_DERIVEMODE, &mode);
+    }
+#endif
+    *p = OSSL_PARAM_construct_end();
+
+    xctx = EVP_PKEY_CTX_new_from_name(key->libctx, key->xinfo->algorithm_name, key->propq);
+    if (xctx == NULL
+        || EVP_PKEY_keygen_init(xctx) != 1
+        || !EVP_PKEY_CTX_set_params(xctx, params)
+        || EVP_PKEY_generate(xctx, &key->xkey) != 1)
+        goto err;
+
+    if (key->mkey == NULL || key->xkey == NULL)
+        goto err;
+    key->state = MLX_HAVE_PRVKEY;
+    ret = 1;
+err:
+    OPENSSL_cleanse(seed_buf, sizeof(seed_buf));
+    EVP_PKEY_CTX_free(mctx);
+    EVP_PKEY_CTX_free(xctx);
+    EVP_MD_free(shakemd);
+    EVP_MD_CTX_free(mdctx);
+    return ret;
 }
 
 static int mlx_kem_has(const void *vkey, int selection)
@@ -168,10 +297,10 @@ typedef struct export_cb_arg_st {
 static int export_sub_cb(const OSSL_PARAM *params, void *varg)
 {
     EXPORT_CB_ARG *sub_arg = varg;
-    struct ml_kem_import_export_st p;
+    struct mlx_kem_import_export_st p;
     size_t len;
 
-    if (!ml_kem_import_export_decoder(params, &p))
+    if (!mlx_kem_import_export_decoder(params, &p))
         return 0;
 
     /*
@@ -327,7 +456,7 @@ err:
 static const OSSL_PARAM *mlx_kem_imexport_types(int selection)
 {
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        return ml_kem_import_export_list;
+        return mlx_kem_import_export_list;
     return NULL;
 }
 
@@ -414,7 +543,7 @@ static int mlx_kem_key_fromdata(MLX_KEY *key,
     const OSSL_PARAM params[],
     int include_private)
 {
-    struct ml_kem_import_export_st p;
+    struct mlx_kem_import_export_st p;
     const void *pubenc = NULL, *prvenc = NULL;
     size_t pubkey_bytes, prvkey_bytes;
     size_t publen = 0, prvlen = 0;
@@ -425,7 +554,7 @@ static int mlx_kem_key_fromdata(MLX_KEY *key,
     pubkey_bytes = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
     prvkey_bytes = key->minfo->prvkey_bytes + key->xinfo->prvkey_bytes;
 
-    if (!ml_kem_import_export_decoder(params, &p))
+    if (!mlx_kem_import_export_decoder(params, &p))
         return 0;
 
     /* What does the caller want to set? */
@@ -479,6 +608,26 @@ static const OSSL_PARAM *mlx_kem_gettable_params(void *provctx)
     return mlx_get_params_list;
 }
 
+static int copy_public_param(const OSSL_PARAM *src, OSSL_PARAM *dst)
+{
+    size_t publen = src->return_size;
+
+    if (dst->data_type != OSSL_PARAM_OCTET_STRING)
+        return 0;
+    dst->return_size = publen;
+    if (dst->data == NULL)
+        return 1;
+    if (dst->data_size < publen) {
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL,
+            "public key output buffer too short: %lu < %lu",
+            (unsigned long)dst->data_size,
+            (unsigned long)publen);
+        return 0;
+    }
+    memcpy(dst->data, src->data, publen);
+    return 1;
+}
+
 /*
  * It is assumed the key is guaranteed non-NULL here, and is from this provider
  */
@@ -516,8 +665,11 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     if (!mlx_kem_have_pubkey(key))
         return 1;
 
+    pub = p.encpubkey;
+    if (pub == NULL)
+        pub = p.pub;
     memset(&sub_arg, 0, sizeof(sub_arg));
-    if ((pub = p.pub) != NULL) {
+    if (pub != NULL) {
         size_t publen = key->minfo->pubkey_bytes + key->xinfo->pubkey_bytes;
 
         if (pub->data_type != OSSL_PARAM_OCTET_STRING)
@@ -570,6 +722,8 @@ static int mlx_kem_get_params(void *vkey, OSSL_PARAM params[])
     if ((pub != NULL && sub_arg.pubcount != 2)
         || (prv != NULL && sub_arg.prvcount != 2))
         return 0;
+    if (p.encpubkey != NULL && p.pub != NULL)
+        return copy_public_param(p.encpubkey, p.pub);
 
     return 1;
 }
@@ -633,10 +787,28 @@ static int mlx_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
         if ((gctx->propq = OPENSSL_strdup(p.propq->data)) == NULL)
             return 0;
     }
+    if (p.ikm != NULL) {
+        void *vp = gctx->ikm_or_seed;
+
+        if (gctx->ikm_or_seed_len > 0)
+            return 0;
+        if (!OSSL_PARAM_get_octet_string(p.ikm, &vp, sizeof(gctx->ikm_or_seed), &gctx->ikm_or_seed_len))
+            return 0;
+        gctx->is_ikm = true;
+    }
+    if (p.seed != NULL) {
+        void *vp = gctx->ikm_or_seed;
+
+        if (gctx->ikm_or_seed_len > 0)
+            return 0;
+        if (!OSSL_PARAM_get_octet_string(p.seed, &vp, sizeof(gctx->ikm_or_seed), &gctx->ikm_or_seed_len))
+            return 0;
+        gctx->is_ikm = false;
+    }
     return 1;
 }
 
-static void *mlx_kem_gen_init(int evp_type, OSSL_LIB_CTX *libctx,
+static void *mlx_kem_gen_init(int evp_type, OSSL_LIB_CTX *libctx, int kemid,
     int selection, const OSSL_PARAM params[])
 {
     PROV_ML_KEM_GEN_CTX *gctx = NULL;
@@ -653,6 +825,7 @@ static void *mlx_kem_gen_init(int evp_type, OSSL_LIB_CTX *libctx,
     gctx->evp_type = evp_type;
     gctx->libctx = libctx;
     gctx->selection = selection;
+    gctx->kemid = kemid;
     if (mlx_kem_gen_set_params(gctx, params))
         return gctx;
 
@@ -679,23 +852,16 @@ static void *mlx_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     /* Lose ownership of propq */
     propq = gctx->propq;
     gctx->propq = NULL;
-    if ((key = mlx_kem_key_new(gctx->evp_type, gctx->libctx, propq)) == NULL)
+    if ((key = mlx_kem_key_new(gctx->evp_type, gctx->libctx, propq, gctx->kemid)) == NULL)
         return NULL;
 
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    /* For now, using the same "propq" for all components */
-    key->mkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
-        key->minfo->algorithm_name);
-    key->xkey = EVP_PKEY_Q_keygen(key->libctx, key->propq,
-        key->xinfo->algorithm_name,
-        key->xinfo->group_name);
-    if (key->mkey != NULL && key->xkey != NULL) {
-        key->state = MLX_HAVE_PRVKEY;
-        return key;
-    }
-
+    if (!mlx_kem_key_gen(key, gctx->ikm_or_seed, gctx->ikm_or_seed_len, gctx->is_ikm))
+        goto err;
+    return key;
+err:
     mlx_kem_key_free(key);
     return NULL;
 }
@@ -757,14 +923,14 @@ static void *mlx_kem_dup(const void *vkey, int selection)
     return NULL;
 }
 
-#define DECLARE_DISPATCH(name, variant)                                                    \
+#define DECLARE_DISPATCH(name, variant, kemid)                                             \
     static OSSL_FUNC_keymgmt_new_fn mlx_##name##_kem_new;                                  \
     static void *mlx_##name##_kem_new(void *provctx)                                       \
     {                                                                                      \
         OSSL_LIB_CTX *libctx;                                                              \
                                                                                            \
         libctx = provctx == NULL ? NULL : PROV_LIBCTX_OF(provctx);                         \
-        return mlx_kem_key_new(variant, libctx, NULL);                                     \
+        return mlx_kem_key_new(variant, libctx, NULL, kemid);                              \
     }                                                                                      \
     static OSSL_FUNC_keymgmt_gen_init_fn mlx_##name##_kem_gen_init;                        \
     static void *mlx_##name##_kem_gen_init(void *provctx, int selection,                   \
@@ -773,7 +939,7 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         OSSL_LIB_CTX *libctx;                                                              \
                                                                                            \
         libctx = provctx == NULL ? NULL : PROV_LIBCTX_OF(provctx);                         \
-        return mlx_kem_gen_init(variant, libctx, selection, params);                       \
+        return mlx_kem_gen_init(variant, libctx, kemid, selection, params);                \
     }                                                                                      \
     const OSSL_DISPATCH ossl_mlx_##name##_kem_kmgmt_functions[] = {                        \
         { OSSL_FUNC_KEYMGMT_NEW, (OSSL_FUNC)mlx_##name##_kem_new },                        \
@@ -797,12 +963,20 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         OSSL_DISPATCH_END                                                                  \
     }
 /* See |hybrid_vtable| above */
-DECLARE_DISPATCH(p256, 0);
-DECLARE_DISPATCH(p384, 1);
+DECLARE_DISPATCH(p256, 0, 0);
+DECLARE_DISPATCH(p384, 1, 0);
 #if !defined(OPENSSL_NO_ECX)
-DECLARE_DISPATCH(x25519, 2);
-DECLARE_DISPATCH(x448, 3);
+DECLARE_DISPATCH(x25519, 2, 0);
+DECLARE_DISPATCH(x448, 3, 0);
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-DECLARE_DISPATCH(curve_sm2, 4);
+DECLARE_DISPATCH(curve_sm2, 4, 0);
+#endif
+
+#if !defined(FIPS_MODULE)
+DECLARE_DISPATCH(p256_hpke, 5, OSSL_HPKE_KEM_ID_MLKEM768_P256);
+DECLARE_DISPATCH(p384_hpke, 6, OSSL_HPKE_KEM_ID_MLKEM1024_P384);
+#if !defined(OPENSSL_NO_ECX)
+DECLARE_DISPATCH(x25519_hpke, 7, OSSL_HPKE_KEM_ID_XWING);
+#endif
 #endif

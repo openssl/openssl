@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -16,6 +16,7 @@
 #include <openssl/hpke.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
+#include <openssl/byteorder.h>
 #include "crypto/ecx.h"
 #include "crypto/rand.h"
 #include "internal/hpke_util.h"
@@ -45,6 +46,10 @@ typedef struct {
 /* Define HPKE labels from RFC9180 in hex for EBCDIC compatibility */
 /* ASCII: "HPKE-v1", in hex for EBCDIC compatibility */
 static const char LABEL_HPKEV1[] = "\x48\x50\x4B\x45\x2D\x76\x31";
+/* ASCII: "KEM", in hex for EBCDIC compatibility */
+static const char LABEL_KEM[] = "\x4b\x45\x4d";
+/* "DeriveKeyPair" */
+static const char OSSL_HPKE_DERIVEKEYPAIR_LABEL[] = "\x44\x65\x72\x69\x76\x65\x4B\x65\x79\x50\x61\x69\x72";
 
 /*
  * Note that if additions are made to the set of IANA codepoints
@@ -61,24 +66,45 @@ static const char LABEL_HPKEV1[] = "\x48\x50\x4B\x45\x2D\x76\x31";
  * See RFC9180 Section 7.1 "Table 2 KEM IDs"
  */
 static const OSSL_HPKE_KEM_INFO hpke_kem_tab[] = {
+#if !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ML_KEM)
+#ifndef OPENSSL_NO_ML_KEM
+    { OSSL_HPKE_KEM_ID_ML_KEM_512, OSSL_HPKE_KEMSTR_ML_KEM_512, NULL,
+        LN_sha256, SHA256_DIGEST_LENGTH, 768, 800, 0, 64, 0x00, false, true, 0 },
+    { OSSL_HPKE_KEM_ID_ML_KEM_768, OSSL_HPKE_KEMSTR_ML_KEM_768, NULL,
+        LN_sha256, SHA256_DIGEST_LENGTH, 1088, 1184, 0, 64, 0x00, false, true, 0 },
+    { OSSL_HPKE_KEM_ID_ML_KEM_1024, OSSL_HPKE_KEMSTR_ML_KEM_1024, NULL,
+        LN_sha384, SHA384_DIGEST_LENGTH, 1568, 1568, 0, 64, 0x00, false, true, 0 },
+#ifndef OPENSSL_NO_EC
+    { OSSL_HPKE_KEM_ID_MLKEM768_P256, OSSL_HPKE_KEMSTR_MLKEM768_P256, NULL,
+        LN_sha256, SHA256_DIGEST_LENGTH, 1153, 1249, 0, 32, 0x00, false, true, 160 },
+    { OSSL_HPKE_KEM_ID_MLKEM1024_P384, OSSL_HPKE_KEMSTR_MLKEM1024_P384, NULL,
+        LN_sha384, SHA384_DIGEST_LENGTH, 1665, 1665, 0, 32, 0x00, false, true, 80 },
+#ifndef OPENSSL_NO_ECX
+    { OSSL_HPKE_KEM_ID_XWING, OSSL_HPKE_KEMSTR_XWING, NULL,
+        LN_sha256, SHA256_DIGEST_LENGTH, 1120, 1216, 0, 32, 0x00, false, true, 64 },
+#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_ML_KEM */
+
 #ifndef OPENSSL_NO_EC
     { OSSL_HPKE_KEM_ID_P256, "EC", OSSL_HPKE_KEMSTR_P256,
-        LN_sha256, SHA256_DIGEST_LENGTH, 65, 65, 32, 0xFF },
+        LN_sha256, SHA256_DIGEST_LENGTH, 65, 65, 32, 0, 0xFF, true, false, 32 },
     { OSSL_HPKE_KEM_ID_P384, "EC", OSSL_HPKE_KEMSTR_P384,
-        LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0xFF },
+        LN_sha384, SHA384_DIGEST_LENGTH, 97, 97, 48, 0, 0xFF, true, false, 48 },
     { OSSL_HPKE_KEM_ID_P521, "EC", OSSL_HPKE_KEMSTR_P521,
-        LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0x01 },
+        LN_sha512, SHA512_DIGEST_LENGTH, 133, 133, 66, 0, 0x01, true, false, 66 },
 #ifndef OPENSSL_NO_ECX
     { OSSL_HPKE_KEM_ID_X25519, OSSL_HPKE_KEMSTR_X25519, NULL,
         LN_sha256, SHA256_DIGEST_LENGTH,
-        X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0x00 },
+        X25519_KEYLEN, X25519_KEYLEN, X25519_KEYLEN, 0, 0x00, true, false, X25519_KEYLEN },
     { OSSL_HPKE_KEM_ID_X448, OSSL_HPKE_KEMSTR_X448, NULL,
         LN_sha512, SHA512_DIGEST_LENGTH,
-        X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0x00 }
-#endif
+        X448_KEYLEN, X448_KEYLEN, X448_KEYLEN, 0, 0x00, true, false, X448_KEYLEN },
+#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
 #else
-    { OSSL_HPKE_KEM_ID_RESERVED, NULL, NULL, NULL, 0, 0, 0, 0, 0x00 }
-#endif
+    { OSSL_HPKE_KEM_ID_RESERVED, NULL, NULL, NULL, 0, 0, 0, 0, 0x00, false }
+#endif /* !defined(OPENSSL_NO_EC) || !defined(OPENSSL_NO_ML_KEM) */
 };
 
 /*
@@ -120,18 +146,26 @@ static const OSSL_HPKE_KDF_INFO hpke_kdf_tab[] = {
  * sizes (i.e. allow exactly 4 synonyms) don't change.
  */
 static const synonymttab_t kemstrtab[] = {
-    { OSSL_HPKE_KEM_ID_P256,
-        { OSSL_HPKE_KEMSTR_P256, "0x10", "0x10", "16" } },
-    { OSSL_HPKE_KEM_ID_P384,
-        { OSSL_HPKE_KEMSTR_P384, "0x11", "0x11", "17" } },
-    { OSSL_HPKE_KEM_ID_P521,
-        { OSSL_HPKE_KEMSTR_P521, "0x12", "0x12", "18" } },
+    { OSSL_HPKE_KEM_ID_P256, { OSSL_HPKE_KEMSTR_P256, "0x10", "0x10", "16" } },
+    { OSSL_HPKE_KEM_ID_P384, { OSSL_HPKE_KEMSTR_P384, "0x11", "0x11", "17" } },
+    { OSSL_HPKE_KEM_ID_P521, { OSSL_HPKE_KEMSTR_P521, "0x12", "0x12", "18" } },
 #ifndef OPENSSL_NO_ECX
-    { OSSL_HPKE_KEM_ID_X25519,
-        { OSSL_HPKE_KEMSTR_X25519, "0x20", "0x20", "32" } },
-    { OSSL_HPKE_KEM_ID_X448,
-        { OSSL_HPKE_KEMSTR_X448, "0x21", "0x21", "33" } }
-#endif
+    { OSSL_HPKE_KEM_ID_X25519, { OSSL_HPKE_KEMSTR_X25519, "0x20", "0x20", "32" } },
+    { OSSL_HPKE_KEM_ID_X448, { OSSL_HPKE_KEMSTR_X448, "0x21", "0x21", "33" } },
+#endif /* OPENSSL_NO_ECX */
+#ifndef OPENSSL_NO_ML_KEM
+    { OSSL_HPKE_KEM_ID_ML_KEM_512, { OSSL_HPKE_KEMSTR_ML_KEM_512, "0x40", "0x40", "64" } },
+    { OSSL_HPKE_KEM_ID_ML_KEM_768, { OSSL_HPKE_KEMSTR_ML_KEM_768, "0x41", "0x41", "65" } },
+    { OSSL_HPKE_KEM_ID_ML_KEM_1024, { OSSL_HPKE_KEMSTR_ML_KEM_1024, "0x42", "0x42", "66" } },
+#ifndef OPENSSL_NO_EC
+    { OSSL_HPKE_KEM_ID_MLKEM768_P256, { OSSL_HPKE_KEMSTR_MLKEM768_P256, "0x50", "0x50", "80" } },
+    { OSSL_HPKE_KEM_ID_MLKEM1024_P384, { OSSL_HPKE_KEMSTR_MLKEM1024_P384, "0x51", "0x51", "81" } },
+#ifndef OPENSSL_NO_ECX
+    { OSSL_HPKE_KEM_ID_XWING,
+        { OSSL_HPKE_KEMSTR_XWING, "0x647A", "0x647A", "25722" } },
+#endif /* OPENSSL_NO_ECX */
+#endif /* OPENSSL_NO_EC */
+#endif /* OPENSSL_NO_ML_KEM */
 };
 static const synonymttab_t kdfstrtab[] = {
     { OSSL_HPKE_KDF_ID_HKDF_SHA256,
@@ -337,6 +371,60 @@ end:
     OPENSSL_cleanse(labeled_ikm, labeled_ikmlen);
     OPENSSL_free(labeled_ikm);
     return ret;
+}
+
+/*
+ * See https://datatracker.ietf.org/doc/html/draft-ietf-hpke-hpke-03
+ * Section 4.4. Labeled Derivation Functions
+ *
+ * This is used by One Stage KDFs.
+ */
+int ossl_hpke_labeled_derive_xof(uint8_t *out, size_t outlen,
+    EVP_MD *md_xof, uint16_t kemid, const char *label,
+    const uint8_t *ikm, size_t ikmlen,
+    const uint8_t *context, size_t contextlen)
+{
+    int ret = 0;
+    EVP_MD_CTX *mctx = NULL;
+    uint8_t suiteid_buf[2];
+    uint8_t labellen_buf[2];
+    uint8_t outlen_buf[2];
+    size_t labellen = strlen(label);
+
+    /*
+     * suite_id = concat("KEM", I2OSP(kemid, 2))
+     * labeled_ikm = concat(ikm, "HPKE-v1", suite_id, lengthPrefixed(label), I2OSP(L, 2), context)
+     * SHAKE256.Derive(labeled_ikm, L)
+     */
+    if (labellen > 0xFFFF || outlen > 0xFFFF)
+        return 0;
+    if (md_xof == NULL || (mctx = EVP_MD_CTX_new()) == NULL)
+        return 0;
+
+    OPENSSL_store_u16_be(labellen_buf, (uint16_t)labellen);
+    OPENSSL_store_u16_be(outlen_buf, (uint16_t)outlen);
+    OPENSSL_store_u16_be(suiteid_buf, kemid);
+
+    ret = EVP_DigestInit_ex2(mctx, md_xof, NULL)
+        && EVP_DigestUpdate(mctx, ikm, ikmlen)
+        && EVP_DigestUpdate(mctx, LABEL_HPKEV1, strlen(LABEL_HPKEV1))
+        && EVP_DigestUpdate(mctx, LABEL_KEM, strlen(LABEL_KEM))
+        && EVP_DigestUpdate(mctx, suiteid_buf, sizeof(suiteid_buf))
+        && EVP_DigestUpdate(mctx, labellen_buf, sizeof(labellen_buf))
+        && EVP_DigestUpdate(mctx, label, labellen)
+        && EVP_DigestUpdate(mctx, outlen_buf, sizeof(outlen_buf))
+        && EVP_DigestUpdate(mctx, context, contextlen)
+        && EVP_DigestFinalXOF(mctx, out, outlen);
+    EVP_MD_CTX_free(mctx);
+    return ret;
+}
+
+int ossl_hpke_keypair_derive_xof(uint8_t *out, size_t outlen,
+    EVP_MD *md_xof, uint16_t kemid, const uint8_t *ikm, size_t ikmlen)
+{
+    return ossl_hpke_labeled_derive_xof(out, outlen, md_xof, kemid,
+        OSSL_HPKE_DERIVEKEYPAIR_LABEL,
+        ikm, ikmlen, NULL, 0);
 }
 
 /*

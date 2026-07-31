@@ -159,13 +159,21 @@ Used for getting the EC public key Y component.
 Getter that returns the default digest name.
 (Currently returns "SHA256" as of OpenSSL 3.0).
 
-=item "dhkem-ikm" (B<OSSL_PKEY_PARAM_DHKEM_IKM>) <octet string>
+=item "dhkem-ikm" (B<OSSL_PKEY_PARAM_DHKEM_IKM> or B<>OSSL_PKEY_PARAM_IKM>) <octet string>
 
-DHKEM requires the generation of a keypair using an input key material (seed).
+This is used when generating keys for B<HPKE>.
+DHKEM and MLX-KEM require the generation of a keypair using an input key material (seed).
 Use this to specify the key material used for generation of the private key.
-This value should not be reused for other purposes. It can only be used
+This value should not be reused for other purposes. For DHKEM it can only be used
 for the curves "P-256", "P-384" and "P-521" and should have a length of at least
 the size of the encoded private key (i.e. 32, 48 and 66 for the listed curves).
+For MLX-KEM it can only be used for the curves "P-256", "P-384" and should have a
+length of at least 128, for "P-256" and at least 80 "P-384".
+
+=item "ikm-derivemode" (B<OSSL_PKEY_PARAM_IKM_DERIVEMODE>) <integer>
+
+Can be used with the B<OSSL_PKEY_PARAM_IKM> parameter to specify MLX-KEM mode
+if the value is 1 or DHKEM mode if the value is 0. The default value is 0.
 
 =back
 
@@ -332,6 +340,8 @@ L<EVP_KEYEXCH-ECDH(7)>
 =head1 HISTORY
 
 The B<OSSL_PKEY_PARAM_EC_FIELD_DEGREE> parameter was added in OpenSSL 4.0.
+
+The B<OSSL_PKEY_PARAM_IKM_DERIVEMODE> parameter was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
