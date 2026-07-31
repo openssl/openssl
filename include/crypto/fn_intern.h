@@ -17,11 +17,46 @@
 #pragma once
 
 #include <stdbool.h>
+#include "internal/common.h"
+#include "internal/safe_math.h"
 #include "crypto/fn.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+/*
+ * Context-size composition helpers, shared by all the *_ctx_size()
+ * functions, which all compose nested arena budgets the same way: sum the
+ * operation's own scratch frame with the largest nested frame it may need.
+ *
+ * ossl_fn_ctx_add_size() adds two sizes overflow-safely, and
+ * ossl_fn_ctx_max_size() picks the larger of two sequential frame budgets.
+ * Both honour the *_ctx_size() result convention: 0 (error) is sticky,
+ * OSSL_FN_CTX_SIZE_NONE counts as 0, and a resulting 0 maps back to
+ * OSSL_FN_CTX_SIZE_NONE.
+ */
+static ossl_inline ossl_unused size_t ossl_fn_ctx_add_size(size_t a, size_t b)
+{
+    if (ossl_unlikely(a == 0 || b == 0))
+        return 0;
+    a = (a == OSSL_FN_CTX_SIZE_NONE) ? 0 : a;
+    b = (b == OSSL_FN_CTX_SIZE_NONE) ? 0 : b;
+    if (ossl_unlikely(b > OSSL_SAFE_MATH_MAXU(size_t) - a))
+        return 0;
+    a += b;
+    return (a == 0) ? OSSL_FN_CTX_SIZE_NONE : a;
+}
+
+static ossl_inline ossl_unused size_t ossl_fn_ctx_max_size(size_t a, size_t b)
+{
+    if (ossl_unlikely(a == 0 || b == 0))
+        return 0;
+    a = (a == OSSL_FN_CTX_SIZE_NONE) ? 0 : a;
+    b = (b == OSSL_FN_CTX_SIZE_NONE) ? 0 : b;
+    a = (a > b) ? a : b;
+    return (a == 0) ? OSSL_FN_CTX_SIZE_NONE : a;
+}
 
 #if OSSL_FN_BYTES == 4
 /* 32-bit systems */
