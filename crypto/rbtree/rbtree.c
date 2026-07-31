@@ -338,7 +338,7 @@ ossl_rbt_insert(const struct ossl_rbt_type *t, struct ossl_rbt_tree *rbt, void *
     void *node;
     int comp = 0;
 
-#if NDEBUG
+#ifndef NDEBUG
     assert(rbe->rb_parent == NULL);
     assert(rbe->rb_left == NULL);
     assert(rbe->rb_right == NULL);
