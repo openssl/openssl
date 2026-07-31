@@ -1187,7 +1187,7 @@ static int rsa_ossl_s390x_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
     int rc;
 
     if (rsa->version != RSA_ASN1_VERSION_MULTI) {
-        rc = s390x_crt(r0, i, rsa->p, rsa->q, rsa->dmp1, rsa->dmq1, rsa->iqmp);
+        rc = s390x_crt(r0, i, rsa->p, rsa->q, rsa->dmp1, rsa->dmq1, rsa->iqmp, rsa->n);
         if (rc >= 0)
             return rc;
     }
