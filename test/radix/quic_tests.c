@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -9,6 +9,9 @@
 
 #include "internal/quic_stream_map.h"
 #include "internal/quic_reactor.h"
+#include "internal/quic_channel.h"
+#include "internal/quic_ssl.h"
+#include "internal/time.h"
 #include "../../ssl/rio/poll_builder.h"
 
 #if defined(_AIX)
@@ -584,6 +587,282 @@ DEF_SCRIPT(poll_abort_blocking,
     OP_SELECT_SSL(2, Cb0);
     OP_SELECT_SSL(3, Lb0);
     OP_FUNC(check_poll_abort_blocking);
+}
+
+/*
+ * Test: poll_multi_reactor_cleanup
+ * --------------------------------
+ *
+ * Exercise SSL_poll() cleanup when two workers register the same two
+ * notifier-enabled reactors in opposite orders. Both notifiers are armed
+ * while each reactor has two blocking waiters. Cleanup must allow both
+ * workers to finish and leave both reactors with no waiters or signals.
+ *
+ * Each worker's third poll item is a NULL sentinel. Its translation hook
+ * blocks after the first two items have registered both reactors but before
+ * cleanup can begin. Once both workers reach this barrier, the coordinator
+ * arms the notifiers and releases them, making the ordering deterministic.
+ */
+
+#if defined(OPENSSL_THREADS)
+struct poll_multi_reactor_ctx {
+    CRYPTO_MUTEX *mu;
+    CRYPTO_CONDVAR *cv;
+    int arrived;
+    int release;
+    int done;
+    int rc[2];
+    size_t result_count[2];
+};
+
+struct poll_cleanup_thread_ctx {
+    SSL *ssl0, *ssl1;
+    size_t idx;
+    struct poll_multi_reactor_ctx *ctx;
+};
+
+/*
+ * Arm the notifier exactly as rtor_notify_other_threads() does, but without
+ * its condvar wait, so both reactors can be put into the required state
+ * deterministically before the workers are released.
+ */
+static void poll_cleanup_signal_notifier(QUIC_REACTOR *rtor)
+{
+    ossl_crypto_mutex_lock(rtor->mutex);
+    if (rtor->have_notifier && !rtor->signalled_notifier
+        && rtor->cur_blocking_waiters > 0) {
+        ossl_rio_notifier_signal(&rtor->notifier);
+        rtor->signalled_notifier = 1;
+    }
+    ossl_crypto_mutex_unlock(rtor->mutex);
+}
+
+static void poll_cleanup_test_step_cb(size_t idx, void *arg)
+{
+    struct poll_multi_reactor_ctx *ctx = arg;
+
+    /* Both reactors are registered when the NULL sentinel is reached. */
+    if (idx != 2)
+        return;
+
+    ossl_crypto_mutex_lock(ctx->mu);
+    if (!ctx->release) {
+        ++ctx->arrived;
+        ossl_crypto_condvar_broadcast(ctx->cv);
+        while (!ctx->release)
+            ossl_crypto_condvar_wait(ctx->cv, ctx->mu);
+    }
+    ossl_crypto_mutex_unlock(ctx->mu);
+}
+
+static CRYPTO_THREAD_RETVAL poll_cleanup_thread(void *arg)
+{
+    struct poll_cleanup_thread_ctx *d = arg;
+    struct poll_multi_reactor_ctx *ctx = d->ctx;
+    SSL_POLL_ITEM items[3] = { 0 };
+    const struct timeval timeout = { 1, 0 };
+    size_t result_count = 0;
+    int rc;
+
+    items[0].desc = SSL_as_poll_descriptor(d->ssl0);
+    items[0].events = SSL_POLL_EVENT_R;
+    items[1].desc = SSL_as_poll_descriptor(d->ssl1);
+    items[1].events = SSL_POLL_EVENT_R;
+    items[2].desc = SSL_as_poll_descriptor(NULL);
+
+    rc = SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
+        &timeout, 0, &result_count);
+
+    ossl_crypto_mutex_lock(ctx->mu);
+    ctx->rc[d->idx] = rc;
+    ctx->result_count[d->idx] = result_count;
+    ++ctx->done;
+    ossl_crypto_condvar_broadcast(ctx->cv);
+    ossl_crypto_mutex_unlock(ctx->mu);
+    return 0;
+}
+#endif
+
+DEF_FUNC(check_poll_multi_reactor_cleanup)
+{
+    int ok = 0;
+#if !defined(OPENSSL_THREADS)
+    TEST_skip("threading not supported, skipping");
+    F_SKIP_REST();
+err:
+    return ok;
+#else
+    SSL *stream_a0, *stream_a1, *stream_b0, *stream_b1, *conn;
+    QUIC_CHANNEL *ch;
+    QUIC_REACTOR *rtor[2];
+    CRYPTO_THREAD *thread[2] = { NULL, NULL };
+    OSSL_TIME deadline;
+    size_t i;
+    int state_ok;
+    struct poll_multi_reactor_ctx ctx = { 0 };
+    struct poll_cleanup_thread_ctx worker[2] = { 0 };
+
+    REQUIRE_SSL_4(stream_a0, stream_a1, stream_b0, stream_b1);
+
+    for (i = 0; i < 2; ++i)
+        if (!TEST_ptr(conn = SSL_get0_connection(i == 0 ? stream_a0
+                                                        : stream_b0))
+            || !TEST_ptr(ch = ossl_quic_conn_get_channel(conn))
+            || !TEST_ptr(rtor[i] = ossl_quic_channel_get_reactor(ch)))
+            return 0;
+
+    if (rtor[0] == rtor[1]
+        || !rtor[0]->have_notifier
+        || !rtor[1]->have_notifier) {
+        TEST_skip("test requires two distinct notifier-enabled reactors");
+        F_SKIP_REST();
+    }
+
+    if ((ctx.mu = ossl_crypto_mutex_new()) == NULL
+        || (ctx.cv = ossl_crypto_condvar_new()) == NULL)
+        goto err;
+
+    worker[0].ssl0 = stream_a0;
+    worker[0].ssl1 = stream_b0;
+    worker[1].ssl0 = stream_b1;
+    worker[1].ssl1 = stream_a1;
+    for (i = 0; i < 2; ++i) {
+        worker[i].idx = i;
+        worker[i].ctx = &ctx;
+    }
+
+    ossl_quic_poll_translate_test_step_cb_arg = &ctx;
+    ossl_quic_poll_translate_test_step_cb = poll_cleanup_test_step_cb;
+
+    for (i = 0; i < 2; ++i)
+        if ((thread[i] = ossl_crypto_thread_native_start(poll_cleanup_thread,
+                 &worker[i], 1))
+            == NULL)
+            goto err_release;
+
+    /* Wait until both workers have registered both reactors. */
+    deadline = ossl_time_add(ossl_time_now(), ossl_seconds2time(10));
+    ossl_crypto_mutex_lock(ctx.mu);
+    while (ctx.arrived < 2
+        && ossl_time_compare(ossl_time_now(), deadline) < 0)
+        ossl_crypto_condvar_wait_timeout(ctx.cv, ctx.mu, deadline);
+    if (ctx.arrived < 2) {
+        TEST_error("coordinator timed out waiting for workers to register "
+                   "(arrived=%d/2, done=%d); SSL_poll() registration "
+                   "never reached",
+            ctx.arrived, ctx.done);
+        ossl_crypto_mutex_unlock(ctx.mu);
+        goto err_release;
+    }
+    ossl_crypto_mutex_unlock(ctx.mu);
+
+    /* The barrier keeps the waiter counts stable until release. */
+    state_ok = 1;
+    for (i = 0; i < 2; ++i) {
+        ossl_crypto_mutex_lock(rtor[i]->mutex);
+        if (!TEST_size_t_eq(rtor[i]->cur_blocking_waiters, 2))
+            state_ok = 0;
+        ossl_crypto_mutex_unlock(rtor[i]->mutex);
+    }
+    if (!state_ok)
+        goto err_release;
+
+    for (i = 0; i < 2; ++i)
+        poll_cleanup_signal_notifier(rtor[i]);
+
+    ossl_crypto_mutex_lock(ctx.mu);
+    ctx.release = 1;
+    ossl_crypto_condvar_broadcast(ctx.cv);
+    ossl_crypto_mutex_unlock(ctx.mu);
+
+    /* Do not let a cleanup regression hang the test process. */
+    deadline = ossl_time_add(ossl_time_now(), ossl_seconds2time(10));
+    ossl_crypto_mutex_lock(ctx.mu);
+    while (ctx.done < 2
+        && ossl_time_compare(ossl_time_now(), deadline) < 0)
+        ossl_crypto_condvar_wait_timeout(ctx.cv, ctx.mu, deadline);
+    if (ctx.done < 2) {
+        TEST_error("SSL_poll multi-reactor cleanup stuck (finished %d/2)",
+            ctx.done);
+        ossl_crypto_mutex_unlock(ctx.mu);
+        goto err_wedge;
+    }
+
+    state_ok = 1;
+    for (i = 0; i < 2; ++i)
+        if (!TEST_int_eq(ctx.rc[i], 1)
+            || !TEST_size_t_eq(ctx.result_count[i], 0))
+            state_ok = 0;
+    ossl_crypto_mutex_unlock(ctx.mu);
+    if (!state_ok)
+        goto err_join;
+
+    state_ok = 1;
+    for (i = 0; i < 2; ++i) {
+        ossl_crypto_mutex_lock(rtor[i]->mutex);
+        if (!TEST_size_t_eq(rtor[i]->cur_blocking_waiters, 0))
+            state_ok = 0;
+        if (!TEST_int_eq(rtor[i]->signalled_notifier, 0))
+            state_ok = 0;
+        ossl_crypto_mutex_unlock(rtor[i]->mutex);
+    }
+    if (!state_ok)
+        goto err_join;
+
+    ok = 1;
+
+err_join:
+    for (i = 0; i < 2; ++i) {
+        if (thread[i] == NULL)
+            continue;
+        ossl_crypto_thread_native_join(thread[i], NULL);
+        ossl_crypto_thread_native_clean(thread[i]);
+    }
+    goto err;
+
+err_release:
+    /* Release any worker stopped at the registration barrier. */
+    ossl_crypto_mutex_lock(ctx.mu);
+    ctx.release = 1;
+    ossl_crypto_condvar_broadcast(ctx.cv);
+    ossl_crypto_mutex_unlock(ctx.mu);
+    goto err_join;
+
+err_wedge:
+    /* Normal cleanup would re-enter reactors held by the wedged workers. */
+    OPENSSL_die("SSL_poll cleanup workers are wedged", __FILE__, __LINE__);
+
+err:
+    ossl_quic_poll_translate_test_step_cb = NULL;
+    ossl_quic_poll_translate_test_step_cb_arg = NULL;
+    ossl_crypto_condvar_free(&ctx.cv);
+    ossl_crypto_mutex_free(&ctx.mu);
+    return ok;
+#endif
+}
+
+DEF_SCRIPT(poll_multi_reactor_cleanup,
+    "verify SSL_poll() multi-reactor two-phase cleanup does not deadlock")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_NEW_STREAM(C, C0, 0);
+    OP_NEW_STREAM(C, C1, 0);
+
+    /* A second, independent client connection (its own reactor). */
+    OP_NEW_SSL_C(Cb);
+    OP_SET_PEER_ADDR_FROM(Cb, L);
+    OP_CONNECT_WAIT(Cb);
+    OP_SET_DEFAULT_STREAM_MODE(Cb, SSL_DEFAULT_STREAM_MODE_NONE);
+
+    OP_NEW_STREAM(Cb, Cb0, 0);
+    OP_NEW_STREAM(Cb, Cb1, 0);
+
+    OP_SELECT_SSL(0, C0);
+    OP_SELECT_SSL(1, C1);
+    OP_SELECT_SSL(2, Cb0);
+    OP_SELECT_SSL(3, Cb1);
+    OP_FUNC(check_poll_multi_reactor_cleanup);
 }
 
 DEF_FUNC(check_writeable)
@@ -3065,6 +3344,7 @@ static SCRIPT_INFO *const scripts[] = {
     USE(simple_thread),
     USE(ssl_poll),
     USE(poll_abort_blocking),
+    USE(poll_multi_reactor_cleanup),
     USE(check_cwm),
     USE(check_pc_flood),
     USE(check_ctx_cbks),
