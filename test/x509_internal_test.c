@@ -16,6 +16,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include <openssl/evp.h>
+#include <openssl/err.h>
 #include "testutil.h"
 #include "internal/nelem.h"
 #include "crypto/x509.h"
@@ -1077,6 +1078,289 @@ err:
     return ret;
 }
 
+/*
+ * Helpers shared by the extension-cache finalization tests below.  Each builds
+ * on a minimal self-signed certificate and re-encodes it so the cache is built
+ * by a genuine parse.
+ */
+static X509 *cache_test_make_cert(EVP_PKEY *key, const char *cn)
+{
+    X509 *x = NULL;
+    X509_NAME *name = NULL;
+
+    if (!TEST_ptr(x = X509_new())
+        || !TEST_true(X509_set_version(x, X509_VERSION_3))
+        || !TEST_true(ASN1_INTEGER_set(X509_get_serialNumber(x), 1))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notBefore(x), 0))
+        || !TEST_ptr(X509_gmtime_adj(X509_getm_notAfter(x), 3600))
+        || !TEST_true(X509_set_pubkey(x, key))
+        || !TEST_ptr(name = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC,
+            (const unsigned char *)cn, -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(x, name))
+        || !TEST_true(X509_set_issuer_name(x, name))) {
+        X509_free(x);
+        x = NULL;
+    }
+    X509_NAME_free(name);
+    return x;
+}
+
+static X509 *cache_test_reparse(X509 *x)
+{
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    X509 *ret = NULL;
+    int len;
+
+    if (TEST_int_gt(len = i2d_X509(x, &der), 0)) {
+        p = der;
+        ret = d2i_X509(NULL, &p, len);
+    }
+    OPENSSL_free(der);
+    return ret;
+}
+
+static int cache_test_set_ids(X509 *x, unsigned char value)
+{
+    ASN1_OCTET_STRING *skid = NULL;
+    AUTHORITY_KEYID *akid = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(skid = ASN1_OCTET_STRING_new())
+        || !TEST_ptr(akid = AUTHORITY_KEYID_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(skid, &value, 1))
+        || !TEST_ptr(akid->keyid = ASN1_OCTET_STRING_dup(skid))
+        || !TEST_int_eq(X509_add1_ext_i2d(x, NID_subject_key_identifier, skid,
+                            0, X509V3_ADD_REPLACE),
+            1)
+        || !TEST_int_eq(X509_add1_ext_i2d(x, NID_authority_key_identifier, akid,
+                            0, X509V3_ADD_REPLACE),
+            1))
+        goto err;
+    ret = 1;
+err:
+    ASN1_OCTET_STRING_free(skid);
+    AUTHORITY_KEYID_free(akid);
+    return ret;
+}
+
+static int cache_test_add_proxy(X509 *x, long pathlen)
+{
+    PROXY_CERT_INFO_EXTENSION *pci = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(pci = PROXY_CERT_INFO_EXTENSION_new())
+        || !TEST_ptr(pci->pcPathLengthConstraint = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(pci->pcPathLengthConstraint, pathlen))
+        || !TEST_ptr(pci->proxyPolicy = PROXY_POLICY_new())
+        || !TEST_ptr(pci->proxyPolicy->policyLanguage = OBJ_dup(OBJ_nid2obj(NID_id_ppl_anyLanguage)))
+        || !TEST_int_eq(X509_add1_ext_i2d(x, NID_proxyCertInfo, pci, 1,
+                            X509V3_ADD_REPLACE),
+            1))
+        goto err;
+    ret = 1;
+err:
+    PROXY_CERT_INFO_EXTENSION_free(pci);
+    return ret;
+}
+
+/*
+ * A self-signed certificate whose SKID matches its AKID must be flagged
+ * EXFLAG_SS, and that must survive a re-sign that changes both identifiers
+ * (the self-signed check has to consult the freshly cached SKID).
+ */
+static int test_ss_flag_survives_resign(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL, *reparsed = NULL;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = cache_test_make_cert(key, "ss-flag-test"))
+        || !TEST_true(cache_test_set_ids(cert, 0x11))
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_ptr(parsed = cache_test_reparse(cert)))
+        goto err;
+
+    if (!TEST_int_ne(X509_get_extension_flags(parsed) & EXFLAG_SS, 0))
+        goto err;
+
+    if (!TEST_true(cache_test_set_ids(parsed, 0x22))
+        || !TEST_int_gt(X509_sign(parsed, key, EVP_sha256()), 0)
+        || !TEST_ptr(reparsed = cache_test_reparse(parsed))
+        || !TEST_int_ne(X509_get_extension_flags(reparsed) & EXFLAG_SS, 0))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(reparsed);
+    X509_free(parsed);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * A proxy certificate reports its pcPathLengthConstraint; once the proxy
+ * extension is removed and the certificate re-signed, the cache must not keep
+ * reporting the stale path length.
+ */
+static int test_proxy_pathlen_not_stale(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL, *reparsed = NULL;
+    X509_EXTENSION *ext = NULL;
+    int idx;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = cache_test_make_cert(key, "proxy-pathlen-test"))
+        || !TEST_true(cache_test_add_proxy(cert, 7))
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_ptr(parsed = cache_test_reparse(cert)))
+        goto err;
+
+    if (!TEST_int_ne(X509_get_extension_flags(parsed) & EXFLAG_PROXY, 0)
+        || !TEST_long_eq(X509_get_proxy_pathlen(parsed), 7))
+        goto err;
+
+    if (!TEST_int_ge(idx = X509_get_ext_by_NID(parsed, NID_proxyCertInfo, -1), 0)
+        || !TEST_ptr(ext = X509_delete_ext(parsed, idx)))
+        goto err;
+    X509_EXTENSION_free(ext);
+    ext = NULL;
+
+    if (!TEST_int_gt(X509_sign(parsed, key, EVP_sha256()), 0)
+        || !TEST_ptr(reparsed = cache_test_reparse(parsed)))
+        goto err;
+
+    /* Neither the re-signed nor the re-parsed cert may report the old path. */
+    if (!TEST_int_eq(X509_get_extension_flags(parsed) & EXFLAG_PROXY, 0)
+        || !TEST_long_eq(X509_get_proxy_pathlen(parsed), -1)
+        || !TEST_int_eq(X509_get_extension_flags(reparsed) & EXFLAG_PROXY, 0)
+        || !TEST_long_eq(X509_get_proxy_pathlen(reparsed), -1))
+        goto err;
+
+    ret = 1;
+err:
+    X509_EXTENSION_free(ext);
+    X509_free(reparsed);
+    X509_free(parsed);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * A certificate with a malformed basicConstraints is flagged EXFLAG_INVALID;
+ * X509_check_purpose() and X509_check_ca() must then fail closed and raise
+ * X509V3_R_INVALID_CERTIFICATE rather than report on an unusable cache.
+ */
+static int test_invalid_ext_raises(void)
+{
+    static const unsigned char malformed[] = { 0x05, 0x00 };
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL;
+    ASN1_OCTET_STRING *oct = NULL;
+    X509_EXTENSION *ext = NULL;
+    unsigned long errcode;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = cache_test_make_cert(key, "invalid-ext-test"))
+        || !TEST_ptr(oct = ASN1_OCTET_STRING_new())
+        || !TEST_true(ASN1_OCTET_STRING_set(oct, malformed, sizeof(malformed)))
+        || !TEST_ptr(ext = X509_EXTENSION_create_by_NID(NULL,
+                         NID_basic_constraints, 1, oct))
+        || !TEST_int_eq(X509_add_ext(cert, ext, -1), 1)
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_ptr(parsed = cache_test_reparse(cert)))
+        goto err;
+
+    if (!TEST_int_ne(X509_get_extension_flags(parsed) & EXFLAG_INVALID, 0))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_check_purpose(parsed, -1, 0), -1))
+        goto err;
+    errcode = ERR_peek_error();
+    if (!TEST_int_eq(ERR_GET_LIB(errcode), ERR_LIB_X509V3)
+        || !TEST_int_eq(ERR_GET_REASON(errcode), X509V3_R_INVALID_CERTIFICATE))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_check_ca(parsed), 0))
+        goto err;
+    errcode = ERR_peek_error();
+    if (!TEST_int_eq(ERR_GET_LIB(errcode), ERR_LIB_X509V3)
+        || !TEST_int_eq(ERR_GET_REASON(errcode), X509V3_R_INVALID_CERTIFICATE))
+        goto err;
+
+    ret = 1;
+err:
+    X509_EXTENSION_free(ext);
+    ASN1_OCTET_STRING_free(oct);
+    X509_free(parsed);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
+/*
+ * A certificatePolicies extension with duplicate policy OIDs makes the policy
+ * cache invalid.  The certificate must still finalize (the parse succeeds) but
+ * be flagged EXFLAG_INVALID_POLICY.
+ */
+static int test_invalid_policy_flag(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *cert = NULL, *parsed = NULL;
+    STACK_OF(POLICYINFO) *pols = NULL;
+    POLICYINFO *pi = NULL;
+    ASN1_OBJECT *obj = NULL;
+    int i;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(cert = cache_test_make_cert(key, "invalid-policy-test"))
+        || !TEST_ptr(pols = sk_POLICYINFO_new_null()))
+        goto err;
+
+    for (i = 0; i < 2; i++) {
+        if (!TEST_ptr(obj = OBJ_txt2obj("1.3.6.1.4.1.42424.1", 1))
+            || !TEST_ptr(pi = POLICYINFO_new()))
+            goto err;
+        ASN1_OBJECT_free(pi->policyid);
+        pi->policyid = obj;
+        obj = NULL;
+        if (!TEST_true(sk_POLICYINFO_push(pols, pi)))
+            goto err;
+        pi = NULL;
+    }
+
+    if (!TEST_int_eq(X509_add1_ext_i2d(cert, NID_certificate_policies, pols, 0,
+                         X509V3_ADD_REPLACE),
+            1)
+        || !TEST_int_gt(X509_sign(cert, key, EVP_sha256()), 0)
+        || !TEST_ptr(parsed = cache_test_reparse(cert)))
+        goto err;
+
+    if (!TEST_int_ne(X509_get_extension_flags(parsed) & EXFLAG_INVALID_POLICY,
+            0))
+        goto err;
+
+    ret = 1;
+err:
+    ASN1_OBJECT_free(obj);
+    POLICYINFO_free(pi);
+    sk_POLICYINFO_pop_free(pols, POLICYINFO_free);
+    X509_free(parsed);
+    X509_free(cert);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -1091,6 +1375,10 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
     ADD_TEST(test_resign_rebuilds_cached_hash);
+    ADD_TEST(test_ss_flag_survives_resign);
+    ADD_TEST(test_proxy_pathlen_not_stale);
+    ADD_TEST(test_invalid_ext_raises);
+    ADD_TEST(test_invalid_policy_flag);
 
     return 1;
 }
