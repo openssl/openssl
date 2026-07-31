@@ -181,6 +181,11 @@ L<SSL_listener_set_pending_timeout(3)> to adjust this timeout.
 
 See L<SSL_new_listener(3)> for complete API documentation.
 
+The complete source code for an example DTLS listener server (and a matching
+client) is available in the B<demos/dtlslistenerecho> directory of the OpenSSL
+source distribution in the file B<main.c>. It is also available online at
+L<https://github.com/openssl/openssl/blob/master/demos/dtlslistenerecho/main.c>.
+
 =head1 APPLICATION DATA
 
 When either the DTLSv1.3 client or server is awaiting an Acknowledgement message,
@@ -224,6 +229,39 @@ Use the -dtls option to specify that you want to use DTLS instead of TLS.
 =head2 s_server
 
 Use the min_protocol and max_protocol parameters and set them to DTLSv1.3.
+
+=head1 DEMOS
+
+OpenSSL is distributed with two DTLS demo applications that illustrate the
+concepts described on this page. They can be found in the B<demos> directory
+of the OpenSSL source distribution:
+
+=over 4
+
+=item B<demos/dtlsecho>
+
+A simple DTLSv1.3 echo client and server built on a single L<SSL(3)> object per
+connection. The complete source code is available in the B<demos/dtlsecho>
+directory of the OpenSSL source distribution in the file B<main.c>. It is also
+available online at
+L<https://github.com/openssl/openssl/blob/master/demos/dtlsecho/main.c>.
+
+=item B<demos/dtlslistenerecho>
+
+A DTLS echo server that uses the DTLS listener API (L<SSL_new_listener(3)>,
+L<SSL_listen(3)> and L<SSL_accept_connection(3)>) to demultiplex and handle
+multiple client connections on a single UDP socket, together with a matching
+client. The complete source code is available in the B<demos/dtlslistenerecho>
+directory of the OpenSSL source distribution in the file B<main.c>. It is also
+available online at
+L<https://github.com/openssl/openssl/blob/master/demos/dtlslistenerecho/main.c>.
+
+=back
+
+=head1 SEE ALSO
+
+L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
+L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>
 
 =head1 COPYRIGHT
 
