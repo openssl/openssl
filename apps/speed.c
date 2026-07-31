@@ -3250,6 +3250,7 @@ int speed_main(int argc, char **argv)
                 "RSA verify setup failure.  No RSA verify will be done.\n");
             dofail();
             op_count = 1;
+            goto rsa_err_break;
         } else {
             /*
              * The spaces after 'public' and 'verify' are to align the length
