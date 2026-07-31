@@ -93,8 +93,10 @@ int X509_check_purpose(const X509 *x, int id, int non_leaf)
         ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return -1;
     }
-    if ((x->ex_flags & EXFLAG_INVALID) != 0)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
         return -1;
+    }
     if (id == -1)
         return 1;
 
@@ -877,8 +879,10 @@ int X509_check_ca(const X509 *x)
         ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
     }
-    if ((x->ex_flags & EXFLAG_INVALID) != 0)
+    if ((x->ex_flags & EXFLAG_INVALID) != 0) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
         return 0;
+    }
 
     return check_ca(x);
 }
