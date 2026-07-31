@@ -353,6 +353,19 @@ long ossl_x509_get_proxy_pathlen(const X509 *x);
 int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Move a certificate to a library context, re-parsing it if needed.
+ *
+ * Replaces *px with a copy re-parsed under libctx/propq unless it is already
+ * in that context, so the copy is finalized under the context it claims.
+ *
+ * @param px pointer to the certificate to move, which may be NULL
+ * @param libctx the library context to move the certificate to
+ * @param propq the property query to move the certificate to, may be NULL
+ * @returns 1 on success, 0 on failure, leaving *px untouched
+ */
+int ossl_x509_transfer_libctx(X509 **px, OSSL_LIB_CTX *libctx,
+    const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,

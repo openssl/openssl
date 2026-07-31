@@ -193,6 +193,45 @@ int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
     return 1;
 }
 
+int ossl_x509_transfer_libctx(X509 **px, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    X509 *cert = *px;
+    X509 *copy = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len;
+
+    /*
+     * Nothing to do for an absent certificate, or for one already finalized
+     * in the target context.  An unfinalized certificate is re-parsed even
+     * when the context matches, since the parse is what finalizes it.
+     */
+    if (cert == NULL
+        || ((cert->ex_flags & EXFLAG_SET) != 0
+            && cert->libctx == libctx
+            && (cert->propq == NULL) == (propq == NULL)
+            && (propq == NULL || strcmp(cert->propq, propq) == 0)))
+        return 1;
+
+    if ((len = i2d_X509(cert, &der)) < 0
+        || (copy = X509_new_ex(libctx, propq)) == NULL)
+        goto err;
+    p = der;
+    if (d2i_X509(&copy, &p, len) == NULL)
+        goto err;
+
+    OPENSSL_free(der);
+    X509_free(cert);
+    *px = copy;
+    return 1;
+
+err:
+    OPENSSL_free(der);
+    X509_free(copy);
+    return 0;
+}
+
 X509 *X509_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509 *cert = NULL;
