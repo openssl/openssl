@@ -220,10 +220,9 @@ int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
      * expected to arrive either BN_FLG_CONSTTIME or fixed-top, so that their
      * top is a public, value-independent width and the copy length does not
      * leak their magnitude.  ECDSA satisfies this via
-     * ossl_bn_priv_rand_range_fixed_top(); the generic SM2 signing path does
-     * not yet (see the sm2_sig_gen() hardening tracked separately).  The
-     * fixed-top pinning below makes the subsequent arithmetic constant time
-     * regardless, but cannot retroactively fix the copy length here.
+     * ossl_bn_priv_rand_range_fixed_top().  The fixed-top pinning below makes
+     * the subsequent arithmetic constant time regardless, but cannot
+     * retroactively fix the copy length here.
      */
     if (!BN_copy(k, scalar)) {
         ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
