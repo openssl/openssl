@@ -697,29 +697,32 @@ static int test_server_cert_verify_cb(void)
     server_retry_state = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-                                       TLS_client_method(), TLS1_VERSION, 0,
-                                       &sctx, &cctx, NULL, NULL)))
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, NULL, NULL)))
         goto end;
 
     /* Server needs its own cert/key for the TLS handshake. */
     if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 1)
-            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, skey,
-                                                        SSL_FILETYPE_PEM), 1)
-            || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, skey,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
         goto end;
 
     /* Server requests and verifies a client certificate via the retry cb. */
     SSL_CTX_set_verify(sctx,
-                       SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
-                       NULL);
+        SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+        NULL);
     SSL_CTX_set_cert_verify_callback(sctx, server_verify_retry_cb, NULL);
 
     /* Client presents its cert (leaf signed by interCA/rootCA). */
     if (!TEST_int_eq(SSL_CTX_use_certificate_file(cctx, leaf,
-                                                  SSL_FILETYPE_PEM), 1)
-            || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(cctx, skey,
-                                                        SSL_FILETYPE_PEM), 1)
-            || !TEST_int_eq(SSL_CTX_check_private_key(cctx), 1))
+                         SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(cctx, skey,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(cctx), 1))
         goto end;
     /* Client trusts the server's root so it accepts the server cert. */
     if (!TEST_true(SSL_CTX_load_verify_locations(cctx, root, NULL)))
@@ -727,7 +730,7 @@ static int test_server_cert_verify_cb(void)
     SSL_CTX_set_verify(cctx, SSL_VERIFY_PEER, NULL);
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
-                                      &clientssl, NULL, NULL)))
+            &clientssl, NULL, NULL)))
         goto end;
 
     /*
@@ -736,14 +739,14 @@ static int test_server_cert_verify_cb(void)
      * honored the callback's pause request rather than silently accepting -1).
      */
     if (!TEST_false(create_ssl_connection(serverssl, clientssl,
-                                          SSL_ERROR_WANT_RETRY_VERIFY)))
+            SSL_ERROR_WANT_RETRY_VERIFY)))
         goto end;
     if (!TEST_int_eq(server_retry_state, 1))
         goto end;
 
     /* Resuming the handshake must now complete cleanly. */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
-                                         SSL_ERROR_NONE)))
+            SSL_ERROR_NONE)))
         goto end;
     if (!TEST_int_eq(server_retry_state, 2))
         goto end;
