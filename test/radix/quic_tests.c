@@ -2738,8 +2738,24 @@ DEF_SCRIPT(script_42, "Fault injection - CRYPTO frame with illegal offset")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_43, "place holder for multistrem script_43")
+/* 43. Fault injection - CRYPTO frame exceeding FC */
+DEF_SCRIPT(script_43, "Fault injection - CRYPTO frame exceeding FC")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_42_inject_plain);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0x100000 /* 1 MiB */);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0);
 }
 
 DEF_SCRIPT(script_44, "place holder for multistrem script_44")
