@@ -2684,8 +2684,58 @@ DEF_SCRIPT(script_41, "Fault injection - PATH_CHALLENGE yields PATH_RESPONSE")
     OP_FUNC(check_path_response_41);
 }
 
-DEF_SCRIPT(script_42, "place holder for multistrem script_42")
+/* 42. Fault injection - CRYPTO frame with illegal offset */
+static int script_42_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+
+    if (fault->word0 == 0)
+        return 1;
+
+    --fault->word0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 1))
+        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_42, "Fault injection - CRYPTO frame with illegal offset")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_42_inject_plain);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, (((uint64_t)1) << 62) - 1);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_43, "place holder for multistrem script_43")

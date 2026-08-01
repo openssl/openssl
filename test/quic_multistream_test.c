@@ -2549,61 +2549,8 @@ static const struct script_op script_41[] = {
 };
 
 /* 42. Fault injection - CRYPTO frame with illegal offset */
-static int script_42_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    unsigned char frame_buf[64];
-    size_t written;
-    WPACKET wpkt;
-
-    if (h->inject_word0 == 0)
-        return 1;
-
-    --h->inject_word0;
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
-            sizeof(frame_buf), 0)))
-        return 0;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 1))
-        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
-        goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    return ok;
-}
-
 static const struct script_op script_42[] = {
-    OP_S_SET_INJECT_PLAIN(script_42_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, (((uint64_t)1) << 62) - 1),
-    OP_S_WRITE(a, "orange", 6),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
