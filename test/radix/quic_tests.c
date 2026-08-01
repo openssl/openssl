@@ -2499,8 +2499,38 @@ DEF_SCRIPT(script_39, "Fault injection - NEW_CONN_ID with zero-len CID")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_40, "place holder for multistrem script_40")
+/* 40. Shutdown flush test */
+static unsigned char script_40_data[1024] = "strawberry";
+
+DEF_SCRIPT(script_40, "Shutdown flush test")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_INHIBIT_TICK(C, 1);
+    OP_SET_WRITE_BUF_SIZE(Ca, 1024 * 100 * 3);
+
+    for (i = 0; i < 100; ++i)
+        OP_WRITE(Ca, script_40_data, sizeof(script_40_data));
+
+    OP_CONCLUDE(Ca);
+    OP_SHUTDOWN_WAIT(C, 0, 0, NULL); /* disengages tick inhibition */
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    for (i = 0; i < 100; ++i)
+        OP_READ_EXPECT(Sa, script_40_data, sizeof(script_40_data));
+
+    OP_EXPECT_FIN(Sa);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(S, 0, 1, 1);
 }
 
 DEF_SCRIPT(script_41, "place holder for multistrem script_41")

@@ -2499,42 +2499,8 @@ static const struct script_op script_39[] = {
 };
 
 /* 40. Shutdown flush test */
-static const unsigned char script_40_data[1024] = "strawberry";
-
 static const struct script_op script_40[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-    OP_C_SET_DEFAULT_STREAM_MODE(SSL_DEFAULT_STREAM_MODE_NONE),
-
-    OP_C_NEW_STREAM_BIDI(a, C_BIDI_ID(0)),
-    OP_C_WRITE(a, "apple", 5),
-
-    OP_C_INHIBIT_TICK(1),
-    OP_C_SET_WRITE_BUF_SIZE(a, 1024 * 100 * 3),
-
-    OP_BEGIN_REPEAT(100),
-
-    OP_C_WRITE(a, script_40_data, sizeof(script_40_data)),
-
-    OP_END_REPEAT(),
-
-    OP_C_CONCLUDE(a),
-    OP_C_SHUTDOWN_WAIT(NULL, 0), /* disengages tick inhibition */
-
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_BEGIN_REPEAT(100),
-
-    OP_S_READ_EXPECT(a, script_40_data, sizeof(script_40_data)),
-
-    OP_END_REPEAT(),
-
-    OP_S_EXPECT_FIN(a),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(0, 1, 0),
-    OP_S_EXPECT_CONN_CLOSE_INFO(0, 1, 1),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
