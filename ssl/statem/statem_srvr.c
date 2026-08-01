@@ -4078,7 +4078,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
- err:
+err:
     X509_free(x);
     OSSL_STACK_OF_X509_free(sk);
     return ret;
