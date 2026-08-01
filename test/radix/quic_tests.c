@@ -2729,8 +2729,51 @@ DEF_SCRIPT(script_43, "Fault injection - CRYPTO frame exceeding FC")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0);
 }
 
-DEF_SCRIPT(script_44, "place holder for multistrem script_44")
+/* 44. Fault injection - PADDING */
+static int script_44_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(ossl_quic_wire_encode_padding(&wpkt, 1))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_44, "Fault injection - PADDING")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_44_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+    OP_READ_EXPECT(C, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_45, "place holder for multistrem script_45")
