@@ -2233,6 +2233,15 @@ typedef struct dtls1_state_st {
 DEFINE_STACK_OF(SSL)
 
 /*
+ * Default maximum size in bytes of a datagram a DTLS listener will receive.
+ * A DTLS 1.3 ClientHello carrying large (e.g. post-quantum) key shares can
+ * exceed the 1500-byte Ethernet MTU; default a little above it so that such a
+ * ClientHello, when sent unfragmented, is received whole rather than truncated.
+ * Applied to the listener's demuxer.
+ */
+#define DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE 2000
+
+/*
  * DTLS listener SSL object type. This implements the API personality
  * layer for DTLS listener objects, providing server-side connection
  * demultiplexing for DTLS 1.3.
