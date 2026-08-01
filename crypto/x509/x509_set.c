@@ -205,6 +205,13 @@ void X509_SIG_INFO_set(X509_SIG_INFO *siginf, int mdnid, int pknid,
 int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
     uint32_t *flags)
 {
+    /*
+     * siginf is only meaningful once computed at finalization; on an
+     * unfinalized (or mutated) certificate it may hold stale data, so report
+     * that there is no signature information rather than return it.
+     */
+    if ((x->ex_flags & EXFLAG_SET) == 0)
+        return 0;
     return X509_SIG_INFO_get(&x->siginf, mdnid, pknid, secbits, flags);
 }
 
