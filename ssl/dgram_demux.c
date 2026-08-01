@@ -19,12 +19,7 @@
 /* URXE_DEMUX_STATE_* are defined in dgram_demux.h */
 
 #define DEMUX_MAX_MSGS_PER_CALL 32
-/*
- * Default receive buffer size. A DTLS 1.3 ClientHello carrying large (e.g.
- * post-quantum) key shares can exceed the 1500-byte Ethernet MTU, so default a
- * little above it to avoid truncating such a datagram when it is not fragmented.
- */
-#define DEMUX_DEFAULT_MTU 2000
+#define DEMUX_DEFAULT_MTU 1500
 #define DEMUX_MIN_INITIAL_DGRAM_LEN 1200
 
 struct dgram_demux_st {
