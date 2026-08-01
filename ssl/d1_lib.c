@@ -1788,6 +1788,14 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     /* Default maximum pending connections */
     dl->max_pending_conns = DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS;
 
+    /*
+     * Default maximum received datagram size. The demux sizes its receive
+     * buffers from this value; it is set large enough to avoid truncating a
+     * large ClientHello.
+     */
+    dl->max_dgram_size = DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE;
+    ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
+
     /* Handle cookie validation flags */
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
         if (flags & SSL_LISTENER_FLAG_REQUIRE_HVR)
@@ -2462,6 +2470,12 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 
     ossl_dgram_demux_set_bio(dl->demux, bio);
 
+    /*
+     * set_bio() may change the demux receive-buffer size from an MTU queried
+     * off the new BIO. Re-apply the configured size so it is not overridden.
+     */
+    ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
+
     old_rbio = dl->net_rbio;
 
     /* No change - nothing to do */
@@ -2701,6 +2715,8 @@ int ossl_dtls_listener_set_override_now_cb(SSL *s,
  *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
  *       Current reap timeout for pending connections, in milliseconds.
  *       UINT64_MAX means "infinite / disabled".
+ *   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE
+ *       Maximum size in bytes of a datagram the listener will receive.
  *
  * Only SSL_VALUE_CLASS_FEATURE_REQUEST is accepted for class_; other
  * classes are rejected with a return of 0
@@ -2742,6 +2758,9 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
         else
             *value = ossl_time2ms(dl->pending_timeout);
         break;
+    case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
+        *value = (uint64_t)ossl_dgram_demux_get_mtu(dl->demux);
+        break;
     default:
         ret = 0;
         break;
@@ -2767,6 +2786,9 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
  *   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT
  *       Interpreted as milliseconds. UINT64_MAX is treated as
  *       "infinite / disabled".
+ *   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE
+ *       Clamped to the maximum UDP payload (DTLS_LISTENER_MAX_DGRAM_SIZE);
+ *       values below the demux minimum receive size are rejected.
  *
  * Only SSL_VALUE_CLASS_FEATURE_REQUEST is accepted for class_.
  *
@@ -2809,6 +2831,18 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
             dl->pending_timeout = ossl_time_infinite();
         else
             dl->pending_timeout = ossl_ms2time(value);
+        break;
+    case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
+        /* Nothing larger than the maximum UDP payload can ever arrive. */
+        if (value > DTLS_LISTENER_MAX_DGRAM_SIZE)
+            value = DTLS_LISTENER_MAX_DGRAM_SIZE;
+        /* set_mtu returns 0 (rejecting) for values below the demux minimum. */
+        if (!ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)value)) {
+            ret = 0;
+        } else {
+            /* Retain the accepted value as the current configured size. */
+            dl->max_dgram_size = (size_t)value;
+        }
         break;
     default:
         ret = 0;

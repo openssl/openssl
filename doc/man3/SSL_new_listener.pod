@@ -175,13 +175,13 @@ next pending connection, removing it from the queue. The returned connection
 count is a point-in-time value, the actual number of connections that will
 ultimately be returned may be different.
 
-For DTLS listeners, two per-listener tunables control pending-connection
-tracking. Both are configured through L<SSL_get_value_uint(3)> /
-L<SSL_set_value_uint(3)> using the values
-B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (cap, default 256, cannot be
-disabled) and B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> (millisecond reap
-timeout, default 30000, B<UINT64_MAX> disables). See L<SSL_get_value_uint(3)>
-for details.
+For DTLS listeners, several per-listener tunables are configured through
+L<SSL_get_value_uint(3)> / L<SSL_set_value_uint(3)>:
+B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS> (pending-connection cap, default
+256, cannot be disabled), B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> (millisecond
+reap timeout, default 30000, B<UINT64_MAX> disables) and
+B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE> (maximum received datagram size in
+bytes, default 2000). See L<SSL_get_value_uint(3)> for details.
 
 Currently, listener SSL objects are supported for QUIC server usage via
 L<OSSL_QUIC_server_method(3)>, QUIC client-only usage via
@@ -400,8 +400,9 @@ DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR>,
 B<SSL_LISTENER_FLAG_REQUIRE_HRR> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 flags) was added in OpenSSL 4.1.
 
-The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>
-and B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>, accessed via
+The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>,
+B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT> and
+B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE>, accessed via
 L<SSL_get_value_uint(3)> and L<SSL_set_value_uint(3)>, were added in
 OpenSSL 4.1.
 

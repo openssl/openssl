@@ -176,6 +176,11 @@ int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu)
     return 1;
 }
 
+size_t ossl_dgram_demux_get_mtu(const DGRAM_DEMUX *demux)
+{
+    return demux->mtu;
+}
+
 void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
     ossl_dgram_demux_cb_fn *cb,
     void *cb_arg)

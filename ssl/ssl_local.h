@@ -2238,6 +2238,22 @@ DEFINE_STACK_OF(SSL)
 #define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 256
 
 /*
+ * Default maximum size in bytes of a datagram a DTLS listener will receive.
+ * A DTLS 1.3 ClientHello carrying large (e.g. post-quantum) key shares can
+ * exceed the 1500-byte Ethernet MTU; default a little above it so that such a
+ * ClientHello, when sent unfragmented, is received whole rather than truncated.
+ * Applied to the listener's demuxer.
+ */
+#define DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE 2000
+
+/*
+ * Upper bound for the DTLS listener receive datagram size: nothing larger than
+ * the maximum UDP payload can ever arrive. It may be raised up to this ceiling
+ * via SSL_set_value_uint(SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE).
+ */
+#define DTLS_LISTENER_MAX_DGRAM_SIZE 65535
+
+/*
  * DTLS listener SSL object type. This implements the API personality
  * layer for DTLS listener objects, providing server-side connection
  * demultiplexing for DTLS 1.3.
@@ -2321,6 +2337,14 @@ typedef struct dtls_listener_st {
      * This limit cannot be disabled.
      */
     size_t max_pending_conns;
+
+    /*
+     * Maximum size in bytes of a datagram the listener will receive. The demux
+     * sizes its receive buffers from this value.
+     *
+     * Default: DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE
+     */
+    size_t max_dgram_size;
 
     CRYPTO_CONDVAR *notifier_cv;
 
