@@ -780,7 +780,7 @@ static struct stream_range_t *append_range(SFRAME_SET *fs,
     if (chop_range(fs, right_sr, left_sr->sr_range.end) == 0)
         return NULL;
 
-    ossl_list_sc_append(&left_sr->sr_chunks, &right_sr->sr_chunks);
+    ossl_list_sc_join(&left_sr->sr_chunks, &right_sr->sr_chunks);
     left_sr->sr_range.end = right_sr->sr_range.end;
     DEBUG_PRINT(stderr, "[ %llu, %llu ]\n",
         left_sr->sr_range.start, left_sr->sr_range.end);
