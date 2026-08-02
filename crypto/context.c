@@ -53,6 +53,10 @@ struct ossl_lib_ctx_st {
 
     int ischild;
     int conf_diagnostics;
+
+#ifndef OPENSSL_NO_CRAU
+    void *crau_ctx;
+#endif
 };
 
 int ossl_lib_ctx_write_lock(OSSL_LIB_CTX *ctx)
@@ -240,6 +244,12 @@ static int context_init(OSSL_LIB_CTX *ctx)
     ctx->comp_methods = ossl_load_builtin_compressions();
 #endif
 
+#ifndef OPENSSL_NO_CRAU
+    ctx->crau_ctx = ossl_crau_set_context_new(ctx);
+    if (ctx->crau_ctx == NULL)
+        goto err;
+#endif
+
     return 1;
 
 err:
@@ -379,6 +389,13 @@ static void context_deinit_objs(OSSL_LIB_CTX *ctx)
     if (ctx->comp_methods != NULL) {
         ossl_free_compression_methods_int(ctx->comp_methods);
         ctx->comp_methods = NULL;
+    }
+#endif
+
+#ifndef OPENSSL_NO_CRAU
+    if (ctx->crau_ctx != NULL) {
+        ossl_crau_set_context_free(ctx->crau_ctx);
+        ctx->crau_ctx = NULL;
     }
 #endif
 }
@@ -674,6 +691,11 @@ void *ossl_lib_ctx_get_data(OSSL_LIB_CTX *ctx, int index)
 
     case OSSL_LIB_CTX_SSL_CONF_IMODULE:
         return (void *)ctx->ssl_imod;
+
+#ifndef OPENSSL_NO_CRAU
+    case OSSL_LIB_CTX_CRAU_CONTEXT_INDEX:
+        return ctx->crau_ctx;
+#endif
 
     default:
         return NULL;

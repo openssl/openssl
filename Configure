@@ -519,6 +519,7 @@ my @disablables_features = (
     "buildtest-c++",
     "bulk",
     "cached-fetch",
+    "crau",
     "dgram",
     "winstore",
     "crypto-mdebug",
@@ -1962,6 +1963,23 @@ unless ($disabled{"unit-tests"}) {
         disable('no-unit-test-support', 'unit-tests');
     }
 }
+
+unless ($disabled{crau}) {
+    my $cc = $config{CROSS_COMPILE}.$config{CC};
+    # eBPF USDT probes are defined using the DTRACE_PROBE* macros
+    # defined in <sys/sdt.h>. Some platforms including macOS and
+    # FreeBSD have this header as well, though they are incompatible
+    # with USDT probes. Restrict the support for Linux only for now.
+    if ($target =~ m/^linux/) {
+	system("printf '#include <sys/sdt.h>\n' | $cc -E - >/dev/null 2>&1");
+	if ($? != 0) {
+	    disable('no-sys-sdt-h', 'crau');
+	}
+    } else {
+	disable('not-linux', 'crau');
+    }
+}
+push @{$config{openssl_other_defines}}, "OPENSSL_NO_CRAU" if ($disabled{crau});
 
 # Get the extra flags used when building shared libraries and modules.  We
 # do this late because some of them depend on %disabled.

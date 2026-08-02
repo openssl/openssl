@@ -16,6 +16,7 @@
 #include <openssl/rand.h>
 #include <openssl/trace.h>
 #endif
+#include <openssl/crau.h>
 
 #define COOKIE_STATE_FORMAT_VERSION 1
 
@@ -1978,10 +1979,12 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
     size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    unsigned char *encoded_pubkey;
+    unsigned char *encoded_pubkey = NULL;
     size_t encoded_pubkey_len = 0;
     EVP_PKEY *ckey = s->s3.peer_tmp, *skey = NULL;
+    unsigned char *ct = NULL;
     const TLS_GROUP_INFO *ginf = NULL;
+    EXT_RETURN ret = EXT_RETURN_FAIL;
 
     if (s->hello_retry_request == SSL_HRR_PENDING) {
         if (ckey != NULL) {
@@ -2032,43 +2035,46 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_DEFN("tls::group", OSSL_PARAM_UNSIGNED_INTEGER, (void *)&ginf->group_id, sizeof(ginf->group_id)),
+        OSSL_PARAM_END
+    };
+    OSSL_CRAU_enter(SSL_CONNECTION_GET_CTX(s)->libctx, "tls::key_exchange", params);
+#endif
+
     if (!ginf->is_kem) {
         /* Regular KEX */
         skey = ssl_generate_pkey(s, ckey);
         if (skey == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
-            return EXT_RETURN_FAIL;
+            goto err;
         }
 
         /* Generate encoding of server key */
         encoded_pubkey_len = EVP_PKEY_get1_encoded_public_key(skey, &encoded_pubkey);
         if (encoded_pubkey_len == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_EC_LIB);
-            EVP_PKEY_free(skey);
-            return EXT_RETURN_FAIL;
+            goto err;
         }
 
         if (!WPACKET_sub_memcpy_u16(pkt, encoded_pubkey, encoded_pubkey_len)
             || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            EVP_PKEY_free(skey);
-            OPENSSL_free(encoded_pubkey);
-            return EXT_RETURN_FAIL;
+            goto err;
         }
-        OPENSSL_free(encoded_pubkey);
 
         /*
          * This causes the crypto state to be updated based on the derived keys
          */
         if (ssl_derive(s, skey, ckey, 1) == 0) {
             /* SSLfatal() already called */
-            EVP_PKEY_free(skey);
-            return EXT_RETURN_FAIL;
+            goto err;
         }
         s->s3.tmp.pkey = skey;
+        skey = NULL;
     } else {
         /* KEM mode */
-        unsigned char *ct = NULL;
         size_t ctlen = 0;
 
         /*
@@ -2079,33 +2085,39 @@ EXT_RETURN tls_construct_stoc_key_share(SSL_CONNECTION *s, WPACKET *pkt,
          */
         if (ssl_encapsulate(s, ckey, &ct, &ctlen, 0) == 0) {
             /* SSLfatal() already called */
-            return EXT_RETURN_FAIL;
+            goto err;
         }
 
         if (ctlen == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            OPENSSL_free(ct);
-            return EXT_RETURN_FAIL;
+            goto err;
         }
 
         if (!WPACKET_sub_memcpy_u16(pkt, ct, ctlen)
             || !WPACKET_close(pkt)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            OPENSSL_free(ct);
-            return EXT_RETURN_FAIL;
+            goto err;
         }
-        OPENSSL_free(ct);
 
         /*
          * This causes the crypto state to be updated based on the generated pms
          */
         if (ssl_gensecret(s, s->s3.tmp.pms, s->s3.tmp.pmslen) == 0) {
             /* SSLfatal() already called */
-            return EXT_RETURN_FAIL;
+            goto err;
         }
     }
     s->s3.did_kex = 1;
-    return EXT_RETURN_SENT;
+    ret = EXT_RETURN_SENT;
+
+err:
+    EVP_PKEY_free(skey);
+    OPENSSL_free(encoded_pubkey);
+    OPENSSL_free(ct);
+#ifndef OPENSSL_NO_CRAU
+    OSSL_CRAU_leave(SSL_CONNECTION_GET_CTX(s)->libctx);
+#endif
+    return ret;
 #else
     return EXT_RETURN_FAIL;
 #endif
