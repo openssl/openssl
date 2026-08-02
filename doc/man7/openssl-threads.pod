@@ -84,9 +84,35 @@ In this specific case, and probably for factory methods in general, it is
 not safe to modify the factory object after it has been used to create
 other objects.
 
+=head1 THREAD CANCELLATION
+
+Thread safety does not imply cancellation safety.
+Unless a specific function documents otherwise, OpenSSL does not guarantee
+that an in-progress call can be abandoned safely by thread cancellation or
+forced termination. An interruption can leave locks held, resources unreleased,
+or shared state inconsistent, making later use or cleanup unsafe.
+
+Deferred cancellation can take effect at a cancellation point reached directly
+or through a callback, BIO, provider, or other pluggable implementation.
+Automatic thread-local cleanup and L<OPENSSL_thread_stop(3)>, when they run, do
+not unwind the interrupted call.
+
+Applications should act on cancellation only between OpenSSL calls. On POSIX
+systems, applications using pthread cancellation should disable cancellation
+with B<pthread_setcancelstate>() before entering OpenSSL and restore it only
+after OpenSSL returns at a point safe for cancellation. Callbacks invoked by
+OpenSSL must not re-enable it. Disabling cancellation does not make a blocking
+call return on a cancellation request; applications requiring prompt
+cancellation should use nonblocking operation where available.
+
+The same restriction applies to other non-local exits which abandon an OpenSSL
+call in progress, including direct thread exit, long jumps, and language
+exceptions.
+
 =head1 SEE ALSO
 
-CRYPTO_THREAD_run_once(3),
+L<CRYPTO_THREAD_run_once(3)>, L<OPENSSL_thread_stop(3)>,
+L<openssl-quic-concurrency(7)>,
 local system threads documentation.
 
 =head1 BUGS
@@ -95,7 +121,7 @@ This page is admittedly very incomplete.
 
 =head1 COPYRIGHT
 
-Copyright 2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
