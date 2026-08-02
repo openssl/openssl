@@ -52,6 +52,28 @@ OpenSSL Releases
 
    *Todd Short*
 
+ * Added an aggregate receive-side reassembly byte budget for DTLS handshake
+   state.
+
+   DTLS handshake reassembly was bounded per message but not by aggregate
+   bytes per connection: a stateful DTLS connection could retain up to 11
+   reassembly slots (the current message plus 10 future sequence numbers),
+   each allocating up to `SSL_MAX_CERT_LIST_DEFAULT + ceil(msg_len / 8)`
+   bytes (~1.3 MB per connection at the default certificate list size).
+   An unauthenticated peer could open many simultaneous connections to
+   exhaust memory without completing a handshake.
+
+   A per-connection budget now caps the total bytes held in the receive-side
+   reassembly queue. The budget is derived from the configured
+   `SSL_CTX_set_max_cert_list()` value (`DTLS_MAX_REASSEMBLY_BUDGET_DEFAULT`,
+   ~400 KB at the default) and is never smaller than the largest single
+   handshake message the peer may legally send, so legitimate handshakes are
+   unaffected. Fragments that would exceed the budget are discarded (with the
+   record drained), consistent with existing DTLS handling of out-of-window
+   records; DTLS reliability then covers any retransmission.
+
+   *Saksham Kapoor*
+
  * Added various optimizations for the Elbrus2000 architecture in the
    cryptographic and BN code.
 
