@@ -365,7 +365,7 @@ jobs:
       with:
         operating_system: openbsd
         architecture: x86-64
-        version: '7.7'
+        version: '7.9'
         shutdown_vm: false
         run: |
           ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace
@@ -374,7 +374,7 @@ jobs:
       with:
         operating_system: openbsd
         architecture: x86-64
-        version: '7.7'
+        version: '7.9'
         shutdown_vm: false
         run: |
           ./configdata.pm --dump
@@ -383,7 +383,7 @@ jobs:
       with:
         operating_system: openbsd
         architecture: x86-64
-        version: '7.7'
+        version: '7.9'
         shutdown_vm: false
         run: |
           make -j4
@@ -392,7 +392,7 @@ jobs:
       with:
         operating_system: openbsd
         architecture: x86-64
-        version: '7.7'
+        version: '7.9'
         run: |
           ./util/opensslwrap.sh version -c
           .github/workflows/make-test
