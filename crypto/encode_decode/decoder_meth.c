@@ -405,7 +405,12 @@ inner_ossl_decoder_fetch(struct decoder_data_st *methdata,
              */
             if (id == 0 && name != NULL)
                 id = ossl_namemap_name2num(namemap, name);
-            if (id != 0 && methdata->tmp_store == NULL) {
+            /*
+             * Decide cacheability from this method's own no_store flag, not
+             * from the tmp store; see encoder_meth.c for the rationale.
+             */
+            if (id != 0
+                && ((OSSL_DECODER *)method)->base.no_store == 0) {
                 ossl_method_store_cache_set(store, prov, id, propq, method,
                     ossl_decoder_up_ref, ossl_decoder_free);
             } else {

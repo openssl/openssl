@@ -353,7 +353,12 @@ inner_loader_fetch(struct loader_data_st *methdata,
              */
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, scheme);
-            if (id != 0 && methdata->tmp_store == NULL) {
+            /*
+             * Decide cacheability from this loader's own no_store flag, not
+             * from the tmp store; see encoder_meth.c for the rationale.
+             */
+            if (id != 0
+                && ((OSSL_STORE_LOADER *)method)->no_store == 0) {
                 ossl_method_store_cache_set(store, prov, id, propq, method,
                     up_ref_loader, free_loader);
             } else {
