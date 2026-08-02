@@ -175,7 +175,7 @@ static int test_insert(void)
     return 1;
 }
 
-static int test_append(void)
+static int test_join(void)
 {
     OSSL_LIST(int)
     l_h, l_t;
@@ -185,7 +185,7 @@ static int test_append(void)
 
     ossl_list_int_init(&l_h);
     ossl_list_int_init(&l_t);
-    ossl_list_int_append(&l_h, &l_t);
+    ossl_list_int_join(&l_h, &l_t);
     if (!TEST_size_t_eq(ossl_list_int_num(&l_t), 0))
         return 0;
 
@@ -201,17 +201,17 @@ static int test_append(void)
         ossl_list_int_insert_head(&l_t, &elem_t[i]);
     }
 
-    ossl_list_int_append(NULL, NULL);
+    ossl_list_int_join(NULL, NULL);
 
-    ossl_list_int_append(NULL, &l_t);
+    ossl_list_int_join(NULL, &l_t);
     if (!TEST_size_t_eq(ossl_list_int_num(&l_t), OSSL_NELEM(elem_t)))
         return 0;
 
-    ossl_list_int_append(&l_h, NULL);
+    ossl_list_int_join(&l_h, NULL);
     if (!TEST_size_t_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h)))
         return 0;
 
-    ossl_list_int_append(&l_h, &l_t);
+    ossl_list_int_join(&l_h, &l_t);
     if (!TEST_size_t_eq(ossl_list_int_num(&l_h), OSSL_NELEM(elem_h) + OSSL_NELEM(elem_t)))
         return 0;
 
@@ -224,6 +224,6 @@ int setup_tests(void)
 {
     ADD_TEST(test_fizzbuzz);
     ADD_TEST(test_insert);
-    ADD_TEST(test_append);
+    ADD_TEST(test_join);
     return 1;
 }

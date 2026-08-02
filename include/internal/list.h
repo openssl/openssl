@@ -195,7 +195,7 @@
         list->num_elems++;                                                                    \
     }                                                                                         \
     static ossl_unused ossl_inline void                                                       \
-    ossl_list_##name##_append(OSSL_LIST(name) * lh, OSSL_LIST(name) * lt)                     \
+    ossl_list_##name##_join(OSSL_LIST(name) * lh, OSSL_LIST(name) * lt)                     \
     {                                                                                         \
         OSSL_LIST_DBG(type * _p); /* local variable '_p' when debug */                        \
         if (lt == NULL || lh == NULL || lt->num_elems == 0 || lh == lt)                       \
