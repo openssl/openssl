@@ -337,6 +337,20 @@ stream SSL objects, are supported.
 
 This limitation may be revised in a future release of OpenSSL.
 
+=head1 THREAD CANCELLATION
+
+A finite I<timeout> limits ordinary waiting by SSL_poll(), but does not make the
+call safe against thread cancellation; see L<openssl-threads(7)>.
+
+Cancellation can prevent SSL_poll() from removing internal wait state. Because
+an I<items> array can span multiple QUIC domains, one interrupted call can leave
+stale state in several domains and cause later calls on those domains, including
+SSL_poll() with a finite timeout, to block indefinitely.
+
+For cooperative cancellation, use a finite timeout and check a cancellation
+condition between calls; see L<openssl-quic-concurrency(7)/THREAD CANCELLATION>
+for the nonblocking alternative.
+
 =head1 RETURN VALUES
 
 SSL_poll() returns 1 on success and 0 on failure.
@@ -406,7 +420,9 @@ I<result_count>.
 =head1 SEE ALSO
 
 L<BIO_get_rpoll_descriptor(3)>, L<BIO_get_wpoll_descriptor(3)>,
-L<SSL_get_rpoll_descriptor(3)>, L<SSL_get_wpoll_descriptor(3)>
+L<SSL_get_rpoll_descriptor(3)>, L<SSL_get_wpoll_descriptor(3)>,
+L<openssl-threads(7)>, L<openssl-quic(7)>,
+L<openssl-quic-concurrency(7)>
 
 =head1 HISTORY
 
@@ -421,7 +437,7 @@ event types were not present.
 
 =head1 COPYRIGHT
 
-Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
