@@ -4113,9 +4113,9 @@ sub GCM_ENC_DEC {
   # ;;;   LENGTH
   # ;;;     | ==0 --------------------------------------------> done
   # ;;;     v
-  # ;;;   [cmp 64] -- <64 B ------------------------------> +------------------+
+  # ;;;   [cmp 128] -- <128 B ----------------------------> +------------------+
   # ;;;     |                                               | small handler    |
-  # ;;;     | >=64 B  (set up big-endian counter)           | GCM_ENC_DEC_     |
+  # ;;;     | >=128 B (set up big-endian counter)           | GCM_ENC_DEC_     |
   # ;;;     v                                               | SMALL: 1..16     |
   # ;;;   [cmp 704] -- <704 B --> [cmp 128] -- <128 B ----> | blocks in one    |
   # ;;;     |                        |                      | masked pass;     |
@@ -4193,11 +4193,11 @@ sub GCM_ENC_DEC {
         je                .L_enc_dec_done_${label_suffix}
 ___
 
-  # ;; First dispatch: messages < 64 B (< 4 blocks) take the masked small/
-  # ;; partial path; 64 B and above set up the big-endian counter and fall
-  # ;; through to the length-based loop selection below.
+  # ;; First dispatch: LENGTH < 128 B goes straight to the masked small-block
+  # ;; handler (LE counter from context; shuffle mask loaded there). Wider paths
+  # ;; set up the big-endian counter and ADDBE constants first.
   $code .= <<___;
-        cmp               \$64,$LENGTH
+        cmp               \$128,$LENGTH
         jb               .L_message_below_equal_16_blocks_${label_suffix}
 
         vmovdqa64         SHUF_MASK(%rip),$SHUF_MASK
@@ -4212,7 +4212,7 @@ ___
         vpshufb           $SHUF_MASK,$CTR_BLOCKz,$CTR_BLOCKz
 ___
 
-  # ;; -- Early dispatch: 64 <= msg < 704 -> 8-block path / small handler --
+  # ;; -- Early dispatch: 128 <= msg < 704 -> 8-block path / small handler --
   # ;; (704 chosen as the 8-block->16-block crossover; above it the 8-block
   # ;;  path degrades on its tail, e.g. 704-767B, while 16-block is faster)
   $code .= <<___;
