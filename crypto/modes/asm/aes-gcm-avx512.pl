@@ -479,30 +479,30 @@ ___
 # ;;; And cleanup stack.
 # ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 sub EPILOG {
-  # ; $payload_len is retained for call-site compatibility but is intentionally
-  # ; unused (see the note in the hkeys-cleanup block below).
-  my ($hkeys_storage_on_stack, $payload_len) = @_;
+  # ; $hkeys_ready_reg is the routine's HKEYS_READY flag: non-zero only once
+  # ; precompute_hkeys_on_stack() has written hash keys to the frame, so it says
+  # ; exactly when the wipe is needed. Entry points zero it on entry. A length
+  # ; cannot be used instead: on Linux $LENGTH is the payload length register and
+  # ; the loops decrement it, so by the epilog it holds only the residual tail.
+  my ($hkeys_storage_on_stack, $hkeys_ready_reg) = @_;
 
   my $label_suffix = $label_count++;
 
   if ($hkeys_storage_on_stack && $CLEAR_HKEYS_STORAGE_ON_EXIT) {
 
-    # ; Clear the hash-key stack storage unconditionally whenever it was
-    # ; allocated. The stored H^i powers are derived from the secret hash
-    # ; subkey (H = E_K(0)) and must not be left on the stack after return.
-    # ;
-    # ; NOTE: the previous "skip cleanup when payload_len <= 16*16" shortcut is
-    # ; intentionally removed. It is no longer a safe proxy for "no hkeys were
-    # ; written": CALC_AAD_HASH() now lazily precomputes H^1..H^16 onto the
-    # ; stack even for sub-16-block AAD/IV inputs (including the common 12-byte
-    # ; IV handled by setiv), so a small $payload_len no longer implies an
-    # ; untouched storage. $payload_len is therefore unused here now.
+    # ; The stored H^i powers are derived from the secret hash subkey
+    # ; (H = E_K(0)) and must not be left on the stack after return.
+    $code .= <<___;
+        test              $hkeys_ready_reg,$hkeys_ready_reg
+        jz                .L_skip_hkeys_cleanup_${label_suffix}
+___
     $code .= "vpxor             %xmm0,%xmm0,%xmm0\n";
     # ; Clear both the plain and the folded hash-key regions (adjacent on the
     # ; frame); the folded keys are derived from the secret H and must not leak.
     for (my $i = 0; $i < int(($HKEYS_STORAGE + $HKEYS_FOLDED_STORAGE) / 64); $i++) {
       $code .= "vmovdqa64         %zmm0,`$STACK_HKEYS_OFFSET + 64*$i`(%rsp)\n";
     }
+    $code .= ".L_skip_hkeys_cleanup_${label_suffix}:\n";
   }
 
   if ($CLEAR_SCRATCH_REGISTERS) {
@@ -5024,13 +5024,17 @@ ___
   1,    # allocate stack space for hkeys
   0,    # do not allocate stack space for AES blocks
   "setiv");
+
+# ; CALC_AAD_HASH's HKEYS_READY: define it here so the 12-byte IV path, which
+# ; never reaches CALC_AAD_HASH, tells EPILOG the frame holds no hash keys.
+$code .= "xor               %rbx,%rbx\n";
 &GCM_INIT_IV(
   "$arg1",  "$arg2",  "$arg3",  "$arg4",  "%r10",   "%r11",  "%r12",  "%k1",   "%xmm2",  "%zmm1",
   "%zmm11", "%zmm3",  "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm12",
   "%zmm13", "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19");
 &EPILOG(
-  1,    # hkeys were allocated
-  $arg4);
+  1,        # hkeys were allocated
+  "%rbx");  # CALC_AAD_HASH's HKEYS_READY
 $code .= <<___;
 .Labort_setiv:
 ret
@@ -5077,13 +5081,16 @@ ___
   1,    # allocate stack space for hkeys,
   0,    # do not allocate stack space for AES blocks
   "ghash");
+
+# ; See the note in setiv: keep HKEYS_READY defined for EPILOG.
+$code .= "xor               %rbx,%rbx\n";
 &GCM_UPDATE_AAD(
   "$arg1",  "$arg2",  "$arg3",  "%r10",   "%r11",  "%r12",  "%k1",   "%xmm14", "%zmm1",  "%zmm11",
   "%zmm3",  "%zmm4",  "%zmm5",  "%zmm6",  "%zmm7", "%zmm8", "%zmm9", "%zmm10", "%zmm12", "%zmm13",
   "%zmm15", "%zmm16", "%zmm17", "%zmm18", "%zmm19");
 &EPILOG(
-  1,    # hkeys were allocated
-  $arg3);
+  1,        # hkeys were allocated
+  "%rbx");  # CALC_AAD_HASH's HKEYS_READY
 $code .= <<___;
 .Lexit_update_aad:
 ret
@@ -5119,6 +5126,10 @@ ___
   1,    # allocate stack space for hkeys
   1,    # allocate stack space for AES blocks
   "encrypt");
+
+# ; GCM_ENC_DEC's HKEYS_READY ($IA7): define it before the argument checks, whose
+# ; failure paths jump straight to the epilog.
+$code .= "xor               %r14,%r14\n";
 if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check aes_keys != NULL
@@ -5169,7 +5180,7 @@ ___
   $code .= "jmp .Lexit_gcm_encrypt\n";
 }
 $code .= ".Lexit_gcm_encrypt:\n";
-&EPILOG(1, $arg5);
+&EPILOG(1, "%r14");    # GCM_ENC_DEC's HKEYS_READY
 $code .= <<___;
 ret
 .Lencrypt_seh_end:
@@ -5204,6 +5215,9 @@ ___
   1,    # allocate stack space for hkeys
   1,    # allocate stack space for AES blocks
   "decrypt");
+
+# ; See the note in encrypt: keep HKEYS_READY defined for EPILOG.
+$code .= "xor               %r14,%r14\n";
 if ($CHECK_FUNCTION_ARGUMENTS) {
   $code .= <<___;
         # ;; Check keys != NULL
@@ -5254,7 +5268,7 @@ ___
   $code .= "jmp .Lexit_gcm_decrypt\n";
 }
 $code .= ".Lexit_gcm_decrypt:\n";
-&EPILOG(1, $arg5);
+&EPILOG(1, "%r14");    # GCM_ENC_DEC's HKEYS_READY
 $code .= <<___;
 ret
 .Ldecrypt_seh_end:
