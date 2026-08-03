@@ -2983,8 +2983,22 @@ DEF_SCRIPT(script_46, "Fault injection - ACK - malformed initial range")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_47, "place holder for multistrem script_47")
+DEF_SCRIPT(script_47, "Fault injection - ACK - malformed subsequent range")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_malformed_ack_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(2, 0);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_48, "place holder for multistrem script_48")
