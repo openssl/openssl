@@ -3085,8 +3085,92 @@ DEF_SCRIPT(script_51, "Fault injection - PATH_RESPONSE is ignored")
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_52, "place holder for multistrem script_52")
+/* 52. Fault injection - ignore BLOCKED frames with bogus values */
+static int script_52_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+    uint64_t type = fault->word1;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    --fault->word0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type)))
+        goto err;
+
+    if (type == OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, C_BIDI_ID(0))))
+            goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, 0xFFFFFF)))
+        goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_52, "Fault injection - ignore BLOCKED frames with bogus values")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_52_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_53, "place holder for multistrem script_53")
