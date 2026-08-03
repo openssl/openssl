@@ -2873,8 +2873,114 @@ DEF_SCRIPT(script_45, "PING must generate ACK")
     OP_READ_EXPECT(C, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_46, "place holder for multistrem script_46")
+static int inject_malformed_ack_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+    uint64_t type = 0, largest_acked = 0, first_range = 0, range_count = 0;
+    uint64_t agap = 0, alen = 0;
+    uint64_t ect0 = 0, ect1 = 0, ecnce = 0;
+
+    if (fault->word0 == 0)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    type = OSSL_QUIC_FRAME_TYPE_ACK_WITHOUT_ECN;
+
+    switch (fault->word0) {
+    case 1:
+        largest_acked = 100;
+        first_range = 101;
+        range_count = 0;
+        break;
+    case 2:
+        largest_acked = 100;
+        first_range = 80;
+        /* [20..100]; [0..18]  */
+        range_count = 1;
+        agap = 0;
+        alen = 19;
+        break;
+    case 3:
+        largest_acked = 100;
+        first_range = 80;
+        range_count = 1;
+        agap = 18;
+        alen = 1;
+        break;
+    case 4:
+        type = OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN;
+        largest_acked = 100;
+        first_range = 1;
+        range_count = 0;
+        break;
+    case 5:
+        type = OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN;
+        largest_acked = 0;
+        first_range = 0;
+        range_count = 0;
+        ect0 = 0;
+        ect1 = 50;
+        ecnce = 200;
+        break;
+    }
+
+    fault->word0 = 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, type))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, largest_acked))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*ack_delay=*/0))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*ack_range_count=*/range_count))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*first_ack_range=*/first_range)))
+        goto err;
+
+    if (range_count > 0)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, /*range[0].gap=*/agap))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, /*range[0].len=*/alen)))
+            goto err;
+
+    if (type == OSSL_QUIC_FRAME_TYPE_ACK_WITH_ECN)
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, ect0))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, ect1))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, ecnce)))
+            goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+/* 46. Fault injection - ACK - malformed initial range */
+DEF_SCRIPT(script_46, "Fault injection - ACK - malformed initial range")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_malformed_ack_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_47, "place holder for multistrem script_47")
