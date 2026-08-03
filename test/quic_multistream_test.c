@@ -2583,24 +2583,8 @@ static const struct script_op script_53[] = {
 };
 
 /* 54. Fault injection - corrupted crypto stream data */
-static int script_54_inject_handshake(struct helper *h,
-    unsigned char *buf, size_t buf_len)
-{
-    size_t i;
-
-    for (i = 0; i < buf_len; ++i)
-        buf[i] ^= 0xff;
-
-    return 1;
-}
-
 static const struct script_op script_54[] = {
-    OP_S_SET_INJECT_HANDSHAKE(script_54_inject_handshake),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT_OR_FAIL(),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_CRYPTO_UNEXPECTED_MESSAGE, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
