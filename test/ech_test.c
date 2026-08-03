@@ -2025,6 +2025,220 @@ end:
     return res;
 }
 
+#define TEST_KEYLOG_SIZE 4096
+static char c_keylog[TEST_KEYLOG_SIZE];
+static char s_keylog[TEST_KEYLOG_SIZE];
+static int keylog_overflow = 0;
+
+static void keylog_add(char *buf, const char *line)
+{
+    if (strlen(buf) + strlen(line) + 2 > TEST_KEYLOG_SIZE) {
+        keylog_overflow = 1;
+        return;
+    }
+    OPENSSL_strlcat(buf, line, TEST_KEYLOG_SIZE);
+    OPENSSL_strlcat(buf, "\n", TEST_KEYLOG_SIZE);
+}
+
+static void c_keylog_cb(const SSL *ssl, const char *line)
+{
+    keylog_add(c_keylog, line);
+}
+
+static void s_keylog_cb(const SSL *ssl, const char *line)
+{
+    keylog_add(s_keylog, line);
+}
+
+static const char *keylog_line(const char *log, const char *label)
+{
+    const char *p = log;
+    size_t label_len = strlen(label);
+
+    while (p != NULL && *p != '\0') {
+        if (strncmp(p, label, label_len) == 0 && p[label_len] == ' ')
+            return p;
+        p = strchr(p, '\n');
+        if (p != NULL)
+            p++;
+    }
+    return NULL;
+}
+
+/* compare two keylog lines (each terminated by newline or NUL) */
+static int keylog_line_eq(const char *a, const char *b)
+{
+    size_t la = strcspn(a, "\n"), lb = strcspn(b, "\n");
+
+    return la == lb && memcmp(a, b, la) == 0;
+}
+
+/* check the client random field of a keylog line is the hex of rnd */
+static int keylog_line_rnd_eq(const char *line, const unsigned char *rnd)
+{
+    const char *hexdig = "0123456789abcdef";
+    const char *p = strchr(line, ' ');
+    size_t i;
+
+    if (p == NULL)
+        return 0;
+    p++;
+    for (i = 0; i < SSL3_RANDOM_SIZE; i++) {
+        if (p[2 * i] != hexdig[rnd[i] >> 4]
+            || p[2 * i + 1] != hexdig[rnd[i] & 0x0f])
+            return 0;
+    }
+    return p[2 * SSL3_RANDOM_SIZE] == ' ';
+}
+
+/*
+ * When ECH is negotiated, keylog callback output is tagged with the inner
+ * ClientHello random, so that client and server log identical lines for the
+ * same secret. The 1st iteration is a plain handshake, the 2nd adds a HRR and
+ * the 3rd resumes with early data, whose secrets are logged before the client
+ * knows if the server accepted the ECH.
+ */
+static int test_ech_keylog_random(int idx)
+{
+    int res = 0, clientstatus, serverstatus;
+    OSSL_ECHSTORE *es = NULL;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    SSL_CTX *c = NULL, *s = NULL;
+    SSL *cssl = NULL, *sssl = NULL;
+    SSL_SESSION *sess = NULL;
+    char *cinner = NULL, *couter = NULL, *sinner = NULL, *souter = NULL;
+    unsigned char inner_rnd[SSL3_RANDOM_SIZE], outer_rnd[SSL3_RANDOM_SIZE];
+    unsigned char ed[21], buf[1024];
+    size_t written = 0, readbytes = 0, l, lstart;
+    static const char *labels[] = {
+        /* the early data labels only apply for the 3rd iteration */
+        "CLIENT_EARLY_TRAFFIC_SECRET",
+        "EARLY_EXPORTER_SECRET",
+        "CLIENT_HANDSHAKE_TRAFFIC_SECRET",
+        "SERVER_HANDSHAKE_TRAFFIC_SECRET",
+        "CLIENT_TRAFFIC_SECRET_0",
+        "SERVER_TRAFFIC_SECRET_0",
+        "EXPORTER_SECRET"
+    };
+
+    c_keylog[0] = s_keylog[0] = '\0';
+    keylog_overflow = 0;
+    memset(ed, 'A', sizeof(ed));
+    if (!TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_new_config(es, OSSL_ECH_CURRENT_VERSION,
+            0, "example.com", hpke_suite))
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION, TLS1_3_VERSION,
+            &s, &c, cert, privkey)))
+        goto end;
+    if (idx == 2
+        && (!TEST_true(SSL_CTX_set_options(s, SSL_OP_NO_ANTI_REPLAY))
+            || !TEST_true(SSL_CTX_set_max_early_data(s,
+                SSL3_RT_MAX_PLAIN_LENGTH))
+            || !TEST_true(SSL_CTX_set_recv_max_early_data(s,
+                SSL3_RT_MAX_PLAIN_LENGTH))))
+        goto end;
+    SSL_CTX_set_keylog_callback(c, c_keylog_cb);
+    SSL_CTX_set_keylog_callback(s, s_keylog_cb);
+    if (!TEST_true(SSL_CTX_set1_echstore(s, es))
+        || !TEST_true(SSL_CTX_set1_echstore(c, es))
+        || !TEST_true(create_ssl_objects(s, c, &sssl,
+            &cssl, NULL, NULL))
+        || !TEST_true(SSL_set_tlsext_host_name(cssl, "server.example")))
+        goto end;
+    /* force a HRR for the 2nd iteration */
+    if (idx == 1 && !TEST_true(SSL_set1_groups_list(sssl, "P-384")))
+        goto end;
+    if (!TEST_true(create_ssl_connection(sssl, cssl,
+            SSL_ERROR_NONE)))
+        goto end;
+    if (idx == 2) {
+        /* resume with early data, checking only the 2nd connection */
+        sess = SSL_get1_session(cssl);
+        SSL_shutdown(cssl);
+        SSL_shutdown(sssl);
+        SSL_free(sssl);
+        SSL_free(cssl);
+        sssl = cssl = NULL;
+        c_keylog[0] = s_keylog[0] = '\0';
+        if (!TEST_ptr(sess)
+            || !TEST_true(create_ssl_objects(s, c, &sssl,
+                &cssl, NULL, NULL))
+            || !TEST_true(SSL_set_tlsext_host_name(cssl, "server.example"))
+            || !TEST_true(SSL_set_session(cssl, sess))
+            || !TEST_true(SSL_write_early_data(cssl, ed, sizeof(ed),
+                &written))
+            || !TEST_size_t_eq(written, sizeof(ed))
+            || !TEST_int_eq(SSL_read_early_data(sssl, buf, sizeof(buf),
+                                &readbytes),
+                SSL_READ_EARLY_DATA_SUCCESS)
+            || !TEST_size_t_eq(written, readbytes)
+            || !TEST_true(SSL_write_early_data(sssl, ed, sizeof(ed),
+                &written))
+            || !TEST_true(SSL_read_ex(cssl, buf, sizeof(buf),
+                &readbytes)))
+            goto end;
+        /* drive the server through the client Finished */
+        if (!TEST_true(SSL_write_ex(cssl, ed, sizeof(ed), &written))
+            || !TEST_true(SSL_read_ex(sssl, buf, sizeof(buf),
+                &readbytes)))
+            goto end;
+    }
+    /* override cert verification */
+    SSL_set_verify_result(cssl, X509_V_OK);
+    clientstatus = SSL_ech_get1_status(cssl, &cinner, &couter);
+    serverstatus = SSL_ech_get1_status(sssl, &sinner, &souter);
+    if (!TEST_int_eq(clientstatus, SSL_ECH_STATUS_SUCCESS)
+        || !TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS)
+        || !TEST_false(keylog_overflow))
+        goto end;
+    /*
+     * With ECH the client's s3.client_random is the outer CH random
+     * while the server, having decrypted the ECH, has the inner - so
+     * the server's value tells us the random the logs must be using
+     */
+    if (!TEST_size_t_eq(SSL_get_client_random(cssl, outer_rnd,
+                            sizeof(outer_rnd)),
+            sizeof(outer_rnd))
+        || !TEST_size_t_eq(SSL_get_client_random(sssl, inner_rnd,
+                               sizeof(inner_rnd)),
+            sizeof(inner_rnd))
+        || !TEST_int_ne(memcmp(outer_rnd, inner_rnd, SSL3_RANDOM_SIZE), 0))
+        goto end;
+    /*
+     * client and server must log identical lines, tagged with the
+     * inner CH random - before the fix in ssl_log_secret the client
+     * tagged these with the outer CH random while the server used
+     * the inner
+     */
+    lstart = (idx == 2 ? 0 : 2);
+    for (l = lstart; l < OSSL_NELEM(labels); l++) {
+        const char *cline, *sline;
+
+        if (!TEST_ptr(cline = keylog_line(c_keylog, labels[l]))
+            || !TEST_ptr(sline = keylog_line(s_keylog, labels[l]))
+            || !TEST_true(keylog_line_eq(cline, sline))
+            || !TEST_true(keylog_line_rnd_eq(cline, inner_rnd))) {
+            TEST_info("keylog mismatch for label %s", labels[l]);
+            goto end;
+        }
+    }
+    res = 1;
+end:
+    OSSL_ECHSTORE_free(es);
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OPENSSL_free(cinner);
+    OPENSSL_free(couter);
+    SSL_SESSION_free(sess);
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2074,6 +2288,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_in_out_test, 14);
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
+    ADD_ALL_TESTS(test_ech_keylog_random, 3);
     return 1;
 err:
     return 0;
