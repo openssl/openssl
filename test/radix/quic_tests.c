@@ -2805,8 +2805,72 @@ DEF_SCRIPT(script_44, "Fault injection - PADDING")
     OP_READ_EXPECT(C, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_45, "place holder for multistrem script_45")
+static uint16_t script_45_ack_count;
+
+/* 45. PING must generate ACK */
+DEF_FUNC(force_ping_45)
 {
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    script_45_ack_count = ossl_quic_channel_get_diag_num_rx_ack(ch);
+
+    if (!TEST_true(ossl_quic_channel_ping(ch)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(wait_incoming_acks_increased_45)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+    uint16_t count;
+
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    if (!TEST_ptr(ch))
+        goto err;
+
+    count = ossl_quic_channel_get_diag_num_rx_ack(ch);
+
+    if (count == script_45_ack_count)
+        F_SPIN_AGAIN();
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_45, "PING must generate ACK")
+{
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    for (i = 0; i < 2; ++i) {
+        OP_SELECT_SSL(0, S);
+        OP_FUNC(force_ping_45);
+        OP_SELECT_SSL(0, S);
+        OP_FUNC(wait_incoming_acks_increased_45);
+    }
+
+    OP_WRITE(Sa, "Strawberry", 10);
+    OP_READ_EXPECT(C, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_46, "place holder for multistrem script_46")
