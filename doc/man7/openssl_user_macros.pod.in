@@ -85,13 +85,6 @@ C<{- join('', map { my @x = split /=/,$_; $x[1] }
      || '0x00000000L'
   -}>
 
-=item B<OPENSSL_NO_DEPRECATED>
-
-If this macro is defined, all deprecated public symbols in all OpenSSL
-versions up to and including the version given by B<OPENSSL_API_COMPAT>
-(or the default value given above, when B<OPENSSL_API_COMPAT> isn't defined)
-will be hidden.
-
 =item B<OPENSSL_ENGINE_STUBS>
 
 ENGINE API, as defined in openssl/engine.h, was permanently removed
@@ -103,6 +96,13 @@ the transition of applications without source code modifications.
 
 Note that all stub macros emulate API function failures; they will not restore
 the removed API functionality even if the B<OPENSSL_API_COMPAT> define is used.
+
+=item B<OPENSSL_NO_DEPRECATED>
+
+If this macro is defined, all deprecated public symbols in all OpenSSL
+versions up to and including the version given by B<OPENSSL_API_COMPAT>
+(or the default value given above, when B<OPENSSL_API_COMPAT> isn't defined)
+will be hidden.
 
 =back
 
