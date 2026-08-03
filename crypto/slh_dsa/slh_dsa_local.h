@@ -49,6 +49,16 @@ struct slh_dsa_hash_ctx_st {
     const SLH_DSA_KEY *key; /* This key is not owned by this object */
     void *shactx; /* A low level SHAKE object */
     void *shactx_pkseed; /* A low level SHAKE or SHA256 object with PK.seed hashed in it */
+    size_t shactx_len; /* The size of the two hash contexts above */
+    /*
+     * A working hash context used by the hash functions in place of local
+     * stack copies, so that intermediate hash states derived from secrets
+     * live in one place and are erased when this object is freed.  It is
+     * also used for the one-shot SHA-512 contexts of the security category
+     * 3 and 5 SHA2 parameter sets.  Not used concurrently.
+     */
+    void *scratch;
+    size_t scratch_len;
     EVP_MAC_CTX *hmac_ctx; /* required by SHA algorithms for PRFmsg() */
     int hmac_digest_used; /* Used for lazy init of hmac_ctx digest */
 };
