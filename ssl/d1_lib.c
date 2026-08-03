@@ -1371,19 +1371,18 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
 
     /* Create new pending connection if needed */
     if (conn_ssl == NULL) {
+        /*
+         * Reject before allocating anything if we have reached the pending
+         * connection limit. The LHASH item count is O(1), and this check does
+         * not need a conn_ssl, so performing it first avoids creating and then
+         * immediately freeing a connection when we are at capacity.
+         */
+        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns)
+            goto release;
+
         conn_ssl = dtls_listener_create_conn_ssl(dl, &urxe->peer);
         if (conn_ssl == NULL)
             goto release;
-
-        /*
-         * Check if we've reached the pending connection limit before registering.
-         * Access the LHASH item count directly - it's O(1).
-         */
-        if (ossl_dgram_conn_lookup_num_items(dl->pending_conns) >= dl->max_pending_conns) {
-            /* Cap reached - reject new connection */
-            dtls_listener_connection_free(conn_ssl);
-            goto release;
-        }
 
         /*
          * Give the application a chance to decorate or veto the new
@@ -2468,6 +2467,8 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 
     dl = (DTLS_LISTENER *)s;
 
+    ossl_crypto_mutex_lock(dl->mutex);
+
     ossl_dgram_demux_set_bio(dl->demux, bio);
 
     /*
@@ -2480,10 +2481,13 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
 
     /* No change - nothing to do */
     if (old_rbio == bio) {
+        ossl_crypto_mutex_unlock(dl->mutex);
         return;
     }
 
     dl->net_rbio = bio;
+
+    ossl_crypto_mutex_unlock(dl->mutex);
 
     /* Free the old BIO now that we've taken ownership of the new one */
     BIO_free_all(old_rbio);
@@ -2736,13 +2740,16 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
 {
     DTLS_LISTENER *dl;
     int ret = 1;
+    uint64_t v = 0;
 
-    if (!IS_DTLS_LISTENER(s))
+    if (!IS_DTLS_LISTENER(s)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_LISTENER_USE_ONLY);
         return 0;
-    if (class_ != SSL_VALUE_CLASS_FEATURE_REQUEST)
+    }
+    if (class_ != SSL_VALUE_CLASS_FEATURE_REQUEST) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS);
         return 0;
-    if (value == NULL)
-        return 0;
+    }
 
     dl = (DTLS_LISTENER *)s;
 
@@ -2750,21 +2757,26 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
 
     switch (id) {
     case SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS:
-        *value = (uint64_t)dl->max_pending_conns;
+        v = (uint64_t)dl->max_pending_conns;
         break;
     case SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT:
         if (ossl_time_is_infinite(dl->pending_timeout))
-            *value = UINT64_MAX;
+            v = UINT64_MAX;
         else
-            *value = ossl_time2ms(dl->pending_timeout);
+            v = ossl_time2ms(dl->pending_timeout);
         break;
     case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
-        *value = (uint64_t)ossl_dgram_demux_get_mtu(dl->demux);
+        v = (uint64_t)ossl_dgram_demux_get_mtu(dl->demux);
         break;
     default:
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         ret = 0;
         break;
     }
+
+    /* a NULL out-value is tolerated, the store is simply skipped. */
+    if (ret && value != NULL)
+        *value = v;
 
     ossl_crypto_mutex_unlock(dl->mutex);
     return ret;
@@ -2808,10 +2820,14 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
     DTLS_LISTENER *dl;
     int ret = 1;
 
-    if (!IS_DTLS_LISTENER(s))
+    if (!IS_DTLS_LISTENER(s)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_LISTENER_USE_ONLY);
         return 0;
-    if (class_ != SSL_VALUE_CLASS_FEATURE_REQUEST)
+    }
+    if (class_ != SSL_VALUE_CLASS_FEATURE_REQUEST) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS);
         return 0;
+    }
 
     dl = (DTLS_LISTENER *)s;
 
@@ -2820,6 +2836,8 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
     switch (id) {
     case SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS:
         if (value == 0) {
+            /* The cap cannot be disabled (DoS-hardening). */
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             ret = 0;
             break;
         }
@@ -2827,7 +2845,13 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
         dl->max_pending_conns = (value > SIZE_MAX) ? SIZE_MAX : (size_t)value;
         break;
     case SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT:
-        if (value == UINT64_MAX)
+        /*
+         * ossl_ms2time() scales by OSSL_TIME_MS (10^6 ns/ms), so any value
+         * above UINT64_MAX / OSSL_TIME_MS would overflow the product and
+         * silently wrap to a tiny timeout. Treat those (which includes the
+         * UINT64_MAX "infinite" sentinel) as an infinite timeout.
+         */
+        if (value > UINT64_MAX / OSSL_TIME_MS)
             dl->pending_timeout = ossl_time_infinite();
         else
             dl->pending_timeout = ossl_ms2time(value);
@@ -2838,6 +2862,7 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
             value = DTLS_LISTENER_MAX_DGRAM_SIZE;
         /* set_mtu returns 0 (rejecting) for values below the demux minimum. */
         if (!ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)value)) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             ret = 0;
         } else {
             /* Retain the accepted value as the current configured size. */
@@ -2845,6 +2870,7 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
         }
         break;
     default:
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         ret = 0;
         break;
     }

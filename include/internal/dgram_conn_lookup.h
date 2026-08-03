@@ -44,6 +44,7 @@ struct dgram_conn_lookup_methods_st {
     void (*foreach)(DGRAM_CONN_LOOKUP *lookup, ossl_dgram_conn_lookup_iter_fn cb,
         void *arg);
     void (*free)(DGRAM_CONN_LOOKUP *lookup);
+    size_t (*num_items)(const DGRAM_CONN_LOOKUP *lookup);
 };
 
 struct dgram_conn_lookup_st {

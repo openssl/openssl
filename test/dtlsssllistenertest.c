@@ -4264,7 +4264,7 @@ err:
  *   3. Verifies there are 3 pending connections
  *   4. Waits for the pending connections to timeout and be released
  *   5. Add the last two clients
- *   5. Verifies there are 2 pending connections
+ *   6. Verifies there are 2 pending connections
  */
 static int test_pending_cap_with_timeout(void)
 {

@@ -403,13 +403,25 @@ static void addr_foreach(DGRAM_CONN_LOOKUP *lookup,
     lh_DGRAM_CONN_ENTRY_doall_void(data->htable, addr_foreach_cb, &ctx);
 }
 
+static size_t addr_num_items(const DGRAM_CONN_LOOKUP *lookup)
+{
+    ADDR_LOOKUP_DATA *data;
+
+    if (lookup == NULL || lookup->impl_data == NULL)
+        return 0;
+
+    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
+    return lh_DGRAM_CONN_ENTRY_num_items(data->htable);
+}
+
 static const DGRAM_CONN_LOOKUP_METHODS addr_methods = {
     addr_lookup,
     addr_register_conn,
     addr_register_conn_addr,
     addr_unregister_conn,
     addr_foreach,
-    addr_free
+    addr_free,
+    addr_num_items
 };
 
 /*
@@ -509,13 +521,10 @@ void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup)
 
 size_t ossl_dgram_conn_lookup_num_items(const DGRAM_CONN_LOOKUP *lookup)
 {
-    ADDR_LOOKUP_DATA *data;
-
-    if (lookup == NULL || lookup->impl_data == NULL)
+    if (lookup == NULL || lookup->methods == NULL
+        || lookup->methods->num_items == NULL)
         return 0;
-
-    data = (ADDR_LOOKUP_DATA *)lookup->impl_data;
-    return lh_DGRAM_CONN_ENTRY_num_items(data->htable);
+    return lookup->methods->num_items(lookup);
 }
 
 #endif /* OPENSSL_NO_DTLS */
