@@ -507,7 +507,11 @@ int cms_main(int argc, char **argv)
             flags |= CMS_NO_SIGNER_CERT_VERIFY;
             break;
         case OPT_NOCERTS:
-            flags |= CMS_NOCERTS; /* note that this does on affect "other" certs */
+            flags |= CMS_NOCERTS;
+            /*
+             * Note that this does not affect certificates in variable 'other'
+             * containing extra certs loaded according to the -certfile option.
+             */
             break;
         case OPT_NOATTR:
             flags |= CMS_NOATTR;
