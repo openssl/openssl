@@ -3173,8 +3173,82 @@ DEF_SCRIPT(script_52, "Fault injection - ignore BLOCKED frames with bogus values
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
-DEF_SCRIPT(script_53, "place holder for multistrem script_53")
+/* 53. Fault injection - excess CRYPTO buffer size */
+static int script_53_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    size_t written;
+    WPACKET wpkt;
+    uint64_t offset = 0, data_len = 100;
+    unsigned char *frame_buf = NULL;
+    size_t frame_len, i;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    fault->word0 = 0;
+
+    switch (fault->word1) {
+    case 0:
+        /*
+         * Far out offset which will not have been reached during handshake.
+         * This will not be delivered to the QUIC_TLS instance since it will be
+         * waiting for in-order delivery of previous bytes. This tests our flow
+         * control on CRYPTO stream buffering.
+         */
+        offset = 100000;
+        data_len = 1;
+        break;
+    }
+
+    frame_len = 1 + 8 + 8 + (size_t)data_len;
+    if (!TEST_ptr(frame_buf = OPENSSL_malloc(frame_len)))
+        return 0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf, frame_len, 0)))
+        goto err;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, data_len)))
+        goto err;
+
+    for (i = 0; i < data_len; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    OPENSSL_free(frame_buf);
+    return ok;
+}
+
+DEF_SCRIPT(script_53, "Fault injection - excess CRYPTO buffer size")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_53_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0);
+    OP_WRITE(Sa, "Strawberry", 10);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0);
 }
 
 DEF_SCRIPT(script_54, "place holder for multistrem script_54")
