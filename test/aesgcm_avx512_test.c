@@ -31,9 +31,12 @@
  *   4. Decrypts (also chunked) and requires both tag verification to succeed and
  *      the recovered plaintext to match the original.
  *
- * The chosen lengths straddle the 4->8 (64 B), 8->16 (704 B) and 16->32
- * (1792 B) crossovers with +-1 neighbours, plus the 512-byte residues that can
- * accidentally pass, so the test exercises every dispatch path and its drain.
+ * The chosen total message lengths straddle the 4->8 (64 B), 8->16 (704 B) and
+ * 16->32 (1792 B) crossovers with +-1 neighbours. gcm_feed_split() halves each
+ * payload across two Update calls (with a non-block split), so those totals do
+ * not by themselves hit each boundary in a single Update; test_gcm_dispatch_
+ * boundary_update() adds N-1/N/N+1 one-shot payload updates at 64, 128, 704,
+ * and 1792 B.
  *
  * The test also verifies the VAES/AVX-512 path is actually the one dispatched:
  * on hosts without the required ISA it skips instead of silently passing while
@@ -55,22 +58,13 @@
 #define GCM_BLOCK 16
 
 /*
- * Gate on the effective dispatch state, so a non-skipped run provably executed
- * the VAES/AVX-512 implementation (and the recipe's masked run provably executed
- * a different, AES-NI backend).
- *
- * The provider selects the implementation under review in ossl_prov_aes_hw_gcm()
- * via ossl_vaes_vpclmulqdq_capable(), which tests these exact bits of the
- * *effective* OPENSSL_ia32cap_P (the runtime capability vector, after any
- * OPENSSL_ia32cap mask is applied). We check the same vector and bits here. We
- * read OPENSSL_ia32cap_P directly (always defined on x86 in libcrypto, even in
- * no-asm builds) so this links on every build; the test is linked against the
- * static libcrypto (see test/build.info) so the internal symbol is reachable.
- * Requires x86_64.
+ * Skip when libcrypto would not use the VAES/AVX-512 GCM backend; gate on
+ * ossl_vaes_vpclmulqdq_capable() as in ossl_prov_aes_hw_gcm(). x86_64 only.
  */
 #if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) \
     || defined(_M_X64)
 #define AESGCM_AVX512_GATE 1
+int ossl_vaes_vpclmulqdq_capable(void);
 #else
 #define AESGCM_AVX512_GATE 0
 #endif
@@ -78,18 +72,8 @@
 static int vaes_avx512_available(void)
 {
 #if AESGCM_AVX512_GATE
-    /* Same bits ossl_vaes_vpclmulqdq_capable() checks in OPENSSL_ia32cap_P+8. */
-    const unsigned int need2 = (1u << 16) | (1u << 17) | (1u << 30)
-        | (1u << 31); /* word 2: AVX512 F, DQ, BW, VL */
-    const unsigned int need3 = (1u << 9) | (1u << 10); /* word 3: VAES,VPCLMULQDQ */
-
-    /*
-     * Ensure OPENSSL_ia32cap_P is populated (and any OPENSSL_ia32cap mask
-     * applied) before reading it. Idempotent.
-     */
-    OPENSSL_cpuid_setup();
-    return (OPENSSL_ia32cap_P[2] & need2) == need2
-        && (OPENSSL_ia32cap_P[3] & need3) == need3;
+    OPENSSL_cpuid_setup(); /* effective ia32cap; idempotent */
+    return ossl_vaes_vpclmulqdq_capable() != 0;
 #else
     return 0;
 #endif
@@ -503,6 +487,104 @@ static int test_gcm_tag(int idx)
                 bits, len, iv_len, aad_len);
             goto err;
         }
+    }
+    ok = 1;
+
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    OPENSSL_free(pt);
+    OPENSSL_free(ct);
+    OPENSSL_free(dec);
+    OPENSSL_free(ref_ct);
+    return ok;
+}
+
+/*
+ * One-shot payload Update at internal dispatch boundaries. gcm_feed_split() in
+ * test_gcm_tag halves each message, so e.g. total 704 B becomes 351+353 B per
+ * call and never exercises the 704 B path selector in one Update.
+ */
+static const size_t dispatch_edge_lens[] = {
+    63, 64, 65, 127, 128, 129, 703, 704, 705, 1791, 1792, 1793,
+};
+
+#define NUM_EDGE_LENS                                                        \
+    (int)(sizeof(dispatch_edge_lens) / sizeof(dispatch_edge_lens[0]))
+
+static int test_gcm_dispatch_boundary_update(int idx)
+{
+    int l = idx % NUM_EDGE_LENS;
+    int bits = keybits[idx / NUM_EDGE_LENS];
+    size_t len = dispatch_edge_lens[l];
+    size_t iv_len = 12;
+    unsigned char key[32], iv[MAX_IVLEN];
+    unsigned char *pt = NULL, *ct = NULL, *dec = NULL, *ref_ct = NULL;
+    unsigned char evp_tag[GCM_BLOCK], ref_tag[GCM_BLOCK];
+    unsigned char H[GCM_BLOCK], J0[GCM_BLOCK], fin[GCM_BLOCK];
+    EVP_CIPHER_CTX *ctx = NULL;
+    int tmpl = 0, ok = 0;
+    size_t i;
+
+    for (i = 0; i < sizeof(key); i++)
+        key[i] = (unsigned char)(0x10 + i);
+    for (i = 0; i < iv_len; i++)
+        iv[i] = (unsigned char)(0xA0 + i);
+
+    if (!TEST_ptr(pt = OPENSSL_malloc(len ? len : 1))
+        || !TEST_ptr(ct = OPENSSL_malloc(len ? len : 1))
+        || !TEST_ptr(dec = OPENSSL_malloc(len ? len : 1))
+        || !TEST_ptr(ref_ct = OPENSSL_malloc(len ? len : 1)))
+        goto err;
+    for (i = 0; i < len; i++)
+        pt[i] = (unsigned char)((i * 131u + 7u) & 0xff);
+
+    memcpy(ct, pt, len);
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex(ctx, gcm_cipher(bits), NULL, NULL,
+            NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
+            (int)iv_len, NULL))
+        || !TEST_true(EVP_EncryptInit_ex(ctx, NULL, NULL, key, iv))
+        || !TEST_true(gcm_update(ctx, 1, ct, ct, (int)len))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, fin, &tmpl))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_GET_TAG,
+            GCM_BLOCK, evp_tag)))
+        goto err;
+
+    if (!TEST_true(gcm_derive_H_J0(bits, key, iv, iv_len, H, J0))
+        || !TEST_true(gcm_reference_ct(bits, key, J0, pt, len, ref_ct)))
+        goto err;
+    if (len != 0 && !TEST_mem_eq(ref_ct, len, ct, len)) {
+        TEST_info("AES-%d GCM one-shot ciphertext mismatch: msglen=%zu",
+            bits, len);
+        goto err;
+    }
+
+    if (!TEST_true(gcm_reference_tag(bits, key, iv, iv_len, NULL, 0, ct, len,
+            ref_tag)))
+        goto err;
+    if (!TEST_mem_eq(ref_tag, GCM_BLOCK, evp_tag, GCM_BLOCK)) {
+        TEST_info("AES-%d GCM one-shot tag mismatch: msglen=%zu", bits, len);
+        goto err;
+    }
+
+    EVP_CIPHER_CTX_free(ctx);
+    ctx = NULL;
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex(ctx, gcm_cipher(bits), NULL, NULL,
+            NULL))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_IVLEN,
+            (int)iv_len, NULL))
+        || !TEST_true(EVP_DecryptInit_ex(ctx, NULL, NULL, key, iv))
+        || !TEST_true(EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_GCM_SET_TAG,
+            GCM_BLOCK, evp_tag))
+        || !TEST_true(gcm_update(ctx, 0, dec, ct, (int)len))
+        || !TEST_int_gt(EVP_DecryptFinal_ex(ctx, fin, &tmpl), 0))
+        goto err;
+    if (len != 0 && !TEST_mem_eq(dec, len, pt, len)) {
+        TEST_info("AES-%d GCM one-shot plaintext mismatch: msglen=%zu", bits,
+            len);
+        goto err;
     }
     ok = 1;
 
@@ -1003,16 +1085,16 @@ err:
  *     keystream (gcm_reference_ct) and GF(2^128) GHASH (gcm_reference_tag/
  *     gf_mul) above, not OpenSSL code. An independent oracle can catch a bug
  *     common to both OpenSSL implementations, which a differential test cannot.
- *     It deterministically sweeps the exact dispatch boundaries (63/64/65 ...
- *     1791/1792/1793 ...) x key sizes x IV/AAD lengths on every run, so those
- *     edges are guaranteed to be exercised; the bitwise reference GHASH is slow,
- *     hence the curated size list.
+ *     test_gcm_tag sweeps many total lengths with split payload updates (plus
+ *     independent CTR/GHASH checks); test_gcm_dispatch_boundary_update() adds
+ *     one-shot N-1/N/N+1 payload updates at the 64/128/704/1792 B selectors.
  *
  *   Test 2 ("dump" mode, test_gcm_differential_dump): differential agreement
  *     with OpenSSL's non-VAES GCM (the AES-NI + CLMUL-GHASH path) over a
- *     deterministic grid -- every dispatch-boundary length x all key sizes
- *     (128/192/256) x IV/AAD lengths, with seeded-random content -- driven by
- *     test/recipes/30-test_aesgcm_avx512.t (a native run vs an
+ *     deterministic grid -- total message lengths from lengths[] x all key sizes
+ *     (128/192/256) x IV/AAD lengths, with split payload updates and seeded-
+ *     random content -- driven by test/recipes/30-test_aesgcm_avx512.t (a native
+ *     run vs an
  *     OPENSSL_ia32cap-masked run with AVX512F cleared). It is cheap (EVP vs EVP)
  *     and catches AVX-512-specific divergence from that path, but it only proves
  *     the two OpenSSL implementations agree -- not that they are correct -- so
@@ -1038,6 +1120,8 @@ int setup_tests(void)
         return 1;
     }
     ADD_ALL_TESTS(test_gcm_tag, NUM_KEYS * NUM_LENS * NUM_IVS * NUM_AADS);
+    ADD_ALL_TESTS(test_gcm_dispatch_boundary_update,
+        NUM_KEYS * NUM_EDGE_LENS);
     ADD_ALL_TESTS(test_gcm_auth_fail, NUM_KEYS * NUM_LENS);
     ADD_ALL_TESTS(test_gcm_ctr_overflow_split,
         NUM_KEYS * ctr_ovf_cases_per_key());

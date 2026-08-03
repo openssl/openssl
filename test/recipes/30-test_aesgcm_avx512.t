@@ -38,39 +38,36 @@ ok(run(test(["aesgcm_avx512_test", "aesgcm"])),
 # that independent, mature implementation.
 sub dump_digest {
     my ($ia32cap) = @_;
+    my $status = 0;
     my @out;
 
-    if (defined $ia32cap) {
-        local $ENV{OPENSSL_ia32cap} = $ia32cap;
-        @out = run(test(["aesgcm_avx512_test", "dump"]), capture => 1);
-    } else {
-        @out = run(test(["aesgcm_avx512_test", "dump"]), capture => 1);
+    {
+        local $ENV{OPENSSL_ia32cap} = $ia32cap if defined $ia32cap;
+        @out = run(test(["aesgcm_avx512_test", "dump"]),
+                   capture => 1, statusvar => \$status);
     }
+    return (0, undef, undef) unless $status;
     foreach (@out) {
-        return ($1, $2) if /^DIFFDIGEST:\s+VAES=(\d)\s+([0-9a-f]+)/;
+        return (1, $1, $2) if /^DIFFDIGEST:\s+VAES=(\d)\s+([0-9a-f]+)/;
     }
-    return (undef, undef);
+    return (1, undef, undef);
 }
 
  SKIP: {
-    my ($nvaes, $ndig) = dump_digest(undef);
+    my ($nok, $nvaes, $ndig) = dump_digest(undef);
 
-    # VAES=1 is emitted only when ossl_vaes_vpclmulqdq_capable() is true, i.e.
-    # libcrypto actually dispatched the sweep to the VAES/AVX-512 backend.
     skip "AVX-512/VAES not available on this host", 1
-        unless defined $nvaes && $nvaes eq "1";
+        if $nok && defined $nvaes && $nvaes ne "1";
 
-    # Clear AVX512F (CPUID leaf 7 EBX bit 16) so ossl_vaes_vpclmulqdq_capable()
-    # returns 0 and the non-VAES (AES-NI/CLMUL) GCM is used instead. (AES-NI is
-    # left enabled, so this is the AES-NI path, not the pure-C generic.)
-    my ($gvaes, $gdig) = dump_digest(":~0x10000");
+    unless ($nok && defined $nvaes && $nvaes eq "1") {
+        ok(0, "AES-GCM AVX-512 dump (native) succeeded and printed DIFFDIGEST");
+    } else {
+        my ($gok, $gvaes, $gdig) = dump_digest(":~0x10000");
 
-    # Require the two runs to have used different backends (VAES=1 vs VAES=0)
-    # AND to have produced byte-identical output. This proves the AVX-512 path
-    # was exercised and matches the mature AES-NI implementation.
-    ok(defined $ndig && defined $gdig
-       && defined $gvaes && $gvaes eq "0"
-       && $ndig eq $gdig,
-       "AVX-512 GCM (VAES=1) byte-identical to non-VAES AES-NI GCM (VAES=0) "
-       . "over sweep");
+        ok($gok && defined $gvaes && defined $gdig && defined $ndig
+           && $gvaes eq "0"
+           && $ndig eq $gdig,
+           "AVX-512 GCM (VAES=1) byte-identical to non-VAES AES-NI GCM (VAES=0) "
+           . "over sweep");
+    }
 }

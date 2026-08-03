@@ -1220,8 +1220,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[aesgcm_avx512_test]=aesgcm_avx512_test.c
   INCLUDE[aesgcm_avx512_test]=../include ../apps/include
-  # Linked against the static libcrypto so the test can read the internal
-  # OPENSSL_ia32cap_P (the effective dispatch vector); see the noinst block.
+  # Static libcrypto for ossl_vaes_vpclmulqdq_capable(); see noinst block.
   DEPEND[aesgcm_avx512_test]=../libcrypto.a libtestutil.a
 
   PROGRAMS{noinst}=context_internal_test
