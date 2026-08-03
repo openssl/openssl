@@ -67,11 +67,8 @@ static int test_dupctx_tlsmac(int idx)
         &mac_size);
     params[2] = OSSL_PARAM_construct_end();
 
-    if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
-        TEST_skip("Cipher %s does not support TLS params", name);
-        ret = 1;
+    if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx, params)))
         goto err;
-    }
 
     /*
      * Perform a decrypt update with enough data to trigger tlsmac
@@ -92,11 +89,8 @@ static int test_dupctx_tlsmac(int idx)
     if (!TEST_ptr(dupctx))
         goto err;
 
-    if (!EVP_CIPHER_CTX_copy(dupctx, ctx)) {
-        TEST_skip("Cipher %s does not support context copy", name);
-        ret = 1;
+    if (!TEST_true(EVP_CIPHER_CTX_copy(dupctx, ctx)))
         goto err;
-    }
 
     /*
      * Free both contexts. Without the fix, the second free triggers
