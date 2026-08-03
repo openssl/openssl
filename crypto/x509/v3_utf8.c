@@ -55,7 +55,7 @@ ASN1_UTF8STRING *s2i_ASN1_UTF8STRING(X509V3_EXT_METHOD *method,
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         return NULL;
     }
-    if (!ASN1_STRING_set_string(utf8, str)) {
+    if (!ASN1_STRING_set1_string(utf8, str)) {
         ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
         ASN1_UTF8STRING_free(utf8);
         return NULL;

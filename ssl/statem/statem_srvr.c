@@ -3632,7 +3632,7 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    inlen = ASN1_STRING_length_ex(pKX->kxBlob->value.sequence);
+    inlen = ASN1_STRING_get_length(pKX->kxBlob->value.sequence);
     if (inlen > INT_MAX)
         goto err;
 
