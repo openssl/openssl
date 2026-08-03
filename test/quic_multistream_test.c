@@ -2567,51 +2567,8 @@ static const struct script_op script_44[] = {
 };
 
 /* 45. PING must generate ACK */
-static int force_ping(struct helper *h, struct helper_local *hl)
-{
-    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S());
-
-    h->scratch0 = ossl_quic_channel_get_diag_num_rx_ack(ch);
-
-    if (!TEST_true(ossl_quic_tserver_ping(ACQUIRE_S())))
-        return 0;
-
-    return 1;
-}
-
-static int wait_incoming_acks_increased(struct helper *h, struct helper_local *hl)
-{
-    QUIC_CHANNEL *ch = ossl_quic_tserver_get_channel(ACQUIRE_S());
-    uint16_t count;
-
-    count = ossl_quic_channel_get_diag_num_rx_ack(ch);
-
-    if (count == h->scratch0) {
-        h->check_spin_again = 1;
-        return 0;
-    }
-
-    return 1;
-}
-
 static const struct script_op script_45[] = {
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_BEGIN_REPEAT(2),
-
-    OP_CHECK(force_ping, 0),
-    OP_CHECK(wait_incoming_acks_increased, 0),
-
-    OP_END_REPEAT(),
-
-    OP_S_WRITE(a, "Strawberry", 10),
-    OP_C_READ_EXPECT(DEFAULT, "Strawberry", 10),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
