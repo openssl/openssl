@@ -65,6 +65,11 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
     X509 *cert = X509_new();
     int res = 0;
 
+    if (!TEST_ptr(cert) || !TEST_true(X509_up_ref(cert)))
+        goto err;
+    /* assign directly as the cert has no fingerprint, so the setter fails */
+    ctx->validatedSrvCert = cert;
+
     /* set non-default values in all relevant fields */
     ctx->status = 1;
     ctx->failInfoCode = 1;
@@ -74,7 +79,6 @@ static int execute_CTX_reinit_test(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
         || !ossl_cmp_ctx_set1_newChain(ctx, certs)
         || !ossl_cmp_ctx_set1_caPubs(ctx, certs)
         || !ossl_cmp_ctx_set1_extraCertsIn(ctx, certs)
-        || !ossl_cmp_ctx_set1_validatedSrvCert(ctx, cert)
         || !TEST_ptr(bytes = ASN1_OCTET_STRING_new())
         || !OSSL_CMP_CTX_set1_transactionID(ctx, bytes)
         || !OSSL_CMP_CTX_set1_senderNonce(ctx, bytes)
@@ -764,15 +768,53 @@ DEFINE_SET_GET_P_VOID_TEST(http_cb_arg)
 DEFINE_SET_CB_TEST(transfer_cb)
 DEFINE_SET_GET_P_VOID_TEST(transfer_cb_arg)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, srvCert, X509)
-DEFINE_SET_GET_TEST(ossl_cmp, ctx, 1, 0, 0, validatedSrvCert, X509)
+/*
+ * An empty X509 object cannot be DER-encoded, so it has no fingerprint and
+ * thus the cert setters must reject it as potentially invalid.
+ */
+static int execute_CTX_set1_invalid_cert(OSSL_CMP_CTX_TEST_FIXTURE *fixture)
+{
+    CMP_CTX *ctx = fixture->ctx;
+    X509 *cert = X509_new();
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int len;
+    int res = 0;
+
+    if (!TEST_ptr(cert)
+        || !TEST_false(X509_digest(cert, EVP_sha256(), md, &len)))
+        goto err;
+    ERR_clear_error();
+
+    if (!TEST_false(OSSL_CMP_CTX_set1_srvCert(ctx, cert))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
+        || !TEST_ptr_null(ctx->srvCert)
+        || !TEST_false(ossl_cmp_ctx_set1_validatedSrvCert(ctx, cert))
+        || !TEST_ptr_null(ctx->validatedSrvCert)
+        || !TEST_false(OSSL_CMP_CTX_set1_cert(ctx, cert))
+        || !TEST_ptr_null(ctx->cert)
+        || !TEST_false(OSSL_CMP_CTX_set1_oldCert(ctx, cert))
+        || !TEST_ptr_null(ctx->oldCert))
+        goto err;
+    res = 1;
+err:
+    ERR_clear_error();
+    X509_free(cert);
+    return res;
+}
+
+static int test_CTX_set1_invalid_cert(void)
+{
+    SETUP_TEST_FIXTURE(OSSL_CMP_CTX_TEST_FIXTURE, set_up);
+    EXECUTE_TEST(execute_CTX_set1_invalid_cert, tear_down);
+    return result;
+}
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, expected_sender, X509_NAME)
 DEFINE_SET_GET_BASE_TEST(OSSL_CMP_CTX, set0, get0, 0, trusted,
     X509_STORE *, NULL,
     DEFAULT_STORE, X509_STORE_new_1(), X509_STORE_free)
 DEFINE_SET_GET_SK_X509_TEST(OSSL_CMP, CTX, 1, 0, untrusted)
 
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, cert, X509)
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, pkey, EVP_PKEY)
 
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, recipient, X509_NAME)
@@ -794,7 +836,6 @@ DEFINE_PUSH_TEST(1, 1, subjectAltNames, subjectAltName, GENERAL_NAME)
 #endif
 DEFINE_SET_SK_TEST(OSSL_CMP, CTX, 0, reqExtensions, X509_EXTENSION)
 DEFINE_PUSH_TEST(0, 0, policies, policy, POLICYINFO)
-DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 0, oldCert, X509)
 #ifdef ISSUE_9504_RESOLVED
 DEFINE_SET_TEST(OSSL_CMP, CTX, 1, 1, p10CSR, X509_REQ)
 #endif
@@ -857,13 +898,11 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set_get_transfer_cb);
     ADD_TEST(test_CTX_set_get_transfer_cb_arg);
     /* server authentication: */
-    ADD_TEST(test_CTX_set1_get0_srvCert);
-    ADD_TEST(test_CTX_set1_get0_validatedSrvCert);
+    ADD_TEST(test_CTX_set1_invalid_cert);
     ADD_TEST(test_CTX_set1_get0_expected_sender);
     ADD_TEST(test_CTX_set0_get0_trusted);
     ADD_TEST(test_CTX_set1_get0_untrusted);
     /* client authentication: */
-    ADD_TEST(test_CTX_set1_get0_cert);
     ADD_TEST(test_CTX_set1_get0_pkey);
     /* the following two also test ossl_cmp_asn1_octet_string_set1_bytes(): */
     ADD_TEST(test_CTX_set1_get1_referenceValue_str);
@@ -886,7 +925,6 @@ int setup_tests(void)
     ADD_TEST(test_CTX_set0_get0_reqExtensions);
     ADD_TEST(test_CTX_reqExtensions_have_SAN);
     ADD_TEST(test_CTX_push0_policy);
-    ADD_TEST(test_CTX_set1_get0_oldCert);
 #ifdef ISSUE_9504_RESOLVED
     /*
      * test currently fails, see https://github.com/openssl/openssl/issues/9504
