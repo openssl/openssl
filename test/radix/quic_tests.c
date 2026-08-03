@@ -3044,8 +3044,26 @@ DEF_SCRIPT(script_49, "Fault injection - ACK - fictional PN")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
-DEF_SCRIPT(script_50, "place holder for multistrem script_50")
+/* 50. Fault injection - ACK - duplicate PN */
+DEF_SCRIPT(script_50, "Fault injection - ACK - duplicate PN")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_malformed_ack_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    for (i = 0; i < 2; ++i) {
+        OP_SET_INJECT_WORD(5, 0);
+
+        OP_WRITE(Sa, "Strawberry", 10);
+        OP_READ_EXPECT(C, "Strawberry", 10);
+    }
 }
 
 DEF_SCRIPT(script_51, "place holder for multistrem script_51")
