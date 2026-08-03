@@ -2,7 +2,10 @@
 
 =head1 NAME
 
-openssl_user_macros, OPENSSL_API_COMPAT, OPENSSL_NO_DEPRECATED
+openssl_user_macros,
+OPENSSL_API_COMPAT,
+OPENSSL_ENGINE_STUBS,
+OPENSSL_NO_DEPRECATED
 - User defined macros
 
 =head1 DESCRIPTION
