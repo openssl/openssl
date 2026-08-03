@@ -219,6 +219,13 @@ static int matrix_expand_A_scalar(EVP_MD_CTX *g_ctx, const EVP_MD *md,
     uint8_t derived_seed[ML_DSA_RHO_BYTES + 2];
     POLY *poly = out->m_poly;
 
+    /*
+     * The seeds derived below and the sampling buffers in rej_ntt_poly() are
+     * not cleansed: per FIPS 204 section 3.6.3 the matrix A is easily
+     * computed from the public key and does not require any special
+     * protections.
+     */
+
     /* The seed used for each matrix element is rho + column_index + row_index */
     memcpy(derived_seed, rho, ML_DSA_RHO_BYTES);
     for (i = 0; i < out->k; i++) {
@@ -327,13 +334,14 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
     uint64_t signs;
     int offset = 8;
     size_t end;
+    int ret = 0;
 
     /*
      * Rather than squeeze 8 bytes followed by lots of 1 byte squeezes
      * the SHAKE blocksize is squeezed each time and buffered into 'block'.
      */
     if (!shake_xof(h_ctx, md, seed, seed_len, block, sizeof(block)))
-        return 0;
+        goto err;
 
     /*
      * grab the first 64 bits - since tau < 64
@@ -369,7 +377,7 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
             if (offset == sizeof(block)) {
                 /* squeeze another block if the bytes from block have been used */
                 if (!EVP_DigestSqueeze(h_ctx, block, sizeof(block)))
-                    return 0;
+                    goto err;
                 /* See comment above for why the block is declassified. */
                 CONSTTIME_DECLASSIFY(block, sizeof(block));
                 offset = 0;
@@ -389,7 +397,10 @@ int ossl_ml_dsa_poly_sample_in_ball(POLY *out_c, const uint8_t *seed, int seed_l
         out_c->coeff[index] = mod_sub(1, 2 * (signs & 1));
         signs >>= 1; /* grab the next random bit */
     }
-    return 1;
+    ret = 1;
+err:
+    OPENSSL_cleanse(block, sizeof(block));
+    return ret;
 }
 
 static void vector_expand_mask_scalar(VECTOR *out,
