@@ -2673,20 +2673,7 @@ static const struct script_op script_46[] = {
 
 /* 47. Fault injection - ACK - malformed subsequent range */
 static const struct script_op script_47[] = {
-    OP_S_SET_INJECT_PLAIN(script_46_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(2, 0),
-
-    OP_S_WRITE(a, "Strawberry", 10),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
