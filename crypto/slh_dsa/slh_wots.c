@@ -244,6 +244,8 @@ int ossl_slh_wots_sign(SLH_DSA_HASH_CTX *ctx, const uint8_t *msg,
     }
     ret = 1;
 err:
+    OPENSSL_cleanse(sk, sizeof(sk));
+    OPENSSL_cleanse(msg_and_csum_nibbles, sizeof(msg_and_csum_nibbles));
     return ret;
 }
 
@@ -311,5 +313,7 @@ int ossl_slh_wots_pk_from_sig(SLH_DSA_HASH_CTX *ctx,
 err:
     if (!WPACKET_finish(tmp_pkt))
         ret = 0;
+    OPENSSL_cleanse(tmp, sizeof(tmp));
+    OPENSSL_cleanse(msg_and_csum_nibbles, sizeof(msg_and_csum_nibbles));
     return ret;
 }
