@@ -43,6 +43,13 @@ typedef struct sbuf_st {
 /* Number of frames added before the data is copied to the stream buffer. */
 #define RSTREAM_MOVE_THRESHOLD 32
 
+/*
+ * Shorter runs of contiguous data are left in their packets. Copying them would
+ * hold a whole chunk for very little, so this bounds what a chunk can waste at
+ * SBUF_CHUNK_SIZE / SBUF_MIN_COPY_LEN.
+ */
+#define SBUF_MIN_COPY_LEN (SBUF_CHUNK_SIZE / 4)
+
 struct quic_rstream_st {
     SFRAME_LIST fl;
     QUIC_RXFC *rxfc;
@@ -220,7 +227,8 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT *pkt,
      * their packet.
      */
     if (qrs->fl.num_frames >= qrs->frames_at_last_move + RSTREAM_MOVE_THRESHOLD) {
-        (void)ossl_sframe_list_move_data(&qrs->fl, write_at_sbuf_cb, &qrs->sbuf);
+        (void)ossl_sframe_list_move_data(&qrs->fl, SBUF_MIN_COPY_LEN,
+            write_at_sbuf_cb, &qrs->sbuf);
         qrs->frames_at_last_move = qrs->fl.num_frames;
     }
 

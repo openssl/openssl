@@ -581,16 +581,20 @@ err:
 }
 
 /*
- * Check that a stream cannot be fragmented without bound, and that the limit only
- * rejects frames which actually grow the list.
+ * Check that a stream cannot be fragmented without bound, and that the limit
+ * only rejects frames which actually grow the list. The frames are spaced out
+ * enough that the data received averages out above the minimum, so it is the
+ * absolute limit that stops this and not the ratio.
  */
 static int test_rstream_fragmentation_limit(void)
 {
     QUIC_RSTREAM *rstream = NULL;
     unsigned char *data = NULL;
     unsigned char *read_buf = NULL;
-    const size_t data_size = 2 * SFRAME_LIST_MAX_FRAGMENTATION + 64;
-    const uint64_t past_tail = 2 * SFRAME_LIST_MAX_FRAGMENTATION;
+    const size_t stride = 2 * SFRAME_LIST_MIN_AVG_SPAN;
+    const size_t data_size = stride * (SFRAME_LIST_MAX_FRAGMENTATION + 16);
+    const uint64_t past_tail = stride * SFRAME_LIST_MAX_FRAGMENTATION;
+    const size_t covered = 10 * stride + 1;
     size_t i, readbytes = 0;
     int fin = 0, ret = 0;
 
@@ -602,10 +606,10 @@ static int test_rstream_fragmentation_limit(void)
     for (i = 0; i < data_size; i++)
         data[i] = (unsigned char)(i & 0xff);
 
-    /* one byte frames separated by one byte gaps can never be merged */
+    /* one byte frames with a gap after each of them can never be merged */
     for (i = 0; i < SFRAME_LIST_MAX_FRAGMENTATION; i++)
-        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 2 * i,
-                data + 2 * i, 1, 0)))
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, i * stride,
+                data + i * stride, 1, 0)))
             goto err;
 
     /* a further frame would exceed the limit and must be refused */
@@ -614,39 +618,33 @@ static int test_rstream_fragmentation_limit(void)
         goto err;
 
     /* a retransmission of a buffered frame does not grow the list */
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 10,
-            data + 10, 1, 0)))
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, stride,
+            data + stride, 1, 0)))
         goto err;
 
     /* a frame covering eleven buffered frames shrinks the list by ten */
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0, data, 21, 0)))
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0, data,
+            covered, 0)))
         goto err;
 
     /* so exactly ten more frames fit, and the eleventh does not */
     for (i = 0; i < 10; i++)
         if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
-                past_tail + 2 * i,
-                data + past_tail + 2 * i, 1, 0)))
+                past_tail + i * stride,
+                data + past_tail + i * stride, 1, 0)))
             goto err;
 
-    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, past_tail + 20,
-            data + past_tail + 20, 1, 0)))
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
+            past_tail + 10 * stride,
+            data + past_tail + 10 * stride, 1, 0)))
         goto err;
 
     /* the buffered data is unaffected by all of the above */
     if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf, data_size,
             &readbytes, &fin))
         || !TEST_false(fin)
-        || !TEST_size_t_eq(readbytes, 21)
-        || !TEST_mem_eq(read_buf, readbytes, data, 21))
-        goto err;
-
-    /* reading released one frame, so one more frame fits again */
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, past_tail + 20,
-            data + past_tail + 20, 1, 0))
-        || !TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
-            past_tail + 22,
-            data + past_tail + 22, 1, 0)))
+        || !TEST_size_t_eq(readbytes, covered)
+        || !TEST_mem_eq(read_buf, readbytes, data, covered))
         goto err;
 
     ret = 1;
@@ -655,6 +653,44 @@ err:
     ossl_quic_rstream_free(rstream);
     OPENSSL_free(data);
     OPENSSL_free(read_buf);
+    return ret;
+}
+
+/*
+ * A peer sending tiny frames with a gap after each of them is refused long
+ * before the absolute limit, because the data it has sent does not average out
+ * at a sensible size.
+ */
+static int test_rstream_fragmentation_ratio(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL;
+    const size_t stride = 2;
+    const size_t data_size = stride * (SFRAME_LIST_MIN_FRAGMENTATION + 8);
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
+        goto err;
+
+    memset(data, 'x', data_size);
+
+    for (i = 0; i < SFRAME_LIST_MIN_FRAGMENTATION; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, i * stride,
+                data + i * stride, 1, 0)))
+            goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
+            SFRAME_LIST_MIN_FRAGMENTATION * stride,
+            data + SFRAME_LIST_MIN_FRAGMENTATION * stride, 1, 0)))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
     return ret;
 }
 
@@ -711,6 +747,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rstream_simple, 2);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_fragmentation_limit);
+    ADD_TEST(test_rstream_fragmentation_ratio);
     ADD_TEST(test_rstream_small_frames);
     return 1;
 }
