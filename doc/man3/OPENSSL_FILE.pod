@@ -52,7 +52,9 @@ see above
 
 =head1 SEE ALSO
 
-L<crypto(7)>
+L<crypto(7)>,
+L<OPENSSL_NO_DEPRECATED(7)>,
+L<OPENSSL_SUPPRESS_DEPRECATED(7)>
 
 =head1 HISTORY
 
