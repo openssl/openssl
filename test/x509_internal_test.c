@@ -1153,7 +1153,6 @@ static int cache_test_add_proxy(X509 *x, long pathlen)
     if (!TEST_ptr(pci = PROXY_CERT_INFO_EXTENSION_new())
         || !TEST_ptr(pci->pcPathLengthConstraint = ASN1_INTEGER_new())
         || !TEST_true(ASN1_INTEGER_set(pci->pcPathLengthConstraint, pathlen))
-        || !TEST_ptr(pci->proxyPolicy = PROXY_POLICY_new())
         || !TEST_ptr(pci->proxyPolicy->policyLanguage = OBJ_dup(OBJ_nid2obj(NID_id_ppl_anyLanguage)))
         || !TEST_int_eq(X509_add1_ext_i2d(x, NID_proxyCertInfo, pci, 1,
                             X509V3_ADD_REPLACE),
