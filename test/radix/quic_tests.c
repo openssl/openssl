@@ -3061,8 +3061,26 @@ DEF_SCRIPT(script_48, "Fault injection - ACK - malformed subsequent range")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_49, "place holder for multistrem script_49")
+DEF_SCRIPT(script_49, "Fault injection - ACK - fictional PN")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_malformed_ack_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(4, 0);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+    /*
+     * The injected ACK acknowledges a packet number we have not sent, which the
+     * peer is expected to treat as a PROTOCOL_VIOLATION, so the connection is
+     * closed rather than the stream data being delivered.
+     */
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
 DEF_SCRIPT(script_50, "place holder for multistrem script_50")
