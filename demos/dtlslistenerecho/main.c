@@ -7,6 +7,7 @@
  *  https://www.openssl.org/source/license.html
  */
 
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -60,13 +61,9 @@ struct connection_thread_args {
     int *server_shutdown;
 };
 
-typedef unsigned char flag;
-#define true 1
-#define false 0
-
 static CRYPTO_RWLOCK *atomic_lock = NULL;
 
-static SSL_CTX *create_context(flag isServer)
+static SSL_CTX *create_context(bool isServer)
 {
     SSL_CTX *ctx;
 
@@ -148,9 +145,19 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
         goto err;
     }
 
-    /* Attach the BIO to the listener - ownership of listener_bio is transferred */
-    SSL_set_bio(*listener, listener_bio, listener_bio);
-    listener_bio = NULL; /* Ownership transferred to listener */
+    /*
+     * Attach the BIO to the listener for both read and write. Because rbio and
+     * wbio are the same BIO, each set0 call takes one reference, so bump the
+     * reference count once beforehand.
+     */
+    if (!BIO_up_ref(listener_bio)) {
+        fprintf(stderr, "Unable to increment BIO reference count\n");
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+    SSL_set0_rbio(*listener, listener_bio);
+    SSL_set0_wbio(*listener, listener_bio);
+    listener_bio = NULL; /* Both references transferred to listener */
 
     /* Start listening for incoming connections */
     if (SSL_listen(*listener) != 1) {
@@ -634,9 +641,19 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
         goto err;
     }
 
-    /* Attach the BIO to the SSL - ownership is transferred */
-    SSL_set_bio(*client, client_bio, client_bio);
-    client_bio = NULL;
+    /*
+     * Attach the BIO to the SSL for both read and write. Because rbio and wbio
+     * are the same BIO, each set0 call takes one reference, so bump the
+     * reference count once beforehand.
+     */
+    if (!BIO_up_ref(client_bio)) {
+        fprintf(stderr, "Unable to increment BIO reference count\n");
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+    SSL_set0_rbio(*client, client_bio);
+    SSL_set0_wbio(*client, client_bio);
+    client_bio = NULL; /* Both references transferred to the SSL */
 
     if (!SSL_set1_dnsname(*client, server_name)) {
         ERR_print_errors_fp(stderr);
@@ -668,8 +685,6 @@ static int do_client_handshake(SSL *client)
     struct timeval timeout;
     size_t result_count;
     int ret, err;
-
-    SSL_set_connect_state(client);
 
     while ((ret = SSL_connect(client)) != 1) {
         err = SSL_get_error(client, ret);
@@ -909,6 +924,9 @@ static void run_client(char *rem_server_name, int dtls_version)
     }
 
 err:
+    /* Send a graceful shutdown (close_notify) to the server before freeing. */
+    if (client != NULL)
+        SSL_shutdown(client);
     SSL_free(client);
     SSL_CTX_free(ssl_ctx);
     if (client_fd != INVALID_SOCKET)
@@ -927,7 +945,7 @@ static void usage(void)
 
 int main(int argc, char **argv)
 {
-    flag isServer;
+    bool isServer;
     char *rem_server_name = NULL;
     int dtls_version = 0;
 
