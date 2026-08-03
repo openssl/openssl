@@ -737,6 +737,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_MD5
 static int test_X509_ALGOR_set_md_md5(void)
 {
     X509_ALGOR *alg = NULL;
@@ -759,6 +760,7 @@ err:
     X509_ALGOR_free(alg);
     return ret;
 }
+#endif /* OPENSSL_NO_MD5 */
 
 /*
  * An EVP_MD with NID_undef type but a name that OBJ_txt2obj() can resolve.
@@ -1089,7 +1091,9 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
 
     ADD_TEST(test_X509_ALGOR_set_md_sha1);
+#ifndef OPENSSL_NO_MD5
     ADD_TEST(test_X509_ALGOR_set_md_md5);
+#endif
     ADD_TEST(test_X509_ALGOR_set_md_nid_undef_known_name);
     ADD_TEST(test_X509_ALGOR_set_md_null_obj);
     return 1;
