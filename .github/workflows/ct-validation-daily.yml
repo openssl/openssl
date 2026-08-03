@@ -80,7 +80,7 @@ jobs:
   ct-validation:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -141,6 +141,7 @@ jobs:
         # - memcmp: test_crypto_memcmp
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
+        # - SM2/EC: test_ec
         #
         # Also covered:
         # - test_ct_validation_helpers: The Valgrind-based constant-time
