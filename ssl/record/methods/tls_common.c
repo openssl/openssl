@@ -1994,9 +1994,9 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
              */
             if (TLS_BUFFER_is_app_buffer(thiswb)
                 && (rl->mode & SSL_MODE_ACCEPT_MOVING_WRITE_BUFFER) != 0) {
-                size_t left = TLS_BUFFER_get_left(thiswb);
                 unsigned char *buf;
 
+                left = TLS_BUFFER_get_left(thiswb);
                 buf = OPENSSL_malloc(left);
                 if (buf == NULL) {
                     RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
