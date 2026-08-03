@@ -713,7 +713,7 @@ int x509_main(int argc, char **argv)
     if (!opt_check_md(digest))
         goto opthelp;
 
-    if (reqfile || newcert || privkey != NULL || CAfile != NULL)
+    if (reqfile || newcert || privkeyfile != NULL || CAfile != NULL)
         newout = 1;
     else if (sno != NULL
         || not_before != NULL
