@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <openssl/crypto.h>
 #include "ml_dsa_poly.h"
 
 struct vector_st {
@@ -153,6 +154,7 @@ vector_expand_mask(VECTOR *out, const uint8_t *rho_prime, size_t rho_prime_len,
         poly_expand_mask(out->poly + i, derived_seed, sizeof(derived_seed),
             gamma1, h_ctx, md);
     }
+    OPENSSL_cleanse(derived_seed, sizeof(derived_seed));
 }
 
 /* Scale back previously rounded value */

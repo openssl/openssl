@@ -932,6 +932,9 @@ int ossl_ml_dsa_sig_encode(const ML_DSA_SIG *sig, const ML_DSA_PARAMS *params,
     ret = 1;
 err:
     WPACKET_finish(&pkt);
+    /* Erase any partial signature output on failure */
+    if (ret == 0)
+        OPENSSL_cleanse(out, params->sig_len);
     return ret;
 }
 
