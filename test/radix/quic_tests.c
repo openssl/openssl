@@ -3251,8 +3251,83 @@ DEF_SCRIPT(script_53, "Fault injection - excess CRYPTO buffer size")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0);
 }
 
-DEF_SCRIPT(script_54, "place holder for multistrem script_54")
+/* 54. Fault injection - corrupted crypto stream data */
+static int script_54_inject_handshake(RADIX_FAULT *fault, unsigned char *buf,
+    size_t buf_len)
 {
+    size_t i;
+
+    for (i = 0; i < buf_len; ++i)
+        buf[i] ^= 0xff;
+
+    return 1;
+}
+
+/*
+ * The corrupted connection's channel does not exist until the client's
+ * Initial packet is accepted, by which point the server's first handshake
+ * flight has already been generated. So instead of arming the handshake
+ * mutator on an already-accepted connection (too late for this test), a
+ * client_hello callback is used to install it as soon as the ClientHello is
+ * processed, before any response is generated.
+ */
+static int script_54_client_hello_cb(SSL *s, int *al, void *arg)
+{
+    return ossl_statem_set_mutator(s, radix_fault_handshake_mutate,
+        radix_fault_handshake_finish, &radix_fault);
+}
+
+DEF_FUNC(new_listener_54)
+{
+    int ok = 0;
+    SSL_CTX *ctx = NULL;
+    SSL *listener = NULL;
+    const char *name;
+
+    F_POP(name);
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(OSSL_QUIC_server_method())))
+        goto err;
+
+#if defined(OPENSSL_THREADS)
+    if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
+            SSL_DOMAIN_FLAG_MULTI_THREAD
+                | SSL_DOMAIN_FLAG_BLOCKING)))
+        goto err;
+#endif
+
+    if (!TEST_true(ssl_ctx_configure(ctx, 1)))
+        goto err;
+
+    SSL_CTX_set_client_hello_cb(ctx, script_54_client_hello_cb, NULL);
+
+    if (!TEST_ptr(listener = SSL_new_listener(ctx, 0))
+        || !TEST_true(ssl_attach_bio_dgram(listener, 0, NULL))
+        || !TEST_true(RADIX_PROCESS_set_ssl(RP(), name, listener))) {
+        SSL_free(listener);
+        goto err;
+    }
+
+    ok = 1;
+err:
+    /* SSL object will hold ref, we don't need it */
+    SSL_CTX_free(ctx);
+    return ok;
+}
+
+DEF_SCRIPT(script_54, "Fault injection - corrupted crypto stream data")
+{
+    OP_SET_INJECT_HANDSHAKE_CB(script_54_inject_handshake);
+
+    OP_PUSH_PZ("L");
+    OP_FUNC(new_listener_54);
+    OP_LISTEN(L);
+    OP_NEW_SSL_C(C);
+    OP_SET_PEER_ADDR_FROM(C, L);
+
+    OP_CONNECT_WAIT_OR_FAIL(C);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_UNEXPECTED_MESSAGE, 0, 0);
 }
 
 DEF_SCRIPT(script_55, "place holder for multistrem script_55")
