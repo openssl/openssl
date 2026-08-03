@@ -2577,80 +2577,8 @@ static const struct script_op script_52[] = {
 };
 
 /* 53. Fault injection - excess CRYPTO buffer size */
-static int script_53_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    size_t written;
-    WPACKET wpkt;
-    uint64_t offset = 0, data_len = 100;
-    unsigned char *frame_buf = NULL;
-    size_t frame_len, i;
-
-    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
-        return 1;
-
-    h->inject_word0 = 0;
-
-    switch (h->inject_word1) {
-    case 0:
-        /*
-         * Far out offset which will not have been reached during handshake.
-         * This will not be delivered to the QUIC_TLS instance since it will be
-         * waiting for in-order delivery of previous bytes. This tests our flow
-         * control on CRYPTO stream buffering.
-         */
-        offset = 100000;
-        data_len = 1;
-        break;
-    }
-
-    frame_len = 1 + 8 + 8 + (size_t)data_len;
-    if (!TEST_ptr(frame_buf = OPENSSL_malloc(frame_len)))
-        return 0;
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf, frame_len, 0)))
-        goto err;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
-        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, data_len)))
-        goto err;
-
-    for (i = 0; i < data_len; ++i)
-        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
-            goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    OPENSSL_free(frame_buf);
-    return ok;
-}
-
 static const struct script_op script_53[] = {
-    OP_S_SET_INJECT_PLAIN(script_53_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, 0),
-    OP_S_WRITE(a, "Strawberry", 10),
-
-    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 
