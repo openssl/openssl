@@ -90,14 +90,15 @@ will be hidden.
 
 =item B<OPENSSL_ENGINE_STUBS>
 
-ENGINE API, as defined in openssl/engine.h, was permanently removed in OpenSSL 4.0.
+ENGINE API, as defined in openssl/engine.h, was permanently removed
+in OpenSSL 4.0.
 
-The user application can use the define B<OPENSSL_ENGINE_STUBS> to enable stub macros
-for API ENGINE functions. It should temporarily help the easy transition of applications
-without source code modifications.
+The user application can use the define B<OPENSSL_ENGINE_STUBS> to enable stub
+macros for API ENGINE functions.  It should temporarily help to ease
+the transition of applications without source code modifications.
 
 Note that all stub macros emulate API function failures; they will not restore
-the removed API even if the B<OPENSSL_API_COMPAT> define is used.
+the removed API functionality even if the B<OPENSSL_API_COMPAT> define is used.
 
 =back
 
