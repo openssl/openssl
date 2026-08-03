@@ -5465,11 +5465,6 @@ SSL *SSL_dup(SSL *s)
 
 #ifndef OPENSSL_NO_CT
     retsc->ct_validation_callback = sc->ct_validation_callback;
-    /*
-     * application that uses SSL_dup() must understand the `callback` must
-     * not free arg. The arg becomes shared between all SSL connection objects
-     * entangled by SSL_dup().
-     */
     retsc->ct_validation_callback_arg = sc->ct_validation_callback_arg;
 #endif
 
