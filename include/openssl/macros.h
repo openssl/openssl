@@ -42,7 +42,7 @@
 #define OSSL_DEPRECATED(since) \
     __declspec(deprecated("Since OpenSSL " #since))
 #define OSSL_DEPRECATED_FOR(since, message) \
-    __declspec(deprecated("Since OpenSSL " #since ";" message))
+    __declspec(deprecated("Since OpenSSL " #since "; " message))
 #define OSSL_DEPRECATED_MESSAGE(message) __declspec(deprecated(message))
 #elif _MSC_VER >= 1310
 #define OSSL_DEPRECATED(since) __declspec(deprecated)
@@ -56,7 +56,7 @@
 #define OSSL_DEPRECATED(since) \
     __attribute__((deprecated("Since OpenSSL " #since)))
 #define OSSL_DEPRECATED_FOR(since, message) \
-    __attribute__((deprecated("Since OpenSSL " #since ";" message)))
+    __attribute__((deprecated("Since OpenSSL " #since "; " message)))
 #define OSSL_DEPRECATED_MESSAGE(message) __attribute__((deprecated(message)))
 #define OSSL_BEGIN_ALLOW_DEPRECATED \
     _Pragma("GCC diagnostic push")  \

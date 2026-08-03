@@ -273,7 +273,7 @@ int asn1parse_main(int argc, char **argv)
             }
             /* hmm... this is a little evil but it works */
             tmpbuf = ASN1_STRING_get0_data(at->value.asn1_string);
-            tmplen = ASN1_STRING_length_ex(at->value.asn1_string);
+            tmplen = ASN1_STRING_get_length(at->value.asn1_string);
             if (tmplen > INT_MAX) {
                 BIO_puts(bio_err, "ASN.1 string length exceeds INT_MAX\n");
                 ERR_print_errors(bio_err);

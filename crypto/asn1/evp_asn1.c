@@ -42,7 +42,7 @@ int ASN1_TYPE_get_octetstring(const ASN1_TYPE *a, unsigned char *data, int max_l
         return -1;
     }
     p = ASN1_STRING_get0_data(a->value.octet_string);
-    tmp = ASN1_STRING_length_ex(a->value.octet_string);
+    tmp = ASN1_STRING_get_length(a->value.octet_string);
     if (tmp > INT_MAX) {
         ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LARGE);
         return -1;
@@ -82,7 +82,7 @@ static int asn1_type_get_int_oct(ASN1_OCTET_STRING *oct, int32_t anum,
     if (num != NULL)
         *num = anum;
 
-    tmp = ASN1_STRING_length_ex(oct);
+    tmp = ASN1_STRING_get_length(oct);
 
     if (tmp > INT_MAX)
         tmp = INT_MAX;

@@ -350,7 +350,7 @@ int PKCS12_verify_mac(PKCS12 *p12, const char *pass, int passlen)
         }
     }
     X509_SIG_get0(p12->mac->dinfo, NULL, &macoct);
-    if ((maclen != ASN1_STRING_length_ex(macoct))
+    if ((maclen != ASN1_STRING_get_length(macoct))
         || CRYPTO_memcmp(mac, ASN1_STRING_get0_data(macoct), maclen) != 0)
         return 0;
 

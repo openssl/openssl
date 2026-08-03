@@ -966,7 +966,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
 
     if (priv_key->privateKey) {
         ASN1_OCTET_STRING *pkey = priv_key->privateKey;
-        size_t pkey_len = ASN1_STRING_length_ex(pkey);
+        size_t pkey_len = ASN1_STRING_get_length(pkey);
         if (pkey_len > INT_MAX)
             goto err;
         if (EC_KEY_oct2priv(ret, ASN1_STRING_get0_data(pkey), (int)pkey_len) == 0)
@@ -991,7 +991,7 @@ EC_KEY *d2i_ECPrivateKey(EC_KEY **a, const unsigned char **in, long len)
         size_t pub_oct_len;
 
         pub_oct = ASN1_STRING_get0_data(priv_key->publicKey);
-        pub_oct_len = ASN1_STRING_length_ex(priv_key->publicKey);
+        pub_oct_len = ASN1_STRING_get_length(priv_key->publicKey);
         if (pub_oct_len > INT_MAX)
             goto err;
         if (!EC_KEY_oct2key(ret, pub_oct, (int)pub_oct_len, NULL)) {
