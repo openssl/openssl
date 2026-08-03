@@ -7263,9 +7263,19 @@ int ssl_log_secret(SSL_CONNECTION *sc,
     const uint8_t *secret,
     size_t secret_len)
 {
+    const uint8_t *client_random = sc->s3.client_random;
+
+#ifndef OPENSSL_NO_ECH
+    if (!sc->server && sc->ext.ech.attempted == 1
+        && (sc->ext.ech.success == 1
+            || strcmp(label, CLIENT_EARLY_LABEL) == 0
+            || strcmp(label, EARLY_EXPORTER_SECRET_LABEL) == 0))
+        client_random = sc->ext.ech.client_random;
+#endif
+
     return nss_keylog_int(label,
         sc,
-        sc->s3.client_random,
+        client_random,
         SSL3_RANDOM_SIZE,
         secret,
         secret_len);
