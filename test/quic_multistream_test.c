@@ -2505,44 +2505,6 @@ static const struct script_op script_40[] = {
 };
 
 /* 41. Fault injection - PATH_CHALLENGE yields PATH_RESPONSE */
-static const uint64_t path_challenge = UINT64_C(0xbdeb9451169c83aa);
-
-static int script_41_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
-    unsigned char *buf, size_t len)
-{
-    int ok = 0;
-    WPACKET wpkt;
-    unsigned char frame_buf[16];
-    size_t written;
-
-    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
-        return 1;
-
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
-            sizeof(frame_buf), 0)))
-        return 0;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
-        || !TEST_true(WPACKET_put_bytes_u64(&wpkt, path_challenge)))
-        goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
-        || !TEST_size_t_eq(written, 9))
-        goto err;
-
-    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
-        goto err;
-
-    --h->inject_word0;
-    ok = 1;
-err:
-    if (ok)
-        WPACKET_finish(&wpkt);
-    else
-        WPACKET_cleanup(&wpkt);
-    return ok;
-}
-
 static const struct script_op script_41[] = {
     /* test moved to test/radix/quic_tests.c */
     OP_END
@@ -2604,22 +2566,7 @@ static const struct script_op script_50[] = {
 
 /* 51. Fault injection - PATH_RESPONSE is ignored */
 static const struct script_op script_51[] = {
-    OP_S_SET_INJECT_PLAIN(script_41_inject_plain),
-    OP_C_SET_ALPN("ossltest"),
-    OP_C_CONNECT_WAIT(),
-
-    OP_C_WRITE(DEFAULT, "apple", 5),
-    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
-    OP_S_READ_EXPECT(a, "apple", 5),
-
-    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE),
-
-    OP_S_WRITE(a, "orange", 6),
-    OP_C_READ_EXPECT(DEFAULT, "orange", 6),
-
-    OP_C_WRITE(DEFAULT, "Strawberry", 10),
-    OP_S_READ_EXPECT(a, "Strawberry", 10),
-
+    /* test moved to test/radix/quic_tests.c */
     OP_END
 };
 

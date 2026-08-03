@@ -2567,7 +2567,7 @@ static const uint64_t script_41_path_challenge = UINT64_C(0xbdeb9451169c83aa);
 static uint64_t script_41_valid_responses;
 static uint64_t script_41_bad_responses;
 
-static int script_41_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+static int inject_path_challenge_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
     unsigned char *buf, size_t len)
 {
     int ok = 0;
@@ -2667,7 +2667,7 @@ DEF_SCRIPT(script_41, "Fault injection - PATH_CHALLENGE yields PATH_RESPONSE")
     OP_WRITE(C, "apple", 5);
 
     OP_ACCEPT_CONN_WAIT(L, S, 0);
-    OP_SET_INJECT_PLAIN(S, script_41_inject_plain);
+    OP_SET_INJECT_PLAIN(S, inject_path_challenge_plain);
     OP_SELECT_SSL(0, S);
     OP_FUNC(install_trace_41);
 
@@ -3066,8 +3066,23 @@ DEF_SCRIPT(script_50, "Fault injection - ACK - duplicate PN")
     }
 }
 
-DEF_SCRIPT(script_51, "place holder for multistrem script_51")
+DEF_SCRIPT(script_51, "Fault injection - PATH_RESPONSE is ignored")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_SET_INJECT_PLAIN(S, inject_path_challenge_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE);
+
+    OP_WRITE(Sa, "orange", 6);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_52, "place holder for multistrem script_52")
