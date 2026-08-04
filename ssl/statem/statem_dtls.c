@@ -754,7 +754,6 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     if (item == NULL) {
         item = pitem_new(seq64be, frag);
         if (item == NULL) {
-            i = -1;
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
