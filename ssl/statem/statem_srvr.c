@@ -3938,7 +3938,7 @@ int tls_construct_new_session_ticket(SSL *s, WPACKET *pkt)
             SSL_SESSION *new_sess = ssl_session_dup(s->session, 0);
 
             if (new_sess == NULL) {
-                /* SSLfatal already called */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
                 goto err;
             }
 
