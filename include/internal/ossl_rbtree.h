@@ -57,13 +57,13 @@ struct ossl_rbt_entry {
 
 #define OSSL_RBT_ENTRY(_type) struct ossl_rbt_entry
 
-static inline void
+static ossl_inline void
 ossl_rbt_init(struct ossl_rbt_tree *rb)
 {
     rb->rb_root = NULL;
 }
 
-static inline int
+static ossl_inline int
 ossl_rbt_empty(struct ossl_rbt_tree *rb)
 {
     return (rb->rb_root == NULL);
@@ -96,108 +96,108 @@ void ossl_rbt_init_rbe(const struct ossl_rbt_type *, void *);
 #define OSSL_RBT_PROTOTYPE(_name, _type, _field, _cmp)                       \
     extern const struct ossl_rbt_type *const _name##_OSSL_RBT_TYPE;          \
                                                                              \
-    ossl_unused static inline void                                           \
+    ossl_unused static ossl_inline void                                      \
     _name##_OSSL_RBT_INIT(struct _name *head)                                \
     {                                                                        \
         ossl_rbt_init(&head->rbh_root);                                      \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_INSERT(struct _name *head, struct _type *elm)           \
     {                                                                        \
         return ossl_rbt_insert(_name##_OSSL_RBT_TYPE, &head->rbh_root, elm); \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_REMOVE(struct _name *head, struct _type *elm)           \
     {                                                                        \
         return ossl_rbt_remove(_name##_OSSL_RBT_TYPE, &head->rbh_root, elm); \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_FIND(struct _name *head, const struct _type *key)       \
     {                                                                        \
         return ossl_rbt_find(_name##_OSSL_RBT_TYPE, &head->rbh_root, key);   \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_NFIND(struct _name *head, const struct _type *key)      \
     {                                                                        \
         return ossl_rbt_nfind(_name##_OSSL_RBT_TYPE, &head->rbh_root, key);  \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_ROOT(struct _name *head)                                \
     {                                                                        \
         return ossl_rbt_root(_name##_OSSL_RBT_TYPE, &head->rbh_root);        \
     }                                                                        \
                                                                              \
-    ossl_unused static inline int                                            \
+    ossl_unused static ossl_inline int                                       \
     _name##_OSSL_RBT_EMPTY(struct _name *head)                               \
     {                                                                        \
         return ossl_rbt_empty(&head->rbh_root);                              \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_MIN(struct _name *head)                                 \
     {                                                                        \
         return ossl_rbt_min(_name##_OSSL_RBT_TYPE, &head->rbh_root);         \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_MAX(struct _name *head)                                 \
     {                                                                        \
         return ossl_rbt_max(_name##_OSSL_RBT_TYPE, &head->rbh_root);         \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_NEXT(struct _type *elm)                                 \
     {                                                                        \
         return ossl_rbt_next(_name##_OSSL_RBT_TYPE, elm);                    \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_PREV(struct _type *elm)                                 \
     {                                                                        \
         return ossl_rbt_prev(_name##_OSSL_RBT_TYPE, elm);                    \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_LEFT(struct _type *elm)                                 \
     {                                                                        \
         return ossl_rbt_left(_name##_OSSL_RBT_TYPE, elm);                    \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_RIGHT(struct _type *elm)                                \
     {                                                                        \
         return ossl_rbt_right(_name##_OSSL_RBT_TYPE, elm);                   \
     }                                                                        \
                                                                              \
-    ossl_unused static inline struct _type *                                 \
+    ossl_unused static ossl_inline struct _type *                            \
     _name##_OSSL_RBT_PARENT(struct _type *elm)                               \
     {                                                                        \
         return ossl_rbt_parent(_name##_OSSL_RBT_TYPE, elm);                  \
     }                                                                        \
                                                                              \
-    ossl_unused static inline void                                           \
+    ossl_unused static ossl_inline void                                      \
     _name##_OSSL_RBT_SET_LEFT(struct _type *elm, struct _type *left)         \
     {                                                                        \
         ossl_rbt_set_left(_name##_OSSL_RBT_TYPE, elm, left);                 \
     }                                                                        \
                                                                              \
-    ossl_unused static inline void                                           \
+    ossl_unused static ossl_inline void                                      \
     _name##_OSSL_RBT_SET_RIGHT(struct _type *elm, struct _type *right)       \
     {                                                                        \
         ossl_rbt_set_right(_name##_OSSL_RBT_TYPE, elm, right);               \
     }                                                                        \
                                                                              \
-    ossl_unused static inline void                                           \
+    ossl_unused static ossl_inline void                                      \
     _name##_OSSL_RBT_SET_PARENT(struct _type *elm, struct _type *parent)     \
     {                                                                        \
         ossl_rbt_set_parent(_name##_OSSL_RBT_TYPE, elm, parent);             \
     }                                                                        \
-    ossl_unused static inline void                                           \
+    ossl_unused static ossl_inline void                                      \
     _name##_OSSL_RBT_INIT_RBE(struct _type *elm)                             \
     {                                                                        \
         ossl_rbt_init_rbe(_name##_OSSL_RBT_TYPE, elm);                       \
