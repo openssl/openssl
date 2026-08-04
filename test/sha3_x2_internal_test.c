@@ -8,6 +8,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "testutil.h"
+
 #if defined(__aarch64__) && defined(__AARCH64EL__) && !defined(OPENSSL_NO_ASM)
 #ifndef KECCAK1600_ASM
 #define KECCAK1600_ASM
@@ -15,7 +17,6 @@
 #include <string.h>
 #include <openssl/byteorder.h>
 #include <openssl/rand.h>
-#include "testutil.h"
 #include "internal/sha3.h"
 
 #define SHAKE256_RATE SHA3_BLOCKSIZE(256)
