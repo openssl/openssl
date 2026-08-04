@@ -1227,6 +1227,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[aesgcm_avx512_test]=../include ../apps/include
   # Static libcrypto for ossl_vaes_vpclmulqdq_capable(); see noinst block.
   DEPEND[aesgcm_avx512_test]=../libcrypto.a libtestutil.a
+  # That symbol comes from crypto/modes/asm/aes-gcm-avx512.pl, so it only
+  # exists when the assembly is built.
+  IF[{- !$disabled{asm} -}]
+    DEFINE[aesgcm_avx512_test]=AESGCM_AVX512_ASM
+  ENDIF
 
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c

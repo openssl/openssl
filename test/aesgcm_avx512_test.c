@@ -59,10 +59,13 @@
 
 /*
  * Skip when libcrypto would not use the VAES/AVX-512 GCM backend; gate on
- * ossl_vaes_vpclmulqdq_capable() as in ossl_prov_aes_hw_gcm(). x86_64 only.
+ * ossl_vaes_vpclmulqdq_capable() as in ossl_prov_aes_hw_gcm(). x86_64 only,
+ * and only where the assembly defining that symbol is built: a no-asm build
+ * has no VAES backend to test, and msan implies no-asm.
  */
-#if defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) \
-    || defined(_M_X64)
+#if (defined(__x86_64__) || defined(__x86_64) || defined(_M_AMD64) \
+    || defined(_M_X64))                                            \
+    && defined(AESGCM_AVX512_ASM)
 #define AESGCM_AVX512_GATE 1
 int ossl_vaes_vpclmulqdq_capable(void);
 #else
