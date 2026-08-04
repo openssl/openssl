@@ -5882,8 +5882,6 @@ static int test_evp_oneshot_aead_zerolen(int idx)
     /* filter out various modes */
     if (info->taglen == 0
         || info->mode == EVP_CIPH_CCM_MODE
-        || info->mode == EVP_CIPH_OCB_MODE
-        || info->mode == EVP_CIPH_GCM_SIV_MODE
         /* skip TLS stitched MTE cipher */
         || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
         /* skip TLS stitched MTE cipher */
@@ -5891,8 +5889,7 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         /* skip TLS stitched MTE cipher */
         || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA256")
         /* skip TLS stitched MTE cipher */
-        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256")
-        || EVP_CIPHER_is_a(info->ciph, "ChaCha20-Poly1305"))
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256"))
         return 1;
 
     for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
