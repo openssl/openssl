@@ -16800,12 +16800,248 @@ end:
     return testresult;
 }
 
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+
+/* Number of handshake half-steps in the stepwise mfail handshake tests */
+#define MFAIL_HS_NUM_STEPS 5
+
+/* Run one handshake half-step (even: client, odd: server), no test macros */
+static int mfail_hs_step(SSL *serverssl, SSL *clientssl, int version, int step)
+{
+    int client_done = (version == TLS1_3_VERSION) ? 2 : 4;
+    int rc, err, i;
+
+    if (version == TLS1_3_VERSION && step == 4) {
+        unsigned char buf;
+        size_t readbytes;
+
+        /* Client processes the two NewSessionTicket messages */
+        for (i = 0; i < 2; i++) {
+            if (SSL_read_ex(clientssl, &buf, sizeof(buf), &readbytes) > 0
+                || SSL_get_error(clientssl, 0) != SSL_ERROR_WANT_READ)
+                return 0;
+        }
+        return 1;
+    }
+
+    if (step % 2 == 0) {
+        rc = SSL_connect(clientssl);
+        if (step >= client_done)
+            return rc == 1;
+        err = SSL_get_error(clientssl, rc);
+    } else {
+        rc = SSL_accept(serverssl);
+        if (step >= 3)
+            return rc == 1;
+        err = SSL_get_error(serverssl, rc);
+    }
+    return rc <= 0 && err == SSL_ERROR_WANT_READ;
+}
+
+/* Create the SSL objects for a |version| handshake and advance it |steps| */
+static int mfail_hs_setup(int version, SSL_CTX **sctx, SSL_CTX **cctx,
+    SSL **serverssl, SSL **clientssl, int steps)
+{
+    int i;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), version, version, sctx, cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(*sctx, *cctx, serverssl, clientssl,
+            NULL, NULL)))
+        return 0;
+
+    for (i = 0; i < steps; i++)
+        if (!TEST_true(mfail_hs_step(*serverssl, *clientssl, version, i)))
+            return 0;
+    return 1;
+}
+
+/* Trigger memory failures in a single handshake half-step */
+static int test_ssl_handshake_mfail(int version, int step)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int ret = -1, i;
+
+    if (!mfail_hs_setup(version, &sctx, &cctx, &serverssl, &clientssl, step))
+        goto end;
+
+    MFAIL_start();
+    ret = mfail_hs_step(serverssl, clientssl, version, step);
+    MFAIL_end();
+
+    if (ret == 1 && !mfail_was_triggered()) {
+        for (i = step + 1; i < MFAIL_HS_NUM_STEPS; i++)
+            if (!mfail_hs_step(serverssl, clientssl, version, i)) {
+                ret = 0;
+                break;
+            }
+    }
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+static int test_tls13_hs_client_hello_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_3_VERSION, 0);
+}
+
+static int test_tls13_hs_server_flight_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_3_VERSION, 1);
+}
+
+static int test_tls13_hs_client_flight_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_3_VERSION, 2);
+}
+
+static int test_tls13_hs_server_finish_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_3_VERSION, 3);
+}
+
+static int test_tls13_hs_client_ticket_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_3_VERSION, 4);
+}
+#endif
+
+#ifndef OPENSSL_NO_TLS1_2
+static int test_tls12_hs_client_hello_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_2_VERSION, 0);
+}
+
+static int test_tls12_hs_server_flight_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_2_VERSION, 1);
+}
+
+static int test_tls12_hs_client_flight_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_2_VERSION, 2);
+}
+
+static int test_tls12_hs_server_finish_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_2_VERSION, 3);
+}
+
+static int test_tls12_hs_client_finish_mfail(void)
+{
+    return test_ssl_handshake_mfail(TLS1_2_VERSION, 4);
+}
+#endif
+
+#endif /* !OSSL_NO_USABLE_TLS1_3 || !OPENSSL_NO_TLS1_2 */
+
+/* Trigger memory failures in SSL_CTX creation. */
+static int test_ssl_ctx_mfail(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    int ret;
+
+    MFAIL_start();
+    ret = (sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())) != NULL
+        && (cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method())) != NULL;
+    MFAIL_end();
+
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
+/* Trigger memory failures in SSL_CTX cert and key loading. */
+static int test_ssl_ctx_cert_mfail(void)
+{
+    SSL_CTX *sctx = NULL;
+    int ret = -1;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+
+    /* Warm up the decoder and fetch caches outside the mfail section */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(sctx, cert,
+                         SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, privkey,
+                            SSL_FILETYPE_PEM),
+            1))
+        goto end;
+
+    MFAIL_start();
+    ret = SSL_CTX_use_certificate_file(sctx, cert, SSL_FILETYPE_PEM) == 1
+        && SSL_CTX_use_PrivateKey_file(sctx, privkey, SSL_FILETYPE_PEM) == 1
+        && SSL_CTX_check_private_key(sctx) == 1;
+    MFAIL_end();
+
+end:
+    SSL_CTX_free(sctx);
+    return ret;
+}
+
+/* Trigger memory failures in SSL object and BIO creation. */
+static int test_ssl_objects_mfail(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    BIO *s_to_c_bio = NULL, *c_to_s_bio = NULL;
+    int ret = -1;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    MFAIL_start();
+    ret = (serverssl = SSL_new(sctx)) != NULL
+        && (clientssl = SSL_new(cctx)) != NULL
+        && (s_to_c_bio = BIO_new(BIO_s_mem())) != NULL
+        && (c_to_s_bio = BIO_new(BIO_s_mem())) != NULL;
+    MFAIL_end();
+
+    if (ret == 1) {
+        /* Ownership as in create_ssl_objects() */
+        if (!BIO_up_ref(s_to_c_bio)) {
+            ret = -1;
+            goto end;
+        }
+        if (!BIO_up_ref(c_to_s_bio)) {
+            BIO_free(s_to_c_bio);
+            ret = -1;
+            goto end;
+        }
+        SSL_set_bio(serverssl, c_to_s_bio, s_to_c_bio);
+        SSL_set_bio(clientssl, s_to_c_bio, c_to_s_bio);
+        s_to_c_bio = c_to_s_bio = NULL;
+    }
+
+end:
+    BIO_free(s_to_c_bio);
+    BIO_free(c_to_s_bio);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
 int setup_tests(void)
 {
     char *modulename;
     char *configfile;
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    int mfail_hs_checked;
+#endif
 
     libctx = OSSL_LIB_CTX_new();
     if (!TEST_ptr(libctx))
@@ -17176,6 +17412,43 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_http_verbs, 3);
 #if !defined(OSSL_NO_USABLE_TLS1_3)
     ADD_TEST(test_grease);
+#endif
+    /* NO_CHECK: capability discovery and decoder chain absorb failures */
+    ADD_MFAIL_NO_CHECK_TEST(test_ssl_ctx_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_ssl_ctx_cert_mfail);
+    ADD_MFAIL_TEST(test_ssl_objects_mfail);
+#if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2)
+    /*
+     * NO_CHECK flight steps: sigalg/chain/verify fallbacks absorb failures.
+     * The steps generating or copying an EC peer key (fips or no-ecx) are
+     * NO_CHECK too as the EVP key info caching absorbs get_params failures
+     * that the X25519 key management does not do.
+     */
+#ifdef OPENSSL_NO_ECX
+    mfail_hs_checked = 0;
+#else
+    mfail_hs_checked = !is_fips;
+#endif
+#endif
+#ifndef OSSL_NO_USABLE_TLS1_3
+    if (mfail_hs_checked)
+        ADD_MFAIL_TEST(test_tls13_hs_client_hello_mfail);
+    else
+        ADD_MFAIL_NO_CHECK_TEST(test_tls13_hs_client_hello_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_tls13_hs_server_flight_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_tls13_hs_client_flight_mfail);
+    ADD_MFAIL_TEST(test_tls13_hs_server_finish_mfail);
+    ADD_MFAIL_TEST(test_tls13_hs_client_ticket_mfail);
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_MFAIL_TEST(test_tls12_hs_client_hello_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_tls12_hs_server_flight_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_tls12_hs_client_flight_mfail);
+    if (mfail_hs_checked)
+        ADD_MFAIL_TEST(test_tls12_hs_server_finish_mfail);
+    else
+        ADD_MFAIL_NO_CHECK_TEST(test_tls12_hs_server_finish_mfail);
+    ADD_MFAIL_TEST(test_tls12_hs_client_finish_mfail);
 #endif
     return 1;
 
