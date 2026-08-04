@@ -399,7 +399,7 @@ entries age out via B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>.
 The default limit is 256. Setting the value to 0 is rejected: the limit is an
 upper bound on tracked pending connections, so a cap of 0 would reject every
 incoming connection and leave the listener unable to accept anything. Any
-non-zero value is accepted (values larger than B<SIZE_MAX> are clamped to
+nonzero value is accepted (values larger than B<SIZE_MAX> are clamped to
 B<SIZE_MAX>); a sufficiently large value therefore makes the limit effectively
 unbounded, so keeping it at a sensible value is what protects the listener
 against Denial of Service from spoofed-source UDP floods.
