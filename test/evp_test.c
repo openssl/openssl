@@ -23,6 +23,7 @@
 #include <openssl/param_build.h>
 #include <openssl/core_names.h>
 #include <openssl/fips_names.h>
+#include <openssl/fipskey.h>
 #include <openssl/thread.h>
 #include "internal/numbers.h"
 #include "internal/nelem.h"
@@ -3962,6 +3963,18 @@ static int rand_test_run(EVP_TEST *t)
     unsigned int strength;
     unsigned char *z;
     size_t params_n = 0, params_allocated_n = 0;
+
+    /* Skip tests that don't use the df for CTR-DRBG from the FIPS provider */
+    if (!expected->use_df) {
+        EVP_RAND *rand = EVP_RAND_CTX_get0_rand(expected->ctx);
+        const OSSL_PROVIDER *prov = EVP_RAND_get0_provider(rand);
+        const char *prov_name = OSSL_PROVIDER_get0_name(prov);
+
+        if (strcmp(prov_name, "fips") == 0 && EVP_RAND_is_a(rand, "CTR-DRBG")) {
+            TEST_info("Skipping %s:%d as fips requires a derivation function\n", t->s.test_file, t->s.curr);
+            return 1;
+        }
+    }
 
     if (!TEST_ptr(got = OPENSSL_malloc(got_len)))
         return 0;
