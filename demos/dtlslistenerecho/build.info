@@ -8,4 +8,4 @@ PROGRAMS{noinst} = dtlslistenerecho
 
 INCLUDE[dtlslistenerecho]=../../include ..
 SOURCE[dtlslistenerecho]=main.c
-DEPEND[dtlslistenerecho]=../../libcrypto.a ../../libssl.a
+DEPEND[dtlslistenerecho]=../../libcrypto ../../libssl
