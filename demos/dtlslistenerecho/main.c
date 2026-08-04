@@ -214,24 +214,32 @@ static void handle_connection(struct connection_thread_args *conn_args)
         }
 
         /*
-         * Wait for the socket to become ready rather than busy-looping, and
-         * abandon the connection if the client goes quiet mid-handshake.
+         * Wait for the socket to become ready rather than busy-looping. Size
+         * the wait to the DTLS retransmit timer so we wake when a flight is
+         * due for retransmission; fall back to a fixed interval if no timer is
+         * armed.
          */
         item.desc = SSL_as_poll_descriptor(conn_args->conn);
         item.events = (err == SSL_ERROR_WANT_READ) ? SSL_POLL_EVENT_R
                                                    : SSL_POLL_EVENT_W;
         item.revents = 0;
-        timeout.tv_sec = POLL_TIMEOUT_SEC;
-        timeout.tv_usec = 0;
+        if (!DTLSv1_get_timeout(conn_args->conn, &timeout)) {
+            timeout.tv_sec = POLL_TIMEOUT_SEC;
+            timeout.tv_usec = 0;
+        }
         if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
             printf("Thread %d: SSL_poll failed during handshake\n", conn_args->thread_idx);
             ERR_print_errors_fp(stderr);
             goto done;
         }
-        if (result_count == 0) {
-            printf("Thread %d: Handshake timed out, abandoning\n", conn_args->thread_idx);
-            goto done;
-        }
+        /*
+         * No inbound datagram before the timer expired: loop back into
+         * SSL_accept() so the library retransmits the last flight. A dead peer
+         * eventually exhausts the DTLS retransmit budget, which surfaces as a
+         * fatal error from SSL_accept() above and ends the loop.
+         */
+        if (result_count == 0)
+            continue;
     }
 
     printf("Thread %d: Handshake completed\n", conn_args->thread_idx);
@@ -694,13 +702,19 @@ static int do_client_handshake(SSL *client)
             return 0;
         }
 
-        /* Poll for the socket to be ready */
+        /*
+         * Poll for the socket to be ready. Size the wait to the DTLS
+         * retransmit timer so we wake when a flight is due for retransmission;
+         * fall back to a fixed interval if no timer is armed.
+         */
         item.desc = SSL_as_poll_descriptor(client);
         item.events = (err == SSL_ERROR_WANT_READ) ? SSL_POLL_EVENT_R : SSL_POLL_EVENT_W;
         item.revents = 0;
 
-        timeout.tv_sec = POLL_TIMEOUT_SEC;
-        timeout.tv_usec = 0;
+        if (!DTLSv1_get_timeout(client, &timeout)) {
+            timeout.tv_sec = POLL_TIMEOUT_SEC;
+            timeout.tv_usec = 0;
+        }
 
         if (!SSL_poll(&item, 1, sizeof(item), &timeout, 0, &result_count)) {
             fprintf(stderr, "SSL_poll failed during handshake\n");
@@ -708,10 +722,14 @@ static int do_client_handshake(SSL *client)
             return 0;
         }
 
-        if (result_count == 0) {
-            fprintf(stderr, "Handshake timed out\n");
-            return 0;
-        }
+        /*
+         * No inbound datagram before the timer expired: loop back into
+         * SSL_connect() so the library retransmits the last flight. A dead
+         * peer eventually exhausts the DTLS retransmit budget, which surfaces
+         * as a fatal error from SSL_connect() above and ends the loop.
+         */
+        if (result_count == 0)
+            continue;
     }
 
     return 1;
