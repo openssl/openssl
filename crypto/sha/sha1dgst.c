@@ -24,3 +24,19 @@
 
 #include "sha_local.h"
 #include "crypto/sha.h"
+
+int SHA1_Init(SHA_CTX *c)
+{
+    memset(c, 0, sizeof(*c));
+    c->h0 = INIT_DATA_h0;
+    c->h1 = INIT_DATA_h1;
+    c->h2 = INIT_DATA_h2;
+    c->h3 = INIT_DATA_h3;
+    c->h4 = INIT_DATA_h4;
+    return 1;
+}
+
+int SHA1_Update(SHA_CTX *c, const void *data, size_t len)
+{
+    return SHA1_Update_thunk((void *)c, (const unsigned char *)data, len);
+}
