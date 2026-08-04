@@ -73,6 +73,8 @@ static OSSL_BASIC_ATTR_CONSTRAINTS *v2i_OSSL_BASIC_ATTR_CONSTRAINTS(
             if (!X509V3_get_value_bool(val, &battcons->authority))
                 goto err;
         } else if (strcmp(val->name, "pathlen") == 0) {
+            ASN1_INTEGER_free(battcons->pathlen);
+            battcons->pathlen = NULL;
             if (!X509V3_get_value_int(val, &battcons->pathlen))
                 goto err;
         } else {

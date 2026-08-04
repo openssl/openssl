@@ -67,9 +67,13 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
     for (i = 0; i < sk_CONF_VALUE_num(values); i++) {
         val = sk_CONF_VALUE_value(values, i);
         if (strcmp(val->name, "requireExplicitPolicy") == 0) {
+            ASN1_INTEGER_free(pcons->requireExplicitPolicy);
+            pcons->requireExplicitPolicy = NULL;
             if (!X509V3_get_value_int(val, &pcons->requireExplicitPolicy))
                 goto err;
         } else if (strcmp(val->name, "inhibitPolicyMapping") == 0) {
+            ASN1_INTEGER_free(pcons->inhibitPolicyMapping);
+            pcons->inhibitPolicyMapping = NULL;
             if (!X509V3_get_value_int(val, &pcons->inhibitPolicyMapping))
                 goto err;
         } else {
