@@ -418,7 +418,7 @@ static const OSSL_ML_DSA_SAMPLE_OPS ml_dsa_sample_generic_meth = {
     vector_expand_mask_scalar
 };
 
-#if defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM) \
+#if defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM)  \
     && ((defined(__aarch64__) && defined(__AARCH64EL__)) \
         || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
 #if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
