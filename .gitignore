@@ -296,6 +296,8 @@ providers/implementations/rands/test_rng.inc
 /test-runs
 /test/buildtest_*
 /test/provider_internal_test.cnf
+/test/pathed.cnf
+/test/nocache-and-default.cnf
 /test/fipsmodule.cnf
 /providers/fipsmodule.cnf
 

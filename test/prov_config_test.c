@@ -10,6 +10,7 @@
 #include <sys/stat.h>
 #include <openssl/evp.h>
 #include <openssl/conf.h>
+#include "crypto/dso_conf.h"
 #include "testutil.h"
 
 static char *configfile = NULL;
@@ -67,7 +68,7 @@ err:
     return testresult;
 }
 
-#define P_TEST_PATH "/../test/p_test.so"
+#define P_TEST_PATH "/../test/p_test" DSO_EXTENSION
 static int test_path_config(void)
 {
     OSSL_LIB_CTX *ctx = NULL;
