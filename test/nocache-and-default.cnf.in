@@ -1,3 +1,4 @@
+{- use platform -}
 openssl_conf = openssl_init
 
 # Comment out the next line to ignore configuration errors
@@ -11,7 +12,7 @@ test    = test_sect
 default = default_sect
 
 [test_sect]
-module = ../test/p_test.so
+module = ../test/{- platform->dso("p_test") -}
 activate = true
 
 [default_sect]
