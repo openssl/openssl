@@ -2740,7 +2740,6 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
 {
     DTLS_LISTENER *dl;
     int ret = 1;
-    uint64_t v = 0;
 
     if (!IS_DTLS_LISTENER(s)) {
         ERR_raise(ERR_LIB_SSL, SSL_R_LISTENER_USE_ONLY);
@@ -2750,6 +2749,10 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
         ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS);
         return 0;
     }
+    if (value == NULL) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
 
     dl = (DTLS_LISTENER *)s;
 
@@ -2757,26 +2760,22 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
 
     switch (id) {
     case SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS:
-        v = (uint64_t)dl->max_pending_conns;
+        *value = (uint64_t)dl->max_pending_conns;
         break;
     case SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT:
         if (ossl_time_is_infinite(dl->pending_timeout))
-            v = UINT64_MAX;
+            *value = UINT64_MAX;
         else
-            v = ossl_time2ms(dl->pending_timeout);
+            *value = ossl_time2ms(dl->pending_timeout);
         break;
     case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
-        v = (uint64_t)ossl_dgram_demux_get_mtu(dl->demux);
+        *value = (uint64_t)ossl_dgram_demux_get_mtu(dl->demux);
         break;
     default:
         ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
         ret = 0;
         break;
     }
-
-    /* a NULL out-value is tolerated, the store is simply skipped. */
-    if (ret && value != NULL)
-        *value = v;
 
     ossl_crypto_mutex_unlock(dl->mutex);
     return ret;

@@ -4100,6 +4100,11 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
+    /* Get with a NULL out-value must fail */
+    if (!TEST_false(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, NULL)))
+        goto end;
+
     testresult = 1;
 
 end:
