@@ -2338,14 +2338,6 @@ typedef struct dtls_listener_st {
      */
     size_t max_pending_conns;
 
-    /*
-     * Maximum size in bytes of a datagram the listener will receive. The demux
-     * sizes its receive buffers from this value.
-     *
-     * Default: DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE
-     */
-    size_t max_dgram_size;
-
     CRYPTO_CONDVAR *notifier_cv;
 
     /*

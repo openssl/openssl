@@ -519,6 +519,14 @@ void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup)
     lookup->methods->free(lookup);
 }
 
+/*
+ * Return the number of entries currently registered.
+ *
+ * The lookup is not internally synchronised: like the other lookup
+ * operations, the caller must hold the lock that serialises access to it.
+ * Reading the count without that lock held races with concurrent
+ * register/unregister.
+ */
 size_t ossl_dgram_conn_lookup_num_items(const DGRAM_CONN_LOOKUP *lookup)
 {
     if (lookup == NULL || lookup->methods == NULL

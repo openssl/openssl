@@ -2144,7 +2144,7 @@ static int test_dtls_listener_pending_timeout_basic(void)
         goto err;
 
     /* Default timeout should be 30 seconds (30000 ms) */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
         goto err;
     if (!TEST_uint64_t_eq(retrieved, 30000))
@@ -2152,24 +2152,24 @@ static int test_dtls_listener_pending_timeout_basic(void)
 
     /* Set a custom timeout of 60 seconds (60000 ms) */
     timeout = 60000;
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
     /* Verify the timeout was set */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
         goto err;
     if (!TEST_uint64_t_eq(retrieved, timeout))
         goto err;
 
     /* Set timeout to UINT64_MAX (disable) */
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, UINT64_MAX)))
         goto err;
 
     /* Verify infinite timeout */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
         goto err;
     if (!TEST_uint64_t_eq(retrieved, UINT64_MAX))
@@ -2177,11 +2177,11 @@ static int test_dtls_listener_pending_timeout_basic(void)
 
     /* Set a very short timeout (1 second = 1000 ms) */
     timeout = 1000;
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
         goto err;
     if (!TEST_uint64_t_eq(retrieved, timeout))
@@ -2221,12 +2221,12 @@ static int test_dtls_listener_pending_timeout_invalid(void)
     timeout = 60000;
 
     /* Setting timeout on a non-listener SSL should fail */
-    if (!TEST_false(SSL_set_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_set_generic_value_uint(ssl,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
         goto err;
 
     /* Get on non-listener should fail */
-    if (!TEST_false(SSL_get_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_get_generic_value_uint(ssl,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, &retrieved)))
         goto err;
 
@@ -2234,8 +2234,12 @@ static int test_dtls_listener_pending_timeout_invalid(void)
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
 
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, timeout)))
+        goto err;
+
+    if (!TEST_false(SSL_set_generic_value_uint(listener,
+            SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 0)))
         goto err;
 
     success = 1;
@@ -3014,7 +3018,7 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
             &listener, &clientssl, &client_addr)))
         goto end;
 
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 1000)))
         goto end;
 
@@ -3711,7 +3715,7 @@ static int test_dtls_listener_max_pending_conns_api(void)
         goto end;
 
     /* Retrieve default maximum pending connections (256) */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
@@ -3719,21 +3723,21 @@ static int test_dtls_listener_max_pending_conns_api(void)
         goto end;
 
     max_conns = 10;
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, max_conns)))
         goto end;
 
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_max_conns, max_conns))
         goto end;
 
-    if (!TEST_false(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 0)))
         goto end;
 
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_max_conns, max_conns))
@@ -3761,7 +3765,7 @@ static int test_dtls_listener_max_dgram_size_api(void)
         goto end;
 
     /* Retrieve default maximum datagram size (2000) */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, &retrieved_size)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_size, 2000))
@@ -3769,31 +3773,31 @@ static int test_dtls_listener_max_dgram_size_api(void)
 
     /* Set and read back a larger value */
     size = 9000;
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, size)))
         goto end;
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, &retrieved_size)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_size, size))
         goto end;
 
     /* Values above the maximum UDP payload are clamped to 65535 */
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, 100000)))
         goto end;
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, &retrieved_size)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_size, 65535))
         goto end;
 
     /* Values below the minimum receive size are rejected... */
-    if (!TEST_false(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, 100)))
         goto end;
     /* ...and leave the previous value unchanged. */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, &retrieved_size)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_size, 65535))
@@ -3924,7 +3928,7 @@ static int test_dtls_listener_max_dgram_size_functional(void)
         goto end;
 
     /* Raise the receive size above the inflated ClientHello. */
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, 9000)))
         goto end;
 
@@ -3997,64 +4001,6 @@ end:
     return testresult;
 }
 
-/*
- * Ordering test for SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE.
- *
- * The receive size is set before the rbio is attached, and the attached BIO
- * reports its own 1500-byte MTU. Attaching an rbio makes the demux query that
- * MTU; unless the configured size is re-applied afterwards it would drop to
- * 1500. Reading it back as 9000 shows the configured value is retained.
- */
-static int test_dtls_listener_max_dgram_size_bio_ordering(void)
-{
-    SSL_CTX *ctx = NULL;
-    SSL *listener = NULL;
-    BIO *bio = NULL;
-    int fd = -1;
-    uint64_t retrieved;
-    int testresult = 0;
-
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
-        goto end;
-
-    if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
-        goto end;
-
-    /* Set the receive size before the BIO is attached. */
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
-            SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, 9000)))
-        goto end;
-
-    /* Attach a BIO that reports a 1500-byte MTU when the demux queries it. */
-    fd = BIO_socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP, 0);
-    if (!TEST_int_ge(fd, 0))
-        goto end;
-    if (!TEST_ptr(bio = BIO_new_dgram(fd, BIO_CLOSE)))
-        goto end;
-    fd = -1; /* owned by bio now */
-    if (!TEST_true(BIO_dgram_set_mtu(bio, 1500)))
-        goto end;
-
-    SSL_set_bio(listener, bio, bio);
-    bio = NULL; /* owned by listener now */
-
-    /* The attach must not have lowered the receive size to the BIO MTU. */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
-            SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE, &retrieved)))
-        goto end;
-    if (!TEST_uint64_t_eq(retrieved, 9000))
-        goto end;
-
-    testresult = 1;
-end:
-    BIO_free(bio);
-    if (fd >= 0)
-        BIO_closesocket(fd);
-    SSL_free(listener);
-    SSL_CTX_free(ctx);
-    return testresult;
-}
-
 static int test_dtls_listener_max_pending_conns_invalid(void)
 {
     SSL_CTX *ctx = NULL;
@@ -4070,7 +4016,7 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
         goto end;
 
     /* Retrieve default maximum pending connections (256) */
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
@@ -4078,11 +4024,11 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
         goto end;
 
     /* Setting the cap to 0 must fail - the cap cannot be disabled */
-    if (!TEST_false(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 0)))
         goto end;
 
-    if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
     if (!TEST_uint64_t_eq(retrieved_max_conns, 256))
@@ -4091,18 +4037,29 @@ static int test_dtls_listener_max_pending_conns_invalid(void)
     /* Setting on a non-listener SSL should fail */
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto end;
-    if (!TEST_false(SSL_set_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_set_generic_value_uint(ssl,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 100)))
         goto end;
 
     /* Get on non-listener should fail */
-    if (!TEST_false(SSL_get_value_uint(ssl, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_get_generic_value_uint(ssl,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
     /* Get with a NULL out-value must fail */
-    if (!TEST_false(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_false(SSL_get_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, NULL)))
+        goto end;
+
+    /*
+     * A non-GENERIC value class must be rejected: these tunables are local
+     * configuration and do not participate in feature negotiation.
+     */
+    if (!TEST_false(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, 100)))
+        goto end;
+    if (!TEST_false(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+            SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &retrieved_max_conns)))
         goto end;
 
     testresult = 1;
@@ -4206,14 +4163,14 @@ static int test_pending_conn_cap_enforcement(void)
         goto err;
 
     /* Set the pending connection cap to 3 */
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, PENDING_CAP_TEST_LIMIT)))
         goto err;
 
     /* Verify the cap was set */
     {
         uint64_t v;
-        if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+        if (!TEST_true(SSL_get_generic_value_uint(listener,
                 SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &v)))
             goto err;
         if (!TEST_uint64_t_eq(v, PENDING_CAP_TEST_LIMIT))
@@ -4299,21 +4256,21 @@ static int test_pending_cap_with_timeout(void)
         goto err;
 
     /* Set the pending connection cap to 3 */
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, PENDING_CAP_TEST_LIMIT)))
         goto err;
 
     /* Verify the cap was set */
     {
         uint64_t v;
-        if (!TEST_true(SSL_get_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+        if (!TEST_true(SSL_get_generic_value_uint(listener,
                 SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, &v)))
             goto err;
         if (!TEST_uint64_t_eq(v, PENDING_CAP_TEST_LIMIT))
             goto err;
     }
 
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT, 1000)))
         goto err;
 
@@ -4540,7 +4497,7 @@ static int run_new_pending_cb_scenario(uint64_t max_pending, int allow_remaining
             &listener, &server_addr, &server_fd)))
         goto err;
 
-    if (!TEST_true(SSL_set_value_uint(listener, SSL_VALUE_CLASS_FEATURE_REQUEST,
+    if (!TEST_true(SSL_set_generic_value_uint(listener,
             SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS, max_pending)))
         goto err;
 
@@ -4782,7 +4739,6 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listener_max_pending_conns_invalid);
     ADD_TEST(test_dtls_listener_max_dgram_size_api);
     ADD_TEST(test_dtls_listener_max_dgram_size_functional);
-    ADD_TEST(test_dtls_listener_max_dgram_size_bio_ordering);
     ADD_TEST(test_pending_conn_cap_enforcement);
     ADD_TEST(test_pending_cap_with_timeout);
 
