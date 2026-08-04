@@ -2817,7 +2817,7 @@ int do_X509_REQ_verify(X509_REQ *x, EVP_PKEY *pkey,
 
 /* Get first http URL from a DIST_POINT structure */
 
-static const char *get_dp_url(DIST_POINT *dp)
+static char *get_dp_url(DIST_POINT *dp)
 {
     GENERAL_NAMES *gens;
     GENERAL_NAME *gen;
@@ -2832,9 +2832,11 @@ static const char *get_dp_url(DIST_POINT *dp)
         uri = GENERAL_NAME_get0_value(gen, &gtype);
         if (gtype == GEN_URI && ASN1_STRING_length_ex(uri) > 6) {
             const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
+            char *ret = OPENSSL_strndup(uptr, ASN1_STRING_length_ex(uri));
 
-            if (IS_HTTP(uptr)) /* can/should not use HTTPS here */
-                return uptr;
+            if (ret != NULL && IS_HTTP(ret))
+                return ret;
+            OPENSSL_free(ret);
         }
     }
     return NULL;
@@ -2848,14 +2850,18 @@ static const char *get_dp_url(DIST_POINT *dp)
 static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
 {
     int i;
-    const char *urlptr = NULL;
+    char *urlptr = NULL;
 
     for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
         DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
 
         urlptr = get_dp_url(dp);
-        if (urlptr != NULL)
-            return load_crl(urlptr, FORMAT_UNDEF, 0, "CRL via CDP");
+        if (urlptr != NULL) {
+            X509_CRL *crl = load_crl(urlptr, FORMAT_UNDEF, 0, "CRL via CDP");
+
+            OPENSSL_free(urlptr);
+            return crl;
+        }
     }
     return NULL;
 }
