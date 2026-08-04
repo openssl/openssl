@@ -203,6 +203,48 @@ SRP_user_pwd *SRP_user_pwd_new(void)
     return ret;
 }
 
+/*
+ * Sanity-check (N, g) for SRP: 1 < g < N - 1, with N at least 1024 bits.
+ * Cheaper than SRP_check_known_gN_param() and does not enforce RFC 5054
+ * group membership, so legitimate custom groups still load; this is the
+ * minimum needed to keep BN_mod_exp() from being handed degenerate input.
+ *
+ * Returns 0 if (N, g) pass, else the ERR_R_ reason code describing the
+ * failure.  Invalid values are also reported on the error stack; a memory
+ * failure is already raised by the allocator.
+ */
+static int srp_check_Ng(const BIGNUM *N, const BIGNUM *g)
+{
+    BIGNUM *Nm1;
+    int ok;
+
+    if (N == NULL || g == NULL) {
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_PASSED_NULL_PARAMETER);
+        return ERR_R_PASSED_NULL_PARAMETER;
+    }
+    if (BN_num_bits(N) < 1024) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SRP modulus N must be at least 1024 bits");
+        return ERR_R_PASSED_INVALID_ARGUMENT;
+    }
+    if ((Nm1 = BN_dup(N)) == NULL)
+        return ERR_R_MALLOC_FAILURE;
+    if (!BN_sub_word(Nm1, 1)) {
+        BN_free(Nm1);
+        ERR_raise(ERR_LIB_CRYPTO, ERR_R_BN_LIB);
+        return ERR_R_BN_LIB;
+    }
+    ok = BN_cmp(g, BN_value_one()) > 0 /* g >= 2 */
+        && BN_cmp(g, Nm1) < 0; /* g <= N - 2 */
+    BN_free(Nm1);
+    if (!ok) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SRP generator g must satisfy 1 < g < N - 1");
+        return ERR_R_PASSED_INVALID_ARGUMENT;
+    }
+    return 0;
+}
+
 void SRP_user_pwd_set_gN(SRP_user_pwd *vinfo, const BIGNUM *g,
     const BIGNUM *N)
 {
@@ -236,6 +278,14 @@ static int SRP_user_pwd_set_sv(SRP_user_pwd *vinfo, const char *s,
         return 0;
     if (NULL == (vinfo->v = BN_bin2bn(tmp, len, NULL)))
         return 0;
+    /* 1 < v < N; vinfo->N is set by the preceding SRP_user_pwd_set_gN(). */
+    if (vinfo->N == NULL
+        || BN_cmp(vinfo->v, BN_value_one()) <= 0
+        || BN_cmp(vinfo->v, vinfo->N) >= 0) {
+        ERR_raise_data(ERR_LIB_CRYPTO, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SRP verifier v must satisfy 1 < v < N");
+        goto err;
+    }
     len = t_fromb64(tmp, sizeof(tmp), s);
     if (len < 0)
         goto err;
@@ -406,7 +456,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
     int error_code = SRP_ERR_MEMORY;
     STACK_OF(SRP_gN) *SRP_gN_tab = sk_SRP_gN_new_null();
     char *last_index = NULL;
-    int i;
+    int i, reason;
     char **pp;
 
     SRP_gN *gN = NULL;
@@ -452,8 +502,16 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
                 || (gN->N = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpverifier]))
                     == NULL
                 || (gN->g = SRP_gN_place_bn(vb->gN_cache, pp[DB_srpsalt]))
-                    == NULL
-                || sk_SRP_gN_insert(SRP_gN_tab, gN, 0) == 0)
+                    == NULL)
+                goto err;
+
+            if ((reason = srp_check_Ng(gN->N, gN->g)) != 0) {
+                if (reason != ERR_R_MALLOC_FAILURE)
+                    error_code = SRP_ERR_VBASE_BN_LIB;
+                goto err;
+            }
+
+            if (sk_SRP_gN_insert(SRP_gN_tab, gN, 0) == 0)
                 goto err;
 
             gN = NULL;
@@ -642,6 +700,8 @@ char *SRP_create_verifier_ex(const char *user, const char *pass, char **salt,
         if (g_bn_alloc == NULL)
             goto err;
         g_bn = g_bn_alloc;
+        if (srp_check_Ng(N_bn, g_bn) != 0)
+            goto err;
         defgNid = "*";
     } else {
         SRP_gN *gN = SRP_get_default_gN(g);
