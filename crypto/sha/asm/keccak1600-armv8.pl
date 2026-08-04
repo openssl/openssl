@@ -945,7 +945,7 @@ ___
 ##        You only can move directly into the state on the first absorb call. Subsequent
 ##        absorbs require XORing into the state.
 ## @param $inp Input buffer containing 2 lane Double Words. It Must be aligned to a 16 byte boundary.
-##            It is incremented by 64 (4 double words)
+##             It is post incremented by 64 (4 double words)
 ## @param $i The state double word index (Normally a multiple of 4).. Maps to q$i
 ## @param $j The state double word index (Normally a (multiple of 4) + 1)
 ## @param $k The state double word index (Normally a (multiple of 4) + 2)
@@ -965,7 +965,8 @@ ___
 }
 
 ## @brief Copy aligned input to 1 vector register representing the double word state
-## @param $inp Input buffer (Must be aligned to 16 byte boundary), It is not incremented
+## @param $inp Input buffer (Must be aligned to 16 byte boundary)
+##             It is not post incremented
 ## @param $i The state double word index. Maps to q$i
 sub copy_1x2_input_align16_to_qvectors {
     my ($inp, $i) = @_;
@@ -979,7 +980,8 @@ ___
 
 ## @brief Copy aligned input to 21 vector register representing the double word state
 ##        and clear the remaining 4 vector registers.
-## @param $inp Input buffer (Must be aligned to 16 byte boundary), It is not incremented
+## @param $inp Input buffer (Must be aligned to 16 byte boundary),
+##             It is not post incremented
 sub shake128_2x_copy_input_block_to_qvectors {
     my ($inp) = @_;
     copy_4x2_input_align16_to_qvectors($inp,0,1,2,3);
@@ -992,7 +994,8 @@ sub shake128_2x_copy_input_block_to_qvectors {
 }
 ## @brief Copy aligned input to 17 vector register representing the double word state
 ##        and clear the remaining 8 vector registers.
-## @param $inp Input buffer (Must be aligned to 16 byte boundary), It is not incremented
+## @param $inp Input buffer (Must be aligned to 16 byte boundary)
+##             It is not post incremented
 sub shake256_2x_copy_input_block_to_qvectors {
     my ($inp) = @_;
     copy_4x2_input_align16_to_qvectors($inp,0,1,2,3);
@@ -1005,7 +1008,8 @@ sub shake256_2x_copy_input_block_to_qvectors {
 }
 
 ## @brief Copy $state into 25 double words in q0..q24.
-## @param $state A 5*5 state of double words (Must be aligned to 16 byte boundary), It is not incremented.
+## @param $state A 5*5 state of double words (Must be aligned to 16 byte boundary).
+##               It is not post incremented.
 sub load_qvectors_from_aligned16_state {
     my ($state) = @_;
     for($i=0; $i<24; $i+=2) {
@@ -1022,7 +1026,8 @@ ___
 }
 
 ## @brief Save 4 Double word q vectors to $state
-## @param $state Output 5x5 double word state array (aligned to 16 byte boundary). It is not post incremented.
+## @param $state Output 5x5 double word state array (aligned to 16 byte boundary).
+##               It is not post incremented.
 ## @param $i Saves to 4 vectors starting at q$i
 sub save_4_qvectors_to_aligned16_state {
     my ($state, $i) = @_;
@@ -1036,7 +1041,8 @@ ___
 }
 
 ## @brief Save All 25 Double word q vectors to $state
-## @param $state A 5 by 5 double word state array (aligned to 16 byte boundary). It is not incremented.
+## @param $state A 5 by 5 double word state array (aligned to 16 byte boundary).
+##               It is not post incremented.
 ## @param $i Saves to 4 vectors starting at q$i
 sub save_qvectors_to_aligned16_state {
     my ($state) = @_;
@@ -1062,8 +1068,10 @@ ___
 
 ## @brief Move 4 double words from q$i..q($i+3) to 2 output buffers.
 ##        Each double word copies the first lane to $out1 and the second lane to $out2
-## @param out1 An output buffer for lane1 that can hold 4 words, It is incremented by 4 words. It must be 8 byte aligned.
-## @param out2 An Output buffer for lane2 that can hold 4 words, It is incremented by 4 words. In must be 8 byte alligned.
+## @param out1 An output buffer for lane1 that can hold 4 words,
+##        It is post incremented by 4 words. It must be 8 byte aligned.
+## @param out2 An Output buffer for lane2 that can hold 4 words.
+##        It is post incremented by 4 words. It must be 8 byte aligned.
 sub copy_4x2_qvectors_to_out2 {
     my ($out1, $out2, $i) = @_;
     my $j = $i+1;
@@ -1097,8 +1105,10 @@ ___
 }
 ## @brief Move 1 double word from q$i to 2 output buffers.
 ##        Each double word copies the first lane to $out1 and the second lane to $out2
-## @param out1 An output buffer for lane0 that can hold 1 word, It is incremented by 1 word. It must be 8 byte aligned.
-## @param out2 An Output buffer for lane1 that can hold 1 word, It is incremented by 1 word. In must be 8 byte alligned.
+## @param out1 An output buffer for lane0 that can hold 1 word,
+##             It is post incremented by 1 word. It must be 8 byte aligned.
+## @param out2 An Output buffer for lane1 that can hold 1 word,
+##             It is post incremented by 1 word. It must be 8 byte aligned.
 sub copy_1x2_qvectors_to_out2 {
     my ($out1, $out2, $i) = @_;
 $code.=<<___;
@@ -1220,7 +1230,7 @@ function_end('ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_bloc
 
 $code.=<<___;
 ## @brief To be called on completion if the values stored in the state are secret.
-##        This clears the temporary vectors q0..q7, q16..q31, It does not clear q8..q15 as they
+##        This clears the temporary vectors q0..q7, q16..q31. It does not clear q8..q15 as they
 ##        are saved and restored on each call.
 .globl SHA3_secure_vector_clear_armv8
 .type   SHA3_secure_vector_clear_armv8,%function
