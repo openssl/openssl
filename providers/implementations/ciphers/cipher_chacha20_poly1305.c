@@ -291,11 +291,6 @@ static int chacha20_poly1305_cipher(void *vctx, unsigned char *out,
     if (!ossl_prov_is_running())
         return 0;
 
-    if (inl == 0) {
-        *outl = 0;
-        return 1;
-    }
-
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);
         return 0;
@@ -315,6 +310,15 @@ static int chacha20_poly1305_update(void *vctx, unsigned char *out,
 
     if (ctx->iv_state == IV_STATE_FINISHED)
         return 0;
+
+    /*
+     * a zero-length update is a nop, ALWAYS SUCCEED via early exit
+     * NB: ONLY EVP_Cipher() / final produce or check the tag
+     */
+    if (inl == 0) {
+        *outl = 0;
+        return 1;
+    }
 
     return chacha20_poly1305_cipher(vctx, out, outl, outsize, in, inl);
 }
