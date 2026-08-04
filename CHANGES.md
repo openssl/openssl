@@ -89,6 +89,10 @@ OpenSSL 4.2
 
    *Shane Lontis*
 
+ * Added AARCH64 optimized SHAKE x2 operations for ML-DSA on `armv8`.
+
+   *Shane Lontis*
+
  * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
    only when it can actually be used. A resumption ticket or external PSK is
    offered only if some offered ciphersuite shares its handshake digest, and
