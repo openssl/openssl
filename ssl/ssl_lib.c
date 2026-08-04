@@ -5457,6 +5457,7 @@ SSL *SSL_dup(SSL *s)
     }
 
     if (sc->client_cert_type != NULL) {
+        OPENSSL_free(retsc->client_cert_type);
         retsc->client_cert_type = OPENSSL_memdup(sc->client_cert_type,
             sc->client_cert_type_len);
         if (retsc->client_cert_type == NULL)
