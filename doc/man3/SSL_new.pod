@@ -98,7 +98,7 @@ SSL_set0_client_CA_list() or similar functions
 
 =item type of server certificate set via L<SSL_set1_server_cert_type(3)>.
 
-=item type of client certificate set via L<SSL_set_client_cert_type(3)>.
+=item type of client certificate set via L<SSL_set1_client_cert_type(3)>.
 
 =item validation callback set via L<SSL_set_ct_validation_callback(3)>,
 
