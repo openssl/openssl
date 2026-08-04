@@ -418,9 +418,10 @@ static const OSSL_ML_DSA_SAMPLE_OPS ml_dsa_sample_generic_meth = {
     vector_expand_mask_scalar
 };
 
-#if defined(KECCAK1600_ASM)                                                               \
-    && (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) \
-    && !defined(OPENSSL_NO_ASM)
+#if defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM) \
+    && ((defined(__aarch64__) && defined(__AARCH64EL__)) \
+        || defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64))
+#if defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)
 #include "ml_dsa_sample_hw_x86_64.inc"
 const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
 {
@@ -428,6 +429,15 @@ const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
         return &ml_dsa_sample_x86_64;
     return &ml_dsa_sample_generic_meth;
 }
+#elif defined(__aarch64__)
+#include "ml_dsa_sample_hw_armv8.inc"
+const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
+{
+    if (ossl_shakex2_sha3_capable_armv8())
+        return &ml_dsa_sample_armv8;
+    return &ml_dsa_sample_generic_meth;
+}
+#endif
 #else
 const OSSL_ML_DSA_SAMPLE_OPS *ossl_ml_dsa_sample_ops(void)
 {
