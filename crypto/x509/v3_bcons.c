@@ -72,6 +72,8 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
             if (!X509V3_get_value_bool(val, &bcons->ca))
                 goto err;
         } else if (strcmp(val->name, "pathlen") == 0) {
+            ASN1_INTEGER_free(bcons->pathlen);
+            bcons->pathlen = NULL;
             if (!X509V3_get_value_int(val, &bcons->pathlen))
                 goto err;
         } else {
