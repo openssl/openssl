@@ -259,6 +259,10 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
         ctx->ibuf_len = 0;
         ctx->obuf_off = 0;
         ctx->obuf_len = 0;
+#ifndef OPENSSL_NO_SOCK
+        BIO_ADDR_free(ctx->peer);
+        ctx->peer = NULL;
+#endif
         if (b->next_bio == NULL)
             return 0;
         ret = BIO_ctrl(b->next_bio, cmd, num, ptr);
@@ -361,6 +365,10 @@ static long buffer_ctrl(BIO *b, int cmd, long num, void *ptr)
             ctx->obuf_off = 0;
             ctx->obuf_len = 0;
             ctx->obuf_size = obs;
+#ifndef OPENSSL_NO_SOCK
+            BIO_ADDR_free(ctx->peer);
+            ctx->peer = NULL;
+#endif
         }
         break;
     case BIO_C_DO_STATE_MACHINE:
@@ -494,9 +502,9 @@ static int buffer_puts(BIO *b, const char *str)
 /*
  * buffer_send_next - write one chunk of buffered output to the next BIO.
  *
- * For listener-created datagram connections a peer address has been recorded
+ * For listener-created datagram connections a peer address has been recorded and
  * such connections share a single network BIO, so the data must be sent with
- * BIO_sendmmsg() carrying the explicit peer address rather than BIO_write()
+ * BIO_sendmmsg() carrying the explicit peer address rather than BIO_write().
  *
  * Returns the number of bytes sent - the full len for the datagram case, which
  * is all-or-nothing - or 0 / a negative value on a transient or fatal error.
@@ -531,7 +539,7 @@ static int buffer_send_next(BIO *b, BIO_F_BUFFER_CTX *ctx,
  * use BIO_write(). Instead the record layer sends each record via BIO_sendmmsg(),
  * which lands here. We record the peer address and then buffer the data exactly
  * like buffer_write() does, so that multiple handshake records accumulate and are
- * packed into a single datagram when the state machine flushes
+ * packed into a single datagram when the state machine flushes.
  */
 static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t num_msg, uint64_t flags,
@@ -547,7 +555,7 @@ static int buffer_sendmmsg(BIO *b, BIO_MSG *msg, size_t stride,
         return 0;
 
     ctx = (BIO_F_BUFFER_CTX *)b->ptr;
-    if (ctx == NULL || msg == NULL)
+    if (ctx == NULL || msg == NULL || num_msg == 0)
         return 0;
 
     /*
