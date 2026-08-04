@@ -70,7 +70,7 @@ IF[{- !$disabled{asm} -}]
   $KECCAK1600ASM_s390x=keccak1600-s390x.S
 
   $KECCAK1600ASM_armv4=keccak1600-armv4.S
-  $KECCAK1600ASM_aarch64=keccak1600-armv8.S
+  $KECCAK1600ASM_aarch64=keccak1600-armv8.S sha3_x2_armv8.c
 
   $KECCAK1600ASM_ppc64=keccak1600-ppc64.s
 
