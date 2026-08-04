@@ -31,6 +31,27 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
+   manpage for details.
+
+   *Frederik Wedel-Heinen and Ryan Hooper*
+
+ * Added DTLS support to the SSL listener API. SSL_new_listener() can now
+   create a DTLS listener that demultiplexes incoming datagrams into per-peer
+   connections accepted with SSL_accept_connection(). Refer to the
+   SSL_new_listener(3) manpage for details.
+
+   *Ryan Hooper*
+
+ * Added configurable values for DTLS listeners, accessed via
+   SSL_get_value_uint() / SSL_set_value_uint():
+   SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS,
+   SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT and
+   SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE. Refer to the SSL_get_value_uint(3)
+   manpage for details.
+
+   *Ryan Hooper*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early
