@@ -11624,10 +11624,6 @@ static int test_ssl_dup(void)
     unsigned char *ctype;
     size_t ctype_len;
 
-    /*
-     * need leaf_chain so we can test how SSL_dup() deals with OCSP
-     * extensions.
-     */
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
             TLS_client_method(),
             0,
