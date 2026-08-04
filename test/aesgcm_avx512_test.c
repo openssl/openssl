@@ -505,10 +505,10 @@ err:
  * call and never exercises the 704 B path selector in one Update.
  */
 static const size_t dispatch_edge_lens[] = {
-    63, 64, 65, 127, 128, 129, 703, 704, 705, 1791, 1792, 1793,
+    63, 64, 65, 127, 128, 129, 703, 704, 705, 1791, 1792, 1793
 };
 
-#define NUM_EDGE_LENS                                                        \
+#define NUM_EDGE_LENS \
     (int)(sizeof(dispatch_edge_lens) / sizeof(dispatch_edge_lens[0]))
 
 static int test_gcm_dispatch_boundary_update(int idx)
