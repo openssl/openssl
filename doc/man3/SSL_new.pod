@@ -100,7 +100,7 @@ SSL_set0_client_CA_list() or similar functions
 
 =item type of client certificate set via L<SSL_set1_client_cert_type(3)>.
 
-=item validation callback set via L<SSL_set_ct_validation_callback(3)>,
+=item certificate transparency validation callback set via L<SSL_set_ct_validation_callback(3)>,
 
 =item OCSP validation set via L<SSL_set_tlsext_status_type(3)>.
 
