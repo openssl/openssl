@@ -827,7 +827,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 
         frag = dtls1_hm_fragment_new(frag_len, 0);
         if (frag == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
 
@@ -848,7 +848,7 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
 
         item = pitem_new(seq64be, frag);
         if (item == NULL) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
 
