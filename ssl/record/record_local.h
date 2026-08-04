@@ -41,9 +41,18 @@ __owur int ssl3_read_n(SSL *s, size_t n, size_t max, int extend, int clearold,
 
 DTLS1_BITMAP *dtls1_get_bitmap(SSL *s, SSL3_RECORD *rr,
     unsigned int *is_next_epoch);
+/*
+ * Limits on the number of records dtls1_buffer_record() will hold, to prevent
+ * DOS attacks. Records arriving early for the next epoch get a tighter limit:
+ * a legitimate peer only ever has a small burst of those in flight.
+ */
+#define DTLS1_MAX_UNPROCESSED_RECORDS 16
+#define DTLS1_MAX_BUFFERED_RECORDS 100
+
 int dtls1_process_buffered_records(SSL *s);
 int dtls1_retrieve_buffered_record(SSL *s, record_pqueue *queue);
-int dtls1_buffer_record(SSL *s, record_pqueue *q, unsigned char *priority);
+int dtls1_buffer_record(SSL *s, record_pqueue *q, unsigned char *priority,
+    size_t limit);
 void ssl3_record_sequence_update(unsigned char *seq);
 
 /* Functions provided by the DTLS1_BITMAP component */
