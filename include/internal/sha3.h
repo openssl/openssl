@@ -14,6 +14,7 @@
 
 #include <openssl/e_os2.h>
 #include <stddef.h>
+#include "internal/common.h"
 
 #define KECCAK1600_WIDTH 1600
 #define SHA3_MDSIZE(bitlen) (bitlen / 8)
@@ -78,7 +79,7 @@ typedef struct {
     /* 4 interleaved Keccak states (800 bytes)
        plus 8 bytes to store the number of
        already absorbed or not yet squeezed bytes */
-    uint64_t A[(25 * 4) + 1];
+    ALIGN16 uint64_t A[(25 * 4) + 1];
     size_t rate; /* Rate in bytes: 168 (SHAKE-128) or 136 (SHAKE-256) */
     unsigned finalized; /* Has finalize been called? 0=no, 1=yes */
 } KECCAK1600_X4_AVX512VL_CTX;
@@ -135,5 +136,24 @@ void ossl_sha3_shake256_x4_avx512vl(
     size_t inlen);
 
 #endif /* KECCAK1600_ASM && x86_64 && !OPENSSL_NO_ASM */
+
+/* Multi-buffer (x2) Keccak-f[1600] context and API */
+#if defined(__aarch64__) && defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM)
+/*
+ * Context for 2-way parallel SHAKE operations.
+ * It only performs operations on a single interleaved
+ * absorb block and multiple squeeze blocks. Because it
+ * only handles full sized blocks, there is no need to
+ * handle partial blocks currently. The caller is responsible
+ * for handling interleaving and partial blocks.
+ */
+typedef struct {
+    ALIGN16 uint64_t A[25 * 2]; /* 2 interleaved Keccak states (400 bytes) */
+} KECCAK1600_X2_ARMV8_CTX;
+
+int ossl_shakex2_sha3_capable_armv8(void);
+void ossl_shakex2_cleanup_armv8(KECCAK1600_X2_ARMV8_CTX *ctx);
+
+#endif /* aarch64 && KECCAK1600_ASM && !OPENSSL_NO_ASM) */
 
 #endif /* OSSL_INTERNAL_SHA3_H */
