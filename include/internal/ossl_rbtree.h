@@ -66,7 +66,7 @@ ossl_rbt_init(struct ossl_rbt_tree *rb)
 static ossl_inline int
 ossl_rbt_empty(struct ossl_rbt_tree *rb)
 {
-    return (rb->rb_root == NULL);
+    return rb->rb_root == NULL;
 }
 
 void *ossl_rbt_insert(const struct ossl_rbt_type *, struct ossl_rbt_tree *, void *);
