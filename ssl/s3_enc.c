@@ -79,51 +79,9 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
          * point we know what the protocol version is.
          */
         if (s->negotiated_version == DTLS1_3_VERSION) {
-            /*
-             * In DTLS 1.3 we need to parse the messages that are buffered to
-             * be able to remove message_sequence, fragment_size and fragment_offset
-             * from the Transcript Hash calculation.
-             */
-            while (len > 0) {
-                PACKET hmhdr;
-                unsigned long hmbodylen;
-                unsigned int msgtype;
-                size_t hmhdrlen;
-
-                if (!ossl_assert(len >= SSL3_HM_HEADER_LENGTH)
-                    || !PACKET_buf_init(&hmhdr, buf, SSL3_HM_HEADER_LENGTH)
-                    || !PACKET_get_1(&hmhdr, &msgtype)
-                    || !PACKET_get_net_3(&hmhdr, &hmbodylen)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
-
-                /*
-                 * SSL3_MT_MESSAGE_HASH is a dummy message type only used when
-                 * calculating the transcript hash of the synthetic message in
-                 * (D)TLS 1.3.
-                 */
-                if (msgtype == SSL3_MT_MESSAGE_HASH)
-                    hmhdrlen = SSL3_HM_HEADER_LENGTH;
-                else
-                    hmhdrlen = DTLS1_HM_HEADER_LENGTH;
-
-                /*
-                 * In DTLS 1.3 the transcript hash is calculated excluding the
-                 * message_sequence, fragment_size and fragment_offset header
-                 * fields which are carried in the last
-                 * DTLS1_HM_HEADER_LENGTH - SSL3_HM_HEADER_LENGTH header bytes
-                 * of the DTLS handshake message header.
-                 */
-                if (!ossl_assert(hmhdrlen + hmbodylen <= len)
-                    || !EVP_DigestUpdate(s->s3.handshake_dgst, buf, SSL3_HM_HEADER_LENGTH)
-                    || !EVP_DigestUpdate(s->s3.handshake_dgst, buf + hmhdrlen, hmbodylen)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                    return 0;
-                }
-
-                buf += hmhdrlen + hmbodylen;
-                len -= hmhdrlen + hmbodylen;
+            if (!dtls13_transcript_hash_update(s->s3.handshake_dgst, buf, len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
             }
         } else {
             if (!EVP_DigestUpdate(s->s3.handshake_dgst, buf, len)) {
