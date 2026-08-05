@@ -37,6 +37,38 @@
  */
 #ifndef OPENSSL_NO_QUIC
 
+/*
+ * A stream is too fragmented once the offsets it has received span fewer than
+ * this many bytes per frame list entry. Contiguous frames are merged when their
+ * data is moved out of the packets, so an entry stands for a gap in the data
+ * received, and gaps come from lost packets, which are a packet worth of
+ * offsets apart. The offsets received never span more than the flow control
+ * window, so this limits the entries to a share of that window.
+ */
+#define SFRAME_LIST_MIN_AVG_SPAN 1024
+
+/*
+ * Below this many entries a stream is never considered too fragmented, however
+ * few offsets it spans. Frames are merged only when the data is moved out of
+ * the packets, so until that happens the list holds more entries than the data
+ * received has gaps.
+ */
+#define SFRAME_LIST_MIN_FRAGMENTATION 256
+
+/*
+ * An entry is walked both when a frame is inserted before the tail and when the
+ * data is moved out of the packets. That cost does not shrink when the window
+ * is large, so the number of entries is capped as well.
+ */
+#define SFRAME_LIST_MAX_FRAGMENTATION 8192
+
+/*
+ * A short run is only moved when it and the data around it fill at least this
+ * fraction of the space they span, so that a side storage block holds a useful
+ * amount of data whatever spacing the peer picks for its frames.
+ */
+#define SFRAME_LIST_MIN_MOVE_FILL 4
+
 typedef struct stream_frame_st STREAM_FRAME;
 
 typedef struct sframe_list_st {
@@ -136,14 +168,16 @@ typedef int(sframe_list_write_at_cb)(uint64_t logical_offset,
     void *cb_arg);
 
 /*
- * Move the frame data in all the stream frames in the list fl
- * from the packets to the side storage using the write_at_cb
- * callback.
+ * Move the frame data in the stream frames in the list fl from the packets to
+ * the side storage using the write_at_cb callback, merging frames that become
+ * contiguous. Short isolated runs of contiguous frames are left in their
+ * packets and moved later once they grow past min_run_len or the data
+ * around them fills in.
  * Returns 1 if all the calls to the callback return 1.
  * If the callback returns 0, the function stops processing further
  * frames and returns 0.
  */
-int ossl_sframe_list_move_data(SFRAME_LIST *fl,
+int ossl_sframe_list_move_data(SFRAME_LIST *fl, uint64_t min_run_len,
     sframe_list_write_at_cb *write_at_cb,
     void *cb_arg);
 #endif

@@ -318,11 +318,8 @@ void ossl_quic_sstream_set_cleanse(QUIC_SSTREAM *qss, int cleanse);
  * controller and statistics module. They can be NULL for unit testing.
  * If they are non-NULL, the `rxfc` is called when receive stream data
  * is read by application. `statm` is queried for current rtt.
- * `rbuf_size` is the initial size of the ring buffer to be used
- * when ossl_quic_rstream_move_to_rbuf() is called.
  */
-QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
-    OSSL_STATM *statm, size_t rbuf_size);
+QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc, OSSL_STATM *statm);
 
 /*
  * Frees a QUIC_RSTREAM and any associated storage.
@@ -398,26 +395,6 @@ int ossl_quic_rstream_get_record(QUIC_RSTREAM *qrs,
  * times without calling ossl_quic_rstream_get_record() in between.
  */
 int ossl_quic_rstream_release_record(QUIC_RSTREAM *qrs, size_t read_len);
-
-/*
- * Moves received frame data from decrypted packets to ring buffer.
- * This should be called when there are too many decrypted packets allocated.
- * Returns 1 on success, 0 when it was not possible to release all
- * referenced packets due to an insufficient size of the ring buffer.
- * Exception is the packet from the record returned previously by
- * ossl_quic_rstream_get_record() - that one will be always skipped.
- */
-int ossl_quic_rstream_move_to_rbuf(QUIC_RSTREAM *qrs);
-
-/*
- * Resizes the internal ring buffer to a new `rbuf_size` size.
- * Returns 1 on success, 0 on error.
- * Possible error conditions are an allocation failure, trying to resize
- * the ring buffer when ossl_quic_rstream_get_record() was called and
- * not yet released, or trying to resize the ring buffer to a smaller size
- * than currently occupied.
- */
-int ossl_quic_rstream_resize_rbuf(QUIC_RSTREAM *qrs, size_t rbuf_size);
 
 /*
  * Sets flag to cleanse the buffered data when user reads it.
