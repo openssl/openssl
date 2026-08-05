@@ -647,6 +647,7 @@ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
         B_ASN1_UTF8STRING);
     if (ret < 0)
         return ret;
+    /* ASN1_mbstring_copy() guarantees the data it produced is NUL terminated */
     *out = stmp.data;
     return stmp.length;
 }

@@ -591,6 +591,72 @@ static int test_ossl_uni2utf8(void)
     return ok;
 }
 
+static int test_asn1_string_to_utf8(void)
+{
+    static const unsigned char bmp[] = { 0x00, 'A', 0x00, 'B' };
+    ASN1_STRING in;
+    unsigned char *out = NULL;
+    int len, ok = 0;
+
+    in.flags = 0;
+
+    /* UTF8String in: same-format path of ASN1_mbstring_copy() */
+    in.type = V_ASN1_UTF8STRING;
+    in.data = (unsigned char *)"ABC";
+    in.length = 3;
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 3)
+        || !TEST_ptr(out)
+        || !TEST_mem_eq(out, len, "ABC", 3)
+        || !TEST_true(out[len] == '\0'))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    /* BMPString in: converting path */
+    in.type = V_ASN1_BMPSTRING;
+    in.data = (unsigned char *)bmp;
+    in.length = (int)sizeof(bmp);
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 2)
+        || !TEST_ptr(out)
+        || !TEST_mem_eq(out, len, "AB", 2)
+        || !TEST_true(out[len] == '\0'))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    /* Empty input still yields a NUL terminated buffer */
+    in.type = V_ASN1_UTF8STRING;
+    in.data = (unsigned char *)"";
+    in.length = 0;
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 0)
+        || !TEST_ptr(out)
+        || !TEST_true(out[0] == '\0'))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    /*
+     * The decoder represents an empty string as a NULL data pointer with a
+     * zero length, not as a pointer to zero bytes, so cover that separately.
+     */
+    in.type = V_ASN1_UTF8STRING;
+    in.data = NULL;
+    in.length = 0;
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 0)
+        || !TEST_ptr(out)
+        || !TEST_true(out[0] == '\0'))
+        goto err;
+
+    ok = 1;
+err:
+    OPENSSL_free(out);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -604,5 +670,6 @@ int setup_tests(void)
     ADD_TEST(test_asn1_time_tm_conversions);
     ADD_TEST(test_mbstring_ncopy);
     ADD_TEST(test_ossl_uni2utf8);
+    ADD_TEST(test_asn1_string_to_utf8);
     return 1;
 }
