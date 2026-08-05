@@ -58,6 +58,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH *in,
     const OSSL_DISPATCH **out,
     void **provctx);
+void tls_provider_set_sigalg256b_group(const char *group);
 
 #define XOR_KEY_SIZE 32
 
@@ -307,9 +308,22 @@ struct tls_sigalg_st {
  * and the schemes are told apart by the group/parameter set the key is
  * bound to. The group OID is carried in the AlgorithmIdentifier parameters
  * of encoded keys, like the GOST paramset.
+ *
+ * We borrow the real GOST 2012-256 key type name and OID on purpose: that
+ * NID has a built-in cert slot, so these keys collide with the built-in
+ * table the way real RFC 9367 keys do. A made-up key type matches no
+ * built-in slot and so can't show the problem at all. Nothing else claims
+ * this key type here, as GOST itself lives in an external provider.
  */
-#define XORSIGALG256_KEYTYPE_NAME "xorhmacsig256"
-#define XORSIGALG256_KEYTYPE_OID "1.3.6.1.4.1.16604.998888.4"
+#define XORSIGALG256_KEYTYPE_NAME "gost2012_256"
+#define XORSIGALG256_KEYTYPE_OID "1.2.643.7.1.1.1.1"
+/*
+ * libcrypto already knows this OID, so lookups can come in under any of its
+ * names - X509_PUBKEY decoding uses the long one. Register all three.
+ */
+#define XORSIGALG256_KEYTYPE_LONG_NAME "GOST R 34.10-2012 with 256 bit modulus"
+#define XORSIGALG256_KEYTYPE_NAMES \
+    XORSIGALG256_KEYTYPE_LONG_NAME ":" XORSIGALG256_KEYTYPE_NAME ":" XORSIGALG256_KEYTYPE_OID
 #define XORSIGALG256A_NAME "xorhmacsig256a"
 #define XORSIGALG256A_OID "1.3.6.1.4.1.16604.998888.5"
 #define XORSIGALG256B_NAME "xorhmacsig256b"
@@ -353,6 +367,20 @@ static struct tls_sigalg_st xor_sigalg256b = {
     TLS1_3_VERSION, /* mintls */
     0, /* maxtls */
 };
+
+/*
+ * The group we advertise for XORSIGALG256B_NAME. Mutable so a test can point
+ * it at a bogus name. Pass NULL to the setter to put it back.
+ */
+static char xor_sigalg256b_group[64] = XORGROUP256B_NAME;
+
+void tls_provider_set_sigalg256b_group(const char *group)
+{
+    if (group == NULL)
+        group = XORGROUP256B_NAME;
+    OPENSSL_strlcpy(xor_sigalg256b_group, group,
+        sizeof(xor_sigalg256b_group));
+}
 
 static const OSSL_PARAM xor_sig_nohash_params[] = {
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME,
@@ -455,7 +483,7 @@ static const OSSL_PARAM xor_sig_256b_params[] = {
         XORSIGALG256_KEYTYPE_OID,
         sizeof(XORSIGALG256_KEYTYPE_OID)),
     OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP,
-        XORGROUP256B_NAME, sizeof(XORGROUP256B_NAME)),
+        xor_sigalg256b_group, sizeof(xor_sigalg256b_group)),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT,
         &xor_sigalg256b.code_point),
     OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS,
@@ -1480,7 +1508,7 @@ static const OSSL_ALGORITHM tls_prov_keymgmt[] = {
     { XORSIGALG_HASH_NAME,
         "provider=tls-provider,fips=yes",
         xor_xorhmacsha2sig_keymgmt_functions },
-    { XORSIGALG256_KEYTYPE_NAME,
+    { XORSIGALG256_KEYTYPE_NAMES,
         "provider=tls-provider,fips=yes",
         xor_xorhmacsig256_keymgmt_functions },
     { NULL, NULL, NULL }
@@ -2289,17 +2317,17 @@ static const OSSL_ALGORITHM tls_prov_encoder[] = {
         der, SubjectPublicKeyInfo),
     ENCODER_w_structure(XORSIGALG_HASH_NAME, xorhmacsha2sig,
         pem, SubjectPublicKeyInfo),
-    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, xorhmacsig256,
         der, PrivateKeyInfo),
-    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, xorhmacsig256,
         pem, PrivateKeyInfo),
-    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, xorhmacsig256,
         der, EncryptedPrivateKeyInfo),
-    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, xorhmacsig256,
         pem, EncryptedPrivateKeyInfo),
-    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, xorhmacsig256,
         der, SubjectPublicKeyInfo),
-    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAME, xorhmacsig256,
+    ENCODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, xorhmacsig256,
         pem, SubjectPublicKeyInfo),
 #undef ENCODER_PROVIDER
     { NULL, NULL, NULL }
@@ -2772,8 +2800,8 @@ static const OSSL_ALGORITHM tls_prov_decoder[] = {
     DECODER_w_structure(XORSIGALG_NAME, der, SubjectPublicKeyInfo, xorhmacsig),
     DECODER_w_structure(XORSIGALG_HASH_NAME, der, PrivateKeyInfo, xorhmacsha2sig),
     DECODER_w_structure(XORSIGALG_HASH_NAME, der, SubjectPublicKeyInfo, xorhmacsha2sig),
-    DECODER_w_structure(XORSIGALG256_KEYTYPE_NAME, der, PrivateKeyInfo, xorhmacsig256),
-    DECODER_w_structure(XORSIGALG256_KEYTYPE_NAME, der, SubjectPublicKeyInfo, xorhmacsig256),
+    DECODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, der, PrivateKeyInfo, xorhmacsig256),
+    DECODER_w_structure(XORSIGALG256_KEYTYPE_NAMES, der, SubjectPublicKeyInfo, xorhmacsig256),
 #undef DECODER_PROVIDER
     { NULL, NULL, NULL }
 };

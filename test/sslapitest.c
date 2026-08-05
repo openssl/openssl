@@ -60,6 +60,7 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH *in,
     const OSSL_DISPATCH **out,
     void **provctx);
+void tls_provider_set_sigalg256b_group(const char *group);
 
 static OSSL_LIB_CTX *libctx = NULL;
 static OSSL_PROVIDER *defctxnull = NULL;
@@ -11669,14 +11670,14 @@ end:
 }
 
 /*
- * Like create_cert_key() but for the "xorhmacsig256" key type whose keys
- * must be bound to a group/parameter set (RFC 9367 GOST style).
+ * Like create_cert_key() but for the shared key type, whose keys carry a
+ * group (RFC 9367 GOST style). tls-provider registers it as gost2012_256.
  */
 static int create_cert_key_with_group(const char *group, char *certfilename,
     char *privkeyfilename)
 {
     EVP_PKEY_CTX *evpctx = EVP_PKEY_CTX_new_from_name(libctx,
-        "xorhmacsig256", NULL);
+        "gost2012_256", NULL);
     EVP_PKEY *pkey = NULL;
     X509 *x509 = X509_new();
     X509_NAME *name = NULL;
@@ -11748,6 +11749,9 @@ static int test_pluggable_sigalg_group_disambiguation(int idx)
     const char *sigalg_name = NULL;
     X509 *expected_cert = NULL;
     X509 *peer_cert = NULL;
+    X509 *last_loaded_cert = NULL;
+    X509 *first_slot_cert = NULL;
+    int nslots = 0;
 
     if (!TEST_ptr(tlsprov)
         || !TEST_true(create_cert_key_with_group("xorgroup256a",
@@ -11807,14 +11811,75 @@ static int test_pluggable_sigalg_group_disambiguation(int idx)
         || !TEST_int_eq(X509_cmp(peer_cert, expected_cert), 0))
         goto end;
 
+    /*
+     * This key type also has a built-in slot (SSL_PKEY_GOST12_256), and TLS
+     * 1.2 and below reach that slot by index. So loading should fill it as
+     * well as the two group slots: three in total.
+     */
+    while (SSL_CTX_set_current_cert(sctx,
+        nslots == 0 ? SSL_CERT_SET_FIRST : SSL_CERT_SET_NEXT)) {
+        if (nslots++ == 0)
+            first_slot_cert = SSL_CTX_get0_certificate(sctx);
+    }
+    if (!TEST_int_eq(nslots, 3))
+        goto end;
+
+    /*
+     * Built-in indices come before provider ones, so the walk starts at the
+     * built-in slot, which holds whichever cert was loaded last. Skip that
+     * slot and the walk would start at group a's instead.
+     */
+    if (!TEST_ptr(last_loaded_cert = load_cert_pem(certfilename_b, libctx))
+        || !TEST_ptr(first_slot_cert)
+        || !TEST_int_eq(X509_cmp(first_slot_cert, last_loaded_cert), 0))
+        goto end;
+
     testresult = 1;
 
 end:
+    X509_free(last_loaded_cert);
     X509_free(expected_cert);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
+    OSSL_PROVIDER_unload(tlsprov);
+    OSSL_PROVIDER_unload(defaultprov);
+
+    return testresult;
+}
+
+/*
+ * A "key-type-group" we can't resolve must be rejected at sigalg load time,
+ * not quietly treated as NID_undef, which would mean "any group".
+ */
+static int test_pluggable_sigalg_bad_group(void)
+{
+    SSL_CTX *sctx = NULL;
+    int testresult = 0;
+    OSSL_PROVIDER *tlsprov = OSSL_PROVIDER_load(libctx, "tls-provider");
+    OSSL_PROVIDER *defaultprov = OSSL_PROVIDER_load(libctx, "default");
+
+    if (!TEST_ptr(tlsprov))
+        goto end;
+
+    /* With the real group name this works */
+    if (!TEST_ptr(sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method())))
+        goto end;
+    SSL_CTX_free(sctx);
+    sctx = NULL;
+
+    tls_provider_set_sigalg256b_group("no-such-group-name");
+
+    sctx = SSL_CTX_new_ex(libctx, NULL, TLS_server_method());
+    if (!TEST_ptr_null(sctx))
+        goto end;
+
+    testresult = 1;
+
+end:
+    tls_provider_set_sigalg256b_group(NULL);
+    SSL_CTX_free(sctx);
     OSSL_PROVIDER_unload(tlsprov);
     OSSL_PROVIDER_unload(defaultprov);
 
@@ -15846,6 +15911,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_pluggable_group, 2);
     ADD_ALL_TESTS(test_pluggable_signature, 6);
     ADD_ALL_TESTS(test_pluggable_sigalg_group_disambiguation, 2);
+    ADD_TEST(test_pluggable_sigalg_bad_group);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);

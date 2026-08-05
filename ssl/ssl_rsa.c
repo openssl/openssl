@@ -132,22 +132,37 @@ int SSL_use_certificate_ASN1(SSL *ssl, const unsigned char *d, int len)
 
 static int ssl_set_pkey(CERT *c, EVP_PKEY *pkey, SSL_CTX *ctx)
 {
-    size_t i;
+    size_t idx[SSL_CERT_MAX_PKEY_SLOTS];
+    size_t nidx, n;
 
-    if (ssl_cert_lookup_by_pkey(pkey, &i, ctx) == NULL) {
+    /* See ssl_set_cert() for why there can be two slots */
+    nidx = ssl_cert_lookup_slots_by_pkey(pkey, idx, ctx);
+    if (nidx == 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         return 0;
     }
 
-    if (c->pkeys[i].x509 != NULL
-        && !X509_check_private_key(c->pkeys[i].x509, pkey))
-        return 0;
-    if (!EVP_PKEY_up_ref(pkey))
-        return 0;
+    for (n = 0; n < nidx; n++) {
+        if (c->pkeys[idx[n]].x509 != NULL
+            && !X509_check_private_key(c->pkeys[idx[n]].x509, pkey))
+            return 0;
+    }
 
-    EVP_PKEY_free(c->pkeys[i].privatekey);
-    c->pkeys[i].privatekey = pkey;
-    c->key = &c->pkeys[i];
+    /* Grab all the references first, so this is all or nothing */
+    for (n = 0; n < nidx; n++) {
+        if (!EVP_PKEY_up_ref(pkey)) {
+            while (n-- > 0)
+                EVP_PKEY_free(pkey);
+            return 0;
+        }
+    }
+
+    for (n = 0; n < nidx; n++) {
+        EVP_PKEY_free(c->pkeys[idx[n]].privatekey);
+        c->pkeys[idx[n]].privatekey = pkey;
+    }
+
+    c->key = &c->pkeys[idx[0]];
     return 1;
 }
 
@@ -255,27 +270,9 @@ int SSL_CTX_use_certificate(SSL_CTX *ctx, X509 *x)
     return ssl_set_cert(ctx->cert, x, ctx);
 }
 
-static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
+/* Stores x in slot i, consuming one reference taken by the caller */
+static void ssl_set_cert_at(CERT *c, X509 *x, EVP_PKEY *pkey, size_t i)
 {
-    EVP_PKEY *pkey;
-    size_t i;
-
-    pkey = X509_get0_pubkey(x);
-    if (pkey == NULL) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_X509_LIB);
-        return 0;
-    }
-
-    if (ssl_cert_lookup_by_pkey(pkey, &i, ctx) == NULL) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-        return 0;
-    }
-
-    if (i == SSL_PKEY_ECC && !EVP_PKEY_can_sign(pkey)) {
-        ERR_raise(ERR_LIB_SSL, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
-        return 0;
-    }
-
     if (c->pkeys[i].privatekey != NULL) {
         /*
          * The return code from EVP_PKEY_copy_parameters is deliberately
@@ -298,12 +295,50 @@ static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
         }
     }
 
-    if (!X509_up_ref(x))
-        return 0;
-
     X509_free(c->pkeys[i].x509);
     c->pkeys[i].x509 = x;
-    c->key = &(c->pkeys[i]);
+}
+
+static int ssl_set_cert(CERT *c, X509 *x, SSL_CTX *ctx)
+{
+    EVP_PKEY *pkey;
+    size_t idx[SSL_CERT_MAX_PKEY_SLOTS];
+    size_t nidx, n;
+
+    pkey = X509_get0_pubkey(x);
+    if (pkey == NULL) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_X509_LIB);
+        return 0;
+    }
+
+    /*
+     * A grouped key goes in its normal slot and in the sigalg's own slot,
+     * so both the old index-based paths and TLS 1.3 find the certificate.
+     */
+    nidx = ssl_cert_lookup_slots_by_pkey(pkey, idx, ctx);
+    if (nidx == 0) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
+        return 0;
+    }
+
+    if (idx[0] == SSL_PKEY_ECC && !EVP_PKEY_can_sign(pkey)) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_ECC_CERT_NOT_FOR_SIGNING);
+        return 0;
+    }
+
+    /* Grab all the references first, so this is all or nothing */
+    for (n = 0; n < nidx; n++) {
+        if (!X509_up_ref(x)) {
+            while (n-- > 0)
+                X509_free(x);
+            return 0;
+        }
+    }
+
+    for (n = 0; n < nidx; n++)
+        ssl_set_cert_at(c, x, pkey, idx[n]);
+
+    c->key = &(c->pkeys[idx[0]]);
 
     return 1;
 }
@@ -981,10 +1016,13 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
 {
     int ret = 0;
     size_t i;
+    size_t idx[SSL_CERT_MAX_PKEY_SLOTS];
+    size_t nidx, n;
     int j;
     int rv;
     CERT *c;
-    STACK_OF(X509) *dup_chain = NULL;
+    STACK_OF(X509) *dup_chains[SSL_CERT_MAX_PKEY_SLOTS] = { NULL };
+    size_t nx509refs = 0, npkeyrefs = 0;
     EVP_PKEY *pubkey = NULL;
     SSL_CONNECTION *sc = NULL;
 
@@ -1039,51 +1077,66 @@ static int ssl_set_cert_and_key(SSL *ssl, SSL_CTX *ctx, X509 *x509, EVP_PKEY *pr
             goto out;
         }
     }
-    if (ssl_cert_lookup_by_pkey(pubkey, &i,
-            sc != NULL ? SSL_CONNECTION_GET_CTX(sc) : ctx)
-        == NULL) {
+    /* See ssl_set_cert() for why there can be two slots */
+    nidx = ssl_cert_lookup_slots_by_pkey(pubkey, idx,
+        sc != NULL ? SSL_CONNECTION_GET_CTX(sc) : ctx);
+    if (nidx == 0) {
         ERR_raise(ERR_LIB_SSL, SSL_R_UNKNOWN_CERTIFICATE_TYPE);
         goto out;
     }
 
-    if (!override && (c->pkeys[i].x509 != NULL || c->pkeys[i].privatekey != NULL || c->pkeys[i].chain != NULL)) {
-        /* No override, and something already there */
-        ERR_raise(ERR_LIB_SSL, SSL_R_NOT_REPLACING_CERTIFICATE);
-        goto out;
-    }
-
-    if (chain != NULL) {
-        dup_chain = X509_chain_up_ref(chain);
-        if (dup_chain == NULL) {
-            ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+    for (n = 0; n < nidx; n++) {
+        i = idx[n];
+        if (!override && (c->pkeys[i].x509 != NULL || c->pkeys[i].privatekey != NULL || c->pkeys[i].chain != NULL)) {
+            /* No override, and something already there */
+            ERR_raise(ERR_LIB_SSL, SSL_R_NOT_REPLACING_CERTIFICATE);
             goto out;
         }
     }
 
-    if (!X509_up_ref(x509)) {
-        OSSL_STACK_OF_X509_free(dup_chain);
-        goto out;
+    /* Grab all the references first, so a failure leaves the slots alone */
+    for (n = 0; n < nidx; n++) {
+        if (chain != NULL) {
+            dup_chains[n] = X509_chain_up_ref(chain);
+            if (dup_chains[n] == NULL) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_X509_LIB);
+                goto out;
+            }
+        }
+        if (!X509_up_ref(x509))
+            goto out;
+        nx509refs++;
+        if (!EVP_PKEY_up_ref(privatekey))
+            goto out;
+        npkeyrefs++;
     }
 
-    if (!EVP_PKEY_up_ref(privatekey)) {
-        OSSL_STACK_OF_X509_free(dup_chain);
-        X509_free(x509);
-        goto out;
+    for (n = 0; n < nidx; n++) {
+        i = idx[n];
+
+        OSSL_STACK_OF_X509_free(c->pkeys[i].chain);
+        c->pkeys[i].chain = dup_chains[n];
+        dup_chains[n] = NULL;
+
+        X509_free(c->pkeys[i].x509);
+        c->pkeys[i].x509 = x509;
+
+        EVP_PKEY_free(c->pkeys[i].privatekey);
+        c->pkeys[i].privatekey = privatekey;
     }
+    nx509refs = npkeyrefs = 0;
 
-    OSSL_STACK_OF_X509_free(c->pkeys[i].chain);
-    c->pkeys[i].chain = dup_chain;
-
-    X509_free(c->pkeys[i].x509);
-    c->pkeys[i].x509 = x509;
-
-    EVP_PKEY_free(c->pkeys[i].privatekey);
-    c->pkeys[i].privatekey = privatekey;
-
-    c->key = &(c->pkeys[i]);
+    c->key = &(c->pkeys[idx[0]]);
 
     ret = 1;
 out:
+    /* Drop anything we took but didn't store; no-ops on success */
+    for (n = 0; n < OSSL_NELEM(dup_chains); n++)
+        OSSL_STACK_OF_X509_free(dup_chains[n]);
+    while (nx509refs-- > 0)
+        X509_free(x509);
+    while (npkeyrefs-- > 0)
+        EVP_PKEY_free(privatekey);
     EVP_PKEY_free(pubkey);
     return ret;
 }

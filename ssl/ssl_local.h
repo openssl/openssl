@@ -809,13 +809,14 @@ typedef struct {
     int pkey_nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
     /*
-     * Optional group/parameter set that binds this cert slot to a specific
-     * signature scheme when several schemes share one key type OID (for
-     * example GOST 256a/b/c/d per RFC 9367). NID_undef means "any group",
-     * which preserves the legacy first-match-by-key-type behaviour.
+     * Group/parameter set this slot is tied to, for when several schemes
+     * share a key type OID (GOST 256a/b/c/d). NID_undef means any group.
      */
     int group_nid;
 } SSL_CERT_LOOKUP;
+
+/* A key fits at most two slots: its primary one and a group-bound one */
+#define SSL_CERT_MAX_PKEY_SLOTS 2
 
 #if !defined(OPENSSL_NO_TLS1)      \
     || !defined(OPENSSL_NO_TLS1_1) \
@@ -2527,8 +2528,16 @@ __owur int ssl_ctx_security(const SSL_CTX *ctx, int op, int bits, int nid,
 int ssl_get_security_level_bits(const SSL *s, const SSL_CTX *ctx, int *levelp);
 
 __owur int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx);
+__owur uint32_t ssl_cert_builtin_amask_by_nid(int nid);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk,
     size_t *pidx,
+    SSL_CTX *ctx);
+__owur int ssl_cert_pkey_fits_slot(const EVP_PKEY *pk,
+    const SSL_CERT_LOOKUP *lu);
+__owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey_group(const EVP_PKEY *pk,
+    size_t *pidx,
+    SSL_CTX *ctx);
+__owur size_t ssl_cert_lookup_slots_by_pkey(const EVP_PKEY *pk, size_t *pidx,
     SSL_CTX *ctx);
 __owur const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx);
 

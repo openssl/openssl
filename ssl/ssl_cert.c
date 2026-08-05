@@ -1345,6 +1345,18 @@ int ssl_cert_lookup_by_nid(int nid, size_t *pidx, SSL_CTX *ctx)
     return 0;
 }
 
+/* amask of the built-in slot for this key type, SSL_aANY if there isn't one */
+uint32_t ssl_cert_builtin_amask_by_nid(int nid)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
+        if (ssl_cert_info[i].pkey_nid == nid)
+            return ssl_cert_info[i].amask;
+    }
+    return SSL_aANY;
+}
+
 static int ssl_pkey_group_nid(const EVP_PKEY *pk)
 {
     char gname[256];
@@ -1355,59 +1367,47 @@ static int ssl_pkey_group_nid(const EVP_PKEY *pk)
     return OBJ_txt2nid(gname);
 }
 
-const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_CTX *ctx)
+static int ssl_cert_pkey_is_a(const EVP_PKEY *pk, const SSL_CERT_LOOKUP *lu)
+{
+    return EVP_PKEY_is_a(pk, OBJ_nid2sn(lu->pkey_nid))
+        || EVP_PKEY_is_a(pk, OBJ_nid2ln(lu->pkey_nid));
+}
+
+/*
+ * Can this key go in this slot? Key type must match, and so must the group
+ * if the slot has one. Asking this way doesn't depend on lookup order.
+ */
+int ssl_cert_pkey_fits_slot(const EVP_PKEY *pk, const SSL_CERT_LOOKUP *lu)
+{
+    if (!ssl_cert_pkey_is_a(pk, lu))
+        return 0;
+    if (lu->group_nid != NID_undef && ssl_pkey_group_nid(pk) != lu->group_nid)
+        return 0;
+    return 1;
+}
+
+/*
+ * Find the provider slot bound to the group this key carries. This is what
+ * tells apart schemes sharing a key type OID, like the RFC 9367 GOST ones.
+ */
+const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey_group(const EVP_PKEY *pk,
+    size_t *pidx, SSL_CTX *ctx)
 {
     size_t i;
-    int pk_group_nid = NID_undef;
+    int pk_group_nid;
 
-    /*
-     * Provider slots bound to the key's group/parameter set take priority
-     * over everything else: the built-in table below may contain entries
-     * with the same key type NIDs (for example the built-in GOST slots vs
-     * the RFC 9367 provider sigalgs) which would otherwise shadow the
-     * provider slots and make them unreachable.
-     */
-    if (ctx->sigalg_list_len > 0)
-        pk_group_nid = ssl_pkey_group_nid(pk);
-    if (pk_group_nid != NID_undef) {
-        for (i = 0; i < ctx->sigalg_list_len; i++) {
-            SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
+    if (ctx->sigalg_list_len == 0)
+        return NULL;
 
-            if (tmp_lu->group_nid == pk_group_nid
-                && (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
-                    || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid)))) {
-                if (pidx != NULL)
-                    *pidx = SSL_PKEY_NUM + i;
-                return tmp_lu;
-            }
-        }
-    }
+    pk_group_nid = ssl_pkey_group_nid(pk);
+    if (pk_group_nid == NID_undef)
+        return NULL;
 
-    /* check classic pk types */
-    for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
-        const SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
-
-        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
-            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid))) {
-            if (pidx != NULL)
-                *pidx = i;
-            return tmp_lu;
-        }
-    }
-
-    /*
-     * Check provider-loaded pk types. Slots bound to a group were already
-     * tried above; a slot without a group binding keeps the legacy
-     * first-match-by-key-type behaviour.
-     */
     for (i = 0; i < ctx->sigalg_list_len; i++) {
         SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
 
-        if (tmp_lu->group_nid != NID_undef)
-            continue;
-
-        if (EVP_PKEY_is_a(pk, OBJ_nid2sn(tmp_lu->pkey_nid))
-            || EVP_PKEY_is_a(pk, OBJ_nid2ln(tmp_lu->pkey_nid))) {
+        if (tmp_lu->group_nid == pk_group_nid
+            && ssl_cert_pkey_is_a(pk, tmp_lu)) {
             if (pidx != NULL)
                 *pidx = SSL_PKEY_NUM + i;
             return tmp_lu;
@@ -1415,6 +1415,64 @@ const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx,
     }
 
     return NULL;
+}
+
+const SSL_CERT_LOOKUP *ssl_cert_lookup_by_pkey(const EVP_PKEY *pk, size_t *pidx, SSL_CTX *ctx)
+{
+    const SSL_CERT_LOOKUP *lu;
+    size_t i;
+
+    /*
+     * Classic pk types first. If a key type has a built-in slot it must keep
+     * resolving to it, since TLS 1.2 and below address that slot by index.
+     */
+    for (i = 0; i < OSSL_NELEM(ssl_cert_info); i++) {
+        const SSL_CERT_LOOKUP *tmp_lu = &ssl_cert_info[i];
+
+        if (ssl_cert_pkey_is_a(pk, tmp_lu)) {
+            if (pidx != NULL)
+                *pidx = i;
+            return tmp_lu;
+        }
+    }
+
+    /* Then provider slots, by group first so shared key types still split */
+    lu = ssl_cert_lookup_by_pkey_group(pk, pidx, ctx);
+    if (lu != NULL)
+        return lu;
+
+    /* Slots with no group keep the old first-match behaviour */
+    for (i = 0; i < ctx->sigalg_list_len; i++) {
+        SSL_CERT_LOOKUP *tmp_lu = &(ctx->ssl_cert_info[i]);
+
+        if (ssl_cert_pkey_is_a(pk, tmp_lu)) {
+            if (pidx != NULL)
+                *pidx = SSL_PKEY_NUM + i;
+            return tmp_lu;
+        }
+    }
+
+    return NULL;
+}
+
+/*
+ * Every slot this key belongs in: the primary one, plus its group-bound
+ * provider slot if that's a different slot. Returns how many, 0 if unknown.
+ */
+size_t ssl_cert_lookup_slots_by_pkey(const EVP_PKEY *pk, size_t *pidx,
+    SSL_CTX *ctx)
+{
+    size_t n = 0, gidx;
+
+    if (ssl_cert_lookup_by_pkey(pk, &pidx[0], ctx) == NULL)
+        return 0;
+    n = 1;
+
+    if (ssl_cert_lookup_by_pkey_group(pk, &gidx, ctx) != NULL
+        && gidx != pidx[0])
+        pidx[n++] = gidx;
+
+    return n;
 }
 
 const SSL_CERT_LOOKUP *ssl_cert_lookup_by_idx(size_t idx, SSL_CTX *ctx)
