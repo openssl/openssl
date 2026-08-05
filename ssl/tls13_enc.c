@@ -653,9 +653,28 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
             }
 
             md = ssl_md(sctx, sslcipher->algorithm2);
-            if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)
-                || !EVP_DigestUpdate(mdctx, hdata, handlen)
-                || !EVP_DigestFinal_ex(mdctx, hashval, &hashlenui)) {
+            if (md == NULL || !EVP_DigestInit_ex(mdctx, md, NULL)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                EVP_MD_CTX_free(mdctx);
+                goto err;
+            }
+
+            if (SSL_CONNECTION_IS_DTLS(s)) {
+                if (!dtls13_transcript_hash_update(mdctx, hdata,
+                        (size_t)handlen)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    EVP_MD_CTX_free(mdctx);
+                    goto err;
+                }
+            } else {
+                if (!EVP_DigestUpdate(mdctx, hdata, handlen)) {
+                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    EVP_MD_CTX_free(mdctx);
+                    goto err;
+                }
+            }
+
+            if (!EVP_DigestFinal_ex(mdctx, hashval, &hashlenui)) {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 EVP_MD_CTX_free(mdctx);
                 goto err;
