@@ -74,9 +74,11 @@ ASN1_STRING_type() returns the type of I<x>, using standard constants
 such as B<V_ASN1_OCTET_STRING>.
 
 ASN1_STRING_to_UTF8() converts the string I<in> to UTF8 format, the
-converted data is allocated in a buffer in I<*out>. The length of
+converted data is allocated in a buffer in I<*out>. The buffer is NUL
+terminated, so it is a valid C string, but the returned length does not
+include the terminating NUL. The length of
 I<out> is returned or a negative error code. The buffer I<*out>
-should be freed using OPENSSL_free().
+should be freed using OPENSSL_free(). See L</WARNINGS> below.
 
 =head1 NOTES
 
@@ -101,6 +103,16 @@ format, and for a UTF8String it will be in UTF8 format.
 Similar care should be taken to ensure the data is in the correct
 format when calling ASN1_STRING_set(), ASN1_STRING_set_data(), or
 ASN1_STRING_set_string().
+
+=head1 WARNINGS
+
+Although the buffer returned by ASN1_STRING_to_UTF8() is NUL terminated and
+is therefore a valid C string, the converted data may itself contain embedded
+NUL bytes. Using C string functions such as strlen() or strcmp() on
+the output is therefore inherently dangerous: they will stop at the first
+embedded NUL and silently process only part of the string, which can lead to
+incorrect comparisons or truncated data. Callers should use the returned
+length and not rely on NUL termination.
 
 =head1 RETURN VALUES
 
