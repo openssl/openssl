@@ -339,10 +339,6 @@ done:
 static DWORD WINAPI thread_run(LPVOID arg)
 {
     handle_connection(arg);
-    /*
-     * When linked against the static OpenSSL libraries each thread must stop
-     * itself so its per-thread state is released (see OPENSSL_thread_stop(3)).
-     */
     OPENSSL_thread_stop();
     return 0;
 }
@@ -367,10 +363,6 @@ static int wait_for_thread(thread_t thread)
 static void *thread_run(void *arg)
 {
     handle_connection(arg);
-    /*
-     * When linked against the static OpenSSL libraries each thread must stop
-     * itself so its per-thread state is released (see OPENSSL_thread_stop(3)).
-     */
     OPENSSL_thread_stop();
     return NULL;
 }
