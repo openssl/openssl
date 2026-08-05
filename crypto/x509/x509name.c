@@ -45,7 +45,8 @@ int X509_NAME_get_text_by_OBJ(const X509_NAME *name, const ASN1_OBJECT *obj,
     if (len <= 0)
         return 0;
     i = (data->length > (len - 1)) ? (len - 1) : data->length;
-    memcpy(buf, data->data, i);
+    if (i > 0)
+        memcpy(buf, data->data, i);
     buf[i] = '\0';
     return i;
 }
