@@ -444,7 +444,9 @@ static void print_qualifiers(BIO *out, STACK_OF(POLICYQUALINFO) *quals,
         case NID_id_qt_cps:
             BIO_printf(out, "%*sCPS: %.*s", indent, "",
                 qualinfo->d.cpsuri->length,
-                qualinfo->d.cpsuri->data);
+                qualinfo->d.cpsuri->length
+                    ? qualinfo->d.cpsuri->data
+                    : (const unsigned char *)"");
             break;
 
         case NID_id_qt_unotice:
@@ -469,7 +471,9 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
         ref = notice->noticeref;
         BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
             ref->organization->length,
-            ref->organization->data);
+            ref->organization->length
+                ? ref->organization->data
+                : (const unsigned char *)"");
         BIO_printf(out, "%*sNumber%s: ", indent, "",
             sk_ASN1_INTEGER_num(ref->noticenos) > 1 ? "s" : "");
         for (i = 0; i < sk_ASN1_INTEGER_num(ref->noticenos); i++) {
@@ -494,7 +498,9 @@ static void print_notice(BIO *out, USERNOTICE *notice, int indent)
     if (notice->exptext)
         BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
             notice->exptext->length,
-            notice->exptext->data);
+            notice->exptext->length
+                ? notice->exptext->data
+                : (const unsigned char *)"");
 }
 
 void X509_POLICY_NODE_print(BIO *out, X509_POLICY_NODE *node, int indent)
