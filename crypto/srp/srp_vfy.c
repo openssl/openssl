@@ -28,6 +28,8 @@
 #define SRP_RANDOM_SALT_LEN 20
 #define MAX_LEN 2500
 
+static void SRP_gN_cache_free(SRP_gN_cache *gN_cache);
+
 /*
  * Note that SRP uses its own variant of base 64 encoding. A different base64
  * alphabet is used and no padding '=' characters are added. Instead we pad to
@@ -303,7 +305,7 @@ void SRP_VBASE_free(SRP_VBASE *vb)
     if (!vb)
         return;
     sk_SRP_user_pwd_pop_free(vb->users_pwd, SRP_user_pwd_free);
-    sk_SRP_gN_cache_free(vb->gN_cache);
+    sk_SRP_gN_cache_pop_free(vb->gN_cache, SRP_gN_cache_free);
     OPENSSL_free(vb->seed_key);
     OPENSSL_free(vb);
 }
@@ -333,7 +335,7 @@ err:
     return NULL;
 }
 
-static void SRP_gN_free(SRP_gN_cache *gN_cache)
+static void SRP_gN_cache_free(SRP_gN_cache *gN_cache)
 {
     if (gN_cache == NULL)
         return;
@@ -375,10 +377,18 @@ static BIGNUM *SRP_gN_place_bn(STACK_OF(SRP_gN_cache) *gN_cache, char *ch)
         if (newgN) {
             if (sk_SRP_gN_cache_insert(gN_cache, newgN, 0) > 0)
                 return newgN->bn;
-            SRP_gN_free(newgN);
+            SRP_gN_cache_free(newgN);
         }
     }
     return NULL;
+}
+
+static void SRP_gN_free(SRP_gN *gN)
+{
+    if (gN == NULL)
+        return;
+    OPENSSL_free(gN->id);
+    OPENSSL_free(gN);
 }
 
 /*
@@ -435,7 +445,7 @@ int SRP_VBASE_init(SRP_VBASE *vb, char *verifier_file)
              * we add this couple in the internal Stack
              */
 
-            if ((gN = OPENSSL_malloc(sizeof(*gN))) == NULL)
+            if ((gN = OPENSSL_zalloc(sizeof(*gN))) == NULL)
                 goto err;
 
             if ((gN->id = OPENSSL_strdup(pp[DB_srpid])) == NULL
@@ -494,17 +504,12 @@ err:
      * terminates most likely
      */
 
-    if (gN != NULL) {
-        OPENSSL_free(gN->id);
-        OPENSSL_free(gN);
-    }
-
+    SRP_gN_free(gN);
+    sk_SRP_gN_pop_free(SRP_gN_tab, SRP_gN_free);
     SRP_user_pwd_free(user_pwd);
 
     TXT_DB_free(tmpdb);
     BIO_free_all(in);
-
-    sk_SRP_gN_free(SRP_gN_tab);
 
     return error_code;
 }
