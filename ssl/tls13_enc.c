@@ -694,7 +694,7 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
 
             if (!ssl_log_secret(s, EARLY_EXPORTER_SECRET_LABEL,
                     s->early_exporter_master_secret, hashlen)) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                /* SSLfatal() already called */
                 goto err;
             }
         } else if (which & SSL3_CC_HANDSHAKE) {
