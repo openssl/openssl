@@ -2974,6 +2974,8 @@ __owur int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype);
 
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
     size_t len, size_t *written);
+int dtls13_transcript_hash_update(EVP_MD_CTX *mdctx,
+    const unsigned char *buf, size_t len);
 
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
 __owur int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type);

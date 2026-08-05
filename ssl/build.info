@@ -12,7 +12,7 @@ SOURCE[../libssl]=\
         statem/statem_lib.c statem/extensions.c statem/extensions_srvr.c \
         statem/extensions_clnt.c statem/extensions_cust.c s3_msg.c \
         methods.c t1_lib.c  t1_enc.c tls13_enc.c \
-        d1_lib.c d1_msg.c \
+        d1_lib.c d1_msg.c d1_transcript.c \
         statem/statem_dtls.c d1_srtp.c \
         ssl_lib.c ssl_cert.c ssl_sess.c \
         ssl_ciph.c ssl_stat.c ssl_rsa.c \
