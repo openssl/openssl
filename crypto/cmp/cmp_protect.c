@@ -160,18 +160,18 @@ int ossl_cmp_msg_add_extraCerts(OSSL_CMP_CTX *ctx, OSSL_CMP_MSG *msg)
 
         ossl_cmp_set_own_chain(ctx);
         if (ctx->chain != NULL) {
-            if (!ossl_x509_add_certs_new(&msg->extraCerts, ctx->chain, prepend))
+            if (!ossl_cmp_x509_add_certs_new(&msg->extraCerts, ctx->chain, prepend))
                 return 0;
         } else {
             /* make sure that at least our own signer cert is included first */
-            if (!ossl_x509_add_cert_new(&msg->extraCerts, ctx->cert, prepend))
+            if (!ossl_cmp_x509_add_cert_new(&msg->extraCerts, ctx->cert, prepend))
                 return 0;
             ossl_cmp_debug(ctx, "fallback: adding just own CMP signer cert");
         }
     }
 
     /* add any additional certificates from ctx->extraCertsOut */
-    if (!ossl_x509_add_certs_new(&msg->extraCerts, ctx->extraCertsOut,
+    if (!ossl_cmp_x509_add_certs_new(&msg->extraCerts, ctx->extraCertsOut,
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         return 0;
 

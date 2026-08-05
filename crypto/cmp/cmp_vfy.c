@@ -793,7 +793,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * cached. Also they get used first, which is likely good for efficiency.
      */
     num_untrusted = ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted);
-    res = ossl_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
+    res = ossl_cmp_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
         /* this allows self-signed certs */
         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND);
