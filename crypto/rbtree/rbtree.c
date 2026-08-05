@@ -31,7 +31,7 @@
 static struct ossl_rbt_entry *
 rbt_n2e(const struct ossl_rbt_type *t, void *node)
 {
-    size_t addr = (size_t)node;
+    uintptr_t addr = (uintptr_t)node;
 
     return ((struct ossl_rbt_entry *)(addr + t->t_offset));
 }
@@ -39,7 +39,7 @@ rbt_n2e(const struct ossl_rbt_type *t, void *node)
 static void *
 rbt_e2n(const struct ossl_rbt_type *t, struct ossl_rbt_entry *rbe)
 {
-    size_t addr = (size_t)rbe;
+    uintptr_t addr = (uintptr_t)rbe;
 
     return ((void *)(addr - t->t_offset));
 }
