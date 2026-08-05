@@ -47,7 +47,7 @@ int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
 
     if (s->type != V_ASN1_UNIVERSALSTRING)
         return 0;
-    if ((s->length % 4) != 0)
+    if (s->length < 0 || (s->length % 4) != 0)
         return 0;
     p = s->data;
     for (i = 0; i < s->length; i += 4) {
@@ -62,7 +62,8 @@ int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
     for (i = 3; i < s->length; i += 4) {
         *(p++) = s->data[i];
     }
-    *(p) = '\0';
+    if (s->length > 0)
+        *p = '\0';
     s->length /= 4;
     s->type = ASN1_PRINTABLE_type(s->data, s->length);
     return 1;
