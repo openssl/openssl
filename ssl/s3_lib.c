@@ -5003,8 +5003,10 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
 
         pskpmslen = 4 + pmslen + psklen;
         pskpms = OPENSSL_malloc(pskpmslen);
-        if (pskpms == NULL)
+        if (pskpms == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
+        }
         t = pskpms;
         s2n(pmslen, t);
         if (alg_k & SSL_kPSK)
@@ -5028,6 +5030,7 @@ int ssl_generate_master_secret(SSL *s, unsigned char *pms, size_t pmslen,
         OPENSSL_clear_free(pskpms, pskpmslen);
 #else
         /* Should never happen */
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
 #endif
     } else {
