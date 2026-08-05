@@ -262,7 +262,7 @@ void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num)
 
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 {
-    if (str == NULL)
+    if (str == NULL || str->length < 0)
         return 0;
     dst->type = str->type;
     if (!ossl_asn1_string_set_internal(dst, str->data, str->length,
