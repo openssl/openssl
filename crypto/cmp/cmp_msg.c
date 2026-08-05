@@ -566,7 +566,7 @@ OSSL_CMP_MSG *ossl_cmp_certrep_new(OSSL_CMP_CTX *ctx, int bodytype,
         && (repMsg->caPubs = X509_chain_up_ref(caPubs)) == NULL)
         goto err;
     if (sk_X509_num(chain) > 0
-        && !ossl_x509_add_certs_new(&msg->extraCerts, chain,
+        && !ossl_cmp_x509_add_certs_new(&msg->extraCerts, chain,
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         goto err;
 

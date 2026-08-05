@@ -68,7 +68,7 @@ DEFINE_OSSL_CMP_CTX_get0_NAME(trusted, trusted, X509_STORE)
         ERR_raise(ERR_LIB_CMP, CMP_R_NULL_ARGUMENT);
         return 0;
     }
-    if (!ossl_x509_add_certs_new(&untrusted, certs,
+    if (!ossl_cmp_x509_add_certs_new(&untrusted, certs,
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         goto err;
     OSSL_STACK_OF_X509_free(ctx->untrusted);
@@ -717,7 +717,7 @@ DEFINE_OSSL_set1_up_ref(OSSL_CMP_CTX, cert, X509)
         return 0;
     }
 
-    if (!ossl_x509_add_certs_new(&ctx->untrusted, candidates,
+    if (!ossl_cmp_x509_add_certs_new(&ctx->untrusted, candidates,
             X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
         return 0;
 
