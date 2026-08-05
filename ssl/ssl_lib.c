@@ -7029,8 +7029,10 @@ static int nss_keylog_int(const char *prefix,
      */
     prefix_len = strlen(prefix);
     out_len = prefix_len + (2 * parameter_1_len) + (2 * parameter_2_len) + 3;
-    if ((out = cursor = OPENSSL_malloc(out_len)) == NULL)
+    if ((out = cursor = OPENSSL_malloc(out_len)) == NULL) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
         return 0;
+    }
 
     memcpy(cursor, prefix, prefix_len);
     cursor += prefix_len;
