@@ -533,11 +533,6 @@ int test_BN_abs_eq_word(const char *file, int line, const char *bns,
     return 0;
 }
 
-static const char *print_time(const ASN1_TIME *t)
-{
-    return t == NULL ? "<null>" : (const char *)ASN1_STRING_get0_data(t);
-}
-
 #define DEFINE_TIME_T_COMPARISON(opname, op)                           \
     int test_time_t_##opname(const char *file, int line,               \
         const char *s1, const char *s2,                                \
@@ -547,10 +542,21 @@ static const char *print_time(const ASN1_TIME *t)
         ASN1_TIME *at2 = ASN1_TIME_set(NULL, t2);                      \
         int r = at1 != NULL && at2 != NULL                             \
             && ASN1_TIME_compare(at1, at2) op 0;                       \
-        if (!r)                                                        \
+        if (!r) {                                                      \
+            const char *d1 = "<null>", *d2 = "<null>";                 \
+            int n1 = (int)(sizeof("<null>") - 1), n2 = n1;             \
+                                                                       \
+            if (at1 != NULL) {                                         \
+                d1 = (const char *)ASN1_STRING_get0_data(at1);         \
+                n1 = (int)ASN1_STRING_length_ex(at1);                  \
+            }                                                          \
+            if (at2 != NULL) {                                         \
+                d2 = (const char *)ASN1_STRING_get0_data(at2);         \
+                n2 = (int)ASN1_STRING_length_ex(at2);                  \
+            }                                                          \
             test_fail_message(NULL, file, line, "time_t", s1, s2, #op, \
-                "[%s] compared to [%s]",                               \
-                print_time(at1), print_time(at2));                     \
+                "[%.*s] compared to [%.*s]", n1, d1, n2, d2);          \
+        }                                                              \
         ASN1_STRING_free(at1);                                         \
         ASN1_STRING_free(at2);                                         \
         return r;                                                      \

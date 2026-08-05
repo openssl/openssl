@@ -265,12 +265,16 @@ static int test_asn1_time_conversion(char *time_string, const char *file,
                     V_ASN1_GENERALIZEDTIME)))
             goto err;
     }
-    if (!TEST_true((strcmp(time_string,
-                        (const char *)ASN1_STRING_get0_data(result))
-            == 0))) {
-        TEST_info("Expected time: %s, Got time: %s\n", time_string,
-            ASN1_STRING_get0_data(result));
-        goto err;
+    {
+        size_t rlen = ASN1_STRING_length_ex(result);
+        const char *rdata = (const char *)ASN1_STRING_get0_data(result);
+
+        if (!TEST_true(strlen(time_string) == rlen
+                && memcmp(time_string, rdata, rlen) == 0)) {
+            TEST_info("Expected time: %s, Got time: %.*s\n", time_string,
+                (int)rlen, rdata);
+            goto err;
+        }
     }
 
     ret = 1;
