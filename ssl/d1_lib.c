@@ -1764,6 +1764,9 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     /* Default timeout for pending connections: 30 seconds */
     dl->pending_timeout = ossl_seconds2time(30);
 
+    /* Size the demux receive buffers via the DTLS listener default. */
+    ossl_dgram_demux_set_mtu(dl->demux, DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE);
+
     /* Handle cookie validation flags */
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
         if (flags & SSL_LISTENER_FLAG_REQUIRE_HVR)
