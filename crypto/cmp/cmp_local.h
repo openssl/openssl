@@ -824,6 +824,10 @@ int ossl_cmp_asn1_octet_string_set1(ASN1_OCTET_STRING **tgt,
     const ASN1_OCTET_STRING *src);
 int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     const unsigned char *bytes, int len);
+int ossl_cmp_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert,
+    int flags);
+int ossl_cmp_x509_add_certs_new(STACK_OF(X509) **p_sk,
+    const STACK_OF(X509) *certs, int flags);
 
 /* from cmp_ctx.c */
 int ossl_cmp_print_log(OSSL_CMP_severity level, const OSSL_CMP_CTX *ctx,
