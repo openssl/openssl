@@ -284,6 +284,22 @@ typedef uint64_t ossl_uintmax_t;
 #define ossl_unused
 #endif
 
+/*
+ * OPENSSL_NONSTRING: mark a char/unsigned char buffer object or struct field
+ * whose contents are not necessarily NUL terminated, so that misuse with C
+ * string functions (strlen(), strcpy(), "%s", ...) is diagnosed by compilers
+ * that support the attribute. It has no effect elsewhere.
+ */
+#if defined(__has_attribute)
+#if __has_attribute(nonstring)
+#define OPENSSL_NONSTRING __attribute__((nonstring))
+#else
+#define OPENSSL_NONSTRING
+#endif
+#else
+#define OPENSSL_NONSTRING
+#endif
+
 #ifdef __cplusplus
 }
 #endif

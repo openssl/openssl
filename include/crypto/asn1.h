@@ -50,7 +50,7 @@
 struct asn1_string_st {
     int length;
     int type;
-    unsigned char *data;
+    unsigned char *data OPENSSL_NONSTRING;
     /*
      * The value of the following field depends on the type being held.  It
      * is mostly being used for BIT_STRING so if the input data has a
