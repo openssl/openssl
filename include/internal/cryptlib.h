@@ -154,6 +154,21 @@ const void *ossl_bsearch(const void *key, const void *base, int num,
     int (*cmp_thunk)(int (*real_cmp_fn)(const void *, const void *), const void *, const void *),
     int flags);
 
+/**
+ * @brief Join a stack of ASN1_UTF8STRINGs into one allocated string.
+ *
+ * Concatenates the elements of text, separated by sep, into a newly allocated
+ * NUL terminated string. The element data is copied in full and may itself
+ * contain embedded NUL bytes, so a caller that treats the result as a C string
+ * will see it truncated at the first such byte.
+ *
+ * @param text the stack of ASN1_UTF8STRINGs to join
+ * @param sep separator placed between elements, or NULL for none
+ * @param max_len maximum length of the result, excluding the NUL terminator,
+ *                or 0 for no restriction
+ * @returns a newly allocated string to be freed with OPENSSL_free(), or NULL on
+ *          error or if the result would exceed max_len
+ */
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
     const char *sep, size_t max_len);
 char *ossl_ipaddr_to_asc(const unsigned char *p, int len);
