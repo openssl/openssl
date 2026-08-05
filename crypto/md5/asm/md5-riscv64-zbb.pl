@@ -232,9 +232,6 @@ ___
     return $code;
 }
 
-my $FRAME = 64;
-my $SOFF  = 0;
-
 my @Cw = ($C1, $C2, $C3, $C4, $C5, $C6, $C7, $C8);
 my $funnel = "    ld   $T2, 0($KT)\n    ld   $lA, 8($KT)\n";
 for (my $i = 0; $i < 8; $i++) {
@@ -250,10 +247,8 @@ for (my $i = 0; $i < 8; $i++) {
 chomp $funnel;
 
 my $loop_head = <<___;
-    addi $T2, $LEN, -1
-    beqz $T2, L_round_loop
     andi $T0, $INP, 7
-    bnez $T0, L_funnel
+    bnez $T0, L_funnel_setup
 
 L_round_loop:
     ld $C1, 0($INP)
@@ -264,14 +259,6 @@ L_round_loop:
     ld $C6, 40($INP)
     ld $C7, 48($INP)
     ld $C8, 56($INP)
-    j L_have_words
-
-L_funnel:
-    andi $KT, $INP, -8
-    slli $T0, $T0, 3
-    li   $T1, 64
-    sub  $T1, $T1, $T0
-$funnel
 
 L_have_words:
 ___
@@ -279,15 +266,30 @@ chomp $loop_head;
 
 my $loop_tail = <<___;
     beqz $LEN, L_end
-    addi $T2, $LEN, -1
-    beqz $T2, L_round_loop
     andi $T0, $INP, 7
     beqz $T0, L_round_loop
-    j    L_funnel
+    addi $T2, $LEN, -1
+    beqz $T2, L_round_loop
+    j    L_funnel_body
 
 L_end:
 ___
 chomp $loop_tail;
+
+my $loop_funnel = <<___;
+L_funnel_setup:
+    addi $T2, $LEN, -1
+    beqz $T2, L_round_loop
+
+L_funnel_body:
+    andi $KT, $INP, -8
+    slli $T0, $T0, 3
+    li   $T1, 64
+    sub  $T1, $T1, $T0
+$funnel
+    j L_have_words
+___
+chomp $loop_funnel;
 
 ################################################################################
 # void ossl_md5_block_asm_data_order@{[$isaext]}(MD5_CTX *c, const void *p, size_t num)
@@ -297,16 +299,16 @@ $code .= <<___;
 .type ossl_md5_block_asm_data_order@{[$isaext]},\@function
 ossl_md5_block_asm_data_order@{[$isaext]}:
 
-    addi sp, sp, -$FRAME
+    addi sp, sp, -64
 
-    sd s0, @{[0 + $SOFF]}(sp)
-    sd s1, @{[8 + $SOFF]}(sp)
-    sd s2, @{[16 + $SOFF]}(sp)
-    sd s3, @{[24 + $SOFF]}(sp)
-    sd s4, @{[32 + $SOFF]}(sp)
-    sd s5, @{[40 + $SOFF]}(sp)
-    sd s6, @{[48 + $SOFF]}(sp)
-    sd s7, @{[56 + $SOFF]}(sp)
+    sd s0, 0(sp)
+    sd s1, 8(sp)
+    sd s2, 16(sp)
+    sd s3, 24(sp)
+    sd s4, 32(sp)
+    sd s5, 40(sp)
+    sd s6, 48(sp)
+    sd s7, 56(sp)
 
     # load ctx
     lw $A, 0($CTX)
@@ -405,18 +407,19 @@ ossl_md5_block_asm_data_order@{[$isaext]}:
     sw $C, 8($CTX)
     sw $D, 12($CTX)
 
-    ld s0, @{[0 + $SOFF]}(sp)
-    ld s1, @{[8 + $SOFF]}(sp)
-    ld s2, @{[16 + $SOFF]}(sp)
-    ld s3, @{[24 + $SOFF]}(sp)
-    ld s4, @{[32 + $SOFF]}(sp)
-    ld s5, @{[40 + $SOFF]}(sp)
-    ld s6, @{[48 + $SOFF]}(sp)
-    ld s7, @{[56 + $SOFF]}(sp)
+    ld s0, 0(sp)
+    ld s1, 8(sp)
+    ld s2, 16(sp)
+    ld s3, 24(sp)
+    ld s4, 32(sp)
+    ld s5, 40(sp)
+    ld s6, 48(sp)
+    ld s7, 56(sp)
 
-    addi sp, sp, $FRAME
+    addi sp, sp, 64
 
     ret
+@{[$loop_funnel]}
 .size ossl_md5_block_asm_data_order@{[$isaext]},.-ossl_md5_block_asm_data_order@{[$isaext]}
 ___
 
