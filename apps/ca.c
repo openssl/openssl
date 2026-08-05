@@ -2428,7 +2428,8 @@ static char *make_revocation_str(REVINFO_TYPE rev_type, const char *rev_arg)
         i += strlen(other) + 1;
 
     str = app_malloc(i, "revocation reason");
-    OPENSSL_strlcpy(str, (const char *)ASN1_STRING_get0_data(revtm), i);
+    BIO_snprintf(str, i, "%.*s", (int)ASN1_STRING_get_length(revtm),
+        (const char *)ASN1_STRING_get0_data(revtm));
     if (reason) {
         OPENSSL_strlcat(str, ",", i);
         OPENSSL_strlcat(str, reason, i);
