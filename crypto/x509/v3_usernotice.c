@@ -29,7 +29,9 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
         ref = notice->noticeref;
         if (BIO_printf(out, "%*sOrganization: %.*s\n", indent, "",
                 ref->organization->length,
-                ref->organization->data)
+                ref->organization->length
+                    ? ref->organization->data
+                    : (const unsigned char *)"")
             <= 0)
             return 0;
         if (BIO_printf(out, "%*sNumber%s: ", indent, "",
@@ -61,7 +63,9 @@ static int print_notice(BIO *out, USERNOTICE *notice, int indent)
 
     return BIO_printf(out, "%*sExplicit Text: %.*s", indent, "",
                notice->exptext->length,
-               notice->exptext->data)
+               notice->exptext->length
+                   ? notice->exptext->data
+                   : (const unsigned char *)"")
         >= 0;
 }
 
