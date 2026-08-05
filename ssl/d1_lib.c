@@ -1433,8 +1433,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
                  * being_driven kept the tick away, so the connection still
                  * holds only its single reference and the free is safe.
                  */
-                ossl_dgram_conn_lookup_unregister(dl->pending_conns,
-                    &sc->d1->peer_addr);
+                ossl_dgram_conn_lookup_unregister(dl->pending_conns, &urxe->peer);
                 dtls_listener_connection_free(conn_ssl);
                 goto release;
             }
