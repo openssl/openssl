@@ -674,7 +674,7 @@ static int test_table(struct testdata *tbl, int idx)
     int day, sec;
 
     atime.data = (unsigned char *)td->data;
-    atime.length = (int)strlen((char *)atime.data);
+    atime.length = (int)strlen(td->data);
     atime.type = td->type;
     atime.flags = 0;
 
@@ -719,8 +719,8 @@ static int test_table(struct testdata *tbl, int idx)
     } else {
         int local_error = 0;
         if (!TEST_int_eq(ASN1_TIME_cmp_time_t(ptime, td->t), 0)) {
-            TEST_info("ASN1_TIME_set(%ld) compare failed (%s->%s)",
-                (long)td->t, td->data, ptime->data);
+            TEST_info("ASN1_TIME_set(%ld) compare failed (%s->%.*s)",
+                (long)td->t, td->data, ptime->length, ptime->data);
             local_error = error = 1;
         }
         if (!TEST_int_eq(ptime->type, td->expected_type)) {
@@ -728,7 +728,7 @@ static int test_table(struct testdata *tbl, int idx)
             local_error = error = 1;
         }
         if (local_error)
-            TEST_info("ASN1_TIME_set() = %*s", ptime->length, ptime->data);
+            TEST_info("ASN1_TIME_set() = %.*s", ptime->length, ptime->data);
         ASN1_TIME_free(ptime);
     }
 
@@ -760,7 +760,7 @@ static int test_table(struct testdata *tbl, int idx)
             local_error = error = 1;
         }
         if (local_error)
-            TEST_info("ASN1_TIME_set_string_gmt() = %*s", ptime->length, ptime->data);
+            TEST_info("ASN1_TIME_set_string_gmt() = %.*s", ptime->length, ptime->data);
         ASN1_TIME_free(ptime);
     }
 
@@ -784,7 +784,7 @@ static int test_table(struct testdata *tbl, int idx)
             local_error = error = 1;
         }
         if (local_error)
-            TEST_info("ASN1_TIME_set_string() = %*s", ptime->length, ptime->data);
+            TEST_info("ASN1_TIME_set_string() = %.*s", ptime->length, ptime->data);
         ASN1_TIME_free(ptime);
     }
 
@@ -798,7 +798,8 @@ static int test_table(struct testdata *tbl, int idx)
             error = 1;
         }
         if (ptime != NULL && !TEST_int_eq(ASN1_TIME_cmp_time_t(ptime, td->t), 0)) {
-            TEST_info("ASN1_TIME_to_generalizedtime(%s->%s) bad result", atime.data, ptime->data);
+            TEST_info("ASN1_TIME_to_generalizedtime(%s->%.*s) bad result", atime.data,
+                ptime->length, ptime->data);
             error = 1;
         }
         ASN1_TIME_free(ptime);
