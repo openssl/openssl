@@ -612,10 +612,10 @@ static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
     srv_ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
     srv_ctx->polling = 0;
 
-    return OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL)
-        && OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL)
-        && (srv_ctx->clean_transaction == NULL
-            || srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID));
+    return ((srv_ctx->clean_transaction == NULL
+                || srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID))
+        && OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL)
+        && OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL));
 }
 
 /*
