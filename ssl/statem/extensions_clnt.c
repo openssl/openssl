@@ -1272,8 +1272,10 @@ EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
              */
             int md_size = EVP_MD_get_size(md);
 
-            if (md_size <= 0)
+            if (md_size <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 return EXT_RETURN_FAIL;
+            }
             hlen += PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
                 + md_size;
         }
