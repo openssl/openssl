@@ -31,6 +31,42 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Changed TLS 1.3 clients to offer a PSK, and to attempt 0-RTT early data,
+   only when it can actually be used. A resumption ticket or external PSK is
+   offered only if some offered ciphersuite shares its handshake digest, and
+   0-RTT is attempted only if the first offered PSK's exact ciphersuite and,
+   where recorded, its ALPN protocol are offered and, for a ticket, it has not
+   aged out. When 0-RTT is not viable the client keeps the PSK for a 1-RTT
+   handshake. In particular a client-detected ALPN inconsistency now suppresses
+   0-RTT rather than failing with `SSL_R_INCONSISTENT_EARLY_DATA_ALPN`.
+
+   Fixed TLS 1.3 clients to reject a `psk_use_session` callback PSK whose master
+   key is empty, with `SSL_R_BAD_PSK`, instead of failing later in binder
+   computation.
+
+   *Viktor Dukhovni*
+
+ * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
+   protocol from an earlier connection after a resumption negotiated a
+   different protocol (or none), on both the server and the client,
+   which could otherwise affect a later 0-RTT decision.
+
+   *Daniel Kubec and Viktor Dukhovni*
+
+ * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
+   PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
+   ticket has aged out and an external PSK is offered in its place. The early
+   data was being encrypted with the retired ticket's secret rather than the
+   external PSK's, causing the server to reject it with a bad record MAC.
+
+   *Viktor Dukhovni*
+
+ * Fixed TLS 1.3 servers to reject early data when a resumed PSK's
+   ticket age is outside tolerance, per RFC 9846, instead of accepting
+   0-RTT data from a ticket that has aged out.
+
+   *Daniel Kubec*
+
  * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
    list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
    available in the active providers are advertised.  `PKCS7_sign_add_signer()`
