@@ -2338,6 +2338,13 @@ typedef struct dtls_listener_st {
      */
     size_t max_pending_conns;
 
+    /*
+     * Largest datagram the listener will receive, chosen by the application.
+     *
+     * Default: DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE
+     */
+    size_t max_dgram_size;
+
     CRYPTO_CONDVAR *notifier_cv;
 
     /*

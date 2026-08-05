@@ -1400,8 +1400,8 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
          * pending connection via SSL_CTX_set_new_pending_conn_cb().
          *
          * A return value of 0 from the callback means "discard this
-         * connection"; on non-zero we proceed with pending_conns
-         * registration.
+         * connection". On a non-zero return there is nothing more to do here:
+         * we already registered the connection above.
          */
         if (dl->ssl.ctx->new_pending_conn_cb != NULL) {
             int keep;
@@ -1826,10 +1826,11 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     dl->max_pending_conns = DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS;
 
     /*
-     * Seed the demux receive-buffer size with DTLS Listener default.
+     * The listener owns its receive-buffer size independent of any
+     * network BIO's send-path MTU.
      */
-    ossl_dgram_demux_set_mtu(dl->demux,
-        (unsigned int)DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE);
+    dl->max_dgram_size = DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE;
+    ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
 
     /* Handle cookie validation flags */
     if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
@@ -2506,10 +2507,12 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
     ossl_crypto_mutex_lock(dl->mutex);
 
     /*
-     * The demux tracks the new BIO's MTU: that is where datagrams actually
-     * arrive, so it is the authoritative receive-buffer size.
+     * The demux receive-buffer size is the listener's configured maximum
+     * datagram size, independent of the network BIO's path MTU. Size the demux
+     * to that value for whatever BIO is attached.
      */
     ossl_dgram_demux_set_bio(dl->demux, bio);
+    ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
 
     old_rbio = dl->net_rbio;
 
@@ -2803,7 +2806,7 @@ int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *val
             *value = ossl_time2ms(dl->pending_timeout);
         break;
     case SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE:
-        *value = (uint64_t)ossl_dgram_demux_get_mtu(dl->demux);
+        *value = (uint64_t)dl->max_dgram_size;
         break;
     default:
         ERR_raise(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE);
@@ -2906,6 +2909,8 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
         if (!ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)value)) {
             ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
             ret = 0;
+        } else {
+            dl->max_dgram_size = (size_t)value;
         }
         break;
     default:

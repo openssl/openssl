@@ -169,11 +169,6 @@ void ossl_dgram_demux_set_bio(DGRAM_DEMUX *demux, BIO *net_bio);
 int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu);
 
 /*
- * Returns the current MTU in bytes used to size receive buffers.
- */
-size_t ossl_dgram_demux_get_mtu(const DGRAM_DEMUX *demux);
-
-/*
  * Set the default packet handler. This is called for every incoming datagram.
  * If a default packet handler is not set, received datagrams are silently
  * dropped. A default packet handler may be unset by passing NULL.

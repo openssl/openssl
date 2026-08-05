@@ -184,18 +184,6 @@ int ossl_dgram_demux_set_mtu(DGRAM_DEMUX *demux, unsigned int mtu)
     return 1;
 }
 
-size_t ossl_dgram_demux_get_mtu(const DGRAM_DEMUX *demux)
-{
-    size_t mtu;
-
-    if (demux->require_mutex)
-        ossl_crypto_mutex_lock(demux->mutex);
-    mtu = demux->mtu;
-    if (demux->require_mutex)
-        ossl_crypto_mutex_unlock(demux->mutex);
-    return mtu;
-}
-
 void ossl_dgram_demux_set_default_handler(DGRAM_DEMUX *demux,
     ossl_dgram_demux_cb_fn *cb,
     void *cb_arg)
