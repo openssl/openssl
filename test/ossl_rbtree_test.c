@@ -10,6 +10,7 @@
 #include <string.h>
 
 #include "testutil.h"
+#include "internal/nelem.h"
 #include "internal/ossl_rbtree.h"
 
 static const char *test_data[] = {
@@ -70,7 +71,7 @@ static int test_rbt_insert(void)
 
     OSSL_RBT_INIT(ossl_rbt, &rbt_head);
 
-    for (i = 26; i != 0; i--) {
+    for (i = OSSL_NELEM(test_data); i != 0; i--) {
         node_rbt = &nodes_rbt[i - 1];
         OSSL_RBT_INIT_RBE(ossl_rbt, node_rbt);
         node_rbt->rbt_data = test_data[i - 1];
@@ -101,7 +102,7 @@ static int test_rbt_min(void)
         return 0;
     }
 
-    for (i = 0; i < 26; i++) {
+    for (i = 0; i < OSSL_NELEM(test_data); i++) {
         match = strcmp(node_rbt->rbt_data, test_data[i]);
         if (!TEST_int_eq(match, 0)) {
             TEST_info("%s %s != %s @ %u", OPENSSL_FUNC,
@@ -134,7 +135,7 @@ static int test_rbt_max(void)
         return 0;
     }
 
-    for (i = 26; i > 0; i--) {
+    for (i = OSSL_NELEM(test_data); i > 0; i--) {
         match = strcmp(node_rbt->rbt_data, test_data[i - 1]);
         if (!TEST_int_eq(match, 0)) {
             TEST_info("%s %s != %s @ %u", OPENSSL_FUNC,
@@ -161,7 +162,7 @@ static int test_rbt_find_remove(void)
     if (test_rbt_insert() == 0)
         return 0;
 
-    for (i = 0; i < 26; i++) {
+    for (i = 0; i < OSSL_NELEM(test_data); i++) {
         key_rbt.rbt_data = test_data[i];
         node_rbt = OSSL_RBT_FIND(ossl_rbt, &rbt_head, &key_rbt);
         if (!TEST_ptr(node_rbt)) {
@@ -202,7 +203,7 @@ static int test_rbt_dup_insert(void)
     if (test_rbt_insert() == 0)
         return 0;
 
-    for (i = 0; i < 26; i++) {
+    for (i = 0; i < OSSL_NELEM(test_data); i++) {
         OSSL_RBT_INIT_RBE(ossl_rbt, &insert_rbt);
         insert_rbt.rbt_data = test_data[i];
         conflict_rbt = OSSL_RBT_INSERT(ossl_rbt, &rbt_head, &insert_rbt);
