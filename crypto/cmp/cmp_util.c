@@ -285,3 +285,29 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
     *tgt = new;
     return 1;
 }
+
+int ossl_cmp_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert,
+    int flags)
+{
+    if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    return X509_add_cert(*p_sk, cert, flags);
+}
+
+int ossl_cmp_x509_add_certs_new(STACK_OF(X509) **p_sk,
+    const STACK_OF(X509) *certs, int flags)
+{
+    int n = sk_X509_num(certs /* may be NULL */);
+    int i;
+
+    for (i = 0; i < n; i++) {
+        int j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
+        /* if prepend, add certs in reverse order to keep original order */
+
+        if (!ossl_cmp_x509_add_cert_new(p_sk, sk_X509_value(certs, j), flags))
+            return 0;
+    }
+    return 1;
+}

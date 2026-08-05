@@ -619,7 +619,7 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
         if (X509_verify_cert(csc) <= 0)
             goto err;
 
-        if (!ossl_x509_add_certs_new(&chain, X509_STORE_CTX_get0_chain(csc),
+        if (!ossl_cmp_x509_add_certs_new(&chain, X509_STORE_CTX_get0_chain(csc),
                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                     | X509_ADD_FLAG_NO_SS)) {
             sk_X509_free(chain);
