@@ -534,7 +534,6 @@ const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
     return x->data;
 }
 
-/* |max_len| excludes NUL terminator and may be 0 to indicate no restriction */
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
     const char *sep, size_t max_len)
 {
@@ -564,11 +563,13 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
         current = sk_ASN1_UTF8STRING_value(text, i);
         length = ASN1_STRING_get_length(current);
         if (i > 0 && sep_len > 0) {
-            strncpy(p, sep, sep_len + 1); /* using + 1 to silence gcc warning */
+            memcpy(p, sep, sep_len);
             p += sep_len;
         }
-        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
-        p += length;
+        if (length > 0) {
+            memcpy(p, ASN1_STRING_get0_data(current), length);
+            p += length;
+        }
     }
     *p = '\0';
 
