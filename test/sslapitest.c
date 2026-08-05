@@ -16838,15 +16838,26 @@ static int mfail_hs_step(SSL *serverssl, SSL *clientssl, int version, int step)
     return rc <= 0 && err == SSL_ERROR_WANT_READ;
 }
 
+static void mfail_keylog_cb(const SSL *ssl, const char *line)
+{
+}
+
 /* Create the SSL objects for a |version| handshake and advance it |steps| */
-static int mfail_hs_setup(int version, SSL_CTX **sctx, SSL_CTX **cctx,
-    SSL **serverssl, SSL **clientssl, int steps)
+static int mfail_hs_setup(int version, int keylog, SSL_CTX **sctx,
+    SSL_CTX **cctx, SSL **serverssl, SSL **clientssl, int steps)
 {
     int i;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-            TLS_client_method(), version, version, sctx, cctx, cert, privkey))
-        || !TEST_true(create_ssl_objects(*sctx, *cctx, serverssl, clientssl,
+            TLS_client_method(), version, version, sctx, cctx, cert, privkey)))
+        return 0;
+
+    if (keylog) {
+        SSL_CTX_set_keylog_callback(*sctx, mfail_keylog_cb);
+        SSL_CTX_set_keylog_callback(*cctx, mfail_keylog_cb);
+    }
+
+    if (!TEST_true(create_ssl_objects(*sctx, *cctx, serverssl, clientssl,
             NULL, NULL)))
         return 0;
 
@@ -16857,13 +16868,14 @@ static int mfail_hs_setup(int version, SSL_CTX **sctx, SSL_CTX **cctx,
 }
 
 /* Trigger memory failures in a single handshake half-step */
-static int test_ssl_handshake_mfail(int version, int step)
+static int test_ssl_handshake_mfail_ex(int version, int step, int keylog)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     int ret = -1, i;
 
-    if (!mfail_hs_setup(version, &sctx, &cctx, &serverssl, &clientssl, step))
+    if (!mfail_hs_setup(version, keylog, &sctx, &cctx, &serverssl, &clientssl,
+            step))
         goto end;
 
     MFAIL_start();
@@ -16884,6 +16896,11 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     return ret;
+}
+
+static int test_ssl_handshake_mfail(int version, int step)
+{
+    return test_ssl_handshake_mfail_ex(version, step, 0);
 }
 
 #ifndef OSSL_NO_USABLE_TLS1_3
@@ -16937,6 +16954,82 @@ static int test_tls12_hs_server_finish_mfail(void)
 static int test_tls12_hs_client_finish_mfail(void)
 {
     return test_ssl_handshake_mfail(TLS1_2_VERSION, 4);
+}
+#endif
+
+#ifndef OSSL_NO_USABLE_TLS1_3
+/* Covers the keylog output paths in the TLSv1.3 key schedule */
+static int test_tls13_hs_keylog_mfail(void)
+{
+    return test_ssl_handshake_mfail_ex(TLS1_3_VERSION, 2, 1);
+}
+#endif
+
+#ifndef OPENSSL_NO_TLS1_2
+/* Covers the master secret keylog output in the Finished construction */
+static int test_tls12_hs_keylog_mfail(void)
+{
+    return test_ssl_handshake_mfail_ex(TLS1_2_VERSION, 2, 1);
+}
+#endif
+
+#if !defined(OPENSSL_NO_PSK) && !defined(OPENSSL_NO_TLS1_2) \
+    && !defined(OSSL_NO_USABLE_TLS1_3)
+/* Trigger memory failures in the TLSv1.2 PSK client key exchange step */
+static int test_tls12_hs_psk_mfail(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int ret = -1, i;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_2_VERSION, TLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        goto end;
+
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "PSK-AES128-GCM-SHA256"))
+        || !TEST_true(SSL_CTX_set_cipher_list(sctx, "PSK-AES128-GCM-SHA256")))
+        goto end;
+
+    SSL_CTX_set_psk_client_callback(cctx, psk_client_cb);
+    SSL_CTX_set_psk_server_callback(sctx, psk_server_cb);
+    srvid = pskid;
+    psk_client_cb_cnt = 0;
+    psk_server_cb_cnt = 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    clientpsk = serverpsk = create_a_psk(clientssl, SHA384_DIGEST_LENGTH);
+    if (!TEST_ptr(clientpsk) || !TEST_true(SSL_SESSION_up_ref(clientpsk)))
+        goto end;
+
+    for (i = 0; i < 2; i++)
+        if (!TEST_true(mfail_hs_step(serverssl, clientssl, TLS1_2_VERSION, i)))
+            goto end;
+
+    MFAIL_start();
+    ret = mfail_hs_step(serverssl, clientssl, TLS1_2_VERSION, 2);
+    MFAIL_end();
+
+    if (ret == 1 && !mfail_was_triggered()) {
+        for (i = 3; i < MFAIL_HS_NUM_STEPS; i++)
+            if (!mfail_hs_step(serverssl, clientssl, TLS1_2_VERSION, i)) {
+                ret = 0;
+                break;
+            }
+    }
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    return ret;
 }
 #endif
 
@@ -17449,6 +17542,16 @@ int setup_tests(void)
     else
         ADD_MFAIL_NO_CHECK_TEST(test_tls12_hs_server_finish_mfail);
     ADD_MFAIL_TEST(test_tls12_hs_client_finish_mfail);
+#endif
+#ifndef OSSL_NO_USABLE_TLS1_3
+    ADD_MFAIL_NO_CHECK_TEST(test_tls13_hs_keylog_mfail);
+#endif
+#ifndef OPENSSL_NO_TLS1_2
+    ADD_MFAIL_NO_CHECK_TEST(test_tls12_hs_keylog_mfail);
+#endif
+#if !defined(OPENSSL_NO_PSK) && !defined(OPENSSL_NO_TLS1_2) \
+    && !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_MFAIL_TEST(test_tls12_hs_psk_mfail);
 #endif
     return 1;
 
