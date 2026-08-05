@@ -1385,6 +1385,17 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
             goto release;
 
         /*
+         * Register the connection in pending_conns before running the
+         * application callback. This is to avoid a race condition where
+         * another thread grabs the lock and tries to register a connection
+         * for this address.
+         */
+        if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
+            dtls_listener_connection_free(conn_ssl);
+            goto release;
+        }
+
+        /*
          * Give the application a chance to decorate or veto the new
          * pending connection via SSL_CTX_set_new_pending_conn_cb().
          *
@@ -1395,35 +1406,40 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
         if (dl->ssl.ctx->new_pending_conn_cb != NULL) {
             int keep;
 
+            sc = SSL_CONNECTION_FROM_SSL_ONLY(conn_ssl);
+            if (sc == NULL || sc->d1 == NULL) {
+                ossl_dgram_conn_lookup_unregister(dl->pending_conns, &urxe->peer);
+                dtls_listener_connection_free(conn_ssl);
+                goto release;
+            }
+
             /*
-             * Invoke the application callback without the mutex held,
-             * since the callback may try to acquire the mutex.
+             * Mark the connection being_driven while the mutex is dropped for
+             * the callback. This keeps the tick loop away from this connection.
              */
+            sc->d1->being_driven = 1;
             ossl_crypto_mutex_unlock(dl->mutex);
             keep = dl->ssl.ctx->new_pending_conn_cb(dl->ssl.ctx, conn_ssl,
                 dl->ssl.ctx->new_pending_conn_arg);
             ossl_crypto_mutex_lock(dl->mutex);
 
             if (!keep) {
+                /*
+                 * The pending callback doesn't want this connection, so
+                 * unregister and free it. While the mutex was dropped a
+                 * concurrent handler may have found this same connection and
+                 * injected datagrams into its RX queue; freeing releases them
+                 * back to the demux via ossl_dtls_rx_free(), so nothing leaks.
+                 * being_driven kept the tick away, so the connection still
+                 * holds only its single reference and the free is safe.
+                 */
+                ossl_dgram_conn_lookup_unregister(dl->pending_conns,
+                    &sc->d1->peer_addr);
                 dtls_listener_connection_free(conn_ssl);
                 goto release;
             }
 
-            /*
-             * The lock was released for the callback, so the earlier capacity
-             * check is stale: another thread may have filled the pending table
-             * meanwhile.
-             */
-            if (ossl_dgram_conn_lookup_num_items(dl->pending_conns)
-                >= dl->max_pending_conns) {
-                dtls_listener_connection_free(conn_ssl);
-                goto release;
-            }
-        }
-
-        if (!ossl_dgram_conn_lookup_register(dl->pending_conns, urxe, conn_ssl)) {
-            dtls_listener_connection_free(conn_ssl);
-            goto release;
+            sc->d1->being_driven = 0;
         }
     }
 
