@@ -1628,10 +1628,18 @@ static int do_body(X509 **xret, EVP_PKEY *pkey, X509 *x509,
                 if (j < 0) {
                     BIO_printf(bio_err,
                         "The %s field is different between\n"
-                        "CA certificate (%s) and the request (%s)\n",
-                        cv->name,
-                        ((str2 == NULL) ? "NULL" : (char *)ASN1_STRING_get0_data(str2)),
-                        ((str == NULL) ? "NULL" : (char *)ASN1_STRING_get0_data(str)));
+                        "CA certificate (",
+                        cv->name);
+                    if (str2 == NULL)
+                        BIO_puts(bio_err, "NULL");
+                    else
+                        ASN1_STRING_print_ex(bio_err, str2, ASN1_STRFLGS_RFC2253);
+                    BIO_puts(bio_err, ") and the request (");
+                    if (str == NULL)
+                        BIO_puts(bio_err, "NULL");
+                    else
+                        ASN1_STRING_print_ex(bio_err, str, ASN1_STRFLGS_RFC2253);
+                    BIO_puts(bio_err, ")\n");
                     goto end;
                 }
             } else {
