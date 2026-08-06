@@ -228,6 +228,9 @@ static int poll_translate(SSL_POLL_ITEM *items,
                 ossl_quic_poll_translate_test_step_cb_arg);
 
         switch (item->desc.type) {
+        case BIO_POLL_DESCRIPTOR_TYPE_NONE:
+            break;
+
         case BIO_POLL_DESCRIPTOR_TYPE_SSL:
             ssl = item->desc.value.ssl;
             if (ssl == NULL)
@@ -383,6 +386,9 @@ static int poll_readout(SSL_POLL_ITEM *items,
         revents = 0;
 
         switch (item->desc.type) {
+        case BIO_POLL_DESCRIPTOR_TYPE_NONE:
+            break;
+
         case BIO_POLL_DESCRIPTOR_TYPE_SSL:
             ssl = item->desc.value.ssl;
             if (ssl == NULL)
