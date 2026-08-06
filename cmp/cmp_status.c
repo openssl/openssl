@@ -11,6 +11,7 @@
 
 /* CMP functions for PKIStatusInfo handling and PKIMessage decomposition */
 
+#include "internal/deprecated.h"
 #include <libcmp/names.h>
 
 #include <stdio.h>

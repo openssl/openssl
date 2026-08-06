@@ -11,6 +11,7 @@
 
 /* CMP functions for PKIHeader handling */
 
+#include "internal/deprecated.h"
 #include <libcmp/names.h>
 #include "cmp_local.h"
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
