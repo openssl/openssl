@@ -674,8 +674,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     size_t readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len || msg_hdr->msg_len > dtls1_max_handshake_message_len(s))
+    if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len || msg_hdr->msg_len > dtls1_max_handshake_message_len(s)) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto err;
+    }
 
     if (frag_len == 0) {
         return DTLS1_HM_FRAGMENT_RETRY;
@@ -689,8 +691,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
 
     if (item == NULL) {
         frag = dtls1_hm_fragment_new(msg_hdr->msg_len, 1);
-        if (frag == NULL)
+        if (frag == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
+        }
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
         frag->msg_header.frag_len = frag->msg_header.msg_len;
         frag->msg_header.frag_off = 0;
@@ -699,6 +703,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
         if (frag->msg_header.msg_len != msg_hdr->msg_len) {
             item = NULL;
             frag = NULL;
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_BAD_LENGTH);
             goto err;
         }
     }
@@ -734,8 +739,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     RSMBLY_BITMASK_MARK(frag->reassembly, (long)msg_hdr->frag_off,
         (long)(msg_hdr->frag_off + frag_len));
 
-    if (!ossl_assert(msg_hdr->msg_len > 0))
+    if (!ossl_assert(msg_hdr->msg_len > 0)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         goto err;
+    }
     RSMBLY_BITMASK_IS_COMPLETE(frag->reassembly, (long)msg_hdr->msg_len,
         is_complete);
 
@@ -747,7 +754,7 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
     if (item == NULL) {
         item = pitem_new(seq64be, frag);
         if (item == NULL) {
-            i = -1;
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
 
@@ -758,8 +765,10 @@ static int dtls1_reassemble_fragment(SSL_CONNECTION *s,
          * would have returned it and control would never have reached this
          * branch.
          */
-        if (!ossl_assert(item != NULL))
+        if (!ossl_assert(item != NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
     }
 
     return DTLS1_HM_FRAGMENT_RETRY;
@@ -781,8 +790,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
     size_t readbytes;
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
 
-    if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len)
+    if ((msg_hdr->frag_off + frag_len) > msg_hdr->msg_len) {
+        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
         goto err;
+    }
 
     /* Try to find item in queue, to prevent duplicate entries */
     memset(seq64be, 0, sizeof(seq64be));
@@ -818,12 +829,16 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             return dtls1_reassemble_fragment(s, msg_hdr);
         }
 
-        if (frag_len > dtls1_max_handshake_message_len(s))
+        if (frag_len > dtls1_max_handshake_message_len(s)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_EXCESSIVE_MESSAGE_SIZE);
             goto err;
+        }
 
         frag = dtls1_hm_fragment_new(frag_len, 0);
-        if (frag == NULL)
+        if (frag == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
+        }
 
         memcpy(&(frag->msg_header), msg_hdr, sizeof(*msg_hdr));
 
@@ -841,8 +856,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
         }
 
         item = pitem_new(seq64be, frag);
-        if (item == NULL)
+        if (item == NULL) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
+        }
 
         item = pqueue_insert(s->d1->buffered_messages, item);
         /*
@@ -853,8 +870,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
          * have been processed with |dtls1_reassemble_fragment|, above, or
          * the record will have been discarded.
          */
-        if (!ossl_assert(item != NULL))
+        if (!ossl_assert(item != NULL)) {
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
+        }
     }
 
     return DTLS1_HM_FRAGMENT_RETRY;
