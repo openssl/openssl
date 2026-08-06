@@ -154,6 +154,7 @@ $code.=<<___;
 .text
 
 .globl	ChaCha20_ctr32_dflt
+.hidden ChaCha20_ctr32_dflt
 .type	ChaCha20_ctr32_dflt,%function
 .align	5
 ChaCha20_ctr32_dflt:
@@ -467,6 +468,7 @@ $code.=<<___;
 
 #ifdef	__KERNEL__
 .globl	ChaCha20_neon
+.hidden ChaCha20_neon
 #endif
 .type	ChaCha20_neon,%function
 .align	5
