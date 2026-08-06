@@ -22,6 +22,23 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 4.0
 
+=head3 The CMP and CRMF API has moved to libcmp
+
+The Certificate Management Protocol and Certificate Request Message Format
+implementation has moved to a new library, libcmp. The copies remaining in
+libcrypto are deprecated, and stay exported for ABI compatibility until a
+future major release.
+
+Applications should include F<< <libcmp/cmp.h> >>, F<< <libcmp/cmp_util.h> >>
+and F<< <libcmp/crmf.h> >> in place of the F<< <openssl/...> >> headers of the
+same names, and link with libcmp; a F<libcmp.pc> pkg-config file is installed.
+The API itself is unchanged, so no source changes are needed.
+
+Both steps are required: libcmp exports the API under its own symbol names, so
+switching headers without also linking libcmp will fail to link.
+
+See L<libcmp(7)>.
+
 =head3 Deprecation of EVP_CIPHER_CTX_get_num() and EVP_CIPHER_CTX_set_num()
 
 These functions have been deprecated in OpenSSL 4.1 since they were primarily
