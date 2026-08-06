@@ -1108,6 +1108,32 @@ ossl_cmp_certrepmessage_get0_certresponse(const OSSL_CMP_CERTREPMESSAGE *crm,
     return NULL;
 }
 
+/* transfer cert to the given libctx, replacing it by a re-parsed copy */
+static X509 *cert_to_libctx(X509 *cert, OSSL_LIB_CTX *libctx, const char *propq)
+{
+    X509 *res = X509_new_ex(libctx, propq);
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len;
+
+    if (res == NULL)
+        goto err;
+    len = i2d_X509(cert, &der);
+    if (len < 0)
+        goto err;
+    p = der;
+    if (d2i_X509(&res, &p, len) == NULL)
+        goto err;
+    OPENSSL_free(der);
+    X509_free(cert);
+    return res;
+
+err:
+    OPENSSL_free(der);
+    X509_free(res);
+    return cert;
+}
+
 /*-
  * Retrieve newly enrolled certificate and key from the given certResponse crep.
  * Stores any centrally generated key in ctx->newPkey.
@@ -1177,7 +1203,7 @@ X509 *ossl_cmp_certresponse_get1_cert(const OSSL_CMP_CTX *ctx, const OSSL_CMP_CE
     if (crt == NULL)
         ERR_raise(ERR_LIB_CMP, CMP_R_CERTIFICATE_NOT_FOUND);
     else
-        (void)ossl_x509_set0_libctx(crt, ctx->libctx, ctx->propq);
+        crt = cert_to_libctx(crt, ctx->libctx, ctx->propq);
     return crt;
 }
 
