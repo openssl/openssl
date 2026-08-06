@@ -21,6 +21,52 @@
 
 static const char *infile;
 
+static const char *duplicate_field_configs[] = {
+    "[default]\nbasicConstraints=CA:true,CA:false\n",
+    "[default]\nbasicConstraints=pathlen:0,pathlen:1\n",
+    "[default]\nbasicAttConstraints=authority:true,authority:false\n",
+    "[default]\nbasicAttConstraints=pathlen:0,pathlen:1\n",
+    "[default]\npolicyConstraints=requireExplicitPolicy:0,requireExplicitPolicy:1\n",
+    "[default]\npolicyConstraints=inhibitPolicyMapping:0,inhibitPolicyMapping:1\n",
+};
+
+static int test_duplicate_field(int idx)
+{
+    const char *config = duplicate_field_configs[idx];
+    size_t config_len = strlen(config);
+    BIO *in = NULL;
+    CONF *conf = NULL;
+    X509 *cert = NULL;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    ERR_clear_error();
+    if (!TEST_ptr(in = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(BIO_write(in, config, (int)config_len),
+            (int)config_len)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, in, NULL), 0)
+        || !TEST_ptr(cert = X509_new()))
+        goto end;
+
+    X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+    X509V3_set_nconf(&ctx, conf);
+    ERR_clear_error();
+    if (!TEST_false(X509V3_EXT_add_nconf(conf, &ctx, "default", cert)))
+        goto end;
+
+    if (!TEST_err_r(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD))
+        goto end;
+
+    ret = 1;
+end:
+    X509_free(cert);
+    NCONF_free(conf);
+    BIO_free(in);
+    ERR_clear_error();
+    return ret;
+}
+
 static int test_pathlen(void)
 {
     X509 *x = NULL;
@@ -1185,6 +1231,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_pathlen);
+    ADD_ALL_TESTS(test_duplicate_field, OSSL_NELEM(duplicate_field_configs));
 #ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);
     ADD_TEST(test_addr_ranges);
