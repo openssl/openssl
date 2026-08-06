@@ -1,4 +1,5 @@
 LIBS=../libcrypto
+
 $OPENSSLSRC=\
         cmp_asn.c cmp_ctx.c cmp_err.c cmp_util.c \
         cmp_status.c cmp_hdr.c cmp_protect.c cmp_msg.c cmp_vfy.c \
@@ -12,4 +13,17 @@ IF[{- !$disabled{'crmf'} -}]
   $OPENSSLSRC=$OPENSSLSRC crmf_asn.c crmf_err.c crmf_lib.c crmf_pbm.c
 ENDIF
 
+# The CMP and CRMF sources are compiled twice from the same source of
+# truth: once for libcrypto, which keeps exporting the OSSL_CMP_* and
+# OSSL_CRMF_* symbols through the 4.x ABI, and once for libcmp, where
+# libcmp_names.h renames every public symbol to its libcmp-native
+# OSSL_LIBCMP_* / OSSL_LIBCRMF_* equivalent.
 SOURCE[../libcrypto]=$OPENSSLSRC
+
+SOURCE[../libcmp]=$OPENSSLSRC
+DEFINE[../libcmp]=OSSL_LIBCMP_NAMES
+INCLUDE[../libcmp]=.
+
+GENERATE[libcmp_names.h]=../util/mklibcmpnames.pl
+DEPEND[libcmp_names.h]=../util/libcmp.num
+DEPEND[""]=libcmp_names.h
