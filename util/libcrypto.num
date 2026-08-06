@@ -5751,3 +5751,4 @@ PKCS12_parse_ex                         ?	4_2_0	EXIST::FUNCTION:
 PKCS12_check_version                    ?	4_2_0	EXIST::FUNCTION:
 CRYPTO_new_ex_data_ex                   ?	4_2_0	EXIST::FUNCTION:
 X509_digest_sig_ex                      ?	4_2_0	EXIST::FUNCTION:
+CMS_SignedData_it                       ?	4_2_0	EXIST::FUNCTION:CMS

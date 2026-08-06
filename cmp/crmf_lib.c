@@ -642,7 +642,6 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
 }
 
 #ifndef OPENSSL_NO_CMS
-DECLARE_ASN1_ITEM(CMS_SignedData) /* copied from cms_local.h */
 
 /* check for KGA authorization implied by CA flag or by explicit EKU cmKGA */
 static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose, const X509 *x, int ca)
