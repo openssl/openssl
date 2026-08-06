@@ -12,6 +12,14 @@
 
 #include "crypto/pkcs7.h"
 
+/*
+ * The public PKCS7 state field once held PKCS7_S_HEADER/BODY/TAIL; those
+ * values are no longer used but remain public.  Use a separate bit of the
+ * field, clear of the public values, as an internal flag recording that the
+ * content octet string is an indefinite-length (NDEF) streaming placeholder.
+ */
+#define PKCS7_STATE_STREAMING 0x100
+
 STACK_OF(X509) *pkcs7_get0_certificates(const PKCS7 *p7);
 const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7);
 OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
