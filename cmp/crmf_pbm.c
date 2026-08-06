@@ -11,6 +11,7 @@
  * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
+#include "internal/deprecated.h"
 #include <libcmp/names.h>
 #include "crmf_local.h"
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
