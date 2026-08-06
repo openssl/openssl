@@ -19,7 +19,6 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/ess.h"
-#include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 #include "cms_local.h"
 
 /* CMS SignedData Utilities */
@@ -849,8 +848,8 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
         if (si->signer != NULL) {
-            if (!ossl_x509_add_cert_new(&signers, si->signer,
-                    X509_ADD_FLAG_DEFAULT)) {
+            if ((signers == NULL && (signers = sk_X509_new_null()) == NULL)
+                || !X509_add_cert(signers, si->signer, X509_ADD_FLAG_DEFAULT)) {
                 sk_X509_free(signers);
                 return NULL;
             }
