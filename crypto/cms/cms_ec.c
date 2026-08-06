@@ -12,7 +12,6 @@
 #include <openssl/cms.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
-#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
@@ -43,7 +42,7 @@ static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
         return pkey;
     } else if (ptype == V_ASN1_OBJECT) {
         const ASN1_OBJECT *poid = pval;
-        char groupname[OSSL_MAX_NAME_SIZE];
+        char groupname[CMS_MAX_NAME_SIZE];
 
         /* type == V_ASN1_OBJECT => the parameters are given by an asn1 OID */
         pctx = EVP_PKEY_CTX_new_from_name(libctx, "EC", propq);
@@ -173,7 +172,7 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     int ptype = 0;
     const void *parameter = NULL;
 
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         return 0;

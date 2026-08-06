@@ -12,7 +12,6 @@
 #include <openssl/dh.h>
 #include <openssl/err.h>
 #include <openssl/core_names.h>
-#include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
 
@@ -96,7 +95,7 @@ static int dh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     const ASN1_OBJECT *aoid;
     const void *parameter = NULL;
     int ptype = 0;
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
 
     if (!CMS_RecipientInfo_kari_get0_alg(ri, &alg, &ukm))
         goto err;
