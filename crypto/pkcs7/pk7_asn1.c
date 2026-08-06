@@ -39,7 +39,7 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_STREAM_PRE:
-        if (PKCS7_stream(&sarg->boundary, *pp7) <= 0)
+        if (ossl_pkcs7_stream(*pp7) <= 0)
             return 0;
         /* fall through */
     case ASN1_OP_DETACHED_PRE:
@@ -53,6 +53,12 @@ static int pk7_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (PKCS7_dataFinal(*pp7, sarg->ndef_bio) <= 0)
             return 0;
         break;
+
+    case ASN1_OP_STREAM_CONTENT: {
+        ASN1_STRING **content = exarg;
+
+        *content = ossl_pkcs7_stream_content(*pp7);
+    } break;
     }
     return 1;
 }
