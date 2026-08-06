@@ -10,7 +10,6 @@
  */
 
 #include "cmp_local.h"
-#include "crypto/asn1.h" /* for ossl_X509_ALGOR_from_nid() */
 
 /*
  * This function is also used by the internal verify_PBMAC() in cmp_vfy.c.
@@ -208,8 +207,13 @@ static X509_ALGOR *pbmac_algor(const OSSL_CMP_CTX *ctx)
         goto err;
     if (!ASN1_STRING_set_data(pbm_str, pbm_der, pbm_der_len))
         goto err;
-    alg = ossl_X509_ALGOR_from_nid(NID_id_PasswordBasedMAC,
-        V_ASN1_SEQUENCE, pbm_str);
+    alg = X509_ALGOR_new();
+    if (alg == NULL
+        || !X509_ALGOR_set0(alg, OBJ_nid2obj(NID_id_PasswordBasedMAC),
+            V_ASN1_SEQUENCE, pbm_str)) {
+        X509_ALGOR_free(alg);
+        alg = NULL;
+    }
 err:
     if (alg == NULL)
         ASN1_STRING_free(pbm_str);
