@@ -1852,6 +1852,16 @@ EOF
       my $shared_imp = "";
       $shared_imp .= ' '.$target{shared_impflag}.basename($import)
           if defined $target{shared_impflag} && defined $import;
+      # macOS records library version metadata via link flags, and
+      # LIB_LDFLAGS carries them with the global shared library version.
+      # For a library with a shlib_version of its own, append overriding
+      # flags; the linker uses the last occurrence.
+      my $shared_versions = "";
+      if ($target{shared_target} eq "darwin-shared") {
+          my $v = platform->shlib_version($args{lib});
+          $shared_versions = " -current_version $v -compatibility_version $v"
+              if $v ne $config{shlib_version};
+      }
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
 
       # There is at least one platform where the compiler-as-linker needs to
@@ -1914,7 +1924,7 @@ EOF
       if (!run_on_windows()) {
           $recipe .= <<"EOF";
 $full: $fulldeps
-	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_versions$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
@@ -1925,7 +1935,7 @@ $full: $fulldeps
 	\$(file >\$@.lst, \\
 		$fullobjs \\
 	)
-	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_versions$shared_imp \\
 		-o $full$shared_def \\
 		@\$@.lst \\
 		$linklibs \$(LIB_EX_LIBS)
