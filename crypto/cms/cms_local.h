@@ -66,6 +66,16 @@ struct CMS_ContentInfo_st {
         void *otherData;
     } d;
     CMS_CTX ctx;
+    /*-
+     * Set when the content octet string is empty and is to be filled at
+     * dataFinal time from the memory BIO ossl_cms_content_bio() returns.
+     * Cleared:
+     * - once the string has been filled;
+     * - when the content is detached;
+     * - when streaming is set up, where the encoder writes the content out
+     *   and records its position in the string rather than filling it.
+     */
+    int contentIncomplete;
 };
 
 DEFINE_STACK_OF(CMS_CertificateChoices)

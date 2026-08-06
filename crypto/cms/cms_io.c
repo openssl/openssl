@@ -28,7 +28,7 @@ int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
         *pos = ASN1_OCTET_STRING_new();
     if (*pos != NULL) {
         (*pos)->flags |= ASN1_STRING_FLAG_NDEF;
-        (*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+        cms->contentIncomplete = 0;
         *boundary = &(*pos)->data;
         return 1;
     }
