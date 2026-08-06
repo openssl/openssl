@@ -704,11 +704,21 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     if (!ec->havenocert && !ec->debug)
         ec->harderr = cms_ktri_harderr_ok(ktri->pctx, pkey);
 
-    if (evp_pkey_decrypt_alloc(ktri->pctx, &ek, &eklen, 0,
-            ktri->encryptedKey->data,
+    if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen, ktri->encryptedKey->data,
             ktri->encryptedKey->length)
-        <= 0)
+            <= 0
+        || (ek = OPENSSL_malloc(eklen)) == NULL)
         goto err;
+
+    if (EVP_PKEY_decrypt(ktri->pctx, ek, &eklen, ktri->encryptedKey->data,
+            ktri->encryptedKey->length)
+            <= 0
+        || eklen == 0) {
+        ERR_raise(ERR_LIB_CMS, ERR_R_EVP_LIB);
+        OPENSSL_clear_free(ek, eklen);
+        ek = NULL;
+        goto err;
+    }
 
     /* Use the same accepted key lengths as content initialization. */
     if (cctx != NULL
