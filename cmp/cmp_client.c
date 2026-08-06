@@ -9,7 +9,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "libcmp_names.h"
+#include <libcmp/names.h>
 #include "cmp_local.h"
 #include <inttypes.h>
 
