@@ -18,6 +18,11 @@
 #error "<openssl/cmp_util.h> was included before <libcmp/cmp_util.h>"
 #endif
 
+/*
+ * OSSL_LIBCMP_NAMES also tells the <openssl/...> headers that the
+ * declarations are being reached through libcmp, where the API is not
+ * deprecated.
+ */
 #ifndef OSSL_LIBCMP_NAMES
 #define OSSL_LIBCMP_NAMES
 #endif
