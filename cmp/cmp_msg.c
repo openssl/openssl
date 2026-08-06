@@ -11,6 +11,7 @@
 
 /* CMP functions for PKIMessage construction */
 
+#include "internal/deprecated.h"
 #include <libcmp/names.h>
 #include "cmp_local.h"
 
