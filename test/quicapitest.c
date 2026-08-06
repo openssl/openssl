@@ -3842,13 +3842,14 @@ err:
 }
 
 #define PENDING_LIMIT 5
+#define HANDSHAKE_STEPS 10
 static int test_pending_limit(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl_listener = NULL, *serverssl = NULL;
-    SSL *extra_clients[PENDING_LIMIT * 2] = { 0 };
+    SSL *extra_clients[PENDING_LIMIT * 2] = { NULL };
     BIO *bio;
-    unsigned int i, watchdog;
+    unsigned int i, handshake_step;
     int done;
     int testresult = 0;
     int ok;
@@ -3862,7 +3863,7 @@ static int test_pending_limit(void)
         goto end;
 
     ok = SSL_set_feature_request_uint(serverssl_listener,
-        SSL_VALUE_QUIC_MAX_PENDING_CONNS, 5);
+        SSL_VALUE_QUIC_MAX_PENDING_CONNS, PENDING_LIMIT);
     if (!TEST_true(ok)) {
         TEST_info("%s call to SSL_get_feature_request_uint"
                   "(SSL_VALUE_QUIC_MAX_PENDING_CONNS failed",
@@ -3893,9 +3894,9 @@ static int test_pending_limit(void)
     }
 
     for (i = 0; i < PENDING_LIMIT; i++) {
-        watchdog = 0;
+        handshake_step = 0;
         done = 0;
-        while (!done && watchdog++ < 10) {
+        while (!done && handshake_step++ < HANDSHAKE_STEPS) {
             /*
              * connections are never accepted by the server. The SSL_connect()
              * for non-blocking client returns -1 to keep connect retrying
@@ -3916,9 +3917,9 @@ static int test_pending_limit(void)
      * to pending queue. The pending_connections must be 5.
      */
     for (i = PENDING_LIMIT; i < OSSL_NELEM(extra_clients); i++) {
-        watchdog = 0;
+        handshake_step = 0;
         done = 0;
-        while (!done && watchdog++ < 10) {
+        while (!done && handshake_step++ < HANDSHAKE_STEPS) {
             /*
              * connections are never accepted by the server. The SSL_connect()
              * for non-blocking client returns -1 to keep connect retrying
@@ -3938,8 +3939,8 @@ static int test_pending_limit(void)
      * accept one connection and check the length of the queue dropped to 4.
      */
     done = 0;
-    watchdog = 0;
-    while (!done && watchdog++ < 10) {
+    handshake_step = 0;
+    while (!done && handshake_step++ < HANDSHAKE_STEPS) {
         if (!TEST_int_lt(SSL_connect(extra_clients[0]), 0))
             goto end;
         SSL_handle_events(serverssl_listener);

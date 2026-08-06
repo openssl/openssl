@@ -1445,10 +1445,10 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
     int ok;
 
     ina.s_addr = htonl(0x7f000001);
-    bio_flags |= BIO_DGRAM_CAP_HANDLES_DST_ADDR;
-    bio_flags |= BIO_DGRAM_CAP_HANDLES_SRC_ADDR;
-    bio_flags |= BIO_DGRAM_CAP_PROVIDES_DST_ADDR;
-    bio_flags |= BIO_DGRAM_CAP_PROVIDES_SRC_ADDR;
+    bio_flags |= BIO_DGRAM_CAP_HANDLES_DST_ADDR
+        | BIO_DGRAM_CAP_HANDLES_SRC_ADDR
+        | BIO_DGRAM_CAP_PROVIDES_DST_ADDR
+        | BIO_DGRAM_CAP_PROVIDES_SRC_ADDR;
 
     c_bio = NULL;
     s_bio = NULL;
@@ -1599,14 +1599,10 @@ done:
 
 int create_quic_conn_objects(SSL_CTX *c_sctx, SSL_CTX *s_sctx, SSL **c_ssl_p, SSL **s_ssl_p)
 {
-    BIO *c_bio, *s_bio;
-    SSL *c_ssl, *s_ssl;
+    BIO *c_bio = NULL, *s_bio = NULL;
+    SSL *c_ssl = NULL, *s_ssl = NULL;
     int ok;
 
-    c_bio = NULL;
-    s_bio = NULL;
-    c_ssl = NULL;
-    s_ssl = NULL;
     ok = create_dgram_pair(&c_bio, &s_bio);
     if (ok == 0)
         goto done;

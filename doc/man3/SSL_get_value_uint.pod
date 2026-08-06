@@ -238,15 +238,15 @@ peer in the transport parameters.
 This release of OpenSSL uses a default value of 25 milliseconds. This default
 value may change between releases of OpenSSL.
 
-=item B< SSL_VALUE_QUIC_MAX_PENDING_CONNS> (listener object)
+=item B<SSL_VALUE_QUIC_MAX_PENDING_CONNS> (listener object)
 
-This sets the limit on channels (connection objects) which QUIC server can
-insert into list of pending connections. The pending connection is connection
-which local application needs to accept (L<SSL_accept_connection(3)>) in order to retrieve
-SSL connection object. The connection is removed from pending queue by call
-to L<SSL_accept_connection(3)>. The default limit for pending connections is 256. The INITIAL
-QUIC packet which exceeds the limit is silently discarded. Setting the value to zero disables
-the limit.
+This sets the limit on channels (connection objects) which a QUIC server can
+insert into the list of pending connections. A pending connection is a connection
+which the local application needs to accept (L<SSL_accept_connection(3)>) in order to retrieve
+an SSL connection object. The connection is removed from the pending queue by a call
+to L<SSL_accept_connection(3)>. The default limit for pending connections is 256. An INITIAL
+QUIC packet, which is received by a QUIC server with a full pending connections
+queue, is silently discarded. Setting the value to zero disables the limit.
 
 =item B<SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL> (connection object)
 
@@ -424,6 +424,9 @@ The values SSL_VALUE_QUIC_UDP_PAYLOAD_SIZE_MAX, SSL_VALUE_QUIC_WINDOWCON,
 SSL_VALUE_QUIC_WINDOWBSTR, SSL_VALUE_QUIC_WINDOWUSTR,
 SSL_VALUE_QUIC_ACK_DELAY_EXPONENT, and SSL_VALUE_QUIC_ACK_DELAY_MAX
 were added in OpenSSL 4.1.
+
+The value SSL_VALUE_QUIC_MAX_PENDING_CONNS has been added in OpenSSL 4.1
+and ported to older releases 4.0.2, 3.6.4 and 3.5.8.
 
 The remaining functions and values described here were all added in OpenSSL 3.3.
 

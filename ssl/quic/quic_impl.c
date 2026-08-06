@@ -4199,6 +4199,8 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_ack_delay_exponent(&ctx, class_, value, NULL);
     case SSL_VALUE_QUIC_ACK_DELAY_MAX:
         return qc_getset_max_ack_delay(&ctx, class_, value, NULL);
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
+        return qc_getset_max_pending_channels(&ctx, class_, value, NULL);
 
     case SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL:
         return qc_get_stream_avail(&ctx, class_, /*uni=*/0, /*remote=*/0, value);
@@ -4221,8 +4223,6 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
     case SSL_VALUE_STREAM_WRITE_BUF_AVAIL:
         return qc_get_stream_write_buf_stat(&ctx, class_, value,
             ossl_quic_sstream_get_buffer_avail);
-    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
-        return qc_getset_max_pending_channels(&ctx, class_, value, NULL);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
