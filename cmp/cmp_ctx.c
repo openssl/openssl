@@ -11,6 +11,7 @@
 
 #include <stdio.h>
 
+#include "libcmp_names.h"
 #include "cmp_local.h"
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
 

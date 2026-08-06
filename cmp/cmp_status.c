@@ -13,6 +13,7 @@
 
 #include <stdio.h>
 
+#include "libcmp_names.h"
 #include "cmp_local.h"
 
 /* CMP functions related to PKIStatus */
