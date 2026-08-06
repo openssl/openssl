@@ -3862,10 +3862,10 @@ static int test_pending_limit(void)
     if (!TEST_true(create_quic_conn_objects(cctx, sctx, &clientssl, &serverssl_listener)))
         goto end;
 
-    ok = SSL_set_feature_request_uint(serverssl_listener,
+    ok = SSL_set_generic_value_uint(serverssl_listener,
         SSL_VALUE_QUIC_MAX_PENDING_CONNS, PENDING_LIMIT);
     if (!TEST_true(ok)) {
-        TEST_info("%s call to SSL_get_feature_request_uint"
+        TEST_info("%s call to SSL_set_generic_request_uint"
                   "(SSL_VALUE_QUIC_MAX_PENDING_CONNS failed",
             __func__);
         goto end;
