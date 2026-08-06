@@ -236,7 +236,7 @@ static int cms_signature_nomd(EVP_PKEY *pkey)
 /* (EC)DSA and all provider-delivered signatures implementation is the same */
 static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 {
-    if (!ossl_assert(verify == 0 || verify == 1))
+    if (!cms_assert(verify == 0 || verify == 1))
         return -1;
 
     if (!verify) {

@@ -747,7 +747,7 @@ int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls)
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
             if (!X509_CRL_up_ref(rch->d.crl)
-                || !ossl_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
+                || !cms_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
                 /* push cannot fail on reserved stack */
                 sk_X509_CRL_pop_free(*crls, X509_CRL_free);
                 *crls = NULL;
