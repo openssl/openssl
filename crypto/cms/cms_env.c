@@ -7,13 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-/*
- * Low level key APIs (DH etc) are deprecated for public use, but still ok for
- * internal use.
- */
-#include "internal/deprecated.h"
-
-#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -23,7 +16,6 @@
 #include <openssl/rsa.h>
 #include <openssl/params.h>
 #include <openssl/core_names.h>
-#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
@@ -655,7 +647,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     if (cms->d.envelopedData->encryptedContentInfo->havenocert
         && !cms->d.envelopedData->encryptedContentInfo->debug) {
         X509_ALGOR *calg = ec->contentEncryptionAlgorithm;
-        char name[OSSL_MAX_NAME_SIZE];
+        char name[CMS_MAX_NAME_SIZE];
 
         OBJ_obj2txt(name, sizeof(name), calg->algorithm, 0);
 
