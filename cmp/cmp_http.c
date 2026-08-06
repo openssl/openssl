@@ -9,9 +9,10 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <libcmp/names.h>
+
 #include <stdio.h>
 
-#include "libcmp_names.h"
 #include "cmp_local.h"
 
 static int keep_alive(int want_keep_alive, int body_type, BIO **bios)
