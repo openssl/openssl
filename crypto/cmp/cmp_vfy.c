@@ -13,6 +13,31 @@
 
 #include "cmp_local.h"
 
+/* print brief info on the given cert as error diagnostics on failure */
+static int print_cert_brief(BIO *bio, const X509 *cert)
+{
+    unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE
+        | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
+    X509_VERIFY_PARAM *vpm;
+    int error, ret;
+
+    ret = X509_print_ex(bio, cert, flags,
+        X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION | X509_FLAG_NO_SIGNAME
+            | X509_FLAG_NO_PUBKEY | X509_FLAG_NO_EXTENSIONS
+            | X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_AUX
+            | X509_FLAG_NO_ATTRIBUTES | X509_FLAG_NO_IDS);
+    if (ret == 0)
+        return 0;
+    if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
+        return 0;
+    if (X509_check_certificate_times(vpm, cert, &error) == 0)
+        ret = BIO_printf(bio, "        %s\n",
+                  X509_verify_cert_error_string(error))
+            > 0;
+    X509_VERIFY_PARAM_free(vpm);
+    return ret;
+}
+
 /* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     const OSSL_CMP_MSG *msg, X509 *cert)
@@ -54,7 +79,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     }
 
 sig_err:
-    res = ossl_x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
+    res = print_cert_brief(bio, cert);
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_SIGNATURE);
     if (res) {
         ERR_add_error_txt(NULL, "\n");
