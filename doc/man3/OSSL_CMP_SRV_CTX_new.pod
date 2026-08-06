@@ -26,7 +26,7 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
                                             const OSSL_CMP_MSG *req);
@@ -207,6 +207,10 @@ The OpenSSL CMP support was added in OpenSSL 3.0.
 OSSL_CMP_SRV_CTX_init_trans()
 supporting delayed delivery of all types of response messages
 was added in OpenSSL 3.3.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

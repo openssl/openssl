@@ -18,7 +18,7 @@ OSSL_CMP_ATAV_free
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  typedef OSSL_CRMF_ATTRIBUTETYPEANDVALUE OSSL_CMP_ATAV;
  OSSL_CMP_ATAV *OSSL_CMP_ATAV_create(ASN1_OBJECT *type, ASN1_TYPE *value);
@@ -105,6 +105,10 @@ L<OSSL_CMP_ITAV_new0_certReqTemplate(3)>, L<ASN1_TYPE_set(3)>
 =head1 HISTORY
 
 The B<OSSL_CMP_ATAV> type and related functions were added in OpenSSL 3.4.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 
