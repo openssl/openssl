@@ -11,6 +11,7 @@
 
 /* CMP functions for PKIStatusInfo handling and PKIMessage decomposition */
 
+#include "libcmp_names.h"
 #include "cmp_local.h"
 
 /* CMP functions related to PKIStatus */
