@@ -12,7 +12,7 @@
 #ifndef OSSL_TEST_CMP_TESTLIB_H
 #define OSSL_TEST_CMP_TESTLIB_H
 
-#include <openssl/cmp.h>
+#include <libcmp/cmp.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>
 
