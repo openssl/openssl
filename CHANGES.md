@@ -31,6 +31,16 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed builds configured with `no-md5`, which previously failed to compile.
+   In such builds, the legacy (RFC 1421 style) PEM encryption routines and
+   `X509_REQ_to_X509()` now fail with an "unsupported" error, the MD5-based
+   options of `openssl passwd` (`-1`, `-apr1`, `-aixmd5`) and
+   `openssl rehash` (`-old`, `-compat`) are not available, and
+   `openssl passwd` requires an algorithm option since the MD5-based
+   default is unavailable.
+
+   *Matt Andreko*
+
  * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
    list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
    available in the active providers are advertised.  `PKCS7_sign_add_signer()`

@@ -88,9 +88,11 @@ const OPTIONS passwd_options[] = {
     { "salt", OPT_SALT, 's', "Use provided salt" },
     { "6", OPT_6, '-', "SHA512-based password algorithm" },
     { "5", OPT_5, '-', "SHA256-based password algorithm" },
+#ifndef OPENSSL_NO_MD5
     { "apr1", OPT_APR1, '-', "MD5-based password algorithm, Apache variant" },
     { "1", OPT_1, '-', "MD5-based password algorithm" },
     { "aixmd5", OPT_AIXMD5, '-', "AIX MD5-based password algorithm" },
+#endif
 
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
@@ -208,8 +210,15 @@ int passwd_main(int argc, char **argv)
         goto end;
 
     if (mode == passwd_unset) {
+#ifndef OPENSSL_NO_MD5
         /* use default */
         mode = passwd_md5;
+#else
+        BIO_printf(bio_err,
+            "%s: MD5 is not available; select an algorithm with -5 or -6\n",
+            prog);
+        goto opthelp;
+#endif
     }
 
     if (infile != NULL && in_stdin) {
@@ -309,6 +318,7 @@ end:
     return ret;
 }
 
+#ifndef OPENSSL_NO_MD5
 /*
  * MD5-based password algorithm (should probably be available as a library
  * function; then the static buffer would not be acceptable). For magic
@@ -491,6 +501,7 @@ err:
     EVP_MD_CTX_free(md);
     return NULL;
 }
+#endif /* OPENSSL_NO_MD5 */
 
 /*
  * SHA based password algorithm, describe by Ulrich Drepper here:
@@ -830,10 +841,12 @@ static int do_passwd(int passed_salt, char **salt_p, char **salt_malloc_p,
     assert(strlen(passwd) <= pw_maxlen);
 
     /* now compute password hash */
+#ifndef OPENSSL_NO_MD5
     if (mode == passwd_md5 || mode == passwd_apr1)
         hash = md5crypt(passwd, (mode == passwd_md5 ? "1" : "apr1"), *salt_p);
     if (mode == passwd_aixmd5)
         hash = md5crypt(passwd, "", *salt_p);
+#endif
     if (mode == passwd_sha256 || mode == passwd_sha512)
         hash = shacrypt(passwd, (mode == passwd_sha256 ? "5" : "6"), *salt_p);
     assert(hash != NULL);

@@ -174,6 +174,7 @@ static int ossltest_dgst_update(void *ctx, const void *data,
     return 1;
 }
 
+#ifndef OPENSSL_NO_MD5
 /**
  * @brief Finalize the digest output.
  *
@@ -189,6 +190,7 @@ static int ossltest_MD5_final(unsigned char *md, void *ctx)
     fill_known_data(md, MD5_DIGEST_LENGTH);
     return 1;
 }
+#endif
 
 /**
  * @brief Finalize the digest output.
@@ -265,14 +267,18 @@ static int ossltest_SHA512_final(unsigned char *md, void *ctx)
  * mark them as such here.  They won't get exported anyway as p_ossltest only gets built as
  * a DSO, and the linker map we use doesn't list them as exported
  */
+#ifndef OPENSSL_NO_MD5
 extern const OSSL_DISPATCH ossl_testmd5_functions[];
+#endif
 extern const OSSL_DISPATCH ossl_testsha1_functions[];
 extern const OSSL_DISPATCH ossl_testsha256_functions[];
 extern const OSSL_DISPATCH ossl_testsha384_functions[];
 extern const OSSL_DISPATCH ossl_testsha512_functions[];
 
+#ifndef OPENSSL_NO_MD5
 IMPLEMENT_digest_functions(testmd5, MD5_CTX, MD5_CBLOCK, MD5_DIGEST_LENGTH, 0,
     ossltest_dgst_init, ossltest_dgst_update, ossltest_MD5_final)
+#endif
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 IMPLEMENT_digest_functions(testsha1, SHA_CTX, SHA_CBLOCK, SHA_DIGEST_LENGTH, SHA2_FLAGS,
@@ -294,7 +300,9 @@ IMPLEMENT_digest_functions(testsha512, SHA512_CTX,
     { NAMES, "provider=p_ossltest", FUNC }
 
 static const OSSL_ALGORITHM ossltest_digests[] = {
+#ifndef OPENSSL_NO_MD5
     ALG(PROV_NAMES_MD5, ossl_testmd5_functions),
+#endif
     ALG(PROV_NAMES_SHA1, ossl_testsha1_functions),
     ALG(PROV_NAMES_SHA2_256, ossl_testsha256_functions),
     ALG(PROV_NAMES_SHA2_384, ossl_testsha384_functions),

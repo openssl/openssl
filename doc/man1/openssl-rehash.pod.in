@@ -79,6 +79,7 @@ Display a brief usage message.
 Use old-style hashing (MD5, as opposed to SHA-1) for generating
 links to be used for releases before 1.0.0.
 Note that current versions will not use the old style.
+This option exists only if OpenSSL was built with MD5 support.
 
 =item B<-n>
 
@@ -90,6 +91,7 @@ This is needed when keeping new and old-style links in the same directory.
 Generate links for both old-style (MD5) and new-style (SHA1) hashing.
 This allows releases before 1.0.0 to use these links along-side newer
 releases.
+This option exists only if OpenSSL was built with MD5 support.
 
 =item B<-v>
 

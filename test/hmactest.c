@@ -31,7 +31,6 @@
 
 #include "testutil.h"
 
-#ifndef OPENSSL_NO_MD5
 static struct test_st {
     const unsigned char key[16];
     int key_len;
@@ -80,7 +79,6 @@ static struct test_st {
     { "12345", 5, "My test data again", 18,
         "a12396ceddd2a85f4c656bc1e0aa50c78cffde3e" }
 };
-#endif
 
 static char *pt(unsigned char *md, unsigned int len);
 
@@ -298,7 +296,6 @@ err:
     return res;
 }
 
-#ifndef OPENSSL_NO_MD5
 #define OSSL_HEX_CHARS_PER_BYTE 2
 static char *pt(unsigned char *md, unsigned int len)
 {
@@ -312,7 +309,6 @@ static char *pt(unsigned char *md, unsigned int len)
             OSSL_HEX_CHARS_PER_BYTE + 1, "%02x", md[i]);
     return buf;
 }
-#endif
 
 static struct test_chunks_st {
     const char *md_name;
@@ -434,7 +430,9 @@ err:
 
 int setup_tests(void)
 {
+#ifndef OPENSSL_NO_MD5
     ADD_ALL_TESTS(test_hmac_md5, 4);
+#endif
     ADD_TEST(test_hmac_single_shot);
     ADD_TEST(test_hmac_bad);
     ADD_TEST(test_hmac_run);
