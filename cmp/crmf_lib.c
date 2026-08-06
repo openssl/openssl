@@ -26,7 +26,7 @@
  * cases increases its link count) in the parent and so both should be freed up.
  */
 
-#include "libcmp_names.h"
+#include <libcmp/names.h>
 #include "crmf_local.h"
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
