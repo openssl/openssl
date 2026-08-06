@@ -1,4 +1,4 @@
-LIBS=../../libcrypto
+LIBS=../libcrypto
 $OPENSSLSRC=\
         cmp_asn.c cmp_ctx.c cmp_err.c cmp_util.c \
         cmp_status.c cmp_hdr.c cmp_protect.c cmp_msg.c cmp_vfy.c \
@@ -8,4 +8,8 @@ IF[{- !$disabled{'http'} -}]
   $OPENSSLSRC=$OPENSSLSRC cmp_http.c
 ENDIF
 
-SOURCE[../../libcrypto]=$OPENSSLSRC
+IF[{- !$disabled{'crmf'} -}]
+  $OPENSSLSRC=$OPENSSLSRC crmf_asn.c crmf_err.c crmf_lib.c crmf_pbm.c
+ENDIF
+
+SOURCE[../libcrypto]=$OPENSSLSRC
