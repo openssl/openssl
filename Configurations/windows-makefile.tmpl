@@ -546,6 +546,13 @@ install_dev: install_runtime_libs
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
+	@{- output_off() if $disabled{cmp}; "" -}
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\libcmp"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\include\libcmp\*.h" \
+				       "$(INSTALLTOP)\include\libcmp"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\libcmp\*.h" \
+				       "$(INSTALLTOP)\include\libcmp"
+	@{- output_on() if $disabled{cmp}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(CMAKECONFIGDIR)"

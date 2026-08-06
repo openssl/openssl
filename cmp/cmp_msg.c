@@ -11,7 +11,7 @@
 
 /* CMP functions for PKIMessage construction */
 
-#include "libcmp_names.h"
+#include <libcmp/names.h>
 #include "cmp_local.h"
 
 #include <openssl/cms.h>

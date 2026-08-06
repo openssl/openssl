@@ -22,8 +22,3 @@ SOURCE[../libcrypto]=$OPENSSLSRC
 
 SOURCE[../libcmp]=$OPENSSLSRC
 DEFINE[../libcmp]=OSSL_LIBCMP_NAMES
-INCLUDE[../libcmp]=.
-
-GENERATE[libcmp_names.h]=../util/mklibcmpnames.pl
-DEPEND[libcmp_names.h]=../util/libcmp.num
-DEPEND[""]=libcmp_names.h

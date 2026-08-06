@@ -876,6 +876,12 @@ install_dev: install_runtime_libs
 	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
 		"$(DESTDIR)$(INSTALLTOP)/include/openssl" \
 		$(SRCDIR)/include/openssl/*.h $(BLDDIR)/include/openssl/*.h
+	@ : {- output_off() if $disabled{cmp}; "" -}
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/libcmp"
+	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
+		"$(DESTDIR)$(INSTALLTOP)/include/libcmp" \
+		$(SRCDIR)/include/libcmp/*.h $(BLDDIR)/include/libcmp/*.h
+	@ : {- output_on() if $disabled{cmp}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -950,6 +956,15 @@ uninstall_dev: uninstall_runtime_libs
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/openssl"
+	@ : {- output_off() if $disabled{cmp}; "" -}
+	@set -e; for i in $(SRCDIR)/include/libcmp/*.h \
+			  $(BLDDIR)/include/libcmp/*.h; do \
+		fn=`basename $$i`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/libcmp/$$fn"; \
+		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/libcmp/$$fn"; \
+	done
+	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/libcmp"
+	@ : {- output_on() if $disabled{cmp}; "" -}
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \

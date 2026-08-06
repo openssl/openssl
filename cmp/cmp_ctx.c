@@ -9,9 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include <stdio.h>
+#include <libcmp/names.h>
 
-#include "libcmp_names.h"
+#include <stdio.h>
 #include "cmp_local.h"
 #include <openssl/ocsp.h> /* for OCSP_REVOKED_STATUS_* */
 
