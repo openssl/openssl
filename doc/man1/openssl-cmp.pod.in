@@ -133,6 +133,8 @@ Client-side debugging options:
 
 Mock server options:
 
+[B<-[4|6]>]
+[B<-host> I<address>|I<name>]
 [B<-port> I<number>]
 [B<-max_msgs> I<number>]
 [B<-srv_ref> I<value>]
@@ -1173,6 +1175,16 @@ This excludes the B<-server> and B<-port> options.
 =head2 Mock server options
 
 =over 4
+
+=item B<-[4|6]>
+
+Force ipv4 and ipv6 respectively
+
+=item B<-host> I<address>|I<name>
+
+Act as HTTP-based CMP server mock-up
+It understand '*' an alias for 0.0.0.0 or [::]
+If -host is not given, the server is listening on '*'
 
 =item B<-port> I<number>
 

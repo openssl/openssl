@@ -16,7 +16,7 @@ plan skip_all => "HTTP protocol is not supported by this OpenSSL build"
     if disabled('http');
 plan skip_all => "not supported by no-sock build" if disabled('sock');
 
-plan tests => 2;
+plan tests => 6;
 
 SKIP: {
     skip "sockets disabled", 1 if disabled("sock");
@@ -26,6 +26,34 @@ SKIP: {
     my @output = run(app($cmd), capture => 1);
     $output[0] =~ s/\r\n/\n/g;
     ok($output[0] =~ /^ACCEPT (0.0.0.0|\[::\]):(\d+?) PID=(\d+)$/
+       && $2 >= 1024 && $3 > 0,
+       "HTTP server auto-selects and reports local port >= 1024 and pid > 0");
+}
+
+ok(run(test(["http_test", srctop_file("test", "certs", "ca-cert.pem")])));
+
+SKIP: {
+    skip "sockets disabled", 1 if disabled("sock");
+    skip "OCSP disabled", 1 if disabled("ocsp");
+    skip "HTTP disabled", 1 if disabled("http");
+    my $cmd = [qw{openssl ocsp -index any -host '*' -port 0}];
+    my @output = run(app($cmd), capture => 1);
+    $output[0] =~ s/\r\n/\n/g;
+    ok($output[0] =~ /^ACCEPT (0.0.0.0|\[::\]):(\d+?) PID=(\d+)$/
+       && $2 >= 1024 && $3 > 0,
+       "HTTP server auto-selects and reports local port >= 1024 and pid > 0");
+}
+
+ok(run(test(["http_test", srctop_file("test", "certs", "ca-cert.pem")])));
+
+SKIP: {
+    skip "sockets disabled", 1 if disabled("sock");
+    skip "OCSP disabled", 1 if disabled("ocsp");
+    skip "HTTP disabled", 1 if disabled("http");
+    my $cmd = [qw{openssl ocsp -index any -host localhost -port 0}];
+    my @output = run(app($cmd), capture => 1);
+    $output[0] =~ s/\r\n/\n/g;
+    ok($output[0] =~ /^ACCEPT (127.0.0.1|\[::1\]):(\d+?) PID=(\d+)$/
        && $2 >= 1024 && $3 > 0,
        "HTTP server auto-selects and reports local port >= 1024 and pid > 0");
 }
