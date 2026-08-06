@@ -11,6 +11,7 @@
  * CRMF implementation by Martin Peylo, Miikka Viljanen, and David von Oheimb.
  */
 
+#include "libcmp_names.h"
 #include <openssl/asn1t.h>
 #include "crmf_local.h"
 
