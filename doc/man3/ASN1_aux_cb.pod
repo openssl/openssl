@@ -223,6 +223,16 @@ Invoked in order to obtain the property query string associated with an
 B<ASN1_VALUE> if any. A pointer to the property query string should be stored in
 I<*exarg> if such a value exists.
 
+=item B<ASN1_OP_GET0_STREAM_CONTENT>
+
+Invoked while setting up indefinite length streaming, after
+B<ASN1_OP_STREAM_PRE>, in order to obtain the content octet string of the
+B<ASN1_VALUE> being streamed. A pointer to the B<ASN1_STRING> should be stored
+in I<*exarg> if such a value exists. The caller marks that string for
+indefinite length encoding and records the position of the content in it on
+every encoding pass, so it must remain valid for as long as the streaming
+B<BIO> is in use.
+
 =back
 
 An B<ASN1_PRINT_ARG> object is used during processing of B<ASN1_OP_PRINT_PRE>
@@ -261,7 +271,9 @@ The B<BIO> with filters appended
 
 =item I<boundary>
 
-The streaming I/O boundary.
+The streaming I/O boundary. This field is no longer used: the position of the
+content is taken from the content octet string obtained with
+B<ASN1_OP_GET0_STREAM_CONTENT>.
 
 =back
 
@@ -311,6 +323,8 @@ L<ASN1_item_new_ex(3)>
 
 The ASN1_aux_const_cb() callback and the B<ASN1_OP_GET0_LIBCTX> and
 B<ASN1_OP_GET0_PROPQ> operation types were added in OpenSSL 3.0.
+
+The B<ASN1_OP_GET0_STREAM_CONTENT> operation type was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
