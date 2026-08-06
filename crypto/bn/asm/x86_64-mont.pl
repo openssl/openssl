@@ -147,9 +147,12 @@ $code.=<<___;
 	push	%r15
 .cfi_push	%r15
 
+	# The first 8 bytes at %rsp will be used for saving the frame pointer (%rax),
+	# as it is not possible for win64 unwind code to place it afterwards, while the tp
+	# array starts at byte 16 (%rsp + 16; for proper SSE alignment).
 	neg	$num
 	mov	%rsp,%r11
-	lea	-16(%rsp,$num,8),%r10	# future alloca(8*(num+2))
+	lea	`-16-16`(%rsp,$num,8),%r10	# future alloca(16 + 8*(num+2))
 	neg	$num			# restore $num
 	and	\$-1024,%r10		# minimize TLB usage
 
@@ -177,9 +180,9 @@ $code.=<<___;
 	ja	.Lmul_page_walk
 .Lmul_page_walk_done:
 
-	mov	%rax,8(%rsp,$num,8)	# tp[num+1]=%rsp
-.cfi_cfa_expression	%rsp+8,$num,8,mul,plus,deref,+8
-.Lmul_body:
+	mov	%rax,(%rsp)		# tp[-2]=%rsp
+.cfi_cfa_expression	%rsp+0,deref,+8
+.cfi_endprolog
 	mov	$bp,%r12		# reassign $bp
 ___
 		$bp="%r12";
@@ -216,7 +219,7 @@ $code.=<<___;
 	add	$hi0,$hi1		# np[j]*m1+ap[j]*bp[0]
 	mov	$lo0,$hi0
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$j,8)	# tp[j-1]
+	mov	$hi1,`-16+16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$hi1
 
 .L1st_enter:
@@ -236,15 +239,15 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$hi0,$hi1		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$j,8)	# tp[j-1]
+	mov	$hi1,`-16+16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$hi1
 	mov	$lo0,$hi0
 
 	xor	%rdx,%rdx
 	add	$hi0,$hi1
 	adc	\$0,%rdx
-	mov	$hi1,-8(%rsp,$num,8)
-	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
+	mov	$hi1,`-8+16`(%rsp,$num,8)
+	mov	%rdx,`0+16`(%rsp,$num,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 	jmp	.Louter
@@ -253,7 +256,7 @@ $code.=<<___;
 	mov	($bp,$i,8),$m0		# m0=bp[i]
 	xor	$j,$j			# j=0
 	mov	$n0,$m1
-	mov	(%rsp),$lo0
+	mov	`0+16`(%rsp),$lo0
 	mulq	$m0			# ap[0]*bp[i]
 	add	%rax,$lo0		# ap[0]*bp[i]+tp[0]
 	mov	($np),%rax
@@ -266,7 +269,7 @@ $code.=<<___;
 	add	%rax,$lo0		# discarded
 	mov	8($ap),%rax
 	adc	\$0,%rdx
-	mov	8(%rsp),$lo0		# tp[1]
+	mov	`8+16`(%rsp),$lo0		# tp[1]
 	mov	%rdx,$hi1
 
 	lea	1($j),$j		# j++
@@ -278,9 +281,9 @@ $code.=<<___;
 	mov	($ap,$j,8),%rax
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# np[j]*m1+ap[j]*bp[i]+tp[j]
-	mov	(%rsp,$j,8),$lo0
+	mov	`0+16`(%rsp,$j,8),$lo0
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$j,8)	# tp[j-1]
+	mov	$hi1,`-16+16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$hi1
 
 .Linner_enter:
@@ -301,9 +304,9 @@ $code.=<<___;
 	mov	($ap),%rax		# ap[0]
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# np[j]*m1+ap[j]*bp[i]+tp[j]
-	mov	(%rsp,$j,8),$lo0
+	mov	`0+16`(%rsp,$j,8),$lo0
 	adc	\$0,%rdx
-	mov	$hi1,-16(%rsp,$j,8)	# tp[j-1]
+	mov	$hi1,`-16+16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$hi1
 
 	xor	%rdx,%rdx
@@ -311,21 +314,21 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$lo0,$hi1		# pull upmost overflow bit
 	adc	\$0,%rdx
-	mov	$hi1,-8(%rsp,$num,8)
-	mov	%rdx,(%rsp,$num,8)	# store upmost overflow bit
+	mov	$hi1,`-8+16`(%rsp,$num,8)
+	mov	%rdx,`0+16`(%rsp,$num,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 	cmp	$num,$i
 	jb	.Louter
 
 	xor	$i,$i			# i=0 and clear CF!
-	mov	(%rsp),%rax		# tp[0]
+	mov	`0+16`(%rsp),%rax	# tp[0]
 	mov	$num,$j			# j=num
 
 .align	16
 .Lsub:	sbb	($np,$i,8),%rax
 	mov	%rax,($rp,$i,8)		# rp[i]=tp[i]-np[i]
-	mov	8(%rsp,$i,8),%rax	# tp[i+1]
+	mov	`8+16`(%rsp,$i,8),%rax	# tp[i+1]
 	lea	1($i),$i		# i++
 	dec	$j			# doesn't affect CF!
 	jnz	.Lsub
@@ -338,17 +341,17 @@ $code.=<<___;
 
 .Lcopy:					# conditional copy
 	mov	($rp,$i,8),%rcx
-	mov	(%rsp,$i,8),%rdx
+	mov	`0+16`(%rsp,$i,8),%rdx
 	and	%rbx,%rcx
 	and	%rax,%rdx
-	mov	$num,(%rsp,$i,8)	# zap temporary vector
+	mov	$num,`0+16`(%rsp,$i,8)	# zap temporary vector
 	or	%rcx,%rdx
 	mov	%rdx,($rp,$i,8)		# rp[i]=tp[i]
 	lea	1($i),$i
 	sub	\$1,$j
 	jnz	.Lcopy
 
-	mov	8(%rsp,$num,8),%rsi	# restore %rsp
+	mov	(%rsp),%rsi		# restore %rsp
 .cfi_def_cfa	%rsi,8
 	mov	\$1,%rax
 	mov	-48(%rsi),%r15
@@ -365,7 +368,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lmul_epilogue:
 	ret
 .cfi_endproc
 .size	bn_mul_mont,.-bn_mul_mont
@@ -402,9 +404,12 @@ $code.=<<___;
 	push	%r15
 .cfi_push	%r15
 
+	# The first 8 bytes at %rsp will be used for saving the frame pointer (%rax),
+	# as it is not possible for win64 unwind code to place it afterwards, while the tp
+	# array starts at byte 16 (%rsp + 16; for proper SSE alignment).
 	neg	$num
 	mov	%rsp,%r11
-	lea	-32(%rsp,$num,8),%r10	# future alloca(8*(num+4))
+	lea	`-16-32`(%rsp,$num,8),%r10	# future alloca(16 + 8*(num+4))
 	neg	$num			# restore
 	and	\$-1024,%r10		# minimize TLB usage
 
@@ -423,10 +428,10 @@ $code.=<<___;
 	ja	.Lmul4x_page_walk
 .Lmul4x_page_walk_done:
 
-	mov	%rax,8(%rsp,$num,8)	# tp[num+1]=%rsp
-.cfi_cfa_expression	%rsp+8,$num,8,mul,plus,deref,+8
-.Lmul4x_body:
-	mov	$rp,16(%rsp,$num,8)	# tp[num+2]=$rp
+	mov	%rax,(%rsp)	# tp[-2]=%rsp
+.cfi_cfa_expression	%rsp+0,deref,+8
+.cfi_endprolog
+	mov	$rp,`+16+16`(%rsp,$num,8)	# tp[num+2]=$rp
 	mov	%rdx,%r12		# reassign $bp
 ___
 		$bp="%r12";
@@ -465,7 +470,7 @@ $code.=<<___;
 	add	$A[1],$N[1]
 	lea	4($j),$j		# j++
 	adc	\$0,%rdx
-	mov	$N[1],(%rsp)
+	mov	$N[1],`+16+0`(%rsp)
 	mov	%rdx,$N[0]
 	jmp	.L1st4x
 .align	16
@@ -482,7 +487,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],`+16-24`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[0]
@@ -497,7 +502,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],`+16-16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
 	mulq	$m0			# ap[j]*bp[0]
@@ -512,7 +517,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$N[0],-8(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],`+16-8`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[0]
@@ -528,7 +533,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],`+16-32`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 	cmp	$num,$j
 	jb	.L1st4x
@@ -545,7 +550,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],`+16-24`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[0]
@@ -560,21 +565,21 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]		# np[j]*m1+ap[j]*bp[0]
 	adc	\$0,%rdx
-	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],`+16-16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
 	xor	$N[1],$N[1]
 	add	$A[0],$N[0]
 	adc	\$0,$N[1]
-	mov	$N[0],-8(%rsp,$j,8)
-	mov	$N[1],(%rsp,$j,8)	# store upmost overflow bit
+	mov	$N[0],`+16-8`(%rsp,$j,8)
+	mov	$N[1],`+16+0`(%rsp,$j,8)	# store upmost overflow bit
 
 	lea	1($i),$i		# i++
 .align	4
 .Louter4x:
 	mov	($bp,$i,8),$m0		# m0=bp[i]
 	xor	$j,$j			# j=0
-	mov	(%rsp),$A[0]
+	mov	`+16+0`(%rsp),$A[0]
 	mov	$n0,$m1
 	mulq	$m0			# ap[0]*bp[i]
 	add	%rax,$A[0]		# ap[0]*bp[i]+tp[0]
@@ -594,7 +599,7 @@ $code.=<<___;
 	add	%rax,$A[1]
 	mov	8($np),%rax
 	adc	\$0,%rdx
-	add	8(%rsp),$A[1]		# +tp[1]
+	add	`+16+8`(%rsp),$A[1]	# +tp[1]
 	adc	\$0,%rdx
 	mov	%rdx,$A[0]
 
@@ -605,7 +610,7 @@ $code.=<<___;
 	add	$A[1],$N[1]		# np[j]*m1+ap[j]*bp[i]+tp[j]
 	lea	4($j),$j		# j+=2
 	adc	\$0,%rdx
-	mov	$N[1],(%rsp)		# tp[j-1]
+	mov	$N[1],`+16+0`(%rsp)	# tp[j-1]
 	mov	%rdx,$N[0]
 	jmp	.Linner4x
 .align	16
@@ -614,7 +619,7 @@ $code.=<<___;
 	add	%rax,$A[0]
 	mov	-16($np,$j,8),%rax
 	adc	\$0,%rdx
-	add	-16(%rsp,$j,8),$A[0]	# ap[j]*bp[i]+tp[j]
+	add	`+16-16`(%rsp,$j,8),$A[0]	# ap[j]*bp[i]+tp[j]
 	adc	\$0,%rdx
 	mov	%rdx,$A[1]
 
@@ -624,14 +629,14 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]
 	adc	\$0,%rdx
-	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],`+16-24`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[i]
 	add	%rax,$A[1]
 	mov	-8($np,$j,8),%rax
 	adc	\$0,%rdx
-	add	-8(%rsp,$j,8),$A[1]
+	add	`+16-8`(%rsp,$j,8),$A[1]
 	adc	\$0,%rdx
 	mov	%rdx,$A[0]
 
@@ -641,14 +646,14 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]
 	adc	\$0,%rdx
-	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],`+16-16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
 	mulq	$m0			# ap[j]*bp[i]
 	add	%rax,$A[0]
 	mov	($np,$j,8),%rax
 	adc	\$0,%rdx
-	add	(%rsp,$j,8),$A[0]	# ap[j]*bp[i]+tp[j]
+	add	`+16+0`(%rsp,$j,8),$A[0]	# ap[j]*bp[i]+tp[j]
 	adc	\$0,%rdx
 	mov	%rdx,$A[1]
 
@@ -658,14 +663,14 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]
 	adc	\$0,%rdx
-	mov	$N[0],-8(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],`+16-8`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[i]
 	add	%rax,$A[1]
 	mov	8($np,$j,8),%rax
 	adc	\$0,%rdx
-	add	8(%rsp,$j,8),$A[1]
+	add	`+16+8`(%rsp,$j,8),$A[1]
 	adc	\$0,%rdx
 	lea	4($j),$j		# j++
 	mov	%rdx,$A[0]
@@ -676,7 +681,7 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]
 	adc	\$0,%rdx
-	mov	$N[1],-32(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],`+16-32`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 	cmp	$num,$j
 	jb	.Linner4x
@@ -685,7 +690,7 @@ $code.=<<___;
 	add	%rax,$A[0]
 	mov	-16($np,$j,8),%rax
 	adc	\$0,%rdx
-	add	-16(%rsp,$j,8),$A[0]	# ap[j]*bp[i]+tp[j]
+	add	`+16-16`(%rsp,$j,8),$A[0]	# ap[j]*bp[i]+tp[j]
 	adc	\$0,%rdx
 	mov	%rdx,$A[1]
 
@@ -695,14 +700,14 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[0],$N[0]
 	adc	\$0,%rdx
-	mov	$N[0],-24(%rsp,$j,8)	# tp[j-1]
+	mov	$N[0],`+16-24`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[1]
 
 	mulq	$m0			# ap[j]*bp[i]
 	add	%rax,$A[1]
 	mov	-8($np,$j,8),%rax
 	adc	\$0,%rdx
-	add	-8(%rsp,$j,8),$A[1]
+	add	`+16-8`(%rsp,$j,8),$A[1]
 	adc	\$0,%rdx
 	lea	1($i),$i		# i++
 	mov	%rdx,$A[0]
@@ -713,16 +718,16 @@ $code.=<<___;
 	adc	\$0,%rdx
 	add	$A[1],$N[1]
 	adc	\$0,%rdx
-	mov	$N[1],-16(%rsp,$j,8)	# tp[j-1]
+	mov	$N[1],`+16-16`(%rsp,$j,8)	# tp[j-1]
 	mov	%rdx,$N[0]
 
 	xor	$N[1],$N[1]
 	add	$A[0],$N[0]
 	adc	\$0,$N[1]
-	add	(%rsp,$num,8),$N[0]	# pull upmost overflow bit
+	add	`+16+0`(%rsp,$num,8),$N[0]	# pull upmost overflow bit
 	adc	\$0,$N[1]
-	mov	$N[0],-8(%rsp,$j,8)
-	mov	$N[1],(%rsp,$j,8)	# store upmost overflow bit
+	mov	$N[0],`+16-8`(%rsp,$j,8)
+	mov	$N[1],`+16+0`(%rsp,$j,8)	# store upmost overflow bit
 
 	cmp	$num,$i
 	jb	.Louter4x
@@ -730,12 +735,12 @@ ___
 {
 my @ri=("%rax","%rdx",$m0,$m1);
 $code.=<<___;
-	mov	16(%rsp,$num,8),$rp	# restore $rp
+	mov	`+16+16`(%rsp,$num,8),$rp	# restore $rp
 	lea	-4($num),$j
-	mov	0(%rsp),@ri[0]		# tp[0]
-	mov	8(%rsp),@ri[1]		# tp[1]
+	mov	`+16+0`(%rsp),@ri[0]		# tp[0]
+	mov	`+16+8`(%rsp),@ri[1]		# tp[1]
 	shr	\$2,$j			# j=num/4-1
-	lea	(%rsp),$ap		# borrow ap for tp
+	lea	`+16+0`(%rsp),$ap	# borrow ap for tp
 	xor	$i,$i			# i=0 and clear CF!
 
 	sub	0($np),@ri[0]
@@ -781,18 +786,18 @@ $code.=<<___;
 	jmp	.Lcopy4x
 .align	16
 .Lcopy4x:				# conditional copy
-	movdqa	(%rsp,%rax),%xmm1
+	movdqa	`+16+0`(%rsp,%rax),%xmm1
 	movdqu	($rp,%rax),%xmm2
 	pand	%xmm4,%xmm1
 	pand	%xmm5,%xmm2
-	movdqa	16(%rsp,%rax),%xmm3
-	movdqa	%xmm0,(%rsp,%rax)
+	movdqa	`+16+16`(%rsp,%rax),%xmm3
+	movdqa	%xmm0,`+16+0`(%rsp,%rax)
 	por	%xmm2,%xmm1
 	movdqu	16($rp,%rax),%xmm2
 	movdqu	%xmm1,($rp,%rax)
 	pand	%xmm4,%xmm3
 	pand	%xmm5,%xmm2
-	movdqa	%xmm0,16(%rsp,%rax)
+	movdqa	%xmm0,`+16+16`(%rsp,%rax)
 	por	%xmm2,%xmm3
 	movdqu	%xmm3,16($rp,%rax)
 	lea	32(%rax),%rax
@@ -801,7 +806,7 @@ $code.=<<___;
 ___
 }
 $code.=<<___;
-	mov	8(%rsp,$num,8),%rsi	# restore %rsp
+	mov	(%rsp),%rsi	# restore %rsp
 .cfi_def_cfa	%rsi, 8
 	mov	\$1,%rax
 	mov	-48(%rsi),%r15
@@ -818,7 +823,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lmul4x_epilogue:
 	ret
 .cfi_endproc
 .size	bn_mul4x_mont,.-bn_mul4x_mont
@@ -864,7 +868,6 @@ bn_sqr8x_mont:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lsqr8x_prologue:
 
 	mov	${num}d,%r10d
 	shl	\$3,${num}d		# convert $num to bytes
@@ -920,7 +923,7 @@ bn_sqr8x_mont:
 	mov	$n0,  32(%rsp)
 	mov	%rax, 40(%rsp)		# save original %rsp
 .cfi_cfa_expression	%rsp+40,deref,+8
-.Lsqr8x_body:
+.cfi_endprolog
 
 	movq	$nptr, %xmm2		# save pointer to modulus
 	pxor	%xmm0,%xmm0
@@ -1032,7 +1035,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lsqr8x_epilogue:
 	ret
 .cfi_endproc
 .size	bn_sqr8x_mont,.-bn_sqr8x_mont
@@ -1062,7 +1064,6 @@ bn_mulx4x_mont:
 .cfi_push	%r14
 	push	%r15
 .cfi_push	%r15
-.Lmulx4x_prologue:
 
 	shl	\$3,${num}d		# convert $num to bytes
 	xor	%r10,%r10
@@ -1108,6 +1109,7 @@ bn_mulx4x_mont:
 	mov	$rp, 32(%rsp)		# save $rp
 	mov	%rax,40(%rsp)		# save original %rsp
 .cfi_cfa_expression	%rsp+40,deref,+8
+.cfi_endprolog
 	mov	$num,48(%rsp)		# inner counter
 	jmp	.Lmulx4x_body
 
@@ -1400,7 +1402,6 @@ $code.=<<___;
 .cfi_restore	%rbx
 	lea	(%rsi),%rsp
 .cfi_def_cfa_register	%rsp
-.Lmulx4x_epilogue:
 	ret
 .cfi_endproc
 .size	bn_mulx4x_mont,.-bn_mulx4x_mont
@@ -1411,191 +1412,6 @@ $code.=<<___;
 .align	16
 ___
 
-# EXCEPTION_DISPOSITION handler (EXCEPTION_RECORD *rec,ULONG64 frame,
-#		CONTEXT *context,DISPATCHER_CONTEXT *disp)
-if ($win64) {
-$rec="%rcx";
-$frame="%rdx";
-$context="%r8";
-$disp="%r9";
-
-$code.=<<___;
-.extern	__imp_RtlVirtualUnwind
-.type	mul_handler,\@abi-omnipotent
-.align	16
-mul_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# end of prologue label
-	cmp	%r10,%rbx		# context->Rip<end of prologue label
-	jb	.Lcommon_seh_tail
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=epilogue label
-	jae	.Lcommon_seh_tail
-
-	mov	192($context),%r10	# pull $num
-	mov	8(%rax,%r10,8),%rax	# pull saved stack pointer
-
-	jmp	.Lcommon_pop_regs
-.size	mul_handler,.-mul_handler
-
-.type	sqr_handler,\@abi-omnipotent
-.align	16
-sqr_handler:
-	push	%rsi
-	push	%rdi
-	push	%rbx
-	push	%rbp
-	push	%r12
-	push	%r13
-	push	%r14
-	push	%r15
-	pushfq
-	sub	\$64,%rsp
-
-	mov	120($context),%rax	# pull context->Rax
-	mov	248($context),%rbx	# pull context->Rip
-
-	mov	8($disp),%rsi		# disp->ImageBase
-	mov	56($disp),%r11		# disp->HandlerData
-
-	mov	0(%r11),%r10d		# HandlerData[0]
-	lea	(%rsi,%r10),%r10	# end of prologue label
-	cmp	%r10,%rbx		# context->Rip<.Lsqr_prologue
-	jb	.Lcommon_seh_tail
-
-	mov	4(%r11),%r10d		# HandlerData[1]
-	lea	(%rsi,%r10),%r10	# body label
-	cmp	%r10,%rbx		# context->Rip<.Lsqr_body
-	jb	.Lcommon_pop_regs
-
-	mov	152($context),%rax	# pull context->Rsp
-
-	mov	8(%r11),%r10d		# HandlerData[2]
-	lea	(%rsi,%r10),%r10	# epilogue label
-	cmp	%r10,%rbx		# context->Rip>=.Lsqr_epilogue
-	jae	.Lcommon_seh_tail
-
-	mov	40(%rax),%rax		# pull saved stack pointer
-
-.Lcommon_pop_regs:
-	mov	-8(%rax),%rbx
-	mov	-16(%rax),%rbp
-	mov	-24(%rax),%r12
-	mov	-32(%rax),%r13
-	mov	-40(%rax),%r14
-	mov	-48(%rax),%r15
-	mov	%rbx,144($context)	# restore context->Rbx
-	mov	%rbp,160($context)	# restore context->Rbp
-	mov	%r12,216($context)	# restore context->R12
-	mov	%r13,224($context)	# restore context->R13
-	mov	%r14,232($context)	# restore context->R14
-	mov	%r15,240($context)	# restore context->R15
-
-.Lcommon_seh_tail:
-	mov	8(%rax),%rdi
-	mov	16(%rax),%rsi
-	mov	%rax,152($context)	# restore context->Rsp
-	mov	%rsi,168($context)	# restore context->Rsi
-	mov	%rdi,176($context)	# restore context->Rdi
-
-	mov	40($disp),%rdi		# disp->ContextRecord
-	mov	$context,%rsi		# context
-	mov	\$154,%ecx		# sizeof(CONTEXT)
-	.long	0xa548f3fc		# cld; rep movsq
-
-	mov	$disp,%rsi
-	xor	%rcx,%rcx		# arg1, UNW_FLAG_NHANDLER
-	mov	8(%rsi),%rdx		# arg2, disp->ImageBase
-	mov	0(%rsi),%r8		# arg3, disp->ControlPc
-	mov	16(%rsi),%r9		# arg4, disp->FunctionEntry
-	mov	40(%rsi),%r10		# disp->ContextRecord
-	lea	56(%rsi),%r11		# &disp->HandlerData
-	lea	24(%rsi),%r12		# &disp->EstablisherFrame
-	mov	%r10,32(%rsp)		# arg5
-	mov	%r11,40(%rsp)		# arg6
-	mov	%r12,48(%rsp)		# arg7
-	mov	%rcx,56(%rsp)		# arg8, (NULL)
-	call	*__imp_RtlVirtualUnwind(%rip)
-
-	mov	\$1,%eax		# ExceptionContinueSearch
-	add	\$64,%rsp
-	popfq
-	pop	%r15
-	pop	%r14
-	pop	%r13
-	pop	%r12
-	pop	%rbp
-	pop	%rbx
-	pop	%rdi
-	pop	%rsi
-	ret
-.size	sqr_handler,.-sqr_handler
-
-.section	.pdata
-.align	4
-	.rva	.LSEH_begin_bn_mul_mont
-	.rva	.LSEH_end_bn_mul_mont
-	.rva	.LSEH_info_bn_mul_mont
-
-	.rva	.LSEH_begin_bn_mul4x_mont
-	.rva	.LSEH_end_bn_mul4x_mont
-	.rva	.LSEH_info_bn_mul4x_mont
-
-	.rva	.LSEH_begin_bn_sqr8x_mont
-	.rva	.LSEH_end_bn_sqr8x_mont
-	.rva	.LSEH_info_bn_sqr8x_mont
-___
-$code.=<<___ if ($addx);
-	.rva	.LSEH_begin_bn_mulx4x_mont
-	.rva	.LSEH_end_bn_mulx4x_mont
-	.rva	.LSEH_info_bn_mulx4x_mont
-___
-$code.=<<___;
-.section	.xdata
-.align	8
-.LSEH_info_bn_mul_mont:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lmul_body,.Lmul_epilogue	# HandlerData[]
-.LSEH_info_bn_mul4x_mont:
-	.byte	9,0,0,0
-	.rva	mul_handler
-	.rva	.Lmul4x_body,.Lmul4x_epilogue	# HandlerData[]
-.LSEH_info_bn_sqr8x_mont:
-	.byte	9,0,0,0
-	.rva	sqr_handler
-	.rva	.Lsqr8x_prologue,.Lsqr8x_body,.Lsqr8x_epilogue		# HandlerData[]
-.align	8
-___
-$code.=<<___ if ($addx);
-.LSEH_info_bn_mulx4x_mont:
-	.byte	9,0,0,0
-	.rva	sqr_handler
-	.rva	.Lmulx4x_prologue,.Lmulx4x_body,.Lmulx4x_epilogue	# HandlerData[]
-.align	8
-___
-}
-
+$code =~ s/\`([^\`]*)\`/eval $1/gem;
 print $code;
 close STDOUT or die "error closing STDOUT: $!";
