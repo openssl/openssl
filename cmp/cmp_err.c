@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "libcmp_names.h"
+#include <libcmp/names.h>
 #include <openssl/err.h>
 #include <openssl/cmperr.h>
 #include "crypto/cmperr.h"

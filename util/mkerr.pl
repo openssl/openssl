@@ -509,7 +509,7 @@ EOF
         # covers the declaration as well as the definition.
         my $cdir = dirname($cfile);
         my $namesinc = -f "util/mklib${cdir}names.pl"
-            ? "#include \"lib${cdir}_names.h\"\n" : '';
+            ? "#include <lib${cdir}/names.h>\n" : '';
 
         if ($internal) {
             if ($hpubincf ne 'NONE') {
