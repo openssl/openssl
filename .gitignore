@@ -199,17 +199,17 @@ providers/implementations/rands/test_rng.inc
 # error code files
 /crypto/err/openssl.txt.old
 # Generated error code files (from crypto/err/openssl.txt)
+/cmp/cmp_err.c
+/cmp/crmf_err.c
 /crypto/asn1/asn1_err.c
 /crypto/async/async_err.c
 /crypto/bio/bio_err.c
 /crypto/bn/bn_err.c
 /crypto/buffer/buf_err.c
-/crypto/cmp/cmp_err.c
 /crypto/cms/cms_err.c
 /crypto/comp/comp_err.c
 /crypto/conf/conf_err.c
 /crypto/cpt_err.c
-/crypto/crmf/crmf_err.c
 /crypto/ct/ct_err.c
 /crypto/dh/dh_err.c
 /crypto/dsa/dsa_err.c

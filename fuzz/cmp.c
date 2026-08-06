@@ -13,7 +13,7 @@
 
 #include <openssl/bio.h>
 #include <openssl/cmp.h>
-#include "../crypto/cmp/cmp_local.h"
+#include "../cmp/cmp_local.h"
 #include <openssl/err.h>
 #include "fuzzer.h"
 
