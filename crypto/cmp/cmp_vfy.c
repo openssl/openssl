@@ -104,11 +104,13 @@ static int verify_PBMAC(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     if ((protection = ossl_cmp_calc_protection(ctx, msg)) == NULL)
         return 0; /* failed to generate protection string! */
 
-    valid = msg->protection != NULL && msg->protection->length >= 0
-        && msg->protection->type == protection->type
-        && msg->protection->length == protection->length
-        && CRYPTO_memcmp(msg->protection->data, protection->data,
-               protection->length)
+    valid = msg->protection != NULL
+        && ASN1_STRING_type(msg->protection) == ASN1_STRING_type(protection)
+        && ASN1_STRING_length_ex(msg->protection)
+            == ASN1_STRING_length_ex(protection)
+        && CRYPTO_memcmp(ASN1_STRING_get0_data(msg->protection),
+               ASN1_STRING_get0_data(protection),
+               ASN1_STRING_length_ex(protection))
             == 0;
     ASN1_BIT_STRING_free(protection);
     if (!valid)
@@ -615,7 +617,8 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     }
 
     if (msg->header->protectionAlg == NULL /* unprotected message */
-        || msg->protection == NULL || msg->protection->data == NULL) {
+        || msg->protection == NULL
+        || ASN1_STRING_get0_data(msg->protection) == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PROTECTION);
         return 0;
     }
