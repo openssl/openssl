@@ -4614,7 +4614,7 @@ void SSL_CTX_free(SSL_CTX *a)
     OPENSSL_free(a->ext.alpn);
     OPENSSL_secure_clear_free(a->ext.secure, sizeof(*a->ext.secure));
 
-    for (j = 0; j < SSL_ENC_NUM_IDX; j++)
+    for (j = 0; j < OSSL_NELEM(a->ssl_cipher_methods); j++)
         ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
     for (j = 0; j < SSL_MD_NUM_IDX; j++)
         ssl_evp_md_free(a->ssl_digest_methods[j]);
