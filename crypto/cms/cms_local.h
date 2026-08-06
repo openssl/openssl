@@ -441,6 +441,14 @@ CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     const unsigned char *precomp_md,
     unsigned int precomp_mdlen);
+/**
+ * @brief Prepare the content of cms for indefinite-length streaming.
+ * The content octet string is created if it is not already present, and the
+ * content is recorded as created here rather than read in via d2i.
+ * @param cms the CMS_ContentInfo to prepare for streaming
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_stream(CMS_ContentInfo *cms);
 
 CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
     OSSL_LIB_CTX *libctx,
