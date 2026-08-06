@@ -669,7 +669,7 @@ sub write_c_source
     # the build directory.
     my $cdir = dirname($cfile);
     my $namesinc = -f catfile(dirname($0), "mklib${cdir}names.pl")
-        ? "#include \"lib${cdir}_names.h\"\n" : '';
+        ? "#include <lib${cdir}/names.h>\n" : '';
 
     if ($internal) {
         if ($hpubincf ne 'NONE') {

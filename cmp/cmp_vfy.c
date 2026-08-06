@@ -11,7 +11,7 @@
 
 /* CMP functions for PKIMessage checking */
 
-#include "libcmp_names.h"
+#include <libcmp/names.h>
 #include "cmp_local.h"
 
 /* print brief info on the given cert as error diagnostics on failure */
