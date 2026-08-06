@@ -69,7 +69,7 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         if (strcmp(val->name, "requireExplicitPolicy") == 0) {
             if (pcons->requireExplicitPolicy != NULL) {
                 ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
-                               "field=%s", val->name);
+                    "field=%s", val->name);
                 goto err;
             }
             if (!X509V3_get_value_int(val, &pcons->requireExplicitPolicy))
@@ -77,7 +77,7 @@ static void *v2i_POLICY_CONSTRAINTS(const X509V3_EXT_METHOD *method,
         } else if (strcmp(val->name, "inhibitPolicyMapping") == 0) {
             if (pcons->inhibitPolicyMapping != NULL) {
                 ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
-                               "field=%s", val->name);
+                    "field=%s", val->name);
                 goto err;
             }
             if (!X509V3_get_value_int(val, &pcons->inhibitPolicyMapping))
