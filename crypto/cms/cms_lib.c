@@ -412,8 +412,10 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     EVP_MD *digest = NULL;
     char alg[OSSL_MAX_NAME_SIZE];
     size_t xof_len = 0;
+    int ptype = 0;
+    const void *pval = NULL;
 
-    X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
+    X509_ALGOR_get0(&digestoid, &ptype, &pval, digestAlgorithm);
     OBJ_obj2txt(alg, sizeof(alg), digestoid, 0);
 
     digest = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(ctx), alg,
@@ -434,6 +436,17 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
             xof_len = 32;
         else if (EVP_MD_is_a(digest, SN_shake256))
             xof_len = 64;
+        else {
+            if (ptype == V_ASN1_INTEGER && pval != NULL) {
+                int val = ASN1_INTEGER_get((ASN1_INTEGER *)pval);
+
+                if (EVP_MD_is_a(digest, LN_shake128_len) && val > 0)
+                    xof_len = (size_t)val / 8;
+                else if (EVP_MD_is_a(digest, LN_shake256_len) && val > 0)
+                    xof_len = (size_t)val / 8;
+            }
+        }
+
         if (xof_len > 0) {
             EVP_MD_CTX *mdctx;
             OSSL_PARAM params[2];
@@ -464,6 +477,8 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
     const ASN1_OBJECT *mdoid;
     X509_ALGOR_get0(&mdoid, NULL, NULL, mdalg);
     nid = OBJ_obj2nid(mdoid);
+    char alg[OSSL_MAX_NAME_SIZE]; 
+           
     /* Look for digest type to match signature */
     for (;;) {
         EVP_MD_CTX *mtmp;
@@ -473,12 +488,21 @@ int ossl_cms_DigestAlgorithm_find_ctx(EVP_MD_CTX *mctx, BIO *chain,
             return 0;
         }
         BIO_get_md_ctx(chain, &mtmp);
-        if (EVP_MD_CTX_get_type(mtmp) == nid || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
-            /*
-             * Workaround for broken implementations that use signature
-             * algorithm OID instead of digest.
-             */
-            || EVP_MD_get_pkey_type(EVP_MD_CTX_get0_md(mtmp)) == nid)
+        OBJ_obj2txt(alg, sizeof(alg), mdoid, 0);
+        const EVP_MD *md = EVP_MD_CTX_get0_md(mtmp);
+
+        if (EVP_MD_CTX_get_type(mtmp) == nid
+            || OBJ_sn2nid(EVP_MD_CTX_get0_name(mtmp)) == nid
+            || (md != NULL
+                /*
+                 * Workaround for broken implementations that use signature
+                 * algorithm OID instead of digest.
+                 */
+                && (EVP_MD_get_pkey_type(md) == nid
+                    /*
+                     * Workaround if there is no legacy function.
+                     */
+                    || EVP_MD_is_a(md, alg))))
             return EVP_MD_CTX_copy_ex(mctx, mtmp);
         chain = BIO_next(chain);
     }

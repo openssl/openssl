@@ -32,6 +32,8 @@ extern const OSSL_DISPATCH ossl_keccak_384_functions[];
 extern const OSSL_DISPATCH ossl_keccak_512_functions[];
 extern const OSSL_DISPATCH ossl_shake_128_functions[];
 extern const OSSL_DISPATCH ossl_shake_256_functions[];
+extern const OSSL_DISPATCH ossl_shake_128_len_functions[];
+extern const OSSL_DISPATCH ossl_shake_256_len_functions[];
 extern const OSSL_DISPATCH ossl_cshake_keccak_128_functions[];
 extern const OSSL_DISPATCH ossl_cshake_keccak_256_functions[];
 extern const OSSL_DISPATCH ossl_cshake_128_functions[];
