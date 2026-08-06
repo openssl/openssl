@@ -41,8 +41,12 @@
  */
 
 /* Name of the seed source used to seed the primary DRBG. */
-#ifndef OPENSSL_NO_FIPS_JITTER
+#if !defined(OPENSSL_NO_FIPS_JITTER)
 #define OPENSSL_SEED_SRC_NAME "JITTER"
+#define OPENSSL_FIPS_SEED_SRC 1
+#elif !defined(OPENSSL_NO_FIPS_CPURNG)
+#define OPENSSL_SEED_SRC_NAME "CPURNG"
+#define OPENSSL_FIPS_SEED_SRC 1
 #elif defined(OPENSSL_DEFAULT_SEED_SRC)
 #define OPENSSL_SEED_SRC_NAME OPENSSL_MSTR(OPENSSL_DEFAULT_SEED_SRC)
 #else

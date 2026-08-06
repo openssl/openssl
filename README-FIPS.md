@@ -183,6 +183,11 @@ assessment [ESV] and validation through the [CMVP] are additionally conducted.
 Note that the `enable-fips-jitter` option is only available in OpenSSL
 versions 3.5 and later.
 
+An alternative on x86 CPUs, it si possible to use the RDSEED instruction.
+For CPUs for which that Intel and/or AMD have free to use Entropy
+certificates you can `enable-fips-cpurng` for better entropy seeding
+performance. This option is available in OpenSSL version 4.1 and later.
+
  [CMVP]: https://csrc.nist.gov/projects/cryptographic-module-validation-program
  [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 

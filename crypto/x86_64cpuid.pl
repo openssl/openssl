@@ -263,6 +263,22 @@ OPENSSL_ia32_cpuid:
 .cfi_endproc
 .size	OPENSSL_ia32_cpuid,.-OPENSSL_ia32_cpuid
 
+.globl OPENSSL_ia32_cpuver_info
+.type  OPENSSL_ia32_cpuver_info,\@abi-omnipotent
+.align  16
+OPENSSL_ia32_cpuver_info:
+.cfi_startproc
+	endbranch
+	mov	%rbx,%r8    	# save %rbx
+.cfi_register	%rbx,%r8
+	mov	\$1,%rax
+	cpuid
+	mov	%r8,%rbx	# restore %rbx
+.cfi_restore	%rbx
+	ret
+.cfi_endproc
+.size	OPENSSL_ia32_cpuver_info,.-OPENSSL_ia32_cpuver_info
+
 .globl  OPENSSL_cleanse
 .type   OPENSSL_cleanse,\@abi-omnipotent
 .align  16
