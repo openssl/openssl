@@ -13,8 +13,8 @@
 /*
  * The libcmp entry point for the CMP API.  The declarations are shared
  * with <openssl/cmp.h>, but code entering through this header gets every
- * public symbol renamed to its libcmp-native OSSL_LIBCMP_* name and must
- * be linked against libcmp.
+ * public symbol renamed to the same name with the LIBCMP_ prefix, and
+ * must be linked against libcmp.
  */
 
 #if defined(OPENSSL_CMP_H) && !defined(OSSL_LIBCMP_NAMES)
