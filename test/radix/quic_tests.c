@@ -386,6 +386,11 @@ DEF_SCRIPT(ssl_poll,
 }
 
 /*
+ * The abort path below requires a QUIC notifier. The RADIX harness enables
+ * notifiers only in threaded builds.
+ */
+#if defined(OPENSSL_THREADS)
+/*
  * Test: poll_abort_blocking
  * -------------------------
  *
@@ -397,74 +402,69 @@ DEF_SCRIPT(ssl_poll,
  * checks that:
  *
  *   - SSL_poll() reports success rather than spuriously failing, and
+ *   - translation stops at the item which triggers the abort, and
  *   - any items already registered before the abort have their blocking
  *     section correctly left (i.e. no leak in the QUIC reactor's blocking
  *     waiter count).
  *
  * The race between an item being registered and becoming ready is normally
  * vanishingly narrow, so we use ossl_quic_poll_translate_test_step_cb (test
- * instrumentation only, see ssl/rio/poll_builder.h) to deterministically
- * make the second item ready immediately before poll_translate() processes
- * it, while the first item is still mid-registration.
+ * instrumentation only, see ssl/rio/poll_builder.h) to change the second
+ * item's interest from a known-not-ready read event to a known-ready write
+ * event immediately before poll_translate() processes it, while the first
+ * item is still mid-registration.
+ *
+ * Application code must not mutate items while SSL_poll() is running. This
+ * deliberate mutation is confined to the test-only hook, and the later
+ * witness item proves that the resulting readiness actually stops translation.
  */
 struct poll_abort_test_ctx {
-    SSL *peer_writer; /* write here to make target ready */
-    SSL *target;
-    uint64_t target_events;
+    SSL_POLL_ITEM *target_item;
     size_t trigger_idx;
-    int made_ready; /* set by poll_abort_test_step_cb() on success */
+    size_t trigger_count;
+    int translated_past_trigger;
 };
 
 static void poll_abort_test_step_cb(size_t idx, void *arg)
 {
     struct poll_abort_test_ctx *ctx = arg;
-    uint64_t revents = 0;
-    int i;
+
+    if (idx > ctx->trigger_idx) {
+        ctx->translated_past_trigger = 1;
+        return;
+    }
 
     if (idx != ctx->trigger_idx)
         return;
 
-    if (SSL_write(ctx->peer_writer, "x", 1) != 1)
-        return;
-
-    /* Force the data through synchronously so target is ready by the time we return. */
-    for (i = 0; i < 1000; ++i) {
-        if (!ossl_quic_conn_poll_events(ctx->target, ctx->target_events,
-                /* do_tick = */ 1, &revents))
-            return;
-
-        if (revents != 0) {
-            ctx->made_ready = 1;
-            return;
-        }
-
-        OSSL_sleep(1);
-    }
+    /*
+     * Keep this hook memory-only. Doing QUIC I/O or ticking a reactor here
+     * reintroduces progress dependencies and can deadlock if an earlier item
+     * has already left a blocking section open on the same reactor.
+     */
+    ctx->target_item->events = SSL_POLL_EVENT_W;
+    ++ctx->trigger_count;
 }
 
 DEF_FUNC(check_poll_abort_blocking)
 {
     int ok = 0;
-    SSL *C, *C0, *Cb0, *Lb0;
-    QUIC_CHANNEL *ch0;
-    QUIC_REACTOR *rtor0;
-    SSL_POLL_ITEM items[2] = { 0 };
-    size_t result_count = SIZE_MAX, waiters_before, waiters_after;
+    SSL *C, *C0, *Cb0, *Lb0, *Cb;
+    QUIC_CHANNEL *ch0, *ch1;
+    QUIC_REACTOR *rtor0, *rtor1;
+    SSL_POLL_ITEM items[3] = { 0 }, writable_item = { 0 };
+    size_t result_count = SIZE_MAX;
     struct poll_abort_test_ctx ctx;
     const struct timeval z_timeout = { 0 };
+    const struct timeval timeout = { 5, 0 };
 
     /*
-     * C0 and Cb0 are streams of two independent client connections, and so
-     * belong to two independent QUIC_REACTORs. The bug being tested for does
-     * not actually require this: it reproduces just as well if all items
-     * share one reactor. What needs two reactors is poll_abort_test_step_cb()
-     * below, which forces Cb0 ready by ticking its reactor directly, on this
-     * thread, while C0's blocking section is still open. Doing that on C0's
-     * own (shared) reactor would deadlock: ossl_quic_reactor_tick() would see
-     * a nonzero cur_blocking_waiters left over from C0 and call
-     * rtor_notify_other_threads(), which waits on a condvar for some *other*
-     * thread to clear the notifier signal - a thread that doesn't exist here.
-     * Using Cb0's own, still-untouched reactor keeps that tick a no-op.
+     * C0 and Cb0 belong to independent client connections and reactors. This
+     * preserves coverage of a wait context containing multiple reactor slots
+     * without requiring the hook to drive either reactor. Lb0 is after the
+     * trigger item solely to witness that translation stops at Cb0. Its server
+     * reactor is deliberately not inspected because a successful abort never
+     * registers that item for blocking.
      */
     REQUIRE_SSL_4(C, C0, Cb0, Lb0);
 
@@ -472,6 +472,8 @@ DEF_FUNC(check_poll_abort_blocking)
     items[0].events = SSL_POLL_EVENT_R;
     items[1].desc = SSL_as_poll_descriptor(Cb0);
     items[1].events = SSL_POLL_EVENT_R;
+    items[2].desc = SSL_as_poll_descriptor(Lb0);
+    items[2].events = SSL_POLL_EVENT_R;
 
     /* Sanity check: nothing ready yet, so SSL_poll() will need to block. */
     if (!TEST_true(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
@@ -479,27 +481,50 @@ DEF_FUNC(check_poll_abort_blocking)
         || !TEST_size_t_eq(result_count, 0))
         goto err;
 
-    if (!TEST_ptr(ch0 = ossl_quic_conn_get_channel(C)))
+    /*
+     * The hook below changes item 1's interest to W. Verify first that this
+     * event is already ready, so the post-registration readout is guaranteed
+     * to take the abort-blocking path without network I/O or reactor ticking
+     * in the hook.
+     */
+    writable_item.desc = items[1].desc;
+    writable_item.events = SSL_POLL_EVENT_W;
+    result_count = SIZE_MAX;
+    if (!TEST_true(SSL_poll(&writable_item, 1, sizeof(writable_item),
+            &z_timeout, 0, &result_count))
+        || !TEST_size_t_eq(result_count, 1)
+        || !TEST_uint64_t_eq(writable_item.revents, SSL_POLL_EVENT_W))
+        goto err;
+
+    if (!TEST_int_ne(ossl_quic_get_notifier_fd(C0), -1)
+        || !TEST_int_ne(ossl_quic_get_notifier_fd(Cb0), -1)
+        || !TEST_ptr(Cb = SSL_get0_connection(Cb0))
+        || !TEST_ptr(ch0 = ossl_quic_conn_get_channel(C))
+        || !TEST_ptr(ch1 = ossl_quic_conn_get_channel(Cb)))
         goto err;
     rtor0 = ossl_quic_channel_get_reactor(ch0);
-    waiters_before = rtor0->cur_blocking_waiters;
+    rtor1 = ossl_quic_channel_get_reactor(ch1);
+    if (!TEST_ptr_ne(rtor0, rtor1)
+        || !TEST_size_t_eq(rtor0->cur_blocking_waiters, 0)
+        || !TEST_size_t_eq(rtor1->cur_blocking_waiters, 0))
+        goto err;
 
-    ctx.peer_writer = Lb0;
-    ctx.target = Cb0;
-    ctx.target_events = items[1].events;
+    ctx.target_item = &items[1];
     ctx.trigger_idx = 1;
-    ctx.made_ready = 0;
+    ctx.trigger_count = 0;
+    ctx.translated_past_trigger = 0;
 
     ossl_quic_poll_translate_test_step_cb_arg = &ctx;
     ossl_quic_poll_translate_test_step_cb = poll_abort_test_step_cb;
 
     result_count = SIZE_MAX;
     /*
-     * No timeout: if the abort_blocking case were instead to actually block,
-     * this call would hang forever rather than fail fast.
+     * This should return immediately through the abort-blocking path. Keep a
+     * finite timeout as a fail-safe so a broken injection cannot hang the
+     * entire test job.
      */
     ok = TEST_true(SSL_poll(items, OSSL_NELEM(items), sizeof(SSL_POLL_ITEM),
-        NULL, 0, &result_count));
+        &timeout, 0, &result_count));
 
     ossl_quic_poll_translate_test_step_cb = NULL;
     ossl_quic_poll_translate_test_step_cb_arg = NULL;
@@ -508,14 +533,17 @@ DEF_FUNC(check_poll_abort_blocking)
         goto err;
 
     ok = 0;
-    if (!TEST_true(ctx.made_ready)
-        || !TEST_size_t_ge(result_count, 1)
-        || !TEST_true((items[1].revents & SSL_POLL_EVENT_R) != 0))
+    if (!TEST_size_t_eq(ctx.trigger_count, 1)
+        || !TEST_false(ctx.translated_past_trigger)
+        || !TEST_size_t_eq(result_count, 1)
+        || !TEST_uint64_t_eq(items[0].revents, 0)
+        || !TEST_uint64_t_eq(items[1].revents, SSL_POLL_EVENT_W)
+        || !TEST_uint64_t_eq(items[2].revents, 0))
         goto err;
 
-    /* The first item's blocking-section entry must have been balanced. */
-    waiters_after = rtor0->cur_blocking_waiters;
-    if (!TEST_size_t_eq(waiters_after, waiters_before))
+    /* All blocking-section entries must have been balanced. */
+    if (!TEST_size_t_eq(rtor0->cur_blocking_waiters, 0)
+        || !TEST_size_t_eq(rtor1->cur_blocking_waiters, 0))
         goto err;
 
     ok = 1;
@@ -556,6 +584,7 @@ DEF_SCRIPT(poll_abort_blocking,
     OP_SELECT_SSL(3, Lb0);
     OP_FUNC(check_poll_abort_blocking);
 }
+#endif
 
 DEF_FUNC(check_writeable)
 {
@@ -2609,7 +2638,9 @@ static SCRIPT_INFO *const scripts[] = {
     USE(simple_conn),
     USE(simple_thread),
     USE(ssl_poll),
+#if defined(OPENSSL_THREADS)
     USE(poll_abort_blocking),
+#endif
     USE(check_cwm),
     USE(check_pc_flood),
     USE(check_ctx_cbks),
