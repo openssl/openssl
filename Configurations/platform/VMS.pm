@@ -49,15 +49,14 @@ sub staticname {
 
 # To enable installation of multiple major OpenSSL releases, we include the
 # version number in installed shared library names.
-my $sover_filename =
-    join('', map { sprintf "%02d", $_ } split(m|\.|, $config{shlib_version}));
 sub shlib_version_as_filename {
-    return $sover_filename;
+    return join('', map { sprintf "%02d", $_ }
+                        split(m|\.|, $_[0]->shlib_version($_[1])));
 }
 sub sharedname {
     return platform::BASE::__concat($_[0]->osslprefix(),
                                     platform::BASE->sharedname($_[1]),
-                                    $_[0]->shlib_version_as_filename(),
+                                    $_[0]->shlib_version_as_filename($_[1]),
                                     ($_[0]->shlibvariant() // ''),
                                     "_shr$target{pointer_size}");
 }
