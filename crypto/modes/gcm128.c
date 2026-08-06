@@ -428,6 +428,16 @@ void gcm_init_e2kv6_clmul(u128 Htable[16], const uint64_t Xi[2]);
 void gcm_gmult_e2kv6_clmul(uint64_t Xi[2], const u128 Htable[16]);
 void gcm_ghash_e2kv6_clmul(uint64_t Xi[2], const u128 Htable[16],
     const uint8_t *inp, size_t len);
+#elif defined(OPENSSL_CPUID_OBJ) && defined(__loongarch__) && __loongarch_grlen == 64
+#include "arch/loongarch_arch.h"
+#define GHASH_ASM_LOONGARCH64
+void gcm_gmult_loongarch64(uint64_t Xi[2], const u128 Htable[16]);
+void gcm_ghash_loongarch64(uint64_t Xi[2], const u128 Htable[16],
+    const uint8_t *inp, size_t len);
+void gcm_ghash_loongarch64_lsx(uint64_t Xi[2], const u128 Htable[16],
+    const uint8_t *inp, size_t len);
+void gcm_ghash_loongarch64_lasx(uint64_t Xi[2], const u128 Htable[16],
+    const uint8_t *inp, size_t len);
 #endif
 #endif
 
@@ -562,6 +572,21 @@ static void gcm_get_funcs(struct gcm_funcs_st *ctx)
     ctx->ginit = gcm_init_e2kv6_clmul;
     ctx->gmult = gcm_gmult_e2kv6_clmul;
     ctx->ghash = gcm_ghash_e2kv6_clmul;
+    return;
+#elif defined(GHASH_ASM_LOONGARCH64)
+    /*
+     * All variants use the Htable from gcm_init_4bit.  gmult stays scalar,
+     * as a single block is cheaper with the 4-bit table than with the SIMD
+     * code, which rebuilds its lookup tables on every call.
+     */
+    ctx->gmult = gcm_gmult_loongarch64;
+    ctx->ghash = gcm_ghash_loongarch64;
+    if (OPENSSL_loongarch_hwcap_P & LOONGARCH_HWCAP_LSX) {
+        ctx->ghash = gcm_ghash_loongarch64_lsx;
+        if (OPENSSL_loongarch_hwcap_P & LOONGARCH_HWCAP_LASX) {
+            ctx->ghash = gcm_ghash_loongarch64_lasx;
+        }
+    }
     return;
 #elif defined(GHASH_ASM)
     /* all other architectures use the generic names */
