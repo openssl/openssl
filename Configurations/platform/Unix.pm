@@ -20,7 +20,7 @@ sub dsoext              { $target{dso_extension} || platform->shlibextsimple()
 sub shlibext            { (my $x = $target{shared_extension}
                                || '.so.$(SHLIB_VERSION_NUMBER)')
                               =~ s|\.\$\(SHLIB_VERSION_NUMBER\)
-                                  |.$config{shlib_version}|x;
+                                  |'.' . $_[0]->shlib_version($_[1])|xe;
                           $x; }
 sub libext              { $target{lib_extension} || '.a' }
 sub defext              { $target{def_extension} || '.ld' }
@@ -72,7 +72,7 @@ sub sharedlib_simple {
     # accounted for.
     my $name = $_[0]->sharedname($_[1]);
     my $simplename = $_[0]->sharedname_simple($_[1]);
-    my $ext = $_[0]->shlibext();
+    my $ext = $_[0]->shlibext($_[1]);
     # Allow override of the extension passed in as parameter
     my $simpleext = $_[2];
     $simpleext = $_[0]->shlibextsimple() unless defined $simpleext;
