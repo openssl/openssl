@@ -10,7 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
-#include "../crypto/crmf/crmf_local.h" /* for manipulating POPO signature */
+#include "../cmp/crmf_local.h" /* for manipulating POPO signature */
 
 static const char *server_f;
 static const char *client_f;
