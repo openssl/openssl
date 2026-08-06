@@ -16,6 +16,83 @@
 #include "crypto/evp.h"
 #include "cms_local.h"
 
+static const EVP_MD *x509_algor_get_md(X509_ALGOR *alg)
+{
+    const EVP_MD *md;
+
+    if (alg == NULL)
+        return EVP_sha1();
+    md = EVP_get_digestbyobj(alg->algorithm);
+    if (md == NULL)
+        ERR_raise(ERR_LIB_CMS, CMS_R_UNKNOWN_DIGEST_ALGORITHM);
+    return md;
+}
+
+static X509_ALGOR *x509_algor_from_nid(int nid, int ptype, void *pval)
+{
+    ASN1_OBJECT *algo = OBJ_nid2obj(nid);
+    X509_ALGOR *alg = NULL;
+
+    if (algo == NULL)
+        return NULL;
+    if ((alg = X509_ALGOR_new()) == NULL)
+        goto err;
+    if (X509_ALGOR_set0(alg, algo, ptype, pval))
+        return alg;
+    alg->algorithm = NULL; /* precaution to prevent double free */
+err:
+    X509_ALGOR_free(alg);
+    return NULL;
+}
+
+static int x509_algor_new_from_md(X509_ALGOR **palg, const EVP_MD *md)
+{
+    X509_ALGOR *alg;
+
+    /* Default is SHA1 so no need to create it - still success */
+    if (md == NULL || EVP_MD_is_a(md, "SHA1"))
+        return 1;
+    if ((alg = X509_ALGOR_new()) == NULL)
+        return 0;
+    if (!X509_ALGOR_set_md(alg, md)) {
+        X509_ALGOR_free(alg);
+        return 0;
+    }
+    *palg = alg;
+    return 1;
+}
+
+static int x509_algor_md_to_mgf1(X509_ALGOR **palg, const EVP_MD *mgf1md)
+{
+    X509_ALGOR *algtmp = NULL;
+    ASN1_STRING *stmp = NULL;
+
+    *palg = NULL;
+    if (mgf1md == NULL || EVP_MD_is_a(mgf1md, "SHA1"))
+        return 1;
+    /* need to embed algorithm ID inside another */
+    if (!x509_algor_new_from_md(&algtmp, mgf1md))
+        goto err;
+    if (ASN1_item_pack(algtmp, ASN1_ITEM_rptr(X509_ALGOR), &stmp) == NULL)
+        goto err;
+    *palg = x509_algor_from_nid(NID_mgf1, V_ASN1_SEQUENCE, stmp);
+    if (*palg == NULL)
+        goto err;
+    stmp = NULL;
+err:
+    ASN1_STRING_free(stmp);
+    X509_ALGOR_free(algtmp);
+    return *palg != NULL;
+}
+
+static X509_ALGOR *x509_algor_mgf1_decode(X509_ALGOR *alg)
+{
+    if (OBJ_obj2nid(alg->algorithm) != NID_mgf1)
+        return NULL;
+    return ASN1_TYPE_unpack_sequence(ASN1_ITEM_rptr(X509_ALGOR),
+        alg->parameter);
+}
+
 static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
 {
     RSA_OAEP_PARAMS *oaep;
@@ -27,7 +104,7 @@ static RSA_OAEP_PARAMS *rsa_oaep_decode(const X509_ALGOR *alg)
         return NULL;
 
     if (oaep->maskGenFunc != NULL) {
-        oaep->maskHash = ossl_x509_algor_mgf1_decode(oaep->maskGenFunc);
+        oaep->maskHash = x509_algor_mgf1_decode(oaep->maskGenFunc);
         if (oaep->maskHash == NULL) {
             RSA_OAEP_PARAMS_free(oaep);
             return NULL;
@@ -70,10 +147,10 @@ static int rsa_cms_decrypt(CMS_RecipientInfo *ri)
         goto err;
     }
 
-    mgf1md = ossl_x509_algor_get_md(oaep->maskHash);
+    mgf1md = x509_algor_get_md(oaep->maskHash);
     if (mgf1md == NULL)
         goto err;
-    md = ossl_x509_algor_get_md(oaep->hashFunc);
+    md = x509_algor_get_md(oaep->hashFunc);
     if (md == NULL)
         goto err;
 
@@ -154,9 +231,9 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
     oaep = RSA_OAEP_PARAMS_new();
     if (oaep == NULL)
         goto err;
-    if (!ossl_x509_algor_new_from_md(&oaep->hashFunc, md))
+    if (!x509_algor_new_from_md(&oaep->hashFunc, md))
         goto err;
-    if (!ossl_x509_algor_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
+    if (!x509_algor_md_to_mgf1(&oaep->maskGenFunc, mgf1md))
         goto err;
     if (labellen > 0) {
         los = ASN1_OCTET_STRING_new();
@@ -166,7 +243,7 @@ static int rsa_cms_encrypt(CMS_RecipientInfo *ri)
         if (!ASN1_OCTET_STRING_set(los, label, labellen))
             goto err;
 
-        oaep->pSourceFunc = ossl_X509_ALGOR_from_nid(NID_pSpecified,
+        oaep->pSourceFunc = x509_algor_from_nid(NID_pSpecified,
             V_ASN1_OCTET_STRING, los);
         if (oaep->pSourceFunc == NULL)
             goto err;
