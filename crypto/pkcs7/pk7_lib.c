@@ -767,6 +767,7 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         return 0;
 
     os->flags |= ASN1_STRING_FLAG_NDEF;
+    p7->state |= PKCS7_STATE_STREAMING;
     *boundary = &os->data;
 
     return 1;
