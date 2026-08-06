@@ -116,6 +116,16 @@ OpenSSL Releases
 
    *Viktor Dukhovni*
 
+ * The CMP and CRMF API in libcrypto is deprecated.  The same API, without
+   deprecation, is now provided by the new libcmp library, reached through
+   the `<libcmp/cmp.h>`, `<libcmp/cmp_util.h>` and `<libcmp/crmf.h>` headers.
+   Note that switching to it requires both using these headers and linking
+   with libcmp, since libcmp exports the API under its own symbol names.
+   libcrypto keeps exporting the deprecated symbols for ABI compatibility
+   until removed in a future major release.
+
+   *Bob Beck*
+
  * Fixed a TLS 1.3 server with no session ID context to accept external PSK
    connections and to stop issuing unusable session tickets.
 
