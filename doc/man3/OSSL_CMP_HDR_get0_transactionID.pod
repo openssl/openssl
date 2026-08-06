@@ -9,7 +9,7 @@ OSSL_CMP_HDR_get0_geninfo_ITAVs
 
 =head1 SYNOPSIS
 
-  #include <openssl/cmp.h>
+  #include <libcmp/cmp.h>
 
   ASN1_OCTET_STRING *OSSL_CMP_HDR_get0_transactionID(const
                                                      OSSL_CMP_PKIHEADER *hdr);
@@ -42,6 +42,10 @@ or NULL if the respective entry does not exist and on error.
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
 OSSL_CMP_HDR_get0_geninfo_ITAVs() was added in OpenSSL 3.3.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

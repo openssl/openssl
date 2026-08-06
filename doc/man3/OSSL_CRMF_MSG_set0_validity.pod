@@ -13,7 +13,7 @@ OSSL_CRMF_MSGS_verify_popo
 
 =head1 SYNOPSIS
 
- #include <openssl/crmf.h>
+ #include <libcmp/crmf.h>
 
  int OSSL_CRMF_MSG_set0_validity(OSSL_CRMF_MSG *crm,
                                  ASN1_TIME *notBefore, ASN1_TIME *notAfter);
@@ -107,6 +107,10 @@ RFC 4211
 =head1 HISTORY
 
 The OpenSSL CRMF support was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/crmf.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 
