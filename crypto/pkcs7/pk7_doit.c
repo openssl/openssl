@@ -260,7 +260,6 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     }
 
     i = OBJ_obj2nid(p7->type);
-    p7->state = PKCS7_S_HEADER;
 
     switch (i) {
     case NID_pkcs7_signed:
@@ -461,7 +460,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     }
 
     i = OBJ_obj2nid(p7->type);
-    p7->state = PKCS7_S_HEADER;
 
     switch (i) {
     case NID_pkcs7_signed:
@@ -771,7 +769,6 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     }
 
     i = OBJ_obj2nid(p7->type);
-    p7->state = PKCS7_S_HEADER;
 
     switch (i) {
     case NID_pkcs7_data:
