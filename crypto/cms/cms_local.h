@@ -428,6 +428,19 @@ const CMS_CTX *ossl_cms_get0_cmsctx(const CMS_ContentInfo *cms);
 OSSL_LIB_CTX *ossl_cms_ctx_get0_libctx(const CMS_CTX *ctx);
 const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx);
 void ossl_cms_resolve_libctx(CMS_ContentInfo *ci);
+/**
+ * @brief Rebind a certificate to a library context by re-decoding it.
+ * The certificate cert is re-encoded and decoded in the given library
+ * context; on success the rebound certificate is stored in *out.  On failure
+ * *out is left unmodified.
+ * @param libctx library context to bind the certificate to
+ * @param propq property query associated with libctx
+ * @param cert the certificate to rebind
+ * @param out on success, receives the rebound certificate
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_cert_to_libctx(OSSL_LIB_CTX *libctx, const char *propq,
+    const X509 *cert, X509 **out);
 
 CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
