@@ -32,7 +32,9 @@ jobs:
       run: make help
     - name: make md-nits
       run: |
-          sudo gem install mdl
+          # mdl 0.18.0 is incompatible with the runner's uri 0.12.x.
+          # See https://github.com/markdownlint/markdownlint/issues/605
+          sudo gem install mdl -v 0.17.0
           make md-nits
 
   # out-of-source-and-install checks multiple things at the same time:
