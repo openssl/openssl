@@ -221,15 +221,23 @@ static int cms_msgSigDigest(CMS_SignerInfo *si,
     unsigned char *dig, unsigned int *diglen)
 {
     const EVP_MD *md = EVP_get_digestbyobj(si->digestAlgorithm->algorithm);
+    EVP_MD *fetched_md = NULL;
+    unsigned char *str = NULL;
+    int derlen, ret = 0;
 
     if (md == NULL)
         return 0;
-    if (!ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(CMS_Attributes_Verify), md,
-            si->signedAttrs, dig, diglen,
-            ossl_cms_ctx_get0_libctx(si->cms_ctx),
-            ossl_cms_ctx_get0_propq(si->cms_ctx)))
+    derlen = ASN1_item_i2d((ASN1_VALUE *)si->signedAttrs, &str,
+        ASN1_ITEM_rptr(CMS_Attributes_Verify));
+    if (derlen < 0 || str == NULL)
         return 0;
-    return 1;
+    fetched_md = EVP_MD_fetch(ossl_cms_ctx_get0_libctx(si->cms_ctx),
+        EVP_MD_get0_name(md), ossl_cms_ctx_get0_propq(si->cms_ctx));
+    if (fetched_md != NULL)
+        ret = EVP_Digest(str, derlen, dig, diglen, fetched_md, NULL);
+    EVP_MD_free(fetched_md);
+    OPENSSL_free(str);
+    return ret;
 }
 
 /* Add a msgSigDigest attribute to a SignerInfo */
