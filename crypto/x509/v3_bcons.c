@@ -71,7 +71,7 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
         if (strcmp(val->name, "CA") == 0) {
             if (ca_seen) {
                 ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
-                               "field=%s", val->name);
+                    "field=%s", val->name);
                 goto err;
             }
             if (!X509V3_get_value_bool(val, &bcons->ca))
@@ -80,7 +80,7 @@ static BASIC_CONSTRAINTS *v2i_BASIC_CONSTRAINTS(X509V3_EXT_METHOD *method,
         } else if (strcmp(val->name, "pathlen") == 0) {
             if (bcons->pathlen != NULL) {
                 ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
-                               "field=%s", val->name);
+                    "field=%s", val->name);
                 goto err;
             }
             if (!X509V3_get_value_int(val, &bcons->pathlen))

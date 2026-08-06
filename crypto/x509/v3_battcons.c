@@ -72,7 +72,7 @@ static OSSL_BASIC_ATTR_CONSTRAINTS *v2i_OSSL_BASIC_ATTR_CONSTRAINTS(
         if (strcmp(val->name, "authority") == 0) {
             if (authority_seen) {
                 ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
-                               "field=%s", val->name);
+                    "field=%s", val->name);
                 goto err;
             }
             if (!X509V3_get_value_bool(val, &battcons->authority))
@@ -81,7 +81,7 @@ static OSSL_BASIC_ATTR_CONSTRAINTS *v2i_OSSL_BASIC_ATTR_CONSTRAINTS(
         } else if (strcmp(val->name, "pathlen") == 0) {
             if (battcons->pathlen != NULL) {
                 ERR_raise_data(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD,
-                               "field=%s", val->name);
+                    "field=%s", val->name);
                 goto err;
             }
             if (!X509V3_get_value_int(val, &battcons->pathlen))
