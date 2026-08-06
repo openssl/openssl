@@ -50,13 +50,16 @@
  *
  * Choosing BARRETT_SHIFT == 32 (over the minimum of 24) aligns the shift to
  * a 32-bit word boundary, so the >> 32 extraction is equivalent to simply
- * taking the upper 32-bit half of a 64-bit product.  This is a single native
- * "multiply-high" instruction on all major ISAs (x86-64: upper half of MUL;
- * AArch64: UMULH; RISC-V: MULHU) and maps directly to SIMD lane-wide mul-high
- * operations.  With BARRETT_SHIFT == 24 the result would straddle the 32-bit
- * boundary (bits [55:24] of the product), requiring a separate bit-shift after
- * the multiply.  The multiplier m = floor(2^32 / 3329) = 1290167 still fits
- * comfortably in 32 bits, so there is no cost to the larger shift value.
+ * taking the upper 32-bit half of a 64-bit product.  On x86-64, the upper
+ * half of a 64-bit MUL is available in a single instruction; on s390x the
+ * SIMD vec_mulh intrinsic provides a lane-wide 16-bit multiply-high directly.
+ * On AArch64 and RV64, UMULH/MULHU operate on 64-bit operands, so the
+ * compiler still emits a 64-bit multiply followed by a right shift to extract
+ * bits [63:32].  Even so, the shift aligns the extraction to a word boundary,
+ * which avoids the sub-word bit manipulation that BARRETT_SHIFT == 24 would
+ * require (bits [55:24]).  The multiplier m = floor(2^32 / 3329) = 1290167
+ * still fits comfortably in 32 bits, so there is no cost to the larger shift
+ * value.
  */
 #define BARRETT_SHIFT 32
 
@@ -529,11 +532,14 @@ static void scalar_inverse_ntt_ppc(scalar *s)
  *          the INVERSE_DEGREE normalization.
  *
  *  matrix_mult_intt
- *      Computes out[i] = sum_j m[i*rank+j] * a[j] for each row i, and then
- *      immediately applies scalar_inverse_ntt to each result row.  Because
- *      this path uses scalar_inverse_ntt (not scalar_inverse_ntt_demontgomerize),
- *      the intermediate per-row inner products must be in standard form. The
- *      s390x implementation ensures this within matrix_mult_intt_vec128.
+ *      Computes out[i] = INTT(sum_j m[i*rank+j] * a[j]) for each row i.
+ *      The generic implementation accumulates each row in standard form (via
+ *      Barrett reduction) and then calls scalar_inverse_ntt.  The s390x/vec128
+ *      implementation accumulates each row in inverse-Montgomery form, then
+ *      explicitly calls demontgomerize_scalar_vec128 to convert to standard
+ *      form, and finally calls ossl_ml_kem_scalar_inverse_ntt_vec128 directly
+ *      (not the demontgomerize INTT variant, which is reserved for use after
+ *      inner_product_montgomery_vec128).
  */
 typedef void (*ml_kem_scalar_mult_add_fn)(scalar *out, const scalar *lhs, const scalar *rhs);
 typedef void (*ml_kem_inner_product_montgomery_fn)(scalar *out, const scalar *lhs, const scalar *rhs, int rank);

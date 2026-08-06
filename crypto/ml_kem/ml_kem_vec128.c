@@ -594,16 +594,17 @@ static __owur ossl_inline vec_int16_t multiply_512_montgomery(vec_int16_t b)
  * of s by 512, used as the final normalization step of the inverse NTT.
  *
  * The reference INTT normalizes by multiplying by inverseDegree = 3303 =
- * 128^{-1} mod q = (n/2)^{-1} mod q.  The vectorized pipeline instead
- * multiplies by 512 and compensates by entering the INTT from inverse-
- * Montgomery form: since 512 * R_M^{-1} ≡ 3303 (mod q)  (verify: 512 * 169
- * = 86528 = 25 * 3329 + 3303), multiplying an inv-Montgomery value by 512
- * via MontMulRaw gives the same result as multiplying the standard-form value
- * by 3303.
+ * 128^{-1} mod q = (n/2)^{-1} mod q.  The vectorized raw INTT
+ * (scalar_inverse_ntt_vec128_raw) leaves coefficients in standard form but
+ * scaled by (n/2) = 128; this function removes that factor by computing
+ * (coefficient * 512 * R_M^{-1}) mod q.  Since 512 * R_M^{-1} ≡ 3303 mod q
+ * (verify: 512 * 169 = 86528 = 25 * 3329 + 3303), the result equals the
+ * correct INTT output.
  *
  * Pre:  Every coefficient s->c[i] satisfies |s->c[i]| < 2 * q.
  *       (The typical caller is scalar_inverse_ntt_vec128_raw, which leaves
- *       even-indexed coefficients in (-2q, 2q) and odd-indexed in (-q, q).)
+ *       lower-half outputs s->c[0..127] in (-2q, 2q) and upper-half outputs
+ *       s->c[128..255] in (-q, q).)
  * Post: Every coefficient s->c[i] is in [0, q) and equals the old value
  *       times 512 * R_M^{-1} mod q = 3303.
  */
@@ -1193,10 +1194,13 @@ void ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128(scalar *s)
  * NTT.
  *
  * Computes out[i] = INTT(sum_{j=0}^{rank-1} m[i*rank+j] (*) a[j]) for each
- * row i.  Products are accumulated in inverse-Montgomery form without
- * per-step demontgomerization; the demontgomerizing INTT variant
- * (scalar_inverse_ntt_vec128_demontgomerize) handles conversion and INTT
- * for each row.
+ * row i.  For each row the per-element products are accumulated in
+ * inverse-Montgomery form via scalar_mult_montgomery_vec128 /
+ * scalar_mult_add_montgomery_vec128.  After accumulation, the row is
+ * converted to standard form by demontgomerize_scalar_vec128 and then passed
+ * to ossl_ml_kem_scalar_inverse_ntt_vec128 (the standard INTT, not the
+ * demontgomerize variant) which runs the butterfly stages and the final
+ * multiply-by-512 normalization.
  *
  * Pre:  1 <= rank <= 4  (ML-KEM supports k in {2, 3, 4}).
  *       Every coefficient of m[i*rank+j] and a[j] is in [0, q)  (NTTScalar).

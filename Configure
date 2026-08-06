@@ -1887,14 +1887,21 @@ int main(void) { vec_i16 v = probe(1, 2); return (int)v[0]; }
 END_PROBE
     close($fh);
 
-    # First try without any extra flags (GCC works without -fzvector).
+    # The vec128 TUs are always compiled with -march=z13 -mvx regardless of
+    # the global baseline march.  The probe must use the same target flags so
+    # that the result is valid for those TUs.  With an older baseline (e.g.
+    # -march=z10) Clang rejects <vecintrin.h> even with -fzvector unless the
+    # target already includes z13/VX.
+    #
+    # First try without -fzvector (GCC works without it).
     # If that fails, retry with -fzvector (Clang needs it for <vecintrin.h>).
     # Store the result in s390x_vector_cflags — NOT in the global cflags —
     # so only the two vec128 TUs see it.
     $config{s390x_vector_cflags} = "";
-    my $rc = system("$cc $flagstr -c -o $obj $tf 2>/dev/null");
+    my $vec_target = "-march=z13 -mvx";
+    my $rc = system("$cc $flagstr $vec_target -c -o $obj $tf 2>/dev/null");
     if ($rc != 0) {
-        $rc = system("$cc $flagstr -fzvector -c -o $obj $tf 2>/dev/null");
+        $rc = system("$cc $flagstr $vec_target -fzvector -c -o $obj $tf 2>/dev/null");
         if ($rc == 0) {
             $config{s390x_vector_cflags} = "-fzvector";
         }

@@ -51,7 +51,13 @@
  * Structure of keys
  */
 typedef struct ossl_ml_kem_scalar_st {
-    /* On every function entry and exit, 0 <= c[i] < ML_KEM_PRIME. */
+    /*
+     * At every function boundary 0 <= c[i] < ML_KEM_PRIME, with one
+     * exception: ossl_ml_kem_inner_product_montgomery_vec128 leaves
+     * coefficients in inverse-Montgomery form (c[i] ≡ value * R^{-1} mod q,
+     * |c[i]| <= rank * 6007).  Callers of that function must pass the result
+     * directly to ossl_ml_kem_scalar_inverse_ntt_demontgomerize_vec128.
+     */
 #if defined(VX_COMPILER_SUPPORT_VEC128)
     ALIGN16 uint16_t c[ML_KEM_DEGREE];
 #else

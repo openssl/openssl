@@ -276,6 +276,7 @@ crypto/ml_dsa/ml_dsa_sign.c
 crypto/ml_dsa/ml_dsa_sign.h
 crypto/ml_dsa/ml_dsa_vector.h
 crypto/ml_kem/ml_kem.c
+crypto/ml_kem/ml_kem_local.h
 crypto/ml_kem/ml_kem_vec128.c
 crypto/modes/asm/aes-gcm-armv8-unroll8_64.pl
 crypto/modes/asm/aes-gcm-armv8_64.pl
