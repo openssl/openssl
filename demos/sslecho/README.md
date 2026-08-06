@@ -5,6 +5,8 @@ This project implements a simple echo client/server.
 
 It is a console application, with command line parameters determining the mode
 of operation (client or server). Start it with no parameters to see usage.
+The client accepts a hostname as the server argument, which is used for both
+connection and certificate verification.
 
 The server code was adapted from the Simple TLS Server on the OpenSSL Wiki.
 The server code was modified to perform the echo function, and client code
