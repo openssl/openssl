@@ -589,6 +589,18 @@ err:
 
 /* Decrypt content key from KTRI */
 
+/* Check that the content-encryption algorithm parameters decode for cipher */
+static int cms_content_cipher_params_ok(EVP_CIPHER_CTX *cctx,
+    const EVP_CIPHER *cipher, ASN1_TYPE *param)
+{
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    int ivlen;
+
+    if ((EVP_CIPHER_get_flags(cipher) & EVP_CIPH_FLAG_AEAD_CIPHER) != 0)
+        return ossl_cms_get_aead_params(param, iv, sizeof(iv), &ivlen);
+    return EVP_CIPHER_asn1_to_param(cctx, param) > 0;
+}
+
 /* Check whether reporting a key length mismatch cannot act as an MMA oracle */
 static int cms_ktri_harderr_ok(EVP_PKEY_CTX *pctx, EVP_PKEY *pkey)
 {
@@ -627,7 +639,6 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     size_t eklen = 0;
     int ret = 0;
     EVP_CIPHER_CTX *cctx = NULL;
-    evp_cipher_aead_asn1_params aparams;
     const EVP_CIPHER *cipher = NULL;
     EVP_CIPHER *fetched_cipher = NULL;
     CMS_EncryptedContentInfo *ec;
@@ -666,7 +677,7 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
         cctx = EVP_CIPHER_CTX_new();
         if (cctx == NULL
             || EVP_DecryptInit_ex(cctx, cipher, NULL, NULL, NULL) <= 0
-            || evp_cipher_asn1_to_param_ex(cctx, calg->parameter, &aparams) <= 0) {
+            || !cms_content_cipher_params_ok(cctx, cipher, calg->parameter)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR);
             goto err;
         }

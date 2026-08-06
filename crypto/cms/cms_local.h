@@ -492,6 +492,16 @@ int ossl_cms_keyid_cert_cmp(ASN1_OCTET_STRING *keyid, X509 *cert);
 int ossl_cms_set1_ias(CMS_IssuerAndSerialNumber **pias, X509 *cert);
 int ossl_cms_set1_keyid(ASN1_OCTET_STRING **pkeyid, X509 *cert);
 
+/**
+ * @brief Decode the RFC 5084 GCMParameters of an AEAD content cipher.
+ * @param param the content-encryption algorithm parameter
+ * @param iv buffer receiving the nonce
+ * @param iv_max the size of iv in bytes
+ * @param iv_len receives the length of the nonce
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_get_aead_params(const ASN1_TYPE *param, unsigned char *iv,
+    size_t iv_max, int *iv_len);
 BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
     const CMS_CTX *ctx, int auth);
 BIO *ossl_cms_EncryptedData_init_bio(const CMS_ContentInfo *cms);
