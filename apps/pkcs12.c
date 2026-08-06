@@ -42,13 +42,16 @@ static int get_cert_chain(X509 *cert, X509_STORE *store,
     STACK_OF(X509) **chain);
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12,
     const char *pass, int passlen, int options,
-    char *pempass, const EVP_CIPHER *enc);
+    char *pempass, const EVP_CIPHER *enc,
+    int skey_idx);
 int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
     const char *pass, int passlen, int options,
-    char *pempass, const EVP_CIPHER *enc);
+    char *pempass, const EVP_CIPHER *enc,
+    int skey_idx, int *skey_count);
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bags,
     const char *pass, int passlen,
-    int options, char *pempass, const EVP_CIPHER *enc);
+    int options, char *pempass, const EVP_CIPHER *enc,
+    int skey_idx, int *skey_count);
 void print_attribute(BIO *out, const ASN1_TYPE *av);
 int print_attribs(BIO *out, const STACK_OF(X509_ATTRIBUTE) *attrlst,
     const char *name);
@@ -114,7 +117,8 @@ typedef enum OPTION_choice {
 #ifndef OPENSSL_NO_DES
     OPT_LEGACY_ALG,
 #endif
-    OPT_RAW
+    OPT_RAW,
+    OPT_SKEYSELECT
 } OPTION_CHOICE;
 
 const OPTIONS pkcs12_options[] = {
@@ -147,6 +151,7 @@ const OPTIONS pkcs12_options[] = {
     { "clcerts", OPT_CLCERTS, '-', "Only output client certificates" },
     { "cacerts", OPT_CACERTS, '-', "Only output CA certificates" },
     { "raw", OPT_RAW, '-', "Output secret keys as raw binary (no metadata)" },
+    { "skey_select", OPT_SKEYSELECT, 'p', "Index (1-based) of symmetric key to extract" },
     { "", OPT_CIPHER, '-', "Any supported cipher for output encryption" },
     { "noenc", OPT_NOENC, '-', "Don't encrypt private keys" },
     { "nodes", OPT_NODES, '-', "Don't encrypt private keys; deprecated" },
@@ -205,7 +210,7 @@ int pkcs12_main(int argc, char **argv)
     char *passcertsarg = NULL, *passcerts = NULL;
     char *name = NULL, *csp_name = NULL;
     char pass[PASSWD_BUF_SIZE] = "", macpass[PASSWD_BUF_SIZE] = "";
-    int export_pkcs12 = 0, options = 0, chain = 0, twopass = 0, keytype = 0;
+    int export_pkcs12 = 0, options = 0, chain = 0, twopass = 0, keytype = 0, skey_idx = 0;
     char *jdktrust = NULL;
 #ifndef OPENSSL_NO_DES
     int use_legacy = 0;
@@ -273,6 +278,9 @@ int pkcs12_main(int argc, char **argv)
             break;
         case OPT_RAW:
             options |= RAW;
+            break;
+        case OPT_SKEYSELECT:
+            skey_idx = opt_int_arg();
             break;
         case OPT_CHAIN:
             chain = 1;
@@ -936,7 +944,7 @@ dump:
     if (out == NULL)
         goto end;
 
-    if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc)) {
+    if (!dump_certs_keys_p12(out, p12, cpass, -1, options, passout, enc, skey_idx)) {
         BIO_puts(bio_err, "Error outputting keys and certificates\n");
         ERR_print_errors(bio_err);
         goto end;
@@ -981,11 +989,12 @@ static int jdk_trust(PKCS12_SAFEBAG *bag, void *cbarg)
 
 int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
     int passlen, int options, char *pempass,
-    const EVP_CIPHER *enc)
+    const EVP_CIPHER *enc, int skey_idx)
 {
     STACK_OF(PKCS7) *asafes = NULL;
     int i, bagnid;
     int ret = 0;
+    int skey_count = 0;
     PKCS7 *p7;
 
     if ((asafes = PKCS12_unpack_authsafes(p12)) == NULL)
@@ -1015,7 +1024,7 @@ int dump_certs_keys_p12(BIO *out, const PKCS12 *p12, const char *pass,
         if (bags == NULL)
             goto err;
         if (!dump_certs_pkeys_bags(out, bags, pass, passlen,
-                options, pempass, enc)) {
+                options, pempass, enc, skey_idx, &skey_count)) {
             sk_PKCS12_SAFEBAG_pop_free(bags, PKCS12_SAFEBAG_free);
             goto err;
         }
@@ -1030,13 +1039,15 @@ err:
 
 int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
     const char *pass, int passlen, int options,
-    char *pempass, const EVP_CIPHER *enc)
+    char *pempass, const EVP_CIPHER *enc,
+    int skey_idx, int *skey_count)
 {
     int i;
     for (i = 0; i < sk_PKCS12_SAFEBAG_num(bags); i++) {
         if (!dump_certs_pkeys_bag(out,
                 sk_PKCS12_SAFEBAG_value(bags, i),
-                pass, passlen, options, pempass, enc))
+                pass, passlen, options, pempass, enc,
+                skey_idx, skey_count))
             return 0;
     }
     return 1;
@@ -1044,7 +1055,8 @@ int dump_certs_pkeys_bags(BIO *out, const STACK_OF(PKCS12_SAFEBAG) *bags,
 
 int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
     const char *pass, int passlen, int options,
-    char *pempass, const EVP_CIPHER *enc)
+    char *pempass, const EVP_CIPHER *enc,
+    int skey_idx, int *skey_count)
 {
     EVP_PKEY *pkey;
     PKCS8_PRIV_KEY_INFO *p8;
@@ -1116,6 +1128,7 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         break;
 
     case NID_secretBag:
+        (*skey_count)++;
         if (options & INFO) {
             BIO_puts(bio_err, "Secret bag\n");
             BIO_puts(bio_err, "Bag Type: ");
@@ -1146,9 +1159,32 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
         }
         if (!(options & INFO) && !(options & NOKEYS)) {
             EVP_SKEY *skey;
+            char *friendly = NULL;
 
             if (PKCS12_SAFEBAG_get_bag_nid(bag) != NID_pkcs8ShroudedKeyBag)
                 return 1;
+
+            friendly = PKCS12_get_friendlyname((PKCS12_SAFEBAG *)bag);
+
+            if (skey_idx > 0 && *skey_count != skey_idx) {
+                OPENSSL_free(friendly);
+                return 1;
+            }
+
+            if ((options & RAW) && skey_idx == 0 && *skey_count > 1) {
+                BIO_printf(bio_err,
+                    "Warning: skipping symmetric key %d%s%s%s in raw mode"
+                    " (use -skey_select %d to extract it)\n",
+                    *skey_count,
+                    friendly != NULL ? " ('" : "",
+                    friendly != NULL ? friendly : "",
+                    friendly != NULL ? "')" : "",
+                    *skey_count);
+                OPENSSL_free(friendly);
+                return 1;
+            }
+            OPENSSL_free(friendly);
+
             p8 = PKCS12_decrypt_secretbag(bag, pass, passlen,
                 app_get0_libctx(), app_get0_propq());
             if (p8 == NULL)
@@ -1209,7 +1245,8 @@ int dump_certs_pkeys_bag(BIO *out, const PKCS12_SAFEBAG *bag,
             BIO_puts(bio_err, "Safe Contents bag\n");
         print_attribs(out, attrs, "Bag Attributes");
         return dump_certs_pkeys_bags(out, PKCS12_SAFEBAG_get0_safes(bag),
-            pass, passlen, options, pempass, enc);
+            pass, passlen, options, pempass, enc,
+            skey_idx, skey_count);
 
     default:
         BIO_puts(bio_err, "Warning unsupported bag type: ");

@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 97 + ($no_fips ? 0 : 5);
+plan tests => 110 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -653,23 +653,94 @@ ok(run(test(["pkcs12_api_test",
     ok($content =~ /0202020202020202/,
        "test multi-skey -noenc output contains key2 hex data");
 
-    # Test 4: Extract as raw binary - both keys concatenated
+    # Test 4: -raw outputs only first key and warns about the rest
     ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
-                "-out", $mskey_raw, "-passin", "pass:password", "-raw"])),
+                "-out", $mskey_raw, "-passin", "pass:password", "-raw"],
+               stderr => "mskey_stderr.txt")),
        "test multi-skey PKCS#12 extract with -raw option");
 
-    ok(-s $mskey_raw == 48,
-       "test multi-skey raw output is 48 bytes (32 + 16)");
+    ok(-s $mskey_raw == 32,
+       "test multi-skey raw output is 32 bytes (first key only)");
 
     open $fh, '<:raw', $mskey_raw or die "Cannot open $mskey_raw: $!";
     my $raw_content = do { local $/; <$fh> };
     close $fh;
-    ok(substr($raw_content, 0, 32) eq ("\x01" x 32),
-       "test multi-skey raw key1 is correct");
-    ok(substr($raw_content, 32, 16) eq ("\x02" x 16),
-       "test multi-skey raw key2 is correct");
+    ok($raw_content eq ("\x01" x 32),
+       "test multi-skey raw first key is correct");
 
-    unlink $mskey_out, $mskey_raw;
+    open $fh, '<', "mskey_stderr.txt" or die "Cannot open mskey_stderr.txt: $!";
+    $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content =~ /Warning: skipping symmetric key 2.*in raw mode/,
+       "test multi-skey raw warns about skipped key");
+
+    # Test 5: -raw -skey_select 1 extracts first key without warning
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_raw, "-passin", "pass:password",
+                "-raw", "-skey_select", "1"],
+               stderr => "mskey_stderr.txt")),
+       "test multi-skey -raw -skey_select 1");
+
+    ok(-s $mskey_raw == 32,
+       "test multi-skey -skey_select 1 raw output is 32 bytes");
+
+    open $fh, '<:raw', $mskey_raw or die "Cannot open $mskey_raw: $!";
+    $raw_content = do { local $/; <$fh> };
+    close $fh;
+    ok($raw_content eq ("\x01" x 32),
+       "test multi-skey -skey_select 1 key data is correct");
+
+    open $fh, '<', "mskey_stderr.txt" or die "Cannot open mskey_stderr.txt: $!";
+    $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content !~ /Warning/,
+       "test multi-skey -raw -skey_select 1 no warning");
+
+    # Test 6: -raw -skey_select 2 extracts second key
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_raw, "-passin", "pass:password",
+                "-raw", "-skey_select", "2"])),
+       "test multi-skey -raw -skey_select 2");
+
+    ok(-s $mskey_raw == 16,
+       "test multi-skey -skey_select 2 raw output is 16 bytes");
+
+    open $fh, '<:raw', $mskey_raw or die "Cannot open $mskey_raw: $!";
+    $raw_content = do { local $/; <$fh> };
+    close $fh;
+    ok($raw_content eq ("\x02" x 16),
+       "test multi-skey -skey_select 2 key data is correct");
+
+    # Test 7: -noenc -skey_select 2 extracts only second key with metadata
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_out, "-passin", "pass:password",
+                "-noenc", "-skey_select", "2"])),
+       "test multi-skey -noenc -skey_select 2");
+
+    open $fh, '<', $mskey_out or die "Cannot open $mskey_out: $!";
+    $content = do { local $/; <$fh> };
+    close $fh;
+    ok($content =~ /Key Length: 16 bytes/ && $content =~ /0202020202020202/,
+       "test multi-skey -skey_select 2 shows only key2 data");
+    ok($content !~ /Key Length: 32 bytes/,
+       "test multi-skey -skey_select 2 does not show key1");
+
+    # Test 8: -skey_select 5 (out of range) produces empty output
+    ok(run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                "-out", $mskey_raw, "-passin", "pass:password",
+                "-raw", "-skey_select", "5"])),
+       "test multi-skey -raw -skey_select 5 (out of range)");
+
+    ok(-s $mskey_raw == 0 || !-e $mskey_raw,
+       "test multi-skey -skey_select 5 produces no output");
+
+    # Test 9: -skey_select 0 is rejected
+    ok(!run(app(["openssl", "pkcs12", "-in", $multi_p12, "-nocerts",
+                 "-out", $mskey_raw, "-passin", "pass:password",
+                 "-raw", "-skey_select", "0"])),
+       "test multi-skey -skey_select 0 is rejected");
+
+    unlink $mskey_out, $mskey_raw, "mskey_stderr.txt";
 }
 
 # Test PKCS12_parse_ex() with multiple symmetric keys
