@@ -4030,11 +4030,7 @@ int SSL_export_keying_material(SSL *s, unsigned char *out, size_t olen,
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
 
-    if (sc == NULL)
-        return -1;
-
-    if (sc->session == NULL
-        || (sc->version < TLS1_VERSION && sc->version != DTLS1_BAD_VER))
+    if (sc == NULL || sc->session == NULL)
         return -1;
 
     return sc->ssl.method->ssl3_enc->export_keying_material(sc, out, olen, label,
