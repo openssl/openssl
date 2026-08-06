@@ -148,6 +148,20 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
 }
 
 #define ERR_PRINT_BUF_SIZE 4096
+
+static int cmp_strerror_r(int errnum, char *buf, size_t buflen)
+{
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+    return strerror_s(buf, buflen, errnum);
+#elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+    || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    return strerror_r(errnum, buf, buflen);
+#else
+    /* Your platform is too old to get error messages. you'll get reason codes */
+    return -1;
+#endif
+}
+
 /* this is similar to ERR_print_errors_cb, but uses the CMP-specific cb type */
 void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
 {
@@ -164,7 +178,7 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
 
 #ifndef OPENSSL_NO_ERR
         if (ERR_SYSTEM_ERROR(err)) {
-            if (openssl_strerror_r(reason, rsbuf, sizeof(rsbuf)))
+            if (cmp_strerror_r((int)reason, rsbuf, sizeof(rsbuf)) == 0)
                 rs = rsbuf;
         } else {
             rs = ERR_reason_error_string(err);
