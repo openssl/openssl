@@ -950,7 +950,7 @@ static int cms_RecipientInfo_kekri_encrypt(const CMS_ContentInfo *cms,
         goto err;
     }
     wkeylen += outlen;
-    if (!ossl_assert((size_t)wkeylen == ec->keylen + 8)) {
+    if (!cms_assert((size_t)wkeylen == ec->keylen + 8)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_WRAP_ERROR);
         goto err;
     }

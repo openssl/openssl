@@ -10,8 +10,15 @@
 #ifndef OSSL_CRYPTO_CMS_LOCAL_H
 #define OSSL_CRYPTO_CMS_LOCAL_H
 
+#include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/x509.h>
+
+static ossl_inline int cms_assert(int expr)
+{
+    assert(expr);
+    return expr;
+}
 
 /*
  * Cryptographic message syntax (CMS) structures: taken from RFC3852
