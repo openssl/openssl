@@ -2,6 +2,9 @@
 # %skipdir there for further explanations.
 
 SUBDIRS=crypto ssl apps util fuzz providers doc
+IF[{- !$disabled{cmp} -}]
+  SUBDIRS=cmp
+ENDIF
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF
