@@ -4000,7 +4000,7 @@ static int qc_getset_max_pending_channels(QCTX *ctx, uint32_t class_,
 
     qctx_lock(ctx);
 
-    if (class_ == SSL_VALUE_CLASS_FEATURE_REQUEST && ctx->is_listener) {
+    if (class_ == SSL_VALUE_CLASS_GENERIC && ctx->is_listener) {
         value_out = ossl_quic_port_get_max_pending_channels(ctx->ql->port);
         if (p_value_in != NULL) {
             value_in = *p_value_in;

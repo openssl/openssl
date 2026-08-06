@@ -240,7 +240,7 @@ value may change between releases of OpenSSL.
 
 =item B<SSL_VALUE_QUIC_MAX_PENDING_CONNS> (listener object)
 
-This sets the limit on channels (connection objects) which a QUIC server can
+Generic value, sets the limit on channels (connection objects) which a QUIC server can
 insert into the list of pending connections. A pending connection is a connection
 which the local application needs to accept (L<SSL_accept_connection(3)>) in order to retrieve
 an SSL connection object. The connection is removed from the pending queue by a call
