@@ -66,6 +66,8 @@ struct CMS_ContentInfo_st {
         void *otherData;
     } d;
     CMS_CTX ctx;
+    /* Content octet string was created here, not read in via d2i */
+    int contentCreated;
 };
 
 DEFINE_STACK_OF(CMS_CertificateChoices)
