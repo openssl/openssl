@@ -917,13 +917,9 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl)
     rl->num_released = 0;
     ret = OSSL_RECORD_RETURN_SUCCESS;
 end:
-    if (macbufs != NULL) {
-        for (j = 0; j < num_recs; j++) {
-            if (macbufs[j].alloced)
-                OPENSSL_free(macbufs[j].mac);
-        }
+    if (macbufs != NULL)
         OPENSSL_free(macbufs);
-    }
+
     return ret;
 }
 
