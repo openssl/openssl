@@ -20,6 +20,10 @@ static ossl_inline int cms_assert(int expr)
     return expr;
 }
 
+/* Local copies of the libcrypto-internal buffer-size limits (internal/sizes.h) */
+#define CMS_MAX_NAME_SIZE 50 /* Algorithm name */
+#define CMS_MAX_ALGORITHM_ID_SIZE 256 /* AlgorithmIdentifier DER */
+
 /*
  * Cryptographic message syntax (CMS) structures: taken from RFC3852
  */

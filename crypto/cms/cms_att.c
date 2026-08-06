@@ -12,8 +12,6 @@
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
-#include "internal/nelem.h"
-#include "crypto/x509.h"
 #include "cms_local.h"
 
 /*-
@@ -257,7 +255,9 @@ int ossl_cms_si_check_attributes(const CMS_SignerInfo *si)
     int have_signed_attrs = (CMS_signed_get_attr_count(si) > 0);
     int have_unsigned_attrs = (CMS_unsigned_get_attr_count(si) > 0);
 
-    for (i = 0; i < (int)OSSL_NELEM(cms_attribute_properties); ++i) {
+    for (i = 0; i < (int)(sizeof(cms_attribute_properties)
+                    / sizeof(cms_attribute_properties[0]));
+        ++i) {
         int nid = cms_attribute_properties[i].nid;
         int flags = cms_attribute_properties[i].flags;
 

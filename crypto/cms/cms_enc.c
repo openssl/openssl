@@ -7,7 +7,6 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -16,7 +15,6 @@
 #include <openssl/rand.h>
 #include "crypto/asn1.h"
 #include "cms_local.h"
-#include "internal/sizes.h"
 
 /* CMS EncryptedData Utilities */
 
@@ -124,7 +122,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         fetched_ciph = EVP_CIPHER_fetch(libctx, EVP_CIPHER_get0_name(cipher),
             propq);
     } else {
-        char txtoid[OSSL_MAX_NAME_SIZE];
+        char txtoid[CMS_MAX_NAME_SIZE];
         if (OBJ_obj2txt(txtoid, sizeof(txtoid), calg->algorithm, 1) > 0)
             fetched_ciph = EVP_CIPHER_fetch(libctx, txtoid, propq);
     }

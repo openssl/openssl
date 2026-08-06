@@ -13,7 +13,6 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
-#include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "cms_local.h"
@@ -25,7 +24,7 @@ static int kem_cms_decrypt(CMS_RecipientInfo *ri)
     EVP_PKEY_CTX *pctx;
     EVP_CIPHER_CTX *kekctx;
     uint32_t cipher_length;
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
     EVP_CIPHER *kekcipher = NULL;
     int rv = 0;
 
@@ -70,7 +69,7 @@ static int kem_cms_encrypt(CMS_RecipientInfo *ri)
     EVP_PKEY *pkey;
     int security_bits;
     const ASN1_OBJECT *kdf_obj = NULL;
-    unsigned char kemri_x509_algor[OSSL_MAX_ALGORITHM_ID_SIZE];
+    unsigned char kemri_x509_algor[CMS_MAX_ALGORITHM_ID_SIZE];
     OSSL_PARAM params[2];
     X509_ALGOR *x509_algor = NULL;
     EVP_CIPHER_CTX *kekctx;
