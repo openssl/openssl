@@ -16,7 +16,6 @@
 #include <openssl/x509.h>
 #include "cms_local.h"
 #include "crypto/evp.h"
-#include "internal/sizes.h"
 
 #include <crypto/asn1.h>
 
@@ -183,7 +182,7 @@ static EVP_KDF_CTX *create_kdf_ctx(CMS_KEMRecipientInfo *kemri)
 {
     const ASN1_OBJECT *kdf_oid;
     int ptype;
-    char kdf_alg[OSSL_MAX_NAME_SIZE];
+    char kdf_alg[CMS_MAX_NAME_SIZE];
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
 
