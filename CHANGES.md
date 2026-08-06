@@ -31,6 +31,12 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Repeated fields in the `basicConstraints`, `basicAttConstraints`,
+   and `policyConstraints` X.509v3 extension configurations are now rejected
+   instead of silently using the last value.
+
+   *Adam Tabak*
+
  * The `tsget` utility now uses `Net::Curl::Easy` (from the `Net-Curl` CPAN
    distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who relied
    on `tsget` must install `Net::Curl::Easy` before upgrading.
