@@ -10,6 +10,7 @@
  */
 
 #include <stdio.h>
+#include "libcmp_names.h"
 #include <string.h>
 #include <openssl/cmp_util.h>
 #include "cmp_local.h" /* just for decls of internal functions defined here */
