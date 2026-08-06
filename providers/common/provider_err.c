@@ -67,6 +67,8 @@ static const ERR_STRING_DATA PROV_str_reasons[] = {
         "fips module import pct error" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FIPS_MODULE_IN_ERROR_STATE),
         "fips module in error state" },
+    { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_FIPS_MODULE_MISSING_CHECKSUM),
+        "fips module missing checksum" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_GENERATE_ERROR), "generate error" },
     { ERR_PACK(ERR_LIB_PROV, 0, PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE),
         "illegal or unsupported padding mode" },
