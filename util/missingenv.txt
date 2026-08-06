@@ -1,0 +1,87 @@
+# Internal OpenSSL environment variables not yet formally documented.
+#
+# These are used by the test suite, release tooling, ASM generators, or
+# build infrastructure.  They are not relevant to end users and therefore
+# not documented in openssl-env(7), but they should eventually be covered
+# in doc/internal, CONTRIBUTING.md, or HACKING.md.
+#
+# Format: one variable name per line (first whitespace-delimited token).
+# Everything after the first token is treated as a comment.
+# Blank lines and lines beginning with # are ignored.
+#
+# When a variable gets documented, remove it from this file.
+
+# --- TAP::Harness / OpenSSL::Test harness knobs ---
+HARNESS_ACTIVE                    Set by TAP::Harness while a test is running
+HARNESS_FAILLOG                   Path to failure log written by harness
+HARNESS_JOBS                      Number of parallel test jobs (e.g. make test HARNESS_JOBS=4)
+HARNESS_OSSL_LEVEL                OpenSSL-specific harness verbosity level
+HARNESS_TAP_COPY                  Copy TAP output to this file descriptor
+HARNESS_TIMER                     Enable per-test wall-clock timing
+HARNESS_VERBOSE                   Enable verbose TAP output
+HARNESS_VERBOSE_FAILURE           Show full output only for failing tests
+HARNESS_VERBOSE_FAILURE_PROGRESS  Show progress indicator during verbose failure output
+
+# --- Test framework paths (set by OpenSSL::Test / util/wrap.pl) ---
+BLDTOP                Build tree top directory
+SRCTOP                Source tree top directory
+TOP                   Legacy alias for source tree top
+CERTS_DIR             Path to test certificate store
+CT_DIR                Path to certificate-transparency test data
+TEST_CERTS_DIR        Alternative test certificate path
+TESTDATADIR           Path to test data files
+
+# --- Test behaviour switches ---
+ECSTRESS              Enable EC stress tests (99-test_ecstress.t)
+EVP_TEST_EXTENDED     Run extended EVP tests
+EXE_SHELL             Shell used to execute test binaries
+FILEPREFIX            Prefix for test-generated temporary files
+FIPSKEY               FIPS module integrity key used during testing
+LHASH_WORKERS         Number of worker threads for LHASH tests
+NO_ADDR_VALIDATE      Skip address validation in tests
+NO_FIPS               Skip FIPS-related tests
+NO_LEGACY             Skip legacy-provider tests
+OSSL_RUN_CI_TESTS     Enable CI-only tests (set in GitHub Actions)
+OPENSSL_TEST_GETCOUNTS    Enable test allocation counting
+OPENSSL_TEST_RAND_ORDER   Randomise test execution order
+OPENSSL_TEST_RAND_SEED    Seed for randomised test ordering
+RETAIN_SEED           Preserve random seed across test runs
+REPORT_FAILURES       Report detailed test failures
+REPORT_FAILURES_PROGRESS  Show progress during failure reporting
+VERBOSE               Test verbosity flag (short form)
+VERBOSE_FAILURE       Verbose output on failure (short form)
+VERBOSE_FAILURE_PROGRESS  Progress during verbose failure output
+VF                    Alias for VERBOSE_FAILURE
+VFP                   Alias for VERBOSE_FAILURE_PROGRESS
+
+# --- CMP test infrastructure ---
+OPENSSL_CMP_ASPECTS   CMP test aspects configuration
+OPENSSL_CMP_CONFIG    CMP test configuration file path
+OPENSSL_CMP_SERVER    CMP test server URL
+
+# --- SSL/TLS test knobs ---
+SSL_CIPHER_SUITES     Cipher suites for SSL tests
+SSL_SESSION_FILE      Session file for SSL tests
+SSL_TESTS             SSL test selection filter
+
+# --- Release and build tooling ---
+ADD_DEPENDS_DEBUG             Debug mode for dependency generation
+OPENSSL_MKINSTALLVARS_DEBUG   Debug mode for util/mkinstallvars.pl
+ASM                   Assembly source override for ASM generators
+AUTHOR_TESTING        Enable author-level testing
+CN2                   Alternative CN for test certificates
+MYKEY                 Key name used in test recipes
+PREV_RELEASE_DATE     Previous release date (util/mkrelease.pl)
+PREV_RELEASE_TEXT     Previous release description
+RELEASE               Current release version string
+RELEASE_DATE          Current release date string
+RELEASE_TEXT          Current release description
+SHLIB_VERSION_NUMBER  Shared library version number
+
+# --- RPKI test tooling ---
+RPKI_DOWNLOAD_URL     Download URL for RPKI test data
+RPKI_SRC              Source path for RPKI test data
+RPKI_TARBALL          Path to RPKI test tarball
+
+# --- Miscellaneous ---
+TSDNSECT              TSA distinguished-name section in openssl.cnf

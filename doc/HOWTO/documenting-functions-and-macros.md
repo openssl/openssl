@@ -175,6 +175,20 @@ can be utilized to check for this. A completely new documentation file
 should also contain a HISTORY section with wording along this line, e.g.
 "These functions have been added in OpenSSL version xxx.".
 
+The option -a checks for undocumented environment variables by scanning
+C (.c, .in) and Perl (.t, .pl) source files; variables intended for end users
+must be documented in the appropriate manual (e.g. `openssl-env(7)`).
+
+Two external files control which names are excluded from that check:
+
+* `util/env-ignore.txt` – system, platform, and third-party variables
+  (e.g. `LANG`, `LC_ALL`, `ASAN_OPTIONS`) that are never OpenSSL-specific
+  and will never need OpenSSL documentation.
+* `util/missingenv.txt` – internal OpenSSL variables (test harness, release
+  tooling, build infrastructure) that are not yet formally documented.
+  Each entry carries a brief description; when a variable is documented
+  (in `doc/internal`, `CONTRIBUTING.md`, etc.), remove it from this file.
+
 Summary
 -------
 
