@@ -76,7 +76,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   SOURCE[cmp]=cmp.c driver.c fuzz_rand.c
   INCLUDE[cmp]=../include {- $ex_inc -}
-  DEPEND[cmp]=../libcrypto {- $ex_lib -}
+  DEPEND[cmp]=../libcmp ../libcrypto {- $ex_lib -}
 
   SOURCE[slh-dsa]=slh-dsa.c driver.c fuzz_rand.c
   INCLUDE[slh-dsa]=../include {- $ex_inc -}
@@ -254,7 +254,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[cmp-test]=cmp.c $FUZZTESTSRC fuzz_rand.c
   INCLUDE[cmp-test]=../include ../test/mfail
-  DEPEND[cmp-test]=../libcrypto.a
+  DEPEND[cmp-test]=../libcmp.a ../libcrypto.a
   # referring to static lib allows using non-exported functions
 
   SOURCE[ml-kem-test]=ml-kem.c $FUZZTESTSRC
