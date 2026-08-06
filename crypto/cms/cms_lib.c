@@ -17,7 +17,7 @@
 #include <openssl/core_names.h>
 #include "internal/sizes.h"
 #include "internal/cryptlib.h"
-#include "crypto/x509.h"
+#include "crypto/asn1.h"
 #include "cms_local.h"
 #include "internal/cms.h"
 
@@ -86,6 +86,33 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx)
     return ctx != NULL ? ctx->propq : NULL;
 }
 
+int ossl_cms_cert_to_libctx(OSSL_LIB_CTX *libctx, const char *propq,
+    const X509 *cert, X509 **out)
+{
+    X509 *res;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len, ret = 0;
+
+    res = X509_new_ex(libctx, propq);
+    if (res == NULL)
+        goto err;
+    len = i2d_X509(cert, &der);
+    if (len < 0)
+        goto err;
+    p = der;
+    if (d2i_X509(&res, &p, len) == NULL)
+        goto err;
+    *out = res;
+    res = NULL;
+    ret = 1;
+
+err:
+    OPENSSL_free(der);
+    X509_free(res);
+    return ret;
+}
+
 void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
 {
     int i;
@@ -102,8 +129,15 @@ void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
     if (pcerts != NULL) {
         for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
             cch = sk_CMS_CertificateChoices_value(*pcerts, i);
-            if (cch->type == CMS_CERTCHOICE_CERT)
-                ossl_x509_set0_libctx(cch->d.certificate, libctx, propq);
+            if (cch->type == CMS_CERTCHOICE_CERT) {
+                X509 *rebound = NULL;
+
+                if (ossl_cms_cert_to_libctx(libctx, propq, cch->d.certificate,
+                        &rebound)) {
+                    X509_free(cch->d.certificate);
+                    cch->d.certificate = rebound;
+                }
+            }
         }
     }
 }

@@ -24,7 +24,6 @@
 #include "internal/sizes.h"
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/x509.h"
 #include "cms_local.h"
 
 /* CMS EnvelopedData Utilities */
@@ -205,9 +204,17 @@ void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
                 break;
             case CMS_RECIPINFO_TRANS:
                 ri->d.ktri->cms_ctx = ctx;
-                ossl_x509_set0_libctx(ri->d.ktri->recip,
-                    ossl_cms_ctx_get0_libctx(ctx),
-                    ossl_cms_ctx_get0_propq(ctx));
+                /* recip may be NULL (key-id recipient); historically a no-op */
+                if (ri->d.ktri->recip != NULL) {
+                    X509 *rebound = NULL;
+
+                    if (ossl_cms_cert_to_libctx(ossl_cms_ctx_get0_libctx(ctx),
+                            ossl_cms_ctx_get0_propq(ctx), ri->d.ktri->recip,
+                            &rebound)) {
+                        X509_free(ri->d.ktri->recip);
+                        ri->d.ktri->recip = rebound;
+                    }
+                }
                 break;
             case CMS_RECIPINFO_KEK:
                 ri->d.kekri->cms_ctx = ctx;
