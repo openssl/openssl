@@ -29,7 +29,7 @@
 #include "crmf_local.h"
 #include <openssl/asn1t.h>
 #include <openssl/err.h>
-#include "internal/constant_time.h"
+#include <string.h>
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 
 /*-
@@ -756,6 +756,34 @@ end:
     ERR_raise(ERR_LIB_CRMF, CRMF_R_CMS_NOT_SUPPORTED);
     return NULL;
 #endif /* OPENSSL_NO_CMS */
+}
+
+/* Returns the given value with the MSB copied to all the other bits. */
+static ossl_inline unsigned int constant_time_msb(unsigned int a)
+{
+    return 0 - (a >> (sizeof(a) * 8 - 1));
+}
+
+static ossl_inline size_t constant_time_msb_s(size_t a)
+{
+    return 0 - (a >> (sizeof(a) * 8 - 1));
+}
+
+/* Returns 0xff..f if a == 0 and 0 otherwise. */
+static ossl_inline unsigned int constant_time_is_zero(unsigned int a)
+{
+    return constant_time_msb(~a & (a - 1));
+}
+
+static ossl_inline size_t constant_time_is_zero_s(size_t a)
+{
+    return constant_time_msb_s(~a & (a - 1));
+}
+
+/* Returns 0xff..f if a == b and 0 otherwise. */
+static ossl_inline size_t constant_time_eq_s(size_t a, size_t b)
+{
+    return constant_time_is_zero_s(a ^ b);
 }
 
 unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
