@@ -126,6 +126,16 @@ OpenSSL 4.2
 
    *Daniel Kubec*
 
+ * The CMP and CRMF API in libcrypto is deprecated.  The same API, without
+   deprecation, is now provided by the new libcmp library, reached through
+   the `<libcmp/cmp.h>`, `<libcmp/cmp_util.h>` and `<libcmp/crmf.h>` headers.
+   Note that switching to it requires both using these headers and linking
+   with libcmp, since libcmp exports the API under its own symbol names.
+   libcrypto keeps exporting the deprecated symbols for ABI compatibility
+   until removed in a future major release.
+
+   *Bob Beck*
+
  * Added optimized ML-KEM implementation for x86 platforms that support the
    AVX2 vector instruction set.
 
