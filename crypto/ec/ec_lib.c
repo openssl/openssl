@@ -22,6 +22,7 @@
 #include <openssl/param_build.h>
 #include "crypto/ec.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h" /* OSSL_FN_CTX / OSSL_FN_MONT_CTX helpers */
 #include "internal/nelem.h"
 #include "ec_local.h"
 
@@ -59,6 +60,9 @@ EC_GROUP *ossl_ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         ret->cofactor = BN_new();
         if (ret->cofactor == NULL)
             goto err;
+        ret->cardinality = BN_new();
+        if (ret->cardinality == NULL)
+            goto err;
     }
     ret->asn1_flag = OPENSSL_EC_EXPLICIT_CURVE;
     ret->asn1_form = POINT_CONVERSION_UNCOMPRESSED;
@@ -69,6 +73,7 @@ EC_GROUP *ossl_ec_group_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
 err:
     BN_free(ret->order);
     BN_free(ret->cofactor);
+    BN_free(ret->cardinality);
     OPENSSL_free(ret->propq);
     OPENSSL_free(ret);
     return NULL;
@@ -130,9 +135,11 @@ void EC_GROUP_free(EC_GROUP *group)
 
     EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
+    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
     EC_POINT_free(group->generator);
     BN_free(group->order);
     BN_free(group->cofactor);
+    BN_free(group->cardinality);
     OPENSSL_free(group->seed);
     OPENSSL_free(group->propq);
     OPENSSL_free(group);
@@ -151,9 +158,11 @@ void EC_GROUP_clear_free(EC_GROUP *group)
 
     EC_pre_comp_free(group);
     BN_MONT_CTX_free(group->mont_data);
+    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
     EC_POINT_clear_free(group->generator);
     BN_clear_free(group->order);
     BN_clear_free(group->cofactor);
+    BN_clear_free(group->cardinality);
     OPENSSL_clear_free(group->seed, group->seed_len);
     OPENSSL_clear_free(group, sizeof(*group));
 }
@@ -227,6 +236,18 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
         dest->mont_data = NULL;
     }
 
+    /*
+     * The field Montgomery context is self-contained, so duplicate it here
+     * alongside mont_data.  (Unlike the build in EC_GROUP_set_curve(), copying
+     * has no path that bypasses this generic entry point.)  A NULL source
+     * (curve not set, or a GF(2^m) group) leaves the copy NULL.
+     */
+    OSSL_FN_MONT_CTX_free(dest->fn_mont_ctx);
+    dest->fn_mont_ctx = NULL;
+    if (src->fn_mont_ctx != NULL
+        && (dest->fn_mont_ctx = OSSL_FN_MONT_CTX_dup(src->fn_mont_ctx)) == NULL)
+        return 0;
+
     if (src->generator != NULL) {
         if (dest->generator == NULL) {
             dest->generator = EC_POINT_new(dest);
@@ -245,6 +266,8 @@ int EC_GROUP_copy(EC_GROUP *dest, const EC_GROUP *src)
         if (BN_copy(dest->order, src->order) == NULL)
             return 0;
         if (BN_copy(dest->cofactor, src->cofactor) == NULL)
+            return 0;
+        if (BN_copy(dest->cardinality, src->cardinality) == NULL)
             return 0;
     }
 
@@ -421,6 +444,21 @@ int EC_GROUP_set_generator(EC_GROUP *group, const EC_POINT *generator,
     } else if (!ec_guess_cofactor(group)) {
         BN_zero(group->cofactor);
         return 0;
+    }
+
+    /*
+     * Precompute the (public, immutable) cardinality = order * cofactor, so the
+     * constant-time OSSL_FN scalar-multiplication path can read it off the group
+     * instead of recomputing it (and calling BN_mul()) on every invocation.
+     */
+    if (group->cardinality != NULL) {
+        BN_CTX *ctx = BN_CTX_new_ex(group->libctx);
+        int ok = ctx != NULL
+            && BN_mul(group->cardinality, group->order, group->cofactor, ctx);
+
+        BN_CTX_free(ctx);
+        if (!ok)
+            return 0;
     }
 
     /*
@@ -1198,6 +1236,90 @@ int EC_POINT_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *g_scalar,
     BN_CTX_free(new_ctx);
 #endif
     return ret;
+}
+
+int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
+    const EC_POINT *point, OSSL_FN_CTX *ctx)
+{
+    int ret = 0;
+    OSSL_FN_CTX *new_ctx = NULL;
+
+    if (!ec_point_is_compat(r, group)
+        || (point != NULL && !ec_point_is_compat(point, group))) {
+        ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
+
+    if (scalar == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    /*
+     * EC_POINT_mul_fn() serves any group whose method provides a mul_fn, plus
+     * any prime-field (GF(p)) group via the generic constant-time ladder, which
+     * handles both the Montgomery and plain coordinate representations.  A
+     * non-prime-field group (e.g. GF(2^m)) with no mul_fn has no OSSL_FN
+     * secret-scalar path.
+     */
+    if (group->meth->mul_fn == NULL
+        && group->meth->field_type != NID_X9_62_prime_field) {
+        ERR_raise(ERR_LIB_EC, EC_R_NOT_INITIALIZED);
+        return 0;
+    }
+
+    /*
+     * A NULL context is a convenience: size and allocate one for the chosen
+     * implementation.  Unlike the BN_CTX fallback in EC_POINT_mul() this needs
+     * no FIPS guard, since the arena is built against group->libctx.  A size of
+     * OSSL_FN_CTX_SIZE_NONE means the implementation needs no context (leave it
+     * NULL).
+     */
+    if (ctx == NULL) {
+        size_t size = EC_POINT_mul_fn_ctx_size(group, r, scalar, point);
+
+        if (size == 0)
+            return 0;
+        if (size != OSSL_FN_CTX_SIZE_NONE
+            && (ctx = new_ctx = OSSL_FN_CTX_secure_new_size(group->libctx, size))
+                == NULL)
+            return 0;
+    }
+
+    /*
+     * Unlike EC_POINT_mul(), there is no wNAF fallback here: the scalar is
+     * secret, so the only acceptable default is the constant-time ladder.
+     */
+    if (group->meth->mul_fn != NULL)
+        ret = group->meth->mul_fn(group, r, scalar, point, ctx);
+    else
+        ret = ossl_ec_scalar_mul_ladder_fn(group, r, scalar, point, ctx);
+
+    OSSL_FN_CTX_free(new_ctx);
+    return ret;
+}
+
+/*
+ * Arena size EC_POINT_mul_fn() needs for the given group: the method's own
+ * 'mul_fn_ctx_size' when it has a 'mul_fn', otherwise the generic ladder's.
+ * Follows the OSSL_FN _ctx_size convention (0 on error, OSSL_FN_CTX_SIZE_NONE
+ * for "no context needed").
+ */
+size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point)
+{
+    if (group->meth->mul_fn != NULL)
+        return group->meth->mul_fn_ctx_size != NULL
+            ? group->meth->mul_fn_ctx_size(group, r, scalar, point)
+            : 0;
+    /*
+     * No mul_fn: the fallback is the generic ladder, which serves any
+     * prime-field (GF(p)) group.  A non-prime-field group has no OSSL_FN
+     * secret-scalar path.
+     */
+    if (group->meth->field_type != NID_X9_62_prime_field)
+        return 0;
+    return ossl_ec_scalar_mul_ladder_fn_ctx_size(group, r, scalar, point);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0

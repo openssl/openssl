@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -2894,6 +2894,17 @@ static EC_GROUP *ec_group_new_from_data(OSSL_LIB_CTX *libctx,
                 goto err;
             }
             EC_GROUP_set_curve_name(group, curve.nid);
+            /*
+             * The group_full_init() fast path sets order and cofactor directly
+             * and returns here, bypassing EC_GROUP_set_generator(); precompute
+             * the cardinality it would have computed (see that function).
+             */
+            if (group->cardinality != NULL
+                && !BN_mul(group->cardinality, group->order, group->cofactor,
+                    ctx)) {
+                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+                goto err;
+            }
             BN_CTX_free(ctx);
             return group;
         }
