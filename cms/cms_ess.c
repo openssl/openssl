@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "libcms_names.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/rand.h>

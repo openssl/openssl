@@ -13,8 +13,3 @@ SOURCE[../libcrypto]=$OPENSSLSRC
 
 SOURCE[../libcms]=$OPENSSLSRC
 DEFINE[../libcms]=OSSL_LIBCMS_NAMES
-INCLUDE[../libcms]=.
-
-GENERATE[libcms_names.h]=../util/mklibcmsnames.pl
-DEPEND[libcms_names.h]=../util/libcms.num
-DEPEND[""]=libcms_names.h

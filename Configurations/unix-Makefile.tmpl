@@ -792,6 +792,16 @@ install_dev: install_runtime_libs
 		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
+	@ : {- output_off() if $disabled{cms}; "" -}
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/libcms"
+	@set -e; for i in $(SRCDIR)/include/libcms/*.h \
+			  $(BLDDIR)/include/libcms/*.h; do \
+		fn=`basename $$i`; \
+		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+	done
+	@ : {- output_on() if $disabled{cms}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -869,6 +879,15 @@ uninstall_dev: uninstall_runtime_libs
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/openssl"
+	@ : {- output_off() if $disabled{cms}; "" -}
+	@set -e; for i in $(SRCDIR)/include/libcms/*.h \
+			  $(BLDDIR)/include/libcms/*.h; do \
+		fn=`basename $$i`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+	done
+	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/libcms"
+	@ : {- output_on() if $disabled{cms}; "" -}
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \

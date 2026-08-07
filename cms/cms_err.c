@@ -8,7 +8,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "libcms_names.h"
+#include <libcms/names.h>
 #include <openssl/err.h>
 #include <openssl/cmserr.h>
 #include "crypto/cmserr.h"
