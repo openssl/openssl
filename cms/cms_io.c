@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
 #include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
@@ -32,14 +33,14 @@ int ossl_cms_stream(CMS_ContentInfo *cms)
     return 0;
 }
 
-#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+#if !defined(OPENSSL_NO_DEPRECATED_4_1) && !defined(OSSL_LIBCMS_NAMES)
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {
     if (boundary != NULL)
         *boundary = NULL;
     return ossl_cms_stream(cms);
 }
-#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) && !defined(OSSL_LIBCMS_NAMES) */
 
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 {
