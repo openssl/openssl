@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -334,6 +334,51 @@ int OSSL_FN_is_odd(const OSSL_FN *a)
     if (a->dsize <= 0)
         return 0;
     return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
+}
+
+/*-
+ * Conditionally swap |a| and |b| if |condition| is non-zero.
+ * Both operands must be the same width.
+ *
+ * Constant-time profile: |condition| is folded into an all-ones or all-zeros
+ * mask, and every limb of both operands is written unconditionally, so
+ * neither the condition nor the limb values steer control flow.  The only
+ * branches are on the operands' public width.
+ */
+int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b)
+{
+    size_t i, dsize;
+    OSSL_FN_ULONG mask;
+
+    if (ossl_unlikely(a == b))
+        return 1;
+
+    /*
+     * Swapping only the limbs the two have in common would leave the wider
+     * operand holding a mix of both values, so a width mismatch is an error
+     * rather than a partial swap.
+     */
+    if (ossl_unlikely(a->dsize != b->dsize)) {
+        ERR_raise_data(ERR_LIB_OSSL_FN, OSSL_FN_R_MISMATCHED_WIDTHS,
+            "Both operands must be the same width, but they are %zu bytes "
+            "and %zu bytes",
+            (size_t)a->dsize * sizeof(OSSL_FN_ULONG),
+            (size_t)b->dsize * sizeof(OSSL_FN_ULONG));
+        return 0;
+    }
+
+    /* All ones when condition is non-zero, all zeros when it is zero. */
+    mask = ~constant_time_is_zero_bn((OSSL_FN_ULONG)condition);
+    dsize = (size_t)a->dsize;
+
+    for (i = 0; i < dsize; i++) {
+        OSSL_FN_ULONG t = a->d[i];
+
+        a->d[i] = constant_time_select_bn(mask, b->d[i], t);
+        b->d[i] = constant_time_select_bn(mask, t, b->d[i]);
+    }
+
+    return 1;
 }
 
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)
