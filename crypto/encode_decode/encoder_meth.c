@@ -404,7 +404,15 @@ inner_ossl_encoder_fetch(struct encoder_data_st *methdata,
              */
             if (id == 0)
                 id = ossl_namemap_name2num(namemap, name);
-            if (id != 0 && methdata->tmp_store == NULL) {
+            /*
+             * Decide cacheability from this method's own no_store flag, not
+             * from the tmp store: it is allocated once per fetch and shared
+             * across all providers, so using it as a proxy de-caches cacheable
+             * methods from other providers and frees them at unload while still
+             * borrowed (use-after-free).
+             */
+            if (id != 0
+                && ((OSSL_ENCODER *)method)->base.no_store == 0) {
                 ossl_method_store_cache_set(store, prov, id, propq, method,
                     ossl_encoder_up_ref, ossl_encoder_free);
             } else {
