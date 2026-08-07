@@ -22,6 +22,21 @@ L<crypto(7)>.
 
 =head2 Main Changes from OpenSSL 4.1
 
+=head3 The CMS API has moved to libcms
+
+The Cryptographic Message Syntax implementation has moved to a new library,
+libcms. The copies remaining in libcrypto are deprecated, and stay exported
+for ABI compatibility until a future major release.
+
+Applications should include F<< <libcms/cms.h> >> in place of
+F<< <openssl/cms.h> >>, and link with libcms; a F<libcms.pc> pkg-config file
+is installed. The API itself is unchanged, so no source changes are needed.
+
+Both steps are required: libcms exports the API under its own symbol names, so
+switching headers without also linking libcms will fail to link.
+
+See L<libcms(7)>.
+
 =head3 Deprecation of X509_OBJECT_up_ref_count()
 
 This function has been deprecated in OpenSSL 4.2.  Despite its name, it does
