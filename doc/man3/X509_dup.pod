@@ -610,6 +610,13 @@ were added in OpenSSL 3.5.
 IPAddrBlocks_free(), IPAddrBlocks_it() and IPAddrBlocks_new()
 were added in OpenSSL 4.2.
 
+CMS_ContentInfo_free(), CMS_ContentInfo_new(), CMS_ContentInfo_new_ex(),
+CMS_ContentInfo_print_ctx(), CMS_EnvelopedData_dup(), CMS_EnvelopedData_it(),
+CMS_ReceiptRequest_free(), CMS_ReceiptRequest_new(), CMS_SignedData_free() and
+CMS_SignedData_new() moved to the new libcms library in OpenSSL 4.2.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
+
 =head1 COPYRIGHT
 
 Copyright 2016-2025 The OpenSSL Project Authors. All Rights Reserved.
