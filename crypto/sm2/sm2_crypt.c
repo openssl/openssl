@@ -17,7 +17,9 @@
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63() */
+#include "crypto/ec.h" /* ossl_ecdh_kdf_X9_63(), EC_POINT_mul_fn() */
+#include "crypto/bn.h" /* bn_get_ossl_fn(), bn_get_top() */
+#include "crypto/fn.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/bn.h>
@@ -112,11 +114,10 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     int rc = 0, ciphertext_leni;
     size_t i;
     BN_CTX *ctx = NULL;
-    BIGNUM *k = NULL;
+    OSSL_FN *k = NULL;
+    const OSSL_FN *order_fn = NULL;
     BIGNUM *x1 = NULL;
     BIGNUM *y1 = NULL;
-    BIGNUM *x2 = NULL;
-    BIGNUM *y2 = NULL;
     EVP_MD_CTX *hash = EVP_MD_CTX_new();
     struct SM2_Ciphertext_st ctext_struct;
     const EC_GROUP *group = EC_KEY_get0_group(key);
@@ -166,16 +167,25 @@ int ossl_sm2_encrypt(const EC_KEY *key,
     }
 
     BN_CTX_start(ctx);
-    k = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
-    x2 = BN_CTX_get(ctx);
     y1 = BN_CTX_get(ctx);
-    y2 = BN_CTX_get(ctx);
 
-    if (y2 == NULL) {
+    if (y1 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
         goto done;
     }
+
+    /*
+     * The nonce k is secret, so it is an OSSL_FN and never takes BIGNUM
+     * form.  The order is public and stays a BIGNUM; only its read-only
+     * OSSL_FN view is needed, which needs no bn_release().
+     */
+    if ((order_fn = bn_get_ossl_fn(order)) == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
+        goto done;
+    }
+    if ((k = OSSL_FN_secure_new_limbs(bn_get_top(order))) == NULL)
+        goto done;
 
     x2y2 = OPENSSL_calloc(2, field_size);
     C3 = OPENSSL_zalloc(C3_size);
@@ -190,22 +200,26 @@ int ossl_sm2_encrypt(const EC_KEY *key,
         goto done;
 
 again:
-    if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
+    if (!OSSL_FN_priv_rand_range(k, order_fn, 0, libctx))
         goto done;
-    }
 
-    if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
+    /* x1 and y1 become C1 and so are public. */
+    if (!EC_POINT_mul_fn(group, kG, k, NULL, NULL)
         || !EC_POINT_get_affine_coordinates(group, kG, x1, y1, ctx)
-        || !EC_POINT_mul(group, kP, NULL, P, k, ctx)
-        || !EC_POINT_get_affine_coordinates(group, kP, x2, y2, ctx)) {
+        || !EC_POINT_mul_fn(group, kP, k, P, NULL)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
 
-    if (BN_bn2binpad(x2, x2y2, field_size) < 0
-        || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
+    /*
+     * The coordinates of kP are the shared secret that keys the KDF below.
+     * Extract them straight into the fixed-width x2y2 buffer in constant time,
+     * so they never take BIGNUM form.  (The affine inverse this goes through is
+     * not yet constant-time; see the TODO(FIXNUM) in ecp_sm2p256_mod_inverse().)
+     */
+    if (!EC_POINT_get_affine_coords_bytes(group, kP, x2y2, x2y2 + field_size,
+            field_size)) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
 
@@ -282,6 +296,7 @@ done:
     OPENSSL_free(x2y2);
     OPENSSL_free(C3);
     EVP_MD_CTX_free(hash);
+    OSSL_FN_clear_free(k);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
@@ -296,12 +311,9 @@ int ossl_sm2_decrypt(const EC_KEY *key,
 {
     int rc = 0;
     int i;
-    BN_CTX *ctx = NULL;
     const EC_GROUP *group = EC_KEY_get0_group(key);
     EC_POINT *C1 = NULL;
     struct SM2_Ciphertext_st *sm2_ctext = NULL;
-    BIGNUM *x2 = NULL;
-    BIGNUM *y2 = NULL;
     uint8_t *x2y2 = NULL;
     uint8_t *computed_C3 = NULL;
     const int field_size = ec_field_size(group);
@@ -339,21 +351,6 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
-    ctx = BN_CTX_new_ex(libctx);
-    if (ctx == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
-    }
-
-    BN_CTX_start(ctx);
-    x2 = BN_CTX_get(ctx);
-    y2 = BN_CTX_get(ctx);
-
-    if (y2 == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-        goto done;
-    }
-
     msg_mask = OPENSSL_zalloc(msg_len);
     x2y2 = OPENSSL_calloc(2, field_size);
     computed_C3 = OPENSSL_zalloc(hash_size);
@@ -367,18 +364,27 @@ int ossl_sm2_decrypt(const EC_KEY *key,
         goto done;
     }
 
+    /*
+     * The private key is read through its BIGNUM's OSSL_FN view, so the
+     * multiplication takes it as an OSSL_FN and it is never copied into a
+     * BIGNUM of ours.
+     *
+     * The shared point's coordinates key the KDF below; extract them straight
+     * into the fixed-width x2y2 buffer in constant time, so they never take
+     * BIGNUM form.  (The affine inverse this goes through is not yet
+     * constant-time; see the TODO(FIXNUM) in ecp_sm2p256_mod_inverse().)
+     */
     if (!EC_POINT_set_affine_coordinates(group, C1, sm2_ctext->C1x,
-            sm2_ctext->C1y, ctx)
-        || !EC_POINT_mul(group, C1, NULL, C1, EC_KEY_get0_private_key(key),
-            ctx)
-        || !EC_POINT_get_affine_coordinates(group, C1, x2, y2, ctx)) {
+            sm2_ctext->C1y, NULL)
+        || !EC_POINT_mul_fn(group, C1,
+            bn_get_ossl_fn(EC_KEY_get0_private_key(key)), C1, NULL)
+        || !EC_POINT_get_affine_coords_bytes(group, C1, x2y2,
+            x2y2 + field_size, field_size)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
 
-    if (BN_bn2binpad(x2, x2y2, field_size) < 0
-        || BN_bn2binpad(y2, x2y2 + field_size, field_size) < 0
-        || !ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size,
+    if (!ossl_ecdh_kdf_X9_63(msg_mask, msg_len, x2y2, 2 * field_size,
             NULL, 0, digest, libctx, propq)) {
         ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
         goto done;
@@ -423,8 +429,6 @@ done:
     OPENSSL_free(x2y2);
     OPENSSL_free(computed_C3);
     EC_POINT_free(C1);
-    BN_CTX_end(ctx);
-    BN_CTX_free(ctx);
     SM2_Ciphertext_free(sm2_ctext);
     EVP_MD_CTX_free(hash);
 
