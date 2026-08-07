@@ -1998,12 +1998,12 @@ uint64_t ossl_quic_port_get_active_conn_id_limit(const QUIC_PORT *port)
     return port->active_conn_id_limit;
 }
 
-size_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port)
+uint64_t ossl_quic_port_get_max_pending_channels(const QUIC_PORT *port)
 {
     return port->max_pending_channels;
 }
 
-void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, size_t max_pending_channels)
+void ossl_quic_port_set_max_pending_channels(QUIC_PORT *port, uint64_t max_pending_channels)
 {
     port->max_pending_channels = max_pending_channels;
 }
