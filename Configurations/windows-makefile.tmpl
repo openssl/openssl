@@ -725,9 +725,12 @@ EOF
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name =
               $args{generator}->[1] || basename(platform->dsoname($args{product}));
+          my $ord_renames =
+              join("", map { /^--/ ? " $_" : " --rename $_" }
+                       @{$args{generator}}[3 .. $#{$args{generator}}]);
           return <<"EOF";
 $target: $gen0 $deps $mkdef
-	"\$(PERL)" "$mkdef"$ord_ver --type $args{intent} --ordinals $gen0 --name $ord_name --OS windows > $target
+	"\$(PERL)" "$mkdef"$ord_ver --type $args{intent} --ordinals $gen0 --name $ord_name$ord_renames --OS windows > $target
 EOF
       } elsif (platform->isasm($args{src})
                || platform->iscppasm($args{src})) {
