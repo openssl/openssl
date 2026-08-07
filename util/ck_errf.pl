@@ -80,6 +80,33 @@ if ( $internal ) {
     @source = @ARGV;
 }
 
+# util/mkerr.pl keeps a statefile next to the config file and ensures
+# its timestamp records the last completed error-code pass over the
+# tree.  While the statefile is newer than the config file and every
+# source file, this check has already run against the current tree;
+# skip the scan.  (If the config file names its statefile with an S
+# line, this derivation misses it and the check simply never skips.)
+if ( !$debug ) {
+    my $statefile = $config;
+
+    $statefile =~ s/\.ec$/.txt/;
+    my $stamp = (stat $statefile)[9];
+
+    if ( defined $stamp ) {
+        my $uptodate = 1;
+
+        foreach my $file ( $config, @source ) {
+            my $mtime = (stat $file)[9];
+
+            if ( !defined $mtime || $mtime >= $stamp ) {
+                $uptodate = 0;
+                last;
+            }
+        }
+        exit 0 if $uptodate;
+    }
+}
+
 # To detect if there is any error generation for a libcrypto/libssl libs
 # we don't know, we need to find out what libs we do know.  That list is
 # readily available in crypto/err/openssl.ec, in form of lines starting

@@ -13,7 +13,6 @@ use File::Basename;
 use File::Spec::Functions qw(abs2rel rel2abs);
 
 use lib ".";
-use configdata;
 
 my $config       = "crypto/err/openssl.ec";
 my $debug        = 0;
@@ -181,6 +180,32 @@ if ( ! $statefile ) {
     $statefile =~ s/.ec/.txt/;
 }
 
+# Unless a rewrite or a report was explicitly requested, skip the run
+# entirely if nothing relevant changed since the last one.  The
+# statefile doubles as the timestamp of the last completed run: a run
+# that finds new codes rewrites it, and a run that finds nothing
+# freshens its timestamp (see the end of this script).  While the
+# statefile is newer than the config file and every source file, a
+# new run would find no new reason codes and write nothing.
+if ( !$rebuild && !$reindex && !$nowrite && !$unref && !$debug
+     && scalar keys %modules == 0 ) {
+    my $stamp = (stat $statefile)[9];
+
+    if ( defined $stamp ) {
+        my $uptodate = 1;
+
+        foreach my $file ( $config, @source ) {
+            my $mtime = (stat $file)[9];
+
+            if ( !defined $mtime || $mtime >= $stamp ) {
+                $uptodate = 0;
+                last;
+            }
+        }
+        exit if $uptodate;
+    }
+}
+
 # The statefile has all the previous assignments.
 &phase("Reading state");
 my $skippedstate = 0;
@@ -305,13 +330,22 @@ foreach my $lib ( keys %errorfile ) {
     # indent level for innermost preprocessor lines
     my $indent = " ";
 
+    # configdata is large and only needed when a file is actually
+    # rewritten, so load it lazily here rather than at startup.
+    require configdata;
+
     # Flag if the sub-library is disablable
     # There are a few exceptions, where disabling the sub-library
     # doesn't actually remove the whole sub-library, but rather implements
     # it with a NULL backend.
-    my $disablable =
+    my $disablable = do {
+        # The 'once' warning does not know that require defines these.
+        no warnings 'once';
+
         ($lib ne "SSL" && $lib ne "ASYNC" && $lib ne "DSO"
-         && (grep { $lib eq uc $_ } @disablables, @disablables_int));
+         && (grep { $lib eq uc $_ } @configdata::disablables,
+                                    @configdata::disablables_int));
+    };
 
     # Rewrite the internal header file if there is one ($internal only!)
 
@@ -697,6 +731,15 @@ EOF
         rename "$statefile.new", "$statefile"
             || die "Can't rename $statefile to $statefile.new, $!";
     }
+}
+
+# A run that found nothing new leaves every file alone, so record that
+# the sources have been scanned by freshening the statefile timestamp;
+# the up-to-date check at the top keys on it.
+if ( !$newstate && !$nowrite && !$reindex
+     && scalar keys %modules == 0 && -f $statefile ) {
+    utime(undef, undef, $statefile)
+        || warn "Can't update timestamp on $statefile, $!";
 }
 
 exit;
