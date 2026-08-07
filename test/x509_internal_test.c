@@ -957,6 +957,35 @@ err:
     return test;
 }
 
+/*
+ * X509_ATTRIBUTE_create_by_NID() must accept a BIT STRING value supplied as
+ * raw bytes plus an explicit length, as PKCS8_add_keyusage() does for
+ * 'openssl pkcs12 -export -keyex' (0x10) and '-keysig' (0x80).
+ * Regression test for https://github.com/openssl/openssl/issues/32234
+ */
+static int test_x509_attribute_bit_string(int idx)
+{
+    unsigned char usage = idx == 0 ? 0x10 : 0x80;
+    X509_ATTRIBUTE *attr = NULL;
+    const ASN1_BIT_STRING *bs;
+    size_t length = 0;
+    int unused_bits = -1, ret = 0;
+
+    if (!TEST_ptr(attr = X509_ATTRIBUTE_create_by_NID(NULL, NID_key_usage,
+                      V_ASN1_BIT_STRING, &usage, 1))
+        || !TEST_ptr(bs = X509_ATTRIBUTE_get0_data(attr, 0, V_ASN1_BIT_STRING,
+                         NULL))
+        || !TEST_true(ASN1_BIT_STRING_get_length(bs, &length, &unused_bits))
+        || !TEST_size_t_eq(length, 1)
+        || !TEST_int_eq(unused_bits, 0)
+        || !TEST_mem_eq(ASN1_STRING_get0_data(bs), 1, &usage, 1))
+        goto err;
+    ret = 1;
+err:
+    X509_ATTRIBUTE_free(attr);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -970,6 +999,7 @@ int setup_tests(void)
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);
+    ADD_ALL_TESTS(test_x509_attribute_bit_string, 2);
 
     return 1;
 }
