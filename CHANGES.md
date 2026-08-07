@@ -394,6 +394,13 @@ OpenSSL 4.1
 
    *Daniel Kubec*
 
+ * Deprecated `CMS_stream()` and `PKCS7_stream()`.  These are internal
+   plumbing that leaked into the public API, and no longer return a
+   streaming boundary.  Use `BIO_new_CMS()` or `BIO_new_PKCS7()` to stream
+   CMS and PKCS7 content.
+
+   *Bob Beck*
+
  * Added `OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES` option for `OSSL_CMP_CTX` and
    a corresponding `-nonmatched_error_nonces` option for the `openssl cmp` command.
 

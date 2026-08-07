@@ -111,6 +111,8 @@ BIO *BIO_new_NDEF(BIO *out, ASN1_VALUE *val, const ASN1_ITEM *it)
     if (aux->asn1_cb(ASN1_OP_GET0_STREAM_CONTENT, &val, it, &content) > 0
         && content != NULL)
         content->flags |= ASN1_STRING_FLAG_NDEF;
+    else
+        content = NULL; /* Don't leave a junk borrowed pointer to play with */
 
     /*
      * We must not fail now because the callback has prepended additional
