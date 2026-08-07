@@ -3678,7 +3678,7 @@ end:
 }
 
 /*
- * The test below needs a listener with a notifier, which only exists
+ * The two tests below need a listener with a notifier, which only exists
  * when the listener is created without SSL_LISTENER_FLAG_SINGLE_THREAD. In a
  * no-threads build that listener cannot be created at all, because the
  * condition variable it needs is unavailable.
@@ -3843,6 +3843,140 @@ end:
     return testresult;
 }
 
+/*
+ * Test that a blocking SSL_poll() on a listener enters a blocking section.
+ *
+ * Unless it does, three things follow: the notifier is not in the poll set, so
+ * it cannot wake this thread; cur_blocking_waiters is never incremented, and
+ * since signalling is conditional on there being a waiter, no other thread
+ * even attempts to signal; and there is no re-check after registering, so
+ * readiness arising between the readout and the wait is lost.
+ *
+ * Polling the socket alone is not enough, though not because a wakeup can be
+ * missed outright. poll() reports whatever is currently sitting in the socket
+ * buffer and returns immediately if there is any, so a thread cannot miss a
+ * datagram just by being outside poll() when it arrives. What it can miss is a
+ * datagram another thread has already taken. With several threads polling the
+ * one shared socket that happens constantly: an arriving datagram wakes all of
+ * them, only one gets it, and the rest find nothing. Any of them can be the
+ * one that takes it, because SSL_read() on a connection pumps the demux and
+ * SSL_poll() on a connection ticks the whole listener.
+ *
+ *   1. Accept thread A polls the listener for SSL_POLL_EVENT_IC. Its readout
+ *      ticks the listener, finds nothing, and it decides to block.
+ *   2. A client's final ClientHello lands on the shared socket.
+ *   3. Worker thread B, polling one of its own connections, ticks the listener
+ *      and is the one that takes the datagram. Its tick completes the pending
+ *      connection and pushes it onto the accept queue. Signalling is attempted,
+ *      but A never registered as a waiter, so nothing is signalled.
+ *   4. A reaches its poll, watching the socket alone. B drained it, so it is
+ *      empty, and A sleeps with a validated connection sitting on the accept
+ *      queue.
+ *
+ * A's readout, back at step 1, would have found that connection had it run
+ * after step 3 rather than before it. Registering as a waiter and re-checking
+ * is what removes the dependency on that ordering.
+ *
+ * Note that the signal added for the step 3 queue push is itself conditional on
+ * a registered waiter, so it does nothing for a thread polling the listener
+ * until that thread registers. The two fixes are complementary.
+ *
+ * None of that has a public observable, and this deliberately does not time
+ * the wait. Instead it relies on the last waiter out of a blocking section
+ * draining a raised notifier signal: raise one beforehand, poll briefly with
+ * nothing ready, and check afterwards. Drained means a blocking section was
+ * entered and left, since only a leave drains it and only an enter can be left;
+ * still standing means neither happened.
+ *
+ * Note what this does not cover. That the notifier is in the poll set, and so
+ * can actually deliver a wakeup, is not checked: with a signal raised the poll
+ * returns at once if the notifier is being watched and sleeps out its timeout
+ * if it is not, and only timing separates those. A longer timeout would not
+ * help, because the first iteration's leave drains the notifier and the next
+ * one sleeps out the remainder either way. The re-check after registering is
+ * not covered either, since readiness arriving between the readout and the
+ * registration cannot be produced from a single thread.
+ */
+static int test_dtls_poll_listener_enters_blocking_section(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *listener = NULL;
+    BIO_ADDR *server_addr = NULL;
+    DTLS_LISTENER *dl;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result = 0;
+    int server_fd = -1, nfd = -1;
+    int testresult = 0;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method())))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx, 0, &listener, &server_addr,
+            &server_fd)))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    if (!TEST_true(dl->have_notifier))
+        goto end;
+
+    /*
+     * Raise the notifier as another thread reporting readiness would, which
+     * means both writing to the notifier and recording that it is raised, as
+     * dtls_listener_signal_notifier() does.
+     */
+    if (!TEST_true(ossl_rio_notifier_signal(&dl->notifier)))
+        goto end;
+    dl->signalled_notifier = 1;
+
+    nfd = ossl_rio_notifier_as_fd(&dl->notifier);
+    if (!TEST_int_ge(nfd, 0)
+        || !TEST_int_gt(BIO_socket_ready(nfd, /*for_read=*/1), 0))
+        goto end;
+
+    /*
+     * Poll with a short timeout. No client exists, so nothing is ever ready
+     * and SSL_poll() must block, which is what drives the translation that
+     * enters the blocking section.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_item.events = SSL_POLL_EVENT_IC;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 100000;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
+            &poll_result)))
+        goto end;
+
+    if (!TEST_size_t_eq(poll_result, 0))
+        goto end;
+
+    /*
+     * Leaving the blocking section must have drained the notifier. Check the
+     * notifier itself and not only the flag recording its state, since it is
+     * the notifier being readable that would spuriously wake a later waiter.
+     */
+    if (!TEST_int_eq(BIO_socket_ready(nfd, /*for_read=*/1), 0))
+        goto end;
+
+    if (!TEST_int_eq(dl->signalled_notifier, 0))
+        goto end;
+
+    if (!TEST_size_t_eq(dl->cur_blocking_waiters, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
 #endif /* OPENSSL_THREADS */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -3926,6 +4060,7 @@ int setup_tests(void)
     /* Blocking SSL_poll() wakeup tests */
 #if defined(OPENSSL_THREADS)
     ADD_TEST(test_dtls_notifier_signalled_on_accept_queue_push);
+    ADD_TEST(test_dtls_poll_listener_enters_blocking_section);
 #endif
 
     /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */

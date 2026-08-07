@@ -169,10 +169,14 @@ static void postpoll_translation_cleanup_ssl_quic(SSL *ssl,
 #ifndef OPENSSL_NO_DTLS
 static int poll_translate_ssl_dtls_listener(SSL *ssl,
     RIO_POLL_BUILDER *rpb,
-    uint64_t events)
+    uint64_t events,
+    int *abort_blocking)
 {
     BIO *rbio;
     BIO_POLL_DESCRIPTOR desc;
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)ssl;
+    uint64_t revents = 0;
+    int nfd;
 
     rbio = SSL_get_rbio(ssl);
     if (rbio == NULL)
@@ -187,6 +191,41 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
 
     if (!ossl_rio_poll_builder_add_fd(rpb, desc.value.fd, /*r=*/1, /*w=*/0))
         return 0;
+
+    /*
+     * Add the notifier FD for the DTLS listener (if multi-threaded mode is
+     * enabled). Another thread may queue an incoming connection for us, or
+     * demux data to one of our connections, without the underlying network
+     * socket ever becoming readable from our perspective.
+     */
+    if (dl->have_notifier) {
+        nfd = ossl_rio_notifier_as_fd(&dl->notifier);
+        if (nfd != -1) {
+            if (!ossl_rio_poll_builder_add_fd(rpb, nfd, /*r=*/1, /*w=*/0))
+                return 0;
+
+            /* Tell the listener we need to receive notifications. */
+            ossl_dtls_listener_enter_blocking_section(ssl);
+
+            /*
+             * Only after the above call returns is it guaranteed that any
+             * readiness events will cause the notifier to become readable.
+             * Therefore it is possible the listener became ready after the
+             * readout which decided we needed to block. Re-check now.
+             */
+            if (!ossl_dtls_listener_poll_events(ssl, events, /*do_tick=*/0,
+                    &revents)) {
+                ossl_dtls_listener_leave_blocking_section(ssl);
+                return 0;
+            }
+
+            if (revents != 0) {
+                ossl_dtls_listener_leave_blocking_section(ssl);
+                *abort_blocking = 1;
+                return 1;
+            }
+        }
+    }
 
     return 1;
 }
@@ -310,6 +349,15 @@ static int poll_translate_ssl_dtls_conn(SSL *ssl,
     return 1;
 }
 
+static void postpoll_translation_cleanup_ssl_dtls_listener(SSL *ssl)
+{
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)ssl;
+
+    /* Need to mirror the enter blocking section call */
+    if (dl->have_notifier && ossl_rio_notifier_as_fd(&dl->notifier) != -1)
+        ossl_dtls_listener_leave_blocking_section(ssl);
+}
+
 static void postpoll_translation_cleanup_ssl_dtls_conn(SSL *ssl, uint64_t events)
 {
     SSL_CONNECTION *sc;
@@ -366,7 +414,7 @@ static void postpoll_translation_cleanup(SSL_POLL_ITEM *items,
 
 #ifndef OPENSSL_NO_DTLS
             case SSL_TYPE_DTLS_LISTENER:
-                /* Listeners don't enter blocking sections */
+                postpoll_translation_cleanup_ssl_dtls_listener(ssl);
                 break;
             case SSL_TYPE_SSL_CONNECTION:
                 if (SSL_is_dtls(ssl))
@@ -440,8 +488,13 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
 #ifndef OPENSSL_NO_DTLS
             case SSL_TYPE_DTLS_LISTENER:
-                if (!poll_translate_ssl_dtls_listener(ssl, rpb, item->events))
+                if (!poll_translate_ssl_dtls_listener(ssl, rpb, item->events,
+                        abort_blocking))
                     FAIL_ITEM(i);
+
+                if (*abort_blocking)
+                    goto out;
+
                 break;
             case SSL_TYPE_SSL_CONNECTION:
                 if (SSL_is_dtls(ssl)) {
