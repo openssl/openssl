@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,6 +18,8 @@
 #include <openssl/symhacks.h>
 
 #include "ec_local.h"
+#include "crypto/bn.h" /* bn_get_ossl_fn() */
+#include "crypto/fn.h" /* OSSL_FN_MONT_CTX_{new,free}() */
 
 const EC_METHOD *EC_GFp_simple_method(void)
 {
@@ -135,6 +137,8 @@ int ossl_ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     dest->a_is_minus3 = src->a_is_minus3;
 
+    /* dest->fn_mont_ctx is duplicated generically in EC_GROUP_copy(). */
+
     return 1;
 }
 
@@ -188,6 +192,41 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
     if (!BN_add_word(tmp_a, 3))
         goto err;
     group->a_is_minus3 = (0 == BN_cmp(tmp_a, group->field));
+
+    /*
+     * Build the significant-width OSSL_FN copy of the field modulus used by
+     * the constant-time OSSL_FN point arithmetic (see ec_local.h).  A tight
+     * copy is required: bn_get_ossl_fn(group->field) exposes the BIGNUM's
+     * allocation width, which can exceed the modulus (e.g. after copying
+     * into a wider reused BIGNUM or for a CONSTTIME field), and the ladder's
+     * fn_mont_ctx and OSSL_FN_mul_mont_quick() demand operand widths equal
+     * to the modulus width. Done here, the universal sink for GF(p) field
+     * setup (every GF(p) method's group_set_curve delegates to this one),
+     * so that named-curve construction - which calls meth->group_set_curve
+     * directly, bypassing EC_GROUP_set_curve() - gets it too.
+     */
+    OSSL_FN_free(group->field_fn);
+    group->field_fn = OSSL_FN_new_limbs((size_t)bn_get_top(group->field));
+    if (group->field_fn == NULL
+        || OSSL_FN_copy_truncate(group->field_fn, bn_get_ossl_fn(group->field))
+            == NULL)
+        goto err;
+
+    /*
+     * Build the field Montgomery context from field_fn, but only for methods
+     * that keep point coordinates in Montgomery form (field_encode != NULL):
+     * the ladder multiplies coordinates with OSSL_FN_mul_mont_quick(), which
+     * is only correct for encoded operands.  Plain-representation methods
+     * (nist, nistp*, simple, sm2) leave it NULL and use field_fn as the plain
+     * modulus instead.
+     */
+    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
+    group->fn_mont_ctx = NULL;
+    if (group->meth->field_encode != NULL) {
+        group->fn_mont_ctx = OSSL_FN_MONT_CTX_new(group->field_fn);
+        if (group->fn_mont_ctx == NULL)
+            goto err;
+    }
 
     ret = 1;
 
