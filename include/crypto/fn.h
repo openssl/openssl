@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -192,6 +192,22 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
  * @returns     the destination.
  */
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
+
+/**
+ * Conditionally swap two OSSL_FN numbers of equal width.
+ *
+ * @param[in]           condition       Swap if non-zero, leave alone if zero
+ * @param[in,out]       a               The first operand
+ * @param[in,out]       b               The second operand
+ * @returns             1 on success, 0 on error
+ *
+ * @note Both operands must have the same width; a mismatch is reported as
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL.
+ *
+ * @note Constant-time in both @p condition and the limb values.
+ *       The only control flow branches on the operands' public width.
+ */
+int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b);
 
 /**
  * Calculate the arena payload size for an OSSL_FN_CTX.
