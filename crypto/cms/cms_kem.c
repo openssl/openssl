@@ -13,7 +13,6 @@
 #include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/decoder.h>
-#include "crypto/asn1.h"
 #include "cms_local.h"
 
 static int kem_cms_decrypt(CMS_RecipientInfo *ri)
