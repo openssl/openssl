@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -18,6 +18,8 @@
 #include <openssl/symhacks.h>
 
 #include "ec_local.h"
+#include "crypto/bn.h" /* bn_get_ossl_fn() */
+#include "crypto/fn.h" /* OSSL_FN_MONT_CTX_{new,free}() */
 
 const EC_METHOD *EC_GFp_simple_method(void)
 {
@@ -135,6 +137,8 @@ int ossl_ec_GFp_simple_group_copy(EC_GROUP *dest, const EC_GROUP *src)
 
     dest->a_is_minus3 = src->a_is_minus3;
 
+    /* dest->fn_mont_ctx is duplicated generically in EC_GROUP_copy(). */
+
     return 1;
 }
 
@@ -188,6 +192,26 @@ int ossl_ec_GFp_simple_group_set_curve(EC_GROUP *group,
     if (!BN_add_word(tmp_a, 3))
         goto err;
     group->a_is_minus3 = (0 == BN_cmp(tmp_a, group->field));
+
+    /*
+     * Build the field Montgomery context used by the constant-time OSSL_FN
+     * point ladder, but only for methods that keep point coordinates in
+     * Montgomery form (field_encode != NULL): the ladder multiplies
+     * coordinates with OSSL_FN_mul_mont_quick(), which is only correct for
+     * encoded operands.  Plain-representation methods (nist, nistp*, simple,
+     * sm2) leave it NULL and supply their own mul_fn instead.  Done here, the
+     * universal sink for GF(p) field setup (every GF(p) method's
+     * group_set_curve delegates to this one), so that named-curve construction
+     * - which calls meth->group_set_curve directly, bypassing
+     * EC_GROUP_set_curve() - gets it too.
+     */
+    OSSL_FN_MONT_CTX_free(group->fn_mont_ctx);
+    group->fn_mont_ctx = NULL;
+    if (group->meth->field_encode != NULL) {
+        group->fn_mont_ctx = OSSL_FN_MONT_CTX_new(bn_get_ossl_fn(group->field));
+        if (group->fn_mont_ctx == NULL)
+            goto err;
+    }
 
     ret = 1;
 
