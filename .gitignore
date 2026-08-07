@@ -29,10 +29,16 @@
 
 # Auto generated headers
 /crypto/buildinf.h
+/crypto/asn1/charmap.h
+/crypto/bn/bn_prime.h
+/crypto/conf/conf_def.h
+/crypto/objects/obj_dat.h
+/crypto/objects/obj_xref.h
 /include/crypto/*_conf.h
 /include/crypto/ec_params.h
 /include/crypto/rsa_params.h
 /include/openssl/asn1.h
+/include/openssl/obj_mac.h
 /include/openssl/asn1t.h
 /include/openssl/bio.h
 /include/openssl/cmp.h
