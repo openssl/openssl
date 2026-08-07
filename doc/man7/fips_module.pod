@@ -584,13 +584,16 @@ L<EVP_SIGNATURE-RSA(7)/Signature Parameters> /for further information.
 Some released versions of OpenSSL do not include a validated
 FIPS provider.  To determine which versions have undergone
 the validation process, please refer to the
-L<OpenSSL Downloads page|https://www.openssl.org/source/>.  If you
+L<OpenSSL Downloads page|https://openssl-library.org/source/>.  If you
 require FIPS-approved functionality, it is essential to build your FIPS
 provider using one of the validated versions listed there.  Normally,
 it is possible to utilize a FIPS provider constructed from one of the
 validated versions alongside F<libcrypto> and F<libssl> compiled from any
-release within the same major release series.  This flexibility enables
-you to address bug fixes and CVEs that fall outside the FIPS boundary.
+supported release from OpenSSL 3.0 onwards; provider compatibility is
+maintained backward and forward across these releases, including future
+major release series, for as long as the module remains supported.  This
+flexibility enables you to address bug fixes and CVEs that fall outside
+the FIPS boundary.
 
 As the FIPS provider still supports non-FIPS validated algorithms,
 The property query C<fips=yes> is mandatory for applications that
