@@ -13,8 +13,10 @@
 
 #include "crypto/sm2.h"
 #include "crypto/sm2err.h"
-#include "crypto/ec.h" /* ossl_ec_group_do_inverse_ord() */
-#include "crypto/bn.h" /* fixed-top / Montgomery constant-time BN helpers */
+#include "crypto/ec.h" /* EC_POINT_mul_fn() */
+#include "crypto/bn.h" /* bn_acquire_ossl_fn(), bn_release() */
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h" /* ossl_fn_ctx_{max,add}_size() */
 #include "internal/numbers.h"
 #include <openssl/err.h>
 #include <openssl/evp.h>
@@ -235,21 +237,26 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     ECDSA_SIG *sig = NULL;
     EC_POINT *kG = NULL;
     BN_CTX *ctx = NULL;
-    BIGNUM *k = NULL;
     BIGNUM *r = NULL;
     BIGNUM *s = NULL;
     BIGNUM *x1 = NULL;
-    BIGNUM *tmp = NULL;
-    BN_MONT_CTX *mont = EC_GROUP_get_mont_data(group);
+    OSSL_FN_CTX *fnctx = NULL;
+    const void *token = NULL;
+    const OSSL_FN *order_fn = NULL;
+    OSSL_FN *k = NULL;
+    OSSL_FN *rk = NULL;
+    OSSL_FN *tmp = NULL;
+    OSSL_FN *sf = NULL;
+    OSSL_FN *rf = NULL;
+    OSSL_FN *dAf = NULL;
+    OSSL_FN *one = NULL;
+    OSSL_FN *s_acq = NULL;
+    int nlimbs;
+    size_t need;
     OSSL_LIB_CTX *libctx = ossl_ec_key_get_libctx(key);
 
     if (dA == NULL) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_PRIVATE_KEY);
-        goto done;
-    }
-
-    if (mont == NULL) {
-        ERR_raise(ERR_LIB_SM2, ERR_R_EC_LIB);
         goto done;
     }
     kG = EC_POINT_new(group);
@@ -264,10 +271,8 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     BN_CTX_start(ctx);
-    k = BN_CTX_get(ctx);
     x1 = BN_CTX_get(ctx);
-    tmp = BN_CTX_get(ctx);
-    if (tmp == NULL) {
+    if (x1 == NULL) {
         ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
         goto done;
     }
@@ -285,6 +290,68 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
     }
 
     /*
+     * The order is public and stays a BIGNUM; only its OSSL_FN view is
+     * needed, which is read-only and so needs no bn_release().
+     */
+    nlimbs = bn_get_top(order);
+    if ((order_fn = bn_get_ossl_fn(order)) == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
+        goto done;
+    }
+
+    /*
+     * Size the arena for the temporaries below plus the widest of the nested
+     * modular operations.  Every operand handed to those is exactly nlimbs
+     * wide, and order_fn is at least that wide (a BIGNUM's dmax is never
+     * below its top), so modelling them all as order_fn is an upper bound.
+     */
+    need = ossl_fn_ctx_max_size(
+        ossl_fn_ctx_max_size(
+            OSSL_FN_mod_inverse_prime_ctx_size(order_fn, order_fn, order_fn,
+                NULL),
+            OSSL_FN_mod_mul_ctx_size(order_fn, order_fn, order_fn, order_fn)),
+        OSSL_FN_mod_sub_ctx_size(order_fn, order_fn, order_fn, order_fn));
+    /*
+     * Seven temporaries; rk is one limb wider, see below.
+     * The order of the SM2 curve group is fixed, so we don't have to worry
+     * about overflow.
+     */
+    need = ossl_fn_ctx_add_size(need,
+        OSSL_FN_CTX_size(1, 7, 7 * (size_t)nlimbs + 1));
+    if (need == 0) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
+        goto done;
+    }
+
+    /* k and everything derived from it are secret, hence the secure arena. */
+    fnctx = OSSL_FN_CTX_secure_new_size(libctx, need);
+    if (fnctx == NULL || (token = OSSL_FN_CTX_start(fnctx)) == NULL)
+        goto done;
+
+    /*
+     * rk holds r + k unreduced, and both are below the order, so it needs one
+     * limb more than the order to be sure of not truncating the sum.
+     */
+    if ((k = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
+        || (rk = OSSL_FN_CTX_get_limbs(fnctx, nlimbs + 1)) == NULL
+        || (tmp = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
+        || (sf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
+        || (rf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
+        || (dAf = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL
+        || (one = OSSL_FN_CTX_get_limbs(fnctx, nlimbs)) == NULL)
+        goto done;
+
+    /*
+     * dA is below the order, so nlimbs holds it and the truncating copy drops
+     * nothing.  Copying it into an arena temporary rather than using the
+     * private key BIGNUM's own OSSL_FN view keeps every operand exactly
+     * nlimbs wide, which is what the sizing above relies on.
+     */
+    if (OSSL_FN_copy_truncate(dAf, bn_get_ossl_fn(dA)) == NULL
+        || !OSSL_FN_one(one))
+        goto done;
+
+    /*
      * A3: Generate a random number k in [1,n-1] using random number generators;
      * A4: Compute (x1,y1)=[k]G, and convert the type of data x1 to be integer
      *     as specified in clause 4.2.8 of GM/T 0003.1-2012;
@@ -294,24 +361,15 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
      *     in clause 4.2.2 of GM/T 0003.1-2012. Then the signature of message M is (r,s).
      */
     for (;;) {
-        if (!BN_priv_rand_range_ex(k, order, 0, ctx)) {
-            ERR_raise(ERR_LIB_SM2, ERR_R_INTERNAL_ERROR);
+        if (!OSSL_FN_priv_rand_range(k, order_fn, 0, libctx))
             goto done;
-        }
-        /*
-         * Pin the nonce to a fixed, value-independent width and flag it
-         * BN_FLG_CONSTTIME, so its magnitude does not leak through operand
-         * lengths in the scalar copy inside the ladder, or in the arithmetic
-         * below.  BN_priv_rand_range_ex() is kept so the nonce value itself
-         * is unchanged; only its representation is pinned.
-         */
-        BN_set_flags(k, BN_FLG_CONSTTIME);
-        if (!bn_set_top_fixed(k, bn_get_top(order))) {
-            ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
-            goto done;
-        }
 
-        if (!EC_POINT_mul(group, kG, k, NULL, NULL, ctx)
+        /*
+         * x1 and hence r are public: r is half the signature, and x1 is
+         * recoverable from it.  Only k needs protecting here, which is why
+         * the multiplication goes through EC_POINT_mul_fn().
+         */
+        if (!EC_POINT_mul_fn(group, kG, k, NULL, NULL)
             || !EC_POINT_get_affine_coordinates(group, kG, x1, NULL,
                 ctx)
             || !BN_mod_add(r, e, x1, order, ctx)) {
@@ -323,48 +381,46 @@ static ECDSA_SIG *sm2_sig_gen(const EC_KEY *key, const BIGNUM *e)
         if (BN_is_zero(r))
             continue;
 
-        /*
-         * Since 0 < r < n and 0 < k < n, r + k == n is the same as
-         * k == n - r.  Both operands of the subtraction are public, so
-         * compute it in the open and then compare against the nonce with a
-         * fixed-width constant-time comparison.  A BN_cmp() on r + k would
-         * branch on whether the sum carried into an extra word, which
-         * depends on the value of k.
-         */
-        if (!BN_sub(tmp, order, r)
-            || !bn_set_top_fixed(tmp, bn_get_top(order))) {
-            ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
+        /* r is below the order, so this copy drops nothing either. */
+        if (OSSL_FN_copy_truncate(rf, bn_get_ossl_fn(r)) == NULL
+            || !OSSL_FN_add(rk, rf, k))
             goto done;
-        }
 
-        if (CRYPTO_memcmp(bn_get_words(k), bn_get_words(tmp),
-                bn_get_top(order) * sizeof(BN_ULONG))
-            == 0)
+        if (OSSL_FN_cmp(rk, order_fn) == 0)
             continue;
 
         /*
-         * s = ((1 + dA)^-1 * (k - r * dA)) mod order
+         * 1 + dA is an OSSL_FN_add against a one rather than an
+         * OSSL_FN_add_word, because add_word stops as soon as the carry is
+         * exhausted and so would run for a length that depends on dA.
          *
-         * Computed with fixed-top / Montgomery constant-time primitives, so
-         * that the running time does not depend on the secret k or dA (the
-         * generic BN_mod_mul()/BN_sub() used previously reduce via BN_div(),
-         * whose timing is value dependent).  This mirrors the ECDSA path.
-         *
-         * s holds (1 + dA)^-1 throughout; the (k - r * dA) term is built in
-         * tmp.  bn_mul_mont_fixed_top() with one operand in the Montgomery
-         * domain yields the plain product, and the final
-         * BN_mod_mul_montgomery() returns the user-visible, normalised value.
+         * (1 + dA)^-1 uses OSSL_FN_mod_inverse_prime(), the constant-time
+         * Fermat inverse (a^(n-2) mod n) - as the BIGNUM version did through
+         * ossl_ec_group_do_inverse_ord() - so the magnitude of the secret
+         * operand does not leak.
          */
-        if (!BN_add(s, dA, BN_value_one())
-            || !ossl_ec_group_do_inverse_ord(group, s, s, ctx)
-            || !bn_to_mont_fixed_top(tmp, r, mont, ctx)
-            || !bn_mul_mont_fixed_top(tmp, tmp, dA, mont, ctx)
-            || !bn_mod_sub_fixed_top(tmp, k, tmp, order)
-            || !bn_to_mont_fixed_top(tmp, tmp, mont, ctx)
-            || !BN_mod_mul_montgomery(s, tmp, s, mont, ctx)) {
+        if (!OSSL_FN_add(sf, dAf, one)
+            || !OSSL_FN_mod_inverse_prime(sf, sf, order_fn, fnctx, NULL)
+            || !OSSL_FN_mod_mul(tmp, dAf, rf, order_fn, fnctx)
+            || !OSSL_FN_mod_sub(tmp, k, tmp, order_fn, fnctx))
+            goto done;
+
+        /*
+         * s is the other half of the signature and so is public from here
+         * on.  It is computed straight into the OSSL_FN of its BIGNUM, so
+         * the secret factors never have to be handed over as a BIGNUM.
+         */
+        if ((s_acq = bn_acquire_ossl_fn(s, nlimbs)) == NULL) {
             ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
             goto done;
         }
+        if (!OSSL_FN_mod_mul(s_acq, sf, tmp, order_fn, fnctx)) {
+            bn_release(s, nlimbs);
+            s_acq = NULL;
+            goto done;
+        }
+        bn_release(s, nlimbs);
+        s_acq = NULL;
 
         /* try again if s == 0 */
         if (BN_is_zero(s))
@@ -387,6 +443,8 @@ done:
         BN_free(s);
     }
 
+    OSSL_FN_CTX_end(fnctx, token);
+    OSSL_FN_CTX_free(fnctx);
     BN_CTX_end(ctx);
     BN_CTX_free(ctx);
     EC_POINT_free(kG);
