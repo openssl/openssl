@@ -42,7 +42,13 @@ my %shlibname;
 my %stlibpath;
 my %shlibpath;
 my %defpath;
-foreach (qw(crypto ssl)) {
+# Libraries built from the same sources as libcrypto export their symbols
+# under a prefix of their own, which mkdef.pl needs to be told about for
+# the expected symbol list to match.
+my %libprefix = ( cmp => 'LIBCMP_' );
+my @libs = qw(crypto ssl);
+push @libs, 'cmp' unless disabled('cmp');
+foreach (@libs) {
     $stlibname{$_} = platform->staticlib("lib$_");
     $stlibpath{$_} = bldtop_file($stlibname{$_});
     $shlibname{$_} = platform->sharedlib("lib$_") unless disabled('shared');
@@ -97,7 +103,10 @@ foreach (sort keys %stlibname) {
         indir $bldtop => sub {
             my $mkdefpath = srctop_file("util", "mkdef.pl");
             my $def_path = srctop_file("util", "lib$_.num");
-            my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_ --OS linux 2> /dev/null";
+            my $prefix = $libprefix{$_};
+            my $def_cmd = "$^X $mkdefpath --ordinals $def_path --name $_"
+                . (defined $prefix ? " --symbol-prefix=$prefix" : "")
+                . " --OS linux 2> /dev/null";
             @def_lines = map { s|\R$||; $_ } `$def_cmd`;
             if ($? != 0) {
                 note "running 'cd $bldtop; $def_cmd' => $?";
