@@ -11,6 +11,7 @@
 
 /* CMP functions for PKIMessage construction */
 
+#include "internal/deprecated.h"
 #include "cmp_local.h"
 
 #include <internal/cms.h> /* for ossl_cms_sign_encrypt() */
