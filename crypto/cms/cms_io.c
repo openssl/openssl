@@ -31,10 +31,12 @@ int ossl_cms_stream(CMS_ContentInfo *cms)
     return 0;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
 int CMS_stream(unsigned char ***boundary, CMS_ContentInfo *cms)
 {
     return ossl_cms_stream(cms);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 
 CMS_ContentInfo *d2i_CMS_bio(BIO *bp, CMS_ContentInfo **cms)
 {
