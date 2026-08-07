@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include "pcy_local.h"
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
     ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
@@ -30,8 +31,6 @@ ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
 
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
-
-extern void ossl_policy_cache_free(X509_POLICY_CACHE *cache);
 
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
@@ -58,13 +57,14 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         /* fall through */
 
     case ASN1_OP_NEW_POST:
-        ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
         ret->ex_nscert = 0;
         ret->ex_flags = 0;
+        ret->ex_proxy_user = 0;
         ret->ex_pathlen = -1;
         ret->ex_pcpathlen = -1;
+        ret->ex_proxy_pathlen = -1;
         ret->skid = NULL;
         ret->akid = NULL;
         ret->policy_cache = NULL;
@@ -80,6 +80,25 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
             return 0;
         break;
+
+    case ASN1_OP_D2I_POST: {
+        int ok;
+
+        /*
+         * Cache the v3 extensions of the freshly decoded certificate. Invalid
+         * extensions set EXFLAG_INVALID but do not fail the parse; the mark
+         * keeps a successful parse from leaving errors on the queue, which
+         * verification re-raises as needed.  A failure to publish the cache,
+         * for example an allocation failure, does fail the parse.
+         */
+        ERR_set_mark();
+        ok = ossl_x509v3_cache_extensions(ret);
+        ERR_pop_to_mark();
+        if (!ok)
+            return 0;
+        ret->ex_flags |= EXFLAG_SET; /* finalize: the parsed cert is immutable */
+        break;
+    }
 
     case ASN1_OP_FREE_POST:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
@@ -140,6 +159,10 @@ IMPLEMENT_ASN1_DUP_FUNCTION(X509)
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
 {
     if (x != NULL) {
+        int changed = x->libctx != libctx
+            || (x->propq == NULL) != (propq == NULL)
+            || (propq != NULL && strcmp(x->propq, propq) != 0);
+
         x->libctx = libctx;
         OPENSSL_free(x->propq);
         x->propq = NULL;
@@ -147,6 +170,24 @@ int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
             x->propq = OPENSSL_strdup(propq);
             if (x->propq == NULL)
                 return 0;
+        }
+
+        /*
+         * The SHA-1 fingerprint and siginf are computed under libctx/propq, so
+         * a certificate already finalized under a different context (typically
+         * one embedded in a CMS or PKCS7 container and finalized during decode)
+         * must be rebuilt under the new one.
+         */
+        if (changed && (x->ex_flags & EXFLAG_SET) != 0) {
+            int ok;
+
+            ERR_set_mark();
+            ossl_x509_reset_ext_cache(x);
+            ok = ossl_x509v3_cache_extensions(x);
+            ERR_pop_to_mark();
+            if (!ok)
+                return 0;
+            x->ex_flags |= EXFLAG_SET;
         }
     }
     return 1;

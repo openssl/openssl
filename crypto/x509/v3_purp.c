@@ -13,8 +13,8 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include "crypto/x509.h"
-#include "internal/tsan_assist.h"
 #include "x509_local.h"
+#include "pcy_local.h"
 #include "crypto/objects/obj_dat.h"
 #include "internal/hashfunc.h"
 
@@ -41,6 +41,8 @@ static int no_check_purpose(const X509_PURPOSE *xp, const X509 *x,
 static int check_purpose_ocsp_helper(const X509_PURPOSE *xp, const X509 *x,
     int non_leaf);
 static int check_name_constraints(const NAME_CONSTRAINTS *nc);
+static int check_akid(const X509 *issuer, const ASN1_OCTET_STRING *skid,
+    const AUTHORITY_KEYID *akid);
 
 static int xp_cmp(const X509_PURPOSE *const *a, const X509_PURPOSE *const *b);
 static void xptable_free(X509_PURPOSE *p);
@@ -87,12 +89,14 @@ int X509_check_purpose(const X509 *x, int id, int non_leaf)
     int idx;
     const X509_PURPOSE *pt;
 
-    /*
-     * TODO: This cast can be dropped when https://github.com/openssl/openssl/pull/30067
-     * gets merged
-     */
-    if (!ossl_x509v3_cache_extensions((X509 *)x))
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return -1;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
+        return -1;
+    }
     if (id == -1)
         return 1;
 
@@ -548,27 +552,37 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     STACK_OF(GENERAL_NAME) *tmp_altname;
     NAME_CONSTRAINTS *tmp_nc;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
+    X509_POLICY_CACHE *tmp_policy_cache = NULL;
     X509_SIG_INFO tmp_siginf;
 
-#ifdef tsan_ld_acq
-    /* Fast lock-free check, see end of the function for details. */
-    if (tsan_ld_acq((TSAN_QUALIFIER int *)&const_x->ex_cached))
-        return (const_x->ex_flags & EXFLAG_INVALID) == 0;
-#endif
-
-    if (!CRYPTO_THREAD_read_lock(const_x->lock))
+    if ((const_x->ex_flags & EXFLAG_SET) != 0) {
+        /*
+         * A finalized certificate's cache is immutable and is not rebuilt
+         * here.  Re-finalizing (re-signing, or re-parsing with d2i) clears
+         * EXFLAG_SET first and then rebuilds; reaching this with EXFLAG_SET
+         * still set is a programming error.
+         */
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
+    }
     tmp_ex_flags = const_x->ex_flags;
-    tmp_ex_pcpathlen = const_x->ex_pcpathlen;
     tmp_ex_kusage = const_x->ex_kusage;
     tmp_ex_nscert = const_x->ex_nscert;
 
-    if ((tmp_ex_flags & EXFLAG_SET) != 0) { /* Cert has already been processed */
-        CRYPTO_THREAD_unlock(const_x->lock);
-        return (tmp_ex_flags & EXFLAG_INVALID) == 0;
-    }
-
     ERR_set_mark();
+
+    /*
+     * Build the policy cache from the certificate's policy extensions.  A NULL
+     * return is an allocation failure, which fails finalization; invalid policy
+     * extensions are not fatal and only set EXFLAG_INVALID_POLICY.
+     */
+    tmp_policy_cache = ossl_policy_cache_new(const_x);
+    if (tmp_policy_cache == NULL) {
+        ERR_pop_to_mark();
+        return 0;
+    }
+    if (tmp_policy_cache->invalid)
+        tmp_ex_flags |= EXFLAG_INVALID_POLICY;
 
     /* Cache the SHA1 digest of the cert */
     if (!X509_digest(const_x, EVP_sha1(), tmp_sha1_hash, NULL))
@@ -602,6 +616,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     }
 
     /* Handle proxy certificates */
+    tmp_ex_pcpathlen = -1;
     if ((pci = X509_get_ext_d2i(const_x, NID_proxyCertInfo, &i, NULL)) != NULL) {
         if ((tmp_ex_flags & EXFLAG_CA) != 0
             || X509_get_ext_by_NID(const_x, NID_subject_alt_name, -1) >= 0
@@ -711,7 +726,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
          * decided against it for efficiency reasons and according to RFC 5280,
          * CA certs MUST have an SKID and non-root certs MUST have an AKID.
          */
-        if (X509_check_akid(const_x, tmp_akid) == X509_V_OK
+        if (check_akid(const_x, tmp_skid, tmp_akid) == X509_V_OK
             && check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK) {
             /*
              * Assume self-signed if the signature alg matches the pkey alg and
@@ -754,16 +769,12 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     /* Set x->siginf, ignoring errors due to unsupported algos */
     (void)ossl_x509_init_sig_info(const_x, &tmp_siginf);
 
-    tmp_ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
     ERR_pop_to_mark();
 
-    CRYPTO_THREAD_unlock(const_x->lock);
     /*
-     * Now that we've done all the compute intensive work under read lock
-     * do all the updating under a write lock
+     * The caller owns this not-yet-finalized certificate, so the cache is
+     * built without locking; it becomes immutable once the caller finalizes.
      */
-    if (!CRYPTO_THREAD_write_lock(const_x->lock))
-        return 0;
     ((X509 *)const_x)->ex_flags = tmp_ex_flags;
     ((X509 *)const_x)->ex_pathlen = tmp_ex_pathlen;
     ((X509 *)const_x)->ex_pcpathlen = tmp_ex_pcpathlen;
@@ -784,6 +795,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->nc = tmp_nc;
     sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
     ((X509 *)const_x)->crldp = tmp_crldp;
+    ossl_policy_cache_free(((X509 *)const_x)->policy_cache);
+    ((X509 *)const_x)->policy_cache = tmp_policy_cache;
 #ifndef OPENSSL_NO_RFC3779
     sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
     ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
@@ -792,19 +805,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 #endif
     ((X509 *)const_x)->siginf = tmp_siginf;
 
-#ifdef tsan_st_rel
-    tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
     /*
-     * Above store triggers fast lock-free check in the beginning of the
-     * function. But one has to ensure that the structure is "stable", i.e.
-     * all stores are visible on all processors. Hence the release fence.
+     * The cache is now published.  An invalid certificate is still a
+     * successful finalization: EXFLAG_INVALID records the invalidity.  A 0
+     * return is reserved for a genuine failure to build and publish the cache.
      */
-#endif
-    CRYPTO_THREAD_unlock(const_x->lock);
-    if (tmp_ex_flags & EXFLAG_INVALID) {
-        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
-        return 0;
-    }
     return 1;
 }
 
@@ -849,21 +854,27 @@ static int check_ca(const X509 *x)
 void X509_set_proxy_flag(X509 *x)
 {
     if (CRYPTO_THREAD_write_lock(x->lock)) {
-        x->ex_flags |= EXFLAG_PROXY;
+        x->ex_proxy_user = 1;
         CRYPTO_THREAD_unlock(x->lock);
     }
 }
 
 void X509_set_proxy_pathlen(X509 *x, long l)
 {
-    x->ex_pcpathlen = l;
+    x->ex_proxy_pathlen = l;
 }
 
 int X509_check_ca(const X509 *x)
 {
     /* Note 0 normally means "not a CA" - but in this case means error. */
-    if (!ossl_x509v3_cache_extensions(x))
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return 0;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0) {
+        ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_CERTIFICATE);
+        return 0;
+    }
 
     return check_ca(x);
 }
@@ -1180,9 +1191,8 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
         != 0)
         return X509_V_ERR_SUBJECT_ISSUER_MISMATCH;
 
-    /* set issuer->skid, subject->akid, and subject->ex_flags */
-    if (!ossl_x509v3_cache_extensions(issuer)
-        || !ossl_x509v3_cache_extensions(subject))
+    if ((issuer->ex_flags & EXFLAG_INVALID) != 0
+        || (subject->ex_flags & EXFLAG_INVALID) != 0)
         return X509_V_ERR_UNSPECIFIED;
 
     if (issuer == subject
@@ -1220,7 +1230,7 @@ int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject)
  */
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
 {
-    if ((subject->ex_flags & EXFLAG_PROXY) != 0) {
+    if (ossl_x509_is_proxy(subject)) {
         if (ku_reject(issuer, KU_DIGITAL_SIGNATURE))
             return X509_V_ERR_KEYUSAGE_NO_DIGITAL_SIGNATURE;
     } else if (ku_reject(issuer, KU_KEY_CERT_SIGN)) {
@@ -1231,17 +1241,18 @@ int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject)
 
 /*
  * check if all sub-fields of the authority key identifier information akid,
- * as far as present, match the respective subjectKeyIdentifier extension (if
- * present in issuer), serialNumber field, and issuer fields of issuer.
+ * as far as present, match the given subjectKeyIdentifier skid, and the
+ * serialNumber and issuer fields of issuer.
  * returns X509_V_OK also if akid is NULL because this means no restriction.
  */
-int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
+static int check_akid(const X509 *issuer, const ASN1_OCTET_STRING *skid,
+    const AUTHORITY_KEYID *akid)
 {
     if (akid == NULL)
         return X509_V_OK;
 
     /* Check key ids (if present) */
-    if (akid->keyid && issuer->skid && ASN1_OCTET_STRING_cmp(akid->keyid, issuer->skid))
+    if (akid->keyid && skid && ASN1_OCTET_STRING_cmp(akid->keyid, skid))
         return X509_V_ERR_AKID_SKID_MISMATCH;
     /* Check serial number */
     if (akid->serial && ASN1_INTEGER_cmp(X509_get0_serialNumber(issuer), akid->serial))
@@ -1271,65 +1282,96 @@ int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
     return X509_V_OK;
 }
 
+/* Match akid against issuer's own subjectKeyIdentifier. */
+int X509_check_akid(const X509 *issuer, const AUTHORITY_KEYID *akid)
+{
+    return check_akid(issuer, issuer->skid, akid);
+}
+
+int ossl_x509_is_proxy(const X509 *x)
+{
+    return (x->ex_flags & EXFLAG_PROXY) != 0 || x->ex_proxy_user;
+}
+
 uint32_t X509_get_extension_flags(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    X509_check_purpose(x, -1, 0);
-    return x->ex_flags;
+    /* EXFLAG_PROXY may be caller-asserted rather than derived; synthesise it. */
+    return x->ex_flags | (x->ex_proxy_user ? EXFLAG_PROXY : 0);
 }
 
 uint32_t X509_get_key_usage(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
     return (x->ex_flags & EXFLAG_KUSAGE) != 0 ? x->ex_kusage : UINT32_MAX;
 }
 
 uint32_t X509_get_extended_key_usage(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return 0;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return 0;
     return (x->ex_flags & EXFLAG_XKUSAGE) != 0 ? x->ex_xkusage : UINT32_MAX;
 }
 
 const ASN1_OCTET_STRING *X509_get0_subject_key_id(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return x->skid;
 }
 
 const ASN1_OCTET_STRING *X509_get0_authority_key_id(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->keyid : NULL);
 }
 
 const GENERAL_NAMES *X509_get0_authority_issuer(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->issuer : NULL);
 }
 
 const ASN1_INTEGER *X509_get0_authority_serial(const X509 *x)
 {
-    /* Call for side-effect of computing hash and caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0)
         return NULL;
     return (x->akid != NULL ? x->akid->serial : NULL);
 }
 
 long X509_get_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return -1;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0
         || (x->ex_flags & EXFLAG_BCONS) == 0)
         return -1;
     return x->ex_pathlen;
@@ -1337,9 +1379,12 @@ long X509_get_pathlen(const X509 *x)
 
 long X509_get_proxy_pathlen(const X509 *x)
 {
-    /* Called for side effect of caching extensions */
-    if (X509_check_purpose(x, -1, 0) != 1
-        || (x->ex_flags & EXFLAG_PROXY) == 0)
+    if ((x->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
         return -1;
-    return x->ex_pcpathlen;
+    }
+    if ((x->ex_flags & EXFLAG_INVALID) != 0
+        || !ossl_x509_is_proxy(x))
+        return -1;
+    return x->ex_proxy_user ? x->ex_proxy_pathlen : x->ex_pcpathlen;
 }

@@ -118,19 +118,18 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         return X509_PCY_TREE_EMPTY;
 
     /*
-     * First setup the policy cache in all n non-TA certificates, this will be
-     * used in X509_verify_cert() which will invoke the verify callback for all
-     * certificates with invalid policy extensions.
+     * The policy cache of each of the n non-TA certificates is built when the
+     * certificate is finalized.  Confirm every one is present: a NULL cache
+     * means the certificate was never finalized, so policy checking is being
+     * run on a certificate it should not have been called for.
      */
     for (i = n - 1; i >= 0; i--) {
         X509 *x = sk_X509_value(certs, i);
 
-        /* Call for side-effect of computing hash and caching extensions */
-        X509_check_purpose(x, -1, 0);
-
-        /* If cache is NULL, likely ENOMEM: return immediately */
-        if (ossl_policy_cache_set(x) == NULL)
+        if (ossl_policy_cache_set(x) == NULL) {
+            ERR_raise(ERR_LIB_X509V3, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
             return X509_PCY_TREE_INTERNAL;
+        }
     }
 
     /*

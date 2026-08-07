@@ -188,9 +188,17 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
     return 0;
 }
 
+void ossl_x509_reset_ext_cache(X509 *x)
+{
+    x->ex_flags = 0;
+    x->ex_kusage = 0;
+    x->ex_nscert = 0;
+}
+
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    int ret;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -209,14 +217,27 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * which exist below are the same.
      */
     x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
+    ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
         pkey, md, x->libctx, x->propq);
+    if (ret > 0) {
+        int ok;
+
+        ERR_set_mark();
+        ossl_x509_reset_ext_cache(x);
+        ok = ossl_x509v3_cache_extensions(x);
+        ERR_pop_to_mark();
+        if (!ok) /* the cache could not be published; report failure */
+            return 0;
+        x->ex_flags |= EXFLAG_SET; /* finalize the freshly signed cert */
+    }
+    return ret;
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    int ret;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -228,9 +249,21 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
     x->cert_info.enc.modified = 1;
-    return ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
+    ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
+    if (ret > 0) {
+        int ok;
+
+        ERR_set_mark();
+        ossl_x509_reset_ext_cache(x);
+        ok = ossl_x509v3_cache_extensions(x);
+        ERR_pop_to_mark();
+        if (!ok) /* the cache could not be published; report failure */
+            return 0;
+        x->ex_flags |= EXFLAG_SET; /* finalize the freshly signed cert */
+    }
+    return ret;
 }
 
 static ASN1_VALUE *simple_get_asn1(const char *url, BIO *bio, BIO *rbio,
