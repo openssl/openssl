@@ -1609,9 +1609,14 @@ EOF
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
+          my $ord_node_prefix = $args{generator}->[2]
+              ? " --node-prefix $args{generator}->[2]" : "";
+          my $ord_renames =
+              join("", map { /^--/ ? " $_" : " --rename $_" }
+                       @{$args{generator}}[3 .. $#{$args{generator}}]);
           return <<"EOF";
 $target: $gen0 $deps \$(SRCDIR)/util/mkdef.pl
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name --OS $mkdef_os > $target
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name$ord_node_prefix$ord_renames --OS $mkdef_os > $target
 EOF
       } elsif (platform->isasm($args{src})
                || platform->iscppasm($args{src})) {
