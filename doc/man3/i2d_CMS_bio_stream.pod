@@ -6,7 +6,7 @@ i2d_CMS_bio_stream - output CMS_ContentInfo structure in BER format
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int i2d_CMS_bio_stream(BIO *out, CMS_ContentInfo *cms, BIO *data, int flags);
 
@@ -40,6 +40,10 @@ L<PEM_write_bio_CMS_stream(3)>
 =head1 HISTORY
 
 The i2d_CMS_bio_stream() function was added in OpenSSL 1.0.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

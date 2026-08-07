@@ -6,7 +6,7 @@ SMIME_read_CMS_ex, SMIME_read_CMS - parse S/MIME message
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *SMIME_read_CMS_ex(BIO *bio, int flags, BIO **bcont,
                                     CMS_ContentInfo **cms);
@@ -79,6 +79,10 @@ L<CMS_decrypt(3)>
 =head1 HISTORY
 
 The function SMIME_read_CMS_ex() was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

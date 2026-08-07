@@ -6,7 +6,7 @@ BIO_new_CMS - CMS streaming filter BIO
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  BIO *BIO_new_CMS(BIO *out, CMS_ContentInfo *cms);
 
@@ -62,6 +62,10 @@ L<CMS_encrypt(3)>
 =head1 HISTORY
 
 The BIO_new_CMS() function was added in OpenSSL 1.0.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

@@ -18,7 +18,7 @@ CMS_unsigned_get0_data_by_OBJ
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_signed_get_attr_count(const CMS_SignerInfo *si);
  int CMS_signed_get_attr_by_NID(const CMS_SignerInfo *si, int nid,
@@ -201,6 +201,12 @@ For ESS attribute rules see RFC 2634 Section 1.3.4 and RFC 5035 Section 5.4.
 =head1 SEE ALSO
 
 L<X509_ATTRIBUTE(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

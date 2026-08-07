@@ -6,7 +6,7 @@ CMS_compress - create a CMS CompressedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *CMS_compress(BIO *in, int comp_nid, unsigned int flags);
 
@@ -64,6 +64,10 @@ L<ERR_get_error(3)>, L<CMS_uncompress(3)>
 =head1 HISTORY
 
 The B<CMS_STREAM> flag was added in OpenSSL 1.0.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
