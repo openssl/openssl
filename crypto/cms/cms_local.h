@@ -147,7 +147,8 @@ struct CMS_EncryptedContentInfo_st {
     const EVP_CIPHER *cipher;
     unsigned char *key;
     size_t keylen;
-    unsigned char *tag;
+    /* Borrowed from the AuthEnvelopedData mac, not owned here */
+    const unsigned char *tag;
     size_t taglen;
     /* Set to 1 if we are debugging decrypt and don't fake keys for MMA */
     int debug;

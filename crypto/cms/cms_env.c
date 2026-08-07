@@ -14,7 +14,6 @@
 #include <openssl/cms.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
-#include "crypto/asn1.h"
 #include "cms_local.h"
 
 /* CMS EnvelopedData Utilities */
@@ -634,14 +633,16 @@ static int cms_RecipientInfo_ktri_decrypt(CMS_ContentInfo *cms,
     if (!ossl_cms_env_asn1_ctrl(ri, 1))
         goto err;
 
-    if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen, ktri->encryptedKey->data,
-            ktri->encryptedKey->length)
+    if (EVP_PKEY_decrypt(ktri->pctx, NULL, &eklen,
+            ASN1_STRING_get0_data(ktri->encryptedKey),
+            ASN1_STRING_length_ex(ktri->encryptedKey))
             <= 0
         || (ek = OPENSSL_malloc(eklen)) == NULL)
         goto err;
 
-    if (EVP_PKEY_decrypt(ktri->pctx, ek, &eklen, ktri->encryptedKey->data,
-            ktri->encryptedKey->length)
+    if (EVP_PKEY_decrypt(ktri->pctx, ek, &eklen,
+            ASN1_STRING_get0_data(ktri->encryptedKey),
+            ASN1_STRING_length_ex(ktri->encryptedKey))
             <= 0
         || eklen == 0
         || (fixlen != 0 && eklen != fixlen)) {
@@ -671,18 +672,21 @@ err:
 int CMS_RecipientInfo_kekri_id_cmp(CMS_RecipientInfo *ri,
     const unsigned char *id, size_t idlen)
 {
-    ASN1_OCTET_STRING tmp_os;
+    ASN1_OCTET_STRING *tmp_os;
     CMS_KEKRecipientInfo *kekri;
+    int ret;
+
     if (ri->type != CMS_RECIPINFO_KEK) {
         ERR_raise(ERR_LIB_CMS, CMS_R_NOT_KEK);
         return -2;
     }
     kekri = ri->d.kekri;
-    tmp_os.type = V_ASN1_OCTET_STRING;
-    tmp_os.flags = 0;
-    tmp_os.data = (unsigned char *)id;
-    tmp_os.length = (int)idlen;
-    return ASN1_OCTET_STRING_cmp(&tmp_os, kekri->kekid->keyIdentifier);
+    tmp_os = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, id, idlen);
+    if (tmp_os == NULL)
+        return -2;
+    ret = ASN1_OCTET_STRING_cmp(tmp_os, kekri->kekid->keyIdentifier);
+    ASN1_STRING_free(tmp_os);
+    return ret;
 }
 
 /* For now hard code AES key wrap info */
@@ -980,7 +984,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
     /* If encrypted key length is invalid don't bother */
 
-    if (kekri->encryptedKey->length < 16) {
+    if (ASN1_STRING_length_ex(kekri->encryptedKey) < 16) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_ENCRYPTED_KEY_LENGTH);
         goto err;
     }
@@ -991,7 +995,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
         goto err;
     }
 
-    ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+    ukey = OPENSSL_malloc(ASN1_STRING_length_ex(kekri->encryptedKey) - 8);
     if (ukey == NULL)
         goto err;
 
@@ -1003,8 +1007,8 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 
     if (!EVP_DecryptInit_ex(ctx, cipher, NULL, kekri->key, NULL)
         || !EVP_DecryptUpdate(ctx, ukey, &ukeylen,
-            kekri->encryptedKey->data,
-            kekri->encryptedKey->length)
+            ASN1_STRING_get0_data(kekri->encryptedKey),
+            (int)ASN1_STRING_length_ex(kekri->encryptedKey))
         || !EVP_DecryptFinal_ex(ctx, ukey + ukeylen, &outlen)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_UNWRAP_ERROR);
         goto err;
@@ -1278,8 +1282,8 @@ BIO *ossl_cms_AuthEnvelopedData_init_bio(CMS_ContentInfo *cms)
     ec = aenv->authEncryptedContentInfo;
     /* Set tag for decryption */
     if (ec->cipher == NULL) {
-        ec->tag = aenv->mac->data;
-        ec->taglen = aenv->mac->length;
+        ec->tag = ASN1_STRING_get0_data(aenv->mac);
+        ec->taglen = ASN1_STRING_length_ex(aenv->mac);
     }
     ret = ossl_cms_EncryptedContent_init_bio(ec, ossl_cms_get0_cmsctx(cms), 1);
     if (ret == NULL)

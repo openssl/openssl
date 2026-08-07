@@ -14,7 +14,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "crypto/asn1.h"
 #include "cms_local.h"
 
 /* CMS SignedData Utilities */
@@ -788,7 +787,7 @@ static int cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
     }
 
     if (CMS_signed_add1_attr_by_NID(si, NID_pkcs9_signingTime,
-            tt->type, tt, -1)
+            ASN1_STRING_type(tt), tt, -1)
         <= 0) {
         ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
         goto err;
@@ -999,7 +998,8 @@ static int cms_EVP_PKEY_sign(EVP_PKEY_CTX *pctx, BIO *in,
     return ret;
 }
 
-static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in, unsigned char *sig,
+static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in,
+    const unsigned char *sig,
     size_t siglen, int has_msg_update)
 {
     size_t buffer_len;
@@ -1332,8 +1332,8 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         r = -1;
         goto err;
     }
-    r = EVP_DigestVerifyFinal(mctx,
-        si->signature->data, si->signature->length);
+    r = EVP_DigestVerifyFinal(mctx, ASN1_STRING_get0_data(si->signature),
+        ASN1_STRING_length_ex(si->signature));
     if (r <= 0)
         ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
 err:
@@ -1415,12 +1415,12 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
 
     /* If messageDigest found compare it */
     if (os != NULL) {
-        if (mlen != (unsigned int)os->length) {
+        if (mlen != ASN1_STRING_length_ex(os)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH);
             goto err;
         }
 
-        if (memcmp(mval, os->data, mlen)) {
+        if (memcmp(mval, ASN1_STRING_get0_data(os), mlen)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
             r = 0;
         } else {
@@ -1451,8 +1451,9 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
                 goto err;
 
             has_msg_update = EVP_SIGNATURE_has_message_update(sig_alg);
-            r = cms_EVP_PKEY_verify(pkctx, data, si->signature->data,
-                si->signature->length, has_msg_update);
+            r = cms_EVP_PKEY_verify(pkctx, data,
+                ASN1_STRING_get0_data(si->signature),
+                ASN1_STRING_length_ex(si->signature), has_msg_update);
         } else {
             if (EVP_PKEY_verify_init(pkctx) <= 0)
                 goto err;
@@ -1465,8 +1466,8 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
             }
             si->pctx = NULL;
 
-            r = EVP_PKEY_verify(pkctx, si->signature->data,
-                si->signature->length, mval, mlen);
+            r = EVP_PKEY_verify(pkctx, ASN1_STRING_get0_data(si->signature),
+                ASN1_STRING_length_ex(si->signature), mval, mlen);
         }
         if (r <= 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
@@ -1542,7 +1543,11 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     int algnid, int keysize)
 {
     X509_ALGOR *alg;
+    ASN1_OBJECT *algo = OBJ_nid2obj(algnid);
     ASN1_INTEGER *key = NULL;
+
+    if (algo == NULL)
+        return 0;
 
     if (keysize > 0) {
         key = ASN1_INTEGER_new();
@@ -1551,8 +1556,11 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
             return 0;
         }
     }
-    alg = ossl_X509_ALGOR_from_nid(algnid, key != NULL ? V_ASN1_INTEGER : V_ASN1_UNDEF, key);
-    if (alg == NULL) {
+    alg = X509_ALGOR_new();
+    if (alg == NULL
+        || !X509_ALGOR_set0(alg, algo,
+            key != NULL ? V_ASN1_INTEGER : V_ASN1_UNDEF, key)) {
+        X509_ALGOR_free(alg);
         ASN1_INTEGER_free(key);
         return 0;
     }

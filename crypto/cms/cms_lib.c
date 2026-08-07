@@ -15,7 +15,6 @@
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include "crypto/asn1.h"
 #include "cms_local.h"
 #include "internal/cms.h"
 
@@ -172,7 +171,8 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
     if (*pos == NULL || cms->contentCreated)
         return BIO_new(BIO_s_mem());
     /* Else content was read in: return read only BIO for it */
-    return BIO_new_mem_buf((*pos)->data, (*pos)->length);
+    return BIO_new_mem_buf(ASN1_STRING_get0_data(*pos),
+        (int)ASN1_STRING_length_ex(*pos));
 }
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
