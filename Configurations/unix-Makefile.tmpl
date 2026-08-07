@@ -1326,7 +1326,7 @@ ERROR_REBUILD=
 errors:
 	( b=`pwd`; set -e; cd $(SRCDIR); \
           $(PERL) util/ck_errf.pl -strict -internal; \
-          $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal )
+          $(PERL) -I$$b util/mkerr.pl $(ERROR_REBUILD) -internal -state )
 
 {- use File::Basename;
 

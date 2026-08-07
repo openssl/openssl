@@ -32,6 +32,77 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ess.h \
          include/openssl/fipskey.h \
          include/openssl/lhash.h \
+         crypto/sslerr.h \
+         include/crypto/asn1err.h \
+         include/crypto/asyncerr.h \
+         include/crypto/bioerr.h \
+         include/crypto/bnerr.h \
+         include/crypto/buffererr.h \
+         include/crypto/cmperr.h \
+         include/crypto/cmserr.h \
+         include/crypto/comperr.h \
+         include/crypto/conferr.h \
+         include/crypto/crmferr.h \
+         include/crypto/cryptoerr.h \
+         include/crypto/cterr.h \
+         include/crypto/decodererr.h \
+         include/crypto/dherr.h \
+         include/crypto/dsaerr.h \
+         include/crypto/ecerr.h \
+         include/crypto/encodererr.h \
+         include/crypto/esserr.h \
+         include/crypto/evperr.h \
+         include/crypto/httperr.h \
+         include/crypto/objectserr.h \
+         include/crypto/ocsperr.h \
+         include/crypto/pemerr.h \
+         include/crypto/pkcs12err.h \
+         include/crypto/pkcs7err.h \
+         include/crypto/randerr.h \
+         include/crypto/rsaerr.h \
+         include/crypto/sm2err.h \
+         include/crypto/storeerr.h \
+         include/crypto/tserr.h \
+         include/crypto/uierr.h \
+         include/crypto/x509err.h \
+         include/crypto/x509v3err.h \
+         include/internal/dsoerr.h \
+         include/internal/propertyerr.h \
+         include/openssl/asn1err.h \
+         include/openssl/asyncerr.h \
+         include/openssl/bioerr.h \
+         include/openssl/bnerr.h \
+         include/openssl/buffererr.h \
+         include/openssl/cmperr.h \
+         include/openssl/cmserr.h \
+         include/openssl/comperr.h \
+         include/openssl/conferr.h \
+         include/openssl/crmferr.h \
+         include/openssl/cryptoerr.h \
+         include/openssl/cterr.h \
+         include/openssl/decodererr.h \
+         include/openssl/dherr.h \
+         include/openssl/dsaerr.h \
+         include/openssl/ecerr.h \
+         include/openssl/encodererr.h \
+         include/openssl/esserr.h \
+         include/openssl/evperr.h \
+         include/openssl/httperr.h \
+         include/openssl/objectserr.h \
+         include/openssl/ocsperr.h \
+         include/openssl/pemerr.h \
+         include/openssl/pkcs12err.h \
+         include/openssl/pkcs7err.h \
+         include/openssl/proverr.h \
+         include/openssl/randerr.h \
+         include/openssl/rsaerr.h \
+         include/openssl/sslerr.h \
+         include/openssl/storeerr.h \
+         include/openssl/tserr.h \
+         include/openssl/uierr.h \
+         include/openssl/x509err.h \
+         include/openssl/x509v3err.h \
+         providers/common/include/prov/proverr.h \
          include/openssl/obj_mac.h \
          include/openssl/opensslv.h \
          include/openssl/ocsp.h \
@@ -140,6 +211,334 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/rands/test_rng.inc
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
+
+# The error headers and tables are emitted from the state in
+# crypto/err/openssl.ec and crypto/err/openssl.txt; this block
+# mirrors the L table in openssl.ec.
+GENERATE[crypto/asn1/asn1_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/asn1/asn1_err.c
+DEPEND[crypto/asn1/asn1_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/async/async_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/async/async_err.c
+DEPEND[crypto/async/async_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/bio/bio_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/bio/bio_err.c
+DEPEND[crypto/bio/bio_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/bn/bn_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/bn/bn_err.c
+DEPEND[crypto/bn/bn_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/buffer/buf_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/buffer/buf_err.c
+DEPEND[crypto/buffer/buf_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/cmp/cmp_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/cmp/cmp_err.c
+DEPEND[crypto/cmp/cmp_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/cms/cms_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/cms/cms_err.c
+DEPEND[crypto/cms/cms_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/comp/comp_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/comp/comp_err.c
+DEPEND[crypto/comp/comp_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/conf/conf_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/conf/conf_err.c
+DEPEND[crypto/conf/conf_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/cpt_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/cpt_err.c
+DEPEND[crypto/cpt_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/crmf/crmf_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/crmf/crmf_err.c
+DEPEND[crypto/crmf/crmf_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ct/ct_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ct/ct_err.c
+DEPEND[crypto/ct/ct_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/dh/dh_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/dh/dh_err.c
+DEPEND[crypto/dh/dh_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/dsa/dsa_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/dsa/dsa_err.c
+DEPEND[crypto/dsa/dsa_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/dso/dso_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/dso/dso_err.c
+DEPEND[crypto/dso/dso_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ec/ec_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ec/ec_err.c
+DEPEND[crypto/ec/ec_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/encode_decode/decoder_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/encode_decode/decoder_err.c
+DEPEND[crypto/encode_decode/decoder_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/encode_decode/encoder_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/encode_decode/encoder_err.c
+DEPEND[crypto/encode_decode/encoder_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ess/ess_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ess/ess_err.c
+DEPEND[crypto/ess/ess_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/evp/evp_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/evp/evp_err.c
+DEPEND[crypto/evp/evp_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/http/http_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/http/http_err.c
+DEPEND[crypto/http/http_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/objects/obj_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/objects/obj_err.c
+DEPEND[crypto/objects/obj_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ocsp/ocsp_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ocsp/ocsp_err.c
+DEPEND[crypto/ocsp/ocsp_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/pem/pem_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/pem/pem_err.c
+DEPEND[crypto/pem/pem_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/pkcs12/pk12err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/pkcs12/pk12err.c
+DEPEND[crypto/pkcs12/pk12err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/pkcs7/pkcs7err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/pkcs7/pkcs7err.c
+DEPEND[crypto/pkcs7/pkcs7err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/property/property_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/property/property_err.c
+DEPEND[crypto/property/property_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/rand/rand_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/rand/rand_err.c
+DEPEND[crypto/rand/rand_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/rsa/rsa_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/rsa/rsa_err.c
+DEPEND[crypto/rsa/rsa_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/sm2/sm2_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/sm2/sm2_err.c
+DEPEND[crypto/sm2/sm2_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ssl_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ssl_err.c
+DEPEND[crypto/ssl_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/sslerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/sslerr.h
+DEPEND[crypto/sslerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/store/store_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/store/store_err.c
+DEPEND[crypto/store/store_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ts/ts_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ts/ts_err.c
+DEPEND[crypto/ts/ts_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/ui/ui_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/ui/ui_err.c
+DEPEND[crypto/ui/ui_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/x509/v3err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/x509/v3err.c
+DEPEND[crypto/x509/v3err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[crypto/x509/x509_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit crypto/x509/x509_err.c
+DEPEND[crypto/x509/x509_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/asn1err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/asn1err.h
+DEPEND[include/crypto/asn1err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/asyncerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/asyncerr.h
+DEPEND[include/crypto/asyncerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/bioerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/bioerr.h
+DEPEND[include/crypto/bioerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/bnerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/bnerr.h
+DEPEND[include/crypto/bnerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/buffererr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/buffererr.h
+DEPEND[include/crypto/buffererr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/cmperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/cmperr.h
+DEPEND[include/crypto/cmperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/cmserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/cmserr.h
+DEPEND[include/crypto/cmserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/comperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/comperr.h
+DEPEND[include/crypto/comperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/conferr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/conferr.h
+DEPEND[include/crypto/conferr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/crmferr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/crmferr.h
+DEPEND[include/crypto/crmferr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/cryptoerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/cryptoerr.h
+DEPEND[include/crypto/cryptoerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/cterr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/cterr.h
+DEPEND[include/crypto/cterr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/decodererr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/decodererr.h
+DEPEND[include/crypto/decodererr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/dherr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/dherr.h
+DEPEND[include/crypto/dherr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/dsaerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/dsaerr.h
+DEPEND[include/crypto/dsaerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/ecerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/ecerr.h
+DEPEND[include/crypto/ecerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/encodererr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/encodererr.h
+DEPEND[include/crypto/encodererr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/esserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/esserr.h
+DEPEND[include/crypto/esserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/evperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/evperr.h
+DEPEND[include/crypto/evperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/httperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/httperr.h
+DEPEND[include/crypto/httperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/objectserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/objectserr.h
+DEPEND[include/crypto/objectserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/ocsperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/ocsperr.h
+DEPEND[include/crypto/ocsperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/pemerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/pemerr.h
+DEPEND[include/crypto/pemerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/pkcs12err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/pkcs12err.h
+DEPEND[include/crypto/pkcs12err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/pkcs7err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/pkcs7err.h
+DEPEND[include/crypto/pkcs7err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/randerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/randerr.h
+DEPEND[include/crypto/randerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/rsaerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/rsaerr.h
+DEPEND[include/crypto/rsaerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/sm2err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/sm2err.h
+DEPEND[include/crypto/sm2err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/storeerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/storeerr.h
+DEPEND[include/crypto/storeerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/tserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/tserr.h
+DEPEND[include/crypto/tserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/uierr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/uierr.h
+DEPEND[include/crypto/uierr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/x509err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/x509err.h
+DEPEND[include/crypto/x509err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/crypto/x509v3err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/crypto/x509v3err.h
+DEPEND[include/crypto/x509v3err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/internal/dsoerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/internal/dsoerr.h
+DEPEND[include/internal/dsoerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/internal/propertyerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/internal/propertyerr.h
+DEPEND[include/internal/propertyerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/asn1err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/asn1err.h
+DEPEND[include/openssl/asn1err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/asyncerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/asyncerr.h
+DEPEND[include/openssl/asyncerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/bioerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/bioerr.h
+DEPEND[include/openssl/bioerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/bnerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/bnerr.h
+DEPEND[include/openssl/bnerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/buffererr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/buffererr.h
+DEPEND[include/openssl/buffererr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/cmperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/cmperr.h
+DEPEND[include/openssl/cmperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/cmserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/cmserr.h
+DEPEND[include/openssl/cmserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/comperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/comperr.h
+DEPEND[include/openssl/comperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/conferr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/conferr.h
+DEPEND[include/openssl/conferr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/crmferr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/crmferr.h
+DEPEND[include/openssl/crmferr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/cryptoerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/cryptoerr.h
+DEPEND[include/openssl/cryptoerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/cterr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/cterr.h
+DEPEND[include/openssl/cterr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/decodererr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/decodererr.h
+DEPEND[include/openssl/decodererr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/dherr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/dherr.h
+DEPEND[include/openssl/dherr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/dsaerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/dsaerr.h
+DEPEND[include/openssl/dsaerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/ecerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/ecerr.h
+DEPEND[include/openssl/ecerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/encodererr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/encodererr.h
+DEPEND[include/openssl/encodererr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/esserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/esserr.h
+DEPEND[include/openssl/esserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/evperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/evperr.h
+DEPEND[include/openssl/evperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/httperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/httperr.h
+DEPEND[include/openssl/httperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/objectserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/objectserr.h
+DEPEND[include/openssl/objectserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/ocsperr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/ocsperr.h
+DEPEND[include/openssl/ocsperr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/pemerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/pemerr.h
+DEPEND[include/openssl/pemerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/pkcs12err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/pkcs12err.h
+DEPEND[include/openssl/pkcs12err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/pkcs7err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/pkcs7err.h
+DEPEND[include/openssl/pkcs7err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/proverr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/proverr.h
+DEPEND[include/openssl/proverr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/randerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/randerr.h
+DEPEND[include/openssl/randerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/rsaerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/rsaerr.h
+DEPEND[include/openssl/rsaerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/sslerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/sslerr.h
+DEPEND[include/openssl/sslerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/storeerr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/storeerr.h
+DEPEND[include/openssl/storeerr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/tserr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/tserr.h
+DEPEND[include/openssl/tserr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/uierr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/uierr.h
+DEPEND[include/openssl/uierr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/x509err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/x509err.h
+DEPEND[include/openssl/x509err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[include/openssl/x509v3err.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit include/openssl/x509v3err.h
+DEPEND[include/openssl/x509v3err.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[providers/common/include/prov/proverr.h]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit providers/common/include/prov/proverr.h
+DEPEND[providers/common/include/prov/proverr.h]=crypto/err/openssl.ec crypto/err/openssl.txt
+GENERATE[providers/common/provider_err.c]=util/mkerr.pl -internal \
+    -conf $(SRCDIR)/crypto/err/openssl.ec -emit providers/common/provider_err.c
+DEPEND[providers/common/provider_err.c]=crypto/err/openssl.ec crypto/err/openssl.txt
 GENERATE[include/openssl/obj_mac.h]=crypto/objects/objects.pl \
     -a $(SRCDIR)/crypto/objects/obj_compat.h \
     $(SRCDIR)/crypto/objects/objects.txt $(SRCDIR)/crypto/objects/obj_mac.num
