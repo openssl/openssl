@@ -279,16 +279,16 @@ my @opensslchandlers = (
 
     # OSSL_DEPRECATEDIN_x_y[_z] is simply ignored.  Such declarations are
     # supposed to be guarded with an '#ifdef OPENSSL_NO_DEPRECATED_x_y[_z]'
-    { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+    { regexp   => qr/OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
       massager => sub { return $1; },
     },
-    { regexp   => qr/OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?_FOR<<<.*>>>(.*)/,
+    { regexp   => qr/OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_\d+_\d+(?:_\d+)?_FOR<<<.*>>>(.*)/,
       massager => sub { return $1; },
     },
-    { regexp   => qr/(.*?)\s+OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
+    { regexp   => qr/(.*?)\s+OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_\d+_\d+(?:_\d+)?\s+(.*)/,
       massager => sub { return "$1 $2"; },
     },
-    { regexp   => qr/(.*?)\s+OSSL_DEPRECATEDIN_\d+_\d+(?:_\d+)?_FOR<<<.*>>>(.*)/,
+    { regexp   => qr/(.*?)\s+OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_\d+_\d+(?:_\d+)?_FOR<<<.*>>>(.*)/,
       massager => sub { return "$1 $2"; },
     },
 
@@ -548,7 +548,7 @@ EOF
            |_NDEF_FUNCTION|_PRINT_FUNCTION|_PRINT_FUNCTION_name
            |_DUP_FUNCTION|_DUP_FUNCTION_name)
           _attr
-          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+          <<<\(\s*OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
       /x,
       massager => sub { return (<<"EOF");
 DECLARE_ASN1$1($3)
@@ -557,6 +557,21 @@ EOF
     },
     { regexp   => qr/DECLARE_PKCS12_SET_OF<<<\((.*)\)>>>/,
       massager => sub { return (); }
+    },
+
+    # Universal translator of attributed ASN1 declarators
+    { regexp   => qr/
+          DECLARE_ASN1
+          ((?:_ITEM|_ALLOC_FUNCTIONS|_DUP_FUNCTION|_ENCODE_FUNCTIONS
+            |_FUNCTIONS|_NDEF_FUNCTION|_PRINT_FUNCTION)
+           (?:_only|_name|_fname)?)
+          _attr
+          <<<\(\s*OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+      /x,
+      massager => sub { return (<<"EOF");
+DECLARE_ASN1$1($3)
+EOF
+      },
     },
 
     #####
@@ -633,7 +648,7 @@ EOF
           ((?:_rw|_rw_cb|_rw_const|_write|_write_cb|_write_const|_read|_read_cb)
            (?:_ex)?)
           _attr
-          <<<\(\s*OSSL_DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
+          <<<\(\s*OSSL_(?:[A-Z0-9]+_)?DEPRECATEDIN_(.*?)\s*,(.*?)\)>>>
       /x,
       massager => sub { return (<<"EOF");
 DECLARE_PEM$1($3)
