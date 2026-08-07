@@ -1309,6 +1309,7 @@ struct radix_fault_st {
     OSSL_QTX_IOVEC io;
     size_t buf_alloc;
     radix_fault_plain_cb cb;
+    QUIC_CHANNEL *ch;
     uint64_t word0, word1;
 };
 
@@ -1444,6 +1445,7 @@ DEF_FUNC(hf_set_inject_plain)
     OPENSSL_free((unsigned char *)radix_fault.io.buf);
     memset(&radix_fault, 0, sizeof(radix_fault));
     radix_fault.cb = radix_fault_ptr_to_plain_cb(cbptr);
+    radix_fault.ch = ch;
 
     if (!TEST_true(ossl_quic_channel_set_mutator(ch, radix_fault_mutate,
             radix_fault_finish, &radix_fault)))
@@ -1459,6 +1461,56 @@ DEF_FUNC(hf_set_inject_word)
     int ok = 0;
 
     F_POP2(radix_fault.word0, radix_fault.word1);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_push_stream_id_plus_one)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t stream_id_plus_one;
+
+    REQUIRE_SSL(ssl);
+    stream_id_plus_one = SSL_get_stream_id(ssl) + 1;
+    F_PUSH(stream_id_plus_one);
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_inhibit_tick)
+{
+    int ok = 0;
+    uint64_t inhibit;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(inhibit);
+    REQUIRE_SSL(ssl);
+
+    ch = ossl_quic_conn_get_channel(ssl);
+    ossl_quic_engine_set_inhibit_tick(ossl_quic_channel_get0_engine(ch),
+        (int)inhibit);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_write_buf_size)
+{
+    int ok = 0;
+    size_t size;
+    SSL *ssl;
+
+    F_POP(size);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(ossl_quic_set_write_buffer_size(ssl, size)))
+        goto err;
 
     ok = 1;
 err:
@@ -1770,3 +1822,17 @@ err:
     (OP_PUSH_U64(word0),                 \
         OP_PUSH_U64(word1),              \
         OP_FUNC(hf_set_inject_word))
+
+#define OP_PUSH_STREAM_ID_PLUS_ONE(name) \
+    (OP_SELECT_SSL(0, name),             \
+        OP_FUNC(hf_push_stream_id_plus_one))
+
+#define OP_INHIBIT_TICK(name, inhibit) \
+    (OP_SELECT_SSL(0, name),           \
+        OP_PUSH_U64(inhibit),          \
+        OP_FUNC(hf_inhibit_tick))
+
+#define OP_SET_WRITE_BUF_SIZE(name, size) \
+    (OP_SELECT_SSL(0, name),              \
+        OP_PUSH_SIZE(size),               \
+        OP_FUNC(hf_set_write_buf_size))
