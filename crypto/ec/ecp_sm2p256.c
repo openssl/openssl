@@ -168,8 +168,19 @@ static ossl_inline int is_greater(const BN_ULONG *a, const BN_ULONG *b)
 
 /* Modular inverse |out| = |in|^(-1) mod |p|. */
 static ossl_inline void ecp_sm2p256_mod_inverse(BN_ULONG *out,
-    const BN_ULONG *in)
+    const BN_ULONG *in, int secret)
 {
+    /*
+     * TODO(FIXNUM): 'secret' marks an inverse over private data - a secret
+     * point's Z, reached from the point_get_affine_coords_bytes() extraction
+     * path.  BN_MOD_INV below is a binary-GCD inverse whose iteration count and
+     * branches depend on the operand, so for secret != 0 it is NOT
+     * constant-time and must be replaced by a timing-attack-resistant inverse
+     * The existing callers invert the input point of a scalar multiplication,
+     * which is public, and pass secret == 0, for which the variable-time
+     * inverse is acceptable.
+     */
+    (void)secret;
     BN_MOD_INV(out, in, ecp_sm2p256_div_by_2, ecp_sm2p256_sub, def_p);
 }
 
@@ -414,7 +425,7 @@ static void ecp_sm2p256_point_P_mul_by_scalar(P256_POINT *R, const BN_ULONG *k,
 
 /* Get affine point */
 static void ecp_sm2p256_point_get_affine(P256_POINT_AFFINE *R,
-    const P256_POINT *P)
+    const P256_POINT *P, int secret)
 {
     ALIGN32 BN_ULONG z_inv3[P256_LIMBS] = { 0 };
     ALIGN32 BN_ULONG z_inv2[P256_LIMBS] = { 0 };
@@ -425,7 +436,7 @@ static void ecp_sm2p256_point_get_affine(P256_POINT_AFFINE *R,
         return;
     }
 
-    ecp_sm2p256_mod_inverse(z_inv3, P->Z);
+    ecp_sm2p256_mod_inverse(z_inv3, P->Z, secret);
     ecp_sm2p256_sqr(z_inv2, z_inv3);
     ecp_sm2p256_mul(R->X, P->X, z_inv2);
     ecp_sm2p256_mul(z_inv3, z_inv3, z_inv2);
@@ -494,7 +505,7 @@ static int ecp_sm2p256_windowed_mul(const EC_GROUP *group,
             goto err;
         }
 
-        ecp_sm2p256_point_get_affine(&t.a, &p.p);
+        ecp_sm2p256_point_get_affine(&t.a, &p.p, 0);
         ecp_sm2p256_point_P_mul_by_scalar(&kP, k, t.a);
         ecp_sm2p256_point_add(r, r, &kP);
     }
@@ -543,7 +554,7 @@ static int ecp_sm2p256_mul_one(const EC_GROUP *group, P256_POINT *out,
         ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
         return 0;
     }
-    ecp_sm2p256_point_get_affine(&t.a, &p.p);
+    ecp_sm2p256_point_get_affine(&t.a, &p.p, 0);
     ecp_sm2p256_point_P_mul_by_scalar(out, k, t.a);
     return 1;
 }
@@ -575,6 +586,92 @@ static int ecp_sm2p256_set_result(EC_POINT *r, const P256_POINT *p)
     if (!ok)
         return 0;
     return 1;
+}
+
+/*
+ * Read a coordinate BIGNUM into P256 limbs at fixed width, in constant time.
+ * Unlike ecp_sm2p256_bignum_field_elem() (bn_copy_words(), which copies only
+ * 'top' limbs and so leaks the coordinate's magnitude) this reads the full
+ * width through the BIGNUM's OSSL_FN view - needed because the point being
+ * read here is secret.  Returns 0 if the BIGNUM has no OSSL_FN view or holds a
+ * value wider than P256 (checked by folding the excess limbs in constant time).
+ */
+static int ecp_sm2p256_secret_coord(BN_ULONG out[P256_LIMBS], const BIGNUM *in)
+{
+    const OSSL_FN *fn = bn_get_ossl_fn(in);
+    const OSSL_FN_ULONG *w;
+    size_t dsize, i;
+    OSSL_FN_ULONG hi = 0;
+
+    if (fn == NULL)
+        return 0;
+    w = ossl_fn_get_words(fn);
+    dsize = ossl_fn_get_dsize(fn);
+    for (i = 0; i < P256_LIMBS; i++)
+        out[i] = i < dsize ? w[i] : 0;
+    for (; i < dsize; i++)
+        hi |= w[i];
+    return hi == 0;
+}
+
+/*
+ * Serialise a P256 field element (little-endian limbs, reduced mod p) into
+ * 'len' big-endian bytes, in constant time.  'len' is the field width, i.e.
+ * P256_LIMBS limbs, so every byte of 'in' is consumed.
+ */
+static ossl_inline void ecp_sm2p256_felem_to_be(unsigned char *out, size_t len,
+    const BN_ULONG *in)
+{
+    size_t i;
+
+    for (i = 0; i < len; i++)
+        out[len - 1 - i] = (unsigned char)(in[i / sizeof(BN_ULONG)]
+            >> (8 * (i % sizeof(BN_ULONG))));
+}
+
+/*
+ * Affine coordinates of 'point' as fixed-width big-endian byte strings; the
+ * method's point_get_affine_coords_bytes slot.  'point' may be secret (an SM2
+ * kP, an ECDH shared point), so its coordinates are read at fixed width and
+ * converted through ecp_sm2p256_point_get_affine(), which works entirely on
+ * fixed-width limbs, never through a variable-width BIGNUM.  See
+ * EC_POINT_get_affine_coords_bytes().
+ *
+ * The affine conversion's field inverse is not yet constant-time; see the
+ * TODO(FIXNUM) in ecp_sm2p256_mod_inverse().
+ */
+static int ecp_sm2p256_point_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len)
+{
+    int ret = 0;
+    ALIGN32 P256_POINT jp;
+    ALIGN32 P256_POINT_AFFINE aff;
+
+    if (len != P256_LIMBS * sizeof(BN_ULONG)) {
+        ECerr(ERR_LIB_EC, EC_R_INVALID_ARGUMENT);
+        return 0;
+    }
+    if (EC_POINT_is_at_infinity(group, point))
+        return 0;
+
+    if (!ecp_sm2p256_secret_coord(jp.X, point->X)
+        || !ecp_sm2p256_secret_coord(jp.Y, point->Y)
+        || !ecp_sm2p256_secret_coord(jp.Z, point->Z)) {
+        ECerr(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+
+    ecp_sm2p256_point_get_affine(&aff, &jp, 1);
+    if (x != NULL)
+        ecp_sm2p256_felem_to_be(x, len, aff.X);
+    if (y != NULL)
+        ecp_sm2p256_felem_to_be(y, len, aff.Y);
+    ret = 1;
+
+err:
+    OPENSSL_cleanse(&jp, sizeof(jp));
+    OPENSSL_cleanse(&aff, sizeof(aff));
+    return ret;
 }
 
 /* r = scalar*G + sum(scalars[i]*points[i]) */
@@ -797,7 +894,7 @@ const EC_METHOD *EC_GFp_sm2p256_method(void)
         0, /* group_full_init */
         ecp_sm2p256_points_mul_fn, /* mul_fn */
         ecp_sm2p256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
-        ossl_ec_GFp_simple_point_get_affine_coords_bytes
+        ecp_sm2p256_point_get_affine_coords_bytes /* point_get_affine_coords_bytes */
     };
 
     return &ret;
