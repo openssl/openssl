@@ -13,7 +13,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/rand.h>
-#include "crypto/asn1.h"
 #include "cms_local.h"
 
 /* CMS EncryptedData Utilities */
@@ -145,7 +144,7 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         calg->algorithm = OBJ_nid2obj(EVP_CIPHER_CTX_get_type(ctx));
         (void)ERR_pop_to_mark();
 
-        if (calg->algorithm == NULL || calg->algorithm->nid == NID_undef)
+        if (calg->algorithm == NULL || OBJ_obj2nid(calg->algorithm) == NID_undef)
             calg->algorithm = OBJ_txt2obj(EVP_CIPHER_get0_name(cipher), 0);
 
         if (calg->algorithm == NULL || OBJ_length(calg->algorithm) == 0) {
@@ -171,7 +170,9 @@ BIO *ossl_cms_EncryptedContent_init_bio(CMS_EncryptedContentInfo *ec,
         }
         piv = iv;
         if (ec->taglen < 4 || ec->taglen > 16
-            || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)ec->taglen, ec->tag) <= 0) {
+            || EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG, (int)ec->taglen,
+                   (void *)ec->tag)
+                <= 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_CIPHER_AEAD_SET_TAG_ERROR);
             goto err;
         }
