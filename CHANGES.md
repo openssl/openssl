@@ -317,6 +317,15 @@ OpenSSL Releases
 
    *Timo Keller*
 
+ * The CMS API in libcrypto is deprecated.  The same API, without
+   deprecation, is now provided by the new libcms library, reached through
+   the `<libcms/cms.h>` header.  Note that switching to it requires both
+   using this header and linking with libcms, since libcms exports the API
+   under its own symbol names.  libcrypto keeps exporting the deprecated
+   symbols for ABI compatibility until removed in a future major release.
+
+   *Bob Beck*
+
  * Added `EVP_KDF_CTX_get0_kdf()` and `EVP_KDF_CTX_get1_kdf()` functions
    as a replacement for the now deprecated `EVP_KDF_CTX_kdf()`.
 

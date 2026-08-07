@@ -25,7 +25,7 @@ PEM_read_CMS                            24	1_0_0	EXIST::FUNCTION:CMS,STDIO
 PEM_write_CMS                           25	1_0_0	EXIST::FUNCTION:CMS,STDIO
 PEM_read_bio_CMS                        26	1_0_0	EXIST::FUNCTION:CMS
 PEM_write_bio_CMS                       27	1_0_0	EXIST::FUNCTION:CMS
-CMS_stream                              28	1_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_4_1
+CMS_stream                              28	1_0_0	EXIST::FUNCTION:CMS
 d2i_CMS_bio                             29	1_0_0	EXIST::FUNCTION:CMS
 i2d_CMS_bio                             30	1_0_0	EXIST::FUNCTION:CMS
 BIO_new_CMS                             31	1_0_0	EXIST::FUNCTION:CMS

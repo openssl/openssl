@@ -7,7 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef LIBCMS_CMS_H
+#if !defined(LIBCMS_CMS_H)
 #define LIBCMS_CMS_H
 
 /*
@@ -19,12 +19,17 @@
 
 #if defined(OPENSSL_CMS_H) && !defined(OSSL_LIBCMS_NAMES)
 #error "<openssl/cms.h> was included before <libcms/cms.h>"
-#endif
+#endif /* defined(OPENSSL_CMS_H) && !defined(OSSL_LIBCMS_NAMES) */
 
-#ifndef OSSL_LIBCMS_NAMES
+/*
+ * OSSL_LIBCMS_NAMES also tells <openssl/cms.h> that the declarations are
+ * being reached through libcms, where the API is not deprecated.
+ */
+#if !defined(OSSL_LIBCMS_NAMES)
 #define OSSL_LIBCMS_NAMES
-#endif
+#endif /* !defined(OSSL_LIBCMS_NAMES) */
+
 #include <libcms/names.h>
 #include <openssl/cms.h>
 
-#endif /* LIBCMS_CMS_H */
+#endif /* !defined(LIBCMS_CMS_H) */

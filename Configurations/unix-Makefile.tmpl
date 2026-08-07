@@ -1450,6 +1450,8 @@ renumber: build_generated
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(CMSHEADERS)
+	$(PERL) -p -i -e 's/,DEPRECATEDIN_4_1//;s/DEPRECATEDIN_4_1,//' \
+                $(SRCDIR)/util/libcms.num
 	@ : {- output_on() if $disabled{cms}; "" -}
 
 .PHONY: ordinals
@@ -1467,6 +1469,8 @@ ordinals: build_generated
                 --ordinals $(SRCDIR)/util/libcms.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(CMSHEADERS)
+	$(PERL) -p -i -e 's/,DEPRECATEDIN_4_1//;s/DEPRECATEDIN_4_1,//' \
+                $(SRCDIR)/util/libcms.num
 	@ : {- output_on() if $disabled{cms}; "" -}
 
 test_ordinals:
