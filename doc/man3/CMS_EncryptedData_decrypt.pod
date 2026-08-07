@@ -7,7 +7,7 @@ CMS_EncryptedData_decrypt, CMS_EnvelopedData_decrypt
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_EncryptedData_decrypt(CMS_ContentInfo *cms,
                                const unsigned char *key, size_t keylen,
@@ -55,6 +55,10 @@ L<ERR_get_error(3)>, L<CMS_EncryptedData_encrypt(3)>, L<CMS_decrypt(3)>
 =head1 HISTORY
 
 CMS_EnvelopedData_decrypt() was added in OpenSSL 3.2.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

@@ -16,7 +16,7 @@ CMS_RecipientInfo_encrypt
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms);
  int CMS_RecipientInfo_type(CMS_RecipientInfo *ri);
@@ -191,6 +191,10 @@ were added in OpenSSL 3.0.
 B<CMS_RecipientInfo_kemri_cert_cmp>, B<CMS_RecipientInfo_kemri_set0_pkey>,
 B<CMS_RecipientInfo_kemri_get0_ctx>, B<CMS_RecipientInfo_kemri_get0_kdf_alg>
 and B<CMS_RecipientInfo_kemri_set_ukm> were added in OpenSSL 3.6.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

@@ -7,7 +7,7 @@ CMS_EncryptedData_encrypt_ex, CMS_EncryptedData_encrypt
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *CMS_EncryptedData_encrypt_ex(BIO *in,
                                                const EVP_CIPHER *cipher,
@@ -56,6 +56,10 @@ L<ERR_get_error(3)>, L<CMS_final(3)>, L<CMS_EncryptedData_decrypt(3)>
 =head1 HISTORY
 
 The CMS_EncryptedData_encrypt_ex() method was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
