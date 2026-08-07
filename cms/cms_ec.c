@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
 #include <libcms/names.h>
 #include <assert.h>
 #include <limits.h>
