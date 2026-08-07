@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -49,6 +49,50 @@ int evp_pkey_ctx_set_ec_param_enc_prov(EVP_PKEY_CTX *ctx, int param_enc);
  */
 __owur int ossl_ec_group_do_inverse_ord(const EC_GROUP *group, BIGNUM *res,
     const BIGNUM *x, BN_CTX *ctx);
+
+/*-
+ * Computes  r := scalar * point,  or  r := scalar * generator  when @p point
+ * is NULL, with a secret scalar.
+ *
+ * This is the OSSL_FN counterpart of EC_POINT_mul().  The scalar is an
+ * OSSL_FN and is never materialised as a BIGNUM anywhere along the way,
+ * which is the whole point of the function: callers holding a private key
+ * or an ephemeral nonce can multiply by it without the value ever taking
+ * BIGNUM form.  The point coordinates stay BIGNUMs, which costs nothing -
+ * the scalar and the coordinates never meet in a single arithmetic
+ * operation, the scalar only selects conditional swaps.
+ *
+ * Unlike EC_POINT_mul() this takes one scalar rather than a generator
+ * scalar and a list of point scalars.  A secret scalar always goes through
+ * a constant-time single-point multiplication, so the multi-scalar sum has
+ * no secret-scalar counterpart; verification, where that sum is used, has
+ * no secret to protect and stays on EC_POINT_mul().
+ *
+ * The scalar should be in the range [0, n) - where n is the cardinality of
+ * the EC group - otherwise all constant time bets are off.
+ *
+ * @p ctx is a caller-owned OSSL_FN_CTX (not a BN_CTX): all the scratch this
+ * path needs is OSSL_FN scratch.  It may be NULL, in which case a suitably
+ * sized context is allocated internally; callers doing several multiplications
+ * on one group can amortise by sizing one with EC_POINT_mul_fn_ctx_size() and
+ * passing it in.
+ *
+ * This function returns 1 on success, 0 on error.
+ */
+__owur int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point,
+    OSSL_FN_CTX *ctx);
+
+/*
+ * Size of the OSSL_FN_CTX that EC_POINT_mul_fn() needs for @p group, for
+ * callers that pre-allocate one to reuse.  Follows the OSSL_FN _ctx_size
+ * convention: 0 on error, OSSL_FN_CTX_SIZE_NONE if no context is needed.
+ * A group that EC_POINT_mul_fn() cannot serve - one whose method has no mul_fn
+ * and does not keep coordinates in Montgomery form - has no OSSL_FN path and
+ * likewise yields 0.
+ */
+__owur size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point);
 
 /*-
  * ECDH Key Derivation Function as defined in ANSI X9.63

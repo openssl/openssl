@@ -1,5 +1,5 @@
 /*
- * Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (c) 2002, Oracle and/or its affiliates. All rights reserved
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -200,6 +200,28 @@ struct ec_method_st {
         EC_POINT *r, EC_POINT *s,
         EC_POINT *p, BN_CTX *ctx);
     int (*group_full_init)(EC_GROUP *group, const unsigned char *data);
+    /*-
+     * The OSSL_FN counterpart of 'mul', used by EC_POINT_mul_fn() when the
+     * scalar is secret and must never be materialised as a BIGNUM.
+     *
+     * Unlike 'mul' this takes a single scalar: a secret scalar always goes
+     * through a constant-time single-point multiplication, so the
+     * multi-scalar sum that 'mul' supports has no secret-scalar counterpart.
+     * Computes scalar * point, or scalar * generator when point is NULL.
+     *
+     * Methods with no OSSL_FN implementation leave this NULL, and
+     * EC_POINT_mul_fn() falls back to ossl_ec_scalar_mul_ladder_fn().
+     */
+    int (*mul_fn)(const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,
+        const EC_POINT *point, OSSL_FN_CTX *ctx);
+    /*
+     * Arena size that 'mul_fn' needs, so EC_POINT_mul_fn() can size the
+     * OSSL_FN_CTX it allocates on the caller's behalf.  Follows the OSSL_FN
+     * _ctx_size convention: 0 on error, OSSL_FN_CTX_SIZE_NONE if 'mul_fn'
+     * needs no context.  Present iff 'mul_fn' is.
+     */
+    size_t (*mul_fn_ctx_size)(const EC_GROUP *group, EC_POINT *r,
+        const OSSL_FN *scalar, const EC_POINT *point);
 };
 
 /*
@@ -216,6 +238,12 @@ struct ec_group_st {
     const EC_METHOD *meth;
     EC_POINT *generator; /* optional */
     BIGNUM *order, *cofactor;
+    /*
+     * Cardinality of the curve, i.e. order * cofactor.  A public, immutable
+     * group attribute, precomputed by EC_GROUP_set_generator() so the
+     * scalar-multiplication path need not recompute it.
+     */
+    BIGNUM *cardinality;
     int curve_name; /* optional NID for named curve */
     int asn1_flag; /* flag to control the asn1 encoding */
     int decoded_from_explicit_params; /* set if decoded from explicit
@@ -259,6 +287,14 @@ struct ec_group_st {
     /* method-specific */
     int (*field_mod_func)(BIGNUM *, const BIGNUM *, const BIGNUM *,
         BN_CTX *);
+    /*
+     * Montgomery context for the field modulus, in OSSL_FN form.  Built by
+     * EC_GROUP_set_curve() for prime-field (GF(p)) groups and shared by the
+     * constant-time OSSL_FN point arithmetic; NULL for GF(2^m) groups.  Unlike
+     * the method-specific field_data1 (a BN_MONT_CTX used by the BIGNUM field
+     * ops) this is generic and owned by the EC layer.
+     */
+    OSSL_FN_MONT_CTX *fn_mont_ctx;
     /* data for ECDSA inverse */
     BN_MONT_CTX *mont_data;
 
@@ -456,6 +492,53 @@ int ossl_ec_GFp_mont_field_encode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
 int ossl_ec_GFp_mont_field_decode(const EC_GROUP *, BIGNUM *r, const BIGNUM *a,
     BN_CTX *);
 int ossl_ec_GFp_mont_field_set_to_one(const EC_GROUP *, BIGNUM *r, BN_CTX *);
+
+/*-
+ * OSSL_FN counterpart of ossl_ec_GFp_simple_ladder_step(), used by
+ * ossl_ec_scalar_mul_ladder_fn() for groups with Montgomery field arithmetic.
+ *
+ * This is the x-only (differential) ladder step: a fixed, branchless sequence
+ * of field operations on r's and s's X/Z coordinates (with p affine), done
+ * through the coordinates' OSSL_FN view (no BIGNUM copy, no reallocation).  It
+ * has no value-dependent control flow, so it is genuinely constant-time.
+ *
+ * r, s and p must be distinct.  The helper widens r's and s's coordinates in
+ * place and copies the public base coordinate p->X together with group->a /
+ * group->b into field-width temporaries, so no operand needs to be pre-"cleaned"
+ * to the field width.  @p ctx is sized per the *_ctx_size companion.
+ */
+int ossl_ec_GFp_mont_ladder_step_fn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
+size_t ossl_ec_GFp_mont_ladder_step_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, EC_POINT *s, EC_POINT *p);
+
+/*-
+ * OSSL_FN counterpart of ossl_ec_GFp_simple_ladder_pre(): initialises the
+ * ladder state to (r := 2p, s := p) in x-only projective coordinates and
+ * applies coordinate blinding (random, via OSSL_FN_priv_rand_range()).  Works
+ * on the coordinates' OSSL_FN view; @p p must be affine (p->Z_is_one).  As in
+ * the step, p->X and group->a / group->b are copied into field-width
+ * temporaries, so no operand needs pre-"cleaning".  The only branch is on the
+ * public p->Z_is_one.
+ */
+int ossl_ec_GFp_mont_ladder_pre_fn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
+size_t ossl_ec_GFp_mont_ladder_pre_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, EC_POINT *s, EC_POINT *p);
+
+/*-
+ * OSSL_FN counterpart of ossl_ec_GFp_simple_ladder_post(): recovers the affine
+ * coordinates of r from the final x-only ladder state (r, s) and the affine
+ * base p.  The single field inversion uses Fermat's little theorem with the
+ * public exponent field-2 (via OSSL_FN_mod_exp_mont()), preserving the
+ * constant-time profile of the BIGNUM original.  The two early returns
+ * (r->Z == 0 -> infinity, s->Z == 0 -> -p) branch on the public result, again
+ * exactly as the original does.
+ */
+int ossl_ec_GFp_mont_ladder_post_fn(const EC_GROUP *group, EC_POINT *r,
+    EC_POINT *s, EC_POINT *p, OSSL_FN_CTX *ctx);
+size_t ossl_ec_GFp_mont_ladder_post_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, EC_POINT *s, EC_POINT *p);
 
 /* method functions in ecp_nist.c */
 int ossl_ec_GFp_nist_group_copy(EC_GROUP *dest, const EC_GROUP *src);
@@ -756,6 +839,24 @@ int ossl_ecdsa_simple_verify_sig(const unsigned char *dgst, int dgst_len,
 int ossl_ec_scalar_mul_ladder(const EC_GROUP *group, EC_POINT *r,
     const BIGNUM *scalar, const EC_POINT *point,
     BN_CTX *ctx);
+
+/*-
+ * The OSSL_FN counterpart of ossl_ec_scalar_mul_ladder(): the same Montgomery
+ * ladder with the same timing-attack defenses, driven by an OSSL_FN scalar
+ * that is never materialised as a BIGNUM.
+ *
+ * This is the fallback EC_POINT_mul_fn() uses for methods that do not
+ * implement 'mul_fn'.  Pre-conditions are as for the BIGNUM version, except
+ * that @p fnctx is a caller-owned OSSL_FN_CTX sized by the companion
+ * ossl_ec_scalar_mul_ladder_fn_ctx_size() and must not be NULL.
+ *
+ * Returns 1 on success, 0 otherwise.
+ */
+int ossl_ec_scalar_mul_ladder_fn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point,
+    OSSL_FN_CTX *fnctx);
+size_t ossl_ec_scalar_mul_ladder_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point);
 
 int ossl_ec_point_blind_coordinates(const EC_GROUP *group, EC_POINT *p,
     BN_CTX *ctx);
