@@ -2836,6 +2836,18 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
         ossl_dtls_tick(dl);
     }
 
+    /*
+     * Handle events for the connection itself, which for DTLS means servicing
+     * the retransmission timer. The caller may have blocked until that timer
+     * expired, so if nothing retransmits here then nothing will, and the
+     * deadline would be recomputed as "now" on every subsequent wait.
+     *
+     * A failure here leaves the connection in a fatal error state, which the
+     * SSL_POLL_EVENT_EC check below reports.
+     */
+    if (do_tick)
+        SSL_handle_events(s);
+
     if ((events & SSL_POLL_EVENT_R) != 0) {
         if (SSL_has_pending(s) || SSL_pending(s) > 0) {
             result |= SSL_POLL_EVENT_R;
