@@ -11,8 +11,8 @@ use FindBin;
 use lib "$FindBin::Bin/../../util/perl";
 use OpenSSL::copyright;
 
-our($opt_n);
-getopts('n');
+our($opt_n, $opt_a);
+getopts('na:');
 
 # The year the output file is generated.
 my $YEAR = OpenSSL::copyright::latest(($0, $ARGV[1], $ARGV[0]));
@@ -182,6 +182,19 @@ print <<EOF;
 
 #endif /* OPENSSL_OBJ_MAC_H */
 EOF
+
+# Append the compatibility aliases, skipping their license header the
+# same way the old build recipe did with sed -e '1,8d'.
+if ( $opt_a )
+	{
+	open (CMP,"$opt_a") || die "Can't open compat file $opt_a";
+	my $line = 0;
+	while (<CMP>)
+		{
+		print if ++$line > 8;
+		}
+	close CMP;
+	}
 
 sub process_oid
 	{

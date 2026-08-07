@@ -1138,6 +1138,7 @@ IF[{- !$disabled{tests} -}]
     SOURCE[bn_internal_test]=bn_internal_test.c
     INCLUDE[bn_internal_test]=.. ../include ../crypto/bn ../apps/include
     DEPEND[bn_internal_test]=../libcrypto.a libtestutil.a
+    DEPEND[bn_internal_test.o]=../crypto/bn/bn_prime.h
 
     SOURCE[asn1_dsa_internal_test]=asn1_dsa_internal_test.c
     INCLUDE[asn1_dsa_internal_test]=.. ../include ../apps/include

@@ -1183,10 +1183,8 @@ update: generate errors ordinals generate_buildinfo ## Update errors, ordinals a
 # of a target that is already current.
 UPTODATE=$(PERL) -e 'my $$o = shift; exit 1 unless -e $$o; -M $$o < -M $$_ or exit 1 for @ARGV'
 
-.PHONY: generate generate_apps generate_crypto_bn generate_crypto_objects \
-          generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
-generate: generate_apps generate_crypto_bn generate_crypto_objects \
-          generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
+.PHONY: generate generate_apps generate_crypto_objects generate_fuzz_oids
+generate: generate_apps generate_crypto_objects generate_fuzz_oids
 
 .PHONY: generate_buildinfo generate_doc_buildinfo
 generate_buildinfo: generate_doc_buildinfo
@@ -1234,59 +1232,25 @@ generate_apps:
 	  $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
 
-generate_crypto_bn:
-	( cd $(SRCDIR); \
-	  $(UPTODATE) crypto/bn/bn_prime.h crypto/bn/bn_prime.pl || \
-	  $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
-
 generate_crypto_objects:
 	( cd $(SRCDIR); set -e; \
 	  $(PERL) crypto/objects/objects.pl -n \
 			crypto/objects/objects.txt \
 			crypto/objects/obj_mac.num \
 			> crypto/objects/obj_mac.num.new; \
-	  $(PERL) crypto/objects/objects.pl \
-			crypto/objects/objects.txt \
-			crypto/objects/obj_mac.num.new \
-			> include/openssl/obj_mac.h.new; \
-	  $(PERL) crypto/objects/obj_dat.pl \
-			include/openssl/obj_mac.h.new \
-			> crypto/objects/obj_dat.h.new; \
-	  $(PERL) crypto/objects/objxref.pl \
-			crypto/objects/obj_mac.num.new \
-			crypto/objects/obj_xref.txt \
-			> crypto/objects/obj_xref.h.new; \
-	  sed -e '1,8d' crypto/objects/obj_compat.h \
-			>> include/openssl/obj_mac.h.new; \
-	  for f in crypto/objects/obj_mac.num \
-		   include/openssl/obj_mac.h \
-		   crypto/objects/obj_dat.h \
-		   crypto/objects/obj_xref.h; do \
-		if cmp $$f.new $$f > /dev/null 2>&1; then \
-			rm $$f.new; \
-		else \
-			mv $$f.new $$f; \
-		fi; \
-	  done )
+	  if cmp crypto/objects/obj_mac.num.new \
+		 crypto/objects/obj_mac.num > /dev/null 2>&1; then \
+		rm crypto/objects/obj_mac.num.new; \
+	  else \
+		mv crypto/objects/obj_mac.num.new crypto/objects/obj_mac.num; \
+	  fi )
 
-generate_crypto_conf:
-	( cd $(SRCDIR); \
-	  $(UPTODATE) crypto/conf/conf_def.h crypto/conf/keysets.pl || \
-	  $(PERL) crypto/conf/keysets.pl \
-			        > crypto/conf/conf_def.h )
-
-generate_crypto_asn1:
-	( cd $(SRCDIR); \
-	  $(UPTODATE) crypto/asn1/charmap.h crypto/asn1/charmap.pl || \
-	  $(PERL) crypto/asn1/charmap.pl \
-			        > crypto/asn1/charmap.h )
-
-generate_fuzz_oids:
-	( cd $(SRCDIR); \
+generate_fuzz_oids: crypto/objects/obj_dat.h
+	( b=`pwd`; cd $(SRCDIR); \
 	  $(UPTODATE) fuzz/oids.txt \
-		      crypto/objects/obj_dat.h fuzz/mkfuzzoids.pl || \
+		      $$b/crypto/objects/obj_dat.h fuzz/mkfuzzoids.pl || \
 	  $(PERL) fuzz/mkfuzzoids.pl \
-				crypto/objects/obj_dat.h \
+				$$b/crypto/objects/obj_dat.h \
 				> fuzz/oids.txt )
 
 generate_doc_buildinfo:
