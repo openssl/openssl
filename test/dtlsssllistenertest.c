@@ -27,6 +27,7 @@
 #include <openssl/conf.h>
 #include "internal/time.h"
 #include "internal/sockets.h"
+#include "internal/dgram_demux.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
@@ -4841,6 +4842,185 @@ static int test_new_pending_cb_alternate(void)
     return run_new_pending_cb_scenario(100, 1, 2, 1, 2, 0);
 }
 
+/*
+ * The test below needs a listener with a notifier, which only exists
+ * when the listener is created without SSL_LISTENER_FLAG_SINGLE_THREAD. In a
+ * no-threads build that listener cannot be created at all, because the
+ * condition variable it needs is unavailable.
+ */
+#if defined(OPENSSL_THREADS)
+/*
+ * Test that queueing a connection for accept signals the listener's notifier.
+ *
+ * A thread waiting in SSL_poll() for SSL_POLL_EVENT_IC is blocked on the
+ * listener's network socket and on its notifier. Where another thread does the
+ * demuxing, that socket does not necessarily become readable on the waiter's
+ * behalf, so the notifier is what has to wake it.
+ *
+ * Most of the time the bug this covers is masked. Every connection reaching
+ * the accept queue got there because a datagram was demuxed into its receive
+ * queue, and the packet handler has always signalled on that injection, so the
+ * waiter is woken, ticks the listener itself during its readout, and finds the
+ * connection. What is not covered by that is the window in which the injection
+ * and the queue push straddle a waiter registering, because signalling is
+ * conditional on there being a waiter at the time.
+ *
+ * The numbered steps below are that window - the interleaving of two threads
+ * which the fix exists to handle. They are not what this test does, and are
+ * given only so that what it does assert makes sense; see the end of this
+ * comment for how it is actually checked.
+ *
+ *   1. Accept thread A polls the listener for SSL_POLL_EVENT_IC. Its readout
+ *      ticks the listener, finds nothing, and it decides to block. It is not
+ *      a registered waiter yet.
+ *   2. Worker thread B polls one of its own connections, which also ticks the
+ *      listener. The pump reads a client's final ClientHello and injects it
+ *      into that pending connection's queue. There are no waiters, so nothing
+ *      is signalled.
+ *   3. A enters the blocking section. Its re-check runs without ticking, so it
+ *      sees only the accept queue, which is still empty, and it blocks.
+ *   4. B's tick reaches dtls_listener_drive_pending(), which completes the
+ *      connection against the buffered ClientHello and pushes it onto the
+ *      accept queue.
+ *
+ * Without a signal at step 4, A sleeps on with a validated connection sitting
+ * ready, until some unrelated datagram makes the socket readable again. B
+ * consumed the only one in flight, and the client is now waiting on the
+ * server, so on a quiet listener that is until the client retransmits.
+ *
+ * That interleaving cannot be forced from outside the library, so rather than
+ * reproducing the steps above, this drives their essential part by hand and on
+ * one thread: pumping the demux directly performs step 2, the signal it raises
+ * is then cleared, and the tick which follows can only signal by way of step 4.
+ * Asserting that it did is therefore asserting that a queue push signals.
+ *
+ * signalled_notifier is protected by the listener mutex in the library, which
+ * has to assume concurrent access. This test is single threaded throughout, so
+ * it reads the field directly without holding the mutex.
+ */
+static int test_dtls_notifier_signalled_on_accept_queue_push(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL;
+    BIO_ADDR *server_addr = NULL;
+    DTLS_LISTENER *dl;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout;
+    size_t poll_result = 0;
+    int server_fd = -1, client_fd = -1;
+    int in_blocking_section = 0;
+    int abortctr, retc, err_code;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    /*
+     * Multi-threaded mode (no SSL_LISTENER_FLAG_SINGLE_THREAD) so that the
+     * listener has a notifier at all.
+     */
+    if (!TEST_true(create_dtls_listener(sctx,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    dl = (DTLS_LISTENER *)listener;
+    if (!TEST_true(dl->have_notifier))
+        goto end;
+
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr, &clientssl,
+            &client_fd)))
+        goto end;
+
+    /* Pose as a thread waiting for readiness, so signalling is enabled. */
+    ossl_dtls_listener_enter_blocking_section(listener);
+    in_blocking_section = 1;
+
+    /*
+     * Drive the cookie exchange, splitting each round into its two halves so
+     * that the two signalling opportunities can be told apart:
+     *
+     *   - demuxing a datagram to a connection's receive queue, which the
+     *     packet handler has always signalled, and
+     *   - completing a connection and pushing it onto the accept queue.
+     *
+     * Pumping the demux directly performs only the first. The signal it
+     * raises is then cleared, so when the listener is next ticked the pump
+     * finds nothing new and only the accept queue push can signal.
+     *
+     * There is no public API for that split: SSL_poll() and
+     * SSL_accept_connection() both tick the listener, which does the two
+     * together.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = listener;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 0;
+
+    SSL_set_connect_state(clientssl);
+    for (abortctr = 0; abortctr < 100; abortctr++) {
+        retc = SSL_connect(clientssl);
+        err_code = SSL_get_error(clientssl, retc);
+        if (retc <= 0
+            && err_code != SSL_ERROR_WANT_READ
+            && err_code != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err_code);
+            goto end;
+        }
+
+        ossl_dgram_demux_pump(dl->demux);
+
+        ossl_dtls_listener_leave_blocking_section(listener);
+        in_blocking_section = 0;
+        if (!TEST_int_eq(dl->signalled_notifier, 0))
+            goto end;
+        ossl_dtls_listener_enter_blocking_section(listener);
+        in_blocking_section = 1;
+
+        /*
+         * A zero timeout, so this ticks the listener and reads out the result
+         * without ever blocking, and therefore without itself entering a
+         * blocking section and clearing the signal we are watching for.
+         */
+        poll_item.events = SSL_POLL_EVENT_IC;
+        poll_item.revents = 0;
+
+        if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout,
+                0, &poll_result)))
+            goto end;
+
+        if ((poll_item.revents & SSL_POLL_EVENT_IC) != 0)
+            break;
+    }
+
+    if (!TEST_size_t_gt(SSL_get_accept_connection_queue_len(listener), 0))
+        goto end;
+
+    /* The accept queue push must have woken any waiter. */
+    if (!TEST_int_eq(dl->signalled_notifier, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    if (in_blocking_section)
+        ossl_dtls_listener_leave_blocking_section(listener);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+#endif /* OPENSSL_THREADS */
+
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -4946,5 +5126,11 @@ int setup_tests(void)
     ADD_TEST(test_new_pending_cb_blocked_by_cap);
     ADD_TEST(test_new_pending_cb_all_denied_under_cap);
     ADD_TEST(test_new_pending_cb_alternate);
+    /* Blocking SSL_poll() wakeup tests */
+#if defined(OPENSSL_THREADS)
+    ADD_TEST(test_dtls_notifier_signalled_on_accept_queue_push);
+#endif
+
+
     return 1;
 }
