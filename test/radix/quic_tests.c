@@ -2311,24 +2311,192 @@ DEF_SCRIPT(script_34, "Fault injection - STREAM frame which exceeds FC")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FLOW_CONTROL_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_35, "place holder for multistrem script_35")
+/* 35. Fault injection - MAX_STREAM_DATA for receive-only stream */
+DEF_SCRIPT(script_35, "Fault injection - MAX_STREAM_DATA for receive-only stream")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(S, Sa, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(S_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA);
+
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_36, "place holder for multistrem script_36")
+/* 36. Fault injection - MAX_STREAM_DATA for nonexistent stream */
+DEF_SCRIPT(script_36, "Fault injection - MAX_STREAM_DATA for nonexistent stream")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(S, Sa, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sa, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(C, Ca, 0);
+    OP_READ_EXPECT(Ca, "apple", 5);
+
+    OP_SET_INJECT_WORD(C_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_MAX_STREAM_DATA);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_37, "place holder for multistrem script_37")
+/* 37. Fault injection - STREAM_DATA_BLOCKED for send-only stream */
+DEF_SCRIPT(script_37, "Fault injection - STREAM_DATA_BLOCKED for send-only stream")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(C, Ca, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_NEW_STREAM(S, Sb, SSL_STREAM_FLAG_UNI);
+    OP_SET_INJECT_WORD(C_UNI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED);
+    OP_WRITE(Sb, "orange", 5);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_38, "place holder for multistrem script_38")
+/* 38. Fault injection - STREAM_DATA_BLOCKED for non-existent stream */
+DEF_SCRIPT(script_38, "Fault injection - STREAM_DATA_BLOCKED for non-existent stream")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_stream_frame_plain);
+
+    OP_NEW_STREAM(C, Ca, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(C_BIDI_ID(0) + 1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED);
+
+    OP_NEW_STREAM(S, Sb, SSL_STREAM_FLAG_UNI);
+    OP_WRITE(Sb, "orange", 5);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_STREAM_STATE_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_39, "place holder for multistrem script_39")
+/* 39. Fault injection - NEW_CONN_ID with zero-len CID */
+static int inject_new_conn_id_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[64];
+    size_t i, written;
+    uint64_t seq_no = 0, retire_prior_to = 0;
+    QUIC_CONN_ID new_cid = { 0 };
+
+    if (hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    switch (fault->word1) {
+    case 0:
+        return 1;
+    case 1:
+        new_cid.id_len = 0;
+        break;
+    case 2:
+        new_cid.id_len = 21;
+        break;
+    case 3:
+        new_cid.id_len = 1;
+        new_cid.id[0] = 0x55;
+
+        seq_no = 0;
+        retire_prior_to = 1;
+        break;
+    case 4:
+        /* Use our actual CID so we don't break connectivity. */
+        ossl_quic_channel_get_diag_local_cid(fault->ch, &new_cid);
+
+        seq_no = 2;
+        retire_prior_to = 2;
+        break;
+    case 5:
+        /*
+         * Use a bogus CID which will need to be ignored if connectivity is to
+         * be continued.
+         */
+        new_cid.id_len = 8;
+        new_cid.id[0] = 0x55;
+
+        seq_no = 1;
+        retire_prior_to = 1;
+        break;
+    }
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_NEW_CONN_ID))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, seq_no)) /* seq no */
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, retire_prior_to)) /* retire prior to */
+        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id_len))) /* len */
+        goto err;
+
+    for (i = 0; i < new_cid.id_len && i < OSSL_NELEM(new_cid.id); ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, new_cid.id[i])))
+            goto err;
+
+    for (; i < new_cid.id_len; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x55)))
+            goto err;
+
+    for (i = 0; i < QUIC_STATELESS_RESET_TOKEN_LEN; ++i)
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            goto err;
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_39, "Fault injection - NEW_CONN_ID with zero-len CID")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_new_conn_id_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(0, 1);
+    OP_WRITE(Sa, "orange", 5);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
 DEF_SCRIPT(script_40, "place holder for multistrem script_40")
