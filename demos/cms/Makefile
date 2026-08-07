@@ -17,7 +17,7 @@ TESTS = cms_comp \
 
 CFLAGS  = -I../../include -g -Wall
 LDFLAGS = -L../..
-LDLIBS  = -lcrypto
+LDLIBS  = -lcms -lcrypto
 
 all: $(TESTS)
 
