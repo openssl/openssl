@@ -38,6 +38,21 @@ ASN1_BIT_STRING_set1(). The new functions in addition to what
 ASN1_BIT_STRING_set() does, validates the function arguments and sets
 unused bits after setting the BIT STRING value.
 
+=head3 The CMS API has moved to libcms
+
+The Cryptographic Message Syntax implementation has moved to a new library,
+libcms. The copies remaining in libcrypto are deprecated, and stay exported
+for ABI compatibility until a future major release.
+
+Applications should include F<< <libcms/cms.h> >> in place of
+F<< <openssl/cms.h> >>, and link with libcms; a F<libcms.pc> pkg-config file
+is installed. The API itself is unchanged, so no source changes are needed.
+
+Both steps are required: libcms exports the API under its own symbol names, so
+switching headers without also linking libcms will fail to link.
+
+See L<libcms(7)>.
+
 =head3 Deprecation of EVP_KDF_CTX_kdf()
 
 This function is deprecated in favour of EVP_KDF_CTX_get0_ctx(), to align
