@@ -8,7 +8,7 @@ CMS_add1_ReceiptRequest, CMS_get1_ReceiptRequest, CMS_ReceiptRequest_get0_values
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
      unsigned char *id, int idlen, int allorfirst,
@@ -79,6 +79,10 @@ L<CMS_verify_receipt(3)>
 =head1 HISTORY
 
 The function CMS_ReceiptRequest_create0_ex() was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

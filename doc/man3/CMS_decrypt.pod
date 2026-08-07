@@ -8,7 +8,7 @@ CMS_decrypt_set1_pkey, CMS_decrypt_set1_password
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_decrypt(CMS_ContentInfo *cms, EVP_PKEY *pkey, X509 *cert,
                  BIO *dcont, BIO *out, unsigned int flags);
@@ -109,6 +109,10 @@ L<ERR_get_error(3)>, L<CMS_encrypt(3)>, L<EVP_PKEY_decrypt(3)>
 
 CMS_decrypt_set1_pkey_and_peer() and CMS_decrypt_set1_password()
 were added in OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

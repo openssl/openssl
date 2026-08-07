@@ -6,7 +6,7 @@ CMS_sign, CMS_sign_ex - create a CMS SignedData structure
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *CMS_sign_ex(X509 *signcert, EVP_PKEY *pkey,
                               STACK_OF(X509) *certs, BIO *data,
@@ -131,6 +131,10 @@ The CMS_sign_ex() method was added in OpenSSL 3.0.
 
 Since OpenSSL 3.2, CMS_sign_ex() and CMS_sign() ignore any duplicate
 certificates in their I<certs> argument and no longer throw an error for them.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
