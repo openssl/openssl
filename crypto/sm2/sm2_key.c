@@ -12,6 +12,8 @@
 #include <openssl/err.h>
 #include "crypto/sm2err.h"
 #include "crypto/sm2.h"
+#include "crypto/bn.h" /* bn_get_ossl_fn(), bn_get_top() */
+#include "crypto/fn.h"
 #include <openssl/ec.h> /* EC_KEY and EC_GROUP functions */
 
 /*
@@ -22,7 +24,8 @@
 int ossl_sm2_key_private_check(const EC_KEY *eckey)
 {
     int ret = 0;
-    BIGNUM *max = NULL;
+    OSSL_FN *max = NULL;
+    const OSSL_FN *priv_fn = NULL, *order_fn = NULL;
     const EC_GROUP *group = NULL;
     const BIGNUM *priv_key = NULL, *order = NULL;
 
@@ -34,18 +37,38 @@ int ossl_sm2_key_private_check(const EC_KEY *eckey)
         return 0;
     }
 
+    /*
+     * The private key is compared as an OSSL_FN, read through its BIGNUM's
+     * view.  The bound is derived from the order and so is public, but it is
+     * built as an OSSL_FN too, since that is what it is compared against.
+     */
+    if ((priv_fn = bn_get_ossl_fn(priv_key)) == NULL
+        || (order_fn = bn_get_ossl_fn(order)) == NULL) {
+        ERR_raise(ERR_LIB_SM2, ERR_R_BN_LIB);
+        return 0;
+    }
+
     /* range of SM2 private key is [1, n-1) */
-    max = BN_dup(order);
-    if (max == NULL || !BN_sub_word(max, 1))
+    max = OSSL_FN_new_limbs(bn_get_top(order));
+    if (max == NULL
+        || OSSL_FN_copy_truncate(max, order_fn) == NULL
+        || !OSSL_FN_sub_word(max, 1))
         goto end;
-    if (BN_cmp(priv_key, BN_value_one()) < 0
-        || BN_cmp(priv_key, max) >= 0) {
+    /*
+     * OSSL_FN is unsigned, so a negative key has to be caught at the BIGNUM
+     * boundary: its OSSL_FN view is the magnitude, which would pass.  The
+     * "< 1" of the BIGNUM version is a zero test once the sign is out of the
+     * way.
+     */
+    if (BN_is_negative(priv_key)
+        || OSSL_FN_is_zero(priv_fn)
+        || OSSL_FN_cmp(priv_fn, max) >= 0) {
         ERR_raise(ERR_LIB_SM2, SM2_R_INVALID_PRIVATE_KEY);
         goto end;
     }
     ret = 1;
 
 end:
-    BN_free(max);
+    OSSL_FN_free(max);
     return ret;
 }
