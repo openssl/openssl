@@ -15,7 +15,6 @@
 #include <openssl/cms.h>
 #include <openssl/ess.h>
 #include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 /* CMS SignedData Utilities */
@@ -727,16 +726,17 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit_ex(si->mctx, &si->pctx,
-                       EVP_MD_get0_name(md),
-                       ossl_cms_ctx_get0_libctx(ctx),
-                       ossl_cms_ctx_get0_propq(ctx),
-                       pk, NULL)
-            <= 0) {
-            si->pctx = NULL;
-            goto err;
         } else {
-            EVP_MD_CTX_set_flags(si->mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+            si->pctx = EVP_PKEY_CTX_new_from_pkey(ossl_cms_ctx_get0_libctx(ctx),
+                pk, ossl_cms_ctx_get0_propq(ctx));
+            if (si->pctx == NULL)
+                goto err;
+            EVP_MD_CTX_set_pkey_ctx(si->mctx, si->pctx);
+            if (EVP_DigestSignInit_ex(si->mctx, NULL, EVP_MD_get0_name(md),
+                    ossl_cms_ctx_get0_libctx(ctx),
+                    ossl_cms_ctx_get0_propq(ctx), NULL, NULL)
+                <= 0)
+                goto err;
         }
     }
     if (sd->signerInfos == NULL)
@@ -1184,7 +1184,6 @@ int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain, BIO *data,
 int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 {
     EVP_MD_CTX *mctx = si->mctx;
-    EVP_PKEY_CTX *pctx = NULL;
     unsigned char *abuf = NULL;
     int alen;
     size_t siglen;
@@ -1206,18 +1205,19 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     if (!ossl_cms_si_check_attributes(si))
         goto err;
 
-    if (si->pctx) {
-        pctx = si->pctx;
-    } else {
+    if (si->pctx == NULL) {
         EVP_MD_CTX_reset(mctx);
-        if (EVP_DigestSignInit_ex(mctx, &pctx, md_name,
+        si->pctx = EVP_PKEY_CTX_new_from_pkey(ossl_cms_ctx_get0_libctx(ctx),
+            si->pkey, ossl_cms_ctx_get0_propq(ctx));
+        if (si->pctx == NULL)
+            goto err;
+        EVP_MD_CTX_set_pkey_ctx(mctx, si->pctx);
+        if (EVP_DigestSignInit_ex(mctx, NULL, md_name,
                 ossl_cms_ctx_get0_libctx(ctx),
-                ossl_cms_ctx_get0_propq(ctx), si->pkey,
+                ossl_cms_ctx_get0_propq(ctx), NULL,
                 NULL)
             <= 0)
             goto err;
-        EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-        si->pctx = pctx;
     }
 
     if (md_name == NULL) {
@@ -1310,13 +1310,14 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         EVP_PKEY_CTX_free(si->pctx);
         si->pctx = NULL;
     }
-    if (EVP_DigestVerifyInit_ex(mctx, &si->pctx, EVP_MD_get0_name(md), libctx,
-            propq, si->pkey, NULL)
-        <= 0) {
-        si->pctx = NULL;
+    si->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, si->pkey, propq);
+    if (si->pctx == NULL)
         goto err;
-    }
-    EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    EVP_MD_CTX_set_pkey_ctx(mctx, si->pctx);
+    if (EVP_DigestVerifyInit_ex(mctx, NULL, EVP_MD_get0_name(md), libctx,
+            propq, NULL, NULL)
+        <= 0)
+        goto err;
 
     if (!cms_sd_asn1_ctrl(si, 1))
         goto err;
