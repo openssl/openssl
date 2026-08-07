@@ -265,26 +265,11 @@ static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 {
     EVP_PKEY *pkey = si->pkey;
-    int i;
 
-    if (EVP_PKEY_is_a(pkey, "DSA") || EVP_PKEY_is_a(pkey, "EC"))
-        return cms_generic_sign(si, cmd) > 0;
-    else if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS"))
+    if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS"))
         return ossl_cms_rsa_sign(si, cmd) > 0;
 
-    /* Now give engines, providers, etc a chance to handle this */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return cms_generic_sign(si, cmd) > 0;
-    i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
-    if (i == -2) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
-    }
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
-        return 0;
-    }
-    return 1;
+    return cms_generic_sign(si, cmd) > 0;
 }
 
 /* Add SigningCertificate signed attribute to the signer info. */
