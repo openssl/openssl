@@ -28,6 +28,9 @@ use platform;
 my $name = undef;               # internal library/module name
 my $ordinals_file = undef;      # the ordinals file to use
 my $version = undef;            # the version to use for the library
+my $node_prefix = 'OPENSSL';    # prefix for version nodes in linker scripts
+my $symbol_prefix = '';         # prefix to prepend to every symbol on output
+my %renames = ();               # symbol renames to apply on output
 my $OS = undef;                 # the operating system family
 my $type = 'lib';               # either lib or dso
 my $verbose = 0;
@@ -40,6 +43,14 @@ my $case_insensitive = 0;
 GetOptions('name=s'     => \$name,
            'ordinals=s' => \$ordinals_file,
            'version=s'  => \$version,
+           'node-prefix=s' => \$node_prefix,
+           'symbol-prefix=s' => \$symbol_prefix,
+           'rename=s'   => sub {
+               my ($old, $new) = split /=/, $_[1], 2;
+               die "--rename argument must be OLD=NEW\n"
+                   unless defined $new && $old ne '';
+               $renames{$old} = $new;
+           },
            'OS=s'       => \$OS,
            'type=s'     => \$type,
            'ctest'      => \$ctest,
@@ -245,6 +256,15 @@ sub sorter_linux {
     };
 }
 
+sub renamed {
+    my $name = shift;
+
+    foreach my $old (sort keys %renames) {
+        $name =~ s|\Q$old\E|$renames{$old}|;
+    }
+    return $symbol_prefix . $name;
+}
+
 sub writer_linux {
     my $thisversion = '';
     my $currversion_s = '';
@@ -259,21 +279,21 @@ sub writer_linux {
             print <<"_____";
 }${prevversion_s};
 _____
-            $prevversion_s = " OPENSSL${SO_VARIANT}_$thisversion";
+            $prevversion_s = " ${node_prefix}${SO_VARIANT}_$thisversion";
             $thisversion = '';  # Trigger start of next section
         }
         unless ($thisversion) {
             $indent = 0;
             $thisversion = $_->version();
             $currversion_s = '';
-            $currversion_s = "OPENSSL${SO_VARIANT}_$thisversion "
+            $currversion_s = "${node_prefix}${SO_VARIANT}_$thisversion "
                 if $thisversion ne '*';
             print <<"_____";
 ${currversion_s}{
     global:
 _____
         }
-        print '        ', $_->name(), ";\n";
+        print '        ', renamed($_->name()), ";\n";
     }
 
     print <<"_____";
@@ -284,13 +304,13 @@ _____
 
 sub writer_aix {
     for (@_) {
-        print $_->name(),"\n";
+        print renamed($_->name()),"\n";
     }
 }
 
 sub writer_nonstop {
     for (@_) {
-        print "-export ",$_->name(),"\n";
+        print "-export ",renamed($_->name()),"\n";
     }
 }
 
@@ -305,9 +325,9 @@ LIBRARY         "$libname"
 EXPORTS
 _____
     for (@_) {
-        print "    ",$_->name();
+        print "    ",renamed($_->name());
         if (platform->can('export2internal')) {
-            print "=". platform->export2internal($_->name());
+            print "=". platform->export2internal(renamed($_->name()));
         }
         print "\n";
     }
@@ -351,7 +371,7 @@ sub writer_VMS {
             FUNCTION    => 'PROCEDURE',
             VARIABLE    => 'DATA'
            } -> {$_->type()};
-        push @slot_collection, $collector->($_->name(), $type);
+        push @slot_collection, $collector->(renamed($_->name()), $type);
     }
 
     print <<"_____" if defined $version;
