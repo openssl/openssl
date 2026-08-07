@@ -100,6 +100,7 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
+    OPENSSL_cleanse(sig, sizeof(sig));
     return ret;
 }
 #endif
@@ -565,7 +566,7 @@ static void ml_dsa_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
-    OPENSSL_cleanse(gctx->entropy, gctx->entropy_len);
+    OPENSSL_cleanse(gctx->entropy, sizeof(gctx->entropy));
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }

@@ -98,8 +98,9 @@ void ossl_slh_dsa_hash_ctx_free(SLH_DSA_HASH_CTX *ctx)
 {
     if (ctx == NULL)
         return;
-    OPENSSL_free(ctx->shactx);
-    OPENSSL_free(ctx->shactx_pkseed);
+    OPENSSL_clear_free(ctx->shactx, ctx->shactx_len);
+    OPENSSL_clear_free(ctx->shactx_pkseed, ctx->shactx_len);
+    OPENSSL_clear_free(ctx->scratch, ctx->scratch_len);
     EVP_MAC_CTX_free(ctx->hmac_ctx);
     OPENSSL_free(ctx);
 }
