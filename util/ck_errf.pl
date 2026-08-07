@@ -80,22 +80,22 @@ if ( $internal ) {
     @source = @ARGV;
 }
 
-# util/mkerr.pl keeps a statefile next to the config file and ensures
-# its timestamp records the last completed error-code pass over the
-# tree.  While the statefile is newer than the config file and every
-# source file, this check has already run against the current tree;
-# skip the scan.  (If the config file names its statefile with an S
-# line, this derivation misses it and the check simply never skips.)
+# util/mkerr.pl keeps a stamp file next to its statefile recording the
+# last completed error-code pass over the tree.  While the stamp is
+# newer than the config file, the statefile and every source file,
+# this check has already run against the current tree; skip the scan.
+# (If the config file names its statefile with an S line, this
+# derivation misses it and the check simply never skips.)
 if ( !$debug ) {
     my $statefile = $config;
 
     $statefile =~ s/\.ec$/.txt/;
-    my $stamp = (stat $statefile)[9];
+    my $stamp = (stat "$statefile.stamp")[9];
 
     if ( defined $stamp ) {
         my $uptodate = 1;
 
-        foreach my $file ( $config, @source ) {
+        foreach my $file ( $config, $statefile, @source ) {
             my $mtime = (stat $file)[9];
 
             if ( !defined $mtime || $mtime >= $stamp ) {
