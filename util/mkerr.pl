@@ -501,6 +501,16 @@ EOF
         my $hpubincf = $hpubinc{$lib};
         my $hprivincf = $hprivinc{$lib};
         my $includes = '';
+
+        # Sources kept in a top-level directory of their own are compiled
+        # both into libcrypto and into a library of their own, the latter
+        # with every external symbol renamed by that library's generated
+        # names header.  Include it ahead of everything else, so that it
+        # covers the declaration as well as the definition.
+        my $cdir = dirname($cfile);
+        my $namesinc = -f "util/mklib${cdir}names.pl"
+            ? "#include \"lib${cdir}_names.h\"\n" : '';
+
         if ($internal) {
             if ($hpubincf ne 'NONE') {
                 $hpubincf =~ s|^include/||;
@@ -533,7 +543,7 @@ EOF
  * https://www.openssl.org/source/license.html
  */
 
-#include <openssl/err.h>
+${namesinc}#include <openssl/err.h>
 $includes
 EOF
         $indent = '';

@@ -90,6 +90,7 @@ RELEASE_DATE={- my $t = localtime;
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
+LIBCMS_VERSION_NUMBER=1.0.0
 SHLIB_TARGET={- $target{shared_target} -}
 
 LIBS={- join(" \\\n" . ' ' x 5,
@@ -1357,6 +1358,8 @@ errors:
            include/internal/pem.h
            include/internal/asn1.h
            include/internal/sslconf.h );
+   my @cmsheaders_tmpl =
+       qw( include/openssl/cms.h );
    my @cryptoskipheaders = ( @sslheaders_tmpl,
        qw( include/openssl/conf_api.h
            include/openssl/ebcdic.h
@@ -1365,6 +1368,7 @@ errors:
            include/openssl/symhacks.h ) );
    our %cryptoheaders = ();
    our %sslheaders = ();
+   our %cmsheaders = ();
    foreach my $d ( qw( include/openssl include/internal ) ) {
        my @header_patterns =
            map { catfile($config{sourcedir}, $d, $_) } ( '*.h', '*.h.in' );
@@ -1390,6 +1394,7 @@ errors:
                    && !( grep { $_ eq $fn } @cryptoskipheaders ));
            # The logic to add files to @sslheaders is much simpler...
            $sslheaders{$new_f} = 1 if grep { $_ eq $fn } @sslheaders_tmpl;
+           $cmsheaders{$new_f} = 1 if grep { $_ eq $fn } @cmsheaders_tmpl;
        }
    }
    "";
@@ -1406,6 +1411,8 @@ CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
+CMSHEADERS={- join(" \\\n" . ' ' x 11,
+                   fill_lines(" ", $COLUMNS - 11, sort keys %cmsheaders)) -}
 
 renumber: build_generated
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
@@ -1418,6 +1425,13 @@ renumber: build_generated
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(SSLHEADERS)
+	@ : {- output_off() if $disabled{cms}; "" -}
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(LIBCMS_VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcms.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                --renumber \
+                $(CMSHEADERS)
+	@ : {- output_on() if $disabled{cms}; "" -}
 
 .PHONY: ordinals
 ordinals: build_generated
@@ -1429,6 +1443,12 @@ ordinals: build_generated
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(SSLHEADERS)
+	@ : {- output_off() if $disabled{cms}; "" -}
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(LIBCMS_VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcms.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                $(CMSHEADERS)
+	@ : {- output_on() if $disabled{cms}; "" -}
 
 test_ordinals:
 	"$(MAKE)" run_tests TESTS=test_ordinals
