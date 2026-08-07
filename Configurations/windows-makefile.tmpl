@@ -546,6 +546,13 @@ install_dev: install_runtime_libs
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
+	@{- output_off() if $disabled{cms}; "" -}
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\libcms"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\include\libcms\*.h" \
+				       "$(INSTALLTOP)\include\libcms"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\libcms\*.h" \
+				       "$(INSTALLTOP)\include\libcms"
+	@{- output_on() if $disabled{cms}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(CMAKECONFIGDIR)"
