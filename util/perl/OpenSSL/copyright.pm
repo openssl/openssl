@@ -14,6 +14,11 @@ package OpenSSL::copyright;
 sub year_of {
     my $file = shift;
 
+    # A generated file is staged as FILE.new before it is compared to,
+    # and possibly replaces, FILE; the year that belongs to it is the
+    # year of the file it is staged to replace.
+    $file =~ s/\.new$//;
+
     return $ENV{'OSSL_COPYRIGHT_YEAR'} if defined $ENV{'OSSL_COPYRIGHT_YEAR'};
 
     # Get the current year.  We use that as the default because the other
