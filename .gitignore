@@ -28,6 +28,7 @@
 /apps/md4.c
 
 # Auto generated headers
+/cms/libcms_names.h
 /crypto/buildinf.h
 /crypto/asn1/charmap.h
 /crypto/bn/bn_prime.h
