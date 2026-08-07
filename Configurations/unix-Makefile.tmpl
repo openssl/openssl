@@ -1189,6 +1189,11 @@ uninstall_image_docs:
 # is sensitive to build.info changes.
 update: generate errors ordinals generate_buildinfo ## Update errors, ordinals and build info
 
+# $(UPTODATE) target input... succeeds when target exists and is strictly
+# newer than every input, and fails otherwise; used to skip regeneration
+# of a target that is already current.
+UPTODATE=$(PERL) -e 'my $$o = shift; exit 1 unless -e $$o; -M $$o < -M $$_ or exit 1 for @ARGV'
+
 .PHONY: generate generate_apps generate_crypto_bn generate_crypto_objects \
           generate_crypto_conf generate_crypto_asn1 generate_fuzz_oids
 generate: generate_apps generate_crypto_bn generate_crypto_objects \
@@ -1234,11 +1239,16 @@ check-format: check-clang-format-diff-cmd ## Evaluate C code according to OpenSS
 	( cd $(SRCDIR); git diff -U0 --no-prefix --no-color | $(CLANG_FORMAT_DIFF) )
 
 generate_apps:
-	( cd $(SRCDIR); $(PERL) VMS/VMSify-conf.pl \
+	( cd $(SRCDIR); \
+	  $(UPTODATE) apps/openssl-vms.cnf \
+		      apps/openssl.cnf VMS/VMSify-conf.pl || \
+	  $(PERL) VMS/VMSify-conf.pl \
 				< apps/openssl.cnf > apps/openssl-vms.cnf )
 
 generate_crypto_bn:
-	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
+	( cd $(SRCDIR); \
+	  $(UPTODATE) crypto/bn/bn_prime.h crypto/bn/bn_prime.pl || \
+	  $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
 
 generate_crypto_objects:
 	( cd $(SRCDIR); set -e; \
@@ -1271,15 +1281,22 @@ generate_crypto_objects:
 	  done )
 
 generate_crypto_conf:
-	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \
+	( cd $(SRCDIR); \
+	  $(UPTODATE) crypto/conf/conf_def.h crypto/conf/keysets.pl || \
+	  $(PERL) crypto/conf/keysets.pl \
 			        > crypto/conf/conf_def.h )
 
 generate_crypto_asn1:
-	( cd $(SRCDIR); $(PERL) crypto/asn1/charmap.pl \
+	( cd $(SRCDIR); \
+	  $(UPTODATE) crypto/asn1/charmap.h crypto/asn1/charmap.pl || \
+	  $(PERL) crypto/asn1/charmap.pl \
 			        > crypto/asn1/charmap.h )
 
 generate_fuzz_oids:
-	( cd $(SRCDIR); $(PERL) fuzz/mkfuzzoids.pl \
+	( cd $(SRCDIR); \
+	  $(UPTODATE) fuzz/oids.txt \
+		      crypto/objects/obj_dat.h fuzz/mkfuzzoids.pl || \
+	  $(PERL) fuzz/mkfuzzoids.pl \
 				crypto/objects/obj_dat.h \
 				> fuzz/oids.txt )
 
