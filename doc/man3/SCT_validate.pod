@@ -54,6 +54,8 @@ A CTLOG_STORE that contains the CT log that issued this SCT.
 
 If the SCT was issued by a log that is not in this CTLOG_STORE, the validation
 status will be SCT_VALIDATION_STATUS_UNKNOWN_LOG.
+If no CTLOG_STORE is provided, the validation status will also be
+SCT_VALIDATION_STATUS_UNKNOWN_LOG.
 
 =back
 
