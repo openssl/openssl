@@ -14,7 +14,6 @@
 #include <openssl/err.h>
 #include <openssl/decoder.h>
 #include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 static int kem_cms_decrypt(CMS_RecipientInfo *ri)
@@ -40,7 +39,8 @@ static int kem_cms_decrypt(CMS_RecipientInfo *ri)
         goto err;
 
     OBJ_obj2txt(name, sizeof(name), wrap->algorithm, 0);
-    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
+    kekcipher = EVP_CIPHER_fetch(EVP_PKEY_CTX_get0_libctx(pctx), name,
+        EVP_PKEY_CTX_get0_propq(pctx));
     if (kekcipher == NULL || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))
