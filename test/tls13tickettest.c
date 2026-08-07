@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <openssl/crypto.h>
 #include <openssl/ssl.h>
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
@@ -652,6 +653,316 @@ static int test_tls13_ticket_no_decrypt(void)
     return test;
 }
 
+/* Encode a session with i2d_SSL_SESSION and decode it again */
+static SSL_SESSION *session_roundtrip(SSL_SESSION *in)
+{
+    unsigned char *der = NULL, *p;
+    const unsigned char *q;
+    SSL_SESSION *out = NULL;
+    int len = i2d_SSL_SESSION(in, NULL);
+
+    if (len <= 0 || (der = OPENSSL_malloc(len)) == NULL)
+        return NULL;
+    p = der;
+    if (i2d_SSL_SESSION(in, &p) == len) {
+        q = der;
+        out = d2i_SSL_SESSION(NULL, &q, len);
+    }
+    OPENSSL_free(der);
+    return out;
+}
+
+/*
+ * Verify that a ticket issued for a resumed TLSv1.3 session does not extend
+ * the session lifetime beyond the bound established by the initial full
+ * handshake. The NewSessionTicket lifetime hint mirrors the (possibly capped)
+ * session timeout computed by the server, so it is used to observe the cap:
+ * the initial handshake advertises the full configured timeout, a resumed
+ * handshake advertises at most the remaining lifetime, and once the original
+ * lifetime has elapsed the client no longer offers the ticket, forcing a full
+ * handshake that restarts the lifetime in full.
+ */
+#define BOUND_TIMEOUT 5 /* seconds */
+#define DEFAULT_TIMEOUT (2 * 60 * 60) /* tls1_default_timeout() */
+
+static int test_tls13_ticket_lifetime_bound(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel expired = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *sess2 = NULL, *sess3 = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_long_eq(SSL_CTX_set_timeout(s, BOUND_TIMEOUT), DEFAULT_TIMEOUT)
+        && TEST_long_eq(SSL_CTX_get_timeout(s), BOUND_TIMEOUT)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess), BOUND_TIMEOUT);
+
+    if (test) {
+        /* Consume a noticeable part of the session lifetime */
+        OSSL_sleep(3000);
+
+        test = TEST_true(tls_channel_init(c, s, &resumed))
+            && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+            && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+            && TEST_true(SSL_session_reused(resumed.c.ssl))
+            && TEST_uint_eq(resumed.s.stats.ch_has_psk, 1)
+            && TEST_true(tls_shutdown(&resumed))
+            && TEST_ptr(sess2 = SSL_get1_session(resumed.c.ssl))
+            /* The new ticket only carries what was left of the lifetime */
+            && TEST_ulong_le(SSL_SESSION_get_ticket_lifetime_hint(sess2),
+                BOUND_TIMEOUT - 3);
+    }
+
+    if (test) {
+        /* Let the originally established lifetime elapse completely */
+        OSSL_sleep(4000);
+
+        test = TEST_true(tls_channel_init(c, s, &expired))
+            && TEST_true(SSL_set_session(expired.c.ssl, sess2))
+            && TEST_true(create_ssl_connection(expired.s.ssl, expired.c.ssl, SSL_ERROR_NONE))
+            /* The ticket has expired: no PSK offered, full handshake */
+            && TEST_false(SSL_session_reused(expired.c.ssl))
+            && TEST_uint_eq(expired.s.stats.ch_has_psk, 0)
+            && TEST_true(tls_shutdown(&expired))
+            && TEST_ptr(sess3 = SSL_get1_session(expired.c.ssl))
+            /* The full handshake re-establishes the lifetime in full */
+            && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess3),
+                BOUND_TIMEOUT);
+    }
+
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess2);
+    SSL_SESSION_free(sess3);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    tls_channel_fini(&expired);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * An unlimited session timeout, selected with a negative value, is advertised
+ * in the ticket lifetime hint as the RFC8446 1 week maximum and, unlike a
+ * finite timeout, is restarted in full on each resumption rather than being
+ * capped by the remaining lifetime.
+ */
+#define ONE_WEEK_SECS (7 * 24 * 60 * 60)
+
+static int test_tls13_ticket_lifetime_unlimited(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel resumed = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *sess2 = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_long_eq(SSL_CTX_set_timeout(s, -1), DEFAULT_TIMEOUT)
+        && TEST_long_eq(SSL_CTX_get_timeout(s), -1)
+        /* The setter reports a previously unlimited timeout as -1 */
+        && TEST_long_eq(SSL_CTX_set_timeout(s, 300), -1)
+        && TEST_long_eq(SSL_CTX_set_timeout(s, -1), 300)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess), ONE_WEEK_SECS);
+
+    if (test) {
+        /*
+         * Let some time pass so that a finite timeout would be capped to the
+         * remaining lifetime and thus advertise less than the full week.
+         */
+        OSSL_sleep(2000);
+
+        test = TEST_true(tls_channel_init(c, s, &resumed))
+            && TEST_true(SSL_set_session(resumed.c.ssl, sess))
+            && TEST_true(create_ssl_connection(resumed.s.ssl, resumed.c.ssl, SSL_ERROR_NONE))
+            && TEST_true(SSL_session_reused(resumed.c.ssl))
+            && TEST_true(tls_shutdown(&resumed))
+            && TEST_ptr(sess2 = SSL_get1_session(resumed.c.ssl))
+            /* Unlimited lifetime is restarted in full, not capped */
+            && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess2),
+                ONE_WEEK_SECS);
+    }
+
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess2);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&resumed);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * An unlimited session timeout survives i2d_SSL_SESSION/d2i_SSL_SESSION,
+ * which is the same encoding used inside stateless session tickets, so a
+ * session re-created from such a ticket retains its unlimited timeout.
+ */
+static int test_tls13_ticket_timeout_encoding(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *rt1 = NULL, *rt2 = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_long_eq(SSL_SESSION_set_timeout(sess, -1), 1)
+        && TEST_long_eq(SSL_SESSION_get_timeout(sess), -1)
+        && TEST_ptr(rt1 = session_roundtrip(sess))
+        && TEST_long_eq(SSL_SESSION_get_timeout(rt1), -1)
+        && TEST_long_eq(SSL_SESSION_set_timeout(sess, 12345), 1)
+        && TEST_ptr(rt2 = session_roundtrip(sess))
+        && TEST_long_eq(SSL_SESSION_get_timeout(rt2), 12345);
+
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(rt1);
+    SSL_SESSION_free(rt2);
+    tls_channel_fini(&initial);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * The server must not resume an expired session even if the client offers the
+ * ticket. The ticket lifetime communicated in NewSessionTicket is only a
+ * hint: a non-conforming client can ignore it and keep offering the ticket,
+ * so the lifetime bound established by the initial full handshake has to be
+ * enforced server side from the state embedded in the ticket itself. The
+ * enforcement lives in ssl_get_prev_session(), which rejects a timed out
+ * session for TLSv1.3 tickets as well.
+ *
+ * Simulate such a client by overwriting the lifetime hint stored in the
+ * client's session with a large value, so that the client offers a PSK whose
+ * server-side lifetime has already expired.
+ */
+#define EXPIRE_TIMEOUT 1 /* seconds */
+
+static int test_tls13_ticket_expired_no_resume(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel initial = { .c.ssl = NULL, .s.ssl = NULL };
+    struct tls13_channel expired = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL, *sess2 = NULL;
+    int test;
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_long_eq(SSL_CTX_set_timeout(s, EXPIRE_TIMEOUT), DEFAULT_TIMEOUT)
+        && TEST_true(tls_channel_init(c, s, &initial))
+        && TEST_true(create_ssl_connection(initial.s.ssl, initial.c.ssl, SSL_ERROR_NONE))
+        && TEST_true(tls_shutdown(&initial))
+        && TEST_ptr(sess = SSL_get1_session(initial.c.ssl))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess), EXPIRE_TIMEOUT);
+
+    if (test) {
+        /*
+         * Let the session lifetime expire, with ample margin for the second
+         * granularity of the serialised session time inside the ticket.
+         */
+        OSSL_sleep(3000);
+
+        /* Pretend the client did not honour the ticket lifetime hint */
+        sess->ext.tick_lifetime_hint = ONE_WEEK_SECS;
+
+        test = TEST_true(tls_channel_init(c, s, &expired))
+            && TEST_true(SSL_set_session(expired.c.ssl, sess))
+            && TEST_true(create_ssl_connection(expired.s.ssl, expired.c.ssl, SSL_ERROR_NONE))
+            /* The client offered the expired ticket ... */
+            && TEST_uint_eq(expired.s.stats.ch_has_psk, 1)
+            /* ... but the server must refuse it and do a full handshake */
+            && TEST_false(SSL_session_reused(expired.c.ssl))
+            && TEST_uint_eq(expired.s.stats.sh_has_psk, 0)
+            && TEST_true(tls_shutdown(&expired))
+            /* The fallback full handshake issues fresh full-lifetime tickets */
+            && TEST_uint_eq(expired.s.stats.nst_msgs, 2)
+            && TEST_ptr(sess2 = SSL_get1_session(expired.c.ssl))
+            && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess2),
+                EXPIRE_TIMEOUT);
+    }
+
+    SSL_SESSION_free(sess);
+    SSL_SESSION_free(sess2);
+    tls_channel_fini(&initial);
+    tls_channel_fini(&expired);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
+/*
+ * Coverage for the SessionTimeout (-session_timeout) configuration command:
+ * plain seconds, "infinite" (case-insensitive) and negative values are
+ * accepted, malformed values are rejected, and the command is only available
+ * to servers.
+ */
+static int test_tls13_ticket_session_timeout_conf(void)
+{
+    SSL_CTX *s = NULL;
+    SSL_CONF_CTX *cctx = NULL;
+    int test;
+
+    test = TEST_ptr(s = SSL_CTX_new(TLS_server_method()))
+        && TEST_ptr(cctx = SSL_CONF_CTX_new());
+
+    if (test) {
+        SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_FILE | SSL_CONF_FLAG_SERVER);
+        SSL_CONF_CTX_set_ssl_ctx(cctx, s);
+
+        test = TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", "1234"), 2)
+            && TEST_long_eq(SSL_CTX_get_timeout(s), 1234)
+            && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", "Infinite"), 2)
+            && TEST_long_eq(SSL_CTX_get_timeout(s), -1)
+            && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", "-30"), 2)
+            && TEST_long_eq(SSL_CTX_get_timeout(s), -1)
+            && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", "12abc"), 0)
+            && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", ""), 0)
+            && TEST_true(SSL_CONF_CTX_finish(cctx));
+    }
+
+    if (test) {
+        /* The command must not be recognised in a client-only context */
+        test = TEST_uint_eq(SSL_CONF_CTX_clear_flags(cctx, SSL_CONF_FLAG_SERVER)
+                & SSL_CONF_FLAG_SERVER,
+            0);
+        SSL_CONF_CTX_set_flags(cctx, SSL_CONF_FLAG_CLIENT);
+        test = test
+            && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", "10"), -2);
+    }
+
+    SSL_CONF_CTX_free(cctx);
+    SSL_CTX_free(s);
+    return test;
+}
+
 OPT_TEST_DECLARE_USAGE("\n")
 
 int setup_tests(void)
@@ -674,6 +985,11 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_resumed_set_num_tickets_zero);
     ADD_TEST(test_tls13_ticket_disable_server);
     ADD_TEST(test_tls13_ticket_no_decrypt);
+    ADD_TEST(test_tls13_ticket_lifetime_bound);
+    ADD_TEST(test_tls13_ticket_lifetime_unlimited);
+    ADD_TEST(test_tls13_ticket_timeout_encoding);
+    ADD_TEST(test_tls13_ticket_expired_no_resume);
+    ADD_TEST(test_tls13_ticket_session_timeout_conf);
 
     return 1;
 }
