@@ -12,7 +12,7 @@
  * arise this is an example....
  */
 #include <openssl/pem.h>
-#include <openssl/cms.h>
+#include <libcms/cms.h>
 #include <openssl/err.h>
 
 int main(int argc, char **argv)
