@@ -10,6 +10,7 @@ package OpenSSL::Test;
 use strict;
 use warnings;
 
+use IPC::Open3;
 use Carp;
 use Test::More 0.96;
 
@@ -509,7 +510,13 @@ sub run {
     my $pipe;
     local $_;
 
-    open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
+    # open3(CHILD_IN, CHILD_OUT, CHILD_ERR, ...)
+    my $harness_quiet = $ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE};
+    if ($harness_quiet) {
+        open3($STDIN, $pipe, undef, "$prefix$cmd") or die "Can't start command: $!";
+    } else {
+        open3($STDIN, $pipe, $STDERR, "$prefix$cmd") or die "Can't start command: $!";
+    }
     while(<$pipe>) {
         my $l = ($opts{prefix} // $default_prefix) . $_;
         if ($opts{capture}) {
@@ -530,7 +537,6 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    my $harness_quiet = $ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE};
     if ($^O eq 'VMS') {
         # Restore STDOUT / STDERR on VMS
         if ($harness_quiet) {
