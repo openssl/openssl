@@ -61,6 +61,10 @@ OpenSSL Releases
 
    *Viktor Dukhovni*
 
+ * Added AARCH64 optimized SHAKE x2 operations for ML-DSA on `armv8`.
+
+   *Shane Lontis*
+
  * Added AVX512 optimized SHAKE x4 operations for ML-DSA on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
