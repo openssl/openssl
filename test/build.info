@@ -49,6 +49,7 @@ IF[{- !$disabled{tests} -}]
           destest mdc2test sha_test \
           exptest pbetest localetest evp_pkey_ctx_new_from_name \
           evp_pkey_provided_test evp_test evp_extra_test evp_extra_test2 \
+          evp_cipher_padding_test \
           evp_fetch_prov_test evp_libctx_test ossl_store_test \
           v3nametest v3ext byteorder_test punycode_test evp_byname_test \
           crltest danetest bad_dtls_test lhash_test sparse_array_test \
@@ -255,6 +256,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[evp_extra_test2]=evp_extra_test2.c $INITSRC tls-provider.c
   INCLUDE[evp_extra_test2]=../include ../apps/include
   DEPEND[evp_extra_test2]=../libcrypto libtestutil.a
+
+  SOURCE[evp_cipher_padding_test]=evp_cipher_padding_test.c
+  INCLUDE[evp_cipher_padding_test]=../include ../apps/include
+  DEPEND[evp_cipher_padding_test]=../libcrypto libtestutil.a
 
   SOURCE[evp_libctx_test]=evp_libctx_test.c
   INCLUDE[evp_libctx_test]=../include ../apps/include
@@ -903,6 +908,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
+                     aesgcm_avx512_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
@@ -1234,6 +1240,16 @@ IF[{- !$disabled{tests} -}]
   SOURCE[aesgcmtest]=aesgcmtest.c
   INCLUDE[aesgcmtest]=../include ../apps/include
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
+
+  SOURCE[aesgcm_avx512_test]=aesgcm_avx512_test.c
+  INCLUDE[aesgcm_avx512_test]=../include ../apps/include
+  # Static libcrypto for ossl_vaes_vpclmulqdq_capable(); see noinst block.
+  DEPEND[aesgcm_avx512_test]=../libcrypto.a libtestutil.a
+  # That symbol comes from crypto/modes/asm/aes-gcm-avx512.pl, so it only
+  # exists when the assembly is built.
+  IF[{- !$disabled{asm} -}]
+    DEFINE[aesgcm_avx512_test]=AESGCM_AVX512_ASM
+  ENDIF
 
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c

@@ -66,6 +66,20 @@ void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+/* Tell the provider context that padding is disabled. */
+static int evp_cipher_set_no_padding(EVP_CIPHER_CTX *ctx)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    unsigned int pd = 0;
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
+    if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
+        return 0;
+    }
+    return 1;
+}
+
 static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     const EVP_CIPHER *cipher,
     const unsigned char *key,
@@ -151,15 +165,22 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
-    }
-
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
+#ifndef FIPS_MODULE
         /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
+         * A new provider context starts with the provider's padding default,
+         * so a no-padding request held in ctx->flags has to be pushed down
+         * again; a reused context still has it.
+         *
+         * It goes in its own call so that a padding failure is not reported as
+         * a length error by the batched set_params below.
+         *
+         * The FIPS module needs none of this: its in-module callers set
+         * padding after an init rather than across one.
          */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
+        if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
+            && !evp_cipher_set_no_padding(ctx))
             return 0;
+#endif
     }
 
 #ifndef FIPS_MODULE
@@ -316,20 +337,20 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
+        /*
+         * A new provider context starts with the provider's padding default,
+         * so a no-padding request held in ctx->flags has to be pushed down
+         * again; a reused context still has it.  evp_cipher_init_internal()
+         * does the same for the raw-key path (outside the FIPS module).
+         */
+        if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0
+            && !evp_cipher_set_no_padding(ctx))
+            return 0;
     }
 
     if (skey != NULL && ctx->cipher->prov != skey->skeymgmt->prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
-    }
-
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
-         */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
-            return 0;
     }
 
     if (iv == NULL)
@@ -1152,6 +1173,25 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
             if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len)) {
                 r = 0;
                 ctx->iv_len = -1;
+            }
+        }
+        /*
+         * Keep ctx->flags in step with the padding the provider was just
+         * given, so that a padding request made this way - rather than
+         * through EVP_CIPHER_CTX_set_padding() - is still known here and can
+         * be re-applied when a later init allocates a new provider context.
+         */
+        if (r > 0) {
+            unsigned int pd;
+
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+            if (p != NULL) {
+                if (!OSSL_PARAM_get_uint(p, &pd))
+                    r = 0;
+                else if (pd == 0)
+                    ctx->flags |= EVP_CIPH_NO_PADDING;
+                else
+                    ctx->flags &= ~EVP_CIPH_NO_PADDING;
             }
         }
     }
