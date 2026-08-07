@@ -25,7 +25,7 @@ sub year_of {
     open my $FH,
        "git log -1 --date=short --format=format:%cd $file 2>/dev/null|"
            or return $YEAR;
-    my $LINE = <$FH>;
+    my $LINE = <$FH> // '';
     close $FH;
     $LINE =~ s/^([0-9]*)-.*/$1/;
     $YEAR = $LINE if $LINE;
