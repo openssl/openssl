@@ -3171,20 +3171,20 @@ MSG_PROCESS_RETURN tls_process_new_session_ticket(SSL_CONNECTION *s,
         goto err;
     }
 
+    /*
+     * RFC 9846 4.7.1: Clients MUST NOT use tickets for longer than 7 days
+     * after issuance, regardless of the ticket_lifetime, and MAY delete tickets
+     * earlier based on local policy.
+     */
+    if (SSL_CONNECTION_IS_TLS13(s) && ticket_lifetime_hint > 604800)
+        ticket_lifetime_hint = 604800;
+
     s->session->ext.tick_lifetime_hint = ticket_lifetime_hint;
     s->session->ext.tick_age_add = age_add;
     s->session->ext.ticklen = ticklen;
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
         PACKET extpkt;
-
-        /*
-         * Fulfilling RFC9846:4.7.1 requirement: Clients MUST NOT cache
-         * tickets for longer than 7 days.
-         */
-        if (ticket_lifetime_hint > 604800) {
-            ticket_lifetime_hint = 604800;
-        }
 
         if (!PACKET_as_length_prefixed_2(pkt, &extpkt)
             || PACKET_remaining(pkt) != 0) {
