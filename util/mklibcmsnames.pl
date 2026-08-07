@@ -6,7 +6,7 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Emit libcms_names.h on standard output: one object-like macro
+# Emit include/libcms/names.h on standard output: one object-like macro
 # per symbol the CMS sources define with external linkage, renaming it to
 # the same name with the LIBCMS_ prefix.  The macros are only active when
 # OSSL_LIBCMS_NAMES is defined.
@@ -98,8 +98,8 @@ print <<"_____";
  * https://www.openssl.org/source/license.html
  */
 
-#if !defined(OSSL_LIBCMS_NAMES_H)
-#define OSSL_LIBCMS_NAMES_H
+#if !defined(LIBCMS_NAMES_H)
+#define LIBCMS_NAMES_H
 #if defined(OSSL_LIBCMS_NAMES)
 _____
 foreach (sort keys %names) {
@@ -107,5 +107,5 @@ foreach (sort keys %names) {
 }
 print <<"_____";
 #endif /* defined(OSSL_LIBCMS_NAMES) */
-#endif /* !defined(OSSL_LIBCMS_NAMES_H) */
+#endif /* !defined(LIBCMS_NAMES_H) */
 _____

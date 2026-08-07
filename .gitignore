@@ -28,7 +28,7 @@
 /apps/md4.c
 
 # Auto generated headers
-/cms/libcms_names.h
+/include/libcms/names.h
 /crypto/buildinf.h
 /include/crypto/*_conf.h
 /include/openssl/asn1.h

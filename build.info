@@ -457,6 +457,11 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+IF[{- !$disabled{cms} -}]
+  GENERATE[include/libcms/names.h]=util/mklibcmsnames.pl
+  DEPEND[include/libcms/names.h]=util/libcms.num
+  DEPEND[]=include/libcms/names.h
+ENDIF
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
