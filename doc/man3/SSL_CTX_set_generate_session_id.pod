@@ -14,7 +14,7 @@ SSL_has_matching_session_id, GEN_SESSION_CB
                                unsigned int *id_len);
 
  int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb);
- int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB, cb);
+ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb);
  int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
                                  unsigned int id_len);
 
@@ -70,14 +70,16 @@ guarantee uniqueness, it is recommended to use the maximum B<id_len> and
 fill in the bytes not used to code special information with random data
 to avoid collisions.
 
-SSL_has_matching_session_id() will only query the internal session cache,
-not the external one. Since the session id is generated before the
-handshake is completed, it is not immediately added to the cache. If
-another thread is using the same internal session cache, a race condition
-can occur in that another thread generates the same session id.
-Collisions can also occur when using an external session cache, since
-the external cache is not tested with SSL_has_matching_session_id()
-and the same race condition applies.
+SSL_has_matching_session_id() only queries the internal session cache.
+Since the session id is generated before the handshake is completed, it is
+not immediately added to the cache. If another thread is using the same
+internal session cache, a race condition can occur in that another thread
+generates the same session id.
+
+When using an external session cache, applications may provide an optional
+external collision callback via
+L<SSL_CTX_set_session_id_collision_cb(3)> to check whether a generated ID
+collides with a resumable external entry.
 
 The callback must return 0 if it cannot generate a session id for whatever
 reason and return 1 on success.
@@ -125,6 +127,7 @@ server id given, and will fill the rest with pseudo random bytes:
 =head1 SEE ALSO
 
 L<ssl(7)>, L<SSL_get_version(3)>
+L<SSL_CTX_set_session_id_collision_cb(3)>
 
 =head1 COPYRIGHT
 

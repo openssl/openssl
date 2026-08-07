@@ -710,6 +710,17 @@ OSSL_DEPRECATEDIN_3_0 __owur int SRP_Calc_A_param(SSL *s);
 typedef int (*GEN_SESSION_CB)(SSL *ssl, unsigned char *id,
     unsigned int *id_len);
 
+/*
+ * Optional callback used by servers during session ID generation to check if
+ * an ID collides with a resumable entry in an external session cache.
+ * Return values:
+ *   1: collision exists
+ *   0: no collision (including non-resumable matches)
+ *  <0: unable to determine; OpenSSL falls back to internal-cache-only checks
+ */
+typedef int (*GEN_SESSION_COLLISION_CB)(SSL *ssl, const unsigned char *id,
+    unsigned int id_len);
+
 #define SSL_SESS_CACHE_OFF 0x0000
 #define SSL_SESS_CACHE_CLIENT 0x0001
 #define SSL_SESS_CACHE_SERVER 0x0002
@@ -1796,6 +1807,10 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *session);
 int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *session);
 __owur int SSL_CTX_set_generate_session_id(SSL_CTX *ctx, GEN_SESSION_CB cb);
 __owur int SSL_set_generate_session_id(SSL *s, GEN_SESSION_CB cb);
+__owur int SSL_CTX_set_session_id_collision_cb(SSL_CTX *ctx,
+    GEN_SESSION_COLLISION_CB cb);
+__owur int SSL_set_session_id_collision_cb(SSL *s,
+    GEN_SESSION_COLLISION_CB cb);
 __owur int SSL_has_matching_session_id(const SSL *s,
     const unsigned char *id,
     unsigned int id_len);
