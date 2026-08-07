@@ -5158,6 +5158,117 @@ end:
 
 #endif /* OPENSSL_THREADS */
 
+static unsigned int short_timer_cb_count;
+
+/* Force a short retransmission timeout and count how often it is consulted. */
+static unsigned int short_timer_cb(SSL *s, unsigned int timer_us)
+{
+    ++short_timer_cb_count;
+    return 50000; /* 50ms */
+}
+
+/*
+ * Test that a blocking SSL_poll() on a DTLS connection honours the
+ * retransmission timer.
+ *
+ * SSL_poll() bounds its wait by the per-object event timeout so that timer
+ * driven work is not delayed. For a DTLS connection that timeout is the
+ * handshake retransmission timer: if it is ignored, a poll with a long user
+ * timeout sleeps straight through the point at which the flight should have
+ * been resent, and if the peer had lost that flight neither side progresses.
+ *
+ * This does not time the wait. The retransmission timeout is forced down to
+ * 50ms and the poll is given much longer, so a correct implementation must
+ * wake and retransmit at least once before the poll deadline; an
+ * implementation which ignores the timer retransmits not at all.
+ */
+static int test_dtls_poll_conn_honours_retransmit_timer(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_POLL_ITEM poll_item;
+    struct timeval poll_timeout, timer_left;
+    size_t poll_result = 0;
+    int is_infinite = 0;
+    int retc, rets, err_code;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * Install the short timeout before the server sends anything, so that it
+     * is picked up when the retransmission timer is first started rather than
+     * only on a later expiry.
+     */
+    DTLS_set_timer_cb(serverssl, short_timer_cb);
+
+    /*
+     * Drive just far enough for the server to send its first flight and start
+     * its retransmission timer. The client is then left alone, so the flight
+     * stays unacknowledged for the duration of the poll.
+     */
+    retc = SSL_connect(clientssl);
+    if (!TEST_int_le(retc, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, retc), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * The server consumes the ClientHello, sends its flight and then waits for
+     * the client, so this does not complete the handshake.
+     */
+    rets = SSL_accept(serverssl);
+    if (!TEST_int_le(rets, 0))
+        goto end;
+
+    err_code = SSL_get_error(serverssl, rets);
+    if (!TEST_true(err_code == SSL_ERROR_WANT_READ
+            || err_code == SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Assert the precondition through the same call SSL_poll() uses to compute
+     * its deadline: a running timer is reported as a finite timeout.
+     */
+    if (!TEST_true(SSL_get_event_timeout(serverssl, &timer_left, &is_infinite))
+        || !TEST_false(is_infinite))
+        goto end;
+
+    short_timer_cb_count = 0;
+
+    /*
+     * Nothing will arrive for this connection during the poll, so it runs to
+     * its deadline. Along the way the retransmission timer must expire and be
+     * serviced, which re-arms the timer via the callback.
+     */
+    poll_item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    poll_item.desc.value.ssl = serverssl;
+    poll_item.events = SSL_POLL_EVENT_R;
+    poll_item.revents = 0;
+    poll_timeout.tv_sec = 0;
+    poll_timeout.tv_usec = 500000;
+
+    if (!TEST_true(SSL_poll(&poll_item, 1, sizeof(poll_item), &poll_timeout, 0,
+            &poll_result)))
+        goto end;
+
+    if (!TEST_uint_gt(short_timer_cb_count, 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
@@ -5269,7 +5380,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_notifier_signalled_on_accept_queue_push);
     ADD_TEST(test_dtls_poll_listener_enters_blocking_section);
 #endif
-
+    ADD_TEST(test_dtls_poll_conn_honours_retransmit_timer);
 
     return 1;
 }

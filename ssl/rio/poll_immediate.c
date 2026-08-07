@@ -453,7 +453,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
     size_t result_count = 0;
     SSL *ssl;
     OSSL_TIME earliest_wakeup_deadline = ossl_time_infinite();
-#ifndef OPENSSL_NO_QUIC
+#if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
     struct timeval timeout;
     int is_infinite = 0;
 #endif
@@ -515,6 +515,20 @@ static int poll_translate(SSL_POLL_ITEM *items,
 
                     if (*abort_blocking)
                         goto out;
+
+                    /*
+                     * Bound the wait by the DTLS retransmission timer,
+                     * otherwise a poll with no timeout sleeps straight through
+                     * the point at which we should be retransmitting.
+                     */
+                    if (!SSL_get_event_timeout(ssl, &timeout, &is_infinite))
+                        FAIL_ITEM(i++); /* need to clean up this item too */
+
+                    if (!is_infinite)
+                        earliest_wakeup_deadline
+                            = ossl_time_min(earliest_wakeup_deadline,
+                                ossl_time_add(ossl_time_now(),
+                                    ossl_time_from_timeval(timeout)));
 
                 } else {
                     ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
