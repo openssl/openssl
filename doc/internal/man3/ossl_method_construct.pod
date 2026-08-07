@@ -19,7 +19,7 @@ OSSL_METHOD_CONSTRUCT_METHOD, ossl_method_construct
                 const char *name, const char *propdef, void *data);
      /* Construct a new method */
      void *(*construct)(const OSSL_ALGORITHM *algodef, OSSL_PROVIDER *prov,
-                        void *data);
+                        void *data, int no_store);
      /* Destruct a method */
      void (*destruct)(void *method, void *data);
  };
@@ -59,6 +59,9 @@ passed by ossl_method_construct()).
 If I<prov> is not NULL, only that provider is considered, which is
 useful in the case a method must be found in that particular
 provider.
+If I<force_cache> is nonzero, the constructed method is placed in the
+permanent store even if the provider requested otherwise.  This does not alter
+the lifetime of the provider's query data.
 
 This function assumes that the subsystem method creator implements
 reference counting and acts accordingly (i.e. it will call the
@@ -119,14 +122,19 @@ This function is expected to increment the I<method>'s reference count.
 
 =item construct()
 
-Constructs a subsystem method for the given I<name> and the given
-dispatch table I<fns>.
+Constructs a subsystem method from the algorithm definition I<algodef>.
 
 The associated provider object I<prov> is passed as well, to make
 it possible for the subsystem constructor to keep a reference, which
 is recommended.
 If such a reference is kept, the I<provider object> reference counter
 must be incremented, using ossl_provider_up_ref().
+
+I<no_store> indicates whether the provider permits references to I<algodef> and
+its associated data to be retained.  If it is nonzero, construct() must copy
+any such data that the method will use after construction.  If it is zero,
+construct() may retain references to that data, which the provider must keep
+valid until teardown.
 
 This function is expected to set the method's reference count to 1.
 
@@ -148,7 +156,7 @@ This functionality was added to OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2019-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use this
 file except in compliance with the License.  You can obtain a copy in the file

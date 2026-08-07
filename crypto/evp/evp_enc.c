@@ -1393,7 +1393,12 @@ static void *evp_cipher_from_algorithm(const int name_id,
     if ((cipher->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
 
-    cipher->description = algodef->algorithm_description;
+    if (no_store == 0) {
+        cipher->description = algodef->algorithm_description;
+    } else if (algodef->algorithm_description != NULL
+        && (cipher->description = OPENSSL_strdup(algodef->algorithm_description)) == NULL) {
+        goto err;
+    }
 
     for (; fns->function_id != 0; fns++) {
         switch (fns->function_id) {
@@ -1586,6 +1591,8 @@ int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 void evp_cipher_free_int(EVP_CIPHER *cipher)
 {
     OPENSSL_free(cipher->type_name);
+    if ((cipher->flags & EVP_CIPH_FLAG_NO_STORE) != 0)
+        OPENSSL_free((char *)cipher->description);
     ossl_provider_free(cipher->prov);
     CRYPTO_FREE_REF(&cipher->refcnt);
     OPENSSL_free(cipher);

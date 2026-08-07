@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -26,7 +26,10 @@ struct ossl_endecode_base_st {
     int id;
     int no_store;
     char *name;
+    /* Retained only for cacheable provider query results */
     const OSSL_ALGORITHM *algodef;
+    char *propdef;
+    char *description;
     OSSL_PROPERTY_LIST *parsed_propdef;
 
     CRYPTO_REF_COUNT refcnt;
