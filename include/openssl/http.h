@@ -79,6 +79,9 @@ OSSL_HTTP_REQ_CTX *OSSL_HTTP_open(const char *server, const char *port,
 int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
     const char *proxyuser, const char *proxypass,
     int timeout, BIO *bio_err, const char *prog);
+int OSSL_HTTP_REQ_CTX_proxy_connect(OSSL_HTTP_REQ_CTX *rctx,
+    const char *proxyuser, const char *proxypass,
+    BIO *bio_err, const char *prog);
 int OSSL_HTTP_set1_request(OSSL_HTTP_REQ_CTX *rctx, const char *path,
     const STACK_OF(CONF_VALUE) *headers,
     const char *content_type, BIO *req,
