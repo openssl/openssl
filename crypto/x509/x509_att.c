@@ -364,8 +364,24 @@ int X509_ATTRIBUTE_set1_data(X509_ATTRIBUTE *attr, int attrtype,
         }
         atype = stmp->type;
     } else if (len != -1) {
-        if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL
-            || !ASN1_STRING_set_data(stmp, data, len)) {
+        if ((stmp = ASN1_STRING_type_new(attrtype)) == NULL) {
+            ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+            goto err;
+        }
+        if (attrtype == V_ASN1_BIT_STRING) {
+            /*
+             * ASN1_STRING_set_data() rejects bit strings, so use the
+             * dedicated bit string setter, with zero unused bits.
+             */
+            if (data == NULL && len > 0) {
+                ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
+                goto err;
+            }
+            if (!ASN1_BIT_STRING_set1(stmp, data, len, 0)) {
+                ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
+                goto err;
+            }
+        } else if (!ASN1_STRING_set_data(stmp, data, len)) {
             ERR_raise(ERR_LIB_X509, ERR_R_ASN1_LIB);
             goto err;
         }
