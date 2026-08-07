@@ -13,6 +13,14 @@
 #include "internal/cryptlib.h"
 #include "internal/safe_math.h"
 
+#ifndef OPENSSL_NO_TCPDUMP
+#include <stdio.h>
+
+#include "internal/time.h"
+#include "internal/bio_addr.h"
+
+#endif
+
 #if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
 
 OSSL_SAFE_MATH_UNSIGNED(size_t, size_t)
@@ -268,6 +276,11 @@ struct bio_dgram_pair_st {
     unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
     unsigned int role : 1; /* Determines lock order */
     unsigned int grows_on_write : 1; /* Set for BIO_s_dgram_mem only */
+#ifndef OPENSSL_NO_TCPDUMP
+    FILE *tcpdump_f;
+    int owner;
+    uint64_t packet_num;
+#endif
 };
 
 #define MIN_BUF_LEN (1024)
@@ -292,6 +305,7 @@ static int dgram_pair_init(BIO *bio)
     }
 
     bio->ptr = b;
+
     return 1;
 }
 
@@ -331,6 +345,10 @@ static int dgram_pair_free(BIO *bio)
     dgram_pair_ctrl_destroy_bio_pair(bio);
 
     CRYPTO_THREAD_lock_free(b->lock);
+#ifdef OPENSSL_NO_TCPDUMP
+    if (b->tcpdump_f != NULL)
+        fclose(b->tcpdump_f);
+#endif
     OPENSSL_free(b);
     return 1;
 }
@@ -396,7 +414,61 @@ static int dgram_pair_ctrl_make_bio_pair(BIO *bio1, BIO *bio2)
     b2->role = 1;
     bio1->init = 1;
     bio2->init = 1;
+
     return 1;
+}
+
+/* ARGSUSED */
+static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
+{
+    int ret = 0;
+
+#ifndef OPENSSL_NO_TCPDUMP
+#define LINKTYPE_IPV4   0x00e4	/* IANA type */
+    struct bio_dgram_pair_st *b1, *b2;
+    char *filename = (char *)ptr;
+    static struct {
+        uint32_t    pcap_magic;
+        uint16_t    pcap_maj;
+        uint16_t    pcap_min;
+        uint32_t    pcap_r1;
+        uint32_t    pcap_r2;
+        uint32_t    pcap_snap;
+        uint16_t    pcap_ltype;
+        uint16_t    pcap_fcs;
+    } pcap_f_header = {
+        .pcap_magic = 0xA1B2C3D4,
+        .pcap_maj = 2, /* https://www.ietf.org/archive/id/draft-gharris-opsawg-pcap-01.html */
+        .pcap_min = 4, /* ---"--- */
+        .pcap_r1 = 0,
+        .pcap_r2 = 0,
+        .pcap_snap = 65536,
+        .pcap_fcs = 0,
+        .pcap_ltype = LINKTYPE_IPV4,
+    };
+
+    b1 = (struct bio_dgram_pair_st *)bio->ptr;
+    if (b1 == NULL)
+        return 0;
+
+    if (b1->peer == NULL)
+        return 0;
+
+    b2 = (struct bio_dgram_pair_st *)b1->peer->ptr;
+    if (b2 == NULL)
+        return 0;
+
+    if (filename != NULL) {
+        b1->tcpdump_f = fopen(filename, "wb");
+        if (b1->tcpdump_f != NULL) {
+            b1->owner = 1;
+            b2->tcpdump_f = b1->tcpdump_f;
+            ret = fwrite(&pcap_f_header, sizeof(pcap_f_header), 1, b1->tcpdump_f);
+        }
+    }
+#endif
+
+    return ret;
 }
 
 /* BIO_destroy_bio_pair (BIO_C_DESTROY_BIO_PAIR) */
@@ -423,6 +495,17 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
 
     /* Free buffers. */
     ring_buf_destroy(&b2->rbuf);
+
+#ifndef OPENSSL_NO_TCPDUMP
+    if (b1->tcpdump_f != NULL || b2->tcpdump_f != NULL) {
+        if (b1->owner && b1->tcpdump_f)
+            fclose(b1->tcpdump_f);
+        if (b2->owner && b1->tcpdump_f)
+            fclose(b2->tcpdump_f);
+        b1->tcpdump_f = NULL;
+        b2->tcpdump_f = NULL;
+    }
+#endif
 
     bio2->init = 0;
     b1->peer = NULL;
@@ -789,6 +872,10 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
     /* BIO_dgram_get_effective_caps */
     case BIO_CTRL_DGRAM_GET_EFFECTIVE_CAPS: /* Non-threadsafe */
         ret = (long)dgram_pair_ctrl_get_effective_caps(bio);
+        break;
+
+    case BIO_CTRL_DGRAM_SET_PCAP_FILE:
+        ret = dgram_pair_ctrl_set_pcap_file(bio, ptr);
         break;
 
     default:
@@ -1167,6 +1254,82 @@ static ossl_inline size_t compute_rbuf_growth(size_t target, size_t current)
     return current;
 }
 
+#ifndef OPENSSL_NO_TCPDUMP
+static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
+{
+    struct {
+        uint32_t pcap_secs;
+        uint32_t pcap_usecs;
+        uint32_t pcap_plen;
+        uint32_t pcap_olen;
+    } pcap_hdr;
+    struct {
+        uint8_t ip_hv;
+        uint8_t ip_tos;
+        uint16_t ip_len;
+        uint16_t ip_id;
+        uint8_t ip_frag;
+        uint8_t ip_foff;
+        uint8_t ip_ttl;
+        uint8_t ip_proto;
+        uint8_t ip_csum;
+        uint32_t ip_src;
+        uint32_t ip_dst;
+    } ip_hdr;
+    struct {
+        uint16_t uh_sport;
+        uint16_t uh_dport;
+        uint16_t uh_len;
+        uint16_t uh_csum;
+    } udp_hdr;
+    uint16_t len;
+    OSSL_TIME now;
+    struct bio_dgram_pair_st *peer;
+
+    if (b->tcpdump_f == NULL || sz == 0)
+        return;
+
+    if ((sz + sizeof(ip_hdr) + sizeof(udp_hdr)) > 65535)
+        return;
+    len = (uint16_t)(sz + sizeof(ip_hdr) + sizeof(udp_hdr));
+
+    now = ossl_time_now();
+
+    pcap_hdr.pcap_secs = ossl_time2seconds(now);
+    pcap_hdr.pcap_usecs = (uint32_t)(ossl_time2us(now) - pcap_hdr.pcap_secs * 1000000);
+    pcap_hdr.pcap_plen = (uint32_t)(sz + sizeof(ip_hdr) + sizeof(udp_hdr));
+    pcap_hdr.pcap_olen = pcap_hdr.pcap_plen;
+
+    ip_hdr.ip_hv = 0x45;
+    ip_hdr.ip_tos = 0;
+    ip_hdr.ip_len = htons(len);
+    /* ip_id, can be anything */
+    ip_hdr.ip_id = (uint16_t)(random() & 0xffff);
+    ip_hdr.ip_frag = 0x40; /* don't fragment */
+    ip_hdr.ip_foff = 0;
+    ip_hdr.ip_ttl = 64;
+    ip_hdr.ip_proto = 17;
+    ip_hdr.ip_csum = 0; /* wireshark will complain with ?chksum offload? */
+    ip_hdr.ip_src = (b->local_addr == NULL) ? htonl(0x7f000001) : b->local_addr->s_in.sin_addr.s_addr;
+    peer = (struct bio_dgram_pair_st *)b->peer->ptr;
+    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL) ? htonl(0x7f000001) : peer->local_addr->s_in.sin_addr.s_addr; 
+
+    /*
+     * use some fake port numbers
+     */
+    udp_hdr.uh_sport = (b->local_addr == NULL) ?
+        htons(8080) : b->local_addr->s_in.sin_port;
+    udp_hdr.uh_dport = (peer == NULL || peer->local_addr == NULL) ?
+        htons(4040) : peer->local_addr->s_in.sin_port;
+    udp_hdr.uh_csum = 0;
+    udp_hdr.uh_len = htons((uint16_t)(sz + sizeof(udp_hdr)));
+    fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, b->tcpdump_f);
+    fwrite(&ip_hdr, sizeof(ip_hdr), 1, b->tcpdump_f);
+    fwrite(&udp_hdr, sizeof(udp_hdr), 1, b->tcpdump_f);
+    fwrite(buf, sz, 1, b->tcpdump_f);
+}
+#endif
+
 /* Must hold local write lock */
 static size_t dgram_pair_write_inner(struct bio_dgram_pair_st *b,
     const uint8_t *buf, size_t sz)
@@ -1256,6 +1419,11 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
 
     saved_idx = b->rbuf.idx[0];
     saved_count = b->rbuf.count;
+
+#ifndef OPENSSL_NO_TCPDUMP
+    dgram_pcap(b, buf, sz);
+#endif
+
     if (dgram_pair_write_inner(b, (const uint8_t *)&hdr, sizeof(hdr)) != sizeof(hdr)
         || dgram_pair_write_inner(b, (const uint8_t *)buf, sz) != sz) {
         /*
