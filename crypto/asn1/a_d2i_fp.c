@@ -209,10 +209,10 @@ int asn1_d2i_read_bio(BIO *in, BUF_MEM **pb)
         if (*q & 0x80) {
             unsigned int n = *q & 0x7f;
 
-            if (n > sizeof(long)) {
-                ERR_raise(ERR_LIB_ASN1, ASN1_R_TOO_LONG);
-                goto err;
-            }
+            /*
+             * Tolerate BER length encoding which may include leading zeroes,
+             * since ASN1_get_object does also accept BER encoding.
+             */
             if (n > diff) {
                 want = q - p + n + 1;
                 continue;
