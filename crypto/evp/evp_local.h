@@ -362,11 +362,6 @@ EVP_MAC *evp_mac_fetch_from_prov(OSSL_PROVIDER *prov,
 EVP_MD *evp_md_new(void);
 EVP_CIPHER *evp_cipher_new(void);
 
-int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
-    evp_cipher_aead_asn1_params *asn1_params);
-int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
-    evp_cipher_aead_asn1_params *asn1_params);
-
 /* Helper functions to avoid duplicating code */
 
 /*
