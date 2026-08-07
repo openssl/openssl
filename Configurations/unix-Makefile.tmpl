@@ -1241,23 +1241,34 @@ generate_crypto_bn:
 	( cd $(SRCDIR); $(PERL) crypto/bn/bn_prime.pl > crypto/bn/bn_prime.h )
 
 generate_crypto_objects:
-	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl -n \
-				crypto/objects/objects.txt \
-				crypto/objects/obj_mac.num \
-				> crypto/objects/obj_mac.new && \
-	    mv crypto/objects/obj_mac.new crypto/objects/obj_mac.num )
-	( cd $(SRCDIR); $(PERL) crypto/objects/objects.pl \
-				crypto/objects/objects.txt \
-				crypto/objects/obj_mac.num \
-				> include/openssl/obj_mac.h )
-	( cd $(SRCDIR); $(PERL) crypto/objects/obj_dat.pl \
-				include/openssl/obj_mac.h \
-				> crypto/objects/obj_dat.h )
-	( cd $(SRCDIR); $(PERL) crypto/objects/objxref.pl \
-				crypto/objects/obj_mac.num \
-				crypto/objects/obj_xref.txt \
-				> crypto/objects/obj_xref.h )
-	( cd $(SRCDIR);	sed -e '1,8d' crypto/objects/obj_compat.h >> include/openssl/obj_mac.h )
+	( cd $(SRCDIR); set -e; \
+	  $(PERL) crypto/objects/objects.pl -n \
+			crypto/objects/objects.txt \
+			crypto/objects/obj_mac.num \
+			> crypto/objects/obj_mac.num.new; \
+	  $(PERL) crypto/objects/objects.pl \
+			crypto/objects/objects.txt \
+			crypto/objects/obj_mac.num.new \
+			> include/openssl/obj_mac.h.new; \
+	  $(PERL) crypto/objects/obj_dat.pl \
+			include/openssl/obj_mac.h.new \
+			> crypto/objects/obj_dat.h.new; \
+	  $(PERL) crypto/objects/objxref.pl \
+			crypto/objects/obj_mac.num.new \
+			crypto/objects/obj_xref.txt \
+			> crypto/objects/obj_xref.h.new; \
+	  sed -e '1,8d' crypto/objects/obj_compat.h \
+			>> include/openssl/obj_mac.h.new; \
+	  for f in crypto/objects/obj_mac.num \
+		   include/openssl/obj_mac.h \
+		   crypto/objects/obj_dat.h \
+		   crypto/objects/obj_xref.h; do \
+		if cmp $$f.new $$f > /dev/null 2>&1; then \
+			rm $$f.new; \
+		else \
+			mv $$f.new $$f; \
+		fi; \
+	  done )
 
 generate_crypto_conf:
 	( cd $(SRCDIR); $(PERL) crypto/conf/keysets.pl \
