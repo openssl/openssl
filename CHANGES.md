@@ -268,6 +268,15 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * Deprecated `CMS_stream()` and `PKCS7_stream()`.  These are internal
+   plumbing for the indefinite length streaming set up by `BIO_new_NDEF()`
+   that leaked into the public API.  `BIO_new_NDEF()` now obtains the content
+   octet string from the ASN.1 callback instead, so they no longer return a
+   streaming boundary.  Use `BIO_new_CMS()` or `BIO_new_NDEF()` to stream
+   CMS and PKCS7 content.
+
+   *Bob Beck*
+
  * Added `OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES` option for `OSSL_CMP_CTX` and
    a corresponding `-nonmatched_error_nonces` option for the `openssl cmp` command.
 
