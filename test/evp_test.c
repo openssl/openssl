@@ -24,9 +24,11 @@
 #include <openssl/core_names.h>
 #include <openssl/fips_names.h>
 #include <openssl/thread.h>
+#include <openssl/bn.h> /* BN_ULONG - the OSSL_FN limb width */
 #include "internal/numbers.h"
 #include "internal/nelem.h"
 #include "internal/sizes.h"
+#include "internal/endian.h"
 #include "crypto/evp.h"
 #include "testutil.h"
 
@@ -5637,9 +5639,61 @@ start:
                 return 0;
             }
         } else if (strcmp(pp->key, "Test-Entropy") == 0) {
+            /*-
+             * Entropy fed to the fake RNG for a fixed-nonce signing test.
+             * The value is written big-endian, the way the standards print it,
+             * and laid out here the way the consumer reads it back.
+             *
+             * The SM2 signer - the only consumer of this keyword - draws its
+             * nonce with OSSL_FN, and ossl_fn_rand() draws straight into the
+             * number's limb array (RAND_bytes_ex() over (unsigned char *)d).
+             * The stream is therefore the value's byte image in the host's
+             * limb layout, not the big-endian BN_bin2bn() image that
+             * BN_priv_rand_range_ex() used before.  So the big-endian value has
+             * to be re-laid-out into that limb image here (a data file cannot
+             * express the host's byte order or limb size, and only about a
+             * third of the build targets declare endianness to the recipes):
+             *
+             *   - little-endian host: reverse the whole buffer;
+             *   - big-endian host: reverse the order of the BN_ULONG-sized limb
+             *     groups, keeping the bytes within each group - because within a
+             *     limb a big-endian host already stores the most-significant
+             *     byte first, only the limb order (least-significant limb first)
+             *     is opposite to the big-endian byte string.
+             *
+             * Both line up with the value only when the entropy is a whole
+             * number of limbs (or a shorter pattern that tiles it evenly); a
+             * uniform pattern is invariant under either transform.
+             */
             if (!parse_bin(pp->value, &t->entropy, &t->entropy_len)) {
                 TEST_info("Line %d: invalid entropy", t->s.curr);
                 return 0;
+            }
+            {
+                DECLARE_IS_ENDIAN;
+                const size_t w = sizeof(BN_ULONG);
+
+                if (IS_LITTLE_ENDIAN) {
+                    size_t lo, hi;
+
+                    for (lo = 0, hi = t->entropy_len; lo < hi--; lo++) {
+                        unsigned char b = t->entropy[lo];
+
+                        t->entropy[lo] = t->entropy[hi];
+                        t->entropy[hi] = b;
+                    }
+                } else if (w != 0 && t->entropy_len % w == 0) {
+                    size_t ng = t->entropy_len / w, gi, bj;
+
+                    for (gi = 0; gi < ng / 2; gi++) {
+                        for (bj = 0; bj < w; bj++) {
+                            unsigned char b = t->entropy[gi * w + bj];
+
+                            t->entropy[gi * w + bj] = t->entropy[(ng - 1 - gi) * w + bj];
+                            t->entropy[(ng - 1 - gi) * w + bj] = b;
+                        }
+                    }
+                }
             }
         } else {
             /* Must be test specific line: try to parse it */
