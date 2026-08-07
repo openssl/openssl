@@ -153,6 +153,7 @@ struct ossl_provider_st {
     int activatecnt;
     char *name;
     char *path;
+    char *mdir;
     DSO *module;
     OSSL_provider_init_fn *init_function;
     STACK_OF(INFOPAIR) *parameters;
@@ -281,6 +282,7 @@ void ossl_provider_info_clear(OSSL_PROVIDER_INFO *info)
 {
     OPENSSL_free(info->name);
     OPENSSL_free(info->path);
+    OPENSSL_free(info->mdir);
     sk_INFOPAIR_pop_free(info->parameters, infopair_free);
 }
 
@@ -613,7 +615,8 @@ OSSL_PROVIDER *ossl_provider_new(OSSL_LIB_CTX *libctx, const char *name,
     if (prov == NULL)
         return NULL;
 
-    if (!ossl_provider_set_module_path(prov, template.path)) {
+    if (!ossl_provider_set_module_path(prov, template.path)
+        || !ossl_provider_set_module_dir(prov, template.mdir)) {
         ossl_provider_free(prov);
         return NULL;
     }
@@ -779,6 +782,7 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
 #endif
             OPENSSL_free(prov->name);
             OPENSSL_free(prov->path);
+            OPENSSL_free(prov->mdir);
             sk_INFOPAIR_pop_free(prov->parameters, infopair_free);
             CRYPTO_THREAD_lock_free(prov->opbits_lock);
             CRYPTO_THREAD_lock_free(prov->flag_lock);
@@ -795,13 +799,24 @@ void ossl_provider_free(OSSL_PROVIDER *prov)
 }
 
 /* Setters */
-int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path)
+int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *path)
 {
     OPENSSL_free(prov->path);
     prov->path = NULL;
-    if (module_path == NULL)
+
+    if (path == NULL
+        || (prov->path = OPENSSL_strdup(path)) != NULL)
         return 1;
-    if ((prov->path = OPENSSL_strdup(module_path)) != NULL)
+    return 0;
+}
+
+int ossl_provider_set_module_dir(OSSL_PROVIDER *prov, const char *mdir)
+{
+    OPENSSL_free(prov->mdir);
+    prov->mdir = NULL;
+
+    if (mdir == NULL
+        || (prov->mdir = OPENSSL_strdup(mdir)) != NULL)
         return 1;
     return 0;
 }
@@ -916,7 +931,8 @@ int OSSL_PROVIDER_set_default_search_path(OSSL_LIB_CTX *libctx,
     struct provider_store_st *store;
     char *p = NULL;
 
-    if (path != NULL) {
+    /* Both NULL and empty values clear any stored path */
+    if (path != NULL && *path != '\0') {
         p = OPENSSL_strdup(path);
         if (p == NULL)
             return 0;
@@ -991,15 +1007,17 @@ static int provider_init(OSSL_PROVIDER *prov)
                 || !CRYPTO_THREAD_read_lock(store->default_path_lock))
                 goto end;
 
-            if (store->default_path != NULL) {
+            if (prov->mdir != NULL) {
+                load_dir = prov->mdir;
+            } else if (store->default_path != NULL) {
                 allocated_load_dir = OPENSSL_strdup(store->default_path);
-                CRYPTO_THREAD_unlock(store->default_path_lock);
-                if (allocated_load_dir == NULL)
-                    goto end;
                 load_dir = allocated_load_dir;
-            } else {
-                CRYPTO_THREAD_unlock(store->default_path_lock);
+                if (allocated_load_dir == NULL) {
+                    CRYPTO_THREAD_unlock(store->default_path_lock);
+                    goto end;
+                }
             }
+            CRYPTO_THREAD_unlock(store->default_path_lock);
 
             if (load_dir == NULL) {
                 load_dir = ossl_safe_getenv("OPENSSL_MODULES");

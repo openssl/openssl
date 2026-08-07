@@ -37,7 +37,8 @@ int ossl_provider_up_ref(OSSL_PROVIDER *prov);
 void ossl_provider_free(OSSL_PROVIDER *prov);
 
 /* Setters */
-int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *module_path);
+int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *path);
+int ossl_provider_set_module_dir(OSSL_PROVIDER *prov, const char *mdir);
 
 int ossl_provider_is_child(const OSSL_PROVIDER *prov);
 int ossl_provider_set_child(OSSL_PROVIDER *prov, const OSSL_CORE_HANDLE *handle);
