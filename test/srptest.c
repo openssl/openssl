@@ -16,13 +16,14 @@
 #include <openssl/opensslconf.h>
 #include "testutil.h"
 
-#ifdef OPENSSL_NO_SRP
 #include <stdio.h>
-#else
+
+#ifndef OPENSSL_NO_SRP
 
 #include <openssl/srp.h>
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include <openssl/bio.h>
 
 #define RANDOM_SIZE 32 /* use 256 bits on each side */
 
@@ -255,6 +256,162 @@ err:
     return ret;
 }
 
+/*
+ * The RFC 5054 appendix A 1024-bit group in the SRP variant of base64,
+ * matching SRP_get_default_gN("1024"), and its generator g = 2.
+ */
+static const char b64_N_1024[] = "Ewl2hcjiutMd3Fu2lgFnUXWSc67TVyy2vwYCKoS9MLsrdJVT9RgWTCuEqWJrfB6u"
+                                 "E3LsE9GkOlaZabS7M29sj5TnzUqOLJMjiwEzArfiLr9WbMRANlF68N5AVLcPWvNx"
+                                 "6Zjl3m5Scp0BzJBz9TkgfhzKJZ.WtP3Mv/67I/0wmRZ";
+/*
+ * In the SRP base64 alphabet '0'-'9' encode the values 0-9, so these
+ * single-byte generators encode to strings that look like plain digits:
+ * "02" really is the SRP base64 encoding of g = 2.
+ */
+static const char b64_g_two[] = "02";
+
+/* N - 1 for the group above */
+static const char b64_N_1024_minus_1[] = "Ewl2hcjiutMd3Fu2lgFnUXWSc67TVyy2vwYCKoS9MLsrdJVT9RgWTCuEqWJrfB6u"
+                                         "E3LsE9GkOlaZabS7M29sj5TnzUqOLJMjiwEzArfiLr9WbMRANlF68N5AVLcPWvNx"
+                                         "6Zjl3m5Scp0BzJBz9TkgfhzKJZ.WtP3Mv/67I/0wmRY";
+
+/* Degenerate generators */
+static const char b64_g_one[] = "01";
+static const char b64_g_zero[] = "00";
+
+/* A 512-bit prime, below the 1024-bit minimum for N */
+static const char b64_N_512[] = "2LjDzcipQOr7FYsL0CdlJppNaT/zlgxNoExaATKv9X0XRO9HZdcWk77Wcgw5xtLJ"
+                                "WpMjOjEsn6w4FlHc9GEgtd";
+
+/*
+ * Check that SRP_create_verifier_ex() rejects (N, g), and show the error
+ * detail it raised so a curious maintainer can see the right bound failed.
+ */
+static int check_verifier_rejected(const char *label, const char *N,
+    const char *g)
+{
+    int ret;
+    char *salt = NULL, *verifier = NULL;
+
+    TEST_info("SRP_create_verifier_ex, expecting rejection: %s", label);
+    ret = TEST_ptr_null(SRP_create_verifier_ex("alice", "password", &salt,
+        &verifier, N, g, NULL, NULL));
+    TEST_openssl_errors();
+    OPENSSL_free(salt);
+    OPENSSL_free(verifier);
+    return ret;
+}
+
+/* Degenerate (N, g, v) inputs must not make it into a verifier */
+static int run_srp_create_verifier_checks(void)
+{
+    int ret = 0;
+    char *salt = NULL, *verifier = NULL;
+
+    /* A valid custom (N, g) still works */
+    if (!TEST_ptr(SRP_create_verifier_ex("alice", "password", &salt, &verifier,
+            b64_N_1024, b64_g_two, NULL, NULL)))
+        goto end;
+    OPENSSL_free(salt);
+    OPENSSL_free(verifier);
+    salt = NULL;
+    verifier = NULL;
+
+    /* g = 0, g = 1, g = N - 1 and g = N all violate 1 < g < N - 1 */
+    if (!check_verifier_rejected("g = 0", b64_N_1024, b64_g_zero)
+        || !check_verifier_rejected("g = 1", b64_N_1024, b64_g_one)
+        || !check_verifier_rejected("g = N - 1", b64_N_1024,
+            b64_N_1024_minus_1)
+        || !check_verifier_rejected("g = N", b64_N_1024, b64_N_1024)
+        /* N below the 1024-bit minimum */
+        || !check_verifier_rejected("N of 512 bits", b64_N_512, b64_g_two))
+        goto end;
+
+    ret = 1;
+end:
+    OPENSSL_free(salt);
+    OPENSSL_free(verifier);
+    return ret;
+}
+
+/*
+ * Write a one-group verifier file: an I row carrying (N, g) under group id
+ * "C" and, if v is non-NULL, a V row for user "alice" referencing it.
+ */
+static int write_vbase_file(const char *fname, const char *N, const char *g,
+    const char *v, const char *s)
+{
+    BIO *out;
+    int ret = 0;
+
+    if (!TEST_ptr(out = BIO_new_file(fname, "w")))
+        return 0;
+    if (!TEST_int_gt(BIO_printf(out, "I\t%s\t%s\tC\t\t\n", N, g), 0))
+        goto end;
+    if (v != NULL
+        && !TEST_int_gt(BIO_printf(out, "V\t%s\t%s\talice\tC\t\n", v, s), 0))
+        goto end;
+    ret = 1;
+end:
+    BIO_free(out);
+    return ret;
+}
+
+/* Degenerate (N, g, v) rows must not load from a verifier file */
+static int run_srp_vbase_checks(void)
+{
+    int ret = 0;
+    SRP_VBASE *vb = NULL;
+    SRP_user_pwd *user = NULL;
+    char *salt = NULL, *verifier = NULL;
+    char fname[] = "srp-vbase-test.txt";
+    char username[] = "alice";
+
+    /* A valid custom group and verifier round-trip through a file */
+    if (!TEST_ptr(SRP_create_verifier_ex(username, "password", &salt,
+            &verifier, b64_N_1024, b64_g_two, NULL, NULL)))
+        goto end;
+    if (!write_vbase_file(fname, b64_N_1024, b64_g_two, verifier, salt))
+        goto end;
+    if (!TEST_ptr(vb = SRP_VBASE_new(NULL))
+        || !TEST_int_eq(SRP_VBASE_init(vb, fname), SRP_NO_ERROR)
+        || !TEST_ptr(user = SRP_VBASE_get1_by_user(vb, username)))
+        goto end;
+    SRP_user_pwd_free(user);
+    user = NULL;
+    SRP_VBASE_free(vb);
+    vb = NULL;
+
+    /* An I row with g = 1 is rejected */
+    TEST_info("SRP_VBASE_init, expecting rejection: I row with g = 1");
+    if (!write_vbase_file(fname, b64_N_1024, b64_g_one, NULL, NULL))
+        goto end;
+    if (!TEST_ptr(vb = SRP_VBASE_new(NULL))
+        || !TEST_int_eq(SRP_VBASE_init(vb, fname), SRP_ERR_VBASE_BN_LIB))
+        goto end;
+    TEST_openssl_errors();
+    SRP_VBASE_free(vb);
+    vb = NULL;
+
+    /* A V row with v = N (violating 1 < v < N) is rejected */
+    TEST_info("SRP_VBASE_init, expecting rejection: V row with v = N");
+    if (!write_vbase_file(fname, b64_N_1024, b64_g_two, b64_N_1024, salt))
+        goto end;
+    if (!TEST_ptr(vb = SRP_VBASE_new(NULL))
+        || !TEST_int_eq(SRP_VBASE_init(vb, fname), SRP_ERR_VBASE_BN_LIB))
+        goto end;
+    TEST_openssl_errors();
+
+    ret = 1;
+end:
+    SRP_user_pwd_free(user);
+    SRP_VBASE_free(vb);
+    OPENSSL_free(salt);
+    OPENSSL_free(verifier);
+    remove(fname);
+    return ret;
+}
+
 static int run_srp_tests(void)
 {
     /* "Negative" test, expect a mismatch */
@@ -278,6 +435,8 @@ int setup_tests(void)
 #else
     ADD_TEST(run_srp_tests);
     ADD_TEST(run_srp_kat);
+    ADD_TEST(run_srp_create_verifier_checks);
+    ADD_TEST(run_srp_vbase_checks);
 #endif
     return 1;
 }

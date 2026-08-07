@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Reject degenerate SRP parameters.
+   The modulus `N` must be at least 1024 bits.
+   The generator `g` must satisfy `1 < g < N - 1`.
+   The verifier `v` must satisfy `1 < v < N`.
+
+   *Viktor Dukhovni*
+
  * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
    list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
    available in the active providers are advertised.  `PKCS7_sign_add_signer()`
