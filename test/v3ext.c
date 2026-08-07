@@ -21,26 +21,33 @@
 
 static const char *infile;
 
-static const char *duplicate_field_configs[] = {
-    "[default]\nbasicConstraints=CA:true,CA:false\n",
-    "[default]\nbasicConstraints=pathlen:0,pathlen:1\n",
-    "[default]\nbasicAttConstraints=authority:true,authority:false\n",
-    "[default]\nbasicAttConstraints=pathlen:0,pathlen:1\n",
-    "[default]\npolicyConstraints=requireExplicitPolicy:0,requireExplicitPolicy:1\n",
-    "[default]\npolicyConstraints=inhibitPolicyMapping:0,inhibitPolicyMapping:1\n",
+static const struct {
+    const char *single; /* Valid */
+    const char *duplicate; /* Invalid */
+} duplicate_field_configs[] = {
+    { "[default]\nbasicConstraints=CA:true\n",
+        "[default]\nbasicConstraints=CA:true,CA:false\n" },
+    { "[default]\nbasicConstraints=pathlen:0\n",
+        "[default]\nbasicConstraints=pathlen:0,pathlen:1\n" },
+    { "[default]\nbasicAttConstraints=authority:true\n",
+        "[default]\nbasicAttConstraints=authority:true,authority:false\n" },
+    { "[default]\nbasicAttConstraints=pathlen:0\n",
+        "[default]\nbasicAttConstraints=pathlen:0,pathlen:1\n" },
+    { "[default]\npolicyConstraints=requireExplicitPolicy:0\n",
+        "[default]\npolicyConstraints=requireExplicitPolicy:0,requireExplicitPolicy:1\n" },
+    { "[default]\npolicyConstraints=inhibitPolicyMapping:0\n",
+        "[default]\npolicyConstraints=inhibitPolicyMapping:0,inhibitPolicyMapping:1\n" },
 };
 
-static int test_duplicate_field(int idx)
+static int test_field_config(const char *config, int should_pass)
 {
-    const char *config = duplicate_field_configs[idx];
     size_t config_len = strlen(config);
     BIO *in = NULL;
     CONF *conf = NULL;
     X509 *cert = NULL;
     X509V3_CTX ctx;
-    int ret = 0;
+    int conf_res, ret = 0;
 
-    ERR_clear_error();
     if (!TEST_ptr(in = BIO_new(BIO_s_mem()))
         || !TEST_int_eq(BIO_write(in, config, (int)config_len),
             (int)config_len)
@@ -51,11 +58,11 @@ static int test_duplicate_field(int idx)
 
     X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
     X509V3_set_nconf(&ctx, conf);
-    ERR_clear_error();
-    if (!TEST_false(X509V3_EXT_add_nconf(conf, &ctx, "default", cert)))
-        goto end;
 
-    if (!TEST_err_r(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD))
+    ERR_clear_error();
+    conf_res = X509V3_EXT_add_nconf(conf, &ctx, "default", cert);
+    if (!TEST_int_eq(conf_res, should_pass)
+        || (!should_pass && !TEST_err_r(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD)))
         goto end;
 
     ret = 1;
@@ -65,6 +72,12 @@ end:
     BIO_free(in);
     ERR_clear_error();
     return ret;
+}
+
+static int test_duplicate_field(int idx)
+{
+    return test_field_config(duplicate_field_configs[idx].single, 1)
+        && test_field_config(duplicate_field_configs[idx].duplicate, 0);
 }
 
 static int test_pathlen(void)
