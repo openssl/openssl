@@ -120,8 +120,10 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
 
     assert((rpb->pfd_heap != NULL && rpb->pfd_heap == pfds) || (rpb->pfd_heap == NULL && rpb->pfds == pfds));
     assert(i <= rpb->pfd_num && rpb->pfd_num <= rpb->pfd_alloc);
+    /* Check the index first because an appended entry is uninitialised. */
+    if (i == rpb->pfd_num || pfds[i].fd == -1)
+        pfds[i].events = 0;
     pfds[i].fd = fd;
-    pfds[i].events = 0;
 
     if (want_read)
         pfds[i].events |= POLLIN;
