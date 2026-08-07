@@ -778,7 +778,11 @@ int ossl_pkcs7_stream(PKCS7 *p7)
     return 1;
 }
 
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
 int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
 {
+    if (boundary != NULL)
+        *boundary = NULL;
     return ossl_pkcs7_stream(p7);
 }
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
