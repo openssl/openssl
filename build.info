@@ -17,6 +17,11 @@ LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. include
 INCLUDE[libssl]=. include
 DEPEND[libssl]=libcrypto
+IF[{- !$disabled{cms} -}]
+  LIBS{shlib_version=1}=libcms
+  INCLUDE[libcms]=. include
+  DEPEND[libcms]=libcrypto
+ENDIF
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
@@ -460,6 +465,12 @@ IF[{- defined $target{shared_defflag} -}]
   GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
   GENERATE[libssl.ld]=util/libssl.num libssl
   DEPEND[libcrypto.ld libssl.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
+
+  IF[{- !$disabled{cms} -}]
+    SHARED_SOURCE[libcms]=libcms.ld
+    GENERATE[libcms.ld]=util/libcms.num libcms LIBCMS --symbol-prefix=LIBCMS_
+    DEPEND[libcms.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
+  ENDIF
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
@@ -469,6 +480,12 @@ IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
   SHARED_SOURCE[libssl]=libssl.rc
+
+  IF[{- !$disabled{cms} -}]
+    GENERATE[libcms.rc]=util/mkrc.pl libcms
+    DEPEND[libcms.rc]=configdata.pm
+    SHARED_SOURCE[libcms]=libcms.rc
+  ENDIF
 ENDIF
 
 # These files set the build directory up for CMake inclusion.
