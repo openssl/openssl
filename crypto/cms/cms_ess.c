@@ -14,7 +14,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "crypto/x509.h"
 #include "cms_local.h"
 
 IMPLEMENT_ASN1_FUNCTIONS(CMS_ReceiptRequest)
@@ -126,17 +125,18 @@ CMS_ReceiptRequest *CMS_ReceiptRequest_create0_ex(
         ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
         goto err;
     }
-    if (id)
+    if (id != NULL) {
         ASN1_STRING_set0(rr->signedContentIdentifier, id, idlen);
-    else {
-        if (!ASN1_STRING_set1_data(rr->signedContentIdentifier, NULL, 32)) {
+    } else {
+        unsigned char cid[32];
+
+        if (RAND_bytes_ex(libctx, cid, sizeof(cid), 0) <= 0)
+            goto err;
+        if (!ASN1_STRING_set1_data(rr->signedContentIdentifier, cid,
+                sizeof(cid))) {
             ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
             goto err;
         }
-        if (RAND_bytes_ex(libctx, rr->signedContentIdentifier->data, 32,
-                0)
-            <= 0)
-            goto err;
     }
 
     sk_GENERAL_NAMES_pop_free(rr->receiptsTo, GENERAL_NAMES_free);
@@ -334,12 +334,12 @@ int ossl_cms_Receipt_verify(CMS_ContentInfo *cms, CMS_ContentInfo *req_cms)
         goto err;
     }
 
-    if (diglen != (unsigned int)msig->length) {
+    if (diglen != ASN1_STRING_get_length(msig)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_WRONG_LENGTH);
         goto err;
     }
 
-    if (memcmp(dig, msig->data, diglen)) {
+    if (memcmp(dig, ASN1_STRING_get0_data(msig), diglen)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_MSGSIGDIGEST_VERIFICATION_FAILURE);
         goto err;
     }
