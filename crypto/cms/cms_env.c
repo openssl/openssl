@@ -15,7 +15,6 @@
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 /* CMS EnvelopedData Utilities */
@@ -106,7 +105,6 @@ cms_auth_enveloped_data_init(CMS_ContentInfo *cms)
 int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
 {
     EVP_PKEY *pkey;
-    int i;
 
     switch (ri->type) {
     case CMS_RECIPINFO_TRANS:
@@ -135,18 +133,6 @@ int ossl_cms_env_asn1_ctrl(CMS_RecipientInfo *ri, int cmd)
     else if (EVP_PKEY_is_a(pkey, "RSA"))
         return ossl_cms_rsa_envelope(ri, cmd);
 
-    /* Something else? We'll give engines etc a chance to handle this */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return 1;
-    i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_ENVELOPE, cmd, ri);
-    if (i == -2) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
-    }
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
-        return 0;
-    }
     return 1;
 }
 
@@ -1438,17 +1424,6 @@ int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk)
         return CMS_RECIPINFO_TRANS;
 
     /*
-     * Otherwise this might be an engine implementation, so see if we can get
-     * the type from the ameth.
-     */
-    if (pk->ameth && pk->ameth->pkey_ctrl) {
-        int i, r;
-        i = pk->ameth->pkey_ctrl(pk, ASN1_PKEY_CTRL_CMS_RI_TYPE, 0, &r);
-        if (i > 0)
-            return r;
-    }
-
-    /*
      * Otherwise try very hard to figure out what RecipientInfo the key supports.
      */
     ri_type = CMS_RECIPINFO_TRANS;
@@ -1471,15 +1446,6 @@ int ossl_cms_pkey_get_ri_type(EVP_PKEY *pk)
 int ossl_cms_pkey_is_ri_type_supported(EVP_PKEY *pk, int ri_type)
 {
     int supportedRiType;
-
-    if (pk->ameth != NULL && pk->ameth->pkey_ctrl != NULL) {
-        int i, r;
-
-        i = pk->ameth->pkey_ctrl(pk, ASN1_PKEY_CTRL_CMS_IS_RI_TYPE_SUPPORTED,
-            ri_type, &r);
-        if (i > 0)
-            return r;
-    }
 
     supportedRiType = ossl_cms_pkey_get_ri_type(pk);
     if (supportedRiType < 0)
