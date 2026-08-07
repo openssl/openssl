@@ -1344,6 +1344,25 @@ err:
 }
 
 /*
+ * dtls_listener_signal_notifier - wake threads blocked on this listener.
+ *
+ * Readiness may be produced by the thread which pumps the demux while a
+ * different thread is blocked in poll() on the network socket. That socket
+ * will not necessarily become readable again from the blocked thread's point
+ * of view, so the notifier is used to wake it.
+ *
+ * The caller must hold dl->mutex.
+ */
+static void dtls_listener_signal_notifier(DTLS_LISTENER *dl)
+{
+    if (dl->have_notifier && dl->cur_blocking_waiters > 0
+        && !dl->signalled_notifier) {
+        ossl_rio_notifier_signal(&dl->notifier);
+        dl->signalled_notifier = 1;
+    }
+}
+
+/*
  * dtls_listener_packet_handler - callback for handling incoming datagrams.
  *
  * This callback is invoked by the demux for each received datagram. It routes
@@ -1393,10 +1412,7 @@ static void dtls_listener_packet_handler(DGRAM_URXE *urxe, void *arg)
     ossl_dtls_rx_inject_urxe(sc->d1->rx, urxe);
 
     /* Signal notifier if needed */
-    if (dl->have_notifier && dl->cur_blocking_waiters > 0 && !dl->signalled_notifier) {
-        ossl_rio_notifier_signal(&dl->notifier);
-        dl->signalled_notifier = 1;
-    }
+    dtls_listener_signal_notifier(dl);
 
     ossl_crypto_mutex_unlock(dl->mutex);
     return;
@@ -2242,6 +2258,14 @@ static int dtls_listener_drive_pending(DTLS_LISTENER *dl)
         }
     }
 
+    /*
+     * A connection became acceptable. Any thread blocked waiting for one is
+     * polling the network socket, which will not necessarily become readable
+     * again on its behalf, so wake it explicitly.
+     */
+    if (result)
+        dtls_listener_signal_notifier(dl);
+
     /* Remove failed connections (after releasing refs so ref count is 1) */
     for (i = 0; i < sk_SSL_num(ctx.failed_conns); i++) {
         ssl = sk_SSL_value(ctx.failed_conns, i);
@@ -2811,6 +2835,18 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
         DTLS_LISTENER *dl = (DTLS_LISTENER *)sc->d1->listener;
         ossl_dtls_tick(dl);
     }
+
+    /*
+     * Handle events for the connection itself, which for DTLS means servicing
+     * the retransmission timer. The caller may have blocked until that timer
+     * expired, so if nothing retransmits here then nothing will, and the
+     * deadline would be recomputed as "now" on every subsequent wait.
+     *
+     * A failure here leaves the connection in a fatal error state, which the
+     * SSL_POLL_EVENT_EC check below reports.
+     */
+    if (do_tick)
+        SSL_handle_events(s);
 
     if ((events & SSL_POLL_EVENT_R) != 0) {
         if (SSL_has_pending(s) || SSL_pending(s) > 0) {
