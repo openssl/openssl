@@ -6,7 +6,7 @@ CMS_add1_signer, CMS_SignerInfo_sign - add a signer to a CMS_ContentInfo signed 
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms, X509 *signcert,
                                  EVP_PKEY *pkey, const EVP_MD *md,
@@ -106,6 +106,12 @@ CMS_SignerInfo_sign() returns 1 on success, 0 on failure.
 
 L<ERR_get_error(3)>, L<CMS_sign(3)>,
 L<CMS_final(3)>,
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

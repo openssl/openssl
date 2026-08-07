@@ -8,7 +8,7 @@ CMS_AuthEnvelopedData_create, CMS_AuthEnvelopedData_create_ex
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_ContentInfo *
  CMS_EnvelopedData_create_ex(const EVP_CIPHER *cipher, OSSL_LIB_CTX *libctx,
@@ -74,6 +74,10 @@ The CMS_EnvelopedData_create_ex() method was added in OpenSSL 3.0.
 
 CMS_AuthEnvelopedData_create() and CMS_AuthEnvelopedData_create_ex()
 were added in OpenSSL 3.5.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
