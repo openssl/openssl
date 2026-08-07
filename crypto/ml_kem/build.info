@@ -8,15 +8,24 @@ IF[{- !$disabled{asm} -}]
     $MLKEMASM_ppc64=asm/mlkem_ntt_ppc64le.S asm/mlkem_intt_ppc64le.S
   ENDIF
 
+  IF[{- ($target{perlasm_scheme} // '') ne '31' -}]
+    $MLKEM_VX_s390x=ml_kem_vec128.c
+    $MLKEMDEF_s390x=OPENSSL_ML_KEM_S390X
+  ENDIF
+
   # Now that we have defined all the arch specific variables, use the
-  # appropriate one, and define the appropriate macros
+  # appropriate ones, and define the appropriate macros
   IF[$MLKEMASM_{- $target{asm_arch} -}]
     $MLKEMASM=$MLKEMASM_{- $target{asm_arch} -}
     $MLKEMDEF=$MLKEMDEF_{- $target{asm_arch} -}
   ENDIF
+  IF[$MLKEM_VX_{- $target{asm_arch} -}]
+    $MLKEM_VX=$MLKEM_VX_{- $target{asm_arch} -}
+    $MLKEMDEF=$MLKEMDEF_{- $target{asm_arch} -}
+  ENDIF
 ENDIF
 
-$COMMON=ml_kem.c $MLKEMASM
+$COMMON=ml_kem.c $MLKEMASM $MLKEM_VX
 
 IF[{- !$disabled{'ml-kem'} -}]
     SOURCE[../../libcrypto]=$COMMON

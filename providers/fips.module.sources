@@ -267,6 +267,7 @@ crypto/ml_dsa/ml_dsa_local.h
 crypto/ml_dsa/ml_dsa_matrix.c
 crypto/ml_dsa/ml_dsa_matrix.h
 crypto/ml_dsa/ml_dsa_ntt.c
+crypto/ml_dsa/ml_dsa_ntt_vec128.c
 crypto/ml_dsa/ml_dsa_params.c
 crypto/ml_dsa/ml_dsa_poly.h
 crypto/ml_dsa/ml_dsa_sample.c
@@ -275,6 +276,8 @@ crypto/ml_dsa/ml_dsa_sign.c
 crypto/ml_dsa/ml_dsa_sign.h
 crypto/ml_dsa/ml_dsa_vector.h
 crypto/ml_kem/ml_kem.c
+crypto/ml_kem/ml_kem_local.h
+crypto/ml_kem/ml_kem_vec128.c
 crypto/modes/asm/aes-gcm-armv8-unroll8_64.pl
 crypto/modes/asm/aes-gcm-armv8_64.pl
 crypto/modes/asm/aes-gcm-avx512.pl
