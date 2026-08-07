@@ -13,7 +13,6 @@
 #include <openssl/err.h>
 #include <openssl/decoder.h>
 #include "crypto/asn1.h"
-#include "crypto/evp.h"
 #include "cms_local.h"
 
 static EVP_PKEY *pkey_type2param(int ptype, const void *pval,
@@ -198,7 +197,8 @@ static int ecdh_cms_set_shared_info(EVP_PKEY_CTX *pctx, CMS_RecipientInfo *ri)
     if (kekctx == NULL)
         goto err;
     OBJ_obj2txt(name, sizeof(name), kekalg->algorithm, 0);
-    kekcipher = EVP_CIPHER_fetch(pctx->libctx, name, pctx->propquery);
+    kekcipher = EVP_CIPHER_fetch(EVP_PKEY_CTX_get0_libctx(pctx), name,
+        EVP_PKEY_CTX_get0_propq(pctx));
     if (kekcipher == NULL || EVP_CIPHER_get_mode(kekcipher) != EVP_CIPH_WRAP_MODE)
         goto err;
     if (!EVP_EncryptInit_ex(kekctx, kekcipher, NULL, NULL, NULL))

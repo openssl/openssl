@@ -15,7 +15,6 @@
 #include <openssl/kdf.h>
 #include <openssl/x509.h>
 #include "cms_local.h"
-#include "crypto/evp.h"
 
 #include <crypto/asn1.h>
 
