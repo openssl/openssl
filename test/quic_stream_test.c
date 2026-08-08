@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/packet.h"
+#include "internal/quic_sf_list.h"
 #include "internal/quic_stream.h"
 #include "testutil.h"
 
@@ -595,11 +596,107 @@ err:
     return ret;
 }
 
+/*
+ * The frame limit is derived from the flow control window, clamped to
+ * [SFRAME_LIST_MIN_MAX_FRAMES, SFRAME_LIST_MAX_MAX_FRAMES].
+ */
+static const struct {
+    uint64_t window;
+    size_t max_frames;
+} frame_limit_tests[] = {
+    { 256 * 1024, 4096 }, /* derived from the window */
+    { 1024, SFRAME_LIST_MIN_MAX_FRAMES }, /* raised to the minimum */
+    { 64 * 1024 * 1024, SFRAME_LIST_MAX_MAX_FRAMES }, /* capped at the maximum */
+};
+
+/*
+ * Check that the number of buffered stream frames is capped, and that the cap
+ * only rejects frames which actually grow the list.
+ */
+static int test_rstream_frame_limit(int idx)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL;
+    unsigned char *read_buf = NULL;
+    const size_t max_frames = frame_limit_tests[idx].max_frames;
+    const size_t data_size = 2 * max_frames + 64;
+    const uint64_t past_tail = 2 * max_frames;
+    size_t i, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        goto err;
+
+    ossl_quic_rstream_set_rx_window(rstream, frame_limit_tests[idx].window);
+
+    for (i = 0; i < data_size; i++)
+        data[i] = (unsigned char)(i & 0xff);
+
+    /* fill the list to the cap with one byte frames separated by one byte gaps */
+    for (i = 0; i < max_frames; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 2 * i,
+                data + 2 * i, 1, 0)))
+            goto err;
+
+    /* a further frame would exceed the cap and must be refused */
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, past_tail,
+            data + past_tail, 1, 0)))
+        goto err;
+
+    /* a retransmission of a buffered frame does not grow the list */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 10,
+            data + 10, 1, 0)))
+        goto err;
+
+    /* a frame covering eleven buffered frames shrinks the list by ten */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0, data, 21, 0)))
+        goto err;
+
+    /* so exactly ten more frames fit, and the eleventh does not */
+    for (i = 0; i < 10; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                past_tail + 2 * i,
+                data + past_tail + 2 * i, 1, 0)))
+            goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
+            past_tail + 20,
+            data + past_tail + 20, 1, 0)))
+        goto err;
+
+    /* the buffered data is unaffected by all of the above */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf, data_size,
+            &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 21)
+        || !TEST_mem_eq(read_buf, readbytes, data, 21))
+        goto err;
+
+    /* reading released one frame, so one more frame fits again */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, past_tail + 20,
+            data + past_tail + 20, 1, 0))
+        || !TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
+            past_tail + 22,
+            data + past_tail + 22, 1, 0)))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
+    OPENSSL_free(read_buf);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
     ADD_ALL_TESTS(test_rstream_simple, 4);
     ADD_ALL_TESTS(test_rstream_random, 100);
+    ADD_ALL_TESTS(test_rstream_frame_limit, OSSL_NELEM(frame_limit_tests));
     return 1;
 }
