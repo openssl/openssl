@@ -1026,69 +1026,33 @@ install_man_docs: build_man_docs
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(MANDIR)/man5"
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(MANDIR)/man7"
 	@$(ECHO) "*** Installing manpages"
-	@set -e; for x in dummy $(MANDOCS1); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
-		cp $$x "$(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
-		chmod 644 "$(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man1 $(BLDDIR)/doc/man1 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man1"; \
-	done
-	@set -e; for x in dummy $(MANDOCS3); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
-		cp $$x "$(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
-		chmod 644 "$(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man3 $(BLDDIR)/doc/man3 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man3"; \
-	done
-	@set -e; for x in dummy $(MANDOCS5); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
-		cp $$x "$(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
-		chmod 644 "$(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man5 $(BLDDIR)/doc/man5 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man5"; \
-	done
-	@set -e; for x in dummy $(MANDOCS7); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "install $$x -> $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
-		cp $$x "$(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
-		chmod 644 "$(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks install $(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man7"; \
-	done
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl install \
+		$(SRCDIR)/doc/man1 $(BLDDIR)/doc/man1 \
+		"$(DESTDIR)$(MANDIR)/man1" "$(MANSUFFIX)" $(MANDOCS1)
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl install \
+		$(SRCDIR)/doc/man3 $(BLDDIR)/doc/man3 \
+		"$(DESTDIR)$(MANDIR)/man3" "$(MANSUFFIX)" $(MANDOCS3)
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl install \
+		$(SRCDIR)/doc/man5 $(BLDDIR)/doc/man5 \
+		"$(DESTDIR)$(MANDIR)/man5" "$(MANSUFFIX)" $(MANDOCS5)
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl install \
+		$(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 \
+		"$(DESTDIR)$(MANDIR)/man7" "$(MANSUFFIX)" $(MANDOCS7)
 
 uninstall_man_docs: build_man_docs
 	@$(ECHO) "*** Uninstalling manpages"
-	@set -e; for x in dummy $(MANDOCS1); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
-		$(RM) "$(DESTDIR)$(MANDIR)/man1/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man1 $(BLDDIR)/doc/man1 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man1"; \
-	done
-	@set -e; for x in dummy $(MANDOCS3); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
-		$(RM) "$(DESTDIR)$(MANDIR)/man3/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man3 $(BLDDIR)/doc/man3 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man3"; \
-	done
-	@set -e; for x in dummy $(MANDOCS5); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
-		$(RM) "$(DESTDIR)$(MANDIR)/man5/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man5 $(BLDDIR)/doc/man5 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man5"; \
-	done
-	@set -e; for x in dummy $(MANDOCS7); do \
-		if [ "$$x" = "dummy" ]; then continue; fi; \
-		fn=`basename $$x`; \
-		$(ECHO) "$(RM) $(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
-		$(RM) "$(DESTDIR)$(MANDIR)/man7/$${fn}$(MANSUFFIX)"; \
-		$(PERL) $(SRCDIR)/util/write-man-symlinks uninstall $(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 $${fn}$(MANSUFFIX) "$(DESTDIR)$(MANDIR)/man7"; \
-	done
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl uninstall \
+		$(SRCDIR)/doc/man1 $(BLDDIR)/doc/man1 \
+		"$(DESTDIR)$(MANDIR)/man1" "$(MANSUFFIX)" $(MANDOCS1)
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl uninstall \
+		$(SRCDIR)/doc/man3 $(BLDDIR)/doc/man3 \
+		"$(DESTDIR)$(MANDIR)/man3" "$(MANSUFFIX)" $(MANDOCS3)
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl uninstall \
+		$(SRCDIR)/doc/man5 $(BLDDIR)/doc/man5 \
+		"$(DESTDIR)$(MANDIR)/man5" "$(MANSUFFIX)" $(MANDOCS5)
+	@$(PERL) $(SRCDIR)/util/install-man-pages.pl uninstall \
+		$(SRCDIR)/doc/man7 $(BLDDIR)/doc/man7 \
+		"$(DESTDIR)$(MANDIR)/man7" "$(MANSUFFIX)" $(MANDOCS7)
 
 install_html_docs: install_image_docs build_html_docs
 	@[ -n "$(INSTALLTOP)" ] || (echo INSTALLTOP should not be empty; exit 1)
