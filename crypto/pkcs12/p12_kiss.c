@@ -59,7 +59,7 @@ void PKCS12_PARSE_CTX_set_skeys(PKCS12_PARSE_CTX *ctx, STACK_OF(EVP_SKEY) **skey
 
 /*
  * Parse and decrypt a PKCS#12 structure returning user key, user cert,
- * other (CA) certs, and/or symmetric secret key according to ctx settings.
+ * other (CA) certs, and/or symmetric secret keys according to ctx settings.
  */
 
 int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
