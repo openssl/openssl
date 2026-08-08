@@ -780,26 +780,26 @@ install_dev: install_runtime_libs
 	@$(ECHO) "*** Installing development files"
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/openssl"
 	@ : {- output_off() if $disabled{uplink}; "" -}
-	@$(ECHO) "install $(SRCDIR)/ms/applink.c -> $(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
-	@cp $(SRCDIR)/ms/applink.c "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
-	@chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/applink.c"
+	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
+		"$(DESTDIR)$(INSTALLTOP)/include/openssl" $(SRCDIR)/ms/applink.c
 	@ : {- output_on() if $disabled{uplink}; "" -}
-	@set -e; for i in $(SRCDIR)/include/openssl/*.h \
-			  $(BLDDIR)/include/openssl/*.h; do \
-		fn=`basename $$i`; \
-		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
-		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
-		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
-	done
+	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
+		"$(DESTDIR)$(INSTALLTOP)/include/openssl" \
+		$(SRCDIR)/include/openssl/*.h $(BLDDIR)/include/openssl/*.h
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
-		$(ECHO) "install $$l -> $(DESTDIR)$(libdir)/$$fn"; \
 		cp $$l "$(DESTDIR)$(libdir)/$$fn.new"; \
 		$(RANLIB) "$(DESTDIR)$(libdir)/$$fn.new"; \
 		chmod 644 "$(DESTDIR)$(libdir)/$$fn.new"; \
-		mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
-		      "$(DESTDIR)$(libdir)/$$fn"; \
+		if cmp -s "$(DESTDIR)$(libdir)/$$fn.new" \
+			  "$(DESTDIR)$(libdir)/$$fn"; then \
+			$(RM) "$(DESTDIR)$(libdir)/$$fn.new"; \
+		else \
+			$(ECHO) "install $$l -> $(DESTDIR)$(libdir)/$$fn"; \
+			mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
+			      "$(DESTDIR)$(libdir)/$$fn"; \
+		fi; \
 	done
 	@ : {- output_off() if $disabled{shared}; "" -}
 	@set -e; for s in $(INSTALL_SHLIB_INFO); do \
@@ -841,19 +841,11 @@ install_dev: install_runtime_libs
 	done
 	@ : {- output_on() if $disabled{shared}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(PKGCONFIGDIR)"
-	@for e in $(INSTALL_EXPORTERS_PKGCONFIG); do \
-		fn=`basename $$e`; \
-		$(ECHO) "install $$e -> $(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
-		cp $$e "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
-		chmod 644 "$(DESTDIR)$(PKGCONFIGDIR)/$$fn"; \
-	done
+	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
+		"$(DESTDIR)$(PKGCONFIGDIR)" $(INSTALL_EXPORTERS_PKGCONFIG)
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(CMAKECONFIGDIR)"
-	@for e in $(INSTALL_EXPORTERS_CMAKE); do \
-		fn=`basename $$e`; \
-		$(ECHO) "install $$e -> $(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
-		cp $$e "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
-		chmod 644 "$(DESTDIR)$(CMAKECONFIGDIR)/$$fn"; \
-	done
+	@$(PERL) $(SRCDIR)/util/install-files.pl 644 \
+		"$(DESTDIR)$(CMAKECONFIGDIR)" $(INSTALL_EXPORTERS_CMAKE)
 
 uninstall_dev: uninstall_runtime_libs
 	@$(ECHO) "*** Uninstalling development files"
@@ -950,17 +942,27 @@ install_runtime_libs: build_libs
 		if [ "$$s" = "dummy" ]; then continue; fi; \
 		fn=`basename $$s`; \
 		: {- output_off() unless windowsdll(); "" -}; \
-		$(ECHO) "install $$s -> $(DESTDIR)$(bindir)/$$fn"; \
 		cp $$s "$(DESTDIR)$(bindir)/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(bindir)/$$fn.new"; \
-		mv -f "$(DESTDIR)$(bindir)/$$fn.new" \
-		      "$(DESTDIR)$(bindir)/$$fn"; \
+		if cmp -s "$(DESTDIR)$(bindir)/$$fn.new" \
+			  "$(DESTDIR)$(bindir)/$$fn"; then \
+			$(RM) "$(DESTDIR)$(bindir)/$$fn.new"; \
+		else \
+			$(ECHO) "install $$s -> $(DESTDIR)$(bindir)/$$fn"; \
+			mv -f "$(DESTDIR)$(bindir)/$$fn.new" \
+			      "$(DESTDIR)$(bindir)/$$fn"; \
+		fi; \
 		: {- output_on() unless windowsdll(); "" -}{- output_off() if windowsdll(); "" -}; \
-		$(ECHO) "install $$s -> $(DESTDIR)$(libdir)/$$fn"; \
 		cp $$s "$(DESTDIR)$(libdir)/$$fn.new"; \
 		chmod 755 "$(DESTDIR)$(libdir)/$$fn.new"; \
-		mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
-		      "$(DESTDIR)$(libdir)/$$fn"; \
+		if cmp -s "$(DESTDIR)$(libdir)/$$fn.new" \
+			  "$(DESTDIR)$(libdir)/$$fn"; then \
+			$(RM) "$(DESTDIR)$(libdir)/$$fn.new"; \
+		else \
+			$(ECHO) "install $$s -> $(DESTDIR)$(libdir)/$$fn"; \
+			mv -f "$(DESTDIR)$(libdir)/$$fn.new" \
+			      "$(DESTDIR)$(libdir)/$$fn"; \
+		fi; \
 		: {- output_on() if windowsdll(); "" -}; \
 	done
 
