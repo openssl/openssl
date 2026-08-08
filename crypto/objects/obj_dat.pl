@@ -55,6 +55,9 @@ my %obj;
 my %objd;
 open(IN, "$ARGV[0]") || die "Can't open input file $ARGV[0], $!";
 while (<IN>) {
+    # The compatibility aliases appended after the include guard's
+    # closing #endif carry no object data; read only the guarded body.
+    last if m@^#endif\s+/\* OPENSSL_OBJ_MAC_H \*/@;
     next unless /^\#define\s+(\S+)\s+(.*)$/;
     my $v = $1;
     my $d = $2;

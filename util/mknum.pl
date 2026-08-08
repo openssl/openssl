@@ -39,6 +39,29 @@ GetOptions('ordinals=s' => \$ordinals_file,
 die "Please supply ordinals file\n"
     unless $ordinals_file;
 
+# The ordinals file is rewritten on every run, so its timestamp
+# records the last completed run.  While it is newer than the symbol
+# hacking file and every header given, the last run saw the tree in
+# its current state and re-parsing would change nothing; skip it.
+# Modes that exist to report or to renumber always run.
+unless ($checkexist || $renumber || $verbose || $debug) {
+    my $stamp = (stat $ordinals_file)[9];
+
+    if (defined $stamp) {
+        my $uptodate = 1;
+
+        foreach my $f (($symhacks_file // (), @ARGV)) {
+            my $mtime = (stat $f)[9];
+
+            if (!defined $mtime || $mtime >= $stamp) {
+                $uptodate = 0;
+                last;
+            }
+        }
+        exit 0 if $uptodate;
+    }
+}
+
 my $ordinals = OpenSSL::Ordinals->new(from => $ordinals_file,
                                       warnings => $warnings,
                                       verbose => $verbose,
