@@ -199,7 +199,7 @@ sub feature_filter {
 
     if ($disabled{deprecated}) {
         foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)_(\d+)(?:_(\d+))?$/;
+            next unless /^DEPRECATED_(\d+)_(\d+)(?:_(\d+))?$/;
             my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
             $verdict = 0 if $config{api} >= $symdep;
             print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"

@@ -58,41 +58,6 @@ sub all_conds {
 #                       be ignored.
 #                       If the massager is undefined, the "complete" string
 #                       should be ignored.
-my @opensslcpphandlers = (
-    ##################################################################
-    # OpenSSL CPP specials
-    #
-    # These are used to convert certain pre-processor expressions into
-    # others that @cpphandlers have a better chance to understand.
-
-    # This changes any OPENSSL_NO_DEPRECATED_x_y[_z] check to a check of
-    # OPENSSL_NO_DEPRECATEDIN_x_y[_z].  That's due to <openssl/macros.h>
-    # creating OPENSSL_NO_DEPRECATED_x_y[_z], but the ordinals files using
-    # DEPRECATEDIN_x_y[_z].
-    { regexp   => qr/#if(def|ndef) OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?)$/,
-      massager => sub {
-          return (<<"EOF");
-#if$1 OPENSSL_NO_DEPRECATEDIN_$2
-EOF
-      }
-    },
-    # Do the same for modern CPP definition tests.
-    { regexp   => qr/#if (\!defined).*OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?).*$/,
-      massager => sub {
-          return (<<"EOF");
-#ifndef OPENSSL_NO_DEPRECATEDIN_$2
-EOF
-      }
-    },
-    # Do the same for modern CPP definition tests.
-    { regexp   => qr/#if (defined).*OPENSSL_NO_DEPRECATED_(\d+_\d+(?:_\d+)?).*$/,
-      massager => sub {
-          return (<<"EOF");
-#ifdef OPENSSL_NO_DEPRECATEDIN_$2
-EOF
-      }
-    }
-);
 my @cpphandlers = (
     ##################################################################
     # CPP stuff
@@ -892,44 +857,26 @@ sub parse {
                     # This is only done if we're not inside a comment and
                     # if it's a preprocessor directive and it's finished.
                     if ($normalized_line =~ m|^#| && $_ eq "") {
-                        print STDERR "DEBUG[OPENSSL CPP]: \$normalized_line = '$normalized_line'\n"
+                        print STDERR "DEBUG[CPP]: \$normalized_line = '$normalized_line'\n"
                             if $opts{debug};
-                        $opts{debug_type} = "OPENSSL CPP";
+                        $opts{debug_type} = "CPP";
                         my @r = ( _run_handlers($normalized_line,
-                                                @opensslcpphandlers,
+                                                @cpphandlers,
                                                 \%opts) );
                         if (shift @r) {
-                            # Checking if there are lines to inject.
+                            if (ref($r[0]) eq "HASH") {
+                                push @result, shift @r;
+                            }
+
+                            # Now, check if there are lines to inject.
+                            # Really, this should never happen, it IS a
+                            # preprocessor directive after all...
                             if (@r) {
-                                @r = split $/, (pop @r).$_;
-                                print STDERR "DEBUG[OPENSSL CPP]: injecting '", join("', '", @r),"'\n"
+                                @r = split $/, pop @r;
+                                print STDERR "DEBUG[CPP]: injecting '", join("', '", @r),"'\n"
                                     if $opts{debug} && @r;
                                 @lines = ( @r, @lines );
-
                                 $_ = "";
-                            }
-                        } else {
-                            print STDERR "DEBUG[CPP]: \$normalized_line = '$normalized_line'\n"
-                                if $opts{debug};
-                            $opts{debug_type} = "CPP";
-                            my @r = ( _run_handlers($normalized_line,
-                                                    @cpphandlers,
-                                                    \%opts) );
-                            if (shift @r) {
-                                if (ref($r[0]) eq "HASH") {
-                                    push @result, shift @r;
-                                }
-
-                                # Now, check if there are lines to inject.
-                                # Really, this should never happen, it IS a
-                                # preprocessor directive after all...
-                                if (@r) {
-                                    @r = split $/, pop @r;
-                                    print STDERR "DEBUG[CPP]: injecting '", join("', '", @r),"'\n"
-                                    if $opts{debug} && @r;
-                                    @lines = ( @r, @lines );
-                                    $_ = "";
-                                }
                             }
                         }
 
