@@ -475,12 +475,15 @@ sub lib_disablable
     # Flag if the sub-library is disablable.
     # There are a few exceptions, where disabling the sub-library
     # doesn't actually remove the whole sub-library, but rather
-    # implements it with a NULL backend.
+    # implements it with a NULL backend or keeps part of it: no-http
+    # still builds http_lib.c for URL parsing, so the HTTP reason
+    # codes must remain visible.
     return do {
         # The 'once' warning does not know that require defines these.
         no warnings 'once';
 
         ($lib ne "SSL" && $lib ne "ASYNC" && $lib ne "DSO"
+         && $lib ne "HTTP"
          && (grep { $lib eq uc $_ } @configdata::disablables,
                                     @configdata::disablables_int));
     };
