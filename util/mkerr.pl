@@ -159,8 +159,10 @@ my %strings;    # define -> text
 # Read and parse the config file
 open(IN, "$config") || die "Can't open config file $config, $!,";
 while ( <IN> ) {
+    s|\R$||;                    # Better chomp; this may run on a
+                                # checkout with CRLF line endings
     next if /^#/ || /^$/;
-    if ( /^L\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\S+))?\s+$/ ) {
+    if ( /^L\s+(\S+)\s+(\S+)\s+(\S+)(?:\s+(\S+))?\s*$/ ) {
         my $lib = $1;
         my $pubhdr = $2;
         my $err = $3;
@@ -234,6 +236,7 @@ if ( ! $reindex && $statefile ) {
     # Scan function and reason codes and store them: keep a note of the
     # maximum code used.
     while ( <STATE> ) {
+        s|\R$||;                # Better chomp, as above
         next if /^#/ || /^$/;
         my $name;
         my $code;

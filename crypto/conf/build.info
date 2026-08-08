@@ -5,3 +5,4 @@ SOURCE[../../libcrypto]= \
 
 DEPEND[conf_def.o]=conf_def.h
 GENERATE[conf_def.h]=keysets.pl
+INCLUDE[conf_def.o]=.
