@@ -1,0 +1,15 @@
+LIBS=../libcrypto
+
+$OPENSSLSRC=\
+        cms_lib.c cms_asn1.c cms_att.c cms_io.c cms_smime.c cms_err.c \
+        cms_sd.c cms_dd.c cms_cd.c cms_env.c cms_enc.c cms_ess.c \
+        cms_pwri.c cms_kari.c cms_rsa.c cms_dh.c cms_ec.c cms_kem.c cms_kemri.c
+
+# The CMS sources are compiled twice from the same source of truth: once
+# for libcrypto, which keeps exporting the CMS_* symbols through the 4.x
+# ABI, and once for libcms, where libcms_names.h renames every public
+# symbol to its libcms-native LIBCMS_* equivalent.
+SOURCE[../libcrypto]=$OPENSSLSRC
+
+SOURCE[../libcms]=$OPENSSLSRC
+DEFINE[../libcms]=OSSL_LIBCMS_NAMES

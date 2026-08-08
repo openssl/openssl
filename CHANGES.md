@@ -262,6 +262,15 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * Deprecated `CMS_stream()` and `PKCS7_stream()`.  These are internal
+   plumbing for the indefinite length streaming set up by `BIO_new_NDEF()`
+   that leaked into the public API.  `BIO_new_NDEF()` now obtains the content
+   octet string from the ASN.1 callback instead, so they no longer return a
+   streaming boundary.  Use `BIO_new_CMS()` or `BIO_new_NDEF()` to stream
+   CMS and PKCS7 content.
+
+   *Bob Beck*
+
  * Added `OSSL_CMP_OPT_NONMATCHED_ERROR_NONCES` option for `OSSL_CMP_CTX` and
    a corresponding `-nonmatched_error_nonces` option for the `openssl cmp` command.
 
@@ -301,6 +310,15 @@ OpenSSL Releases
    (or other architectures with 128 bit vector registers).
 
    *Timo Keller*
+
+ * The CMS API in libcrypto is deprecated.  The same API, without
+   deprecation, is now provided by the new libcms library, reached through
+   the `<libcms/cms.h>` header.  Note that switching to it requires both
+   using this header and linking with libcms, since libcms exports the API
+   under its own symbol names.  libcrypto keeps exporting the deprecated
+   symbols for ABI compatibility until removed in a future major release.
+
+   *Bob Beck*
 
  * Added `EVP_KDF_CTX_get0_kdf()` and `EVP_KDF_CTX_get1_kdf()` functions
    as a replacement for the now deprecated `EVP_KDF_CTX_kdf()`.

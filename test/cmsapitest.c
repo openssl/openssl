@@ -10,10 +10,10 @@
 #include <string.h>
 
 #include <openssl/pem.h>
-#include <openssl/cms.h>
+#include <libcms/cms.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
-#include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
+#include "../cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
 #include "testutil.h"
 

@@ -32,6 +32,21 @@
 #if !defined(FIPS_MODULE)
 #include "crypto/asn1.h"
 
+typedef struct {
+    unsigned char iv[EVP_MAX_IV_LENGTH];
+    unsigned int iv_len;
+    unsigned int tag_len;
+} evp_cipher_aead_asn1_params;
+
+static int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+    evp_cipher_aead_asn1_params *asn1_params);
+static int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+    evp_cipher_aead_asn1_params *asn1_params);
+static int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+    evp_cipher_aead_asn1_params *asn1_params);
+static int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+    evp_cipher_aead_asn1_params *asn1_params);
+
 int EVP_CIPHER_param_to_asn1(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
 {
     return evp_cipher_param_to_asn1_ex(c, type, NULL);
@@ -78,7 +93,7 @@ int EVP_CIPHER_set_asn1_iv(EVP_CIPHER_CTX *c, ASN1_TYPE *type)
     return i;
 }
 
-int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+static int evp_cipher_param_to_asn1_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     evp_cipher_aead_asn1_params *asn1_params)
 {
     int ret = -1; /* Assume the worst */
@@ -142,7 +157,7 @@ err:
     return ret;
 }
 
-int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+static int evp_cipher_asn1_to_param_ex(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     evp_cipher_aead_asn1_params *asn1_params)
 {
     int ret = -1; /* Assume the worst */
@@ -204,7 +219,7 @@ err:
     return ret;
 }
 
-int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+static int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     evp_cipher_aead_asn1_params *asn1_params)
 {
     int i = 0;
@@ -224,7 +239,7 @@ int evp_cipher_get_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     return i;
 }
 
-int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
+static int evp_cipher_set_asn1_aead_params(EVP_CIPHER_CTX *c, ASN1_TYPE *type,
     evp_cipher_aead_asn1_params *asn1_params)
 {
     if (type == NULL || asn1_params == NULL)

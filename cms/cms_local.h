@@ -10,8 +10,19 @@
 #ifndef OSSL_CRYPTO_CMS_LOCAL_H
 #define OSSL_CRYPTO_CMS_LOCAL_H
 
+#include <assert.h>
 #include <openssl/cms.h>
 #include <openssl/x509.h>
+
+static ossl_inline int cms_assert(int expr)
+{
+    assert(expr);
+    return expr;
+}
+
+/* Local copies of the libcrypto-internal buffer-size limits (internal/sizes.h) */
+#define CMS_MAX_NAME_SIZE 50 /* Algorithm name */
+#define CMS_MAX_ALGORITHM_ID_SIZE 256 /* AlgorithmIdentifier DER */
 
 /*
  * Cryptographic message syntax (CMS) structures: taken from RFC3852
@@ -66,6 +77,8 @@ struct CMS_ContentInfo_st {
         void *otherData;
     } d;
     CMS_CTX ctx;
+    /* Content octet string was created here, not read in via d2i */
+    int contentCreated;
 };
 
 DEFINE_STACK_OF(CMS_CertificateChoices)
@@ -134,7 +147,8 @@ struct CMS_EncryptedContentInfo_st {
     const EVP_CIPHER *cipher;
     unsigned char *key;
     size_t keylen;
-    unsigned char *tag;
+    /* Borrowed from the AuthEnvelopedData mac, not owned here */
+    const unsigned char *tag;
     size_t taglen;
     /* Set to 1 if we are debugging decrypt and don't fake keys for MMA */
     int debug;
@@ -426,11 +440,32 @@ const CMS_CTX *ossl_cms_get0_cmsctx(const CMS_ContentInfo *cms);
 OSSL_LIB_CTX *ossl_cms_ctx_get0_libctx(const CMS_CTX *ctx);
 const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx);
 void ossl_cms_resolve_libctx(CMS_ContentInfo *ci);
+/**
+ * @brief Rebind a certificate to a library context by re-decoding it.
+ * The certificate cert is re-encoded and decoded in the given library
+ * context; on success the rebound certificate is stored in *out.  On failure
+ * *out is left unmodified.
+ * @param libctx library context to bind the certificate to
+ * @param propq property query associated with libctx
+ * @param cert the certificate to rebind
+ * @param out on success, receives the rebound certificate
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_cert_to_libctx(OSSL_LIB_CTX *libctx, const char *propq,
+    const X509 *cert, X509 **out);
 
 CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     const unsigned char *precomp_md,
     unsigned int precomp_mdlen);
+/**
+ * @brief Prepare the content of cms for indefinite-length streaming.
+ * The content octet string is created if it is not already present, and the
+ * content is recorded as created here rather than read in via d2i.
+ * @param cms the CMS_ContentInfo to prepare for streaming
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_stream(CMS_ContentInfo *cms);
 
 CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
     OSSL_LIB_CTX *libctx,

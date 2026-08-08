@@ -7,15 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
-#include "crypto/asn1.h"
-#include "crypto/x509.h"
 
 static BIO *cms_get_text_bio(BIO *out, unsigned int flags)
 {
@@ -400,10 +399,13 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         }
         if (!ossl_cms_get1_certs_ex(cms, &untrusted))
             goto err;
-        if (sk_X509_num(certs) > 0
-            && !ossl_x509_add_certs_new(&untrusted, certs,
-                X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
-            goto err;
+        if (sk_X509_num(certs) > 0) {
+            if (untrusted == NULL && (untrusted = sk_X509_new_null()) == NULL)
+                goto err;
+            if (!X509_add_certs(untrusted, certs,
+                    X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP))
+                goto err;
+        }
 
         if ((flags & CMS_NOCRL) == 0
             && !ossl_cms_get1_crls_ex(cms, &crls))
@@ -643,7 +645,8 @@ CMS_ContentInfo *CMS_sign_receipt(CMS_SignerInfo *si,
         goto err;
 
     /* Set content to digest */
-    rct_cont = BIO_new_mem_buf(os->data, os->length);
+    rct_cont = BIO_new_mem_buf(ASN1_STRING_get0_data(os),
+        (int)ASN1_STRING_length_ex(os));
     if (rct_cont == NULL)
         goto err;
 

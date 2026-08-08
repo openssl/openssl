@@ -7,13 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
-
-#include <crypto/asn1.h>
 
 ASN1_SEQUENCE(CMS_IssuerAndSerialNumber) = {
     ASN1_SIMPLE(CMS_IssuerAndSerialNumber, issuer, X509_NAME),
@@ -358,7 +358,7 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     switch (operation) {
 
     case ASN1_OP_STREAM_PRE:
-        if (CMS_stream(&sarg->boundary, cms) <= 0)
+        if (ossl_cms_stream(cms) <= 0)
             return 0;
         /* fall through */
     case ASN1_OP_DETACHED_PRE:
@@ -372,6 +372,13 @@ static int cms_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (CMS_dataFinal(cms, sarg->ndef_bio) <= 0)
             return 0;
         break;
+
+    case ASN1_OP_STREAM_CONTENT: {
+        ASN1_STRING **content = exarg;
+        ASN1_OCTET_STRING **pos = CMS_get0_content(cms);
+
+        *content = pos == NULL ? NULL : *pos;
+    } break;
 
     case ASN1_OP_FREE_POST:
         OPENSSL_free(cms->ctx.propq);
@@ -445,24 +452,26 @@ int CMS_SharedInfo_encode(unsigned char **pder, X509_ALGOR *kekalg, ASN1_OCTET_S
         NULL
     };
 
-    ASN1_OCTET_STRING oklen;
+    ASN1_OCTET_STRING *oklen;
     unsigned char kl[4];
     CMS_SharedInfo ecsi;
+    int ret;
 
     keylen <<= 3;
     kl[0] = (keylen >> 24) & 0xff;
     kl[1] = (keylen >> 16) & 0xff;
     kl[2] = (keylen >> 8) & 0xff;
     kl[3] = keylen & 0xff;
-    oklen.length = 4;
-    oklen.data = kl;
-    oklen.type = V_ASN1_OCTET_STRING;
-    oklen.flags = 0;
+    oklen = ASN1_STRING_new_not_owned(V_ASN1_OCTET_STRING, kl, sizeof(kl));
+    if (oklen == NULL)
+        return -1;
     ecsi.keyInfo = kekalg;
     ecsi.entityUInfo = ukm;
-    ecsi.suppPubInfo = &oklen;
+    ecsi.suppPubInfo = oklen;
     intsi.pecsi = &ecsi;
-    return ASN1_item_i2d(intsi.a, pder, ASN1_ITEM_rptr(CMS_SharedInfo));
+    ret = ASN1_item_i2d(intsi.a, pder, ASN1_ITEM_rptr(CMS_SharedInfo));
+    ASN1_STRING_free(oklen);
+    return ret;
 }
 
 /*

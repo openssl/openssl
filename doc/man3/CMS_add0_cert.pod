@@ -8,7 +8,7 @@ CMS_add0_crl, CMS_add1_crl, CMS_get1_crls
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  int CMS_add0_cert(CMS_ContentInfo *cms, X509 *cert);
  int CMS_add1_cert(CMS_ContentInfo *cms, X509 *cert);
@@ -72,6 +72,10 @@ L<CMS_encrypt(3)>
 
 CMS_add0_cert() and CMS_add1_cert() have been changed in OpenSSL 3.2
 not to throw an error if a certificate to be added is already present.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

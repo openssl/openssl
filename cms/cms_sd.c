@@ -7,7 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
@@ -15,11 +16,6 @@
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include <openssl/ess.h>
-#include "internal/sizes.h"
-#include "crypto/asn1.h"
-#include "crypto/evp.h"
-#include "crypto/ess.h"
-#include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
 #include "cms_local.h"
 
 /* CMS SignedData Utilities */
@@ -237,7 +233,7 @@ static int cms_signature_nomd(EVP_PKEY *pkey)
 /* (EC)DSA and all provider-delivered signatures implementation is the same */
 static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 {
-    if (!ossl_assert(verify == 0 || verify == 1))
+    if (!cms_assert(verify == 0 || verify == 1))
         return -1;
 
     if (!verify) {
@@ -269,26 +265,11 @@ static int cms_generic_sign(CMS_SignerInfo *si, int verify)
 static int cms_sd_asn1_ctrl(CMS_SignerInfo *si, int cmd)
 {
     EVP_PKEY *pkey = si->pkey;
-    int i;
 
-    if (EVP_PKEY_is_a(pkey, "DSA") || EVP_PKEY_is_a(pkey, "EC"))
-        return cms_generic_sign(si, cmd) > 0;
-    else if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS"))
+    if (EVP_PKEY_is_a(pkey, "RSA") || EVP_PKEY_is_a(pkey, "RSA-PSS"))
         return ossl_cms_rsa_sign(si, cmd) > 0;
 
-    /* Now give engines, providers, etc a chance to handle this */
-    if (pkey->ameth == NULL || pkey->ameth->pkey_ctrl == NULL)
-        return cms_generic_sign(si, cmd) > 0;
-    i = pkey->ameth->pkey_ctrl(pkey, ASN1_PKEY_CTRL_CMS_SIGN, cmd, si);
-    if (i == -2) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_NOT_SUPPORTED_FOR_THIS_KEY_TYPE);
-        return 0;
-    }
-    if (i <= 0) {
-        ERR_raise(ERR_LIB_CMS, CMS_R_CTRL_FAILURE);
-        return 0;
-    }
-    return 1;
+    return cms_generic_sign(si, cmd) > 0;
 }
 
 /* Add SigningCertificate signed attribute to the signer info. */
@@ -640,7 +621,7 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
     /* See if digest is present in digestAlgorithms */
     for (i = 0; i < sk_X509_ALGOR_num(sd->digestAlgorithms); i++) {
         const ASN1_OBJECT *aoid;
-        char name[OSSL_MAX_NAME_SIZE];
+        char name[CMS_MAX_NAME_SIZE];
 
         alg = sk_X509_ALGOR_value(sd->digestAlgorithms, i);
         X509_ALGOR_get0(&aoid, NULL, NULL, alg);
@@ -746,16 +727,17 @@ CMS_SignerInfo *CMS_add1_signer(CMS_ContentInfo *cms,
                 goto err;
             if (EVP_PKEY_CTX_set_signature_md(si->pctx, md) <= 0)
                 goto err;
-        } else if (EVP_DigestSignInit_ex(si->mctx, &si->pctx,
-                       EVP_MD_get0_name(md),
-                       ossl_cms_ctx_get0_libctx(ctx),
-                       ossl_cms_ctx_get0_propq(ctx),
-                       pk, NULL)
-            <= 0) {
-            si->pctx = NULL;
-            goto err;
         } else {
-            EVP_MD_CTX_set_flags(si->mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+            si->pctx = EVP_PKEY_CTX_new_from_pkey(ossl_cms_ctx_get0_libctx(ctx),
+                pk, ossl_cms_ctx_get0_propq(ctx));
+            if (si->pctx == NULL)
+                goto err;
+            EVP_MD_CTX_set_pkey_ctx(si->mctx, si->pctx);
+            if (EVP_DigestSignInit_ex(si->mctx, NULL, EVP_MD_get0_name(md),
+                    ossl_cms_ctx_get0_libctx(ctx),
+                    ossl_cms_ctx_get0_propq(ctx), NULL, NULL)
+                <= 0)
+                goto err;
         }
     }
     if (sd->signerInfos == NULL)
@@ -807,7 +789,7 @@ static int cms_add1_signingTime(CMS_SignerInfo *si, ASN1_TIME *t)
     }
 
     if (CMS_signed_add1_attr_by_NID(si, NID_pkcs9_signingTime,
-            tt->type, tt, -1)
+            ASN1_STRING_type(tt), tt, -1)
         <= 0) {
         ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
         goto err;
@@ -849,8 +831,8 @@ STACK_OF(X509) *CMS_get0_signers(CMS_ContentInfo *cms)
     for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
         si = sk_CMS_SignerInfo_value(sinfos, i);
         if (si->signer != NULL) {
-            if (!ossl_x509_add_cert_new(&signers, si->signer,
-                    X509_ADD_FLAG_DEFAULT)) {
+            if ((signers == NULL && (signers = sk_X509_new_null()) == NULL)
+                || !X509_add_cert(signers, si->signer, X509_ADD_FLAG_DEFAULT)) {
                 sk_X509_free(signers);
                 return NULL;
             }
@@ -1018,7 +1000,8 @@ static int cms_EVP_PKEY_sign(EVP_PKEY_CTX *pctx, BIO *in,
     return ret;
 }
 
-static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in, unsigned char *sig,
+static int cms_EVP_PKEY_verify(EVP_PKEY_CTX *pctx, BIO *in,
+    const unsigned char *sig,
     size_t siglen, int has_msg_update)
 {
     size_t buffer_len;
@@ -1203,12 +1186,11 @@ int ossl_cms_SignedData_final(CMS_ContentInfo *cms, BIO *chain, BIO *data,
 int CMS_SignerInfo_sign(CMS_SignerInfo *si)
 {
     EVP_MD_CTX *mctx = si->mctx;
-    EVP_PKEY_CTX *pctx = NULL;
     unsigned char *abuf = NULL;
     int alen;
     size_t siglen;
     const CMS_CTX *ctx = si->cms_ctx;
-    char md_name_buf[OSSL_MAX_NAME_SIZE], *md_name;
+    char md_name_buf[CMS_MAX_NAME_SIZE], *md_name;
 
     if (OBJ_obj2txt(md_name_buf, sizeof(md_name_buf),
             si->digestAlgorithm->algorithm, 0)
@@ -1225,18 +1207,19 @@ int CMS_SignerInfo_sign(CMS_SignerInfo *si)
     if (!ossl_cms_si_check_attributes(si))
         goto err;
 
-    if (si->pctx) {
-        pctx = si->pctx;
-    } else {
+    if (si->pctx == NULL) {
         EVP_MD_CTX_reset(mctx);
-        if (EVP_DigestSignInit_ex(mctx, &pctx, md_name,
+        si->pctx = EVP_PKEY_CTX_new_from_pkey(ossl_cms_ctx_get0_libctx(ctx),
+            si->pkey, ossl_cms_ctx_get0_propq(ctx));
+        if (si->pctx == NULL)
+            goto err;
+        EVP_MD_CTX_set_pkey_ctx(mctx, si->pctx);
+        if (EVP_DigestSignInit_ex(mctx, NULL, md_name,
                 ossl_cms_ctx_get0_libctx(ctx),
-                ossl_cms_ctx_get0_propq(ctx), si->pkey,
+                ossl_cms_ctx_get0_propq(ctx), NULL,
                 NULL)
             <= 0)
             goto err;
-        EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
-        si->pctx = pctx;
     }
 
     if (md_name == NULL) {
@@ -1279,7 +1262,7 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
     EVP_MD_CTX *mctx = NULL;
     unsigned char *abuf = NULL;
     int alen, r = -1;
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
     const EVP_MD *md;
     EVP_MD *fetched_md = NULL;
     const CMS_CTX *ctx = si->cms_ctx;
@@ -1329,13 +1312,14 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         EVP_PKEY_CTX_free(si->pctx);
         si->pctx = NULL;
     }
-    if (EVP_DigestVerifyInit_ex(mctx, &si->pctx, EVP_MD_get0_name(md), libctx,
-            propq, si->pkey, NULL)
-        <= 0) {
-        si->pctx = NULL;
+    si->pctx = EVP_PKEY_CTX_new_from_pkey(libctx, si->pkey, propq);
+    if (si->pctx == NULL)
         goto err;
-    }
-    EVP_MD_CTX_set_flags(mctx, EVP_MD_CTX_FLAG_KEEP_PKEY_CTX);
+    EVP_MD_CTX_set_pkey_ctx(mctx, si->pctx);
+    if (EVP_DigestVerifyInit_ex(mctx, NULL, EVP_MD_get0_name(md), libctx,
+            propq, NULL, NULL)
+        <= 0)
+        goto err;
 
     if (!cms_sd_asn1_ctrl(si, 1))
         goto err;
@@ -1350,8 +1334,8 @@ int CMS_SignerInfo_verify(CMS_SignerInfo *si)
         r = -1;
         goto err;
     }
-    r = EVP_DigestVerifyFinal(mctx,
-        si->signature->data, si->signature->length);
+    r = EVP_DigestVerifyFinal(mctx, ASN1_STRING_get0_data(si->signature),
+        ASN1_STRING_length_ex(si->signature));
     if (r <= 0)
         ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
 err:
@@ -1433,12 +1417,12 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
 
     /* If messageDigest found compare it */
     if (os != NULL) {
-        if (mlen != (unsigned int)os->length) {
+        if (mlen != ASN1_STRING_length_ex(os)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_MESSAGEDIGEST_ATTRIBUTE_WRONG_LENGTH);
             goto err;
         }
 
-        if (memcmp(mval, os->data, mlen)) {
+        if (memcmp(mval, ASN1_STRING_get0_data(os), mlen)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
             r = 0;
         } else {
@@ -1469,8 +1453,9 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
                 goto err;
 
             has_msg_update = EVP_SIGNATURE_has_message_update(sig_alg);
-            r = cms_EVP_PKEY_verify(pkctx, data, si->signature->data,
-                si->signature->length, has_msg_update);
+            r = cms_EVP_PKEY_verify(pkctx, data,
+                ASN1_STRING_get0_data(si->signature),
+                ASN1_STRING_length_ex(si->signature), has_msg_update);
         } else {
             if (EVP_PKEY_verify_init(pkctx) <= 0)
                 goto err;
@@ -1483,8 +1468,8 @@ int CMS_SignerInfo_verify_ex(CMS_SignerInfo *si, BIO *chain, BIO *data)
             }
             si->pctx = NULL;
 
-            r = EVP_PKEY_verify(pkctx, si->signature->data,
-                si->signature->length, mval, mlen);
+            r = EVP_PKEY_verify(pkctx, ASN1_STRING_get0_data(si->signature),
+                ASN1_STRING_length_ex(si->signature), mval, mlen);
         }
         if (r <= 0) {
             ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
@@ -1560,7 +1545,11 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
     int algnid, int keysize)
 {
     X509_ALGOR *alg;
+    ASN1_OBJECT *algo = OBJ_nid2obj(algnid);
     ASN1_INTEGER *key = NULL;
+
+    if (algo == NULL)
+        return 0;
 
     if (keysize > 0) {
         key = ASN1_INTEGER_new();
@@ -1569,8 +1558,11 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
             return 0;
         }
     }
-    alg = ossl_X509_ALGOR_from_nid(algnid, key != NULL ? V_ASN1_INTEGER : V_ASN1_UNDEF, key);
-    if (alg == NULL) {
+    alg = X509_ALGOR_new();
+    if (alg == NULL
+        || !X509_ALGOR_set0(alg, algo,
+            key != NULL ? V_ASN1_INTEGER : V_ASN1_UNDEF, key)) {
+        X509_ALGOR_free(alg);
         ASN1_INTEGER_free(key);
         return 0;
     }

@@ -6,7 +6,7 @@ CMS_add1_recipient, CMS_add1_recipient_cert, CMS_add0_recipient_key - add recipi
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  CMS_RecipientInfo *CMS_add1_recipient(CMS_ContentInfo *cms, X509 *recip,
                                        EVP_PKEY *originatorPrivKey,
@@ -74,6 +74,10 @@ L<CMS_final(3)>,
 
 B<CMS_add1_recipient_cert> and B<CMS_add0_recipient_key> were added in
 OpenSSL 3.0.
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

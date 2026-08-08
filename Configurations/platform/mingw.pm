@@ -25,14 +25,14 @@ sub shlibextimport      { $target{shared_import_extension} || '.dll.a' }
 sub shlibextsimple      { undef }
 sub makedepcmd          { $disabled{makedepend} ? undef : $config{makedepcmd} }
 
-(my $sover_filename = $config{shlib_version}) =~ s|\.|_|g;
 sub shlib_version_as_filename {
-    return $sover_filename;
+    (my $v = $_[0]->shlib_version($_[1])) =~ s|\.|_|g;
+    return $v;
 }
 sub sharedname {
     return platform::BASE::__concat(platform::BASE->sharedname($_[1]),
                                     "-",
-                                    $_[0]->shlib_version_as_filename(),
+                                    $_[0]->shlib_version_as_filename($_[1]),
                                     ($config{target} eq "mingw64"
                                          ? "-x64" : ""));
 }

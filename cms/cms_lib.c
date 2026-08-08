@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
@@ -15,9 +17,6 @@
 #include <openssl/asn1.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
-#include "internal/sizes.h"
-#include "internal/cryptlib.h"
-#include "crypto/x509.h"
 #include "cms_local.h"
 #include "internal/cms.h"
 
@@ -86,6 +85,33 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx)
     return ctx != NULL ? ctx->propq : NULL;
 }
 
+int ossl_cms_cert_to_libctx(OSSL_LIB_CTX *libctx, const char *propq,
+    const X509 *cert, X509 **out)
+{
+    X509 *res;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len, ret = 0;
+
+    res = X509_new_ex(libctx, propq);
+    if (res == NULL)
+        goto err;
+    len = i2d_X509(cert, &der);
+    if (len < 0)
+        goto err;
+    p = der;
+    if (d2i_X509(&res, &p, len) == NULL)
+        goto err;
+    *out = res;
+    res = NULL;
+    ret = 1;
+
+err:
+    OPENSSL_free(der);
+    X509_free(res);
+    return ret;
+}
+
 void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
 {
     int i;
@@ -102,8 +128,15 @@ void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
     if (pcerts != NULL) {
         for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
             cch = sk_CMS_CertificateChoices_value(*pcerts, i);
-            if (cch->type == CMS_CERTCHOICE_CERT)
-                ossl_x509_set0_libctx(cch->d.certificate, libctx, propq);
+            if (cch->type == CMS_CERTCHOICE_CERT) {
+                X509 *rebound = NULL;
+
+                if (ossl_cms_cert_to_libctx(libctx, propq, cch->d.certificate,
+                        &rebound)) {
+                    X509_free(cch->d.certificate);
+                    cch->d.certificate = rebound;
+                }
+            }
         }
     }
 }
@@ -137,10 +170,11 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
     /*
      * If content not detached and created return memory BIO
      */
-    if (*pos == NULL || ((*pos)->flags == ASN1_STRING_FLAG_CONT))
+    if (*pos == NULL || cms->contentCreated)
         return BIO_new(BIO_s_mem());
     /* Else content was read in: return read only BIO for it */
-    return BIO_new_mem_buf((*pos)->data, (*pos)->length);
+    return BIO_new_mem_buf(ASN1_STRING_get0_data(*pos),
+        (int)ASN1_STRING_length_ex(*pos));
 }
 
 BIO *CMS_dataInit(CMS_ContentInfo *cms, BIO *icont)
@@ -217,7 +251,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     if (pos == NULL)
         return 0;
     /* If embedded content find memory BIO and set content */
-    if (*pos && ((*pos)->flags & ASN1_STRING_FLAG_CONT)) {
+    if (*pos && cms->contentCreated) {
         BIO *mbio;
         unsigned char *cont;
         long contlen;
@@ -231,7 +265,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
         BIO_set_flags(mbio, BIO_FLAGS_MEM_RDONLY);
         BIO_set_mem_eof_return(mbio, 0);
         ASN1_STRING_set0(*pos, cont, contlen);
-        (*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+        cms->contentCreated = 0;
     }
 
     switch (OBJ_obj2nid(cms->contentType)) {
@@ -387,15 +421,13 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
     if (detached) {
         ASN1_OCTET_STRING_free(*pos);
         *pos = NULL;
+        cms->contentCreated = 0;
         return 1;
     }
     if (*pos == NULL)
         *pos = ASN1_OCTET_STRING_new();
     if (*pos != NULL) {
-        /*
-         * NB: special flag to show content is created and not read in.
-         */
-        (*pos)->flags |= ASN1_STRING_FLAG_CONT;
+        cms->contentCreated = 1;
         return 1;
     }
     ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);
@@ -410,7 +442,7 @@ BIO *ossl_cms_DigestAlgorithm_init_bio(X509_ALGOR *digestAlgorithm,
     BIO *mdbio = NULL;
     const ASN1_OBJECT *digestoid;
     EVP_MD *digest = NULL;
-    char alg[OSSL_MAX_NAME_SIZE];
+    char alg[CMS_MAX_NAME_SIZE];
     size_t xof_len = 0;
 
     X509_ALGOR_get0(&digestoid, NULL, NULL, digestAlgorithm);
@@ -715,7 +747,7 @@ int ossl_cms_get1_crls_ex(CMS_ContentInfo *cms, STACK_OF(X509_CRL) **crls)
         rch = sk_CMS_RevocationInfoChoice_value(*pcrls, i);
         if (rch->type == 0) {
             if (!X509_CRL_up_ref(rch->d.crl)
-                || !ossl_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
+                || !cms_assert(sk_X509_CRL_push(*crls, rch->d.crl))) {
                 /* push cannot fail on reserved stack */
                 sk_X509_CRL_pop_free(*crls, X509_CRL_free);
                 *crls = NULL;

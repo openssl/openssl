@@ -9,7 +9,7 @@ CMS_SignerInfo_get0_signature, CMS_SignerInfo_cert_cmp
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  STACK_OF(CMS_SignerInfo) *CMS_get0_SignerInfos(CMS_ContentInfo *cms);
 
@@ -77,6 +77,12 @@ Any error can be obtained from L<ERR_get_error(3)>
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>, L<CMS_verify(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 

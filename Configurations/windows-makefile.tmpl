@@ -546,6 +546,13 @@ install_dev: install_runtime_libs
 				       "$(INSTALLTOP)\include\openssl"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\openssl\*.h" \
 				       "$(INSTALLTOP)\include\openssl"
+	@{- output_off() if $disabled{cms}; "" -}
+	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(INSTALLTOP)\include\libcms"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(SRCDIR)\include\libcms\*.h" \
+				       "$(INSTALLTOP)\include\libcms"
+	@"$(PERL)" "$(SRCDIR)\util\copy.pl" "$(BLDDIR)\include\libcms\*.h" \
+				       "$(INSTALLTOP)\include\libcms"
+	@{- output_on() if $disabled{cms}; "" -}
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\copy.pl" $(INSTALL_LIBS) "$(libdir)"
 	@"$(PERL)" "$(SRCDIR)\util\mkdir-p.pl" "$(CMAKECONFIGDIR)"
@@ -725,9 +732,12 @@ EOF
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name =
               $args{generator}->[1] || basename(platform->dsoname($args{product}));
+          my $ord_renames =
+              join("", map { /^--/ ? " $_" : " --rename $_" }
+                       @{$args{generator}}[3 .. $#{$args{generator}}]);
           return <<"EOF";
 $target: $gen0 $deps $mkdef
-	"\$(PERL)" "$mkdef"$ord_ver --type $args{intent} --ordinals $gen0 --name $ord_name --OS windows > $target
+	"\$(PERL)" "$mkdef"$ord_ver --type $args{intent} --ordinals $gen0 --name $ord_name$ord_renames --OS windows > $target
 EOF
       } elsif (platform->isasm($args{src})
                || platform->iscppasm($args{src})) {

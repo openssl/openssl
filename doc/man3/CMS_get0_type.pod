@@ -6,7 +6,7 @@ CMS_get0_type, CMS_set1_eContentType, CMS_get0_eContentType, CMS_get0_content - 
 
 =head1 SYNOPSIS
 
- #include <openssl/cms.h>
+ #include <libcms/cms.h>
 
  const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms);
  int CMS_set1_eContentType(CMS_ContentInfo *cms, const ASN1_OBJECT *oid);
@@ -70,6 +70,12 @@ error can be obtained from ERR_get_error(3).
 =head1 SEE ALSO
 
 L<ERR_get_error(3)>
+
+=head1 HISTORY
+
+All of these functions moved to the new libcms library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cms.h> >>,
+until a future major release.  See L<libcms(7)>.
 
 =head1 COPYRIGHT
 
