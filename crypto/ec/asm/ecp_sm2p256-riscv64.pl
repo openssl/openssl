@@ -373,6 +373,7 @@ $code.=<<___;
 .type	bn_rshift1,%function
 .p2align 5
 bn_rshift1:
+	@{[lpad 0]}
 	// Load inputs
 	ld $t0, 0($i0)
 	ld $t1, 8($i0)
@@ -405,6 +406,7 @@ bn_rshift1:
 .type	bn_sub,%function
 .p2align 5
 bn_sub:
+	@{[lpad 0]}
 	// Load inputs
 	ld $t0, 0($i1)
 	ld $t1, 8($i1)
@@ -449,6 +451,7 @@ bn_sub:
 .type	ecp_sm2p256_mul_by_3,%function
 .p2align 5
 ecp_sm2p256_mul_by_3:
+	@{[lpad 0]}
 // returns r = ( a * 3 ) mod p, where p is a predefined polynomial modulus .Lpoly
 // Input: $i1 = address of operand a
 // Output: $i0 = address for result storage
@@ -601,6 +604,7 @@ $code.=<<___;
 .type	ecp_sm2p256_add,%function
 .p2align 5
 ecp_sm2p256_add:
+	@{[lpad 0]}
 ___
     &bn_mod_add(".Lpoly");
 $code.=<<___;
@@ -612,6 +616,7 @@ $code.=<<___;
 .type	ecp_sm2p256_sub,%function
 .p2align 5
 ecp_sm2p256_sub:
+	@{[lpad 0]}
 ___
     &bn_mod_sub(".Lpoly");
 $code.=<<___;
@@ -623,6 +628,7 @@ $code.=<<___;
 .type	ecp_sm2p256_sub_mod_ord,%function
 .p2align 5
 ecp_sm2p256_sub_mod_ord:
+	@{[lpad 0]}
 ___
     &bn_mod_sub(".Lord");
 $code.=<<___;
@@ -634,6 +640,7 @@ $code.=<<___;
 .type	ecp_sm2p256_div_by_2,%function
 .p2align 5
 ecp_sm2p256_div_by_2:
+	@{[lpad 0]}
 ___
     &bn_mod_div_by_2(".Lpoly_div_2");
 $code.=<<___;
@@ -645,6 +652,7 @@ $code.=<<___;
 .type	ecp_sm2p256_div_by_2_mod_ord,%function
 .p2align 5
 ecp_sm2p256_div_by_2_mod_ord:
+	@{[lpad 0]}
 ___
     &bn_mod_div_by_2(".Lord_div_2");
 $code.=<<___;
@@ -946,6 +954,7 @@ $code.=<<___;
 .type	ecp_sm2p256_mul,%function
 .p2align 5
 ecp_sm2p256_mul:
+	@{[lpad 0]}
 ___
 $code.= save_regs();
 $code.=<<___;
@@ -1135,6 +1144,7 @@ $code.=<<___;
 .type	ecp_sm2p256_sqr,%function
 .p2align 5
 ecp_sm2p256_sqr:
+	@{[lpad 0]}
 ___
 $code.= save_regs();
 $code.=<<___;
