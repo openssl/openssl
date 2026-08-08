@@ -21,6 +21,10 @@
  * which OpenSSL::Ordinals::_parse_features treats differently from
  * OPENSSL_NO_ -- live in polarity.h instead.
  *
+ * OPENSSL_API_LEVEL below is the exception to that interchangeability: it
+ * is not a feature guard but a number, and it is here because comparing
+ * it is the commonest expression the parser cannot represent.
+ *
  * This file is parser input, not compilable source.  Its exact layout is
  * the thing under test, so the formatter is turned off above and stays
  * off for the rest of the file, comments included.
@@ -72,4 +76,43 @@ int cond_and3(int x);
 # if !defined(OPENSSL_NO_EC)
 int cond_mixed_nesting(int x);
 # endif
+#endif
+
+/* 'defined' is equally legal without parentheses. */
+
+#if !defined OPENSSL_NO_TS && !defined OPENSSL_NO_EC
+int cond_bare_defined(int x);
+#endif
+
+/*
+ * #else over a compound condition.  Inverting each term of a list of
+ * conditions and reading the result as a conjunction again is right for
+ * !(A||B) and wrong for !(A&&B), which is a disjunction.
+ */
+
+#if !defined(OPENSSL_NO_TS) && !defined(OPENSSL_NO_EC)
+int cond_else_over_and_then(int x);
+#else
+int cond_else_over_and_otherwise(int x);
+#endif
+
+/*
+ * Expressions with a term the parser cannot represent.  Comparing
+ * OPENSSL_API_LEVEL is not a test of whether a macro is defined, and no
+ * naming scheme makes it one, so the term is dropped and the recorded
+ * condition is weaker than the header's.  A conjunct is dropped on its
+ * own; a disjunct takes its whole disjunction, since dropping it alone
+ * would strengthen.  OpenSSL::ParseC states the rule and the reason.
+ */
+
+#if OPENSSL_API_LEVEL >= 30000
+int cond_opaque_alone(int x);
+#endif
+
+#if !defined(OPENSSL_NO_TS) && OPENSSL_API_LEVEL >= 30000
+int cond_opaque_conjunct(int x);
+#endif
+
+#if defined(OPENSSL_NO_TS) || OPENSSL_API_LEVEL >= 30000
+int cond_opaque_disjunct(int x);
 #endif

@@ -18,13 +18,274 @@ $VERSION = "0.9";
 @EXPORT = qw(parse);
 
 # Global handler data
-my @preprocessor_conds;         # A list of simple preprocessor conditions,
-                                # each item being a list of macros defined
-                                # or not defined.
+my @preprocessor_conds;         # One entry per open preprocessor level,
+                                # holding that level's condition, or undef
+                                # for a level whose condition could not be
+                                # represented.  See below.
+my $cpp_dropped;                # Set while parsing a preprocessor
+                                # expression, when a term of it had to be
+                                # dropped to arrive at a condition.
+
+# Preprocessor conditions
+#
+# Each open preprocessor level contributes at most one condition, and
+# all_conds() returns them in source order.  The consumer reads that list
+# as a conjunction, which is what nesting levels means.
+#
+# A condition is a tree of array references over macro names:
+#
+#       [ 'macro', NAME ]
+#       [ 'not',   COND ]
+#       [ 'and',   COND, ... ]
+#       [ 'or',    COND, ... ]
+#
+# and undef, meaning that there is no condition to record.  undef is not
+# the same as false: it is what an expression this parser cannot represent
+# reduces to, such as the numeric comparison in
+#
+#       #if OPENSSL_API_LEVEL >= 30000
+#
+# Such a term is dropped, and the constructors below combine the terms
+# that are left so that the condition recorded is always implied by the
+# expression in the header, never the other way around.  A condition that
+# is too weak names a symbol that may not exist in a given configuration;
+# one that is too strong omits a symbol that does exist, which is a silent
+# ABI break.  Only the first of those is acceptable, so where this parser
+# has to be wrong, it is wrong in that direction.
+
+sub _cond_not {
+    my $cond = shift;
+
+    return undef unless defined $cond;          # !unknown is unknown
+    return $cond->[1] if $cond->[0] eq 'not';   # collapse !!X to X
+
+    return [ 'not', $cond ];
+}
+
+# A dropped conjunct leaves a conjunction of the terms that remain, which
+# the whole implies, so it is weaker.  With nothing left there is nothing
+# to record.
+sub _cond_and {
+    my @conds = grep { defined } @_;
+
+    return undef unless @conds;
+    return $conds[0] if scalar @conds == 1;
+
+    return [ 'and', @conds ];
+}
+
+# A dropped disjunct would leave a disjunction that implies the whole
+# rather than the reverse, which is the wrong direction, so one unknown
+# disjunct makes the disjunction unknown.
+sub _cond_or {
+    my @conds = @_;
+
+    return undef if grep { !defined } @conds;
+    return $conds[0] if scalar @conds == 1;
+
+    return [ 'or', @conds ];
+}
+
+# Parenthesise an operand only where precedence demands it: '!' binds
+# tighter than '&&', which binds tighter than '||'.
+sub _cond_to_string {
+    my $cond = shift;
+
+    return '' unless defined $cond;
+    return $cond->[1] if $cond->[0] eq 'macro';
+
+    my @operands = @{$cond}[1..$#$cond];
+    if ($cond->[0] eq 'not') {
+        my $operand = _cond_to_string($operands[0]);
+
+        return $operands[0]->[0] eq 'macro' ? "!$operand" : "!($operand)";
+    }
+
+    my $tighter = $cond->[0] eq 'and' ? 'or' : undef;
+
+    return join($cond->[0] eq 'and' ? '&&' : '||',
+                map {
+                    my $string = _cond_to_string($_);
+
+                    defined $tighter && $_->[0] eq $tighter
+                        ? "($string)" : $string;
+                } @operands);
+}
+
+# Split a preprocessor expression into tokens.  Names, the boolean
+# operators and the parentheses are recognised; everything else -- a
+# number, a comparison, an arithmetic operator -- comes back as a token of
+# its own, which is enough to see that the term containing it cannot be
+# represented, without having to understand what it means.
+sub _cpp_tokens {
+    my $string = shift;
+
+    $string =~ s/<<<|>>>//g;
+    my @tokens = ();
+    while (length $string) {
+        next if $string =~ s/^\s+//;
+        push @tokens, $1
+            if ($string =~ s/^([[:alpha:]_]\w*)//
+                || $string =~ s/^(&&|\|\||[!()])//
+                || $string =~ s/^(.)//s);
+    }
+
+    return @tokens;
+}
+
+# The parse helpers below each consume from the front of @$tokens.
+#
+#       expression = term, { "||", term };
+#       term       = operand, { "&&", operand };
+#       operand    = "!", operand | "(", expression, ")"
+#                  | "defined", [ "(" ], NAME, [ ")" ]
+#                  | anything else;
+#
+# Relational and arithmetic operators bind tighter than '&&' and '||' in
+# C, so an operand this parser does not recognise can be skipped as far as
+# the next boolean operator without misreading the boolean structure
+# around it.  That is what keeps one unrepresentable operand from costing
+# the rest of the expression.
+
+sub _cpp_at_operand_end {
+    my $tokens = shift;
+
+    return 1 unless @$tokens;
+
+    return $tokens->[0] eq '&&' || $tokens->[0] eq '||'
+        || $tokens->[0] eq ')';
+}
+
+sub _cpp_skip_operand {
+    my $tokens = shift;
+
+    my $depth = 0;
+    while (@$tokens) {
+        last if !$depth && _cpp_at_operand_end($tokens);
+        my $token = shift @$tokens;
+
+        $depth++ if $token eq '(';
+        $depth-- if $token eq ')';
+    }
+    $cpp_dropped = 1;
+
+    return undef;
+}
+
+sub _cpp_parse_operand {
+    my $tokens = shift;
+
+    my $token = @$tokens ? $tokens->[0] : '';
+    if ($token eq '!') {
+        shift @$tokens;
+
+        return _cond_not(_cpp_parse_operand($tokens));
+    }
+
+    my $cond = undef;
+    if ($token eq '(') {
+        shift @$tokens;
+        $cond = _cpp_parse_expression($tokens);
+
+        return _cpp_skip_operand($tokens)
+            unless @$tokens && $tokens->[0] eq ')';
+        shift @$tokens;
+    } elsif ($token eq 'defined') {
+        shift @$tokens;
+
+        # Both 'defined(X)' and the bare 'defined X' are legal.
+        my $name = undef;
+        if (@$tokens && $tokens->[0] eq '(') {
+            $name = $tokens->[1]
+                if scalar @$tokens > 2 && $tokens->[2] eq ')'
+                    && $tokens->[1] =~ m/^[[:alpha:]_]\w*$/;
+            splice @$tokens, 0, 3 if defined $name;
+        } elsif (@$tokens && $tokens->[0] =~ m/^[[:alpha:]_]\w*$/) {
+            $name = shift @$tokens;
+        }
+
+        return _cpp_skip_operand($tokens) unless defined $name;
+        $cond = [ 'macro', $name ];
+    } else {
+        # A bare name is not the same test as defined(): '#if X' is false
+        # for an X defined as 0.  There is nothing here to represent.
+        return _cpp_skip_operand($tokens);
+    }
+
+    # What was parsed turns out to be a subexpression of something larger,
+    # a comparison say, so it is not the operand after all.
+    return _cpp_skip_operand($tokens) unless _cpp_at_operand_end($tokens);
+
+    return $cond;
+}
+
+sub _cpp_parse_term {
+    my $tokens = shift;
+
+    my @conds = ( _cpp_parse_operand($tokens) );
+    while (@$tokens && $tokens->[0] eq '&&') {
+        shift @$tokens;
+        push @conds, _cpp_parse_operand($tokens);
+    }
+
+    return _cond_and(@conds);
+}
+
+sub _cpp_parse_expression {
+    my $tokens = shift;
+
+    my @conds = ( _cpp_parse_term($tokens) );
+    while (@$tokens && $tokens->[0] eq '||') {
+        shift @$tokens;
+        push @conds, _cpp_parse_term($tokens);
+    }
+
+    return _cond_or(@conds);
+}
+
+# Returns the condition for a preprocessor expression, and whether
+# anything had to be dropped to arrive at it.
+sub _parse_cpp_expression {
+    my $string = shift;
+
+    my @tokens = _cpp_tokens($string);
+    $cpp_dropped = 0;
+    my $cond = _cpp_parse_expression(\@tokens);
+
+    # Tokens left over means the expression is not shaped the way this
+    # parser assumes at all, so record nothing rather than part of it.
+    ($cond, $cpp_dropped) = (undef, 1) if @tokens;
+
+    return ($cond, $cpp_dropped);
+}
+
+# Open a preprocessor level with the condition EXPRESSION stands for,
+# saying so when that condition had to be weakened to be recorded.  TEXT
+# is what followed DIRECTIVE in the source, for that message.
+sub _push_cpp_level {
+    my ($opts, $directive, $text, $expression) = @_;
+
+    my ($cond, $dropped) = _parse_cpp_expression($expression);
+
+    push @preprocessor_conds, $cond;
+    if ($dropped && $opts->{warnings}) {
+        my $recorded = _cond_to_string($cond);
+
+        $text =~ s/<<<|>>>//g;
+        warn "Warning: $directive expression weakened to ",
+            ($recorded eq '' ? 'nothing' : "'".$recorded."'"),
+            ": $text$opts->{PLACE}";
+    }
+    print STDERR "DEBUG[",$opts->{debug_type},"]: preprocessor level: ",
+        scalar(@preprocessor_conds), "\n"
+        if $opts->{debug};
+
+    return ();
+}
 
 # Handler helpers
 sub all_conds {
-    return map { ( @$_ ) } @preprocessor_conds;
+    return map { _cond_to_string($_) } grep { defined } @preprocessor_conds;
 }
 
 # A list of handlers that will look at a "complete" string and try to
@@ -47,11 +308,14 @@ sub all_conds {
 #                       [3]     Return type (only for type 'F' and 'V')
 #                       [4]     Value (for type 'M') or signature (for type 'F',
 #                               'V', 'T' or 'S')
-#                       [5...]  The list of preprocessor conditions this is
-#                               found in, as in checks for macro definitions
-#                               (stored as the macro's name) or the absence
-#                               of definition (stored as the macro's name
-#                               prefixed with a '!'
+#                       [5...]  The preprocessor conditions this is found
+#                               in, one per enclosing preprocessor level
+#                               and to be read as a conjunction.  Each is a
+#                               boolean expression over macro names, built
+#                               from '!', '&&', '||' and parentheses, where
+#                               a bare name means that macro is defined.
+#                               A level whose condition could not be
+#                               represented contributes nothing.
 #
 #                       If the massager returns an empty list, it means the
 #                       "complete" string has side effects but should otherwise
@@ -69,10 +333,7 @@ my @cpphandlers = (
               %opts = %{$_[$#_]};
               pop @_;
           }
-          push @preprocessor_conds, [ $1 ];
-          print STDERR "DEBUG[",$opts{debug_type},"]: preprocessor level: ", scalar(@preprocessor_conds), "\n"
-              if $opts{debug};
-          return ();
+          return _push_cpp_level(\%opts, '#ifdef', $1, "defined($1)");
       },
     },
     { regexp   => qr/#ifndef ?(.*)/,
@@ -82,10 +343,7 @@ my @cpphandlers = (
               %opts = %{$_[$#_]};
               pop @_;
           }
-          push @preprocessor_conds, [ '!'.$1 ];
-          print STDERR "DEBUG[",$opts{debug_type},"]: preprocessor level: ", scalar(@preprocessor_conds), "\n"
-              if $opts{debug};
-          return ();
+          return _push_cpp_level(\%opts, '#ifndef', $1, "!defined($1)");
       },
     },
     { regexp   => qr/#if (0|1)/,
@@ -95,11 +353,9 @@ my @cpphandlers = (
               %opts = %{$_[$#_]};
               pop @_;
           }
-          if ($1 eq "1") {
-              push @preprocessor_conds, [ "TRUE" ];
-          } else {
-              push @preprocessor_conds, [ "!TRUE" ];
-          }
+          push @preprocessor_conds,
+              $1 eq "1" ? [ 'macro', 'TRUE' ]
+                        : _cond_not([ 'macro', 'TRUE' ]);
           print STDERR "DEBUG[",$opts{debug_type},"]: preprocessor level: ", scalar(@preprocessor_conds), "\n"
               if $opts{debug};
           return ();
@@ -112,57 +368,7 @@ my @cpphandlers = (
               %opts = %{$_[$#_]};
               pop @_;
           }
-          my @results = ();
-          my $conds = $1;
-          if ($conds =~ m|^defined<<<\(([^\)]*)\)>>>(.*)$|) {
-              push @results, $1; # Handle the simple case
-              my $rest = $2;
-              my $re = qr/^(?:\|\|defined<<<\([^\)]*\)>>>)*$/;
-              print STDERR "DEBUG[",$opts{debug_type},"]: Matching '$rest' with '$re'\n"
-                  if $opts{debug};
-              if ($rest =~ m/$re/) {
-                  my @rest = split /\|\|/, $rest;
-                  shift @rest;
-                  foreach (@rest) {
-                      m|^defined<<<\(([^\)]*)\)>>>$|;
-                      die "Something wrong...$opts{PLACE}" if $1 eq "";
-                      push @results, $1;
-                  }
-              } else {
-                  $conds =~ s/<<<|>>>//g;
-                  warn "Warning: complicated #if expression(1): $conds$opts{PLACE}"
-                      if $opts{warnings};
-              }
-          } elsif ($conds =~ m|^!defined<<<\(([^\)]*)\)>>>(.*)$|) {
-              push @results, '!'.$1; # Handle the simple case
-              my $rest = $2;
-              my $re = qr/^(?:\&\&!defined<<<\([^\)]*\)>>>)*$/;
-              print STDERR "DEBUG[",$opts{debug_type},"]: Matching '$rest' with '$re'\n"
-                  if $opts{debug};
-              if ($rest =~ m/$re/) {
-                  my @rest = split /\&\&/, $rest;
-                  shift @rest;
-                  foreach (@rest) {
-                      m|^!defined<<<\(([^\)]*)\)>>>$|;
-                      die "Something wrong...$opts{PLACE}" if $1 eq "";
-                      push @results, '!'.$1;
-                  }
-              } else {
-                  $conds =~ s/<<<|>>>//g;
-                  warn "Warning: complicated #if expression(2): $conds$opts{PLACE}"
-                      if $opts{warnings};
-              }
-          } else {
-              $conds =~ s/<<<|>>>//g;
-              warn "Warning: complicated #if expression(3): $conds$opts{PLACE}"
-                  if $opts{warnings};
-          }
-          print STDERR "DEBUG[",$opts{debug_type},"]: Added preprocessor conds: '", join("', '", @results), "'\n"
-              if $opts{debug};
-          push @preprocessor_conds, [ @results ];
-          print STDERR "DEBUG[",$opts{debug_type},"]: preprocessor level: ", scalar(@preprocessor_conds), "\n"
-              if $opts{debug};
-          return ();
+          return _push_cpp_level(\%opts, '#if', $1, $1);
       },
     },
     { regexp   => qr/#elif (.*)/,
@@ -191,11 +397,13 @@ EOF
           }
           die "An #else without corresponding condition$opts{PLACE}"
               if !@preprocessor_conds;
-          # Invert all conditions on the last level
-          my $stuff = pop @preprocessor_conds;
-          push @preprocessor_conds, [
-              map { m|^!(.*)$| ? $1 : '!'.$_ } @$stuff
-          ];
+          # Invert the innermost level's condition.  Inverting each entry
+          # of a list of conditions and reading the result as a
+          # conjunction again would be right for !(A||B) and wrong for
+          # !(A&&B), which is a disjunction; one condition per level has
+          # no such ambiguity to get wrong.
+          $preprocessor_conds[$#preprocessor_conds] =
+              _cond_not($preprocessor_conds[$#preprocessor_conds]);
           print STDERR "DEBUG[",$opts{debug_type},"]: preprocessor level: ", scalar(@preprocessor_conds), "\n"
               if $opts{debug};
           return ();

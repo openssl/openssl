@@ -21,17 +21,12 @@
  *   ZLIB             recorded positive, matched as a bare name
  *   BROTLI, ZSTD     as ZLIB
  *
- * ParseC's #if handler accepts exactly two shapes: a chain of
- * defined(...) joined by ||, or a chain of !defined(...) joined by &&.
- * Any other expression keeps only the leading term and emits a
- * "complicated #if expression" warning.  That warning is the parser
- * reporting that it has discarded information, and util/mknum.pl is
- * invoked from the build with --no-warnings, so it is not seen in
- * practice.  The transcript records these warnings deliberately.
- *
- * Note that the mixed-polarity cases below are not asserted as bugs:
- * the limitation is deliberate and announced.  What is recorded here is
- * which shapes trip it, so that a change to the handler is visible.
+ * ParseC's #if handler reads the whole expression, so the mixed-polarity
+ * cases below keep every term they are written with, and none of them
+ * warns.  A warning belongs to an expression carrying a term the parser
+ * cannot represent, a numeric comparison say; conditions.h holds those.
+ * util/mknum.pl is invoked from the build with --no-warnings, so warnings
+ * are not seen in practice, which is why the transcript records them.
  *
  * This file is parser input, not compilable source.
  */
@@ -70,7 +65,7 @@ int bare_compression_or(int x);
 int use_prefix_ifdef(int x);
 #endif
 
-/* Mixed polarity within one expression: only the leading term survives. */
+/* Mixed polarity within one expression. */
 
 #if defined(ZLIB) && !defined(OPENSSL_NO_COMP)
 int mixed_positive_first(int x);

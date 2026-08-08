@@ -37,7 +37,7 @@ setup("test_parsec");
 # stable regardless of directory traversal order.
 my @fixtures = qw(conditions.h declarations.h deprecation.h polarity.h);
 
-plan tests => 4;
+plan tests => 11;
 
 my %conds = ();
 my @warnings = ();
@@ -99,6 +99,35 @@ ok(cond_mentions('dep_guard_and', 'OPENSSL_NO_TS'),
 ok(cond_mentions('dep_guard_and_reversed', 'OPENSSL_NO_TS'),
    "dep_guard_and_reversed retains OPENSSL_NO_TS");
 
+# A compound condition keeps every term, whatever mix of polarities it is
+# written with.  These name the sibling condition only, leaving the
+# spelling to the transcript.
+ok(cond_mentions('mixed_positive_first', 'OPENSSL_NO_COMP'),
+   "mixed_positive_first retains OPENSSL_NO_COMP");
+ok(cond_mentions('mixed_negative_first', 'OPENSSL_USE_NODELETE'),
+   "mixed_negative_first retains OPENSSL_USE_NODELETE");
+ok(cond_mentions('style_md_worked_example', 'OPENSSL_NO_HOOBLA'),
+   "STYLE.md's worked example retains its nested disjunction");
+
+# A level joined by '||' is one condition.  Several would be read as a
+# conjunction downstream, where disabling one of the two drops a symbol the
+# header declares.
+is(scalar @{$conds{uniform_or_positive} // []}, 1,
+   "a disjunction is one condition, not a list read as a conjunction");
+
+# #else negates the level's condition as a whole.  !(A&&B) is a
+# disjunction, which inverting term by term would turn into a conjunction.
+is(scalar @{$conds{cond_else_over_and_otherwise} // []}, 1,
+   "#else over a compound condition inverts it as a whole");
+
+# A term the parser cannot represent weakens the condition and never
+# strengthens it.  A conjunct costs only itself; a disjunct cannot go
+# alone, since what remained would omit a symbol the header declares.
+ok(cond_mentions('cond_opaque_conjunct', 'OPENSSL_NO_TS'),
+   "an unrepresentable conjunct costs only itself");
+is(scalar @{$conds{cond_opaque_disjunct} // []}, 0,
+   "an unrepresentable disjunct costs the whole disjunction");
+
 sub read_fixture {
     my $filename = shift;
 
@@ -113,11 +142,12 @@ sub read_fixture {
 # benefit of the targeted assertions above.
 #
 # Warnings are deliberately left enabled and captured.  ParseC warns when
-# it meets a preprocessor expression it cannot represent and keeps only
-# the leading term; that warning is the parser announcing that it has
-# discarded information.  util/mknum.pl is invoked from the build with
-# --no-warnings, so these are not seen in practice, which is exactly why
-# the transcript should carry them.
+# it has had to drop a term of a preprocessor expression to arrive at a
+# condition it can represent; that warning is the parser announcing that
+# the condition it recorded is weaker than the one in the header.
+# util/mknum.pl is invoked from the build with --no-warnings, so these are
+# not seen in practice, which is exactly why the transcript should carry
+# them.
 sub parse_lines {
     my ($fixture, @lines) = @_;
     my @entries;
