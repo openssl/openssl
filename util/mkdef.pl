@@ -190,16 +190,17 @@ sub platform_filter {
 
 sub feature_filter {
     my $item = shift;
-    my @features = ( $item->features() );
 
-    # True if no features are defined
-    return 1 if scalar @features == 0;
+    # An item with no condition is unconditionally available.
+    my $verdict = $item->available(\%disabled_uc);
 
-    my $verdict = ! grep { $disabled_uc{$_} } @features;
-
+    # Deprecation is a property of the symbol rather than of the build, so
+    # it is judged from the feature names the condition mentions, without
+    # regard to how they are combined.  Every condition written so far is a
+    # conjunction, for which the two readings agree.
     if ($disabled{deprecated}) {
-        foreach (@features) {
-            next unless /^DEPRECATEDIN_(\d+)_(\d+)(?:_(\d+))?$/;
+        foreach ($item->features()) {
+            next unless /^DEPRECATED_(\d+)_(\d+)(?:_(\d+))?$/;
             my $symdep = $1 * 10000 + $2 * 100 + ($3 // 0);
             $verdict = 0 if $config{api} >= $symdep;
             print STDERR "DEBUG: \$symdep = $symdep, \$verdict = $verdict\n"
