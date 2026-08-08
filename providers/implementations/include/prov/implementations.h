@@ -41,6 +41,9 @@ extern const OSSL_DISPATCH ossl_blake2b512_functions[];
 extern const OSSL_DISPATCH ossl_md5_functions[];
 extern const OSSL_DISPATCH ossl_md5_sha1_functions[];
 extern const OSSL_DISPATCH ossl_sm3_functions[];
+extern const OSSL_DISPATCH ossl_ascon_hash256_functions[];
+extern const OSSL_DISPATCH ossl_ascon_xof128_functions[];
+extern const OSSL_DISPATCH ossl_ascon_cxof128_functions[];
 extern const OSSL_DISPATCH ossl_md2_functions[];
 extern const OSSL_DISPATCH ossl_md4_functions[];
 extern const OSSL_DISPATCH ossl_mdc2_functions[];
@@ -265,6 +268,10 @@ extern const OSSL_DISPATCH ossl_aes128gcm_siv_functions[];
 extern const OSSL_DISPATCH ossl_aes192gcm_siv_functions[];
 extern const OSSL_DISPATCH ossl_aes256gcm_siv_functions[];
 #endif /* OPENSSL_NO_SIV */
+
+#ifndef OPENSSL_NO_ASCON128
+extern const OSSL_DISPATCH ossl_ascon_aead128_functions[];
+#endif /* OPENSSL_NO_ASCON128 */
 
 /* MACs */
 extern const OSSL_DISPATCH ossl_blake2bmac_functions[];
