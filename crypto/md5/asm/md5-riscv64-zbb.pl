@@ -233,15 +233,18 @@ ___
 }
 
 my @Cw = ($C1, $C2, $C3, $C4, $C5, $C6, $C7, $C8);
-my $funnel = "    ld   $T2, 0($KT)\n    ld   $lA, 8($KT)\n";
+my @win = ($lA, $lB);
+my $funnel = "    ld $lA, 0($KT)\n    ld $lB, 8($KT)\n";
 for (my $i = 0; $i < 8; $i++) {
-    my $ci = $Cw[$i];
-    $funnel .= "    srl  $ci, $T2, $T0\n";
-    $funnel .= "    sll  $lB, $lA, $T1\n";
-    $funnel .= "    or   $ci, $ci, $lB\n";
+    my $ci  = $Cw[$i];
+    my $cur = $win[$i % 2];
+    my $nxt = $win[($i + 1) % 2];
+    $funnel .= "    srl $ci, $cur, $T0\n";
+    $funnel .= "    sll $T2, $nxt, $T1\n";
+    $funnel .= "    or $ci, $ci, $T2\n";
     if ($i < 7) {
         my $off = 8 * ($i + 2);
-        $funnel .= "    mv   $T2, $lA\n    ld   $lA, $off($KT)\n";
+        $funnel .= "    ld $cur, $off($KT)\n";
     }
 }
 chomp $funnel;
