@@ -12,6 +12,25 @@
 
 #include "crypto/pkcs7.h"
 
+/*
+ * The public PKCS7 state field once held PKCS7_S_HEADER/BODY/TAIL; those
+ * values are no longer used but remain public.  Use a separate bit of the
+ * field, clear of the public values, as an internal flag recording that the
+ * content octet string is an indefinite-length (NDEF) streaming placeholder.
+ */
+#define PKCS7_STATE_STREAMING 0x100
+
+ASN1_OCTET_STRING *ossl_pkcs7_stream_content(PKCS7 *p7);
+
+/**
+ * @brief Prepare the content of p7 for indefinite-length streaming.
+ * The content octet string is created if it is not already present, and the
+ * content is recorded as a streaming placeholder in the state field.
+ * @param p7 the PKCS7 to prepare for streaming
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_pkcs7_stream(PKCS7 *p7);
+
 STACK_OF(X509) *pkcs7_get0_certificates(const PKCS7 *p7);
 const PKCS7_CTX *ossl_pkcs7_get0_ctx(const PKCS7 *p7);
 OSSL_LIB_CTX *ossl_pkcs7_ctx_get0_libctx(const PKCS7_CTX *ctx);
