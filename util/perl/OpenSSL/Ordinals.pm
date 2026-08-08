@@ -45,8 +45,8 @@ write out the data you want, sorted and filtered according to your rules.
 An ordinals file is a file that enumerates all the symbols that a shared
 library or loadable module must export.  Each of them have a unique
 assigned number as well as other attributes to indicate if they only exist
-on a subset of the supported platforms, or if they are specific to certain
-features.
+on a subset of the supported platforms, and the condition over enabled
+features under which they exist.
 
 The unique numbers each symbol gets assigned needs to be maintained for a
 shared library or module to stay compatible with previous versions on
@@ -301,8 +301,8 @@ sub items {
 # - They MUST have the same number
 # - They MUST have the same version
 # - For platforms, both MUST hold the same ones, but with opposite values
-# - For features, both MUST hold the same ones.
-# - They MUST NOT have identical name, type, numeral, version, platforms, and features
+# - They MUST have the same condition
+# - They MUST NOT have identical name, type, numeral, version, platforms, and condition
 # If there's just one item, just put it in the slot of its number
 # In all other cases, something is wrong
 sub _putback {
@@ -317,13 +317,11 @@ sub _putback {
         # Collect some data
         my %numbers = ();
         my %versions = ();
-        my %features = ();
+        my %conditions = ();
         foreach (@items) {
             $numbers{$_->intnum()} = 1;
             $versions{$_->version()} = 1;
-            foreach ($_->features()) {
-                $features{$_}++;
-            }
+            $conditions{$_->condition()}++;
         }
 
         # Check that all items we're trying to put back have the same number
@@ -334,16 +332,14 @@ sub _putback {
             join(", ", map { $_->name()." => ".$_->version() } @items), "\n"
             if (scalar keys %versions > 1);
 
-        # Check that both items run with the same features
-        foreach (@items) {
-        }
-        foreach (keys %features) {
-            delete $features{$_} if $features{$_} == 2;
-        }
-        croak "Features not in common between ",
-            $items[0]->name(), " and ", $items[1]->name(), ":",
-            join(", ", sort keys %features), "\n"
-            if %features;
+        # Check that both items are available under the same condition.
+        # Comparing the written form rather than the set of feature names
+        # keeps two differently combined conditions over the same names
+        # from being taken for one another.
+        croak "Conditions not in common between ",
+            $items[0]->name(), " and ", $items[1]->name(), ": ",
+            join(", ", map { "'".$_."'" } sort keys %conditions), "\n"
+            if scalar keys %conditions > 1;
 
         # Check for in addition identical name, type, and platforms
         croak "Duplicate entries for ".$items[0]->name()." from ".
@@ -381,8 +377,204 @@ sub _putback {
     $self->{contents}->[$items[0]->intnum()] = [ @items ];
 }
 
+# Condition expressions
+#
+# The condition field of an ordinals line is a boolean expression over
+# feature names.  Historically it was a comma separated list read as a
+# conjunction; that spelling is retained, so ',' is a synonym for '&&'
+# and every previously written field parses unchanged.  The grammar is
+# deliberately whitespace free, so that the field remains a single token
+# for the line oriented tools that read these files.
+#
+#   expression = term, { "||", term };
+#   term       = factor, { ( "&&" | "," ), factor };
+#   factor     = "!", factor | "(", expression, ")" | feature;
+#   feature    = ( letter | "_" ), { letter | digit | "_" };
+#
+# A parsed expression is a tree of array references, each tagged with its
+# kind:
+#
+#   [ 'feature', NAME ]
+#   [ 'not',     EXPR ]
+#   [ 'and',     EXPR, ... ]
+#   [ 'or',      EXPR, ... ]
+#
+# An empty condition field parses to undef, meaning "always available".
+
+sub _condition_tokens {
+    my $string = shift;
+
+    my @tokens = ();
+    while ($string =~ m{\G(&&|\|\||[,!()]|[A-Za-z_][A-Za-z_0-9]*)}gc) {
+        push @tokens, $1;
+    }
+    croak "Malformed condition: $string"
+        unless (pos($string) // 0) == length $string;
+
+    return @tokens;
+}
+
+# Each of the three parse helpers consumes from the front of @$tokens.
+sub _parse_condition_factor {
+    my $tokens = shift;
+
+    croak "Truncated condition" unless @$tokens;
+    my $token = shift @$tokens;
+
+    return [ 'not', _parse_condition_factor($tokens) ] if $token eq '!';
+    if ($token eq '(') {
+        my $expr = _parse_condition_expression($tokens);
+
+        croak "Unbalanced parenthesis in condition"
+            unless @$tokens && $tokens->[0] eq ')';
+        shift @$tokens;
+        return $expr;
+    }
+    croak "Unexpected '$token' in condition"
+        unless $token =~ m{^[A-Za-z_][A-Za-z_0-9]*$};
+
+    return [ 'feature', $token ];
+}
+
+sub _parse_condition_term {
+    my $tokens = shift;
+
+    my @operands = ( _parse_condition_factor($tokens) );
+    while (@$tokens && ($tokens->[0] eq '&&' || $tokens->[0] eq ',')) {
+        shift @$tokens;
+        push @operands, _parse_condition_factor($tokens);
+    }
+
+    return scalar @operands == 1 ? $operands[0] : [ 'and', @operands ];
+}
+
+sub _parse_condition_expression {
+    my $tokens = shift;
+
+    my @operands = ( _parse_condition_term($tokens) );
+    while (@$tokens && $tokens->[0] eq '||') {
+        shift @$tokens;
+        push @operands, _parse_condition_term($tokens);
+    }
+
+    return scalar @operands == 1 ? $operands[0] : [ 'or', @operands ];
+}
+
+sub _parse_condition {
+    my $string = shift // '';
+
+    my @tokens = _condition_tokens($string);
+    return undef unless @tokens;
+
+    my $expr = _parse_condition_expression(\@tokens);
+    croak "Trailing '".join('', @tokens)."' in condition: $string" if @tokens;
+
+    return $expr;
+}
+
+# True when the expression is a conjunction of plain feature names, which
+# is the shape every historical condition field has.  Such an expression
+# is written back out in the legacy comma separated form, so that files
+# written before this grammar existed round trip byte for byte.
+sub _condition_is_feature_list {
+    my $expr = shift;
+
+    return 1 unless defined $expr;
+    return 1 if $expr->[0] eq 'feature';
+    return 0 unless $expr->[0] eq 'and';
+
+    foreach my $operand (@{$expr}[1..$#$expr]) {
+        return 0 unless $operand->[0] eq 'feature';
+    }
+
+    return 1;
+}
+
+sub _condition_features {
+    my $expr = shift;
+
+    return () unless defined $expr;
+    return ( $expr->[1] ) if $expr->[0] eq 'feature';
+
+    return map { _condition_features($_) } @{$expr}[1..$#$expr];
+}
+
+# Parenthesise an operand only where precedence demands it: '!' binds
+# tighter than '&&', which binds tighter than '||'.
+sub _condition_to_string {
+    my $expr = shift;
+
+    return '' unless defined $expr;
+    return $expr->[1] if $expr->[0] eq 'feature';
+
+    my @operands = @{$expr}[1..$#$expr];
+    if ($expr->[0] eq 'not') {
+        my $operand = _condition_to_string($operands[0]);
+
+        $operand = "($operand)" unless $operands[0]->[0] eq 'feature';
+        return "!$operand";
+    }
+
+    my $tighter = $expr->[0] eq 'and' ? 'or' : undef;
+    my @strings = map {
+        my $string = _condition_to_string($_);
+
+        defined $tighter && $_->[0] eq $tighter ? "($string)" : $string;
+    } @operands;
+
+    return join($expr->[0] eq 'and' ? '&&' : '||', @strings);
+}
+
+# The form written to an ordinals file.  A conjunction of plain feature
+# names keeps the legacy comma separated spelling, so that every field
+# written before this grammar existed round trips byte for byte; anything
+# else is written with explicit operators, where ',' would read poorly.
+sub _features_to_condition {
+    my @features = @_;
+
+    return undef unless @features;
+    return [ 'feature', $features[0] ] if scalar @features == 1;
+
+    return [ 'and', map { [ 'feature', $_ ] } @features ];
+}
+
+sub _condition_to_field {
+    my $expr = shift;
+
+    if (_condition_is_feature_list($expr)) {
+        my @features = _condition_features($expr);
+
+        return join(',', sort @features);
+    }
+
+    return _condition_to_string($expr);
+}
+
+# DISABLED is the set of feature names that are turned off.  A bare
+# feature name is satisfied when that feature is enabled.
+sub _condition_evaluate {
+    my $expr = shift;
+    my $disabled = shift;
+
+    return 1 unless defined $expr;
+    return !$disabled->{$expr->[1]} if $expr->[0] eq 'feature';
+    return !_condition_evaluate($expr->[1], $disabled) if $expr->[0] eq 'not';
+
+    my @operands = @{$expr}[1..$#$expr];
+    if ($expr->[0] eq 'and') {
+        foreach my $operand (@operands) {
+            return 0 unless _condition_evaluate($operand, $disabled);
+        }
+        return 1;
+    }
+    foreach my $operand (@operands) {
+        return 1 if _condition_evaluate($operand, $disabled);
+    }
+
+    return 0;
+}
+
 sub _parse_platforms {
-    my $self = shift;
     my @defs = @_;
 
     my %platforms = ();
@@ -404,7 +596,6 @@ sub _parse_platforms {
 }
 
 sub _parse_features {
-    my $self = shift;
     my @defs = @_;
 
     my %features = ();
@@ -577,7 +768,7 @@ sub add_alias {
             version       => $self->_adjust_version($items[0]->version()),
             exists        => $items[0]->exists(),
             platforms     => { %platforms },
-            features      => [ $items[0]->features() ]
+            condition     => $items[0]->condition()
            );
         push @items, $alias_item;
 
@@ -819,7 +1010,7 @@ sub new {
                   platforms     => { map { m|^(!)?|; $' => !$1 }
                                          split /,/,$b[1] },
                   type          => $b[2],
-                  features      => [ split /,/,$b[3] // '' ] );
+                  condition     => $b[3] // '' );
     }
 
     if ($opts{name} && $opts{version} && defined $opts{exists} && $opts{type}
@@ -827,6 +1018,14 @@ sub new {
             && ref($opts{features} // []) eq 'ARRAY') {
         my $version = $opts{version};
         $version =~ s|_|.|g;
+
+        # A condition arrives either already parsed, as a string to parse,
+        # or as the plain list of features that every caller predating the
+        # expression grammar passes.
+        my $condition = $opts{condition};
+        $condition = OpenSSL::Ordinals::_parse_condition($condition) if ref $condition eq '';
+        $condition = OpenSSL::Ordinals::_features_to_condition(@{$opts{features}})
+            if !defined $condition && $opts{features};
 
         $instance = { source    => $opts{source},
                       name      => $opts{name},
@@ -836,7 +1035,7 @@ sub new {
                       version   => $version,
                       exists    => !!$opts{exists},
                       platforms => { %{$opts{platforms} // {}} },
-                      features  => [ sort @{$opts{features} // []} ] };
+                      condition => $condition };
     } else {
         croak __PACKAGE__."->new() called with bad arguments\n".
             join("", map { "    $_\t=> ".$opts{$_}."\n" } sort keys %opts);
@@ -880,13 +1079,6 @@ that aren't mentioned default to 1.
 
 C<FUNCTION> or C<VARIABLE>, depending on what the symbol represents.
 Some platforms do not care about this, others do.
-
-=item B<< $item->features >> (read-only)
-
-An array reference, where every item indicates a feature where this symbol
-is available.  If no features are mentioned, the symbol is always available.
-If any feature is mentioned, this symbol is I<only> available when those
-features are enabled.
 
 =cut
 
@@ -946,7 +1138,6 @@ sub to_string {
 
     croak "Too many arguments" if @_;
     my %platforms = $self->platforms();
-    my @features = $self->features();
     my $version = $self->version();
     $version =~ s|\.|_|g;
     return sprintf "%-39s %s\t%s\t%s:%s:%s:%s",
@@ -957,7 +1148,55 @@ sub to_string {
         join(',', (map { ($platforms{$_} ? '' : '!') . $_ }
                    sort keys %platforms)),
         $self->type(),
-        join(',', @features);
+        OpenSSL::Ordinals::_condition_to_field($self->{condition});
+}
+
+=item B<< $item->features >> (read-only)
+
+The feature names mentioned by this item's condition, sorted.  Callers
+that need the condition's structure, rather than the bare set of names
+appearing in it, want I<< $item->condition >> instead.
+
+=cut
+
+sub features {
+    my $self = shift;
+
+    croak "features called as setter" if @_;
+    my @features = OpenSSL::Ordinals::_condition_features($self->{condition});
+
+    return sort @features;
+}
+
+=item B<< $item->condition >> (read-only)
+
+The condition under which this symbol is available, in the form written
+to an ordinals file.  The empty string means the symbol is unconditional.
+
+=cut
+
+sub condition {
+    my $self = shift;
+
+    croak "condition called as setter" if @_;
+
+    return OpenSSL::Ordinals::_condition_to_field($self->{condition});
+}
+
+=item B<< $item->available >> (read-only)
+
+Given a reference to a hash whose keys are the names of disabled
+features, returns true when this item's condition is satisfied.
+
+=cut
+
+sub available {
+    my $self = shift;
+    my $disabled = shift;
+
+    croak "available called with extra arguments" if @_;
+
+    return !!OpenSSL::Ordinals::_condition_evaluate($self->{condition}, $disabled);
 }
 
 =back
