@@ -17,6 +17,99 @@ $VERSION = "0.9";
 @ISA = qw(Exporter);
 @EXPORT = qw(parse);
 
+=head1 NAME
+
+OpenSSL::ParseC - a private module to extract declarations from C headers
+
+=head1 SYNOPSIS
+
+  use OpenSSL::ParseC;
+
+  open my $fh, '<', 'include/openssl/evp.h';
+  foreach (parse(<$fh>, { filename => 'include/openssl/evp.h' })) {
+      print $_->{type}, " ", $_->{name}, "\n";
+  }
+
+=head1 DESCRIPTION
+
+This is an OpenSSL private module that reads the text of a C header and
+reports the declarations it makes, along with the preprocessor conditions
+each one is nested under.
+
+Its only consumer is F<util/mknum.pl>, which maintains the ordinals files
+F<util/libcrypto.num> and F<util/libssl.num>.  Neither runs during a
+build; they run from C<make update>.
+
+It is neither a C parser nor a preprocessor.  Input is scanned a line at a
+time: comments and line continuations are folded away, whitespace is
+normalised, the outermost parentheses of a line are marked, and the result
+is matched against ordered lists of handlers, each holding a regexp for one
+form of declaration and code to extract the name and type from it.  See
+C<@chandlers>, C<@opensslchandlers>, C<@cpphandlers> and C<@endhandlers>.
+Nothing is expanded, evaluated or resolved: an OpenSSL declaration macro
+such as C<DECLARE_STACK_OF> is rewritten into the C it stands for by its
+handler, and a C<#define> is reported as a macro rather than applied.
+Lines no handler matches are ignored, C<extern> declarations among them.
+
+Preprocessor conditions are collected one per enclosing level, all of which
+have to hold.  Only macro names, C<!>, C<&&>, C<||> and parentheses are
+rendered; a term of any other form, such as the numeric comparison in
+C<< #if OPENSSL_API_LEVEL >= 30000 >>, is dropped.  What is left holds
+wherever the header's expression does, and may also hold where it does not,
+so a symbol may be listed under a configuration that does not have it, but
+a symbol the header declares is never omitted.
+
+F<test/recipes/02-test_parsec.t> parses the fixtures in
+F<test/recipes/02-test_parsec_data/> and compares the result against a
+recorded transcript of this module's output.
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item B<parse LINES, HASHref>
+
+Parses LINES, the lines of one C header, and returns a list of hash
+references, one per declaration recognised, in the order they were found.
+Each has the keys:
+
+=over 4
+
+=item B<name>
+
+The name declared.
+
+=item B<type>
+
+A single letter: C<F> for a function, C<V> for a variable, C<T> for a
+typedef, C<S> for a struct, C<M> for a macro.  F<util/mknum.pl> keeps C<F>
+and C<V>, and C<M> only from the symbol hacking file.
+
+=item B<returntype>
+
+The return type, for C<F> and C<V>.
+
+=item B<value>
+
+The value, for C<M>; otherwise the signature.
+
+=item B<conds>
+
+An array reference holding the preprocessor conditions the declaration was
+found under, one per enclosing level, all of which have to hold.  Each is a
+boolean expression over macro names built from C<!>, C<&&>, C<||> and
+parentheses, in which a bare name means that macro is defined.
+
+=back
+
+The HASHref is optional and takes the keys B<filename>, naming the file for
+diagnostics, B<warnings>, false to silence them, and B<debug> with
+B<debug_type>, for tracing.
+
+=back
+
+=cut
+
 # Global handler data
 my @preprocessor_conds;         # One entry per open preprocessor level,
                                 # holding that level's condition, or undef
