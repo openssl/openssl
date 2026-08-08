@@ -631,6 +631,7 @@ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
 {
     ASN1_STRING stmp, *str = &stmp;
     int mbflag, type, ret;
+    unsigned char *p;
     if (!in)
         return -1;
     type = in->type;
@@ -647,6 +648,14 @@ int ASN1_STRING_to_UTF8(unsigned char **out, const ASN1_STRING *in)
         B_ASN1_UTF8STRING);
     if (ret < 0)
         return ret;
-    *out = stmp.data;
+    if ((p = OPENSSL_malloc((size_t)stmp.length + 1)) == NULL) {
+        OPENSSL_clear_free(stmp.data, stmp.length);
+        return -1;
+    }
+    if (stmp.length > 0)
+        memcpy(p, stmp.data, stmp.length);
+    p[stmp.length] = '\0';
+    OPENSSL_clear_free(stmp.data, stmp.length);
+    *out = p;
     return stmp.length;
 }

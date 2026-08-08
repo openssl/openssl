@@ -225,27 +225,37 @@ int GENERAL_NAME_print(BIO *out, GENERAL_NAME *gen)
         case NID_id_on_SmtpUTF8Mailbox:
             BIO_printf(out, "othername:SmtpUTF8Mailbox:%.*s",
                 gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                gen->d.otherName->value->value.utf8string->length
+                    ? gen->d.otherName->value->value.utf8string->data
+                    : (const unsigned char *)"");
             break;
         case NID_XmppAddr:
             BIO_printf(out, "othername:XmppAddr:%.*s",
                 gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                gen->d.otherName->value->value.utf8string->length
+                    ? gen->d.otherName->value->value.utf8string->data
+                    : (const unsigned char *)"");
             break;
         case NID_SRVName:
             BIO_printf(out, "othername:SRVName:%.*s",
                 gen->d.otherName->value->value.ia5string->length,
-                gen->d.otherName->value->value.ia5string->data);
+                gen->d.otherName->value->value.ia5string->length
+                    ? gen->d.otherName->value->value.ia5string->data
+                    : (const unsigned char *)"");
             break;
         case NID_ms_upn:
             BIO_printf(out, "othername:UPN:%.*s",
                 gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                gen->d.otherName->value->value.utf8string->length
+                    ? gen->d.otherName->value->value.utf8string->data
+                    : (const unsigned char *)"");
             break;
         case NID_NAIRealm:
             BIO_printf(out, "othername:NAIRealm:%.*s",
                 gen->d.otherName->value->value.utf8string->length,
-                gen->d.otherName->value->value.utf8string->data);
+                gen->d.otherName->value->value.utf8string->length
+                    ? gen->d.otherName->value->value.utf8string->data
+                    : (const unsigned char *)"");
             break;
         default:
             BIO_printf(out, "othername:<unsupported>");

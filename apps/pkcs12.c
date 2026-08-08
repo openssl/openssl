@@ -1289,7 +1289,9 @@ void print_attribute(BIO *out, const ASN1_TYPE *av)
 
     case V_ASN1_UTF8STRING:
         BIO_printf(out, "%.*s\n", (int)ASN1_STRING_length_ex(av->value.utf8string),
-            ASN1_STRING_get0_data(av->value.utf8string));
+            ASN1_STRING_length_ex(av->value.utf8string)
+                ? ASN1_STRING_get0_data(av->value.utf8string)
+                : (const unsigned char *)"");
         break;
 
     case V_ASN1_OCTET_STRING:
