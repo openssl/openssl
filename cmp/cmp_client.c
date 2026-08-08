@@ -9,11 +9,56 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
 #include "cmp_local.h"
 #include <inttypes.h>
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
     || (t) == OSSL_CMP_PKIBODY_KUP)
+
+/* |max_len| excludes NUL terminator and may be 0 to indicate no restriction */
+static char *sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
+    const char *sep, size_t max_len)
+{
+    int i;
+    ASN1_UTF8STRING *current;
+    size_t length = 0, sep_len;
+    char *result = NULL;
+    char *p;
+
+    if (sep == NULL)
+        sep = "";
+    sep_len = strlen(sep);
+
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
+        current = sk_ASN1_UTF8STRING_value(text, i);
+        if (i > 0)
+            length += sep_len;
+        length += ASN1_STRING_length_ex(current);
+        if (max_len != 0 && length > max_len)
+            return NULL;
+    }
+    if ((result = OPENSSL_malloc(length + 1)) == NULL)
+        return NULL;
+
+    p = result;
+    for (i = 0; i < sk_ASN1_UTF8STRING_num(text); i++) {
+        current = sk_ASN1_UTF8STRING_value(text, i);
+        length = ASN1_STRING_length_ex(current);
+        if (i > 0 && sep_len > 0) {
+            memcpy(p, sep, sep_len);
+            p += sep_len;
+        }
+        if (length > 0) {
+            memcpy(p, ASN1_STRING_get0_data(current), length);
+            p += length;
+        }
+    }
+    *p = '\0';
+
+    return result;
+}
 
 /*-
  * Evaluate whether there's an exception (violating the standard) configured for
@@ -236,7 +281,7 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
                 > 0)
             ERR_add_error_data(1, buf);
         if (emc->errorDetails != NULL) {
-            char *text = ossl_sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
+            char *text = sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
                 OSSL_CMP_PKISI_BUFLEN - 1);
 
             if (text != NULL && *text != '\0')
@@ -323,7 +368,7 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                     < 0) {
                 *str = '\0';
             } else {
-                char *text = ossl_sk_ASN1_UTF8STRING2text(pollRep->reason, ", ",
+                char *text = sk_ASN1_UTF8STRING2text(pollRep->reason, ", ",
                     sizeof(str) - len - 2);
 
                 if (text == NULL
@@ -614,7 +659,7 @@ int OSSL_CMP_certConf_cb(OSSL_CMP_CTX *ctx, X509 *cert, int fail_info,
         if (X509_verify_cert(csc) <= 0)
             goto err;
 
-        if (!ossl_x509_add_certs_new(&chain, X509_STORE_CTX_get0_chain(csc),
+        if (!ossl_cmp_x509_add_certs_new(&chain, X509_STORE_CTX_get0_chain(csc),
                 X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
                     | X509_ADD_FLAG_NO_SS)) {
             sk_X509_free(chain);

@@ -11,7 +11,34 @@
 
 /* CMP functions for PKIMessage checking */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
 #include "cmp_local.h"
+
+/* print brief info on the given cert as error diagnostics on failure */
+static int print_cert_brief(BIO *bio, const X509 *cert)
+{
+    unsigned long flags = ASN1_STRFLGS_RFC2253 | ASN1_STRFLGS_ESC_QUOTE
+        | XN_FLAG_SEP_CPLUS_SPC | XN_FLAG_FN_SN;
+    X509_VERIFY_PARAM *vpm;
+    int error, ret;
+
+    ret = X509_print_ex(bio, cert, flags,
+        X509_FLAG_NO_HEADER | X509_FLAG_NO_VERSION | X509_FLAG_NO_SIGNAME
+            | X509_FLAG_NO_PUBKEY | X509_FLAG_NO_EXTENSIONS
+            | X509_FLAG_NO_SIGDUMP | X509_FLAG_NO_AUX
+            | X509_FLAG_NO_ATTRIBUTES | X509_FLAG_NO_IDS);
+    if (ret == 0)
+        return 0;
+    if ((vpm = X509_VERIFY_PARAM_new()) == NULL)
+        return 0;
+    if (X509_check_certificate_times(vpm, cert, &error) == 0)
+        ret = BIO_printf(bio, "        %s\n",
+                  X509_verify_cert_error_string(error))
+            > 0;
+    X509_VERIFY_PARAM_free(vpm);
+    return ret;
+}
 
 /* Verify a message protected by signature according to RFC section 5.1.3.3 */
 static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
@@ -54,7 +81,7 @@ static int verify_signature(const OSSL_CMP_CTX *cmp_ctx,
     }
 
 sig_err:
-    res = ossl_x509_print_ex_brief(bio, cert, X509_FLAG_NO_EXTENSIONS);
+    res = print_cert_brief(bio, cert);
     ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_VALIDATING_SIGNATURE);
     if (res) {
         ERR_add_error_txt(NULL, "\n");
@@ -79,11 +106,13 @@ static int verify_PBMAC(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     if ((protection = ossl_cmp_calc_protection(ctx, msg)) == NULL)
         return 0; /* failed to generate protection string! */
 
-    valid = msg->protection != NULL && msg->protection->length >= 0
-        && msg->protection->type == protection->type
-        && msg->protection->length == protection->length
-        && CRYPTO_memcmp(msg->protection->data, protection->data,
-               protection->length)
+    valid = msg->protection != NULL
+        && ASN1_STRING_type(msg->protection) == ASN1_STRING_type(protection)
+        && ASN1_STRING_length_ex(msg->protection)
+            == ASN1_STRING_length_ex(protection)
+        && CRYPTO_memcmp(ASN1_STRING_get0_data(msg->protection),
+               ASN1_STRING_get0_data(protection),
+               ASN1_STRING_length_ex(protection))
             == 0;
     ASN1_BIT_STRING_free(protection);
     if (!valid)
@@ -301,8 +330,8 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
 
     if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
-    /* prevent misleading error later in case x509v3_cache_extensions() fails */
-    if (!ossl_x509v3_cache_extensions(cert)) {
+    /* prevent misleading error later in case the cert is invalid */
+    if (X509_check_purpose(cert, -1, 0) != 1) {
         ossl_cmp_warn(ctx, "cert appears to be invalid");
         return 0;
     }
@@ -590,7 +619,8 @@ int OSSL_CMP_validate_msg(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg)
     }
 
     if (msg->header->protectionAlg == NULL /* unprotected message */
-        || msg->protection == NULL || msg->protection->data == NULL) {
+        || msg->protection == NULL
+        || ASN1_STRING_get0_data(msg->protection) == NULL) {
         ERR_raise(ERR_LIB_CMP, CMP_R_MISSING_PROTECTION);
         return 0;
     }
@@ -793,7 +823,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
      * cached. Also they get used first, which is likely good for efficiency.
      */
     num_untrusted = ctx->untrusted == NULL ? 0 : sk_X509_num(ctx->untrusted);
-    res = ossl_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
+    res = ossl_cmp_x509_add_certs_new(&ctx->untrusted, msg->extraCerts,
         /* this allows self-signed certs */
         X509_ADD_FLAG_UP_REF | X509_ADD_FLAG_NO_DUP
             | X509_ADD_FLAG_PREPEND);

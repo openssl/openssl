@@ -26,11 +26,13 @@
  * cases increases its link count) in the parent and so both should be freed up.
  */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
 #include "crmf_local.h"
 #include <openssl/asn1t.h>
-#include "internal/constant_time.h"
+#include <openssl/err.h>
+#include <string.h>
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
-#include "crypto/x509.h" /* for ossl_x509_check_private_key() */
 
 /*-
  * atyp = Attribute Type
@@ -365,8 +367,14 @@ static int create_popo_signature(OSSL_CRMF_POPOSIGNINGKEY *ps,
         return 0;
     }
     pub = X509_PUBKEY_get0(cr->certTemplate->publicKey);
-    if (!ossl_x509_check_private_key(pub, pkey))
+    if (pub == NULL) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_MISSING_PUBLIC_KEY);
         return 0;
+    }
+    if (EVP_PKEY_eq(pub, pkey) != 1) {
+        ERR_raise(ERR_LIB_CRMF, CRMF_R_POPO_INCONSISTENT_PUBLIC_KEY);
+        return 0;
+    }
 
     if (ps->poposkInput != NULL) {
         /* We do not support cases 1+2 defined in RFC 4211, section 4.1 */
@@ -551,7 +559,7 @@ int OSSL_CRMF_MSG_centralkeygen_requested(const OSSL_CRMF_MSG *crm, const X509_R
     if (crm != NULL)
         pubkey = OSSL_CRMF_CERTTEMPLATE_get0_publicKey(OSSL_CRMF_MSG_get0_tmpl(crm));
     else
-        pubkey = p10->req_info.pubkey;
+        pubkey = X509_REQ_get_X509_PUBKEY(p10);
 
     if (pubkey == NULL
         || (X509_PUBKEY_get0_param(NULL, &pk, &pklen, NULL, pubkey)
@@ -636,7 +644,6 @@ int OSSL_CRMF_CERTTEMPLATE_fill(OSSL_CRMF_CERTTEMPLATE *tmpl,
 }
 
 #ifndef OPENSSL_NO_CMS
-DECLARE_ASN1_ITEM(CMS_SignedData) /* copied from cms_local.h */
 
 /* check for KGA authorization implied by CA flag or by explicit EKU cmKGA */
 static int check_cmKGA(ossl_unused const X509_PURPOSE *purpose, const X509 *x, int ca)
@@ -752,6 +759,34 @@ end:
 #endif /* OPENSSL_NO_CMS */
 }
 
+/* Returns the given value with the MSB copied to all the other bits. */
+static ossl_inline unsigned int constant_time_msb(unsigned int a)
+{
+    return 0 - (a >> (sizeof(a) * 8 - 1));
+}
+
+static ossl_inline size_t constant_time_msb_s(size_t a)
+{
+    return 0 - (a >> (sizeof(a) * 8 - 1));
+}
+
+/* Returns 0xff..f if a == 0 and 0 otherwise. */
+static ossl_inline unsigned int constant_time_is_zero(unsigned int a)
+{
+    return constant_time_msb(~a & (a - 1));
+}
+
+static ossl_inline size_t constant_time_is_zero_s(size_t a)
+{
+    return constant_time_msb_s(~a & (a - 1));
+}
+
+/* Returns 0xff..f if a == b and 0 otherwise. */
+static ossl_inline size_t constant_time_eq_s(size_t a, size_t b)
+{
+    return constant_time_is_zero_s(a ^ b);
+}
+
 unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *enc,
     OSSL_LIB_CTX *libctx, const char *propq,
     EVP_PKEY *pkey, int *outlen)
@@ -796,11 +831,12 @@ unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *
         int retval;
 
         if (EVP_PKEY_decrypt(pkctx, NULL, &eksize,
-                encKey->data, encKey->length)
+                ASN1_STRING_get0_data(encKey), ASN1_STRING_length_ex(encKey))
                 <= 0
             || (ek = OPENSSL_malloc(eksize)) == NULL)
             goto end;
-        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize, encKey->data, encKey->length);
+        retval = EVP_PKEY_decrypt(pkctx, ek, &eksize,
+            ASN1_STRING_get0_data(encKey), ASN1_STRING_length_ex(encKey));
         failure = ~constant_time_is_zero_s(constant_time_msb(retval)
             | constant_time_is_zero(retval));
         failure |= ~constant_time_eq_s(eksize, (size_t)cikeysize);
@@ -822,15 +858,17 @@ unsigned char *OSSL_CRMF_ENCRYPTEDVALUE_decrypt(const OSSL_CRMF_ENCRYPTEDVALUE *
         goto end;
     }
 
-    if ((out = OPENSSL_malloc(enc->encValue->length + EVP_CIPHER_get_block_size(cipher))) == NULL
+    if ((out = OPENSSL_malloc(ASN1_STRING_length_ex(enc->encValue)
+             + EVP_CIPHER_get_block_size(cipher)))
+            == NULL
         || (evp_ctx = EVP_CIPHER_CTX_new()) == NULL)
         goto end;
     EVP_CIPHER_CTX_set_padding(evp_ctx, 0);
 
     if (!EVP_DecryptInit(evp_ctx, cipher, ek, iv)
         || !EVP_DecryptUpdate(evp_ctx, out, outlen,
-            enc->encValue->data,
-            enc->encValue->length)
+            ASN1_STRING_get0_data(enc->encValue),
+            (int)ASN1_STRING_length_ex(enc->encValue))
         || !EVP_DecryptFinal(evp_ctx, out + *outlen, &n)) {
         ERR_raise(ERR_LIB_CRMF, CRMF_R_ERROR_DECRYPTING_ENCRYPTEDVALUE);
         goto end;
