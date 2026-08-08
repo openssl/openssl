@@ -16,13 +16,13 @@
  *
  *   OPENSSL_NO_DEPRECATED_x_y   the feature-disable guard macro
  *   OSSL_DEPRECATEDIN_x_y       the compiler attribute on a declaration
- *   DEPRECATEDIN_x_y            the condition name recorded in util/*.num
+ *   DEPRECATED_x_y              the condition name recorded in util/*.num
  *
- * ParseC rewrites guard lines of the first spelling into the third before
- * its generic condition handling sees them.  The dep_guard_and* cases
- * below exercise that rewrite where the guard is one term of a compound
- * condition; the recorded behaviour is that the sibling terms are lost.
- * See the TODO assertions in 02-test_parsec.t.
+ * ParseC records the first spelling as it stands; the third is produced
+ * downstream by OpenSSL::Ordinals, which strips the OPENSSL_NO_ prefix.
+ * The dep_guard_and* cases below place the guard in one term of a
+ * compound condition, which is where the rewrite ParseC used to perform
+ * discarded the sibling terms.  See the assertions in 02-test_parsec.t.
  *
  * This file is parser input, not compilable source.
  */

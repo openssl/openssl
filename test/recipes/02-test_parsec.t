@@ -19,18 +19,17 @@
 #
 #     OPENSSL_PARSEC_REGEN=1 make test TESTS=test_parsec
 #
-# Cases believed to be incorrect are additionally asserted below under
-# TODO, so that the intent is recorded next to the behaviour.  A TODO that
-# starts passing is reported by the harness and should be promoted to a
-# plain assertion in the same change that fixes it.
+# Cases believed to be incorrect should additionally be asserted below
+# under TODO (declaring `our $TODO;` for Test::More), so that the intent
+# is recorded next to the behaviour.  A TODO that starts passing is
+# reported by the harness and should be promoted to a plain assertion in
+# the same change that fixes it.
 
 use strict;
 use warnings;
 
 use OpenSSL::Test qw(:DEFAULT data_file);
 use OpenSSL::ParseC;
-
-our $TODO;
 
 setup("test_parsec");
 
@@ -86,27 +85,19 @@ my @crlf = render(parse_lines('conditions.h',
 is(join("\n", @crlf), join("\n", @lf),
    "CRLF line endings parse identically to LF");
 
-# Known-incorrect behaviour.  ParseC rewrites a guard naming
-# OPENSSL_NO_DEPRECATED_x_y into the ordinals spelling before its generic
-# condition handling runs, and the rewrite replaces the whole line.  Where
-# the guard is one term of a compound condition, the other terms are
-# discarded.  The generic handling parses the same compound shape
-# correctly when no deprecation guard is involved, so the loss comes from
-# the rewrite and not from the condition parser.
+# A deprecation guard is one term of a compound condition here.  ParseC
+# used to rewrite such guard lines into the ordinals spelling before its
+# generic condition handling ran, and because the rewrite replaced the
+# whole line, the sibling terms were discarded.  The rewrite is gone and
+# the generic handling now sees these lines like any other, so the
+# siblings survive.
 #
 # These assert only that the sibling condition survives, deliberately not
-# naming the deprecation spelling, so that they do not prejudge how the
-# rewrite is removed.
-TODO: {
-    local $TODO = "ParseC discards sibling conditions from compound "
-        . "deprecation guards (\@opensslcpphandlers in "
-        . "util/perl/OpenSSL/ParseC.pm)";
-
-    ok(cond_mentions('dep_guard_and', 'OPENSSL_NO_TS'),
-       "dep_guard_and retains OPENSSL_NO_TS");
-    ok(cond_mentions('dep_guard_and_reversed', 'OPENSSL_NO_TS'),
-       "dep_guard_and_reversed retains OPENSSL_NO_TS");
-}
+# naming the deprecation spelling, which is the transcript's business.
+ok(cond_mentions('dep_guard_and', 'OPENSSL_NO_TS'),
+   "dep_guard_and retains OPENSSL_NO_TS");
+ok(cond_mentions('dep_guard_and_reversed', 'OPENSSL_NO_TS'),
+   "dep_guard_and_reversed retains OPENSSL_NO_TS");
 
 sub read_fixture {
     my $filename = shift;
