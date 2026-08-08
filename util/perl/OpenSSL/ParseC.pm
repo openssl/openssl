@@ -17,6 +17,107 @@ $VERSION = "0.9";
 @ISA = qw(Exporter);
 @EXPORT = qw(parse);
 
+=head1 NAME
+
+OpenSSL::ParseC - a private module to extract declarations from C headers
+
+=head1 SYNOPSIS
+
+  use OpenSSL::ParseC;
+
+  open my $fh, '<', 'include/openssl/evp.h';
+  foreach (parse(<$fh>, { filename => 'include/openssl/evp.h' })) {
+      print $_->{type}, " ", $_->{name}, "\n";
+  }
+
+=head1 DESCRIPTION
+
+This is an OpenSSL private module that reads the text of a C header and
+reports the declarations it makes, along with the preprocessor conditions
+each one is nested under.
+
+It exists because the ordinals files, F<util/libcrypto.num> and
+F<util/libssl.num>, must name every symbol the shared libraries export and
+record under which build configurations each of them exists.  Deriving
+that from the public headers is this module's whole purpose, and
+F<util/mknum.pl> is its only consumer.  Neither runs during a build; they
+run from C<make update>.
+
+It is neither a C parser nor a preprocessor.  Input is scanned a line at a
+time: comments and line continuations are folded away, whitespace is
+normalised, the outermost parentheses of a line are marked, and the result
+is matched against ordered tables of regular expressions, one entry per
+shape of declaration.  Nothing is expanded, evaluated or resolved.  An
+OpenSSL declaration macro such as C<DECLARE_STACK_OF> is handled by an
+entry that rewrites it into the C it stands for; a C<#define> is reported
+as a macro rather than applied.
+
+So this module reports the shapes its tables name and silently ignores
+everything else.  That is a deliberate trade for a job with one caller and
+a bounded set of inputs, but it does mean absence of an entry is not
+evidence that a header declares nothing: C<extern> declarations, for
+example, are dropped entirely.
+
+Preprocessor conditions are collected one per enclosing level.  Where an
+expression cannot be represented, the condition reported is weaker than
+the one in the header and never stronger, so a symbol may be listed that
+a given configuration does not have, but one that exists is not omitted.
+The rule and its reasoning are stated at C<@cpphandlers>.
+
+Because all of this is a heuristic rather than a specification, the
+behaviour is pinned by a characterisation test.
+F<test/recipes/02-test_parsec.t> parses the fixtures in
+F<test/recipes/02-test_parsec_data/> and compares the result against a
+recorded transcript.  That transcript is the exhaustive statement of what
+this module does; a change to the parser is reviewed as a diff of it.
+
+=head1 FUNCTIONS
+
+=over 4
+
+=item B<parse LINES, HASHref>
+
+Parses LINES, the lines of one C header, and returns a list of hash
+references, one per declaration recognised, in the order they were found.
+Each has the keys:
+
+=over 4
+
+=item B<name>
+
+The name declared.
+
+=item B<type>
+
+A single letter: C<F> for a function, C<V> for a variable, C<T> for a
+typedef, C<S> for a struct, C<M> for a macro.  F<util/mknum.pl> keeps C<F>
+and C<V>, and C<M> only from the symbol hacking file.
+
+=item B<returntype>
+
+The return type, for C<F> and C<V>.
+
+=item B<value>
+
+The value, for C<M>; otherwise the signature.
+
+=item B<conds>
+
+An array reference holding the preprocessor conditions the declaration was
+found under, one per enclosing level, to be read as a conjunction.  Each is
+a boolean expression over macro names built from C<!>, C<&&>, C<||> and
+parentheses, in which a bare name means that macro is defined.
+
+=back
+
+The HASHref is optional and takes the keys B<filename>, naming the file for
+diagnostics, B<warnings>, false to silence them, and B<debug> with
+B<debug_type>, for tracing.
+
+=back
+
+=cut
+
 # Global handler data
 my @preprocessor_conds;         # One entry per open preprocessor level,
                                 # holding that level's condition, or undef
