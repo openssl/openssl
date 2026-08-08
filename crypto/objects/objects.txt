@@ -1024,6 +1024,9 @@ id-smime-alg 8		: ZLIB			: zlib compression
 !Alias nistAlgorithms csor 4
 !Alias aes nistAlgorithms 1
 
+# Base AES OID (used by Java keytool for generic AES keys)
+nistAlgorithms 1	: id-aes
+
 aes 1			: AES-128-ECB		: aes-128-ecb
 aes 2			: AES-128-CBC		: aes-128-cbc
 !Cname aes-128-ofb128

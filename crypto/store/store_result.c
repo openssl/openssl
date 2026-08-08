@@ -572,6 +572,8 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
             EVP_PKEY *pkey = NULL;
             X509 *cert = NULL;
             STACK_OF(X509) *chain = NULL;
+            STACK_OF(EVP_SKEY) *skeys = NULL;
+            PKCS12_PARSE_CTX *pctx = NULL;
 
             data->object_type = OSSL_OBJECT_PKCS12;
 
@@ -601,7 +603,7 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 pass = tpass;
                 /*
                  * ossl_pw_get_passphrase() does not NUL terminate but
-                 * we must do it for PKCS12_parse()
+                 * we must do it for PKCS12_parse_ex()
                  */
                 pass[tpass_len] = '\0';
                 if (!PKCS12_verify_mac(p12, pass, (int)tpass_len)) {
@@ -612,11 +614,19 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 }
             }
 
-            if (PKCS12_parse(p12, pass, &pkey, &cert, &chain)) {
+            if ((pctx = PKCS12_PARSE_CTX_new()) == NULL)
+                goto p12_end;
+            PKCS12_PARSE_CTX_set_pkey(pctx, &pkey);
+            PKCS12_PARSE_CTX_set_cert(pctx, &cert);
+            PKCS12_PARSE_CTX_set_ca(pctx, &chain);
+            PKCS12_PARSE_CTX_set_skeys(pctx, &skeys);
+
+            if (PKCS12_parse_ex(p12, pass, pctx, libctx, propq)) {
                 STACK_OF(OSSL_STORE_INFO) *infos = NULL;
                 OSSL_STORE_INFO *osi_pkey = NULL;
                 OSSL_STORE_INFO *osi_cert = NULL;
                 OSSL_STORE_INFO *osi_ca = NULL;
+                OSSL_STORE_INFO *osi_skey = NULL;
 
                 ok = 1; /* Parsing went through correctly! */
 
@@ -639,6 +649,16 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                         else
                             ok = 0;
                     }
+                    while (ok && sk_EVP_SKEY_num(skeys) > 0) {
+                        EVP_SKEY *sk = sk_EVP_SKEY_value(skeys, 0);
+
+                        if ((osi_skey = OSSL_STORE_INFO_new_SKEY(sk)) != NULL
+                            && sk_EVP_SKEY_shift(skeys) != NULL
+                            && sk_OSSL_STORE_INFO_push(infos, osi_skey) != 0)
+                            osi_skey = NULL;
+                        else
+                            ok = 0;
+                    }
                     while (ok && sk_X509_num(chain) > 0) {
                         X509 *ca = sk_X509_value(chain, 0);
 
@@ -653,15 +673,18 @@ static int try_pkcs12(struct extracted_param_data_st *data, OSSL_STORE_INFO **v,
                 EVP_PKEY_free(pkey);
                 X509_free(cert);
                 OSSL_STACK_OF_X509_free(chain);
+                sk_EVP_SKEY_pop_free(skeys, EVP_SKEY_free);
                 OSSL_STORE_INFO_free(osi_pkey);
                 OSSL_STORE_INFO_free(osi_cert);
                 OSSL_STORE_INFO_free(osi_ca);
+                OSSL_STORE_INFO_free(osi_skey);
                 if (!ok) {
                     sk_OSSL_STORE_INFO_pop_free(infos, OSSL_STORE_INFO_free);
                     infos = NULL;
                 }
                 ctx->cached_info = infos;
             }
+            PKCS12_PARSE_CTX_free(pctx);
         p12_end:
             OPENSSL_cleanse(tpass, sizeof(tpass));
             PKCS12_free(p12);
