@@ -21,6 +21,65 @@
 
 static const char *infile;
 
+static const struct {
+    const char *single; /* Valid */
+    const char *duplicate; /* Invalid */
+} duplicate_field_configs[] = {
+    { "[default]\nbasicConstraints=CA:true\n",
+        "[default]\nbasicConstraints=CA:true,CA:false\n" },
+    { "[default]\nbasicConstraints=pathlen:0\n",
+        "[default]\nbasicConstraints=pathlen:0,pathlen:1\n" },
+    { "[default]\nbasicAttConstraints=authority:true\n",
+        "[default]\nbasicAttConstraints=authority:true,authority:false\n" },
+    { "[default]\nbasicAttConstraints=pathlen:0\n",
+        "[default]\nbasicAttConstraints=pathlen:0,pathlen:1\n" },
+    { "[default]\npolicyConstraints=requireExplicitPolicy:0\n",
+        "[default]\npolicyConstraints=requireExplicitPolicy:0,requireExplicitPolicy:1\n" },
+    { "[default]\npolicyConstraints=inhibitPolicyMapping:0\n",
+        "[default]\npolicyConstraints=inhibitPolicyMapping:0,inhibitPolicyMapping:1\n" },
+};
+
+static int test_field_config(const char *config, int should_pass)
+{
+    size_t config_len = strlen(config);
+    BIO *in = NULL;
+    CONF *conf = NULL;
+    X509 *cert = NULL;
+    X509V3_CTX ctx;
+    int conf_res, ret = 0;
+
+    if (!TEST_ptr(in = BIO_new(BIO_s_mem()))
+        || !TEST_int_eq(BIO_write(in, config, (int)config_len),
+            (int)config_len)
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, in, NULL), 0)
+        || !TEST_ptr(cert = X509_new()))
+        goto end;
+
+    X509V3_set_ctx(&ctx, cert, cert, NULL, NULL, 0);
+    X509V3_set_nconf(&ctx, conf);
+
+    ERR_clear_error();
+    conf_res = X509V3_EXT_add_nconf(conf, &ctx, "default", cert);
+    if (!TEST_int_eq(conf_res, should_pass)
+        || (!should_pass && !TEST_err_r(ERR_LIB_X509V3, X509V3_R_DUPLICATE_FIELD)))
+        goto end;
+
+    ret = 1;
+end:
+    X509_free(cert);
+    NCONF_free(conf);
+    BIO_free(in);
+    ERR_clear_error();
+    return ret;
+}
+
+static int test_duplicate_field(int idx)
+{
+    return test_field_config(duplicate_field_configs[idx].single, 1)
+        && test_field_config(duplicate_field_configs[idx].duplicate, 0);
+}
+
 static int test_pathlen(void)
 {
     X509 *x = NULL;
@@ -1185,6 +1244,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_pathlen);
+    ADD_ALL_TESTS(test_duplicate_field, OSSL_NELEM(duplicate_field_configs));
 #ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);
     ADD_TEST(test_addr_ranges);
