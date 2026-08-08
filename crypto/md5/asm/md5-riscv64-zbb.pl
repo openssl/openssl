@@ -250,8 +250,9 @@ for (my $i = 0; $i < 8; $i++) {
 chomp $funnel;
 
 my $loop_head = <<___;
+L_block:
     andi $T0, $INP, 7
-    bnez $T0, L_funnel_setup
+    bnez $T0, L_funnel
 
 L_round_loop:
     ld $C1, 0($INP)
@@ -268,27 +269,18 @@ ___
 chomp $loop_head;
 
 my $loop_tail = <<___;
-    beqz $LEN, L_end
-    andi $T0, $INP, 7
-    beqz $T0, L_round_loop
-    addi $T2, $LEN, -1
-    beqz $T2, L_round_loop
-    j    L_funnel_body
-
-L_end:
+    bnez $LEN, L_block
 ___
 chomp $loop_tail;
 
 my $loop_funnel = <<___;
-L_funnel_setup:
+L_funnel:
     addi $T2, $LEN, -1
     beqz $T2, L_round_loop
-
-L_funnel_body:
     andi $KT, $INP, -8
     slli $T0, $T0, 3
-    li   $T1, 64
-    sub  $T1, $T1, $T0
+    li $T1, 64
+    sub $T1, $T1, $T0
 $funnel
     j L_have_words
 ___
