@@ -522,19 +522,9 @@ sub _condition_to_string {
     return join($expr->[0] eq 'and' ? '&&' : '||', @strings);
 }
 
-# The form written to an ordinals file.  A conjunction of plain feature
-# names keeps the legacy comma separated spelling, so that every field
-# written before this grammar existed round trips byte for byte; anything
-# else is written with explicit operators, where ',' would read poorly.
-sub _features_to_condition {
-    my @features = @_;
-
-    return undef unless @features;
-    return [ 'feature', $features[0] ] if scalar @features == 1;
-
-    return [ 'and', map { [ 'feature', $_ ] } @features ];
-}
-
+# The form written to an ordinals file: names joined by '&&' are written
+# comma separated and sorted, which is how such a field was written before
+# this grammar existed; anything else is written with explicit operators.
 sub _condition_to_field {
     my $expr = shift;
 
@@ -571,14 +561,87 @@ sub _condition_evaluate {
     return 0;
 }
 
+sub _condition_negate {
+    my $expr = shift;
+
+    return $expr->[1] if $expr->[0] eq 'not';   # collapse !!X to X
+
+    return [ 'not', $expr ];
+}
+
+# The terms an expression requires outright: it descends through '&&' and
+# returns everything else as it stands, so a term under a '||' comes back
+# as part of that whole '||' and not on its own.
+sub _condition_conjuncts {
+    my $expr = shift;
+
+    return () unless defined $expr;
+    return map { _condition_conjuncts($_) } @{$expr}[1..$#$expr]
+        if $expr->[0] eq 'and';
+
+    return ( $expr );
+}
+
+# A parsed condition over the macro names a preprocessor directive tests,
+# mapped to the feature names an ordinals condition field is written in.
+# OPENSSL_NO_x comes back negated, the macro being defined when feature x
+# is off; OPENSSL_USE_x and the compression names map straight across.
+#
+# A term naming none of those -- a platform macro, a toolchain macro,
+# anything outside the vocabulary below -- becomes undef.  An undef
+# operand of an '&&' is dropped and the rest kept, but an undef operand of
+# a '||' discards the whole '||': the result then holds wherever the
+# original did, and the symbol keeps its entry rather than losing it,
+# which for an exported symbol would be a silent ABI break.
+sub _condition_map_features {
+    my $expr = shift;
+
+    return undef unless defined $expr;
+
+    if ($expr->[0] eq 'feature') {
+        my $def = $expr->[1];
+
+        return [ 'feature', $def ] if $def =~ m{^(?:ZLIB|BROTLI|ZSTD)$};
+        return [ 'feature', $' ] if $def =~ m{^OPENSSL_USE_};
+        return _condition_negate([ 'feature', $' ])
+            if $def =~ m{^OPENSSL_NO_};
+
+        return undef;
+    }
+
+    my @operands = map { _condition_map_features($_) } @{$expr}[1..$#$expr];
+
+    return defined $operands[0] ? _condition_negate($operands[0]) : undef
+        if $expr->[0] eq 'not';
+    if ($expr->[0] eq 'and') {
+        @operands = grep { defined } @operands;
+    } else {
+        @operands = () if grep { !defined } @operands;
+    }
+
+    return undef unless @operands;
+    return $operands[0] if scalar @operands == 1;
+
+    return [ $expr->[0], @operands ];
+}
+
 sub _parse_platforms {
     my @defs = @_;
 
     my %platforms = ();
-    foreach (@defs) {
-        m{^(!)?};
-        my $op = !(defined $1 && $1 eq '!');
-        my $def = $';
+    # The platform field is a flat list of names, so it takes only the terms
+    # the condition requires outright; a platform macro named under a '||'
+    # is dropped.
+    foreach my $conjunct (map { _condition_conjuncts(_parse_condition($_)) }
+                          @defs) {
+        my $op = 1;
+
+        while ($conjunct->[0] eq 'not') {
+            $op = !$op;
+            $conjunct = $conjunct->[1];
+        }
+        next unless $conjunct->[0] eq 'feature';
+        my $def = $conjunct->[1];
 
         if ($def =~ m{^_?WIN32$})                   { $platforms{$&} = $op; }
         if ($def =~ m{^__FreeBSD__$})               { $platforms{$&} = $op; }
@@ -592,23 +655,18 @@ sub _parse_platforms {
     return %platforms;
 }
 
+# The condition of a symbol found under the preprocessor conditions DEFS,
+# one per enclosing preprocessor level, all of which have to hold.
 sub _parse_features {
     my @defs = @_;
 
-    my %features = ();
-    foreach (@defs) {
-        m{^(!)?};
-        my $op = !(defined $1 && $1 eq '!');
-        my $def = $';
+    my @conds = grep { defined }
+        map { _condition_map_features(_parse_condition($_)) } @defs;
 
-        if ($def =~ m{^ZLIB$})                      { $features{$&} =  $op; }
-        if ($def =~ m{^BROTLI$})                    { $features{$&} =  $op; }
-        if ($def =~ m{^ZSTD$})                      { $features{$&} =  $op; }
-        if ($def =~ m{^OPENSSL_USE_})               { $features{$'} =  $op; }
-        if ($def =~ m{^OPENSSL_NO_})                { $features{$'} = !$op; }
-    }
+    return undef unless @conds;
+    return $conds[0] if scalar @conds == 1;
 
-    return %features;
+    return [ 'and', @conds ];
 }
 
 sub _adjust_version {
@@ -625,10 +683,11 @@ sub _adjust_version {
 
 =item B<< $ordinals->add SOURCE, NAME, TYPE, LIST >>
 
-Adds a new item from file SOURCE named NAME with the type TYPE,
-and a set of C macros in
-LIST that are expected to be defined or undefined to use this symbol, if
-any.  For undefined macros, they each must be prefixed with a C<!>.
+Adds a new item from file SOURCE named NAME with the type TYPE, found
+under the preprocessor conditions in LIST.  Each of those is a boolean
+expression over C macro names, one per enclosing preprocessor level, all of
+which have to hold: a bare name means that macro is defined, and C<!>,
+C<&&>, C<||> and parentheses combine them.
 
 If this symbol already exists in loaded data, it will be rewritten using
 the new input data, but will keep the same ordinal number and version.
@@ -641,8 +700,8 @@ sub add {
     my $source = shift;         # file where item was defined
     my $name = shift;
     my $type = shift;           # FUNCTION or VARIABLE
-    my @defs = @_;              # Macros from #ifdef and #ifndef
-                                # (the latter prefixed with a '!')
+    my @defs = @_;              # One condition per enclosing
+                                # preprocessor level
 
     # call signature for debug output
     my $verbsig = "add('$name' , '$type' , [ " . join(', ', @defs) . " ])";
@@ -651,7 +710,7 @@ sub add {
         unless $type eq 'FUNCTION' || $type eq 'VARIABLE';
 
     my %platforms = _parse_platforms(@defs);
-    my %features = _parse_features(@defs);
+    my $condition = _parse_features(@defs);
 
     my @items = $self->items(filter => f_name($name));
     my $version = @items ? $items[0]->version() : $self->{currversion};
@@ -672,9 +731,7 @@ sub add {
                                           $self->_adjust_version($version),
                                       exists        => 1,
                                       platforms     => { %platforms },
-                                      features      => [
-                                          grep { $features{$_} } keys %features
-                                      ] );
+                                      condition     => $condition );
 
     push @items, $new_item;
     print STDERR "DEBUG[",__PACKAGE__,"::add] $verbsig\n", map { "\t".$_->to_string()."\n" } @items
@@ -694,9 +751,9 @@ sub add {
 
 =item B<< $ordinals->add_alias SOURCE, ALIAS, NAME, LIST >>
 
-Adds an alias ALIAS for the symbol NAME from file SOURCE, and a set of C macros
-in LIST that are expected to be defined or undefined to use this symbol, if any.
-For undefined macros, they each must be prefixed with a C<!>.
+Adds an alias ALIAS for the symbol NAME from file SOURCE, found under the
+preprocessor conditions in LIST, which take the same form as they do for
+B<< $ordinals->add >>.  An alias may only be conditional on a platform.
 
 If this symbol already exists in loaded data, it will be rewritten using
 the new input data.  Otherwise, the data will just be store away, to wait
@@ -718,10 +775,9 @@ sub add_alias {
     croak "You're kidding me... $alias == $name" if $alias eq $name;
 
     my %platforms = _parse_platforms(@defs);
-    my %features = _parse_features(@defs);
 
-    croak "Alias with associated features is forbidden\n"
-        if %features;
+    croak "Alias with an associated condition is forbidden\n"
+        if defined _parse_features(@defs);
 
     my $f_byalias = f_name($alias);
     my $f_byname = f_name($name);
@@ -944,7 +1000,7 @@ This will create a new item from FILENAME, filled with data coming from STRING.
 STRING must conform to the following EBNF description:
 
   ordinal string = symbol, spaces, ordinal, spaces, version, spaces,
-                   exist, ":", platforms, ":", type, ":", features;
+                   exist, ":", platforms, ":", type, ":", condition;
   spaces         = space, { space };
   space          = " " | "\t";
   symbol         = ( letter | "_" ), { letter | digit | "_" };
@@ -954,15 +1010,19 @@ STRING must conform to the following EBNF description:
   platforms      = platform, { ",", platform };
   platform       = ( letter | "_" ) { letter | digit | "_" };
   type           = "FUNCTION" | "VARIABLE";
-  features       = feature, { ",", feature };
+  condition      = [ expression ];
+  expression     = term, { "||", term };
+  term           = factor, { ( "&&" | "," ), factor };
+  factor         = "!", factor | "(", expression, ")" | feature;
   feature        = ( letter | "_" ) { letter | digit | "_" };
   number         = digit, { digit };
 
-(C<letter> and C<digit> are assumed self evident)
+(C<letter> and C<digit> are assumed self evident.  The condition contains
+no spaces, so that the field remains a single token.)
 
 =item B<< source => FILENAME >>, B<< name => STRING >>, B<< number => NUMBER >>,
       B<< version => STRING >>, B<< exists => BOOLEAN >>, B<< type => STRING >>,
-      B<< platforms => HASHref >>, B<< features => LISTref >>
+      B<< platforms => HASHref >>, B<< condition => STRING >>
 
 This will create a new item with data coming from the arguments.
 
@@ -1011,18 +1071,14 @@ sub new {
     }
 
     if ($opts{name} && $opts{version} && defined $opts{exists} && $opts{type}
-            && ref($opts{platforms} // {}) eq 'HASH'
-            && ref($opts{features} // []) eq 'ARRAY') {
+            && ref($opts{platforms} // {}) eq 'HASH') {
         my $version = $opts{version};
         $version =~ s|_|.|g;
 
-        # A condition arrives either already parsed, as a string to parse,
-        # or as the plain list of features that every caller predating the
-        # expression grammar passes.
+        # A condition arrives either already parsed or as a string to parse.
         my $condition = $opts{condition};
-        $condition = OpenSSL::Ordinals::_parse_condition($condition) if ref $condition eq '';
-        $condition = OpenSSL::Ordinals::_features_to_condition(@{$opts{features}})
-            if !defined $condition && $opts{features};
+        $condition = OpenSSL::Ordinals::_parse_condition($condition)
+            if ref $condition eq '';
 
         $instance = { source    => $opts{source},
                       name      => $opts{name},

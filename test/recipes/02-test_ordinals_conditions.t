@@ -78,7 +78,56 @@ my @malformed = (
     '1A',
 );
 
-plan tests => scalar @tests * 2 + scalar @malformed + 2;
+# Writing the field, rather than reading it: the preprocessor conditions a
+# symbol was found under, one per enclosing level, and the field they map
+# to.  A directive names macros and the field names features, so
+# OPENSSL_NO_x inverts polarity.
+#
+# [ [ conditions ], expected field ]
+my @mappings = (
+    [ [ '!OPENSSL_NO_TS' ],                            'TS' ],
+    [ [ 'OPENSSL_NO_TS' ],                             '!TS' ],
+    [ [ 'OPENSSL_USE_NODELETE' ],                      'NODELETE' ],
+    [ [ 'ZLIB' ],                                      'ZLIB' ],
+    [ [ '!ZLIB' ],                                     '!ZLIB' ],
+    # Nested levels are a conjunction.
+    [ [ '!OPENSSL_NO_TS', '!OPENSSL_NO_EC' ],          'EC,TS' ],
+    # Shapes a flat list of feature names could not hold.
+    [ [ 'ZLIB&&!OPENSSL_NO_COMP' ],                    'COMP,ZLIB' ],
+    [ [ '!OPENSSL_NO_COMP&&OPENSSL_USE_NODELETE' ],    'COMP,NODELETE' ],
+    [ [ 'OPENSSL_NO_TS||OPENSSL_NO_EC' ],              '!TS||!EC' ],
+    # What '#else' over a compound condition produces.
+    [ [ '!(!OPENSSL_NO_TS&&!OPENSSL_NO_EC)' ],         '!(TS&&EC)' ],
+    # A name that is no feature is dropped, which weakens a conjunction.
+    # A disjunction cannot lose one term without strengthening, so it goes
+    # whole.
+    [ [ '__GNUC__' ],                                  '' ],
+    [ [ '!OPENSSL_NO_TS&&__GNUC__' ],                  'TS' ],
+    [ [ '!OPENSSL_NO_TS||__GNUC__' ],                  '' ],
+    [ [ '!OPENSSL_NO_TS', '__GNUC__' ],                'TS' ],
+    # STYLE.md's worked example.  Neither OPENSSL_LINUX nor OPENSSL_BULA is
+    # a feature, and the second is in a disjunction.
+    [ [ 'OPENSSL_LINUX&&(!OPENSSL_NO_HOOBLA||!OPENSSL_BULA)' ], '' ],
+    [ [ 'OPENSSL_LINUX&&(!OPENSSL_NO_HOOBLA||!OPENSSL_NO_BULA)' ],
+                                                       'HOOBLA||BULA' ],
+);
+
+# The platform field is a flat list of names, so it holds only the terms a
+# condition requires outright.
+#
+# [ [ conditions ], expected field ]
+my @platform_mappings = (
+    [ [ 'OPENSSL_SYS_VMS' ],                           'VMS' ],
+    [ [ '!OPENSSL_SYS_VMS' ],                          '!VMS' ],
+    [ [ '_WIN32' ],                                    '_WIN32' ],
+    [ [ '_WIN32&&(BASETYPES||_WINDEF_H)' ],            '_WIN32' ],
+    # A disjunction requires neither platform; a flat field would say it
+    # requires the one it lists.
+    [ [ '_WIN32||__CYGWIN__' ],                        '' ],
+);
+
+plan tests => scalar @tests * 2 + scalar @malformed
+    + scalar @mappings + scalar @platform_mappings + 2;
 
 foreach my $test (@tests) {
     my ($condition, $written, $disabled, $expected) = @$test;
@@ -94,6 +143,24 @@ foreach my $test (@tests) {
 foreach my $condition (@malformed) {
     ok(!defined eval { item_with_condition($condition); 1 },
        "'$condition' is rejected");
+}
+
+foreach my $mapping (@mappings) {
+    my ($defs, $field) = @$mapping;
+    my $condition =
+        OpenSSL::Ordinals::_condition_to_field(
+            OpenSSL::Ordinals::_parse_features(@$defs));
+
+    is($condition, $field, "[@$defs] is recorded as '$field'");
+}
+
+foreach my $mapping (@platform_mappings) {
+    my ($defs, $field) = @$mapping;
+    my %platforms = OpenSSL::Ordinals::_parse_platforms(@$defs);
+
+    is(join(',', map { ($platforms{$_} ? '' : '!') . $_ }
+                 sort keys %platforms),
+       $field, "[@$defs] is recorded on platforms '$field'");
 }
 
 # The written form must be a fixed point, or a file would keep changing
