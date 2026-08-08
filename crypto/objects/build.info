@@ -10,3 +10,5 @@ DEPEND[obj_xref.o]=obj_xref.h
 GENERATE[obj_xref.h]=objxref.pl $(SRCDIR)/crypto/objects/obj_mac.num \
     $(SRCDIR)/crypto/objects/obj_xref.txt
 DEPEND[obj_xref.h]=obj_mac.num obj_xref.txt
+INCLUDE[obj_dat.o]=.
+INCLUDE[obj_xref.o]=.
