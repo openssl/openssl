@@ -14,6 +14,19 @@
 #include <openssl/sha.h>
 #include "arch/riscv_arch.h"
 
+void sha1_block_data_order_zbb(void *ctx, const void *in, size_t num);
+void sha1_block_data_order_c(void *ctx, const void *in, size_t num);
+void sha1_block_data_order(SHA_CTX *ctx, const void *in, size_t num);
+
+void sha1_block_data_order(SHA_CTX *ctx, const void *in, size_t num)
+{
+    if (RISCV_HAS_ZBB()) {
+        sha1_block_data_order_zbb(ctx, in, num);
+    } else {
+        sha1_block_data_order_c(ctx, in, num);
+    }
+}
+
 void sha256_block_data_order_zvkb_zvknha_or_zvknhb(void *ctx, const void *in,
     size_t num);
 void sha256_block_data_order_zbb(void *ctx, const void *in, size_t num);
