@@ -24,3 +24,4 @@ ENDIF
 
 DEPEND[a_strex.o]=charmap.h
 GENERATE[charmap.h]=charmap.pl
+INCLUDE[a_strex.o]=.

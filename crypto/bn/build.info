@@ -197,3 +197,4 @@ INCLUDE[riscv64-mont.o]=..
 
 DEPEND[bn_prime.o]=bn_prime.h
 GENERATE[bn_prime.h]=bn_prime.pl
+INCLUDE[bn_prime.o]=.
