@@ -244,6 +244,9 @@ if ( ! $reindex && $statefile ) {
             $name = $1;
             $code = $2;
             my $next = <STATE>;
+
+            $next =~ s|\R$||;      # Better chomp, as above; the greedy
+                                    # trim below would keep a \r
             $next =~ s/^\s*(.*)\s*$/$1/;
             die "Duplicate define $name" if exists $strings{$name};
             $strings{$name} = $next;
