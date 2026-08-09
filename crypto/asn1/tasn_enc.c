@@ -145,12 +145,8 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* fall through */
 
     case ASN1_ITYPE_SEQUENCE:
-        i = ossl_asn1_enc_restore(&seqcontlen, out, pval, it);
-        /* An error occurred */
-        if (i < 0)
-            return 0;
         /* We have a valid cached encoding... */
-        if (i > 0)
+        if (ossl_asn1_enc_restore(&seqcontlen, out, pval, it))
             return seqcontlen;
         /* Otherwise carry on */
         seqcontlen = 0;
