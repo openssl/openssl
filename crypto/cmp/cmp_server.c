@@ -584,7 +584,8 @@ static int assuming_new_transaction(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
         char *tid_str = i2s_ASN1_OCTET_STRING(NULL, tid);
 
         ossl_cmp_log2(WARN, ctx, "Assuming that last transaction with ID=%s got aborted, new ID=%s",
-            ctx_str, tid_str);
+            ctx_str != NULL ? ctx_str : "(null)",
+            tid_str != NULL ? tid_str : "(null)");
         OPENSSL_free(tid_str);
         OPENSSL_free(ctx_str);
         return 1;
@@ -608,14 +609,19 @@ static int assuming_new_transaction(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req)
 /* Prepare for next transaction */
 static int transaction_reinit(OSSL_CMP_SRV_CTX *srv_ctx)
 {
+    int ret = 1;
+
     srv_ctx->ctx->status = OSSL_CMP_PKISTATUS_unspecified; /* transaction closed */
     srv_ctx->certReqId = OSSL_CMP_CERTREQID_INVALID;
     srv_ctx->polling = 0;
 
-    return ((srv_ctx->clean_transaction == NULL
-                || srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID))
-        && OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL)
-        && OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL));
+    if (srv_ctx->clean_transaction != NULL)
+        ret = srv_ctx->clean_transaction(srv_ctx, srv_ctx->ctx->transactionID);
+    if (!OSSL_CMP_CTX_set1_transactionID(srv_ctx->ctx, NULL))
+        ret = 0;
+    if (!OSSL_CMP_CTX_set1_senderNonce(srv_ctx->ctx, NULL))
+        ret = 0;
+    return ret;
 }
 
 /*
@@ -655,9 +661,16 @@ OSSL_CMP_MSG *OSSL_CMP_SRV_process_request(OSSL_CMP_SRV_CTX *srv_ctx,
         goto err;
 
     if (assuming_new_transaction(ctx, req)) {
-        /* start of a new transaction, reset transactionID and senderNonce */
-        if (!transaction_reinit(srv_ctx))
+        /*
+         * Start of a new transaction, resetting transactionID and senderNonce.
+         * Must in this case reset transactionID beforehand such that the clean()
+         * callback function gets a NULL transactionID argument, as documented.
+         */
+        (void)OSSL_CMP_CTX_set1_transactionID(ctx, NULL);
+        if (!transaction_reinit(srv_ctx)) {
+            ERR_raise(ERR_LIB_CMP, CMP_R_ERROR_PROCESSING_MESSAGE);
             goto err;
+        }
     } else {
         /* transactionID should be already initialized */
         if (ctx->transactionID == NULL) {

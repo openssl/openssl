@@ -110,6 +110,9 @@ Otherwise it should be called again with the next request message of the same
 transaction (which can be a certificate confirmation or poll request message).
 The function should not be called by multiple threads sharing
 the same I<srv_ctx>; calling it in parallel leads to undefined behavior.
+When an earlier call did not yet finish the respective transaction,
+calling it in an interleaved way with a new request belonging to a different
+transaction will abort the earlier transaction and begin the new one.
 
 OSSL_CMP_CTX_server_perform() is an interface to
 OSSL_CMP_SRV_process_request() that can be used by a CMP client
