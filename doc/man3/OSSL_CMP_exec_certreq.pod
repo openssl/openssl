@@ -51,8 +51,9 @@ OSSL_CMP_get1_certReqTemplate
                                    OSSL_CMP_ATAVS **keySpec);
 =head1 DESCRIPTION
 
-This is the OpenSSL API for doing CMP (Certificate Management Protocol)
-client-server transactions, i.e., sequences of CMP requests and responses.
+This is the OpenSSL main API for Certificate Management Protocol (CMP) clients.
+Each of the OSSL_CMP_exec_*() functions performs a whole CMP transaction,
+which is a sequence of related CMP request messages and response messages.
 
 All functions take a populated OSSL_CMP_CTX structure as their first argument.
 Usually the server name, port, and path ("CMP alias") need to be set, as well as
@@ -185,8 +186,9 @@ Both must be freed by the caller.
 
 CMP is defined in RFC 9810 (and CRMF in RFC 4211).
 
-The CMP client implementation is limited to one request per CMP message
-(and consequently to at most one response component per CMP message).
+This CMP implementation focuses on the Lightweight CMP Profile (RFC 9483).
+Among other things, this implies that only commonly used CMP message types are supported
+and that each CMP message may not contain multiple certificate requests or responses.
 
 When a client obtains from a CMP server CA certificates that it is going to
 trust, for instance via the caPubs field of a certificate response or using
