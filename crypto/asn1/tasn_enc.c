@@ -170,7 +170,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             int tmplen;
             seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
-                return 0;
+                return -1;
             pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             tmplen = asn1_template_ex_i2d(pseqval, NULL, seqtt, -1, aclass);
             if (tmplen == -1 || (tmplen > INT_MAX - seqcontlen))
@@ -188,7 +188,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             const ASN1_VALUE **pseqval;
             seqtt = ossl_asn1_do_adb(*pval, tt, 1);
             if (!seqtt)
-                return 0;
+                return -1;
             pseqval = ossl_asn1_get_const_field_ptr(pval, seqtt);
             /* FIXME: check for errors in enhanced version */
             asn1_template_ex_i2d(pseqval, out, seqtt, -1, aclass);
