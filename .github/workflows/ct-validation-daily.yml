@@ -141,7 +141,12 @@ jobs:
         # - memcmp: test_crypto_memcmp
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
+        #
+        # Also covered:
+        # - test_ct_validation_helpers: The Valgrind-based constant-time
+        #   validation helpers from constant_time.h, like CONSTTIME_SECRET and
+        #   CONSTTIME_DECLASSIFY
         run: |
-          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp" \
+          make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp test_ct_validation_helpers" \
                OSSL_VALGRIND_CT=yes \
                test
