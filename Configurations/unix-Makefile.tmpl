@@ -11,7 +11,13 @@
      our $makedepcmd = platform->makedepcmd();
 
      sub windowsdll { $config{target} =~ /^(?:Cygwin|mingw|win64)/ }
-     sub run_on_windows { $^O =~ /^(?:cygwin|msys|MSWin32)/ }
+     sub use_response_file {
+         # Use a response file instead of splitting commands into batches when
+         # running on Windows (strict command line length limitations) or when
+         # using an MSVC-like toolchain (some tools cannot be run in batches)
+         return $^O =~ /^(?:cygwin|msys|MSWin32)/
+             || ($target{msvc_syntax} // 0);
+     }
 
      # Shared AIX support is special. We put libcrypto[64].so.ver into
      # libcrypto.a and use libcrypto_a.a as static one, unless using
@@ -1911,7 +1917,7 @@ $import: $full
 EOF
           }
       }
-      if (!run_on_windows()) {
+      if (!use_response_file()) {
           $recipe .= <<"EOF";
 $full: $fulldeps
 	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
