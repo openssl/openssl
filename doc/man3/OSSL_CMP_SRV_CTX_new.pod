@@ -94,15 +94,24 @@ OSSL_CMP_SRV_CTX_set_grant_implicit_confirm
 
 =head1 DESCRIPTION
 
-OSSL_CMP_SRV_process_request() implements the generic aspects of a CMP server.
-Its arguments are the B<OSSL_CMP_SRV_CTX> I<srv_ctx> and the CMP request message
+OSSL_CMP_SRV_process_request() implements the generic core aspects
+of Certificate Management Protocol (CMP) servers.
+Its arguments are the B<OSSL_CMP_SRV_CTX> I<srv_ctx> and a CMP request message
 I<req>. It does the typical generic checks on I<req>, calls
 the respective callback function (if present) for more specific processing,
-and then assembles a result message, which may be a CMP error message.
+and then assembles a response message, which may be a CMP error message.
+
+Since OSSL_CMP_SRV_process_request() handles only a single CMP request message,
+it may need to be called multiple times until a CMP transaction has ended.
 If after return of the function the expression
 I<OSSL_CMP_CTX_get_status(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx))> yields -1
 then the function has closed the current transaction,
 which may be due to normal successful end of the transaction or due to an error.
+Otherwise, it should be called again with the next request message of the same
+transaction (which can be a certificate confirmation or a poll request message).
+The function should not be called by multiple threads sharing
+the same I<srv_ctx> without explicitly serialising the calls;
+calling it in parallel leads to undefined behavior.
 
 OSSL_CMP_CTX_server_perform() is an interface to
 OSSL_CMP_SRV_process_request() that can be used by a CMP client
@@ -160,10 +169,20 @@ confirmation of newly enrolled certificates if requested.
 
 CMP is defined in RFC 9810 (and CRMF in RFC 4211).
 
-So far the CMP server implementation is limited to one request per CMP message
-(and consequently to at most one response component per CMP message).
+Like the OpenSSL CMP client, the CMP server implementation documented here
+focuses on the Lightweight CMP Profile (RFC 9483).
+Among other things, this implies that only commonly used CMP message types are supported
+and that each CMP message may not contain multiple certificate requests or responses.
+
+So far, this server implementation is single-threaded and
+should not be called in parallel for any given B<OSSL_CMP_SRV_CTX> I<srv_ctx>.
+It can handle only one CMP transaction at a time (which, of course, is not a problem
+for transactions consisting of just a single request/response message pair).
 
 =head1 RETURN VALUES
+
+OSSL_CMP_SRV_process_request() returns a CMP response message, which may be an
+error message, or NULL on internal errors that preclude producing a response.
 
 OSSL_CMP_SRV_CTX_new() returns a B<OSSL_CMP_SRV_CTX> structure on success,
 NULL on error.
