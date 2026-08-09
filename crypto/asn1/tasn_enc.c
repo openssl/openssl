@@ -130,8 +130,8 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         /* FIXME: Called only in the error path? */
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_POST, pval, it, NULL))
             return -1;
-        /* Fixme: error condition if selector out of range */
-        break;
+        ERR_raise(ERR_LIB_ASN1, ASN1_R_NO_MATCHING_CHOICE_TYPE);
+        return -1;
 
     case ASN1_ITYPE_EXTERN:
         /* If new style i2d it does all the work */
@@ -198,7 +198,6 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
     default:
         return 0;
     }
-    return 0;
 }
 
 static int asn1_template_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
