@@ -5845,12 +5845,29 @@ err:
     return testresult;
 }
 
+static int prepare_ccm_no_payload(EVP_CIPHER_CTX *ctx,
+    const EVP_CIPHER_TEST_INFO *info)
+{
+    static const unsigned char aad[] = "CCM empty-payload Final regression";
+    int outlen = 0;
+
+    if (info->mode != EVP_CIPH_CCM_MODE)
+        return 1;
+
+    return EVP_CipherUpdate(ctx, NULL, &outlen, NULL, 0) > 0
+        && EVP_CipherUpdate(ctx, NULL, &outlen, aad,
+               (int)sizeof(aad) - 1)
+        > 0;
+}
+
 /*-
  * A zero-length AEAD message driven through the one-shot EVP_Cipher() interface
  * must agree with the streaming EVP_CipherFinal_ex() path. This checks:
  * - an empty message yields the same tag via both interfaces
  * - the true tag passes verification on decrypt
  * - the modified tag fails verification on decrypt
+ * For CCM, each operation declares a zero payload length and supplies AAD, but
+ * deliberately omits the payload Update that would otherwise authenticate it.
  */
 static int test_evp_oneshot_aead_zerolen(int idx)
 {
@@ -5881,7 +5898,6 @@ static int test_evp_oneshot_aead_zerolen(int idx)
 
     /* filter out various modes */
     if (info->taglen == 0
-        || info->mode == EVP_CIPH_CCM_MODE
         /* skip TLS stitched MTE cipher */
         || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
         /* skip TLS stitched MTE cipher */
@@ -5904,6 +5920,10 @@ static int test_evp_oneshot_aead_zerolen(int idx)
     }
     if (!TEST_true(EVP_EncryptInit_ex2(ctx_stream, info->ciph, key, iv, NULL))) {
         errmsg = "STREAM_INIT";
+        goto err;
+    }
+    if (!TEST_true(prepare_ccm_no_payload(ctx_stream, info))) {
+        errmsg = "STREAM_CCM_PREPARE";
         goto err;
     }
     if (!TEST_true(EVP_EncryptFinal_ex(ctx_stream, ct, &finlen))) {
@@ -5939,6 +5959,10 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         errmsg = "ONESHOT_INIT";
         goto err;
     }
+    if (!TEST_true(prepare_ccm_no_payload(ctx_oneshot, info))) {
+        errmsg = "ONESHOT_CCM_PREPARE";
+        goto err;
+    }
     oneshot_flen = EVP_Cipher(ctx_oneshot, ct, NULL, 0);
     if (!TEST_int_ge(oneshot_flen, 0)) {
         errmsg = "ONESHOT_FINAL_NULL";
@@ -5972,6 +5996,10 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         errmsg = "DEC_SET_TAG";
         goto err;
     }
+    if (!TEST_true(prepare_ccm_no_payload(ctx_dec, info))) {
+        errmsg = "DEC_CCM_PREPARE";
+        goto err;
+    }
     dec_flen = EVP_Cipher(ctx_dec, ct, NULL, 0);
     if (!TEST_int_ge(dec_flen, 0)) {
         errmsg = "DEC_VERIFY_NULL";
@@ -5999,6 +6027,10 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         errmsg = "DEC_BAD_SET_TAG";
         goto err;
     }
+    if (!TEST_true(prepare_ccm_no_payload(ctx_dec_bad, info))) {
+        errmsg = "DEC_BAD_CCM_PREPARE";
+        goto err;
+    }
     if (!TEST_int_lt(EVP_Cipher(ctx_dec_bad, ct, NULL, 0), 0)) {
         errmsg = "DEC_BADTAG_NOT_REJECTED";
         goto err;
@@ -6019,6 +6051,10 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         errmsg = "DEC_STREAM_SET_TAG";
         goto err;
     }
+    if (!TEST_true(prepare_ccm_no_payload(ctx_dec_s, info))) {
+        errmsg = "DEC_STREAM_CCM_PREPARE";
+        goto err;
+    }
     if (!TEST_true(EVP_DecryptFinal_ex(ctx_dec_s, ct, &finlen))) {
         errmsg = "DEC_STREAM_VERIFY";
         goto err;
@@ -6037,6 +6073,10 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         tag_bad, taglen);
     if (!TEST_true(EVP_CIPHER_CTX_set_params(ctx_dec_s_bad, set_tagparams))) {
         errmsg = "DEC_STREAM_BAD_SET_TAG";
+        goto err;
+    }
+    if (!TEST_true(prepare_ccm_no_payload(ctx_dec_s_bad, info))) {
+        errmsg = "DEC_STREAM_BAD_CCM_PREPARE";
         goto err;
     }
     if (!TEST_false(EVP_DecryptFinal_ex(ctx_dec_s_bad, ct, &finlen))) {
