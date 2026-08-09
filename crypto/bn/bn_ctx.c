@@ -37,23 +37,30 @@ typedef struct bignum_pool {
 static void BN_POOL_init(BN_POOL *);
 static void BN_POOL_finish(BN_POOL *);
 static BIGNUM *BN_POOL_get(BN_POOL *, int);
-static void BN_POOL_release(BN_POOL *, unsigned int);
+static void BN_POOL_release(BN_POOL *, unsigned int, unsigned int);
 
 /************/
 /* BN_STACK */
 /************/
 
 /* A wrapper to manage the "stack frames" */
+typedef struct bignum_ctx_frame {
+    /* The number of temporaries in use when the frame was opened */
+    unsigned int used;
+    /* Frame-scoped behavior flags */
+    unsigned int flags;
+} BN_CTX_FRAME;
+
 typedef struct bignum_ctx_stack {
-    /* Array of indexes into the bignum stack */
-    unsigned int *indexes;
+    /* Array of frame records into the bignum stack */
+    BN_CTX_FRAME *indexes;
     /* Number of stack frames, and the size of the allocated array */
     unsigned int depth, size;
 } BN_STACK;
 static void BN_STACK_init(BN_STACK *);
 static void BN_STACK_finish(BN_STACK *);
-static int BN_STACK_push(BN_STACK *, unsigned int);
-static unsigned int BN_STACK_pop(BN_STACK *);
+static int BN_STACK_push(BN_STACK *, unsigned int, unsigned int);
+static BN_CTX_FRAME BN_STACK_pop(BN_STACK *);
 
 /**********/
 /* BN_CTX */
@@ -71,7 +78,7 @@ struct bignum_ctx {
     int err_stack;
     /* Block "gets" until an "end" (compatibility behaviour) */
     int too_many;
-    /* Flags. */
+    /* Flags applied to bignums obtained from the pool. */
     int flags;
     /* The library context */
     OSSL_LIB_CTX *libctx;
@@ -184,16 +191,27 @@ void BN_CTX_free(BN_CTX *ctx)
 
 void BN_CTX_start(BN_CTX *ctx)
 {
+    (void)BN_CTX_start_ex(ctx, 0);
+}
+
+int BN_CTX_start_ex(BN_CTX *ctx, unsigned int flags)
+{
     CTXDBG("ENTER BN_CTX_start()", ctx);
     /* If we're already overflowing ... */
-    if (ctx->err_stack || ctx->too_many)
+    if (ctx->err_stack || ctx->too_many) {
         ctx->err_stack++;
+        CTXDBG("LEAVE BN_CTX_start()", ctx);
+        return 0;
+    }
     /* (Try to) get a new frame pointer */
-    else if (!BN_STACK_push(&ctx->stack, ctx->used)) {
+    if (!BN_STACK_push(&ctx->stack, ctx->used, flags)) {
         ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
         ctx->err_stack++;
+        CTXDBG("LEAVE BN_CTX_start()", ctx);
+        return 0;
     }
     CTXDBG("LEAVE BN_CTX_start()", ctx);
+    return 1;
 }
 
 void BN_CTX_end(BN_CTX *ctx)
@@ -204,10 +222,11 @@ void BN_CTX_end(BN_CTX *ctx)
     if (ctx->err_stack)
         ctx->err_stack--;
     else {
-        unsigned int fp = BN_STACK_pop(&ctx->stack);
+        BN_CTX_FRAME frame = BN_STACK_pop(&ctx->stack);
+        unsigned int fp = frame.used;
         /* Does this stack frame have anything to release? */
         if (fp < ctx->used)
-            BN_POOL_release(&ctx->pool, ctx->used - fp);
+            BN_POOL_release(&ctx->pool, ctx->used - fp, frame.flags);
         ctx->used = fp;
         /* Unjam "too_many" in case "get" had failed */
         ctx->too_many = 0;
@@ -263,12 +282,12 @@ static void BN_STACK_finish(BN_STACK *st)
     st->indexes = NULL;
 }
 
-static int BN_STACK_push(BN_STACK *st, unsigned int idx)
+static int BN_STACK_push(BN_STACK *st, unsigned int idx, unsigned int flags)
 {
     if (st->depth == st->size) {
         /* Need to expand */
         unsigned int newsize = st->size ? (st->size * 3 / 2) : BN_CTX_START_FRAMES;
-        unsigned int *newitems;
+        BN_CTX_FRAME *newitems;
 
         if ((newitems = OPENSSL_malloc_array(newsize, sizeof(*newitems))) == NULL)
             return 0;
@@ -278,11 +297,13 @@ static int BN_STACK_push(BN_STACK *st, unsigned int idx)
         st->indexes = newitems;
         st->size = newsize;
     }
-    st->indexes[(st->depth)++] = idx;
+    st->indexes[st->depth].used = idx;
+    st->indexes[st->depth].flags = flags;
+    st->depth++;
     return 1;
 }
 
-static unsigned int BN_STACK_pop(BN_STACK *st)
+static BN_CTX_FRAME BN_STACK_pop(BN_STACK *st)
 {
     return st->indexes[--(st->depth)];
 }
@@ -351,13 +372,17 @@ static BIGNUM *BN_POOL_get(BN_POOL *p, int flag)
     return p->current->vals + ((p->used++) % BN_CTX_POOL_SIZE);
 }
 
-static void BN_POOL_release(BN_POOL *p, unsigned int num)
+static void BN_POOL_release(BN_POOL *p, unsigned int num, unsigned int flags)
 {
     unsigned int offset = (p->used - 1) % BN_CTX_POOL_SIZE;
 
     p->used -= num;
     while (num--) {
-        bn_check_top(p->current->vals + offset);
+        BIGNUM *bn = p->current->vals + offset;
+
+        if ((flags & BN_CTX_START_FLAG_SCRUB_ON_END) != 0)
+            BN_clear(bn);
+        bn_check_top(bn);
         if (offset == 0) {
             offset = BN_CTX_POOL_SIZE - 1;
             p->current = p->current->prev;

@@ -19,6 +19,7 @@
 #include <openssl/crypto.h>
 #include <openssl/err.h>
 #include <openssl/rand.h>
+#include "crypto/bn.h"
 #include "internal/nelem.h"
 #include "internal/numbers.h"
 #include "testutil.h"
@@ -2911,6 +2912,60 @@ err:
     return st;
 }
 
+static int test_ctx_scrub_on_end_flag(void)
+{
+    BN_CTX *nctx = NULL;
+    BIGNUM *outer = NULL, *inner = NULL, *reused = NULL, *next = NULL;
+    int st = 0;
+    int outer_started = 0, inner_started = 0, next_started = 0;
+
+    if (!TEST_ptr(nctx = BN_CTX_new()))
+        goto err;
+
+    BN_CTX_start(nctx);
+    outer_started = 1;
+    if (!TEST_ptr(outer = BN_CTX_get(nctx))
+        || !TEST_true(BN_set_word(outer, 0x11111111UL)))
+        goto err;
+
+    bn_get_words(outer)[0] = (BN_ULONG)0x11111111UL;
+
+    if (!TEST_true(BN_CTX_start_ex(nctx, BN_CTX_START_FLAG_SCRUB_ON_END)))
+        goto err;
+    inner_started = 1;
+    if (!TEST_ptr(inner = BN_CTX_get(nctx))
+        || !TEST_true(BN_set_word(inner, 0x22222222UL)))
+        goto err;
+
+    bn_get_words(inner)[0] = (BN_ULONG)0x22222222UL;
+    BN_CTX_end(nctx);
+    inner_started = 0;
+
+    if (!TEST_ptr(reused = BN_CTX_get(nctx))
+        || !TEST_true(bn_get_words(reused)[0] == 0))
+        goto err;
+
+    BN_CTX_end(nctx);
+    outer_started = 0;
+
+    BN_CTX_start(nctx);
+    next_started = 1;
+    if (!TEST_ptr(next = BN_CTX_get(nctx))
+        || !TEST_true(bn_get_words(next)[0] == (BN_ULONG)0x11111111UL))
+        goto err;
+
+    st = 1;
+err:
+    if (next_started)
+        BN_CTX_end(nctx);
+    if (inner_started)
+        BN_CTX_end(nctx);
+    if (outer_started)
+        BN_CTX_end(nctx);
+    BN_CTX_free(nctx);
+    return st;
+}
+
 static int test_coprime(void)
 {
     BIGNUM *a = NULL, *b = NULL;
@@ -3505,6 +3560,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_smallsafeprime, 16);
         ADD_TEST(test_swap);
         ADD_TEST(test_ctx_consttime_flag);
+        ADD_TEST(test_ctx_scrub_on_end_flag);
 #ifndef OPENSSL_NO_EC2M
         ADD_TEST(test_gf2m_add);
         ADD_TEST(test_gf2m_mod);

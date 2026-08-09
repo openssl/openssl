@@ -90,6 +90,7 @@ BN_CTX_free                             89	4_0_0	EXIST::FUNCTION:
 BN_CTX_start                            90	4_0_0	EXIST::FUNCTION:
 BN_CTX_get                              91	4_0_0	EXIST::FUNCTION:
 BN_CTX_end                              92	4_0_0	EXIST::FUNCTION:
+BN_CTX_start_ex                         ?	4_1_0	EXIST::FUNCTION:
 BN_rand_ex                              93	4_0_0	EXIST::FUNCTION:
 BN_rand                                 94	4_0_0	EXIST::FUNCTION:
 BN_priv_rand_ex                         95	4_0_0	EXIST::FUNCTION:
