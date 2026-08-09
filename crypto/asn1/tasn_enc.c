@@ -118,7 +118,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             return -1;
         }
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_PRE, pval, it, NULL))
-            return 0;
+            return -1;
         i = ossl_asn1_get_choice_selector_const(pval, it);
         if ((i >= 0) && (i < it->tcount)) {
             const ASN1_VALUE **pchval;
@@ -127,9 +127,10 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
             pchval = ossl_asn1_get_const_field_ptr(pval, chtt);
             return asn1_template_ex_i2d(pchval, out, chtt, -1, aclass);
         }
-        /* Fixme: error condition if selector out of range */
+        /* FIXME: Called only in the error path? */
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_POST, pval, it, NULL))
-            return 0;
+            return -1;
+        /* Fixme: error condition if selector out of range */
         break;
 
     case ASN1_ITYPE_EXTERN:
@@ -161,7 +162,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
                 | V_ASN1_UNIVERSAL;
         }
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_PRE, pval, it, NULL))
-            return 0;
+            return -1;
         /* First work out sequence content length */
         for (i = 0, tt = it->templates; i < it->tcount; tt++, i++) {
             const ASN1_TEMPLATE *seqtt;
@@ -195,7 +196,7 @@ int ASN1_item_ex_i2d(const ASN1_VALUE **pval, unsigned char **out,
         if (ndef == 2)
             ASN1_put_eoc(out);
         if (!ossl_asn1_call_aux_cb(aux, ASN1_OP_I2D_POST, pval, it, NULL))
-            return 0;
+            return -1;
         return seqlen;
 
     default:
