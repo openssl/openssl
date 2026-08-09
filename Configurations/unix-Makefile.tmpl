@@ -1826,10 +1826,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -1977,10 +1983,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
@@ -2056,10 +2068,16 @@ EOF
           if (platform->isstaticlib($_)) {
               push @linklibs, platform->convertext($_);
           } else {
-              my $d = "-L" . dirname($_);
+              my $d = dirname($_);
               my $l = basename($_);
-              $l =~ s/^lib//;
-              $l = "-l" . $l;
+              if ($target{msvc_syntax} // 0) {
+                  $d = "/LIBPATH:" . $d;
+                  $l = $l . '.lib';
+              } else {
+                  $d = "-L" . $d;
+                  $l =~ s/^lib//;
+                  $l = "-l" . $l;
+              }
               push @linklibs, $l;
               push @linkdirs, $d unless grep { $d eq $_ } @linkdirs;
           }
