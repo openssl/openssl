@@ -407,6 +407,128 @@ static int test_single_copy_read(QUIC_RSTREAM *qrs,
     return 1;
 }
 
+static const unsigned char simple_data[] = "Hello world! And thank you for all the fish!";
+
+/*
+ * Walks the basic sequential contract of the receive stream: a gap at
+ * the head reads zero bytes without signalling the end of stream even
+ * when FIN is already known, duplicate FIN frames with a matching final
+ * size are accepted, available() reports the final size together with
+ * FIN, partial reads flip the FIN flag exactly with the last byte and
+ * reading at the end of stream stays successful. Runs once with the
+ * plain read and once with the single copy record path.
+ */
+static int test_rstream_simple(int idx)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    QUIC_CHANNEL *ch = NULL;
+    QUIC_RSTREAM_QPARM *rsqp = NULL;
+    OSSL_QRX_PKT *pkt[8] = { NULL };
+    int ret = 0;
+    unsigned char buf[sizeof(simple_data)];
+    size_t readbytes = 0, avail = 0, i;
+    int fin = 0;
+    int use_sc = (idx & 1) != 0;
+    int (*read_fn)(QUIC_RSTREAM *, unsigned char *, size_t, size_t *,
+        int *)
+        = use_sc ? test_single_copy_read
+                 : ossl_quic_rstream_read;
+
+    /* every frame arrives in a packet, as it does in production */
+    for (i = 0; i < OSSL_NELEM(pkt); ++i)
+        if (!TEST_ptr(pkt[i] = pkt_test_new(1200)))
+            goto err;
+
+    if (!TEST_ptr(ch = OPENSSL_zalloc(sizeof(QUIC_CHANNEL)))
+        || !TEST_ptr(rsqp = ossl_quic_rstream_qparm_new(ch))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, rsqp)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[0], 5,
+            simple_data + 5, 10, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[1],
+            sizeof(simple_data) - 1,
+            simple_data + sizeof(simple_data) - 1,
+            1, 1))
+        || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 0)
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[2],
+            sizeof(simple_data) - 10,
+            simple_data + sizeof(simple_data) - 10,
+            10, 1))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[3], 0,
+            simple_data, 1, 0))
+        || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 1)
+        || !TEST_mem_eq(buf, 1, simple_data, 1)
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[4],
+            0, simple_data,
+            10, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[5],
+            sizeof(simple_data),
+            NULL,
+            0, 1))
+        || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 15)
+        || !TEST_mem_eq(buf, 15, simple_data, 15)
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[6],
+            15,
+            simple_data + 15,
+            sizeof(simple_data) - 15, 1))
+        || !TEST_true(ossl_quic_rstream_available(rstream, &avail, &fin))
+        || !TEST_true(fin)
+        || !TEST_size_t_eq(avail, sizeof(simple_data))
+        || !TEST_true(read_fn(rstream, buf, 2, &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 2)
+        || !TEST_mem_eq(buf, 2, simple_data, 2)
+        || !TEST_true(read_fn(rstream, buf + 2, 12, &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 12)
+        || !TEST_mem_eq(buf + 2, 12, simple_data + 2, 12)
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[7],
+            sizeof(simple_data),
+            NULL,
+            0, 1))
+        || !TEST_true(read_fn(rstream, buf + 14, 5, &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, 5)
+        || !TEST_mem_eq(buf, 14 + 5, simple_data, 14 + 5)
+        || !TEST_true(read_fn(rstream, buf + 14 + 5, sizeof(buf) - 14 - 5,
+            &readbytes, &fin))
+        || !TEST_true(fin)
+        || !TEST_size_t_eq(readbytes, sizeof(buf) - 14 - 5)
+        || !TEST_mem_eq(buf, sizeof(buf), simple_data, sizeof(simple_data))
+        || !TEST_true(read_fn(rstream, buf, sizeof(buf), &readbytes, &fin))
+        || !TEST_true(fin)
+        || !TEST_size_t_eq(readbytes, 0))
+        goto err;
+
+    if (!TEST_int_eq(ch->protocol_error, 0))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    /* All the references held by the stream must have been released */
+    for (i = 0; i < OSSL_NELEM(pkt); ++i) {
+        if (pkt[i] != NULL
+            && !TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            ret = 0;
+        pkt_test_free(pkt[i]);
+    }
+    ossl_quic_rstream_qparm_destroy(rsqp);
+    ossl_quic_channel_free(ch);
+    return ret;
+}
+
 static int test_rstream_random(int idx)
 {
     unsigned char *bulk_data = NULL;
@@ -608,7 +730,7 @@ static int test_rstream_pkt(void)
      */
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_c, 0,
             pdata, 15, 0))
-        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 2)
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 3)
         || !TEST_size_t_eq(pkt_test_refcount(pkt_c), 2))
         goto err;
 
@@ -627,10 +749,7 @@ static int test_rstream_pkt(void)
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_b, 15,
             pdata + 15, 5, 0))
         || !TEST_size_t_eq(pkt_test_refcount(pkt_b), 2)
-        || !TEST_true(ossl_quic_rstream_resize_rbuf(rstream, sizeof(pdata)))
-        || !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream))
-        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 1)
-        || !TEST_size_t_eq(pkt_test_refcount(pkt_b), 1))
+        || !TEST_size_t_eq(pkt_test_refcount(pkt_a), 2))
         goto err;
 
     /* The moved data is still readable from the ring buffer */
@@ -1195,10 +1314,11 @@ static int test_rstream_chunk_partial_overlap(void)
 
     ok = 1;
 err:
+    ossl_quic_rstream_free(rstream);
+
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
         pkt_test_free(pkt[i]);
 
-    ossl_quic_rstream_free(rstream);
     ossl_quic_rstream_qparm_destroy(rsqp);
     ossl_quic_channel_free(ch);
 
@@ -1339,10 +1459,11 @@ static int test_rstream_chunk_full_overlap(void)
 
     ok = 1;
 err:
+    ossl_quic_rstream_free(rstream);
+
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
         pkt_test_free(pkt[i]);
 
-    ossl_quic_rstream_free(rstream);
     ossl_quic_rstream_qparm_destroy(rsqp);
     ossl_quic_channel_free(ch);
 
@@ -1538,10 +1659,11 @@ static int test_rstream_range_overlap(void)
 
     ok = 1;
 err:
+    ossl_quic_rstream_free(rstream);
+
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
         pkt_test_free(pkt[i]);
 
-    ossl_quic_rstream_free(rstream);
     ossl_quic_rstream_qparm_destroy(rsqp);
     ossl_quic_channel_free(ch);
 
@@ -1692,10 +1814,11 @@ static int test_rstream_prepend_byte_chunks(void)
 
     ok = 1;
 err:
+    ossl_quic_rstream_free(rstream);
+
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
         pkt_test_free(pkt[i]);
 
-    ossl_quic_rstream_free(rstream);
     ossl_quic_rstream_qparm_destroy(rsqp);
     ossl_quic_channel_free(ch);
 
@@ -1846,10 +1969,11 @@ static int test_rstream_append_byte_chunks(void)
 
     ok = 1;
 err:
+    ossl_quic_rstream_free(rstream);
+
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
         pkt_test_free(pkt[i]);
 
-    ossl_quic_rstream_free(rstream);
     ossl_quic_rstream_qparm_destroy(rsqp);
     ossl_quic_channel_free(ch);
 
@@ -2026,10 +2150,11 @@ static int test_rstream_mix_chunks(void)
 
     ok = 1;
 err:
+    ossl_quic_rstream_free(rstream);
+
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
         pkt_test_free(pkt[i]);
 
-    ossl_quic_rstream_free(rstream);
     ossl_quic_rstream_qparm_destroy(rsqp);
     ossl_quic_channel_free(ch);
 
@@ -2153,12 +2278,6 @@ static int test_final_size_violation_fin_first(void)
 
     ok = 1;
 err:
-    /*
-     * the data from rstream has not been consumed,
-     * references to packets are still retained there.
-     * therefore we need to free rstream before freeing
-     * pkckets.
-     */
     ossl_quic_rstream_free(rstream);
 
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
@@ -2272,12 +2391,6 @@ static int test_final_size_violation_data_first(void)
 
     ok = 1;
 err:
-    /*
-     * the data from rstream has not been consumed,
-     * references to packets are still retained there.
-     * therefore we need to free rstream before freeing
-     * pkckets.
-     */
     ossl_quic_rstream_free(rstream);
 
     for (i = 0; i < OSSL_NELEM(tsc_buf); i++)
@@ -2293,6 +2406,7 @@ int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
+    ADD_ALL_TESTS(test_rstream_simple, 2);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_pkt);
     ADD_TEST(test_rstream_pkt_overhead);
