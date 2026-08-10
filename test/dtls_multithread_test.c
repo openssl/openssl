@@ -444,6 +444,116 @@ err:
     return testresult;
 }
 
+/*
+ * Per-thread state for the blocking accept
+ */
+struct accept_thread_args {
+    SSL *listener;
+    SSL *conn; /* connection the accept returned */
+    CRYPTO_THREAD *thread;
+    int result; /* 1 = success, 0 = failure */
+};
+
+/*
+ * Thread function: block in SSL_accept_connection() until a connection turns
+ * up. This is the accept path which ticks the listener itself, so no other
+ * thread needs to drive it.
+ */
+static unsigned int blocking_accept_thread(void *arg)
+{
+    struct accept_thread_args *ta = (struct accept_thread_args *)arg;
+
+    ta->conn = SSL_accept_connection(ta->listener, 0);
+    ta->result = (ta->conn != NULL);
+    return 1;
+}
+
+/*
+ * Test that a blocking SSL_accept_connection() waits for a connection and
+ * returns it.
+ *
+ * The listener demultiplexes one socket to many connections, so it cannot
+ * block inside a read: doing so would stall every other connection, and the
+ * demux lock is held across it. Blocking accept therefore has to wait for
+ * readiness rather than for a datagram, which is what this exercises - a
+ * client is only created once the accepting thread is already in the call.
+ *
+ * Note that this cannot distinguish waiting from spinning: the accept returns
+ * the connection either way, and the difference is CPU consumed rather than
+ * anything observable through the API. It is a test that the blocking path
+ * works at all, which was previously only covered for the failure case of
+ * having no BIO set.
+ */
+static int test_dtls_blocking_accept(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *client = NULL;
+    struct accept_thread_args accept_args;
+    BIO_ADDR *server_addr = NULL;
+    int server_fd = -1, client_fd = -1;
+    int testresult = 0;
+    int i, ret, err;
+
+    memset(&accept_args, 0, sizeof(accept_args));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), 0, 0, &sctx, &cctx, cert, privkey)))
+        goto err;
+
+    if (!TEST_true(create_listener(sctx, &listener, &server_addr, &server_fd)))
+        goto err;
+
+    /* Block a thread in accept before any client exists. */
+    accept_args.listener = listener;
+    accept_args.thread = ossl_crypto_thread_native_start(blocking_accept_thread,
+        &accept_args, 1);
+    if (!TEST_ptr(accept_args.thread))
+        goto err;
+
+    if (!TEST_true(create_client(cctx, server_addr, &client, &client_fd)))
+        goto err;
+
+    /*
+     * Drive the client's side of the cookie exchange. The accepting thread
+     * ticks the listener, so this only has to keep the client moving.
+     */
+    SSL_set_connect_state(client);
+    for (i = 0; i < 200 && accept_args.result == 0; i++) {
+        ret = SSL_connect(client);
+        err = SSL_get_error(client, ret);
+        if (ret <= 0 && err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+            TEST_error("SSL_connect failed (err %d)", err);
+            goto err;
+        }
+        OSSL_sleep(10);
+    }
+
+    ossl_crypto_thread_native_join(accept_args.thread, NULL);
+    ossl_crypto_thread_native_clean(accept_args.thread);
+    accept_args.thread = NULL;
+
+    if (!TEST_int_eq(accept_args.result, 1) || !TEST_ptr(accept_args.conn))
+        goto err;
+
+    testresult = 1;
+err:
+    if (accept_args.thread != NULL) {
+        ossl_crypto_thread_native_join(accept_args.thread, NULL);
+        ossl_crypto_thread_native_clean(accept_args.thread);
+    }
+    SSL_free(accept_args.conn);
+    SSL_free(client);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     if (!TEST_ptr(cert = test_get_argument(0))
@@ -451,5 +561,6 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_dtls_multithread);
+    ADD_TEST(test_dtls_blocking_accept);
     return 1;
 }
