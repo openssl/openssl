@@ -274,6 +274,17 @@ HTMLDOCS7={-
         join(" \\\n" . ' ' x 10,
              fill_lines(" ", $COLUMNS - 10,
                         @{$unified_info{htmldocs}->{man7}})) -}
+
+# The pods every HTML page is made from, which is what the whole set is
+# converted from in one go.  Each page's pod is the first element of its
+# generator, the same place generatesrc() below takes it from.
+HTMLPODS={-
+        join(" \\\n" . ' ' x 9,
+             fill_lines(" ", $COLUMNS - 9,
+                        map { $unified_info{generate}->{$_}->[0] }
+                        map { @{$unified_info{htmldocs}->{$_} // []} }
+                        qw(man1 man3 man5 man7))) -}
+
 MANDOCS1={-
         join(" \\\n" . ' ' x 9,
              fill_lines(" ", $COLUMNS - 9,
@@ -586,7 +597,18 @@ doc/man/.mandocs.stamp: {- $config{manpage_format} eq "roff"
      . "\n\t" . '@touch $@'
    : "\t" . '@touch $@' -}
 
-build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7) ## Create HTML documentation
+build_html_docs: doc/html/.htmldocs.stamp ## Create HTML documentation
+
+# As with the manual pages, Pod::Html is compiled before the first pod is
+# read, so the whole set is converted in one invocation rather than in a
+# process per page.  Nothing depends on an individual page -- the install
+# recipe takes them as arguments -- so a stamp is enough to order the work,
+# and the per-page rules below stay available for one page by name.
+doc/html/.htmldocs.stamp: $(HTMLPODS)
+	@$(ECHO) "Converting the manual pages to HTML"
+	@$(PERL) $(SRCDIR)/util/mkpod2html.pl -o doc/html \
+		-r "$(SRCDIR)/doc" $(HTMLPODS)
+	@touch $@
 
 build_generated: $(GENERATED_MANDATORY)
 build_libs_nodep: $(LIBS) {- join(" ",map { platform->sharedlib_simple($_) // platform->sharedlib_import($_) // platform->sharedlib($_) // () } @{$unified_info{libraries}}) -}
@@ -670,6 +692,7 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(HTMLDOCS3)
 	$(RM) $(HTMLDOCS5)
 	$(RM) $(HTMLDOCS7)
+	$(RM) doc/html/.htmldocs.stamp
 	$(RM) $(MANDOCS1)
 	$(RM) $(MANDOCS3)
 	$(RM) $(MANDOCS5)
