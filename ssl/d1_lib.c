@@ -565,7 +565,14 @@ int dtls1_handle_timeout(SSL_CONNECTION *s)
         dtls1_double_timeout(s);
 
     if (dtls1_check_timeout_num(s) < 0) {
-        /* SSLfatal() already called */
+        /*
+         * SSLfatal() already called, so the connection is finished. Stop the
+         * timer rather than returning with next_timeout left in the past:
+         * nothing will re-arm or clear it from here, so DTLSv1_get_timeout()
+         * would report "due now" for ever and spin any caller which waits on
+         * it.
+         */
+        dtls1_stop_timer(s);
         return -1;
     }
 
