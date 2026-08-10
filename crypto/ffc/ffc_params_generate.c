@@ -77,6 +77,13 @@ static int ffc_validate_LN(size_t L, size_t N, int type, int verify)
         ERR_raise(ERR_LIB_DH, DH_R_BAD_FFC_PARAMETERS);
 #endif
     } else if (type == FFC_PARAM_TYPE_DSA) {
+        if (N > 512) {
+#ifndef OPENSSL_NO_DSA
+            ERR_raise_data(ERR_LIB_DSA, DSA_R_BAD_FFC_PARAMETERS,
+                "N is %zu, but the maximum supported N is 512", N);
+#endif
+            return 0;
+        }
         if (L >= 3072 && N >= 256)
             return 128;
         if (L >= 2048 && N >= 224)
