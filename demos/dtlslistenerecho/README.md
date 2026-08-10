@@ -31,6 +31,10 @@ Limitations
 - Maximum 10 concurrent client connections (defined by MAX_CONNECTIONS)
 - Additional connection attempts while at capacity will be rejected with an
   error message printed to the server console
+- Connections do not stay open indefinitely: if a client sends no data for
+  CLIENT_IDLE_TIMEOUT_SEC (90 seconds), the server abandons the connection and
+  frees its thread slot. A stalled handshake is likewise time-bounded rather
+  than retried for minutes (see dtls_timer_cb() in main.c)
 
 The code demonstrates
 ---------------------
@@ -43,6 +47,7 @@ The code demonstrates
 - Server sending data to an established Client
 - Client-side DTLS version selection via command-line argument
 - Using SSL_CTX_set_min_proto_version() and SSL_CTX_set_max_proto_version()
+- Bounding the handshake retransmit backoff via DTLS_set_timer_cb()
 - Active thread shutdown via signaling mechanism
 - Graceful server shutdown with client disconnection
 
@@ -102,5 +107,11 @@ When "killall" is received:
 
 The cert.pem and key.pem files included are self signed certificates with the
 "Common Name" of 'localhost'.
+
+The client verifies the server's certificate against the hostname you pass on
+the command line (via SSL_set1_dnsname()), so that name must match the
+certificate. With the bundled certificate you must use 'localhost'. Note that
+the hostname is matched strictly as a DNS name: an IP address literal such as
+'127.0.0.1' will not verify, even though it resolves to the same host.
 
 Best to create the 'pem' files using an actual hostname.

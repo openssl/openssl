@@ -169,11 +169,11 @@ initializes internal synchronization mechanisms that allow connections accepted
 from the listener to be safely used from multiple threads concurrently. This
 includes a notifier mechanism that enables efficient polling across threads.
 
-After attaching a UDP socket BIO with L<SSL_set_bio(3)> and calling L<SSL_listen(3)>,
-use L<SSL_accept_connection(3)> to accept incoming connections. Each accepted
-connection has completed cookie validation (if required) but still requires
-L<SSL_do_handshake(3)> or L<SSL_accept(3)> to complete the TLS handshake before
-application data can be exchanged.
+After attaching a UDP socket BIO with L<SSL_set0_rbio(3)> and L<SSL_set0_wbio(3)>
+and calling L<SSL_listen(3)>, use L<SSL_accept_connection(3)> to accept incoming
+connections. Each accepted connection has completed cookie validation (if required)
+but still requires L<SSL_do_handshake(3)> or L<SSL_accept(3)> to complete the TLS
+handshake before application data can be exchanged.
 
 Pending connections that do not complete their handshake within the timeout period
 (default 30 seconds) are automatically cleaned up. Use

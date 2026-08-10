@@ -45,8 +45,17 @@ static const int server_port = 4433;
 
 #define MAX_CONNECTIONS 10
 #define POLL_TIMEOUT_SEC 5
-/* Abandon a connection whose client sends nothing for 30 seconds. */
-#define CLIENT_IDLE_TIMEOUT_SEC 30
+/* Abandon a connection whose client sends nothing for 90 seconds. */
+#define CLIENT_IDLE_TIMEOUT_SEC 90
+
+/*
+ * Cap the DTLS handshake retransmit backoff. The library default doubles the
+ * timeout up to 60s; across the retransmits DTLS allows before giving up that
+ * lets a dead peer stall a handshake for nearly 8 minutes. Capping each backoff
+ * at 8s bounds the handshake to about 87s (1 + 2 + 4 + 8 x 10), keeping it in
+ * line with CLIENT_IDLE_TIMEOUT_SEC. See dtls_timer_cb().
+ */
+#define DTLS_MAX_RETRANSMIT_TIMEOUT_US (8 * 1000000u)
 
 /*
  * Per-thread state for connection handlers
@@ -80,6 +89,22 @@ static SSL_CTX *create_context(bool isServer)
     }
 
     return ctx;
+}
+
+/*
+ * DTLS retransmit timer callback. Installed with DTLS_set_timer_cb(), it is
+ * invoked for each handshake flight to choose the next retransmit interval.
+ * timer_us holds the previous interval (0 on the first call). We start at 1s
+ * and double, but cap the backoff so a stalled handshake is abandoned in a
+ * reasonable time rather than the library default of nearly 8 minutes.
+ */
+static unsigned int dtls_timer_cb(SSL *s, unsigned int timer_us)
+{
+    unsigned int next = (timer_us == 0) ? 1000000u : timer_us * 2;
+
+    if (next > DTLS_MAX_RETRANSMIT_TIMEOUT_US)
+        next = DTLS_MAX_RETRANSMIT_TIMEOUT_US;
+    return next;
 }
 
 static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
@@ -528,6 +553,9 @@ static void run_server(void)
             continue;
         }
 
+        /* Bound the handshake retransmit backoff (see dtls_timer_cb). */
+        DTLS_set_timer_cb(new_conn, dtls_timer_cb);
+
         /* Find free slot */
         slot = find_free_thread_slot(conn_threads);
         if (slot < 0) {
@@ -640,6 +668,9 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
         ERR_print_errors_fp(stderr);
         goto err;
     }
+
+    /* Bound the handshake retransmit backoff (see dtls_timer_cb). */
+    DTLS_set_timer_cb(*client, dtls_timer_cb);
 
     /*
      * Attach the BIO to the SSL for both read and write. Because rbio and wbio
@@ -797,6 +828,10 @@ static void run_client(char *rem_server_name, int dtls_version)
     /* Abort the handshake if the server certificate cannot be verified. */
     SSL_CTX_set_verify(ssl_ctx, SSL_VERIFY_PEER, NULL);
 
+    /*
+     * This is an atypical use case for real applications, which normally load a
+     * directory of trusted roots. Here we trust the server's certificate directly.
+     */
     if (!SSL_CTX_load_verify_locations(ssl_ctx, "cert.pem", NULL)) {
         ERR_print_errors_fp(stderr);
         goto err;
@@ -831,6 +866,14 @@ static void run_client(char *rem_server_name, int dtls_version)
     pfds[0].events = POLLIN;
     pfds[1].fd = ssl_fd;
     pfds[1].events = POLLIN;
+#else
+    /*
+     * Make stdin unbuffered so fgets() reads only up to the newline and does
+     * not pull following lines out of the console into the stdio buffer, where
+     * _kbhit() cannot see them. Any remaining lines then stay in the console
+     * buffer and are processed on subsequent loop iterations.
+     */
+    setvbuf(stdin, NULL, _IONBF, 0);
 #endif
 
     /* Main loop: poll on both stdin and SSL connection */
@@ -879,8 +922,14 @@ static void run_client(char *rem_server_name, int dtls_version)
                 if (err == SSL_ERROR_ZERO_RETURN) {
                     printf("Server closed connection\n");
                     break;
-                } else if (err == SSL_ERROR_WANT_READ) {
-                    /* No actual data ready, continue polling */
+                } else if (err == SSL_ERROR_WANT_READ
+                    || err == SSL_ERROR_WANT_WRITE) {
+                    /*
+                     * No progress possible yet. SSL_read_ex() can ask to write
+                     * (e.g. a DTLS retransmission or post-handshake message)
+                     * when the socket is momentarily unwritable. Either way,
+                     * go back to polling and retry.
+                     */
                     continue;
                 } else {
                     fprintf(stderr, "Read error from server\n");
