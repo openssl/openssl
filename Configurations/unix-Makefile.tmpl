@@ -291,6 +291,16 @@ MANDOCS7={-
              fill_lines(" ", $COLUMNS - 9,
                         @{$unified_info{mandocs}->{man7}})) -}
 
+# The pods every manual page is made from, which is what the whole manual
+# is formatted from in one go.  Each page's pod is the first element of its
+# generator, the same place generatesrc() below takes it from.
+MANPODS={-
+        join(" \\\n" . ' ' x 8,
+             fill_lines(" ", $COLUMNS - 8,
+                        map { $unified_info{generate}->{$_}->[0] }
+                        map { @{$unified_info{mandocs}->{$_} // []} }
+                        qw(man1 man3 man5 man7))) -}
+
 APPS_OPENSSL="{- use File::Spec::Functions;
                  catfile("apps","openssl") -}"
 
@@ -557,7 +567,25 @@ cov-report: $(SHLIBS)
 ##@ Documentation
 build_generated_pods: $(GENERATED_PODS)
 build_docs: build_man_docs build_html_docs ## Create documentation
-build_man_docs: $(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7) ## Create manpages
+build_man_docs: doc/man/.mandocs.stamp ## Create manpages
+
+# The whole manual is formatted in one run.  pod2man is a perl program that
+# compiles Pod::Man before it reads a single pod, so a process per page
+# spends most of its time loading the same module over nine hundred times.
+# No target depends on an individual page -- the install recipes take them
+# as arguments -- so a stamp is enough to order the work, and the per-page
+# rules below stay available for building one page by name.
+doc/man/.mandocs.stamp: {- $config{manpage_format} eq "roff"
+                           ? '$(MANPODS)'
+                           : '$(MANDOCS1) $(MANDOCS3) $(MANDOCS5) $(MANDOCS7)' -}
+{- $config{manpage_format} eq "roff"
+   ? "\t" . '@$(ECHO) "Formatting the manual pages"'
+     . "\n\t" . '@$(PERL) $(SRCDIR)/util/mkpod2man.pl -o doc/man \\'
+     . "\n\t\t" . '-m "$(MANSUFFIX)" -d "$(RELEASE_DATE)" -r "$(VERSION)" \\'
+     . "\n\t\t" . '$(MANPODS)'
+     . "\n\t" . '@touch $@'
+   : "\t" . '@touch $@' -}
+
 build_html_docs: $(HTMLDOCS1) $(HTMLDOCS3) $(HTMLDOCS5) $(HTMLDOCS7) ## Create HTML documentation
 
 build_generated: $(GENERATED_MANDATORY)
@@ -646,6 +674,7 @@ clean: libclean ## Clean the workspace, keep the configuration
 	$(RM) $(MANDOCS3)
 	$(RM) $(MANDOCS5)
 	$(RM) $(MANDOCS7)
+	$(RM) doc/man/.mandocs.stamp
 	$(RM) $(PROGRAMS) $(TESTPROGS) $(MODULES) $(FIPSMODULE) $(SCRIPTS)
 	$(RM) $(GENERATED_MANDATORY) $(GENERATED)
 	$(RM) core
@@ -1577,11 +1606,14 @@ $args{src}: $pod
 		 $pod >\$\@
 EOF
           } elsif ($config{manpage_format} eq "roff") {
+              # One page at a time, through the same script that formats
+              # the whole manual, so there is a single implementation.  It
+              # does not fork for a single pod, and still beats pod2man,
+              # which has more of its own start-up to do.
               return <<"EOF";
 $args{src}: $pod
-	pod2man --name=$name --section=$section\$(MANSUFFIX) --center=OpenSSL \\
-		--date=\$(RELEASE_DATE) --release=\$(VERSION) \\
-		$pod >\$\@
+	\$(PERL) \$(SRCDIR)/util/mkpod2man.pl -o doc/man -m "\$(MANSUFFIX)" \\
+		-d "\$(RELEASE_DATE)" -r "\$(VERSION)" $pod
 EOF
           } else {
               die "Unhandled manpage format: $config{manpage_format}";
