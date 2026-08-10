@@ -692,7 +692,18 @@ install: Makefile ## Install software and documentation, create OpenSSL director
 
 uninstall: {- "uninstall_docs" if !$disabled{docs}; -} uninstall_sw {- $disabled{fips} ? "" : "uninstall_fips" -} ## Uninstall software and documentation
 
-install_sw: install_dev install_modules install_runtime ## Install just the software and libraries
+# install_dev, install_modules and install_runtime each reach the build
+# through a recursive $(MAKE) of their own, and they do not build disjoint
+# sets: apps/libapps.a is a member of $(LIBS) and also a prerequisite of the
+# installable programs.  Under "make -j" the prerequisites below run at the
+# same time, so two of those sub-makes build the archive concurrently and one
+# removes it while the other is running ranlib over it.  Build everything in
+# a single make first; the sub-makes then find their targets current and
+# build nothing.
+install_sw: build_inst_sw ## Install just the software and libraries
+	"$(MAKE)" _install_sw
+
+_install_sw: install_dev install_modules install_runtime
 
 uninstall_sw: uninstall_runtime uninstall_modules uninstall_dev ## Uninstall the software and libraries
 
