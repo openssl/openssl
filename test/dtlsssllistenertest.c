@@ -740,9 +740,10 @@ err:
 }
 
 /*
- * Test SSL_accept_connection with no net_bio and NO_BLOCK flag.
- * When there is no BIO set and the caller requests non-blocking behaviour,
- * the function must return NULL immediately without raising an error.
+ * Test SSL_accept_connection with no net_bio and the
+ * SSL_ACCEPT_CONNECTION_NO_BLOCK flag, so that the caller is not asking to
+ * wait. The function must return NULL immediately without raising an error,
+ * the absence of a BIO being indistinguishable from having nothing queued.
  */
 static int test_dtls_accept_connection_no_bio_no_block(void)
 {
@@ -784,9 +785,10 @@ err:
 }
 
 /*
- * Test SSL_accept_connection with no net_bio and blocking mode (no NO_BLOCK).
- * When there is no BIO and the caller wants to block, the function must return
- * NULL and raise SSL_R_BIO_NOT_SET.
+ * Test SSL_accept_connection with no net_bio and without the
+ * SSL_ACCEPT_CONNECTION_NO_BLOCK flag, so that the caller is asking to wait.
+ * When there is no BIO the function must return NULL and raise
+ * SSL_R_BIO_NOT_SET rather than waiting, since nothing could ever arrive.
  */
 static int test_dtls_accept_connection_no_bio_block(void)
 {
