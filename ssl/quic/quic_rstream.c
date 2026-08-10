@@ -57,6 +57,7 @@ struct quic_rstream_st {
     UINT_RANGE head_range;
     SBUF sbuf;
     size_t frames_at_last_move;
+    size_t pinned_at_last_move;
 };
 
 static void sbuf_init(SBUF *sb)
@@ -206,6 +207,7 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT *pkt,
     int fin)
 {
     UINT_RANGE range;
+    int move_pinned;
 
     if ((data == NULL && data_len != 0) || (data_len == 0 && fin == 0)) {
         /* empty frame allowed only at the end of the stream */
@@ -221,15 +223,28 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT *pkt,
 
     if (qrs->frames_at_last_move > qrs->fl.num_frames)
         qrs->frames_at_last_move = qrs->fl.num_frames;
+    if (qrs->pinned_at_last_move > qrs->fl.num_pinned)
+        qrs->pinned_at_last_move = qrs->fl.num_pinned;
+
+    /*
+     * Once too many frames pin the packet they arrived in, they are all
+     * copied out however little they are worth moving. Only a pin count
+     * that grew since the last move triggers this, so frames that cannot
+     * be copied do not make every insert walk the list.
+     */
+    move_pinned = qrs->fl.num_pinned > SFRAME_LIST_MAX_PINNED_FRAMES
+        && qrs->fl.num_pinned > qrs->pinned_at_last_move;
 
     /*
      * Copying is best effort, frames we fail to copy just keep referencing
      * their packet.
      */
-    if (qrs->fl.num_frames >= qrs->frames_at_last_move + RSTREAM_MOVE_THRESHOLD) {
+    if (move_pinned
+        || qrs->fl.num_frames >= qrs->frames_at_last_move + RSTREAM_MOVE_THRESHOLD) {
         (void)ossl_sframe_list_move_data(&qrs->fl, SBUF_MIN_COPY_LEN,
-            write_at_sbuf_cb, &qrs->sbuf);
+            move_pinned, write_at_sbuf_cb, &qrs->sbuf);
         qrs->frames_at_last_move = qrs->fl.num_frames;
+        qrs->pinned_at_last_move = qrs->fl.num_pinned;
     }
 
     return 1;

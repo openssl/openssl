@@ -740,6 +740,73 @@ err:
     return ret;
 }
 
+/*
+ * Frames not worth copying to the stream buffer stay in the buffers they
+ * arrived in, but only so many of them; past the limit they are copied into
+ * buffers sized to what they hold. The data must survive being copied that
+ * way, and again once the gaps around it fill in and it merges into runs
+ * that go to the stream buffer after all.
+ */
+static int test_rstream_pinned_limit(int idx)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL, *ref = NULL, *read_buf = NULL;
+    const size_t stride = 8;
+    const size_t num_frames = 3 * SFRAME_LIST_MAX_PINNED_FRAMES;
+    const size_t data_size = num_frames * stride;
+    size_t i, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
+        goto err;
+
+    if (idx == 1)
+        ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    for (i = 0; i < data_size; i++)
+        data[i] = (unsigned char)(i & 0xff);
+
+    if (!TEST_ptr(ref = OPENSSL_memdup(data, data_size)))
+        goto err;
+
+    /* single byte frames spaced out so that none is worth moving */
+    for (i = 0; i < num_frames; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, i * stride,
+                data + i * stride, 1, 0)))
+            goto err;
+
+    /* fill the gaps without covering the frames already buffered */
+    for (i = 0; i < num_frames; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                i * stride + 1,
+                data + i * stride + 1, stride - 1,
+                i == num_frames - 1)))
+            goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf, data_size,
+            &readbytes, &fin))
+        || !TEST_true(fin)
+        || !TEST_size_t_eq(readbytes, data_size)
+        || !TEST_mem_eq(read_buf, readbytes, ref, data_size))
+        goto err;
+
+    if (idx == 1)
+        for (i = 0; i < data_size; i++)
+            if (!TEST_uchar_eq(data[i], 0))
+                goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
+    OPENSSL_free(ref);
+    OPENSSL_free(read_buf);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
@@ -749,5 +816,6 @@ int setup_tests(void)
     ADD_TEST(test_rstream_fragmentation_limit);
     ADD_TEST(test_rstream_fragmentation_ratio);
     ADD_TEST(test_rstream_small_frames);
+    ADD_ALL_TESTS(test_rstream_pinned_limit, 2);
     return 1;
 }

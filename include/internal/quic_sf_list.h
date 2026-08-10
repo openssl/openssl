@@ -69,6 +69,14 @@
  */
 #define SFRAME_LIST_MIN_MOVE_FILL 4
 
+/*
+ * An unmoved frame pins the buffer it arrived in, typically an MTU sized
+ * packet buffer however small the frame. Past this many pinned frames a move
+ * pass copies even the runs it would otherwise leave behind, so a stream pins
+ * at most about 64 KiB of packet buffers.
+ */
+#define SFRAME_LIST_MAX_PINNED_FRAMES (64 * 1024 / 1500)
+
 typedef struct stream_frame_st STREAM_FRAME;
 
 typedef struct sframe_list_st {
@@ -77,6 +85,8 @@ typedef struct sframe_list_st {
     unsigned int fin;
     /* Number of stream frames in the list. */
     size_t num_frames;
+    /* Number of frames whose data still pins the buffer it arrived in. */
+    size_t num_pinned;
     /* Offset of data not yet dropped */
     uint64_t offset;
     /* Is head locked ? */
@@ -172,12 +182,15 @@ typedef int(sframe_list_write_at_cb)(uint64_t logical_offset,
  * the side storage using the write_at_cb callback, merging frames that become
  * contiguous. Short isolated runs of contiguous frames are left in their
  * packets and moved later once they grow past min_run_len or the data
- * around them fills in.
+ * around them fills in. If move_pinned is nonzero such runs are instead
+ * copied into buffers sized to the run and owned by the list, so that no
+ * frame keeps pinning the buffer it arrived in.
  * Returns 1 if all the calls to the callback return 1.
  * If the callback returns 0, the function stops processing further
  * frames and returns 0.
  */
 int ossl_sframe_list_move_data(SFRAME_LIST *fl, uint64_t min_run_len,
+    int move_pinned,
     sframe_list_write_at_cb *write_at_cb,
     void *cb_arg);
 #endif
