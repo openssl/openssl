@@ -333,7 +333,7 @@ static int ch_init(QUIC_CHANNEL *ch)
     }
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
@@ -3753,7 +3753,7 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
             goto err;
 
     if (can_recv)
-        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
+        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL)) == NULL)
             goto err;
 
     /* TXFC */
