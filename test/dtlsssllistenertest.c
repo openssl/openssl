@@ -5168,6 +5168,81 @@ static unsigned int short_timer_cb(SSL *s, unsigned int timer_us)
 }
 
 /*
+ * Force a retransmission timeout short enough that it is always already
+ * expired, so the timeout can be driven repeatedly without waiting. Anything
+ * at or below 15ms is treated as expired by dtls1_get_timeout().
+ */
+static unsigned int tiny_timer_cb(SSL *s, unsigned int timer_us)
+{
+    return 1000; /* 1ms */
+}
+
+/*
+ * Test that the DTLS retransmission timer is stopped once the connection gives
+ * up retransmitting.
+ *
+ * dtls1_handle_timeout() fails the connection after DTLS1_TMO_ALERT_COUNT
+ * unanswered retransmissions. It must not leave the timer armed in the past
+ * when it does: nothing will re-arm or clear it afterwards, so every later
+ * query reports the timeout as due immediately, and any caller which waits on
+ * it spins instead of sleeping - whether that is an application using
+ * DTLSv1_get_timeout() with select(), or SSL_poll() bounding its own wait.
+ */
+static int test_dtls_timer_stopped_when_retransmits_exhausted(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    struct timeval timer_left;
+    int is_infinite = 0;
+    int retc, rets;
+    int testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    DTLS_set_timer_cb(serverssl, tiny_timer_cb);
+
+    retc = SSL_connect(clientssl);
+    if (!TEST_int_le(retc, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, retc), SSL_ERROR_WANT_READ))
+        goto end;
+
+    /*
+     * With a timeout this short the server's timer is expired on every read
+     * attempt, so the accept retransmits until the budget runs out and fails
+     * the connection by itself. The client is never fed, so nothing is ever
+     * acknowledged.
+     *
+     * The retransmissions happen in dtls1_read_bytes(), which calls
+     * dtls1_handle_timeout() and, when it reports that it retransmitted, goes
+     * back to its start label to try the read again.
+     */
+    rets = SSL_accept(serverssl);
+    if (!TEST_int_le(rets, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, rets), SSL_ERROR_SSL))
+        goto end;
+
+    /* The timer must not have been left armed in the past. */
+    if (!TEST_true(SSL_get_event_timeout(serverssl, &timer_left, &is_infinite))
+        || !TEST_true(is_infinite))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * Test that a blocking SSL_poll() on a DTLS connection honours the
  * retransmission timer.
  *
@@ -5381,6 +5456,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_listener_enters_blocking_section);
 #endif
     ADD_TEST(test_dtls_poll_conn_honours_retransmit_timer);
+    ADD_TEST(test_dtls_timer_stopped_when_retransmits_exhausted);
 
     return 1;
 }
