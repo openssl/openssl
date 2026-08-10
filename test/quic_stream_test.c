@@ -379,14 +379,13 @@ static int test_rstream_simple(int idx)
     unsigned char buf[sizeof(simple_data)];
     size_t readbytes = 0, avail = 0;
     int fin = 0;
-    int use_rbuf = idx > 1;
     int use_sc = idx % 2;
     int (*read_fn)(QUIC_RSTREAM *, unsigned char *, size_t, size_t *,
         int *)
         = use_sc ? test_single_copy_read
                  : ossl_quic_rstream_read;
 
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
         goto err;
 
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 5,
@@ -410,11 +409,6 @@ static int test_rstream_simple(int idx)
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 1)
         || !TEST_mem_eq(buf, 1, simple_data, 1)
-        || (use_rbuf && !TEST_false(ossl_quic_rstream_move_to_rbuf(rstream)))
-        || (use_rbuf
-            && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                sizeof(simple_data))))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
             0, simple_data,
             10, 0))
@@ -446,10 +440,6 @@ static int test_rstream_simple(int idx)
             sizeof(simple_data),
             NULL,
             0, 1))
-        || (use_rbuf
-            && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                2 * sizeof(simple_data))))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(read_fn(rstream, buf + 14, 5, &readbytes, &fin))
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 5)
@@ -459,7 +449,6 @@ static int test_rstream_simple(int idx)
         || !TEST_true(fin)
         || !TEST_size_t_eq(readbytes, sizeof(buf) - 14 - 5)
         || !TEST_mem_eq(buf, sizeof(buf), simple_data, sizeof(simple_data))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(read_fn(rstream, buf, sizeof(buf), &readbytes, &fin))
         || !TEST_true(fin)
         || !TEST_size_t_eq(readbytes, 0))
@@ -485,7 +474,7 @@ static int test_rstream_random(int idx)
 
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
         goto err;
 
     if (idx % 3 == 0)
@@ -550,11 +539,6 @@ static int test_rstream_random(int idx)
             goto err;
         read_off += readbytes;
         queued_min = read_off;
-        if (test_random() % 50 == 0)
-            if (!TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                    queued_max - read_off + 1))
-                || !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
-                goto err;
         if (!fin_set && queued_max >= data_size - test_random() % 200) {
             fin_set = 1;
             /* Queue empty fin frame */
