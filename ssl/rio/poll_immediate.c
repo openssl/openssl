@@ -196,6 +196,13 @@ static int poll_translate_ssl_dtls_listener(SSL *ssl,
         return 0;
     }
 
+    /*
+     * Watch the socket for readability whatever was asked for. Every event a
+     * listener reports is ultimately driven by a datagram arriving, both an
+     * incoming connection and data pending on the listener itself, so there is
+     * no event for which this is the wrong thing to wait on. events is
+     * therefore only consulted for the readiness re-check below.
+     */
     if (!ossl_rio_poll_builder_add_fd(rpb, desc.value.fd, /*r=*/1, /*w=*/0))
         return 0;
 
@@ -641,6 +648,37 @@ out:
 #endif
     return ok;
 }
+
+#ifndef OPENSSL_NO_DTLS
+/*
+ * Wait until the given DTLS listener or listener-based connection may have
+ * become ready for one of the given events, or until the deadline expires.
+ *
+ * This is the wait that libssl itself performs when a DTLS object is used in
+ * blocking mode. It is the same wait SSL_poll() performs, and reuses it, so a
+ * blocking call is woken by the same means an application polling the object
+ * would be: readiness of the listener's socket, or the listener's notifier if
+ * another thread produces readiness without the socket becoming readable here.
+ *
+ * No readout is performed. A spurious wakeup is always possible - the socket
+ * becoming readable says nothing about which connection the datagram is for -
+ * so the caller must re-test its own condition and wait again if needed.
+ *
+ * Returns 1 if the wait completed and 0 on error.
+ */
+int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline)
+{
+    SSL_POLL_ITEM item;
+    size_t result_count = 0;
+
+    item.desc.type = BIO_POLL_DESCRIPTOR_TYPE_SSL;
+    item.desc.value.ssl = ssl;
+    item.events = events;
+    item.revents = 0;
+
+    return poll_block(&item, 1, sizeof(item), deadline, &result_count);
+}
+#endif /* OPENSSL_NO_DTLS */
 #endif
 
 static int poll_readout(SSL_POLL_ITEM *items,
