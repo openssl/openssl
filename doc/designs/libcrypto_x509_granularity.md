@@ -11,13 +11,13 @@ granularity and level of system control.
 We propose new sections, [OPNAME_algorithm_limits] to specify the parameters
 for particular algorithms. OPNAME as of now can be `sign` or `verify`.
 
-This sections contain the algorithms that are only permitted in the
+This section contains the algorithms that are only permitted in the
 chain.  If present, the certificates having a different algorithm should be
 considered invalid in the context of chain building.  If absent, any algorithm
 is permitted.
 
 For each algorithm (mostly relevant for RSA and EC) there may be a subsection
-named [crypto_algorithm_limits_ALGNAME] with algorithm-dependent parameters. If
+named [ALGNAME_limits] with algorithm-dependent parameters. If
 present, the alg-specific limitations are applied.
 
 Example configuration
@@ -58,3 +58,6 @@ ParamLimit1=LIMIT1
 ParamLimitType=MinValue|enum-values
 
 can work but it would be quite fragile.
+
+We can imply that each algorithm that is not explicitly permitted should be
+forbidden to avoid working with esoteric algorithms.
