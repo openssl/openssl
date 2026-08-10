@@ -28,12 +28,6 @@ jobs:
             branch: '3.4',
             cppflags: 'CPPFLAGS=-ansi'
           }, {
-            branch: '3.3',
-            cppflags: 'CPPFLAGS=-ansi',
-          }, {
-            branch: '3.2',
-            cppflags: 'CPPFLAGS=-ansi'
-          }, {
             branch: '3.0',
             cppflags: 'CPPFLAGS=-ansi'
           }
