@@ -1508,7 +1508,7 @@ static int run_script(int script_idx, const struct script_op *script)
                     16 * 1024 * 1024,
                     fake_now, NULL))
                 || !TEST_ptr(s->rstream = ossl_quic_rstream_new(&s->rxfc,
-                                 NULL, 1024))) {
+                                 NULL))) {
                 ossl_quic_sstream_free(s->sstream);
                 ossl_quic_stream_map_release(h.args.qsm, s);
                 goto err;
