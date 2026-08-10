@@ -21,7 +21,7 @@ jobs:
       matrix:
         tag: [edge, latest]
         cc: [gcc, clang]
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, master]
     runs-on: ubuntu-latest
     container:
       image: docker.io/library/alpine:${{ matrix.tag }}
@@ -55,7 +55,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, master]
         zoo:
           - image: docker.io/library/debian:11
             install: apt-get update && apt-get install -y gcc make perl
@@ -108,7 +108,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        branch: [openssl-3.0, openssl-3.1, master]
+        branch: [openssl-3.0, master]
         os: [macos-13, macos-14, macos-15]
     runs-on: ${{ matrix.os }}
     steps:
