@@ -7,10 +7,16 @@
 
 name: Backports CI
 
-on: [pull_request]
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
 
 permissions:
   contents: read
+
+concurrency:
+  group: backports-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
 
 jobs:
   check_backports:
