@@ -2457,19 +2457,13 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
     }
 
     /*
-     * Loop calling ossl_dtls_tick() until a verified connection arrives or
-     * a fatal error occurs.
+     * Blocking path: tick to make whatever progress is possible now, and if
+     * that did not produce a connection, wait for readiness before ticking
+     * again.
      *
-     * This blocking accept path requires net_rbio to be a blocking BIO. With
-     * a blocking BIO each tick sleeps inside BIO_recvmmsg() until a datagram
-     * is received, so the loop waits efficiently and does not spin.
-     *
-     * If net_rbio were non-blocking, BIO_recvmmsg() would return a transient
-     * (non-fatal) error when no datagram is ready; ossl_dtls_tick() would then
-     * return >= 0 with the incoming queue still empty and this loop would busy
-     * spin. Callers that want non-blocking behaviour must use
-     * SSL_ACCEPT_CONNECTION_NO_BLOCK (handled above) instead of a non-blocking
-     * BIO on this path.
+     * The wait is what stops this from being a busy loop. The network BIO is
+     * non-blocking, so a tick which finds no datagram returns immediately;
+     * without waiting in between, this loop would spin.
      */
     for (;;) {
         if (ossl_dtls_tick(dl) < 0) {
@@ -2482,6 +2476,16 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
         conn = sk_SSL_shift(dl->incoming_connections);
         ossl_crypto_mutex_unlock(dl->mutex);
         if (conn != NULL)
+            break;
+
+        /*
+         * Nothing yet, so wait for the listener to become ready before ticking
+         * again. What that amounts to is decided by the poll translation for a
+         * listener: the network socket becoming readable, or another thread
+         * signalling the notifier because it produced readiness on our behalf.
+         */
+        if (!ossl_dtls_block_until_ready(ssl, SSL_POLL_EVENT_IC,
+                ossl_time_infinite()))
             break;
     }
 
@@ -2533,6 +2537,16 @@ void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio)
         return;
 
     dl = (DTLS_LISTENER *)s;
+
+    /*
+     * The listener demultiplexes one socket to many connections, so it can
+     * never afford to block inside a read: a read for one connection would
+     * stall every other, and the demux lock is held across it. Blocking
+     * behaviour is provided by waiting for readiness instead, so configure the
+     * BIO for non-blocking operation on the application's behalf, as QUIC does.
+     */
+    if (bio != NULL)
+        BIO_set_nbio(bio, 1); /* best effort autoconfig */
 
     ossl_crypto_mutex_lock(dl->mutex);
 
@@ -2600,6 +2614,10 @@ void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio)
         return;
 
     dl = (DTLS_LISTENER *)s;
+
+    /* See ossl_dtls_listener_set0_net_rbio() as to why. */
+    if (bio != NULL)
+        BIO_set_nbio(bio, 1); /* best effort autoconfig */
 
     old_wbio = dl->net_wbio;
 
