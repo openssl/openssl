@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 env:
-  opts: enable-rc5 enable-md2 enable-ssl3 enable-weak-ssl-ciphers enable-zlib
+  opts: enable-rc5 enable-md2 enable-weak-ssl-ciphers enable-zlib
 
 jobs:
   fips-releases:
