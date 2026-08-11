@@ -300,6 +300,7 @@ SKIP: {
         my $destfips = bldtop_file("test-runs", "test_cli_fips", platform->dso("fips-identity"));
         copy($fipsmodule, $destfips) or die("Couldn't copy file");
         $ENV{OPENSSL_CONF} = $identityconf;
+        my $oldmodules = $ENV{OPENSSL_MODULES};
         $ENV{OPENSSL_MODULES} = bldtop_dir("test-runs", "test_cli_fips");
         $testtext = $testtext_prefix.': '.
             'Generate a key with a non-FIPS algorithm with the default provider';
@@ -315,6 +316,7 @@ SKIP: {
                     '-pkeyopt', 'rsa_keygen_bits:2048',
                     '-out', $fips_key])),
            $testtext);
+        $ENV{OPENSSL_MODULES} = $oldmodules;
     };
 }
 
