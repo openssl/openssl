@@ -70,6 +70,8 @@ sub format_page
     $pod = rel2abs($pod) or die "Can't convert to real path: $!";
     $out = rel2abs($out) or die "Can't convert to real path: $!";
 
+    unlink $out;
+
     pod2html "--infile=$pod",
              "--outfile=$out",
              "--title=$title",
@@ -90,6 +92,9 @@ sub format_page
         or die "Can't write $out, $!";
     print $fh $contents;
     close $fh;
+
+    chmod 0444, $out
+        or die "Can't set the mode of $out, $!\n";
 }
 
 # One named page: the output file and title are given.

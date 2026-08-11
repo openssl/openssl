@@ -1602,6 +1602,18 @@ EOF
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
       my $deps = join(" ", compute_platform_depends(@{$args{generator_deps}},
                                                     @{$args{deps}}));
+      my $tofile = "\$(PERL) \$(SRCDIR)/util/file-from-stdout.pl";
+      # A generator named for more than one target cannot be producing them
+      # on standard output; it writes them itself, so its output must not be
+      # captured.
+      our %gen_targets;
+      unless (%gen_targets) {
+          foreach my $t (keys %{$unified_info{generate}}) {
+              $gen_targets{join(" ", @{$unified_info{generate}->{$t}})}++;
+          }
+      }
+      my $writes_own_files =
+          $gen_targets{join(" ", @{$args{generator}})} > 1;
 
       if ($args{src} =~ /\.html$/) {
           #
@@ -1651,7 +1663,8 @@ EOF
           my $ord_name = $args{generator}->[1] || $args{product};
           return <<"EOF";
 $target: $gen0 $deps \$(SRCDIR)/util/mkdef.pl
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name --OS $mkdef_os > $target
+	$tofile $target \\
+		\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name --OS $mkdef_os
 EOF
       } elsif (platform->isasm($args{src})
                || platform->iscppasm($args{src})) {
@@ -1666,11 +1679,15 @@ EOF
           } -> {$args{intent}};
 
           my $generator;
+          # The perlasm modules take the output name as their last argument;
+          # m4 writes to standard output.
+          my $to_stdout = 0;
           if ($gen0 =~ /\.pl$/) {
               $generator = 'CC="$(CC)" $(PERL)'.$gen_incs.' '.$gen0.$gen_args
                   .' "$(PERLASM_SCHEME)"'.$incs.' '.$cppflags.$defs.' $(PROCESSOR)';
           } elsif ($gen0 =~ /\.m4$/) {
-              $generator = 'm4 -B 8192'.$gen_incs.' '.$gen0.$gen_args.' >'
+              $generator = 'm4 -B 8192'.$gen_incs.' '.$gen0.$gen_args;
+              $to_stdout = 1;
           } elsif ($gen0 =~ /\.S$/) {
               $generator = undef;
           } else {
@@ -1678,15 +1695,17 @@ EOF
           }
 
           if (defined($generator)) {
+              my $recipe = $to_stdout ? "$tofile \$\@ $generator"
+                                      : "$generator \$\@";
               return <<"EOF";
 $args{src}: $gen0 $deps
-	$generator \$@
+	$recipe
 EOF
           }
           return <<"EOF";
 $args{src}: $gen0 $deps
 	\$(CC) $incs $cppflags $defs -E $gen0 | \\
-	\$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print' > \$@
+	$tofile \$@ \$(PERL) -ne '/^#(line)?\\s*[0-9]+/ or print'
 EOF
       } elsif ($gen0 =~ m|^.*\.in$|) {
           #
@@ -1735,9 +1754,8 @@ EOF
 
           return <<"EOF";
 $args{src}: $gen0 $deps
-	if [ -r "\$@" ]; then chmod u+w \$@; fi
-	\$(PERL)$perlmodules "$dofile" "-o$target{build_file}" $gen0$gen_args > \$@
-	chmod a-w \$@
+	$tofile \$@ \\
+		\$(PERL)$perlmodules "$dofile" "-o$target{build_file}" $gen0$gen_args
 EOF
       } elsif (grep { $_ eq $gen0 } @{$unified_info{programs}}) {
           #
@@ -1750,7 +1768,9 @@ EOF
           # Use $(PERL) to execute wrap.pl directly to avoid calling env
           return <<"EOF";
 $args{src}: $gen0 $deps \$(BLDDIR)/util/wrap.pl
-	\$(PERL) \$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$@
+	@{[ $writes_own_files
+	    ? "\$(PERL) \$(BLDDIR)/util/wrap.pl $gen0$gen_args > \$\@"
+	    : "$tofile \$\@ \$(PERL) \$(BLDDIR)/util/wrap.pl $gen0$gen_args" ]}
 EOF
       } else {
           #
@@ -1758,7 +1778,9 @@ EOF
           #
           return <<"EOF";
 $args{src}: $gen0 $deps
-	\$(PERL)$gen_incs $gen0$gen_args > \$@
+	@{[ $writes_own_files
+	    ? "\$(PERL)$gen_incs $gen0$gen_args > \$\@"
+	    : "$tofile \$\@ \$(PERL)$gen_incs $gen0$gen_args" ]}
 EOF
       }
   }
@@ -2117,11 +2139,9 @@ EOF
                            rel2abs($config{builddir}));
       return <<"EOF";
 $script: $sources configdata.pm
-	if [ -r "$script" ]; then chmod u+w $script; fi
-	\$(RM) "$script"
-	\$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
-	    "-o$target{build_file}" $sources > "$script"
-	chmod a+x,a-w $script
+	\$(PERL) \$(SRCDIR)/util/file-from-stdout.pl -x "$script" \\
+	    \$(PERL) "-I\$(BLDDIR)" -Mconfigdata "$dofile" \\
+	    "-o$target{build_file}" $sources
 EOF
   }
   sub generatedir {
