@@ -591,6 +591,32 @@ static int test_ossl_uni2utf8(void)
     return ok;
 }
 
+static int test_empty_uni_conversions(void)
+{
+    char *out = NULL;
+    int ok = 0;
+
+    /*
+     * A decoded empty BMPString is a NULL data pointer with a zero length,
+     * which is how an empty PKCS12 friendlyName reaches these functions by
+     * way of ASN1_STRING_get0_data().
+     */
+    if (!TEST_ptr(out = OPENSSL_uni2asc(NULL, 0))
+        || !TEST_str_eq(out, ""))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    if (!TEST_ptr(out = OPENSSL_uni2utf8(NULL, 0))
+        || !TEST_str_eq(out, ""))
+        goto err;
+
+    ok = 1;
+err:
+    OPENSSL_free(out);
+    return ok;
+}
+
 static int test_asn1_string_to_utf8(void)
 {
     static const unsigned char bmp[] = { 0x00, 'A', 0x00, 'B' };
@@ -670,6 +696,7 @@ int setup_tests(void)
     ADD_TEST(test_asn1_time_tm_conversions);
     ADD_TEST(test_mbstring_ncopy);
     ADD_TEST(test_ossl_uni2utf8);
+    ADD_TEST(test_empty_uni_conversions);
     ADD_TEST(test_asn1_string_to_utf8);
     return 1;
 }
