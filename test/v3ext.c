@@ -80,6 +80,39 @@ static int test_duplicate_field(int idx)
         && test_field_config(duplicate_field_configs[idx].duplicate, 0);
 }
 
+static int test_asn1_multi_mfail(void)
+{
+    static const char config[] = "[default]\n"
+                                 "1.2.3.4 = ASN1:SEQUENCE:items\n"
+                                 "[items]\n"
+                                 "value = INTEGER:1\n";
+    size_t config_len = strlen(config);
+    BIO *in = NULL;
+    CONF *conf = NULL;
+    X509 *cert = NULL;
+    X509V3_CTX ctx;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf(config, (int)config_len))
+        || !TEST_ptr(conf = NCONF_new(NULL))
+        || !TEST_int_gt(NCONF_load_bio(conf, in, NULL), 0)
+        || !TEST_ptr(cert = X509_new()))
+        goto end;
+
+    X509V3_set_ctx(&ctx, NULL, NULL, NULL, NULL, 0);
+    X509V3_set_nconf(&ctx, conf);
+
+    MFAIL_start();
+    ret = X509V3_EXT_add_nconf(conf, &ctx, "default", cert);
+    MFAIL_end();
+
+end:
+    X509_free(cert);
+    NCONF_free(conf);
+    BIO_free(in);
+    return ret;
+}
+
 static int test_pathlen(void)
 {
     X509 *x = NULL;
@@ -1245,6 +1278,7 @@ int setup_tests(void)
 
     ADD_TEST(test_pathlen);
     ADD_ALL_TESTS(test_duplicate_field, OSSL_NELEM(duplicate_field_configs));
+    ADD_MFAIL_TEST(test_asn1_multi_mfail);
 #ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);
     ADD_TEST(test_addr_ranges);
