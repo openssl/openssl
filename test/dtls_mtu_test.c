@@ -22,6 +22,8 @@
 #include "internal/ssl_unwrap.h"
 
 static int debug = 0;
+static char *cert = NULL;
+static char *privkey = NULL;
 
 static unsigned int clnt_psk_callback(SSL *ssl, const char *hint,
     char *ident, unsigned int max_ident_len,
@@ -47,7 +49,8 @@ static unsigned int srvr_psk_callback(SSL *ssl, const char *identity,
     return max_psk_len;
 }
 
-static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
+static int mtu_test(SSL_CTX *sctx, SSL_CTX *cctx, const char *cs, int no_etm,
+    int dtls_version)
 {
     SSL *srvr_ssl = NULL, *clnt_ssl = NULL;
     BIO *sc_bio = NULL;
@@ -60,27 +63,55 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
 
     memset(buf, 0x5a, sizeof(buf));
 
-    if (!TEST_true(create_ssl_objects(ctx, ctx, &srvr_ssl, &clnt_ssl,
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &srvr_ssl, &clnt_ssl,
             NULL, NULL)))
         goto end;
 
     if (no_etm)
         SSL_set_options(srvr_ssl, SSL_OP_NO_ENCRYPT_THEN_MAC);
 
-    if (!TEST_true(SSL_set_cipher_list(srvr_ssl, cs))
-        || !TEST_true(SSL_set_cipher_list(clnt_ssl, cs))
-        || !TEST_ptr(sc_bio = SSL_get_rbio(srvr_ssl))
-        || !TEST_true(create_ssl_connection(clnt_ssl, srvr_ssl,
+    if (dtls_version == DTLS1_3_VERSION) {
+        if (!TEST_true(SSL_set_ciphersuites(srvr_ssl, cs))
+            || !TEST_true(SSL_set_ciphersuites(clnt_ssl, cs)))
+            goto end;
+    } else {
+        if (!TEST_true(SSL_set_max_proto_version(srvr_ssl, DTLS1_2_VERSION))
+            || !TEST_true(SSL_set_max_proto_version(clnt_ssl, DTLS1_2_VERSION))
+            || !TEST_true(SSL_set_cipher_list(srvr_ssl, cs))
+            || !TEST_true(SSL_set_cipher_list(clnt_ssl, cs)))
+            goto end;
+    }
+
+    if (!TEST_ptr(sc_bio = SSL_get_rbio(srvr_ssl))
+        || !TEST_true(create_ssl_connection(srvr_ssl, clnt_ssl,
             SSL_ERROR_NONE)))
         goto end;
 
     if (debug)
         TEST_info("Channel established");
 
+    /*
+     * DTLS 1.3 sends ACKs for post-handshake messages (e.g. NewSessionTicket).
+     * Those ACKs land in sc_bio before we start measuring. Drain them so the
+     * BIO contains only the application records we write below.
+     */
+    if (dtls_version == DTLS1_3_VERSION) {
+        unsigned char tmp[1];
+        size_t nread;
+
+        while (BIO_pending(sc_bio) > 0) {
+            if (!TEST_false(SSL_read_ex(srvr_ssl, tmp, sizeof(tmp), &nread))
+                || !TEST_int_eq(SSL_get_error(srvr_ssl, 0),
+                    SSL_ERROR_WANT_READ))
+                goto end;
+        }
+    }
+
     /* For record MTU values between 500 and 539, call DTLS_get_data_mtu()
      * to query the payload MTU which will fit. */
     for (i = 0; i < 30; i++) {
-        SSL_set_mtu(clnt_ssl, 500 + i);
+        if (!TEST_true(SSL_set_mtu(clnt_ssl, 500 + i)))
+            goto end;
         mtus[i] = DTLS_get_data_mtu(clnt_ssl);
         if (debug)
             TEST_info("%s%s MTU for record mtu %d = %zu",
@@ -93,18 +124,23 @@ static int mtu_test(SSL_CTX *ctx, const char *cs, int no_etm)
     }
 
     /* Now get out of the way */
-    SSL_set_mtu(clnt_ssl, 1000);
+    if (!TEST_true(SSL_set_mtu(clnt_ssl, 1000)))
+        goto end;
 
     /*
      * Now for all values in the range of payload MTUs, send a payload of
      * that size and see what actual record size we end up with.
      */
     for (s = mtus[0]; s <= mtus[29]; s++) {
+        int rlen;
         size_t reclen;
 
         if (!TEST_int_eq(SSL_write(clnt_ssl, buf, (int)s), (int)s))
             goto end;
-        reclen = BIO_read(sc_bio, buf, sizeof(buf));
+        rlen = BIO_read(sc_bio, buf, sizeof(buf));
+        if (!TEST_int_gt(rlen, 0))
+            goto end;
+        reclen = (size_t)rlen;
         if (debug)
             TEST_info("record %zu for payload %zu", reclen, s);
 
@@ -148,6 +184,17 @@ static int run_mtu_tests(void)
     SSL_CTX *ctx = NULL;
     STACK_OF(SSL_CIPHER) *ciphers;
     int i, ret = 0;
+#ifndef OPENSSL_NO_DTLS1_3
+    static const char *const dtls13_ciphers[] = {
+        "TLS_AES_128_GCM_SHA256",
+        "TLS_AES_256_GCM_SHA384",
+#if !defined(OPENSSL_NO_CHACHA) && !defined(OPENSSL_NO_POLY1305)
+        "TLS_CHACHA20_POLY1305_SHA256",
+#endif
+    };
+    SSL_CTX *sctx13 = NULL, *cctx13 = NULL;
+    size_t j;
+#endif
 
     if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_method())))
         goto end;
@@ -157,9 +204,11 @@ static int run_mtu_tests(void)
     SSL_CTX_set_security_level(ctx, 0);
 
     /*
+     * DTLS 1.2: iterate over each enc/mac variant using PSK ciphers.
      * We only care about iterating over each enc/mac; we don't want to
      * repeat the test for each auth/kx variant. So keep life simple and
-     * only do (non-DH) PSK.
+     * only do (non-DH) PSK. Pin to DTLS 1.2 so the intended ciphers are
+     * actually negotiated rather than being overridden by DTLS 1.3.
      */
     if (!TEST_true(SSL_CTX_set_cipher_list(ctx, "PSK")))
         goto end;
@@ -173,20 +222,45 @@ static int run_mtu_tests(void)
         if (!HAS_PREFIX(cipher_name, "PSK-"))
             continue;
 
-        if (!TEST_int_gt(ret = mtu_test(ctx, cipher_name, 0), 0))
-            break;
+        if (!TEST_int_gt(ret = mtu_test(ctx, ctx, cipher_name, 0, DTLS1_2_VERSION), 0))
+            goto end;
         TEST_info("%s OK", cipher_name);
         if (ret == 1)
             continue;
 
         /* mtu_test() returns 2 if it used Encrypt-then-MAC */
-        if (!TEST_int_gt(ret = mtu_test(ctx, cipher_name, 1), 0))
-            break;
+        if (!TEST_int_gt(ret = mtu_test(ctx, ctx, cipher_name, 1, DTLS1_2_VERSION), 0))
+            goto end;
         TEST_info("%s without EtM OK", cipher_name);
     }
 
+#ifndef OPENSSL_NO_DTLS1_3
+    /*
+     * DTLS 1.3: test each ciphersuite using certificate-based auth.
+     * PSK is not needed here — auth method doesn't affect record overhead.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx13, &cctx13, cert, privkey)))
+        goto end;
+
+    for (j = 0; j < OSSL_NELEM(dtls13_ciphers); j++) {
+        if (!TEST_int_gt(ret = mtu_test(sctx13, cctx13, dtls13_ciphers[j],
+                             0, DTLS1_3_VERSION),
+                0))
+            goto end;
+        TEST_info("%s OK", dtls13_ciphers[j]);
+    }
+#endif
+
+    ret = 1;
 end:
     SSL_CTX_free(ctx);
+#ifndef OPENSSL_NO_DTLS1_3
+    SSL_CTX_free(sctx13);
+    SSL_CTX_free(cctx13);
+#endif
     return ret;
 }
 
@@ -231,8 +305,18 @@ end:
     return rv;
 }
 
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
+
 int setup_tests(void)
 {
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    cert = test_get_argument(0);
+    privkey = test_get_argument(1);
+
     ADD_TEST(run_mtu_tests);
     ADD_TEST(test_server_mtu_larger_than_max_fragment_length);
     return 1;
