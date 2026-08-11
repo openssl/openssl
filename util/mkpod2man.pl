@@ -75,12 +75,17 @@ sub format_page
     # The page is current when it is newer than the pod it comes from.
     return if -e $out && -M $out < -M $pod;
 
+    unlink $out;
+
     Pod::Man->new(name => uc $name,
                   section => "$section$opt_m",
                   center => "OpenSSL",
                   date => $opt_d,
                   release => $opt_r)
         ->parse_from_file($pod, $out);
+
+    chmod 0444, $out
+        or die "Can't set the mode of $out, $!\n";
 }
 
 my @pods = @ARGV;
