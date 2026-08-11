@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 
-use OpenSSL::Test;
+use OpenSSL::Test qw/:DEFAULT srctop_file/;
 use OpenSSL::Test::Utils;
 
 my $test_name = "test_dtls_mtu";
@@ -18,4 +18,7 @@ plan skip_all => "$test_name needs DTLS and PSK support enabled"
 
 plan tests => 1;
 
-ok(run(test(["dtls_mtu_test"])), "running dtls_mtu_test");
+ok(run(test(["dtls_mtu_test",
+             srctop_file("test/certs/servercert.pem"),
+             srctop_file("test/certs/serverkey.pem")])),
+   "running dtls_mtu_test");
