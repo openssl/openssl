@@ -88,6 +88,11 @@ jobs:
           cd SPECS/ && source ${GITHUB_WORKSPACE}/VERSION.dat && \
           sed -i "s/SOVERSION/$SHLIB_VERSION/" openssl.spec && \
           sed -i "s/^Version: .*\$/Version: $MAJOR.$MINOR.$PATCH/" openssl.spec
+          # The spec comes from the interop repo and always passes no-docs, which
+          # Configure only understands since 3.2.0. Drop it on older branches.
+          if [ "$MAJOR" -lt 3 ] || { [ "$MAJOR" -eq 3 ] && [ "$MINOR" -lt 2 ]; }; then
+            sed -i 's/[[:space:]]*no-docs\>//g' /build/SPECS/openssl.spec
+          fi
           yum-builddep -y /build/SPECS/openssl.spec # just for sure nothing is missing
           mkdir -p /build/SOURCES
           tar --transform "s/^__w\/openssl\/openssl/openssl-$MAJOR.$MINOR.$PATCH/" -czf /build/SOURCES/openssl-$MAJOR.$MINOR.$PATCH.tar.gz "$GITHUB_WORKSPACE"
