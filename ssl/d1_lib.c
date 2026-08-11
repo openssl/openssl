@@ -336,6 +336,7 @@ int dtls1_clear(SSL *ssl)
         DTLS_RX *rx = s->d1->rx;
         SSL *listener = s->d1->listener;
         OSSL_TIME created_at = s->d1->created_at;
+        unsigned int req_blocking_mode = s->d1->req_blocking_mode;
 #endif
 
         mtu = s->d1->mtu;
@@ -361,6 +362,11 @@ int dtls1_clear(SSL *ssl)
 #ifndef OPENSSL_NO_DTLS
         s->d1->rx = rx;
         s->d1->listener = listener;
+        /*
+         * The blocking mode is a property of the connection as the application
+         * configured it, not of the handshake, so it survives a clear.
+         */
+        s->d1->req_blocking_mode = req_blocking_mode;
         s->d1->created_at = created_at;
 #endif
 
@@ -2433,6 +2439,15 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
     if (conn != NULL)
         goto end;
 
+    /*
+     * Wait only if the caller has not asked us not to and the listener is in
+     * blocking mode. Note that the check for a network BIO below is deliberately
+     * left ahead of this, so that asking to wait on a listener which has none
+     * remains an error rather than silently returning nothing.
+     */
+    if (!no_block && !ossl_dtls_blocking(ssl) && dl->net_rbio != NULL)
+        no_block = 1;
+
     if (no_block) {
         /*
          * Non-blocking: run one tick to drain any pending datagram, then
@@ -2969,6 +2984,125 @@ int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t valu
 
     ossl_crypto_mutex_unlock(dl->mutex);
     return ret;
+}
+
+/*
+ * Resolve the requested blocking mode of a DTLS listener, or of a connection
+ * created from one, following the inheritance chain.
+ *
+ * A connection set to INHERIT follows its listener; a listener set to INHERIT
+ * is blocking, there being nothing further to inherit from. Blocking is
+ * therefore the default unless the application asks otherwise.
+ *
+ * Returns 1 if blocking is wanted, which says nothing about whether it can be
+ * provided - see ossl_dtls_can_support_blocking().
+ */
+static int ossl_dtls_desires_blocking(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
+    const DTLS_LISTENER *dl = NULL;
+
+    if (sc != NULL && sc->d1 != NULL) {
+        if (sc->d1->req_blocking_mode != DTLS_BLOCKING_MODE_INHERIT)
+            return sc->d1->req_blocking_mode == DTLS_BLOCKING_MODE_BLOCKING;
+
+        dl = (const DTLS_LISTENER *)sc->d1->listener;
+    } else if (IS_DTLS_LISTENER(s)) {
+        dl = (const DTLS_LISTENER *)s;
+    }
+
+    if (dl == NULL)
+        return 0;
+
+    return dl->req_blocking_mode != DTLS_BLOCKING_MODE_NONBLOCKING;
+}
+
+/*
+ * Report whether blocking mode can be provided for a DTLS listener or a
+ * connection created from one.
+ *
+ * Blocking is emulated by waiting for readiness of the listener's network
+ * socket, so it requires a BIO which can supply a poll descriptor to wait on.
+ * A memory BIO cannot, and such a listener is therefore non-blocking whatever
+ * was requested, as is the case for QUIC.
+ */
+static int ossl_dtls_can_support_blocking(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
+    const SSL *listener = NULL;
+    BIO_POLL_DESCRIPTOR desc;
+    BIO *rbio;
+
+    if (sc != NULL && sc->d1 != NULL)
+        listener = sc->d1->listener;
+    else if (IS_DTLS_LISTENER(s))
+        listener = s;
+
+    if (listener == NULL)
+        return 0;
+
+    rbio = SSL_get_rbio(listener);
+    if (rbio == NULL)
+        return 0;
+
+    return BIO_get_rpoll_descriptor(rbio, &desc) != 0
+        && desc.type == BIO_POLL_DESCRIPTOR_TYPE_SOCK_FD;
+}
+
+/*
+ * Report whether a call on this object should block, which is the case when
+ * blocking is both wanted and possible.
+ */
+int ossl_dtls_blocking(const SSL *s)
+{
+    return ossl_dtls_desires_blocking(s) && ossl_dtls_can_support_blocking(s);
+}
+
+int ossl_dtls_set_blocking_mode(SSL *s, int blocking)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    unsigned int mode = (blocking != 0)
+        ? DTLS_BLOCKING_MODE_BLOCKING
+        : DTLS_BLOCKING_MODE_NONBLOCKING;
+
+    /*
+     * Only a listener, or a connection created from one, has a blocking mode.
+     * Any other DTLS object takes its behaviour from its own BIO in the
+     * traditional way, so there is nothing here to configure.
+     */
+    if (!IS_DTLS_LISTENER(s)
+        && (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    /*
+     * Refuse to claim blocking we cannot deliver, as QUIC does. Checked before
+     * anything is written, so that a call which fails leaves the mode alone
+     * rather than reporting failure having already changed it.
+     */
+    if (blocking && !ossl_dtls_can_support_blocking(s)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
+        return 0;
+    }
+
+    if (IS_DTLS_LISTENER(s))
+        ((DTLS_LISTENER *)s)->req_blocking_mode = mode;
+    else
+        sc->d1->req_blocking_mode = mode;
+
+    return 1;
+}
+
+int ossl_dtls_get_blocking_mode(const SSL *s)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL_ONLY(s);
+
+    if (!IS_DTLS_LISTENER(s)
+        && (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL))
+        return -1;
+
+    return ossl_dtls_blocking(s);
 }
 
 void ossl_dtls_listener_enter_blocking_section(SSL *s)
