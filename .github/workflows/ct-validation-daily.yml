@@ -116,19 +116,37 @@ jobs:
           persist-credentials: false
           ref: ${{ github.event.inputs.head_sha || github.sha }}
 
+      # enable-ct-validation does not exist before 4.1, so Configure rejects it
+      # and there is nothing to validate.  The workflow is also dispatched for
+      # pull requests against the stable branches, hence the check on the
+      # checked out tree rather than on the branch this file came from.
+      - name: Check for CT validation support
+        id: ct
+        run: |
+          . ./VERSION.dat
+          if [ "$MAJOR" -gt 4 ] || { [ "$MAJOR" -eq 4 ] && [ "$MINOR" -ge 1 ]; }; then
+            echo "supported=yes" >> "$GITHUB_OUTPUT"
+          else
+            echo "supported=no" >> "$GITHUB_OUTPUT"
+            echo "::notice::Skipping CT validation: $MAJOR.$MINOR does not support enable-ct-validation"
+          fi
+
       - name: Install valgrind
         # On Debian/Ubuntu the main 'valgrind' package includes
         # /usr/include/valgrind/memcheck.h — no separate -dev package needed.
+        if: steps.ct.outputs.supported == 'yes'
         run: |
           sudo apt-get -y update
           sudo apt-get -y install valgrind
 
       - name: Configure with CT validation enabled
+        if: steps.ct.outputs.supported == 'yes'
         run: |
           ./Configure enable-ct-validation ${{ matrix.config_extra }}
           ./configdata.pm --dump
 
       - name: Build
+        if: steps.ct.outputs.supported == 'yes'
         run: make -j$(nproc)
 
       - name: Run CT validation under Valgrind
@@ -141,6 +159,7 @@ jobs:
         # - memcmp: test_crypto_memcmp
         # - ML-KEM: test_internal_ml_kem
         # - ML-DSA: test_internal_ml_dsa
+        if: steps.ct.outputs.supported == 'yes'
         run: |
           make TESTS="test_internal_ml_kem test_internal_ml_dsa test_crypto_memcmp" \
                OSSL_VALGRIND_CT=yes \
