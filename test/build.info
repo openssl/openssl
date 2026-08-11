@@ -791,7 +791,7 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=cmsapitest
     SOURCE[cmsapitest]=cmsapitest.c
     INCLUDE[cmsapitest]=../include ../apps/include
-    DEPEND[cmsapitest]=../libcrypto libtestutil.a
+    DEPEND[cmsapitest]=../libcms ../libcrypto libtestutil.a
   ENDIF
 
   IF[{- !$disabled{psk} -}]

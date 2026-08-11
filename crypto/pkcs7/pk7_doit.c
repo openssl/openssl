@@ -56,7 +56,7 @@ ASN1_OCTET_STRING *PKCS7_get_octet_string(PKCS7 *p7)
     return NULL;
 }
 
-static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7)
+static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7, int streaming)
 {
     ASN1_OCTET_STRING *os = PKCS7_get_octet_string(p7);
 
@@ -64,8 +64,7 @@ static ASN1_OCTET_STRING *pkcs7_get1_data(PKCS7 *p7)
         /* Edge case for MIME content, see RFC 5652 section-5.2.1 */
         ASN1_OCTET_STRING *osdup = ASN1_OCTET_STRING_dup(os);
 
-        if (osdup != NULL && (os->flags & ASN1_STRING_FLAG_NDEF))
-            /* ASN1_STRING_FLAG_NDEF flag is currently used by openssl-smime */
+        if (osdup != NULL && streaming)
             ASN1_STRING_set0(osdup, NULL, 0);
         return osdup;
     }
@@ -260,12 +259,12 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
     }
 
     i = OBJ_obj2nid(p7->type);
-    p7->state = PKCS7_S_HEADER;
 
     switch (i) {
     case NID_pkcs7_signed:
         md_sk = p7->d.sign->md_algs;
-        os = pkcs7_get1_data(p7->d.sign->contents);
+        os = pkcs7_get1_data(p7->d.sign->contents,
+            (p7->state & PKCS7_STATE_STREAMING) != 0);
         break;
     case NID_pkcs7_signedAndEnveloped:
         rsk = p7->d.signed_and_enveloped->recipientinfo;
@@ -288,7 +287,8 @@ BIO *PKCS7_dataInit(PKCS7 *p7, BIO *bio)
         break;
     case NID_pkcs7_digest:
         xa = p7->d.digest->md;
-        os = pkcs7_get1_data(p7->d.digest->contents);
+        os = pkcs7_get1_data(p7->d.digest->contents,
+            (p7->state & PKCS7_STATE_STREAMING) != 0);
         break;
     case NID_pkcs7_data:
         break;
@@ -461,7 +461,6 @@ BIO *PKCS7_dataDecode(PKCS7 *p7, EVP_PKEY *pkey, BIO *in_bio, X509 *pcert)
     }
 
     i = OBJ_obj2nid(p7->type);
-    p7->state = PKCS7_S_HEADER;
 
     switch (i) {
     case NID_pkcs7_signed:
@@ -771,7 +770,6 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
     }
 
     i = OBJ_obj2nid(p7->type);
-    p7->state = PKCS7_S_HEADER;
 
     switch (i) {
     case NID_pkcs7_data:
@@ -902,7 +900,7 @@ int PKCS7_dataFinal(PKCS7 *p7, BIO *bio)
          */
         if (os == NULL)
             goto err;
-        if (!(os->flags & ASN1_STRING_FLAG_NDEF)) {
+        if (!(p7->state & PKCS7_STATE_STREAMING)) {
             char *cont;
             long contlen;
             btmp = BIO_find_type(bio, BIO_TYPE_MEM);

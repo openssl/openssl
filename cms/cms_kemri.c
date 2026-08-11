@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/cms.h>
 #include <openssl/core_names.h>
 #include <openssl/crypto.h>
@@ -15,10 +17,6 @@
 #include <openssl/kdf.h>
 #include <openssl/x509.h>
 #include "cms_local.h"
-#include "crypto/evp.h"
-#include "internal/sizes.h"
-
-#include <crypto/asn1.h>
 
 /* KEM Recipient Info (KEMRI) routines */
 
@@ -183,7 +181,7 @@ static EVP_KDF_CTX *create_kdf_ctx(CMS_KEMRecipientInfo *kemri)
 {
     const ASN1_OBJECT *kdf_oid;
     int ptype;
-    char kdf_alg[OSSL_MAX_NAME_SIZE];
+    char kdf_alg[CMS_MAX_NAME_SIZE];
     EVP_KDF *kdf = NULL;
     EVP_KDF_CTX *kctx = NULL;
 
@@ -366,7 +364,7 @@ int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
     size_t kem_ct_len;
     unsigned char *kem_secret = NULL;
     size_t kem_secret_len = 0;
-    unsigned char *enckey = NULL;
+    const unsigned char *enckey = NULL;
     size_t enckeylen;
     unsigned char *cek = NULL;
     size_t ceklen;
@@ -403,8 +401,8 @@ int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
         goto err;
 
     /* Attempt to decrypt CEK */
-    enckeylen = kemri->encryptedKey->length;
-    enckey = kemri->encryptedKey->data;
+    enckeylen = ASN1_STRING_get_length(kemri->encryptedKey);
+    enckey = ASN1_STRING_get0_data(kemri->encryptedKey);
     if (!cms_kek_cipher(&cek, &ceklen, kem_secret, kem_secret_len, enckey, enckeylen, kemri, 0))
         goto err;
     ec = ossl_cms_get0_env_enc_content(cms);

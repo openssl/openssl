@@ -90,6 +90,7 @@ RELEASE_DATE={- my $t = localtime;
 MAJOR={- $config{major} -}
 MINOR={- $config{minor} -}
 SHLIB_VERSION_NUMBER={- $config{shlib_version} -}
+LIBCMS_VERSION_NUMBER=1.0.0
 SHLIB_TARGET={- $target{shared_target} -}
 
 LIBS={- join(" \\\n" . ' ' x 5,
@@ -791,6 +792,16 @@ install_dev: install_runtime_libs
 		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
+	@ : {- output_off() if $disabled{cms}; "" -}
+	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(INSTALLTOP)/include/libcms"
+	@set -e; for i in $(SRCDIR)/include/libcms/*.h \
+			  $(BLDDIR)/include/libcms/*.h; do \
+		fn=`basename $$i`; \
+		$(ECHO) "install $$i -> $(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+		cp $$i "$(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+		chmod 644 "$(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+	done
+	@ : {- output_on() if $disabled{cms}; "" -}
 	@$(PERL) $(SRCDIR)/util/mkdir-p.pl "$(DESTDIR)$(libdir)"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -868,6 +879,15 @@ uninstall_dev: uninstall_runtime_libs
 		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/openssl/$$fn"; \
 	done
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/openssl"
+	@ : {- output_off() if $disabled{cms}; "" -}
+	@set -e; for i in $(SRCDIR)/include/libcms/*.h \
+			  $(BLDDIR)/include/libcms/*.h; do \
+		fn=`basename $$i`; \
+		$(ECHO) "$(RM) $(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+		$(RM) "$(DESTDIR)$(INSTALLTOP)/include/libcms/$$fn"; \
+	done
+	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include/libcms"
+	@ : {- output_on() if $disabled{cms}; "" -}
 	-$(RMDIR) "$(DESTDIR)$(INSTALLTOP)/include"
 	@set -e; for l in $(INSTALL_LIBS); do \
 		fn=`basename $$l`; \
@@ -1357,6 +1377,8 @@ errors:
            include/internal/pem.h
            include/internal/asn1.h
            include/internal/sslconf.h );
+   my @cmsheaders_tmpl =
+       qw( include/openssl/cms.h );
    my @cryptoskipheaders = ( @sslheaders_tmpl,
        qw( include/openssl/conf_api.h
            include/openssl/ebcdic.h
@@ -1365,6 +1387,7 @@ errors:
            include/openssl/symhacks.h ) );
    our %cryptoheaders = ();
    our %sslheaders = ();
+   our %cmsheaders = ();
    foreach my $d ( qw( include/openssl include/internal ) ) {
        my @header_patterns =
            map { catfile($config{sourcedir}, $d, $_) } ( '*.h', '*.h.in' );
@@ -1390,6 +1413,7 @@ errors:
                    && !( grep { $_ eq $fn } @cryptoskipheaders ));
            # The logic to add files to @sslheaders is much simpler...
            $sslheaders{$new_f} = 1 if grep { $_ eq $fn } @sslheaders_tmpl;
+           $cmsheaders{$new_f} = 1 if grep { $_ eq $fn } @cmsheaders_tmpl;
        }
    }
    "";
@@ -1406,6 +1430,8 @@ CRYPTOHEADERS={- join(" \\\n" . ' ' x 14,
                       fill_lines(" ", $COLUMNS - 14, sort keys %cryptoheaders)) -}
 SSLHEADERS={- join(" \\\n" . ' ' x 11,
                    fill_lines(" ", $COLUMNS - 11, sort keys %sslheaders)) -}
+CMSHEADERS={- join(" \\\n" . ' ' x 11,
+                   fill_lines(" ", $COLUMNS - 11, sort keys %cmsheaders)) -}
 
 renumber: build_generated
 	$(PERL) $(SRCDIR)/util/mknum.pl --version $(VERSION_NUMBER) --no-warnings \
@@ -1418,6 +1444,15 @@ renumber: build_generated
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 --renumber \
                 $(SSLHEADERS)
+	@ : {- output_off() if $disabled{cms}; "" -}
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(LIBCMS_VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcms.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                --renumber \
+                $(CMSHEADERS)
+	$(PERL) -p -i -e 's/,DEPRECATEDIN_4_1//;s/DEPRECATEDIN_4_1,//' \
+                $(SRCDIR)/util/libcms.num
+	@ : {- output_on() if $disabled{cms}; "" -}
 
 .PHONY: ordinals
 ordinals: build_generated
@@ -1429,6 +1464,14 @@ ordinals: build_generated
                 --ordinals $(SRCDIR)/util/libssl.num \
                 --symhacks $(SRCDIR)/include/openssl/symhacks.h \
                 $(SSLHEADERS)
+	@ : {- output_off() if $disabled{cms}; "" -}
+	$(PERL) $(SRCDIR)/util/mknum.pl --version $(LIBCMS_VERSION_NUMBER) --no-warnings \
+                --ordinals $(SRCDIR)/util/libcms.num \
+                --symhacks $(SRCDIR)/include/openssl/symhacks.h \
+                $(CMSHEADERS)
+	$(PERL) -p -i -e 's/,DEPRECATEDIN_4_1//;s/DEPRECATEDIN_4_1,//' \
+                $(SRCDIR)/util/libcms.num
+	@ : {- output_on() if $disabled{cms}; "" -}
 
 test_ordinals:
 	"$(MAKE)" run_tests TESTS=test_ordinals
@@ -1609,9 +1652,14 @@ EOF
           (my $mkdef_os = $target{shared_target}) =~ s|-shared$||;
           my $ord_ver = $args{intent} eq 'lib' ? ' --version $(VERSION_NUMBER)' : '';
           my $ord_name = $args{generator}->[1] || $args{product};
+          my $ord_node_prefix = $args{generator}->[2]
+              ? " --node-prefix $args{generator}->[2]" : "";
+          my $ord_renames =
+              join("", map { /^--/ ? " $_" : " --rename $_" }
+                       @{$args{generator}}[3 .. $#{$args{generator}}]);
           return <<"EOF";
 $target: $gen0 $deps \$(SRCDIR)/util/mkdef.pl
-	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name --OS $mkdef_os > $target
+	\$(PERL) \$(SRCDIR)/util/mkdef.pl$ord_ver --type $args{intent} --ordinals $gen0  --name $ord_name$ord_node_prefix$ord_renames --OS $mkdef_os > $target
 EOF
       } elsif (platform->isasm($args{src})
                || platform->iscppasm($args{src})) {
@@ -1852,6 +1900,16 @@ EOF
       my $shared_imp = "";
       $shared_imp .= ' '.$target{shared_impflag}.basename($import)
           if defined $target{shared_impflag} && defined $import;
+      # macOS records library version metadata via link flags, and
+      # LIB_LDFLAGS carries them with the global shared library version.
+      # For a library with a shlib_version of its own, append overriding
+      # flags; the linker uses the last occurrence.
+      my $shared_versions = "";
+      if ($target{shared_target} eq "darwin-shared") {
+          my $v = platform->shlib_version($args{lib});
+          $shared_versions = " -current_version $v -compatibility_version $v"
+              if $v ne $config{shlib_version};
+      }
       my $shared_def = join("", map { ' '.$target{shared_defflag}.$_ } @defs);
 
       # There is at least one platform where the compiler-as-linker needs to
@@ -1914,7 +1972,7 @@ EOF
       if (!run_on_windows()) {
           $recipe .= <<"EOF";
 $full: $fulldeps
-	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_versions$shared_imp \\
 		-o $full$shared_def \\
 		$fullobjs \\
 		$linklibs \$(LIB_EX_LIBS)
@@ -1925,7 +1983,7 @@ $full: $fulldeps
 	\$(file >\$@.lst, \\
 		$fullobjs \\
 	)
-	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_imp \\
+	\$(CC) \$(LIB_CFLAGS) $linkflags\$(LIB_LDFLAGS)$shared_soname$shared_versions$shared_imp \\
 		-o $full$shared_def \\
 		@\$@.lst \\
 		$linklibs \$(LIB_EX_LIBS)

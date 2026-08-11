@@ -7,7 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
@@ -15,8 +16,6 @@
 #include <openssl/cms.h>
 #include <openssl/rand.h>
 #include <openssl/aes.h>
-#include "internal/sizes.h"
-#include "crypto/asn1.h"
 #include "cms_local.h"
 
 int CMS_RecipientInfo_set0_password(CMS_RecipientInfo *ri,
@@ -312,7 +311,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     int r = 0;
     X509_ALGOR *algtmp, *kekalg = NULL;
     EVP_CIPHER_CTX *kekctx = NULL;
-    char name[OSSL_MAX_NAME_SIZE];
+    char name[CMS_MAX_NAME_SIZE];
     EVP_CIPHER *kekcipher;
     unsigned char *key = NULL;
     size_t keylen;
@@ -395,15 +394,14 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, kekctx, cms_ctx))
             goto err;
-        pwri->encryptedKey->data = key;
-        pwri->encryptedKey->length = (int)keylen;
+        ASN1_STRING_set0(pwri->encryptedKey, key, (int)keylen);
     } else {
-        key = OPENSSL_malloc(pwri->encryptedKey->length);
+        key = OPENSSL_malloc(ASN1_STRING_get_length(pwri->encryptedKey));
         if (key == NULL)
             goto err;
         if (!kek_unwrap_key(key, &keylen,
-                pwri->encryptedKey->data,
-                pwri->encryptedKey->length, kekctx)) {
+                ASN1_STRING_get0_data(pwri->encryptedKey),
+                ASN1_STRING_get_length(pwri->encryptedKey), kekctx)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_UNWRAP_FAILURE);
             goto err;
         }

@@ -7,15 +7,14 @@
  * https://www.openssl.org/source/license.html
  */
 
-#include "internal/cryptlib.h"
+#include "internal/deprecated.h"
+#include <libcms/names.h>
 #include <openssl/asn1t.h>
 #include <openssl/pem.h>
 #include <openssl/x509v3.h>
 #include <openssl/err.h>
 #include <openssl/cms.h>
 #include "cms_local.h"
-
-#include <crypto/asn1.h>
 
 /* CMS DigestedData Utilities */
 
@@ -82,12 +81,12 @@ int ossl_cms_DigestedData_do_final(const CMS_ContentInfo *cms, BIO *chain,
         goto err;
 
     if (verify) {
-        if (mdlen != (unsigned int)dd->digest->length) {
+        if (mdlen != ASN1_STRING_get_length(dd->digest)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_MESSAGEDIGEST_WRONG_LENGTH);
             goto err;
         }
 
-        if (memcmp(md, dd->digest->data, mdlen))
+        if (memcmp(md, ASN1_STRING_get0_data(dd->digest), mdlen))
             ERR_raise(ERR_LIB_CMS, CMS_R_VERIFICATION_FAILURE);
         else
             r = 1;
