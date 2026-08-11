@@ -216,6 +216,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     size_t keklen;
     int rv = 0;
     unsigned char *out = NULL;
+    size_t out_alloc_len = 0;
     int outlen;
 
     keklen = EVP_CIPHER_CTX_get_key_length(kari->ctx);
@@ -233,7 +234,8 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     out = OPENSSL_malloc(outlen);
     if (out == NULL)
         goto err;
-    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, inlen))
+    out_alloc_len = (size_t)outlen;
+    if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, (int)inlen))
         goto err;
     *pout = out;
     *poutlen = (size_t)outlen;
@@ -242,7 +244,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 err:
     OPENSSL_cleanse(kek, keklen);
     if (!rv)
-        OPENSSL_free(out);
+        OPENSSL_clear_free(out, out_alloc_len);
     EVP_CIPHER_CTX_reset(kari->ctx);
     /* FIXME: WHY IS kari->pctx freed here?  /RL */
     EVP_PKEY_CTX_free(kari->pctx);
