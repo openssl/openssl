@@ -608,9 +608,10 @@ static int do_add(SSL_CONF_CTX *cctx,
     } else {
         return 1;
     }
-    assert(ctx != NULL);
-    libctx = ctx->libctx;
-    propq = ctx->propq;
+    if (ctx != NULL) {
+	libctx = ctx->libctx;
+	propq = ctx->propq;
+    }
     st = &ctx->cert_store;
     if (*st == NULL) {
         *st = X509_STORE_new();
@@ -715,9 +716,10 @@ static int do_store(SSL_CONF_CTX *cctx,
     } else {
         return 1;
     }
-    assert(ctx != NULL);
-    libctx = ctx->libctx;
-    propq = ctx->propq;
+    if (ctx != NULL) {
+        libctx = ctx->libctx;
+        propq = ctx->propq;
+    }
     st = verify_store ? &cert->verify_store : &cert->chain_store;
     if (*st == NULL) {
         *st = X509_STORE_new();
