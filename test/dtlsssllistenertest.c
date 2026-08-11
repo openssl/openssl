@@ -270,6 +270,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
 /*
  * Helper to create a DTLS client with a bound local address.
  *
@@ -342,6 +343,7 @@ err:
     }
     return ret;
 }
+#endif /* OPENSSL_NO_DTLS1_3 */
 
 /*
  * Helper to create a DTLS listener and client using memory BIOs.
@@ -457,9 +459,7 @@ static int test_dtls_new_listener(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     /* Create a DTLS listener */
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
@@ -486,9 +486,7 @@ static int test_dtls_listener_bio(void)
     BIO *bio2 = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
 
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
@@ -572,9 +570,7 @@ static int test_dtls_get0_listener_non_dtls_listener(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     /* Create a DTLS connection object */
     if (!TEST_ptr(ssl = SSL_new(ctx)))
@@ -601,9 +597,7 @@ static int test_dtls_get0_listener_listener(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     /* Create a DTLS listener */
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
@@ -631,9 +625,7 @@ static int test_dtls_listen_basic(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -656,9 +648,7 @@ static int test_dtls_listen_wrong_type(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -681,9 +671,7 @@ static int test_dtls_accept_connection_wrong_type(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -707,9 +695,7 @@ static int test_dtls_accept_connection_empty_no_block(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -734,9 +720,7 @@ static int test_dtls_queue_len_wrong_type(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -759,9 +743,7 @@ static int test_dtls_queue_len_empty(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -787,9 +769,7 @@ static int test_dtls_accept_connection_no_bio_no_block(void)
     SSL *conn = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -832,9 +812,7 @@ static int test_dtls_accept_connection_no_bio_block(void)
     SSL *conn = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -1394,7 +1372,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
     /* Create server and client contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -2459,6 +2437,7 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
 /*
  * Test: Three connections with different ownership states.
  *
@@ -2662,6 +2641,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS1_3 */
 
 /*
  * Test: SSL_set0_rbio with pending connections causes leak.
@@ -3770,6 +3750,7 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
 /*
  * Test DTLS 1.3 SSL Listener handshake message buffering.
  *
@@ -3964,6 +3945,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS1_3 */
 
 static int test_dtls_listener_max_pending_conns_api(void)
 {
@@ -4177,7 +4159,7 @@ static int test_dtls_listener_max_dgram_size_functional(void)
     int abortctr = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            DTLS_client_method(), 0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -4236,9 +4218,6 @@ static int test_dtls_listener_max_dgram_size_functional(void)
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
-        goto end;
-
-    if (!TEST_int_eq(SSL_version(serverssl), DTLS1_3_VERSION))
         goto end;
 
     if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
@@ -4416,7 +4395,7 @@ static int test_pending_conn_cap_enforcement(void)
     /* Create SSL contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto err;
 
@@ -4509,7 +4488,7 @@ static int test_pending_cap_with_timeout(void)
     /* Create SSL contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto err;
 
@@ -4751,7 +4730,7 @@ static int run_new_pending_cb_scenario(uint64_t max_pending, int allow_remaining
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto err;
 
@@ -6019,6 +5998,7 @@ int setup_tests(void)
 
     /* Concurrent client tests */
     ADD_TEST(test_dtls_concurrent_clients_real_sockets);
+#endif /* OPENSSL_NO_DTLS1_3 */
 
     /* SSL_poll() specific tests */
     ADD_TEST(test_dtls_poll_conn_event_w);
@@ -6028,6 +6008,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_conn_event_ec);
     ADD_TEST(test_dtls_poll_null_item);
 
+#ifndef OPENSSL_NO_DTLS1_3
     /* Message buffering test */
     ADD_TEST(test_dtls13_listener_msg_buffering);
 #endif /* OPENSSL_NO_DTLS1_3 */
@@ -6049,7 +6030,9 @@ int setup_tests(void)
     /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */
     ADD_TEST(test_ssl_ownership_pending_conn_leak);
     ADD_TEST(test_ssl_ownership_incoming_conn_leak);
+#ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_ssl_ownership_three_conn_states);
+#endif
     ADD_TEST(test_ssl_ownership_set_rbio_pending_leak);
     ADD_TEST(test_ssl_ownership_accept_free_no_double_free);
     ADD_TEST(test_ssl_ownership_set_rbio_incoming_leak);
