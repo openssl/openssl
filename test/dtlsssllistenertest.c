@@ -270,6 +270,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
 /*
  * Helper to create a DTLS client with a bound local address.
  *
@@ -342,6 +343,7 @@ err:
     }
     return ret;
 }
+#endif /* OPENSSL_NO_DTLS1_3 */
 
 /*
  * Helper to create a DTLS listener and client using memory BIOs.
@@ -2459,6 +2461,7 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
 /*
  * Test: Three connections with different ownership states.
  *
@@ -2662,6 +2665,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS1_3 */
 
 /*
  * Test: SSL_set0_rbio with pending connections causes leak.
@@ -6015,6 +6019,7 @@ int setup_tests(void)
 
     /* Concurrent client tests */
     ADD_TEST(test_dtls_concurrent_clients_real_sockets);
+#endif /* OPENSSL_NO_DTLS1_3 */
 
     /* SSL_poll() specific tests */
     ADD_TEST(test_dtls_poll_conn_event_w);
@@ -6024,6 +6029,7 @@ int setup_tests(void)
     ADD_TEST(test_dtls_poll_conn_event_ec);
     ADD_TEST(test_dtls_poll_null_item);
 
+#ifndef OPENSSL_NO_DTLS1_3
     /* Message buffering test */
     ADD_TEST(test_dtls13_listener_msg_buffering);
 #endif /* OPENSSL_NO_DTLS1_3 */
@@ -6045,7 +6051,9 @@ int setup_tests(void)
     /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */
     ADD_TEST(test_ssl_ownership_pending_conn_leak);
     ADD_TEST(test_ssl_ownership_incoming_conn_leak);
+#ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_ssl_ownership_three_conn_states);
+#endif
     ADD_TEST(test_ssl_ownership_set_rbio_pending_leak);
     ADD_TEST(test_ssl_ownership_accept_free_no_double_free);
     ADD_TEST(test_ssl_ownership_set_rbio_incoming_leak);
