@@ -841,7 +841,7 @@ void X509_VERIFY_PARAM_move_peername(X509_VERIFY_PARAM *to,
         from->peername = NULL;
 }
 
-static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(X509_VERIFY_PARAM *param, size_t *plen, size_t idx)
+static const unsigned char *int_X509_VERIFY_PARAM_get0_ip(const X509_VERIFY_PARAM *param, size_t *plen, size_t idx)
 {
     X509_BUFFER *buf;
 
