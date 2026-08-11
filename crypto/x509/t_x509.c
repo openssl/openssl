@@ -473,7 +473,7 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
 
             switch (cert_error) {
             case X509_V_ERR_HOSTNAME_MISMATCH:
-                BIO_printf(bio, "Expected hostname(s) = ");
+                BIO_printf(bio, "Expected hostname(s): ");
                 while ((str = X509_VERIFY_PARAM_get0_host(vpm, idx++)) != NULL)
                     BIO_printf(bio, "%s%s", idx == 1 ? "" : ", ", str);
                 BIO_printf(bio, "\n");
@@ -481,10 +481,10 @@ int X509_STORE_CTX_print_verify_cb(int ok, X509_STORE_CTX *ctx)
             case X509_V_ERR_EMAIL_MISMATCH:
                 str = X509_VERIFY_PARAM_get0_email(vpm);
                 if (str != NULL)
-                    BIO_printf(bio, "Expected email address = %s\n", str);
+                    BIO_printf(bio, "Expected email address: %s\n", str);
                 break;
             case X509_V_ERR_IP_ADDRESS_MISMATCH:
-                BIO_printf(bio, "Expected IP address(es) = ");
+                BIO_printf(bio, "Expected IP address(es): ");
                 while ((str = X509_VERIFY_PARAM_get1_ip_asc_ex(vpm, idx++)) != NULL) {
                     BIO_printf(bio, "%s%s\n", idx == 1 ? "" : ", ", str);
                     OPENSSL_free(str);
