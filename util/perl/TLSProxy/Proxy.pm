@@ -99,23 +99,6 @@ sub new_dtls {
 
 sub init
 {
-    my $useSockInet = 0;
-    eval {
-        require IO::Socket::IP;
-        my $s = IO::Socket::IP->new(
-                LocalAddr => "::1",
-                LocalPort => 0,
-                Listen=>1,
-                );
-            $s or die "\n";
-            $s->close();
-    };
-    if ($@ eq "") {
-        require IO::Socket::IP;
-    } else {
-        $useSockInet = 1;
-    }
-
     my $class = shift;
     my ($filter,
         $execute,
@@ -125,48 +108,9 @@ sub init
         $use_IPv6) = @_;
     $use_IPv6 //= $have_IPv6;
 
-    my $test_client_port;
-
-    # Sometimes, our random selection of client ports gets unlucky
-    # And we randomly select a port that's already in use.  This causes
-    # this test to fail, so lets harden ourselves against that by doing
-    # a test bind to the randomly selected port, and only continue once we
-    # find a port that's available.
-    my $test_client_addr = $use_IPv6 ? "[::1]" : "127.0.0.1";
-    my $found_port = 0;
-    for (my $i = 0; $i <= 10; $i++) {
-        $test_client_port = 49152 + int(rand(65535 - 49152));
-        my $test_sock;
-        if ($use_IPv6 == 0 || $useINET6 == 0) {
-            if ($useSockInet == 0) {
-                $test_sock = IO::Socket::IP->new(LocalPort => $test_client_port,
-                                                 LocalAddr => $test_client_addr);
-            } else {
-                $test_sock = IO::Socket::INET->new(LocalAddr => $test_client_addr,
-                                                   LocalPort => $test_client_port);
-            }
-        } else {
-            $test_sock = IO::Socket::INET6->new(LocalAddr => $test_client_addr,
-                                                LocalPort => $test_client_port,
-                                                Domain => AF_INET6);
-        }
-        if ($test_sock) {
-            $found_port = 1;
-            $test_sock->close();
-            print "Found available client port ${test_client_port}\n";
-            last;
-        }
-        print "Port ${test_client_port} in use - $@\n";
-    }
-  
-    if ($found_port == 0) {
-        die "Unable to find usable port for TLSProxy";
-    }
-
     my $self = {
         #Public read/write
-        proxy_addr => $test_client_addr,
-        client_addr => $test_client_addr,
+        proxy_addr => $use_IPv6 ? "[::1]" : "127.0.0.1",
         filter => $filter,
         serverflags => "",
         clientflags => "",
@@ -177,7 +121,6 @@ sub init
         #Public read
         isdtls => $isdtls,
         proxy_port => 0,
-        client_port => $test_client_port,
         server_port => 0,
         serverpid => 0,
         clientpid => 0,
@@ -291,41 +234,20 @@ sub start
     #
     $ENV{OPENSSL_s390xcap} = "kmac:~0:~f000";
 
-    # For DTLS, s_client must bind to a fixed client port so the proxy knows
-    # where to send packets back.  The port was chosen once at new() time, but
-    # a prior s_client from a previous start() call may not have fully released
-    # it yet.  Re-select a free port on every start() to avoid EADDRINUSE.
-    if ($self->{isdtls}) {
-        my $found_port = 0;
-        my $test_client_addr = $self->{client_addr};
-        for (my $i = 0; $i <= 10; $i++) {
-            my $candidate = 49152 + int(rand(65535 - 49152));
-            my $test_sock = $IP_factory->(LocalPort => $candidate,
-                                          LocalAddr => $test_client_addr);
-            if ($test_sock) {
-                $test_sock->close();
-                $self->{client_port} = $candidate;
-                $found_port = 1;
-                last;
-            }
-        }
-        die "Unable to find usable port for TLSProxy" if $found_port == 0;
-    }
-
     # Create the Proxy socket
     my $proxaddr = $self->{proxy_addr};
     $proxaddr =~ s/[\[\]]//g; # Remove [ and ]
-    my $clientaddr = $self->{client_addr};
-    $clientaddr =~ s/[\[\]]//g; # Remove [ and ]
 
     my @proxyargs;
 
     if ($self->{isdtls}) {
+        # The socket is left unconnected: the client's address and port are
+        # learned from the first datagram it sends and remembered for
+        # sending back the server's flights.  That way the client's port is
+        # picked (race free) by the kernel rather than by us.
         @proxyargs = (
             LocalHost   => $proxaddr,
             LocalPort   => 0,
-            PeerHost   => $clientaddr,
-            PeerPort   => $self->{client_port},
             Proto       => "udp",
         );
     } else {
@@ -471,10 +393,7 @@ sub clientstart
             $execcmd .= " -dtls -max_protocol DTLSv1.3"
                         # TLSProxy does not support message fragmentation. So
                         # set a high mtu and fingers crossed.
-                        ." -mtu 1500"
-                        # UDP has no "accept" for sockets which means we need to
-                        # know were to send data back to.
-                        ." -bind $self->{client_addr}:$self->{client_port}";
+                        ." -mtu 1500";
         } else {
             $execcmd .= " -max_protocol TLSv1.3";
         }
@@ -524,7 +443,12 @@ sub clientstart
 
     my $client_sock;
     if($self->{isdtls}) {
-        $client_sock = $self->{proxy_sock}
+        # The proxy socket is unconnected; the client's address is learned
+        # from the datagrams it sends (see client_sockaddr below).  A new
+        # s_client (with a fresh kernel-assigned port) may connect on each
+        # clientstart(), so forget any previous peer.
+        $client_sock = $self->{proxy_sock};
+        $self->{client_sockaddr} = undef;
     } elsif (!($client_sock = $self->{proxy_sock}->accept())) {
         warn "Failed accepting incoming connection: $!\n";
         return 0;
@@ -583,7 +507,7 @@ sub clientstart
             if ($hand == $server_sock) {
                 if ($server_sock->sysread($indata, 16384)) {
                     if ($indata = $self->process_packet(1, $indata)) {
-                        if (!$client_sock->syswrite($indata)) {
+                        if (!$self->client_syswrite($client_sock, $indata)) {
                             # For DTLS/UDP, syswrite failure after handshake completion
                             # is not necessarily an error - the client may have already
                             # sent close_notify and exited. Unlike TCP, UDP is
@@ -606,7 +530,7 @@ sub clientstart
                     }
                 }
             } elsif ($hand == $client_sock) {
-                if ($client_sock->sysread($indata, 16384)) {
+                if ($self->client_sysread($client_sock, \$indata)) {
                     if ($indata = $self->process_packet(0, $indata)) {
                         if (!$server_sock->syswrite($indata)) {
                             # For DTLS/UDP, syswrite failure after handshake completion
@@ -658,7 +582,8 @@ sub clientstart
         # this is because closing the socket does not result in a FIN being sent as in TCP.
         if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
             my $alert_message = $self->construct_alert_message($self->{server_epoch}, $self->{server_sequence_number} + 1);
-            $client_sock->syswrite($alert_message) or warn "Failed to send close_notify alert: $!\n";
+            $self->client_syswrite($client_sock, $alert_message)
+                or warn "Failed to send close_notify alert: $!\n";
         }
 
         #Closing this also kills the child process
@@ -697,6 +622,41 @@ sub clientstart
     $self->{clientexit} = $?;
 
     return $success;
+}
+
+# Read data sent by the client.  For DTLS the proxy socket is unconnected,
+# so recv() is used and the sender's address is remembered as the
+# destination for datagrams sent back to the client.
+sub client_sysread
+{
+    my ($self, $client_sock, $dataref) = @_;
+
+    if (!$self->{isdtls}) {
+        return $client_sock->sysread($$dataref, 16384);
+    }
+
+    my $peer = $client_sock->recv($$dataref, 16384, 0);
+    return undef if !defined $peer;
+    $self->{client_sockaddr} = $peer;
+    return length($$dataref);
+}
+
+# Send data to the client, using the address it last sent from in the DTLS
+# case.
+sub client_syswrite
+{
+    my ($self, $client_sock, $data) = @_;
+
+    if (!$self->{isdtls}) {
+        return $client_sock->syswrite($data);
+    }
+
+    if (!defined $self->{client_sockaddr}) {
+        warn "Cannot send to client: no datagram received from it yet\n";
+        return undef;
+    }
+
+    return $client_sock->send($data, 0, $self->{client_sockaddr});
 }
 
 sub construct_alert_message
