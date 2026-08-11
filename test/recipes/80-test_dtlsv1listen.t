@@ -14,6 +14,9 @@ setup("test_dtlsv1listen");
 plan skip_all => "No DTLS protocols are supported by this OpenSSL build"
     if alldisabled(available_protocols("dtls"));
 
+plan skip_all => "No DTLS 1.2 support in this OpenSSL build"
+    if disabled("dtls1_2");
+
 plan tests => 1;
 
 ok(run(test(["dtlsv1listentest", srctop_file("apps", "server.pem"),
