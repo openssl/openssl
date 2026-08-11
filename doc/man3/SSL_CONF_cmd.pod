@@ -832,7 +832,7 @@ B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT>.
 =item B<SetExpectedDNSName>
 
 The B<value> argument is the expected DNS hostname or a comma-
-or semicolomn-separated list of DNS hostnames to use for
+or semicolon-separated list of DNS hostnames to use for
 certificate verification.  There should be no whitespace around the
 comma or semicolon.  Any previous value is cleared.  This option
 is intended for configurations that are dedicated to connecting to a single
@@ -852,7 +852,7 @@ are used to connect to a diverse set of destinations.
 =item B<SetExpectedIPAddress>
 
 The B<value> argument is the expected IPv4 or IPv6 address or a comma-
-or semicolomn-separated list of IPv4 or IPv6 addresses to use for
+or semicolon-separated list of IPv4 or IPv6 addresses to use for
 certificate verification.  There should be no whitespace around the
 comma or semicolon.  Any previous value is cleared.  This option
 is intended for configurations that are dedicated to connecting to a single
@@ -862,7 +862,7 @@ are used to connect to a diverse set of destinations.
 =item B<AddExpectedIPAddress>
 
 The B<value> argument is an expected IPv4 or IPv6 address or a comma-
-or semicolomn-separated list of IPv4 or IPv6 addresses to use for
+or semicolon-separated list of IPv4 or IPv6 addresses to use for
 certificate verification, in addition to any previously set value.
 There should be no whitespace around the comma or semicolon.  This option
 is intended for configurations that are dedicated to connecting to a single
