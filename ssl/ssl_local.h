@@ -2222,11 +2222,30 @@ typedef struct dtls1_state_st {
      * the listener mutex.
      */
     unsigned int being_driven : 1;
+
+    /*
+     * Blocking mode requested for this connection, as a DTLS_BLOCKING_MODE.
+     * Defaults to inheriting from the listener it came from.
+     */
+    unsigned int req_blocking_mode : 2;
 #endif
 
 } DTLS1_STATE;
 
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/*
+ * Blocking mode of a DTLS listener or of a connection created from one.
+ *
+ * A connection set to INHERIT follows its listener, and a listener set to
+ * INHERIT means blocking, so blocking is the default throughout unless an
+ * application asks otherwise. This mirrors QUIC_BLOCKING_MODE.
+ */
+enum {
+    DTLS_BLOCKING_MODE_INHERIT,
+    DTLS_BLOCKING_MODE_NONBLOCKING,
+    DTLS_BLOCKING_MODE_BLOCKING
+};
+
 /*
  * Define stack of SSL for DTLS listener incoming connections.
  */
@@ -2356,6 +2375,13 @@ typedef struct dtls_listener_st {
      * Count of threads currently blocked waiting in poll().
      */
     size_t cur_blocking_waiters;
+
+    /*
+     * Blocking mode requested for this listener, as a DTLS_BLOCKING_MODE.
+     * INHERIT here means blocking, there being nothing further to inherit
+     * from.
+     */
+    unsigned int req_blocking_mode : 2;
 } DTLS_LISTENER;
 
 #endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
@@ -3033,6 +3059,9 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
 void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
 int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline);
+int ossl_dtls_blocking(const SSL *s);
+int ossl_dtls_set_blocking_mode(SSL *s, int blocking);
+int ossl_dtls_get_blocking_mode(const SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
 
 /* DTLS Listener internal cookie callbacks */
