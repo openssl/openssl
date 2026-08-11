@@ -532,6 +532,7 @@ err:
  * Test SSL_new_listener with DTLS 1.2 only context.
  * Verifies that listeners work with DTLS 1.2.
  */
+#ifndef OPENSSL_NO_DTLS1_2
 static int test_dtls_new_listener_dtls12(void)
 {
     SSL_CTX *ctx = NULL;
@@ -560,6 +561,7 @@ err:
     SSL_CTX_free(ctx);
     return success;
 }
+#endif /* OPENSSL_NO_DTLS1_2 */
 
 /*
  * Test SSL_get0_listener and SSL_is_listener on a non-listener DTLS SSL object.
@@ -1123,6 +1125,7 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_2
 /*
  * Test mixed DTLS versions: DTLS 1.2 with HVR and DTLS 1.3 with HRR.
  *
@@ -1350,6 +1353,7 @@ end:
     SSL_CTX_free(cctx_13);
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS1_2 */
 
 /*
  * Test true concurrent multi-client with real UDP sockets (shared socket).
@@ -1615,6 +1619,7 @@ end:
 }
 #endif /* OPENSSL_NO_DTLS1_3 */
 
+#ifndef OPENSSL_NO_DTLS1_2
 /*
  * Test DTLS 1.2 connection WITH HelloVerifyRequest (HVR).
  *
@@ -1877,6 +1882,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS1_2 */
 
 /*
  * Test SSL_get_peer_addr on a fresh SSL object with no peer.
@@ -2307,12 +2313,12 @@ static int test_ssl_ownership_pending_conn_leak(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2386,12 +2392,12 @@ static int test_ssl_ownership_incoming_conn_leak(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2678,12 +2684,12 @@ static int test_ssl_ownership_set_rbio_pending_leak(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2773,12 +2779,12 @@ static int test_ssl_ownership_set_rbio_incoming_leak(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2868,12 +2874,12 @@ static int test_ssl_ownership_accept_free_no_double_free(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2963,12 +2969,12 @@ static int test_ssl_ownership_multiple_pending_leak(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -3045,12 +3051,12 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3180,7 +3186,7 @@ static int test_dtls_poll_conn_event_w(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -3271,7 +3277,8 @@ static int test_dtls_poll_conn_dgram_pair_readable(void)
     BIO_ADDR *client_addr = NULL;
     const char msg[] = "Test data for poll readable";
     char buf[64];
-    size_t written, readbytes;
+    unsigned char drain[256];
+    size_t written, readbytes, drain_len = 0;
     int testresult = 0;
     int retc, err_code;
     SSL_POLL_ITEM poll_item;
@@ -3281,7 +3288,7 @@ static int test_dtls_poll_conn_dgram_pair_readable(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -3325,6 +3332,15 @@ static int test_dtls_poll_conn_dgram_pair_readable(void)
 
     /* Complete the handshake */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Drain any pending post-handshake records (e.g., DTLS 1.3 ACKs for
+     * NewSessionTicket). These are not application data but appear as readable.
+     * Expect SSL_read_ex to return 0 (no app data) with zero bytes read.
+     */
+    if (!TEST_false(SSL_read_ex(serverssl, drain, sizeof(drain), &drain_len))
+        || !TEST_size_t_eq(drain_len, 0))
         goto end;
 
     /*
@@ -3401,6 +3417,8 @@ static int test_dtls_poll_conn_no_events_before_data(void)
     SSL *listener = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
     BIO_ADDR *client_addr = NULL;
+    unsigned char drain[256];
+    size_t drain_len = 0;
     int testresult = 0;
     int retc, err_code;
     SSL_POLL_ITEM poll_item;
@@ -3410,7 +3428,7 @@ static int test_dtls_poll_conn_no_events_before_data(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -3454,6 +3472,15 @@ static int test_dtls_poll_conn_no_events_before_data(void)
 
     /* Complete the handshake */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Drain any pending post-handshake records (e.g., DTLS 1.3 ACKs for
+     * NewSessionTicket). These are not application data but appear as readable.
+     * Expect SSL_read_ex to return 0 (no app data) with zero bytes read.
+     */
+    if (!TEST_false(SSL_read_ex(serverssl, drain, sizeof(drain), &drain_len))
+        || !TEST_size_t_eq(drain_len, 0))
         goto end;
 
     /*
@@ -3509,7 +3536,7 @@ static int test_dtls_poll_listener_multiple_events(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -3601,7 +3628,7 @@ static int test_dtls_poll_conn_event_ec(void)
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -5937,7 +5964,9 @@ int setup_tests(void)
 
     /* Basic listener creation and configuration tests */
     ADD_TEST(test_dtls_new_listener);
+#ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_new_listener_dtls12);
+#endif
 
     /* BIO management tests */
     ADD_TEST(test_dtls_listener_bio);
@@ -5969,8 +5998,10 @@ int setup_tests(void)
     ADD_TEST(test_dtls_listen_ex_returns_error);
 
     /* DTLS 1.2 connection tests */
+#ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls12_connection_with_hvr);
     ADD_TEST(test_dtls12_connection_without_hvr);
+#endif
 
 #ifndef OPENSSL_NO_DTLS1_3
     /* DTLS 1.3 connection tests */
@@ -5978,7 +6009,9 @@ int setup_tests(void)
     ADD_TEST(test_dtls13_connection_without_hrr);
 
     /* Mixed version tests */
+#ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_dtls_mixed_12_hvr_and_13_hrr);
+#endif
 
     /* Concurrent client tests */
     ADD_TEST(test_dtls_concurrent_clients_real_sockets);
