@@ -302,6 +302,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
     EVP_CIPHER *kekcipher;
     unsigned char *key = NULL;
     size_t keylen;
+    size_t key_alloc_len = 0;
     const CMS_CTX *cms_ctx = ossl_cms_get0_cmsctx(cms);
 
     ec = ossl_cms_get0_env_enc_content(cms);
@@ -378,6 +379,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
 
         if (key == NULL)
             goto err;
+        key_alloc_len = keylen;
 
         if (!kek_wrap_key(key, &keylen, ec->key, ec->keylen, kekctx, cms_ctx))
             goto err;
@@ -390,6 +392,7 @@ int ossl_cms_RecipientInfo_pwri_crypt(const CMS_ContentInfo *cms,
             ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
             goto err;
         }
+        key_alloc_len = (size_t)pwri->encryptedKey->length;
         if (!kek_unwrap_key(key, &keylen,
                 pwri->encryptedKey->data,
                 pwri->encryptedKey->length, kekctx)) {
@@ -409,7 +412,7 @@ err:
     EVP_CIPHER_CTX_free(kekctx);
 
     if (!r)
-        OPENSSL_free(key);
+        OPENSSL_clear_free(key, key_alloc_len);
     X509_ALGOR_free(kekalg);
 
     return r;

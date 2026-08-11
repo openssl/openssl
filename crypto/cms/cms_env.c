@@ -897,6 +897,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
     CMS_EncryptedContentInfo *ec;
     CMS_KEKRecipientInfo *kekri;
     unsigned char *ukey = NULL;
+    size_t ukey_alloc_len = 0;
     int ukeylen;
     int r = 0, wrap_nid;
     EVP_CIPHER *cipher = NULL;
@@ -934,7 +935,8 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
         goto err;
     }
 
-    ukey = OPENSSL_malloc(kekri->encryptedKey->length - 8);
+    ukey_alloc_len = (size_t)kekri->encryptedKey->length - 8;
+    ukey = OPENSSL_malloc(ukey_alloc_len);
     if (ukey == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_MALLOC_FAILURE);
         goto err;
@@ -965,7 +967,7 @@ static int cms_RecipientInfo_kekri_decrypt(CMS_ContentInfo *cms,
 err:
     EVP_CIPHER_free(cipher);
     if (!r)
-        OPENSSL_free(ukey);
+        OPENSSL_clear_free(ukey, ukey_alloc_len);
     EVP_CIPHER_CTX_free(ctx);
 
     return r;
