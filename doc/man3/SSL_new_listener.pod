@@ -289,6 +289,15 @@ generate and verify cookies based on the client's address, providing basic
 amplification attack protection without requiring application-specific
 callback implementations.
 
+A DTLS listener demultiplexes a single network socket to many connections, so it
+cannot allow one connection's read to block and thereby stall the others. Its
+network BIO is configured for nonblocking operation when it is set, and blocking
+behaviour is provided by waiting for readiness of that socket instead. A DTLS
+listener is blocking by default, and the connections it returns inherit that;
+use L<SSL_set_blocking_mode(3)> to change it. A listener whose BIO cannot provide
+a poll descriptor, such as one using a memory BIO, has nothing to wait on and is
+nonblocking whatever is requested.
+
 An example DTLS server using the listener API in single threaded mode which only
 accepts one connection at a time. A typical implementation would utilize L<SSL_poll(3)>
 and can accept multiple connections concurrently.

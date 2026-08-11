@@ -101,6 +101,11 @@ BIO is subsequently set on the SSL object which can support blocking mode,
 blocking mode will not be automatically re-enabled. For more information, see
 L<SSL_set_blocking_mode(3)>.
 
+When B<ssl> is a DTLS listener object, the BIO is configured for nonblocking
+operation, since a listener demultiplexes one socket to many connections and so
+cannot allow a read for one of them to block. Blocking behaviour is provided by
+waiting for readiness of the socket instead; see L<SSL_set_blocking_mode(3)>.
+
 When B<ssl> is a DTLS listener object, these functions must not be called
 concurrently with any other operations on the listener or its connections.
 This includes L<SSL_accept_connection(3)>, L<SSL_poll(3)>,
