@@ -327,7 +327,7 @@ X509_VERIFY_PARAM_set1_rfc822_input_validation(),
 X509_VERIFY_PARAM_set1_smtputf8_input_validation(), and
 X509_VERIFY_PARAM_set1_ip_input_validation() were added in OpenSSL 4.0.
 
-X509_VERIFY_PARAM_get1_ip_asc_ex() was added in Openssl 4.1.
+X509_VERIFY_PARAM_get1_ip_asc_ex() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

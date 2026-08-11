@@ -112,7 +112,7 @@ that can match the peer's certificate.  Any previous hostnames set via
 SSL_set1_host() or SSL_add1_host() are retained.  No change is
 made if I<host> is NULL or empty.  The peer is considered verified
 when any of the added hostnames, if present, match, and any of the
-provided IP addressess, if present, match.
+provided IP addresses, if present, match.
 
 =head1 RETURN VALUES
 
