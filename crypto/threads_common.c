@@ -123,7 +123,7 @@ DEFINE_SPARSE_ARRAY_OF(CTX_TABLE_ENTRY);
  *
  */
 typedef struct master_key_entry {
-    SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) * ctx_table;
+    SPARSE_ARRAY_OF(CTX_TABLE_ENTRY) *ctx_table;
 } MASTER_KEY_ENTRY;
 
 /**
