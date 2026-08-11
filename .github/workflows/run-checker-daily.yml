@@ -88,6 +88,7 @@ jobs:
           no-dsa,
           no-dtls1,
           no-dtls1_2,
+          no-dtls1_3,
           no-dtls1_2-method,
           no-dtls1-method,
           enable-ec_nistp_64_gcc_128,
