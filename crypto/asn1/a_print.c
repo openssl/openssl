@@ -14,20 +14,26 @@
 
 #include <crypto/asn1.h>
 
-int ASN1_PRINTABLE_type(const unsigned char *s, int len)
+/**
+ * @brief Determine the narrowest ASN.1 string type that can represent bytes.
+ *
+ * Unlike ASN1_PRINTABLE_type() this requires an explicit length and has no
+ * legacy path that treats its input as a NUL terminated C string, so it may
+ * be called on ASN1_STRING data.
+ *
+ * @param s pointer to the bytes to classify
+ * @param len the number of bytes available at s
+ * @returns V_ASN1_T61STRING, V_ASN1_IA5STRING or V_ASN1_PRINTABLESTRING
+ */
+static int printable_type(const unsigned char *s, size_t len)
 {
-    int c;
     int ia5 = 0;
     int t61 = 0;
+    size_t i;
 
-    if (s == NULL)
-        return V_ASN1_PRINTABLESTRING;
+    for (i = 0; i < len; i++) {
+        int c = s[i];
 
-    if (len < 0)
-        len = (int)strlen((const char *)s);
-
-    while (len-- > 0) {
-        c = *(s++);
         if (!ossl_isasn1print(c))
             ia5 = 1;
         if (!ossl_isascii(c))
@@ -38,6 +44,17 @@ int ASN1_PRINTABLE_type(const unsigned char *s, int len)
     if (ia5)
         return V_ASN1_IA5STRING;
     return V_ASN1_PRINTABLESTRING;
+}
+
+int ASN1_PRINTABLE_type(const unsigned char *s, int len)
+{
+    if (s == NULL)
+        return V_ASN1_PRINTABLESTRING;
+
+    if (len < 0)
+        len = (int)strlen((const char *)s);
+
+    return printable_type(s, (size_t)len);
 }
 
 int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
@@ -65,7 +82,7 @@ int ASN1_UNIVERSALSTRING_to_string(ASN1_UNIVERSALSTRING *s)
     if (s->length > 0)
         *p = '\0';
     s->length /= 4;
-    s->type = ASN1_PRINTABLE_type(s->data, s->length);
+    s->type = printable_type(s->data, (size_t)s->length);
     return 1;
 }
 
