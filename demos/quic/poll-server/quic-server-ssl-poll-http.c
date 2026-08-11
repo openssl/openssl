@@ -1018,8 +1018,7 @@ rebuild_poll_set(struct poll_manager *pm)
     i = 0;
     DPRINTF(stderr, "%s there %zu events to poll\n", __func__,
         ossl_list_pe_num(&pm->pm_head));
-    OSSL_LIST_FOREACH(pe, pe, &pm->pm_head)
-    {
+    OSSL_LIST_FOREACH (pe, pe, &pm->pm_head) {
         pe->pe_poll_item.events = pe->pe_want_events;
         pm->pm_poll_set[i++] = *pe;
         DPRINTF(stderr, "\t%p (%s) " POLL_FMT " (disabled: " POLL_FMT ")\n",
@@ -1041,8 +1040,8 @@ destroy_poll_manager(struct poll_manager *pm)
     if (pm == NULL)
         return;
 
-    OSSL_LIST_FOREACH_DELSAFE(pe, pe_safe, pe, &pm->pm_head)
-    destroy_pe(pe);
+    OSSL_LIST_FOREACH_DELSAFE (pe, pe_safe, pe, &pm->pm_head)
+        destroy_pe(pe);
 
     OPENSSL_free(pm->pm_poll_set);
     OPENSSL_free(pm);
@@ -1625,14 +1624,12 @@ app_destroy_qconn(struct poll_event *pe)
     if (pec == NULL)
         return;
 
-    OSSL_LIST_FOREACH_DELSAFE(peccx, peccx_save, peccx, &pec->pec_unistream_cx)
-    {
+    OSSL_LIST_FOREACH_DELSAFE (peccx, peccx_save, peccx, &pec->pec_unistream_cx) {
         peccx->peccx_cb_ondestroy(peccx->peccx);
         OPENSSL_free(peccx);
     }
 
-    OSSL_LIST_FOREACH_DELSAFE(peccx, peccx_save, peccx, &pec->pec_stream_cx)
-    {
+    OSSL_LIST_FOREACH_DELSAFE (peccx, peccx_save, peccx, &pec->pec_stream_cx) {
         peccx->peccx_cb_ondestroy(peccx->peccx);
         OPENSSL_free(peccx);
     }
