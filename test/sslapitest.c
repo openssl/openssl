@@ -15519,7 +15519,7 @@ static int test_ssl_conf_SetHostFlags(SSL_CONF_CTX *confctx,
     if (!TEST_int_eq(SSL_CONF_cmd(confctx, "SetHostFlags", "-AlwaysCheckSubject"), 2))
         goto end;
 
-    flags = X509_VERIFY_PARAM_get_flags(param);
+    flags = X509_VERIFY_PARAM_get_hostflags(param);
     if (!TEST_int_eq(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, 0))
         goto end;
 
