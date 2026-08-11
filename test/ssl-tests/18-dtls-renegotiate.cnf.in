@@ -23,7 +23,7 @@ our @tests = ();
 foreach my $sctp ("No", "Yes")
 {
     next if disabled("sctp") && $sctp eq "Yes";
-    next if disabled("dtls1_2") && $fips_mode;
+    next if disabled("dtls1_2");
 
     my $suffix = ($sctp eq "No") ? "" : "-sctp";
     our @tests_basic = (
