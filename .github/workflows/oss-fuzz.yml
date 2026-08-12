@@ -58,15 +58,21 @@ jobs:
         df
         sudo rm -rf /usr/share/dotnet /usr/share/swift /usr/local/.ghcup /usr/local/share/powershell /usr/local/share/chromium /usr/local/lib/android /usr/local/lib/node_modules
         df
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: Build Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/build_fuzzers@master
       with:
         oss-fuzz-project-name: 'openssl'
+        project-src-path: ${{ github.workspace }}
         dry-run: false
     - name: Run Fuzzers
       uses: google/oss-fuzz/infra/cifuzz/actions/run_fuzzers@master
       with:
         oss-fuzz-project-name: 'openssl'
+        project-src-path: ${{ github.workspace }}
         fuzz-seconds: 600
         dry-run: false
     - name: Upload Crash
