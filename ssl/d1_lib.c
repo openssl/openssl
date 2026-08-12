@@ -3181,6 +3181,44 @@ int ossl_dtls_conn_wait_for_datagram(SSL *s)
     }
 }
 
+/*
+ * Wait until the listener's socket can accept another datagram, for a
+ * connection which is in blocking mode.
+ *
+ * The socket is shared with every other connection and is always
+ * non-blocking, so a send which cannot be completed has nowhere to wait. For
+ * DTLS the record layer would otherwise discard the datagram - a reasonable
+ * default for an unreliable transport, but not what an application which asked
+ * for blocking writes expects.
+ *
+ * Only one wait is performed. The caller retries the send, and comes back here
+ * if it still cannot proceed, so a wakeup which turns out not to leave room in
+ * the socket buffer costs an extra attempt rather than a lost datagram.
+ *
+ * Returns 1 if the send should be retried, or 0 if the wait could not be
+ * performed or the listener has failed.
+ */
+int ossl_dtls_conn_wait_for_write(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    DTLS_LISTENER *dl;
+    int fatal;
+
+    if (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)
+        return 0;
+
+    dl = (DTLS_LISTENER *)sc->d1->listener;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    fatal = dl->fatal;
+    ossl_crypto_mutex_unlock(dl->mutex);
+    if (fatal)
+        return 0;
+
+    return ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_W,
+        ossl_time_infinite());
+}
+
 void ossl_dtls_listener_enter_blocking_section(SSL *s)
 {
     DTLS_LISTENER *dl;

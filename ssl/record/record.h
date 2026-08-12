@@ -211,4 +211,16 @@ OSSL_CORE_MAKE_FUNC(int, rlayer_get_urxe_packet, (void *cbarg, unsigned char **d
 #define OSSL_FUNC_RLAYER_RELEASE_URXE_PACKET 6
 OSSL_CORE_MAKE_FUNC(void, rlayer_release_urxe_packet, (void *cbarg, void *packet_handle))
 
+/*
+ * Callback for listener-based connections to wait until their shared socket can
+ * accept a datagram, for a connection which is in blocking mode. Such a
+ * connection cannot block in the socket itself, because the socket is shared
+ * with every other connection and is always non-blocking.
+ *
+ * Returns 1 if the send should be attempted again, or 0 to report the write as
+ * needing a retry in the usual way.
+ */
+#define OSSL_FUNC_RLAYER_BLOCK_FOR_WRITE 7
+OSSL_CORE_MAKE_FUNC(int, rlayer_block_for_write, (void *cbarg))
+
 #endif /* !defined(OSSL_SSL_RECORD_RECORD_H) */

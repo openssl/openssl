@@ -1213,6 +1213,18 @@ static void rlayer_dtls_release_urxe_packet(void *cbarg, void *packet_handle)
     if (s != NULL && s->d1 != NULL && s->d1->rx != NULL && urxe != NULL)
         ossl_dtls_rx_release_urxe(s->d1->rx, urxe);
 }
+
+static OSSL_FUNC_rlayer_block_for_write_fn rlayer_dtls_block_for_write;
+static int rlayer_dtls_block_for_write(void *cbarg)
+{
+    SSL_CONNECTION *s = cbarg;
+
+    if (s == NULL || s->d1 == NULL || s->d1->listener == NULL
+        || !ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s)))
+        return 0;
+
+    return ossl_dtls_conn_wait_for_write(SSL_CONNECTION_GET_SSL(s));
+}
 #endif
 
 static const OSSL_DISPATCH rlayer_dispatch[] = {
@@ -1223,6 +1235,7 @@ static const OSSL_DISPATCH rlayer_dispatch[] = {
 #if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
     { OSSL_FUNC_RLAYER_GET_URXE_PACKET, (void (*)(void))rlayer_dtls_get_urxe_packet },
     { OSSL_FUNC_RLAYER_RELEASE_URXE_PACKET, (void (*)(void))rlayer_dtls_release_urxe_packet },
+    { OSSL_FUNC_RLAYER_BLOCK_FOR_WRITE, (void (*)(void))rlayer_dtls_block_for_write },
 #endif
     OSSL_DISPATCH_END
 };

@@ -5632,6 +5632,202 @@ end:
     return testresult;
 }
 
+/*
+ * State for the filter BIO below.
+ */
+struct failing_send_data {
+    int fails_remaining; /* sends still to be rejected */
+    int sends; /* sends attempted through the filter */
+};
+
+static long failing_send_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    BIO *next = BIO_next(bio);
+
+    if (next == NULL)
+        return 0;
+
+    if (cmd == BIO_CTRL_DUP)
+        return 0L;
+
+    /*
+     * Everything else, the poll descriptors in particular, has to reach the
+     * socket underneath: the blocking write waits on the descriptor this
+     * returns.
+     */
+    return BIO_ctrl(next, cmd, num, ptr);
+}
+
+static int failing_send_sendmmsg(BIO *bio, BIO_MSG *msg, size_t stride,
+    size_t num_msg, uint64_t flags, size_t *msgs_processed)
+{
+    struct failing_send_data *data = BIO_get_data(bio);
+    BIO *next = BIO_next(bio);
+
+    if (data == NULL || next == NULL)
+        return 0;
+
+    data->sends++;
+
+    if (data->fails_remaining > 0) {
+        data->fails_remaining--;
+        *msgs_processed = 0;
+        /*
+         * BIO_err_is_non_fatal() accepts this, so the record layer treats the
+         * send as one to be attempted again rather than as an error.
+         */
+        ERR_raise(ERR_LIB_BIO, BIO_R_NON_FATAL);
+        return 0;
+    }
+
+    return BIO_sendmmsg(next, msg, stride, num_msg, flags, msgs_processed);
+}
+
+/* Choose a sufficiently large type likely to be unused for this custom BIO */
+#define BIO_TYPE_FAILING_SEND_FILTER (0x83 | BIO_TYPE_FILTER)
+
+static BIO_METHOD *method_failing_send = NULL;
+
+/* Note: Not thread safe! */
+static const BIO_METHOD *bio_f_failing_send_filter(void)
+{
+    if (method_failing_send == NULL) {
+        method_failing_send = BIO_meth_new(BIO_TYPE_FAILING_SEND_FILTER,
+            "Failing datagram send filter");
+        if (method_failing_send == NULL
+            || !BIO_meth_set_ctrl(method_failing_send, failing_send_ctrl)
+            || !BIO_meth_set_sendmmsg(method_failing_send,
+                failing_send_sendmmsg))
+            return NULL;
+    }
+    return method_failing_send;
+}
+
+/*
+ * Test that a write on a blocking listener connection waits for the socket and
+ * sends again, rather than reporting that it needs to be retried.
+ *
+ * A datagram which cannot be sent is normally dropped, which is reasonable for
+ * an unreliable transport but is not what an application asking for blocking
+ * writes expects: it gets no data sent and a WANT_WRITE it did not ask to have
+ * to handle. The listener's socket is shared and always non-blocking, so there
+ * is nothing for such a write to block in by itself.
+ *
+ * A loopback socket's send buffer does not fill, so a filter BIO supplies the
+ * transient failure instead. Only one send is rejected: the retry then goes
+ * through, and the client is read to confirm the datagram was really sent
+ * rather than merely reported as sent.
+ *
+ * The handshake runs with the listener non-blocking, so this test drives both
+ * ends from the one thread as the others here do, and only the connection is
+ * switched to blocking, for the write.
+ */
+static int test_dtls_blocking_write(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO *sockbio = NULL, *filter = NULL;
+    struct failing_send_data data;
+    int server_fd = -1, client_fd = -1;
+    int testresult = 0;
+    char buf[256];
+    size_t written = 0, readbytes = 0;
+    int i, ret = -1;
+
+    memset(&data, 0, sizeof(data));
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(), DTLS1_VERSION, 0, &sctx, &cctx, cert,
+            privkey)))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    /*
+     * Insert the filter in front of the listener's socket for writes only,
+     * leaving reads to reach the socket directly. The listener holds a
+     * reference for each direction, so the filter chain needs one of its own.
+     */
+    if (!TEST_ptr(sockbio = SSL_get_wbio(listener))
+        || !TEST_ptr(filter = BIO_new(bio_f_failing_send_filter())))
+        goto end;
+
+    BIO_set_data(filter, &data);
+    BIO_set_init(filter, 1);
+
+    if (!TEST_true(BIO_up_ref(sockbio))) {
+        BIO_free(filter);
+        goto end;
+    }
+
+    BIO_push(filter, sockbio);
+    SSL_set0_wbio(listener, filter); /* the listener owns the chain now */
+    filter = NULL;
+
+    if (!TEST_true(create_dtls_client_for_addr(cctx, server_addr, &clientssl,
+            &client_fd)))
+        goto end;
+
+    if (!drive_until_connection_queued(listener, clientssl)
+        || !TEST_ptr(serverssl = SSL_accept_connection(listener,
+                         SSL_ACCEPT_CONNECTION_NO_BLOCK)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+
+    /*
+     * Everything up to here, including any post-handshake traffic, has gone
+     * through the filter untouched. Reject the next send only.
+     */
+    if (!TEST_true(SSL_set_blocking_mode(serverssl, 1))
+        || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 1))
+        goto end;
+
+    data.fails_remaining = 1;
+
+    if (!TEST_true(SSL_write_ex(serverssl, "msg", 3, &written))
+        || !TEST_size_t_eq(written, 3))
+        goto end;
+
+    /* The send really was rejected, and was retried rather than reported. */
+    if (!TEST_int_eq(data.fails_remaining, 0))
+        goto end;
+
+    /* The datagram reached the client, so nothing was dropped on the way. */
+    for (i = 0; i < 20; i++) {
+        ret = SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes);
+        if (ret == 1)
+            break;
+        if (!TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto end;
+        OSSL_sleep(10);
+    }
+
+    if (!TEST_int_eq(ret, 1)
+        || !TEST_mem_eq(buf, readbytes, "msg", 3))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    if (client_fd >= 0)
+        BIO_closesocket(client_fd);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_meth_free(method_failing_send);
+    method_failing_send = NULL;
+    return testresult;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
 int setup_tests(void)
@@ -5716,6 +5912,7 @@ int setup_tests(void)
     /* Blocking mode tests */
     ADD_TEST(test_dtls_blocking_mode);
     ADD_TEST(test_dtls_accept_wait_requires_mode_and_flag);
+    ADD_TEST(test_dtls_blocking_write);
 
     /* SSL object ownership tests (run with ASAN to detect leaks/double-frees) */
     ADD_TEST(test_ssl_ownership_pending_conn_leak);

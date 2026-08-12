@@ -3071,6 +3071,7 @@ int ossl_dtls_blocking(const SSL *s);
 int ossl_dtls_set_blocking_mode(SSL *s, int blocking);
 int ossl_dtls_get_blocking_mode(const SSL *s);
 int ossl_dtls_conn_wait_for_datagram(SSL *s);
+int ossl_dtls_conn_wait_for_write(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
 
 /* DTLS Listener internal cookie callbacks */
