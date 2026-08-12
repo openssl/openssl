@@ -57,7 +57,9 @@ cannot allow a read for one connection to block and thereby stall the others.
 Its network BIO is therefore configured for nonblocking operation when it is set,
 and blocking mode is provided by waiting for readiness of that socket instead,
 as it is for QUIC. This applies to L<SSL_accept_connection(3)> on the listener as
-well as to reads and writes on the connections it returns.
+well as to reads and writes on the connections it returns. A write which the
+socket cannot accept is retried once it can be sent, where a nonblocking
+connection discards the datagram and reports that the write should be retried.
 
 A connection SSL object returned by L<SSL_accept_connection(3)> inherits the
 blocking mode of the listener it came from. Calling SSL_set_blocking_mode() on
