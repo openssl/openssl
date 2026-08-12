@@ -484,7 +484,7 @@ static int drbg_fetch_algs_from_prov(const struct drbg_set_ctx_params_st *p,
     EVP_MAC_CTX_free(*macctx);
     *macctx = NULL;
 
-    mac = evp_mac_fetch_from_prov(prov, (const char *)p->mac->data, NULL);
+    mac = EVP_MAC_fetch(libctx, p->mac->data, propquery);
     if (mac) {
         *macctx = EVP_MAC_CTX_new(mac);
         /* The context holds on to the MAC */
