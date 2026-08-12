@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Improved AES-GCM performance on `x86_64` processors with AVX512 and VAES
+   support.  The encryption and decryption loop width is now selected from the
+   message length, and GHASH uses Karatsuba multiplication with prefolded hash
+   keys.
+
+   *Madan mohan Manokar*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early

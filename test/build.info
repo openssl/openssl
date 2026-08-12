@@ -913,6 +913,7 @@ IF[{- !$disabled{tests} -}]
   IF[1]
     PROGRAMS{noinst}=asn1_internal_test modes_internal_test x509_internal_test \
                      tls13encryptiontest wpackettest ctype_internal_test \
+                     aesgcm_avx512_test \
                      rdcpu_sanitytest property_test ideatest rsa_mp_test \
                      rsa_sp800_56b_test bn_internal_test ecdsatest rsa_test \
                      rc2test rc4test rc5test hmactest ffc_internal_test \
@@ -1244,6 +1245,16 @@ IF[{- !$disabled{tests} -}]
   SOURCE[aesgcmtest]=aesgcmtest.c
   INCLUDE[aesgcmtest]=../include ../apps/include
   DEPEND[aesgcmtest]=../libcrypto libtestutil.a
+
+  SOURCE[aesgcm_avx512_test]=aesgcm_avx512_test.c
+  INCLUDE[aesgcm_avx512_test]=../include ../apps/include
+  # Static libcrypto for ossl_vaes_vpclmulqdq_capable(); see noinst block.
+  DEPEND[aesgcm_avx512_test]=../libcrypto.a libtestutil.a
+  # That symbol comes from crypto/modes/asm/aes-gcm-avx512.pl, so it only
+  # exists when the assembly is built.
+  IF[{- !$disabled{asm} -}]
+    DEFINE[aesgcm_avx512_test]=AESGCM_AVX512_ASM
+  ENDIF
 
   PROGRAMS{noinst}=context_internal_test
   SOURCE[context_internal_test]=context_internal_test.c
