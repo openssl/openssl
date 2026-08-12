@@ -137,6 +137,7 @@ sub init
         partial => ["", ""],
         record_list => [],
         message_list => [],
+        seen_msgseq => {},
     };
 
     return bless $self, $class;
@@ -160,6 +161,7 @@ sub clearClient
     $self->{partial} = ["", ""];
     $self->{record_list} = [];
     $self->{message_list} = [];
+    $self->{seen_msgseq} = {};
     $self->{clientflags} = "";
     $self->{sessionfile} = undef;
     $self->{clientpid} = 0;
@@ -720,7 +722,15 @@ sub process_packet
 
     $self->{partial}[$serverissender] = $ret[2];
     push @{$self->{record_list}}, @{$ret[0]};
-    push @{$self->{message_list}}, @{$ret[1]};
+    if ($self->{isdtls}) {
+        foreach my $msg (@{$ret[1]}) {
+            my $key = $msg->server . ":" . $msg->msgseq;
+            push @{$self->{message_list}}, $msg
+                unless $self->{seen_msgseq}{$key}++;
+        }
+    } else {
+        push @{$self->{message_list}}, @{$ret[1]};
+    }
 
     print "\n";
 
