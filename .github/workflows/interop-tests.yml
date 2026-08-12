@@ -99,6 +99,7 @@ jobs:
   openssh_interop:
     needs: [validate-dispatch-inputs]
     if: >-
+      inputs.pr == '' &&
       (github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
