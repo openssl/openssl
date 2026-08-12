@@ -1334,6 +1334,9 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
             case OSSL_FUNC_RLAYER_RELEASE_URXE_PACKET:
                 rl->release_urxe_packet = OSSL_FUNC_rlayer_release_urxe_packet(fns);
                 break;
+            case OSSL_FUNC_RLAYER_BLOCK_FOR_WRITE:
+                rl->block_for_write = OSSL_FUNC_rlayer_block_for_write(fns);
+                break;
             default:
                 /* Just ignore anything we don't understand */
                 break;
@@ -1967,6 +1970,22 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
                      */
                     if (BIO_err_is_non_fatal(err)) {
                         ERR_pop_to_mark();
+
+                        /*
+                         * A connection in blocking mode waits for the socket to
+                         * become writable and sends again, rather than reporting
+                         * a retry. Nothing has been consumed, so the next time
+                         * round the loop repeats this same send.
+                         *
+                         * Only listener based connections install this callback.
+                         * Anything else either has a socket of its own to block
+                         * in or is genuinely non-blocking, and keeps the
+                         * behaviour below.
+                         */
+                        if (rl->block_for_write != NULL
+                            && rl->block_for_write(rl->cbarg))
+                            continue;
+
                         ret = OSSL_RECORD_RETURN_RETRY;
                         i = 0;
                         tmpwrit = 0;

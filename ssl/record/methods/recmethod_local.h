@@ -393,6 +393,7 @@ struct ossl_record_layer_st {
     OSSL_FUNC_rlayer_padding_fn *padding;
     OSSL_FUNC_rlayer_get_urxe_packet_fn *get_urxe_packet;
     OSSL_FUNC_rlayer_release_urxe_packet_fn *release_urxe_packet;
+    OSSL_FUNC_rlayer_block_for_write_fn *block_for_write;
 
     size_t max_pipelines;
 
