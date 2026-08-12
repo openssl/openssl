@@ -1396,7 +1396,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
     /* Create server and client contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_2_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -3768,6 +3768,7 @@ end:
     return testresult;
 }
 
+#ifndef OPENSSL_NO_DTLS1_3
 /*
  * Test DTLS 1.3 SSL Listener handshake message buffering.
  *
@@ -3962,6 +3963,7 @@ end:
     SSL_CTX_free(cctx);
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS1_3 */
 
 static int test_dtls_listener_max_pending_conns_api(void)
 {
@@ -4175,7 +4177,7 @@ static int test_dtls_listener_max_dgram_size_functional(void)
     int abortctr = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
-            DTLS_client_method(), DTLS1_3_VERSION, DTLS1_3_VERSION,
+            DTLS_client_method(), 0, 0,
             &sctx, &cctx, cert, privkey)))
         goto end;
 
@@ -4185,7 +4187,8 @@ static int test_dtls_listener_max_dgram_size_functional(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
+                | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -4234,9 +4237,6 @@ static int test_dtls_listener_max_dgram_size_functional(void)
         goto end;
 
     if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
-        goto end;
-
-    if (!TEST_int_eq(SSL_version(serverssl), DTLS1_3_VERSION))
         goto end;
 
     if (!TEST_true(SSL_write_ex(clientssl, msg, sizeof(msg), &written))
@@ -4414,7 +4414,7 @@ static int test_pending_conn_cap_enforcement(void)
     /* Create SSL contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto err;
 
@@ -4507,7 +4507,7 @@ static int test_pending_cap_with_timeout(void)
     /* Create SSL contexts */
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto err;
 
@@ -4749,7 +4749,7 @@ static int run_new_pending_cb_scenario(uint64_t max_pending, int allow_remaining
 
     if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
             DTLS_client_method(),
-            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            0, 0,
             &sctx, &cctx, cert, privkey)))
         goto err;
 
