@@ -66,6 +66,62 @@ void EVP_CIPHER_CTX_free(EVP_CIPHER_CTX *ctx)
     OPENSSL_free(ctx);
 }
 
+/*
+ * Bring the padding held by the provider context in step with ctx->flags.
+ * Nothing is sent when the two already agree, so re-initialising a context
+ * that keeps its provider context costs no round trip.
+ *
+ * A successful push is recorded in ctx->prov_no_padding by
+ * EVP_CIPHER_CTX_set_params() itself, which does so for any padding parameter
+ * it carries, wherever it came from.
+ */
+static int evp_cipher_sync_padding(EVP_CIPHER_CTX *ctx)
+{
+    OSSL_PARAM params[2] = { OSSL_PARAM_END, OSSL_PARAM_END };
+    int no_padding = (ctx->flags & EVP_CIPH_NO_PADDING) != 0;
+    unsigned int pd = no_padding ? 0 : 1;
+
+    if (no_padding == (ctx->prov_no_padding != 0))
+        return 1;
+
+    params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
+    if (!EVP_CIPHER_CTX_set_params(ctx, params)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
+        return 0;
+    }
+    return 1;
+}
+
+/*
+ * Records a padding request that came in as part of an init call.  The
+ * provider's own init is what applies it, but it has to be remembered here
+ * too, so that a later init - which may build a new provider context - knows
+ * to ask for it again.  What the provider made of the parameter is not
+ * assumed, so the padding recorded for the provider context is left as it
+ * was and the next init asks again if the two no longer agree.
+ */
+static int evp_cipher_note_padding_param(EVP_CIPHER_CTX *ctx,
+    const OSSL_PARAM params[])
+{
+    const OSSL_PARAM *p;
+    unsigned int pd;
+
+    if (params == NULL)
+        return 1;
+    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+    if (p == NULL)
+        return 1;
+    if (!OSSL_PARAM_get_uint(p, &pd)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_CANNOT_SET_PARAMETERS);
+        return 0;
+    }
+    if (pd == 0)
+        ctx->flags |= EVP_CIPH_NO_PADDING;
+    else
+        ctx->flags &= ~EVP_CIPH_NO_PADDING;
+    return 1;
+}
+
 static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
     const EVP_CIPHER *cipher,
     const unsigned char *key,
@@ -151,16 +207,24 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
+        /* A new provider context starts with the provider's own default. */
+        ctx->prov_no_padding = 0;
     }
 
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
-         */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
-            return 0;
-    }
+    /*
+     * A padding request held in ctx->flags has to reach the provider context,
+     * whether it arrived through EVP_CIPHER_CTX_set_padding(), the padding
+     * flag or a parameter, and whether the context here is a new one or one
+     * that was left over from a previous init.
+     *
+     * It goes in a call of its own, rather than joining the length parameters
+     * below, so that a padding failure is not reported as a length error.
+     * Such a failure is left recorded, so that a retry on this context asks
+     * again and fails again rather than carrying on with padding that was
+     * never agreed.
+     */
+    if (!evp_cipher_sync_padding(ctx))
+        return 0;
 
 #ifndef FIPS_MODULE
     /*
@@ -197,6 +261,9 @@ static int evp_cipher_init_internal(EVP_CIPHER_CTX *ctx,
         }
     }
 #endif
+
+    if (!evp_cipher_note_padding_param(ctx, params))
+        return 0;
 
     if (is_pipeline)
         return 1;
@@ -316,20 +383,23 @@ static int evp_cipher_init_skey_internal(EVP_CIPHER_CTX *ctx,
             ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
             return 0;
         }
+        /* A new provider context starts with the provider's own default. */
+        ctx->prov_no_padding = 0;
     }
+
+    /*
+     * The padding held in ctx->flags has to reach the provider context, just
+     * as evp_cipher_init_internal() does it for the raw-key path.
+     */
+    if (!evp_cipher_sync_padding(ctx))
+        return 0;
+
+    if (!evp_cipher_note_padding_param(ctx, params))
+        return 0;
 
     if (skey != NULL && ctx->cipher->prov != skey->skeymgmt->prov) {
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return 0;
-    }
-
-    if ((ctx->flags & EVP_CIPH_NO_PADDING) != 0) {
-        /*
-         * If this ctx was already set up for no padding then we need to tell
-         * the new cipher about it.
-         */
-        if (!EVP_CIPHER_CTX_set_padding(ctx, 0))
-            return 0;
     }
 
     if (iv == NULL)
@@ -917,6 +987,8 @@ int EVP_CIPHER_CTX_set_padding(EVP_CIPHER_CTX *ctx, int pad)
         return 1;
     params[0] = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_PADDING, &pd);
     ok = evp_do_ciph_ctx_setparams(ctx->cipher, ctx->algctx, params);
+    if (ok != 0)
+        ctx->prov_no_padding = !pad;
 
     return ok != 0;
 }
@@ -1158,6 +1230,28 @@ int EVP_CIPHER_CTX_set_params(EVP_CIPHER_CTX *ctx, const OSSL_PARAM params[])
             if (p != NULL && !OSSL_PARAM_get_int(p, &ctx->iv_len)) {
                 r = 0;
                 ctx->iv_len = -1;
+            }
+        }
+        /*
+         * Keep ctx->flags in step with the padding the provider was just
+         * given, so that a padding request made this way - rather than
+         * through EVP_CIPHER_CTX_set_padding() - is still known here and can
+         * be re-applied when a later init allocates a new provider context.
+         */
+        if (r > 0) {
+            unsigned int pd;
+
+            p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_PADDING);
+            if (p != NULL) {
+                if (!OSSL_PARAM_get_uint(p, &pd)) {
+                    r = 0;
+                } else {
+                    if (pd == 0)
+                        ctx->flags |= EVP_CIPH_NO_PADDING;
+                    else
+                        ctx->flags &= ~EVP_CIPH_NO_PADDING;
+                    ctx->prov_no_padding = (pd == 0);
+                }
             }
         }
     }
