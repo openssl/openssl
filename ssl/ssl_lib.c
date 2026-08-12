@@ -1202,7 +1202,6 @@ int SSL_add1_host(SSL *s, const char *host)
     /* If a host is provided and parses as an IP address, treat it as such. */
     if (host != NULL) {
         ASN1_OCTET_STRING *ip;
-        char *old_ip;
 
         ip = a2i_IPADDRESS(host);
         if (ip != NULL) {
