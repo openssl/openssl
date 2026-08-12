@@ -102,14 +102,19 @@ Print out a usage message.
 
 =item B<-passin> I<arg>
 
-The password source for the input, and for encrypting any private keys that
-are output.
+The password source for input files. With B<-export>, it is used to decrypt
+the input private key. Otherwise, it is the password for the input PKCS#12
+file.
 For more information about the format of B<arg>
 see L<openssl-passphrase-options(1)>.
 
 =item B<-passout> I<arg>
 
-The password source for output files.
+The password source for output files. With B<-export>, it is the password for
+the output PKCS#12 file. Otherwise, it is used to encrypt any private keys that
+are output.
+For more information about the format of B<arg>
+see L<openssl-passphrase-options(1)>.
 
 =item B<-password> I<arg>
 
