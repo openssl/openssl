@@ -238,6 +238,7 @@ jobs:
   linux-arm64:
     needs: [validate-dispatch-inputs]
     if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: linux-arm64
