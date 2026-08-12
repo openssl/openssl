@@ -307,7 +307,7 @@ static void handle_connection(struct connection_thread_args *conn_args)
         ret = SSL_read_ex(conn_args->conn, buf, sizeof(buf) - 1, &readbytes);
         if (ret != 1) {
             err = SSL_get_error(conn_args->conn, ret);
-            if (err == SSL_ERROR_WANT_READ)
+            if (err == SSL_ERROR_WANT_READ || err == SSL_ERROR_WANT_WRITE)
                 continue;
             if (err == SSL_ERROR_ZERO_RETURN)
                 printf("Thread %d: Client closed connection\n", conn_args->thread_idx);
@@ -339,10 +339,13 @@ static void handle_connection(struct connection_thread_args *conn_args)
         printf("Thread %d: Received: %s", conn_args->thread_idx, buf);
 
         /* Echo back */
-        if (!SSL_write_ex(conn_args->conn, buf, readbytes, &written)) {
-            printf("Thread %d: Write failed\n", conn_args->thread_idx);
-            ERR_print_errors_fp(stderr);
-            break;
+        while (!SSL_write_ex(conn_args->conn, buf, readbytes, &written)) {
+            err = SSL_get_error(conn_args->conn, 0);
+            if (err != SSL_ERROR_WANT_READ && err != SSL_ERROR_WANT_WRITE) {
+                printf("Thread %d: Write failed\n", conn_args->thread_idx);
+                ERR_print_errors_fp(stderr);
+                goto done;
+            }
         }
     }
 
