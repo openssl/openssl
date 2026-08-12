@@ -1402,26 +1402,26 @@ int create_quic_ctx_pair(OSSL_LIB_CTX *libctx, SSL_CTX **c_sctx_p, SSL_CTX **s_s
     s_sctx = NULL;
     c_sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_client_method());
     if (!TEST_ptr(c_sctx)) {
-        TEST_info("%s SSL_CTX_new_ex(OSSL_QUIC_client_method()) failed", __func__);
+        TEST_info("%s SSL_CTX_new_ex(OSSL_QUIC_client_method()) failed", OPENSSL_FUNC);
         goto done;
     }
 
     s_sctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_server_method());
     if (!TEST_ptr(s_sctx)) {
-        TEST_info("%s SSL_CTX_new_ex(OSSL_QUIC_server_method()) failed", __func__);
+        TEST_info("%s SSL_CTX_new_ex(OSSL_QUIC_server_method()) failed", OPENSSL_FUNC);
         goto done;
     }
 
     ok = SSL_CTX_use_certificate_file(s_sctx, certfile, SSL_FILETYPE_PEM);
     if (ok != 1) {
-        TEST_info("%s SSL_CTX_use_certificate_file(%s) failed", __func__, certfile);
+        TEST_info("%s SSL_CTX_use_certificate_file(%s) failed", OPENSSL_FUNC, certfile);
         ok = 0;
         goto done;
     }
 
     ok = SSL_CTX_use_PrivateKey_file(s_sctx, keyfile, SSL_FILETYPE_PEM);
     if (ok != 1) {
-        TEST_info("%s SSL_CTX_use_PrivateKey_file(%s) failed", __func__, keyfile);
+        TEST_info("%s SSL_CTX_use_PrivateKey_file(%s) failed", OPENSSL_FUNC, keyfile);
         ok = 0;
         goto done;
     }
@@ -1457,64 +1457,64 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
     s_bio = NULL;
     ok = BIO_new_bio_dgram_pair(&c_bio, 1500, &s_bio, 1500);
     if (ok == 0) {
-        TEST_info("%s BIO_new_bio_dgram_pair() error", __func__);
+        TEST_info("%s BIO_new_bio_dgram_pair() error", OPENSSL_FUNC);
         goto done;
     }
 
     ok = BIO_dgram_set_caps(c_bio, bio_flags);
     if (ok == 0) {
-        TEST_info("%s BIO_dgram_set_caps(c_bio, bio_flags) failed", __func__);
+        TEST_info("%s BIO_dgram_set_caps(c_bio, bio_flags) failed", OPENSSL_FUNC);
         goto done;
     }
 
     ok = BIO_dgram_set_caps(s_bio, bio_flags);
     if (ok == 0) {
-        TEST_info("%s BIO_dgram_set_caps(s_bio, bio_flags) failed", __func__);
+        TEST_info("%s BIO_dgram_set_caps(s_bio, bio_flags) failed", OPENSSL_FUNC);
         goto done;
     }
 
     ok = BIO_dgram_set_mtu(c_bio, 1500);
     if (ok == 0) {
-        TEST_info("%s BIO_dgram_set_mtu(c_bio) error", __func__);
+        TEST_info("%s BIO_dgram_set_mtu(c_bio) error", OPENSSL_FUNC);
         goto done;
     }
 
     ok = BIO_dgram_set_mtu(s_bio, 1500);
     if (ok == 0) {
-        TEST_info("%s BIO_dgram_set_mtu(s_bio) error", __func__);
+        TEST_info("%s BIO_dgram_set_mtu(s_bio) error", OPENSSL_FUNC);
         goto done;
     }
 
     localaddr = BIO_ADDR_new();
     if (!TEST_ptr(localaddr)) {
-        TEST_info("%s BIO_ADDR_new() error", __func__);
+        TEST_info("%s BIO_ADDR_new() error", OPENSSL_FUNC);
         goto done;
     }
     ok = BIO_ADDR_rawmake(localaddr, AF_INET, &ina, sizeof(ina), htons(4080));
     if (ok == 0) {
-        TEST_info("%s BIO_ADDR_rawmake(4080) error", __func__);
+        TEST_info("%s BIO_ADDR_rawmake(4080) error", OPENSSL_FUNC);
         goto done;
     }
     ok = BIO_dgram_set0_local_addr(c_bio, localaddr);
     if (ok != 1) {
-        TEST_info("%s BIO_dgram_set0_local_addr(c_bio)", __func__);
+        TEST_info("%s BIO_dgram_set0_local_addr(c_bio)", OPENSSL_FUNC);
         ok = 0;
         goto done;
     }
 
     localaddr = BIO_ADDR_new();
     if (!TEST_ptr(localaddr)) {
-        TEST_info("%s BIO_ADDR_new() error", __func__);
+        TEST_info("%s BIO_ADDR_new() error", OPENSSL_FUNC);
         goto done;
     }
     ok = BIO_ADDR_rawmake(localaddr, AF_INET, &ina, sizeof(ina), htons(8040));
     if (ok == 0) {
-        TEST_info("%s BIO_ADDR_rawmake(8040) error", __func__);
+        TEST_info("%s BIO_ADDR_rawmake(8040) error", OPENSSL_FUNC);
         goto done;
     }
     ok = BIO_dgram_set0_local_addr(s_bio, localaddr);
     if (ok != 1) {
-        TEST_info("%s BIO_dgram_set0_local_addr(c_bio)", __func__);
+        TEST_info("%s BIO_dgram_set0_local_addr(c_bio)", OPENSSL_FUNC);
         ok = 0;
         goto done;
     }
@@ -1522,13 +1522,13 @@ static int create_dgram_pair(BIO **c_bio_p, BIO **s_bio_p)
 
     ok = BIO_dgram_set_local_addr_enable(c_bio, 1);
     if (ok == 0) {
-        TEST_info("%s BIO_dgram_set_local_addr_enable(c_bio)", __func__);
+        TEST_info("%s BIO_dgram_set_local_addr_enable(c_bio)", OPENSSL_FUNC);
         goto done;
     }
 
     ok = BIO_dgram_set_local_addr_enable(s_bio, 1);
     if (ok == 0) {
-        TEST_info("%s BIO_dgram_set_local_addr_enable(s_bio)", __func__);
+        TEST_info("%s BIO_dgram_set_local_addr_enable(s_bio)", OPENSSL_FUNC);
         goto done;
     }
 
@@ -1556,43 +1556,43 @@ static int init_client(SSL *c_ssl)
 
     ok = SSL_set_tlsext_host_name(c_ssl, "localhost");
     if (ok == 0) {
-        TEST_info("%s SSL_set_tlsext_host_name()", __func__);
+        TEST_info("%s SSL_set_tlsext_host_name()", OPENSSL_FUNC);
         goto done;
     }
 
     sc = SSL_CONNECTION_FROM_SSL(c_ssl);
     if (sc == NULL || !X509_VERIFY_PARAM_set1_host(sc->param, "localhost", 0)) {
         ok = 0;
-        TEST_info("%s SSL_set1_dnsname()", __func__);
+        TEST_info("%s SSL_set1_dnsname()", OPENSSL_FUNC);
         goto done;
     }
 
     ok = SSL_set_alpn_protos(c_ssl, alpn, sizeof(alpn));
     if (ok != 0) {
-        TEST_info("%s SSL_set_alpn_protos() failed", __func__);
+        TEST_info("%s SSL_set_alpn_protos() failed", OPENSSL_FUNC);
         ok = 0;
         goto done;
     }
 
     ok = SSL_set_blocking_mode(c_ssl, 0);
     if (ok == 0) {
-        TEST_info("%s SSL_set_block_mode() failed", __func__);
+        TEST_info("%s SSL_set_block_mode() failed", OPENSSL_FUNC);
         goto done;
     }
 
     peer_addr = BIO_ADDR_new();
     if (!TEST_ptr(peer_addr)) {
-        TEST_info("%s BIO_ADDR_new() failed", __func__);
+        TEST_info("%s BIO_ADDR_new() failed", OPENSSL_FUNC);
         goto done;
     }
     ok = BIO_ADDR_rawmake(peer_addr, AF_INET, &ina, sizeof(ina), htons(8040));
     if (ok == 0) {
-        TEST_info("%s BIO_ADDR_rawmake() failed", __func__);
+        TEST_info("%s BIO_ADDR_rawmake() failed", OPENSSL_FUNC);
         goto done;
     }
     ok = SSL_set1_initial_peer_addr(c_ssl, peer_addr);
     if (ok == 0) {
-        TEST_info("%s SSL_set1_initial_peer_addr() failed", __func__);
+        TEST_info("%s SSL_set1_initial_peer_addr() failed", OPENSSL_FUNC);
         goto done;
     }
 
@@ -1614,7 +1614,7 @@ int create_quic_conn_objects(SSL_CTX *c_sctx, SSL_CTX *s_sctx, SSL **c_ssl_p, SS
 
     c_ssl = SSL_new(c_sctx);
     if (!TEST_ptr(c_ssl)) {
-        TEST_info("%s SSL_new(c_sctx) failed", __func__);
+        TEST_info("%s SSL_new(c_sctx) failed", OPENSSL_FUNC);
         ok = 0;
         goto done;
     }
@@ -1625,7 +1625,7 @@ int create_quic_conn_objects(SSL_CTX *c_sctx, SSL_CTX *s_sctx, SSL **c_ssl_p, SS
 
     s_ssl = SSL_new_listener(s_sctx, 0);
     if (!TEST_ptr(s_ssl)) {
-        TEST_info("%s SSL_new_listener() failed", __func__);
+        TEST_info("%s SSL_new_listener() failed", OPENSSL_FUNC);
         ok = 0;
         goto done;
     }
@@ -1637,7 +1637,7 @@ int create_quic_conn_objects(SSL_CTX *c_sctx, SSL_CTX *s_sctx, SSL **c_ssl_p, SS
 
     ok = SSL_set_blocking_mode(s_ssl, 0);
     if (ok == 0) {
-        TEST_info("%s SSL_set_blocking_mode() failed", __func__);
+        TEST_info("%s SSL_set_blocking_mode() failed", OPENSSL_FUNC);
         ok = 0;
         goto done;
     }
@@ -1665,12 +1665,12 @@ SSL *create_quic_client(SSL_CTX *c_sctx, BIO *c_bio)
 
     c_ssl = SSL_new(c_sctx);
     if (!TEST_ptr(c_ssl)) {
-        TEST_info("%s SSL_new(c_sctx) failed", __func__);
+        TEST_info("%s SSL_new(c_sctx) failed", OPENSSL_FUNC);
         return NULL;
     }
 
     if (BIO_up_ref(c_bio) == 0) {
-        TEST_info("%s BIO_up_ref() failed)", __func__);
+        TEST_info("%s BIO_up_ref() failed)", OPENSSL_FUNC);
         goto error;
     }
     SSL_set_bio(c_ssl, c_bio, c_bio);
@@ -1679,7 +1679,7 @@ SSL *create_quic_client(SSL_CTX *c_sctx, BIO *c_bio)
         goto error;
 
     if (SSL_set_blocking_mode(c_ssl, 0) == 0) {
-        TEST_info("%s SSL_set_blocking_mode() failed", __func__);
+        TEST_info("%s SSL_set_blocking_mode() failed", OPENSSL_FUNC);
         goto error;
     }
 
