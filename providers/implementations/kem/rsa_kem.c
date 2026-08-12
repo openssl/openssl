@@ -402,6 +402,44 @@ static int rsasve_recover(PROV_RSA_CTX *prsactx,
         return 0;
     }
 
+#ifndef FIPS_MODULE
+    /*
+     * Reject clearly degenerate ciphertexts, c in {0, 1, n-1}.
+     *
+     * SP 800-56B Rev 2, 7.1.2.1 requires RSADP to enforce 1 < c < n-1.  In a
+     * FIPS build that bound is applied by the RSADP primitive itself (see
+     * crypto/rsa/rsa_ossl.c, guarded by FIPS_MODULE), where it is also needed
+     * for KTS-OAEP; the primitive does not apply it in a non-FIPS build, so
+     * enforce it here for RSASVE.  Raise the same errors as the primitive so
+     * the behaviour matches in both builds; keep the two sites in step.
+     */
+    {
+        const BIGNUM *n = RSA_get0_n(prsactx->rsa);
+        BIGNUM *c = BN_new();
+        BIGNUM *nminus1 = BN_new();
+        int reason = 0;
+
+        if (n == NULL || c == NULL || nminus1 == NULL
+            || BN_bin2bn(in, (int)inlen, c) == NULL
+            || BN_copy(nminus1, n) == NULL
+            || !BN_sub_word(nminus1, 1)) {
+            BN_free(c);
+            BN_free(nminus1);
+            return 0;
+        }
+        if (BN_ucmp(c, BN_value_one()) <= 0)
+            reason = RSA_R_DATA_TOO_SMALL;
+        else if (BN_ucmp(c, nminus1) >= 0)
+            reason = RSA_R_DATA_TOO_LARGE_FOR_MODULUS;
+        BN_free(c);
+        BN_free(nminus1);
+        if (reason != 0) {
+            ERR_raise(ERR_LIB_RSA, reason);
+            return 0;
+        }
+    }
+#endif
+
     /* Step (3): out = RSADP((n,d), in) */
     ret = RSA_private_decrypt(inlen, in, out, prsactx->rsa, RSA_NO_PADDING);
     if (ret > 0 && outlen != NULL)
