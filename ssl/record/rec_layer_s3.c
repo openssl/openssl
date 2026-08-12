@@ -1182,6 +1182,19 @@ static int rlayer_dtls_get_urxe_packet(void *cbarg, unsigned char **data,
         urxe = ossl_dtls_read_datagram(s->d1->rx);
     }
 
+    /*
+     * Still nothing. In blocking mode this is where the caller waits: the
+     * connection has no BIO of its own to block in, so returning here would
+     * report SSL_ERROR_WANT_READ instead of blocking. Waiting inside this
+     * callback keeps that out of the record layer and the state machine, which
+     * see only a read which took a while, exactly as a blocking BIO would give
+     * them.
+     */
+    if (urxe == NULL && s->d1->listener != NULL
+        && ossl_dtls_blocking(SSL_CONNECTION_GET_SSL(s))
+        && ossl_dtls_conn_wait_for_datagram(SSL_CONNECTION_GET_SSL(s)))
+        urxe = ossl_dtls_read_datagram(s->d1->rx);
+
     if (urxe == NULL)
         return 0;
 
