@@ -314,6 +314,7 @@ jobs:
   linux-ppc64le:
     needs: [validate-dispatch-inputs]
     if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
       (github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
@@ -339,6 +340,7 @@ jobs:
   linux-s390x:
     needs: [validate-dispatch-inputs]
     if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
       (github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
@@ -364,6 +366,7 @@ jobs:
   linux-riscv64:
     needs: [validate-dispatch-inputs]
     if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
       (github.repository == 'openssl/openssl') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
