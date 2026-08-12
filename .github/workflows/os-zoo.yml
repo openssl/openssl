@@ -50,6 +50,7 @@ jobs:
   alpine:
     needs: [validate-dispatch-inputs]
     if: >-
+      inputs.pr == '' &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -90,6 +91,7 @@ jobs:
   linux:
     needs: [validate-dispatch-inputs]
     if: >-
+      inputs.pr == '' &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -147,6 +149,7 @@ jobs:
   macos:
     needs: [validate-dispatch-inputs]
     if: >-
+      inputs.pr == '' &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
