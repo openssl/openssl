@@ -337,6 +337,7 @@ int dtls1_clear(SSL *ssl)
         SSL *listener = s->d1->listener;
         OSSL_TIME created_at = s->d1->created_at;
         unsigned int req_blocking_mode = s->d1->req_blocking_mode;
+        unsigned int force_nonblocking = s->d1->force_nonblocking;
 #endif
 
         mtu = s->d1->mtu;
@@ -367,6 +368,12 @@ int dtls1_clear(SSL *ssl)
          * configured it, not of the handshake, so it survives a clear.
          */
         s->d1->req_blocking_mode = req_blocking_mode;
+        /*
+         * SSL_clear() can be called from inside the very SSL_accept() the
+         * listener is driving, so losing this would let the connection block
+         * there and stall the listener.
+         */
+        s->d1->force_nonblocking = force_nonblocking;
         s->d1->created_at = created_at;
 #endif
 
@@ -2195,7 +2202,14 @@ static void drive_single_connection(SSL *ssl, DTLS_LISTENER *dl,
     if (dl->require_hrr_cookie || dl->require_hvr_cookie)
         sc->s3.flags |= TLS1_FLAGS_STATELESS;
 
+    /*
+     * We are inside the listener's own tick, so this must not block: nothing
+     * else can make progress while it does, including whatever it would be
+     * waiting for.
+     */
+    sc->d1->force_nonblocking = 1;
     ret = SSL_accept(ssl);
+    sc->d1->force_nonblocking = 0;
 
     /*
      * Always clear the stateless flag after SSL_accept() completes.
@@ -3003,6 +3017,10 @@ static int ossl_dtls_desires_blocking(const SSL *s)
     const DTLS_LISTENER *dl = NULL;
 
     if (sc != NULL && sc->d1 != NULL) {
+        /* The listener is driving this connection; it must not block. */
+        if (sc->d1->force_nonblocking)
+            return 0;
+
         if (sc->d1->req_blocking_mode != DTLS_BLOCKING_MODE_INHERIT)
             return sc->d1->req_blocking_mode == DTLS_BLOCKING_MODE_BLOCKING;
 
