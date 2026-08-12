@@ -135,35 +135,6 @@ int msvc_translate_printf_format(const char *format, const char **out,
     return 1;
 }
 
-int msvc_bio_vprintf(BIO *bio, const char *format, va_list args)
-{
-    char buf[512];
-    char *abuf, *fmt_alloc = NULL;
-    const char *fmt;
-    int ret, sz;
-
-    if (!msvc_translate_printf_format(format, &fmt, &fmt_alloc))
-        return -1;
-
-    sz = _vsnprintf_s(buf, sizeof(buf), _TRUNCATE, fmt, args);
-    if (sz == -1) {
-        sz = _vscprintf(fmt, args) + 1;
-        abuf = (char *)OPENSSL_malloc(sz);
-        if (abuf == NULL) {
-            ret = -1;
-        } else {
-            sz = _vsnprintf(abuf, sz, fmt, args);
-            ret = BIO_write(bio, abuf, sz);
-            OPENSSL_free(abuf);
-        }
-    } else {
-        ret = BIO_write(bio, buf, sz);
-    }
-
-    OPENSSL_free(fmt_alloc);
-    return ret;
-}
-
 int vsnprintf(char *buf, size_t n, const char *format, va_list args)
 {
     int count = -1;

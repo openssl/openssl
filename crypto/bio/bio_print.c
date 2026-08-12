@@ -42,7 +42,7 @@ int BIO_vprintf(BIO *bio, const char *format, va_list args)
 
 #if defined(_MSC_VER) && _MSC_VER < 1900
     /* Fix MSVC 2013 format to accept C99 format strings */
-    if (!msvc_translate_printf_format(format, &fmt, &fmt_alloc))
+    if (!msvc_translate_printf_format(format, &fmt, &msvc_fmt_alloc))
         goto done;
 #else
     fmt = format;
