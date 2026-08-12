@@ -592,6 +592,12 @@ then no padding is performed, the total amount of data encrypted or decrypted
 must then be a multiple of the block size or an error will occur. I<x> B<MUST
 NOT> be NULL.
 
+The choice is kept by the context, so initialising I<x> again for another
+operation keeps the padding that was last asked for.  The same holds for
+padding set through the "padding" parameter described in
+L</Gettable and Settable EVP_CIPHER_CTX parameters>, including when that
+parameter is passed to the initialisation call itself.
+
 =item EVP_CIPHER_get_key_length() and EVP_CIPHER_CTX_get_key_length()
 
 Return the key length of a cipher when passed an B<EVP_CIPHER> or
