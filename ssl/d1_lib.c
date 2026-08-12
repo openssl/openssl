@@ -3131,6 +3131,70 @@ int ossl_dtls_get_blocking_mode(const SSL *s)
     return ossl_dtls_blocking(s);
 }
 
+/*
+ * Wait until a datagram has been demultiplexed to this connection's receive
+ * queue, for a connection which is in blocking mode.
+ *
+ * This is what makes a blocking read on a listener based connection block. Such
+ * a connection has no BIO of its own to block in: it reads from a queue which
+ * the listener fills, so the wait has to happen here instead.
+ *
+ * A wakeup does not mean the datagram was ours - the listener's socket is
+ * shared, and another connection may be the one with data - so this loops until
+ * something actually lands in our queue. Events are handled after each wait
+ * because nothing else will do it while we are in here, and the retransmission
+ * timer needs servicing if it is what woke us.
+ *
+ * A datagram which is already waiting costs nothing: the wait pumps the
+ * listener's demux while translating the poll, and returns without sleeping if
+ * anything has been queued for us by then.
+ *
+ * Returns 1 if a datagram is now queued for this connection, or 0 if the wait
+ * could not be performed or the listener has failed.
+ */
+int ossl_dtls_conn_wait_for_datagram(SSL *s)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    DTLS_LISTENER *dl;
+    int empty;
+
+    if (sc == NULL || sc->d1 == NULL || sc->d1->rx == NULL
+        || sc->d1->listener == NULL)
+        return 0;
+
+    dl = (DTLS_LISTENER *)sc->d1->listener;
+
+    for (;;) {
+        ossl_crypto_mutex_lock(dl->mutex);
+        if (dl->fatal) {
+            ossl_crypto_mutex_unlock(dl->mutex);
+            return 0;
+        }
+        ossl_crypto_mutex_unlock(dl->mutex);
+
+        /*
+         * An infinite deadline here is bounded by the connection's own event
+         * timeout, which the poll translation folds in, so this still wakes in
+         * time to retransmit.
+         */
+        if (!ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_R,
+                ossl_time_infinite()))
+            return 0;
+
+        if (!SSL_handle_events(s))
+            return 0;
+
+        ossl_dgram_demux_pump(sc->d1->rx->demux);
+
+        ossl_crypto_mutex_lock(sc->d1->rx->mutex);
+        empty = ossl_list_urxe_is_empty(&sc->d1->rx->urxe_pending);
+        ossl_crypto_mutex_unlock(sc->d1->rx->mutex);
+
+        if (!empty)
+            return 1;
+    }
+}
+
 void ossl_dtls_listener_enter_blocking_section(SSL *s)
 {
     DTLS_LISTENER *dl;

@@ -115,7 +115,7 @@ static int dtls_read_with_retry(SSL *ssl, void *buf, size_t bufsize,
  * Returns 1 on success, 0 on failure.
  * On success, caller is responsible for cleanup using the returned pointers/fds.
  */
-static int create_dtls_listener(SSL_CTX *sctx, uint64_t listener_flags,
+static int create_dtls_listener_unconfigured(SSL_CTX *sctx, uint64_t listener_flags,
     SSL **listener, BIO_ADDR **server_addr, int *server_fd)
 {
     BIO *listener_bio = NULL;
@@ -181,6 +181,38 @@ err:
         *server_fd = -1;
     }
     return ret;
+}
+
+/*
+ * As create_dtls_listener_unconfigured(), but also opts out of blocking mode.
+ *
+ * These tests drive both ends of a handshake from a single thread, so the server
+ * side must not block: a blocking read would wait for a client which only this
+ * thread can advance. A listener is blocking by default, so opt out here rather
+ * than in each test, and note that connections accepted from it inherit this.
+ *
+ * A test which needs to observe the default, or to exercise blocking mode, should
+ * use create_dtls_listener_unconfigured() and configure what it needs.
+ */
+static int create_dtls_listener(SSL_CTX *sctx, uint64_t listener_flags,
+    SSL **listener, BIO_ADDR **server_addr, int *server_fd)
+{
+    if (!create_dtls_listener_unconfigured(sctx, listener_flags, listener,
+            server_addr, server_fd))
+        return 0;
+
+    if (!TEST_true(SSL_set_blocking_mode(*listener, 0))) {
+        SSL_free(*listener);
+        BIO_ADDR_free(*server_addr);
+        if (*server_fd >= 0)
+            BIO_closesocket(*server_fd);
+        *listener = NULL;
+        *server_addr = NULL;
+        *server_fd = -1;
+        return 0;
+    }
+
+    return 1;
 }
 
 /*
@@ -5421,8 +5453,15 @@ static int test_dtls_blocking_mode(void)
             privkey)))
         goto end;
 
-    /* A socket BIO supplies a poll descriptor, so blocking is available. */
-    if (!TEST_true(create_dtls_listener(sctx,
+    /*
+     * create_dtls_listener() turns blocking mode off on behalf of the single
+     * threaded tests, so it cannot be used here: this test has to see the mode
+     * a listener has when the application has never set it. Hence the
+     * unconfigured variant.
+     *
+     * A socket BIO supplies a poll descriptor, so blocking is available.
+     */
+    if (!TEST_true(create_dtls_listener_unconfigured(sctx,
             SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
                 | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
