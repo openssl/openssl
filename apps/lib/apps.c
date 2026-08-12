@@ -219,7 +219,7 @@ int app_passwd(const char *arg1, const char *arg2, char **pass1, char **pass2)
 static char *app_get_pass(const char *arg, int keepbio)
 {
     static BIO *pwdbio = NULL;
-    char *tmp, tpass[APP_PASS_LEN];
+    char *tmp, tpass[APP_PASS_LEN + 1];
     int i;
 
     /* PASS_SOURCE_SIZE_MAX = max number of chars before ':' in below strings */
@@ -290,19 +290,30 @@ static char *app_get_pass(const char *arg, int keepbio)
             return NULL;
         }
     }
-    i = BIO_gets(pwdbio, tpass, APP_PASS_LEN);
+    i = BIO_gets(pwdbio, tpass, sizeof(tpass));
+    if (i <= 0) {
+        BIO_puts(bio_err, "Error reading password from BIO\n");
+        goto err;
+    }
+    tmp = strchr(tpass, '\n');
+    if (tmp != NULL) {
+        *tmp = '\0';
+    } else if (i == APP_PASS_LEN) {
+        BIO_printf(bio_err,
+            "Password is too long (maximum %d bytes)\n",
+            APP_PASS_LEN - 1);
+        goto err;
+    }
     if (keepbio != 1) {
         BIO_free_all(pwdbio);
         pwdbio = NULL;
     }
-    if (i <= 0) {
-        BIO_puts(bio_err, "Error reading password from BIO\n");
-        return NULL;
-    }
-    tmp = strchr(tpass, '\n');
-    if (tmp != NULL)
-        *tmp = 0;
     return OPENSSL_strdup(tpass);
+
+err:
+    BIO_free_all(pwdbio);
+    pwdbio = NULL;
+    return NULL;
 }
 
 char *app_conf_try_string(const CONF *conf, const char *group, const char *name)
