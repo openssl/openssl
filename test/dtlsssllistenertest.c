@@ -28,6 +28,7 @@
 #include "internal/time.h"
 #include "internal/sockets.h"
 #include "internal/dgram_demux.h"
+#include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 #include "../ssl/ssl_local.h"
@@ -5411,6 +5412,7 @@ static int test_dtls_blocking_mode(void)
     SSL *listener = NULL, *clientssl = NULL, *serverssl = NULL;
     SSL *memlistener = NULL, *memclient = NULL, *plainssl = NULL;
     BIO_ADDR *server_addr = NULL, *client_addr = NULL;
+    SSL_CONNECTION *sc;
     int server_fd = -1, client_fd = -1;
     int testresult = 0;
 
@@ -5472,8 +5474,25 @@ static int test_dtls_blocking_mode(void)
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
         goto end;
 
+    /*
+     * being_driven has to survive a clear as well, for a different reason: it
+     * records that the listener is driving this connection's handshake, and is
+     * what stops a concurrent tick collecting the same connection a second
+     * time. The listener can reach SSL_clear() from inside the very
+     * SSL_accept() it is driving, so losing it there would admit a second
+     * thread to the state machine for this connection.
+     *
+     * It has to be set by hand, being held only for the duration of a call
+     * inside the listener's tick, which is not observable from out here.
+     */
+    if (!TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
+        goto end;
+    sc->d1->being_driven = 1;
+
     if (!TEST_true(SSL_clear(serverssl))
-        || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
+        || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_int_eq(sc->d1->being_driven, 1))
         goto end;
 
     /*
@@ -5483,8 +5502,12 @@ static int test_dtls_blocking_mode(void)
      * d1, so both have to be covered.
      */
     if (!TEST_true(SSL_clear(serverssl))
-        || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0))
+        || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 0)
+        || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl))
+        || !TEST_int_eq(sc->d1->being_driven, 1))
         goto end;
+
+    sc->d1->being_driven = 0;
 
     /* And back the other way round. */
     if (!TEST_true(SSL_set_blocking_mode(listener, 1))
