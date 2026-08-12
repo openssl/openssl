@@ -1071,8 +1071,11 @@ int SSL_set_generate_session_id(SSL *ssl, GEN_SESSION_CB cb)
     return 1;
 }
 
-int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
-    unsigned int id_len)
+/*
+ * Returns -1 on error, 0 if there is no match and 1 if there is a match.
+ */
+int ssl_has_matching_session_id(const SSL_CONNECTION *sc,
+    const unsigned char *id, unsigned int id_len)
 {
     /*
      * A quick examination of SSL_SESSION_hash and SSL_SESSION_cmp shows how
@@ -1082,20 +1085,28 @@ int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
      * by this SSL.
      */
     SSL_SESSION r, *p;
-    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
 
     if (sc == NULL || id_len > sizeof(r.session_id))
-        return 0;
+        return -1;
 
     r.ssl_version = sc->version;
     r.session_id_length = id_len;
     memcpy(r.session_id, id, id_len);
 
     if (!CRYPTO_THREAD_read_lock(sc->session_ctx->lock))
-        return 0;
+        return -1;
     p = lh_SSL_SESSION_retrieve(sc->session_ctx->sessions, &r);
     CRYPTO_THREAD_unlock(sc->session_ctx->lock);
     return (p != NULL);
+}
+
+int SSL_has_matching_session_id(const SSL *ssl, const unsigned char *id,
+    unsigned int id_len)
+{
+    const SSL_CONNECTION *sc = SSL_CONNECTION_FROM_CONST_SSL(ssl);
+
+    /* Preserve the public API's boolean return value on internal errors. */
+    return ssl_has_matching_session_id(sc, id, id_len) > 0;
 }
 
 int SSL_CTX_set_purpose(SSL_CTX *s, int purpose)

@@ -2456,6 +2456,8 @@ __owur CERT *ssl_cert_new(size_t ssl_pkey_num);
 __owur CERT *ssl_cert_dup(CERT *cert);
 void ssl_cert_clear_certs(CERT *c);
 void ssl_cert_free(CERT *c);
+__owur int ssl_has_matching_session_id(const SSL_CONNECTION *sc,
+    const unsigned char *id, unsigned int id_len);
 __owur int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss);
 __owur int ssl_get_new_session(SSL_CONNECTION *s, int session);
 __owur SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
