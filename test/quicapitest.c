@@ -3090,7 +3090,6 @@ end:
     return ret;
 }
 
-
 #define PENDING_LIMIT 5
 #define HANDSHAKE_STEPS 10
 static int test_pending_limit(void)
