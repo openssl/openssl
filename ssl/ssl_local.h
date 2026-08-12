@@ -3066,11 +3066,13 @@ int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
     uint64_t *revents);
 void ossl_dtls_listener_enter_blocking_section(SSL *s);
 void ossl_dtls_listener_leave_blocking_section(SSL *s);
-int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline);
+int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
+    int bound_by_event_timeout);
 int ossl_dtls_blocking(const SSL *s);
 int ossl_dtls_set_blocking_mode(SSL *s, int blocking);
 int ossl_dtls_get_blocking_mode(const SSL *s);
 int ossl_dtls_conn_wait_for_datagram(SSL *s);
+int ossl_dtls_conn_wait_for_write(SSL *s);
 int ossl_dtls_tick(DTLS_LISTENER *dl);
 
 /* DTLS Listener internal cookie callbacks */

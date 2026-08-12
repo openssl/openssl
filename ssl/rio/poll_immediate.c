@@ -446,6 +446,7 @@ static int poll_translate(SSL_POLL_ITEM *items,
     RIO_POLL_BUILDER *rpb,
     OSSL_TIME *p_earliest_wakeup_deadline,
     int *abort_blocking,
+    int bound_by_event_timeout,
     size_t *p_result_count)
 {
     int ok = 1;
@@ -516,15 +517,22 @@ static int poll_translate(SSL_POLL_ITEM *items,
                      * Bound the wait by the DTLS retransmission timer,
                      * otherwise a poll with no timeout sleeps straight through
                      * the point at which we should be retransmitting.
+                     *
+                     * Unless the caller has told us not to. A waiter which
+                     * cannot service the timer must not be woken by it: it
+                     * would find the timeout still expired on the next wait,
+                     * which reads as a zero deadline, and spin.
                      */
-                    if (!SSL_get_event_timeout(ssl, &timeout, &is_infinite))
-                        FAIL_ITEM(i++); /* need to clean up this item too */
+                    if (bound_by_event_timeout) {
+                        if (!SSL_get_event_timeout(ssl, &timeout, &is_infinite))
+                            FAIL_ITEM(i++); /* need to clean up this item too */
 
-                    if (!is_infinite)
-                        earliest_wakeup_deadline
-                            = ossl_time_min(earliest_wakeup_deadline,
-                                ossl_time_add(ossl_time_now(),
-                                    ossl_time_from_timeval(timeout)));
+                        if (!is_infinite)
+                            earliest_wakeup_deadline
+                                = ossl_time_min(earliest_wakeup_deadline,
+                                    ossl_time_add(ossl_time_now(),
+                                        ossl_time_from_timeval(timeout)));
+                    }
 
                 } else {
                     ERR_raise_data(ERR_LIB_SSL, SSL_R_POLL_REQUEST_NOT_SUPPORTED,
@@ -574,6 +582,7 @@ static int poll_block(SSL_POLL_ITEM *items,
     size_t num_items,
     size_t stride,
     OSSL_TIME user_deadline,
+    int bound_by_event_timeout,
     size_t *p_result_count)
 {
     int ok = 0, abort_blocking = 0;
@@ -610,6 +619,7 @@ static int poll_block(SSL_POLL_ITEM *items,
     if (!poll_translate(items, num_items, stride, &wctx, &rpb,
             &earliest_wakeup_deadline,
             &abort_blocking,
+            bound_by_event_timeout,
             p_result_count))
         goto out;
 
@@ -648,9 +658,16 @@ out:
  * becoming readable says nothing about which connection the datagram is for -
  * so the caller must re-test its own condition and wait again if needed.
  *
+ * bound_by_event_timeout says whether the connection's own event timeout, which
+ * for DTLS is the retransmission timer, should shorten the wait. Pass 1 unless
+ * the caller is unable to service that timer when it fires: waking for a
+ * timeout nothing then handles leaves it expired, and an expired timeout reads
+ * as a zero deadline, so every later wait returns at once.
+ *
  * Returns 1 if the wait completed and 0 on error.
  */
-int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline)
+int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
+    int bound_by_event_timeout)
 {
     SSL_POLL_ITEM item;
     size_t result_count = 0;
@@ -660,7 +677,8 @@ int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline)
     item.events = events;
     item.revents = 0;
 
-    return poll_block(&item, 1, sizeof(item), deadline, &result_count);
+    return poll_block(&item, 1, sizeof(item), deadline, bound_by_event_timeout,
+        &result_count);
 }
 #endif /* OPENSSL_NO_DTLS */
 #endif
@@ -816,7 +834,8 @@ int SSL_poll(SSL_POLL_ITEM *items,
          */
         do_tick = 1;
 #if !defined(OPENSSL_NO_QUIC) || !defined(OPENSSL_NO_DTLS)
-        if (!poll_block(items, num_items, stride, deadline, &result_count)) {
+        if (!poll_block(items, num_items, stride, deadline,
+                /*bound_by_event_timeout=*/1, &result_count)) {
             ok = 0;
             goto out;
         }
