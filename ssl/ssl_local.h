@@ -2261,6 +2261,14 @@ typedef struct dtls1_state_st {
      * Defaults to inheriting from the listener it came from.
      */
     unsigned int req_blocking_mode : 2;
+
+    /*
+     * Set while the listener itself is driving this connection's handshake, to
+     * stop it blocking. The listener drives pending connections from inside its
+     * own tick, so a connection which blocked there would stop the listener
+     * making any further progress, including the progress being waited for.
+     */
+    unsigned int force_nonblocking : 1;
 #endif
 
 } DTLS1_STATE;
