@@ -9,11 +9,12 @@
 
 #include <stdio.h>
 #include <errno.h>
+#include <openssl/rand.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 #include "internal/safe_math.h"
 
-#ifndef OPENSSL_NO_TCPDUMP
+#ifndef OPENSSL_NO_PCAP
 #include <stdio.h>
 
 #include "internal/time.h"
@@ -276,7 +277,7 @@ struct bio_dgram_pair_st {
     unsigned int local_addr_enable : 1; /* Can use BIO_MSG->local? */
     unsigned int role : 1; /* Determines lock order */
     unsigned int grows_on_write : 1; /* Set for BIO_s_dgram_mem only */
-#ifndef OPENSSL_NO_TCPDUMP
+#ifndef OPENSSL_NO_PCAP
     FILE *tcpdump_f;
     int owner;
     uint64_t packet_num;
@@ -345,7 +346,7 @@ static int dgram_pair_free(BIO *bio)
     dgram_pair_ctrl_destroy_bio_pair(bio);
 
     CRYPTO_THREAD_lock_free(b->lock);
-#ifdef OPENSSL_NO_TCPDUMP
+#ifdef OPENSSL_NO_PCAP
     if (b->tcpdump_f != NULL)
         fclose(b->tcpdump_f);
 #endif
@@ -423,7 +424,7 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
 {
     int ret = 0;
 
-#ifndef OPENSSL_NO_TCPDUMP
+#ifndef OPENSSL_NO_PCAP
 #define LINKTYPE_IPV4   0x00e4	/* IANA type */
     struct bio_dgram_pair_st *b1, *b2;
     char *filename = (char *)ptr;
@@ -496,7 +497,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
     /* Free buffers. */
     ring_buf_destroy(&b2->rbuf);
 
-#ifndef OPENSSL_NO_TCPDUMP
+#ifndef OPENSSL_NO_PCAP
     if (b1->tcpdump_f != NULL || b2->tcpdump_f != NULL) {
         if (b1->owner && b1->tcpdump_f)
             fclose(b1->tcpdump_f);
@@ -1254,7 +1255,7 @@ static ossl_inline size_t compute_rbuf_growth(size_t target, size_t current)
     return current;
 }
 
-#ifndef OPENSSL_NO_TCPDUMP
+#ifndef OPENSSL_NO_PCAP
 static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
 {
     struct {
@@ -1303,8 +1304,7 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     ip_hdr.ip_hv = 0x45;
     ip_hdr.ip_tos = 0;
     ip_hdr.ip_len = htons(len);
-    /* ip_id, can be anything */
-    ip_hdr.ip_id = (uint16_t)(random() & 0xffff);
+    RAND_bytes(&ip_hdr.ip_id, 2);
     ip_hdr.ip_frag = 0x40; /* don't fragment */
     ip_hdr.ip_foff = 0;
     ip_hdr.ip_ttl = 64;
@@ -1420,7 +1420,7 @@ static ossl_ssize_t dgram_pair_write_actual(BIO *bio, const char *buf, size_t sz
     saved_idx = b->rbuf.idx[0];
     saved_count = b->rbuf.count;
 
-#ifndef OPENSSL_NO_TCPDUMP
+#ifndef OPENSSL_NO_PCAP
     dgram_pcap(b, buf, sz);
 #endif
 
