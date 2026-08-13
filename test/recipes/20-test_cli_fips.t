@@ -31,7 +31,7 @@ plan tests => 13;
 my $fipsmodule = bldtop_file('providers', platform->dso('fips'));
 my $fipsconf = srctop_file("test", "fips-and-base.cnf");
 my $defaultconf = srctop_file("test", "default.cnf");
-my $identityconf = srctop_file("test" ,"fips-identity.cnf");
+my $identityconf = srctop_file("test" ,"fipsidentity.cnf");
 my $tbs_data = $fipsmodule;
 my $bogus_data = $fipsconf;
 
