@@ -5851,14 +5851,21 @@ static int test_dtls_blocking_write(void)
         || !TEST_int_eq(SSL_get_blocking_mode(serverssl), 1))
         goto end;
 
+    data.sends = 0;
     data.fails_remaining = 1;
 
     if (!TEST_true(SSL_write_ex(serverssl, "msg", 3, &written))
         || !TEST_size_t_eq(written, 3))
         goto end;
 
-    /* The send really was rejected, and was retried rather than reported. */
-    if (!TEST_int_eq(data.fails_remaining, 0))
+    /*
+     * The send really was rejected, and was retried rather than reported: the
+     * count proves a second attempt was made, which is the whole behaviour
+     * under test. Without it, a write which never reached the filter at all
+     * would look the same as one which was retried.
+     */
+    if (!TEST_int_eq(data.fails_remaining, 0)
+        || !TEST_int_ge(data.sends, 2))
         goto end;
 
     /* The datagram reached the client, so nothing was dropped on the way. */
