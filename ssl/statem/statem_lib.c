@@ -2354,6 +2354,20 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
         return 0;
     }
 
+    /*-
+     * RFC 9846 section 4.2.3 requires a client receiving a TLS 1.3
+     * ServerHello whose legacy_version is not 0x0303 to abort the handshake
+     * with a protocol_version alert.  RFC 8446 placed no such requirement
+     * on the client.  The requirement on the server to send 0x0303 is not
+     * new -- it was already in RFC 8446 -- and OpenSSL servers comply, as
+     * do any others we know of.
+     */
+    if (s->version == TLS1_3_VERSION && version != TLS1_2_VERSION) {
+        s->version = origv;
+        SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_WRONG_SSL_VERSION);
+        return 0;
+    }
+
     switch (ssl->method->version) {
     default:
         if (s->version != ssl->method->version) {
