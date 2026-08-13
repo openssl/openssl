@@ -425,7 +425,7 @@ static int test_rstream_simple(int idx)
         if (!TEST_ptr(pkt[i] = pkt_test_new(1200)))
             goto err;
 
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 0)))
         goto err;
 
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[0], 5,
@@ -535,7 +535,7 @@ static int test_rstream_random(int idx)
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
         || !TEST_ptr(pkts = OPENSSL_zalloc(sizeof(*pkts) * max_pkts))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 0)))
         goto err;
 
     if (idx % 3 == 0)
@@ -684,7 +684,7 @@ static int test_rstream_pkt(void)
     if (!TEST_ptr(pkt_a = pkt_test_new(1200))
         || !TEST_ptr(pkt_b = pkt_test_new(1200))
         || !TEST_ptr(pkt_c = pkt_test_new(1200))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 0)))
         goto err;
 
     /* A buffered frame holds a reference to its packet */
@@ -758,7 +758,7 @@ static int test_rstream_pkt(void)
      * data, leaving the surrounding bytes intact.
      */
     memset(cbuf, 0xAA, sizeof(cbuf));
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 0)))
         goto err;
     ossl_quic_rstream_set_cleanse(rstream, 1);
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt_a, 0,
@@ -804,7 +804,7 @@ static int test_rstream_pkt_overhead(void)
     if (!TEST_ptr(data = OPENSSL_malloc(total))
         || !TEST_ptr(buf = OPENSSL_malloc(total))
         || !TEST_ptr(pkt = OPENSSL_zalloc(nframes * sizeof(*pkt)))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 0)))
         goto err;
 
     for (i = 0; i < total; ++i)
@@ -886,7 +886,7 @@ static int test_rstream_reorder(int idx)
         || !TEST_ptr(arena = OPENSSL_malloc(3 * data_size))
         || !TEST_ptr(order = OPENSSL_malloc(nframes * sizeof(*order)))
         || !TEST_ptr(pkts = OPENSSL_zalloc(2 * nframes * sizeof(*pkts)))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 0)))
         goto err;
 
     if (cleanse)

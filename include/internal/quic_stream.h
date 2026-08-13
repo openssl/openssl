@@ -320,9 +320,10 @@ void ossl_quic_sstream_set_cleanse(QUIC_SSTREAM *qss, int cleanse);
  * is read by application. `statm` is queried for current rtt.
  * `rbuf_size` is the initial size of the ring buffer to be used
  * when ossl_quic_rstream_move_to_rbuf() is called.
+ * `max_frames` is the max number of buffered frames, or 0 for no limit.
  */
 QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
-    OSSL_STATM *statm, size_t rbuf_size);
+    OSSL_STATM *statm, size_t rbuf_size, size_t max_frames);
 
 /*
  * Frees a QUIC_RSTREAM and any associated storage.
