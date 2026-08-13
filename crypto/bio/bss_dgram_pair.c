@@ -9,12 +9,12 @@
 
 #include <stdio.h>
 #include <errno.h>
-#include <openssl/rand.h>
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 #include "internal/safe_math.h"
 
 #ifndef OPENSSL_NO_PCAP
+#include <openssl/rand.h>
 #include <stdio.h>
 
 #include "internal/time.h"
@@ -346,7 +346,7 @@ static int dgram_pair_free(BIO *bio)
     dgram_pair_ctrl_destroy_bio_pair(bio);
 
     CRYPTO_THREAD_lock_free(b->lock);
-#ifdef OPENSSL_NO_PCAP
+#ifndef OPENSSL_NO_PCAP
     if (b->tcpdump_f != NULL)
         fclose(b->tcpdump_f);
 #endif
