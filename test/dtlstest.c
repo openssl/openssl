@@ -181,8 +181,10 @@ end:
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
+#ifndef OPENSSL_NO_DTLS
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
     int doresumption, int epoch, int idx);
+#endif
 #ifndef OPENSSL_NO_DTLS1_2
 static int test_dtls_drop_records_dtls1(int idx)
 {
@@ -319,6 +321,7 @@ static int test_dtls_drop_records_dtls13(int idx)
 }
 #endif /* !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS) */
 
+#ifndef OPENSSL_NO_DTLS
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
     int doresumption, int epoch, int idx)
 {
@@ -436,6 +439,7 @@ end:
 
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS */
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 static int test_cookie(void)
@@ -852,7 +856,9 @@ end:
 }
 #endif
 
+#ifndef OPENSSL_NO_DTLS
 static int test_duplicate_app_data(int minversion, int maxversion);
+#endif
 #ifndef OPENSSL_NO_DTLS1_2
 static int test_duplicate_app_data_dtls1(void)
 {
@@ -867,6 +873,7 @@ static int test_duplicate_app_data_dtls13(void)
 }
 #endif /* OPENSSL_NO_DTLS1_3 */
 
+#ifndef OPENSSL_NO_DTLS
 static int test_duplicate_app_data(int minversion, int maxversion)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -965,6 +972,7 @@ end:
 
     return testresult;
 }
+#endif /* OPENSSL_NO_DTLS */
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
 #ifndef OPENSSL_NO_DTLS1_2
