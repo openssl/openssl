@@ -550,6 +550,66 @@ err:
     return success;
 }
 
+static int
+asn1_universalstring_to_string_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    static const uint8_t abc[] = { 0, 0, 0, 'A', 0, 0, 0, 'B', 0, 0, 0, 'C' };
+
+    /*
+     * An empty UniversalString, as decoded from an empty string, has
+     * data == NULL and length == 0. Conversion succeeds and leaves it
+     * empty, with the type rewritten like any successful conversion.
+     */
+    if (!TEST_ptr(str = ASN1_STRING_type_new(V_ASN1_UNIVERSALSTRING)))
+        goto err;
+
+    if (!TEST_true(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
+        goto err;
+
+    if (!TEST_ptr_null(ASN1_STRING_get0_data(str)))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_type(str), V_ASN1_PRINTABLESTRING))
+        goto err;
+
+    /* The type is no longer UniversalString, so a second conversion fails. */
+    if (!TEST_false(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    ASN1_STRING_free(str);
+    str = NULL;
+
+    /* A non-empty UniversalString converts to its compacted form. */
+    if (!TEST_ptr(str = ASN1_STRING_type_new(V_ASN1_UNIVERSALSTRING)))
+        goto err;
+
+    if (!TEST_true(ASN1_STRING_set1_data(str, abc, sizeof(abc))))
+        goto err;
+
+    if (!TEST_true(ASN1_UNIVERSALSTRING_to_string(str)))
+        goto err;
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 3))
+        goto err;
+
+    if (!TEST_mem_eq(ASN1_STRING_get0_data(str), 3, "ABC", 3))
+        goto err;
+
+    if (!TEST_int_eq(ASN1_STRING_type(str), V_ASN1_PRINTABLESTRING))
+        goto err;
+
+    success = 1;
+
+err:
+    ASN1_STRING_free(str);
+    return success;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(asn1_bit_string_get_length_test, OSSL_NELEM(abs_get_length_tests));
@@ -557,5 +617,6 @@ int setup_tests(void)
     ADD_TEST(asn1_string_new_not_owned_test);
     ADD_TEST(asn1_string_set_data_test);
     ADD_TEST(asn1_string_set_string_test);
+    ADD_TEST(asn1_universalstring_to_string_test);
     return 1;
 }
