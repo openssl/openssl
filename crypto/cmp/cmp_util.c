@@ -223,7 +223,8 @@ int ossl_cmp_sk_ASN1_UTF8STRING_push_str(STACK_OF(ASN1_UTF8STRING) *sk,
 {
     ASN1_UTF8STRING *utf8string;
 
-    if (!ossl_assert(sk != NULL && text != NULL))
+    /* text == NULL with len == 0 is the canonical empty string and is valid */
+    if (!ossl_assert(sk != NULL && (text != NULL || len == 0)))
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         return 0;
