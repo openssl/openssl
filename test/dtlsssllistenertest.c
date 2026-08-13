@@ -5333,7 +5333,7 @@ static int test_dtls_poll_conn_honours_retransmit_timer(void)
             &poll_result)))
         goto end;
 
-    if (!TEST_size_t_gt(short_timer_cb_count, 0))
+    if (!TEST_uint_gt(short_timer_cb_count, 0))
         goto end;
 
     testresult = 1;
