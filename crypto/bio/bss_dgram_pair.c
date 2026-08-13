@@ -1273,7 +1273,7 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
         uint8_t ip_foff;
         uint8_t ip_ttl;
         uint8_t ip_proto;
-        uint8_t ip_csum;
+        uint16_t ip_csum;
         uint32_t ip_src;
         uint32_t ip_dst;
     } ip_hdr;
