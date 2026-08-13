@@ -425,18 +425,18 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
     int ret = 0;
 
 #ifndef OPENSSL_NO_PCAP
-#define LINKTYPE_IPV4   0x00e4	/* IANA type */
+#define LINKTYPE_IPV4 0x00e4 /* IANA type */
     struct bio_dgram_pair_st *b1, *b2;
     char *filename = (char *)ptr;
     static struct {
-        uint32_t    pcap_magic;
-        uint16_t    pcap_maj;
-        uint16_t    pcap_min;
-        uint32_t    pcap_r1;
-        uint32_t    pcap_r2;
-        uint32_t    pcap_snap;
-        uint16_t    pcap_ltype;
-        uint16_t    pcap_fcs;
+        uint32_t pcap_magic;
+        uint16_t pcap_maj;
+        uint16_t pcap_min;
+        uint32_t pcap_r1;
+        uint32_t pcap_r2;
+        uint32_t pcap_snap;
+        uint16_t pcap_ltype;
+        uint16_t pcap_fcs;
     } pcap_f_header = {
         .pcap_magic = 0xA1B2C3D4,
         .pcap_maj = 2, /* https://www.ietf.org/archive/id/draft-gharris-opsawg-pcap-01.html */
@@ -1312,15 +1312,13 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     ip_hdr.ip_csum = 0; /* wireshark will complain with ?chksum offload? */
     ip_hdr.ip_src = (b->local_addr == NULL) ? htonl(0x7f000001) : b->local_addr->s_in.sin_addr.s_addr;
     peer = (struct bio_dgram_pair_st *)b->peer->ptr;
-    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL) ? htonl(0x7f000001) : peer->local_addr->s_in.sin_addr.s_addr; 
+    ip_hdr.ip_dst = (peer == NULL || peer->local_addr == NULL) ? htonl(0x7f000001) : peer->local_addr->s_in.sin_addr.s_addr;
 
     /*
      * use some fake port numbers
      */
-    udp_hdr.uh_sport = (b->local_addr == NULL) ?
-        htons(8080) : b->local_addr->s_in.sin_port;
-    udp_hdr.uh_dport = (peer == NULL || peer->local_addr == NULL) ?
-        htons(4040) : peer->local_addr->s_in.sin_port;
+    udp_hdr.uh_sport = (b->local_addr == NULL) ? htons(8080) : b->local_addr->s_in.sin_port;
+    udp_hdr.uh_dport = (peer == NULL || peer->local_addr == NULL) ? htons(4040) : peer->local_addr->s_in.sin_port;
     udp_hdr.uh_csum = 0;
     udp_hdr.uh_len = htons((uint16_t)(sz + sizeof(udp_hdr)));
     fwrite(&pcap_hdr, sizeof(pcap_hdr), 1, b->tcpdump_f);
