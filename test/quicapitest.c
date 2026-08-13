@@ -3090,7 +3090,6 @@ end:
     return ret;
 }
 
-
 #define PENDING_LIMIT 5
 #define HANDSHAKE_STEPS 10
 static int test_pending_limit(void)
@@ -3117,12 +3116,12 @@ static int test_pending_limit(void)
     if (!TEST_true(ok)) {
         TEST_info("%s call to SSL_set_generic_request_uint"
                   "(SSL_VALUE_QUIC_MAX_PENDING_CONNS failed",
-            __func__);
+            OPENSSL_FUNC);
         goto end;
     }
 
     if (!TEST_true(SSL_listen(serverssl_listener))) {
-        TEST_info("%s SSL_listen() failed", __func__);
+        TEST_info("%s SSL_listen() failed", OPENSSL_FUNC);
         goto end;
     }
 
