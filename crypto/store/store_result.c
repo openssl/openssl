@@ -308,6 +308,12 @@ static EVP_PKEY *try_key_value(struct extracted_param_data_st *data,
     decoderctx = OSSL_DECODER_CTX_new_for_pkey(&pk, data->input_type, data->data_structure,
         data->data_type, selection, libctx,
         propq);
+
+    if (decoderctx == NULL) {
+        *harderr = 1;
+        return NULL;
+    }
+
     (void)OSSL_DECODER_CTX_set_passphrase_cb(decoderctx, cb, cbarg);
 
     /* No error if this couldn't be decoded */
