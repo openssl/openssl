@@ -3088,20 +3088,26 @@ int ossl_dtls_set_blocking_mode(SSL *s, int blocking)
      * Any other DTLS object takes its behaviour from its own BIO in the
      * traditional way, so there is nothing here to configure.
      */
-    if (IS_DTLS_LISTENER(s)) {
-        ((DTLS_LISTENER *)s)->req_blocking_mode = mode;
-    } else if (sc != NULL && sc->d1 != NULL && sc->d1->listener != NULL) {
-        sc->d1->req_blocking_mode = mode;
-    } else {
+    if (!IS_DTLS_LISTENER(s)
+        && (sc == NULL || sc->d1 == NULL || sc->d1->listener == NULL)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
         return 0;
     }
 
-    /* Refuse to claim blocking we cannot deliver, as QUIC does. */
+    /*
+     * Refuse to claim blocking we cannot deliver, as QUIC does. Checked before
+     * anything is written, so that a call which fails leaves the mode alone
+     * rather than reporting failure having already changed it.
+     */
     if (blocking && !ossl_dtls_can_support_blocking(s)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_UNSUPPORTED);
         return 0;
     }
+
+    if (IS_DTLS_LISTENER(s))
+        ((DTLS_LISTENER *)s)->req_blocking_mode = mode;
+    else
+        sc->d1->req_blocking_mode = mode;
 
     return 1;
 }
