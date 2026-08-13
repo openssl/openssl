@@ -2274,6 +2274,9 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
              * with any other value, even if TLS 1.3 is supported but
              * not TLS 1.2.
              */
+#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
+#error Code needs update for DTLSv1.3
+#endif
             if (best_vers == TLS1_3_VERSION && client_version != TLS1_2_VERSION)
                 return SSL_R_BAD_LEGACY_VERSION;
 
@@ -2375,6 +2378,9 @@ int ssl_choose_client_version(SSL_CONNECTION *s, int version,
      * new -- it was already in RFC 8446 -- and OpenSSL servers comply, as
      * do any others we know of.
      */
+#if DTLS_MAX_VERSION_INTERNAL != DTLS1_2_VERSION
+#error Code needs update for DTLSv1.3
+#endif
     if (s->version == TLS1_3_VERSION && version != TLS1_2_VERSION) {
         s->version = origv;
         SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_WRONG_SSL_VERSION);
