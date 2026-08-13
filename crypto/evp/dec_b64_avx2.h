@@ -12,16 +12,9 @@
 
 #include <openssl/evp.h>
 
-#if defined(__clang__)
-#define HAVE_AVX2_INTRINSICS 1
-#elif defined(__GNUC__) && (__GNUC__ >= 8)
-#define HAVE_AVX2_INTRINSICS 1
-#elif defined(_MSC_VER) && (_MSC_VER >= 1920) /* MSVC 2019 */
-#define HAVE_AVX2_INTRINSICS 1
-#endif
+#include "b64_avx2_common.h"
 
-#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64) || defined(__e2k__)) \
-    && !defined(_M_ARM64EC) && defined(HAVE_AVX2_INTRINSICS)
+#ifdef HAVE_AVX2
 int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     const unsigned char *src, int srclen,
     int *consumed_out);

@@ -35,10 +35,9 @@
 
 #include <openssl/evp.h>
 #include "dec_b64_avx2.h"
-
-#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64) || defined(__e2k__)) \
-    && !defined(_M_ARM64EC) && defined(HAVE_AVX2_INTRINSICS)
 #include "b64_avx2_common.h"
+
+#ifdef HAVE_AVX2
 #include "dec_b64_avx2_tables.h"
 
 /*
@@ -662,4 +661,4 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     return (int)(out - dst);
 }
 OPENSSL_UNTARGET_AVX2
-#endif
+#endif /* HAVE_AVX2 */

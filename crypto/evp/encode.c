@@ -19,15 +19,6 @@
 #include "dec_b64_avx2.h"
 #include "enc_b64_scalar.h"
 
-#if defined(HAVE_AVX2_INTRINSICS)
-#if defined(__AVX2__)
-#define HAVE_AVX2() 1
-#elif defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM) \
-    && ((defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) || defined(_M_X64)) && !defined(_M_ARM64EC))
-#define HAVE_AVX2() ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
-#endif
-#endif /* defined(HAVE_AVX2_INTRINSICS) */
-
 static unsigned char conv_ascii2bin(unsigned char a,
     const unsigned char *table);
 size_t evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,

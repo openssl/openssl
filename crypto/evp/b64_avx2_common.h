@@ -7,6 +7,27 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_CRYPTO_EVP_B64_AVX2_COMMON_H
+#define OSSL_CRYPTO_EVP_B64_AVX2_COMMON_H
+
+#include "internal/cryptlib.h" /* OPENSSL_ia32cap_P */
+
+#if defined(__clang__)                      \
+    || (defined(__GNUC__) && __GNUC__ >= 8) \
+    || (defined(_MSC_VER) && _MSC_VER >= 1920) /* MSVC 2019 */
+#if (defined(__x86_64) || defined(__x86_64__) || defined(_M_AMD64) \
+    || defined(_M_X64) || defined(__e2k__))                        \
+    && !defined(_M_ARM64EC)
+#if defined(__AVX2__)
+#define HAVE_AVX2() 1
+#elif defined(OPENSSL_CPUID_OBJ) && !defined(OPENSSL_NO_ASM)
+#define HAVE_AVX2() ((OPENSSL_ia32cap_P[2] & (1u << 5)) != 0)
+#endif
+#endif
+#endif
+
+#ifdef HAVE_AVX2
+
 #define STRINGIFY_IMPLEMENTATION_(a) #a
 #define STRINGIFY(a) STRINGIFY_IMPLEMENTATION_(a)
 
@@ -41,6 +62,9 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "internal/cryptlib.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
+
+#endif /* HAVE_AVX2 */
+
+#endif /* OSSL_CRYPTO_EVP_B64_AVX2_COMMON_H */
