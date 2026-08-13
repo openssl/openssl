@@ -5633,6 +5633,70 @@ end:
 }
 
 /*
+ * Test that a rejected SSL_set_blocking_mode() leaves the mode alone.
+ *
+ * Whether blocking can be supported depends on the listener's BIO, so a
+ * request can be refused now and be perfectly deliverable later. The refusal
+ * must therefore not record the mode it refused to set: the effect only becomes
+ * visible once a BIO which can supply a poll descriptor is in place, at which
+ * point the listener would be found blocking on the strength of a call which
+ * failed.
+ */
+static int test_dtls_blocking_mode_failed_set_is_inert(void)
+{
+    SSL_CTX *sctx = NULL;
+    SSL *listener = NULL;
+    BIO_ADDR *server_addr = NULL;
+    BIO *rbio = NULL;
+    int server_fd = -1;
+    int testresult = 0;
+
+    if (!TEST_ptr(sctx = SSL_CTX_new(DTLS_server_method())))
+        goto end;
+
+    if (!TEST_true(create_dtls_listener(sctx, SSL_LISTENER_FLAG_SINGLE_THREAD,
+            &listener, &server_addr, &server_fd)))
+        goto end;
+
+    /* Ask for non-blocking explicitly, so the default cannot mask a change. */
+    if (!TEST_true(SSL_set_blocking_mode(listener, 0))
+        || !TEST_int_eq(SSL_get_blocking_mode(listener), 0))
+        goto end;
+
+    /* Keep the BIO, then take it away so blocking cannot be supported. */
+    if (!TEST_ptr(rbio = SSL_get_rbio(listener))
+        || !TEST_true(BIO_up_ref(rbio)))
+        goto end;
+
+    SSL_set0_rbio(listener, NULL);
+
+    ERR_clear_error();
+    if (!TEST_false(SSL_set_blocking_mode(listener, 1))
+        || !TEST_int_eq((int)ERR_GET_REASON(ERR_peek_error()),
+            ERR_R_UNSUPPORTED)) {
+        BIO_free(rbio);
+        goto end;
+    }
+    ERR_clear_error();
+
+    /* Give the BIO back, which makes blocking supportable once more. */
+    SSL_set0_rbio(listener, rbio);
+
+    /* The refused request must not have taken effect. */
+    if (!TEST_int_eq(SSL_get_blocking_mode(listener), 0))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(listener);
+    BIO_ADDR_free(server_addr);
+    if (server_fd >= 0)
+        BIO_closesocket(server_fd);
+    SSL_CTX_free(sctx);
+    return testresult;
+}
+
+/*
  * State for the filter BIO below.
  */
 struct failing_send_data {
@@ -5911,6 +5975,7 @@ int setup_tests(void)
 
     /* Blocking mode tests */
     ADD_TEST(test_dtls_blocking_mode);
+    ADD_TEST(test_dtls_blocking_mode_failed_set_is_inert);
     ADD_TEST(test_dtls_accept_wait_requires_mode_and_flag);
     ADD_TEST(test_dtls_blocking_write);
 
