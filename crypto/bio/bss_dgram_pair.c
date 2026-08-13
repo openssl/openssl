@@ -1297,7 +1297,7 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     now = ossl_time_now();
 
     pcap_hdr.pcap_secs = ossl_time2seconds(now);
-    pcap_hdr.pcap_usecs = (uint32_t)(ossl_time2us(now) - pcap_hdr.pcap_secs * 1000000);
+    pcap_hdr.pcap_usecs = (uint32_t)(ossl_time2us(now) % 1000000;
     pcap_hdr.pcap_plen = (uint32_t)(sz + sizeof(ip_hdr) + sizeof(udp_hdr));
     pcap_hdr.pcap_olen = pcap_hdr.pcap_plen;
 
