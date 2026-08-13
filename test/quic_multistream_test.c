@@ -5008,6 +5008,77 @@ static const struct script_op script_106[] = {
     OP_END
 };
 
+/* Inject a run of tiny out-of-order CRYPTO frames into each 1-RTT packet. */
+static int script_107_inject_plain(struct helper *h, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    unsigned char frame_buf[800];
+    size_t written, i;
+    WPACKET wpkt;
+
+    if (h->inject_word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    /* 160 frames of 5 bytes: type, 2-byte offset, length 1, one data byte. */
+    for (i = 0; i < 160; ++i) {
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, h->inject_word1))
+            || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 1))
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
+            goto err;
+        /* Leave a gap after every frame so none can be merged or read. */
+        h->inject_word1 += 2;
+    }
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
+        goto err;
+
+    if (!qtest_fault_prepend_frame(h->qtf, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+/*
+ * 107. Fault injection - CRYPTO reassembly frame limit. The crypto stream
+ * cap is 1024 frames; 7 packets of 160 exceed it. Offsets start well past
+ * any post-handshake CRYPTO data and stay inside the 16KiB crypto window.
+ */
+static const struct script_op script_107[] = {
+    OP_S_SET_INJECT_PLAIN(script_107_inject_plain),
+    OP_C_SET_ALPN("ossltest"),
+    OP_C_CONNECT_WAIT(),
+
+    OP_C_WRITE(DEFAULT, "apple", 5),
+    OP_S_BIND_STREAM_ID(a, C_BIDI_ID(0)),
+    OP_S_READ_EXPECT(a, "apple", 5),
+
+    OP_SET_INJECT_WORD(1, 8000),
+
+    OP_S_WRITE(a, "1", 1),
+    OP_S_WRITE(a, "2", 1),
+    OP_S_WRITE(a, "3", 1),
+    OP_S_WRITE(a, "4", 1),
+    OP_S_WRITE(a, "5", 1),
+    OP_S_WRITE(a, "6", 1),
+    OP_S_WRITE(a, "7", 1),
+
+    OP_C_EXPECT_CONN_CLOSE_INFO(OSSL_QUIC_ERR_INTERNAL_ERROR, 0, 0),
+
+    OP_END
+};
+
 static const struct script_op *const scripts[] = {
     script_1,
     script_2,
@@ -5115,6 +5186,7 @@ static const struct script_op *const scripts[] = {
     script_104,
     script_105,
     script_106,
+    script_107,
 };
 
 static int test_script(int idx)

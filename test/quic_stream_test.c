@@ -518,6 +518,114 @@ err:
     return ret;
 }
 
+static int test_rstream_frame_limit(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    int ret = 0, fin = 0;
+    unsigned char buf[16];
+    size_t readbytes = 0;
+
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 4)))
+        goto err;
+
+    /* Four disjoint frames fill the list to the cap. */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0,
+            simple_data, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 4,
+            simple_data + 4, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 8,
+            simple_data + 8, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 12,
+            simple_data + 12, 2, 0))
+        /* A further frame past the tail is refused. */
+        || !TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, 16,
+            simple_data + 16, 2, 0))
+        /* A further frame in a gap is refused. */
+        || !TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, 6,
+            simple_data + 6, 2, 0))
+        /* A frame covering the whole list drops frames, so is accepted. */
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0,
+            simple_data, 14, 0))
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 14)
+        || !TEST_mem_eq(buf, 14, simple_data, 14))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    return ret;
+}
+
+/* Unread in-order frames count towards the cap; reading makes room. */
+static int test_rstream_frame_limit_unread(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    int ret = 0, fin = 0;
+    unsigned char buf[16];
+    size_t readbytes = 0;
+
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 4)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0,
+            simple_data, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 2,
+            simple_data + 2, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 4,
+            simple_data + 4, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 6,
+            simple_data + 6, 2, 0))
+        || !TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, 8,
+            simple_data + 8, 2, 0))
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 8)
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 8,
+            simple_data + 8, 2, 0))
+        || !TEST_true(ossl_quic_rstream_read(rstream, buf, sizeof(buf),
+            &readbytes, &fin))
+        || !TEST_size_t_eq(readbytes, 2)
+        || !TEST_mem_eq(buf, 2, simple_data + 8, 2))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    return ret;
+}
+
+/* A lost first frame is not exempt: its retransmit is refused at the cap. */
+static int test_rstream_frame_limit_lost(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0, 4)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 2,
+            simple_data + 2, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 4,
+            simple_data + 4, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 6,
+            simple_data + 6, 2, 0))
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 8,
+            simple_data + 8, 2, 0))
+        || !TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, 0,
+            simple_data, 2, 0)))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    return ret;
+}
+
 static int test_rstream_random(int idx)
 {
     unsigned char *bulk_data = NULL;
@@ -979,6 +1087,9 @@ int setup_tests(void)
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
     ADD_ALL_TESTS(test_rstream_simple, 4);
+    ADD_TEST(test_rstream_frame_limit);
+    ADD_TEST(test_rstream_frame_limit_unread);
+    ADD_TEST(test_rstream_frame_limit_lost);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_pkt);
     ADD_TEST(test_rstream_pkt_overhead);
