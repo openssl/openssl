@@ -2522,7 +2522,7 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
          * signalling the notifier because it produced readiness on our behalf.
          */
         if (!ossl_dtls_block_until_ready(ssl, SSL_POLL_EVENT_IC,
-                ossl_time_infinite()))
+                ossl_time_infinite(), /*bound_by_event_timeout=*/1))
             break;
     }
 
@@ -3178,7 +3178,7 @@ int ossl_dtls_conn_wait_for_datagram(SSL *s)
          * time to retransmit.
          */
         if (!ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_R,
-                ossl_time_infinite()))
+                ossl_time_infinite(), /*bound_by_event_timeout=*/1))
             return 0;
 
         if (!SSL_handle_events(s))
@@ -3209,6 +3209,19 @@ int ossl_dtls_conn_wait_for_datagram(SSL *s)
  * if it still cannot proceed, so a wakeup which turns out not to leave room in
  * the socket buffer costs an extra attempt rather than a lost datagram.
  *
+ * The retransmission timer deliberately does not shorten this wait, unlike the
+ * one for a datagram above. There the wakeup is useful, because the wait can
+ * service the timer itself; here it cannot. Servicing it would mean
+ * retransmitting a flight from inside tls_retry_write_records(), which is
+ * part-way through sending one and holds write buffer state that a
+ * re-entrant do_dtls1_write() would clobber. Waking for a timer nothing then
+ * services would be worse than not waking: the timeout stays expired, and an
+ * expired timeout reads as a zero deadline, so every later wait would return
+ * at once and the caller's retry loop would spin without sleeping. Waiting for
+ * the socket alone is also what the send actually needs. Retransmission is not
+ * the right response to a flight which has not finished going out, and once it
+ * has, the state machine handles the timer as usual.
+ *
  * Returns 1 if the send should be retried, or 0 if the wait could not be
  * performed or the listener has failed.
  */
@@ -3230,7 +3243,7 @@ int ossl_dtls_conn_wait_for_write(SSL *s)
         return 0;
 
     return ossl_dtls_block_until_ready(s, SSL_POLL_EVENT_W,
-        ossl_time_infinite());
+        ossl_time_infinite(), /*bound_by_event_timeout=*/0);
 }
 
 void ossl_dtls_listener_enter_blocking_section(SSL *s)
