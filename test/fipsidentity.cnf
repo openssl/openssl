@@ -7,6 +7,7 @@ config_diagnostics = 1
 
 [openssl_init]
 providers = provider_sect
+random = random_sect
 
 [provider_sect]
 default = default_sect
@@ -17,3 +18,6 @@ activate = yes
 
 [fips_sect]
 identity = fips-identity
+
+[random_sect]
+properties = fips=yes
