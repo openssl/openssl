@@ -2419,6 +2419,111 @@ err:
     return testresult;
 }
 
+static SSL *gen_sid_expected_ssl = NULL;
+static int gen_sid_called = 0;
+static int gen_sid_arg_error = 0;
+static int gen_sid_idx = -1;
+static const char gen_sid_marker[] = "gen-sid-marker";
+
+static int generate_session_id_user_ssl(SSL *ssl, unsigned char *id,
+    unsigned int *id_len)
+{
+    unsigned int i;
+
+    gen_sid_called++;
+    if (ssl != gen_sid_expected_ssl
+        || !SSL_is_quic(ssl)
+        || SSL_get_ex_data(ssl, gen_sid_idx) != (void *)gen_sid_marker) {
+        gen_sid_arg_error = 1;
+        return 0;
+    }
+
+    if (*id_len == 0)
+        return 0;
+    for (i = 0; i < *id_len; i++)
+        id[i] = (unsigned char)(0xa0 + i);
+    return !SSL_has_matching_session_id(ssl, id, *id_len);
+}
+
+/*
+ * generate_session_id must be invoked with the SSL the application holds,
+ * not the inner handshake-layer object. Ordinary TLS 1.3 QUIC handshake
+ * tickets reach the callback after tls_finish_handshake() clears
+ * ticket_expected; no explicit extra ticket is required.
+ */
+static int test_generate_session_id_user_ssl(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    int testresult = 0;
+    int ret, i;
+
+    if (gen_sid_idx < 0) {
+        gen_sid_idx = SSL_get_ex_new_index(0, "gen sid", NULL, NULL, NULL);
+        if (!TEST_int_ge(gen_sid_idx, 0))
+            return 0;
+    }
+
+    gen_sid_called = 0;
+    gen_sid_arg_error = 0;
+    gen_sid_expected_ssl = NULL;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx()))
+        goto err;
+
+    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    /* Send ClientHello and server retry */
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    serverssl = SSL_accept_connection(qlistener, 0);
+    if (!TEST_ptr(serverssl) || !TEST_false(SSL_is_init_finished(serverssl)))
+        goto err;
+
+    gen_sid_expected_ssl = serverssl;
+    if (!TEST_true(SSL_set_ex_data(serverssl, gen_sid_idx,
+            (void *)gen_sid_marker))
+        || !TEST_true(SSL_set_generate_session_id(serverssl,
+            generate_session_id_user_ssl)))
+        goto err;
+
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0)))
+        goto err;
+
+    /*
+     * Ordinary TLS 1.3 tickets are constructed after the handshake finishes.
+     * Drive both endpoints until the callback has run; do not request an
+     * extra ticket.
+     */
+    for (i = 0; i < 20 && gen_sid_called == 0; i++) {
+        if (!TEST_true(SSL_handle_events(serverssl))
+            || !TEST_true(SSL_handle_events(clientssl)))
+            goto err;
+    }
+
+    if (!TEST_int_gt(gen_sid_called, 0) || !TEST_int_eq(gen_sid_arg_error, 0))
+        goto err;
+
+    testresult = 1;
+err:
+    gen_sid_expected_ssl = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int test_domain_flags(void)
 {
     int testresult = 0;
@@ -4059,6 +4164,7 @@ int setup_tests(void)
     ADD_TEST(test_get_shutdown);
     ADD_ALL_TESTS(test_tparam, OSSL_NELEM(tparam_tests));
     ADD_TEST(test_session_cb);
+    ADD_TEST(test_generate_session_id_user_ssl);
     ADD_TEST(test_domain_flags);
     ADD_TEST(test_early_ticks);
     ADD_TEST(test_ssl_new_from_listener);
