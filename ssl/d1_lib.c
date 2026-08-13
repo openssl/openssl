@@ -338,6 +338,7 @@ int dtls1_clear(SSL *ssl)
         OSSL_TIME created_at = s->d1->created_at;
         unsigned int req_blocking_mode = s->d1->req_blocking_mode;
         unsigned int force_nonblocking = s->d1->force_nonblocking;
+        unsigned int being_driven = s->d1->being_driven;
 #endif
 
         mtu = s->d1->mtu;
@@ -374,6 +375,13 @@ int dtls1_clear(SSL *ssl)
          * there and stall the listener.
          */
         s->d1->force_nonblocking = force_nonblocking;
+        /*
+         * being_driven says the listener is driving this connection's
+         * handshake, and is what keeps a concurrent tick from collecting it a
+         * second time. Losing it would let two threads into the state machine
+         * for one connection.
+         */
+        s->d1->being_driven = being_driven;
         s->d1->created_at = created_at;
 #endif
 
