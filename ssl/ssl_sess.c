@@ -328,9 +328,15 @@ unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 static int def_generate_session_id(SSL *ssl, unsigned char *id,
     unsigned int *id_len)
 {
+    SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL(ssl);
     unsigned int retry = 0;
+
+    if (!ossl_assert(s != NULL))
+        return 0;
+
     do {
-        if (RAND_bytes_ex(ssl->ctx->libctx, id, *id_len, 0) <= 0)
+        if (RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx, id, *id_len, 0)
+            <= 0)
             return 0;
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
         if (retry > 0) {
@@ -356,7 +362,7 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
 {
     unsigned int tmp;
     GEN_SESSION_CB cb = def_generate_session_id;
-    SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *ssl = SSL_CONNECTION_GET_USER_SSL(s);
 
     switch (s->version) {
     case TLS1_VERSION:
@@ -394,7 +400,7 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     }
 
     /* Choose which callback will set the session ID */
-    if (!CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_SSL(s)->lock)) {
+    if (!CRYPTO_THREAD_read_lock(ssl->lock)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
