@@ -175,9 +175,13 @@ connections. Each accepted connection has completed cookie validation (if requir
 but still requires L<SSL_do_handshake(3)> or L<SSL_accept(3)> to complete the TLS
 handshake before application data can be exchanged.
 
-Pending connections that do not complete their handshake within the timeout period
-(default 30 seconds) are automatically cleaned up. Use
-L<SSL_listener_set_pending_timeout(3)> to adjust this timeout.
+The following tunables are available via L<SSL_get_value_uint(3)> /
+L<SSL_set_value_uint(3)>: B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>
+(pending-connection cap, default 256), B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>
+(pending connection timeout in milliseconds, default 30000; pending connections
+that do not complete their handshake within this period are automatically cleaned
+up), and B<SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE> (maximum received datagram size
+in bytes, default 2000).
 
 See L<SSL_new_listener(3)> for complete API documentation.
 
