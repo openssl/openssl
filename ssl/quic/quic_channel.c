@@ -142,6 +142,10 @@ static QLOG *ch_get_qlog_cb(void *arg)
 
 #define DEFAULT_STREAM_RXFC_MAX_WND_MUL 12
 
+/* Reassembly frame cap: window / STREAM_FRAME_MIN_AVG_LEN, floored. */
+#define STREAM_FRAME_MIN_AVG_LEN 384
+#define SFRAME_LIST_MAX_FRAMES_FLOOR 1024
+
 static int ch_init(QUIC_CHANNEL *ch)
 {
     OSSL_QUIC_TX_PACKETISER_ARGS txp_args = { 0 };
@@ -309,7 +313,8 @@ static int ch_init(QUIC_CHANNEL *ch)
     }
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0,
+            SFRAME_LIST_MAX_FRAMES_FLOOR);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
@@ -3837,9 +3842,26 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
         if ((qs->sstream = ossl_quic_sstream_new(INIT_APP_BUF_LEN)) == NULL)
             goto err;
 
-    if (can_recv)
-        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0)) == NULL)
+    if (!can_recv)
+        rxfc_wnd = 0;
+    else if (is_uni)
+        rxfc_wnd = ch->tx_init_max_stream_data_uni;
+    else if (local_init)
+        rxfc_wnd = ch->tx_init_max_stream_data_bidi_local;
+    else
+        rxfc_wnd = ch->tx_init_max_stream_data_bidi_remote;
+
+    if (can_recv) {
+        size_t max_frames = (size_t)(DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd
+            / STREAM_FRAME_MIN_AVG_LEN);
+
+        if (max_frames < SFRAME_LIST_MAX_FRAMES_FLOOR)
+            max_frames = SFRAME_LIST_MAX_FRAMES_FLOOR;
+        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, 0,
+                 max_frames))
+            == NULL)
             goto err;
+    }
 
     /* TXFC */
     if (!ossl_quic_txfc_init(&qs->txfc, &ch->conn_txfc))
@@ -3866,15 +3888,6 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
     }
 
     /* RXFC */
-    if (!can_recv)
-        rxfc_wnd = 0;
-    else if (is_uni)
-        rxfc_wnd = ch->tx_init_max_stream_data_uni;
-    else if (local_init)
-        rxfc_wnd = ch->tx_init_max_stream_data_bidi_local;
-    else
-        rxfc_wnd = ch->tx_init_max_stream_data_bidi_remote;
-
     if (!ossl_quic_rxfc_init(&qs->rxfc, &ch->conn_rxfc,
             rxfc_wnd,
             DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd,

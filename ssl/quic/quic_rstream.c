@@ -22,7 +22,7 @@ struct quic_rstream_st {
 };
 
 QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
-    OSSL_STATM *statm, size_t rbuf_size)
+    OSSL_STATM *statm, size_t rbuf_size, size_t max_frames)
 {
     QUIC_RSTREAM *ret = OPENSSL_zalloc(sizeof(*ret));
 
@@ -36,6 +36,7 @@ QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
     }
 
     ossl_sframe_list_init(&ret->fl);
+    ret->fl.max_frames = max_frames;
     ret->rxfc = rxfc;
     ret->statm = statm;
     return ret;
