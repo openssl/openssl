@@ -713,14 +713,20 @@ static int test_dtls_blocking_read(int idx)
     if (!TEST_true(SSL_set_blocking_mode(listener, 1)))
         goto err;
 
+    /*
+     * As in test_dtls_blocking_accept, create the client's socket before the
+     * thread which will park in the blocking accept, because nothing can
+     * release that thread except a connection arriving. Nothing is sent until
+     * SSL_connect() below, so the accept still waits.
+     */
+    if (!TEST_true(create_client(cctx, server_addr, &client, &client_fd)))
+        goto err;
+
     read_args.listener = listener;
     read_args.nonblocking_handshake = idx;
     read_args.thread = ossl_crypto_thread_native_start(blocking_read_thread,
         &read_args, 1);
     if (!TEST_ptr(read_args.thread))
-        goto err;
-
-    if (!TEST_true(create_client(cctx, server_addr, &client, &client_fd)))
         goto err;
 
     /* Drive the client's handshake to completion. */
