@@ -2264,6 +2264,19 @@ int ssl_choose_server_version(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello,
             if (s->ext.ech.success == 1 && best_vers != TLS1_3_VERSION)
                 return SSL_R_UNSUPPORTED_PROTOCOL;
 #endif
+            /*-
+             * RFC 9846 Section 4.2.2 requires a server selecting TLS
+             * 1.3 to abort the handshake with a protocol_version
+             * alert if the ClientHello carries a maximum
+             * legacy_version other than 0x0303.  RFC 8446 placed no
+             * such requirement on the server.  It is not possible
+             * with an OpenSSL client to send a TLS 1.3 client hello
+             * with any other value, even if TLS 1.3 is supported but
+             * not TLS 1.2.
+             */
+            if (best_vers == TLS1_3_VERSION && client_version != TLS1_2_VERSION)
+                return SSL_R_BAD_LEGACY_VERSION;
+
             if (s->hello_retry_request != SSL_HRR_NONE) {
                 /*
                  * This is after a HelloRetryRequest so we better check that we
