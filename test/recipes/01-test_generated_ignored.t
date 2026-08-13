@@ -15,6 +15,7 @@ use IPC::Cmd;
 use OpenSSL::Test qw(:DEFAULT bldtop_dir srctop_dir);
 
 use constant MAX_REPORTED => 10;    # Longer lists are truncated
+use constant CANARY => 'configdata.pm';    # Always present, always ignored
 
 BEGIN {
     setup("test_generated_ignored");
@@ -35,6 +36,25 @@ plan skip_all => "This test requires git"
 # directory in an ordinary clone and a file in a linked worktree.
 plan skip_all => "This test requires a git checkout"
     unless -e catfile(srctop_dir(), '.git');
+# The targets are judged by git's answer to an ignore query, so a query
+# whose answer is known is made first.  configdata.pm is covered by the
+# committed .gitignore, and this recipe has read it out of the build tree
+# already.  The query goes through ignore_faults(), the same path the
+# targets take, and so covers running git, parsing what it prints, and
+# finding the matching rule's source tracked.  Only an ignored verdict for
+# it makes the verdicts on the targets worth anything; short of that the
+# recipe skips.
+my %canary_fault = eval { ignore_faults(CANARY) };
+
+if ($@) {
+    my $reason = $@;
+
+    chomp $reason;
+    plan skip_all => "git cannot answer ignore queries: $reason";
+}
+
+plan skip_all => "git does not report " . CANARY . " as ignored"
+    if %canary_fault;
 
 # The targets are native paths relative to the build tree; git speaks only
 # in forward slashes.  splitdir() knows the local separator, so splitting
@@ -120,9 +140,11 @@ sub ignore_faults {
 
 # Run a git subcommand in the source tree and return its standard output as
 # a list of lines.  Both subcommands used here report their answer entirely
-# on stdout and set their exit status only to say whether the answer was
-# empty, so it is not consulted.  core.quotePath is off so that paths come
-# back as they were passed in.
+# on stdout; git's exit status adds only whether that answer was empty,
+# 1 meaning nothing matched, which is an answer and not a failure.  Above
+# that git is declining to answer -- 129 with a usage message when it is
+# too old for the query, 128 for a repository it will not open -- and that
+# dies here rather than being read as an empty answer.
 sub git_run {
     my (@args) = @_;
 
@@ -131,6 +153,8 @@ sub git_run {
         or die "Failed to run git @args: $!";
     my @lines = map { s|\R$||; $_ } <$pipe>;
     close $pipe;
+    die "git @args killed by signal " . ($? & 127) . "\n" if $? & 127;
+    die "git @args exited with status " . ($? >> 8) . "\n" if ($? >> 8) > 1;
     return @lines;
 }
 
