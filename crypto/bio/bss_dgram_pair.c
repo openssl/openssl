@@ -875,7 +875,7 @@ static long dgram_pair_ctrl(BIO *bio, int cmd, long num, void *ptr)
         ret = (long)dgram_pair_ctrl_get_effective_caps(bio);
         break;
 
-    case BIO_CTRL_DGRAM_SET_PCAP_FILE:
+    case BIO_CTRL_DGRAM_PAIR_SET_PCAP_FILE:
         ret = dgram_pair_ctrl_set_pcap_file(bio, ptr);
         break;
 
@@ -1297,14 +1297,14 @@ static void dgram_pcap(struct bio_dgram_pair_st *b, const char *buf, size_t sz)
     now = ossl_time_now();
 
     pcap_hdr.pcap_secs = ossl_time2seconds(now);
-    pcap_hdr.pcap_usecs = (uint32_t)(ossl_time2us(now) % 1000000;
+    pcap_hdr.pcap_usecs = (uint32_t)(ossl_time2us(now)) % 1000000;
     pcap_hdr.pcap_plen = (uint32_t)(sz + sizeof(ip_hdr) + sizeof(udp_hdr));
     pcap_hdr.pcap_olen = pcap_hdr.pcap_plen;
 
     ip_hdr.ip_hv = 0x45;
     ip_hdr.ip_tos = 0;
     ip_hdr.ip_len = htons(len);
-    RAND_bytes(&ip_hdr.ip_id, 2);
+    RAND_bytes((unsigned char *)&ip_hdr.ip_id, 2);
     ip_hdr.ip_frag = 0x40; /* don't fragment */
     ip_hdr.ip_foff = 0;
     ip_hdr.ip_ttl = 64;
