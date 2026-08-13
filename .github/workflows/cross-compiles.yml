@@ -101,6 +101,10 @@ jobs:
             target: linux-ppc64le
           }, {
             arch: riscv64-linux-gnu,
+            # Pin the vector spec version, otherwise qemu-user emits a
+            # "vector version is not specified" warning on stderr at every
+            # process start, which upsets tests that parse or check stderr.
+            qemucpu: "rv64,v=true,vext_spec=v1.0",
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64
           }, {
