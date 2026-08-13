@@ -520,14 +520,22 @@ static int test_dtls_blocking_accept(void)
     if (!TEST_true(SSL_set_blocking_mode(listener, 1)))
         goto err;
 
-    /* Block a thread in accept before any client exists. */
+    /*
+     * Create the client's socket first, but do not connect with it yet. There
+     * is no way to cancel a blocking SSL_accept_connection(), so a thread
+     * parked in one is released only by a connection arriving - which means
+     * nothing between starting the thread and the exchange completing may bail
+     * out, or the join below would wait for ever. Anything which can fail is
+     * therefore done up front. The accept still has to wait, since no datagram
+     * is sent until SSL_connect() below.
+     */
+    if (!TEST_true(create_client(cctx, server_addr, &client, &client_fd)))
+        goto err;
+
     accept_args.listener = listener;
     accept_args.thread = ossl_crypto_thread_native_start(blocking_accept_thread,
         &accept_args, 1);
     if (!TEST_ptr(accept_args.thread))
-        goto err;
-
-    if (!TEST_true(create_client(cctx, server_addr, &client, &client_fd)))
         goto err;
 
     /*
