@@ -344,6 +344,12 @@ OpenSSL Releases
 
    *Dimitri John Ledkov*
 
+ * RFC 9925 Unsigned X.509 certificates are now accepted as trusted for
+   X.509 certificate chain verification, without need to specify
+   partial_chain option. Added OID for alg-unsigned, as well as unit test.
+
+   *Dimitri John Ledkov*
+
 OpenSSL 4.0
 -----------
 
