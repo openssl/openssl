@@ -209,6 +209,30 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
  */
 int OSSL_FN_consttime_swap(int condition, OSSL_FN *a, OSSL_FN *b);
 
+/*-
+ * Sentinel return value for the OSSL_FN_*_ctx_size() family.
+ *
+ * Those functions return the OSSL_FN_CTX arena payload size (in bytes) that an
+ * operation needs, and 0 on error (overflow or invalid input).  0 is therefore
+ * not usable to mean "no context is needed": that would be indistinguishable
+ * from an error, and would also make the caller pass 0 to OSSL_FN_CTX_new_size()
+ * which is itself an error.
+ *
+ * OSSL_FN_CTX_SIZE_NONE lets a _ctx_size() report "this operation needs no
+ * context" distinctly, so the caller can skip the allocation and pass a NULL
+ * OSSL_FN_CTX.  Its value can never be a genuine requirement: the smallest real
+ * arena holds at least one frame (tens of bytes), so 1 is unreachable as a true
+ * size.  An operation whose _ctx_size() returns OSSL_FN_CTX_SIZE_NONE must
+ * accept a NULL context.
+ *
+ * Callers therefore read a _ctx_size() result as: 0 -> error;
+ * OSSL_FN_CTX_SIZE_NONE -> no context needed (pass NULL); otherwise the arena
+ * size to allocate.  When taking a max over several operations, treat
+ * OSSL_FN_CTX_SIZE_NONE as 0 for the max, then map a resulting 0 back to
+ * OSSL_FN_CTX_SIZE_NONE.
+ */
+#define OSSL_FN_CTX_SIZE_NONE ((size_t)1)
+
 /**
  * Calculate the arena payload size for an OSSL_FN_CTX.
  *
