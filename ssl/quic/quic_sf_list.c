@@ -15,15 +15,29 @@ struct stream_frame_st {
     struct stream_frame_st *prev, *next;
     UINT_RANGE range;
     OSSL_QRX_PKT *pkt;
-    const unsigned char *data;
+    union {
+        const unsigned char *u_data_r;
+        unsigned char *u_data_w;
+    } u;
 };
+
+#define data_r u.u_data_r
+#define data_w u.u_data_w
+
+#define SFRAME_SZ(_sf) ((_sf)->range.end - (_sf)->range.start)
+#define SFRAME_OVERHEAD(_pkt, _sf) ((_pkt)->datagram_len - SFRAME_SZ(_sf))
 
 static void stream_frame_free(SFRAME_LIST *fl, STREAM_FRAME *sf)
 {
-    if (fl->cleanse && sf->data != NULL)
-        OPENSSL_cleanse((unsigned char *)sf->data,
-            (size_t)(sf->range.end - sf->range.start));
-    ossl_qrx_pkt_release(sf->pkt);
+    if (fl->cleanse && sf->data_w != NULL)
+        OPENSSL_cleanse(sf->data_w, (size_t)(sf->range.end - sf->range.start));
+    if (sf->pkt != NULL) {
+        fl->pkt_buf_overhead_sz -= SFRAME_OVERHEAD(sf->pkt, sf);
+        ossl_qrx_pkt_release(sf->pkt);
+    } else {
+        OPENSSL_free(sf->data_w);
+    }
+
     OPENSSL_free(sf);
 }
 
@@ -40,7 +54,30 @@ static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT *pkt,
 
     sf->range = *range;
     sf->pkt = pkt;
-    sf->data = data;
+    sf->data_r = data;
+
+    return sf;
+}
+
+static STREAM_FRAME *stream_frame_offload(SFRAME_LIST *fl, STREAM_FRAME *sf)
+{
+    unsigned char *buf;
+
+    if (sf->data_r != NULL) {
+        buf = OPENSSL_memdup(sf->data_r, SFRAME_SZ(sf));
+        if (buf == NULL) {
+            stream_frame_free(fl, sf);
+            return NULL;
+        }
+        if (fl->cleanse)
+            OPENSSL_cleanse(sf->data_w, SFRAME_SZ(sf));
+
+        sf->data_w = buf;
+    }
+
+    fl->pkt_buf_overhead_sz -= SFRAME_OVERHEAD(sf->pkt, sf);
+    ossl_qrx_pkt_release(sf->pkt);
+    sf->pkt = NULL;
 
     return sf;
 }
@@ -68,6 +105,14 @@ static int append_frame(SFRAME_LIST *fl, UINT_RANGE *range,
 
     if ((new_frame = stream_frame_new(range, pkt, data)) == NULL)
         return 0;
+
+    fl->pkt_buf_overhead_sz += SFRAME_OVERHEAD(pkt, new_frame);
+    if (fl->pkt_buf_overhead_sz >= 64536) {
+        new_frame = stream_frame_offload(fl, new_frame);
+        if (new_frame == NULL)
+            return 0;
+    }
+
     new_frame->prev = fl->tail;
     if (fl->tail != NULL)
         fl->tail->next = new_frame;
@@ -100,6 +145,7 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
             return 0;
 
         ++fl->num_frames;
+        fl->pkt_buf_overhead_sz += SFRAME_OVERHEAD(pkt, fl->head);
         goto end;
     }
 
@@ -132,6 +178,12 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
     new_frame = stream_frame_new(range, pkt, data);
     if (new_frame == NULL)
         return 0;
+    fl->pkt_buf_overhead_sz += SFRAME_OVERHEAD(pkt, new_frame);
+    if (fl->pkt_buf_overhead_sz >= 64536) {
+        new_frame = stream_frame_offload(fl, new_frame);
+        if (new_frame == NULL)
+            return 0;
+    }
 
     for (next_frame = sf;
         next_frame != NULL && next_frame->range.end <= range->end;) {
@@ -206,8 +258,8 @@ int ossl_sframe_list_peek(const SFRAME_LIST *fl, void **iter,
     }
 
     range->end = sf->range.end;
-    if (sf->data != NULL)
-        *data = sf->data + (start - sf->range.start);
+    if (sf->data_r != NULL)
+        *data = sf->data_r + (start - sf->range.start);
     else
         *data = NULL;
     *fin = sf->next == NULL ? fl->fin : 0;
@@ -284,7 +336,7 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
 
     for (; sf != NULL; sf = sf->next) {
         size_t len;
-        const unsigned char *data = sf->data;
+        const unsigned char *data = sf->data_r;
 
         if (limit < sf->range.start)
             limit = sf->range.start;
@@ -299,13 +351,16 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
                 return 0;
 
             if (fl->cleanse)
-                OPENSSL_cleanse((unsigned char *)sf->data,
+                OPENSSL_cleanse(sf->data_w,
                     (size_t)(sf->range.end - sf->range.start));
 
             /* release the packet */
-            sf->data = NULL;
-            ossl_qrx_pkt_release(sf->pkt);
-            sf->pkt = NULL;
+            sf->data_r = NULL;
+            if (sf->pkt != NULL) {
+                fl->pkt_buf_overhead_sz -= SFRAME_OVERHEAD(sf->pkt, sf);
+                ossl_qrx_pkt_release(sf->pkt);
+                sf->pkt = NULL;
+            }
         }
 
         limit = sf->range.end;

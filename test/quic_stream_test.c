@@ -37,6 +37,13 @@ static const unsigned char data_1[] = {
     0x5a, 0x5b, 0x5c, 0x5d, 0x5e, 0x5f
 };
 
+/*
+ * HACK! the reference counter to pkt is part of RXE structure.
+ * the structure is private. It is currently 464 bytes long on
+ * amd64. Using 512 byte buffer should be enough.
+ */
+static unsigned char mock_pkt[512];
+
 static int test_sstream_simple(void)
 {
     int testresult = 0;
@@ -375,6 +382,7 @@ static const unsigned char simple_data[] = "Hello world! And thank you for all t
 static int test_rstream_simple(int idx)
 {
     QUIC_RSTREAM *rstream = NULL;
+    OSSL_QRX_PKT *pkt;
     int ret = 0;
     unsigned char buf[sizeof(simple_data)];
     size_t readbytes = 0, avail = 0;
@@ -386,12 +394,19 @@ static int test_rstream_simple(int idx)
         = use_sc ? test_single_copy_read
                  : ossl_quic_rstream_read;
 
+    /*
+     * it sets reference counter to value large enough.
+     * should be enough to keep test alive.
+     */
+    memset(&mock_pkt, 0x1f, sizeof(mock_pkt));
+    pkt = (OSSL_QRX_PKT *)&mock_pkt;
+
     if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
         goto err;
 
-    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 5,
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, 5,
             simple_data + 5, 10, 0))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt,
             sizeof(simple_data) - 1,
             simple_data + sizeof(simple_data) - 1,
             1, 1))
@@ -399,11 +414,11 @@ static int test_rstream_simple(int idx)
             &readbytes, &fin))
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 0)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt,
             sizeof(simple_data) - 10,
             simple_data + sizeof(simple_data) - 10,
             10, 1))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, 0,
             simple_data, 1, 0))
         || !TEST_true(ossl_quic_rstream_peek(rstream, buf, sizeof(buf),
             &readbytes, &fin))
@@ -415,10 +430,10 @@ static int test_rstream_simple(int idx)
             && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
                 sizeof(simple_data))))
         || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt,
             0, simple_data,
             10, 0))
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt,
             sizeof(simple_data),
             NULL,
             0, 1))
@@ -427,7 +442,7 @@ static int test_rstream_simple(int idx)
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 15)
         || !TEST_mem_eq(buf, 15, simple_data, 15)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt,
             15,
             simple_data + 15,
             sizeof(simple_data) - 15, 1))
@@ -442,7 +457,7 @@ static int test_rstream_simple(int idx)
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 12)
         || !TEST_mem_eq(buf + 2, 12, simple_data + 2, 12)
-        || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+        || !TEST_true(ossl_quic_rstream_queue_data(rstream, pkt,
             sizeof(simple_data),
             NULL,
             0, 1))
@@ -476,12 +491,20 @@ static int test_rstream_random(int idx)
 {
     unsigned char *bulk_data = NULL;
     unsigned char *read_buf = NULL;
+    OSSL_QRX_PKT *pkt;
     QUIC_RSTREAM *rstream = NULL;
     size_t i, read_off, queued_min, queued_max;
     const size_t data_size = 10000;
     int r, s, fin = 0, fin_set = 0;
     int ret = 0;
     size_t readbytes = 0;
+
+    /*
+     * it sets reference counter to value large enough.
+     * should be enough to keep test alive.
+     */
+    memset(&mock_pkt, 0x1f, sizeof(mock_pkt));
+    pkt = (OSSL_QRX_PKT *)&mock_pkt;
 
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
@@ -506,7 +529,7 @@ static int test_rstream_random(int idx)
             if (off <= queued_min && off + size > queued_min)
                 queued_min = off + size;
 
-            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, off,
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off,
                     bulk_data + off,
                     size, 0)))
                 goto err;
@@ -526,7 +549,7 @@ static int test_rstream_random(int idx)
             if (off <= queued_min && off + size > queued_min)
                 queued_min = off + size;
 
-            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, off,
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off,
                     bulk_data + off,
                     size, 0)))
                 goto err;
@@ -558,7 +581,7 @@ static int test_rstream_random(int idx)
         if (!fin_set && queued_max >= data_size - test_random() % 200) {
             fin_set = 1;
             /* Queue empty fin frame */
-            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, data_size,
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, data_size,
                     NULL, 0, 1)))
                 goto err;
         }

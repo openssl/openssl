@@ -51,6 +51,7 @@ typedef struct sframe_list_st {
     int head_locked;
     /* Cleanse data on release? */
     int cleanse;
+    size_t pkt_buf_overhead_sz;
 } SFRAME_LIST;
 
 /*
