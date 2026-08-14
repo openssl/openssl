@@ -182,6 +182,9 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
     FILE **fpp;
     char p[4];
     int st;
+#if defined(OPENSSL_SYS_WINDOWS)
+    int oldErr;
+#endif
 
     switch (cmd) {
     case BIO_C_FILE_SEEK:
@@ -198,6 +201,10 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
          * so we map the 0:non-0 return value here to 0:1 with a
          * double negation
          */
+#if defined(OPENSSL_SYS_WINDOWS)
+        oldErr = errno;
+        errno = 0;
+#endif
         if (b->flags & BIO_FLAGS_UPLINK_INTERNAL)
             ret = !!(long)UP_feof(fp);
         else
@@ -211,6 +218,8 @@ static long file_ctrl(BIO *b, int cmd, long num, void *ptr)
          */
         if (ret == 0 && errno == EINVAL)
             ret = -EINVAL;
+        else if (errno == 0)
+            errno = oldErr;
 #endif
         break;
     case BIO_C_FILE_TELL:
