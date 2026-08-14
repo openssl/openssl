@@ -711,7 +711,6 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_outer_extensions,
     TLSEXT_IDX_grease1,
     TLSEXT_IDX_grease2,
-    TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
     TLSEXT_IDX_num_builtins

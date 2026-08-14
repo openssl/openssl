@@ -1214,99 +1214,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-#define F5_WORKAROUND_MIN_MSG_LEN 0xff
-#define F5_WORKAROUND_MAX_MSG_LEN 0x200
-
-/*
- * PSK pre binder overhead =
- *  2 bytes for TLSEXT_TYPE_psk
- *  2 bytes for extension length
- *  2 bytes for identities list length
- *  2 bytes for identity length
- *  4 bytes for obfuscated_ticket_age
- *  2 bytes for binder list length
- *  1 byte for binder length
- * The above excludes the number of bytes for the identity itself and the
- * subsequent binder bytes
- */
-#define PSK_PRE_BINDER_OVERHEAD (2 + 2 + 2 + 2 + 4 + 2 + 1)
-
-EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
-    unsigned int context, X509 *x,
-    size_t chainidx)
-{
-    unsigned char *padbytes;
-    size_t hlen;
-
-    if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
-        return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt);
-#endif
-
-    /*
-     * Add padding to workaround bugs in F5 terminators. See RFC7685.
-     * This code calculates the length of all extensions added so far but
-     * excludes the PSK extension (because that MUST be written last). Therefore
-     * this extension MUST always appear second to last.
-     */
-    if (!WPACKET_get_total_written(pkt, &hlen)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    /*
-     * If we're going to send a PSK then that will be written out after this
-     * extension, so we need to calculate how long it is going to be.
-     */
-    if (s->session->ssl_version == TLS1_3_VERSION
-        && s->session->ext.ticklen != 0
-        && s->session->cipher != NULL) {
-        const EVP_MD *md = ssl_md(SSL_CONNECTION_GET_CTX(s),
-            s->session->cipher->algorithm2);
-
-        if (md != NULL) {
-            /*
-             * Add the fixed PSK overhead, the identity length and the binder
-             * length.
-             */
-            int md_size = EVP_MD_get_size(md);
-
-            if (md_size <= 0) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-            hlen += PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                + md_size;
-        }
-    }
-
-    if (hlen > F5_WORKAROUND_MIN_MSG_LEN && hlen < F5_WORKAROUND_MAX_MSG_LEN) {
-        /* Calculate the amount of padding we need to add */
-        hlen = F5_WORKAROUND_MAX_MSG_LEN - hlen;
-
-        /*
-         * Take off the size of extension header itself (2 bytes for type and
-         * 2 bytes for length bytes), but ensure that the extension is at least
-         * 1 byte long so as not to have an empty extension last (WebSphere 7.x,
-         * 8.x are intolerant of that condition)
-         */
-        if (hlen > 4)
-            hlen -= 4;
-        else
-            hlen = 1;
-
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
-            || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        memset(padbytes, 0, hlen);
-    }
-
-    return EXT_RETURN_SENT;
-}
-
 /*
  * Construct the pre_shared_key extension
  */
@@ -1325,12 +1232,6 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     OSSL_TIME t;
 
     s->ext.tick_identity = 0;
-
-    /*
-     * Note: At this stage of the code we only support adding a single
-     * resumption PSK. If we add support for multiple PSKs then the length
-     * calculations in the padding extension will need to be adjusted.
-     */
 
     /*
      * If this is an incompatible or new session then we have nothing to resume

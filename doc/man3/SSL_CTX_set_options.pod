@@ -81,12 +81,6 @@ using other ciphers.
 Don't prefer ECDHE-ECDSA ciphers when the client appears to be Safari on OS X.
 OS X 10.8..10.8.3 has broken support for ECDHE-ECDSA ciphers.
 
-=item SSL_OP_TLSEXT_PADDING
-
-Adds a padding extension to ensure the ClientHello size is never between
-256 and 511 bytes in length. This is needed as a workaround for some
-implementations.
-
 =item SSL_OP_ALL
 
 All of the above bug workarounds.
@@ -467,6 +461,8 @@ retained for compatibility purposes:
 
 =item SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG
 
+=item SSL_OP_TLSEXT_PADDING
+
 =back
 
 =head1 SECURE RENEGOTIATION
@@ -609,6 +605,12 @@ whether these macros are defined or not.
 As of OpenSSL 3.6, use of the B<SSL_OP_CIPHER_SERVER_PREFERENCE> constant
 is discouraged and its semantics became available using the more aptly named
 B<SSL_OP_SERVER_PREFERENCE> constant.
+
+As of OpenSSL 4.1, B<SSL_OP_TLSEXT_PADDING> has no effect. It previously
+added a padding extension (RFC 7685) to the ClientHello to work around a
+bug in certain F5 middleboxes; the fix shipped long ago and the affected
+hardware is long out of support, so nothing should still be running the
+problematic version.
 
 =head1 COPYRIGHT
 
