@@ -45,6 +45,16 @@ OpenSSL Releases
 
    *Daniel Kubec*
 
+ * TLS clients no longer send the TLS padding extension (RFC 7685). It was
+   only ever sent when `SSL_OP_TLSEXT_PADDING` was set, to work around a
+   ClientHello-length bug in F5 middleboxes; the fix shipped long ago and
+   the affected hardware is long out of support, so nothing should still
+   be running the problematic version.
+   `SSL_OP_TLSEXT_PADDING` is now a no-op retained for compatibility, and
+   is no longer included in `SSL_OP_ALL`.
+
+   *Bob Beck*
+
  * Repeated fields in the `basicConstraints`, `basicAttConstraints`,
    and `policyConstraints` X.509v3 extension configurations are now rejected
    instead of silently using the last value.
