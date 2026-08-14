@@ -103,6 +103,88 @@ static int test_x509_tbs_cache(void)
     return ret;
 }
 
+static X509 *make_invalid_cert(int num_exts)
+{
+    const unsigned char *p = certdata;
+    BASIC_CONSTRAINTS *bc = NULL;
+    X509_EXTENSION *ext = NULL;
+    X509 *x = NULL;
+    int i;
+
+    if (!TEST_ptr(x = d2i_X509(NULL, &p, sizeof(certdata)))
+        || !TEST_ptr(bc = BASIC_CONSTRAINTS_new())
+        || !TEST_ptr(ext = X509V3_EXT_i2d(NID_basic_constraints, 0, bc)))
+        goto err;
+    for (i = 0; i < num_exts; i++) {
+        if (!TEST_true(X509_add_ext(x, ext, -1)))
+            goto err;
+    }
+    BASIC_CONSTRAINTS_free(bc);
+    X509_EXTENSION_free(ext);
+    return x;
+
+err:
+    BASIC_CONSTRAINTS_free(bc);
+    X509_EXTENSION_free(ext);
+    X509_free(x);
+    return NULL;
+}
+
+static int test_x509_cmp(void)
+{
+    const unsigned char *p = certdata;
+    unsigned char *a_der = NULL, *b_der = NULL;
+    X509 *valid = NULL, *empty = NULL;
+    X509 *invalid_a = NULL, *invalid_b = NULL, *invalid_dup = NULL;
+    int a_len, b_len, der_cmp;
+    int ret = 0;
+
+    if (!TEST_ptr(valid = d2i_X509(NULL, &p, sizeof(certdata)))
+        || !TEST_ptr(empty = X509_new())
+        || !TEST_ptr(invalid_a = make_invalid_cert(2))
+        || !TEST_ptr(invalid_b = make_invalid_cert(3))
+        || !TEST_ptr(invalid_dup = X509_dup(invalid_a))
+        || !TEST_int_eq(X509_check_purpose(valid, -1, 0), 1)
+        || !TEST_int_le(X509_check_purpose(empty, -1, 0), 0)
+        || !TEST_int_le(X509_check_purpose(invalid_a, -1, 0), 0)
+        || !TEST_int_le(X509_check_purpose(invalid_b, -1, 0), 0)
+        || !TEST_int_le(X509_check_purpose(invalid_dup, -1, 0), 0))
+        goto err;
+
+    /* Invalid certificates are ordered after valid certificates. */
+    if (!TEST_int_eq(X509_cmp(valid, empty), -1)
+        || !TEST_int_eq(X509_cmp(empty, valid), 1)
+        || !TEST_int_eq(X509_cmp(valid, invalid_a), -1)
+        || !TEST_int_eq(X509_cmp(invalid_a, valid), 1)
+        || !TEST_int_eq(X509_cmp(invalid_a, invalid_dup), 0))
+        goto err;
+
+    a_len = i2d_X509(invalid_a, &a_der);
+    b_len = i2d_X509(invalid_b, &b_der);
+    if (!TEST_int_gt(a_len, 0) || !TEST_int_gt(b_len, 0))
+        goto err;
+    if (a_len < b_len)
+        der_cmp = -1;
+    else if (a_len > b_len)
+        der_cmp = 1;
+    else {
+        der_cmp = memcmp(a_der, b_der, a_len);
+        der_cmp = der_cmp < 0 ? -1 : der_cmp > 0;
+    }
+
+    ret = TEST_int_eq(X509_cmp(invalid_a, invalid_b), der_cmp)
+        && TEST_int_eq(X509_cmp(invalid_b, invalid_a), -der_cmp);
+err:
+    OPENSSL_free(a_der);
+    OPENSSL_free(b_der);
+    X509_free(valid);
+    X509_free(empty);
+    X509_free(invalid_a);
+    X509_free(invalid_b);
+    X509_free(invalid_dup);
+    return ret;
+}
+
 static int test_x509_verify_with_new(void)
 {
     int ret;
@@ -733,6 +815,7 @@ int setup_tests(void)
     }
 
     ADD_TEST(test_x509_tbs_cache);
+    ADD_TEST(test_x509_cmp);
     ADD_TEST(test_x509_crl_tbs_cache);
     ADD_TEST(test_asn1_item_verify);
     ADD_MFAIL_NO_CHECK_TEST(test_x509_asn1_item_verify_mfail);

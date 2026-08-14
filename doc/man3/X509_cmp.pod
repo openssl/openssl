@@ -25,8 +25,12 @@ This set of functions are used to compare X509 objects, including X509
 certificates, X509 CRL objects and various values in an X509 certificate.
 
 The X509_cmp() function compares two B<X509> objects indicated by parameters
-I<a> and I<b>. The comparison is based on the B<memcmp> result of the hash
-values of two B<X509> objects and the canonical (DER) encoding values.
+I<a> and I<b>. Certificates for which L<X509_check_purpose(3)> fails while
+caching internal fields are ordered after those for which it succeeds. Two
+certificates that fail this check are compared using their complete canonical
+(DER) encodings. Otherwise, the comparison is based on the B<memcmp> result of
+the hash values of the two B<X509> objects and the canonical (DER) encoding
+values.
 
 The X509_NAME_cmp() function compares two B<X509_NAME> objects indicated by
 parameters I<a> and I<b>, any of which may be NULL.
@@ -74,7 +78,7 @@ L<i2d_X509_NAME(3)>, L<i2d_X509(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2019-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

@@ -149,14 +149,49 @@ unsigned long X509_subject_name_hash_old(const X509 *x)
  */
 int X509_cmp(const X509 *a, const X509 *b)
 {
+    unsigned char *a_der = NULL, *b_der = NULL;
+    int a_status, b_status, a_len, b_len;
     int rv = 0;
 
     if (a == b) /* for efficiency */
         return 0;
 
     /* attempt to compute cert hash */
-    (void)X509_check_purpose((X509 *)a, -1, 0);
-    (void)X509_check_purpose((X509 *)b, -1, 0);
+    a_status = X509_check_purpose(a, -1, 0);
+    b_status = X509_check_purpose(b, -1, 0);
+
+    /* Sort invalid certificates after valid ones. */
+    if (a_status <= 0 || b_status <= 0) {
+        if (a_status > 0)
+            return -1;
+        if (b_status > 0)
+            return 1;
+
+        /*
+         * Neither certificate has a dependable cached fingerprint, so fall
+         * back to comparing their complete DER encodings.
+         */
+        ERR_set_mark();
+        a_len = i2d_X509(a, &a_der);
+        b_len = i2d_X509(b, &b_der);
+        ERR_pop_to_mark();
+
+        if (a_len <= 0 || b_len <= 0) {
+            if (a_len > 0)
+                rv = -1;
+            else if (b_len > 0)
+                rv = 1;
+        } else if (a_len < b_len) {
+            rv = -1;
+        } else if (a_len > b_len) {
+            rv = 1;
+        } else {
+            rv = memcmp(a_der, b_der, a_len);
+        }
+        OPENSSL_free(a_der);
+        OPENSSL_free(b_der);
+        return rv < 0 ? -1 : rv > 0;
+    }
 
     rv = memcmp(a->sha256_hash, b->sha256_hash, SHA256_DIGEST_LENGTH);
     if (rv != 0)
