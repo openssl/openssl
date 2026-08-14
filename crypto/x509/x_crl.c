@@ -417,7 +417,7 @@ X509_CRL *X509_CRL_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_CRL *crl = NULL;
 
-    crl = (X509_CRL *)ASN1_item_new((X509_CRL_it()));
+    crl = (X509_CRL *)ASN1_item_new(ASN1_ITEM_rptr(X509_CRL));
     if (!ossl_x509_crl_set0_libctx(crl, libctx, propq)) {
         X509_CRL_free(crl);
         crl = NULL;
