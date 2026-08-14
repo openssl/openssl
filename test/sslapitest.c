@@ -14595,6 +14595,85 @@ static int test_tls13_unknown_extension(void)
     return test;
 }
 
+#define RECORD_SIZE_LIMIT_EXT_TYPE 28
+
+static int unrequested_cert_ext_add_cb(SSL *s, unsigned int ext_type,
+    unsigned int context, const unsigned char **out, size_t *outlen, X509 *x,
+    size_t chainidx, int *al, void *add_arg)
+{
+    *out = NULL;
+    *outlen = 0;
+    return 1;
+}
+
+static int force_unrequested_cert_ext_cb(SSL *s, int *al, void *arg)
+{
+    SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(s);
+    custom_ext_method *meth;
+
+    if (!TEST_ptr(sc)
+        || !TEST_ptr(meth = custom_ext_find(&sc->cert->custext,
+                         ENDPOINT_BOTH, RECORD_SIZE_LIMIT_EXT_TYPE, NULL))) {
+        *al = SSL_AD_INTERNAL_ERROR;
+        return SSL_CLIENT_HELLO_ERROR;
+    }
+
+    /* Make the server send the extension without a matching client request. */
+    meth->ext_flags |= SSL_EXT_FLAG_RECEIVED;
+    return SSL_CLIENT_HELLO_SUCCESS;
+}
+
+static void capture_alert_cb(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
+{
+    const unsigned char *alert = buf;
+
+    if (write_p == 1 && content_type == SSL3_RT_ALERT && len == 2)
+        *(unsigned int *)arg = alert[1];
+}
+
+/*
+ * Test that the client rejects an unknown extension in a TLS 1.3 server
+ * Certificate message. record_size_limit is only valid in ClientHello and
+ * EncryptedExtensions, so receiving it here must produce unsupported_extension.
+ */
+static int test_tls13_unknown_cert_extension(void)
+{
+    SSL_CTX *s = NULL, *c = NULL;
+    SSL *s_ssl = NULL, *c_ssl = NULL;
+    unsigned int alert = 0;
+    int test = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &s, &c, cert, privkey))
+        || !TEST_true(SSL_CTX_add_custom_ext(s, RECORD_SIZE_LIMIT_EXT_TYPE,
+            SSL_EXT_TLS1_3_CERTIFICATE, unrequested_cert_ext_add_cb,
+            NULL, NULL, NULL, NULL)))
+        goto end;
+
+    SSL_CTX_set_client_hello_cb(s, force_unrequested_cert_ext_cb, NULL);
+
+    if (!TEST_true(create_ssl_objects(s, c, &s_ssl, &c_ssl, NULL, NULL)))
+        goto end;
+
+    SSL_set_msg_callback(c_ssl, capture_alert_cb);
+    SSL_set_msg_callback_arg(c_ssl, &alert);
+
+    if (!TEST_false(create_ssl_connection(s_ssl, c_ssl, SSL_ERROR_SSL))
+        || !TEST_int_eq(alert, SSL_AD_UNSUPPORTED_EXTENSION))
+        goto end;
+
+    test = 1;
+
+end:
+    SSL_free(s_ssl);
+    SSL_free(c_ssl);
+    SSL_CTX_free(s);
+    SSL_CTX_free(c);
+    return test;
+}
+
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 
 static int check_version_string(SSL *s, int version)
@@ -17144,6 +17223,7 @@ int setup_tests(void)
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_tls13_unknown_extension);
+    ADD_TEST(test_tls13_unknown_cert_extension);
     ADD_TEST(test_read_ahead_key_change);
 #endif
 #if (!defined(OPENSSL_NO_TLS1_2) && !defined(OSSL_NO_USABLE_TLS1_3)) \

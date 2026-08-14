@@ -2550,7 +2550,9 @@ MSG_PROCESS_RETURN tls_process_server_certificate(SSL_CONNECTION *s,
                 SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_LENGTH);
                 goto err;
             }
-            if (!tls_collect_extensions(s, &extensions,
+            if (!tls_validate_no_unknown_extensions(s, &extensions,
+                    SSL_EXT_TLS1_3_CERTIFICATE)
+                || !tls_collect_extensions(s, &extensions,
                     SSL_EXT_TLS1_3_CERTIFICATE, &rawexts,
                     NULL, chainidx == 0)
                 || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_CERTIFICATE,
