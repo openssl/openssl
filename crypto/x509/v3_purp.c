@@ -712,11 +712,13 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
          * CA certs MUST have an SKID and non-root certs MUST have an AKID.
          */
         if (X509_check_akid(const_x, tmp_akid) == X509_V_OK
-            && check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK) {
+            && (check_sig_alg_match(X509_get0_pubkey(const_x), const_x) == X509_V_OK
+                || OBJ_obj2nid(const_x->cert_info.signature.algorithm) == NID_id_alg_unsigned)) {
             /*
-             * Assume self-signed if the signature alg matches the pkey alg and
-             * AKID is missing or matches respective fields in the same cert
-             * Not checking if any given key usage extension allows signing.
+             * Assume self-signed if the signature alg matches the pkey alg or
+             * it is RFC 9925 alg-unsigned; and AKID is missing or matches
+             * respective fields in the same cert. Not checking if any given key
+             * usage extension allows signing.
              */
             tmp_ex_flags |= EXFLAG_SS;
         }
