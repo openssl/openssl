@@ -4525,6 +4525,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
     if (SSL_CONNECTION_IS_TLS13(s)) {
         size_t i, hashlen;
         uint64_t nonce;
+        OSSL_TIME expiry;
         /* ASCII: "resumption", in hex for EBCDIC compatibility */
         static const unsigned char nonce_label[] = { 0x72, 0x65, 0x73, 0x75, 0x6D,
             0x70, 0x74, 0x69, 0x6F, 0x6E };
@@ -4585,7 +4586,20 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
         }
         s->session->master_key_length = hashlen;
 
+        /*
+         * Each ticket carries its own lifetime, restarted at issuance time.
+         * If this ticket is issued for a resumed session, cap the new
+         * lifetime by the remaining lifetime of the session we resumed from,
+         * so that resumption cannot be used to prolong a session.
+         */
+        expiry = ossl_time_add(s->session->time, s->session->timeout);
         s->session->time = ossl_time_now();
+        if (s->hit && !ossl_time_is_infinite(expiry)) {
+            OSSL_TIME remaining = ossl_time_subtract(expiry, s->session->time);
+
+            if (ossl_time_compare(remaining, s->session->timeout) < 0)
+                s->session->timeout = remaining;
+        }
         ssl_session_calculate_timeout(s->session);
         if (s->s3.alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);
