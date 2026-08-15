@@ -9,6 +9,7 @@
 
 #include <openssl/ssl.h>
 #include <openssl/hpke.h>
+#include <openssl/pem.h>
 #include "testutil.h"
 #include "helpers/ssltestlib.h"
 #include "internal/packet.h"
@@ -2025,6 +2026,112 @@ end:
     return res;
 }
 
+/*
+ * Regression test for ECHConfig vs ECHConfigList encoding confusion.
+ *
+ * OSSL_ECHSTORE_new_config() used to store a whole ECHConfigList in
+ * ee->encoded, whereas the read_pem path stores a single ECHConfig there.
+ * ossl_ech_make_enc_info() feeds ee->encoded into the HPKE info, which RFC 9849
+ * requires to be a bare ECHConfig, so a server whose key came from
+ * OSSL_ECHSTORE_new_config() derived a different HPKE key schedule from any
+ * conformant client and silently discarded every real ECH ClientHello as
+ * GREASE.
+ *
+ * The other handshake tests hand the same store to client and server, so both
+ * compute the same non-conformant info and agree.  Here the client instead
+ * consumes the published ECHConfigList via SSL_set1_ech_config_list(), the way
+ * a real client gets it from a DNS HTTPS RR, which is what exposes the bug.
+ */
+static int ech_new_config_encoding_test(void)
+{
+    int res = 0, num = -1, serverstatus;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    OSSL_ECHSTORE *es = NULL, *es2 = NULL;
+    OSSL_HPKE_SUITE hpke_suite = OSSL_HPKE_SUITE_DEFAULT;
+    BIO *pembio = NULL, *rtbio = NULL;
+    char *pemname = NULL, *pemhdr = NULL, *sinner = NULL, *souter = NULL;
+    unsigned char *pemdata = NULL, *ecl = NULL;
+    long pemlen = 0;
+    size_t ecllen = 0;
+
+    /* an ECH key generated in-process, the natural use of the public API */
+    if (!TEST_ptr(es = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_new_config(es, OSSL_ECH_RFC9849_VERSION, 0,
+            "example.com", hpke_suite)))
+        goto end;
+
+    /* publish it, and pull the ECHConfigList out as a client would get it */
+    if (!TEST_ptr(pembio = BIO_new(BIO_s_mem()))
+        || !TEST_true(OSSL_ECHSTORE_write_pem(es, 0, pembio)))
+        goto end;
+    while (PEM_read_bio(pembio, &pemname, &pemhdr, &pemdata, &pemlen) == 1) {
+        if (ecl == NULL && pemname != NULL
+            && strcmp(pemname, PEM_STRING_ECHCONFIG) == 0) {
+            if (!TEST_ptr(ecl = OPENSSL_memdup(pemdata, pemlen)))
+                goto end;
+            ecllen = (size_t)pemlen;
+        }
+        OPENSSL_free(pemname);
+        OPENSSL_free(pemhdr);
+        OPENSSL_free(pemdata);
+        pemname = NULL;
+        pemhdr = NULL;
+        pemdata = NULL;
+    }
+    if (!TEST_ptr(ecl) || !TEST_size_t_gt(ecllen, 0))
+        goto end;
+
+    /* OpenSSL must be able to read back the ECHConfigList it just emitted */
+    if (!TEST_ptr(rtbio = BIO_new(BIO_s_mem()))
+        || !TEST_true(OSSL_ECHSTORE_write_pem(es, OSSL_ECHSTORE_ALL, rtbio))
+        || !TEST_ptr(es2 = OSSL_ECHSTORE_new(libctx, propq))
+        || !TEST_true(OSSL_ECHSTORE_read_pem(es2, rtbio, OSSL_ECH_FOR_RETRY))
+        || !TEST_true(OSSL_ECHSTORE_num_entries(es2, &num))
+        || !TEST_int_eq(num, 1))
+        goto end;
+
+    /*
+     * Server uses the store straight from OSSL_ECHSTORE_new_config(); client
+     * uses the published ECHConfigList.  Before the fix the server reported
+     * GREASE and fell back to the public name.
+     */
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set1_echstore(sctx, es))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(SSL_set1_ech_config_list(clientssl, ecl, ecllen))
+        || !TEST_true(SSL_ech_set1_server_names(clientssl, "secret.example.net",
+            "example.com", 0)))
+        goto end;
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE)))
+        goto end;
+    serverstatus = SSL_ech_get1_status(serverssl, &sinner, &souter);
+    if (!TEST_int_eq(serverstatus, SSL_ECH_STATUS_SUCCESS)
+        || !TEST_ptr(sinner)
+        || !TEST_str_eq(sinner, "secret.example.net"))
+        goto end;
+    res = 1;
+end:
+    OPENSSL_free(sinner);
+    OPENSSL_free(souter);
+    OPENSSL_free(pemname);
+    OPENSSL_free(pemhdr);
+    OPENSSL_free(pemdata);
+    OPENSSL_free(ecl);
+    BIO_free(pembio);
+    BIO_free(rtbio);
+    OSSL_ECHSTORE_free(es);
+    OSSL_ECHSTORE_free(es2);
+    SSL_free(clientssl);
+    SSL_free(serverssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+    return res;
+}
+
 #endif
 
 int setup_tests(void)
@@ -2074,6 +2181,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(ech_in_out_test, 14);
     ADD_ALL_TESTS(ech_grease_test, 4);
     ADD_ALL_TESTS(test_ech_no_inner, suite_combos);
+    ADD_TEST(ech_new_config_encoding_test);
     return 1;
 err:
     return 0;
