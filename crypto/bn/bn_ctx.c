@@ -104,7 +104,7 @@ static void ctxdbg(BIO *channel, const char *text, BN_CTX *ctx)
     bnidx = 0;
     BIO_printf(channel, "   %16s : ", "");
     while (fpidx < stack->depth) {
-        while (bnidx++ < stack->indexes[fpidx])
+        while (bnidx++ < stack->indexes[fpidx].used)
             BIO_printf(channel, "    ");
         BIO_printf(channel, "^^^ ");
         bnidx++;
