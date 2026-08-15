@@ -1573,6 +1573,10 @@ static int test_hpke_oddcalls(void)
     if (!TEST_false(OSSL_HPKE_open(rctx, clear, &clearlen, NULL, 0,
             cipher, cipherlen)))
         goto end;
+    /* same as above, but with a NULL output buffer */
+    if (!TEST_false(OSSL_HPKE_open(rctx, NULL, &clearlen, NULL, 0,
+            cipher, cipherlen)))
+        goto end;
 
     erv = 1;
 end:

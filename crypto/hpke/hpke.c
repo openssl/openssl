@@ -180,9 +180,13 @@ static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
             goto err;
         }
     }
-    if (EVP_DecryptUpdate(ctx, pt, &len, ct, (int)(ctlen - taglen)) != 1) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
+    if (ctlen > taglen) {
+        if (EVP_DecryptUpdate(ctx, pt, &len, ct, (int)(ctlen - taglen)) != 1) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    } else {
+        len = 0;
     }
     *ptlen = len;
     if (!EVP_CIPHER_CTX_ctrl(ctx, EVP_CTRL_AEAD_SET_TAG,
@@ -190,11 +194,19 @@ static int hpke_aead_dec(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
-    /* Finalise decryption.  */
-    if (EVP_DecryptFinal_ex(ctx, pt + len, &len) <= 0) {
+    /*
+     * Finalise decryption, which checks the tag. Ideally, we would simply write
+     * pt + len here, but the caller may have passed a zero-length output buffer
+     * if ctlen == taglen. pt may be NULL for a zero-length buffer. However,
+     * before C2y, NULL + 0 was undefined. While this will be fixed and applied
+     * to old C versions retroactively, we support old compilers and sanitizers.
+     * https://developers.redhat.com/articles/2024/12/11/making-memcpynull-null-0-well-defined
+     */
+    if (EVP_DecryptFinal_ex(ctx, len ? pt + len : pt, &len) <= 0) {
         ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
         goto err;
     }
+    *ptlen += len;
     erv = 1;
 
 err:
@@ -263,9 +275,13 @@ static int hpke_aead_enc(OSSL_HPKE_CTX *hctx, const unsigned char *iv,
             goto err;
         }
     }
-    if (EVP_EncryptUpdate(ctx, ct, &len, pt, (int)ptlen) != 1) {
-        ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
-        goto err;
+    if (ptlen != 0) {
+        if (EVP_EncryptUpdate(ctx, ct, &len, pt, (int)ptlen) != 1) {
+            ERR_raise(ERR_LIB_CRYPTO, ERR_R_INTERNAL_ERROR);
+            goto err;
+        }
+    } else {
+        len = 0;
     }
     *ctlen = len;
     /* Finalise the encryption. */
