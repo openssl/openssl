@@ -125,6 +125,7 @@ CERT *ssl_cert_dup(CERT *cert)
 
     ret->dh_tmp_cb = cert->dh_tmp_cb;
     ret->dh_tmp_auto = cert->dh_tmp_auto;
+    ret->default_ecdh_group = cert->default_ecdh_group;
 
     for (i = 0; i < ret->ssl_pkey_num; i++) {
         CERT_PKEY *cpk = cert->pkeys + i;

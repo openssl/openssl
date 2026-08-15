@@ -182,6 +182,7 @@ sub init
         serverpid => 0,
         clientpid => 0,
         clientexit => 0,
+        abort => 0,
         execute => $execute,
         cert => $cert,
         debug => $debug,
@@ -221,6 +222,7 @@ sub clearClient
     $self->{sessionfile} = undef;
     $self->{clientpid} = 0;
     $self->{clientexit} = 0;
+    $self->{abort} = 0;
     $is_tls13 = 0;
     $ciphersuite = undef;
 
@@ -521,7 +523,7 @@ sub clientstart
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
     $self->{saw_session_ticket} = undef;
-    while($fdset->count && $ctr < 10) {
+    while($fdset->count && $ctr < 10 && !$self->abort) {
         if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
             # look for data *and* session ticket...
@@ -595,7 +597,8 @@ sub clientstart
         print "Waiting for s_server process to close: $pid...\n";
         # it's done already, just collect the exit code [and reap]...
         waitpid($pid, 0);
-        die "exit code $? from s_server process\n" if $? != 0;
+        die "exit code $? from s_server process\n"
+            if $? != 0 && !$self->abort;
     } else {
         # It's a bit counter-intuitive spot to make next connection to
         # the s_server. Rationale is that established connection works
@@ -814,6 +817,14 @@ sub serverconnects
         $self->{serverconnects} = shift;
     }
     return $self->{serverconnects};
+}
+sub abort
+{
+    my $self = shift;
+    if (@_) {
+        $self->{abort} = shift;
+    }
+    return $self->{abort};
 }
 # This is a bit ugly because the caller is responsible for keeping the records
 # in sync with the updated message list; simply updating the message list isn't
