@@ -8,6 +8,7 @@
  */
 
 #include <string.h>
+#include <openssl/crypto.h>
 #include <openssl/types.h>
 #include "testutil.h"
 #include "internal/numbers.h"
@@ -238,6 +239,16 @@ static int test_sanity_memcmp(void)
     return CRYPTO_memcmp("ab", "cd", 2);
 }
 
+static int test_sanity_cleanse(void)
+{
+    /*
+     * Cleansing a zero-length buffer, while a no-op, is legal. (NULL, 0) is a
+     * legal representation of a zero-length buffer.
+     */
+    OPENSSL_cleanse(NULL, 0);
+    return 1;
+}
+
 static const struct sleep_test_vector {
     uint64_t val;
 } sleep_test_vectors[] = { { 0 }, { 1 }, { 999 }, { 1000 } };
@@ -318,6 +329,7 @@ int setup_tests(void)
     ADD_TEST(test_sanity_unsigned_conversion);
     ADD_TEST(test_sanity_range);
     ADD_TEST(test_sanity_memcmp);
+    ADD_TEST(test_sanity_cleanse);
     ADD_ALL_TESTS(test_sanity_sleep, OSSL_NELEM(sleep_test_vectors));
     return 1;
 }
