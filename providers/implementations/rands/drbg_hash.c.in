@@ -592,12 +592,6 @@ static int drbg_hash_set_ctx_params_locked(PROV_DRBG *ctx, const struct drbg_set
     if (!drbg_fetch_digest_from_prov(p, libctx, &prov_md,
             (p->propq != NULL && p->propq->data_type == OSSL_PARAM_UTF8_STRING) ? p->propq->data : NULL)) {
         (void)ERR_pop_to_mark();
-        /*
-         * Its possible for drbg_fetch_digest_from_prov to return 0 after having set prov_md
-         * so we need to ensure we free it here
-         */
-        EVP_MD_free(prov_md);
-
         /* fall back to full implementation search */
         if (!ossl_prov_digest_load(&hash->digest, p->digest, p->propq,
                 p->engine, libctx))
