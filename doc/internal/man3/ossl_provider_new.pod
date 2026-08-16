@@ -2,8 +2,8 @@
 
 =head1 NAME
 
-ossl_provider_find, ossl_provider_new, ossl_provider_up_ref,
-ossl_provider_free, ossl_provider_set_module_path,
+ossl_provider_find, ossl_provider_new, ossl_provider_up_ref, ossl_provider_free,
+ossl_provider_set_module_path, ossl_provider_set_module_dir,
 ossl_provider_set_child, ossl_provider_get_parent,
 ossl_provider_up_ref_parent, ossl_provider_free_parent,
 ossl_provider_default_props_update, ossl_provider_get0_dispatch,
@@ -36,6 +36,7 @@ ossl_provider_get_capabilities
 
  /* Setters */
  int ossl_provider_set_module_path(OSSL_PROVIDER *prov, const char *path);
+ int ossl_provider_set_module_dir(OSSL_PROVIDER *prov, const char *mdir);
 
  /* Child Providers */
  int ossl_provider_set_child(OSSL_PROVIDER *prov,
@@ -163,6 +164,11 @@ provider module given the provider object I<prov>.
 This will be used in preference to automatically trying to figure out
 the path from the provider name and the default module directory (more
 on this in L</NOTES>).
+
+ossl_provider_set_module_dir() sets the directory prefix to use when
+the module's shared object filename is either implicit or relative.
+This overrides both the C<OPENSSL_MODULES> environment variable, and
+the and the default module directory (more on this in L</NOTES>).
 
 ossl_provider_libctx() returns the library context the given
 provider I<prov> is registered in.
@@ -330,10 +336,14 @@ platform specific standard extensions added.
 
 =item 2.
 
-If the environment variable B<OPENSSL_MODULES> is defined, assume its
-value is a directory specification and merge it with the module path.
-Otherwise, merge the value of the OpenSSL built in macro B<MODULESDIR>
-with the module path.
+If the module path is already an absolute path, it is used as-is.
+If ossl_provider_set_module_dir() was used to specify a module
+directory (perhaps via a "module_path" directive in the B<providers>
+section of the configuration, that that directory is used to locate
+the module.
+Otherwise, if the environment variable C<OPENSSL_MODULES> is defined, assume
+its value is a directory specification use that.
+As a last resort, use the default B<MODULESDIR>.
 
 =back
 
