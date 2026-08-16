@@ -474,7 +474,7 @@ sub clientstart
     $self->{client_epoch} = 0;
     $self->{client_sequence_number} = 0;
 
-    while($fdset->count && $ctr < 10) {
+    while($fdset->count && $ctr < 50) {
         if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
             # look for data *and* session ticket...
@@ -495,7 +495,7 @@ sub clientstart
             }
         }
 
-        if (!(@ready = $fdset->can_read(1))) {
+        if (!(@ready = $fdset->can_read(0.1))) {
             my $success_flag = TLSProxy::Message->success();
             my $handshake_done = $self->handshake_complete();
             my $msg_end = TLSProxy::Message->end();
@@ -563,7 +563,7 @@ sub clientstart
         }
     }
 
-    if ($ctr >= 10) {
+    if ($ctr >= 50) {
         kill(3, $self->{real_serverpid});
         print "No progress made\n";
         $success = 0;
