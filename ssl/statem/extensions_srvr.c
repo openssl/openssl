@@ -702,7 +702,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
 
         /*
          * Check if this share is in supported_groups sent from client
-         * RFC 8446 also mandates that clients send keyshares in the same
+         * RFC 9846 also mandates that clients send keyshares in the same
          * order as listed in the supported groups extension, but its not
          * required that the server check that, and some clients violate this
          * so instead of failing the connection when that occurs, log a trace
@@ -714,7 +714,7 @@ static KS_EXTRACTION_RESULT extract_keyshares(SSL_CONNECTION *s, PACKET *key_sha
         }
 
         if (key_share_pos < previous_key_share_pos)
-            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 8446 order\n", group_id);
+            OSSL_TRACE1(TLS, "key share group id %d is out of RFC 9846 order\n", group_id);
 
         previous_key_share_pos = key_share_pos;
 
@@ -1397,7 +1397,10 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
 #endif /* OPENSSL_NO_PSK */
 
         if (sess != NULL) {
-            /* We found a PSK */
+            /*
+             * We found an external (not a resumption) PSK - duplicate the
+             * session, set the session id to our own, and mark it as external.
+             */
             SSL_SESSION *sesstmp = ssl_session_dup(sess, 0);
 
             if (sesstmp == NULL) {
@@ -1413,7 +1416,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
              */
             memcpy(sess->sid_ctx, s->sid_ctx, s->sid_ctx_length);
             sess->sid_ctx_length = s->sid_ctx_length;
-            ext = 1;
+            sess->psk_external = ext = 1;
             if (id == 0)
                 s->ext.early_data_ok = 1;
             s->ext.ticket_expected = 1;
@@ -1484,6 +1487,8 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
                  */
                 s->ext.early_data_ok = 1;
             }
+            /* This PSK is not external, use the correct binder label, ... */
+            ext = 0;
         }
 
         md = ssl_md(sctx, sess->cipher->algorithm2);
@@ -1506,6 +1511,13 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
             s->ext.ticket_expected = 1;
             continue;
         }
+        /*
+         * Same-hash ciphersuite changes are allowed for TLSv1.3 PSK
+         * resumption, but RFC 9846 Section 4.3.10 requires the selected
+         * ciphersuite to match the selected PSK before accepting early data.
+         */
+        if (sess->cipher->id != s->s3.tmp.new_cipher->id)
+            s->ext.early_data_ok = 0;
         break;
     }
 
@@ -1520,7 +1532,7 @@ int tls_parse_ctos_psk(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
         }
         /*
          * decrypt_error here to keep the alert the same as if the binder
-         * failed. See RFC8446 Appendix E.6. Note we make no attempt to do this
+         * failed. See RFC9846 Appendix F.6. Note we make no attempt to do this
          * in constant time compared to verifying the binder. None of this code
          * is constant time anyway.
          */
@@ -1760,7 +1772,15 @@ EXT_RETURN tls_construct_stoc_session_ticket(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
 {
-    if (!s->ext.ticket_expected || !tls_use_ticket(s)) {
+    /*
+     * Don't tell the client to expect a NewSessionTicket when any
+     * ticket we'd mint would be rejected by ssl_get_prev_session()
+     * whenever SSL_VERIFY_PEER is set with no sid_ctx configured (see
+     * the checks there).  In TLS 1.2, once promised the ticket MUST
+     * be sent.
+     */
+    if (!s->ext.ticket_expected || !tls_use_ticket(s)
+        || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0)) {
         s->ext.ticket_expected = 0;
         return EXT_RETURN_NOT_SENT;
     }

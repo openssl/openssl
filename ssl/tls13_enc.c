@@ -280,8 +280,10 @@ size_t tls13_final_finish_mac(SSL_CONNECTION *s, const char *str, size_t slen,
     OSSL_PARAM params[2], *p = params;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
-    if (md == NULL)
+    if (md == NULL) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     /* Safe to cast away const here since we're not "getting" any data */
     if (sctx->propq != NULL)

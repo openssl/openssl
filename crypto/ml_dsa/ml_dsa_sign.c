@@ -360,6 +360,7 @@ err:
     if (w1_encoded != NULL)
         OPENSSL_clear_free(w1_encoded, w1_encoded_len);
     OPENSSL_cleanse(rho_prime, sizeof(rho_prime));
+    OPENSSL_cleanse(c_tilde, sizeof(c_tilde));
     /*
      * Declassify the private key material before returning.  The key struct
      * is not owned here, so we do not free it, but we must remove the
@@ -540,6 +541,7 @@ int ossl_ml_dsa_sign(const ML_DSA_KEY *priv,
 
 err:
     EVP_MD_CTX_free(md_ctx);
+    OPENSSL_cleanse(mu, sizeof(mu));
     return ret;
 }
 
@@ -579,5 +581,6 @@ int ossl_ml_dsa_verify(const ML_DSA_KEY *pub,
     ret = ml_dsa_verify_internal(pub, mu_ptr, mu_len, sig, sig_len);
 err:
     EVP_MD_CTX_free(md_ctx);
+    OPENSSL_cleanse(mu, sizeof(mu));
     return ret;
 }

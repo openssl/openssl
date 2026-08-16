@@ -15,6 +15,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <limits.h>
 #include <openssl/e_os2.h>
 #include "internal/nelem.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
@@ -1299,7 +1300,7 @@ int s_client_main(int argc, char **argv)
             crlf = 1;
             break;
         case OPT_QUIET:
-            c_quiet = c_ign_eof = 1;
+            verify_args.quiet = c_quiet = c_ign_eof = 1;
             break;
         case OPT_NBIO:
             c_nbio = 1;
@@ -1520,7 +1521,8 @@ int s_client_main(int argc, char **argv)
             break;
         case OPT_MTU:
 #ifndef OPENSSL_NO_DTLS
-            socket_mtu = atol(opt_arg());
+            if (!opt_long(opt_arg(), &socket_mtu))
+                goto opthelp;
 #endif
             break;
         case OPT_FALLBACKSCSV:
@@ -1625,7 +1627,20 @@ int s_client_main(int argc, char **argv)
             len = (int)strlen(p);
             for (start = 0, i = 0; i <= len; ++i) {
                 if (i == len || p[i] == ',') {
-                    serverinfo_types[serverinfo_count] = atoi(p + start);
+                    char *end;
+                    unsigned long ul;
+
+                    /*
+                     * Parse only the current comma-separated component.
+                     * OPENSSL_strtoul() with an endptr consumes the leading
+                     * digits; we require it to stop exactly at the delimiter
+                     * (or NUL) and to fit in an unsigned short.
+                     */
+                    if (!OPENSSL_strtoul(p + start, &end, 10, &ul)
+                        || end != p + i
+                        || ul > USHRT_MAX)
+                        goto opthelp;
+                    serverinfo_types[serverinfo_count] = (unsigned short)ul;
                     if (++serverinfo_count == MAX_SI_TYPES)
                         break;
                     start = i + 1;
@@ -2447,7 +2462,7 @@ re_start:
     BIO_ADDR_free(peer_addr);
     peer_addr = NULL;
     if (init_client(&sock, host, port, bindhost, bindport, socket_family,
-            socket_type, protocol, tfo, !isquic, &peer_addr)
+            socket_type, protocol, tfo, !isquic, &peer_addr, c_quiet)
         == 0) {
         BIO_printf(bio_err, "connect:errno=%d\n", get_last_socket_error());
         BIO_closesocket(sock);
@@ -3082,7 +3097,7 @@ re_start:
             BIO_puts(bio_err, "ASN1_generate_nconf failed\n");
             goto end;
         }
-        ssl_request_len = ASN1_STRING_length_ex(atyp->value.sequence);
+        ssl_request_len = ASN1_STRING_get_length(atyp->value.sequence);
         if (ssl_request_len > INT_MAX) {
             NCONF_free(cnf);
             ASN1_TYPE_free(atyp);

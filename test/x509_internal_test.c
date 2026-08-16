@@ -162,7 +162,7 @@ static int test_a2i_ipaddress(int idx)
         }
     } else {
         if (!TEST_ptr(ip)
-            || !TEST_size_t_eq(ASN1_STRING_length_ex(ip), len)
+            || !TEST_size_t_eq(ASN1_STRING_get_length(ip), len)
             || !TEST_mem_eq(ASN1_STRING_get0_data(ip), len,
                 a2i_ipaddress_tests[idx].data, len)) {
             good = 0;
@@ -688,6 +688,24 @@ err:
     return test;
 }
 
+static int test_X509_ALGOR_set_md_null(void)
+{
+    X509_ALGOR *alg = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(alg = X509_ALGOR_new()))
+        goto err;
+
+    if (!TEST_false(X509_ALGOR_set_md(alg, NULL)))
+        goto err;
+
+    ret = 1;
+
+err:
+    X509_ALGOR_free(alg);
+    return ret;
+}
+
 /* https://github.com/openssl/openssl/issues/26325 */
 static const char *kRootExtensionDuplicity[] = {
     "-----BEGIN CERTIFICATE-----\n",
@@ -948,6 +966,7 @@ int setup_tests(void)
     ADD_TEST(tests_X509_check_crypto);
     ADD_TEST(tests_x509_check_dpn);
     ADD_TEST(tests_x509_check_akid);
+    ADD_TEST(test_X509_ALGOR_set_md_null);
     ADD_TEST(tests_x509_check_ext_duplicity);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_undef);
     ADD_TEST(tests_x509_check_ext_duplicity_nid_dynamic);

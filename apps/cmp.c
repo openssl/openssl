@@ -2140,7 +2140,7 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         goto err;
-    if (!ASN1_STRING_set_string(utf8string, name)) {
+    if (!ASN1_STRING_set1_string(utf8string, name)) {
         ASN1_STRING_free(utf8string);
         goto err;
     }
@@ -2215,7 +2215,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
             else
                 *end++ = '\0';
             if ((text = ASN1_UTF8STRING_new()) == NULL
-                || !ASN1_STRING_set_string(text, ptr))
+                || !ASN1_STRING_set1_string(text, ptr))
                 goto oom;
             ptr = end;
             ASN1_TYPE_set(type, V_ASN1_UTF8STRING, text);
@@ -3706,9 +3706,13 @@ static int handle_opts_upfront(int argc, char **argv)
                 opt_section = argv[++i];
             else if (strcmp(argv[i] + 1,
                          cmp_options[OPT_VERBOSITY - OPT_HELP].name)
-                    == 0
-                && !set_verbosity(atoi(argv[++i])))
-                return 0;
+                == 0) {
+                int level;
+
+                ++i;
+                if (!opt_int(argv[i], &level) || !set_verbosity(level))
+                    return 0;
+            }
         }
     }
     if (opt_section[0] == '\0') /* empty string */

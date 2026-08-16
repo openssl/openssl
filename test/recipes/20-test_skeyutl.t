@@ -18,7 +18,7 @@ setup("test_skeyutl");
 # when module support is enabled.
 my $fake_cipher = !disabled('module');
 
-plan tests => 14 + ($fake_cipher ? 2 : 0);
+plan tests => 14 + ($fake_cipher ? 8 : 0);
 
 # Helper: run skeyutl expecting a non-zero (failure) exit code, and optionally
 # check that stderr matches a regular expression.
@@ -96,4 +96,29 @@ if ($fake_cipher) {
     ok($status, "skeyutl -genkey with fake-cipher provider succeeds");
     ok(grep(/opaque key/, @out),
        "skeyutl -genkey reports the generated opaque key");
+
+    # -skeyopt values are passed to the key generation.  The fake-cipher
+    # provider names the generated key after its key_name parameter, so the
+    # option shows up in the reported key id.
+    my $rawopt = 'hexraw-bytes:00112233445566778899aabbccddeeff';
+    @out = run(app(['openssl', 'skeyutl', @prov, '-genkey',
+                    '-skeymgmt', 'fake_cipher',
+                    '-skeyopt', 'key_name:testkey',
+                    '-skeyopt', $rawopt]),
+               capture => 1, statusvar => \$status);
+    ok($status, "skeyutl -genkey with -skeyopt succeeds");
+    ok(grep(/opaque key identified by testkey/, @out),
+       "skeyutl -genkey applies the -skeyopt key name");
+
+    # An option not settable by the key management is rejected
+    skeyutl_fails("skeyutl -genkey with an unknown -skeyopt fails",
+                  qr/Parameter unknown 'nosuchopt:1'/,
+                  @prov, '-genkey', '-skeymgmt', 'fake_cipher',
+                  '-skeyopt', 'nosuchopt:1');
+
+    # A -skeyopt without the opt:value separator is rejected
+    skeyutl_fails("skeyutl -genkey with a malformed -skeyopt fails",
+                  qr/Parameter error 'key_name'/,
+                  @prov, '-genkey', '-skeymgmt', 'fake_cipher',
+                  '-skeyopt', 'key_name');
 }

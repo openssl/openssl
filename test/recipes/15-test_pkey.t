@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_pkey");
 
-plan tests => 7;
+plan tests => 9;
 
 my @app = ('openssl', 'pkey');
 
@@ -110,6 +110,65 @@ subtest "=== pkey handling of DER encoding ===" => sub {
        "read DER-encoded key");
     is(compare_text($in_key, $pem_out), 0,
        "Same file contents after converting to DER and back");
+};
+
+subtest "=== pkey -inform and -outform ===" => sub {
+    plan tests => 10;
+
+    my $priv_der = 'inform_priv.der';
+    my $priv_pem = 'inform_priv.pem';
+    my $pub_der = 'inform_pub.der';
+    my $pub_pem = 'inform_pub.pem';
+    my $pub_ref = 'inform_pubref.pem';
+
+    # Public keys convert between PEM and DER just like private keys do.
+    ok(run(app([@app, '-in', $in_key, '-pubout', '-outform', 'DER',
+                '-out', $pub_der])),
+       "write DER-encoded public key");
+    ok(run(app([@app, '-pubin', '-inform', 'DER', '-in', $pub_der,
+                '-pubout', '-out', $pub_pem])),
+       "read DER-encoded public key");
+    ok(run(app([@app, '-in', $in_key, '-pubout', '-out', $pub_ref])),
+       "write PEM-encoded public key");
+    is(compare_text($pub_ref, $pub_pem), 0,
+       "Same public key after converting to DER and back");
+
+    # -inform is unspecified by default, in which case the format is detected.
+    ok(run(app([@app, '-in', $in_key, '-outform', 'DER', '-out', $priv_der])),
+       "write DER-encoded private key");
+    ok(run(app([@app, '-in', $priv_der, '-out', $priv_pem])),
+       "DER input is accepted without -inform");
+    is(compare_text($in_key, $priv_pem), 0,
+       "Same private key after converting to DER and back");
+
+    # A mismatching -inform is not silently ignored.
+    ok(!run(app([@app, '-inform', 'DER', '-in', $in_key, '-noout'])),
+       "PEM input read as DER is rejected");
+    ok(!run(app([@app, '-inform', 'PEM', '-in', $priv_der, '-noout'])),
+       "DER input read as PEM is rejected");
+
+    # Unlike -inform, -outform is limited to PEM and DER.
+    ok(!run(app([@app, '-in', $in_key, '-outform', 'MSBLOB',
+                 '-out', 'inform_bad.tmp'])),
+       "-outform MSBLOB is rejected");
+};
+
+subtest "=== pkey PKCS#12 input ===" => sub {
+    plan tests => 3;
+
+    my $p12 = 'key.p12';
+    ok(run(app(['openssl', 'pkcs12', '-export', '-inkey', $in_key,
+                '-in', srctop_file('test', 'certs', 'root-cert.pem'),
+                '-keypbe', 'AES-256-CBC', '-certpbe', 'AES-256-CBC',
+                '-macalg', 'sha256', '-passout', $pass, '-out', $p12])),
+       "create a PKCS#12 file holding the key");
+
+    my $from_p12 = 'from_p12.pem';
+    ok(run(app([@app, '-inform', 'P12', '-in', $p12, '-passin', $pass,
+                '-out', $from_p12])),
+       "read the private key from the PKCS#12 file");
+    is(compare_text($in_key, $from_p12), 0,
+       "key read from PKCS#12 is the same as the original key");
 };
 
 subtest "=== pkey text and text_pub output ===" => sub {

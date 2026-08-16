@@ -270,6 +270,9 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
         return 0;
     }
 
+    if (inlen > INT_MAX)
+        return 0;
+
     if (!kdf_derive(kek, keklen, ss, sslen, kemri))
         goto err;
 
@@ -388,7 +391,7 @@ int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
         goto err;
 
     kem_ct = ASN1_STRING_get0_data(kemri->kemct);
-    kem_ct_len = ASN1_STRING_length_ex(kemri->kemct);
+    kem_ct_len = ASN1_STRING_get_length(kemri->kemct);
 
     if (EVP_PKEY_decapsulate(kemri->pctx, NULL, &kem_secret_len, kem_ct, kem_ct_len) <= 0)
         return 0;

@@ -569,6 +569,41 @@ err:
     EVP_RAND_CTX_free(ctx);
     return NULL;
 }
+
+/*
+ * Get the global seed source, creating and storing it if it does not
+ * exist yet.  If several threads race here, exactly one instance is
+ * kept and returned to all of them.
+ */
+static EVP_RAND_CTX *rand_get0_seed(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
+{
+    EVP_RAND_CTX *ret, *seed;
+
+    if (!CRYPTO_THREAD_read_lock(dgbl->lock))
+        return NULL;
+    ret = dgbl->seed;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    if (ret != NULL)
+        return ret;
+
+    seed = rand_new_seed(ctx);
+    if (seed == NULL)
+        return NULL;
+
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock)) {
+        EVP_RAND_CTX_free(seed);
+        return NULL;
+    }
+    if (dgbl->seed == NULL) {
+        dgbl->seed = seed;
+        seed = NULL;
+    }
+    ret = dgbl->seed;
+    CRYPTO_THREAD_unlock(dgbl->lock);
+    /* Free the instance that lost a creation race */
+    EVP_RAND_CTX_free(seed);
+    return ret;
+}
 #endif /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
 
 #ifndef FIPS_MODULE
@@ -597,7 +632,6 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
     EVP_RAND_CTX *ctx;
     OSSL_PARAM params[9], *p = params;
     const OSSL_PARAM *settables;
-    const char *prov_name;
     char *name, *cipher;
     int use_df = 1;
 
@@ -609,7 +643,6 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
         ERR_raise(ERR_LIB_RAND, RAND_R_UNABLE_TO_FETCH_DRBG);
         return NULL;
     }
-    prov_name = ossl_provider_name(EVP_RAND_get0_provider(rand));
     ctx = EVP_RAND_CTX_new(rand, parent);
     EVP_RAND_free(rand);
     if (ctx == NULL) {
@@ -627,9 +660,6 @@ static EVP_RAND_CTX *rand_new_drbg(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent,
         && OSSL_PARAM_locate_const(settables, OSSL_DRBG_PARAM_DIGEST))
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_DIGEST,
             dgbl->rng_digest, 0);
-    if (prov_name != NULL)
-        *p++ = OSSL_PARAM_construct_utf8_string(OSSL_PROV_PARAM_CORE_PROV_NAME,
-            (char *)prov_name, 0);
     if (dgbl->rng_propq != NULL)
         *p++ = OSSL_PARAM_construct_utf8_string(OSSL_DRBG_PARAM_PROPERTIES,
             dgbl->rng_propq, 0);
@@ -684,7 +714,7 @@ static EVP_RAND_CTX *rand_new_crngt(OSSL_LIB_CTX *libctx, EVP_RAND_CTX *parent)
  */
 static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 {
-    EVP_RAND_CTX *ret, *seed, *newseed = NULL, *primary;
+    EVP_RAND_CTX *ret, *seed = NULL, *primary;
 
     if (dgbl == NULL)
         return NULL;
@@ -693,7 +723,6 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         return NULL;
 
     ret = dgbl->primary;
-    seed = dgbl->seed;
     CRYPTO_THREAD_unlock(dgbl->lock);
 
     if (ret != NULL)
@@ -701,16 +730,13 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
 
 #if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
     /* Create a seed source for libcrypto or jitter enabled FIPS provider */
-    if (seed == NULL) {
-        ERR_set_mark();
-        seed = newseed = rand_new_seed(ctx);
-        if (ERR_count_to_mark() > 0) {
-            EVP_RAND_CTX_free(newseed);
-            ERR_clear_last_mark();
-            return NULL;
-        }
-        ERR_pop_to_mark();
+    ERR_set_mark();
+    seed = rand_get0_seed(ctx, dgbl);
+    if (seed == NULL && ERR_count_to_mark() > 0) {
+        ERR_clear_last_mark();
+        return NULL;
     }
+    ERR_pop_to_mark();
 #endif /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
 
 #if defined(FIPS_MODULE)
@@ -721,33 +747,30 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         PRIMARY_RESEED_TIME_INTERVAL);
 #endif /* FIPS_MODULE */
 
+    if (ret == NULL)
+        return NULL;
+
     /*
      * The primary DRBG may be shared between multiple threads so we must
      * enable locking.
      */
-    if (ret == NULL || !EVP_RAND_enable_locking(ret)) {
-        if (ret != NULL) {
-            ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
-            EVP_RAND_CTX_free(ret);
-        }
-        if (newseed == NULL)
-            return NULL;
-        /* else carry on and store seed */
-        ret = NULL;
+    if (!EVP_RAND_enable_locking(ret)) {
+        ERR_raise(ERR_LIB_EVP, EVP_R_UNABLE_TO_ENABLE_LOCKING);
+        EVP_RAND_CTX_free(ret);
+        return NULL;
     }
 
-    if (!CRYPTO_THREAD_write_lock(dgbl->lock))
+    if (!CRYPTO_THREAD_write_lock(dgbl->lock)) {
+        EVP_RAND_CTX_free(ret);
         return NULL;
+    }
 
     primary = dgbl->primary;
     if (primary != NULL) {
         CRYPTO_THREAD_unlock(dgbl->lock);
         EVP_RAND_CTX_free(ret);
-        EVP_RAND_CTX_free(newseed);
         return primary;
     }
-    if (newseed != NULL)
-        dgbl->seed = newseed;
     dgbl->primary = ret;
     CRYPTO_THREAD_unlock(dgbl->lock);
 

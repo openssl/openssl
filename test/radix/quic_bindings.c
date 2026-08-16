@@ -13,6 +13,7 @@
 #include "internal/quic_channel.h"
 #include "internal/quic_ssl.h"
 #include "internal/quic_error.h"
+#include "internal/quic_thread_assist.h"
 
 /*
  * RADIX 6D QUIC Test Framework
@@ -66,9 +67,13 @@ typedef struct radix_process_st {
 
     /* Process-global state. */
     CRYPTO_MUTEX *gm; /* global mutex */
-    LHASH_OF(RADIX_OBJ) *objs; /* protected by gm */
-    OSSL_TIME time_slip; /* protected by gm */
+    LHASH_OF(RADIX_OBJ) *objs;
     BIO *keylog_out; /* protected by gm */
+    uint64_t counter[2]; /* protected by gm */
+
+    CRYPTO_MUTEX *time_m;
+    OSSL_TIME base_time; /* set once at init, constant thereafter */
+    OSSL_TIME time_slip; /* protected by time_m */
 
     int done_join_all_threads;
 
@@ -104,7 +109,7 @@ typedef struct radix_thread_st {
 
 DEFINE_STACK_OF(RADIX_THREAD)
 
-/* ssl reference is transferred. name is copied and is required. */
+/* name is copied and is required. Created with no SSL object bound yet. */
 static RADIX_OBJ *RADIX_OBJ_new_empty(const char *name)
 {
     RADIX_OBJ *obj;
@@ -132,6 +137,7 @@ static RADIX_OBJ *RADIX_OBJ_new_empty(const char *name)
     return obj;
 }
 
+/* ssl reference is transferred. name is copied and is required. */
 static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
 {
     RADIX_OBJ *obj;
@@ -139,8 +145,7 @@ static RADIX_OBJ *RADIX_OBJ_new(const char *name, SSL *ssl)
     if (!TEST_ptr(ssl))
         return NULL;
 
-    obj = RADIX_OBJ_new_empty(name);
-    if (!TEST_ptr(obj))
+    if (!TEST_ptr(obj = RADIX_OBJ_new_empty(name)))
         return NULL;
 
     obj->ssl = ssl;
@@ -178,6 +183,8 @@ static int RADIX_PROCESS_init(RADIX_PROCESS *rp, size_t node_idx, size_t process
 #if defined(OPENSSL_THREADS)
     if (!TEST_ptr(rp->gm = ossl_crypto_mutex_new()))
         goto err;
+    if (!TEST_ptr(rp->time_m = ossl_crypto_mutex_new()))
+        goto err;
 #endif
 
     if (!TEST_ptr(rp->objs = lh_RADIX_OBJ_new(RADIX_OBJ_hash, RADIX_OBJ_cmp)))
@@ -196,12 +203,15 @@ static int RADIX_PROCESS_init(RADIX_PROCESS *rp, size_t node_idx, size_t process
     rp->process_idx = process_idx;
     rp->done_join_all_threads = 0;
     rp->next_thread_idx = 0;
+    rp->base_time = ossl_time_now();
+    rp->time_slip = ossl_time_zero();
     return 1;
 
 err:
     lh_RADIX_OBJ_free(rp->objs);
     rp->objs = NULL;
     ossl_crypto_mutex_free(&rp->gm);
+    ossl_crypto_mutex_free(&rp->time_m);
     return 0;
 }
 
@@ -456,6 +466,7 @@ static void RADIX_PROCESS_cleanup(RADIX_PROCESS *rp)
     BIO_free_all(rp->keylog_out);
     rp->keylog_out = NULL;
     ossl_crypto_mutex_free(&rp->gm);
+    ossl_crypto_mutex_free(&rp->time_m);
 }
 
 static RADIX_OBJ *RADIX_PROCESS_get_obj(RADIX_PROCESS *rp, const char *name)
@@ -681,38 +692,46 @@ static OSSL_TIME get_time(void *arg)
 {
     OSSL_TIME time_slip;
 
-    ossl_crypto_mutex_lock(RP()->gm);
+    ossl_crypto_mutex_lock(RP()->time_m);
     time_slip = RP()->time_slip;
-    ossl_crypto_mutex_unlock(RP()->gm);
+    ossl_crypto_mutex_unlock(RP()->time_m);
 
-    return ossl_time_add(ossl_time_now(), time_slip);
+    return ossl_time_add(RP()->base_time, time_slip);
 }
 
-ossl_unused static void radix_skip_time(OSSL_TIME t)
+static OSSL_TIME terp_now(void *arg)
 {
-    ossl_crypto_mutex_lock(RP()->gm);
+    return ossl_time_now();
+}
+
+static void radix_skip_time(OSSL_TIME t)
+{
+    ossl_crypto_mutex_lock(RP()->time_m);
     RP()->time_slip = ossl_time_add(RP()->time_slip, t);
-    ossl_crypto_mutex_unlock(RP()->gm);
+    ossl_crypto_mutex_unlock(RP()->time_m);
 }
 
 static void per_op_tick_obj(RADIX_OBJ *obj)
 {
     ossl_crypto_mutex_lock(obj->mx);
-    if (obj->active && obj->ssl)
+    if (obj->active && obj->ssl != NULL)
         SSL_handle_events(obj->ssl);
     ossl_crypto_mutex_unlock(obj->mx);
 }
 
 static int do_per_op(TERP *terp, void *arg)
 {
+    radix_skip_time(ossl_ms2time(1));
     lh_RADIX_OBJ_doall(RP()->objs, per_op_tick_obj);
     return 1;
 }
 
 static int bindings_adjust_terp_config(TERP_CONFIG *cfg)
 {
-    cfg->now_cb = get_time;
+    cfg->now_cb = terp_now;
     cfg->per_op_cb = do_per_op;
+
+    cfg->max_execution_time = ossl_ms2time(60000);
     return 1;
 }
 
@@ -874,8 +893,6 @@ DEF_FUNC(hf_clear)
     RADIX_THREAD *rt = RT();
     size_t i;
 
-    ossl_crypto_mutex_lock(RP()->gm);
-
     lh_RADIX_OBJ_doall(RP()->objs, cleanup_one);
     lh_RADIX_OBJ_flush(RP()->objs);
 
@@ -884,7 +901,6 @@ DEF_FUNC(hf_clear)
         rt->ssl[i] = NULL;
     }
 
-    ossl_crypto_mutex_unlock(RP()->gm);
     return 1;
 }
 

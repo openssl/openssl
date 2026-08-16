@@ -15,7 +15,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_req");
 
-plan tests => 131;
+plan tests => 133;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -144,6 +144,28 @@ subtest "generating certificate requests with RSA" => sub {
                     "-config", srctop_file("test", "test.cnf"),
                     "-verify", "-in", "testreq_withattrs_der.pem", "-noout"])),
            "Verifying signature on request from a key with extra attributes - PEM");
+    }
+};
+
+subtest "RSA requests with truncated SHA-512 digests" => sub {
+    plan tests => 2;
+
+    SKIP: {
+        skip "RSA is not supported by this OpenSSL build", 2
+            if disabled("rsa");
+
+        foreach my $digest ("sha512-224", "sha512-256") {
+            my $request = "testreq-rsa-$digest.pem";
+
+            ok(run(app(["openssl", "req",
+                        "-config", srctop_file("test", "test.cnf"),
+                        "-new", "-out", $request,
+                        "-key", srctop_file("test", "testrsa.pem"),
+                        "-$digest"]))
+               && run(app(["openssl", "req", "-verify",
+                           "-in", $request, "-noout"])),
+               "Generating and verifying request with RSA and $digest");
+        }
     }
 };
 
@@ -319,6 +341,24 @@ subtest "generating certificate requests" => sub {
     ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
                 "-verify", "-in", "testreq.pem", "-noout"])),
        "Verifying signature on request");
+};
+
+subtest "modifying the subject of an existing certificate request" => sub {
+    plan tests => 3;
+
+    my $req_in = srctop_file("test", "testreq2.pem");
+    my $req_out = "testreq-modified-subj.pem";
+    my $subj_out = "testreq-modified-subj.txt";
+
+    ok(run(app(["openssl", "req", "-config", srctop_file("test", "test.cnf"),
+                "-in", $req_in, "-subj", "/CN=Modified Subject",
+                "-out", $req_out])),
+       "Modifying subject of certificate request");
+
+    run(app(["openssl", "req", "-in", $req_out, "-noout", "-subject",
+             "-out", $subj_out]));
+    test_file_contains("modified request", $subj_out, "CN=Modified Subject", 1);
+    test_file_contains("modified request", $subj_out, "CN=cn4", 0);
 };
 
 subtest "generating SM2 certificate requests" => sub {

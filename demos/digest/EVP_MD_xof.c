@@ -9,8 +9,10 @@
 
 #include <stdio.h>
 #include <string.h>
+#include <limits.h>
 #include <openssl/err.h>
 #include <openssl/evp.h>
+#include <openssl/crypto.h>
 #include <openssl/core_names.h>
 
 /*
@@ -53,7 +55,13 @@ int main(int argc, char **argv)
 
     /* Allow digest length to be changed for demonstration purposes. */
     if (argc > 1) {
-        digest_len_i = atoi(argv[1]);
+        unsigned long ul;
+
+        if (!OPENSSL_strtoul(argv[1], NULL, 10, &ul) || ul > INT_MAX) {
+            fprintf(stderr, "Specify a non-negative digest length\n");
+            goto end;
+        }
+        digest_len_i = (int)ul;
         if (digest_len_i <= 0) {
             fprintf(stderr, "Specify a non-negative digest length\n");
             goto end;

@@ -252,10 +252,8 @@ static char *app_get_pass(const char *arg, int keepbio)
         } else if (CHECK_AND_SKIP_PREFIX(arg, "fd:")) {
             BIO *btmp;
 
-            i = atoi(arg);
-            if (i >= 0)
-                pwdbio = BIO_new_fd(i, BIO_NOCLOSE);
-            if ((i < 0) || pwdbio == NULL) {
+            if (!opt_int(arg, &i) || i < 0
+                || (pwdbio = BIO_new_fd(i, BIO_NOCLOSE)) == NULL) {
                 BIO_printf(bio_err, "Can't access file descriptor %s\n", arg);
                 return NULL;
             }
@@ -2551,7 +2549,6 @@ int check_cert_might_be_valid(BIO *bio, BIO *b_err, X509 *x, const char *checkho
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_PARTIAL_CHAIN);
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_IGNORE_CRITICAL);
     X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_PROXY_CERTS);
-    X509_VERIFY_PARAM_set_trust(vpm, X509_TRUST_OK_ANY_EKU);
 
     if (!X509_VERIFY_PARAM_set1_ip_asc(vpm, checkip)) {
         maybe_printf(b_err, "Invalid IP address: %s\n", checkip);
@@ -2833,7 +2830,7 @@ static const char *get_dp_url(DIST_POINT *dp)
     for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
         gen = sk_GENERAL_NAME_value(gens, i);
         uri = GENERAL_NAME_get0_value(gen, &gtype);
-        if (gtype == GEN_URI && ASN1_STRING_length_ex(uri) > 6) {
+        if (gtype == GEN_URI && ASN1_STRING_get_length(uri) > 6) {
             const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
 
             if (IS_HTTP(uptr)) /* can/should not use HTTPS here */
@@ -3722,7 +3719,7 @@ int has_stdin_waiting(void)
 int corrupt_signature(ASN1_STRING *signature)
 {
     const unsigned char *valid = ASN1_STRING_get0_data(signature);
-    size_t length = ASN1_STRING_length_ex(signature);
+    size_t length = ASN1_STRING_get_length(signature);
     unsigned char *s = OPENSSL_memdup(valid, length);
 
     if (s == NULL)

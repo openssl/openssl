@@ -10,6 +10,7 @@
 
 IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   PROGRAMS{noinst}=asn1 asn1parse bignum bndiv client conf crl server smime
+  PROGRAMS{noinst}=pkcs7_verify
   PROGRAMS{noinst}=pkcs12 punycode pem decoder hashtable acert
   PROGRAMS{noinst}=v3name
   PROGRAMS{noinst}=provider
@@ -48,6 +49,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
 
   IF[{- !$disabled{"dtls"} -}]
     PROGRAMS{noinst}=dtlsclient dtlsserver
+  ENDIF
+
+  IF[{- !$disabled{"ech"} -}]
+    PROGRAMS{noinst}=echconfiglist_parser
   ENDIF
 
   SOURCE[asn1]=asn1.c driver.c fuzz_rand.c
@@ -106,6 +111,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   INCLUDE[dtlsserver]=../include {- $ex_inc -}
   DEPEND[dtlsserver]=../libcrypto ../libssl {- $ex_lib -}
 
+  SOURCE[echconfiglist_parser]=echconfiglist_parser.c driver.c
+  INCLUDE[echconfiglist_parser]=../include {- $ex_inc -}
+  DEPEND[echconfiglist_parser]=../libcrypto ../libssl {- $ex_lib -}
+
   SOURCE[pem]=pem.c driver.c
   INCLUDE[pem]=../include {- $ex_inc -}
   DEPEND[pem]=../libcrypto.a {- $ex_lib -}
@@ -129,6 +138,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[smime]=smime.c driver.c
   INCLUDE[smime]=../include {- $ex_inc -}
   DEPEND[smime]=../libcrypto ../libssl {- $ex_lib -}
+
+  SOURCE[pkcs7_verify]=pkcs7_verify.c driver.c
+  INCLUDE[pkcs7_verify]=../include {- $ex_inc -}
+  DEPEND[pkcs7_verify]=../libcrypto {- $ex_lib -}
 
   SOURCE[v3name]=v3name.c driver.c
   INCLUDE[v3name]=../include {- $ex_inc -}
@@ -179,6 +192,7 @@ IF[{- !$disabled{tests} -}]
   $FUZZTESTSRC=test-corpus.c ../test/mfail/mfail.c
 
   PROGRAMS{noinst}=asn1-test asn1parse-test bignum-test bndiv-test client-test conf-test crl-test server-test smime-test
+  PROGRAMS{noinst}=pkcs7_verify-test
   PROGRAMS{noinst}=pkcs12-test punycode-test pem-test decoder-test hashtable-test acert-test
   PROGRAMS{noinst}=v3name-test
   PROGRAMS{noinst}=provider-test
@@ -218,6 +232,10 @@ IF[{- !$disabled{tests} -}]
 
   IF[{- !$disabled{"dtls"} -}]
     PROGRAMS{noinst}=dtlsclient-test dtlsserver-test
+  ENDIF
+
+  IF[{- !$disabled{"ech"} -}]
+    PROGRAMS{noinst}=echconfiglist_parser-test
   ENDIF
 
   SOURCE[asn1-test]=asn1.c $FUZZTESTSRC fuzz_rand.c
@@ -288,6 +306,10 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[dtlsserver-test]=../include ../test/mfail
   DEPEND[dtlsserver-test]=../libcrypto.a ../libssl.a
 
+  SOURCE[echconfiglist_parser-test]=echconfiglist_parser.c $FUZZTESTSRC
+  INCLUDE[echconfiglist_parser-test]=../include ../test/mfail
+  DEPEND[echconfiglist_parser-test]=../libcrypto.a ../libssl.a
+
   SOURCE[pem-test]=pem.c $FUZZTESTSRC
   INCLUDE[pem-test]=../include ../test/mfail
   DEPEND[pem-test]=../libcrypto.a
@@ -311,6 +333,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[smime-test]=smime.c $FUZZTESTSRC
   INCLUDE[smime-test]=../include ../test/mfail
   DEPEND[smime-test]=../libcrypto.a ../libssl.a
+
+  SOURCE[pkcs7_verify-test]=pkcs7_verify.c $FUZZTESTSRC
+  INCLUDE[pkcs7_verify-test]=../include ../test/mfail
+  DEPEND[pkcs7_verify-test]=../libcrypto.a
 
   SOURCE[v3name-test]=v3name.c $FUZZTESTSRC
   INCLUDE[v3name-test]=../include ../test/mfail

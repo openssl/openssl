@@ -162,6 +162,19 @@ char *ossl_buf2hexstr_sep(const unsigned char *buf, long buflen, char sep);
 unsigned char *ossl_hexstr2buf_sep(const char *str, long *buflen,
     const char sep);
 
+/*
+ * Parse a signed long with validation; see OPENSSL_strtoul() for the rules.
+ * Returns 1 on success (and stores the result in |*result|), 0 on failure.
+ */
+int ossl_strtol(const char *str, char **endptr, int base, long *result);
+
+/*
+ * As ossl_strtol() but stores the result in an int, additionally failing if
+ * the parsed value does not fit in an int.
+ * Returns 1 on success (and stores the result in |*result|), 0 on failure.
+ */
+int ossl_strtoint(const char *str, char **endptr, int base, int *result);
+
 /**
  *  Writes |n| value in hex format into |buf|,
  *  and returns the number of bytes written

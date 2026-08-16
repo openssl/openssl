@@ -426,8 +426,11 @@ static ASN1_TYPE *asn1_multi(int utype, const char *section, X509V3_CTX *cnf,
                 depth + 1, perr);
             if (!typ)
                 goto bad;
-            if (!sk_ASN1_TYPE_push(sk, typ))
+
+            if (!sk_ASN1_TYPE_push(sk, typ)) {
+                ASN1_TYPE_free(typ);
                 goto bad;
+            }
         }
     }
 
@@ -651,7 +654,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto bad_str;
         }
-        if (!ASN1_STRING_set_string(atmp->value.asn1_string, str)) {
+        if (!ASN1_STRING_set1_string(atmp->value.asn1_string, str)) {
             ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             goto bad_str;
         }
@@ -706,7 +709,7 @@ static ASN1_TYPE *asn1_str2type(const char *str, int format, int utype)
             atmp->value.asn1_string->length = rdlen;
             atmp->value.asn1_string->type = utype;
         } else if (format == ASN1_GEN_FORMAT_ASCII) {
-            if (!ASN1_STRING_set_string(atmp->value.asn1_string, str)) {
+            if (!ASN1_STRING_set1_string(atmp->value.asn1_string, str)) {
                 ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
                 goto bad_str;
             }

@@ -451,13 +451,34 @@ SKIP: {
         my $ecpub = srctop_file("test", "testecpub-p256.pem");
         my $rsapub = srctop_file("test", "testrsapub.pem");
 
-        plan tests => 5;
+        plan tests => 8;
 
         # ECDH derive against a matching peer public key
         ok(run(app(['openssl', 'pkeyutl', '-derive',
                     '-inkey', $eckey, '-peerkey', $ecpub,
                     '-out', 'derive_secret.bin'])),
            "Derive shared secret with matching peer key");
+
+        # -peerform: load the peer public key from a DER file and check the
+        # derived secret matches the one derived from the PEM peer key.
+        my $ecpub_der = "peer-p256.der";
+        ok(run(app(['openssl', 'pkey', '-pubin', '-in', $ecpub,
+                    '-outform', 'DER', '-out', $ecpub_der])),
+           "Convert peer public key to DER");
+        ok(run(app(['openssl', 'pkeyutl', '-derive',
+                    '-inkey', $eckey, '-peerkey', $ecpub_der,
+                    '-peerform', 'DER', '-out', 'derive_secret_der.bin']))
+           && compare('derive_secret.bin', 'derive_secret_der.bin') == 0,
+           "Derive with DER peer key via -peerform matches the PEM result");
+
+        # -peerform mismatch: reading a DER peer key as PEM fails.
+        with({ exit_checker => sub { return shift == 1; } },
+            sub {
+                ok(run(app(['openssl', 'pkeyutl', '-derive',
+                            '-inkey', $eckey, '-peerkey', $ecpub_der,
+                            '-peerform', 'PEM'])),
+                   "Fail when -peerform does not match the peer key encoding");
+            });
 
         # setup_peer: peer key file cannot be loaded
         with({ exit_checker => sub { return shift == 1; } },

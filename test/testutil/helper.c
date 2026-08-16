@@ -7,11 +7,23 @@
  * https://www.openssl.org/source/license.html
  */
 #include <time.h>
+#include <limits.h>
 
 #include <openssl/asn1t.h>
 #include <openssl/posix_time.h>
+#include <openssl/crypto.h>
 
 #include "../testutil.h"
+
+int test_strtoint(const char *value, int *result)
+{
+    unsigned long ul;
+
+    if (!OPENSSL_strtoul(value, NULL, 10, &ul) || ul > INT_MAX)
+        return 0;
+    *result = (int)ul;
+    return 1;
+}
 
 int test_asn1_string_to_time_t(const char *asn1_string, time_t *out_time_t)
 {

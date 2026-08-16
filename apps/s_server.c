@@ -1885,7 +1885,7 @@ int s_server_main(int argc, char *argv[])
             break;
 #endif
         case OPT_NACCEPT:
-            naccept = atol(opt_arg());
+            naccept = opt_int_arg();
             break;
         case OPT_VERIFY:
             s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
@@ -2254,7 +2254,8 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_MTU:
 #ifndef OPENSSL_NO_DTLS
-            socket_mtu = atol(opt_arg());
+            if (!opt_long(opt_arg(), &socket_mtu))
+                goto opthelp;
 #endif
             break;
         case OPT_LISTEN:

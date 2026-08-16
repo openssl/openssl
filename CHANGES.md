@@ -31,7 +31,43 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
- * Added AVX512 optimized SHAKE x4 operations for ML-DSA on x86_64.
+ * Repeated fields in the `basicConstraints`, `basicAttConstraints`,
+   and `policyConstraints` X.509v3 extension configurations are now rejected
+   instead of silently using the last value.
+
+   *Adam Tabak*
+
+ * The `tsget` utility now uses `Net::Curl::Easy` (from the `Net-Curl` CPAN
+   distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who relied
+   on `tsget` must install `Net::Curl::Easy` before upgrading.
+
+   *Shreenidhi Shedi*
+
+ * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
+   list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
+   available in the active providers are advertised.  `PKCS7_sign_add_signer()`
+   was updated in the same way, so that legacy ciphers such as RC2 and DES are
+   no longer included in SMIMECapabilities by default when only the default
+   provider is loaded.
+
+   *Todd Short*
+
+ * Added various optimizations for the Elbrus2000 architecture in the
+   cryptographic and BN code.
+
+   *Gleb Popov*
+
+ * Fixed TLS 1.3 external PSK connections being wrongly rejected when
+   the client sets a non-empty session ID context.
+
+   *Viktor Dukhovni*
+
+ * Fixed a TLS 1.3 server with no session ID context to accept external PSK
+   connections and to stop issuing unusable session tickets.
+
+   *Viktor Dukhovni*
+
+ * Added AVX512 optimized SHAKE x4 operations for ML-DSA on `x86_64`.
 
    *Marcel Cornu and Tomasz Kantecki*
 
@@ -76,6 +112,12 @@ OpenSSL Releases
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*
+
+ * Fixed TLS 1.3 servers to reject early data when the selected ciphersuite
+   differs from the ciphersuite associated with the selected PSK. Same-hash
+   PSK resumption can still continue without accepting 0-RTT data.
+
+   *Mounir IDRASSI*
 
  * Added support for Ed25519 and Ed448 certificates in DTLS 1.2. Previously,
    these certificate types were only supported in TLS 1.2 and TLS 1.3.
@@ -132,8 +174,8 @@ OpenSSL Releases
    *Bob Beck*
 
  *  `ASN1_STRING_set()` and `ASN1_STRING_length()` have been
-    deprecated. The replacement functions `ASN1_STRING_set_data()` or
-    `ASN1_STRING_set_string()`, and `ASN1_STRING_length_ex()` should be
+    deprecated. The replacement functions `ASN1_STRING_set1_data()` or
+    `ASN1_STRING_set1_string()`, and `ASN1_STRING_get_length()` should be
     used in their place. This prepares the ASN1_STRING type to support
     modern size_t length values in the future.
 
@@ -252,6 +294,11 @@ OpenSSL Releases
 
    *Helen Zhang*
 
+ * Added AVX-512 and VAES optimizations for AES-CBC decryption. Decryption
+   performance for large inputs (1024 bytes or more) improved by 3.5x to 3.8x.
+
+   *Madan Mohan Manokar*
+
  * Deprecated `ASN1_BIT_STRING_set()` in favour of `ASN1_BIT_STRING_set1()`.
 
    *Norbert Pócs*
@@ -291,6 +338,20 @@ OpenSSL 4.0
    *Abel Thomas*
 
 ### Changes between 4.0.0 and 4.0.1 [9 Jun 2026]
+
+ * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
+
+   Previously, we would allocate a buffer large enough to hold the full size of
+   an incoming handshake message as advertised by the peer. This could be quite
+   large (although it is bounded, e.g. for ClientHello this is approximately
+   128 KiB). If the peer then fails to send the full handshake message, then the
+   endpoint is left waiting for the remainder of the message to arrive and the
+   memory is still allocated (i.e. a Slowloris attack). To prevent this, we
+   incrementally grow the buffer as we receive the data.
+
+   This issue was reported by Okta Red Team.
+
+   *Matt Caswell*
 
  * Fixed heap use-after-free in `PKCS7_verify()`.
 

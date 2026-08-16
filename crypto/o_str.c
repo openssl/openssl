@@ -161,6 +161,52 @@ int OPENSSL_strtoul(const char *str, char **endptr, int base,
     return 1;
 }
 
+/*
+ * Internal signed counterpart to OPENSSL_strtoul().  Parses a signed long with
+ * the same validation rules: it fails on a conversion error (including
+ * overflow/underflow), if no digits were consumed, or, when |endptr| is NULL,
+ * if the whole string was not consumed.  Returns 1 on success (storing the
+ * result in |*result|), 0 otherwise.
+ */
+int ossl_strtol(const char *str, char **endptr, int base, long *result)
+{
+    char *tmp_endptr;
+    char **internal_endptr = endptr == NULL ? &tmp_endptr : endptr;
+
+    errno = 0;
+
+    *internal_endptr = (char *)str;
+
+    if (result == NULL || str == NULL)
+        return 0;
+
+    *result = strtol(str, internal_endptr, base);
+    if (errno != 0
+        || (endptr == NULL && **internal_endptr != '\0')
+        || str == *internal_endptr)
+        return 0;
+
+    return 1;
+}
+
+/*
+ * As ossl_strtol() but stores the result in an int, additionally failing if
+ * the parsed value does not fit in an int.  Returns 1 on success (storing the
+ * result in |*result|), 0 otherwise.
+ */
+int ossl_strtoint(const char *str, char **endptr, int base, int *result)
+{
+    long l;
+
+    if (result == NULL || !ossl_strtol(str, endptr, base, &l))
+        return 0;
+    if (l < INT_MIN || l > INT_MAX)
+        return 0;
+
+    *result = (int)l;
+    return 1;
+}
+
 int OPENSSL_hexchar2int(unsigned char c)
 {
 #ifdef CHARSET_EBCDIC

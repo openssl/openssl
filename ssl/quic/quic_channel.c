@@ -3325,7 +3325,8 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
     WPACKET wpkt;
     size_t l;
 
-    ossl_quic_srtm_remove(ch->srtm, ch, seq_num);
+    if (!ossl_quic_srtm_remove(ch->srtm, ch, seq_num, NULL))
+        goto err;
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
         goto err;

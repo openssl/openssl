@@ -75,7 +75,7 @@ IF[{- !$disabled{tests} -}]
           fips_version_test x509_test hpke_test pairwise_fail_test \
           nodefltctxtest evp_xof_test x509_load_cert_file_test bio_meth_test \
           x509_acert_test x509_req_test strtoultest bio_pw_callback_test \
-          engine_stubs_test base64_simdutf_test bio_eof_test ech_test
+          engine_stubs_test base64_simdutf_test bio_eof_test ech_test ossl_rbtree_test
 
   IF[{- !$disabled{'ech'} -}]
     PROGRAMS{noinst}=ech_corrupt_test
@@ -86,12 +86,13 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{'allocfail-tests'} -}]
-    PROGRAMS{noinst}=handshake-memfail x509-memfail load_key_certs_crls_memfail
+    PROGRAMS{noinst}=handshake-memfail load_key_certs_crls_memfail
   ENDIF
 
   IF[{- !$disabled{quic} -}]
     PROGRAMS{noinst}=priority_queue_test quicfaultstest quicapitest \
-                     quic_newcid_test quic_srt_gen_test rio_notifier_test
+                     quic_newcid_test quic_srt_gen_test rio_notifier_test \
+                     rio_poll_builder_test
   ENDIF
 
   IF[{- !$disabled{quic} && !$disabled{qlog} -}]
@@ -401,6 +402,10 @@ IF[{- !$disabled{tests} -}]
       INCLUDE[rio_notifier_test]=.. ../include ../apps/include
       DEPEND[rio_notifier_test]=../libcrypto.a ../libssl.a libtestutil.a
 
+      SOURCE[rio_poll_builder_test]=rio_poll_builder_test.c
+      INCLUDE[rio_poll_builder_test]=.. ../include ../apps/include
+      DEPEND[rio_poll_builder_test]=../libcrypto.a ../libssl.a libtestutil.a
+
       SOURCE[quic_wire_test]=quic_wire_test.c
       INCLUDE[quic_wire_test]=../include ../apps/include
       DEPEND[quic_wire_test]=../libcrypto.a ../libssl.a libtestutil.a
@@ -648,10 +653,6 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[handshake-memfail]=../include ../apps/include
   DEPEND[handshake-memfail]=../libcrypto.a ../libssl.a libtestutil.a
 
-  SOURCE[x509-memfail]=x509_memfail.c
-  INCLUDE[x509-memfail]=../include ../apps/include
-  DEPEND[x509-memfail]=../libcrypto.a libtestutil.a
-
   SOURCE[load_key_certs_crls_memfail]=load_key_certs_crls_memfail.c ../apps/lib/apps.c \
           ../apps/lib/app_rand.c ../apps/lib/app_provider.c ../apps/lib/app_libctx.c \
           ../apps/lib/fmt.c ../apps/lib/apps_ui.c ../apps/lib/app_x509.c \
@@ -816,6 +817,11 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cipher_overhead_test]=cipher_overhead_test.c
   INCLUDE[cipher_overhead_test]=.. ../include ../apps/include
   DEPEND[cipher_overhead_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+  PROGRAMS{noinst}=cipher_dupctx_test
+  SOURCE[cipher_dupctx_test]=cipher_dupctx_test.c
+  INCLUDE[cipher_dupctx_test]=../include ../apps/include
+  DEPEND[cipher_dupctx_test]=../libcrypto libtestutil.a
 
   SOURCE[uitest]=uitest.c ../apps/lib/apps_ui.c
   INCLUDE[uitest]=.. ../include ../apps/include
@@ -1299,6 +1305,10 @@ IF[{- !$disabled{tests} -}]
   ENDIF
   DEPEND[]=provider_internal_test.cnf
   GENERATE[provider_internal_test.cnf]=provider_internal_test.cnf.in
+  DEPEND[]=pathed.cnf
+  GENERATE[pathed.cnf]=pathed.cnf.in
+  DEPEND[]=nocache-and-default.cnf
+  GENERATE[nocache-and-default.cnf]=nocache-and-default.cnf.in
 
   PROGRAMS{noinst}=provider_fallback_test
   SOURCE[provider_fallback_test]=provider_fallback_test.c
@@ -1434,7 +1444,7 @@ ENDIF
 
   SOURCE[strtoultest]=strtoultest.c
   INCLUDE[strtoultest]=../include ../apps/include
-  DEPEND[strtoultest]=../libcrypto libtestutil.a
+  DEPEND[strtoultest]=../libcrypto.a libtestutil.a
 
   SOURCE[bio_pw_callback_test]=bio_pw_callback_test.c
   INCLUDE[bio_pw_callback_test]=../include ../apps/include
@@ -1443,6 +1453,10 @@ ENDIF
   SOURCE[engine_stubs_test]=engine_stubs_test.c
   INCLUDE[engine_stubs_test]=../include ../apps/include
   DEPEND[engine_stubs_test]=../libcrypto libtestutil.a
+
+  SOURCE[ossl_rbtree_test]=ossl_rbtree_test.c
+  INCLUDE[ossl_rbtree_test]=../include ../apps/include
+  DEPEND[ossl_rbtree_test]=../libcrypto.a libtestutil.a
 
 {-
    use File::Spec::Functions;

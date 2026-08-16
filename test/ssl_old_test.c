@@ -1043,13 +1043,16 @@ int main(int argc, char *argv[])
         } else if (HAS_PREFIX(*argv, "-num")) {
             if (--argc < 1)
                 goto bad;
-            number = atoi(*(++argv));
+            (void)test_strtoint(*(++argv), &number);
             if (number == 0)
                 number = 1;
         } else if (strcmp(*argv, "-bytes") == 0) {
+            unsigned long ul = 0;
+
             if (--argc < 1)
                 goto bad;
-            bytes = atol(*(++argv));
+            if (OPENSSL_strtoul(*(++argv), NULL, 10, &ul) && ul <= LONG_MAX)
+                bytes = (long)ul;
             if (bytes == 0L)
                 bytes = 1L;
             i = (int)strlen(argv[0]);
@@ -1191,9 +1194,12 @@ int main(int argc, char *argv[])
                 goto bad;
             client_sess_in = *(++argv);
         } else if (strcmp(*argv, "-should_reuse") == 0) {
+            int reuse_arg = 0;
+
             if (--argc < 1)
                 goto bad;
-            should_reuse = !!atoi(*(++argv));
+            (void)test_strtoint(*(++argv), &reuse_arg);
+            should_reuse = reuse_arg != 0;
         } else if (strcmp(*argv, "-no_ticket") == 0) {
             no_ticket = 1;
         } else if (strcmp(*argv, "-client_ktls") == 0) {

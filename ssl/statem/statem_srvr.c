@@ -701,7 +701,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * parameters such as new_session_count = 0 or resumption_count = 0, is
          * effectively signaling no interest in session tickets or resumption.
          *
-         * RFC 8446 section 4.2.9: Servers MUST NOT select a key exchange mode
+         * RFC 9846 section 4.3.9: Servers MUST NOT select a key exchange mode
          * that is not listed by the client. This extension also restricts the
          * modes for use with PSK resumption. Servers SHOULD NOT send
          * NewSessionTicket with tickets that are not compatible with the
@@ -712,17 +712,20 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * session tickets or resumption (e.g. new_session_count = 0 or
          * resumption_count = 0), this implementation does not currently
          * interpret or enforce those parameters.
+         *
+         * Also skip issuance when SSL_VERIFY_PEER is set with no sid_ctx
+         * configured: any ticket minted here would be rejected by
+         * ssl_get_prev_session() in that configuration.
          */
-        if (((s->options & SSL_OP_NO_TICKET) != 0
+        if (s->num_tickets <= s->sent_tickets
+            || ((s->options & SSL_OP_NO_TICKET) != 0
                 && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
-            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE) {
+            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
+            || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0))
             st->hand_state = TLS_ST_OK;
-        } else if (s->num_tickets > s->sent_tickets) {
+        else
             st->hand_state = TLS_ST_SW_SESSION_TICKET;
-        } else {
-            st->hand_state = TLS_ST_OK;
-        }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
@@ -3629,7 +3632,7 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    inlen = ASN1_STRING_length_ex(pKX->kxBlob->value.sequence);
+    inlen = ASN1_STRING_get_length(pKX->kxBlob->value.sequence);
     if (inlen > INT_MAX)
         goto err;
 
@@ -4224,8 +4227,10 @@ CON_FUNC_RETURN tls_construct_server_compressed_certificate(SSL_CONNECTION *sc, 
         || !WPACKET_put_bytes_u24(pkt, cc->orig_len)
         || !WPACKET_start_sub_packet_u24(pkt)
         || !WPACKET_memcpy(pkt, cc->data, cc->len)
-        || !WPACKET_close(pkt))
+        || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     sc->s3.tmp.cert->cert_comp_used++;
     return 1;
@@ -4240,7 +4245,7 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
     /*
      * Ticket lifetime hint:
      * In TLSv1.3 we reset the "time" field above, and always specify the
-     * timeout, limited to a 1 week period per RFC8446.
+     * timeout, limited to a 1 week period per RFC9846.
      * For TLSv1.2 this is advisory only and we leave this unspecified for
      * resumed session (for simplicity).
      */
@@ -4542,7 +4547,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
             SSL_SESSION *new_sess = ssl_session_dup(s->session, 0);
 
             if (new_sess == NULL) {
-                /* SSLfatal already called */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
                 goto err;
             }
 

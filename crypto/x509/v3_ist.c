@@ -52,28 +52,28 @@ static ISSUER_SIGN_TOOL *v2i_issuer_sign_tool(X509V3_EXT_METHOD *method, X509V3_
         if (strcmp(cnf->name, "signTool") == 0) {
             if (ist->signTool == NULL
                 || cnf->value == NULL
-                || !ASN1_STRING_set_string(ist->signTool, cnf->value)) {
+                || !ASN1_STRING_set1_string(ist->signTool, cnf->value)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
         } else if (strcmp(cnf->name, "cATool") == 0) {
             if (ist->cATool == NULL
                 || cnf->value == NULL
-                || !ASN1_STRING_set_string(ist->cATool, cnf->value)) {
+                || !ASN1_STRING_set1_string(ist->cATool, cnf->value)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
         } else if (strcmp(cnf->name, "signToolCert") == 0) {
             if (ist->signToolCert == NULL
                 || cnf->value == NULL
-                || !ASN1_STRING_set_string(ist->signToolCert, cnf->value)) {
+                || !ASN1_STRING_set1_string(ist->signToolCert, cnf->value)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }
         } else if (strcmp(cnf->name, "cAToolCert") == 0) {
             if (ist->cAToolCert == NULL
                 || cnf->value == NULL
-                || !ASN1_STRING_set_string(ist->cAToolCert, cnf->value)) {
+                || !ASN1_STRING_set1_string(ist->cAToolCert, cnf->value)) {
                 ERR_raise(ERR_LIB_X509V3, ERR_R_ASN1_LIB);
                 goto err;
             }

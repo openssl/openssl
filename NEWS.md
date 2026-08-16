@@ -30,6 +30,7 @@ OpenSSL 4.1
 
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
+  * Initial support for the Elbrus2000 (e2k) architecture
 
   * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
 
@@ -99,6 +100,8 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed incorrect tag processing for empty messages in AES-GCM-SIV
     and AES-SIV modes.
     ([CVE-2026-45446])
+
+  * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
 
   * Fixed a regression introduced in 4.0.0 that led to a `openssl pkey`
     command crash when it was invoked to encrypt a private key with password

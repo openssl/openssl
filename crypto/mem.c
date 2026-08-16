@@ -112,12 +112,19 @@ static void parseit(void)
 {
     char *semi = strchr(md_failstring, ';');
     char *atsign;
+    char *end;
 
     if (semi != NULL)
         *semi++ = '\0';
 
-    /* Get the count (atol will stop at the @ if there), and percentage */
-    md_count = atol(md_failstring);
+    /*
+     * Get the count (parsing stops at the '@' if present), and percentage.
+     * Ignore an unparsable/overflowing count rather than acting on garbage.
+     * Validate that the count is followed by '@' or end-of-string.
+     */
+    if (!ossl_strtol(md_failstring, &end, 10, &md_count)
+        || (*end != '\0' && *end != '@'))
+        md_count = 0;
     atsign = strchr(md_failstring, '@');
     md_fail_percent = atsign == NULL ? 0 : (int)(atof(atsign + 1) * 100 + 0.5);
 
@@ -179,10 +186,19 @@ void ossl_malloc_setup_failures(void)
             parseit();
         }
     }
-    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL)
-        md_tracefd = atoi(cp);
-    if ((cp = getenv("OPENSSL_MALLOC_SEED")) != NULL)
-        srandom(atoi(cp));
+    if ((cp = getenv("OPENSSL_MALLOC_FD")) != NULL) {
+        int fd;
+
+        if (ossl_strtoint(cp, NULL, 10, &fd) && fd >= 0)
+            md_tracefd = fd;
+    }
+    if ((cp = getenv("OPENSSL_MALLOC_SEED")) != NULL) {
+        unsigned long seed;
+
+        /* Any value is a usable seed; just truncate it to the srandom() type. */
+        if (OPENSSL_strtoul(cp, NULL, 10, &seed))
+            srandom((unsigned int)seed);
+    }
 }
 #endif
 

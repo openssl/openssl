@@ -128,6 +128,7 @@ static int ml_kem_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 
         /* Possibly, but much less likely wrong type */
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+        OPENSSL_cleanse((void *)ctx->entropy_buf, sizeof(ctx->entropy_buf));
         ctx->entropy = NULL;
         return 0;
     }

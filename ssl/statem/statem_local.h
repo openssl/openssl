@@ -37,10 +37,10 @@
 #define KEY_UPDATE_MAX_LENGTH 1
 #define CCS_MAX_LENGTH 1
 
-/* Max ServerHello size permitted by RFC 8446 */
+/* Max ServerHello size permitted by RFC 9846 */
 #define SERVER_HELLO_MAX_LENGTH 65607
 
-/* Max CertificateVerify size permitted by RFC 8446 */
+/* Max CertificateVerify size permitted by RFC 9846 */
 #define CERTIFICATE_VERIFY_MAX_LENGTH 65539
 
 /* Max should actually be 36 but we are generous */
@@ -269,6 +269,8 @@ __owur int tls_validate_all_contexts(SSL_CONNECTION *s, unsigned int thisctx,
     RAW_EXTENSION *exts);
 __owur int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
     unsigned int thisctx);
+__owur int tls_validate_no_unknown_extensions(SSL_CONNECTION *s,
+    PACKET *packet, unsigned int context);
 __owur int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
     unsigned int context,
     RAW_EXTENSION **res, size_t *len, int init);

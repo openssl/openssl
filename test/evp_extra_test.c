@@ -4244,6 +4244,76 @@ done:
     return ret;
 }
 
+/*
+ * A raw RSA PKCS#1 v1.5 signature whose recovered data is empty must be
+ * recovered successfully with a length of zero, not rejected as an error.
+ */
+static int test_RSA_verify_recover_empty_payload(void)
+{
+    int ret = 0;
+    int recovered_cap = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_PKEY_CTX *sign_ctx = NULL, *verify_ctx = NULL;
+    unsigned char *sig = NULL, *recovered = NULL;
+    size_t sig_len = 0, recovered_len = 0;
+    /*
+     * The signed input has zero length, but a valid non-null address is still
+     * passed so the result does not depend on how lower layers treat NULL for
+     * zero-length data.
+     */
+    const unsigned char empty[] = { 0 };
+
+    if (OSSL_PROVIDER_available(testctx, "fips"))
+        return TEST_skip("Test skipped for FIPS provider");
+
+    if (!TEST_ptr(pkey = load_example_rsa_key())
+        || !TEST_ptr(sign_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_sign_init(sign_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(sign_ctx, RSA_PKCS1_PADDING), 0)
+        /*
+         * Deliberately do not configure a signature digest so that the raw
+         * PKCS#1 v1.5 sign and verify-recover paths are exercised.
+         */
+        || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, NULL, &sig_len, empty, 0), 0)
+        || !TEST_ptr(sig = OPENSSL_malloc(sig_len))
+        || !TEST_int_gt(EVP_PKEY_sign(sign_ctx, sig, &sig_len, empty, 0), 0)
+        || !TEST_int_gt(recovered_cap = EVP_PKEY_get_size(pkey), 0)
+        || !TEST_ptr(recovered = OPENSSL_malloc(recovered_cap))
+        || !TEST_ptr(verify_ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pkey, NULL))
+        || !TEST_int_gt(EVP_PKEY_verify_recover_init(verify_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_padding(verify_ctx, RSA_PKCS1_PADDING),
+            0))
+        goto done;
+
+    /* Size-query call must succeed. */
+    recovered_len = (size_t)recovered_cap;
+    if (!TEST_int_gt(EVP_PKEY_verify_recover(verify_ctx, NULL,
+                         &recovered_len, sig, sig_len),
+            0))
+        goto done;
+
+    /*
+     * The actual recovery call is essential: a NULL output buffer would only
+     * run the size-query path, which never decodes the signature and so would
+     * not reproduce the regression.
+     */
+    recovered_len = (size_t)recovered_cap;
+    if (!TEST_int_gt(EVP_PKEY_verify_recover(verify_ctx, recovered,
+                         &recovered_len, sig, sig_len),
+            0)
+        || !TEST_size_t_eq(recovered_len, 0))
+        goto done;
+
+    ret = 1;
+done:
+    EVP_PKEY_CTX_free(sign_ctx);
+    EVP_PKEY_CTX_free(verify_ctx);
+    EVP_PKEY_free(pkey);
+    OPENSSL_free(sig);
+    OPENSSL_free(recovered);
+    return ret;
+}
+
 static int test_RSA_encrypt(void)
 {
     int ret = 0;
@@ -5812,8 +5882,6 @@ static int test_evp_oneshot_aead_zerolen(int idx)
     /* filter out various modes */
     if (info->taglen == 0
         || info->mode == EVP_CIPH_CCM_MODE
-        || info->mode == EVP_CIPH_OCB_MODE
-        || info->mode == EVP_CIPH_GCM_SIV_MODE
         /* skip TLS stitched MTE cipher */
         || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA1")
         /* skip TLS stitched MTE cipher */
@@ -5821,8 +5889,7 @@ static int test_evp_oneshot_aead_zerolen(int idx)
         /* skip TLS stitched MTE cipher */
         || EVP_CIPHER_is_a(info->ciph, "AES-128-CBC-HMAC-SHA256")
         /* skip TLS stitched MTE cipher */
-        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256")
-        || EVP_CIPHER_is_a(info->ciph, "ChaCha20-Poly1305"))
+        || EVP_CIPHER_is_a(info->ciph, "AES-256-CBC-HMAC-SHA256"))
         return 1;
 
     for (i = 0; i < info->keylen && i < (int)sizeof(key); i++)
@@ -6920,6 +6987,102 @@ err:
         TEST_info("test_evp_reset %d: %s", idx, errmsg);
     EVP_CIPHER_CTX_free(ctx);
     EVP_CIPHER_free(type);
+    return testresult;
+}
+
+static const char *const aes_cbc_decrypt_ciphers[] = {
+    "AES-128-CBC", "AES-192-CBC", "AES-256-CBC"
+};
+
+/*
+ * Lengths (in bytes, all block-aligned) chosen so that the block count modulo
+ * the 16-block main loop hits every tail path in the bulk CBC decrypt routine:
+ * exact multiple of 16 blocks, the 1/2/3-block lookahead variants, and the
+ * 8-block, 4-block and 1-3 block remainder paths.
+ */
+static const int aes_cbc_decrypt_lengths[] = {
+    256, /* 16 blocks: main loop once, no lookahead                */
+    272, /* 17 blocks: lookahead rem==1, 1-block tail             */
+    288, /* 18 blocks: lookahead rem==2, 2-block tail             */
+    304, /* 19 blocks: lookahead rem==3, 3-block tail             */
+    320, /* 20 blocks: 4-block path                               */
+    384, /* 24 blocks: 8-block path                               */
+    448, /* 28 blocks: 8-block + nested lookahead + 4-block       */
+    496, /* 31 blocks: 8 + 4 + 3-block tail                       */
+    512 /* 32 blocks: main loop twice                            */
+};
+
+#define AES_CBC_DECRYPT_MAXLEN 512
+
+/*
+ * For each length, decrypt the ciphertext in a single call (the >= 256 byte
+ * length exercises the bulk/VAES CBC decrypt path) and again one block at a
+ * time (keeping every call below the bulk threshold, i.e. an independent
+ * reference decrypt).  The bulk output must match both the original plaintext
+ * and the reference, for AES-128/192/256 and across all length branches.
+ */
+static int test_aes_cbc_decrypt(int idx)
+{
+    const char *ciphername = aes_cbc_decrypt_ciphers[idx];
+    unsigned char key[32], iv[16], pt[AES_CBC_DECRYPT_MAXLEN];
+    unsigned char ct[AES_CBC_DECRYPT_MAXLEN];
+    unsigned char bulk_out[AES_CBC_DECRYPT_MAXLEN];
+    unsigned char ref_out[AES_CBC_DECRYPT_MAXLEN];
+    int testresult = 0, i, outl, tmpl, off;
+    size_t li;
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+
+    for (i = 0; i < (int)sizeof(key); i++)
+        key[i] = (unsigned char)(i + 1);
+    for (i = 0; i < (int)sizeof(iv); i++)
+        iv[i] = (unsigned char)(0xf0 ^ i);
+    for (i = 0; i < AES_CBC_DECRYPT_MAXLEN; i++)
+        pt[i] = (unsigned char)(i * 7 + 3);
+
+    if (!TEST_ptr(cipher = EVP_CIPHER_fetch(testctx, ciphername, testpropq))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    for (li = 0; li < OSSL_NELEM(aes_cbc_decrypt_lengths); li++) {
+        int buflen = aes_cbc_decrypt_lengths[li];
+
+        /* Reference encrypt (block-aligned input, padding disabled). */
+        if (!TEST_true(EVP_EncryptInit_ex(ctx, cipher, NULL, key, iv))
+            || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
+            || !TEST_true(EVP_EncryptUpdate(ctx, ct, &outl, pt, buflen))
+            || !TEST_int_eq(outl, buflen))
+            goto err;
+
+        /* One-shot decrypt: exercises the bulk path for this length. */
+        if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv))
+            || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0))
+            || !TEST_true(EVP_DecryptUpdate(ctx, bulk_out, &outl, ct, buflen))
+            || !TEST_int_eq(outl, buflen))
+            goto err;
+
+        /* Reference decrypt: one block per call bypasses the bulk path. */
+        if (!TEST_true(EVP_DecryptInit_ex(ctx, cipher, NULL, key, iv))
+            || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0)))
+            goto err;
+        for (off = 0; off < buflen; off += 16) {
+            if (!TEST_true(EVP_DecryptUpdate(ctx, ref_out + off, &tmpl,
+                    ct + off, 16))
+                || !TEST_int_eq(tmpl, 16))
+                goto err;
+        }
+
+        if (!TEST_mem_eq(bulk_out, buflen, pt, buflen)
+            || !TEST_mem_eq(bulk_out, buflen, ref_out, buflen)) {
+            TEST_info("%s failed at length %d", ciphername, buflen);
+            goto err;
+        }
+    }
+
+    testresult = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
     return testresult;
 }
 
@@ -8670,6 +8833,137 @@ end:
     return testresult;
 }
 
+/*
+ * RSASVE (SP 800-56B 7.2) must reject mathematically degenerate inputs:
+ * a public exponent e <= 1, and a ciphertext c in {0, 1, n - 1}.  Outside
+ * the FIPS module these were previously accepted; the checks now apply to
+ * every build, so exercise them in the default provider.
+ */
+
+/*
+ * With e <= 1 the RSA public operation is the identity (or worse), so
+ * encapsulation setup must reject the key with PROV_R_INVALID_KEY.  idx
+ * selects the exponent: 0 or 1.
+ */
+static int test_rsasve_degenerate_exponent(int idx)
+{
+    EVP_PKEY *rsakey = NULL;
+    EVP_PKEY *pubkey = NULL;
+    EVP_PKEY_CTX *genctx = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    OSSL_PARAM_BLD *bld = NULL;
+    OSSL_PARAM *params = NULL;
+    BIGNUM *n = NULL;
+    BIGNUM *e = NULL;
+    int testresult = 0;
+
+    /* Borrow a real modulus; only the exponent is degenerate. */
+    if (!TEST_ptr(rsakey = load_example_rsa_key())
+        || !TEST_true(EVP_PKEY_get_bn_param(rsakey, OSSL_PKEY_PARAM_RSA_N, &n)))
+        goto err;
+
+    if (!TEST_ptr(e = BN_new())
+        || !TEST_true(BN_set_word(e, (BN_ULONG)idx))) /* idx is 0 or 1 */
+        goto err;
+
+    if (!TEST_ptr(bld = OSSL_PARAM_BLD_new())
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_N, n))
+        || !TEST_true(OSSL_PARAM_BLD_push_BN(bld, OSSL_PKEY_PARAM_RSA_E, e))
+        || !TEST_ptr(params = OSSL_PARAM_BLD_to_param(bld)))
+        goto err;
+
+    if (!TEST_ptr(genctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA", NULL))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(genctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(genctx, &pubkey, EVP_PKEY_PUBLIC_KEY,
+                            params),
+            0))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, pubkey, NULL))
+        || !TEST_int_eq(EVP_PKEY_encapsulate_init(ctx, NULL), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), PROV_R_INVALID_KEY))
+        goto err;
+
+    testresult = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_CTX_free(genctx);
+    EVP_PKEY_free(pubkey);
+    EVP_PKEY_free(rsakey);
+    OSSL_PARAM_free(params);
+    OSSL_PARAM_BLD_free(bld);
+    BN_free(e);
+    BN_free(n);
+    return testresult;
+}
+
+/*
+ * A ciphertext c in {0, 1, n - 1} is a fixed point or trivial case of RSADP,
+ * so RSASVE recovery must reject it.  idx selects the ciphertext: 0, 1, or
+ * n - 1.  The ciphertext length must equal the modulus length.
+ */
+static int test_rsasve_degenerate_ciphertext(int idx)
+{
+    EVP_PKEY *rsakey = NULL;
+    EVP_PKEY_CTX *ctx = NULL;
+    BIGNUM *n = NULL;
+    unsigned char *ct = NULL;
+    unsigned char *secret = NULL;
+    size_t ctlen = 0;
+    size_t secretlen = 0;
+    int expected_reason = 0;
+    int testresult = 0;
+
+    if (!TEST_ptr(rsakey = load_example_rsa_key())
+        || !TEST_true(EVP_PKEY_get_bn_param(rsakey, OSSL_PKEY_PARAM_RSA_N, &n)))
+        goto err;
+
+    ctlen = secretlen = (size_t)EVP_PKEY_get_size(rsakey);
+    if (!TEST_size_t_gt(ctlen, 0))
+        goto err;
+    if (!TEST_ptr(ct = OPENSSL_zalloc(ctlen))
+        || !TEST_ptr(secret = OPENSSL_malloc(secretlen)))
+        goto err;
+
+    switch (idx) {
+    case 0: /* c = 0 */
+        expected_reason = RSA_R_DATA_TOO_SMALL;
+        break;
+    case 1: /* c = 1 */
+        ct[ctlen - 1] = 1;
+        expected_reason = RSA_R_DATA_TOO_SMALL;
+        break;
+    case 2: /* c = n - 1 */
+        if (!TEST_true(BN_sub_word(n, 1))
+            || !TEST_int_eq(BN_bn2binpad(n, ct, (int)ctlen), (int)ctlen))
+            goto err;
+        expected_reason = RSA_R_DATA_TOO_LARGE_FOR_MODULUS;
+        break;
+    default:
+        goto err;
+    }
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_pkey(testctx, rsakey, NULL))
+        || !TEST_int_eq(EVP_PKEY_decapsulate_init(ctx, NULL), 1)
+        || !TEST_int_eq(EVP_PKEY_CTX_set_kem_op(ctx, "RSASVE"), 1))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(EVP_PKEY_decapsulate(ctx, secret, &secretlen, ct, ctlen), 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()), expected_reason))
+        goto err;
+
+    testresult = 1;
+err:
+    OPENSSL_free(secret);
+    OPENSSL_free(ct);
+    EVP_PKEY_CTX_free(ctx);
+    EVP_PKEY_free(rsakey);
+    BN_free(n);
+    return testresult;
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 
 static int sign_hits = 0;
@@ -9238,6 +9532,7 @@ int setup_tests(void)
     ADD_TEST(test_RSA_OAEP_set_get_params);
     ADD_TEST(test_RSA_OAEP_set_null_label);
     ADD_TEST(test_RSA_verify_recover_rejects_short_buffer);
+    ADD_TEST(test_RSA_verify_recover_empty_payload);
     ADD_TEST(test_RSA_encrypt);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
@@ -9291,6 +9586,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_evp_init_seq, OSSL_NELEM(evp_init_tests));
     ADD_ALL_TESTS(test_evp_reset, OSSL_NELEM(evp_reset_tests));
+    ADD_ALL_TESTS(test_aes_cbc_decrypt, OSSL_NELEM(aes_cbc_decrypt_ciphers));
     ADD_ALL_TESTS(test_evp_reinit_seq, OSSL_NELEM(evp_reinit_tests));
     ADD_ALL_TESTS(test_gcm_reinit, OSSL_NELEM(gcm_reinit_tests));
     ADD_ALL_TESTS(test_evp_updated_iv, OSSL_NELEM(evp_updated_iv_tests));
@@ -9326,6 +9622,9 @@ int setup_tests(void)
     ADD_TEST(test_aes_xts_rejects_missing_iv);
 
     ADD_TEST(test_evp_cipher_pipeline);
+
+    ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
+    ADD_ALL_TESTS(test_rsasve_degenerate_ciphertext, 3);
 
 #ifndef OPENSSL_NO_ML_KEM
     ADD_ALL_TESTS(test_ml_kem_seed_only, 2);

@@ -66,6 +66,12 @@ parameters or key are written to I<*ppkey>.  If I<*ppkey> is NULL when this
 function is called, it will be allocated, and should be freed by the caller
 when no longer useful, using L<EVP_PKEY_free(3)>.
 
+When a key is generated, EVP_PKEY_generate() does not associate it with I<ctx>
+or change I<ctx> into a context for operations using that key.  To use the
+generated key, create a new context with L<EVP_PKEY_CTX_new_from_pkey(3)>,
+passing I<*ppkey>.  The generation context can be reused for further generation
+operations or freed.
+
 EVP_PKEY_paramgen() and EVP_PKEY_keygen() do exactly the same thing as
 EVP_PKEY_generate(), after checking that the corresponding EVP_PKEY_paramgen_init()
 or EVP_PKEY_keygen_init() was used to initialize I<ctx>.
@@ -153,7 +159,7 @@ in functions which require the use of a public key or parameters.
 
 =head1 EXAMPLES
 
-Generate a 2048 bit RSA key:
+Generate a 2048 bit RSA key, then initialize a context for encryption:
 
  #include <openssl/evp.h>
  #include <openssl/rsa.h>
@@ -161,7 +167,7 @@ Generate a 2048 bit RSA key:
  EVP_PKEY_CTX *ctx;
  EVP_PKEY *pkey = NULL;
 
- ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, NULL);
+ ctx = EVP_PKEY_CTX_new_from_name(NULL, "RSA", NULL);
  if (!ctx)
      /* Error occurred */
  if (EVP_PKEY_keygen_init(ctx) <= 0)
@@ -170,7 +176,15 @@ Generate a 2048 bit RSA key:
      /* Error */
 
  /* Generate key */
- if (EVP_PKEY_keygen(ctx, &pkey) <= 0)
+ if (EVP_PKEY_generate(ctx, &pkey) <= 0)
+     /* Error */
+
+ /* ctx is still a generation context; pkey contains the generated key */
+ EVP_PKEY_CTX_free(ctx);
+ ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
+ if (!ctx)
+     /* Error occurred */
+ if (EVP_PKEY_encrypt_init(ctx) <= 0)
      /* Error */
 
 Generate a key from a set of parameters:
