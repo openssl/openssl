@@ -2026,6 +2026,17 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
 
     ctx->current_crl = crl;
 
+    /*
+     * Reject negative CRLNumber / BaseCRLNumber under X509_V_FLAG_X509_STRICT.
+     */
+    if ((ctx->param->flags & X509_V_FLAG_X509_STRICT) != 0
+        && ((crl->crl_number != NULL
+             && crl->crl_number->type == V_ASN1_NEG_INTEGER)
+            || (crl->base_crl_number != NULL
+                && crl->base_crl_number->type == V_ASN1_NEG_INTEGER))
+        && !verify_cb_crl(ctx, X509_V_ERR_NEGATIVE_CRL_NUMBER))
+        return 0;
+
     /* If we have an alternative CRL issuer cert use that */
     if (ctx->current_issuer != NULL) {
         issuer = ctx->current_issuer;
