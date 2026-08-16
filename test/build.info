@@ -158,6 +158,13 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[ecstresstest]=../include ../apps/include
   DEPEND[ecstresstest]=../libcrypto libtestutil.a
 
+  IF[{- !$disabled{ec} -}]
+    PROGRAMS{noinst}=genec_test
+    SOURCE[genec_test]=genec_test.c
+    INCLUDE[genec_test]=../include ../apps/include
+    DEPEND[genec_test]=../libcrypto libtestutil.a
+  ENDIF
+
   SOURCE[gmdifftest]=gmdifftest.c
   INCLUDE[gmdifftest]=../include ../apps/include
   DEPEND[gmdifftest]=../libcrypto libtestutil.a
