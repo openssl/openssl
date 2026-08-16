@@ -168,6 +168,11 @@ IF[{- !$disabled{tests} -}]
     SOURCE[genec_test]=genec_test.c
     INCLUDE[genec_test]=../include ../apps/include
     DEPEND[genec_test]=../libcrypto libtestutil.a
+
+    PROGRAMS{noinst}=ecparam_test
+    SOURCE[ecparam_test]=ecparam_test.c
+    INCLUDE[ecparam_test]=../include ../apps/include
+    DEPEND[ecparam_test]=../libcrypto libtestutil.a
   ENDIF
 
   SOURCE[gmdifftest]=gmdifftest.c
