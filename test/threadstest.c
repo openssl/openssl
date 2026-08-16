@@ -128,7 +128,7 @@ static void rwwriter_fn(int id, int *iterations)
         new = OPENSSL_zalloc(sizeof(int));
         OPENSSL_assert(new != NULL);
         if (contention == 0)
-            OSSL_sleep(1000);
+            OSSL_sleep(1);
         if (!CRYPTO_THREAD_write_lock(rwtorturelock))
             abort();
         if (rwwriter_ptr != NULL) {
@@ -335,7 +335,7 @@ static void writer_fn(int id, int *iterations)
         }
 
         if (contention == 0)
-            OSSL_sleep(1000);
+            OSSL_sleep(1);
         ossl_rcu_write_lock(rcu_lock);
         old = ossl_rcu_deref(&writer_ptr);
         TSAN_ACQUIRE(&writer_ptr);
