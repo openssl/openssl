@@ -433,13 +433,6 @@ static int drbg_fetch_algs_from_prov(const OSSL_PARAM params[],
     if (macctx == NULL || digest == NULL)
         return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params,
-             OSSL_PROV_PARAM_CORE_PROV_NAME))
-        == NULL)
-        return 0;
-    if (p->data_type != OSSL_PARAM_UTF8_STRING)
-        return 0;
-
     p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST);
     if (p) {
         if (!OSSL_PARAM_get_utf8_string_ptr(p, &digest_name)) {
@@ -472,7 +465,7 @@ static int drbg_fetch_algs_from_prov(const OSSL_PARAM params[],
     EVP_MAC_CTX_free(*macctx);
     *macctx = NULL;
 
-    mac = EVP_MAC_fetch(libctx, p->data, propquery);
+    mac = EVP_MAC_fetch(libctx, hmac_name, propquery);
     if (mac) {
         *macctx = EVP_MAC_CTX_new(mac);
         /* The context holds on to the MAC */

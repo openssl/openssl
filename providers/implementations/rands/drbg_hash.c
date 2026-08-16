@@ -526,13 +526,6 @@ static int drbg_fetch_digest_from_prov(const OSSL_PARAM params[],
     if (digest == NULL)
         return 0;
 
-    if ((p = OSSL_PARAM_locate_const(params,
-             OSSL_PROV_PARAM_CORE_PROV_NAME))
-        == NULL)
-        return 0;
-    if (p->data_type != OSSL_PARAM_UTF8_STRING)
-        return 0;
-
     p = OSSL_PARAM_locate_const(params, OSSL_ALG_PARAM_DIGEST);
     if (p == NULL) {
         ret = 1;
