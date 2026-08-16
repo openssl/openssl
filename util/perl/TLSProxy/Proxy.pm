@@ -521,14 +521,14 @@ sub clientstart
     my $ctr = 0;
     local $SIG{PIPE} = "IGNORE";
     $self->{saw_session_ticket} = undef;
-    while($fdset->count && $ctr < 10) {
+    while($fdset->count && $ctr < 50) {
         if (defined($self->{sessionfile})) {
             # s_client got -ign_eof and won't be exiting voluntarily, so we
             # look for data *and* session ticket...
             last if TLSProxy::Message->success()
                     && $self->{saw_session_ticket};
         }
-        if (!(@ready = $fdset->can_read(1))) {
+        if (!(@ready = $fdset->can_read(0.1))) {
             last if TLSProxy::Message->success()
                 && $self->{saw_session_ticket};
 
@@ -563,7 +563,7 @@ sub clientstart
         }
     }
 
-    if ($ctr >= 10) {
+    if ($ctr >= 50) {
         kill(3, $self->{real_serverpid});
         print "No progress made\n";
         $success = 0;
