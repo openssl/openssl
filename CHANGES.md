@@ -334,6 +334,10 @@ OpenSSL Releases
 
    *Dimitri John Ledkov*
 
+ * The API functions `BN_CTX_start_ex` has been added to libcrypto.
+
+   *Wolfgang Beck*
+
 OpenSSL 4.0
 -----------
 
