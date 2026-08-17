@@ -39,7 +39,7 @@ char *test_get_argument(size_t n)
 {
     char **argv = opt_rest();
 
-    OPENSSL_assert(n < sizeof(used));
+    OPENSSL_assert(n < OSSL_NELEM(used));
     if ((int)n >= opt_num_rest() || argv == NULL)
         return NULL;
     used[n] = 1;
