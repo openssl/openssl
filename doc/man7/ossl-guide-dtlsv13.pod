@@ -175,6 +175,26 @@ connections. Each accepted connection has completed cookie validation (if requir
 but still requires L<SSL_do_handshake(3)> or L<SSL_accept(3)> to complete the TLS
 handshake before application data can be exchanged.
 
+By default a DTLS listener created with L<SSL_new_listener(3)> operates in
+blocking mode. Because a listener demultiplexes a single UDP socket across many
+connections, it cannot allow a read for one connection to block and thereby
+stall the others. Its network BIO is therefore configured for nonblocking
+operation, and blocking is instead provided by waiting for readiness of the
+underlying socket. This applies to L<SSL_accept_connection(3)> on the listener
+as well as to L<SSL_read(3)> and L<SSL_write(3)> on the connections it returns.
+
+Use L<SSL_set_blocking_mode(3)> to enable or disable blocking mode, and
+L<SSL_get_blocking_mode(3)> to query it. The blocking mode of a listener is
+normally configured once, before it is used.
+
+A connection SSL object returned by L<SSL_accept_connection(3)> inherits the
+blocking mode of the listener it came from. Calling L<SSL_set_blocking_mode(3)>
+on such a connection overrides that inheritance for that connection only. To
+perform a single nonblocking accept on an otherwise blocking listener, pass the
+B<SSL_ACCEPT_CONNECTION_NO_BLOCK> flag to L<SSL_accept_connection(3)>.
+
+See L<SSL_set_blocking_mode(3)> for full details.
+
 The following tunables are available via L<SSL_get_value_uint(3)> /
 L<SSL_set_value_uint(3)>: B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>
 (pending-connection cap, default 256), B<SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT>
@@ -265,7 +285,8 @@ L<https://github.com/openssl/openssl/blob/master/demos/dtlslistenerecho/main.c>.
 =head1 SEE ALSO
 
 L<ossl-guide-introduction(7)>, L<ossl-guide-libraries-introduction(7)>,
-L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>
+L<ossl-guide-libssl-introduction(7)>, L<ossl-guide-tls-introduction(7)>,
+L<SSL_set_blocking_mode(3)>, L<SSL_new_listener(3)>, L<SSL_accept_connection(3)>
 
 =head1 COPYRIGHT
 
