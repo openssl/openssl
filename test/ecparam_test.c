@@ -27,7 +27,11 @@
  *
  * Invoked as:
  *
- *     ecparam_test valid|noncanon|invalid <file>...
+ *     ecparam_test valid|noncanon|invalid <listfile>
+ *
+ * where the list file holds one file name per line.  The list is passed
+ * this way because the corpus has more files in it than a test can be
+ * given arguments.
  *
  * Valid and non-canonically encoded parameters must load and check.
  * Invalid ones must not.  Only the canonically encoded valid files are
@@ -41,12 +45,55 @@ typedef enum {
 
 static corpus_kind corpus;
 static int expect_check; /* Whether loading and checking should succeed */
+static char **files;
 static int num_files;
 
-/* The files start at argument 1; argument 0 names the corpus. */
 static const char *corpus_file(int idx)
 {
-    return test_get_argument(idx + 1);
+    return files[idx];
+}
+
+/* Read the corpus file names, one per line. */
+static int read_file_list(const char *path)
+{
+    BIO *bio = BIO_new_file(path, "r");
+    char line[512];
+    int n = 0, allocated = 0;
+
+    if (bio == NULL)
+        return 0;
+
+    while (BIO_gets(bio, line, sizeof(line)) > 0) {
+        size_t len = strlen(line);
+
+        while (len > 0 && (line[len - 1] == '\n' || line[len - 1] == '\r'))
+            line[--len] = '\0';
+        if (len == 0)
+            continue;
+
+        if (n == allocated) {
+            char **tmp;
+
+            allocated = allocated == 0 ? 64 : allocated * 2;
+            tmp = OPENSSL_realloc(files, allocated * sizeof(*files));
+            if (tmp == NULL)
+                goto err;
+            files = tmp;
+        }
+
+        if ((files[n] = OPENSSL_strdup(line)) == NULL)
+            goto err;
+        n++;
+    }
+
+    BIO_free(bio);
+    num_files = n;
+    return n > 0;
+
+err:
+    num_files = n;
+    BIO_free(bio);
+    return 0;
 }
 
 /*
@@ -231,10 +278,9 @@ err:
 int setup_tests(void)
 {
     const char *kind;
-    size_t argc = test_get_argument_count();
 
-    if (!TEST_size_t_gt(argc, 1)) {
-        TEST_error("usage: ecparam_test valid|noncanon|invalid <file>...");
+    if (!TEST_size_t_eq(test_get_argument_count(), 2)) {
+        TEST_error("usage: ecparam_test valid|noncanon|invalid <listfile>");
         return 0;
     }
 
@@ -251,7 +297,11 @@ int setup_tests(void)
     }
 
     expect_check = corpus != CORPUS_INVALID;
-    num_files = (int)argc - 1;
+
+    if (!TEST_true(read_file_list(test_get_argument(1)))) {
+        TEST_error("cannot read corpus list %s", test_get_argument(1));
+        return 0;
+    }
 
     ADD_ALL_TESTS(test_ecparam_check, num_files);
     ADD_ALL_TESTS(test_ecparam_check_named, num_files);
@@ -261,4 +311,13 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_reencode, num_files);
 
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    int i;
+
+    for (i = 0; i < num_files; i++)
+        OPENSSL_free(files[i]);
+    OPENSSL_free(files);
 }
