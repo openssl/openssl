@@ -40,6 +40,9 @@ The code demonstrates
 ---------------------
 
 - DTLS Server using SSL Listener APIs to establish Connections
+- Placing the listener (and the connections it accepts, which inherit its mode)
+  into non-blocking mode via SSL_set_blocking_mode(), since a DTLS listener is
+  blocking by default
 - DTLS Server validating Clients via HRR/HVR
 - Thread-per-connection model for handling multiple clients
 - Clients sending data to an established Server
