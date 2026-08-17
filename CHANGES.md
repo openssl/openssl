@@ -131,8 +131,8 @@ OpenSSL Releases
 
    *Adriano Sela Aviles*
 
- * Add a build target to provide MSVC 2013 hacks in a c99 world.
-   The build target adds internal functions to provide c99 functions
+ * Add a build target to provide MSVC 2013 hacks in a C99 world.
+   The build target adds internal functions to provide C99 functions
    that are not present with MSVC 2013.
 
    *Bob Beck*
