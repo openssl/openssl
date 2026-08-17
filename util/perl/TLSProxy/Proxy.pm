@@ -317,10 +317,23 @@ sub start
 
     open(my $savedin, "<&STDIN");
 
-    # Temporarily replace STDIN so that sink process can inherit it...
-    open(STDIN, "$^X -e 'sleep(10)' |") if $self->{isdtls};
+    # DTLS s_server exits when its stdin reaches EOF, so it needs one that
+    # stays open for as long as the test does.  Give it the read end of a
+    # pipe and keep the write end here; closing that in clientstart() is
+    # what lets it finish.
+    my $stdin_holder;
+    if ($self->{isdtls}) {
+        my $rd;
+
+        # A previous run that died before its teardown may have left one.
+        close($self->{stdin_holder}) if defined($self->{stdin_holder});
+        pipe($rd, $stdin_holder) or die "Failed to create stdin pipe: $!\n";
+        open(STDIN, "<&", $rd) or die "Failed to replace STDIN: $!\n";
+        close($rd);
+    }
     $pid = open(STDIN, "$execcmd 2>&1 |") or die "Failed to $execcmd: $!\n";
     $self->{real_serverpid} = $pid;
+    $self->{stdin_holder} = $stdin_holder;
 
     # Process the output from s_server until we find the ACCEPT line, which
     # tells us what the accepting address and port are.
@@ -596,6 +609,13 @@ sub clientstart
 
     my $pid;
     if (--$self->{serverconnects} == 0) {
+        # Let a DTLS s_server see EOF on its stdin, so that it exits and the
+        # sink process reading its output finishes too.  This has to happen
+        # before either is waited for.
+        if (defined($self->{stdin_holder})) {
+            close($self->{stdin_holder});
+            $self->{stdin_holder} = undef;
+        }
         $pid = $self->{serverpid};
         print "Waiting for 'perl -ne print' process to close: $pid...\n";
         $pid = waitpid($pid, 0);
