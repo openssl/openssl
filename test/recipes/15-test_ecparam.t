@@ -31,11 +31,23 @@ if (disabled("sm2")) {
 # pkeyparam applications themselves are covered by 20-test_app_ecparam.t.
 plan tests => 3;
 
-ok(run(test(["ecparam_test", "valid", @valid])),
+# The file names are written to a list file and that is passed instead:
+# there are more of them than a test can be given arguments.
+sub corpus_list {
+    my $name = shift;
+
+    open(my $fh, '>', $name) or die "Cannot write $name: $!";
+    print $fh "$_\n" foreach (@_);
+    close($fh);
+    return $name;
+}
+
+ok(run(test(["ecparam_test", "valid", corpus_list("valid.lst", @valid)])),
    "Load and check valid parameters");
 
-ok(run(test(["ecparam_test", "noncanon", @noncanon])),
+ok(run(test(["ecparam_test", "noncanon",
+             corpus_list("noncanon.lst", @noncanon)])),
    "Load and check non-canonically encoded parameters");
 
-ok(run(test(["ecparam_test", "invalid", @invalid])),
+ok(run(test(["ecparam_test", "invalid", corpus_list("invalid.lst", @invalid)])),
    "Reject invalid parameters");
