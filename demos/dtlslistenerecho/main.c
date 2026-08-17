@@ -184,6 +184,19 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
     SSL_set0_wbio(*listener, listener_bio);
     listener_bio = NULL; /* Both references transferred to listener */
 
+    /*
+     * A DTLS listener is blocking by default, and the connections it returns
+     * inherit that mode. This demo drives the listener and its connections with
+     * SSL_poll() and passes SSL_ACCEPT_CONNECTION_NO_BLOCK to
+     * SSL_accept_connection(), so put the listener into non-blocking mode. The
+     * accepted connections then inherit non-blocking mode as well.
+     */
+    if (SSL_set_blocking_mode(*listener, 0) != 1) {
+        fprintf(stderr, "Unable to set listener to non-blocking mode\n");
+        ERR_print_errors_fp(stderr);
+        goto err;
+    }
+
     /* Start listening for incoming connections */
     if (SSL_listen(*listener) != 1) {
         fprintf(stderr, "SSL_listen failed\n");
