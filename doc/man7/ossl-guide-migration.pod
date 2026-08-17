@@ -44,6 +44,34 @@ This function is deprecated in favour of EVP_KDF_CTX_get0_ctx(), to align
 with the naming of functions that provide similar functionality for other kinds
 of EVP context oobjects.
 
+=head3 B<ASN1_STRING> values have never been NUL byte terminated
+
+The bytes returned by L<ASN1_STRING_get0_data(3)> have never been guaranteed to
+be NUL byte terminated, and the documentation has said so since 2002. Values
+constructed as pointers into parsed DER never have been. Applications treating
+them as C strings have always relied on behaviour that was never promised.
+
+Such code usually escaped consequences because ASN1_STRING_set() allocated one
+byte more than the requested length and wrote a NUL byte into it. That byte was
+never counted in the length reported by ASN1_STRING_length().
+
+ASN1_STRING_set() is now deprecated. Its replacements,
+L<ASN1_STRING_set1_data(3)> and L<ASN1_STRING_set1_string(3)>, allocate exactly
+the requested number of bytes and append nothing. This includes
+ASN1_STRING_set1_string(): it takes a NUL byte terminated C string, but does not
+store the terminator.
+
+Applications must use the data only together with its length, obtained from
+L<ASN1_STRING_get_length(3)>, and never derive the length from the data.
+Applications should be cautious of passing a NULL data pointer when an
+ASN1_STRING has a length of 0 to functions where this behaviour may be
+undefined.
+
+Applications which wish to use the content of an B<ASN1_STRING> as a C string
+should make a copy of the data, NUL byte terminate it, and when appropriate,
+sanitize it for embedded NUL bytes. They should never have been using the
+B<ASN1_STRING> data directly.
+
 =head1 OPENSSL 4.0
 
 =head2 Main Changes from OpenSSL 3.6
