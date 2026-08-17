@@ -189,12 +189,17 @@ STACK_OF(CMS_RecipientInfo) *CMS_get0_RecipientInfos(CMS_ContentInfo *cms)
     }
 }
 
-void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
+int ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
 {
     int i;
+    int ret = 1;
     CMS_RecipientInfo *ri;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
-    STACK_OF(CMS_RecipientInfo) *rinfos = CMS_get0_RecipientInfos(cms);
+    STACK_OF(CMS_RecipientInfo) *rinfos;
+
+    ERR_set_mark();
+    rinfos = CMS_get0_RecipientInfos(cms);
+    ERR_pop_to_mark(); /* removes error in case the content is not enveloped */
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(rinfos); i++) {
         ri = sk_CMS_RecipientInfo_value(rinfos, i);
@@ -205,9 +210,10 @@ void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
                 break;
             case CMS_RECIPINFO_TRANS:
                 ri->d.ktri->cms_ctx = ctx;
-                ossl_x509_set0_libctx(ri->d.ktri->recip,
-                    ossl_cms_ctx_get0_libctx(ctx),
-                    ossl_cms_ctx_get0_propq(ctx));
+                if (!ossl_x509_transfer_libctx(&ri->d.ktri->recip,
+                        ossl_cms_ctx_get0_libctx(ctx),
+                        ossl_cms_ctx_get0_propq(ctx)))
+                    ret = 0;
                 break;
             case CMS_RECIPINFO_KEK:
                 ri->d.kekri->cms_ctx = ctx;
@@ -223,6 +229,7 @@ void ossl_cms_RecipientInfos_set_cmsctx(CMS_ContentInfo *cms)
             }
         }
     }
+    return ret;
 }
 
 int CMS_RecipientInfo_type(CMS_RecipientInfo *ri)

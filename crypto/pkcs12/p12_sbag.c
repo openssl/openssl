@@ -122,7 +122,7 @@ X509 *PKCS12_SAFEBAG_get1_cert_ex(const PKCS12_SAFEBAG *bag,
         return NULL;
     ret = ASN1_item_unpack_ex(bag->value.bag->value.octet,
         ASN1_ITEM_rptr(X509), libctx, propq);
-    if (!ossl_x509_set0_libctx(ret, libctx, propq)) {
+    if (!ossl_x509_transfer_libctx(&ret, libctx, propq)) {
         X509_free(ret);
         return NULL;
     }

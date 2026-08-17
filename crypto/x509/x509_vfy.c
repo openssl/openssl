@@ -67,7 +67,7 @@ static int check_dane_issuer(X509_STORE_CTX *ctx, int depth);
 static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert);
 static int check_key_level(X509_STORE_CTX *ctx, EVP_PKEY *pkey);
 static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert);
-static int check_curve(X509 *cert);
+static int check_curve(const X509 *cert);
 
 static int get_crl_score(X509_STORE_CTX *ctx, X509 **pissuer,
     unsigned int *preasons, X509_CRL *crl, X509 *x);
@@ -78,7 +78,7 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
+static int crl_crldp_check(const X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
 static int check_crl_chain(X509_STORE_CTX *ctx,
@@ -95,9 +95,9 @@ static int null_callback(int ok, X509_STORE_CTX *e)
 /*-
  * Return 1 if given cert is considered self-signed, 0 if not, or -1 on error.
  * This actually verifies self-signedness only if requested.
- * It calls ossl_x509v3_cache_extensions()
- * to match issuer and subject names (i.e., the cert being self-issued) and any
- * present authority key identifier to match the subject key identifier, etc.
+ * Self-signedness is determined from the cached extension data: matching issuer
+ * and subject names (i.e., the cert being self-issued) and any present authority
+ * key identifier matching the subject key identifier, etc.
  */
 int X509_self_signed(const X509 *cert, int verify_signature)
 {
@@ -107,7 +107,7 @@ int X509_self_signed(const X509 *cert, int verify_signature)
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
-    if (!ossl_x509v3_cache_extensions((X509 *)cert))
+    if ((cert->ex_flags & EXFLAG_INVALID) != 0)
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;
@@ -545,7 +545,7 @@ static STACK_OF(X509) *lookup_certs_sk(const X509_STORE_CTX *ctx, const X509_NAM
  * auxiliary trust can be used to override EKU-restrictions.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
-static int check_purpose(X509_STORE_CTX *ctx, X509 *x, int purpose, int depth,
+static int check_purpose(X509_STORE_CTX *ctx, const X509 *x, int purpose, int depth,
     int must_be_ca)
 {
     int tr_ok = X509_TRUST_UNTRUSTED;
@@ -631,7 +631,7 @@ static int check_extensions(X509_STORE_CTX *ctx)
         CB_FAIL_IF((ctx->param->flags & X509_V_FLAG_IGNORE_CRITICAL) == 0
                 && (x->ex_flags & EXFLAG_CRITICAL) != 0,
             ctx, x, i, X509_V_ERR_UNHANDLED_CRITICAL_EXTENSION);
-        CB_FAIL_IF(!allow_proxy_certs && (x->ex_flags & EXFLAG_PROXY) != 0,
+        CB_FAIL_IF(!allow_proxy_certs && ossl_x509_is_proxy(x),
             ctx, x, i, X509_V_ERR_PROXY_CERTIFICATES_NOT_ALLOWED);
         ret = X509_check_ca(x);
         switch (must_be_ca) {
@@ -749,7 +749,9 @@ static int check_extensions(X509_STORE_CTX *ctx)
          * must be another proxy certificate or a EE certificate.  If not,
          * the next certificate must be a CA certificate.
          */
-        if (x->ex_flags & EXFLAG_PROXY) {
+        if (ossl_x509_is_proxy(x)) {
+            long proxy_pathlen = ossl_x509_get_proxy_pathlen(x);
+
             /*
              * RFC3820, 4.1.3 (b)(1) stipulates that if pCPathLengthConstraint
              * is less than max_path_length, the former should be copied to
@@ -761,10 +763,10 @@ static int check_extensions(X509_STORE_CTX *ctx)
              * and copy the latter to the former if it is, and finally,
              * increment proxy_path_length.
              */
-            if (x->ex_pcpathlen != -1) {
-                CB_FAIL_IF(proxy_path_length > x->ex_pcpathlen,
+            if (proxy_pathlen != -1) {
+                CB_FAIL_IF(proxy_path_length > proxy_pathlen,
                     ctx, x, i, X509_V_ERR_PROXY_PATH_LENGTH_EXCEEDED);
-                proxy_path_length = x->ex_pcpathlen;
+                proxy_path_length = proxy_pathlen;
             }
             proxy_path_length++;
             must_be_ca = 0;
@@ -819,7 +821,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
          * added.
          * (RFC 3820: 3.4, 4.1.3 (a)(4))
          */
-        if ((x->ex_flags & EXFLAG_PROXY) != 0) {
+        if (ossl_x509_is_proxy(x)) {
             const X509_NAME *tmpsubject = X509_get_subject_name(x);
             const X509_NAME *tmpissuer = X509_get_issuer_name(x);
             X509_NAME *tmpsubject2;
@@ -927,7 +929,7 @@ static int check_id_error(X509_STORE_CTX *ctx, int errcode)
     return verify_cb_cert(ctx, ctx->cert, 0, errcode);
 }
 
-static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_hosts(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     const uint8_t *name;
     int n = sk_X509_BUFFER_num(vpm->hosts);
@@ -947,7 +949,7 @@ static int check_hosts(X509 *x, X509_VERIFY_PARAM *vpm)
     return n <= 0;
 }
 
-static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_email(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     const uint8_t *name;
     int nasc = sk_X509_BUFFER_num(vpm->rfc822s);
@@ -968,7 +970,7 @@ static int check_email(X509 *x, X509_VERIFY_PARAM *vpm)
     return nasc <= 0 && nutf <= 0;
 }
 
-static int check_ips(X509 *x, X509_VERIFY_PARAM *vpm)
+static int check_ips(const X509 *x, X509_VERIFY_PARAM *vpm)
 {
     const uint8_t *name;
     int n = sk_X509_BUFFER_num(vpm->ips);
@@ -1412,7 +1414,7 @@ static int check_cert_crl(X509_STORE_CTX *ctx)
     /* skip if cert is apparently self-signed */
     if (ctx->current_cert->ex_flags & EXFLAG_SS)
         return 1;
-    if ((x->ex_flags & EXFLAG_PROXY) != 0)
+    if (ossl_x509_is_proxy(x))
         return 1;
 
     while (ctx->current_reasons != CRLDP_ALL_REASONS) {
@@ -1941,7 +1943,7 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 }
 
 /* Check CRLDP and IDP */
-static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
+static int crl_crldp_check(const X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {
     int i;
@@ -4114,7 +4116,7 @@ static int check_cert_key_level(X509_STORE_CTX *ctx, X509 *cert)
  *
  * Returns 1 on success, 0 if check fails, -1 for other errors.
  */
-static int check_curve(X509 *cert)
+static int check_curve(const X509 *cert)
 {
     EVP_PKEY *pkey = X509_get0_pubkey(cert);
     int ret, val;

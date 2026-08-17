@@ -38,10 +38,11 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
         (CMS_ContentInfo_it()),
         ossl_cms_ctx_get0_libctx(ctx),
         ossl_cms_ctx_get0_propq(ctx));
-    if (ci != NULL) {
-        ERR_set_mark();
-        ossl_cms_resolve_libctx(ci);
-        ERR_pop_to_mark();
+    if (ci != NULL && !ossl_cms_resolve_libctx(ci)) {
+        if (a != NULL && *a == ci)
+            *a = NULL;
+        CMS_ContentInfo_free(ci);
+        ci = NULL;
     }
     return ci;
 }
@@ -86,9 +87,10 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx)
     return ctx != NULL ? ctx->propq : NULL;
 }
 
-void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
+int ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
 {
     int i;
+    int ret;
     CMS_CertificateChoices *cch;
     STACK_OF(CMS_CertificateChoices) **pcerts;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(ci);
@@ -96,16 +98,21 @@ void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
     const char *propq = ossl_cms_ctx_get0_propq(ctx);
 
     ossl_cms_SignerInfos_set_cmsctx(ci);
-    ossl_cms_RecipientInfos_set_cmsctx(ci);
+    ret = ossl_cms_RecipientInfos_set_cmsctx(ci);
 
+    ERR_set_mark();
     pcerts = cms_get0_certificate_choices(ci);
+    ERR_pop_to_mark(); /* removes error in case the content type has no certs */
     if (pcerts != NULL) {
         for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
             cch = sk_CMS_CertificateChoices_value(*pcerts, i);
-            if (cch->type == CMS_CERTCHOICE_CERT)
-                ossl_x509_set0_libctx(cch->d.certificate, libctx, propq);
+            if (cch->type == CMS_CERTCHOICE_CERT
+                && !ossl_x509_transfer_libctx(&cch->d.certificate, libctx,
+                    propq))
+                ret = 0;
         }
     }
+    return ret;
 }
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)

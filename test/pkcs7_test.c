@@ -13,6 +13,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
+#include <openssl/provider.h>
 #include "internal/nelem.h"
 #include "testutil.h"
 
@@ -512,6 +513,124 @@ static int pkcs7_stream_enveloped_signed_no_content_test(void)
     return ret;
 }
 
+/* DER of a SignedData carrying the signer certificate, in the default context. */
+static int signeddata_der(unsigned char **der)
+{
+    static const char msg[] = "in a library context";
+    BIO *content = BIO_new_mem_buf(msg, sizeof(msg) - 1);
+    PKCS7 *p7 = NULL;
+    int len = -1;
+
+    if (TEST_ptr(content)
+        && TEST_ptr(p7 = PKCS7_sign(smimecap_cert, smimecap_privkey, NULL,
+                        content, PKCS7_BINARY)))
+        len = i2d_PKCS7(p7, der);
+
+    PKCS7_free(p7);
+    BIO_free(content);
+    return len;
+}
+
+/* Every certificate a decoded container hands back must be finalized. */
+static int certs_finalized(const STACK_OF(X509) *certs)
+{
+    int i;
+
+    if (sk_X509_num(certs) <= 0)
+        return 0;
+    for (i = 0; i < sk_X509_num(certs); i++)
+        if ((X509_get_extension_flags(sk_X509_value(certs, i))
+                & EXFLAG_SET)
+            == 0)
+            return 0;
+    return 1;
+}
+
+/*-
+ * Decoding a SignedData into a library context re-parses the certificates it
+ * carries there, because a certificate is finalized by the parse and must be
+ * finalized under the context it claims.
+ */
+static int pkcs7_libctx_decode_test(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
+    PKCS7 *decoded = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len, ret = 0;
+
+    if (!TEST_int_gt(len = signeddata_der(&der), 0)
+        || !TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(decoded = PKCS7_new_ex(libctx, NULL)))
+        goto err;
+
+    p = der;
+    if (!TEST_ptr(d2i_PKCS7(&decoded, &p, len))
+        || !TEST_true(certs_finalized(decoded->d.sign->cert))
+        || !TEST_int_eq(X509_check_purpose(sk_X509_value(decoded->d.sign->cert,
+                                               0),
+                            -1, 0),
+            1))
+        goto err;
+
+    ret = 1;
+err:
+    PKCS7_free(decoded);
+    OPENSSL_free(der);
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
+/*-
+ * An allocation failure while re-parsing those certificates must fail the
+ * decode, rather than hand back a container holding an unfinalized one.
+ *
+ * Failures the decode reports are not interesting here: an allocation failure
+ * is allowed to be tolerated internally, so the mfail driver runs with its own
+ * "the failure was reported" check disabled.  Returning -1 for a container
+ * that reports success over an unfinalized certificate is what fails the test,
+ * since the driver decides the verdict from the return value alone.
+ */
+static int pkcs7_libctx_decode_mfail_test(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *prov = NULL;
+    PKCS7 *decoded = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int len, ret = 0;
+
+    if (!TEST_int_gt(len = signeddata_der(&der), 0)
+        || !TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(prov = OSSL_PROVIDER_load(libctx, "default")))
+        goto err;
+
+    p = der;
+    MFAIL_start();
+    decoded = PKCS7_new_ex(libctx, NULL);
+    if (decoded != NULL && d2i_PKCS7(&decoded, &p, len) == NULL)
+        decoded = NULL;
+    MFAIL_end();
+
+    if (decoded == NULL)
+        goto err;
+    if (!TEST_true(certs_finalized(decoded->d.sign->cert))) {
+        ret = -1;
+        goto err;
+    }
+
+    ret = 1;
+err:
+    PKCS7_free(decoded);
+    OPENSSL_free(der);
+    OSSL_PROVIDER_unload(prov);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 int setup_tests(void)
 {
     const char *certin, *privkeyin;
@@ -542,8 +661,11 @@ int setup_tests(void)
 #endif /* OPENSSL_NO_EC */
     ADD_TEST(pkcs7_stream_enveloped_no_content_test);
     ADD_TEST(pkcs7_stream_enveloped_signed_no_content_test);
-    if (smimecap_cert != NULL && smimecap_privkey != NULL)
+    if (smimecap_cert != NULL && smimecap_privkey != NULL) {
         ADD_TEST(test_pkcs7_smimecap);
+        ADD_TEST(pkcs7_libctx_decode_test);
+        ADD_MFAIL_NO_CHECK_TEST(pkcs7_libctx_decode_mfail_test);
+    }
     return 1;
 }
 
