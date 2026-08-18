@@ -63,17 +63,17 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         p++;
         if (--max == 0)
             goto err;
-        len = 0;
-        while (*p & 0x80) {
-            len <<= 7L;
-            len |= *(p++) & 0x7f;
+        len = *p & 0x7f;
+        if (len == 0)
+            goto err;
+        while (*(p++) & 0x80) {
             if (--max == 0)
                 goto err;
-            if (len > (INT_MAX >> 7L) || len == 0)
+            if (len > (INT_MAX >> 7L))
                 goto err;
+            len <<= 7L;
+            len |= *p & 0x7f;
         }
-        len <<= 7L;
-        len |= *(p++) & 0x7f;
         tag = (int)len;
         if (--max == 0)
             goto err;
