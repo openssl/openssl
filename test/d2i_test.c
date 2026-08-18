@@ -28,7 +28,6 @@ static const char *test_file;
 typedef enum {
     ASN1_UNKNOWN,
     ASN1_OK,
-    ASN1_BIO,
     ASN1_DECODE,
     ASN1_ENCODE,
     ASN1_COMPARE
@@ -41,7 +40,7 @@ typedef struct {
 
 static expected_error_t expected_error = ASN1_UNKNOWN;
 
-static int test_bad_asn1(void)
+static int test_bad_asn1(int idx)
 {
     BIO *bio = NULL;
     ASN1_VALUE *value = NULL;
@@ -56,22 +55,18 @@ static int test_bad_asn1(void)
     if (!TEST_ptr(bio))
         return 0;
 
-    if (expected_error == ASN1_BIO) {
-        if (TEST_ptr_null(ASN1_item_d2i_bio(item_type, bio, NULL)))
-            ret = 1;
-        goto err;
-    }
-
-    /*
-     * Unless we are testing it we don't use ASN1_item_d2i_bio because it
-     * performs sanity checks on the input and can reject it before the
-     * decoder is called.
-     */
     len = BIO_read(bio, buf, sizeof(buf));
     if (!TEST_int_ge(len, 0))
         goto err;
 
-    value = ASN1_item_d2i(NULL, &buf_ptr, len, item_type);
+    if (idx == 0) {
+        value = ASN1_item_d2i(NULL, &buf_ptr, len, item_type);
+    } else {
+        if (!TEST_int_ge(BIO_seek(bio, 0), 0))
+            goto err;
+        value = ASN1_item_d2i_bio(item_type, bio, NULL);
+    }
+
     if (value == NULL) {
         if (TEST_int_eq(expected_error, ASN1_DECODE))
             ret = 1;
@@ -121,7 +116,7 @@ int setup_tests(void)
 
     static error_enum expected_errors[] = {
         { "OK", ASN1_OK },
-        { "BIO", ASN1_BIO },
+        { "BIO", ASN1_DECODE },
         { "decode", ASN1_DECODE },
         { "encode", ASN1_ENCODE },
         { "compare", ASN1_COMPARE }
@@ -164,6 +159,6 @@ int setup_tests(void)
         return 0;
     }
 
-    ADD_TEST(test_bad_asn1);
+    ADD_ALL_TESTS(test_bad_asn1, 2);
     return 1;
 }
