@@ -535,3 +535,42 @@ jobs:
       with:
         name: "ci@bn_debug"
         path: artifacts.tar.gz
+
+  fuzz_tests_mfail_deep:
+    needs: [validate-dispatch-inputs]
+    if: |
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: Adjust ASLR for sanitizer
+      run: sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      run: |
+        ./config --strict-warnings --banner=Configured --debug \
+          -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
+          enable-asan enable-ec_explicit_curves enable-ubsan \
+          enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 \
+          enable-weak-ssl-ciphers enable-nextprotoneg
+        perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test (fuzz with mfail, deep run)
+      env:
+        OSSL_FUZZ_TEST_BUDGET: 10800
+        OSSL_FUZZ_TEST_JOBS: 4
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@fuzz_tests_mfail_deep"
+        path: artifacts.tar.gz
+        if-no-files-found: ignore
