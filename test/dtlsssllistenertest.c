@@ -459,9 +459,7 @@ static int test_dtls_new_listener(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     /* Create a DTLS listener */
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
@@ -488,9 +486,7 @@ static int test_dtls_listener_bio(void)
     BIO *bio2 = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
 
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
@@ -574,9 +570,7 @@ static int test_dtls_get0_listener_non_dtls_listener(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     /* Create a DTLS connection object */
     if (!TEST_ptr(ssl = SSL_new(ctx)))
@@ -603,9 +597,7 @@ static int test_dtls_get0_listener_listener(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     /* Create a DTLS listener */
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
@@ -633,9 +625,7 @@ static int test_dtls_listen_basic(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -658,9 +648,7 @@ static int test_dtls_listen_wrong_type(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -683,9 +671,7 @@ static int test_dtls_accept_connection_wrong_type(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -709,9 +695,7 @@ static int test_dtls_accept_connection_empty_no_block(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -736,9 +720,7 @@ static int test_dtls_queue_len_wrong_type(void)
     SSL *ssl = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(ssl = SSL_new(ctx)))
         goto err;
@@ -761,9 +743,7 @@ static int test_dtls_queue_len_empty(void)
     SSL *listener = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -789,9 +769,7 @@ static int test_dtls_accept_connection_no_bio_no_block(void)
     SSL *conn = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
@@ -834,9 +812,7 @@ static int test_dtls_accept_connection_no_bio_block(void)
     SSL *conn = NULL;
     int success = 0;
 
-    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method()))
-        || !TEST_true(SSL_CTX_set_min_proto_version(ctx, DTLS1_3_VERSION))
-        || !TEST_true(SSL_CTX_set_max_proto_version(ctx, DTLS1_3_VERSION)))
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
         goto err;
     if (!TEST_ptr(listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
         goto err;
