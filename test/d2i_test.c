@@ -81,13 +81,15 @@ static int test_bad_asn1(int idx)
         goto err;
     }
 
-    if (derlen != len || memcmp(der, buf, derlen) != 0) {
-        if (TEST_int_eq(expected_error, ASN1_COMPARE))
+    if (expected_error == ASN1_COMPARE) {
+        /* DER encoding should be shorter than BER encoding */
+        if (TEST_int_lt(derlen, len))
             ret = 1;
         goto err;
     }
 
-    if (TEST_int_eq(expected_error, ASN1_OK))
+    if (TEST_mem_eq(der, derlen, buf, len)
+        && TEST_int_eq(expected_error, ASN1_OK))
         ret = 1;
 
 err:
