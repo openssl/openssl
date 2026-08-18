@@ -1163,8 +1163,8 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
     if (ciph == NULL)
         return 0;
 
-    if (!ssl_cipher_get_overhead(ciph, &mac_overhead, &int_overhead,
-            &blocksize, &ext_overhead))
+    if (!ssl_cipher_get_overhead(ciph, SSL_version(ssl), &mac_overhead,
+            &int_overhead, &blocksize, &ext_overhead))
         return 0;
 
     if (SSL_READ_ETM(s))
@@ -1194,17 +1194,6 @@ size_t DTLS_get_data_mtu(const SSL *ssl)
 
         /* Added record type at the end of the data */
         int_overhead++;
-
-        /*
-         * DTLS 1.3 uses implicit IVs (nonce = key IV XOR sequence number).
-         * ssl_cipher_get_overhead includes an explicit IV for GCM/CCM ciphers
-         * that does not exist in DTLS 1.3 records; subtract it back out.
-         */
-        if (ciph->algorithm_enc & (SSL_AESGCM | SSL_ARIAGCM))
-            ext_overhead -= EVP_GCM_TLS_EXPLICIT_IV_LEN;
-        else if (ciph->algorithm_enc & (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8))
-            ext_overhead -= EVP_CCM_TLS_EXPLICIT_IV_LEN;
-
     } else {
         rechdrlen = DTLS1_RT_HEADER_LENGTH;
     }
