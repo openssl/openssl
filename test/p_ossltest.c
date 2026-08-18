@@ -283,7 +283,7 @@ IMPLEMENT_digest_functions(testsha256, SHA256_CTX,
     ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA256_final)
 
 IMPLEMENT_digest_functions(testsha384, SHA512_CTX,
-    SHA512_CBLOCK, SHA512_DIGEST_LENGTH, SHA2_FLAGS,
+    SHA512_CBLOCK, SHA384_DIGEST_LENGTH, SHA2_FLAGS,
     ossltest_dgst_init, ossltest_dgst_update, ossltest_SHA384_final)
 
 IMPLEMENT_digest_functions(testsha512, SHA512_CTX,
