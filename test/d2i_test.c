@@ -116,7 +116,6 @@ int setup_tests(void)
 
     static error_enum expected_errors[] = {
         { "OK", ASN1_OK },
-        { "BIO", ASN1_DECODE },
         { "decode", ASN1_DECODE },
         { "encode", ASN1_ENCODE },
         { "compare", ASN1_COMPARE }
