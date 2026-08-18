@@ -59,21 +59,21 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
  int PEM_write_bio_PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                               unsigned char *kstr, int klen,
                               pem_password_cb *cb, void *u);
- int PEM_write_bio_PrivateKey_traditional(BIO *bp, EVP_PKEY *x,
+ int PEM_write_bio_PrivateKey_traditional(BIO *bp, const EVP_PKEY *x,
                                           const EVP_CIPHER *enc,
                                           unsigned char *kstr, int klen,
                                           pem_password_cb *cb, void *u);
- int PEM_write_PrivateKey_ex(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+ int PEM_write_PrivateKey_ex(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                              unsigned char *kstr, int klen,
                              pem_password_cb *cb, void *u,
                              OSSL_LIB_CTX *libctx, const char *propq);
- int PEM_write_PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+ int PEM_write_PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                           unsigned char *kstr, int klen,
                           pem_password_cb *cb, void *u);
- int PEM_write_bio_PKCS8PrivateKey(BIO *bp, EVP_PKEY *x, const EVP_CIPHER *enc,
+ int PEM_write_bio_PKCS8PrivateKey(BIO *bp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                                    char *kstr, int klen,
                                    pem_password_cb *cb, void *u);
- int PEM_write_PKCS8PrivateKey(FILE *fp, EVP_PKEY *x, const EVP_CIPHER *enc,
+ int PEM_write_PKCS8PrivateKey(FILE *fp, const EVP_PKEY *x, const EVP_CIPHER *enc,
                                char *kstr, int klen,
                                pem_password_cb *cb, void *u);
  int PEM_write_bio_PKCS8PrivateKey_nid(BIO *bp, const EVP_PKEY *x, int nid,
@@ -93,12 +93,12 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
                               OSSL_LIB_CTX *libctx, const char *propq);
  EVP_PKEY *PEM_read_PUBKEY(FILE *fp, EVP_PKEY **x,
                            pem_password_cb *cb, void *u);
- int PEM_write_bio_PUBKEY_ex(BIO *bp, EVP_PKEY *x,
+ int PEM_write_bio_PUBKEY_ex(BIO *bp, const EVP_PKEY *x,
                              OSSL_LIB_CTX *libctx, const char *propq);
- int PEM_write_bio_PUBKEY(BIO *bp, EVP_PKEY *x);
- int PEM_write_PUBKEY_ex(FILE *fp, EVP_PKEY *x,
+ int PEM_write_bio_PUBKEY(BIO *bp, const EVP_PKEY *x);
+ int PEM_write_PUBKEY_ex(FILE *fp, const EVP_PKEY *x,
                          OSSL_LIB_CTX *libctx, const char *propq);
- int PEM_write_PUBKEY(FILE *fp, EVP_PKEY *x);
+ int PEM_write_PUBKEY(FILE *fp, const EVP_PKEY *x);
 
  EVP_PKEY *PEM_read_bio_Parameters_ex(BIO *bp, EVP_PKEY **x,
                                       OSSL_LIB_CTX *libctx, const char *propq);
@@ -107,41 +107,41 @@ PEM_write_bio_PKCS7, PEM_write_PKCS7 - PEM routines
 
  X509 *PEM_read_bio_X509(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
  X509 *PEM_read_X509(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_X509(BIO *bp, X509 *x);
- int PEM_write_X509(FILE *fp, X509 *x);
+ int PEM_write_bio_X509(BIO *bp, const X509 *x);
+ int PEM_write_X509(FILE *fp, const X509 *x);
 
  X509_ACERT *PEM_read_bio_X509_ACERT(BIO *bp, X509_ACERT **x,
                                      pem_password_cb *cb, void *u);
  X509_ACERT *PEM_read_X509_ACERT(FILE *fp, X509_ACERT **x,
                                      pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_ACERT(BIO *bp, X509_ACERT *x);
- int PEM_write_X509_ACERT(FILE *fp, X509_ACERT *x);
+ int PEM_write_bio_X509_ACERT(BIO *bp, const X509_ACERT *x);
+ int PEM_write_X509_ACERT(FILE *fp, const X509_ACERT *x);
 
  X509 *PEM_read_bio_X509_AUX(BIO *bp, X509 **x, pem_password_cb *cb, void *u);
  X509 *PEM_read_X509_AUX(FILE *fp, X509 **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_AUX(BIO *bp, X509 *x);
- int PEM_write_X509_AUX(FILE *fp, X509 *x);
+ int PEM_write_bio_X509_AUX(BIO *bp, const X509 *x);
+ int PEM_write_X509_AUX(FILE *fp, const X509 *x);
 
  X509_REQ *PEM_read_bio_X509_REQ(BIO *bp, X509_REQ **x,
                                  pem_password_cb *cb, void *u);
  X509_REQ *PEM_read_X509_REQ(FILE *fp, X509_REQ **x,
                              pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_REQ(BIO *bp, X509_REQ *x);
- int PEM_write_X509_REQ(FILE *fp, X509_REQ *x);
- int PEM_write_bio_X509_REQ_NEW(BIO *bp, X509_REQ *x);
- int PEM_write_X509_REQ_NEW(FILE *fp, X509_REQ *x);
+ int PEM_write_bio_X509_REQ(BIO *bp, const X509_REQ *x);
+ int PEM_write_X509_REQ(FILE *fp, const X509_REQ *x);
+ int PEM_write_bio_X509_REQ_NEW(BIO *bp, const X509_REQ *x);
+ int PEM_write_X509_REQ_NEW(FILE *fp, const X509_REQ *x);
 
  X509_CRL *PEM_read_bio_X509_CRL(BIO *bp, X509_CRL **x,
                                  pem_password_cb *cb, void *u);
  X509_CRL *PEM_read_X509_CRL(FILE *fp, X509_CRL **x,
                              pem_password_cb *cb, void *u);
- int PEM_write_bio_X509_CRL(BIO *bp, X509_CRL *x);
- int PEM_write_X509_CRL(FILE *fp, X509_CRL *x);
+ int PEM_write_bio_X509_CRL(BIO *bp, const X509_CRL *x);
+ int PEM_write_X509_CRL(FILE *fp, const X509_CRL *x);
 
  PKCS7 *PEM_read_bio_PKCS7(BIO *bp, PKCS7 **x, pem_password_cb *cb, void *u);
  PKCS7 *PEM_read_PKCS7(FILE *fp, PKCS7 **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_PKCS7(BIO *bp, PKCS7 *x);
- int PEM_write_PKCS7(FILE *fp, PKCS7 *x);
+ int PEM_write_bio_PKCS7(BIO *bp, const PKCS7 *x);
+ int PEM_write_PKCS7(FILE *fp, const PKCS7 *x);
 
 The following functions have been deprecated since OpenSSL 3.0, and can be
 hidden entirely by defining B<OPENSSL_API_COMPAT> with a suitable version value,
@@ -151,10 +151,10 @@ see L<openssl_user_macros(7)>:
                                  pem_password_cb *cb, void *u);
  RSA *PEM_read_RSAPrivateKey(FILE *fp, RSA **x,
                              pem_password_cb *cb, void *u);
- int PEM_write_bio_RSAPrivateKey(BIO *bp, RSA *x, const EVP_CIPHER *enc,
+ int PEM_write_bio_RSAPrivateKey(BIO *bp, const RSA *x, const EVP_CIPHER *enc,
                                  unsigned char *kstr, int klen,
                                  pem_password_cb *cb, void *u);
- int PEM_write_RSAPrivateKey(FILE *fp, RSA *x, const EVP_CIPHER *enc,
+ int PEM_write_RSAPrivateKey(FILE *fp, const RSA *x, const EVP_CIPHER *enc,
                              unsigned char *kstr, int klen,
                              pem_password_cb *cb, void *u);
 
@@ -162,24 +162,24 @@ see L<openssl_user_macros(7)>:
                                 pem_password_cb *cb, void *u);
  RSA *PEM_read_RSAPublicKey(FILE *fp, RSA **x,
                             pem_password_cb *cb, void *u);
- int PEM_write_bio_RSAPublicKey(BIO *bp, RSA *x);
- int PEM_write_RSAPublicKey(FILE *fp, RSA *x);
+ int PEM_write_bio_RSAPublicKey(BIO *bp, const RSA *x);
+ int PEM_write_RSAPublicKey(FILE *fp, const RSA *x);
 
  RSA *PEM_read_bio_RSA_PUBKEY(BIO *bp, RSA **x,
                               pem_password_cb *cb, void *u);
  RSA *PEM_read_RSA_PUBKEY(FILE *fp, RSA **x,
                           pem_password_cb *cb, void *u);
- int PEM_write_bio_RSA_PUBKEY(BIO *bp, RSA *x);
- int PEM_write_RSA_PUBKEY(FILE *fp, RSA *x);
+ int PEM_write_bio_RSA_PUBKEY(BIO *bp, const RSA *x);
+ int PEM_write_RSA_PUBKEY(FILE *fp, const RSA *x);
 
  DSA *PEM_read_bio_DSAPrivateKey(BIO *bp, DSA **x,
                                  pem_password_cb *cb, void *u);
  DSA *PEM_read_DSAPrivateKey(FILE *fp, DSA **x,
                              pem_password_cb *cb, void *u);
- int PEM_write_bio_DSAPrivateKey(BIO *bp, DSA *x, const EVP_CIPHER *enc,
+ int PEM_write_bio_DSAPrivateKey(BIO *bp, const DSA *x, const EVP_CIPHER *enc,
                                  unsigned char *kstr, int klen,
                                  pem_password_cb *cb, void *u);
- int PEM_write_DSAPrivateKey(FILE *fp, DSA *x, const EVP_CIPHER *enc,
+ int PEM_write_DSAPrivateKey(FILE *fp, const DSA *x, const EVP_CIPHER *enc,
                              unsigned char *kstr, int klen,
                              pem_password_cb *cb, void *u);
 
@@ -187,17 +187,17 @@ see L<openssl_user_macros(7)>:
                               pem_password_cb *cb, void *u);
  DSA *PEM_read_DSA_PUBKEY(FILE *fp, DSA **x,
                           pem_password_cb *cb, void *u);
- int PEM_write_bio_DSA_PUBKEY(BIO *bp, DSA *x);
- int PEM_write_DSA_PUBKEY(FILE *fp, DSA *x);
+ int PEM_write_bio_DSA_PUBKEY(BIO *bp, const DSA *x);
+ int PEM_write_DSA_PUBKEY(FILE *fp, const DSA *x);
  DSA *PEM_read_bio_DSAparams(BIO *bp, DSA **x, pem_password_cb *cb, void *u);
  DSA *PEM_read_DSAparams(FILE *fp, DSA **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_DSAparams(BIO *bp, DSA *x);
- int PEM_write_DSAparams(FILE *fp, DSA *x);
+ int PEM_write_bio_DSAparams(BIO *bp, const DSA *x);
+ int PEM_write_DSAparams(FILE *fp, const DSA *x);
 
  DH *PEM_read_bio_DHparams(BIO *bp, DH **x, pem_password_cb *cb, void *u);
  DH *PEM_read_DHparams(FILE *fp, DH **x, pem_password_cb *cb, void *u);
- int PEM_write_bio_DHparams(BIO *bp, DH *x);
- int PEM_write_DHparams(FILE *fp, DH *x);
+ int PEM_write_bio_DHparams(BIO *bp, const DH *x);
+ int PEM_write_DHparams(FILE *fp, const DH *x);
 
 =head1 DESCRIPTION
 
