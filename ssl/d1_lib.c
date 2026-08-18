@@ -1875,12 +1875,17 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
     dl->max_dgram_size = DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE;
     ossl_dgram_demux_set_mtu(dl->demux, (unsigned int)dl->max_dgram_size);
 
-    /* Handle cookie validation flags */
-    if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0) {
-        if (flags & SSL_LISTENER_FLAG_REQUIRE_HVR)
-            dl->require_hvr_cookie = 1;
-        if (flags & SSL_LISTENER_FLAG_REQUIRE_HRR)
-            dl->require_hrr_cookie = 1;
+    /*
+     * Address validation is performed by default: HelloVerifyRequest for
+     * DTLS 1.0/1.2 and a HelloRetryRequest cookie for DTLS 1.3.  It can be
+     * requested explicitly with SSL_LISTENER_FLAG_ADDRESS_VALIDATION, or
+     * disabled with SSL_LISTENER_FLAG_NO_VALIDATE.  If both are specified we
+     * fail safe and validate: SSL_LISTENER_FLAG_ADDRESS_VALIDATION wins.
+     */
+    if ((flags & SSL_LISTENER_FLAG_NO_VALIDATE) == 0
+        || (flags & SSL_LISTENER_FLAG_ADDRESS_VALIDATION) != 0) {
+        dl->require_hvr_cookie = 1;
+        dl->require_hrr_cookie = 1;
     }
 
     dl->have_notifier = 0;

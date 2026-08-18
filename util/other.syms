@@ -826,8 +826,7 @@ SSL_WRITE_FLAG_CONCLUDE                 define
 SSL_LISTENER_FLAG_NO_ACCEPT             define
 SSL_LISTENER_FLAG_NO_VALIDATE           define
 SSL_LISTENER_FLAG_SINGLE_THREAD         define
-SSL_LISTENER_FLAG_REQUIRE_HRR           define
-SSL_LISTENER_FLAG_REQUIRE_HVR           define
+SSL_LISTENER_FLAG_ADDRESS_VALIDATION    define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0
