@@ -439,6 +439,22 @@ static int RADIX_PROCESS_join_all_threads(RADIX_PROCESS *rp, int *testresult)
     return ok;
 }
 
+/*
+ * Free every non-listener object's SSL before cleanup_one() frees any listener.
+ *
+ * A connection's assist thread reads from its network BIO, and for a dgram BIO
+ * pair (see hf_link_dgram_pair) that BIO belongs to the linked listener. Freeing
+ * the connection joins its assist thread (see ossl_quic_free), so doing so first
+ * ensures no assist thread is still reading when the listener BIOs are freed.
+ */
+static void cleanup_nonlistener(RADIX_OBJ *obj)
+{
+    if (obj->ssl != NULL && !SSL_is_listener(obj->ssl)) {
+        SSL_free(obj->ssl);
+        obj->ssl = NULL;
+    }
+}
+
 static void cleanup_one(RADIX_OBJ *obj)
 {
     obj->registered = 0;
@@ -459,6 +475,7 @@ static void RADIX_PROCESS_cleanup(RADIX_PROCESS *rp)
     sk_RADIX_THREAD_free(rp->threads);
     rp->threads = NULL;
 
+    lh_RADIX_OBJ_doall(rp->objs, cleanup_nonlistener);
     lh_RADIX_OBJ_doall(rp->objs, cleanup_one);
     lh_RADIX_OBJ_free(rp->objs);
     rp->objs = NULL;
