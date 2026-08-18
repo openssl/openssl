@@ -162,8 +162,11 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
         goto err;
     }
 
-    /* Create the DTLS listener with HVR (DTLS 1.2) and HRR (DTLS 1.3) cookie validation */
-    *listener = SSL_new_listener(ssl_ctx, SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR);
+    /*
+     * Create the DTLS listener. By default it will perform HelloVerifyRequest
+     * (HVR) and HelloRetryRequest (HRR).
+     */
+    *listener = SSL_new_listener(ssl_ctx, 0);
     if (*listener == NULL) {
         fprintf(stderr, "Unable to create DTLS listener\n");
         ERR_print_errors_fp(stderr);

@@ -8,8 +8,7 @@ SSL_accept_connection, SSL_get_accept_connection_queue_len,
 SSL_new_from_listener,
 SSL_ACCEPT_CONNECTION_NO_BLOCK,
 SSL_LISTENER_FLAG_NO_VALIDATE,
-SSL_LISTENER_FLAG_REQUIRE_HVR,
-SSL_LISTENER_FLAG_REQUIRE_HRR,
+SSL_LISTENER_FLAG_ADDRESS_VALIDATION,
 SSL_LISTENER_FLAG_SINGLE_THREAD - SSL object interface for abstracted connection
 acceptance
 
@@ -29,8 +28,7 @@ acceptance
  #define SSL_ACCEPT_CONNECTION_NO_BLOCK
 
  #define SSL_LISTENER_FLAG_NO_VALIDATE
- #define SSL_LISTENER_FLAG_REQUIRE_HVR
- #define SSL_LISTENER_FLAG_REQUIRE_HRR
+ #define SSL_LISTENER_FLAG_ADDRESS_VALIDATION
  #define SSL_LISTENER_FLAG_SINGLE_THREAD
 
  SSL *SSL_accept_connection(SSL *ssl, uint64_t flags);
@@ -227,31 +225,28 @@ created using L<DTLS_server_method(3)> or L<DTLS_method(3)>. A DTLS listener
 provides server-side connection demultiplexing, allowing multiple DTLS clients
 to connect to the same UDP socket.
 
-For DTLS listeners, the following flags control address validation behavior:
+For DTLS listeners, address validation is performed by default: the listener
+sends a HelloVerifyRequest (HVR) with a cookie for DTLS 1.0/1.2 connections and
+a HelloRetryRequest (HRR) with a cookie extension for DTLS 1.3 connections, and
+the client must echo the valid cookie in a subsequent ClientHello before the
+handshake proceeds. This protects against amplification attacks across all
+supported DTLS versions. The following flags adjust this behavior:
 
 =over 4
+
+=item B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION>
+
+Requests address validation (HVR for DTLS 1.0/1.2, HRR with cookie for
+DTLS 1.3). This is the default.
 
 =item B<SSL_LISTENER_FLAG_NO_VALIDATE>
 
 Disables all address validation. The listener will not send HelloVerifyRequest
 (for DTLS 1.0/1.2) or HelloRetryRequest with cookie (for DTLS 1.3). This is
-faster but provides no protection against amplification attacks. Not
-recommended for use in untrusted network environments.
-
-=item B<SSL_LISTENER_FLAG_REQUIRE_HVR>
-
-Requires HelloVerifyRequest (HVR) cookie exchange for DTLS 1.0 and DTLS 1.2
-connections. The listener will send an HVR with a cookie, and the client must
-respond with a ClientHello containing the valid cookie before the handshake
-proceeds. This provides protection against amplification attacks for pre-1.3
-DTLS versions.
-
-=item B<SSL_LISTENER_FLAG_REQUIRE_HRR>
-
-Requires HelloRetryRequest (HRR) cookie exchange for DTLS 1.3 connections.
-The listener will send an HRR with a cookie extension, and the client must
-respond with a second ClientHello containing the valid cookie. This provides
-protection against amplification attacks for DTLS 1.3.
+faster but provides no protection against amplification attacks, and is not
+recommended for use in untrusted network environments. If both this flag and
+B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION> are specified, the listener fails safe
+and performs address validation.
 
 =item B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 
@@ -268,12 +263,8 @@ This flag is only applicable to DTLS listeners.
 
 =back
 
-Both B<SSL_LISTENER_FLAG_REQUIRE_HVR> and B<SSL_LISTENER_FLAG_REQUIRE_HRR> may
-be specified together to enable address validation for all supported DTLS
-versions.
-
 For DTLS listeners, SSL_accept_connection() returns a connection after cookie
-validation is complete (if required) or after receiving the first ClientHello
+validation is complete (the default) or after receiving the first ClientHello
 (if B<SSL_LISTENER_FLAG_NO_VALIDATE> is set). The handshake is B<not> complete
 at this point. The application must call L<SSL_do_handshake(3)> or
 L<SSL_accept(3)> to complete the handshake before sending or receiving
@@ -306,10 +297,11 @@ and can accept multiple connections concurrently.
  SSL_CTX_use_certificate_file(ctx, "server.pem", SSL_FILETYPE_PEM);
  SSL_CTX_use_PrivateKey_file(ctx, "key.pem", SSL_FILETYPE_PEM);
 
- /* Create listener with HVR and HRR requirements in single-threaded mode */
- SSL *listener = SSL_new_listener(ctx,
-     SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
-     | SSL_LISTENER_FLAG_SINGLE_THREAD);
+ /*
+  * Create listener in single-threaded mode.  Address validation (HVR for
+  * DTLS 1.0/1.2, HRR with cookie for DTLS 1.3) is enabled by default.
+  */
+ SSL *listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD);
 
  /* Set up UDP socket BIO */
  BIO *bio = BIO_new_dgram(socket_fd, BIO_NOCLOSE);
@@ -405,8 +397,8 @@ These functions were added in OpenSSL 3.5.
 
 SSL_listen_ex() was added in OpenSSL 4.0.
 
-DTLS listener support (including B<SSL_LISTENER_FLAG_REQUIRE_HVR>,
-B<SSL_LISTENER_FLAG_REQUIRE_HRR> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
+DTLS listener support (including the B<SSL_LISTENER_FLAG_ADDRESS_VALIDATION>,
+B<SSL_LISTENER_FLAG_NO_VALIDATE> and B<SSL_LISTENER_FLAG_SINGLE_THREAD>
 flags) was added in OpenSSL 4.1.
 
 The DTLS listener tunables B<SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS>,
