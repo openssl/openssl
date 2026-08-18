@@ -16,6 +16,15 @@ PointerAlignment: Right
 # of a comment block to protect comments as
 # per STYLE.md
 CommentPragmas:  '(^ IWYU pragma:|^\*$|^-$)'
+ForEachMacros:
+  - "OSSL_LIST_FOREACH"
+  - "OSSL_LIST_FOREACH_FROM"
+  - "OSSL_LIST_FOREACH_REV"
+  - "OSSL_LIST_FOREACH_REV_FROM"
+  - "OSSL_LIST_FOREACH_DELSAFE"
+  - "OSSL_LIST_FOREACH_DELSAFE_FROM"
+  - "OSSL_LIST_FOREACH_REV_DELSAFE"
+  - "OSSL_LIST_FOREACH_REV_DELSAFE_FROM"
 # OpenSSL uses typedefs extensively. Tell clang-format about them.
 TypeNames:
   - "ACCESS_DESCRIPTION"
@@ -1130,7 +1139,12 @@ TypeNames:
   - "HASH_LONG"
   - "MD32_REG_T"
 # OpenSSL uses macros extensively. Tell clang-format about them.
-TypenameMacros: ['LHASH_OF', 'STACK_OF']
+TypenameMacros:
+  - "LHASH_OF"
+  - "OSSL_LIST"
+  - "PRIORITY_QUEUE_OF"
+  - "SPARSE_ARRAY_OF"
+  - "STACK_OF"
 StatementMacros:
   - "BLOCK_CIPHER_aead"
   - "BLOCK_CIPHER_generic"
