@@ -38,8 +38,10 @@ OpenSSL Releases
 
  * Added DTLS support to the SSL listener API. SSL_new_listener() can now
    create a DTLS listener that demultiplexes incoming datagrams into per-peer
-   connections accepted with SSL_accept_connection(). Refer to the
-   SSL_new_listener(3) manpage for details.
+   connections accepted with SSL_accept_connection(). The listener performs
+   address validation (HelloVerifyRequest for DTLS 1.0/1.2, HelloRetryRequest
+   cookie for DTLS 1.3) by default; pass SSL_LISTENER_FLAG_NO_VALIDATE to
+   disable it. Refer to the SSL_new_listener(3) manpage for details.
 
    *Ryan Hooper*
 
