@@ -870,7 +870,7 @@ err:
  *
  * Flow:
  *   1. Create SSL contexts for DTLS 1.3 only
- *   2. Create listener (with REQUIRE_HRR flag) and client using helper
+ *   2. Create listener (address validation is on by default) and client using helper
  *   3. Drive connection loop: client SSL_connect() + poll listener for IC event
  *   4. SSL_accept_connection() returns server SSL after HRR cookie validation
  *   5. Complete handshake with create_ssl_connection()
@@ -903,7 +903,7 @@ static int test_dtls13_connection_with_hrr(void)
 
     /* Create listener and client using memory BIO helper */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -1187,7 +1187,7 @@ static int test_dtls_mixed_12_hvr_and_13_hrr(void)
      * go through HRR cookie validation.
      */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -1399,7 +1399,7 @@ static int test_dtls_concurrent_clients_real_sockets(void)
      * This ensures address validation for both DTLS 1.2 and 1.3 clients.
      */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -1624,7 +1624,7 @@ end:
  *
  * Flow:
  *   1. Create SSL contexts for DTLS 1.2 only
- *   2. Create listener (with REQUIRE_HVR flag) and client using helper
+ *   2. Create listener (address validation is on by default) and client using helper
  *   3. Drive connection loop: client SSL_connect() + poll listener for IC event
  *   4. SSL_accept_connection() returns server SSL after HVR cookie validation
  *   5. Complete handshake with create_ssl_connection()
@@ -1657,7 +1657,7 @@ static int test_dtls12_connection_with_hvr(void)
 
     /* Create listener and client using memory BIO helper */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2312,7 +2312,7 @@ static int test_ssl_ownership_pending_conn_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2391,7 +2391,7 @@ static int test_ssl_ownership_incoming_conn_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2491,7 +2491,7 @@ static int test_ssl_ownership_three_conn_states(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -2683,7 +2683,7 @@ static int test_ssl_ownership_set_rbio_pending_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2778,7 +2778,7 @@ static int test_ssl_ownership_set_rbio_incoming_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2873,7 +2873,7 @@ static int test_ssl_ownership_accept_free_no_double_free(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -2968,7 +2968,7 @@ static int test_ssl_ownership_multiple_pending_leak(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -3050,7 +3050,7 @@ static int test_ssl_ownership_pending_timeout_cleanup(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -3513,8 +3513,14 @@ static int test_dtls_poll_listener_multiple_events(void)
             &sctx, &cctx, cert, privkey)))
         goto end;
 
+    /*
+     * This test drives a single ClientHello and expects the listener to
+     * report the incoming connection immediately, so disable address
+     * validation (otherwise the connection is not ready until the HVR/HRR
+     * cookie round-trip completes).
+     */
     if (!TEST_true(create_dtls_listener_and_client_mem(sctx, cctx,
-            SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_NO_VALIDATE | SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &clientssl, &client_addr)))
         goto end;
 
@@ -4154,7 +4160,7 @@ static int test_dtls_listener_max_dgram_size_functional(void)
         goto end;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -4389,7 +4395,7 @@ static int test_pending_conn_cap_enforcement(void)
 
     /* Create listener with HVR required (so connections stay pending) */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto err;
 
@@ -4482,7 +4488,7 @@ static int test_pending_cap_with_timeout(void)
 
     /* Create listener with HVR required (so connections stay pending) */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto err;
 
@@ -4723,8 +4729,7 @@ static int run_new_pending_cb_scenario(uint64_t max_pending, int allow_remaining
         goto err;
 
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
-                | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto err;
 
@@ -4957,7 +4962,7 @@ static int test_dtls_notifier_signalled_on_accept_queue_push(void)
      * listener has a notifier at all.
      */
     if (!TEST_true(create_dtls_listener(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR,
+            0,
             &listener, &server_addr, &server_fd)))
         goto end;
 
@@ -5462,8 +5467,7 @@ static int test_dtls_blocking_mode(void)
      * A socket BIO supplies a poll descriptor, so blocking is available.
      */
     if (!TEST_true(create_dtls_listener_unconfigured(sctx,
-            SSL_LISTENER_FLAG_REQUIRE_HVR | SSL_LISTENER_FLAG_REQUIRE_HRR
-                | SSL_LISTENER_FLAG_SINGLE_THREAD,
+            SSL_LISTENER_FLAG_SINGLE_THREAD,
             &listener, &server_addr, &server_fd)))
         goto end;
 
