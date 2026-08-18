@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <string.h>
 #include <openssl/evp.h>
 #include <openssl/core_names.h>
 #include "../../ssl_local.h"
@@ -80,6 +81,31 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
+
+#ifndef OPENSSL_NO_GOST
+    if (!rl->isdtls && rl->tlstree != 0) {
+        const char *tlstree_mode = NULL;
+
+        if ((rl->tlstree & TLS1_TLSTREE_S) != 0)
+            tlstree_mode = "strong";
+        else if ((rl->tlstree & TLS1_TLSTREE_L) != 0)
+            tlstree_mode = "light";
+
+        if (tlstree_mode != NULL) {
+            void *tlstree_mode_ptr = (void *)tlstree_mode;
+            params[0] = OSSL_PARAM_construct_octet_ptr(
+                OSSL_CIPHER_PARAM_TLSTREE_MODE,
+                &tlstree_mode_ptr,
+                strlen(tlstree_mode));
+            params[1] = OSSL_PARAM_construct_end();
+
+            if (!EVP_CIPHER_CTX_set_params(ciph_ctx, params)) {
+                ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+                return OSSL_RECORD_RETURN_FATAL;
+            }
+        }
+    }
+#endif
 end:
     return OSSL_RECORD_RETURN_SUCCESS;
 }
@@ -163,6 +189,20 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     memcpy(nonce, staticiv, offset);
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
+
+#ifndef OPENSSL_NO_GOST
+    if (!rl->isdtls && rl->tlstree != 0) {
+        OSSL_PARAM params[2];
+
+        params[0] = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_TLSTREE,
+            seq, 0);
+        params[1] = OSSL_PARAM_construct_end();
+        if (!EVP_CIPHER_CTX_set_params(enc_ctx, params)) {
+            RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+    }
+#endif
 
     if (!tls_increment_sequence_ctr(rl)) {
         /* RLAYERfatal already called */
