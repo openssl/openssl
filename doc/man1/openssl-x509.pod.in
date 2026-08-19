@@ -651,7 +651,7 @@ Further ones may be defined by applications of OpenSSL.
 B<anyExtendedKeyUsage> enables all uses when added to the trust list
 and blocks all uses when added to the rejection list.
 
-Trust attributes can be added to any CA certificate, not just not just to a self-signed CA certificate.
+Trust attributes can be added to any CA certificate, not just to a self-signed CA certificate.
 
 See L<openssl-verification-options(1)/Trust Anchors> for more information
 on the meaning of trust attributes in certificate validation.

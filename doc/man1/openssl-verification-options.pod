@@ -120,7 +120,7 @@ The currently predefined verification methods are:
 
 =item C<ssl_client> for SSL/(D)TLS clients with purpose C<sslclient> and trust C<clientAuth>
 
-=item C<ssl_server> for SSL/(D)TLS servers with purpose C<sslservert> and trust C<serverAuth>
+=item C<ssl_server> for SSL/(D)TLS servers with purpose C<sslserver> and trust C<serverAuth>
 
 =item C<smime_sign> with alias C<pkcs7> for CMS/PKCS7 (including S/MIME)
 with purpose C<smimesign> and trust C<emailProtection>
@@ -546,7 +546,7 @@ Allow verification to succeed if an incomplete chain can be built.
 That is, a chain ending in a certificate that normally would not be trusted
 (because it is not self-signed and has no matching positive trust attributes)
 but is an element of the trust store.
-This certificate may be self-issued or belong to an subordinate CA.
+This certificate may be self-issued or belong to a subordinate CA.
 
 =item B<-check_ss_sig>
 
