@@ -466,11 +466,14 @@ ECPKPARAMETERS *EC_GROUP_get_ecpkparameters(const EC_GROUP *group,
             return NULL;
         }
     } else {
-        if (ret->type == ECPKPARAMETERS_TYPE_NAMED)
+        if (ret->type == ECPKPARAMETERS_TYPE_NAMED) {
             ASN1_OBJECT_free(ret->value.named_curve);
-        else if (ret->type == ECPKPARAMETERS_TYPE_EXPLICIT
-            && ret->value.parameters != NULL)
+            ret->value.named_curve = NULL;
+        } else if (ret->type == ECPKPARAMETERS_TYPE_EXPLICIT
+            && ret->value.parameters != NULL) {
             ECPARAMETERS_free(ret->value.parameters);
+            ret->value.parameters = NULL;
+        }
     }
 
     if (EC_GROUP_get_asn1_flag(group) == OPENSSL_EC_NAMED_CURVE) {
