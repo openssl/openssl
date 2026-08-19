@@ -15,18 +15,22 @@ SSL_CTX_set_security_level, SSL_set_security_level, SSL_CTX_get_security_level, 
  int SSL_get_security_level(const SSL *s);
 
  void SSL_CTX_set_security_callback(SSL_CTX *ctx,
-                                    int (*cb)(SSL *s, SSL_CTX *ctx, int op,
-                                              int bits, int nid,
+                                    int (*cb)(const SSL *s, const SSL_CTX *ctx,
+                                              int op, int bits, int nid,
                                               void *other, void *ex));
 
- void SSL_set_security_callback(SSL *s, int (*cb)(SSL *s, SSL_CTX *ctx, int op,
-                                                  int bits, int nid,
-                                                  void *other, void *ex));
+ void SSL_set_security_callback(SSL *s,
+                                int (*cb)(const SSL *s, const SSL_CTX *ctx,
+                                          int op, int bits, int nid,
+                                          void *other, void *ex));
 
- int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx))(SSL *s, SSL_CTX *ctx, int op,
-                                                          int bits, int nid, void *other,
+ int (*SSL_CTX_get_security_callback(const SSL_CTX *ctx))(const SSL *s,
+                                                          const SSL_CTX *ctx,
+                                                          int op, int bits,
+                                                          int nid, void *other,
                                                           void *ex);
- int (*SSL_get_security_callback(const SSL *s))(SSL *s, SSL_CTX *ctx, int op,
+ int (*SSL_get_security_callback(const SSL *s))(const SSL *s,
+                                                const SSL_CTX *ctx, int op,
                                                 int bits, int nid, void *other,
                                                 void *ex);
 
@@ -110,7 +114,96 @@ shorter than 15360 bits and ECC keys shorter than 512 bits are prohibited.
 
 =head1 APPLICATION DEFINED SECURITY CALLBACKS
 
-I<Documentation to be provided.>
+An application defined security callback is installed with
+SSL_CTX_set_security_callback() or SSL_set_security_callback() and replaces the
+default callback. It is consulted whenever the library needs to decide whether
+an algorithm, key, parameter or protocol version meets the configured security
+level. It should return 1 to permit the operation and 0 to reject it. A
+rejected parameter is not advertised or used, as appropriate.
+
+The callback arguments are:
+
+=over 4
+
+=item B<s>, B<ctx>
+
+The B<SSL> or B<SSL_CTX> the check applies to. One of the two is NULL: checks
+originating from a connection pass B<s> (with B<ctx> NULL), and checks
+originating from a context pass B<ctx> (with B<s> NULL).
+
+=item B<op>
+
+The operation being checked, one of the B<SSL_SECOP_*> values below.
+
+=item B<bits>
+
+The number of bits of security the parameter provides, or 0 when not
+meaningful for B<op>.
+
+=item B<nid>
+
+An identifier whose meaning depends on B<op>, or B<NID_undef> when not
+applicable.
+
+=item B<other>
+
+A pointer to the object being checked, whose type depends on B<op> as listed
+below. It is NULL when no object is associated with the operation.
+
+=item B<ex>
+
+The extra data pointer previously set with SSL_CTX_set0_security_ex_data() or
+SSL_set0_security_ex_data(), or NULL.
+
+=back
+
+Several operations have B<_SUPPORTED>, B<_SHARED> and B<_CHECK> variants.
+The I<supported> variant checks a parameter before advertising support for it.
+The I<shared> variant checks a parameter when selecting from the options
+offered by both peers. The I<check> variant checks a parameter the peer has
+selected before accepting it.
+
+The defined operations, and the corresponding type of B<other>, are:
+
+=over 4
+
+=item B<SSL_SECOP_CIPHER_SUPPORTED>, B<SSL_SECOP_CIPHER_SHARED>, B<SSL_SECOP_CIPHER_CHECK>
+
+Advertise/select/accept a TLS cipher suite. B<other> is the B<SSL_CIPHER>.
+
+=item B<SSL_SECOP_CURVE_SUPPORTED>, B<SSL_SECOP_CURVE_SHARED>, B<SSL_SECOP_CURVE_CHECK>
+
+Advertise/select/accept a named group used for key exchange, either an elliptic
+curve or a finite-field DH group. B<nid> is the group and B<other> points to
+its two byte TLS codepoint.
+
+=item B<SSL_SECOP_SIGALG_SUPPORTED>, B<SSL_SECOP_SIGALG_SHARED>, B<SSL_SECOP_SIGALG_CHECK>, B<SSL_SECOP_SIGALG_MASK>
+
+Advertise/select/accept a signature algorithm used in the handshake;
+B<SSL_SECOP_SIGALG_MASK> is used when building the mask of permitted signature
+algorithms. B<nid> is its hash and B<other> points to its two byte TLS
+codepoint.
+
+=item B<SSL_SECOP_VERSION>
+
+Negotiate a protocol version. B<nid> is the version, for example
+B<TLS1_2_VERSION>, and B<other> is NULL.
+
+=item B<SSL_SECOP_TMP_DH>
+
+Use an ephemeral DH key. B<other> is the B<EVP_PKEY>.
+
+=item B<SSL_SECOP_EE_KEY>, B<SSL_SECOP_CA_KEY>
+
+Accept an end entity or CA certificate public key. B<other> is the B<X509>
+certificate.
+
+=item B<SSL_SECOP_TICKET>, B<SSL_SECOP_COMPRESSION>
+
+Issue or accept a session ticket, or enable record compression. B<other>
+is NULL.
+
+=back
 
 =head1 NOTES
 
