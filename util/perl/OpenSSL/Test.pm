@@ -489,6 +489,10 @@ sub run {
     local $_;
 
     open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
+    # Read line by line, even if a recipe played with $/ (slurp or
+    # paragraph mode).  Otherwise, a bare prefix (or only the first
+    # line of a multi-line read) would hit the TAP stream unguarded.
+    local $/ = "\n";
     while(<$pipe>) {
         my $l = ($opts{prefix} // $default_prefix) . $_;
         if ($opts{capture}) {
