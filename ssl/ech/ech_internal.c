@@ -1588,9 +1588,17 @@ static int ech_reconstitute_inner(SSL_CONNECTION *s, WPACKET *di, PACKET *ei,
         || !WPACKET_put_bytes_u16(di, pi_tmp)
         || !WPACKET_memcpy(di, pp_tmp, pi_tmp)
 
-        /* compression len & meth */
+        /*
+         * compression len & meth - reading this as a single 16 bit quantity
+         * is only correct when there is exactly one, null, compression
+         * method, which is what TLSv1.3 mandates.  ech_find_outers() already
+         * checks that for the encoded inner CH; check it for the outer CH
+         * too, otherwise any other value silently mis-parses here and
+         * desynchronises the rest of this walk over the outer CH.
+         */
         || !PACKET_get_net_2(ei, &pi_tmp)
         || !PACKET_get_net_2(&outer, &pi_tmp)
+        || pi_tmp != 0x0100
         || !WPACKET_put_bytes_u16(di, pi_tmp)) {
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_BAD_EXTENSION);
         goto err;
