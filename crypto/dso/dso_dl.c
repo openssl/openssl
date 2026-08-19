@@ -161,7 +161,7 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
      * If the first file specification is a rooted path, it rules. same goes
      * if the second file specification is missing.
      */
-    if (!filespec2 || filespec1[0] == '/') {
+    if (!filespec2 || (filespec1 != NULL && filespec1[0] == '/')) {
         merged = OPENSSL_strdup(filespec1);
         if (merged == NULL)
             return NULL;
@@ -173,30 +173,22 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
         merged = OPENSSL_strdup(filespec2);
         if (merged == NULL)
             return NULL;
-    } else
-    /*
-     * This part isn't as trivial as it looks.  It assumes that the
-     * second file specification really is a directory, and makes no
-     * checks whatsoever.  Therefore, the result becomes the
-     * concatenation of filespec2 followed by a slash followed by
-     * filespec1.
-     */
-    {
-        int spec2len, len;
+    } else {
+        /*
+         * This part isn't as trivial as it looks.  It assumes that the
+         * second file specification really is a directory, and makes no
+         * checks whatsoever.  Therefore, the result becomes the
+         * concatenation of filespec2 followed by a slash followed by
+         * filespec1, taking care not to double the separator if filespec2
+         * already ends with one.
+         */
+        size_t spec2len = strlen(filespec2);
+        const char *fmt = (spec2len > 0 && filespec2[spec2len - 1] == '/')
+            ? "%s%s"
+            : "%s/%s";
 
-        spec2len = (filespec2 ? strlen(filespec2) : 0);
-        len = spec2len + (filespec1 ? strlen(filespec1) : 0);
-
-        if (spec2len && filespec2[spec2len - 1] == '/') {
-            spec2len--;
-            len--;
-        }
-        merged = OPENSSL_malloc(len + 2);
-        if (merged == NULL)
+        if (OPENSSL_asprintf(&merged, fmt, filespec2, filespec1) < 0)
             return NULL;
-        strcpy(merged, filespec2);
-        merged[spec2len] = '/';
-        strcpy(&merged[spec2len + 1], filespec1);
     }
     return merged;
 }
@@ -210,31 +202,20 @@ static char *dl_merger(DSO *dso, const char *filespec1, const char *filespec2)
  */
 static char *dl_name_converter(DSO *dso, const char *filename)
 {
-    char *translated;
-    int len, rsize, transform;
+    char *translated = NULL;
 
-    len = strlen(filename);
-    rsize = len + 1;
-    transform = (strchr(filename, '/') == NULL);
-    if (transform) {
-        /* We will convert this to "%s.s?" or "lib%s.s?" */
-        rsize += strlen(DSO_EXTENSION); /* The length of ".s?" */
-        if ((DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0)
-            rsize += 3; /* The length of "lib" */
+    if (strchr(filename, '/') != NULL) {
+        translated = OPENSSL_strdup(filename);
+    } else {
+        const char *fmt = (DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY)
+            ? "%s" DSO_EXTENSION
+            : "lib%s" DSO_EXTENSION;
+
+        if (OPENSSL_asprintf(&translated, fmt, filename) < 0)
+            translated = NULL;
     }
-    translated = OPENSSL_malloc(rsize);
-    if (translated == NULL) {
+    if (translated == NULL)
         ERR_raise(ERR_LIB_DSO, DSO_R_NAME_TRANSLATION_FAILED);
-        return NULL;
-    }
-    if (transform)
-        BIO_snprintf(translated, rsize,
-            (DSO_flags(dso) & DSO_FLAG_NAME_TRANSLATION_EXT_ONLY) == 0
-                ? "lib%s%s"
-                : "%s%s",
-            filename, DSO_EXTENSION);
-    else
-        BIO_snprintf(translated, rsize, "%s", filename);
     return translated;
 }
 
