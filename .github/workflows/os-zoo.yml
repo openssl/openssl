@@ -290,7 +290,10 @@ jobs:
         ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: run container
       run: |
-        CONTAINER_ID=$(podman run -d -v $(pwd):/mnt -w /mnt --platform=linux/i386 docker.io/i386/debian:13 sleep infinity)
+        # Work around actions/runner-images#14473, where Podman's built-in
+        # runtime search can prefer a stale crun over the PATH-selected one.
+        OCI_RUNTIME=$(command -v crun)
+        CONTAINER_ID=$(podman --runtime "$OCI_RUNTIME" run -d -v $(pwd):/mnt -w /mnt --platform=linux/i386 docker.io/i386/debian:13 sleep infinity)
         echo "CONTAINER_ID=$CONTAINER_ID" >> "$GITHUB_ENV"
     - name: install dependencies
       run:
