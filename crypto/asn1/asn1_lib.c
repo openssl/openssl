@@ -77,6 +77,8 @@ int ASN1_get_object(const unsigned char **pp, long *plength, int *ptag,
         tag = (int)len;
         if (--max == 0)
             goto err;
+        if (tag < 31)
+            goto err;
     } else {
         tag = i;
         p++;
