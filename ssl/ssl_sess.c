@@ -729,7 +729,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
      * Refusing resumption and falling back to a full handshake is the correct
      * response.
      */
-    if (!SSL_CONNECTION_IS_TLS13(s) && hello->session_id_len > 0
+    if (!SSL_CONNECTION_IS_VERSION13(s) && hello->session_id_len > 0
         && (s->session->session_id_length != hello->session_id_len
             || memcmp(s->session->session_id, hello->session_id,
                    hello->session_id_len)
