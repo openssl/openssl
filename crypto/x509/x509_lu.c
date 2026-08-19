@@ -13,6 +13,7 @@
 #include "internal/hashfunc.h"
 #include "internal/refcount.h"
 #include <openssl/x509.h>
+#include "crypto/sha.h"
 #include "crypto/x509.h"
 #include <openssl/x509v3.h>
 #include "x509_local.h"
@@ -232,8 +233,8 @@ static int x509_object_prepare_store_hash(X509_OBJECT *obj)
 
         if (derlen <= 0)
             goto end;
-        if (!EVP_Q_digest(NULL, "SHA1", NULL, der, (size_t)derlen,
-                obj->store_hash, NULL))
+        /* The store key must not depend on provider availability. */
+        if (ossl_sha1(der, (size_t)derlen, obj->store_hash) == NULL)
             goto end;
     }
     obj->store_hash_valid = 1;
