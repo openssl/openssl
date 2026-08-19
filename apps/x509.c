@@ -112,7 +112,11 @@ typedef enum OPTION_choice {
     OPT_NOT_AFTER,
     OPT_R_ENUM,
     OPT_PROV_ENUM,
-    OPT_EXT
+    OPT_EXT,
+    OPT_SETDISTRUST_AFTER_SERVER,
+    OPT_SETDISTRUST_AFTER_EMAIL,
+    OPT_CLROTHER,
+    OPT_CLRDISTURST_AFTER
 } OPTION_CHOICE;
 
 const OPTIONS x509_options[] = {
@@ -236,7 +240,11 @@ const OPTIONS x509_options[] = {
         "Clears all the prohibited or rejected uses of the certificate" },
     { "addreject", OPT_ADDREJECT, 's',
         "Reject certificate for a given purpose" },
-
+    {"clrother", OPT_CLROTHER, '-', "Clear all other aux attachments"},
+    {"setdistrustafterserver", OPT_SETDISTRUST_AFTER_SERVER, 's', "Distrust new leafs chain to this that signed after given date"},
+    {"setdistrustafteremail", OPT_SETDISTRUST_AFTER_EMAIL, 's', "Distrust new leafs chain to this that signed after given date"},
+    {"clrdistrustafter", OPT_CLRDISTURST_AFTER, '-', "Clear distrust_after_date tag"},
+    
     OPT_R_OPTIONS,
     OPT_PROV_OPTIONS,
     { NULL }
@@ -366,6 +374,7 @@ static CONF *load_ext_conf(const char *file, const char *sect, int quiet)
 
 int x509_main(int argc, char **argv)
 {
+    ASN1_GENERALIZEDTIME *distrustafterserver = NULL, *distrustafteremail = NULL;
     ASN1_INTEGER *sno = NULL;
     BIO *out = NULL;
     CONF *extconf = NULL;
@@ -397,8 +406,8 @@ int x509_main(int argc, char **argv)
     int fingerprint = 0, reqfile = 0, checkend = 0;
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
-    int noout = 0, CA_createserial = 0, email = 0;
-    int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
+    int noout = 0, CA_createserial = 0, email = 0, ocsp_uri = 0, clrdistrustafter = 0;
+    int clrother = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
     int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
@@ -559,6 +568,24 @@ int x509_main(int argc, char **argv)
                 goto end;
             trustout = 1;
             break;
+        case OPT_SETDISTRUST_AFTER_SERVER:
+            if (distrustafterserver == NULL &&
+                (distrustafterserver = ASN1_GENERALIZEDTIME_new()) == NULL)
+                goto err;
+            if (!ASN1_GENERALIZEDTIME_set_string(distrustafterserver, opt_arg())) {
+                BIO_printf(bio_err, "%s isn't valid asn1_generalizedtime string", opt_arg());
+                goto opthelp;
+            }
+            break;
+        case OPT_SETDISTRUST_AFTER_EMAIL:
+            if (distrustafteremail == NULL &&
+                (distrustafteremail = ASN1_GENERALIZEDTIME_new()) == NULL)
+                goto err;
+            if (!ASN1_GENERALIZEDTIME_set_string(distrustafteremail, opt_arg())) {
+                BIO_printf(bio_err, "%s isn't valid asn1_generalizedtime string", opt_arg());
+                goto opthelp;
+            }
+            break;
         case OPT_SETALIAS:
             alias = opt_arg();
             trustout = 1;
@@ -640,6 +667,12 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_CLRREJECT:
             clrreject = ++num;
+            break;
+        case OPT_CLROTHER:
+            clrother = ++num;
+            break;
+        case OPT_CLRDISTURST_AFTER:
+            clrdistrustafter = ++num;
             break;
         case OPT_ALIAS:
             aliasout = ++num;
@@ -952,6 +985,12 @@ cert_loop:
         X509_trust_clear(x);
     if (clrreject)
         X509_reject_clear(x);
+    if (clrother)
+        X509_other_clear(x);
+    if (clrdistrustafter) {
+        X509_other_clear_nid(x, NID_openssl_server_distrust_after);
+        X509_other_clear_nid(x, NID_openssl_email_distrust_after);
+    }
 
     if (trust != NULL) {
         for (i = 0; i < sk_ASN1_OBJECT_num(trust); i++)
@@ -963,6 +1002,10 @@ cert_loop:
             X509_add1_reject_object(x, sk_ASN1_OBJECT_value(reject, i));
     }
 
+    if (distrustafterserver)
+        X509_set0_aux_server_distrust_after(x, distrustafterserver);
+    if (distrustafteremail)
+        X509_set0_aux_email_distrust_after(x, distrustafteremail);
     if (clrext && ext_names != NULL)
         BIO_puts(bio_err, "Warning: Ignoring -ext since -clrext is given\n");
     for (i = X509_get_ext_count(x) - 1; i >= 0; i--) {
