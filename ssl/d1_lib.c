@@ -1581,7 +1581,6 @@ static int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     SSL_CTX *ctx;
-    EVP_MAC *mac = NULL;
     EVP_MAC_CTX *mctx = NULL;
     OSSL_PARAM params[2];
     /* 8 (timestamp) + 2 (port) + max address size */
@@ -1618,12 +1617,7 @@ static int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
         return 0;
     }
 
-    mac = EVP_MAC_fetch(ctx->libctx, "HMAC", ctx->propq);
-    if (mac == NULL)
-        goto err;
-
-    /* TODO: DTLS1.3 after rebase use ctx's hmac */
-    mctx = EVP_MAC_CTX_new(mac);
+    mctx = EVP_MAC_CTX_new(ctx->hmac);
     if (mctx == NULL)
         goto err;
 
@@ -1645,7 +1639,6 @@ static int dtls_listener_cookie_hmac(SSL *ssl, uint64_t timestamp,
 
 err:
     EVP_MAC_CTX_free(mctx);
-    EVP_MAC_free(mac);
     return ret;
 }
 
