@@ -355,8 +355,10 @@ static int def_generate_session_id(SSL *ssl, unsigned char *id,
 int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
 {
     unsigned int tmp;
-    GEN_SESSION_CB cb = def_generate_session_id;
+    GEN_SESSION_CB cb = NULL;
+    SSL *user_ssl = SSL_CONNECTION_GET_USER_SSL(s);
     SSL *ssl = SSL_CONNECTION_GET_SSL(s);
+    SSL *cb_ssl;
 
     switch (s->version) {
     case TLS1_VERSION:
@@ -394,12 +396,12 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     }
 
     /* Choose which callback will set the session ID */
-    if (!CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_SSL(s)->lock)) {
+    if (!CRYPTO_THREAD_read_lock(user_ssl->lock)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
     }
     if (!CRYPTO_THREAD_read_lock(s->session_ctx->lock)) {
-        CRYPTO_THREAD_unlock(ssl->lock);
+        CRYPTO_THREAD_unlock(user_ssl->lock);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
             SSL_R_SESSION_ID_CONTEXT_UNINITIALIZED);
         return 0;
@@ -409,11 +411,23 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     else if (s->session_ctx->generate_session_id)
         cb = s->session_ctx->generate_session_id;
     CRYPTO_THREAD_unlock(s->session_ctx->lock);
-    CRYPTO_THREAD_unlock(ssl->lock);
+    CRYPTO_THREAD_unlock(user_ssl->lock);
+    /*
+     * Application callbacks receive the public SSL so per-SSL state such as
+     * ex_data is visible. The built-in generator must keep the handshake
+     * SSL because it uses ssl->ctx->libctx, which can differ from the
+     * public object's context under SSL_listen_ex().
+     */
+    if (cb == NULL) {
+        cb = def_generate_session_id;
+        cb_ssl = ssl;
+    } else {
+        cb_ssl = user_ssl;
+    }
     /* Choose a session ID */
     memset(ss->session_id, 0, ss->session_id_length);
     tmp = (int)ss->session_id_length;
-    if (!cb(ssl, ss->session_id, &tmp)) {
+    if (!cb(cb_ssl, ss->session_id, &tmp)) {
         /* The callback failed */
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
             SSL_R_SSL_SESSION_ID_CALLBACK_FAILED);
