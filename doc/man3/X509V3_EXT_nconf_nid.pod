@@ -25,7 +25,7 @@ I<conf> the configuration information where additional data
 will be read from. I<conf> will typically come from a config
 file.
 
-In case when I<ctx> value is null, the default one is used. 
+In case when I<ctx> value is null, the default one is used.
 
 =head1 NOTES
 
