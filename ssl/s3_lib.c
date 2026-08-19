@@ -5665,7 +5665,7 @@ const char *SSL_get0_group_name(SSL *s)
     if (SSL_CONNECTION_IS_TLS13(sc) && sc->s3.did_kex)
         id = sc->s3.group_id;
     else
-        id = sc->session->kex_group;
+        id = (sc->session != NULL) ? sc->session->kex_group : NID_undef;
 
     return tls1_group_id2name(s->ctx, id);
 }
