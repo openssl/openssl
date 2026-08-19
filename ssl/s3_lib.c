@@ -5081,11 +5081,11 @@ int ssl3_shutdown(SSL *s)
         ssl3_send_alert(sc, SSL3_AL_WARNING, SSL_AD_CLOSE_NOTIFY);
         /*
          * our shutdown alert has been sent now, and if it still needs to be
-         * written, s->s3.alert_dispatch will be > 0
+         * written, s->s3.alert_dispatch will be != SSL_ALERT_DISPATCH_NONE
          */
-        if (sc->s3.alert_dispatch > 0)
+        if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE)
             return -1; /* return WANT_WRITE */
-    } else if (sc->s3.alert_dispatch > 0) {
+    } else if (sc->s3.alert_dispatch != SSL_ALERT_DISPATCH_NONE) {
         /* resend it if not sent */
         ret = s->method->ssl_dispatch_alert(s);
         if (ret == -1) {

@@ -41,8 +41,6 @@ int dtls1_dispatch_alert(SSL *ssl)
 {
     int i, j;
     void (*cb)(const SSL *ssl, int type, int val) = NULL;
-    unsigned char buf[DTLS1_AL_HEADER_LENGTH];
-    unsigned char *ptr = &buf[0];
     size_t written;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
 
@@ -51,20 +49,15 @@ int dtls1_dispatch_alert(SSL *ssl)
 
     s->s3.alert_dispatch = SSL_ALERT_DISPATCH_NONE;
 
-    memset(buf, 0, sizeof(buf));
-    *ptr++ = s->s3.send_alert[0];
-    *ptr++ = s->s3.send_alert[1];
-
-    i = do_dtls1_write(s, SSL3_RT_ALERT, &buf[0], sizeof(buf), &written);
+    i = do_dtls1_write(s, SSL3_RT_ALERT, s->s3.send_alert, sizeof(s->s3.send_alert), &written);
     if (i <= 0) {
-        s->s3.alert_dispatch = 1;
-        /* fprintf(stderr, "not done with alert\n"); */
+        s->s3.alert_dispatch = SSL_ALERT_DISPATCH_PENDING;
     } else {
         (void)BIO_flush(s->wbio);
 
         if (s->msg_callback)
             s->msg_callback(1, s->version, SSL3_RT_ALERT, s->s3.send_alert,
-                2, ssl, s->msg_callback_arg);
+                sizeof(s->s3.send_alert), ssl, s->msg_callback_arg);
 
         if (s->info_callback != NULL)
             cb = s->info_callback;
