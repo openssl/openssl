@@ -82,6 +82,14 @@ requirements down. There are just a few exceptions.
    This module is required for testing only!  If you don't plan on running
    the tests, you don't need to bother with this one.
 
+ * `Test::Harness` this is required *for testing*
+
+   We require the minimum version to be 3.17, which appeared in Perl 5.10.1,
+   because the test suite is driven with `prove` and its plugin mechanism,
+   which appeared in that version.  This module is required for testing only!
+   If you don't plan on running the tests, you don't need to bother with this
+   one.
+
 Notes on installing a Perl module
 ---------------------------------
 
