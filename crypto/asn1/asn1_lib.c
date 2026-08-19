@@ -378,7 +378,7 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
     }
     str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
-    str->length = len;
+    str->length = len < 0 ? 0 : len;
 }
 
 int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
