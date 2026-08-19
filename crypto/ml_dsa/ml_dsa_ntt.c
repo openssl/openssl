@@ -240,7 +240,15 @@ static void ml_dsa_ntt_init(void)
         poly_ntt_mult_impl = poly_ntt_mult_avx2_wrapper;
     }
 #endif
-#ifdef VX_COMPILER_SUPPORT_VEC128
+/*
+ * OPENSSL_ML_DSA_S390X is injected by the build system for all asm-enabled
+ * s390x targets and is the only guard needed here.  An additional
+ * defined(__s390x__) check is redundant — the define is never emitted for
+ * non-s390x targets — and has been observed to be absent in some clang
+ * cross-compilation environments, which would silently omit the dispatch
+ * block and break the VX fast-path.
+ */
+#if defined(OPENSSL_ML_DSA_S390X)
     if (S390X_VX_CAPABLE) {
         poly_ntt_impl = ossl_ml_dsa_poly_ntt_vec128;
         poly_ntt_inverse_impl = ossl_ml_dsa_poly_ntt_inverse_vec128;

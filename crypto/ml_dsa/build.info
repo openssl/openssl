@@ -14,7 +14,7 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 IF[{- !$disabled{'ml-dsa'} -}]
-  IF[{- ($target{perlasm_scheme} // '') ne '31' -}]
+  IF[{- !$disabled{asm} && ($target{perlasm_scheme} // '') ne '31' && defined($config{s390x_vector_cflags}) -}]
     $ML_DSA_VX_s390x=ml_dsa_ntt_vec128.c
     $ML_DSA_DEF_s390x=OPENSSL_ML_DSA_S390X
   ENDIF
