@@ -179,9 +179,8 @@ foreach my $alg (@algs) {
         sprintf("create fake private key: %s", $alg));
     my $realfh = IO::File->new($real, "<:raw");
     my $fakefh = IO::File->new($fake, "<:raw");
-    local $/ = undef;
-    my $realder = <$realfh>;
-    my $fakeder = <$fakefh>;
+    my $realder = do { local $/; <$realfh> };
+    my $fakeder = do { local $/; <$fakefh> };
     $realfh->close();
     $fakefh->close();
     #
