@@ -33,7 +33,10 @@ OpenSSL 4.1
 
 ### Changes between 4.1.0 and 4.1.1 [xx XXX xxxx]
 
- * none yet
+ * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
 
 ### Changes between 4.0 and 4.1.0 [23 Oct 2026]
 
