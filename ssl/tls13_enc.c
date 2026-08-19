@@ -772,6 +772,10 @@ int tls13_change_cipher_state(SSL_CONNECTION *s, int which)
         goto err;
     }
 
+    if ((which & SSL3_CC_WRITE) != 0
+        && !s->server && label == client_early_traffic)
+        s->rlayer.wrlmethod->set_plain_alerts(s->rlayer.wrl, 1);
+
     ret = 1;
 err:
     if ((which & SSL3_CC_EARLY) != 0) {
