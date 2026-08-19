@@ -11,12 +11,47 @@ on:
   schedule:
     - cron: '50 02 * * *'
   workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Internal: openssl-ci-bot PR number. Leave empty for a normal manual run.'
+        required: false
+        type: string
+      head_sha:
+        description: 'Internal: openssl-ci-bot commit SHA. Leave empty for a normal manual run.'
+        required: false
+        type: string
+      check_run_id:
+        description: 'Internal: openssl-ci-bot check-run ID. Leave empty for a normal manual run.'
+        required: false
+        type: string
+
+# Keep in sync with openssl-ci-bot's run-name parser, and with the Actions statistics
+# collector that attributes CI load by parsing this same string. Both break silently.
+run-name: >-
+  ${{ github.event.inputs.pr && format('ci-dispatch pr={0} head={1} check_run_id={2}', github.event.inputs.pr, github.event.inputs.head_sha, github.event.inputs.check_run_id) || github.workflow }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.pr || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  # Only a dispatch carries inputs, so this is skipped on the nightly cron.
+  validate-dispatch-inputs:
+    if: inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != ''
+    uses: ./.github/workflows/validate-dispatch-inputs.yml
+    with:
+      pr: ${{ inputs.pr }}
+      head_sha: ${{ inputs.head_sha }}
+      check_run_id: ${{ inputs.check_run_id }}
+
   alpine:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -38,6 +73,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       run: |
         ./config --strict-warnings --banner=Configured no-shared enable-fips \
@@ -54,6 +90,10 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -89,6 +129,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: install packages
       run: ${{ matrix.zoo.install }}
     - name: config
@@ -105,6 +146,10 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   macos:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -114,6 +159,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: config
@@ -130,6 +176,10 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   windows:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -143,6 +193,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: install nasm
@@ -182,12 +233,18 @@ jobs:
         nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4 LHASH_WORKERS=16
 
   linux-arm64:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
+      (github.repository == 'openssl/openssl') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: linux-arm64
-    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
@@ -200,12 +257,18 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-ppc64le:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
+      (github.repository == 'openssl/openssl') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: linux-ppc64le
-    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       run: ./config --strict-warnings enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
@@ -220,12 +283,18 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-s390x:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
+      (github.repository == 'openssl/openssl') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: linux-s390x
-    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       run: ./config --strict-warnings enable-fips enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
@@ -240,12 +309,18 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   linux-riscv64:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.pr == '')) &&
+      (github.repository == 'openssl/openssl') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: linux-riscv64
-    if: github.repository == 'openssl/openssl'
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       run: ./config enable-fips enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-ssl3 enable-ssl3-method enable-trace
     - name: config dump
@@ -260,11 +335,16 @@ jobs:
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16}
 
   freebsd-x86_64:
+    needs: [validate-dispatch-inputs]
+    if: >-
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: config
       uses: cross-platform-actions/action@46e8d7fb25520a8d6c64fd2b7a1192611da98eda #v0.30.0
       with:
