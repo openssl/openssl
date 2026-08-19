@@ -11,12 +11,14 @@
 
 #include <openssl/opensslconf.h>
 #include <openssl/crypto.h>
+#include <openssl/err.h>
 #include <openssl/ocsp.h>
 #include <openssl/x509.h>
 #include <openssl/asn1.h>
 #include <openssl/pem.h>
 
 #include "testutil.h"
+#include "internal/nelem.h"
 
 static const char *certstr;
 static const char *privkeystr;
@@ -213,6 +215,57 @@ err:
     return ret;
 }
 
+static const struct {
+    const char *thisupd;
+    const char *nextupd;
+    long maxsec;
+    int reason;
+} invalid_update_tests[] = {
+    { "99991231235959+0100", NULL, 60,
+        OCSP_R_ERROR_IN_THISUPDATE_FIELD },
+    { "20000101000000Z", "20000102000000.5Z", -1,
+        OCSP_R_ERROR_IN_NEXTUPDATE_FIELD },
+    /* Canonical forms must keep their existing, specific reasons */
+    { "20000101000000Z", NULL, 60, OCSP_R_STATUS_TOO_OLD },
+    { "20000101000000Z", "20000102000000Z", -1,
+        OCSP_R_STATUS_EXPIRED },
+};
+
+static int test_invalid_update_time(int idx)
+{
+    ASN1_GENERALIZEDTIME *thisupd = NULL, *nextupd = NULL;
+    unsigned long errcode;
+    int ret = 0;
+
+    if (!TEST_ptr(thisupd = ASN1_GENERALIZEDTIME_new())
+        || !TEST_true(ASN1_GENERALIZEDTIME_set_string(
+            thisupd, invalid_update_tests[idx].thisupd)))
+        goto err;
+    if (invalid_update_tests[idx].nextupd != NULL
+        && (!TEST_ptr(nextupd = ASN1_GENERALIZEDTIME_new())
+            || !TEST_true(ASN1_GENERALIZEDTIME_set_string(
+                nextupd, invalid_update_tests[idx].nextupd))))
+        goto err;
+
+    ERR_clear_error();
+    if (!TEST_false(OCSP_check_validity(
+            thisupd, nextupd, 0, invalid_update_tests[idx].maxsec)))
+        goto err;
+    errcode = ERR_get_error();
+    if (!TEST_int_eq(ERR_GET_LIB(errcode), ERR_LIB_OCSP)
+        || !TEST_int_eq(ERR_GET_REASON(errcode),
+            invalid_update_tests[idx].reason)
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+    ret = 1;
+
+err:
+    ERR_clear_error();
+    ASN1_GENERALIZEDTIME_free(thisupd);
+    ASN1_GENERALIZEDTIME_free(nextupd);
+    return ret;
+}
+
 #endif /* OPENSSL_NO_OCSP */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
@@ -231,6 +284,8 @@ int setup_tests(void)
     ADD_TEST(test_resp_signer);
     ADD_ALL_TESTS(test_access_description, 3);
     ADD_TEST(test_ocsp_url_svcloc_new);
+    ADD_ALL_TESTS(test_invalid_update_time,
+        OSSL_NELEM(invalid_update_tests));
 #endif
     return 1;
 }
