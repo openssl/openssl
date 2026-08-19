@@ -1430,7 +1430,7 @@ static int final_server_name(SSL_CONNECTION *s, unsigned int context, int sent)
                 ss->ext.tick_lifetime_hint = 0;
                 ss->ext.tick_age_add = 0;
                 if (!ssl_generate_session_id(s, ss)) {
-                    SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                    /* SSLfatal() already called */
                     return 0;
                 }
             } else {
