@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2021 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -36,7 +36,40 @@
  */
 
 #include <stddef.h>
+#include <string.h>
 #include "ec_local.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h" /* ossl_fn_get_words(), ossl_fn_get_dsize() */
+
+/*
+ * Serialise a secret OSSL_FN scalar into 'len' little-endian bytes, over the
+ * full width of the OSSL_FN (constant-time; no dependence on the value's
+ * magnitude), mirroring BN_bn2lebinpad() as used by the nistp points_mul
+ * implementations.  Returns 0 if the value does not fit in 'len' bytes.
+ */
+int ossl_ec_GFp_nistp_fn_scalar_bytes(unsigned char *out, size_t len,
+    const OSSL_FN *scalar)
+{
+    const OSSL_FN_ULONG *w = ossl_fn_get_words(scalar);
+    size_t dsize = ossl_fn_get_dsize(scalar);
+    size_t i, j;
+
+    memset(out, 0, len);
+    for (i = 0; i < dsize; i++) {
+        OSSL_FN_ULONG d = w[i];
+
+        for (j = 0; j < sizeof(d); j++) {
+            size_t off = i * sizeof(d) + j;
+            unsigned char b = (unsigned char)(d >> (8 * j));
+
+            if (off < len)
+                out[off] = b;
+            else if (b != 0)
+                return 0; /* value wider than the field */
+        }
+    }
+    return 1;
+}
 
 /*
  * Convert an array of points into affine coordinates. (If the point at
