@@ -2284,6 +2284,8 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
 {
     const X509_VERIFY_PARAM *vpm = ctx->param;
     int64_t notafter_seconds, notbefore_seconds, verification_time;
+    int i, purpose;
+    ASN1_TIME *auxdistrustafter = NULL;
     int err;
 
     if (!get_verification_time(vpm, &verification_time))
@@ -2317,6 +2319,18 @@ int ossl_x509_check_cert_time(X509_STORE_CTX *ctx, X509 *x, int depth)
             if (depth < 0 || verify_cb_cert(ctx, x, depth, err) == 0)
                 return 0;
         }
+    }
+
+    purpose = ctx->param->purpose;
+    if (purpose == X509_PURPOSE_SSL_SERVER)
+        auxdistrustafter = X509_get0_aux_server_distrust_after(x);
+    if (purpose == X509_PURPOSE_SMIME_SIGN || purpose == X509_PURPOSE_SMIME_ENCRYPT)
+        auxdistrustafter = X509_get0_aux_email_distrust_after(x);
+    if (auxdistrustafter != NULL) {
+        i = ASN1_TIME_compare(auxdistrustafter, X509_get0_notBefore(ctx->cert));
+        if (i <= 0 && depth < 0)
+            return 0;
+        CB_FAIL_IF(i < 0, ctx, x, depth, X509_V_ERR_CERT_REJECTED);
     }
 
     return 1;

@@ -31,6 +31,18 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added Distrust after date into certificates aux info to encode method
+    used by root programs gradually retires a root certificate.
+    it can be set by X509_set0_aux_server_distrust_after()
+    and accessed by X509_get0_other_algors()
+    'openssl x509' now have `-setdistrustafterserver`, `-setdistrustafteremail` and `-clrdistrustafter`
+    to handle this setting, and `-clrother` to clear other unknown aux infomation in
+    trusted certificate.
+
+    Added general handling of 'other' struct inside certificate aux info.
+
+    *Seo Suchan*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early
