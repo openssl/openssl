@@ -44,15 +44,30 @@ for test_name in quic_multistream; do
 done
 
 # Collect any core dumps together with the matching test binary, so the core is
-# usable with gdb without a rebuild. The executable name is the %e field of the
-# core file name. Only a failing run produces any. Linux only for now.
+# usable with gdb without a rebuild. Cores land in two places: host cores in
+# /tmp/cores via core_pattern (core.<exe>.<pid>), and qemu-user guest cores
+# written next to the test in its run directory (qemu_<exe>_<pid>.core). Sweep
+# the tree for both and pair each with test/<exe> where possible. Only a
+# failing run produces any. Linux only for now.
 if [ "$(uname)" = Linux ]; then
-    for core in /tmp/cores/core.*; do
-        [ -f "$core" ] || continue
-        exe=$(basename "$core"); exe=${exe#core.}; exe=${exe%.*}
-        [ -f "test/$exe" ] && cp "test/$exe" "$OSSL_CI_ARTIFACTS_PATH/" || true
-        mv "$core" "$OSSL_CI_ARTIFACTS_PATH/" || true
-    done
+    {
+        find /tmp/cores . \
+            \( -type d \( -name .git -o -name artifacts \) -prune \) -o \
+            \( -type f \( -name 'core' -o -name 'core.*' -o -name '*.core' \) \
+               -print0 \) 2>/dev/null |
+        while IFS= read -r -d '' core; do
+            base=$(basename "$core")
+            case "$base" in
+                qemu_*.core) exe=${base#qemu_}; exe=${exe%.core}; exe=${exe%_*} ;;
+                core.*)      exe=${base#core.}; exe=${exe%.*} ;;
+                *.core)      exe=${base%.core}; exe=${exe%_*} ;;
+                *)           exe= ;;
+            esac
+            [ -n "$exe" ] && [ -f "test/$exe" ] &&
+                cp "test/$exe" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
+            cp "$core" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
+        done
+    } || true
 fi
 
 # Log the artifact tree.
