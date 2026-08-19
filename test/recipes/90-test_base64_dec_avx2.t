@@ -8,4 +8,4 @@
 
 use OpenSSL::Test::Simple;
 
-simple_test("test_base64_dec_avx2", "base64_dec_avx2_test", "base64_dec_avx2");
+simple_test("test_base64_dec_avx2", "base64_dec_avx2_test");

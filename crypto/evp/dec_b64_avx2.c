@@ -26,6 +26,9 @@
  *      avoids the full compress cost when a chunk has exactly 1 WS byte
  *      (~83% of chunks for 76-char PEM lines).
  *
+ * EVP_DecodeBlock passes swallow_ws 0, which disables loops 2 and 3 so
+ * that only pure base64 is ever consumed.
+ *
  * Whitespace detection, compression routines, and lookup tables are derived
  * from simdutf (https://github.com/simdutf/simdutf), dual-licensed under
  * Apache-2.0 and MIT, based on: D. Lemire & W. Mula, "Base64 encoding and
@@ -33,6 +36,7 @@
  * Experience 50 (2), 2020.
  */
 
+#include <limits.h>
 #include <openssl/evp.h>
 #include "dec_b64_avx2.h"
 #include "b64_avx2_common.h"
@@ -178,34 +182,20 @@ static inline __m256i pack(__m256i in)
 OPENSSL_UNTARGET_AVX2
 
 /*
- * Store 48 decoded bytes via 4 overlapping 128-bit stores.
- * Writes 4 garbage bytes at [48..51] past valid output.
+ * Store 48 bytes via 4 overlapping 128-bit stores. The last one is
+ * end-aligned, so nothing is written past out[47].
  */
 OPENSSL_TARGET_AVX2
 static inline void store_48(unsigned char *out, __m256i p0, __m256i p1)
 {
+    /* dwords 2,4,5,6 of p1 = decoded bytes [32..47] */
+    const __m256i last16 = _mm256_setr_epi32(2, 4, 5, 6, 2, 4, 5, 6);
+
     _mm_storeu_si128((__m128i *)out, _mm256_castsi256_si128(p0));
     _mm_storeu_si128((__m128i *)(out + 12), _mm256_extracti128_si256(p0, 1));
     _mm_storeu_si128((__m128i *)(out + 24), _mm256_castsi256_si128(p1));
-    _mm_storeu_si128((__m128i *)(out + 36), _mm256_extracti128_si256(p1, 1));
-}
-OPENSSL_UNTARGET_AVX2
-
-/*
- * Store 48 decoded bytes without overshoot. Second half goes through
- * a stack buffer so the 4 trailing garbage bytes never reach the
- * output. Used for the last block near the end of the output buffer.
- */
-OPENSSL_TARGET_AVX2
-static inline void store_48_safe(unsigned char *out, __m256i p0, __m256i p1)
-{
-    unsigned char tmp[28];
-
-    _mm_storeu_si128((__m128i *)out, _mm256_castsi256_si128(p0));
-    _mm_storeu_si128((__m128i *)(out + 12), _mm256_extracti128_si256(p0, 1));
-    _mm_storeu_si128((__m128i *)tmp, _mm256_castsi256_si128(p1));
-    _mm_storeu_si128((__m128i *)(tmp + 12), _mm256_extracti128_si256(p1, 1));
-    memcpy(out + 24, tmp, 24);
+    _mm_storeu_si128((__m128i *)(out + 32),
+        _mm256_castsi256_si128(_mm256_permutevar8x32_epi32(p1, last16)));
 }
 OPENSSL_UNTARGET_AVX2
 
@@ -350,8 +340,7 @@ OPENSSL_UNTARGET_AVX2
 OPENSSL_TARGET_AVX2
 static inline int decode_buffer_block(const unsigned char *buf,
     unsigned char *out,
-    int use_srp,
-    unsigned char *safe_end)
+    int use_srp)
 {
     __m256i bv0 = _mm256_loadu_si256((const __m256i *)buf);
     __m256i bv1 = _mm256_loadu_si256((const __m256i *)(buf + 32));
@@ -373,10 +362,7 @@ static inline int decode_buffer_block(const unsigned char *buf,
     if (_mm256_movemask_epi8(err) != 0)
         return -1;
 
-    if (out >= safe_end)
-        store_48_safe(out, p0, p1);
-    else
-        store_48(out, p0, p1);
+    store_48(out, p0, p1);
     return 0;
 }
 OPENSSL_UNTARGET_AVX2
@@ -394,19 +380,24 @@ OPENSSL_UNTARGET_AVX2
  *      compression into a stack buffer, decoded on flush.
  *      Three sub-paths: single-WS compress, general compress, copy.
  *
- * Returns decoded byte count (>= 0), or -1 on error.
- * Sets *consumed_out to the number of input bytes consumed.
- * Stores 0-3 leftover base64 bytes in ctx->enc_data / ctx->num.
+ * Returns bytes written to dst and sets *consumed_out. No error
+ * return, undecodable input stays unconsumed for the caller's scalar
+ * loop. Leftovers (< 64) go to ctx->enc_data as scalar would buffer.
+ * With swallow_ws 0 whitespace is never skipped and consumption stops
+ * at the first block holding anything but base64 characters.
  */
 OPENSSL_TARGET_AVX2
 int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
-    const unsigned char *src, int srclen,
+    const unsigned char *src, int srclen, int swallow_ws,
     int *consumed_out)
 {
     unsigned char *out = dst;
     int consumed = 0;
-    const int use_srp = (ctx != NULL
-        && (ctx->flags & EVP_ENCODE_CTX_USE_SRP_ALPHABET) != 0);
+    const int use_srp = (ctx->flags & EVP_ENCODE_CTX_USE_SRP_ALPHABET) != 0;
+
+    /* keep consumed + 128 below INT_MAX, the excess stays unconsumed */
+    if (srclen > INT_MAX - 128)
+        srclen = INT_MAX - 128;
 
     /*
      * Stack buffer for whitespace-compressed data.
@@ -418,13 +409,8 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
     unsigned char *bufferptr = buffer;
     int buf_rpos = 0;
 
-    /*
-     * Safe zone boundary: beyond this point, store_48 would overshoot
-     * the output buffer. Conservative: assumes maximum output of 3/4
-     * of input (clean base64, no whitespace).
-     */
-    int max_out = (srclen / 4) * 3;
-    unsigned char *safe_end = max_out >= 52 ? dst + max_out - 52 : dst;
+    int general_consumed;
+    unsigned char *general_out;
 
     /*
      * Tight inner loop for clean data (no WS, no stops).
@@ -469,10 +455,7 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         v3 = _mm256_loadu_si256((const __m256i *)(src + consumed + 96));
 
         /* Store first half while second half decodes */
-        if (out >= safe_end)
-            store_48_safe(out, p0, p1);
-        else
-            store_48(out, p0, p1);
+        store_48(out, p0, p1);
 
         if (use_srp) {
             d2 = decode_srp(v2, &err23);
@@ -491,10 +474,7 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
             break;
         }
 
-        if (out + 48 >= safe_end)
-            store_48_safe(out + 48, p2, p3);
-        else
-            store_48(out + 48, p2, p3);
+        store_48(out + 48, p2, p3);
         out += 96;
         consumed += 128;
     }
@@ -509,7 +489,7 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         __m256i v0, v1, err, d0, d1, p0, p1;
 
         /* Skip inter-line whitespace (typically 1 LF per PEM line) */
-        while (consumed < srclen) {
+        while (swallow_ws && consumed < srclen) {
             unsigned char c = src[consumed];
 
             if (c != '\n' && c != '\r' && c != ' ' && c != '\t')
@@ -540,10 +520,7 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         if (_mm256_movemask_epi8(err) != 0)
             break;
 
-        if (out >= safe_end)
-            store_48_safe(out, p0, p1);
-        else
-            store_48(out, p0, p1);
+        store_48(out, p0, p1);
         out += 48;
         consumed += 64;
     }
@@ -552,7 +529,10 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
      * General loop: handles whitespace, stop characters, and buffer
      * management. Entered when WS appears mid-block or after the
      * skip-WS loop encounters non-standard formatting.
+     * Errors in buffered data rewind to this snapshot.
      */
+    general_consumed = consumed;
+    general_out = out;
     {
         /* WS detection via low nibble (each WS char has a unique one) */
         const __m256i ws_tbl = _mm256_setr_epi8(
@@ -561,7 +541,7 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         const __m256i eq_char = _mm256_set1_epi8('=');
         const __m256i dash_char = _mm256_set1_epi8('-');
 
-        while (consumed + 64 <= srclen) {
+        while (swallow_ws && consumed + 64 <= srclen) {
             __m256i v0 = _mm256_loadu_si256((const __m256i *)(src + consumed));
             __m256i v1 = _mm256_loadu_si256((const __m256i *)(src + consumed + 32));
 
@@ -615,10 +595,8 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
                 int buf_avail = (int)(bufferptr - buffer) - buf_rpos;
 
                 while (buf_avail >= 64) {
-                    if (decode_buffer_block(buffer + buf_rpos, out, use_srp, safe_end) < 0) {
-                        *consumed_out = consumed;
-                        return -1;
-                    }
+                    if (decode_buffer_block(buffer + buf_rpos, out, use_srp) < 0)
+                        goto rewind;
                     out += 48;
                     buf_rpos += 64;
                     buf_avail -= 64;
@@ -629,6 +607,12 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
                     bufferptr = buffer + buf_avail;
                     buf_rpos = 0;
                 }
+                /* accounting is exact on a drained buffer, so advance
+                 * the rewind point to bound the error-path re-decode */
+                if (buf_avail == 0) {
+                    general_consumed = consumed;
+                    general_out = out;
+                }
             }
         }
     } /* end general loop scope */
@@ -638,20 +622,30 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
         int buf_avail = (int)(bufferptr - buffer) - buf_rpos;
 
         if (buf_avail > 0) {
-            int complete = buf_avail & ~3;
+            unsigned char tmpblk[64];
+            __m256i verr = _mm256_setzero_si256();
+            __m256i b0, b1;
 
-            if (complete > 0) {
-                int decoded = evp_decodeblock_int(ctx, out, buffer + buf_rpos,
-                    complete, 0);
-                if (decoded < 0) {
-                    *consumed_out = consumed;
-                    return -1;
-                }
-                out += decoded;
+            /* pad with 'A' and reuse the decoders' validity check,
+             * only valid characters may be stashed like scalar does */
+            memset(tmpblk, 'A', sizeof(tmpblk));
+            memcpy(tmpblk, buffer + buf_rpos, buf_avail);
+            b0 = _mm256_loadu_si256((const __m256i *)tmpblk);
+            b1 = _mm256_loadu_si256((const __m256i *)(tmpblk + 32));
+            if (use_srp) {
+                (void)decode_srp(b0, &verr);
+                (void)decode_srp(b1, &verr);
+            } else {
+                (void)decode_std(b0, &verr);
+                (void)decode_std(b1, &verr);
             }
-            memcpy(ctx->enc_data, buffer + buf_rpos + complete,
-                buf_avail - complete);
-            ctx->num = buf_avail - complete;
+            if (_mm256_movemask_epi8(verr) != 0)
+                goto rewind;
+
+            /* stash whole since decoding any of it here would diverge
+             * from scalar per-call *outl and ctx->num */
+            memcpy(ctx->enc_data, buffer + buf_rpos, buf_avail);
+            ctx->num = buf_avail;
         } else {
             ctx->num = 0;
         }
@@ -659,6 +653,15 @@ int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
 
     *consumed_out = consumed;
     return (int)(out - dst);
+
+rewind:
+    /*
+     * Compression lost the invalid byte's input offset. Unconsume the
+     * whole region and let the scalar loop redo it (error inputs only).
+     */
+    ctx->num = 0;
+    *consumed_out = general_consumed;
+    return (int)(general_out - dst);
 }
 OPENSSL_UNTARGET_AVX2
 #endif /* HAVE_AVX2 */

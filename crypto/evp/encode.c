@@ -295,8 +295,10 @@ int EVP_DecodeUpdate(EVP_ENCODE_CTX *ctx, unsigned char *out, int *outl,
     if (HAVE_AVX2() && eof == 0 && n == 0 && inl >= 64) {
         int fast_consumed = 0;
         int decoded = decode_base64_avx2(ctx, out, in, inl,
-            &fast_consumed);
-        if (decoded < 0) {
+            1 /* swallow_ws */, &fast_consumed);
+
+        /* unconsumed input is left for the scalar loop */
+        if (!ossl_assert(decoded >= 0)) {
             rv = -1;
             goto end;
         }
@@ -392,6 +394,25 @@ end:
     return rv;
 }
 
+static ossl_inline int evp_decodeblock_trim(const unsigned char **f, int n,
+    const unsigned char *table)
+{
+    /* trim whitespace from the start of the line. */
+    while ((n > 0) && (conv_ascii2bin(**f, table) == B64_WS)) {
+        (*f)++;
+        n--;
+    }
+
+    /*
+     * strip off stuff at the end of the line ascii2bin values B64_WS,
+     * B64_EOLN, B64_EOLN and B64_EOF
+     */
+    while ((n > 3) && (B64_NOT_BASE64(conv_ascii2bin((*f)[n - 1], table))))
+        n--;
+
+    return n;
+}
+
 int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n,
     int eof)
@@ -408,18 +429,7 @@ int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     else
         table = data_ascii2bin;
 
-    /* trim whitespace from the start of the line. */
-    while ((n > 0) && (conv_ascii2bin(*f, table) == B64_WS)) {
-        f++;
-        n--;
-    }
-
-    /*
-     * strip off stuff at the end of the line ascii2bin values B64_WS,
-     * B64_EOLN, B64_EOLN and B64_EOF
-     */
-    while ((n > 3) && (B64_NOT_BASE64(conv_ascii2bin(f[n - 1], table))))
-        n--;
+    n = evp_decodeblock_trim(&f, n, table);
 
     if (n % 4 != 0)
         return -1;
@@ -476,28 +486,32 @@ int EVP_DecodeBlock(unsigned char *t, const unsigned char *f, int n)
 {
 #ifdef HAVE_AVX2
     if (HAVE_AVX2() && n >= 64) {
-        EVP_ENCODE_CTX tmpctx;
-        int consumed = 0, result;
+        const unsigned char *fx = f;
+        int nx = evp_decodeblock_trim(&fx, n, data_ascii2bin);
 
-        memset(&tmpctx, 0, sizeof(tmpctx));
-        result = decode_base64_avx2(&tmpctx, t, f, n, &consumed);
-        if (result >= 0) {
-            int rem_len = n - consumed;
+        if (nx >= 64) {
+            EVP_ENCODE_CTX tmpctx;
+            int consumed = 0, result;
 
-            if (tmpctx.num == 0 && rem_len == 0)
+            memset(&tmpctx, 0, sizeof(tmpctx));
+            /* strict mode consumes pure base64 only and cannot fail */
+            result = decode_base64_avx2(&tmpctx, t, fx, nx,
+                0 /* swallow_ws */, &consumed);
+
+            if (consumed == nx)
                 return result;
 
-            if (tmpctx.num == 0) {
-                int rem = evp_decodeblock_int(NULL, t + result,
-                    f + consumed, rem_len, 0);
-                return (rem >= 0) ? result + rem : rem;
-            }
-
             /*
-             * Leftover in compress buffer means internal whitespace was
-             * present, which is invalid for EVP_DecodeBlock (see docs).
+             * A quad-aligned remainder equals one whole-input call
+             * unless it starts with WS, which only the scalar path
+             * below may treat as leading.
              */
-            return -1;
+            if (conv_ascii2bin(fx[consumed], data_ascii2bin) != B64_WS) {
+                int rem = evp_decodeblock_int(NULL, t + result,
+                    fx + consumed, nx - consumed, 0);
+
+                return rem >= 0 ? result + rem : -1;
+            }
         }
     }
 #endif

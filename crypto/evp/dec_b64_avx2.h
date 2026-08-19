@@ -16,7 +16,7 @@
 
 #ifdef HAVE_AVX2
 int decode_base64_avx2(EVP_ENCODE_CTX *ctx, unsigned char *dst,
-    const unsigned char *src, int srclen,
+    const unsigned char *src, int srclen, int swallow_ws,
     int *consumed_out);
 #endif
 

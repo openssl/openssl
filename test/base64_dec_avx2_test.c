@@ -278,11 +278,12 @@ static int run_decode_test(int rawlen, int ws_type, int use_srp,
     int ret = 0;
     int i;
 
+    /* output buffers exactly the decoded size so ASan catches overshoot */
     raw = OPENSSL_malloc(rawlen + 1);
     b64 = OPENSSL_malloc(rawlen * 2 + 256);
     input = OPENSSL_malloc(rawlen * 3 + 256);
-    out_full = OPENSSL_malloc(rawlen + 256);
-    out_ref = OPENSSL_malloc(rawlen + 256);
+    out_full = OPENSSL_malloc(rawlen > 0 ? rawlen : 1);
+    out_ref = OPENSSL_malloc(rawlen > 0 ? rawlen : 1);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(input)
         || !TEST_ptr(out_full) || !TEST_ptr(out_ref))
@@ -404,8 +405,8 @@ static int test_decode_chunked(int idx)
     raw = OPENSSL_malloc(rawlen + 1);
     b64 = OPENSSL_malloc(rawlen * 2 + 256);
     pem = OPENSSL_malloc(rawlen * 3 + 256);
-    out_chunked = OPENSSL_malloc(rawlen + 256);
-    out_ref = OPENSSL_malloc(rawlen + 256);
+    out_chunked = OPENSSL_malloc(rawlen);
+    out_ref = OPENSSL_malloc(rawlen);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(pem)
         || !TEST_ptr(out_chunked) || !TEST_ptr(out_ref))
@@ -512,8 +513,8 @@ static int test_decode_partial_ctx(int split)
     raw = OPENSSL_malloc(PARTIAL_RAW_LEN);
     b64 = OPENSSL_malloc(PARTIAL_RAW_LEN * 2 + 256);
     pem = OPENSSL_malloc(PARTIAL_RAW_LEN * 3 + 256);
-    out_split = OPENSSL_malloc(PARTIAL_RAW_LEN + 256);
-    out_ref = OPENSSL_malloc(PARTIAL_RAW_LEN + 256);
+    out_split = OPENSSL_malloc(PARTIAL_RAW_LEN);
+    out_ref = OPENSSL_malloc(PARTIAL_RAW_LEN);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(pem)
         || !TEST_ptr(out_split) || !TEST_ptr(out_ref))
@@ -604,7 +605,8 @@ static int test_decode_block(int idx)
 
     raw = OPENSSL_malloc(rawlen);
     b64 = OPENSSL_malloc(rawlen * 2 + 256);
-    out = OPENSSL_malloc(rawlen + 256);
+    /* exactly 3 bytes per input quad, incl. padding */
+    out = OPENSSL_malloc((rawlen + 2) / 3 * 3);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(out))
         goto end;
@@ -649,7 +651,8 @@ static int test_decode_block_overflow(int idx)
     raw = OPENSSL_malloc(rawlen);
     b64 = OPENSSL_malloc(rawlen * 2 + 256);
     bad = OPENSSL_malloc(rawlen * 2 + 258);
-    out = OPENSSL_malloc(rawlen + 256);
+    /* correct behavior writes nothing before rejecting */
+    out = OPENSSL_malloc(1);
 
     if (!TEST_ptr(raw) || !TEST_ptr(b64) || !TEST_ptr(bad) || !TEST_ptr(out))
         goto end;
@@ -674,6 +677,136 @@ end:
     return ret;
 }
 
+#define A4 "AAAA"
+#define A8 A4 A4
+#define A16 A8 A8
+#define A32 A16 A16
+#define A64 A32 A32
+#define A28 A16 A8 A4
+#define A30 A28 "AA"
+#define A34 A32 "AA"
+#define A60 A32 A28
+#define A62 A60 "AA"
+#define A63 A60 "AAA"
+#define SP4 "    "
+#define SP8 SP4 SP4
+#define SP56 SP8 SP8 SP8 SP8 SP8 SP8 SP8
+#define SP57 SP56 " "
+
+/*
+ * EVP_DecodeBlock accept/reject vectors. Expected values are the
+ * scalar behaviour, which the AVX2 path must match.
+ */
+static const struct block_vec {
+    const char *desc;
+    const char *in;
+    int expected;
+} block_vecs[] = {
+    {"internal spaces", A30 SP4 A30, -1},
+    {"internal space after full block", A64 " " A4, -1},
+    {"leading space", " " A64, 48},
+    {"leading tab", "\t" A64, 48},
+    {"leading LF", "\n" A64, -1},
+    {"leading CR", "\r" A64, -1},
+    {"trailing LF", A64 "\n", 48},
+    {"trailing space", A64 " ", 48},
+    {"trailing LF LF", A64 "\n\n", 48},
+    {"trailing junk", A64 "!", -1},
+    {"invalid char in first quad", "!" A63, -1},
+    {"invalid char in last quad", A63 "!", -1},
+    {"length not a multiple of four", A64 "A", -1},
+    {"padding at the end", A62 "==", 48},
+    {"padding mid-input", A34 "==" A28, 48},
+};
+
+static int check_decode_block(const struct block_vec *v)
+{
+    static const unsigned char zeros[64];
+    unsigned char *out;
+    int inlen = (int)strlen(v->in);
+    int outsz = inlen / 4 * 3;
+    int r, ret = 0;
+
+    /* EVP_DecodeBlock writes at most 3 bytes per full input quad */
+    out = OPENSSL_malloc(outsz > 0 ? outsz : 1);
+    if (!TEST_ptr(out))
+        return 0;
+    r = EVP_DecodeBlock(out, (const unsigned char *)v->in, inlen);
+    if (!TEST_int_eq(r, v->expected)) {
+        TEST_info("EVP_DecodeBlock semantics: %s", v->desc);
+        goto end;
+    }
+    /* every accept vector decodes to zero bytes ('A' and '=' map to 0) */
+    if (r > 0
+        && (!TEST_int_le(r, (int)sizeof(zeros))
+            || !TEST_mem_eq(out, r, zeros, r))) {
+        TEST_info("EVP_DecodeBlock semantics: %s", v->desc);
+        goto end;
+    }
+    ret = 1;
+
+end:
+    OPENSSL_free(out);
+    return ret;
+}
+
+static int test_decode_block_vec(int i)
+{
+    return check_decode_block(&block_vecs[i]);
+}
+
+/*
+ * EVP_DecodeUpdate vectors, one full-buffer call checked against the
+ * scalar behaviour. All inputs decode to zero bytes.
+ */
+static const struct update_vec {
+    const char *desc;
+    const char *in;
+    int rv, outl;
+} update_vecs[] = {
+    {"invalid byte after full lines", A64 "\n" A64 "\n!AAA", -1, 96},
+    {"invalid byte in first block", A63 "\f", -1, 0},
+    {"invalid bytes between whitespace", A64 "\n" A4 "!!!!" SP56, -1, 48},
+    {"invalid byte in stashed leftover", A64 "\n" "AA" SP57 A4 "!", -1, 48},
+    {"leftover stashed whole", "A " A62, 1, 0},
+    {"stash into padding and trailing data", "A " A62 "=A", -1, 47},
+    {"quad-aligned leftover stashed", "A" SP4 A60, 1, 0},
+};
+
+static int check_update(const struct update_vec *v)
+{
+    static const unsigned char zeros[128];
+    EVP_ENCODE_CTX *ctx = NULL;
+    unsigned char *out;
+    int inlen = (int)strlen(v->in);
+    int outl = 0, rv, ret = 0;
+
+    /* exactly the expected output size, no room for overshoot */
+    out = OPENSSL_malloc(v->outl > 0 ? v->outl : 1);
+    if (!TEST_ptr(out) || !TEST_ptr(ctx = EVP_ENCODE_CTX_new()))
+        goto end;
+    EVP_DecodeInit(ctx);
+    rv = EVP_DecodeUpdate(ctx, out, &outl, (const unsigned char *)v->in,
+                          inlen);
+    if (!TEST_int_eq(rv, v->rv) || !TEST_int_eq(outl, v->outl)
+        || !TEST_int_le(outl, (int)sizeof(zeros))
+        || !TEST_mem_eq(out, outl, zeros, outl)) {
+        TEST_info("EVP_DecodeUpdate semantics: %s", v->desc);
+        goto end;
+    }
+    ret = 1;
+
+end:
+    OPENSSL_free(out);
+    EVP_ENCODE_CTX_free(ctx);
+    return ret;
+}
+
+static int test_decode_update_vec(int i)
+{
+    return check_update(&update_vecs[i]);
+}
+
 int setup_tests(void)
 {
     /* Standard alphabet: test_sizes x WS patterns */
@@ -693,6 +826,14 @@ int setup_tests(void)
 
     /* EVP_DecodeBlock overflow regression (sizes >= 96) */
     ADD_ALL_TESTS(test_decode_block_overflow, NUM_OVERFLOW_SIZES);
+
+    /* EVP_DecodeBlock accept/reject parity with the scalar path */
+    ADD_ALL_TESTS(test_decode_block_vec,
+                  (int)(sizeof(block_vecs) / sizeof(block_vecs[0])));
+
+    /* EVP_DecodeUpdate outl and ctx state parity with the scalar path */
+    ADD_ALL_TESTS(test_decode_update_vec,
+                  (int)(sizeof(update_vecs) / sizeof(update_vecs[0])));
 
     return 1;
 }
