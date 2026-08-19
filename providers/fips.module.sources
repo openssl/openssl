@@ -399,7 +399,6 @@ crypto/sha/asm/sha512-sparcv9.pl
 crypto/sha/asm/sha512-x86_64.pl
 crypto/sha/asm/sha512p8-ppc.pl
 crypto/sha/keccak1600.c
-crypto/sha/sha1dgst.c
 crypto/sha/sha256.c
 crypto/sha/sha3.c
 crypto/sha/sha3_encode.c
@@ -716,7 +715,6 @@ providers/implementations/digests/digestcommon.inc.in
 providers/implementations/digests/ml_dsa_mu_prov.c
 providers/implementations/digests/ml_dsa_mu_prov.inc.in
 providers/implementations/digests/sha2_prov.c
-providers/implementations/digests/sha2_prov.inc.in
 providers/implementations/digests/sha3_prov.c
 providers/implementations/digests/sha3_prov.inc.in
 providers/implementations/exchange/dh_exch.c

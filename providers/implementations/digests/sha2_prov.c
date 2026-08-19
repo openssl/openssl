@@ -16,45 +16,16 @@
 #include <openssl/byteorder.h>
 #include <openssl/crypto.h>
 #include <openssl/core_dispatch.h>
-#include <openssl/evp.h>
-#include <openssl/err.h>
 #include <openssl/sha.h>
-#include <openssl/params.h>
-#include <openssl/proverr.h>
-#include <openssl/core_names.h>
 #include "prov/digestcommon.h"
 #include "prov/implementations.h"
 #include "crypto/sha.h"
-#include "internal/common.h"
-#include "providers/implementations/digests/sha2_prov.inc"
 
 #define SHA2_FLAGS PROV_DIGEST_FLAG_ALGID_ABSENT
 
 extern int SHA1_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
 extern int SHA256_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
 extern int SHA512_Update_thunk(void *ctx, const unsigned char *data, size_t sz);
-
-/* Special set_params method for SSL3 */
-static int sha1_set_ctx_params(void *vctx, const OSSL_PARAM params[])
-{
-    struct sha1_set_ctx_params_st p;
-    SHA_CTX *ctx = (SHA_CTX *)vctx;
-
-    if (ossl_unlikely(ctx == NULL || !sha1_set_ctx_params_decoder(params, &p)))
-        return 0;
-
-    if (p.ssl3_ms != NULL)
-        return ossl_sha1_ctrl(ctx, EVP_CTRL_SSL3_MASTER_SECRET,
-            (int)p.ssl3_ms->data_size, p.ssl3_ms->data);
-
-    return 1;
-}
-
-static const OSSL_PARAM *sha1_settable_ctx_params(ossl_unused void *ctx,
-    ossl_unused void *provctx)
-{
-    return sha1_set_ctx_params_list;
-}
 
 static const unsigned char sha256magic[] = "SHA256v1";
 #define SHA256MAGIC_LEN (sizeof(sha256magic) - 1)
@@ -281,10 +252,9 @@ static int SHA512_Deserialize(SHA512_CTX *c, const unsigned char *in,
 }
 
 /* ossl_sha1_functions */
-IMPLEMENT_digest_functions_with_settable_ctx(
+IMPLEMENT_digest_functions(
     sha1, SHA_CTX, SHA_CBLOCK, SHA_DIGEST_LENGTH, SHA2_FLAGS,
-    SHA1_Init, SHA1_Update_thunk, SHA1_Final,
-    sha1_settable_ctx_params, sha1_set_ctx_params)
+    SHA1_Init, SHA1_Update_thunk, SHA1_Final)
 
 /* ossl_sha224_functions */
 IMPLEMENT_digest_functions_with_serialize(sha224, SHA256_CTX,

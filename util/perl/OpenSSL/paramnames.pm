@@ -166,7 +166,6 @@ my %params = (
 
 # digest parameters
     'OSSL_DIGEST_PARAM_XOFLEN' =>       "xoflen",       # size_t
-    'OSSL_DIGEST_PARAM_SSL3_MS' =>      "ssl3-ms",      # octet string
     'OSSL_DIGEST_PARAM_PAD_TYPE' =>     "pad-type",     # uint
     'OSSL_DIGEST_PARAM_MICALG' =>       "micalg",       # utf8 string
     'OSSL_DIGEST_PARAM_BLOCK_SIZE' =>   "blocksize",    # size_t
