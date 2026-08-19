@@ -299,6 +299,14 @@ OpenSSL Releases
 
    *David von Oheimb*
 
+ * Streamlined the workaround for the connection callback function of type
+   `OSSL_HTTP_bio_cb_t` not having a `OSSL_HTTP_REQ_CTX *` parameter,
+   by adding `OSSL_HTTP_REQ_CTX_proxy_connect()` called on SSL/TLS connect.
+
+   This work was sponsored by Siemens AG.
+
+   *David von Oheimb*
+
  * Added support for RFC 8701 GREASE (Generate Random Extensions And Sustain
    Extensibility). When `SSL_OP_GREASE` is set, the TLS client injects
    reserved GREASE values into cipher suites, supported versions, supported
