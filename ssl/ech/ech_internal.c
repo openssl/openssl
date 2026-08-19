@@ -1371,11 +1371,13 @@ static int ech_decode_inbound_ech(SSL_CONNECTION *s, PACKET *pkt,
         }
         /* squirrel away that value in case of future HRR */
         OPENSSL_free(s->ext.ech.pub);
-        s->ext.ech.pub_len = extval->enc_len;
+        s->ext.ech.pub = NULL;
+        s->ext.ech.pub_len = 0;
         s->ext.ech.pub = OPENSSL_malloc(extval->enc_len);
         if (s->ext.ech.pub == NULL)
             goto err;
         memcpy(s->ext.ech.pub, extval->enc, extval->enc_len);
+        s->ext.ech.pub_len = extval->enc_len;
     }
     /* payload - the encrypted CH */
     *payload_offset = PACKET_data(pkt) - startofech;
