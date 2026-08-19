@@ -18,7 +18,7 @@ create X.509 certificate extensions based on OpenSSL configuration
 =head1 DESCRIPTION
 
 X509V3_EXT_nconf_nid() and X509V3_EXT_nconf() create a requested X.509
-extension idenitfied either by I<name> or I<ext_nid> correspondingly using
+extension identified either by I<name> or I<ext_nid> correspondingly using
 I<value> contains the string to encode.
 
 I<conf> the configuration information where additional data
