@@ -1100,9 +1100,10 @@ static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const EVP_MD *mdres;
+    const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (s->session == NULL
-        || s->session->ssl_version != TLS1_3_VERSION
+        || s->session->ssl_version != version1_3
         || s->session->ext.ticklen == 0
         || s->session->cipher == NULL)
         return 0;
