@@ -504,6 +504,15 @@ BIN_LDFLAGS={- join(' ', $target{bin_lflags} || (),
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
 BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 
+# Extra flags appended only to the two s390x VX vector source files
+# (ml_kem_vec128.c and ml_dsa_ntt_vec128.c).  For GCC this is empty
+# (the #pragma GCC target inside each file sets arch=z13,vx for that TU).
+# For Clang this contains -fzvector when the probe determined it is needed
+# to make <vecintrin.h> available.  The per-object rule in src2obj also
+# appends -march=z13 -mvx unconditionally for these two files so that
+# Clang defines __VX__ and emits the vector entry points.
+S390X_VEC_CFLAGS={- $config{s390x_vector_cflags} // '' -}
+
 CMOCKA_LIBS={- $config{cmocka_libs} // '' -}
 DETOURS_LIBS={- $config{detours_libs} // '' -}
 
@@ -1323,7 +1332,9 @@ providers/fips.module.sources.new: configdata.pm
 		   crypto/sha/asm/*.pl \
 		   crypto/slh_dsa/asm/*.pl \
 		   crypto/*cpuid.pl crypto/*cpuid.S \
-		   crypto/*cap.c; do \
+		   crypto/*cap.c \
+		   crypto/ml_kem/ml_kem_vec128.c \
+		   crypto/ml_dsa/ml_dsa_ntt_vec128.c; do \
 	    test -e "$$x" && echo "$$x"; \
 	  done \
 	) | grep -v sm2p256 | sort | uniq > providers/fips.module.sources.new
@@ -1735,6 +1746,15 @@ EOF
       my $deps = join(" ", @srcs, @{$args{deps}});
       my $incs = join("", map { " -I".$_ } @{$args{incs}});
       my $defs = join("", map { " -D".$_ } @{$args{defs}});
+      # Per-file extra flags for the two s390x VX vector translation units.
+      # GCC uses #pragma GCC target inside each file so only needs an empty
+      # suffix.  Clang needs -march=z13 -mvx (to define __VX__ and generate
+      # VX instructions) plus the optional $(S390X_VEC_CFLAGS) (-fzvector
+      # for older Clang to unlock <vecintrin.h>).
+      my $extra_cflags = "";
+      if (grep m{(?:^|/)(ml_kem_vec128|ml_dsa_ntt_vec128)\.c$}, @srcs) {
+          $extra_cflags = " -march=z13 -mvx \$(S390X_VEC_CFLAGS)";
+      }
       my $cmd;
       my $cmdflags;
       my $cmdcompile;
@@ -1781,7 +1801,7 @@ EOF
       } elsif ($makedep_scheme eq 'gcc' && !grep /\.rc$/, @srcs) {
           $recipe .= <<"EOF";
 $obj: $deps
-	$cmd $incs $defs $cmdflags -MMD -MF $dep.tmp -c -o \$\@ $srcs
+	$cmd $incs $defs $cmdflags$extra_cflags -MMD -MF $dep.tmp -c -o \$\@ $srcs
 	\@touch $dep.tmp
 	\@if cmp $dep.tmp $dep > /dev/null 2> /dev/null; then \\
 		rm -f $dep.tmp; \\
@@ -1792,11 +1812,11 @@ EOF
       } else {
           $recipe .= <<"EOF";
 $obj: $deps
-	$cmd $incs $defs $cmdflags $cmdcompile -o \$\@ $srcs
+	$cmd $incs $defs $cmdflags$extra_cflags $cmdcompile -o \$\@ $srcs
 EOF
           if ($makedep_scheme eq 'makedepend') {
               $recipe .= <<"EOF";
-	\$(MAKEDEPEND) -f- -Y -- $incs $cmdflags -- $srcs 2>/dev/null \\
+	\$(MAKEDEPEND) -f- -Y -- $incs $cmdflags$extra_cflags -- $srcs 2>/dev/null \\
 	    > $dep
 EOF
           }
