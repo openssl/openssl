@@ -292,3 +292,8 @@ void ossl_quic_rstream_set_cleanse(QUIC_RSTREAM *qrs, int cleanse)
 {
     qrs->fl.cleanse = cleanse;
 }
+
+void ossl_quic_rstream_set_rx_window(QUIC_RSTREAM *qrs, uint64_t window)
+{
+    ossl_sframe_list_set_rx_window(&qrs->fl, window);
+}

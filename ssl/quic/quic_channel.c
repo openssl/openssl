@@ -312,6 +312,9 @@ static int ch_init(QUIC_CHANNEL *ch)
         ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, 0);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
+
+        ossl_quic_rstream_set_rx_window(ch->crypto_recv[pn_space],
+            INIT_CRYPTO_RECV_BUF_LEN);
     }
 
     /* Plug in the TLS handshake layer. */
@@ -3829,7 +3832,7 @@ SSL *ossl_quic_channel_get0_ssl(QUIC_CHANNEL *ch)
 static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
     int can_send, int can_recv)
 {
-    uint64_t rxfc_wnd;
+    uint64_t rxfc_wnd, max_rxfc_wnd;
     int server_init = ossl_quic_stream_is_server_init(qs);
     int local_init = (ch->is_server == server_init);
     int is_uni = !ossl_quic_stream_is_bidi(qs);
@@ -3876,11 +3879,15 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
     else
         rxfc_wnd = ch->tx_init_max_stream_data_bidi_remote;
 
+    max_rxfc_wnd = DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd;
+
     if (!ossl_quic_rxfc_init(&qs->rxfc, &ch->conn_rxfc,
-            rxfc_wnd,
-            DEFAULT_STREAM_RXFC_MAX_WND_MUL * rxfc_wnd,
+            rxfc_wnd, max_rxfc_wnd,
             get_time, ch))
         goto err;
+
+    if (can_recv)
+        ossl_quic_rstream_set_rx_window(qs->rstream, max_rxfc_wnd);
 
     return 1;
 
