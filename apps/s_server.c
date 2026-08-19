@@ -1591,7 +1591,6 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     OPENSSL_DIR_CTX *d = NULL;
     const char *thisfile = NULL;
     OSSL_ECHSTORE *es = NULL;
-    BIO *in = NULL;
     int loaded = 0;
     int ret = 0;
 
@@ -1619,6 +1618,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
     }
     while ((thisfile = OPENSSL_DIR_read(&d, thedir))) {
         char filepath[PATH_MAX];
+        BIO *in = NULL;
         int r;
 
 #ifdef OPENSSL_SYS_VMS
@@ -1634,6 +1634,7 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         if (r < 0
             || (in = BIO_new_file(filepath, "r")) == NULL
             || OSSL_ECHSTORE_read_pem(es, in, for_retry) != 1) {
+            BIO_free_all(in);
             BIO_printf(bio_err, "Failed reading from: %s\n", filepath);
             continue;
         }
