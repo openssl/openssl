@@ -65,7 +65,7 @@ X509_EXTENSION *X509V3_EXT_nconf(CONF *conf, X509V3_CTX *ctx, const char *name,
         X509V3_set_nconf(&tmpctx, conf);
     }
 
-    return X509V3_EXT_nconf_int(conf, ctx ? ctx : tmpctx, NULL, name, value);
+    return X509V3_EXT_nconf_int(conf, ctx ? ctx : &tmpctx, NULL, name, value);
 }
 
 X509_EXTENSION *X509V3_EXT_nconf_nid(CONF *conf, X509V3_CTX *ctx, int ext_nid,
