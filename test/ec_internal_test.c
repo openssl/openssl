@@ -834,7 +834,7 @@ err:
  */
 static int test_scalar_mul_fn(int idx)
 {
-    int ret = 0;
+    int ret = 0, iter;
     EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *R1 = NULL, *R2 = NULL;
     const BIGNUM *order;
@@ -866,21 +866,31 @@ static int test_scalar_mul_fn(int idx)
         && !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL, fnsz)))
         goto err;
 
-    /* k*G via BIGNUM vs via the OSSL_FN view of the same k (NULL ctx). */
+    /* A fixed random base point P for the variable-point checks. */
     if (!TEST_true(BN_rand_range(k, order))
-        || !TEST_true(EC_POINT_mul(group, R1, k, NULL, NULL, ctx))
-        || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(k), NULL, NULL))
-        || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
+        || !TEST_true(EC_POINT_mul(group, P, k, NULL, NULL, ctx)))
         goto err;
 
-    /* k*P for a random affine base point P (caller-provided arena). */
-    if (!TEST_true(BN_rand_range(k, order))
-        || !TEST_true(EC_POINT_mul(group, P, k, NULL, NULL, ctx))
-        || !TEST_true(BN_rand_range(k, order))
-        || !TEST_true(EC_POINT_mul(group, R1, NULL, P, k, ctx))
-        || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(k), P, fnctx))
-        || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
-        goto err;
+    /*
+     * Over several random scalars, EC_POINT_mul_fn() must agree with
+     * EC_POINT_mul() for both k*G (fixed point) and k*P (variable point).
+     * Alternate a NULL and a caller-provided arena to cover both ctx paths.
+     */
+    for (iter = 0; iter < 16; iter++) {
+        OSSL_FN_CTX *c = (iter & 1) ? fnctx : NULL;
+
+        if (!TEST_true(BN_rand_range(k, order))
+            || !TEST_true(EC_POINT_mul(group, R1, k, NULL, NULL, ctx))
+            || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(k), NULL, c))
+            || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
+            goto err;
+
+        if (!TEST_true(BN_rand_range(k, order))
+            || !TEST_true(EC_POINT_mul(group, R1, NULL, P, k, ctx))
+            || !TEST_true(EC_POINT_mul_fn(group, R2, bn_get_ossl_fn(k), P, c))
+            || !TEST_int_eq(EC_POINT_cmp(group, R1, R2, ctx), 0))
+            goto err;
+    }
 
     ret = 1;
 err:
