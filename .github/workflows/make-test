@@ -43,28 +43,29 @@ for test_name in quic_multistream; do
     fi
 done
 
-# Collect any core dumps together with the matching test binary, so the core is
+# Collect any core dumps together with the crashing binary, so the core is
 # usable with gdb without a rebuild. Cores land in two places: host cores in
 # /tmp/cores via core_pattern (core.<exe>.<pid>), and qemu-user guest cores
-# written next to the test in its run directory (qemu_<exe>_<pid>.core). Sweep
-# the tree for both and pair each with test/<exe> where possible. Only a
-# failing run produces any. Linux only for now.
+# written next to the test in its run directory (qemu_<exe>_<...>.core). For
+# each core, take the executable path the core records for itself (its execfn)
+# and copy that binary alongside; this matches any crashing program without
+# parsing core file names. Only a failing run produces any. Linux only for now.
 if [ "$(uname)" = Linux ]; then
     {
-        find /tmp/cores . \
-            \( -type d \( -name .git -o -name artifacts \) -prune \) -o \
-            \( -type f \( -name 'core' -o -name 'core.*' -o -name '*.core' \) \
-               -print0 \) 2>/dev/null |
-        while IFS= read -r -d '' core; do
-            base=$(basename "$core")
-            case "$base" in
-                qemu_*.core) exe=${base#qemu_}; exe=${exe%.core}; exe=${exe%_*} ;;
-                core.*)      exe=${base#core.}; exe=${exe%.*} ;;
-                *.core)      exe=${base%.core}; exe=${exe%_*} ;;
-                *)           exe= ;;
-            esac
-            [ -n "$exe" ] && [ -f "test/$exe" ] &&
-                cp "test/$exe" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
+        { ls /tmp/cores/* 2>/dev/null || true
+          find . -name 'qemu_*.core' -type f 2>/dev/null || true; } |
+        while IFS= read -r core; do
+            [ -f "$core" ] || continue
+            # execfn is recorded relative to the test's working directory
+            # (e.g. ../../test/quic_radix_test); strip leading ../ so it
+            # resolves from the build root.
+            exe=$(file -b "$core" 2>/dev/null |
+                  sed -n "s/.*execfn: '\([^']*\)'.*/\1/p" |
+                  sed 's#^\(\.\./\)*##')
+            # Only pull in binaries from the build tree (relative execfn), not
+            # system executables such as /usr/bin/perl.
+            [ -n "$exe" ] && [ "${exe#/}" = "$exe" ] && [ -f "$exe" ] &&
+                cp "$exe" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
             cp "$core" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
         done
     } || true
