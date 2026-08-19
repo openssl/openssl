@@ -699,6 +699,8 @@ void ossl_ec_GFp_nistp_points_make_affine_internal(size_t num, void *point_array
         const void *in2),
     void (*felem_inv)(void *out, const void *in),
     void (*felem_contract)(void *out, const void *in));
+int ossl_ec_GFp_nistp_fn_scalar_bytes(unsigned char *out, size_t len,
+    const OSSL_FN *scalar);
 void ossl_ec_GFp_nistp_recode_scalar_bits(unsigned char *sign,
     unsigned char *digit,
     unsigned char in);

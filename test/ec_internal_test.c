@@ -827,28 +827,21 @@ err:
 }
 
 /*
- * End-to-end check of the wired OSSL_FN Montgomery ladder: EC_POINT_mul_fn()
- * (which, for the plain Montgomery method, dispatches to
- * ossl_ec_scalar_mul_ladder_fn() and the ossl_ec_GFp_mont_ladder_*_fn helpers)
- * must agree with the BIGNUM EC_POINT_mul() for both k*G and k*P.
+ * End-to-end check that EC_POINT_mul_fn() agrees with the BIGNUM
+ * EC_POINT_mul() for both k*G and k*P, over several random scalars.  For the
+ * plain Montgomery method this exercises ossl_ec_scalar_mul_ladder_fn() and the
+ * ossl_ec_GFp_mont_ladder_*_fn helpers; for methods with a specialised mul_fn
+ * (nistz256, nistp*) it exercises that.
  */
-static int test_scalar_mul_fn(int idx)
+static int fn_check_scalar_mul(EC_GROUP *group)
 {
     int ret = 0, iter;
-    EC_GROUP *group = NULL;
     EC_POINT *P = NULL, *R1 = NULL, *R2 = NULL;
     const BIGNUM *order;
     BIGNUM *k = NULL;
     BN_CTX *ctx = NULL;
     OSSL_FN_CTX *fnctx = NULL;
     size_t fnsz;
-
-    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
-        return 0;
-    if (group->fn_mont_ctx == NULL) { /* generic ladder_fn needs Montgomery */
-        EC_GROUP_free(group);
-        return 1;
-    }
 
     if (!TEST_ptr(ctx = BN_CTX_new())
         || !TEST_ptr(k = BN_new())
@@ -858,10 +851,22 @@ static int test_scalar_mul_fn(int idx)
         || !TEST_ptr(R2 = EC_POINT_new(group)))
         goto err;
 
-    /* Pre-size a caller-owned arena to exercise the non-NULL ctx path too. */
+    /*
+     * EC_POINT_mul_fn() serves only groups with a method mul_fn or (via the
+     * generic ladder) Montgomery-representation groups.  Any other group
+     * (plain-representation methods without a mul_fn, e.g. EC_GFp_nist_method,
+     * which NIST primes fall back to on no-asm targets) has no OSSL_FN
+     * scalar-mult path - nothing to check for it.
+     */
+    if (group->meth->mul_fn == NULL && group->fn_mont_ctx == NULL) {
+        ret = 1;
+        goto err;
+    }
+    /* A group with a path must size successfully; a 0 here is a real error. */
     fnsz = EC_POINT_mul_fn_ctx_size(group, NULL, NULL, NULL);
     if (!TEST_size_t_ne(fnsz, 0))
         goto err;
+    /* Pre-size a caller-owned arena to exercise the non-NULL ctx path too. */
     if (fnsz != OSSL_FN_CTX_SIZE_NONE
         && !TEST_ptr(fnctx = OSSL_FN_CTX_secure_new_size(NULL, fnsz)))
         goto err;
@@ -871,11 +876,7 @@ static int test_scalar_mul_fn(int idx)
         || !TEST_true(EC_POINT_mul(group, P, k, NULL, NULL, ctx)))
         goto err;
 
-    /*
-     * Over several random scalars, EC_POINT_mul_fn() must agree with
-     * EC_POINT_mul() for both k*G (fixed point) and k*P (variable point).
-     * Alternate a NULL and a caller-provided arena to cover both ctx paths.
-     */
+    /* Alternate a NULL and a caller-provided arena to cover both ctx paths. */
     for (iter = 0; iter < 16; iter++) {
         OSSL_FN_CTX *c = (iter & 1) ? fnctx : NULL;
 
@@ -900,9 +901,85 @@ err:
     EC_POINT_free(R1);
     EC_POINT_free(R2);
     BN_CTX_free(ctx);
+    return ret;
+}
+
+static int test_scalar_mul_fn(int idx)
+{
+    int ret;
+    EC_GROUP *group = NULL;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+        return 0;
+
+    ret = fn_check_scalar_mul(group);
     EC_GROUP_free(group);
     return ret;
 }
+
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+/*
+ * Rebuild a named curve's parameters into a group that uses the given method,
+ * so a method not selected for any built-in curve on this platform (e.g.
+ * nistp256 when the nistz256 assembly is present) can still be exercised.
+ */
+static EC_GROUP *fn_clone_group_with_method(int nid, const EC_METHOD *meth)
+{
+    EC_GROUP *src = NULL, *dst = NULL, *ret = NULL;
+    BN_CTX *ctx = NULL;
+    BIGNUM *p = NULL, *a = NULL, *b = NULL, *gx = NULL, *gy = NULL;
+    const BIGNUM *order, *cofactor;
+    const EC_POINT *g;
+    EC_POINT *gpt = NULL;
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(src = EC_GROUP_new_by_curve_name(nid))
+        || !TEST_ptr(p = BN_new()) || !TEST_ptr(a = BN_new())
+        || !TEST_ptr(b = BN_new()) || !TEST_ptr(gx = BN_new())
+        || !TEST_ptr(gy = BN_new())
+        || !TEST_true(EC_GROUP_get_curve(src, p, a, b, ctx))
+        || !TEST_ptr(order = EC_GROUP_get0_order(src))
+        || !TEST_ptr(cofactor = EC_GROUP_get0_cofactor(src))
+        || !TEST_ptr(g = EC_GROUP_get0_generator(src))
+        || !TEST_true(EC_POINT_get_affine_coordinates(src, g, gx, gy, ctx))
+        || !TEST_ptr(dst = EC_GROUP_new(meth))
+        || !TEST_true(EC_GROUP_set_curve(dst, p, a, b, ctx))
+        || !TEST_ptr(gpt = EC_POINT_new(dst))
+        || !TEST_true(EC_POINT_set_affine_coordinates(dst, gpt, gx, gy, ctx))
+        || !TEST_true(EC_GROUP_set_generator(dst, gpt, order, cofactor)))
+        goto err;
+    ret = dst;
+    dst = NULL;
+err:
+    EC_POINT_free(gpt);
+    EC_GROUP_free(dst);
+    EC_GROUP_free(src);
+    BN_free(p);
+    BN_free(a);
+    BN_free(b);
+    BN_free(gx);
+    BN_free(gy);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+/*
+ * nistp256's method is not selected for any built-in curve when nistz256 is
+ * present, so exercise its mul_fn on a P-256 group built explicitly with it.
+ */
+static int test_scalar_mul_fn_nistp256(void)
+{
+    int ret;
+    EC_GROUP *group = fn_clone_group_with_method(NID_X9_62_prime256v1,
+        EC_GFp_nistp256_method());
+
+    if (group == NULL)
+        return 0;
+    ret = fn_check_scalar_mul(group);
+    EC_GROUP_free(group);
+    return ret;
+}
+#endif /* OPENSSL_NO_EC_NISTP_64_GCC_128 */
 
 int setup_tests(void)
 {
@@ -929,6 +1006,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ladder_pre_fn, OSSL_NELEM(fn_ladder_curves));
     ADD_ALL_TESTS(test_ladder_post_fn, OSSL_NELEM(fn_ladder_curves));
     ADD_ALL_TESTS(test_scalar_mul_fn, OSSL_NELEM(fn_ladder_curves));
+#ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
+    ADD_TEST(test_scalar_mul_fn_nistp256);
+#endif
 
     return 1;
 }
