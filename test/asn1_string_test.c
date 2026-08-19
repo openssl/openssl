@@ -551,6 +551,52 @@ err:
 }
 
 static int
+asn1_string_set0_test(void)
+{
+    int success = 0;
+    ASN1_STRING *str = NULL;
+    uint8_t *data = NULL;
+
+    if (!TEST_ptr(str = ASN1_STRING_new()))
+        goto err;
+
+    if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
+        goto err;
+
+    /* A negative length can never be valid and is treated as empty */
+    ASN1_STRING_set0(str, data, -1);
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 0))
+        goto err;
+
+    /* The string takes ownership of the data even so */
+    if (!TEST_ptr_eq(ASN1_STRING_get0_data(str), data))
+        goto err;
+
+    data = NULL;
+
+    if (!TEST_ptr(data = (uint8_t *)OPENSSL_strdup("hoobla")))
+        goto err;
+
+    ASN1_STRING_set0(str, data, (int)strlen("hoobla"));
+
+    if (!TEST_size_t_eq(ASN1_STRING_get_length(str), 6))
+        goto err;
+
+    if (!TEST_ptr_eq(ASN1_STRING_get0_data(str), data))
+        goto err;
+
+    data = NULL;
+
+    success = 1;
+
+err:
+    OPENSSL_free(data);
+    ASN1_STRING_free(str);
+    return success;
+}
+
+static int
 asn1_universalstring_to_string_test(void)
 {
     int success = 0;
@@ -617,6 +663,7 @@ int setup_tests(void)
     ADD_TEST(asn1_string_new_not_owned_test);
     ADD_TEST(asn1_string_set_data_test);
     ADD_TEST(asn1_string_set_string_test);
+    ADD_TEST(asn1_string_set0_test);
     ADD_TEST(asn1_universalstring_to_string_test);
     return 1;
 }
