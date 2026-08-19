@@ -1,5 +1,5 @@
 /*
- * Copyright 2011-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2011-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -42,6 +42,7 @@
 #include <string.h>
 #include <openssl/err.h>
 #include "ec_local.h"
+#include "crypto/fn.h" /* OSSL_FN_CTX_SIZE_NONE */
 
 #include "internal/numbers.h"
 
@@ -1581,6 +1582,12 @@ struct nistp521_pre_comp_st {
     CRYPTO_REF_COUNT references;
 };
 
+static int ossl_ec_GFp_nistp521_points_mul_fn(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point,
+    OSSL_FN_CTX *fnctx);
+static size_t ossl_ec_GFp_nistp521_points_mul_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point);
+
 const EC_METHOD *EC_GFp_nistp521_method(void)
 {
     static const EC_METHOD ret = {
@@ -1639,7 +1646,10 @@ const EC_METHOD *EC_GFp_nistp521_method(void)
         0, /* blind_coordinates */
         0, /* ladder_pre */
         0, /* ladder_step */
-        0 /* ladder_post */
+        0, /* ladder_post */
+        0, /* group_full_init */
+        ossl_ec_GFp_nistp521_points_mul_fn, /* mul_fn */
+        ossl_ec_GFp_nistp521_points_mul_fn_ctx_size /* mul_fn_ctx_size */
     };
 
     return &ret;
@@ -1721,7 +1731,7 @@ int ossl_ec_GFp_nistp521_group_set_curve(EC_GROUP *group, const BIGNUM *p,
     curve_p = BN_CTX_get(ctx);
     curve_a = BN_CTX_get(ctx);
     curve_b = BN_CTX_get(ctx);
-    if (curve_b == NULL)
+    if (curve_p == NULL || curve_a == NULL || curve_b == NULL)
         goto err;
     BN_bin2bn(nistp521_curve_params[0], sizeof(felem_bytearray), curve_p);
     BN_bin2bn(nistp521_curve_params[1], sizeof(felem_bytearray), curve_a);
@@ -1818,21 +1828,58 @@ static void make_points_affine(size_t num, felem points[][3],
  * Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL
  * values Result is stored in r (r can equal one of the inputs).
  */
-int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
-    const BIGNUM *scalar, size_t num,
+/*
+ * Serialise a BIGNUM scalar into the fixed-width little-endian felem_bytearray,
+ * reducing mod the group order for the unusual out-of-range/negative case
+ * (which is not guaranteed constant-time).
+ */
+static int nistp521_scalar_to_bytes(felem_bytearray out, const BIGNUM *scalar,
+    const EC_GROUP *group, BN_CTX *ctx)
+{
+    int frame_started = 0;
+    int ret = 0;
+
+    /*
+     * Reduce only out-of-range scalars, and only then take a BN_CTX frame:
+     * the common in-range case touches no scratch at all.
+     */
+    if (BN_num_bits(scalar) > 521 || BN_is_negative(scalar)) {
+        BIGNUM *tmp_scalar;
+
+        BN_CTX_start(ctx);
+        frame_started = 1;
+        tmp_scalar = BN_CTX_get(ctx);
+        if (tmp_scalar == NULL
+            || !BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
+            ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+            goto err;
+        }
+        scalar = tmp_scalar;
+    }
+    if (BN_bn2lebinpad(scalar, out, sizeof(felem_bytearray)) < 0) {
+        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
+        goto err;
+    }
+    ret = 1;
+err:
+    if (frame_started)
+        BN_CTX_end(ctx);
+    return ret;
+}
+
+static int nistp521_points_mul_bytes(const EC_GROUP *group, EC_POINT *r,
+    felem_bytearray *scalar, size_t num,
     const EC_POINT *points[],
-    const BIGNUM *scalars[], BN_CTX *ctx)
+    felem_bytearray *scalars[], BN_CTX *ctx)
 {
     int ret = 0;
     int j;
     int mixed = 0;
-    BIGNUM *x, *y, *z, *tmp_scalar;
-    felem_bytearray g_secret;
+    BIGNUM *x, *y, *z;
     felem_bytearray *secrets = NULL;
     felem(*pre_comp)[17][3] = NULL;
     felem *tmp_felems = NULL;
     unsigned i;
-    int num_bytes;
     int have_pre_comp = 0;
     size_t num_points = num;
     felem x_in, y_in, z_in, x_out, y_out, z_out;
@@ -1840,14 +1887,13 @@ int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
     felem(*g_pre_comp)[3] = NULL;
     EC_POINT *generator = NULL;
     const EC_POINT *p = NULL;
-    const BIGNUM *p_scalar = NULL;
+    felem_bytearray *p_scalar = NULL;
 
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
     z = BN_CTX_get(ctx);
-    tmp_scalar = BN_CTX_get(ctx);
-    if (tmp_scalar == NULL)
+    if (x == NULL || y == NULL || z == NULL)
         goto err;
 
     if (scalar != NULL) {
@@ -1915,27 +1961,7 @@ int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
                 p_scalar = scalars[i];
             }
             if ((p_scalar != NULL) && (p != NULL)) {
-                /* reduce scalar to 0 <= scalar < 2^521 */
-                if ((BN_num_bits(p_scalar) > 521)
-                    || (BN_is_negative(p_scalar))) {
-                    /*
-                     * this is an unusual input, and we don't guarantee
-                     * constant-timeness
-                     */
-                    if (!BN_nnmod(tmp_scalar, p_scalar, group->order, ctx)) {
-                        ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-                        goto err;
-                    }
-                    num_bytes = BN_bn2lebinpad(tmp_scalar,
-                        secrets[i], sizeof(secrets[i]));
-                } else {
-                    num_bytes = BN_bn2lebinpad(p_scalar,
-                        secrets[i], sizeof(secrets[i]));
-                }
-                if (num_bytes < 0) {
-                    ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-                    goto err;
-                }
+                memcpy(secrets[i], *p_scalar, sizeof(secrets[i]));
                 /* precompute multiples */
                 if ((!BN_to_felem(x_out, p->X)) || (!BN_to_felem(y_out, p->Y)) || (!BN_to_felem(z_out, p->Z)))
                     goto err;
@@ -1965,25 +1991,10 @@ int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
 
     /* the scalar for the generator */
     if ((scalar != NULL) && (have_pre_comp)) {
-        memset(g_secret, 0, sizeof(g_secret));
-        /* reduce scalar to 0 <= scalar < 2^521 */
-        if ((BN_num_bits(scalar) > 521) || (BN_is_negative(scalar))) {
-            /*
-             * this is an unusual input, and we don't guarantee
-             * constant-timeness
-             */
-            if (!BN_nnmod(tmp_scalar, scalar, group->order, ctx)) {
-                ERR_raise(ERR_LIB_EC, ERR_R_BN_LIB);
-                goto err;
-            }
-            num_bytes = BN_bn2lebinpad(tmp_scalar, g_secret, sizeof(g_secret));
-        } else {
-            num_bytes = BN_bn2lebinpad(scalar, g_secret, sizeof(g_secret));
-        }
         /* do the multiplication with generator precomputation */
         batch_mul(x_out, y_out, z_out,
             (const felem_bytearray(*))secrets, num_points,
-            g_secret,
+            *scalar,
             mixed, (const felem(*)[17][3])pre_comp,
             (const felem(*)[3])g_pre_comp);
     } else {
@@ -2012,6 +2023,97 @@ err:
     return ret;
 }
 
+/*
+ * Computes scalar*generator + \sum scalars[i]*points[i], ignoring NULL
+ * values Result is stored in r (r can equal one of the inputs).
+ */
+int ossl_ec_GFp_nistp521_points_mul(const EC_GROUP *group, EC_POINT *r,
+    const BIGNUM *scalar, size_t num,
+    const EC_POINT *points[],
+    const BIGNUM *scalars[], BN_CTX *ctx)
+{
+    int ret = 0;
+    size_t i;
+    felem_bytearray buf;
+    felem_bytearray *pbuf = NULL;
+    felem_bytearray *bufs = NULL;
+    felem_bytearray **buf_ptrs = NULL;
+
+    if (num > 0) {
+        bufs = OPENSSL_calloc(num, sizeof(*bufs));
+        buf_ptrs = OPENSSL_calloc(num, sizeof(*buf_ptrs));
+        if (bufs == NULL || buf_ptrs == NULL)
+            goto err;
+        for (i = 0; i < num; i++) {
+            if (scalars[i] != NULL && points[i] != NULL) {
+                if (!nistp521_scalar_to_bytes(bufs[i], scalars[i], group, ctx))
+                    goto err;
+                buf_ptrs[i] = &bufs[i];
+            }
+        }
+    }
+    if (scalar != NULL) {
+        if (!nistp521_scalar_to_bytes(buf, scalar, group, ctx))
+            goto err;
+        pbuf = &buf;
+    }
+
+    ret = nistp521_points_mul_bytes(group, r, pbuf, num, points, buf_ptrs, ctx);
+
+err:
+    OPENSSL_free(bufs);
+    OPENSSL_free(buf_ptrs);
+    return ret;
+}
+
+/*
+ * OSSL_FN counterpart of ossl_ec_GFp_nistp521_points_mul() and this method's
+ * 'mul_fn' slot: r = scalar*point, or scalar*generator when point is NULL, for
+ * a single secret scalar serialised straight from the OSSL_FN (never a BIGNUM)
+ * and fed to the same constant-time batch_mul() as the BIGNUM path.
+ */
+static int ossl_ec_GFp_nistp521_points_mul_fn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point, OSSL_FN_CTX *fnctx)
+{
+    int ret = 0;
+    felem_bytearray b;
+    felem_bytearray *pb = &b;
+    BN_CTX *ctx = NULL;
+
+    (void)fnctx; /* this method needs no OSSL_FN scratch context */
+
+    if (scalar == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+    if (point != NULL && EC_POINT_is_at_infinity(group, point))
+        return EC_POINT_set_to_infinity(group, r);
+
+    /* Fixed-width serialisation of the secret scalar; reject over-wide inputs. */
+    if (!ossl_ec_GFp_nistp_fn_scalar_bytes(b, sizeof(b), scalar)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        return 0;
+    }
+
+    if ((ctx = BN_CTX_new_ex(group->libctx)) == NULL)
+        return 0;
+
+    if (point == NULL)
+        ret = nistp521_points_mul_bytes(group, r, &b, 0, NULL, NULL, ctx);
+    else
+        ret = nistp521_points_mul_bytes(group, r, NULL, 1, &point, &pb, ctx);
+
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+/* This method needs no scratch context; see the _points_mul_fn above. */
+static size_t ossl_ec_GFp_nistp521_points_mul_fn_ctx_size(const EC_GROUP *group,
+    EC_POINT *r, const OSSL_FN *scalar, const EC_POINT *point)
+{
+    return OSSL_FN_CTX_SIZE_NONE;
+}
+
 int ossl_ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
     int ret = 0;
@@ -2037,7 +2139,7 @@ int ossl_ec_GFp_nistp521_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
     BN_CTX_start(ctx);
     x = BN_CTX_get(ctx);
     y = BN_CTX_get(ctx);
-    if (y == NULL)
+    if (x == NULL || y == NULL)
         goto err;
     /* get the generator */
     if (group->generator == NULL)
