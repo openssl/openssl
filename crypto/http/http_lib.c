@@ -83,11 +83,7 @@ int OSSL_parse_url(const char *url, char **pscheme, char **puser, char **phost,
     /* check for optional prefix "<scheme>://" as per RFC 3986 */
     scheme = scheme_end = p = url;
     if (ossl_isalpha(*p)) {
-        while (*p != '\0'
-            && (ossl_isalpha(*p)
-                || ossl_isdigit(*p)
-                || strchr("+-.", *p) != NULL))
-            p++;
+        OSSL_SKIP_SCHEME(p);
         if (HAS_PREFIX(p, OSSL_URL_SCHEME_SUFFIX)) {
             scheme_end = p;
             p += sizeof(OSSL_URL_SCHEME_SUFFIX) - 1;
