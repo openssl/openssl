@@ -2528,24 +2528,281 @@ DEF_SCRIPT(script_39, "Fault injection - NEW_CONN_ID with zero-len CID")
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_40, "place holder for multistrem script_40")
+/* 40. Shutdown flush test */
+static unsigned char script_40_data[1024] = "strawberry";
+
+DEF_SCRIPT(script_40, "Shutdown flush test")
 {
+    size_t i;
+
+    OP_SIMPLE_PAIR_CONN_ND();
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_INHIBIT_TICK(C, 1);
+    OP_SET_WRITE_BUF_SIZE(Ca, 1024 * 100 * 3);
+
+    for (i = 0; i < 100; ++i)
+        OP_WRITE(Ca, script_40_data, sizeof(script_40_data));
+
+    OP_CONCLUDE(Ca);
+    OP_SHUTDOWN_WAIT(C, 0, 0, NULL); /* disengages tick inhibition */
+
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    for (i = 0; i < 100; ++i)
+        OP_READ_EXPECT(Sa, script_40_data, sizeof(script_40_data));
+
+    OP_EXPECT_FIN(Sa);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(S, 0, 1, 1);
 }
 
-DEF_SCRIPT(script_41, "place holder for multistrem script_41")
+/* 41. Fault injection - PATH_CHALLENGE yields PATH_RESPONSE */
+static const uint64_t script_41_path_challenge = UINT64_C(0xbdeb9451169c83aa);
+static uint64_t script_41_valid_responses;
+static uint64_t script_41_bad_responses;
+
+static int script_41_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1))
+        || !TEST_true(WPACKET_put_bytes_u64(&wpkt, script_41_path_challenge))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !TEST_size_t_eq(written, 9)
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    --fault->word0;
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
 }
 
-DEF_SCRIPT(script_42, "place holder for multistrem script_42")
+static void script_41_trace(int write_p, int version, int content_type,
+    const void *buf, size_t len, SSL *ssl, void *arg)
 {
+    uint64_t frame_type, frame_data;
+    int was_minimal;
+    PACKET pkt;
+
+    if (version != OSSL_QUIC1_VERSION
+        || content_type != SSL3_RT_QUIC_FRAME_FULL
+        || len < 1)
+        return;
+
+    if (!TEST_true(PACKET_buf_init(&pkt, buf, len))
+        || !TEST_true(ossl_quic_wire_peek_frame_header(&pkt, &frame_type,
+            &was_minimal))) {
+        ++script_41_bad_responses;
+        return;
+    }
+
+    if (frame_type != OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE)
+        return;
+
+    if (!TEST_true(ossl_quic_wire_decode_frame_path_response(&pkt, &frame_data))
+        || !TEST_uint64_t_eq(frame_data, script_41_path_challenge)) {
+        ++script_41_bad_responses;
+        return;
+    }
+
+    ++script_41_valid_responses;
 }
 
-DEF_SCRIPT(script_43, "place holder for multistrem script_43")
+DEF_FUNC(install_trace_41)
 {
+    int ok = 0;
+    SSL *ssl;
+
+    REQUIRE_SSL(ssl);
+    SSL_set_msg_callback(ssl, script_41_trace);
+
+    ok = 1;
+err:
+    return ok;
 }
 
-DEF_SCRIPT(script_44, "place holder for multistrem script_44")
+DEF_FUNC(check_path_response_41)
 {
+    int ok = 0;
+
+    /* At least one valid challenge/response echo? */
+    if (script_41_valid_responses == 0)
+        F_SPIN_AGAIN();
+
+    /* No failed tests? */
+    if (!TEST_uint64_t_eq(script_41_bad_responses, 0))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_SCRIPT(script_41, "Fault injection - PATH_CHALLENGE yields PATH_RESPONSE")
+{
+    OP_SIMPLE_PAIR_CONN();
+
+    OP_WRITE(C, "apple", 5);
+
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+    OP_SET_INJECT_PLAIN(S, script_41_inject_plain);
+    OP_SELECT_SSL(0, S);
+    OP_FUNC(install_trace_41);
+
+    OP_READ_EXPECT(S, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_PATH_CHALLENGE);
+
+    OP_WRITE(S, "orange", 6);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "strawberry", 10);
+    OP_READ_EXPECT(S, "strawberry", 10);
+
+    OP_FUNC(check_path_response_41);
+}
+
+/* 42. Fault injection - CRYPTO frame with illegal offset */
+static int script_42_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+
+    if (fault->word0 == 0)
+        return 1;
+
+    --fault->word0;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, fault->word1))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, 1))
+        || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_42, "Fault injection - CRYPTO frame with illegal offset")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_42_inject_plain);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, (((uint64_t)1) << 62) - 1);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
+}
+
+/* 43. Fault injection - CRYPTO frame exceeding FC */
+DEF_SCRIPT(script_43, "Fault injection - CRYPTO frame exceeding FC")
+{
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_42_inject_plain);
+
+    OP_NEW_STREAM(C, Ca, 0);
+    OP_WRITE(Ca, "apple", 5);
+
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0x100000 /* 1 MiB */);
+    OP_WRITE(Sa, "orange", 6);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0);
+}
+
+/* 44. Fault injection - PADDING */
+static int script_44_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
+{
+    int ok = 0;
+    WPACKET wpkt;
+    unsigned char frame_buf[16];
+    size_t written;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (!TEST_true(ossl_quic_wire_encode_padding(&wpkt, 1))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
+}
+
+DEF_SCRIPT(script_44, "Fault injection - PADDING")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_44_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_SET_INJECT_WORD(1, 0);
+
+    OP_WRITE(Sa, "Strawberry", 10);
+    OP_READ_EXPECT(C, "Strawberry", 10);
 }
 
 DEF_SCRIPT(script_45, "place holder for multistrem script_45")

@@ -81,7 +81,6 @@ static EXT_LIST ext_list[] = {
 #endif
     EXT_ENTRY(grease1),
     EXT_ENTRY(grease2),
-    EXT_ENTRY(padding),
     EXT_ENTRY(psk),
     EXT_END(num_builtins)
 };

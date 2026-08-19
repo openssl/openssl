@@ -478,13 +478,6 @@ static const EXTENSION_DEFINITION ext_defs[] = {
         0,
         NULL,
         NULL, NULL, NULL, tls_construct_ctos_grease2, NULL },
-    { /* Must be immediately before pre_shared_key */
-        TLSEXT_TYPE_padding,
-        SSL_EXT_CLIENT_HELLO,
-        OSSL_ECH_HANDLING_CALL_BOTH,
-        NULL,
-        /* We send this, but don't read it */
-        NULL, NULL, NULL, tls_construct_ctos_padding, NULL },
     { /* Required by the TLSv1.3 spec to always be the last extension */
         TLSEXT_TYPE_psk,
         SSL_EXT_CLIENT_HELLO | SSL_EXT_TLS1_3_SERVER_HELLO
@@ -1885,8 +1878,7 @@ int tls_psk_do_binder(SSL_CONNECTION *s, const EVP_MD *md,
 
     if (external
         && s->early_data_state == SSL_EARLY_DATA_CONNECTING
-        && s->session->ext.max_early_data == 0
-        && sess->ext.max_early_data > 0)
+        && sess == s->ext.early_data_session)
         usepskfored = 1;
 
     if (external) {

@@ -180,7 +180,7 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
 # keyBag (created with -keypbe NONE) rather than a shrouded keyBag.
 {
     my $keybag = "keybag.p12";
-    ok(run(app(["openssl", "pkcs12", "-export", "-keypbe", "NONE",
+    ok(run(app(["openssl", "pkcs12", "-export", "-keyex", "-keypbe", "NONE",
                 "-certpbe", "NONE", "-nomac",
                 "-inkey", srctop_file(@path, "cert-key-cert.pem"),
                 "-in", srctop_file(@path, "cert-key-cert.pem"),

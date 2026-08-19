@@ -245,6 +245,20 @@ int ossl_statem_skip_early_data(SSL_CONNECTION *s)
  */
 int ossl_statem_check_finish_init(SSL_CONNECTION *s, int sending)
 {
+    /*
+     * A client that suppressed 0-RTT keeps SSL_write_early_data() reporting
+     * success while the application streams early data. Any ordinary read,
+     * write, or handshake call waits for the handshake to complete and so ends
+     * that sequence: clear the suppressed flag, after which a further
+     * SSL_write_early_data() returns the normal error instead of masking a
+     * state-machine mistake. The internal SSL_connect() issued from
+     * SSL_write_early_data() runs in the CONNECTING state and is excluded.
+     */
+    if (!s->server
+        && s->ext.early_data_suppressed
+        && s->early_data_state == SSL_EARLY_DATA_NONE)
+        s->ext.early_data_suppressed = 0;
+
     if (sending == -1) {
         if (s->statem.hand_state == TLS_ST_PENDING_EARLY_DATA_END
             || s->statem.hand_state == TLS_ST_EARLY_DATA) {

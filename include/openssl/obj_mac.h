@@ -1517,6 +1517,10 @@
 #define NID_id_ppl              662
 #define OBJ_id_ppl              OBJ_id_pkix,21L
 
+#define SN_id_rdna_unsigned             "id-rdna-unsigned"
+#define NID_id_rdna_unsigned            1502
+#define OBJ_id_rdna_unsigned            OBJ_id_pkix,25L,1L
+
 #define SN_id_ad                "id-ad"
 #define NID_id_ad               176
 #define OBJ_id_ad               OBJ_id_pkix,48L
@@ -1964,6 +1968,10 @@
 #define SN_id_alg_dh_pop                "id-alg-dh-pop"
 #define NID_id_alg_dh_pop               326
 #define OBJ_id_alg_dh_pop               OBJ_id_alg,4L
+
+#define SN_id_alg_unsigned              "id-alg-unsigned"
+#define NID_id_alg_unsigned             1503
+#define OBJ_id_alg_unsigned             OBJ_id_alg,36L
 
 #define SN_id_cmc_statusInfo            "id-cmc-statusInfo"
 #define NID_id_cmc_statusInfo           327

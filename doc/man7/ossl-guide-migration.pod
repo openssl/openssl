@@ -44,6 +44,22 @@ This function is deprecated in favour of EVP_KDF_CTX_get0_ctx(), to align
 with the naming of functions that provide similar functionality for other kinds
 of EVP context oobjects.
 
+=head3 B<SSL_OP_TLSEXT_PADDING> is now a no-op
+
+Prior to OpenSSL 4.1, when B<SSL_OP_TLSEXT_PADDING> was set, TLS clients sent
+a padding extension (RFC 7685) whenever the ClientHello would otherwise be
+between 256 and 511 bytes long. The option was part of B<SSL_OP_ALL>, so any
+application setting B<SSL_OP_ALL> sent this padding. It worked around a bug
+in F5 middleboxes; the fix shipped long ago and the affected hardware is
+long out of support, so nothing should still be running the problematic
+version. The option now has no effect and has been removed from
+B<SSL_OP_ALL>.
+
+Applications that require the padding extension can construct it themselves
+by registering a handler for B<TLSEXT_TYPE_padding> with
+L<SSL_CTX_add_custom_ext(3)>. Registering a handler for this extension type
+was previously refused.
+
 =head1 OPENSSL 4.0
 
 =head2 Main Changes from OpenSSL 3.6

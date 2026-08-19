@@ -338,7 +338,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define SSL_OP_LEGACY_SERVER_CONNECT SSL_OP_BIT(2)
 /* Enable support for Kernel TLS */
 #define SSL_OP_ENABLE_KTLS SSL_OP_BIT(3)
-#define SSL_OP_TLSEXT_PADDING SSL_OP_BIT(4)
+/* SSL_OP_BIT(4) was SSL_OP_TLSEXT_PADDING, now a no-op */
 #define SSL_OP_SAFARI_ECDHE_ECDSA_BUG SSL_OP_BIT(6)
 #define SSL_OP_IGNORE_UNEXPECTED_EOF SSL_OP_BIT(7)
 #define SSL_OP_ALLOW_CLIENT_RENEGOTIATION SSL_OP_BIT(8)
@@ -468,7 +468,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 /* Various bug workarounds that should be rather harmless. */
 #define SSL_OP_ALL                                                    \
     (SSL_OP_CRYPTOPRO_TLSEXT_BUG | SSL_OP_DONT_INSERT_EMPTY_FRAGMENTS \
-        | SSL_OP_TLSEXT_PADDING | SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
+        | SSL_OP_SAFARI_ECDHE_ECDSA_BUG)
 
 /*
  * OBSOLETE OPTIONS retained for compatibility
@@ -491,6 +491,7 @@ typedef int (*SSL_async_callback_fn)(SSL *s, void *arg);
 #define SSL_OP_PKCS1_CHECK_2 0x0
 #define SSL_OP_NETSCAPE_CA_DN_BUG 0x0
 #define SSL_OP_NETSCAPE_DEMO_CIPHER_CHANGE_BUG 0x0
+#define SSL_OP_TLSEXT_PADDING 0x0
 
 /*
  * Allow SSL_write(..., n) to return r with 0 < r < n (i.e. report success

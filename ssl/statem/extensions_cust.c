@@ -626,7 +626,6 @@ int SSL_extension_supported(unsigned int ext_type)
 #ifndef OPENSSL_NO_NEXTPROTONEG
     case TLSEXT_TYPE_next_proto_neg:
 #endif
-    case TLSEXT_TYPE_padding:
     case TLSEXT_TYPE_renegotiate:
     case TLSEXT_TYPE_max_fragment_length:
     case TLSEXT_TYPE_server_name:

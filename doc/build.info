@@ -3027,10 +3027,18 @@ DEPEND[html/man3/X509_STORE_set_verify_cb_func.html]=man3/X509_STORE_set_verify_
 GENERATE[html/man3/X509_STORE_set_verify_cb_func.html]=man3/X509_STORE_set_verify_cb_func.pod
 DEPEND[man/man3/X509_STORE_set_verify_cb_func.3]=man3/X509_STORE_set_verify_cb_func.pod
 GENERATE[man/man3/X509_STORE_set_verify_cb_func.3]=man3/X509_STORE_set_verify_cb_func.pod
+DEPEND[html/man3/X509_VERIFY_PARAM_set1_host.html]=man3/X509_VERIFY_PARAM_set1_host.pod
+GENERATE[html/man3/X509_VERIFY_PARAM_set1_host.html]=man3/X509_VERIFY_PARAM_set1_host.pod
+DEPEND[man/man3/X509_VERIFY_PARAM_set1_host.3]=man3/X509_VERIFY_PARAM_set1_host.pod
+GENERATE[man/man3/X509_VERIFY_PARAM_set1_host.3]=man3/X509_VERIFY_PARAM_set1_host.pod
 DEPEND[html/man3/X509_VERIFY_PARAM_set_flags.html]=man3/X509_VERIFY_PARAM_set_flags.pod
 GENERATE[html/man3/X509_VERIFY_PARAM_set_flags.html]=man3/X509_VERIFY_PARAM_set_flags.pod
 DEPEND[man/man3/X509_VERIFY_PARAM_set_flags.3]=man3/X509_VERIFY_PARAM_set_flags.pod
 GENERATE[man/man3/X509_VERIFY_PARAM_set_flags.3]=man3/X509_VERIFY_PARAM_set_flags.pod
+DEPEND[html/man3/X509_VERIFY_PARAM_set_hostflags.html]=man3/X509_VERIFY_PARAM_set_hostflags.pod
+GENERATE[html/man3/X509_VERIFY_PARAM_set_hostflags.html]=man3/X509_VERIFY_PARAM_set_hostflags.pod
+DEPEND[man/man3/X509_VERIFY_PARAM_set_hostflags.3]=man3/X509_VERIFY_PARAM_set_hostflags.pod
+GENERATE[man/man3/X509_VERIFY_PARAM_set_hostflags.3]=man3/X509_VERIFY_PARAM_set_hostflags.pod
 DEPEND[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 GENERATE[html/man3/X509_add_cert.html]=man3/X509_add_cert.pod
 DEPEND[man/man3/X509_add_cert.3]=man3/X509_add_cert.pod
@@ -3159,14 +3167,10 @@ DEPEND[html/man3/d2i_X509.html]=man3/d2i_X509.pod
 GENERATE[html/man3/d2i_X509.html]=man3/d2i_X509.pod
 DEPEND[man/man3/d2i_X509.3]=man3/d2i_X509.pod
 GENERATE[man/man3/d2i_X509.3]=man3/d2i_X509.pod
-DEPEND[html/man3/i2d_CMS_bio_stream.html]=man3/i2d_CMS_bio_stream.pod
-GENERATE[html/man3/i2d_CMS_bio_stream.html]=man3/i2d_CMS_bio_stream.pod
-DEPEND[man/man3/i2d_CMS_bio_stream.3]=man3/i2d_CMS_bio_stream.pod
-GENERATE[man/man3/i2d_CMS_bio_stream.3]=man3/i2d_CMS_bio_stream.pod
-DEPEND[html/man3/i2d_PKCS7_bio_stream.html]=man3/i2d_PKCS7_bio_stream.pod
-GENERATE[html/man3/i2d_PKCS7_bio_stream.html]=man3/i2d_PKCS7_bio_stream.pod
-DEPEND[man/man3/i2d_PKCS7_bio_stream.3]=man3/i2d_PKCS7_bio_stream.pod
-GENERATE[man/man3/i2d_PKCS7_bio_stream.3]=man3/i2d_PKCS7_bio_stream.pod
+DEPEND[html/man3/i2d_ASN1_bio_stream.html]=man3/i2d_ASN1_bio_stream.pod
+GENERATE[html/man3/i2d_ASN1_bio_stream.html]=man3/i2d_ASN1_bio_stream.pod
+DEPEND[man/man3/i2d_ASN1_bio_stream.3]=man3/i2d_ASN1_bio_stream.pod
+GENERATE[man/man3/i2d_ASN1_bio_stream.3]=man3/i2d_ASN1_bio_stream.pod
 DEPEND[html/man3/i2d_re_X509_tbs.html]=man3/i2d_re_X509_tbs.pod
 GENERATE[html/man3/i2d_re_X509_tbs.html]=man3/i2d_re_X509_tbs.pod
 DEPEND[man/man3/i2d_re_X509_tbs.3]=man3/i2d_re_X509_tbs.pod
@@ -3820,7 +3824,9 @@ html/man3/X509_STORE_add_cert.html \
 html/man3/X509_STORE_get0_param.html \
 html/man3/X509_STORE_new.html \
 html/man3/X509_STORE_set_verify_cb_func.html \
+html/man3/X509_VERIFY_PARAM_set1_host.html \
 html/man3/X509_VERIFY_PARAM_set_flags.html \
+html/man3/X509_VERIFY_PARAM_set_hostflags.html \
 html/man3/X509_add_cert.html \
 html/man3/X509_check_ca.html \
 html/man3/X509_check_certificate_times.html \
@@ -3853,8 +3859,7 @@ html/man3/d2i_PrivateKey.html \
 html/man3/d2i_RSAPrivateKey.html \
 html/man3/d2i_SSL_SESSION.html \
 html/man3/d2i_X509.html \
-html/man3/i2d_CMS_bio_stream.html \
-html/man3/i2d_PKCS7_bio_stream.html \
+html/man3/i2d_ASN1_bio_stream.html \
 html/man3/i2d_re_X509_tbs.html \
 html/man3/o2i_SCT_LIST.html \
 html/man3/s2i_ASN1_IA5STRING.html
@@ -4498,7 +4503,9 @@ man/man3/X509_STORE_add_cert.3 \
 man/man3/X509_STORE_get0_param.3 \
 man/man3/X509_STORE_new.3 \
 man/man3/X509_STORE_set_verify_cb_func.3 \
+man/man3/X509_VERIFY_PARAM_set1_host.3 \
 man/man3/X509_VERIFY_PARAM_set_flags.3 \
+man/man3/X509_VERIFY_PARAM_set_hostflags.3 \
 man/man3/X509_add_cert.3 \
 man/man3/X509_check_ca.3 \
 man/man3/X509_check_certificate_times.3 \
@@ -4531,8 +4538,7 @@ man/man3/d2i_PrivateKey.3 \
 man/man3/d2i_RSAPrivateKey.3 \
 man/man3/d2i_SSL_SESSION.3 \
 man/man3/d2i_X509.3 \
-man/man3/i2d_CMS_bio_stream.3 \
-man/man3/i2d_PKCS7_bio_stream.3 \
+man/man3/i2d_ASN1_bio_stream.3 \
 man/man3/i2d_re_X509_tbs.3 \
 man/man3/o2i_SCT_LIST.3 \
 man/man3/s2i_ASN1_IA5STRING.3

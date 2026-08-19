@@ -11670,12 +11670,29 @@ end:
 #endif
 
 #ifndef OPENSSL_NO_TLS1_2
+
+#define CERT_TYPE_C "\x0" /* TLSEXT_cert_type_x509 */
+#define CERT_TYPE_S "\x2" /* TLSEXT_cert_type_rpk */
+
+#ifndef OPENSSL_NO_CT
+#define CB_ARG "callback arg"
+
+/* ARGSUSED */
+static int validation_cbk(const CT_POLICY_EVAL_CTX *ctx,
+    const STACK_OF(SCT) *scts, void *arg)
+{
+    return 1;
+}
+#endif
+
 static int test_ssl_dup(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *client2ssl = NULL;
     int testresult = 0;
     BIO *rbio = NULL, *wbio = NULL;
+    unsigned char *ctype;
+    size_t ctype_len;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
             TLS_client_method(),
@@ -11691,6 +11708,27 @@ static int test_ssl_dup(void)
     if (!TEST_true(SSL_set_min_proto_version(clientssl, TLS1_2_VERSION))
         || !TEST_true(SSL_set_max_proto_version(clientssl, TLS1_2_VERSION)))
         goto end;
+
+    if (!TEST_true(
+            SSL_set1_client_cert_type(clientssl,
+                (const unsigned char *)CERT_TYPE_C, sizeof(CERT_TYPE_C) - 1)))
+        goto end;
+
+    if (!TEST_true(
+            SSL_set1_server_cert_type(clientssl,
+                (const unsigned char *)CERT_TYPE_S, sizeof(CERT_TYPE_S) - 1)))
+        goto end;
+
+#ifndef OPENSSL_NO_CT
+    if (!TEST_true(SSL_set_ct_validation_callback(clientssl, validation_cbk, CB_ARG)))
+        goto end;
+#endif
+
+#ifndef OPENSSL_NO_OCSP
+    if (!TEST_true(
+            SSL_set_tlsext_status_type(clientssl, TLSEXT_STATUSTYPE_ocsp)))
+        goto end;
+#endif
 
     client2ssl = SSL_dup(clientssl);
     rbio = SSL_get_rbio(clientssl);
@@ -11718,6 +11756,28 @@ static int test_ssl_dup(void)
 
     if (!TEST_true(create_ssl_connection(serverssl, client2ssl, SSL_ERROR_NONE)))
         goto end;
+
+    if (!TEST_true(SSL_get0_client_cert_type(client2ssl, &ctype, &ctype_len)))
+        goto end;
+
+    if (!TEST_mem_eq(ctype, ctype_len, CERT_TYPE_C, sizeof(CERT_TYPE_C) - 1))
+        goto end;
+
+    if (!TEST_true(SSL_get0_server_cert_type(client2ssl, &ctype, &ctype_len)))
+        goto end;
+
+    if (!TEST_mem_eq(ctype, ctype_len, CERT_TYPE_S, sizeof(CERT_TYPE_S) - 1))
+        goto end;
+
+#ifndef OPENSSL_NO_CT
+    if (!TEST_true(SSL_ct_is_enabled(client2ssl)))
+        goto end;
+#endif
+
+#ifndef OPENSSL_NO_OCSP
+    if (!TEST_long_eq(SSL_get_tlsext_status_type(client2ssl), TLSEXT_STATUSTYPE_ocsp))
+        goto end;
+#endif
 
     SSL_free(clientssl);
     clientssl = SSL_dup(client2ssl);

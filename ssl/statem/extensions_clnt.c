@@ -8,13 +8,13 @@
  */
 
 #include <openssl/ocsp.h>
+#include <openssl/rand.h>
 #include "../ssl_local.h"
 #include "internal/cryptlib.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/tlsgroups.h"
 #include "statem_local.h"
 #ifndef OPENSSL_NO_ECH
-#include <openssl/rand.h>
 #include "internal/ech_helpers.h"
 #endif
 
@@ -1032,6 +1032,83 @@ end:
     return ret;
 }
 
+static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
+{
+    OSSL_TIME t;
+    uint32_t agesec;
+
+    if (s->ext.tick_age_checked)
+        return s->ext.tick_age_ok;
+    s->ext.tick_age_ok = 1;
+
+    /*
+     * Technically the C standard just says time() returns a time_t and says
+     * nothing about the encoding of that type. In practice most
+     * implementations follow POSIX which holds it as an integral type in
+     * seconds since epoch. We've already made the assumption that we can do
+     * this in multiple places in the code, so portability shouldn't be an
+     * issue.
+     */
+    t = ossl_time_subtract(ossl_time_now(), s->session->time);
+    agesec = (uint32_t)ossl_time2seconds(t);
+
+    /*
+     * We calculate the age in seconds but the server may work in ms. Due to
+     * rounding errors we could overestimate the age by up to 1s. It is
+     * better to underestimate it. Otherwise, if the RTT is very short, when
+     * the server calculates the age reported by the client it could be
+     * bigger than the age calculated on the server - which should never
+     * happen.
+     */
+    if (agesec > 0)
+        agesec--;
+
+    /*
+     * Calculate age in ms. We're just doing it to nearest second. Should be
+     * good enough.
+     */
+    s->ext.tick_age_ms = agesec * (uint32_t)1000;
+
+    /*
+     * Ticket is too old. Ignore it. Overflow. Shouldn't happen unless this is a
+     * *really* old session. If so we just ignore it.
+     */
+    if (s->session->ext.tick_lifetime_hint < agesec)
+        s->ext.tick_age_ok = 0;
+    else if (agesec != 0 && s->ext.tick_age_ms / (uint32_t)1000 != agesec)
+        s->ext.tick_age_ok = 0;
+
+    s->ext.tick_age_checked = 1;
+    return s->ext.tick_age_ok;
+}
+
+/*
+ * Mirrors the ticket-resumption gating checks in tls_construct_ctos_psk() so
+ * that early_data is only advertised when the resumption PSK will actually
+ * be sent.
+ */
+static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
+{
+    SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    const EVP_MD *mdres;
+
+    if (s->session == NULL
+        || s->session->ssl_version != TLS1_3_VERSION
+        || s->session->ext.ticklen == 0
+        || s->session->cipher == NULL)
+        return 0;
+
+    mdres = ssl_md(sctx, s->session->cipher->algorithm2);
+    if (mdres == NULL)
+        return 0;
+    if (s->hello_retry_request == SSL_HRR_PENDING && mdres != handmd)
+        return 0;
+    if (tls13_check_tick_lifetime_hint(s) == 0)
+        return 0;
+
+    return 1;
+}
+
 EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx)
@@ -1045,6 +1122,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     SSL_SESSION *edsess = NULL;
     const EVP_MD *handmd = NULL;
     SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+
+    s->ext.tick_age_checked = 0;
 
 #ifndef OPENSSL_NO_ECH
     /*
@@ -1147,14 +1226,65 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
         s->psksession_id_len = idlen;
     }
 
+    /*
+     * Suppress early_data unless a PSK is available and will be sent.
+     *
+     * RFC 9846 4.3.10: When a PSK is used and early data is allowed for that
+     * PSK, the client can send Application Data in its first flight of
+     * messages. If the client opts to do so, it MUST supply both the
+     * "pre_shared_key" and "early_data" extensions.
+     *
+     * The PSK used to encrypt the early data MUST be the first PSK listed in
+     * the client's "pre_shared_key" extension.
+     */
+    /*
+     * Slot 0 -- the first identity we will offer -- is the only one that can
+     * key 0-RTT. It is the resumption session when we are offering it, else
+     * the external psksession. Offer early_data only when that slot-0 PSK is
+     * itself 0-RTT-capable; never key it off a PSK in a later slot.
+     */
+    edsess = tls13_check_resumption_psk(s, handmd) ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
-        || (s->session->ext.max_early_data == 0
-            && (psksess == NULL || psksess->ext.max_early_data == 0))) {
+        || edsess == NULL
+        || edsess->ext.max_early_data == 0) {
         s->max_early_data = 0;
+        if (s->early_data_state == SSL_EARLY_DATA_CONNECTING) {
+            s->ext.early_data_suppressed = 1;
+            s->ext.early_data = SSL_EARLY_DATA_REJECTED;
+            /*
+             * We report REJECTED (not NOT_SENT), so
+             * SSL_export_keying_material_early() stays callable as it is for a
+             * server-rejected attempt -- but no early exporter secret was
+             * derived here. Randomise it so any such export yields a harmless
+             * per-connection orphan, not an all-zero (predictable) or stale
+             * (prior-handshake) value.
+             */
+            if (RAND_bytes_ex(SSL_CONNECTION_GET_CTX(s)->libctx,
+                    s->early_exporter_master_secret,
+                    sizeof(s->early_exporter_master_secret), 0)
+                <= 0) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return EXT_RETURN_FAIL;
+            }
+        }
+        s->early_data_state = SSL_EARLY_DATA_NONE;
         return EXT_RETURN_NOT_SENT;
     }
-    edsess = s->session->ext.max_early_data != 0 ? s->session : psksess;
     s->max_early_data = edsess->ext.max_early_data;
+    /*
+     * Freeze slot 0 (candidate_at(0)) so the binder, the early-key derivation,
+     * the early exporter, the byte-budget lookup and the post-ServerHello fixup
+     * all key off the actual first-offered PSK rather than guessing the source
+     * from s->session->ext.max_early_data. Held (up-ref'd) so it stays valid
+     * across the swap that later folds a selected psksession into s->session.
+     */
+    SSL_SESSION_free(s->ext.early_data_session);
+    s->ext.early_data_session = edsess;
+    if (!SSL_SESSION_up_ref(edsess)) {
+        s->ext.early_data_session = NULL;
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return EXT_RETURN_FAIL;
+    }
 
     if (edsess->ext.hostname != NULL) {
         if (s->ext.hostname == NULL
@@ -1214,99 +1344,6 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
     return EXT_RETURN_SENT;
 }
 
-#define F5_WORKAROUND_MIN_MSG_LEN 0xff
-#define F5_WORKAROUND_MAX_MSG_LEN 0x200
-
-/*
- * PSK pre binder overhead =
- *  2 bytes for TLSEXT_TYPE_psk
- *  2 bytes for extension length
- *  2 bytes for identities list length
- *  2 bytes for identity length
- *  4 bytes for obfuscated_ticket_age
- *  2 bytes for binder list length
- *  1 byte for binder length
- * The above excludes the number of bytes for the identity itself and the
- * subsequent binder bytes
- */
-#define PSK_PRE_BINDER_OVERHEAD (2 + 2 + 2 + 2 + 4 + 2 + 1)
-
-EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
-    unsigned int context, X509 *x,
-    size_t chainidx)
-{
-    unsigned char *padbytes;
-    size_t hlen;
-
-    if ((s->options & SSL_OP_TLSEXT_PADDING) == 0)
-        return EXT_RETURN_NOT_SENT;
-#ifndef OPENSSL_NO_ECH
-    ECH_SAME_EXT(s, context, pkt);
-#endif
-
-    /*
-     * Add padding to workaround bugs in F5 terminators. See RFC7685.
-     * This code calculates the length of all extensions added so far but
-     * excludes the PSK extension (because that MUST be written last). Therefore
-     * this extension MUST always appear second to last.
-     */
-    if (!WPACKET_get_total_written(pkt, &hlen)) {
-        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-        return EXT_RETURN_FAIL;
-    }
-
-    /*
-     * If we're going to send a PSK then that will be written out after this
-     * extension, so we need to calculate how long it is going to be.
-     */
-    if (s->session->ssl_version == TLS1_3_VERSION
-        && s->session->ext.ticklen != 0
-        && s->session->cipher != NULL) {
-        const EVP_MD *md = ssl_md(SSL_CONNECTION_GET_CTX(s),
-            s->session->cipher->algorithm2);
-
-        if (md != NULL) {
-            /*
-             * Add the fixed PSK overhead, the identity length and the binder
-             * length.
-             */
-            int md_size = EVP_MD_get_size(md);
-
-            if (md_size <= 0) {
-                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-                return EXT_RETURN_FAIL;
-            }
-            hlen += PSK_PRE_BINDER_OVERHEAD + s->session->ext.ticklen
-                + md_size;
-        }
-    }
-
-    if (hlen > F5_WORKAROUND_MIN_MSG_LEN && hlen < F5_WORKAROUND_MAX_MSG_LEN) {
-        /* Calculate the amount of padding we need to add */
-        hlen = F5_WORKAROUND_MAX_MSG_LEN - hlen;
-
-        /*
-         * Take off the size of extension header itself (2 bytes for type and
-         * 2 bytes for length bytes), but ensure that the extension is at least
-         * 1 byte long so as not to have an empty extension last (WebSphere 7.x,
-         * 8.x are intolerant of that condition)
-         */
-        if (hlen > 4)
-            hlen -= 4;
-        else
-            hlen = 1;
-
-        if (!WPACKET_put_bytes_u16(pkt, TLSEXT_TYPE_padding)
-            || !WPACKET_sub_allocate_bytes_u16(pkt, hlen, &padbytes)) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return EXT_RETURN_FAIL;
-        }
-        memset(padbytes, 0, hlen);
-    }
-
-    return EXT_RETURN_SENT;
-}
-
 /*
  * Construct the pre_shared_key extension
  */
@@ -1315,22 +1352,15 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     X509 *x, size_t chainidx)
 {
 #ifndef OPENSSL_NO_TLS1_3
-    uint32_t agesec, agems = 0;
+    uint32_t agems = 0;
     size_t binderoffset, msglen;
     int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
     const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
-    OSSL_TIME t;
 
     s->ext.tick_identity = 0;
-
-    /*
-     * Note: At this stage of the code we only support adding a single
-     * resumption PSK. If we add support for multiple PSKs then the length
-     * calculations in the padding extension will need to be adjusted.
-     */
 
     /*
      * If this is an incompatible or new session then we have nothing to resume
@@ -1379,46 +1409,10 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
         }
 #endif
 
-        /*
-         * Technically the C standard just says time() returns a time_t and says
-         * nothing about the encoding of that type. In practice most
-         * implementations follow POSIX which holds it as an integral type in
-         * seconds since epoch. We've already made the assumption that we can do
-         * this in multiple places in the code, so portability shouldn't be an
-         * issue.
-         */
-        t = ossl_time_subtract(ossl_time_now(), s->session->time);
-        agesec = (uint32_t)ossl_time2seconds(t);
-
-        /*
-         * We calculate the age in seconds but the server may work in ms. Due to
-         * rounding errors we could overestimate the age by up to 1s. It is
-         * better to underestimate it. Otherwise, if the RTT is very short, when
-         * the server calculates the age reported by the client it could be
-         * bigger than the age calculated on the server - which should never
-         * happen.
-         */
-        if (agesec > 0)
-            agesec--;
-
-        if (s->session->ext.tick_lifetime_hint < agesec) {
-            /* Ticket is too old. Ignore it. */
+        if (tls13_check_tick_lifetime_hint(s) == 0)
             goto dopsksess;
-        }
-
-        /*
-         * Calculate age in ms. We're just doing it to nearest second. Should be
-         * good enough.
-         */
-        agems = agesec * (uint32_t)1000;
-
-        if (agesec != 0 && agems / (uint32_t)1000 != agesec) {
-            /*
-             * Overflow. Shouldn't happen unless this is a *really* old session.
-             * If so we just ignore it.
-             */
-            goto dopsksess;
-        }
+        /* tls13_check_tick_lifetime_hint() updates the tick_age_ms value. */
+        agems = s->ext.tick_age_ms;
 
         /*
          * Obfuscate the age. Overflow here is fine, this addition is supposed
@@ -2455,8 +2449,7 @@ int tls_parse_stoc_psk(SSL_CONNECTION *s, PACKET *pkt,
      */
     if ((s->early_data_state != SSL_EARLY_DATA_WRITE_RETRY
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_WRITING)
-        || s->session->ext.max_early_data > 0
-        || s->psksession->ext.max_early_data == 0)
+        || s->ext.early_data_session != s->psksession)
         memcpy(s->early_secret, s->psksession->early_secret, EVP_MAX_MD_SIZE);
 
     /*

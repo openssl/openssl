@@ -2497,11 +2497,12 @@ static int old_entry_print(const ASN1_OBJECT *obj, const ASN1_STRING *str)
 {
     char buf[25], *pbuf;
     const char *p;
+    int i;
     size_t j;
 
-    j = i2a_ASN1_OBJECT(bio_err, obj);
+    i = i2a_ASN1_OBJECT(bio_err, obj);
     pbuf = buf;
-    for (j = 22 - j; j > 0; j--)
+    for (i = 22 - i; i > 0; i--)
         *(pbuf++) = ' ';
     *(pbuf++) = ':';
     *(pbuf++) = '\0';

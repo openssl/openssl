@@ -224,6 +224,9 @@ with those threads. The application should either call OPENSSL_thread_stop() on
 each thread prior to the dlclose() call, or alternatively the original dlopen()
 call should use the RTLD_NODELETE flag (where available on the platform).
 
+Thread cleanup does not unwind an OpenSSL function interrupted by cancellation
+or thread exit; see L<openssl-threads(7)>.
+
 =head1 RETURN VALUES
 
 The functions OPENSSL_init_crypto, and
@@ -231,7 +234,7 @@ OPENSSL_INIT_set_config_appname() return 1 on success or 0 on error.
 
 =head1 SEE ALSO
 
-L<OPENSSL_init_ssl(3)>
+L<OPENSSL_init_ssl(3)>, L<openssl-threads(7)>
 
 =head1 HISTORY
 

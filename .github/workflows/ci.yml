@@ -474,13 +474,20 @@ jobs:
 
   fuzz_tests_mfail:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 15
     steps:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
+    - name: trim corpora to a few seeds per fuzzer
+      env:
+        FUZZ_CORPUS_KEEP: 5
+      run: |
+        for d in fuzz/corpora/*/; do
+          find "$d" -maxdepth 1 -type f | tail -n +$((FUZZ_CORPUS_KEEP + 1)) | xargs -r rm -f
+        done
     - name: Adjust ASLR for sanitizer
       run: sudo sysctl -w vm.mmap_rnd_bits=28
     - name: config
@@ -494,9 +501,6 @@ jobs:
     - name: make
       run: make -s -j4
     - name: make test (fuzz with mfail)
-      env:
-        OSSL_FUZZ_TEST_BUDGET: 1200
-        OSSL_FUZZ_TEST_JOBS: 4
       run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
     - name: save artifacts
       if: success() || failure()

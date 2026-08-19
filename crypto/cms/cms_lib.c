@@ -35,7 +35,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(a == NULL ? NULL : *a);
 
     ci = (CMS_ContentInfo *)ASN1_item_d2i_ex((ASN1_VALUE **)a, in, len,
-        (CMS_ContentInfo_it()),
+        ASN1_ITEM_rptr(CMS_ContentInfo),
         ossl_cms_ctx_get0_libctx(ctx),
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
@@ -48,7 +48,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
 
 int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
 {
-    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(CMS_ContentInfo));
 }
 
 CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)

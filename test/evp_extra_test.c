@@ -8920,6 +8920,8 @@ static int test_rsasve_degenerate_ciphertext(int idx)
         goto err;
 
     ctlen = secretlen = (size_t)EVP_PKEY_get_size(rsakey);
+    if (!TEST_size_t_gt(ctlen, 0))
+        goto err;
     if (!TEST_ptr(ct = OPENSSL_zalloc(ctlen))
         || !TEST_ptr(secret = OPENSSL_malloc(secretlen)))
         goto err;
