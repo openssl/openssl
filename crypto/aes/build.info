@@ -54,8 +54,10 @@ IF[{- !$disabled{asm} -}]
   # aes-c64xplus.s implements AES_ctr32_encrypt
   $AESDEF_c64xplus=AES_ASM AES_CTR_ASM
 
-  $AESASM_riscv64=aes_cbc.c aes-riscv64.s aes-riscv64-zkn.s aes-riscv64-zvkb-zvkned.s aes-riscv64-zvkned.s aes-riscv64-zvbb-zvkg-zvkned.s
-  $AESDEF_riscv64=AES_ASM
+  # Keep the RISC-V Zkn/Zvkned assembly fast paths, but route the generic
+  # low-level AES APIs through the constant-time C implementation.
+  $AESASM_riscv64=aes_core.c aes_cbc.c aes-riscv64-zkn.s aes-riscv64-zvkb-zvkned.s aes-riscv64-zvkned.s aes-riscv64-zvbb-zvkg-zvkned.s
+  $AESDEF_riscv64=OPENSSL_AES_CONST_TIME
   $AESASM_riscv32=aes_core.c aes_cbc.c aes-riscv32-zkn.s
 
   $AESASM_loongarch64=aes_core.c aes_cbc.c vpaes-loongarch64.S
@@ -129,7 +131,6 @@ GENERATE[aes-parisc.s]=asm/aes-parisc.pl
 GENERATE[aes-mips.S]=asm/aes-mips.pl
 INCLUDE[aes-mips.o]=..
 
-GENERATE[aes-riscv64.s]=asm/aes-riscv64.pl
 GENERATE[aes-riscv64-zkn.s]=asm/aes-riscv64-zkn.pl
 GENERATE[aes-riscv32-zkn.s]=asm/aes-riscv32-zkn.pl
 GENERATE[aes-riscv64-zvkb-zvkned.s]=asm/aes-riscv64-zvkb-zvkned.pl
