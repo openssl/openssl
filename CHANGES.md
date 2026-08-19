@@ -31,6 +31,26 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * The padding request held by an `EVP_CIPHER_CTX` is now kept across
+   re-initialisation, whether it was made with `EVP_CIPHER_CTX_set_padding()`,
+   the `EVP_CIPH_NO_PADDING` flag or the `OSSL_CIPHER_PARAM_PADDING` parameter,
+   including when that parameter is passed to the initialisation call itself.
+   In particular, re-enabling padding with
+   `EVP_CIPHER_CTX_clear_flags(ctx, EVP_CIPH_NO_PADDING)` now takes effect on
+   the next initialisation, where previously the cipher continued to produce
+   unpadded output.  Because the parameter is now tracked as well,
+   `EVP_CIPHER_CTX_test_flags(ctx, EVP_CIPH_NO_PADDING)` reports padding that
+   was disabled through `OSSL_CIPHER_PARAM_PADDING`.
+
+   *Madan mohan Manokar*
+
+ * Improved AES-GCM performance on `x86_64` processors with AVX512 and VAES
+   support.  The encryption and decryption loop width is now selected from the
+   message length, and GHASH uses Karatsuba multiplication with prefolded hash
+   keys.
+
+   *Madan mohan Manokar*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early
