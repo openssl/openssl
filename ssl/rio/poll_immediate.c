@@ -470,9 +470,11 @@ static int poll_translate(SSL_POLL_ITEM *items,
     for (i = 0; i < num_items; ++i) {
         item = &ITEM_N(items, stride, i);
 
+#ifndef OPENSSL_NO_QUIC
         if (ossl_quic_poll_translate_test_step_cb != NULL)
             ossl_quic_poll_translate_test_step_cb(i,
                 ossl_quic_poll_translate_test_step_cb_arg);
+#endif
 
         switch (item->desc.type) {
         case BIO_POLL_DESCRIPTOR_TYPE_SSL:
