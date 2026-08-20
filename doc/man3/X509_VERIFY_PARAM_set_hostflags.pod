@@ -50,7 +50,10 @@ The B<X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT> flag causes the function to
 also match against the subject DN (the B<commonName> attribute for DNS
 names, the B<emailAddress> attribute for email addresses), whether or not
 the certificate contains a subject alternative name of the corresponding
-type.
+type.  During certificate chain verification this flag additionally
+causes DNS name constraints to be applied to the subject B<commonName>
+of the leaf certificate, since the B<commonName> may then be used as a
+DNS identity; see L<NAME_CONSTRAINTS_check(3)>.
 
 The B<X509_CHECK_FLAG_NEVER_CHECK_SUBJECT> flag suppresses matching against
 the subject DN. As that is already the default, this flag has an effect

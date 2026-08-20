@@ -492,8 +492,8 @@ ok(verify("goodcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
 ok(verify("goodcn2-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints CNs permitted - no SAN extension");
 
-ok(!verify("badcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
-   "Name Constraints CNs not permitted");
+ok(verify("badcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints DNS-like CN not checked by default");
 
 ok(!verify("badalt1-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints hostname not permitted");
@@ -510,11 +510,11 @@ ok(!verify("badalt4-cert", "", ["root-cert"], ["ncca1-cert"], ),
 ok(!verify("badalt5-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints IP address not permitted");
 
-ok(!verify("badalt6-cert", "", ["root-cert"], ["ncca1-cert"], ),
-   "Name Constraints CN hostname not permitted");
+ok(verify("badalt6-cert", "", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints CN hostname not checked by default");
 
-ok(!verify("badalt7-cert", "", ["root-cert"], ["ncca1-cert"], ),
-   "Name Constraints CN BMPSTRING hostname not permitted");
+ok(verify("badalt7-cert", "", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints CN BMPSTRING hostname not checked by default");
 
 ok(!verify("badalt8-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constraints nested DNS name not permitted 1");
