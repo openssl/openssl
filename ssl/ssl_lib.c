@@ -7790,6 +7790,10 @@ int SSL_verify_client_post_handshake(SSL *ssl)
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return 0;
     case SSL_PHA_EXT_RECEIVED:
+        if (RECORD_LAYER_write_pending(&sc->rlayer)) {
+            ERR_raise(ERR_LIB_SSL, SSL_R_BAD_WRITE_RETRY);
+            return 0;
+        }
         break;
     case SSL_PHA_REQUEST_PENDING:
         ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
