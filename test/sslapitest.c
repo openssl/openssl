@@ -771,6 +771,96 @@ end:
     return testresult;
 }
 
+/*
+ * Same as test_server_cert_verify_cb() but with the client sending its
+ * credentials as an RPK. Exercises tls_post_process_client_rpk() and the
+ * SSL_set_retry_verify() pause on the server-side RPK code path.
+ */
+static int test_server_rpk_verify_cb(void)
+{
+    static const unsigned char cert_type_rpk[] = { TLSEXT_cert_type_rpk };
+    char *skey = test_mk_file_path(certsdir, "leaf.key");
+    char *leaf = test_mk_file_path(certsdir, "leaf.pem");
+    char *leaf_chain = test_mk_file_path(certsdir, "leaf-chain.pem");
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    int testresult = 0;
+
+    server_retry_state = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, 0,
+            &sctx, &cctx, NULL, NULL)))
+        goto end;
+
+    /* Server needs its own cert/key for the TLS handshake. */
+    if (!TEST_int_eq(SSL_CTX_use_certificate_chain_file(sctx, leaf_chain), 1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(sctx, skey,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(sctx), 1))
+        goto end;
+
+    /* Server: require client auth as RPK, verify via retry callback. */
+    if (!TEST_true(SSL_CTX_set1_client_cert_type(sctx, cert_type_rpk,
+            sizeof(cert_type_rpk))))
+        goto end;
+    SSL_CTX_set_verify(sctx,
+        SSL_VERIFY_PEER | SSL_VERIFY_FAIL_IF_NO_PEER_CERT,
+        NULL);
+    SSL_CTX_set_cert_verify_callback(sctx, server_verify_retry_cb, NULL);
+
+    /* Client presents its cert as RPK. */
+    if (!TEST_true(SSL_CTX_set1_client_cert_type(cctx, cert_type_rpk,
+            sizeof(cert_type_rpk))))
+        goto end;
+    if (!TEST_int_eq(SSL_CTX_use_certificate_file(cctx, leaf,
+                         SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_use_PrivateKey_file(cctx, skey,
+                            SSL_FILETYPE_PEM),
+            1)
+        || !TEST_int_eq(SSL_CTX_check_private_key(cctx), 1))
+        goto end;
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, NULL);
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    /* First drive: callback returns retry, handshake must surface it. */
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_WANT_RETRY_VERIFY)))
+        goto end;
+    if (!TEST_int_eq(server_retry_state, 1))
+        goto end;
+
+    /* Resume: callback accepts, handshake completes. */
+    if (!TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE)))
+        goto end;
+    if (!TEST_int_eq(server_retry_state, 2))
+        goto end;
+
+    testresult = 1;
+
+end:
+    if (clientssl != NULL) {
+        SSL_shutdown(clientssl);
+        SSL_free(clientssl);
+    }
+    if (serverssl != NULL) {
+        SSL_shutdown(serverssl);
+        SSL_free(serverssl);
+    }
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    OPENSSL_free(skey);
+    OPENSSL_free(leaf);
+    OPENSSL_free(leaf_chain);
+    return testresult;
+}
+
 static int test_ssl_build_cert_chain(void)
 {
     int ret = 0;
@@ -15757,6 +15847,7 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_client_cert_verify_cb);
     ADD_TEST(test_server_cert_verify_cb);
+    ADD_TEST(test_server_rpk_verify_cb);
     ADD_TEST(test_ssl_build_cert_chain);
     ADD_TEST(test_ssl_ctx_build_cert_chain);
 #ifndef OPENSSL_NO_TLS1_2

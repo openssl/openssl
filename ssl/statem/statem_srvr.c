@@ -3886,27 +3886,50 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
 
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 {
-    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
-    SSL_SESSION *new_sess = NULL;
     EVP_PKEY *peer_rpk = NULL;
 
     if (!tls_process_rpk(sc, pkt, &peer_rpk)) {
         /* SSLfatal already called */
-        goto err;
+        return MSG_PROCESS_ERROR;
     }
+
+    /* Stash the parsed RPK; verification runs in the post-process step. */
+    EVP_PKEY_free(sc->session->peer_rpk);
+    sc->session->peer_rpk = peer_rpk;
+
+    return MSG_PROCESS_CONTINUE_PROCESSING;
+}
+
+/* Verify the parked RPK; may pause via SSL_set_retry_verify(). */
+static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
+    WORK_STATE wst)
+{
+    EVP_PKEY *peer_rpk = sc->session->peer_rpk;
+    SSL_SESSION *new_sess = NULL;
+
+    (void)wst;
 
     if (peer_rpk == NULL) {
         if ((sc->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
             && (sc->verify_mode & SSL_VERIFY_PEER)) {
             SSLfatal(sc, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            goto err;
+            return WORK_ERROR;
         }
     } else {
-        if (ssl_verify_rpk(sc, peer_rpk) <= 0) {
+        int v_ok;
+
+        if (sc->rwstate == SSL_RETRY_VERIFY)
+            sc->rwstate = SSL_NOTHING;
+        v_ok = ssl_verify_rpk(sc, peer_rpk);
+        if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
+            /* The verify callback asked to pause; resume here on retry. */
+            return WORK_MORE_A;
+        }
+        if (v_ok <= 0) {
             SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            goto err;
+            return WORK_ERROR;
         }
     }
 
@@ -3917,11 +3940,10 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
      * a new RPK (or certificate) is received via post-handshake authentication,
      * as the session may have already gone into the session cache.
      */
-
     if (sc->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(sc->session, 0)) == NULL) {
             SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
+            return WORK_ERROR;
         }
 
         SSL_SESSION_free(sc->session);
@@ -3933,10 +3955,6 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     sc->session->peer = NULL;
     sk_X509_pop_free(sc->session->peer_chain, X509_free);
     sc->session->peer_chain = NULL;
-    /* Save RPK */
-    EVP_PKEY_free(sc->session->peer_rpk);
-    sc->session->peer_rpk = peer_rpk;
-    peer_rpk = NULL;
 
     sc->session->verify_result = sc->verify_result;
 
@@ -3947,26 +3965,22 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     if (SSL_CONNECTION_IS_TLS13(sc)) {
         if (!ssl3_digest_cached_records(sc, 1)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
 
         /* Save the current hash state for when we receive the CertificateVerify */
         if (!ssl_handshake_hash(sc, sc->cert_verify_hash,
                 sizeof(sc->cert_verify_hash),
                 &sc->cert_verify_hash_len)) {
-            /* SSLfatal() already called */;
-            goto err;
+            /* SSLfatal() already called */
+            return WORK_ERROR;
         }
 
         /* resend session tickets */
         sc->sent_tickets = 0;
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
-
-err:
-    EVP_PKEY_free(peer_rpk);
-    return ret;
+    return WORK_FINISHED_CONTINUE;
 }
 
 MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
@@ -4094,11 +4108,15 @@ err:
 WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
     WORK_STATE wst)
 {
-    STACK_OF(X509) *sk = s->session->peer_chain;
+    STACK_OF(X509) *sk;
     SSL_SESSION *new_sess = NULL;
     EVP_PKEY *pkey;
     int i;
 
+    if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
+        return tls_post_process_client_rpk(s, wst);
+
+    sk = s->session->peer_chain;
     (void)wst;
 
     if (sk == NULL || sk_X509_num(sk) <= 0) {
@@ -4161,10 +4179,7 @@ WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
 
     if (sk != NULL && sk_X509_num(sk) > 0) {
         X509_free(s->session->peer);
-        /*
-         * Inconsistency alert: cert_chain does *not* include the peer's own
-         * certificate, while we do include it in statem_clnt.c
-         */
+        /* Server keeps the EE cert in session->peer; peer_chain holds issuers only. */
         s->session->peer = sk_X509_shift(sk);
         s->session->verify_result = s->verify_result;
     }
