@@ -631,6 +631,8 @@ int evp_pkey_ctx_set_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 
 int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
 {
+    int ret;
+
     if (ctx == NULL || params == NULL)
         return 0;
 
@@ -651,7 +653,10 @@ int evp_pkey_ctx_get_params_strict(EVP_PKEY_CTX *ctx, OSSL_PARAM *params)
         }
     }
 
-    return EVP_PKEY_CTX_get_params(ctx, params);
+    if ((ret = EVP_PKEY_CTX_get_params(ctx, params)) <= 0)
+        return ret;
+
+    return OSSL_PARAM_modified(params);
 }
 
 int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
@@ -676,7 +681,8 @@ int EVP_PKEY_CTX_get_signature_md(EVP_PKEY_CTX *ctx, const EVP_MD **md)
         sizeof(name));
     *p = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_CTX_get_params(ctx, sig_md_params))
+    if ((EVP_PKEY_CTX_get_params(ctx, sig_md_params) <= 0)
+        || !OSSL_PARAM_modified(sig_md_params))
         return 0;
 
     tmp = evp_get_digestbyname_ex(ctx->libctx, name);
@@ -810,11 +816,8 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
     os_params[0] = OSSL_PARAM_construct_octet_string(param, NULL, 0);
     os_params[1] = OSSL_PARAM_construct_end();
 
-    if (!EVP_PKEY_CTX_get_params(ctx, os_params))
-        return 0;
-
-    /* This should not happen but check to be sure. */
-    if (os_params[0].return_size == OSSL_PARAM_UNMODIFIED)
+    if ((EVP_PKEY_CTX_get_params(ctx, os_params) <= 0)
+        || !OSSL_PARAM_modified(os_params))
         return 0;
 
     info_alloc = os_params[0].return_size + datalen;
@@ -828,10 +831,8 @@ static int evp_pkey_ctx_add1_octet_string(EVP_PKEY_CTX *ctx, int fallback,
     os_params[0] = OSSL_PARAM_construct_octet_string(param, info, info_alloc);
 
     /* if we have data, then go get it */
-    if (info_len > 0) {
-        if (!EVP_PKEY_CTX_get_params(ctx, os_params))
-            goto error;
-    }
+    if (info_len > 0 && (EVP_PKEY_CTX_get_params(ctx, os_params) <= 0 || !OSSL_PARAM_modified(os_params)))
+        goto error;
 
     /* Copy the input data */
     memcpy(&info[info_len], data, datalen);
