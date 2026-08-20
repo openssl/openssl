@@ -43,7 +43,7 @@ IF[{- !$disabled{asm} -}]
 
   $SHA1ASM_ppc32=\
         sha_ppc.c sha1-ppc.s sha256-ppc.s sha512-ppc.s sha256p8-ppc.s \
-        sha512p8-ppc.s
+        sha512p8-ppc.s sha256dm-ppc.s sha512dm-ppc.s
   $SHA1DEF_ppc32=SHA1_ASM SHA256_ASM SHA512_ASM
   $SHA1ASM_ppc64=$SHA1ASM_ppc32
   $SHA1DEF_ppc64=$SHA1DEF_ppc32
@@ -132,6 +132,8 @@ GENERATE[sha256-ppc.s]=asm/sha512-ppc.pl
 GENERATE[sha512-ppc.s]=asm/sha512-ppc.pl
 GENERATE[sha256p8-ppc.s]=asm/sha512p8-ppc.pl
 GENERATE[sha512p8-ppc.s]=asm/sha512p8-ppc.pl
+GENERATE[sha256dm-ppc.s]=asm/sha512dm-ppc.pl
+GENERATE[sha512dm-ppc.s]=asm/sha512dm-ppc.pl
 GENERATE[keccak1600-ppc64.s]=asm/keccak1600-ppc64.pl
 
 GENERATE[sha1-parisc.s]=asm/sha1-parisc.pl
