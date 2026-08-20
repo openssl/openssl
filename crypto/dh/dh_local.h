@@ -13,6 +13,7 @@
 #include <openssl/dh.h>
 #include "internal/refcount.h"
 #include "internal/ffc.h"
+#include "crypto/fn.h"
 
 #define DH_MIN_MODULUS_BITS 512
 
@@ -30,6 +31,7 @@ struct dh_st {
     BIGNUM *priv_key; /* x */
     int flags;
     BN_MONT_CTX *method_mont_p;
+    OSSL_FN_MONT_CTX *method_mont_fn_p;
     CRYPTO_REF_COUNT references;
 #ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
