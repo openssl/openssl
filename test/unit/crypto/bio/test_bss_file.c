@@ -47,6 +47,22 @@ int __wrap_fclose(FILE *stream);
 int __wrap_fflush(FILE *stream);
 char *__wrap_fgets(char *s, int size, FILE *stream);
 
+size_t __real_fread(void *ptr, size_t size, size_t nmemb, FILE *stream);
+size_t __real_fwrite(const void *ptr, size_t size, size_t nmemb,
+    FILE *stream);
+int __real_fseek(FILE *stream, long offset, int whence);
+long __real_ftell(FILE *stream);
+int __real_feof(FILE *stream);
+int __real_ferror(FILE *stream);
+int __real_fclose(FILE *stream);
+int __real_fflush(FILE *stream);
+char *__real_fgets(char *s, int size, FILE *stream);
+
+static int is_fake_fp(FILE *stream)
+{
+    return stream == FAKE_FP || stream == FAKE_FP2;
+}
+
 FILE *__wrap_openssl_fopen(const char *filename, const char *mode)
 {
     FILE *fp;
@@ -62,6 +78,9 @@ FILE *__wrap_openssl_fopen(const char *filename, const char *mode)
 
 size_t __wrap_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_fread(ptr, size, nmemb, stream);
+
     function_called();
     check_expected_ptr(ptr);
     check_expected(size);
@@ -72,6 +91,9 @@ size_t __wrap_fread(void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 size_t __wrap_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_fwrite(ptr, size, nmemb, stream);
+
     function_called();
     check_expected_ptr(ptr);
     check_expected(size);
@@ -82,6 +104,9 @@ size_t __wrap_fwrite(const void *ptr, size_t size, size_t nmemb, FILE *stream)
 
 int __wrap_fseek(FILE *stream, long offset, int whence)
 {
+    if (!is_fake_fp(stream))
+        return __real_fseek(stream, offset, whence);
+
     function_called();
     check_expected_ptr(stream);
     check_expected(offset);
@@ -91,6 +116,9 @@ int __wrap_fseek(FILE *stream, long offset, int whence)
 
 long __wrap_ftell(FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_ftell(stream);
+
     function_called();
     check_expected_ptr(stream);
     return mock_type(long);
@@ -98,6 +126,9 @@ long __wrap_ftell(FILE *stream)
 
 int __wrap_feof(FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_feof(stream);
+
     function_called();
     check_expected_ptr(stream);
     return mock_type(int);
@@ -105,6 +136,9 @@ int __wrap_feof(FILE *stream)
 
 int __wrap_ferror(FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_ferror(stream);
+
     function_called();
     check_expected_ptr(stream);
     return mock_type(int);
@@ -112,6 +146,9 @@ int __wrap_ferror(FILE *stream)
 
 int __wrap_fclose(FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_fclose(stream);
+
     function_called();
     check_expected_ptr(stream);
     return mock_type(int);
@@ -119,6 +156,9 @@ int __wrap_fclose(FILE *stream)
 
 int __wrap_fflush(FILE *stream)
 {
+    if (!is_fake_fp(stream))
+        return __real_fflush(stream);
+
     function_called();
     check_expected_ptr(stream);
     return mock_type(int);
@@ -127,6 +167,9 @@ int __wrap_fflush(FILE *stream)
 char *__wrap_fgets(char *s, int size, FILE *stream)
 {
     const char *data;
+
+    if (!is_fake_fp(stream))
+        return __real_fgets(s, size, stream);
 
     function_called();
     check_expected_ptr(s);
