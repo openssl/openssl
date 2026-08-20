@@ -34,6 +34,21 @@ int verify_callback(int ok, X509_STORE_CTX *ctx);
 int set_cert_stuff(SSL_CTX *ctx, char *cert_file, char *key_file);
 int set_cert_key_stuff(SSL_CTX *ctx, X509 *cert, EVP_PKEY *key,
     STACK_OF(X509) *chain, int build_chain);
+
+/**
+ * @brief Parse a comma-separated RFC 7250 certificate type list.
+ *
+ * The list holds "rpk" and "x509" (case-insensitive) in preference order,
+ * and is stored as TLSEXT_cert_type_* values.
+ *
+ * @param arg the list to parse
+ * @param types the array to store the values in
+ * @param max the number of elements in |types|
+ * @param ntypes set to the number of values stored, on success
+ * @returns 1 on success, 0 on a syntax error or a list longer than |max|
+ */
+int parse_cert_types(const char *arg, unsigned char *types, size_t max,
+    size_t *ntypes);
 int ssl_print_sigalgs(BIO *out, SSL *s);
 int ssl_print_point_formats(BIO *out, SSL *s);
 int ssl_print_groups(BIO *out, SSL *s, int noshared);
