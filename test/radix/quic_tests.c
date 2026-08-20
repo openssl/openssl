@@ -2976,9 +2976,10 @@ DEF_SCRIPT(script_46, "Fault injection - ACK - malformed initial range")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, 0);
-
     OP_WRITE(Sa, "Strawberry", 10);
+    OP_ENGINE_TICK_ENABLE(S);
 
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
@@ -2994,9 +2995,10 @@ DEF_SCRIPT(script_47, "Fault injection - ACK - malformed subsequent range")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(2, 0);
-
     OP_WRITE(Sa, "Strawberry", 10);
+    OP_ENGINE_TICK_ENABLE(S);
 
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
@@ -3012,9 +3014,10 @@ DEF_SCRIPT(script_48, "Fault injection - ACK - malformed subsequent range")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(3, 0);
-
     OP_WRITE(Sa, "Strawberry", 10);
+    OP_ENGINE_TICK_ENABLE(S);
 
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
