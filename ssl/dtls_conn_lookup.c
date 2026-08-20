@@ -508,7 +508,7 @@ void ossl_dgram_conn_lookup_foreach(DGRAM_CONN_LOOKUP *lookup,
     if (lookup == NULL || lookup->methods == NULL
         || lookup->methods->foreach == NULL)
         return;
-    lookup->methods->foreach (lookup, cb, arg);
+    lookup->methods->foreach(lookup, cb, arg);
 }
 
 void ossl_dgram_conn_lookup_free(DGRAM_CONN_LOOKUP *lookup)
