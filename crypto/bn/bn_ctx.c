@@ -191,27 +191,26 @@ void BN_CTX_free(BN_CTX *ctx)
 
 void BN_CTX_start(BN_CTX *ctx)
 {
-    (void)BN_CTX_start_ex(ctx, 0);
+    BN_CTX_start_ex(ctx, 0);
 }
 
-int BN_CTX_start_ex(BN_CTX *ctx, unsigned int flags)
+void BN_CTX_start_ex(BN_CTX *ctx, unsigned int flags)
 {
     CTXDBG("ENTER BN_CTX_start()", ctx);
     /* If we're already overflowing ... */
     if (ctx->err_stack || ctx->too_many) {
         ctx->err_stack++;
         CTXDBG("LEAVE BN_CTX_start()", ctx);
-        return 0;
+        return;
     }
     /* (Try to) get a new frame pointer */
     if (!BN_STACK_push(&ctx->stack, ctx->used, flags)) {
         ERR_raise(ERR_LIB_BN, BN_R_TOO_MANY_TEMPORARY_VARIABLES);
         ctx->err_stack++;
         CTXDBG("LEAVE BN_CTX_start()", ctx);
-        return 0;
+        return;
     }
     CTXDBG("LEAVE BN_CTX_start()", ctx);
-    return 1;
 }
 
 void BN_CTX_end(BN_CTX *ctx)

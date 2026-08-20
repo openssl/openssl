@@ -2935,8 +2935,7 @@ static int test_ctx_scrub_on_end_flag(void)
                        (unsigned long)outer_value))
         goto err;
 
-    if (!TEST_true(BN_CTX_start_ex(nctx, BN_CTX_START_FLAG_SCRUB_ON_END)))
-        goto err;
+    BN_CTX_start_ex(nctx, BN_CTX_START_FLAG_SCRUB_ON_END);
     inner_started = 1;
     if (!TEST_ptr(inner = BN_CTX_get(nctx))
         || !TEST_true(BN_set_word(inner, inner_value)))

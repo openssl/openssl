@@ -2,13 +2,16 @@
 
 =head1 NAME
 
-BN_CTX_start, BN_CTX_get, BN_CTX_end - use temporary BIGNUM variables
+BN_CTX_start, BN_CTX_start_ex, BN_CTX_get, BN_CTX_end - use temporary
+BIGNUM variables
 
 =head1 SYNOPSIS
 
  #include <openssl/bn.h>
 
  void BN_CTX_start(BN_CTX *ctx);
+
+ void BN_CTX_start_ex(BN_CTX *ctx, unsigned int flags);
 
  BIGNUM *BN_CTX_get(BN_CTX *ctx);
 
@@ -21,10 +24,15 @@ a B<BN_CTX> (which can been created by using L<BN_CTX_new(3)>)
 in order to save the overhead of repeatedly creating and
 freeing B<BIGNUM>s in functions that are called from inside a loop.
 
-A function must call BN_CTX_start() first. Then, BN_CTX_get() may be
-called repeatedly to obtain temporary B<BIGNUM>s. All BN_CTX_get()
-calls must be made before calling any other functions that use the
-B<ctx> as an argument.
+A function must call BN_CTX_start() or BN_CTX_start_ex() first.
+BN_CTX_start_ex() accepts additional frame-scoped flags. Currently,
+BN_CTX_START_FLAG_SCRUB_ON_END causes the contents of temporary
+B<BIGNUM>s obtained within that frame to be cleared when the matching
+BN_CTX_end() call releases them back to the pool.
+
+Then, BN_CTX_get() may be called repeatedly to obtain temporary
+B<BIGNUM>s. All BN_CTX_get() calls must be made before calling any
+other functions that use the B<ctx> as an argument.
 
 Finally, BN_CTX_end() must be called before returning from the function.
 If B<ctx> is NULL, nothing is done.
@@ -33,7 +41,7 @@ BN_CTX_get() become invalid.
 
 =head1 RETURN VALUES
 
-BN_CTX_start() and BN_CTX_end() return no values.
+BN_CTX_start(), BN_CTX_start_ex(), and BN_CTX_end() return no values.
 
 BN_CTX_get() returns a pointer to the B<BIGNUM>, or B<NULL> on error.
 Once BN_CTX_get() has failed, the subsequent calls will return B<NULL>
@@ -45,6 +53,10 @@ can be obtained by L<ERR_get_error(3)>.
 =head1 SEE ALSO
 
 L<BN_CTX_new(3)>
+
+=head1 HISTORY
+
+BN_CTX_start_ex() was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
