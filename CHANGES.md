@@ -33,6 +33,28 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * A peer's certificate type extension (RFC 7250) is now processed even
+   when no local certificate type list is configured, as though the local
+   list were just X.509.  When there is no certificate type in common the
+   handshake now fails with an `unsupported_certificate` alert only when the
+   affected certificate would actually be exchanged: optional client
+   authentication proceeds without a CertificateRequest, mismatches on
+   handshakes that exchange no certificate (session resumption, PSK) are
+   ignored, and a post-handshake authentication request that cannot be
+   satisfied fails with `SSL_R_WRONG_CERTIFICATE_TYPE` instead of a
+   misleading "invalid config" error.
+
+   A client that does not send the server certificate type extension is
+   treated as accepting only an X.509 server certificate, so a server whose
+   server certificate type list excludes X.509 now refuses such a client,
+   instead of sending it an X.509 certificate.  Likewise, a client that does
+   not send the client certificate type extension can only send an X.509
+   client certificate, so a server whose client certificate type list
+   excludes X.509 no longer requests one from such a client, and fails the
+   handshake if one is required.
+
+   *Viktor Dukhovni*
+
  * Added parameter name pointers for faster `OSSL_PARAM` decoding.
 
    *Dr Paul Dale*
