@@ -89,6 +89,9 @@ static const OSSL_ALGORITHM base_store[] = {
 
 static const OSSL_ALGORITHM base_rands[] = {
     { PROV_NAMES_SEED_SRC, "provider=base", ossl_seed_src_functions },
+#ifndef OPENSSL_NO_CPURNG
+    { PROV_NAMES_CPURNG, "provider=base", ossl_cpurng_functions },
+#endif
 #ifndef OPENSSL_NO_JITTER
     { PROV_NAMES_JITTER, "provider=base", ossl_jitter_functions },
 #endif

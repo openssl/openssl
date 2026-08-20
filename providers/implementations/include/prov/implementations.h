@@ -317,6 +317,7 @@ extern const OSSL_DISPATCH ossl_kdf_argon2id_functions[];
 /* RNGs */
 extern const OSSL_DISPATCH ossl_test_rng_functions[];
 extern const OSSL_DISPATCH ossl_seed_src_functions[];
+extern const OSSL_DISPATCH ossl_cpurng_functions[];
 extern const OSSL_DISPATCH ossl_jitter_functions[];
 extern const OSSL_DISPATCH ossl_crng_test_functions[];
 extern const OSSL_DISPATCH ossl_drbg_hash_functions[];
