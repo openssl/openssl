@@ -180,8 +180,8 @@ static int ossl_fn_rand_range(enum ossl_fn_rand_flag flag, OSSL_FN *r,
 
     if (n == 1) {
         return OSSL_FN_zero(r);
-    } else if (!OSSL_FN_is_bit_set(range, (int)(n - 2))
-        && !OSSL_FN_is_bit_set(range, (int)(n - 3))
+    } else if (!OSSL_FN_is_bit_set(range, n - 2)
+        && !OSSL_FN_is_bit_set(range, n - 3)
         && n < (size_t)r->dsize * OSSL_FN_BITS) {
         /*
          * range = 100..._2, so 3*range (= 11..._2) is exactly one bit longer
