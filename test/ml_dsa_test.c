@@ -616,6 +616,39 @@ err:
     OPENSSL_free(sig);
     return ret;
 }
+static int ml_dsa_mu_empty_message_final_test(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *mdctx = NULL;
+    uint8_t pub[ML_DSA_44_PUB_LEN];
+    uint8_t mu[ML_DSA_MU_BYTES];
+    size_t publen = 0;
+    OSSL_PARAM params[2];
+
+    if (!TEST_ptr(key = do_gen_key("ML-DSA-44", NULL, 0))
+        || !TEST_true(EVP_PKEY_get_octet_string_param(key,
+                          OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub), &publen))) {
+        goto err;
+    }
+    params[0] = OSSL_PARAM_construct_octet_string(OSSL_DIGEST_PARAM_MU_PUB_KEY,
+        pub, publen);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(md = EVP_MD_fetch(lib_ctx, "ML-DSA-MU", NULL))
+        || !TEST_ptr(mdctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestInit_ex2(mdctx, md, params))
+        || !TEST_true(EVP_DigestFinalXOF(mdctx, mu, sizeof(mu))))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_MD_CTX_free(mdctx);
+    EVP_MD_free(md);
+    EVP_PKEY_free(key);
+    return ret;
+}
 
 static int ml_dsa_priv_pub_bad_t0_test(void)
 {
@@ -797,6 +830,7 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
+    ADD_TEST(ml_dsa_mu_empty_message_final_test);
 
     /*
      * Tested only in the default configuration, with a non-default provider
