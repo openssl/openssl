@@ -19,6 +19,7 @@
 #include "internal/safe_math.h"
 #include "fn_local.h"
 #include "../bn/bn_local.h"
+#include <openssl/crypto.h>
 #include <openssl/err.h>
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
@@ -150,6 +151,52 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod)
     }
 
     return ctx;
+}
+
+/*
+ * Thread-safe lazy initialization of a shared Montgomery context cache.
+ * The context construction runs outside the lock, so concurrent lazy
+ * inits on the same slot duplicate the work rather than serialize on it;
+ * the loser of the publication race discards its context and returns the
+ * winner's.
+ *
+ * Constant-time profile:
+ *   - The control flow branches on the cache state (*pmont == NULL or
+ *     not) and on lock acquisition, not on the modulus value.
+ *   - What leaks: whether the cache was already populated, and the leak
+ *     profile of OSSL_FN_MONT_CTX_new() when a new context is built
+ *     (essentially the modulus value, which is expected to be public).
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_set_locked(OSSL_FN_MONT_CTX **pmont,
+    CRYPTO_RWLOCK *lock, const OSSL_FN *mod)
+{
+    OSSL_FN_MONT_CTX *ret = NULL, *newctx = NULL;
+    int lock_failed = 0;
+
+    if (!CRYPTO_atomic_load_ptr((void **)pmont, (void **)&ret, lock))
+        return NULL;
+    if (ret != NULL)
+        return ret;
+
+    newctx = OSSL_FN_MONT_CTX_new(mod);
+    if (newctx == NULL)
+        return NULL;
+
+    /*
+     * The compare-and-set publication, after the local work is done.  If
+     * the exchange fails, |ret| receives the winning context and the loser
+     * |newctx| is discarded; if it failed because of the lock, there is no
+     * winner and NULL is returned.
+     */
+    if (CRYPTO_atomic_cmp_exch_ptr((void **)pmont, (void **)&ret, newctx,
+            lock, &lock_failed)) {
+        ret = newctx;
+    } else {
+        OSSL_FN_MONT_CTX_free(newctx);
+        if (lock_failed)
+            ret = NULL;
+    }
+    return ret;
 }
 
 /*
