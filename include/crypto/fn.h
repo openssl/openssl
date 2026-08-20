@@ -380,6 +380,23 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
 int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
 
 /**
+ * Clear bit @p n of @p a.
+ *
+ * @param[in,out]       a       The operand
+ * @param[in]           n       The bit index (0 = least significant)
+ * @returns             1 on success, 0 on error
+ *
+ * @note An out-of-range index (n < 0 or n >= the operand's width in bits)
+ *       leaves @p a unchanged and fails with
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL (OSSL_FN is fixed-size, so the
+ *       operand cannot be grown to reach @p n).  The only control flow
+ *       branches on the operand's public width (its dsize) and on the
+ *       caller-chosen index @p n, not on limb values; whether the bit was
+ *       previously set is not revealed.
+ */
+int OSSL_FN_clear_bit(OSSL_FN *a, int n);
+
+/**
  * Test whether the unsigned value of @p a equals the single-limb word @p w.
  *
  * @param[in]           a       The operand

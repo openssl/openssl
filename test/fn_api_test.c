@@ -1074,6 +1074,67 @@ err:
     return ret;
 }
 
+static int test_clear_bit(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    const OSSL_FN_ULONG *u = NULL;
+    size_t dsize = 4, i;
+    OSSL_FN_ULONG expect;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(dsize)))
+        goto err;
+
+    /* All bits set: clear the lowest bit, a limb-boundary bit, a high bit. */
+    /* Constness deliberately violated here, as in pollute() */
+    memset((OSSL_FN_ULONG *)ossl_fn_get_words(a), 0xff, dsize * OSSL_FN_BYTES);
+
+    if (!TEST_true(OSSL_FN_clear_bit(a, 0))
+        || !TEST_false(OSSL_FN_is_bit_set(a, 0))
+        || !TEST_true(OSSL_FN_is_bit_set(a, 1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_clear_bit(a, OSSL_FN_BITS))
+        || !TEST_false(OSSL_FN_is_bit_set(a, OSSL_FN_BITS)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_clear_bit(a, (int)(dsize * OSSL_FN_BITS - 1)))
+        || !TEST_false(OSSL_FN_is_bit_set(a, (int)(dsize * OSSL_FN_BITS - 1))))
+        goto err;
+
+    /* Clearing an already-clear bit succeeds and changes nothing. */
+    if (!TEST_true(OSSL_FN_clear_bit(a, 0))
+        || !TEST_false(OSSL_FN_is_bit_set(a, 0)))
+        goto err;
+
+    /* Every other bit must still be set. */
+    u = ossl_fn_get_words(a);
+    for (i = 0; i < dsize; i++) {
+        expect = ~OSSL_FN_ULONG_C(0);
+        if (i == 0)
+            expect &= ~OSSL_FN_ULONG_C(1);
+        if (i == 1)
+            expect &= ~OSSL_FN_ULONG_C(1);
+        if (i == dsize - 1)
+            expect &= ~(OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1));
+        if (!TEST_true(u[i] == expect))
+            goto err;
+    }
+
+    /* Out-of-range indexes fail and leave the operand unchanged. */
+    if (!TEST_false(OSSL_FN_clear_bit(a, -1))
+        || !TEST_false(OSSL_FN_clear_bit(a, (int)(dsize * OSSL_FN_BITS)))
+        || !TEST_false(OSSL_FN_clear_bit(a, (int)(dsize * OSSL_FN_BITS + 7))))
+        goto err;
+    if (!TEST_false(OSSL_FN_is_bit_set(a, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    return ret;
+}
+
 static int test_one(void)
 {
     int ret = 0;
@@ -5337,6 +5398,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
+    ADD_TEST(test_clear_bit);
     ADD_TEST(test_one);
     ADD_TEST(test_zero);
     ADD_ALL_TESTS(test_lshift1, 2);
