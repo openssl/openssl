@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <openssl/opensslconf.h>
 #include <openssl/bn_limbs.h>
+#include <openssl/crypto.h>
 #include <openssl/types.h>
 #include "crypto/types.h"
 
@@ -1286,6 +1287,27 @@ size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
  * @returns             An allocated OSSL_FN_MONT_CTX, or NULL on error.
  */
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
+
+/**
+ * Thread-safe lazy initialization of a shared Montgomery context cache.
+ *
+ * @param[in,out]       pmont   The cache slot to read / fill
+ * @param[in]           lock    A read/write lock guarding @p pmont
+ * @param[in]           mod     The modulus
+ * @returns             The cached Montgomery context for @p mod, or NULL on
+ *                      error.  The returned pointer remains owned by
+ *                      @p pmont; the caller must not free it.
+ *
+ * @note If @p pmont already holds a context, it is returned unchanged;
+ *       whether it was initialized for @p mod is the caller's
+ *       responsibility.  Otherwise a context is built for @p mod outside
+ *       the lock (so concurrent lazy inits on the same slot duplicate the
+ *       work rather than serialize on it) and published under a write
+ *       lock; the loser of the race discards its work and returns the
+ *       winner's context.  Leak profile as for OSSL_FN_MONT_CTX_new().
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_set_locked(OSSL_FN_MONT_CTX **pmont,
+    CRYPTO_RWLOCK *lock, const OSSL_FN *mod);
 
 /**
  * Free a Montgomery context.
