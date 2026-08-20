@@ -33,6 +33,21 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * SSL_verify_client_post_handshake() now fails with an `SSL_R_BAD_WRITE_RETRY`
+   error when called while an application data write is pending retry after
+   `SSL_ERROR_WANT_WRITE`.
+
+   *Viktor Dukhovni*
+
+ * The `s_client` and `s_server` commands can now run with just a private key
+   and no certificate when raw public keys (RFC 7250) are enabled.  The new
+   `-server_cert_type` and `-client_cert_type` options of both commands give
+   explicit control over the advertised certificate types, and the new `s_server`
+   `-no_default_cert` option suppresses the default certificate files without
+   suppressing explicitly named keys and certificates.
+
+   *Viktor Dukhovni*
+
  * A peer's certificate type extension (RFC 7250) is now processed even
    when no local certificate type list is configured, as though the local
    list were just X.509.  When there is no certificate type in common the

@@ -43,6 +43,7 @@ B<openssl> B<s_server>
 [B<-msgfile> I<outfile>]
 [B<-state>]
 [B<-nocert>]
+[B<-no_default_cert>]
 [B<-quiet>]
 [B<-no_resume_ephemeral>]
 [B<-www>]
@@ -133,9 +134,11 @@ B<openssl> B<s_server>
 {- $OpenSSL::safe::opt_trust_synopsis -}
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
-[B<-enable_server_rpk>]
 [B<-enable_client_rpk>]
+[B<-client_cert_type> I<list>]
 [B<-expected-rpks>]
+[B<-enable_server_rpk>]
+[B<-server_cert_type> I<list>]
 [B<-ech_key> I<filename>]
 [B<-ech_dir> I<dirname>]
 [B<-ech_noretry_dir> I<dirname>]
@@ -205,14 +208,23 @@ For details see L<openssl-verification-options(1)/Certificate Extensions>.
 
 =item B<-cert> I<infile>
 
-The certificate to use, most servers cipher suites require the use of a
-certificate and some require a certificate with a certain public key type:
-for example the DSS cipher suites require a certificate containing a DSS
-(DSA) key. If not specified then the filename F<server.pem> will be used.
+The certificate to use; if not specified the filename F<server.pem> is
+used (but see B<-no_default_cert> and B<-nocert>).
+Most cipher suites require a certificate, with a key whose algorithm
+suits the signature algorithms and cipher suites offered by the client;
+see B<-dcert> for configuring an additional certificate with a key of a
+different algorithm.
+When server raw public key support is enabled, a private key alone can
+serve in place of a certificate (see B<-enable_server_rpk> and
+B<-server_cert_type>).
 
 =item B<-cert2> I<infile>
 
-The certificate file to use for servername; default is C<server2.pem>.
+The certificate file for the second server identity, used when the
+client's TLS servername (SNI) extension matches the name given with
+B<-servername>; the default is F<server2.pem>.
+See B<-dcert> for supporting multiple certificate algorithms for one
+server identity, which is a different mechanism.
 
 =item B<-certform> B<DER>|B<PEM>|B<P12>
 
@@ -247,7 +259,8 @@ be used.
 
 =item B<-key2> I<filename>|I<uri>
 
-The private Key file to use for servername if not given via B<-cert2>.
+The private key file for the second server identity (see B<-cert2>),
+if not combined with the certificate in the B<-cert2> file.
 
 =item B<-keyform> B<DER>|B<PEM>|B<P12>
 
@@ -262,14 +275,22 @@ see L<openssl-passphrase-options(1)>.
 
 =item B<-dcert> I<infile>, B<-dkey> I<filename>|I<uri>
 
-Specify an additional certificate and private key, these behave in the
-same manner as the B<-cert> and B<-key> options except there is no default
-if they are not specified (no additional certificate and key is used). As
-noted above some cipher suites require a certificate containing a key of
-a certain type. Some cipher suites need a certificate carrying an RSA key
-and some a DSS (DSA) key. By using RSA and DSS certificates and keys
-a server can support clients which only support RSA or DSS cipher suites
-by using an appropriate certificate.
+Specify an additional certificate and private key of a different
+algorithm for the same server, alongside the B<-cert> and B<-key> pair.
+These behave in the same manner as the B<-cert> and B<-key> options
+except that there is no default: when not specified no additional
+certificate and key are used.
+With two keys of different algorithms configured (for example one RSA
+and one ECDSA, Ed25519 or ML-DSA), the server picks whichever one suits
+the signature algorithms and cipher suites offered by each client.
+This differs from B<-cert2> and B<-key2>, which configure a second
+server identity selected by the TLS servername (SNI) extension rather
+than a second algorithm for the same identity.
+
+A B<-dkey> without a matching B<-dcert> is accepted when server raw
+public key support is enabled (see B<-enable_server_rpk> and
+B<-server_cert_type>); the bare key is then usable only in raw public
+key handshakes.
 
 =item B<-dcert_chain>
 
@@ -397,6 +418,15 @@ See L<ossl_store(7)> for more information on stores and supported schemes.
 If this option is set then no certificate is used. This restricts the
 cipher suites available to the anonymous ones (currently just anonymous
 DH).
+
+=item B<-no_default_cert>
+
+Do not use the built-in default certificate files (see B<-cert> and
+B<-cert2>); only explicitly named certificates and keys are loaded.
+A key (B<-key>) or certificate (B<-cert>) must be given, unless
+B<-nocert> is also in effect.
+With server raw public key support enabled a key alone is sufficient
+(see B<-enable_server_rpk> and B<-server_cert_type>).
 
 =item B<-quiet>
 
@@ -833,16 +863,6 @@ If the server requests a client certificate, then
 verification errors are displayed, for debugging, but the command will
 proceed unless the B<-verify_return_error> option is used.
 
-=item B<-enable_server_rpk>
-
-Enable support for sending raw public keys (RFC7250) to the client.
-A raw public key will be sent by the server, if solicited by the client,
-provided a suitable key and public certificate pair is configured.
-Clients that don't support raw public keys or prefer to use X.509
-certificates can still elect to receive X.509 certificates as usual.
-
-Raw public keys are extracted from the configured certificate/private key.
-
 =item B<-enable_client_rpk>
 
 Enable support for receiving raw public keys (RFC7250) from the client.
@@ -850,6 +870,13 @@ Use of X.509 certificates by the client becomes optional, and clients that
 support raw public keys may elect to use them.
 Clients that don't support raw public keys or prefer to use X.509
 certificates can still elect to send X.509 certificates as usual.
+
+=item B<-client_cert_type> I<list>
+
+Specify the acceptable client certificate types as a comma-separated
+list of B<rpk> and B<x509>, in preference order.
+This is an explicit alternative to B<-enable_client_rpk>, and the two
+are mutually exclusive.
 
 =item B<-expected-rpks> I<file>
 
@@ -867,6 +894,31 @@ is validated as though it were presented as a raw public key instead.
 Verification success or failure is reported as a DANE verification success or
 failure, because verification of raw public keys is internally mapped to
 verification of DANE TLSA records derived from the specified keys.
+
+=item B<-enable_server_rpk>
+
+Enable support for sending raw public keys (RFC7250) to the client.
+A raw public key will be sent by the server, if solicited by the client,
+provided a suitable private key is configured; a certificate is not
+required (see B<-no_default_cert>).
+When at least one certificate is configured (via B<-cert>, B<-dcert> or
+B<-cert2>), both raw public keys and X.509 certificates are supported,
+and clients that don't support raw public keys or prefer to use X.509
+certificates are served as usual.
+With only private keys configured the server supports nothing but raw
+public keys, and the handshake fails for clients that do not offer them.
+
+=item B<-server_cert_type> I<list>
+
+Specify the supported server certificate types as a comma-separated
+list of B<rpk> and B<x509> (case-insensitive, with B<x.509> accepted as
+a synonym for the latter), in preference order.
+This is an explicit alternative to B<-enable_server_rpk>, and the two
+are mutually exclusive.
+The list is used verbatim: with B<x509> omitted the server is raw
+public key only even when a certificate is loaded, and clients that do
+not offer raw public keys are turned away with an
+B<unsupported_certificate> alert.
 
 =item I<host>:I<port>
 
@@ -1015,6 +1067,9 @@ The B<ech> options were added in OpenSSL 4.0.
 The B<-engine> option was removed in OpenSSL 4.0.
 
 The B<-expected-rpks> option was added in OpenSSL 4.0.
+
+The B<-no_default_cert>, B<-server_cert_type> and B<-client_cert_type>
+options were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
