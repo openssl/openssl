@@ -101,6 +101,7 @@ static int dtls13_cipher_overhead(int idx)
 
 int setup_tests(void)
 {
+    OPENSSL_init_ssl(0, NULL);
     ADD_TEST(cipher_overhead);
     ADD_ALL_TESTS(dtls13_cipher_overhead, OSSL_NELEM(dtls13_ciphers));
     return 1;
