@@ -23,7 +23,7 @@ static unsigned char conv_ascii2bin(unsigned char a,
     const unsigned char *table);
 size_t evp_encodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int dlen, int *wrap_cnt);
-int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n, int eof);
 /*-
  * 64 char lines
@@ -413,7 +413,7 @@ static ossl_inline int evp_decodeblock_trim(const unsigned char **f, int n,
     return n;
 }
 
-int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
+static int evp_decodeblock_int(EVP_ENCODE_CTX *ctx, unsigned char *t,
     const unsigned char *f, int n,
     int eof)
 {
