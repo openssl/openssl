@@ -529,7 +529,8 @@ static int test_decode_partial_ctx(int split)
     if (!TEST_int_eq(pemlen, PARTIAL_PEM_LEN))
         goto end;
 
-    if (!TEST_int_eq(decode_full(pem, pemlen, out_ref, &outlen_ref, 0), 0))
+    if (!TEST_int_eq(decode_scalar_ref(pem, pemlen, out_ref, &outlen_ref, 0),
+            0))
         goto end;
 
     /* Two-call decode split at position 'split' */
@@ -576,7 +577,8 @@ static int test_decode_partial_ctx(int split)
                 outlen_ref);
             goto end;
         }
-        if (!TEST_mem_eq(out_split, total, out_ref, outlen_ref)) {
+        if (!TEST_mem_eq(out_split, total, out_ref, outlen_ref)
+            || !TEST_mem_eq(out_split, total, raw, PARTIAL_RAW_LEN)) {
             TEST_info("split=%d data mismatch", split);
             goto end;
         }
