@@ -1075,6 +1075,27 @@ err:
     return ok;
 }
 
+/* Inhibit ticking at the QUIC_ENGINE level */
+DEF_FUNC(hf_set_engine_tick_inhibit)
+{
+    int ok = 0;
+    uint64_t inhibit;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(inhibit);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_ptr(ch = ossl_quic_conn_get_channel(ssl)))
+        goto err;
+
+    ossl_quic_engine_set_inhibit_tick(ossl_quic_channel_get0_engine(ch),
+        inhibit != 0);
+    ok = 1;
+err:
+    return ok;
+}
+
 /*
  * Skip fake time and wait for the assist thread to catch up. It waits on real
  * time internally, so wake it and spin until the event timeout is back in the
@@ -1770,6 +1791,20 @@ err:
     (OP_PUSH_PZ(#name),      \
         OP_PUSH_U64(1),      \
         OP_FUNC(hf_set_tick_active))
+
+/*
+ * Inhibits/uninhibits ticking of the QUIC_ENGINE that "name" belongs  (see
+ * see hf_set_engine_tick_inhibit).
+ */
+#define OP_ENGINE_TICK_DISABLE(name) \
+    (OP_SELECT_SSL(0, name),         \
+        OP_PUSH_U64(1),              \
+        OP_FUNC(hf_set_engine_tick_inhibit))
+
+#define OP_ENGINE_TICK_ENABLE(name) \
+    (OP_SELECT_SSL(0, name),        \
+        OP_PUSH_U64(0),             \
+        OP_FUNC(hf_set_engine_tick_inhibit))
 
 #define OP_SKIP_TIME_WAIT(name, ms) \
     (OP_SELECT_SSL(0, name),        \
