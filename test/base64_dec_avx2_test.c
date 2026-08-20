@@ -702,21 +702,21 @@ static const struct block_vec {
     const char *in;
     int expected;
 } block_vecs[] = {
-    {"internal spaces", A30 SP4 A30, -1},
-    {"internal space after full block", A64 " " A4, -1},
-    {"leading space", " " A64, 48},
-    {"leading tab", "\t" A64, 48},
-    {"leading LF", "\n" A64, -1},
-    {"leading CR", "\r" A64, -1},
-    {"trailing LF", A64 "\n", 48},
-    {"trailing space", A64 " ", 48},
-    {"trailing LF LF", A64 "\n\n", 48},
-    {"trailing junk", A64 "!", -1},
-    {"invalid char in first quad", "!" A63, -1},
-    {"invalid char in last quad", A63 "!", -1},
-    {"length not a multiple of four", A64 "A", -1},
-    {"padding at the end", A62 "==", 48},
-    {"padding mid-input", A34 "==" A28, 48},
+    { "internal spaces", A30 SP4 A30, -1 },
+    { "internal space after full block", A64 " " A4, -1 },
+    { "leading space", " " A64, 48 },
+    { "leading tab", "\t" A64, 48 },
+    { "leading LF", "\n" A64, -1 },
+    { "leading CR", "\r" A64, -1 },
+    { "trailing LF", A64 "\n", 48 },
+    { "trailing space", A64 " ", 48 },
+    { "trailing LF LF", A64 "\n\n", 48 },
+    { "trailing junk", A64 "!", -1 },
+    { "invalid char in first quad", "!" A63, -1 },
+    { "invalid char in last quad", A63 "!", -1 },
+    { "length not a multiple of four", A64 "A", -1 },
+    { "padding at the end", A62 "==", 48 },
+    { "padding mid-input", A34 "==" A28, 48 },
 };
 
 static int check_decode_block(const struct block_vec *v)
@@ -764,13 +764,13 @@ static const struct update_vec {
     const char *in;
     int rv, outl;
 } update_vecs[] = {
-    {"invalid byte after full lines", A64 "\n" A64 "\n!AAA", -1, 96},
-    {"invalid byte in first block", A63 "\f", -1, 0},
-    {"invalid bytes between whitespace", A64 "\n" A4 "!!!!" SP56, -1, 48},
-    {"invalid byte in stashed leftover", A64 "\n" "AA" SP57 A4 "!", -1, 48},
-    {"leftover stashed whole", "A " A62, 1, 0},
-    {"stash into padding and trailing data", "A " A62 "=A", -1, 47},
-    {"quad-aligned leftover stashed", "A" SP4 A60, 1, 0},
+    { "invalid byte after full lines", A64 "\n" A64 "\n!AAA", -1, 96 },
+    { "invalid byte in first block", A63 "\f", -1, 0 },
+    { "invalid bytes between whitespace", A64 "\n" A4 "!!!!" SP56, -1, 48 },
+    { "invalid byte in stashed leftover", A64 "\nAA" SP57 A4 "!", -1, 48 },
+    { "leftover stashed whole", "A " A62, 1, 0 },
+    { "stash into padding and trailing data", "A " A62 "=A", -1, 47 },
+    { "quad-aligned leftover stashed", "A" SP4 A60, 1, 0 },
 };
 
 static int check_update(const struct update_vec *v)
@@ -787,7 +787,7 @@ static int check_update(const struct update_vec *v)
         goto end;
     EVP_DecodeInit(ctx);
     rv = EVP_DecodeUpdate(ctx, out, &outl, (const unsigned char *)v->in,
-                          inlen);
+        inlen);
     if (!TEST_int_eq(rv, v->rv) || !TEST_int_eq(outl, v->outl)
         || !TEST_int_le(outl, (int)sizeof(zeros))
         || !TEST_mem_eq(out, outl, zeros, outl)) {
@@ -829,11 +829,11 @@ int setup_tests(void)
 
     /* EVP_DecodeBlock accept/reject parity with the scalar path */
     ADD_ALL_TESTS(test_decode_block_vec,
-                  (int)(sizeof(block_vecs) / sizeof(block_vecs[0])));
+        (int)(sizeof(block_vecs) / sizeof(block_vecs[0])));
 
     /* EVP_DecodeUpdate outl and ctx state parity with the scalar path */
     ADD_ALL_TESTS(test_decode_update_vec,
-                  (int)(sizeof(update_vecs) / sizeof(update_vecs[0])));
+        (int)(sizeof(update_vecs) / sizeof(update_vecs[0])));
 
     return 1;
 }
