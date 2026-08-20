@@ -72,7 +72,7 @@ typedef struct {
 } ALGORITHM;
 
 typedef struct {
-    SPARSE_ARRAY_OF(ALGORITHM) * algs;
+    SPARSE_ARRAY_OF(ALGORITHM) *algs;
 
     QUERY *cache_lists[MAX_CACHE_LINES];
     QUERY *archive;
