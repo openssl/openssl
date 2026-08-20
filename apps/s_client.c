@@ -2264,6 +2264,7 @@ int s_client_main(int argc, char **argv)
             goto end;
         }
     } else if (rpk_files != NULL) {
+        SSL_CTX_dane_set_flags(ctx, DANE_FLAG_NO_DANE_EE_NAMECHECKS);
         if (SSL_CTX_dane_enable(ctx) <= 0) {
             BIO_printf(bio_err, "%s: Error enabling RPK verification\n", prog);
             goto end;
