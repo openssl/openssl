@@ -20,7 +20,7 @@
 #include <unistd.h>
 #include <errno.h>
 
-static int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
+int s390x_mod_exp_hw(BIGNUM *r, const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m)
 {
     struct ica_rsa_modexpo me;
