@@ -41,7 +41,7 @@ jobs:
   # Only a dispatch carries inputs, so this is skipped on the nightly cron.
   validate-dispatch-inputs:
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       (inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != '')
     uses: ./.github/workflows/validate-dispatch-inputs.yml
     with:
@@ -52,7 +52,7 @@ jobs:
   alpine:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -95,7 +95,7 @@ jobs:
   linux:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -152,7 +152,7 @@ jobs:
   macos:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -183,7 +183,7 @@ jobs:
   windows:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
@@ -256,7 +256,7 @@ jobs:
   linux-arm64:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-24.04-arm
@@ -279,7 +279,7 @@ jobs:
   linux-x86:
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     runs-on: ubuntu-latest
@@ -326,6 +326,8 @@ jobs:
   linux-ppc64le:
     runs-on: linux-ppc64le
     needs: [validate-dispatch-inputs]
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
     if: |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
@@ -353,6 +355,8 @@ jobs:
   linux-s390x:
     runs-on: linux-s390x
     needs: [validate-dispatch-inputs]
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
     if: |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
@@ -380,6 +384,8 @@ jobs:
   linux-riscv64:
     runs-on: linux-riscv64
     needs: [validate-dispatch-inputs]
+    # Self-hosted runner; its label only exists in openssl/openssl, so keep
+    # this job out of forks (a manual dispatch there would hang forever).
     if: |
       github.repository == 'openssl/openssl' &&
       ( github.event_name == 'schedule' ||
@@ -408,7 +414,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     steps:
@@ -452,7 +458,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: [validate-dispatch-inputs]
     if: |
-      github.repository == 'openssl/openssl' &&
+      (github.repository == 'openssl/openssl' || github.event_name == 'workflow_dispatch') &&
       !cancelled() &&
       (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     steps:
