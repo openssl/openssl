@@ -281,10 +281,14 @@ OpenSSL Releases
 
  * X509 certificate verification no longer consults the subject
    distinguished name by default.  Previously, when a certificate
-   contained no subject alternative name of the type being checked, the
-   subject commonName (for host name checks) or emailAddress (for email
-   checks) was matched instead.  This fallback now happens only when the
-   `X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT` flag is set.
+   contained no subject alternative name of the type being checked,
+   the subject commonName (for host name checks) or emailAddress (for
+   email checks) was matched instead.  The subject dn is now checked
+   only when the `X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT` flag is set.
+   Correspondingly, during chain verification DNS name constraints are
+   applied to the subject commonName of the leaf certificate only when
+   that flag is set, rather than whenever the leaf had no DNS subject
+   alternative name.
 
    *Bob Beck*
 
