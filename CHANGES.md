@@ -31,6 +31,13 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added `BN_CTX_start_ex()`, which allows callers to request that temporary
+   `BIGNUM` contents are cleared when the corresponding `BN_CTX_end()` is
+   called. This provides optional cleanup of sensitive intermediate values
+   while allowing reusable `BN_CTX` allocations to be retained.
+
+   *Wolfgang Beck*
+
  * The `tsget` utility now uses `Net::Curl::Easy` (from the `Net-Curl` CPAN
    distribution) instead of the abandoned `WWW::Curl::Easy`.  Users who relied
    on `tsget` must install `Net::Curl::Easy` before upgrading.

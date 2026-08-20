@@ -215,6 +215,12 @@ BN_CTX *BN_CTX_new(void);
 BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx);
 BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
+/**
+ * @brief Starts a BN_CTX frame with the specified flags.
+ * @param ctx the BN_CTX
+ * @param flags frame flags
+ * @see BN_CTX_start_ex(3)
+ */
 void BN_CTX_start_ex(BN_CTX *ctx, unsigned int flags);
 void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
