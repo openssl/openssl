@@ -719,6 +719,11 @@ static const struct block_vec {
     { "length not a multiple of four", A64 "A", -1 },
     { "padding at the end", A62 "==", 48 },
     { "padding mid-input", A34 "==" A28, 48 },
+    { "high bit bytes", A64 "\xC3\xA9\xC3\xA9", -1 },
+    { "vertical tab in quad", A60 "\vAAA", -1 },
+    { "EOF marker in last quad", A60 "-AAA", -1 },
+    { "trailing EOF marker", A64 "-", 48 },
+    { "whitespace only", SP56 SP8, 0 },
 };
 
 static int check_decode_block(const struct block_vec *v)
@@ -764,15 +769,18 @@ static int test_decode_block_vec(int i)
 static const struct update_vec {
     const char *desc;
     const char *in;
-    int rv, outl;
+    int rv, outl, num;
 } update_vecs[] = {
-    { "invalid byte after full lines", A64 "\n" A64 "\n!AAA", -1, 96 },
-    { "invalid byte in first block", A63 "\f", -1, 0 },
-    { "invalid bytes between whitespace", A64 "\n" A4 "!!!!" SP56, -1, 48 },
-    { "invalid byte in stashed leftover", A64 "\nAA" SP57 A4 "!", -1, 48 },
-    { "leftover stashed whole", "A " A62, 1, 0 },
-    { "stash into padding and trailing data", "A " A62 "=A", -1, 47 },
-    { "quad-aligned leftover stashed", "A" SP4 A60, 1, 0 },
+    { "invalid byte after full lines", A64 "\n" A64 "\n!AAA", -1, 96, 0 },
+    { "invalid byte in first block", A63 "\f", -1, 0, 63 },
+    { "invalid bytes between whitespace", A64 "\n" A4 "!!!!" SP56, -1, 48, 4 },
+    { "invalid byte in stashed leftover", A64 "\nAA" SP57 A4 "!", -1, 48, 6 },
+    { "leftover stashed whole", "A " A62, 1, 0, 63 },
+    { "stash into padding and trailing data", "A " A62 "=A", -1, 47, 0 },
+    { "quad-aligned leftover stashed", "A" SP4 A60, 1, 0, 61 },
+    { "high bit byte", A64 "\xC3\xA9", -1, 48, 0 },
+    { "EOF marker after full block", A64 "\n-XYZ", 0, 48, 0 },
+    { "vertical tab in quad", A64 "\n" A60 "\vAAA", -1, 48, 60 },
 };
 
 static int check_update(const struct update_vec *v)
@@ -791,6 +799,7 @@ static int check_update(const struct update_vec *v)
     rv = EVP_DecodeUpdate(ctx, out, &outl, (const unsigned char *)v->in,
         inlen);
     if (!TEST_int_eq(rv, v->rv) || !TEST_int_eq(outl, v->outl)
+        || !TEST_int_eq(EVP_ENCODE_CTX_num(ctx), v->num)
         || !TEST_int_le(outl, (int)sizeof(zeros))
         || !TEST_mem_eq(out, outl, zeros, outl)) {
         TEST_info("EVP_DecodeUpdate semantics: %s", v->desc);
