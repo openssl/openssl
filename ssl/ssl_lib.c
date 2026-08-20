@@ -7755,6 +7755,7 @@ void SSL_set_post_handshake_auth(SSL *ssl, int val)
 int SSL_verify_client_post_handshake(SSL *ssl)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(ssl);
+    int canask;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(ssl)) {
@@ -7801,9 +7802,12 @@ int SSL_verify_client_post_handshake(SSL *ssl)
     sc->post_handshake_auth = SSL_PHA_REQUEST_PENDING;
 
     /* checks verify_mode and algorithm_auth */
-    if (!send_certificate_request(sc)) {
+    if ((canask = send_certificate_request(sc)) <= 0) {
         sc->post_handshake_auth = SSL_PHA_EXT_RECEIVED; /* restore on error */
-        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_CONFIG);
+        if (canask < 0)
+            ERR_raise(ERR_LIB_SSL, SSL_R_WRONG_CERTIFICATE_TYPE);
+        else
+            ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_CONFIG);
         return 0;
     }
 

@@ -32,6 +32,19 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * A peer's certificate type extension (RFC 7250) is now processed even
+   when no local certificate type list is configured, as though the local
+   list were just X.509.  When there is no certificate type in common the
+   handshake now fails with an unsupported_certificate alert only when the
+   affected certificate would actually be exchanged: optional client
+   authentication proceeds without a CertificateRequest, mismatches on
+   handshakes that exchange no certificate (session resumption, PSK) are
+   ignored, and a post-handshake authentication request that cannot be
+   satisfied fails with SSL_R_WRONG_CERTIFICATE_TYPE instead of a
+   misleading "invalid config" error.
+
+   *Viktor Dukhovni*
+
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
    `OSSL_PARAM_locate()` calls.  This should ensure that the list
