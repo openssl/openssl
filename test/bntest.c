@@ -2916,6 +2916,8 @@ static int test_ctx_scrub_on_end_flag(void)
 {
     BN_CTX *nctx = NULL;
     BIGNUM *outer = NULL, *inner = NULL, *reused = NULL, *next = NULL;
+    const BN_ULONG outer_value = (BN_ULONG)0x11111111UL;
+    const BN_ULONG inner_value = (BN_ULONG)0x22222222UL;
     int st = 0;
     int outer_started = 0, inner_started = 0, next_started = 0;
 
@@ -2925,24 +2927,29 @@ static int test_ctx_scrub_on_end_flag(void)
     BN_CTX_start(nctx);
     outer_started = 1;
     if (!TEST_ptr(outer = BN_CTX_get(nctx))
-        || !TEST_true(BN_set_word(outer, 0x11111111UL)))
+        || !TEST_true(BN_set_word(outer, outer_value)))
         goto err;
 
-    bn_get_words(outer)[0] = (BN_ULONG)0x11111111UL;
+    /* Check the first limb content directly, not the limb pointer value. */
+    if (!TEST_ulong_eq((unsigned long)bn_get_words(outer)[0],
+                       (unsigned long)outer_value))
+        goto err;
 
     if (!TEST_true(BN_CTX_start_ex(nctx, BN_CTX_START_FLAG_SCRUB_ON_END)))
         goto err;
     inner_started = 1;
     if (!TEST_ptr(inner = BN_CTX_get(nctx))
-        || !TEST_true(BN_set_word(inner, 0x22222222UL)))
+        || !TEST_true(BN_set_word(inner, inner_value)))
         goto err;
 
-    bn_get_words(inner)[0] = (BN_ULONG)0x22222222UL;
+    if (!TEST_ulong_eq((unsigned long)bn_get_words(inner)[0],
+                       (unsigned long)inner_value))
+        goto err;
     BN_CTX_end(nctx);
     inner_started = 0;
 
     if (!TEST_ptr(reused = BN_CTX_get(nctx))
-        || !TEST_true(bn_get_words(reused)[0] == 0))
+        || !TEST_ulong_eq((unsigned long)bn_get_words(reused)[0], 0))
         goto err;
 
     BN_CTX_end(nctx);
@@ -2951,7 +2958,8 @@ static int test_ctx_scrub_on_end_flag(void)
     BN_CTX_start(nctx);
     next_started = 1;
     if (!TEST_ptr(next = BN_CTX_get(nctx))
-        || !TEST_true(bn_get_words(next)[0] == (BN_ULONG)0x11111111UL))
+        || !TEST_ulong_eq((unsigned long)bn_get_words(next)[0],
+                          (unsigned long)outer_value))
         goto err;
 
     st = 1;
