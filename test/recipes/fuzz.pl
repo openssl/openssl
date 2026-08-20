@@ -179,7 +179,7 @@ sub fuzz_test_names {
     return @names;
 }
 
-# match a test name against TESTS env filter (test/run_tests.pl semantics)
+# match a test name against TESTS env filter (OpenSSL::TestHarness semantics)
 sub fuzz_match_tests_filter {
     my ($name, $filter) = @_;
     return 1 unless defined $filter && $filter ne '';
