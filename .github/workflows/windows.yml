@@ -136,6 +136,9 @@ jobs:
       run: |
         call "${{ matrix.platform.vcvars }}"
         perl ../util/checkplatformsyms.pl ../util/platform_symbols/windows-symbols.txt libcrypto-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' || '' }}.dll ./libssl-%OSSL_MAJOR%${{ matrix.platform.arch == 'amd64' && '-x64' || '' }}.dll
+    # The cmake config test requires cmake; the Windows runners don't have it
+    # installed by default
+    - uses: lukka/get-cmake@v3.22.2
     - name: test
       working-directory: _build
       shell: cmd
@@ -202,6 +205,9 @@ jobs:
         7z.exe x coreinfo/Coreinfo.zip
         ./Coreinfo64.exe -accepteula -f
         ./apps/openssl.exe version -c
+    # The cmake config test requires cmake; the Windows runners don't have it
+    # installed by default
+    - uses: lukka/get-cmake@v3.22.2
     - name: test
       working-directory: _build
       shell: cmd
