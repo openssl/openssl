@@ -89,6 +89,35 @@ Raw public keys may be used in place of certificates when specified in the
 certificate type and negotiated.
 Raw public keys have no subject, issuer, validity dates or digital signature.
 
+A peer's certificate type extension takes part in negotiation even when no
+local list is configured: the local side then negotiates as though its list
+were just X.509.
+
+When the two sides have no server certificate type in common, the outcome
+depends on whether a server Certificate message would actually be exchanged.
+When it would, the server fails the handshake with an
+B<unsupported_certificate> alert while constructing the ServerHello (TLS 1.2
+and earlier) or EncryptedExtensions (TLS 1.3) message.
+When no server Certificate message is exchanged (session resumption, PSK,
+SRP and anonymous ciphers) the mismatch is harmless and the handshake
+proceeds.
+A server whose selected identity is a private key with no certificate
+cannot take part in an X.509 handshake at all; when X.509 is negotiated
+regardless, certificate selection fails and the handshake is terminated
+with a B<handshake_failure> alert.
+
+A client certificate type mismatch is fatal, with an
+B<unsupported_certificate> alert, only when a client certificate is
+required (B<SSL_VERIFY_FAIL_IF_NO_PEER_CERT>); when client authentication
+is merely optional the server omits the CertificateRequest message and the
+handshake continues without it.
+A post-handshake authentication request that cannot be satisfied for the
+same reason fails cleanly; see L<SSL_verify_client_post_handshake(3)>.
+
+On a resumed session no certificate is exchanged, but the certificate type
+extensions are still negotiated and the negotiated type from the getters
+below reflects the result.
+
 Use the L<SSL_get_negotiated_client_cert_type(3)> and
 L<SSL_get_negotiated_server_cert_type(3)> functions to get the negotiated cert
 type values (at the conclusion of the handshake, or in callbacks that happen
@@ -188,6 +217,11 @@ L<SSL_use_certificate(3)>
 =head1 HISTORY
 
 These functions were added in OpenSSL 3.2.
+
+In OpenSSL 4.1 a peer's certificate type extension is processed even when
+no local list is configured, instead of being ignored, and a certificate
+type mismatch is an error only when the affected certificate would
+actually be exchanged.
 
 =head1 COPYRIGHT
 

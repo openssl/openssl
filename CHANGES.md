@@ -33,6 +33,19 @@ OpenSSL 4.2
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
 
+ * A peer's certificate type extension (RFC 7250) is now processed even
+   when no local certificate type list is configured, as though the local
+   list were just X.509.  When there is no certificate type in common the
+   handshake now fails with an `unsupported_certificate` alert only when the
+   affected certificate would actually be exchanged: optional client
+   authentication proceeds without a CertificateRequest, mismatches on
+   handshakes that exchange no certificate (session resumption, PSK) are
+   ignored, and a post-handshake authentication request that cannot be
+   satisfied fails with `SSL_R_WRONG_CERTIFICATE_TYPE` instead of a
+   misleading "invalid config" error.
+
+   *Viktor Dukhovni*
+
  * s390x: Disable mod-expo offloading to a crypto card for small exponents.
    Add a new keyword `cex_min_bits:<bits>` for the `OPENSSL_s390xcap`
    environment variable to specify the minimum number of bits that the
