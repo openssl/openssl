@@ -17,7 +17,6 @@
 #include "ssl_local.h"
 #include "internal/time.h"
 #include "internal/ssl_unwrap.h"
-#include "internal/hashfunc.h"
 #include "internal/dtls_record_rx.h"
 #include "internal/dgram_demux.h"
 #include "internal/dgram_conn_lookup.h"

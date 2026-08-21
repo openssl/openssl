@@ -16,7 +16,7 @@
 #include "internal/tsan_assist.h"
 #include "x509_local.h"
 #include "crypto/objects/obj_dat.h"
-#include "internal/hashfunc.h"
+#include "internal/xxhash.h"
 
 static int check_ssl_ca(const X509 *x);
 static int check_purpose_ssl_client(const X509_PURPOSE *xp, const X509 *x,
@@ -427,7 +427,7 @@ static unsigned long oid_hash(const void *p)
 {
     const ASN1_OBJECT *a = p;
 
-    return (unsigned long)ossl_fnv1a_hash((uint8_t *)a->data, a->length);
+    return (unsigned long)ossl_xxh3(a->data, a->length, 0);
 }
 
 static int oid_cmp(const void *a, const void *b)
