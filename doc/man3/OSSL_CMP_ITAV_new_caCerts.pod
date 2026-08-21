@@ -21,7 +21,7 @@ OSSL_CMP_ITAV_get1_certReqTemplate
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  OSSL_CMP_ITAV *OSSL_CMP_ITAV_new_caCerts(const STACK_OF(X509) *caCerts);
  int OSSL_CMP_ITAV_get0_caCerts(const OSSL_CMP_ITAV *itav, STACK_OF(X509) **out);
@@ -205,6 +205,10 @@ OSSL_CMP_CRLSTATUS_get0(), OSSL_CMP_ITAV_new0_crlStatusList(),
 OSSL_CMP_ITAV_get0_crlStatusList(), OSSL_CMP_ITAV_new_crls(),
 OSSL_CMP_ITAV_get0_crls(), OSSL_CMP_ITAV_new0_certReqTemplate()
 and OSSL_CMP_ITAV_get1_certReqTemplate() were added in OpenSSL 3.4.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

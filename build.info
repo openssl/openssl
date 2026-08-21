@@ -2,6 +2,9 @@
 # %skipdir there for further explanations.
 
 SUBDIRS=crypto ssl apps util fuzz providers doc
+IF[{- !$disabled{cmp} -}]
+  SUBDIRS=cmp
+ENDIF
 IF[{- !$disabled{tests} -}]
   SUBDIRS=test
 ENDIF
@@ -14,6 +17,11 @@ LIBS=libcrypto libssl
 INCLUDE[libcrypto]=. include
 INCLUDE[libssl]=. include
 DEPEND[libssl]=libcrypto
+IF[{- !$disabled{cmp} -}]
+  LIBS{shlib_version=1}=libcmp
+  INCLUDE[libcmp]=. include
+  DEPEND[libcmp]=libcrypto
+ENDIF
 
 # Empty DEPEND "indices" means the dependencies are expected to be built
 # unconditionally before anything else.
@@ -449,6 +457,11 @@ GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
 GENERATE[providers/implementations/rands/test_rng.inc]=\
     providers/implementations/rands/test_rng.inc.in
 GENERATE[include/openssl/core_names.h]=include/openssl/core_names.h.in
+IF[{- !$disabled{cmp} -}]
+  GENERATE[include/libcmp/names.h]=util/mklibcmpnames.pl
+  DEPEND[include/libcmp/names.h]=util/libcmp.num
+  DEPEND[]=include/libcmp/names.h
+ENDIF
 
 IF[{- defined $target{shared_defflag} -}]
   SHARED_SOURCE[libcrypto]=libcrypto.ld
@@ -457,6 +470,12 @@ IF[{- defined $target{shared_defflag} -}]
   GENERATE[libcrypto.ld]=util/libcrypto.num libcrypto
   GENERATE[libssl.ld]=util/libssl.num libssl
   DEPEND[libcrypto.ld libssl.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
+
+  IF[{- !$disabled{cmp} -}]
+    SHARED_SOURCE[libcmp]=libcmp.ld
+    GENERATE[libcmp.ld]=util/libcmp.num libcmp LIBCMP --symbol-prefix=LIBCMP_
+    DEPEND[libcmp.ld]=configdata.pm util/perl/OpenSSL/Ordinals.pm
+  ENDIF
 ENDIF
 
 IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
@@ -466,6 +485,12 @@ IF[{- $config{target} =~ /^(?:Cygwin|mingw|VC-|BC-)/ -}]
 
   SHARED_SOURCE[libcrypto]=libcrypto.rc
   SHARED_SOURCE[libssl]=libssl.rc
+
+  IF[{- !$disabled{cmp} -}]
+    GENERATE[libcmp.rc]=util/mkrc.pl libcmp
+    DEPEND[libcmp.rc]=configdata.pm
+    SHARED_SOURCE[libcmp]=libcmp.rc
+  ENDIF
 ENDIF
 
 # These files set the build directory up for CMake inclusion.

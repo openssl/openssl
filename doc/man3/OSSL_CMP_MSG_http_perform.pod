@@ -7,7 +7,7 @@ OSSL_CMP_MSG_http_perform
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp.h>
+ #include <libcmp/cmp.h>
 
  OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
                                          const OSSL_CMP_MSG *req);
@@ -60,6 +60,10 @@ L<OSSL_CMP_CTX_new(3)>, L<OSSL_HTTP_open(3)>, and L<OSSL_HTTP_proxy_connect(3)>.
 The OpenSSL CMP support was added in OpenSSL 3.0.
 
 The OSSL_CMP_MSG_http_perform() use of transfer_cb_arg was added in OpenSSL 3.5.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

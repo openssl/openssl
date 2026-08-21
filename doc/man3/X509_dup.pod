@@ -33,6 +33,7 @@ CMS_ContentInfo_new_ex,
 CMS_ContentInfo_print_ctx,
 CMS_EnvelopedData_it,
 CMS_EnvelopedData_dup,
+CMS_SignedData_it,
 CMS_ReceiptRequest_free,
 CMS_ReceiptRequest_new,
 CMS_SignedData_free,
@@ -538,6 +539,8 @@ deprecated in 3.0.
 
 CMS_EnvelopedData_it(), CMS_SignedData_free(), CMS_SignedData_new()
 were added in OpenSSL 3.2.
+
+CMS_SignedData_it() was made public in OpenSSL 4.1.
 
 DIST_POINT_NAME_dup(), OSSL_IETF_ATTR_SYNTAX_free(), OSSL_IETF_ATTR_SYNTAX_it(),
 OSSL_IETF_ATTR_SYNTAX_new(), OSSL_ATTRIBUTES_SYNTAX_free(),
