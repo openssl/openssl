@@ -442,6 +442,39 @@ jobs:
         name: "ci@address_ub_sanitizer"
         path: artifacts.tar.gz
 
+  # Same configuration as the run-checker-merge variant, promoted to per-PR CI.
+  # no-asm builds the sanitizer-instrumented C fallback primitives (e.g. the
+  # OPENSSL_cleanse() C implementation), which the asm-enabled asan job above
+  # cannot observe; keep both, as each covers C code the other does not build.
+  address_ub_sanitizer_no_asm:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: Adjust ASLR for sanitizer
+      run: |
+        sudo cat /proc/sys/vm/mmap_rnd_bits
+        sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      run: CC=clang ./config --strict-warnings --banner=Configured enable-asan enable-ubsan no-shared no-asm -DOPENSSL_SMALL_FOOTPRINT -fno-sanitize=function && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
+    - name: make test
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@address_ub_sanitizer_no_asm"
+        path: artifacts.tar.gz
+
   fuzz_tests:
     runs-on: ubuntu-latest
     steps:
