@@ -225,3 +225,40 @@ jobs:
       run: ./config ${{ matrix.platform.arch }}  --strict-warnings --banner=Configured ${{ matrix.platform.config }}
     - name: make
       run: make -j4 -s
+
+  external-tests-crypto-auditing:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout crypto-auditing submodule
+      run: .github/retry git submodule update --init --depth 1 crypto-auditing
+    - name: package installs
+      run: |
+        .github/retry sh -c "sudo apt-get update &&
+          sudo apt-get -yq install systemtap-sdt-dev libbpf-dev libelf-dev zlib1g-dev \
+            clang libclang-dev gcc-multilib linux-tools-common linux-tools-$(uname -r)"
+    - name: generate vmlinux.h for the runner kernel
+      run: |
+        bpftool btf dump file /sys/kernel/btf/vmlinux format c > crypto-auditing/agent/src/bpf/vmlinux.h
+        cp crypto-auditing/agent/src/bpf/vmlinux.h crypto-auditing/agent/tests/agenttest/src/bpf/
+    - name: config
+      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests no-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    # Fetch crates separately so a compile error is not retried as an environment failure
+    - name: fetch crypto-auditing dependencies
+      working-directory: crypto-auditing
+      run: |
+        "$GITHUB_WORKSPACE"/.github/retry cargo fetch
+    - name: build crypto-auditing
+      working-directory: crypto-auditing
+      run: cargo build --offline --verbose
+    # crau-agent loads BPF programs, so the test runs as root with the runner's Rust toolchain
+    - name: test external crypto-auditing
+      run: sudo -E env "PATH=$PATH" "HOME=$HOME" make test TESTS="test_external_crypto_auditing" V=1
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c
