@@ -848,3 +848,34 @@ jobs:
         cd ../..
     - name: Test ECH with NSS
       run: make test TESTS='test_external_ech_nss' V=1
+
+  external-tests-crau:
+    runs-on: ubuntu-latest
+    container:
+      image: fedora:latest
+      options: --privileged
+    steps:
+    - name: package installs
+      run: |
+        dnf install -y --setopt=install_weak_deps=False perl-FindBin perl-IPC-Cmd perl-File-Compare perl-File-Copy perl-Test-Simple perl-Test-Harness make g++ perl git cargo clang clippy kernel-devel libbpf-devel llvm-devel rustfmt systemtap-sdt-devel jq procps
+    - uses: actions/checkout@v6
+      with:
+        submodules: recursive
+        persist-credentials: false
+    - name: checkout crypto-auditing submodule
+      run: |
+        git config --global --add safe.directory "$GITHUB_WORKSPACE"
+        git submodule update --init --depth 1 crypto-auditing
+    - name: Copy vmlinux.h from kernel-devel
+      run: |
+        cp $(rpm -ql kernel-devel | grep '/vmlinux.h$' | tail -1) .
+    - name: config
+      run: ./config --strict-warnings --banner=Configured --debug enable-external-tests no-fips && perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: test external crypto-auditing
+      run: make test TESTS="test_external_crau"
+    - name: get cpu info
+      run: |
+        cat /proc/cpuinfo
+        ./util/opensslwrap.sh version -c

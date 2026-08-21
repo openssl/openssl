@@ -60,7 +60,8 @@ jobs:
           no-tls1_3,
           enable-trace enable-fips,
           no-quic,
-          -DOPENSSL_USE_IPV6=0
+          -DOPENSSL_USE_IPV6=0,
+          no-crau
         ]
     runs-on: ubuntu-latest
     steps:

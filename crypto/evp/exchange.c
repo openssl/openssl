@@ -8,6 +8,7 @@
  */
 
 #include <openssl/core_names.h>
+#include <openssl/crau.h>
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/err.h>
@@ -16,6 +17,7 @@
 #include "internal/provider.h"
 #include "internal/core.h"
 #include "internal/numbers.h" /* includes SIZE_MAX */
+#include "internal/sizes.h"
 #include "crypto/evp.h"
 #include "evp_local.h"
 
@@ -479,9 +481,35 @@ int EVP_PKEY_derive(EVP_PKEY_CTX *ctx, unsigned char *key, size_t *pkeylen)
         return -2;
     }
 
+#ifndef OPENSSL_NO_CRAU
+    if (key != NULL) {
+        size_t n = 0;
+        OSSL_PARAM params[3];
+
+        params[n++] = OSSL_PARAM_construct_utf8_string(
+            "pk::algorithm",
+            (char *)EVP_PKEY_get0_type_name(ctx->pkey),
+            0);
+
+        if (EVP_PKEY_is_a(ctx->pkey, "EC")) {
+            char gname[OSSL_MAX_NAME_SIZE];
+
+            if (EVP_PKEY_get_group_name(ctx->pkey, gname, sizeof(gname), NULL))
+                params[n++] = OSSL_PARAM_construct_utf8_string("pk::group", gname, 0);
+        }
+        params[n++] = OSSL_PARAM_construct_end();
+
+        OSSL_CRAU_enter(ctx->libctx, "pk::derive", params);
+    }
+#endif
+
     ret = ctx->op.kex.exchange->derive(ctx->op.kex.algctx, key, pkeylen,
         key != NULL ? *pkeylen : 0);
 
+#ifndef OPENSSL_NO_CRAU
+    if (key != NULL)
+        OSSL_CRAU_leave(ctx->libctx);
+#endif
     return ret;
 }
 

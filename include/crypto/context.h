@@ -31,6 +31,7 @@ void *ossl_fips_prov_ossl_ctx_new(OSSL_LIB_CTX *);
 #if defined(OPENSSL_THREADS)
 void *ossl_threads_ctx_new(OSSL_LIB_CTX *);
 #endif
+void *ossl_crau_set_context_new(OSSL_LIB_CTX *);
 
 void ossl_provider_store_free(void *);
 void ossl_property_string_data_free(void *);
@@ -51,5 +52,6 @@ void ossl_release_default_drbg_ctx(void);
 #if defined(OPENSSL_THREADS)
 void ossl_threads_ctx_free(void *);
 #endif
+void ossl_crau_set_context_free(void *);
 
 #endif /* !defined(OSSL_CRYPTO_CONTEXT_H) */
