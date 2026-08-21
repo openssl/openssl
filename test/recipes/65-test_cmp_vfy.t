@@ -29,10 +29,19 @@ plan skip_all => "This test is not supported in a no-ec build"
 
 plan tests => 2 + ($no_fips ? 0 : 1); #fips test
 
+# The cert hierarchy should be as given in chain.txt:
+# 1 - Root_CA (self-signed)
+# 1.1 - EndEntity1
+# 1.2 Intermediate_CA
+# 1.2.1 EndEntity2
+sub test_cert { srctop_file("test/certs", $_[0]); }
 my @basic_cmd = ("cmp_vfy_test",
-                 data_file("server.crt"),     data_file("client.crt"),
-                 data_file("EndEntity1.crt"), data_file("EndEntity2.crt"),
-                 data_file("Root_CA.crt"),    data_file("Intermediate_CA.crt"),
+                 data_file("server.crt"),
+                 data_file("client.crt"),
+                 test_cert("ee-cert1.pem"),
+                 test_cert("ee-cert.pem"),
+                 test_cert("root-cert.pem"),
+                 test_cert("ca-cert.pem"),
                  data_file("IR_protected.der"),
                  data_file("IR_unprotected.der"),
                  data_file("IP_waitingStatus_PBM.der"),
