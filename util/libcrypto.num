@@ -3228,7 +3228,7 @@ PEM_read_CMS                            3226	4_0_0	EXIST::FUNCTION:CMS,STDIO
 PEM_write_CMS                           3227	4_0_0	EXIST::FUNCTION:CMS,STDIO
 PEM_read_bio_CMS                        3228	4_0_0	EXIST::FUNCTION:CMS
 PEM_write_bio_CMS                       3229	4_0_0	EXIST::FUNCTION:CMS
-CMS_stream                              3230	4_0_0	EXIST::FUNCTION:CMS
+CMS_stream                              3230	4_0_0	EXIST::FUNCTION:CMS,DEPRECATEDIN_4_1
 d2i_CMS_bio                             3231	4_0_0	EXIST::FUNCTION:CMS
 i2d_CMS_bio                             3232	4_0_0	EXIST::FUNCTION:CMS
 BIO_new_CMS                             3233	4_0_0	EXIST::FUNCTION:CMS
@@ -4164,7 +4164,7 @@ PKCS7_RECIP_INFO_get0_alg               4161	4_0_0	EXIST::FUNCTION:
 PKCS7_add_recipient_info                4162	4_0_0	EXIST::FUNCTION:
 PKCS7_RECIP_INFO_set                    4163	4_0_0	EXIST::FUNCTION:
 PKCS7_set_cipher                        4164	4_0_0	EXIST::FUNCTION:
-PKCS7_stream                            4165	4_0_0	EXIST::FUNCTION:
+PKCS7_stream                            4165	4_0_0	EXIST::FUNCTION:DEPRECATEDIN_4_1
 PKCS7_get_issuer_and_serial             4166	4_0_0	EXIST::FUNCTION:
 PKCS7_get_octet_string                  4167	4_0_0	EXIST::FUNCTION:
 PKCS7_digest_from_attributes            4168	4_0_0	EXIST::FUNCTION:
