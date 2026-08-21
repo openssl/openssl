@@ -199,11 +199,17 @@ Don't try to verify the signatures on the message.
 
 =item B<-nocerts>
 
-When signing a message, the signer certificates and extra certificates are
-normally included, but this option disables their inclusion.
+When signing a message, the signer certificates are normally included,
+but this option disables their inclusion.
 This will reduce the size of the signed message,
 but the verifier must have a copy of those certificates
 available locally (passed using the B<-certfile> option for example).
+
+Setting this option has special effect on any extra certificates supplied via the
+B<-certfile> option: while signer certificates supplied via the B<-signer> option are
+not included, the extra certificates from B<-certfile> are included in the given order.
+This can be used to specify the order certificates appear in the PKCS#7 structure
+as a workaround for broken applications that require a certain ordering.
 
 =item B<-noattr>
 
@@ -237,8 +243,7 @@ option is present B<CRLF> is used instead.
 =item B<-certfile> I<filename>|I<uri>
 
 Provide extra certificates.
-When signing, these will be included (unless the B<-nocerts> option is given)
-with the message and can serve
+When signing, these will be included with the message and can serve
 both as candidate untrusted CA certificates for chain building in verification
 and as fallback signer certificates.
 When verifying, the provided certificates will be used for chain building
@@ -254,10 +259,11 @@ The input can be in PEM, DER, or PKCS#12 format.
 
 =item B<-signer> I<filename>|I<uri>
 
-A signer certificate when signing or resigning a message, this option can be
-used multiple times if more than one signer is required. If a message is being
-verified, then the signers certificates will be written to this file if the
-verification was successful.
+A signer certificate. When signing or resigning a message, this option can be
+used multiple times if more than one signer is required.
+If a message has been verified successfully, then the signer certificate(s)
+will be written to this file.
+In the verification case, the option argument format I<uri> cannot be used.
 
 =item B<-recip> I<filename>|I<uri>
 

@@ -62,14 +62,14 @@ An error occurs if a matching digest value cannot be found to copy. The
 returned B<PKCS7> structure will be valid and finalized when this flag is set.
 
 If B<PKCS7_PARTIAL> is set in addition to B<PKCS7_REUSE_DIGEST> then the
-B<PKCS7_SIGNER_INO> structure will not be finalized so additional attributes
+B<PKCS7_SIGNER_INFO> structure will not be finalized so additional attributes
 can be added. In this case an explicit call to PKCS7_SIGNER_INFO_sign() is
 needed to finalize it.
 
 If B<PKCS7_NOCERTS> is set, the signer certificates will not be included in the
 B<PKCS7> structure. The signer certificates must still be supplied in the
 I<signcert> parameter though. This can reduce the size of the signature if the
-signers certificate can be obtained by other means: for example a previously
+signer certificates can be obtained by other means: for example a previously
 signed message.
 
 The signedData structure includes several PKCS#7 authenticatedAttributes
@@ -83,11 +83,11 @@ algorithms: triple DES, 128 bit RC2, 64 bit RC2, DES and 40 bit RC2. If any of
 these algorithms is disabled then it will not be included.
 
 Certificates and CRLs are added to the I<cert> or
-I<crl> fields of PKCS7_SIGNED structure.
+I<crl> fields of B<PKCS7_SIGNED> or B<PKCS7_SIGN_ENVELOPE> structures.
 
 =head1 RETURN VALUES
 
-PKCS7_sign_add_signers() returns an internal pointer to the B<PKCS7_SIGNER_INFO>
+PKCS7_sign_add_signer() returns an internal pointer to the B<PKCS7_SIGNER_INFO>
 structure just added (which can be used to set additional attributes
 before it is finalized), or NULL if an error occurs.
 

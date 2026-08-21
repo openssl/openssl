@@ -564,8 +564,8 @@ option B<must> but supplied if a signed receipt is requested.
 
 =item B<-signer> I<file>
 
-If a message has been verified successfully then the signers certificate(s)
-will be written to this file if the verification was successful.
+If a message has been verified successfully, then the signer certificate(s)
+will be written to this file.
 
 =item B<-content> I<filename>
 
