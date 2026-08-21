@@ -842,6 +842,10 @@ static int test_server_rpk_verify_cb(void)
     if (!TEST_int_eq(server_retry_state, 2))
         goto end;
 
+    /* Confirm the connection actually used raw public keys. */
+    if (!TEST_ptr(SSL_get0_peer_rpk(serverssl)))
+        goto end;
+
     testresult = 1;
 
 end:

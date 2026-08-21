@@ -4079,7 +4079,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
-        x = NULL;
     }
 
     /*
@@ -4088,7 +4087,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      */
     OSSL_STACK_OF_X509_free(s->session->peer_chain);
     s->session->peer_chain = sk;
-    sk = NULL;
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
 
