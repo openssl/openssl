@@ -104,6 +104,7 @@ Verification options:
 [B<-noverify>]
 [B<-nointern>]
 [B<-cades>]
+[B<-verify_partial>]
 [B<-verify_retcode>]
 {- $OpenSSL::safe::opt_trust_synopsis -}
 
@@ -593,6 +594,12 @@ The supplied certificates can still be used as untrusted CAs however.
 When used with B<-verify>, require and check signer certificate digest.
 See the NOTES section for more details.
 
+=item B<-verify_partial>
+
+Succeed if at least one signature can be verified.
+Print info which signature verifications succeeded or failed in which
+aspect(s).
+
 =item B<-verify_retcode>
 
 Exit nonzero on verification failure.
@@ -961,6 +968,8 @@ The B<-digest> option was added in OpenSSL 3.2.
 The B<-recip_kdf> and B<-recip_ukm> options were added in OpenSSL 3.6.
 
 The B<-engine> option was removed in OpenSSL 4.0.
+
+The B<-verify_partial> option was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
