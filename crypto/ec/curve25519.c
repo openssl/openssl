@@ -5845,7 +5845,8 @@ int ossl_ed25519_public_from_private(OSSL_LIB_CTX *ctx, uint8_t out_public_key[3
 /*
  * Verified to be constant-time under enable-ct-validation for
  * CI & Valgrind-supported architectures, currently x86_64 and aarch64.
- * Notably the 32-bit-only fe_* C implementation is UNCOVERED.
+ * Notably the 32-bit-only fe_*-based ladder is UNCOVERED (the fe_* arithmetic
+ * itself is covered via ossl_x25519_public_from_private).
  */
 int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     const uint8_t peer_public_value[32])
@@ -5861,12 +5862,18 @@ int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
 }
 
+/*
+ * Verified to be constant-time under enable-ct-validation for
+ * CI & Valgrind-supported architectures, currently x86_64 and aarch64.
+ */
 void ossl_x25519_public_from_private(uint8_t out_public_value[32],
     const uint8_t private_key[32])
 {
     uint8_t e[32];
     ge_p3 A;
     fe zplusy, zminusy, zminusy_inv;
+
+    CONSTTIME_SECRET(private_key, 32);
 
     memcpy(e, private_key, 32);
     e[0] &= 248;
@@ -5885,6 +5892,9 @@ void ossl_x25519_public_from_private(uint8_t out_public_value[32],
     fe_invert(zminusy_inv, zminusy);
     fe_mul(zplusy, zplusy, zminusy_inv);
     fe_tobytes(out_public_value, zplusy);
+
+    CONSTTIME_DECLASSIFY(private_key, 32);
+    CONSTTIME_DECLASSIFY(out_public_value, 32);
 
     OPENSSL_cleanse(e, sizeof(e));
 }

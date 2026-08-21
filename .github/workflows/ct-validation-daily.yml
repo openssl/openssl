@@ -135,21 +135,20 @@ jobs:
         #
         # Algorithms & implementations covered:
         # - memcmp: test_crypto_memcmp
-        #     - x86_64 asm
-        #     - x86_64 no-asm
-        #     - aarch64 asm
-        #     - aarch64 no-asm
+        #     - any x86_64
+        #     - any aarch64
         # - ML-KEM/ML-DSA: test_internal_ml_kem/test_internal_ml_dsa
-        #     - x86_64 asm
-        #     - x86_64 no-asm
-        #     - aarch64 asm
-        #     - aarch64 no-asm
-        # - x25519: test_evp_ct
+        #     - any x86_64
+        #     - any aarch64
+        # - x25519 - ossl_x25519: test_evp_ct
         #     - x86_64 asm ADX/BMI2 (fe64 asm)
         #     - x86_64 asm no-ADX/no-BMI2 (fe51 asm)
         #     - x86_64 no-asm (fe51 C)
-        #     - aarch64 no-asm (fe51 C)
+        #     - any aarch64 (fe51 C)
         #     - FUTURE: x86 (fe C)
+        # - x25519 - ossl_x25519_public_from_private: test_evp_ct
+        #     - any x86_64 (fe C)
+        #     - any aarch64 (fe C)
         run: |
           make TESTS="test_internal_ml_kem \
                       test_internal_ml_dsa \
