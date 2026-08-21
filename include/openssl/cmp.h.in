@@ -353,6 +353,7 @@ OSSL_LIB_CTX *OSSL_CMP_CTX_get0_libctx(const OSSL_CMP_CTX *ctx);
 const char *OSSL_CMP_CTX_get0_propq(const OSSL_CMP_CTX *ctx);
 /* CMP general options: */
 #define OSSL_CMP_OPT_LOG_VERBOSITY 0
+#define OSSL_CMP_OPT_FAMILY 1
 /* CMP transfer options: */
 #define OSSL_CMP_OPT_KEEP_ALIVE 10
 #define OSSL_CMP_OPT_MSG_TIMEOUT 11
@@ -387,6 +388,8 @@ void OSSL_CMP_CTX_print_errors(const OSSL_CMP_CTX *ctx);
 /* message transfer: */
 int OSSL_CMP_CTX_set1_serverPath(OSSL_CMP_CTX *ctx, const char *path);
 int OSSL_CMP_CTX_set1_server(OSSL_CMP_CTX *ctx, const char *address);
+#define OSSL_CMP_CTX_set_family(ctx, level) \
+    OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_FAMILY, level)
 int OSSL_CMP_CTX_set_serverPort(OSSL_CMP_CTX *ctx, int port);
 int OSSL_CMP_CTX_set1_proxy(OSSL_CMP_CTX *ctx, const char *name);
 int OSSL_CMP_CTX_set1_no_proxy(OSSL_CMP_CTX *ctx, const char *names);
