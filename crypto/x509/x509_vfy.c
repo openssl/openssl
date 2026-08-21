@@ -778,27 +778,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
     return 1;
 }
 
-static int has_san_id(const X509 *x, int gtype)
-{
-    int i;
-    int ret = 0;
-    GENERAL_NAMES *gs = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-
-    if (gs == NULL)
-        return 0;
-
-    for (i = 0; i < sk_GENERAL_NAME_num(gs); i++) {
-        GENERAL_NAME *g = sk_GENERAL_NAME_value(gs, i);
-
-        if (g->type == gtype) {
-            ret = 1;
-            break;
-        }
-    }
-    GENERAL_NAMES_free(gs);
-    return ret;
-}
-
 /*-
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -895,20 +874,22 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 
             if (nc) {
                 int rv = NAME_CONSTRAINTS_check(x, nc);
-                int ret = 1;
 
-                /* If EE certificate check commonName too */
+                /*
+                 * Apply DNS name constraints to the EE subject commonName
+                 * only when the commonName may be used for host name checks,
+                 * mirroring do_x509_check(): only when the caller opted in
+                 * with X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, and never when
+                 * X509_CHECK_FLAG_NEVER_CHECK_SUBJECT is set.
+                 */
                 if (rv == X509_V_OK && i == 0
                     && (ctx->param->hostflags
                            & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT)
                         == 0
-                    && ((ctx->param->hostflags
-                            & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)
-                            != 0
-                        || (ret = has_san_id(x, GEN_DNS)) == 0))
+                    && (ctx->param->hostflags
+                           & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)
+                        != 0)
                     rv = NAME_CONSTRAINTS_check_CN(x, nc);
-                if (ret < 0)
-                    return ret;
 
                 switch (rv) {
                 case X509_V_OK:
