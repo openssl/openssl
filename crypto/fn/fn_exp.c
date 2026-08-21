@@ -13,6 +13,7 @@
 #include "internal/constant_time.h"
 #include "crypto/fnerr.h"
 #include "fn_local.h"
+#include "../bn/bn_local.h"
 
 /*
  * Exponentiation strategy macros.
@@ -99,20 +100,51 @@ static size_t ctx_max_size(size_t a, size_t b)
 
 /*
  * Number of limbs the fixed-window precomputed-powers buffer needs:
- * |numpowers| powers of |ml| limbs each, plus slack to align the buffer to
- * the minimum cache line width within the containing OSSL_FN's limb array.
- * Returns 0 on overflow (the buffer must fit in one OSSL_FN, whose limb
- * count is an int).
+ * |numpowers| powers of |ml| limbs each, plus |extra_limbs| of tail space
+ * (the accelerated gather path keeps a cache-local copy of the modulus
+ * right after the table), plus slack to align the buffer to the minimum
+ * cache line width within the containing OSSL_FN's limb array.  Returns 0
+ * on overflow (the buffer must fit in one OSSL_FN, whose limb count is an
+ * int).
  */
 static int mod_exp_mont_power_limbs(size_t *power_limbs, size_t numpowers,
-    size_t ml)
+    size_t ml, size_t extra_limbs)
 {
     size_t slack = MOD_EXP_CTIME_MIN_CACHE_LINE_WIDTH / OSSL_FN_BYTES;
 
-    if (ml == 0 || numpowers > ((size_t)INT_MAX - slack) / ml)
+    if (ml == 0 || extra_limbs > (size_t)INT_MAX - slack
+        || numpowers > ((size_t)INT_MAX - slack - extra_limbs) / ml)
         return 0;
-    *power_limbs = numpowers * ml + slack;
+    *power_limbs = numpowers * ml + extra_limbs + slack;
     return 1;
+}
+
+/*
+ * Window size selection for the fixed-window Montgomery path.  The window
+ * derives from the exponent's and modulus' widths only, so sizing and
+ * runtime always agree.
+ */
+static size_t mod_exp_mont_ctime_window(size_t bits, size_t ml)
+{
+    size_t window = OSSL_FN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(bits);
+
+#if defined(OPENSSL_BN_ASM_MONT5)
+    /* The accelerated gather path is fixed at window 5. */
+    if (window >= 5 && ml <= BN_SOFT_LIMIT)
+        window = 5; /* ~5% improvement for RSA2048 sign, and even
+                     * for RSA4096 */
+#endif
+    return window;
+}
+
+/* Whether the accelerated gather path applies for these widths. */
+static int mod_exp_mont_asm5(size_t window, size_t ml)
+{
+#if defined(OPENSSL_BN_ASM_MONT5)
+    return window == 5 && ml > 1 && ml <= BN_SOFT_LIMIT;
+#else
+    return 0;
+#endif
 }
 
 /*
@@ -261,14 +293,17 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
         return 0;
 
     /*
-     * The window size derives from the exponent's width only, so the sizing
-     * matches the runtime choice exactly.
+     * The window size derives from the exponent's and modulus' widths only,
+     * so the sizing matches the runtime choice exactly.
      */
     size_t bits = (size_t)p->dsize * OSSL_FN_BITS;
-    size_t window = OSSL_FN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(bits);
+    size_t window = mod_exp_mont_ctime_window(bits, ml);
     size_t power_limbs;
+    /* The accelerated gather path parks a copy of N's limbs after the table. */
+    size_t np_limbs = mod_exp_mont_asm5(window, ml) ? ml : 0;
 
-    if (!mod_exp_mont_power_limbs(&power_limbs, (size_t)1 << window, ml))
+    if (!mod_exp_mont_power_limbs(&power_limbs, (size_t)1 << window, ml,
+            np_limbs))
         return 0;
 
     /* power table, accumulator (tmp), gathered power (am) */
@@ -588,15 +623,16 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         goto err;
     }
 
-    size_t window = OSSL_FN_WINDOW_BITS_FOR_CTIME_EXPONENT_SIZE(bits);
+    size_t window = mod_exp_mont_ctime_window(bits, ml);
     size_t numpowers = (size_t)1 << window;
+    size_t np_limbs = mod_exp_mont_asm5(window, ml) ? ml : 0;
     size_t power_limbs;
 
-    if (!mod_exp_mont_power_limbs(&power_limbs, numpowers, ml)) {
+    if (!mod_exp_mont_power_limbs(&power_limbs, numpowers, ml, np_limbs)) {
         ERR_raise(ERR_LIB_OSSL_FN, ERR_R_PASSED_INVALID_ARGUMENT);
         goto err;
     }
-    table_limbs = numpowers * ml;
+    table_limbs = numpowers * ml + np_limbs;
 
     OSSL_FN *tmp = OSSL_FN_CTX_get_limbs(ctx, ml);
     OSSL_FN *am = OSSL_FN_CTX_get_limbs(ctx, ml);
@@ -645,7 +681,6 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
         if (!OSSL_FN_to_mont(tmp, am, mont, ctx))
             goto err;
     }
-    mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, 0, numpowers);
 
     /*
      * a^1 in Montgomery domain.  to_mont() reduces a modulo m internally
@@ -655,60 +690,169 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
      */
     if (!OSSL_FN_to_mont(am, a, mont, ctx))
         goto err;
-    mod_exp_ctime_copy_to_prebuf(am, powerbuf, 1, numpowers);
 
-    /* a^i = a^(i-1) * a for i = 2..numpowers-1 */
-    if (window > 1) {
-        if (!OSSL_FN_mul_mont_quick(tmp, am, am, mont, ctx))
-            goto err;
-        mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, 2, numpowers);
-        for (i = 3; i < numpowers; i++) {
-            if (!OSSL_FN_mul_mont_quick(tmp, am, tmp, mont, ctx))
-                goto err;
-            mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, i, numpowers);
+    size_t window0, wmask, wvalue;
+
+#if defined(OPENSSL_BN_ASM_MONT5)
+    /*
+     * Accelerated path: |bn_mul_mont_gather5|, |bn_scatter5|, |bn_gather5|
+     * and |bn_power5| implement the same fixed-window, cache-line-uniform
+     * table access as the portable path below, using ideas from
+     * https://eprint.iacr.org/2011/239 -- cache-timing attack
+     * countermeasures, pre-computation optimization, and Almost Montgomery
+     * Multiplication.
+     *
+     * |bn_mul_mont_gather5| and |bn_power5| implement the "almost"
+     * reduction variant, so the values here may not be fully reduced.
+     * They are bounded by R (i.e. they fit in |ml| limbs), not |m|.
+     * Additionally, we pass these "almost" reduced inputs into
+     * |bn_mul_mont|, which implements the normal reduction variant.
+     * Given those inputs, |bn_mul_mont| may not give reduced
+     * output, but it will still produce "almost" reduced output.
+     */
+    if (mod_exp_mont_asm5(window, ml)) {
+        void bn_mul_mont_gather5(BN_ULONG *rp, const BN_ULONG *ap,
+            const void *table, const BN_ULONG *np,
+            const BN_ULONG *n0, int num, int power);
+        void bn_scatter5(const BN_ULONG *inp, size_t num,
+            void *table, size_t power);
+        void bn_gather5(BN_ULONG *out, size_t num, void *table, size_t power);
+        void bn_power5(BN_ULONG *rp, const BN_ULONG *ap,
+            const void *table, const BN_ULONG *np,
+            const BN_ULONG *n0, int num, int power);
+        int bn_get_bits5(const BN_ULONG *ap, int off);
+
+        OSSL_FN_ULONG *np = powerbuf + numpowers * ml;
+        int j;
+
+        /* copy N's limbs right after the table to improve cache locality */
+        for (i = 0; i < ml; i++)
+            np[i] = mont->N->d[i];
+
+        bn_scatter5(tmp->d, ml, powerbuf, 0);
+        bn_scatter5(am->d, ml, powerbuf, 1);
+        bn_mul_mont(tmp->d, am->d, am->d, np, mont->n0, (int)ml);
+        bn_scatter5(tmp->d, ml, powerbuf, 2);
+
+        /* same as a straight i-loop, but uses squaring for 1/2 of the ops */
+        for (i = 4; i < 32; i *= 2) {
+            bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+            bn_scatter5(tmp->d, ml, powerbuf, i);
         }
-    }
-
-    /*
-     * The exponent may not have a whole number of fixed-size windows.  To
-     * simplify the main loop, the initial window has between 1 and
-     * full-window-size bits such that what remains is always a whole
-     * number of windows.
-     */
-    size_t window0 = (bits - 1) % window + 1;
-    size_t wmask = ((size_t)1 << window0) - 1;
-
-    bits -= window0;
-    size_t wvalue = fn_get_bits(p, bits) & wmask;
-
-    mod_exp_ctime_copy_from_prebuf(tmp, powerbuf, wvalue, window, ml);
-
-    wmask = ((size_t)1 << window) - 1;
-    /*
-     * Scan the exponent one window at a time starting from the most
-     * significant bits.
-     */
-    while (bits > 0) {
-        /* Square the result window-size times */
-        for (i = 0; i < window; i++) {
-            if (!OSSL_FN_mul_mont_quick(tmp, tmp, tmp, mont, ctx))
-                goto err;
+        for (i = 3; i < 8; i += 2) {
+            bn_mul_mont_gather5(tmp->d, am->d, powerbuf, np, mont->n0,
+                (int)ml, (int)i - 1);
+            bn_scatter5(tmp->d, ml, powerbuf, i);
+            for (j = 2 * (int)i; j < 32; j *= 2) {
+                bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+                bn_scatter5(tmp->d, ml, powerbuf, (size_t)j);
+            }
+        }
+        for (; i < 16; i += 2) {
+            bn_mul_mont_gather5(tmp->d, am->d, powerbuf, np, mont->n0,
+                (int)ml, (int)i - 1);
+            bn_scatter5(tmp->d, ml, powerbuf, i);
+            bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+            bn_scatter5(tmp->d, ml, powerbuf, 2 * i);
+        }
+        for (; i < 32; i += 2) {
+            bn_mul_mont_gather5(tmp->d, am->d, powerbuf, np, mont->n0,
+                (int)ml, (int)i - 1);
+            bn_scatter5(tmp->d, ml, powerbuf, i);
         }
 
         /*
-         * Get a window's worth of bits from the exponent, at fixed offsets,
-         * rather than testing bit by bit (each per-bit test would make that
-         * bit individually vulnerable to EM-style side-channel attacks).
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows.
          */
-        bits -= window;
+        window0 = (bits - 1) % 5 + 1;
+        wmask = ((size_t)1 << window0) - 1;
+        bits -= window0;
+        wvalue = fn_get_bits(p, bits) & wmask;
+        bn_gather5(tmp->d, ml, powerbuf, wvalue);
+
+        /*
+         * Scan the exponent one window at a time starting from the most
+         * significant bits.
+         */
+        if (ml & 7) {
+            while (bits > 0) {
+                bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+                bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+                bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+                bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+                bn_mul_mont(tmp->d, tmp->d, tmp->d, np, mont->n0, (int)ml);
+                bn_mul_mont_gather5(tmp->d, tmp->d, powerbuf, np, mont->n0,
+                    (int)ml, bn_get_bits5(p->d, (int)(bits -= 5)));
+            }
+        } else {
+            while (bits > 0) {
+                bn_power5(tmp->d, tmp->d, powerbuf, np, mont->n0, (int)ml,
+                    bn_get_bits5(p->d, (int)(bits -= 5)));
+            }
+        }
+    } else
+#endif
+    {
+        mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, 0, numpowers);
+        mod_exp_ctime_copy_to_prebuf(am, powerbuf, 1, numpowers);
+
+        /* a^i = a^(i-1) * a for i = 2..numpowers-1 */
+        if (window > 1) {
+            if (!OSSL_FN_mul_mont_quick(tmp, am, am, mont, ctx))
+                goto err;
+            mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, 2, numpowers);
+            for (i = 3; i < numpowers; i++) {
+                if (!OSSL_FN_mul_mont_quick(tmp, am, tmp, mont, ctx))
+                    goto err;
+                mod_exp_ctime_copy_to_prebuf(tmp, powerbuf, i, numpowers);
+            }
+        }
+
+        /*
+         * The exponent may not have a whole number of fixed-size windows.
+         * To simplify the main loop, the initial window has between 1 and
+         * full-window-size bits such that what remains is always a whole
+         * number of windows.
+         */
+        window0 = (bits - 1) % window + 1;
+        wmask = ((size_t)1 << window0) - 1;
+
+        bits -= window0;
         wvalue = fn_get_bits(p, bits) & wmask;
 
-        /* Fetch the appropriate pre-computed power from the table */
-        mod_exp_ctime_copy_from_prebuf(am, powerbuf, wvalue, window, ml);
+        mod_exp_ctime_copy_from_prebuf(tmp, powerbuf, wvalue, window, ml);
 
-        /* Multiply the result into the intermediate result */
-        if (!OSSL_FN_mul_mont_quick(tmp, tmp, am, mont, ctx))
-            goto err;
+        wmask = ((size_t)1 << window) - 1;
+        /*
+         * Scan the exponent one window at a time starting from the most
+         * significant bits.
+         */
+        while (bits > 0) {
+            /* Square the result window-size times */
+            for (i = 0; i < window; i++) {
+                if (!OSSL_FN_mul_mont_quick(tmp, tmp, tmp, mont, ctx))
+                    goto err;
+            }
+
+            /*
+             * Get a window's worth of bits from the exponent, at fixed
+             * offsets, rather than testing bit by bit (each per-bit test
+             * would make that bit individually vulnerable to EM-style
+             * side-channel attacks).
+             */
+            bits -= window;
+            wvalue = fn_get_bits(p, bits) & wmask;
+
+            /* Fetch the appropriate pre-computed power from the table */
+            mod_exp_ctime_copy_from_prebuf(am, powerbuf, wvalue, window, ml);
+
+            /* Multiply the result into the intermediate result */
+            if (!OSSL_FN_mul_mont_quick(tmp, tmp, am, mont, ctx))
+                goto err;
+        }
     }
 
     /* from_mont needs an ml-limb destination; reuse |am| and copy-truncate to |r|. */
