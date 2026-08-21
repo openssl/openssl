@@ -583,6 +583,7 @@ static int encoder_process(struct encoder_process_data_st *data)
         data->prev_encoder_inst = new_data.prev_encoder_inst;
         data->running_output = new_data.running_output;
         data->running_output_length = new_data.running_output_length;
+        data->data_type = new_data.data_type;
 
         /*
          * ok == -1     means that the recursion call above gave no further
