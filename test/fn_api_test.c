@@ -4221,6 +4221,8 @@ static const OSSL_FN_ULONG exp_a3[] = { OSSL_FN_ULONG_C(3) };
 static const OSSL_FN_ULONG exp_a5[] = { OSSL_FN_ULONG_C(5) };
 static const OSSL_FN_ULONG exp_a7[] = { OSSL_FN_ULONG_C(7) };
 static const OSSL_FN_ULONG exp_p0[] = { OSSL_FN_ULONG_C(0) };
+/* Zero-valued exponent in a multi-limb container. */
+static const OSSL_FN_ULONG exp_p0_wide[] = { OSSL_FN_ULONG_C(0), OSSL_FN_ULONG_C(0) };
 static const OSSL_FN_ULONG exp_p1[] = { OSSL_FN_ULONG_C(1) };
 static const OSSL_FN_ULONG exp_p5[] = { OSSL_FN_ULONG_C(5) };
 static const OSSL_FN_ULONG exp_p10[] = { OSSL_FN_ULONG_C(10) };
@@ -4261,6 +4263,9 @@ static struct mod_exp_test_st test_mod_exp_cases[] = {
         exp_m65521, LIMBSOF(exp_m65521), ex_2_16_m65521, LIMBSOF(ex_2_16_m65521) },
     { exp_a5, LIMBSOF(exp_a5), exp_p0, LIMBSOF(exp_p0),
         exp_m7, LIMBSOF(exp_m7), ex_5_0_m7, LIMBSOF(ex_5_0_m7) },
+    /* Known-answer: zero-valued exponent in a multi-limb container. */
+    { exp_a5, LIMBSOF(exp_a5), exp_p0_wide, LIMBSOF(exp_p0_wide),
+        exp_m7, LIMBSOF(exp_m7), ex_5_0_m7, LIMBSOF(ex_5_0_m7) },
     { exp_a5, LIMBSOF(exp_a5), exp_p0, LIMBSOF(exp_p0),
         exp_m1, LIMBSOF(exp_m1), ex_5_0_m1, LIMBSOF(ex_5_0_m1) },
     { exp_a7, LIMBSOF(exp_a7), exp_p1, LIMBSOF(exp_p1),
@@ -4281,6 +4286,12 @@ static struct mod_exp_test_st test_mod_exp_cases[] = {
     /* Reference-checked: base >= modulus (forces initial reduction). */
     { exp_m7, LIMBSOF(exp_m7), exp_p5, LIMBSOF(exp_p5),
         exp_m5, LIMBSOF(exp_m5), NULL, 0 },
+    /* Reference-checked: exponent much wider than the modulus. */
+    { exp_a5, LIMBSOF(exp_a5), exp_p256, LIMBSOF(exp_p256),
+        exp_m7, LIMBSOF(exp_m7), NULL, 0 },
+    /* Reference-checked: exponent much narrower than the modulus. */
+    { exp_a5, LIMBSOF(exp_a5), exp_p5, LIMBSOF(exp_p5),
+        mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
     /* Reference-checked: wide operands under secp128r1 prime, window 5. */
     { num5, LIMBSOF(num5), exp_p256, LIMBSOF(exp_p256),
         mod_secp128r1_p, LIMBSOF(mod_secp128r1_p), NULL, 0 },
@@ -4683,7 +4694,9 @@ static int test_mod_exp_ctx_size(void)
     if (!TEST_true(OSSL_FN_mod_exp(r, fa, fp, fm, ctx)))
         goto err;
     OSSL_FN_CTX_peak_usage(ctx, &peak_frames, &peak_numbers, &peak_limbs);
-    if (!TEST_size_t_gt(peak_frames, 0))
+    if (!TEST_size_t_gt(peak_frames, 0)
+        || !TEST_size_t_gt(peak_numbers, 0)
+        || !TEST_size_t_gt(peak_limbs, 0))
         goto err;
 
     /* Cross-check against the reference oracle. */
