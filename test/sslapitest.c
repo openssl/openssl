@@ -6223,6 +6223,36 @@ end:
 #endif /* !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH) */
 
 /*
+ * Test that the group accessors report "no group" rather than crashing when
+ * they are called on a connection that has not performed a handshake yet.
+ */
+static int test_group_before_handshake(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method())))
+        goto end;
+
+    if (!TEST_ptr(clientssl = SSL_new(cctx)))
+        goto end;
+
+    if (!TEST_ptr_null(SSL_get0_group_name(clientssl)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_negotiated_group(clientssl), NID_undef))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(clientssl);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+
+/*
  * Test TLSv1.3 Cipher Suite
  * Test 0 = Set TLS1.3 cipher on context
  * Test 1 = Set TLS1.3 cipher on SSL
@@ -15608,6 +15638,7 @@ int setup_tests(void)
     ADD_TEST(test_ktls_moving_write_buffer);
 #endif
 #endif
+    ADD_TEST(test_group_before_handshake);
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
 #ifndef OPENSSL_NO_DTLS
