@@ -1843,6 +1843,115 @@ if (!$disabled{asm} && !$predefined_C{__MACH__} && $^O ne 'VMS' && !$predefined_
     }
 }
 
+# On s390x, <vecintrin.h> (included by ml_kem_vec128.c and
+# ml_dsa_ntt_vec128.c) requires -fzvector with Clang; GCC accepts it
+# without that flag.  We probe for the required intrinsics (vec_perm,
+# vec_mulh, vec_min) and store the result in $config{s390x_vector_cflags}:
+#   undef  — probe failed; vec128 back-end will be excluded from the build
+#   ""     — probe passed without extra flags (GCC)
+#   "-fzvector" — probe passed only with -fzvector (older Clang)
+# The value is applied ONLY to the two vec128 translation units.
+#
+# GCC: "#pragma GCC target("arch=z13,vx")" inside each vec128 file scopes
+#      VX code generation to that TU; no global -march is needed.
+#      GCC also does not require -fzvector, so $config{s390x_vector_cflags}
+#      will be empty ("") for GCC builds.
+# Clang: does not honour #pragma GCC target for preprocessor macros; it
+#        requires -march=z13 (passed per-file via the Makefile wrapper rule
+#        generated from $config{s390x_vector_cflags} and the explicit
+#        -march=z13 -mvx flags).  -fzvector is additionally needed on older
+#        Clang versions to make <vecintrin.h> available.
+#
+# $config{s390x_vector_cflags} is consumed by Configurations/unix-Makefile.tmpl
+# to emit a S390X_VEC_CFLAGS Makefile variable and to append it (alongside
+# -march=z13 -mvx) to the per-object compile command for the two vec128 files.
+# The build.info files for ml_kem and ml_dsa gate the vec128 source files on
+# defined($config{s390x_vector_cflags}), so a failed probe cleanly excludes
+# them from the build.
+if (!$disabled{asm} && ($predefined_C{__s390x__} // 0)) {
+    my $cc  = $config{CROSS_COMPILE} . $config{CC};
+    my $tf  = "vx_probe_$$.c";
+    my $obj = "vx_probe_$$.o";
+    my @all_cflags = (
+        @{$config{CPPFLAGS} // []},
+        @{$config{cppflags} // []},
+        (ref($target{cflags}) ? @{$target{cflags}} : ($target{cflags} // ())),
+        @{$config{cflags}},
+        @{$config{CFLAGS}   // []},
+    );
+    # --ossl-strict-warnings is a Configure-internal placeholder that is
+    # expanded to real warning flags later (after this probe runs).  Drop it
+    # here so the probe compiler invocation does not see an unknown option.
+    my $flagstr = join(' ', grep { $_ ne '--ossl-strict-warnings' } @all_cflags);
+
+    open(my $fh, '>', $tf) or die "Cannot write $tf: $!";
+    # The probe exercises all intrinsics used by the vec128 back-end:
+    #   vec_perm      – used for even/odd lane extraction (ML-KEM, ML-DSA)
+    #   vec_mulh i16  – signed 16-bit multiply-high (ML-KEM Montgomery multiply)
+    #   vec_mulh i32  – signed 32-bit multiply-high (ML-DSA Montgomery multiply)
+    #   vec_min       – unsigned 16-bit lane-wise minimum (ML-KEM reduce_once_vec128)
+    # The probe uses plain GCC vector types (no __may_alias__) because the
+    # s390x built-in signatures for vec_perm/vec_mulh/vec_min require their
+    # native types.  The production source files handle aliasing via explicit
+    # pointer casts and the separate vec_int16_noalias_t / vec_uint16_t types
+    # defined in ml_kem_vec128.c, so the probe correctly reflects what
+    # the compiler must accept when building those TUs.
+    print $fh <<'END_PROBE';
+#include <vecintrin.h>
+#include <stdint.h>
+typedef __attribute__((vector_size(16))) int16_t  vec_i16;
+typedef __attribute__((vector_size(16))) uint16_t vec_u16;
+typedef __attribute__((vector_size(16))) uint8_t  vec_u8;
+typedef __attribute__((vector_size(16))) int32_t  vec_i32;
+static vec_i16 probe(int16_t a, int16_t b, uint8_t c) {
+    vec_u8  perm    = vec_splats(c);
+    vec_i16 va      = vec_splats(a);
+    vec_i16 vb      = vec_splats(b);
+    vec_i32 va32    = vec_splats((int32_t)a);
+    vec_i32 vb32    = vec_splats((int32_t)b);
+    /* vec_perm: even/odd lane extraction */
+    vec_i16 vperm   = (vec_i16)vec_perm(va, vb, perm);
+    /* vec_mulh: signed 16-bit multiply-high (ML-KEM) */
+    vec_i16 vmulh   = vec_mulh(va, vb);
+    /* vec_mulh: signed 32-bit multiply-high (ML-DSA) */
+    vec_i32 vmulh32 = vec_mulh(va32, vb32);
+    /* vec_min: unsigned 16-bit lane-wise minimum (ML-KEM) */
+    vec_u16 vmin    = vec_min((vec_u16)va, (vec_u16)vb);
+    /* reinterpret-cast vec_i32 → vec_i16 to combine all results */
+    return vperm + vmulh + (vec_i16)vmin + (vec_i16)vmulh32;
+}
+int main(void) { vec_i16 v = probe(1, 2, 0); return (int)v[0]; }
+END_PROBE
+    close($fh);
+
+    # The vec128 TUs are always compiled with -march=z13 -mvx regardless of
+    # the global baseline march.  The probe must use the same target flags so
+    # that the result is valid for those TUs.  With an older baseline (e.g.
+    # -march=z10) Clang rejects <vecintrin.h> even with -fzvector unless the
+    # target already includes z13/VX.
+    #
+    # First try without -fzvector (GCC works without it).
+    # If that fails, retry with -fzvector (Clang needs it for <vecintrin.h>).
+    # Store the result in s390x_vector_cflags — NOT in the global cflags —
+    # so only the two vec128 TUs see it.
+    # If both attempts fail the compiler lacks the required support; disable
+    # the s390x vec128 back-end so the build can still complete using the
+    # generic implementation.
+    $config{s390x_vector_cflags} = undef;   # undef == probe failed / disabled
+    my $vec_target = "-march=z13 -mvx";
+    my $rc = system("$cc $flagstr $vec_target -c -o $obj $tf 2>/dev/null");
+    if ($rc != 0) {
+        $rc = system("$cc $flagstr $vec_target -fzvector -c -o $obj $tf 2>/dev/null");
+        if ($rc == 0) {
+            $config{s390x_vector_cflags} = "-fzvector";
+        }
+        # else: both attempts failed — leave s390x_vector_cflags as undef
+    } else {
+        $config{s390x_vector_cflags} = "";
+    }
+    unlink($tf, $obj);
+}
+
 # Deal with bn_ops ###################################################
 
 $config{bn_ll}                  =0;
