@@ -35,3 +35,6 @@
 [submodule "pkcs11-provider"]
 	path = pkcs11-provider
 	url = https://github.com/latchset/pkcs11-provider.git
+[submodule "crypto-auditing"]
+	path = crypto-auditing
+	url = https://github.com/latchset/crypto-auditing.git
