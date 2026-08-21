@@ -90,8 +90,8 @@ Then they are looked up among the certificates contained
 in the I<cms> structure unless B<CMS_NOINTERN> is set.
 If any of the signer certificates cannot be located, the operation fails.
 
-Each signer certificate is chain verified using by default the I<smimesign> purpose and
-using I<store> as the trusted certificate store if supplied.
+Each signer certificate is chain verified using I<store> as the trusted
+certificate store if supplied, and by default requiring the I<smimesign> purpose.
 The default purpose may be overridden using L<X509_STORE_set_purpose(3)>.
 Any internal certificates in the message, which may have been added using
 L<CMS_add1_cert(3)>, are used as untrusted CAs.

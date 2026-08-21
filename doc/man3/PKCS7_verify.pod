@@ -77,8 +77,10 @@ the I<certs> parameter (if it is not NULL). Then they are looked up in any
 certificates contained in the I<p7> structure unless B<PKCS7_NOINTERN> is set.
 If any signer certificates cannot be located the operation fails.
 
-Each signer certificate is chain verified using by default the C<smime_sign> purpose and
+Each signer certificate is chain verified
 using I<store> as the trusted certificate store if supplied.
+Unless B<PKCS7_NOCHAIN> is set,
+the default purpose required in this verification is I<smimesign>.
 The default purpose may be overridden using L<X509_STORE_set_purpose(3)>.
 Any internal certificates in the message, which may have been added using
 L<PKCS7_add_certificate(3)>, are used as untrusted CAs unless B<PKCS7_NOCHAIN>
