@@ -1231,6 +1231,9 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s,
         s->ext.ech.attempted_type = TLSEXT_TYPE_ech;
         s->ext.ech.attempted_cid = ee->config_id;
         s->ext.ech.attempted = 1;
+        /* force TLSv1.3 if really doing ECH */
+        s->version = TLS1_3_VERSION;
+        s->min_proto_version = TLS1_3_VERSION;
         if (s->ext.ech.outer_hostname == NULL && ee->public_name != NULL) {
             s->ext.ech.outer_hostname = OPENSSL_strdup((char *)ee->public_name);
             if (s->ext.ech.outer_hostname == NULL) {
@@ -1489,7 +1492,7 @@ __owur CON_FUNC_RETURN tls_construct_client_hello(SSL_CONNECTION *s, WPACKET *pk
 #ifndef OPENSSL_NO_ECH
     /* same session ID is used for inner/outer when doing ECH */
     if (s->ext.ech.es != NULL) {
-        if (s->version != TLS1_3_VERSION) {
+        if (s->version != TLS1_3_VERSION || s->min_proto_version < TLS1_3_VERSION) {
             SSLfatal(s, SSL_AD_PROTOCOL_VERSION, SSL_R_UNSUPPORTED_SSL_VERSION);
             return CON_FUNC_ERROR;
         }
