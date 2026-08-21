@@ -12,6 +12,8 @@
 #include "../record_local.h"
 #include "recmethod_local.h"
 
+static int dtls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl);
+
 /* mod 128 saturating subtract of two 64-bit values in big-endian order */
 static int satsub64be(const unsigned char *v1, const unsigned char *v2)
 {
@@ -738,7 +740,25 @@ int dtls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
         return 0;
     }
 
-    return tls_increment_sequence_ctr(rl);
+    return dtls_increment_sequence_ctr(rl);
+}
+
+static int dtls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
+{
+    int i;
+
+    /* DTLS serializes only the low 48 bits as the record sequence number. */
+    for (i = SEQ_NUM_SIZE; i > 2; i--) {
+        ++(rl->sequence[i - 1]);
+        if (rl->sequence[i - 1] != 0)
+            break;
+    }
+    if (i == 2) {
+        /* Sequence has wrapped */
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
+        return 0;
+    }
+    return 1;
 }
 
 static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
@@ -772,6 +792,12 @@ static size_t dtls_get_max_record_overhead(OSSL_RECORD_LAYER *rl)
     return DTLS1_RT_HEADER_LENGTH + rl->eivlen + blocksize + rl->taglen;
 }
 
+static int dtls_set_sequence(OSSL_RECORD_LAYER *rl, const unsigned char *sequence)
+{
+    memcpy(&rl->sequence[2], sequence, 6);
+    return 1;
+}
+
 const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     dtls_new_record_layer,
     dtls_free,
@@ -795,7 +821,8 @@ const OSSL_RECORD_METHOD ossl_dtls_record_method = {
     tls_get_compression,
     tls_set_max_frag_len,
     dtls_get_max_record_overhead,
-    tls_increment_sequence_ctr,
+    dtls_increment_sequence_ctr,
+    dtls_set_sequence,
     tls_alloc_buffers,
     tls_free_buffers
 };
