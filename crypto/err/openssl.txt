@@ -1056,6 +1056,7 @@ PROV_R_FIPS_MODULE_CONDITIONAL_ERROR:227:fips module conditional error
 PROV_R_FIPS_MODULE_ENTERING_ERROR_STATE:224:fips module entering error state
 PROV_R_FIPS_MODULE_IMPORT_PCT_ERROR:253:fips module import pct error
 PROV_R_FIPS_MODULE_IN_ERROR_STATE:225:fips module in error state
+PROV_R_FIPS_MODULE_MISSING_CHECKSUM:267:fips module missing checksum
 PROV_R_GENERATE_ERROR:191:generate error
 PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE:165:\
 	illegal or unsupported padding mode
