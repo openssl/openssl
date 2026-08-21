@@ -760,6 +760,7 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
         ec->keylen = 0;
+        ec->harderr = 0;
     }
 
     if (ris != NULL && ec != NULL)
@@ -803,10 +804,11 @@ int CMS_decrypt_set1_pkey_and_peer(CMS_ContentInfo *cms, EVP_PKEY *pk,
             CMS_RecipientInfo_set0_pkey(ri, NULL);
             if (cert != NULL) {
                 /*
-                 * If not debugging clear any error and return success to
-                 * avoid leaking of information useful to MMA
+                 * If not debugging and a failure cannot be reported safely,
+                 * clear any error and return success to avoid leaking of
+                 * information useful to MMA
                  */
-                if (!debug) {
+                if (!debug && (ec == NULL || !ec->harderr)) {
                     ERR_clear_error();
                     return 1;
                 }
@@ -887,6 +889,7 @@ int CMS_decrypt_set1_password(CMS_ContentInfo *cms,
         OPENSSL_clear_free(ec->key, ec->keylen);
         ec->key = NULL;
         ec->keylen = 0;
+        ec->harderr = 0;
     }
 
     for (i = 0; i < sk_CMS_RecipientInfo_num(ris); i++) {
