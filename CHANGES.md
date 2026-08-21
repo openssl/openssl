@@ -67,6 +67,21 @@ OpenSSL Releases
 
    *Shreenidhi Shedi*
 
+ * The internally cached certificate and CRL fingerprint, which is used by
+   `X509_cmp()` and `X509_CRL_match()` to determine object equality, is now
+   computed with SHA-256 instead of SHA-1, ruling out equality decisions
+   based on colliding SHA-1 digests.
+
+   Failure to compute the fingerprint is now treated as fatal: a certificate
+   whose SHA-256 digest cannot be computed is marked with `EXFLAG_INVALID`
+   in addition to `EXFLAG_NO_FINGERPRINT` and is rejected in certificate
+   chain building and purpose checks, and parsing a CRL fails outright in
+   that case. In particular, certificates and CRLs can no longer be used
+   in library contexts whose providers offer no SHA-256 implementation.
+   `X509_CRL_match()` no longer returns -2.
+
+   *Nikola Pajkovsky*
+
  * Added `CMS_add_standard_smimecap_ex()`, which populates an SMIMECapabilities
    list using `EVP_CIPHER_fetch()` and `EVP_MD_fetch()` so that only algorithms
    available in the active providers are advertised.  `PKCS7_sign_add_signer()`
