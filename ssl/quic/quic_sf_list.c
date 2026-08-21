@@ -16,18 +16,36 @@ struct stream_frame_st {
     UINT_RANGE range;
     OSSL_QRX_PKT *pkt;
     const unsigned char *data;
+    /* Buffer owned by the frame holding its data once copied, or NULL. */
+    unsigned char *own_buf;
 };
+
+/*
+ * Release the storage of a frame whose data was copied elsewhere, whether
+ * that is the buffer the frame arrived in or a buffer the frame owns.
+ */
+static void stream_frame_release_data(SFRAME_LIST *fl, STREAM_FRAME *sf)
+{
+    if (sf->data != NULL && sf->own_buf == NULL)
+        --fl->num_pinned;
+    sf->data = NULL;
+    ossl_qrx_pkt_release(sf->pkt);
+    sf->pkt = NULL;
+    OPENSSL_free(sf->own_buf);
+    sf->own_buf = NULL;
+}
 
 static void stream_frame_free(SFRAME_LIST *fl, STREAM_FRAME *sf)
 {
     if (fl->cleanse && sf->data != NULL)
         OPENSSL_cleanse((unsigned char *)sf->data,
             (size_t)(sf->range.end - sf->range.start));
-    ossl_qrx_pkt_release(sf->pkt);
+    stream_frame_release_data(fl, sf);
     OPENSSL_free(sf);
 }
 
-static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT *pkt,
+static STREAM_FRAME *stream_frame_new(SFRAME_LIST *fl, UINT_RANGE *range,
+    OSSL_QRX_PKT *pkt,
     const unsigned char *data)
 {
     STREAM_FRAME *sf = OPENSSL_zalloc(sizeof(*sf));
@@ -41,6 +59,8 @@ static STREAM_FRAME *stream_frame_new(UINT_RANGE *range, OSSL_QRX_PKT *pkt,
     sf->range = *range;
     sf->pkt = pkt;
     sf->data = data;
+    if (data != NULL)
+        ++fl->num_pinned;
 
     return sf;
 }
@@ -60,13 +80,34 @@ void ossl_sframe_list_destroy(SFRAME_LIST *fl)
     }
 }
 
+/* end is the end of the range about to be added to the list */
+static int sframe_list_too_fragmented(const SFRAME_LIST *fl, uint64_t end)
+{
+    uint64_t span;
+
+    if (fl->num_frames >= SFRAME_LIST_MAX_FRAGMENTATION)
+        return 1;
+
+    if (fl->num_frames < SFRAME_LIST_MIN_FRAGMENTATION)
+        return 0;
+
+    if (fl->tail != NULL && fl->tail->range.end > end)
+        end = fl->tail->range.end;
+    span = end - fl->offset;
+
+    return fl->num_frames * (uint64_t)SFRAME_LIST_MIN_AVG_SPAN > span;
+}
+
 static int append_frame(SFRAME_LIST *fl, UINT_RANGE *range,
     OSSL_QRX_PKT *pkt,
     const unsigned char *data)
 {
     STREAM_FRAME *new_frame;
 
-    if ((new_frame = stream_frame_new(range, pkt, data)) == NULL)
+    if (sframe_list_too_fragmented(fl, range->end))
+        return 0;
+
+    if ((new_frame = stream_frame_new(fl, range, pkt, data)) == NULL)
         return 0;
     new_frame->prev = fl->tail;
     if (fl->tail != NULL)
@@ -95,7 +136,7 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
 
     /* nothing there yet */
     if (fl->tail == NULL) {
-        fl->tail = fl->head = stream_frame_new(range, pkt, data);
+        fl->tail = fl->head = stream_frame_new(fl, range, pkt, data);
         if (fl->tail == NULL)
             return 0;
 
@@ -129,13 +170,16 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
      * Now we must create a new frame although in the end we might drop it,
      * because we will be potentially dropping existing overlapping frames.
      */
-    new_frame = stream_frame_new(range, pkt, data);
+    new_frame = stream_frame_new(fl, range, pkt, data);
     if (new_frame == NULL)
         return 0;
 
     for (next_frame = sf;
         next_frame != NULL && next_frame->range.end <= range->end;) {
         STREAM_FRAME *drop_frame = next_frame;
+
+        /* the reader still holds the data of a locked head */
+        assert(!fl->head_locked || drop_frame != fl->head);
 
         next_frame = next_frame->next;
         if (next_frame != NULL)
@@ -150,17 +194,23 @@ int ossl_sframe_list_insert(SFRAME_LIST *fl, UINT_RANGE *range,
         stream_frame_free(fl, drop_frame);
     }
 
-    if (next_frame != NULL) {
-        /* check whether the new_frame is redundant because there is no gap */
-        if (prev_frame != NULL
-            && next_frame->range.start <= prev_frame->range.end) {
-            stream_frame_free(fl, new_frame);
-            goto end;
-        }
-        next_frame->prev = new_frame;
-    } else {
-        fl->tail = new_frame;
+    /* check whether the new_frame is redundant because there is no gap */
+    if (next_frame != NULL && prev_frame != NULL
+        && next_frame->range.start <= prev_frame->range.end) {
+        stream_frame_free(fl, new_frame);
+        goto end;
     }
+
+    /* the frame count only grows past this point */
+    if (sframe_list_too_fragmented(fl, range->end)) {
+        stream_frame_free(fl, new_frame);
+        return 0;
+    }
+
+    if (next_frame != NULL)
+        next_frame->prev = new_frame;
+    else
+        fl->tail = new_frame;
 
     new_frame->next = next_frame;
     new_frame->prev = prev_frame;
@@ -269,12 +319,103 @@ int ossl_sframe_list_is_head_locked(SFRAME_LIST *fl)
     return fl->head_locked;
 }
 
-int ossl_sframe_list_move_data(SFRAME_LIST *fl,
+/*
+ * Whether a run of contiguous frames spanning start to last->range.end is
+ * worth moving to the side storage. A short run surrounded by empty space is
+ * not, as moving it would hold a whole side storage block for very little
+ * data, so it stays in the packets it arrived in and is moved once it grows
+ * or the space around it fills in. Until then its frames keep their data and
+ * packet reference, which is how every frame is read before it is moved, so
+ * the reader is unaffected.
+ */
+static int run_worth_moving(const STREAM_FRAME *last, uint64_t start,
+    uint64_t prev_end, uint64_t min_run_len)
+{
+    uint64_t run_len = last->range.end - start;
+    uint64_t gap_before = start - prev_end;
+    /* space past the last frame is where the rest of the stream goes */
+    uint64_t gap_after = last->next != NULL
+        ? last->next->range.start - last->range.end
+        : 0;
+
+    if (run_len >= min_run_len)
+        return 1;
+
+    /* space farther than min_run_len away could not share a block anyway */
+    if (gap_before > min_run_len)
+        gap_before = min_run_len;
+    if (gap_after > min_run_len)
+        gap_after = min_run_len;
+
+    return run_len * SFRAME_LIST_MIN_MOVE_FILL
+        >= gap_before + run_len + gap_after;
+}
+
+/*
+ * Copy a run of contiguous frames into a single buffer sized to the run and
+ * owned by its first frame, releasing the buffers the frames arrived in.
+ * Runs whose data was partly moved to the side storage already cannot be
+ * brought back into one buffer and are left alone, as are runs pinning
+ * nothing. Returns 0 if the run was left as it is.
+ */
+static int move_run_to_own_buf(SFRAME_LIST *fl, STREAM_FRAME *sf,
+    STREAM_FRAME *last)
+{
+    STREAM_FRAME *cur;
+    unsigned char *buf;
+    uint64_t start = sf->range.start, limit = start;
+    int pinned = 0;
+
+    for (cur = sf;; cur = cur->next) {
+        if (cur->data == NULL && cur->range.end > cur->range.start)
+            return 0;
+        if (cur->data != NULL && cur->own_buf == NULL)
+            pinned = 1;
+        if (cur == last)
+            break;
+    }
+
+    if (!pinned || last->range.end == start)
+        return 0;
+
+    buf = OPENSSL_malloc((size_t)(last->range.end - start));
+    if (buf == NULL)
+        return 0;
+
+    for (cur = sf;; cur = cur->next) {
+        if (cur->data != NULL) {
+            const unsigned char *data = cur->data;
+
+            /* frames in a run may overlap, write only what is new */
+            if (limit > cur->range.start)
+                data += (size_t)(limit - cur->range.start);
+            memcpy(buf + (size_t)(limit - start), data,
+                (size_t)(cur->range.end - limit));
+
+            if (fl->cleanse)
+                OPENSSL_cleanse((unsigned char *)cur->data,
+                    (size_t)(cur->range.end - cur->range.start));
+
+            stream_frame_release_data(fl, cur);
+        }
+
+        limit = cur->range.end;
+        if (cur == last)
+            break;
+    }
+
+    sf->data = buf;
+    sf->own_buf = buf;
+    return 1;
+}
+
+int ossl_sframe_list_move_data(SFRAME_LIST *fl, uint64_t min_run_len,
+    int move_pinned,
     sframe_list_write_at_cb *write_at_cb,
     void *cb_arg)
 {
-    STREAM_FRAME *sf = fl->head, *prev_frame = NULL;
-    uint64_t limit = fl->offset;
+    STREAM_FRAME *sf = fl->head;
+    uint64_t prev_end = fl->offset;
 
     if (sf == NULL)
         return 1;
@@ -282,52 +423,67 @@ int ossl_sframe_list_move_data(SFRAME_LIST *fl,
     if (fl->head_locked)
         sf = sf->next;
 
-    for (; sf != NULL; sf = sf->next) {
-        size_t len;
-        const unsigned char *data = sf->data;
+    while (sf != NULL) {
+        STREAM_FRAME *last = sf, *cur, *next_frame;
+        uint64_t limit = sf->range.start > fl->offset ? sf->range.start
+                                                      : fl->offset;
 
-        if (limit < sf->range.start)
-            limit = sf->range.start;
+        /* find the last frame of the run of contiguous frames from sf */
+        while (last->next != NULL && last->next->range.start <= last->range.end)
+            last = last->next;
 
-        if (data != NULL) {
-            if (limit > sf->range.start)
-                data += (size_t)(limit - sf->range.start);
-            len = (size_t)(sf->range.end - limit);
+        if (!run_worth_moving(last, limit, prev_end, min_run_len)) {
+            if (!move_pinned || !move_run_to_own_buf(fl, sf, last)) {
+                prev_end = last->range.end;
+                sf = last->next;
+                continue;
+            }
+        } else {
+            /* move the data of each frame in the run out of its packet */
+            for (cur = sf;; cur = cur->next) {
+                if (cur->data != NULL) {
+                    const unsigned char *data = cur->data;
+                    size_t len;
 
-            if (!write_at_cb(limit, data, len, cb_arg))
-                /* data did not fit */
-                return 0;
+                    /* frames in a run may overlap, write only what is new */
+                    if (limit > cur->range.start)
+                        data += (size_t)(limit - cur->range.start);
+                    len = (size_t)(cur->range.end - limit);
 
-            if (fl->cleanse)
-                OPENSSL_cleanse((unsigned char *)sf->data,
-                    (size_t)(sf->range.end - sf->range.start));
+                    if (!write_at_cb(limit, data, len, cb_arg))
+                        /* data did not fit */
+                        return 0;
 
-            /* release the packet */
-            sf->data = NULL;
-            ossl_qrx_pkt_release(sf->pkt);
-            sf->pkt = NULL;
+                    if (fl->cleanse)
+                        OPENSSL_cleanse((unsigned char *)cur->data,
+                            (size_t)(cur->range.end - cur->range.start));
+
+                    /* release the packet */
+                    stream_frame_release_data(fl, cur);
+                }
+
+                limit = cur->range.end;
+                if (cur == last)
+                    break;
+            }
         }
 
-        limit = sf->range.end;
-
-        /* merge contiguous frames */
-        if (prev_frame != NULL
-            && prev_frame->range.end >= sf->range.start) {
-            prev_frame->range.end = sf->range.end;
-            prev_frame->next = sf->next;
-
-            if (sf->next != NULL)
-                sf->next->prev = prev_frame;
-            else
-                fl->tail = prev_frame;
-
+        /* the moved run is contiguous, merge it into its first frame */
+        next_frame = last->next;
+        sf->range.end = last->range.end;
+        while (sf->next != next_frame) {
+            cur = sf->next;
+            sf->next = cur->next;
             --fl->num_frames;
-            stream_frame_free(fl, sf);
-            sf = prev_frame;
-            continue;
+            stream_frame_free(fl, cur);
         }
+        if (next_frame != NULL)
+            next_frame->prev = sf;
+        else
+            fl->tail = sf;
 
-        prev_frame = sf;
+        prev_end = sf->range.end;
+        sf = next_frame;
     }
 
     return 1;

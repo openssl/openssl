@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 #include "internal/packet.h"
+#include "internal/quic_sf_list.h"
 #include "internal/quic_stream.h"
 #include "testutil.h"
 
@@ -379,14 +380,13 @@ static int test_rstream_simple(int idx)
     unsigned char buf[sizeof(simple_data)];
     size_t readbytes = 0, avail = 0;
     int fin = 0;
-    int use_rbuf = idx > 1;
     int use_sc = idx % 2;
     int (*read_fn)(QUIC_RSTREAM *, unsigned char *, size_t, size_t *,
         int *)
         = use_sc ? test_single_copy_read
                  : ossl_quic_rstream_read;
 
-    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+    if (!TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
         goto err;
 
     if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 5,
@@ -410,11 +410,6 @@ static int test_rstream_simple(int idx)
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 1)
         || !TEST_mem_eq(buf, 1, simple_data, 1)
-        || (use_rbuf && !TEST_false(ossl_quic_rstream_move_to_rbuf(rstream)))
-        || (use_rbuf
-            && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                sizeof(simple_data))))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
             0, simple_data,
             10, 0))
@@ -446,10 +441,6 @@ static int test_rstream_simple(int idx)
             sizeof(simple_data),
             NULL,
             0, 1))
-        || (use_rbuf
-            && !TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                2 * sizeof(simple_data))))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(read_fn(rstream, buf + 14, 5, &readbytes, &fin))
         || !TEST_false(fin)
         || !TEST_size_t_eq(readbytes, 5)
@@ -459,7 +450,6 @@ static int test_rstream_simple(int idx)
         || !TEST_true(fin)
         || !TEST_size_t_eq(readbytes, sizeof(buf) - 14 - 5)
         || !TEST_mem_eq(buf, sizeof(buf), simple_data, sizeof(simple_data))
-        || (use_rbuf && !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
         || !TEST_true(read_fn(rstream, buf, sizeof(buf), &readbytes, &fin))
         || !TEST_true(fin)
         || !TEST_size_t_eq(readbytes, 0))
@@ -485,7 +475,7 @@ static int test_rstream_random(int idx)
 
     if (!TEST_ptr(bulk_data = OPENSSL_malloc(data_size))
         || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
-        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
         goto err;
 
     if (idx % 3 == 0)
@@ -550,11 +540,6 @@ static int test_rstream_random(int idx)
             goto err;
         read_off += readbytes;
         queued_min = read_off;
-        if (test_random() % 50 == 0)
-            if (!TEST_true(ossl_quic_rstream_resize_rbuf(rstream,
-                    queued_max - read_off + 1))
-                || !TEST_true(ossl_quic_rstream_move_to_rbuf(rstream)))
-                goto err;
         if (!fin_set && queued_max >= data_size - test_random() % 200) {
             fin_set = 1;
             /* Queue empty fin frame */
@@ -595,11 +580,242 @@ err:
     return ret;
 }
 
+/*
+ * Check that a stream cannot be fragmented without bound, and that the limit
+ * only rejects frames which actually grow the list. The frames are spaced out
+ * enough that the data received averages out above the minimum, so it is the
+ * absolute limit that stops this and not the ratio.
+ */
+static int test_rstream_fragmentation_limit(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL;
+    unsigned char *read_buf = NULL;
+    const size_t stride = 2 * SFRAME_LIST_MIN_AVG_SPAN;
+    const size_t data_size = stride * (SFRAME_LIST_MAX_FRAGMENTATION + 16);
+    const uint64_t past_tail = stride * SFRAME_LIST_MAX_FRAGMENTATION;
+    const size_t covered = 10 * stride + 1;
+    size_t i, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
+        goto err;
+
+    for (i = 0; i < data_size; i++)
+        data[i] = (unsigned char)(i & 0xff);
+
+    /* one byte frames with a gap after each of them can never be merged */
+    for (i = 0; i < SFRAME_LIST_MAX_FRAGMENTATION; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, i * stride,
+                data + i * stride, 1, 0)))
+            goto err;
+
+    /* a further frame would exceed the limit and must be refused */
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL, past_tail,
+            data + past_tail, 1, 0)))
+        goto err;
+
+    /* a retransmission of a buffered frame does not grow the list */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, stride,
+            data + stride, 1, 0)))
+        goto err;
+
+    /* a frame covering eleven buffered frames shrinks the list by ten */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, 0, data,
+            covered, 0)))
+        goto err;
+
+    /* so exactly ten more frames fit, and the eleventh does not */
+    for (i = 0; i < 10; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                past_tail + i * stride,
+                data + past_tail + i * stride, 1, 0)))
+            goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
+            past_tail + 10 * stride,
+            data + past_tail + 10 * stride, 1, 0)))
+        goto err;
+
+    /* the buffered data is unaffected by all of the above */
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf, data_size,
+            &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, covered)
+        || !TEST_mem_eq(read_buf, readbytes, data, covered))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
+    OPENSSL_free(read_buf);
+    return ret;
+}
+
+/*
+ * A peer sending tiny frames with a gap after each of them is refused long
+ * before the absolute limit, because the data it has sent does not average out
+ * at a sensible size.
+ */
+static int test_rstream_fragmentation_ratio(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL;
+    const size_t stride = 2;
+    const size_t data_size = stride * (SFRAME_LIST_MIN_FRAGMENTATION + 8);
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
+        goto err;
+
+    memset(data, 'x', data_size);
+
+    for (i = 0; i < SFRAME_LIST_MIN_FRAGMENTATION; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, i * stride,
+                data + i * stride, 1, 0)))
+            goto err;
+
+    if (!TEST_false(ossl_quic_rstream_queue_data(rstream, NULL,
+            SFRAME_LIST_MIN_FRAGMENTATION * stride,
+            data + SFRAME_LIST_MIN_FRAGMENTATION * stride, 1, 0)))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
+    return ret;
+}
+
+/*
+ * Small in-order frames are merged once their data is copied to the stream
+ * buffer, so the frame limit does not apply to them however many arrive. The
+ * data spans many buffer chunks, which the read path has to walk.
+ */
+static int test_rstream_small_frames(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL;
+    unsigned char *read_buf = NULL;
+    const size_t frame_len = 4;
+    const size_t num_frames = 65536;
+    const size_t data_size = num_frames * frame_len;
+    size_t i, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
+        goto err;
+
+    for (i = 0; i < data_size; i++)
+        data[i] = (unsigned char)(i & 0xff);
+
+    for (i = 0; i < num_frames; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                i * frame_len, data + i * frame_len,
+                frame_len, 0)))
+            goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf, data_size,
+            &readbytes, &fin))
+        || !TEST_false(fin)
+        || !TEST_size_t_eq(readbytes, data_size)
+        || !TEST_mem_eq(read_buf, readbytes, data, data_size))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
+    OPENSSL_free(read_buf);
+    return ret;
+}
+
+/*
+ * Frames not worth copying to the stream buffer stay in the buffers they
+ * arrived in, but only so many of them; past the limit they are copied into
+ * buffers sized to what they hold. The data must survive being copied that
+ * way, and again once the gaps around it fill in and it merges into runs
+ * that go to the stream buffer after all.
+ */
+static int test_rstream_pinned_limit(int idx)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    unsigned char *data = NULL, *ref = NULL, *read_buf = NULL;
+    const size_t stride = 8;
+    const size_t num_frames = 3 * SFRAME_LIST_MAX_PINNED_FRAMES;
+    const size_t data_size = num_frames * stride;
+    size_t i, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(read_buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL)))
+        goto err;
+
+    if (idx == 1)
+        ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    for (i = 0; i < data_size; i++)
+        data[i] = (unsigned char)(i & 0xff);
+
+    if (!TEST_ptr(ref = OPENSSL_memdup(data, data_size)))
+        goto err;
+
+    /* single byte frames spaced out so that none is worth moving */
+    for (i = 0; i < num_frames; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, i * stride,
+                data + i * stride, 1, 0)))
+            goto err;
+
+    /* fill the gaps without covering the frames already buffered */
+    for (i = 0; i < num_frames; i++)
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL,
+                i * stride + 1,
+                data + i * stride + 1, stride - 1,
+                i == num_frames - 1)))
+            goto err;
+
+    if (!TEST_true(ossl_quic_rstream_read(rstream, read_buf, data_size,
+            &readbytes, &fin))
+        || !TEST_true(fin)
+        || !TEST_size_t_eq(readbytes, data_size)
+        || !TEST_mem_eq(read_buf, readbytes, ref, data_size))
+        goto err;
+
+    if (idx == 1)
+        for (i = 0; i < data_size; i++)
+            if (!TEST_uchar_eq(data[i], 0))
+                goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    OPENSSL_free(data);
+    OPENSSL_free(ref);
+    OPENSSL_free(read_buf);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
     ADD_ALL_TESTS(test_sstream_bulk, 100);
-    ADD_ALL_TESTS(test_rstream_simple, 4);
+    ADD_ALL_TESTS(test_rstream_simple, 2);
     ADD_ALL_TESTS(test_rstream_random, 100);
+    ADD_TEST(test_rstream_fragmentation_limit);
+    ADD_TEST(test_rstream_fragmentation_ratio);
+    ADD_TEST(test_rstream_small_frames);
+    ADD_ALL_TESTS(test_rstream_pinned_limit, 2);
     return 1;
 }
