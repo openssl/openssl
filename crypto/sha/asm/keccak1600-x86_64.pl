@@ -348,9 +348,26 @@ $code.=<<___;
 .cfi_endproc
 .size	__KeccakF1600,.-__KeccakF1600
 
-.type	KeccakF1600,\@abi-omnipotent
+___
+
+sub x86_64_lane_complement {
+    $code.=<<___;
+	notq	$A[0][1](%rdi)
+	notq	$A[0][2](%rdi)
+	notq	$A[1][3](%rdi)
+	notq	$A[2][2](%rdi)
+	notq	$A[3][2](%rdi)
+	notq	$A[4][0](%rdi)
+___
+}
+
+sub gen_keccak1600_wrapper {
+    my ($name, $iotas_base) = @_;
+
+    $code.=<<___;
+.type	$name,\@abi-omnipotent
 .align	32
-KeccakF1600:
+$name:
 .cfi_startproc
 	push	%rbx
 .cfi_push	%rbx
@@ -369,24 +386,19 @@ KeccakF1600:
 	sub	\$200,%rsp
 .cfi_adjust_cfa_offset	200
 
-	notq	$A[0][1](%rdi)
-	notq	$A[0][2](%rdi)
-	notq	$A[1][3](%rdi)
-	notq	$A[2][2](%rdi)
-	notq	$A[3][2](%rdi)
-	notq	$A[4][0](%rdi)
+___
+    x86_64_lane_complement();
 
-	lea	iotas(%rip),$iotas
+    $code.=<<___;
+	lea	$iotas_base(%rip),$iotas
 	lea	100(%rsp),%rsi		# size optimization
 
 	call	__KeccakF1600
 
-	notq	$A[0][1](%rdi)
-	notq	$A[0][2](%rdi)
-	notq	$A[1][3](%rdi)
-	notq	$A[2][2](%rdi)
-	notq	$A[3][2](%rdi)
-	notq	$A[4][0](%rdi)
+___
+    x86_64_lane_complement();
+
+    $code.=<<___;
 	lea	-100(%rdi),%rdi		# preserve A[][]
 
 	add	\$200,%rsp
@@ -406,16 +418,24 @@ KeccakF1600:
 .cfi_pop	%rbx
 	ret
 .cfi_endproc
-.size	KeccakF1600,.-KeccakF1600
+.size	$name,.-$name
 ___
+}
+
+gen_keccak1600_wrapper("KeccakF1600", "iotas");
+gen_keccak1600_wrapper("KeccakP1600_12", "96+iotas");
 
 { my ($A_flat,$inp,$len,$bsz) = ("%rdi","%rsi","%rdx","%rcx");
      ($A_flat,$inp) = ("%r8","%r9");
-$code.=<<___;
-.globl	SHA3_absorb
-.type	SHA3_absorb,\@function,4
+
+sub gen_absorb {
+    my ($name, $suffix, $init_iotas, $round_iotas) = @_;
+
+    $code.=<<___;
+.globl	$name
+.type	$name,\@function,4
 .align	32
-SHA3_absorb:
+$name:
 .cfi_startproc
 	push	%rbx
 .cfi_push	%rbx
@@ -437,24 +457,20 @@ SHA3_absorb:
 	mov	%rsi,$inp
 	lea	100(%rsp),%rsi		# size optimization
 
-	notq	$A[0][1](%rdi)
-	notq	$A[0][2](%rdi)
-	notq	$A[1][3](%rdi)
-	notq	$A[2][2](%rdi)
-	notq	$A[3][2](%rdi)
-	notq	$A[4][0](%rdi)
-	lea	iotas(%rip),$iotas
-
+___
+    x86_64_lane_complement();
+    $code .= $init_iotas;
+    $code.=<<___;
 	mov	$bsz,216-100(%rsi)	# save bsz
 
-.Loop_absorb:
+.Loop_absorb$suffix:
 	cmp	$bsz,$len
-	jc	.Ldone_absorb
+	jc	.Ldone_absorb$suffix
 
 	shr	\$3,$bsz
 	lea	-100(%rdi),$A_flat
 
-.Lblock_absorb:
+.Lblock_absorb$suffix:
 	mov	($inp),%rax
 	lea	8($inp),$inp
 	xor	($A_flat),%rax
@@ -462,26 +478,27 @@ SHA3_absorb:
 	sub	\$8,$len
 	mov	%rax,-8($A_flat)
 	sub	\$1,$bsz
-	jnz	.Lblock_absorb
+	jnz	.Lblock_absorb$suffix
 
 	mov	$inp,200-100(%rsi)	# save inp
 	mov	$len,208-100(%rsi)	# save len
+___
+    $code .= $round_iotas;
+    $code.=<<___;
 	call	__KeccakF1600
 	mov	200-100(%rsi),$inp	# pull inp
 	mov	208-100(%rsi),$len	# pull len
 	mov	216-100(%rsi),$bsz	# pull bsz
-	jmp	.Loop_absorb
+	jmp	.Loop_absorb$suffix
 
 .align	32
-.Ldone_absorb:
+.Ldone_absorb$suffix:
 	mov	$len,%rax		# return value
 
-	notq	$A[0][1](%rdi)
-	notq	$A[0][2](%rdi)
-	notq	$A[1][3](%rdi)
-	notq	$A[2][2](%rdi)
-	notq	$A[3][2](%rdi)
-	notq	$A[4][0](%rdi)
+___
+    x86_64_lane_complement();
+
+    $code.=<<___;
 
 	add	\$232,%rsp
 .cfi_adjust_cfa_offset	-232
@@ -500,17 +517,24 @@ SHA3_absorb:
 .cfi_pop	%rbx
 	ret
 .cfi_endproc
-.size	SHA3_absorb,.-SHA3_absorb
+.size	$name,.-$name
 ___
+}
+gen_absorb("SHA3_absorb", "", "\tlea\tiotas(%rip),$iotas\n\n", "");
+gen_absorb("ossl_keccak1600_absorb_p12", "_p12", "",
+           "\tlea\t96+iotas(%rip),$iotas\n");
 }
 { my ($A_flat,$out,$len,$bsz,$next) = ("%rdi","%rsi","%rdx","%rcx","%r8");
      ($out,$len,$bsz) = ("%r12","%r13","%r14");
 
-$code.=<<___;
-.globl	SHA3_squeeze
-.type	SHA3_squeeze,\@function,5
+sub gen_squeeze {
+    my ($name, $suffix, $round_func, $r12_cfi) = @_;
+
+    $code.=<<___;
+.globl	$name
+.type	$name,\@function,5
 .align	32
-SHA3_squeeze:
+$name:
 .cfi_startproc
 	push	%r12
 .cfi_push	%r12
@@ -525,46 +549,49 @@ SHA3_squeeze:
 	mov	%rdx,$len
 	mov	%rcx,$bsz
 	bt	\$0,${next}d
-	jc	.Lnext_block
-	jmp	.Loop_squeeze
+	jc	.Lnext_block$suffix
+	jmp	.Loop_squeeze$suffix
 
 .align	32
-.Loop_squeeze:
+.Loop_squeeze$suffix:
 	cmp	\$8,$len
-	jb	.Ltail_squeeze
+	jb	.Ltail_squeeze$suffix
 
 	mov	(%r9),%rax
 	lea	8(%r9),%r9
 	mov	%rax,($out)
 	lea	8($out),$out
 	sub	\$8,$len		# len -= 8
-	jz	.Ldone_squeeze
+	jz	.Ldone_squeeze$suffix
 
 	sub	\$1,%rcx		# bsz--
-	jnz	.Loop_squeeze
-.Lnext_block:
-	call	KeccakF1600
+	jnz	.Loop_squeeze$suffix
+.Lnext_block$suffix:
+	call	$round_func
 	mov	$A_flat,%r9
 	mov	$bsz,%rcx
-	jmp	.Loop_squeeze
+	jmp	.Loop_squeeze$suffix
 
-.Ltail_squeeze:
+.Ltail_squeeze$suffix:
 	mov	%r9, %rsi
 	mov	$out,%rdi
 	mov	$len,%rcx
 	.byte	0xf3,0xa4		# rep	movsb
 
-.Ldone_squeeze:
+.Ldone_squeeze$suffix:
 	pop	%r14
 .cfi_pop	%r14
 	pop	%r13
 .cfi_pop	%r13
 	pop	%r12
-.cfi_pop	%r13
+.cfi_pop	$r12_cfi
 	ret
 .cfi_endproc
-.size	SHA3_squeeze,.-SHA3_squeeze
+.size	$name,.-$name
 ___
+}
+gen_squeeze("SHA3_squeeze", "", "KeccakF1600", "%r13");
+gen_squeeze("ossl_keccak1600_squeeze_p12", "_p12", "KeccakP1600_12", "%r12");
 }
 $code.=<<___;
 .section .rodata align=256

@@ -6,6 +6,8 @@ $COMMON_GOAL=../../libcommon.a
 $SHA1_GOAL=../../libdefault.a ../../libfips.a
 $SHA2_GOAL=../../libdefault.a ../../libfips.a
 $SHA3_GOAL=../../libdefault.a ../../libfips.a
+$TURBOSHAKE_GOAL=../../libdefault.a
+$KT_GOAL=../../libdefault.a
 $BLAKE2_GOAL=../../libdefault.a
 $SM3_GOAL=../../libdefault.a
 $MD5_GOAL=../../libdefault.a
@@ -27,6 +29,8 @@ SOURCE[$COMMON_GOAL]=digestcommon.c
 
 SOURCE[$SHA2_GOAL]=sha2_prov.c
 SOURCE[$SHA3_GOAL]=sha3_prov.c cshake_prov.c
+SOURCE[$TURBOSHAKE_GOAL]=turboshake_prov.c
+SOURCE[$KT_GOAL]=kt_prov.c
 
 SOURCE[$NULL_GOAL]=null_prov.c
 
