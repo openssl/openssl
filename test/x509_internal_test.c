@@ -16,6 +16,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/x509_vfy.h>
 #include "testutil.h"
+#include "internal/cryptlib.h"
 #include "internal/nelem.h"
 #include "crypto/x509.h"
 
@@ -169,6 +170,64 @@ static int test_a2i_ipaddress(int idx)
         }
     }
     ASN1_OCTET_STRING_free(ip);
+    return good;
+}
+
+/**
+ * @struct ip_asc_testdata_st
+ * @brief One ossl_ipaddr_to_asc() case: input bytes and expected output.
+ */
+typedef struct ip_asc_testdata_st {
+    const char *data; /**< The address bytes to convert */
+    int length; /**< The number of bytes at data */
+    const char *expected; /**< The string the conversion should produce */
+} IP_ASC_TESTDATA;
+
+/*-
+ * ossl_ipaddr_to_asc() is not the inverse of a2i_IPADDRESS(): it neither
+ * elides a run of zero groups as "::" nor emits lowercase hex, so the
+ * expected strings below are not the RFC 5952 canonical presentation
+ * forms of these addresses.
+ */
+static IP_ASC_TESTDATA ipaddr_to_asc_tests[] = {
+    { "\x7f\x00\x00\x01", 4, "127.0.0.1" },
+    { "\x01\x02\x03\x04", 4, "1.2.3.4" },
+    { "\xff\xff\xff\xff", 4, "255.255.255.255" },
+
+    { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00", 16,
+        "0:0:0:0:0:0:0:0" },
+    { "\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x01", 16,
+        "0:0:0:0:0:0:0:1" },
+    { "\x20\x01\x0d\xb8\x00\x00\x00\x00\x00\x00\xff\x00\x00\x42\x83\x29", 16,
+        "2001:DB8:0:0:0:FF00:42:8329" },
+
+    /*
+     * The longest output ossl_ipaddr_to_asc() can produce: 39 characters
+     * and a nul exactly fill its 40-byte buffer, so the last group is
+     * written with no room to spare.  A truncation guard that is off by
+     * one drops that group.
+     */
+    { "\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff\xff", 16,
+        "FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF:FFFF" },
+
+    /* Only 4 and 16 are addresses; every other length is reported back. */
+    { "", 0, "<invalid length=0>" },
+    { "\x01\x02\x03", 3, "<invalid length=3>" },
+    { "\x01\x02\x03\x04\x05", 5, "<invalid length=5>" },
+};
+
+/**
+ * @brief Check ossl_ipaddr_to_asc() against one ipaddr_to_asc_tests entry.
+ * @param idx index into ipaddr_to_asc_tests of the case to run
+ * @returns 1 if the conversion produced the expected string, 0 otherwise
+ */
+static int test_ipaddr_to_asc(int idx)
+{
+    const IP_ASC_TESTDATA *t = &ipaddr_to_asc_tests[idx];
+    char *asc = ossl_ipaddr_to_asc((const unsigned char *)t->data, t->length);
+    int good = TEST_ptr(asc) && TEST_str_eq(asc, t->expected);
+
+    OPENSSL_free(asc);
     return good;
 }
 
@@ -990,6 +1049,7 @@ int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
     ADD_ALL_TESTS(test_a2i_ipaddress, OSSL_NELEM(a2i_ipaddress_tests));
+    ADD_ALL_TESTS(test_ipaddr_to_asc, OSSL_NELEM(ipaddr_to_asc_tests));
     ADD_TEST(tests_X509_PURPOSE);
     ADD_TEST(tests_X509_check_time);
     ADD_TEST(tests_X509_check_crypto);

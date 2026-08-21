@@ -307,9 +307,10 @@ int s_time_main(int argc, char **argv)
             goto end;
 
         if (www_path != NULL) {
-            buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
+            buf_len = snprintf(buf, sizeof(buf), fmt_http_get_cmd,
                 www_path);
-            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
+            if (buf_len <= 0 || (size_t)buf_len >= sizeof(buf)
+                || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;
@@ -360,8 +361,9 @@ next:
     }
 
     if (www_path != NULL) {
-        buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd, www_path);
-        if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
+        buf_len = snprintf(buf, sizeof(buf), fmt_http_get_cmd, www_path);
+        if (buf_len <= 0 || (size_t)buf_len >= sizeof(buf)
+            || SSL_write(scon, buf, buf_len) <= 0)
             goto end;
         while (SSL_read(scon, buf, sizeof(buf)) > 0)
             continue;
@@ -388,9 +390,10 @@ next:
             goto end;
 
         if (www_path != NULL) {
-            buf_len = BIO_snprintf(buf, sizeof(buf), fmt_http_get_cmd,
+            buf_len = snprintf(buf, sizeof(buf), fmt_http_get_cmd,
                 www_path);
-            if (buf_len <= 0 || SSL_write(scon, buf, buf_len) <= 0)
+            if (buf_len <= 0 || (size_t)buf_len >= sizeof(buf)
+                || SSL_write(scon, buf, buf_len) <= 0)
                 goto end;
             while ((i = SSL_read(scon, buf, sizeof(buf))) > 0)
                 bytes_read += i;

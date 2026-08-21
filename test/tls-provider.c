@@ -408,7 +408,7 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
                 dummy_group_names[i] = OPENSSL_zalloc(dummy_name_max_size);
                 if (dummy_group_names[i] == NULL)
                     return 0;
-                BIO_snprintf(dummy_group_names[i],
+                snprintf(dummy_group_names[i],
                     dummy_name_max_size,
                     "%s%d", dummy_base, i);
             }
