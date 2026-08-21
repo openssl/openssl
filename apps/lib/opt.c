@@ -739,7 +739,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
         /* purpose name -> purpose index */
         i = X509_PURPOSE_get_by_sname(opt_arg());
         if (i < 0) {
-            opt_printf_stderr("%s: Invalid purpose %s\n", prog, opt_arg());
+            opt_printf_stderr("%s: Invalid verification purpose name: %s\n", prog, opt_arg());
             return 0;
         }
 
@@ -758,8 +758,7 @@ int opt_verify(int opt, X509_VERIFY_PARAM *vpm)
     case OPT_V_VERIFY_NAME:
         vtmp = X509_VERIFY_PARAM_lookup(opt_arg());
         if (vtmp == NULL) {
-            opt_printf_stderr("%s: Invalid verify name %s\n",
-                prog, opt_arg());
+            opt_printf_stderr("%s: Invalid verification method name: %s\n", prog, opt_arg());
             return 0;
         }
         X509_VERIFY_PARAM_set1(vpm, vtmp);
