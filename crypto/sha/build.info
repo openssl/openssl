@@ -72,7 +72,7 @@ IF[{- !$disabled{asm} -}]
   $KECCAK1600ASM_armv4=keccak1600-armv4.S
   $KECCAK1600ASM_aarch64=keccak1600-armv8.S
 
-  $KECCAK1600ASM_ppc64=keccak1600-ppc64.s
+  $KECCAK1600ASM_ppc64=keccak1600-ppc64.s keccakf1600x2_ppc64le.c
 
   # Now that we have defined all the arch specific variables, use the
   # appropriate one, and define the appropriate macros
