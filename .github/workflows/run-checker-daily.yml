@@ -117,6 +117,7 @@ jobs:
           no-multiblock,
           no-nextprotoneg,
           no-ocb,
+          no-pcap,
           no-pic,
           no-poly1305,
           no-posix-io,
