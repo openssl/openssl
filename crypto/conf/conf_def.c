@@ -437,7 +437,8 @@ static int def_load_bio(CONF *conf, BIO *in, long *line)
                 && (p != pname || *p == '=')) {
                 char *include = NULL;
                 BIO *next;
-                const char *include_dir = ossl_safe_getenv("OPENSSL_CONF_INCLUDE");
+                const char *include_dir = CRYPTO_safe_getenv(conf->libctx,
+                    "OPENSSL_CONF_INCLUDE");
                 char *include_path = NULL;
 
 #ifdef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
@@ -641,7 +642,8 @@ static void clear_comments(CONF *conf, char *p)
 static int str_copy(CONF *conf, char *section, char **pto, char *from)
 {
     int q, r, rr = 0, to = 0;
-    char *s, *e, *rp, *p, *rrp, *np, *cp, v;
+    char *s, *e, *rp, *rrp, *np, *cp, v;
+    const char *p;
     BUF_MEM *buf;
 
     if ((buf = BUF_MEM_new()) == NULL)

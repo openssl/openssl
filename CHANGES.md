@@ -344,6 +344,13 @@ OpenSSL Releases
 
    *Dimitri John Ledkov*
 
+ * Added `OSSL_LIB_CTX_set_safe_getenv_function` to be able to provide
+   retrieval of environment values in a application defined manner.
+   `OSSL_LIB_CTX_safe_getenv` is exposed to retreive an environment variable
+   using the set callback function or the default implementation.
+
+   *Daniel Black*
+
 OpenSSL 4.0
 -----------
 

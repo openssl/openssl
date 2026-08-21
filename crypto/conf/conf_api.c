@@ -67,12 +67,12 @@ char *_CONF_get_string(const CONF *conf, const char *section,
     const char *name)
 {
     CONF_VALUE *v, vv;
-    char *p;
+    const char *p;
 
     if (name == NULL)
         return NULL;
     if (conf == NULL)
-        return ossl_safe_getenv(name);
+        return (char *)ossl_safe_getenv(name);
     if (conf->data == NULL)
         return NULL;
     if (section != NULL) {
@@ -82,9 +82,9 @@ char *_CONF_get_string(const CONF *conf, const char *section,
         if (v != NULL)
             return v->value;
         if (strcmp(section, "ENV") == 0) {
-            p = ossl_safe_getenv(name);
+            p = CRYPTO_safe_getenv(conf->libctx, name);
             if (p != NULL)
-                return p;
+                return (char *)p;
         }
     }
     vv.section = "default";

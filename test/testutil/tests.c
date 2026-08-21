@@ -257,6 +257,25 @@ int test_ptr(const char *file, int line, const char *s, const void *p)
     return 0;
 }
 
+int test_fnptr(const char *file, int line, const char *s, void (*const p)(void))
+{
+    if (p != NULL)
+        return 1;
+    test_fail_message(NULL, file, line, "ptr", s, "NULL", "!=", "function pointer");
+    return 0;
+}
+
+int test_fnptr_eq(const char *file, int line,
+    const char *s1, const char *s2,
+    void (*const t1)(void), void (*const t2)(void))
+{
+    if (t1 == t2)
+        return 1;
+    test_fail_message(NULL, file, line, "%p", s1, s2, "==",
+        "function pointers differ");
+    return 0;
+}
+
 int test_true(const char *file, int line, const char *s, int b)
 {
     if (b)
