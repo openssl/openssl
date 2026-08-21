@@ -251,6 +251,60 @@ jobs:
         call "${{ matrix.platform.vcvars }}"
         jom test VERBOSE_FAILURE=yes HARNESS_JOBS=4 LHASH_WORKERS=16
 
+  windows-arm64:
+    needs: [validate-dispatch-inputs]
+    if: |
+      github.repository == 'openssl/openssl' &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    runs-on: windows-11-arm
+    env:
+      VCVARS: C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvarsarm64.bat
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    # no nasm: VC-WIN64-ARM has no asm_arch, so Configure disables asm
+    # here jom is an x86/x64 binary and Windows 11 on ARM runs it under emulation
+    - name: install jom
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        perl ..\Configure VC-WIN64-ARM --banner=Configured --strict-warnings no-makedepend enable-fips
+        perl configdata.pm --dump
+    - name: build
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        jom /j4 /S
+    - name: get cpu info
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        apps\openssl.exe version -c
+    - name: test
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "%VCVARS%"
+        jom test VERBOSE_FAILURE=yes HARNESS_JOBS=4 LHASH_WORKERS=16
+
   # GitHub-hosted, so pull-request code may build here: coverage bought, not risked. The
   # repository clause is new -- a cron in a fork expresses nobody's intent.
   linux-arm64:
