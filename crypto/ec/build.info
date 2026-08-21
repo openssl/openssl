@@ -59,12 +59,16 @@ IF[{- !$disabled{asm} -}]
 
   $ECASM_c64xplus=
 
+  # NIST P-256 field arithmetic in assembly; point arithmetic and constant-time
+  # table access come from the portable C reference code in ecp_nistz256.c.
+  $ECASM_riscv64=ecp_nistz256.c ecp_nistz256-riscv64.S
+  $ECDEF_riscv64=ECP_NISTZ256_ASM ECP_NISTZ256_REFERENCE_IMPLEMENTATION
   IF[{- !$disabled{'sm2'} -}]
-    $ECASM_riscv64=ecp_sm2p256.c  ecp_sm2p256-riscv64.S
+    $ECASM_riscv64=$ECASM_riscv64 ecp_sm2p256.c  ecp_sm2p256-riscv64.S
     IF[{- !$disabled{'sm2-precomp'} -}]
       $ECASM_riscv64=$ECASM_riscv64 ecp_sm2p256_table.c
     ENDIF
-    $ECDEF_riscv64=ECP_SM2P256_ASM
+    $ECDEF_riscv64=$ECDEF_riscv64 ECP_SM2P256_ASM
   ENDIF
 
   # Now that we have defined all the arch specific variables, use the
@@ -152,3 +156,6 @@ IF[{- !$disabled{'sm2'} -}]
   GENERATE[ecp_sm2p256-riscv64.S]=asm/ecp_sm2p256-riscv64.pl
   INCLUDE[ecp_sm2p256-riscv64.o]=..
 ENDIF
+
+GENERATE[ecp_nistz256-riscv64.S]=asm/ecp_nistz256-riscv64.pl
+INCLUDE[ecp_nistz256-riscv64.o]=..
