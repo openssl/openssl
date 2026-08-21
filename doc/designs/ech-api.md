@@ -387,9 +387,167 @@ ECH split-mode involves a front-end server that only does ECH decryption and
 then passes on the decrypted inner CH to a back-end TLS server that negotiates
 the actual TLS session with the client, based on the inner CH content.
 
-This release does however support servers that act as the back-end TLS server
-in an ECH split-mode scenario, as the functionality required is internal and
-also required when using shared-mode.
+This release does however support servers that act as the back-end TLS
+server in an ECH split-mode scenario, since that functionality is internal
+and also required for shared-mode. What's missing is the front-end piece.
+
+### Proposal: an ECH split-mode front-end
+
+The front-end piece: decrypt the outer CH, swap in the inner, forward it to
+the backend. This flow is implemented in the
+[DEfO fork](https://github.com/defo-project/openssl/blob/76fbc406d12e5b40c0eac50ef6dd87bb9e1ac738/include/openssl/ech.h#L129-L134),
+as `SSL_CTX_ech_raw_decrypt()`, with the buffer-handling code duplicated in
+DEfO's nginx and haproxy forks.
+
+That function's shape was discussed on the `ech@openssl.org` list in
+[August 2023](https://mta.openssl.org/pipermail/ech/2023-August/000051.html)
+without being resolved. A BIO-based shape was proposed there and never
+built. "create a regular BIO where applications would `BIO_write()` the
+messages and `BIO_read()` the modified ones", configured via `BIO_ctrl`
+([000056](https://mta.openssl.org/pipermail/ech/2023-August/000056.html)).
+
+Two constraints raised in that thread carry into the design below:
+
+- A split-mode front-end never terminates TLS (haproxy/nginx "tcp mode" as
+  opposed to "http mode"), so there is no `SSL_accept()` to fold this
+  processing into. It has to be a standalone object.
+
+- The input is not a bare CH. On HRR the second CH is prefixed by six octets
+  of a fake ChangeCipherSpec (when the client uses middlebox-compat mode),
+  and early data rides along in the same buffer. Leaving that
+  to the application meant the same buffer handling code would be written twice, in
+  nginx and haproxy.
+
+The DEfO fork's `ech.h` has otherwise been kept current. It defines
+`OSSL_ECH_RFC9849_VERSION` and carries the `OSSL_ECHSTORE` type and its
+associated `SSL_CTX_set1_echstore()`/`SSL_get1_echstore()` APIs that this
+release ships. `SSL_CTX_ech_raw_decrypt()` itself was never migrated:
+
+```c
+/* ECH split mode API */
+int SSL_CTX_ech_raw_decrypt(SSL_CTX *ctx, int *decrypted_ok,
+    char **inner_sni, char **outer_sni,
+    unsigned char *outer_ch, size_t outer_len,
+    unsigned char *inner_ch, size_t *inner_len,
+    unsigned char **hrrtok, size_t *toklen);
+```
+
+It still keys off a whole `SSL_CTX` rather than an `OSSL_ECHSTORE` directly,
+and still carries the `hrrtok` and `toklen` params that exist only because
+the caller, not the library itself, is responsible for recognising and replaying
+across an HRR.
+
+#### Proposed API
+
+A per-connection source/sink `BIO`, completing the shape from
+[000056](https://mta.openssl.org/pipermail/ech/2023-August/000056.html).
+This is deliberately not a filter stacked on the network BIO: proxies own
+their sockets and do their own I/O multiplexing, so this needs to sit
+beside that, not inside it.
+
+```c
+/* placeholder name, open for review */
+BIO *OSSL_ECH_new_split_bio(OSSL_ECHSTORE *es, uint32_t flags);
+```
+
+Bytes from the client are written in via `BIO_write()`. Rewritten bytes that are
+ready to send to the backend, are read out via `BIO_read()`. Everything
+else (status, SNI values, feeding the server direction stream) goes
+through `BIO_ctrl()`. Keys and config come from an `OSSL_ECHSTORE`, matching
+how every other current ECH API is configured, rather than requiring the
+caller to first stand up an `SSL_CTX`.
+
+Status follows the `SSL_ech_get1_status()` idiom already used elsewhere in
+this API, with `inner_sni`/`outer_sni` as caller-freed (`OPENSSL_free()`)
+out-params:
+
+```c
+int OSSL_ECH_split_get1_status(BIO *b, char **inner_sni, char **outer_sni);
+
+/* placeholder names/values, open for review */
+#  define OSSL_ECH_SPLIT_FAILED     0 /* decrypt/protocol error, drop the connection */
+#  define OSSL_ECH_SPLIT_NEED_MORE  1 /* need more client bytes before a decision can be made */
+#  define OSSL_ECH_SPLIT_REWROTE    2 /* outer CH rewritten to inner. Result available via BIO_read() */
+#  define OSSL_ECH_SPLIT_NO_ECH     3 /* CH carried no ECH (or GREASE). Bytes passed through unchanged */
+#  define OSSL_ECH_SPLIT_AWAIT_CH2  4 /* HRR seen on the server-direction feed. Waiting on second CH */
+#  define OSSL_ECH_SPLIT_DONE       5 /* detach the BIO and splice the raw sockets */
+```
+
+Note that `DONE` is only reachable once the BIO has observed the server's
+response: immediately for `NO_ECH`, after a non-HRR ServerHello when the CH
+was rewritten, or after the second rewrite when an HRR intervened. After
+`REWROTE` alone, ECH's involvement is not yet over, since an HRR may still
+arrive.
+
+#### The HRR piece
+
+The server-direction stream is fed through the same BIO (via ctrl, not
+`BIO_write()`, since that channel is reserved for the client->backend byte
+stream):
+
+```c
+/* placeholder */
+BIO_ctrl(b, OSSL_ECH_BIO_CTRL_FEED_SERVER, len, (void *)serverbytes);
+```
+
+so that the BIO, not the proxy, can detect a HelloRetryRequest and decide
+whether to expect a second CH.
+[RFC 8446 §4.1.3](https://datatracker.ietf.org/doc/html/rfc8446#section-4.1.3)
+mandates a fixed `Random` value in the ServerHello to signal an HRR; OpenSSL
+already has that constant internally as `hrrrandom` (defined in
+`ssl/statem/statem_lib.c`, declared in `ssl/statem/statem_local.h`),
+and the existing client-side detection logic in `tls_process_server_hello()`
+(`ssl/statem/statem_clnt.c`) is the model to reuse: confirm
+handshake type 2 (ServerHello), then `memcmp()` the `Random` field against
+`hrrrandom`. `ssl/ech/` code is already linked with `ssl/statem/` internals,
+so no new public symbol is needed for this.
+
+Doing this inside the BIO, rather than via the `hrrtok` out-param DEfO's
+version returns to the caller, means:
+
+- the `hrrtok`/`toklen` pair goes away entirely, since the HPKE context and
+  HPKE sequence-number advance across the HRR stay inside the BIO, never
+  crossing into application code;
+- the proxy does zero TLS parsing on the server-direction stream, only
+  forwards bytes and lets `OSSL_ECH_split_get1_status()` tell it whether to
+  expect a second CH (`OSSL_ECH_SPLIT_AWAIT_CH2`).
+
+The app's contract collapses to one line: pipe both directions through this
+BIO until it reports `OSSL_ECH_SPLIT_DONE`, then detach it and splice the raw
+sockets directly. There are never more than two ClientHellos to handle,
+since RFC 8446 permits at most one HRR per handshake, so `AWAIT_CH2` is a
+single one-shot transition rather than a loop. A second HRR is a protocol
+violation (see Open Questions below).
+
+#### Open questions
+
+- Is feeding the server-direction stream mandatory, or can a caller that
+  doesn't care about HRR skip it (accepting that a real HRR then surfaces as
+  `OSSL_ECH_SPLIT_FAILED` or similar rather than `AWAIT_CH2`)?
+- Most connections carry no ECH, or GREASE, in which case the correct output
+  is the input, unchanged. But `BIO_write()` in / `BIO_read()` out still
+  costs two full copies of the CH even when nothing was rewritten. Is there
+  a zero-copy path for `OSSL_ECH_SPLIT_NO_ECH`, where the BIO signals "forward
+  what you already have" instead of handing back a copy? The tradeoff: it
+  saves memcpy's on the common case, at the cost of the BIO having to peek
+  far enough into the record to rule out an ECH extension before it can
+  decide to skip buffering, which is more internal state-machine complexity
+  for a cheaper hot path.
+- `OSSL_ECH_SPLIT_NO_ECH` conflates three cases with identical wire
+  behaviour: no ECH extension present, GREASE, and a real ECH that
+  decryption failed on (unknown config_id, rotated key). DEfO's
+  `raw_decrypt` exposes `decrypted_ok` as its own signal; a deployment
+  debugging key rotation would want "tried and failed" distinguishable from
+  "nothing to do". Split the status, or expose this via a separate ctrl?
+- What bounds the amount of client-direction data the BIO will buffer while
+  waiting for a complete CH, before giving up and reporting `FAILED`? This is
+  needed to avoid an unbounded buffering DoS on a partial CH.
+- If `BIO_write()` is called with a partial TLS record, does it consume what
+  it can and report `NEED_MORE`, or does the caller own reassembly before
+  ever calling in?
+- RFC 8446 forbids a second HRR in the same handshake. Does a second one
+  observed on the server-direction feed simply fail the connection
+  (`FAILED`), given the client's stack will reject it anyway?
 
 Different encodings
 -------------------
