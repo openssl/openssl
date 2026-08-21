@@ -100,7 +100,11 @@ static int i2r_OSSL_INFO_SYNTAX(X509V3_EXT_METHOD *method,
     case OSSL_INFO_SYNTAX_TYPE_CONTENT:
         if (BIO_printf(out, "%*sContent: ", indent, "") <= 0)
             return 0;
-        if (BIO_printf(out, "%.*s", info->choice.content->length, info->choice.content->data) <= 0)
+        if (BIO_printf(out, "%.*s", info->choice.content->length,
+                info->choice.content->length
+                    ? info->choice.content->data
+                    : (const unsigned char *)"")
+            <= 0)
             return 0;
         if (BIO_puts(out, "\n") <= 0)
             return 0;
@@ -145,18 +149,28 @@ static int i2r_OSSL_ATTRIBUTE_DESCRIPTOR(X509V3_EXT_METHOD *method,
     if (BIO_printf(out, "%*sSyntax:\n", indent, "") <= 0)
         return 0;
     if (BIO_printf(out, "%*s%.*s", indent + 4, "",
-            ad->attributeSyntax->length, ad->attributeSyntax->data)
+            ad->attributeSyntax->length,
+            ad->attributeSyntax->length
+                ? ad->attributeSyntax->data
+                : (const unsigned char *)"")
         <= 0)
         return 0;
     if (BIO_puts(out, "\n\n") <= 0)
         return 0;
     if (ad->name != NULL) {
-        if (BIO_printf(out, "%*sName: %.*s\n", indent, "", ad->name->length, ad->name->data) <= 0)
+        if (BIO_printf(out, "%*sName: %.*s\n", indent, "", ad->name->length,
+                ad->name->length
+                    ? ad->name->data
+                    : (const unsigned char *)"")
+            <= 0)
             return 0;
     }
     if (ad->description != NULL) {
         if (BIO_printf(out, "%*sDescription: %.*s\n", indent, "",
-                ad->description->length, ad->description->data)
+                ad->description->length,
+                ad->description->length
+                    ? ad->description->data
+                    : (const unsigned char *)"")
             <= 0)
             return 0;
     }

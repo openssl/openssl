@@ -262,7 +262,7 @@ void ossl_asn1_bit_string_set_unused_bits(ASN1_STRING *str, unsigned int num)
 
 int ASN1_STRING_copy(ASN1_STRING *dst, const ASN1_STRING *str)
 {
-    if (str == NULL)
+    if (str == NULL || str->length < 0)
         return 0;
     dst->type = str->type;
     if (!ossl_asn1_string_set_internal(dst, str->data, str->length,
@@ -378,7 +378,7 @@ void ASN1_STRING_set0(ASN1_STRING *str, void *data, int len)
     }
     str->flags &= ~ASN1_STRING_FLAG_DATA_NOT_OWNED;
     str->data = data;
-    str->length = len;
+    str->length = len < 0 ? 0 : len;
 }
 
 int ASN1_STRING_set1_data(ASN1_STRING *str, const uint8_t *data, size_t len_in)
@@ -534,7 +534,6 @@ const unsigned char *ASN1_STRING_get0_data(const ASN1_STRING *x)
     return x->data;
 }
 
-/* |max_len| excludes NUL terminator and may be 0 to indicate no restriction */
 char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
     const char *sep, size_t max_len)
 {
@@ -564,11 +563,13 @@ char *ossl_sk_ASN1_UTF8STRING2text(STACK_OF(ASN1_UTF8STRING) *text,
         current = sk_ASN1_UTF8STRING_value(text, i);
         length = ASN1_STRING_get_length(current);
         if (i > 0 && sep_len > 0) {
-            strncpy(p, sep, sep_len + 1); /* using + 1 to silence gcc warning */
+            memcpy(p, sep, sep_len);
             p += sep_len;
         }
-        strncpy(p, (const char *)ASN1_STRING_get0_data(current), length);
-        p += length;
+        if (length > 0) {
+            memcpy(p, ASN1_STRING_get0_data(current), length);
+            p += length;
+        }
     }
     *p = '\0';
 

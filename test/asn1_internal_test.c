@@ -265,12 +265,16 @@ static int test_asn1_time_conversion(char *time_string, const char *file,
                     V_ASN1_GENERALIZEDTIME)))
             goto err;
     }
-    if (!TEST_true((strcmp(time_string,
-                        (const char *)ASN1_STRING_get0_data(result))
-            == 0))) {
-        TEST_info("Expected time: %s, Got time: %s\n", time_string,
-            ASN1_STRING_get0_data(result));
-        goto err;
+    {
+        size_t rlen = ASN1_STRING_get_length(result);
+        const char *rdata = (const char *)ASN1_STRING_get0_data(result);
+
+        if (!TEST_size_t_eq(strlen(time_string), rlen)
+            || !TEST_int_eq(memcmp(time_string, rdata, rlen), 0)) {
+            TEST_info("Expected time: %s, Got time: %.*s\n", time_string,
+                (int)rlen, rdata);
+            goto err;
+        }
     }
 
     ret = 1;
@@ -587,6 +591,98 @@ static int test_ossl_uni2utf8(void)
     return ok;
 }
 
+static int test_empty_uni_conversions(void)
+{
+    char *out = NULL;
+    int ok = 0;
+
+    /*
+     * A decoded empty BMPString is a NULL data pointer with a zero length,
+     * which is how an empty PKCS12 friendlyName reaches these functions by
+     * way of ASN1_STRING_get0_data().
+     */
+    if (!TEST_ptr(out = OPENSSL_uni2asc(NULL, 0))
+        || !TEST_str_eq(out, ""))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    if (!TEST_ptr(out = OPENSSL_uni2utf8(NULL, 0))
+        || !TEST_str_eq(out, ""))
+        goto err;
+
+    ok = 1;
+err:
+    OPENSSL_free(out);
+    return ok;
+}
+
+static int test_asn1_string_to_utf8(void)
+{
+    static const unsigned char bmp[] = { 0x00, 'A', 0x00, 'B' };
+    ASN1_STRING in;
+    unsigned char *out = NULL;
+    int len, ok = 0;
+
+    in.flags = 0;
+
+    /* UTF8String in: same-format path of ASN1_mbstring_copy() */
+    in.type = V_ASN1_UTF8STRING;
+    in.data = (unsigned char *)"ABC";
+    in.length = 3;
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 3)
+        || !TEST_ptr(out)
+        || !TEST_mem_eq(out, len, "ABC", 3)
+        || !TEST_true(out[len] == '\0'))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    /* BMPString in: converting path */
+    in.type = V_ASN1_BMPSTRING;
+    in.data = (unsigned char *)bmp;
+    in.length = (int)sizeof(bmp);
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 2)
+        || !TEST_ptr(out)
+        || !TEST_mem_eq(out, len, "AB", 2)
+        || !TEST_true(out[len] == '\0'))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    /* Empty input still yields a NUL terminated buffer */
+    in.type = V_ASN1_UTF8STRING;
+    in.data = (unsigned char *)"";
+    in.length = 0;
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 0)
+        || !TEST_ptr(out)
+        || !TEST_true(out[0] == '\0'))
+        goto err;
+    OPENSSL_free(out);
+    out = NULL;
+
+    /*
+     * The decoder represents an empty string as a NULL data pointer with a
+     * zero length, not as a pointer to zero bytes, so cover that separately.
+     */
+    in.type = V_ASN1_UTF8STRING;
+    in.data = NULL;
+    in.length = 0;
+    len = ASN1_STRING_to_UTF8(&out, &in);
+    if (!TEST_int_eq(len, 0)
+        || !TEST_ptr(out)
+        || !TEST_true(out[0] == '\0'))
+        goto err;
+
+    ok = 1;
+err:
+    OPENSSL_free(out);
+    return ok;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_tbl_standard);
@@ -600,5 +696,7 @@ int setup_tests(void)
     ADD_TEST(test_asn1_time_tm_conversions);
     ADD_TEST(test_mbstring_ncopy);
     ADD_TEST(test_ossl_uni2utf8);
+    ADD_TEST(test_empty_uni_conversions);
+    ADD_TEST(test_asn1_string_to_utf8);
     return 1;
 }

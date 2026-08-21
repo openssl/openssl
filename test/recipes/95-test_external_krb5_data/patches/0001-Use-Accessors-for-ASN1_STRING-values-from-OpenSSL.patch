@@ -10,8 +10,8 @@ structure.
 
 https://github.com/openssl/openssl/issues/29117
 ---
- .../preauth/pkinit/pkinit_crypto_openssl.c       | 16 +++++++++-------
- 1 file changed, 9 insertions(+), 7 deletions(-)
+ .../preauth/pkinit/pkinit_crypto_openssl.c       | 18 +++++++++++-------
+ 1 file changed, 11 insertions(+), 7 deletions(-)
 
 diff --git a/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c b/src/plugins/preauth/pkinit/pkinit_crypto_openssl.c
 index d1fe18e5a..14e060de8 100644
@@ -47,20 +47,25 @@ index d1fe18e5a..14e060de8 100644
              if (princs != NULL &&
                  OBJ_cmp(plgctx->id_pkinit_san,
                          gen->d.otherName->type_id) == 0) {
-@@ -2414,12 +2415,13 @@ crypto_retrieve_X509_sans(krb5_context context,
+@@ -2414,12 +2415,17 @@ crypto_retrieve_X509_sans(krb5_context context,
          case GEN_DNS:
              if (dnss != NULL) {
++                if (ASN1_STRING_length(gen->d.dNSName) == 0)
++                    break;
                  /* Prevent abuse of embedded null characters. */
 -                if (memchr(gen->d.dNSName->data, '\0', gen->d.dNSName->length))
 +                if (memchr(ASN1_STRING_get0_data(gen->d.dNSName), '\0',
 +                           ASN1_STRING_length(gen->d.dNSName)))
                      break;
-                 pkiDebug("%s: found dns name = %s\n", __FUNCTION__,
+-                pkiDebug("%s: found dns name = %s\n", __FUNCTION__,
 -                         gen->d.dNSName->data);
++                pkiDebug("%s: found dns name = %.*s\n", __FUNCTION__,
++                         (int)ASN1_STRING_length(gen->d.dNSName),
 +                         ASN1_STRING_get0_data(gen->d.dNSName));
                  dnss[d] = (unsigned char *)
 -                    strdup((char *)gen->d.dNSName->data);
-+                    strdup((char *)ASN1_STRING_get0_data(gen->d.dNSName));
++                    strndup((char *)ASN1_STRING_get0_data(gen->d.dNSName),
++                            ASN1_STRING_length(gen->d.dNSName));
                  if (dnss[d] == NULL) {
                      pkiDebug("%s: failed to duplicate dns name\n",
                               __FUNCTION__);

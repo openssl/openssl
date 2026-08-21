@@ -57,11 +57,15 @@ char *OPENSSL_uni2asc(const unsigned char *uni, int unilen)
     /* If no terminating zero allow for one */
     if (!unilen || uni[unilen - 1])
         asclen++;
-    uni++;
     if ((asctmp = OPENSSL_malloc(asclen)) == NULL)
         return NULL;
+    /*
+     * Take the low byte of each big-endian UTF-16 unit. Index from the
+     * caller's pointer rather than incrementing it first, so that a zero
+     * length input does not do pointer arithmetic on a NULL pointer.
+     */
     for (i = 0; i < unilen; i += 2)
-        asctmp[i >> 1] = uni[i];
+        asctmp[i >> 1] = uni[i + 1];
     asctmp[asclen - 1] = 0;
     return asctmp;
 }

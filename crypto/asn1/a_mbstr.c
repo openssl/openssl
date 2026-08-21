@@ -171,14 +171,18 @@ int ASN1_mbstring_ncopy(ASN1_STRING **out, const unsigned char *in, int len,
     }
     /* If both the same type just copy across */
     if (inform == outform) {
-        if (!ASN1_STRING_set1_data(dest, in, len)) {
+        if ((p = OPENSSL_malloc((size_t)len + 1)) == NULL) {
             if (free_out) {
                 ASN1_STRING_free(dest);
                 *out = NULL;
             }
-            ERR_raise(ERR_LIB_ASN1, ERR_R_ASN1_LIB);
             return -1;
         }
+        if (len > 0)
+            memcpy(p, in, (size_t)len);
+        p[len] = '\0';
+        dest->data = p;
+        dest->length = len;
         return str_type;
     }
 
