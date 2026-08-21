@@ -197,6 +197,8 @@ int BN_is_odd(const BIGNUM *a);
 
 void BN_zero_ex(BIGNUM *a);
 
+#define BN_CTX_START_FLAG_SCRUB_ON_END 0x0001u
+
 #if OPENSSL_API_LEVEL > 908
 #define BN_zero(a) BN_zero_ex(a)
 #else
@@ -210,6 +212,7 @@ BN_CTX *BN_CTX_new(void);
 BN_CTX *BN_CTX_secure_new_ex(OSSL_LIB_CTX *ctx);
 BN_CTX *BN_CTX_secure_new(void);
 void BN_CTX_free(BN_CTX *c);
+int BN_CTX_start_ex(BN_CTX *ctx, unsigned int flags);
 void BN_CTX_start(BN_CTX *ctx);
 BIGNUM *BN_CTX_get(BN_CTX *ctx);
 void BN_CTX_end(BN_CTX *ctx);
