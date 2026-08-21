@@ -63,7 +63,7 @@ ___
 
 # Function arguments
 my ($CTX, $INP, $LEN, $A, $B, $C, $D) = ("a0", "a1", "a2", "a4", "a5", "a6", "a7");
-my ($KT, $T0, $T1, $T2, $lA, $lB, $lC, $lD) = ("a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6");
+my ($BASE, $T0, $T1, $T2, $lA, $lB, $lC, $lD) = ("a3", "t0", "t1", "t2", "t3", "t4", "t5", "t6");
 my ($C1, $C2, $C3, $C4, $C5, $C6, $C7, $C8) = ("s0", "s1", "s2", "s3", "s4", "s5", "s6", "s7");
 
 sub ROUND0 {
@@ -232,6 +232,60 @@ ___
     return $code;
 }
 
+my @Cw = ($C1, $C2, $C3, $C4, $C5, $C6, $C7, $C8);
+my @win = ($lA, $lB);
+my $funnel = "    ld $lA, 0($BASE)\n    ld $lB, 8($BASE)\n";
+for (my $i = 0; $i < 8; $i++) {
+    my $ci  = $Cw[$i];
+    my $cur = $win[$i % 2];
+    my $nxt = $win[($i + 1) % 2];
+    $funnel .= "    srl $ci, $cur, $T0\n";
+    $funnel .= "    sll $T2, $nxt, $T1\n";
+    $funnel .= "    or $ci, $ci, $T2\n";
+    if ($i < 7) {
+        my $off = 8 * ($i + 2);
+        $funnel .= "    ld $cur, $off($BASE)\n";
+    }
+}
+chomp $funnel;
+
+my $loop_head = <<___;
+L_block:
+    andi $T0, $INP, 7
+    bnez $T0, L_funnel
+
+L_round_loop:
+    ld $C1, 0($INP)
+    ld $C2, 8($INP)
+    ld $C3, 16($INP)
+    ld $C4, 24($INP)
+    ld $C5, 32($INP)
+    ld $C6, 40($INP)
+    ld $C7, 48($INP)
+    ld $C8, 56($INP)
+
+L_have_words:
+___
+chomp $loop_head;
+
+my $loop_tail = <<___;
+    bnez $LEN, L_block
+___
+chomp $loop_tail;
+
+my $loop_funnel = <<___;
+L_funnel:
+    addi $T2, $LEN, -1
+    beqz $T2, L_round_loop
+    andi $BASE, $INP, -8
+    slli $T0, $T0, 3
+    li $T1, 64
+    sub $T1, $T1, $T0
+$funnel
+    j L_have_words
+___
+chomp $loop_funnel;
+
 ################################################################################
 # void ossl_md5_block_asm_data_order@{[$isaext]}(MD5_CTX *c, const void *p, size_t num)
 $code .= <<___;
@@ -257,16 +311,7 @@ ossl_md5_block_asm_data_order@{[$isaext]}:
     lw $C, 8($CTX)
     lw $D, 12($CTX)
 
-L_round_loop:
-
-    ld $C1, 0($INP)
-    ld $C2, 8($INP)
-    ld $C3, 16($INP)
-    ld $C4, 24($INP)
-    ld $C5, 32($INP)
-    ld $C6, 40($INP)
-    ld $C7, 48($INP)
-    ld $C8, 56($INP)
+@{[$loop_head]}
 
     mv $lA, $A
     mv $lB, $B
@@ -350,7 +395,7 @@ L_round_loop:
 
     addi $LEN, $LEN, -1
 
-    bnez $LEN, L_round_loop
+@{[$loop_tail]}
 
     sw $A, 0($CTX)
     sw $B, 4($CTX)
@@ -369,6 +414,7 @@ L_round_loop:
     addi sp, sp, 64
 
     ret
+@{[$loop_funnel]}
 .size ossl_md5_block_asm_data_order@{[$isaext]},.-ossl_md5_block_asm_data_order@{[$isaext]}
 ___
 
