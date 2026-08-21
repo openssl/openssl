@@ -1046,6 +1046,71 @@ err:
     return r;
 }
 
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+static int test_ec_points_mul_null_scalar_prime256v1(void)
+{
+    int ret = 0;
+    int num_of_points = 0;
+    EC_GROUP *ecgroup = NULL;
+    BN_CTX *ctx = NULL;
+
+    EC_POINT **points = NULL;
+    BIGNUM **scalars = NULL;
+
+    EC_POINT *result = NULL;
+
+    ecgroup = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1);
+    if (!TEST_ptr(ecgroup))
+        goto end;
+
+    ctx = BN_CTX_new();
+    if (!TEST_ptr(ctx))
+        goto end;
+
+    const EC_POINT *gen = EC_GROUP_get0_generator(ecgroup);
+
+    num_of_points = 3;
+    points = OPENSSL_calloc(num_of_points, sizeof(EC_POINT *));
+    scalars = OPENSSL_calloc(num_of_points, sizeof(BIGNUM *));
+
+    if (!TEST_ptr(points) || !TEST_ptr(scalars))
+        goto end;
+
+    for (int i = 0; i < num_of_points; i++) {
+        points[i] = EC_POINT_new(ecgroup);
+        EC_POINT_copy(points[i], gen);
+
+        scalars[i] = (i == 0) ? NULL : BN_new();
+        if (scalars[i])
+            BN_rand(scalars[i], 256, BN_RAND_TOP_ANY, BN_RAND_BOTTOM_ANY);
+    }
+    result = EC_POINT_new(ecgroup);
+    if (!TEST_ptr(result))
+        goto end;
+
+    if (!TEST_true(EC_POINTs_mul(ecgroup, result, NULL, num_of_points,
+            (const EC_POINT **)points,
+            (const BIGNUM **)scalars, ctx)))
+        goto end;
+
+    ret = 1;
+end:
+
+    EC_POINT_free(result);
+    for (int i = 0; i < num_of_points; i++) {
+        EC_POINT_free(points[i]);
+        BN_free(scalars[i]);
+    }
+    OPENSSL_free(points);
+    OPENSSL_free(scalars);
+
+    BN_CTX_free(ctx);
+    EC_GROUP_free(ecgroup);
+
+    return ret;
+}
+#endif /* OPENSSL_NO_DEPRECATED_3_0 */
+
 static int hybrid_point_encoding_test(void)
 {
     BIGNUM *x = NULL, *y = NULL;
@@ -3157,6 +3222,9 @@ int setup_tests(void)
 #endif
     ADD_ALL_TESTS(cardinality_test, (int)crv_len);
     ADD_TEST(prime_field_tests);
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_ec_points_mul_null_scalar_prime256v1);
+#endif
 #ifndef OPENSSL_NO_EC2M
     ADD_TEST(hybrid_point_encoding_test);
     ADD_TEST(char2_field_tests);
