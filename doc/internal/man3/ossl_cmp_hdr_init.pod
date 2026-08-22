@@ -77,9 +77,8 @@ The messageTime field contains the time at which the sender created the message.
 This may be useful to allow end entities to correct/check their local time for
 consistency with the time on a central system.
 
-ossl_cmp_hdr_set1_senderKID() Sets hdr->senderKID to the given string.
-In an PBMAC-protected IR this usually is a reference number issued by the CA,
-else the subject key ID of the sender's protecting certificate.
+ossl_cmp_hdr_set1_senderKID() sets the B<senderKID> field in the given
+PKIHeader I<hdr> to I<senderKID>. If it is NULL the field will be omitted.
 
 ossl_cmp_hdr_push0_freeText() pushes an ASN1_UTF8STRING to
 hdr->freeText and consumes the given pointer.
