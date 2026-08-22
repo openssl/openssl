@@ -17,6 +17,18 @@ fi
 mkdir -p "$OSSL_CI_ARTIFACTS_PATH"
 export OSSL_CI_ARTIFACTS_PATH="$(cd "$OSSL_CI_ARTIFACTS_PATH"; pwd)"
 
+# Enable core dumps so a crashing test leaves a core with every thread's stack
+# for diagnosis. Only a failing run produces one; green runs dump nothing.
+# Linux only for now; best effort - a runner that disallows this just won't
+# dump.
+if [ "$(uname)" = Linux ]; then
+    ulimit -c unlimited 2>/dev/null || true
+    if command -v sudo >/dev/null 2>&1; then
+        sudo mkdir -p /tmp/cores && sudo chmod 1777 /tmp/cores || true
+        echo '/tmp/cores/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern >/dev/null 2>&1 || true
+    fi
+fi
+
 # Run the tests. This might fail, but we need to capture artifacts anyway.
 set +e
 make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16} "$@"
@@ -30,6 +42,18 @@ for test_name in quic_multistream; do
         mv "test-runs/test_${test_name}" "$OSSL_CI_ARTIFACTS_PATH/"
     fi
 done
+
+# Collect any core dumps together with the matching test binary, so the core is
+# usable with gdb without a rebuild. The executable name is the %e field of the
+# core file name. Only a failing run produces any. Linux only for now.
+if [ "$(uname)" = Linux ]; then
+    for core in /tmp/cores/core.*; do
+        [ -f "$core" ] || continue
+        exe=$(basename "$core"); exe=${exe#core.}; exe=${exe%.*}
+        [ -f "test/$exe" ] && cp "test/$exe" "$OSSL_CI_ARTIFACTS_PATH/" || true
+        mv "$core" "$OSSL_CI_ARTIFACTS_PATH/" || true
+    done
+fi
 
 # Log the artifact tree.
 echo "::group::List of artifact files generated"
