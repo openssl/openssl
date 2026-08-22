@@ -222,6 +222,38 @@ jobs:
       if: matrix.platform.tests != 'none'
       run: sudo apt-get -yq --allow-unauthenticated --allow-downgrades --allow-remove-essential --allow-change-held-packages install qemu-user
 
+    # Ubuntu 24.04 pins qemu-user at 8.2.2. Pre-9.2 qemu has a number of known
+    # serious bugs with hppa emulation, and the hppa job appears to hit an
+    # intermittent SIGILL under it (empty log, no guest signal - i.e. qemu
+    # itself, not the test). Build a current-stable qemu for the hppa job and
+    # point binfmt at it.
+    - name: use current-stable qemu for hppa
+      if: contains(matrix.platform.arch, 'hppa') && matrix.platform.tests != 'none'
+      env:
+        QEMU_TAG: v11.1.0
+      run: |
+        sudo apt-get -yq install ninja-build pkg-config libglib2.0-dev \
+          flex bison python3-venv python3-pip
+        git clone --depth 1 -b "$QEMU_TAG" \
+          https://gitlab.com/qemu-project/qemu.git /tmp/qemu
+        mkdir /tmp/qemu/build
+        cd /tmp/qemu/build
+        ../configure --target-list=hppa-linux-user --static \
+          --disable-docs --disable-tools --disable-plugins
+        ninja qemu-hppa
+        # binfmt on this runner is managed by systemd-binfmt (no
+        # update-binfmts). Overwrite the registered interpreter binary in
+        # place and refresh the registration so any 'F' flag re-opens it.
+        newq=/tmp/qemu/build/qemu-hppa
+        sudo cp "$newq" /usr/bin/qemu-hppa
+        entry=$(ls /proc/sys/fs/binfmt_misc/ | grep -i hppa | head -1)
+        interp=$(sed -n 's/^interpreter //p' "/proc/sys/fs/binfmt_misc/$entry")
+        echo "binfmt entry=$entry interpreter=$interp"
+        [ -n "$interp" ] && sudo cp "$newq" "$interp"
+        sudo systemctl restart systemd-binfmt 2>/dev/null || true
+        cat "/proc/sys/fs/binfmt_misc/$entry"
+        "${interp:-/usr/bin/qemu-hppa}" --version | head -1
+
     - name: Set QEMU environment
       if: matrix.platform.qemucpu != ''
       run: echo "QEMU_CPU=${{ matrix.platform.qemucpu }}" >> $GITHUB_ENV

@@ -17,6 +17,18 @@ fi
 mkdir -p "$OSSL_CI_ARTIFACTS_PATH"
 export OSSL_CI_ARTIFACTS_PATH="$(cd "$OSSL_CI_ARTIFACTS_PATH"; pwd)"
 
+# Enable core dumps so a crashing test leaves a core with every thread's stack
+# for diagnosis. Only a failing run produces one; green runs dump nothing.
+# Linux only for now; best effort - a runner that disallows this just won't
+# dump.
+if [ "$(uname)" = Linux ]; then
+    ulimit -c unlimited 2>/dev/null || true
+    if command -v sudo >/dev/null 2>&1; then
+        sudo mkdir -p /tmp/cores && sudo chmod 1777 /tmp/cores || true
+        echo '/tmp/cores/core.%e.%p' | sudo tee /proc/sys/kernel/core_pattern >/dev/null 2>&1 || true
+    fi
+fi
+
 # Run the tests. This might fail, but we need to capture artifacts anyway.
 set +e
 make test HARNESS_JOBS=${HARNESS_JOBS:-4} LHASH_WORKERS=${LHASH_WORKERS:-16} "$@"
@@ -30,6 +42,34 @@ for test_name in quic_multistream; do
         mv "test-runs/test_${test_name}" "$OSSL_CI_ARTIFACTS_PATH/"
     fi
 done
+
+# Collect any core dumps together with the crashing binary, so the core is
+# usable with gdb without a rebuild. Cores land in two places: host cores in
+# /tmp/cores via core_pattern (core.<exe>.<pid>), and qemu-user guest cores
+# written next to the test in its run directory (qemu_<exe>_<...>.core). For
+# each core, take the executable path the core records for itself (its execfn)
+# and copy that binary alongside; this matches any crashing program without
+# parsing core file names. Only a failing run produces any. Linux only for now.
+if [ "$(uname)" = Linux ]; then
+    {
+        { ls /tmp/cores/* 2>/dev/null || true
+          find . -name 'qemu_*.core' -type f 2>/dev/null || true; } |
+        while IFS= read -r core; do
+            [ -f "$core" ] || continue
+            # execfn is recorded relative to the test's working directory
+            # (e.g. ../../test/quic_radix_test); strip leading ../ so it
+            # resolves from the build root.
+            exe=$(file -b "$core" 2>/dev/null |
+                  sed -n "s/.*execfn: '\([^']*\)'.*/\1/p" |
+                  sed 's#^\(\.\./\)*##')
+            # Only pull in binaries from the build tree (relative execfn), not
+            # system executables such as /usr/bin/perl.
+            [ -n "$exe" ] && [ "${exe#/}" = "$exe" ] && [ -f "$exe" ] &&
+                cp "$exe" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
+            cp "$core" "$OSSL_CI_ARTIFACTS_PATH/" 2>/dev/null || true
+        done
+    } || true
+fi
 
 # Log the artifact tree.
 echo "::group::List of artifact files generated"
