@@ -34,6 +34,10 @@ OpenSSL 4.1
 
   * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
 
+  * RFC 9925 Unsigned X.509 certificates are now accepted as trusted
+    for X.509 certificate chain verification, without need to specify
+    partial_chain option.
+
 OpenSSL 4.0
 -----------
 
