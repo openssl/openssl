@@ -721,7 +721,7 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
     return 1;
 }
 
-static uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
+uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name)
 {
     size_t i;
 
@@ -1011,6 +1011,33 @@ end:
     return ret;
 }
 
+static uint16_t tls1_get_default_ecdh_group(SSL_CONNECTION *s)
+{
+    const TLS_GROUP_INFO *inf;
+    uint16_t group_id = s->cert->default_ecdh_group;
+    int minversion, maxversion;
+
+    if (group_id == 0 || !is_ecdhe_group(group_id)
+        || !tls1_check_group_id(s, group_id, 1)
+        || !tls_group_allowed(s, group_id, SSL_SECOP_CURVE_SHARED))
+        return 0;
+
+    inf = tls1_group_id_lookup(SSL_CONNECTION_GET_CTX(s), group_id);
+    if (!ossl_assert(inf != NULL))
+        return 0;
+
+    minversion = SSL_CONNECTION_IS_DTLS(s) ? inf->mindtls : inf->mintls;
+    maxversion = SSL_CONNECTION_IS_DTLS(s) ? inf->maxdtls : inf->maxtls;
+    if (maxversion == -1
+        || (minversion != 0
+            && ssl_version_cmp(s, s->version, minversion) < 0)
+        || (maxversion != 0
+            && ssl_version_cmp(s, s->version, maxversion) > 0))
+        return 0;
+
+    return group_id;
+}
+
 /*-
  * For nmatch >= 0, return the id of the |nmatch|th shared group or 0
  * if there is no match.
@@ -1029,6 +1056,7 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups)
 {
     const uint16_t *pref, *supp;
     size_t num_pref, num_supp, i;
+    size_t num_peer_groups;
     int k;
     SSL_CTX *ctx = SSL_CONNECTION_GET_CTX(s);
 
@@ -1098,7 +1126,36 @@ uint16_t tls1_shared_group(SSL_CONNECTION *s, int nmatch, int groups)
     }
     if (nmatch == TLS1_GROUPS_RETURN_NUMBER)
         return k;
-    /* Out of range (nmatch > k). */
+
+    /*
+     * No shared group was found.  RFC 4492 / 8422 section 5.1.2 permit the
+     * server to pick any curve when the client omitted the supported_groups
+     * extension entirely (as opposed to sending a list that simply shares
+     * nothing with us).  Honour an explicitly configured fallback only in
+     * that case, only for non-FFDHE searches, and only for the "first /
+     * temporary-key" lookups.  Default behaviour (no configuration) stays
+     * unchanged.
+     *
+     * Note: nmatch was rewritten from TLS1_GROUPS_RETURN_TMP_ID to 0 above,
+     * so we only need to test nmatch == 0 here.  The original caller that
+     * asked for TMP_ID still receives the fallback group.
+     */
+    if (k == 0
+        && nmatch == 0
+        && groups != TLS1_GROUPS_FFDHE_GROUPS) {
+        const uint16_t *peer_groups;
+
+        tls1_get_peer_groups(s, &peer_groups, &num_peer_groups);
+        /* groups_len == 0 always means the extension was absent */
+        if (num_peer_groups == 0) {
+            uint16_t def = tls1_get_default_ecdh_group(s);
+
+            if (def != 0)
+                return def;
+        }
+    }
+
+    /* Out of range (nmatch > k) or no usable default configured. */
     return 0;
 }
 
@@ -2032,9 +2089,10 @@ int tls1_check_ffdhe_tmp_key(SSL_CONNECTION *s, unsigned long cid)
  */
 int tls1_check_ec_tmp_key(SSL_CONNECTION *s, unsigned long cid)
 {
-    /* If not Suite B just need a shared group */
-    if (!tls1_suiteb(s))
+    /* If not Suite B just need a shared (or configured fallback) group */
+    if (!tls1_suiteb(s)) {
         return tls1_shared_group(s, 0, TLS1_GROUPS_NON_FFDHE_GROUPS) != 0;
+    }
     /*
      * If Suite B, AES128 MUST use P-256 and AES256 MUST use P-384, no other
      * curves permitted.

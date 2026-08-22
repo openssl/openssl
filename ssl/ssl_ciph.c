@@ -22,6 +22,7 @@
 #include <openssl/conf.h>
 #include <openssl/trace.h>
 #include "internal/nelem.h"
+#include "internal/tlsgroups.h"
 #include "ssl_local.h"
 #include "internal/thread_once.h"
 #include "internal/cryptlib.h"
@@ -923,7 +924,7 @@ static int ssl_cipher_strength_sort(CIPHER_ORDER **head_p,
 static int ssl_cipher_process_rulestr(const char *rule_str,
     CIPHER_ORDER **head_p,
     CIPHER_ORDER **tail_p,
-    const SSL_CIPHER **ca_list, CERT *c)
+    const SSL_CIPHER **ca_list, SSL_CTX *ctx, CERT *c)
 {
     uint32_t alg_mkey, alg_auth, alg_enc, alg_mac, algo_strength;
     int min_tls;
@@ -1149,6 +1150,30 @@ static int ssl_cipher_process_rulestr(const char *rule_str,
                 } else {
                     c->sec_level = level;
                     ok = 1;
+                }
+            } else if (buflen > (int)(sizeof("DEFAULT_EC=") - 1)
+                && CHECK_AND_SKIP_CASE_PREFIX(buf, "DEFAULT_EC=")) {
+                char group_name[65];
+                size_t group_name_len =
+                    (size_t)buflen - (sizeof("DEFAULT_EC=") - 1);
+                uint16_t group_id;
+
+                if (group_name_len >= sizeof(group_name)) {
+                    ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
+                } else {
+                    memcpy(group_name, buf, group_name_len);
+                    group_name[group_name_len] = '\0';
+                    group_id = tls1_group_name2id(ctx, group_name);
+                    /*
+                     * Only pure ECDHE groups are useful as a fallback for
+                     * the legacy "client omitted supported_groups" case.
+                     */
+                    if (group_id == 0 || !is_ecdhe_group(group_id)) {
+                        ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
+                    } else {
+                        c->default_ecdh_group = group_id;
+                        ok = 1;
+                    }
                 }
             } else {
                 ERR_raise(ERR_LIB_SSL, SSL_R_INVALID_COMMAND);
@@ -1552,14 +1577,14 @@ STACK_OF(SSL_CIPHER) *ssl_create_cipher_list(SSL_CTX *ctx,
     rule_p = rule_str;
     if (HAS_CASE_PREFIX(rule_str, "DEFAULT")) {
         ok = ssl_cipher_process_rulestr(OSSL_default_cipher_list(),
-            &head, &tail, ca_list, c);
+            &head, &tail, ca_list, ctx, c);
         rule_p += 7;
         if (*rule_p == ':')
             rule_p++;
     }
 
     if (ok && (rule_p[0] != '\0'))
-        ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, c);
+        ok = ssl_cipher_process_rulestr(rule_p, &head, &tail, ca_list, ctx, c);
 
     OPENSSL_free(ca_list); /* Not needed anymore */
 

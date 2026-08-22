@@ -85,6 +85,46 @@ sub extension_filter
     }
 }
 
+# Remove the supported_groups extension from ClientHello. After observing the
+# ServerHello, discard that flight. Forwarding it would make the client and
+# server transcripts differ, so the subsequent Finished MAC check would fail.
+sub remove_supported_groups
+{
+    my $proxy = shift;
+
+    if ($proxy->flight == 0) {
+        foreach my $message (@{$proxy->message_list}) {
+            next if $message->mt != TLSProxy::Message::MT_CLIENT_HELLO;
+            delete ${$message->extension_data}{TLSProxy::Message::EXT_SUPPORTED_GROUPS};
+            $message->process_extensions();
+            $message->repack();
+        }
+        return;
+    }
+
+    # Do not forward ServerHello. TLSProxy has no success() setter; keeping the
+    # record would make the client send a Finished based on its original,
+    # unmodified ClientHello and cause s_server to exit with an error. Abort
+    # the proxy after observing this intentional partial handshake.
+    if ($proxy->flight >= 1 && server_sent_hello($proxy)) {
+        @{$proxy->record_list} = grep {
+            $_->flight != $proxy->flight
+        } @{$proxy->record_list};
+        $proxy->abort(1);
+        $proxy->filter(undef);
+    }
+}
+
+sub server_sent_hello
+{
+    my $proxy = shift;
+
+    foreach my $message (@{$proxy->message_list}) {
+        return 1 if $message->mt == TLSProxy::Message::MT_SERVER_HELLO;
+    }
+    return 0;
+}
+
 sub inject_duplicate_extension
 {
   my ($proxy, $message_type) = @_;
@@ -198,7 +238,7 @@ sub inject_cryptopro_extension
 
 # Test 1-2: Sending a duplicate extension should fail.
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 9;
+plan tests => 11;
 ok($fatal_alert, "Duplicate ClientHello extension");
 
 SKIP: {
@@ -237,6 +277,35 @@ SKIP: {
     $proxy->clientflags("-no_tls1_3");
     $proxy->start();
     ok(TLSProxy::Message->success(), "Cryptopro extension in ClientHello");
+}
+
+SKIP: {
+    skip "TLS <= 1.2 disabled or EC disabled", 2
+        if $no_below_tls13 || disabled("ec");
+
+    # Without the setting the server must still reject the handshake.
+    $proxy->clear();
+    $proxy->filter(\&remove_supported_groups);
+    $proxy->clientflags("-tls1_2");
+    $proxy->serverflags("-tls1_2");
+    $proxy->cipherc("ECDHE-RSA-AES128-SHA256");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA256");
+    $proxy->start();
+    ok(!server_sent_hello($proxy),
+       "Server rejects ECDHE without supported_groups when no default is set");
+
+    # Mutating ClientHello on the wire breaks the Finished MAC, so check that
+    # the server accepted it by observing its ServerHello. The filter discards
+    # that ServerHello, preventing the client from sending a mismatched Finished.
+    $proxy->clear();
+    $proxy->filter(\&remove_supported_groups);
+    $proxy->clientflags("-tls1_2");
+    $proxy->serverflags("-tls1_2");
+    $proxy->cipherc("ECDHE-RSA-AES128-SHA256");
+    $proxy->ciphers("ECDHE-RSA-AES128-SHA256:\@DEFAULT_EC=P-256");
+    $proxy->start();
+    ok(server_sent_hello($proxy),
+        "Server uses configured default ECDHE group without supported_groups");
 }
 
 SKIP: {
