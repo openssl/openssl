@@ -789,7 +789,7 @@ static int test_server_rpk_verify_cb(void)
     server_retry_state = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
-            TLS_client_method(), TLS1_3_VERSION, 0,
+            TLS_client_method(), TLS1_VERSION, 0,
             &sctx, &cctx, NULL, NULL)))
         goto end;
 
