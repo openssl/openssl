@@ -1,5 +1,5 @@
 /*
- * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2025-2026 The OpenSSL Project Authors. All Rights Reserved.
  * Copyright (C) 2026, Advanced Micro Devices, all rights reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
@@ -43,6 +43,14 @@ void aesni_cbc_encrypt(const unsigned char *in, unsigned char *out,
     unsigned char *ivec, int enc);
 void aesni_decrypt(const unsigned char *in, unsigned char *out,
     const AES_KEY *key);
+
+/*
+ * Keep the cleanup out of line in assembly. Its opacity to C and LTO
+ * optimizers is what prevents the cleanup call and stores from being
+ * eliminated as dead. Do not replace it with a compiler-visible C function.
+ */
+void ossl_aes_cbc_vaes_cleanup(void *key_schedule, size_t num_keys);
+int ossl_aes_cbc_vaes_cleanup_eligible(void);
 
 /* Portable compiler abstractions for inlining and ISA target selection */
 #define STRINGIFY_IMPL_(a) #a
@@ -314,13 +322,8 @@ DEFINE_AES_DECRYPT_FUNCS(14) /* AES-256 */
         if (has_blocks)                                                             \
             _mm_storeu_si128((__m128i *)iv, saved_iv);                              \
                                                                                     \
-        /* Clear round-key material from the stack                              */  \
-        {                                                                           \
-            /* Use of volatile prevents dead-store elimination by compilers. */     \
-            volatile __m512i *vrk = (volatile __m512i *)(volatile void *)rk;        \
-            for (int i = 0; i <= NR; i++)                                           \
-                vrk[i] = _mm512_setzero_si512();                                    \
-        }                                                                           \
+        /* Erase the broadcast schedule and the volatile vector register bank. */   \
+        ossl_aes_cbc_vaes_cleanup(rk, NR + 1);                                      \
     }
 
 DEFINE_CBC_DECRYPT(10) /* AES-128 */
@@ -372,7 +375,8 @@ void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
 
 int ossl_aes_cbc_vaes_eligible(void)
 {
-    return (OPENSSL_ia32cap_P[2] & (1 << 16)) /* AVX512F            */
+    return ossl_aes_cbc_vaes_cleanup_eligible()
+        && (OPENSSL_ia32cap_P[2] & (1 << 16)) /* AVX512F            */
         && (OPENSSL_ia32cap_P[2] & (1 << 17)) /* AVX512DQ           */
         && (OPENSSL_ia32cap_P[2] & (1 << 30)) /* AVX512BW           */
         && (OPENSSL_ia32cap_P[3] & (1 << 9)); /* AVX512VAES         */
