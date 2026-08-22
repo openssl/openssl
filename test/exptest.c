@@ -236,6 +236,17 @@ err:
     return ret;
 }
 
+/*-
+ * The factor sizes are what matters; the rounds are repetition on fresh
+ * random inputs.  A defect showing on a fraction f of inputs is caught by
+ * N rounds with probability 1 - (1 - f) ^ N, so twenty catch anything
+ * affecting a seventh of inputs or more.  Rarer ones are not caught in a
+ * single run at any affordable count, and are left to the inputs being
+ * drawn afresh on every run.
+ */
+static const int factor_sizes[] = { 1024, 1536, 2048 };
+#define ROUNDS_PER_FACTOR_SIZE 20
+
 static int test_mod_exp_x2(int idx)
 {
     BN_CTX *ctx;
@@ -250,14 +261,7 @@ static int test_mod_exp_x2(int idx)
     BIGNUM *a2 = NULL;
     BIGNUM *b2 = NULL;
     BIGNUM *m2 = NULL;
-    int factor_size = 0;
-
-    if (idx <= 100)
-        factor_size = 1024;
-    else if (idx <= 200)
-        factor_size = 1536;
-    else if (idx <= 300)
-        factor_size = 2048;
+    int factor_size = factor_sizes[idx / ROUNDS_PER_FACTOR_SIZE];
 
     if (!TEST_ptr(ctx = BN_CTX_new()))
         goto err;
@@ -333,6 +337,7 @@ int setup_tests(void)
 {
     ADD_TEST(test_mod_exp_zero);
     ADD_ALL_TESTS(test_mod_exp, 200);
-    ADD_ALL_TESTS(test_mod_exp_x2, 300);
+    ADD_ALL_TESTS(test_mod_exp_x2,
+        OSSL_NELEM(factor_sizes) * ROUNDS_PER_FACTOR_SIZE);
     return 1;
 }

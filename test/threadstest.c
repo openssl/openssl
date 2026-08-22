@@ -117,18 +117,42 @@ static int rw_torture_result = 1;
 static CRYPTO_RWLOCK *rwtorturelock = NULL;
 static CRYPTO_RWLOCK *atomiclock = NULL;
 
+/*-
+ * Every write is a race for the readers to catch, and the readers read
+ * continuously for as long as the writers run.  The number of writes is
+ * therefore what decides the smallest fault the test reliably catches:
+ * one showing on a fraction p of write races is caught with probability
+ * 1 - (1 - p) ^ writes, so 100000 writes cover anything at or above 5e-5.
+ * There is no point at which the sampling is complete -- a rarer fault
+ * just needs more writes -- so this is a floor for the default run rather
+ * than a derived figure.
+ *
+ * The low contention writers sleep a millisecond between writes, which
+ * holds them near 1600 writes a second, so they are given fewer.
+ *
+ * These counts are per writer and there are two writers, so the races
+ * sampled are twice the figures below.
+ *
+ * The elapsed time check remains as a backstop, so that a machine too
+ * slow to reach the target stops where it would have stopped before.
+ */
+#define TORTURE_WRITES 50000
+#define TORTURE_WRITES_LOW 1000
+#define TORTURE_SECONDS 4
+
 static void rwwriter_fn(int id, int *iterations)
 {
     int count;
     int *old, *new;
+    int writes = contention == 0 ? TORTURE_WRITES_LOW : TORTURE_WRITES;
     OSSL_TIME t1, t2;
     t1 = ossl_time_now();
 
-    for (count = 0;; count++) {
+    for (count = 0; count < writes; count++) {
         new = OPENSSL_zalloc(sizeof(int));
         OPENSSL_assert(new != NULL);
         if (contention == 0)
-            OSSL_sleep(1000);
+            OSSL_sleep(1);
         if (!CRYPTO_THREAD_write_lock(rwtorturelock))
             abort();
         if (rwwriter_ptr != NULL) {
@@ -143,7 +167,7 @@ static void rwwriter_fn(int id, int *iterations)
         if (old != NULL)
             CRYPTO_free(old, __FILE__, __LINE__);
         t2 = ossl_time_now();
-        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
+        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= TORTURE_SECONDS)
             break;
     }
     *iterations = count;
@@ -318,13 +342,14 @@ static void free_old_rcu_data(void *data)
 static void writer_fn(int id, int *iterations)
 {
     int count;
+    int writes = contention == 0 ? TORTURE_WRITES_LOW : TORTURE_WRITES;
     OSSL_TIME t1, t2;
     uint64_t *old, *new;
     CRYPTO_RCU_CB_ITEM *cbi = NULL;
 
     t1 = ossl_time_now();
 
-    for (count = 0;; count++) {
+    for (count = 0; count < writes; count++) {
         new = OPENSSL_zalloc(sizeof(uint64_t));
         OPENSSL_assert(new != NULL);
         *new = (uint64_t)0xBAD;
@@ -335,7 +360,7 @@ static void writer_fn(int id, int *iterations)
         }
 
         if (contention == 0)
-            OSSL_sleep(1000);
+            OSSL_sleep(1);
         ossl_rcu_write_lock(rcu_lock);
         old = ossl_rcu_deref(&writer_ptr);
         TSAN_ACQUIRE(&writer_ptr);
@@ -349,7 +374,7 @@ static void writer_fn(int id, int *iterations)
             CRYPTO_free(old, NULL, 0);
         }
         t2 = ossl_time_now();
-        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= 4)
+        if ((ossl_time2seconds(t2) - ossl_time2seconds(t1)) >= TORTURE_SECONDS)
             break;
     }
     *iterations = count;

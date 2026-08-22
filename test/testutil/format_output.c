@@ -129,15 +129,19 @@ void test_fail_string_message(const char *prefix, const char *file,
     const char *op, const char *m1, size_t l1,
     const char *m2, size_t l2)
 {
+    test_output_record_begin();
     test_fail_string_common(prefix, file, line, type, left, right, op,
         m1, l1, m2, l2);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_output_string(const char *name, const char *m, size_t l)
 {
+    test_output_record_begin();
     test_fail_string_common("string", NULL, 0, NULL, NULL, NULL, name,
         m, l, m, l);
+    test_output_record_end();
 }
 
 /* BIGNUM formatted output routines */
@@ -369,8 +373,10 @@ void test_fail_bignum_message(const char *prefix, const char *file,
     const char *op,
     const BIGNUM *bn1, const BIGNUM *bn2)
 {
+    test_output_record_begin();
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn1, bn2);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_fail_bignum_mono_message(const char *prefix, const char *file,
@@ -378,12 +384,15 @@ void test_fail_bignum_mono_message(const char *prefix, const char *file,
     const char *left, const char *right,
     const char *op, const BIGNUM *bn)
 {
+    test_output_record_begin();
     test_fail_bignum_common(prefix, file, line, type, left, right, op, bn, bn);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_output_bignum(const char *name, const BIGNUM *bn)
 {
+    test_output_record_begin();
     if (bn == NULL || BN_is_zero(bn)) {
         test_printf_stderr("bignum: '%s' = %s\n",
             name == NULL ? "<NULL>" : name,
@@ -404,6 +413,7 @@ void test_output_bignum(const char *name, const BIGNUM *bn)
         test_fail_bignum_common("bignum", NULL, 0, NULL, NULL, NULL, name,
             bn, bn);
     }
+    test_output_record_end();
 }
 
 /* Memory output routines */
@@ -524,13 +534,17 @@ void test_fail_memory_message(const char *prefix, const char *file,
     const unsigned char *m1, size_t l1,
     const unsigned char *m2, size_t l2)
 {
+    test_output_record_begin();
     test_fail_memory_common(prefix, file, line, type, left, right, op,
         m1, l1, m2, l2);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_output_memory(const char *name, const unsigned char *m, size_t l)
 {
+    test_output_record_begin();
     test_fail_memory_common("memory", NULL, 0, NULL, NULL, NULL, name,
         m, l, m, l);
+    test_output_record_end();
 }

@@ -24,6 +24,7 @@ static BIO *tap_err = NULL;
 
 typedef struct local_test_data_st {
     BIO *override_bio_out, *override_bio_err;
+    int io_lock_depth; /**< Recursion depth of this thread's io_lock hold */
 } LOCAL_TEST_DATA;
 
 #if defined(OPENSSL_THREADS)
@@ -185,9 +186,20 @@ void test_close_streams(void)
 #endif
 }
 
+/*-
+ * The lock is taken recursively, tracked by a per-thread depth count, so
+ * that a caller may hold it across a whole output record while the
+ * individual writes making up that record continue to take it.  A thread
+ * with no thread-local data available cannot track the depth, and so
+ * falls back to taking the lock for each write.
+ */
 static ossl_inline void test_io_lock(void)
 {
 #if defined(OPENSSL_THREADS)
+    LOCAL_TEST_DATA *data = get_local_test_data();
+
+    if (data != NULL && data->io_lock_depth++ > 0)
+        return;
     OPENSSL_assert(CRYPTO_THREAD_write_lock(io_lock) > 0);
 #endif
 }
@@ -195,7 +207,41 @@ static ossl_inline void test_io_lock(void)
 static ossl_inline void test_io_unlock(void)
 {
 #if defined(OPENSSL_THREADS)
+    LOCAL_TEST_DATA *data = get_local_test_data();
+
+    if (data != NULL && --data->io_lock_depth > 0)
+        return;
     CRYPTO_THREAD_unlock(io_lock);
+#endif
+}
+
+/*-
+ * A thread with no thread-local data has nowhere to record the depth, so
+ * it must not hold the lock across the record: the writes within would
+ * deadlock against it.  Such a thread falls back to the per-write
+ * locking, and its records may interleave as they did before.
+ *
+ * The depth is tested rather than assumed on the way out, so that a
+ * begin which found no thread-local data is not matched by an end which
+ * finds some and releases a lock this thread never took.
+ */
+void test_output_record_begin(void)
+{
+#if defined(OPENSSL_THREADS)
+    if (get_local_test_data() == NULL)
+        return;
+    test_io_lock();
+#endif
+}
+
+void test_output_record_end(void)
+{
+#if defined(OPENSSL_THREADS)
+    LOCAL_TEST_DATA *data = get_local_test_data();
+
+    if (data == NULL || data->io_lock_depth == 0)
+        return;
+    test_io_unlock();
 #endif
 }
 
