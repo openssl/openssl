@@ -1,0 +1,81 @@
+=pod
+
+=head1 NAME
+
+SSL_CTX_set_session_id_collision_cb, SSL_set_session_id_collision_cb,
+GEN_SESSION_COLLISION_CB
+- set an optional callback to detect external session ID collisions
+
+=head1 SYNOPSIS
+
+ #include <openssl/ssl.h>
+
+ typedef int (*GEN_SESSION_COLLISION_CB)(SSL *ssl, const unsigned char *id,
+                                         unsigned int id_len);
+
+ int SSL_CTX_set_session_id_collision_cb(SSL_CTX *ctx,
+                                         GEN_SESSION_COLLISION_CB cb);
+ int SSL_set_session_id_collision_cb(SSL *ssl,
+                                     GEN_SESSION_COLLISION_CB cb);
+
+=head1 DESCRIPTION
+
+SSL_CTX_set_session_id_collision_cb() sets an optional callback used when a
+server generates a new session ID for B<ctx>.
+
+SSL_set_session_id_collision_cb() sets an optional callback used when a
+server generates a new session ID for B<ssl>. If both SSL and SSL_CTX have a
+callback, the SSL callback is preferred.
+
+The callback is used only for collision checks during session ID generation.
+It is not used for session lookup or resumption and does not replace
+get_session_cb().
+The callback MUST NOT perform session resumption or modify connection state.
+It should only perform an existence check.
+
+The callback receives the candidate session ID (B<id>, B<id_len>) and should
+return one of the following values:
+
+=over 4
+
+=item 1
+
+A collision exists in the external cache with a resumable session.
+
+=item 0
+
+No collision exists. This includes matches that are known to be
+non-resumable.
+
+=item E<lt>0
+
+Indeterminate. The callback cannot determine whether a collision exists.
+OpenSSL treats this as no external collision and falls back to internal-cache
+collision checks only.
+
+=back
+
+If no callback is set, OpenSSL behaves as before and checks only the internal
+session cache for collisions.
+
+=head1 RETURN VALUES
+
+SSL_CTX_set_session_id_collision_cb() and SSL_set_session_id_collision_cb()
+return 1 on success, or 0 on error.
+
+=head1 SEE ALSO
+
+L<ssl(7)>,
+L<SSL_CTX_set_generate_session_id(3)>,
+L<SSL_CTX_sess_set_get_cb(3)>
+
+=head1 COPYRIGHT
+
+Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+
+Licensed under the Apache License 2.0 (the "License").  You may not use
+this file except in compliance with the License.  You can obtain a copy
+in the file LICENSE in the source distribution or at
+L<https://www.openssl.org/source/license.html>.
+
+=cut
