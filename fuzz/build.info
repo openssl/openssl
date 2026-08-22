@@ -32,7 +32,7 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   ENDIF
 
   IF[{- !$disabled{"cms"} -}]
-    PROGRAMS{noinst}=cms
+    PROGRAMS{noinst}=cms cms_verify
   ENDIF
 
   IF[{- !$disabled{"ct"} -}]
@@ -86,6 +86,10 @@ IF[{- !$disabled{"fuzz-afl"} || !$disabled{"fuzz-libfuzzer"} -}]
   SOURCE[cms]=cms.c driver.c
   INCLUDE[cms]=../include {- $ex_inc -}
   DEPEND[cms]=../libcrypto {- $ex_lib -}
+
+  SOURCE[cms_verify]=cms_verify.c driver.c
+  INCLUDE[cms_verify]=../include {- $ex_inc -}
+  DEPEND[cms_verify]=../libcrypto {- $ex_lib -}
 
   SOURCE[pkcs12]=pkcs12.c driver.c
   INCLUDE[pkcs12]=../include {- $ex_inc -}
@@ -214,7 +218,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   IF[{- !$disabled{"cms"} -}]
-    PROGRAMS{noinst}=cms-test
+    PROGRAMS{noinst}=cms-test cms_verify-test
   ENDIF
 
   IF[{- !$disabled{"ct"} -}]
@@ -281,6 +285,10 @@ IF[{- !$disabled{tests} -}]
   SOURCE[cms-test]=cms.c $FUZZTESTSRC
   INCLUDE[cms-test]=../include ../test/mfail
   DEPEND[cms-test]=../libcrypto.a
+
+  SOURCE[cms_verify-test]=cms_verify.c $FUZZTESTSRC
+  INCLUDE[cms_verify-test]=../include ../test/mfail
+  DEPEND[cms_verify-test]=../libcrypto.a
 
   SOURCE[pkcs12-test]=pkcs12.c $FUZZTESTSRC
   INCLUDE[pkcs12-test]=../include ../test/mfail
