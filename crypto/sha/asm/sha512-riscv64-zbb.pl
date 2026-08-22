@@ -196,6 +196,7 @@ $code .= <<___;
 .globl sha512_block_data_order_zbb
 .type   sha512_block_data_order_zbb,\@function
 sha512_block_data_order_zbb:
+    @{[lpad 0]}
 
     addi sp, sp, -96
 

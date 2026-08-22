@@ -117,6 +117,7 @@ $code .= <<___;
 .globl sha256_block_data_order_zvkb_zvknha_or_zvknhb
 .type   sha256_block_data_order_zvkb_zvknha_or_zvknhb,\@function
 sha256_block_data_order_zvkb_zvknha_or_zvknhb:
+    @{[lpad 0]}
 
     # Setup v0 mask for the vmerge to replace the first word (idx==0) in key-scheduling.
     # The AVL is 4 in SHA, so we could use a single e8(8 element masking) for masking.
