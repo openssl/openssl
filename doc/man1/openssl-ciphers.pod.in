@@ -432,8 +432,8 @@ permissible.
 
 All cipher suites using encryption algorithm in Cipher Block Chaining (CBC)
 mode. These cipher suites are only supported in TLS v1.2 and earlier. Currently
-it's an alias for the following cipherstrings: B<SSL_3DES>,
-B<SSL_IDEA>, B<SSL_AES128>, B<SSL_AES256>, B<SSL_CAMELLIA128>, B<SSL_CAMELLIA256>, B<SSL_SEED>.
+it's an alias for the following cipherstrings: B<3DES>, B<IDEA>, B<AES128>,
+B<AES256>, B<CAMELLIA128>, B<CAMELLIA256>, B<SEED>.
 
 =back
 
