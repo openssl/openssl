@@ -3059,9 +3059,10 @@ DEF_SCRIPT(script_50, "Fault injection - ACK - duplicate PN")
     OP_READ_EXPECT(Sa, "apple", 5);
 
     for (i = 0; i < 2; ++i) {
+        OP_ENGINE_TICK_DISABLE(S);
         OP_SET_INJECT_WORD(5, 0);
-
         OP_WRITE(Sa, "Strawberry", 10);
+        OP_ENGINE_TICK_ENABLE(S);
         OP_READ_EXPECT(C, "Strawberry", 10);
     }
 }
@@ -3076,9 +3077,10 @@ DEF_SCRIPT(script_51, "Fault injection - PATH_RESPONSE is ignored")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_PATH_RESPONSE);
-
     OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
     OP_READ_EXPECT(C, "orange", 6);
 
     OP_WRITE(C, "Strawberry", 10);
@@ -3111,13 +3113,9 @@ static int script_52_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
         if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, C_BIDI_ID(0))))
             goto err;
 
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, 0xFFFFFF)))
-        goto err;
-
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!radix_fault_prepend_frame(fault, frame_buf, written))
+    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, 0xFFFFFF))
+        || !TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
         goto err;
 
     ok = 1;
@@ -3140,33 +3138,37 @@ DEF_SCRIPT(script_52, "Fault injection - ignore BLOCKED frames with bogus values
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_DATA_BLOCKED);
-
     OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
     OP_READ_EXPECT(C, "orange", 6);
 
     OP_WRITE(C, "Strawberry", 10);
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAM_DATA_BLOCKED);
-
     OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
     OP_READ_EXPECT(C, "orange", 6);
 
     OP_WRITE(C, "Strawberry", 10);
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_UNI);
-
     OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
     OP_READ_EXPECT(C, "orange", 6);
 
     OP_WRITE(C, "Strawberry", 10);
     OP_READ_EXPECT(Sa, "Strawberry", 10);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, OSSL_QUIC_FRAME_TYPE_STREAMS_BLOCKED_BIDI);
-
     OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
     OP_READ_EXPECT(C, "orange", 6);
 
     OP_WRITE(C, "Strawberry", 10);
@@ -3206,10 +3208,8 @@ static int script_53_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
     if (!TEST_ptr(frame_buf = OPENSSL_malloc(frame_len)))
         return 0;
 
-    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf, frame_len, 0)))
-        goto err;
-
-    if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf, frame_len, 0))
+        || !TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_CRYPTO))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, offset))
         || !TEST_true(WPACKET_quic_write_vlint(&wpkt, data_len)))
         goto err;
@@ -3218,10 +3218,8 @@ static int script_53_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
         if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x42)))
             goto err;
 
-    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written)))
-        goto err;
-
-    if (!radix_fault_prepend_frame(fault, frame_buf, written))
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
         goto err;
 
     ok = 1;
@@ -3245,8 +3243,10 @@ DEF_SCRIPT(script_53, "Fault injection - excess CRYPTO buffer size")
     OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
     OP_READ_EXPECT(Sa, "apple", 5);
 
+    OP_ENGINE_TICK_DISABLE(S);
     OP_SET_INJECT_WORD(1, 0);
     OP_WRITE(Sa, "Strawberry", 10);
+    OP_ENGINE_TICK_ENABLE(S);
 
     OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_CRYPTO_BUFFER_EXCEEDED, 0, 0);
 }
