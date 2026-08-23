@@ -186,7 +186,7 @@ B<OPT_PARAMETERS> macro:
     OPT_PARAMETERS()
     {OPT_PARAM_STR, 1, '-', "Parameters:\n"}
 
-Every "option" after after this should contain the parameter and
+Every "option" after this should contain the parameter and
 the help string:
 
     {"text", 0, 0, "Words to display (optional)"},
@@ -244,7 +244,7 @@ The opt_arg() function returns the option's argument value, if there is one.
 The opt_unknown() function returns the unknown option.
 In an option list, there can be at most one option with the empty string.
 This is a "wildcard" or "unknown" option. For example, it allows an
-option to be be taken as digest algorithm, like C<-sha1>. The function
+option to be taken as digest algorithm, like C<-sha1>. The function
 opt_md() takes the specified I<name> and fills in the digest into I<mdp>.
 The functions opt_cipher(), opt_cipher_any() and opt_cipher_silent()
 each takes the specified I<name> and fills in the cipher into I<cipherp>.

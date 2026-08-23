@@ -247,7 +247,7 @@ Finally we associate the B<SSL> object we created earlier with the B<BIO> using
 the L<SSL_set_bio(3)> function. Note that this passes ownership of the B<BIO>
 object to the B<SSL> object. Once ownership is passed the SSL object is
 responsible for its management and will free it automatically when the B<SSL> is
-freed. So, once L<SSL_set_bio(3)> has been been called, you should not call
+freed. So, once L<SSL_set_bio(3)> has been called, you should not call
 L<BIO_free(3)> on the B<BIO>.
 
     SSL_set_bio(ssl, bio, bio);
