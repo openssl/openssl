@@ -86,7 +86,7 @@ least one of the given resources is ready.
 A call to SSL_poll() specifies an array of B<SSL_POLL_ITEM> structures, each of
 which designates a resource which is being polled for readiness, and a set of
 event flags which indicate the specific readiness events which the caller is
-interested in in relation to the specified resource.
+interested in relation to the specified resource.
 
 The fields of B<SSL_POLL_ITEM> are as follows:
 
@@ -412,7 +412,7 @@ guaranteed to be at least one) reflect the cause of the failure of the first
 item in I<items> with B<SSL_POLL_EVENT_F> raised. Note that there may be events
 other than I<SSL_POLL_EVENT_F> output for items which come before the first
 item with B<SSL_POLL_EVENT_F> raised, and additional B<SSL_POLL_EVENT_F>
-events may or may not have been output, both of which which will be reflected in
+events may or may not have been output, both of which will be reflected in
 I<result_count>.
 
 =back

@@ -165,7 +165,7 @@ provider side digest context I<dctx> to I<params>.
 Any parameter settings are additional to any that were previously set.
 Passing NULL for I<params> should return true.
 
-OSSL_FUNC_digest_get_ctx_params() gets digest operation details details from
+OSSL_FUNC_digest_get_ctx_params() gets digest operation details from
 the given provider side digest context I<dctx> and stores them in I<params>.
 Passing NULL for I<params> should return true.
 
