@@ -71,7 +71,7 @@ format. These are:
 
 =item TLS_ST_BEFORE
 
-No handshake messages have yet been been sent or received.
+No handshake messages have yet been sent or received.
 
 =item TLS_ST_OK
 

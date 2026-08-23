@@ -65,7 +65,7 @@ Otherwise, when I<idx> is nonnegative, it is the index of the shared
 signature algorithm to return starting from zero.
 The signature algorithm NID is written to I<*psign>, the hash NID to I<*phash>
 and the sign and hash NID to I<*psignhash>.
-As of TLS 1.3 signature algorithms are not always a pairing of of a separate
+As of TLS 1.3 signature algorithms are not always a pairing of a separate
 public key algorithm and a digest algorithm, and so I<*phash> and I<*psignhash>
 may not always be meaningful.
 The raw B<hash> and B<signature> bytes of the signature algorithm codepoint are
