@@ -432,7 +432,7 @@ are handled in a timely manner. See B<THREAD ASSISTED MODE> for details.
 Ensure that your usage of L<SSL_want(3)>, L<SSL_want_read(3)> and
 L<SSL_want_write(3)> reflects the API changes described in B<CHANGES TO EXISTING
 APIS>. In particular, you should use these APIs to determine the ability of a
-QUIC stream to receive or provide application data, not to to determine if
+QUIC stream to receive or provide application data, not to determine if
 network I/O is required.
 
 =item
