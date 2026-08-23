@@ -66,7 +66,7 @@ it off. The default setting is off.
 
 If "auto" DH parameters are switched on then the parameters will be selected to
 be consistent with the size of the key associated with the server's certificate.
-If there is no certificate (e.g. for PSK ciphersuites), then it it will be
+If there is no certificate (e.g. for PSK ciphersuites), then it will be
 consistent with the size of the negotiated symmetric cipher key.
 
 Applications may supply their own DH parameters instead of using the built-in
