@@ -50,7 +50,7 @@ ignored.
 
 RAND_set1_random_provider() specifies a provider, I<prov>, which will be used
 by the library context I<ctx> for all of the generate calls above instead
-of the built-in in DRBGs and entropy source.  Pass NULL for the provider
+of the built-in DRBGs and entropy source.  Pass NULL for the provider
 to disable the random provider functionality.  In this case, the built-in DRBGs
 and entropy source will be used.  This call should not be considered thread safe.
 
