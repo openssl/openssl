@@ -152,9 +152,7 @@ static int chacha20_poly1305_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.iv != NULL) {
         size_t ivlen = CHACHA20_POLY1305_IVLEN;
 
-        if (p.iv->data == NULL || CHACHA20_POLY1305_IVLEN < p.iv->data_size)
-            ivlen = CHACHA20_POLY1305_IVLEN;
-        else
+        if (p.iv->data != NULL && ivlen > p.iv->data_size)
             ivlen = p.iv->data_size;
 
         if (p.iv->data != NULL && ivlen == 0) {

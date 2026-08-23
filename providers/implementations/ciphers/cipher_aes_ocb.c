@@ -451,7 +451,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
         size_t ivlen = ctx->base.ivlen;
 
         if (p.iv->data != NULL && ivlen > p.iv->data_size)
-            ivlen = p.tag->data_size;
+            ivlen = p.iv->data_size;
 
         if (p.iv->data != NULL && ivlen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
@@ -467,7 +467,7 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
         size_t updivlen = ctx->base.ivlen;
 
         if (p.upd_iv->data != NULL && updivlen > p.upd_iv->data_size)
-            updivlen = p.tag->data_size;
+            updivlen = p.upd_iv->data_size;
 
         if (p.upd_iv->data != NULL && updivlen == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_IV_LENGTH);
