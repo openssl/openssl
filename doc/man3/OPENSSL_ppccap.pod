@@ -63,7 +63,7 @@ enabled.
 Name: B<PPC_CRYPTO207>
 
 Meaning: Use instructions added in ISA level 2.07. The associated probe
-instruction instruction is vcipher (vector AES cipher round).
+instruction is vcipher (vector AES cipher round).
 
 Effect: Enables AES, SHA-2 sigma, and other ISA 2.07 instructions for AES, SHA-2,
 GHASH, and Poly1305.

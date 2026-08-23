@@ -453,7 +453,7 @@ use cases.
 
 The design is similar to that of `DTLSv1_get_timeout` and uses a `struct
 timeval`. However, this function can also output an infinite timeout using the
-`is_infinite` argument, whereas whereas `DTLSv1_get_timeout` represents an
+`is_infinite` argument, whereas `DTLSv1_get_timeout` represents an
 infinite timeout using a 0 return value, which does not allow a failure
 condition to be distinguished.
 
