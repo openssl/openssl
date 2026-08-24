@@ -1374,7 +1374,8 @@ static int test_tls13_ticket_lifetime_bound(void)
         /* Consume a noticeable part of the server-side session lifetime */
         && TEST_ptr(srvsess = SSL_get1_session(initial.s.ssl))
         && TEST_time_t_gt(SSL_SESSION_set_time_ex(srvsess,
-                time(NULL) - BOUND_ELAPSED), 0);
+                              time(NULL) - BOUND_ELAPSED),
+            0);
 
     if (test) {
         test = TEST_true(tls_channel_init(c, s, &resumed))
@@ -1400,7 +1401,8 @@ static int test_tls13_ticket_lifetime_bound(void)
     if (test) {
         /* Let the capped lifetime elapse completely, client side */
         test = TEST_time_t_gt(SSL_SESSION_set_time_ex(sess2,
-                    time(NULL) - BOUND_TIMEOUT), 0)
+                                  time(NULL) - BOUND_TIMEOUT),
+                   0)
             && TEST_true(tls_channel_init(c, s, &expired))
             && TEST_true(SSL_set_session(expired.c.ssl, sess2))
             && TEST_true(create_ssl_connection(expired.s.ssl, expired.c.ssl, SSL_ERROR_NONE))
@@ -1579,9 +1581,11 @@ static int test_tls13_ticket_expired_no_resume(void)
         /* Let the session lifetime expire, with ample margin */
         && TEST_ptr(srvsess = SSL_get1_session(initial.s.ssl))
         && TEST_time_t_gt(SSL_SESSION_set_time_ex(srvsess,
-                time(NULL) - (EXPIRE_TIMEOUT + 2)), 0)
+                              time(NULL) - (EXPIRE_TIMEOUT + 2)),
+            0)
         && TEST_time_t_gt(SSL_SESSION_set_time_ex(sess,
-                time(NULL) - (EXPIRE_TIMEOUT + 2)), 0);
+                              time(NULL) - (EXPIRE_TIMEOUT + 2)),
+            0);
 
     if (test) {
         /* Pretend the client did not honour the ticket lifetime hint */
@@ -1644,7 +1648,8 @@ static int test_tls13_ticket_session_timeout_conf(void)
             && TEST_long_eq(SSL_CTX_get_timeout(s), 300)
             /* Values that overflow the parser are rejected, not wrapped */
             && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout",
-                    "99999999999999999999"), 0)
+                               "99999999999999999999"),
+                0)
             && TEST_long_eq(SSL_CTX_get_timeout(s), 300)
             && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", "12abc"), 0)
             && TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout", ""), 0);
@@ -1656,7 +1661,8 @@ static int test_tls13_ticket_session_timeout_conf(void)
              * wrapping to a near-zero one.
              */
             test = TEST_int_eq(SSL_CONF_cmd(cctx, "SessionTimeout",
-                        "4611686018427387904"), 2)
+                                   "4611686018427387904"),
+                       2)
                 && TEST_long_eq(SSL_CTX_get_timeout(s), -1);
         }
 
