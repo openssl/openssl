@@ -613,10 +613,22 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
             || X509_get_ext_by_NID(const_x, NID_issuer_alt_name, -1) >= 0) {
             tmp_ex_flags |= EXFLAG_INVALID;
         }
-        if (pci->pcPathLengthConstraint != NULL)
-            tmp_ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
-        else
+        if (pci->pcPathLengthConstraint != NULL) {
+            if (pci->pcPathLengthConstraint->type == V_ASN1_NEG_INTEGER) {
+                ERR_raise(ERR_LIB_X509V3, X509V3_R_NEGATIVE_PATHLEN);
+                tmp_ex_flags |= EXFLAG_INVALID;
+                tmp_ex_pcpathlen = -1;
+            } else {
+                tmp_ex_pcpathlen = ASN1_INTEGER_get(pci->pcPathLengthConstraint);
+                if (tmp_ex_pcpathlen < 0 || tmp_ex_pcpathlen > 255) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_PATHLEN_TOO_LARGE);
+                    tmp_ex_flags |= EXFLAG_INVALID;
+                    tmp_ex_pcpathlen = -1;
+                }
+            }
+        } else {
             tmp_ex_pcpathlen = -1;
+        }
         PROXY_CERT_INFO_EXTENSION_free(pci);
         tmp_ex_flags |= EXFLAG_PROXY;
     } else if (i != -1) {
@@ -861,6 +873,14 @@ void X509_set_proxy_flag(X509 *x)
 
 void X509_set_proxy_pathlen(X509 *x, long l)
 {
+    /*
+     * Out of range values cannot be reported from a void function, so
+     * fail closed: the caller asked for a constraint, and 0 permits no
+     * further delegation and can never be more permissive than the
+     * requested value.
+     */
+    if (l < -1 || l > 255)
+        l = 0;
     x->ex_pcpathlen = l;
 }
 
