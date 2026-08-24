@@ -39,20 +39,6 @@ OpenSSL 3.4
 
 ### Changes between 3.4.5 and 3.4.6 [9 Jun 2026]
 
- * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
-
-   Previously, we would allocate a buffer large enough to hold the full size of
-   an incoming handshake message as advertised by the peer. This could be quite
-   large (although it is bounded, e.g. for ClientHello this is approximately
-   128 KiB). If the peer then fails to send the full handshake message, then the
-   endpoint is left waiting for the remainder of the message to arrive and the
-   memory is still allocated (i.e. a Slowloris attack). To prevent this, we
-   incrementally grow the buffer as we receive the data.
-
-   This issue was reported by Okta Red Team.
-
-   *Matt Caswell*
-
  * Fixed heap use-after-free in `PKCS7_verify()`.
 
    Severity: High
@@ -293,6 +279,21 @@ OpenSSL 3.4
    ([CVE-2026-45446])
 
    *Dmitry Belyavskiy (Red Hat)*
+
+ * Fixed excessive allocation of the handshake message buffer (aka HollowByte).
+
+   Previously, we would allocate a buffer large enough to hold the full size of
+   an incoming handshake message as advertised by the peer. This could be quite
+   large (although it is bounded, e.g. for ClientHello this is approximately
+   128 KiB). If the peer then fails to send the full handshake message, then the
+   endpoint is left waiting for the remainder of the message to arrive and the
+   memory is still allocated (i.e. a Slowloris attack). To prevent this, we
+   incrementally grow the buffer as we receive the data.
+
+   This issue was reported by Okta Red Team.
+   <!-- https://github.com/openssl/openssl/pull/30793 -->
+
+   *Matt Caswell*
 
  * Fixed TLS 1.3 server not sending `NewSessionTicket` message
    after ciphersuite mismatch.
