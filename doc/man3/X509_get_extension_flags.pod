@@ -36,7 +36,12 @@ These functions retrieve information related to commonly used certificate extens
 
 X509_get_pathlen() retrieves the path length extension from a certificate.
 This extension is used to limit the length of a cert chain that may be
-issued from that CA.
+issued from that CA.  A path length constraint, whether from the basic
+constraints extension or the B<pcPathLengthConstraint> of a proxy
+certificate, must be in the range 0 to 255 inclusive.  A certificate
+carrying a value outside this range is treated as invalid, as if the
+extension could not be parsed, and the corresponding getter reports no
+constraint.
 
 X509_get_extension_flags() retrieves general information about a certificate,
 it will return one or more of the following flags ored together.
@@ -175,7 +180,8 @@ X509_get_ext_d2i().
 =head1 RETURN VALUES
 
 X509_get_pathlen() returns the path length value, or -1 if the extension
-is not present.
+is not present, is out of range, or the certificate's extensions could
+not be parsed.
 
 X509_get_extension_flags(), X509_get_key_usage() and
 X509_get_extended_key_usage() return sets of flags corresponding to the

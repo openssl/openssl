@@ -593,6 +593,11 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
                 tmp_ex_flags |= EXFLAG_INVALID;
             } else {
                 tmp_ex_pathlen = ASN1_INTEGER_get(bs->pathlen);
+                if (tmp_ex_pathlen < 0 || tmp_ex_pathlen > 255) {
+                    ERR_raise(ERR_LIB_X509V3, X509V3_R_PATHLEN_TOO_LARGE);
+                    tmp_ex_flags |= EXFLAG_INVALID;
+                    tmp_ex_pathlen = -1;
+                }
             }
         }
         BASIC_CONSTRAINTS_free(bs);
