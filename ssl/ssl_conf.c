@@ -740,6 +740,7 @@ static int cmd_NumTickets(SSL_CONF_CTX *cctx, const char *value)
 
 static int cmd_SessionTimeout(SSL_CONF_CTX *cctx, const char *value)
 {
+    ossl_unused long prev;
     long t;
     char *endptr = NULL;
 
@@ -758,8 +759,8 @@ static int cmd_SessionTimeout(SSL_CONF_CTX *cctx, const char *value)
             return 0;
     }
 
-    /* SSL_CTX_set_timeout() returns the previous timeout, not a status */
-    SSL_CTX_set_timeout(cctx->ctx, t);
+    /* Returns the previous timeout rather than a status; cannot fail here */
+    prev = SSL_CTX_set_timeout(cctx->ctx, t);
     return 1;
 }
 
