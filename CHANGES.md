@@ -30,15 +30,11 @@ OpenSSL 3.5
 
 ### Changes between 3.5.7 and 3.5.8 [xx XXX xxxx]
 
- * Add client-side validation for TLS 1.3 session ticket lifetimes.
-
-   In accordance with [RFC 8446 Section 4.6.1](https://datatracker.ietf.org/doc/html/rfc8446#section-4.6.1),
-   TLS 1.3 clients must not cache session tickets
-   for longer than 7 days (604800 seconds).
-   When processing a new session ticket message with a
-   `ticket_lifetime_hint` value greater than 7 days,
-   the client now caps the lifetime to the
-   maximum permitted value of 7 days (604800 seconds).
+ * Updated compliance with TLS 1.3 session ticket lifetime requirements.
+   TLS 1.3 clients now cap `ticket_lifetime_hint` to 7 days (604800 seconds)
+   when processing new session ticket messages, in accordance
+   with [RFC 8446 Section 4.6.1].
+   <!-- https://github.com/openssl/openssl/pull/31174 -->
 
    *Abel Thomas*
 
@@ -22314,4 +22310,5 @@ ndif
 [RFC 3211]: https://datatracker.ietf.org/doc/html/rfc3211
 [RFC 5297]: https://datatracker.ietf.org/doc/html/rfc5297
 [RFC 8446]: https://datatracker.ietf.org/doc/html/rfc8446
+[RFC 8446 Section 4.6.1]: https://datatracker.ietf.org/doc/html/rfc8446#section-4.6.1
 [RFC 8452]: https://datatracker.ietf.org/doc/html/rfc8452
