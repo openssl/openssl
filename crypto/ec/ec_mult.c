@@ -428,6 +428,12 @@ int ossl_ec_wNAF_mul(const EC_GROUP *group, EC_POINT *r, const BIGNUM *scalar,
                          * precomputation is not available */
     int ret = 0;
 
+    for (i = 0; i < num; i++) {
+        if (scalars[i] == NULL || points[i] == NULL) {
+            goto err;
+        }
+    }
+
     if (!BN_is_zero(group->order) && !BN_is_zero(group->cofactor)) {
         /*-
          * Handle the common cases where the scalar is secret, enforcing a
