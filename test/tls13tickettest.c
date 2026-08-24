@@ -12,7 +12,9 @@
 #include <openssl/ssl3.h>
 #include <openssl/tls1.h>
 #include "ssl/ssl_local.h"
+#include "ssl/statem/statem_local.h"
 #include "internal/packet.h"
+#include "internal/ssl_unwrap.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 
@@ -1297,6 +1299,63 @@ static int test_tls13_external_psk_sid_ctx_not_shared(void)
     return test;
 }
 
+/*
+ * RFC 9846 4.7.1: Servers MUST NOT use any value greater than 604800 seconds
+ * (7 days). The value of zero indicates that the ticket should be discarded
+ * immediately. Clients MUST NOT use tickets for longer than 7 days after
+ * issuance, regardless of the ticket_lifetime, and MAY delete tickets earlier
+ * based on local policy.
+ *
+ * An OpenSSL server never advertises a ticket_lifetime larger than 7 days,
+ * so emulate a peer that does by feeding a crafted NewSessionTicket message
+ * body directly to the parser of a freshly connected client and check that
+ * the lifetime hint stored in the session has been capped.
+ */
+static int test_tls13_ticket_lifetime_cap(void)
+{
+    SSL_CTX *c = NULL, *s = NULL;
+    struct tls13_channel ch = { .c.ssl = NULL, .s.ssl = NULL };
+    SSL_SESSION *sess = NULL;
+    SSL_CONNECTION *sc = NULL;
+    unsigned char body[64], nonce[8], tick[32];
+    WPACKET wpkt;
+    PACKET pkt;
+    size_t written = 0;
+    int test;
+
+    memset(nonce, 0xff, sizeof(nonce));
+    memset(tick, 0xaa, sizeof(tick));
+
+    test = TEST_true(create_ssl_ctx_pair(NULL, TLS_server_method(), TLS_client_method(),
+               TLS1_3_VERSION, TLS1_3_VERSION, &s, &c, cert, pkey))
+        && TEST_true(set_ctx_callbacks(c, s))
+        && TEST_true(ticket_enable(s))
+        && TEST_true(ticket_enable(c))
+        && TEST_true(tls_channel_init(c, s, &ch))
+        && TEST_true(create_ssl_connection(ch.s.ssl, ch.c.ssl, SSL_ERROR_NONE))
+        /* A NewSessionTicket body with a lifetime one hour beyond 7 days */
+        && TEST_true(WPACKET_init_static_len(&wpkt, body, sizeof(body), 0))
+        && TEST_true(WPACKET_put_bytes_u32(&wpkt, 604800 + 3600))
+        && TEST_true(WPACKET_put_bytes_u32(&wpkt, 0))
+        && TEST_true(WPACKET_sub_memcpy_u8(&wpkt, nonce, sizeof(nonce)))
+        && TEST_true(WPACKET_sub_memcpy_u16(&wpkt, tick, sizeof(tick)))
+        && TEST_true(WPACKET_put_bytes_u16(&wpkt, 0))
+        && TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        && TEST_true(WPACKET_finish(&wpkt))
+        && TEST_ptr(sc = SSL_CONNECTION_FROM_SSL(ch.c.ssl))
+        && TEST_true(PACKET_buf_init(&pkt, body, written))
+        && TEST_int_eq(tls_process_new_session_ticket(sc, &pkt),
+            MSG_PROCESS_FINISHED_READING)
+        && TEST_ptr(sess = SSL_get1_session(ch.c.ssl))
+        && TEST_ulong_eq(SSL_SESSION_get_ticket_lifetime_hint(sess), 604800);
+
+    SSL_SESSION_free(sess);
+    tls_channel_fini(&ch);
+    SSL_CTX_free(c);
+    SSL_CTX_free(s);
+    return test;
+}
+
 int setup_tests(void)
 {
     if (!test_skip_common_options()) {
@@ -1323,6 +1382,7 @@ int setup_tests(void)
     ADD_TEST(test_tls13_ticket_server_age_mismatch_reject_early_data);
     ADD_TEST(test_tls13_aged_ticket_external_psk_early_data);
     ADD_TEST(test_tls13_external_psk_sid_ctx_not_shared);
+    ADD_TEST(test_tls13_ticket_lifetime_cap);
 
     return 1;
 }
