@@ -836,6 +836,30 @@ static const char *ca_cert_pathlen_max[] = {
     NULL,
 };
 
+static const char *bad_pc7_cert[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDUzCCAjugAwIBAgIBAjANBgkqhkiG9w0BAQsFADAZMRcwFQYDVQQDDA5zZXJ2\n"
+    "ZXIuZXhhbXBsZTAgFw0yNjA5MDMxOTIwMDJaGA8yMTI2MDkwNDE5MjAwMlowKzEX\n"
+    "MBUGA1UEAwwOc2VydmVyLmV4YW1wbGUxEDAOBgNVBAMMB3Byb3h5IDcwggEiMA0G\n"
+    "CSqGSIb3DQEBAQUAA4IBDwAwggEKAoIBAQC/cun2FqC9pusaIZIPZFe9rEfEqMgC\n"
+    "7dnLm83Uxnr4KPjZ5GlygYCb9Zm3zKzL4XXEkHh//1slh51jgA9XiNpVoQGJ2TAg\n"
+    "pQ4ZhFOCIo4FOByinqQpKpPZu8/ODi6Ap9mGtvgqpPzouQZiADQr8kX+jkVeiSoO\n"
+    "DJcMLK9Ym+urY30dJWHQAV1jg7V+y4KC0gZPE7FCgZ1lkqnnR/75vq/A1L8WQiLI\n"
+    "1gXmzz5JOxZIlcpJeFtWsBpVPYlKbls1kXmLWL1CFUrg+0JrgH1kBeNe8xN+YJzz\n"
+    "dmcpzEQ2rT3a59xk3i788pLjvG8zksST4Q7iX9DU8ngg4pF3JlSW5c99AgMBAAGj\n"
+    "gZEwgY4wHQYDVR0OBBYEFCRqfkUTT5aj35YYpcN+XRVWS5XpMDUGA1UdIwQuMCyA\n"
+    "FOeb4iqtimw6y3ZR5Y4HmCKX4XOioRGkDzANMQswCQYDVQQDDAJDQYIBAjAJBgNV\n"
+    "HRMEAjAAMCsGCCsGAQUFBwEOAQH/BBwwGgIIf/////////8wDgYIKwYBBQUHFQAE\n"
+    "AkFCMA0GCSqGSIb3DQEBCwUAA4IBAQBR9qfkgHxYhlhf1lRDaKv+HgECFy4Kzlzs\n"
+    "cwAgS0vJ+EV/3TCF8SmbnmM8E0YhW+1KiFNnX9D+24swDjC94sNRL2F2Lk+JeNIP\n"
+    "7NiJUf67pnjwm4ajnZpCgUatLVg9Y/nUjFfLr1m4XLS34j98Xm3HZ+HPLBZZCzV4\n"
+    "Vr0lvc9+avniOkaQTh+lBTK1W26djm26hnssCBqDMbfVnjOzp9QCuQpNm6kxElPk\n"
+    "J5TaCMuVlaCgo4O+nfONkkHmA5yoQb6H7cprDR8JI3YNCK7uPKRfR7fkl+bOHW/p\n"
+    "aDxj2bUKdXsI0WlHwm+Bta3c0U53QWX4FB9/Ia2jnCWRS4H0GFPJ\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
 /* Verification time for the path length chains, within all cert lifetimes */
 #define PATHLEN_CHAIN_TIME 1790000000
 
@@ -868,6 +892,9 @@ static const struct {
         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
     { { "pc1-cert.pem", NULL },
         { { "ee-client.pem", NULL }, { NULL, ca_cert_pathlen_max } }, 1,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+    { { NULL, bad_pc7_cert },
+        { { "ee-client.pem", NULL }, { "ca-cert.pem", NULL } }, 1,
         X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
 };
 
