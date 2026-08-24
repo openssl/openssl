@@ -4240,24 +4240,33 @@ CON_FUNC_RETURN tls_construct_server_compressed_certificate(SSL_CONNECTION *sc, 
 static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
     uint32_t age_add, unsigned char *tick_nonce)
 {
-    uint32_t timeout = (uint32_t)ossl_time2seconds(s->session->timeout);
+    uint64_t timeout_secs = ossl_time2seconds(s->session->timeout);
+    uint32_t timeout;
 
     /*
      * Ticket lifetime hint:
      * In TLSv1.3 we reset the "time" field above, and always specify the
-     * timeout, limited to a 1 week period per RFC9846.
+     * timeout, limited to a 1 week period per RFC9846. An unlimited timeout
+     * is transmitted as the 1 week maximum too.
      * For TLSv1.2 this is advisory only and we leave this unspecified for
-     * resumed session (for simplicity).
+     * resumed sessions (for simplicity) and for unlimited timeouts, which
+     * have no finite representation on the wire; other values that do not
+     * fit the 32 bit field are saturated.
      */
 #define ONE_WEEK_SEC (7 * 24 * 60 * 60)
 
     if (SSL_CONNECTION_IS_TLS13(s)) {
-        if (ossl_time_compare(s->session->timeout,
-                ossl_seconds2time(ONE_WEEK_SEC))
-            > 0)
+        if (timeout_secs > ONE_WEEK_SEC)
             timeout = ONE_WEEK_SEC;
-    } else if (s->hit)
+        else
+            timeout = (uint32_t)timeout_secs;
+    } else if (s->hit || ossl_time_is_infinite(s->session->timeout)) {
         timeout = 0;
+    } else if (timeout_secs > UINT32_MAX) {
+        timeout = UINT32_MAX;
+    } else {
+        timeout = (uint32_t)timeout_secs;
+    }
 
     if (!WPACKET_put_bytes_u32(pkt, timeout)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -4525,6 +4534,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
     if (SSL_CONNECTION_IS_TLS13(s)) {
         size_t i, hashlen;
         uint64_t nonce;
+        OSSL_TIME expiry;
         /* ASCII: "resumption", in hex for EBCDIC compatibility */
         static const unsigned char nonce_label[] = { 0x72, 0x65, 0x73, 0x75, 0x6D,
             0x70, 0x74, 0x69, 0x6F, 0x6E };
@@ -4537,6 +4547,21 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
             goto err;
         }
         hashlen = (size_t)hashleni;
+
+        /*
+         * Establish the bound for the new ticket's lifetime before the
+         * session is (possibly) duplicated below: the duplicate does not
+         * retain |psk_external|. A ticket issued for a resumed session must
+         * not push the expiry beyond that of the session it was resumed
+         * from, so that resumption cannot be used to prolong a session
+         * indefinitely. An external PSK is not a resumption: it is a fresh
+         * authentication of an application-provided key, so it (re)starts
+         * the ticket lifetime in full.
+         */
+        if (s->hit && !s->session->psk_external)
+            expiry = ossl_time_add(s->session->time, s->session->timeout);
+        else
+            expiry = ossl_time_infinite();
 
         /*
          * If we already sent one NewSessionTicket, or we resumed then
@@ -4585,7 +4610,34 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
         }
         s->session->master_key_length = hashlen;
 
+        /*
+         * Each ticket carries its own lifetime, restarted at issuance time
+         * but capped by the |expiry| bound established above.
+         */
         s->session->time = ossl_time_now();
+        if (!ossl_time_is_infinite(expiry)) {
+            OSSL_TIME remaining = ossl_time_subtract(expiry, s->session->time);
+            uint64_t secs;
+
+            /*
+             * The ticket only encodes whole seconds, so round the remainder
+             * up: rounding down would issue a ticket that expires before its
+             * advertised lifetime, and a session serialised with a zero
+             * timeout would be re-created with a small default timeout
+             * instead, outliving the intended bound. A remainder that is (or
+             * rounds up to) zero still becomes a one second ticket: the
+             * session was still valid when this handshake was accepted.
+             */
+            secs = ossl_time2seconds(ossl_time_add(remaining,
+                ossl_ticks2time(OSSL_TIME_SECOND - 1)));
+            if (secs == 0)
+                secs = 1;
+            if (secs < ossl_time2seconds(ossl_time_infinite())
+                && ossl_time_compare(ossl_seconds2time(secs),
+                       s->session->timeout)
+                    < 0)
+                s->session->timeout = ossl_seconds2time(secs);
+        }
         ssl_session_calculate_timeout(s->session);
         if (s->s3.alpn_selected != NULL) {
             OPENSSL_free(s->session->ext.alpn_selected);

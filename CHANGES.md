@@ -31,6 +31,20 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * TLS 1.3 servers now bind the lifetime of a resumed session to the initial
+   full handshake: a ticket issued for a resumed session restarts the session
+   lifetime, but is capped by the remaining lifetime of the session it was
+   resumed from, so that repeated resumption can no longer prolong a session
+   indefinitely. Tickets issued after a fresh external-PSK authentication are
+   not capped. A negative timeout passed to `SSL_CTX_set_timeout()` or
+   `SSL_SESSION_set_timeout()` now selects an unlimited session lifetime,
+   opting out of expiry entirely; the corresponding getters (and the
+   previous-value return of the setters) report an unlimited timeout as -1.
+   A new `SessionTimeout` (`-session_timeout`) configuration command exposes
+   the same control, including the value `infinite`.
+
+   *Daniel Kubec*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early

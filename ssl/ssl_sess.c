@@ -12,6 +12,7 @@
 #include <spthread.h>
 #include <spt_extensions.h> /* timeval */
 #endif
+#include <limits.h>
 #include <stdio.h>
 #include <openssl/rand.h>
 #include "internal/refcount.h"
@@ -997,12 +998,41 @@ int SSL_SESSION_set1_id(SSL_SESSION *s, const unsigned char *sid,
     return 1;
 }
 
+/*
+ * A negative timeout selects an unlimited ("infinite") session lifetime.
+ * Values too large to represent as an OSSL_TIME saturate to unlimited as
+ * well, matching the treatment of oversized encoded timeouts in
+ * d2i_SSL_SESSION_ex().
+ */
+static OSSL_TIME sess_timeout_from_seconds(long t)
+{
+    if (t < 0 || (uint64_t)t >= ossl_time2seconds(ossl_time_infinite()))
+        return ossl_time_infinite();
+    return ossl_seconds2time(t);
+}
+
+/*
+ * An unlimited timeout is reported as -1. A finite timeout is clamped to
+ * LONG_MAX so that it cannot truncate into a negative value and be mistaken
+ * for the -1 sentinel on platforms with a 32 bit long.
+ */
+static long sess_timeout_to_seconds(OSSL_TIME timeout)
+{
+    uint64_t secs;
+
+    if (ossl_time_is_infinite(timeout))
+        return -1;
+    secs = ossl_time2seconds(timeout);
+    return secs > LONG_MAX ? LONG_MAX : (long)secs;
+}
+
 long SSL_SESSION_set_timeout(SSL_SESSION *s, long t)
 {
-    OSSL_TIME new_timeout = ossl_seconds2time(t);
+    OSSL_TIME new_timeout;
 
-    if (s == NULL || t < 0)
+    if (s == NULL)
         return 0;
+    new_timeout = sess_timeout_from_seconds(t);
     if (s->owner != NULL) {
         if (!CRYPTO_THREAD_write_lock(s->owner->lock))
             return 0;
@@ -1021,7 +1051,7 @@ long SSL_SESSION_get_timeout(const SSL_SESSION *s)
 {
     if (s == NULL)
         return 0;
-    return (long)ossl_time_to_time_t(s->timeout);
+    return sess_timeout_to_seconds(s->timeout);
 }
 
 #ifndef OPENSSL_NO_DEPRECATED_3_4
@@ -1201,8 +1231,8 @@ long SSL_CTX_set_timeout(SSL_CTX *s, long t)
 
     if (s == NULL)
         return 0;
-    l = (long)ossl_time2seconds(s->session_timeout);
-    s->session_timeout = ossl_seconds2time(t);
+    l = sess_timeout_to_seconds(s->session_timeout);
+    s->session_timeout = sess_timeout_from_seconds(t);
     return l;
 }
 
@@ -1210,7 +1240,7 @@ long SSL_CTX_get_timeout(const SSL_CTX *s)
 {
     if (s == NULL)
         return 0;
-    return (long)ossl_time2seconds(s->session_timeout);
+    return sess_timeout_to_seconds(s->session_timeout);
 }
 
 int SSL_set_session_secret_cb(SSL *s,

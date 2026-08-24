@@ -302,6 +302,13 @@ Padding attempts to pad TLSv1.3 records so that they are a multiple of the set
 length on send. A value of 0 or 1 turns off padding as relevant. Otherwise, the
 values must be >1 or <=16384.
 
+=item B<-session_timeout> I<timeout>
+
+Sets the timeout for newly created sessions to I<timeout> seconds. The value
+B<infinite> (or any negative number) selects an unlimited session lifetime:
+such sessions never expire and can be resumed indefinitely. See
+L<SSL_CTX_set_timeout(3)>. This command is only supported for servers.
+
 =item B<-debug_broken_protocol>
 
 Ignored.
@@ -447,6 +454,13 @@ Note that, for QUIC objects, padding is always performed at the
 packet level, and so cannot be done at the record level.  Given that, when the
 config file is created, there is no knowledge of what kind of SSL objects are
 being created, this option is silently ignored for QUIC objects.
+
+=item B<SessionTimeout>
+
+Sets the timeout for newly created sessions to B<value> seconds. The value
+B<infinite> (or any negative number) selects an unlimited session lifetime:
+such sessions never expire and can be resumed indefinitely. See
+L<SSL_CTX_set_timeout(3)>. This option is only supported for servers.
 
 =item B<SignatureAlgorithms>
 

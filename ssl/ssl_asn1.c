@@ -328,10 +328,16 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     else
         ret->time = ossl_time_now();
 
-    if (as->timeout != 0)
-        ret->timeout = ossl_seconds2time(as->timeout);
-    else
+    if (as->timeout != 0) {
+        uint64_t infinite_secs = ossl_time2seconds(ossl_time_infinite());
+
+        if (as->timeout < 0 || (uint64_t)as->timeout >= infinite_secs)
+            ret->timeout = ossl_time_infinite();
+        else
+            ret->timeout = ossl_seconds2time(as->timeout);
+    } else {
         ret->timeout = ossl_seconds2time(3);
+    }
     ssl_session_calculate_timeout(ret);
 
     X509_free(ret->peer);
