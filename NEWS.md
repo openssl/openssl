@@ -24,7 +24,40 @@ OpenSSL 3.4
 
 ### Major changes between OpenSSL 3.4.6 and OpenSSL 3.4.7 [under development]
 
-  * none
+OpenSSL 3.4.7 is a security patch release.  The most severe CVE fixed
+in this release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed heap buffer overflow in CMS key unwrapping.
+    ([CVE-2026-63072])
+
+  * Fixed invalid pointer dereference in CMP server via crafted `protectionAlg`.
+    ([CVE-2026-63076])
+
+  * Fixed RPK server signature algorithm selection being able to dereference
+    a missing certificate.
+    ([CVE-2026-14457])
+
+  * Fixed excessive memory use buffering DTLS records for a future epoch.
+    ([CVE-2026-54874])
+
+  * Fixed untrusted Sender DN being used as a format string in CMP response
+    validation.
+    ([CVE-2026-63073])
+
+  * Fixed CMP indefinite cache growth of `extraCerts`.
+    ([CVE-2026-63074])
+
+  * Fixed QUIC ACK-only packet retention being able to cause memory exhaustion.
+    ([CVE-2026-63075])
+
+  * Fixed possibility of AEAD forgeries with empty ciphertext when using
+    `EVP_Cipher()`.
+    ([CVE-2026-75803])
+
+  * Fixed checking of authentication tags for empty ciphertexts for AEAD ciphers
+    in CCM cipher mode.
 
 ### Major changes between OpenSSL 3.4.5 and OpenSSL 3.4.6 [9 Jun 2026]
 
@@ -2172,6 +2205,7 @@ OpenSSL 0.9.x
 [CVE-2025-69421]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69421
 [CVE-2026-7383]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-7383
 [CVE-2026-9076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-9076
+[CVE-2026-14457]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-14457
 [CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
 [CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
 [CVE-2026-28387]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28387
@@ -2191,6 +2225,13 @@ OpenSSL 0.9.x
 [CVE-2026-45445]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45445
 [CVE-2026-45446]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45446
 [CVE-2026-45447]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45447
+[CVE-2026-54874]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54874
+[CVE-2026-63072]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63072
+[CVE-2026-63073]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63073
+[CVE-2026-63074]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63074
+[CVE-2026-63075]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63075
+[CVE-2026-63076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63076
+[CVE-2026-75803]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75803
 [OpenSSL Guide]: https://www.openssl.org/docs/manmaster/man7/ossl-guide-introduction.html
 [README-QUIC.md]: ./README-QUIC.md
 [issue tracker]: https://github.com/openssl/openssl/issues
