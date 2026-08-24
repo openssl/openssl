@@ -583,8 +583,8 @@ static const OSSL_ALGORITHM fips_asym_kem[] = {
     { PROV_NAMES_ML_KEM_768, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
     { PROV_NAMES_ML_KEM_1024, FIPS_DEFAULT_PROPERTIES, ossl_ml_kem_asym_kem_functions },
 #if !defined(OPENSSL_NO_ECX)
-    { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
-    { PROV_NAMES_X448MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+    { "X25519MLKEM768", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
+    { "X448MLKEM1024", FIPS_UNAPPROVED_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
 #endif
 #if !defined(OPENSSL_NO_EC)
     { "SecP256r1MLKEM768", FIPS_DEFAULT_PROPERTIES, ossl_mlx_kem_asym_kem_functions },
@@ -655,7 +655,7 @@ static const OSSL_ALGORITHM fips_keymgmt[] = {
 #if !defined(OPENSSL_NO_ECX)
     { PROV_NAMES_X25519MLKEM768, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x25519_kem_kmgmt_functions,
         PROV_DESCS_X25519MLKEM768 },
-    { PROV_NAMES_X448MLKEM1024, FIPS_DEFAULT_PROPERTIES, ossl_mlx_x448_kem_kmgmt_functions,
+    { PROV_NAMES_X448MLKEM1024, FIPS_UNAPPROVED_PROPERTIES, ossl_mlx_x448_kem_kmgmt_functions,
         PROV_DESCS_X448MLKEM1024 },
 #endif
 #if !defined(OPENSSL_NO_EC)
