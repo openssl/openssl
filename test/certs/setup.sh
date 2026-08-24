@@ -79,6 +79,9 @@ openssl x509 -in sroot-cert.pem -trustout \
 
 # Primary intermediate ca: ca-cert
 ./mkcert.sh genca "CA" ca-key ca-cert root-key root-cert
+# Intermediate CA with the largest representable path length constraint
+OPENSSL_PATHLEN=9223372036854775807 \
+./mkcert.sh genca "CA pathlen max" ca-key ca-cert-pathlen-max root-key root-cert
 # ca variants: CA:false, no bc, key2, DN2, issuer2, expired
 ./mkcert.sh genee "CA" ca-key ca-nonca root-key root-cert
 ./mkcert.sh gen_nonbc_ca "CA" ca-key ca-nonbc root-key root-cert
@@ -234,6 +237,13 @@ openssl req -new -x509 -key ee-key.pem -subj /CN=ee-self-signed-pss -out ee-self
     -sha256 -sigopt rsa_padding_mode:pss -sigopt rsa_pss_saltlen:digest
 
 # Proxy certificates, off of ee-client
+# A matching EE/proxy chain under the maximum-pathlen CA exercises path-length
+# arithmetic without overflowing when proxy certificates are allowed.
+./mkcert.sh genee -p clientAuth server.example ee-key ee-client-pathlen-max \
+    ca-key ca-cert-pathlen-max
+./mkcert.sh req pc1-key "0.CN = server.example" "1.CN = proxy 1" | \
+    ./mkcert.sh genpc pc1-key pc1-pathlen-max-cert ee-key ee-client-pathlen-max \
+                "language = id-ppl-anyLanguage" "pathlen = 1" "policy = text:AB"
 # Start with some good ones
 ./mkcert.sh req pc1-key "0.CN = server.example" "1.CN = proxy 1" | \
     ./mkcert.sh genpc pc1-key pc1-cert ee-key ee-client \
