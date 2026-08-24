@@ -360,20 +360,6 @@ OpenSSL 4.0
 
 ### Changes between 4.0.0 and 4.0.1 [9 Jun 2026]
 
- * Fixed excessive allocation of the handshake message buffer (aka HollowByte)
-
-   Previously, we would allocate a buffer large enough to hold the full size of
-   an incoming handshake message as advertised by the peer. This could be quite
-   large (although it is bounded, e.g. for ClientHello this is approximately
-   128 KiB). If the peer then fails to send the full handshake message, then the
-   endpoint is left waiting for the remainder of the message to arrive and the
-   memory is still allocated (i.e. a Slowloris attack). To prevent this, we
-   incrementally grow the buffer as we receive the data.
-
-   This issue was reported by Okta Red Team.
-
-   *Matt Caswell*
-
  * Fixed heap use-after-free in `PKCS7_verify()`.
 
    Severity: High
@@ -705,6 +691,21 @@ OpenSSL 4.0
    ([CVE-2026-45446])
 
    *Dmitry Belyavskiy (Red Hat)*
+
+ * Fixed excessive allocation of the handshake message buffer (aka HollowByte).
+
+   Previously, we would allocate a buffer large enough to hold the full size of
+   an incoming handshake message as advertised by the peer. This could be quite
+   large (although it is bounded, e.g. for ClientHello this is approximately
+   128 KiB). If the peer then fails to send the full handshake message, then the
+   endpoint is left waiting for the remainder of the message to arrive and the
+   memory is still allocated (i.e. a Slowloris attack). To prevent this, we
+   incrementally grow the buffer as we receive the data.
+
+   This issue was reported by Okta Red Team.
+   <!-- https://github.com/openssl/openssl/pull/30792 -->
+
+   *Matt Caswell*
 
  * Fixed a regression introduced in 4.0.0 that led to a `openssl pkey`
    command crash when it was invoked to encrypt a private key with password
