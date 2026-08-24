@@ -27,7 +27,50 @@ OpenSSL 4.0
 
 ### Major changes between OpenSSL 4.0.1 and OpenSSL 4.0.2 [under development]
 
-  * none
+OpenSSL 4.0.2 is a security patch release.  The most severe CVE fixed
+in this release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed QUIC server being able to trigger double free when processing
+    `INITIAL` packet.
+    ([CVE-2026-18798])
+
+  * Fixed heap buffer overflow in CMS key unwrapping.
+    ([CVE-2026-63072])
+
+  * Fixed invalid pointer dereference in CMP server via crafted `protectionAlg`.
+    ([CVE-2026-63076])
+
+  * Fixed unbounded memory growth in QUIC server incoming channel queue.
+    ([CVE-2026-14456])
+
+  * Fixed RPK server signature algorithm selection being able to dereference
+    a missing certificate.
+    ([CVE-2026-14457])
+
+  * Fixed excessive memory use buffering DTLS records for a future epoch.
+    ([CVE-2026-54874])
+
+  * Fixed client-side nemory leak in OCSP response checking.
+    ([CVE-2026-54876])
+
+  * Fixed untrusted Sender DN being used as a format string in CMP response
+    validation.
+    ([CVE-2026-63073])
+
+  * Fixed CMP indefinite cache growth of `extraCerts`.
+    ([CVE-2026-63074])
+
+  * Fixed QUIC ACK-only packet retention being able to cause memory exhaustion.
+    ([CVE-2026-63075])
+
+  * Fixed possibility of AEAD forgeries with empty ciphertext when using
+    `EVP_Cipher()`.
+    ([CVE-2026-75803])
+
+  * Fixed checking of authentication tags for empty ciphertexts for AEAD ciphers
+    in CCM cipher mode.
 
 ### Major changes between OpenSSL 4.0.0 and OpenSSL 4.0.1 [9 Jun 2026]
 
@@ -2434,6 +2477,9 @@ OpenSSL 0.9.x
 [CVE-2026-2673]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-2673
 [CVE-2026-7383]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-7383
 [CVE-2026-9076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-9076
+[CVE-2026-14456]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-14456
+[CVE-2026-14457]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-14457
+[CVE-2026-18798]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-18798
 [CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
 [CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
 [CVE-2026-28386]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28386
@@ -2459,6 +2505,14 @@ OpenSSL 0.9.x
 [CVE-2026-45445]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45445
 [CVE-2026-45446]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45446
 [CVE-2026-45447]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45447
+[CVE-2026-54874]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54874
+[CVE-2026-54876]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54876
+[CVE-2026-63072]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63072
+[CVE-2026-63073]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63073
+[CVE-2026-63074]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63074
+[CVE-2026-63075]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63075
+[CVE-2026-63076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63076
+[CVE-2026-75803]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75803
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
