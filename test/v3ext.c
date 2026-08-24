@@ -80,6 +80,51 @@ static int test_duplicate_field(int idx)
         && test_field_config(duplicate_field_configs[idx].duplicate, 0);
 }
 
+static const struct {
+    long pathlen; /* Value of the basic constraints path length */
+    int valid; /* Nonzero if a cert carrying it is accepted */
+} pathlen_range_values[] = {
+    { 0, 1 },
+    { 254, 1 },
+    { 255, 1 },
+    { 256, 0 },
+    { 65535, 0 },
+    { -1, 0 },
+    { -2, 0 },
+};
+
+/*
+ * Build a CA cert whose basic constraints extension carries the given
+ * path length constraint and check whether extension caching accepts it.
+ * Values outside 0..255 must be rejected and reported as no constraint.
+ */
+static int test_pathlen_range_value(int idx)
+{
+    long pathlen = pathlen_range_values[idx].pathlen;
+    int valid = pathlen_range_values[idx].valid;
+    X509 *cert = NULL;
+    BASIC_CONSTRAINTS *bs = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cert = X509_new())
+        || !TEST_true(X509_set_version(cert, X509_VERSION_3))
+        || !TEST_ptr(bs = BASIC_CONSTRAINTS_new())
+        || !TEST_ptr(bs->pathlen = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(bs->pathlen, pathlen)))
+        goto end;
+    bs->ca = 255;
+    if (!TEST_int_gt(X509_add1_ext_i2d(cert, NID_basic_constraints, bs, 1, 0), 0)
+        || !TEST_int_eq(X509_check_purpose(cert, -1, 0), valid ? 1 : -1)
+        || !TEST_long_eq(X509_get_pathlen(cert), valid ? pathlen : -1))
+        goto end;
+
+    ret = 1;
+end:
+    BASIC_CONSTRAINTS_free(bs);
+    X509_free(cert);
+    return ret;
+}
+
 static int test_pathlen(void)
 {
     X509 *x = NULL;
@@ -1244,6 +1289,7 @@ int setup_tests(void)
         return 0;
 
     ADD_TEST(test_pathlen);
+    ADD_ALL_TESTS(test_pathlen_range_value, OSSL_NELEM(pathlen_range_values));
     ADD_ALL_TESTS(test_duplicate_field, OSSL_NELEM(duplicate_field_configs));
 #ifndef OPENSSL_NO_RFC3779
     ADD_TEST(test_asid);

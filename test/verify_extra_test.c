@@ -15,6 +15,7 @@
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include <openssl/err.h>
+#include "internal/nelem.h"
 #include "testutil.h"
 
 static const char *certs_dir;
@@ -766,6 +767,180 @@ static int test_purpose_any(void)
     return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
+static const char *ca_cert_pathlen_254[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDADCCAeigAwIBAgIBAjANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290\n"
+    "IENBMCAXDTI2MDkwMzE5MjgxM1oYDzIxMjYwOTA0MTkyODEzWjANMQswCQYDVQQD\n"
+    "DAJDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJadpD0ASxxfxsvd\n"
+    "j9IxsogVzMSGLFziaYuE9KejU9+R479RifvwfBANO62sNWJ19X//9G5UjwWmkiOz\n"
+    "n1k50DkYsBBA3mJzik6wjt/c58lBIlSEgAgpvDU8ht8w3t20JP9+YqXAeugqFj/W\n"
+    "l9rFQtsvaWSRywjXVlp5fxuEQelNnXcJEKhsKTNExsBUZebo4/J1BWpklWzA9P0l\n"
+    "YW5INvDAAwcF1nzlEf0Y6Eot03IMNyg2MTE4hehxjdgCSci8GYnFirE/ojXqqpAc\n"
+    "ZGh7r2dqWgZUD1Dh+bT2vjrUzj8eTH3GdzI+oljt29102JIUaqj3yzRYkah8FLF9\n"
+    "CLNNsUcCAwEAAaNkMGIwEwYDVR0TAQH/BAkwBwEB/wICAP4wCwYDVR0PBAQDAgEG\n"
+    "MB0GA1UdDgQWBBS0ETPx1+Je91OeICIQT4YGvx/JXjAfBgNVHSMEGDAWgBSO9SWv\n"
+    "HptrhD18gJrJU5xNcvejUjANBgkqhkiG9w0BAQsFAAOCAQEASsSh8GLBpXEHpobO\n"
+    "lCoH3PER3ndBl7LzgEWxc9vcTXewcdPMDX6k4JrdLyM7SvaVBGw87ox0RZEv0AgN\n"
+    "aKL4jU0SvenIP5cOzUbhblOd0DCEyf3BWc54cSIB1y9AuXOTGCtTxNd1CPscQncD\n"
+    "STSxZAChvdxgWMa2ICBWOgIP6kZMkWI/O424u27NMaMnzuNcPikWFRqAfNAJZTR6\n"
+    "0zyX3WKNBRSEz4bsVwy9uYk0rcg2q6NzpdGmYYLbhSWARRHwCD8tBnzpTWCZZO71\n"
+    "84LsfV61OvZdPE6JJyoBJ09ZQe3BpIT/q/hj+oE9l+Or4dVUkSg0mkjwEUjYGk3d\n"
+    "cRczBQ==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *ca_cert_pathlen_255[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDADCCAeigAwIBAgIBAjANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290\n"
+    "IENBMCAXDTI2MDkwMzE5MjAwMVoYDzIxMjYwOTA0MTkyMDAxWjANMQswCQYDVQQD\n"
+    "DAJDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJadpD0ASxxfxsvd\n"
+    "j9IxsogVzMSGLFziaYuE9KejU9+R479RifvwfBANO62sNWJ19X//9G5UjwWmkiOz\n"
+    "n1k50DkYsBBA3mJzik6wjt/c58lBIlSEgAgpvDU8ht8w3t20JP9+YqXAeugqFj/W\n"
+    "l9rFQtsvaWSRywjXVlp5fxuEQelNnXcJEKhsKTNExsBUZebo4/J1BWpklWzA9P0l\n"
+    "YW5INvDAAwcF1nzlEf0Y6Eot03IMNyg2MTE4hehxjdgCSci8GYnFirE/ojXqqpAc\n"
+    "ZGh7r2dqWgZUD1Dh+bT2vjrUzj8eTH3GdzI+oljt29102JIUaqj3yzRYkah8FLF9\n"
+    "CLNNsUcCAwEAAaNkMGIwEwYDVR0TAQH/BAkwBwEB/wICAP8wCwYDVR0PBAQDAgEG\n"
+    "MB0GA1UdDgQWBBS0ETPx1+Je91OeICIQT4YGvx/JXjAfBgNVHSMEGDAWgBSO9SWv\n"
+    "HptrhD18gJrJU5xNcvejUjANBgkqhkiG9w0BAQsFAAOCAQEAShszCEdORas+xwIR\n"
+    "C6cMnP8NgwUl17qyBgTcyNcPWJxFZ5mBBiOg3H3GMFjTp5qeTzxj62GylzCcv28R\n"
+    "32WBOWSFSyIKRW76TbIuGtNHAsU2MpO8QNK9vNdRNARvkHd99oBQ/achQ0q6UpjJ\n"
+    "7vBJSEkQLTeoFzGSHo2xSllXln2s3dzP9cuyP0gNn540Fu5PTgEDHIgRNBP1axip\n"
+    "MCoQBefqNoSMczzSRN75VLO4NcDE9F7vIRqRtp/ij9ktXjNzAMblnzzDqnQGCQrh\n"
+    "GqsQvTqO1jNO6DXgTvfb5pfORXytO6okCsVin/gcA2LTQQf072L+2w3AtYakx4gc\n"
+    "9wGndg==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+static const char *ca_cert_pathlen_max[] = {
+    "-----BEGIN CERTIFICATE-----\n"
+    "MIIDBjCCAe6gAwIBAgIBAjANBgkqhkiG9w0BAQsFADASMRAwDgYDVQQDDAdSb290\n"
+    "IENBMCAXDTI2MDkwMzE5MjAwMloYDzIxMjYwOTA0MTkyMDAyWjANMQswCQYDVQQD\n"
+    "DAJDQTCCASIwDQYJKoZIhvcNAQEBBQADggEPADCCAQoCggEBAJadpD0ASxxfxsvd\n"
+    "j9IxsogVzMSGLFziaYuE9KejU9+R479RifvwfBANO62sNWJ19X//9G5UjwWmkiOz\n"
+    "n1k50DkYsBBA3mJzik6wjt/c58lBIlSEgAgpvDU8ht8w3t20JP9+YqXAeugqFj/W\n"
+    "l9rFQtsvaWSRywjXVlp5fxuEQelNnXcJEKhsKTNExsBUZebo4/J1BWpklWzA9P0l\n"
+    "YW5INvDAAwcF1nzlEf0Y6Eot03IMNyg2MTE4hehxjdgCSci8GYnFirE/ojXqqpAc\n"
+    "ZGh7r2dqWgZUD1Dh+bT2vjrUzj8eTH3GdzI+oljt29102JIUaqj3yzRYkah8FLF9\n"
+    "CLNNsUcCAwEAAaNqMGgwGQYDVR0TAQH/BA8wDQEB/wIIf/////////8wCwYDVR0P\n"
+    "BAQDAgEGMB0GA1UdDgQWBBS0ETPx1+Je91OeICIQT4YGvx/JXjAfBgNVHSMEGDAW\n"
+    "gBSO9SWvHptrhD18gJrJU5xNcvejUjANBgkqhkiG9w0BAQsFAAOCAQEA04vW/HVJ\n"
+    "7fg54oODO5WGxGyzVu6DTh9vTcFbDWhhGeeMlPIyzGJcCmW7rRGNHqmBjiH9dben\n"
+    "LTG/96XO96kOcKXG7Yqb1dKx/TVKLtfDxhrBUE3KdUn5B7uKGcXlh1YfINgdqH/4\n"
+    "WNwvJRDa/J9nhbAe+/SQamHkuAEet1go/hbss1YYQxrNxDel9NaJP+KXHrmNKAf3\n"
+    "Aib7SwN1r3Fr7g02pcm0gA7ah0uU+vHhRFhfawKbidWpH8iOVkRtHN+aYctyf6OD\n"
+    "NMNbV1+8lyIaFqzCauYZ93OP+uhXd/x0htmpSVSvpc75sE92oECO02udD65Bwaix\n"
+    "qE35gsZQkofHoQ==\n"
+    "-----END CERTIFICATE-----\n",
+    NULL,
+};
+
+/* Verification time for the path length chains, within all cert lifetimes */
+#define PATHLEN_CHAIN_TIME 1790000000
+
+/*
+ * A certificate for a path length chain: either a file in the certs
+ * directory or an inline PEM, exactly one of which is set.
+ */
+typedef struct pathlen_cert_st {
+    const char *file; /* File name in certs_dir */
+    const char **pem; /* PEM lines for X509_from_strings() */
+} PATHLEN_CERT;
+
+/*
+ * Chains anchored at root-cert, exercising path length constraints at the
+ * limit of the accepted range and beyond it, through X509_verify_cert().
+ * The intermediates were all issued from ca-key, so ee-cert and ee-client
+ * chain to each of them.
+ */
+static const struct {
+    PATHLEN_CERT leaf; /* Certificate being verified */
+    PATHLEN_CERT untrusted[2]; /* Untrusted chain certs, terminated by {0} */
+    int allow_proxy; /* Nonzero to set X509_V_FLAG_ALLOW_PROXY_CERTS */
+    int expected_err; /* X509_STORE_CTX error after verification */
+} pathlen_chains[] = {
+    { { "ee-cert.pem", NULL }, { { NULL, ca_cert_pathlen_254 } }, 0,
+        X509_V_OK },
+    { { "ee-cert.pem", NULL }, { { NULL, ca_cert_pathlen_255 } }, 0,
+        X509_V_OK },
+    { { "ee-cert.pem", NULL }, { { NULL, ca_cert_pathlen_max } }, 0,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+    { { "pc1-cert.pem", NULL },
+        { { "ee-client.pem", NULL }, { NULL, ca_cert_pathlen_max } }, 1,
+        X509_V_ERR_UNABLE_TO_GET_ISSUER_CERT_LOCALLY },
+};
+
+static X509 *load_pathlen_cert(const PATHLEN_CERT *pc)
+{
+    char *path;
+    X509 *cert;
+
+    if (pc->pem != NULL)
+        return X509_from_strings(pc->pem);
+    if ((path = test_mk_file_path(certs_dir, pc->file)) == NULL)
+        return NULL;
+    cert = load_cert_pem(path, NULL);
+    OPENSSL_free(path);
+    return cert;
+}
+
+static int test_pathlen_chain(int idx)
+{
+    static const PATHLEN_CERT root = { "root-cert.pem", NULL };
+    X509 *leaf = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *trusted = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    X509_VERIFY_PARAM *vpm;
+    size_t i;
+    int ret = 0;
+
+    if (!TEST_ptr(leaf = load_pathlen_cert(&pathlen_chains[idx].leaf))
+        || !TEST_ptr(trusted = sk_X509_new_null())
+        || !TEST_ptr(untrusted = sk_X509_new_null())
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_ptr(cert = load_pathlen_cert(&root))
+        || !TEST_true(sk_X509_push(trusted, cert)))
+        goto err;
+    cert = NULL;
+    for (i = 0; i < OSSL_NELEM(pathlen_chains[idx].untrusted); i++) {
+        const PATHLEN_CERT *pc = &pathlen_chains[idx].untrusted[i];
+
+        if (pc->file == NULL && pc->pem == NULL)
+            break;
+        if (!TEST_ptr(cert = load_pathlen_cert(pc))
+            || !TEST_true(sk_X509_push(untrusted, cert)))
+            goto err;
+        cert = NULL;
+    }
+
+    if (!TEST_true(X509_STORE_CTX_init(ctx, NULL, leaf, untrusted)))
+        goto err;
+    X509_STORE_CTX_set0_trusted_stack(ctx, trusted);
+    vpm = X509_STORE_CTX_get0_param(ctx);
+    X509_VERIFY_PARAM_set_time(vpm, PATHLEN_CHAIN_TIME);
+    if (pathlen_chains[idx].allow_proxy
+        && !TEST_true(X509_VERIFY_PARAM_set_flags(vpm, X509_V_FLAG_ALLOW_PROXY_CERTS)))
+        goto err;
+
+    if (!TEST_int_eq(X509_verify_cert(ctx),
+            pathlen_chains[idx].expected_err == X509_V_OK)
+        || !TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            pathlen_chains[idx].expected_err))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(cert);
+    X509_free(leaf);
+    OSSL_STACK_OF_X509_free(trusted);
+    OSSL_STACK_OF_X509_free(untrusted);
+    X509_STORE_CTX_free(ctx);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -800,6 +975,7 @@ int setup_tests(void)
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
+    ADD_ALL_TESTS(test_pathlen_chain, OSSL_NELEM(pathlen_chains));
     return 1;
 err:
     cleanup_tests();
