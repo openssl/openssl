@@ -27,6 +27,7 @@ OpenSSL Releases
  - [OpenSSL 1.0.0](#openssl-100)
  - [OpenSSL 0.9.x](#openssl-09x)
 
+OpenSSL 4.0
 -----------
 
 ### Changes between 4.0.1 and 4.0.2 [xx XXX xxxx]
