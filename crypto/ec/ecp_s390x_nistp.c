@@ -18,6 +18,8 @@
 #include <openssl/err.h>
 #include <openssl/rand.h>
 #include "ec_local.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "arch/s390x_arch.h"
 
 /* Size of parameter blocks */
@@ -46,14 +48,79 @@
 
 #define S390X_PAD(n) (n == 80 ? 14 : 0)
 
+/*
+ * Serialise an OSSL_FN scalar big-endian into a len-byte buffer, straight from
+ * its little-endian limbs (never a BIGNUM).  A value wider than len is rejected.
+ */
+static int s390x_fn_scalar_be(unsigned char *out, int len, const OSSL_FN *scalar)
+{
+    const OSSL_FN_ULONG *w = ossl_fn_get_words(scalar);
+    size_t dsize = ossl_fn_get_dsize(scalar), i, j;
+
+    memset(out, 0, len);
+    for (i = 0; i < dsize; i++) {
+        OSSL_FN_ULONG d = w[i];
+
+        for (j = 0; j < sizeof(d); j++) {
+            size_t off = i * sizeof(d) + j;
+            unsigned char b = (unsigned char)(d >> (8 * j));
+
+            if (off < (size_t)len)
+                out[len - 1 - off] = b;
+            else if (b != 0)
+                return 0;
+        }
+    }
+    return 1;
+}
+
+/*
+ * Shared PCC scalar multiplication core: r = scalar * point, where the scalar
+ * is already serialised big-endian into a len-byte buffer.  point must be a
+ * finite point.  Both the BIGNUM (ec_GFp_s390x_nistp_mul) and OSSL_FN
+ * (ec_GFp_s390x_nistp_mul_fn) entry points wrap this; only the scalar
+ * serialisation differs between them.
+ */
+static int ec_GFp_s390x_nistp_pcc(const EC_GROUP *group, EC_POINT *r,
+    const unsigned char *scalar_be, const EC_POINT *point,
+    unsigned int fc, int len, BN_CTX *ctx)
+{
+    unsigned char param[S390X_SIZE_PARAM];
+    BIGNUM *x, *y;
+    int rc = 0;
+
+    BN_CTX_start(ctx);
+    x = BN_CTX_get(ctx);
+    y = BN_CTX_get(ctx);
+    if (x == NULL || y == NULL)
+        goto ret;
+
+    memset(param, 0, sizeof(param));
+    memcpy(param + S390X_OFF_SCALAR(len), scalar_be, len);
+
+    if (EC_POINT_get_affine_coordinates(group, point, x, y, ctx) != 1
+        || BN_bn2binpad(x, param + S390X_OFF_SRC_X(len), len) == -1
+        || BN_bn2binpad(y, param + S390X_OFF_SRC_Y(len), len) == -1
+        || s390x_pcc(fc, param) != 0
+        || BN_bin2bn(param + S390X_OFF_RES_X(len), len, x) == NULL
+        || BN_bin2bn(param + S390X_OFF_RES_Y(len), len, y) == NULL
+        || EC_POINT_set_affine_coordinates(group, r, x, y, ctx) != 1)
+        goto ret;
+
+    rc = 1;
+ret:
+    OPENSSL_cleanse(param, sizeof(param));
+    BN_CTX_end(ctx);
+    return rc;
+}
+
 static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
     const BIGNUM *scalar,
     size_t num, const EC_POINT *points[],
     const BIGNUM *scalars[],
     BN_CTX *ctx, unsigned int fc, int len)
 {
-    unsigned char param[S390X_SIZE_PARAM];
-    BIGNUM *x, *y;
+    unsigned char scalar_be[S390X_SIZE_P521];
     const EC_POINT *point_ptr = NULL;
     const BIGNUM *scalar_ptr = NULL;
     BN_CTX *new_ctx = NULL;
@@ -65,19 +132,9 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
             return 0;
     }
 
-    BN_CTX_start(ctx);
-
-    x = BN_CTX_get(ctx);
-    y = BN_CTX_get(ctx);
-    if (x == NULL || y == NULL) {
-        rc = 0;
-        goto ret;
-    }
-
     /*
      * Use PCC for EC keygen and ECDH key derivation:
-     * scalar * generator and scalar * peer public key,
-     * scalar in [0,order).
+     * scalar * generator and scalar * peer public key, scalar in [0,order).
      */
     if ((scalar != NULL && num == 0 && BN_is_negative(scalar) == 0)
         || (scalar == NULL && num == 1 && BN_is_negative(scalars[0]) == 0)) {
@@ -90,37 +147,71 @@ static int ec_GFp_s390x_nistp_mul(const EC_GROUP *group, EC_POINT *r,
             scalar_ptr = scalars[0];
         }
 
-        if (EC_POINT_is_at_infinity(group, point_ptr) == 1
+        if (EC_POINT_is_at_infinity(group, point_ptr)
             || BN_is_zero(scalar_ptr)) {
             rc = EC_POINT_set_to_infinity(group, r);
-            goto ret;
+        } else if (BN_bn2binpad(scalar_ptr, scalar_be, len) != -1
+            && ec_GFp_s390x_nistp_pcc(group, r, scalar_be, point_ptr, fc, len,
+                ctx)) {
+            rc = 1;
         }
-
-        memset(&param, 0, sizeof(param));
-
-        if (EC_POINT_get_affine_coordinates(group, point_ptr, x, y, ctx) != 1
-            || BN_bn2binpad(x, param + S390X_OFF_SRC_X(len), len) == -1
-            || BN_bn2binpad(y, param + S390X_OFF_SRC_Y(len), len) == -1
-            || BN_bn2binpad(scalar_ptr,
-                   param + S390X_OFF_SCALAR(len), len)
-                == -1
-            || s390x_pcc(fc, param) != 0
-            || BN_bin2bn(param + S390X_OFF_RES_X(len), len, x) == NULL
-            || BN_bin2bn(param + S390X_OFF_RES_Y(len), len, y) == NULL
-            || EC_POINT_set_affine_coordinates(group, r, x, y, ctx) != 1)
-            goto ret;
-
-        rc = 1;
     }
 
-ret:
     /* Otherwise use default. */
     if (rc == -1)
         rc = ossl_ec_wNAF_mul(group, r, scalar, num, points, scalars, ctx);
-    OPENSSL_cleanse(param, sizeof(param));
-    BN_CTX_end(ctx);
+    OPENSSL_cleanse(scalar_be, sizeof(scalar_be));
     BN_CTX_free(new_ctx);
     return rc;
+}
+
+/*-
+ * OSSL_FN counterpart of ec_GFp_s390x_nistp_mul() and this method's 'mul_fn'
+ * slot, reached from EC_POINT_mul_fn() when the scalar is secret.  It covers the
+ * single-scalar cases the PCC path serves (scalar*G for key generation,
+ * scalar*point for ECDH), which is all a secret scalar needs.
+ *
+ * Only the scalar changes representation: it is serialised big-endian straight
+ * from the OSSL_FN limbs, so it never takes BIGNUM form, and then fed to the
+ * shared ec_GFp_s390x_nistp_pcc() core.
+ */
+static int ec_GFp_s390x_nistp_mul_fn(const EC_GROUP *group, EC_POINT *r,
+    const OSSL_FN *scalar, const EC_POINT *point,
+    OSSL_FN_CTX *fnctx, unsigned int fc, int len)
+{
+    unsigned char scalar_be[S390X_SIZE_P521];
+    BN_CTX *ctx = NULL;
+    int ret = 0;
+
+    (void)fnctx; /* fixed-width vectors; no OSSL_FN scratch context needed */
+
+    if (scalar == NULL) {
+        ERR_raise(ERR_LIB_EC, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (point == NULL) {
+        point = EC_GROUP_get0_generator(group);
+        if (point == NULL) {
+            ERR_raise(ERR_LIB_EC, EC_R_UNDEFINED_GENERATOR);
+            return 0;
+        }
+    }
+    if (EC_POINT_is_at_infinity(group, point) || OSSL_FN_is_zero(scalar))
+        return EC_POINT_set_to_infinity(group, r);
+
+    if (!s390x_fn_scalar_be(scalar_be, len, scalar)) {
+        ERR_raise(ERR_LIB_EC, EC_R_COORDINATES_OUT_OF_RANGE);
+        goto err;
+    }
+    if ((ctx = BN_CTX_new_ex(group->libctx)) == NULL)
+        goto err;
+    ret = ec_GFp_s390x_nistp_pcc(group, r, scalar_be, point, fc, len, ctx);
+
+err:
+    BN_CTX_free(ctx);
+    OPENSSL_cleanse(scalar_be, sizeof(scalar_be));
+    return ret;
 }
 
 #define MIN_ECDSA_SIGN_ORDERBITS 64
@@ -397,6 +488,24 @@ ret:
             S390X_SIZE_P##bits);                                                    \
     }                                                                               \
                                                                                     \
+    static int ec_GFp_s390x_nistp##bits##_mul_fn(const EC_GROUP *group,             \
+        EC_POINT *r,                                                                \
+        const OSSL_FN *scalar,                                                      \
+        const EC_POINT *point,                                                      \
+        OSSL_FN_CTX *fnctx)                                                         \
+    {                                                                               \
+        return ec_GFp_s390x_nistp_mul_fn(group, r, scalar, point, fnctx,            \
+            S390X_SCALAR_MULTIPLY_P##bits,                                          \
+            S390X_SIZE_P##bits);                                                    \
+    }                                                                               \
+                                                                                    \
+    static size_t ec_GFp_s390x_nistp##bits##_mul_fn_ctx_size(                       \
+        const EC_GROUP *group, EC_POINT *r, const OSSL_FN *scalar,                  \
+        const EC_POINT *point)                                                      \
+    {                                                                               \
+        return OSSL_FN_CTX_SIZE_NONE;                                               \
+    }                                                                               \
+                                                                                    \
     static ECDSA_SIG *ecdsa_s390x_nistp##bits##_sign_sig(const unsigned char *dgst, \
         int dgstlen,                                                                \
         const BIGNUM *kinv,                                                         \
@@ -476,7 +585,10 @@ ret:
             ossl_ec_GFp_simple_blind_coordinates,                                   \
             ossl_ec_GFp_simple_ladder_pre,                                          \
             ossl_ec_GFp_simple_ladder_step,                                         \
-            ossl_ec_GFp_simple_ladder_post                                          \
+            ossl_ec_GFp_simple_ladder_post,                                         \
+            0, /* group_full_init */                                                \
+            ec_GFp_s390x_nistp##bits##_mul_fn,                                      \
+            ec_GFp_s390x_nistp##bits##_mul_fn_ctx_size                              \
         };                                                                          \
         static const EC_METHOD *ret;                                                \
                                                                                     \
