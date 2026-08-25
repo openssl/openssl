@@ -42,7 +42,7 @@ SSL_SESSION_get_timeout() returns the timeout value set for session B<s>
 in seconds, or -1 if the timeout is unlimited.
 
 SSL_SESSION_set_timeout() sets the timeout value for session B<s> in seconds
-to B<tm>. A negative value for B<tm> selects an unlimited timeout: the
+to I<tm>. A negative value for I<tm> selects an unlimited timeout: the
 session then never expires.
 
 SSL_SESSION_get_time() and SSL_SESSION_set_time() functions use
