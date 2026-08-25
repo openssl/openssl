@@ -1522,6 +1522,26 @@ size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
     const OSSL_FN *add, const OSSL_FN *rem, BN_GENCB *cb,
     OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_generate_prime() needs.
+ *
+ * @param[in]           ret     The destination, as for
+ *                              OSSL_FN_generate_prime()
+ * @param[in]           bits    The desired size of the prime, in bits
+ * @param[in]           safe    Nonzero to generate a safe prime
+ * @param[in]           add     Optional residue modulus, or NULL
+ * @param[in]           rem     Optional residue, or NULL
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size covers the generation attempts as well as the primality
+ * tests they run.  The same size serves a given |bits| and |safe| regardless
+ * of the |add| and |rem| values.
+ */
+size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
+    int safe, const OSSL_FN *add, const OSSL_FN *rem);
+
 /**
  * Generate a pair of X9.31 parameters Xp and Xq for prime generation.
  * On entry, @p nbits is the sum of the bit lengths of both parameters;
@@ -1537,6 +1557,7 @@ int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
  */
 int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
     OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+
 /**
  * Derive an X9.31 prime @p p from the parameters @p Xp1, @p Xp2 and @p Xp.
  * When @p p1 or @p p2 is NULL, the corresponding intermediate prime is
@@ -1565,6 +1586,7 @@ int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
     const OSSL_FN *Xp, const OSSL_FN *Xp1, const OSSL_FN *Xp2,
     const OSSL_FN *e, OSSL_FN_CTX *ctx, BN_GENCB *cb,
     OSSL_LIB_CTX *libctx);
+
 /**
  * Generate an X9.31 prime @p p using random Xp1 and Xp2 parameters, then
  * defer to OSSL_FN_X931_derive_prime().  Any non-NULL @p p1, @p p2, @p Xp1
@@ -1590,15 +1612,16 @@ int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
     OSSL_FN *Xp1, OSSL_FN *Xp2, const OSSL_FN *Xp, const OSSL_FN *e,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
 
-*Calculate the arena payload size that OSSL_FN_X931_generate_Xpq()
-    * needs.
-          *
-              *@param[in] Xp The first parameter to generate
-                  *@returns The arena payload size,
-    in bytes.
-        *@retval 0 on arithmetic overflow
-    or invalid input.
-            * / size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_Xpq()
+ * needs.
+ *
+ * @param[in]           Xp      The first parameter to generate
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
+
 /**
  * Calculate the arena payload size that OSSL_FN_X931_generate_prime()
  * needs.
@@ -1615,6 +1638,7 @@ int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
 size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *e);
+
 /**
  * Calculate the arena payload size that OSSL_FN_X931_derive_prime() needs.
  *
@@ -1635,26 +1659,6 @@ size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
 size_t OSSL_FN_X931_derive_prime_ctx_size(const OSSL_FN *p,
     const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
     const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e);
-#ifdef __cplusplus
-
-/**
- * Calculate the arena payload size that OSSL_FN_generate_prime() needs.
- *
- * @param[in]           ret     The destination, as for
- *                              OSSL_FN_generate_prime()
- * @param[in]           bits    The desired size of the prime, in bits
- * @param[in]           safe    Nonzero to generate a safe prime
- * @param[in]           add     Optional residue modulus, or NULL
- * @param[in]           rem     Optional residue, or NULL
- * @returns             The arena payload size, in bytes.
- * @retval              0       on arithmetic overflow or invalid input.
- *
- * The returned size covers the generation attempts as well as the primality
- * tests they run.  The same size serves a given |bits| and |safe| regardless
- * of the |add| and |rem| values.
- */
-size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
-    int safe, const OSSL_FN *add, const OSSL_FN *rem);
 #ifdef __cplusplus
 }
 #endif
