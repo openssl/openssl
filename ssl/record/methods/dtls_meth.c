@@ -351,6 +351,55 @@ static int dtls_rlayer_buffer_record(OSSL_RECORD_LAYER *rl, struct pqueue_st *qu
     return 1;
 }
 
+/* rfc9147 section 4.2.3 */
+int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
+    unsigned char *rec_data)
+{
+    unsigned char mask[16];
+    int outlen, inlen;
+    unsigned char *in, *iv;
+    size_t i;
+    unsigned char zeros[16] = { 0 };
+
+    inlen = (int)(sizeof(mask));
+
+    in = rec_data;
+    iv = NULL;
+    memset(mask, 0, sizeof(mask));
+
+    /*
+     * When the AEAD is based on ChaCha20, the first 4 bytes of the ciphertext
+     * are treated as the block counter and the next 12 bytes as the nonce.
+     * These are passed together as the IV (counter || nonce) to reinitialise
+     * the cipher, and a zero block is encrypted to produce the mask.
+     */
+    if (EVP_CIPHER_CTX_get_nid(ctx) == NID_chacha20) {
+        iv = rec_data;
+        in = zeros;
+        inlen = sizeof(zeros);
+    }
+
+    if (!ossl_assert(inlen >= 0)
+        || (size_t)inlen > sizeof(mask)
+        || !EVP_CIPHER_CTX_set_padding(ctx, 0)
+        || EVP_CipherInit_ex2(ctx, NULL, NULL, iv, 1, NULL) <= 0
+        || EVP_CipherUpdate(ctx, mask, &outlen, in, inlen) <= 0
+        || outlen != inlen
+        || EVP_CipherFinal_ex(ctx, mask + outlen, &outlen) <= 0
+        || outlen != 0)
+        return 0;
+
+    if (!ossl_assert(seqlen <= sizeof(mask)))
+        return 0;
+
+    for (i = 0; i < seqlen; i++)
+        seq[i] ^= mask[i];
+
+    OPENSSL_cleanse(mask, sizeof(mask));
+
+    return 1;
+}
+
 /*-
  * Call this to get a new input record.
  * It will return <= 0 if more data is needed, normally due to an error
@@ -752,7 +801,7 @@ static int dtls_free(OSSL_RECORD_LAYER *rl)
         while ((item = pqueue_pop(rl->unprocessed_rcds)) != NULL) {
             rdata = (DTLS_RLAYER_RECORD_DATA *)item->data;
             /* Push to the next record layer */
-            ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,\
+            ret &= BIO_write_ex(rl->next, rdata->packet, rdata->packet_length,
                 &written);
             OPENSSL_free(rdata->packet);
             OPENSSL_free(item->data);
