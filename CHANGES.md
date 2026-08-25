@@ -27,7 +27,7 @@ OpenSSL Releases
 OpenSSL 3.4
 -----------
 
-### Changes between 3.4.6 and 3.4.7 [xx XXX xxxx]
+### Changes between 3.4.6 and 3.4.7 [25 Aug 2026]
 
  * Fixed heap buffer overflow in CMS key unwrapping.
 
