@@ -5037,6 +5037,30 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     if (!expect_quic_c(new_conn, &cctx))
         return -1;
 
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
+    if (cctx.qc->is_thread_assisted) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SSL_listen_ex requires new_conn without thread assistance");
+        return -1;
+    }
+#endif
+
+    /* The standalone transport is replaced, so new_conn must be unused. */
+    if (cctx.qc->started || cctx.qc->shutting_down
+        || cctx.qc->num_xso != 0
+        || cctx.qc->default_xso_created
+        || cctx.qc->listener != NULL
+        || ossl_quic_port_get_net_rbio(cctx.qc->port) != NULL
+        || ossl_quic_port_get_net_wbio(cctx.qc->port) != NULL
+        || ossl_quic_channel_is_active(cctx.qc->ch)
+        || ossl_quic_channel_is_term_any(cctx.qc->ch)
+        || !cctx.obj->is_event_leader || !cctx.obj->is_port_leader
+        || cctx.obj->parent_obj != NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SSL_listen_ex requires a fresh connection created by SSL_new()");
+        return -1;
+    }
+
     qctx_lock_for_io(&lctx);
 
     if (!ossl_quic_port_test_and_set_peeloff(lctx.ql->port, PEELOFF_LISTEN)) {
@@ -5046,8 +5070,8 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
         goto out;
     }
 
-    new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
-    if (new_ch == NULL)
+    /* Do all fallible setup before consuming the queued channel. */
+    if (!ossl_quic_port_have_incoming(lctx.ql->port))
         goto out;
 
     qc = cctx.qc;
@@ -5055,13 +5079,17 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 
     tls = ossl_ssl_connection_new_int(
         ossl_quic_port_get_channel_ctx(ql->port), new_conn, TLS_method());
-    if (tls == NULL)
+    if (tls == NULL) {
+        /* An internal failure is not "no connection available" */
+        ret = -1;
         goto out;
+    }
 
     tls_conn = SSL_CONNECTION_FROM_SSL(tls);
     if (tls_conn == NULL) {
         QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         SSL_free(tls);
+        ret = -1;
         goto out;
     }
 
@@ -5071,9 +5099,13 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 
     /* The connection keeps its listener alive. */
     if (!SSL_up_ref(&ql->obj.ssl)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
         SSL_free(tls);
+        ret = -1;
         goto out;
     }
+
+    new_ch = ossl_quic_port_pop_incoming(ql->port);
 
     /* Bind TLS before adopting the deferred incoming channel. */
     ossl_quic_channel_set0_tls(new_ch, tls);
@@ -5091,10 +5123,6 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     qc->port = ql->port;
     /* The connection is handed to the caller, as in SSL_accept_connection() */
     qc->pending = 0;
-#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
-    /* Incoming connections never start a thread-assist worker. */
-    qc->is_thread_assisted = 0;
-#endif
     /* Demote the standalone object into the listener's hierarchy. */
     ossl_quic_obj_reparent(&qc->obj, &ql->obj);
 

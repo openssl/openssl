@@ -145,9 +145,24 @@ it is the first I/O call made to the SSL object to which the port is attached.
 
 Likewise, if a listener has accepted a connection via
 L<SSL_accept_connection(3)>, it is impermissible to accept connections via
-B<SSL_listen_ex()>.  Note also that SSL objects passed in the B<new_conn>
-parameter to B<SSL_listen_ex()> must be created using L<OSSL_QUIC_method(3)> or
-L<OSSL_QUIC_server_method(3)>.
+B<SSL_listen_ex()>. The SSL object passed in the B<new_conn> parameter must be
+a fresh standalone connection returned by L<SSL_new(3)>.
+L<OSSL_QUIC_method(3)> is intended for this use. The connection must not use
+thread assisted mode, have been started or shut down, have streams or network
+BIOs configured on it, or belong to another QUIC object hierarchy.
+
+On success, I<new_conn> is adopted into the listener's object hierarchy and
+uses its shared network port and TLS configuration derived from the listener.
+Certificates, verification parameters, ciphersuites, ALPN configuration and
+other security policy must be configured on the listener's
+B<SSL_CTX>. Applications must not install a private connected BIO or file
+descriptor on the returned connection.
+
+Once B<SSL_listen_ex()> returns success, the connection written to I<new_conn>
+is already in the accept (server) state. Use L<SSL_do_handshake(3)> (or
+L<SSL_handle_events(3)>) to progress its handshake towards completion.
+L<SSL_accept(3)> must not be used for this purpose; use
+L<SSL_do_handshake(3)> instead.
 
 The SSL_accept_connection() call is supported only on a listener SSL object and
 accepts a new incoming connection. A new SSL object representing the accepted
@@ -341,8 +356,7 @@ SSL_listen() returns 1 on success or 0 on failure.
 
 SSL_listen_ex() returns 1 when a new connection was accepted on the new_conn
 parameter, 0 if no new connection was available at the time of the call, or -1
-in the event an internal error occurred, signaling a need to check the error
-queue.
+on error, signaling a need to check the error queue.
 
 SSL_accept_connection() returns a pointer to a new SSL object on success or NULL
 on failure. On success, the caller assumes ownership of the reference.
@@ -409,7 +423,7 @@ OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
-Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
