@@ -5702,6 +5702,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_check_prime, OSSL_NELEM(prime_cases));
     ADD_ALL_TESTS(test_check_generated_prime, OSSL_NELEM(prime_cases));
     ADD_TEST(test_miller_rabin_enhanced);
+    ADD_TEST(test_generate_prime);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));

@@ -282,3 +282,284 @@ int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
 {
     return ossl_fn_is_prime_int(w, checks, ctx, 1, cb, libctx);
 }
+
+/*
+ * Generate a random number of |bits| bits that is probably prime by sieving.
+ * If |safe| != 0, it generates a safe prime.
+ * |mods| is a preallocated array that gets reused when called again.
+ *
+ * |rnd| must have room for |bits| bits plus one limb of headroom: the sieve
+ * adds a word-sized delta, and a carry past |bits| is detected by the
+ * significance check below rather than silently truncated.
+ *
+ * The probably prime is saved in |rnd|.
+ *
+ * Returns 1 on success and 0 on error.
+ */
+static int ossl_fn_probable_prime(OSSL_FN *rnd, size_t bits, int safe,
+    prime_t *mods, OSSL_LIB_CTX *libctx)
+{
+    int i;
+    OSSL_FN_ULONG delta;
+    int trial_divisions = ossl_fn_calc_trial_divisions(bits);
+    OSSL_FN_ULONG maxdelta = OSSL_FN_MASK - primes[trial_divisions - 1];
+
+again:
+    if (!OSSL_FN_priv_rand(rnd, bits, OSSL_FN_RAND_TOP_TWO,
+            OSSL_FN_RAND_BOTTOM_ODD, 0, libctx))
+        return 0;
+    if (safe && !OSSL_FN_set_bit(rnd, 1))
+        return 0;
+    /* we now have a random number 'rnd' to test. */
+    for (i = 1; i < trial_divisions; i++) {
+        OSSL_FN_ULONG mod = OSSL_FN_mod_word(rnd, (OSSL_FN_ULONG)primes[i]);
+
+        if (mod == (OSSL_FN_ULONG)-1)
+            return 0;
+        mods[i] = (prime_t)mod;
+    }
+    delta = 0;
+loop:
+    for (i = 1; i < trial_divisions; i++) {
+        /*
+         * check that rnd is a prime and also that
+         * gcd(rnd-1,primes) == 1 (except for 2)
+         * do the second check only if we are interested in safe primes
+         * in the case that the candidate prime is a single word then
+         * we check only the primes up to sqrt(rnd)
+         */
+        if (bits <= 31 && delta <= 0x7fffffff
+            && square(primes[i]) > OSSL_FN_get_word(rnd) + delta)
+            break;
+        if (safe ? (mods[i] + delta) % primes[i] <= 1
+                 : (mods[i] + delta) % primes[i] == 0) {
+            delta += safe ? 4 : 2;
+            if (delta > maxdelta)
+                goto again;
+            goto loop;
+        }
+    }
+    if (!OSSL_FN_add_word(rnd, delta))
+        return 0;
+    /*
+     * A carry past |bits| lands in the headroom limb and is caught here;
+     * the candidate is redrawn in that case.
+     */
+    if (OSSL_FN_num_bits(rnd) != bits)
+        goto again;
+    return 1;
+}
+
+/*
+ * Generate a random number |rnd| of |bits| bits that is probably prime
+ * and satisfies |rnd| % |add| == |rem| by sieving.
+ * If |safe| != 0, it generates a safe prime.
+ * |mods| is a preallocated array that gets reused when called again.
+ *
+ * |rnd| must have room for |bits| bits plus one limb of headroom: the
+ * residue adjustment and the sieve delta can push the candidate slightly
+ * past |bits| bits, and the headroom keeps that visible rather than
+ * truncated.
+ *
+ * The probably prime is saved in |rnd|.
+ *
+ * Returns 1 on success and 0 on error.
+ */
+static int ossl_fn_probable_prime_dh(OSSL_FN *rnd, size_t bits, int safe,
+    prime_t *mods, const OSSL_FN *add, const OSSL_FN *rem,
+    OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx)
+{
+    int i, ret = 0;
+    OSSL_FN *t1;
+    OSSL_FN_ULONG delta;
+    int trial_divisions = ossl_fn_calc_trial_divisions(bits);
+    OSSL_FN_ULONG maxdelta = OSSL_FN_MASK - primes[trial_divisions - 1];
+    const void *token = NULL;
+
+    if (maxdelta > OSSL_FN_MASK - OSSL_FN_get_word(add))
+        maxdelta = OSSL_FN_MASK - OSSL_FN_get_word(add);
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+    if ((t1 = OSSL_FN_CTX_get_limbs(ctx, rnd->dsize)) == NULL)
+        goto err;
+
+again:
+    if (!OSSL_FN_rand(rnd, bits, OSSL_FN_RAND_TOP_ONE,
+            OSSL_FN_RAND_BOTTOM_ODD, 0, libctx))
+        goto err;
+
+    /* we need ((rnd-rem) % add) == 0 */
+
+    if (!OSSL_FN_div(NULL, t1, rnd, add, ctx))
+        goto err;
+    if (!OSSL_FN_sub(rnd, rnd, t1))
+        goto err;
+    if (rem == NULL) {
+        if (!OSSL_FN_add_word(rnd, safe ? 3u : 1u))
+            goto err;
+    } else {
+        if (!OSSL_FN_add(rnd, rnd, rem))
+            goto err;
+    }
+
+    if (OSSL_FN_num_bits(rnd) < bits
+        || OSSL_FN_get_word(rnd) < (safe ? 5u : 3u)) {
+        if (!OSSL_FN_add(rnd, rnd, add))
+            goto err;
+    }
+
+    /* we now have a random number 'rnd' to test. */
+    for (i = 1; i < trial_divisions; i++) {
+        OSSL_FN_ULONG mod = OSSL_FN_mod_word(rnd, (OSSL_FN_ULONG)primes[i]);
+
+        if (mod == (OSSL_FN_ULONG)-1)
+            goto err;
+        mods[i] = (prime_t)mod;
+    }
+    delta = 0;
+loop:
+    for (i = 1; i < trial_divisions; i++) {
+        /* check that rnd is a prime */
+        if (bits <= 31 && delta <= 0x7fffffff
+            && square(primes[i]) > OSSL_FN_get_word(rnd) + delta)
+            break;
+        /* rnd mod p == 1 implies q = (rnd-1)/2 is divisible by p */
+        if (safe ? (mods[i] + delta) % primes[i] <= 1
+                 : (mods[i] + delta) % primes[i] == 0) {
+            delta += OSSL_FN_get_word(add);
+            if (delta > maxdelta)
+                goto again;
+            goto loop;
+        }
+    }
+    if (!OSSL_FN_add_word(rnd, delta))
+        goto err;
+    ret = 1;
+
+err:
+    if (token != NULL)
+        OSSL_FN_CTX_end(ctx, token);
+    return ret;
+}
+
+/*
+ * Generate a random number of |bits| bits that is probably prime.
+ * If |safe| != 0, it generates a safe prime.  If |add| is not NULL, the
+ * prime satisfies ret % |add| == |rem| (or ret % |add| == (safe ? 3 : 1)
+ * when |rem| is NULL).
+ *
+ * The result is generated in an arena temporary with one limb of headroom
+ * over |bits|, so that a sieve carry past |bits| is detected and redrawn
+ * rather than truncated, and is copied to |ret| on success.  |ret| must
+ * have room for |bits| bits; with |add| not NULL the result can
+ * occasionally exceed |bits| bits by a small amount, so one limb of
+ * headroom in |ret| is advisable in that case.
+ *
+ * Returns 1 on success and 0 on error.
+ */
+int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
+    const OSSL_FN *add, const OSSL_FN *rem, BN_GENCB *cb,
+    OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx)
+{
+    OSSL_FN *t, *rntmp;
+    int found = 0;
+    int i, j, c1 = 0;
+    prime_t *mods = NULL;
+    int checks = ossl_fn_mr_min_checks(bits);
+    size_t limbs = bits / OSSL_FN_BITS + (bits % OSSL_FN_BITS != 0);
+    const void *token = NULL;
+
+    if (bits < 2) {
+        /* There are no prime numbers this small. */
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_BITS_TOO_SMALL);
+        return 0;
+    } else if (add == NULL && safe && bits < 6 && bits != 3) {
+        /*
+         * The smallest safe prime (7) is three bits.
+         * But the following two safe primes with less than 6 bits (11, 23)
+         * are unreachable for OSSL_FN_rand with OSSL_FN_RAND_TOP_TWO.
+         */
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_BITS_TOO_SMALL);
+        return 0;
+    }
+
+    /* The destination must have room for |bits| bits. */
+    if ((size_t)ret->dsize < limbs) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+
+    mods = OPENSSL_calloc(NUMPRIMES, sizeof(*mods));
+    if (mods == NULL)
+        return 0;
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        goto err;
+    /* One limb of headroom over |bits|, for carry detection. */
+    rntmp = OSSL_FN_CTX_get_limbs(ctx, limbs + 1);
+    t = OSSL_FN_CTX_get_limbs(ctx, limbs + 1);
+    if (t == NULL || rntmp == NULL)
+        goto err;
+loop:
+    /* make a random number and set the top and bottom bits */
+    if (add == NULL) {
+        if (!ossl_fn_probable_prime(rntmp, bits, safe, mods, libctx))
+            goto err;
+    } else {
+        if (!ossl_fn_probable_prime_dh(rntmp, bits, safe, mods, add, rem,
+                ctx, libctx))
+            goto err;
+    }
+
+    if (!BN_GENCB_call(cb, 0, c1++))
+        /* aborted */
+        goto err;
+
+    if (!safe) {
+        i = ossl_fn_is_prime_int(rntmp, checks, ctx, 0, cb, libctx);
+        if (i == -1)
+            goto err;
+        if (i == 0)
+            goto loop;
+    } else {
+        /*
+         * for "safe prime" generation, check that (p-1)/2 is prime.  Since a
+         * prime is odd, we just need to divide by 2.
+         */
+        if (!OSSL_FN_rshift1(t, rntmp))
+            goto err;
+
+        for (i = 0; i < checks; i++) {
+            j = ossl_fn_is_prime_int(rntmp, 1, ctx, 0, cb, libctx);
+            if (j == -1)
+                goto err;
+            if (j == 0)
+                goto loop;
+
+            j = ossl_fn_is_prime_int(t, 1, ctx, 0, cb, libctx);
+            if (j == -1)
+                goto err;
+            if (j == 0)
+                goto loop;
+
+            if (!BN_GENCB_call(cb, 2, c1 - 1))
+                goto err;
+            /* We have a safe prime test pass */
+        }
+    }
+    /* we have a prime :-) */
+    found = 1;
+err:
+    if (found)
+        /*
+         * The candidate has exactly |bits| bits (add == NULL) or slightly
+         * more (add != NULL); the copy is exact when |ret| is sized per the
+         * contract above.
+         */
+        OSSL_FN_copy_truncate(ret, rntmp);
+    OPENSSL_free(mods);
+    if (token != NULL)
+        OSSL_FN_CTX_end(ctx, token);
+    return found;
+}
