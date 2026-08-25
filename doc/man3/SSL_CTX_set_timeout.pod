@@ -59,11 +59,7 @@ lifetime hint.
 For TLSv1.3, a ticket issued for a resumed session restarts the session
 lifetime, but the new lifetime is capped by the remaining lifetime of the
 session it was resumed from, so that resumption cannot be used to prolong a
-session beyond its originally intended lifetime. This does not apply to
-external pre-shared keys: a handshake authenticated by an external PSK is a
-fresh authentication rather than a resumption, so tickets issued for it
-carry the full timeout. If the timeout is unlimited the lifetime is
-restarted in full on each resumption.
+session beyond its originally intended lifetime.
 
 For TLSv1.3, an unlimited timeout is transmitted in a ticket lifetime hint
 as the RFC8446 1 week maximum, but the session stored or re-created from
