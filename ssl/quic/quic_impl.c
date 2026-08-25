@@ -4687,10 +4687,16 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 {
     QCTX lctx;
     QCTX cctx;
-    QUIC_CHANNEL *new_ch;
+    QUIC_CHANNEL *new_ch, *old_ch;
+    QUIC_PORT *old_port;
+    QUIC_ENGINE *old_engine;
+#if defined(OPENSSL_THREADS)
+    CRYPTO_MUTEX *old_mutex = NULL;
+#endif
     QUIC_CONNECTION *qc = NULL;
     QUIC_LISTENER *ql = NULL;
     SSL *tls = NULL;
+    SSL_CONNECTION *tls_conn = NULL;
     int ret = 0;
 
     if (!expect_quic_listener(listener, &lctx))
@@ -4709,52 +4715,86 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     }
 
     new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
-    if (new_ch != NULL) {
-        tls = ossl_ssl_connection_new_int(ossl_quic_port_get_channel_ctx(lctx.ql->port),
-            new_conn, TLS_method());
-        if (tls == NULL)
-            goto out;
+    if (new_ch == NULL)
+        goto out;
 
-        qc = cctx.qc;
-        ql = lctx.ql;
-        /*
-         * Need to ensure that we take a reference on our new listener
-         * so that we don't free it before this connection
-         */
-        if (!SSL_up_ref(&ql->obj.ssl))
-            goto out;
+    qc = cctx.qc;
+    ql = lctx.ql;
 
-        ossl_quic_channel_free(qc->ch);
-        ossl_quic_port_free(qc->port);
-        ossl_quic_engine_free(qc->engine);
-        /*
-         * Ensure that we point to our listener so we can drop
-         * the above refcount when this SSL object is freed
-         */
-        qc->listener = ql;
-        qc->obj.engine = ql->engine;
-        qc->engine = ql->engine;
-        qc->port = ql->port;
-        qc->pending = 1;
-#if defined(OPENSSL_THREADS)
-        ossl_crypto_mutex_free(&qc->mutex);
-        qc->mutex = ql->mutex;
-#endif
-        qc->ch = new_ch;
-        SSL_free(qc->tls);
-        ossl_quic_channel_set0_tls(new_ch, tls);
-        qc->tls = tls;
-        ossl_quic_channel_get_peer_addr(new_ch, &qc->init_peer_addr); /* best effort */
-        qc->started = 1;
-        qc->as_server = 1;
-        qc->as_server_state = 1;
-        qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
-        qc->default_ssl_options = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
-        qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
-        qc->last_error = SSL_ERROR_NONE;
-        qc_update_reject_policy(qc);
-        ret = 1;
+    tls = ossl_ssl_connection_new_int(
+        ossl_quic_port_get_channel_ctx(ql->port), new_conn, TLS_method());
+    if (tls == NULL)
+        goto out;
+
+    tls_conn = SSL_CONNECTION_FROM_SSL(tls);
+    if (tls_conn == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        SSL_free(tls);
+        goto out;
     }
+
+    tls_conn->s3.flags |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
+    tls_conn->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
+    tls_conn->pha_enabled = 0;
+
+    /* The connection keeps its listener alive. */
+    if (!SSL_up_ref(&ql->obj.ssl)) {
+        SSL_free(tls);
+        goto out;
+    }
+
+    /* Bind TLS before adopting the deferred incoming channel. */
+    ossl_quic_channel_set0_tls(new_ch, tls);
+
+    old_ch = qc->ch;
+    old_port = qc->port;
+    old_engine = qc->engine;
+#if defined(OPENSSL_THREADS)
+    old_mutex = qc->mutex;
+#endif
+
+    /* Ensure that SSL_free() drops the listener reference. */
+    qc->listener = ql;
+    qc->engine = ql->engine;
+    qc->port = ql->port;
+    /* The connection is handed to the caller, as in SSL_accept_connection() */
+    qc->pending = 0;
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
+    /* Incoming connections never start a thread-assist worker. */
+    qc->is_thread_assisted = 0;
+#endif
+    /* Demote the standalone object into the listener's hierarchy. */
+    ossl_quic_obj_reparent(&qc->obj, &ql->obj);
+
+    /* Release the resources the connection owned as a standalone object. */
+    ossl_quic_channel_free(old_ch);
+    quic_unref_port_bios(old_port);
+    ossl_quic_port_free(old_port);
+    ossl_quic_engine_free(old_engine);
+#if defined(OPENSSL_THREADS)
+    /* The standalone mutex was borrowed by all three resources above. */
+    qc->mutex = ql->mutex;
+    ossl_crypto_mutex_free(&old_mutex);
+#endif
+
+    qc->ch = new_ch;
+    SSL_free(qc->tls);
+    qc->tls = tls;
+    ossl_quic_channel_get_peer_addr(new_ch,
+        &qc->init_peer_addr); /* best effort */
+    qc->started = 1;
+    qc->as_server = 1;
+    qc->as_server_state = 1;
+    /* Reinitialise configuration to the accepted-connection defaults. */
+    qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
+    qc->default_ssl_options
+        = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
+    qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
+    qc->incoming_stream_aec = 0;
+    qc->last_error = SSL_ERROR_NONE;
+    qc_update_reject_policy(qc);
+    ret = 1;
+
 out:
     qctx_unlock(&lctx);
     return ret;

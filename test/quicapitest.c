@@ -41,6 +41,10 @@ static BIO_ADDR *create_addr(struct in_addr *ina, short int port);
 static int bio_addr_bind(BIO *bio, BIO_ADDR *addr);
 static SSL *ql_create(SSL_CTX *ssl_ctx, BIO *bio);
 static SSL_CTX *create_server_ctx(void);
+static SSL_CTX *create_client_ctx(void);
+static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL **lssl, SSL **cssl);
+static void quic_advance_time(SSL *clientssl, SSL *serverssl);
 static int qc_init(SSL *qconn, BIO_ADDR *dst_addr);
 
 /* The ssltrace test assumes some options are switched on/off */
@@ -2710,8 +2714,16 @@ end:
     return ret;
 }
 
-static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
-    SSL **lssl, SSL **cssl)
+/* Fake clock for tests that advance QUIC time without consuming real time. */
+static OSSL_TIME fake_now;
+
+static OSSL_TIME fake_now_cb(void *arg)
+{
+    return fake_now;
+}
+
+static int create_quic_ssl_objects_ex(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL **lssl, SSL **cssl, int use_fake_time)
 {
     BIO_ADDR *addr = NULL;
     struct in_addr ina;
@@ -2752,6 +2764,18 @@ static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
     SSL_set_bio(*cssl, cbio, cbio);
     cbio = NULL;
 
+    if (use_fake_time) {
+        /*
+         * The base value does not matter but must be nonzero, as the ACK
+         * manager reads a zero packet timestamp as unset. Use real time to
+         * match the clock the engines were created with.
+         */
+        fake_now = ossl_time_now();
+        if (!TEST_true(ossl_quic_set_override_now_cb(*lssl, fake_now_cb, NULL))
+            || !TEST_true(ossl_quic_set_override_now_cb(*cssl, fake_now_cb, NULL)))
+            goto err;
+    }
+
     ret = 1;
 
 err:
@@ -2765,6 +2789,30 @@ err:
     BIO_ADDR_free(addr);
 
     return ret;
+}
+
+static int create_quic_ssl_objects(SSL_CTX *sctx, SSL_CTX *cctx,
+    SSL **lssl, SSL **cssl)
+{
+    return create_quic_ssl_objects_ex(sctx, cctx, lssl, cssl, 0);
+}
+
+static int queue_incoming_connection(SSL *qlistener, SSL *clientssl)
+{
+    int i, ret;
+
+    for (i = 0; i < 5; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            return 0;
+
+        SSL_handle_events(qlistener);
+        if (SSL_get_accept_connection_queue_len(qlistener) == 1)
+            break;
+    }
+
+    return TEST_size_t_eq(SSL_get_accept_connection_queue_len(qlistener), 1);
 }
 
 static int test_ssl_client_as_ossl_quic_method(void)
@@ -2833,60 +2881,134 @@ err:
     return testresult;
 }
 
-static int test_ssl_listen_ex(void)
+static int test_ssl_listen_ex(int idx)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL, *qmctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    SSL *cstream = NULL, *sstream = NULL;
+    unsigned char buf[16], msg[] = "Hello, World!";
+    size_t readbytes, written;
     int testresult = 0;
     int ret = 0, i;
+
+#if !defined(OPENSSL_THREADS) || defined(OPENSSL_NO_THREAD_POOL) \
+    || defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
+    if (idx == 1)
+        return TEST_skip("thread assisted mode not available in this build");
+#endif
 
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx()))
         goto err;
 
-    if (!create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+    if (!create_quic_ssl_objects_ex(sctx, cctx,
+            &qlistener, &clientssl, 1))
         goto err;
 
     qmctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_method());
     if (!TEST_ptr(qmctx))
         goto err;
 
+    if (idx == 1
+        && !TEST_true(SSL_CTX_set_domain_flags(qmctx,
+            SSL_DOMAIN_FLAG_THREAD_ASSISTED | SSL_DOMAIN_FLAG_BLOCKING)))
+        goto err;
+
     serverssl = SSL_new(qmctx);
     if (!TEST_ptr(serverssl))
         goto err;
 
-    /* Send ClientHello and server retry */
-    for (i = 0; i < 5; i++) {
-        ret = SSL_connect(clientssl);
-        if (!TEST_int_le(ret, 0)
-            || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+    if (!TEST_int_eq(SSL_listen_ex(qlistener, serverssl), 0)
+        || !queue_incoming_connection(qlistener, clientssl))
+        goto err;
+
+    if (!TEST_int_eq(SSL_listen_ex(qlistener, serverssl), 1)
+        || !TEST_size_t_eq(SSL_get_accept_connection_queue_len(qlistener), 0))
+        goto err;
+
+    for (i = 0; i < 10; i++) {
+        ret = SSL_do_handshake(serverssl);
+        if (ret != 1
+            && !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_READ))
             goto err;
-        ret = SSL_listen_ex(qlistener, serverssl);
-        if (ret == 1)
+
+        ret = SSL_connect(clientssl);
+        if (ret != 1
+            && !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_READ))
+            goto err;
+
+        if (SSL_is_init_finished(serverssl) && SSL_is_init_finished(clientssl))
             break;
-        SSL_handle_events(qlistener);
+        quic_advance_time(clientssl, serverssl);
     }
 
-    /*
-     * Check to make sure we got a good return code from SSL_listen_ex
-     */
-    if (!TEST_int_eq(ret, 1))
+    if (!TEST_int_lt(i, 10)
+        || !TEST_true(SSL_is_init_finished(serverssl))
+        || !TEST_true(SSL_is_init_finished(clientssl)))
         goto err;
 
-    /* Call SSL_accept() and SSL_connect() until we are connected */
-    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl, SSL_ERROR_NONE, 0, 0)))
-
-        /*
-         * Ensure that, now that we have used SSL_listen_ex, SSL_accept_connection
-         * produces an error
-         */
-        if (!TEST_ptr_null(SSL_accept_connection(qlistener, 0)))
-            goto err;
-
-    if (!TEST_true((ERR_GET_REASON(ERR_get_error())) == ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
+    if (!TEST_ptr_null(SSL_accept_connection(qlistener, 0))
+        || !TEST_true(ERR_GET_REASON(ERR_get_error())
+            == ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED))
         goto err;
-
     ERR_clear_error();
+
+    if (!TEST_true(SSL_set_default_stream_mode(serverssl,
+            SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_true(SSL_set_default_stream_mode(clientssl,
+            SSL_DEFAULT_STREAM_MODE_NONE))
+        || !TEST_ptr(cstream = SSL_new_stream(clientssl, 0))
+        || !TEST_true(SSL_write_ex(cstream, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg))
+        || !TEST_int_eq(SSL_handle_events(serverssl), 1))
+        goto err;
+
+    sstream = SSL_accept_stream(serverssl, 0);
+    if (!TEST_ptr(sstream)
+        || !TEST_true(SSL_read_ex(sstream, buf, sizeof(buf), &readbytes))
+        || !TEST_size_t_eq(readbytes, sizeof(msg))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg))
+        || !TEST_true(SSL_write_ex(sstream, msg, sizeof(msg), &written))
+        || !TEST_size_t_eq(written, sizeof(msg))
+        || !TEST_true(SSL_read_ex(cstream, buf, sizeof(buf), &readbytes))
+        || !TEST_size_t_eq(readbytes, sizeof(msg))
+        || !TEST_mem_eq(buf, readbytes, msg, sizeof(msg)))
+        goto err;
+
+    testresult = 1;
+
+err:
+    SSL_free(sstream);
+    SSL_free(cstream);
+    SSL_free(qlistener);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(qmctx);
+
+    return testresult;
+}
+
+/* Free a listener which still owns a deferred, unpeeled channel. */
+static int test_ssl_listen_ex_teardown(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL, *qmctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx())
+        || !create_quic_ssl_objects_ex(sctx, cctx,
+            &qlistener, &clientssl, 1)
+        || !TEST_ptr(qmctx = SSL_CTX_new_ex(libctx, NULL, OSSL_QUIC_method()))
+        || !TEST_ptr(serverssl = SSL_new(qmctx))
+        || !TEST_int_eq(SSL_listen_ex(qlistener, serverssl), 0)
+        || !queue_incoming_connection(qlistener, clientssl))
+        goto err;
+
+    SSL_free(qlistener);
+    qlistener = NULL;
     testresult = 1;
 
 err:
@@ -2896,7 +3018,6 @@ err:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
     SSL_CTX_free(qmctx);
-
     return testresult;
 }
 
@@ -3486,6 +3607,35 @@ static int test_quic_peer_addr_v6(void)
 }
 #endif
 
+/*
+ * Advance the fake clock to the next QUIC timer event when both endpoints are
+ * idle, consuming no real time.
+ */
+static void quic_advance_time(SSL *clientssl, SSL *serverssl)
+{
+    struct timeval tv;
+    int inf = 0;
+    OSSL_TIME delay = ossl_time_infinite(), t;
+
+    /* If there is data waiting to be processed, do not wait - tick instead. */
+    if (BIO_pending(SSL_get_rbio(clientssl)) > 0)
+        return;
+
+    if (SSL_get_event_timeout(clientssl, &tv, &inf) && !inf) {
+        t = ossl_time_from_timeval(tv);
+        if (ossl_time_compare(t, delay) < 0)
+            delay = t;
+    }
+    if (SSL_get_event_timeout(serverssl, &tv, &inf) && !inf) {
+        t = ossl_time_from_timeval(tv);
+        if (ossl_time_compare(t, delay) < 0)
+            delay = t;
+    }
+
+    if (!ossl_time_is_infinite(delay))
+        fake_now = ossl_time_add(fake_now, delay);
+}
+
 /* Test ECH with quic */
 static int test_ech(void)
 {
@@ -3644,7 +3794,6 @@ end:
     SSL_CTX_free(cctx);
     return ret;
 }
-
 
 #define PENDING_LIMIT 5
 #define HANDSHAKE_STEPS 10
@@ -3850,7 +3999,8 @@ int setup_tests(void)
     ADD_TEST(test_quic_forbidden_options);
     ADD_ALL_TESTS(test_quic_set_fd, 3);
     ADD_TEST(test_bio_ssl);
-    ADD_TEST(test_ssl_listen_ex);
+    ADD_ALL_TESTS(test_ssl_listen_ex, 2);
+    ADD_TEST(test_ssl_listen_ex_teardown);
     ADD_TEST(test_ssl_client_as_ossl_quic_method);
     ADD_TEST(test_back_pressure);
     ADD_TEST(test_multiple_dgrams);

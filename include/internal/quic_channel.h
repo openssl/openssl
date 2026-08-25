@@ -316,7 +316,7 @@ OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
 /* Gets the TLS handshake layer used with the channel. */
 SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch);
 
-/* Sets the TLS handshake layer used for the channel */
+/* Attaches the TLS layer to a deferred channel. */
 void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl);
 
 /* Gets the channels short header connection id length */
