@@ -385,6 +385,9 @@ DECLARE_COMPARISON(void *, ptr, eq)
 DECLARE_COMPARISON(void *, ptr, ne)
 int test_ptr(const char *file, int line, const char *s, const void *p);
 int test_ptr_null(const char *file, int line, const char *s, const void *p);
+int test_fnptr(const char *file, int line, const char *s, void (*const p)(void));
+int test_fnptr_eq(const char *file, int line, const char *s1, const char *s2,
+    void (*const t1)(void), void (*const t2)(void));
 
 /*
  * Equality tests for strings where NULL is a legitimate value.
@@ -569,6 +572,9 @@ void test_perror(const char *s);
 #define TEST_ptr_ne(a, b) test_ptr_ne(__FILE__, __LINE__, #a, #b, a, b)
 #define TEST_ptr(a) test_ptr(__FILE__, __LINE__, #a, a)
 #define TEST_ptr_null(a) test_ptr_null(__FILE__, __LINE__, #a, a)
+#define TEST_fnptr(a) test_fnptr(__FILE__, __LINE__, #a, a)
+#define TEST_fnptr_eq(a, b) test_fnptr_eq(__FILE__, __LINE__, #a, #b, \
+    (void (*)(void))a, (void (*)(void))b)
 
 #define TEST_str_eq(a, b) test_str_eq(__FILE__, __LINE__, #a, #b, a, b)
 #define TEST_str_ne(a, b) test_str_ne(__FILE__, __LINE__, #a, #b, a, b)

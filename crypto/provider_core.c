@@ -1002,7 +1002,7 @@ static int provider_init(OSSL_PROVIDER *prov)
             }
 
             if (load_dir == NULL) {
-                load_dir = ossl_safe_getenv("OPENSSL_MODULES");
+                load_dir = CRYPTO_safe_getenv(prov->libctx, "OPENSSL_MODULES");
                 if (load_dir == NULL)
                     load_dir = ossl_get_modulesdir();
             }

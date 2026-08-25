@@ -104,11 +104,11 @@ err:
     return NULL;
 }
 
-QLOG *ossl_qlog_new_from_env(const QLOG_TRACE_INFO *info)
+QLOG *ossl_qlog_new_from_env(const OSSL_LIB_CTX *libctx, const QLOG_TRACE_INFO *info)
 {
     QLOG *qlog = NULL;
-    const char *qlogdir = ossl_safe_getenv("QLOGDIR");
-    const char *qfilter = ossl_safe_getenv("OSSL_QFILTER");
+    const char *qlogdir = CRYPTO_safe_getenv(libctx, "QLOGDIR");
+    const char *qfilter = CRYPTO_safe_getenv(libctx, "OSSL_QFILTER");
     char qlogdir_sep, *filename = NULL;
     size_t i, l, strl;
 
