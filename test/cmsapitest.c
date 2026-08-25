@@ -740,7 +740,7 @@ end:
     return ret;
 }
 
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
 
 /*
  * Regression test for CVE-2026-63072: an 8-byte out-of-bounds heap write
@@ -892,7 +892,7 @@ int setup_tests(void)
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
 
-#ifndef OPENSSL_NO_EC
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
     ADD_TEST(test_kari_wrap_pad_unwrap_overflow);
 #endif
     return 1;
