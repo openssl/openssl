@@ -691,6 +691,13 @@ CON_FUNC_RETURN tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt)
         return CON_FUNC_ERROR;
     }
 
+    /*
+     * RFC 9846 section 4.7.3: until receiving a subsequent KeyUpdate from
+     * the peer, we must not send another KeyUpdate with update_requested.
+     */
+    if (s->key_update == SSL_KEY_UPDATE_REQUESTED)
+        s->key_update_request_pending = 1;
+
     s->key_update = SSL_KEY_UPDATE_NONE;
     return CON_FUNC_SUCCESS;
 }
@@ -731,6 +738,9 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL_CONNECTION *s, PACKET *pkt)
      */
     if (updatetype == SSL_KEY_UPDATE_REQUESTED)
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
+
+    /* Any KeyUpdate from the peer releases our outstanding update request */
+    s->key_update_request_pending = 0;
 
     if (!tls13_update_key(s, 0)) {
         /* SSLfatal() already called */

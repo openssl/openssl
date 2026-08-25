@@ -41,7 +41,9 @@ SSL_do_handshake() can be called to force the update to take place immediately.
 Locally initiated key updates on a TLS connection are rate limited, which
 keeps the connection within the key update limits of RFC 9846.
 SSL_key_update() fails, leaving the connection otherwise unaffected, if
-called too soon after a previous successful call.
+called too soon after a previous successful call, or with
+B<SSL_KEY_UPDATE_REQUESTED> while an earlier requested update is still
+awaiting a KeyUpdate message from the peer.
 
 SSL_get_key_update_type() can be used to determine whether a key update
 operation has been scheduled but not yet performed. The type of the pending key
