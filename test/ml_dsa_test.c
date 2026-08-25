@@ -853,8 +853,15 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
-    ADD_ALL_TESTS(ml_dsa_mu_empty_message_final_test,
-        OSSL_NELEM(ml_dsa_mu_empty_message_digest));
+    /*
+     * mu_final() dereferenced an uninitialised digest context for an empty
+     * message, so this test crashes against a FIPS provider that predates
+     * the fix.  Only run it where the provider has it.
+     */
+    if (fips_provider_version_ge(lib_ctx, 4, 1, 0)) {
+        ADD_ALL_TESTS(ml_dsa_mu_empty_message_final_test,
+            OSSL_NELEM(ml_dsa_mu_empty_message_digest));
+    }
 
     /*
      * Tested only in the default configuration, with a non-default provider
