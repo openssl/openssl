@@ -1658,6 +1658,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         && ossl_quic_lcidm_lookup(port->lcidm, dcid, NULL,
             (void **)&ch)) {
         assert(ch != NULL);
+        ossl_quic_tx_packetiser_add_unvalidated_credit(ch->txp, e->data_len);
         ossl_quic_channel_inject(ch, e);
         return;
     }
@@ -1869,6 +1870,7 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
          * Time to reinject packets from qrx to channel before
          * qrx will be destroyed here.
          */
+        ossl_quic_tx_packetiser_add_unvalidated_credit(new_ch->txp, e->data_len);
         while (ossl_qrx_read_pkt(qrx_src, &qrx_pkt) == 1)
             ossl_quic_channel_inject_pkt(new_ch, qrx_pkt);
         ossl_qrx_update_pn_space(qrx_src, new_ch->qrx);
