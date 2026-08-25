@@ -28,7 +28,7 @@ OpenSSL Releases
 OpenSSL 3.5
 -----------
 
-### Changes between 3.5.7 and 3.5.8 [xx XXX xxxx]
+### Changes between 3.5.7 and 3.5.8 [25 Aug 2026]
 
  * Fixed QUIC server being able to trigger double free when processing `INITIAL`
    packet.
