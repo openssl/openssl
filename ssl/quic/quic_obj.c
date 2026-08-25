@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -51,6 +51,21 @@ err:
     obj->is_event_leader = 0;
     obj->is_port_leader = 0;
     return 0;
+}
+
+void ossl_quic_obj_reparent(QUIC_OBJ *obj, QUIC_OBJ *parent)
+{
+    if (!ossl_assert(obj != NULL && obj->init_done
+            && parent != NULL && parent->init_done
+            && obj->is_event_leader && obj->is_port_leader
+            && obj->parent_obj == NULL))
+        return;
+
+    obj->parent_obj = parent;
+    obj->is_event_leader = 0;
+    obj->is_port_leader = 0;
+    obj->domain_flags = parent->domain_flags;
+    (void)obj_update_cache(obj);
 }
 
 static int obj_update_cache(QUIC_OBJ *obj)

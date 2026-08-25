@@ -731,6 +731,12 @@ void ossl_quic_port_drop_incoming(QUIC_PORT *port)
             break;
 
         tls = ossl_quic_channel_get0_tls(ch);
+        if (tls == NULL) {
+            /* Unpeeled SSL_listen_ex() channels have no user SSL. */
+            ossl_quic_channel_free(ch);
+            continue;
+        }
+
         /*
          * The user ssl may or may not have been created via the
          * get_conn_user_ssl callback in the QUIC stack.  The
