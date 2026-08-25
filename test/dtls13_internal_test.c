@@ -8895,6 +8895,11 @@ static long overlap_pump_cb(BIO *b, int oper, const char *argp, size_t len,
     }
 
     if (pump->stage == 0) {
+        /*
+         * C waits out KEY_UPDATE_MIN_INTERVAL after A, plus 20ms to cover
+         * the 15.6ms Windows clock tick
+         */
+        OSSL_sleep(KEY_UPDATE_MIN_INTERVAL + 20);
         if (SSL_key_update(pump->peer, SSL_KEY_UPDATE_REQUESTED) != 1) {
             pump->failed = 1;
             goto done;
