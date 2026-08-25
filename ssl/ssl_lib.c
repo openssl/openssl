@@ -643,6 +643,7 @@ int ossl_ssl_connection_reset(SSL *s)
 
     sc->key_update = SSL_KEY_UPDATE_NONE;
     sc->last_key_update_time = ossl_time_zero();
+    sc->key_update_request_pending = 0;
     memset(sc->ext.compress_certificate_from_peer, 0,
         sizeof(sc->ext.compress_certificate_from_peer));
     sc->ext.compress_certificate_sent = 0;
@@ -989,6 +990,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
 
     s->key_update = SSL_KEY_UPDATE_NONE;
     s->last_key_update_time = ossl_time_zero();
+    s->key_update_request_pending = 0;
 
     if (!IS_QUIC_CTX(ctx)) {
         s->allow_early_data_cb = ctx->allow_early_data_cb;
@@ -3401,6 +3403,17 @@ int SSL_key_update(SSL *s, int updatetype)
      */
     if (SSL_CONNECTION_IS_DTLS13(sc) && sc->d1->key_update_write_pending) {
         ERR_raise(ERR_LIB_SSL, SSL_R_REQUEST_PENDING);
+        return 0;
+    }
+
+    /*
+     * RFC 9846 section 4.7.3: until receiving a subsequent KeyUpdate from
+     * the peer, we must not send another KeyUpdate with update_requested.
+     */
+    if (SSL_CONNECTION_IS_TLS13(sc)
+        && updatetype == SSL_KEY_UPDATE_REQUESTED
+        && sc->key_update_request_pending) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_TOO_MANY_KEY_UPDATES);
         return 0;
     }
 
