@@ -92,6 +92,12 @@ OpenSSL 4.1
 
    *Ryan Hooper*
 
+ * Fixed `SSL_listen_ex()` to return a usable QUIC connection and to preserve
+   queued connections on allocation failure. Invalid arguments and internal
+   failures now return `-1`, reserving `0` for "no connection available".
+
+   *Mounir IDRASSI*
+
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption
    ticket has aged out and an external PSK is offered in its place. The early

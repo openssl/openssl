@@ -2006,7 +2006,7 @@ err:
 
 /*
  * Test SSL_listen_ex for DTLS.
- * Currently SSL_listen_ex is QUIC-only, so it should return 0 for DTLS.
+ * SSL_listen_ex is QUIC-only, so it should reject DTLS objects.
  */
 static int test_dtls_listen_ex_returns_error(void)
 {
@@ -2024,8 +2024,9 @@ static int test_dtls_listen_ex_returns_error(void)
     if (!TEST_ptr(new_conn = SSL_new(ctx)))
         goto err;
 
-    /* SSL_listen_ex should return 0 for DTLS */
-    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), 0))
+    if (!TEST_int_eq(SSL_listen_ex(listener, new_conn), -1)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_get_error()),
+            ERR_R_PASSED_INVALID_ARGUMENT))
         goto err;
 
     success = 1;
