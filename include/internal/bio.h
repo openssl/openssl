@@ -91,6 +91,9 @@ int bread_conv(BIO *bio, char *data, size_t datal, size_t *read);
     BIO_ctrl(b, BIO_CTRL_SET_KTLS_TX_ZEROCOPY_SENDFILE, 0, NULL)
 
 /* Functions to allow the core to offer the CORE_BIO type to providers */
+/* Returns the peer BIO of a BIO_s_dgram_pair, or NULL. Internal use only. */
+BIO *ossl_bio_dgram_pair_get_peer(BIO *bio);
+
 OSSL_CORE_BIO *ossl_core_bio_new_from_bio(BIO *bio);
 OSSL_CORE_BIO *ossl_core_bio_new_file(const char *filename, const char *mode);
 OSSL_CORE_BIO *ossl_core_bio_new_mem_buf(const void *buf, int len);

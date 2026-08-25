@@ -12,6 +12,7 @@
 #include <openssl/sslerr.h>
 #include <crypto/rand.h>
 #include "quic_local.h"
+#include "internal/bio.h"
 #include "internal/hashfunc.h"
 #include "internal/ssl_unwrap.h"
 #include "internal/quic_tls.h"
@@ -717,6 +718,22 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
 
         ossl_quic_engine_free(qc->engine);
         qc->engine = NULL;
+    } else if (qc->port != NULL && qc->listener_ref_for_bio_peer) {
+        /*
+         * This connection owns its own port, engine and mutex, but its BIO is
+         * one half of a dgram pair whose other half belongs to the listener.
+         * The listener will free its own BIO half independently.  Our half is
+         * freed here as part of port teardown, which also severs the peer
+         * link inside the dgram pair so the listener's BIO no longer
+         * references our memory.  We must NOT call quic_unref_port_bios
+         * for the listener's side - that happens when the listener is freed.
+         */
+        quic_unref_port_bios(qc->port);
+        ossl_quic_port_free(qc->port);
+        qc->port = NULL;
+
+        ossl_quic_engine_free(qc->engine);
+        qc->engine = NULL;
     }
 
 #if defined(OPENSSL_THREADS)
@@ -725,6 +742,8 @@ static void qc_cleanup(QUIC_CONNECTION *qc, int have_lock)
         ossl_crypto_mutex_unlock(qc->mutex);
 
     if (qc->listener == NULL && qc->pending == 0)
+        ossl_crypto_mutex_free(&qc->mutex);
+    else if (qc->listener_ref_for_bio_peer)
         ossl_crypto_mutex_free(&qc->mutex);
 #endif
 }
@@ -1192,6 +1211,77 @@ quic_set0_net_wbio(QUIC_OBJ *obj, BIO *net_wbio)
     return 1;
 }
 
+/*
+ * When a standalone QUIC_CONNECTION (one created via SSL_new, with no
+ * shared-port listener) calls SSL_set0_rbio with a BIO_s_dgram_pair BIO,
+ * the other half of that pair may belong to a QUIC_LISTENER's port.  If it
+ * does, the connection's assist thread will access the listener's
+ * bio_dgram_pair_st internals (specifically its lock, via the peer pointer)
+ * while performing reactor ticks.  If the listener is freed first, that
+ * memory is gone while the assist thread is still using it - a
+ * heap-use-after-free.
+ *
+ * The root fix: establish the missing lifetime dependency.  When we detect
+ * that the peer of a dgram-pair rbio is owned by a listener's port, take
+ * SSL_up_ref on that listener and record it in qc->listener so that:
+ *   - the listener cannot be fully destroyed while this connection is alive;
+ *   - ossl_quic_free drops the ref after joining the assist thread, ensuring
+ *     the listener (and thus its BIO) outlives the thread.
+ *
+ * We set qc->listener_ref_for_bio_peer to distinguish this case from the
+ * shared-port case (ossl_quic_new_from_listener / SSL_accept_connection),
+ * where the connection does NOT own its own port/engine/mutex.  In our case
+ * it does own them and qc_cleanup must free them normally.
+ *
+ * Detection mechanism:
+ *   - When SSL_set0_rbio is called on a QUIC_LISTENER, we store a pointer to
+ *     the listener in the BIO's app_data (BIO_set_app_data).
+ *   - When SSL_set0_rbio is called on a standalone QUIC_CONNECTION with a
+ *     dgram-pair BIO, we retrieve the peer BIO via ossl_bio_dgram_pair_get_peer
+ *     and check whether that peer BIO's app_data carries a QUIC_LISTENER *.
+ *     A final cross-check (peer == listener port's net_rbio) guards against
+ *     false positives from unrelated use of BIO_set_app_data.
+ */
+static void
+quic_conn_detect_and_ref_dgram_peer_listener(QUIC_CONNECTION *qc,
+    BIO *net_rbio)
+{
+    BIO *peer_bio;
+    QUIC_LISTENER *ql;
+
+    /* Only relevant for standalone connections that haven't linked a listener */
+    if (qc == NULL || qc->listener != NULL)
+        return;
+
+    /* Only dgram-pair BIOs have a meaningful peer that could be a listener */
+    if (net_rbio == NULL || BIO_method_type(net_rbio) != BIO_TYPE_DGRAM_PAIR)
+        return;
+
+    /* Retrieve the other half of the pair via the internal accessor */
+    peer_bio = ossl_bio_dgram_pair_get_peer(net_rbio);
+    if (peer_bio == NULL)
+        return;
+
+    /* Check whether the peer BIO carries a QUIC_LISTENER back-pointer */
+    ql = (QUIC_LISTENER *)BIO_get_app_data(peer_bio);
+    if (ql == NULL)
+        return;
+
+    /*
+     * Cross-check: confirm the peer BIO really is the net_rbio of the
+     * listener's port, guarding against unrelated BIO_set_app_data use.
+     */
+    if (ossl_quic_port_get_net_rbio(ql->port) != peer_bio)
+        return;
+
+    /* Take the lifetime reference on the listener */
+    if (!SSL_up_ref(&ql->obj.ssl))
+        return;
+
+    qc->listener = ql;
+    qc->listener_ref_for_bio_peer = 1;
+}
+
 void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
 {
     QCTX ctx;
@@ -1202,6 +1292,25 @@ void ossl_quic_conn_set0_net_rbio(SSL *s, BIO *net_rbio)
     /* Returns 0 if no change. */
     if (!quic_set0_net_rbio(ctx.obj, net_rbio))
         return;
+
+    if (ctx.is_listener) {
+        /*
+         * Tag the listener's port BIO with a back-pointer to the listener so
+         * that a connection using the peer half of this BIO pair can detect the
+         * dependency and take a lifetime reference (see
+         * quic_conn_detect_and_ref_dgram_peer_listener).
+         */
+        if (net_rbio != NULL)
+            BIO_set_app_data(net_rbio, ctx.ql);
+    } else if (!ctx.is_stream && ctx.qc != NULL) {
+        /*
+         * If this is a standalone QUIC_CONNECTION whose new rbio is one half
+         * of a dgram pair whose other half is a listener's port BIO, establish
+         * a lifetime reference on that listener now so it cannot be freed while
+         * our assist thread is still reading from the pair.
+         */
+        quic_conn_detect_and_ref_dgram_peer_listener(ctx.qc, net_rbio);
+    }
 }
 
 void ossl_quic_conn_set0_net_wbio(SSL *s, BIO *net_wbio)

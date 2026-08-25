@@ -5728,3 +5728,4 @@ ASN1_STRING_set1_data                   ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_set1_string                 ?	4_1_0	EXIST::FUNCTION:
 ASN1_STRING_get_length                  ?	4_1_0	EXIST::FUNCTION:
 CMS_add_standard_smimecap_ex            ?	4_1_0	EXIST::FUNCTION:CMS
+ossl_bio_dgram_pair_get_peer            ?	4_0_0	EXIST::FUNCTION:

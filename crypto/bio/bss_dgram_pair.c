@@ -1347,4 +1347,32 @@ out:
     return ret;
 }
 
+#endif /* !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK) */
+
+/*
+ * Returns the peer BIO of a BIO_s_dgram_pair BIO, or NULL if the BIO is not
+ * of that type or has no peer.  For internal use only (e.g. QUIC lifetime
+ * management).
+ *
+ * This function is intentionally defined outside the OPENSSL_NO_DGRAM /
+ * OPENSSL_NO_SOCK compile guard so that callers (e.g. quic_impl.c) can
+ * reference it unconditionally.  When dgram-pair support is not compiled in,
+ * dgram_pair_method is unavailable, so we simply return NULL for every input.
+ */
+BIO *ossl_bio_dgram_pair_get_peer(BIO *bio)
+{
+#if !defined(OPENSSL_NO_DGRAM) && !defined(OPENSSL_NO_SOCK)
+    struct bio_dgram_pair_st *b;
+
+    if (bio == NULL || bio->method != &dgram_pair_method)
+        return NULL;
+
+    b = bio->ptr;
+    if (b == NULL)
+        return NULL;
+
+    return b->peer;
+#else
+    return NULL;
 #endif
+}
