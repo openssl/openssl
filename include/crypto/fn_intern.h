@@ -143,6 +143,13 @@ int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
     OSSL_LIB_CTX *libctx);
 
 /*
+ * Calculate the arena payload size that ossl_fn_miller_rabin_is_prime()
+ * needs for a candidate of width |w|->dsize.  Returns 0 on arithmetic
+ * overflow or invalid input.
+ */
+size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w);
+
+/*
  * Test whether |w| is probably prime, clamping |checks| to a minimum
  * round count based on the candidate's width.  When |do_trial_division|
  * is nonzero, small factors are weeded out first.  Returns 1 when probably
@@ -152,12 +159,26 @@ int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
     int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
 
 /*
+ * Calculate the arena payload size that ossl_fn_check_prime() needs for a
+ * candidate of width |w|->dsize.  Returns 0 on arithmetic overflow or
+ * invalid input.
+ */
+size_t ossl_fn_check_prime_ctx_size(const OSSL_FN *w);
+
+/*
  * Test whether |w| is probably prime, for key generation.  Always
  * trial-divides; |checks| is used unclamped.  Returns 1 when probably
  * prime, 0 when composite, -1 on error.
  */
 int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/*
+ * Calculate the arena payload size that ossl_fn_check_generated_prime()
+ * needs for a candidate of width |w|->dsize.  Returns 0 on arithmetic
+ * overflow or invalid input.
+ */
+size_t ossl_fn_check_generated_prime_ctx_size(const OSSL_FN *w);
 
 /*
  * Generate a probable prime (an RSA p or q candidate) per FIPS 186-5

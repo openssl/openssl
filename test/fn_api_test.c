@@ -1059,8 +1059,8 @@ err:
 /*-
  * Focused tests for ossl_fn_check_prime() / ossl_fn_check_generated_prime()
  * and the underlying ossl_fn_miller_rabin_is_prime().  Small primes and
- * composites are checked by verdict; the arena is sized generously and the
- * peak usage is reported as a note for future right-sizing.
+ * composites are checked by verdict; the arena is sized per the Miller-Rabin
+ * sizing helper, which also verifies that the estimate suffices.
  */
 
 /* A set of small primes and composites, as single-limb words. */
@@ -1093,11 +1093,10 @@ static int test_check_prime(int idx)
     OSSL_FN *w = NULL;
     OSSL_FN_CTX *ctx = NULL;
     const struct prime_case_st *c = &prime_cases[idx];
-    size_t peak_frames, peak_numbers, peak_limbs;
 
-    /* Generous arena; the candidate is a single limb but MR needs scratch. */
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 256)))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
         goto err;
     if (!TEST_true(OSSL_FN_set_word(w, c->w)))
         goto err;
@@ -1105,10 +1104,6 @@ static int test_check_prime(int idx)
     if (!TEST_int_eq(ossl_fn_check_prime(w, 0, ctx, 1, NULL, NULL),
             c->is_prime))
         goto err;
-
-    OSSL_FN_CTX_peak_usage(ctx, &peak_frames, &peak_numbers, &peak_limbs);
-    TEST_note("peak usage: frames=%zu numbers=%zu limbs=%zu", peak_frames,
-        peak_numbers, peak_limbs);
 
     ret = 1;
 err:
@@ -1125,7 +1120,8 @@ static int test_check_generated_prime(int idx)
     const struct prime_case_st *c = &prime_cases[idx];
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 256)))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
         goto err;
     if (!TEST_true(OSSL_FN_set_word(w, c->w)))
         goto err;
@@ -1157,7 +1153,9 @@ static int test_generate_prime(void)
 
     if (!TEST_ptr(p = OSSL_FN_new_limbs(2))
         || !TEST_ptr(q = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 24, 48, 1024)))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_generate_prime_ctx_size(p, bits, 1, p,
+                             NULL))))
         goto err;
 
     /* Plain generation: exact width, odd, and prime. */
@@ -1226,7 +1224,8 @@ static int test_miller_rabin_enhanced(void)
     int status = -1;
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 256)))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
         goto err;
 
     /* A prime reports BN_PRIMETEST_PROBABLY_PRIME. */

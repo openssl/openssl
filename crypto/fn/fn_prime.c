@@ -8,6 +8,7 @@
  */
 
 #include <openssl/err.h>
+#include "internal/mem_alloc_utils.h"
 #include "crypto/fnerr.h"
 #include "crypto/bn.h" /* For BN_GENCB / BN_GENCB_call and the prime-test status codes */
 #include "../bn/bn_prime.h" /* For the sieve primes[] table and prime_t */
@@ -46,6 +47,49 @@ static int ossl_fn_mr_min_checks(size_t bits)
     if (bits > 2048)
         return 128;
     return 64;
+}
+
+/* The usual static helpers from the other fn_*.c operation files. */
+static size_t ctx_add_size(size_t a, size_t b)
+{
+    int err = 0;
+    size_t r = safe_add_size_t(a, b, &err);
+
+    return err == 0 ? r : 0;
+}
+
+static size_t ctx_max_size(size_t a, size_t b)
+{
+    return a > b ? a : b;
+}
+
+/*
+ * Estimate the arena payload for ossl_fn_miller_rabin_is_prime() on a
+ * candidate of width |w|->dsize.  The operation holds seven |w|-limb
+ * numbers for the whole round set; the gcd, modular exponentiation and
+ * modular multiplication it calls run sequentially within that frame, so
+ * their nested needs combine by maximum.  The enhanced variant's gcd calls
+ * are accounted for whether the caller uses them or not.
+ */
+size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w)
+{
+    OSSL_FN n;
+    size_t scratch, exp, mul, gcd, inner;
+
+    if (w == NULL || w->dsize == 0)
+        return 0;
+
+    n.dsize = w->dsize;
+
+    /* Seven |w|-limb numbers held for the whole round set. */
+    scratch = OSSL_FN_CTX_size(1, 7, 7 * (size_t)w->dsize);
+
+    exp = OSSL_FN_mod_exp_mont_ctx_size(&n, &n, &n, &n, NULL);
+    mul = OSSL_FN_mod_mul_ctx_size(&n, &n, &n, &n);
+    gcd = OSSL_FN_gcd_ctx_size(&n, &n);
+    inner = ctx_max_size(exp, ctx_max_size(mul, gcd));
+
+    return ctx_add_size(scratch, inner);
 }
 
 /*
@@ -281,6 +325,20 @@ int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx)
 {
     return ossl_fn_is_prime_int(w, checks, ctx, 1, cb, libctx);
+}
+
+/*
+ * Both primality test variants need what the Miller-Rabin test needs;
+ * trial division uses no context space.
+ */
+size_t ossl_fn_check_prime_ctx_size(const OSSL_FN *w)
+{
+    return ossl_fn_miller_rabin_is_prime_ctx_size(w);
+}
+
+size_t ossl_fn_check_generated_prime_ctx_size(const OSSL_FN *w)
+{
+    return ossl_fn_miller_rabin_is_prime_ctx_size(w);
 }
 
 /*
@@ -562,4 +620,33 @@ err:
     if (token != NULL)
         OSSL_FN_CTX_end(ctx, token);
     return found;
+}
+
+/*
+ * Estimate the arena payload for OSSL_FN_generate_prime().  The frame
+ * holds two numbers of one limb more than |bits| needs; each generation
+ * attempt adds the residue adjustment when |add| is not NULL, and one or
+ * two primality tests, all run sequentially.
+ */
+size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
+    int safe, const OSSL_FN *add, const OSSL_FN *rem)
+{
+    OSSL_FN cand;
+    size_t limbs = bits / OSSL_FN_BITS + (bits % OSSL_FN_BITS != 0);
+    size_t scratch, mr, div, tests;
+
+    if (bits < 2 || limbs == 0 || (add == NULL && rem != NULL)
+        || (add != NULL && (size_t)add->dsize < limbs)
+        || (ret != NULL && (size_t)ret->dsize < limbs))
+        return 0;
+
+    /* Candidates carry one limb of headroom over |bits|. */
+    cand.dsize = limbs + 1;
+
+    scratch = OSSL_FN_CTX_size(1, 2, 2 * (limbs + 1));
+    mr = ossl_fn_miller_rabin_is_prime_ctx_size(&cand);
+    div = add != NULL ? OSSL_FN_div_ctx_size(NULL, &cand, &cand, add) : 0;
+    tests = ctx_add_size(mr, mr);
+
+    return ctx_add_size(scratch, ctx_max_size(div, tests));
 }
