@@ -141,27 +141,59 @@ int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     const BIGNUM *Xp,
     const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb)
 {
-    int ret = 0;
+    int ret = 0, limbs;
+    OSSL_FN *fn_p, *fn_p1 = NULL, *fn_p2 = NULL;
+    OSSL_FN *fn_Xp1 = NULL, *fn_Xp2 = NULL, *fn_Xp, *fn_e;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_LIB_CTX *libctx;
+    size_t fn_size;
 
-    BN_CTX_start(ctx);
-    if (Xp1 == NULL)
-        Xp1 = BN_CTX_get(ctx);
-    if (Xp2 == NULL)
-        Xp2 = BN_CTX_get(ctx);
-    if (Xp1 == NULL || Xp2 == NULL)
-        goto error;
+    if (Xp == NULL || e == NULL)
+        return 0;
+    limbs = Xp->data != NULL ? Xp->data->dsize : 0;
+    if (limbs == 0)
+        return 0;
 
-    if (!BN_priv_rand_ex(Xp1, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY, 0, ctx))
-        goto error;
-    if (!BN_priv_rand_ex(Xp2, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY, 0, ctx))
-        goto error;
-    if (!BN_X931_derive_prime_ex(p, p1, p2, Xp, Xp1, Xp2, e, ctx, cb))
-        goto error;
+    if ((fn_p = bn_acquire_ossl_fn(p, limbs)) == NULL)
+        return 0;
+    if (p1 != NULL && (fn_p1 = bn_acquire_ossl_fn(p1, limbs)) == NULL)
+        goto release;
+    if (p2 != NULL && (fn_p2 = bn_acquire_ossl_fn(p2, limbs)) == NULL)
+        goto release;
+    if (Xp1 != NULL && (fn_Xp1 = bn_acquire_ossl_fn(Xp1, limbs)) == NULL)
+        goto release;
+    if (Xp2 != NULL && (fn_Xp2 = bn_acquire_ossl_fn(Xp2, limbs)) == NULL)
+        goto release;
 
-    ret = 1;
+    fn_Xp = bn_get_ossl_fn(Xp);
+    fn_e = bn_get_ossl_fn(e);
+    if (fn_Xp == NULL || fn_e == NULL)
+        goto release;
 
-error:
-    BN_CTX_end(ctx);
+    libctx = ossl_bn_get_libctx(ctx);
+    fn_size = OSSL_FN_X931_generate_prime_ctx_size(fn_p, fn_p1, fn_p2,
+        fn_Xp, fn_e);
+    if (fn_size == 0)
+        goto release;
+    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto release;
+
+    if (OSSL_FN_X931_generate_prime(fn_p, fn_p1, fn_p2, fn_Xp1, fn_Xp2,
+            fn_Xp, fn_e, fn_ctx, cb, libctx))
+        ret = 1;
+
+release:
+    OSSL_FN_CTX_free(fn_ctx);
+    bn_release(p, ret ? limbs : 0);
+    if (fn_p1 != NULL)
+        bn_release(p1, ret ? limbs : 0);
+    if (fn_p2 != NULL)
+        bn_release(p2, ret ? limbs : 0);
+    if (fn_Xp1 != NULL)
+        bn_release(Xp1, ret ? limbs : 0);
+    if (fn_Xp2 != NULL)
+        bn_release(Xp2, ret ? limbs : 0);
 
     return ret;
 }
