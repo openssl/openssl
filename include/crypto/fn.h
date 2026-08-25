@@ -393,6 +393,46 @@ int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
 int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w);
 
 /**
+ * Return the least significant limb of @p a.
+ *
+ * @param[in]           a       The operand
+ * @returns             The least significant limb of @p a, or 0 when @p a has
+ *                      no limbs
+ *
+ * @note The only control flow branches on the operand's public width (its
+ *       dsize), not on limb values; the returned value is the limb itself,
+ *       which is the information the caller asked for.
+ */
+OSSL_FN_ULONG OSSL_FN_get_word(const OSSL_FN *a);
+
+/**
+ * Set bit @p pos (0 = least significant) of @p a, by absolute position.
+ *
+ * @param[in,out]       a       The OSSL_FN to modify
+ * @param[in]           pos     The absolute bit position to set
+ * @returns             1 on success, 0 on error
+ *
+ * @note No expansion: an out-of-range position (@p pos >= the operand's width
+ *       in bits) is an error (OSSL_FN_R_RESULT_ARG_TOO_SMALL), not an implicit
+ *       grow.  The only control flow branches on the operand's public width
+ *       (its dsize), not on limb values.
+ */
+int OSSL_FN_set_bit(OSSL_FN *a, size_t pos);
+
+/**
+ * Compute @p a mod @p w for a single-limb word @p w.
+ *
+ * @param[in]           a       The operand
+ * @param[in]           w       The OSSL_FN_ULONG modulus word
+ * @returns             @p a mod @p w, or (OSSL_FN_ULONG)-1 when @p w is 0
+ *
+ * @note Control flow branches only on the operand's public width (its dsize),
+ *       not on limb values; the reduction itself is the arithmetic the caller
+ *       asked for.
+ */
+OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w);
+
+/**
  * Test whether @p a is zero.
  *
  * @param[in]           a       The operand

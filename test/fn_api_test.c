@@ -893,6 +893,169 @@ err:
 }
 
 /*-
+ * Focused tests for OSSL_FN_get_word(): returns the least significant limb,
+ * covering plain values, fixed-top zero padding, and the dsize == 0
+ * degenerate case.
+ */
+static int test_get_word(void)
+{
+    int ret = 0;
+    OSSL_FN *z = NULL; /* dsize 2, value 0 */
+    OSSL_FN *z_empty = NULL; /* dsize 0 */
+    OSSL_FN *lo = NULL; /* dsize 2, low limb set, high limb 0 */
+    OSSL_FN *two_limbs = NULL; /* dsize 2, both limbs nonzero */
+    OSSL_FN_ULONG lo_word = OSSL_FN_ULONG_C(0x01234567);
+    const OSSL_FN_ULONG two_limbs_words[] = {
+        OSSL_FN_ULONG_C(0x76543210),
+        OSSL_FN_ULONG_C(0xfedcba98)
+    };
+
+    if (!TEST_ptr(z = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(z_empty = OSSL_FN_new_limbs(0))
+        || !TEST_ptr(lo = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(two_limbs = OSSL_FN_new_limbs(2)))
+        goto err;
+
+    if (!TEST_true(ossl_fn_set_words(lo, &lo_word, 1))
+        || !TEST_true(ossl_fn_set_words(two_limbs, two_limbs_words,
+            LIMBSOF(two_limbs_words))))
+        goto err;
+
+    if (!TEST_ulong_eq(OSSL_FN_get_word(z), 0)
+        || !TEST_ulong_eq(OSSL_FN_get_word(z_empty), 0) /* dsize == 0 */
+        || !TEST_ulong_eq(OSSL_FN_get_word(lo), lo_word)
+        /* Only the least significant limb is returned. */
+        || !TEST_ulong_eq(OSSL_FN_get_word(two_limbs),
+            OSSL_FN_ULONG_C(0x76543210)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(z);
+    OSSL_FN_free(z_empty);
+    OSSL_FN_free(lo);
+    OSSL_FN_free(two_limbs);
+    return ret;
+}
+
+/*-
+ * Focused tests for OSSL_FN_set_bit(): sets a bit by absolute position,
+ * covering bit 0, a mid-limb bit, the top limb, fixed-top padding, and the
+ * out-of-range error.
+ */
+static int test_set_bit(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL; /* dsize 2 */
+    OSSL_FN *z_empty = NULL; /* dsize 0 */
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(z_empty = OSSL_FN_new_limbs(0)))
+        goto err;
+
+    /* bit 0 */
+    if (!TEST_true(OSSL_FN_set_bit(a, 0))
+        || !TEST_ulong_eq(OSSL_FN_get_word(a), 1))
+        goto err;
+    /* a mid-limb bit, without disturbing bit 0 */
+    if (!TEST_true(OSSL_FN_set_bit(a, 5))
+        || !TEST_ulong_eq(OSSL_FN_get_word(a), (OSSL_FN_ULONG_C(1) << 5) | 1))
+        goto err;
+    /* a bit in the top limb (position OSSL_FN_BITS + 3) */
+    if (!TEST_true(OSSL_FN_set_bit(a, OSSL_FN_BITS + 3))
+        || !TEST_true(OSSL_FN_is_bit_set(a, OSSL_FN_BITS + 3))
+        || !TEST_ulong_eq(OSSL_FN_get_word(a), (OSSL_FN_ULONG_C(1) << 5) | 1))
+        goto err;
+    /* out-of-range: position >= width is an error, not an implicit grow */
+    if (!TEST_false(OSSL_FN_set_bit(a, 2 * OSSL_FN_BITS))
+        || !TEST_false(OSSL_FN_set_bit(z_empty, 0)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(z_empty);
+    return ret;
+}
+
+/*-
+ * Focused tests for OSSL_FN_mod_word(): reduces an OSSL_FN modulo a
+ * single-limb word, cross-checked against an independent schoolbook
+ * half-limb reduction computed in the test, plus the w == 0 error sentinel.
+ */
+static OSSL_FN_ULONG mod_word_oracle(const OSSL_FN_ULONG *d, size_t limbs,
+    OSSL_FN_ULONG w)
+{
+    /*
+     * Independent reduction, one bit at a time, doubling modulo w without
+     * overflow (the running remainder is always smaller than w).  This is
+     * deliberately a different shape from the implementation's fast paths,
+     * and is correct for any limb width and any nonzero w.
+     */
+    OSSL_FN_ULONG ret = 0;
+    size_t i;
+    int bit;
+
+    for (i = limbs; i-- > 0;)
+        for (bit = OSSL_FN_BITS - 1; bit >= 0; bit--) {
+            if (ret < w - ret)
+                ret += ret;
+            else
+                ret = ret - (w - ret);
+            if ((d[i] >> bit) & 1)
+                ret = (ret == w - 1) ? 0 : ret + 1;
+        }
+    return ret;
+}
+
+static int test_mod_word(void)
+{
+    int ret = 0;
+    OSSL_FN *a = NULL;
+    OSSL_FN *z_empty = NULL;
+    /* Exercise values with nonzero high limbs, so the reduction folds. */
+    const OSSL_FN_ULONG words[] = {
+        OSSL_FN_ULONG_C(0x76543210),
+        OSSL_FN_ULONG_C(0xfedcba98),
+        OSSL_FN_ULONG_C(0x01234567),
+        OSSL_FN_ULONG_C(0x89abcdef)
+    };
+    /* A spread of moduli, including small sieve-like primes and a large one. */
+    static const OSSL_FN_ULONG moduli[] = {
+        OSSL_FN_ULONG_C(3),
+        OSSL_FN_ULONG_C(7),
+        OSSL_FN_ULONG_C(751),
+        OSSL_FN_ULONG_C(65521),
+        OSSL_FN_ULONG_C(0xfffffffb)
+    };
+    size_t i;
+
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(LIMBSOF(words)))
+        || !TEST_ptr(z_empty = OSSL_FN_new_limbs(0)))
+        goto err;
+    if (!TEST_true(ossl_fn_set_words(a, words, LIMBSOF(words))))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(moduli); i++) {
+        OSSL_FN_ULONG expect = mod_word_oracle(words, LIMBSOF(words), moduli[i]);
+
+        if (!TEST_ulong_eq(OSSL_FN_mod_word(a, moduli[i]), expect))
+            goto err;
+    }
+
+    /* dsize == 0 reduces to 0; w == 0 is the error sentinel. */
+    if (!TEST_ulong_eq(OSSL_FN_mod_word(z_empty, 7), 0)
+        || !TEST_ulong_eq(OSSL_FN_mod_word(a, 0), (OSSL_FN_ULONG)-1))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_free(a);
+    OSSL_FN_free(z_empty);
+    return ret;
+}
+
+/*-
  * Focused tests for OSSL_FN_add_word() / OSSL_FN_sub_word().  Each case is
  * cross-checked against OSSL_FN_add() / OSSL_FN_sub() with a single-limb
  * operand, an independent oracle that exercises the exact fixed-size
@@ -5334,6 +5497,9 @@ int setup_tests(void)
     ADD_TEST(test_num_bits);
     ADD_TEST(test_cmp);
     ADD_TEST(test_introspection);
+    ADD_TEST(test_get_word);
+    ADD_TEST(test_set_bit);
+    ADD_TEST(test_mod_word);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
