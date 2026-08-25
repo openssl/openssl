@@ -5287,6 +5287,215 @@ static int test_EVP_rsa_invalid_key(void)
     return ret;
 }
 
+static int test_EVP_rsa_pss_utf8_ptr_params(void)
+{
+    char *digest = "SHA256";
+    char *maskgenfunc = "MGF1";
+    char *mgf1_digest = "SHA384";
+    char *missing_provider = "provider=missing";
+    OSSL_PARAM ptr_params[] = {
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MASKGENFUNC,
+            &maskgenfunc, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST,
+            &mgf1_digest, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM property_params[] = {
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS,
+            &missing_provider, 0),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS",
+                      testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, ptr_params), 0)
+        || !TEST_int_le(EVP_PKEY_CTX_set_params(ctx, property_params), 0))
+        goto err;
+    ERR_clear_error();
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+#ifndef OPENSSL_NO_EC
+static int test_ec_fromdata_selection_params(void)
+{
+    char group_name[] = "prime256v1";
+    unsigned char pub[] = { 0 };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, group_name, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub)),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub)),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const OSSL_PARAM *settable = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "EC", testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_ptr(settable = EVP_PKEY_fromdata_settable(
+                         ctx, EVP_PKEY_KEY_PARAMETERS))
+        || !TEST_ptr_null(OSSL_PARAM_locate_const(
+            settable, OSSL_PKEY_PARAM_PUB_KEY))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey,
+                            EVP_PKEY_KEY_PARAMETERS, params),
+            0))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_SM2
+static int test_sm2_common_set_params(void)
+{
+    static const unsigned char expected_seed[] = { 1, 2, 3, 4, 5 };
+    char requested_encoding[] = "explicit";
+    char requested_point_format[] = "compressed";
+    unsigned char requested_seed[sizeof(expected_seed)];
+    OSSL_PARAM set_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+            requested_encoding, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            requested_point_format, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, requested_seed,
+            sizeof(requested_seed)),
+        OSSL_PARAM_END
+    };
+    char encoding[16] = { 0 };
+    char point_format[16] = { 0 };
+    unsigned char seed[sizeof(expected_seed)] = { 0 };
+    OSSL_PARAM get_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING, encoding,
+            sizeof(encoding)),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            point_format, sizeof(point_format)),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, seed, sizeof(seed)),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const OSSL_PARAM *settable;
+    int ret = 0;
+
+    memcpy(requested_seed, expected_seed, sizeof(requested_seed));
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "SM2", testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
+        || !TEST_ptr(settable = EVP_PKEY_settable_params(pkey))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable,
+            OSSL_PKEY_PARAM_EC_ENCODING))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable,
+            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable,
+            OSSL_PKEY_PARAM_EC_SEED))
+        || !TEST_int_gt(EVP_PKEY_set_params(pkey, set_params), 0)
+        || !TEST_int_gt(EVP_PKEY_get_params(pkey, get_params), 0)
+        || !TEST_str_eq(encoding, requested_encoding)
+        || !TEST_str_eq(point_format, requested_point_format)
+        || !TEST_size_t_eq(get_params[2].return_size, sizeof(expected_seed))
+        || !TEST_mem_eq(seed, sizeof(seed), expected_seed,
+            sizeof(expected_seed)))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
+static int param_is_advertised(const OSSL_PARAM *params, const char *name)
+{
+    return params != NULL && OSSL_PARAM_locate_const(params, name) != NULL;
+}
+
+static int test_rsa_algorithm_param_lists(void)
+{
+    static const char *pss_names[] = {
+        OSSL_PKEY_PARAM_RSA_DIGEST,
+        OSSL_PKEY_PARAM_RSA_DIGEST_PROPS,
+        OSSL_PKEY_PARAM_RSA_MASKGENFUNC,
+        OSSL_PKEY_PARAM_RSA_MGF1_DIGEST,
+        OSSL_PKEY_PARAM_RSA_PSS_SALTLEN
+    };
+    EVP_PKEY_CTX *rsa_ctx = NULL, *pss_ctx = NULL;
+    EVP_PKEY *rsa = NULL, *pss = NULL;
+    const OSSL_PARAM *rsa_import, *pss_import;
+    const OSSL_PARAM *rsa_gettable, *pss_gettable;
+    char untouched[16] = "unchanged";
+    OSSL_PARAM ignored[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST, untouched,
+            sizeof(untouched)),
+        OSSL_PARAM_END
+    };
+    size_t i;
+    int ret = 0;
+    int selection = EVP_PKEY_KEYPAIR
+        | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
+
+    if (!TEST_ptr(rsa_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA",
+                      testpropq))
+        || !TEST_ptr(pss_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS",
+                         testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(rsa_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pss_ctx), 0)
+        || !TEST_ptr(rsa_import = EVP_PKEY_fromdata_settable(rsa_ctx,
+                         selection))
+        || !TEST_ptr(pss_import = EVP_PKEY_fromdata_settable(pss_ctx,
+                         selection)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(pss_names); i++) {
+        if (!TEST_false(param_is_advertised(rsa_import, pss_names[i]))
+            || !TEST_true(param_is_advertised(pss_import, pss_names[i])))
+            goto err;
+    }
+
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(rsa_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(rsa_ctx, 1024), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(rsa_ctx, &rsa), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen_init(pss_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(pss_ctx, 1024), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(pss_ctx, &pss), 0)
+        || !TEST_ptr(rsa_gettable = EVP_PKEY_gettable_params(rsa))
+        || !TEST_ptr(pss_gettable = EVP_PKEY_gettable_params(pss)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(pss_names); i++) {
+        if (!TEST_false(param_is_advertised(rsa_gettable, pss_names[i])))
+            goto err;
+        if (strcmp(pss_names[i], OSSL_PKEY_PARAM_RSA_DIGEST_PROPS) != 0
+            && !TEST_true(param_is_advertised(pss_gettable, pss_names[i])))
+            goto err;
+    }
+    if (!TEST_false(param_is_advertised(rsa_gettable,
+            OSSL_PKEY_PARAM_MANDATORY_DIGEST))
+        || !TEST_true(param_is_advertised(pss_gettable,
+            OSSL_PKEY_PARAM_MANDATORY_DIGEST))
+        || !TEST_int_gt(EVP_PKEY_get_params(rsa, ignored), 0)
+        || !TEST_size_t_eq(ignored[0].return_size, OSSL_PARAM_UNMODIFIED)
+        || !TEST_str_eq(untouched, "unchanged"))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(rsa);
+    EVP_PKEY_free(pss);
+    EVP_PKEY_CTX_free(rsa_ctx);
+    EVP_PKEY_CTX_free(pss_ctx);
+    return ret;
+}
+
 static int success = 1;
 static void md_names(const char *name, void *vctx)
 {
@@ -9667,8 +9876,12 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
     ADD_TEST(test_X509_PUBKEY_dup);
+    ADD_TEST(test_ec_fromdata_selection_params);
     ADD_ALL_TESTS(test_invalid_ec_char2_pub_range_decode,
         OSSL_NELEM(ec_der_pub_keys));
+#endif
+#ifndef OPENSSL_NO_SM2
+    ADD_TEST(test_sm2_common_set_params);
 #endif
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_DSA_get_set_params);
