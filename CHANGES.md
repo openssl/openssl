@@ -29,6 +29,10 @@ OpenSSL Releases
 OpenSSL 3.6
 -----------
 
+### Changes between 3.6.4 and 3.6.5 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 3.6.3 and 3.6.4 [25 Aug 2026]
 
  * Fixed QUIC server being able to trigger double free when processing `INITIAL`
