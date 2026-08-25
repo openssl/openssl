@@ -15,6 +15,8 @@
 
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "crypto/sparse_array.h"
 #include "rsa_local.h"
 #include "internal/constant_time.h"
@@ -38,6 +40,13 @@ static int rsa_ossl_private_decrypt(int flen, const unsigned char *from,
     unsigned char *to, RSA *rsa, int padding);
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
     BN_CTX *ctx);
+static int rsa_ossl_mod_exp_bn(BIGNUM *r0, const BIGNUM *i, RSA *rsa,
+    BN_CTX *ctx);
+static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
+    OSSL_FN_CTX *ctx);
+static int rsa_ossl_fn_mod_exp(OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *p, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *m_ctx);
 static int rsa_ossl_init(RSA *rsa);
 static int rsa_ossl_finish(RSA *rsa);
 #ifdef S390X_MOD_EXP
@@ -58,7 +67,9 @@ static const RSA_METHOD rsa_pkcs1_ossl_meth = {
     0, /* rsa_sign */
     0, /* rsa_verify */
     NULL, /* rsa_keygen */
-    NULL /* rsa_multi_prime_keygen */
+    NULL, /* rsa_multi_prime_keygen */
+    rsa_ossl_fn_rsa_mod_exp,
+    rsa_ossl_fn_mod_exp
 };
 #else
 static const RSA_METHOD rsa_pkcs1_ossl_meth = {
@@ -77,7 +88,9 @@ static const RSA_METHOD rsa_pkcs1_ossl_meth = {
     0, /* rsa_sign */
     0, /* rsa_verify */
     NULL, /* rsa_keygen */
-    NULL /* rsa_multi_prime_keygen */
+    NULL, /* rsa_multi_prime_keygen */
+    rsa_ossl_fn_rsa_mod_exp,
+    rsa_ossl_fn_mod_exp
 };
 #endif
 
@@ -785,7 +798,244 @@ err:
     return r;
 }
 
+/*
+ * The default RSA_METHOD::ossl_fn_mod_exp implementation: a single
+ * modular exponentiation on OSSL_FN views, backed by OSSL_FN_mod_exp_mont().
+ * This is where the default method's modular exponentiation conversion
+ * happens; the BIGNUM::bn_mod_exp slot remains BN_mod_exp_mont() for
+ * BIGNUM-level callers and external overrides.
+ */
+static int rsa_ossl_fn_mod_exp(OSSL_FN *r, const OSSL_FN *a,
+    const OSSL_FN *p, const OSSL_FN *m,
+    OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *m_ctx)
+{
+    return OSSL_FN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
+}
+
+/*
+ * The default RSA_METHOD::ossl_fn_rsa_mod_exp implementation: the full CRT
+ * private-key exponentiation, operating on OSSL_FN throughout.  The
+ * exponentiations dispatch through rsa->meth->ossl_fn_mod_exp so surgical
+ * method overrides are honored; the CRT recombination uses OSSL_FN
+ * arithmetic directly.
+ *
+ * OSSL_FN is unsigned, so the BIGNUM body's negative-intermediate
+ * corrections are replaced by their unsigned modular equivalents.
+ */
+static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
+    OSSL_FN_CTX *ctx)
+{
+    const OSSL_FN *fn_p, *fn_q, *fn_n, *fn_e, *fn_d;
+    const OSSL_FN *fn_dmp1, *fn_dmq1, *fn_iqmp;
+    OSSL_FN *r1 = NULL, *m1 = NULL, *vrfy = NULL, *t = NULL;
+    OSSL_FN_MONT_CTX *mont_p = NULL, *mont_q = NULL, *mont_n = NULL;
+    const void *token = NULL;
+    size_t nl;
+    int ret = 0;
+#ifndef FIPS_MODULE
+    int i, ex_primes = 0;
+    RSA_PRIME_INFO *pinfo;
+#endif
+
+    fn_p = bn_get_ossl_fn(rsa->p);
+    fn_q = bn_get_ossl_fn(rsa->q);
+    fn_n = bn_get_ossl_fn(rsa->n);
+    fn_dmp1 = bn_get_ossl_fn(rsa->dmp1);
+    fn_dmq1 = bn_get_ossl_fn(rsa->dmq1);
+    fn_iqmp = bn_get_ossl_fn(rsa->iqmp);
+    if (fn_p == NULL || fn_q == NULL || fn_n == NULL
+        || fn_dmp1 == NULL || fn_dmq1 == NULL || fn_iqmp == NULL)
+        return 0;
+    fn_e = rsa->e != NULL ? bn_get_ossl_fn(rsa->e) : NULL;
+    fn_d = rsa->d != NULL ? bn_get_ossl_fn(rsa->d) : NULL;
+
+    nl = ossl_fn_get_dsize((OSSL_FN *)fn_n);
+
+#ifndef FIPS_MODULE
+    if (rsa->version == RSA_ASN1_VERSION_MULTI
+        && ((ex_primes = sk_RSA_PRIME_INFO_num(rsa->prime_infos)) <= 0
+            || ex_primes > RSA_MAX_PRIME_NUM - 2))
+        return 0;
+#endif
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    r1 = OSSL_FN_CTX_get_limbs(ctx, nl);
+    m1 = OSSL_FN_CTX_get_limbs(ctx, nl);
+    vrfy = OSSL_FN_CTX_get_limbs(ctx, nl);
+    t = OSSL_FN_CTX_get_limbs(ctx, 2 * nl);
+    if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL)
+        goto err;
+
+    if (rsa->flags & RSA_FLAG_CACHE_PRIVATE) {
+        mont_p = OSSL_FN_MONT_CTX_set_locked(&rsa->_method_mod_fn_p,
+            rsa->lock, fn_p);
+        mont_q = OSSL_FN_MONT_CTX_set_locked(&rsa->_method_mod_fn_q,
+            rsa->lock, fn_q);
+        if (mont_p == NULL || mont_q == NULL)
+            goto err;
+#ifndef FIPS_MODULE
+        for (i = 0; i < ex_primes; i++) {
+            pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
+            if (OSSL_FN_MONT_CTX_set_locked(&pinfo->m_fn, rsa->lock,
+                    bn_get_ossl_fn(pinfo->r))
+                == NULL)
+                goto err;
+        }
+#endif
+    }
+    if (rsa->flags & RSA_FLAG_CACHE_PUBLIC) {
+        mont_n = OSSL_FN_MONT_CTX_set_locked(&rsa->_method_mod_fn_n,
+            rsa->lock, fn_n);
+        if (mont_n == NULL)
+            goto err;
+    }
+
+    /* m1 = I^dmq1 mod q */
+    if (!OSSL_FN_mod(m1, I, fn_q, ctx)
+        || !rsa->meth->ossl_fn_mod_exp(m1, m1, fn_dmq1, fn_q, ctx, mont_q))
+        goto err;
+
+    /* r1 = I^dmp1 mod p */
+    if (!OSSL_FN_mod(r1, I, fn_p, ctx)
+        || !rsa->meth->ossl_fn_mod_exp(r1, r1, fn_dmp1, fn_p, ctx, mont_p))
+        goto err;
+
+    /* r0 = (r1 - m1) mod p   (unsigned: r1, m1 both already reduced mod p/q) */
+    if (!OSSL_FN_mod_sub(r0, r1, m1, fn_p, ctx))
+        goto err;
+
+    /* r0 = r0 * iqmp mod p */
+    if (!OSSL_FN_mod_mul(r0, r0, fn_iqmp, fn_p, ctx))
+        goto err;
+
+    /* r0 = r0 * q + m1  (full-width multiply, then add the reduced m1) */
+    if (!OSSL_FN_mul(t, r0, fn_q, ctx))
+        goto err;
+    if (!OSSL_FN_add(r0, t, m1))
+        goto err;
+
+#ifndef FIPS_MODULE
+    /* add m_i to m in multi-prime case */
+    for (i = 0; i < ex_primes; i++) {
+        const OSSL_FN *fn_r, *fn_di, *fn_ti, *fn_pp;
+
+        pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
+        fn_r = bn_get_ossl_fn(pinfo->r);
+        fn_di = bn_get_ossl_fn(pinfo->d);
+        fn_ti = bn_get_ossl_fn(pinfo->t);
+        fn_pp = bn_get_ossl_fn(pinfo->pp);
+        if (fn_r == NULL || fn_di == NULL || fn_ti == NULL || fn_pp == NULL)
+            goto err;
+
+        /* m1 = I^d_i mod r_i */
+        if (!OSSL_FN_mod(m1, I, fn_r, ctx)
+            || !rsa->meth->ossl_fn_mod_exp(m1, m1, fn_di, fn_r, ctx,
+                pinfo->m_fn))
+            goto err;
+        /* r1 = (m_i - r0) mod r_i */
+        if (!OSSL_FN_mod_sub(r1, m1, r0, fn_r, ctx))
+            goto err;
+        /* r1 = r1 * t_i mod r_i */
+        if (!OSSL_FN_mod_mul(r1, r1, fn_ti, fn_r, ctx))
+            goto err;
+        /* r0 = r0 + r1 * pp_i */
+        if (!OSSL_FN_mul(t, r1, fn_pp, ctx)
+            || !OSSL_FN_add(r0, r0, t))
+            goto err;
+    }
+#endif
+
+    /*
+     * Verify the result against the public exponent.  'I' and 'vrfy' must
+     * be congruent mod n; if not, don't leak the miscalculated CRT output,
+     * do a raw (slower) mod_exp and return that instead.
+     */
+    if (fn_e != NULL && fn_n != NULL) {
+        if (!rsa->meth->ossl_fn_mod_exp(vrfy, r0, fn_e, fn_n, ctx, mont_n))
+            goto err;
+        if (!OSSL_FN_mod_sub(vrfy, vrfy, I, fn_n, ctx))
+            goto err;
+        if (!OSSL_FN_is_zero(vrfy)) {
+            if (fn_d == NULL)
+                goto err;
+            if (!rsa->meth->ossl_fn_mod_exp(r0, I, fn_d, fn_n, ctx, mont_n))
+                goto err;
+        }
+    }
+
+    ret = 1;
+err:
+    if (!OSSL_FN_CTX_end(ctx, token))
+        ret = 0;
+    return ret;
+}
+
+/*
+ * The default RSA_METHOD::rsa_mod_exp implementation.  When the method
+ * provides an OSSL_FN CRT slot, this is a thin BIGNUM boundary: acquire
+ * OSSL_FN views, arrange an explicitly sized OSSL_FN_CTX, dispatch to the
+ * OSSL_FN CRT implementation, release.  Otherwise the legacy BIGNUM CRT
+ * body below runs.  Keeping the conversion behind this hook means
+ * whole-method swaps and surgical RSA_meth_set_mod_exp() overrides keep
+ * being honored.
+ */
 static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
+{
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_r0 = NULL;
+    const OSSL_FN *fn_I = NULL;
+    size_t fn_size, nl;
+    int fn_bits, ret = 0;
+
+    if (rsa->meth->ossl_fn_rsa_mod_exp == NULL)
+        return rsa_ossl_mod_exp_bn(r0, I, rsa, ctx);
+
+    fn_I = bn_get_ossl_fn(I);
+    if (fn_I == NULL)
+        return 0;
+    nl = ossl_fn_get_dsize((OSSL_FN *)bn_get_ossl_fn(rsa->n));
+
+    /* Acquire the writable result before OSSL_FN_CTX sizing. */
+    if ((fn_r0 = bn_acquire_ossl_fn(r0, (int)nl)) == NULL)
+        return 0;
+
+    /*
+     * Size the arena for the whole CRT sequence: the two mod_exp temporary
+     * sets dominate, plus scratch for the recombination values.
+     */
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
+                  bn_get_ossl_fn(rsa->dmp1),
+                  bn_get_ossl_fn(rsa->p), NULL)
+        + OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
+            bn_get_ossl_fn(rsa->dmq1),
+            bn_get_ossl_fn(rsa->q), NULL)
+        + OSSL_FN_CTX_size(4, 8, 8 * nl + 4);
+    if (fn_size == 0)
+        goto err;
+
+    fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    ret = rsa->meth->ossl_fn_rsa_mod_exp(fn_r0, fn_I, rsa, fn_ctx);
+
+    if (ret) {
+        fn_bits = (int)OSSL_FN_num_bits(fn_r0);
+        bn_release(r0, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    }
+
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
+}
+
+/*
+ * The legacy BIGNUM CRT body, kept for methods that do not provide an
+ * OSSL_FN CRT slot.  See rsa_ossl_mod_exp() above.
+ */
+static int rsa_ossl_mod_exp_bn(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
 {
     BIGNUM *r1, *m1, *vrfy;
     int ret = 0, smooth = 0;
@@ -1171,12 +1421,16 @@ static int rsa_ossl_finish(RSA *rsa)
     for (i = 0; i < sk_RSA_PRIME_INFO_num(rsa->prime_infos); i++) {
         pinfo = sk_RSA_PRIME_INFO_value(rsa->prime_infos, i);
         BN_MONT_CTX_free(pinfo->m);
+        OSSL_FN_MONT_CTX_free(pinfo->m_fn);
     }
 #endif
 
     BN_MONT_CTX_free(rsa->_method_mod_n);
     BN_MONT_CTX_free(rsa->_method_mod_p);
     BN_MONT_CTX_free(rsa->_method_mod_q);
+    OSSL_FN_MONT_CTX_free(rsa->_method_mod_fn_n);
+    OSSL_FN_MONT_CTX_free(rsa->_method_mod_fn_p);
+    OSSL_FN_MONT_CTX_free(rsa->_method_mod_fn_q);
     return 1;
 }
 
