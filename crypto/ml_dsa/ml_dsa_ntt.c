@@ -30,14 +30,14 @@ typedef void (*ml_dsa_poly_ntt_mult_fn)(const POLY *lhs, const POLY *rhs,
     POLY *out);
 
 /* Forward declarations of scalar NTT functions */
-static void poly_ntt_scalar(POLY *p);
+void ossl_ml_dsa_poly_ntt_scalar(POLY *p);
 static void poly_ntt_inverse_scalar(POLY *p);
 static void poly_ntt_mult_scalar(const POLY *lhs, const POLY *rhs, POLY *out);
 
 /*
  * NTT function pointers - initialized to scalar implementations by default.
  */
-static ml_dsa_poly_ntt_fn poly_ntt_impl = poly_ntt_scalar;
+static ml_dsa_poly_ntt_fn poly_ntt_impl = ossl_ml_dsa_poly_ntt_scalar;
 static ml_dsa_poly_ntt_inverse_fn poly_ntt_inverse_impl = poly_ntt_inverse_scalar;
 static ml_dsa_poly_ntt_mult_fn poly_ntt_mult_impl = poly_ntt_mult_scalar;
 
@@ -145,7 +145,7 @@ static void poly_ntt_mult_scalar(const POLY *lhs, const POLY *rhs, POLY *out)
             * (uint64_t)rhs->coeff[i]);
 }
 
-static void poly_ntt_scalar(POLY *p)
+void ossl_ml_dsa_poly_ntt_scalar(POLY *p)
 {
     int i, j, k;
     int step;
