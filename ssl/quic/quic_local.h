@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -185,7 +185,7 @@ struct quic_conn_st {
      */
     unsigned int as_server_state : 1;
 
-    /* Are we using thread assisted mode? Never changes after init. */
+    /* Are we using thread assisted mode? Cleared on SSL_listen_ex adoption. */
     unsigned int is_thread_assisted : 1;
 
     /* Have we created a default XSO yet? */

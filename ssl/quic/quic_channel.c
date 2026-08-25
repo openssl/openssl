@@ -584,7 +584,15 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
 
 void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
 {
-    SSL_free(ch->tls);
+    /*
+     * Rebind the handshake layer first, so that a failure leaves the channel
+     * entirely unmodified rather than with a TLS connection the handshake
+     * layer does not know about.
+     */
+    if (!ossl_assert(ch != NULL && ssl != NULL && ch->tls == NULL)
+        || !ossl_quic_tls_set0_ssl(ch->qtls, ssl))
+        return;
+
     ch->tls = ssl;
 #ifndef OPENSSL_NO_QLOG
     /*

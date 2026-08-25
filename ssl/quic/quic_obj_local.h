@@ -1,5 +1,5 @@
 /*
- * Copyright 2024-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2024-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -154,6 +154,9 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     SSL *parent_obj,
     QUIC_ENGINE *engine,
     QUIC_PORT *port);
+
+/* Reparent a standalone leader; the caller must release its old resources. */
+void ossl_quic_obj_reparent(QUIC_OBJ *obj, QUIC_OBJ *parent);
 
 /*
  * Returns a pointer to the handshake layer object which should be accessible on
