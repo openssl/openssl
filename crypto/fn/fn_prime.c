@@ -621,3 +621,32 @@ err:
         OSSL_FN_CTX_end(ctx, token);
     return found;
 }
+
+/*
+ * Estimate the arena payload for OSSL_FN_generate_prime().  The frame
+ * holds two numbers of one limb more than |bits| needs; each generation
+ * attempt adds the residue adjustment when |add| is not NULL, and one or
+ * two primality tests, all run sequentially.
+ */
+size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
+    int safe, const OSSL_FN *add, const OSSL_FN *rem)
+{
+    OSSL_FN cand;
+    size_t limbs = bits / OSSL_FN_BITS + (bits % OSSL_FN_BITS != 0);
+    size_t scratch, mr, div, tests;
+
+    if (bits < 2 || limbs == 0 || (add == NULL && rem != NULL)
+        || (add != NULL && (size_t)add->dsize < limbs)
+        || (ret != NULL && (size_t)ret->dsize < limbs))
+        return 0;
+
+    /* Candidates carry one limb of headroom over |bits|. */
+    cand.dsize = limbs + 1;
+
+    scratch = OSSL_FN_CTX_size(1, 2, 2 * (limbs + 1));
+    mr = ossl_fn_miller_rabin_is_prime_ctx_size(&cand);
+    div = add != NULL ? OSSL_FN_div_ctx_size(NULL, &cand, &cand, add) : 0;
+    tests = ctx_add_size(mr, mr);
+
+    return ctx_add_size(scratch, ctx_max_size(div, tests));
+}
