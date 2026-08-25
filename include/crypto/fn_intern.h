@@ -159,6 +159,30 @@ int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
 int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
 
+/*
+ * Generate a probable prime (an RSA p or q candidate) per FIPS 186-5
+ * A.1.6 (Steps 4 & 5), optionally enforcing |p| congruent to |c| mod 8.
+ * |p| and |Xpout| must have room for nlen/2 bits; one limb of headroom
+ * over that width lets a carry past the width be detected rather than
+ * truncated.  Internally generated auxiliary primes and random draws
+ * that are not returned are cleared.  Returns 1 on success, 0 on error.
+ */
+int ossl_fn_rsa_fips186_5_gen_prob_primes(OSSL_FN *p, OSSL_FN *Xpout,
+    OSSL_FN *p1, OSSL_FN *p2, const OSSL_FN *Xp, const OSSL_FN *Xp1,
+    const OSSL_FN *Xp2, int nlen, const OSSL_FN *e, OSSL_FN_CTX *ctx,
+    BN_GENCB *cb, uint32_t c, OSSL_LIB_CTX *libctx);
+
+/*
+ * Generate a probable prime factor per FIPS 186-5 B.9 from two
+ * auxiliary primes using the Chinese Remainder Theorem.  Same width
+ * contract as ossl_fn_rsa_fips186_5_gen_prob_primes().  Returns 1 on
+ * success, 0 on error.
+ */
+int ossl_fn_rsa_fips186_5_derive_prime(OSSL_FN *Y, OSSL_FN *X,
+    const OSSL_FN *Xin, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
+    const OSSL_FN *e, OSSL_FN_CTX *ctx, BN_GENCB *cb, uint32_t c,
+    OSSL_LIB_CTX *libctx);
+
 #ifdef __cplusplus
 }
 #endif

@@ -4,7 +4,7 @@ LIBS=$LIBCRYPTO
 
 $COMMON=fn_err.c fn_lib.c fn_ctx.c fn_intern.c fn_addsub.c fn_shift.c fn_mul.c \
         fn_sqr.c fn_div.c fn_rand.c fn_mod.c fn_gcd.c fn_mod_inv.c fn_mont.c \
-        fn_exp.c fn_kron.c fn_sqrt.c fn_prime.c \
+        fn_exp.c fn_kron.c fn_sqrt.c fn_prime.c fn_rsa_fips186_5.c \
         fn_inv_sqrt_2.c fn_dh_consts.c fn_srp_consts.c
 
 SOURCE[$LIBCRYPTO]=$COMMON
