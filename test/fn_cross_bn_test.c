@@ -134,6 +134,7 @@ static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
     OSSL_FN *f_p = NULL, *f_x = NULL;
     OSSL_FN_CTX *ctx = NULL;
     OSSL_FN *v_xp = NULL, *v_xp1 = NULL, *v_xp2 = NULL, *v_e = NULL;
+    size_t fn_ctxsize;
 
     if (!TEST_ptr(bctx = BN_CTX_new())
         || !TEST_ptr(b_p = BN_new()) || !TEST_ptr(b_x = BN_new())
@@ -149,23 +150,34 @@ static int test_rsa_fips186_5_gen_prob_primes_cross_bn(int idx)
     if (!TEST_int_eq(bn_ok, t->expect_success))
         goto err;
 
-    /* Generous arena; generation draws down a nested stack of frames. */
-    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 48, 2048))
-        || !TEST_ptr(f_p = OSSL_FN_new_limbs(bits_limbs + 1))
+    if (!TEST_ptr(f_p = OSSL_FN_new_limbs(bits_limbs + 1))
         || !TEST_ptr(f_x = OSSL_FN_new_limbs(bits_limbs + 1)))
+        goto err;
+    v_e = bn_get_ossl_fn(b_e);
+    if (bn_ok) {
+        v_xp = bn_get_ossl_fn(b_xp);
+        v_xp1 = bn_get_ossl_fn(b_xp1);
+        v_xp2 = bn_get_ossl_fn(b_xp2);
+    }
+
+    /*
+     * Size the arena with the operation's sizing companion.  For the
+     * invalid key size it returns 0; a minimal arena suffices then,
+     * since the call fails before allocating more than its frame.
+     */
+    fn_ctxsize = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(f_p, f_x,
+        NULL, NULL, v_xp1, v_xp2, t->nlen, v_e);
+    if (fn_ctxsize == 0)
+        fn_ctxsize = OSSL_FN_CTX_size(2, 1, 8);
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, fn_ctxsize)))
         goto err;
     if (!bn_ok) {
         /* Invalid key size must fail on the FN side too. */
-        v_e = bn_get_ossl_fn(b_e);
         fn_ok = ossl_fn_rsa_fips186_5_gen_prob_primes(f_p, f_x, NULL, NULL,
             NULL, NULL, NULL, t->nlen, v_e, ctx, NULL, t->c, NULL);
         if (!TEST_int_eq(fn_ok, t->expect_success))
             goto err;
     } else {
-        v_xp = bn_get_ossl_fn(b_xp);
-        v_xp1 = bn_get_ossl_fn(b_xp1);
-        v_xp2 = bn_get_ossl_fn(b_xp2);
-        v_e = bn_get_ossl_fn(b_e);
         fn_ok = ossl_fn_rsa_fips186_5_gen_prob_primes(f_p, f_x, NULL, NULL,
             v_xp, v_xp1, v_xp2, t->nlen, v_e, ctx, NULL, t->c, NULL);
         if (!TEST_int_eq(fn_ok, t->expect_success)
