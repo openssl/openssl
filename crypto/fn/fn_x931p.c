@@ -162,6 +162,18 @@ size_t OSSL_FN_X931_derive_prime_ctx_size(const OSSL_FN *p,
     return ctx_add_size(own, loop);
 }
 
+size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
+    const OSSL_FN *e)
+{
+    return OSSL_FN_X931_derive_prime_ctx_size(p, p1, p2, Xp, NULL, NULL,
+        e);
+}
+
+/*
+ * Derive one X9.31 prime pi from the parameter Xpi by checking successive
+ * odd integers upward from Xpi.
+ */
 static int ossl_fn_x931_derive_pi(OSSL_FN *pi, const OSSL_FN *Xpi,
     OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx)
 {
@@ -263,6 +275,40 @@ int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
     BN_GENCB_call(cb, 3, 0);
 
     ret = 1;
+
+err:
+    if (!OSSL_FN_CTX_end(ctx, token))
+        ret = 0;
+    return ret;
+}
+
+int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
+    OSSL_FN *Xp1, OSSL_FN *Xp2, const OSSL_FN *Xp, const OSSL_FN *e,
+    OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx)
+{
+    const void *token;
+    int ret = 0;
+
+    if ((token = OSSL_FN_CTX_start(ctx)) == NULL)
+        return 0;
+
+    if (p1 == NULL && (p1 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+        goto err;
+    if (p2 == NULL && (p2 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+        goto err;
+    if (Xp1 == NULL && (Xp1 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+        goto err;
+    if (Xp2 == NULL && (Xp2 = OSSL_FN_CTX_get_limbs(ctx, (size_t)Xp->dsize)) == NULL)
+        goto err;
+
+    if (!OSSL_FN_priv_rand(Xp1, 101, OSSL_FN_RAND_TOP_ONE,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, libctx)
+        || !OSSL_FN_priv_rand(Xp2, 101, OSSL_FN_RAND_TOP_ONE,
+            OSSL_FN_RAND_BOTTOM_ANY, 0, libctx))
+        goto err;
+
+    ret = OSSL_FN_X931_derive_prime(p, p1, p2, Xp, Xp1, Xp2, e,
+        ctx, cb, libctx);
 
 err:
     if (!OSSL_FN_CTX_end(ctx, token))
