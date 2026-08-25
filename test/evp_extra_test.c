@@ -9893,6 +9893,8 @@ int setup_tests(void)
     ADD_TEST(test_RSA_verify_recover_rejects_short_buffer);
     ADD_TEST(test_RSA_verify_recover_empty_payload);
     ADD_TEST(test_RSA_encrypt);
+    ADD_TEST(test_EVP_rsa_pss_utf8_ptr_params);
+    ADD_TEST(test_rsa_algorithm_param_lists);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
 #endif
