@@ -1510,6 +1510,30 @@ size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
 int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
     const OSSL_FN *add, const OSSL_FN *rem, BN_GENCB *cb,
     OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+/**
+ * Generate a pair of X9.31 parameters Xp and Xq for prime generation.
+ * On entry, @p nbits is the sum of the bit lengths of both parameters;
+ * each must be of the form 512+128s for s = 0, 1, ...
+ *
+ * @param[out]          Xp      The first parameter
+ * @param[out]          Xq      The second parameter
+ * @param[in]           nbits   The total bit length (sum of both)
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_generate_Xpq_ctx_size()
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
+    OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+*Calculate the arena payload size that OSSL_FN_X931_generate_Xpq()
+    * needs.
+          *
+              *@param[in] Xp The first parameter to generate
+                  *@returns The arena payload size,
+    in bytes.
+        *@retval 0 on arithmetic overflow
+    or invalid input.
+            * / size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
 
 /**
  * Calculate the arena payload size that OSSL_FN_generate_prime() needs.

@@ -12,6 +12,7 @@
 #include <stdio.h>
 #include <openssl/bn.h>
 #include "bn_local.h"
+#include "crypto/fn.h"
 
 /* X9.31 routines for prime derivation */
 
@@ -161,51 +162,44 @@ err:
 
 int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
 {
-    BIGNUM *t;
-    int i;
+    int per, limbs, ret = 0;
+    OSSL_FN *f, *g;
+    OSSL_LIB_CTX *libctx;
+
     /*
-     * Number of bits for each prime is of the form 512+128s for s = 0, 1,
-     * ...
+     * The OSSL_FN peer checks the same condition; do it here too to
+     * derive sane limb sizing before the acquire steps.
      */
     if ((nbits < 1024) || (nbits & 0xff))
         return 0;
-    nbits >>= 1;
-    /*
-     * The random value Xp must be between sqrt(2) * 2^(nbits-1) and 2^nbits
-     * - 1. By setting the top two bits we ensure that the lower bound is
-     * exceeded.
-     */
-    if (!BN_priv_rand_ex(Xp, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY, 0,
-            ctx))
+    per = nbits >> 1;
+    limbs = (per + BN_BITS2 - 1) / BN_BITS2;
+
+    libctx = ossl_bn_get_libctx(ctx);
+
+    if ((f = bn_acquire_ossl_fn(Xp, limbs)) == NULL)
         return 0;
-
-    BN_CTX_start(ctx);
-    t = BN_CTX_get(ctx);
-    if (t == NULL)
-        goto err;
-
-    for (i = 0; i < 1000; i++) {
-        if (!BN_priv_rand_ex(Xq, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY, 0,
-                ctx))
-            goto err;
-
-        /* Check that |Xp - Xq| > 2^(nbits - 100) */
-        if (!BN_sub(t, Xp, Xq))
-            goto err;
-        if (BN_num_bits(t) > (nbits - 100))
-            break;
+    if ((g = bn_acquire_ossl_fn(Xq, limbs)) == NULL) {
+        bn_release(Xp, 0);
+        return 0;
     }
 
-    BN_CTX_end(ctx);
+    {
+        size_t fn_size = OSSL_FN_X931_generate_Xpq_ctx_size(f);
+        OSSL_FN_CTX *fn_ctx = NULL;
 
-    if (i < 1000)
-        return 1;
+        if (fn_size != 0)
+            fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
+        if (fn_ctx != NULL
+            && OSSL_FN_X931_generate_Xpq(f, g, nbits, fn_ctx, libctx))
+            ret = 1;
+        OSSL_FN_CTX_free(fn_ctx);
+    }
 
-    return 0;
+    bn_release(Xp, ret ? limbs : 0);
+    bn_release(Xq, ret ? limbs : 0);
 
-err:
-    BN_CTX_end(ctx);
-    return 0;
+    return ret;
 }
 
 /*
