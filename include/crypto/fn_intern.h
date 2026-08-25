@@ -194,6 +194,16 @@ int ossl_fn_rsa_fips186_5_gen_prob_primes(OSSL_FN *p, OSSL_FN *Xpout,
     BN_GENCB *cb, uint32_t c, OSSL_LIB_CTX *libctx);
 
 /*
+ * Calculate the arena payload size that
+ * ossl_fn_rsa_fips186_5_gen_prob_primes() needs.  |p1|, |p2|, |Xp1|
+ * and |Xp2| may be NULL, as for the operation.  Returns 0 on
+ * arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *Xpout, const OSSL_FN *p1, const OSSL_FN *p2,
+    const OSSL_FN *Xp1, const OSSL_FN *Xp2, int nlen, const OSSL_FN *e);
+
+/*
  * Generate a probable prime factor per FIPS 186-5 B.9 from two
  * auxiliary primes using the Chinese Remainder Theorem.  Same width
  * contract as ossl_fn_rsa_fips186_5_gen_prob_primes().  Returns 1 on
@@ -203,6 +213,15 @@ int ossl_fn_rsa_fips186_5_derive_prime(OSSL_FN *Y, OSSL_FN *X,
     const OSSL_FN *Xin, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
     const OSSL_FN *e, OSSL_FN_CTX *ctx, BN_GENCB *cb, uint32_t c,
     OSSL_LIB_CTX *libctx);
+
+/*
+ * Calculate the arena payload size that
+ * ossl_fn_rsa_fips186_5_derive_prime() needs.  Returns 0 on
+ * arithmetic overflow or invalid input.
+ */
+size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size(const OSSL_FN *Y,
+    const OSSL_FN *X, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
+    const OSSL_FN *e);
 
 #ifdef __cplusplus
 }

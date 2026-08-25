@@ -18,10 +18,25 @@
  * Everything else branches on public widths and round counts only.
  */
 #include <openssl/err.h>
+#include "internal/mem_alloc_utils.h"
 #include "crypto/fnerr.h"
 #include "crypto/bn.h" /* For BN_GENCB / BN_GENCB_call and BN_R_* retryable errors */
 #include "crypto/fn_constants.h" /* For the inverse-square-root constant */
 #include "fn_local.h"
+
+/* The usual static helpers from the other fn_*.c operation files. */
+static size_t ctx_add_size(size_t a, size_t b)
+{
+    int err = 0;
+    size_t r = safe_add_size_t(a, b, &err);
+
+    return err == 0 ? r : 0;
+}
+
+static size_t ctx_max_size(size_t a, size_t b)
+{
+    return a > b ? a : b;
+}
 
 /*
  * Refer to FIPS 186-5 Table B.1 for minimum rounds of Miller Rabin
@@ -158,6 +173,68 @@ static ossl_inline int get_multiple_of_y_congruent_to_cmod8(OSSL_FN *y,
     }
     /* Fall through for y = y + 6 * r1r2 */
     return 1;
+}
+
+/*
+ * Estimate the arena payload for ossl_fn_rsa_fips186_5_derive_prime().
+ * The frame holds nine numbers: |base| of nlen/2 bits and |range| with one
+ * limb of headroom over that, the CRT modulus |r1r2x2|, the interim
+ * products |R| and |tmp|, and the congruence step |r1r2x2_step| of
+ * |r1| + |r2| + 1 limbs each, the doubled auxiliary prime |r1x2|, and
+ * |y1| and |g| of |Y|'s width.  The modular inverses, products and
+ * subtractions, the gcd and the primality checks it calls run
+ * sequentially within that frame, so their nested needs combine by
+ * maximum.
+ */
+size_t ossl_fn_rsa_fips186_5_derive_prime_ctx_size(const OSSL_FN *Y,
+    const OSSL_FN *X, const OSSL_FN *r1, const OSSL_FN *r2, int nlen,
+    const OSSL_FN *e)
+{
+    int bits = nlen >> 1;
+    size_t bits_limbs, r1x2_limbs, r1r2x2_limbs, limbs;
+    size_t own, nested, inv1, inv2, mul1, mul2, mul3, msub1, msub2;
+    size_t gcd, prime;
+    OSSL_FN m_R, m_tmp, m_mod, m_y1, m_r1x2;
+
+    if (Y == NULL || X == NULL || r1 == NULL || r2 == NULL || e == NULL
+        || nlen <= 0 || bits <= 0)
+        return 0;
+
+    bits_limbs = (size_t)bits / OSSL_FN_BITS
+        + ((size_t)bits % OSSL_FN_BITS != 0);
+    r1x2_limbs = (size_t)r1->dsize + 1;
+    r1r2x2_limbs = r1x2_limbs + (size_t)r2->dsize;
+    m_R.dsize = (int)r1r2x2_limbs;
+    m_tmp.dsize = (int)r1r2x2_limbs;
+    m_mod.dsize = (int)r1r2x2_limbs;
+    m_y1.dsize = Y->dsize;
+    m_r1x2.dsize = (int)r1x2_limbs;
+
+    limbs = bits_limbs + (bits_limbs + 1) + 4 * r1r2x2_limbs + 1
+        + r1x2_limbs + 2 * (size_t)Y->dsize;
+    own = OSSL_FN_CTX_size(1, 9, limbs);
+
+    inv1 = OSSL_FN_mod_inverse_ctx_size(&m_tmp, &m_r1x2, r2);
+    inv2 = OSSL_FN_mod_inverse_ctx_size(&m_R, r2, &m_r1x2);
+    mul1 = OSSL_FN_mul_ctx_size(&m_R, &m_R, r2);
+    mul2 = OSSL_FN_mul_ctx_size(&m_tmp, &m_tmp, &m_r1x2);
+    mul3 = OSSL_FN_mul_ctx_size(&m_mod, &m_r1x2, r2);
+    msub1 = OSSL_FN_mod_sub_ctx_size(&m_R, &m_R, &m_tmp, &m_mod);
+    msub2 = OSSL_FN_mod_sub_ctx_size(Y, &m_R, X, &m_mod);
+    gcd = OSSL_FN_gcd_ctx_size(&m_y1, e);
+    prime = ossl_fn_check_generated_prime_ctx_size(Y);
+
+    nested = ctx_max_size(inv1,
+        ctx_max_size(inv2,
+            ctx_max_size(mul1,
+                ctx_max_size(mul2,
+                    ctx_max_size(mul3,
+                        ctx_max_size(msub1,
+                            ctx_max_size(msub2,
+                                ctx_max_size(gcd, prime))))))));
+    if (own == 0 || nested == 0)
+        return 0;
+    return ctx_add_size(own, nested);
 }
 
 /*
@@ -351,6 +428,48 @@ err:
     if (!OSSL_FN_CTX_end(ctx, token))
         ret = 0;
     return ret;
+}
+
+/*
+ * Estimate the arena payload for
+ * ossl_fn_rsa_fips186_5_gen_prob_primes().  The frame holds one
+ * auxiliary-prime-width temporary for each of |p1|, |p2|, |Xp1| and
+ * |Xp2| that the caller leaves NULL; caller-provided numbers keep
+ * their own width for the nested auxiliary prime hunts.  The hunts
+ * and the prime derivation run sequentially within that frame, so
+ * their nested needs combine by maximum.  Returns 0 for an invalid
+ * |nlen|, like the operation itself.
+ */
+size_t ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *Xpout, const OSSL_FN *p1, const OSSL_FN *p2,
+    const OSSL_FN *Xp1, const OSSL_FN *Xp2, int nlen, const OSSL_FN *e)
+{
+    int bitlen;
+    size_t bitlimbs, n_temps, own, nested, hunt1, hunt2, derive;
+    OSSL_FN m_p1, m_p2;
+
+    if (p == NULL || Xpout == NULL || e == NULL)
+        return 0;
+    bitlen = ossl_fn_rsa_fips186_5_aux_prime_min_size(nlen);
+    if (bitlen == 0)
+        return 0;
+    bitlimbs = (size_t)bitlen / OSSL_FN_BITS
+        + ((size_t)bitlen % OSSL_FN_BITS != 0);
+
+    m_p1.dsize = p1 != NULL ? p1->dsize : (int)bitlimbs;
+    m_p2.dsize = p2 != NULL ? p2->dsize : (int)bitlimbs;
+    n_temps = (size_t)(p1 == NULL) + (p2 == NULL) + (Xp1 == NULL)
+        + (Xp2 == NULL);
+    own = OSSL_FN_CTX_size(1, n_temps, n_temps * bitlimbs);
+
+    hunt1 = ossl_fn_check_generated_prime_ctx_size(&m_p1);
+    hunt2 = ossl_fn_check_generated_prime_ctx_size(&m_p2);
+    derive = ossl_fn_rsa_fips186_5_derive_prime_ctx_size(p, Xpout, &m_p1,
+        &m_p2, nlen, e);
+    nested = ctx_max_size(hunt1, ctx_max_size(hunt2, derive));
+    if (own == 0 || nested == 0)
+        return 0;
+    return ctx_add_size(own, nested);
 }
 
 /*
