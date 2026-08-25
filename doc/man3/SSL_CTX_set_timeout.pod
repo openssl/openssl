@@ -14,9 +14,12 @@ SSL_CTX_set_timeout, SSL_CTX_get_timeout - manipulate timeout values for session
 =head1 DESCRIPTION
 
 SSL_CTX_set_timeout() sets the timeout for newly created sessions for
-B<ctx> to B<t>. The timeout value B<t> must be given in seconds.
+I<ctx> to I<t>. The timeout value B<t> must be given in seconds. A negative
+value for I<t> selects an unlimited timeout: sessions then never expire and
+can be resumed indefinitely.
 
-SSL_CTX_get_timeout() returns the currently set timeout value for B<ctx>.
+SSL_CTX_get_timeout() returns the currently set timeout value for B<ctx>,
+or -1 if the timeout is unlimited.
 
 =head1 NOTES
 
@@ -49,14 +52,32 @@ For TLSv1.3, RFC8446 limits transmission of this value to 1 week (604800
 seconds).
 
 For TLSv1.2, tickets generated during an initial handshake use the value
-as specified. Tickets generated during a resumed handshake have a value
-of 0 for the ticket lifetime hint.
+as specified. Tickets generated during a resumed handshake, and tickets for
+sessions with an unlimited timeout, have a value of 0 for the ticket
+lifetime hint.
+
+For TLSv1.3, a ticket issued for a resumed session restarts the session
+lifetime, but the new lifetime is capped by the remaining lifetime of the
+session it was resumed from, so that resumption cannot be used to prolong a
+session beyond its originally intended lifetime.
+
+For TLSv1.3, an unlimited timeout is transmitted in a ticket lifetime hint
+as the RFC8446 1 week maximum, but the session stored or re-created from
+such a ticket retains its unlimited timeout.
+
+Note that if B<SSL_SESS_CACHE_UPDATE_TIME> is set in the session cache mode
+(see L<SSL_CTX_set_session_cache_mode(3)>) the session's timestamp is
+refreshed each time the session is used, which moves its expiry forward and
+so still allows a regularly resumed session to be prolonged beyond the cap
+described above.
 
 =head1 RETURN VALUES
 
-SSL_CTX_set_timeout() returns the previously set timeout value.
+SSL_CTX_set_timeout() returns the previously set timeout value, or -1 if the
+previously set timeout was unlimited.
 
-SSL_CTX_get_timeout() returns the currently set timeout value.
+SSL_CTX_get_timeout() returns the currently set timeout value, or -1 if the
+timeout is unlimited.
 
 =head1 SEE ALSO
 
@@ -68,7 +89,7 @@ L<SSL_get_default_timeout(3)>
 
 =head1 COPYRIGHT
 
-Copyright 2001-2022 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
