@@ -99,6 +99,7 @@ void ossl_ml_dsa_poly_ntt_mult(const POLY *lhs, const POLY *rhs, POLY *out);
  */
 #if defined(OPENSSL_ML_DSA_S390X)
 #include "arch/s390x_arch.h"
+void ossl_ml_dsa_poly_ntt_scalar(POLY *p);
 void ossl_ml_dsa_poly_ntt_vec128(POLY *p);
 void ossl_ml_dsa_poly_ntt_inverse_vec128(POLY *p);
 void ossl_poly_ntt_mult_scalar_vec128(const POLY *lhs, const POLY *rhs, POLY *out);
