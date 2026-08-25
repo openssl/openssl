@@ -158,7 +158,7 @@ OpenSSL 4.0
 
    *Matt Caswell*
 
- * Fixed client-side nemory leak in OCSP response checking.
+ * Fixed client-side memory leak in OCSP response checking.
 
    Severity: Low
 
