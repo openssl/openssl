@@ -30,6 +30,7 @@
 # Auto generated headers
 /crypto/buildinf.h
 /include/crypto/*_conf.h
+/include/crypto/ec_params.h
 /include/crypto/rsa_params.h
 /include/openssl/asn1.h
 /include/openssl/asn1t.h
