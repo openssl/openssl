@@ -1481,6 +1481,7 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
  */
 size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
+
 #ifdef __cplusplus
 }
 #endif
