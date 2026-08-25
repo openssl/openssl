@@ -28,11 +28,15 @@ extern "C" {
  * @def OSSL_FN_BYTES is defined with the size of OSSL_FN_ULONG, measured in
  * bytes.  This is mainly useful where 'sizeof(OSSL_FN_ULONG)' isn't suitable,
  * such as the C pre-processor.
+ *
+ * @def OSSL_FN_BITS is defined with the size of OSSL_FN_ULONG, measured in
+ * bits.
  */
 
 #ifdef BN_BYTES
 typedef BN_ULONG OSSL_FN_ULONG;
 #define OSSL_FN_BYTES BN_BYTES
+#define OSSL_FN_BITS (OSSL_FN_BYTES * 8)
 #endif
 
 #ifndef OSSL_FN_BYTES

@@ -63,7 +63,7 @@ OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod)
     mod_size = safe_add_size_t(mod_size, sizeof(OSSL_FN), &err);
     size_t ctx_size = safe_mul_size_t(2, mod_size, &err);
     ctx_size = safe_add_size_t(ctx_size, sizeof(OSSL_FN_MONT_CTX), &err);
-    int ri = safe_mul_int(mod->dsize, OSSL_FN_BYTES * 8, &err);
+    int ri = safe_mul_int(mod->dsize, OSSL_FN_BITS, &err);
     if (err) {
         ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_OVERFLOW);
         return NULL;

@@ -108,7 +108,6 @@ static const OSSL_FN_ULONG num8[] = {
  * All sizes are in number of limbs, the LIMBSOF() macro is there to help
  */
 #define LIMBSOF(num) ((sizeof(num) + OSSL_FN_BYTES - 1) / OSSL_FN_BYTES)
-#define OSSL_FN_BITS (OSSL_FN_BYTES * 8)
 struct test_case_st {
     /* Two operands and expected full result (possibly two numbers) */
     const OSSL_FN_ULONG *op1;
@@ -1163,7 +1162,7 @@ static int test_lshift_common(int i, int use_lshift1)
         r_limbs = LIMBSOF(ex_lshift_num2_limb) + 2;
         ex_words = ex_lshift_num2_limb;
         check_limbs = LIMBSOF(ex_lshift_num2_limb);
-        shift = OSSL_FN_BYTES * 8;
+        shift = OSSL_FN_BITS;
         break;
     case 4:
         a_words = num2;
@@ -1181,7 +1180,7 @@ static int test_lshift_common(int i, int use_lshift1)
         r_limbs = LIMBSOF(ex_lshift_num2_limb_3) + 2;
         ex_words = ex_lshift_num2_limb_3;
         check_limbs = LIMBSOF(ex_lshift_num2_limb_3);
-        shift = OSSL_FN_BYTES * 8 + 3;
+        shift = OSSL_FN_BITS + 3;
         break;
     default:
         return 0;
@@ -1270,7 +1269,7 @@ static int test_rshift_common(int i, int use_rshift1, int alias)
         r_limbs = LIMBSOF(ex_rshift_num8_limb) + 2;
         ex_words = ex_rshift_num8_limb;
         check_limbs = LIMBSOF(ex_rshift_num8_limb);
-        shift = OSSL_FN_BYTES * 8;
+        shift = OSSL_FN_BITS;
         break;
     case 4:
         a_words = num8;
@@ -1279,7 +1278,7 @@ static int test_rshift_common(int i, int use_rshift1, int alias)
         r_limbs = LIMBSOF(ex_rshift_num8_limb_3) + 2;
         ex_words = ex_rshift_num8_limb_3;
         check_limbs = LIMBSOF(ex_rshift_num8_limb_3);
-        shift = OSSL_FN_BYTES * 8 + 3;
+        shift = OSSL_FN_BITS + 3;
         break;
     case 5:
         a_words = num2;
@@ -1288,7 +1287,7 @@ static int test_rshift_common(int i, int use_rshift1, int alias)
         r_limbs = LIMBSOF(ex_rshift_num2_limb) + 2;
         ex_words = ex_rshift_num2_limb;
         check_limbs = LIMBSOF(ex_rshift_num2_limb);
-        shift = OSSL_FN_BYTES * 8;
+        shift = OSSL_FN_BITS;
         break;
     case 6:
         a_words = num8;
@@ -1307,7 +1306,7 @@ static int test_rshift_common(int i, int use_rshift1, int alias)
         r_limbs = LIMBSOF(num2) + 2;
         ex_words = ex_rshift_zero;
         check_limbs = LIMBSOF(num2);
-        shift = OSSL_FN_BYTES * 8 * (LIMBSOF(num2) + 1);
+        shift = OSSL_FN_BITS * (LIMBSOF(num2) + 1);
         break;
     case 8:
         /* Exact-fit destination (no padding) with a non-zero shift. */
