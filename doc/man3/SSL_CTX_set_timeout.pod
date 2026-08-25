@@ -14,8 +14,8 @@ SSL_CTX_set_timeout, SSL_CTX_get_timeout - manipulate timeout values for session
 =head1 DESCRIPTION
 
 SSL_CTX_set_timeout() sets the timeout for newly created sessions for
-B<ctx> to B<t>. The timeout value B<t> must be given in seconds. A negative
-value for B<t> selects an unlimited timeout: sessions then never expire and
+I<ctx> to I<t>. The timeout value B<t> must be given in seconds. A negative
+value for I<t> selects an unlimited timeout: sessions then never expire and
 can be resumed indefinitely.
 
 SSL_CTX_get_timeout() returns the currently set timeout value for B<ctx>,
