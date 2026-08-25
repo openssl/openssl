@@ -195,6 +195,7 @@ static int test_cmp_calc_protection_pbmac(void)
  * a valid ASN1_STRING * and dereferenced 0xff, crashing with a near-NULL
  * access.  The fixed code must reject the malformed parameter and return NULL.
  */
+#if 1
 static int test_cmp_calc_protection_pbmac_bad_alg_param(void)
 {
     unsigned char sec_insta[] = { 'i', 'n', 's', 't', 'a' };
@@ -217,6 +218,7 @@ static int test_cmp_calc_protection_pbmac_bad_alg_param(void)
     EXECUTE_TEST(execute_calc_protection_fails_test, tear_down);
     return result;
 }
+#endif
 static int execute_MSG_protect_test(CMP_PROTECT_TEST_FIXTURE *fixture)
 {
     return TEST_int_eq(fixture->expected,
