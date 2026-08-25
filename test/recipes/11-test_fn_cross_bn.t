@@ -7,7 +7,7 @@
 # https://www.openssl.org/source/license.html
 
 use strict;
-use OpenSSL::Test;              # get 'plan'
+use OpenSSL::Test;
 use OpenSSL::Test::Simple;
 
 setup("test_fn_cross_bn");
