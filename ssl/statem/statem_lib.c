@@ -732,15 +732,36 @@ MSG_PROCESS_RETURN tls_process_key_update(SSL_CONNECTION *s, PACKET *pkt)
     }
 
     /*
+     * Rate-limit KeyUpdates from the peer to bound the key derivations it can
+     * force on us: one arriving within KEY_UPDATE_MIN_RECV_INTERVAL of the
+     * last accepted KeyUpdate terminates the connection. A KeyUpdate that
+     * answers our own outstanding update_requested is exempt and does not
+     * update the timestamp; the flag also covers a KeyUpdate that crossed our
+     * request in flight (RFC 9846 section 4.7.3).
+     */
+    if (s->key_update_request_pending) {
+        s->key_update_request_pending = 0;
+    } else {
+        OSSL_TIME now = ossl_time_now();
+
+        if (ossl_time_compare(now, s->last_key_update_recv_time) >= 0
+            && ossl_time_compare(ossl_time_subtract(now,
+                                     s->last_key_update_recv_time),
+                   ossl_ms2time(KEY_UPDATE_MIN_RECV_INTERVAL))
+                < 0) {
+            SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_TOO_MANY_KEY_UPDATES);
+            return MSG_PROCESS_ERROR;
+        }
+        s->last_key_update_recv_time = now;
+    }
+
+    /*
      * If we get a request for us to update our sending keys too then, we need
      * to additionally send a KeyUpdate message. However that message should
      * not also request an update (otherwise we get into an infinite loop).
      */
     if (updatetype == SSL_KEY_UPDATE_REQUESTED)
         s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
-
-    /* Any KeyUpdate from the peer releases our outstanding update request */
-    s->key_update_request_pending = 0;
 
     if (!tls13_update_key(s, 0)) {
         /* SSLfatal() already called */
