@@ -1,0 +1,78 @@
+/*
+ * Copyright 2025 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+/**
+ * @file Static OSSL_FN constant storage declarations.
+ *
+ * These declarations pair with OSSL_FN_STATIC_DEFINE in corresponding
+ * crypto/fn/fn_*_consts.c files.  The unions give fixed numerical
+ * constants (mathematical constants, group parameters) an OSSL_FN
+ * backing in .rodata.
+ */
+
+#ifndef OPENSSL_FN_CONSTANTS_H
+#define OPENSSL_FN_CONSTANTS_H
+#pragma once
+
+#include "crypto/fn_intern.h"
+
+/*
+ * 1 / sqrt(2) * 2^256, rounded up.
+ */
+OSSL_FN_STATIC_DECLARE(inv_sqrt_2, OSSL_FN_LIMBS_N(256));
+
+/* The literal 2, used as a small DH generator in some groups */
+OSSL_FN_STATIC_DECLARE(const_2, 1);
+
+/* DH, FFDHE, and MODP group parameters (from RFCs 3526 and 5114) */
+OSSL_FN_STATIC_DECLARE(modp_1536_p, OSSL_FN_LIMBS_N(1536));
+OSSL_FN_STATIC_DECLARE(modp_1536_q, OSSL_FN_LIMBS_N(1536));
+OSSL_FN_STATIC_DECLARE(modp_2048_p, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(modp_2048_q, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(modp_3072_p, OSSL_FN_LIMBS_N(3072));
+OSSL_FN_STATIC_DECLARE(modp_3072_q, OSSL_FN_LIMBS_N(3072));
+OSSL_FN_STATIC_DECLARE(modp_4096_p, OSSL_FN_LIMBS_N(4096));
+OSSL_FN_STATIC_DECLARE(modp_4096_q, OSSL_FN_LIMBS_N(4096));
+OSSL_FN_STATIC_DECLARE(modp_6144_p, OSSL_FN_LIMBS_N(6144));
+OSSL_FN_STATIC_DECLARE(modp_6144_q, OSSL_FN_LIMBS_N(6144));
+OSSL_FN_STATIC_DECLARE(modp_8192_p, OSSL_FN_LIMBS_N(8192));
+OSSL_FN_STATIC_DECLARE(modp_8192_q, OSSL_FN_LIMBS_N(8192));
+OSSL_FN_STATIC_DECLARE(dh1024_160_p, OSSL_FN_LIMBS_N(1024));
+OSSL_FN_STATIC_DECLARE(dh1024_160_q, OSSL_FN_LIMBS_N(160));
+OSSL_FN_STATIC_DECLARE(dh1024_160_g, OSSL_FN_LIMBS_N(1024));
+OSSL_FN_STATIC_DECLARE(dh2048_224_p, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(dh2048_224_q, OSSL_FN_LIMBS_N(224));
+OSSL_FN_STATIC_DECLARE(dh2048_224_g, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(dh2048_256_p, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(dh2048_256_q, OSSL_FN_LIMBS_N(256));
+OSSL_FN_STATIC_DECLARE(dh2048_256_g, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(ffdhe2048_p, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(ffdhe2048_q, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(ffdhe3072_p, OSSL_FN_LIMBS_N(3072));
+OSSL_FN_STATIC_DECLARE(ffdhe3072_q, OSSL_FN_LIMBS_N(3072));
+OSSL_FN_STATIC_DECLARE(ffdhe4096_p, OSSL_FN_LIMBS_N(4096));
+OSSL_FN_STATIC_DECLARE(ffdhe4096_q, OSSL_FN_LIMBS_N(4096));
+OSSL_FN_STATIC_DECLARE(ffdhe6144_p, OSSL_FN_LIMBS_N(6144));
+OSSL_FN_STATIC_DECLARE(ffdhe6144_q, OSSL_FN_LIMBS_N(6144));
+OSSL_FN_STATIC_DECLARE(ffdhe8192_p, OSSL_FN_LIMBS_N(8192));
+OSSL_FN_STATIC_DECLARE(ffdhe8192_q, OSSL_FN_LIMBS_N(8192));
+
+/* SRP group primes and generators */
+OSSL_FN_STATIC_DECLARE(bn_group_1024, OSSL_FN_LIMBS_N(1024));
+OSSL_FN_STATIC_DECLARE(bn_group_1536, OSSL_FN_LIMBS_N(1536));
+OSSL_FN_STATIC_DECLARE(bn_group_2048, OSSL_FN_LIMBS_N(2048));
+OSSL_FN_STATIC_DECLARE(bn_group_3072, OSSL_FN_LIMBS_N(3072));
+OSSL_FN_STATIC_DECLARE(bn_group_4096, OSSL_FN_LIMBS_N(4096));
+OSSL_FN_STATIC_DECLARE(bn_group_6144, OSSL_FN_LIMBS_N(6144));
+OSSL_FN_STATIC_DECLARE(bn_group_8192, OSSL_FN_LIMBS_N(8192));
+OSSL_FN_STATIC_DECLARE(bn_generator_19, 1);
+OSSL_FN_STATIC_DECLARE(bn_generator_5, 1);
+OSSL_FN_STATIC_DECLARE(bn_generator_2, 1);
+
+#endif /* OPENSSL_FN_CONSTANTS_H */
