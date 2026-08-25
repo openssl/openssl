@@ -1002,8 +1002,43 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         return 0;
 
     /*
-     * Size the arena for the whole CRT sequence: the two mod_exp temporary
-     * sets dominate, plus scratch for the recombination values.
+     * Size the arena for the whole CRT sequence.  The OSSL_FN CRT body
+     * (rsa_ossl_fn_rsa_mod_exp) holds a single frame for the whole
+     * computation, within which it does, in sequence:
+     *
+     *   - four scratch OSSL_FNs from the arena (r1, m1, vrfy sized like
+     *     the modulus n, and t sized twice that for the full-width
+     *     products), and
+     *   - two modular exponentiations (I^dmp1 mod p and I^dmq1 mod q),
+     *     whose temporary storage is sized by
+     *     OSSL_FN_mod_exp_mont_ctx_size() from the result, base,
+     *     exponent, and modulus widths.  These run one after another, so
+     *     their arenas accumulate.
+     *
+     * The mod_exp sizing calls below use the actual exponent and modulus
+     * operands (dmp1/p, dmq1/q), so the estimate tracks the real key
+     * sizes.  The trailing OSSL_FN_CTX_size() term covers the CRT scratch
+     * and recombination (OSSL_FN_mod / mod_sub / mod_mul / mul / add).
+     *
+     * The limb budget 8*nl+4 (nl = modulus limbs) is sized from the four
+     * scratch numbers the CRT body draws from the arena: r1, m1, vrfy at
+     * nl limbs each and t at 2*nl for the full-width products, plus the
+     * transient recombination temporaries, with a small constant margin.
+     * The number-header budget (24) covers those four plus the per-call
+     * temporaries the mod_exp engine allocates inside the same arena; the
+     * frame budget (8) covers the body's own frame plus the nested frames
+     * the operations open.  All three budgets are measured against
+     * OSSL_FN_CTX_peak_usage() during development (see the
+     * OSSL_RSA_FN_CTX_DEBUG instrumentation below): at 2048-bit keys the
+     * observed peak is 4 frames, 24 numbers, ~242 limbs, so these budgets
+     * hold with modest margin.  The multi-prime loop (when present)
+     * reuses the same scratch numbers and adds at most one more
+     * exponentiation per extra prime; the margin absorbs that for the
+     * supported prime counts.
+     *
+     * This is an estimate, not a per-step composition; the limb term is
+     * derived from the operand widths as shown, the frame/number budgets
+     * from the measured peak.
      */
     fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
                   bn_get_ossl_fn(rsa->dmp1),
@@ -1011,7 +1046,7 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         + OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
             bn_get_ossl_fn(rsa->dmq1),
             bn_get_ossl_fn(rsa->q), NULL)
-        + OSSL_FN_CTX_size(4, 8, 8 * nl + 4);
+        + OSSL_FN_CTX_size(8, 24, 8 * nl + 4);
     if (fn_size == 0)
         goto err;
 
@@ -1020,6 +1055,19 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         goto err;
 
     ret = rsa->meth->ossl_fn_rsa_mod_exp(fn_r0, fn_I, rsa, fn_ctx);
+
+#ifdef BN_DEBUG
+    /* Development telemetry: report actual peak arena use vs the estimate. */
+    {
+        size_t pk_frames, pk_numbers, pk_limbs;
+
+        OSSL_FN_CTX_peak_usage(fn_ctx, &pk_frames, &pk_numbers, &pk_limbs);
+        fprintf(stderr,
+            "DEBUG[%s]: estimate=%zu peak_frames=%zu "
+            "peak_numbers=%zu peak_limbs=%zu\n",
+            OPENSSL_FUNC, fn_size, pk_frames, pk_numbers, pk_limbs);
+    }
+#endif
 
     if (ret) {
         fn_bits = (int)OSSL_FN_num_bits(fn_r0);
