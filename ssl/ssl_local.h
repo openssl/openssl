@@ -1857,6 +1857,8 @@ struct ssl_connection_st {
     int key_update;
     /* Time of the last accepted SSL_key_update() call */
     OSSL_TIME last_key_update_time;
+    /* An update_requested KeyUpdate we sent awaits the peer's KeyUpdate */
+    int key_update_request_pending;
     /* Post-handshake authentication state */
     SSL_PHA_STATE post_handshake_auth;
     int pha_enabled;
