@@ -1060,8 +1060,8 @@ err:
 /*-
  * Focused tests for ossl_fn_check_prime() / ossl_fn_check_generated_prime()
  * and the underlying ossl_fn_miller_rabin_is_prime().  Small primes and
- * composites are checked by verdict; the arena is sized per the Miller-Rabin
- * sizing helper, which also verifies that the estimate suffices.
+ * composites are checked by verdict; the arena is sized generously and the
+ * peak usage is reported as a note for future right-sizing.
  */
 
 /* A set of small primes and composites, as single-limb words. */
@@ -1094,10 +1094,11 @@ static int test_check_prime(int idx)
     OSSL_FN *w = NULL;
     OSSL_FN_CTX *ctx = NULL;
     const struct prime_case_st *c = &prime_cases[idx];
+    size_t peak_frames, peak_numbers, peak_limbs;
 
+    /* Generous arena; the candidate is a single limb but MR needs scratch. */
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 256)))
         goto err;
     if (!TEST_true(OSSL_FN_set_word(w, c->w)))
         goto err;
@@ -1105,6 +1106,10 @@ static int test_check_prime(int idx)
     if (!TEST_int_eq(ossl_fn_check_prime(w, 0, ctx, 1, NULL, NULL),
             c->is_prime))
         goto err;
+
+    OSSL_FN_CTX_peak_usage(ctx, &peak_frames, &peak_numbers, &peak_limbs);
+    TEST_note("peak usage: frames=%zu numbers=%zu limbs=%zu", peak_frames,
+        peak_numbers, peak_limbs);
 
     ret = 1;
 err:
@@ -1121,8 +1126,7 @@ static int test_check_generated_prime(int idx)
     const struct prime_case_st *c = &prime_cases[idx];
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 256)))
         goto err;
     if (!TEST_true(OSSL_FN_set_word(w, c->w)))
         goto err;
@@ -1136,6 +1140,74 @@ static int test_check_generated_prime(int idx)
 err:
     OSSL_FN_CTX_free(ctx);
     OSSL_FN_free(w);
+    return ret;
+}
+
+/*-
+ * Cross-check ossl_fn_check_prime() against BN_check_prime() on multi-limb
+ * values: the two must agree on the verdict for the same number.
+ */
+static int test_check_prime_cross_bn(void)
+{
+    int ret = 0;
+    OSSL_FN *w = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    BIGNUM *bw = NULL;
+    BN_CTX *bctx = NULL;
+    size_t i;
+    /* Multi-limb candidates: primes and composites wider than one limb. */
+    const OSSL_FN_ULONG mask = (OSSL_FN_ULONG)-1;
+    const struct {
+        OSSL_FN_ULONG words[4];
+        size_t limbs;
+    } wide_cases[] = {
+        /* 2^127 - 1, a Mersenne prime */
+        { { mask, mask, mask, mask >> 1 }, 4 },
+        /* 2^127 - 3, a wide odd composite */
+        { { mask - 2, mask, mask, mask >> 1 }, 4 },
+        /* 2^89 - 1, a Mersenne prime, in 2 limbs on 64-bit, 3 on 32-bit */
+        { { mask, mask >> (OSSL_FN_BITS - 25), 0, 0 }, 2 },
+        /* A wide odd composite */
+        { { mask - 57, mask, 0, 0 }, 2 },
+    };
+
+    if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 512))
+        || !TEST_ptr(bctx = BN_CTX_new())
+        || !TEST_ptr(bw = BN_new())
+        || !TEST_ptr(w = OSSL_FN_new_limbs(4)))
+        goto err;
+
+    for (i = 0; i < OSSL_NELEM(wide_cases); i++) {
+        int fn_verdict, bn_verdict;
+
+        if (!TEST_true(ossl_fn_set_words(w, wide_cases[i].words,
+                wide_cases[i].limbs)))
+            goto err;
+        /* Build the same value as a BIGNUM, little-endian limbs. */
+        if (!TEST_true(BN_set_word(bw, 0)))
+            goto err;
+        {
+            size_t l;
+
+            for (l = wide_cases[i].limbs; l-- > 0;) {
+                if (!TEST_true(BN_lshift(bw, bw, OSSL_FN_BITS))
+                    || !TEST_true(BN_add_word(bw, wide_cases[i].words[l])))
+                    goto err;
+            }
+        }
+
+        fn_verdict = ossl_fn_check_prime(w, 0, ctx, 1, NULL, NULL);
+        bn_verdict = BN_check_prime(bw, bctx, NULL);
+        if (!TEST_int_eq(fn_verdict, bn_verdict))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(w);
+    BN_free(bw);
+    BN_CTX_free(bctx);
     return ret;
 }
 
@@ -1154,9 +1226,7 @@ static int test_generate_prime(void)
 
     if (!TEST_ptr(p = OSSL_FN_new_limbs(2))
         || !TEST_ptr(q = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         OSSL_FN_generate_prime_ctx_size(p, bits, 1, p,
-                             NULL))))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 24, 48, 1024)))
         goto err;
 
     /* Plain generation: exact width, odd, and prime. */
@@ -1225,8 +1295,7 @@ static int test_miller_rabin_enhanced(void)
     int status = -1;
 
     if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
-                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 16, 32, 256)))
         goto err;
 
     /* A prime reports BN_PRIMETEST_PROBABLY_PRIME. */
@@ -5822,6 +5891,222 @@ err:
     return ret;
 }
 
+/*
+ * X9.31 parameter pair generation.  The shapes are the 512+128s rule,
+ * plus the two bit-shaping rules that make a valid pair.
+ */
+static int test_x931_generate_Xpq(void)
+{
+    int ret = 0;
+    OSSL_FN *Xp = NULL, *Xq = NULL, *diff = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    /* 1024 bits total = 512 bits per parameter */
+    size_t limbs = 512 / OSSL_FN_BITS;
+    size_t size;
+
+    if (!TEST_ptr(Xp = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(Xq = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(diff = OSSL_FN_new_limbs(limbs)))
+        goto err;
+
+    if (!TEST_size_t_eq(OSSL_FN_X931_generate_Xpq_ctx_size(NULL), 0)
+        || !TEST_size_t_gt(size = OSSL_FN_X931_generate_Xpq_ctx_size(Xp), 0)
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
+        goto err;
+
+    /* Invalid shapes are rejected. */
+    if (!TEST_false(OSSL_FN_X931_generate_Xpq(Xp, Xq, 768, ctx, NULL))
+        || !TEST_false(OSSL_FN_X931_generate_Xpq(Xp, Xq, 1025, ctx, NULL)))
+        goto err;
+    ERR_clear_error();
+
+    if (!TEST_true(OSSL_FN_X931_generate_Xpq(Xp, Xq, 1024, ctx, NULL)))
+        goto err;
+
+    /* Each parameter must have the top two bits set. */
+    if (!TEST_true(OSSL_FN_is_bit_set(Xp, 511))
+        || !TEST_true(OSSL_FN_is_bit_set(Xp, 510))
+        || !TEST_true(OSSL_FN_is_bit_set(Xq, 511))
+        || !TEST_true(OSSL_FN_is_bit_set(Xq, 510)))
+        goto err;
+
+    /* |Xp - Xq| > 2^(512 - 100) */
+    if (OSSL_FN_cmp(Xp, Xq) >= 0) {
+        if (!TEST_true(OSSL_FN_sub(diff, Xp, Xq)))
+            goto err;
+    } else {
+        if (!TEST_true(OSSL_FN_sub(diff, Xq, Xp)))
+            goto err;
+    }
+    if (!TEST_size_t_gt(OSSL_FN_num_bits(diff), 512 - 100))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(diff);
+    OSSL_FN_free(Xp);
+    OSSL_FN_free(Xq);
+    return ret;
+}
+
+/*
+ * X9.31 prime derivation.  The CRT construction guarantees p = 1 (mod p1)
+ * and p = -1 (mod p2); both are checked explicitly.  p must be prime, and
+ * the returned p1 / p2 are the derived auxiliary primes.
+ */
+static int test_x931_derive_prime(void)
+{
+    int ret = 0;
+    OSSL_FN *p = NULL, *p1 = NULL, *p2 = NULL;
+    OSSL_FN *Xp = NULL, *Xp1 = NULL, *Xp2 = NULL;
+    OSSL_FN *e = NULL, *even_e = NULL, *r = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t size = 0, peak_frames, peak_numbers, peak_limbs;
+
+    if (!TEST_ptr(p = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(p1 = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(p2 = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(Xp = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(Xp1 = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(Xp2 = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(e = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(even_e = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(1)))
+        goto err;
+
+    /*
+     * Small auxiliary primes keep Yp0 + k*p1*p2 comfortably inside one
+     * limb even on 32-bit builds.
+     */
+    if (!TEST_true(OSSL_FN_set_word(Xp, 0xBEEFUL))
+        || !TEST_true(OSSL_FN_set_word(Xp1, 1021))
+        || !TEST_true(OSSL_FN_set_word(Xp2, 1031))
+        || !TEST_true(OSSL_FN_set_word(e, 65537))
+        || !TEST_true(OSSL_FN_set_word(even_e, 2)))
+        goto err;
+
+    size = OSSL_FN_X931_derive_prime_ctx_size(p, p1, p2, Xp, Xp1, Xp2, e);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
+        goto err;
+
+    /* Even exponents are rejected. */
+    if (!TEST_false(OSSL_FN_X931_derive_prime(p, p1, p2, Xp, Xp1, Xp2,
+            even_e, ctx, NULL, NULL)))
+        goto err;
+    ERR_clear_error();
+
+    if (!TEST_true(OSSL_FN_X931_derive_prime(p, p1, p2, Xp, Xp1, Xp2, e,
+            ctx, NULL, NULL)))
+        goto err;
+
+    /* The derived prime passes the primality test. */
+    if (!TEST_int_eq(ossl_fn_check_prime(p, 0, ctx, 1, NULL, NULL), 1))
+        goto err;
+
+    /* CRT congruences: p == 1 (mod p1), p == -1 (mod p2). */
+    if (!TEST_true(OSSL_FN_div(NULL, r, p, p1, ctx))
+        || !TEST_true(OSSL_FN_is_word(r, 1)))
+        goto err;
+    if (!TEST_true(OSSL_FN_div(NULL, r, p, p2, ctx)))
+        goto err;
+    {
+        OSSL_FN *p2m1 = OSSL_FN_new_limbs(1);
+
+        if (!TEST_ptr(p2m1)
+            || !TEST_true(OSSL_FN_copy(p2m1, p2) != NULL)
+            || !TEST_true(OSSL_FN_sub_word(p2m1, 1))
+            || !TEST_int_eq(OSSL_FN_cmp(r, p2m1), 0)) {
+            OSSL_FN_free(p2m1);
+            goto err;
+        }
+        OSSL_FN_free(p2m1);
+    }
+
+    /* The returned p1 / p2 are themselves prime. */
+    if (!TEST_int_eq(ossl_fn_check_prime(p1, 0, ctx, 1, NULL, NULL), 1)
+        || !TEST_int_eq(ossl_fn_check_prime(p2, 0, ctx, 1, NULL, NULL), 1))
+        goto err;
+
+    /* The arena estimate is at least the peak that was actually used. */
+    OSSL_FN_CTX_peak_usage(ctx, &peak_frames, &peak_numbers, &peak_limbs);
+    if (!TEST_size_t_ge(size,
+            OSSL_FN_CTX_size(peak_frames, peak_numbers, peak_limbs)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(r);
+    OSSL_FN_free(even_e);
+    OSSL_FN_free(e);
+    OSSL_FN_free(Xp2);
+    OSSL_FN_free(Xp1);
+    OSSL_FN_free(Xp);
+    OSSL_FN_free(p2);
+    OSSL_FN_free(p1);
+    OSSL_FN_free(p);
+    return ret;
+}
+
+/*
+ * X9.31 prime generation with random Xp1 / Xp2, over small operands.
+ */
+static int test_x931_generate_prime(void)
+{
+    int ret = 0;
+    OSSL_FN *p = NULL, *p1 = NULL, *p2 = NULL, *Xp1 = NULL, *Xp2 = NULL;
+    OSSL_FN *Xp = NULL, *e = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t size = 0;
+    /* Xp1 / Xp2 are drawn as 101-bit numbers; the buffers must fit them. */
+    size_t limbs = (101 + OSSL_FN_BITS - 1) / OSSL_FN_BITS;
+
+    if (!TEST_ptr(p = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(p1 = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(p2 = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(Xp1 = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(Xp2 = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(Xp = OSSL_FN_new_limbs(limbs))
+        || !TEST_ptr(e = OSSL_FN_new_limbs(1)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_set_word(Xp, 0xDEADBEEFUL))
+        || !TEST_true(OSSL_FN_set_word(e, 65537)))
+        goto err;
+
+    size = OSSL_FN_X931_generate_prime_ctx_size(p, p1, p2, Xp, e);
+    if (!TEST_size_t_ne(size, 0)
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL, size)))
+        goto err;
+
+    if (!TEST_true(OSSL_FN_X931_generate_prime(p, p1, p2, Xp1, Xp2, Xp, e,
+            ctx, NULL, NULL)))
+        goto err;
+
+    /* The generated prime passes the primality test. */
+    if (!TEST_int_eq(ossl_fn_check_prime(p, 0, ctx, 1, NULL, NULL), 1))
+        goto err;
+
+    /* Xp1 / Xp2 were drawn as 101-bit numbers with the top bit set. */
+    if (!TEST_size_t_eq(OSSL_FN_num_bits(Xp1), 101)
+        || !TEST_size_t_eq(OSSL_FN_num_bits(Xp2), 101))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(e);
+    OSSL_FN_free(Xp);
+    OSSL_FN_free(Xp2);
+    OSSL_FN_free(Xp1);
+    OSSL_FN_free(p2);
+    OSSL_FN_free(p1);
+    OSSL_FN_free(p);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5837,6 +6122,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_check_prime, OSSL_NELEM(prime_cases));
     ADD_ALL_TESTS(test_check_generated_prime, OSSL_NELEM(prime_cases));
     ADD_TEST(test_miller_rabin_enhanced);
+    ADD_TEST(test_check_prime_cross_bn);
     ADD_TEST(test_generate_prime);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
@@ -5907,6 +6193,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_kronecker_legendre_wide, OSSL_NELEM(kronecker_wide_cases));
     ADD_ALL_TESTS(test_mod_sqrt, OSSL_NELEM(mod_sqrt_primes));
     ADD_TEST(test_mod_sqrt_result_truncation);
+    ADD_TEST(test_x931_generate_Xpq);
+    ADD_TEST(test_x931_derive_prime);
+    ADD_TEST(test_x931_generate_prime);
 
     return 1;
 }

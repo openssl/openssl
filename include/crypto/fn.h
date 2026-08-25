@@ -1568,6 +1568,124 @@ int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
  */
 size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
     int safe, const OSSL_FN *add, const OSSL_FN *rem);
+
+/**
+ * Generate a pair of X9.31 parameters Xp and Xq for prime generation.
+ * On entry, @p nbits is the sum of the bit lengths of both parameters;
+ * each must be of the form 512+128s for s = 0, 1, ...
+ *
+ * @param[out]          Xp      The first parameter
+ * @param[out]          Xq      The second parameter
+ * @param[in]           nbits   The total bit length (sum of both)
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_generate_Xpq_ctx_size()
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
+    OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+
+/**
+ * Derive an X9.31 prime @p p from the parameters @p Xp1, @p Xp2 and @p Xp.
+ * When @p p1 or @p p2 is NULL, the corresponding intermediate prime is
+ * derived in an arena temporary and discarded.  Provided operands must
+ * carry the main width (@p Xp's width): @p Xp1, @p Xp2, and any non-NULL
+ * @p p1 / @p p2 all do.
+ *
+ * @param[out]          p       The derived prime
+ * @param[out]          p1      The returned intermediate prime, or NULL
+ * @param[out]          p2      The returned intermediate prime, or NULL
+ * @param[in]           Xp      The starting parameter
+ * @param[in]           Xp1     The first parameter for p1
+ * @param[in]           Xp2     The second parameter for p2
+ * @param[in]           e       The exponent; must be odd
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_derive_prime_ctx_size()
+ * @param[in]           cb      Progress callback, or NULL
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ *
+ * @note The embedded primality tests branch on public sizes and public
+ *       round counts only; the candidate values are the secret the caller
+ *       asked for.
+ */
+int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
+    const OSSL_FN *Xp, const OSSL_FN *Xp1, const OSSL_FN *Xp2,
+    const OSSL_FN *e, OSSL_FN_CTX *ctx, BN_GENCB *cb,
+    OSSL_LIB_CTX *libctx);
+
+/**
+ * Generate an X9.31 prime @p p using random Xp1 and Xp2 parameters, then
+ * defer to OSSL_FN_X931_derive_prime().  Any non-NULL @p p1, @p p2, @p Xp1
+ * and @p Xp2 receive the intermediate values.  All operands carry @p Xp's
+ * width, which must be at least 101 bits wide for the parameter draws.
+ *
+ * @param[out]          p       The derived prime
+ * @param[out]          p1      The returned intermediate prime, or NULL
+ * @param[out]          p2      The second returned intermediate prime, or
+ *                              NULL
+ * @param[in,out]       Xp1     The first random parameter, or NULL
+ * @param[in,out]       Xp2     The second random parameter, or NULL
+ * @param[in]           Xp      The starting parameter from
+ *                              OSSL_FN_X931_generate_Xpq()
+ * @param[in]           e       The exponent; must be odd
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_generate_prime_ctx_size()
+ * @param[in]           cb      Progress callback, or NULL
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
+    OSSL_FN *Xp1, OSSL_FN *Xp2, const OSSL_FN *Xp, const OSSL_FN *e,
+    OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_Xpq()
+ * needs.
+ *
+ * @param[in]           Xp      The first parameter to generate
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_prime()
+ * needs.
+ *
+ * @param[in]           p       The OSSL_FN to receive the derived prime
+ * @param[in]           p1      The returned intermediate prime, or NULL
+ * @param[in]           p2      The second returned intermediate prime, or
+ *                              NULL
+ * @param[in]           Xp      The starting parameter
+ * @param[in]           e       The exponent
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
+    const OSSL_FN *e);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_derive_prime() needs.
+ *
+ * @param[in]           p       The OSSL_FN to receive the derived prime
+ * @param[in]           p1      The returned intermediate prime, or NULL
+ * @param[in]           p2      The second returned intermediate prime, or
+ *                              NULL
+ * @param[in]           Xp      The starting parameter
+ * @param[in]           Xp1     The first parameter for p1
+ * @param[in]           Xp2     The second parameter for p2
+ * @param[in]           e       The exponent
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by
+ * OSSL_FN_X931_derive_prime().
+ */
+size_t OSSL_FN_X931_derive_prime_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
+    const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e);
 #ifdef __cplusplus
 }
 #endif
