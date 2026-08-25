@@ -1141,6 +1141,80 @@ err:
 }
 
 /*-
+ * Focused tests for OSSL_FN_generate_prime(): the result must have the
+ * requested width, be odd, and pass ossl_fn_check_prime(); the safe variant
+ * must additionally have a prime (p-1)/2; the add/rem variant must satisfy
+ * the residue condition.  Small sizes keep the Miller-Rabin rounds cheap.
+ */
+static int test_generate_prime(void)
+{
+    int ret = 0;
+    OSSL_FN *p = NULL, *q = NULL;
+    OSSL_FN *add = NULL, *rem = NULL, *r = NULL, *small = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    const size_t bits = 24;
+
+    if (!TEST_ptr(p = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(q = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_generate_prime_ctx_size(p, bits, 1, p,
+                             NULL))))
+        goto err;
+
+    /* Plain generation: exact width, odd, and prime. */
+    if (!TEST_true(OSSL_FN_generate_prime(p, bits, 0, NULL, NULL, NULL,
+            ctx, NULL))
+        || !TEST_size_t_eq(OSSL_FN_num_bits(p), bits)
+        || !TEST_true(OSSL_FN_is_odd(p))
+        || !TEST_int_eq(ossl_fn_check_prime(p, 0, ctx, 1, NULL, NULL), 1))
+        goto err;
+
+    /* Safe generation: (p-1)/2 must be prime too. */
+    if (!TEST_true(OSSL_FN_generate_prime(p, bits, 1, NULL, NULL, NULL,
+            ctx, NULL))
+        || !TEST_size_t_eq(OSSL_FN_num_bits(p), bits)
+        || !TEST_true(OSSL_FN_rshift1(q, p))
+        || !TEST_int_eq(ossl_fn_check_prime(q, 0, ctx, 1, NULL, NULL), 1))
+        goto err;
+
+    /* add/rem generation: exact width, and p % add == rem. */
+    if (!TEST_ptr(add = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(rem = OSSL_FN_new_limbs(1))
+        || !TEST_ptr(r = OSSL_FN_new_limbs(2))
+        || !TEST_true(OSSL_FN_set_word(add, 120))
+        || !TEST_true(OSSL_FN_set_word(rem, 23))
+        || !TEST_true(OSSL_FN_generate_prime(p, bits, 0, add, rem,
+            NULL, ctx, NULL))
+        || !TEST_size_t_eq(OSSL_FN_num_bits(p), bits)
+        || !TEST_true(OSSL_FN_div(NULL, r, p, add, ctx))
+        || !TEST_uint64_t_eq(OSSL_FN_get_word(r), 23)
+        || !TEST_int_eq(ossl_fn_check_prime(p, 0, ctx, 1, NULL, NULL), 1))
+        goto err;
+
+    /* bits < 2 is an error. */
+    if (!TEST_false(OSSL_FN_generate_prime(p, 1, 0, NULL, NULL, NULL,
+            ctx, NULL)))
+        goto err;
+
+    /* A destination without room for |bits| bits is an error. */
+    if (!TEST_ptr(small = OSSL_FN_new_limbs(0))
+        || !TEST_false(OSSL_FN_generate_prime(small, bits, 0, NULL, NULL,
+            NULL, ctx, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(small);
+    OSSL_FN_free(r);
+    OSSL_FN_free(rem);
+    OSSL_FN_free(add);
+    OSSL_FN_free(q);
+    OSSL_FN_free(p);
+    return ret;
+}
+
+/*-
  * ossl_fn_miller_rabin_is_prime() with the enhanced variant: the status code
  * distinguishes a plain composite from a composite with a small factor.
  */
@@ -5629,6 +5703,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_check_prime, OSSL_NELEM(prime_cases));
     ADD_ALL_TESTS(test_check_generated_prime, OSSL_NELEM(prime_cases));
     ADD_TEST(test_miller_rabin_enhanced);
+    ADD_TEST(test_generate_prime);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
