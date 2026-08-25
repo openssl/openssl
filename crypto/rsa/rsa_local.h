@@ -12,6 +12,7 @@
 
 #include "internal/refcount.h"
 #include "crypto/rsa.h"
+#include "crypto/fn.h"
 
 #define RSA_MAX_PRIME_NUM 5
 
@@ -22,6 +23,7 @@ typedef struct rsa_prime_info_st {
     /* save product of primes prior to this one */
     BIGNUM *pp;
     BN_MONT_CTX *m;
+    OSSL_FN_MONT_CTX *m_fn;
 } RSA_PRIME_INFO;
 
 DECLARE_ASN1_ITEM(RSA_PRIME_INFO)
@@ -91,6 +93,9 @@ struct rsa_st {
     BN_MONT_CTX *_method_mod_n;
     BN_MONT_CTX *_method_mod_p;
     BN_MONT_CTX *_method_mod_q;
+    OSSL_FN_MONT_CTX *_method_mod_fn_n;
+    OSSL_FN_MONT_CTX *_method_mod_fn_p;
+    OSSL_FN_MONT_CTX *_method_mod_fn_q;
     void *blindings_sa;
     CRYPTO_RWLOCK *lock;
 
@@ -142,6 +147,17 @@ struct rsa_meth_st {
     int (*rsa_keygen)(RSA *rsa, int bits, BIGNUM *e, BN_GENCB *cb);
     int (*rsa_multi_prime_keygen)(RSA *rsa, int bits, int primes,
         BIGNUM *e, BN_GENCB *cb);
+    /*
+     * OSSL_FN counterparts of rsa_mod_exp and bn_mod_exp.  These are
+     * internal-only slots: struct rsa_meth_st is defined in this internal
+     * header, so extending it does not touch the public ABI.  They may be
+     * NULL; method functions that have access to the RSA structure choose
+     * between the BIGNUM and OSSL_FN slots according to their needs.
+     */
+    int (*ossl_fn_rsa_mod_exp)(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
+        OSSL_FN_CTX *ctx);
+    int (*ossl_fn_mod_exp)(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
+        const OSSL_FN *m, OSSL_FN_CTX *ctx, OSSL_FN_MONT_CTX *m_ctx);
 };
 
 /* Macro to test if a pkey is for a PSS key */
