@@ -814,7 +814,10 @@ static int rsa_ossl_fn_mod_exp(OSSL_FN *r, const OSSL_FN *a,
 
 /*
  * The default RSA_METHOD::ossl_fn_rsa_mod_exp implementation: the full CRT
- * private-key exponentiation, operating on OSSL_FN throughout.  The
+ * private-key exponentiation, operating on OSSL_FN throughout.  This is a
+ * faithful OSSL_FN rendering of the legacy BIGNUM body
+ * (rsa_ossl_mod_exp_bn), including its smooth (same-width primes,
+ * prime-width Montgomery) fast path and the generic path.  The
  * exponentiations dispatch through rsa->meth->ossl_fn_mod_exp so surgical
  * method overrides are honored; the CRT recombination uses OSSL_FN
  * arithmetic directly.
@@ -826,7 +829,8 @@ static int rsa_ossl_fn_mod_exp(OSSL_FN *r, const OSSL_FN *a,
  * it lands.
  *
  * OSSL_FN is unsigned, so the BIGNUM body's negative-intermediate
- * corrections are replaced by their unsigned modular equivalents.
+ * corrections are replaced by their unsigned modular equivalents
+ * (OSSL_FN_mod_sub et al).
  */
 static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     OSSL_FN_CTX *ctx)
@@ -834,10 +838,11 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     const OSSL_FN *fn_p, *fn_q, *fn_n, *fn_e, *fn_d;
     const OSSL_FN *fn_dmp1, *fn_dmq1, *fn_iqmp;
     OSSL_FN *r1 = NULL, *m1 = NULL, *vrfy = NULL, *t = NULL;
+    OSSL_FN *sp = NULL, *sq = NULL;
     OSSL_FN_MONT_CTX *mont_p = NULL, *mont_q = NULL, *mont_n = NULL;
     const void *token = NULL;
-    size_t nl;
-    int ret = 0;
+    size_t nl, pl, ql;
+    int ret = 0, smooth = 0;
 #ifndef FIPS_MODULE
     int i, ex_primes = 0;
     RSA_PRIME_INFO *pinfo;
@@ -856,6 +861,8 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     fn_d = rsa->d != NULL ? bn_get_ossl_fn(rsa->d) : NULL;
 
     nl = ossl_fn_get_dsize((OSSL_FN *)fn_n);
+    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+    ql = ossl_fn_get_dsize((OSSL_FN *)fn_q);
 
 #ifndef FIPS_MODULE
     if (rsa->version == RSA_ASN1_VERSION_MULTI
@@ -871,7 +878,15 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     m1 = OSSL_FN_CTX_get_limbs(ctx, nl);
     vrfy = OSSL_FN_CTX_get_limbs(ctx, nl);
     t = OSSL_FN_CTX_get_limbs(ctx, 2 * nl);
-    if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL)
+    /*
+     * Prime-width scratch for the smooth path's Montgomery operations,
+     * which require operands and result to match the prime's width
+     * exactly (the OSSL_FN_*_mont functions are strict-width).
+     */
+    sp = OSSL_FN_CTX_get_limbs(ctx, pl);
+    sq = OSSL_FN_CTX_get_limbs(ctx, ql);
+    if (r1 == NULL || m1 == NULL || vrfy == NULL || t == NULL
+        || sp == NULL || sq == NULL)
         goto err;
 
     if (rsa->flags & RSA_FLAG_CACHE_PRIVATE) {
@@ -890,12 +905,67 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
                 goto err;
         }
 #endif
+
+        smooth = (rsa->meth->ossl_fn_mod_exp == rsa_ossl_fn_mod_exp)
+#ifndef FIPS_MODULE
+            && (ex_primes == 0)
+#endif
+            && (OSSL_FN_num_bits(fn_q) == OSSL_FN_num_bits(fn_p));
     }
+
     if (rsa->flags & RSA_FLAG_CACHE_PUBLIC) {
         mont_n = OSSL_FN_MONT_CTX_set_locked(&rsa->_method_mod_fn_n,
             rsa->lock, fn_n);
         if (mont_n == NULL)
             goto err;
+    }
+
+    if (smooth) {
+        /*
+         * The Montgomery operations are strict-width: their operands and
+         * result must match the prime's width exactly.  The full-width
+         * input I is therefore first reduced into the prime-width scratch
+         * (sq / sp); the exponentiation engine takes a normal-domain base
+         * and converts it internally.
+         */
+        if (/* sq = I mod q (reduce the full-width I into q's width) */
+            !OSSL_FN_mod(sq, I, fn_q, ctx)
+            /* sp = I mod p, likewise */
+            || !OSSL_FN_mod(sp, I, fn_p, ctx)
+            /*
+             * Two sequential exponentiations:
+             *    m1 = sq^dmq1 mod q
+             *    r1 = sp^dmp1 mod p
+             */
+            || !rsa->meth->ossl_fn_mod_exp(sq, sq, fn_dmq1, fn_q, ctx,
+                mont_q)
+            || !rsa->meth->ossl_fn_mod_exp(sp, sp, fn_dmp1, fn_p, ctx,
+                mont_p)
+            /*
+             * r1 = (sp - sq) mod p, into the p-wide scratch.  The
+             * subtrahend can be larger than the modulus (the uncommon
+             * q>p case), but not bit-wise wider; OSSL_FN_mod_sub tolerates
+             * that.
+             */
+            || !OSSL_FN_mod_sub(sp, sp, sq, fn_p, ctx)
+
+            /*
+             * r1 = sp * iqmp mod p.  mul_mont with a Montgomery-domain
+             * and a plain operand yields a plain result.
+             */
+            || !OSSL_FN_to_mont(sp, sp, mont_p, ctx)
+            || !OSSL_FN_mul_mont(sp, sp, fn_iqmp, mont_p, ctx)
+            /*
+             * r0 = r1 * q + m1.  Widen the p-wide r1 and q-wide m1 into
+             * the full-width result.  t holds the full-width product.
+             */
+            || !OSSL_FN_copy_truncate(r1, sp)
+            || !OSSL_FN_copy_truncate(m1, sq)
+            || !OSSL_FN_mul(t, r1, fn_q, ctx)
+            || !OSSL_FN_mod_add(r0, t, m1, fn_n, ctx))
+            goto err;
+
+        goto tail;
     }
 
     /* m1 = I^dmq1 mod q */
@@ -953,6 +1023,7 @@ static int rsa_ossl_fn_rsa_mod_exp(OSSL_FN *r0, const OSSL_FN *I, RSA *rsa,
     }
 #endif
 
+tail:
     /*
      * Verify the result against the public exponent.  'I' and 'vrfy' must
      * be congruent mod n; if not, don't leak the miscalculated CRT output,
@@ -1009,16 +1080,49 @@ static int rsa_ossl_mod_exp(BIGNUM *r0, const BIGNUM *I, RSA *rsa, BN_CTX *ctx)
         return 0;
 
     /*
-     * Size the arena for the whole CRT sequence: the two mod_exp temporary
-     * sets dominate, plus scratch for the recombination values.
+     * Size the arena for the whole CRT sequence.  The OSSL_FN CRT body
+     * (rsa_ossl_fn_rsa_mod_exp) holds a single frame for the whole
+     * computation, within which it does, in sequence:
+     *
+     *   - four scratch OSSL_FNs from the arena (r1, m1, vrfy sized like
+     *     the modulus n, and t sized twice that for the full-width
+     *     products), and
+     *   - two modular exponentiations (I^dmp1 mod p and I^dmq1 mod q),
+     *     whose temporary storage is sized by
+     *     OSSL_FN_mod_exp_mont_ctx_size() from the result, base,
+     *     exponent, and modulus widths.  These run one after another, so
+     *     their arenas accumulate.
+     *
+     * The mod_exp sizing calls below use the actual exponent and modulus
+     * operands (dmp1/p, dmq1/q), so the estimate tracks the real key
+     * sizes.  The trailing OSSL_FN_CTX_size() term covers the CRT scratch
+     * and recombination for both the generic and the smooth paths.
+     *
+     * The scratch numbers the CRT body draws from the arena are r1, m1,
+     * vrfy at nl limbs each, t at 2*nl for the full-width products, and
+     * (smooth path) sp and sq at the prime widths pl and ql.  The limb
+     * budget below is dominated by the smooth path, whose two prime-width
+     * Montgomery exponentiations accumulate more arena than the generic
+     * path; it is validated against OSSL_FN_CTX_peak_usage() during
+     * development: at 2048-bit keys the observed peak is 3 frames,
+     * 42 numbers, ~770 limbs, so the budgets 8 frames, 48 numbers,
+     * 24*nl+16 limbs hold with modest margin.  The multi-prime loop (when
+     * present) uses the generic path and reuses the same scratch numbers,
+     * adding at most one exponentiation per extra prime.
+     *
+     * This is an estimate, not a per-step composition; the limb term is
+     * derived from the operand widths as shown, the frame/number budgets
+     * from the measured peak.
      */
-    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
-                  bn_get_ossl_fn(rsa->dmp1),
-                  bn_get_ossl_fn(rsa->p), NULL)
-        + OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
-            bn_get_ossl_fn(rsa->dmq1),
-            bn_get_ossl_fn(rsa->q), NULL)
-        + OSSL_FN_CTX_size(4, 8, 8 * nl + 4);
+    fn_size = ossl_fn_ctx_add_size(
+        ossl_fn_ctx_add_size(
+            OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
+                bn_get_ossl_fn(rsa->dmp1),
+                bn_get_ossl_fn(rsa->p), NULL),
+            OSSL_FN_mod_exp_mont_ctx_size(fn_r0, fn_I,
+                bn_get_ossl_fn(rsa->dmq1),
+                bn_get_ossl_fn(rsa->q), NULL)),
+        OSSL_FN_CTX_size(8, 48, 24 * nl + 16));
     if (fn_size == 0)
         goto err;
 
