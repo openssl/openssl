@@ -1155,7 +1155,9 @@ static int test_generate_prime(void)
 
     if (!TEST_ptr(p = OSSL_FN_new_limbs(2))
         || !TEST_ptr(q = OSSL_FN_new_limbs(2))
-        || !TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 24, 48, 1024)))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         OSSL_FN_generate_prime_ctx_size(p, bits, 1, p,
+                             NULL))))
         goto err;
 
     /* Plain generation: exact width, odd, and prime. */
@@ -5701,6 +5703,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_check_prime, OSSL_NELEM(prime_cases));
     ADD_ALL_TESTS(test_check_generated_prime, OSSL_NELEM(prime_cases));
     ADD_TEST(test_miller_rabin_enhanced);
+    ADD_TEST(test_generate_prime);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));

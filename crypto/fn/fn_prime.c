@@ -638,3 +638,49 @@ err:
         OSSL_FN_CTX_end(ctx, token);
     return found;
 }
+
+/*
+ * Estimate the arena payload for OSSL_FN_generate_prime().  The frame
+ * holds two numbers of one limb more than |bits| needs; each generation
+ * attempt adds the residue adjustment when |add| is not NULL, and one or
+ * two primality tests, all run sequentially.
+ */
+size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
+    int safe, const OSSL_FN *add, const OSSL_FN *rem)
+{
+    OSSL_FN *cand;
+    size_t limbs = bits / OSSL_FN_BITS + (bits % OSSL_FN_BITS != 0);
+    size_t scratch, mr, div, sz;
+
+    if (bits < 2 || limbs == 0 || (add == NULL && rem != NULL)
+        || (add != NULL && (size_t)add->dsize < limbs)
+        || (ret != NULL && (size_t)ret->dsize < limbs))
+        return 0;
+
+    /*
+     * Candidates carry one limb of headroom over |bits|.  A real (zeroed)
+     * candidate is needed rather than a width-only model, because the
+     * Miller-Rabin sizing it feeds may inspect operand values; the zero
+     * value takes the conservative branches.
+     */
+    if ((cand = OSSL_FN_new_limbs(limbs + 1)) == NULL)
+        return 0;
+
+    scratch = OSSL_FN_CTX_size(1, 2, 2 * (limbs + 1));
+    mr = ossl_fn_miller_rabin_is_prime_ctx_size(cand);
+    /* probable_prime_dh's own frame (t1) is open while the div runs */
+    div = add != NULL
+        ? ctx_add_size(OSSL_FN_CTX_size(1, 1, limbs + 1),
+              OSSL_FN_div_ctx_size(NULL, cand, cand, add))
+        : 0;
+
+    if (scratch == 0 || mr == 0 || (add != NULL && div == 0)) {
+        sz = 0;
+    } else {
+        /* The one or two primality tests run sequentially, so max. */
+        sz = ctx_add_size(scratch, ctx_max_size(div, mr));
+    }
+
+    OSSL_FN_free(cand);
+    return sz;
+}
