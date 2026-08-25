@@ -228,19 +228,68 @@ static int rsa_match(const void *keydata1, const void *keydata2, int selection)
     return ok;
 }
 
+enum {
+    RSA_IMEXPORT_TYPE_NONE = 0,
+    RSA_IMEXPORT_TYPE_OTHER = 1,
+    RSA_IMEXPORT_TYPE_KEY = 2,
+    RSA_IMEXPORT_TYPE_ALL = RSA_IMEXPORT_TYPE_OTHER | RSA_IMEXPORT_TYPE_KEY,
+    RSA_IMEXPORT_TYPE_COUNT
+};
+
+typedef int (*rsa_import_types_decoder_fn)(const OSSL_PARAM *, RSA_PARAMS *);
+
+struct rsa_imexport_types_st {
+    const OSSL_PARAM *import_types;
+    rsa_import_types_decoder_fn import_decoder;
+    const OSSL_PARAM *export_types;
+};
+
+static const struct rsa_imexport_types_st
+    rsa_imexport_types[RSA_IMEXPORT_TYPE_COUNT]
+    = {
+          [RSA_IMEXPORT_TYPE_OTHER] = {
+              rsa_other_import_types_list,
+              rsa_other_import_types_decoder,
+              rsa_other_export_types_list,
+          },
+          [RSA_IMEXPORT_TYPE_KEY] = {
+              rsa_key_import_types_list,
+              rsa_key_import_types_decoder,
+              rsa_key_export_types_list,
+          },
+          [RSA_IMEXPORT_TYPE_ALL] = {
+              rsa_all_import_types_list,
+              rsa_all_import_types_decoder,
+              rsa_all_export_types_list,
+          },
+      };
+
+static int rsa_imexport_type_select(int selection)
+{
+    int type_select = RSA_IMEXPORT_TYPE_NONE;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
+        type_select |= RSA_IMEXPORT_TYPE_OTHER;
+    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
+        type_select |= RSA_IMEXPORT_TYPE_KEY;
+    return type_select;
+}
+
 static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     RSA *rsa = keydata;
     RSA_PARAMS p;
+    int type_select;
     int rsa_type;
     int ok = 1;
     int pss_defaults_set = 0;
 
-    if (!ossl_prov_is_running() || rsa == NULL
-        || !rsa_import_decoder(params, &p))
+    if (!ossl_prov_is_running() || rsa == NULL)
         return 0;
 
-    if ((selection & RSA_POSSIBLE_SELECTIONS) == 0)
+    type_select = rsa_imexport_type_select(selection);
+    if (type_select == RSA_IMEXPORT_TYPE_NONE
+        || !rsa_imexport_types[type_select].import_decoder(params, &p))
         return 0;
 
     rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
@@ -263,12 +312,14 @@ static int rsa_export(void *keydata, int selection,
     const RSA_PSS_PARAMS_30 *pss_params = ossl_rsa_get0_pss_params_30(rsa);
     OSSL_PARAM_BLD *tmpl;
     OSSL_PARAM *params = NULL;
+    int type_select;
     int ok = 1;
 
     if (!ossl_prov_is_running() || rsa == NULL)
         return 0;
 
-    if ((selection & RSA_POSSIBLE_SELECTIONS) == 0)
+    type_select = rsa_imexport_type_select(selection);
+    if (type_select == RSA_IMEXPORT_TYPE_NONE)
         return 0;
 
     tmpl = OSSL_PARAM_BLD_new();
@@ -297,42 +348,12 @@ err:
 
 static const OSSL_PARAM *rsa_import_types(int selection)
 {
-    int type_select = 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        type_select += 1;
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        type_select += 2;
-    switch (type_select) {
-    case 1:
-        return rsa_other_import_types_list;
-    case 2:
-        return rsa_key_import_types_list;
-    case 3:
-        return rsa_all_import_types_list;
-    default:
-        return NULL;
-    }
+    return rsa_imexport_types[rsa_imexport_type_select(selection)].import_types;
 }
 
 static const OSSL_PARAM *rsa_export_types(int selection)
 {
-    int type_select = 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        type_select += 1;
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) != 0)
-        type_select += 2;
-    switch (type_select) {
-    case 1:
-        return rsa_other_export_types_list;
-    case 2:
-        return rsa_key_export_types_list;
-    case 3:
-        return rsa_all_export_types_list;
-    default:
-        return NULL;
-    }
+    return rsa_imexport_types[rsa_imexport_type_select(selection)].export_types;
 }
 
 static int rsa_get_params(void *key, OSSL_PARAM params[])

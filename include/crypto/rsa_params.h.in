@@ -7,6 +7,8 @@
  * https://www.openssl.org/source/license.html
  */
 
+/* clang-format off */
+
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
@@ -114,14 +116,6 @@ return "";
 #define rsa_pss_todata_st rsa_params_st
 {- produce_param_decoder('rsa_pss_todata', @RSA_PSS_EXPORT_TYPES); -}
 
-/* The provider keymgmt import path parses its input only once. */
-#define rsa_import_st rsa_params_st
-{- produce_param_decoder('rsa_import',
-                         (@RSA_KEY_TYPES,
-                          ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int'],
-                          @RSA_PSS_IMPORT_TYPES
-                         )); -}
-
 /* Parameters processed by rsa_get_params(), including conditional ACVP data. */
 #define rsa_get_params_st rsa_params_st
 {- produce_param_decoder('rsa_get_params',
@@ -173,8 +167,7 @@ return "";
 {- produce_param_decoder('rsa_acvp_output', @RSA_ACVP_OUTPUT_TYPES); -}
 
 /* Selection-specific import and export declarations. */
-#define rsa_key_import_types_st
-#define rsa_key_import_types_decoder
+#define rsa_key_import_types_st rsa_params_st
 {- produce_param_decoder('rsa_key_import_types',
                          (@RSA_KEY_TYPES,
                           ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int']
@@ -184,16 +177,14 @@ return "";
 #define rsa_key_export_types_decoder
 {- produce_param_decoder('rsa_key_export_types', @RSA_KEY_TYPES); -}
 
-#define rsa_other_import_types_st
-#define rsa_other_import_types_decoder
+#define rsa_other_import_types_st rsa_params_st
 {- produce_param_decoder('rsa_other_import_types', @RSA_PSS_IMPORT_TYPES); -}
 
 #define rsa_other_export_types_st
 #define rsa_other_export_types_decoder
 {- produce_param_decoder('rsa_other_export_types', @RSA_PSS_EXPORT_TYPES); -}
 
-#define rsa_all_import_types_st
-#define rsa_all_import_types_decoder
+#define rsa_all_import_types_st rsa_params_st
 {- produce_param_decoder('rsa_all_import_types',
                          (@RSA_KEY_TYPES,
                           ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int'],
@@ -204,3 +195,5 @@ return "";
 #define rsa_all_export_types_decoder
 {- produce_param_decoder('rsa_all_export_types',
                          (@RSA_KEY_TYPES, @RSA_PSS_EXPORT_TYPES)); -}
+
+/* clang-format on */
