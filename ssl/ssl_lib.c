@@ -610,6 +610,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->key_update = SSL_KEY_UPDATE_NONE;
     sc->last_key_update_time = ossl_time_zero();
     sc->key_update_request_pending = 0;
+    sc->last_key_update_recv_time = ossl_time_zero();
     memset(sc->ext.compress_certificate_from_peer, 0,
         sizeof(sc->ext.compress_certificate_from_peer));
     sc->ext.compress_certificate_sent = 0;
@@ -895,6 +896,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     s->key_update = SSL_KEY_UPDATE_NONE;
     s->last_key_update_time = ossl_time_zero();
     s->key_update_request_pending = 0;
+    s->last_key_update_recv_time = ossl_time_zero();
 
     if (!IS_QUIC_CTX(ctx)) {
         s->allow_early_data_cb = ctx->allow_early_data_cb;

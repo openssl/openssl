@@ -77,6 +77,12 @@
  */
 #define KEY_UPDATE_MIN_INTERVAL 100
 
+/*-
+ * The minimum interval, in milliseconds, between KeyUpdates we will accept
+ * from the peer. A KeyUpdate received sooner terminates the connection.
+ */
+#define KEY_UPDATE_MIN_RECV_INTERVAL 100
+
 /*
  * Define the Bitmasks for SSL_CIPHER.algorithms.
  * This bits are used packed as dense as possible. If new methods/ciphers
@@ -1859,6 +1865,8 @@ struct ssl_connection_st {
     OSSL_TIME last_key_update_time;
     /* An update_requested KeyUpdate we sent awaits the peer's KeyUpdate */
     int key_update_request_pending;
+    /* Time of the last KeyUpdate accepted from the peer */
+    OSSL_TIME last_key_update_recv_time;
     /* Post-handshake authentication state */
     SSL_PHA_STATE post_handshake_auth;
     int pha_enabled;
