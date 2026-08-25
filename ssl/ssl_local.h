@@ -69,6 +69,14 @@
 
 #define SSL_AD_NO_ALERT -1
 
+/*-
+ * The minimum interval, in milliseconds, between locally-initiated
+ * KeyUpdates. RFC 9846 section 4.7.3 forbids a sender from performing
+ * more than 2^48 - 1 re-keys on a connection; a minimum interval makes
+ * that unreachable.
+ */
+#define KEY_UPDATE_MIN_INTERVAL 100
+
 /*
  * Define the Bitmasks for SSL_CIPHER.algorithms.
  * This bits are used packed as dense as possible. If new methods/ciphers
@@ -1847,6 +1855,8 @@ struct ssl_connection_st {
     int renegotiate;
     /* If sending a KeyUpdate is pending */
     int key_update;
+    /* Time of the last accepted SSL_key_update() call */
+    OSSL_TIME last_key_update_time;
     /* Post-handshake authentication state */
     SSL_PHA_STATE post_handshake_auth;
     int pha_enabled;

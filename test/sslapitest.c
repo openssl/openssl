@@ -7788,6 +7788,7 @@ static int test_key_update(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
     SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_CONNECTION *clientsc = NULL;
     int testresult = 0, i, j;
     char buf[20];
     static char *mess = "A test message";
@@ -7800,12 +7801,15 @@ static int test_key_update(void)
         || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
             NULL, NULL))
         || !TEST_true(create_ssl_connection(serverssl, clientssl,
-            SSL_ERROR_NONE)))
+            SSL_ERROR_NONE))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl)))
         goto end;
 
     for (j = 0; j < 2; j++) {
         /* Send lots of KeyUpdate messages */
         for (i = 0; i < NUM_KEY_UPDATE_MESSAGES; i++) {
+            /* Bypass the KeyUpdate rate limit for this stress loop */
+            clientsc->last_key_update_time = ossl_time_zero();
             if (!TEST_true(SSL_key_update(clientssl,
                     (j == 0)
                         ? SSL_KEY_UPDATE_NOT_REQUESTED
@@ -7825,6 +7829,91 @@ static int test_key_update(void)
                 (int)strlen(mess)))
             goto end;
     }
+
+    testresult = 1;
+
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * Test that locally-initiated KeyUpdates are rate limited. A second
+ * SSL_key_update() within KEY_UPDATE_MIN_INTERVAL of the previous one must
+ * fail with SSL_R_TOO_MANY_KEY_UPDATES and leave the connection usable, and
+ * an update must be accepted again once the interval has elapsed (simulated
+ * by rewinding the recorded update time) or if the clock has stepped
+ * backwards (simulated by a recorded update time in the future).
+ */
+static int test_key_update_ratelimit(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_CONNECTION *clientsc = NULL;
+    int testresult = 0;
+    char buf[20];
+    static char *mess = "A test message";
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(),
+            TLS1_3_VERSION,
+            0,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl)))
+        goto end;
+
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+        || !TEST_true(SSL_do_handshake(clientssl)))
+        goto end;
+
+    /*
+     * An immediate second update must be refused. Re-arm the recorded time
+     * first so the test cannot become flaky on a machine slow enough for
+     * the interval to elapse between the two calls.
+     */
+    clientsc->last_key_update_time = ossl_time_now();
+    if (!TEST_false(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()),
+            SSL_R_TOO_MANY_KEY_UPDATES))
+        goto end;
+
+    ERR_clear_error();
+
+    /* The refusal must not have scheduled an update */
+    if (!TEST_int_eq(SSL_get_key_update_type(clientssl), SSL_KEY_UPDATE_NONE))
+        goto end;
+
+    /* Once the interval has elapsed an update is accepted again */
+    clientsc->last_key_update_time = ossl_time_subtract(clientsc->last_key_update_time,
+        ossl_ms2time(KEY_UPDATE_MIN_INTERVAL));
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+        || !TEST_true(SSL_do_handshake(clientssl)))
+        goto end;
+
+    /* A clock that has stepped backwards permits an update */
+    clientsc->last_key_update_time = ossl_time_add(ossl_time_now(), ossl_seconds2time(3600));
+    if (!TEST_true(SSL_key_update(clientssl, SSL_KEY_UPDATE_NOT_REQUESTED))
+        || !TEST_true(SSL_do_handshake(clientssl)))
+        goto end;
+
+    /* The connection must still be usable in both directions */
+    if (!TEST_int_eq(SSL_write(clientssl, mess, (int)strlen(mess)),
+            (int)strlen(mess))
+        || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)),
+            (int)strlen(mess))
+        || !TEST_int_eq(SSL_write(serverssl, mess, (int)strlen(mess)),
+            (int)strlen(mess))
+        || !TEST_int_eq(SSL_read(clientssl, buf, sizeof(buf)),
+            (int)strlen(mess)))
+        goto end;
 
     testresult = 1;
 
@@ -15710,6 +15799,7 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_export_key_mat_early, 3);
     ADD_TEST(test_key_update);
+    ADD_TEST(test_key_update_ratelimit);
     ADD_ALL_TESTS(test_key_update_peer_in_write, 2);
     ADD_ALL_TESTS(test_key_update_peer_in_read, 2);
     ADD_ALL_TESTS(test_key_update_local_in_write, 2);

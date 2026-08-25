@@ -608,6 +608,7 @@ int ossl_ssl_connection_reset(SSL *s)
     sc->first_packet = 0;
 
     sc->key_update = SSL_KEY_UPDATE_NONE;
+    sc->last_key_update_time = ossl_time_zero();
     memset(sc->ext.compress_certificate_from_peer, 0,
         sizeof(sc->ext.compress_certificate_from_peer));
     sc->ext.compress_certificate_sent = 0;
@@ -891,6 +892,7 @@ SSL *ossl_ssl_connection_new_int(SSL_CTX *ctx, SSL *user_ssl,
     s->default_passwd_callback_userdata = ctx->default_passwd_callback_userdata;
 
     s->key_update = SSL_KEY_UPDATE_NONE;
+    s->last_key_update_time = ossl_time_zero();
 
     if (!IS_QUIC_CTX(ctx)) {
         s->allow_early_data_cb = ctx->allow_early_data_cb;
@@ -3024,6 +3026,7 @@ int SSL_shutdown(SSL *s)
 int SSL_key_update(SSL *s, int updatetype)
 {
     SSL_CONNECTION *sc = SSL_CONNECTION_FROM_SSL(s);
+    OSSL_TIME now;
 
 #ifndef OPENSSL_NO_QUIC
     if (IS_QUIC(s))
@@ -3054,8 +3057,19 @@ int SSL_key_update(SSL *s, int updatetype)
         return 0;
     }
 
+    /* Rate-limit KeyUpdates; see KEY_UPDATE_MIN_INTERVAL */
+    now = ossl_time_now();
+    if (ossl_time_compare(now, sc->last_key_update_time) >= 0
+        && ossl_time_compare(ossl_time_subtract(now, sc->last_key_update_time),
+               ossl_ms2time(KEY_UPDATE_MIN_INTERVAL))
+            < 0) {
+        ERR_raise(ERR_LIB_SSL, SSL_R_TOO_MANY_KEY_UPDATES);
+        return 0;
+    }
+
     ossl_statem_set_in_init(sc, 1);
     sc->key_update = updatetype;
+    sc->last_key_update_time = now;
     return 1;
 }
 
