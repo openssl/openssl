@@ -30,6 +30,10 @@ OpenSSL Releases
 OpenSSL 4.0
 -----------
 
+### Changes between 4.0.2 and 4.0.3 [xx XXX xxxx]
+
+ * none yet
+
 ### Changes between 4.0.1 and 4.0.2 [25 Aug 2026]
 
  * Fixed QUIC server being able to trigger double free when processing `INITIAL`
