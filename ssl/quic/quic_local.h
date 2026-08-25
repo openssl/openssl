@@ -185,7 +185,7 @@ struct quic_conn_st {
      */
     unsigned int as_server_state : 1;
 
-    /* Are we using thread assisted mode? Cleared on SSL_listen_ex adoption. */
+    /* Are we using thread assisted mode? Never changes after init. */
     unsigned int is_thread_assisted : 1;
 
     /* Have we created a default XSO yet? */
