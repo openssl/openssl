@@ -28,7 +28,7 @@ breaking changes, and mappings for the large list of deprecated functions.
 
 [Migration guide]: https://github.com/openssl/openssl/tree/master/doc/man7/migration_guide.pod
 
-### Changes between 3.0.21 and 3.0.22 [xx XXX xxxx]
+### Changes between 3.0.21 and 3.0.22 [25 Aug 2026]
 
  * Fixed heap buffer overflow in CMS key unwrapping.
 
