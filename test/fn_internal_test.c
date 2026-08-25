@@ -318,8 +318,8 @@ static int test_ctx_peak_used(void)
     const void *token1 = NULL;
     const void *token2 = NULL;
     size_t frames, numbers, limbs;
-    size_t limbs_2048 = 2048 / 8 / OSSL_FN_BYTES;
-    size_t limbs_4096 = 4096 / 8 / OSSL_FN_BYTES;
+    size_t limbs_2048 = 2048 / OSSL_FN_BITS;
+    size_t limbs_4096 = 4096 / OSSL_FN_BITS;
 
     if (!TEST_ptr(ctx = OSSL_FN_CTX_new(NULL, 2, 4, 256))) {
         ret = 0;
