@@ -55,7 +55,7 @@ This release incorporates the following bug fixes and mitigations:
   * Fixed excessive memory use buffering DTLS records for a future epoch.
     ([CVE-2026-54874])
 
-  * Fixed client-side nemory leak in OCSP response checking.
+  * Fixed client-side memory leak in OCSP response checking.
     ([CVE-2026-54876])
 
   * Fixed untrusted Sender DN being used as a format string in CMP response
