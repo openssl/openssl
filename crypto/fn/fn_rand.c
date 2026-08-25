@@ -25,12 +25,6 @@ enum ossl_fn_rand_flag {
     PRIVATE
 };
 
-/* Set bit |pos| (0 = least significant) of |a|, by absolute position. */
-static void ossl_fn_set_bit(OSSL_FN *a, size_t pos)
-{
-    a->d[pos / OSSL_FN_BITS] |= OSSL_FN_ULONG_C(1) << (pos % OSSL_FN_BITS);
-}
-
 /*-
  * ossl_fn_rand() fills |rnd| with |bits| random bits, shaping the top and
  * bottom bits per the |top|/|bottom| requests.  The random bytes are drawn
@@ -113,9 +107,10 @@ static int ossl_fn_rand(enum ossl_fn_rand_flag flag, OSSL_FN *rnd, size_t bits,
 
     /* Set the requested top bit(s); |bits| >= 2 is guaranteed for TOP_TWO. */
     if (top != OSSL_FN_RAND_TOP_ANY) {
-        ossl_fn_set_bit(rnd, bits - 1);
-        if (top == OSSL_FN_RAND_TOP_TWO)
-            ossl_fn_set_bit(rnd, bits - 2);
+        if (!OSSL_FN_set_bit(rnd, bits - 1))
+            return 0;
+        if (top == OSSL_FN_RAND_TOP_TWO && !OSSL_FN_set_bit(rnd, bits - 2))
+            return 0;
     }
 
     /* Set the bottom bit if requested. */
