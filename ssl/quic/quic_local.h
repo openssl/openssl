@@ -188,6 +188,19 @@ struct quic_conn_st {
     /* Are we using thread assisted mode? Never changes after init. */
     unsigned int is_thread_assisted : 1;
 
+    /*
+     * Set when qc->listener was taken via dgram-pair BIO peer auto-detection
+     * (i.e. SSL_set0_rbio was called with a BIO_s_dgram_pair BIO whose peer
+     * is owned by a listener's port).  In this case qc still owns its own
+     * port, engine and mutex - only the BIOs are shared with the listener -
+     * so qc_cleanup must free those normally but skip quic_unref_port_bios
+     * (the listener will free its own BIO half when it is destroyed, and our
+     * half was freed by our own port teardown).  The flag is orthogonal to
+     * qc->listener != NULL, which in the shared-port case means the port,
+     * engine and mutex are all owned by the listener.
+     */
+    unsigned int listener_ref_for_bio_peer : 1;
+
     /* Have we created a default XSO yet? */
     unsigned int default_xso_created : 1;
 
