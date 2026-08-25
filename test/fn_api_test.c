@@ -17,6 +17,7 @@
 
 #include <openssl/rand.h>
 #include <openssl/err.h>
+#include "crypto/bn.h" /* For the BN_PRIMETEST_* status codes */
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
 #include "crypto/fnerr.h"
@@ -1054,6 +1055,129 @@ static int test_mod_word(void)
 err:
     OSSL_FN_free(a);
     OSSL_FN_free(z_empty);
+    return ret;
+}
+
+/*-
+ * Focused tests for ossl_fn_check_prime() / ossl_fn_check_generated_prime()
+ * and the underlying ossl_fn_miller_rabin_is_prime().  Small primes and
+ * composites are checked by verdict; the arena is sized per the Miller-Rabin
+ * sizing helper, which also verifies that the estimate suffices.
+ */
+
+/* A set of small primes and composites, as single-limb words. */
+struct prime_case_st {
+    OSSL_FN_ULONG w;
+    int is_prime;
+};
+
+static const struct prime_case_st prime_cases[] = {
+    { OSSL_FN_ULONG_C(2), 1 },
+    { OSSL_FN_ULONG_C(3), 1 },
+    { OSSL_FN_ULONG_C(5), 1 },
+    { OSSL_FN_ULONG_C(7), 1 },
+    { OSSL_FN_ULONG_C(7919), 1 }, /* the 1000th prime */
+    { OSSL_FN_ULONG_C(65537), 1 }, /* a Fermat prime */
+    { OSSL_FN_ULONG_C(0), 0 },
+    { OSSL_FN_ULONG_C(1), 0 },
+    { OSSL_FN_ULONG_C(4), 0 },
+    { OSSL_FN_ULONG_C(9), 0 },
+    { OSSL_FN_ULONG_C(7921), 0 }, /* 89 * 89 */
+    { OSSL_FN_ULONG_C(65537 * 3), 0 },
+    /* Carmichael numbers: composite, but pass Fermat tests for many bases. */
+    { OSSL_FN_ULONG_C(561), 0 },
+    { OSSL_FN_ULONG_C(41041), 0 },
+};
+
+static int test_check_prime(int idx)
+{
+    int ret = 0;
+    OSSL_FN *w = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    const struct prime_case_st *c = &prime_cases[idx];
+
+    if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_check_prime_ctx_size(w))))
+        goto err;
+    if (!TEST_true(OSSL_FN_set_word(w, c->w)))
+        goto err;
+
+    if (!TEST_int_eq(ossl_fn_check_prime(w, 0, ctx, 1, NULL, NULL),
+            c->is_prime))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(w);
+    return ret;
+}
+
+static int test_check_generated_prime(int idx)
+{
+    int ret = 0;
+    OSSL_FN *w = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    const struct prime_case_st *c = &prime_cases[idx];
+
+    if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_check_generated_prime_ctx_size(w))))
+        goto err;
+    if (!TEST_true(OSSL_FN_set_word(w, c->w)))
+        goto err;
+
+    /* check_generated_prime always trial-divides and does not clamp checks. */
+    if (!TEST_int_eq(ossl_fn_check_generated_prime(w, 3, ctx, NULL, NULL),
+            c->is_prime))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(w);
+    return ret;
+}
+
+/*-
+ * ossl_fn_miller_rabin_is_prime() with the enhanced variant: the status code
+ * distinguishes a plain composite from a composite with a small factor.
+ */
+static int test_miller_rabin_enhanced(void)
+{
+    int ret = 0;
+    OSSL_FN *w = NULL;
+    OSSL_FN_CTX *ctx = NULL;
+    int status = -1;
+
+    if (!TEST_ptr(w = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(ctx = OSSL_FN_CTX_new_size(NULL,
+                         ossl_fn_miller_rabin_is_prime_ctx_size(w))))
+        goto err;
+
+    /* A prime reports BN_PRIMETEST_PROBABLY_PRIME. */
+    if (!TEST_true(OSSL_FN_set_word(w, 7919))
+        || !TEST_true(ossl_fn_miller_rabin_is_prime(w, 8, ctx, NULL, 1,
+            &status, NULL))
+        || !TEST_int_eq(status, BN_PRIMETEST_PROBABLY_PRIME))
+        goto err;
+
+    /* An odd composite with no small factor in the first base is reported
+     * composite; the exact enhanced sub-status depends on the random base,
+     * so accept either composite status. */
+    status = -1;
+    if (!TEST_true(OSSL_FN_set_word(w, 7921)) /* 89 * 89 */
+        || !TEST_true(ossl_fn_miller_rabin_is_prime(w, 8, ctx, NULL, 1,
+            &status, NULL))
+        || !TEST_true(status == BN_PRIMETEST_COMPOSITE_WITH_FACTOR
+            || status == BN_PRIMETEST_COMPOSITE_NOT_POWER_OF_PRIME))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(ctx);
+    OSSL_FN_free(w);
     return ret;
 }
 
@@ -5502,6 +5626,9 @@ int setup_tests(void)
     ADD_TEST(test_get_word);
     ADD_TEST(test_set_bit);
     ADD_TEST(test_mod_word);
+    ADD_ALL_TESTS(test_check_prime, OSSL_NELEM(prime_cases));
+    ADD_ALL_TESTS(test_check_generated_prime, OSSL_NELEM(prime_cases));
+    ADD_TEST(test_miller_rabin_enhanced);
     ADD_ALL_TESTS(test_add_word, OSSL_NELEM(add_word_cases));
     ADD_ALL_TESTS(test_sub_word, OSSL_NELEM(sub_word_cases));
     ADD_ALL_TESTS(test_set_word, OSSL_NELEM(set_word_cases));
