@@ -783,6 +783,81 @@ err:
     return ret;
 }
 
+/*
+ * Many small contiguous frames, each pinning its own packet while the reader
+ * lags behind, so a large number of packets are held at once and released only
+ * as the data is finally consumed. Every byte must still read back in order and
+ * every packet reference must end up released.
+ */
+static int test_rstream_pkt_overhead(void)
+{
+    QUIC_RSTREAM *rstream = NULL;
+    OSSL_QRX_PKT **pkt = NULL;
+    unsigned char *data = NULL, *buf = NULL;
+    const size_t framesz = 8;
+    const size_t nframes = 4096; /* far past a 64 KiB overhead limit */
+    const size_t total = framesz * nframes;
+    const size_t read_lag = 200; /* read only after this many arrive */
+    size_t i, got = 0, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(total))
+        || !TEST_ptr(buf = OPENSSL_malloc(total))
+        || !TEST_ptr(pkt = OPENSSL_zalloc(nframes * sizeof(*pkt)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        goto err;
+
+    for (i = 0; i < total; ++i)
+        data[i] = (unsigned char)(i & 0xff);
+
+    for (i = 0; i < nframes; ++i) {
+        if (!TEST_ptr(pkt[i] = pkt_test_new(1200)))
+            goto err;
+
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt[i],
+                i * framesz, data + i * framesz, framesz,
+                i == nframes - 1)))
+            goto err;
+
+        /* let the reader fall behind, then drain what has become available */
+        if (i % read_lag == read_lag - 1)
+            while (got < total
+                && TEST_true(ossl_quic_rstream_read(rstream, buf + got,
+                    total - got, &readbytes, &fin))
+                && readbytes > 0)
+                got += readbytes;
+    }
+
+    /* drain whatever is left and check every byte survived in order */
+    while (got < total
+        && TEST_true(ossl_quic_rstream_read(rstream, buf + got, total - got,
+            &readbytes, &fin))
+        && readbytes > 0)
+        got += readbytes;
+
+    if (!TEST_size_t_eq(got, total)
+        || !TEST_true(fin)
+        || !TEST_mem_eq(buf, got, data, total))
+        goto err;
+
+    /* every consumed frame has released the reference it held on its packet */
+    for (i = 0; i < nframes; ++i)
+        if (!TEST_size_t_eq(pkt_test_refcount(pkt[i]), 1))
+            goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    if (pkt != NULL)
+        for (i = 0; i < nframes; ++i)
+            pkt_test_free(pkt[i]);
+    OPENSSL_free(pkt);
+    OPENSSL_free(data);
+    OPENSSL_free(buf);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
@@ -790,5 +865,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rstream_simple, 4);
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_pkt);
+    ADD_TEST(test_rstream_pkt_overhead);
     return 1;
 }
