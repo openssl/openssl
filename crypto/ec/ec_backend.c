@@ -819,6 +819,7 @@ EC_KEY *ossl_ec_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     const unsigned char *p = NULL;
     int pklen;
     EC_KEY *eckey = NULL;
+    EC_GROUP *group = NULL;
     const X509_ALGOR *palg;
 
     if (!PKCS8_pkey_get0(NULL, &p, &pklen, &palg, p8inf))
@@ -827,14 +828,34 @@ EC_KEY *ossl_ec_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     if (eckey == NULL)
         goto err;
 
+    /*
+     * Keep a copy of the group from the AlgorithmIdentifier: if the inner
+     * ECPrivateKey carries its own parameters, d2i_ECPrivateKey() replaces
+     * the group with them.
+     */
+    if ((group = EC_GROUP_dup(EC_KEY_get0_group(eckey))) == NULL)
+        goto err;
+
     /* We have parameters now set private key */
     if (!d2i_ECPrivateKey(&eckey, &p, pklen)) {
         ERR_raise(ERR_LIB_EC, EC_R_DECODE_ERROR);
         goto err;
     }
 
+    /*
+     * The parameters in the AlgorithmIdentifier and those in the
+     * ECPrivateKey (RFC 5915) both identify the domain parameters of the
+     * same key; reject a PKCS#8 structure in which they disagree.
+     */
+    if (EC_GROUP_cmp(group, EC_KEY_get0_group(eckey), NULL) != 0) {
+        ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
+        goto err;
+    }
+
+    EC_GROUP_free(group);
     return eckey;
 err:
+    EC_GROUP_free(group);
     EC_KEY_free(eckey);
     return NULL;
 }

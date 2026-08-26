@@ -39,6 +39,13 @@ OpenSSL 4.1
 
    *Daniel Kubec and Viktor Dukhovni*
 
+ * The EC PKCS#8 decoder now rejects a PrivateKeyInfo whose privateKeyAlgorithm
+   parameters specify a different curve than the parameters carried inside the
+   ECPrivateKey structure. Previously the inner parameters silently took
+   precedence over the AlgorithmIdentifier.
+
+   *Paul Grubbs*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 
