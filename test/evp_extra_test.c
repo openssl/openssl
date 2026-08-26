@@ -7714,6 +7714,57 @@ err:
 }
 #endif /* OPENSSL_NO_ECX */
 
+#ifndef OPENSSL_NO_ECX
+/*
+ * A context string parameter of {NULL, 0} is an empty context string, the same
+ * as no context string parameter at all.  Ed448 always uses a context string
+ * (empty by default), so check that a signature made with one verifies with
+ * the other.
+ */
+static int test_ed448_empty_context(void)
+{
+    int ret = 0;
+    EVP_PKEY *pkey = NULL;
+    EVP_MD_CTX *mctx = NULL;
+    static const unsigned char msg[] = "Hello World";
+    unsigned char sig[114];
+    size_t siglen = sizeof(sig);
+    OSSL_PARAM null_ctx[2];
+
+    null_ctx[0] = OSSL_PARAM_construct_octet_string(OSSL_SIGNATURE_PARAM_CONTEXT_STRING,
+        NULL, 0);
+    null_ctx[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(pkey = EVP_PKEY_Q_keygen(testctx, testpropq, "ED448"))
+        || !TEST_ptr(mctx = EVP_MD_CTX_new()))
+        goto err;
+
+    /* Sign with {NULL, 0}, verify with the parameter omitted */
+    if (!TEST_true(EVP_DigestSignInit_ex(mctx, NULL, NULL, testctx, testpropq,
+            pkey, null_ctx))
+        || !TEST_true(EVP_DigestSign(mctx, sig, &siglen, msg, sizeof(msg)))
+        || !TEST_true(EVP_DigestVerifyInit_ex(mctx, NULL, NULL, testctx,
+            testpropq, pkey, NULL))
+        || !TEST_true(EVP_DigestVerify(mctx, sig, siglen, msg, sizeof(msg))))
+        goto err;
+
+    /* Sign with the parameter omitted, verify with {NULL, 0} */
+    siglen = sizeof(sig);
+    if (!TEST_true(EVP_DigestSignInit_ex(mctx, NULL, NULL, testctx, testpropq,
+            pkey, NULL))
+        || !TEST_true(EVP_DigestSign(mctx, sig, &siglen, msg, sizeof(msg)))
+        || !TEST_true(EVP_DigestVerifyInit_ex(mctx, NULL, NULL, testctx,
+            testpropq, pkey, null_ctx))
+        || !TEST_true(EVP_DigestVerify(mctx, sig, siglen, msg, sizeof(msg))))
+        goto err;
+    ret = 1;
+err:
+    EVP_MD_CTX_free(mctx);
+    EVP_PKEY_free(pkey);
+    return ret;
+}
+#endif
+
 static int test_sign_continuation(void)
 {
     OSSL_PROVIDER *fake_rsa = NULL;
@@ -9640,6 +9691,8 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_ECX
     ADD_ALL_TESTS(test_ecx_short_keys, OSSL_NELEM(ecxnids));
     ADD_ALL_TESTS(test_ecx_not_private_key, OSSL_NELEM(keys));
+    if (fips_provider_version_ge(testctx, 4, 1, 0))
+        ADD_TEST(test_ed448_empty_context);
 #endif
 
     ADD_TEST(test_sign_continuation);

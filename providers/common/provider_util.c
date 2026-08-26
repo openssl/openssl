@@ -244,3 +244,16 @@ int ossl_prov_memdup(const void *src, size_t src_len,
     }
     return 1;
 }
+
+int ossl_prov_get_octet_string_allow_empty(const OSSL_PARAM *p, void *buf,
+    size_t max_len, size_t *used_len)
+{
+    void *vp = buf;
+
+    if (p->data_type == OSSL_PARAM_OCTET_STRING && p->data == NULL
+        && p->data_size == 0) {
+        *used_len = 0;
+        return 1;
+    }
+    return OSSL_PARAM_get_octet_string(p, &vp, max_len, used_len);
+}

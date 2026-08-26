@@ -31,6 +31,14 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * The ML-DSA, SLH-DSA and EdDSA signature algorithms and the ML-DSA-MU
+   digest now accept a context string parameter given as an octet string with
+   a NULL data pointer and a length of 0, treating it as an empty context
+   string. Previously such a parameter was rejected, while an empty context
+   string with a non-NULL data pointer was accepted.
+
+   *Paul Grubbs*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 

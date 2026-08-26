@@ -19,6 +19,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_ml_dsa.h"
+#include "prov/provider_util.h"
 #include "crypto/ml_dsa.h"
 #include "internal/common.h"
 #include "internal/packet.h"
@@ -388,14 +389,11 @@ static int ml_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (pctx == NULL || !ml_dsa_verifymsg_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.ctx != NULL) {
-        void *vp = pctx->context_string;
-
-        if (!OSSL_PARAM_get_octet_string(p.ctx, &vp, sizeof(pctx->context_string),
-                &(pctx->context_string_len))) {
-            pctx->context_string_len = 0;
-            return 0;
-        }
+    if (p.ctx != NULL
+        && !ossl_prov_get_octet_string_allow_empty(p.ctx, pctx->context_string,
+            sizeof(pctx->context_string), &(pctx->context_string_len))) {
+        pctx->context_string_len = 0;
+        return 0;
     }
 
     if (p.ent != NULL) {

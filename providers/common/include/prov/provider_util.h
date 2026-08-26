@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2019-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -112,5 +112,14 @@ void ossl_prov_cache_exported_algorithms(const OSSL_ALGORITHM_CAPABLE *in,
 /* Duplicate a lump of memory safely */
 int ossl_prov_memdup(const void *src, size_t src_len,
     unsigned char **dest, size_t *dest_len);
+
+/*
+ * Get an octet string parameter that may legitimately be empty into a caller
+ * supplied buffer of |max_len| bytes.  Unlike OSSL_PARAM_get_octet_string(),
+ * a parameter with a NULL data pointer and a data size of 0 is accepted as an
+ * empty string.
+ */
+int ossl_prov_get_octet_string_allow_empty(const OSSL_PARAM *p, void *buf,
+    size_t max_len, size_t *used_len);
 
 #endif /* !defined(OSSL_PROVIDERS_COMMON_INCLUDE_PROV_PROVIDER_UTIL_H) */

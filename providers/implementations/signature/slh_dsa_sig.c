@@ -16,6 +16,7 @@
 #include "prov/providercommon.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_slh_dsa.h"
+#include "prov/provider_util.h"
 #include "crypto/slh_dsa.h"
 #include "internal/cryptlib.h"
 #include "internal/sizes.h"
@@ -284,15 +285,12 @@ static int slh_dsa_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (pctx == NULL || !slh_dsa_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.context != NULL) {
-        void *vp = pctx->context_string;
-
-        if (!OSSL_PARAM_get_octet_string(p.context, &vp,
-                sizeof(pctx->context_string),
-                &(pctx->context_string_len))) {
-            pctx->context_string_len = 0;
-            return 0;
-        }
+    if (p.context != NULL
+        && !ossl_prov_get_octet_string_allow_empty(p.context,
+            pctx->context_string, sizeof(pctx->context_string),
+            &(pctx->context_string_len))) {
+        pctx->context_string_len = 0;
+        return 0;
     }
 
     if (p.entropy != NULL) {
