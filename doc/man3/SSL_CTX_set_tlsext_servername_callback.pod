@@ -135,6 +135,13 @@ ClientHello extension defined in RFC 3546 section 3.1
 to contain the value I<name> of type B<TLSEXT_NAMETYPE_host_name>.
 If I<name> is NULL, it clears the SNI extension.
 
+I<name> must be a DNS hostname as required by RFC 6066 section 3: a sequence
+of dot-separated labels of 1 to 63 ASCII letters, digits, hyphens or
+underscores, without a trailing dot, at most 255 characters in total, and
+with a top-level label that is not all-numeric. In particular, IPv4 and IPv6
+address literals are not permitted. If I<name> is not a valid hostname the
+function fails and the SNI extension is cleared.
+
 Using this function may also be important for correct routing of connection requests.
 TLS clients should call this function alongside L<SSL_set1_dnsname(3)> or
 L<SSL_add1_dnsname(3)> to set the expected server hostname(s) for certificate validation.
@@ -153,7 +160,8 @@ executed first, then the servername callback, followed by the ALPN callback.
 
 SSL_CTX_set_tlsext_servername_callback() and
 SSL_CTX_set_tlsext_servername_arg() both always return 1 indicating success.
-SSL_set_tlsext_host_name() returns 1 on success, 0 in case of error.
+SSL_set_tlsext_host_name() returns 1 on success, 0 in case of error, for
+example if I<name> is not a valid hostname.
 
 =head1 SEE ALSO
 
@@ -163,6 +171,9 @@ L<SSL_set1_dnsname(3)>, L<SSL_add1_dnsname(3)>,
 L<X509_VERIFY_PARAM_set1_host(3)>, L<X509_VERIFY_PARAM_add1_host(3)>
 
 =head1 HISTORY
+
+SSL_set_tlsext_host_name() validates I<name> as a DNS hostname since
+OpenSSL 4.1. Previously any string of at most 255 characters was accepted.
 
 SSL_get_servername() historically provided some unexpected results in certain
 corner cases. This has been fixed from OpenSSL 1.1.1e.
