@@ -29,6 +29,7 @@
 #include "prov/digestcommon.h"
 #include "prov/der_pq_dsa.h"
 #include "prov/implementations.h"
+#include "prov/provider_util.h"
 #include "internal/common.h"
 #include "internal/sha3.h"
 #include "providers/implementations/digests/ml_dsa_mu_prov.inc"
@@ -198,14 +199,11 @@ static int mu_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (ctx == NULL || !ml_dsa_mu_set_ctx_params_decoder(params, &p))
         return 0;
 
-    if (p.ctx != NULL) {
-        void *vp = ctx->context;
-
-        if (!OSSL_PARAM_get_octet_string(p.ctx, &vp, sizeof(ctx->context),
-                &(ctx->context_len))) {
-            ctx->context_len = 0;
-            return 0;
-        }
+    if (p.ctx != NULL
+        && !ossl_prov_get_octet_string_allow_empty(p.ctx, ctx->context,
+            sizeof(ctx->context), &(ctx->context_len))) {
+        ctx->context_len = 0;
+        return 0;
     }
     if (p.propq != NULL) {
         if (p.propq->data_type != OSSL_PARAM_UTF8_STRING

@@ -22,6 +22,7 @@
 #include "prov/securitycheck.h"
 #include "prov/provider_ctx.h"
 #include "prov/der_ecx.h"
+#include "prov/provider_util.h"
 #include "crypto/ecx.h"
 #include "internal/fips.h"
 
@@ -898,15 +899,12 @@ static int eddsa_set_ctx_params_internal(PROV_EDDSA_CTX *peddsactx, const struct
         }
     }
 
-    if (p->ctx != NULL) {
-        void *vp_context_string = peddsactx->context_string;
-
-        if (!OSSL_PARAM_get_octet_string(p->ctx, &vp_context_string,
-                sizeof(peddsactx->context_string),
-                &(peddsactx->context_string_len))) {
-            peddsactx->context_string_len = 0;
-            return 0;
-        }
+    if (p->ctx != NULL
+        && !ossl_prov_get_octet_string_allow_empty(p->ctx,
+            peddsactx->context_string, sizeof(peddsactx->context_string),
+            &(peddsactx->context_string_len))) {
+        peddsactx->context_string_len = 0;
+        return 0;
     }
 
     return 1;
