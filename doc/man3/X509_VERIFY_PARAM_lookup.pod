@@ -26,7 +26,7 @@ structures to be used in certificate verification.
 
 Currently several standard entries are defined with the following names:
 C<ssl_client>, C<ssl_server>, C<code_sign>,
-C<smime_sign>, C<pkcs7> (which equivalent to C<smime_sign>), and C<default>.
+C<smime_sign>, C<pkcs7> (which is equivalent to C<smime_sign>), and C<default>.
 
 These entries are immutable but the list may be extended.
 
