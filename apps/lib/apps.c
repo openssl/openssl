@@ -2826,6 +2826,16 @@ static const char *get_dp_url(DIST_POINT *dp)
     for (i = 0; i < sk_GENERAL_NAME_num(gens); i++) {
         gen = sk_GENERAL_NAME_value(gens, i);
         uri = GENERAL_NAME_get0_value(gen, &gtype);
+        /*
+         * A URI with an embedded NUL would be truncated at the NUL by the
+         * C string handling below and a different URL than the one in the
+         * certificate would be fetched, so ignore it.
+         */
+        if (gtype == GEN_URI && ASN1_STRING_get_length(uri) > 0
+            && memchr(ASN1_STRING_get0_data(uri), 0,
+                   ASN1_STRING_get_length(uri))
+                != NULL)
+            continue;
         if (gtype == GEN_URI && ASN1_STRING_get_length(uri) > 6) {
             const char *uptr = (const char *)ASN1_STRING_get0_data(uri);
 
