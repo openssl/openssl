@@ -24,22 +24,16 @@ jobs:
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-python@v6
-      - name: "Get changed files"
-        env:
-          NUMBER: ${{ github.event.pull_request.number }}
-          REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
+      - name: "Fetch the base commit"
         run: |
-          # --paginate is required: this endpoint returns one page at a
-          # time, and a short list means files are silently left unchecked
-          # rather than failing. per_page only reduces the number of
-          # requests (the default is 30).
-          {
-            echo 'CHANGED_FILES<<EOF'
-            gh api --paginate "repos/$REPO/pulls/$NUMBER/files?per_page=100" \
-              --jq '.[].filename'
-            echo EOF
-          } >> "$GITHUB_ENV"
+          # actions/checkout fetches a single commit by default
+          # (fetch-depth: 1), so the pull request's base commit is not
+          # present and pre-commit cannot work out which files changed.
+          # Depth 1 is enough here: the diff needs the base commit's tree,
+          # not its history.
+          git fetch --depth=1 origin ${{ github.event.pull_request.base.sha }}
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd #v3.0.1
         with:
-          extra_args: "--files $CHANGED_FILES"
+          extra_args: >-
+            --from-ref ${{ github.event.pull_request.base.sha }}
+            --to-ref HEAD
