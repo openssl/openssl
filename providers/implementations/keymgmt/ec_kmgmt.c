@@ -1217,8 +1217,8 @@ static const OSSL_PARAM *ec_gen_settable_params(ossl_unused void *genctx,
         OSSL_PARAM_BN(OSSL_PKEY_PARAM_EC_COFACTOR, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, NULL, 0),
         OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_DHKEM_IKM, NULL, 0),
-        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_PKEY_PARAM_FIPS_KEY_CHECK)
-            OSSL_PARAM_END
+        OSSL_FIPS_IND_SETTABLE_CTX_PARAM(OSSL_PKEY_PARAM_FIPS_KEY_CHECK),
+        OSSL_PARAM_END
     };
     return settable;
 }
@@ -1227,8 +1227,8 @@ static const OSSL_PARAM *ec_gen_gettable_params(ossl_unused void *genctx,
     ossl_unused void *provctx)
 {
     static const OSSL_PARAM known_ec_gen_gettable_ctx_params[] = {
-        OSSL_FIPS_IND_GETTABLE_CTX_PARAM()
-            OSSL_PARAM_END
+        OSSL_FIPS_IND_GETTABLE_CTX_PARAM(),
+        OSSL_PARAM_END
     };
     return known_ec_gen_gettable_ctx_params;
 }
