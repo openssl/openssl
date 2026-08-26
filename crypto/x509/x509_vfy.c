@@ -2680,6 +2680,11 @@ X509_CRL *X509_CRL_diff(X509_CRL *base, X509_CRL *newer,
         goto err;
     }
 
+    if (!ossl_x509_crl_cache_extensions(crl)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+        goto err;
+    }
+
     return crl;
 
 err:
