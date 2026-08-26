@@ -962,18 +962,30 @@ static int cms_bio_read(BIO *in,
     *buffer = NULL;
     *buffer_len = 0;
 
-    /* read data from BIO into memory */
-    do {
-        *buffer_len += 10240;
-        tmp = OPENSSL_realloc(*buffer, *buffer_len);
-        if (!tmp)
-            goto err;
-        *buffer = tmp;
+    /*
+     * Read data from BIO into memory.  A file BIO only reports EOF once a
+     * read has hit the end of the file, so a read returning 0 is the normal
+     * end of the content (which may be empty or an exact multiple of the
+     * chunk size) rather than an error.
+     */
+    for (;;) {
+        if (offset == *buffer_len) {
+            *buffer_len += 10240;
+            tmp = OPENSSL_realloc(*buffer, *buffer_len);
+            if (tmp == NULL)
+                goto err;
+            *buffer = tmp;
+        }
 
-        if ((n = BIO_read(in, &(*buffer)[offset], 10240)) <= 0)
+        n = BIO_read(in, &(*buffer)[offset], (int)(*buffer_len - offset));
+        if (n < 0)
             goto err;
+        if (n == 0)
+            break;
         offset += n;
-    } while (BIO_eof(in) != 1);
+        if (BIO_eof(in) == 1)
+            break;
+    }
 
     *buffer_len = offset;
 
