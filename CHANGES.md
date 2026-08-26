@@ -87,6 +87,15 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
+ * The TLS 1.3 server now enforces the RFC 8446 section 9.2 requirement that
+   a ClientHello containing a supported_groups extension also contains a
+   key_share extension and vice versa, aborting the handshake with a
+   missing_extension alert otherwise. Previously a PSK resumption ClientHello
+   that offered psk_ke and carried supported_groups but no key_share was
+   accepted when the server allowed non-DHE PSK key exchange.
+
+   *Paul Grubbs*
+
 OpenSSL 4.1
 -----------
 
