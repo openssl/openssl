@@ -1766,6 +1766,23 @@ static int final_key_share(SSL_CONNECTION *s, unsigned int context, int sent)
      *             send a HelloRetryRequest
      */
     if (s->server) {
+        /*
+         * RFC 8446, section 9.2: a ClientHello containing a supported_groups
+         * extension MUST also contain a key_share extension, and vice versa
+         * (an empty KeyShare.client_shares vector is permitted).  Servers
+         * MUST abort the handshake with a missing_extension alert otherwise.
+         */
+        if (s->clienthello != NULL) {
+            const RAW_EXTENSION *groups = &s->clienthello->pre_proc_exts[TLSEXT_IDX_supported_groups];
+
+            if ((sent != 0) != (groups->present != 0)) {
+                SSLfatal(s, SSL_AD_MISSING_EXTENSION,
+                    sent ? SSL_R_MISSING_SUPPORTED_GROUPS_EXTENSION
+                         : SSL_R_NO_SUITABLE_KEY_SHARE);
+                return 0;
+            }
+        }
+
         if (s->s3.peer_tmp != NULL) {
             /* We have a suitable key_share */
             if ((s->s3.flags & TLS1_FLAGS_STATELESS) != 0
