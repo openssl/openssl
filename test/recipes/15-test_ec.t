@@ -250,6 +250,25 @@ subtest 'ec -check reports the key consistency' => sub {
                        "EC Key Invalid");
 };
 
+subtest 'PKCS#8 EC key with inconsistent curve parameters' => sub {
+    plan tests => 3;
+
+    # ec-pkcs8-mismatch.pem is a PrivateKeyInfo whose privateKeyAlgorithm
+    # names secp384r1 while the ECPrivateKey inside it carries prime256v1
+    # parameters (and a P-256 key).  ec-pkcs8-consistent.pem is the same
+    # key with prime256v1 in both places.
+    ok(run(app(['openssl', 'pkey', '-noout',
+                '-in', data_file('ec-pkcs8-consistent.pem')])),
+       "PKCS#8 EC key with consistent curve parameters loads");
+    ok(!run(app(['openssl', 'pkey', '-noout',
+                 '-in', data_file('ec-pkcs8-mismatch.pem')])),
+       "PKCS#8 EC key with inconsistent curve parameters is rejected");
+    ok(!run(app(['openssl', 'pkcs8', '-nocrypt',
+                 '-in', data_file('ec-pkcs8-mismatch.pem'),
+                 '-out', 'ec-pkcs8-mismatch.out'])),
+       "pkcs8 rejects a PKCS#8 EC key with inconsistent curve parameters");
+};
+
 subtest 'Check loading of fips and non-fips keys' => sub {
     plan skip_all => "FIPS is disabled"
         if $no_fips;
