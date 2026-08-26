@@ -1614,8 +1614,11 @@ int CMS_add_simple_smimecap(STACK_OF(X509_ALGOR) **algs,
 static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_CIPHER *cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
+    EVP_CIPHER *cipher;
 
+    ERR_set_mark();
+    cipher = EVP_CIPHER_fetch(libctx, OBJ_nid2sn(nid), propq);
+    ERR_pop_to_mark();
     if (cipher != NULL) {
         EVP_CIPHER_free(cipher);
         return CMS_add_simple_smimecap(sk, nid, arg);
@@ -1626,8 +1629,11 @@ static int cms_add_cipher_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
 static int cms_add_digest_smcap(STACK_OF(X509_ALGOR) **sk, int nid, int arg,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
-    EVP_MD *md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
+    EVP_MD *md;
 
+    ERR_set_mark();
+    md = EVP_MD_fetch(libctx, OBJ_nid2sn(nid), propq);
+    ERR_pop_to_mark();
     if (md != NULL) {
         EVP_MD_free(md);
         return CMS_add_simple_smimecap(sk, nid, arg);

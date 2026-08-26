@@ -42,7 +42,8 @@ static int test_pkcs7_smimecap(void)
         || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
         || !TEST_true(PKCS7_content_new(p7, NID_pkcs7_data))
         || !TEST_ptr(si = PKCS7_sign_add_signer(p7, smimecap_cert,
-                         smimecap_privkey, NULL, 0)))
+                         smimecap_privkey, NULL, 0))
+        || !TEST_int_eq(ERR_peek_error(), 0))
         goto end;
 
     if (!TEST_ptr(smcap = PKCS7_get_smimecap(si)))
