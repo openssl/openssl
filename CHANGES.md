@@ -79,6 +79,15 @@ OpenSSL 4.2
 
    *Dominic Cunningham, Billy Bob Brumley*
 
+ * The TLS 1.3 client now aborts the handshake with an "unsupported_extension"
+   alert if the server's EncryptedExtensions message contains an extension
+   that the client did not request and does not recognise, as required by
+   RFC 8446 section 4.2. Previously such extensions were silently ignored.
+   Custom extensions registered with SSL_CTX_add_custom_ext() for the
+   EncryptedExtensions context continue to be accepted.
+
+   *Paul Grubbs*
+
 OpenSSL 4.1
 -----------
 
