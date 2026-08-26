@@ -3772,9 +3772,12 @@ int speed_main(int argc, char **argv)
 
         ecdh_err_break:
             EVP_PKEY_free(key_A);
+            pkey_A = NULL;
             EVP_PKEY_free(key_B);
+            pkey_B = NULL;
             EVP_PKEY_CTX_free(test_ctx);
             test_ctx = NULL;
+            /* The other free's are performed after "end:" */
             if (ecdh_checks == 0) /* for any failure */
                 break;
         }
