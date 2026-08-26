@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * A CRL in which an entry carries an undecodable or duplicated reasonCode
+   or certificateIssuer extension is no longer accepted for revocation
+   checking if a later entry carries a critical extension that OpenSSL does
+   not handle. Previously the scan for critical CRL entry extensions stopped
+   at the malformed entry, so such a CRL was used as if it had no critical
+   entry extensions.
+
+   *Paul Grubbs*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 
