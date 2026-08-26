@@ -31,6 +31,17 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * SSL_set_tlsext_host_name() now validates that the given name is a DNS
+   hostname suitable for the server_name extension as specified in RFC 6066:
+   ASCII labels of letters, digits, hyphens or underscores, no trailing dot,
+   and no IPv4 or IPv6 address literal. Previously any string of at most 255
+   characters was accepted and sent verbatim, producing a non-compliant
+   ClientHello for names such as IP addresses. The function now fails with
+   SSL_R_TLS_EXT_INVALID_SERVERNAME for such names; applications that connect
+   to servers by IP address must not set an SNI host name in that case.
+
+   *Paul Grubbs*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 

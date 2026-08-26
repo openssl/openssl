@@ -16598,6 +16598,83 @@ end:
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
+/*
+ * Test that SSL_set_tlsext_host_name() accepts valid server_name HostNames
+ * (RFC 6066, section 3) and rejects invalid ones, clearing any previously
+ * set name when it does.
+ */
+static int test_set_tlsext_host_name(void)
+{
+    static const char *const valid[] = {
+        "localhost",
+        "example.com",
+        "EXAMPLE.COM",
+        "xn--nxasmq6b.example",
+        "a-b.c-d.example",
+        "under_score.example",
+        "123.example",
+        "1a.example",
+        /* A 63 character label */
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example",
+    };
+    static const char *const invalid[] = {
+        "",
+        "joe@example.com",
+        "1.1.1.1",
+        "::1",
+        "[::1]",
+        "2001:db8::1",
+        "\xe4\xbd\xa0\xe5\xa5\xbd\xe4\xb8\x96\xe7\x95\x8c", /* UTF-8 */
+        "example.com.",
+        ".example.com",
+        "example..com",
+        "example com",
+        "example.com/path",
+        "example.com:443",
+        "123",
+        "example.123",
+        /* A 64 character label */
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa.example",
+    };
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    int testresult = 0;
+    size_t i;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method()))
+        || !TEST_ptr(ssl = SSL_new(ctx)))
+        goto end;
+
+    for (i = 0; i < OSSL_NELEM(valid); i++) {
+        TEST_info("valid: \"%s\"", valid[i]);
+        if (!TEST_true(SSL_set_tlsext_host_name(ssl, valid[i]))
+            || !TEST_str_eq(SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name),
+                valid[i]))
+            goto end;
+    }
+
+    for (i = 0; i < OSSL_NELEM(invalid); i++) {
+        TEST_info("invalid: \"%s\"", invalid[i]);
+        /* A rejected name must also clear the previously set one */
+        if (!TEST_true(SSL_set_tlsext_host_name(ssl, "example.com"))
+            || !TEST_false(SSL_set_tlsext_host_name(ssl, invalid[i]))
+            || !TEST_ptr_null(SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)))
+            goto end;
+    }
+
+    /* NULL clears the name */
+    if (!TEST_true(SSL_set_tlsext_host_name(ssl, "example.com"))
+        || !TEST_true(SSL_set_tlsext_host_name(ssl, NULL))
+        || !TEST_ptr_null(SSL_get_servername(ssl, TLSEXT_NAMETYPE_host_name)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     char *modulename;
@@ -16917,6 +16994,7 @@ int setup_tests(void)
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3)
     ADD_ALL_TESTS(test_sni_tls13, 2);
+    ADD_TEST(test_set_tlsext_host_name);
     ADD_ALL_TESTS(test_ticket_lifetime, 4);
 #endif
     ADD_TEST(test_inherit_verify_param);
