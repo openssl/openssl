@@ -16418,8 +16418,22 @@ err:
  * PACKET functions to confirm that GREASE values (matching 0x?A?A) are
  * present in the expected fields.
  */
-static unsigned char *grease_ch_buf;
-static size_t grease_ch_len;
+#define MAX_GREASE_CLIENT_HELLOS 2
+
+typedef struct grease_capture_st {
+    unsigned char *buf[MAX_GREASE_CLIENT_HELLOS];
+    size_t len[MAX_GREASE_CLIENT_HELLOS];
+    size_t count;
+} GREASE_CAPTURE;
+
+static void grease_capture_reset(GREASE_CAPTURE *capture)
+{
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(capture->buf); i++)
+        OPENSSL_free(capture->buf[i]);
+    memset(capture, 0, sizeof(*capture));
+}
 
 static int is_grease(unsigned int v)
 {
@@ -16429,6 +16443,7 @@ static int is_grease(unsigned int v)
 static void grease_msg_cb(int write_p, int version, int content_type,
     const void *buf, size_t len, SSL *ssl, void *arg)
 {
+    GREASE_CAPTURE *capture = arg;
     const unsigned char *p = buf;
 
     /*
@@ -16441,12 +16456,14 @@ static void grease_msg_cb(int write_p, int version, int content_type,
         || p[0] != SSL3_MT_CLIENT_HELLO)
         return;
 
-    /* Only capture the first ClientHello (not HRR retry) */
-    if (grease_ch_buf != NULL)
+    if (capture == NULL || capture->count >= OSSL_NELEM(capture->buf))
         return;
 
-    grease_ch_buf = OPENSSL_memdup(buf, len);
-    grease_ch_len = len;
+    capture->buf[capture->count] = OPENSSL_memdup(buf, len);
+    if (capture->buf[capture->count] == NULL)
+        return;
+    capture->len[capture->count] = len;
+    capture->count++;
 }
 
 /*
@@ -16455,11 +16472,13 @@ static void grease_msg_cb(int write_p, int version, int content_type,
  * groups, key shares, and signature algorithms.
  * Returns 1 on success, 0 on failure.
  */
-static int check_grease_in_client_hello(void)
+static int check_grease_in_client_hello(const unsigned char *buf, size_t len,
+    int expect_grease_keyshare)
 {
     PACKET pkt, ciphers, session, compression, exts, ext_data;
     PACKET inner;
     unsigned int ext_type = 0, val = 0;
+    size_t keyshare_count = 0;
     int found_grease_cipher = 0;
     int found_grease_ext = 0;
     int found_grease_group = 0;
@@ -16475,9 +16494,8 @@ static int check_grease_in_client_hello(void)
     memset(&ext_data, 0, sizeof(ext_data));
     memset(&inner, 0, sizeof(inner));
 
-    if (!TEST_ptr(grease_ch_buf)
-        || !TEST_true(PACKET_buf_init(&pkt, grease_ch_buf,
-            grease_ch_len))
+    if (!TEST_ptr(buf)
+        || !TEST_true(PACKET_buf_init(&pkt, buf, len))
         /* Skip handshake message header */
         || !TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
         /* Skip client_version + random */
@@ -16550,6 +16568,7 @@ static int check_grease_in_client_hello(void)
                     || !TEST_true(PACKET_get_length_prefixed_2(
                         &inner, &ks_entry)))
                     return 0;
+                keyshare_count++;
                 if (is_grease(val))
                     found_grease_kshare = 1;
             }
@@ -16577,9 +16596,11 @@ static int check_grease_in_client_hello(void)
         return 0;
     if (!TEST_true(found_grease_group))
         return 0;
-    if (!TEST_true(found_grease_kshare))
+    if (!TEST_int_eq(found_grease_kshare, expect_grease_keyshare))
         return 0;
     if (!TEST_true(found_grease_sigalg))
+        return 0;
+    if (!expect_grease_keyshare && !TEST_size_t_eq(keyshare_count, 1))
         return 0;
 
     return 1;
@@ -16589,10 +16610,8 @@ static int test_grease(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *serverssl = NULL, *clientssl = NULL;
+    GREASE_CAPTURE capture = { 0 };
     int testresult = 0;
-
-    grease_ch_buf = NULL;
-    grease_ch_len = 0;
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
             TLS_client_method(),
@@ -16606,23 +16625,65 @@ static int test_grease(void)
             &clientssl, NULL, NULL)))
         goto end;
 
-    SSL_set_msg_callback(clientssl, grease_msg_cb);
+    /* Force the server to request a new key share. */
+#if defined(OPENSSL_NO_EC)
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "ffdhe3072")))
+        goto end;
+#else
+    if (!TEST_true(SSL_set1_groups_list(serverssl, "P-384")))
+        goto end;
+#endif
 
-    /* A full handshake should succeed - server must tolerate GREASE */
+    SSL_set_msg_callback(clientssl, grease_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &capture);
+
+    /* A full handshake should succeed - server must tolerate GREASE. */
     if (!TEST_true(create_ssl_connection(serverssl, clientssl,
             SSL_ERROR_NONE)))
         goto end;
 
-    /* Now verify the captured ClientHello contains GREASE values */
-    if (!TEST_true(check_grease_in_client_hello()))
+    if (!TEST_size_t_eq(capture.count, 2)
+        || !TEST_true(check_grease_in_client_hello(capture.buf[0],
+            capture.len[0], 1))
+        || !TEST_true(check_grease_in_client_hello(capture.buf[1],
+            capture.len[1], 0)))
+        goto end;
+
+    shutdown_ssl_connection(serverssl, clientssl);
+    serverssl = clientssl = NULL;
+    grease_capture_reset(&capture);
+
+    /* A cookie-only retry must retain the original GREASE key share. */
+    SSL_CTX_clear_options(cctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
+    SSL_CTX_set_stateless_cookie_generate_cb(sctx,
+        generate_stateless_cookie_callback);
+    SSL_CTX_set_stateless_cookie_verify_cb(sctx,
+        verify_stateless_cookie_callback);
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl,
+            &clientssl, NULL, NULL)))
+        goto end;
+
+    SSL_set_msg_callback(clientssl, grease_msg_cb);
+    SSL_set_msg_callback_arg(clientssl, &capture);
+    if (!TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_WANT_READ))
+        || !TEST_int_eq(SSL_stateless(serverssl), 0)
+        || !TEST_false(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_WANT_READ))
+        || !TEST_int_eq(SSL_stateless(serverssl), 1)
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_size_t_eq(capture.count, 2)
+        || !TEST_true(check_grease_in_client_hello(capture.buf[0],
+            capture.len[0], 1))
+        || !TEST_true(check_grease_in_client_hello(capture.buf[1],
+            capture.len[1], 1)))
         goto end;
 
     testresult = 1;
 
 end:
-    OPENSSL_free(grease_ch_buf);
-    grease_ch_buf = NULL;
-    grease_ch_len = 0;
+    grease_capture_reset(&capture);
     SSL_free(serverssl);
     SSL_free(clientssl);
     SSL_CTX_free(sctx);

@@ -918,8 +918,14 @@ EXT_RETURN tls_construct_ctos_key_share(SSL_CONNECTION *s, WPACKET *pkt,
         return EXT_RETURN_FAIL;
     }
 
-    /* RFC 8701: prepend a GREASE key share entry (1 byte of 0x00) */
-    if ((s->options & SSL_OP_GREASE) && !s->server) {
+    /*
+     * RFC 8701: prepend a GREASE key share entry (1 byte of 0x00). After an
+     * HRR requesting a new key share, RFC 9846 requires the requested entry
+     * to be the only one in the second ClientHello.
+     */
+    if ((s->options & SSL_OP_GREASE) && !s->server
+        && !(s->hello_retry_request == SSL_HRR_PENDING
+            && s->s3.group_id != 0 && s->s3.tmp.pkey == NULL)) {
         uint16_t grease_group = ossl_grease_value(s, OSSL_GREASE_GROUP);
 
         if (!WPACKET_put_bytes_u16(pkt, grease_group)
