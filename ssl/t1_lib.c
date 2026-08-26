@@ -553,6 +553,18 @@ static int add_provider_sigalgs(const OSSL_PARAM params[], void *data)
             goto err;
     }
 
+    p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_GROUP);
+    if (p == NULL) {
+        sinf->keytype_group = NULL;
+    } else if (p->data_type != OSSL_PARAM_UTF8_STRING) {
+        goto err;
+    } else {
+        OPENSSL_free(sinf->keytype_group);
+        sinf->keytype_group = OPENSSL_strdup(p->data);
+        if (sinf->keytype_group == NULL)
+            goto err;
+    }
+
     /* Optional, not documented prior to 3.5 */
     sinf->mindtls = sinf->maxdtls = -1;
     p = OSSL_PARAM_locate_const(params, OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS);
@@ -673,6 +685,8 @@ err:
         sinf->keytype = NULL;
         OPENSSL_free(sinf->keytype_oid);
         sinf->keytype_oid = NULL;
+        OPENSSL_free(sinf->keytype_group);
+        sinf->keytype_group = NULL;
     }
     return ret;
 }
@@ -708,8 +722,33 @@ int ssl_load_sigalgs(SSL_CTX *ctx)
             return 0;
         for (i = 0; i < ctx->sigalg_list_len; i++) {
             const char *keytype = inferred_keytype(&ctx->sigalg_list[i]);
-            ctx->ssl_cert_info[i].pkey_nid = OBJ_txt2nid(keytype);
-            ctx->ssl_cert_info[i].amask = SSL_aANY;
+            const char *group = ctx->sigalg_list[i].keytype_group;
+            int pkey_nid = OBJ_txt2nid(keytype);
+
+            ctx->ssl_cert_info[i].pkey_nid = pkey_nid;
+            /*
+             * Borrow the built-in slot's amask. SSL_aANY is zero, and every
+             * cert-vs-ciphersuite check is (amask & algorithm_auth) != 0, so
+             * leaving it zero rejects the slot everywhere below TLS 1.3.
+             */
+            ctx->ssl_cert_info[i].amask = ssl_cert_builtin_amask_by_nid(pkey_nid);
+            /*
+             * Remember the group, if any, so cert loading can tell apart
+             * schemes sharing a key type OID. A name we can't resolve is an
+             * error: NID_undef means "any group", so accepting it would
+             * quietly make a grouped sigalg ungrouped.
+             */
+            ctx->ssl_cert_info[i].group_nid = NID_undef;
+            if (group != NULL) {
+                int group_nid = OBJ_txt2nid(group);
+
+                if (group_nid == NID_undef) {
+                    ERR_raise_data(ERR_LIB_SSL, SSL_R_UNSUPPORTED_CONFIG_VALUE,
+                        "unknown key-type-group \"%s\"", group);
+                    return 0;
+                }
+                ctx->ssl_cert_info[i].group_nid = group_nid;
+            }
         }
     }
 
@@ -2866,24 +2905,42 @@ int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t sig, EVP_PKEY *pkey)
         return -1;
     }
 
-    /*
-     * Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. Check key type
-     * is consistent with signature: RSA keys can be used for RSA-PSS
-     */
-    if ((SSL_CONNECTION_IS_TLS13(s)
-            && (lu->hash == NID_sha1 || lu->hash == NID_sha224))
-        || (pkeyid != lu->sig
-            && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA))) {
+    /* Check sigalgs is known. Disallow SHA1/SHA224 with TLS 1.3. */
+    if (SSL_CONNECTION_IS_TLS13(s)
+        && (lu->hash == NID_sha1 || lu->hash == NID_sha224)) {
         SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
         return 0;
     }
-    /* Check the sigalg is consistent with the key OID */
-    if (!ssl_cert_lookup_by_nid(
-            (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
-            &cidx, SSL_CONNECTION_GET_CTX(s))
-        || lu->sig_idx != (int)cidx) {
-        SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
-        return 0;
+    if (lu->sig_idx >= SSL_PKEY_NUM) {
+        /*
+         * Provider-defined sigalg: lu->sig is the NID of the combined
+         * signature scheme while pkeyid is the key type NID, so the two can
+         * legitimately differ (for example the RFC 9367 GOST schemes). So
+         * ask whether the key fits this sigalg's slot instead of looking a
+         * slot up from the key, which would depend on lookup order. This
+         * also rejects a key whose paramset doesn't match the sigalg.
+         */
+        const SSL_CERT_LOOKUP *scl = ssl_cert_lookup_by_idx(lu->sig_idx,
+            SSL_CONNECTION_GET_CTX(s));
+
+        if (scl == NULL || !ssl_cert_pkey_fits_slot(pkey, scl)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+    } else {
+        if (pkeyid != lu->sig
+            && (lu->sig != EVP_PKEY_RSA_PSS || pkeyid != EVP_PKEY_RSA)) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
+        /* Check the sigalg is consistent with the key OID */
+        if (!ssl_cert_lookup_by_nid(
+                (pkeyid == EVP_PKEY_RSA_PSS) ? EVP_PKEY_get_id(pkey) : pkeyid,
+                &cidx, SSL_CONNECTION_GET_CTX(s))
+            || lu->sig_idx != (int)cidx) {
+            SSLfatal(s, SSL_AD_ILLEGAL_PARAMETER, SSL_R_WRONG_SIGNATURE_TYPE);
+            return 0;
+        }
     }
 
     if (pkeyid == EVP_PKEY_EC) {
