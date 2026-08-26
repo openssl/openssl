@@ -858,6 +858,122 @@ err:
     return ret;
 }
 
+/*
+ * Reassemble a buffer delivered as small frames in a random order with
+ * overlapping retransmits, each frame carrying its own copy of its bytes on
+ * its own packet as a real one would. The random order drives insertion at the
+ * head, the tail and the middle of the reassembly, and the frame size is swept
+ * across the boundary where a design may switch how it stores a chunk, so short
+ * frames and their overlaps are merged in every combination. The read back must
+ * match what was sent whether or not the data is cleansed, since each frame's
+ * own copy is what gets wiped, never the reference.
+ */
+static int test_rstream_reorder(int idx)
+{
+    unsigned char *data = NULL, *buf = NULL, *arena = NULL, *ap;
+    QUIC_RSTREAM *rstream = NULL;
+    OSSL_QRX_PKT **pkts = NULL;
+    const size_t data_size = 4096;
+    const size_t framesz = 1 + (size_t)(idx % 17);
+    const int cleanse = (idx & 1);
+    const size_t nframes = (data_size + framesz - 1) / framesz;
+    size_t *order = NULL;
+    size_t i, num_pkts = 0, got = 0, readbytes = 0;
+    int fin = 0, ret = 0;
+
+    if (!TEST_ptr(data = OPENSSL_malloc(data_size))
+        || !TEST_ptr(buf = OPENSSL_malloc(data_size))
+        || !TEST_ptr(arena = OPENSSL_malloc(3 * data_size))
+        || !TEST_ptr(order = OPENSSL_malloc(nframes * sizeof(*order)))
+        || !TEST_ptr(pkts = OPENSSL_zalloc(2 * nframes * sizeof(*pkts)))
+        || !TEST_ptr(rstream = ossl_quic_rstream_new(NULL, NULL, 0)))
+        goto err;
+
+    if (cleanse)
+        ossl_quic_rstream_set_cleanse(rstream, 1);
+
+    for (i = 0; i < data_size; ++i)
+        data[i] = (unsigned char)(test_random() & 0xFF);
+
+    for (i = 0; i < nframes; ++i)
+        order[i] = i;
+    for (i = nframes; i > 1; --i) {
+        size_t j = (size_t)(test_random() % i);
+        size_t tmp = order[i - 1];
+
+        order[i - 1] = order[j];
+        order[j] = tmp;
+    }
+
+    ap = arena;
+    for (i = 0; i < nframes; ++i) {
+        size_t off = order[i] * framesz;
+        size_t size = off + framesz > data_size ? data_size - off : framesz;
+        OSSL_QRX_PKT *pkt;
+
+        if (!TEST_ptr(pkt = pkt_test_new(1200)))
+            goto err;
+        pkts[num_pkts++] = pkt;
+        memcpy(ap, data + off, size);
+        if (!TEST_true(ossl_quic_rstream_queue_data(rstream, pkt, off, ap,
+                size, 0)))
+            goto err;
+        ap += size;
+
+        /* an overlapping retransmit straddling this frame and the next */
+        if (off + framesz + framesz / 2 <= data_size
+            && test_random() % 3 == 0) {
+            size_t roff = off + framesz / 2;
+            OSSL_QRX_PKT *rpkt;
+
+            if (!TEST_ptr(rpkt = pkt_test_new(1200)))
+                goto err;
+            pkts[num_pkts++] = rpkt;
+            memcpy(ap, data + roff, framesz);
+            if (!TEST_true(ossl_quic_rstream_queue_data(rstream, rpkt, roff, ap,
+                    framesz, 0)))
+                goto err;
+            ap += framesz;
+        }
+    }
+
+    /* final empty fin frame past the last byte */
+    if (!TEST_true(ossl_quic_rstream_queue_data(rstream, NULL, data_size, NULL,
+            0, 1)))
+        goto err;
+
+    while (got < data_size) {
+        if (!TEST_true(ossl_quic_rstream_read(rstream, buf + got,
+                data_size - got, &readbytes, &fin)))
+            goto err;
+        if (readbytes == 0)
+            break;
+        got += readbytes;
+    }
+
+    if (!TEST_size_t_eq(got, data_size)
+        || !TEST_mem_eq(buf, got, data, data_size))
+        goto err;
+
+    ret = 1;
+
+err:
+    ossl_quic_rstream_free(rstream);
+    if (pkts != NULL) {
+        for (i = 0; i < num_pkts; ++i) {
+            if (!TEST_size_t_eq(pkt_test_refcount(pkts[i]), 1))
+                ret = 0;
+            pkt_test_free(pkts[i]);
+        }
+        OPENSSL_free(pkts);
+    }
+    OPENSSL_free(order);
+    OPENSSL_free(arena);
+    OPENSSL_free(data);
+    OPENSSL_free(buf);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_sstream_simple);
@@ -866,5 +982,6 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rstream_random, 100);
     ADD_TEST(test_rstream_pkt);
     ADD_TEST(test_rstream_pkt_overhead);
+    ADD_ALL_TESTS(test_rstream_reorder, 40);
     return 1;
 }
