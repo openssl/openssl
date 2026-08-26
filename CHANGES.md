@@ -92,9 +92,16 @@ OpenSSL 4.1
 
    *Ryan Hooper*
 
- * Fixed `SSL_listen_ex()` to return a usable QUIC connection and to preserve
-   queued connections on allocation failure. Invalid arguments and internal
-   failures now return `-1`, reserving `0` for "no connection available".
+ * Fixed `SSL_listen_ex()` to correctly adopt a QUIC connection and to preserve
+   queued connections on allocation failure. Invalid arguments, including
+   non-QUIC SSL objects, and internal failures now return `-1`, reserving `0`
+   for "no connection available".
+
+   *Mounir IDRASSI*
+
+ * Fixed QUIC child objects to inherit the effective flags of their explicit
+   event domain. `SSL_get0_domain()` now reports that domain for connections
+   and streams in the hierarchy.
 
    *Mounir IDRASSI*
 

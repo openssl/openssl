@@ -307,8 +307,10 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
     case SSL_TYPE_QUIC_CONNECTION:
         qc = (QUIC_CONNECTION *)s;
         ctx->obj = &qc->obj;
-        ctx->qd = qc->domain;
-        ctx->ql = qc->listener; /* never changes, so can be read without lock */
+        ctx->qd = qc->domain != NULL
+            ? qc->domain
+            : (qc->listener != NULL ? qc->listener->domain : NULL);
+        ctx->ql = qc->listener;
         ctx->qc = qc;
 
         if ((flags & QCTX_AUTO_S) != 0) {
@@ -357,7 +359,11 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
 
         xso = (QUIC_XSO *)s;
         ctx->obj = &xso->obj;
-        ctx->qd = xso->conn->domain;
+        ctx->qd = xso->conn->domain != NULL
+            ? xso->conn->domain
+            : (xso->conn->listener != NULL
+                      ? xso->conn->listener->domain
+                      : NULL);
         ctx->ql = xso->conn->listener;
         ctx->qc = xso->conn;
         ctx->xso = xso;
@@ -5019,7 +5025,7 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 {
     QCTX lctx;
     QCTX cctx;
-    QUIC_CHANNEL *new_ch, *old_ch;
+    QUIC_CHANNEL *new_ch, *old_ch, *popped_ch;
     QUIC_PORT *old_port;
     QUIC_ENGINE *old_engine;
 #if defined(OPENSSL_THREADS)
@@ -5071,7 +5077,8 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     }
 
     /* Do all fallible setup before consuming the queued channel. */
-    if (!ossl_quic_port_have_incoming(lctx.ql->port))
+    new_ch = ossl_quic_port_peek_incoming(lctx.ql->port);
+    if (new_ch == NULL)
         goto out;
 
     qc = cctx.qc;
@@ -5105,10 +5112,24 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
         goto out;
     }
 
-    new_ch = ossl_quic_port_pop_incoming(ql->port);
-
     /* Bind TLS before adopting the deferred incoming channel. */
-    ossl_quic_channel_set0_tls(new_ch, tls);
+    if (!ossl_quic_channel_set0_tls(new_ch, tls)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        SSL_free(tls);
+        SSL_free(&ql->obj.ssl);
+        ret = -1;
+        goto out;
+    }
+
+    ossl_quic_channel_set_msg_callback(new_ch,
+        ql->obj.ssl.ctx->msg_callback, new_conn);
+    ossl_quic_channel_set_msg_callback_arg(new_ch,
+        ql->obj.ssl.ctx->msg_callback_arg);
+
+    /* The listener lock guarantees that the queue head has not changed. */
+    popped_ch = ossl_quic_port_pop_incoming(ql->port);
+    assert(popped_ch == new_ch);
+    (void)popped_ch;
 
     old_ch = qc->ch;
     old_port = qc->port;
@@ -5147,11 +5168,14 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
     qc->as_server_state = 1;
     /* Reinitialise configuration to the accepted-connection defaults. */
     qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
+    qc->default_ssl_mode = ql->obj.ssl.ctx->mode;
     qc->default_ssl_options
         = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
     qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
     qc->incoming_stream_aec = 0;
     qc->last_error = SSL_ERROR_NONE;
+    ossl_quic_obj_set_blocking_mode(&qc->obj, QUIC_BLOCKING_MODE_INHERIT);
+    qc->obj.event_handling_mode = SSL_VALUE_EVENT_HANDLING_MODE_INHERIT;
     qc_update_reject_policy(qc);
     ret = 1;
 

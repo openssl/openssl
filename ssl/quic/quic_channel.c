@@ -582,7 +582,7 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
-void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
+int ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
 {
     /*
      * Rebind the handshake layer first, so that a failure leaves the channel
@@ -591,19 +591,10 @@ void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
      */
     if (!ossl_assert(ch != NULL && ssl != NULL && ch->tls == NULL)
         || !ossl_quic_tls_set0_ssl(ch->qtls, ssl))
-        return;
+        return 0;
 
     ch->tls = ssl;
-#ifndef OPENSSL_NO_QLOG
-    /*
-     * If we're using qlog, make sure the tls gets further configured properly
-     */
-    ch->use_qlog = 1;
-    if (ch->tls->ctx->qlog_title != NULL) {
-        OPENSSL_free(ch->qlog_title);
-        ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title);
-    }
-#endif
+    return 1;
 }
 
 static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
