@@ -263,6 +263,7 @@ _vpaes_encrypt_core:
 .size	_vpaes_encrypt_core,.-_vpaes_encrypt_core
 
 .globl	vpaes_encrypt
+.hidden vpaes_encrypt
 .type	vpaes_encrypt,%function
 .align	4
 vpaes_encrypt:
@@ -501,6 +502,7 @@ _vpaes_decrypt_core:
 .size	_vpaes_decrypt_core,.-_vpaes_decrypt_core
 
 .globl	vpaes_decrypt
+.hidden vpaes_decrypt
 .type	vpaes_decrypt,%function
 .align	4
 vpaes_decrypt:
@@ -1069,6 +1071,7 @@ _vpaes_schedule_mangle:
 .size	_vpaes_schedule_mangle,.-_vpaes_schedule_mangle
 
 .globl	vpaes_set_encrypt_key
+.hidden vpaes_set_encrypt_key
 .type	vpaes_set_encrypt_key,%function
 .align	4
 vpaes_set_encrypt_key:
@@ -1093,6 +1096,7 @@ vpaes_set_encrypt_key:
 .size	vpaes_set_encrypt_key,.-vpaes_set_encrypt_key
 
 .globl	vpaes_set_decrypt_key
+.hidden vpaes_set_decrypt_key
 .type	vpaes_set_decrypt_key,%function
 .align	4
 vpaes_set_decrypt_key:
@@ -1126,6 +1130,7 @@ my ($inp,$out,$len,$key,$ivec,$dir) = map("x$_",(0..5));
 
 $code.=<<___;
 .globl	vpaes_cbc_encrypt
+.hidden vpaes_cbc_encrypt
 .type	vpaes_cbc_encrypt,%function
 .align	4
 vpaes_cbc_encrypt:
@@ -1214,6 +1219,7 @@ ___
 if (1) {
 $code.=<<___;
 .globl	vpaes_ecb_encrypt
+.hidden vpaes_ecb_encrypt
 .type	vpaes_ecb_encrypt,%function
 .align	4
 vpaes_ecb_encrypt:

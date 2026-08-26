@@ -124,6 +124,7 @@ $code.=<<___;
 .align 16
 
 .globl	$func
+.hidden $func
 .type	$func,\@function,$nargs
 $func:
 .cfi_startproc

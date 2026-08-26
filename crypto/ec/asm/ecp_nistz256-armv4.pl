@@ -83,6 +83,7 @@ die "insane number of elements" if ($#arr != 64*16*37-1);
 $code.=<<___;
 .rodata
 .globl	ecp_nistz256_precomputed
+.hidden ecp_nistz256_precomputed
 .type	ecp_nistz256_precomputed,%object
 .align	12
 ecp_nistz256_precomputed:
@@ -129,6 +130,7 @@ ___
 $code.=<<___;
 @ void	ecp_nistz256_to_mont(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_to_mont
+.hidden ecp_nistz256_to_mont
 .type	ecp_nistz256_to_mont,%function
 ecp_nistz256_to_mont:
 	adr	$b_ptr,.LRR
@@ -137,6 +139,7 @@ ecp_nistz256_to_mont:
 
 @ void	ecp_nistz256_from_mont(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_from_mont
+.hidden ecp_nistz256_from_mont
 .type	ecp_nistz256_from_mont,%function
 ecp_nistz256_from_mont:
 	adr	$b_ptr,.Lone
@@ -145,6 +148,7 @@ ecp_nistz256_from_mont:
 
 @ void	ecp_nistz256_mul_by_2(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_mul_by_2
+.hidden ecp_nistz256_mul_by_2
 .type	ecp_nistz256_mul_by_2,%function
 .align	4
 ecp_nistz256_mul_by_2:
@@ -186,6 +190,7 @@ __ecp_nistz256_mul_by_2:
 @ void	ecp_nistz256_add(BN_ULONG r0[8],const BN_ULONG r1[8],
 @					const BN_ULONG r2[8]);
 .globl	ecp_nistz256_add
+.hidden ecp_nistz256_add
 .type	ecp_nistz256_add,%function
 .align	4
 ecp_nistz256_add:
@@ -276,6 +281,7 @@ __ecp_nistz256_add:
 
 @ void	ecp_nistz256_mul_by_3(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_mul_by_3
+.hidden ecp_nistz256_mul_by_3
 .type	ecp_nistz256_mul_by_3,%function
 .align	4
 ecp_nistz256_mul_by_3:
@@ -361,6 +367,7 @@ __ecp_nistz256_mul_by_3:
 
 @ void	ecp_nistz256_div_by_2(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_div_by_2
+.hidden ecp_nistz256_div_by_2
 .type	ecp_nistz256_div_by_2,%function
 .align	4
 ecp_nistz256_div_by_2:
@@ -436,6 +443,7 @@ __ecp_nistz256_div_by_2:
 @ void	ecp_nistz256_sub(BN_ULONG r0[8],const BN_ULONG r1[8],
 @				        const BN_ULONG r2[8]);
 .globl	ecp_nistz256_sub
+.hidden ecp_nistz256_sub
 .type	ecp_nistz256_sub,%function
 .align	4
 ecp_nistz256_sub:
@@ -512,6 +520,7 @@ __ecp_nistz256_sub:
 
 @ void	ecp_nistz256_neg(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_neg
+.hidden ecp_nistz256_neg
 .type	ecp_nistz256_neg,%function
 .align	4
 ecp_nistz256_neg:
@@ -557,6 +566,7 @@ my ($t0,$t1,$bj,$t2,$t3)=map("r$_",(0,1,2,12,14));
 $code.=<<___;
 @ void	ecp_nistz256_sqr_mont(BN_ULONG r0[8],const BN_ULONG r1[8]);
 .globl	ecp_nistz256_sqr_mont
+.hidden ecp_nistz256_sqr_mont
 .type	ecp_nistz256_sqr_mont,%function
 .align	4
 ecp_nistz256_sqr_mont:
@@ -567,6 +577,7 @@ ecp_nistz256_sqr_mont:
 @ void	ecp_nistz256_mul_mont(BN_ULONG r0[8],const BN_ULONG r1[8],
 @					     const BN_ULONG r2[8]);
 .globl	ecp_nistz256_mul_mont
+.hidden ecp_nistz256_mul_mont
 .type	ecp_nistz256_mul_mont,%function
 .align	4
 ecp_nistz256_mul_mont:
@@ -759,6 +770,7 @@ $code.=<<___;
 @ void	ecp_nistz256_scatter_w5(void *r0,const P256_POINT *r1,
 @					 int r2);
 .globl	ecp_nistz256_scatter_w5
+.hidden ecp_nistz256_scatter_w5
 .type	ecp_nistz256_scatter_w5,%function
 .align	5
 ecp_nistz256_scatter_w5:
@@ -809,6 +821,7 @@ ecp_nistz256_scatter_w5:
 @ void	ecp_nistz256_gather_w5(P256_POINT *r0,const void *r1,
 @					      int r2);
 .globl	ecp_nistz256_gather_w5
+.hidden ecp_nistz256_gather_w5
 .type	ecp_nistz256_gather_w5,%function
 .align	5
 ecp_nistz256_gather_w5:
@@ -890,6 +903,7 @@ ecp_nistz256_gather_w5:
 @ void	ecp_nistz256_scatter_w7(void *r0,const P256_POINT_AFFINE *r1,
 @					 int r2);
 .globl	ecp_nistz256_scatter_w7
+.hidden ecp_nistz256_scatter_w7
 .type	ecp_nistz256_scatter_w7,%function
 .align	5
 ecp_nistz256_scatter_w7:
@@ -918,6 +932,7 @@ ecp_nistz256_scatter_w7:
 @ void	ecp_nistz256_gather_w7(P256_POINT_AFFINE *r0,const void *r1,
 @						     int r2);
 .globl	ecp_nistz256_gather_w7
+.hidden ecp_nistz256_gather_w7
 .type	ecp_nistz256_gather_w7,%function
 .align	5
 ecp_nistz256_gather_w7:
@@ -978,6 +993,7 @@ $code.=<<___;
 .fpu	neon
 
 .globl	ecp_nistz256_mul_mont_neon
+.hidden ecp_nistz256_mul_mont_neon
 .type	ecp_nistz256_mul_mont_neon,%function
 .align	5
 ecp_nistz256_mul_mont_neon:
@@ -1281,6 +1297,7 @@ my ($S,$M,$Zsqr,$in_x,$tmp0)=map(32*$_,(0..4));
 
 $code.=<<___;
 .globl	ecp_nistz256_point_double
+.hidden ecp_nistz256_point_double
 .type	ecp_nistz256_point_double,%function
 .align	5
 ecp_nistz256_point_double:
@@ -1403,6 +1420,7 @@ my ($Z1sqr, $Z2sqr) = ($Hsqr, $Rsqr);
 
 $code.=<<___;
 .globl	ecp_nistz256_point_add
+.hidden ecp_nistz256_point_add
 .type	ecp_nistz256_point_add,%function
 .align	5
 ecp_nistz256_point_add:
@@ -1653,6 +1671,7 @@ my @ONE_mont=(1,0,0,-1,-1,-1,-2,0);
 
 $code.=<<___;
 .globl	ecp_nistz256_point_add_affine
+.hidden ecp_nistz256_point_add_affine
 .type	ecp_nistz256_point_add_affine,%function
 .align	5
 ecp_nistz256_point_add_affine:
