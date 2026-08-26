@@ -317,7 +317,7 @@ OSSL_STATM *ossl_quic_channel_get_statm(QUIC_CHANNEL *ch);
 SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch);
 
 /* Attaches the TLS layer to a deferred channel. */
-void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl);
+int ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl);
 
 /* Gets the channels short header connection id length */
 size_t ossl_quic_channel_get_short_header_conn_id_len(QUIC_CHANNEL *ch);

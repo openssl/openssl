@@ -130,10 +130,11 @@ in that it polls a listening SSL object, and, if a new connection is available,
 writes that connection into the SSL object pointed to by B<new_conn>.  Note that
 once a connection is returned from a listener via this call, accepting
 connections via L<SSL_accept_connection(3)> is no longer permissible, and will
-result in an error.  Note that many calls into the QUIC api may trigger the quic reactor
-(such as L<SSL_poll(3)>), and will set the port into a mode in which L<SSL_accept_connection(3)>
-is assumed.  To avoid this, it is recommended that, if the use of SSL_listen_ex use is desired, that
-it is the first I/O call made to the SSL object to which the port is attached.
+result in an error. Many calls into the QUIC API may trigger the QUIC reactor
+(such as L<SSL_poll(3)>) and select L<SSL_accept_connection(3)> mode for the
+port. Applications intending to use SSL_listen_ex() must call it before any
+operation selects that mode; in practice, it should be the first I/O call made
+on the listener.
 
 Likewise, if a listener has accepted a connection via
 L<SSL_accept_connection(3)>, it is impermissible to accept connections via
@@ -141,14 +142,22 @@ B<SSL_listen_ex()>. The SSL object passed in the B<new_conn> parameter must be
 a fresh standalone connection returned by L<SSL_new(3)>.
 L<OSSL_QUIC_method(3)> is intended for this use. The connection must not use
 thread assisted mode, have been started or shut down, have streams or network
-BIOs configured on it, or belong to another QUIC object hierarchy.
+BIOs configured on it, or belong to another QUIC object hierarchy. The
+application must not access I<new_conn> concurrently while SSL_listen_ex() is
+executing.
 
 On success, I<new_conn> is adopted into the listener's object hierarchy and
 uses its shared network port and TLS configuration derived from the listener.
 Certificates, verification parameters, ciphersuites, ALPN configuration and
 other security policy must be configured on the listener's
-B<SSL_CTX>. Applications must not install a private connected BIO or file
-descriptor on the returned connection.
+B<SSL_CTX>. The connection is reset to accepted-connection defaults. TLS
+callbacks and QUIC message tracing callbacks are derived from the listener.
+Except for application ex data associated with the outer SSL object,
+applications must not rely on configuration applied to I<new_conn> before the
+call being retained; configure it on the listener or after SSL_listen_ex()
+succeeds. Applications must not call L<SSL_set_bio(3)> or L<SSL_set_fd(3)> to
+install a private connected BIO or file descriptor on the returned connection;
+it continues to use the listener's shared network port.
 
 Once B<SSL_listen_ex()> returns success, the connection written to I<new_conn>
 is already in the accept (server) state. Use L<SSL_do_handshake(3)> (or

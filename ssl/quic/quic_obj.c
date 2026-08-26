@@ -20,11 +20,13 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     QUIC_ENGINE *engine,
     QUIC_PORT *port)
 {
+    QUIC_OBJ *parent = (QUIC_OBJ *)parent_obj;
     int is_event_leader = (engine != NULL);
     int is_port_leader = (port != NULL);
 
     if (!ossl_assert(obj != NULL && !obj->init_done && SSL_TYPE_IS_QUIC(type)
-            && (parent_obj == NULL || IS_QUIC(parent_obj))))
+            && (parent_obj == NULL
+                || (IS_QUIC(parent_obj) && parent->init_done))))
         return 0;
 
     /* Event leader is always the root object. */
@@ -34,8 +36,9 @@ int ossl_quic_obj_init(QUIC_OBJ *obj,
     if (!ossl_ssl_init(&obj->ssl, ctx, ctx->method, type))
         goto err;
 
-    obj->domain_flags = ctx->domain_flags;
-    obj->parent_obj = (QUIC_OBJ *)parent_obj;
+    obj->domain_flags
+        = parent != NULL ? parent->domain_flags : ctx->domain_flags;
+    obj->parent_obj = parent;
     obj->is_event_leader = is_event_leader;
     obj->is_port_leader = is_port_leader;
     obj->engine = engine;
