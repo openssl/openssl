@@ -34,6 +34,8 @@ OpenSSL 4.1
 
   * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
 
+  * API call `BN_CTX_start_ex` has been added.
+
 OpenSSL 4.0
 -----------
 
