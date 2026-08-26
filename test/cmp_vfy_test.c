@@ -570,7 +570,6 @@ static int test_msg_check_recipient_nonce_bad(void)
     EXECUTE_TEST(execute_msg_check_test, tear_down);
     return result;
 }
-#endif
 
 /* Regression test for CVE-2026-63073 */
 static int execute_msg_check_update_malicious_sender(CMP_VFY_TEST_FIXTURE *fixture)
@@ -593,13 +592,13 @@ static int test_msg_check_update_malicious_sender(void)
     OSSL_CMP_PKIHEADER *hdr;
     X509_NAME *expected = X509_NAME_new();
     X509_NAME *actual = X509_NAME_new();
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
 
     if (expected == NULL || actual == NULL) {
         X509_NAME_free(expected);
         return 0;
     }
 
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
     if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
         || !TEST_ptr(hdr = OSSL_CMP_MSG_get0_header(fixture->msg))
         || !TEST_int_eq(X509_NAME_add_entry_by_txt(expected, "CN", MBSTRING_ASC,
@@ -620,6 +619,8 @@ static int test_msg_check_update_malicious_sender(void)
     X509_NAME_free(actual);
     return result;
 }
+
+#endif
 
 void cleanup_tests(void)
 {
@@ -760,8 +761,8 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_recipient_nonce);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_recipient_nonce_bad);
-#endif
     ADD_TEST(test_msg_check_update_malicious_sender);
+#endif
 
     return 1;
 
