@@ -80,7 +80,7 @@ store the terminator.
 Applications must use the data only together with its length, obtained from
 L<ASN1_STRING_get_length(3)>, and never derive the length from the data.
 Applications should be cautious of passing a NULL data pointer when an
-ASN1_STRING has a length of 0 to functions where this behaviour may be
+B<ASN1_STRING> has a length of 0 to functions where this behaviour may be
 undefined.
 
 Applications which wish to use the content of an B<ASN1_STRING> as a C string
