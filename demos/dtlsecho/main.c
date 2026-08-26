@@ -53,7 +53,7 @@ static SOCKET create_socket(void)
      * single socket that, BIO_listen will clear IPV6_V6ONLY below, and the
      * socket accepts both IPv6 and IPv4 clients.
      */
-    BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
+    snprintf(port_str, sizeof(port_str), "%d", server_port);
     if (!BIO_lookup_ex(NULL, port_str, BIO_LOOKUP_SERVER, AF_INET6,
             SOCK_DGRAM, 0, &res)) {
         fprintf(stderr, "Unable to resolve local address\n");
@@ -307,7 +307,7 @@ int main(int argc, char **argv)
         configure_client_context(ssl_ctx);
 
         /* Resolve server hostname or IP address (IPv4 or IPv6) */
-        BIO_snprintf(port_str, sizeof(port_str), "%d", server_port);
+        snprintf(port_str, sizeof(port_str), "%d", server_port);
         if (!BIO_lookup(rem_server_name, port_str, BIO_LOOKUP_CLIENT,
                 AF_UNSPEC, SOCK_DGRAM, &res)) {
             fprintf(stderr, "Unable to resolve server: %s\n", rem_server_name);

@@ -124,7 +124,7 @@ static int create_dtls_listener(SSL_CTX *ssl_ctx, int port,
      * single socket that, since we do not pass BIO_SOCK_V6_ONLY to BIO_listen,
      * serves both IPv6 and IPv4 clients.
      */
-    BIO_snprintf(port_str, sizeof(port_str), "%d", port);
+    snprintf(port_str, sizeof(port_str), "%d", port);
     if (!BIO_lookup_ex(NULL, port_str, BIO_LOOKUP_SERVER, AF_INET6,
             SOCK_DGRAM, 0, &res)) {
         fprintf(stderr, "Unable to resolve local address\n");
@@ -636,7 +636,7 @@ static int create_dtls_client(SSL_CTX *ssl_ctx, const char *server_name, int por
      * matching family to the first address that works. For UDP, BIO_connect
      * just records the default peer.
      */
-    BIO_snprintf(port_str, sizeof(port_str), "%d", port);
+    snprintf(port_str, sizeof(port_str), "%d", port);
     if (!BIO_lookup(server_name, port_str, BIO_LOOKUP_CLIENT, AF_UNSPEC,
             SOCK_DGRAM, &res)) {
         fprintf(stderr, "Unable to resolve server: %s\n", server_name);
