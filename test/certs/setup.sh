@@ -528,7 +528,13 @@ _DSA_CERT_DIR=$(cd "$(dirname "$0")" && pwd)
 )
 unset _DSA_CERT_DIR
 
-# EC cert seigned RSA intermediate CA
+# EC end-entity cert signed by RSA intermediate CA
 OPENSSL_KEYALG=ec OPENSSL_KEYBITS=prime256v1 ./mkcert.sh genee \
     "P-256 cert EE issuer" p256-ee-rsa-ca-key \
     p256-ee-rsa-ca-cert ca-key ca-cert
+
+# Mixed chain: RSA root -> ECC intermediate CA -> RSA end entity
+OPENSSL_KEYALG=ec OPENSSL_KEYBITS=prime256v1 ./mkcert.sh genca \
+    "ECC CA" mixed-ca-key mixed-ca-cert root-key root-cert
+OPENSSL_KEYALG=rsa OPENSSL_KEYBITS=2048 ./mkcert.sh genee \
+    "server mixed ECC/RSA" mixed-ee-key mixed-ee-cert mixed-ca-key mixed-ca-cert
