@@ -16800,6 +16800,7 @@ end:
     return testresult;
 }
 
+#if !defined(OSSL_NO_USABLE_TLS1_3)
 /*
  * Test calling SSL_write() after SSL_read() has signalled SSL_ERROR_WANT_WRITE
  * This scenario is allowed.
@@ -16955,6 +16956,119 @@ end:
 }
 
 /*
+ * Demonstrate that a server requesting post-handshake authentication while the
+ * client has an application-data write pending retry breaks the client if the
+ * client switches to reading at that point.
+ *
+ * The client streams application data until, over a finite BIO pair with the
+ * server not reading, its SSL_write() stalls with SSL_ERROR_WANT_WRITE and a
+ * write is left pending.  The server then requests post-handshake
+ * authentication; the CertificateRequest reaches the client.  When the client
+ * next reads, it processes the request and tries to send its Certificate
+ * flight through ssl3_write_bytes() while the application write is still
+ * pending.  The pending-write length guard fires and the connection dies with
+ * SSL_R_BAD_LENGTH.
+ *
+ * Though reading while a write is pending is sometimes desirable (e.g.
+ * draining the peer to avoid a write-write deadlock), it is not always safe, a
+ * post-handshake request during that read makes the client emit a write that
+ * collides with the pending one.  The "do not interleave SSL_read() with a
+ * pending SSL_write()" caution is still relevant in TLS 1.3, since, though
+ * renegotiation is gone, post-handshake auth / key update can also solicit
+ * handshake writes.  The client need not even hold a certificate: an empty
+ * Certificate response collides just the same.
+ */
+static int test_pha_pending_write(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    BIO *sbio = NULL, *cbio = NULL;
+    static unsigned char data[16384];
+    unsigned char buf[16384];
+    int ret, iter;
+    int testresult = 0;
+
+    memset(data, 0xA5, sizeof(data));
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(SSL_CTX_set_min_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_max_proto_version(sctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_min_proto_version(cctx, TLS1_3_VERSION))
+        || !TEST_true(SSL_CTX_set_max_proto_version(cctx, TLS1_3_VERSION)))
+        goto end;
+
+    SSL_CTX_set_post_handshake_auth(cctx, 1);
+
+    if (!TEST_ptr(serverssl = SSL_new(sctx))
+        || !TEST_ptr(clientssl = SSL_new(cctx))
+        || !TEST_true(BIO_new_bio_pair(&sbio, 65536, &cbio, 65536)))
+        goto end;
+
+    SSL_set_bio(serverssl, sbio, sbio);
+    SSL_set_bio(clientssl, cbio, cbio);
+    sbio = cbio = NULL;
+    SSL_set_accept_state(serverssl);
+    SSL_set_connect_state(clientssl);
+
+    if (!TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0)))
+        goto end;
+
+    /*
+     * The client streams application data until it blocks: the server is not
+     * reading, so the client->server direction fills and SSL_write() stalls,
+     * leaving a write pending.
+     */
+    for (iter = ret = 0; iter < 100; iter++) {
+        if ((ret = SSL_write(clientssl, data, sizeof(data))) > 0)
+            continue;
+        break;
+    }
+    if (!TEST_int_lt(iter, 100)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * The server requests post-handshake authentication.  The server->client
+     * direction is drained, so the CertificateRequest goes out; the request
+     * is asynchronous, so SSL_do_handshake() returns success without waiting.
+     */
+    SSL_set_verify(serverssl, SSL_VERIFY_PEER, NULL);
+    if (!TEST_true(SSL_verify_client_post_handshake(serverssl))
+        || !TEST_int_eq(SSL_do_handshake(serverssl), 1))
+        goto end;
+
+    /*
+     * The client, blocked on its write, reads.  It consumes the
+     * CertificateRequest and tries to send its Certificate flight while the
+     * application write is still pending: ssl3_write_bytes() rejects it with
+     * SSL_R_BAD_LENGTH and the connection is torn down.
+     */
+    ERR_clear_error();
+    ret = SSL_read(clientssl, buf, sizeof(buf));
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_SSL)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), SSL_R_BAD_LENGTH))
+        goto end;
+
+    testresult = 1;
+end:
+    BIO_free(sbio);
+    BIO_free(cbio);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
+#ifndef OPENSSL_NO_TLS1_2
+/*
  * Test calling SSL_read() after SSL_write() has signalled SSL_ERROR_WANT_READ
  * This scenario is allowed.
  */
@@ -17083,6 +17197,7 @@ end:
 
     return testresult;
 }
+#endif
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile srpvfile tmpfile provider config dhfile\n")
 
@@ -17462,6 +17577,7 @@ int setup_tests(void)
     ADD_TEST(test_grease);
     ADD_TEST(test_write_after_read_want_write);
     ADD_TEST(test_write_after_read_want_read);
+    ADD_TEST(test_pha_pending_write);
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_read_after_write_want_read);
