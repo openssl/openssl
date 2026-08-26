@@ -70,11 +70,20 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 222;
+plan tests => 223;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
    "accept compat trust");
+SKIP: {
+    skip "Mixed RSA/ECC chain test certs are unavailable", 1
+        unless -f srctop_file(@certspath, "mixed-ee-cert.pem")
+            && -f srctop_file(@certspath, "mixed-ca-cert.pem");
+    skip "EC is not supported by this OpenSSL build", 1
+        if disabled("ec");
+    ok(verify("mixed-ee-cert", "sslserver", ["root-cert"], ["mixed-ca-cert"]),
+       "accept mixed RSA/ECC chain");
+}
 
 # Root CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-nonca)], [qw(ca-cert)]),
