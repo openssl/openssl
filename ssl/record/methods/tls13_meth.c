@@ -333,7 +333,7 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
     size_t rlen;
 
     /* Nothing to be done in the case of a plaintext alert */
-    if (rl->allow_plain_alerts && thistempl->type != SSL3_RT_ALERT)
+    if (rl->allow_plain_alerts && thistempl->type == SSL3_RT_ALERT)
         return 1;
 
     if (!WPACKET_put_bytes_u8(thispkt, thistempl->type)) {

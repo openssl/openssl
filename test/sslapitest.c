@@ -4237,6 +4237,58 @@ static int setupearly_data_test(SSL_CTX **cctx, SSL_CTX **sctx, SSL **clientssl,
     return 1;
 }
 
+/*
+ * Test that a client fatal alert generated after writing early data, but
+ * before receiving a ServerHello, is sent in plaintext. The server cannot be
+ * assumed to have selected TLSv1.3 or accepted the PSK at this point.
+ */
+static int test_early_data_plaintext_alert(void)
+{
+    static const unsigned char unexpected_certificate[] = {
+        SSL3_RT_HANDSHAKE, 0x03, 0x03, 0x00, 0x04,
+        SSL3_MT_CERTIFICATE, 0x00, 0x00, 0x00
+    };
+    static const unsigned char expected_alert[] = {
+        SSL3_RT_ALERT, 0x03, 0x03, 0x00, 0x02,
+        SSL3_AL_FATAL, SSL_AD_UNEXPECTED_MESSAGE
+    };
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    BIO *wbio;
+    unsigned char alert[sizeof(expected_alert) + 1];
+    size_t written, readbytes;
+    int testresult = 0;
+
+    if (!TEST_true(setupearly_data_test(&cctx, &sctx, &clientssl,
+            &serverssl, NULL, 2, SHA384_DIGEST_LENGTH))
+        || !TEST_true(SSL_write_early_data(clientssl, MSG1, strlen(MSG1),
+            &written))
+        || !TEST_size_t_eq(written, strlen(MSG1))
+        || !TEST_ptr(wbio = SSL_get_wbio(clientssl))
+        || !TEST_int_eq(BIO_reset(wbio), 1)
+        || !TEST_true(BIO_write_ex(SSL_get_rbio(clientssl),
+            unexpected_certificate, sizeof(unexpected_certificate),
+            &written))
+        || !TEST_size_t_eq(written, sizeof(unexpected_certificate))
+        || !TEST_int_le(SSL_connect(clientssl), 0)
+        || !TEST_true(BIO_read_ex(wbio, alert, sizeof(alert), &readbytes))
+        || !TEST_mem_eq(alert, readbytes, expected_alert,
+            sizeof(expected_alert)))
+        goto end;
+
+    testresult = 1;
+end:
+    ERR_clear_error();
+    SSL_SESSION_free(clientpsk);
+    SSL_SESSION_free(serverpsk);
+    clientpsk = serverpsk = NULL;
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int check_early_data_timeout(OSSL_TIME timer)
 {
     int res = 0;
@@ -15655,6 +15707,7 @@ int setup_tests(void)
 #endif
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_ALL_TESTS(test_early_data_read_write, 6);
+    ADD_TEST(test_early_data_plaintext_alert);
     /*
      * We don't do replay tests for external PSK. Replay protection isn't used
      * in that scenario.
