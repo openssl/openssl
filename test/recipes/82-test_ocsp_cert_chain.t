@@ -28,7 +28,7 @@ plan skip_all => "$test_name requires TLS enabled"
 plan skip_all => "$test_name is not available Windows or VMS"
     if $^O =~ /^(VMS|MSWin32|msys)$/;
 
-plan tests => 3;
+plan tests => 4;
 
 my $shlib_wrap   = bldtop_file("util", "shlib_wrap.sh");
 my $apps_openssl = bldtop_file("apps", "openssl");
@@ -41,7 +41,7 @@ my $server_pem            = srctop_file("test", "ocsp-tests", "server.pem");
 
 sub run_test {
 
-    # this test starts two servers that listen on respective ports.
+    # this test starts three servers that listen on respective ports.
     # that can be problematic since the ports may not be available
     # (e.g. when multiple instances of the test are run on the same
     # machine).
@@ -74,6 +74,30 @@ sub run_test {
             $port = $1;
             last;
         } elsif (/^ACCEPT \[::\]:(\d+)/) {
+            $port = $1;
+            last;
+        } else {
+            last;
+        }
+    }
+    ok($port ne "0", "ocsp server port check");
+	# we specify the hostname
+    # openssl ocsp -host localhost -port 0 -index index.txt -rsigner ocsp.pem -CA intermediate-cert.pem
+    my @ocsp_cmd = ("ocsp", "-host", "localhost", "-port", "0", "-index", $index_txt, "-rsigner", $ocsp_pem, "-CA", $intermediate_cert_pem);
+    my $ocsp_pid = open3(my $ocsp_i, my $ocsp_o, my $ocsp_e = gensym, $shlib_wrap, $apps_openssl, @ocsp_cmd);
+
+    ## ipv4
+    # ACCEPT 127.0.0.1:19254 PID=620007
+    ## ipv6
+    # ACCEPT [::1]:19254 PID=620007
+    my $port = "0";
+    while (<$ocsp_o>) {
+        print($_);
+        chomp;
+        if (/^ACCEPT 127.0.0.1:(\d+)/) {
+            $port = $1;
+            last;
+        } elsif (/^ACCEPT \[::1\]:(\d+)/) {
             $port = $1;
             last;
         } else {
