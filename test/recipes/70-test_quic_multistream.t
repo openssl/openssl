@@ -37,7 +37,7 @@ SKIP: {
     skip "no qlog", 1 if disabled('qlog');
     skip "not running CI tests", 1 unless $ENV{OSSL_RUN_CI_TESTS};
 
-    subtest "check qlog output" => sub {
+    subtest "generate and check qlog output" => sub {
         plan tests => 2;
         ok(run(test(["quic_radix_test",
                      srctop_file("test", "certs", "servercert.pem"),
