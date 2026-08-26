@@ -27,11 +27,17 @@ jobs:
       - name: "Get changed files"
         env:
           NUMBER: ${{ github.event.pull_request.number }}
+          REPO: ${{ github.repository }}
           GH_TOKEN: ${{ github.token }}
         run: |
+          # --paginate is required: this endpoint returns one page at a
+          # time, and a short list means files are silently left unchecked
+          # rather than failing. per_page only reduces the number of
+          # requests (the default is 30).
           {
             echo 'CHANGED_FILES<<EOF'
-            gh pr view $NUMBER --json files --jq '.files.[].path'
+            gh api --paginate "repos/$REPO/pulls/$NUMBER/files?per_page=100" \
+              --jq '.[].filename'
             echo EOF
           } >> "$GITHUB_ENV"
       - uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd #v3.0.1
