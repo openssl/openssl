@@ -2156,6 +2156,7 @@ typedef struct cert_st {
     EVP_PKEY *dh_tmp;
     DH *(*dh_tmp_cb)(SSL *ssl, int is_export, int keysize);
     int dh_tmp_auto;
+    uint16_t default_ecdh_group;
     /* Flags related to certificates */
     uint32_t cert_flags;
     CERT_PKEY *pkeys;
@@ -2782,6 +2783,7 @@ SSL_COMP *ssl3_comp_find(STACK_OF(SSL_COMP) *sk, int n);
 
 __owur const TLS_GROUP_INFO *tls1_group_id_lookup(SSL_CTX *ctx, uint16_t curve_id);
 __owur const char *tls1_group_id2name(SSL_CTX *ctx, uint16_t group_id);
+__owur uint16_t tls1_group_name2id(SSL_CTX *ctx, const char *name);
 __owur int tls1_group_id2nid(uint16_t group_id, int include_unknown);
 __owur uint16_t tls1_nid2group_id(int nid);
 __owur int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,

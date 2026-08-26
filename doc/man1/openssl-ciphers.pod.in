@@ -159,6 +159,12 @@ The cipher string B<@SECLEVEL>=I<n> can be used at any point to set the security
 level to I<n>, which should be a number between zero and five, inclusive.
 See L<SSL_CTX_set_security_level(3)> for a description of what each level means.
 
+The cipher string B<@DEFAULT_EC>=I<group> configures the named group to use for
+ephemeral ECDH key exchange when a TLS 1.2 or earlier client does not send a
+Supported Groups extension. The group must also be enabled in the server's
+supported groups list and allowed by the configured security policy. This
+setting does not change group selection for clients that send the extension.
+
 The cipher list can be prefixed with the B<DEFAULT> keyword, which enables
 the default cipher list as defined below.  Unlike cipher strings,
 this prefix may not be combined with other strings using B<+> character.
