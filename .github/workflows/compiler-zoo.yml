@@ -85,6 +85,70 @@ jobs:
     - name: make test
       run: make test HARNESS_JOBS=${HARNESS_JOBS:-4}
 
+  vs2013:
+    needs: [validate-dispatch-inputs]
+    if: |
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - arch: amd64
+            target: VC-WIN64A
+          - arch: x86
+            target: VC-WIN32
+    runs-on: windows-2022
+    env:
+      IMAGE: ghcr.io/openssl/openssl-vs2013:latest
+      VCVARS: C:\vc12\vcvars_${{ matrix.arch }}.cmd
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: pull the VS2013 toolchain image
+      shell: cmd
+      run: docker pull %IMAGE%
+    - name: config
+      run: |
+        $config = @(
+          'no-makedepend'
+          'no-shared'
+          'enable-fips'
+          '-DOSSL_WINCTX=openssl'
+        ) -join ' '
+        $chain = @(
+          # 'call', not a bare invocation: cmd does not necessarily return from a
+          # batch file run without it, which would skip the rest of the chain.
+          "call $env:VCVARS"
+          'mkdir _build'
+          'cd _build'
+          "perl ..\Configure ${{ matrix.target }} --banner=Configured $config"
+          'perl configdata.pm --dump'
+        ) -join ' && '
+        docker run --rm --isolation=process -v "${env:GITHUB_WORKSPACE}:C:\src" `
+          -w C:\src ${env:IMAGE} cmd /S /C $chain
+    - name: make
+      run: |
+        $chain = @(
+          "call $env:VCVARS"
+          'jom /j4 /S'
+          'apps\openssl.exe version -c'
+        ) -join ' && '
+        docker run --rm --isolation=process -v "${env:GITHUB_WORKSPACE}:C:\src" `
+          -w C:\src\_build ${env:IMAGE} cmd /S /C $chain
+    - name: make test
+      run: |
+        $chain = @(
+          "call $env:VCVARS"
+          'jom test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4'
+        ) -join ' && '
+        docker run --rm --isolation=process -v "${env:GITHUB_WORKSPACE}:C:\src" `
+          -w C:\src\_build ${env:IMAGE} cmd /S /C $chain
+
   clang:
     needs: [validate-dispatch-inputs]
     if: |
