@@ -421,6 +421,8 @@ suites, supported groups, supported versions, signature algorithms, key share
 entries, and extensions. GREASE values help prevent ecosystem ossification by
 ensuring servers and middleboxes tolerate unknown values. The injected values
 are consistent across HelloRetryRequest replays within the same connection.
+If a HelloRetryRequest asks for a new key share, the second ClientHello omits
+the GREASE key share so that the requested key share is the only entry.
 
 =back
 
