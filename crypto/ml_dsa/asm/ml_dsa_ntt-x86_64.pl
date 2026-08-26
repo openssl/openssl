@@ -57,7 +57,7 @@ $dir = $1;
   or die "can't locate x86_64-xlate.pl";
 
 # Check for AVX2 support in assembler
-if (`$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1` =~ /GNU assembler version ([2-9]\.[0-9]+)/) {
+if (defined $ENV{CC} && `$ENV{CC} -Wa,-v -c -o /dev/null -x assembler /dev/null 2>&1` =~ /GNU assembler version ([2-9]\.[0-9]+)/) {
   $avx2 = ($1 >= 2.22);
 }
 
@@ -69,7 +69,7 @@ if (!$avx2
   $avx2 = ($1 >= 2.10);
 }
 
-if (!$avx2 && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
+if (!$avx2 && defined $ENV{CC} && `$ENV{CC} -v 2>&1` =~ /((?:clang|LLVM) version|.*based on LLVM) ([0-9]+\.[0-9]+)/) {
     $avx2 = ($2>=3.3); # minimal tested version for AVX2
 }
 
