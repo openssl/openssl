@@ -83,6 +83,11 @@ int OSSL_PARAM_modified(const OSSL_PARAM *p)
     return p != NULL && p->return_size != OSSL_PARAM_UNMODIFIED;
 }
 
+int ossl_param_has_content(const OSSL_PARAM *p)
+{
+    return p != NULL && p->return_size != 0;
+}
+
 void OSSL_PARAM_set_all_unmodified(OSSL_PARAM *p)
 {
     if (p != NULL)
