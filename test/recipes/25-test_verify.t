@@ -31,7 +31,7 @@ sub verify {
 }
 
 sub make_empty_crl {
-    my ($prefix, $ca_cert, $ca_key, $crl) = @_;
+    my ($prefix, $ca_cert, $ca_key, $crl, $crlexts) = @_;
     my $index = "$prefix-index.txt";
     my $serial = "$prefix-serial.txt";
     my $cnf = "$prefix.cnf";
@@ -64,13 +64,16 @@ policy = policy_any
 [ policy_any ]
 commonName = optional
 EOF
+    # Optional CRL extension sections; the section is named "crl_ext".
+    print $cnf_fh $crlexts if defined $crlexts;
     close $cnf_fh;
 
     run(app(["openssl", "ca", "-batch", "-config", $cnf, "-gencrl",
+             (defined $crlexts ? ("-crlexts", "crl_ext") : ()),
              "-out", $crl]));
 }
 
-plan tests => 222;
+plan tests => 224;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -685,6 +688,52 @@ run(app(["openssl", "verify",
          stderr => $cve_28388_stderr));
 ok(grep(/CRL is not yet valid/, do { open my $fh, '<', $cve_28388_stderr; <$fh> }),
    "CVE-2026-28388");
+
+# A certificate without a CRL distribution points extension is checked against
+# CRLs issued by its issuer as if it had a distribution point named after the
+# certificate issuer (RFC 5280, section 6.3.3).  A CRL whose issuing
+# distribution point names the certificate issuer is therefore in scope, while
+# one that names only a URI is not.
+my $idp_dirname_exts = <<"EOF";
+[ crl_ext ]
+issuingDistributionPoint = critical, \@idp_section
+
+[ idp_section ]
+fullname = dirName:idp_dn
+
+[ idp_dn ]
+CN = CA
+EOF
+ok(make_empty_crl("idp-dirname", srctop_file(@certspath, "ca-cert.pem"),
+                  srctop_file(@certspath, "ca-key.pem"),
+                  "idp-dirname.crl", $idp_dirname_exts)
+   && run(app(["openssl", "verify",
+               "-trusted", srctop_file(@certspath, "root-cert.pem"),
+               "-untrusted", srctop_file(@certspath, "ca-cert.pem"),
+               "-crl_check", "-CRLfile", "idp-dirname.crl",
+               srctop_file(@certspath, "ee-cert.pem")])),
+   "accept CRL whose IDP names the certificate issuer for a certificate without CDP");
+
+my $idp_uri_exts = <<"EOF";
+[ crl_ext ]
+issuingDistributionPoint = critical, \@idp_section
+
+[ idp_section ]
+fullname = URI:http://example.com/ca.crl
+EOF
+my $idp_uri_stderr = "idp-uri.err";
+ok(make_empty_crl("idp-uri", srctop_file(@certspath, "ca-cert.pem"),
+                  srctop_file(@certspath, "ca-key.pem"),
+                  "idp-uri.crl", $idp_uri_exts)
+   && !run(app(["openssl", "verify",
+                "-trusted", srctop_file(@certspath, "root-cert.pem"),
+                "-untrusted", srctop_file(@certspath, "ca-cert.pem"),
+                "-crl_check", "-CRLfile", "idp-uri.crl",
+                srctop_file(@certspath, "ee-cert.pem")],
+               stderr => $idp_uri_stderr))
+   && grep(/different CRL scope/,
+           do { open my $fh, '<', $idp_uri_stderr; <$fh> }),
+   "reject CRL whose IDP names only a URI for a certificate without CDP");
 
 # Delta CRLs must not be accepted as complete CRLs
 my $delta_crl_as_complete_stderr = "delta-crl-as-complete.err";
