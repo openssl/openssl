@@ -80,6 +80,8 @@ static int ssl_free(BIO *a)
     if (a == NULL)
         return 0;
     bs = BIO_get_data(a);
+    if (bs == NULL)
+        return 1;
     if (BIO_get_shutdown(a)) {
         if (bs->ssl != NULL && !SSL_in_init(bs->ssl))
             SSL_shutdown(bs->ssl);
@@ -89,6 +91,8 @@ static int ssl_free(BIO *a)
         BIO_set_init(a, 0);
     }
     OPENSSL_free(bs);
+    /* The BIO may be freed again, or given a new SSL, after this */
+    BIO_set_data(a, NULL);
     return 1;
 }
 
@@ -103,6 +107,8 @@ static int ssl_read(BIO *b, char *buf, size_t size, size_t *readbytes)
     if (buf == NULL)
         return 0;
     sb = BIO_get_data(b);
+    if (sb == NULL)
+        return 0;
     ssl = sb->ssl;
 
     BIO_clear_retry_flags(b);
@@ -175,6 +181,8 @@ static int ssl_write(BIO *b, const char *buf, size_t size, size_t *written)
     if (buf == NULL)
         return 0;
     bs = BIO_get_data(b);
+    if (bs == NULL)
+        return 0;
     ssl = bs->ssl;
 
     BIO_clear_retry_flags(b);
@@ -238,7 +246,7 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
 
     bs = BIO_get_data(b);
     next = BIO_next(b);
-    ssl = bs->ssl;
+    ssl = bs != NULL ? bs->ssl : NULL;
     if (ssl == NULL && cmd != BIO_C_SET_SSL)
         return 0;
     switch (cmd) {
@@ -291,12 +299,15 @@ static long ssl_ctrl(BIO *b, int cmd, long num, void *ptr)
         ret = bs->num_renegotiates;
         break;
     case BIO_C_SET_SSL:
-        if (ssl != NULL) {
+        if (ssl != NULL)
             ssl_free(b);
-            if (!ssl_new(b))
-                return 0;
-            bs = BIO_get_data(b);
-        }
+        /*
+         * ssl_free() has released the state, or an earlier ssl_new() failed:
+         * in both cases the BIO has no state, so allocate it afresh.
+         */
+        if (BIO_get_data(b) == NULL && !ssl_new(b))
+            return 0;
+        bs = BIO_get_data(b);
         BIO_set_shutdown(b, num);
         ssl = (SSL *)ptr;
         bio = SSL_get_rbio(ssl);
@@ -432,6 +443,8 @@ static long ssl_callback_ctrl(BIO *b, int cmd, BIO_info_cb *fp)
     long ret = 1;
 
     bs = BIO_get_data(b);
+    if (bs == NULL)
+        return 0;
     ssl = bs->ssl;
     switch (cmd) {
     case BIO_CTRL_SET_CALLBACK:
@@ -535,7 +548,8 @@ int BIO_ssl_copy_session_id(BIO *t, BIO *f)
         return 0;
     tdata = BIO_get_data(t);
     fdata = BIO_get_data(f);
-    if ((tdata->ssl == NULL) || (fdata->ssl == NULL))
+    if (tdata == NULL || fdata == NULL
+        || tdata->ssl == NULL || fdata->ssl == NULL)
         return 0;
     if (!SSL_copy_session_id(tdata->ssl, (fdata->ssl)))
         return 0;
