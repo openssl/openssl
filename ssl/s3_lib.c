@@ -3951,6 +3951,45 @@ static char *srp_password_from_info_cb(SSL *s, void *arg)
 
 static int ssl3_set_req_cert_type(CERT *c, const unsigned char *p, size_t len);
 
+/*
+ * Check that |name|, of length |len| (1 <= len <= TLSEXT_MAXLEN_host_name),
+ * is acceptable as the HostName of a server_name extension: RFC 6066,
+ * section 3, requires an ASCII DNS hostname without a trailing dot and
+ * forbids IP address literals.  Labels are separated by dots, are 1 to 63
+ * characters long and consist of ASCII letters, digits, hyphens and, as a
+ * commonly encountered deviation from RFC 1123, underscores.  The top-level
+ * label must not be all-numeric (RFC 1123, section 2.1), which excludes
+ * dotted-decimal IPv4 literals; IPv6 literals fail on the colons.
+ */
+static int is_valid_sni_hostname(const char *name, size_t len)
+{
+    size_t i, label_len = 0;
+    int label_numeric = 1;
+
+    for (i = 0; i < len; i++) {
+        char c = name[i];
+
+        if (c == '.') {
+            /* An empty label: a leading dot or two consecutive dots */
+            if (label_len == 0)
+                return 0;
+            label_len = 0;
+            label_numeric = 1;
+            continue;
+        }
+        if (c < '0' || c > '9') {
+            if ((c < 'a' || c > 'z') && (c < 'A' || c > 'Z')
+                && c != '-' && c != '_')
+                return 0;
+            label_numeric = 0;
+        }
+        if (++label_len > 63)
+            return 0;
+    }
+    /* label_len == 0 here means the name ends with a dot */
+    return label_len > 0 && !label_numeric;
+}
+
 long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
 {
     int ret = 0;
@@ -4038,7 +4077,8 @@ long ssl3_ctrl(SSL *s, int cmd, long larg, void *parg)
             if (parg == NULL)
                 break;
             len = strlen((char *)parg);
-            if (len == 0 || len > TLSEXT_MAXLEN_host_name) {
+            if (len == 0 || len > TLSEXT_MAXLEN_host_name
+                || !is_valid_sni_hostname((char *)parg, len)) {
                 ERR_raise(ERR_LIB_SSL, SSL_R_TLS_EXT_INVALID_SERVERNAME);
                 return 0;
             }
