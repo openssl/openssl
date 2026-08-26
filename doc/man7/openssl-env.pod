@@ -51,6 +51,13 @@ See L<OPENSSL_malloc(3)>.
 Specifies the directory from which cryptographic providers are loaded.
 Equivalently, the generic B<-provider-path> command-line option may be used.
 
+=item B<OPENSSL_RUNNING_UNIT_TESTS>
+
+This environment variable is used to flag the fact that unit tests are being run
+(i.e. `make test`).  It is used to detect when the OpenSSL should behave in a special
+manner during unit tests (i.e. when unit tests are being run on fuzzing builds).  It should
+generally not be set by users.
+
 =item B<OPENSSL_TRACE>
 
 By default the OpenSSL trace feature is disabled statically.
@@ -63,13 +70,6 @@ This output usually makes sense only if you know OpenSSL internals well.
 
 The value of this environment variable is a comma-separated list of names,
 with the following available:
-
-=item B<OPENSSL_RUNNING_UNIT_TESTS>
-
-This environment variable is used to flag the fact that unit tests are being run
-(i.e. `make test`).  It is used to detect when the OpenSSL should behave in a special
-manner during unit tests (i.e. when unit tests are being run on fuzzing builds).  It should
-generally not be set by users.
 
 =over 4
 
