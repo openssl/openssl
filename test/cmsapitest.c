@@ -296,7 +296,8 @@ static int test_CMS_add_standard_smimecap_ex(void)
     STACK_OF(X509_ALGOR) *smcap = NULL;
     int ret = 0;
 
-    if (!TEST_true(CMS_add_standard_smimecap_ex(&smcap, NULL, NULL)))
+    if (!TEST_true(CMS_add_standard_smimecap_ex(&smcap, NULL, NULL))
+        || !TEST_int_eq(ERR_peek_error(), 0))
         goto end;
 
     /* AES ciphers must be present with the default provider */
