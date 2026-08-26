@@ -4646,7 +4646,16 @@ static MSG_PROCESS_RETURN tls_process_encrypted_extensions(SSL_CONNECTION *s,
         goto err;
     }
 
-    if (!tls_collect_extensions(s, &extensions,
+    /*
+     * RFC 8446, section 4.2: a client MUST abort the handshake with an
+     * "unsupported_extension" alert if it receives an extension it did not
+     * request. tls_collect_extensions() enforces this for extensions we
+     * know about; extensions we do not recognise cannot have been requested
+     * either, so reject them too, as we already do for the ServerHello.
+     */
+    if (!tls_validate_no_unknown_extensions(s, &extensions,
+            SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS)
+        || !tls_collect_extensions(s, &extensions,
             SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS, &rawexts,
             NULL, 1)
         || !tls_parse_all_extensions(s, SSL_EXT_TLS1_3_ENCRYPTED_EXTENSIONS,
