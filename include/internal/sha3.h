@@ -66,6 +66,10 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);
 size_t ossl_keccak1600_absorb_p12(uint64_t A[5][5],
     const unsigned char *inp, size_t len, size_t r);
+/*
+ * The assembler implementations require |len| > 0. Callers must enforce
+ * this before calling ossl_keccak1600_squeeze_p12().
+ */
 void ossl_keccak1600_squeeze_p12(uint64_t A[5][5], unsigned char *out,
     size_t len, size_t r, int next);
 
