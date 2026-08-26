@@ -39,6 +39,14 @@ OpenSSL 4.1
 
    *Daniel Kubec and Viktor Dukhovni*
 
+ * Fixed a NULL pointer dereference in EVP_PKEY_CTX_set_dh_paramgen_type().
+   The legacy ctrl was translated into a UTF8 string OSSL_PARAM without
+   converting the integer type to its name, so the DH provider dereferenced a
+   NULL string for every type value, including the documented
+   DH_PARAMGEN_TYPE_GENERATOR.
+
+   *Paul Grubbs*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 
