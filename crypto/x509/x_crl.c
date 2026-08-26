@@ -219,6 +219,9 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     X509_EXTENSION *ext;
     int idx, i;
 
+    if (operation == ASN1_OP_D2I_POST)
+        ERR_set_mark();
+
     switch (operation) {
     case ASN1_OP_D2I_PRE:
         if (crl->meth->crl_free) {
@@ -249,6 +252,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509_CRL), crl,
                 crl->fingerprint))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
+        ERR_pop_to_mark();
         crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp == NULL && i != -1) {
             ERR_raise_data(ERR_LIB_ASN1, ASN1_R_ILLEGAL_OBJECT,
@@ -340,6 +344,16 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     } break;
     }
     return 1;
+}
+
+int ossl_x509_crl_cache_extensions(X509_CRL *crl)
+{
+    ASN1_VALUE *value = (ASN1_VALUE *)crl;
+
+    if ((crl->flags & EXFLAG_SET) != 0) /* CRL has already been processed */
+        return 1;
+
+    return crl_cb(ASN1_OP_D2I_POST, &value, ASN1_ITEM_rptr(X509_CRL), NULL);
 }
 
 /* Convert IDP into a more convenient form */
