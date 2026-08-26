@@ -100,7 +100,7 @@ struct quic_obj_st {
      */
     QUIC_PORT *port;
 
-    /* SSL_DOMAIN_FLAG values taken from SSL_CTX at construction time. */
+    /* Effective SSL_DOMAIN_FLAG values inherited from the object hierarchy. */
     uint64_t domain_flags;
 
     unsigned int init_done : 1;

@@ -591,6 +591,9 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     QUIC_CHANNEL_ARGS args = { 0 };
     QUIC_CHANNEL *ch;
     SSL *user_ssl = NULL;
+#ifndef OPENSSL_NO_QLOG
+    SSL_CTX *qlog_ctx;
+#endif
 
     args.port = port;
     args.is_server = is_server;
@@ -649,12 +652,15 @@ static QUIC_CHANNEL *port_make_channel(QUIC_PORT *port, SSL *tls, OSSL_QRX *qrx,
     }
 #ifndef OPENSSL_NO_QLOG
     /*
-     * If we're using qlog, make sure the tls get further configured properly
+     * A deferred SSL_listen_ex() channel does not have its TLS object yet, but
+     * it still uses the port's channel context. Configure its qlog title before
+     * the first packet can cause the qlog object to be instantiated.
      */
     ch->use_qlog = 1;
-    if (ch->tls != NULL && ch->tls->ctx->qlog_title != NULL) {
+    qlog_ctx = ch->tls != NULL ? ch->tls->ctx : port->channel_ctx;
+    if (qlog_ctx != NULL && qlog_ctx->qlog_title != NULL) {
         OPENSSL_free(ch->qlog_title);
-        if ((ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title)) == NULL)
+        if ((ch->qlog_title = OPENSSL_strdup(qlog_ctx->qlog_title)) == NULL)
             goto err;
     }
 #endif
@@ -713,9 +719,14 @@ QUIC_CHANNEL *ossl_quic_port_pop_incoming(QUIC_PORT *port)
     return ch;
 }
 
+QUIC_CHANNEL *ossl_quic_port_peek_incoming(QUIC_PORT *port)
+{
+    return ossl_list_incoming_ch_head(&port->incoming_channel_list);
+}
+
 int ossl_quic_port_have_incoming(QUIC_PORT *port)
 {
-    return ossl_list_incoming_ch_head(&port->incoming_channel_list) != NULL;
+    return ossl_quic_port_peek_incoming(port) != NULL;
 }
 
 void ossl_quic_port_drop_incoming(QUIC_PORT *port)
