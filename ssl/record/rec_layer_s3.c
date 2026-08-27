@@ -261,6 +261,94 @@ static int tls_write_check_pending(SSL_CONNECTION *s, uint8_t type,
 }
 
 /*
+ * Schedule a KeyUpdate before an application write would reach the TLS 1.3
+ * AES-GCM per-key record limit. One old-key record is reserved for the
+ * KeyUpdate message itself. If the active write record layer cannot safely
+ * change keys, fail the write before reaching the limit instead.
+ */
+int ossl_tls13_maybe_key_update(SSL_CONNECTION *s, uint8_t type, size_t len)
+{
+    const EVP_CIPHER *ciph = s->s3.tmp.new_sym_enc;
+    uint64_t sequence, records;
+    size_t fragment;
+
+    if (type != SSL3_RT_APPLICATION_DATA || len == 0
+        || !SSL_CONNECTION_IS_TLS13(s) || ciph == NULL
+        || (!EVP_CIPHER_is_a(ciph, "AES-128-GCM")
+            && !EVP_CIPHER_is_a(ciph, "AES-256-GCM"))
+        || s->rlayer.wrlmethod->get_sequence == NULL)
+        return 1;
+
+    if (!s->rlayer.wrlmethod->get_sequence(s->rlayer.wrl, &sequence)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    fragment = ssl_get_split_send_fragment(s);
+    if (fragment == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    records = 1 + (len - 1) / fragment;
+
+    if (sequence >= TLS13_AES_GCM_USAGE_LIMIT
+        || records >= TLS13_AES_GCM_USAGE_LIMIT) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+            SSL_R_AEAD_USAGE_LIMIT_REACHED);
+        return 0;
+    }
+
+    if (records >= TLS13_AES_GCM_USAGE_LIMIT - sequence
+        && s->key_update == SSL_KEY_UPDATE_NONE) {
+        if (!SSL_is_init_finished(SSL_CONNECTION_GET_SSL(s))
+            || BIO_get_ktls_send(s->wbio)) {
+            /*
+             * KeyUpdate is unavailable for early data. An active KTLS
+             * transmit layer also cannot guarantee that the kernel accepts
+             * the replacement key immediately after the old-key KeyUpdate
+             * record, so close rather than risk exceeding the usage limit.
+             */
+            SSLfatal(s, SSL_AD_INTERNAL_ERROR,
+                SSL_R_AEAD_USAGE_LIMIT_REACHED);
+            return 0;
+        }
+        s->key_update = SSL_KEY_UPDATE_NOT_REQUESTED;
+    }
+
+    return 1;
+}
+
+/* Update the userspace sequence shadow after a direct KTLS write. */
+int ossl_tls_record_add_write_bytes(SSL_CONNECTION *s, size_t bytes)
+{
+    uint64_t sequence, records;
+    size_t fragment;
+
+    if (bytes == 0)
+        return 1;
+    if (s->rlayer.wrlmethod->get_sequence == NULL
+        || s->rlayer.wrlmethod->set_sequence == NULL
+        || !s->rlayer.wrlmethod->get_sequence(s->rlayer.wrl, &sequence)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    fragment = ssl_get_split_send_fragment(s);
+    if (fragment == 0) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    records = 1 + (bytes - 1) / fragment;
+    if (records > UINT64_MAX - sequence) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
+        return 0;
+    }
+
+    return s->rlayer.wrlmethod->set_sequence(s->rlayer.wrl,
+        sequence + records);
+}
+
+/*
  * Call this to write data in records of type 'type' It will return <= 0 if
  * not all data has been sent or non-blocking IO.
  */
@@ -270,7 +358,7 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
     const unsigned char *buf = buf_;
     size_t tot;
     size_t n, max_send_fragment, split_send_fragment, maxpipes;
-    int i;
+    int i, aead_limit_checked = 0;
     SSL_CONNECTION *s = SSL_CONNECTION_FROM_SSL_ONLY(ssl);
     OSSL_RECORD_TEMPLATE tmpls[SSL_MAX_PIPELINES];
     unsigned int recversion;
@@ -304,6 +392,12 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
 
     s->rlayer.wnum = 0;
 
+    if (s->rlayer.wpend_tot == 0 && !SSL_in_init(ssl)) {
+        if (!ossl_tls13_maybe_key_update(s, type, len - tot))
+            return -1;
+        aead_limit_checked = 1;
+    }
+
     /*
      * If we are supposed to be sending a KeyUpdate or NewSessionTicket then go
      * into init unless we have writes pending - in which case we should finish
@@ -327,6 +421,15 @@ int ssl3_write_bytes(SSL *ssl, uint8_t type, const void *buf_, size_t len,
             return -1;
         }
     }
+
+    /*
+     * If a handshake (including a previous nonblocking KeyUpdate) was already
+     * in progress, let it finish before assessing the application write under
+     * the resulting write key.
+     */
+    if (s->rlayer.wpend_tot == 0 && !aead_limit_checked
+        && !ossl_tls13_maybe_key_update(s, type, len - tot))
+        return -1;
 
     i = tls_write_check_pending(s, type, buf, len);
     if (i < 0) {
