@@ -526,8 +526,8 @@ static int ktls_post_encryption_processing(OSSL_RECORD_LAYER *rl,
     WPACKET *thispkt,
     TLS_RL_RECORD *thiswr)
 {
-    /* The kernel does anything that is needed, so nothing to do here */
-    return 1;
+    /* Keep a userspace shadow of the sequence number used by the kernel. */
+    return tls_increment_sequence_ctr(rl);
 }
 
 static int ktls_prepare_write_bio(OSSL_RECORD_LAYER *rl, int type)
@@ -608,8 +608,8 @@ const OSSL_RECORD_METHOD ossl_ktls_record_method = {
     tls_set_max_frag_len,
     NULL,
     tls_increment_sequence_ctr,
-    NULL,
-    NULL,
+    tls_get_sequence_number,
+    tls_set_sequence_number,
     NULL,
     NULL,
     NULL,

@@ -24,6 +24,9 @@
 
 #define SEQ_NUM_SIZE 8
 
+/* floor(2^24.5), the TLS 1.3 AES-GCM per-key record limit from RFC 9846 */
+#define TLS13_AES_GCM_USAGE_LIMIT UINT64_C(23726566)
+
 typedef struct tls_record_st {
     void *rechandle;
     int version;
@@ -177,6 +180,9 @@ int ssl_release_record(SSL_CONNECTION *s, TLS_RECORD *rr, size_t length);
 
 int ossl_tls_handle_rlayer_return(SSL_CONNECTION *s, int writing, int ret,
     char *file, int line);
+
+int ossl_tls13_maybe_key_update(SSL_CONNECTION *s, uint8_t type, size_t len);
+int ossl_tls_record_add_write_bytes(SSL_CONNECTION *s, size_t bytes);
 
 int ssl_set_new_record_layer(SSL_CONNECTION *s, int version,
     int direction, int level,
