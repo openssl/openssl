@@ -522,7 +522,7 @@ end:
 static int make_expected(const struct test_key_st *key, char *buf,
     size_t bufsz, size_t *len)
 {
-    int n = BIO_snprintf(buf, bufsz,
+    int n = snprintf(buf, bufsz,
         PEM_HEADER INTER_PREFIX "%u:%s" PEM_FOOTER, key->seed, key->label);
 
     if (n <= 0)
