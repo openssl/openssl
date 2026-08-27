@@ -32,6 +32,21 @@ static ossl_inline void X509V3_conf_add_error_name_value(
         ossl_string_or_null(val->value));
 }
 
+/**
+ * @brief Append the section, name and value of a config entry to the
+ * current error.
+ *
+ * @param val the config entry to report
+ */
+static ossl_inline void ossl_X509v3_conf_err(
+    const CONF_VALUE *val)
+{
+    ossl_err_add_error_fmt("section:%s,name:%s,value:%s",
+        ossl_string_or_null(val->section),
+        ossl_string_or_null(val->name),
+        ossl_string_or_null(val->value));
+}
+
 /*
  * Really all I want is CRYPTO_BUFFER from BoringSSL, but let's just do this
  * for now.
