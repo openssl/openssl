@@ -76,12 +76,4 @@ DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa,
     unsigned int nonce_type, const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq);
 
-/*
- * The OSSL_FN modular exponentiation backing the default DSA_METHOD's
- * private-key calculations; see dsa_ossl.c.
- */
-int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
-    const BIGNUM *a, const BIGNUM *p,
-    const BIGNUM *m);
-
 #endif /* !defined(OSSL_LIBCRYPTO_DSA_DSA_LOCAL_H) */
