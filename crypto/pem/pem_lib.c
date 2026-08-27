@@ -16,6 +16,7 @@
 #include "crypto/ctype.h"
 #include <string.h>
 #include "internal/cryptlib.h"
+#include "internal/err.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
@@ -253,7 +254,8 @@ static int pem_bytes_read_bio_flags(unsigned char **pdata, long *plen,
         PEM_FREE(data, flags, len);
         if (!PEM_read_bio_ex(bp, &nm, &header, &data, &len, flags)) {
             if (ERR_GET_REASON(ERR_peek_error()) == PEM_R_NO_START_LINE)
-                ERR_add_error_data(2, "Expecting: ", name);
+                ossl_err_add_error_fmt("Expecting: %s",
+                    ossl_string_or_null(name));
             return 0;
         }
     } while (!check_pem(nm, name));
