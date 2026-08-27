@@ -1084,6 +1084,35 @@ DEF_SCRIPT(check_thread_assisted_stream_reset,
     OP_FUNC(check_stream_reset_5);
 }
 
+/* Explicitly created and accepted streams on a thread-assisted client. */
+DEF_SCRIPT(check_thread_assisted_streams,
+    "thread-assisted client with explicitly created/accepted streams")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    /* Client-initiated stream accepted by the server */
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE_B(Ca, "raspberry");
+    OP_CONCLUDE(Ca);
+    OP_ACCEPT_STREAM_WAIT(Sa, Ss, 0);
+    OP_READ_EXPECT_B(Ss, "raspberry");
+    OP_EXPECT_FIN(Ss);
+    OP_WRITE_B(Ss, "elderberry");
+    OP_CONCLUDE(Ss);
+    OP_READ_EXPECT_B(Ca, "elderberry");
+    OP_EXPECT_FIN(Ca);
+
+    /* Server-initiated stream accepted by the client */
+    OP_NEW_STREAM(Sa, Sb, 0 /* bidirectional */);
+    OP_WRITE_B(Sb, "cranberry");
+    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+    OP_READ_EXPECT_B(Cb, "cranberry");
+    OP_WRITE_B(Cb, "blueberry");
+    OP_READ_EXPECT_B(Sb, "blueberry");
+}
+
 /*
  * script_5 - script_106 are place holders for tests we
  * currently keep in test/quic_multistream_test.c.
@@ -2556,6 +2585,7 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_thread_assisted_close_local),
     USE(check_thread_assisted_close_remote),
     USE(check_thread_assisted_stream_reset),
+    USE(check_thread_assisted_streams),
     USE(script_5),
     USE(script_6),
     USE(script_7),
