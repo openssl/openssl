@@ -311,11 +311,8 @@ static int poll_for_response(OSSL_CMP_CTX *ctx, int sleep, int rid,
                 goto err;
             }
             if (check_after < 0 || (uint64_t)check_after > (sleep ? ULONG_MAX / 1000 : INT_MAX)) {
-                ERR_raise(ERR_LIB_CMP, CMP_R_CHECKAFTER_OUT_OF_RANGE);
-                if (snprintf(str, OSSL_CMP_PKISI_BUFLEN, "value = %" PRId64,
-                        check_after)
-                    >= 0)
-                    ERR_add_error_data(1, str);
+                ERR_raise_data(ERR_LIB_CMP, CMP_R_CHECKAFTER_OUT_OF_RANGE,
+                    "value = %" PRId64, check_after);
                 goto err;
             }
 
