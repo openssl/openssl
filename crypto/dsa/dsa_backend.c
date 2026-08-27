@@ -130,7 +130,6 @@ DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
     const ASN1_STRING *pstr;
     const X509_ALGOR *palg;
     ASN1_INTEGER *privkey = NULL;
-    const BIGNUM *dsa_p, *dsa_g;
     BIGNUM *dsa_pubkey = NULL, *dsa_privkey = NULL;
     BN_CTX *ctx = NULL;
 
@@ -166,10 +165,7 @@ DSA *ossl_dsa_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
         goto dsaerr;
     }
 
-    dsa_p = DSA_get0_p(dsa);
-    dsa_g = DSA_get0_g(dsa);
-    BN_set_flags(dsa_privkey, BN_FLG_CONSTTIME);
-    if (!BN_mod_exp(dsa_pubkey, dsa_g, dsa_privkey, dsa_p, ctx)) {
+    if (!ossl_dsa_generate_public_key(ctx, dsa, dsa_privkey, dsa_pubkey)) {
         ERR_raise(ERR_LIB_DSA, DSA_R_BN_ERROR);
         goto dsaerr;
     }
