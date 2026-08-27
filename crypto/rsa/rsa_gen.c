@@ -25,6 +25,9 @@
 #include <openssl/bn.h>
 #include <openssl/self_test.h>
 #include "prov/providercommon.h"
+#include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "rsa_local.h"
 
 static int rsa_keygen_pairwise_test(RSA *rsa, OSSL_CALLBACK *cb, void *cbarg);
@@ -270,6 +273,91 @@ err:
     return ret;
 }
 
+/*
+ * Generate one probable prime of |bits| bits into |prime| on an OSSL_FN
+ * view, converting at the BIGNUM boundary.  The OSSL_FN generation runs
+ * in an explicitly sized OSSL_FN_CTX arena; |prime| is acquired writable
+ * before sizing.
+ */
+static int rsa_fn_generate_prime(BIGNUM *prime, int bits, BN_GENCB *cb,
+    OSSL_LIB_CTX *libctx)
+{
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_p = NULL;
+    size_t fn_size, pl;
+    int ret = 0, p_bits;
+
+    pl = (size_t)(bits + BN_BITS2 - 1) / BN_BITS2;
+    if ((fn_p = bn_acquire_ossl_fn(prime, (int)pl)) == NULL)
+        return 0;
+
+    fn_size = OSSL_FN_generate_prime_ctx_size(fn_p, (size_t)bits, 0, NULL,
+        NULL);
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!OSSL_FN_generate_prime(fn_p, (size_t)bits, 0, NULL, NULL, cb,
+            fn_ctx, libctx))
+        goto err;
+
+    p_bits = (int)OSSL_FN_num_bits(fn_p);
+    bn_release(prime, p_bits > 0 ? (p_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
+}
+
+/*
+ * Check that gcd(prime - 1, e) == 1 (i.e. e has an inverse mod prime-1),
+ * on OSSL_FN views.  Returns 1 if coprime, 0 if not, -1 on error.
+ */
+static int rsa_fn_coprime_with_e(const BIGNUM *prime, const BIGNUM *e,
+    OSSL_LIB_CTX *libctx)
+{
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_pm1 = NULL, *fn_inv = NULL;
+    const OSSL_FN *fn_p = NULL, *fn_e = NULL;
+    size_t fn_size, pl;
+    int ret = -1;
+
+    fn_p = bn_get_ossl_fn(prime);
+    fn_e = bn_get_ossl_fn(e);
+    if (fn_p == NULL || fn_e == NULL)
+        return -1;
+    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+
+    /* pm1 and the inverse candidate both fit in the prime width. */
+    fn_pm1 = OSSL_FN_secure_new_limbs(pl);
+    fn_inv = OSSL_FN_secure_new_limbs(pl);
+    if (fn_pm1 == NULL || fn_inv == NULL)
+        goto err;
+
+    fn_size = OSSL_FN_mod_inverse_ctx_size(fn_inv, fn_e, fn_pm1);
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!OSSL_FN_copy_truncate(fn_pm1, fn_p)
+        || !OSSL_FN_sub_word(fn_pm1, 1))
+        goto err;
+    /*
+     * OSSL_FN_mod_inverse fails when there is no inverse, i.e. when
+     * gcd(prime-1, e) != 1.
+     */
+    ret = OSSL_FN_mod_inverse(fn_inv, fn_e, fn_pm1, fn_ctx) ? 1 : 0;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    OSSL_FN_clear_free(fn_pm1);
+    OSSL_FN_clear_free(fn_inv);
+    return ret;
+}
+
 static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     BIGNUM *e_value, BN_GENCB *cb)
 {
@@ -283,7 +371,6 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
     STACK_OF(BIGNUM) *coeffs = NULL;
     BN_CTX *ctx = NULL;
     BN_ULONG bitst = 0;
-    unsigned long error = 0;
     int ok = -1;
 
     if (bits < RSA_MIN_MODULUS_BITS) {
@@ -393,8 +480,7 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
 
         for (;;) {
         redo:
-            if (!BN_generate_prime_ex2(prime, bitsr[i] + adj, 0, NULL, NULL,
-                    cb, ctx))
+            if (!rsa_fn_generate_prime(prime, bitsr[i] + adj, cb, rsa->libctx))
                 goto err;
             /*
              * prime should not be equal to p, q, r_3...
@@ -420,21 +506,15 @@ static int rsa_multiprime_keygen(RSA *rsa, int bits, int primes,
                     }
                 }
             }
-            if (!BN_sub(r2, prime, BN_value_one()))
-                goto err;
-            ERR_set_mark();
-            BN_set_flags(r2, BN_FLG_CONSTTIME);
-            if (BN_mod_inverse(r1, r2, rsa->e, ctx) != NULL) {
-                /* GCD == 1 since inverse exists */
-                break;
-            }
-            error = ERR_peek_last_error();
-            if (ERR_GET_LIB(error) == ERR_LIB_BN
-                && ERR_GET_REASON(error) == BN_R_NO_INVERSE) {
-                /* GCD != 1 */
-                ERR_pop_to_mark();
-            } else {
-                goto err;
+            /* GCD(prime - 1, e) == 1 ? */
+            {
+                int coprime = rsa_fn_coprime_with_e(prime, rsa->e,
+                    rsa->libctx);
+
+                if (coprime < 0)
+                    goto err;
+                if (coprime)
+                    break;
             }
             if (!BN_GENCB_call(cb, 2, n++))
                 goto err;
