@@ -12,6 +12,7 @@
 #include <stdio.h>
 
 #include "cmp_local.h"
+#include "internal/err.h"
 #include <inttypes.h>
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
@@ -220,8 +221,8 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
     ERR_raise(ERR_LIB_CMP, bt == OSSL_CMP_PKIBODY_ERROR ? CMP_R_RECEIVED_ERROR : CMP_R_UNEXPECTED_PKIBODY); /* in next line for mkerr.pl */
 
     if (bt != OSSL_CMP_PKIBODY_ERROR) {
-        ERR_add_error_data(3, "message type is '",
-            ossl_cmp_bodytype_to_string(bt), "'");
+        ossl_err_add_error_fmt("message type is '%s'",
+            ossl_cmp_bodytype_to_string(bt));
     } else {
         OSSL_CMP_ERRORMSGCONTENT *emc = (*rep)->body->value.error;
         OSSL_CMP_PKISI *si = emc->pKIStatusInfo;
@@ -231,18 +232,16 @@ static int send_receive_check(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *req,
             && OSSL_CMP_CTX_snprint_PKIStatus(ctx, buf,
                    sizeof(buf))
                 != NULL)
-            ERR_add_error_data(1, buf);
-        if (emc->errorCode != NULL
-            && snprintf(buf, sizeof(buf), "; errorCode: %08lX",
-                   ASN1_INTEGER_get(emc->errorCode))
-                > 0)
-            ERR_add_error_data(1, buf);
+            ossl_err_add_error_fmt("%s", buf);
+        if (emc->errorCode != NULL)
+            ossl_err_add_error_fmt("; errorCode: %08lX",
+                ASN1_INTEGER_get(emc->errorCode));
         if (emc->errorDetails != NULL) {
             char *text = ossl_sk_ASN1_UTF8STRING2text(emc->errorDetails, ", ",
                 OSSL_CMP_PKISI_BUFLEN - 1);
 
             if (text != NULL && *text != '\0')
-                ERR_add_error_data(2, "; errorDetails: ", text);
+                ossl_err_add_error_fmt("; errorDetails: %s", text);
             OPENSSL_free(text);
         }
         if (ctx->status != OSSL_CMP_PKISTATUS_rejection) {
@@ -563,7 +562,7 @@ static X509 *get1_cert_status(OSSL_CMP_CTX *ctx, int bodytype,
 
 err:
     if (OSSL_CMP_CTX_snprint_PKIStatus(ctx, buf, sizeof(buf)) != NULL)
-        ERR_add_error_data(1, buf);
+        ossl_err_add_error_fmt("%s", buf);
     return NULL;
 }
 
@@ -739,7 +738,7 @@ retry:
 
     cert = get1_cert_status(ctx, (*resp)->body->type, crep);
     if (cert == NULL) {
-        ERR_add_error_data(1, "; cannot extract certificate from response");
+        ossl_err_add_error_fmt("; cannot extract certificate from response");
         return 0;
     }
     if (!ossl_cmp_ctx_set0_newCert(ctx, cert)) {
@@ -1021,7 +1020,7 @@ int OSSL_CMP_exec_RR_ses(OSSL_CMP_CTX *ctx)
 err:
     if (ret == 0
         && OSSL_CMP_CTX_snprint_PKIStatus(ctx, buf, sizeof(buf)) != NULL)
-        ERR_add_error_data(1, buf);
+        ossl_err_add_error_fmt("%s", buf);
 
 end:
     OSSL_CMP_MSG_free(rr);
