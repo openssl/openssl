@@ -7635,6 +7635,16 @@ static const struct cipher_param_test_st cipher_param_tests[] = {
     { "DES-EDE3-CBC", "provider=default", OSSL_CIPHER_PARAM_RANDOM_KEY,
         OSSL_PARAM_OCTET_STRING, 0, CIPHER_GETTABLE_CTX_PARAMS, 0 },
 #endif
+#ifndef OPENSSL_NO_RC2
+    { "RC2-CBC", "provider=legacy",
+        OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD, OSSL_PARAM_OCTET_STRING, 0,
+        CIPHER_GETTABLE_CTX_PARAMS, 0 },
+#endif
+#ifndef OPENSSL_NO_RC5
+    { "RC5-CBC", "provider=legacy", OSSL_CIPHER_PARAM_ROUNDS,
+        OSSL_PARAM_UNSIGNED_INTEGER, sizeof(unsigned int),
+        CIPHER_GETTABLE_CTX_PARAMS, 0 },
+#endif
 };
 
 static int test_cipher_param_types(int idx)
@@ -7643,6 +7653,9 @@ static int test_cipher_param_types(int idx)
     const OSSL_PARAM *params, *p;
     EVP_CIPHER *cipher = NULL;
     int ret = 0;
+
+    if (strcmp(t->properties, "provider=legacy") == 0 && lgcyprov == NULL)
+        return TEST_skip("Test requires legacy provider to be loaded");
 
     cipher = EVP_CIPHER_fetch(testctx, t->cipher, t->properties);
     if (cipher == NULL && t->optional) {
