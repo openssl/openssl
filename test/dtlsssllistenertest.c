@@ -5411,7 +5411,7 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
 
     SSL_set_connect_state(clientssl);
 
-    for (abortctr = 0; abortctr < 100; abortctr++) {
+    for (abortctr = 0; abortctr < 200; abortctr++) {
         retc = SSL_connect(clientssl);
         err_code = SSL_get_error(clientssl, retc);
         if (retc <= 0
@@ -5431,6 +5431,9 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
 
         if ((poll_item.revents & SSL_POLL_EVENT_IC) != 0)
             return 1;
+
+        /* Loopback delivery can lag and a lost datagram needs a retransmit */
+        OSSL_sleep(10);
     }
 
     TEST_error("cookie exchange loop did not converge");
