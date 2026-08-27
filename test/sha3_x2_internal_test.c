@@ -33,14 +33,14 @@ extern void ossl_shake256_2x_squeeze_singleblock(uint64_t *statex2, uint8_t *out
 extern void ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(const uint64_t *in_interleaved, uint8_t *out1, uint8_t *out2, size_t outlen);
 extern void SHA3_secure_vector_clear_armv8(void);
 
-static int do_single_shake(const uint8_t *in1, const uint8_t *in2, size_t inlen,
+static int do_single_shake(int shake256, const uint8_t *in1, const uint8_t *in2, size_t inlen,
     uint8_t *out1, uint8_t *out2, size_t outlen)
 {
     int ret = 0;
     EVP_MD *md = NULL;
     EVP_MD_CTX *ctx = NULL;
 
-    if (!TEST_ptr(md = EVP_MD_fetch(NULL, "SHAKE256", NULL))
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, shake256 ? "SHAKE256" : "SHAKE128", NULL))
         || !TEST_ptr(ctx = EVP_MD_CTX_new())
         || !TEST_int_eq(EVP_DigestInit(ctx, md), 1)
         || !TEST_int_eq(EVP_DigestUpdate(ctx, in1, inlen), 1)
@@ -111,7 +111,7 @@ static int do_shake_single_absorb_multiblock_squeeze(size_t rate, size_t outlen)
 
     RAND_bytes(in1, sizeof(in1));
     RAND_bytes(in2, sizeof(in2));
-    if (!do_single_shake(in1, in2, inlen, expected_out1, expected_out2, outlen))
+    if (!do_single_shake(rate == SHAKE256_RATE, in1, in2, inlen, expected_out1, expected_out2, outlen))
         goto err;
     do_interleave(rate, in1, in2, inlen, inx2);
     if (rate == SHAKE128_RATE)
@@ -159,7 +159,7 @@ static int test_shake256_stateless_multiblock_squeeze_once(int tstid)
     size_t outlen = SHAKE256_RATE * (tstid + 1);
     int ret = 0;
 
-    if (!do_single_shake(in1, in2, inlen, expected_out1, expected_out2, outlen))
+    if (!do_single_shake(1, in1, in2, inlen, expected_out1, expected_out2, outlen))
         goto err;
     do_interleave(SHAKE256_RATE, in1, in2, inlen, inx2);
     ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(inx2, out1, out2, outlen);
@@ -185,7 +185,7 @@ static int test_shake256_stateless_absorb_multiblock_squeeze_once(void)
 
     RAND_bytes(in1, sizeof(in1));
     RAND_bytes(in2, sizeof(in2));
-    if (!do_single_shake(in1, in2, inlen, expected_out1, expected_out2, outlen))
+    if (!do_single_shake(1, in1, in2, inlen, expected_out1, expected_out2, outlen))
         goto err;
     do_interleave(SHAKE256_RATE, in1, in2, inlen, inx2);
     ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_multi_block_squeeze(inx2, out1, out2, outlen);
