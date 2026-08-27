@@ -852,6 +852,69 @@ void ERR_add_error_vdata(int num, va_list args)
         OPENSSL_free(str);
 }
 
+void ossl_err_add_error_fmt(const char *fmt, ...)
+{
+    ERR_STATE *es;
+    va_list args, args_copy;
+    char *str, *tmp;
+    size_t base_len, size;
+    int add_len;
+    int i;
+
+    es = ossl_err_get_state_int(1);
+    if (es == NULL)
+        return;
+    i = es->top;
+
+    /* Take the string over so that nothing we call can free it. */
+    if ((es->err_data_flags[i] & (ERR_TXT_MALLOCED | ERR_TXT_STRING))
+            == (ERR_TXT_MALLOCED | ERR_TXT_STRING)
+        && es->err_data[i] != NULL) {
+        str = es->err_data[i];
+        base_len = strlen(str);
+        /* The recorded size never overstates the allocation. */
+        size = es->err_data_size[i];
+        es->err_data[i] = NULL;
+        es->err_data_flags[i] = 0;
+    } else {
+        str = NULL;
+        base_len = 0;
+        size = 0;
+    }
+
+    va_start(args, fmt);
+
+    /* Initial allocation, grown below if the text does not fit. */
+    if (str == NULL) {
+        size = 64;
+        if ((str = OPENSSL_malloc(size)) == NULL)
+            goto err;
+    }
+
+    va_copy(args_copy, args);
+    add_len = vsnprintf(str + base_len, size - base_len, fmt, args_copy);
+    va_end(args_copy);
+    if (add_len < 0)
+        goto err;
+
+    if ((size_t)add_len >= size - base_len) {
+        size = base_len + (size_t)add_len + 1;
+        if ((tmp = OPENSSL_realloc(str, size)) == NULL)
+            goto err;
+        str = tmp;
+        if (vsnprintf(str + base_len, size - base_len, fmt, args) != add_len)
+            goto err;
+    }
+    va_end(args);
+
+    err_set_data(es, i, str, size, ERR_TXT_MALLOCED | ERR_TXT_STRING);
+    return;
+
+err:
+    va_end(args);
+    OPENSSL_free(str);
+}
+
 void err_clear_last_constant_time(int clear)
 {
     ERR_STATE *es;
