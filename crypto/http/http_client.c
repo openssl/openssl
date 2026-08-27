@@ -23,6 +23,7 @@
 #include <openssl/trace.h>
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
+#include "internal/err.h"
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */
@@ -509,7 +510,7 @@ static int parse_http_line1(char *line, int *found_keep_alive)
             || retcode < HTTP_STATUS_CODES_NONFATAL_ERROR) {
             ERR_raise_data(ERR_LIB_HTTP, HTTP_R_STATUS_CODE_UNSUPPORTED, "code=%s", code);
             if (*reason != '\0')
-                ERR_add_error_data(2, ", reason=", reason);
+                ossl_err_add_error_fmt(", reason=%s", reason);
         } /* must return content normally if status >= 400, still tentatively raised error on 404 */
         return retcode;
     }
@@ -1228,7 +1229,6 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
                 /* may be NULL if out of memory: */
                 *redirection_url = OPENSSL_strdup(rctx->redirection_url);
         } else {
-            char buf[200];
             unsigned long err = ERR_peek_error();
             int lib = ERR_GET_LIB(err);
             int reason = ERR_GET_REASON(err);
@@ -1241,20 +1241,16 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
                     && reason == CMP_R_POTENTIALLY_INVALID_CERTIFICATE)
 #endif
             ) {
-                if (rctx->server != NULL && *rctx->server != '\0') {
-                    snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
+                if (rctx->server != NULL && *rctx->server != '\0')
+                    ossl_err_add_error_fmt("server=http%s://%s%s%s",
                         rctx->use_ssl ? "s" : "", rctx->server,
                         rctx->port != NULL ? ":" : "",
                         rctx->port != NULL ? rctx->port : "");
-                    ERR_add_error_data(1, buf);
-                }
                 if (rctx->proxy != NULL)
-                    ERR_add_error_data(2, " proxy=", rctx->proxy);
-                if (err == 0) {
-                    snprintf(buf, sizeof(buf), " peer has disconnected%s",
+                    ossl_err_add_error_fmt(" proxy=%s", rctx->proxy);
+                if (err == 0)
+                    ossl_err_add_error_fmt(" peer has disconnected%s",
                         rctx->use_ssl ? " violating the protocol" : ", likely because it requires the use of TLS");
-                    ERR_add_error_data(1, buf);
-                }
             }
         }
     }
