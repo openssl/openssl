@@ -11,7 +11,7 @@
  * Helper functions for 128 bit CBC CTS ciphers (Currently AES and Camellia).
  *
  * The function dispatch tables are embedded into cipher_aes.c
- * and cipher_camellia.c using cipher_aes_cts.inc and cipher_camellia_cts.inc
+ * and cipher_camellia.c
  */
 
 /*
