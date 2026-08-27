@@ -15,6 +15,10 @@
 #include "internal/constant_time.h"
 #include "internal/sha3.h"
 
+#if defined(__PPC64__) && defined(__LITTLE_ENDIAN__)
+#include "crypto/sha/shakex2_ppc64le.h"
+#endif
+
 #if ML_KEM_SEED_BYTES != ML_KEM_SHARED_SECRET_BYTES + ML_KEM_RANDOM_BYTES
 #error "ML-KEM keygen seed length != shared secret + random bytes length"
 #endif
@@ -25,6 +29,13 @@
 #if UINT_MAX < UINT32_MAX
 #error "Unsupported compiler: sizeof(unsigned int) < sizeof(uint32_t)"
 #endif
+
+typedef int (*ML_KEM_MATRIX_EXPAND_FN)(EVP_MD_CTX *mdctx,
+                                       ML_KEM_KEY *key);
+
+typedef struct {
+    ML_KEM_MATRIX_EXPAND_FN matrix_expand;
+} OSSL_ML_KEM_SAMPLE_OPS;
 
 /* Handy function-like bit-extraction macros */
 #define bit0(b) ((b) & 1)
@@ -978,8 +989,7 @@ matrix_mult_transpose_add(scalar *out, const scalar *m, const scalar *a, int ran
  *
  * Where FIPS 203 computes t = A * s + e, we use the transpose of "m".
  */
-static __owur int matrix_expand(EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
-{
+static __owur int matrix_expand_scalar(EVP_MD_CTX *mdctx, ML_KEM_KEY *key){
     scalar *out = key->m;
     uint8_t input[ML_KEM_RANDOM_BYTES + 2];
     int rank = key->vinfo->rank;
@@ -1003,6 +1013,37 @@ static __owur int matrix_expand(EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
         }
     }
     return 1;
+}
+
+static const OSSL_ML_KEM_SAMPLE_OPS ml_kem_sample_generic_meth = {
+    matrix_expand_scalar
+};
+
+#if defined(__PPC64__) && defined(__LITTLE_ENDIAN__)
+
+# include "arch/ppc_arch.h"
+# include "ml_kem_hw_ppc64le.inc"
+
+static const OSSL_ML_KEM_SAMPLE_OPS *ossl_ml_kem_sample_ops(void)
+{
+    if (OPENSSL_ppccap_P & PPC_CRYPTO207)
+        return &ml_kem_sample_ppc64le;
+
+    return &ml_kem_sample_generic_meth;
+}
+
+#else
+
+static const OSSL_ML_KEM_SAMPLE_OPS *ossl_ml_kem_sample_ops(void)
+{
+    return &ml_kem_sample_generic_meth;
+}
+
+#endif
+
+static __owur int matrix_expand(EVP_MD_CTX *mdctx, ML_KEM_KEY *key)
+{
+    return ossl_ml_kem_sample_ops()->matrix_expand(mdctx, key);
 }
 
 /*
