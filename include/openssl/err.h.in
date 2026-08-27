@@ -339,8 +339,17 @@ typedef struct ERR_string_data_st {
 /* Building blocks */
 void ERR_new(void);
 void ERR_set_debug(const char *file, int line, const char *func);
-void ERR_set_error(int lib, int reason, const char *fmt, ...);
-void ERR_vset_error(int lib, int reason, const char *fmt, va_list args);
+#define ossl_err__attr__(x)
+#if defined(__GNUC__) && !defined(__MINGW32__) && !defined(__MINGW64__) \
+    && !defined(__APPLE__)
+#undef ossl_err__attr__
+#define ossl_err__attr__ __attribute__
+#endif
+void ERR_set_error(int lib, int reason, const char *fmt, ...)
+    ossl_err__attr__((__format__(__printf__, 3, 4)));
+void ERR_vset_error(int lib, int reason, const char *fmt, va_list args)
+    ossl_err__attr__((__format__(__printf__, 3, 0)));
+#undef ossl_err__attr__
 
 /* Main error raising functions */
 #define ERR_raise(lib, reason) ERR_raise_data((lib), (reason), NULL)
