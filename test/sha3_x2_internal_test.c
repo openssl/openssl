@@ -107,19 +107,26 @@ static int do_shake_single_absorb_multiblock_squeeze(size_t rate, size_t outlen)
     uint8_t *o1 = out1, *o2 = out2;
     size_t inlen = sizeof(in1);
     int ret = 0;
+    size_t len = outlen;
 
     RAND_bytes(in1, sizeof(in1));
     RAND_bytes(in2, sizeof(in2));
     if (!do_single_shake(in1, in2, inlen, expected_out1, expected_out2, outlen))
         goto err;
     do_interleave(rate, in1, in2, inlen, inx2);
-    ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
-    outlen -= rate;
-    while (outlen > 0) {
+    if (rate == SHAKE128_RATE)
+        ossl_shake128_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
+    else
+        ossl_shake256_2x_oneshot_singleblock_absorb_interleaved_squeeze(ctx.A, inx2, o1, o2);
+    len -= rate;
+    while (len > 0) {
         o1 += rate;
         o2 += rate;
-        ossl_shake256_2x_squeeze_singleblock(ctx.A, o1, o2);
-        outlen -= rate;
+        if (rate == SHAKE128_RATE)
+            ossl_shake128_2x_squeeze_singleblock(ctx.A, o1, o2);
+        else
+            ossl_shake256_2x_squeeze_singleblock(ctx.A, o1, o2);
+        len -= rate;
     }
     if (!TEST_mem_eq(out1, outlen, expected_out1, outlen)
         || !TEST_mem_eq(out2, outlen, expected_out2, outlen))
