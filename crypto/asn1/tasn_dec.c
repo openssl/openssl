@@ -15,6 +15,7 @@
 #include <openssl/buffer.h>
 #include <openssl/err.h>
 #include "crypto/asn1.h"
+#include "internal/err.h"
 #include "internal/numbers.h"
 #include "asn1_local.h"
 
@@ -506,11 +507,11 @@ int asn1_item_embed_d2i(ASN1_VALUE **pval, const unsigned char **in,
 auxerr:
     ERR_raise(ERR_LIB_ASN1, ASN1_R_AUX_ERROR);
 err:
-    if (errtt)
-        ERR_add_error_data(4, "Field=", errtt->field_name,
-            ", Type=", it->sname);
+    if (errtt != NULL)
+        ossl_err_add_error_fmt("Field=%s, Type=%s", errtt->field_name,
+            it->sname);
     else
-        ERR_add_error_data(2, "Type=", it->sname);
+        ossl_err_add_error_fmt("Type=%s", it->sname);
     return 0;
 }
 
