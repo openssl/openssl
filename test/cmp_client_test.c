@@ -10,6 +10,7 @@
  */
 
 #include "helpers/cmp_testlib.h"
+#include "../crypto/crmf/crmf_local.h" /* for manipulating the CertId issuer */
 
 #include "cmp_mock_srv.h"
 
@@ -216,6 +217,97 @@ static int test_exec_RR_ses_receive_error(void)
         "test string");
     ossl_cmp_mock_srv_set_sendError(fixture->srv_ctx, OSSL_CMP_PKIBODY_RR);
     fixture->expected = OSSL_CMP_PKISTATUS_rejection;
+    EXECUTE_TEST(execute_exec_RR_ses_test, tear_down);
+    return result;
+}
+
+/*
+ * Create a CertId the issuer of which is not a directoryName, such that
+ * OSSL_CRMF_CERTID_get0_issuer() yields NULL for it, while
+ * OSSL_CRMF_CERTID_get0_serialNumber() yields the serial number as usual.
+ */
+static OSSL_CRMF_CERTID *certid_new_non_dirName_issuer(void)
+{
+    OSSL_CRMF_CERTID *cid = OSSL_CRMF_CERTID_new();
+    ASN1_IA5STRING *dns = ASN1_IA5STRING_new();
+
+    if (cid == NULL || dns == NULL)
+        goto err;
+    if (!ASN1_STRING_set1_string(dns, "server.example"))
+        goto err;
+    GENERAL_NAME_set0_value(cid->issuer, GEN_DNS, dns);
+    dns = NULL; /* ownership transferred to cid->issuer */
+    if (!ASN1_INTEGER_set(cid->serialNumber, 1))
+        goto err;
+    return cid;
+
+err:
+    ASN1_IA5STRING_free(dns);
+    OSSL_CRMF_CERTID_free(cid);
+    return NULL;
+}
+
+/*
+ * Transfer callback wrapping the mock server: add a CertId to the revCerts
+ * field of the RP, which the server side omits for an RR request derived from
+ * a PKCS#10 CSR because such a request contains no issuer and serial number.
+ */
+static OSSL_CMP_MSG *transfer_add_revCerts(OSSL_CMP_CTX *ctx,
+    const OSSL_CMP_MSG *req)
+{
+    OSSL_CMP_SRV_CTX *srv_ctx = OSSL_CMP_CTX_get_transfer_cb_arg(ctx);
+    OSSL_CMP_MSG *rp = ossl_cmp_mock_server_perform(ctx, req);
+    OSSL_CRMF_CERTID *cid;
+
+    if (rp == NULL || OSSL_CMP_MSG_get_bodytype(rp) != OSSL_CMP_PKIBODY_RP)
+        return rp;
+
+    if ((cid = certid_new_non_dirName_issuer()) == NULL)
+        goto err;
+    if (!sk_OSSL_CRMF_CERTID_push(rp->body->value.rp->revCerts, cid)) {
+        OSSL_CRMF_CERTID_free(cid);
+        goto err;
+    }
+    /* the body has been modified after the server protected the message */
+    if (!ossl_cmp_msg_protect(OSSL_CMP_SRV_CTX_get0_cmp_ctx(srv_ctx), rp))
+        goto err;
+    return rp;
+
+err:
+    OSSL_CMP_MSG_free(rp);
+    return NULL;
+}
+
+/*
+ * The certificate to be revoked is given by a PKCS#10 CSR, so the RR contains
+ * neither issuer nor serial number, yet the RP contains a CertId in revCerts.
+ * The client cannot compare the CertId with what it did not send and thus
+ * must not reject the response.
+ * The CertId issuer is not a directoryName, such that the issuer comparison
+ * compares NULL with NULL and succeeds, which makes the client go on
+ * comparing the serial numbers with the one it did not send being NULL.
+ */
+static int test_exec_RR_ses_p10CSR_revCerts(void)
+{
+    OSSL_CMP_CTX *ctx;
+    X509_REQ *csr = NULL;
+
+    SETUP_TEST_FIXTURE(CMP_SES_TEST_FIXTURE, set_up);
+    ctx = fixture->cmp_ctx;
+    fixture->expected = OSSL_CMP_PKISTATUS_accepted;
+    if (!TEST_ptr(csr = load_csr_der(pkcs10_f, libctx))
+        /* drop the reference cert such that the CSR is used instead */
+        || !TEST_true(OSSL_CMP_CTX_set1_oldCert(ctx, NULL))
+        || !TEST_true(OSSL_CMP_CTX_set1_p10CSR(ctx, csr))
+        /* no recipient can be derived from just a CSR */
+        || !TEST_true(OSSL_CMP_CTX_set1_recipient(ctx,
+            X509_get_subject_name(server_cert)))
+        || !TEST_true(OSSL_CMP_CTX_set_transfer_cb(ctx,
+            transfer_add_revCerts))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    X509_REQ_free(csr);
     EXECUTE_TEST(execute_exec_RR_ses_test, tear_down);
     return result;
 }
@@ -605,6 +697,7 @@ int setup_tests(void)
     ADD_TEST(test_exec_RR_ses_ok);
     ADD_TEST(test_exec_RR_ses_request_error);
     ADD_TEST(test_exec_RR_ses_receive_error);
+    ADD_TEST(test_exec_RR_ses_p10CSR_revCerts);
     ADD_TEST(test_exec_CR_ses_explicit_confirm);
     ADD_TEST(test_exec_CR_ses_implicit_confirm);
     ADD_TEST(test_exec_IR_ses);
