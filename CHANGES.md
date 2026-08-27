@@ -38,6 +38,14 @@ OpenSSL Releases
 
    *Daniel Kubec and Viktor Dukhovni*
 
+ * CMS_verify() with the CMS_CADES flag, and `openssl cms -verify -cades`, now
+   reject a SignerInfo that has no signed attributes. CAdES requires the ESS
+   signing-certificate signed attribute, but a SignerInfo without any signed
+   attributes (as produced by `openssl cms -sign -noattr`) skipped that check
+   and was wrongly accepted.
+
+   *Jeffrey Kintscher*
+
  * Added support for DTLS 1.3 (RFC 9147). Refer to the ossl-guide-dtlsv13(7)
    manpage for details.
 
