@@ -90,6 +90,98 @@ DEFINE_STACK_OF(BIGNUM)
  * on their respective exps and coeffs stacks
  */
 #ifndef FIPS_MODULE
+/*
+ * Compute r = a mod m into a freshly allocated BIGNUM on OSSL_FN views,
+ * in an explicitly sized OSSL_FN_CTX arena.  Returns the result BIGNUM,
+ * or NULL on error.
+ */
+static BIGNUM *rsa_fn_mod_new(const BIGNUM *a, const BIGNUM *m,
+    OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *r = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_m = NULL;
+    size_t fn_size, ml;
+    int r_bits;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_m = bn_get_ossl_fn(m);
+    if (fn_a == NULL || fn_m == NULL)
+        return NULL;
+    ml = ossl_fn_get_dsize((OSSL_FN *)fn_m);
+
+    r = BN_secure_new();
+    if (r == NULL)
+        return NULL;
+    if ((fn_r = bn_acquire_ossl_fn(r, (int)ml)) == NULL)
+        goto err;
+    fn_size = OSSL_FN_mod_ctx_size(fn_r, fn_a, fn_m);
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!OSSL_FN_mod(fn_r, fn_a, fn_m, fn_ctx))
+        goto err;
+
+    r_bits = (int)OSSL_FN_num_bits(fn_r);
+    bn_release(r, r_bits > 0 ? (r_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    OSSL_FN_CTX_free(fn_ctx);
+    return r;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    BN_clear_free(r);
+    return NULL;
+}
+
+/*
+ * Compute r = a^-1 mod m into a freshly allocated BIGNUM on OSSL_FN
+ * views, in an explicitly sized OSSL_FN_CTX arena.  Returns the result
+ * BIGNUM, or NULL on error (including when no inverse exists).
+ */
+static BIGNUM *rsa_fn_mod_inverse_new(const BIGNUM *a, const BIGNUM *m,
+    OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *r = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_m = NULL;
+    size_t fn_size, ml;
+    int r_bits;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_m = bn_get_ossl_fn(m);
+    if (fn_a == NULL || fn_m == NULL)
+        return NULL;
+    ml = ossl_fn_get_dsize((OSSL_FN *)fn_m);
+
+    r = BN_secure_new();
+    if (r == NULL)
+        return NULL;
+    if ((fn_r = bn_acquire_ossl_fn(r, (int)ml)) == NULL)
+        goto err;
+    fn_size = OSSL_FN_mod_inverse_ctx_size(fn_r, fn_a, fn_m);
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!OSSL_FN_mod_inverse(fn_r, fn_a, fn_m, fn_ctx))
+        goto err;
+
+    r_bits = (int)OSSL_FN_num_bits(fn_r);
+    bn_release(r, r_bits > 0 ? (r_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    OSSL_FN_CTX_free(fn_ctx);
+    return r;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    BN_clear_free(r);
+    return NULL;
+}
+
 int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     BIGNUM *e_value,
     STACK_OF(BIGNUM) *factors,
@@ -199,20 +291,15 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     }
 
     /* Calculate dmp1, dmq1 and additional exponents */
-    dmp1 = BN_secure_new();
+    dmp1 = rsa_fn_mod_new(rsa->d, r1, rsa->libctx);
     if (dmp1 == NULL)
-        goto err;
-    dmq1 = BN_secure_new();
-    if (dmq1 == NULL)
-        goto err;
-
-    if (!BN_mod(dmp1, rsa->d, r1, ctx))
         goto err;
     if (!sk_BIGNUM_insert(exps, dmp1, sk_BIGNUM_num(exps)))
         goto err;
     dmp1 = NULL;
 
-    if (!BN_mod(dmq1, rsa->d, r2, ctx))
+    dmq1 = rsa_fn_mod_new(rsa->d, r2, rsa->libctx);
+    if (dmq1 == NULL)
         goto err;
     if (!sk_BIGNUM_insert(exps, dmq1, sk_BIGNUM_num(exps)))
         goto err;
@@ -220,10 +307,8 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
 
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         newpd = sk_BIGNUM_value(pdlist, i - 2);
-        newexp = BN_new();
+        newexp = rsa_fn_mod_new(rsa->d, newpd, rsa->libctx);
         if (newexp == NULL)
-            goto err;
-        if (!BN_mod(newexp, rsa->d, newpd, ctx))
             goto err;
         if (!sk_BIGNUM_insert(exps, newexp, sk_BIGNUM_num(exps)))
             goto err;
@@ -231,13 +316,9 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     }
 
     /* Calculate iqmp and additional coefficients */
-    iqmp = BN_new();
+    iqmp = rsa_fn_mod_inverse_new(sk_BIGNUM_value(factors, 1),
+        sk_BIGNUM_value(factors, 0), rsa->libctx);
     if (iqmp == NULL)
-        goto err;
-
-    if (BN_mod_inverse(iqmp, sk_BIGNUM_value(factors, 1),
-            sk_BIGNUM_value(factors, 0), ctx)
-        == NULL)
         goto err;
     if (!sk_BIGNUM_insert(coeffs, iqmp, sk_BIGNUM_num(coeffs)))
         goto err;
@@ -245,12 +326,9 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
 
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         newpp = sk_BIGNUM_value(pplist, i - 2);
-        newcoeff = BN_new();
+        newcoeff = rsa_fn_mod_inverse_new(newpp,
+            sk_BIGNUM_value(factors, i), rsa->libctx);
         if (newcoeff == NULL)
-            goto err;
-        if (BN_mod_inverse(newcoeff, newpp, sk_BIGNUM_value(factors, i),
-                ctx)
-            == NULL)
             goto err;
         if (!sk_BIGNUM_insert(coeffs, newcoeff, sk_BIGNUM_num(coeffs)))
             goto err;
