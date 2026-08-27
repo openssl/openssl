@@ -634,6 +634,7 @@ static int dsa_finish(DSA *dsa)
     BN_MONT_CTX_free(dsa->method_mont_p);
     dsa->method_mont_p = NULL;
     OSSL_FN_MONT_CTX_free(dsa->method_mont_fn_p);
+    dsa->method_mont_fn_p = NULL;
     return 1;
 }
 
