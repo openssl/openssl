@@ -1670,7 +1670,7 @@ static int rsa_set_ctx_params(void *vprsactx, const OSSL_PARAM params[])
             else
                 ERR_raise_data(ERR_LIB_PROV,
                     PROV_R_ILLEGAL_OR_UNSUPPORTED_PADDING_MODE,
-                    err_extra_text);
+                    "%s", err_extra_text);
             return 0;
         }
     }
