@@ -30,6 +30,7 @@ find_package(OpenSSL CONFIG REQUIRED)
 
 add_executable(ossl_config_dummy_vars dummy.c)
 target_compile_definitions(ossl_config_dummy_vars PRIVATE DIRECT_CRYPTO_CALLS)
+target_include_directories(ossl_config_dummy_vars PRIVATE ${OPENSSL_INCLUDE_DIR})
 target_link_libraries(ossl_config_dummy_vars PRIVATE ${OPENSSL_LIBRARIES})
 
 add_executable(ossl_config_dummy_tgt dummy.c)
