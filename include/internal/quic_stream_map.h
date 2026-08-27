@@ -352,6 +352,15 @@ static ossl_inline ossl_unused int ossl_quic_stream_is_local_init(const QUIC_STR
 }
 
 /*
+ * Returns 1 if s is currently in an accept queue. A NULL stream is not in an
+ * accept queue.
+ */
+static ossl_inline ossl_unused int ossl_quic_stream_is_in_accept_queue(const QUIC_STREAM *s)
+{
+    return s != NULL && s->accept_node.next != NULL;
+}
+
+/*
  * Returns 1 if the QUIC_STREAM has a sending part, based on its stream type.
  *
  * Do NOT use (s->sstream != NULL) to test this; use this function. Note that
