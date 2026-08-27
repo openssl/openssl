@@ -9,16 +9,28 @@
 #if !defined(OSSL_LIBCRYPTO_X509_X509_LOCAL_H)
 #define OSSL_LIBCRYPTO_X509_X509_LOCAL_H
 
+#include <openssl/conf.h>
 #include <openssl/safestack.h>
 #include <openssl/x509_vfy.h>
 
 #include "internal/refcount.h"
 #include "internal/hashtable.h"
+#include "internal/err.h"
 
 #include <crypto/asn1.h>
 
-#define X509V3_conf_add_error_name_value(val) \
-    ERR_add_error_data(4, "name=", (val)->name, ", value=", (val)->value)
+/**
+ * @brief Append the name and value of a config entry to the current error.
+ *
+ * @param val the config entry to report
+ */
+static ossl_inline void X509V3_conf_add_error_name_value(
+    const CONF_VALUE *val)
+{
+    ossl_err_add_error_fmt("name=%s, value=%s",
+        ossl_string_or_null(val->name),
+        ossl_string_or_null(val->value));
+}
 
 /*
  * Really all I want is CRYPTO_BUFFER from BoringSSL, but let's just do this
