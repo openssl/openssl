@@ -137,6 +137,85 @@ err:
 }
 
 /*
+ * Compute a - 1 into a freshly allocated BIGNUM on an OSSL_FN view.
+ * Returns the result BIGNUM, or NULL on error.
+ */
+static BIGNUM *rsa_fn_sub_one_new(const BIGNUM *a, OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *r = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL;
+    size_t al;
+    int r_bits;
+
+    fn_a = bn_get_ossl_fn(a);
+    if (fn_a == NULL)
+        return NULL;
+    al = ossl_fn_get_dsize((OSSL_FN *)fn_a);
+
+    r = BN_secure_new();
+    if (r == NULL)
+        return NULL;
+    if ((fn_r = bn_acquire_ossl_fn(r, (int)al)) == NULL)
+        goto err;
+    if (!OSSL_FN_copy_truncate(fn_r, fn_a)
+        || !OSSL_FN_sub_word(fn_r, 1))
+        goto err;
+    r_bits = (int)OSSL_FN_num_bits(fn_r);
+    bn_release(r, r_bits > 0 ? (r_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    return r;
+err:
+    BN_clear_free(r);
+    return NULL;
+}
+
+/*
+ * Multiply two BIGNUMs into a freshly allocated BIGNUM on OSSL_FN views,
+ * in an explicitly sized OSSL_FN_CTX arena.  Returns the result BIGNUM,
+ * or NULL on error.
+ */
+static BIGNUM *rsa_fn_mul_new(const BIGNUM *a, const BIGNUM *b,
+    OSSL_LIB_CTX *libctx)
+{
+    BIGNUM *r = NULL;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_b = NULL;
+    size_t fn_size, al, bl;
+    int r_bits;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_b = bn_get_ossl_fn(b);
+    if (fn_a == NULL || fn_b == NULL)
+        return NULL;
+    al = ossl_fn_get_dsize((OSSL_FN *)fn_a);
+    bl = ossl_fn_get_dsize((OSSL_FN *)fn_b);
+
+    r = BN_secure_new();
+    if (r == NULL)
+        return NULL;
+    if ((fn_r = bn_acquire_ossl_fn(r, (int)(al + bl))) == NULL)
+        goto err;
+    fn_size = OSSL_FN_mul_ctx_size(fn_r, fn_a, fn_b);
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!OSSL_FN_mul(fn_r, fn_a, fn_b, fn_ctx))
+        goto err;
+    r_bits = (int)OSSL_FN_num_bits(fn_r);
+    bn_release(r, r_bits > 0 ? (r_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    OSSL_FN_CTX_free(fn_ctx);
+    return r;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    BN_clear_free(r);
+    return NULL;
+}
+
+/*
  * Compute r = a^-1 mod m into a freshly allocated BIGNUM on OSSL_FN
  * views, in an explicitly sized OSSL_FN_CTX arena.  Returns the result
  * BIGNUM, or NULL on error (including when no inverse exists).
@@ -234,16 +313,24 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     for (i = 0; i < sk_BIGNUM_num(factors); i++) {
         switch (i) {
         case 0:
-            /* our first prime, p */
-            if (!BN_sub(r2, p, BN_value_one()))
+            /*
+             * our first prime, p: verify gcd(p-1, e) == 1 (the inverse
+             * exists).  The result is not kept; r1 is reused below.
+             */
+            tmp = rsa_fn_sub_one_new(p, rsa->libctx);
+            if (tmp == NULL)
                 goto err;
-            BN_set_flags(r2, BN_FLG_CONSTTIME);
-            if (BN_mod_inverse(r1, r2, rsa->e, ctx) == NULL)
+            r1 = rsa_fn_mod_inverse_new(rsa->e, tmp, rsa->libctx);
+            BN_clear_free(tmp);
+            tmp = NULL;
+            if (r1 == NULL)
                 goto err;
             break;
         case 1:
-            /* second prime q */
-            if (!BN_mul(r1, p, q, ctx))
+            /* second prime q: partial product p * q */
+            BN_clear_free(r1);
+            r1 = rsa_fn_mul_new(p, q, rsa->libctx);
+            if (r1 == NULL)
                 goto err;
             tmp = BN_dup(r1);
             if (tmp == NULL)
@@ -254,9 +341,12 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
             break;
         default:
             factor = sk_BIGNUM_value(factors, i);
-            /* all other primes */
-            if (!BN_mul(r1, r1, factor, ctx))
+            /* all other primes: extend the partial product */
+            tmp = rsa_fn_mul_new(r1, factor, rsa->libctx);
+            if (tmp == NULL)
                 goto err;
+            BN_clear_free(r1);
+            r1 = tmp;
             tmp = BN_dup(r1);
             if (tmp == NULL)
                 goto err;
@@ -268,23 +358,31 @@ int ossl_rsa_multiprime_derive(RSA *rsa, int bits, int primes,
     }
 
     /* build list of relative d values */
-    /* p -1 */
-    if (!BN_sub(r1, p, BN_value_one()))
+    /* r1 = p - 1, r2 = q - 1, r0 = (p-1)(q-1) */
+    BN_clear_free(r1);
+    r1 = rsa_fn_sub_one_new(p, rsa->libctx);
+    if (r1 == NULL)
         goto err;
-    if (!BN_sub(r2, q, BN_value_one()))
+    BN_clear_free(r2);
+    r2 = rsa_fn_sub_one_new(q, rsa->libctx);
+    if (r2 == NULL)
         goto err;
-    if (!BN_mul(r0, r1, r2, ctx))
+    BN_clear_free(r0);
+    r0 = rsa_fn_mul_new(r1, r2, rsa->libctx);
+    if (r0 == NULL)
         goto err;
     for (i = 2; i < sk_BIGNUM_num(factors); i++) {
         factor = sk_BIGNUM_value(factors, i);
-        dval = BN_new();
+        dval = rsa_fn_sub_one_new(factor, rsa->libctx);
         if (dval == NULL)
             goto err;
-        BN_set_flags(dval, BN_FLG_CONSTTIME);
-        if (!BN_sub(dval, factor, BN_value_one()))
+        /* r0 *= (factor - 1) */
+        tmp = rsa_fn_mul_new(r0, dval, rsa->libctx);
+        if (tmp == NULL)
             goto err;
-        if (!BN_mul(r0, r0, dval, ctx))
-            goto err;
+        BN_clear_free(r0);
+        r0 = tmp;
+        tmp = NULL;
         if (!sk_BIGNUM_insert(pdlist, dval, sk_BIGNUM_num(pdlist)))
             goto err;
         dval = NULL;
