@@ -101,7 +101,7 @@ typedef struct fips_global_st {
 
 } FIPS_GLOBAL;
 
-static inline FIPS_PARAMS *get_fips_params(FIPS_GLOBAL *fgbl)
+static ossl_inline FIPS_PARAMS *get_fips_params(FIPS_GLOBAL *fgbl)
 {
     return &fgbl->fips_params;
 }
