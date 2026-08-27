@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <openssl/opensslconf.h>
 #include <openssl/bn_limbs.h>
+#include <openssl/crypto.h>
 #include <openssl/types.h>
 #include "crypto/types.h"
 
@@ -380,6 +381,23 @@ int OSSL_FN_cmp(const OSSL_FN *a, const OSSL_FN *b);
 int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
 
 /**
+ * Clear bit @p n of @p a.
+ *
+ * @param[in,out]       a       The operand
+ * @param[in]           n       The bit index (0 = least significant)
+ * @returns             1 on success, 0 on error
+ *
+ * @note An out-of-range index (n < 0 or n >= the operand's width in bits)
+ *       leaves @p a unchanged and fails with
+ *       OSSL_FN_R_RESULT_ARG_TOO_SMALL (OSSL_FN is fixed-size, so the
+ *       operand cannot be grown to reach @p n).  The only control flow
+ *       branches on the operand's public width (its dsize) and on the
+ *       caller-chosen index @p n, not on limb values; whether the bit was
+ *       previously set is not revealed.
+ */
+int OSSL_FN_clear_bit(OSSL_FN *a, int n);
+
+/**
  * Test whether the unsigned value of @p a equals the single-limb word @p w.
  *
  * @param[in]           a       The operand
@@ -391,6 +409,46 @@ int OSSL_FN_is_bit_set(const OSSL_FN *a, int n);
  *       asked for.
  */
 int OSSL_FN_is_word(const OSSL_FN *a, OSSL_FN_ULONG w);
+
+/**
+ * Return the least significant limb of @p a.
+ *
+ * @param[in]           a       The operand
+ * @returns             The least significant limb of @p a, or 0 when @p a has
+ *                      no limbs
+ *
+ * @note The only control flow branches on the operand's public width (its
+ *       dsize), not on limb values; the returned value is the limb itself,
+ *       which is the information the caller asked for.
+ */
+OSSL_FN_ULONG OSSL_FN_get_word(const OSSL_FN *a);
+
+/**
+ * Set bit @p pos (0 = least significant) of @p a, by absolute position.
+ *
+ * @param[in,out]       a       The OSSL_FN to modify
+ * @param[in]           pos     The absolute bit position to set
+ * @returns             1 on success, 0 on error
+ *
+ * @note No expansion: an out-of-range position (@p pos >= the operand's width
+ *       in bits) is an error (OSSL_FN_R_RESULT_ARG_TOO_SMALL), not an implicit
+ *       grow.  The only control flow branches on the operand's public width
+ *       (its dsize), not on limb values.
+ */
+int OSSL_FN_set_bit(OSSL_FN *a, size_t pos);
+
+/**
+ * Compute @p a mod @p w for a single-limb word @p w.
+ *
+ * @param[in]           a       The operand
+ * @param[in]           w       The OSSL_FN_ULONG modulus word
+ * @returns             @p a mod @p w, or (OSSL_FN_ULONG)-1 when @p w is 0
+ *
+ * @note Control flow branches only on the operand's public width (its dsize),
+ *       not on limb values; the reduction itself is the arithmetic the caller
+ *       asked for.
+ */
+OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w);
 
 /**
  * Test whether @p a is zero.
@@ -1271,6 +1329,27 @@ size_t OSSL_FN_sqr_ctx_size(const OSSL_FN *r, const OSSL_FN *a);
 OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_new(const OSSL_FN *mod);
 
 /**
+ * Thread-safe lazy initialization of a shared Montgomery context cache.
+ *
+ * @param[in,out]       pmont   The cache slot to read / fill
+ * @param[in]           lock    A read/write lock guarding @p pmont
+ * @param[in]           mod     The modulus
+ * @returns             The cached Montgomery context for @p mod, or NULL on
+ *                      error.  The returned pointer remains owned by
+ *                      @p pmont; the caller must not free it.
+ *
+ * @note If @p pmont already holds a context, it is returned unchanged;
+ *       whether it was initialized for @p mod is the caller's
+ *       responsibility.  Otherwise a context is built for @p mod outside
+ *       the lock (so concurrent lazy inits on the same slot duplicate the
+ *       work rather than serialize on it) and published under a write
+ *       lock; the loser of the race discards its work and returns the
+ *       winner's context.  Leak profile as for OSSL_FN_MONT_CTX_new().
+ */
+OSSL_FN_MONT_CTX *OSSL_FN_MONT_CTX_set_locked(OSSL_FN_MONT_CTX **pmont,
+    CRYPTO_RWLOCK *lock, const OSSL_FN *mod);
+
+/**
  * Free a Montgomery context.
  *
  * @param[in]   ctx     The context to be freed. This may be NULL.
@@ -1441,6 +1520,172 @@ int OSSL_FN_from_mont(OSSL_FN *r, const OSSL_FN *a,
  */
 size_t OSSL_FN_from_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
+
+/**
+ * Generate a probable prime of @p bits bits.  When @p safe is nonzero, a
+ * safe prime is generated ((p-1)/2 is also prime).  When @p add is not
+ * NULL, the result satisfies ret % @p add == @p rem (or
+ * ret % @p add == (safe ? 3 : 1) when @p rem is NULL).
+ *
+ * @param[out]          ret     The destination; must have room for @p bits
+ *                              bits.  With @p add not NULL the result can
+ *                              occasionally exceed @p bits bits slightly, so
+ *                              one limb of headroom is advisable then.
+ * @param[in]           bits    The desired size of the prime, in bits
+ * @param[in]           safe    Nonzero to generate a safe prime
+ * @param[in]           add     Optional residue modulus, or NULL
+ * @param[in]           rem     Optional residue, or NULL
+ * @param[in]           cb      Progress callback, or NULL
+ * @param[in]           ctx     The OSSL_FN_CTX arena
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ *
+ * @note The generation runs in an arena temporary with one limb of headroom
+ *       over @p bits, so a sieve carry past @p bits is detected and redrawn
+ *       rather than silently truncated.  The number of redraws and the
+ *       Miller-Rabin round count branch on public sizes only; the candidate
+ *       values themselves are the secret the caller asked for.
+ */
+int OSSL_FN_generate_prime(OSSL_FN *ret, size_t bits, int safe,
+    const OSSL_FN *add, const OSSL_FN *rem, BN_GENCB *cb,
+    OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_generate_prime() needs.
+ *
+ * @param[in]           ret     The destination, as for
+ *                              OSSL_FN_generate_prime()
+ * @param[in]           bits    The desired size of the prime, in bits
+ * @param[in]           safe    Nonzero to generate a safe prime
+ * @param[in]           add     Optional residue modulus, or NULL
+ * @param[in]           rem     Optional residue, or NULL
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size covers the generation attempts as well as the primality
+ * tests they run.  The same size serves a given |bits| and |safe| regardless
+ * of the |add| and |rem| values.
+ */
+size_t OSSL_FN_generate_prime_ctx_size(const OSSL_FN *ret, size_t bits,
+    int safe, const OSSL_FN *add, const OSSL_FN *rem);
+
+/**
+ * Generate a pair of X9.31 parameters Xp and Xq for prime generation.
+ * On entry, @p nbits is the sum of the bit lengths of both parameters;
+ * each must be of the form 512+128s for s = 0, 1, ...
+ *
+ * @param[out]          Xp      The first parameter
+ * @param[out]          Xq      The second parameter
+ * @param[in]           nbits   The total bit length (sum of both)
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_generate_Xpq_ctx_size()
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_X931_generate_Xpq(OSSL_FN *Xp, OSSL_FN *Xq, int nbits,
+    OSSL_FN_CTX *ctx, OSSL_LIB_CTX *libctx);
+
+/**
+ * Derive an X9.31 prime @p p from the parameters @p Xp1, @p Xp2 and @p Xp.
+ * When @p p1 or @p p2 is NULL, the corresponding intermediate prime is
+ * derived in an arena temporary and discarded.  Provided operands must
+ * carry the main width (@p Xp's width): @p Xp1, @p Xp2, and any non-NULL
+ * @p p1 / @p p2 all do.
+ *
+ * @param[out]          p       The derived prime
+ * @param[out]          p1      The returned intermediate prime, or NULL
+ * @param[out]          p2      The returned intermediate prime, or NULL
+ * @param[in]           Xp      The starting parameter
+ * @param[in]           Xp1     The first parameter for p1
+ * @param[in]           Xp2     The second parameter for p2
+ * @param[in]           e       The exponent; must be odd
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_derive_prime_ctx_size()
+ * @param[in]           cb      Progress callback, or NULL
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ *
+ * @note The embedded primality tests branch on public sizes and public
+ *       round counts only; the candidate values are the secret the caller
+ *       asked for.
+ */
+int OSSL_FN_X931_derive_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
+    const OSSL_FN *Xp, const OSSL_FN *Xp1, const OSSL_FN *Xp2,
+    const OSSL_FN *e, OSSL_FN_CTX *ctx, BN_GENCB *cb,
+    OSSL_LIB_CTX *libctx);
+
+/**
+ * Generate an X9.31 prime @p p using random Xp1 and Xp2 parameters, then
+ * defer to OSSL_FN_X931_derive_prime().  Any non-NULL @p p1, @p p2, @p Xp1
+ * and @p Xp2 receive the intermediate values.  All operands carry @p Xp's
+ * width, which must be at least 101 bits wide for the parameter draws.
+ *
+ * @param[out]          p       The derived prime
+ * @param[out]          p1      The returned intermediate prime, or NULL
+ * @param[out]          p2      The second returned intermediate prime, or
+ *                              NULL
+ * @param[in,out]       Xp1     The first random parameter, or NULL
+ * @param[in,out]       Xp2     The second random parameter, or NULL
+ * @param[in]           Xp      The starting parameter from
+ *                              OSSL_FN_X931_generate_Xpq()
+ * @param[in]           e       The exponent; must be odd
+ * @param[in]           ctx     The OSSL_FN_CTX arena, sized per
+ *                              OSSL_FN_X931_generate_prime_ctx_size()
+ * @param[in]           cb      Progress callback, or NULL
+ * @param[in]           libctx  The library context for the random draws
+ * @returns             1 on success, 0 on error
+ */
+int OSSL_FN_X931_generate_prime(OSSL_FN *p, OSSL_FN *p1, OSSL_FN *p2,
+    OSSL_FN *Xp1, OSSL_FN *Xp2, const OSSL_FN *Xp, const OSSL_FN *e,
+    OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_Xpq()
+ * needs.
+ *
+ * @param[in]           Xp      The first parameter to generate
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_Xpq_ctx_size(const OSSL_FN *Xp);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_generate_prime()
+ * needs.
+ *
+ * @param[in]           p       The OSSL_FN to receive the derived prime
+ * @param[in]           p1      The returned intermediate prime, or NULL
+ * @param[in]           p2      The second returned intermediate prime, or
+ *                              NULL
+ * @param[in]           Xp      The starting parameter
+ * @param[in]           e       The exponent
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_X931_generate_prime_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
+    const OSSL_FN *e);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_X931_derive_prime() needs.
+ *
+ * @param[in]           p       The OSSL_FN to receive the derived prime
+ * @param[in]           p1      The returned intermediate prime, or NULL
+ * @param[in]           p2      The second returned intermediate prime, or
+ *                              NULL
+ * @param[in]           Xp      The starting parameter
+ * @param[in]           Xp1     The first parameter for p1
+ * @param[in]           Xp2     The second parameter for p2
+ * @param[in]           e       The exponent
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * The returned size includes any frame budget needed by
+ * OSSL_FN_X931_derive_prime().
+ */
+size_t OSSL_FN_X931_derive_prime_ctx_size(const OSSL_FN *p,
+    const OSSL_FN *p1, const OSSL_FN *p2, const OSSL_FN *Xp,
+    const OSSL_FN *Xp1, const OSSL_FN *Xp2, const OSSL_FN *e);
 #ifdef __cplusplus
 }
 #endif

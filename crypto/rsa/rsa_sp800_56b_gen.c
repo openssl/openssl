@@ -14,11 +14,101 @@
 #include <openssl/evp.h>
 #include <openssl/rand.h>
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "crypto/security_bits.h"
 #include "rsa_local.h"
 
 #define RSA_FIPS186_5_MIN_KEYGEN_KEYSIZE 2048
 #define RSA_FIPS186_5_MIN_KEYGEN_STRENGTH 112
+
+/*
+ * Generate one probable prime (p or q) on OSSL_FN views, converting the
+ * BIGNUM parameters at the boundary.  |p_bn| and |Xpo_bn| are the writable
+ * results; |p1|, |p2| are optional writable results; |Xp|, |Xp1|, |Xp2|
+ * are optional read-only inputs (all BIGNUM, for CAVS testing).  The
+ * OSSL_FN generation runs in an explicitly sized OSSL_FN_CTX arena.
+ */
+static int rsa_fn_gen_prob_prime(BIGNUM *p_bn, BIGNUM *Xpo_bn,
+    BIGNUM *p1, BIGNUM *p2,
+    const BIGNUM *Xp, const BIGNUM *Xp1,
+    const BIGNUM *Xp2, int nbits,
+    const BIGNUM *e, BN_GENCB *cb, uint32_t c,
+    OSSL_LIB_CTX *libctx)
+{
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_p = NULL, *fn_Xpo = NULL, *fn_p1 = NULL, *fn_p2 = NULL;
+    const OSSL_FN *fn_Xp = NULL, *fn_Xp1 = NULL, *fn_Xp2 = NULL, *fn_e = NULL;
+    size_t fn_size, pl;
+    int ret = 0, p_bits;
+
+    fn_e = bn_get_ossl_fn(e);
+    if (fn_e == NULL)
+        return 0;
+    fn_Xp = Xp != NULL ? bn_get_ossl_fn(Xp) : NULL;
+    fn_Xp1 = Xp1 != NULL ? bn_get_ossl_fn(Xp1) : NULL;
+    fn_Xp2 = Xp2 != NULL ? bn_get_ossl_fn(Xp2) : NULL;
+
+    /*
+     * The prime and its random draw echo have room for nbits/2 bits; one
+     * limb of headroom lets a carry past the width be detected rather
+     * than truncated (per the OSSL_FN generation's width contract).
+     */
+    pl = (size_t)(nbits / 2 + BN_BITS2 - 1) / BN_BITS2 + 1;
+
+    /* Acquire the writable results before OSSL_FN_CTX sizing. */
+    fn_p = bn_acquire_ossl_fn(p_bn, (int)pl);
+    fn_Xpo = bn_acquire_ossl_fn(Xpo_bn, (int)pl);
+    if (fn_p == NULL || fn_Xpo == NULL)
+        goto err;
+    if (p1 != NULL && (fn_p1 = bn_acquire_ossl_fn(p1, (int)pl)) == NULL)
+        goto err;
+    if (p2 != NULL && (fn_p2 = bn_acquire_ossl_fn(p2, (int)pl)) == NULL)
+        goto err;
+
+    fn_size = ossl_fn_rsa_fips186_5_gen_prob_primes_ctx_size(fn_p, fn_Xpo,
+        fn_p1, fn_p2, fn_Xp1, fn_Xp2,
+        nbits, fn_e);
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    if (!ossl_fn_rsa_fips186_5_gen_prob_primes(fn_p, fn_Xpo, fn_p1, fn_p2,
+            fn_Xp, fn_Xp1, fn_Xp2, nbits,
+            fn_e, fn_ctx, cb, c, libctx))
+        goto err;
+
+#ifdef BN_DEBUG
+    {
+        size_t pk_frames, pk_numbers, pk_limbs;
+
+        OSSL_FN_CTX_peak_usage(fn_ctx, &pk_frames, &pk_numbers, &pk_limbs);
+        fprintf(stderr,
+            "DEBUG[%s]: estimate=%zu peak_frames=%zu peak_numbers=%zu "
+            "peak_limbs=%zu (nbits=%d pl=%zu)\n",
+            OPENSSL_FUNC, fn_size, pk_frames, pk_numbers, pk_limbs, nbits, pl);
+    }
+#endif
+
+    p_bits = (int)OSSL_FN_num_bits(fn_p);
+    bn_release(p_bn, p_bits > 0 ? (p_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    p_bits = (int)OSSL_FN_num_bits(fn_Xpo);
+    bn_release(Xpo_bn, p_bits > 0 ? (p_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    if (p1 != NULL) {
+        p_bits = (int)OSSL_FN_num_bits(fn_p1);
+        bn_release(p1, p_bits > 0 ? (p_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    }
+    if (p2 != NULL) {
+        p_bits = (int)OSSL_FN_num_bits(fn_p2);
+        bn_release(p2, p_bits > 0 ? (p_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    }
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
+}
 
 /*
  * Generate probable primes 'p' & 'q'. See FIPS 186-5 Section A.1.6
@@ -129,13 +219,13 @@ int ossl_rsa_fips186_5_gen_prob_primes(RSA *rsa, RSA_ACVP_TEST *test,
     BN_set_flags(rsa->q, BN_FLG_CONSTTIME);
 
     /* (Step 4) Generate p, Xp */
-    if (!ossl_bn_rsa_fips186_5_gen_prob_primes(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
-            nbits, e, ctx, cb, a))
+    if (!rsa_fn_gen_prob_prime(rsa->p, Xpo, p1, p2, Xp, Xp1, Xp2,
+            nbits, e, cb, a, rsa->libctx))
         goto err;
     for (;;) {
         /* (Step 5) Generate q, Xq*/
-        if (!ossl_bn_rsa_fips186_5_gen_prob_primes(rsa->q, Xqo, q1, q2, Xq, Xq1,
-                Xq2, nbits, e, ctx, cb, b))
+        if (!rsa_fn_gen_prob_prime(rsa->q, Xqo, q1, q2, Xq, Xq1, Xq2,
+                nbits, e, cb, b, rsa->libctx))
             goto err;
 
         /* (Step 6) |Xp - Xq| > 2^(nbitlen/2 - 100) */
@@ -272,6 +362,12 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
      * if e is provided as a parameter, don't recompute e, d or n
      */
     if (e != NULL) {
+        OSSL_FN_CTX *fn_ctx = NULL;
+        OSSL_FN *fn_d = NULL, *fn_n = NULL;
+        const OSSL_FN *fn_e, *fn_lcm, *fn_p, *fn_q;
+        size_t nl, fn_size;
+        int d_bits;
+
         /* copy e */
         BN_free(rsa->e);
         rsa->e = BN_dup(e);
@@ -284,8 +380,31 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
         if (rsa->d == NULL)
             goto err;
         BN_set_flags(rsa->d, BN_FLG_CONSTTIME);
-        if (BN_mod_inverse(rsa->d, e, lcm, ctx) == NULL)
+
+        fn_e = bn_get_ossl_fn(rsa->e);
+        fn_lcm = bn_get_ossl_fn(lcm);
+        fn_p = bn_get_ossl_fn(rsa->p);
+        fn_q = bn_get_ossl_fn(rsa->q);
+        if (fn_e == NULL || fn_lcm == NULL || fn_p == NULL || fn_q == NULL)
             goto err;
+        nl = ossl_fn_get_dsize((OSSL_FN *)fn_lcm);
+
+        /* (Step 3) d = (e^-1) mod lcm, on OSSL_FN views. */
+        if ((fn_d = bn_acquire_ossl_fn(rsa->d, (int)nl)) == NULL)
+            goto err;
+        fn_size = OSSL_FN_mod_inverse_ctx_size(fn_d, fn_e, fn_lcm);
+        if (fn_size == 0)
+            goto err;
+        fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, fn_size);
+        if (fn_ctx == NULL)
+            goto err;
+        if (!OSSL_FN_mod_inverse(fn_d, fn_e, fn_lcm, fn_ctx))
+            goto fn_err;
+        d_bits = (int)OSSL_FN_num_bits(fn_d);
+        bn_release(rsa->d, d_bits > 0 ? (d_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+        fn_d = NULL;
+        OSSL_FN_CTX_free(fn_ctx);
+        fn_ctx = NULL;
 
         /* (Step 3) return an error if d is too small */
         if (BN_num_bits(rsa->d) <= (nbits >> 1)) {
@@ -296,9 +415,35 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
         /* (Step 4) n = pq */
         if (rsa->n == NULL)
             rsa->n = BN_new();
-        if (rsa->n == NULL || !BN_mul(rsa->n, rsa->p, rsa->q, ctx))
+        if (rsa->n == NULL)
             goto err;
+        {
+            size_t npl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+            size_t nql = ossl_fn_get_dsize((OSSL_FN *)fn_q);
+
+            if ((fn_n = bn_acquire_ossl_fn(rsa->n, (int)(npl + nql))) == NULL)
+                goto err;
+            fn_size = OSSL_FN_mul_ctx_size(fn_n, fn_p, fn_q);
+            if (fn_size == 0)
+                goto err;
+            fn_ctx = OSSL_FN_CTX_new_size(rsa->libctx, fn_size);
+            if (fn_ctx == NULL)
+                goto err;
+            if (!OSSL_FN_mul(fn_n, fn_p, fn_q, fn_ctx))
+                goto fn_err;
+            bn_release(rsa->n, (int)(npl + nql));
+            fn_n = NULL;
+            OSSL_FN_CTX_free(fn_ctx);
+            fn_ctx = NULL;
+        }
+        goto derived;
+
+    fn_err:
+        OSSL_FN_CTX_free(fn_ctx);
+        goto err;
     }
+
+derived:;
 
     /* (Step 5a) dP = d mod (p-1) */
     if (rsa->dmp1 == NULL)
@@ -306,26 +451,75 @@ int ossl_rsa_sp800_56b_derive_params_from_pq(RSA *rsa, int nbits,
     if (rsa->dmp1 == NULL)
         goto err;
     BN_set_flags(rsa->dmp1, BN_FLG_CONSTTIME);
-    if (!BN_mod(rsa->dmp1, rsa->d, p1, ctx))
-        goto err;
-
     /* (Step 5b) dQ = d mod (q-1) */
     if (rsa->dmq1 == NULL)
         rsa->dmq1 = BN_secure_new();
     if (rsa->dmq1 == NULL)
         goto err;
     BN_set_flags(rsa->dmq1, BN_FLG_CONSTTIME);
-    if (!BN_mod(rsa->dmq1, rsa->d, q1, ctx))
-        goto err;
-
     /* (Step 5c) qInv = (inverse of q) mod p */
     BN_free(rsa->iqmp);
     rsa->iqmp = BN_secure_new();
     if (rsa->iqmp == NULL)
         goto err;
     BN_set_flags(rsa->iqmp, BN_FLG_CONSTTIME);
-    if (BN_mod_inverse(rsa->iqmp, rsa->q, rsa->p, ctx) == NULL)
-        goto err;
+
+    /*
+     * Steps 5a-5c on OSSL_FN views: dP = d mod (p-1), dQ = d mod (q-1),
+     * qInv = q^-1 mod p.  p1 and q1 already hold p-1 and q-1.  The
+     * operations run sequentially in one arena, each in its own frame, so
+     * the arena is sized for the largest single operation; this block
+     * opens no frame of its own (it only passes fn_ctx down).
+     */
+    {
+        OSSL_FN_CTX *fn_ctx = NULL;
+        OSSL_FN *fn_dmp1 = NULL, *fn_dmq1 = NULL, *fn_iqmp = NULL;
+        const OSSL_FN *fn_d, *fn_p1, *fn_q1, *fn_q, *fn_p;
+        size_t fn_size, sz, pl, ql, dl;
+
+        fn_d = bn_get_ossl_fn(rsa->d);
+        fn_p1 = bn_get_ossl_fn(p1);
+        fn_q1 = bn_get_ossl_fn(q1);
+        fn_q = bn_get_ossl_fn(rsa->q);
+        fn_p = bn_get_ossl_fn(rsa->p);
+        if (fn_d == NULL || fn_p1 == NULL || fn_q1 == NULL || fn_q == NULL
+            || fn_p == NULL)
+            goto err;
+        pl = ossl_fn_get_dsize((OSSL_FN *)fn_p1);
+        ql = ossl_fn_get_dsize((OSSL_FN *)fn_q1);
+        dl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+
+        fn_dmp1 = bn_acquire_ossl_fn(rsa->dmp1, (int)pl);
+        fn_dmq1 = bn_acquire_ossl_fn(rsa->dmq1, (int)ql);
+        fn_iqmp = bn_acquire_ossl_fn(rsa->iqmp, (int)dl);
+        if (fn_dmp1 == NULL || fn_dmq1 == NULL || fn_iqmp == NULL)
+            goto err;
+
+        fn_size = 0;
+        if ((sz = OSSL_FN_mod_ctx_size(fn_dmp1, fn_d, fn_p1)) > fn_size)
+            fn_size = sz;
+        if ((sz = OSSL_FN_mod_ctx_size(fn_dmq1, fn_d, fn_q1)) > fn_size)
+            fn_size = sz;
+        if ((sz = OSSL_FN_mod_inverse_ctx_size(fn_iqmp, fn_q, fn_p)) > fn_size)
+            fn_size = sz;
+        if (fn_size == 0)
+            goto err;
+        fn_ctx = OSSL_FN_CTX_secure_new_size(rsa->libctx, fn_size);
+        if (fn_ctx == NULL)
+            goto err;
+
+        if (!OSSL_FN_mod(fn_dmp1, fn_d, fn_p1, fn_ctx)
+            || !OSSL_FN_mod(fn_dmq1, fn_d, fn_q1, fn_ctx)
+            || !OSSL_FN_mod_inverse(fn_iqmp, fn_q, fn_p, fn_ctx)) {
+            OSSL_FN_CTX_free(fn_ctx);
+            goto err;
+        }
+
+        bn_release(rsa->dmp1, (int)pl);
+        bn_release(rsa->dmq1, (int)ql);
+        bn_release(rsa->iqmp, (int)dl);
+        OSSL_FN_CTX_free(fn_ctx);
+    }
 
     rsa->dirty_cnt++;
     ret = 1;

@@ -12,37 +12,9 @@
 #include <stdio.h>
 #include <openssl/bn.h>
 #include "bn_local.h"
+#include "crypto/fn.h"
 
 /* X9.31 routines for prime derivation */
-
-/*
- * X9.31 prime derivation. This is used to generate the primes pi (p1, p2,
- * q1, q2) from a parameter Xpi by checking successive odd integers.
- */
-
-static int bn_x931_derive_pi(BIGNUM *pi, const BIGNUM *Xpi, BN_CTX *ctx,
-    BN_GENCB *cb)
-{
-    int i = 0, is_prime;
-    if (BN_copy(pi, Xpi) == NULL)
-        return 0;
-    if (!BN_is_odd(pi) && !BN_add_word(pi, 1))
-        return 0;
-    for (;;) {
-        i++;
-        BN_GENCB_call(cb, 0, i);
-        /* NB 27 MR is specified in X9.31 */
-        is_prime = BN_check_prime(pi, ctx, cb);
-        if (is_prime < 0)
-            return 0;
-        if (is_prime)
-            break;
-        if (!BN_add_word(pi, 2))
-            return 0;
-    }
-    BN_GENCB_call(cb, 2, i);
-    return 1;
-}
 
 /*
  * This is the main X9.31 prime derivation function. From parameters Xp1, Xp2
@@ -55,101 +27,56 @@ int BN_X931_derive_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     const BIGNUM *Xp2, const BIGNUM *e, BN_CTX *ctx,
     BN_GENCB *cb)
 {
-    int ret = 0;
+    int ret = 0, limbs;
+    OSSL_FN *fn_p, *fn_p1 = NULL, *fn_p2 = NULL;
+    OSSL_FN *fn_Xp, *fn_Xp1, *fn_Xp2, *fn_e;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_LIB_CTX *libctx;
+    size_t fn_size;
 
-    BIGNUM *t, *p1p2, *pm1;
-
-    /* Only even e supported */
-    if (!BN_is_odd(e))
+    /* Only odd e supported */
+    if (e == NULL || !BN_is_odd(e))
+        return 0;
+    if (Xp == NULL || Xp1 == NULL || Xp2 == NULL || e == NULL)
+        return 0;
+    limbs = Xp->data != NULL ? Xp->data->dsize : 0;
+    if (limbs == 0)
         return 0;
 
-    BN_CTX_start(ctx);
-    if (p1 == NULL)
-        p1 = BN_CTX_get(ctx);
+    if ((fn_p = bn_acquire_ossl_fn(p, limbs)) == NULL)
+        return 0;
+    if (p1 != NULL && (fn_p1 = bn_acquire_ossl_fn(p1, limbs)) == NULL)
+        goto release;
+    if (p2 != NULL && (fn_p2 = bn_acquire_ossl_fn(p2, limbs)) == NULL)
+        goto release;
 
-    if (p2 == NULL)
-        p2 = BN_CTX_get(ctx);
+    fn_Xp = bn_get_ossl_fn(Xp);
+    fn_Xp1 = bn_get_ossl_fn(Xp1);
+    fn_Xp2 = bn_get_ossl_fn(Xp2);
+    fn_e = bn_get_ossl_fn(e);
+    if (fn_Xp == NULL || fn_Xp1 == NULL || fn_Xp2 == NULL || fn_e == NULL)
+        goto release;
 
-    t = BN_CTX_get(ctx);
+    libctx = ossl_bn_get_libctx(ctx);
+    fn_size = OSSL_FN_X931_derive_prime_ctx_size(fn_p, fn_p1, fn_p2,
+        fn_Xp, fn_Xp1, fn_Xp2, fn_e);
+    if (fn_size == 0)
+        goto release;
+    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto release;
 
-    p1p2 = BN_CTX_get(ctx);
+    if (OSSL_FN_X931_derive_prime(fn_p, fn_p1, fn_p2, fn_Xp, fn_Xp1,
+            fn_Xp2, fn_e, fn_ctx, cb, libctx))
+        ret = 1;
 
-    pm1 = BN_CTX_get(ctx);
-
-    if (pm1 == NULL)
-        goto err;
-
-    if (!bn_x931_derive_pi(p1, Xp1, ctx, cb))
-        goto err;
-
-    if (!bn_x931_derive_pi(p2, Xp2, ctx, cb))
-        goto err;
-
-    if (!BN_mul(p1p2, p1, p2, ctx))
-        goto err;
-
-    /* First set p to value of Rp */
-
-    if (!BN_mod_inverse(p, p2, p1, ctx))
-        goto err;
-
-    if (!BN_mul(p, p, p2, ctx))
-        goto err;
-
-    if (!BN_mod_inverse(t, p1, p2, ctx))
-        goto err;
-
-    if (!BN_mul(t, t, p1, ctx))
-        goto err;
-
-    if (!BN_sub(p, p, t))
-        goto err;
-
-    if (p->neg && !BN_add(p, p, p1p2))
-        goto err;
-
-    /* p now equals Rp */
-
-    if (!BN_mod_sub(p, p, Xp, p1p2, ctx))
-        goto err;
-
-    if (!BN_add(p, p, Xp))
-        goto err;
-
-    /* p now equals Yp0 */
-
-    for (;;) {
-        int i = 1;
-        BN_GENCB_call(cb, 0, i++);
-        if (BN_copy(pm1, p) == NULL)
-            goto err;
-        if (!BN_sub_word(pm1, 1))
-            goto err;
-        if (!BN_gcd(t, pm1, e, ctx))
-            goto err;
-        if (BN_is_one(t)) {
-            /*
-             * X9.31 specifies 8 MR and 1 Lucas test or any prime test
-             * offering similar or better guarantees 50 MR is considerably
-             * better.
-             */
-            int r = BN_check_prime(p, ctx, cb);
-            if (r < 0)
-                goto err;
-            if (r)
-                break;
-        }
-        if (!BN_add(p, p, p1p2))
-            goto err;
-    }
-
-    BN_GENCB_call(cb, 3, 0);
-
-    ret = 1;
-
-err:
-
-    BN_CTX_end(ctx);
+release:
+    OSSL_FN_CTX_free(fn_ctx);
+    bn_release(p, ret ? limbs : 0);
+    if (fn_p1 != NULL)
+        bn_release(p1, ret ? limbs : 0);
+    if (fn_p2 != NULL)
+        bn_release(p2, ret ? limbs : 0);
 
     return ret;
 }
@@ -161,51 +88,44 @@ err:
 
 int BN_X931_generate_Xpq(BIGNUM *Xp, BIGNUM *Xq, int nbits, BN_CTX *ctx)
 {
-    BIGNUM *t;
-    int i;
+    int per, limbs, ret = 0;
+    OSSL_FN *f, *g;
+    OSSL_LIB_CTX *libctx;
+
     /*
-     * Number of bits for each prime is of the form 512+128s for s = 0, 1,
-     * ...
+     * The OSSL_FN peer checks the same condition; do it here too to
+     * derive sane limb sizing before the acquire steps.
      */
     if ((nbits < 1024) || (nbits & 0xff))
         return 0;
-    nbits >>= 1;
-    /*
-     * The random value Xp must be between sqrt(2) * 2^(nbits-1) and 2^nbits
-     * - 1. By setting the top two bits we ensure that the lower bound is
-     * exceeded.
-     */
-    if (!BN_priv_rand_ex(Xp, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY, 0,
-            ctx))
+    per = nbits >> 1;
+    limbs = (per + BN_BITS2 - 1) / BN_BITS2;
+
+    libctx = ossl_bn_get_libctx(ctx);
+
+    if ((f = bn_acquire_ossl_fn(Xp, limbs)) == NULL)
         return 0;
-
-    BN_CTX_start(ctx);
-    t = BN_CTX_get(ctx);
-    if (t == NULL)
-        goto err;
-
-    for (i = 0; i < 1000; i++) {
-        if (!BN_priv_rand_ex(Xq, nbits, BN_RAND_TOP_TWO, BN_RAND_BOTTOM_ANY, 0,
-                ctx))
-            goto err;
-
-        /* Check that |Xp - Xq| > 2^(nbits - 100) */
-        if (!BN_sub(t, Xp, Xq))
-            goto err;
-        if (BN_num_bits(t) > (nbits - 100))
-            break;
+    if ((g = bn_acquire_ossl_fn(Xq, limbs)) == NULL) {
+        bn_release(Xp, 0);
+        return 0;
     }
 
-    BN_CTX_end(ctx);
+    {
+        size_t fn_size = OSSL_FN_X931_generate_Xpq_ctx_size(f);
+        OSSL_FN_CTX *fn_ctx = NULL;
 
-    if (i < 1000)
-        return 1;
+        if (fn_size != 0)
+            fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
+        if (fn_ctx != NULL
+            && OSSL_FN_X931_generate_Xpq(f, g, nbits, fn_ctx, libctx))
+            ret = 1;
+        OSSL_FN_CTX_free(fn_ctx);
+    }
 
-    return 0;
+    bn_release(Xp, ret ? limbs : 0);
+    bn_release(Xq, ret ? limbs : 0);
 
-err:
-    BN_CTX_end(ctx);
-    return 0;
+    return ret;
 }
 
 /*
@@ -221,27 +141,59 @@ int BN_X931_generate_prime_ex(BIGNUM *p, BIGNUM *p1, BIGNUM *p2,
     const BIGNUM *Xp,
     const BIGNUM *e, BN_CTX *ctx, BN_GENCB *cb)
 {
-    int ret = 0;
+    int ret = 0, limbs;
+    OSSL_FN *fn_p, *fn_p1 = NULL, *fn_p2 = NULL;
+    OSSL_FN *fn_Xp1 = NULL, *fn_Xp2 = NULL, *fn_Xp, *fn_e;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_LIB_CTX *libctx;
+    size_t fn_size;
 
-    BN_CTX_start(ctx);
-    if (Xp1 == NULL)
-        Xp1 = BN_CTX_get(ctx);
-    if (Xp2 == NULL)
-        Xp2 = BN_CTX_get(ctx);
-    if (Xp1 == NULL || Xp2 == NULL)
-        goto error;
+    if (Xp == NULL || e == NULL)
+        return 0;
+    limbs = Xp->data != NULL ? Xp->data->dsize : 0;
+    if (limbs == 0)
+        return 0;
 
-    if (!BN_priv_rand_ex(Xp1, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY, 0, ctx))
-        goto error;
-    if (!BN_priv_rand_ex(Xp2, 101, BN_RAND_TOP_ONE, BN_RAND_BOTTOM_ANY, 0, ctx))
-        goto error;
-    if (!BN_X931_derive_prime_ex(p, p1, p2, Xp, Xp1, Xp2, e, ctx, cb))
-        goto error;
+    if ((fn_p = bn_acquire_ossl_fn(p, limbs)) == NULL)
+        return 0;
+    if (p1 != NULL && (fn_p1 = bn_acquire_ossl_fn(p1, limbs)) == NULL)
+        goto release;
+    if (p2 != NULL && (fn_p2 = bn_acquire_ossl_fn(p2, limbs)) == NULL)
+        goto release;
+    if (Xp1 != NULL && (fn_Xp1 = bn_acquire_ossl_fn(Xp1, limbs)) == NULL)
+        goto release;
+    if (Xp2 != NULL && (fn_Xp2 = bn_acquire_ossl_fn(Xp2, limbs)) == NULL)
+        goto release;
 
-    ret = 1;
+    fn_Xp = bn_get_ossl_fn(Xp);
+    fn_e = bn_get_ossl_fn(e);
+    if (fn_Xp == NULL || fn_e == NULL)
+        goto release;
 
-error:
-    BN_CTX_end(ctx);
+    libctx = ossl_bn_get_libctx(ctx);
+    fn_size = OSSL_FN_X931_generate_prime_ctx_size(fn_p, fn_p1, fn_p2,
+        fn_Xp, fn_e);
+    if (fn_size == 0)
+        goto release;
+    fn_ctx = OSSL_FN_CTX_new_size(libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto release;
+
+    if (OSSL_FN_X931_generate_prime(fn_p, fn_p1, fn_p2, fn_Xp1, fn_Xp2,
+            fn_Xp, fn_e, fn_ctx, cb, libctx))
+        ret = 1;
+
+release:
+    OSSL_FN_CTX_free(fn_ctx);
+    bn_release(p, ret ? limbs : 0);
+    if (fn_p1 != NULL)
+        bn_release(p1, ret ? limbs : 0);
+    if (fn_p2 != NULL)
+        bn_release(p2, ret ? limbs : 0);
+    if (fn_Xp1 != NULL)
+        bn_release(Xp1, ret ? limbs : 0);
+    if (fn_Xp2 != NULL)
+        bn_release(Xp2, ret ? limbs : 0);
 
     return ret;
 }
