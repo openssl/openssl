@@ -87,6 +87,28 @@ if ($flavour && $flavour ne "void") {
     $output and open STDOUT,">$output";
 }
 
+sub rename_labels {
+    my ($text, $from, $to) = @_;
+    my %labels;
+
+    while ($text =~ /^\s*([A-Za-z_.][A-Za-z0-9_\$.]*):/mg) {
+        my ($label, $replacement) = ($1, $1);
+
+        $replacement .= "_p12" unless $replacement =~ s/\Q$from\E/$to/g;
+        $labels{$label} = $replacement;
+    }
+
+    if (%labels) {
+        my $pattern = join("|", map { quotemeta($_) }
+                                sort { length($b) <=> length($a) }
+                                keys %labels);
+
+        $text =~ s/(?<![A-Za-z0-9_\$.])($pattern)(?![A-Za-z0-9_\$.])/$labels{$1}/g;
+    }
+
+    return $text;
+}
+
 my @C = map("r$_",(0..9));
 my @E = map("r$_",(10..12,14));
 
@@ -765,8 +787,9 @@ KeccakF1600:
 .size	KeccakF1600,.-KeccakF1600
 ___
 
-my $p12 = substr($code, $p12_start);
-$p12 =~ s/KeccakF1600/KeccakP1600_12/g;
+my $p12 = rename_labels(substr($code, $p12_start),
+                        "KeccakF1600", "KeccakP1600_12");
+$p12 =~ s/KeccakF1600_enter/KeccakP1600_12_enter/g;
 $code .= $p12;
 { my ($A_flat,$inp,$len,$bsz) = map("r$_",(10..12,14));
 
@@ -952,12 +975,8 @@ SHA3_absorb:
 .size	SHA3_absorb,.-SHA3_absorb
 ___
 
-$p12 = substr($code, $p12_start);
-$p12 =~ s/SHA3_absorb/ossl_keccak1600_absorb_p12/g;
-$p12 =~ s/\.Labsorb_abort/.Labsorb_abort_p12/g;
-$p12 =~ s/\.Loop_absorb/.Loop_absorb_p12/g;
-$p12 =~ s/\.Loop_block/.Loop_block_p12/g;
-$p12 =~ s/\.Labsorbed/.Labsorbed_p12/g;
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_absorb", "ossl_keccak1600_absorb_p12");
 $p12 =~ s/KeccakF1600_int/KeccakP1600_12_int/g;
 $code .= $p12;
 }
@@ -1130,12 +1149,8 @@ SHA3_squeeze:
 .size	SHA3_squeeze,.-SHA3_squeeze
 ___
 
-$p12 = substr($code, $p12_start);
-$p12 =~ s/SHA3_squeeze/ossl_keccak1600_squeeze_p12/g;
-$p12 =~ s/\.Lnext_block/.Lnext_block_p12/g;
-$p12 =~ s/\.Loop_squeeze/.Loop_squeeze_p12/g;
-$p12 =~ s/\.Lsqueeze_tail/.Lsqueeze_tail_p12/g;
-$p12 =~ s/\.Lsqueeze_done/.Lsqueeze_done_p12/g;
+$p12 = rename_labels(substr($code, $p12_start),
+                     "SHA3_squeeze", "ossl_keccak1600_squeeze_p12");
 $p12 =~ s/KeccakF1600/KeccakP1600_12/g;
 $code .= $p12;
 }
