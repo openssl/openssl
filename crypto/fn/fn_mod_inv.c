@@ -14,18 +14,7 @@
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
-static size_t ctx_add_size(size_t a, size_t b)
-{
-    int err = 0;
-    size_t r = safe_add_size_t(a, b, &err);
-
-    return err == 0 ? r : 0;
-}
-
-static size_t ctx_max_size(size_t a, size_t b)
-{
-    return a > b ? a : b;
-}
+/* mod helpers shared through fn_local.h. */
 
 /*-
  * OSSL_FN_mod_inverse_ctx_size() calculates a plausible upper bound
@@ -84,11 +73,11 @@ size_t OSSL_FN_mod_inverse_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     /* OSSL_FN_mod(r, Y, n): the final reduction, r is the caller's. */
     size_t mod_size = OSSL_FN_mod_ctx_size(r, &t_L, n);
 
-    size_t nested_size = ctx_max_size(div_size, mod_size);
+    size_t nested_size = ossl_fn_ctx_max_size(div_size, mod_size);
     if (own_size == 0 || nested_size == 0)
         return 0;
 
-    return ctx_add_size(own_size, nested_size);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
 /*-

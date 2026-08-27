@@ -18,13 +18,7 @@ OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 #define lsw(n) \
     (((n)->dsize == 0) ? (OSSL_FN_ULONG)0 : (n)->d[0])
 
-static size_t ctx_add_size(size_t a, size_t b)
-{
-    int err = 0;
-    size_t r = safe_add_size_t(a, b, &err);
-
-    return err == 0 ? r : 0;
-}
+/* Kron/ctx helper calls are shared through fn_local.h. */
 
 /*-
  * OSSL_FN_kronecker() computes the Kronecker symbol (a/b), returning -1, 0,
@@ -206,5 +200,5 @@ size_t OSSL_FN_kronecker_ctx_size(const OSSL_FN *a, const OSSL_FN *b)
     if (own_size == 0 || nested_size == 0)
         return 0;
 
-    return ctx_add_size(own_size, nested_size);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
