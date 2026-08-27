@@ -979,6 +979,32 @@ DEF_SCRIPT(check_thread_assisted_idle,
     OP_TICK_ENABLE(C);
 }
 
+/*
+ * With per-op ticking disabled the client runs like a real thread-assisted
+ * app: progress comes only from API-call autoticks and the assist thread.
+ * Cover a full-duplex default-stream transfer with conclude/EOS both ways.
+ */
+DEF_SCRIPT(check_thread_assisted_transfer,
+    "thread-assisted client full-duplex transfer with conclude/EOS")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    OP_TICK_DISABLE(C);
+
+    OP_WRITE_B(C, "raspberry");
+    OP_CONCLUDE(C);
+    OP_READ_EXPECT_B(Sa, "raspberry");
+    OP_EXPECT_FIN(Sa);
+
+    OP_WRITE_B(Sa, "elderberry");
+    OP_CONCLUDE(Sa);
+    OP_READ_EXPECT_B(C, "elderberry");
+    OP_EXPECT_FIN(C);
+
+    OP_TICK_ENABLE(C);
+}
+
 DEF_FUNC(check_stream_reset_5)
 {
     int ok = 0;
@@ -2471,6 +2497,7 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_pc_flood),
     USE(check_ctx_cbks),
     USE(check_thread_assisted_idle),
+    USE(check_thread_assisted_transfer),
     USE(script_5),
     USE(script_6),
     USE(script_7),

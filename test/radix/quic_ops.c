@@ -1541,6 +1541,14 @@ err:
     (OP_SIMPLE_PAIR_CONN(),      \
         OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE))
 
+/* Thread-assisted client and listener linked by an in-memory dgram pair. */
+#define OP_SIMPLE_PAIR_CONN_TA()  \
+    (OP_NEW_SSL_L_MEM(L),         \
+        OP_NEW_SSL_C_TA_MEM(C),   \
+        OP_LINK_DGRAM_PAIR(C, L), \
+        OP_LISTEN(L),             \
+        OP_CONNECT_WAIT(C))
+
 #define OP_NEW_STREAM(conn_name, stream_name, flags) \
     (OP_SELECT_SSL(0, conn_name),                    \
         OP_PUSH_PZ(#stream_name),                    \
