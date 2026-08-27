@@ -433,7 +433,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             si = sk_CMS_SignerInfo_value(sinfos, i);
             if (!si->verify_result)
                 continue;
-            if (CMS_signed_get_attr_count(si) < 0) {
+            if (CMS_signed_get_attr_count(si) < 0 && !cadesVerify) {
                 si->attr_verified = 1;
                 continue;
             }
