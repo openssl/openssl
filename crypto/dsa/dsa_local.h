@@ -13,6 +13,7 @@
 #include <openssl/dsa.h>
 #include "internal/refcount.h"
 #include "internal/ffc.h"
+#include "crypto/fn.h"
 
 struct dsa_st {
     /*
@@ -27,6 +28,7 @@ struct dsa_st {
     int flags;
     /* Normally used to cache montgomery values */
     BN_MONT_CTX *method_mont_p;
+    OSSL_FN_MONT_CTX *method_mont_fn_p;
     CRYPTO_REF_COUNT references;
 #ifndef FIPS_MODULE
     CRYPTO_EX_DATA ex_data;
@@ -73,5 +75,13 @@ struct dsa_method {
 DSA_SIG *ossl_dsa_do_sign_int(const unsigned char *dgst, int dlen, DSA *dsa,
     unsigned int nonce_type, const char *digestname,
     OSSL_LIB_CTX *libctx, const char *propq);
+
+/*
+ * The OSSL_FN modular exponentiation backing the default DSA_METHOD's
+ * private-key calculations; see dsa_ossl.c.
+ */
+int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
+    const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m);
 
 #endif /* !defined(OSSL_LIBCRYPTO_DSA_DSA_LOCAL_H) */
