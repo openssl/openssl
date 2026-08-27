@@ -20,6 +20,24 @@
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
 
+struct rc2_get_ctx_param_list_st {
+    struct ossl_cipher_get_ctx_param_list_st common;
+    OSSL_PARAM *bits;
+    OSSL_PARAM *algid;
+    OSSL_PARAM *oldid;
+};
+
+struct rc2_set_ctx_param_list_st {
+    struct ossl_cipher_set_ctx_param_list_st common;
+    OSSL_PARAM *bits;
+    OSSL_PARAM *algid;
+};
+
+#define rc2_get_ctx_params_st rc2_get_ctx_param_list_st
+#define rc2_set_ctx_params_st rc2_set_ctx_param_list_st
+
+#include "providers/implementations/ciphers/cipher_rc2.inc"
+
 #define RC2_40_MAGIC 0xa0
 #define RC2_64_MAGIC 0x78
 #define RC2_128_MAGIC 0x3a
@@ -106,17 +124,20 @@ static int rc2_dinit(void *ctx, const unsigned char *key, size_t keylen,
 static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 {
     PROV_RC2_CTX *ctx = (PROV_RC2_CTX *)vctx;
+    struct rc2_get_ctx_param_list_st prms;
     OSSL_PARAM *p, *p1, *p2;
 
-    if (!ossl_cipher_generic_get_ctx_params(vctx, params))
+    if (ctx == NULL || !rc2_get_ctx_params_decoder(params, &prms))
         return 0;
-    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_RC2_KEYBITS);
+    if (!ossl_cipher_common_get_ctx_params(&ctx->base, &prms.common))
+        return 0;
+    p = prms.bits;
     if (p != NULL && !OSSL_PARAM_set_size_t(p, ctx->key_bits)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    p1 = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS);
-    p2 = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS_OLD);
+    p1 = prms.algid;
+    p2 = prms.oldid;
     if (p1 != NULL || p2 != NULL) {
         long num;
         int i;
@@ -174,21 +195,24 @@ static int rc2_get_ctx_params(void *vctx, OSSL_PARAM params[])
 static int rc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     PROV_RC2_CTX *ctx = (PROV_RC2_CTX *)vctx;
+    struct rc2_set_ctx_param_list_st prms;
     const OSSL_PARAM *p;
 
     if (ossl_param_is_empty(params))
         return 1;
 
-    if (!ossl_cipher_var_keylen_set_ctx_params(vctx, params))
+    if (ctx == NULL || !rc2_set_ctx_params_decoder(params, &prms))
         return 0;
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_RC2_KEYBITS);
+    if (!ossl_cipher_common_set_ctx_params(&ctx->base, &prms.common))
+        return 0;
+    p = prms.bits;
     if (p != NULL) {
         if (!OSSL_PARAM_get_size_t(p, &ctx->key_bits)) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
     }
-    p = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS);
+    p = prms.algid;
     if (p != NULL) {
         ASN1_TYPE *type = NULL;
         long num = 0;
@@ -220,16 +244,17 @@ static int rc2_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     return 1;
 }
 
-CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_START(rc2)
-OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0),
-    CIPHER_DEFAULT_GETTABLE_CTX_PARAMS_END(rc2)
+static const OSSL_PARAM *rc2_gettable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
+{
+    return rc2_get_ctx_params_list;
+}
 
-        CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_START(rc2)
-            OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
-    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_ALGORITHM_ID_PARAMS, NULL, 0),
-    CIPHER_DEFAULT_SETTABLE_CTX_PARAMS_END(rc2)
+static const OSSL_PARAM *rc2_settable_ctx_params(ossl_unused void *cctx,
+    ossl_unused void *provctx)
+{
+    return rc2_set_ctx_params_list;
+}
 
 #define IMPLEMENT_cipher(alg, UCALG, lcmode, UCMODE, flags, kbits, blkbits,              \
     ivbits, typ)                                                                         \
@@ -280,8 +305,8 @@ OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_RC2_KEYBITS, NULL),
         OSSL_DISPATCH_END                                                                \
     };
 
-    /* ossl_rc2128ecb_functions */
-    IMPLEMENT_cipher(rc2, RC2, ecb, ECB, RC2_FLAGS, 128, 64, 0, block)
+/* ossl_rc2128ecb_functions */
+IMPLEMENT_cipher(rc2, RC2, ecb, ECB, RC2_FLAGS, 128, 64, 0, block)
 /* ossl_rc2128cbc_functions */
 IMPLEMENT_cipher(rc2, RC2, cbc, CBC, RC2_FLAGS, 128, 64, 64, block)
 /* ossl_rc240cbc_functions */
