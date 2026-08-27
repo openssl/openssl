@@ -1553,6 +1553,36 @@ err:
     return ok;
 }
 
+/* Local close: the thread-assisted client shuts the connection down. */
+DEF_SCRIPT(check_thread_assisted_close_local,
+    "thread-assisted client closes the connection")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    OP_WRITE_B(C, "raspberry");
+    OP_READ_EXPECT_B(Sa, "raspberry");
+
+    OP_SHUTDOWN_WAIT(C, 0, 0, NULL);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(Sa, 0, 1, 1);
+}
+
+/* Remote close: the thread-assisted client handles the server's shutdown. */
+DEF_SCRIPT(check_thread_assisted_close_remote,
+    "thread-assisted client handles a remote close")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    OP_WRITE_B(C, "raspberry");
+    OP_READ_EXPECT_B(Sa, "raspberry");
+
+    OP_SHUTDOWN_WAIT(Sa, 0, 42, "changed my mind");
+    OP_EXPECT_CONN_CLOSE_INFO(Sa, 42, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 42, 1, 1);
+}
+
 /* 5. Test stream reset functionality */
 DEF_SCRIPT(script_5, "Test stream reset functionality")
 {
@@ -6169,6 +6199,8 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_ctx_cbks),
     USE(check_thread_assisted_idle),
     USE(check_thread_assisted_transfer),
+    USE(check_thread_assisted_close_local),
+    USE(check_thread_assisted_close_remote),
     USE(script_5),
     USE(script_6),
     USE(script_7),
