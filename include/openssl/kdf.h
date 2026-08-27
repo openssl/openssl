@@ -89,7 +89,8 @@ int EVP_KDF_argon2(uint8_t *out, size_t outlen,
     const uint8_t *pass, size_t passlen,
     const uint8_t *salt, size_t saltlen,
     uint32_t lanes, uint32_t memorycost, uint32_t iterations,
-    OSSL_LIB_CTX *libctx, const OSSL_PARAM *optionals);
+    OSSL_LIB_CTX *libctx, const char *propq,
+    const OSSL_PARAM *optionals);
 
 /**** The legacy PKEY-based KDF API follows. ****/
 

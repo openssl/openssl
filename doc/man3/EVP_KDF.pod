@@ -61,7 +61,8 @@ EVP_KDF_argon2 - EVP KDF routines
                     const uint8_t *pass, size_t passlen,
                     const uint8_t *salt, size_t saltlen,
                     uint32_t lanes, uint32_t memorycost, uint32_t iterations,
-                    OSSL_LIB_CTX *libctx, const OSSL_PARAM *optionals);
+                    OSSL_LIB_CTX *libctx, const char *propq,
+                    const OSSL_PARAM *optionals);
 
 =head1 DESCRIPTION
 
@@ -212,12 +213,16 @@ general form using OSSL_PARAM.
 EVP_KDF_argon2() uses the I<alg_type> (which is one of EVP_KDF_ARGON2ID_TYPE,
 EVP_KDF_ARGON2D_TYPE or EVP_KDF_ARGON2I_TYPE) and other parameters such as
 the password I<pass> and salt I<salt>, to derive I<outlen> bytes of key
-material into the buffer I<out>. See L<EVP_KDF-ARGON2(7)/Supported parameters>
-for more information related to parameters supported by Argon2.
+material into the buffer I<out>. The I<libctx> and I<propq> parameters are used
+to fetch the EVP_KDF-ARGON2 algorithm. Note that I<propq> will also be used for
+internal fetches if OSSL_KDF_PARAM_PROPERTIES is not specified as an optional
+parameter. I<pass> is allowed to be NULL, but I<salt> must be set.
+See L<EVP_KDF-ARGON2(7)/Supported parameters> for more information
+related to parameters supported by Argon2 that can be set as I<optionals>.
 
 =head1 PARAMETERS
 
-The standard parameter names are:
+The standard KDF parameter names are:
 
 =over 4
 
