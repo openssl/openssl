@@ -20,6 +20,15 @@ setup("test_cmake_config");
 plan skip_all => "cmake is not available"
     unless IPC::Cmd::can_run("cmake");
 
+# The cmake-built dummies aren't sanitizer-instrumented, but wrap.pl
+# inherits the sanitizer runtime environment from the outer test run.
+# ASan refuses to attach to a non-instrumented executable, and MSan
+# produces spurious link errors against the sanitized libraries.
+plan skip_all => "not run under address sanitizer"
+    unless disabled("asan");
+plan skip_all => "not run under memory sanitizer"
+    unless disabled("msan");
+
 # We require cmake 3.22 or later
 my $cmake_version_output = `cmake --version`;
 my ($cmake_major, $cmake_minor) =
