@@ -1093,11 +1093,14 @@ size_t SSL_get_accept_stream_queue_len(SSL *ssl);
 /*
  * Sets the policy for incoming streams. If `policy` is `AUTO` (the default):
  *
- *   - if the default stream mode is
- *     `SSL_DEFAULT_STREAM_MODE_AUTO_BIDI` or
- *     `SSL_DEFAULT_STREAM_MODE_AUTO_UNI`, this is equivalent to `REJECT`;
+ *   - if the default stream mode is `SSL_DEFAULT_STREAM_MODE_NONE`, this is
+ *     equivalent to `ACCEPT`;
  *
- *   - otherwise, this is equivalent to `ACCEPT`.
+ *   - otherwise, this is equivalent to `ACCEPT` while automatic default stream
+ *     creation remains possible. Once a default stream has been created, or
+ *     automatic default stream creation has been inhibited by a successful
+ *     call to `SSL_new_stream` or `SSL_accept_stream`, this is equivalent to
+ *     `REJECT`.
  *
  * If configured to `ACCEPT`, incoming streams are placed on the accept queue
  * for application consumption. `aec` is ignored in this case.

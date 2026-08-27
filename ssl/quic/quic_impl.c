@@ -2158,12 +2158,15 @@ static QUIC_STREAM *quic_get_incoming_default_stream(QUIC_CONNECTION *qc,
 
     qs = ossl_quic_stream_map_get_by_id(qsm,
         expect_id | QUIC_STREAM_DIR_BIDI);
-    if (qs == NULL)
-        qs = ossl_quic_stream_map_get_by_id(qsm,
-            expect_id | QUIC_STREAM_DIR_UNI);
+    if (ossl_quic_stream_map_is_in_accept_queue(qs))
+        return qs;
 
-    /* Auto-rejected streams remain in the map until garbage collection. */
-    return qs != NULL && qs->accept_node.next != NULL ? qs : NULL;
+    qs = ossl_quic_stream_map_get_by_id(qsm,
+        expect_id | QUIC_STREAM_DIR_UNI);
+    if (ossl_quic_stream_map_is_in_accept_queue(qs))
+        return qs;
+
+    return NULL;
 }
 
 QUIC_NEEDS_LOCK

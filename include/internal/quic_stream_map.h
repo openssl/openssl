@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -839,6 +839,12 @@ QUIC_STREAM *ossl_quic_stream_map_peek_accept_queue(QUIC_STREAM_MAP *qsm);
  */
 QUIC_STREAM *ossl_quic_stream_map_find_in_accept_queue(QUIC_STREAM_MAP *qsm,
     int is_uni);
+
+/*
+ * Returns 1 if s is currently in an accept queue. A NULL stream is not in an
+ * accept queue.
+ */
+int ossl_quic_stream_map_is_in_accept_queue(const QUIC_STREAM *s);
 
 /*
  * Removes a stream from the accept queue. rtt is the estimated connection RTT.
