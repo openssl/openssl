@@ -160,10 +160,12 @@ providers/implementations/ciphers/ciphercommon_ccm.inc
 providers/implementations/ciphers/ciphercommon_gcm.inc
 providers/implementations/ciphers/cipher_chacha20.inc
 providers/implementations/ciphers/cipher_chacha20_poly1305.inc
+providers/implementations/ciphers/cipher_cts.inc
 providers/implementations/ciphers/cipher_null.inc
 providers/implementations/ciphers/cipher_rc4_hmac_md5.inc
 providers/implementations/ciphers/cipher_sm2_xts.c
 providers/implementations/ciphers/cipher_sm4_xts.inc
+providers/implementations/ciphers/cipher_tdes.inc
 providers/implementations/digests/blake2_prov.inc
 providers/implementations/digests/digestcommon.inc
 providers/implementations/digests/mdc2_prov.inc
