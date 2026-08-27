@@ -174,6 +174,26 @@ jobs:
         name: "ci@linux-arm64"
         path: artifacts.tar.gz
 
+  linux-arm64-gcs:
+    runs-on: ubuntu-26.04-arm
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: print tool versions
+      run: |
+        gcc --version
+        ld --version
+    - name: config
+      run: |
+        CFLAGS='-mbranch-protection=standard' \
+        LDFLAGS='-Wl,-z,gcs=always -Wl,-z,gcs-report=error' \
+        ./config --strict-warnings enable-demos enable-fips enable-lms enable-ec_nistp_64_gcc_128 enable-md2 enable-rc5 enable-trace --banner=Configured
+    - name: config dump
+      run: ./configdata.pm --dump
+    - name: make
+      run: make -j4
+
   gcc-min-version:
     runs-on: ubuntu-latest
     container:
