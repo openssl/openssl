@@ -19,6 +19,7 @@
 /* For SSL3_VERSION and TLS1_VERSION */
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
+#include <openssl/ssl3.h>
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
@@ -32,6 +33,21 @@
 
 #define AES_CBC_HMAC_SHA_FLAGS (PROV_CIPHER_FLAG_AEAD \
     | PROV_CIPHER_FLAG_TLS1_MULTIBLOCK)
+
+#if !defined(OPENSSL_NO_MULTIBLOCK)
+static int aes_get_multiblock_interleave(const OSSL_PARAM *p,
+    unsigned int *interleave)
+{
+    return p != NULL
+        && OSSL_PARAM_get_uint(p, interleave)
+        && (*interleave == 4 || *interleave == 8);
+}
+
+static unsigned int tls1_aad_plaintext_len(const unsigned char *aad)
+{
+    return ((unsigned int)aad[11] << 8) | aad[12];
+}
+#endif /* !defined(OPENSSL_NO_MULTIBLOCK) */
 
 static OSSL_FUNC_cipher_encrypt_init_fn aes_einit;
 static OSSL_FUNC_cipher_decrypt_init_fn aes_dinit;
@@ -69,7 +85,7 @@ static const OSSL_PARAM cipher_aes_known_settable_ctx_params[] = {
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TLS1_AAD, NULL, 0),
 #if !defined(OPENSSL_NO_MULTIBLOCK)
     OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT, NULL),
-    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD, NULL, 0),
     OSSL_PARAM_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE, NULL),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC, NULL, 0),
     OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN, NULL, 0),
@@ -127,8 +143,14 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
         const OSSL_PARAM *p1 = OSSL_PARAM_locate_const(params,
             OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE);
         if (p->data_type != OSSL_PARAM_OCTET_STRING
+            || p->data == NULL
+            || p->data_size < EVP_AEAD_TLS1_AAD_LEN
+            || !aes_get_multiblock_interleave(p1, &mb_param.interleave)
             || p1 == NULL
-            || !OSSL_PARAM_get_uint(p1, &mb_param.interleave)) {
+            || !OSSL_PARAM_get_uint(p1, &mb_param.interleave)
+            || tls1_aad_plaintext_len(p->data) > SSL3_RT_MAX_PLAIN_LENGTH
+            || p->data_size
+                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
@@ -155,10 +177,16 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC_IN);
 
         if (p->data_type != OSSL_PARAM_OCTET_STRING
+            || p->data == NULL
             || pin == NULL
             || pin->data_type != OSSL_PARAM_OCTET_STRING
+            || pin->data == NULL
+            || pin->data_size == 0
+            || p->data_size != pin->data_size
             || p1 == NULL
-            || !OSSL_PARAM_get_uint(p1, &mb_param.interleave)) {
+            || !aes_get_multiblock_interleave(p1, &mb_param.interleave)
+            || pin->data_size
+                > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
