@@ -207,6 +207,7 @@ static int dh_init(DH *dh)
 static int dh_finish(DH *dh)
 {
     BN_MONT_CTX_free(dh->method_mont_p);
+    dh->method_mont_p = NULL;
     return 1;
 }
 
