@@ -148,8 +148,11 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/ciphers/cipher_chacha20.inc \
          providers/implementations/ciphers/cipher_chacha20_poly1305.inc \
          providers/implementations/ciphers/cipher_cts.inc \
+         providers/implementations/ciphers/cipher_des.inc \
          providers/implementations/ciphers/cipher_null.inc \
+         providers/implementations/ciphers/cipher_rc2.inc \
          providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
+         providers/implementations/ciphers/cipher_rc5.inc \
          providers/implementations/ciphers/cipher_sm4_xts.inc \
          providers/implementations/ciphers/cipher_tdes.inc \
          providers/implementations/digests/blake2_prov.inc \
@@ -281,8 +284,11 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/ciphers/cipher_chacha20.inc \
        providers/implementations/ciphers/cipher_chacha20_poly1305.inc \
        providers/implementations/ciphers/cipher_cts.inc \
+       providers/implementations/ciphers/cipher_des.inc \
        providers/implementations/ciphers/cipher_null.inc \
+       providers/implementations/ciphers/cipher_rc2.inc \
        providers/implementations/ciphers/cipher_rc4_hmac_md5.inc \
+       providers/implementations/ciphers/cipher_rc5.inc \
        providers/implementations/ciphers/cipher_sm4_xts.inc \
        providers/implementations/ciphers/cipher_tdes.inc \
        providers/implementations/digests/blake2_prov.inc \
@@ -452,10 +458,16 @@ GENERATE[providers/implementations/ciphers/cipher_chacha20_poly1305.inc]=\
     providers/implementations/ciphers/cipher_chacha20_poly1305.inc.in
 GENERATE[providers/implementations/ciphers/cipher_cts.inc]=\
     providers/implementations/ciphers/cipher_cts.inc.in
+GENERATE[providers/implementations/ciphers/cipher_des.inc]=\
+    providers/implementations/ciphers/cipher_des.inc.in
 GENERATE[providers/implementations/ciphers/cipher_null.inc]=\
     providers/implementations/ciphers/cipher_null.inc.in
+GENERATE[providers/implementations/ciphers/cipher_rc2.inc]=\
+    providers/implementations/ciphers/cipher_rc2.inc.in
 GENERATE[providers/implementations/ciphers/cipher_rc4_hmac_md5.inc]=\
     providers/implementations/ciphers/cipher_rc4_hmac_md5.inc.in
+GENERATE[providers/implementations/ciphers/cipher_rc5.inc]=\
+    providers/implementations/ciphers/cipher_rc5.inc.in
 GENERATE[providers/implementations/ciphers/cipher_sm4_xts.inc]=\
     providers/implementations/ciphers/cipher_sm4_xts.inc.in
 GENERATE[providers/implementations/ciphers/cipher_tdes.inc]=\
