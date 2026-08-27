@@ -597,8 +597,8 @@ static int free_secret_marker;
 static int free_secrets_were_cleared;
 
 static void check_connection_secrets_on_free(void *parent, void *ptr,
-                                             CRYPTO_EX_DATA *ad, int idx,
-                                             long argl, void *argp)
+    CRYPTO_EX_DATA *ad, int idx,
+    long argl, void *argp)
 {
     SSL_CONNECTION *sc;
 
@@ -622,7 +622,8 @@ static int test_connection_secret_free(void)
         || !TEST_ptr(ssl = SSL_new(ctx))
         || !TEST_ptr(sc = SSL_CONNECTION_FROM_SSL_ONLY(ssl))
         || !TEST_int_ge(idx = SSL_get_ex_new_index(0, NULL, NULL, NULL,
-                                                    check_connection_secrets_on_free), 0)
+                            check_connection_secrets_on_free),
+            0)
         || !TEST_true(SSL_set_ex_data(ssl, idx, &free_secret_marker)))
         goto err;
 
