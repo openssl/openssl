@@ -22,6 +22,8 @@
 #include <openssl/pem.h>
 #include <openssl/kdf.h>
 #include <openssl/provider.h>
+#include <openssl/prov_ssl.h>
+#include <openssl/ssl3.h>
 #include <openssl/core_names.h>
 #include <openssl/params.h>
 #include <openssl/param_build.h>
@@ -6729,6 +6731,71 @@ err:
 #endif /* OPENSSL_NO_DYNAMIC_ENGINE */
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
+#if !defined(OPENSSL_NO_MULTIBLOCK)
+static int test_aes_cbc_hmac_sha_reject_multiblock_params(const OSSL_PARAM *params)
+{
+    static const unsigned char key[16] = { 0 };
+    static const unsigned char iv[16] = { 0 };
+    EVP_CIPHER *cipher = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    int ret = 0;
+
+    cipher = EVP_CIPHER_fetch(testctx, "AES-128-CBC-HMAC-SHA256",
+        "provider=default");
+    if (cipher == NULL) {
+        ERR_clear_error();
+        return TEST_skip("AES-CBC-HMAC-SHA multiblock cipher is not available");
+    }
+    if (!TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, cipher, key, iv, NULL))
+        || !TEST_false(EVP_CIPHER_CTX_set_params(ctx, params)))
+        goto end;
+
+    ERR_clear_error();
+    ret = 1;
+end:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(cipher);
+    return ret;
+}
+
+static int test_aes_cbc_hmac_sha_short_multiblock_aad(void)
+{
+    unsigned char aad[EVP_AEAD_TLS1_AAD_LEN - 1] = { 0 };
+    unsigned int interleave = 4;
+    OSSL_PARAM params[3], *p = params;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD,
+        aad, sizeof(aad));
+    *p++ = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE,
+        &interleave);
+    *p = OSSL_PARAM_construct_end();
+
+    return test_aes_cbc_hmac_sha_reject_multiblock_params(params);
+}
+
+static int test_aes_cbc_hmac_sha_large_multiblock_aad(void)
+{
+    static const unsigned int oversized_len = SSL3_RT_MAX_PLAIN_LENGTH + 1;
+    unsigned char aad[EVP_AEAD_TLS1_AAD_LEN] = { 0 };
+    unsigned int interleave = 4;
+    OSSL_PARAM params[3], *p = params;
+
+    *p++ = OSSL_PARAM_construct_octet_string(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD,
+        aad, sizeof(aad));
+    *p++ = OSSL_PARAM_construct_uint(OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE,
+        &interleave);
+    *p = OSSL_PARAM_construct_end();
+
+    aad[9] = (unsigned char)(TLS1_2_VERSION >> 8);
+    aad[10] = (unsigned char)TLS1_2_VERSION;
+    aad[11] = (unsigned char)(oversized_len >> 8);
+    aad[12] = (unsigned char)oversized_len;
+
+    return test_aes_cbc_hmac_sha_reject_multiblock_params(params);
+}
+#endif
+
 #ifndef OPENSSL_NO_ECX
 static int ecxnids[] = {
     NID_X25519,
@@ -8456,6 +8523,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_ivlen_change, OSSL_NELEM(ivlen_change_ciphers));
     if (OSSL_NELEM(keylen_change_ciphers) - 1 > 0)
         ADD_ALL_TESTS(test_keylen_change, OSSL_NELEM(keylen_change_ciphers) - 1);
+#if !defined(OPENSSL_NO_MULTIBLOCK)
+    ADD_TEST(test_aes_cbc_hmac_sha_short_multiblock_aad);
+    ADD_TEST(test_aes_cbc_hmac_sha_large_multiblock_aad);
+#endif
 
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_ALL_TESTS(test_custom_pmeth, 12);
