@@ -11,6 +11,8 @@
 #include <openssl/err.h>
 #include <openssl/bn.h>
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "rsa_local.h"
 
 /*
@@ -267,11 +269,89 @@ int ossl_rsa_get_lcm(BN_CTX *ctx, const BIGNUM *p, const BIGNUM *q,
     BIGNUM *lcm, BIGNUM *gcd, BIGNUM *p1, BIGNUM *q1,
     BIGNUM *p1q1)
 {
-    return BN_sub(p1, p, BN_value_one()) /* p-1 */
-        && BN_sub(q1, q, BN_value_one()) /* q-1 */
-        && BN_mul(p1q1, p1, q1, ctx) /* (p-1)(q-1) */
-        && BN_gcd(gcd, p1, q1, ctx)
-        && BN_div(lcm, NULL, p1q1, gcd, ctx); /* LCM((p-1, q-1)) */
+    /*
+     * The LCM computation is a fixed-size candidate: p-1, q-1, their
+     * product, gcd, and the quotient all fit in widths derived from p and
+     * q.  The operands keep their BIGNUM signatures (this is an internal
+     * helper with callers holding key-structure BIGNUMs); the arithmetic
+     * is done on OSSL_FN views.
+     */
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN *fn_p1 = NULL, *fn_q1 = NULL, *fn_gcd = NULL, *fn_lcm = NULL;
+    OSSL_FN *fn_p1q1 = NULL;
+    const OSSL_FN *fn_p = NULL, *fn_q = NULL;
+    size_t pl, ql, fn_size;
+    int ret = 0;
+
+    fn_p = bn_get_ossl_fn(p);
+    fn_q = bn_get_ossl_fn(q);
+    if (fn_p == NULL || fn_q == NULL)
+        return 0;
+    pl = ossl_fn_get_dsize((OSSL_FN *)fn_p);
+    ql = ossl_fn_get_dsize((OSSL_FN *)fn_q);
+
+    /*
+     * Acquire the writable results before sizing.  p-1 and q-1 fit in the
+     * prime widths; their product in pl+ql; gcd in min(pl,ql); lcm (the
+     * quotient p1q1/gcd) in pl+ql.
+     */
+    fn_p1 = bn_acquire_ossl_fn(p1, (int)pl);
+    fn_q1 = bn_acquire_ossl_fn(q1, (int)ql);
+    fn_p1q1 = bn_acquire_ossl_fn(p1q1, (int)(pl + ql));
+    fn_gcd = bn_acquire_ossl_fn(gcd, (int)(pl < ql ? pl : ql));
+    fn_lcm = bn_acquire_ossl_fn(lcm, (int)(pl + ql));
+    if (fn_p1 == NULL || fn_q1 == NULL || fn_p1q1 == NULL || fn_gcd == NULL
+        || fn_lcm == NULL)
+        goto err;
+
+    /*
+     * The operations run one after another in the same arena, each in its
+     * own frame that is ended before the next begins, so the arena must be
+     * large enough for the largest single operation, not the sum.  This
+     * function itself does not draw from the arena (it only passes fn_ctx
+     * down to the operations, which open their own frames), so it opens
+     * no frame of its own; the sizing companions account for the
+     * operations' frames.
+     */
+    {
+        size_t sz, largest = 0;
+
+        if ((sz = OSSL_FN_mul_ctx_size(fn_p1q1, fn_p1, fn_q1)) > largest)
+            largest = sz;
+        if ((sz = OSSL_FN_gcd_ctx_size(fn_p1, fn_q1)) > largest)
+            largest = sz;
+        if ((sz = OSSL_FN_div_ctx_size(fn_lcm, NULL, fn_p1q1, fn_gcd)) > largest)
+            largest = sz;
+        fn_size = largest;
+    }
+    if (fn_size == 0)
+        goto err;
+    fn_ctx = OSSL_FN_CTX_secure_new_size(NULL, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+
+    /* p-1 and q-1 */
+    if (!OSSL_FN_copy_truncate(fn_p1, fn_p)
+        || !OSSL_FN_sub_word(fn_p1, 1)
+        || !OSSL_FN_copy_truncate(fn_q1, fn_q)
+        || !OSSL_FN_sub_word(fn_q1, 1)
+        /* (p-1)(q-1) */
+        || !OSSL_FN_mul(fn_p1q1, fn_p1, fn_q1, fn_ctx)
+        /* gcd(p-1, q-1) */
+        || !OSSL_FN_gcd(fn_gcd, fn_p1, fn_q1, fn_ctx)
+        /* LCM((p-1, q-1)) = (p-1)(q-1) / gcd */
+        || !OSSL_FN_div(fn_lcm, NULL, fn_p1q1, fn_gcd, fn_ctx))
+        goto err;
+
+    bn_release(p1, (int)pl);
+    bn_release(q1, (int)ql);
+    bn_release(p1q1, (int)(pl + ql));
+    bn_release(gcd, (int)(pl < ql ? pl : ql));
+    bn_release(lcm, (int)(pl + ql));
+    ret = 1;
+err:
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
 }
 
 /*
