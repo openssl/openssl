@@ -3167,6 +3167,86 @@ err:
 }
 
 /*
+ * Streams rejected by the incoming stream policy are never placed on the accept
+ * queue. Check that they are still garbage collected and that the peer is
+ * granted credit for another stream, so that a peer which keeps opening streams
+ * neither grows the stream map without bound nor exhausts its stream limit.
+ */
+static int test_reject_stream_gc(void)
+{
+    /* Comfortably more than the default initial stream limit of 100. */
+    static const int num_streams = 250;
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    SSL *streamssl = NULL;
+    QUIC_CHANNEL *ch;
+    QUIC_STREAM_MAP *qsm;
+    size_t written = 0;
+    int testresult = 0, ret, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx())
+        || !create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret),
+                SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0))
+        || !TEST_true(SSL_set_incoming_stream_policy(clientssl,
+            SSL_INCOMING_STREAM_POLICY_REJECT, 42))
+        || !TEST_ptr(ch = ossl_quic_conn_get_channel(clientssl)))
+        goto err;
+
+    qsm = ossl_quic_channel_get_qsm(ch);
+
+    for (i = 0; i < num_streams; i++) {
+        if (!TEST_ptr(streamssl = SSL_new_stream(serverssl, 0))
+            || !TEST_true(SSL_write_ex(streamssl, "x", 1, &written)))
+            goto err;
+        SSL_free(streamssl);
+        streamssl = NULL;
+
+        /*
+         * Let the client reject the stream and the server pick up both the
+         * resulting frames and the MAX_STREAMS credit they release.
+         */
+        if (!TEST_int_eq(SSL_handle_events(clientssl), 1)
+            || !TEST_int_eq(SSL_handle_events(serverssl), 1)
+            || !TEST_int_eq(SSL_handle_events(clientssl), 1))
+            goto err;
+    }
+
+    /*
+     * Every rejected stream should have been collected by now, so the map must
+     * not have grown in proportion to the number of streams opened.
+     */
+    if (!TEST_size_t_lt(OPENSSL_LH_num_items((OPENSSL_LHASH *)qsm->map),
+            (size_t)num_streams / 10)
+        || !TEST_size_t_eq(SSL_get_accept_stream_queue_len(clientssl), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(streamssl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
  * When the server has a different primary group than the client, the server
  * should not fail on the client hello retry.
  */
@@ -3794,6 +3874,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_accept_connection);
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
+    ADD_TEST(test_reject_stream_gc);
     ADD_TEST(test_client_hello_retry);
 #if OPENSSL_USE_IPV6
     ADD_TEST(test_quic_peer_addr_v6);
