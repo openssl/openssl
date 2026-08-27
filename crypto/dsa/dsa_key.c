@@ -42,20 +42,9 @@ int DSA_generate_key(DSA *dsa)
 int ossl_dsa_generate_public_key(BN_CTX *ctx, const DSA *dsa,
     const BIGNUM *priv_key, BIGNUM *pub_key)
 {
-    int ret = 0;
-    BIGNUM *prk = BN_new();
-
-    if (prk == NULL)
-        return 0;
-    BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-
     /* pub_key = g ^ priv_key mod p */
-    if (!BN_mod_exp(pub_key, dsa->params.g, prk, dsa->params.p, ctx))
-        goto err;
-    ret = 1;
-err:
-    BN_clear_free(prk);
-    return ret;
+    return ossl_dsa_fn_mod_exp(dsa, pub_key, dsa->params.g, priv_key,
+        dsa->params.p);
 }
 
 #ifdef FIPS_MODULE

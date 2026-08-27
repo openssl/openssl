@@ -16,6 +16,8 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include "crypto/bn.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include <openssl/bn.h>
 #include <openssl/sha.h>
 #include "dsa_local.h"
@@ -468,7 +470,85 @@ static int dsa_init(DSA *dsa)
 static int dsa_finish(DSA *dsa)
 {
     BN_MONT_CTX_free(dsa->method_mont_p);
+    OSSL_FN_MONT_CTX_free(dsa->method_mont_fn_p);
     return 1;
+}
+
+/*
+ * The OSSL_FN modular exponentiation backing the default DSA_METHOD's
+ * private-key calculations.  This is where the BIGNUM -> OSSL_FN
+ * conversion happens: read-only operands are passed as views, the
+ * writable result is acquired at the modulus width before OSSL_FN_CTX
+ * sizing, and the OSSL_FN_CTX arena is explicitly sized from the
+ * operation's sizing companion.
+ */
+int ossl_dsa_fn_mod_exp(const DSA *dsa, BIGNUM *r,
+    const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m)
+{
+    int ret = 0;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN_MONT_CTX *fn_mont = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
+    const void *token = NULL;
+    int limbs, fn_bits;
+    size_t fn_size;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_p = bn_get_ossl_fn(p);
+    fn_m = bn_get_ossl_fn(m);
+    if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
+        return 0;
+    limbs = (int)ossl_fn_get_dsize(fn_m);
+
+    /* Acquire the writable result before OSSL_FN_CTX sizing. */
+    if ((fn_r = bn_acquire_ossl_fn(r, limbs)) == NULL)
+        return 0;
+
+    if (dsa->flags & DSA_FLAG_CACHE_MONT_P) {
+        /*
+         * We take the input DSA as const, but we lie, because in some cases
+         * we want to get a hold of its Montgomery context.
+         *
+         * We cast to remove the const qualifier in this case, it should be
+         * fine...
+         */
+        OSSL_FN_MONT_CTX **pmont
+            = (OSSL_FN_MONT_CTX **)&dsa->method_mont_fn_p;
+
+        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dsa->lock, fn_m);
+        if (fn_mont == NULL)
+            goto err;
+    }
+
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_a, fn_p, fn_m, fn_mont);
+    if (fn_size == 0)
+        goto err;
+
+    fn_ctx = OSSL_FN_CTX_secure_new_size(dsa->libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+    if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+        goto err;
+
+    ret = OSSL_FN_mod_exp_mont(fn_r, fn_a, fn_p, fn_m, fn_ctx, fn_mont);
+
+    if (ret) {
+        fn_bits = (int)OSSL_FN_num_bits(fn_r);
+        bn_release(r, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    }
+
+    if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+        token = NULL;
+        goto err;
+    }
+    token = NULL;
+err:
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
 }
 
 /*
