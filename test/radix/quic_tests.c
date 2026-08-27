@@ -1059,6 +1059,31 @@ DEF_SCRIPT(check_thread_assisted_close_remote,
     OP_EXPECT_CONN_CLOSE_INFO(C, 42, 1, 1);
 }
 
+/* Stream reset sent and received by a thread-assisted client. */
+DEF_SCRIPT(check_thread_assisted_stream_reset,
+    "thread-assisted client sends and receives a stream reset")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    /* Client-initiated reset observed by the server */
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE_B(Ca, "raspberry");
+    OP_STREAM_RESET(Ca, 42);
+    OP_ACCEPT_STREAM_WAIT(Sa, Ss, 0);
+    OP_SELECT_SSL(0, Ss);
+    OP_FUNC(check_stream_reset_5);
+
+    /* Server-initiated reset observed by the client */
+    OP_NEW_STREAM(Sa, Sb, 0 /* bidirectional */);
+    OP_WRITE_B(Sb, "elderberry");
+    OP_STREAM_RESET(Sb, 42);
+    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+    OP_SELECT_SSL(0, Cb);
+    OP_FUNC(check_stream_reset_5);
+}
+
 /*
  * script_5 - script_106 are place holders for tests we
  * currently keep in test/quic_multistream_test.c.
@@ -2530,6 +2555,7 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_thread_assisted_transfer),
     USE(check_thread_assisted_close_local),
     USE(check_thread_assisted_close_remote),
+    USE(check_thread_assisted_stream_reset),
     USE(script_5),
     USE(script_6),
     USE(script_7),
