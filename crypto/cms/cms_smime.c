@@ -433,11 +433,14 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
             si = sk_CMS_SignerInfo_value(sinfos, i);
             if (!si->verify_result)
                 continue;
-            if (CMS_signed_get_attr_count(si) < 0 && !cadesVerify) {
-                si->attr_verified = 1;
-                continue;
-            }
-            if (CMS_SignerInfo_verify(si) <= 0) {
+            /*
+             * A SignerInfo without signed attributes has no attribute
+             * signature to verify, but CAdES still requires the ESS
+             * signing-certificate attribute, so only skip the signature
+             * check here and let ossl_cms_check_signing_certs() fail below.
+             */
+            if (CMS_signed_get_attr_count(si) >= 0
+                && CMS_SignerInfo_verify(si) <= 0) {
                 si->verify_result = 0;
                 continue;
             }

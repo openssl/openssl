@@ -13,6 +13,8 @@
 #include <openssl/cms.h>
 #include <openssl/bio.h>
 #include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/ess.h>
 #include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
 #include "testutil.h"
@@ -947,6 +949,67 @@ end:
 }
 #endif
 
+/*
+ * A SignerInfo without signed attributes cannot carry the ESS
+ * signing-certificate attribute that CAdES requires, so CMS_verify() with
+ * CMS_CADES must reject it even though the signature itself is valid.
+ */
+static int test_cades_verify_noattr(void)
+{
+    static const char content[] = "Content signed without signed attributes";
+    CMS_ContentInfo *cms = NULL;
+    X509_STORE *store = NULL;
+    BIO *in = NULL, *out = NULL;
+    char *outdata = NULL;
+    long outlen;
+    unsigned long err;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf(content, sizeof(content) - 1))
+        || !TEST_ptr(cms = CMS_sign(cert, privkey, NULL, in,
+                         CMS_NOATTR | CMS_BINARY)))
+        goto end;
+
+    /*
+     * CAdES verification always verifies the signer certificate, so trust
+     * the (TLS server) test certificate directly and accept any purpose.
+     */
+    if (!TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, cert))
+        || !TEST_true(X509_STORE_set_flags(store, X509_V_FLAG_PARTIAL_CHAIN))
+        || !TEST_true(X509_STORE_set_purpose(store, X509_PURPOSE_ANY)))
+        goto end;
+
+    /* Control: signature and certificate verify without CAdES. */
+    if (!TEST_ptr(out = BIO_new(BIO_s_mem()))
+        || !TEST_int_gt(CMS_verify(cms, NULL, store, NULL, out, CMS_BINARY), 0))
+        goto end;
+    outlen = BIO_get_mem_data(out, &outdata);
+    if (!TEST_mem_eq(outdata, outlen, content, sizeof(content) - 1))
+        goto end;
+
+    /* With CAdES the missing signing-certificate attribute must be fatal. */
+    ERR_clear_error();
+    if (!TEST_int_le(CMS_verify(cms, NULL, store, NULL, NULL,
+                         CMS_BINARY | CMS_CADES),
+            0))
+        goto end;
+    err = ERR_peek_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_ESS)
+        || !TEST_int_eq(ERR_GET_REASON(err),
+            ESS_R_MISSING_SIGNING_CERTIFICATE_ATTRIBUTE))
+        goto end;
+    ERR_clear_error();
+
+    ret = 1;
+end:
+    BIO_free(out);
+    BIO_free(in);
+    X509_STORE_free(store);
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip [ed448certfile ed448privkeyfile]\n")
 
 int setup_tests(void)
@@ -1004,6 +1067,7 @@ int setup_tests(void)
     ADD_TEST(test_CMS_set1_key_mem_leak);
     ADD_TEST(test_encrypted_data);
     ADD_TEST(test_encrypted_data_aead);
+    ADD_TEST(test_cades_verify_noattr);
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
