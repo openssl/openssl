@@ -37,6 +37,10 @@
 #	much better (but watch out for them generating code specific
 #	to processor they execute on).
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -74,28 +78,6 @@ $LOCALS=6*$SIZE_T;
 $TEMP=$LOCALS+6*$SIZE_T;
 
 my $sp ="r1";
-
-sub rename_labels {
-    my ($text, $from, $to) = @_;
-    my %labels;
-
-    while ($text =~ /^\s*([A-Za-z_.][A-Za-z0-9_\$.]*):/mg) {
-        my ($label, $replacement) = ($1, $1);
-
-        $replacement .= "_p12" unless $replacement =~ s/\Q$from\E/$to/g;
-        $labels{$label} = $replacement;
-    }
-
-    if (%labels) {
-        my $pattern = join("|", map { quotemeta($_) }
-                                sort { length($b) <=> length($a) }
-                                keys %labels);
-
-        $text =~ s/(?<![A-Za-z0-9_\$.])($pattern)(?![A-Za-z0-9_\$.])/$labels{$1}/g;
-    }
-
-    return $text;
-}
 
 my @A = map([ "r$_", "r".($_+1), "r".($_+2), "r".($_+3), "r".($_+4) ],
             (7, 12, 17, 22, 27));

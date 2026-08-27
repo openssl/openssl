@@ -59,6 +59,10 @@
 #	Cortex-A57 to 25% on Cortex-A53. While in comparison to older
 #	compiler this code is at least 2x faster...
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -72,28 +76,6 @@ die "can't locate arm-xlate.pl";
 open OUT,"| \"$^X\" $xlate $flavour \"$output\""
     or die "can't call $xlate: $!";
 *STDOUT=*OUT;
-
-sub rename_labels {
-    my ($text, $from, $to) = @_;
-    my %labels;
-
-    while ($text =~ /^\s*([A-Za-z_.][A-Za-z0-9_\$.]*):/mg) {
-        my ($label, $replacement) = ($1, $1);
-
-        $replacement .= "_p12" unless $replacement =~ s/\Q$from\E/$to/g;
-        $labels{$label} = $replacement;
-    }
-
-    if (%labels) {
-        my $pattern = join("|", map { quotemeta($_) }
-                                sort { length($b) <=> length($a) }
-                                keys %labels);
-
-        $text =~ s/(?<![A-Za-z0-9_\$.])($pattern)(?![A-Za-z0-9_\$.])/$labels{$1}/g;
-    }
-
-    return $text;
-}
 
 my @rhotates = ([  0,  1, 62, 28, 27 ],
                 [ 36, 44,  6, 55, 20 ],

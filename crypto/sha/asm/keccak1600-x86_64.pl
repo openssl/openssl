@@ -50,6 +50,10 @@
 #	improved by 14% by replacing rotates with double-precision
 #	shift with same register as source and destination.
 
+use FindBin qw($Bin);
+use lib "$Bin";
+require "keccak1600-common.pl";
+
 # $output is the last argument if it looks like a file (it has an extension)
 # $flavour is the first argument if it doesn't look like a file
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
@@ -79,28 +83,6 @@ my @rhotates = ([  0,  1, 62, 28, 27 ],
                 [  3, 10, 43, 25, 39 ],
                 [ 41, 45, 15, 21,  8 ],
                 [ 18,  2, 61, 56, 14 ]);
-
-sub rename_labels {
-    my ($text, $from, $to) = @_;
-    my %labels;
-
-    while ($text =~ /^\s*([A-Za-z_.][A-Za-z0-9_\$.]*):/mg) {
-        my ($label, $replacement) = ($1, $1);
-
-        $replacement .= "_p12" unless $replacement =~ s/\Q$from\E/$to/g;
-        $labels{$label} = $replacement;
-    }
-
-    if (%labels) {
-        my $pattern = join("|", map { quotemeta($_) }
-                                sort { length($b) <=> length($a) }
-                                keys %labels);
-
-        $text =~ s/(?<![A-Za-z0-9_\$.])($pattern)(?![A-Za-z0-9_\$.])/$labels{$1}/g;
-    }
-
-    return $text;
-}
 
 $code.=<<___;
 .text
