@@ -66,11 +66,11 @@ B<PKCS7_SIGNER_INFO> structure will not be finalized so additional attributes
 can be added. In this case an explicit call to PKCS7_SIGNER_INFO_sign() is
 needed to finalize it.
 
-If B<PKCS7_NOCERTS> is set, the signer certificates will not be included in the
-B<PKCS7> structure. The signer certificates must still be supplied in the
-I<signcert> parameter though. This can reduce the size of the signature if the
-signer certificates can be obtained by other means: for example a previously
-signed message.
+If B<PKCS7_NOCERTS> is set, this call does not add I<signcert> to the
+B<PKCS7> structure. Certificates already present in the structure are left
+unchanged. I<signcert> must still be supplied. This can reduce the size of
+the signature if the signer certificate can be obtained by other means,
+for example a previously signed message.
 
 The signedData structure includes several PKCS#7 authenticatedAttributes
 including the signing time, the PKCS#7 content type and the supported list of

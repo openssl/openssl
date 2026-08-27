@@ -100,6 +100,10 @@ Resign a message: take an existing message and one or more new signers.
 Verify signed mail. Expects a signed mail message on input and outputs
 the signed data. Both clear text and opaque signing is supported.
 
+Unless B<-nochain> is specified, validation of signer certificates and their
+chain is done by default w.r.t. the S/MIME signing (C<smimesign>) purpose.
+For details see L<openssl-verification-options(1)/Certificate Extensions>.
+
 =item B<-pk7out>
 
 Takes an input message and writes out a PEM encoded PKCS#7 structure.
@@ -182,7 +186,8 @@ Normally, when verifying a message, the certificates (if any) included in
 the message are searched for the signer certificates. With this option,
 only the certificates given with the B<-certfile> option are used.
 However, the certificates included in the message are still used
-as candidate intermediate CA certificates during chain construction.
+as candidate intermediate CA certificates during chain construction
+unless B<-nochain> is also specified.
 
 =item B<-noverify>
 
@@ -192,6 +197,8 @@ Do not verify the signers certificate of a signed message.
 
 When verifying the signer certificates of a signed message, do not use the
 certificates in the message as candidate CA certificates for chain building.
+This also disables the default use of the S/MIME signing (C<smimesign>) purpose.
+To re-enable it, B<-purpose smimesign> can be specified.
 
 =item B<-nosigs>
 
@@ -205,7 +212,8 @@ This will reduce the size of the signed message,
 but the verifier must have a copy of those certificates
 available locally (passed using the B<-certfile> option for example).
 
-Setting this option has special effect on any extra certificates supplied via the
+With the -sign operation,
+setting this option has special effect on any extra certificates supplied via the
 B<-certfile> option: while signer certificates supplied via the B<-signer> option are
 not included, the extra certificates from B<-certfile> are included in the given order.
 This can be used to specify the order certificates appear in the PKCS#7 structure
@@ -474,7 +482,7 @@ algorithms as supplied in the SMIMECapabilities signed attribute. This means the
 user has to manually include the correct encryption algorithm. It should store
 the list of permitted ciphers in a database and only use those.
 
-No revocation checking is done on the signer's certificate.
+No revocation checking is done on signer certificates.
 
 The current code can only handle S/MIME v2 messages, the more complex S/MIME v3
 structures may cause parsing errors.

@@ -33,7 +33,8 @@ CMS_verify() is very similar to L<PKCS7_verify(3)>. It verifies a
 B<CMS SignedData> structure contained in a structure of type B<CMS_ContentInfo>.
 I<cms> points to the B<CMS_ContentInfo> structure to verify.
 The optional I<certs> parameter can provide a list of certificates
-that are used for searching for signer's certificates first.
+that are used for searching for signer certificates first,
+as far as they are not already associated with the B<CMS_SignerInfo>.
 It is also used
 as a source of untrusted intermediate CA certificates for chain building.
 I<cms> may contain extra untrusted CA certificates that may be used for
@@ -83,13 +84,15 @@ Initially some sanity checks are performed on I<cms>. The type of I<cms> must
 be SignedData. There must be at least one signature on the data and if
 the content is detached I<detached_data> cannot be NULL.
 
-An attempt is made to locate all the signer certificate(s).
+An attempt is made to locate all the signer certificate(s)
+as far as they are not already associated with the B<CMS_SignerInfo>.
 First, they are searched among the certificates provided
 in the I<certs> parameter (if it is not NULL).
 Then they are looked up among the certificates contained
 in the I<cms> structure unless B<CMS_NOINTERN> is set.
-If any signer certificate cannot be located the operation fails unless
+If any signer certificate cannot be located, the operation fails unless
 B<CMS_VERIFY_PARTIAL> is set, where one signer certificate can be sufficient.
+Signer associations are retained between verification calls.
 
 Each found signer certificate is chain verified using I<store> as the trusted
 certificate store if supplied, and by default requiring the I<smimesign> purpose.
@@ -115,7 +118,8 @@ parameter to change the default verify behaviour.
 
 If B<CMS_NOINTERN> is set the certificates in the message itself are not
 searched when locating the signer certificate(s).
-This means that all the signer certificates must be in the I<certs> parameter.
+This means that the signer certificates that are not already associated
+with the B<CMS_SignerInfo> must be in the I<certs> parameter.
 
 If B<CMS_NOCRL> is set and CRL checking is enabled in I<store> then any
 CRLs in the message itself and provided via the I<crls> parameter are ignored.
@@ -138,7 +142,8 @@ If B<CMS_NO_CONTENT_VERIFY> is set then the content digest is not checked.
 
 =head1 NOTES
 
-One application of B<CMS_NOINTERN> is to only accept messages signed by
+As far as signer certificates are not already associated with B<CMS_SignerInfo>,
+one application of B<CMS_NOINTERN> can be to only accept messages signed by
 a small number of certificates. The acceptable certificates would be passed
 in the I<certs> parameter. In this case if the signer certificate is not one
 of the certificates supplied in I<certs> then the verify will fail because the
