@@ -65,7 +65,7 @@ typedef struct prov_tdes_ctx_st {
         { OSSL_FUNC_CIPHER_GET_PARAMS,                                             \
             (void (*)(void))tdes_##type##_##lcmode##_get_params },                 \
         { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                        \
-            (void (*)(void))ossl_cipher_generic_gettable_params },                 \
+            (void (*)(void))ossl_tdes_gettable_params },                           \
         { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                         \
             (void (*)(void))ossl_tdes_get_ctx_params },                            \
         { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                    \
@@ -87,6 +87,7 @@ OSSL_FUNC_cipher_freectx_fn ossl_tdes_freectx;
 OSSL_FUNC_cipher_encrypt_init_fn ossl_tdes_einit;
 OSSL_FUNC_cipher_decrypt_init_fn ossl_tdes_dinit;
 OSSL_FUNC_cipher_get_ctx_params_fn ossl_tdes_get_ctx_params;
+OSSL_FUNC_cipher_gettable_params_fn ossl_tdes_gettable_params;
 OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_tdes_gettable_ctx_params;
 OSSL_FUNC_cipher_set_ctx_params_fn ossl_tdes_set_ctx_params;
 OSSL_FUNC_cipher_settable_ctx_params_fn ossl_tdes_settable_ctx_params;

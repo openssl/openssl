@@ -38,18 +38,22 @@
         { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                      \
             (void (*)(void))ossl_cipher_generic_gettable_params },               \
         { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                       \
-            (void (*)(void))alg##_cbc_cts_get_ctx_params },                      \
+            (void (*)(void))ossl_cipher_cbc_cts_get_ctx_params },                \
         { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                       \
-            (void (*)(void))alg##_cbc_cts_set_ctx_params },                      \
+            (void (*)(void))ossl_cipher_cbc_cts_set_ctx_params },                \
         { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                  \
-            (void (*)(void))alg##_cbc_cts_gettable_ctx_params },                 \
+            (void (*)(void))ossl_cipher_cbc_cts_gettable_ctx_params },           \
         { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                  \
-            (void (*)(void))alg##_cbc_cts_settable_ctx_params },                 \
+            (void (*)(void))ossl_cipher_cbc_cts_settable_ctx_params },           \
         OSSL_DISPATCH_END                                                        \
     };
 
 OSSL_FUNC_cipher_update_fn ossl_cipher_cbc_cts_block_update;
 OSSL_FUNC_cipher_final_fn ossl_cipher_cbc_cts_block_final;
+OSSL_FUNC_cipher_get_ctx_params_fn ossl_cipher_cbc_cts_get_ctx_params;
+OSSL_FUNC_cipher_set_ctx_params_fn ossl_cipher_cbc_cts_set_ctx_params;
+OSSL_FUNC_cipher_gettable_ctx_params_fn ossl_cipher_cbc_cts_gettable_ctx_params;
+OSSL_FUNC_cipher_settable_ctx_params_fn ossl_cipher_cbc_cts_settable_ctx_params;
 
 const char *ossl_cipher_cbc_cts_mode_id2name(unsigned int id);
 int ossl_cipher_cbc_cts_mode_name2id(const char *name);

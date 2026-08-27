@@ -381,6 +381,19 @@ PROV_CIPHER_HW_FN ossl_cipher_hw_chunked_ofb128;
         return name##_known_settable_ctx_params;                         \
     }
 
+struct ossl_cipher_get_param_list_st {
+    OSSL_PARAM *mode;
+    OSSL_PARAM *keylen;
+    OSSL_PARAM *ivlen;
+    OSSL_PARAM *bsize;
+    OSSL_PARAM *aead;
+    OSSL_PARAM *custiv;
+    OSSL_PARAM *cts;
+    OSSL_PARAM *mb;
+    OSSL_PARAM *rand;
+    OSSL_PARAM *etm;
+};
+
 struct ossl_cipher_get_ctx_param_list_st {
     OSSL_PARAM *keylen; /* all ciphers */
     OSSL_PARAM *ivlen; /* all ciphers */
@@ -400,8 +413,13 @@ struct ossl_cipher_set_ctx_param_list_st {
     OSSL_PARAM *keylen; /* variable key length ciphers */
 };
 
-int ossl_cipher_common_get_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_cipher_get_ctx_param_list_st *p);
-int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_cipher_set_ctx_param_list_st *p);
+int ossl_cipher_common_get_params(const struct ossl_cipher_get_param_list_st *p,
+    unsigned int md, uint64_t flags, size_t kbits, size_t blkbits,
+    size_t ivbits);
+int ossl_cipher_common_get_ctx_params(PROV_CIPHER_CTX *ctx,
+    const struct ossl_cipher_get_ctx_param_list_st *p);
+int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx,
+    const struct ossl_cipher_set_ctx_param_list_st *p);
 
 int ossl_cipher_generic_initiv(PROV_CIPHER_CTX *ctx, const unsigned char *iv,
     size_t ivlen);

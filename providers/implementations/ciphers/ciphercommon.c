@@ -22,6 +22,7 @@
 #include "internal/e_os.h"
 #include "crypto/types.h"
 
+#define ossl_cipher_generic_get_params_st ossl_cipher_get_param_list_st
 #define cipher_generic_get_ctx_params_st ossl_cipher_get_ctx_param_list_st
 #define cipher_generic_set_ctx_params_st ossl_cipher_set_ctx_param_list_st
 #define cipher_var_keylen_set_ctx_params_st ossl_cipher_set_ctx_param_list_st
@@ -41,54 +42,69 @@ int ossl_cipher_generic_get_params(OSSL_PARAM params[], unsigned int md,
     uint64_t flags,
     size_t kbits, size_t blkbits, size_t ivbits)
 {
-    struct ossl_cipher_generic_get_params_st p;
+    struct ossl_cipher_get_param_list_st p;
 
     if (!ossl_cipher_generic_get_params_decoder(params, &p))
         return 0;
 
-    if (p.mode != NULL && !OSSL_PARAM_set_uint(p.mode, md)) {
+    return ossl_cipher_common_get_params(&p, md, flags, kbits, blkbits,
+        ivbits);
+}
+
+int ossl_cipher_common_get_params(const struct ossl_cipher_get_param_list_st *p,
+    unsigned int md, uint64_t flags, size_t kbits, size_t blkbits,
+    size_t ivbits)
+{
+    if (p->mode != NULL && !OSSL_PARAM_set_uint(p->mode, md)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.aead != NULL
-        && !OSSL_PARAM_set_int(p.aead, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
+    if (p->aead != NULL
+        && !OSSL_PARAM_set_int(p->aead, (flags & PROV_CIPHER_FLAG_AEAD) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.custiv != NULL
-        && !OSSL_PARAM_set_int(p.custiv, (flags & PROV_CIPHER_FLAG_CUSTOM_IV) != 0)) {
+    if (p->custiv != NULL
+        && !OSSL_PARAM_set_int(p->custiv,
+            (flags & PROV_CIPHER_FLAG_CUSTOM_IV) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.cts != NULL
-        && !OSSL_PARAM_set_int(p.cts, (flags & PROV_CIPHER_FLAG_CTS) != 0)) {
+    if (p->cts != NULL
+        && !OSSL_PARAM_set_int(p->cts, (flags & PROV_CIPHER_FLAG_CTS) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.mb != NULL
-        && !OSSL_PARAM_set_int(p.mb, (flags & PROV_CIPHER_FLAG_TLS1_MULTIBLOCK) != 0)) {
+    if (p->mb != NULL
+        && !OSSL_PARAM_set_int(p->mb,
+            (flags & PROV_CIPHER_FLAG_TLS1_MULTIBLOCK) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.rand != NULL
-        && !OSSL_PARAM_set_int(p.rand, (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
+    if (p->rand != NULL
+        && !OSSL_PARAM_set_int(p->rand,
+            (flags & PROV_CIPHER_FLAG_RAND_KEY) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.etm != NULL
-        && !OSSL_PARAM_set_int(p.etm, (flags & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0)) {
+    if (p->etm != NULL
+        && !OSSL_PARAM_set_int(p->etm,
+            (flags & EVP_CIPH_FLAG_ENC_THEN_MAC) != 0)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.keylen != NULL && !OSSL_PARAM_set_size_t(p.keylen, kbits / 8)) {
+    if (p->keylen != NULL
+        && !OSSL_PARAM_set_size_t(p->keylen, kbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.bsize != NULL && !OSSL_PARAM_set_size_t(p.bsize, blkbits / 8)) {
+    if (p->bsize != NULL
+        && !OSSL_PARAM_set_size_t(p->bsize, blkbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
-    if (p.ivlen != NULL && !OSSL_PARAM_set_size_t(p.ivlen, ivbits / 8)) {
+    if (p->ivlen != NULL
+        && !OSSL_PARAM_set_size_t(p->ivlen, ivbits / 8)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_SET_PARAMETER);
         return 0;
     }
@@ -119,24 +135,9 @@ int ossl_cipher_var_keylen_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     PROV_CIPHER_CTX *ctx = (PROV_CIPHER_CTX *)vctx;
     struct ossl_cipher_set_ctx_param_list_st p;
 
-    if (ctx == NULL
-        || !cipher_var_keylen_set_ctx_params_decoder(params, &p)
-        || !ossl_cipher_common_set_ctx_params(ctx, &p))
+    if (ctx == NULL || !cipher_var_keylen_set_ctx_params_decoder(params, &p))
         return 0;
-
-    if (p.keylen != NULL) {
-        size_t keylen;
-
-        if (!OSSL_PARAM_get_size_t(p.keylen, &keylen)) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
-            return 0;
-        }
-        if (ctx->keylen != keylen) {
-            ctx->keylen = keylen;
-            ctx->key_set = 0;
-        }
-    }
-    return 1;
+    return ossl_cipher_common_set_ctx_params(ctx, &p);
 }
 
 void ossl_cipher_generic_reset_ctx(PROV_CIPHER_CTX *ctx)
@@ -668,6 +669,19 @@ int ossl_cipher_common_set_ctx_params(PROV_CIPHER_CTX *ctx, const struct ossl_ci
             return 0;
         }
         ctx->num = num;
+    }
+
+    if (p->keylen != NULL) {
+        size_t keylen;
+
+        if (!OSSL_PARAM_get_size_t(p->keylen, &keylen)) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
+            return 0;
+        }
+        if (ctx->keylen != keylen) {
+            ctx->keylen = keylen;
+            ctx->key_set = 0;
+        }
     }
     return 1;
 }
