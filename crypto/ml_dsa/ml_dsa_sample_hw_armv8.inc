@@ -138,8 +138,10 @@ static ossl_unused int rej_ntt_poly_mb(const uint64_t *words,
             }
             for (; b < end; b += 3) {
                 if (coeff_from_three_bytes(b, coeff+j)) {
-                    if (++j == ML_DSA_NUM_POLY_COEFFICIENTS)
+                    if (++j == ML_DSA_NUM_POLY_COEFFICIENTS) {
+                        finished++;
                         break;
+                    }
                 }
             }
             coeff_idx[lane] = j;
