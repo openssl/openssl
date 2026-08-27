@@ -31,7 +31,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_CIPHER_PARAM_NUM',        'num',    'uint' ],
                           ['OSSL_CIPHER_PARAM_IV',         'iv',     'octet_string' ],
                           ['OSSL_CIPHER_PARAM_UPDATED_IV', 'updiv',  'octet_string' ],
-                          ['OSSL_CIPHER_PARAM_TLS_MAC',    'tlsmac', 'octet_string' ],
+                          ['OSSL_CIPHER_PARAM_TLS_MAC',    'tlsmac', 'octet_ptr' ],
                          )); -}
 
 {- produce_param_decoder('cipher_generic_set_ctx_params',
