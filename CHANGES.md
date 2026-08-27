@@ -31,6 +31,14 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Added the ASCON-AEAD128 cipher as specified in NIST SP 800-232. ASCON-AEAD128
+   provides authenticated encryption with associated data (AEAD) using 128-bit
+   keys, nonces, and tags. The cipher is available through the EVP interface and
+   the default provider. This implementation only supports byte-aligned inputs
+   and full-length tags.
+
+   *Dominic Cunningham, Billy Bob Brumley*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,
