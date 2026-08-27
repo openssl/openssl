@@ -21,9 +21,11 @@ OPENSSL=openssl
 # Possible values: "PQC" or "Classic"
 # Check if first parameter is PQC, then set USE_PQC accordingly
 
-if [[ "${1,,}" == "pqc" ]]; then
+if [[ "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" == "pqc" ]]; then
     OPENSSL_VER=$($OPENSSL version | awk '{print $2}')
-    if [[ "$(printf '%s\n' "3.5.0" "$OPENSSL_VER" | sort -V | head -n1)" != "3.5.0" ]]; then
+    if ! awk -v ver="$OPENSSL_VER" 'BEGIN {
+        split(ver, a, /[.\-]/); split("3.5.0", b, /[.\-]/);
+        for (i=1; i<=3; i++) if (a[i]+0 != b[i]+0) { exit (a[i]+0 > b[i]+0) ? 0 : 1 }; exit 0 }'; then
         echo "Error: OpenSSL version 3.5 or higher is required for PQC algorithms. Current version: $OPENSSL_VER"
         exit 1
     fi
