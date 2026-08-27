@@ -1164,6 +1164,64 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
 
 /**
+ * Calculate  a1^p1 * a2^p2 mod m  with a double-base Montgomery
+ * sliding-window algorithm (Shamir's trick), roughly the price of one
+ * modular exponentiation.
+ *
+ * Callers performing many verifications against the same modulus may pass a
+ * reused OSSL_FN_MONT_CTX to amortise the RR / n0 setup, mirroring
+ * BN_mod_exp2_mont().
+ *
+ * @param[out]          r       The OSSL_FN for the result.  Destination width
+ *                              is the caller's choice: if smaller than the
+ *                              modulus, the result is truncated; if larger,
+ *                              zero-padded.  |r| must not alias |m|.
+ * @param[in]           a1      The first base.
+ * @param[in]           p1      The first exponent.
+ * @param[in]           a2      The second base.
+ * @param[in]           p2      The second exponent.
+ * @param[in]           m       The modulus.  Must be odd and non-zero.
+ * @param[in]           ctx     A context to get temporary OSSL_FN instances
+ *                              from, sized per
+ *                              OSSL_FN_mod_exp2_mont_ctx_size().
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to have this function build and free its own.
+ *                              When non-NULL it is borrowed (used as-is,
+ *                              never freed here) and its modulus must be |m|.
+ * @returns             1 on success, 0 on error.
+ *
+ * @note This path is not constant-time per se; do not use it for secret
+ *       exponents.  See the implementation in crypto/fn/fn_exp.c.
+ */
+int OSSL_FN_mod_exp2_mont(OSSL_FN *r, const OSSL_FN *a1, const OSSL_FN *p1,
+    const OSSL_FN *a2, const OSSL_FN *p2, const OSSL_FN *m, OSSL_FN_CTX *ctx,
+    OSSL_FN_MONT_CTX *in_mont);
+
+/**
+ * Calculate the arena payload size that OSSL_FN_mod_exp2_mont() needs.
+ *
+ * The arena also serves a call that passes NULL |in_mont| (the function
+ * builds and frees its own context then), since the operand modelling makes
+ * the two cases the same size.
+ *
+ * @param[in]           r       The OSSL_FN for the result
+ * @param[in]           a1      The first base
+ * @param[in]           p1      The first exponent
+ * @param[in]           a2      The second base
+ * @param[in]           p2      The second exponent
+ * @param[in]           m       The modulus
+ * @param[in]           in_mont A reusable Montgomery context for |m|, or NULL
+ *                              to model the function-owned context
+ *                              OSSL_FN_mod_exp2_mont() builds when called
+ *                              with in_mont == NULL.
+ * @returns             The arena payload size, in bytes.
+ * @retval              0       on arithmetic overflow or invalid input.
+ */
+size_t OSSL_FN_mod_exp2_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a1,
+    const OSSL_FN *p1, const OSSL_FN *a2, const OSSL_FN *p2, const OSSL_FN *m,
+    OSSL_FN_MONT_CTX *in_mont);
+
+/**
  * Compute the Kronecker symbol (a/b).
  *
  * @param[in]           a       The first operand

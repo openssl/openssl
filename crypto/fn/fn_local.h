@@ -16,6 +16,7 @@
 #include <openssl/opensslconf.h>
 #include <openssl/e_os2.h>
 #include "internal/common.h"
+#include "internal/safe_math.h"
 #include "crypto/fn.h"
 #include "crypto/fn_intern.h"
 
@@ -34,6 +35,37 @@
 #define OSSL_FN_HIGH_BIT_MASK (OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS - 1))
 #define OSSL_FN_LOW_HALF_MASK ((OSSL_FN_ULONG_C(1) << (OSSL_FN_BITS / 2)) - 1)
 #define OSSL_FN_HIGH_HALF_MASK (OSSL_FN_LOW_HALF_MASK << (OSSL_FN_BITS / 2))
+
+/* maximum precomputation table size for *variable* sliding windows */
+#define TABLE_SIZE 32
+
+/*
+ * Sliding-window size selection: a function of the exponent bit count (a
+ * public magnitude), capped at 6, so TABLE_SIZE == 1 << 5 always suffices.
+ */
+#define OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
+    ((b) > 671 ? 6 : (b) > 239 ? 5               \
+            : (b) > 79         ? 4               \
+            : (b) > 23         ? 3               \
+                               : 1)
+
+/*
+ * Safe-accumulate arena size helpers, shared across OSSL_FN operation
+ * modules.  ossl_fn_ctx_add_size() returns 0 on overflow; ossl_fn_ctx_max_size()
+ * returns the larger of its two operands (often used to pick among
+ * sequential frame budgets).
+ */
+static ossl_inline size_t ossl_fn_ctx_add_size(size_t a, size_t b)
+{
+    if (ossl_unlikely(a > OSSL_SAFE_MATH_MAXU(size_t) - b))
+        return 0;
+    return a + b;
+}
+
+static ossl_inline size_t ossl_fn_ctx_max_size(size_t a, size_t b)
+{
+    return a > b ? a : b;
+}
 
 struct ossl_fn_st {
     /* Flag: alloced with OSSL_FN_new() or  OSSL_FN_secure_new() */

@@ -28,33 +28,7 @@
 #define MONT_MUL_MOD
 #undef RECP_MUL_MOD
 
-OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
-
-/* maximum precomputation table size for *variable* sliding windows */
-#define TABLE_SIZE 32
-
-/*
- * Sliding-window size selection: a function of the exponent bit count (a
- * public magnitude), capped at 6, so TABLE_SIZE == 1 << 5 always suffices.
- */
-#define OSSL_FN_WINDOW_BITS_FOR_EXPONENT_SIZE(b) \
-    ((b) > 671 ? 6 : (b) > 239 ? 5               \
-            : (b) > 79         ? 4               \
-            : (b) > 23         ? 3               \
-                               : 1)
-
-static size_t ctx_add_size(size_t a, size_t b)
-{
-    int err = 0;
-    size_t r = safe_add_size_t(a, b, &err);
-
-    return err == 0 ? r : 0;
-}
-
-static size_t ctx_max_size(size_t a, size_t b)
-{
-    return a > b ? a : b;
-}
+/* maximum precomputation table size is shared through fn_local.h */
 
 /*-
  * mod_exp_mont_nested() -- Montgomery-path nested arena size for
@@ -87,8 +61,8 @@ static size_t mod_exp_mont_nested(const OSSL_FN *a, const OSSL_FN *m,
      * Montgomery-domain values, so it uses the non-reducing
      * OSSL_FN_mul_mont_quick() and its smaller ctx_size.
      */
-    mont_size = ctx_max_size(OSSL_FN_to_mont_ctx_size(NULL, a, in_mont),
-        ctx_max_size(OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, in_mont),
+    mont_size = ossl_fn_ctx_max_size(OSSL_FN_to_mont_ctx_size(NULL, a, in_mont),
+        ossl_fn_ctx_max_size(OSSL_FN_mul_mont_quick_ctx_size(NULL, NULL, NULL, in_mont),
             OSSL_FN_from_mont_ctx_size(NULL, NULL, in_mont)));
 
     return mont_size;
@@ -117,7 +91,7 @@ size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     if (own_size == 0 || nested_size == 0)
         return 0;
 
-    return ctx_add_size(own_size, nested_size);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
 /*
@@ -148,11 +122,11 @@ size_t OSSL_FN_mod_exp_simple_ctx_size(const OSSL_FN *r,
      */
     size_t mul_size = OSSL_FN_mod_mul_ctx_size(m, m, m, m);
 
-    size_t nested_size = ctx_max_size(mod_size, mul_size);
+    size_t nested_size = ossl_fn_ctx_max_size(mod_size, mul_size);
     if (own_size == 0 || nested_size == 0)
         return 0;
 
-    return ctx_add_size(own_size, nested_size);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
 
 #ifdef RECP_MUL_MOD

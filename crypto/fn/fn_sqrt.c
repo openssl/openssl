@@ -14,18 +14,7 @@
 
 OSSL_SAFE_MATH_ADDU(size_t, size_t, OSSL_SAFE_MATH_MAXU(size_t))
 
-static size_t ctx_add_size(size_t a, size_t b)
-{
-    int err = 0;
-    size_t r = safe_add_size_t(a, b, &err);
-
-    return err == 0 ? r : 0;
-}
-
-static size_t ctx_max_size(size_t a, size_t b)
-{
-    return a > b ? a : b;
-}
+/* mod helpers shared through fn_local.h. */
 
 /*-
  * OSSL_FN_mod_sqrt() computes ret such that ret^2 == a (mod p), using the
@@ -419,13 +408,13 @@ size_t OSSL_FN_mod_sqrt_ctx_size(const OSSL_FN *ret, const OSSL_FN *a,
     size_t mod_size = OSSL_FN_mod_ctx_size(p, a, p);
     size_t kronecker_size = OSSL_FN_kronecker_ctx_size(p, p);
 
-    size_t nested_size = ctx_max_size(mod_exp_size,
-        ctx_max_size(mod_sqr_size,
-            ctx_max_size(mod_mul_size,
-                ctx_max_size(mod_size, kronecker_size))));
+    size_t nested_size = ossl_fn_ctx_max_size(mod_exp_size,
+        ossl_fn_ctx_max_size(mod_sqr_size,
+            ossl_fn_ctx_max_size(mod_mul_size,
+                ossl_fn_ctx_max_size(mod_size, kronecker_size))));
 
     if (own_size == 0 || nested_size == 0)
         return 0;
 
-    return ctx_add_size(own_size, nested_size);
+    return ossl_fn_ctx_add_size(own_size, nested_size);
 }
