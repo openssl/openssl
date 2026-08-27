@@ -183,7 +183,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
 
             if ((pobj = OBJ_txt2obj(cnf->value, 0)) == NULL) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OBJECT_IDENTIFIER);
-                X509V3_conf_err(cnf);
+                ossl_X509v3_conf_err(cnf);
                 goto err;
             }
             pol->policyid = pobj;
@@ -216,14 +216,14 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             STACK_OF(CONF_VALUE) *unot;
             if (*cnf->value != '@') {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_EXPECTED_A_SECTION_NAME);
-                X509V3_conf_err(cnf);
+                ossl_X509v3_conf_err(cnf);
                 goto err;
             }
             unot = X509V3_get_section(ctx, cnf->value + 1);
             if (!unot) {
                 ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_SECTION);
 
-                X509V3_conf_err(cnf);
+                ossl_X509v3_conf_err(cnf);
                 goto err;
             }
             qual = notice_section(ctx, unot, ia5org);
@@ -239,7 +239,7 @@ static POLICYINFO *policy_section(X509V3_CTX *ctx,
             }
         } else {
             ERR_raise(ERR_LIB_X509V3, X509V3_R_INVALID_OPTION);
-            X509V3_conf_err(cnf);
+            ossl_X509v3_conf_err(cnf);
             goto err;
         }
     }
