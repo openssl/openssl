@@ -114,7 +114,7 @@ using 2 lanes, and memory cost of 65536 using a one shot function:
  {
 
      if (!EVP_KDF_argon2(result, outlen, EVP_KDF_ARGON2ID_TYPE,
-         pwd, pwdlen, salt, saltlen, lanes, memcost, iterations, NULL, NULL))
+         pwd, pwdlen, salt, saltlen, lanes, memcost, iterations, NULL, NULL, NULL))
         return 0;
     printf("Output = %s\n", OPENSSL_buf2hexstr(result, outlen));
     return 1
