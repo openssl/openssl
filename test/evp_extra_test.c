@@ -8040,8 +8040,10 @@ static int test_low_level_dsa_method(void)
     DSA *dsa = NULL;
     const DSA_METHOD *def = DSA_get_default_method();
     DSA_METHOD *method = DSA_meth_dup(def);
+    DSA_SIG *dsa_sig = NULL;
     EVP_PKEY *pkey = NULL;
     int testresult = 0;
+    unsigned char dgst[32];
 
     if (nullprov != NULL) {
         testresult = TEST_skip("Test does not support a non-default library context");
@@ -8060,6 +8062,12 @@ static int test_low_level_dsa_method(void)
         goto err;
     if (!TEST_true(DSA_generate_key(dsa)))
         goto err;
+
+    /* Warm the Montgomery cache so the finish slot touches it (Issue: 32541) */
+    memset(dgst, 0, sizeof(dgst));
+    if (!TEST_ptr(dsa_sig = DSA_do_sign(dgst, sizeof(dgst), dsa)))
+        goto err;
+    DSA_SIG_free(dsa_sig);
 
     orig_dsa_sign = DSA_meth_get_sign(def);
     if (!TEST_true(DSA_meth_set_sign(method, tst_dsa_sign)))
@@ -8212,12 +8220,7 @@ static int test_low_level_dh_method(void)
     if (!TEST_true(DH_set_ex_data(dh, dh_ex_idx, (void *)"test")))
         goto err;
 
-    orig_dh_compute_key = DH_meth_get_compute_key(def);
-    if (!TEST_true(DH_meth_set_compute_key(method, tst_dh_compute_key)))
-        goto err;
-    if (!TEST_true(DH_set_method(dh, method)))
-        goto err;
-
+    /* Prepare the API for warming the cache */
     p = BN_dup(DH_get0_p(cdh));
     g = BN_dup(DH_get0_g(cdh));
     if (!TEST_ptr(p) || !TEST_ptr(g))
@@ -8227,6 +8230,21 @@ static int test_low_level_dh_method(void)
     p = g = NULL;
 
     if (!TEST_true(DH_generate_key(dh)))
+        goto err;
+
+    /* Warm the Montgomery cache before the switch (Issue: #32541) */
+    buf = OPENSSL_malloc(DH_size(dh));
+    if (!TEST_ptr(buf))
+        goto err;
+    if (!TEST_int_gt(DH_compute_key(buf, DH_get0_pub_key(dh), dh), 0))
+        goto err;
+    OPENSSL_free(buf);
+    buf = NULL;
+
+    orig_dh_compute_key = DH_meth_get_compute_key(def);
+    if (!TEST_true(DH_meth_set_compute_key(method, tst_dh_compute_key)))
+        goto err;
+    if (!TEST_true(DH_set_method(dh, method)))
         goto err;
 
     ctx = EVP_PKEY_CTX_new_from_pkey(NULL, pkey, NULL);
