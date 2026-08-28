@@ -180,7 +180,6 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             || p->data == NULL
             || pin == NULL
             || pin->data_type != OSSL_PARAM_OCTET_STRING
-            || pin->data_type != OSSL_PARAM_OCTET_STRING
             || pin->data == NULL
             || pin->data_size == 0
             || p->data_size != pin->data_size
