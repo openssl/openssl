@@ -1531,6 +1531,13 @@ typedef struct kt_boundary_data_st {
     size_t expected_len;
 } KT_BOUNDARY_DATA;
 
+static const unsigned char kt128_8190[] = {
+    0x7a, 0xc8, 0x1b, 0x54, 0x96, 0x13, 0x3d, 0x56,
+    0x4d, 0x35, 0xc6, 0xb5, 0xe6, 0x6e, 0x2f, 0x95,
+    0xea, 0x2a, 0xe8, 0xd7, 0x75, 0xf6, 0x04, 0x20,
+    0xab, 0xb0, 0xa1, 0x50, 0x24, 0xd3, 0xd4, 0xf8
+};
+
 static const unsigned char kt128_8191[] = {
     0x1b, 0x57, 0x76, 0x36, 0xf7, 0x23, 0x64, 0x3e,
     0x99, 0x0c, 0xc7, 0xd6, 0xa6, 0x59, 0x83, 0x74,
@@ -1543,6 +1550,27 @@ static const unsigned char kt128_8192[] = {
     0xb6, 0xa8, 0xb6, 0x61, 0xec, 0x92, 0xdc, 0x93,
     0xb9, 0x5e, 0xbd, 0x05, 0xa0, 0x8a, 0x17, 0xb3,
     0x9a, 0xe3, 0x49, 0x08, 0x70, 0xc9, 0x26, 0xc3
+};
+
+static const unsigned char kt128_8191_c2[] = {
+    0x04, 0x51, 0x48, 0xe4, 0x7b, 0x68, 0xc8, 0xb5,
+    0x8d, 0x37, 0xc2, 0xdc, 0x37, 0xf4, 0x35, 0x2d,
+    0x6e, 0x2d, 0x1b, 0xce, 0xb6, 0xca, 0x63, 0x02,
+    0x37, 0x2d, 0xc2, 0x7f, 0xd3, 0x77, 0x9f, 0x04
+};
+
+static const unsigned char kt128_16383[] = {
+    0xe3, 0xde, 0xd5, 0x21, 0x18, 0xea, 0x64, 0xea,
+    0xf0, 0x4c, 0x75, 0x31, 0xc6, 0xcc, 0xb9, 0x5e,
+    0x32, 0x92, 0x4b, 0x7c, 0x2b, 0x87, 0xb2, 0xce,
+    0x68, 0xff, 0x2f, 0x2e, 0xe4, 0x6e, 0x84, 0xef
+};
+
+static const unsigned char kt128_16384[] = {
+    0x82, 0x77, 0x8f, 0x7f, 0x72, 0x34, 0xc8, 0x33,
+    0x52, 0xe7, 0x68, 0x37, 0xb7, 0x21, 0xfb, 0xdb,
+    0xb5, 0x27, 0x0b, 0x88, 0x01, 0x0d, 0x84, 0xfa,
+    0x5a, 0xb0, 0xb6, 0x1e, 0xc8, 0xce, 0x09, 0x56
 };
 
 #if 0
@@ -1570,8 +1598,15 @@ static const unsigned char kt256_8192[] = {
 };
 
 static const KT_BOUNDARY_DATA kt_boundary_tests[] = {
+    /* |S| = 8191, 8192, and 8193, respectively. */
+    { "KT128", 8190, 0, kt128_8190, sizeof(kt128_8190) },
     { "KT128", 8191, 0, kt128_8191, sizeof(kt128_8191) },
     { "KT128", 8192, 0, kt128_8192, sizeof(kt128_8192) },
+    /* Byte 8193 of S is the second customization byte. */
+    { "KT128", 8191, 2, kt128_8191_c2, sizeof(kt128_8191_c2) },
+    /* Exercise an exactly full leaf and a following partial leaf. */
+    { "KT128", 16383, 0, kt128_16383, sizeof(kt128_16383) },
+    { "KT128", 16384, 0, kt128_16384, sizeof(kt128_16384) },
 #if 0
     /*
      * This RFC 9861 tree-boundary vector uses an 8189-byte customization
@@ -1586,12 +1621,14 @@ static const KT_BOUNDARY_DATA kt_boundary_tests[] = {
 static int kt_boundary_test(int tstid)
 {
     const KT_BOUNDARY_DATA *td = kt_boundary_tests + tstid;
-    unsigned char *msg = NULL, *custom = NULL, *out = NULL;
+    unsigned char *msg = NULL, *custom = NULL;
+    unsigned char *one_shot = NULL, *chunked = NULL;
     OSSL_PARAM params[2], *p = params;
     int ret = 0;
 
     if (!TEST_ptr(msg = OPENSSL_malloc(td->msglen))
-        || !TEST_ptr(out = OPENSSL_malloc(td->expected_len)))
+        || !TEST_ptr(one_shot = OPENSSL_malloc(td->expected_len))
+        || !TEST_ptr(chunked = OPENSSL_malloc(td->expected_len)))
         goto err;
     fill_ptn(msg, td->msglen);
     if (td->customlen > 0) {
@@ -1603,13 +1640,21 @@ static int kt_boundary_test(int tstid)
     }
     *p = OSSL_PARAM_construct_end();
 
-    if (!digest_xof_with_params(td->alg, msg, td->msglen, params, out,
+    if (!digest_xof_with_params(td->alg, msg, td->msglen, params, one_shot,
             td->expected_len)
-        || !TEST_mem_eq(out, td->expected_len, td->expected, td->expected_len))
+        || !digest_xof_chunked_with_params(td->alg, msg, td->msglen, params,
+            chunked, td->expected_len)
+        || !TEST_mem_eq(one_shot, td->expected_len, td->expected,
+            td->expected_len)
+        || !TEST_mem_eq(chunked, td->expected_len, td->expected,
+            td->expected_len)
+        || !TEST_mem_eq(one_shot, td->expected_len, chunked,
+            td->expected_len))
         goto err;
     ret = 1;
 err:
-    OPENSSL_free(out);
+    OPENSSL_free(chunked);
+    OPENSSL_free(one_shot);
     OPENSSL_free(custom);
     OPENSSL_free(msg);
     return ret;

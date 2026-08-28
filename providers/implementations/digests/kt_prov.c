@@ -37,11 +37,9 @@ typedef struct kt_ctx_st {
     size_t cvlen;
     unsigned char *custom;
     size_t custom_len;
-    unsigned char first[KT_CHUNK_SIZE];
-    size_t first_len;
     KECCAK1600_CTX root;
     KECCAK1600_CTX leaf;
-    size_t leaf_len;
+    size_t chunk_len;
     size_t cv_count;
     int tree_started;
     int finalized;
@@ -76,51 +74,6 @@ static size_t kt_length_encode(size_t x, unsigned char *out)
     return n + 1;
 }
 
-static int kt_check_cv_count(const KT_CTX *ctx, size_t inlen, int final)
-{
-    size_t new_cvs = 0, leaf_len = ctx->leaf_len;
-
-    if (!ctx->tree_started) {
-        size_t first_space = KT_CHUNK_SIZE - ctx->first_len;
-
-        if (inlen <= first_space)
-            return 1;
-        inlen -= first_space;
-        leaf_len = 0;
-    }
-
-    if (inlen > 0) {
-        size_t leaf_space = KT_CHUNK_SIZE - leaf_len;
-
-        if (inlen >= leaf_space) {
-            size_t full_leaves;
-
-            new_cvs++;
-            inlen -= leaf_space;
-            full_leaves = inlen / KT_CHUNK_SIZE;
-            if (full_leaves > SIZE_MAX - new_cvs)
-                goto err;
-            new_cvs += full_leaves;
-            leaf_len = inlen % KT_CHUNK_SIZE;
-        } else {
-            leaf_len += inlen;
-        }
-    }
-
-    if (final && leaf_len > 0) {
-        if (new_cvs == SIZE_MAX)
-            goto err;
-        new_cvs++;
-    }
-
-    if (new_cvs > SIZE_MAX - ctx->cv_count)
-        goto err;
-    return 1;
-err:
-    ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
-    return 0;
-}
-
 static int kt_start_tree(KT_CTX *ctx)
 {
     static const unsigned char kt_tree_marker[8] = {
@@ -129,21 +82,21 @@ static int kt_start_tree(KT_CTX *ctx)
 
     if (ctx->tree_started)
         return 1;
-    if (!ossl_turboshake_init_keccak(&ctx->root, ctx->bitlen,
-            KT_DOMAIN_FINAL_NODE, ctx->xoflen)
-        || !ossl_sha3_absorb(&ctx->root, ctx->first, ctx->first_len)
-        || !ossl_sha3_absorb(&ctx->root, kt_tree_marker,
+    ctx->root.pad = KT_DOMAIN_FINAL_NODE;
+    if (!ossl_sha3_absorb(&ctx->root, kt_tree_marker,
             sizeof(kt_tree_marker))
         || !ossl_turboshake_init_keccak(&ctx->leaf, ctx->bitlen,
             KT_DOMAIN_INTERMEDIATE_NODE, ctx->cvlen))
         return 0;
     ctx->tree_started = 1;
+    ctx->chunk_len = 0;
     return 1;
 }
 
 static int kt_finish_leaf(KT_CTX *ctx)
 {
     unsigned char cv[64];
+    int ret = 0;
 
     if (ctx->cv_count == SIZE_MAX) {
         ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
@@ -151,12 +104,14 @@ static int kt_finish_leaf(KT_CTX *ctx)
     }
     if (!ossl_sha3_final(&ctx->leaf, cv, ctx->cvlen)
         || !ossl_sha3_absorb(&ctx->root, cv, ctx->cvlen))
-        return 0;
-    OPENSSL_cleanse(cv, sizeof(cv));
+        goto err;
     ctx->cv_count++;
-    ctx->leaf_len = 0;
-    return ossl_turboshake_init_keccak(&ctx->leaf, ctx->bitlen,
+    ctx->chunk_len = 0;
+    ret = ossl_turboshake_init_keccak(&ctx->leaf, ctx->bitlen,
         KT_DOMAIN_INTERMEDIATE_NODE, ctx->cvlen);
+err:
+    OPENSSL_cleanse(cv, sizeof(cv));
+    return ret;
 }
 
 static int kt_absorb_s(KT_CTX *ctx, const unsigned char *in, size_t inlen)
@@ -167,33 +122,24 @@ static int kt_absorb_s(KT_CTX *ctx, const unsigned char *in, size_t inlen)
         return 1;
     if (ctx->finalized)
         return 0;
-    if (!kt_check_cv_count(ctx, inlen, 0))
-        return 0;
-
-    if (!ctx->tree_started) {
-        len = KT_CHUNK_SIZE - ctx->first_len;
-        if (len > inlen)
-            len = inlen;
-        memcpy(ctx->first + ctx->first_len, in, len);
-        ctx->first_len += len;
-        in += len;
-        inlen -= len;
-        if (inlen == 0)
-            return 1;
-        if (!kt_start_tree(ctx))
-            return 0;
-    }
 
     while (inlen > 0) {
-        len = KT_CHUNK_SIZE - ctx->leaf_len;
+        /* The next byte is byte 8193 of S, so switch to tree mode. */
+        if (!ctx->tree_started && ctx->chunk_len == KT_CHUNK_SIZE
+            && !kt_start_tree(ctx))
+            return 0;
+
+        len = KT_CHUNK_SIZE - ctx->chunk_len;
         if (len > inlen)
             len = inlen;
-        if (!ossl_sha3_absorb(&ctx->leaf, in, len))
+        if (!ossl_sha3_absorb(ctx->tree_started ? &ctx->leaf : &ctx->root,
+                in, len))
             return 0;
-        ctx->leaf_len += len;
+        ctx->chunk_len += len;
         in += len;
         inlen -= len;
-        if (ctx->leaf_len == KT_CHUNK_SIZE && !kt_finish_leaf(ctx))
+        if (ctx->tree_started && ctx->chunk_len == KT_CHUNK_SIZE
+            && !kt_finish_leaf(ctx))
             return 0;
     }
     return 1;
@@ -202,31 +148,19 @@ static int kt_absorb_s(KT_CTX *ctx, const unsigned char *in, size_t inlen)
 static int kt_final_absorb(KT_CTX *ctx)
 {
     unsigned char enc[sizeof(size_t) + 1];
-    size_t enclen, suffix_len;
+    size_t enclen;
     static const unsigned char kt_final_suffix[2] = { 0xff, 0xff };
 
     if (ctx->finalized)
         return 1;
 
     enclen = kt_length_encode(ctx->custom_len, enc);
-    if (ctx->custom_len > SIZE_MAX - enclen) {
-        ERR_raise(ERR_LIB_PROV, PROV_R_LENGTH_TOO_LARGE);
-        return 0;
-    }
-    suffix_len = ctx->custom_len + enclen;
-    if (!kt_check_cv_count(ctx, suffix_len, 1))
-        return 0;
     if (!kt_absorb_s(ctx, ctx->custom, ctx->custom_len)
         || !kt_absorb_s(ctx, enc, enclen))
         return 0;
 
-    if (!ctx->tree_started) {
-        if (!ossl_turboshake_init_keccak(&ctx->root, ctx->bitlen,
-                KT_DOMAIN_SINGLE_NODE, ctx->xoflen)
-            || !ossl_sha3_absorb(&ctx->root, ctx->first, ctx->first_len))
-            return 0;
-    } else {
-        if (ctx->leaf_len > 0 && !kt_finish_leaf(ctx))
+    if (ctx->tree_started) {
+        if (ctx->chunk_len > 0 && !kt_finish_leaf(ctx))
             return 0;
         enclen = kt_length_encode(ctx->cv_count, enc);
         if (!ossl_sha3_absorb(&ctx->root, enc, enclen)
@@ -263,13 +197,15 @@ static int kt_init(void *vctx, const OSSL_PARAM params[])
     ctx->custom = NULL;
     ctx->custom_len = 0;
     ctx->xoflen = ctx->cvlen;
-    ctx->first_len = 0;
-    ctx->leaf_len = 0;
+    ctx->chunk_len = 0;
     ctx->cv_count = 0;
     ctx->tree_started = 0;
     ctx->finalized = 0;
     memset(&ctx->root, 0, sizeof(ctx->root));
     memset(&ctx->leaf, 0, sizeof(ctx->leaf));
+    if (!ossl_turboshake_init_keccak(&ctx->root, ctx->bitlen,
+            KT_DOMAIN_SINGLE_NODE, ctx->xoflen))
+        return 0;
     return kt_set_ctx_params(vctx, params);
 }
 
@@ -406,6 +342,7 @@ static int kt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     KT_CTX *ctx = vctx;
     struct kt_set_ctx_params_st p;
+    size_t xoflen;
     int has_change = 0;
 
     if (ctx == NULL || !kt_set_ctx_params_decoder(params, &p))
@@ -415,14 +352,17 @@ static int kt_set_ctx_params(void *vctx, const OSSL_PARAM params[])
     if (has_change && ctx->finalized)
         return 0;
 
+    xoflen = ctx->xoflen;
     if (p.xoflen != NULL
-        && !OSSL_PARAM_get_size_t(p.xoflen, &ctx->xoflen)) {
+        && !OSSL_PARAM_get_size_t(p.xoflen, &xoflen)) {
         ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
         return 0;
     }
 
     if (p.custom != NULL && !kt_set_custom(ctx, p.custom))
         return 0;
+    ctx->xoflen = xoflen;
+    ctx->root.md_size = xoflen;
     return 1;
 }
 
