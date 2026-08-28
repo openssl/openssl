@@ -146,8 +146,6 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             || p->data == NULL
             || p->data_size < EVP_AEAD_TLS1_AAD_LEN
             || !aes_get_multiblock_interleave(p1, &mb_param.interleave)
-            || p1 == NULL
-            || !OSSL_PARAM_get_uint(p1, &mb_param.interleave)
             || tls1_aad_plaintext_len(p->data) > SSL3_RT_MAX_PLAIN_LENGTH
             || p->data_size
                 > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
@@ -183,7 +181,6 @@ static int aes_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             || pin->data == NULL
             || pin->data_size == 0
             || p->data_size != pin->data_size
-            || p1 == NULL
             || !aes_get_multiblock_interleave(p1, &mb_param.interleave)
             || pin->data_size
                 > (size_t)SSL3_RT_MAX_PLAIN_LENGTH * mb_param.interleave) {
