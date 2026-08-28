@@ -36,9 +36,6 @@ OpenSSL 4.1
 
   * TurboSHAKE and KangarooTwelve XOF digest support as per [RFC 9861].
 
-  * cSHAKE now accepts the documented 512-byte maximum customization string
-    length.
-
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
   * Initial support for the Elbrus2000 (e2k) architecture

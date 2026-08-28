@@ -184,11 +184,6 @@ OpenSSL Releases
 
    *Filip Skokan*
 
- * The cSHAKE implementation now accepts customization strings of 512 bytes,
-   matching the documented limit.
-
-   *Filip Skokan*
-
  * Do not issue TLS1.3 session tickets if the server has explicitly disabled
    them via `SSL_OP_NO_TICKET` and also turned off the session cache with
    `SSL_SESS_CACHE_OFF`. Both conditions together indicate a clear intent to
