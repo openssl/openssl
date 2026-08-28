@@ -192,9 +192,8 @@ static int export_sub_cb(const OSSL_PARAM *params, void *varg)
             return 0;
         if (len != sub_arg->prvlen) {
             ERR_raise_data(ERR_LIB_PROV, ERR_R_INTERNAL_ERROR,
-                "Unexpected %s private key length %lu != %lu",
-                sub_arg->algorithm_name, (unsigned long)len,
-                (unsigned long)sub_arg->publen);
+                "Unexpected %s private key length %zu != %zu",
+                sub_arg->algorithm_name, len, sub_arg->prvlen);
             return 0;
         }
         ++sub_arg->prvcount;
