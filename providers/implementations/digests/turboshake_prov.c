@@ -94,11 +94,12 @@ int ossl_turboshake_init_keccak(KECCAK1600_CTX *ctx, size_t bitlen,
     return 1;
 }
 
-static void *turboshake_newctx(void *provctx, size_t bitlen)
+static void *turboshake_newctx(ossl_unused void *provctx, size_t bitlen)
 {
     TURBOSHAKE_CTX *ctx;
 
-    DIGEST_PROV_CHECK(provctx, SHA3_256);
+    if (ossl_unlikely(!ossl_prov_is_running()))
+        return NULL;
     ctx = OPENSSL_zalloc(sizeof(*ctx));
     if (ctx == NULL)
         return NULL;
