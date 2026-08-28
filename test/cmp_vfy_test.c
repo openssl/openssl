@@ -135,7 +135,7 @@ static int test_verify_popo_bad(void)
 }
 #endif
 
-/* indirectly checks also OSSL_CMP_validate_msg(), uses only Insta certs */
+/* indirectly checks also OSSL_CMP_validate_msg(), uses only Insta or self-signed EE certs */
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     int res = TEST_int_eq(fixture->expected,
@@ -211,6 +211,8 @@ static int add_untrusted(OSSL_CMP_CTX *ctx, X509 *cert)
     return X509_add_cert(OSSL_CMP_CTX_get0_untrusted(ctx), cert,
         X509_ADD_FLAG_UP_REF);
 }
+
+/* Message validation tests using self-signed certs for signature-based protection */
 
 static int test_validate_msg_signature_partial_chain(int expired)
 {
@@ -291,6 +293,33 @@ static int test_validate_msg_signature_sender_cert_srvcert(void)
     return test_validate_msg_signature_srvcert(0, 0, 0);
 }
 
+static int test_validate_msg_with_sender(const X509_NAME *name, int expected)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = srvcert;
+    fixture->expected = expected;
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
+        || !TEST_true(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, name))
+        || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    EXECUTE_TEST(execute_validate_msg_test, tear_down);
+    return result;
+}
+
+static int test_validate_msg_signature_expected_sender(void)
+{
+    return test_validate_msg_with_sender(X509_get_subject_name(srvcert), 1);
+}
+
+static int test_validate_msg_signature_unexpected_sender(void)
+{
+    return test_validate_msg_with_sender(X509_get_subject_name(root), 0);
+}
+
+/* Message validation tests using Insta or other certs for signature-based protection */
+
 static int test_validate_msg_signature_sender_cert_untrusted(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
@@ -349,31 +378,6 @@ static int test_validate_msg_signature_sender_cert_absent(void)
     return result;
 }
 #endif
-
-static int test_validate_msg_with_sender(const X509_NAME *name, int expected)
-{
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    fixture->cert = srvcert;
-    fixture->expected = expected;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
-        || !TEST_true(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, name))
-        || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))) {
-        tear_down(fixture);
-        fixture = NULL;
-    }
-    EXECUTE_TEST(execute_validate_msg_test, tear_down);
-    return result;
-}
-
-static int test_validate_msg_signature_expected_sender(void)
-{
-    return test_validate_msg_with_sender(X509_get_subject_name(srvcert), 1);
-}
-
-static int test_validate_msg_signature_unexpected_sender(void)
-{
-    return test_validate_msg_with_sender(X509_get_subject_name(root), 0);
-}
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_unprotected_request(void)
@@ -545,7 +549,8 @@ static int test_msg_check_recipient_nonce_error(void)
     return result;
 }
 
-/* Regression test for CVE-2026-63073 */
+/* Regression test for CVE-2026-63073, uses self-signed cert for signature-based protection */
+
 static int execute_msg_check_update_malicious_sender(CMP_VFY_TEST_FIXTURE *fixture)
 {
     const char *data = NULL;
@@ -753,11 +758,13 @@ int setup_tests(void)
         || !TEST_ptr(error_protected = load_pkimsg(error_protected_f, libctx)))
         goto err;
 
-    /* Message validation tests, using Insta certs for signature-based protection */
+    /* CRMF proof-of-possession self-signature tests */
     ADD_TEST(test_verify_popo);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_verify_popo_bad);
 #endif
+
+    /* Message validation tests using self-signed certs for signature-based protection */
     ADD_TEST(test_validate_msg_signature_trusted_ok);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_trusted_expired);
@@ -768,15 +775,16 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_signature_bad);
 #endif
     ADD_TEST(test_validate_msg_signature_sender_cert_srvcert);
+    ADD_TEST(test_validate_msg_signature_expected_sender);
+    ADD_TEST(test_validate_msg_signature_unexpected_sender);
+    ADD_TEST(test_msg_check_update_malicious_sender);
+
+    /* Message validation tests using Insta or other certs for signature-based protection */
     ADD_TEST(test_validate_msg_signature_sender_cert_untrusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_trusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_extracert);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_sender_cert_absent);
-#endif
-    ADD_TEST(test_validate_msg_signature_expected_sender);
-    ADD_TEST(test_validate_msg_signature_unexpected_sender);
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_unprotected_request);
 #endif
     ADD_TEST(test_validate_msg_mac_alg_protection_ok);
@@ -801,7 +809,6 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
     ADD_TEST(test_msg_check_recipient_nonce_error);
-    ADD_TEST(test_msg_check_update_malicious_sender);
 
     /* Cert path validation tests, using normal OpenSSL test certs */
     ADD_TEST(test_validate_cert_path_2_level_ok);
