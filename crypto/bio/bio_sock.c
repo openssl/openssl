@@ -39,7 +39,7 @@ static int wsa_init_done = 0;
 #include <sys/select.h>
 #endif
 #endif
-#include "internal/err.h"
+#include "crypto/err.h"
 #include "internal/sockets.h" /* for openssl_fdset() */
 
 #ifndef OPENSSL_NO_DEPRECATED_1_1_0

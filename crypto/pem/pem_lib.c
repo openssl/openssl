@@ -16,7 +16,7 @@
 #include "crypto/ctype.h"
 #include <string.h>
 #include "internal/cryptlib.h"
-#include "internal/err.h"
+#include "crypto/err.h"
 #include <openssl/buffer.h>
 #include <openssl/objects.h>
 #include <openssl/evp.h>
