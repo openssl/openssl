@@ -14,6 +14,7 @@
 #include <stddef.h>
 #include <stdarg.h>
 #include <string.h>
+#include <inttypes.h>
 #include <openssl/e_os2.h>
 #include <openssl/evp.h>
 #include <openssl/objects.h>
@@ -1068,20 +1069,20 @@ static int kdf_argon2_derive(void *vctx, unsigned char *out, size_t outlen,
     if (ctx->threads > 1) {
 #ifdef ARGON2_NO_THREADS
         ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
-            "requested %u threads, single-threaded mode supported only",
+            "requested %" PRIu32 " threads, single-threaded mode supported only",
             ctx->threads);
         return 0;
 #else
         if (ctx->threads > ossl_get_avail_threads(ctx->libctx)) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
-                "requested %u threads, available: %u",
+                "requested %" PRIu32 " threads, available: %" PRIu64,
                 ctx->threads, ossl_get_avail_threads(ctx->libctx));
             return 0;
         }
 #endif
         if (ctx->threads > ctx->lanes) {
             ERR_raise_data(ERR_LIB_PROV, PROV_R_INVALID_THREAD_POOL_SIZE,
-                "requested more threads (%u) than lanes (%u)",
+                "requested more threads (%" PRIu32 ") than lanes (%" PRIu32 ")",
                 ctx->threads, ctx->lanes);
             return 0;
         }
