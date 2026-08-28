@@ -81,8 +81,11 @@ static const uint8_t cshake256_output[] = {
     0x4a, 0xa8, 0x70, 0xe7, 0x61, 0x6b, 0x0c, 0x3c
 };
 
+#if !defined(OPENSSL_NO_TURBOSHAKE) || !defined(OPENSSL_NO_KT)
 static const uint8_t empty_input[1] = { 0 };
+#endif
 
+#ifndef OPENSSL_NO_TURBOSHAKE
 static const uint8_t turboshake128_empty_output[] = {
     0x1e, 0x41, 0x5f, 0x1c, 0x59, 0x83, 0xaf, 0xf2,
     0x16, 0x92, 0x17, 0x27, 0x7d, 0x17, 0xbb, 0x53,
@@ -104,7 +107,9 @@ static const uint8_t turboshake256_empty_output[] = {
     0x2f, 0xba, 0xfa, 0xbb, 0x6e, 0x13, 0xec, 0x1c,
     0xc2, 0x0d, 0x99, 0x55, 0x47, 0x60, 0x0d, 0xb0
 };
+#endif
 
+#ifndef OPENSSL_NO_KT
 static const uint8_t kt128_empty_output[] = {
     0x1a, 0xc2, 0xd4, 0x50, 0xfc, 0x3b, 0x42, 0x05,
     0xd1, 0x9d, 0xa7, 0xbf, 0xca, 0x1b, 0x37, 0x51,
@@ -126,6 +131,7 @@ static const uint8_t kt256_empty_output[] = {
     0x3f, 0xd4, 0xad, 0xc7, 0x14, 0x8e, 0xcb, 0x78,
     0x28, 0x55, 0x00, 0x3a, 0xae, 0xbd, 0xe4, 0xa9
 };
+#endif
 
 typedef struct test_data_st {
     const char *alg;
@@ -156,6 +162,7 @@ static const TEST_DATA xof_test_data[] = {
         64,
         "KMAC",
         "Custom" },
+#ifndef OPENSSL_NO_TURBOSHAKE
     { "TURBOSHAKE128",
         empty_input, 0,
         turboshake128_empty_output, sizeof(turboshake128_empty_output),
@@ -164,6 +171,8 @@ static const TEST_DATA xof_test_data[] = {
         empty_input, 0,
         turboshake256_empty_output, sizeof(turboshake256_empty_output),
         64 },
+#endif
+#ifndef OPENSSL_NO_KT
     { "KT128",
         empty_input, 0,
         kt128_empty_output, sizeof(kt128_empty_output),
@@ -172,6 +181,7 @@ static const TEST_DATA xof_test_data[] = {
         empty_input, 0,
         kt256_empty_output, sizeof(kt256_empty_output),
         64 },
+#endif
 };
 
 static const unsigned char shake256_largemsg_input[] = {
@@ -682,6 +692,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_TURBOSHAKE) || !defined(OPENSSL_NO_KT)
 static void fill_ptn(unsigned char *buf, size_t len)
 {
     size_t i;
@@ -689,7 +700,9 @@ static void fill_ptn(unsigned char *buf, size_t len)
     for (i = 0; i < len; i++)
         buf[i] = (unsigned char)(i % 251);
 }
+#endif
 
+#ifndef OPENSSL_NO_TURBOSHAKE
 typedef struct turboshake_squeeze_data_st {
     const char *alg;
     size_t rate;
@@ -734,6 +747,7 @@ err:
     EVP_MD_free(md);
     return ret;
 }
+#endif
 
 static int digest_xof_with_params_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const char *alg, const unsigned char *in, size_t inlen,
@@ -756,6 +770,7 @@ err:
     return ret;
 }
 
+#if !defined(OPENSSL_NO_TURBOSHAKE) || !defined(OPENSSL_NO_KT)
 static int digest_xof_with_params(const char *alg, const unsigned char *in,
     size_t inlen, const OSSL_PARAM params[], unsigned char *out, size_t outlen)
 {
@@ -803,10 +818,14 @@ typedef struct turboshake_kt_data_st {
 } TURBOSHAKE_KT_DATA;
 
 static const TURBOSHAKE_KT_DATA turboshake_kt_tests[] = {
+#ifndef OPENSSL_NO_TURBOSHAKE
     { "TURBOSHAKE128", 0, 32 },
     { "TURBOSHAKE256", 0, 64 },
+#endif
+#ifndef OPENSSL_NO_KT
     { "KT128", 1, 32 },
     { "KT256", 1, 64 },
+#endif
 };
 
 static int turboshake_kt_chunked_absorb_and_size_test(int tstid)
@@ -953,12 +972,9 @@ err:
     return ret;
 }
 
-static int turboshake_kt_repeated_param_test(void)
+#ifndef OPENSSL_NO_TURBOSHAKE
+static int turboshake_repeated_param_test(void)
 {
-    static char custom_utf8[] = "Custom";
-    static unsigned char custom_octet[] = {
-        'C', 'u', 's', 't', 'o', 'm'
-    };
     unsigned int domain1 = 1, domain2 = 2;
     OSSL_PARAM params[3];
     EVP_MD *md = NULL;
@@ -981,10 +997,25 @@ static int turboshake_kt_repeated_param_test(void)
     }
     ERR_pop_to_mark();
 
+    ret = 1;
+err:
     EVP_MD_CTX_free(ctx);
     EVP_MD_free(md);
-    ctx = NULL;
-    md = NULL;
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_KT
+static int kt_repeated_param_test(void)
+{
+    static char custom_utf8[] = "Custom";
+    static unsigned char custom_octet[] = {
+        'C', 'u', 's', 't', 'o', 'm'
+    };
+    OSSL_PARAM params[3];
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
 
     if (!TEST_ptr(md = EVP_MD_fetch(NULL, "KT128", NULL))
         || !TEST_ptr(ctx = EVP_MD_CTX_new()))
@@ -1008,6 +1039,7 @@ err:
     EVP_MD_free(md);
     return ret;
 }
+#endif
 
 #define TURBOSHAKE_KT_NO_CUSTOM SIZE_MAX
 
@@ -1035,6 +1067,7 @@ typedef struct turboshake_kt_vector_st {
  * RFC 9861.
  */
 static const TURBOSHAKE_KT_VECTOR turboshake_kt_vectors[] = {
+#ifndef OPENSSL_NO_TURBOSHAKE
     { "TURBOSHAKE128", TURBOSHAKE_KT_INPUT_PTN, 1, NULL, 32,
         "55cedd6f60af7bb29a4042ae832ef3f58db7299f893ebb9247247d856958daa9", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 0 },
     { "TURBOSHAKE128", TURBOSHAKE_KT_INPUT_PTN, 17, NULL, 32,
@@ -1063,6 +1096,8 @@ static const TURBOSHAKE_KT_VECTOR turboshake_kt_vectors[] = {
         "add53b06543e584b5823f626996aee50fe45ed15f20243a7165485acb4aa76b4ffda75cedf6d8cdc95c332bd56f4b986b58bb17d1778bfc1b1a97545cdf4ec9f", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 0 },
     { "TURBOSHAKE256", TURBOSHAKE_KT_INPUT_PTN, 24137569, NULL, 64,
         "9e11bc59c24e73993c1484ec66358ef71db74aefd84e123f7800ba9c4853e02cfe701d9e6bb765a304f0dc34a4ee3ba82c410f0da70e86bfbd90ea877c2d6104", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 0 },
+#endif
+#ifndef OPENSSL_NO_KT
     { "KT128", TURBOSHAKE_KT_INPUT_PTN, 1, NULL, 32,
         "2bda92450e8b147f8a7cb629e784a058efca7cf7d8218e02d345dfaa65244a1f", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 0 },
     { "KT128", TURBOSHAKE_KT_INPUT_PTN, 17, NULL, 32,
@@ -1147,14 +1182,19 @@ static const TURBOSHAKE_KT_VECTOR turboshake_kt_vectors[] = {
     { "KT256", TURBOSHAKE_KT_INPUT_PTN, 8192, NULL, 64,
         "f4b5908b929ffe01e0f79ec2f21243d41a396b2e7303a6af1d6399cd6c7a0a2dd7c4f607e8277f9c9b1cb4ab9ddc59d4b92d1fc7558441f1832c3279a4241b8b", 0, 0, 8190, 0 },
 #endif
+#endif
+#ifndef OPENSSL_NO_TURBOSHAKE
     { "TURBOSHAKE128", TURBOSHAKE_KT_INPUT_EMPTY, 0, NULL, 10032,
         "a3b9b0385900ce761f22aed548e754da10a5242d62e8c658e3f3a923a7555607", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 1 },
     { "TURBOSHAKE256", TURBOSHAKE_KT_INPUT_EMPTY, 0, NULL, 10032,
         "abefa11630c661269249742685ec082f207265dccf2f43534e9c61ba0c9d1d75", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 1 },
+#endif
+#ifndef OPENSSL_NO_KT
     { "KT128", TURBOSHAKE_KT_INPUT_EMPTY, 0, NULL, 10032,
         "e8dc563642f7228c84684c898405d3a834799158c079b12880277a1d28e2ff6d", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 1 },
     { "KT256", TURBOSHAKE_KT_INPUT_EMPTY, 0, NULL, 10064,
         "ad4a1d718cf950506709a4c33396139b4449041fc79a05d68da35f1e453522e056c64fe94958e7085f2964888259b9932752f3ccd855288efee5fcbb8b563069", 0, 0, TURBOSHAKE_KT_NO_CUSTOM, 1 },
+#endif
 };
 
 static int turboshake_kt_vector_test(int tstid)
@@ -1221,7 +1261,9 @@ err:
     OPENSSL_free(out);
     return ret;
 }
+#endif
 
+#ifndef OPENSSL_NO_TURBOSHAKE
 static int turboshake_domain_test(void)
 {
     static const unsigned char msg[] = { 0xff, 0xff, 0xff };
@@ -1285,7 +1327,9 @@ err:
     EVP_MD_free(md);
     return ret;
 }
+#endif
 
+#ifndef OPENSSL_NO_KT
 static int kt_custom_octet_test(void)
 {
     static const unsigned char msg[] = { 0xff };
@@ -1406,6 +1450,7 @@ err:
     EVP_MD_free(md);
     return ret;
 }
+#endif
 
 static int cshake_custom_utf8_test_libctx(OSSL_LIB_CTX *libctx,
     const char *propq)
@@ -1523,6 +1568,7 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_KT
 typedef struct kt_boundary_data_st {
     const char *alg;
     size_t msglen;
@@ -1659,6 +1705,7 @@ err:
     OPENSSL_free(msg);
     return ret;
 }
+#endif
 
 static int xof_fail_test(void)
 {
@@ -1690,21 +1737,30 @@ int setup_tests(void)
     ADD_ALL_TESTS(xof_squeeze_kat_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_large_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_dup_test, OSSL_NELEM(dupoffset_test_data));
+#ifndef OPENSSL_NO_TURBOSHAKE
     ADD_ALL_TESTS(turboshake_segmented_squeeze_test,
         OSSL_NELEM(turboshake_squeeze_tests));
+#endif
+#if !defined(OPENSSL_NO_TURBOSHAKE) || !defined(OPENSSL_NO_KT)
     ADD_ALL_TESTS(turboshake_kt_vector_test, OSSL_NELEM(turboshake_kt_vectors));
     ADD_ALL_TESTS(turboshake_kt_chunked_absorb_and_size_test,
         OSSL_NELEM(turboshake_kt_tests));
     ADD_ALL_TESTS(turboshake_kt_copyctx_test, OSSL_NELEM(turboshake_kt_tests));
     ADD_ALL_TESTS(turboshake_kt_xoflen_alias_conflict_test,
         OSSL_NELEM(turboshake_kt_tests));
-    ADD_TEST(turboshake_kt_repeated_param_test);
+#endif
+#ifndef OPENSSL_NO_TURBOSHAKE
+    ADD_TEST(turboshake_repeated_param_test);
     ADD_TEST(turboshake_domain_test);
+#endif
+#ifndef OPENSSL_NO_KT
+    ADD_TEST(kt_repeated_param_test);
     ADD_TEST(kt_custom_octet_test);
     ADD_TEST(kt_custom_null_octet_test);
     ADD_TEST(kt_custom_limit_test);
-    ADD_TEST(cshake_custom_test);
     ADD_ALL_TESTS(kt_boundary_test, OSSL_NELEM(kt_boundary_tests));
+#endif
+    ADD_TEST(cshake_custom_test);
     ADD_TEST(xof_fail_test);
     return 1;
 }

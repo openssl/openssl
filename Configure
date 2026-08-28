@@ -469,6 +469,7 @@ my @disablables_algorithms = (
     "ecx",
     "kbkdf",
     "krb5kdf",
+    "kt",
     "gost",
     "idea",
     "ikev2kdf",
@@ -499,6 +500,7 @@ my @disablables_algorithms = (
     "srtpkdf",
     "sshkdf",
     "sskdf",
+    "turboshake",
     "x942kdf",
     "x963kdf",
     "whirlpool",
@@ -674,7 +676,7 @@ my @disable_cascades = (
                              "des", "dgram", "dh", "dsa",
                              "ec", "ech",
                              "filenames", "hmac-drbg-kdf",
-                             "idea", "ikev2kdf", "kbkdf", "krb5kdf", "ktls", "lms",
+                             "idea", "ikev2kdf", "kbkdf", "krb5kdf", "kt", "ktls", "lms",
                              "md4", "ml-dsa", "ml-kem", "multiblock",
                              "nextprotoneg", "ocsp", "ocb", "poly1305", "psk",
                              "pvkkdf", "rc2", "rc4", "rmd160",
@@ -683,7 +685,7 @@ my @disable_cascades = (
                              "srp", "srtp", "srtpkdf", "sshkdf", "sskdf",
                              "ssl-trace",
                              "tfo",
-                             "ts", "ui-console", "whirlpool",
+                             "ts", "turboshake", "ui-console", "whirlpool",
                              "x942kdf", "x963kdf",
                              "fips-securitychecks" ],
     sub { $config{processor} eq "386" }
@@ -745,6 +747,7 @@ my @disable_cascades = (
     "thread-pool"       => [ "default-thread-pool" ],
 
     "blake2"            => [ "argon2" ],
+    "turboshake"        => [ "kt" ],
 
     "deprecated-3.0"    => [ "srp" ],
 

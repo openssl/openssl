@@ -132,10 +132,16 @@ static const OSSL_ALGORITHM deflt_digests[] = {
     { PROV_NAMES_CSHAKE_128, "provider=default", ossl_cshake_128_functions },
     { PROV_NAMES_CSHAKE_256, "provider=default", ossl_cshake_256_functions },
 
-    { PROV_NAMES_TURBOSHAKE_128, "provider=default", ossl_turboshake_128_functions },
-    { PROV_NAMES_TURBOSHAKE_256, "provider=default", ossl_turboshake_256_functions },
+#ifndef OPENSSL_NO_TURBOSHAKE
+    { PROV_NAMES_TURBOSHAKE_128, "provider=default",
+        ossl_turboshake_128_functions },
+    { PROV_NAMES_TURBOSHAKE_256, "provider=default",
+        ossl_turboshake_256_functions },
+#endif /* OPENSSL_NO_TURBOSHAKE */
+#ifndef OPENSSL_NO_KT
     { PROV_NAMES_KT_128, "provider=default", ossl_kt_128_functions },
     { PROV_NAMES_KT_256, "provider=default", ossl_kt_256_functions },
+#endif /* OPENSSL_NO_KT */
 
 #ifndef OPENSSL_NO_BLAKE2
     /*
