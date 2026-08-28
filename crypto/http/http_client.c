@@ -24,7 +24,7 @@
 #include "internal/sockets.h"
 #include "internal/common.h" /* for ossl_assert() */
 #include "internal/cryptlib.h" /* for ossl_asprintf() */
-#include "internal/err.h"
+#include "crypto/err.h"
 
 #define HTTP_PREFIX "HTTP/"
 #define HTTP_VERSION_PATT "1." /* allow 1.x */

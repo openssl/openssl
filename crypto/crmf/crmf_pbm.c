@@ -13,7 +13,7 @@
 
 #include "crmf_local.h"
 #include <openssl/rand.h> /* for RAND_bytes_ex() */
-#include "internal/err.h"
+#include "crypto/err.h"
 #include "internal/sizes.h" /* for OSSL_MAX_NAME_SIZE */
 #include <openssl/err.h>
 

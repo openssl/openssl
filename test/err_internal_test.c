@@ -10,7 +10,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <openssl/err.h>
-#include "internal/err.h"
+#include "crypto/err.h"
 #include "testutil.h"
 
 /* Text longer than the room ossl_err_add_error_fmt() allocates up front. */

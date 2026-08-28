@@ -12,7 +12,7 @@
 #include <stdio.h>
 
 #include "cmp_local.h"
-#include "internal/err.h"
+#include "crypto/err.h"
 #include <inttypes.h>
 
 #define IS_CREP(t) ((t) == OSSL_CMP_PKIBODY_IP || (t) == OSSL_CMP_PKIBODY_CP \
