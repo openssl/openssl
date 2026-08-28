@@ -17,7 +17,7 @@
 #include <sys/stat.h> /* struct stat */
 #endif
 #include "internal/cryptlib.h"
-#include "internal/err.h"
+#include "crypto/err.h"
 #include "internal/o_dir.h"
 #include <openssl/lhash.h>
 #include <openssl/conf.h>
