@@ -41,7 +41,7 @@ my @ciphers =
                      |rc2|rc4|seed)/x} @ciphers
     if disabled("legacy");
 
-plan tests => 10 + (scalar @ciphers)*2;
+plan tests => 11 + (scalar @ciphers)*2;
 
  SKIP: {
      skip "Problems getting ciphers...", 1 + scalar(@ciphers)
@@ -183,5 +183,38 @@ plan tests => 10 + (scalar @ciphers)*2;
                       "-in", "iter.cipher", "-out", "iter_mismatch.clear"]))
             || compare_text($test, "iter_mismatch.clear") != 0,
             "decrypt does not recover the plaintext when -iter does not match");
+     };
+
+     subtest "-kfile reads the passphrase from a file" => sub {
+         plan tests => 5;
+
+         # The trailing CRLF must be stripped from the passphrase.
+         open my $fh, ">", "kfile.pass" or die "Cannot write kfile.pass: $!";
+         print $fh "secret\r\n";
+         close $fh;
+
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-e", "-kfile", "kfile.pass",
+                     "-in", $test, "-out", "kfile.cipher"])),
+            "encrypt with -kfile");
+         ok(run(app([$cmd, "enc", "-aes-128-cbc", "-d", "-k", "secret",
+                     "-in", "kfile.cipher", "-out", "kfile.clear"])),
+            "decrypt with the same passphrase given with -k");
+         ok(compare_text($test, "kfile.clear") == 0,
+            "decrypted output matches the original");
+
+         open $fh, ">", "kfile_empty.pass" or die "Cannot write file: $!";
+         close $fh;
+         ok(!run(app([$cmd, "enc", "-aes-128-cbc", "-e",
+                      "-kfile", "kfile_empty.pass",
+                      "-in", $test, "-out", "kfile_fail.cipher"])),
+            "an empty passphrase file is rejected");
+
+         open $fh, ">", "kfile_newline.pass" or die "Cannot write file: $!";
+         print $fh "\n";
+         close $fh;
+         ok(!run(app([$cmd, "enc", "-aes-128-cbc", "-e",
+                      "-kfile", "kfile_newline.pass",
+                      "-in", $test, "-out", "kfile_fail.cipher"])),
+            "a passphrase file with only a newline is rejected");
      };
 }
