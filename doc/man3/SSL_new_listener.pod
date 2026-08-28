@@ -160,9 +160,9 @@ Certificates, verification parameters, ciphersuites, ALPN configuration and
 other security policy must be configured on the listener's
 B<SSL_CTX>. The connection is reset to accepted-connection defaults. TLS
 callbacks and QUIC message tracing callbacks are derived from the listener.
-Except for application ex data associated with the outer SSL object,
-applications must not rely on configuration applied to I<new_conn> before the
-call being retained; configure it on the listener or after SSL_listen_ex()
+Application ex data set on I<new_conn> is retained. Applications must not rely
+on any other configuration applied to I<new_conn> before the call being
+retained. Configure such settings on the listener or after SSL_listen_ex()
 succeeds. Applications must not call L<SSL_set_bio(3)> or L<SSL_set_fd(3)> to
 install a private connected BIO or file descriptor on the returned connection;
 it continues to use the listener's shared network port.
