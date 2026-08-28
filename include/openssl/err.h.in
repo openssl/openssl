@@ -421,8 +421,12 @@ void ERR_print_errors_fp(FILE *fp);
 #endif
 void ERR_print_errors(BIO *bp);
 
+#ifndef OPENSSL_NO_DEPRECATED_4_1
+OSSL_DEPRECATEDIN_4_1_FOR("use ERR_add_error_txt() or ERR_raise_data()")
 void ERR_add_error_data(int num, ...);
+OSSL_DEPRECATEDIN_4_1_FOR("use ERR_add_error_txt() or ERR_raise_data()")
 void ERR_add_error_vdata(int num, va_list args);
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */
 void ERR_add_error_txt(const char *sepr, const char *txt);
 void ERR_add_error_mem_bio(const char *sep, BIO *bio);
 
