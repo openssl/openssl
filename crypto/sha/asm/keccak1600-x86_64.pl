@@ -517,7 +517,7 @@ SHA3_absorb:
 ___
 
 $p12 = rename_labels(substr($code, $p12_start),
-                     "SHA3_absorb", "ossl_keccak1600_absorb_p12");
+                     "SHA3_absorb", "ossl_keccak1600_p12_absorb");
 $p12 =~ s/\n\tlea\tiotas\(%rip\),\Q$iotas\E\n/\n/;
 $p12 =~ s/\n\tcall\t__KeccakF1600/\n\tlea\t96+iotas(%rip),$iotas\n\n\tcall\t__KeccakF1600/;
 $code .= $p12;
@@ -587,7 +587,7 @@ SHA3_squeeze:
 ___
 
 $p12 = rename_labels(substr($code, $p12_start),
-                     "SHA3_squeeze", "ossl_keccak1600_squeeze_p12");
+                     "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
 $p12 =~ s/KeccakF1600/KeccakP1600_12/g;
 $p12 =~ s/(pop\t%r12\n)\.cfi_pop\t%r13/$1.cfi_pop\t%r12/;
 $code .= $p12;

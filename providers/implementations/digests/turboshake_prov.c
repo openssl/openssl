@@ -48,7 +48,7 @@ static OSSL_FUNC_digest_settable_ctx_params_fn turboshake_settable_ctx_params;
 static size_t turboshake_absorb_p12(KECCAK1600_CTX *ctx,
     const unsigned char *inp, size_t len)
 {
-    return ossl_keccak1600_absorb_p12(ctx->A, inp, len, ctx->block_size);
+    return ossl_keccak1600_p12_absorb(ctx->A, inp, len, ctx->block_size);
 }
 
 static int turboshake_final_p12(KECCAK1600_CTX *ctx, unsigned char *out,
@@ -61,8 +61,8 @@ static int turboshake_final_p12(KECCAK1600_CTX *ctx, unsigned char *out,
     ctx->buf[num] = ctx->pad;
     ctx->buf[bsz - 1] |= 0x80;
 
-    (void)ossl_keccak1600_absorb_p12(ctx->A, ctx->buf, bsz, bsz);
-    ossl_keccak1600_squeeze_p12(ctx->A, out, outlen, bsz, 0);
+    (void)ossl_keccak1600_p12_absorb(ctx->A, ctx->buf, bsz, bsz);
+    ossl_keccak1600_p12_squeeze(ctx->A, out, outlen, bsz, 0);
     return 1;
 }
 
@@ -78,7 +78,7 @@ static int turboshake_squeeze_p12(KECCAK1600_CTX *ctx, unsigned char *out,
         memset(ctx->buf + num, 0, bsz - num);
         ctx->buf[num] = ctx->pad;
         ctx->buf[bsz - 1] |= 0x80;
-        (void)ossl_keccak1600_absorb_p12(ctx->A, ctx->buf, bsz, bsz);
+        (void)ossl_keccak1600_p12_absorb(ctx->A, ctx->buf, bsz, bsz);
         num = ctx->bufsz = 0;
         next = 0;
     }
@@ -95,13 +95,13 @@ static int turboshake_squeeze_p12(KECCAK1600_CTX *ctx, unsigned char *out,
 
     if (outlen >= bsz) {
         len = bsz * (outlen / bsz);
-        ossl_keccak1600_squeeze_p12(ctx->A, out, len, bsz, next);
+        ossl_keccak1600_p12_squeeze(ctx->A, out, len, bsz, next);
         next = 1;
         out += len;
         outlen -= len;
     }
     if (outlen > 0) {
-        ossl_keccak1600_squeeze_p12(ctx->A, ctx->buf, bsz, bsz, next);
+        ossl_keccak1600_p12_squeeze(ctx->A, ctx->buf, bsz, bsz, next);
         memcpy(out, ctx->buf, outlen);
         ctx->bufsz = bsz - outlen;
     }

@@ -494,7 +494,7 @@ $code.=<<___;
 ___
 
 $p12 = rename_labels(substr($code, $p12_start),
-                     "SHA3_absorb", "ossl_keccak1600_absorb_p12");
+                     "SHA3_absorb", "ossl_keccak1600_p12_absorb");
 $p12 =~ s/KeccakF1600_int/.LKeccakP1600_12_int/g;
 $code .= $p12;
 
@@ -577,7 +577,7 @@ SHA3_squeeze:
 ___
 
 $p12 = rename_labels(substr($code, $p12_start),
-                     "SHA3_squeeze", "ossl_keccak1600_squeeze_p12");
+                     "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
 $p12 =~ s/KeccakF1600/KeccakP1600_12/g;
 $code .= $p12;
 }								}}}

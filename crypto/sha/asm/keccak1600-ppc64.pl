@@ -668,7 +668,7 @@ ___
 
 ($p12) = $code =~ /(^\.globl\tSHA3_absorb\n.*?^\.size\tSHA3_absorb,\.\-SHA3_absorb$)/ms
     or die "failed to duplicate SHA3_absorb";
-$p12 = rename_labels($p12, "SHA3_absorb", "ossl_keccak1600_absorb_p12");
+$p12 = rename_labels($p12, "SHA3_absorb", "ossl_keccak1600_p12_absorb");
 $p12 =~ s/KeccakF1600_int/KeccakP1600_12_int/g;
 $p12 =~ s/(\tsubi\tr12,r12,8[^\n]*\n)/$1\taddi\tr12,r12,`8*12`\n/;
 $p12 =~ s/iotas\[24\]/iotas[12]/g;
@@ -758,7 +758,7 @@ ___
 
 ($p12) = $code =~ /(^\.globl\tSHA3_squeeze\n.*?^\.size\tSHA3_squeeze,\.\-SHA3_squeeze$)/ms
     or die "failed to duplicate SHA3_squeeze";
-$p12 = rename_labels($p12, "SHA3_squeeze", "ossl_keccak1600_squeeze_p12");
+$p12 = rename_labels($p12, "SHA3_squeeze", "ossl_keccak1600_p12_squeeze");
 $p12 =~ s/KeccakF1600/KeccakP1600_12/g;
 $code .= "\n$p12\n";
 }
