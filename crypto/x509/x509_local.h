@@ -15,7 +15,7 @@
 
 #include "internal/refcount.h"
 #include "internal/hashtable.h"
-#include "internal/err.h"
+#include "crypto/err.h"
 
 #include <crypto/asn1.h>
 
