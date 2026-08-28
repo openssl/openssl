@@ -6,6 +6,7 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  */
+#include <inttypes.h>
 #include <openssl/ssl.h>
 #include "internal/recordmethod.h"
 #include "internal/quic_tls.h"
@@ -698,7 +699,7 @@ static int raise_error(QUIC_TLS *qtls, uint64_t error_code,
     ERR_new();
     ERR_set_debug(src_file, src_line, src_func);
     ERR_set_error(ERR_LIB_SSL, SSL_R_QUIC_HANDSHAKE_LAYER_ERROR,
-        "handshake layer error, error code %llu (0x%llx) (\"%s\")",
+        "handshake layer error, error code %" PRIu64 " (0x%" PRIx64 ") (\"%s\")",
         error_code, error_code, error_msg);
 
     if (qtls->args.ossl_quic) {
