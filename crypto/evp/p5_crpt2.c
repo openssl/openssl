@@ -179,6 +179,11 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
     const EVP_CIPHER *c, const EVP_MD *md, int en_de,
     OSSL_LIB_CTX *libctx, const char *propq)
 {
+#ifndef OPENSSL_NO_SM3
+    static const unsigned char legacy_hmac_sm3_oid[] = {
+        0x2A, 0x81, 0x1C, 0xCF, 0x55, 0x01, 0x83, 0x11, 0x03, 0x01
+    };
+#endif
     unsigned char *salt, key[EVP_MAX_KEY_LENGTH];
     int saltlen, iter, t;
     int rv = 0;
@@ -217,10 +222,21 @@ int PKCS5_v2_PBKDF2_keyivgen_ex(EVP_CIPHER_CTX *ctx, const char *pass,
         goto err;
     }
 
-    if (kdf->prf)
+    if (kdf->prf) {
         prf_nid = OBJ_obj2nid(kdf->prf->algorithm);
-    else
+#ifndef OPENSSL_NO_SM3
+        /* Accept the previously assigned OID only for existing ciphertext. */
+        if (en_de == 0
+            && prf_nid == NID_undef
+            && OBJ_length(kdf->prf->algorithm)
+                   == (int)sizeof(legacy_hmac_sm3_oid)
+            && memcmp(OBJ_get0_data(kdf->prf->algorithm), legacy_hmac_sm3_oid,
+                   sizeof(legacy_hmac_sm3_oid)) == 0)
+            prf_nid = NID_hmacWithSM3;
+#endif
+    } else {
         prf_nid = NID_hmacWithSHA1;
+    }
 
     if (!EVP_PBE_find(EVP_PBE_TYPE_PRF, prf_nid, NULL, &hmac_md_nid, 0)) {
         ERR_raise(ERR_LIB_EVP, EVP_R_UNSUPPORTED_PRF);
