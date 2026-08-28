@@ -25,6 +25,10 @@ typedef struct keccak_st KECCAK1600_CTX;
 typedef size_t(sha3_absorb_fn)(KECCAK1600_CTX *vctx, const unsigned char *in, size_t inlen);
 typedef int(sha3_final_fn)(KECCAK1600_CTX *vctx, unsigned char *out, size_t outlen);
 typedef int(sha3_squeeze_fn)(KECCAK1600_CTX *vctx, unsigned char *out, size_t outlen);
+typedef size_t(keccak_absorb_fn)(uint64_t A[5][5],
+    const unsigned char *in, size_t inlen, size_t rate);
+typedef void(keccak_squeeze_fn)(uint64_t A[5][5], unsigned char *out,
+    size_t outlen, size_t rate, int next);
 
 typedef struct prov_sha3_meth_st {
     sha3_absorb_fn *absorb;
@@ -61,6 +65,8 @@ int ossl_sha3_squeeze(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
 size_t ossl_sha3_absorb_default(KECCAK1600_CTX *ctx, const unsigned char *inp, size_t len);
 int ossl_sha3_final_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
 int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen);
+int ossl_keccak_block_squeeze(KECCAK1600_CTX *ctx, unsigned char *out,
+    size_t outlen, keccak_absorb_fn *absorb, keccak_squeeze_fn *squeeze);
 
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);

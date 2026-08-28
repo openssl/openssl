@@ -69,43 +69,8 @@ static int turboshake_final_p12(KECCAK1600_CTX *ctx, unsigned char *out,
 static int turboshake_squeeze_p12(KECCAK1600_CTX *ctx, unsigned char *out,
     size_t outlen)
 {
-    size_t bsz = ctx->block_size;
-    size_t num = ctx->bufsz;
-    size_t len;
-    int next = 1;
-
-    if (ctx->xof_state != XOF_STATE_SQUEEZE) {
-        memset(ctx->buf + num, 0, bsz - num);
-        ctx->buf[num] = ctx->pad;
-        ctx->buf[bsz - 1] |= 0x80;
-        (void)ossl_keccak1600_p12_absorb(ctx->A, ctx->buf, bsz, bsz);
-        num = ctx->bufsz = 0;
-        next = 0;
-    }
-
-    if (num != 0) {
-        len = outlen > ctx->bufsz ? ctx->bufsz : outlen;
-        memcpy(out, ctx->buf + bsz - ctx->bufsz, len);
-        out += len;
-        outlen -= len;
-        ctx->bufsz -= len;
-    }
-    if (outlen == 0)
-        return 1;
-
-    if (outlen >= bsz) {
-        len = bsz * (outlen / bsz);
-        ossl_keccak1600_p12_squeeze(ctx->A, out, len, bsz, next);
-        next = 1;
-        out += len;
-        outlen -= len;
-    }
-    if (outlen > 0) {
-        ossl_keccak1600_p12_squeeze(ctx->A, ctx->buf, bsz, bsz, next);
-        memcpy(out, ctx->buf, outlen);
-        ctx->bufsz = bsz - outlen;
-    }
-    return 1;
+    return ossl_keccak_block_squeeze(ctx, out, outlen,
+        ossl_keccak1600_p12_absorb, ossl_keccak1600_p12_squeeze);
 }
 
 static PROV_SHA3_METHOD turboshake_p12_md = {

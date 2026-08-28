@@ -170,15 +170,16 @@ int ossl_sha3_final_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t outl
 
 /*
  * This method can be called multiple times.
- * Rather than heavily modifying assembler for SHA3_squeeze(),
- * we instead just use the limitations of the existing function.
- * i.e. Only request multiples of the ctx->block_size when calling
- * SHA3_squeeze(). For output length requests smaller than the
+ * Rather than requiring low-level squeeze functions to buffer partial
+ * blocks, use their existing block-oriented interface.
+ * i.e. Only request multiples of the ctx->block_size from the squeeze
+ * callback. For output length requests smaller than the
  * ctx->block_size just request a single ctx->block_size bytes and
  * buffer the results. The next request will use the buffer first
  * to grab output bytes.
  */
-int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t outlen)
+int ossl_keccak_block_squeeze(KECCAK1600_CTX *ctx, unsigned char *out,
+    size_t outlen, keccak_absorb_fn *absorb, keccak_squeeze_fn *squeeze)
 {
     size_t bsz = ctx->block_size;
     size_t num = ctx->bufsz;
@@ -199,7 +200,7 @@ int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t o
         memset(ctx->buf + num, 0, bsz - num);
         ctx->buf[num] = ctx->pad;
         ctx->buf[bsz - 1] |= 0x80;
-        (void)SHA3_absorb(ctx->A, ctx->buf, bsz, bsz);
+        (void)absorb(ctx->A, ctx->buf, bsz, bsz);
         num = ctx->bufsz = 0;
         next = 0;
     }
@@ -224,19 +225,26 @@ int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out, size_t o
     /* Step 2. Copy full sized squeezed blocks to the output buffer directly */
     if (outlen >= bsz) {
         len = bsz * (outlen / bsz);
-        SHA3_squeeze(ctx->A, out, len, bsz, next);
+        squeeze(ctx->A, out, len, bsz, next);
         next = 1;
         out += len;
         outlen -= len;
     }
     if (outlen > 0) {
         /* Step 3. Squeeze one more block into a buffer */
-        SHA3_squeeze(ctx->A, ctx->buf, bsz, bsz, next);
+        squeeze(ctx->A, ctx->buf, bsz, bsz, next);
         memcpy(out, ctx->buf, outlen);
         /* Step 4. Remember the leftover part of the squeezed block */
         ctx->bufsz = bsz - outlen;
     }
     return 1;
+}
+
+int ossl_shake_squeeze_default(KECCAK1600_CTX *ctx, unsigned char *out,
+    size_t outlen)
+{
+    return ossl_keccak_block_squeeze(ctx, out, outlen, SHA3_absorb,
+        SHA3_squeeze);
 }
 
 static PROV_SHA3_METHOD shake_generic_meth = {

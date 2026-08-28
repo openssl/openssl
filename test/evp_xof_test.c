@@ -690,6 +690,51 @@ static void fill_ptn(unsigned char *buf, size_t len)
         buf[i] = (unsigned char)(i % 251);
 }
 
+typedef struct turboshake_squeeze_data_st {
+    const char *alg;
+    size_t rate;
+} TURBOSHAKE_SQUEEZE_DATA;
+
+static const TURBOSHAKE_SQUEEZE_DATA turboshake_squeeze_tests[] = {
+    { "TURBOSHAKE128", 168 },
+    { "TURBOSHAKE256", 136 },
+};
+
+static int turboshake_segmented_squeeze_test(int tstid)
+{
+    const TURBOSHAKE_SQUEEZE_DATA *td = turboshake_squeeze_tests + tstid;
+    unsigned char msg[257];
+    unsigned char expected[3 * 168], segmented[3 * 168];
+    size_t i, split, outlen = 3 * td->rate;
+    EVP_MD *md = NULL;
+    EVP_MD_CTX *ctx = NULL;
+    int ret = 0;
+
+    fill_ptn(msg, sizeof(msg));
+    if (!TEST_ptr(md = EVP_MD_fetch(NULL, td->alg, NULL))
+        || !TEST_ptr(ctx = EVP_MD_CTX_new())
+        || !TEST_true(EVP_DigestInit_ex2(ctx, md, NULL))
+        || !TEST_true(EVP_DigestUpdate(ctx, msg, sizeof(msg)))
+        || !TEST_true(EVP_DigestFinalXOF(ctx, expected, outlen)))
+        goto err;
+
+    for (i = 0; i < 3; i++) {
+        split = td->rate - 1 + i;
+        if (!TEST_true(EVP_DigestInit_ex2(ctx, md, NULL))
+            || !TEST_true(EVP_DigestUpdate(ctx, msg, sizeof(msg)))
+            || !TEST_true(EVP_DigestSqueeze(ctx, segmented, split))
+            || !TEST_true(EVP_DigestSqueeze(ctx, segmented + split,
+                outlen - split))
+            || !TEST_mem_eq(segmented, outlen, expected, outlen))
+            goto err;
+    }
+    ret = 1;
+err:
+    EVP_MD_CTX_free(ctx);
+    EVP_MD_free(md);
+    return ret;
+}
+
 static int digest_xof_with_params_ex(OSSL_LIB_CTX *libctx, const char *propq,
     const char *alg, const unsigned char *in, size_t inlen,
     const OSSL_PARAM params[], unsigned char *out, size_t outlen)
@@ -1600,6 +1645,8 @@ int setup_tests(void)
     ADD_ALL_TESTS(xof_squeeze_kat_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_large_test, OSSL_NELEM(stride_test_data));
     ADD_ALL_TESTS(xof_squeeze_dup_test, OSSL_NELEM(dupoffset_test_data));
+    ADD_ALL_TESTS(turboshake_segmented_squeeze_test,
+        OSSL_NELEM(turboshake_squeeze_tests));
     ADD_ALL_TESTS(turboshake_kt_vector_test, OSSL_NELEM(turboshake_kt_vectors));
     ADD_ALL_TESTS(turboshake_kt_chunked_absorb_and_size_test,
         OSSL_NELEM(turboshake_kt_tests));
