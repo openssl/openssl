@@ -20,7 +20,7 @@
 
 #include "dso_local.h"
 #include "internal/e_os.h"
-#include "internal/err.h"
+#include "crypto/err.h"
 
 #ifdef DSO_DLFCN
 
