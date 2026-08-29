@@ -32,6 +32,18 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed CMS RSA key transport decryption silently falling back to PKCS#1
+   v1.5 instead of failing when an RSAES-OAEP recipient has malformed or
+   absent OAEP parameters.
+
+   `rsa_cms_decrypt()` returned -1 on error while its caller chain tests the
+   result with a truthiness check, so `!(-1)` was treated as success and
+   decryption continued on an unconfigured `EVP_PKEY_CTX` using the default
+   PKCS#1 v1.5 padding. Error returns now use 0, matching the convention of
+   the other CMS envelope decrypt handlers.
+
+   *Dmitry Aleksandrov*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,
