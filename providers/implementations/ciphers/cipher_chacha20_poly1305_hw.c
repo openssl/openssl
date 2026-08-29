@@ -247,6 +247,7 @@ static int chacha20_poly1305_tls_cipher(PROV_CIPHER_CTX *bctx,
     if (bctx->enc) {
         memcpy(out, ctx->tag, POLY1305_BLOCK_SIZE);
     } else {
+        /* TODO: raise PROV_R_BAD_DECRYPT here too? TLS record path, silent for now */
         if (CRYPTO_memcmp(tohash, in, POLY1305_BLOCK_SIZE)) {
             if (len > POLY1305_BLOCK_SIZE)
                 memset(out - (len - POLY1305_BLOCK_SIZE), 0,
@@ -381,6 +382,7 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
             if (bctx->enc) {
                 memcpy(out, ctx->tag, POLY1305_BLOCK_SIZE);
             } else {
+                /* TODO: raise PROV_R_BAD_DECRYPT here too? TLS record path, silent for now */
                 if (CRYPTO_memcmp(temp, in, POLY1305_BLOCK_SIZE)) {
                     memset(out - plen, 0, plen);
                     goto err;
@@ -389,8 +391,10 @@ static int chacha20_poly1305_aead_cipher(PROV_CIPHER_CTX *bctx,
                 inl -= POLY1305_BLOCK_SIZE;
             }
         } else if (!bctx->enc) {
-            if (CRYPTO_memcmp(temp, ctx->tag, ctx->tag_len))
+            if (CRYPTO_memcmp(temp, ctx->tag, ctx->tag_len) != 0) {
+                ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
                 goto err;
+            }
         }
     }
 finish:

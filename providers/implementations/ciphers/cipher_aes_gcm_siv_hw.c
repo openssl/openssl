@@ -279,6 +279,8 @@ static int aes_gcm_siv_finish(PROV_AES_GCM_SIV_CTX *ctx)
         return 0;
     ret = CRYPTO_memcmp(ctx->tag, ctx->user_tag, sizeof(ctx->tag)) == 0;
     ret &= ctx->have_user_tag;
+    if (ret == 0 && ctx->have_user_tag)
+        ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
     return ret;
 }
 
