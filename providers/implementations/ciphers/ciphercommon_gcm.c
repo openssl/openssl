@@ -470,8 +470,11 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             goto err;
         }
-        if (!hw->cipherfinal(ctx, ctx->buf))
+        if (hw->cipherfinal(ctx, ctx->buf) == 0) {
+            if (ctx->enc == 0)
+                ERR_raise(ERR_LIB_PROV, PROV_R_BAD_DECRYPT);
             goto err;
+        }
         ctx->iv_state = IV_STATE_FINISHED; /* Don't reuse the IV */
         goto finish;
     }
