@@ -1182,20 +1182,13 @@ int tls1_check_group_id(SSL_CONNECTION *s, uint16_t group_id,
 void tls1_get_formatlist(SSL_CONNECTION *s, const unsigned char **pformats,
     size_t *num_formats)
 {
-    /*
-     * If we have a custom point format list use it otherwise use default
-     */
-    if (s->ext.ecpointformats) {
-        *pformats = s->ext.ecpointformats;
-        *num_formats = s->ext.ecpointformats_len;
-    } else {
-        *pformats = ecformats_default;
-        /* For Suite B we don't support char2 fields */
-        if (tls1_suiteb(s))
-            *num_formats = sizeof(ecformats_default) - 1;
-        else
-            *num_formats = sizeof(ecformats_default);
-    }
+    /* Use default */
+    *pformats = ecformats_default;
+    /* For Suite B we don't support char2 fields */
+    if (tls1_suiteb(s))
+        *num_formats = sizeof(ecformats_default) - 1;
+    else
+        *num_formats = sizeof(ecformats_default);
 }
 
 /* Return group id of a key */
