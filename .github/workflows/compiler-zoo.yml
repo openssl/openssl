@@ -95,9 +95,9 @@ jobs:
       matrix:
         include:
           - arch: amd64
-            target: VC-WIN64A
+            target: VC-WIN64A-MSVC2013
           - arch: x86
-            target: VC-WIN32
+            target: VC-WIN32-MSVC2013
     runs-on: windows-2022
     env:
       IMAGE: ghcr.io/openssl/openssl-vs2013:latest
