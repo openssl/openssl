@@ -153,8 +153,12 @@ int genrsa_main(int argc, char **argv)
     argv = opt_rest();
 
     if (argc == 1) {
-        if (!opt_int(argv[0], &num) || num <= 0)
+        if (!opt_int(argv[0], &num))
             goto end;
+        if (num <= 0) {
+            BIO_printf(bio_err, "%s: Invalid number of bits: %d\n", prog, num);
+            goto end;
+        }
         if (num > OPENSSL_RSA_MAX_MODULUS_BITS)
             BIO_printf(bio_err,
                 "Warning: It is not recommended to use more than %d bit for RSA keys.\n"
