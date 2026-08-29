@@ -12,12 +12,12 @@ use warnings;
 
 use File::Spec;
 use File::Compare qw/compare/;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file app_fails/;
 use OpenSSL::Test::Utils;
 
 setup("test_rsa");
 
-plan tests => 18;
+plan tests => 19;
 
 require_ok(srctop_file('test', 'recipes', 'tconversion.pl'));
 
@@ -28,7 +28,7 @@ run_rsa_tests("pkey");
 run_rsa_tests("rsa");
 
 SKIP: {
-    skip "RSA is not supported in this build", 2 if disabled("rsa");
+    skip "RSA is not supported in this build", 3 if disabled("rsa");
 
     subtest "rsa -modulus prints the RSA modulus" => sub {
         plan tests => 2;
@@ -96,6 +96,62 @@ SKIP: {
            "-text prints the expected modulus for a public key");
         ok(!grep(/privateExponent/, @pub),
            "-text does not print a private exponent for a public key");
+    };
+
+    subtest "rsa error cases" => sub {
+        plan tests => 20;
+
+        my $privkey = srctop_file("test", "testrsa.pem");
+        my $pubkey = srctop_file("test", "testrsapub.pem");
+
+        app_fails('rsa', "invalid input format should fail",
+                  qr/Invalid format "BAD" for option -inform/,
+                  '-inform', 'BAD', '-in', $privkey);
+        app_fails('rsa', "invalid output format should fail",
+                  qr/Invalid format "BAD" for option -outform/,
+                  '-outform', 'BAD', '-in', $privkey);
+        app_fails('rsa', "extra positional argument should fail",
+                  qr/Extra option: "extra"/,
+                  '-in', $privkey, 'extra');
+        app_fails('rsa', "unknown cipher option should fail",
+                  qr/Unknown option or cipher: badcipher/,
+                  '-badcipher', '-in', $privkey);
+        app_fails('rsa', "invalid passin argument should fail",
+                  qr/Error getting passwords/,
+                  '-passin', 'bad:pass', '-in', $privkey);
+        app_fails('rsa', "checking a public key should fail",
+                  qr/Only private keys can be checked/,
+                  '-check', '-pubin', '-in', $pubkey);
+        app_fails('rsa', "unsupported output format should fail",
+                  qr/bad output format specified for outfile/,
+                  '-in', $privkey, '-outform', 'NSS', '-out', 'rsa-nss.out');
+        app_fails('rsa', "PVK output for public key input should fail",
+                  qr/PVK form impossible with public key input/,
+                  '-pubin', '-in', $pubkey, '-outform', 'PVK',
+                  '-out', 'rsa-pvk.out');
+
+        my $garbage = "garbage.pem";
+        open(my $fh, '>', $garbage) or die "Cannot write $garbage: $!";
+        print $fh "not a valid RSA key file\n";
+        close($fh);
+        app_fails('rsa', "loading garbage key file should fail",
+                  qr/Could not find or decode private key/,
+                  '-in', $garbage, '-noout');
+
+        SKIP: {
+            my $nonrsa = !disabled("ec")
+                ? srctop_file("test", "testec-p256.pem")
+                : !disabled("dsa")
+                    ? srctop_file("test", "testdsa.pem")
+                    : undef;
+
+            skip "No non-RSA key type available in this build", 2
+                if !defined $nonrsa;
+
+            app_fails('rsa', "loading a non-RSA key should fail",
+                      qr/Not an RSA key/,
+                      '-in', $nonrsa, '-noout');
+        }
     };
 }
 
