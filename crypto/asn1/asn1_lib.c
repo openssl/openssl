@@ -508,6 +508,9 @@ int ASN1_STRING_cmp(const ASN1_STRING *a, const ASN1_STRING *b)
 #ifndef OPENSSL_NO_DEPRECATED_4_1
 int ASN1_STRING_length(const ASN1_STRING *x)
 {
+    if (x == NULL) {
+        return 0;
+    }
     return x->length;
 }
 #endif
