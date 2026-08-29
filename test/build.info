@@ -55,7 +55,7 @@ IF[{- !$disabled{tests} -}]
           conf_include_test params_api_test params_conversion_test \
           constant_time_test crypto_memcmp_test safe_math_test verify_extra_test clienthellotest \
           packettest asynctest secmemtest srptest memleaktest stack_test \
-          ct_test threadstest d2i_test \
+          dtlsv1listentest ct_test threadstest d2i_test \
           ssl_test_ctx_test ssl_test x509aux cipherlist_test asynciotest \
           bio_callback_test bio_memleak_test bio_core_test bio_dgram_test param_build_test \
           sslapitest ssl_handshake_rtt_test dtlstest sslcorrupttest \
@@ -107,12 +107,8 @@ IF[{- !$disabled{tests} -}]
     PROGRAMS{noinst}=cert_comp_test
   ENDIF
 
-  IF[{- !$disabled{dtls1} || !$disabled{dtls1_2} -}]
+  IF[{- !$disabled{dtls} -}]
     PROGRAMS{noinst}=dtls_ccs_reorder_test
-  ENDIF
-
-  IF[{- !$disabled{dtls1_2} -}]
-    PROGRAMS{noinst}=dtlsv1listentest
   ENDIF
 
   SOURCE[confdump]=confdump.c
@@ -534,11 +530,9 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[lhash_test]=../include ../apps/include
   DEPEND[lhash_test]=../libcrypto.a libtestutil.a
 
-  IF[{- !$disabled{dtls1_2} -}]
-    SOURCE[dtlsv1listentest]=dtlsv1listentest.c helpers/ssltestlib.c
-    INCLUDE[dtlsv1listentest]=../include ../apps/include
-    DEPEND[dtlsv1listentest]=../libcrypto ../libssl libtestutil.a
-  ENDIF
+  SOURCE[dtlsv1listentest]=dtlsv1listentest.c helpers/ssltestlib.c
+  INCLUDE[dtlsv1listentest]=../include ../apps/include
+  DEPEND[dtlsv1listentest]=../libcrypto ../libssl libtestutil.a
 
   IF[{- !$disabled{sock} && !$disabled{dtls} -}]
     PROGRAMS{noinst}=dtlsssllistenertest

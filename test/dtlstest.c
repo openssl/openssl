@@ -183,7 +183,6 @@ end:
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
     int doresumption, int epoch, int idx);
-#ifndef OPENSSL_NO_DTLS1_2
 static int test_dtls_drop_records_dtls1(int idx)
 {
     int doresumption;
@@ -225,7 +224,6 @@ static int test_dtls_drop_records_dtls1(int idx)
     return test_dtls_drop_records(serverwbio, DTLS1_VERSION, DTLS1_2_VERSION,
         doresumption, epoch, idx);
 }
-#endif /* OPENSSL_NO_DTLS1_2 */
 
 /* ClientHello */
 #define DTLS13_CLI_TO_SRV_EPOCH_0_RECS_FULL 1
@@ -606,7 +604,6 @@ end:
  * Test 2: Test receiving an app data record early from next epoch on client side
  * Test 3: Test receiving an app data before Finished on client side
  */
-#ifndef OPENSSL_NO_DTLS1_2
 static int test_swap_records_dtls1(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -727,7 +724,6 @@ end:
 
     return testresult;
 }
-#endif /* OPENSSL_NO_DTLS1_2 */
 
 /*
  * Test that swapping later records before Finished or CCS still works
@@ -852,12 +848,10 @@ end:
 #endif
 
 static int test_duplicate_app_data(int minversion, int maxversion);
-#ifndef OPENSSL_NO_DTLS1_2
 static int test_duplicate_app_data_dtls1(void)
 {
     return test_duplicate_app_data(DTLS1_VERSION, DTLS1_2_VERSION);
 }
-#endif /* OPENSSL_NO_DTLS1_2 */
 
 static int test_duplicate_app_data_dtls13(void)
 {
@@ -964,7 +958,6 @@ end:
 }
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
-#ifndef OPENSSL_NO_DTLS1_2
 static int test_listen(void)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -976,6 +969,14 @@ static int test_listen(void)
             DTLS1_VERSION, 0,
             &sctx, &cctx, cert, privkey)))
         return 0;
+
+#ifdef OPENSSL_NO_DTLS1_2
+    /* Default sigalgs are SHA1 based in <DTLS1.2 which is in security level 0 */
+    if (!TEST_true(SSL_CTX_set_cipher_list(sctx, "DEFAULT:@SECLEVEL=0"))
+        || !TEST_true(SSL_CTX_set_cipher_list(cctx,
+            "DEFAULT:@SECLEVEL=0")))
+        goto end;
+#endif
 
     SSL_CTX_set_cookie_generate_cb(sctx, generate_cookie_cb);
     SSL_CTX_set_cookie_verify_cb(sctx, verify_cookie_cb);
@@ -1004,7 +1005,6 @@ end:
 
     return testresult;
 }
-#endif /* OPENSSL_NO_DTLS1_2 */
 
 OPT_TEST_DECLARE_USAGE("certfile privkeyfile\n")
 
@@ -1021,9 +1021,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_dtls_unprocessed, NUM_TESTS);
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-#ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_dtls_drop_records_dtls1, TOTAL_RECORDS);
-#endif
 #if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
     ADD_ALL_TESTS(test_dtls_drop_records_dtls13, DTLS13_TOTAL_RECORDS);
 #endif
@@ -1031,16 +1029,12 @@ int setup_tests(void)
     ADD_TEST(test_cookie);
     ADD_TEST(test_dtls_duplicate_records);
     ADD_TEST(test_just_finished);
-#ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_swap_records_dtls1, 4);
-#endif
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
     ADD_ALL_TESTS(test_swap_records_dtls13, 4);
 #endif
-#ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data_dtls1);
-#endif
     ADD_TEST(test_duplicate_app_data_dtls13);
 
     return 1;

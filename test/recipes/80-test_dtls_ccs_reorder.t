@@ -18,9 +18,6 @@ setup("test_dtls_ccs_reorder");
 plan skip_all => "No DTLS protocols are supported"
     if alldisabled(available_protocols("dtls"));
 
-plan skip_all => "No DTLS 1.2 or 1.0 support in this OpenSSL build"
-    if disabled("dtls1_2") && disabled("dtls1");
-
 plan tests => 1;
 
 ok(run(test(["dtls_ccs_reorder_test",
