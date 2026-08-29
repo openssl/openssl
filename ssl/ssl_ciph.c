@@ -2182,29 +2182,20 @@ int SSL_CIPHER_is_aead(const SSL_CIPHER *c)
     return (c->algorithm_mac & SSL_AEAD) ? 1 : 0;
 }
 
-int ssl_cipher_get_overhead(const SSL_CIPHER *c, int version,
-    size_t *mac_overhead, size_t *int_overhead,
-    size_t *blocksize, size_t *ext_overhead)
+int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
+    size_t *int_overhead, size_t *blocksize,
+    size_t *ext_overhead)
 {
     int mac = 0, in = 0, blk = 0, out = 0;
 
     /* Some hard-coded numbers for the CCM/Poly1305 MAC overhead
      * because there are no handy #defines for those. */
     if (c->algorithm_enc & (SSL_AESGCM | SSL_ARIAGCM)) {
-        out = EVP_GCM_TLS_TAG_LEN;
-        /* DTLS 1.3 uses an implicit nonce, so no explicit IV on the wire. */
-        if (version != DTLS1_3_VERSION)
-            out += EVP_GCM_TLS_EXPLICIT_IV_LEN;
+        out = EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN;
     } else if (c->algorithm_enc & (SSL_AES128CCM | SSL_AES256CCM)) {
-        out = 16;
-        /* DTLS 1.3 uses an implicit nonce, so no explicit IV on the wire. */
-        if (version != DTLS1_3_VERSION)
-            out += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+        out = EVP_CCM_TLS_EXPLICIT_IV_LEN + 16;
     } else if (c->algorithm_enc & (SSL_AES128CCM8 | SSL_AES256CCM8)) {
-        out = 8;
-        /* DTLS 1.3 uses an implicit nonce, so no explicit IV on the wire. */
-        if (version != DTLS1_3_VERSION)
-            out += EVP_CCM_TLS_EXPLICIT_IV_LEN;
+        out = EVP_CCM_TLS_EXPLICIT_IV_LEN + 8;
     } else if (c->algorithm_enc & SSL_CHACHA20POLY1305) {
         out = 16;
     } else if (c->algorithm_mac & SSL_AEAD) {

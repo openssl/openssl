@@ -2893,9 +2893,9 @@ __owur int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
     const EVP_MD **md,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm);
-__owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, int version,
-    size_t *mac_overhead, size_t *int_overhead,
-    size_t *blocksize, size_t *ext_overhead);
+__owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
+    size_t *int_overhead, size_t *blocksize,
+    size_t *ext_overhead);
 __owur int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL_CONNECTION *ssl,
     const unsigned char *ptr,
