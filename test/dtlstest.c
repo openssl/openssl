@@ -181,10 +181,8 @@ end:
 #define TOTAL_RECORDS (TOTAL_FULL_HAND_RECORDS + TOTAL_RESUME_HAND_RECORDS)
 
 #if !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC)
-#ifndef OPENSSL_NO_DTLS
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
     int doresumption, int epoch, int idx);
-#endif
 #ifndef OPENSSL_NO_DTLS1_2
 static int test_dtls_drop_records_dtls1(int idx)
 {
@@ -258,7 +256,7 @@ static int test_dtls_drop_records_dtls1(int idx)
 #define DTLS13_TOTAL_RECORDS \
     (DTLS13_TOTAL_HAND_RECORDS_FULL + DTLS13_TOTAL_HAND_RECORDS_RESM)
 
-#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS) && !defined(OPENSSL_NO_DTLS1_3)
+#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
 /**
  * test_dtls_drop_records_dtls13 tests DTLS 1.3 implementation robustness against
  * dropped records
@@ -321,7 +319,6 @@ static int test_dtls_drop_records_dtls13(int idx)
 }
 #endif /* !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS) */
 
-#ifndef OPENSSL_NO_DTLS
 static int test_dtls_drop_records(int serverwbio, int minversion, int maxversion,
     int doresumption, int epoch, int idx)
 {
@@ -439,7 +436,6 @@ end:
 
     return testresult;
 }
-#endif /* OPENSSL_NO_DTLS */
 #endif /* !defined(OPENSSL_NO_DH) || !defined(OPENSSL_NO_EC) */
 
 static int test_cookie(void)
@@ -740,8 +736,7 @@ end:
  * Test 2: Test receiving the second fragment of the New Session Ticket before ACK message on client side
  * Test 3: Test receiving an app data before ACK and the New Session Ticket messages on client side
  */
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM) \
-    && !defined(OPENSSL_NO_DTLS1_3)
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
 static int test_swap_records_dtls13(int idx)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -856,9 +851,7 @@ end:
 }
 #endif
 
-#ifndef OPENSSL_NO_DTLS
 static int test_duplicate_app_data(int minversion, int maxversion);
-#endif
 #ifndef OPENSSL_NO_DTLS1_2
 static int test_duplicate_app_data_dtls1(void)
 {
@@ -866,14 +859,11 @@ static int test_duplicate_app_data_dtls1(void)
 }
 #endif /* OPENSSL_NO_DTLS1_2 */
 
-#ifndef OPENSSL_NO_DTLS1_3
 static int test_duplicate_app_data_dtls13(void)
 {
     return test_duplicate_app_data(DTLS1_3_VERSION, DTLS1_3_VERSION);
 }
-#endif /* OPENSSL_NO_DTLS1_3 */
 
-#ifndef OPENSSL_NO_DTLS
 static int test_duplicate_app_data(int minversion, int maxversion)
 {
     SSL_CTX *sctx = NULL, *cctx = NULL;
@@ -972,7 +962,6 @@ end:
 
     return testresult;
 }
-#endif /* OPENSSL_NO_DTLS */
 
 /* Confirm that we can create a connections using DTLSv1_listen() */
 #ifndef OPENSSL_NO_DTLS1_2
@@ -1035,7 +1024,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_dtls_drop_records_dtls1, TOTAL_RECORDS);
 #endif
-#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS) && !defined(OPENSSL_NO_DTLS1_3)
+#if !defined(OPENSSL_NO_INTEGRITY_ONLY_CIPHERS)
     ADD_ALL_TESTS(test_dtls_drop_records_dtls13, DTLS13_TOTAL_RECORDS);
 #endif
 #endif
@@ -1045,17 +1034,14 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_ALL_TESTS(test_swap_records_dtls1, 4);
 #endif
-#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM) \
-    && !defined(OPENSSL_NO_DTLS1_3)
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_ECX) && !defined(OPENSSL_NO_ML_KEM)
     ADD_ALL_TESTS(test_swap_records_dtls13, 4);
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data_dtls1);
 #endif
-#ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_duplicate_app_data_dtls13);
-#endif
 
     return 1;
 }

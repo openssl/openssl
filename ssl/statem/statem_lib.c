@@ -1905,11 +1905,7 @@ static const version_info tls_version_table[] = {
 
 /* Must be in order high to low */
 static const version_info dtls_version_table[] = {
-#ifndef OPENSSL_NO_DTLS1_3
     { DTLS1_3_VERSION, dtlsv1_3_client_method, dtlsv1_3_server_method },
-#else
-    { DTLS1_3_VERSION, NULL, NULL },
-#endif
 #ifndef OPENSSL_NO_DTLS1_2
     { DTLS1_2_VERSION, dtlsv1_2_client_method, dtlsv1_2_server_method },
 #else
