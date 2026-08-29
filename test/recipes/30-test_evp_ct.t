@@ -20,7 +20,11 @@ BEGIN {
 # implementations carry CONSTTIME_SECRET annotations.
 # The CT validation CI workflow runs this recipe under Valgrind
 # (OSSL_VALGRIND_CT=yes) to check that those implementations are constant-time.
-# Outside such a build/run this is a cheap functional re-run of the same files.
+#
+# Already covered functionally by test_evp; only the CT run needs it.
+plan skip_all => "Only runs under CT validation (OSSL_VALGRIND_CT)"
+    unless defined $ENV{OSSL_VALGRIND_CT};
+
 my @files = ();
 # Covers crypto/ec/curve25519.c's ossl_x25519 entrypoint
 # via Derive stanzas -> EVP_PKEY_derive -> ossl_x25519
