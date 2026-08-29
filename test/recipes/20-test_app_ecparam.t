@@ -12,7 +12,7 @@ use warnings;
 
 use File::Copy;
 use File::Compare qw/compare_text compare/;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use OpenSSL::Test qw/:DEFAULT data_file srctop_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_app_ecparam");
@@ -37,7 +37,7 @@ my $prime = param_file('valid', 'prime256v1-named.pem');
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 8;
+plan tests => 9;
 
 sub checkcompare {
     my $files = shift; # List of files
@@ -216,6 +216,48 @@ subtest "Check ecparam -conv_form selects the generator point encoding" => sub {
     ok(!run(app(['openssl', 'ecparam', '-in', $named, '-noout',
                  '-conv_form', 'bogus'])),
        "an invalid conversion form is rejected");
+};
+
+subtest "Check ecparam -no_seed drops the seed from explicit parameters" => sub {
+    plan tests => 7;
+
+    # The reference explicit parameters carry the curve seed.
+    my @text = run(app(['openssl', 'ecparam', '-text', '-noout',
+                        '-in', $explicit],
+                       stderr => undef),
+                   capture => 1);
+    ok(grep(/^Seed:$/, @text),
+       "the explicit parameters print the seed by default");
+
+    my $noseed = 'param-noseed.pem';
+    ok(run(app(['openssl', 'ecparam', '-in', $explicit, '-no_seed',
+                '-out', $noseed])),
+       "write explicit parameters with -no_seed");
+    ok((-s $noseed) < (-s $explicit),
+       "the encoding without the seed is smaller");
+    # The encoding is canonical, so compare it against the checked-in
+    # reference file.
+    ok(!compare($noseed, data_file('secp384r1-explicit-noseed.pem')),
+       "the stripped parameters match the reference file");
+
+    @text = run(app(['openssl', 'ecparam', '-text', '-noout', '-in', $noseed],
+                    stderr => undef),
+                capture => 1);
+    ok(!grep(/^Seed:$/, @text),
+       "the stripped parameters no longer print a seed");
+
+    # -no_seed is applied on the generated parameters path as well.
+    my $genseed = 'param-noseed-gen.pem';
+    ok(run(app(['openssl', 'ecparam', '-name', 'secp384r1', '-param_enc',
+                'explicit', '-no_seed', '-out', $genseed]))
+       && !compare($genseed, data_file('secp384r1-explicit-noseed.pem')),
+       "generated explicit parameters with -no_seed match the reference file");
+
+    my $namedout = 'param-noseed-named.pem';
+    ok(run(app(['openssl', 'ecparam', '-in', $named, '-no_seed',
+                '-out', $namedout]))
+       && !compare($namedout, $named),
+       "-no_seed does not change named curve parameters");
 };
 
 subtest "Check ecparam -text and -list_curves" => sub {
