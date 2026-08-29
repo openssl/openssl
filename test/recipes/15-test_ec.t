@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 20;
+plan tests => 21;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -150,6 +150,31 @@ subtest 'EC parameter encoding (-param_enc)' => sub {
     ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
                  '-param_enc', 'bogus'])),
        "an invalid parameter encoding is rejected");
+};
+
+subtest 'ec -no_public excludes the public key from the private key' => sub {
+    plan tests => 5;
+
+    my $key = srctop_file("test", "testec-p256.pem");
+
+    ok(run(app(['openssl', 'ec', '-in', $key,
+                '-outform', 'DER', '-out', 'ec-priv-default.der'])),
+       "writing private key with the public key included by default");
+    ok(run(app(['openssl', 'ec', '-in', $key, '-no_public',
+                '-outform', 'DER', '-out', 'ec-priv-nopub.der'])),
+       "writing private key with -no_public");
+    ok((-s 'ec-priv-nopub.der') < (-s 'ec-priv-default.der'),
+       "-no_public encoding is smaller than the default one");
+    # The encoding is deterministic for a fixed key, so compare it
+    # against the checked-in reference file.
+    is(compare('ec-priv-nopub.der', data_file('ec-priv-nopub.der')), 0,
+       "-no_public encoding matches the reference file");
+    # The public key is recomputed from the private scalar on load, so
+    # it must match the reference public key encoding.
+    ok(run(app(['openssl', 'ec', '-inform', 'DER', '-in', 'ec-priv-nopub.der',
+                '-pubout', '-outform', 'DER', '-out', 'ec-nopub-pub.der']))
+       && compare('ec-nopub-pub.der', data_file('ec-conv-unc.der')) == 0,
+       "the public key is recovered from a key written with -no_public");
 };
 
 subtest 'ec -text prints the key in text form' => sub {
