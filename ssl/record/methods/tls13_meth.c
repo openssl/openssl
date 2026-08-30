@@ -118,6 +118,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     unsigned char *staticiv;
     unsigned char *nonce;
     unsigned char seq[SEQ_NUM_SIZE], *p_seq = seq;
+    uint64_t seqnum = 0;
     int lenu, lenf;
     TLS_RL_RECORD *rec = &recs[0];
     WPACKET wpkt;
@@ -215,6 +216,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
         exphdrlen = dtls_get_rec_header_size(rec->type);
         sbit = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(rec->type);
         addlen = DTLS13_UNI_HDR_LEN_BIT_IS_SET(rec->type);
+        /* Match the truncated value encoded in the unified header. */
+        seqnum = rl->sequence & DTLS13_UNI_HDR_SEQ_MASK(sbit ? 2 : 1);
     } else {
         exphdrlen = SSL3_RT_HEADER_LENGTH;
         addlen = 1;
@@ -223,7 +226,9 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     if ((isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type)))
         || !WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
         || !WPACKET_put_bytes_u8(&wpkt, rec->type)
-        || (isdtls && (sbit ? !WPACKET_put_bytes_u16(&wpkt, rl->sequence) : !WPACKET_put_bytes_u8(&wpkt, rl->sequence)))
+        || (isdtls
+            && (sbit ? !WPACKET_put_bytes_u16(&wpkt, seqnum)
+                     : !WPACKET_put_bytes_u8(&wpkt, seqnum)))
         || (!isdtls && !WPACKET_put_bytes_u16(&wpkt, rec->rec_version))
         || (addlen && !WPACKET_put_bytes_u16(&wpkt, rec->length + rl->taglen))
         || !WPACKET_get_total_written(&wpkt, &hdrlen)

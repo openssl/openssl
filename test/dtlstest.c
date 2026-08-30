@@ -13,6 +13,10 @@
 #include <openssl/ssl.h>
 #include <openssl/err.h>
 
+#include "internal/nelem.h"
+#include "internal/ssl_unwrap.h"
+#include "../ssl/ssl_local.h"
+#include "../ssl/record/methods/recmethod_local.h"
 #include "helpers/ssltestlib.h"
 #include "testutil.h"
 
@@ -974,6 +978,117 @@ end:
 }
 #endif /* OPENSSL_NO_DTLS */
 
+#ifndef OPENSSL_NO_DTLS1_3
+/* Place record state near boundaries instead of sending 65536 records. */
+typedef struct seqnum_test_st {
+    uint64_t start;
+    /* Keep the initial window for first-period cases; otherwise align it. */
+    int move_reader;
+    int num;
+} SEQNUM_TEST;
+
+static const SEQNUM_TEST seqnum_tests[] = {
+    { 0x100, 1, 2 }, /* ordinary forward progression */
+    { 0xfffe, 0, 2 }, /* end of the first period, reader at the epoch start */
+    { 40000, 0, 2 }, /* more than half a period past the reader's window */
+    { 0xffff, 1, 4 }, /* the 16 bit sequence number field wraps */
+    { 0x1ffff, 1, 4 }, /* ... and wraps again */
+    { 0xfffffffe, 1, 4 }, /* ... and past the 32 bit boundary */
+};
+
+static int test_seq_num_wrap(int idx)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *sssl = NULL, *cssl = NULL;
+    SSL_CONNECTION *ssc, *csc;
+    const SEQNUM_TEST *t = &seqnum_tests[idx];
+    unsigned char wrbuf[16], rdbuf[16];
+    int testresult = 0;
+    int i, j;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_3_VERSION, DTLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
+        goto end;
+
+    if (!TEST_true(create_ssl_connection(sssl, cssl, SSL_ERROR_NONE)))
+        goto end;
+
+    if (!TEST_ptr(ssc = SSL_CONNECTION_FROM_SSL_ONLY(sssl))
+        || !TEST_ptr(csc = SSL_CONNECTION_FROM_SSL_ONLY(cssl)))
+        goto end;
+
+    /* Application data must use a unified header. */
+    if (!TEST_uint64_t_gt(csc->rlayer.wrl->epoch, 0)
+        || !TEST_uint64_t_gt(ssc->rlayer.wrl->epoch, 0))
+        goto end;
+
+    /* Drain post-handshake ACKs before manipulating the record state. */
+    while (SSL_read(sssl, rdbuf, sizeof(rdbuf)) > 0)
+        continue;
+    while (SSL_read(cssl, rdbuf, sizeof(rdbuf)) > 0)
+        continue;
+    ERR_clear_error();
+
+    for (j = 0; j < 2; j++) {
+        SSL *wssl = j == 0 ? cssl : sssl;
+        SSL *rssl = j == 0 ? sssl : cssl;
+        SSL_CONNECTION *wsc = j == 0 ? csc : ssc;
+        SSL_CONNECTION *rsc = j == 0 ? ssc : csc;
+
+        /* The writer must not go backwards: that would reuse a nonce */
+        if (!TEST_uint64_t_ge(t->start, wsc->rlayer.wrl->sequence))
+            goto end;
+
+        wsc->rlayer.wrl->sequence = t->start;
+
+        if (t->move_reader) {
+            rsc->rlayer.rrl->bitmap.max_seq_num = t->start - 1;
+            rsc->rlayer.rrl->bitmap.map = 1;
+        }
+
+        for (i = 0; i < t->num; i++) {
+            memset(wrbuf, 0, sizeof(wrbuf));
+            wrbuf[0] = (unsigned char)(i + 1);
+
+            if (!TEST_int_eq(SSL_write(wssl, wrbuf, sizeof(wrbuf)),
+                    (int)sizeof(wrbuf)))
+                goto end;
+
+            /* The full sequence number keeps increasing across the wrap */
+            if (!TEST_uint64_t_eq(wsc->rlayer.wrl->sequence,
+                    t->start + i + 1))
+                goto end;
+
+            memset(rdbuf, 0, sizeof(rdbuf));
+            if (!TEST_int_eq(SSL_read(rssl, rdbuf, sizeof(rdbuf)),
+                    (int)sizeof(rdbuf))
+                || !TEST_mem_eq(rdbuf, sizeof(rdbuf), wrbuf,
+                    sizeof(wrbuf)))
+                goto end;
+
+            /* ... and the peer has to have reconstructed the same value */
+            if (!TEST_uint64_t_eq(rsc->rlayer.rrl->bitmap.max_seq_num,
+                    t->start + i))
+                goto end;
+        }
+    }
+
+    testresult = 1;
+end:
+    SSL_free(cssl);
+    SSL_free(sssl);
+    SSL_CTX_free(cctx);
+    SSL_CTX_free(sctx);
+
+    return testresult;
+}
+#endif /* OPENSSL_NO_DTLS1_3 */
+
 /* Confirm that we can create a connections using DTLSv1_listen() */
 #ifndef OPENSSL_NO_DTLS1_2
 static int test_listen(void)
@@ -1055,6 +1170,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_DTLS1_3
     ADD_TEST(test_duplicate_app_data_dtls13);
+    ADD_ALL_TESTS(test_seq_num_wrap, OSSL_NELEM(seqnum_tests));
 #endif
 
     return 1;
