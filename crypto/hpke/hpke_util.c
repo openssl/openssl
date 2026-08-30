@@ -14,7 +14,6 @@
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 #include <openssl/hpke.h>
-#include <openssl/bio.h>
 #include <openssl/sha.h>
 #include <openssl/rand.h>
 #include "crypto/ecx.h"
@@ -489,7 +488,7 @@ char *ossl_hpke_suite2str(OSSL_HPKE_SUITE suite)
     ret = OPENSSL_malloc(len);
     if (ret == NULL)
         return NULL;
-    BIO_snprintf(ret, len, "%s,%s,%s", kemstr, kdfstr, aeadstr);
+    snprintf(ret, len, "%s,%s,%s", kemstr, kdfstr, aeadstr);
     return ret;
 }
 
