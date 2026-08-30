@@ -31,6 +31,15 @@ OpenSSL Releases
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Refactored remaining cipher `OSSL_PARAM` name parsing so that
+   automatically generated parsers are used instead of
+   `OSSL_PARAM_locate()` calls.  This should ensure that the list
+   of acceptable parameters better matches those which are actually
+   processed.  It should also provide a small performance improvement,
+   because repeated iteration over passed parameter arrays is avoided.
+
+   *Dr Paul Dale*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,
