@@ -4776,18 +4776,18 @@ static int test_dsa_finish_set_method(void)
     /*
      * Switch to a copy of the default method; the finish slot frees the
      * cache.  Freeing the key below calls the finish slot again.
+     * Note that the key holds a raw pointer to the method, so the method
+     * must outlive the key and is only freed in the cleanup below.
      */
     if (!TEST_ptr(method = DSA_meth_dup(DSA_get_default_method()))
         || !TEST_true(DSA_set_method(dsa, method)))
         goto err;
-    DSA_meth_free(method);
-    method = NULL;
 
     testresult = 1;
 err:
-    DSA_meth_free(method);
     DSA_SIG_free(sig);
     DSA_free(dsa);
+    DSA_meth_free(method);
     return testresult;
 }
 #endif
@@ -4829,18 +4829,18 @@ static int test_dh_finish_set_method(void)
     /*
      * Switch to a copy of the default method; the finish slot frees the
      * cache.  Freeing the key below calls the finish slot again.
+     * Note that the key holds a raw pointer to the method, so the method
+     * must outlive the key and is only freed in the cleanup below.
      */
     if (!TEST_ptr(method = DH_meth_dup(DH_get_default_method()))
         || !TEST_true(DH_set_method(dh, method)))
         goto err;
-    DH_meth_free(method);
-    method = NULL;
 
     testresult = 1;
 err:
-    DH_meth_free(method);
     OPENSSL_free(buf);
     DH_free(dh);
+    DH_meth_free(method);
     return testresult;
 }
 #endif
