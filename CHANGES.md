@@ -32,6 +32,16 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Deprecated `SSL_COMP_add_compression_method()`,
+   `SSL_COMP_get_compression_methods()`, `SSL_COMP_set0_compression_methods()`,
+   `SSL_COMP_get_name()`, `SSL_COMP_get0_name()`, `SSL_COMP_get_id()`,
+   `SSL_get_current_compression()`, `SSL_get_current_expansion()` and
+   `SSL_SESSION_get_compress_id()`.
+   TLS record-level compression is obsolete and a known security liability
+   (the CRIME attack).  These functions will be removed in a future release.
+
+   *John Claus*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,
