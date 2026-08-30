@@ -19,7 +19,6 @@
 /* For SSL3_VERSION and TLS1_VERSION */
 #include <openssl/prov_ssl.h>
 #include <openssl/proverr.h>
-#include <openssl/ssl3.h>
 #include "cipher_aes_cbc_hmac_sha.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
