@@ -135,6 +135,7 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/rands/drbg_hmac.inc \
          providers/implementations/rands/fips_crng_test.inc \
          providers/implementations/rands/seed_src.inc \
+         providers/implementations/rands/seed_src_cpurng.inc \
          providers/implementations/rands/seed_src_jitter.inc \
          providers/implementations/rands/test_rng.inc
 
@@ -260,6 +261,7 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/rands/drbg_hmac.inc \
        providers/implementations/rands/fips_crng_test.inc \
        providers/implementations/rands/seed_src.inc \
+       providers/implementations/rands/seed_src_cpurng.inc \
        providers/implementations/rands/seed_src_jitter.inc \
        providers/implementations/rands/test_rng.inc \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
@@ -444,6 +446,8 @@ GENERATE[providers/implementations/rands/fips_crng_test.inc]=\
     providers/implementations/rands/fips_crng_test.inc.in
 GENERATE[providers/implementations/rands/seed_src.inc]=\
     providers/implementations/rands/seed_src.inc.in
+GENERATE[providers/implementations/rands/seed_src_cpurng.inc]=\
+    providers/implementations/rands/seed_src_cpurng.inc.in
 GENERATE[providers/implementations/rands/seed_src_jitter.inc]=\
     providers/implementations/rands/seed_src_jitter.inc.in
 GENERATE[providers/implementations/rands/test_rng.inc]=\

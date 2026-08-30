@@ -13,7 +13,11 @@ ENDIF
 IF[{- !$disabled{'fips-jitter'} -}]
   $COMMON=$COMMON rand_pool.c
 ELSE
-  $CRYPTO=$CRYPTO rand_pool.c
+  IF[{- !$disabled{'fips-cpurng'} -}]
+    $COMMON=$COMMON rand_pool.c
+  ELSE
+    $CRYPTO=$CRYPTO rand_pool.c
+  ENDIF
 ENDIF
 
 SOURCE[../../libcrypto]=$COMMON $CRYPTO

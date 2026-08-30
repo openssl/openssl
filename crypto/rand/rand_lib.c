@@ -521,15 +521,16 @@ static void rand_delete_thread_state(void *arg)
     EVP_RAND_CTX_free(rand);
 }
 
-#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
+#if !defined(FIPS_MODULE) || defined(OPENSSL_FIPS_SEED_SRC)
 static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
 {
     EVP_RAND *rand;
-    const char *propq;
-    char *name;
+    const char *propq = "";
     EVP_RAND_CTX *ctx = NULL;
     int fallback = 0;
-#ifdef OPENSSL_NO_FIPS_JITTER
+    const char *name = OPENSSL_SEED_SRC_NAME;
+
+#if !defined(OPENSSL_FIPS_SEED_SRC)
     RAND_GLOBAL *dgbl = rand_get_global(libctx);
 
     if (dgbl == NULL)
@@ -539,12 +540,8 @@ static EVP_RAND_CTX *rand_new_seed(OSSL_LIB_CTX *libctx)
         name = dgbl->seed_name;
     } else {
         fallback = 1;
-        name = OPENSSL_SEED_SRC_NAME;
     }
-#else /* !OPENSSL_NO_FIPS_JITTER */
-    name = OPENSSL_SEED_SRC_NAME;
-    propq = "";
-#endif /* OPENSSL_NO_FIPS_JITTER */
+#endif
 
     ERR_set_mark();
     rand = EVP_RAND_fetch(libctx, name, propq);
@@ -604,7 +601,7 @@ static EVP_RAND_CTX *rand_get0_seed(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     EVP_RAND_CTX_free(seed);
     return ret;
 }
-#endif /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
+#endif /* !FIPS_MODULE || OPENSSL_FIPS_SEED_SRC */
 
 #ifndef FIPS_MODULE
 EVP_RAND_CTX *ossl_rand_get0_seed_noncreating(OSSL_LIB_CTX *ctx)
@@ -728,7 +725,7 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     if (ret != NULL)
         return ret;
 
-#if !defined(FIPS_MODULE) || !defined(OPENSSL_NO_FIPS_JITTER)
+#if !defined(FIPS_MODULE) || defined(OPENSSL_FIPS_SEED_SRC)
     /* Create a seed source for libcrypto or jitter enabled FIPS provider */
     ERR_set_mark();
     seed = rand_get0_seed(ctx, dgbl);
@@ -736,8 +733,7 @@ static EVP_RAND_CTX *rand_get0_primary(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
         ERR_clear_last_mark();
         return NULL;
     }
-    ERR_pop_to_mark();
-#endif /* !FIPS_MODULE || !OPENSSL_NO_FIPS_JITTER */
+#endif /* !FIPS_MODULE || OPENSSL_FIPS_SEED_SRC */
 
 #if defined(FIPS_MODULE)
     /* The FIPS provider has entropy health tests instead of the primary */

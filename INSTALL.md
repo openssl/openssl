@@ -872,6 +872,17 @@ This option will only produce a compliant FIPS provider if you have:
 
 Failure to do all of these will produce a non-compliant FIPS provider.
 
+### enable-fips-cpurng
+
+Use the CPU RDSEED instruction (x86 only) as a FIPS validated entropy source.
+
+This option will only produce a comnpliant FIPS provider if:
+
+1. You are using one of the CPUs Intel lists on their free to use Entropy
+   certificates;
+2. independently performed the required [SP 800-90B] entropy assessments;
+3. have had the resulting FIPS provider certified by the [CMVP].
+
 ### enable-fuzz-libfuzzer, enable-fuzz-afl
 
 Build with support for fuzzing using either libfuzzer or AFL.

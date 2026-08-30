@@ -451,6 +451,9 @@ static const OSSL_ALGORITHM fips_rands[] = {
 #ifndef OPENSSL_NO_FIPS_JITTER
     { PROV_NAMES_JITTER, FIPS_DEFAULT_PROPERTIES, ossl_jitter_functions },
 #endif
+#ifndef OPENSSL_NO_FIPS_CPURNG
+    { PROV_NAMES_CPURNG, FIPS_DEFAULT_PROPERTIES, ossl_cpurng_functions },
+#endif
     { PROV_NAMES_TEST_RAND, FIPS_UNAPPROVED_PROPERTIES, ossl_test_rng_functions },
     { NULL, NULL, NULL }
 };
