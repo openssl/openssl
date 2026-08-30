@@ -35,6 +35,9 @@ extern "C" {
 /* QUIC uses a 4 byte unsigned version number */
 #define OSSL_QUIC1_VERSION 0x0000001
 
+/* Maximum plaintext length: defined by SSL/TLS standards */
+#define SSL3_RT_MAX_PLAIN_LENGTH 16384
+
 #ifdef __cplusplus
 }
 #endif
