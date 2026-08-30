@@ -32,6 +32,15 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Refactored remaining cipher `OSSL_PARAM` name parsing so that
+   automatically generated parsers are used instead of
+   `OSSL_PARAM_locate()` calls.  This should ensure that the list
+   of acceptable parameters better matches those which are actually
+   processed.  It should also provide a small performance improvement,
+   because repeated iteration over passed parameter arrays is avoided.
+
+   *Dr Paul Dale*
+
  * Added a `seed_strict` option to the `random` configuration section
    which makes the configured random seed source strictly enforced when
    a provider (such as the FIPS provider) requests entropy or a nonce.
