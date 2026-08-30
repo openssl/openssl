@@ -416,6 +416,11 @@ OpenSSL 4.1
 
    *Dimitri John Ledkov*
 
+ * Added optimized ML-KEM NTT and scalar multiplication operations on `s390x`
+   (with potential reuse for other architectures with 128 bit vector registers).
+
+   *Timo Keller*
+
 OpenSSL 4.0
 -----------
 
