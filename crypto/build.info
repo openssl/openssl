@@ -145,4 +145,5 @@ INCLUDE[init.o]=.
 
 IF[{- $target{needs_c99_snprintf_compat} -}]
   SOURCE[../libcrypto]=msvc2013_snprintf.c
+  SOURCE[../providers/libfips.a]=msvc2013_snprintf.c
 ENDIF
