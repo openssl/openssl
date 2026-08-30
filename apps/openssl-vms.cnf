@@ -90,7 +90,6 @@ default_ca	= CA_default		# The default ca section
 [ CA_default ]
 
 dir		= sys\$disk:[.demoCA		# Where everything is kept
-certs		= $dir.certs]		# Where the issued certs are kept
 database	= $dir]index.txt	# database index file.
 #unique_subject	= no			# Set to 'no' to allow creation of
 					# several certs with same subject.
@@ -100,7 +99,6 @@ certificate	= $dir]cacert.pem 	# The CA certificate
 serial		= $dir]serial. 		# The current serial number
 crlnumber	= $dir]crlnumber.	# the current crl number
 					# must be commented out to leave a V1 CRL
-crl		= $dir]crl.pem 		# The current CRL
 private_key	= $dir.private]cakey.pem # The private key
 
 x509_extensions	= usr_cert		# The extensions to add to the cert
