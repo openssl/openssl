@@ -38,14 +38,20 @@ sub test_ocsp {
     my $expected_exit = shift;
     my $nochecks = shift;
     my $opt_untrusted = shift // "-verify_other";
+    my $certfile = shift;
     my $outputfile = basename($inputfile, '.ors') . '.dat';
 
     run(app(["openssl", "base64", "-d",
              "-in", catfile($ocspdir,$inputfile),
              "-out", $outputfile]));
     my @certopt = ($opt_untrusted, catfile($ocspdir, $untrusted));
+    my @requestopt = defined($certfile)
+        ? ("-issuer", catfile($ocspdir, $CAfile),
+           "-cert", catfile($ocspdir, $certfile), "-no_nonce")
+        : ();
     with({ exit_checker => sub { return shift == $expected_exit; } },
          sub { ok(run(app(["openssl", "ocsp", "-respin", $outputfile,
+                           @requestopt,
                            "-partial_chain", @check_time,
                            "-CAfile", catfile($ocspdir, $CAfile),
                            @certopt,
@@ -54,7 +60,7 @@ sub test_ocsp {
                   $title); });
 }
 
-plan tests => 15;
+plan tests => 16;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
@@ -73,6 +79,14 @@ subtest "=== VALID OCSP RESPONSES ===" => sub {
               "D2.ors", "D2_Issuer_Root.pem", "", 0, 0);
     test_ocsp("DELEGATED; Root CA -> EE",
               "D3.ors", "D3_Issuer_Root.pem", "", 0, 0);
+};
+
+subtest "=== INVALID OCSP RESPONSE TIMES ===" => sub {
+    plan tests => 1;
+
+    test_ocsp("NON-DELEGATED; expired response",
+              "ND1.ors", "ND1_Issuer_ICA.pem", "", 1, 0, undef,
+              "ND1_Cert_EE.pem");
 };
 
 subtest "=== INVALID SIGNATURE on the OCSP RESPONSE ===" => sub {
