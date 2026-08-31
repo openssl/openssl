@@ -480,6 +480,11 @@ static int test_pkey_store_open_ex(void)
                            propq, NULL, NULL, NULL, NULL, NULL)))
         goto end;
 
+    /* retrying with invalid scheme name syntax (note the '_') will fail */
+    if (!TEST_ptr_null(ctx = OSSL_STORE_open_ex("fake_rsa:openpwtest", libctx,
+                           propq, ui_method, NULL, NULL, NULL, NULL)))
+        goto end;
+
     ret = 1;
 
 end:
