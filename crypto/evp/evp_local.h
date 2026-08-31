@@ -59,6 +59,7 @@ struct evp_cipher_ctx_st {
     int block_mask;
     unsigned char final[EVP_MAX_BLOCK_LENGTH]; /* possible final block */
     size_t numpipes;
+    int prov_no_padding; /* no-padding last pushed to algctx */
 
     /*
      * Opaque ctx returned from a providers cipher algorithm implementation
