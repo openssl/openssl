@@ -5323,6 +5323,100 @@ err:
     return ret;
 }
 
+#ifndef OPENSSL_NO_EC
+static int test_ec_fromdata_selection_params(void)
+{
+    char group_name[] = "prime256v1";
+    unsigned char pub[] = { 0 };
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_GROUP_NAME, group_name, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub)),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_PUB_KEY, pub, sizeof(pub)),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const OSSL_PARAM *settable = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "EC", testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_ptr(settable = EVP_PKEY_fromdata_settable(
+                         ctx, EVP_PKEY_KEY_PARAMETERS))
+        || !TEST_ptr_null(OSSL_PARAM_locate_const(
+            settable, OSSL_PKEY_PARAM_PUB_KEY))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata(ctx, &pkey,
+                            EVP_PKEY_KEY_PARAMETERS, params),
+            0))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
+#ifndef OPENSSL_NO_SM2
+static int test_sm2_common_set_params(void)
+{
+    static const unsigned char expected_seed[] = { 1, 2, 3, 4, 5 };
+    char requested_encoding[] = "explicit";
+    char requested_point_format[] = "compressed";
+    unsigned char requested_seed[sizeof(expected_seed)];
+    OSSL_PARAM set_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING,
+            requested_encoding, 0),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            requested_point_format, 0),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, requested_seed,
+            sizeof(requested_seed)),
+        OSSL_PARAM_END
+    };
+    char encoding[16] = { 0 };
+    char point_format[16] = { 0 };
+    unsigned char seed[sizeof(expected_seed)] = { 0 };
+    OSSL_PARAM get_params[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_ENCODING, encoding,
+            sizeof(encoding)),
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT,
+            point_format, sizeof(point_format)),
+        OSSL_PARAM_octet_string(OSSL_PKEY_PARAM_EC_SEED, seed, sizeof(seed)),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    const OSSL_PARAM *settable;
+    int ret = 0;
+
+    memcpy(requested_seed, expected_seed, sizeof(requested_seed));
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "SM2", testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(ctx, &pkey), 0)
+        || !TEST_ptr(settable = EVP_PKEY_settable_params(pkey))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable,
+            OSSL_PKEY_PARAM_EC_ENCODING))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable,
+            OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT))
+        || !TEST_ptr(OSSL_PARAM_locate_const(settable,
+            OSSL_PKEY_PARAM_EC_SEED))
+        || !TEST_int_gt(EVP_PKEY_set_params(pkey, set_params), 0)
+        || !TEST_int_gt(EVP_PKEY_get_params(pkey, get_params), 0)
+        || !TEST_str_eq(encoding, requested_encoding)
+        || !TEST_str_eq(point_format, requested_point_format)
+        || !TEST_size_t_eq(get_params[2].return_size, sizeof(expected_seed))
+        || !TEST_mem_eq(seed, sizeof(seed), expected_seed,
+            sizeof(expected_seed)))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(pkey);
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+#endif
+
 static int param_is_advertised(const OSSL_PARAM *params, const char *name)
 {
     return params != NULL && OSSL_PARAM_locate_const(params, name) != NULL;
@@ -9764,8 +9858,12 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_X509_PUBKEY_inplace);
     ADD_TEST(test_X509_PUBKEY_dup);
+    ADD_TEST(test_ec_fromdata_selection_params);
     ADD_ALL_TESTS(test_invalid_ec_char2_pub_range_decode,
         OSSL_NELEM(ec_der_pub_keys));
+#endif
+#ifndef OPENSSL_NO_SM2
+    ADD_TEST(test_sm2_common_set_params);
 #endif
 #ifndef OPENSSL_NO_DSA
     ADD_TEST(test_DSA_get_set_params);
