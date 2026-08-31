@@ -32,6 +32,15 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed handling of password sources read from `file:`, `fd:`, and `stdin` at
+   the 1023-byte line-length boundary. A maximum-length password followed by a
+   newline is now consumed as one complete line, so when the same source is used
+   for both `-passin` and `-passout`, the next line is used for the output
+   password as documented. Longer password lines are now rejected rather than
+   being silently truncated or split into another password.
+
+   *Mounir Idrassi*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,

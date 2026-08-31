@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_pkey");
 
-plan tests => 9;
+plan tests => 10;
 
 my @app = ('openssl', 'pkey');
 
@@ -42,6 +42,51 @@ subtest "=== pkey typical en-/decryption (using AES256-CBC) ===" => sub {
        "decrypt key");
     is(compare_text($in_key, $decrypted_key), 0,
        "Same file contents after encrypting and decrypting in separate files");
+};
+
+subtest "=== pkey password file line boundaries ===" => sub {
+    plan tests => 6;
+
+    my $password_file = 'passwords.txt';
+    my $encrypted_key = 'boundary-encrypted-key.pem';
+    my $eof_encrypted_key = 'eof-boundary-encrypted-key.pem';
+    my $too_long_key = 'too-long-encrypted-key.pem';
+    my $output_password = 'output-password';
+    my $password_source = "file:$password_file";
+    my $max_password = 'A' x 1023;
+    my $fh;
+
+    open $fh, '>', $password_file or die "Cannot open $password_file: $!";
+    print $fh $max_password, "\n$output_password\n";
+    close $fh or die "Cannot close $password_file: $!";
+
+    ok(run(app([@app, '-aes256', '-in', $in_key, '-out', $encrypted_key,
+                '-passin', $password_source, '-passout', $password_source])),
+       "read a maximum-length input password followed by an output password");
+    ok(run(app([@app, '-in', $encrypted_key,
+                '-passin', "pass:$output_password", '-noout'])),
+       "the second line is used as the output password");
+    ok(!run(app([@app, '-in', $encrypted_key, '-passin', 'pass:', '-noout'])),
+       "the line separator is not used as an empty output password");
+
+    open $fh, '>', $password_file or die "Cannot open $password_file: $!";
+    print $fh $max_password;
+    close $fh or die "Cannot close $password_file: $!";
+
+    ok(run(app([@app, '-aes256', '-in', $in_key,
+                '-out', $eof_encrypted_key, '-passout', $password_source])),
+       "read a maximum-length password ending at EOF");
+    ok(run(app([@app, '-in', $eof_encrypted_key,
+                '-passin', "pass:$max_password", '-noout'])),
+       "the complete maximum-length password is used at EOF");
+
+    open $fh, '>', $password_file or die "Cannot open $password_file: $!";
+    print $fh 'A' x 1024, "\n$output_password\n";
+    close $fh or die "Cannot close $password_file: $!";
+
+    ok(!run(app([@app, '-aes256', '-in', $in_key, '-out', $too_long_key,
+                 '-passin', $password_source, '-passout', $password_source])),
+       "reject an overlong password instead of treating its tail as another password");
 };
 
 subtest "=== pkey handling of identical input and output files (using 3DES) and -traditional ===" => sub {
