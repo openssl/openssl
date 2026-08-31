@@ -7,16 +7,22 @@
  * in the file LICENSE in the source distribution or at
  * https://www.openssl.org/source/license.html
  *
- * Implements AES-CBC128/192/256 decryption with VAES (AVX-512)
+ * AVX-512/VAES-512 intrinsic implementations of AES modes.
  *
- * CBC encryption is inherently serial (each ciphertext block depends
- * on the previous one), so VAES provides no benefit there -- the
- * encrypt path falls back to the aesni_cbc_encrypt assembly routine.
+ * This translation unit gathers the VAES-accelerated AES mode
+ * implementations together with the shared 512-bit primitives they rely on:
+ *   - portable compiler abstractions for ISA targeting and inlining,
+ *   - a macro that emits 1x/2x/4x parallel 512-bit AES round functions,
+ *   - macros to broadcast-load and securely scrub the round-key schedule,
+ *   - a runtime CPU capability check.
  *
- * CBC decryption IS parallel: all blocks can be independently decrypted,
- * then XORed with the preceding ciphertext block (or IV for the first).
- * This implementation processes 4x4=16 blocks per iteration using four
- * ZMM registers, falling back to 8, 4, then single-block processing.
+ * Currently implemented: AES-CBC decryption.
+ *
+ * CBC encryption is inherently serial (each ciphertext block depends on the
+ * previous one), so VAES provides no benefit there -- that path falls back to
+ * the aesni_cbc_encrypt assembly routine.  CBC decryption is parallel: all
+ * blocks are decrypted independently, then XORed with the preceding ciphertext
+ * block (or the IV for the first).
  */
 
 #include "internal/deprecated.h"
@@ -27,7 +33,11 @@
 #include "crypto/modes.h"
 #include "crypto/aes_platform.h"
 
-#if VAES_CBC_ELIGIBLE
+#if VAES512_ELIGIBLE
+
+#include <openssl/e_os2.h>
+#include <openssl/modes.h>
+#include <immintrin.h>
 
 /* Function prototypes */
 void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
@@ -35,9 +45,7 @@ void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
     unsigned char ivec[16], int enc);
 int ossl_aes_cbc_vaes_eligible(void);
 
-#include <openssl/modes.h>
-
-/* Forward declarations -- defined in aesni-x86_64.pl assembly        */
+/* Forward declarations — defined in aesni-x86_64.pl assembly         */
 void aesni_cbc_encrypt(const unsigned char *in, unsigned char *out,
     size_t len, const AES_KEY *key,
     unsigned char *ivec, int enc);
@@ -49,23 +57,23 @@ void aesni_decrypt(const unsigned char *in, unsigned char *out,
  * optimizers is what prevents the cleanup call and stores from being
  * eliminated as dead. Do not replace it with a compiler-visible C function.
  */
-void ossl_aes_cbc_vaes_cleanup(void *key_schedule, size_t num_keys);
-int ossl_aes_cbc_vaes_cleanup_eligible(void);
+void ossl_aes_vaes_cleanup(void *key_schedule, size_t num_keys);
+int ossl_aes_vaes_cleanup_eligible(void);
 
 /* Portable compiler abstractions for inlining and ISA target selection */
-#define STRINGIFY_IMPL_(a) #a
-#define STRINGIFY_(a) STRINGIFY_IMPL_(a)
+#define OSSL_VAES512_STRINGIFY_IMPL_(a) #a
+#define OSSL_VAES512_STRINGIFY_(a) OSSL_VAES512_STRINGIFY_IMPL_(a)
 
 #ifdef __clang__
 #define OPENSSL_TARGET_VAES512                                         \
-    _Pragma(STRINGIFY_(clang attribute push(                           \
+    _Pragma(OSSL_VAES512_STRINGIFY_(clang attribute push(              \
         __attribute__((target("avx512f,avx512dq,avx512bw,vaes,aes"))), \
         apply_to = function)))
 #define OPENSSL_UNTARGET_VAES512 _Pragma("clang attribute pop")
 #elif defined(__GNUC__)
 #define OPENSSL_TARGET_VAES512  \
     _Pragma("GCC push_options") \
-        _Pragma(STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
+        _Pragma(OSSL_VAES512_STRINGIFY_(GCC target("avx512f,avx512dq,avx512bw,vaes,aes")))
 #define OPENSSL_UNTARGET_VAES512 _Pragma("GCC pop_options")
 #else
 /* MSVC: all intrinsics are always available via <immintrin.h>. */
@@ -84,92 +92,124 @@ int ossl_aes_cbc_vaes_cleanup_eligible(void);
 #define OSSL_FUNC_NOINLINE
 #endif
 
-#include <immintrin.h>
+/*
+ * Runtime CPU capability check shared by all VAES-512 mode helpers.
+ * Uses only OPENSSL_ia32cap_P bit tests, so it requires no special ISA
+ * target and is safe to define outside an OPENSSL_TARGET_VAES512 region.
+ */
+static ossl_inline int ossl_vaes512_cpu_capable(void)
+{
+    return (OPENSSL_ia32cap_P[2] & (1 << 16)) /* AVX512F    */
+        && (OPENSSL_ia32cap_P[2] & (1 << 17)) /* AVX512DQ   */
+        && (OPENSSL_ia32cap_P[2] & (1 << 30)) /* AVX512BW   */
+        && (OPENSSL_ia32cap_P[3] & (1 << 9)); /* AVX512VAES */
+}
+
+/*
+ * Emit the 1x/2x/4x parallel 512-bit AES round functions for a given round
+ * count.  TAG names the generated functions (e.g. AesEnc, AesDec); AESOP and
+ * AESLAST select the middle-round and last-round intrinsics (encrypt vs
+ * decrypt).  Each __m512i packs four independent 128-bit AES blocks, and
+ * always_inline keeps the round keys resident in ZMM registers.
+ *
+ * Must be expanded inside an OPENSSL_TARGET_VAES512 region.
+ */
+#define OSSL_VAES512_DEFINE_ROUNDS(TAG, ROUNDS, AESOP, AESLAST) \
+    OSSL_FUNC_ALWAYS_INLINE                                     \
+    void TAG##_4x512_##ROUNDS(                                  \
+        __m512i *b1, __m512i *b2, __m512i *b3, __m512i *b4,     \
+        const __m512i *rk)                                      \
+    {                                                           \
+        *b1 = _mm512_xor_si512(*b1, rk[0]);                     \
+        *b2 = _mm512_xor_si512(*b2, rk[0]);                     \
+        *b3 = _mm512_xor_si512(*b3, rk[0]);                     \
+        *b4 = _mm512_xor_si512(*b4, rk[0]);                     \
+        for (int i = 1; i < ROUNDS; i++) {                      \
+            *b1 = AESOP(*b1, rk[i]);                            \
+            *b2 = AESOP(*b2, rk[i]);                            \
+            *b3 = AESOP(*b3, rk[i]);                            \
+            *b4 = AESOP(*b4, rk[i]);                            \
+        }                                                       \
+        *b1 = AESLAST(*b1, rk[ROUNDS]);                         \
+        *b2 = AESLAST(*b2, rk[ROUNDS]);                         \
+        *b3 = AESLAST(*b3, rk[ROUNDS]);                         \
+        *b4 = AESLAST(*b4, rk[ROUNDS]);                         \
+    }                                                           \
+                                                                \
+    OSSL_FUNC_ALWAYS_INLINE                                     \
+    void TAG##_2x512_##ROUNDS(                                  \
+        __m512i *b1, __m512i *b2, const __m512i *rk)            \
+    {                                                           \
+        *b1 = _mm512_xor_si512(*b1, rk[0]);                     \
+        *b2 = _mm512_xor_si512(*b2, rk[0]);                     \
+        for (int i = 1; i < ROUNDS; i++) {                      \
+            *b1 = AESOP(*b1, rk[i]);                            \
+            *b2 = AESOP(*b2, rk[i]);                            \
+        }                                                       \
+        *b1 = AESLAST(*b1, rk[ROUNDS]);                         \
+        *b2 = AESLAST(*b2, rk[ROUNDS]);                         \
+    }                                                           \
+                                                                \
+    OSSL_FUNC_ALWAYS_INLINE                                     \
+    void TAG##_1x512_##ROUNDS(                                  \
+        __m512i *b1, const __m512i *rk)                         \
+    {                                                           \
+        *b1 = _mm512_xor_si512(*b1, rk[0]);                     \
+        for (int i = 1; i < ROUNDS; i++)                        \
+            *b1 = AESOP(*b1, rk[i]);                            \
+        *b1 = AESLAST(*b1, rk[ROUNDS]);                         \
+    }
+
+/* Emit the AES decryption round helpers (used by CBC decrypt). */
+#define OSSL_VAES512_DEFINE_DECRYPT(ROUNDS)    \
+    OSSL_VAES512_DEFINE_ROUNDS(AesDec, ROUNDS, \
+        _mm512_aesdec_epi128, _mm512_aesdeclast_epi128)
+
+/*
+ * Broadcast-load the AES round-key schedule into an array of ZMM registers,
+ * replicating each 128-bit round key across all four lanes.  key is an
+ * AES_KEY *, rk an array of at least NR+1 __m512i.
+ *
+ * Must be expanded inside an OPENSSL_TARGET_VAES512 region.
+ */
+#define OSSL_VAES512_LOAD_ROUNDKEYS(rk, key, NR)                               \
+    do {                                                                       \
+        const unsigned char *rk_bytes_ = (const unsigned char *)(key)->rd_key; \
+        for (int i_ = 0; i_ <= (NR); i_++) {                                   \
+            __m128i t_ = _mm_loadu_si128(                                      \
+                (const __m128i *)(rk_bytes_ + i_ * 16));                       \
+            (rk)[i_] = _mm512_broadcast_i32x4(t_);                             \
+        }                                                                      \
+    } while (0)
 
 OPENSSL_TARGET_VAES512
 
-/* ------------------------------------------------------------------ */
-/* AES decryption helpers: 1x, 2x, 4x parallel 512-bit blocks         */
-/* Each 512-bit register holds 4 independent 128-bit AES blocks.      */
-/* always_inline guarantees the compiler keeps keys in ZMM regs.      */
-/* ------------------------------------------------------------------ */
+/* AES decryption round helpers (1x/2x/4x parallel 512-bit blocks). */
+OSSL_VAES512_DEFINE_DECRYPT(10) /* AES-128 */
+OSSL_VAES512_DEFINE_DECRYPT(12) /* AES-192 */
+OSSL_VAES512_DEFINE_DECRYPT(14) /* AES-256 */
 
-#define DEFINE_AES_DECRYPT_FUNCS(ROUNDS)                    \
-    OSSL_FUNC_ALWAYS_INLINE                                 \
-    void AesDec_4x512_##ROUNDS(                             \
-        __m512i *b1, __m512i *b2, __m512i *b3, __m512i *b4, \
-        const __m512i *rk)                                  \
-    {                                                       \
-        *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
-        *b2 = _mm512_xor_si512(*b2, rk[0]);                 \
-        *b3 = _mm512_xor_si512(*b3, rk[0]);                 \
-        *b4 = _mm512_xor_si512(*b4, rk[0]);                 \
-        for (int i = 1; i < ROUNDS; i++) {                  \
-            *b1 = _mm512_aesdec_epi128(*b1, rk[i]);         \
-            *b2 = _mm512_aesdec_epi128(*b2, rk[i]);         \
-            *b3 = _mm512_aesdec_epi128(*b3, rk[i]);         \
-            *b4 = _mm512_aesdec_epi128(*b4, rk[i]);         \
-        }                                                   \
-        *b1 = _mm512_aesdeclast_epi128(*b1, rk[ROUNDS]);    \
-        *b2 = _mm512_aesdeclast_epi128(*b2, rk[ROUNDS]);    \
-        *b3 = _mm512_aesdeclast_epi128(*b3, rk[ROUNDS]);    \
-        *b4 = _mm512_aesdeclast_epi128(*b4, rk[ROUNDS]);    \
-    }                                                       \
-                                                            \
-    OSSL_FUNC_ALWAYS_INLINE                                 \
-    void AesDec_2x512_##ROUNDS(                             \
-        __m512i *b1, __m512i *b2, const __m512i *rk)        \
-    {                                                       \
-        *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
-        *b2 = _mm512_xor_si512(*b2, rk[0]);                 \
-        for (int i = 1; i < ROUNDS; i++) {                  \
-            *b1 = _mm512_aesdec_epi128(*b1, rk[i]);         \
-            *b2 = _mm512_aesdec_epi128(*b2, rk[i]);         \
-        }                                                   \
-        *b1 = _mm512_aesdeclast_epi128(*b1, rk[ROUNDS]);    \
-        *b2 = _mm512_aesdeclast_epi128(*b2, rk[ROUNDS]);    \
-    }                                                       \
-                                                            \
-    OSSL_FUNC_ALWAYS_INLINE                                 \
-    void AesDec_1x512_##ROUNDS(                             \
-        __m512i *b1, const __m512i *rk)                     \
-    {                                                       \
-        *b1 = _mm512_xor_si512(*b1, rk[0]);                 \
-        for (int i = 1; i < ROUNDS; i++)                    \
-            *b1 = _mm512_aesdec_epi128(*b1, rk[i]);         \
-        *b1 = _mm512_aesdeclast_epi128(*b1, rk[ROUNDS]);    \
-    }
-
-DEFINE_AES_DECRYPT_FUNCS(10) /* AES-128 */
-DEFINE_AES_DECRYPT_FUNCS(12) /* AES-192 */
-DEFINE_AES_DECRYPT_FUNCS(14) /* AES-256 */
-
-/* ------------------------------------------------------------------ */
-/* CBC-mode decryption -- templated per round count                   */
-/*                                                                    */
-/* Processes as many full blocks as possible:                         */
-/*   16 blocks at a time (4 x zmm = 4 x 4 = 16 blocks)                */
-/*    8 blocks at a time (2 x zmm)                                    */
-/*    4 blocks at a time (1 x zmm)                                    */
-/*    1 block at a time for the remaining 0-3 blocks                  */
-/*                                                                    */
-/* The chaining vector b1 packs [prev_ct[last] | ct[0] | ct[1]        */
-/* | ct[2]] so that a single XOR after decryption applies the CBC     */
-/* feedback to all four lanes simultaneously.                         */
-/* ------------------------------------------------------------------ */
-
+/*-
+ * CBC-mode decryption -- templated per round count.
+ *
+ * Processes as many full blocks as possible:
+ *   16 blocks at a time (4 x zmm = 4 x 4 = 16 blocks)
+ *    8 blocks at a time (2 x zmm)
+ *    4 blocks at a time (1 x zmm)
+ *    1 block at a time for the remaining 0-3 blocks
+ *
+ * The chaining vector b1 packs [prev_ct[last] | ct[0] | ct[1] | ct[2]] so
+ * that a single XOR after decryption applies the CBC feedback to all four
+ * lanes simultaneously.
+ */
 #define DEFINE_CBC_DECRYPT(NR)                                                      \
     OSSL_FUNC_NOINLINE                                                              \
     static void cbc_decrypt_##NR(                                                   \
         const unsigned char *in, unsigned char *out, size_t len,                    \
         const AES_KEY *key, unsigned char *iv)                                      \
     {                                                                               \
-        const unsigned char *rk_bytes = (const unsigned char *)key->rd_key;         \
         __m512i rk[NR + 1];                                                         \
-        for (int i = 0; i <= NR; i++) {                                             \
-            __m128i t = _mm_loadu_si128((const __m128i *)(rk_bytes + i * 16));      \
-            rk[i] = _mm512_broadcast_i32x4(t);                                      \
-        }                                                                           \
+        OSSL_VAES512_LOAD_ROUNDKEYS(rk, key, NR);                                   \
                                                                                     \
         __m512i a1, a2, a3, a4;                                                     \
         __m512i b1, b2, b3, b4;                                                     \
@@ -323,17 +363,14 @@ DEFINE_AES_DECRYPT_FUNCS(14) /* AES-256 */
             _mm_storeu_si128((__m128i *)iv, saved_iv);                              \
                                                                                     \
         /* Erase the broadcast schedule and the volatile vector register bank. */   \
-        ossl_aes_cbc_vaes_cleanup(rk, NR + 1);                                      \
+        ossl_aes_vaes_cleanup(rk, NR + 1);                                      \
     }
 
 DEFINE_CBC_DECRYPT(10) /* AES-128 */
 DEFINE_CBC_DECRYPT(12) /* AES-192 */
 DEFINE_CBC_DECRYPT(14) /* AES-256 */
 
-/* ------------------------------------------------------------------ */
-/* Public entry point                                                 */
-/* ------------------------------------------------------------------ */
-
+/* Public entry point. */
 void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
     size_t len, const void *key,
     unsigned char ivec[16], int enc)
@@ -369,25 +406,13 @@ void ossl_aes_cbc_vaes_decrypt(const unsigned char *in, unsigned char *out,
     }
 }
 
-/* ------------------------------------------------------------------ */
-/* CPU feature check                                                  */
-/* ------------------------------------------------------------------ */
-
+/* CPU feature check. */
 int ossl_aes_cbc_vaes_eligible(void)
 {
-    return ossl_aes_cbc_vaes_cleanup_eligible()
-        && (OPENSSL_ia32cap_P[2] & (1 << 16)) /* AVX512F            */
-        && (OPENSSL_ia32cap_P[2] & (1 << 17)) /* AVX512DQ           */
-        && (OPENSSL_ia32cap_P[2] & (1 << 30)) /* AVX512BW           */
-        && (OPENSSL_ia32cap_P[3] & (1 << 9)); /* AVX512VAES         */
+    return ossl_aes_vaes_cleanup_eligible()
+        && ossl_vaes512_cpu_capable();
 }
 
 OPENSSL_UNTARGET_VAES512
 
-#undef OPENSSL_TARGET_VAES512
-#undef OPENSSL_UNTARGET_VAES512
-#undef STRINGIFY_IMPL_
-#undef STRINGIFY_
-#undef OSSL_FUNC_ALWAYS_INLINE
-#undef OSSL_FUNC_NOINLINE
-#endif /* VAES_CBC_ELIGIBLE */
+#endif /* VAES512_ELIGIBLE */
