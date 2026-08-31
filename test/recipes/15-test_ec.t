@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -19,7 +19,7 @@ setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 20;
+plan tests => 21;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -223,6 +223,30 @@ subtest 'ec -check reports the key consistency' => sub {
        "ec -check runs on an invalid key");
     test_file_contains("ec -check of an invalid key", $invalid_err,
                        "EC Key Invalid");
+};
+
+subtest 'PKCS#8 EC key with inconsistent curve parameters' => sub {
+    plan tests => 4;
+
+    # ec-pkcs8-mismatch.pem is a PrivateKeyInfo whose privateKeyAlgorithm
+    # names secp384r1 while the ECPrivateKey inside it carries prime256v1
+    # parameters (and a P-256 key).  ec-pkcs8-consistent.pem is the same
+    # key with prime256v1 in both places, and ec-pkcs8-no-inner-params.pem
+    # is the same key without the optional parameters in the ECPrivateKey,
+    # so the curve comes from the privateKeyAlgorithm alone.
+    ok(run(app(['openssl', 'pkey', '-noout',
+                '-in', data_file('ec-pkcs8-consistent.pem')])),
+       "PKCS#8 EC key with matching inner and outer curve parameters loads");
+    ok(run(app(['openssl', 'pkey', '-noout',
+                '-in', data_file('ec-pkcs8-no-inner-params.pem')])),
+       "PKCS#8 EC key without inner curve parameters loads");
+    ok(!run(app(['openssl', 'pkey', '-noout',
+                 '-in', data_file('ec-pkcs8-mismatch.pem')])),
+       "PKCS#8 EC key with inconsistent curve parameters is rejected");
+    ok(!run(app(['openssl', 'pkcs8', '-nocrypt',
+                 '-in', data_file('ec-pkcs8-mismatch.pem'),
+                 '-out', 'ec-pkcs8-mismatch.out'])),
+       "pkcs8 rejects a PKCS#8 EC key with inconsistent curve parameters");
 };
 
 subtest 'Check loading of fips and non-fips keys' => sub {
