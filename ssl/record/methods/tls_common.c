@@ -1295,6 +1295,18 @@ int tls_int_new_record_layer(OSSL_LIB_CTX *libctx, const char *propq, int vers,
     rl->taglen = taglen;
     rl->md = md;
 
+    /*
+     * RFC 9846 section 5.5 requires TLS 1.3 implementations to update the
+     * traffic key or close the connection before the AEAD usage limit is
+     * reached. Count every record as full sized, which is conservative for
+     * shorter records.
+     */
+    if (direction == OSSL_RECORD_DIRECTION_WRITE
+        && vers == TLS1_3_VERSION && ciph != NULL
+        && (EVP_CIPHER_is_a(ciph, "AES-128-GCM")
+            || EVP_CIPHER_is_a(ciph, "AES-256-GCM")))
+        rl->max_sequence = TLS13_AES_GCM_USAGE_LIMIT;
+
     rl->alert = SSL_AD_NO_ALERT;
     rl->rstate = SSL_ST_READ_HEADER;
 
@@ -2087,6 +2099,11 @@ int tls_retry_write_records(OSSL_RECORD_LAYER *rl)
             }
             return ret;
         }
+        if (BIO_get_ktls_send(rl->bio)
+            && !tls_increment_sequence_ctr(rl)) {
+            /* RLAYERfatal() already called */
+            return OSSL_RECORD_RETURN_FATAL;
+        }
         TLS_BUFFER_add_offset(thiswb, tmpwrit);
         TLS_BUFFER_sub_left(thiswb, tmpwrit);
     }
@@ -2222,12 +2239,35 @@ void tls_set_max_frag_len(OSSL_RECORD_LAYER *rl, size_t max_frag_len)
 
 int tls_increment_sequence_ctr(OSSL_RECORD_LAYER *rl)
 {
+    if (rl->max_sequence != 0 && rl->sequence >= rl->max_sequence) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+            SSL_R_AEAD_USAGE_LIMIT_REACHED);
+        return 0;
+    }
+
     /* Increment the sequence counter */
     if (++rl->sequence == 0) {
         /* Sequence has wrapped */
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, SSL_R_SEQUENCE_CTR_WRAPPED);
         return 0;
     }
+    return 1;
+}
+
+int tls_get_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t *sequence)
+{
+    *sequence = rl->sequence;
+    return 1;
+}
+
+int tls_set_sequence_number(OSSL_RECORD_LAYER *rl, uint64_t sequence)
+{
+    if (rl->max_sequence != 0 && sequence > rl->max_sequence) {
+        RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR,
+            SSL_R_AEAD_USAGE_LIMIT_REACHED);
+        return 0;
+    }
+    rl->sequence = sequence;
     return 1;
 }
 
@@ -2320,8 +2360,8 @@ const OSSL_RECORD_METHOD ossl_tls_record_method = {
     tls_set_max_frag_len,
     NULL,
     tls_increment_sequence_ctr,
-    NULL,
-    NULL,
+    tls_get_sequence_number,
+    tls_set_sequence_number,
     NULL,
     NULL,
     NULL,

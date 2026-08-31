@@ -1338,25 +1338,10 @@ static int ping_pong_query(SSL *clientssl, SSL *serverssl)
     if (!TEST_mem_eq(cbuf, sizeof(cbuf), sbuf, sizeof(sbuf)))
         goto end;
 
-    /*
-     * If ktls is used then kernel sequences are used instead of
-     * OpenSSL sequences
-     */
-    if (!BIO_get_ktls_send(clientsc->wbio)) {
-        if (!TEST_uint64_t_ne(crec_wseq_before, crec_wseq_after))
-            goto end;
-    } else {
-        if (!TEST_uint64_t_eq(crec_wseq_before, crec_wseq_after))
-            goto end;
-    }
-
-    if (!BIO_get_ktls_send(serversc->wbio)) {
-        if (!TEST_uint64_t_ne(srec_wseq_before, srec_wseq_after))
-            goto end;
-    } else {
-        if (!TEST_uint64_t_eq(srec_wseq_before, srec_wseq_after))
-            goto end;
-    }
+    /* KTLS write sequence numbers are shadowed in userspace. */
+    if (!TEST_uint64_t_ne(crec_wseq_before, crec_wseq_after)
+        || !TEST_uint64_t_ne(srec_wseq_before, srec_wseq_after))
+        goto end;
 
     if (!BIO_get_ktls_recv(clientsc->wbio)) {
         if (!TEST_uint64_t_ne(crec_rseq_before, crec_rseq_after))
@@ -1562,6 +1547,8 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
     ssize_t chunk_size = 0;
     off_t chunk_off = 0;
     int testresult = 0;
+    int test_usage_limit;
+    uint64_t wseq_before, wseq_after;
     FILE *ffdp;
     SSL_CONNECTION *serversc;
 
@@ -1625,6 +1612,11 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
         goto end;
     }
 
+    test_usage_limit = tls_version == TLS1_3_VERSION
+        && strstr(cipher, "_AES_") != NULL
+        && strstr(cipher, "_GCM_") != NULL;
+    wseq_before = serversc->rlayer.wrl->sequence;
+
     if (!TEST_int_gt(RAND_bytes_ex(libctx, buf, SENDFILE_SZ, 0), 0))
         goto end;
 
@@ -1668,6 +1660,29 @@ static int execute_test_ktls_sendfile(int tls_version, const char *cipher,
             goto end;
 
         chunk_off += chunk_size;
+    }
+
+    wseq_after = serversc->rlayer.wrl->sequence;
+    if (!TEST_uint64_t_eq(wseq_after - wseq_before,
+            SENDFILE_SZ / SENDFILE_CHUNK)) {
+        goto end;
+    }
+
+    /*
+     * A KTLS backend may be unable to install a transmit rekey immediately
+     * after the old-key KeyUpdate record. Verify that OpenSSL refuses another
+     * AES-GCM application record instead of crossing the usage limit.
+     */
+    if (test_usage_limit) {
+        serversc->rlayer.wrl->sequence = TLS13_AES_GCM_USAGE_LIMIT - 1;
+        ERR_clear_error();
+        err = SSL_sendfile(serverssl, ffd, 0, SENDFILE_CHUNK, 0);
+        if (!TEST_int_eq(err, -1)
+            || !TEST_int_eq(SSL_get_error(serverssl, err), SSL_ERROR_SSL)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                SSL_R_AEAD_USAGE_LIMIT_REACHED))
+            goto end;
+        ERR_clear_error();
     }
 
     testresult = 1;
@@ -8751,6 +8766,141 @@ end:
     SSL_CTX_free(sctx);
     SSL_CTX_free(cctx);
 
+    return testresult;
+}
+
+static const struct {
+    const char *ciphersuite;
+    int expect_update;
+} tls13_aead_usage_limit_tests[] = {
+    { "TLS_AES_128_GCM_SHA256", 1 },
+    { "TLS_AES_256_GCM_SHA384", 1 },
+    { "TLS_CHACHA20_POLY1305_SHA256", 0 },
+};
+
+/*
+ * Test that TLS 1.3 proactively updates AES-GCM traffic keys before the
+ * per-key record usage limit is reached, without applying the AES-GCM limit
+ * to another AEAD.
+ */
+static int test_tls13_aead_usage_limit(int idx)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_CONNECTION *clientsc = NULL, *serversc = NULL;
+    int testresult = 0;
+    int expect_update = tls13_aead_usage_limit_tests[idx].expect_update;
+    static const char mess[] = "A test message";
+    char buf[sizeof(mess)];
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+            tls13_aead_usage_limit_tests[idx].ciphersuite))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+            tls13_aead_usage_limit_tests[idx].ciphersuite))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(serversc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
+        goto end;
+
+    clientsc->rlayer.wrl->sequence = TLS13_AES_GCM_USAGE_LIMIT
+        - (expect_update ? 2 : 1);
+    serversc->rlayer.rrl->sequence = clientsc->rlayer.wrl->sequence;
+
+    if (!TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)), sizeof(mess))
+        || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), sizeof(buf))
+        || !TEST_mem_eq(buf, sizeof(buf), mess, sizeof(mess))
+        || !TEST_uint64_t_eq(clientsc->rlayer.wrl->sequence,
+            TLS13_AES_GCM_USAGE_LIMIT - (expect_update ? 1 : 0))
+        || !TEST_uint64_t_eq(serversc->rlayer.rrl->sequence,
+            TLS13_AES_GCM_USAGE_LIMIT - (expect_update ? 1 : 0)))
+        goto end;
+
+    if (expect_update
+        && (!TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)),
+                sizeof(mess))
+            || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), sizeof(buf))
+            || !TEST_mem_eq(buf, sizeof(buf), mess, sizeof(mess))
+            /* KeyUpdate uses the old key; application data starts at seq 0. */
+            || !TEST_uint64_t_eq(clientsc->rlayer.wrl->sequence, 1)
+            || !TEST_uint64_t_eq(serversc->rlayer.rrl->sequence, 1)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/* Test retrying an automatic KeyUpdate after a nonblocking write stalls. */
+static int test_tls13_aead_usage_limit_retry(void)
+{
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_CONNECTION *clientsc = NULL, *serversc = NULL;
+    BIO *bretry = BIO_new(bio_s_always_retry());
+    BIO *tmp = NULL;
+    int testresult = 0;
+    static const char mess[] = "A test message";
+    char buf[sizeof(mess)];
+
+    if (!TEST_ptr(bretry)
+        || !TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_3_VERSION, TLS1_3_VERSION,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(SSL_CTX_set_ciphersuites(sctx,
+            "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(SSL_CTX_set_ciphersuites(cctx,
+            "TLS_AES_128_GCM_SHA256"))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(clientsc = SSL_CONNECTION_FROM_SSL_ONLY(clientssl))
+        || !TEST_ptr(serversc = SSL_CONNECTION_FROM_SSL_ONLY(serverssl)))
+        goto end;
+
+    clientsc->rlayer.wrl->sequence = TLS13_AES_GCM_USAGE_LIMIT - 1;
+    serversc->rlayer.rrl->sequence = TLS13_AES_GCM_USAGE_LIMIT - 1;
+
+    tmp = SSL_get_wbio(clientssl);
+    if (!TEST_ptr(tmp) || !TEST_true(BIO_up_ref(tmp))) {
+        tmp = NULL;
+        goto end;
+    }
+    SSL_set0_wbio(clientssl, bretry);
+    bretry = NULL;
+
+    if (!TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)), -1)
+        || !TEST_int_eq(SSL_get_error(clientssl, -1), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    SSL_set0_wbio(clientssl, tmp);
+    tmp = NULL;
+
+    if (!TEST_int_eq(SSL_write(clientssl, mess, sizeof(mess)), sizeof(mess))
+        || !TEST_int_eq(SSL_read(serverssl, buf, sizeof(buf)), sizeof(buf))
+        || !TEST_mem_eq(buf, sizeof(buf), mess, sizeof(mess))
+        || !TEST_uint64_t_eq(clientsc->rlayer.wrl->sequence, 1)
+        || !TEST_uint64_t_eq(serversc->rlayer.rrl->sequence, 1))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    BIO_free(bretry);
+    BIO_free(tmp);
     return testresult;
 }
 
@@ -17070,6 +17220,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_key_update_local_in_write, 4);
 #endif
 #if !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_ALL_TESTS(test_tls13_aead_usage_limit,
+        OSSL_NELEM(tls13_aead_usage_limit_tests));
+    ADD_TEST(test_tls13_aead_usage_limit_retry);
     ADD_ALL_TESTS(test_key_update_local_in_read, 2);
 #endif
     ADD_ALL_TESTS(test_ssl_clear, 8);
