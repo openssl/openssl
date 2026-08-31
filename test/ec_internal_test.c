@@ -1097,6 +1097,100 @@ static int test_scalar_mul_fn_nistp256(void)
 }
 #endif /* OPENSSL_NO_EC_NISTP_64_GCC_128 */
 
+/*
+ * EC_POINT_get_affine_coords_bytes() must yield the point's affine coordinates
+ * as fixed-width big-endian bytes, matching EC_POINT_get_affine_coordinates(),
+ * for both a projective input (Z_is_one == 0, the conversion runs) and an
+ * affine one (Z_is_one == 1, the conversion is skipped).
+ */
+static int fn_check_get_affine_coords_bytes(EC_GROUP *group)
+{
+    int ret = 0;
+    BN_CTX *ctx = NULL;
+    EC_POINT *P = NULL;
+    BIGNUM *k = NULL, *xref = NULL, *yref = NULL;
+    const BIGNUM *order;
+    unsigned char *rx = NULL, *ry = NULL, *gx = NULL, *gy = NULL;
+    size_t flen;
+
+    /* Only prime-field groups have the OSSL_FN affine extraction. */
+    if (group->meth->field_type != NID_X9_62_prime_field)
+        return 1;
+
+    flen = (size_t)((EC_GROUP_get_degree(group) + 7) / 8);
+
+    if (!TEST_ptr(ctx = BN_CTX_new())
+        || !TEST_ptr(k = BN_new())
+        || !TEST_ptr(xref = BN_new())
+        || !TEST_ptr(yref = BN_new())
+        || !TEST_ptr(order = EC_GROUP_get0_order(group))
+        || !TEST_ptr(P = EC_POINT_new(group))
+        || !TEST_ptr(rx = OPENSSL_malloc(flen))
+        || !TEST_ptr(ry = OPENSSL_malloc(flen))
+        || !TEST_ptr(gx = OPENSSL_malloc(flen))
+        || !TEST_ptr(gy = OPENSSL_malloc(flen)))
+        goto err;
+
+    /* A random point, doubled to obtain a projective (Z != 1) representation. */
+    if (!TEST_true(BN_rand_range(k, order))
+        || !TEST_true(EC_POINT_mul(group, P, k, NULL, NULL, ctx))
+        || !TEST_true(EC_POINT_dbl(group, P, P, ctx)))
+        goto err;
+
+    /* Reference affine coordinates as fixed-width big-endian bytes. */
+    if (!TEST_true(EC_POINT_get_affine_coordinates(group, P, xref, yref, ctx))
+        || !TEST_int_ge(BN_bn2binpad(xref, rx, (int)flen), 0)
+        || !TEST_int_ge(BN_bn2binpad(yref, ry, (int)flen), 0))
+        goto err;
+
+    /* Projective input (Z_is_one == 0): the conversion path runs. */
+    if (!TEST_int_eq(P->Z_is_one, 0)
+        || !TEST_true(EC_POINT_get_affine_coords_bytes(group, P, gx, gy, flen))
+        || !TEST_mem_eq(gx, flen, rx, flen)
+        || !TEST_mem_eq(gy, flen, ry, flen))
+        goto err;
+
+    /* Affine input (Z_is_one == 1): the conversion is skipped, same output. */
+    if (!TEST_true(EC_POINT_make_affine(group, P, ctx))
+        || !TEST_int_eq(P->Z_is_one, 1)
+        || !TEST_true(EC_POINT_get_affine_coords_bytes(group, P, gx, gy, flen))
+        || !TEST_mem_eq(gx, flen, rx, flen)
+        || !TEST_mem_eq(gy, flen, ry, flen))
+        goto err;
+
+    /* x and y may each be skipped independently. */
+    if (!TEST_true(EC_POINT_get_affine_coords_bytes(group, P, gx, NULL, flen))
+        || !TEST_mem_eq(gx, flen, rx, flen)
+        || !TEST_true(EC_POINT_get_affine_coords_bytes(group, P, NULL, gy, flen))
+        || !TEST_mem_eq(gy, flen, ry, flen))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(rx);
+    OPENSSL_free(ry);
+    OPENSSL_free(gx);
+    OPENSSL_free(gy);
+    EC_POINT_free(P);
+    BN_free(k);
+    BN_free(xref);
+    BN_free(yref);
+    BN_CTX_free(ctx);
+    return ret;
+}
+
+static int test_get_affine_coords_bytes(int idx)
+{
+    int ret;
+    EC_GROUP *group = NULL;
+
+    if (!TEST_ptr(group = EC_GROUP_new_by_curve_name(fn_ladder_curves[idx])))
+        return 0;
+    ret = fn_check_get_affine_coords_bytes(group);
+    EC_GROUP_free(group);
+    return ret;
+}
+
 int setup_tests(void)
 {
     crv_len = EC_get_builtin_curves(NULL, 0);
@@ -1126,6 +1220,7 @@ int setup_tests(void)
 #ifndef OPENSSL_NO_EC_NISTP_64_GCC_128
     ADD_TEST(test_scalar_mul_fn_nistp256);
 #endif
+    ADD_ALL_TESTS(test_get_affine_coords_bytes, OSSL_NELEM(fn_ladder_curves));
 
     return 1;
 }
