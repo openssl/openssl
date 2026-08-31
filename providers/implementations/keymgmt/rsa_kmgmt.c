@@ -44,14 +44,18 @@ static OSSL_FUNC_keymgmt_load_fn rsa_load;
 static OSSL_FUNC_keymgmt_load_fn rsapss_load;
 static OSSL_FUNC_keymgmt_free_fn rsa_freedata;
 static OSSL_FUNC_keymgmt_get_params_fn rsa_get_params;
+static OSSL_FUNC_keymgmt_get_params_fn rsapss_get_params;
 static OSSL_FUNC_keymgmt_gettable_params_fn rsa_gettable_params;
+static OSSL_FUNC_keymgmt_gettable_params_fn rsapss_gettable_params;
 static OSSL_FUNC_keymgmt_has_fn rsa_has;
 static OSSL_FUNC_keymgmt_match_fn rsa_match;
 static OSSL_FUNC_keymgmt_validate_fn rsa_validate;
 static OSSL_FUNC_keymgmt_import_fn rsa_import;
 static OSSL_FUNC_keymgmt_import_types_fn rsa_import_types;
+static OSSL_FUNC_keymgmt_import_types_fn rsapss_import_types;
 static OSSL_FUNC_keymgmt_export_fn rsa_export;
 static OSSL_FUNC_keymgmt_export_types_fn rsa_export_types;
+static OSSL_FUNC_keymgmt_export_types_fn rsapss_export_types;
 static OSSL_FUNC_keymgmt_query_operation_name_fn rsa_query_operation_name;
 static OSSL_FUNC_keymgmt_dup_fn rsa_dup;
 
@@ -264,6 +268,26 @@ static const struct rsa_imexport_types_st
           },
       };
 
+static const struct rsa_imexport_types_st
+    rsapss_imexport_types[RSA_IMEXPORT_TYPE_COUNT]
+    = {
+          [RSA_IMEXPORT_TYPE_OTHER] = {
+              rsapss_other_import_types_list,
+              rsapss_other_import_types_decoder,
+              rsapss_other_export_types_list,
+          },
+          [RSA_IMEXPORT_TYPE_KEY] = {
+              rsapss_key_import_types_list,
+              rsapss_key_import_types_decoder,
+              rsapss_key_export_types_list,
+          },
+          [RSA_IMEXPORT_TYPE_ALL] = {
+              rsapss_all_import_types_list,
+              rsapss_all_import_types_decoder,
+              rsapss_all_export_types_list,
+          },
+      };
+
 static int rsa_imexport_type_select(int selection)
 {
     int type_select = RSA_IMEXPORT_TYPE_NONE;
@@ -279,6 +303,7 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
     RSA *rsa = keydata;
     RSA_PARAMS p;
+    const struct rsa_imexport_types_st *types;
     int type_select;
     int rsa_type;
     int ok = 1;
@@ -288,11 +313,13 @@ static int rsa_import(void *keydata, int selection, const OSSL_PARAM params[])
         return 0;
 
     type_select = rsa_imexport_type_select(selection);
-    if (type_select == RSA_IMEXPORT_TYPE_NONE
-        || !rsa_imexport_types[type_select].import_decoder(params, &p))
-        return 0;
-
     rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
+    types = rsa_type == RSA_FLAG_TYPE_RSASSAPSS
+        ? rsapss_imexport_types
+        : rsa_imexport_types;
+    if (type_select == RSA_IMEXPORT_TYPE_NONE
+        || !types[type_select].import_decoder(params, &p))
+        return 0;
 
     if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
         ok = ok && pss_params_fromdata(ossl_rsa_get0_pss_params_30(rsa), &pss_defaults_set, &p, rsa_type, ossl_rsa_get0_libctx(rsa));
@@ -351,19 +378,34 @@ static const OSSL_PARAM *rsa_import_types(int selection)
     return rsa_imexport_types[rsa_imexport_type_select(selection)].import_types;
 }
 
+static const OSSL_PARAM *rsapss_import_types(int selection)
+{
+    return rsapss_imexport_types[rsa_imexport_type_select(selection)]
+        .import_types;
+}
+
 static const OSSL_PARAM *rsa_export_types(int selection)
 {
     return rsa_imexport_types[rsa_imexport_type_select(selection)].export_types;
 }
 
-static int rsa_get_params(void *key, OSSL_PARAM params[])
+static const OSSL_PARAM *rsapss_export_types(int selection)
+{
+    return rsapss_imexport_types[rsa_imexport_type_select(selection)]
+        .export_types;
+}
+
+typedef int (*rsa_get_params_decoder_fn)(const OSSL_PARAM *, RSA_PARAMS *);
+
+static int common_get_params(void *key, OSSL_PARAM params[],
+    rsa_get_params_decoder_fn decoder)
 {
     RSA *rsa = key;
     RSA_PARAMS p;
     const RSA_PSS_PARAMS_30 *pss_params;
     int rsa_type, empty;
 
-    if (rsa == NULL || !rsa_get_params_decoder(params, &p))
+    if (rsa == NULL || !decoder(params, &p))
         return 0;
     pss_params = ossl_rsa_get0_pss_params_30(rsa);
     rsa_type = RSA_test_flags(rsa, RSA_FLAG_TYPE_MASK);
@@ -410,9 +452,24 @@ static int rsa_get_params(void *key, OSSL_PARAM params[])
         && ossl_rsa_todata_parsed(rsa, NULL, &p, 1);
 }
 
+static int rsa_get_params(void *key, OSSL_PARAM params[])
+{
+    return common_get_params(key, params, rsa_get_params_decoder);
+}
+
+static int rsapss_get_params(void *key, OSSL_PARAM params[])
+{
+    return common_get_params(key, params, rsapss_get_params_decoder);
+}
+
 static const OSSL_PARAM *rsa_gettable_params(void *provctx)
 {
     return rsa_get_params_list;
+}
+
+static const OSSL_PARAM *rsapss_gettable_params(void *provctx)
+{
+    return rsapss_get_params_list;
 }
 
 static int rsa_validate(const void *keydata, int selection, int checktype)
@@ -760,15 +817,16 @@ const OSSL_DISPATCH ossl_rsapss_keymgmt_functions[] = {
     { OSSL_FUNC_KEYMGMT_GEN_CLEANUP, (void (*)(void))rsa_gen_cleanup },
     { OSSL_FUNC_KEYMGMT_LOAD, (void (*)(void))rsapss_load },
     { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))rsa_freedata },
-    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))rsa_get_params },
-    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS, (void (*)(void))rsa_gettable_params },
+    { OSSL_FUNC_KEYMGMT_GET_PARAMS, (void (*)(void))rsapss_get_params },
+    { OSSL_FUNC_KEYMGMT_GETTABLE_PARAMS,
+        (void (*)(void))rsapss_gettable_params },
     { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))rsa_has },
     { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))rsa_match },
     { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))rsa_validate },
     { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))rsa_import },
-    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsa_import_types },
+    { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))rsapss_import_types },
     { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))rsa_export },
-    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsa_export_types },
+    { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))rsapss_export_types },
     { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,
         (void (*)(void))rsa_query_operation_name },
     { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))rsa_dup },
