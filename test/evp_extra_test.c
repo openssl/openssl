@@ -5287,6 +5287,121 @@ static int test_EVP_rsa_invalid_key(void)
     return ret;
 }
 
+static int test_EVP_rsa_pss_utf8_ptr_params(void)
+{
+    char *digest = "SHA256";
+    char *maskgenfunc = "MGF1";
+    char *mgf1_digest = "SHA384";
+    char *missing_provider = "provider=missing";
+    OSSL_PARAM ptr_params[] = {
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MASKGENFUNC,
+            &maskgenfunc, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_MGF1_DIGEST,
+            &mgf1_digest, 0),
+        OSSL_PARAM_END
+    };
+    OSSL_PARAM property_params[] = {
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST, &digest, 0),
+        OSSL_PARAM_utf8_ptr(OSSL_PKEY_PARAM_RSA_DIGEST_PROPS,
+            &missing_provider, 0),
+        OSSL_PARAM_END
+    };
+    EVP_PKEY_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS",
+                      testpropq))
+        || !TEST_int_gt(EVP_PKEY_keygen_init(ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_params(ctx, ptr_params), 0)
+        || !TEST_int_le(EVP_PKEY_CTX_set_params(ctx, property_params), 0))
+        goto err;
+    ERR_clear_error();
+    ret = 1;
+err:
+    EVP_PKEY_CTX_free(ctx);
+    return ret;
+}
+
+static int param_is_advertised(const OSSL_PARAM *params, const char *name)
+{
+    return params != NULL && OSSL_PARAM_locate_const(params, name) != NULL;
+}
+
+static int test_rsa_algorithm_param_lists(void)
+{
+    static const char *pss_names[] = {
+        OSSL_PKEY_PARAM_RSA_DIGEST,
+        OSSL_PKEY_PARAM_RSA_DIGEST_PROPS,
+        OSSL_PKEY_PARAM_RSA_MASKGENFUNC,
+        OSSL_PKEY_PARAM_RSA_MGF1_DIGEST,
+        OSSL_PKEY_PARAM_RSA_PSS_SALTLEN
+    };
+    EVP_PKEY_CTX *rsa_ctx = NULL, *pss_ctx = NULL;
+    EVP_PKEY *rsa = NULL, *pss = NULL;
+    const OSSL_PARAM *rsa_import, *pss_import;
+    const OSSL_PARAM *rsa_gettable, *pss_gettable;
+    char untouched[16] = "unchanged";
+    OSSL_PARAM ignored[] = {
+        OSSL_PARAM_utf8_string(OSSL_PKEY_PARAM_RSA_DIGEST, untouched,
+            sizeof(untouched)),
+        OSSL_PARAM_END
+    };
+    size_t i;
+    int ret = 0;
+    int selection = EVP_PKEY_KEYPAIR
+        | OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS;
+
+    if (!TEST_ptr(rsa_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA",
+                      testpropq))
+        || !TEST_ptr(pss_ctx = EVP_PKEY_CTX_new_from_name(testctx, "RSA-PSS",
+                         testpropq))
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(rsa_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_fromdata_init(pss_ctx), 0)
+        || !TEST_ptr(rsa_import = EVP_PKEY_fromdata_settable(rsa_ctx,
+                         selection))
+        || !TEST_ptr(pss_import = EVP_PKEY_fromdata_settable(pss_ctx,
+                         selection)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(pss_names); i++) {
+        if (!TEST_false(param_is_advertised(rsa_import, pss_names[i]))
+            || !TEST_true(param_is_advertised(pss_import, pss_names[i])))
+            goto err;
+    }
+
+    if (!TEST_int_gt(EVP_PKEY_keygen_init(rsa_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(rsa_ctx, 1024), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(rsa_ctx, &rsa), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen_init(pss_ctx), 0)
+        || !TEST_int_gt(EVP_PKEY_CTX_set_rsa_keygen_bits(pss_ctx, 1024), 0)
+        || !TEST_int_gt(EVP_PKEY_keygen(pss_ctx, &pss), 0)
+        || !TEST_ptr(rsa_gettable = EVP_PKEY_gettable_params(rsa))
+        || !TEST_ptr(pss_gettable = EVP_PKEY_gettable_params(pss)))
+        goto err;
+    for (i = 0; i < OSSL_NELEM(pss_names); i++) {
+        if (!TEST_false(param_is_advertised(rsa_gettable, pss_names[i])))
+            goto err;
+        if (strcmp(pss_names[i], OSSL_PKEY_PARAM_RSA_DIGEST_PROPS) != 0
+            && !TEST_true(param_is_advertised(pss_gettable, pss_names[i])))
+            goto err;
+    }
+    if (!TEST_false(param_is_advertised(rsa_gettable,
+            OSSL_PKEY_PARAM_MANDATORY_DIGEST))
+        || !TEST_true(param_is_advertised(pss_gettable,
+            OSSL_PKEY_PARAM_MANDATORY_DIGEST))
+        || !TEST_int_gt(EVP_PKEY_get_params(rsa, ignored), 0)
+        || !TEST_size_t_eq(ignored[0].return_size, OSSL_PARAM_UNMODIFIED)
+        || !TEST_str_eq(untouched, "unchanged"))
+        goto err;
+    ret = 1;
+err:
+    EVP_PKEY_free(rsa);
+    EVP_PKEY_free(pss);
+    EVP_PKEY_CTX_free(rsa_ctx);
+    EVP_PKEY_CTX_free(pss_ctx);
+    return ret;
+}
+
 static int success = 1;
 static void md_names(const char *name, void *vctx)
 {
@@ -9662,6 +9777,8 @@ int setup_tests(void)
     ADD_TEST(test_RSA_verify_recover_rejects_short_buffer);
     ADD_TEST(test_RSA_verify_recover_empty_payload);
     ADD_TEST(test_RSA_encrypt);
+    ADD_TEST(test_EVP_rsa_pss_utf8_ptr_params);
+    ADD_TEST(test_rsa_algorithm_param_lists);
 #ifndef OPENSSL_NO_DEPRECATED_3_0
     ADD_TEST(test_RSA_legacy);
 #endif
