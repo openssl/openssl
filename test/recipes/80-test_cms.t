@@ -535,6 +535,16 @@ my @smime_cms_cades_ko_tests = (
       [ @prov, "-verify", "-cades", "-in", "cades-ko.cms", "-inform", "DER",
         "-CAfile", $smroot, "-out", "cades-ko.txt" ],
       \&final_compare
+    ],
+
+    [ "sign content DER format, RSA key, no signed attributes (-noattr)",
+      [ @prov, "-sign", "-in", $smcont, "-outform", "DER", "-nodetach",
+        "-noattr", "-certfile", $smroot, "-signer", $smrsa1,
+        "-out", "cades-noattr.cms" ],
+      "fail to verify token with -cades since it has no signed attributes",
+      [ @prov, "-verify", "-cades", "-in", "cades-noattr.cms", "-inform", "DER",
+        "-CAfile", $smroot, "-out", "cades-noattr.txt" ],
+      \&final_compare
     ]
 );
 
