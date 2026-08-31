@@ -5442,6 +5442,87 @@ static int drive_until_connection_queued(SSL *listener, SSL *clientssl)
 }
 
 /*
+ * Test ossl_dtls_listener_test_and_set_peeloff(), the mutual-exclusion
+ * trapdoor between SSL_accept_connection() and the upcoming SSL_listen_ex()
+ * for DTLS listeners.
+ *
+ * Invalid arguments (bad mode value, non-listener SSL, NULL) must fail.
+ * Repeated calls with the same mode must keep succeeding.
+ * Once a mode is latched, a call with the other mode must fail, in both
+ * directions.
+ */
+static int test_dtls_listener_test_and_set_peeloff(void)
+{
+    SSL_CTX *ctx = NULL;
+    SSL *ssl = NULL;
+    SSL *accept_listener = NULL, *listen_listener = NULL;
+    int success = 0;
+
+    if (!TEST_ptr(ctx = SSL_CTX_new(DTLS_server_method())))
+        goto err;
+
+    /* A non-listener SSL must be rejected regardless of mode. */
+    if (!TEST_ptr(ssl = SSL_new(ctx)))
+        goto err;
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(ssl, DTLS_PEELOFF_ACCEPT)))
+        goto err;
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(ssl, DTLS_PEELOFF_LISTEN)))
+        goto err;
+
+    /* NULL must be rejected. */
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(NULL, DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    if (!TEST_ptr(accept_listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    /* A mode other than DTLS_PEELOFF_LISTEN/DTLS_PEELOFF_ACCEPT must be rejected. */
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_UNSET)))
+        goto err;
+
+    /* First claim of ACCEPT succeeds. */
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    /* Repeating the same mode keeps succeeding. */
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    /* The conflicting mode must now be rejected. */
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(accept_listener,
+            DTLS_PEELOFF_LISTEN)))
+        goto err;
+
+    /* Same sequence again, in the other direction, on a second listener. */
+    if (!TEST_ptr(listen_listener = SSL_new_listener(ctx, SSL_LISTENER_FLAG_SINGLE_THREAD)))
+        goto err;
+
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(listen_listener,
+            DTLS_PEELOFF_LISTEN)))
+        goto err;
+    if (!TEST_true(ossl_dtls_listener_test_and_set_peeloff(listen_listener,
+            DTLS_PEELOFF_LISTEN)))
+        goto err;
+    if (!TEST_false(ossl_dtls_listener_test_and_set_peeloff(listen_listener,
+            DTLS_PEELOFF_ACCEPT)))
+        goto err;
+
+    success = 1;
+err:
+    SSL_free(listen_listener);
+    SSL_free(accept_listener);
+    SSL_free(ssl);
+    SSL_CTX_free(ctx);
+    return success;
+}
+
+/*
  * Test the blocking mode of a DTLS listener and of the connections it creates.
  *
  * Blocking is the default, as it is for QUIC: a listener which was never
@@ -6024,6 +6105,9 @@ int setup_tests(void)
     /* Pending timeout tests */
     ADD_TEST(test_dtls_listener_pending_timeout_basic);
     ADD_TEST(test_dtls_listener_pending_timeout_invalid);
+
+    /* Peeloff mode tests */
+    ADD_TEST(test_dtls_listener_test_and_set_peeloff);
 
     /* Blocking mode tests */
     ADD_TEST(test_dtls_blocking_mode);

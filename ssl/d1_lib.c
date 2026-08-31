@@ -1910,6 +1910,8 @@ SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags)
         dl->have_notifier = 1;
     }
 
+    dl->peeloff_mode = DTLS_PEELOFF_UNSET;
+
     return &dl->ssl;
 
 err:
@@ -2017,6 +2019,39 @@ int ossl_dtls_listen(SSL *ssl)
         return 1;
 
     tsan_store(&dl->listening, 1);
+    return 1;
+}
+
+/*
+ * ossl_dtls_listener_test_and_set_peeloff - set peeloff mode for listener.
+ */
+int ossl_dtls_listener_test_and_set_peeloff(SSL *ssl, int using_peeloff)
+{
+    DTLS_LISTENER *dl;
+
+    /*
+     * Peeloff state must be one of DTLS_PEELOFF_LISTEN or DTLS_PEELOFF_ACCEPT
+     */
+    if (using_peeloff != DTLS_PEELOFF_LISTEN && using_peeloff != DTLS_PEELOFF_ACCEPT) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    if (!IS_DTLS_LISTENER(ssl)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_PASSED_INVALID_ARGUMENT);
+        return 0;
+    }
+
+    dl = (DTLS_LISTENER *)ssl;
+
+    ossl_crypto_mutex_lock(dl->mutex);
+    if (dl->peeloff_mode != DTLS_PEELOFF_UNSET && dl->peeloff_mode != using_peeloff) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        ossl_crypto_mutex_unlock(dl->mutex);
+        return 0;
+    }
+    dl->peeloff_mode = using_peeloff;
+    ossl_crypto_mutex_unlock(dl->mutex);
     return 1;
 }
 
@@ -2457,6 +2492,11 @@ SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags)
 
     if (!ossl_dtls_listen(ssl))
         return NULL;
+
+    if (!ossl_dtls_listener_test_and_set_peeloff(ssl, DTLS_PEELOFF_ACCEPT)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return NULL;
+    }
 
     /* If a previous tick produced a fatal BIO error, do not try again. */
     ossl_crypto_mutex_lock(dl->mutex);
