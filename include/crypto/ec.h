@@ -94,6 +94,21 @@ __owur int EC_POINT_mul_fn(const EC_GROUP *group, EC_POINT *r,
 __owur size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
     const OSSL_FN *scalar, const EC_POINT *point);
 
+/*
+ * Write the affine coordinates of @p point as fixed-width big-endian byte
+ * strings, in constant time, via the group method's
+ * point_get_affine_coords_bytes.  @p x and/or @p y may be NULL to skip that
+ * coordinate; each non-NULL buffer is @p len bytes wide (the caller's field
+ * width).  Unlike EC_POINT_get_affine_coordinates() the coordinates never take
+ * BIGNUM form, so nothing about their magnitude leaks - this is the extraction
+ * path for a secret point (an ECDH shared point, an SM2 kP).
+ *
+ * Returns 1 on success, 0 on failure, if @p point is at infinity, or if the
+ * group's method provides no such operation.
+ */
+__owur int EC_POINT_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len);
+
 /*-
  * ECDH Key Derivation Function as defined in ANSI X9.63
  */
