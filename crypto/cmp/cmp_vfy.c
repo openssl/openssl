@@ -301,8 +301,9 @@ static int cert_acceptable(const OSSL_CMP_CTX *ctx,
 
     if (!check_kid(ctx, X509_get0_subject_key_id(cert), msg->header->senderKID))
         return 0;
-    /* a finalized cert carries its validity; reject if its extensions are bad */
-    if ((X509_get_extension_flags(cert) & EXFLAG_INVALID) != 0) {
+    /* a finalized cert carries its validity; reject unfinalized or invalid */
+    if ((X509_get_extension_flags(cert) & (EXFLAG_SET | EXFLAG_INVALID))
+        != EXFLAG_SET) {
         ossl_cmp_warn(ctx, "cert appears to be invalid");
         return 0;
     }

@@ -110,6 +110,10 @@ int X509_self_signed(const X509 *cert, int verify_signature)
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
+    if ((cert->ex_flags & EXFLAG_SET) == 0) {
+        ERR_raise(ERR_LIB_X509, ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED);
+        return -1;
+    }
     if ((cert->ex_flags & EXFLAG_INVALID) != 0)
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)

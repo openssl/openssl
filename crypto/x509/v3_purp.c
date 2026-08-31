@@ -1175,6 +1175,11 @@ int X509_check_issued(const X509 *issuer, const X509 *subject)
 {
     int ret;
 
+    /* An unfinalized cert has no cached extension data to judge by. */
+    if ((issuer->ex_flags & EXFLAG_SET) == 0
+        || (subject->ex_flags & EXFLAG_SET) == 0)
+        return X509_V_ERR_UNSPECIFIED;
+
     if ((ret = ossl_x509_likely_issued(issuer, subject)) != X509_V_OK)
         return ret;
     return ossl_x509_signing_allowed(issuer, subject);

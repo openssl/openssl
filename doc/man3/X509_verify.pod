@@ -33,6 +33,8 @@ For success the issuer and subject names must match, the components of the
 authority key identifier (if present) must match the subject key identifier etc.
 The signature itself is actually verified only if B<verify_signature> is 1, as
 for explicitly trusted certificates this verification is not worth the effort.
+The I<cert> must be finalized, that is parsed or signed (see L<x509(7)>);
+otherwise -1 is returned.
 
 X509_REQ_verify_ex(), X509_REQ_verify(), X509_CRL_verify() and X509_ACERT_verify()
 verify the signatures of certificate requests, CRLs and attribute certificates
