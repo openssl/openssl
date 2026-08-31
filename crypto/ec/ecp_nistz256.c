@@ -1775,7 +1775,8 @@ const EC_METHOD *EC_GFp_nistz256_method(void)
         0, /* ladder_post */
         ecp_nistz256group_full_init,
         ecp_nistz256_points_mul_fn, /* mul_fn */
-        ecp_nistz256_points_mul_fn_ctx_size /* mul_fn_ctx_size */
+        ecp_nistz256_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ossl_ec_GFp_simple_point_get_affine_coords_bytes
     };
 
     return &ret;
