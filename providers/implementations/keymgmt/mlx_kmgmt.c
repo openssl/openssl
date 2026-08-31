@@ -393,7 +393,9 @@ load_keys(MLX_KEY *key,
         } else if (publen) {
             /* Absent private key data, import public keys */
             if (!load_slot(key->libctx, key->propq, OSSL_PKEY_PARAM_PUB_KEY,
-                    minimal_selection, key, slot, pubenc,
+                    OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
+                        | OSSL_KEYMGMT_SELECT_PUBLIC_KEY,
+                    key, slot, pubenc,
                     (int)key->minfo->pubkey_bytes,
                     (int)key->xinfo->pubkey_bytes))
                 goto err;

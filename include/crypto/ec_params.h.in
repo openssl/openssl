@@ -186,20 +186,22 @@ my $other_parameters_type = 8;
 my $all_types = $private_key_type | $public_key_type
     | $domain_type | $other_parameters_type;
 
-for my $selection ($private_key_type..$all_types) {
-    my @types = ();
+for my $algorithm ('ec', 'sm2') {
+    for my $selection ($private_key_type..$all_types) {
+        my @types = ();
 
-    push @types, @EC_PRIVATE_KEY_TYPES
-        if ($selection & $private_key_type);
-    push @types, @EC_PUBLIC_KEY_TYPES
-        if ($selection & $public_key_type);
-    push @types, @EC_DOMAIN_TYPES if ($selection & $domain_type);
-    push @types, @EC_OTHER_TYPES if ($selection & $other_parameters_type);
-    $imexport .= "#define ec_imexport_types_${selection}_st\n";
-    $imexport .= "#define ec_imexport_types_${selection}_decoder\n";
-    $imexport .= produce_param_decoder("ec_imexport_types_${selection}",
-                                       @types);
-    $imexport .= "\n";
+        push @types, @EC_PRIVATE_KEY_TYPES
+            if ($selection & $private_key_type);
+        push @types, @EC_PUBLIC_KEY_TYPES
+            if ($selection & $public_key_type);
+        push @types, @EC_DOMAIN_TYPES if ($selection & $domain_type);
+        push @types, @EC_OTHER_TYPES if ($selection & $other_parameters_type);
+        $imexport .= "#define ${algorithm}_imexport_types_"
+            . "${selection}_st ec_params_st\n";
+        $imexport .= produce_param_decoder(
+            "${algorithm}_imexport_types_${selection}", @types);
+        $imexport .= "\n";
+    }
 }
 $imexport;
 -}
@@ -217,11 +219,6 @@ $imexport;
 #define ec_key_otherparams_fromdata_st ec_params_st
 {- produce_param_decoder('ec_key_otherparams_fromdata', @EC_OTHER_TYPES,
                          @EC_POINT_FORMAT_TYPES); -}
-
-/* Provider and legacy import paths parse all their input only once. */
-#define ec_import_st ec_params_st
-{- produce_param_decoder('ec_import',
-                         (@EC_DOMAIN_TYPES, @EC_KEY_TYPES, @EC_OTHER_TYPES)); -}
 
 #define ec_pkey_import_from_st ec_params_st
 {- produce_param_decoder('ec_pkey_import_from',
@@ -243,7 +240,7 @@ $imexport;
 {- produce_param_decoder('ec_set_params', @EC_SETTABLE_TYPES); -}
 
 #define sm2_set_params_st ec_params_st
-{- produce_param_decoder('sm2_set_params', @EC_ENCODED_PUBLIC_KEY_TYPES); -}
+{- produce_param_decoder('sm2_set_params', @EC_SETTABLE_TYPES); -}
 
 /* Key generation context parameters. */
 #define ec_gen_set_params_st ec_params_st

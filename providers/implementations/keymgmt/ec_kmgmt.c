@@ -74,6 +74,8 @@ static OSSL_FUNC_keymgmt_gettable_params_fn sm2_gettable_params;
 static OSSL_FUNC_keymgmt_settable_params_fn sm2_settable_params;
 static OSSL_FUNC_keymgmt_set_params_fn sm2_set_params;
 static OSSL_FUNC_keymgmt_import_fn sm2_import;
+static OSSL_FUNC_keymgmt_import_types_fn sm2_import_types;
+static OSSL_FUNC_keymgmt_export_types_fn sm2_export_types;
 static OSSL_FUNC_keymgmt_query_operation_name_fn sm2_query_operation_name;
 static OSSL_FUNC_keymgmt_query_operation_name_fn curve_sm2_query_operation_name;
 static OSSL_FUNC_keymgmt_validate_fn sm2_validate;
@@ -424,8 +426,65 @@ static int common_check_sm2(const EC_KEY *ec, int sm2_wanted)
     return 1;
 }
 
+typedef int (*ec_import_decoder_fn)(const OSSL_PARAM *, EC_PARAMS *);
+
+static const ec_import_decoder_fn ec_import_decoders[] = {
+    NULL,
+    ec_imexport_types_1_decoder,
+    ec_imexport_types_2_decoder,
+    ec_imexport_types_3_decoder,
+    ec_imexport_types_4_decoder,
+    ec_imexport_types_5_decoder,
+    ec_imexport_types_6_decoder,
+    ec_imexport_types_7_decoder,
+    ec_imexport_types_8_decoder,
+    ec_imexport_types_9_decoder,
+    ec_imexport_types_10_decoder,
+    ec_imexport_types_11_decoder,
+    ec_imexport_types_12_decoder,
+    ec_imexport_types_13_decoder,
+    ec_imexport_types_14_decoder,
+    ec_imexport_types_15_decoder,
+};
+
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
+static const ec_import_decoder_fn sm2_import_decoders[] = {
+    NULL,
+    sm2_imexport_types_1_decoder,
+    sm2_imexport_types_2_decoder,
+    sm2_imexport_types_3_decoder,
+    sm2_imexport_types_4_decoder,
+    sm2_imexport_types_5_decoder,
+    sm2_imexport_types_6_decoder,
+    sm2_imexport_types_7_decoder,
+    sm2_imexport_types_8_decoder,
+    sm2_imexport_types_9_decoder,
+    sm2_imexport_types_10_decoder,
+    sm2_imexport_types_11_decoder,
+    sm2_imexport_types_12_decoder,
+    sm2_imexport_types_13_decoder,
+    sm2_imexport_types_14_decoder,
+    sm2_imexport_types_15_decoder,
+};
+#endif
+
+static int ec_imexport_type_select(int selection)
+{
+    int type_select = 0;
+
+    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
+        type_select += 1;
+    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
+        type_select += 2;
+    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
+        type_select += 4;
+    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
+        type_select += 8;
+    return type_select;
+}
+
 static int common_import(void *keydata, int selection, const OSSL_PARAM params[],
-    int sm2_wanted)
+    const ec_import_decoder_fn decoders[], int sm2_wanted)
 {
     EC_KEY *ec = keydata;
     EC_PARAMS p;
@@ -450,7 +509,7 @@ static int common_import(void *keydata, int selection, const OSSL_PARAM params[]
     if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) == 0)
         return 0;
 
-    if (!ec_import_decoder(params, &p))
+    if (!decoders[ec_imexport_type_select(selection)](params, &p))
         return 0;
 
     ok = ok && ossl_ec_group_fromdata_parsed(ec, &p);
@@ -471,14 +530,14 @@ static int common_import(void *keydata, int selection, const OSSL_PARAM params[]
 
 static int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    return common_import(keydata, selection, params, 0);
+    return common_import(keydata, selection, params, ec_import_decoders, 0);
 }
 
 #ifndef FIPS_MODULE
 #ifndef OPENSSL_NO_SM2
 static int sm2_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    return common_import(keydata, selection, params, 1);
+    return common_import(keydata, selection, params, sm2_import_decoders, 1);
 }
 #endif
 #endif
@@ -575,30 +634,48 @@ static const OSSL_PARAM *const ec_types[] = {
     ec_imexport_types_15_list,
 };
 
-static ossl_inline const OSSL_PARAM *ec_imexport_types(int selection)
-{
-    int type_select = 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY) != 0)
-        type_select += 1;
-    if ((selection & OSSL_KEYMGMT_SELECT_PUBLIC_KEY) != 0)
-        type_select += 2;
-    if ((selection & OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS) != 0)
-        type_select += 4;
-    if ((selection & OSSL_KEYMGMT_SELECT_OTHER_PARAMETERS) != 0)
-        type_select += 8;
-    return ec_types[type_select];
-}
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
+static const OSSL_PARAM *const sm2_types[] = {
+    NULL,
+    sm2_imexport_types_1_list,
+    sm2_imexport_types_2_list,
+    sm2_imexport_types_3_list,
+    sm2_imexport_types_4_list,
+    sm2_imexport_types_5_list,
+    sm2_imexport_types_6_list,
+    sm2_imexport_types_7_list,
+    sm2_imexport_types_8_list,
+    sm2_imexport_types_9_list,
+    sm2_imexport_types_10_list,
+    sm2_imexport_types_11_list,
+    sm2_imexport_types_12_list,
+    sm2_imexport_types_13_list,
+    sm2_imexport_types_14_list,
+    sm2_imexport_types_15_list,
+};
+#endif
 
 static const OSSL_PARAM *ec_import_types(int selection)
 {
-    return ec_imexport_types(selection);
+    return ec_types[ec_imexport_type_select(selection)];
 }
 
 static const OSSL_PARAM *ec_export_types(int selection)
 {
-    return ec_imexport_types(selection);
+    return ec_types[ec_imexport_type_select(selection)];
 }
+
+#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
+static const OSSL_PARAM *sm2_import_types(int selection)
+{
+    return sm2_types[ec_imexport_type_select(selection)];
+}
+
+static const OSSL_PARAM *sm2_export_types(int selection)
+{
+    return sm2_types[ec_imexport_type_select(selection)];
+}
+#endif
 
 static int ec_get_ecm_params(const EC_GROUP *group, const EC_PARAMS *params)
 {
@@ -1482,9 +1559,9 @@ const OSSL_DISPATCH ossl_ec_keymgmt_functions[] = {
         { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ec_match },                      \
         { OSSL_FUNC_KEYMGMT_VALIDATE, (void (*)(void))sm2_validate },               \
         { OSSL_FUNC_KEYMGMT_IMPORT, (void (*)(void))sm2_import },                   \
-        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))ec_import_types },        \
+        { OSSL_FUNC_KEYMGMT_IMPORT_TYPES, (void (*)(void))sm2_import_types },       \
         { OSSL_FUNC_KEYMGMT_EXPORT, (void (*)(void))ec_export },                    \
-        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))ec_export_types },        \
+        { OSSL_FUNC_KEYMGMT_EXPORT_TYPES, (void (*)(void))sm2_export_types },       \
         { OSSL_FUNC_KEYMGMT_QUERY_OPERATION_NAME,                                   \
             (void (*)(void))variant##_query_operation_name },                       \
         { OSSL_FUNC_KEYMGMT_DUP, (void (*)(void))ec_dup },                          \
