@@ -89,7 +89,7 @@ _
 =begin html
 
 <table>
-<tr><th>Security Category</th><th>Attack Type</th>></tr>
+<tr><th>Security Category</th><th>Attack Type</th></tr>
 <tr><td>0</td><td>Weak</td></tr>
 <tr><td>1</td><td>Key search on a block cipher with a 128-bit key</td></tr>
 <tr><td>2</td><td>Collision search on a 256-bit hash function</td></tr>
