@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2015-2024 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2015-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -39,7 +39,9 @@ use constant {
     UNSOLICITED_SERVER_NAME_TLS13 => 1,
     UNSOLICITED_SCT => 2,
     NONCOMPLIANT_SUPPORTED_GROUPS => 3,
-    UNKNOWN_SERVER_HELLO_TLS13 => 4
+    UNKNOWN_SERVER_HELLO_TLS13 => 4,
+    UNKNOWN_EE_DELEGATED_CREDENTIAL_TLS13 => 5,
+    UNKNOWN_EE_TRANSPARENCY_INFO_TLS13 => 6
 };
 
 my $testtype;
@@ -153,7 +155,9 @@ sub inject_unsolicited_extension
         return;
     }
 
-    if ($testtype == UNSOLICITED_SERVER_NAME_TLS13) {
+    if ($testtype == UNSOLICITED_SERVER_NAME_TLS13
+            || $testtype == UNKNOWN_EE_DELEGATED_CREDENTIAL_TLS13
+            || $testtype == UNKNOWN_EE_TRANSPARENCY_INFO_TLS13) {
         return if (!defined($message = ${$proxy->message_list}[2]));
         die "Expecting EE message ".($message->mt).","
                                    .${$proxy->message_list}[1]->mt.", "
@@ -176,6 +180,10 @@ sub inject_unsolicited_extension
         $type = TLSProxy::Message::EXT_SUPPORTED_GROUPS;
     } elsif ($testtype == UNKNOWN_SERVER_HELLO_TLS13) {
         $type = TLSProxy::Message::EXT_UNKNOWN;
+    } elsif ($testtype == UNKNOWN_EE_DELEGATED_CREDENTIAL_TLS13) {
+        $type = TLSProxy::Message::EXT_DELEGATED_CREDENTIAL;
+    } elsif ($testtype == UNKNOWN_EE_TRANSPARENCY_INFO_TLS13) {
+        $type = TLSProxy::Message::EXT_TRANSPARENCY_INFO;
     }
     $message->set_extension($type, $ext);
     $message->repack();
@@ -198,7 +206,7 @@ sub inject_cryptopro_extension
 
 # Test 1-2: Sending a duplicate extension should fail.
 $proxy->start() or plan skip_all => "Unable to start up Proxy for tests";
-plan tests => 9;
+plan tests => 11;
 ok($fatal_alert, "Duplicate ClientHello extension");
 
 SKIP: {
@@ -265,7 +273,7 @@ SKIP: {
 }
 
 SKIP: {
-    skip "TLS 1.3 disabled", 2
+    skip "TLS 1.3 disabled", 4
         if disabled("tls1_3") || (disabled("ec") && disabled("dh"));
     #Test 8: Inject an unsolicited extension (TLSv1.3)
     $fatal_alert = 0;
@@ -285,4 +293,28 @@ SKIP: {
     $proxy->start();
     ok($fatal_alert == TLSProxy::Message::AL_DESC_UNSUPPORTED_EXTENSION,
        "Unknown ServerHello extension (TLSv1.3)");
+
+    #Test 10-11: Inject an extension that the client did not request and does
+    #            not recognise into EncryptedExtensions (TLSv1.3). RFC 8446
+    #            section 4.2 requires the client to abort the handshake with an
+    #            "unsupported_extension" alert. We use the code points of
+    #            delegated_credential (RFC 9345) and transparency_info
+    #            (RFC 9162), neither of which OpenSSL implements.
+    $fatal_alert = 0;
+    $proxy->clear();
+    $proxy->filter(\&inject_unsolicited_extension);
+    $testtype = UNKNOWN_EE_DELEGATED_CREDENTIAL_TLS13;
+    $proxy->clientflags("");
+    $proxy->start();
+    ok($fatal_alert == TLSProxy::Message::AL_DESC_UNSUPPORTED_EXTENSION,
+       "Unknown delegated_credential EncryptedExtensions extension (TLSv1.3)");
+
+    $fatal_alert = 0;
+    $proxy->clear();
+    $proxy->filter(\&inject_unsolicited_extension);
+    $testtype = UNKNOWN_EE_TRANSPARENCY_INFO_TLS13;
+    $proxy->clientflags("");
+    $proxy->start();
+    ok($fatal_alert == TLSProxy::Message::AL_DESC_UNSUPPORTED_EXTENSION,
+       "Unknown transparency_info EncryptedExtensions extension (TLSv1.3)");
 }
