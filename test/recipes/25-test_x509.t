@@ -545,7 +545,7 @@ my $in_key = srctop_file('test', 'certs', 'x509-check-key.pem');
 my $invextfile = srctop_file('test', 'invalid-x509.cnf');
 # Test that invalid extensions settings fail
 ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
-            "-out", "/dev/null", "-days", "3650" , "-extensions", "ext",
+            "-out", File::Spec->devnull(), "-days", "3650" , "-extensions", "ext",
             "-extfile", $invextfile])));
 
 # Tests for issue #16080 (fixed in 1.1.1o)
