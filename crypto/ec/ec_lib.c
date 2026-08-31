@@ -1322,6 +1322,20 @@ size_t EC_POINT_mul_fn_ctx_size(const EC_GROUP *group, EC_POINT *r,
     return ossl_ec_scalar_mul_ladder_fn_ctx_size(group, r, scalar, point);
 }
 
+int EC_POINT_get_affine_coords_bytes(const EC_GROUP *group,
+    const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len)
+{
+    if (!ec_point_is_compat(point, group)) {
+        ERR_raise(ERR_LIB_EC, EC_R_INCOMPATIBLE_OBJECTS);
+        return 0;
+    }
+    if (group->meth->point_get_affine_coords_bytes == NULL) {
+        ERR_raise(ERR_LIB_EC, EC_R_OPERATION_NOT_SUPPORTED);
+        return 0;
+    }
+    return group->meth->point_get_affine_coords_bytes(group, point, x, y, len);
+}
+
 #ifndef OPENSSL_NO_DEPRECATED_3_0
 int EC_GROUP_precompute_mult(EC_GROUP *group, BN_CTX *ctx)
 {
