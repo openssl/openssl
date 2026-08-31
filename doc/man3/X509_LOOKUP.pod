@@ -116,16 +116,18 @@ L<X509_LOOKUP_file(3)>.
 X509_LOOKUP_load_file() is similar to X509_LOOKUP_load_file_ex() but
 uses NULL for the library context I<libctx> and property query I<propq>.
 
-X509_LOOKUP_add_dir() passes a directory specification from which
-certificates and CRLs are loaded on demand into the associated
-B<X509_STORE>.
+X509_LOOKUP_add_dir() adds to the given store lookup list I<ctx>
+a directory specification, from which trusted certificates and CRLs
+may be looked up later on demand,
+typically when building a certificate chain or verifying a certificate.
 I<type> indicates what type of object is expected.
 This can only be used with a lookup using the implementation
 L<X509_LOOKUP_hash_dir(3)>.
 
-X509_LOOKUP_add_store_ex() passes a URI or filename for a directory-like or file-like
-structure from which containers with certificates and CRLs are loaded on demand
-into the given B<X509_STORE>. The library context I<libctx> and property
+X509_LOOKUP_add_store_ex() adds to the given store lookup list I<ctx>
+a URI or filename for a directory-like or file-like structure. As with
+X509_LOOKUP_add_dir(), certificates and CRLs will be loaded only on demand.
+The library context I<libctx> and property
 query I<propq> are used when fetching algorithms from providers.
 If I<uri> is not NULL, it must be a URI to a store, which may
 represent a single container or a whole catalogue of containers.
