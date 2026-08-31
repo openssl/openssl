@@ -90,8 +90,7 @@ First, they are searched among the certificates provided
 in the I<certs> parameter (if it is not NULL).
 Then they are looked up among the certificates contained
 in the I<cms> structure unless B<CMS_NOINTERN> is set.
-If any signer certificate cannot be located, the operation fails unless
-B<CMS_VERIFY_PARTIAL> is set, where one signer certificate can be sufficient.
+If any signer certificate cannot be located, the operation fails.
 Signer associations are retained between verification calls.
 
 Each found signer certificate is chain verified using I<store> as the trusted

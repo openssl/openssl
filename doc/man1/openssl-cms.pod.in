@@ -498,8 +498,9 @@ as a source of candidate signers.
 With B<-nointern> these will be the only signer certificates considered.
 
 Note that a message can have multiple signers.
-When verifying a multi-signed message, all the signatures must be valid,
-and so all the signer certificates need to be available.
+In such cases, all signer certificates must be available.
+When verifying a multi-signed message, all the signatures must be valid
+unless B<-verify_partial> has been specified.
 
 The input can be in PEM, DER, or PKCS#12 format.
 
