@@ -10,7 +10,7 @@ IF[{- !$disabled{asm} -}]
   $AESASM_x86_64=\
         aes-x86_64.s vpaes-x86_64.s bsaes-x86_64.s aesni-x86_64.s \
         aesni-sha1-x86_64.s aesni-sha256-x86_64.s aesni-mb-x86_64.s \
-        aesni-xts-avx512.s aes-cfb-avx512.s aes-cbc-vaes-x86_64.s
+        aesni-xts-avx512.s aes-cfb-avx512.s aes-vaes-x86_64.s
   $AESDEF_x86_64=AES_ASM VPAES_ASM BSAES_ASM
 
   $AESASM_ia64=aes_core.c aes_cbc.c aes-ia64.s
@@ -74,11 +74,11 @@ IF[{- !$disabled{asm} -}]
 ENDIF
 
 $COMMON=aes_misc.c aes_ecb.c $AESASM
-SOURCE[../../libcrypto]=$COMMON aes_cfb.c aes_ofb.c aes_wrap.c aes_cbc_vaes_intrinsic.c
+SOURCE[../../libcrypto]=$COMMON aes_cfb.c aes_ofb.c aes_wrap.c aes_vaes512_intrinsics.c
 IF[{- !$disabled{'deprecated-3.0'} -}]
   SOURCE[../../libcrypto]=aes_ige.c
 ENDIF
-SOURCE[../../providers/libfips.a]=$COMMON aes_cbc_vaes_intrinsic.c
+SOURCE[../../providers/libfips.a]=$COMMON aes_vaes512_intrinsics.c
 
 # Implementations are now spread across several libraries, so the defines
 # need to be applied to all affected libraries and modules.
@@ -108,7 +108,7 @@ GENERATE[vpaes-x86_64.s]=asm/vpaes-x86_64.pl
 GENERATE[bsaes-x86_64.s]=asm/bsaes-x86_64.pl
 GENERATE[aesni-x86_64.s]=asm/aesni-x86_64.pl
 GENERATE[aes-cfb-avx512.s]=asm/aes-cfb-avx512.pl
-GENERATE[aes-cbc-vaes-x86_64.s]=asm/aes-cbc-vaes-x86_64.pl
+GENERATE[aes-vaes-x86_64.s]=asm/aes-vaes-x86_64.pl
 GENERATE[aesni-sha1-x86_64.s]=asm/aesni-sha1-x86_64.pl
 GENERATE[aesni-sha256-x86_64.s]=asm/aesni-sha256-x86_64.pl
 GENERATE[aesni-mb-x86_64.s]=asm/aesni-mb-x86_64.pl
