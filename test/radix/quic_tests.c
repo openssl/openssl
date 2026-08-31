@@ -2887,24 +2887,163 @@ DEF_SCRIPT(script_54, "place holder for multistrem script_54")
 {
 }
 
-DEF_SCRIPT(script_55, "place holder for multistrem script_55")
+/* 55. Fault injection - NEW_CONN_ID with >20 byte CID */
+DEF_SCRIPT(script_55, "Fault injection - NEW_CONN_ID with >20 byte CID")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_new_conn_id_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(0, 2);
+    OP_WRITE(Sa, "orange", 5);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_56, "place holder for multistrem script_56")
+/* 56. Fault injection - NEW_CONN_ID with seq no < retire prior to */
+DEF_SCRIPT(script_56, "Fault injection - NEW_CONN_ID with seq no < retire prior to")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_new_conn_id_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(0, 3);
+    OP_WRITE(Sa, "orange", 5);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_FRAME_ENCODING_ERROR, 0, 0);
 }
 
-DEF_SCRIPT(script_57, "place holder for multistrem script_57")
+/* 57. Fault injection - NEW_CONN_ID with lower seq so ignored */
+DEF_SCRIPT(script_57, "Fault injection - NEW_CONN_ID with lower seq so ignored")
 {
+    OP_SIMPLE_PAIR_CONN_ND();
+    OP_ACCEPT_CONN_WAIT_ND(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, inject_new_conn_id_plain);
+
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE(Ca, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(0, 4);
+    OP_WRITE(Sa, "orange", 5);
+    OP_ENGINE_TICK_ENABLE(S);
+    OP_READ_EXPECT(Ca, "orange", 5);
+
+    OP_WRITE(Ca, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
+
+    /*
+     * Now we send a NEW_CONN_ID with a bogus CID. However the sequence number
+     * is old so it should be ignored and we should still be able to
+     * communicate.
+     */
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(0, 5);
+    OP_WRITE(Sa, "raspberry", 9);
+    OP_ENGINE_TICK_ENABLE(S);
+    OP_READ_EXPECT(Ca, "raspberry", 9);
+
+    OP_WRITE(Ca, "peach", 5);
+    OP_READ_EXPECT(Sa, "peach", 5);
 }
 
-DEF_SCRIPT(script_58, "place holder for multistrem script_58")
+/* 58. Fault injection - repeated HANDSHAKE_DONE */
+static int script_58_inject_plain(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len)
 {
+    int ok = 0;
+    unsigned char frame_buf[64];
+    size_t written;
+    WPACKET wpkt;
+
+    if (fault->word0 == 0 || hdr->type != QUIC_PKT_TYPE_1RTT)
+        return 1;
+
+    if (!TEST_true(WPACKET_init_static_len(&wpkt, frame_buf,
+            sizeof(frame_buf), 0)))
+        return 0;
+
+    if (fault->word0 == 1) {
+        if (!TEST_true(WPACKET_quic_write_vlint(&wpkt, OSSL_QUIC_FRAME_TYPE_HANDSHAKE_DONE)))
+            goto err;
+    } else {
+        /* Needless multi-byte encoding */
+        if (!TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x40))
+            || !TEST_true(WPACKET_put_bytes_u8(&wpkt, 0x1E)))
+            goto err;
+    }
+
+    if (!TEST_true(WPACKET_get_total_written(&wpkt, &written))
+        || !radix_fault_prepend_frame(fault, frame_buf, written))
+        goto err;
+
+    ok = 1;
+err:
+    if (ok)
+        WPACKET_finish(&wpkt);
+    else
+        WPACKET_cleanup(&wpkt);
+    return ok;
 }
 
-DEF_SCRIPT(script_59, "place holder for multistrem script_59")
+DEF_SCRIPT(script_58, "Fault injection - repeated HANDSHAKE_DONE")
 {
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_58_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(1, 0);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+    OP_READ_EXPECT(C, "orange", 6);
+
+    OP_WRITE(C, "Strawberry", 10);
+    OP_READ_EXPECT(Sa, "Strawberry", 10);
+}
+
+/* 59. Fault injection - multi-byte frame encoding */
+DEF_SCRIPT(script_59, "Fault injection - multi-byte frame encoding")
+{
+    OP_SIMPLE_PAIR_CONN();
+    OP_ACCEPT_CONN_WAIT(L, S, 0);
+
+    OP_SET_INJECT_PLAIN(S, script_58_inject_plain);
+
+    OP_WRITE(C, "apple", 5);
+    OP_ACCEPT_STREAM_WAIT(S, Sa, 0);
+    OP_READ_EXPECT(Sa, "apple", 5);
+
+    OP_ENGINE_TICK_DISABLE(S);
+    OP_SET_INJECT_WORD(2, 0);
+    OP_WRITE(Sa, "orange", 6);
+    OP_ENGINE_TICK_ENABLE(S);
+
+    OP_EXPECT_CONN_CLOSE_INFO(C, OSSL_QUIC_ERR_PROTOCOL_VIOLATION, 0, 0);
 }
 
 DEF_SCRIPT(script_60, "place holder for multistrem script_60")
