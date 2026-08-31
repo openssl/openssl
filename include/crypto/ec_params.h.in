@@ -7,6 +7,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#ifndef OSSL_CRYPTO_EC_PARAMS_H
+#define OSSL_CRYPTO_EC_PARAMS_H
+
 /* clang-format off */
 
 {-
@@ -256,3 +259,5 @@ $imexport;
                           'fips_indicator', 'int', 'fips']); -}
 
 /* clang-format on */
+
+#endif
