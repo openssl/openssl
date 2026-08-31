@@ -1,5 +1,5 @@
 #! /usr/bin/env perl
-# Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+# Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
 #
 # Licensed under the Apache License 2.0 (the "License").  You may not use
 # this file except in compliance with the License.  You can obtain a copy
@@ -16,7 +16,11 @@ use OpenSSL::Test qw/:DEFAULT srctop_file ok_nofips is_nofips/;
 
 setup("test_pkcs8");
 
-plan tests => 20;
+plan tests => 23;
+
+my @objects = run(app(['openssl', 'list', '-objects']), capture => 1);
+ok(grep(/^hmacWithSM3\s*=\s*1\.2\.156\.10197\.1\.401\.2\s*$/, @objects),
+   "hmacWithSM3 uses the GM/T 0091-2020 Annex C object identifier");
 
 my $pc5_key = srctop_file('test', 'certs', 'pc5-key.pem');
 
@@ -178,11 +182,15 @@ subtest 'PKCS#8 -nocrypt reads an unencrypted PKCS#8 PEM' => sub {
 };
 
 SKIP: {
-    skip "SM2, SM3 or SM4 is not supported by this OpenSSL build", 3
+    skip "SM2, SM3 or SM4 is not supported by this OpenSSL build", 5
         if disabled("sm2") || disabled("sm3") || disabled("sm4");
 
+    my $sm2_key = srctop_file('test', 'certs', 'sm2.key');
+    my $legacy_key = srctop_file('test', 'recipes', '25-test_pkcs8_data',
+                                 'sm2-pbes2-sm4-hmac-sm3-legacy-401-3-1.pem');
+
     ok_nofips(run(app(([ 'openssl', 'pkcs8', '-topk8',
-                      '-in', srctop_file('test', 'certs', 'sm2.key'),
+                      '-in', $sm2_key,
                       '-out', 'sm2-pbes2-sm4-hmacWithSM3.key',
                       '-passout', 'pass:password',
                       '-v2', 'sm4', '-v2prf', 'hmacWithSM3']))),
@@ -195,12 +203,27 @@ SKIP: {
                       '-v2', 'sm4', '-v2prf', 'hmacWithSM3']))),
                       "Convert from PKCS#5 v2.0 format to PKCS#8 unencrypted format");
 
-    is_nofips(compare_text(srctop_file('test', 'certs', 'sm2.key'), 'sm2.key',
+    is_nofips(compare_text($sm2_key, 'sm2.key',
         sub {
             my $in1 = $_[0];
             my $in2 = $_[1];
             $in1 =~ s/\r\n/\n/g;
             $in2 =~ s/\r\n/\n/g;
             $in1 ne $in2
-        }), 0, "compare test/certs/sm2.key to sm2.key")
+        }), 0, "compare test/certs/sm2.key to sm2.key");
+
+    ok_nofips(run(app(([ 'openssl', 'pkcs8', '-topk8',
+                      '-in', $legacy_key,
+                      '-out', 'sm2-legacy-oid.key',
+                      '-passin', 'pass:password', '-nocrypt']))),
+              "Read historical 1.2.156.10197.1.401.3.1 PKCS#8 input");
+
+    is_nofips(compare_text($sm2_key, 'sm2-legacy-oid.key',
+        sub {
+            my $in1 = $_[0];
+            my $in2 = $_[1];
+            $in1 =~ s/\r\n/\n/g;
+            $in2 =~ s/\r\n/\n/g;
+            $in1 ne $in2
+        }), 0, "Historical OID PKCS#8 decrypts to the test SM2 key");
 }

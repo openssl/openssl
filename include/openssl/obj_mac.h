@@ -1277,7 +1277,7 @@
 
 #define LN_hmacWithSM3          "hmacWithSM3"
 #define NID_hmacWithSM3         1281
-#define OBJ_hmacWithSM3         OBJ_sm3,3L,1L
+#define OBJ_hmacWithSM3         OBJ_sm3,2L
 
 #define LN_hmacWithSHA224               "hmacWithSHA224"
 #define NID_hmacWithSHA224              798
