@@ -12,12 +12,12 @@ use warnings;
 
 use File::Spec;
 use OpenSSL::Test::Utils;
-use OpenSSL::Test qw/:DEFAULT srctop_file result_file/;
+use OpenSSL::Test qw/:DEFAULT srctop_file result_file app_fails/;
 use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 160;
+plan tests => 161;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -628,6 +628,51 @@ subtest "signing output detection with -key" => sub {
                 "-key", $in_key, "-extfile", $cnf,
                 "-extensions", "v3_req", "-out", $request])),
        "accept extension options when signing a request with -key");
+};
+
+subtest "printing CRL distribution point URIs" => sub {
+    plan tests => 10;
+
+    my $cert = "crl-uri-cert.pem";
+    my $malformed_cert = "malformed-crl-uri-cert.pem";
+    my $duplicate_cert = srctop_file("test", "recipes", "25-test_x509_data",
+                                     "duplicate_crl_uri.pem");
+    my $extfile = srctop_file("test", "recipes", "25-test_x509_data",
+                              "crl_uri.cnf");
+
+    ok(run(app(["openssl", "x509", "-req", "-in", $in_csr,
+                "-signkey", $in_key, "-extfile", $extfile,
+                "-extensions", "extensions", "-out", $cert])),
+       "create certificate with CRL distribution points");
+
+    my @uris = run(app(["openssl", "x509", "-in", $cert, "-noout",
+                        "-crl_uri"]), capture => 1, statusvar => \my $ok);
+    ok($ok, "print CRL distribution point URIs");
+    s/\r?\n\z// for @uris;
+    is_deeply(\@uris,
+              ["http://primary.example/crl.pem",
+               "ldap://directory.example/crl"],
+              "sort and deduplicate URI names and ignore other name types");
+
+    @uris = run(app(["openssl", "x509", "-in",
+                     srctop_file(@certs, "ca-cert.pem"), "-noout",
+                     "-crl_uri"]), capture => 1, statusvar => \$ok);
+    ok($ok, "handle certificate without CRL distribution points");
+    is(join("", @uris), "", "certificate without CRL URIs prints nothing");
+
+    ok(run(app(["openssl", "x509", "-req", "-in", $in_csr,
+                "-signkey", $in_key, "-extfile", $extfile,
+                "-extensions", "malformed_extensions",
+                "-out", $malformed_cert])),
+       "create certificate with malformed CRL distribution points");
+
+    app_fails("x509", "reject malformed CRL distribution points",
+              qr/Unable to decode CRL distribution points/,
+              "-in", $malformed_cert, "-noout", "-crl_uri");
+
+    app_fails("x509", "reject duplicate CRL distribution points",
+              qr/CRL distribution points extension occurs more than once/,
+              "-in", $duplicate_cert, "-noout", "-crl_uri");
 };
 
 # Tests for issue #16080 (fixed in 1.1.1o)
