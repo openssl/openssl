@@ -187,6 +187,12 @@ foreach (sort keys %stlibname) {
     }
 }
 my @duplicates = sort grep { $symbols{$_} > 1 } keys %symbols;
+# When deprecated-3.0 is disabled, some deprecated symbols (e.g. DES)
+# are intentionally duplicated between libcrypto and liblegacy.
+# Skip them from the duplicate check.
+if (disabled('deprecated-3.0')) {
+    @duplicates = sort grep { $_ !~ /^DES_/ } @duplicates;
+}
 if (@duplicates) {
     note "Duplicates:";
     note join('\n', @duplicates);
