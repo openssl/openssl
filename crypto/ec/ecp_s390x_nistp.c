@@ -588,7 +588,8 @@ ret:
             ossl_ec_GFp_simple_ladder_post,                                         \
             0, /* group_full_init */                                                \
             ec_GFp_s390x_nistp##bits##_mul_fn,                                      \
-            ec_GFp_s390x_nistp##bits##_mul_fn_ctx_size                              \
+            ec_GFp_s390x_nistp##bits##_mul_fn_ctx_size,                             \
+            ossl_ec_GFp_simple_point_get_affine_coords_bytes                        \
         };                                                                          \
         static const EC_METHOD *ret;                                                \
                                                                                     \
