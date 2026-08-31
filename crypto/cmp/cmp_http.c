@@ -91,6 +91,12 @@ OSSL_CMP_MSG *OSSL_CMP_MSG_http_perform(OSSL_CMP_CTX *ctx,
     BIO_free(req_mem);
     res = (OSSL_CMP_MSG *)ASN1_item_d2i_bio(it, rsp, NULL);
     BIO_free(rsp);
+    if (res != NULL
+        && (!ossl_cmp_msg_set0_libctx(res, ctx->libctx, ctx->propq)
+            || !ossl_cmp_msg_resolve_libctx(res))) {
+        OSSL_CMP_MSG_free(res);
+        res = NULL;
+    }
 
     if (ctx->http_ctx == NULL)
         ossl_cmp_debug(ctx, "disconnected from CMP server");

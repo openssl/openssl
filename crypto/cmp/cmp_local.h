@@ -239,6 +239,7 @@ DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CRLSTATUS)
  */
 typedef STACK_OF(OSSL_CMP_MSG) OSSL_CMP_MSGS;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_MSGS)
+DEFINE_STACK_OF(OSSL_CMP_MSG)
 
 /*-
  *   InfoTypeAndValue ::= SEQUENCE {
@@ -322,6 +323,7 @@ typedef struct ossl_cmp_certifiedkeypair_st {
     OSSL_CRMF_PKIPUBLICATIONINFO *publicationInfo;
 } OSSL_CMP_CERTIFIEDKEYPAIR;
 DECLARE_ASN1_FUNCTIONS(OSSL_CMP_CERTIFIEDKEYPAIR)
+DEFINE_STACK_OF(OSSL_CMP_CERTIFIEDKEYPAIR)
 
 /*-
  *   PKIStatusInfo ::= SEQUENCE {
@@ -937,6 +939,14 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr);
 #define OSSL_CMP_REVREQSID 0
 int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
     const char *propq);
+/**
+ * @brief Re-parse every certificate embedded in |msg| into msg->libctx and
+ * msg->propq, since a certificate is finalized by the parse and must be
+ * finalized under the context it claims.  Recurses into nested messages.
+ * @param msg the message whose embedded certificates are transferred, or NULL
+ * @returns 1 on success (including msg == NULL), 0 on error
+ */
+int ossl_cmp_msg_resolve_libctx(OSSL_CMP_MSG *msg);
 const char *ossl_cmp_bodytype_to_string(int type);
 int ossl_cmp_msg_set_bodytype(OSSL_CMP_MSG *msg, int type);
 OSSL_CMP_MSG *ossl_cmp_msg_create(OSSL_CMP_CTX *ctx, int bodytype);

@@ -592,7 +592,7 @@ DEFINE_OSSL_CMP_CTX_get1_certs(caPubs)
     }
 
 /* An unfinalized cert carries no cached validity, so treat it as invalid. */
-#define X509_invalid(cert) \
+#define X509_invalid(cert)                                            \
     ((X509_get_extension_flags(cert) & (EXFLAG_SET | EXFLAG_INVALID)) \
         != EXFLAG_SET)
 #define EVP_PKEY_invalid(key) 0

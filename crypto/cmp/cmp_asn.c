@@ -857,7 +857,12 @@ static int ossl_cmp_msg_cb(int operation, ASN1_VALUE **pval,
     case ASN1_OP_DUP_POST: {
         OSSL_CMP_MSG *old = exarg;
 
-        if (!ossl_cmp_msg_set0_libctx(msg, old->libctx, old->propq))
+        /*
+         * The duplicate's embedded certificates were re-parsed under the
+         * default context; transfer them along with the message context.
+         */
+        if (!ossl_cmp_msg_set0_libctx(msg, old->libctx, old->propq)
+            || !ossl_cmp_msg_resolve_libctx(msg))
             return 0;
     } break;
     case ASN1_OP_GET0_LIBCTX: {

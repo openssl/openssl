@@ -54,6 +54,164 @@ int ossl_cmp_msg_set0_libctx(OSSL_CMP_MSG *msg, OSSL_LIB_CTX *libctx,
     return 1;
 }
 
+static int certs_transfer_libctx(STACK_OF(X509) *certs, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    int i;
+
+    for (i = 0; i < sk_X509_num(certs); i++) {
+        X509 *cert = sk_X509_value(certs, i);
+
+        if (!ossl_x509_transfer_libctx(&cert, libctx, propq))
+            return 0;
+        (void)sk_X509_set(certs, i, cert);
+    }
+    return 1;
+}
+
+static int certifiedkeypair_transfer_libctx(OSSL_CMP_CERTIFIEDKEYPAIR *ckp,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    OSSL_CMP_CERTORENCCERT *coec = ckp == NULL ? NULL : ckp->certOrEncCert;
+
+    if (coec != NULL && coec->type == OSSL_CMP_CERTORENCCERT_CERTIFICATE)
+        return ossl_x509_transfer_libctx(&coec->value.certificate,
+            libctx, propq);
+    return 1;
+}
+
+static int certrep_transfer_libctx(OSSL_CMP_CERTREPMESSAGE *crm,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int i;
+
+    if (crm == NULL)
+        return 1;
+    if (!certs_transfer_libctx(crm->caPubs, libctx, propq))
+        return 0;
+    for (i = 0; i < sk_OSSL_CMP_CERTRESPONSE_num(crm->response); i++) {
+        OSSL_CMP_CERTRESPONSE *rsp = sk_OSSL_CMP_CERTRESPONSE_value(crm->response, i);
+
+        if (rsp != NULL
+            && !certifiedkeypair_transfer_libctx(rsp->certifiedKeyPair,
+                libctx, propq))
+            return 0;
+    }
+    return 1;
+}
+
+static int cakeyupdann_transfer_libctx(OSSL_CMP_CAKEYUPDANNCONTENT *ckua,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    if (ckua == NULL)
+        return 1;
+    return ossl_x509_transfer_libctx(&ckua->oldWithNew, libctx, propq)
+        && ossl_x509_transfer_libctx(&ckua->newWithOld, libctx, propq)
+        && ossl_x509_transfer_libctx(&ckua->newWithNew, libctx, propq);
+}
+
+static int itav_transfer_libctx(OSSL_CMP_ITAV *itav, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    OSSL_CMP_ROOTCAKEYUPDATE *rcku;
+
+    if (itav == NULL || itav->infoValue.ptr == NULL)
+        return 1;
+
+    switch (OBJ_obj2nid(itav->infoType)) {
+    case NID_id_it_caProtEncCert:
+        return ossl_x509_transfer_libctx(&itav->infoValue.caProtEncCert,
+            libctx, propq);
+    case NID_id_it_caKeyUpdateInfo:
+        return cakeyupdann_transfer_libctx(itav->infoValue.caKeyUpdateInfo,
+            libctx, propq);
+    case NID_id_it_caCerts:
+        return certs_transfer_libctx(itav->infoValue.caCerts, libctx, propq);
+    case NID_id_it_rootCaCert:
+        return ossl_x509_transfer_libctx(&itav->infoValue.rootCaCert,
+            libctx, propq);
+    case NID_id_it_rootCaKeyUpdate:
+        rcku = itav->infoValue.rootCaKeyUpdate;
+        return ossl_x509_transfer_libctx(&rcku->newWithNew, libctx, propq)
+            && ossl_x509_transfer_libctx(&rcku->newWithOld, libctx, propq)
+            && ossl_x509_transfer_libctx(&rcku->oldWithNew, libctx, propq);
+    default:
+        return 1;
+    }
+}
+
+static int itavs_transfer_libctx(STACK_OF(OSSL_CMP_ITAV) *itavs,
+    OSSL_LIB_CTX *libctx, const char *propq)
+{
+    int i;
+
+    for (i = 0; i < sk_OSSL_CMP_ITAV_num(itavs); i++)
+        if (!itav_transfer_libctx(sk_OSSL_CMP_ITAV_value(itavs, i),
+                libctx, propq))
+            return 0;
+    return 1;
+}
+
+int ossl_cmp_msg_resolve_libctx(OSSL_CMP_MSG *msg)
+{
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+    OSSL_CMP_PKIBODY *body;
+    int i;
+
+    if (msg == NULL)
+        return 1;
+    libctx = msg->libctx;
+    propq = msg->propq;
+
+    if (!certs_transfer_libctx(msg->extraCerts, libctx, propq))
+        return 0;
+
+    if ((body = msg->body) == NULL)
+        return 1;
+
+    switch (body->type) {
+    case OSSL_CMP_PKIBODY_IP:
+    case OSSL_CMP_PKIBODY_CP:
+    case OSSL_CMP_PKIBODY_KUP:
+    case OSSL_CMP_PKIBODY_CCP:
+        return certrep_transfer_libctx(body->value.ip, libctx, propq);
+    case OSSL_CMP_PKIBODY_KRP:
+        if (body->value.krp == NULL)
+            return 1;
+        if (!ossl_x509_transfer_libctx(&body->value.krp->newSigCert,
+                libctx, propq)
+            || !certs_transfer_libctx(body->value.krp->caCerts, libctx, propq))
+            return 0;
+        for (i = 0;
+            i < sk_OSSL_CMP_CERTIFIEDKEYPAIR_num(body->value.krp->keyPairHist);
+            i++)
+            if (!certifiedkeypair_transfer_libctx(
+                    sk_OSSL_CMP_CERTIFIEDKEYPAIR_value(body->value.krp->keyPairHist, i),
+                    libctx, propq))
+                return 0;
+        return 1;
+    case OSSL_CMP_PKIBODY_CKUANN:
+        return cakeyupdann_transfer_libctx(body->value.ckuann, libctx, propq);
+    case OSSL_CMP_PKIBODY_CANN:
+        return ossl_x509_transfer_libctx(&body->value.cann, libctx, propq);
+    case OSSL_CMP_PKIBODY_NESTED:
+        for (i = 0; i < sk_OSSL_CMP_MSG_num(body->value.nested); i++) {
+            OSSL_CMP_MSG *nested = sk_OSSL_CMP_MSG_value(body->value.nested, i);
+
+            if (!ossl_cmp_msg_set0_libctx(nested, libctx, propq)
+                || !ossl_cmp_msg_resolve_libctx(nested))
+                return 0;
+        }
+        return 1;
+    case OSSL_CMP_PKIBODY_GENM:
+    case OSSL_CMP_PKIBODY_GENP:
+        return itavs_transfer_libctx(body->value.genm, libctx, propq);
+    default:
+        return 1;
+    }
+}
+
 OSSL_CMP_PKIHEADER *OSSL_CMP_MSG_get0_header(const OSSL_CMP_MSG *msg)
 {
     if (msg == NULL) {
@@ -1256,6 +1414,7 @@ int OSSL_CMP_MSG_write(const char *file, const OSSL_CMP_MSG *msg)
 OSSL_CMP_MSG *d2i_OSSL_CMP_MSG(OSSL_CMP_MSG **msg, const unsigned char **in,
     long len)
 {
+    OSSL_CMP_MSG *ret;
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
 
@@ -1264,9 +1423,16 @@ OSSL_CMP_MSG *d2i_OSSL_CMP_MSG(OSSL_CMP_MSG **msg, const unsigned char **in,
         propq = (*msg)->propq;
     }
 
-    return (OSSL_CMP_MSG *)ASN1_item_d2i_ex((ASN1_VALUE **)msg, in, len,
+    ret = (OSSL_CMP_MSG *)ASN1_item_d2i_ex((ASN1_VALUE **)msg, in, len,
         ASN1_ITEM_rptr(OSSL_CMP_MSG),
         libctx, propq);
+    if (ret != NULL && !ossl_cmp_msg_resolve_libctx(ret)) {
+        if (msg != NULL && *msg == ret)
+            *msg = NULL;
+        OSSL_CMP_MSG_free(ret);
+        ret = NULL;
+    }
+    return ret;
 }
 
 int i2d_OSSL_CMP_MSG(const OSSL_CMP_MSG *msg, unsigned char **out)
@@ -1277,6 +1443,7 @@ int i2d_OSSL_CMP_MSG(const OSSL_CMP_MSG *msg, unsigned char **out)
 
 OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
 {
+    OSSL_CMP_MSG *ret;
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
 
@@ -1285,8 +1452,15 @@ OSSL_CMP_MSG *d2i_OSSL_CMP_MSG_bio(BIO *bio, OSSL_CMP_MSG **msg)
         propq = (*msg)->propq;
     }
 
-    return ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(OSSL_CMP_MSG), bio, msg, libctx,
+    ret = ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(OSSL_CMP_MSG), bio, msg, libctx,
         propq);
+    if (ret != NULL && !ossl_cmp_msg_resolve_libctx(ret)) {
+        if (msg != NULL && *msg == ret)
+            *msg = NULL;
+        OSSL_CMP_MSG_free(ret);
+        ret = NULL;
+    }
+    return ret;
 }
 
 int i2d_OSSL_CMP_MSG_bio(BIO *bio, const OSSL_CMP_MSG *msg)

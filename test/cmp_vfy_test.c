@@ -344,6 +344,37 @@ static int test_validate_msg_signature_sender_cert_extracert(void)
     return result;
 }
 
+/*
+ * Reading a message must re-parse the certificates it carries into the given
+ * library context and property query.  Under a property query no provider
+ * satisfies, computing the digest of an embedded certificate must fail, just
+ * as it does for the same certificate parsed directly under that query.
+ */
+static int test_msg_read_transfers_libctx(void)
+{
+    OSSL_LIB_CTX *empty = OSSL_LIB_CTX_new();
+    OSSL_CMP_MSG *msg = NULL;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    int res = 0;
+
+    if (!TEST_ptr(empty)
+        || !TEST_ptr(msg = OSSL_CMP_MSG_read(ir_protected_2_extracerts, empty,
+                         "provider=definitely_missing"))
+        || !TEST_int_gt(sk_X509_num(msg->extraCerts), 0))
+        goto err;
+
+    if (!TEST_false(X509_digest(sk_X509_value(msg->extraCerts, 0),
+            EVP_sha1(), md, &md_len)))
+        goto err;
+
+    res = 1;
+err:
+    OSSL_CMP_MSG_free(msg);
+    OSSL_LIB_CTX_free(empty);
+    return res;
+}
+
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_sender_cert_absent(void)
 {
@@ -755,6 +786,7 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_signature_sender_cert_untrusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_trusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_extracert);
+    ADD_TEST(test_msg_read_transfers_libctx);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_sender_cert_absent);
 #endif
