@@ -447,27 +447,6 @@ static const ec_import_decoder_fn ec_import_decoders[] = {
     ec_imexport_types_15_decoder,
 };
 
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-static const ec_import_decoder_fn sm2_import_decoders[] = {
-    NULL,
-    sm2_imexport_types_1_decoder,
-    sm2_imexport_types_2_decoder,
-    sm2_imexport_types_3_decoder,
-    sm2_imexport_types_4_decoder,
-    sm2_imexport_types_5_decoder,
-    sm2_imexport_types_6_decoder,
-    sm2_imexport_types_7_decoder,
-    sm2_imexport_types_8_decoder,
-    sm2_imexport_types_9_decoder,
-    sm2_imexport_types_10_decoder,
-    sm2_imexport_types_11_decoder,
-    sm2_imexport_types_12_decoder,
-    sm2_imexport_types_13_decoder,
-    sm2_imexport_types_14_decoder,
-    sm2_imexport_types_15_decoder,
-};
-#endif
-
 static int ec_imexport_type_select(int selection)
 {
     int type_select = 0;
@@ -537,7 +516,7 @@ static int ec_import(void *keydata, int selection, const OSSL_PARAM params[])
 #ifndef OPENSSL_NO_SM2
 static int sm2_import(void *keydata, int selection, const OSSL_PARAM params[])
 {
-    return common_import(keydata, selection, params, sm2_import_decoders, 1);
+    return common_import(keydata, selection, params, ec_import_decoders, 1);
 }
 #endif
 #endif
@@ -634,27 +613,6 @@ static const OSSL_PARAM *const ec_types[] = {
     ec_imexport_types_15_list,
 };
 
-#if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-static const OSSL_PARAM *const sm2_types[] = {
-    NULL,
-    sm2_imexport_types_1_list,
-    sm2_imexport_types_2_list,
-    sm2_imexport_types_3_list,
-    sm2_imexport_types_4_list,
-    sm2_imexport_types_5_list,
-    sm2_imexport_types_6_list,
-    sm2_imexport_types_7_list,
-    sm2_imexport_types_8_list,
-    sm2_imexport_types_9_list,
-    sm2_imexport_types_10_list,
-    sm2_imexport_types_11_list,
-    sm2_imexport_types_12_list,
-    sm2_imexport_types_13_list,
-    sm2_imexport_types_14_list,
-    sm2_imexport_types_15_list,
-};
-#endif
-
 static const OSSL_PARAM *ec_import_types(int selection)
 {
     return ec_types[ec_imexport_type_select(selection)];
@@ -668,12 +626,12 @@ static const OSSL_PARAM *ec_export_types(int selection)
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
 static const OSSL_PARAM *sm2_import_types(int selection)
 {
-    return sm2_types[ec_imexport_type_select(selection)];
+    return ec_types[ec_imexport_type_select(selection)];
 }
 
 static const OSSL_PARAM *sm2_export_types(int selection)
 {
-    return sm2_types[ec_imexport_type_select(selection)];
+    return ec_types[ec_imexport_type_select(selection)];
 }
 #endif
 

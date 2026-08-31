@@ -186,22 +186,20 @@ my $other_parameters_type = 8;
 my $all_types = $private_key_type | $public_key_type
     | $domain_type | $other_parameters_type;
 
-for my $algorithm ('ec', 'sm2') {
-    for my $selection ($private_key_type..$all_types) {
-        my @types = ();
+for my $selection ($private_key_type..$all_types) {
+    my @types = ();
 
-        push @types, @EC_PRIVATE_KEY_TYPES
-            if ($selection & $private_key_type);
-        push @types, @EC_PUBLIC_KEY_TYPES
-            if ($selection & $public_key_type);
-        push @types, @EC_DOMAIN_TYPES if ($selection & $domain_type);
-        push @types, @EC_OTHER_TYPES if ($selection & $other_parameters_type);
-        $imexport .= "#define ${algorithm}_imexport_types_"
-            . "${selection}_st ec_params_st\n";
-        $imexport .= produce_param_decoder(
-            "${algorithm}_imexport_types_${selection}", @types);
-        $imexport .= "\n";
-    }
+    push @types, @EC_PRIVATE_KEY_TYPES
+        if ($selection & $private_key_type);
+    push @types, @EC_PUBLIC_KEY_TYPES
+        if ($selection & $public_key_type);
+    push @types, @EC_DOMAIN_TYPES if ($selection & $domain_type);
+    push @types, @EC_OTHER_TYPES if ($selection & $other_parameters_type);
+    $imexport .= "#define ec_imexport_types_"
+        . "${selection}_st ec_params_st\n";
+    $imexport .= produce_param_decoder(
+        "ec_imexport_types_${selection}", @types);
+    $imexport .= "\n";
 }
 $imexport;
 -}
