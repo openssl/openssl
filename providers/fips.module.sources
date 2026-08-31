@@ -235,7 +235,6 @@ crypto/evp/p_lib.c
 crypto/evp/pmeth_check.c
 crypto/evp/pmeth_gn.c
 crypto/evp/pmeth_lib.c
-crypto/evp/s_lib.c
 crypto/evp/signature.c
 crypto/evp/skeymgmt_meth.c
 crypto/ex_data.c
