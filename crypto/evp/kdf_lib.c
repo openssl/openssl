@@ -159,6 +159,7 @@ int EVP_KDF_derive(EVP_KDF_CTX *ctx, unsigned char *key, size_t keylen,
     return ctx->meth->derive(ctx->algctx, key, keylen, params);
 }
 
+#ifndef FIPS_MODULE
 struct convert_key {
     const char *name;
     OSSL_PARAM *param;
@@ -295,6 +296,7 @@ EVP_SKEY *EVP_KDF_derive_SKEY(EVP_KDF_CTX *ctx, EVP_SKEYMGMT *mgmt,
         EVP_SKEYMGMT_free(skeymgmt);
     return ret;
 }
+#endif /* !FIPS_MODULE */
 
 /*
  * The {get,set}_params functions return 1 if there is no corresponding
