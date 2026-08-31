@@ -45,6 +45,7 @@ B<openssl> B<x509>
 [B<-ext> I<extensions>]
 [B<-ocspid>]
 [B<-ocsp_uri>]
+[B<-crl_uri>]
 [B<-purpose>]
 [B<-pubkey>]
 [B<-modulus>]
@@ -331,6 +332,10 @@ Prints the OCSP hash values for the subject name and public key.
 =item B<-ocsp_uri>
 
 Prints the OCSP responder address(es) if any.
+
+=item B<-crl_uri>
+
+Prints the URI(s) from the certificate's CRL distribution points, if any.
 
 =item B<-purpose>
 
@@ -898,6 +903,8 @@ See B<-extfile> above for details.
 As of OpenSSL 4.0, the B<x509> utility no longer has specialised built-in logic
 to add the SKID or AKID extensions, they are handled through configuration
 files and command-line options just like any other extension.
+
+The B<-crl_uri> option was added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
