@@ -67,6 +67,11 @@ static int ch_test_cb(SSL *ssl, int *al, void *arg)
     if (verbose)
         TEST_info("servername: %s", servername);
     OPENSSL_free(servername);
+    /* check supported versions is only TLSv1.3 */
+    if (!SSL_client_hello_get0_ext(ssl, TLSEXT_TYPE_supported_versions, &pos,
+            &remaining)
+        || remaining != 3 || pos[0] != 0x02 || pos[1] != 0x03 || pos[2] != 0x04)
+        goto give_up;
     /* signal to caller all is good */
     ch_test_cb_ok = 1;
     return 1;
