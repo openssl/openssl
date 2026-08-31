@@ -1557,7 +1557,8 @@ const EC_METHOD *ossl_ec_GFp_nistp384_method(void)
         0, /* ladder_post */
         0, /* group_full_init */
         ossl_ec_GFp_nistp384_points_mul_fn, /* mul_fn */
-        ossl_ec_GFp_nistp384_points_mul_fn_ctx_size /* mul_fn_ctx_size */
+        ossl_ec_GFp_nistp384_points_mul_fn_ctx_size, /* mul_fn_ctx_size */
+        ossl_ec_GFp_simple_point_get_affine_coords_bytes
     };
 
     return &ret;
