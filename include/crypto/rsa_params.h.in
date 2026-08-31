@@ -120,7 +120,10 @@ return "";
 #define rsa_pss_todata_st rsa_params_st
 {- produce_param_decoder('rsa_pss_todata', @RSA_PSS_EXPORT_TYPES); -}
 
-/* Parameters processed by plain RSA get_params(). */
+/*
+ * Parameters processed by plain RSA get_params(), including conditional ACVP
+ * data.
+ */
 #define rsa_get_params_st rsa_params_st
 {- produce_param_decoder('rsa_get_params',
                          (['OSSL_PKEY_PARAM_BITS',              'bits',            'int'],
