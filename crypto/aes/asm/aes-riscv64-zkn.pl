@@ -132,6 +132,7 @@ my $code .= <<___;
 .globl rv64i_zkne_encrypt
 .type   rv64i_zkne_encrypt,\@function
 rv64i_zkne_encrypt:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();
@@ -205,6 +206,7 @@ $code .= <<___;
 .globl rv64i_zknd_decrypt
 .type   rv64i_zknd_decrypt,\@function
 rv64i_zknd_decrypt:
+    @{[lpad 0]}
 ___
 
 $code .= save_regs();
@@ -427,6 +429,7 @@ $code .= <<___;
 .globl rv64i_zkne_set_encrypt_key
 .type   rv64i_zkne_set_encrypt_key,\@function
 rv64i_zkne_set_encrypt_key:
+    @{[lpad 0]}
 ___
 $code .= save_regs();
 $code .= AES_set_common(ke128enc(), ke192enc(),ke256enc());
@@ -577,6 +580,7 @@ $code .= <<___;
 .globl rv64i_zknd_set_decrypt_key
 .type   rv64i_zknd_set_decrypt_key,\@function
 rv64i_zknd_set_decrypt_key:
+    @{[lpad 0]}
 ___
 $code .= save_regs();
 $code .= AES_set_common(ke128dec(), ke192dec(),ke256dec());
