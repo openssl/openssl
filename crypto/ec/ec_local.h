@@ -222,6 +222,20 @@ struct ec_method_st {
      */
     size_t (*mul_fn_ctx_size)(const EC_GROUP *group, EC_POINT *r,
         const OSSL_FN *scalar, const EC_POINT *point);
+    /*-
+     * Write the affine coordinates of 'point' as fixed-width big-endian byte
+     * strings, in constant time.  'x' and/or 'y' may be NULL to skip that
+     * coordinate; each non-NULL buffer holds 'len' bytes, the caller's field
+     * width.  Unlike point_get_affine_coordinates() the result never passes
+     * through a BIGNUM, so it leaks nothing about the coordinates' magnitude -
+     * this is the path for a secret point (an ECDH shared point, an SM2 kP).
+     *
+     * Returns 0 if 'point' is at infinity, mirroring
+     * point_get_affine_coordinates().  Methods with no constant-time byte
+     * extraction leave this NULL.
+     */
+    int (*point_get_affine_coords_bytes)(const EC_GROUP *group,
+        const EC_POINT *point, unsigned char *x, unsigned char *y, size_t len);
 };
 
 /*
@@ -435,6 +449,9 @@ int ossl_ec_GFp_simple_point_set_affine_coordinates(const EC_GROUP *, EC_POINT *
 int ossl_ec_GFp_simple_point_get_affine_coordinates(const EC_GROUP *,
     const EC_POINT *, BIGNUM *x,
     BIGNUM *y, BN_CTX *);
+int ossl_ec_GFp_simple_point_get_affine_coords_bytes(const EC_GROUP *,
+    const EC_POINT *, unsigned char *x,
+    unsigned char *y, size_t len);
 int ossl_ec_GFp_simple_set_compressed_coordinates(const EC_GROUP *, EC_POINT *,
     const BIGNUM *x, int y_bit,
     BN_CTX *);
