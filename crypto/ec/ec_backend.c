@@ -847,8 +847,15 @@ EC_KEY *ossl_ec_key_from_pkcs8(const PKCS8_PRIV_KEY_INFO *p8inf,
      * ECPrivateKey (RFC 5915) both identify the domain parameters of the
      * same key; reject a PKCS#8 structure in which they disagree.
      */
-    if (EC_GROUP_cmp(group, EC_KEY_get0_group(eckey), NULL) != 0) {
+    switch (EC_GROUP_cmp(group, EC_KEY_get0_group(eckey), NULL)) {
+    case 0:
+        break;
+    case 1:
         ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
+        goto err;
+    default:
+        /* Comparison failure is an internal error, not a mismatch */
+        ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         goto err;
     }
 

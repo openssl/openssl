@@ -226,15 +226,20 @@ subtest 'ec -check reports the key consistency' => sub {
 };
 
 subtest 'PKCS#8 EC key with inconsistent curve parameters' => sub {
-    plan tests => 3;
+    plan tests => 4;
 
     # ec-pkcs8-mismatch.pem is a PrivateKeyInfo whose privateKeyAlgorithm
     # names secp384r1 while the ECPrivateKey inside it carries prime256v1
     # parameters (and a P-256 key).  ec-pkcs8-consistent.pem is the same
-    # key with prime256v1 in both places.
+    # key with prime256v1 in both places, and ec-pkcs8-no-inner-params.pem
+    # is the same key without the optional parameters in the ECPrivateKey,
+    # so the curve comes from the privateKeyAlgorithm alone.
     ok(run(app(['openssl', 'pkey', '-noout',
                 '-in', data_file('ec-pkcs8-consistent.pem')])),
-       "PKCS#8 EC key with consistent curve parameters loads");
+       "PKCS#8 EC key with matching inner and outer curve parameters loads");
+    ok(run(app(['openssl', 'pkey', '-noout',
+                '-in', data_file('ec-pkcs8-no-inner-params.pem')])),
+       "PKCS#8 EC key without inner curve parameters loads");
     ok(!run(app(['openssl', 'pkey', '-noout',
                  '-in', data_file('ec-pkcs8-mismatch.pem')])),
        "PKCS#8 EC key with inconsistent curve parameters is rejected");
