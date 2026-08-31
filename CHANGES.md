@@ -356,6 +356,12 @@ OpenSSL 4.1
 
    *Marcel Cornu and Tomasz Kantecki*
 
+ * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
+   large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
+   <!-- https://github.com/openssl/openssl/pull/30755 -->
+
+   *Madan Mohan Manokar*
+
  * Added AVX-512 and VAES optimizations for AES-CBC decryption.  Decryption
    performance for large inputs (1024 bytes or more) improved by 3.5x to 3.8x.
    <!-- https://github.com/openssl/openssl/pull/30902 -->
