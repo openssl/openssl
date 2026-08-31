@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 155;
+plan tests => 156;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -597,6 +597,45 @@ my $invextfile = srctop_file('test', 'invalid-x509.cnf');
 ok(!run(app(["openssl", "x509", "-req", "-in", $in_csr, "-signkey", $in_key,
             "-out", "/dev/null", "-days", "3650" , "-extensions", "ext",
             "-extfile", $invextfile])));
+
+subtest "printing CRL distribution point URIs" => sub {
+    plan tests => 7;
+
+    my $cert = "crl-uri-cert.pem";
+    my $malformed_cert = "malformed-crl-uri-cert.pem";
+    my $extfile = srctop_file("test", "recipes", "25-test_x509_data",
+                              "crl_uri.cnf");
+
+    ok(run(app(["openssl", "x509", "-req", "-in", $in_csr,
+                "-signkey", $in_key, "-extfile", $extfile,
+                "-extensions", "extensions", "-out", $cert])),
+       "create certificate with CRL distribution points");
+
+    my @uris = run(app(["openssl", "x509", "-in", $cert, "-noout",
+                        "-crl_uri"]), capture => 1, statusvar => \my $ok);
+    ok($ok, "print CRL distribution point URIs");
+    s/\r?\n\z// for @uris;
+    is_deeply(\@uris,
+              ["http://primary.example/crl.pem",
+               "ldap://directory.example/crl"],
+              "print URI names and ignore other name types");
+
+    @uris = run(app(["openssl", "x509", "-in",
+                     srctop_file(@certs, "ca-cert.pem"), "-noout",
+                     "-crl_uri"]), capture => 1, statusvar => \$ok);
+    ok($ok, "handle certificate without CRL distribution points");
+    is(join("", @uris), "", "certificate without CRL URIs prints nothing");
+
+    ok(run(app(["openssl", "x509", "-req", "-in", $in_csr,
+                "-signkey", $in_key, "-extfile", $extfile,
+                "-extensions", "malformed_extensions",
+                "-out", $malformed_cert])),
+       "create certificate with malformed CRL distribution points");
+
+    run(app(["openssl", "x509", "-in", $malformed_cert, "-noout",
+             "-crl_uri"]), capture => 1, statusvar => \$ok);
+    ok(!$ok, "reject malformed CRL distribution points");
+};
 
 # Tests for issue #16080 (fixed in 1.1.1o)
 my $b_key = "b-key.pem";

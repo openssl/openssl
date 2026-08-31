@@ -38,6 +38,7 @@ static ASN1_INTEGER *x509_load_serial(const char *CAfile,
     const char *serialfile, int create);
 static int purpose_print(BIO *bio, X509 *cert, X509_PURPOSE *pt);
 static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names);
+static int print_crl_uris(BIO *bio, const X509 *cert);
 
 typedef enum OPTION_choice {
     OPT_COMMON,
@@ -73,6 +74,7 @@ typedef enum OPTION_choice {
     OPT_NAMEOPT,
     OPT_EMAIL,
     OPT_OCSP_URI,
+    OPT_CRL_URI,
     OPT_SERIAL,
     OPT_NEXT_SERIAL,
     OPT_MODULUS,
@@ -175,6 +177,7 @@ const OPTIONS x509_options[] = {
     { "ocspid", OPT_OCSPID, '-',
         "Print OCSP hash values for the subject name and public key" },
     { "ocsp_uri", OPT_OCSP_URI, '-', "Print OCSP Responder URL(s)" },
+    { "crl_uri", OPT_CRL_URI, '-', "Print CRL distribution point URI(s)" },
     { "purpose", OPT_PURPOSE, '-', "Print out certificate purposes" },
     { "pubkey", OPT_PUBKEY, '-', "Print the public key in PEM format" },
     { "modulus", OPT_MODULUS, '-', "Print the RSA key modulus" },
@@ -398,7 +401,8 @@ int x509_main(int argc, char **argv)
     int informat = FORMAT_UNDEF, outformat = FORMAT_PEM, keyformat = FORMAT_UNDEF;
     int next_serial = 0, subject_hash = 0, issuer_hash = 0, ocspid = 0;
     int noout = 0, CA_createserial = 0, email = 0;
-    int ocsp_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0, aliasout = 0;
+    int ocsp_uri = 0, crl_uri = 0, trustout = 0, clrtrust = 0, clrreject = 0;
+    int aliasout = 0;
     int ret = 1, i, j, k = 0, num = 0, badsig = 0, clrext = 0, nocert = 0;
     int text = 0, serial = 0, subject = 0, issuer = 0, startdate = 0, ext = 0;
     int enddate = 0;
@@ -576,6 +580,9 @@ int x509_main(int argc, char **argv)
             break;
         case OPT_OCSP_URI:
             ocsp_uri = ++num;
+            break;
+        case OPT_CRL_URI:
+            crl_uri = ++num;
             break;
         case OPT_SERIAL:
             serial = ++num;
@@ -1112,6 +1119,9 @@ cert_loop:
             for (j = 0; j < sk_OPENSSL_STRING_num(emlst); j++)
                 BIO_printf(out, "%s\n", sk_OPENSSL_STRING_value(emlst, j));
             X509_email_free(emlst);
+        } else if (i == crl_uri) {
+            if (!print_crl_uris(out, x))
+                goto err;
         } else if (i == aliasout) {
             const unsigned char *alstr = X509_alias_get0(x, NULL);
 
@@ -1403,6 +1413,51 @@ static int parse_ext_names(char *names, const char **result)
     }
 
     return cnt;
+}
+
+static int print_crl_uris(BIO *bio, const X509 *cert)
+{
+    CRL_DIST_POINTS *crldps = NULL;
+    int crit = -1, i, j, ret = 0;
+
+    crldps = X509_get_ext_d2i(cert, NID_crl_distribution_points, &crit, NULL);
+    if (crldps == NULL) {
+        if (crit == -1)
+            return 1;
+        BIO_puts(bio_err, "Unable to decode CRL distribution points\n");
+        return 0;
+    }
+
+    for (i = 0; i < sk_DIST_POINT_num(crldps); i++) {
+        DIST_POINT *dp = sk_DIST_POINT_value(crldps, i);
+        GENERAL_NAMES *names;
+
+        if (dp->distpoint == NULL || dp->distpoint->type != 0)
+            continue;
+        names = dp->distpoint->name.fullname;
+        for (j = 0; j < sk_GENERAL_NAME_num(names); j++) {
+            GENERAL_NAME *name = sk_GENERAL_NAME_value(names, j);
+            ASN1_IA5STRING *uri;
+            const unsigned char *data;
+            size_t length, written;
+
+            if (name->type != GEN_URI)
+                continue;
+            uri = name->d.uniformResourceIdentifier;
+            data = ASN1_STRING_get0_data(uri);
+            length = ASN1_STRING_get_length(uri);
+            if (data == NULL || length == 0 || memchr(data, 0, length) != NULL)
+                continue;
+            if (!BIO_write_ex(bio, data, length, &written)
+                || written != length || BIO_puts(bio, "\n") <= 0)
+                goto end;
+        }
+    }
+    ret = 1;
+
+end:
+    CRL_DIST_POINTS_free(crldps);
+    return ret;
 }
 
 static int print_x509v3_exts(BIO *bio, X509 *x, const char *ext_names)
