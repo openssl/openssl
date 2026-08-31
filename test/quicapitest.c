@@ -3280,6 +3280,95 @@ err:
 }
 
 /*
+ * A rejected ordinal-0 bidirectional stream remains in the stream map until
+ * garbage collection. It must not mask an accepted ordinal-0 unidirectional
+ * stream when a connection-level read chooses its incoming default stream.
+ * Explicit event handling prevents that read from incidentally collecting the
+ * rejected object through an implicit reactor tick.
+ */
+static int test_incoming_default_stream_candidates(void)
+{
+    static const unsigned char bidi_msg[] = "rejected";
+    static const unsigned char uni_msg[] = "accepted";
+    unsigned char buf[32];
+    SSL_CTX *cctx = NULL, *sctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL, *qlistener = NULL;
+    SSL *bidissl = NULL, *unissl = NULL;
+    QUIC_CHANNEL *ch;
+    QUIC_STREAM_MAP *qsm;
+    QUIC_STREAM *qs;
+    size_t written = 0, readbytes = 0;
+    int testresult = 0, ret, i;
+
+    if (!TEST_ptr(sctx = create_server_ctx())
+        || !TEST_ptr(cctx = create_client_ctx())
+        || !create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
+        goto err;
+
+    for (i = 0; i < 2; i++) {
+        ret = SSL_connect(clientssl);
+        if (!TEST_int_le(ret, 0)
+            || !TEST_int_eq(SSL_get_error(clientssl, ret),
+                SSL_ERROR_WANT_READ))
+            goto err;
+        SSL_handle_events(qlistener);
+    }
+
+    if (!TEST_ptr(serverssl = SSL_accept_connection(qlistener, 0))
+        || !TEST_true(create_bare_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE, 0, 0))
+        || !TEST_true(SSL_set_event_handling_mode(clientssl,
+            SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT))
+        || !TEST_ptr(ch = ossl_quic_conn_get_channel(clientssl)))
+        goto err;
+
+    qsm = ossl_quic_channel_get_qsm(ch);
+
+    if (!TEST_true(SSL_set_incoming_stream_policy(clientssl,
+            SSL_INCOMING_STREAM_POLICY_REJECT, 42))
+        || !TEST_ptr(bidissl = SSL_new_stream(serverssl, 0))
+        || !TEST_true(SSL_write_ex(bidissl, bidi_msg, sizeof(bidi_msg),
+            &written))
+        || !TEST_size_t_eq(written, sizeof(bidi_msg))
+        || !TEST_int_eq(SSL_handle_events(clientssl), 1)
+        || !TEST_ptr(qs = ossl_quic_stream_map_get_by_id(qsm,
+                         SSL_get_stream_id(bidissl)))
+        || !TEST_false(ossl_quic_stream_map_is_in_accept_queue(qs))
+        || !TEST_size_t_eq(SSL_get_accept_stream_queue_len(clientssl), 0)
+        || !TEST_true(SSL_set_incoming_stream_policy(clientssl,
+            SSL_INCOMING_STREAM_POLICY_ACCEPT, 0))
+        || !TEST_ptr(unissl = SSL_new_stream(serverssl, SSL_STREAM_FLAG_UNI))
+        || !TEST_true(SSL_write_ex(unissl, uni_msg, sizeof(uni_msg),
+            &written))
+        || !TEST_size_t_eq(written, sizeof(uni_msg))
+        || !TEST_int_eq(SSL_handle_events(clientssl), 1)
+        || !TEST_ptr(qs = ossl_quic_stream_map_get_by_id(qsm,
+                         SSL_get_stream_id(bidissl)))
+        || !TEST_false(ossl_quic_stream_map_is_in_accept_queue(qs))
+        || !TEST_ptr(qs = ossl_quic_stream_map_get_by_id(qsm,
+                         SSL_get_stream_id(unissl)))
+        || !TEST_true(ossl_quic_stream_map_is_in_accept_queue(qs))
+        || !TEST_size_t_eq(SSL_get_accept_stream_queue_len(clientssl), 1)
+        || !TEST_true(SSL_read_ex(clientssl, buf, sizeof(buf), &readbytes))
+        || !TEST_mem_eq(buf, readbytes, uni_msg, sizeof(uni_msg))
+        || !TEST_uint64_t_eq(SSL_get_stream_id(clientssl),
+            SSL_get_stream_id(unissl))
+        || !TEST_size_t_eq(SSL_get_accept_stream_queue_len(clientssl), 0))
+        goto err;
+
+    testresult = 1;
+err:
+    SSL_free(unissl);
+    SSL_free(bidissl);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_free(qlistener);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
+/*
  * When the server has a different primary group than the client, the server
  * should not fail on the client hello retry.
  */
@@ -4070,6 +4159,7 @@ int setup_tests(void)
     ADD_TEST(test_ssl_accept_connection);
     ADD_TEST(test_ssl_set_verify);
     ADD_TEST(test_accept_stream);
+    ADD_TEST(test_incoming_default_stream_candidates);
     ADD_TEST(test_client_hello_retry);
 #if OPENSSL_USE_IPV6
     ADD_TEST(test_quic_peer_addr_v6);

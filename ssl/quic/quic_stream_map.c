@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -772,6 +772,11 @@ QUIC_STREAM *ossl_quic_stream_map_find_in_accept_queue(QUIC_STREAM_MAP *qsm,
         qs = accept_next(&qsm->accept_list, qs);
     }
     return qs;
+}
+
+int ossl_quic_stream_map_is_in_accept_queue(const QUIC_STREAM *s)
+{
+    return s != NULL && s->accept_node.next != NULL;
 }
 
 void ossl_quic_stream_map_push_accept_queue(QUIC_STREAM_MAP *qsm,

@@ -93,8 +93,15 @@ L<SSL_accept_stream(3)> in order to communicate with the peer.
 A default stream will not be automatically created on a QUIC connection SSL
 object if the default stream mode is set to B<SSL_DEFAULT_STREAM_MODE_NONE>.
 
-L<SSL_set_incoming_stream_policy(3)> interacts significantly with the default
-stream functionality.
+The default stream mode affects the effective value of
+B<SSL_INCOMING_STREAM_POLICY_AUTO>. With B<SSL_DEFAULT_STREAM_MODE_NONE>, the
+effective incoming stream policy remains B<SSL_INCOMING_STREAM_POLICY_ACCEPT>.
+With either automatic default stream mode, it is initially
+B<SSL_INCOMING_STREAM_POLICY_ACCEPT> and changes to
+B<SSL_INCOMING_STREAM_POLICY_REJECT> once a default stream has been created or
+automatic default stream creation has been inhibited by a successful call to
+L<SSL_new_stream(3)> or L<SSL_accept_stream(3)>. See
+L<SSL_set_incoming_stream_policy(3)>.
 
 =head1 RETURN VALUES
 
@@ -117,7 +124,7 @@ These functions were added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2002-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy
