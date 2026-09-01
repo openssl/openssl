@@ -97,6 +97,7 @@ providers/common/include/prov/der_sm2.h
 providers/common/include/prov/der_ml_dsa.h
 providers/common/include/prov/der_hkdf.h
 providers/fips/fipsparams.inc
+ssl/t1_lib.inc
 providers/implementations/asymciphers/rsa_enc.inc
 providers/implementations/asymciphers/sm2_enc.inc
 providers/implementations/exchange/dh_exch.inc
