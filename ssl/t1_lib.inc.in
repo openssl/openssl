@@ -1,0 +1,55 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+
+sub produce_ssl_param_decoder {
+    my $decoder = produce_param_decoder(@_);
+
+    # Adapt the provider-oriented decoder errors for libssl.
+    $decoder =~ s|#include "prov/proverr.h"|#include <openssl/err.h>|;
+    $decoder =~ s/ERR_LIB_PROV/ERR_LIB_SSL/g;
+    $decoder =~ s/PROV_R_REPEATED_PARAMETER/ERR_R_PASSED_INVALID_ARGUMENT/g;
+    return $decoder;
+}
+-}
+
+#define tls_group_params_list
+{- produce_ssl_param_decoder('tls_group_params',
+                         (['OSSL_CAPABILITY_TLS_GROUP_NAME',          'name',     'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL', 'internal', 'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_ID',            'id',       'uint'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_ALG',           'alg',      'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_SECURITY_BITS', 'secbits',  'uint'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_IS_KEM',        'is_kem',   'uint'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_MIN_TLS',       'min_tls',  'int'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_MAX_TLS',       'max_tls',  'int'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_MIN_DTLS',      'min_dtls', 'int'],
+                          ['OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS',      'max_dtls', 'int'],
+                         )); -}
+
+#define tls_sigalg_params_list
+{- produce_ssl_param_decoder('tls_sigalg_params',
+                         (['OSSL_CAPABILITY_TLS_SIGALG_NAME',        'name',        'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME',   'iana_name',   'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_CODE_POINT',  'code_point',  'uint'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_SECURITY_BITS', 'secbits',   'uint'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_OID',         'oid',         'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_SIG_NAME',    'sig_name',    'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_SIG_OID',     'sig_oid',     'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_HASH_NAME',   'hash_name',   'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_HASH_OID',    'hash_oid',    'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE',     'keytype',     'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_KEYTYPE_OID', 'keytype_oid', 'utf8_string'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_MIN_DTLS',    'min_dtls',    'int'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_MAX_DTLS',    'max_dtls',    'int'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_MIN_TLS',     'min_tls',     'int'],
+                          ['OSSL_CAPABILITY_TLS_SIGALG_MAX_TLS',     'max_tls',     'int'],
+                         )); -}

@@ -79,6 +79,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/crypto/dso_conf.h \
          include/crypto/ec_params.h \
          include/crypto/rsa_params.h \
+         ssl/t1_lib.inc \
          providers/implementations/asymciphers/rsa_enc.inc \
          providers/implementations/asymciphers/sm2_enc.inc \
          providers/implementations/exchange/dh_exch.inc \
@@ -210,7 +211,8 @@ GENERATE[include/openssl/x509_acert.h]=include/openssl/x509_acert.h.in
 GENERATE[include/openssl/x509_vfy.h]=include/openssl/x509_vfy.h.in
 GENERATE[include/crypto/dso_conf.h]=include/crypto/dso_conf.h.in
 
-DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
+DEPEND[ssl/t1_lib.inc \
+       providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/asymciphers/sm2_enc.inc \
        providers/implementations/exchange/dh_exch.inc \
        providers/implementations/exchange/ecdh_exch.inc \
@@ -310,6 +312,7 @@ GENERATE[include/crypto/ec_params.h]=\
     include/crypto/ec_params.h.in
 GENERATE[include/crypto/rsa_params.h]=\
     include/crypto/rsa_params.h.in
+GENERATE[ssl/t1_lib.inc]=ssl/t1_lib.inc.in
 GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
     providers/implementations/asymciphers/rsa_enc.inc.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\
