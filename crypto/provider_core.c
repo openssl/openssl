@@ -1305,6 +1305,10 @@ static int provider_activate(OSSL_PROVIDER *prov, int lock, int upcalls)
 
         if (count == 1 && store != NULL) {
             ret = create_provider_children(prov);
+            if (!ret
+                && CRYPTO_atomic_add(&prov->activatecnt, -1, &count,
+                    prov->activatecnt_lock))
+                prov->flag_activated = 0;
         }
     }
     if (lock) {
