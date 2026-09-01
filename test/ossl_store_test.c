@@ -11,7 +11,14 @@
 #include <limits.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
+#include <openssl/provider.h>
+#include <openssl/params.h>
+#include <openssl/core_names.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
+#include <openssl/bio.h>
 #include "testutil.h"
+#include "fake_storeprov.h"
 
 #ifndef PATH_MAX
 #if defined(_WIN32) && defined(_MAX_PATH)
@@ -36,10 +43,13 @@ static const char *infile = NULL;
 static const char *sm2file = NULL;
 static const char *datadir = NULL;
 
+static OSSL_LIB_CTX *fake_libctx = NULL;
+static OSSL_PROVIDER *fake_prov = NULL;
+
 static int test_store_open(void)
 {
     int ret = 0;
-    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_CTX *sctx = NULL, *sctx2 = NULL;
     OSSL_STORE_SEARCH *search = NULL;
     UI_METHOD *ui_method = NULL;
     char *input = test_mk_file_path(inputdir, infile);
@@ -49,11 +59,17 @@ static int test_store_open(void)
         && TEST_ptr(ui_method = UI_create_method("DummyUI"))
         && TEST_ptr(sctx = OSSL_STORE_open_ex(input, NULL, NULL, ui_method,
                         NULL, NULL, NULL, NULL))
+        && TEST_true(OSSL_STORE_supports_search(sctx, OSSL_STORE_SEARCH_BY_NAME))
+        && TEST_false(OSSL_STORE_supports_search(sctx,
+            OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT))
         && TEST_false(OSSL_STORE_find(sctx, NULL))
-        && TEST_true(OSSL_STORE_find(sctx, search));
+        && TEST_true(OSSL_STORE_find(sctx, search))
+        && TEST_ptr(sctx2 = OSSL_STORE_open(input, ui_method, NULL,
+                        NULL, NULL));
     UI_destroy_method(ui_method);
     OSSL_STORE_SEARCH_free(search);
     OSSL_STORE_close(sctx);
+    OSSL_STORE_close(sctx2);
     OPENSSL_free(input);
     return ret;
 }
@@ -259,6 +275,346 @@ static int test_store_delete_null_uri(void)
     return TEST_int_eq(OSSL_STORE_delete(NULL, NULL, NULL, NULL, NULL, NULL), 0);
 }
 
+static int test_fake_store_names(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    char *name = NULL, *desc = NULL;
+    int ret = 0;
+
+    /* The authority prefix (//) invalidates the implicit 'file' scheme */
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex("fake://" FAKE_STORE_CMD_ONE_NAME,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS,
+                      NULL, NULL, NULL, NULL, NULL))
+        || !TEST_true(OSSL_STORE_expect(sctx, OSSL_STORE_INFO_NAME))
+        || !TEST_ptr(info = OSSL_STORE_load(sctx)))
+        goto err;
+
+    if (!TEST_int_eq(OSSL_STORE_INFO_get_type(info), OSSL_STORE_INFO_NAME)
+        || !TEST_str_eq(OSSL_STORE_INFO_get0_NAME(info), "name1")
+        || !TEST_str_eq(OSSL_STORE_INFO_get0_NAME_description(info), "desc1")
+        || !TEST_ptr(name = OSSL_STORE_INFO_get1_NAME(info))
+        || !TEST_str_eq(name, "name1")
+        || !TEST_ptr(desc = OSSL_STORE_INFO_get1_NAME_description(info))
+        || !TEST_str_eq(desc, "desc1")
+        || !TEST_ptr(OSSL_STORE_INFO_get0_data(OSSL_STORE_INFO_NAME, info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_data(OSSL_STORE_INFO_CERT,
+            info)))
+        goto err;
+
+    /* Wrong-type accessors must fail cleanly */
+    if (!TEST_ptr_null(OSSL_STORE_INFO_get0_PARAMS(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_PARAMS(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_PUBKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_PUBKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_PKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_PKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_CERT(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_CERT(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_CRL(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_CRL(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get0_SKEY(info))
+        || !TEST_ptr_null(OSSL_STORE_INFO_get1_SKEY(info)))
+        goto err;
+
+    if (!TEST_true(OSSL_STORE_eof(sctx))
+        || !TEST_ptr_null(OSSL_STORE_load(sctx))
+        || !TEST_false(OSSL_STORE_error(sctx)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(name);
+    OPENSSL_free(desc);
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
+static int test_fake_store_open_ex(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    OSSL_PARAM params[2];
+    int expect = OSSL_STORE_INFO_NAME;
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_STORE_PARAM_EXPECT, &expect);
+    params[1] = OSSL_PARAM_construct_end();
+
+    fake_store_clear_state();
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex(
+                      FAKE_STORE_SCHEME_OPEN_EX ":" FAKE_STORE_CMD_ONE_NAME,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS, NULL, NULL,
+                      params, NULL, NULL))
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_EXPECT)
+        || !TEST_ptr(info = OSSL_STORE_load(sctx))
+        || !TEST_str_eq(OSSL_STORE_INFO_get0_NAME(info), "name1"))
+        goto err;
+
+    /* Both open_ex() failure modes must result in a failed open */
+    if (!TEST_ptr_null(OSSL_STORE_open_ex(
+            FAKE_STORE_SCHEME_OPEN_EX ":" FAKE_STORE_CMD_OPEN_FAIL,
+            fake_libctx, FAKE_STORE_FETCH_PROPS, NULL, NULL,
+            params, NULL, NULL))
+        || !TEST_ptr_null(OSSL_STORE_open_ex(
+            FAKE_STORE_SCHEME_OPEN_EX ":" FAKE_STORE_CMD_PARAMS_FAIL,
+            fake_libctx, FAKE_STORE_FETCH_PROPS, NULL, NULL,
+            params, NULL, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
+static int test_fake_store_params(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_PARAM params[2];
+    char propq[] = FAKE_STORE_FETCH_PROPS;
+    int expect = OSSL_STORE_INFO_NAME;
+    int ret = 0;
+
+    /* Properties in params take precedence over the propq argument */
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_PROPERTIES,
+        propq, 0);
+    params[1] = OSSL_PARAM_construct_end();
+    fake_store_clear_state();
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex(
+                      FAKE_STORE_SCHEME ":" FAKE_STORE_CMD_ONE_NAME,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS, NULL, NULL,
+                      params, NULL, NULL))
+        || !TEST_true(fake_store_get_seen_params()
+            & FAKE_STORE_SEEN_PROPERTIES))
+        goto err;
+    OSSL_STORE_close(sctx);
+    sctx = NULL;
+
+    /* A set_ctx_params failure at open time must make the open fail */
+    params[0] = OSSL_PARAM_construct_int(OSSL_STORE_PARAM_EXPECT, &expect);
+    if (!TEST_ptr_null(OSSL_STORE_open_ex(
+            FAKE_STORE_SCHEME ":" FAKE_STORE_CMD_PARAMS_FAIL,
+            fake_libctx, FAKE_STORE_FETCH_PROPS, NULL, NULL,
+            params, NULL, NULL)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
+static int test_fake_store_find(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_SEARCH *search = NULL;
+    X509_NAME *nm = NULL;
+    ASN1_INTEGER *serial = NULL;
+    unsigned char fingerprint[32] = { 0 };
+    const unsigned char *bytes = NULL;
+    size_t len = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex(
+                      FAKE_STORE_SCHEME ":" FAKE_STORE_CMD_ONE_NAME,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS,
+                      NULL, NULL, NULL, NULL, NULL)))
+        goto err;
+
+    if (!TEST_true(OSSL_STORE_supports_search(sctx, OSSL_STORE_SEARCH_BY_NAME))
+        || !TEST_true(OSSL_STORE_supports_search(sctx,
+            OSSL_STORE_SEARCH_BY_ISSUER_SERIAL))
+        || !TEST_true(OSSL_STORE_supports_search(sctx,
+            OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT))
+        || !TEST_true(OSSL_STORE_supports_search(sctx,
+            OSSL_STORE_SEARCH_BY_ALIAS)))
+        goto err;
+
+    if (!TEST_ptr(nm = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
+            (const unsigned char *)"fake", -1, -1, 0))
+        || !TEST_ptr(serial = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(serial, 42)))
+        goto err;
+
+    fake_store_clear_state();
+    if (!TEST_ptr(search = OSSL_STORE_SEARCH_by_name(nm))
+        || !TEST_int_eq(OSSL_STORE_SEARCH_get_type(search),
+            OSSL_STORE_SEARCH_BY_NAME)
+        || !TEST_ptr_eq(OSSL_STORE_SEARCH_get0_name(search), nm)
+        || !TEST_true(OSSL_STORE_find(sctx, search))
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_SUBJECT))
+        goto err;
+    OSSL_STORE_SEARCH_free(search);
+    search = NULL;
+
+    fake_store_clear_state();
+    if (!TEST_ptr(search = OSSL_STORE_SEARCH_by_issuer_serial(nm, serial))
+        || !TEST_int_eq(OSSL_STORE_SEARCH_get_type(search),
+            OSSL_STORE_SEARCH_BY_ISSUER_SERIAL)
+        || !TEST_ptr_eq(OSSL_STORE_SEARCH_get0_serial(search), serial)
+        || !TEST_true(OSSL_STORE_find(sctx, search))
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_ISSUER)
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_SERIAL))
+        goto err;
+    OSSL_STORE_SEARCH_free(search);
+    search = NULL;
+
+    fake_store_clear_state();
+    if (!TEST_ptr(search = OSSL_STORE_SEARCH_by_key_fingerprint(EVP_sha256(),
+                      fingerprint, sizeof(fingerprint)))
+        || !TEST_int_eq(OSSL_STORE_SEARCH_get_type(search),
+            OSSL_STORE_SEARCH_BY_KEY_FINGERPRINT)
+        || !TEST_ptr_eq(OSSL_STORE_SEARCH_get0_digest(search), EVP_sha256())
+        || !TEST_ptr(bytes = OSSL_STORE_SEARCH_get0_bytes(search, &len))
+        || !TEST_ptr_eq(bytes, fingerprint)
+        || !TEST_size_t_eq(len, sizeof(fingerprint))
+        || !TEST_true(OSSL_STORE_find(sctx, search))
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_DIGEST)
+        || !TEST_true(fake_store_get_seen_params()
+            & FAKE_STORE_SEEN_FINGERPRINT))
+        goto err;
+    OSSL_STORE_SEARCH_free(search);
+    search = NULL;
+
+    fake_store_clear_state();
+    if (!TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("myalias"))
+        || !TEST_int_eq(OSSL_STORE_SEARCH_get_type(search),
+            OSSL_STORE_SEARCH_BY_ALIAS)
+        || !TEST_str_eq(OSSL_STORE_SEARCH_get0_string(search), "myalias")
+        || !TEST_true(OSSL_STORE_find(sctx, search))
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_ALIAS))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_STORE_SEARCH_free(search);
+    X509_NAME_free(nm);
+    ASN1_INTEGER_free(serial);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
+static int test_fake_store_loading_started(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    OSSL_STORE_SEARCH *search = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex(
+                      FAKE_STORE_SCHEME ":" FAKE_STORE_CMD_TWO_NAMES,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS,
+                      NULL, NULL, NULL, NULL, NULL))
+        || !TEST_false(OSSL_STORE_expect(NULL, OSSL_STORE_INFO_CERT))
+        || !TEST_false(OSSL_STORE_expect(sctx, -1))
+        || !TEST_false(OSSL_STORE_expect(sctx, OSSL_STORE_INFO_SKEY + 1))
+        || !TEST_ptr(search = OSSL_STORE_SEARCH_by_alias("myalias")))
+        goto err;
+
+    /* Once loading has started, expect() and find() must fail */
+    if (!TEST_ptr(info = OSSL_STORE_load(sctx))
+        || !TEST_false(OSSL_STORE_expect(sctx, OSSL_STORE_INFO_NAME))
+        || !TEST_false(OSSL_STORE_find(sctx, search)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_STORE_SEARCH_free(search);
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
+static OSSL_STORE_INFO *filter_name2(OSSL_STORE_INFO *info, void *arg)
+{
+    int *calls = arg;
+
+    (*calls)++;
+    if (strcmp(OSSL_STORE_INFO_get0_NAME(info), "name2") == 0) {
+        OSSL_STORE_INFO_free(info);
+        return NULL;
+    }
+    return info;
+}
+
+static int test_fake_store_post_process(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    int calls = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(sctx = OSSL_STORE_open_ex(
+                      FAKE_STORE_SCHEME ":" FAKE_STORE_CMD_TWO_NAMES,
+                      fake_libctx, FAKE_STORE_FETCH_PROPS, NULL, NULL, NULL,
+                      filter_name2, &calls))
+        || !TEST_ptr(info = OSSL_STORE_load(sctx))
+        || !TEST_str_eq(OSSL_STORE_INFO_get0_NAME(info), "name1")
+        || !TEST_int_eq(calls, 2)
+        || !TEST_true(OSSL_STORE_eof(sctx)))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(sctx);
+    return ret;
+}
+
+static int test_fake_store_attach(void)
+{
+    OSSL_STORE_CTX *sctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    BIO *bio = NULL;
+    OSSL_PARAM params[2];
+    int expect = OSSL_STORE_INFO_NAME;
+    int ret = 0;
+
+    params[0] = OSSL_PARAM_construct_int(OSSL_STORE_PARAM_EXPECT, &expect);
+    params[1] = OSSL_PARAM_construct_end();
+
+    fake_store_clear_state();
+    if (!TEST_ptr(bio = BIO_new(BIO_s_mem()))
+        || !TEST_ptr(sctx = OSSL_STORE_attach(bio, FAKE_STORE_SCHEME,
+                         fake_libctx, FAKE_STORE_FETCH_PROPS,
+                         NULL, NULL, params, NULL, NULL))
+        || !TEST_true(fake_store_get_seen_params() & FAKE_STORE_SEEN_EXPECT)
+        || !TEST_true(fake_store_get_seen_params()
+            & FAKE_STORE_SEEN_PROPERTIES)
+        || !TEST_ptr(info = OSSL_STORE_load(sctx))
+        || !TEST_str_eq(OSSL_STORE_INFO_get0_NAME(info), "name1"))
+        goto err;
+
+    ret = 1;
+err:
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(sctx);
+    BIO_free(bio);
+    return ret;
+}
+
+static int test_fake_store_delete(void)
+{
+    fake_store_clear_state();
+    if (!TEST_int_eq(OSSL_STORE_delete(FAKE_STORE_SCHEME ":object",
+                         fake_libctx, FAKE_STORE_FETCH_PROPS,
+                         NULL, NULL, NULL),
+            1)
+        || !TEST_str_eq(fake_store_get0_last_deleted(),
+            FAKE_STORE_SCHEME ":object"))
+        return 0;
+
+    /* The fake-ex loader has no delete support */
+    return TEST_int_eq(OSSL_STORE_delete(FAKE_STORE_SCHEME_OPEN_EX ":object",
+                           fake_libctx, FAKE_STORE_FETCH_PROPS,
+                           NULL, NULL, NULL),
+        0);
+}
+
 const OPTIONS *test_get_options(void)
 {
     static const OPTIONS test_options[] = {
@@ -307,6 +663,10 @@ int setup_tests(void)
         return 0;
     }
 
+    if (!TEST_ptr(fake_libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(fake_prov = fake_store_start(fake_libctx)))
+        return 0;
+
     if (infile != NULL)
         ADD_TEST(test_store_open);
 #ifndef OPENSSL_NO_WINSTORE
@@ -317,5 +677,20 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_store_get_params, 3);
     if (sm2file != NULL)
         ADD_TEST(test_store_attach_unregistered_scheme);
+    ADD_TEST(test_fake_store_names);
+    ADD_TEST(test_fake_store_open_ex);
+    ADD_TEST(test_fake_store_params);
+    ADD_TEST(test_fake_store_find);
+    ADD_TEST(test_fake_store_loading_started);
+    ADD_TEST(test_fake_store_post_process);
+    ADD_TEST(test_fake_store_attach);
+    ADD_TEST(test_fake_store_delete);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    if (fake_prov != NULL)
+        fake_store_finish(fake_prov);
+    OSSL_LIB_CTX_free(fake_libctx);
 }
