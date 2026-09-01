@@ -406,23 +406,17 @@ int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t s
  * one, ignore candidates outside the uint64_t range, and break ties forward.
  * An empty replay window is represented by max_seq_num == 0.
  */
-int dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
-    size_t seqlen, uint64_t *seqnum)
+uint64_t dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
+    size_t seqlen)
 {
     uint64_t mask, period, expected, candidate, alt, best, best_dist, dist;
-
-    if (!ossl_assert(seqlen == 1 || seqlen == 2)
-        || !ossl_assert(truncated <= DTLS13_UNI_HDR_SEQ_MASK(seqlen)))
-        return 0;
 
     mask = DTLS13_UNI_HDR_SEQ_MASK(seqlen);
     period = mask + 1;
 
     /* At the end of the range only candidates in the last block can be valid. */
-    if (max_seq_num == UINT64_MAX) {
-        *seqnum = (UINT64_MAX & ~mask) | truncated;
-        return 1;
-    }
+    if (max_seq_num == UINT64_MAX)
+        return (UINT64_MAX & ~mask) | truncated;
 
     expected = max_seq_num + 1;
 
@@ -454,8 +448,7 @@ int dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
         }
     }
 
-    *seqnum = best;
-    return 1;
+    return best;
 }
 
 /*-
@@ -746,13 +739,8 @@ again:
         for (i = 0; i < recseqnumlen; i++)
             truncated = (truncated << 8) | recseqnum[recseqnumoffs + i];
 
-        if (!dtls13_reconstruct_seq_num(rl->bitmap.max_seq_num, truncated,
-                recseqnumlen, &rl->sequence)) {
-            /* Cannot happen */
-            rr->length = 0;
-            rl->packet_length = 0;
-            goto again;
-        }
+        rl->sequence = dtls13_reconstruct_seq_num(rl->bitmap.max_seq_num,
+            truncated, recseqnumlen);
     } else {
         /*
          * DTLSPlaintext carries 48 bits. A buffered next-epoch unified record

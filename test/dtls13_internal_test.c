@@ -147,9 +147,8 @@ static int test_seq_num_reconstruction(int idx)
     const SEQ_NUM_TEST *t = &seq_num_tests[idx];
     uint64_t seq_num = 0;
 
-    if (!TEST_true(dtls13_reconstruct_seq_num(t->max_seq_num, t->truncated,
-            t->seqlen, &seq_num)))
-        return 0;
+    seq_num = dtls13_reconstruct_seq_num(t->max_seq_num, t->truncated,
+        t->seqlen);
 
     if (!TEST_uint64_t_eq(seq_num, t->seq_num))
         return 0;
