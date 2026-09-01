@@ -51,6 +51,13 @@ my @cmake_configure =
      # The dummy programs are run through the same wrapper that the rest
      # of the test suite uses, so the loader path is set up for them
      "-DOPENSSL_WRAP_PL=" . abs_path(bldtop_file("util", "wrap.pl")));
+# With Visual Studio generators, cmake defaults to the x64 platform.
+# The dummy programs must match the architecture of the OpenSSL build,
+# so say it explicitly when it deviates from that default.
+push @cmake_configure, "-A", "Win32"
+    if config('target') =~ /^VC-WIN32/;
+push @cmake_configure, "-A", "ARM64"
+    if config('target') =~ /^VC-WIN64-ARM/;
 push @cmake_configure, "-DTEST_LEGACY_PROVIDER=OFF"
     if disabled("legacy") || disabled("module");
 
