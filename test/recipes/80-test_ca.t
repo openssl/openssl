@@ -29,7 +29,7 @@ sub src_file {
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 20;
+plan tests => 28;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -87,6 +87,12 @@ has_version($v3_cert, 3);
 has_SKID($v3_cert, 1);
 has_AKID($v3_cert, 1);
 
+# Sign with X509v3 extensions from a separate -extfile, once using its
+# default section and once with a section selected via -extensions.
+test_extfile('extfile_default', [], qr/Digital Signature/);
+test_extfile('extfile_section', ['-extensions', 'alt_ext'],
+             qr/Key Encipherment/);
+
 test_revoke('notimes', {
     should_succeed => 1,
 });
@@ -124,6 +130,45 @@ test_revoke('both_generalizedtime', {
     nextupdate     => '20990908123456Z',
     should_succeed => 1,
 });
+
+sub test_extfile {
+    my ($filename, $ca_opts, $keyusage_re) = @_;
+
+    $ENV{CN2} = $filename;
+    ok(
+        run(app(['openssl',
+                 'req',
+                 '-config',  $cnf,
+                 '-new',
+                 '-key',     data_file('revoked.key'),
+                 '-out',     "$filename-req.pem",
+                 '-section', 'userreq',
+        ])),
+        "Generate CSR: $filename"
+    );
+    delete $ENV{CN2};
+
+    ok(
+        run(app(['openssl',
+                 'ca',
+                 '-batch',
+                 '-config',  $cnf,
+                 '-extfile', data_file('extensions.cnf'),
+                 @$ca_opts,
+                 '-in',      "$filename-req.pem",
+                 '-out',     "$filename-cert.pem",
+        ])),
+        "Sign CSR with -extfile: $filename"
+    );
+
+    has_version("$filename-cert.pem", 3);
+
+    my $keyusage = join('',
+        run(app(['openssl', 'x509', '-in', "$filename-cert.pem",
+                 '-noout', '-ext', 'keyUsage']), capture => 1));
+    ok($keyusage =~ $keyusage_re,
+       "keyUsage taken from the extfile: $filename");
+}
 
 sub test_revoke {
     my ($filename, $opts) = @_;
