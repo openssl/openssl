@@ -204,7 +204,21 @@ sub get_messages
     @message_frag_lens = ();
 
     if ($serverin != $server && length($payload) != 0) {
-        die "Changed peer, but we still have fragment data\n";
+        if ($isdtls) {
+            # A DTLS peer can abort mid-flight, e.g. with an alert rejecting
+            # the ServerHello, while a message fragment from the interrupted
+            # flight is still incomplete.  Discard the stale fragment data.
+            print "Changed peer with incomplete fragment data, discarding\n";
+            $payload = "";
+            $messlen = -1;
+            $messseq = -1;
+            $messfraglen = -1;
+            $messfragoffs = -1;
+            $startoffset = -1;
+            @message_rec_list = ();
+        } else {
+            die "Changed peer, but we still have fragment data\n";
+        }
     }
     $server = $serverin;
 
