@@ -183,8 +183,8 @@ void ossl_rcu_lock_free(CRYPTO_RCU_LOCK *lock)
 /* Read side acquisition of the current qp */
 static ossl_inline struct rcu_qp *get_hold_current_qp(CRYPTO_RCU_LOCK *lock)
 {
-    uint32_t qp_idx;
-    uint32_t tmp;
+    uint32_t qp_idx = 0;
+    uint32_t tmp = 0;
     uint64_t tmp64;
 
     /* get the current qp index */
@@ -273,7 +273,7 @@ void ossl_rcu_read_unlock(CRYPTO_RCU_LOCK *lock)
 {
     struct rcu_thr_data *data = CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RCU_KEY, lock->ctx);
     int i;
-    LONG64 ret;
+    LONG64 ret = 0;
 
     assert(data != NULL);
 
