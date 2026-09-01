@@ -344,3 +344,38 @@ OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b)
 
     return a;
 }
+
+/*-
+ * Serialise |a| as |len| big-endian bytes into |out|, in constant time.
+ *
+ * The low |len| bytes of |a| are written most-significant first; |a|'s value
+ * must fit in |len| bytes.  Returns 1 on success, 0 if |a| has a byte set
+ * beyond |len| (i.e. does not fit) or on a NULL argument.
+ *
+ * Constant-time profile: the byte layout depends only on |len| and |a|'s
+ * public width, never on its value.
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len)
+{
+    size_t dsize, nbytes, i;
+    unsigned char over = 0;
+
+    if (ossl_unlikely(a == NULL || out == NULL))
+        return 0;
+
+    dsize = ossl_fn_get_dsize(a);
+    nbytes = dsize * OSSL_FN_BYTES;
+
+    for (i = 0; i < len; i++) {
+        size_t limb = i / OSSL_FN_BYTES;
+
+        out[len - 1 - i] = limb < dsize
+            ? (unsigned char)(a->d[limb] >> (8 * (i % OSSL_FN_BYTES)))
+            : 0;
+    }
+    /* Every byte of |a| beyond |len| must be zero for the value to fit. */
+    for (; i < nbytes; i++)
+        over |= (unsigned char)(a->d[i / OSSL_FN_BYTES] >> (8 * (i % OSSL_FN_BYTES)));
+
+    return over == 0;
+}
