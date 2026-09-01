@@ -523,6 +523,7 @@ my @disablables_features = (
     "winstore",
     "crypto-mdebug",
     "allocfail-tests",
+    "cet",
     "ct",
     "ct-validation",
     "default-thread-pool",
@@ -628,6 +629,7 @@ our %disabled = ( # "what"         => "comment"
                   "brotli"              => "default",
                   "brotli-dynamic"      => "default",
                   "buildtest-c++"       => "default",
+                  "cet"                 => "default",
                   "crypto-mdebug"       => "default",
                   "allocfail-tests"     => "default",
                   "ct-validation"       => "default",
@@ -994,6 +996,10 @@ while (@argvcopy)
                 elsif ($1 eq "pie")
                         {
                         delete $disabled{"pie"};
+                        }
+                elsif ($1 eq "cet")
+                        {
+                        delete $disabled{"cet"};
                         }
                 elsif ($1 eq "zstd-dynamic")
                         {
