@@ -315,7 +315,7 @@ static int x509_name_ex_print(BIO *out, const ASN1_VALUE **pval,
 
 static int x509_name_canon(X509_NAME *a)
 {
-    unsigned char *buf = NULL, *p, *start;
+    unsigned char *buf = NULL, *p;
     STACK_OF(STACK_OF_X509_NAME_ENTRY) *intname;
     STACK_OF(X509_NAME_ENTRY) *entries = NULL;
     X509_NAME_ENTRY *entry, *tmpentry = NULL;
@@ -375,10 +375,9 @@ static int x509_name_canon(X509_NAME *a)
     if (buf == NULL)
         goto err;
     p = buf;
-    start = p;
 
     outlen = i2d_name_canon(intname, &p);
-    if (outlen != len || p != start + len)
+    if (outlen != len || p != buf + len)
         goto err;
 
     a->canon_enc = buf;

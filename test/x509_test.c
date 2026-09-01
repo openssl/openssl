@@ -790,12 +790,10 @@ end:
     return ret;
 }
 
-static int test_pkcs7_digest_set_i2d_mfail(void)
+static PKCS7 *make_two_digest_pkcs7(void)
 {
     PKCS7 *p7 = NULL;
     X509_ALGOR *alg = NULL;
-    unsigned char *der = NULL, *p;
-    int len, outlen, ret = -1;
 
     if (!TEST_ptr(p7 = PKCS7_new())
         || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
@@ -812,6 +810,23 @@ static int test_pkcs7_digest_set_i2d_mfail(void)
         goto end;
     alg = NULL;
 
+    return p7;
+
+end:
+    X509_ALGOR_free(alg);
+    PKCS7_free(p7);
+    return NULL;
+}
+
+static int test_pkcs7_digest_set_i2d_mfail(void)
+{
+    PKCS7 *p7 = NULL;
+    unsigned char *der = NULL, *p;
+    int len, outlen, ret = -1;
+
+    if (!TEST_ptr(p7 = make_two_digest_pkcs7()))
+        goto end;
+
     len = i2d_PKCS7(p7, NULL);
     if (!TEST_int_gt(len, 0) || !TEST_ptr(der = OPENSSL_malloc(len)))
         goto end;
@@ -827,9 +842,59 @@ static int test_pkcs7_digest_set_i2d_mfail(void)
         ret = outlen == len && p == der + len ? 1 : -1;
 
 end:
-    X509_ALGOR_free(alg);
     OPENSSL_free(der);
     PKCS7_free(p7);
+    return ret;
+}
+
+static int test_pkcs7_digest_set_stream_mfail(void)
+{
+    static const unsigned char content[] = "stream content";
+    PKCS7 *p7 = NULL, *expected_p7 = NULL;
+    BIO *in = NULL, *out = NULL;
+    BIO *expected_in = NULL, *expected_out = NULL;
+    char *data = NULL, *expected_data = NULL;
+    long len, expected_len;
+    int outlen, ret = -1;
+
+    if (!TEST_ptr(expected_p7 = make_two_digest_pkcs7())
+        || !TEST_ptr(expected_in = BIO_new_mem_buf(content,
+                         sizeof(content) - 1))
+        || !TEST_ptr(expected_out = BIO_new(BIO_s_mem()))
+        || !TEST_true(i2d_PKCS7_bio_stream(expected_out, expected_p7,
+            expected_in,
+            SMIME_STREAM | PKCS7_BINARY))
+        || !TEST_long_gt(expected_len = BIO_get_mem_data(expected_out,
+                             &expected_data),
+            0)
+        || !TEST_ptr(p7 = make_two_digest_pkcs7())
+        || !TEST_ptr(in = BIO_new_mem_buf(content, sizeof(content) - 1))
+        || !TEST_ptr(out = BIO_new(BIO_s_mem())))
+        goto end;
+
+    MFAIL_start();
+    outlen = i2d_PKCS7_bio_stream(out, p7, in,
+        SMIME_STREAM | PKCS7_BINARY);
+    MFAIL_end();
+
+    if (outlen <= 0) {
+        ret = 0;
+    } else {
+        len = BIO_get_mem_data(out, &data);
+        if (!TEST_long_eq(len, expected_len)
+            || !TEST_mem_eq(data, len, expected_data, expected_len))
+            ret = -1;
+        else
+            ret = 1;
+    }
+
+end:
+    BIO_free(out);
+    BIO_free(in);
+    PKCS7_free(p7);
+    BIO_free(expected_out);
+    BIO_free(expected_in);
+    PKCS7_free(expected_p7);
     return ret;
 }
 
@@ -882,6 +947,7 @@ int setup_tests(void)
     ADD_MFAIL_TEST(test_x509_name_multivalued_rdn_mfail);
     ADD_MFAIL_TEST(test_x509_attribute_i2d_mfail);
     ADD_MFAIL_TEST(test_pkcs7_digest_set_i2d_mfail);
+    ADD_MFAIL_NO_CHECK_TEST(test_pkcs7_digest_set_stream_mfail);
     return 1;
 }
 

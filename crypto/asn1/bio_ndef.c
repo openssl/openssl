@@ -130,7 +130,7 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
-    int derlen;
+    int derlen, outlen;
 
     if (parg == NULL)
         return 0;
@@ -145,7 +145,9 @@ static int ndef_prefix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     ndef_aux->derbuf = p;
     *pbuf = p;
-    ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
+    outlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
+    if (outlen != derlen || p != *pbuf + derlen)
+        return 0;
 
     if (*ndef_aux->boundary == NULL)
         return 0;
@@ -191,7 +193,7 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 {
     NDEF_SUPPORT *ndef_aux;
     unsigned char *p;
-    int derlen;
+    int derlen, outlen;
     const ASN1_AUX *aux;
     ASN1_STREAM_ARG sarg;
 
@@ -219,7 +221,9 @@ static int ndef_suffix(BIO *b, unsigned char **pbuf, int *plen, void *parg)
 
     ndef_aux->derbuf = p;
     *pbuf = p;
-    derlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
+    outlen = ASN1_item_ndef_i2d(ndef_aux->val, &p, ndef_aux->it);
+    if (outlen != derlen || p != *pbuf + derlen)
+        return 0;
 
     if (*ndef_aux->boundary == NULL)
         return 0;
