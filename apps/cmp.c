@@ -1281,7 +1281,7 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
         CMP_err("Server credentials (-srv_secret or -srv_cert) must be given if -use_mock_srv or -port is used");
         goto err;
     } else {
-        CMP_warn("server will not be able to handle PBM-protected requests since -srv_secret is not given");
+        CMP_warn("server will not be able to handle MAC-protected requests since -srv_secret is not given");
     }
 
     if (opt_srv_secret == NULL

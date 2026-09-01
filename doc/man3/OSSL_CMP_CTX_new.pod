@@ -570,7 +570,7 @@ while for signature-based protection it is just taken as the ultimate fallback v
 According to RFC 9810 section 5.1.1, if no value for the sender field in CMP message
 headers can be determined then the sender field will contain the NULL-DN.
 This can only happen if there is no CMP signer certificate, no certificate to be
-updated, no PKCS#10 CSR is available from which the subject name could be taken
+updated, no PKCS#10 CSR is available from which the subject name could be taken,
 no subject DN is set via OSSL_CMP_CTX_set1_subjectName(),
 and no reference value is set via OSSL_CMP_CTX_set1_referenceValue().
 
