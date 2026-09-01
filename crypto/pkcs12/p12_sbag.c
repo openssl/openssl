@@ -174,6 +174,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
             skey_type = OSSL_SKEY_TYPE_AES;
             break;
         case NID_aes_128_cbc:
+        case NID_aes_128_ccm:
         case NID_aes_128_ecb:
         case NID_aes_128_gcm:
             if (raw_key_len != 16)
@@ -181,6 +182,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
             skey_type = OSSL_SKEY_TYPE_AES;
             break;
         case NID_aes_192_cbc:
+        case NID_aes_192_ccm:
         case NID_aes_192_ecb:
         case NID_aes_192_gcm:
             if (raw_key_len != 24)
@@ -188,6 +190,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
             skey_type = OSSL_SKEY_TYPE_AES;
             break;
         case NID_aes_256_cbc:
+        case NID_aes_256_ccm:
         case NID_aes_256_ecb:
         case NID_aes_256_gcm:
             if (raw_key_len != 32)
