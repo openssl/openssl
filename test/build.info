@@ -293,7 +293,7 @@ IF[{- !$disabled{tests} -}]
     DEPEND[acvp_test]=../libcrypto libtestutil.a
   ENDIF
 
-  SOURCE[ossl_store_test]=ossl_store_test.c
+  SOURCE[ossl_store_test]=ossl_store_test.c fake_storeprov.c
   INCLUDE[ossl_store_test]=../include ../apps/include
   DEPEND[ossl_store_test]=../libcrypto libtestutil.a
 
