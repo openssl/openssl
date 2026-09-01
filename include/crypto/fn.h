@@ -194,6 +194,24 @@ OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b);
 OSSL_FN *OSSL_FN_copy_truncate(OSSL_FN *a, const OSSL_FN *b);
 
 /**
+ * Serialise @p a as @p len big-endian bytes into @p out, in constant time.
+ *
+ * The output width @p len is chosen by the caller (e.g. a field-element or
+ * scalar byte length); the low @p len bytes of @p a are written most-
+ * significant first.
+ *
+ * @param[in]   a       The number to serialise
+ * @param[out]  out     Buffer of at least @p len bytes
+ * @param[in]   len     Number of bytes to write
+ * @returns     1 on success, 0 if @p a does not fit in @p len bytes or on a
+ *              NULL argument
+ *
+ * @note Constant-time: the byte layout depends only on @p len and @p a's
+ *       public width, not on its value.  The counterpart of BN_bn2binpad().
+ */
+int OSSL_FN_to_bytes_be(const OSSL_FN *a, unsigned char *out, size_t len);
+
+/**
  * Conditionally swap two OSSL_FN numbers of equal width.
  *
  * @param[in]           condition       Swap if non-zero, leave alone if zero
