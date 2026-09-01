@@ -5324,6 +5324,75 @@ err:
     return ret;
 }
 
+static int test_to_bytes_be(void)
+{
+    const size_t w = OSSL_FN_BYTES;
+    static const OSSL_FN_ULONG low_word[] = { 0x12 }; /* value 0x12 */
+    static const OSSL_FN_ULONG high_word[] = { 0, 0x12 }; /* 0x12 << OSSL_FN_BITS */
+    int ret = 0;
+    OSSL_FN *a = NULL, *zero = NULL;
+    unsigned char *out = NULL, *zeros = NULL;
+
+    /* Values are set through their limbs, so this exercises to_bytes_be alone. */
+    if (!TEST_ptr(a = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(zero = OSSL_FN_new_limbs(2))
+        || !TEST_ptr(out = OPENSSL_malloc(2 * w))
+        || !TEST_ptr(zeros = OPENSSL_zalloc(2 * w)))
+        goto err;
+
+    /* A small value serialises big-endian: low byte last, higher bytes zero. */
+    if (!TEST_true(ossl_fn_set_words(a, low_word, OSSL_NELEM(low_word)))
+        || !TEST_true(OSSL_FN_to_bytes_be(a, out, 2 * w))
+        || !TEST_mem_eq(out, 2 * w - 1, zeros, 2 * w - 1)
+        || !TEST_uchar_eq(out[2 * w - 1], 0x12))
+        goto err;
+
+    /* It fits in a single byte (the higher bytes being zero). */
+    out[0] = 0xCC;
+    if (!TEST_true(OSSL_FN_to_bytes_be(a, out, 1))
+        || !TEST_uchar_eq(out[0], 0x12))
+        goto err;
+
+    /*
+     * A value whose only non-zero byte sits in the second limb: written into a
+     * full-width buffer it lands at the second limb's low byte with every other
+     * byte zero.
+     */
+    if (!TEST_true(ossl_fn_set_words(a, high_word, OSSL_NELEM(high_word))))
+        goto err;
+    memset(out, 0xCC, 2 * w);
+    if (!TEST_true(OSSL_FN_to_bytes_be(a, out, 2 * w))
+        || !TEST_uchar_eq(out[w - 1], 0x12))
+        goto err;
+    out[w - 1] = 0;
+    if (!TEST_mem_eq(out, 2 * w, zeros, 2 * w)) /* nothing else was written */
+        goto err;
+
+    /* A destination too narrow to reach that byte reports it does not fit. */
+    if (!TEST_false(OSSL_FN_to_bytes_be(a, out, w)))
+        goto err;
+
+    /* Zero fits in any width - including zero bytes - and writes all zeros. */
+    memset(out, 0xCC, 2 * w);
+    if (!TEST_true(OSSL_FN_to_bytes_be(zero, out, 2 * w))
+        || !TEST_mem_eq(out, 2 * w, zeros, 2 * w)
+        || !TEST_true(OSSL_FN_to_bytes_be(zero, out, 0)))
+        goto err;
+
+    /* NULL arguments are rejected. */
+    if (!TEST_false(OSSL_FN_to_bytes_be(NULL, out, w))
+        || !TEST_false(OSSL_FN_to_bytes_be(a, NULL, w)))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(out);
+    OPENSSL_free(zeros);
+    OSSL_FN_free(a);
+    OSSL_FN_free(zero);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_add, 17);
@@ -5344,6 +5413,7 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_rshift, 9);
     ADD_ALL_TESTS(test_rshift_alias, 4);
     ADD_TEST(test_rshift_invalid_shift);
+    ADD_TEST(test_to_bytes_be);
     ADD_ALL_TESTS(test_gcd, OSSL_NELEM(test_gcd_cases));
     ADD_ALL_TESTS(test_gcd_alias, 4);
     ADD_ALL_TESTS(test_mul_feature_r_is_operand, 4);
