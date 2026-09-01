@@ -29,7 +29,7 @@ sub src_file {
 
 rmtree("demoCA", { safe => 0 });
 
-plan tests => 28;
+plan tests => 31;
 
 require_ok(srctop_file("test", "recipes", "tconversion.pl"));
 
@@ -92,6 +92,16 @@ has_AKID($v3_cert, 1);
 test_extfile('extfile_default', [], qr/Digital Signature/);
 test_extfile('extfile_section', ['-extensions', 'alt_ext'],
              qr/Key Encipherment/);
+
+# Generate a CRL with extensions from the config section named by -crlexts
+ok(run(app(['openssl', 'ca', '-config', $cnf, '-gencrl', '-crlsec', '60',
+            '-crlexts', 'crl_ext', '-out', 'crlexts-crl.pem'])),
+   'Generate CRL with -crlexts');
+my $crlexts_text = join('',
+    run(app(['openssl', 'crl', '-in', 'crlexts-crl.pem',
+             '-noout', '-text']), capture => 1));
+ok($crlexts_text =~ qr/Version 2/, 'CRL with extensions is version 2');
+ok($crlexts_text =~ qr/Authority Key Identifier/, 'CRL contains AKID');
 
 test_revoke('notimes', {
     should_succeed => 1,
