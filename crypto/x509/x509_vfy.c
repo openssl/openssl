@@ -1950,36 +1950,38 @@ static int crldp_check_crlissuer(DIST_POINT *dp, X509_CRL *crl, int crl_score)
 static int idp_check_issuer(DIST_POINT_NAME *idpname, X509 *x)
 {
     DIST_POINT_NAME dpname;
-    GENERAL_NAMES *gens = NULL, *ian = NULL;
+    GENERAL_NAMES *gens;
     GENERAL_NAME *gen = NULL;
     X509_NAME *iname = NULL;
-    int i, ret = 0;
+    int ret = 0;
 
-    if ((gens = sk_GENERAL_NAME_new_null()) == NULL
-        || (gen = GENERAL_NAME_new()) == NULL
+    /*
+     * An undecodable issuerAltName extension is treated as an absent one;
+     * any decoding errors are not left in the error queue.
+     */
+    ERR_set_mark();
+    gens = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
+    ERR_pop_to_mark();
+    if (gens == NULL && (gens = sk_GENERAL_NAME_new_null()) == NULL)
+        return 0;
+    if ((gen = GENERAL_NAME_new()) == NULL
         || (iname = X509_NAME_dup(X509_get_issuer_name(x))) == NULL)
         goto end;
     GENERAL_NAME_set0_value(gen, GEN_DIRNAME, iname);
     iname = NULL; /* now owned by |gen| */
     if (!sk_GENERAL_NAME_push(gens, gen))
         goto end;
-    /* An undecodable issuerAltName extension is treated as an absent one */
-    ian = X509_get_ext_d2i(x, NID_issuer_alt_name, NULL, NULL);
-    for (i = 0; i < sk_GENERAL_NAME_num(ian); i++)
-        if (!sk_GENERAL_NAME_push(gens, sk_GENERAL_NAME_value(ian, i)))
-            goto end;
+    gen = NULL; /* now owned by |gens| */
 
-    dpname.type = 0;
+    dpname.type = 0; /* fullName */
     dpname.name.fullname = gens;
     dpname.dpname = NULL;
     ret = idp_check_dp(&dpname, idpname);
 
 end:
-    /* The entries of |gens| are owned by |gen| and |ian| */
-    sk_GENERAL_NAME_free(gens);
     GENERAL_NAME_free(gen);
     X509_NAME_free(iname);
-    GENERAL_NAMES_free(ian);
+    GENERAL_NAMES_free(gens);
     return ret;
 }
 

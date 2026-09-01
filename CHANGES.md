@@ -416,9 +416,6 @@ OpenSSL 4.1
 
    *Dimitri John Ledkov*
 
-OpenSSL 4.0
------------
-
  * Fixed CRL scope checking for certificates without a CRL distribution
    points extension. A CRL having an issuing distribution point extension
    including a name that matches the certificate issuer name or any
@@ -427,6 +424,9 @@ OpenSSL 4.0
    instead of being rejected with X509_V_ERR_DIFFERENT_CRL_SCOPE.
 
    *Paul Grubbs*
+
+OpenSSL 4.0
+-----------
 
 ### Changes between 4.0.1 and 4.0.2 [25 Aug 2026]
 
