@@ -281,8 +281,7 @@ int ossl_cmp_hdr_init(OSSL_CMP_CTX *ctx, OSSL_CMP_PKIHEADER *hdr)
         ref_name = X509_NAME_new();
         if (ref_name == NULL
             || X509_NAME_add_entry_by_NID(ref_name, NID_commonName, MBSTRING_UTF8,
-                   ASN1_STRING_get0_data(ref),
-                   ASN1_STRING_length(ref), -1, 0)
+                   ref->data, ref->length, -1, 0)
                 != 1)
             goto err;
     }
