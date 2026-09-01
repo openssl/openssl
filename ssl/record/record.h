@@ -54,6 +54,7 @@ typedef struct tls_record_st {
  * ceiling of Section 6.1) is what actually bounds w_conn_epoch for DTLS 1.3.
  */
 #define DTLS1_3_MAX_EPOCH ((uint64_t)0xFFFFFFFFFFFFULL)
+#define DTLS1_MAX_EPOCH UINT16_MAX
 
 typedef struct dtls_record_layer_st {
     /*

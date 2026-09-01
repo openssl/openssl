@@ -840,7 +840,7 @@ int dtls1_increment_epoch(SSL_CONNECTION *s, int rw)
             /* We've wrapped around, so clear the buffer just in case */
             return 0;
     } else {
-        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == UINT16_MAX)
+        if (!SSL_CONNECTION_IS_DTLS13(s) && s->rlayer.d->w_conn_epoch == DTLS1_MAX_EPOCH)
             return 0;
 
         /*
