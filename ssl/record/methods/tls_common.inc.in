@@ -1,0 +1,32 @@
+/*
+ * Copyright 2026 The OpenSSL Project Authors. All Rights Reserved.
+ *
+ * Licensed under the Apache License 2.0 (the "License").  You may not use
+ * this file except in compliance with the License.  You can obtain a copy
+ * in the file LICENSE in the source distribution or at
+ * https://www.openssl.org/source/license.html
+ */
+
+{-
+use OpenSSL::paramnames qw(produce_param_decoder);
+
+sub produce_ssl_param_decoder {
+    my $decoder = produce_param_decoder(@_);
+
+    # Adapt the provider-oriented decoder errors for libssl.
+    $decoder =~ s|#include "prov/proverr.h"|#include <openssl/err.h>|;
+    $decoder =~ s/ERR_LIB_PROV/ERR_LIB_SSL/g;
+    $decoder =~ s/PROV_R_REPEATED_PARAMETER/ERR_R_PASSED_INVALID_ARGUMENT/g;
+    return $decoder;
+}
+-}
+
+#define tls_set_options_params_list
+{- produce_ssl_param_decoder('tls_set_options_params',
+                         (['OSSL_LIBSSL_RECORD_LAYER_PARAM_OPTIONS',       'options',  'uint64'],
+                          ['OSSL_LIBSSL_RECORD_LAYER_PARAM_MODE',          'mode',     'uint32'],
+                          ['OSSL_LIBSSL_RECORD_LAYER_READ_BUFFER_LEN',     'rbuf_len', 'size_t'],
+                          ['OSSL_LIBSSL_RECORD_LAYER_PARAM_BLOCK_PADDING', 'blockpad', 'size_t'],
+                          ['OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING',    'hspad',    'size_t'],
+                          ['OSSL_LIBSSL_RECORD_LAYER_PARAM_READ_AHEAD',   'readahead', 'int'],
+                         )); -}
