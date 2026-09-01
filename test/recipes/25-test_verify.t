@@ -19,15 +19,20 @@ use OpenSSL::Test::Utils;
 setup("test_verify");
 
 my @certspath = qw(test certs);
+my $ca_cert = srctop_file(@certspath, "ca-cert.pem");
+my $ca_key = srctop_file(@certspath, "ca-key.pem");
 sub verify {
     my ($cert, $purpose, $trusted, $untrusted, @opts) = @_;
+    # An option hash at the end of @opts is passed on to app(), e.g. to tap
+    # stderr via { stderr => $file }.
+    my %app_opts = @opts > 0 && ref($opts[-1]) eq 'HASH' ? %{pop @opts} : ();
     my @args = qw(openssl verify -auth_level 1);
     push(@args, "-purpose", $purpose) if $purpose ne "";
     push(@args, @opts);
     for (@$trusted) { push(@args, "-trusted", srctop_file(@certspath, "$_.pem")) }
     for (@$untrusted) { push(@args, "-untrusted", srctop_file(@certspath, "$_.pem")) }
     push(@args, srctop_file(@certspath, "$cert.pem"));
-    run(app([@args]));
+    run(app([@args], %app_opts));
 }
 
 sub make_empty_crl {
@@ -73,7 +78,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 224;
+plan tests => 225;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -189,8 +194,7 @@ ok(!verify("ee-cert", "sslserver", [], [qw(ca-cert)], "-partial_chain"),
    "fail untrusted partial chain");
 ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain"),
    "accept trusted partial chain");
-ok(make_empty_crl("partial-chain-ca", srctop_file(@certspath, "ca-cert.pem"),
-                  srctop_file(@certspath, "ca-key.pem"),
+ok(make_empty_crl("partial-chain-ca", $ca_cert, $ca_key,
                   "partial-chain-ca.crl")
    && verify("ee-cert", "sslserver", [qw(ca-cert)], [],
              "-partial_chain", "-crl_check_all", "-CRLfile",
@@ -690,10 +694,11 @@ ok(grep(/CRL is not yet valid/, do { open my $fh, '<', $cve_28388_stderr; <$fh> 
    "CVE-2026-28388");
 
 # A certificate without a CRL distribution points extension is checked against
-# CRLs issued by its issuer as if it had a distribution point named after the
-# certificate issuer (RFC 5280, section 6.3.3).  A CRL whose issuing
-# distribution point names the certificate issuer is therefore in scope, while
-# one that names only a URI is not.
+# CRLs issued by its issuer as if it had a distribution point whose fullName
+# consists of the certificate issuer name and any issuerAltName entries of the
+# certificate (RFC 5280, section 6.3.3, last paragraph).  A CRL whose issuing
+# distribution point matches one of those names is therefore in scope, while
+# one that only names a URI not present in an issuerAltName is not.
 my $idp_dirname_exts = <<"EOF";
 [ crl_ext ]
 issuingDistributionPoint = critical, \@idp_section
@@ -704,14 +709,10 @@ fullname = dirName:idp_dn
 [ idp_dn ]
 CN = CA
 EOF
-ok(make_empty_crl("idp-dirname", srctop_file(@certspath, "ca-cert.pem"),
-                  srctop_file(@certspath, "ca-key.pem"),
+ok(make_empty_crl("idp-dirname", $ca_cert, $ca_key,
                   "idp-dirname.crl", $idp_dirname_exts)
-   && run(app(["openssl", "verify",
-               "-trusted", srctop_file(@certspath, "root-cert.pem"),
-               "-untrusted", srctop_file(@certspath, "ca-cert.pem"),
-               "-crl_check", "-CRLfile", "idp-dirname.crl",
-               srctop_file(@certspath, "ee-cert.pem")])),
+   && verify("ee-cert", "", [qw(root-cert)], [qw(ca-cert)],
+             "-crl_check", "-CRLfile", "idp-dirname.crl"),
    "accept CRL whose IDP names the certificate issuer for a certificate without CDP");
 
 my $idp_uri_exts = <<"EOF";
@@ -722,18 +723,36 @@ issuingDistributionPoint = critical, \@idp_section
 fullname = URI:http://example.com/ca.crl
 EOF
 my $idp_uri_stderr = "idp-uri.err";
-ok(make_empty_crl("idp-uri", srctop_file(@certspath, "ca-cert.pem"),
-                  srctop_file(@certspath, "ca-key.pem"),
+ok(make_empty_crl("idp-uri", $ca_cert, $ca_key,
                   "idp-uri.crl", $idp_uri_exts)
-   && !run(app(["openssl", "verify",
-                "-trusted", srctop_file(@certspath, "root-cert.pem"),
-                "-untrusted", srctop_file(@certspath, "ca-cert.pem"),
-                "-crl_check", "-CRLfile", "idp-uri.crl",
-                srctop_file(@certspath, "ee-cert.pem")],
-               stderr => $idp_uri_stderr))
+   && !verify("ee-cert", "", [qw(root-cert)], [qw(ca-cert)],
+              "-crl_check", "-CRLfile", "idp-uri.crl",
+              { stderr => $idp_uri_stderr })
    && grep(/different CRL scope/,
            do { open my $fh, '<', $idp_uri_stderr; <$fh> }),
    "reject CRL whose IDP names only a URI for a certificate without CDP");
+
+# The URI-only CRL is in scope for a certificate whose issuerAltName extension
+# contains that URI.
+my $ian_cnf = "ian-cert.cnf";
+open(my $ian_fh, '>', $ian_cnf) or die "cannot write $ian_cnf: $!";
+print $ian_fh <<"EOF";
+[ ext ]
+issuerAltName = URI:http://example.com/ca.crl
+EOF
+close($ian_fh);
+ok(run(app(["openssl", "req", "-new",
+            "-key", srctop_file(@certspath, "ee-key.pem"),
+            "-subj", "/CN=issuerAltName test", "-out", "ian-cert.csr"]))
+   && run(app(["openssl", "x509", "-req", "-in", "ian-cert.csr",
+               "-CA", $ca_cert, "-CAkey", $ca_key, "-set_serial", "99",
+               "-days", "3650", "-extfile", $ian_cnf, "-extensions", "ext",
+               "-out", "ian-cert.pem"]))
+   && run(app(["openssl", "verify", "-auth_level", "1",
+               "-trusted", srctop_file(@certspath, "root-cert.pem"),
+               "-untrusted", $ca_cert,
+               "-crl_check", "-CRLfile", "idp-uri.crl", "ian-cert.pem"])),
+   "accept CRL whose IDP matches an issuerAltName of a certificate without CDP");
 
 # Delta CRLs must not be accepted as complete CRLs
 my $delta_crl_as_complete_stderr = "delta-crl-as-complete.err";
