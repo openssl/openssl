@@ -117,6 +117,7 @@ sub init
         serverconnects => 1,
         reneg => 0,
         sessionfile => undef,
+        expected_tickets => 2,
 
         #Public read
         isdtls => $isdtls,
@@ -164,6 +165,7 @@ sub clearClient
     $self->{seen_msgseq} = {};
     $self->{clientflags} = "";
     $self->{sessionfile} = undef;
+    $self->{expected_tickets} = 2;
     $self->{clientpid} = 0;
     $self->{clientexit} = 0;
     $is_tls13 = 0;
@@ -773,7 +775,7 @@ sub process_packet
                 foreach my $record (@{$message->{records}}) {
                     if (@{$self->{session_ticket_seq}} == 0) {
                         push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
-                    } elsif (scalar(@{$self->{session_ticket_seq}}) != 2) {
+                    } elsif (scalar(@{$self->{session_ticket_seq}}) != $self->{expected_tickets}) {
                         my $match = $self->find_session_ticket_ack($record->epoch, $record->seq);
                         if ($match == -1) {
                             push @{$self->{session_ticket_seq}}, TLSProxy::RecordNumber->new($record->epoch, $record->seq);
@@ -820,7 +822,8 @@ sub seen_session_ticket_ack
     my $record = shift;
 
     my $ack_hash = $self->{saw_session_ticket_ack};
-    return if !$self->{saw_session_ticket} || scalar(keys %{$ack_hash}) == 2;
+    return if !$self->{saw_session_ticket}
+              || scalar(keys %{$ack_hash}) == $self->{expected_tickets};
     return if $record->content_type() != TLSProxy::Record::RT_ACK;
 
     my @record_numbers = ();
@@ -838,7 +841,7 @@ sub seen_session_ticket_ack
         if ($match != -1) {
             my $session_ticket = splice(@{$ticket_seq}, $match, 1);
             $ack_hash->{$key} = $session_ticket;
-            last if scalar(keys %{$ack_hash}) == 2;
+            last if scalar(keys %{$ack_hash}) == $self->{expected_tickets};
         }
     }
 }
@@ -867,8 +870,9 @@ sub handshake_complete
     my $res = 0;
 
     if ($self->{isdtls} && $self->is_tls13() && defined($self->{sessionfile})) {
-        # We need to wait for the second ack message for the handshake to be complete
-        if (scalar(keys %{$self->{saw_session_ticket_ack}}) == 2) {
+        # The handshake is complete once every expected NewSessionTicket
+        # (2 by default, but only 1 follows a resumption) has been acked
+        if (scalar(keys %{$self->{saw_session_ticket_ack}}) == $self->{expected_tickets}) {
             $res = 1;
         }
     } else {
@@ -1077,6 +1081,14 @@ sub sessionfile
         TLSProxy::Message->successondata(1);
     }
     return $self->{sessionfile};
+}
+sub expected_tickets
+{
+    my $self = shift;
+    if (@_) {
+        $self->{expected_tickets} = shift;
+    }
+    return $self->{expected_tickets};
 }
 
 sub ciphersuite
