@@ -766,6 +766,58 @@ static int test_purpose_any(void)
     return do_test_purpose(X509_PURPOSE_ANY, 1);
 }
 
+/*
+ * Verify that a leaf carrying the email address u@evil.test is rejected
+ * with X509_V_ERR_EXCLUDED_VIOLATION when its issuer carries
+ * NameConstraints excludedSubtrees rfc822Name=".test", regardless of
+ * whether the address is encoded as a plain rfc822Name SAN or as an
+ * RFC 8398 SmtpUTF8Mailbox otherName SAN.
+ */
+static int test_nc_eai_excluded(int idx)
+{
+    static const char *const leaf_files[] = {
+        "nc-eai-leaf-rfc822.pem", /* SAN: rfc822Name */
+        "nc-eai-leaf.pem", /* SAN: otherName SmtpUTF8Mailbox */
+    };
+    char *root_path = NULL, *ica_path = NULL, *leaf_path = NULL;
+    X509 *root = NULL, *ica = NULL, *leaf = NULL;
+    STACK_OF(X509) *untrusted = NULL;
+    X509_STORE *store = NULL;
+    X509_STORE_CTX *ctx = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(root_path = test_mk_file_path(certs_dir, "root-cert.pem"))
+        || !TEST_ptr(ica_path = test_mk_file_path(certs_dir, "nc-eai-ica.pem"))
+        || !TEST_ptr(leaf_path = test_mk_file_path(certs_dir, leaf_files[idx]))
+        || !TEST_ptr(root = load_cert_from_file(root_path))
+        || !TEST_ptr(ica = load_cert_from_file(ica_path))
+        || !TEST_ptr(leaf = load_cert_from_file(leaf_path))
+        || !TEST_ptr(untrusted = sk_X509_new_null())
+        || !TEST_true(sk_X509_push(untrusted, ica))
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_add_cert(store, root))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, leaf, untrusted)))
+        goto end;
+    ica = NULL;
+
+    ret = TEST_int_eq(X509_verify_cert(ctx), 0)
+        && TEST_int_eq(X509_STORE_CTX_get_error(ctx),
+            X509_V_ERR_EXCLUDED_VIOLATION);
+
+end:
+    X509_STORE_CTX_free(ctx);
+    X509_STORE_free(store);
+    sk_X509_pop_free(untrusted, X509_free);
+    X509_free(leaf);
+    X509_free(ica);
+    X509_free(root);
+    OPENSSL_free(leaf_path);
+    OPENSSL_free(ica_path);
+    OPENSSL_free(root_path);
+    return ret;
+}
+
 OPT_TEST_DECLARE_USAGE("certs-dir\n")
 
 int setup_tests(void)
@@ -800,6 +852,7 @@ int setup_tests(void)
     ADD_TEST(test_purpose_any);
     ADD_TEST(test_multiname_selfsigned);
     ADD_TEST(test_vpm_input_validation);
+    ADD_ALL_TESTS(test_nc_eai_excluded, 2);
     return 1;
 err:
     cleanup_tests();
