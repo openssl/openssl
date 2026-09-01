@@ -22,7 +22,7 @@ OSSL_CMP_print_errors_cb
 
 =head1 SYNOPSIS
 
- #include <openssl/cmp_util.h>
+ #include <libcmp/cmp_util.h>
 
  int  OSSL_CMP_log_open(void);
  void OSSL_CMP_log_close(void);
@@ -111,6 +111,10 @@ All other functions return 1 on success, 0 on error.
 =head1 HISTORY
 
 The OpenSSL CMP support was added in OpenSSL 3.0.
+
+All of these functions moved to the new libcmp library in OpenSSL 4.1.
+Deprecated variants remain in libcrypto, declared in F<< <openssl/cmp_util.h> >>,
+until a future major release.  See L<libcmp(7)>.
 
 =head1 COPYRIGHT
 

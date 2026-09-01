@@ -9,6 +9,9 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/deprecated.h"
+#include <libcmp/names.h>
+
 #include <stdio.h>
 #include <string.h>
 #include <openssl/cmp_util.h>
@@ -148,6 +151,20 @@ int OSSL_CMP_print_to_bio(BIO *bio, const char *component, const char *file,
 }
 
 #define ERR_PRINT_BUF_SIZE 4096
+
+static int cmp_strerror_r(int errnum, char *buf, size_t buflen)
+{
+#if defined(_MSC_VER) && _MSC_VER >= 1400
+    return strerror_s(buf, buflen, errnum);
+#elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112L) \
+    || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    return strerror_r(errnum, buf, buflen);
+#else
+    /* Your platform is too old to get error messages. you'll get reason codes */
+    return -1;
+#endif
+}
+
 /* this is similar to ERR_print_errors_cb, but uses the CMP-specific cb type */
 void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
 {
@@ -164,7 +181,7 @@ void OSSL_CMP_print_errors_cb(OSSL_CMP_log_cb_t log_fn)
 
 #ifndef OPENSSL_NO_ERR
         if (ERR_SYSTEM_ERROR(err)) {
-            if (openssl_strerror_r(reason, rsbuf, sizeof(rsbuf)))
+            if (cmp_strerror_r((int)reason, rsbuf, sizeof(rsbuf)) == 0)
                 rs = rsbuf;
         } else {
             rs = ERR_reason_error_string(err);
@@ -283,5 +300,31 @@ int ossl_cmp_asn1_octet_string_set1_bytes(ASN1_OCTET_STRING **tgt,
 
     ASN1_OCTET_STRING_free(*tgt);
     *tgt = new;
+    return 1;
+}
+
+int ossl_cmp_x509_add_cert_new(STACK_OF(X509) **p_sk, const X509 *cert,
+    int flags)
+{
+    if (*p_sk == NULL && (*p_sk = sk_X509_new_null()) == NULL) {
+        ERR_raise(ERR_LIB_CMP, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+    return X509_add_cert(*p_sk, cert, flags);
+}
+
+int ossl_cmp_x509_add_certs_new(STACK_OF(X509) **p_sk,
+    const STACK_OF(X509) *certs, int flags)
+{
+    int n = sk_X509_num(certs /* may be NULL */);
+    int i;
+
+    for (i = 0; i < n; i++) {
+        int j = (flags & X509_ADD_FLAG_PREPEND) == 0 ? i : n - 1 - i;
+        /* if prepend, add certs in reverse order to keep original order */
+
+        if (!ossl_cmp_x509_add_cert_new(p_sk, sk_X509_value(certs, j), flags))
+            return 0;
+    }
     return 1;
 }
