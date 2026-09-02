@@ -114,12 +114,21 @@ jobs:
       run: docker pull %IMAGE%
     - name: config
       run: |
-        $config = @(
+        if [ "${{ matrix.target }}" == "VC-WIN64A-MSVC2013" ]
+        then
+          $config = @(
           'no-makedepend'
-          'no-shared'
           'enable-fips'
           '-DOSSL_WINCTX=openssl'
-        ) -join ' '
+          ) -join ' '
+         else
+          $config = @(
+            'no-makedepend'
+            'enable-fips'
+            'no-shared'
+            '-DOSSL_WINCTX=openssl'
+            ) -join ' '
+         fi
         $chain = @(
           # 'call', not a bare invocation: cmd does not necessarily return from a
           # batch file run without it, which would skip the rest of the chain.

@@ -37,6 +37,9 @@ IF[{- !$disabled{tests} -}]
           testutil/options.c testutil/test_options.c testutil/provider.c \
           testutil/apps_shims.c testutil/random.c testutil/helper.c \
           testutil/compare.c mfail/mfail.c $LIBAPPSSRC
+  IF[{- $target{needs_c99_snprintf_compat} -}]
+    SOURCE[libtestutil.a]=../crypto/msvc2013_snprintf.c
+  ENDIF
   INCLUDE[libtestutil.a]=../include ../apps/include .. mfail
   DEPEND[libtestutil.a]=../libcrypto
 
