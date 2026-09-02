@@ -248,8 +248,8 @@ jobs:
       - name: set up cross validation of FIPS from A with tree from B
         if: steps.early_exit.outputs.skip != 'true'
         run: |
-          cp providers/fips.so ../${{ matrix.tree_b }}/providers/
-          cp providers/fipsmodule.cnf ../${{ matrix.tree_b }}/providers/
+          cp -f providers/fips.so ../${{ matrix.tree_b }}/providers/
+          cp -f providers/fipsmodule.cnf ../${{ matrix.tree_b }}/providers/
         working-directory: ${{ matrix.tree_a }}
 
       - name: show module versions from cross validation
