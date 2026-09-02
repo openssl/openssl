@@ -18,10 +18,6 @@ int ossl_rsa_acvp_test_gen_params_new_parsed(OSSL_PARAM **dst,
     const RSA_PARAMS *params)
 {
     OSSL_PARAM *d, *alloc = NULL;
-    const OSSL_PARAM *src[] = {
-        params->fips.xp, params->fips.xp1, params->fips.xp2,
-        params->fips.xq, params->fips.xq1, params->fips.xq2
-    };
     size_t i;
     int ret = 1;
 
@@ -37,6 +33,11 @@ int ossl_rsa_acvp_test_gen_params_new_parsed(OSSL_PARAM **dst,
 
     if (dst == NULL || params == NULL)
         return 0;
+
+    const OSSL_PARAM *src[] = {
+        params->fips.xp, params->fips.xp1, params->fips.xp2,
+        params->fips.xq, params->fips.xq1, params->fips.xq2
+    };
 
     /* Xp is required whenever the ACVP test interface is used. */
     if (src[0] == NULL)
