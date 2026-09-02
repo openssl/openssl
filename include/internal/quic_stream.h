@@ -346,6 +346,12 @@ int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT *pkt,
     int fin);
 
 /*
+ * Returns 1 if `qrs` holds its maximum number of buffered frames, so that
+ * ossl_quic_rstream_queue_data() refuses frames that would add to them.
+ */
+int ossl_quic_rstream_at_frame_limit(const QUIC_RSTREAM *qrs);
+
+/*
  * Copies the data from the stream storage to buffer `buf` of size `size`.
  * `readbytes` is set to the number of bytes actually copied.
  * `fin` is set to 1 if all the data from the stream were read so the
