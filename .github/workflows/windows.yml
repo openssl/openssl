@@ -319,6 +319,52 @@ jobs:
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         jom test VERBOSE_FAILURE=yes TESTS=-test_fuzz* HARNESS_JOBS=4
 
+  nmake:
+    # The other Windows jobs build with jom, which spawns commands
+    # differently from Microsoft's nmake.  Build once with the real
+    # nmake, in-tree as NOTES-WINDOWS.md describes, so that makefile
+    # rules nmake handles differently are exercised, including the
+    # perlasm/nasm generator rules.  Build only: the tests are covered
+    # by the jom jobs and nmake builds serially.
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: install nasm
+      if: github.repository == 'openssl/openssl'
+      run: |
+        $installer = "nasm-3.01-installer-x64.exe"
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/$installer" -OutFile $installer
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).$installer
+        $actual = (Get-FileHash $installer -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for $installer (expected $expected, got $actual)" }
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install nasm (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        $installer = "nasm-3.01-installer-x64.exe"
+        Invoke-WebRequest -Uri "https://www.nasm.us/pub/nasm/releasebuilds/3.01/win64/$installer" -OutFile $installer
+        Start-Process -FilePath ".\$installer" -ArgumentList '/S' -Wait
+        "C:\Program Files\NASM" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: config
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        perl Configure --banner=Configured --strict-warnings no-makedepend no-fips -DOSSL_WINCTX=openssl VC-WIN64A
+        perl configdata.pm --dump
+    - name: build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        nmake /S
+    - name: check the build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        apps\openssl.exe version -a
+
   cygwin:
     # Run a job for each of the specified target architectures:
     strategy:
