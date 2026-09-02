@@ -573,6 +573,26 @@ static int cmd_AddExpectedIPAddress(SSL_CONF_CTX *cctx, const char *value)
                         (cb_func)X509_VERIFY_PARAM_add1_ip_asc);
 }
 
+static int cmd_SecurityLevel(SSL_CONF_CTX *cctx, const char *value)
+{
+    int rv = 0;
+    unsigned long ul;
+
+    if (OPENSSL_strtoul(value, NULL, 10, &ul) && ul <= INT_MAX) {
+        int seclevel = (int)ul;
+
+	if (cctx->ctx) {
+	    SSL_CTX_set_security_level(cctx->ctx, seclevel);
+	    rv = 1;
+	}
+	if (cctx->ssl) {
+	    SSL_set_security_level(cctx->ssl, seclevel);
+	    rv = 1;
+	}
+    }
+    return rv;
+}
+
 static int cmd_SetHostFlags(SSL_CONF_CTX *cctx, const char *value)
 {
     static const ssl_flag_tbl ssl_host_flags_list[] = {
@@ -1006,6 +1026,7 @@ static const ssl_conf_cmd_tbl ssl_conf_cmds[] = {
     SSL_CONF_CMD_STRING(AddExpectedDNSName, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(SetExpectedIPAddress, NULL, SSL_CONF_FLAG_CERTIFICATE),
     SSL_CONF_CMD_STRING(AddExpectedIPAddress, NULL, SSL_CONF_FLAG_CERTIFICATE),
+    SSL_CONF_CMD_STRING(SecurityLevel, NULL, 0),
     SSL_CONF_CMD(AddCAPath, "addCApath", SSL_CONF_FLAG_CERTIFICATE,
         SSL_CONF_TYPE_DIR),
     SSL_CONF_CMD(AddCAFile, "addCAfile", SSL_CONF_FLAG_CERTIFICATE,
