@@ -35,7 +35,6 @@
 /crypto/objects/obj_dat.h
 /crypto/objects/obj_xref.h
 /include/crypto/*_conf.h
-/include/crypto/rsa_params.h
 /include/openssl/asn1.h
 /include/openssl/obj_mac.h
 /include/openssl/asn1t.h

@@ -77,7 +77,6 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/dso_conf.h \
-         include/crypto/rsa_params.h \
          providers/implementations/asymciphers/rsa_enc.inc \
          providers/implementations/asymciphers/sm2_enc.inc \
          providers/implementations/exchange/dh_exch.inc \
@@ -301,11 +300,8 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/rands/seed_src.inc \
        providers/implementations/rands/seed_src_jitter.inc \
        providers/implementations/rands/test_rng.inc \
-       include/crypto/rsa_params.h \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
 
-GENERATE[include/crypto/rsa_params.h]=\
-    include/crypto/rsa_params.h.in
 GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
     providers/implementations/asymciphers/rsa_enc.inc.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\
