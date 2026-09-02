@@ -647,8 +647,12 @@ my %params = (
     'OSSL_LIBSSL_RECORD_LAYER_PARAM_HS_PADDING' =>     "hs_padding",
 
 # Symmetric Key parameters
-    'OSSL_SKEY_PARAM_RAW_BYTES' => "raw-bytes",
+    'OSSL_SKEY_PARAM_ALIAS' => "skey-alias",
+    'OSSL_SKEY_PARAM_ALGORITHM_OID' => "skey-algorithm-oid",
+    'OSSL_SKEY_PARAM_ALGORITHM_PARAMS' => "skey-algorithm-params",
     'OSSL_SKEY_PARAM_KEY_LENGTH' => "key-length",
+    'OSSL_SKEY_PARAM_LOCAL_KEYID' => "skey-local-keyid",
+    'OSSL_SKEY_PARAM_RAW_BYTES' => "raw-bytes",
 );
 
 sub output_ifdef {

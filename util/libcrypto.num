@@ -5717,6 +5717,8 @@ OSSL_ESS_check_signing_certs_ex         5714	4_0_0	EXIST::FUNCTION:
 X509v3_delete_extension                 5715	4_0_0	EXIST::FUNCTION:
 CMS_SignerInfo_get0_signer_cert         ?	4_1_0	EXIST::FUNCTION:CMS
 CMS_SignerInfo_get_verification_result  ?	4_1_0	EXIST::FUNCTION:CMS
+EVP_SKEY_get0_local_keyid               ?	4_1_0	EXIST::FUNCTION:
+EVP_SKEY_get0_algorithm_id              ?	4_1_0	EXIST::FUNCTION:
 CTLOG_STORE_add0_log                    ?	4_1_0	EXIST::FUNCTION:CT
 CRYPTO_atomic_load_ptr                  ?	4_1_0	EXIST::FUNCTION:
 CRYPTO_atomic_store_ptr                 ?	4_1_0	EXIST::FUNCTION:

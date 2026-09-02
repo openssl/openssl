@@ -31,6 +31,15 @@ struct prov_skey_st {
 
     unsigned char *data;
     size_t length;
+
+    /* Metadata — set during import, returned during export / get_key_id */
+    char *alias;
+    unsigned char *local_keyid;
+    size_t local_keyid_len;
+    unsigned char *algorithm_oid;
+    size_t algorithm_oid_len;
+    unsigned char *algorithm_params;
+    size_t algorithm_params_len;
 };
 
 #endif /* OSSL_CRYPTO_SKEY_H */
