@@ -7,17 +7,11 @@
  * https://www.openssl.org/source/license.html
  */
 
-#ifndef OSSL_CRYPTO_RSA_PARAMS_H
-#define OSSL_CRYPTO_RSA_PARAMS_H
-
-/* clang-format off */
-
 {-
 use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 #include "crypto/rsa.h"
-#include <openssl/core_names.h>
 #include <openssl/err.h>
 #include <openssl/proverr.h>
 
@@ -120,24 +114,17 @@ return "";
 #define rsa_pss_todata_st rsa_params_st
 {- produce_param_decoder('rsa_pss_todata', @RSA_PSS_EXPORT_TYPES); -}
 
-/*
- * Parameters processed by plain RSA get_params(), including conditional ACVP
- * data.
- */
-#define rsa_get_params_st rsa_params_st
-{- produce_param_decoder('rsa_get_params',
-                         (['OSSL_PKEY_PARAM_BITS',              'bits',            'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits',          'int'],
-                          ['OSSL_PKEY_PARAM_MAX_SIZE',          'maxsize',          'int'],
-                          ['OSSL_PKEY_PARAM_SECURITY_CATEGORY', 'seccat',           'int'],
-                          ['OSSL_PKEY_PARAM_DEFAULT_DIGEST',    'default_digest',   'utf8_string'],
-                          @RSA_KEY_TYPES,
-                          @RSA_ACVP_OUTPUT_TYPES
+/* The provider keymgmt import path parses its input only once. */
+#define rsa_import_st rsa_params_st
+{- produce_param_decoder('rsa_import',
+                         (@RSA_KEY_TYPES,
+                          ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int'],
+                          @RSA_PSS_IMPORT_TYPES
                          )); -}
 
-/* Parameters processed by RSA-PSS get_params(). */
-#define rsapss_get_params_st rsa_params_st
-{- produce_param_decoder('rsapss_get_params',
+/* Parameters processed by rsa_get_params(), including conditional ACVP data. */
+#define rsa_get_params_st rsa_params_st
+{- produce_param_decoder('rsa_get_params',
                          (['OSSL_PKEY_PARAM_BITS',              'bits',            'int'],
                           ['OSSL_PKEY_PARAM_SECURITY_BITS',     'secbits',          'int'],
                           ['OSSL_PKEY_PARAM_MAX_SIZE',          'maxsize',          'int'],
@@ -167,7 +154,8 @@ return "";
 #define rsa_pkey_import_from_st rsa_params_st
 {- produce_param_decoder('rsa_pkey_import_from',
                          (@RSA_KEY_TYPES,
-                          ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int']
+                          ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int'],
+                          @RSA_PSS_IMPORT_TYPES
                          )); -}
 
 #define rsa_pss_pkey_import_from_st rsa_params_st
@@ -185,7 +173,8 @@ return "";
 {- produce_param_decoder('rsa_acvp_output', @RSA_ACVP_OUTPUT_TYPES); -}
 
 /* Selection-specific import and export declarations. */
-#define rsa_key_import_types_st rsa_params_st
+#define rsa_key_import_types_st
+#define rsa_key_import_types_decoder
 {- produce_param_decoder('rsa_key_import_types',
                          (@RSA_KEY_TYPES,
                           ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int']
@@ -195,52 +184,23 @@ return "";
 #define rsa_key_export_types_decoder
 {- produce_param_decoder('rsa_key_export_types', @RSA_KEY_TYPES); -}
 
-#define rsa_other_import_types_st rsa_params_st
-{- produce_param_decoder('rsa_other_import_types'); -}
+#define rsa_other_import_types_st
+#define rsa_other_import_types_decoder
+{- produce_param_decoder('rsa_other_import_types', @RSA_PSS_IMPORT_TYPES); -}
 
 #define rsa_other_export_types_st
 #define rsa_other_export_types_decoder
-{- produce_param_decoder('rsa_other_export_types'); -}
+{- produce_param_decoder('rsa_other_export_types', @RSA_PSS_EXPORT_TYPES); -}
 
-#define rsa_all_import_types_st rsa_params_st
+#define rsa_all_import_types_st
+#define rsa_all_import_types_decoder
 {- produce_param_decoder('rsa_all_import_types',
-                         (@RSA_KEY_TYPES,
-                          ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int']
-                         )); -}
-
-#define rsa_all_export_types_st
-#define rsa_all_export_types_decoder
-{- produce_param_decoder('rsa_all_export_types', @RSA_KEY_TYPES); -}
-
-#define rsapss_key_import_types_st rsa_params_st
-{- produce_param_decoder('rsapss_key_import_types',
-                         (@RSA_KEY_TYPES,
-                          ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int']
-                         )); -}
-
-#define rsapss_key_export_types_st
-#define rsapss_key_export_types_decoder
-{- produce_param_decoder('rsapss_key_export_types', @RSA_KEY_TYPES); -}
-
-#define rsapss_other_import_types_st rsa_params_st
-{- produce_param_decoder('rsapss_other_import_types', @RSA_PSS_IMPORT_TYPES); -}
-
-#define rsapss_other_export_types_st
-#define rsapss_other_export_types_decoder
-{- produce_param_decoder('rsapss_other_export_types', @RSA_PSS_EXPORT_TYPES); -}
-
-#define rsapss_all_import_types_st rsa_params_st
-{- produce_param_decoder('rsapss_all_import_types',
                          (@RSA_KEY_TYPES,
                           ['OSSL_PKEY_PARAM_RSA_DERIVE_FROM_PQ', 'derive', 'int'],
                           @RSA_PSS_IMPORT_TYPES
                          )); -}
 
-#define rsapss_all_export_types_st
-#define rsapss_all_export_types_decoder
-{- produce_param_decoder('rsapss_all_export_types',
+#define rsa_all_export_types_st
+#define rsa_all_export_types_decoder
+{- produce_param_decoder('rsa_all_export_types',
                          (@RSA_KEY_TYPES, @RSA_PSS_EXPORT_TYPES)); -}
-
-/* clang-format on */
-
-#endif
