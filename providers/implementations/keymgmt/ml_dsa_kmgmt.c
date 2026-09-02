@@ -145,6 +145,23 @@ ML_DSA_KEY *ossl_prov_ml_dsa_new(PROV_CTX *ctx, const char *propq, int evp_type)
     return key;
 }
 
+static ML_DSA_KEY *ossl_prov_ml_dsa_new_ex(PROV_CTX *ctx, const OSSL_PARAM params[], int evp_type)
+{
+    struct ml_dsa_new_key_ex_params_st p;
+    const char *propq = NULL;
+
+    if (!ml_dsa_new_key_ex_params_decoder(params, &p))
+        return 0;
+
+    if (p.propq != NULL) {
+        if (p.propq->data_type != OSSL_PARAM_UTF8_STRING)
+            return 0;
+        propq = p.propq->data;
+    }
+
+    return ossl_prov_ml_dsa_new(ctx, propq, evp_type);
+}
+
 static void ml_dsa_free_key(void *keydata)
 {
     ossl_ml_dsa_key_free((ML_DSA_KEY *)keydata);
@@ -585,12 +602,17 @@ static void ml_dsa_gen_cleanup(void *genctx)
     {                                                                                         \
         return ossl_prov_ml_dsa_new(provctx, NULL, EVP_PKEY_ML_DSA_##alg);                    \
     }                                                                                         \
+    static void *ml_dsa_##alg##_new_key_ex(void *provctx, const OSSL_PARAM params[])          \
+    {                                                                                         \
+        return ossl_prov_ml_dsa_new_ex(provctx, params, EVP_PKEY_ML_DSA_##alg);               \
+    }                                                                                         \
     static void *ml_dsa_##alg##_gen(void *genctx, OSSL_CALLBACK *osslcb, void *cbarg)         \
     {                                                                                         \
         return ml_dsa_gen(genctx, EVP_PKEY_ML_DSA_##alg);                                     \
     }                                                                                         \
     const OSSL_DISPATCH ossl_ml_dsa_##alg##_keymgmt_functions[] = {                           \
         { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))ml_dsa_##alg##_new_key },                    \
+        { OSSL_FUNC_KEYMGMT_NEW_EX, (void (*)(void))ml_dsa_##alg##_new_key_ex },              \
         { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))ml_dsa_free_key },                          \
         { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))ml_dsa_has },                                \
         { OSSL_FUNC_KEYMGMT_MATCH, (void (*)(void))ml_dsa_match },                            \

@@ -17,9 +17,12 @@
 #include "crypto/evp.h"
 #include "crypto/ml_dsa.h"
 
+static int do_fips = 0;
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
+    OPT_FIPS,
     OPT_CONFIG_FILE,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
@@ -352,6 +355,32 @@ static int ml_dsa_key_internal_test(void)
 err:
     ossl_ml_dsa_key_free(key1);
     ossl_ml_dsa_key_free(key);
+    return ret;
+}
+
+static int ml_dsa_newdata_bad_propq_test(void)
+{
+    int ret = 0;
+    EVP_KEYMGMT *keymgmt = NULL;
+    void *keydata = NULL;
+    OSSL_PARAM params[2];
+
+    if (do_fips)
+        return TEST_skip("FIPS not supported");
+
+    params[0] = OSSL_PARAM_construct_utf8_string(OSSL_PKEY_PARAM_PROPERTIES,
+        "provider=fail", 0);
+    params[1] = OSSL_PARAM_construct_end();
+
+    if (!TEST_ptr(keymgmt = EVP_KEYMGMT_fetch(lib_ctx, "ML-DSA-44", NULL)))
+        goto end;
+
+    if (!TEST_ptr_null(keydata = evp_keymgmt_newdata(keymgmt, params)))
+        goto end;
+
+    ret = 1;
+end:
+    EVP_KEYMGMT_free(keymgmt);
     return ret;
 }
 
@@ -753,6 +782,7 @@ const OPTIONS *test_get_options(void)
 {
     static const OPTIONS options[] = {
         OPT_TEST_OPTIONS_DEFAULT_USAGE,
+        { "fips", OPT_FIPS, '-', "Test with FIPS provider" },
         { "config", OPT_CONFIG_FILE, '<',
             "The configuration file to use for the libctx" },
         { NULL }
@@ -767,6 +797,9 @@ int setup_tests(void)
 
     while ((o = opt_next()) != OPT_EOF) {
         switch (o) {
+        case OPT_FIPS:
+            do_fips = 1;
+            break;
         case OPT_CONFIG_FILE:
             config_file = opt_arg();
             break;
@@ -797,6 +830,7 @@ int setup_tests(void)
     ADD_TEST(from_data_bad_input_test);
     ADD_TEST(ml_dsa_digest_sign_verify_test);
     ADD_TEST(ml_dsa_priv_pub_bad_t0_test);
+    ADD_TEST(ml_dsa_newdata_bad_propq_test);
 
     /*
      * Tested only in the default configuration, with a non-default provider

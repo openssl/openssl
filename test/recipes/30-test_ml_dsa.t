@@ -92,6 +92,6 @@ SKIP: {
     skip "FIPS provider version is too old for ML-DSA test", 1
         if !$exit;
 
-    ok(run(test(["ml_dsa_test", "-config",  $provconf])),
+    ok(run(test(["ml_dsa_test", "-fips", "-config",  $provconf])),
            "running ml_dsa_test with FIPS");
 }
