@@ -23,7 +23,6 @@
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
 #include "crypto/rsa.h"
-#include "crypto/rsa_params.h"
 #include "rsa_local.h"
 
 /* Set any parameters associated with pkey */
@@ -851,8 +850,10 @@ err:
     return rv;
 }
 
-static int rsa_int_import_from(const RSA_PARAMS *p, EVP_PKEY_CTX *pctx, int rsa_type)
+static int rsa_int_import_from(const OSSL_PARAM params[], void *vpctx,
+    int rsa_type)
 {
+    EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     RSA *rsa = ossl_rsa_new_with_ctx(pctx->libctx);
     RSA_PSS_PARAMS_30 rsa_pss_params = {
@@ -869,9 +870,8 @@ static int rsa_int_import_from(const RSA_PARAMS *p, EVP_PKEY_CTX *pctx, int rsa_
     RSA_clear_flags(rsa, RSA_FLAG_TYPE_MASK);
     RSA_set_flags(rsa, rsa_type);
 
-    if (!ossl_rsa_pss_params_30_fromdata_parsed(&rsa_pss_params,
-            &pss_defaults_set,
-            p, pctx->libctx))
+    if (!ossl_rsa_pss_params_30_fromdata(&rsa_pss_params, &pss_defaults_set,
+            params, pctx->libctx))
         goto err;
 
     switch (rsa_type) {
@@ -907,7 +907,7 @@ static int rsa_int_import_from(const RSA_PARAMS *p, EVP_PKEY_CTX *pctx, int rsa_
         goto err;
     }
 
-    if (!ossl_rsa_fromdata_parsed(rsa, p, 1))
+    if (!ossl_rsa_fromdata(rsa, params, 1))
         goto err;
 
     switch (rsa_type) {
@@ -943,22 +943,12 @@ static int rsa_pss_pkey_export_to(const EVP_PKEY *from, void *to_keydata,
 
 static int rsa_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    EVP_PKEY_CTX *pctx = vpctx;
-    RSA_PARAMS p;
-
-    if (pctx == NULL || !rsa_pkey_import_from_decoder(params, &p))
-        return 0;
-    return rsa_int_import_from(&p, pctx, RSA_FLAG_TYPE_RSA);
+    return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSA);
 }
 
 static int rsa_pss_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
 {
-    EVP_PKEY_CTX *pctx = vpctx;
-    RSA_PARAMS p;
-
-    if (pctx == NULL || !rsa_pss_pkey_import_from_decoder(params, &p))
-        return 0;
-    return rsa_int_import_from(&p, pctx, RSA_FLAG_TYPE_RSASSAPSS);
+    return rsa_int_import_from(params, vpctx, RSA_FLAG_TYPE_RSASSAPSS);
 }
 
 static int rsa_pkey_copy(EVP_PKEY *to, EVP_PKEY *from)
