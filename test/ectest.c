@@ -2113,39 +2113,6 @@ err:
     return r;
 }
 
-static int ossl_explicit_parameter_options_test(void)
-{
-    EC_GROUP *source = NULL, *imported = NULL;
-    OSSL_PARAM *params = NULL;
-    OSSL_PARAM *point_format;
-    int ret = 0;
-
-    if (!TEST_ptr(source = EC_GROUP_new_by_curve_name(NID_X9_62_prime256v1)))
-        goto err;
-    EC_GROUP_set_curve_name(source, NID_undef);
-    EC_GROUP_set_asn1_flag(source, OPENSSL_EC_EXPLICIT_CURVE);
-
-    if (!TEST_ptr(params = EC_GROUP_to_params(source, NULL, NULL, NULL))
-        || !TEST_ptr(imported = EC_GROUP_new_from_params(params, NULL, NULL))
-        || !TEST_int_eq(EC_GROUP_get_asn1_flag(imported),
-            OPENSSL_EC_EXPLICIT_CURVE)
-        || !TEST_ptr(point_format = OSSL_PARAM_locate(params,
-                         OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT))
-        || !TEST_true(OSSL_PARAM_set_utf8_string(point_format, "invalid")))
-        goto err;
-
-    EC_GROUP_free(imported);
-    imported = NULL;
-    if (!TEST_ptr_null(imported = EC_GROUP_new_from_params(params, NULL, NULL)))
-        goto err;
-    ret = 1;
-err:
-    EC_GROUP_free(source);
-    EC_GROUP_free(imported);
-    OSSL_PARAM_free(params);
-    return ret;
-}
-
 #ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
 /*-
  * random 256-bit explicit parameters curve, cofactor absent
@@ -3185,7 +3152,6 @@ int setup_tests(void)
 
     ADD_TEST(parameter_test);
     ADD_TEST(ossl_parameter_test);
-    ADD_TEST(ossl_explicit_parameter_options_test);
 #ifndef OPENSSL_NO_EC_EXPLICIT_CURVES
     ADD_TEST(cofactor_range_test);
 #endif

@@ -1815,8 +1815,6 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
         EC_GROUP_free(group);
         group = named_group;
     }
-    if (!ossl_ec_group_set_params_parsed(group, params))
-        goto err;
     /* We've imported the group from explicit parameters, set it so. */
     group->decoded_from_explicit_params = 1;
     ok = 1;
