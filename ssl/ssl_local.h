@@ -1507,6 +1507,9 @@ struct ssl_connection_st {
             const struct sigalg_lookup_st *sigalg;
             /* Pointer to certificate we use */
             CERT_PKEY *cert;
+            /* Client identity awaiting verification */
+            STACK_OF(X509) *pending_peer_chain;
+            EVP_PKEY *pending_peer_rpk;
             /*
              * signature algorithms peer reports: e.g. supported signature
              * algorithms extension for server or as part of a certificate
