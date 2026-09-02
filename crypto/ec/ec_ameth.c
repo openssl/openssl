@@ -21,7 +21,6 @@
 #include <openssl/asn1t.h>
 #include "crypto/asn1.h"
 #include "crypto/evp.h"
-#include "crypto/ec_params.h"
 #include "crypto/x509.h"
 #include <openssl/core_names.h>
 #include <openssl/param_build.h>
@@ -599,20 +598,15 @@ static int ec_pkey_import_from(const OSSL_PARAM params[], void *vpctx)
     EVP_PKEY_CTX *pctx = vpctx;
     EVP_PKEY *pkey = EVP_PKEY_CTX_get0_pkey(pctx);
     EC_KEY *ec = EC_KEY_new_ex(pctx->libctx, pctx->propquery);
-    EC_PARAMS p;
 
     if (ec == NULL) {
         ERR_raise(ERR_LIB_EC, ERR_R_EC_LIB);
         return 0;
     }
-    if (!ec_pkey_import_from_decoder(params, &p)) {
-        EC_KEY_free(ec);
-        return 0;
-    }
 
-    if (!ossl_ec_group_fromdata_parsed(ec, &p)
-        || !ossl_ec_key_otherparams_fromdata_parsed(ec, &p)
-        || !ossl_ec_key_fromdata_parsed(ec, &p, 1)
+    if (!ossl_ec_group_fromdata(ec, params)
+        || !ossl_ec_key_otherparams_fromdata(ec, params)
+        || !ossl_ec_key_fromdata(ec, params, 1)
         || !EVP_PKEY_assign_EC_KEY(pkey, ec)) {
         EC_KEY_free(ec);
         return 0;

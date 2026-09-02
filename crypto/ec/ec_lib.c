@@ -21,7 +21,6 @@
 #include <openssl/opensslv.h>
 #include <openssl/param_build.h>
 #include "crypto/ec.h"
-#include "crypto/ec_params.h"
 #include "crypto/bn.h"
 #include "internal/nelem.h"
 #include "ec_local.h"
@@ -1549,34 +1548,34 @@ static EC_GROUP *group_new_from_name(const OSSL_PARAM *p,
 }
 
 /* These parameters can be set directly into an EC_GROUP */
-int ossl_ec_group_set_params_parsed(EC_GROUP *group, const EC_PARAMS *params)
+int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
 {
     int encoding_flag = -1, format = -1;
+    const OSSL_PARAM *p;
 
-    if (params == NULL)
-        return 0;
-
-    if (params->pt_format != NULL) {
-        if (!ossl_ec_pt_format_param2id(params->pt_format, &format)) {
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT);
+    if (p != NULL) {
+        if (!ossl_ec_pt_format_param2id(p, &format)) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
             return 0;
         }
         EC_GROUP_set_point_conversion_form(group, format);
     }
 
-    if (params->encoding != NULL) {
-        if (!ossl_ec_encoding_param2id(params->encoding, &encoding_flag)) {
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
+    if (p != NULL) {
+        if (!ossl_ec_encoding_param2id(p, &encoding_flag)) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_FORM);
             return 0;
         }
         EC_GROUP_set_asn1_flag(group, encoding_flag);
     }
     /* Optional seed */
-    if (params->seed != NULL) {
+    p = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_SEED);
+    if (p != NULL) {
         /* The seed is allowed to be NULL */
-        if (params->seed->data_type != OSSL_PARAM_OCTET_STRING
-            || !EC_GROUP_set_seed(group, params->seed->data,
-                params->seed->data_size)) {
+        if (p->data_type != OSSL_PARAM_OCTET_STRING
+            || !EC_GROUP_set_seed(group, p->data, p->data_size)) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_SEED);
             return 0;
         }
@@ -1584,16 +1583,7 @@ int ossl_ec_group_set_params_parsed(EC_GROUP *group, const EC_PARAMS *params)
     return 1;
 }
 
-int ossl_ec_group_set_params(EC_GROUP *group, const OSSL_PARAM params[])
-{
-    EC_PARAMS p;
-
-    if (!ec_group_fromdata_decoder(params, &p))
-        return 0;
-    return ossl_ec_group_set_params_parsed(group, &p);
-}
-
-EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
+EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
     OSSL_LIB_CTX *libctx, const char *propq)
 {
     const OSSL_PARAM *ptmp;
@@ -1615,21 +1605,19 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
 #endif
 
     /* This is the simple named group case */
-    if (params == NULL)
-        return NULL;
-
-    ptmp = params->group_name;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_GROUP_NAME);
     if (ptmp != NULL) {
         int decoded = 0;
 
         if ((group = group_new_from_name(ptmp, libctx, propq)) == NULL)
             return NULL;
-        if (!ossl_ec_group_set_params_parsed(group, params)) {
+        if (!ossl_ec_group_set_params(group, params)) {
             EC_GROUP_free(group);
             return NULL;
         }
 
-        ptmp = params->decoded;
+        ptmp = OSSL_PARAM_locate_const(params,
+            OSSL_PKEY_PARAM_EC_DECODED_FROM_EXPLICIT_PARAMS);
         if (ptmp != NULL && !OSSL_PARAM_get_int(ptmp, &decoded)) {
             ERR_raise(ERR_LIB_EC, EC_R_WRONG_CURVE_PARAMETERS);
             EC_GROUP_free(group);
@@ -1659,7 +1647,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
         goto err;
     }
 
-    ptmp = params->field_type;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_FIELD_TYPE);
     if (ptmp == NULL || ptmp->data_type != OSSL_PARAM_UTF8_STRING) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_FIELD);
         goto err;
@@ -1676,19 +1664,19 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
         goto err;
     }
 
-    pa = params->a;
+    pa = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_A);
     if (!OSSL_PARAM_get_BN(pa, &a)) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_A);
         goto err;
     }
-    pb = params->b;
+    pb = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_B);
     if (!OSSL_PARAM_get_BN(pb, &b)) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_B);
         goto err;
     }
 
     /* extract the prime number or irreducible polynomial */
-    ptmp = params->p;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_P);
     if (!OSSL_PARAM_get_BN(ptmp, &p)) {
         ERR_raise(ERR_LIB_EC, EC_R_INVALID_P);
         goto err;
@@ -1730,7 +1718,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
     }
 
     /* Optional seed */
-    ptmp = params->seed;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_SEED);
     if (ptmp != NULL) {
         if (ptmp->data_type != OSSL_PARAM_OCTET_STRING) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_SEED);
@@ -1741,7 +1729,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
     }
 
     /* generator base point */
-    ptmp = params->generator;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_GENERATOR);
     if (ptmp == NULL
         || ptmp->data_type != OSSL_PARAM_OCTET_STRING
         || ptmp->data_size == 0) {
@@ -1759,7 +1747,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
     }
 
     /* order */
-    ptmp = params->order;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ORDER);
     if (!OSSL_PARAM_get_BN(ptmp, &order)
         || (BN_is_negative(order) || BN_is_zero(order))
         || (BN_num_bits(order) > (int)field_bits + 1)) { /* Hasse bound */
@@ -1768,7 +1756,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
     }
 
     /* Optional cofactor */
-    ptmp = params->cofactor;
+    ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_COFACTOR);
     if (ptmp != NULL) {
         cofactor = BN_CTX_get(bnctx);
         if (cofactor == NULL || !OSSL_PARAM_get_BN(ptmp, &cofactor)) {
@@ -1799,7 +1787,7 @@ EC_GROUP *ossl_ec_group_new_from_params_parsed(const EC_PARAMS *params,
          * If we did not find a named group then the encoding should be explicit
          * if it was specified
          */
-        ptmp = params->encoding;
+        ptmp = OSSL_PARAM_locate_const(params, OSSL_PKEY_PARAM_EC_ENCODING);
         if (ptmp != NULL
             && !ossl_ec_encoding_param2id(ptmp, &encoding_flag)) {
             ERR_raise(ERR_LIB_EC, EC_R_INVALID_ENCODING);
@@ -1829,16 +1817,6 @@ err:
 
     return group;
 #endif /* FIPS_MODULE */
-}
-
-EC_GROUP *EC_GROUP_new_from_params(const OSSL_PARAM params[],
-    OSSL_LIB_CTX *libctx, const char *propq)
-{
-    EC_PARAMS p;
-
-    if (!ec_group_fromdata_decoder(params, &p))
-        return NULL;
-    return ossl_ec_group_new_from_params_parsed(&p, libctx, propq);
 }
 
 OSSL_PARAM *EC_GROUP_to_params(const EC_GROUP *group, OSSL_LIB_CTX *libctx,
