@@ -980,6 +980,28 @@ end:
  * (RFC 9147 sections 4 and 4.5.2).
  */
 
+/*
+ * RFC 9147 section 6.1 assigns epoch 2 to handshake traffic and epoch 3 to
+ * the first application traffic keys.
+ */
+#define DTLS13_HANDSHAKE_EPOCH 2
+#define DTLS13_APPLICATION_EPOCH 3
+
+/*
+ * Genuine sequence numbers are close to zero in these tests. A sequence
+ * number of 100 is beyond the 64 record replay window, so accepting it would
+ * make the next genuine record stale.
+ */
+#define DTLS13_FAR_AHEAD_SEQUENCE 100
+
+/*
+ * DTLSPlaintext has a 48 bit sequence number. Its maximum moves the replay
+ * window as far forward as the record format permits. Sequence zero is the
+ * first protected record in a newly installed epoch.
+ */
+#define DTLS13_MAX_PLAINTEXT_SEQUENCE ((((uint64_t)1) << 48) - 1)
+#define DTLS13_FIRST_PROTECTED_SEQUENCE 0
+
 static size_t make_forged_plaintext_record(unsigned char *out,
     unsigned int epoch, uint64_t seq,
     unsigned int type,
@@ -1019,6 +1041,11 @@ static int do_dtls13_handshake(SSL *sssl, SSL *cssl)
 {
     int i;
 
+    /*
+     * An in memory DTLS 1.3 handshake completes in far fewer than 64 calls,
+     * even when its flights are fragmented. This isn't a protocol limit: it
+     * leaves ample room while making a stalled handshake fail promptly.
+     */
     for (i = 0; i < 64; i++) {
         int rc = SSL_connect(cssl);
         int rs = SSL_accept(sssl);
@@ -1100,29 +1127,33 @@ static int test_dtls13_forged_plaintext_alert(int idx)
     switch (idx) {
     case 0:
         /* Spoofed close_notify */
-        pktlen = make_forged_alert(pkt, 3, 100, SSL3_AL_WARNING,
+        pktlen = make_forged_alert(pkt, DTLS13_APPLICATION_EPOCH,
+            DTLS13_FAR_AHEAD_SEQUENCE, SSL3_AL_WARNING,
             SSL3_AD_CLOSE_NOTIFY);
         break;
     case 1:
         /* Spoofed fatal alert (handshake_failure) */
-        pktlen = make_forged_alert(pkt, 3, 100, SSL3_AL_FATAL,
+        pktlen = make_forged_alert(pkt, DTLS13_APPLICATION_EPOCH,
+            DTLS13_FAR_AHEAD_SEQUENCE, SSL3_AL_FATAL,
             SSL3_AD_HANDSHAKE_FAILURE);
         break;
     case 2:
         /* user_cancelled with seq 2^48-1 (replay-window poison) */
-        pktlen = make_forged_alert(pkt, 3, (((uint64_t)1) << 48) - 1,
-            SSL3_AL_WARNING, SSL_AD_USER_CANCELLED);
+        pktlen = make_forged_alert(pkt, DTLS13_APPLICATION_EPOCH,
+            DTLS13_MAX_PLAINTEXT_SEQUENCE, SSL3_AL_WARNING,
+            SSL_AD_USER_CANCELLED);
         break;
     case 3:
         /* Trip the warning limit while preserving record framing. */
         for (i = 0; i < 5; i++)
-            pktlen += make_forged_alert(pkt + pktlen, 3, 10 + i,
-                SSL3_AL_WARNING,
+            pktlen += make_forged_alert(pkt + pktlen,
+                DTLS13_APPLICATION_EPOCH, 10 + i, SSL3_AL_WARNING,
                 SSL_AD_USER_CANCELLED);
         break;
     case 4:
         /* Malformed alert body (fragment length 3) */
-        pktlen = make_forged_alert(pkt, 3, 100, SSL3_AL_FATAL,
+        pktlen = make_forged_alert(pkt, DTLS13_APPLICATION_EPOCH,
+            DTLS13_FAR_AHEAD_SEQUENCE, SSL3_AL_FATAL,
             SSL3_AD_HANDSHAKE_FAILURE);
         pkt[12] = 3;
         pkt[15] = 0xff;
@@ -1130,7 +1161,8 @@ static int test_dtls13_forged_plaintext_alert(int idx)
         break;
     case 5:
         /* Alert with an overlong body (longer than content + tag) */
-        pktlen = make_forged_alert(pkt, 3, 100, SSL3_AL_WARNING,
+        pktlen = make_forged_alert(pkt, DTLS13_APPLICATION_EPOCH,
+            DTLS13_FAR_AHEAD_SEQUENCE, SSL3_AL_WARNING,
             SSL3_AD_CLOSE_NOTIFY);
         pkt[11] = 0;
         pkt[12] = 40;
@@ -1143,9 +1175,9 @@ static int test_dtls13_forged_plaintext_alert(int idx)
             unsigned char body[40];
 
             memset(body, 0xbb, sizeof(body));
-            pktlen = make_forged_plaintext_record(pkt, 3, 100,
-                SSL3_RT_HANDSHAKE, body,
-                sizeof(body));
+            pktlen = make_forged_plaintext_record(pkt,
+                DTLS13_APPLICATION_EPOCH, DTLS13_FAR_AHEAD_SEQUENCE,
+                SSL3_RT_HANDSHAKE, body, sizeof(body));
         }
         break;
     case 7:
@@ -1154,9 +1186,9 @@ static int test_dtls13_forged_plaintext_alert(int idx)
             unsigned char body[40];
 
             memset(body, 0xcc, sizeof(body));
-            pktlen = make_forged_plaintext_record(pkt, 3, 100,
-                SSL3_RT_ACK, body,
-                sizeof(body));
+            pktlen = make_forged_plaintext_record(pkt,
+                DTLS13_APPLICATION_EPOCH, DTLS13_FAR_AHEAD_SEQUENCE,
+                SSL3_RT_ACK, body, sizeof(body));
         }
         break;
     default:
@@ -1224,15 +1256,18 @@ static int test_dtls13_forged_plaintext_alert_plant(int idx)
 
     switch (idx) {
     case 0:
-        pktlen = make_forged_alert(pkt, 2, (((uint64_t)1) << 48) - 1,
-            SSL3_AL_WARNING, SSL_AD_USER_CANCELLED);
+        pktlen = make_forged_alert(pkt, DTLS13_HANDSHAKE_EPOCH,
+            DTLS13_MAX_PLAINTEXT_SEQUENCE, SSL3_AL_WARNING,
+            SSL_AD_USER_CANCELLED);
         break;
     case 1:
-        pktlen = make_forged_alert(pkt, 2, 0, SSL3_AL_FATAL,
+        pktlen = make_forged_alert(pkt, DTLS13_HANDSHAKE_EPOCH,
+            DTLS13_FIRST_PROTECTED_SEQUENCE, SSL3_AL_FATAL,
             SSL3_AD_HANDSHAKE_FAILURE);
         break;
     case 2:
-        pktlen = make_forged_alert(pkt, 2, 0, SSL3_AL_WARNING,
+        pktlen = make_forged_alert(pkt, DTLS13_HANDSHAKE_EPOCH,
+            DTLS13_FIRST_PROTECTED_SEQUENCE, SSL3_AL_WARNING,
             SSL_AD_USER_CANCELLED);
         break;
     default:
@@ -1268,6 +1303,11 @@ end:
 /* Epoch 0 plaintext alerts must still reach the handshake. */
 static int test_dtls13_epoch0_plaintext_alert(void)
 {
+#ifdef OPENSSL_NO_EC
+    const char *group = "ffdhe3072";
+#else
+    const char *group = "P-256";
+#endif
     SSL_CTX *sctx = NULL, *cctx = NULL;
     SSL *sssl = NULL, *cssl = NULL;
     unsigned char pkt[15];
@@ -1279,6 +1319,11 @@ static int test_dtls13_epoch0_plaintext_alert(void)
             DTLS1_3_VERSION, DTLS1_3_VERSION,
             &sctx, &cctx, cert, privkey)))
         return 0;
+
+    /* Keep ClientHello in one record so sequence number 1 remains unused. */
+    if (!TEST_true(SSL_CTX_set1_groups_list(sctx, group))
+        || !TEST_true(SSL_CTX_set1_groups_list(cctx, group)))
+        goto end;
 
     if (!TEST_true(create_ssl_objects(sctx, cctx, &sssl, &cssl, NULL, NULL)))
         goto end;
