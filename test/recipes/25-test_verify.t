@@ -70,7 +70,7 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 222;
+plan tests => 223;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -717,6 +717,18 @@ ok(!run(app(["openssl", "verify", "-auth_level", "1",
                <$fh>
            }),
    "Delta CRL with onlySomeReasons is not accepted as complete CRL");
+
+# -crl_download must say why no CRL could be obtained
+my $no_cdp_stderr = "crl-download-no-cdp.err";
+ok(!run(app(["openssl", "verify", "-auth_level", "1",
+             "-trusted", srctop_file(@certspath, "root-cert.pem"),
+             "-untrusted", srctop_file(@certspath, "ca-cert.pem"),
+             "-crl_check", "-crl_download",
+             srctop_file(@certspath, "ee-cert.pem")],
+            stderr => $no_cdp_stderr))
+   && grep(/no distribution point/,
+           do { open my $fh, '<', $no_cdp_stderr; <$fh> }),
+   "-crl_download reports missing CRL distribution point");
 
 # CAstore option
 my $rootcertname = "root-cert";
