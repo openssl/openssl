@@ -15,7 +15,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_MAX_SEND_FRAGMENT',
                            'maxfrag',  'size_t',       "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
                           ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_AAD',
-                           'mb_aad',   'size_t',       "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
+                           'mb_aad',   'octet_string', "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
                           ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_INTERLEAVE',
                            'ileave',   'uint',         "#if !defined(OPENSSL_NO_MULTIBLOCK)"],
                           ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK_ENC',
