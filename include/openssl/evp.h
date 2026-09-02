@@ -1950,6 +1950,11 @@ const char *EVP_SKEY_get0_skeymgmt_name(const EVP_SKEY *skey);
 const char *EVP_SKEY_get0_provider_name(const EVP_SKEY *skey);
 EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
     OSSL_PROVIDER *prov, const char *propquery);
+int EVP_SKEY_get0_local_keyid(const EVP_SKEY *skey,
+    const unsigned char **id, size_t *len);
+int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
+    const unsigned char **oid, size_t *oid_len,
+    const unsigned char **params, size_t *params_len);
 
 /*
  * The seemingly redundant expression (char *)(strstr(curve, "")) serves to

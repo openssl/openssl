@@ -50,5 +50,10 @@ const OSSL_DISPATCH ossl_aes_skeymgmt_functions[] = {
     { OSSL_FUNC_SKEYMGMT_EXPORT, (void (*)(void))aes_export },
     { OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS,
         (void (*)(void))generic_imp_settable_params },
+    { OSSL_FUNC_SKEYMGMT_GET_KEY_ID, (void (*)(void))generic_get_key_id },
+    { OSSL_FUNC_SKEYMGMT_GET_LOCAL_KEYID,
+        (void (*)(void))generic_get_local_keyid },
+    { OSSL_FUNC_SKEYMGMT_GET_ALGORITHM_ID,
+        (void (*)(void))generic_get_algorithm_id },
     OSSL_DISPATCH_END
 };

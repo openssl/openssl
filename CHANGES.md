@@ -58,6 +58,10 @@ OpenSSL 4.1
 
    *Daniel Kubec and Viktor Dukhovni*
 
+ * Implement extended support of metadata for symmetric key objects (EVP_SKEY).
+
+   *Dmitry Belyavskiy*
+
  * Declare support for AArch64 Guarded Control Stack (GCS) in assembly code.
 
    When building with compilers that support GCS (Clang 18+, GCC 15+),
