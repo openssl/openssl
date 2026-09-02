@@ -328,6 +328,7 @@ int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
     size_t outsize, const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
+    int rv;
 
     if (inl == 0) {
         *outl = 0;
@@ -339,10 +340,11 @@ int ossl_gcm_stream_update(void *vctx, unsigned char *out, size_t *outl,
         return 0;
     }
 
-    if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0) {
+    rv = gcm_cipher_internal(ctx, out, outl, in, inl);
+    if (rv == 0) /* no specific reason was set */
         ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+    if (rv <= 0)
         return 0;
-    }
     return 1;
 }
 
@@ -356,6 +358,8 @@ int ossl_gcm_stream_final(void *vctx, unsigned char *out, size_t *outl,
         return 0;
 
     i = gcm_cipher_internal(ctx, out, outl, NULL, 0);
+    if (i == 0)
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
     if (i <= 0)
         return 0;
 
@@ -368,6 +372,7 @@ int ossl_gcm_cipher(void *vctx,
     const unsigned char *in, size_t inl)
 {
     PROV_GCM_CTX *ctx = (PROV_GCM_CTX *)vctx;
+    int rv;
 
     if (!ossl_prov_is_running())
         return 0;
@@ -377,7 +382,10 @@ int ossl_gcm_cipher(void *vctx,
         return 0;
     }
 
-    if (gcm_cipher_internal(ctx, out, outl, in, inl) <= 0)
+    rv = gcm_cipher_internal(ctx, out, outl, in, inl);
+    if (rv == 0)
+        ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+    if (rv <= 0)
         return 0;
 
     *outl = inl;
@@ -423,6 +431,16 @@ static int on_preupdate_generate_iv(PROV_GCM_CTX *ctx)
     return 1;
 }
 
+/*
+ * Return values:
+ *   1  success
+ *   0  generic failure; the caller raises PROV_R_CIPHER_OPERATION_FAILED
+ *  -1  AAD length overflow; PROV_R_CIPHER_OPERATION_FAILED already raised
+ *  -2  late AAD; PROV_R_UPDATE_CALL_OUT_OF_ORDER already raised
+ *  -3  tag not set; PROV_R_TAG_NOT_SET already raised
+ * A negative return means a specific reason is already on the queue, so the
+ * caller must not add the generic one.
+ */
 static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     size_t *padlen, const unsigned char *in,
     size_t len)
@@ -457,8 +475,14 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
     if (in != NULL) {
         /*  The input is AAD if out is NULL */
         if (out == NULL) {
-            if (!hw->aadupdate(ctx, in, len))
+            rv = hw->aadupdate(ctx, in, len);
+            if (rv == -2) /* AAD after payload: out of order */
+                ERR_raise(ERR_LIB_PROV, PROV_R_UPDATE_CALL_OUT_OF_ORDER);
+            else if (rv == -1) /* AAD length overflow: no dedicated reason */
+                ERR_raise(ERR_LIB_PROV, PROV_R_CIPHER_OPERATION_FAILED);
+            if (rv <= 0)
                 goto err;
+            rv = 0;
         } else {
             /* The input is ciphertext OR plaintext */
             if (!hw->cipherupdate(ctx, in, len, out))
@@ -468,6 +492,7 @@ static int gcm_cipher_internal(PROV_GCM_CTX *ctx, unsigned char *out,
         /* The tag must be set before actually decrypting data */
         if (!ctx->enc && ctx->taglen == UNINITIALISED_SIZET) {
             ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
+            rv = -3;
             goto err;
         }
         if (!hw->cipherfinal(ctx, ctx->buf))
