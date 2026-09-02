@@ -60,7 +60,6 @@ static int verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
 static unsigned int timer_cb(SSL *s, unsigned int timer_us)
 {
     ++timer_cb_count;
-
     if (timer_us == 0)
         return 50000;
     else
@@ -681,6 +680,416 @@ end:
     return testresult;
 }
 
+/*
+ * frag_bio and the four retransmit tests below need DTLS1.2
+ */
+#ifndef OPENSSL_NO_DTLS1_2
+
+/*
+ * Number of times the retransmit timer is fired while a write is parked, in
+ * each of the four tests below
+ */
+#define NUM_RETRANSMITS 3
+
+typedef struct {
+    BIO *bio;
+    int allowed; /* number of fragment writes to let through before suspending */
+    int write_calls; /* number of times frag_write() has been invoked at all */
+} frag_bio;
+
+/*
+ * Each call to this function corresponds to exactly one DTLS fragment being
+ * handed to the BIO by dtls1_do_write(). Once |allowed| fragments have been
+ * let through, every further write suspends (WANT_WRITE) until the test
+ * bumps |allowed| again.
+ */
+static int frag_write(BIO *bio, const char *buf, size_t len, size_t *written)
+{
+    frag_bio *f = BIO_get_data(bio);
+
+    BIO_clear_retry_flags(bio);
+
+    f->write_calls++;
+
+    if (f->allowed <= 0) {
+        BIO_set_retry_write(bio);
+        *written = 0;
+        return 0;
+    }
+    f->allowed--;
+
+    if (!BIO_write_ex(f->bio, buf, len, written)) {
+        fprintf(stderr, "Failed to send data via BIO_write_ex\n");
+        return 0;
+    }
+
+    return 1;
+}
+
+static int frag_read(BIO *bio, char *buf, size_t buf_len, size_t *readbytes)
+{
+    frag_bio *f = BIO_get_data(bio);
+    return BIO_read_ex(f->bio, buf, buf_len, readbytes);
+}
+
+static long frag_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    frag_bio *f = BIO_get_data(bio);
+    return BIO_ctrl(f->bio, cmd, num, ptr);
+}
+
+static int frag_puts(BIO *bio, const char *str)
+{
+    size_t written;
+    return frag_write(bio, str, strlen(str), &written) ? (int)written : -1;
+}
+
+static int frag_create(BIO *bio)
+{
+    frag_bio *f = OPENSSL_zalloc(sizeof(*f));
+    if (f == NULL)
+        return 0;
+    BIO_set_data(bio, f);
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int frag_destroy(BIO *bio)
+{
+    frag_bio *f = BIO_get_data(bio);
+    if (f == NULL)
+        return 1;
+
+    BIO_free(f->bio);
+    OPENSSL_free(f);
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+    return 1;
+}
+
+static BIO_METHOD *frag_method(void)
+{
+    static BIO_METHOD *m = NULL;
+    if (m == NULL) {
+        m = BIO_meth_new(BIO_TYPE_SOURCE_SINK | BIO_TYPE_FILTER, "fragment-limited dgram");
+        BIO_meth_set_write_ex(m, frag_write);
+        BIO_meth_set_read_ex(m, frag_read);
+        BIO_meth_set_ctrl(m, frag_ctrl);
+        BIO_meth_set_puts(m, frag_puts);
+        BIO_meth_set_create(m, frag_create);
+        BIO_meth_set_destroy(m, frag_destroy);
+    }
+    return m;
+}
+
+static BIO *frag_new(BIO *bio, int allowed)
+{
+    BIO *b = BIO_new(frag_method());
+    frag_bio *f;
+    if (b == NULL) {
+        BIO_free(bio);
+        return NULL;
+    }
+    f = BIO_get_data(b);
+    f->bio = bio;
+    f->allowed = allowed;
+    return b;
+}
+
+/*
+ * DTLS1.2 only. Exercises dtls1_handle_timeout()'s write_state guard (see
+ * d1_lib.c): while a write is parked mid-flight (WANT_WRITE, suspended here
+ * by a fragment-limiting BIO), a firing retransmit timer must not touch the
+ * retransmit queue at all - dtls1_retransmit_sent_messages() should never be
+ * entered, since retransmitting a message concurrently with the live write
+ * reusing the very same s->init_off/s->init_num/s->d1->w_msg fields would
+ * corrupt whichever write resumes second.
+ *
+ * Without the guard, letting that retransmit run ClientHello to completion
+ * while its own live write is still parked resets s->init_off/s->init_num
+ * to 0/0 out from under that write - so when the app resumes with
+ * SSL_connect(), dtls1_do_write() re-enters believing s->init_off == 0 means
+ * a brand new message is starting, when s->init_num no longer matches
+ * ClientHello's real length the way a fresh message's would - hitting an
+ * internal entry assertion and calling OPENSSL_die()/abort().
+ *
+ * The client never calls SSL_connect() again until the very end, so the
+ * server is never driven far enough to respond - there's nothing to
+ * retransmit ClientHello against except the timer, driven purely by
+ * DTLSv1_get_timeout()/DTLSv1_handle_timeout().
+ */
+static int test_dtls_client_retransmit(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    int ret, err, i;
+    struct timeval tv;
+    static unsigned char alpn[750];
+    size_t j, used = 0;
+    BIO *c_to_s_bio = NULL;
+    BIO *frag_wbio;
+    frag_bio *fb;
+    int write_calls_before;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    SSL_CTX_set_verify(cctx, SSL_VERIFY_NONE, NULL);
+
+    /* Pad the ClientHello out via ALPN so it needs multiple fragments. */
+    for (j = 0; j < 3; j++) {
+        char name[250];
+        int n = snprintf(name, sizeof(name),
+            "proto-%04u-%s", (unsigned int)j,
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpadpad"
+            "padpadpadpadpadpadpadpadpadpadpadpadpadpad");
+
+        if (!TEST_int_ge(n, 0) || !TEST_size_t_lt((size_t)n, sizeof(name)))
+            goto end;
+        if (!TEST_size_t_le(used + 1 + (size_t)n, sizeof(alpn)))
+            goto end;
+
+        alpn[used++] = (unsigned char)n;
+        memcpy(alpn + used, name, (size_t)n);
+        used += (size_t)n;
+    }
+    if (!TEST_false(SSL_CTX_set_alpn_protos(cctx, alpn, (unsigned int)used)))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * Pin the MTU so fragmentation of the ClientHello (padded out via ALPN
+     * above) is deterministic. SSL_OP_NO_QUERY_MTU stops dtls1_query_mtu()
+     * from overriding this with a value queried from the BIO.
+     */
+    SSL_set_options(clientssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_true(SSL_set_mtu(clientssl, 256)))
+        goto end;
+
+    /*
+     * Wrap the client's write BIO in our fragment-limiting filter, initially
+     * allowing only the ClientHello's first fragment through. SSL_get_wbio()
+     * is a borrowed reference, and SSL_set0_wbio() will free whatever the old
+     * wbio pointer was as soon as we install the replacement - so we need our
+     * own ref on the underlying bio before frag_new() stores it internally,
+     * otherwise the wrapper is left holding a dangling pointer.
+     */
+    c_to_s_bio = SSL_get_wbio(clientssl);
+
+    if (!TEST_ptr(c_to_s_bio) || !TEST_true(BIO_up_ref(c_to_s_bio)))
+        goto end;
+
+    frag_wbio = frag_new(c_to_s_bio, 1);
+    if (!TEST_ptr(frag_wbio)) {
+        BIO_free(c_to_s_bio);
+        goto end;
+    }
+    fb = BIO_get_data(frag_wbio);
+
+    SSL_set0_wbio(clientssl, frag_wbio);
+
+    DTLS_set_timer_cb(clientssl, timer_cb);
+
+    /*
+     * Flight 1: frag_wbio's budget of 1 write buys exactly ClientHello's
+     * first fragment - that's all that goes out. The next write (its
+     * second fragment) is what actually suspends, leaving write_state
+     * parked at WRITE_STATE_SEND, waiting to resume ClientHello.
+     */
+    ret = SSL_connect(clientssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(clientssl, ret), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Let the retransmit timer fire, NUM_RETRANSMITS times, while the write
+     * above is still parked. fb->allowed = 100 so our custom BIO isn't what
+     * would block a retransmit, if one were sent. frag_write()'s call
+     * counter shouldn't move at all, round after round.
+     */
+    fb->allowed = 100;
+
+    for (i = 0; i < NUM_RETRANSMITS; i++) {
+        write_calls_before = fb->write_calls;
+
+        if (!TEST_int_gt((int)DTLSv1_get_timeout(clientssl, &tv), 0))
+            goto end;
+
+        /* Wait for the retransmit timer to actually expire */
+        OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+
+        if (!TEST_int_ge((int)DTLSv1_handle_timeout(clientssl), 0))
+            goto end;
+
+        if (!TEST_int_eq(fb->write_calls, write_calls_before))
+            goto end;
+    }
+
+    /*
+     * Resume the original suspended write. This is the call expected to
+     * hit the entry assertion described above if the guard weren't there.
+     */
+    ret = SSL_connect(clientssl);
+    err = SSL_get_error(clientssl, ret);
+
+    /*
+     * If we get here at all (i.e. we didn't just abort()), the resume
+     * should look like an ordinary handshake continuation - WANT_READ or
+     * WANT_WRITE, not an internal failure.
+     */
+    if (!TEST_false(err == SSL_ERROR_SSL || err == SSL_ERROR_SYSCALL))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+/*
+ * DTLS1.2 only. Server-side counterpart to test_dtls_client_retransmit():
+ * same write_state guard, but Certificate suspends mid-write during the
+ * server's flight instead of ClientHello. The cipher is pinned to a
+ * static-RSA suite so the flight is just ServerHello + Certificate +
+ * ServerHelloDone (no ServerKeyExchange); with a 256 byte MTU, ServerHello
+ * fits in a single fragment but Certificate does not.
+ *
+ * The client never calls SSL_accept() again until the very end, so the
+ * server is driven purely by DTLSv1_get_timeout()/DTLSv1_handle_timeout().
+ */
+static int test_dtls_server_retransmit(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *serverssl = NULL, *clientssl = NULL;
+    int testresult = 0;
+    int ret, err, i;
+    struct timeval tv;
+    BIO *s_to_c_bio = NULL;
+    BIO *frag_wbio;
+    frag_bio *fb;
+    int write_calls_before;
+
+    if (!TEST_true(create_ssl_ctx_pair(NULL, DTLS_server_method(),
+            DTLS_client_method(),
+            DTLS1_2_VERSION, DTLS1_2_VERSION,
+            &sctx, &cctx, cert, privkey)))
+        return 0;
+
+    /* Static RSA cipher: no ServerKeyExchange, keeps the flight simple. */
+    if (!TEST_true(SSL_CTX_set_cipher_list(cctx, "AES128-SHA")))
+        goto end;
+
+    if (!TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL)))
+        goto end;
+
+    /*
+     * Pin the server's MTU so its flight fragments deterministically. The
+     * client is left alone - its ClientHello is small and unfragmented.
+     */
+    SSL_set_options(serverssl, SSL_OP_NO_QUERY_MTU);
+    if (!TEST_true(SSL_set_mtu(serverssl, 256)))
+        goto end;
+
+    /* Wrap only the server's write BIO in our fragment-limiting filter. */
+    s_to_c_bio = SSL_get_wbio(serverssl);
+
+    if (!TEST_ptr(s_to_c_bio) || !TEST_true(BIO_up_ref(s_to_c_bio)))
+        goto end;
+
+    /* Only let ServerHello and Certificate's first fragment out initially. */
+    frag_wbio = frag_new(s_to_c_bio, 2);
+    if (!TEST_ptr(frag_wbio)) {
+        BIO_free(s_to_c_bio);
+        goto end;
+    }
+    fb = BIO_get_data(frag_wbio);
+
+    SSL_set0_wbio(serverssl, frag_wbio);
+
+    DTLS_set_timer_cb(serverssl, timer_cb);
+
+    /* Flight 1: the client sends its ClientHello without any restriction. */
+    if (!TEST_int_le(SSL_connect(clientssl), 0))
+        goto end;
+
+    /*
+     * Flight 2: frag_wbio's budget of 2 writes buys exactly ServerHello in
+     * full plus the first fragment of Certificate - that's all that goes
+     * out. The next write (Certificate's second fragment) is what actually
+     * suspends, leaving write_state parked at WRITE_STATE_SEND, waiting to
+     * resume Certificate specifically.
+     */
+    ret = SSL_accept(serverssl);
+    if (!TEST_int_le(ret, 0)
+        || !TEST_int_eq(SSL_get_error(serverssl, ret), SSL_ERROR_WANT_WRITE))
+        goto end;
+
+    /*
+     * Let the retransmit timer fire, NUM_RETRANSMITS times, while the write
+     * above is still parked. fb->allowed = 100 so our custom BIO isn't what
+     * would block a retransmit, if one were sent. frag_write()'s call
+     * counter shouldn't move at all, round after round.
+     */
+    fb->allowed = 100;
+
+    for (i = 0; i < NUM_RETRANSMITS; i++) {
+        write_calls_before = fb->write_calls;
+
+        if (!TEST_int_gt((int)DTLSv1_get_timeout(serverssl, &tv), 0))
+            goto end;
+
+        OSSL_sleep((uint64_t)(tv.tv_sec * 1000 + tv.tv_usec / 1000) + 10);
+
+        if (!TEST_int_ge((int)DTLSv1_handle_timeout(serverssl), 0))
+            goto end;
+
+        if (!TEST_int_eq(fb->write_calls, write_calls_before))
+            goto end;
+    }
+
+    /*
+     * Resume the original suspended write. This is the call expected to
+     * hit the entry assertion described in test_dtls_client_retransmit() if
+     * the guard weren't there.
+     */
+    ret = SSL_accept(serverssl);
+    err = SSL_get_error(serverssl, ret);
+
+    /*
+     * If we get here at all (i.e. we didn't just abort()), the resume
+     * should look like an ordinary handshake continuation - WANT_READ or
+     * WANT_WRITE, not an internal failure.
+     */
+    if (!TEST_false(err == SSL_ERROR_SSL || err == SSL_ERROR_SYSCALL))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+
+    return testresult;
+}
+
+#endif
+
 /* Confirm that we can create a connections using DTLSv1_listen() */
 static int test_listen(void)
 {
@@ -753,7 +1162,10 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_swap_records, 4);
     ADD_TEST(test_listen);
     ADD_TEST(test_duplicate_app_data);
-
+#ifndef OPENSSL_NO_DTLS1_2
+    ADD_TEST(test_dtls_client_retransmit);
+    ADD_TEST(test_dtls_server_retransmit);
+#endif
     return 1;
 }
 
