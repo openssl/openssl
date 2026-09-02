@@ -403,6 +403,10 @@ jobs:
             cc: clang
             pkgs: mingw-w64-clang-x86_64-clang
             config: mingw64
+          - arch: CLANGARM64
+            cc: clang
+            pkgs: mingw-w64-clang-aarch64-clang
+            config: mingwarm64
     runs-on: windows-latest
     env:
       CC: ${{ matrix.platform.cc }}
