@@ -3633,15 +3633,15 @@ static int server_gen_version_neg(struct helper *h, BIO_MSG *msg, size_t stride)
         goto err;
 
     if (!TEST_true(qtest_fault_resize_datagram(h->qtf, l)))
-        return 0;
+        goto err;
 
     memcpy(msg->data, buf->data, l);
     h->inject_word0 = 0;
 
     rc = 1;
 err:
-    if (have_wpkt)
-        WPACKET_finish(&wpkt);
+    if (have_wpkt && !WPACKET_finish(&wpkt))
+        WPACKET_cleanup(&wpkt);
 
     BUF_MEM_free(buf);
     return rc;
