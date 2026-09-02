@@ -11,5 +11,9 @@ use OpenSSL::paramnames qw(produce_param_decoder);
 -}
 
 {- produce_param_decoder('generic_skey_import',
-                         (['OSSL_SKEY_PARAM_RAW_BYTES',  'raw_bytes',    'octet_string'],
+                         (['OSSL_SKEY_PARAM_RAW_BYTES',       'raw_bytes',        'octet_string'],
+                          ['OSSL_SKEY_PARAM_ALIAS',           'alias',            'utf8_string'],
+                          ['OSSL_SKEY_PARAM_LOCAL_KEYID',     'local_keyid',      'octet_string'],
+                          ['OSSL_SKEY_PARAM_ALGORITHM_OID',   'algorithm_oid',    'octet_string'],
+                          ['OSSL_SKEY_PARAM_ALGORITHM_PARAMS','algorithm_params', 'octet_string'],
                          )); -}

@@ -5,7 +5,8 @@
 EVP_SKEY, EVP_SKEY_generate, EVP_SKEY_import, EVP_SKEY_import_raw_key,
 EVP_SKEY_import_SKEYMGMT, EVP_SKEY_up_ref, EVP_SKEY_export,
 EVP_SKEY_get0_raw_key, EVP_SKEY_get0_key_id, EVP_SKEY_get0_skeymgmt_name,
-EVP_SKEY_get0_provider_name, EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
+EVP_SKEY_get0_provider_name, EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider,
+EVP_SKEY_get0_local_keyid, EVP_SKEY_get0_algorithm_id
 - opaque symmetric key allocation and handling functions
 
 =head1 SYNOPSIS
@@ -39,6 +40,12 @@ EVP_SKEY_get0_provider_name, EVP_SKEY_free, EVP_SKEY_is_a, EVP_SKEY_to_provider
  EVP_SKEY *EVP_SKEY_to_provider(EVP_SKEY *skey, OSSL_LIB_CTX *libctx,
                                 OSSL_PROVIDER *prov, const char *propquery);
 
+ int EVP_SKEY_get0_local_keyid(const EVP_SKEY *skey,
+                               const unsigned char **id, size_t *len);
+ int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
+                                 const unsigned char **oid, size_t *oid_len,
+                                 const unsigned char **params,
+                                 size_t *params_len);
 
 =head1 DESCRIPTION
 
@@ -95,6 +102,41 @@ EVP_SKEY_to_provider() simplifies the task of importing a I<skey> into a
 different provider identified by I<prov>. If I<prov> is NULL, the default
 provider for the key type identified via I<skey> is used.
 
+=head2 Metadata
+
+An B<EVP_SKEY> object can carry optional metadata alongside the cryptographic
+key material. This metadata is managed by the provider through the
+B<EVP_SKEYMGMT> import/export mechanism and stored in the provider-side key
+data.
+
+The friendly name (alias) is accessible via EVP_SKEY_get0_key_id(), which
+dispatches to the provider's B<OSSL_FUNC_skeymgmt_get_key_id> function.
+The built-in providers return the value of B<OSSL_SKEY_PARAM_ALIAS> if it
+was set during import.
+
+EVP_SKEY_get0_local_keyid() retrieves the local key identifier from I<skey>.
+On success, I<*id> is set to a pointer to the identifier bytes and I<*len>
+is set to the length. The returned pointer is valid for the lifetime of
+I<skey>. Returns 1 on success, 0 on error.
+
+EVP_SKEY_get0_algorithm_id() retrieves the algorithm identifier from I<skey>.
+It can return both the DER-encoded algorithm OID (via I<oid> and I<oid_len>)
+and the DER-encoded algorithm parameters (via I<params> and I<params_len>).
+Either output pair may be NULL if the caller does not need that part.
+The returned pointers are valid for the lifetime of I<skey>.
+Returns 1 on success, 0 on error.
+
+These metadata fields are populated on obtaining the key object (e.g. when
+parsing PKCS#12 files).  For PKCS#12 files the friendly name and local key ID
+correspond to PKCS#12 bag attributes (B<NID_friendlyName> and
+B<NID_localKeyID>), while the algorithm OID and parameters are extracted from
+the PKCS8 B<AlgorithmIdentifier>.
+
+The implementation is in general provider-dependent. If the corresponding
+callback is not implemented for the EVP_SKEYMGMT, 0 is returned. However, as
+metadata is completely optional, the success doesn't indicate that the data is
+available.
+
 =head2 Selections
 
 The following constants can be used for I<selection>:
@@ -145,6 +187,9 @@ otherwise 0.
 EVP_SKEY_to_provider() returns a new B<EVP_SKEY> suitable for operations with
 the I<prov> provider or NULL in case of failure.
 
+EVP_SKEY_get0_local_keyid() and EVP_SKEY_get0_algorithm_id() return 1 on
+success or 0 on error.
+
 =head1 SEE ALSO
 
 L<EVP_SKEYMGMT(3)>, L<provider(7)>, L<OSSL_PARAM(3)>
@@ -159,6 +204,9 @@ EVP_SKEY_get0_skeymgmt_name(), EVP_SKEY_is_a(), EVP_SKEY_to_provider()
 were introduced in OpenSSL 3.5.
 
 The EVP_SKEY_import_SKEYMGMT() function was introduced in OpenSSL 4.0.
+
+The EVP_SKEY_get0_local_keyid() and EVP_SKEY_get0_algorithm_id()
+functions were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

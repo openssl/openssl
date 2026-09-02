@@ -27,6 +27,14 @@ provider-skeymgmt - The SKEYMGMT library E<lt>-E<gt> provider functions
  const OSSL_PARAM *OSSL_FUNC_skeymgmt_gen_settable_params(void *provctx);
  const OSSL_PARAM *OSSL_FUNC_skeymgmt_imp_settable_params(void *provctx);
  const char *OSSL_FUNC_skeymgmt_get_key_id(void *keydata);
+ int OSSL_FUNC_skeymgmt_get_local_keyid(void *keydata,
+                                         const unsigned char **id,
+                                         size_t *len);
+ int OSSL_FUNC_skeymgmt_get_algorithm_id(void *keydata,
+                                          const unsigned char **oid,
+                                          size_t *oid_len,
+                                          const unsigned char **params,
+                                          size_t *params_len);
 
 =head1 DESCRIPTION
 
@@ -63,6 +71,8 @@ macros in L<openssl-core_dispatch.h(7)>, as follows:
  OSSL_FUNC_skeymgmt_generate             OSSL_FUNC_SKEYMGMT_GENERATE
 
  OSSL_FUNC_skeymgmt_get_key_id           OSSL_FUNC_SKEYMGMT_GET_KEY_ID
+ OSSL_FUNC_skeymgmt_get_local_keyid      OSSL_FUNC_SKEYMGMT_GET_LOCAL_KEYID
+ OSSL_FUNC_skeymgmt_get_algorithm_id     OSSL_FUNC_SKEYMGMT_GET_ALGORITHM_ID
  OSSL_FUNC_skeymgmt_imp_settable_params  OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS
  OSSL_FUNC_skeymgmt_gen_settable_params  OSSL_FUNC_SKEYMGMT_GEN_SETTABLE_PARAMS
 
@@ -146,7 +156,21 @@ particular key. The returned string will be freed by a call to EVP_SKEY_free()
 so callers need to copy it themselves if they want to preserve the value past
 the key lifetime.  The purpose of this function is providing a printable string
 that can help users to access the specific key.  The content of this string is
-provider-specific.
+provider-specific.  The built-in implementations return the value of
+B<OSSL_SKEY_PARAM_ALIAS> if it was set during import.
+
+OSSL_FUNC_skeymgmt_get_local_keyid() retrieves the local key ID from I<keydata>.
+On success, it sets I<*id> to point to the key ID bytes and I<*len> to their
+length, and returns 1 on success and 0 on error. As metadata is optional, the
+resulting value still can be NULL and 0 correspondingly.
+
+OSSL_FUNC_skeymgmt_get_algorithm_id() retrieves the algorithm identifier from
+I<keydata>.  On success, it sets I<*oid> and I<*oid_len> to point to the
+DER-encoded algorithm OID, and I<*params> and I<*params_len> to point to the
+DER-encoded algorithm parameters.  Either output pointer pair may be NULL if
+the caller does not need that part.  Returns 1 if the requested data is set
+successfully and 0 otherwise.  As metadata is optional, the resulting value
+still can be NULL and 0 correspondingly.
 
 =head2 Common Import and Export Parameters
 
@@ -157,13 +181,32 @@ skeymgmt algorithms are as follows:
 
 =over 4
 
-=item "raw-bytes" (B<SKEY_PARAM_RAW_BYTES>) <octet string>
+=item "raw-bytes" (B<OSSL_SKEY_PARAM_RAW_BYTES>) <octet string>
 
 The value represents symmetric key as a byte array.
 
-=item "key-length" (B<SKEY_PARAM_KEY_LENGTH>) <integer>
+=item "key-length" (B<OSSL_SKEY_PARAM_KEY_LENGTH>) <integer>
 
 The value is the byte length of the given key.
+
+=item "skey-alias" (B<OSSL_SKEY_PARAM_ALIAS>) <UTF8 string>
+
+The friendly name (alias) for the key.  This is used as the return value
+from OSSL_FUNC_skeymgmt_get_key_id().  May be NULL.
+
+=item "skey-local-keyid" (B<OSSL_SKEY_PARAM_LOCAL_KEYID>) <octet string>
+
+The local key ID, typically originating from PKCS#12 bag attributes.
+Represented as a byte array with an associated length.  May be NULL.
+
+=item "skey-algorithm-oid" (B<OSSL_SKEY_PARAM_ALGORITHM_OID>) <octet string>
+
+The DER-encoded algorithm OID from the AlgorithmIdentifier.  May be NULL.
+
+=item "skey-algorithm-params" (B<OSSL_SKEY_PARAM_ALGORITHM_PARAMS>) <octet string>
+
+The DER-encoded algorithm parameters from the AlgorithmIdentifier.
+May be NULL.
 
 =back
 
@@ -175,6 +218,9 @@ to an allocated object on success and NULL on error.
 OSSL_FUNC_skeymgmt_export() returns 1 for success or 0 on error.
 
 OSSL_FUNC_skeymgmt_get_key_id() returns a pointer to a 0-terminated string or NULL.
+
+OSSL_FUNC_skeymgmt_get_local_keyid() and OSSL_FUNC_skeymgmt_get_algorithm_id()
+return 1 on success or 0 on error.
 
 OSSL_FUNC_skeymgmt_gen_settable_params() and OSSL_FUNC_skeymgmt_imp_settable_params()
 return references to an array of B<OSSL_PARAM> which can be NULL if there are

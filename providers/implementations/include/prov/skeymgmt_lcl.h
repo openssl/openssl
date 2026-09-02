@@ -16,5 +16,8 @@ OSSL_FUNC_skeymgmt_import_fn generic_import;
 OSSL_FUNC_skeymgmt_export_fn generic_export;
 OSSL_FUNC_skeymgmt_free_fn generic_free;
 OSSL_FUNC_skeymgmt_imp_settable_params_fn generic_imp_settable_params;
+OSSL_FUNC_skeymgmt_get_key_id_fn generic_get_key_id;
+OSSL_FUNC_skeymgmt_get_local_keyid_fn generic_get_local_keyid;
+OSSL_FUNC_skeymgmt_get_algorithm_id_fn generic_get_algorithm_id;
 
 #endif

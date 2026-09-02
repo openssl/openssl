@@ -340,3 +340,49 @@ err:
     EVP_SKEY_free(ret);
     return NULL;
 }
+
+int EVP_SKEY_get0_local_keyid(const EVP_SKEY *skey,
+    const unsigned char **id, size_t *len)
+{
+    if (skey == NULL || id == NULL || len == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (skey->skeymgmt->get_local_keyid == NULL)
+        return 0;
+
+    return skey->skeymgmt->get_local_keyid(skey->keydata, id, len);
+}
+
+int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
+    const unsigned char **oid, size_t *oid_len,
+    const unsigned char **params, size_t *params_len)
+{
+    int ret_oid = 0, ret_params = 0;
+
+    if (skey == NULL) {
+        ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
+        return 0;
+    }
+
+    if (skey->skeymgmt->get_algorithm_id == NULL)
+        return 0;
+
+    if (oid != NULL && oid_len != NULL)
+        ret_oid = 1;
+    if (params != NULL && params_len != NULL)
+        ret_params = 1;
+
+    if (ret_oid == 0 && ret_params == 0)
+        return 0;
+
+    if (ret_oid == 0 && (oid != NULL || oid_len != NULL))
+        return 0;
+
+    if (ret_params == 0 && (params != NULL || params_len != NULL))
+        return 0;
+
+    return skey->skeymgmt->get_algorithm_id(skey->keydata,
+        oid, oid_len, params, params_len);
+}

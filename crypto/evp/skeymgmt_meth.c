@@ -100,6 +100,14 @@ static void *skeymgmt_from_algorithm(int name_id,
             if (skeymgmt->get_key_id == NULL)
                 skeymgmt->get_key_id = OSSL_FUNC_skeymgmt_get_key_id(fns);
             break;
+        case OSSL_FUNC_SKEYMGMT_GET_LOCAL_KEYID:
+            if (skeymgmt->get_local_keyid == NULL)
+                skeymgmt->get_local_keyid = OSSL_FUNC_skeymgmt_get_local_keyid(fns);
+            break;
+        case OSSL_FUNC_SKEYMGMT_GET_ALGORITHM_ID:
+            if (skeymgmt->get_algorithm_id == NULL)
+                skeymgmt->get_algorithm_id = OSSL_FUNC_skeymgmt_get_algorithm_id(fns);
+            break;
         case OSSL_FUNC_SKEYMGMT_IMP_SETTABLE_PARAMS:
             if (skeymgmt->imp_params == NULL)
                 skeymgmt->imp_params = OSSL_FUNC_skeymgmt_imp_settable_params(fns);
