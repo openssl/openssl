@@ -22,7 +22,7 @@
 
 static void SSL_SESSION_list_remove(SSL_CTX *ctx, SSL_SESSION *s);
 static void SSL_SESSION_list_add(SSL_CTX *ctx, SSL_SESSION *s);
-static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck);
+static SSL_SESSION *remove_session_locked(SSL_CTX *ctx, SSL_SESSION *c);
 
 DEFINE_STACK_OF(SSL_SESSION)
 
@@ -279,8 +279,16 @@ SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket)
 {
     SSL_SESSION *sess = ssl_session_dup_intern(src, ticket);
 
-    if (sess != NULL)
+    if (sess != NULL) {
         sess->not_resumable = 0;
+        /*
+         * A duplicated session can land in the stateful session cache, and is
+         * not necessarily a live session just built for an external PSK.  The
+         * caller must explicitly set this field non-zero after duplication as
+         * needed.
+         */
+        sess->psk_external = 0;
+    }
 
     return sess;
 }
@@ -306,7 +314,7 @@ unsigned int SSL_SESSION_get_compress_id(const SSL_SESSION *s)
 }
 
 /*
- * SSLv3/TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling
+ * TLSv1 has 32 bytes (256 bits) of session ID space. As such, filling
  * the ID with random junk repeatedly until we have no conflict is going to
  * complete in one iteration pretty much "most" of the time (btw:
  * understatement). So, if it takes us 10 iterations and we still can't avoid
@@ -358,6 +366,7 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     case DTLS1_BAD_VER:
     case DTLS1_VERSION:
     case DTLS1_2_VERSION:
+    case DTLS1_3_VERSION:
         ss->session_id_length = SSL3_SSL_SESSION_ID_LENGTH;
         break;
     default:
@@ -386,8 +395,10 @@ int ssl_generate_session_id(SSL_CONNECTION *s, SSL_SESSION *ss)
     }
 
     /* Choose which callback will set the session ID */
-    if (!CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_SSL(s)->lock))
+    if (!CRYPTO_THREAD_read_lock(SSL_CONNECTION_GET_SSL(s)->lock)) {
+        SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
     if (!CRYPTO_THREAD_read_lock(s->session_ctx->lock)) {
         CRYPTO_THREAD_unlock(ssl->lock);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR,
@@ -452,7 +463,7 @@ int ssl_get_new_session(SSL_CONNECTION *s, int session)
     s->session = NULL;
 
     if (session) {
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
             /*
              * We generate the session id while constructing the
              * NewSessionTicket in TLSv1.3.
@@ -589,7 +600,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
     int try_session_cache = 0;
     SSL_TICKET_STATUS r;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         SSL_SESSION_free(s->session);
         s->session = NULL;
         /*
@@ -648,7 +659,13 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err; /* treat like cache miss */
     }
 
-    if ((s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
+    /*
+     * sid_ctx exists to keep multiple services that happen to share one
+     * session cache from resuming each other's sessions.  This check is not
+     * relevant to external PSK sessions that are not restored from a cache.
+     */
+    if (!ret->psk_external
+        && (s->verify_mode & SSL_VERIFY_PEER) && s->sid_ctx_length == 0) {
         /*
          * We can't be sure if this session is being used out of context,
          * which is especially important for SSL_VERIFY_PEER. The application
@@ -687,8 +704,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
         goto err;
     }
 
-    if (!SSL_CONNECTION_IS_TLS13(s)) {
-        /* We already did this for TLS1.3 */
+    if (!SSL_CONNECTION_IS_VERSION13(s)) {
+        /* We already did this for (D)TLS1.3 */
         SSL_SESSION_free(s->session);
         s->session = ret;
     }
@@ -712,7 +729,7 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
      * Refusing resumption and falling back to a full handshake is the correct
      * response.
      */
-    if (!SSL_CONNECTION_IS_TLS13(s) && hello->session_id_len > 0
+    if (!SSL_CONNECTION_IS_VERSION13(s) && hello->session_id_len > 0
         && (s->session->session_id_length != hello->session_id_len
             || memcmp(s->session->session_id, hello->session_id,
                    hello->session_id_len)
@@ -726,8 +743,8 @@ int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello)
 err:
     if (ret != NULL) {
         SSL_SESSION_free(ret);
-        /* In TLSv1.3 s->session was already set to ret, so we NULL it out */
-        if (SSL_CONNECTION_IS_TLS13(s))
+        /* In (D)TLSv1.3 s->session was already set to ret, so we NULL it out */
+        if (SSL_CONNECTION_IS_VERSION13(s))
             s->session = NULL;
 
         if (!try_session_cache) {
@@ -798,6 +815,14 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
         ssl_session_calculate_timeout(c);
     }
 
+    /*
+     * evicted_head is a singly-linked list (via the next pointer, which
+     * SSL_SESSION_list_remove zeroes out) of sessions evicted from the cache
+     * that need their remove_session_cb called and their reference dropped
+     * once the lock is released.
+     */
+    SSL_SESSION *evicted_head = NULL;
+
     if (s == NULL) {
         /*
          * new cache entry -- remove old ones if cache has become too large
@@ -808,10 +833,13 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
 
         if (SSL_CTX_sess_get_cache_size(ctx) > 0) {
             while (SSL_CTX_sess_number(ctx) >= SSL_CTX_sess_get_cache_size(ctx)) {
-                if (!remove_session_lock(ctx, ctx->session_cache_tail, 0))
+                SSL_SESSION *r = remove_session_locked(ctx, ctx->session_cache_tail);
+
+                if (r == NULL)
                     break;
-                else
-                    ssl_tsan_counter(ctx, &ctx->stats.sess_cache_full);
+                ssl_tsan_counter(ctx, &ctx->stats.sess_cache_full);
+                r->next = evicted_head;
+                evicted_head = r;
             }
         }
 
@@ -828,41 +856,59 @@ int SSL_CTX_add_session(SSL_CTX *ctx, SSL_SESSION *c)
         ret = 0;
     }
     CRYPTO_THREAD_unlock(ctx->lock);
+
+    while (evicted_head != NULL) {
+        SSL_SESSION *next = evicted_head->next;
+
+        evicted_head->next = NULL;
+        if (ctx->remove_session_cb != NULL)
+            ctx->remove_session_cb(ctx, evicted_head);
+        SSL_SESSION_free(evicted_head);
+        evicted_head = next;
+    }
+
     return ret;
 }
 
 int SSL_CTX_remove_session(SSL_CTX *ctx, SSL_SESSION *c)
 {
-    return remove_session_lock(ctx, c, 1);
+    SSL_SESSION *r;
+
+    if (c == NULL || c->session_id_length == 0)
+        return 0;
+    if (!CRYPTO_THREAD_write_lock(ctx->lock))
+        return 0;
+    r = remove_session_locked(ctx, c);
+    CRYPTO_THREAD_unlock(ctx->lock);
+
+    /*
+     * The callback is invoked even when the session is not in the internal
+     * cache so that external caches can be notified.
+     */
+    if (ctx->remove_session_cb != NULL)
+        ctx->remove_session_cb(ctx, c);
+    SSL_SESSION_free(r);
+    return r != NULL;
 }
 
-static int remove_session_lock(SSL_CTX *ctx, SSL_SESSION *c, int lck)
+/*
+ * Removes c from the session cache. Caller must hold ctx->lock.
+ * Returns the removed session (caller must invoke remove_session_cb and
+ * SSL_SESSION_free), or NULL if not found.
+ */
+static SSL_SESSION *remove_session_locked(SSL_CTX *ctx, SSL_SESSION *c)
 {
-    SSL_SESSION *r;
-    int ret = 0;
+    SSL_SESSION *r = NULL;
 
-    if ((c != NULL) && (c->session_id_length != 0)) {
-        if (lck) {
-            if (!CRYPTO_THREAD_write_lock(ctx->lock))
-                return 0;
-        }
-        if ((r = lh_SSL_SESSION_retrieve(ctx->sessions, c)) != NULL) {
-            ret = 1;
+    if (c != NULL && c->session_id_length != 0) {
+        r = lh_SSL_SESSION_retrieve(ctx->sessions, c);
+        if (r != NULL) {
             r = lh_SSL_SESSION_delete(ctx->sessions, r);
             SSL_SESSION_list_remove(ctx, r);
         }
         c->not_resumable = 1;
-
-        if (lck)
-            CRYPTO_THREAD_unlock(ctx->lock);
-
-        if (ctx->remove_session_cb != NULL)
-            ctx->remove_session_cb(ctx, c);
-
-        if (ret)
-            SSL_SESSION_free(r);
     }
-    return ret;
+    return r;
 }
 
 void SSL_SESSION_free(SSL_SESSION *ss)
@@ -903,7 +949,7 @@ int SSL_SESSION_up_ref(SSL_SESSION *ss)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&ss->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&ss->references, &i))
         return 0;
 
     REF_PRINT_COUNT("SSL_SESSION", i, ss);
@@ -1242,9 +1288,10 @@ void SSL_CTX_flush_sessions_ex(SSL_CTX *s, time_t t)
     /*
      * Iterate over the list from the back (oldest), and stop
      * when a session can no longer be removed.
-     * Add the session to a temporary list to be freed outside
-     * the SSL_CTX lock.
-     * But still do the remove_session_cb() within the lock.
+     * Collect removed sessions on a stack to be processed outside the lock,
+     * so that remove_session_cb is never invoked while holding ctx->lock.
+     * If the stack failed to create, or a push fails, free the session
+     * immediately (without invoking the callback).
      */
     while (s->session_cache_tail != NULL) {
         current = s->session_cache_tail;
@@ -1252,15 +1299,6 @@ void SSL_CTX_flush_sessions_ex(SSL_CTX *s, time_t t)
             lh_SSL_SESSION_delete(s->sessions, current);
             SSL_SESSION_list_remove(s, current);
             current->not_resumable = 1;
-            if (s->remove_session_cb != NULL)
-                s->remove_session_cb(s, current);
-            /*
-             * Throw the session on a stack, it's entirely plausible
-             * that while freeing outside the critical section, the
-             * session could be re-added, so avoid using the next/prev
-             * pointers. If the stack failed to create, or the session
-             * couldn't be put on the stack, just free it here
-             */
             if (sk == NULL || !sk_SSL_SESSION_push(sk, current))
                 SSL_SESSION_free(current);
         } else {
@@ -1271,7 +1309,13 @@ void SSL_CTX_flush_sessions_ex(SSL_CTX *s, time_t t)
     lh_SSL_SESSION_set_down_load(s->sessions, i);
     CRYPTO_THREAD_unlock(s->lock);
 
-    sk_SSL_SESSION_pop_free(sk, SSL_SESSION_free);
+    while (sk_SSL_SESSION_num(sk) > 0) {
+        current = sk_SSL_SESSION_pop(sk);
+        if (s->remove_session_cb != NULL)
+            s->remove_session_cb(s, current);
+        SSL_SESSION_free(current);
+    }
+    sk_SSL_SESSION_free(sk);
 }
 
 int ssl_clear_bad_session(SSL_CONNECTION *s)

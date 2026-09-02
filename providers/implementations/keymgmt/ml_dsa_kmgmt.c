@@ -100,6 +100,7 @@ static int ml_dsa_pairwise_test(const ML_DSA_KEY *key)
 err:
     OSSL_SELF_TEST_onend(st, ret);
     OSSL_SELF_TEST_free(st);
+    OPENSSL_cleanse(sig, sizeof(sig));
     return ret;
 }
 #endif
@@ -293,8 +294,18 @@ static int ml_dsa_import(void *keydata, int selection, const OSSL_PARAM params[]
     int include_priv;
     int res;
 
+    /*
+     * Once a key is fully initialised (has at least a public component),
+     * further mutation is no longer safe and disallowed.
+     */
     if (!ossl_prov_is_running() || key == NULL)
         return 0;
+    if (ossl_ml_dsa_key_has(key, OSSL_KEYMGMT_SELECT_PUBLIC_KEY)) {
+        /* Invalid attempt to mutate a key. */
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
+        return 0;
+    }
 
     if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return 0;
@@ -555,7 +566,7 @@ static void ml_dsa_gen_cleanup(void *genctx)
     if (gctx == NULL)
         return;
 
-    OPENSSL_cleanse(gctx->entropy, gctx->entropy_len);
+    OPENSSL_cleanse(gctx->entropy, sizeof(gctx->entropy));
     OPENSSL_free(gctx->propq);
     OPENSSL_free(gctx);
 }

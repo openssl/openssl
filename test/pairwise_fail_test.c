@@ -99,8 +99,6 @@ static int test_keygen_pairwise_failure(void)
         if (!TEST_ptr_null(pkey = EVP_PKEY_Q_keygen(libctx, NULL, "RSA", (size_t)2048)))
             goto err;
     } else if (strncmp(pairwise_name, "ec", 2) == 0) {
-        if (strcmp(pairwise_name, "eckat") == 0)
-            type = OSSL_SELF_TEST_TYPE_PCT_KAT;
         if (!TEST_true(setup_selftest_pairwise_failure(type)))
             goto err;
         if (!TEST_ptr_null(pkey = EVP_PKEY_Q_keygen(libctx, NULL, "EC", "P-256")))

@@ -122,6 +122,7 @@ int EVP_set_default_properties(OSSL_LIB_CTX *libctx, const char *propq);
 char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx);
 int EVP_default_properties_is_fips_enabled(OSSL_LIB_CTX *libctx);
 int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
+#define FIPS_mode() EVP_default_properties_is_fips_enabled(NULL)
 
 #define EVP_PKEY_MO_SIGN 0x0001
 #define EVP_PKEY_MO_VERIFY 0x0002
@@ -153,6 +154,8 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
 
 /* Note if suitable for use in FIPS mode */
 #define EVP_MD_FLAG_FIPS 0x0400
+
+#define EVP_MD_FLAG_NO_STORE 0x0800
 
 /* Digest ctrls */
 
@@ -266,6 +269,8 @@ int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
 #define EVP_CIPH_FLAG_GET_WRAP_CIPHER 0x4000000
 #define EVP_CIPH_FLAG_INVERSE_CIPHER 0x8000000
 #define EVP_CIPH_FLAG_ENC_THEN_MAC 0x10000000
+/* flag to indicate that this cipher isn't cached, and so should be refcounted*/
+#define EVP_CIPH_FLAG_NO_STORE 0x20000000
 
 /*
  * Cipher context flag to indicate we can handle wrap mode: if allowed in

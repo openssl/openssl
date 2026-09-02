@@ -21,8 +21,18 @@ int FuzzerInitialize(int *argc, char ***argv)
 
 int FuzzerTestOneInput(const uint8_t *buf, size_t len)
 {
-    BIO *b = BIO_new_mem_buf(buf, (int)len);
-    PKCS7 *p7 = SMIME_read_PKCS7(b, NULL);
+    BIO *b;
+    PKCS7 *p7;
+
+    if (len > INT_MAX)
+        return 0;
+
+    b = BIO_new_mem_buf(buf, (int)len);
+    if (b == NULL) {
+        ERR_clear_error();
+        return 0;
+    }
+    p7 = SMIME_read_PKCS7(b, NULL);
 
     if (p7 != NULL) {
         STACK_OF(PKCS7_SIGNER_INFO) *p7si = PKCS7_get_signer_info(p7);

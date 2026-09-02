@@ -22,7 +22,7 @@ use lib bldtop_dir('.');
 plan skip_all => "These tests are unsupported in a non fips build"
     if disabled("fips");
 
-plan tests => 9;
+plan tests => 8;
 my $provconf = srctop_file("test", "fips-and-base.cnf");
 
 run(test(["fips_version_test", "-config", $provconf, ">=3.1.0"]),
@@ -37,17 +37,11 @@ SKIP: {
 }
 
 SKIP: {
-    skip "Skip EC test because of no ec in this build", 2
+    skip "Skip EC test because of no ec in this build", 1
         if disabled("ec");
     ok(run(test(["pairwise_fail_test", "-config", $provconf,
                  "-pairwise", "ec"])),
        "fips provider ec keygen pairwise failure test");
-
-    skip "FIPS provider version is too old", 1
-        if !$fips_exit;
-    ok(run(test(["pairwise_fail_test", "-config", $provconf,
-                 "-pairwise", "eckat"])),
-       "fips provider ec keygen kat failure test");
 }
 
 SKIP: {

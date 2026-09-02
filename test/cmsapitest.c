@@ -19,9 +19,13 @@
 
 static X509 *cert = NULL;
 static EVP_PKEY *privkey = NULL;
+static X509 *ed448_cert = NULL;
+static EVP_PKEY *ed448_privkey = NULL;
 static char *derin = NULL;
 static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
+static char *pwri_kek_no_iv_in = NULL;
+static char *ec_recip_in = NULL;
 
 /*
  * This is our bad cms data, it contains an AuthEnvelopedData field
@@ -275,6 +279,44 @@ static int test_encrypt_decrypt_aes_256_gcm(void)
     return test_encrypt_decrypt(EVP_aes_256_gcm());
 }
 
+static int smimecap_has_nid(STACK_OF(X509_ALGOR) *smcap, int nid)
+{
+    int i;
+
+    for (i = 0; i < sk_X509_ALGOR_num(smcap); i++) {
+        X509_ALGOR *alg = sk_X509_ALGOR_value(smcap, i);
+        if (OBJ_obj2nid(alg->algorithm) == nid)
+            return 1;
+    }
+    return 0;
+}
+
+static int test_CMS_add_standard_smimecap_ex(void)
+{
+    STACK_OF(X509_ALGOR) *smcap = NULL;
+    int ret = 0;
+
+    if (!TEST_true(CMS_add_standard_smimecap_ex(&smcap, NULL, NULL)))
+        goto end;
+
+    /* AES ciphers must be present with the default provider */
+    if (!TEST_true(smimecap_has_nid(smcap, NID_aes_256_cbc))
+        || !TEST_true(smimecap_has_nid(smcap, NID_aes_192_cbc))
+        || !TEST_true(smimecap_has_nid(smcap, NID_aes_128_cbc)))
+        goto end;
+
+    /* RC2, DES, and GOST must NOT be present with just the default provider */
+    if (!TEST_false(smimecap_has_nid(smcap, NID_rc2_cbc))
+        || !TEST_false(smimecap_has_nid(smcap, NID_des_cbc))
+        || !TEST_false(smimecap_has_nid(smcap, NID_id_Gost28147_89)))
+        goto end;
+
+    ret = 1;
+end:
+    sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
+    return ret;
+}
+
 static int test_CMS_add1_cert(void)
 {
     CMS_ContentInfo *cms = NULL;
@@ -286,6 +328,47 @@ static int test_CMS_add1_cert(void)
 
     CMS_ContentInfo_free(cms);
     return ret;
+}
+
+static int test_CMS_add1_signer_ed448(const EVP_MD *md, unsigned int flags,
+    int expect_success)
+{
+    CMS_ContentInfo *cms = NULL;
+    CMS_SignerInfo *si = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(cms = CMS_ContentInfo_new()))
+        goto end;
+
+    si = CMS_add1_signer(cms, ed448_cert, ed448_privkey, md, flags);
+    if (expect_success) {
+        if (!TEST_ptr(si))
+            goto end;
+    } else if (!TEST_ptr_null(si)) {
+        goto end;
+    }
+
+    ret = 1;
+end:
+    if (!expect_success && ret)
+        ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+static int test_CMS_add1_signer_ed448_signed_attrs(void)
+{
+    return test_CMS_add1_signer_ed448(NULL, 0, 0);
+}
+
+static int test_CMS_add1_signer_ed448_signed_attrs_md(void)
+{
+    return test_CMS_add1_signer_ed448(EVP_shake256(), 0, 0);
+}
+
+static int test_CMS_add1_signer_ed448_noattr(void)
+{
+    return test_CMS_add1_signer_ed448(NULL, CMS_NOATTR, 1);
 }
 
 static int test_d2i_CMS_bio_NULL(void)
@@ -739,12 +822,137 @@ end:
     return ret;
 }
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer\n")
+static int test_pwri_kek_unwrap_no_iv_key(void)
+{
+    BIO *in = NULL;
+    CMS_ContentInfo *cms = NULL;
+    unsigned long err = 0;
+    int ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_file(pwri_kek_no_iv_in, "rb"))
+        || !TEST_ptr(cms = d2i_CMS_bio(in, NULL)))
+        goto end;
+
+    /*
+     * Due to the missing IV, the unwrap must fail with
+     * CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR.
+     */
+    if (!TEST_false(CMS_decrypt_set1_password(cms,
+            (unsigned char *)"password", -1)))
+        goto end;
+
+    err = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(err), ERR_LIB_CMS)
+        || !TEST_int_eq(ERR_GET_REASON(err),
+            CMS_R_CIPHER_PARAMETER_INITIALISATION_ERROR))
+        goto end;
+
+    ERR_clear_error();
+    ret = 1;
+end:
+    CMS_ContentInfo_free(cms);
+    BIO_free(in);
+    return ret;
+}
+
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
+/*
+ * Regression test for CVE-2026-63072: an 8-byte out-of-bounds heap write
+ * reachable through CMS_decrypt() when a KeyAgreeRecipientInfo names an
+ * id-aesNNN-wrap-pad key-wrap OID. CMS sizes the unwrap output buffer from
+ * the cipher's length query (inlen - 8), but AES-WRAP-PAD unwrap cleanses
+ * inlen bytes of it on every RFC 5649 integrity-failure path.
+ *
+ * We build a valid ECDH KARI message (which uses non-padded id-aes256-wrap),
+ * flip the single OID byte an attacker would flip on the wire to turn it into
+ * id-aes256-wrap-pad (key length unchanged), and decrypt with the matching
+ * private key. The unwrap must fail its integrity check without writing past
+ * the CMS-allocated buffer; CMS_decrypt() must fail cleanly.  Under a
+ * memory-checking build (e.g. valgrind) the overflow is flagged directly.
+ */
+static int test_kari_wrap_pad_unwrap_overflow(void)
+{
+    /* DER encoding of the id-aes256-wrap OID (2.16.840.1.101.3.4.1.45). */
+    static const unsigned char aes256_wrap_oid[] = {
+        0x06, 0x09, 0x60, 0x86, 0x48, 0x01, 0x65, 0x03, 0x04, 0x01, 0x2d
+    };
+    int ret = 0;
+    X509 *eccert = NULL;
+    EVP_PKEY *eckey = NULL;
+    BIO *certbio = NULL, *keybio = NULL, *msgbio = NULL, *outbio = NULL;
+    STACK_OF(X509) *recips = NULL;
+    CMS_ContentInfo *cms = NULL, *cms2 = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    int derlen, i, patched = 0;
+    const char *msg = "secret content for kari";
+
+    if ((certbio = BIO_new_file(ec_recip_in, "r")) == NULL
+        || PEM_read_bio_X509(certbio, &eccert, NULL, NULL) == NULL
+        || (keybio = BIO_new_file(ec_recip_in, "r")) == NULL
+        || PEM_read_bio_PrivateKey(keybio, &eckey, NULL, NULL) == NULL) {
+        goto end;
+    }
+
+    if (!TEST_ptr(recips = sk_X509_new_null())
+        || !TEST_int_gt(sk_X509_push(recips, eccert), 0))
+        goto end;
+
+    /* Build a normal ECDH KARI message; it uses non-padded id-aes256-wrap. */
+    if (!TEST_ptr(msgbio = BIO_new_mem_buf(msg, (int)strlen(msg)))
+        || !TEST_ptr(cms = CMS_encrypt(recips, msgbio, EVP_aes_256_cbc(),
+                         CMS_BINARY)))
+        goto end;
+
+    if (!TEST_int_gt(derlen = i2d_CMS_ContentInfo(cms, &der), 0))
+        goto end;
+
+    /* Swap id-aes256-wrap -> id-aes256-wrap-pad (0x2d -> 0x30). */
+    for (i = 0; i + (int)sizeof(aes256_wrap_oid) <= derlen; i++) {
+        if (memcmp(der + i, aes256_wrap_oid, sizeof(aes256_wrap_oid)) == 0) {
+            der[i + sizeof(aes256_wrap_oid) - 1] = 0x30;
+            patched = 1;
+            break;
+        }
+    }
+    if (!TEST_true(patched))
+        goto end;
+
+    p = der;
+    if (!TEST_ptr(cms2 = d2i_CMS_ContentInfo(NULL, &p, derlen)))
+        goto end;
+
+    /*
+     * The wrap-pad unwrap fails the AIV check; with the fix it does so without
+     * writing past the CMS-allocated buffer.  CMS_decrypt() must fail cleanly.
+     */
+    if (!TEST_ptr(outbio = BIO_new(BIO_s_mem()))
+        || !TEST_false(CMS_decrypt(cms2, eckey, eccert, NULL, outbio, 0)))
+        goto end;
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    OPENSSL_free(der);
+    sk_X509_free(recips);
+    CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms2);
+    BIO_free(certbio);
+    BIO_free(keybio);
+    BIO_free(msgbio);
+    BIO_free(outbio);
+    X509_free(eccert);
+    EVP_PKEY_free(eckey);
+    return ret;
+}
+#endif
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip [ed448certfile ed448privkeyfile]\n")
 
 int setup_tests(void)
 {
     char *certin = NULL, *privkeyin = NULL;
-    BIO *certbio = NULL, *privkeybio = NULL;
+    char *ed448_certin = NULL, *ed448_privkeyin = NULL;
 
     if (!test_skip_common_options()) {
         TEST_error("Error parsing test options\n");
@@ -755,31 +963,33 @@ int setup_tests(void)
         || !TEST_ptr(privkeyin = test_get_argument(1))
         || !TEST_ptr(derin = test_get_argument(2))
         || !TEST_ptr(too_long_iv_cms_in = test_get_argument(3))
-        || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4)))
+        || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4))
+        || !TEST_ptr(pwri_kek_no_iv_in = test_get_argument(5))
+        || !TEST_ptr(ec_recip_in = test_get_argument(6)))
         return 0;
 
-    certbio = BIO_new_file(certin, "r");
-    if (!TEST_ptr(certbio))
-        return 0;
-    if (!TEST_true(PEM_read_bio_X509(certbio, &cert, NULL, NULL))) {
-        BIO_free(certbio);
+    if (!TEST_ptr(cert = load_cert_pem(certin, NULL))
+        || !TEST_ptr(privkey = load_pkey_pem(privkeyin, NULL))) {
+        X509_free(cert);
+        cert = NULL;
+        EVP_PKEY_free(privkey);
+        privkey = NULL;
         return 0;
     }
-    BIO_free(certbio);
 
-    privkeybio = BIO_new_file(privkeyin, "r");
-    if (!TEST_ptr(privkeybio)) {
-        X509_free(cert);
-        cert = NULL;
-        return 0;
+    if (test_get_argument_count() >= 9) {
+        ed448_certin = test_get_argument(7);
+        ed448_privkeyin = test_get_argument(8);
+
+        if (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
+            || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin, NULL))) {
+            X509_free(ed448_cert);
+            ed448_cert = NULL;
+            EVP_PKEY_free(ed448_privkey);
+            ed448_privkey = NULL;
+            return 0;
+        }
     }
-    if (!TEST_true(PEM_read_bio_PrivateKey(privkeybio, &privkey, NULL, NULL))) {
-        BIO_free(privkeybio);
-        X509_free(cert);
-        cert = NULL;
-        return 0;
-    }
-    BIO_free(privkeybio);
 
     ADD_TEST(test_encrypt_decrypt_aes_cbc);
     ADD_TEST(test_encrypt_decrypt_aes_128_gcm);
@@ -788,6 +998,7 @@ int setup_tests(void)
     ADD_TEST(test_non_aead_on_auth_envelope_enc);
     ADD_TEST(test_non_aead_on_auth_envelope_dec);
     ADD_TEST(test_short_mac_on_auth_envelope_data);
+    ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_CMS_add1_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
@@ -796,6 +1007,16 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_d2i_CMS_decode, 2);
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
+    ADD_TEST(test_pwri_kek_unwrap_no_iv_key);
+    if (ed448_cert != NULL && ed448_privkey != NULL) {
+        ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
+        ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs_md);
+        ADD_TEST(test_CMS_add1_signer_ed448_noattr);
+    }
+
+#if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_X963KDF)
+    ADD_TEST(test_kari_wrap_pad_unwrap_overflow);
+#endif
     return 1;
 }
 
@@ -803,4 +1024,6 @@ void cleanup_tests(void)
 {
     X509_free(cert);
     EVP_PKEY_free(privkey);
+    X509_free(ed448_cert);
+    EVP_PKEY_free(ed448_privkey);
 }

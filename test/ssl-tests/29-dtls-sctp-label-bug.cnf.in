@@ -25,7 +25,8 @@ our @tests = (
             "UseSCTP" => "Yes",
             "EnableClientSCTPLabelBug" => "No",
             "EnableServerSCTPLabelBug" => "No",
-            "ExpectedResult" => "Success"
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "DTLSv1.2"
         }
     },
     {
@@ -37,7 +38,8 @@ our @tests = (
             "UseSCTP" => "Yes",
             "EnableClientSCTPLabelBug" => "Yes",
             "EnableServerSCTPLabelBug" => "Yes",
-            "ExpectedResult" => "Success"
+            "ExpectedResult" => "Success",
+            "ExpectedProtocol" => "DTLSv1.2"
         }
     },
     {

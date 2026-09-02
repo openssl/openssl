@@ -21,8 +21,7 @@ static int evp_mac_up_ref(void *vmac)
     EVP_MAC *mac = vmac;
     int ref = 0;
 
-    CRYPTO_UP_REF(&mac->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&mac->refcnt, &ref);
 }
 
 static void evp_mac_free(void *vmac)
@@ -56,7 +55,7 @@ static void *evp_mac_new(void)
 
 static void *evp_mac_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_MAC *mac = NULL;
@@ -67,6 +66,7 @@ static void *evp_mac_from_algorithm(int name_id,
         goto err;
     }
     mac->name_id = name_id;
+    mac->no_store = no_store;
 
     if ((mac->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
@@ -182,12 +182,23 @@ EVP_MAC *EVP_MAC_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_MAC_up_ref(EVP_MAC *mac)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     return evp_mac_up_ref(mac);
+#else
+    if (mac->no_store != 0)
+        return evp_mac_up_ref(mac);
+    return 1;
+#endif
 }
 
 void EVP_MAC_free(EVP_MAC *mac)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     evp_mac_free(mac);
+#else
+    if (mac != NULL && (mac->no_store != 0))
+        evp_mac_free(mac);
+#endif
 }
 
 const OSSL_PROVIDER *EVP_MAC_get0_provider(const EVP_MAC *mac)

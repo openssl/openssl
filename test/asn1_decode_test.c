@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2017-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,11 @@
 #include <openssl/asn1.h>
 #include <openssl/asn1t.h>
 #include <openssl/obj_mac.h>
+#include <openssl/bio.h>
+#include <openssl/buffer.h>
+#include <openssl/err.h>
 #include "internal/numbers.h"
+#include "internal/asn1.h"
 #include "testutil.h"
 
 #ifdef __GNUC__
@@ -266,6 +270,163 @@ err:
     return ret;
 }
 
+/*
+ * A minimal, complete DER object: SEQUENCE { INTEGER 0 }.
+ * asn1_d2i_read_bio() should consume exactly these bytes.
+ */
+static const unsigned char one_obj[] = {
+    0x30, 0x03, /* SEQUENCE, length 3 */
+    0x02, 0x01, 0x00 /*   INTEGER 0        */
+};
+
+/*
+ * Reading concatenated DER objects from a BIO must stop cleanly at EOF:
+ * once the input is exhausted on an object boundary, asn1_d2i_read_bio()
+ * returns < 0 and must NOT leave an error on the queue.  Callers that loop
+ * over concatenated values (e.g. CPython's ssl module loading the Windows
+ * certificate store via d2i_X509_bio()) rely on this to detect end-of-input;
+ * a spurious ASN1_R_NOT_ENOUGH_DATA there is reported as a fatal error.
+ */
+static int test_d2i_read_bio_clean_eof(void)
+{
+    unsigned char two_objs[sizeof(one_obj) * 2];
+    BIO *bio = NULL;
+    BUF_MEM *buf = NULL;
+    int ret = 0;
+
+    memcpy(two_objs, one_obj, sizeof(one_obj));
+    memcpy(two_objs + sizeof(one_obj), one_obj, sizeof(one_obj));
+
+    if (!TEST_ptr(bio = BIO_new_mem_buf(two_objs, sizeof(two_objs))))
+        goto err;
+    ERR_clear_error();
+
+    /* Both complete objects are read, one per call. */
+    if (!TEST_int_eq(asn1_d2i_read_bio(bio, &buf), (int)sizeof(one_obj)))
+        goto err;
+    BUF_MEM_free(buf);
+    buf = NULL;
+    if (!TEST_int_eq(asn1_d2i_read_bio(bio, &buf), (int)sizeof(one_obj)))
+        goto err;
+    BUF_MEM_free(buf);
+    buf = NULL;
+
+    /* Clean EOF: failure return, but no error must be queued. */
+    if (!TEST_int_lt(asn1_d2i_read_bio(bio, &buf), 0))
+        goto err;
+    if (!TEST_ulong_eq(ERR_peek_error(), 0))
+        goto err;
+
+    ret = 1;
+err:
+    BUF_MEM_free(buf);
+    BIO_free(bio);
+    return ret;
+}
+
+/*
+ * In contrast, hitting EOF in the middle of an object is genuine truncation
+ * and must still be reported as ASN1_R_NOT_ENOUGH_DATA.
+ */
+static int test_d2i_read_bio_truncated(void)
+{
+    static const unsigned char truncated[] = {
+        0x30, 0x05, /* SEQUENCE claims 5 content bytes ... */
+        0x02, 0x01 /* ... but only 2 are present         */
+    };
+    BIO *bio = NULL;
+    BUF_MEM *buf = NULL;
+    unsigned long e;
+    int ret = 0;
+
+    if (!TEST_ptr(bio = BIO_new_mem_buf(truncated, sizeof(truncated))))
+        goto err;
+    ERR_clear_error();
+
+    if (!TEST_int_lt(asn1_d2i_read_bio(bio, &buf), 0))
+        goto err;
+    e = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_ASN1)
+        || !TEST_int_eq(ERR_GET_REASON(e), ASN1_R_NOT_ENOUGH_DATA))
+        goto err;
+
+    ret = 1;
+err:
+    BUF_MEM_free(buf);
+    BIO_free(bio);
+    return ret;
+}
+
+/*
+ * An EOF reached while still inside an indefinite-length constructed value,
+ * before its end-of-contents octets, is truncation too (not a clean boundary),
+ * so it must also report ASN1_R_NOT_ENOUGH_DATA rather than an empty queue.
+ */
+static int test_d2i_read_bio_indefinite_truncated(void)
+{
+    /* SEQUENCE (indefinite) { INTEGER 0 } with the 00 00 EOC missing */
+    static const unsigned char truncated_indefinite[] = {
+        0x30, 0x80, /* SEQUENCE, indefinite length */
+        0x02, 0x01, 0x00 /* INTEGER 0; no end-of-contents octets follow */
+    };
+    BIO *bio = NULL;
+    BUF_MEM *buf = NULL;
+    unsigned long e;
+    int ret = 0;
+
+    bio = BIO_new_mem_buf(truncated_indefinite, sizeof(truncated_indefinite));
+    if (!TEST_ptr(bio))
+        goto err;
+    ERR_clear_error();
+
+    if (!TEST_int_lt(asn1_d2i_read_bio(bio, &buf), 0))
+        goto err;
+    e = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_ASN1)
+        || !TEST_int_eq(ERR_GET_REASON(e), ASN1_R_NOT_ENOUGH_DATA))
+        goto err;
+
+    ret = 1;
+err:
+    BUF_MEM_free(buf);
+    BIO_free(bio);
+    return ret;
+}
+
+/*
+ * An EOF reached part-way through an object's header, with some header bytes
+ * already buffered, is truncation as well.  This exercises the "diff != 0" arm
+ * of the header-read check (distinct from the body read handled elsewhere).
+ */
+static int test_d2i_read_bio_partial_header(void)
+{
+    /* SEQUENCE with a 2-byte long-form length, but only one length byte given */
+    static const unsigned char partial_header[] = {
+        0x30, 0x82, 0x01 /* SEQUENCE, length declared as 2 bytes, 1 present */
+    };
+    BIO *bio = NULL;
+    BUF_MEM *buf = NULL;
+    unsigned long e;
+    int ret = 0;
+
+    if (!TEST_ptr(bio = BIO_new_mem_buf(partial_header, sizeof(partial_header))))
+        goto err;
+    ERR_clear_error();
+
+    if (!TEST_int_lt(asn1_d2i_read_bio(bio, &buf), 0))
+        goto err;
+    e = ERR_peek_last_error();
+    if (!TEST_int_eq(ERR_GET_LIB(e), ERR_LIB_ASN1)
+        || !TEST_int_eq(ERR_GET_REASON(e), ASN1_R_NOT_ENOUGH_DATA))
+        goto err;
+
+    ret = 1;
+err:
+    BUF_MEM_free(buf);
+    BIO_free(bio);
+    return ret;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DEPRECATED_3_0
@@ -279,5 +440,9 @@ int setup_tests(void)
     ADD_TEST(test_utctime);
     ADD_TEST(test_invalid_template);
     ADD_TEST(test_reuse_asn1_object);
+    ADD_TEST(test_d2i_read_bio_clean_eof);
+    ADD_TEST(test_d2i_read_bio_truncated);
+    ADD_TEST(test_d2i_read_bio_indefinite_truncated);
+    ADD_TEST(test_d2i_read_bio_partial_header);
     return 1;
 }

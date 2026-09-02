@@ -54,7 +54,7 @@ sub test_ocsp {
                   $title); });
 }
 
-plan tests => 13;
+plan tests => 15;
 
 subtest "=== VALID OCSP RESPONSES ===" => sub {
     plan tests => 7;
@@ -232,6 +232,12 @@ subtest "=== OCSP API TESTS===" => sub {
                  "running ocspapitest");
 };
 
+subtest "=== OCSP VERIFICATION TESTS ===" => sub {
+    plan tests => 1;
+
+    ok(run(test(["ocsptest"])), "running ocsptest");
+};
+
 subtest "=== UNTRUSTED ISSUER HINTS ===" => sub {
     plan tests => 1;
 
@@ -256,4 +262,45 @@ subtest "=== OCSP handling of identical input and output files ===" => sub {
     copy($inout2, $backup2);
     ok(run(app(['openssl', 'ocsp', '-respin', $inout2, '-respout', $inout2, '-noverify'])));
     ok(!compare($inout2, $backup2), "copied response $inout2 did not change");
+};
+
+subtest "=== OCSP offline request/responder/verify round-trip ===" => sub {
+    plan tests => 6;
+
+    # Offline round-trip: build a request, answer it with the built-in
+    # responder using a static index, then verify the response.
+    my $issuer = catfile($ocspdir, "intermediate-cert.pem");
+    my $ee     = catfile($ocspdir, "server-cert.pem");
+    my $index  = catfile($ocspdir, "index.txt");
+    my $rsigner = catfile($ocspdir, "ocsp.pem");
+    my $root   = catfile($ocspdir, "root-cert.pem");
+
+    # The serial of server-cert.pem is listed as valid in index.txt, so its
+    # status is "good"; a serial absent from the index yields "unknown".
+    my $roundtrip = sub {
+        my ($title, $reqargs, $status) = @_;
+        my $req = "rt-req.der";
+        my $resp = "rt-resp.der";
+
+        ok(run(app(['openssl', 'ocsp', '-issuer', $issuer, @$reqargs,
+                    '-reqout', $req])),
+           "$title: produce request");
+        ok(run(app(['openssl', 'ocsp', '-index', $index, '-rsigner', $rsigner,
+                    '-CA', $issuer, '-reqin', $req, '-respout', $resp])),
+           "$title: responder produces response");
+        # Passing the request again lets print_ocsp_summary report the status.
+        ok(run(app(['openssl', 'ocsp', '-issuer', $issuer, @$reqargs,
+                    '-no_nonce', '-respin', $resp, '-CAfile', $root,
+                    '-verify_other', $rsigner,
+                    '-no-CApath', '-no-CAstore'])),
+           "$title: verify self-generated response ($status)");
+    };
+
+  SKIP: {
+        # The responder certificates use EC keys.
+        skip "EC is not supported by this OpenSSL build", 6 if disabled("ec");
+
+        $roundtrip->("GOOD (by cert)", ['-cert', $ee], "good");
+        $roundtrip->("UNKNOWN (by serial)", ['-serial', '0x1234'], "unknown");
+    }
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -8,12 +8,88 @@
  */
 
 #include <string.h>
+#include <openssl/objects.h>
 #include <openssl/pkcs7.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/pem.h>
 #include "internal/nelem.h"
 #include "testutil.h"
+
+static X509 *smimecap_cert = NULL;
+static EVP_PKEY *smimecap_privkey = NULL;
+
+static int smimecap_has_nid(STACK_OF(X509_ALGOR) *smcap, int nid)
+{
+    int i;
+
+    for (i = 0; i < sk_X509_ALGOR_num(smcap); i++) {
+        X509_ALGOR *alg = sk_X509_ALGOR_value(smcap, i);
+        if (OBJ_obj2nid(alg->algorithm) == nid)
+            return 1;
+    }
+    return 0;
+}
+
+static int test_pkcs7_smimecap(void)
+{
+    PKCS7 *p7 = NULL;
+    PKCS7_SIGNER_INFO *si = NULL;
+    STACK_OF(X509_ALGOR) *smcap = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signed))
+        || !TEST_true(PKCS7_content_new(p7, NID_pkcs7_data))
+        || !TEST_ptr(si = PKCS7_sign_add_signer(p7, smimecap_cert,
+                         smimecap_privkey, NULL, 0)))
+        goto end;
+
+    if (!TEST_ptr(smcap = PKCS7_get_smimecap(si)))
+        goto end;
+
+    /* AES ciphers must be present with the default provider */
+    if (!TEST_true(smimecap_has_nid(smcap, NID_aes_256_cbc))
+        || !TEST_true(smimecap_has_nid(smcap, NID_aes_192_cbc))
+        || !TEST_true(smimecap_has_nid(smcap, NID_aes_128_cbc)))
+        goto end;
+
+    /* RC2, DES, and GOST must NOT be present with just the default provider */
+    if (!TEST_false(smimecap_has_nid(smcap, NID_rc2_cbc))
+        || !TEST_false(smimecap_has_nid(smcap, NID_des_cbc))
+        || !TEST_false(smimecap_has_nid(smcap, NID_id_Gost28147_89)))
+        goto end;
+
+    ret = 1;
+end:
+    sk_X509_ALGOR_pop_free(smcap, X509_ALGOR_free);
+    PKCS7_free(p7);
+    return ret;
+}
+
+static int pkcs7_issuer_and_serial_negative_idx_test(void)
+{
+    PKCS7 *p7 = NULL;
+    PKCS7_RECIP_INFO *ri = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(p7 = PKCS7_new())
+        || !TEST_true(PKCS7_set_type(p7, NID_pkcs7_signedAndEnveloped))
+        || !TEST_ptr(ri = PKCS7_RECIP_INFO_new())
+        || !TEST_true(PKCS7_add_recipient_info(p7, ri)))
+        goto end;
+    ri = NULL;
+
+    if (!TEST_ptr(PKCS7_get_issuer_and_serial(p7, 0))
+        || !TEST_ptr_null(PKCS7_get_issuer_and_serial(p7, -1)))
+        goto end;
+
+    ret = 1;
+end:
+    PKCS7_RECIP_INFO_free(ri);
+    PKCS7_free(p7);
+    return ret;
+}
 
 #ifndef OPENSSL_NO_EC
 static const unsigned char cert_der[] = {
@@ -157,6 +233,7 @@ static int pkcs7_verify_test(void)
         && TEST_int_eq(ERR_peek_error(), 0)
         && TEST_ptr(store = X509_STORE_new())
         && TEST_true(X509_STORE_add_cert(store, cert))
+        && TEST_true(X509_STORE_set_flags(store, X509_V_FLAG_NO_CHECK_TIME))
         && TEST_ptr(p7 = SMIME_read_PKCS7(bio, NULL))
         && TEST_int_eq(ERR_peek_error(), 0)
         && TEST_true(PKCS7_verify(p7, NULL, store, msg_bio, NULL, PKCS7_TEXT))
@@ -361,10 +438,10 @@ static int pkcs7_inner_content_verify_test(void)
         0x2D, 0x6F, 0x81
     };
 
-    if (!TEST_ptr(bio = BIO_new_mem_buf(sig_der, sizeof sig_der)))
+    if (!TEST_ptr(bio = BIO_new_mem_buf(sig_der, sizeof(sig_der))))
         goto end;
 
-    ret = TEST_ptr(x509_bio = BIO_new_mem_buf(smroot_der, sizeof smroot_der))
+    ret = TEST_ptr(x509_bio = BIO_new_mem_buf(smroot_der, sizeof(smroot_der)))
         && TEST_ptr(cert = d2i_X509_bio(x509_bio, NULL))
         && TEST_int_eq(ERR_peek_error(), 0)
         && TEST_ptr(store = X509_STORE_new())
@@ -387,11 +464,130 @@ end:
 }
 #endif /* OPENSSL_NO_EC */
 
+static int pkcs7_stream_enveloped_no_content_test(void)
+{
+    int ret = 0;
+    PKCS7 *p7 = NULL;
+    BIO *sink = NULL;
+    BIO *bio = NULL;
+
+    const unsigned char data_enveloped_no_body[] = { 0x30, 0x0b, 0x06, 0x09,
+        0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x03 };
+    const unsigned char *ptr_env_no_body = data_enveloped_no_body;
+
+    ret = TEST_ptr(p7 = d2i_PKCS7(NULL, &ptr_env_no_body,
+                       sizeof(data_enveloped_no_body)))
+        && TEST_ptr(sink = BIO_new(BIO_s_null()))
+        && TEST_ptr_null(bio = BIO_new_PKCS7(sink, p7))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PKCS7_R_NO_CONTENT);
+
+    BIO_free(bio);
+    BIO_free(sink);
+    PKCS7_free(p7);
+    return ret;
+}
+
+static int pkcs7_stream_enveloped_signed_no_content_test(void)
+{
+    int ret = 0;
+    PKCS7 *p7 = NULL;
+    BIO *sink = NULL;
+    BIO *bio = NULL;
+
+    const unsigned char data_enveloped_signed_no_body[] = { 0x30, 0x0b, 0x06,
+        0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x04 };
+    const unsigned char *ptr_env_signed_no_body = data_enveloped_signed_no_body;
+
+    ret = TEST_ptr(p7 = d2i_PKCS7(NULL, &ptr_env_signed_no_body,
+                       sizeof(data_enveloped_signed_no_body)))
+        && TEST_ptr(sink = BIO_new(BIO_s_null()))
+        && TEST_ptr_null(bio = BIO_new_PKCS7(sink, p7))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+            PKCS7_R_NO_CONTENT);
+
+    BIO_free(bio);
+    BIO_free(sink);
+    PKCS7_free(p7);
+    return ret;
+}
+
+static int pkcs7_stream_non_data_test(void)
+{
+    int ret = 0;
+    PKCS7 *p7 = NULL;
+    BIO *sink = NULL;
+    BIO *bio = NULL;
+
+    /* clang-format off */
+    static const unsigned char malformed_der[] = {
+        0x30, 0x32, /* SEQUENCE, 50 bytes */
+        0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x07, 0x02, /* pkcs7-signedData */
+        0xa0, 0x25, /* [0] EXPLICIT, 37 bytes */
+        0x30, 0x23, /* SEQUENCE PKCS7_SIGNED, 35 bytes */
+        0x02, 0x01, 0x01, /* INTEGER version=1 */
+        0x31, 0x00, /* SET{} md_algs */
+        0x30, 0x1a, /* SEQUENCE inner PKCS7 (contents), 26 bytes */
+        0x06, 0x0b, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x09, 0x10, 0x01, 0x04, /* id-ct-TSTInfo */
+        0xa0, 0x0b, /* [0] EXPLICIT, 11 bytes (makes d.other non-NULL) */
+        0x30, 0x09, /*  SEQUENCE */
+        0x02, 0x01, 0x01, /*  INTEGER 1 */
+        0x04, 0x04, 0xde, 0xad, 0xbe, 0xef, /* OCTET STRING */
+        0x31, 0x00, /* SET{} signer_info */
+    };
+    /* clang-format on */
+
+    const unsigned char *ptr_malformed_der = malformed_der;
+
+    ret = TEST_ptr(p7 = d2i_PKCS7(NULL, &ptr_malformed_der, sizeof(malformed_der)))
+        && TEST_ptr(sink = BIO_new(BIO_s_null()))
+        && TEST_ptr_null(bio = BIO_new_PKCS7(sink, p7))
+        && TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()), PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+
+    BIO_free(bio);
+    BIO_free(sink);
+    PKCS7_free(p7);
+    return ret;
+}
+
 int setup_tests(void)
 {
+    const char *certin, *privkeyin;
+    BIO *bio = NULL;
+
+    if (!test_skip_common_options()) {
+        TEST_error("Error parsing test options\n");
+        return 0;
+    }
+
+    certin = test_get_argument(0);
+    privkeyin = test_get_argument(1);
+    if (certin != NULL && privkeyin != NULL) {
+        if (TEST_ptr(bio = BIO_new_file(certin, "r"))) {
+            PEM_read_bio_X509(bio, &smimecap_cert, NULL, NULL);
+            BIO_free(bio);
+        }
+        if (TEST_ptr(bio = BIO_new_file(privkeyin, "r"))) {
+            PEM_read_bio_PrivateKey(bio, &smimecap_privkey, NULL, NULL);
+            BIO_free(bio);
+        }
+    }
+
+    ADD_TEST(pkcs7_issuer_and_serial_negative_idx_test);
 #ifndef OPENSSL_NO_EC
     ADD_TEST(pkcs7_verify_test);
     ADD_TEST(pkcs7_inner_content_verify_test);
 #endif /* OPENSSL_NO_EC */
+    ADD_TEST(pkcs7_stream_enveloped_no_content_test);
+    ADD_TEST(pkcs7_stream_enveloped_signed_no_content_test);
+    if (smimecap_cert != NULL && smimecap_privkey != NULL)
+        ADD_TEST(test_pkcs7_smimecap);
+    ADD_TEST(pkcs7_stream_non_data_test);
     return 1;
+}
+
+void cleanup_tests(void)
+{
+    X509_free(smimecap_cert);
+    EVP_PKEY_free(smimecap_privkey);
 }

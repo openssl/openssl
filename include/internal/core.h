@@ -44,7 +44,7 @@ typedef struct ossl_method_construct_method_st {
         const char *name, const char *propdef, void *data);
     /* Construct a new method */
     void *(*construct)(const OSSL_ALGORITHM *algodef, OSSL_PROVIDER *prov,
-        void *data);
+        void *data, int no_store);
     /* Destruct a method */
     void (*destruct)(void *method, void *data);
 } OSSL_METHOD_CONSTRUCT_METHOD;

@@ -27,6 +27,25 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_bind)
+{
+    int ok = 0;
+    const char *name;
+    RADIX_OBJ *empty_obj;
+
+    F_POP(name);
+
+    if (!TEST_ptr(empty_obj = RADIX_OBJ_new_empty(name))
+        || !TEST_true(RADIX_PROCESS_set_obj(RP(), name, empty_obj))) {
+        RADIX_OBJ_free(empty_obj);
+        goto err;
+    }
+
+    ok = 1;
+err:
+    return ok;
+}
+
 static int ssl_ctx_select_alpn(SSL *ssl,
     const unsigned char **out, unsigned char *out_len,
     const unsigned char *in, unsigned int in_len,
@@ -119,6 +138,18 @@ err:
     return ok;
 }
 
+/* Attaches bio as both rbio and wbio, consuming the caller's reference. */
+static int ssl_attach_bio(SSL *ssl, BIO *bio)
+{
+    SSL_set0_rbio(ssl, bio);
+    if (!TEST_true(BIO_up_ref(bio)))
+        return 0;
+
+    SSL_set0_wbio(ssl, bio);
+
+    return 1;
+}
+
 static int ssl_attach_bio_dgram(SSL *ssl,
     uint16_t local_port, uint16_t *actual_port)
 {
@@ -133,13 +164,7 @@ static int ssl_attach_bio_dgram(SSL *ssl,
         return 0;
     }
 
-    SSL_set0_rbio(ssl, bio);
-    if (!TEST_true(BIO_up_ref(bio)))
-        return 0;
-
-    SSL_set0_wbio(ssl, bio);
-
-    return 1;
+    return ssl_attach_bio(ssl, bio);
 }
 
 DEF_FUNC(hf_new_ssl)
@@ -150,22 +175,51 @@ DEF_FUNC(hf_new_ssl)
     const SSL_METHOD *method;
     SSL *ssl;
     uint64_t flags;
-    int is_server, is_domain;
+    int is_server, is_domain, is_ta, is_no_bio;
 
     F_POP2(name, flags);
 
     is_domain = ((flags & 2) != 0);
     is_server = ((flags & 1) != 0);
+    is_ta = ((flags & 4) != 0);
+    is_no_bio = ((flags & 8) != 0);
 
-    method = is_server ? OSSL_QUIC_server_method() : OSSL_QUIC_client_method();
+    if (is_server)
+        method = OSSL_QUIC_server_method();
+    else if (is_ta)
+        method = OSSL_QUIC_client_thread_method();
+    else
+        method = OSSL_QUIC_client_method();
+
     if (!TEST_ptr(ctx = SSL_CTX_new(method)))
         goto err;
 
+#if defined(OPENSSL_NO_QUIC_THREAD_ASSIST) || !defined(OPENSSL_THREADS)
+    if (is_ta) {
+        TEST_skip("thread assisted mode not available");
+        F_SKIP_REST();
+    }
+#endif
+
 #if defined(OPENSSL_THREADS)
-    if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
-            SSL_DOMAIN_FLAG_MULTI_THREAD
-                | SSL_DOMAIN_FLAG_BLOCKING)))
+    if (is_ta) {
+        uint64_t domain_flags = 0;
+
+        /*
+         * Rely on the OSSL_QUIC_client_thread_method() domain flag defaults
+         * rather than setting them so the method's defaulting stays covered.
+         */
+        if (!TEST_true(SSL_CTX_get_domain_flags(ctx, &domain_flags))
+            || !TEST_uint64_t_eq(domain_flags,
+                SSL_DOMAIN_FLAG_MULTI_THREAD
+                    | SSL_DOMAIN_FLAG_THREAD_ASSISTED
+                    | SSL_DOMAIN_FLAG_BLOCKING))
+            goto err;
+    } else if (!TEST_true(SSL_CTX_set_domain_flags(ctx,
+                   SSL_DOMAIN_FLAG_MULTI_THREAD
+                       | SSL_DOMAIN_FLAG_BLOCKING))) {
         goto err;
+    }
 #endif
 
     if (!TEST_true(ssl_ctx_configure(ctx, is_server)))
@@ -183,8 +237,14 @@ DEF_FUNC(hf_new_ssl)
             goto err;
     }
 
-    if (!is_domain && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
+    if (!is_domain && !is_no_bio
+        && !TEST_true(ssl_attach_bio_dgram(ssl, 0, NULL)))
         goto err;
+
+    if (!TEST_true(ossl_quic_set_override_now_cb(ssl, get_time, NULL))) {
+        SSL_free(ssl);
+        goto err;
+    }
 
     if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), name, ssl))) {
         SSL_free(ssl);
@@ -248,27 +308,38 @@ err:
     return ok;
 }
 
+#define OP_F_REPLACE_STREAM 0x8000000000000000
+#define OP_F_MASK 0x7fffffffffffffff
+
 DEF_FUNC(hf_new_stream)
 {
     int ok = 0;
+    int replace;
+    RADIX_OBJ *stream_obj;
     const char *stream_name;
-    SSL *conn, *stream;
+    SSL *conn, *stream, *old;
     uint64_t flags, do_accept;
 
     F_POP2(flags, do_accept);
     F_POP(stream_name);
     REQUIRE_SSL(conn);
+    replace = ((OP_F_REPLACE_STREAM & flags) != 0);
 
-    if (!TEST_ptr_null(RADIX_PROCESS_get_obj(RP(), stream_name)))
+    stream_obj = RADIX_PROCESS_get_obj(RP(), stream_name);
+    if (replace == 0) {
+        if (!TEST_ptr_null(stream_obj))
+            goto err;
+    } else if (TEST_ptr_null(stream_obj)) {
         goto err;
+    }
 
     if (do_accept) {
-        stream = SSL_accept_stream(conn, flags);
+        stream = SSL_accept_stream(conn, flags & OP_F_MASK);
 
         if (stream == NULL)
             F_SPIN_AGAIN();
     } else {
-        stream = SSL_new_stream(conn, flags);
+        stream = SSL_new_stream(conn, flags & OP_F_MASK);
     }
 
     if (!TEST_ptr(stream))
@@ -276,8 +347,14 @@ DEF_FUNC(hf_new_stream)
 
     /* TODO(QUIC RADIX): Implement wait behaviour */
 
-    if (stream != NULL
-        && !TEST_true(RADIX_PROCESS_set_ssl(RP(), stream_name, stream))) {
+    if (stream_obj != NULL) {
+        ossl_crypto_mutex_lock(stream_obj->mx);
+        old = stream_obj->ssl;
+        stream_obj->ssl = stream;
+        stream = NULL;
+        ossl_crypto_mutex_unlock(stream_obj->mx);
+        SSL_free(old);
+    } else if (!TEST_true(RADIX_PROCESS_set_ssl(RP(), stream_name, stream))) {
         SSL_free(stream);
         goto err;
     }
@@ -308,6 +385,7 @@ DEF_FUNC(hf_accept_conn)
         SSL_free(conn);
         goto err;
     }
+    radix_activate_obj(RADIX_PROCESS_get_obj(RP(), conn_name));
 
     ok = 1;
 err:
@@ -869,6 +947,62 @@ err:
     return ok;
 }
 
+/*
+ * Link a client and a listener with an in-memory datagram BIO pair. Fake-time
+ * tests need this: a datagram sitting in the OS UDP path while fake time skips
+ * ahead could arrive only after a deadline it preceded in fake time.
+ */
+DEF_FUNC(hf_link_dgram_pair)
+{
+    int ok = 0;
+    SSL *c_ssl, *l_ssl;
+    BIO *c_bio = NULL, *l_bio = NULL;
+    BIO_ADDR *addr = NULL;
+    struct in_addr ina;
+
+    REQUIRE_SSL_2(c_ssl, l_ssl);
+
+    if (!TEST_true(BIO_new_bio_dgram_pair(&c_bio, 0, &l_bio, 0)))
+        goto err;
+
+    if (!TEST_true(BIO_dgram_set_caps(c_bio, BIO_DGRAM_CAP_HANDLES_DST_ADDR))
+        || !TEST_true(BIO_dgram_set_caps(l_bio,
+            BIO_DGRAM_CAP_HANDLES_DST_ADDR)))
+        goto err;
+
+    ina.s_addr = htonl(INADDR_LOOPBACK);
+    if (!TEST_ptr(addr = BIO_ADDR_new())
+        || !TEST_true(BIO_ADDR_rawmake(addr, AF_INET, &ina, sizeof(ina), 0)))
+        goto err;
+
+    /* There are no real ports; a stable dummy address is all that is needed. */
+    if (!TEST_true(SSL_set1_initial_peer_addr(c_ssl, addr)))
+        goto err;
+
+    if (!TEST_true(BIO_dgram_set0_local_addr(c_bio, addr)))
+        goto err;
+    addr = NULL;
+
+    if (!ssl_attach_bio(c_ssl, c_bio)) {
+        c_bio = NULL;
+        goto err;
+    }
+    c_bio = NULL;
+
+    if (!ssl_attach_bio(l_ssl, l_bio)) {
+        l_bio = NULL;
+        goto err;
+    }
+    l_bio = NULL;
+
+    ok = 1;
+err:
+    BIO_free(c_bio);
+    BIO_free(l_bio);
+    BIO_ADDR_free(addr);
+    return ok;
+}
+
 DEF_FUNC(hf_set_peer_addr_from)
 {
     int ok = 0;
@@ -924,9 +1058,493 @@ err:
     return ok;
 }
 
+DEF_FUNC(hf_set_tick_active)
+{
+    int ok = 0;
+    uint64_t active;
+    const char *name;
+    RADIX_OBJ *obj;
+
+    F_POP2(name, active);
+    if (!TEST_ptr(obj = RADIX_PROCESS_get_obj(RP(), name)))
+        goto err;
+
+    obj->active = (active != 0);
+    ok = 1;
+err:
+    return ok;
+}
+
+/* Inhibit ticking at the QUIC_ENGINE level */
+DEF_FUNC(hf_set_engine_tick_inhibit)
+{
+    int ok = 0;
+    uint64_t inhibit;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(inhibit);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_ptr(ch = ossl_quic_conn_get_channel(ssl)))
+        goto err;
+
+    ossl_quic_engine_set_inhibit_tick(ossl_quic_channel_get0_engine(ch),
+        inhibit != 0);
+    ok = 1;
+err:
+    return ok;
+}
+
+/*
+ * Skip fake time and wait for the assist thread to catch up. It waits on real
+ * time internally, so wake it and spin until the event timeout is back in the
+ * future, meaning everything due up to now (any keepalive) has been serviced.
+ */
+DEF_FUNC(hf_skip_time_wait)
+{
+    int ok = 0;
+    uint64_t ms;
+    SSL *ssl;
+    struct timeval tv;
+    int is_infinite;
+
+    REQUIRE_SSL(ssl);
+    F_POP(ms);
+
+    if (RT()->scratch0 == 0) {
+        /* Skip only once; spin re-entries pass through here. */
+        radix_skip_time(ossl_ms2time(ms));
+        RT()->scratch0 = 1;
+    }
+
+    ossl_quic_conn_force_assist_thread_wake(ssl);
+
+    if (!TEST_true(SSL_get_event_timeout(ssl, &tv, &is_infinite)))
+        goto err;
+
+    /* {0,0} (subtract saturates) means an event is still pending. */
+    if (!is_infinite && tv.tv_sec == 0 && tv.tv_usec == 0) {
+        OSSL_sleep(1); /* Yield so the assist thread can run. */
+        F_SPIN_AGAIN();
+    }
+
+    RT()->scratch0 = 0; /* done; not reset at err, as spins pass through it */
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_expect_connected)
+{
+    int ok = 0;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    REQUIRE_SSL(ssl);
+    if (!TEST_ptr(ch = ossl_quic_conn_get_channel(ssl)))
+        goto err;
+
+    if (!TEST_true(ossl_quic_channel_is_active(ch)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_override_key_update)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t threshold;
+    QUIC_CHANNEL *ch;
+
+    F_POP(threshold);
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    ossl_quic_channel_set_txku_threshold_override(ch, threshold);
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_key_update_ge)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t min_rxke, txke, rxke;
+    int64_t diff;
+    QUIC_CHANNEL *ch;
+
+    F_POP(min_rxke);
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    txke = ossl_quic_channel_get_tx_key_epoch(ch);
+    rxke = ossl_quic_channel_get_rx_key_epoch(ch);
+    diff = (int64_t)txke - (int64_t)rxke;
+
+    /*
+     * TXKE must always be equal to or ahead of RXKE.
+     * It can be ahead of RXKE by at most 1.
+     */
+    if (!TEST_int64_t_ge(diff, 0) || !TEST_int64_t_le(diff, 1))
+        goto err;
+
+    /* Caller specifies a minimum number of RXKEs which must have happened. */
+    if (!TEST_uint64_t_ge(rxke, min_rxke))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_check_key_update_lt)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t max_txke, txke;
+    QUIC_CHANNEL *ch;
+
+    F_POP(max_txke);
+    REQUIRE_SSL(ssl);
+    ch = ossl_quic_conn_get_channel(ssl);
+    txke = ossl_quic_channel_get_tx_key_epoch(ch);
+
+    /* Caller specifies a maximum number of TXKEs which must not be exceeded. */
+    if (!TEST_uint64_t_lt(txke, max_txke))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_trigger_key_update)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t update_type;
+
+    F_POP(update_type);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(SSL_key_update(ssl, (int)update_type)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_close_socket)
+{
+    int ok = 0;
+    SSL *ssl;
+    BIO *bio;
+    int fd = -1;
+
+    REQUIRE_SSL(ssl);
+
+    bio = SSL_get_rbio(ssl);
+    if (!TEST_ptr(bio) || !TEST_true(BIO_get_fd(bio, &fd)) || !TEST_int_ge(fd, 0))
+        goto err;
+
+    BIO_closesocket(fd);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+/* Process-global counters (RP()->counter[idx]), used for cross-thread sync. */
+DEF_FUNC(hf_trigger_counter)
+{
+    int ok = 0;
+    uint64_t idx;
+
+    F_POP(idx);
+
+    ossl_crypto_mutex_lock(RP()->gm);
+    ++RP()->counter[idx];
+    ossl_crypto_mutex_unlock(RP()->gm);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_wait_counter)
+{
+    int ok = 0;
+    uint64_t idx, threshold, current;
+
+    F_POP2(idx, threshold);
+
+    ossl_crypto_mutex_lock(RP()->gm);
+    current = RP()->counter[idx];
+    ossl_crypto_mutex_unlock(RP()->gm);
+
+    if (current < threshold)
+        F_SPIN_AGAIN();
+
+    ok = 1;
+err:
+    return ok;
+}
+
+/*
+ * Fault injection: intercepts a QUIC channel's outgoing packet in plaintext,
+ * before it is encrypted, so a script can tamper with its frames.
+ */
+typedef struct radix_fault_st RADIX_FAULT;
+
+typedef int (*radix_fault_plain_cb)(RADIX_FAULT *fault, QUIC_PKT_HDR *hdr,
+    unsigned char *buf, size_t len);
+
+static ossl_inline void *radix_fault_plain_cb_to_ptr(radix_fault_plain_cb cb)
+{
+    union {
+        radix_fault_plain_cb cb;
+        void *ptr;
+    } u;
+
+    u.cb = cb;
+    return u.ptr;
+}
+
+static ossl_inline radix_fault_plain_cb radix_fault_ptr_to_plain_cb(void *ptr)
+{
+    union {
+        radix_fault_plain_cb cb;
+        void *ptr;
+    } u;
+
+    u.ptr = ptr;
+    return u.cb;
+}
+
+struct radix_fault_st {
+    QUIC_PKT_HDR hdr;
+    OSSL_QTX_IOVEC io;
+    size_t buf_alloc;
+    radix_fault_plain_cb cb;
+    QUIC_CHANNEL *ch;
+    uint64_t word0, word1;
+};
+
+/* Fault injection against one channel at a time. */
+static RADIX_FAULT radix_fault;
+
+static int radix_fault_mutate(const QUIC_PKT_HDR *hdrin,
+    const OSSL_QTX_IOVEC *iovecin, size_t numin,
+    QUIC_PKT_HDR **hdrout,
+    const OSSL_QTX_IOVEC **iovecout,
+    size_t *numout,
+    void *arg)
+{
+    RADIX_FAULT *fault = arg;
+    size_t i, bufsz = 0;
+    unsigned char *cur;
+    int grow_allowance;
+
+    for (i = 0; i < numin; i++)
+        bufsz += iovecin[i].buf_len;
+
+    fault->io.buf_len = bufsz;
+
+    /*
+     * 1200 is the length of the QUIC payload used by the record layer, bufsz is
+     * what we got from the txp, 16 is the AEAD tag length and 14 is the
+     * long header allowance (assume zero token length).
+     */
+    grow_allowance = 1200 - (int)bufsz - 16 - 14;
+    grow_allowance -= hdrin->dst_conn_id.id_len;
+    grow_allowance -= hdrin->src_conn_id.id_len;
+    if (!TEST_int_ge(grow_allowance, 0))
+        return 0;
+    bufsz += grow_allowance;
+
+    OPENSSL_free((unsigned char *)fault->io.buf);
+    fault->io.buf = cur = OPENSSL_malloc(bufsz);
+    if (cur == NULL) {
+        fault->io.buf_len = 0;
+        fault->buf_alloc = 0;
+        return 0;
+    }
+    fault->buf_alloc = bufsz;
+
+    for (i = 0; i < numin; i++) {
+        memcpy(cur, iovecin[i].buf, iovecin[i].buf_len);
+        cur += iovecin[i].buf_len;
+    }
+
+    fault->hdr = *hdrin;
+
+    if (fault->cb != NULL
+        && !fault->cb(fault, &fault->hdr, (unsigned char *)fault->io.buf,
+            fault->io.buf_len))
+        return 0;
+
+    *hdrout = &fault->hdr;
+    *iovecout = &fault->io;
+    *numout = 1;
+
+    return 1;
+}
+
+static void radix_fault_finish(void *arg)
+{
+    RADIX_FAULT *fault = arg;
+
+    OPENSSL_free((unsigned char *)fault->io.buf);
+    fault->io.buf = NULL;
+    fault->io.buf_len = 0;
+    fault->buf_alloc = 0;
+}
+
+/* To be called from a radix_fault_plain_cb callback. */
+static int radix_fault_resize_plain_packet(RADIX_FAULT *fault, size_t newlen)
+{
+    unsigned char *buf;
+    size_t oldlen = fault->io.buf_len;
+
+    if (fault->buf_alloc == 0 || newlen > fault->buf_alloc)
+        return 0;
+
+    buf = (unsigned char *)fault->io.buf;
+
+    if (newlen > oldlen)
+        memset(buf + oldlen, 0, newlen - oldlen);
+
+    fault->io.buf_len = newlen;
+    fault->hdr.len = newlen;
+
+    return 1;
+}
+
+/*
+ * Prepend frame data into a packet. To be called from a
+ * radix_fault_plain_cb callback.
+ */
+static int radix_fault_prepend_frame(RADIX_FAULT *fault,
+    const unsigned char *frame, size_t frame_len)
+{
+    unsigned char *buf;
+    size_t old_len;
+
+    if (fault->buf_alloc == 0)
+        return 0;
+
+    /* Cast below is safe because we allocated the buffer. */
+    buf = (unsigned char *)fault->io.buf;
+    old_len = fault->io.buf_len;
+
+    if (!radix_fault_resize_plain_packet(fault, old_len + frame_len))
+        return 0;
+
+    memmove(buf + frame_len, buf, old_len);
+    memcpy(buf, frame, frame_len);
+
+    return 1;
+}
+
+DEF_FUNC(hf_set_inject_plain)
+{
+    int ok = 0;
+    SSL *ssl;
+    void *cbptr;
+    QUIC_CHANNEL *ch;
+
+    F_POP(cbptr);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_ptr(ch = ossl_quic_conn_get_channel(ssl)))
+        goto err;
+
+    OPENSSL_free((unsigned char *)radix_fault.io.buf);
+    memset(&radix_fault, 0, sizeof(radix_fault));
+    radix_fault.cb = radix_fault_ptr_to_plain_cb(cbptr);
+    radix_fault.ch = ch;
+
+    if (!TEST_true(ossl_quic_channel_set_mutator(ch, radix_fault_mutate,
+            radix_fault_finish, &radix_fault)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_inject_word)
+{
+    int ok = 0;
+
+    F_POP2(radix_fault.word0, radix_fault.word1);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_push_stream_id_plus_one)
+{
+    int ok = 0;
+    SSL *ssl;
+    uint64_t stream_id_plus_one;
+
+    REQUIRE_SSL(ssl);
+    stream_id_plus_one = SSL_get_stream_id(ssl) + 1;
+    F_PUSH(stream_id_plus_one);
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_inhibit_tick)
+{
+    int ok = 0;
+    uint64_t inhibit;
+    SSL *ssl;
+    QUIC_CHANNEL *ch;
+
+    F_POP(inhibit);
+    REQUIRE_SSL(ssl);
+
+    ch = ossl_quic_conn_get_channel(ssl);
+    ossl_quic_engine_set_inhibit_tick(ossl_quic_channel_get0_engine(ch),
+        (int)inhibit);
+
+    ok = 1;
+err:
+    return ok;
+}
+
+DEF_FUNC(hf_set_write_buf_size)
+{
+    int ok = 0;
+    size_t size;
+    SSL *ssl;
+
+    F_POP(size);
+    REQUIRE_SSL(ssl);
+
+    if (!TEST_true(ossl_quic_set_write_buffer_size(ssl, size)))
+        goto err;
+
+    ok = 1;
+err:
+    return ok;
+}
+
 #define OP_UNBIND(name) \
     (OP_PUSH_PZ(#name), \
         OP_FUNC(hf_unbind))
+
+#define OP_BIND(name)   \
+    (OP_PUSH_PZ(#name), \
+        OP_FUNC(hf_bind))
 
 #define OP_SELECT_SSL(slot, name) \
     (OP_PUSH_U64(slot),           \
@@ -1079,9 +1697,9 @@ err:
         OP_FUNC(hf_read_fail))
 
 #define OP_READ_FAIL_WAIT(name) \
-    (OP_SELECT_SSL(0, name),                                    \
-     OP_PUSH_U64(1),                                            \
-     OP_FUNC(hf_read_fail)
+    (OP_SELECT_SSL(0, name),    \
+        OP_PUSH_U64(1),         \
+        OP_FUNC(hf_read_fail))
 
 #define OP_POP_ERR() \
     OP_FUNC(hf_pop_err)
@@ -1099,7 +1717,7 @@ err:
 
 #define OP_STREAM_RESET(name, error_code) \
     (OP_SELECT_SSL(0, name),              \
-        OP_PUSH_U64(flags),               \
+        OP_PUSH_PZ(#name),                \
         OP_PUSH_U64(error_code),          \
         OP_FUNC(hf_stream_reset))
 
@@ -1146,3 +1764,110 @@ err:
 #define OP_SLEEP(ms)  \
     (OP_PUSH_U64(ms), \
         OP_FUNC(hf_sleep))
+
+/* Thread-assisted client, no socket (link a BIO pair instead). */
+#define OP_NEW_SSL_C_TA_MEM(name) \
+    (OP_PUSH_PZ(#name),           \
+        OP_PUSH_U64(4 | 8),       \
+        OP_FUNC(hf_new_ssl))
+
+/* Listener, no socket (link a BIO pair instead). */
+#define OP_NEW_SSL_L_MEM(name) \
+    (OP_PUSH_PZ(#name),        \
+        OP_PUSH_U64(1 | 8),    \
+        OP_FUNC(hf_new_ssl))
+
+#define OP_LINK_DGRAM_PAIR(client_name, listener_name) \
+    (OP_SELECT_SSL(0, client_name),                    \
+        OP_SELECT_SSL(1, listener_name),               \
+        OP_FUNC(hf_link_dgram_pair))
+
+#define OP_TICK_DISABLE(name) \
+    (OP_PUSH_PZ(#name),       \
+        OP_PUSH_U64(0),       \
+        OP_FUNC(hf_set_tick_active))
+
+#define OP_TICK_ENABLE(name) \
+    (OP_PUSH_PZ(#name),      \
+        OP_PUSH_U64(1),      \
+        OP_FUNC(hf_set_tick_active))
+
+/*
+ * Inhibits/uninhibits ticking of the QUIC_ENGINE that "name" belongs  (see
+ * see hf_set_engine_tick_inhibit).
+ */
+#define OP_ENGINE_TICK_DISABLE(name) \
+    (OP_SELECT_SSL(0, name),         \
+        OP_PUSH_U64(1),              \
+        OP_FUNC(hf_set_engine_tick_inhibit))
+
+#define OP_ENGINE_TICK_ENABLE(name) \
+    (OP_SELECT_SSL(0, name),        \
+        OP_PUSH_U64(0),             \
+        OP_FUNC(hf_set_engine_tick_inhibit))
+
+#define OP_SKIP_TIME_WAIT(name, ms) \
+    (OP_SELECT_SSL(0, name),        \
+        OP_PUSH_U64(ms),            \
+        OP_FUNC(hf_skip_time_wait))
+
+#define OP_EXPECT_CONNECTED(name) \
+    (OP_SELECT_SSL(0, name),      \
+        OP_FUNC(hf_expect_connected))
+
+#define OP_OVERRIDE_KEY_UPDATE(name, threshold) \
+    (OP_SELECT_SSL(0, name),                    \
+        OP_PUSH_U64(threshold),                 \
+        OP_FUNC(hf_override_key_update))
+
+#define OP_CHECK_KEY_UPDATE_GE(name, min_rxke) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(min_rxke),                 \
+        OP_FUNC(hf_check_key_update_ge))
+
+#define OP_CHECK_KEY_UPDATE_LT(name, max_txke) \
+    (OP_SELECT_SSL(0, name),                   \
+        OP_PUSH_U64(max_txke),                 \
+        OP_FUNC(hf_check_key_update_lt))
+
+#define OP_TRIGGER_KEY_UPDATE(name, update_type) \
+    (OP_SELECT_SSL(0, name),                     \
+        OP_PUSH_U64(update_type),                \
+        OP_FUNC(hf_trigger_key_update))
+
+#define OP_CLOSE_SOCKET(name) \
+    (OP_SELECT_SSL(0, name),  \
+        OP_FUNC(hf_close_socket))
+
+#define OP_TRIGGER_COUNTER(idx) \
+    (OP_PUSH_U64(idx),          \
+        OP_FUNC(hf_trigger_counter))
+
+#define OP_WAIT_COUNTER(idx, threshold) \
+    (OP_PUSH_U64(idx),                  \
+        OP_PUSH_U64(threshold),         \
+        OP_FUNC(hf_wait_counter))
+
+#define OP_SET_INJECT_PLAIN(name, cb)               \
+    (OP_SELECT_SSL(0, name),                        \
+        OP_PUSH_P(radix_fault_plain_cb_to_ptr(cb)), \
+        OP_FUNC(hf_set_inject_plain))
+
+#define OP_SET_INJECT_WORD(word0, word1) \
+    (OP_PUSH_U64(word0),                 \
+        OP_PUSH_U64(word1),              \
+        OP_FUNC(hf_set_inject_word))
+
+#define OP_PUSH_STREAM_ID_PLUS_ONE(name) \
+    (OP_SELECT_SSL(0, name),             \
+        OP_FUNC(hf_push_stream_id_plus_one))
+
+#define OP_INHIBIT_TICK(name, inhibit) \
+    (OP_SELECT_SSL(0, name),           \
+        OP_PUSH_U64(inhibit),          \
+        OP_FUNC(hf_inhibit_tick))
+
+#define OP_SET_WRITE_BUF_SIZE(name, size) \
+    (OP_SELECT_SSL(0, name),              \
+        OP_PUSH_SIZE(size),               \
+        OP_FUNC(hf_set_write_buf_size))

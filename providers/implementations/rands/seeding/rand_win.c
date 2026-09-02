@@ -7,6 +7,7 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include "internal/e_os.h" /* For windows.h */
 #include "internal/cryptlib.h"
 #include <openssl/rand.h>
 #include "crypto/rand_pool.h"
@@ -19,10 +20,10 @@
 #error "Unsupported seeding method configured; must be os"
 #endif
 
-#include <windows.h>
 /* On Windows Vista or higher use BCrypt instead of the legacy CryptoAPI */
-#if defined(_MSC_VER) && _MSC_VER > 1500 /* 1500 = Visual Studio 2008 */ \
-    && defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600
+#if defined(_WIN32_WINNT) && _WIN32_WINNT >= 0x0600 \
+    && ((defined(_MSC_VER) && _MSC_VER > 1500)      \
+        || (defined(__MINGW64_VERSION_MAJOR) && __MINGW64_VERSION_MAJOR >= 2))
 #define USE_BCRYPTGENRANDOM
 #endif
 
@@ -70,7 +71,7 @@ size_t ossl_pool_acquire_entropy(RAND_POOL *pool)
     buffer = ossl_rand_pool_add_begin(pool, bytes_needed);
     if (buffer != NULL) {
         size_t bytes = 0;
-        if (BCryptGenRandom(NULL, buffer, bytes_needed,
+        if (BCryptGenRandom(NULL, buffer, (ULONG)bytes_needed,
                 BCRYPT_USE_SYSTEM_PREFERRED_RNG)
             == STATUS_SUCCESS)
             bytes = bytes_needed;

@@ -22,7 +22,7 @@
 # It's impossible to have one that is optimal for every step, hence
 # it's changing as algorithm progresses. Data is saved in linear order,
 # but in-register order morphs between rounds. Even rounds take in
-# linear layout, and odd rounds - transposed, or "verticaly-shaped"...
+# linear layout, and odd rounds - transposed, or "vertically-shaped"...
 #
 ########################################################################
 # Numbers are cycles per processed byte out of large message.

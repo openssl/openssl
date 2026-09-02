@@ -102,6 +102,7 @@ struct evp_keymgmt_st {
     int id; /* libcrypto internal */
 
     int name_id;
+    int no_store;
     /* NID for the legacy alg if there is one */
     int legacy_alg;
     char *type_name;
@@ -148,6 +149,7 @@ struct evp_keymgmt_st {
 
 struct evp_keyexch_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -168,6 +170,7 @@ struct evp_keyexch_st {
 
 struct evp_signature_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -211,6 +214,7 @@ struct evp_signature_st {
 
 struct evp_skeymgmt_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -234,6 +238,7 @@ struct evp_skeymgmt_st {
 
 struct evp_asym_cipher_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -254,6 +259,7 @@ struct evp_asym_cipher_st {
 
 struct evp_kem_st {
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     OSSL_PROVIDER *prov;
@@ -305,14 +311,14 @@ void *evp_generic_fetch(OSSL_LIB_CTX *ctx, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *));
 void *evp_generic_fetch_from_prov(OSSL_PROVIDER *prov, int operation_id,
     const char *name, const char *properties,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *));
 void evp_generic_do_all_prefetched(OSSL_LIB_CTX *libctx, int operation_id,
@@ -323,7 +329,7 @@ void evp_generic_do_all(OSSL_LIB_CTX *libctx, int operation_id,
     void *user_arg,
     void *(*new_method)(int name_id,
         const OSSL_ALGORITHM *algodef,
-        OSSL_PROVIDER *prov),
+        OSSL_PROVIDER *prov, int no_store),
     int (*up_ref_method)(void *),
     void (*free_method)(void *));
 

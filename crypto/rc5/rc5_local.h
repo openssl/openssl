@@ -19,7 +19,7 @@
 #elif defined(__ICC)
 #define ROTATE_l32(a, n) _rotl(a, n)
 #define ROTATE_r32(a, n) _rotr(a, n)
-#elif defined(__GNUC__) && __GNUC__ >= 2 && !defined(__STRICT_ANSI__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
+#elif defined(__GNUC__) && !defined(__STRICT_ANSI__) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM) && !defined(PEDANTIC)
 #if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__)
 #define ROTATE_l32(a, n) ({              \
     register unsigned int ret;           \

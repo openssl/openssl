@@ -23,30 +23,13 @@
 
 #define CLIENT_VERSION_LEN 2
 
-#define TOTAL_NUM_TESTS 3
+#define TOTAL_NUM_TESTS 1
 
 /*
  * Test that explicitly setting ticket data results in it appearing in the
  * ClientHello for a negotiated SSL/TLS version
  */
 #define TEST_SET_SESSION_TICK_DATA_VER_NEG 0
-/* Enable padding and make sure ClientHello is long enough to require it */
-#define TEST_ADD_PADDING 1
-/* Enable padding and make sure ClientHello is short enough to not need it */
-#define TEST_PADDING_NOT_NEEDED 2
-
-#define F5_WORKAROUND_MIN_MSG_LEN 0x7f
-#define F5_WORKAROUND_MAX_MSG_LEN 0x200
-
-/* Dummy ALPN protocols used to pad out the size of the ClientHello */
-/* ASCII 'O' = 79 = 0x4F = EBCDIC '|'*/
-#ifdef CHARSET_EBCDIC
-static const char alpn_prots[] = "|1234567890123456789012345678901234567890123456789012345678901234567890123456789"
-                                 "|1234567890123456789012345678901234567890123456789012345678901234567890123456789";
-#else
-static const char alpn_prots[] = "O1234567890123456789012345678901234567890123456789012345678901234567890123456789"
-                                 "O1234567890123456789012345678901234567890123456789012345678901234567890123456789";
-#endif
 
 static int test_client_hello(int currtest)
 {
@@ -60,7 +43,6 @@ static int test_client_hello(int currtest)
     char *dummytick = "Hello World!";
     unsigned int type = 0;
     int testresult = 0;
-    size_t msglen;
     BIO *sessbio = NULL;
     SSL_SESSION *sess = NULL;
 
@@ -89,37 +71,6 @@ static int test_client_hello(int currtest)
         if (!TEST_true(SSL_CTX_set_max_proto_version(ctx, TLS1_2_VERSION)))
             goto end;
 #endif
-        break;
-
-    case TEST_ADD_PADDING:
-    case TEST_PADDING_NOT_NEEDED:
-        SSL_CTX_set_options(ctx, SSL_OP_TLSEXT_PADDING);
-        /* Make sure we get a consistent size across TLS versions */
-        SSL_CTX_clear_options(ctx, SSL_OP_ENABLE_MIDDLEBOX_COMPAT);
-        /* Avoid large keyshares */
-        if (!TEST_true(SSL_CTX_set1_groups_list(ctx,
-                "?X25519:?secp256r1:?ffdhe2048:?ffdhe3072")))
-            goto end;
-        /*
-         * Add some dummy ALPN protocols so that the ClientHello is at least
-         * F5_WORKAROUND_MIN_MSG_LEN bytes long - meaning padding will be
-         * needed.
-         */
-        if (currtest == TEST_ADD_PADDING) {
-            if (!TEST_false(SSL_CTX_set_alpn_protos(ctx,
-                    (unsigned char *)alpn_prots,
-                    sizeof(alpn_prots) - 1)))
-                goto end;
-            /*
-             * Otherwise we need to make sure we have a small enough message to
-             * not need padding.
-             */
-        } else if (!TEST_true(SSL_CTX_set_cipher_list(ctx,
-                       "AES128-SHA"))
-            || !TEST_true(SSL_CTX_set_ciphersuites(ctx,
-                "TLS_AES_128_GCM_SHA256"))) {
-            goto end;
-        }
         break;
 
     default:
@@ -158,8 +109,6 @@ static int test_client_hello(int currtest)
         || !PACKET_forward(&pkt, SSL3_RT_HEADER_LENGTH))
         goto end;
 
-    msglen = PACKET_remaining(&pkt);
-
     /* Skip the handshake message header */
     if (!TEST_true(PACKET_forward(&pkt, SSL3_HM_HEADER_LENGTH))
         /* Skip client version and random */
@@ -191,16 +140,7 @@ static int test_client_hello(int currtest)
                 goto end;
             }
         }
-        if (type == TLSEXT_TYPE_padding) {
-            if (!TEST_false(currtest == TEST_PADDING_NOT_NEEDED))
-                goto end;
-            else if (TEST_true(currtest == TEST_ADD_PADDING))
-                testresult = TEST_true(msglen == F5_WORKAROUND_MAX_MSG_LEN);
-        }
     }
-
-    if (currtest == TEST_PADDING_NOT_NEEDED)
-        testresult = 1;
 
 end:
     SSL_free(con);

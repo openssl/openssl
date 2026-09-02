@@ -3,7 +3,8 @@
 =head1 NAME
 
 EVP_set_default_properties, EVP_default_properties_enable_fips,
-EVP_default_properties_is_fips_enabled, EVP_get1_default_properties
+EVP_default_properties_is_fips_enabled, EVP_get1_default_properties,
+FIPS_mode
 - manage default properties for future algorithm fetches
 
 =head1 SYNOPSIS
@@ -14,6 +15,7 @@ EVP_default_properties_is_fips_enabled, EVP_get1_default_properties
  char *EVP_get1_default_properties(OSSL_LIB_CTX *libctx);
  int EVP_default_properties_enable_fips(OSSL_LIB_CTX *libctx, int enable);
  int EVP_default_properties_is_fips_enabled(OSSL_LIB_CTX *libctx);
+ #define FIPS_mode() EVP_default_properties_is_fips_enabled(NULL)
 
 =head1 DESCRIPTION
 
@@ -51,6 +53,12 @@ EVP_get1_default_properties() is not thread safe. The application must ensure
 that the context reference is valid and default fetching properties are not
 being modified by a different thread.
 
+EVP_default_properties_is_fips_enabled() and FIPS_mode() are hints of
+intent, but not proof. If you are looking to validate whether the default
+configuration is using a validated module, many additional checks are
+needed; please consult the documentation of the provider you are using
+and the associated security policy.
+
 =head1 RETURN VALUES
 
 EVP_set_default_properties() and  EVP_default_properties_enable_fips() return 1
@@ -63,6 +71,10 @@ property is set for the given I<libctx>, otherwise it returns 0.
 EVP_get1_default_properties() returns allocated memory that must be freed by
 L<OPENSSL_free(3)> on success and NULL on failure.
 
+FIPS_mode() is a convenience define which calls
+EVP_default_properties_is_fips_enabled(NULL) against the default
+library context.
+
 =head1 SEE ALSO
 
 L<EVP_MD_fetch(3)>
@@ -74,6 +86,8 @@ EVP_default_properties_is_fips_enabled() were added in OpenSSL 3.0.
 
 The function EVP_get1_default_properties() was added in OpenSSL 3.5.
 
+FIPS_mode() is restored as a define to
+EVP_default_properties_is_fips_enabled(NULL) in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 

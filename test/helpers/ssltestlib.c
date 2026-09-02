@@ -34,11 +34,13 @@ static int tls_dump_puts(BIO *bp, const char *str);
 #define BIO_TYPE_MEMPACKET_TEST 0x81
 #define BIO_TYPE_ALWAYS_RETRY 0x82
 #define BIO_TYPE_MAYBE_RETRY (0x83 | BIO_TYPE_FILTER)
+#define BIO_TYPE_NO_RETRY_ZERO (0x84 | BIO_TYPE_FILTER)
 
 static BIO_METHOD *method_tls_dump = NULL;
 static BIO_METHOD *meth_mem = NULL;
 static BIO_METHOD *meth_always_retry = NULL;
 static BIO_METHOD *meth_maybe_retry = NULL;
+static BIO_METHOD *meth_no_retry_zero = NULL;
 static int retry_err = -1;
 
 /* Note: Not thread safe! */
@@ -111,6 +113,27 @@ static void copy_flags(BIO *bio)
 #define MSG_FRAG_LEN_MID 10
 #define MSG_FRAG_LEN_LO 11
 
+/* Returns true if the unified header fixed bits are set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_FIX_BITS_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_FIX_BITS_MASK) == DTLS13_UNI_HDR_FIX_BITS)
+
+/* Returns true if the unified header connection id bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_CID_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_CID_BIT) == DTLS13_UNI_HDR_CID_BIT)
+
+/* Returns true if the unified header sequence number bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_SEQ_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_SEQ_BIT) == DTLS13_UNI_HDR_SEQ_BIT)
+
+/* Returns true if the unified header length bit is set (rfc9147 section 4) */
+#define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
+    (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
+
+#define DTLS13_UNI_HDR_RECORD_SEQ_HI 1
+#define DTLS13_UNI_HDR_RECORD_SEQ_LO 2
+#define DTLS13_UNI_HDR_RECORD_LEN_HI 3
+#define DTLS13_UNI_HDR_RECORD_LEN_LO 4
+
 static void dump_data(const char *data, int len)
 {
     int rem, i, content, reclen, msglen, fragoff, fraglen, epoch;
@@ -122,28 +145,51 @@ static void dump_data(const char *data, int len)
     rec = (unsigned char *)data;
 
     while (rem > 0) {
+        int rechdrlen;
+
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+        else
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
         if (rem != len)
             printf("*\n");
         printf("*---- START OF RECORD ----\n");
-        if (rem < DTLS1_RT_HEADER_LENGTH) {
+        if (rem < rechdrlen) {
             printf("*---- RECORD TRUNCATED ----\n");
             break;
         }
-        content = rec[RECORD_CONTENT_TYPE];
-        printf("** Record Content-type: %d\n", content);
-        printf("** Record Version: %02x%02x\n",
-            rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
-        epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
-        printf("** Record Epoch: %d\n", epoch);
-        printf("** Record Sequence: ");
-        for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
-            printf("%02x", rec[i]);
-        reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
-        printf("\n** Record Length: %d\n", reclen);
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+            content = SSL3_RT_APPLICATION_DATA;
+            printf("** Encrypted DTLS 1.3 Record Content\n");
+            epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
 
+            if (epoch == 0)
+                epoch = 4;
+
+            printf("** Record Epoch: %d\n", epoch);
+            printf("** Record Sequence: ");
+            for (i = DTLS13_UNI_HDR_RECORD_SEQ_HI; i <= DTLS13_UNI_HDR_RECORD_SEQ_LO; i++)
+                printf("%02x", rec[i]);
+            reclen = (rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8)
+                | rec[DTLS13_UNI_HDR_RECORD_LEN_LO];
+            printf("\n** Record Length: %d\n", reclen);
+        } else {
+            content = rec[RECORD_CONTENT_TYPE];
+            printf("** Record Content-type: %d\n", content);
+            printf("** Record Version: %02x%02x\n",
+                rec[RECORD_VERSION_HI], rec[RECORD_VERSION_LO]);
+            epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+            printf("** Record Epoch: %d\n", epoch);
+            printf("** Record Sequence: ");
+            for (i = RECORD_SEQUENCE_START; i <= RECORD_SEQUENCE_END; i++)
+                printf("%02x", rec[i]);
+            reclen = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+            printf("\n** Record Length: %d\n", reclen);
+        }
         /* Now look at message */
-        rec += DTLS1_RT_HEADER_LENGTH;
-        rem -= DTLS1_RT_HEADER_LENGTH;
+        rec += rechdrlen;
+        rem -= rechdrlen;
         if (content == SSL3_RT_HANDSHAKE) {
             printf("**---- START OF HANDSHAKE MESSAGE FRAGMENT ----\n");
             if (epoch > 0) {
@@ -328,13 +374,6 @@ static int mempacket_test_free(BIO *bio)
     return 1;
 }
 
-/* Record Header values */
-#define EPOCH_HI 3
-#define EPOCH_LO 4
-#define RECORD_SEQUENCE 10
-#define RECORD_LEN_HI 11
-#define RECORD_LEN_LO 12
-
 #define STANDARD_PACKET 0
 
 static int mempacket_test_read(BIO *bio, char *out, int outl)
@@ -342,8 +381,7 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
     MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
     MEMPACKET *thispkt;
     unsigned char *rec;
-    int rem;
-    unsigned int seq, offset, len, epoch;
+    unsigned int seq, offset, len, epoch, rem;
 
     BIO_clear_retry_flags(bio);
     if ((thispkt = sk_MEMPACKET_value(ctx->pkts, 0)) == NULL
@@ -367,27 +405,48 @@ static int mempacket_test_read(BIO *bio, char *out, int outl)
          * with any packets that have been injected
          */
         for (rem = thispkt->len, rec = thispkt->data; rem > 0; rem -= len) {
-            if (rem < DTLS1_RT_HEADER_LENGTH)
+            unsigned int rechdrlen;
+
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+                rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+            else
+                rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
+            if (rem < rechdrlen)
                 return -1;
-            epoch = (rec[EPOCH_HI] << 8) | rec[EPOCH_LO];
+
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+                /* We don't expect epochs higher than 3 */
+                epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
+            else
+                epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+
             if (epoch != ctx->epoch) {
                 ctx->epoch = epoch;
                 ctx->currrec = 0;
             }
             seq = ctx->currrec;
             offset = 0;
-            do {
-                rec[RECORD_SEQUENCE - offset] = seq & 0xFF;
-                seq >>= 8;
-                offset++;
-            } while (seq > 0);
+            if (!DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+                do {
+                    rec[RECORD_SEQUENCE_END - offset] = seq & 0xFF;
+                    seq >>= 8;
+                    offset++;
+                } while (seq > 0);
+            }
 
-            len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
-                + DTLS1_RT_HEADER_LENGTH;
-            if (rem < (int)len)
+            if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+                len = (rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8)
+                    | rec[DTLS13_UNI_HDR_RECORD_LEN_LO];
+            else
+                len = (rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO];
+
+            len += rechdrlen;
+
+            if (rem < len)
                 return -1;
             if (ctx->droprec == (int)ctx->currrec && ctx->dropepoch == epoch) {
-                if (rem > (int)len)
+                if (rem > len)
                     memmove(rec, rec + len, rem - len);
                 outl -= len;
                 ctx->droprec = -1;
@@ -431,11 +490,28 @@ int mempacket_swap_epoch(BIO *bio)
         return 0;
 
     for (rem = thispkt->len, rec = thispkt->data; rem > 0; rem -= len, rec += len) {
-        if (rem < DTLS1_RT_HEADER_LENGTH)
+        int rechdrlen;
+
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+        else
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
+        if (rem < rechdrlen)
             return 0;
-        epoch = (rec[EPOCH_HI] << 8) | rec[EPOCH_LO];
-        len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO])
-            + DTLS1_RT_HEADER_LENGTH;
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+            epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
+
+            if (epoch == 0)
+                epoch = 4;
+
+            len = ((rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8)
+                | rec[DTLS13_UNI_HDR_RECORD_LEN_LO]);
+            len += rechdrlen;
+        } else {
+            epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+            len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]) + rechdrlen;
+        }
         if (rem < len)
             return 0;
 
@@ -480,6 +556,107 @@ int mempacket_swap_epoch(BIO *bio)
                 return 0;
             }
 
+            return 1;
+        }
+        prevrec = rec;
+        prevlen = len;
+    }
+
+    return 0;
+}
+
+/*
+ * Look for records from different epochs in the last datagram and swap them
+ * around
+ */
+int mempacket_swap_epoch_dtls13(BIO *bio)
+{
+    MEMPACKET_TEST_CTX *ctx = BIO_get_data(bio);
+    MEMPACKET *thispkt;
+    int rem, len, prevlen = 0;
+    unsigned char *rec, *prevrec = NULL, *tmp;
+    unsigned int epoch;
+    int numpkts = sk_MEMPACKET_num(ctx->pkts);
+
+    if (numpkts <= 0)
+        return 0;
+
+    /*
+     * We need to look at the packet that contains the last Epoch 0 and the
+     * first Epoch 1 record. This is in Packet 5.
+     */
+    thispkt = sk_MEMPACKET_value(ctx->pkts, 5);
+    if (thispkt == NULL)
+        return 0;
+
+    for (rem = thispkt->len, rec = thispkt->data;
+        rem > 0; rem -= len, rec += len) {
+        int rechdrlen;
+
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec))
+            rechdrlen = DTLS13_UNI_HDR_FIXED_LENGTH;
+        else
+            rechdrlen = DTLS1_RT_HEADER_LENGTH;
+
+        if (rem < rechdrlen)
+            return 0;
+        if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*rec)) {
+            epoch = *rec & DTLS13_UNI_HDR_EPOCH_BITS_MASK;
+
+            if (epoch == 0)
+                epoch = 4;
+
+            len = ((rec[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8)
+                | rec[DTLS13_UNI_HDR_RECORD_LEN_LO]);
+            len += rechdrlen;
+        } else {
+            epoch = (rec[RECORD_EPOCH_HI] << 8) | rec[RECORD_EPOCH_LO];
+            len = ((rec[RECORD_LEN_HI] << 8) | rec[RECORD_LEN_LO]) + rechdrlen;
+        }
+        if (rem < len)
+            return 0;
+
+        /* Assumes the epoch change does not happen on the first record */
+        if (epoch != ctx->epoch) {
+            if (prevrec == NULL)
+                return 0;
+
+            /*
+             * We found 2 records with different epochs. Take a copy of the
+             * earlier record
+             */
+            tmp = OPENSSL_malloc(prevlen);
+            if (tmp == NULL)
+                return 0;
+
+            memcpy(tmp, prevrec, prevlen);
+            /*
+             * Move everything from this record onwards, including any trailing
+             * records, and overwrite the earlier record
+             */
+            memmove(prevrec, rec, rem);
+            thispkt->len -= prevlen;
+
+            /*
+             * Create a new packet for the earlier record that we took out and
+             * add it to the end of the packet list.
+             */
+            thispkt = OPENSSL_malloc(sizeof(*thispkt));
+            if (thispkt == NULL) {
+                OPENSSL_free(tmp);
+                return 0;
+            }
+            thispkt->type = INJECT_PACKET;
+            thispkt->data = tmp;
+            thispkt->len = prevlen;
+            thispkt->num = numpkts;
+            if (sk_MEMPACKET_insert(ctx->pkts, thispkt, numpkts) <= 0) {
+                OPENSSL_free(tmp);
+                OPENSSL_free(thispkt);
+                return 0;
+            }
+            /* We added a packet so increment lastpkt */
+            ctx->lastpkt++;
             return 1;
         }
         prevrec = rec;
@@ -730,8 +907,24 @@ int mempacket_test_inject(BIO *bio, const char *in, int inl, int pktnum,
     MEMPACKET *thispkt = NULL, *looppkt, *nextpkt, *allpkts[3];
     int i, duprec;
     const unsigned char *inu = (const unsigned char *)in;
-    size_t len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO])
-        + DTLS1_RT_HEADER_LENGTH;
+    size_t len;
+
+    if (DTLS13_UNI_HDR_FIX_BITS_IS_SET(*in)
+        /* The following code does not handle connection ids */
+        && ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(*in))) {
+        if (DTLS13_UNI_HDR_LEN_BIT_IS_SET(*in)) {
+            len = 3; /* 2 bytes for len field and 1 byte for record type */
+            len += DTLS13_UNI_HDR_SEQ_BIT_IS_SET(*in) ? 2 : 1;
+            len += ((inu[DTLS13_UNI_HDR_RECORD_LEN_HI] << 8)
+                | inu[DTLS13_UNI_HDR_RECORD_LEN_LO]);
+        } else {
+            /* We assert that inl is the correct record length */
+            len = inl;
+        }
+    } else {
+        len = ((inu[RECORD_LEN_HI] << 8) | inu[RECORD_LEN_LO]);
+        len += DTLS1_RT_HEADER_LENGTH;
+    }
 
     if (ctx == NULL)
         return -1;
@@ -882,6 +1075,9 @@ static long mempacket_test_ctrl(BIO *bio, int cmd, long num, void *ptr)
     case MEMPACKET_CTRL_SET_DUPLICATE_REC:
         ctx->duprec = (int)num;
         break;
+    case BIO_CTRL_DGRAM_QUERY_MTU:
+        ret = 1500;
+        break;
     case BIO_CTRL_RESET:
     case BIO_CTRL_DUP:
     case BIO_CTRL_PUSH:
@@ -1011,6 +1207,10 @@ static int maybe_retry_new(BIO *bi);
 static int maybe_retry_free(BIO *a);
 static int maybe_retry_write(BIO *b, const char *in, int inl);
 static long maybe_retry_ctrl(BIO *b, int cmd, long num, void *ptr);
+static int no_retry_zero_new(BIO *bi);
+static int no_retry_zero_free(BIO *a);
+static int no_retry_zero_write(BIO *b, const char *in, int inl);
+static long no_retry_zero_ctrl(BIO *b, int cmd, long num, void *ptr);
 
 const BIO_METHOD *bio_s_maybe_retry(void)
 {
@@ -1094,6 +1294,61 @@ static long maybe_retry_ctrl(BIO *bio, int cmd, long num, void *ptr)
         /* fall through */
     default:
         return BIO_ctrl(BIO_next(bio), cmd, num, ptr);
+    }
+}
+
+const BIO_METHOD *bio_s_no_retry_zero(void)
+{
+    if (meth_no_retry_zero == NULL) {
+        if (!TEST_ptr(meth_no_retry_zero = BIO_meth_new(BIO_TYPE_NO_RETRY_ZERO,
+                          "No Retry Zero"))
+            || !TEST_true(BIO_meth_set_write(meth_no_retry_zero,
+                no_retry_zero_write))
+            || !TEST_true(BIO_meth_set_ctrl(meth_no_retry_zero,
+                no_retry_zero_ctrl))
+            || !TEST_true(BIO_meth_set_create(meth_no_retry_zero,
+                no_retry_zero_new))
+            || !TEST_true(BIO_meth_set_destroy(meth_no_retry_zero,
+                no_retry_zero_free)))
+            return NULL;
+    }
+    return meth_no_retry_zero;
+}
+
+void bio_s_no_retry_zero_free(void)
+{
+    BIO_meth_free(meth_no_retry_zero);
+}
+
+static int no_retry_zero_new(BIO *bio)
+{
+    BIO_set_init(bio, 1);
+    return 1;
+}
+
+static int no_retry_zero_free(BIO *bio)
+{
+    BIO_set_data(bio, NULL);
+    BIO_set_init(bio, 0);
+    return 1;
+}
+
+static int no_retry_zero_write(BIO *bio, const char *in, int inl)
+{
+    BIO_clear_retry_flags(bio);
+    return 0;
+}
+
+static long no_retry_zero_ctrl(BIO *bio, int cmd, long num, void *ptr)
+{
+    BIO *next = BIO_next(bio);
+
+    switch (cmd) {
+    case BIO_CTRL_FLUSH:
+        return next == NULL ? 1 : BIO_ctrl(next, cmd, num, ptr);
+
+    default:
+        return next == NULL ? 0 : BIO_ctrl(next, cmd, num, ptr);
     }
 }
 

@@ -21,6 +21,7 @@
 
 #include <openssl/crypto.h>
 #include <openssl/e_os2.h>
+#include <internal/e_os.h>
 
 typedef struct async_ctx_st async_ctx;
 typedef struct async_pool_st async_pool;
@@ -29,7 +30,6 @@ typedef struct async_pool_st async_pool;
 #define ASYNC_WIN
 #define ASYNC_ARCH
 
-#include <windows.h>
 #include "internal/cryptlib.h"
 
 typedef struct async_fibre_st {

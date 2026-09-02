@@ -58,6 +58,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx);
 static int check_id(X509_STORE_CTX *ctx);
 static int check_trust(X509_STORE_CTX *ctx, int num_untrusted);
 static int check_revocation(X509_STORE_CTX *ctx);
+static int revocation_check_end(X509_STORE_CTX *ctx, int check_all);
 #ifndef OPENSSL_NO_OCSP
 static int check_cert_ocsp_resp(X509_STORE_CTX *ctx);
 #endif
@@ -78,6 +79,8 @@ static void get_delta_sk(X509_STORE_CTX *ctx, X509_CRL **dcrl,
     STACK_OF(X509_CRL) *crls);
 static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl, X509 **pissuer,
     int *pcrl_score);
+static int matching_crl_issuer_and_akid(const X509_CRL *crl,
+    const X509 *issuer, const X509_NAME *crl_issuer_name);
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons);
 static int check_crl_path(X509_STORE_CTX *ctx, X509 *x);
@@ -775,27 +778,6 @@ static int check_extensions(X509_STORE_CTX *ctx)
     return 1;
 }
 
-static int has_san_id(const X509 *x, int gtype)
-{
-    int i;
-    int ret = 0;
-    GENERAL_NAMES *gs = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
-
-    if (gs == NULL)
-        return 0;
-
-    for (i = 0; i < sk_GENERAL_NAME_num(gs); i++) {
-        GENERAL_NAME *g = sk_GENERAL_NAME_value(gs, i);
-
-        if (g->type == gtype) {
-            ret = 1;
-            break;
-        }
-    }
-    GENERAL_NAMES_free(gs);
-    return ret;
-}
-
 /*-
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
@@ -892,20 +874,22 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
 
             if (nc) {
                 int rv = NAME_CONSTRAINTS_check(x, nc);
-                int ret = 1;
 
-                /* If EE certificate check commonName too */
+                /*
+                 * Apply DNS name constraints to the EE subject commonName
+                 * only when the commonName may be used for host name checks,
+                 * mirroring do_x509_check(): only when the caller opted in
+                 * with X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, and never when
+                 * X509_CHECK_FLAG_NEVER_CHECK_SUBJECT is set.
+                 */
                 if (rv == X509_V_OK && i == 0
                     && (ctx->param->hostflags
                            & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT)
                         == 0
-                    && ((ctx->param->hostflags
-                            & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)
-                            != 0
-                        || (ret = has_san_id(x, GEN_DNS)) == 0))
+                    && (ctx->param->hostflags
+                           & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT)
+                        != 0)
                     rv = NAME_CONSTRAINTS_check_CN(x, nc);
-                if (ret < 0)
-                    return ret;
 
                 switch (rv) {
                 case X509_V_OK:
@@ -1173,6 +1157,20 @@ trusted:
     return X509_TRUST_UNTRUSTED;
 }
 
+/*
+ * Return the last chain depth whose revocation status should be checked.
+ * With X509_V_FLAG_*_CHECK_ALL and X509_V_FLAG_PARTIAL_CHAIN, revocation
+ * checking stops before the first trusted certificate in the chain.
+ */
+static int revocation_check_end(X509_STORE_CTX *ctx, int check_all)
+{
+    if (!check_all)
+        return 0;
+    return (ctx->param->flags & X509_V_FLAG_PARTIAL_CHAIN) == 0
+        ? sk_X509_num(ctx->chain) - 1
+        : ctx->num_untrusted - 1;
+}
+
 /* Sadly, returns 0 also on internal error. */
 static int check_revocation(X509_STORE_CTX *ctx)
 {
@@ -1190,10 +1188,10 @@ static int check_revocation(X509_STORE_CTX *ctx)
         /*
          * certificate status checking with OCSP
          */
-        if (ocsp_check_all_enabled)
-            last = sk_X509_num(ctx->chain) - 1;
-        else if (!crl_check_all_enabled && ctx->parent != NULL)
+        if (!ocsp_check_all_enabled && !crl_check_all_enabled
+            && ctx->parent != NULL)
             return 1; /* If checking CRL paths this isn't the EE certificate */
+        last = revocation_check_end(ctx, ocsp_check_all_enabled);
 
         for (i = 0; i <= last; i++) {
             ctx->error_depth = i;
@@ -1256,14 +1254,9 @@ static int check_revocation(X509_STORE_CTX *ctx)
 
     if (crl_check_enabled && !ocsp_check_all_enabled) {
         /* certificate status check with CRLs */
-        if (crl_check_all_enabled) {
-            last = sk_X509_num(ctx->chain) - 1;
-        } else {
-            /* If checking CRL paths this isn't the EE certificate */
-            if (ctx->parent != NULL)
-                return 1;
-            last = 0;
-        }
+        if (!crl_check_all_enabled && ctx->parent != NULL)
+            return 1; /* If checking CRL paths this isn't the EE certificate */
+        last = revocation_check_end(ctx, crl_check_all_enabled);
 
         /*
          * in the case that OCSP is only enabled for the server certificate
@@ -1307,9 +1300,19 @@ static int check_cert_ocsp_resp(X509_STORE_CTX *ctx)
         return X509_V_ERR_OCSP_NO_RESPONSE;
 
     if ((resp = sk_OCSP_RESPONSE_value(ctx->ocsp_resp, ctx->error_depth)) == NULL
-        || (bs = OCSP_response_get1_basic(resp)) == NULL
-        || (num = OCSP_resp_count(bs)) < 1)
+        || (bs = OCSP_response_get1_basic(resp)) == NULL)
         return X509_V_ERR_OCSP_NO_RESPONSE;
+
+    /*
+     * OCSP_response_get1_basic() returns an owning reference, so once bs is
+     * non-NULL it must be released via the end: cleanup label. Route an empty
+     * BasicResponse (no single responses) through end: rather than returning
+     * directly, otherwise bs leaks.
+     */
+    if ((num = OCSP_resp_count(bs)) < 1) {
+        ret = X509_V_ERR_OCSP_NO_RESPONSE;
+        goto end;
+    }
 
     if (OCSP_response_status(resp) != OCSP_RESPONSE_STATUS_SUCCESSFUL) {
         OCSP_BASICRESP_free(bs);
@@ -1756,7 +1759,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     crl_issuer = sk_X509_value(ctx->chain, cidx);
 
-    if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+    if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
         if (*pcrl_score & CRL_SCORE_ISSUER_NAME) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_ISSUER_CERT;
             *pissuer = crl_issuer;
@@ -1766,9 +1769,7 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
 
     for (cidx++; cidx < sk_X509_num(ctx->chain); cidx++) {
         crl_issuer = sk_X509_value(ctx->chain, cidx);
-        if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm))
-            continue;
-        if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+        if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
             *pcrl_score |= CRL_SCORE_AKID | CRL_SCORE_SAME_PATH;
             *pissuer = crl_issuer;
             return;
@@ -1785,14 +1786,22 @@ static void crl_akid_check(X509_STORE_CTX *ctx, X509_CRL *crl,
      */
     for (i = 0; i < sk_X509_num(ctx->untrusted); i++) {
         crl_issuer = sk_X509_value(ctx->untrusted, i);
-        if (X509_NAME_cmp(X509_get_subject_name(crl_issuer), cnm) != 0)
-            continue;
-        if (X509_check_akid(crl_issuer, crl->akid) == X509_V_OK) {
+        if (matching_crl_issuer_and_akid(crl, crl_issuer, cnm)) {
             *pissuer = crl_issuer;
             *pcrl_score |= CRL_SCORE_AKID;
             return;
         }
     }
+}
+
+static int matching_crl_issuer_and_akid(const X509_CRL *crl,
+    const X509 *issuer, const X509_NAME *crl_issuer_name)
+{
+    if (issuer == NULL)
+        return 0;
+    if (X509_NAME_cmp(X509_get_subject_name(issuer), crl_issuer_name) != 0)
+        return 0;
+    return X509_check_akid(issuer, crl->akid) == X509_V_OK;
 }
 
 /*

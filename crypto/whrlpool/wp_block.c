@@ -103,7 +103,7 @@ typedef uint64_t u64_aX;
 #pragma intrinsic(_rotl64)
 #define ROTATE(a, n) _rotl64((a), n)
 #endif
-#elif defined(__GNUC__) && __GNUC__ >= 2
+#elif defined(__GNUC__)
 #if defined(__x86_64) || defined(__x86_64__)
 #if defined(L_ENDIAN)
 #define ROTATE(a, n) ({ uint64_t ret; asm ("rolq %1,%0"   \

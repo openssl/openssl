@@ -116,24 +116,22 @@ BIO *BIO_new(const BIO_METHOD *method)
     return BIO_new_ex(NULL, method);
 }
 
-int BIO_free(BIO *a)
+static int BIO_free_int(BIO *a, int *ret)
 {
-    int ret;
 
     if (a == NULL)
         return 0;
 
-    if (CRYPTO_DOWN_REF(&a->references, &ret) <= 0)
+    if (CRYPTO_DOWN_REF(&a->references, ret) <= 0)
         return 0;
 
-    REF_PRINT_COUNT("BIO", ret, a);
-    if (ret > 0)
+    REF_PRINT_COUNT("BIO", *ret, a);
+    if (*ret > 0)
         return 1;
-    REF_ASSERT_ISNT(ret < 0);
+    REF_ASSERT_ISNT(*ret < 0);
 
     if (HAS_CALLBACK(a)) {
-        ret = (int)bio_call_callback(a, BIO_CB_FREE, NULL, 0, 0, 0L, 1L, NULL);
-        if (ret <= 0)
+        if ((int)bio_call_callback(a, BIO_CB_FREE, NULL, 0, 0, 0L, 1L, NULL) <= 0)
             return 0;
     }
 
@@ -147,6 +145,13 @@ int BIO_free(BIO *a)
     OPENSSL_free(a);
 
     return 1;
+}
+
+int BIO_free(BIO *b)
+{
+    int ref;
+
+    return BIO_free_int(b, &ref);
 }
 
 void BIO_set_data(BIO *a, void *ptr)
@@ -188,7 +193,7 @@ int BIO_up_ref(BIO *a)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&a->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&a->references, &i))
         return 0;
 
     REF_PRINT_COUNT("BIO", i, a);
@@ -874,11 +879,11 @@ void BIO_free_all(BIO *bio)
 
     while (bio != NULL) {
         b = bio;
-        CRYPTO_GET_REF(&b->references, &ref);
         bio = bio->next_bio;
-        BIO_free(b);
-        /* Since ref count > 1, don't free anyone else. */
-        if (ref > 1)
+        ref = 0;
+        BIO_free_int(b, &ref);
+        /* Since ref count > 0, don't free anyone else. */
+        if (ref > 0)
             break;
     }
 }

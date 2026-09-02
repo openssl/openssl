@@ -15,13 +15,6 @@
 #if defined(_WIN32) && !defined(OPENSSL_SYS_UEFI)
 #include <tchar.h>
 #include <signal.h>
-#ifdef __WATCOMC__
-#if defined(_UNICODE) || defined(__UNICODE__)
-#define _vsntprintf _vsnwprintf
-#else
-#define _vsntprintf _vsnprintf
-#endif
-#endif
 #ifdef _MSC_VER
 #define alloca _alloca
 #endif
@@ -110,8 +103,6 @@ void OPENSSL_showfatal(const char *fmta, ...)
     /*
      * First check if it's a console application, in which case the
      * error message would be printed to standard error.
-     * Windows CE does not have a concept of a console application,
-     * so we need to guard the check.
      */
 #ifdef STD_ERROR_HANDLE
     HANDLE h;
@@ -260,9 +251,7 @@ void OPENSSL_die(const char *message, const char *file, int line)
     /*
      * Win32 abort() customarily shows a dialog, but we just did that...
      */
-#if !defined(_WIN32_WCE)
     raise(SIGABRT);
-#endif
     _exit(3);
 #endif
 }

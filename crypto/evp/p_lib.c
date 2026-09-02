@@ -1630,7 +1630,7 @@ int EVP_PKEY_up_ref(EVP_PKEY *pkey)
 {
     int i;
 
-    if (CRYPTO_UP_REF(&pkey->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&pkey->references, &i))
         return 0;
 
     REF_PRINT_COUNT("EVP_PKEY", i, pkey);
@@ -2405,13 +2405,10 @@ int EVP_PKEY_get_ec_point_conv_form(const EVP_PKEY *pkey)
         /* Might work through the legacy route */
         const EC_KEY *ec = EVP_PKEY_get0_EC_KEY(pkey);
 
-        if (ec == NULL)
-            return 0;
-
-        return EC_KEY_get_conv_form(ec);
-#else
-        return 0;
+        if (ec != NULL)
+            return EC_KEY_get_conv_form(ec);
 #endif
+        return 0;
     }
 
     if (!EVP_PKEY_get_utf8_string_param(pkey,

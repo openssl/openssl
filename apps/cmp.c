@@ -12,8 +12,9 @@
 /* This app is disabled when OPENSSL_NO_CMP is defined. */
 #include "internal/e_os.h"
 
-#include <string.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <string.h>
 
 #include "apps.h"
 #include "http_server.h"
@@ -1129,9 +1130,41 @@ static int setup_cert(void *ctx, const char *file, const char *pass,
     return ok;
 }
 
+typedef int (*add_X509_fn_srv_t)(OSSL_CMP_SRV_CTX *ctx, X509 *cert);
+static int setup_cert_srv(OSSL_CMP_SRV_CTX *ctx, const char *file, const char *pass,
+    const char *desc, add_X509_fn_srv_t set1_fn)
+{
+    X509 *cert;
+    int ok;
+
+    if (file == NULL)
+        return 1;
+    if ((cert = load_cert_pwd(file, pass, desc)) == NULL)
+        return 0;
+    ok = (*set1_fn)(ctx, cert);
+    X509_free(cert);
+    return ok;
+}
+
 typedef int (*add_X509_stack_fn_t)(void *ctx, const STACK_OF(X509) *certs);
 static int setup_certs(char *files, const char *desc, void *ctx,
     add_X509_stack_fn_t set1_fn)
+{
+    STACK_OF(X509) *certs;
+    int ok;
+
+    if (files == NULL)
+        return 1;
+    if ((certs = load_certs_multifile(files, opt_otherpass, desc, vpm)) == NULL)
+        return 0;
+    ok = (*set1_fn)(ctx, certs);
+    OSSL_STACK_OF_X509_free(certs);
+    return ok;
+}
+
+typedef int (*add_X509_stack_fn_srv_t)(OSSL_CMP_SRV_CTX *ctx, STACK_OF(X509) *certs);
+static int setup_certs_srv(char *files, const char *desc, OSSL_CMP_SRV_CTX *ctx,
+    add_X509_stack_fn_srv_t set1_fn)
 {
     STACK_OF(X509) *certs;
     int ok;
@@ -1288,16 +1321,16 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
             (add_X509_stack_fn_t)OSSL_CMP_CTX_set1_untrusted))
         goto err;
 
-    if (!setup_cert(srv_ctx, opt_ref_cert, opt_otherpass,
+    if (!setup_cert_srv(srv_ctx, opt_ref_cert, opt_otherpass,
             "reference cert to be expected by the mock server",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_refCert))
+            ossl_cmp_mock_srv_set1_refCert))
         goto err;
     if (opt_rsp_cert == NULL) {
         CMP_warn("no -rsp_cert given for mock server");
     } else {
-        if (!setup_cert(srv_ctx, opt_rsp_cert, opt_rsp_keypass,
+        if (!setup_cert_srv(srv_ctx, opt_rsp_cert, opt_rsp_keypass,
                 "cert the mock server returns on certificate requests",
-                (add_X509_fn_t)ossl_cmp_mock_srv_set1_certOut))
+                ossl_cmp_mock_srv_set1_certOut))
             goto err;
     }
     if (opt_rsp_key != NULL) {
@@ -1317,22 +1350,22 @@ static OSSL_CMP_SRV_CTX *setup_srv_ctx(void)
     if (!setup_mock_crlout(srv_ctx, opt_rsp_crl,
             "CRL to be returned by the mock server"))
         goto err;
-    if (!setup_certs(opt_rsp_extracerts,
+    if (!setup_certs_srv(opt_rsp_extracerts,
             "CMP extra certificates for mock server", srv_ctx,
-            (add_X509_stack_fn_t)ossl_cmp_mock_srv_set1_chainOut))
+            ossl_cmp_mock_srv_set1_chainOut))
         goto err;
-    if (!setup_certs(opt_rsp_capubs, "caPubs for mock server", srv_ctx,
-            (add_X509_stack_fn_t)ossl_cmp_mock_srv_set1_caPubsOut))
+    if (!setup_certs_srv(opt_rsp_capubs, "caPubs for mock server", srv_ctx,
+            ossl_cmp_mock_srv_set1_caPubsOut))
         goto err;
-    if (!setup_cert(srv_ctx, opt_rsp_newwithnew, opt_otherpass,
+    if (!setup_cert_srv(srv_ctx, opt_rsp_newwithnew, opt_otherpass,
             "NewWithNew cert the mock server returns in rootCaKeyUpdate",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_newWithNew)
-        || !setup_cert(srv_ctx, opt_rsp_newwithold, opt_otherpass,
+            ossl_cmp_mock_srv_set1_newWithNew)
+        || !setup_cert_srv(srv_ctx, opt_rsp_newwithold, opt_otherpass,
             "NewWithOld cert the mock server returns in rootCaKeyUpdate",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_newWithOld)
-        || !setup_cert(srv_ctx, opt_rsp_oldwithnew, opt_otherpass,
+            ossl_cmp_mock_srv_set1_newWithOld)
+        || !setup_cert_srv(srv_ctx, opt_rsp_oldwithnew, opt_otherpass,
             "OldWithNew cert the mock server returns in rootCaKeyUpdate",
-            (add_X509_fn_t)ossl_cmp_mock_srv_set1_oldWithNew))
+            ossl_cmp_mock_srv_set1_oldWithNew))
         goto err;
     (void)ossl_cmp_mock_srv_set_pollCount(srv_ctx, opt_poll_count);
     (void)ossl_cmp_mock_srv_set_checkAfterTime(srv_ctx, opt_check_after);
@@ -2108,7 +2141,7 @@ static int add_certProfile(OSSL_CMP_CTX *ctx, const char *name)
         return 0;
     if ((utf8string = ASN1_UTF8STRING_new()) == NULL)
         goto err;
-    if (!ASN1_STRING_set(utf8string, name, (int)strlen(name))) {
+    if (!ASN1_STRING_set1_string(utf8string, name)) {
         ASN1_STRING_free(utf8string);
         goto err;
     }
@@ -2183,7 +2216,7 @@ static int handle_opt_geninfo(OSSL_CMP_CTX *ctx)
             else
                 *end++ = '\0';
             if ((text = ASN1_UTF8STRING_new()) == NULL
-                || !ASN1_STRING_set(text, ptr, -1))
+                || !ASN1_STRING_set1_string(text, ptr))
                 goto oom;
             ptr = end;
             ASN1_TYPE_set(type, V_ASN1_UTF8STRING, text);
@@ -2270,7 +2303,7 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
     if (!OSSL_CMP_CTX_set_option(ctx, OSSL_CMP_OPT_USE_TLS, opt_tls_used))
         goto err;
 
-    BIO_snprintf(server_port, sizeof(server_port), "%s", port);
+    snprintf(server_port, sizeof(server_port), "%s", port);
     if (opt_path == NULL)
         used_path = path;
     if (!OSSL_CMP_CTX_set1_server(ctx, host)
@@ -2280,13 +2313,13 @@ static int setup_client_ctx(OSSL_CMP_CTX *ctx)
         goto oom;
     if (opt_no_proxy != NULL && !OSSL_CMP_CTX_set1_no_proxy(ctx, opt_no_proxy))
         goto oom;
-    (void)BIO_snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
+    (void)snprintf(server_buf, sizeof(server_buf), "http%s://%s:%s/%s",
         opt_tls_used ? "s" : "", host, port,
         *used_path == '/' ? used_path + 1 : used_path);
 
     proxy_host = OSSL_HTTP_adapt_proxy(opt_proxy, opt_no_proxy, host, use_ssl);
     if (proxy_host != NULL)
-        (void)BIO_snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
+        (void)snprintf(proxy_buf, sizeof(proxy_buf), " via %s", proxy_host);
 
 set_path:
 #endif
@@ -2556,7 +2589,7 @@ static int save_cert_or_delete(X509 *cert, const char *file, const char *desc)
     if (cert == NULL) {
         char desc_cert[80];
 
-        BIO_snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
+        snprintf(desc_cert, sizeof(desc_cert), "%s certificate", desc);
         return delete_file(file, desc_cert);
     } else {
         STACK_OF(X509) *certs = sk_X509_new_null();
@@ -2805,7 +2838,7 @@ static int read_config(void)
             char *conf_argv[3];
             char arg1[82];
 
-            BIO_snprintf(arg1, 81, "-%s", (char *)opt->name);
+            snprintf(arg1, 81, "-%s", (char *)opt->name);
             conf_argv[0] = prog;
             conf_argv[1] = arg1;
             if (opt->valtype == '-') {
@@ -3674,9 +3707,13 @@ static int handle_opts_upfront(int argc, char **argv)
                 opt_section = argv[++i];
             else if (strcmp(argv[i] + 1,
                          cmp_options[OPT_VERBOSITY - OPT_HELP].name)
-                    == 0
-                && !set_verbosity(atoi(argv[++i])))
-                return 0;
+                == 0) {
+                int level;
+
+                ++i;
+                if (!opt_int(argv[i], &level) || !set_verbosity(level))
+                    return 0;
+            }
         }
     }
     if (opt_section[0] == '\0') /* empty string */

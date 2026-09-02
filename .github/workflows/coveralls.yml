@@ -47,10 +47,10 @@ jobs:
           MATRIX=$(cat << EOF
           [{
               "branch": "master",
-              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-unit-tests"
             }, {
               "branch": "openssl-4.0",
-              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug enable-allocfail-tests"
+              "extra_config": "enable-fips enable-tfo enable-lms enable-crypto-mdebug"
             },{
               "branch": "openssl-3.6",
               "extra_config": "no-afalgeng enable-fips enable-tfo enable-lms"
@@ -93,7 +93,7 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq install lcov
-        sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy
+        sudo apt-get -yq install bison gettext keyutils ldap-utils libcmocka-dev libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy
     - name: install Test2::V0 for gost_engine testing
       uses: perl-actions/install-with-cpanm@10d60f00b4073f484fc29d45bfbe2f776397ab3d #v1.7
       with:

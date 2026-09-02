@@ -18,7 +18,19 @@ For information related to installing the FIPS module see
 L<https://github.com/openssl/openssl/blob/master/README-FIPS.md>.
 
 Note that the old functions FIPS_mode() and FIPS_mode_set() are no longer
-present so you must remove them from your application if you use them.
+present so you should remove them from your application if you use them. A
+convenience define FIPS_mode() to EVP_default_properties_is_fips_enabled(NULL)
+is provided in the openssl/evp.h header. This is a hint of intent, but not
+proof. If you are looking to validate whether the default configuration is using
+a validated module, many additional checks are needed; please consult the
+security policy of the module you are using. Most applications should load the
+default library context and use it as is, without ever using FIPS_mode() or
+checking EVP_default_properties_is_fips_enabled(). This enables your
+application to work unmodified with all the different types of cryptographic
+providers available to OpenSSL. There are many alternative third-party providers
+that implement FIPS cryptography. For example, the wolfCrypt and SymCrypt
+providers can be used with OpenSSL at run time to also provide FIPS
+cryptography.
 
 Applications written to use the OpenSSL 3.0 FIPS module should not use any
 legacy APIs or features that avoid the FIPS module. Specifically this includes:
@@ -584,13 +596,16 @@ L<EVP_SIGNATURE-RSA(7)/Signature Parameters> /for further information.
 Some released versions of OpenSSL do not include a validated
 FIPS provider.  To determine which versions have undergone
 the validation process, please refer to the
-L<OpenSSL Downloads page|https://www.openssl.org/source/>.  If you
+L<OpenSSL Downloads page|https://openssl-library.org/source/>.  If you
 require FIPS-approved functionality, it is essential to build your FIPS
 provider using one of the validated versions listed there.  Normally,
 it is possible to utilize a FIPS provider constructed from one of the
 validated versions alongside F<libcrypto> and F<libssl> compiled from any
-release within the same major release series.  This flexibility enables
-you to address bug fixes and CVEs that fall outside the FIPS boundary.
+supported release from OpenSSL 3.0 onwards; provider compatibility is
+maintained backward and forward across these releases, including future
+major release series, for as long as the module remains supported.  This
+flexibility enables you to address bug fixes and CVEs that fall outside
+the FIPS boundary.
 
 As the FIPS provider still supports non-FIPS validated algorithms,
 The property query C<fips=yes> is mandatory for applications that

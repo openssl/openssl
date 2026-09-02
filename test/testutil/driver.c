@@ -13,6 +13,7 @@
 
 #include <string.h>
 #include <assert.h>
+#include <limits.h>
 
 #include "internal/nelem.h"
 #include <openssl/bio.h>
@@ -39,6 +40,7 @@ typedef struct test_info {
     unsigned int subtest : 1;
     unsigned int mfail : 1;
     int mfail_flags;
+    int mfail_sampled;
 } TEST_INFO;
 
 static TEST_INFO all_tests[1024];
@@ -84,7 +86,8 @@ void add_all_tests(const char *test_case_name, int (*test_fn)(int idx),
         num_test_cases += num;
 }
 
-void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int flags)
+void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int flags,
+    int sampled)
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
@@ -92,12 +95,13 @@ void add_mfail_test(const char *test_case_name, int (*test_fn)(void), int flags)
     all_tests[num_tests].num = -1;
     all_tests[num_tests].mfail = 1;
     all_tests[num_tests].mfail_flags = flags;
+    all_tests[num_tests].mfail_sampled = sampled;
     ++num_tests;
     ++num_test_cases;
 }
 
 void add_mfail_all_tests(const char *test_case_name, int (*test_fn)(int idx),
-    int num, int flags)
+    int num, int flags, int sampled)
 {
     assert(num_tests != OSSL_NELEM(all_tests));
     all_tests[num_tests].test_case_name = test_case_name;
@@ -106,6 +110,7 @@ void add_mfail_all_tests(const char *test_case_name, int (*test_fn)(int idx),
     all_tests[num_tests].subtest = 1;
     all_tests[num_tests].mfail = 1;
     all_tests[num_tests].mfail_flags = flags;
+    all_tests[num_tests].mfail_sampled = sampled;
     ++num_tests;
     ++num_test_cases;
 }
@@ -134,14 +139,22 @@ int setup_test_framework(int argc, char *argv[])
     char *test_rand_seed = getenv("OPENSSL_TEST_RAND_SEED");
     char *TAP_levels = getenv("HARNESS_OSSL_LEVEL");
 
-    if (TAP_levels != NULL)
-        level = 4 * atoi(TAP_levels);
+    if (TAP_levels != NULL) {
+        int n;
+
+        if (test_strtoint(TAP_levels, &n) && n <= INT_MAX / 4)
+            level = 4 * n;
+    }
     test_adjust_streams_tap_level(level);
     if (test_rand_order != NULL) {
+        int n;
+
         rand_order = 1;
-        set_seed(atoi(test_rand_order));
+        set_seed(test_strtoint(test_rand_order, &n) ? n : 0);
     } else if (test_rand_seed != NULL) {
-        set_seed(atoi(test_rand_seed));
+        int n;
+
+        set_seed(test_strtoint(test_rand_seed, &n) ? n : 0);
     } else {
         set_seed(0);
     }
@@ -174,8 +187,12 @@ static int check_single_test_params(char *name, char *testname, char *itname)
                 break;
             }
         }
-        if (i >= num_tests)
-            single_test = atoi(name);
+        if (i >= num_tests) {
+            int n;
+
+            if (test_strtoint(name, &n))
+                single_test = n;
+        }
     }
 
     /* if only iteration is specified, assume we want the first test */
@@ -321,7 +338,23 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
     int injections = 0;
     int allocations = 0;
     int no_check = (t->mfail_flags & MFAIL_TEST_NO_CHECK) != 0;
+    int sampled = (t->mfail_flags & MFAIL_TEST_SAMPLED) != 0;
+    int init_flags = no_check ? MFAIL_FLAG_NO_CHECK : 0;
     clock_t start = clock();
+
+    if (sampled)
+        /* cap injection at mfail_sampled points (exhaustive below that) */
+        init_flags |= MFAIL_FLAG_COUNT;
+#ifdef OPENSSL_NO_CACHED_FETCH
+    else
+        /*
+         * The non-cached does too many allocations, which results in a
+         * significant slowdown of the tests. It does not provide much value,
+         * as it also requires NO_CHECK variant, so just run counting
+         * correctness check and skip the memory failure injection part.
+         */
+        init_flags |= MFAIL_FLAG_COUNT_ONLY;
+#endif
 
     level += 4;
     test_adjust_streams_tap_level(level);
@@ -330,7 +363,7 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
     test_flush_stdout();
     test_flush_tapout();
 
-    mfail_init(0, no_check ? MFAIL_FLAG_NO_CHECK : 0);
+    mfail_init_ex(idx, init_flags, t->mfail_sampled);
 
     while (mfail_has_next()) {
         int phase = mfail_get_phase();
@@ -383,6 +416,8 @@ static int mfail_run_test(const TEST_INFO *t, int idx)
         test_verdict(TEST_SKIP_CODE, "2 - injection (mfail not installed)");
     else if (mfail_env_skip_all())
         test_verdict(TEST_SKIP_CODE, "2 - injection (mfail skip-all set)");
+    else if (mfail_is_count_only())
+        test_verdict(TEST_SKIP_CODE, "2 - injection (count only)");
     else if (mfail_was_slow_skipped())
         test_verdict(TEST_SKIP_CODE,
             "2 - injection (%d allocations exceeds slow threshold %d)",

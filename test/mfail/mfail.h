@@ -13,6 +13,8 @@
 /* Flags for mfail_init(). */
 #define MFAIL_FLAG_COUNT (1 << 0)
 #define MFAIL_FLAG_NO_CHECK (1 << 1)
+/* Force count-only run for this init */
+#define MFAIL_FLAG_COUNT_ONLY (1 << 2)
 
 /* Modes */
 #define MFAIL_MODE_EXHAUSTIVE 0
@@ -30,6 +32,8 @@ int mfail_install(int optional);
 int mfail_is_installed(void);
 /* Initialize the mfail for test case runs */
 void mfail_init(int seq, int flags);
+/* As mfail_init() but caps injection at |count| sampled points */
+void mfail_init_ex(int seq, int flags, int count);
 /* Check for the failure loop if another fail execution should be done */
 int mfail_has_next(void);
 /* Start the failure triggering block */
@@ -40,6 +44,8 @@ void mfail_end(void);
 int mfail_was_triggered(void);
 /* Check if the inject phase was skipped because it got over slow threshold */
 int mfail_was_slow_skipped(void);
+/* Check if mfail counts allocations and not inject */
+int mfail_is_count_only(void);
 /* If the counting was executed, get the total number of allocations */
 int mfail_get_count(void);
 /* Get the total number of failure points */

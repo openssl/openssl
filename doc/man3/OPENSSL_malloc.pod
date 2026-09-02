@@ -47,7 +47,7 @@ OPENSSL_MALLOC_SEED
  char *OPENSSL_strndup(const char *str, size_t s);
  size_t OPENSSL_strlcat(char *dst, const char *src, size_t size);
  size_t OPENSSL_strlcpy(char *dst, const char *src, size_t size);
- int OPENSSL_strtoul(char *src, char **endptr, int base, unsigned long *num);
+ int OPENSSL_strtoul(const char *str, char **endptr, int base, unsigned long *num);
  void *OPENSSL_memdup(void *data, size_t s);
  void *OPENSSL_clear_realloc(void *p, size_t old_len, size_t num);
  void *OPENSSL_clear_realloc_array(void *p, size_t old_len, size_t num,
@@ -226,8 +226,8 @@ work on all platforms):
   ...app invocation... 3>/tmp/log$$
 
 If the environment variable B<OPENSSL_MALLOC_SEED> is set, its value
-is interpreted as an integer using atoi(3) and supplied to the srandom(3)
-call for the random number generator initialisation.
+is parsed using OPENSSL_strtoul() and supplied to the srandom(3) call for
+the random number generator initialisation.
 
 =head1 RETURN VALUES
 

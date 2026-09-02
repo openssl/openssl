@@ -19,6 +19,7 @@
  * It implements the following algorithms
  *
  * The AES-128-CBC cipher
+ * The AES-128-ECB cipher
  * The AES-128-GCM cipher
  * The AES-128-CBC-HMAC-SHA1 cipher
  * The MD5 digest
@@ -390,7 +391,7 @@ static void *ossl_test_aes128cbc_dupctx(void *vprovctx)
 }
 
 /**
- * @brief Initialize an aes-129-cbc context for encryption.
+ * @brief Initialize an aes-128-cbc context for encryption.
  *
  * @param vprovctx void *vprovctx.
  * @param key const unsigned char *key.
@@ -695,6 +696,343 @@ static const OSSL_DISPATCH ossl_testaes128_cbc_functions[] = {
 typedef struct {
     OSSL_LIB_CTX *libctx;
     EVP_CIPHER_CTX *sub_ctx;
+} PROV_EVP_AES128_ECB_CTX;
+
+/**
+ * @brief Allocate and initialize a new aes-128-ecb context.
+ *
+ * @param provctx void *provctx.
+ * @return void *.
+ */
+
+static void *ossl_testaes128_ecb_newctx(void *provctx)
+{
+    PROV_EVP_AES128_ECB_CTX *new;
+    EVP_CIPHER *cph = NULL;
+    int ret;
+
+    if (!ossl_prov_is_running())
+        return NULL;
+
+    new = OPENSSL_zalloc(sizeof(PROV_EVP_AES128_ECB_CTX));
+    if (new == NULL)
+        return NULL;
+    new->sub_ctx = EVP_CIPHER_CTX_new();
+    if (new->sub_ctx == NULL)
+        goto err;
+
+    new->libctx = PROV_LIBCTX_OF(provctx);
+
+    cph = EVP_CIPHER_fetch(new->libctx, "AES-128-ECB", "provider=default");
+    if (cph == NULL)
+        goto err;
+
+    ret = EVP_CipherInit_ex2(new->sub_ctx, cph, NULL, NULL, 1, NULL);
+
+    EVP_CIPHER_free(cph);
+
+    if (ret <= 0)
+        goto err;
+
+    return new;
+err:
+    EVP_CIPHER_CTX_free(new->sub_ctx);
+    OPENSSL_free(new);
+    return NULL;
+}
+
+/**
+ * @brief Release resources and clean up an aes-128-ecb context.
+ *
+ * @param vprovctx void *vprovctx.
+ * @return void.
+ */
+
+static void ossl_test_aes128ecb_freectx(void *vprovctx)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    EVP_CIPHER_CTX_free(ctx->sub_ctx);
+    OPENSSL_free(ctx);
+}
+
+/**
+ * @brief Duplicate an aes-128-ecb context.
+ *
+ * @param vprovctx void *vprovctx.
+ * @return void *.
+ */
+
+static void *ossl_test_aes128ecb_dupctx(void *vprovctx)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+    PROV_EVP_AES128_ECB_CTX *dup;
+
+    dup = OPENSSL_memdup(ctx, sizeof(PROV_EVP_AES128_ECB_CTX));
+
+    if (dup != NULL) {
+        dup->sub_ctx = EVP_CIPHER_CTX_dup(ctx->sub_ctx);
+        if (dup->sub_ctx == NULL) {
+            OPENSSL_free(dup);
+            dup = NULL;
+        }
+    }
+    return dup;
+}
+
+/**
+ * @brief Initialize an aes-128-ecb context for encryption.
+ *
+ * @param vprovctx void *vprovctx.
+ * @param key const unsigned char *key.
+ * @param keylen size_t keylen.
+ * @param iv const unsigned char *iv.
+ * @param ivlen size_t ivlen.
+ * @param params const OSSL_PARAM params[].
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_einit(void *vprovctx, const unsigned char *key,
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_CipherInit_ex2(ctx->sub_ctx, NULL, key, iv, 1, params);
+}
+
+/**
+ * @brief Initialize an aes-128-ecb context for decryption
+ *
+ * @param vprovctx void *vprovctx.
+ * @param key const unsigned char *key.
+ * @param keylen size_t keylen.
+ * @param iv const unsigned char *iv.
+ * @param ivlen size_t ivlen.
+ * @param params const OSSL_PARAM params[].
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_dinit(void *vprovctx, const unsigned char *key,
+    size_t keylen, const unsigned char *iv,
+    size_t ivlen, const OSSL_PARAM params[])
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_CipherInit_ex2(ctx->sub_ctx, NULL, key, iv, 0, params);
+}
+
+/**
+ * @brief en/decrypt data for aes-128-ecb.
+ *
+ *
+ * @param vprovctx void *vprovctx.
+ * @param out char *out.
+ * @param outl size_t *outl.
+ * @param outsize size_t outsize.
+ * @param in const unsigned char *in.
+ * @param inl size_t inl.
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_update(void *vprovctx, char *out, size_t *outl,
+    size_t outsize, const unsigned char *in,
+    size_t inl)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+    int soutl;
+    uint8_t *inbuf = NULL;
+    int ret = 0;
+
+    *outl = 0;
+
+    /*
+     * record our input buffer
+     */
+    inbuf = OPENSSL_zalloc(inl);
+    if (inbuf == NULL)
+        return 0;
+
+    memcpy(inbuf, in, inl);
+
+    if (!EVP_CipherUpdate(ctx->sub_ctx, (unsigned char *)out, &soutl, in, (int)inl))
+        goto err;
+
+    /*
+     * replace the ciphertext with our plain text
+     */
+    memcpy(out, inbuf, inl);
+
+    ret = 1;
+    *outl = soutl;
+err:
+    OPENSSL_free(inbuf);
+    return ret;
+}
+
+/**
+ * @brief Finalize the operation and produce any remaining output for aes-ecb-128
+ *
+ * @param vprovctx void *vprovctx.
+ * @param out unsigned char *out.
+ * @param outl size_t *outl.
+ * @param outsize size_t outsize.
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_final(void *vprovctx, unsigned char *out, size_t *outl,
+    size_t outsize)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+    int soutl;
+    int ret;
+
+    ret = EVP_CipherFinal_ex(ctx->sub_ctx, out, &soutl);
+
+    if (ret == 0 || soutl < 0)
+        return 0;
+
+    *outl = (size_t)soutl;
+
+    return ret;
+}
+
+/**
+ * @brief Implement ossl test aes128ecb cipher.
+ *
+ * Note, nothing in TLS should be using this function, as we are a provider
+ * we just need it for completeness.
+ *
+ * @param vprovctx void *vprovctx.
+ * @param out unsigned char *out.
+ * @param outl size_t *outl.
+ * @param outsize size_t outsize.
+ * @param in const unsigned char *in.
+ * @param inl size_t inl.
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_cipher(void *vprovctx, unsigned char *out, size_t *outl,
+    size_t outsize, const unsigned char *in, size_t inl)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_Cipher(ctx->sub_ctx, out, in, (int)inl);
+}
+
+/**
+ * @brief Return provider or algorithm parameters.
+ *
+ * @param params OSSL_PARAM params[].
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_get_params(OSSL_PARAM params[])
+{
+    return ossl_cipher_generic_get_params(params, EVP_CIPH_ECB_MODE, 0, 128, 128, 0);
+}
+
+/**
+ * @brief Query parameters from the aes-128-ecb context.
+ *
+ * @param vprovctx void *vprovctx.
+ * @param params OSSL_PARAM params[].
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_get_ctx_params(void *vprovctx, OSSL_PARAM params[])
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_CIPHER_CTX_get_params(ctx->sub_ctx, params);
+}
+
+/**
+ * @brief Set parameters on the aes-128-ecb context.
+ *
+ * @param vprovctx void *vprovctx.
+ * @param params const OSSL_PARAM params[].
+ * @return int.
+ */
+
+static int ossl_test_aes128ecb_set_ctx_params(void *vprovctx, const OSSL_PARAM params[])
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
+}
+
+/**
+ * @brief Describe parameters that can be queried for aes-128-ecb
+ *
+ * @param vprovctx void *vprovctx.
+ * @return const OSSL_PARAM *.
+ */
+
+static const OSSL_PARAM *ossl_test_aes128ecb_gettable_params(void *vprovctx)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_CIPHER_gettable_params(EVP_CIPHER_CTX_get0_cipher(ctx->sub_ctx));
+}
+
+/**
+ * @brief Describe context parameters that can be queried for aes-128-ecb.
+ *
+ * @param cctx void *cctx.
+ * @param vprovctx void *vprovctx.
+ * @return const OSSL_PARAM *.
+ */
+
+static const OSSL_PARAM *ossl_test_aes128ecb_gettable_ctx_params(void *cctx, void *vprovctx)
+{
+    return ossl_cipher_generic_gettable_ctx_params(cctx, vprovctx);
+}
+
+/**
+ * @brief Describe context parameters that can be set for aes-128-ecb.
+ *
+ * @param cctx void *cctx.
+ * @param vprovctx void *vprovctx.
+ * @return const OSSL_PARAM *.
+ */
+
+static const OSSL_PARAM *ossl_test_aes128ecb_settable_ctx_params(void *cctx, void *vprovctx)
+{
+    PROV_EVP_AES128_ECB_CTX *ctx = (PROV_EVP_AES128_ECB_CTX *)vprovctx;
+
+    return EVP_CIPHER_CTX_settable_params(ctx->sub_ctx);
+}
+
+static const OSSL_DISPATCH ossl_testaes128_ecb_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX,
+        (void (*)(void))ossl_testaes128_ecb_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))ossl_test_aes128ecb_freectx },
+    { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))ossl_test_aes128ecb_dupctx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))ossl_test_aes128ecb_einit },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))ossl_test_aes128ecb_dinit },
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))ossl_test_aes128ecb_update },
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))ossl_test_aes128ecb_final },
+    { OSSL_FUNC_CIPHER_CIPHER, (void (*)(void))ossl_test_aes128ecb_cipher },
+    { OSSL_FUNC_CIPHER_GET_PARAMS,
+        (void (*)(void))ossl_test_aes128ecb_get_params },
+    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
+        (void (*)(void))ossl_test_aes128ecb_get_ctx_params },
+    { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,
+        (void (*)(void))ossl_test_aes128ecb_set_ctx_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,
+        (void (*)(void))ossl_test_aes128ecb_gettable_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
+        (void (*)(void))ossl_test_aes128ecb_gettable_ctx_params },
+    { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,
+        (void (*)(void))ossl_test_aes128ecb_settable_ctx_params },
+    OSSL_DISPATCH_END
+};
+
+typedef struct {
+    OSSL_LIB_CTX *libctx;
+    EVP_CIPHER_CTX *sub_ctx;
+    int tls1_aad;
 } PROV_EVP_AES128_GCM_CTX;
 
 /**
@@ -838,10 +1176,16 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
     size_t inl)
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
-    int ret, soutl;
-    uint8_t *inbuf;
+    int ret = 0, soutl = 0;
+    uint8_t *inbuf = NULL;
 
-    inbuf = OPENSSL_memdup(in, inl);
+    *outl = 0;
+
+    if (in != NULL && inl > 0) {
+        inbuf = OPENSSL_memdup(in, inl);
+        if (inbuf == NULL)
+            goto end;
+    }
 
     if (EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx))
         ret = EVP_EncryptUpdate(ctx->sub_ctx, (unsigned char *)out,
@@ -849,16 +1193,31 @@ static int ossl_test_aes128gcm_update(void *vprovctx, char *out, size_t *outl,
     else
         ret = EVP_DecryptUpdate(ctx->sub_ctx, (unsigned char *)out,
             &soutl, in, (int)inl);
-    *outl = soutl;
 
     /*
      * Once the cipher is complete, throw it away and use the
      * plaintext as our output
      */
-    if (inbuf != NULL && out != NULL)
-        memcpy(out, inbuf, inl);
-    OPENSSL_free(inbuf);
+    if (ret > 0 && inbuf != NULL && out != NULL) {
+        if (ctx->tls1_aad && EVP_CIPHER_CTX_is_encrypting(ctx->sub_ctx)) {
+            if (inl < EVP_GCM_TLS_EXPLICIT_IV_LEN + EVP_GCM_TLS_TAG_LEN) {
+                ret = 0;
+                goto end;
+            }
 
+            memcpy(out + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                inbuf + EVP_GCM_TLS_EXPLICIT_IV_LEN,
+                inl - EVP_GCM_TLS_EXPLICIT_IV_LEN - EVP_GCM_TLS_TAG_LEN);
+        } else {
+            memcpy(out, inbuf, inl);
+        }
+    }
+
+    *outl = soutl;
+
+end:
+    ctx->tls1_aad = 0;
+    OPENSSL_free(inbuf);
     return ret;
 }
 
@@ -955,8 +1314,15 @@ static int ossl_test_aes128gcm_get_ctx_params(void *vprovctx, OSSL_PARAM params[
 static int ossl_test_aes128gcm_set_ctx_params(void *vprovctx, const OSSL_PARAM params[])
 {
     PROV_EVP_AES128_GCM_CTX *ctx = (PROV_EVP_AES128_GCM_CTX *)vprovctx;
+    int tls1_aad;
+    int ret;
 
-    return EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
+    tls1_aad = OSSL_PARAM_locate_const(params, OSSL_CIPHER_PARAM_AEAD_TLS1_AAD) != NULL;
+    ret = EVP_CIPHER_CTX_set_params(ctx->sub_ctx, params);
+    if (ret)
+        ctx->tls1_aad = tls1_aad;
+
+    return ret;
 }
 
 /**
@@ -1454,6 +1820,7 @@ static const OSSL_DISPATCH ossl_testaes128cbchmacsha1_functions[] = {
 
 static const OSSL_ALGORITHM ossltest_ciphers[] = {
     ALG(PROV_NAMES_AES_128_CBC, ossl_testaes128_cbc_functions),
+    ALG(PROV_NAMES_AES_128_ECB, ossl_testaes128_ecb_functions),
     ALG(PROV_NAMES_AES_128_GCM, ossl_testaes128_gcm_functions),
     ALG(PROV_NAMES_AES_128_CBC_HMAC_SHA1, ossl_testaes128cbchmacsha1_functions),
     { NULL, NULL, NULL }
@@ -1753,6 +2120,84 @@ static const OSSL_ALGORITHM ossltest_rands[] = {
     { NULL, NULL, NULL }
 };
 
+/*
+ * The implementations for the p_ossltest provider decoder/encoder/store objects
+ * are defined below, but they are dummy implementations and do nothing.  They exist
+ * for the sole purpose of returning algorithms from this provider so that we can test if
+ * object creation and refcounting work when a provider requests no caching of the algorithm.
+ */
+
+static int ossl_test_decode(void *ctx, OSSL_CORE_BIO *in, int selection,
+    OSSL_CALLBACK *cb, void *cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pb, void *pbarg)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH ossl_test_decoder_functions[] = {
+    { OSSL_FUNC_DECODER_DECODE, (void (*)(void))ossl_test_decode },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM ossl_test_decoders[] = {
+    ALG("p_ossltest_decoder", ossl_test_decoder_functions),
+    { NULL, NULL, NULL }
+};
+
+static int ossl_test_encode(void *ctx, OSSL_CORE_BIO *out, const void *obj,
+    const OSSL_PARAM obj_abstract[],
+    int selection, OSSL_PASSPHRASE_CALLBACK *pb,
+    void *pbarg)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH ossl_test_encoder_functions[] = {
+    { OSSL_FUNC_ENCODER_ENCODE, (void (*)(void))ossl_test_encode },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM ossl_test_encoders[] = {
+    ALG("p_ossltest_encoder", ossl_test_encoder_functions),
+    { NULL, NULL, NULL }
+};
+
+static int dummy_store_value = 0;
+
+static void *ossl_test_store_open(void *provctx, const char *uri)
+{
+    return (void *)&dummy_store_value;
+}
+
+static int ossl_test_store_load(void *ctx, OSSL_CALLBACK *object_fn, void *cbarg,
+    OSSL_PASSPHRASE_CALLBACK *pb, void *pbarg)
+{
+    return 0;
+}
+
+static int ossl_test_store_eof(void *ctx)
+{
+    return 1;
+}
+
+static int ossl_test_store_close(void *ctx)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH ossl_test_store_functions[] = {
+    { OSSL_FUNC_STORE_OPEN, (void (*)(void))ossl_test_store_open },
+    { OSSL_FUNC_STORE_LOAD, (void (*)(void))ossl_test_store_load },
+    { OSSL_FUNC_STORE_EOF, (void (*)(void))ossl_test_store_eof },
+    { OSSL_FUNC_STORE_CLOSE, (void (*)(void))ossl_test_store_close },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM ossl_test_stores[] = {
+    ALG("p_ossltest_store", ossl_test_store_functions),
+    { NULL, NULL, NULL }
+};
+
 /**
  * @brief Implement ossltest query.
  *
@@ -1766,6 +2211,10 @@ static const OSSL_ALGORITHM *ossltest_query(void *provctx, int operation_id,
     int *no_cache)
 {
     *no_cache = 0;
+
+    if (getenv("OSSL_TEST_PROVIDER_NO_CACHE") != NULL)
+        *no_cache = 1;
+
     switch (operation_id) {
     case OSSL_OP_DIGEST:
         return ossltest_digests;
@@ -1773,6 +2222,12 @@ static const OSSL_ALGORITHM *ossltest_query(void *provctx, int operation_id,
         return ossltest_ciphers;
     case OSSL_OP_RAND:
         return ossltest_rands;
+    case OSSL_OP_DECODER:
+        return ossl_test_decoders;
+    case OSSL_OP_ENCODER:
+        return ossl_test_encoders;
+    case OSSL_OP_STORE:
+        return ossl_test_stores;
     }
     return NULL;
 }

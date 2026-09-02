@@ -149,11 +149,10 @@ static int run_srp_kat(void)
     /* use builtin 1024-bit params */
     const SRP_gN *GN;
 
-    if (!TEST_ptr(GN = SRP_get_default_gN("1024")))
-        goto err;
-    BN_hex2bn(&s, "BEB25379D1A8581EB5A727673A2441EE");
-    /* Set up server's password entry */
-    if (!TEST_true(SRP_create_verifier_BN("alice", "password123", &s, &v, GN->N,
+    if (!TEST_ptr(GN = SRP_get_default_gN("1024"))
+        || !TEST_true(BN_hex2bn(&s, "BEB25379D1A8581EB5A727673A2441EE"))
+        /* Set up server's password entry */
+        || !TEST_true(SRP_create_verifier_BN("alice", "password123", &s, &v, GN->N,
             GN->g)))
         goto err;
 
@@ -168,8 +167,9 @@ static int run_srp_kat(void)
     TEST_note("    okay");
 
     /* Server random */
-    BN_hex2bn(&b, "E487CB59D31AC550471E81F00F6928E01DDA08E974A004F49E61F5D1"
-                  "05284D20");
+    if (!TEST_true(BN_hex2bn(&b, "E487CB59D31AC550471E81F00F6928E01DDA08E974A004F49E61F5D1"
+                                 "05284D20")))
+        goto err;
 
     /* Server's first message */
     Bpub = SRP_Calc_B(b, GN->N, GN->g, v);
@@ -187,8 +187,9 @@ static int run_srp_kat(void)
     TEST_note("    okay");
 
     /* Client random */
-    BN_hex2bn(&a, "60975527035CF2AD1989806F0407210BC81EDC04E2762A56AFD529DD"
-                  "DA2D4393");
+    if (!TEST_true(BN_hex2bn(&a, "60975527035CF2AD1989806F0407210BC81EDC04E2762A56AFD529DD"
+                                 "DA2D4393")))
+        goto err;
 
     /* Client's response */
     Apub = SRP_Calc_A(a, GN->N, GN->g);

@@ -65,9 +65,10 @@ L<EVP_EncryptInit(3)/PARAMETERS>.
 
 =head1 NOTES
 
-The AES-SIV and AES-WRAP mode implementations do not support streaming. That
-means to obtain correct results there can be only one L<EVP_EncryptUpdate(3)>
-or L<EVP_DecryptUpdate(3)> call after the initialization of the context.
+The AES-SIV, AES-WRAP, and GCM-SIV mode implementations do not support
+streaming. That means to obtain correct results there can be only one
+L<EVP_EncryptUpdate(3)> or L<EVP_DecryptUpdate(3)> call on the payload after
+the initialization of the context.
 
 When wrapping with AES-WRAP-PAD ciphers, the output buffer must be at least
 I<inl> rounded up to the cipher block size (8 bytes) plus the block size.

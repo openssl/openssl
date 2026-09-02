@@ -22,12 +22,26 @@
 
 static void evp_signature_free(void *data)
 {
-    EVP_SIGNATURE_free(data);
+    EVP_SIGNATURE *signature = (EVP_SIGNATURE *)data;
+    int i;
+
+    if (signature == NULL)
+        return;
+    CRYPTO_DOWN_REF(&signature->refcnt, &i);
+    if (i > 0)
+        return;
+    OPENSSL_free(signature->type_name);
+    ossl_provider_free(signature->prov);
+    CRYPTO_FREE_REF(&signature->refcnt);
+    OPENSSL_free(signature);
 }
 
 static int evp_signature_up_ref(void *data)
 {
-    return EVP_SIGNATURE_up_ref(data);
+    EVP_SIGNATURE *signature = (EVP_SIGNATURE *)data;
+    int ref = 0;
+
+    return CRYPTO_UP_REF(&signature->refcnt, &ref);
 }
 
 static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
@@ -51,7 +65,7 @@ static EVP_SIGNATURE *evp_signature_new(OSSL_PROVIDER *prov)
 
 static void *evp_signature_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_SIGNATURE *signature = NULL;
@@ -70,6 +84,7 @@ static void *evp_signature_from_algorithm(int name_id,
     }
 
     signature->name_id = name_id;
+    signature->no_store = no_store;
     if ((signature->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL)
         goto err;
     signature->description = algodef->algorithm_description;
@@ -448,31 +463,29 @@ static void *evp_signature_from_algorithm(int name_id,
 
     return signature;
 err:
-    EVP_SIGNATURE_free(signature);
+    evp_signature_free(signature);
     return NULL;
 }
 
 void EVP_SIGNATURE_free(EVP_SIGNATURE *signature)
 {
-    int i;
-
-    if (signature == NULL)
-        return;
-    CRYPTO_DOWN_REF(&signature->refcnt, &i);
-    if (i > 0)
-        return;
-    OPENSSL_free(signature->type_name);
-    ossl_provider_free(signature->prov);
-    CRYPTO_FREE_REF(&signature->refcnt);
-    OPENSSL_free(signature);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_signature_free(signature);
+#else
+    if (signature != NULL && (signature->no_store != 0))
+        evp_signature_free(signature);
+#endif
 }
 
 int EVP_SIGNATURE_up_ref(EVP_SIGNATURE *signature)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&signature->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_signature_up_ref(signature);
+#else
+    if (signature->no_store != 0)
+        return evp_signature_up_ref(signature);
     return 1;
+#endif
 }
 
 OSSL_PROVIDER *EVP_SIGNATURE_get0_provider(const EVP_SIGNATURE *signature)

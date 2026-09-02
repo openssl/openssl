@@ -65,7 +65,7 @@ the underlying socket is configured and how it is to be used; see below.
 
 =item
 
-Use of BIO_s_datagram() with an unconnected network socket is hazardous hecause
+Use of BIO_s_datagram() with an unconnected network socket is hazardous because
 any successful call to BIO_read() results in the peer address used for any
 subsequent call to BIO_write() being set to the source address of the datagram
 received by that call to BIO_read(). Thus, unless the caller calls

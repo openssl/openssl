@@ -35,7 +35,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(a == NULL ? NULL : *a);
 
     ci = (CMS_ContentInfo *)ASN1_item_d2i_ex((ASN1_VALUE **)a, in, len,
-        (CMS_ContentInfo_it()),
+        ASN1_ITEM_rptr(CMS_ContentInfo),
         ossl_cms_ctx_get0_libctx(ctx),
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
@@ -48,7 +48,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
 
 int i2d_CMS_ContentInfo(const CMS_ContentInfo *a, unsigned char **out)
 {
-    return ASN1_item_i2d((const ASN1_VALUE *)a, out, (CMS_ContentInfo_it()));
+    return ASN1_item_i2d((const ASN1_VALUE *)a, out, ASN1_ITEM_rptr(CMS_ContentInfo));
 }
 
 CMS_ContentInfo *CMS_ContentInfo_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
@@ -137,7 +137,7 @@ BIO *ossl_cms_content_bio(CMS_ContentInfo *cms)
     /*
      * If content not detached and created return memory BIO
      */
-    if (*pos == NULL || ((*pos)->flags == ASN1_STRING_FLAG_CONT))
+    if (*pos == NULL || cms->contentIncomplete)
         return BIO_new(BIO_s_mem());
     /* Else content was read in: return read only BIO for it */
     return BIO_new_mem_buf((*pos)->data, (*pos)->length);
@@ -217,7 +217,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     if (pos == NULL)
         return 0;
     /* If embedded content find memory BIO and set content */
-    if (*pos && ((*pos)->flags & ASN1_STRING_FLAG_CONT)) {
+    if (*pos && cms->contentIncomplete) {
         BIO *mbio;
         unsigned char *cont;
         long contlen;
@@ -231,7 +231,7 @@ int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
         BIO_set_flags(mbio, BIO_FLAGS_MEM_RDONLY);
         BIO_set_mem_eof_return(mbio, 0);
         ASN1_STRING_set0(*pos, cont, contlen);
-        (*pos)->flags &= ~ASN1_STRING_FLAG_CONT;
+        cms->contentIncomplete = 0;
     }
 
     switch (OBJ_obj2nid(cms->contentType)) {
@@ -387,15 +387,13 @@ int CMS_set_detached(CMS_ContentInfo *cms, int detached)
     if (detached) {
         ASN1_OCTET_STRING_free(*pos);
         *pos = NULL;
+        cms->contentIncomplete = 0;
         return 1;
     }
     if (*pos == NULL)
         *pos = ASN1_OCTET_STRING_new();
     if (*pos != NULL) {
-        /*
-         * NB: special flag to show content is created and not read in.
-         */
-        (*pos)->flags |= ASN1_STRING_FLAG_CONT;
+        cms->contentIncomplete = 1;
         return 1;
     }
     ERR_raise(ERR_LIB_CMS, ERR_R_ASN1_LIB);

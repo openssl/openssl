@@ -582,20 +582,19 @@ SSL *ossl_quic_channel_get0_tls(QUIC_CHANNEL *ch)
     return ch->tls;
 }
 
-void ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
+int ossl_quic_channel_set0_tls(QUIC_CHANNEL *ch, SSL *ssl)
 {
-    SSL_free(ch->tls);
-    ch->tls = ssl;
-#ifndef OPENSSL_NO_QLOG
     /*
-     * If we're using qlog, make sure the tls gets further configured properly
+     * Rebind the handshake layer first, so that a failure leaves the channel
+     * entirely unmodified rather than with a TLS connection the handshake
+     * layer does not know about.
      */
-    ch->use_qlog = 1;
-    if (ch->tls->ctx->qlog_title != NULL) {
-        OPENSSL_free(ch->qlog_title);
-        ch->qlog_title = OPENSSL_strdup(ch->tls->ctx->qlog_title);
-    }
-#endif
+    if (!ossl_assert(ch != NULL && ssl != NULL && ch->tls == NULL)
+        || !ossl_quic_tls_set0_ssl(ch->qtls, ssl))
+        return 0;
+
+    ch->tls = ssl;
+    return 1;
 }
 
 static void free_buf_mem(unsigned char *buf, size_t buf_len, void *arg)
@@ -3325,7 +3324,8 @@ static int ch_enqueue_retire_conn_id(QUIC_CHANNEL *ch, uint64_t seq_num)
     WPACKET wpkt;
     size_t l;
 
-    ossl_quic_srtm_remove(ch->srtm, ch, seq_num);
+    if (!ossl_quic_srtm_remove(ch->srtm, ch, seq_num, NULL))
+        goto err;
 
     if ((buf_mem = BUF_MEM_new()) == NULL)
         goto err;
@@ -4023,12 +4023,23 @@ void ossl_quic_channel_set_incoming_stream_auto_reject(QUIC_CHANNEL *ch,
 
 void ossl_quic_channel_reject_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs)
 {
+    OSSL_RTT_INFO rtt_info;
+
     ossl_quic_stream_map_stop_sending_recv_part(&ch->qsm, qs,
         ch->incoming_stream_auto_reject_aec);
 
     ossl_quic_stream_map_reset_stream_send_part(&ch->qsm, qs,
         ch->incoming_stream_auto_reject_aec);
     qs->deleted = 1;
+
+    /*
+     * A rejected stream is never placed on the accept queue, so it would
+     * otherwise never be retired and would consume the peer's stream credit
+     * for the lifetime of the connection.
+     */
+    ossl_statm_get_rtt_info(ossl_quic_channel_get_statm(ch), &rtt_info);
+    ossl_quic_stream_map_retire_stream_credit(&ch->qsm, qs,
+        rtt_info.smoothed_rtt);
 
     ossl_quic_stream_map_update_state(&ch->qsm, qs);
 }

@@ -134,7 +134,7 @@ static unsigned long getauxval(unsigned long key)
 #define HWCAP_ARCH_3_00 (1U << 23)
 #define HWCAP_ARCH_3_1 (1U << 18)
 
-#if defined(__GNUC__) && __GNUC__ >= 2
+#if defined(__GNUC__)
 __attribute__((constructor))
 #endif
 void OPENSSL_cpuid_setup(void)
@@ -160,11 +160,16 @@ void OPENSSL_cpuid_setup(void)
 
     if (sizeof(size_t) == 4) {
         struct utsname uts;
+        long major;
+        char *end;
 #if defined(_SC_AIX_KERNEL_BITMODE)
         if (sysconf(_SC_AIX_KERNEL_BITMODE) != 64)
             return;
 #endif
-        if (uname(&uts) != 0 || atoi(uts.version) < 6)
+        if (uname(&uts) != 0
+            || !ossl_strtol(uts.version, &end, 10, &major)
+            || (*end != '\0' && *end != '.')
+            || major < 6)
             return;
     }
 

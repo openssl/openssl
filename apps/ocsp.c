@@ -74,7 +74,7 @@ static int do_responder(OCSP_REQUEST **preq, BIO **pcbio, BIO *acbio,
 static int send_ocsp_response(BIO *cbio, const OCSP_RESPONSE *resp);
 static char *prog;
 
-#ifdef HTTP_DAEMON
+#ifndef OPENSSL_NO_POSIX_IO
 static int index_changed(CA_DB *);
 #endif
 
@@ -680,7 +680,7 @@ int ocsp_main(int argc, char **argv)
 redo_accept:
 
     if (acbio != NULL) {
-#ifdef HTTP_DAEMON
+#ifndef OPENSSL_NO_POSIX_IO
         if (index_changed(rdb)) {
             CA_DB *newrdb = load_index(ridx_filename, NULL);
 
@@ -926,7 +926,7 @@ end:
     return ret;
 }
 
-#ifdef HTTP_DAEMON
+#ifndef OPENSSL_NO_POSIX_IO
 
 static int index_changed(CA_DB *rdb)
 {
@@ -937,7 +937,11 @@ static int index_changed(CA_DB *rdb)
             || rdb->dbst.st_ctime != sb.st_ctime
             || rdb->dbst.st_ino != sb.st_ino
             || rdb->dbst.st_dev != sb.st_dev) {
+#ifdef HTTP_DAEMON
             syslog(LOG_INFO, "index file changed, reloading");
+#else
+            BIO_printf(bio_err, "%s: index file changed, reloading\n", prog);
+#endif
             return 1;
         }
     }

@@ -26,7 +26,7 @@
 # and Jim Guilford of Intel. MD5 is fresh implementation aiming to
 # minimize register usage, which was used as "main thread" with RC4
 # weaved into it, one RC4 round per one MD5 round. In addition to the
-# stiched subroutine the script can generate standalone replacement
+# stitched subroutine the script can generate standalone replacement
 # ossl_md5_block_asm_data_order and RC4. Below are performance numbers in
 # cycles per processed byte, less is better, for these the standalone
 # subroutines, sum of them, and stitched one:

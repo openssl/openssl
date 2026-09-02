@@ -66,6 +66,16 @@ struct CMS_ContentInfo_st {
         void *otherData;
     } d;
     CMS_CTX ctx;
+    /*-
+     * Set when the content octet string is empty and is to be filled at
+     * dataFinal time from the memory BIO ossl_cms_content_bio() returns.
+     * Cleared:
+     * - once the string has been filled;
+     * - when the content is detached;
+     * - when streaming is set up, where the encoder writes the content out
+     *   and records its position in the string rather than filling it.
+     */
+    int contentIncomplete;
 };
 
 DEFINE_STACK_OF(CMS_CertificateChoices)
@@ -103,6 +113,11 @@ struct CMS_SignerInfo_st {
     const CMS_CTX *cms_ctx;
     /* Set to 1 if signing time attribute is to be omitted */
     int omit_signing_time;
+    /* Remember which aspects have been verified */
+    int verify_result; /* for this SignerInfo, all attempted verification aspects succeeded */
+    int cert_verified; /* the certificate was verified successfully */
+    int attr_verified; /* any given signed attributes were verified successfully */
+    int content_verified; /* the signature over the content was verified successfully */
 };
 
 struct CMS_SignerIdentifier_st {
@@ -401,6 +416,9 @@ DECLARE_ASN1_ITEM(CMS_EncryptedContentInfo)
 DECLARE_ASN1_ITEM(CMS_IssuerAndSerialNumber)
 DECLARE_ASN1_ITEM(CMS_Attributes_Sign)
 DECLARE_ASN1_ITEM(CMS_Attributes_Verify)
+/* The authAttrs AAD encoding matches the signed-attributes one */
+#define CMS_Attributes_AadEncrypt_it CMS_Attributes_Sign_it
+#define CMS_Attributes_AadDecrypt_it CMS_Attributes_Verify_it
 DECLARE_ASN1_ITEM(CMS_RecipientInfo)
 DECLARE_ASN1_ITEM(CMS_PasswordRecipientInfo)
 DECLARE_ASN1_ALLOC_FUNCTIONS(CMS_IssuerAndSerialNumber)
@@ -428,6 +446,14 @@ CMS_ContentInfo *ossl_cms_Data_create(OSSL_LIB_CTX *ctx, const char *propq);
 int ossl_cms_DataFinal(CMS_ContentInfo *cms, BIO *cmsbio, BIO *data,
     const unsigned char *precomp_md,
     unsigned int precomp_mdlen);
+/**
+ * @brief Prepare the content of cms for indefinite-length streaming.
+ * The content octet string is created if it is not already present, and the
+ * content is recorded as created here rather than read in via d2i.
+ * @param cms the CMS_ContentInfo to prepare for streaming
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_cms_stream(CMS_ContentInfo *cms);
 
 CMS_ContentInfo *ossl_cms_DigestedData_create(const EVP_MD *md,
     OSSL_LIB_CTX *libctx,

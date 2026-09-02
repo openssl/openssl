@@ -208,8 +208,12 @@ static int test_store_get_params(int idx)
             urifmt = "%s%s-params.pem";
     }
 #endif
-    if (!TEST_true(BIO_snprintf(uri, sizeof(uri), urifmt, datadir, type)))
-        return 0;
+    {
+        int n = snprintf(uri, sizeof(uri), urifmt, datadir, type);
+
+        if (!TEST_true(n > 0 && (size_t)n < sizeof(uri)))
+            return 0;
+    }
 
     TEST_info("Testing uri: %s", uri);
     if (!TEST_true(get_params(uri, type)))

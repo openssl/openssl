@@ -82,6 +82,7 @@ typedef unsigned int u_int;
 #endif
 #include "internal/sockets.h"
 #include "internal/statem.h"
+#include "ssl/ssl_local.h"
 
 #ifndef OPENSSL_NO_ECH
 /* needed for X509_check_host in some CI builds "no-http" */
@@ -168,16 +169,17 @@ static unsigned int psk_server_cb(SSL *ssl, const char *identity,
 {
     long key_len = 0;
     unsigned char *key;
+    const int version1_3 = SSL_is_dtls(ssl) ? DTLS1_3_VERSION : TLS1_3_VERSION;
 
     if (s_debug)
         BIO_puts(bio_s_out, "psk_server_cb\n");
 
-    if (!SSL_is_dtls(ssl) && SSL_version(ssl) >= TLS1_3_VERSION) {
+    if (PROTOCOL_VERSION_CMP(SSL_is_dtls(ssl), SSL_version(ssl), version1_3) >= 0) {
         /*
          * This callback is designed for use in (D)TLSv1.2 (or below). It is
          * possible to use a single callback for all protocol versions - but it
-         * is preferred to use a dedicated callback for TLSv1.3. For TLSv1.3 we
-         * have psk_find_session_cb.
+         * is preferred to use a dedicated callback for (D)TLSv1.3. For
+         * (D)TLSv1.3 we have psk_find_session_cb.
          */
         return 0;
     }
@@ -462,7 +464,7 @@ typedef struct tlsextctx_st {
 static unsigned int ech_print_cb(SSL *s, const char *str)
 {
     if (str != NULL)
-        BIO_printf(bio_s_out, "ECH Server callback printing: \n%s\n", str);
+        BIO_printf(bio_s_out, "ECH Server callback printing:\n%s\n", str);
     return 1;
 }
 
@@ -849,10 +851,8 @@ static int bring_ocsp_resp_in_correct_order(SSL *s, tlsextstatusctx *srctx,
         sk_OCSP_RESPONSE_pop_free(*sk_resp, OCSP_RESPONSE_free);
 
     SSL_get0_chain_certs(s, &server_chain);
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
-    if (server_chain != NULL && srctx->status_all && !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+
+    if (server_chain != NULL && srctx->status_all && ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION))) {
         /* certificate chain is available */
         num = sk_X509_num(server_chain) + 1;
     }
@@ -1007,10 +1007,7 @@ static int get_ocsp_resp_from_responder(SSL *s, tlsextstatusctx *srctx,
 
     SSL_get0_chain_certs(s, &server_chain);
 
-    /*
-     * TODO(DTLS-1.3): in future DTLS should also be considered
-     */
-    if (server_chain != NULL && srctx->status_all && !SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) {
+    if (server_chain != NULL && srctx->status_all && ((!SSL_is_dtls(s) && SSL_version(s) >= TLS1_3_VERSION) || (SSL_is_dtls(s) && SSL_version(s) <= DTLS1_3_VERSION))) {
         /* certificate chain is available */
         num = sk_X509_num(server_chain) + 1;
     } else {
@@ -1266,6 +1263,7 @@ typedef enum OPTION_choice {
     OPT_DTLS,
     OPT_DTLS1,
     OPT_DTLS1_2,
+    OPT_DTLS1_3,
     OPT_SCTP,
     OPT_TIMEOUT,
     OPT_MTU,
@@ -1510,7 +1508,7 @@ const OPTIONS s_server_options[] = {
         "The maximum number of bytes of early data (hard limit)" },
     { "early_data", OPT_EARLY_DATA, '-', "Attempt to read early data" },
     { "num_tickets", OPT_S_NUM_TICKETS, 'n',
-        "The number of TLSv1.3 session tickets that a server will automatically issue" },
+        "The number of (D)TLSv1.3 session tickets that a server will automatically issue" },
     { "anti_replay", OPT_ANTI_REPLAY, '-', "Switch on anti-replay protection (default)" },
     { "no_anti_replay", OPT_NO_ANTI_REPLAY, '-', "Switch off anti-replay protection" },
     { "http_server_binmode", OPT_HTTP_SERVER_BINMODE, '-', "opening files in binary mode when acting as http server (-WWW and -HTTP)" },
@@ -1539,6 +1537,9 @@ const OPTIONS s_server_options[] = {
 #endif
 #ifndef OPENSSL_NO_DTLS1_2
     { "dtls1_2", OPT_DTLS1_2, '-', "Just talk DTLSv1.2" },
+#endif
+#ifndef OPENSSL_NO_DTLS1_3
+    { "dtls1_3", OPT_DTLS1_3, '-', "Just talk DTLSv1.3" },
 #endif
 #ifndef OPENSSL_NO_SCTP
     { "sctp", OPT_SCTP, '-', "Use SCTP" },
@@ -1622,17 +1623,18 @@ static int ech_load_dir(SSL_CTX *lctx, const char *thedir,
         int r;
 
 #ifdef OPENSSL_SYS_VMS
-        r = BIO_snprintf(filepath, sizeof(filepath), "%s%s", thedir, thisfile);
+        r = snprintf(filepath, sizeof(filepath), "%s%s", thedir, thisfile);
 #else
-        r = BIO_snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
+        r = snprintf(filepath, sizeof(filepath), "%s/%s", thedir, thisfile);
 #endif
+        if (r < 0 || (size_t)r >= sizeof(filepath))
+            continue;
         if (app_isdir(filepath) > 0) {
             if (s_debug)
                 BIO_printf(bio_err, "Skipping directory: %s\n", filepath);
             continue;
         }
-        if (r < 0
-            || (in = BIO_new_file(filepath, "r")) == NULL
+        if ((in = BIO_new_file(filepath, "r")) == NULL
             || OSSL_ECHSTORE_read_pem(es, in, for_retry) != 1) {
             BIO_printf(bio_err, "Failed reading from: %s\n", filepath);
             continue;
@@ -1661,9 +1663,10 @@ end:
 }
 #endif
 
-#define IS_PROT_FLAG(o)                                  \
-    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2 \
-        || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2)
+#define IS_PROT_FLAG(o)                                                           \
+    (o == OPT_TLS1 || o == OPT_TLS1_1 || o == OPT_TLS1_2                          \
+        || o == OPT_TLS1_3 || o == OPT_DTLS || o == OPT_DTLS1 || o == OPT_DTLS1_2 \
+        || o == OPT_DTLS1_3)
 
 int s_server_main(int argc, char *argv[])
 {
@@ -1722,6 +1725,9 @@ int s_server_main(int argc, char *argv[])
 #endif
 #ifndef OPENSSL_NO_SRTP
     char *srtp_profiles = NULL;
+#endif
+#if !(defined(OPENSSL_NO_NEXTPROTONEG) && defined(OPENSSL_NO_PSK))
+    int version1_3;
 #endif
     int min_version = 0, max_version = 0, prot_opt = 0, no_prot_opt = 0;
     int s_server_verify = SSL_VERIFY_NONE;
@@ -1885,7 +1891,7 @@ int s_server_main(int argc, char *argv[])
             break;
 #endif
         case OPT_NACCEPT:
-            naccept = atol(opt_arg());
+            naccept = opt_int_arg();
             break;
         case OPT_VERIFY:
             s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
@@ -2020,7 +2026,7 @@ int s_server_main(int argc, char *argv[])
                 goto end;
             break;
         case OPT_VERIFY_RET_ERROR:
-            s_server_verify = SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
+            s_server_verify |= SSL_VERIFY_PEER | SSL_VERIFY_CLIENT_ONCE;
             verify_args.return_error = 1;
             break;
         case OPT_VERIFY_QUIET:
@@ -2237,6 +2243,14 @@ int s_server_main(int argc, char *argv[])
             socket_type = SOCK_DGRAM;
 #endif
             break;
+        case OPT_DTLS1_3:
+#ifndef OPENSSL_NO_DTLS
+            meth = DTLS_server_method();
+            min_version = DTLS1_3_VERSION;
+            max_version = DTLS1_3_VERSION;
+            socket_type = SOCK_DGRAM;
+#endif
+            break;
         case OPT_SCTP:
 #ifndef OPENSSL_NO_SCTP
             protocol = IPPROTO_SCTP;
@@ -2254,7 +2268,8 @@ int s_server_main(int argc, char *argv[])
             break;
         case OPT_MTU:
 #ifndef OPENSSL_NO_DTLS
-            socket_mtu = atol(opt_arg());
+            if (!opt_long(opt_arg(), &socket_mtu))
+                goto opthelp;
 #endif
             break;
         case OPT_LISTEN:
@@ -2407,6 +2422,10 @@ int s_server_main(int argc, char *argv[])
         }
     }
 
+#if !(defined(OPENSSL_NO_NEXTPROTONEG) && defined(OPENSSL_NO_PSK))
+    version1_3 = (socket_type == SOCK_DGRAM) ? DTLS1_3_VERSION : TLS1_3_VERSION;
+#endif
+
     /* No extra arguments. */
     if (!opt_check_rest_arg(NULL))
         goto opthelp;
@@ -2415,7 +2434,7 @@ int s_server_main(int argc, char *argv[])
         goto end;
 
 #ifndef OPENSSL_NO_NEXTPROTONEG
-    if (min_version == TLS1_3_VERSION && next_proto_neg_in != NULL) {
+    if (min_version == version1_3 && next_proto_neg_in != NULL) {
         BIO_puts(bio_err, "Cannot supply -nextprotoneg with TLSv1.3\n");
         goto opthelp;
     }
@@ -2985,7 +3004,7 @@ int s_server_main(int argc, char *argv[])
     }
 
     if (psk_identity_hint != NULL) {
-        if (min_version == TLS1_3_VERSION) {
+        if (min_version == version1_3) {
             BIO_puts(bio_s_out, "PSK warning: there is NO identity hint in TLSv1.3\n");
         } else {
             if (!SSL_CTX_use_psk_identity_hint(ctx, psk_identity_hint)) {
@@ -4020,6 +4039,7 @@ static int www_body(int s, int stype, int prot, unsigned char *context)
 
     if (rpk_files != NULL && !rpk_enable(con)) {
         BIO_puts(bio_err, "Error enabling client RPK verification\n");
+        SSL_free(con);
         goto err;
     }
 
@@ -4543,6 +4563,7 @@ static int rev_body(int s, int stype, int prot, unsigned char *context)
     if (rpk_files != NULL && !rpk_enable(con)) {
         BIO_puts(bio_err, "Error enabling client RPK verification\n");
         ERR_print_errors(bio_err);
+        SSL_free(con);
         goto err;
     }
 

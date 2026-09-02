@@ -2622,7 +2622,7 @@ int speed_main(int argc, char **argv)
         if (evp_mac_mdname == NULL)
             goto end;
         evp_hmac_name = app_malloc(hmac_name_len, "HMAC name");
-        BIO_snprintf(evp_hmac_name, hmac_name_len, "hmac(%s)", evp_mac_mdname);
+        snprintf(evp_hmac_name, hmac_name_len, "hmac(%s)", evp_mac_mdname);
         names[D_HMAC] = evp_hmac_name;
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_MAC_PARAM_DIGEST,
@@ -2945,7 +2945,7 @@ int speed_main(int argc, char **argv)
                                 &outlen, loopargs[k].buf,
                                 lengths[testnum])) {
                             BIO_puts(bio_err,
-                                "\nFailed to to encrypt the data\n");
+                                "\nFailed to encrypt the data\n");
                             dofail();
                             exit(1);
                         }
@@ -3030,7 +3030,7 @@ int speed_main(int argc, char **argv)
             goto end;
         }
         evp_cmac_name = app_malloc(len, "CMAC name");
-        BIO_snprintf(evp_cmac_name, len, "cmac(%s)", evp_mac_ciphername);
+        snprintf(evp_cmac_name, len, "cmac(%s)", evp_mac_ciphername);
         names[D_EVP_CMAC] = evp_cmac_name;
 
         params[0] = OSSL_PARAM_construct_utf8_string(OSSL_ALG_PARAM_CIPHER,
@@ -3946,11 +3946,15 @@ int speed_main(int argc, char **argv)
             }
 
             if (strncmp(sig_name, "dsa", 3) == 0) {
+                int dsa_nbits = 0;
+
+                if (!opt_int(sig_name + 3, &dsa_nbits))
+                    goto sig_err_break;
                 ctx_params = EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL);
                 if (ctx_params == NULL
                     || EVP_PKEY_paramgen_init(ctx_params) <= 0
                     || EVP_PKEY_CTX_set_dsa_paramgen_bits(ctx_params,
-                           atoi(sig_name + 3))
+                           dsa_nbits)
                         <= 0
                     || EVP_PKEY_paramgen(ctx_params, &pkey_params) <= 0
                     || (sig_gen_ctx = EVP_PKEY_CTX_new(pkey_params, NULL)) == NULL
@@ -4633,7 +4637,7 @@ static int do_multi(int multi, int size_num)
     for (n = 0; n < multi; ++n) {
         while (wait(&status) == -1)
             if (errno != EINTR) {
-                BIO_printf(bio_err, "Waitng for child failed with 0x%x\n",
+                BIO_printf(bio_err, "Waiting for child failed with 0x%x\n",
                     errno);
                 return 1;
             }

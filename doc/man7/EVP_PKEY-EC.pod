@@ -94,6 +94,18 @@ Sets or gets the point_conversion_form for the I<key>. For a description of
 point_conversion_forms please see L<EC_POINT_new(3)>. Valid values are
 "uncompressed" or "compressed". The default value is "uncompressed".
 
+At key generation time the public point is emitted in uncompressed
+form.  Any B<point-format> supplied via
+B<EVP_PKEY_CTX_set_params>(3) or B<-pkeyopt point-format:E<lt>formE<gt>>
+is validated -- an invalid value is rejected -- but is otherwise
+ignored on the generated key.
+
+On EC parameter generation the B<point-format> setting selects the
+encoding of the group's generator.  On an existing key the setting
+is honoured normally, so imported keys retain their original form
+through B<EVP_PKEY_set_params>(3), B<EVP_PKEY_fromdata>(3),
+B<EVP_PKEY_todata>(3) and PEM/DER encoding and decoding.
+
 =item "group-check" (B<OSSL_PKEY_PARAM_EC_GROUP_CHECK_TYPE>) <UTF8 string>
 
 Sets or Gets the type of group check done when EVP_PKEY_param_check() is called.

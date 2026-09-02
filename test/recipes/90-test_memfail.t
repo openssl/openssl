@@ -31,11 +31,7 @@ $ENV{OPENSSL_TEST_MFAIL_DISABLE} = "1";
 
 run(test(["handshake-memfail", "count", srctop_dir("test", "certs")], stderr => "$resultdir/hscountinfo.txt"));
 
-run(test(["x509-memfail", "count", srctop_file("test", "certs", "servercert.pem")], stderr => "$resultdir/x509countinfo.txt"));
-
 run(test(["load_key_certs_crls_memfail", "count", srctop_file("test", "certs", "servercert.pem")], stderr => "$resultdir/load_key_certs_crls_countinfo.txt"));
-
-run(test(["property-memfail", "count"], stderr => "$resultdir/propertycountinfo.txt"));
 
 sub get_count_info {
     my ($infile) = @_;
@@ -59,14 +55,10 @@ sub get_count_info {
 
 my ($hsskipcount, $hsmalloccount) = get_count_info("$resultdir/hscountinfo.txt");
 
-my ($x509skipcount, $x509malloccount) = get_count_info("$resultdir/x509countinfo.txt");
-
 my ($load_key_certs_crls_skipcount, $load_key_certs_crls_malloccount) = get_count_info("$resultdir/load_key_certs_crls_countinfo.txt");
 
-my (undef, $propertymalloccount) = get_count_info("$resultdir/propertycountinfo.txt");
-
-my $total_malloccount = $hsmalloccount + $x509malloccount
-    + $load_key_certs_crls_malloccount + $propertymalloccount;
+my $total_malloccount = $hsmalloccount
+    + $load_key_certs_crls_malloccount;
 plan skip_all => "could not get malloc counts (one or more count runs failed or output format changed)"
     if $total_malloccount == 0;
 
@@ -98,10 +90,4 @@ sub run_memfail_test {
 
 run_memfail_test($hsskipcount, $hsmalloccount, ["handshake-memfail", "run", srctop_dir("test", "certs")]);
 
-run_memfail_test($x509skipcount, $x509malloccount, ["x509-memfail", "run", srctop_file("test", "certs", "servercert.pem")]);
-
 run_memfail_test($load_key_certs_crls_skipcount, $load_key_certs_crls_malloccount, ["load_key_certs_crls_memfail", "run", srctop_file("test", "certs", "servercert.pem")]);
-
-for my $idx (1..$propertymalloccount) {
-    ok(run(test(["property-memfail", "run", $idx])));
-}

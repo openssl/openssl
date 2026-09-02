@@ -48,6 +48,9 @@ EVP_PKEY_CTX_new_id() and EVP_PKEY_CTX_new_from_name() are normally
 used when no B<EVP_PKEY> structure is associated with the operations,
 for example during parameter generation or key generation for some
 algorithms.
+The key returned by L<EVP_PKEY_generate(3)> is not associated with the
+generation context.  To perform operations using that key, create a new context
+with L<EVP_PKEY_CTX_new_from_pkey(3)>.
 
 EVP_PKEY_CTX_dup() duplicates the context I<ctx>.
 It is not supported for a keygen operation.
@@ -125,7 +128,7 @@ added in OpenSSL 3.0.
 
 =head1 COPYRIGHT
 
-Copyright 2006-2025 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2006-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

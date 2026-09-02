@@ -57,7 +57,7 @@ const OPTIONS ecparam_options[] = {
     { "text", OPT_TEXT, '-', "Print the ec parameters in text form" },
     { "noout", OPT_NOOUT, '-', "Do not print the ec parameter" },
     { "param_enc", OPT_PARAM_ENC, 's',
-        "Specifies the way the ec parameters are encoded" },
+        "Selects between named_curve and explicit EC parameter encoding" },
 
     OPT_SECTION("Parameter"),
     { "check", OPT_CHECK, '-', "Validate the ec parameters" },

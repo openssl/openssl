@@ -32,6 +32,103 @@
 #include "crypto/rsa.h"
 #include "x509_local.h"
 
+static void *RSA_new_thunk(void)
+{
+    return RSA_new();
+}
+
+static void *d2i_RSA_PUBKEY_thunk(void **a, const unsigned char **in, long len)
+{
+    return d2i_RSA_PUBKEY((RSA **)a, in, len);
+}
+
+static int i2d_RSA_PUBKEY_thunk(const void *a, unsigned char **out)
+{
+    return i2d_RSA_PUBKEY((const RSA *)a, out);
+}
+
+static void *EVP_PKEY_new_thunk(void)
+{
+    return EVP_PKEY_new();
+}
+
+static void *d2i_AutoPrivateKey_thunk(void **a, const unsigned char **in,
+    long len)
+{
+    return d2i_AutoPrivateKey((EVP_PKEY **)a, in, len);
+}
+
+static void *d2i_PUBKEY_thunk(void **a, const unsigned char **in, long len)
+{
+    return d2i_PUBKEY((EVP_PKEY **)a, in, len);
+}
+
+static int i2d_PrivateKey_thunk(const void *a, unsigned char **out)
+{
+    return i2d_PrivateKey((const EVP_PKEY *)a, out);
+}
+
+static int i2d_PUBKEY_thunk(const void *a, unsigned char **out)
+{
+    return i2d_PUBKEY((const EVP_PKEY *)a, out);
+}
+
+#ifndef OPENSSL_NO_DSA
+static void *DSA_new_thunk(void)
+{
+    return DSA_new();
+}
+
+static void *d2i_DSAPrivateKey_thunk(void **a, const unsigned char **in,
+    long len)
+{
+    return d2i_DSAPrivateKey((DSA **)a, in, len);
+}
+
+static int i2d_DSAPrivateKey_thunk(const void *a, unsigned char **out)
+{
+    return i2d_DSAPrivateKey((const DSA *)a, out);
+}
+
+static void *d2i_DSA_PUBKEY_thunk(void **a, const unsigned char **in, long len)
+{
+    return d2i_DSA_PUBKEY((DSA **)a, in, len);
+}
+
+static int i2d_DSA_PUBKEY_thunk(const void *a, unsigned char **out)
+{
+    return i2d_DSA_PUBKEY((const DSA *)a, out);
+}
+#endif
+
+#ifndef OPENSSL_NO_EC
+static void *EC_KEY_new_thunk(void)
+{
+    return EC_KEY_new();
+}
+
+static void *d2i_EC_PUBKEY_thunk(void **a, const unsigned char **in, long len)
+{
+    return d2i_EC_PUBKEY((EC_KEY **)a, in, len);
+}
+
+static int i2d_EC_PUBKEY_thunk(const void *a, unsigned char **out)
+{
+    return i2d_EC_PUBKEY((const EC_KEY *)a, out);
+}
+
+static void *d2i_ECPrivateKey_thunk(void **a, const unsigned char **in,
+    long len)
+{
+    return d2i_ECPrivateKey((EC_KEY **)a, in, len);
+}
+
+static int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
+{
+    return i2d_ECPrivateKey((const EC_KEY *)a, out);
+}
+#endif
+
 int X509_verify(const X509 *a, EVP_PKEY *r)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
@@ -390,10 +487,8 @@ RSA *d2i_RSAPublicKey_fp(FILE *fp, RSA **rsa)
 
 RSA *d2i_RSA_PUBKEY_fp(FILE *fp, RSA **rsa)
 {
-    return ASN1_d2i_fp((void *(*)(void))
-                           RSA_new,
-        (D2I_OF(void))d2i_RSA_PUBKEY, fp,
-        (void **)rsa);
+    return ASN1_d2i_fp(RSA_new_thunk, d2i_RSA_PUBKEY_thunk, fp,
+        CHECKED_PPTR_OF(RSA, rsa));
 }
 
 int i2d_RSAPublicKey_fp(FILE *fp, const RSA *rsa)
@@ -403,7 +498,7 @@ int i2d_RSAPublicKey_fp(FILE *fp, const RSA *rsa)
 
 int i2d_RSA_PUBKEY_fp(FILE *fp, const RSA *rsa)
 {
-    return ASN1_i2d_fp((I2D_OF(void))i2d_RSA_PUBKEY, fp, rsa);
+    return ASN1_i2d_fp(i2d_RSA_PUBKEY_thunk, fp, rsa);
 }
 #endif
 
@@ -424,7 +519,8 @@ RSA *d2i_RSAPublicKey_bio(BIO *bp, RSA **rsa)
 
 RSA *d2i_RSA_PUBKEY_bio(BIO *bp, RSA **rsa)
 {
-    return ASN1_d2i_bio_of(RSA, RSA_new, d2i_RSA_PUBKEY, bp, rsa);
+    return ASN1_d2i_bio(RSA_new_thunk, d2i_RSA_PUBKEY_thunk, bp,
+        CHECKED_PPTR_OF(RSA, rsa));
 }
 
 int i2d_RSAPublicKey_bio(BIO *bp, const RSA *rsa)
@@ -434,50 +530,55 @@ int i2d_RSAPublicKey_bio(BIO *bp, const RSA *rsa)
 
 int i2d_RSA_PUBKEY_bio(BIO *bp, const RSA *rsa)
 {
-    return ASN1_i2d_bio_of(RSA, i2d_RSA_PUBKEY, bp, rsa);
+    return ASN1_i2d_bio(i2d_RSA_PUBKEY_thunk, bp, rsa);
 }
 
 #ifndef OPENSSL_NO_DSA
 #ifndef OPENSSL_NO_STDIO
 DSA *d2i_DSAPrivateKey_fp(FILE *fp, DSA **dsa)
 {
-    return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSAPrivateKey, fp, dsa);
+    return ASN1_d2i_fp(DSA_new_thunk, d2i_DSAPrivateKey_thunk, fp,
+        CHECKED_PPTR_OF(DSA, dsa));
 }
 
 int i2d_DSAPrivateKey_fp(FILE *fp, const DSA *dsa)
 {
-    return ASN1_i2d_fp_of(DSA, i2d_DSAPrivateKey, fp, dsa);
+    return ASN1_i2d_fp(i2d_DSAPrivateKey_thunk, fp,
+        CHECKED_PTR_OF(const DSA, dsa));
 }
 
 DSA *d2i_DSA_PUBKEY_fp(FILE *fp, DSA **dsa)
 {
-    return ASN1_d2i_fp_of(DSA, DSA_new, d2i_DSA_PUBKEY, fp, dsa);
+    return ASN1_d2i_fp(DSA_new_thunk, d2i_DSA_PUBKEY_thunk, fp,
+        CHECKED_PPTR_OF(DSA, dsa));
 }
 
 int i2d_DSA_PUBKEY_fp(FILE *fp, const DSA *dsa)
 {
-    return ASN1_i2d_fp_of(DSA, i2d_DSA_PUBKEY, fp, dsa);
+    return ASN1_i2d_fp(i2d_DSA_PUBKEY_thunk, fp,
+        CHECKED_PTR_OF(const DSA, dsa));
 }
 #endif
 
 DSA *d2i_DSAPrivateKey_bio(BIO *bp, DSA **dsa)
 {
-    return ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSAPrivateKey, bp, dsa);
+    return ASN1_d2i_bio(DSA_new_thunk, d2i_DSAPrivateKey_thunk, bp, (void **)dsa);
 }
 
 int i2d_DSAPrivateKey_bio(BIO *bp, const DSA *dsa)
 {
-    return ASN1_i2d_bio_of(DSA, i2d_DSAPrivateKey, bp, dsa);
+    return ASN1_i2d_bio(i2d_DSAPrivateKey_thunk, bp,
+        CHECKED_PTR_OF(const DSA, dsa));
 }
 
 DSA *d2i_DSA_PUBKEY_bio(BIO *bp, DSA **dsa)
 {
-    return ASN1_d2i_bio_of(DSA, DSA_new, d2i_DSA_PUBKEY, bp, dsa);
+    return ASN1_d2i_bio(DSA_new_thunk, d2i_DSA_PUBKEY_thunk, bp, (void **)dsa);
 }
 
 int i2d_DSA_PUBKEY_bio(BIO *bp, const DSA *dsa)
 {
-    return ASN1_i2d_bio_of(DSA, i2d_DSA_PUBKEY, bp, dsa);
+    return ASN1_i2d_bio(i2d_DSA_PUBKEY_thunk, bp, dsa);
 }
 
 #endif
@@ -486,42 +587,49 @@ int i2d_DSA_PUBKEY_bio(BIO *bp, const DSA *dsa)
 #ifndef OPENSSL_NO_STDIO
 EC_KEY *d2i_EC_PUBKEY_fp(FILE *fp, EC_KEY **eckey)
 {
-    return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, fp, eckey);
+    return ASN1_d2i_fp(EC_KEY_new_thunk, d2i_EC_PUBKEY_thunk, fp,
+        CHECKED_PPTR_OF(EC_KEY, eckey));
 }
 
 int i2d_EC_PUBKEY_fp(FILE *fp, const EC_KEY *eckey)
 {
-    return ASN1_i2d_fp_of(EC_KEY, i2d_EC_PUBKEY, fp, eckey);
+    return ASN1_i2d_fp(i2d_EC_PUBKEY_thunk, fp, CHECKED_PTR_OF(const EC_KEY, eckey));
 }
 
 EC_KEY *d2i_ECPrivateKey_fp(FILE *fp, EC_KEY **eckey)
 {
-    return ASN1_d2i_fp_of(EC_KEY, EC_KEY_new, d2i_ECPrivateKey, fp, eckey);
+    return ASN1_d2i_fp(EC_KEY_new_thunk, d2i_ECPrivateKey_thunk, fp,
+        CHECKED_PPTR_OF(EC_KEY, eckey));
 }
 
 int i2d_ECPrivateKey_fp(FILE *fp, const EC_KEY *eckey)
 {
-    return ASN1_i2d_fp_of(EC_KEY, i2d_ECPrivateKey, fp, eckey);
+    return ASN1_i2d_fp(i2d_ECPrivateKey_thunk, fp,
+        CHECKED_PTR_OF(const EC_KEY, eckey));
 }
 #endif
 EC_KEY *d2i_EC_PUBKEY_bio(BIO *bp, EC_KEY **eckey)
 {
-    return ASN1_d2i_bio_of(EC_KEY, EC_KEY_new, d2i_EC_PUBKEY, bp, eckey);
+    return ASN1_d2i_bio(EC_KEY_new_thunk, d2i_EC_PUBKEY_thunk, bp,
+        CHECKED_PPTR_OF(EC_KEY, eckey));
 }
 
 int i2d_EC_PUBKEY_bio(BIO *bp, const EC_KEY *ecdsa)
 {
-    return ASN1_i2d_bio_of(EC_KEY, i2d_EC_PUBKEY, bp, ecdsa);
+    return ASN1_i2d_bio(i2d_EC_PUBKEY_thunk, bp,
+        CHECKED_PTR_OF(const EC_KEY, ecdsa));
 }
 
 EC_KEY *d2i_ECPrivateKey_bio(BIO *bp, EC_KEY **eckey)
 {
-    return ASN1_d2i_bio_of(EC_KEY, EC_KEY_new, d2i_ECPrivateKey, bp, eckey);
+    return ASN1_d2i_bio(EC_KEY_new_thunk, d2i_ECPrivateKey_thunk, bp,
+        CHECKED_PPTR_OF(EC_KEY, eckey));
 }
 
 int i2d_ECPrivateKey_bio(BIO *bp, const EC_KEY *eckey)
 {
-    return ASN1_i2d_bio_of(EC_KEY, i2d_ECPrivateKey, bp, eckey);
+    return ASN1_i2d_bio(i2d_ECPrivateKey_thunk, bp,
+        CHECKED_PTR_OF(const EC_KEY, eckey));
 }
 #endif
 
@@ -689,61 +797,57 @@ int PKCS7_ISSUER_AND_SERIAL_digest(PKCS7_ISSUER_AND_SERIAL *data,
 #ifndef OPENSSL_NO_STDIO
 X509_SIG *d2i_PKCS8_fp(FILE *fp, X509_SIG **p8)
 {
-    return ASN1_d2i_fp_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, fp, p8);
+    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_SIG), fp, p8);
 }
 
 int i2d_PKCS8_fp(FILE *fp, const X509_SIG *p8)
 {
-    return ASN1_i2d_fp_of(X509_SIG, i2d_X509_SIG, fp, p8);
+    return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_SIG), fp, p8);
 }
 #endif
 
 X509_SIG *d2i_PKCS8_bio(BIO *bp, X509_SIG **p8)
 {
-    return ASN1_d2i_bio_of(X509_SIG, X509_SIG_new, d2i_X509_SIG, bp, p8);
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_SIG), bp, p8);
 }
 
 int i2d_PKCS8_bio(BIO *bp, const X509_SIG *p8)
 {
-    return ASN1_i2d_bio_of(X509_SIG, i2d_X509_SIG, bp, p8);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_SIG), bp, p8);
 }
 
 #ifndef OPENSSL_NO_STDIO
 X509_PUBKEY *d2i_X509_PUBKEY_fp(FILE *fp, X509_PUBKEY **xpk)
 {
-    return ASN1_d2i_fp_of(X509_PUBKEY, X509_PUBKEY_new, d2i_X509_PUBKEY,
-        fp, xpk);
+    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(X509_PUBKEY), fp, xpk);
 }
 
 int i2d_X509_PUBKEY_fp(FILE *fp, const X509_PUBKEY *xpk)
 {
-    return ASN1_i2d_fp_of(X509_PUBKEY, i2d_X509_PUBKEY, fp, xpk);
+    return ASN1_item_i2d_fp(ASN1_ITEM_rptr(X509_PUBKEY), fp, xpk);
 }
 #endif
 
 X509_PUBKEY *d2i_X509_PUBKEY_bio(BIO *bp, X509_PUBKEY **xpk)
 {
-    return ASN1_d2i_bio_of(X509_PUBKEY, X509_PUBKEY_new, d2i_X509_PUBKEY,
-        bp, xpk);
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(X509_PUBKEY), bp, xpk);
 }
 
 int i2d_X509_PUBKEY_bio(BIO *bp, const X509_PUBKEY *xpk)
 {
-    return ASN1_i2d_bio_of(X509_PUBKEY, i2d_X509_PUBKEY, bp, xpk);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(X509_PUBKEY), bp, xpk);
 }
 
 #ifndef OPENSSL_NO_STDIO
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_fp(FILE *fp,
     PKCS8_PRIV_KEY_INFO **p8inf)
 {
-    return ASN1_d2i_fp_of(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_new,
-        d2i_PKCS8_PRIV_KEY_INFO, fp, p8inf);
+    return ASN1_item_d2i_fp(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), fp, p8inf);
 }
 
 int i2d_PKCS8_PRIV_KEY_INFO_fp(FILE *fp, const PKCS8_PRIV_KEY_INFO *p8inf)
 {
-    return ASN1_i2d_fp_of(PKCS8_PRIV_KEY_INFO, i2d_PKCS8_PRIV_KEY_INFO, fp,
-        p8inf);
+    return ASN1_item_i2d_fp(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), fp, p8inf);
 }
 
 int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key)
@@ -761,12 +865,14 @@ int i2d_PKCS8PrivateKeyInfo_fp(FILE *fp, const EVP_PKEY *key)
 
 int i2d_PrivateKey_fp(FILE *fp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_fp_of(EVP_PKEY, i2d_PrivateKey, fp, pkey);
+    return ASN1_i2d_fp(i2d_PrivateKey_thunk, fp,
+        CHECKED_PTR_OF(const EVP_PKEY, pkey));
 }
 
 EVP_PKEY *d2i_PrivateKey_fp(FILE *fp, EVP_PKEY **a)
 {
-    return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, fp, a);
+    return ASN1_d2i_fp(EVP_PKEY_new_thunk, d2i_AutoPrivateKey_thunk,
+        fp, CHECKED_PPTR_OF(EVP_PKEY, a));
 }
 
 EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
@@ -787,7 +893,8 @@ EVP_PKEY *d2i_PrivateKey_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
 
 int i2d_PUBKEY_fp(FILE *fp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_fp_of(EVP_PKEY, i2d_PUBKEY, fp, pkey);
+    return ASN1_i2d_fp(i2d_PUBKEY_thunk, fp,
+        CHECKED_PTR_OF(const EVP_PKEY, pkey));
 }
 
 EVP_PKEY *d2i_PUBKEY_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
@@ -808,7 +915,8 @@ EVP_PKEY *d2i_PUBKEY_ex_fp(FILE *fp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
 
 EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
 {
-    return ASN1_d2i_fp_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, fp, a);
+    return ASN1_d2i_fp(EVP_PKEY_new_thunk, d2i_PUBKEY_thunk, fp,
+        CHECKED_PPTR_OF(EVP_PKEY, a));
 }
 
 #endif
@@ -816,14 +924,12 @@ EVP_PKEY *d2i_PUBKEY_fp(FILE *fp, EVP_PKEY **a)
 PKCS8_PRIV_KEY_INFO *d2i_PKCS8_PRIV_KEY_INFO_bio(BIO *bp,
     PKCS8_PRIV_KEY_INFO **p8inf)
 {
-    return ASN1_d2i_bio_of(PKCS8_PRIV_KEY_INFO, PKCS8_PRIV_KEY_INFO_new,
-        d2i_PKCS8_PRIV_KEY_INFO, bp, p8inf);
+    return ASN1_item_d2i_bio(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), bp, p8inf);
 }
 
 int i2d_PKCS8_PRIV_KEY_INFO_bio(BIO *bp, const PKCS8_PRIV_KEY_INFO *p8inf)
 {
-    return ASN1_i2d_bio_of(PKCS8_PRIV_KEY_INFO, i2d_PKCS8_PRIV_KEY_INFO, bp,
-        p8inf);
+    return ASN1_item_i2d_bio(ASN1_ITEM_rptr(PKCS8_PRIV_KEY_INFO), bp, p8inf);
 }
 
 int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key)
@@ -841,12 +947,14 @@ int i2d_PKCS8PrivateKeyInfo_bio(BIO *bp, const EVP_PKEY *key)
 
 int i2d_PrivateKey_bio(BIO *bp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_bio_of(EVP_PKEY, i2d_PrivateKey, bp, pkey);
+    return ASN1_i2d_bio(i2d_PrivateKey_thunk, bp,
+        CHECKED_PTR_OF(const EVP_PKEY, pkey));
 }
 
 EVP_PKEY *d2i_PrivateKey_bio(BIO *bp, EVP_PKEY **a)
 {
-    return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_AutoPrivateKey, bp, a);
+    return ASN1_d2i_bio(EVP_PKEY_new_thunk, d2i_AutoPrivateKey_thunk,
+        bp, CHECKED_PPTR_OF(EVP_PKEY, a));
 }
 
 EVP_PKEY *d2i_PrivateKey_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
@@ -870,7 +978,8 @@ err:
 
 int i2d_PUBKEY_bio(BIO *bp, const EVP_PKEY *pkey)
 {
-    return ASN1_i2d_bio_of(EVP_PKEY, i2d_PUBKEY, bp, pkey);
+    return ASN1_i2d_bio(i2d_PUBKEY_thunk, bp,
+        CHECKED_PTR_OF(const EVP_PKEY, pkey));
 }
 
 EVP_PKEY *d2i_PUBKEY_ex_bio(BIO *bp, EVP_PKEY **a, OSSL_LIB_CTX *libctx,
@@ -894,7 +1003,8 @@ err:
 
 EVP_PKEY *d2i_PUBKEY_bio(BIO *bp, EVP_PKEY **a)
 {
-    return ASN1_d2i_bio_of(EVP_PKEY, EVP_PKEY_new, d2i_PUBKEY, bp, a);
+    return ASN1_d2i_bio(EVP_PKEY_new_thunk, d2i_PUBKEY_thunk, bp,
+        CHECKED_PPTR_OF(EVP_PKEY, a));
 }
 
 #ifndef OPENSSL_NO_STDIO

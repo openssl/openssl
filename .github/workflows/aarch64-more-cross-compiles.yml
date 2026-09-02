@@ -14,11 +14,42 @@ on:
   schedule:
     - cron: '05 03 * * *'
   workflow_dispatch:
+    inputs:
+      pr:
+        description: 'Internal: openssl-ci-bot PR number. Leave empty for a normal manual run.'
+        required: false
+        type: string
+      head_sha:
+        description: 'Internal: openssl-ci-bot commit SHA. Leave empty for a normal manual run.'
+        required: false
+        type: string
+      check_run_id:
+        description: 'Internal: openssl-ci-bot check-run ID. Leave empty for a normal manual run.'
+        required: false
+        type: string
+
+# Keep in sync with openssl-ci-bot's run-name parser, and with the Actions statistics
+# collector that attributes CI load by parsing this same string. Both break silently.
+run-name: >-
+  ${{ github.event.inputs.pr && format('ci-dispatch pr={0} head={1} check_run_id={2}', github.event.inputs.pr, github.event.inputs.head_sha, github.event.inputs.check_run_id) || github.workflow }}
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.inputs.pr || github.run_id }}
+  cancel-in-progress: true
 
 permissions:
   contents: read
 
 jobs:
+  # Only a dispatch carries inputs, so this is skipped on every other trigger.
+  validate-dispatch-inputs:
+    if: inputs.pr != '' || inputs.head_sha != '' || inputs.check_run_id != ''
+    uses: ./.github/workflows/validate-dispatch-inputs.yml
+    with:
+      pr: ${{ inputs.pr }}
+      head_sha: ${{ inputs.head_sha }}
+      check_run_id: ${{ inputs.check_run_id }}
+
   cross-compilation-aarch64:
     # pull request title contains 'aarch64'
     # pull request title contains 'arm64'
@@ -26,7 +57,11 @@ jobs:
     # push event commit message contains '[aarch64 ci]'
     # cron job
     # manual dispatch
-    if: contains(github.event.pull_request.title, 'aarch64') || contains(github.event.pull_request.title, 'AArch64') || contains(github.event.pull_request.title, 'arm64') || contains(github.event.pull_request.body, '[aarch64 ci]') || contains(github.event.head_commit.message, '[aarch64 ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch'
+    needs: [validate-dispatch-inputs]
+    if: >-
+      (contains(github.event.pull_request.title, 'aarch64') || contains(github.event.pull_request.title, 'AArch64') || contains(github.event.pull_request.title, 'arm64') || contains(github.event.pull_request.body, '[aarch64 ci]') || contains(github.event.head_commit.message, '[aarch64 ci]') || (github.event_name == 'schedule' && github.repository == 'openssl/openssl') || github.event_name == 'workflow_dispatch') &&
+      !cancelled() &&
+      (needs.validate-dispatch-inputs.result == 'success' || needs.validate-dispatch-inputs.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:
@@ -134,6 +169,7 @@ jobs:
     - uses: actions/checkout@v6
       with:
         persist-credentials: false
+        ref: ${{ github.event.inputs.head_sha || github.sha }}
     - name: checkout fuzz/corpora submodule
       run: git submodule update --init --depth 1 fuzz/corpora
 
@@ -175,14 +211,17 @@ jobs:
       if: matrix.platform.tests != 'none'
       run: QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh info -cpusettings
 
+    # A dispatched run takes the push tier, not the pull_request one below: it exists to run
+    # pre-merge what currently only runs post-merge, and evp-only is the weaker signal. Legs
+    # setting `tests: none` stay build-only on every trigger, by design.
     - name: make all tests
-      if: github.event_name == 'push' && matrix.platform.tests == ''
+      if: (github.event_name == 'push' || inputs.pr != '') && matrix.platform.tests == ''
       run: |
         .github/workflows/make-test \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: (github.event_name == 'push' || inputs.pr != '') && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \

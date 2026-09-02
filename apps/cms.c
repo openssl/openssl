@@ -81,6 +81,7 @@ typedef enum OPTION_choice {
     OPT_SIGN_RECEIPT,
     OPT_RESIGN,
     OPT_VERIFY,
+    OPT_VERIFY_PARTIAL,
     OPT_VERIFY_RETCODE,
     OPT_VERIFY_RECEIPT,
     OPT_CMSOUT,
@@ -282,8 +283,10 @@ const OPTIONS cms_options[] = {
     { "nointern", OPT_NOINTERN, '-',
         "Don't search certificates in message for signer" },
     { "cades", OPT_DUP, '-', "Check signingCertificate (CAdES-BES)" },
+    { "verify_partial", OPT_VERIFY_PARTIAL, '-',
+        "Return success if at least one signature can be verified" },
     { "verify_retcode", OPT_VERIFY_RETCODE, '-',
-        "Exit non-zero on verification failure" },
+        "Exit non-zero on verification failure (depends on -verify_partial etc.)" },
     { "CAfile", OPT_CAFILE, '<', "File in PEM format with trusted CA certs" },
     { "CApath", OPT_CAPATH, '/', "Dir with trusted CA cert files in PEM format" },
     { "CAstore", OPT_CASTORE, ':', "URI of store with trusted CA certs" },
@@ -456,6 +459,9 @@ int cms_main(int argc, char **argv)
         case OPT_VERIFY_RECEIPT:
             operation = SMIME_VERIFY_RECEIPT;
             rctfile = opt_arg();
+            break;
+        case OPT_VERIFY_PARTIAL:
+            flags |= CMS_VERIFY_PARTIAL;
             break;
         case OPT_VERIFY_RETCODE:
             verify_retcode = 1;
@@ -1148,7 +1154,7 @@ int cms_main(int argc, char **argv)
 
             res = EVP_PKEY_CTX_ctrl(pctx, -1, -1,
                 EVP_PKEY_CTRL_CIPHER,
-                EVP_CIPHER_get_nid(cipher), NULL);
+                EVP_CIPHER_get_nid(cipher), cipher);
             if (res <= 0 && res != -2)
                 goto end;
 
@@ -1391,6 +1397,35 @@ int cms_main(int argc, char **argv)
                 ret = verify_err + 32;
             goto end;
         }
+        if ((flags & CMS_VERIFY_PARTIAL) != 0) {
+            int i;
+            STACK_OF(CMS_SignerInfo) *sinfos = CMS_get0_SignerInfos(cms);
+
+            for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+                CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+                X509 *si_signer = CMS_SignerInfo_get0_signer_cert(si);
+                const X509_NAME *si_subject = NULL;
+
+                if (si_signer == NULL) {
+                    BIO_printf(bio_err, "Signer %d: no certificate\n", i);
+                    continue;
+                }
+
+                si_subject = X509_get_subject_name(si_signer);
+                if (si_subject == NULL) {
+                    BIO_printf(bio_err, "Signer %d: no subject name\n", i);
+                    continue;
+                }
+
+                BIO_printf(bio_err, "Signer %d: ", i);
+                X509_NAME_print_ex(bio_err, si_subject, 0, XN_FLAG_ONELINE);
+                BIO_printf(bio_err, "\n  Verification %s (cert: %s, attrs: %s, content: %s)\n",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_RESULT) ? "successful" : "failed",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_CERT) ? "success" : "failure or not verified",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_ATTR) ? "success" : "failure or not verified",
+                    CMS_SignerInfo_get_verification_result(si, CMS_VERIFY_CONTENT) ? "success" : "failure or not verified");
+            }
+        }
         if (signerfile != NULL) {
             STACK_OF(X509) *signers = CMS_get0_signers(cms);
 
@@ -1580,13 +1615,15 @@ static void receipt_request_print(CMS_ContentInfo *cms)
             ERR_print_errors(bio_err);
         } else {
             const char *id;
-            int idlen;
+            size_t idlen;
             CMS_ReceiptRequest_get0_values(rr, &scid, &allorfirst,
                 &rlist, &rto);
             BIO_puts(bio_err, "  Signed Content ID:\n");
-            idlen = ASN1_STRING_length(scid);
+            idlen = ASN1_STRING_get_length(scid);
+            if (idlen > INT_MAX)
+                idlen = INT_MAX;
             id = (const char *)ASN1_STRING_get0_data(scid);
-            BIO_dump_indent(bio_err, id, idlen, 4);
+            BIO_dump_indent(bio_err, id, (int)idlen, 4);
             BIO_puts(bio_err, "  Receipts From");
             if (rlist != NULL) {
                 BIO_puts(bio_err, " List:\n");

@@ -393,9 +393,9 @@ certificate requests.
 This allows several different sections to be used in the same configuration
 file to specify requests for a variety of purposes.
 
-When signing a new CSR or X.509 certificate, if neither the the B<-extensions>
+When signing a new CSR or X.509 certificate, if neither the B<-extensions>
 option nor its alias B<-reqexts> are specified, the name of the extension
-section is taken from from C<req> section of the configuration file.
+section is taken from C<req> section of the configuration file.
 Specifically, from the value of that section's C<req_extensions> variable (for
 a CSR) or its C<x509_extensions> variable (for a certificate).
 If there is no setting for the variable (name/value assignment, see

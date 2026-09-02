@@ -269,12 +269,12 @@ Cipher suites using DSS authentication, i.e. the certificates carry DSS keys.
 Cipher suites using ECDSA authentication, i.e. the certificates carry ECDSA
 keys.
 
-=item B<TLSv1.2>, B<TLSv1.0>, B<SSLv3>
+=item B<TLSv1.2>, B<TLSv1.0>
 
-Lists cipher suites introduced in TLS v1.2, TLS v1.0 or SSL v3.0 respectively.
+Lists cipher suites introduced in TLS v1.2 or TLS v1.0 respectively.
 Note: there are no cipher suites specific to TLS v1.1.
-Since this is only the minimum version, if, for example, TLSv1.0 is negotiated
-then both TLSv1.0 and SSLv3.0 cipher suites are available.
+Since this is only the minimum version, if, for example, TLSv1.2 is negotiated
+then both TLSv1.2 and TLSv1.0 cipher suites are available.
 
 Note: these cipher strings B<do not> change the negotiated version of SSL or
 TLS, they only affect the list of available cipher suites.

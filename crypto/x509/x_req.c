@@ -158,7 +158,7 @@ X509_REQ *X509_REQ_new_ex(OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_REQ *req = NULL;
 
-    req = (X509_REQ *)ASN1_item_new((X509_REQ_it()));
+    req = (X509_REQ *)ASN1_item_new(ASN1_ITEM_rptr(X509_REQ));
     if (!ossl_x509_req_set0_libctx(req, libctx, propq)) {
         X509_REQ_free(req);
         req = NULL;

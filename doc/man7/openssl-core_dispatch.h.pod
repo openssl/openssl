@@ -24,7 +24,7 @@ are named as follows:
 
 These macros have the form C<OSSL_OP_I<opname>>.
 
-=item dipatch numbers
+=item dispatch numbers
 
 These macros have the form C<OSSL_FUNC_I<opname>_I<funcname>>, where
 C<I<opname>> is the same as in the macro for the operation this

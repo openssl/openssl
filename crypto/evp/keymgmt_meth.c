@@ -19,12 +19,27 @@
 
 static void evp_keymgmt_free(void *data)
 {
-    EVP_KEYMGMT_free(data);
+    EVP_KEYMGMT *keymgmt = (EVP_KEYMGMT *)data;
+    int ref = 0;
+
+    if (keymgmt == NULL)
+        return;
+
+    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
+    if (ref > 0)
+        return;
+    OPENSSL_free(keymgmt->type_name);
+    ossl_provider_free(keymgmt->prov);
+    CRYPTO_FREE_REF(&keymgmt->refcnt);
+    OPENSSL_free(keymgmt);
 }
 
 static int evp_keymgmt_up_ref(void *data)
 {
-    return EVP_KEYMGMT_up_ref(data);
+    EVP_KEYMGMT *keymgmt = (EVP_KEYMGMT *)data;
+    int ref = 0;
+
+    return CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
 }
 
 static void *keymgmt_new(void)
@@ -34,7 +49,7 @@ static void *keymgmt_new(void)
     if ((keymgmt = OPENSSL_zalloc(sizeof(*keymgmt))) == NULL)
         return NULL;
     if (!CRYPTO_NEW_REF(&keymgmt->refcnt, 1)) {
-        EVP_KEYMGMT_free(keymgmt);
+        OPENSSL_free(keymgmt);
         return NULL;
     }
     return keymgmt;
@@ -62,7 +77,7 @@ static int get_legacy_alg_type_from_keymgmt(const EVP_KEYMGMT *keymgmt)
 
 static void *keymgmt_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_KEYMGMT *keymgmt = NULL;
@@ -76,8 +91,10 @@ static void *keymgmt_from_algorithm(int name_id,
         return NULL;
 
     keymgmt->name_id = name_id;
+    keymgmt->no_store = no_store;
+
     if ((keymgmt->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
-        EVP_KEYMGMT_free(keymgmt);
+        evp_keymgmt_free(keymgmt);
         return NULL;
     }
     keymgmt->description = algodef->algorithm_description;
@@ -253,13 +270,13 @@ static void *keymgmt_from_algorithm(int name_id,
         || (keymgmt->gen != NULL
             && (keymgmt->gen_init == NULL
                 || keymgmt->gen_cleanup == NULL))) {
-        EVP_KEYMGMT_free(keymgmt);
+        evp_keymgmt_free(keymgmt);
         ERR_raise(ERR_LIB_EVP, EVP_R_INVALID_PROVIDER_FUNCTIONS);
         return NULL;
     }
     keymgmt->prov = prov;
     if (prov != NULL && !ossl_provider_up_ref(prov)) {
-        EVP_KEYMGMT_free(keymgmt);
+        evp_keymgmt_free(keymgmt);
         ERR_raise(ERR_LIB_EVP, EVP_R_INITIALIZATION_ERROR);
         return NULL;
     }
@@ -293,26 +310,23 @@ EVP_KEYMGMT *EVP_KEYMGMT_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
 
 int EVP_KEYMGMT_up_ref(EVP_KEYMGMT *keymgmt)
 {
-    int ref = 0;
-
-    CRYPTO_UP_REF(&keymgmt->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_keymgmt_up_ref(keymgmt);
+#else
+    if (keymgmt->no_store != 0)
+        return evp_keymgmt_up_ref(keymgmt);
     return 1;
+#endif
 }
 
 void EVP_KEYMGMT_free(EVP_KEYMGMT *keymgmt)
 {
-    int ref = 0;
-
-    if (keymgmt == NULL)
-        return;
-
-    CRYPTO_DOWN_REF(&keymgmt->refcnt, &ref);
-    if (ref > 0)
-        return;
-    OPENSSL_free(keymgmt->type_name);
-    ossl_provider_free(keymgmt->prov);
-    CRYPTO_FREE_REF(&keymgmt->refcnt);
-    OPENSSL_free(keymgmt);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_keymgmt_free(keymgmt);
+#else
+    if (keymgmt != NULL && (keymgmt->no_store != 0))
+        evp_keymgmt_free(keymgmt);
+#endif
 }
 
 const OSSL_PROVIDER *EVP_KEYMGMT_get0_provider(const EVP_KEYMGMT *keymgmt)

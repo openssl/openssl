@@ -63,10 +63,6 @@ static int aes_xts_check_keys_differ(const unsigned char *key, size_t bytes,
     return 1;
 }
 
-#ifdef AES_XTS_S390X
-#include "cipher_aes_xts_s390x.inc"
-#endif
-
 /*-
  * Provider dispatch functions
  */
@@ -96,6 +92,13 @@ static int aes_xts_init(void *vctx, const unsigned char *key, size_t keylen,
         if (!ctx->hw->init(ctx, key, keylen))
             return 0;
     }
+#ifdef AES_XTS_S390X
+    else if (xctx->plat.s390x.fc && ctx->iv_set) {
+        /* special handle iv-only update */
+        if (!ctx->hw->init(ctx, NULL, 0))
+            return 0;
+    }
+#endif
     return aes_xts_set_ctx_params(ctx, params);
 }
 
@@ -103,10 +106,6 @@ static int aes_xts_einit(void *vctx, const unsigned char *key, size_t keylen,
     const unsigned char *iv, size_t ivlen,
     const OSSL_PARAM params[])
 {
-#ifdef AES_XTS_S390X
-    if (s390x_aes_xts_einit(vctx, key, keylen, iv, ivlen, params) == 1)
-        return 1;
-#endif
     return aes_xts_init(vctx, key, keylen, iv, ivlen, params, 1);
 }
 
@@ -114,10 +113,6 @@ static int aes_xts_dinit(void *vctx, const unsigned char *key, size_t keylen,
     const unsigned char *iv, size_t ivlen,
     const OSSL_PARAM params[])
 {
-#ifdef AES_XTS_S390X
-    if (s390x_aes_xts_dinit(vctx, key, keylen, iv, ivlen, params) == 1)
-        return 1;
-#endif
     return aes_xts_init(vctx, key, keylen, iv, ivlen, params, 0);
 }
 
@@ -152,11 +147,6 @@ static void *aes_xts_dupctx(void *vctx)
     if (!ossl_prov_is_running())
         return NULL;
 
-#ifdef AES_XTS_S390X
-    if (in->plat.s390x.fc)
-        return s390x_aes_xts_dupctx(vctx);
-#endif
-
     if (in->xts.key1 != NULL) {
         if (in->xts.key1 != &in->ks1)
             return NULL;
@@ -177,19 +167,23 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
 {
     PROV_AES_XTS_CTX *ctx = (PROV_AES_XTS_CTX *)vctx;
 
-#ifdef AES_XTS_S390X
-    if (ctx->plat.s390x.fc)
-        return s390x_aes_xts_cipher(vctx, out, outl, outsize, in, inl);
-#endif
-
     if (!ossl_prov_is_running()
-        || ctx->xts.key1 == NULL
-        || ctx->xts.key2 == NULL
-        || !ctx->base.iv_set
-        || out == NULL
+        || inl < AES_BLOCK_SIZE
         || in == NULL
-        || inl < AES_BLOCK_SIZE)
+        || out == NULL)
         return 0;
+
+#ifdef AES_XTS_S390X
+    if (ctx->plat.s390x.fc) {
+        if (!ctx->plat.s390x.iv_set || !ctx->plat.s390x.key_set)
+            return 0;
+    } else
+#endif
+    {
+        if (ctx->xts.key1 == NULL || ctx->xts.key2 == NULL
+            || !ctx->base.iv_set)
+            return 0;
+    }
 
     /*
      * Impose a limit of 2^20 blocks per data unit as specified by
@@ -201,6 +195,11 @@ static int aes_xts_cipher(void *vctx, unsigned char *out, size_t *outl,
         ERR_raise(ERR_LIB_PROV, PROV_R_XTS_DATA_UNIT_IS_TOO_LARGE);
         return 0;
     }
+
+#ifdef AES_XTS_S390X
+    if (ctx->plat.s390x.fc)
+        return s390x_aes_xts_cipher_stream(ctx, out, outl, in, inl);
+#endif
 
     if (ctx->stream != NULL)
         (*ctx->stream)(in, out, inl, ctx->xts.key1, ctx->xts.key2, ctx->base.iv);

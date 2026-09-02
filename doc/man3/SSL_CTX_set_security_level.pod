@@ -78,7 +78,7 @@ DSA and DH keys shorter than 1024 bits and ECC keys shorter than 160 bits
 are prohibited. Any cipher suite using MD5 for the MAC is also prohibited. Any
 cipher suites using CCM with a 64 bit authentication tag are prohibited. Note
 that signatures using SHA1 and MD5 are also forbidden at this level as they
-have less than 80 security bits. Additionally, SSLv3, TLS 1.0, TLS 1.1 and
+have less than 80 security bits. Additionally, TLS 1.0, TLS 1.1 and
 DTLS 1.0 are all disabled at this level.
 
 =item B<Level 2>

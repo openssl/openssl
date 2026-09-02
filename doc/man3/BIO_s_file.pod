@@ -14,8 +14,8 @@ BIO_rw_filename - FILE bio
  BIO *BIO_new_file(const char *filename, const char *mode);
  BIO *BIO_new_fp(FILE *stream, int flags);
 
- BIO_set_fp(BIO *b, FILE *fp, int flags);
- BIO_get_fp(BIO *b, FILE **fpp);
+ long BIO_set_fp(BIO *b, FILE *fp, int flags);
+ long BIO_get_fp(BIO *b, FILE **fpp);
 
  int BIO_read_filename(BIO *b, char *name);
  int BIO_write_filename(BIO *b, char *name);
@@ -87,8 +87,7 @@ BIO_s_file() returns the file BIO method.
 BIO_new_file() and BIO_new_fp() return a file BIO or NULL if an error
 occurred.
 
-BIO_set_fp() and BIO_get_fp() return 1 for success or <=0 for failure
-(although the current implementation never return 0).
+BIO_set_fp() and BIO_get_fp() return 1 for success or <=0 for failure.
 
 BIO_seek() returns 0 for success or negative values for failure.
 

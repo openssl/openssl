@@ -194,6 +194,62 @@ err:
     return ret;
 }
 
+/* Load the self-signed certificate passed on the command line. */
+static X509 *load_arg_cert(void)
+{
+    const char *certfile;
+    BIO *bio;
+    X509 *x509;
+
+    if ((certfile = test_get_argument(0)) == NULL
+        || (bio = BIO_new_file(certfile, "r")) == NULL)
+        return NULL;
+    x509 = PEM_read_bio_X509(bio, NULL, NULL, NULL);
+    BIO_free(bio);
+    return x509;
+}
+
+/* Trigger memory failures during certificate self-signature verification. */
+static int test_x509_asn1_item_verify_mfail(void)
+{
+    X509 *x509;
+    EVP_PKEY *pkey;
+    const ASN1_BIT_STRING *sig = NULL;
+    const X509_ALGOR *alg = NULL;
+
+    if (!TEST_ptr(x509 = load_arg_cert())
+        || !TEST_ptr(pkey = X509_get0_pubkey(x509))) {
+        X509_free(x509);
+        return -1;
+    }
+    X509_get0_signature(&sig, &alg, x509);
+
+    MFAIL_start();
+    (void)ASN1_item_verify(ASN1_ITEM_rptr(X509_CINF), alg, sig,
+        &x509->cert_info, pkey);
+    MFAIL_end();
+
+    X509_free(x509);
+    return 1;
+}
+
+/* Trigger memory failures while hashing the issuer name. */
+static int test_x509_issuer_name_hash_mfail(void)
+{
+    X509 *x509;
+    int ret = -1;
+
+    if (!TEST_ptr(x509 = load_arg_cert()))
+        return -1;
+
+    MFAIL_start();
+    ret = X509_issuer_name_hash(x509) != 0 ? 1 : 0;
+    MFAIL_end();
+
+    X509_free(x509);
+    return ret;
+}
+
 static int test_x509_delete_last_extension(void)
 {
     int ret = 0;
@@ -550,6 +606,101 @@ err:
     return ret;
 }
 
+/*
+ * nameConstraints extnValue contents with one empty directoryName subtree.
+ * Empty X509_NAME has canon_enc == NULL / canon_enclen == 0.
+ *
+ *   SEQUENCE { [0|1] { SEQUENCE { [4] { SEQUENCE {} } } } }
+ */
+static const unsigned char nc_excluded_empty_dirname[] = {
+    0x30, 0x08, 0xa1, 0x06, 0x30, 0x04, 0xa4, 0x02, 0x30, 0x00
+};
+static const unsigned char nc_permitted_empty_dirname[] = {
+    0x30, 0x08, 0xa0, 0x06, 0x30, 0x04, 0xa4, 0x02, 0x30, 0x00
+};
+
+/* Decode a raw nameConstraints extnValue into a NAME_CONSTRAINTS object. */
+static NAME_CONSTRAINTS *nc_empty_dirname_from_der(const unsigned char *der,
+    unsigned int der_len)
+{
+    NAME_CONSTRAINTS *nc = NULL;
+    ASN1_OCTET_STRING *os = NULL;
+    X509_EXTENSION *ext = NULL;
+
+    os = ASN1_OCTET_STRING_new();
+    if (!TEST_ptr(os)
+        || !TEST_true(ASN1_OCTET_STRING_set(os, der, der_len)))
+        goto end;
+    ext = X509_EXTENSION_create_by_NID(NULL, NID_name_constraints,
+        1 /* critical */, os);
+    if (!TEST_ptr(ext))
+        goto end;
+    nc = X509V3_EXT_d2i(ext);
+
+end:
+    X509_EXTENSION_free(ext);
+    ASN1_OCTET_STRING_free(os);
+    return nc;
+}
+
+/* Build a minimal certificate with a non-empty subject DN. */
+static X509 *nc_empty_dirname_subject(const char *cn)
+{
+    X509 *x = NULL;
+    X509_NAME *nm = NULL;
+
+    if (!TEST_ptr(x = X509_new()))
+        goto err;
+    nm = X509_NAME_new();
+    if (!TEST_ptr(nm)
+        || !TEST_true(X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
+            (const unsigned char *)cn, -1, -1, 0))
+        || !TEST_true(X509_set_subject_name(x, nm)))
+        goto err;
+    X509_NAME_free(nm);
+    return x;
+
+err:
+    X509_NAME_free(nm);
+    X509_free(x);
+    return NULL;
+}
+
+/* Check an empty directoryName constraint against a non-empty subject DN. */
+static int nc_check_empty_dirname(const unsigned char *der, unsigned int der_len,
+    int expected)
+{
+    int ok = 0;
+    NAME_CONSTRAINTS *nc = NULL;
+    X509 *x = NULL;
+
+    if (!TEST_ptr(nc = nc_empty_dirname_from_der(der, der_len))
+        || !TEST_ptr(x = nc_empty_dirname_subject("leaf.example"))
+        || !TEST_int_eq(NAME_CONSTRAINTS_check(x, nc), expected))
+        goto end;
+
+    ok = 1;
+
+end:
+    X509_free(x);
+    NAME_CONSTRAINTS_free(nc);
+    return ok;
+}
+
+/* Empty excluded directoryName matches the subject DN: excluded violation. */
+static int test_nc_empty_dirname_excluded(void)
+{
+    return nc_check_empty_dirname(nc_excluded_empty_dirname,
+        sizeof(nc_excluded_empty_dirname), X509_V_ERR_EXCLUDED_VIOLATION);
+}
+
+/* Empty permitted directoryName matches the subject DN: permitted. */
+static int test_nc_empty_dirname_permitted(void)
+{
+    return nc_check_empty_dirname(nc_permitted_empty_dirname,
+        sizeof(nc_permitted_empty_dirname), X509_V_OK);
+}
+
 OPT_TEST_DECLARE_USAGE("<pss-self-signed-cert.pem>\n")
 
 int setup_tests(void)
@@ -584,6 +735,8 @@ int setup_tests(void)
     ADD_TEST(test_x509_tbs_cache);
     ADD_TEST(test_x509_crl_tbs_cache);
     ADD_TEST(test_asn1_item_verify);
+    ADD_MFAIL_NO_CHECK_TEST(test_x509_asn1_item_verify_mfail);
+    ADD_MFAIL_TEST(test_x509_issuer_name_hash_mfail);
     ADD_TEST(test_x509_delete_last_extension);
     ADD_TEST(test_x509_crl_delete_last_extension);
     ADD_TEST(test_x509_revoked_delete_last_extension);
@@ -591,6 +744,8 @@ int setup_tests(void)
     ADD_TEST(test_drop_empty_csr_keyids);
     ADD_TEST(test_rsaesoaep_spki);
     ADD_TEST(test_x509_verify_with_new);
+    ADD_TEST(test_nc_empty_dirname_excluded);
+    ADD_TEST(test_nc_empty_dirname_permitted);
     return 1;
 }
 

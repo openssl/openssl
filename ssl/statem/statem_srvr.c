@@ -91,6 +91,10 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
+            /*
+             * RFC 9147 Section 5.6 states DTLS1.3 should omit the
+             * End of Early Data Message
+             */
         } else if (s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
             && !SSL_NO_EOED(s)) {
             if (mt == SSL3_MT_END_OF_EARLY_DATA) {
@@ -98,6 +102,11 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
                 return 1;
             }
             break;
+        } else if (SSL_CONNECTION_IS_DTLS13(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED) {
+            /*
+             * Let DTLS1.3 fallthrough to the Finished processing below
+             */
+            s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
         }
         /* Fall through */
 
@@ -145,6 +154,15 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
         }
         break;
 
+    case TLS_ST_SR_ACK:
+    case TLS_ST_SW_KEY_UPDATE:
+    case TLS_ST_SW_SESSION_TICKET:
+        if (mt == DTLS13_MT_ACK) {
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
+        break;
+
     case TLS_ST_OK:
         /*
          * Its never ok to start processing handshake messages in the middle of
@@ -171,6 +189,11 @@ static int ossl_statem_server13_read_transition(SSL_CONNECTION *s, int mt)
             st->hand_state = TLS_ST_SR_KEY_UPDATE;
             return 1;
         }
+
+        if (mt == DTLS13_MT_ACK) {
+            st->hand_state = TLS_ST_SR_ACK;
+            return 1;
+        }
         break;
     }
 
@@ -191,7 +214,7 @@ int ossl_statem_server_read_transition(SSL_CONNECTION *s, int mt)
 {
     OSSL_STATEM *st = &s->statem;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         if (!ossl_statem_server13_read_transition(s, mt))
             goto err;
         return 1;
@@ -392,7 +415,7 @@ int send_certificate_request(SSL_CONNECTION *s)
          * don't request if post-handshake-only unless doing
          * post-handshake in TLSv1.3:
          */
-        && (!SSL_CONNECTION_IS_TLS13(s)
+        && (!SSL_CONNECTION_IS_VERSION13(s)
             || !(s->verify_mode & SSL_VERIFY_POST_HANDSHAKE)
             || s->post_handshake_auth == SSL_PHA_REQUEST_PENDING)
         /*
@@ -581,6 +604,7 @@ static int do_compressed_cert(SSL_CONNECTION *sc)
  */
 static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
 {
+    OSSL_HANDSHAKE_STATE next_state;
     OSSL_STATEM *st = &s->statem;
 
     /*
@@ -615,7 +639,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SRVR_HELLO:
-        if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+        if (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
             && s->hello_retry_request != SSL_HRR_COMPLETE)
             st->hand_state = TLS_ST_SW_CHANGE;
         else if (s->hello_retry_request == SSL_HRR_PENDING)
@@ -685,7 +709,13 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
              * If we're not going to renew the ticket then we just finish the
              * handshake at this point.
              */
-            st->hand_state = TLS_ST_OK;
+            if (SSL_CONNECTION_IS_DTLS13(s)) {
+                st->deferred_ack_state = TLS_ST_OK;
+                st->hand_state = TLS_ST_SW_ACK;
+            } else {
+                st->hand_state = TLS_ST_OK;
+            }
+
             return WRITE_TRAN_CONTINUE;
         }
         /*
@@ -701,7 +731,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * parameters such as new_session_count = 0 or resumption_count = 0, is
          * effectively signaling no interest in session tickets or resumption.
          *
-         * RFC 8446 section 4.2.9: Servers MUST NOT select a key exchange mode
+         * RFC 9846 section 4.3.9: Servers MUST NOT select a key exchange mode
          * that is not listed by the client. This extension also restricts the
          * modes for use with PSK resumption. Servers SHOULD NOT send
          * NewSessionTicket with tickets that are not compatible with the
@@ -712,22 +742,42 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * session tickets or resumption (e.g. new_session_count = 0 or
          * resumption_count = 0), this implementation does not currently
          * interpret or enforce those parameters.
+         *
+         * Also skip issuance when SSL_VERIFY_PEER is set with no sid_ctx
+         * configured: any ticket minted here would be rejected by
+         * ssl_get_prev_session() in that configuration.
          */
-        if (((s->options & SSL_OP_NO_TICKET) != 0
+        if (s->num_tickets <= s->sent_tickets
+            || ((s->options & SSL_OP_NO_TICKET) != 0
                 && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
-            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE) {
-            st->hand_state = TLS_ST_OK;
-        } else if (s->num_tickets > s->sent_tickets) {
-            st->hand_state = TLS_ST_SW_SESSION_TICKET;
+            || s->ext.psk_kex_mode == TLSEXT_KEX_MODE_FLAG_NONE
+            || ((s->verify_mode & SSL_VERIFY_PEER) != 0 && s->sid_ctx_length == 0))
+            next_state = TLS_ST_OK;
+        else
+            next_state = TLS_ST_SW_SESSION_TICKET;
+
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            st->deferred_ack_state = next_state;
+            st->hand_state = TLS_ST_SW_ACK;
         } else {
-            st->hand_state = TLS_ST_OK;
+            st->hand_state = next_state;
         }
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_KEY_UPDATE:
+        if (SSL_CONNECTION_IS_DTLS13(s)) {
+            st->deferred_ack_state = TLS_ST_OK;
+            st->hand_state = TLS_ST_SW_ACK;
+            return WRITE_TRAN_CONTINUE;
+        }
+        /* Fall through */
     case TLS_ST_SW_KEY_UPDATE:
-        st->hand_state = TLS_ST_OK;
+        if (SSL_CONNECTION_IS_DTLS13(s))
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        else
+            st->hand_state = TLS_ST_OK;
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
@@ -735,12 +785,25 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * Following an initial handshake we send the number of tickets we have
          * been configured for.
          */
-        if (!SSL_IS_FIRST_HANDSHAKE(s) && s->ext.extra_tickets_expected > 0) {
-            return WRITE_TRAN_CONTINUE;
-        } else if (s->hit || s->num_tickets <= s->sent_tickets) {
+        if ((SSL_IS_FIRST_HANDSHAKE(s) || s->ext.extra_tickets_expected <= 0)
+            && (s->hit || s->num_tickets <= s->sent_tickets)) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
         }
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SR_ACK:
+        if (SSL_CONNECTION_IS_DTLS13(s)
+            && dtls_any_sent_messages_are_missing_acknowledge(s)) {
+            /* We wait for ACK */
+            return WRITE_TRAN_FINISHED;
+        }
+        st->hand_state = TLS_ST_OK;
+        return WRITE_TRAN_CONTINUE;
+
+    case TLS_ST_SW_ACK:
+        st->hand_state = st->deferred_ack_state;
+
         return WRITE_TRAN_CONTINUE;
     }
 }
@@ -758,7 +821,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
      * to negotiate yet, so we don't take this branch until later
      */
 
-    if (SSL_CONNECTION_IS_TLS13(s))
+    if (SSL_CONNECTION_IS_VERSION13(s))
         return ossl_statem_server13_write_transition(s);
 
     switch (st->hand_state) {
@@ -790,7 +853,7 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
         return WRITE_TRAN_CONTINUE;
 
     case TLS_ST_SR_CLNT_HELLO:
-        if (SSL_CONNECTION_IS_DTLS(s) && !s->d1->cookie_verified
+        if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s) && !s->d1->cookie_verified
             && (SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)) {
             st->hand_state = DTLS_ST_SW_HELLO_VERIFY_REQUEST;
         } else if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
@@ -884,6 +947,70 @@ WRITE_TRAN ossl_statem_server_write_transition(SSL_CONNECTION *s)
     }
 }
 
+static int ossl_statem_dtls_server13_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_SW_ACK:
+        /* Fall through */
+
+    case TLS_ST_OK:
+        return 0;
+    }
+
+    return 1;
+}
+
+int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s)
+{
+    OSSL_STATEM *st = &s->statem;
+
+    if (SSL_CONNECTION_IS_DTLS13(s))
+        return ossl_statem_dtls_server13_use_timer(s);
+
+    switch (st->hand_state) {
+    default:
+        break;
+
+    case TLS_ST_SW_SESSION_TICKET:
+        /*
+         * We're into the last flight. We don't retransmit the last flight
+         * unless we need to, so we don't use the timer
+         */
+        st->use_timer = 0;
+        break;
+
+    case TLS_ST_SW_CHANGE:
+        /*
+         * We're into the last flight. We don't retransmit the last flight
+         * unless we need to, so we don't use the timer. This might have
+         * already been set to 0 if we sent a NewSessionTicket message,
+         * but we'll set it again here in case we didn't.
+         */
+        st->use_timer = 0;
+        break;
+
+    case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
+        /* We don't buffer this message so don't use the timer */
+        st->use_timer = 0;
+        break;
+
+    case TLS_ST_SW_SRVR_HELLO:
+        /*
+         * Messages we write from now on should be buffered and
+         * retransmitted if necessary, so we need to use the timer now
+         */
+        st->use_timer = 1;
+        break;
+    }
+
+    return st->use_timer;
+}
+
 /*
  * Perform any pre work that needs to be done prior to sending a message from
  * the server to the client.
@@ -899,28 +1026,12 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_HELLO_REQ:
-        s->shutdown = 0;
-        if (SSL_CONNECTION_IS_DTLS(s))
-            dtls1_clear_sent_buffer(s);
-        break;
-
+        /* fall-through */
     case DTLS_ST_SW_HELLO_VERIFY_REQUEST:
         s->shutdown = 0;
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            dtls1_clear_sent_buffer(s);
-            /* We don't buffer this message so don't use the timer */
-            st->use_timer = 0;
-        }
-        break;
+        if (SSL_CONNECTION_IS_DTLS(s))
+            dtls1_clear_sent_buffer(s, 0);
 
-    case TLS_ST_SW_SRVR_HELLO:
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * Messages we write from now on should be buffered and
-             * retransmitted if necessary, so we need to use the timer now
-             */
-            st->use_timer = 1;
-        }
         break;
 
     case TLS_ST_SW_SRVR_DONE:
@@ -933,7 +1044,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_SW_SESSION_TICKET:
-        if (SSL_CONNECTION_IS_TLS13(s) && s->sent_tickets == 0
+        if (SSL_CONNECTION_IS_VERSION13(s) && s->sent_tickets == 0
             && s->ext.extra_tickets_expected == 0) {
             /*
              * Actually this is the end of the handshake, but we're going
@@ -944,17 +1055,10 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
              */
             return tls_finish_handshake(s, wst, 0, 0);
         }
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * We're into the last flight. We don't retransmit the last flight
-             * unless we need to, so we don't use the timer
-             */
-            st->use_timer = 0;
-        }
         break;
 
     case TLS_ST_SW_CHANGE:
-        if (SSL_CONNECTION_IS_TLS13(s))
+        if (SSL_CONNECTION_IS_VERSION13(s))
             break;
         /* Writes to s->session are only safe for initial handshakes */
         if (s->session->cipher == NULL) {
@@ -967,15 +1071,6 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
             /* SSLfatal() already called */
             return WORK_ERROR;
         }
-        if (SSL_CONNECTION_IS_DTLS(s)) {
-            /*
-             * We're into the last flight. We don't retransmit the last flight
-             * unless we need to, so we don't use the timer. This might have
-             * already been set to 0 if we sent a NewSessionTicket message,
-             * but we'll set it again here in case we didn't.
-             */
-            st->use_timer = 0;
-        }
         return WORK_FINISHED_CONTINUE;
 
     case TLS_ST_EARLY_DATA:
@@ -987,7 +1082,7 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
          * In QUIC with 0-RTT we just carry on when otherwise we would stop
          * to allow the server to read early data
          */
-        if (SSL_NO_EOED(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
+        if (SSL_IS_QUIC_HANDSHAKE(s) && s->ext.early_data == SSL_EARLY_DATA_ACCEPTED
             && s->early_data_state != SSL_EARLY_DATA_FINISHED_READING) {
             s->early_data_state = SSL_EARLY_DATA_FINISHED_READING;
             if (!ssl->method->ssl3_enc->change_cipher_state(s, SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
@@ -1067,15 +1162,20 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
         break;
 
     case TLS_ST_SW_SRVR_HELLO:
-        if (SSL_CONNECTION_IS_TLS13(s)
+        if (SSL_CONNECTION_IS_VERSION13(s)
             && s->hello_retry_request == SSL_HRR_PENDING) {
-            if ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) == 0
+            if (!SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                 && statem_flush(s) != 1)
                 return WORK_MORE_A;
             break;
         }
 #ifndef OPENSSL_NO_SCTP
-        if (SSL_CONNECTION_IS_DTLS(s) && s->hit) {
+        /*
+         * Before exporting the SCTP auth key we check if DTLSv1.3 has been negotiated
+         * which is not supported.
+         * Refer to draft-tuexen-tsvwg-rfc6083-bis-04 for more info.
+         */
+        if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s) && s->hit) {
             unsigned char sctpauthkey[64];
             char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
             size_t labellen;
@@ -1105,8 +1205,8 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 sizeof(sctpauthkey), sctpauthkey);
         }
 #endif
-        if (!SSL_CONNECTION_IS_TLS13(s)
-            || ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0
+        if (!SSL_CONNECTION_IS_VERSION13(s)
+            || (SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)
                 && s->hello_retry_request != SSL_HRR_COMPLETE))
             break;
         /* Fall through */
@@ -1118,7 +1218,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             break;
         }
 
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
             if (!ssl->method->ssl3_enc->setup_key_block(s)
                 || !tls13_store_handshake_traffic_hash(s)
                 || !ssl->method->ssl3_enc->change_cipher_state(s,
@@ -1127,11 +1227,14 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             }
 
-            if (s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
+            if (!SSL_CONNECTION_IS_DTLS13(s)
+                && s->ext.early_data != SSL_EARLY_DATA_ACCEPTED
                 && !ssl->method->ssl3_enc->change_cipher_state(s,
                     SSL3_CC_HANDSHAKE | SSL3_CHANGE_CIPHER_SERVER_READ)) {
                 /* SSLfatal() already called */
                 return WORK_ERROR;
+            } else {
+                s->dtls13_process_hello = 1;
             }
             /*
              * We don't yet know whether the next record we are going to receive
@@ -1178,8 +1281,8 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 0, NULL);
         }
 #endif
-        if (SSL_CONNECTION_IS_TLS13(s)) {
-            /* TLS 1.3 gets the secret size from the handshake md */
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
+            /* (D)TLS 1.3 gets the secret size from the handshake md */
             size_t dummy;
             if (!ssl->method->ssl3_enc->generate_master_secret(s,
                     s->master_secret, s->handshake_secret, 0,
@@ -1197,7 +1300,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             if (statem_flush(s) != 1)
                 return WORK_MORE_A;
         } else {
-            if (!SSL_CONNECTION_IS_TLS13(s)
+            if (!SSL_CONNECTION_IS_VERSION13(s)
                 || (s->options & SSL_OP_NO_TX_CERTIFICATE_COMPRESSION) != 0)
                 s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
         }
@@ -1205,7 +1308,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_SW_ENCRYPTED_EXTENSIONS:
         if (!s->hit && !send_certificate_request(s)) {
-            if (!SSL_CONNECTION_IS_TLS13(s)
+            if (!SSL_CONNECTION_IS_VERSION13(s)
                 || (s->options & SSL_OP_NO_TX_CERTIFICATE_COMPRESSION) != 0)
                 s->ext.compress_certificate_from_peer[0] = TLSEXT_comp_cert_none;
         }
@@ -1222,7 +1325,7 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
 
     case TLS_ST_SW_SESSION_TICKET:
         clear_sys_error();
-        if (SSL_CONNECTION_IS_TLS13(s) && statem_flush(s) != 1) {
+        if (SSL_CONNECTION_IS_VERSION13(s) && statem_flush(s) != 1) {
             if (SSL_get_error(ssl, 0) == SSL_ERROR_SYSCALL
                 && conn_is_closed()) {
                 /*
@@ -1239,6 +1342,11 @@ WORK_STATE ossl_statem_server_post_work(SSL_CONNECTION *s, WORK_STATE wst)
             return WORK_MORE_A;
         }
         ERR_clear_last_mark();
+        break;
+
+    case TLS_ST_SW_ACK:
+        if (statem_flush(s) != 1)
+            return WORK_MORE_A;
         break;
     }
 
@@ -1349,6 +1457,11 @@ int ossl_statem_server_construct_message(SSL_CONNECTION *s,
         *confunc = tls_construct_key_update;
         *mt = SSL3_MT_KEY_UPDATE;
         break;
+
+    case TLS_ST_SW_ACK:
+        *confunc = dtls_construct_ack;
+        *mt = DTLS13_MT_ACK;
+        break;
     }
 
     return 1;
@@ -1416,6 +1529,9 @@ size_t ossl_statem_server_max_message_size(SSL_CONNECTION *s)
 
     case TLS_ST_SR_KEY_UPDATE:
         return KEY_UPDATE_MAX_LENGTH;
+
+    case TLS_ST_SR_ACK:
+        return ACK_MAX_LENGTH;
     }
 }
 
@@ -1466,6 +1582,9 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
 
     case TLS_ST_SR_KEY_UPDATE:
         return tls_process_key_update(s, pkt);
+
+    case TLS_ST_SR_ACK:
+        return dtls_process_ack(s, pkt);
     }
 }
 
@@ -1486,6 +1605,12 @@ WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
 
     case TLS_ST_SR_CLNT_HELLO:
         return tls_post_process_client_hello(s, wst);
+
+    case TLS_ST_SR_CERT:
+#ifndef OPENSSL_NO_COMP_ALG
+    case TLS_ST_SR_COMP_CERT:
+#endif
+        return tls_post_process_client_certificate(s, wst);
 
     case TLS_ST_SR_KEY_EXCH:
         return tls_post_process_client_key_exchange(s, wst);
@@ -1539,14 +1664,25 @@ int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
 CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
-    unsigned int cookie_leni;
+    unsigned int cookie_leni = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
+    SSL *ussl = SSL_CONNECTION_GET_USER_SSL(s);
+    int cb_ret = 0;
 
-    if (sctx->app_gen_cookie_cb == NULL
-        || sctx->app_gen_cookie_cb(SSL_CONNECTION_GET_USER_SSL(s), s->d1->cookie,
-               &cookie_leni)
-            == 0
-        || cookie_leni > sizeof(s->d1->cookie)) {
+#if !defined(OPENSSL_NO_DTLS)
+    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
+        ? (DTLS_LISTENER *)s->d1->listener
+        : NULL;
+
+    if (dl != NULL && dl->require_hvr_cookie && sctx->app_gen_cookie_cb == NULL) {
+        cb_ret = ossl_dtls_listener_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
+    } else
+#endif
+        if (sctx->app_gen_cookie_cb != NULL) {
+        cb_ret = sctx->app_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
+    }
+
+    if (cb_ret == 0 || cookie_leni > sizeof(s->d1->cookie)) {
         SSLfatal(s, SSL_AD_NO_ALERT, SSL_R_COOKIE_GEN_CALLBACK_FAILURE);
         return CON_FUNC_ERROR;
     }
@@ -1557,6 +1693,12 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
         SSLfatal(s, SSL_AD_NO_ALERT, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
+
+    /*
+     * Server must recover the downgrade sentinel in case it sends a
+     * HelloVerifyRequest.
+     */
+    s->d1->hello_verify_request = SSL_HVR_SENT;
 
     return CON_FUNC_SUCCESS;
 }
@@ -1757,7 +1899,7 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
 
     /* Check if this is actually an unexpected renegotiation ClientHello */
     if (s->renegotiate == 0 && !SSL_IS_FIRST_HANDSHAKE(s)) {
-        if (!ossl_assert(!SSL_CONNECTION_IS_TLS13(s))) {
+        if (!ossl_assert(!SSL_CONNECTION_IS_VERSION13(s))) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
@@ -1799,26 +1941,35 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
     }
 
     if (SSL_CONNECTION_IS_DTLS(s)) {
+        int minversion, maxversion;
+
         if (!PACKET_get_length_prefixed_1(pkt, &cookie)) {
             SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
             goto err;
         }
         if (!PACKET_copy_all(&cookie, clienthello->dtls_cookie,
-                DTLS1_COOKIE_LENGTH,
+                sizeof(clienthello->dtls_cookie),
                 &clienthello->dtls_cookie_len)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             goto err;
         }
+
         /*
-         * If we require cookies and this ClientHello doesn't contain one,
-         * just return since we do not want to allocate any memory yet.
-         * So check cookie length...
+         * If the connection supports DTLSv1.3:
+         *      We continue to process ClientHello's without cookies
+         *
+         * Otherwise, if we require cookies and this ClientHello doesn't
+         * contain one:
+         *      Return since we do not want to allocate any memory yet
          */
-        if (SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE) {
-            if (clienthello->dtls_cookie_len == 0) {
-                OPENSSL_free(clienthello);
-                return MSG_PROCESS_FINISHED_READING;
-            }
+        if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
+            && clienthello->dtls_cookie_len == 0
+            && ossl_assert(ssl_get_min_max_version(s, &minversion,
+                                &maxversion, NULL)
+                == 0)
+            && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0) {
+            OPENSSL_free(clienthello);
+            return MSG_PROCESS_FINISHED_READING;
         }
     }
 
@@ -1858,6 +2009,32 @@ MSG_PROCESS_RETURN tls_process_client_hello(SSL_CONNECTION *s, PACKET *pkt)
         /* SSLfatal already been called */
         goto err;
     }
+
+    if (SSL_CONNECTION_IS_DTLS(s)) {
+        int minversion, maxversion;
+
+        /*
+         * If the connection supports DTLSv1.3 or if the ClientHello was sent
+         * with the SupportedVersions extension:
+         *      We continue to process ClientHello's without cookies
+         *
+         * Otherwise, if we require cookies and this ClientHello doesn't
+         * contain one:
+         *      Return since we do not want to allocate any memory yet
+         */
+        if ((SSL_get_options(SSL_CONNECTION_GET_SSL(s)) & SSL_OP_COOKIE_EXCHANGE)
+            && clienthello->dtls_cookie_len == 0
+            && ossl_assert(ssl_get_min_max_version(s, &minversion,
+                               &maxversion, NULL)
+                == 0)
+            && ssl_version_cmp(s, maxversion, DTLS1_3_VERSION) < 0
+            && !clienthello->pre_proc_exts[TLSEXT_IDX_supported_versions].present) {
+            OPENSSL_free(clienthello->pre_proc_exts);
+            OPENSSL_free(clienthello);
+            return MSG_PROCESS_FINISHED_READING;
+        }
+    }
+
     s->clienthello = clienthello;
 
     return MSG_PROCESS_CONTINUE_PROCESSING;
@@ -1932,29 +2109,38 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     /* TLSv1.3 specifies that a ClientHello must end on a record boundary */
-    if (SSL_CONNECTION_IS_TLS13(s)
+    if (SSL_CONNECTION_IS_VERSION13(s)
         && RECORD_LAYER_processed_read_pending(&s->rlayer)) {
         SSLfatal(s, SSL_AD_UNEXPECTED_MESSAGE, SSL_R_NOT_ON_RECORD_BOUNDARY);
         goto err;
     }
-
     if (SSL_CONNECTION_IS_DTLS(s)) {
-        /* Empty cookie was already handled above by returning early. */
-        if (SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) {
-            if (sctx->app_verify_cookie_cb != NULL) {
-                if (sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
-                        (unsigned int)clienthello->dtls_cookie_len)
-                    == 0) {
-                    SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
-                        SSL_R_COOKIE_MISMATCH);
-                    goto err;
-                    /* else cookie verification succeeded */
-                }
-                /* default verification */
-            } else if (s->d1->cookie_len != clienthello->dtls_cookie_len
-                || memcmp(clienthello->dtls_cookie, s->d1->cookie,
+        if ((SSL_get_options(ssl) & SSL_OP_COOKIE_EXCHANGE) && clienthello->dtls_cookie_len != 0) {
+            int verify_ret = 0;
+
+#if !defined(OPENSSL_NO_DTLS)
+            DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
+                ? (DTLS_LISTENER *)s->d1->listener
+                : NULL;
+
+            if (dl != NULL && dl->require_hvr_cookie && sctx->app_verify_cookie_cb == NULL) {
+                verify_ret = ossl_dtls_listener_verify_cookie_cb(ussl,
+                    clienthello->dtls_cookie,
+                    (unsigned int)clienthello->dtls_cookie_len);
+            } else
+#endif
+                if (sctx->app_verify_cookie_cb != NULL) {
+                verify_ret = sctx->app_verify_cookie_cb(ussl, clienthello->dtls_cookie,
+                    (unsigned int)clienthello->dtls_cookie_len);
+            } else if (s->d1->cookie_len == clienthello->dtls_cookie_len
+                && memcmp(clienthello->dtls_cookie, s->d1->cookie,
                        s->d1->cookie_len)
-                    != 0) {
+                    == 0) {
+                /* default verification succeeded */
+                verify_ret = 1;
+            }
+
+            if (verify_ret == 0) {
                 SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE, SSL_R_COOKIE_MISMATCH);
                 goto err;
             }
@@ -1999,7 +2185,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
     }
 
     /* For TLSv1.3 we must select the ciphersuite *before* session resumption */
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         const SSL_CIPHER *cipher = ssl3_choose_cipher(s, ciphers, SSL_get_ciphers(ssl));
 
         if (cipher == NULL) {
@@ -2065,7 +2251,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
         }
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         memcpy(s->tmp_session_id, s->clienthello->session_id,
             s->clienthello->session_id_len);
         s->tmp_session_id_len = s->clienthello->session_id_len;
@@ -2075,7 +2261,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * If it is a hit, check that the cipher is in the list. In TLSv1.3 we check
      * ciphersuite compatibility with the session as part of resumption.
      */
-    if (!SSL_CONNECTION_IS_TLS13(s) && s->hit) {
+    if (!SSL_CONNECTION_IS_VERSION13(s) && s->hit) {
         j = 0;
         id = s->session->cipher->id;
 
@@ -2165,7 +2351,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
 #endif
         !s->hit
         && s->version >= TLS1_VERSION
-        && !SSL_CONNECTION_IS_TLS13(s)
+        && !SSL_CONNECTION_IS_VERSION13(s)
         && !SSL_CONNECTION_IS_DTLS(s)
         && s->ext.session_secret_cb != NULL) {
         const SSL_CIPHER *pref_cipher = NULL;
@@ -2225,7 +2411,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * algorithms from the client, starting at q.
      */
     s->s3.tmp.new_compression = NULL;
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         /*
          * We already checked above that the NULL compression method appears in
          * the list. Now we check there aren't any others (which is illegal in
@@ -2312,7 +2498,7 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
      * Given s->peer_ciphers and SSL_get_ciphers, we must pick a cipher
      */
 
-    if (!s->hit || SSL_CONNECTION_IS_TLS13(s)) {
+    if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
         sk_SSL_CIPHER_free(s->peer_ciphers);
         s->peer_ciphers = ciphers;
         if (ciphers == NULL) {
@@ -2502,7 +2688,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
         wst = WORK_MORE_B;
     }
     if (wst == WORK_MORE_B) {
-        if (!s->hit || SSL_CONNECTION_IS_TLS13(s)) {
+        if (!s->hit || SSL_CONNECTION_IS_VERSION13(s)) {
             /* Let cert callback update server certificates if required */
             if (!s->hit && s->cert->cert_cb != NULL) {
                 int rv = s->cert->cert_cb(ussl, s->cert->cert_cb_arg);
@@ -2519,7 +2705,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
             }
 
             /* In TLSv1.3 we selected the ciphersuite before resumption */
-            if (!SSL_CONNECTION_IS_TLS13(s)) {
+            if (!SSL_CONNECTION_IS_VERSION13(s)) {
                 cipher = ssl3_choose_cipher(s, s->peer_ciphers,
                     SSL_get_ciphers(ssl));
 
@@ -2550,18 +2736,6 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
             s->s3.tmp.new_cipher = s->session->cipher;
         }
 
-        /*-
-         * we now have the following setup.
-         * client_random
-         * cipher_list          - our preferred list of ciphers
-         * ciphers              - the client's preferred list of ciphers
-         * compression          - basically ignored right now
-         * ssl version is set   - sslv3
-         * s->session           - The ssl session has been setup.
-         * s->hit               - session reuse flag
-         * s->s3.tmp.new_cipher - the new cipher to use.
-         */
-
         /*
          * Call status_request callback if needed. Has to be done after the
          * certificate callbacks etc above.
@@ -2576,7 +2750,7 @@ WORK_STATE tls_post_process_client_hello(SSL_CONNECTION *s, WORK_STATE wst)
          * we already did this because cipher negotiation happens earlier, and
          * we must handle ALPN before we decide whether to accept early_data.
          */
-        if (!SSL_CONNECTION_IS_TLS13(s) && !tls_handle_alpn(s)) {
+        if (!SSL_CONNECTION_IS_VERSION13(s) && !tls_handle_alpn(s)) {
             /* SSLfatal() already called */
             goto err;
         }
@@ -2612,9 +2786,13 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     int version;
     unsigned char *session_id;
     int usetls13 = SSL_CONNECTION_IS_TLS13(s)
-        || s->hello_retry_request == SSL_HRR_PENDING;
+        || (!SSL_CONNECTION_IS_DTLS(s)
+            && s->hello_retry_request == SSL_HRR_PENDING);
+    int usedtls13 = SSL_CONNECTION_IS_DTLS13(s)
+        || (SSL_CONNECTION_IS_DTLS(s)
+            && s->hello_retry_request == SSL_HRR_PENDING);
 
-    version = usetls13 ? TLS1_2_VERSION : s->version;
+    version = usetls13 ? TLS1_2_VERSION : (usedtls13 ? DTLS1_2_VERSION : s->version);
     if (!WPACKET_put_bytes_u16(pkt, version)
         /*
          * Random stuff. Filling of the server_random takes place in
@@ -2643,6 +2821,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
      *   we send back a 0-length session ID.
      * - In TLSv1.3 we echo back the session id sent to us by the client
      *   regardless
+     * - In DTLSv1.3 we must not echo the session id sent by the client
      * s->hit is non-zero in either case of session reuse,
      * so the following won't overwrite an ID that we're supposed
      * to send back.
@@ -2654,6 +2833,9 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (usetls13) {
         sl = s->tmp_session_id_len;
         session_id = s->tmp_session_id;
+    } else if (usedtls13) {
+        sl = 0;
+        session_id = NULL;
     } else {
         sl = s->session->session_id_length;
         session_id = s->session->session_id;
@@ -2668,7 +2850,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
 #ifdef OPENSSL_NO_COMP
     compm = 0;
 #else
-    if (usetls13 || s->s3.tmp.new_compression == NULL)
+    if (usetls13 || usedtls13 || s->s3.tmp.new_compression == NULL)
         compm = 0;
     else
         compm = s->s3.tmp.new_compression->id;
@@ -2685,7 +2867,7 @@ CON_FUNC_RETURN tls_construct_server_hello(SSL_CONNECTION *s, WPACKET *pkt)
     if (!tls_construct_extensions(s, pkt,
             s->hello_retry_request == SSL_HRR_PENDING
                 ? SSL_EXT_TLS1_3_HELLO_RETRY_REQUEST
-                : (SSL_CONNECTION_IS_TLS13(s)
+                : (SSL_CONNECTION_IS_VERSION13(s)
                           ? SSL_EXT_TLS1_3_SERVER_HELLO
                           : SSL_EXT_TLS1_2_SERVER_HELLO),
             NULL, 0)) {
@@ -3190,7 +3372,7 @@ err:
 CON_FUNC_RETURN tls_construct_certificate_request(SSL_CONNECTION *s,
     WPACKET *pkt)
 {
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         /* Send random context when doing post-handshake auth */
         if (s->post_handshake_auth == SSL_PHA_REQUEST_PENDING) {
             OPENSSL_free(s->pha_context);
@@ -3574,7 +3756,8 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
     EVP_PKEY *client_pub_pkey = NULL, *pk = NULL;
     unsigned char premaster_secret[32];
     const unsigned char *start;
-    size_t outlen = sizeof(premaster_secret), inlen;
+    size_t outlen = sizeof(premaster_secret);
+    size_t inlen;
     unsigned long alg_a;
     GOST_KX_MESSAGE *pKX = NULL;
     const unsigned char *ptr;
@@ -3640,7 +3823,10 @@ static int tls_process_cke_gost(SSL_CONNECTION *s, PACKET *pkt)
         goto err;
     }
 
-    inlen = ASN1_STRING_length(pKX->kxBlob->value.sequence);
+    inlen = ASN1_STRING_get_length(pKX->kxBlob->value.sequence);
+    if (inlen > INT_MAX)
+        goto err;
+
     start = ASN1_STRING_get0_data(pKX->kxBlob->value.sequence);
 
     if (EVP_PKEY_decrypt(pkey_ctx, premaster_secret, &outlen, start,
@@ -3823,7 +4009,12 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
 {
 #ifndef OPENSSL_NO_SCTP
     if (wst == WORK_MORE_A) {
-        if (SSL_CONNECTION_IS_DTLS(s)) {
+        /*
+         * Before exporting the SCTP auth key we check if DTLSv1.3 has been
+         * negotiated which is not supported.
+         * Refer to draft-tuexen-tsvwg-rfc6083-bis-04 for more info.
+         */
+        if (SSL_CONNECTION_IS_DTLS(s) && !SSL_CONNECTION_IS_DTLS13(s)) {
             unsigned char sctpauthkey[64];
             char labelbuffer[sizeof(DTLS1_SCTP_AUTH_LABEL)];
             size_t labellen;
@@ -3885,27 +4076,50 @@ WORK_STATE tls_post_process_client_key_exchange(SSL_CONNECTION *s,
 
 MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
 {
-    MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
-    SSL_SESSION *new_sess = NULL;
     EVP_PKEY *peer_rpk = NULL;
 
     if (!tls_process_rpk(sc, pkt, &peer_rpk)) {
         /* SSLfatal already called */
-        goto err;
+        return MSG_PROCESS_ERROR;
     }
+
+    /* Stash the parsed RPK; verification runs in the post-process step. */
+    EVP_PKEY_free(sc->session->peer_rpk);
+    sc->session->peer_rpk = peer_rpk;
+
+    return MSG_PROCESS_CONTINUE_PROCESSING;
+}
+
+/* Verify the parked RPK; may pause via SSL_set_retry_verify(). */
+static WORK_STATE tls_post_process_client_rpk(SSL_CONNECTION *sc,
+    WORK_STATE wst)
+{
+    EVP_PKEY *peer_rpk = sc->session->peer_rpk;
+    SSL_SESSION *new_sess = NULL;
+
+    (void)wst;
 
     if (peer_rpk == NULL) {
         if ((sc->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)
             && (sc->verify_mode & SSL_VERIFY_PEER)) {
             SSLfatal(sc, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            goto err;
+            return WORK_ERROR;
         }
     } else {
-        if (ssl_verify_rpk(sc, peer_rpk) <= 0) {
+        int v_ok;
+
+        if (sc->rwstate == SSL_RETRY_VERIFY)
+            sc->rwstate = SSL_NOTHING;
+        v_ok = ssl_verify_rpk(sc, peer_rpk);
+        if (v_ok > 0 && sc->rwstate == SSL_RETRY_VERIFY) {
+            /* The verify callback asked to pause; resume here on retry. */
+            return WORK_MORE_A;
+        }
+        if (v_ok <= 0) {
             SSLfatal(sc, ssl_x509err2alert(sc->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            goto err;
+            return WORK_ERROR;
         }
     }
 
@@ -3916,11 +4130,10 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
      * a new RPK (or certificate) is received via post-handshake authentication,
      * as the session may have already gone into the session cache.
      */
-
     if (sc->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(sc->session, 0)) == NULL) {
             SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_MALLOC_FAILURE);
-            goto err;
+            return WORK_ERROR;
         }
 
         SSL_SESSION_free(sc->session);
@@ -3932,10 +4145,6 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
     sc->session->peer = NULL;
     sk_X509_pop_free(sc->session->peer_chain, X509_free);
     sc->session->peer_chain = NULL;
-    /* Save RPK */
-    EVP_PKEY_free(sc->session->peer_rpk);
-    sc->session->peer_rpk = peer_rpk;
-    peer_rpk = NULL;
 
     sc->session->verify_result = sc->verify_result;
 
@@ -3943,35 +4152,30 @@ MSG_PROCESS_RETURN tls_process_client_rpk(SSL_CONNECTION *sc, PACKET *pkt)
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
      * message
      */
-    if (SSL_CONNECTION_IS_TLS13(sc)) {
+    if (SSL_CONNECTION_IS_VERSION13(sc)) {
         if (!ssl3_digest_cached_records(sc, 1)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
 
         /* Save the current hash state for when we receive the CertificateVerify */
         if (!ssl_handshake_hash(sc, sc->cert_verify_hash,
                 sizeof(sc->cert_verify_hash),
                 &sc->cert_verify_hash_len)) {
-            /* SSLfatal() already called */;
-            goto err;
+            /* SSLfatal() already called */
+            return WORK_ERROR;
         }
 
         /* resend session tickets */
         sc->sent_tickets = 0;
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
-
-err:
-    EVP_PKEY_free(peer_rpk);
-    return ret;
+    return WORK_FINISHED_CONTINUE;
 }
 
 MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     PACKET *pkt)
 {
-    int i;
     MSG_PROCESS_RETURN ret = MSG_PROCESS_ERROR;
     X509 *x = NULL;
     unsigned long l;
@@ -3979,7 +4183,6 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     STACK_OF(X509) *sk = NULL;
     PACKET spkt, context;
     size_t chainidx;
-    SSL_SESSION *new_sess = NULL;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
 
     /*
@@ -4003,7 +4206,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
         goto err;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)
+    if (SSL_CONNECTION_IS_VERSION13(s)
         && (!PACKET_get_length_prefixed_1(pkt, &context)
             || (s->pha_context == NULL && PACKET_remaining(&context) != 0)
             || (s->pha_context != NULL
@@ -4042,7 +4245,7 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
             goto err;
         }
 
-        if (SSL_CONNECTION_IS_TLS13(s)) {
+        if (SSL_CONNECTION_IS_VERSION13(s)) {
             RAW_EXTENSION *rawexts = NULL;
             PACKET extensions;
 
@@ -4066,34 +4269,80 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
             goto err;
         }
-        x = NULL;
     }
 
-    if (sk_X509_num(sk) <= 0) {
+    /*
+     * Stash the parsed chain so that tls_post_process_client_certificate() can
+     * run verification and may pause the handshake via SSL_set_retry_verify().
+     */
+    OSSL_STACK_OF_X509_free(s->session->peer_chain);
+    s->session->peer_chain = sk;
+
+    return MSG_PROCESS_CONTINUE_PROCESSING;
+
+err:
+    X509_free(x);
+    OSSL_STACK_OF_X509_free(sk);
+    return ret;
+}
+
+/*
+ * Verify s->session->peer_chain (parked by tls_process_client_certificate())
+ * and finalize the peer cert / TLS 1.3 handshake-hash bookkeeping.
+ * Allows the verify callback to defer via SSL_set_retry_verify(), in which
+ * case we return WORK_MORE_A and the state machine re-enters this function
+ * once the application has supplied a verdict.
+ */
+WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
+    WORK_STATE wst)
+{
+    STACK_OF(X509) *sk;
+    SSL_SESSION *new_sess = NULL;
+    EVP_PKEY *pkey;
+    int i;
+
+    if (s->ext.client_cert_type == TLSEXT_cert_type_rpk)
+        return tls_post_process_client_rpk(s, wst);
+
+    sk = s->session->peer_chain;
+    (void)wst;
+
+    if (sk == NULL || sk_X509_num(sk) <= 0) {
         /* Fail only if we required a certificate */
-        if ((s->verify_mode & SSL_VERIFY_PEER) && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
+        if ((s->verify_mode & SSL_VERIFY_PEER)
+            && (s->verify_mode & SSL_VERIFY_FAIL_IF_NO_PEER_CERT)) {
             SSLfatal(s, SSL_AD_CERTIFICATE_REQUIRED,
                 SSL_R_PEER_DID_NOT_RETURN_A_CERTIFICATE);
-            goto err;
+            return WORK_ERROR;
         }
         /* No client certificate so digest cached records */
         if (s->s3.handshake_buffer && !ssl3_digest_cached_records(s, 0)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
     } else {
-        EVP_PKEY *pkey;
+        if (s->rwstate == SSL_RETRY_VERIFY)
+            s->rwstate = SSL_NOTHING;
         i = ssl_verify_cert_chain(s, sk);
+        if (i > 0 && s->rwstate == SSL_RETRY_VERIFY) {
+            /*
+             * The application's verify callback asked us to pause via
+             * SSL_set_retry_verify(); SSL_do_handshake() will return
+             * SSL_ERROR_WANT_RETRY_VERIFY and the state machine resumes here
+             * once the callback is invoked again.
+             */
+            return WORK_MORE_A;
+        }
         if (i <= 0) {
             SSLfatal(s, ssl_x509err2alert(s->verify_result),
                 SSL_R_CERTIFICATE_VERIFY_FAILED);
-            goto err;
+            return WORK_ERROR;
         }
         pkey = X509_get0_pubkey(sk_X509_value(sk, 0));
         if (pkey == NULL) {
             SSLfatal(s, SSL_AD_HANDSHAKE_FAILURE,
                 SSL_R_UNKNOWN_CERTIFICATE_TYPE);
-            goto err;
+            return WORK_ERROR;
         }
     }
 
@@ -4104,24 +4353,25 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      * a new certificate is received via post-handshake authentication, as the
      * session may have already gone into the session cache.
      */
-
     if (s->post_handshake_auth == SSL_PHA_REQUESTED) {
         if ((new_sess = ssl_session_dup(s->session, 0)) == 0) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
-            goto err;
+            return WORK_ERROR;
         }
 
         SSL_SESSION_free(s->session);
         s->session = new_sess;
+        /* peer_chain follows the session via ssl_session_dup(); refresh sk. */
+        sk = s->session->peer_chain;
     }
 
-    X509_free(s->session->peer);
-    s->session->peer = sk_X509_shift(sk);
-    s->session->verify_result = s->verify_result;
+    if (sk != NULL && sk_X509_num(sk) > 0) {
+        X509_free(s->session->peer);
+        /* Server keeps the EE cert in session->peer; peer_chain holds issuers only. */
+        s->session->peer = sk_X509_shift(sk);
+        s->session->verify_result = s->verify_result;
+    }
 
-    OSSL_STACK_OF_X509_free(s->session->peer_chain);
-    s->session->peer_chain = sk;
-    sk = NULL;
     /* Ensure there is no RPK */
     EVP_PKEY_free(s->session->peer_rpk);
     s->session->peer_rpk = NULL;
@@ -4130,35 +4380,25 @@ MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
      * Freeze the handshake buffer. For <TLS1.3 we do this after the CKE
      * message
      */
-    if (SSL_CONNECTION_IS_TLS13(s) && !ssl3_digest_cached_records(s, 1)) {
+    if (SSL_CONNECTION_IS_VERSION13(s) && !ssl3_digest_cached_records(s, 1)) {
         /* SSLfatal() already called */
-        goto err;
+        return WORK_ERROR;
     }
 
-    /*
-     * Inconsistency alert: cert_chain does *not* include the peer's own
-     * certificate, while we do include it in statem_clnt.c
-     */
-
     /* Save the current hash state for when we receive the CertificateVerify */
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         if (!ssl_handshake_hash(s, s->cert_verify_hash,
                 sizeof(s->cert_verify_hash),
                 &s->cert_verify_hash_len)) {
             /* SSLfatal() already called */
-            goto err;
+            return WORK_ERROR;
         }
 
         /* Resend session tickets */
         s->sent_tickets = 0;
     }
 
-    ret = MSG_PROCESS_CONTINUE_READING;
-
-err:
-    X509_free(x);
-    OSSL_STACK_OF_X509_free(sk);
-    return ret;
+    return WORK_FINISHED_CONTINUE;
 }
 
 #ifndef OPENSSL_NO_COMP_ALG
@@ -4189,7 +4429,7 @@ CON_FUNC_RETURN tls_construct_server_certificate(SSL_CONNECTION *s, WPACKET *pkt
      * In TLSv1.3 the certificate chain is always preceded by a 0 length context
      * for the server Certificate message
      */
-    if (SSL_CONNECTION_IS_TLS13(s) && !WPACKET_put_bytes_u8(pkt, 0)) {
+    if (SSL_CONNECTION_IS_VERSION13(s) && !WPACKET_put_bytes_u8(pkt, 0)) {
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return CON_FUNC_ERROR;
     }
@@ -4232,8 +4472,10 @@ CON_FUNC_RETURN tls_construct_server_compressed_certificate(SSL_CONNECTION *sc, 
         || !WPACKET_put_bytes_u24(pkt, cc->orig_len)
         || !WPACKET_start_sub_packet_u24(pkt)
         || !WPACKET_memcpy(pkt, cc->data, cc->len)
-        || !WPACKET_close(pkt))
+        || !WPACKET_close(pkt)) {
+        SSLfatal(sc, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         return 0;
+    }
 
     sc->s3.tmp.cert->cert_comp_used++;
     return 1;
@@ -4248,13 +4490,13 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
     /*
      * Ticket lifetime hint:
      * In TLSv1.3 we reset the "time" field above, and always specify the
-     * timeout, limited to a 1 week period per RFC8446.
+     * timeout, limited to a 1 week period per RFC9846.
      * For TLSv1.2 this is advisory only and we leave this unspecified for
      * resumed session (for simplicity).
      */
 #define ONE_WEEK_SEC (7 * 24 * 60 * 60)
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         if (ossl_time_compare(s->session->timeout,
                 ossl_seconds2time(ONE_WEEK_SEC))
             > 0)
@@ -4267,7 +4509,7 @@ static int create_ticket_prequel(SSL_CONNECTION *s, WPACKET *pkt,
         return 0;
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         if (!WPACKET_put_bytes_u32(pkt, age_add)
             || !WPACKET_sub_memcpy_u8(pkt, tick_nonce, TICKET_NONCE_SIZE)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -4393,7 +4635,7 @@ static CON_FUNC_RETURN construct_stateless_ticket(SSL_CONNECTION *s,
              * length ticket is not allowed so we abort construction of the
              * ticket
              */
-            if (SSL_CONNECTION_IS_TLS13(s)) {
+            if (SSL_CONNECTION_IS_VERSION13(s)) {
                 ok = CON_FUNC_DONT_SEND;
                 goto err;
             }
@@ -4525,7 +4767,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
 
     age_add_u.age_add = 0;
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         size_t i, hashlen;
         uint64_t nonce;
         /* ASCII: "resumption", in hex for EBCDIC compatibility */
@@ -4550,7 +4792,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
             SSL_SESSION *new_sess = ssl_session_dup(s->session, 0);
 
             if (new_sess == NULL) {
-                /* SSLfatal already called */
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_SSL_LIB);
                 goto err;
             }
 
@@ -4599,6 +4841,18 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
                 goto err;
             }
             s->session->ext.alpn_selected_len = s->s3.alpn_selected_len;
+        } else {
+            /*
+             * No ALPN was negotiated on this handshake. If we resumed a
+             * session that had previously negotiated ALPN, the stale value
+             * must be cleared from the (copied) session before it is stored
+             * in the new ticket. Otherwise a subsequent 0-RTT attempt using
+             * that ticket would incorrectly assume an ALPN protocol had been
+             * negotiated. See tls_handle_alpn().
+             */
+            OPENSSL_free(s->session->ext.alpn_selected);
+            s->session->ext.alpn_selected = NULL;
+            s->session->ext.alpn_selected_len = 0;
         }
         s->session->ext.max_early_data = s->max_early_data;
     }
@@ -4612,7 +4866,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
      * SSL_OP_NO_TICKET is set - we are caching tickets anyway so there
      * is no point in using full stateless tickets.
      */
-    if (SSL_CONNECTION_IS_TLS13(s)
+    if (SSL_CONNECTION_IS_VERSION13(s)
         && ((s->options & SSL_OP_NO_TICKET) != 0
             || (s->max_early_data > 0
                 && (s->options & SSL_OP_NO_ANTI_REPLAY) == 0))) {
@@ -4637,7 +4891,7 @@ CON_FUNC_RETURN tls_construct_new_session_ticket(SSL_CONNECTION *s, WPACKET *pkt
         }
     }
 
-    if (SSL_CONNECTION_IS_TLS13(s)) {
+    if (SSL_CONNECTION_IS_VERSION13(s)) {
         if (!tls_construct_extensions(s, pkt,
                 SSL_EXT_TLS1_3_NEW_SESSION_TICKET,
                 NULL, 0)) {

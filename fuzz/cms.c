@@ -34,13 +34,23 @@ int FuzzerTestOneInput(const uint8_t *buf, size_t len)
         return 0;
 
     in = BIO_new(BIO_s_mem());
-    OPENSSL_assert((size_t)BIO_write(in, buf, (int)len) == len);
+    if (in == NULL) {
+        ERR_clear_error();
+        return 0;
+    }
+    if ((size_t)BIO_write(in, buf, (int)len) != len) {
+        BIO_free(in);
+        ERR_clear_error();
+        return 0;
+    }
     cms = d2i_CMS_bio(in, NULL);
     if (cms != NULL) {
         BIO *out = BIO_new(BIO_s_null());
 
-        i2d_CMS_bio(out, cms);
-        BIO_free(out);
+        if (out != NULL) {
+            i2d_CMS_bio(out, cms);
+            BIO_free(out);
+        }
         CMS_ContentInfo_free(cms);
     }
 

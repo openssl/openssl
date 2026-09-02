@@ -226,7 +226,7 @@ static const unsigned short ctype_char_map[128] = {
 #ifdef CHARSET_EBCDIC
 int ossl_toascii(int c)
 {
-    if (c < -128 || c > 256 || c == EOF)
+    if (c < -128 || c >= 256 || c == EOF)
         return c;
     /*
      * Adjust negatively signed characters.
@@ -241,7 +241,7 @@ int ossl_toascii(int c)
 
 int ossl_fromascii(int c)
 {
-    if (c < -128 || c > 256 || c == EOF)
+    if (c < -128 || c >= 256 || c == EOF)
         return c;
     if (c < 0)
         c += 256;

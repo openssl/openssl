@@ -7,7 +7,25 @@
 
 # Jobs run per pull request submission
 name: Perl-minimal-checker CI
-on: [pull_request, push]
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 permissions:
   contents: read
 
@@ -23,7 +41,7 @@ jobs:
         tar xf perl-5.10.1.tar.bz2
         cd perl-5.10.1
         ./Configure -des -Dprefix=/tmp/perl -A ccflags='-Wno-incompatible-pointer-types' -A define:malloctype='void *' -A define:freetype='void' -Dlibs='-ldl -lm -lutil -lc'
-        make -j $(nproc) perl
+        make -j1 perl
         make install
         popd
     - name: Install Test::More 0.96

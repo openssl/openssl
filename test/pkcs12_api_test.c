@@ -1,5 +1,5 @@
 /*
- * Copyright 2022-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2022-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -132,6 +132,81 @@ err:
     X509_free(cert);
     OSSL_STACK_OF_X509_free(ca);
     return TEST_true(ret);
+}
+
+/*
+ * If appending an additional certificate to the CA stack fails,
+ * PKCS12_parse() should free its own allocated CA stack.
+ */
+static int pkcs12_parse_mfail_test(void)
+{
+    int ret;
+    PKCS12 *p12 = NULL;
+    STACK_OF(X509) *ca = NULL;
+
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        return -1;
+
+    MFAIL_start();
+    ret = PKCS12_parse(p12, in_pass, NULL, NULL, &ca);
+    MFAIL_end();
+
+    if (ret == 0 && !TEST_ptr_null(ca))
+        ret = -1;
+
+    /*
+     * Only free the stack on success, since PKCS12_parse()
+     * should free its own allocated stack on failure.
+     */
+    if (ret == 1)
+        OSSL_STACK_OF_X509_free(ca);
+
+    PKCS12_free(p12);
+    return ret;
+}
+
+/*
+ * If appending an additional certificate to the CA stack fails,
+ * PKCS12_parse() should leave the original CA stack unmodified.
+ */
+static int pkcs12_parse_existing_ca_mfail_test(void)
+{
+    int i, ret = -1;
+    PKCS12 *p12 = NULL;
+    STACK_OF(X509) *ca = NULL, *initial_ca = NULL;
+    X509 *initial_certs[3] = { NULL };
+
+    if (!TEST_ptr(p12 = PKCS12_load(in_file))
+        || !TEST_ptr(ca = sk_X509_new_null()))
+        goto err;
+
+    for (i = 0; i < 3; i++) {
+        if (!TEST_ptr(initial_certs[i] = X509_new()))
+            goto err;
+
+        if (!TEST_true(sk_X509_push(ca, initial_certs[i]))) {
+            X509_free(initial_certs[i]);
+            goto err;
+        }
+    }
+    initial_ca = ca;
+
+    MFAIL_start();
+    ret = PKCS12_parse(p12, in_pass, NULL, NULL, &ca);
+    MFAIL_end();
+
+    if (ret == 0
+        && (!TEST_ptr_eq(ca, initial_ca)
+            || !TEST_int_eq(sk_X509_num(ca), 3)
+            || !TEST_ptr_eq(sk_X509_value(ca, 0), initial_certs[0])
+            || !TEST_ptr_eq(sk_X509_value(ca, 1), initial_certs[1])
+            || !TEST_ptr_eq(sk_X509_value(ca, 2), initial_certs[2])))
+        ret = -1;
+
+err:
+    PKCS12_free(p12);
+    OSSL_STACK_OF_X509_free(ca);
+    return ret;
 }
 
 static int pkcs12_create_cb(PKCS12_SAFEBAG *bag, void *cbarg)
@@ -347,6 +422,8 @@ int setup_tests(void)
 
     ADD_TEST(test_null_args);
     ADD_TEST(pkcs12_parse_test);
+    ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_mfail_test);
+    ADD_MFAIL_NO_CHECK_TEST(pkcs12_parse_existing_ca_mfail_test);
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);

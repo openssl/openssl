@@ -264,11 +264,15 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     unsigned char *out = NULL;
     int outlen = 0;
     int rv = 0;
+    size_t outsize;
 
     if (keklen > sizeof(kek)) {
         ERR_raise(ERR_LIB_CMS, CMS_R_INVALID_KEY_LENGTH);
         return 0;
     }
+
+    if (inlen > INT_MAX)
+        return 0;
 
     if (!kdf_derive(kek, keklen, ss, sslen, kemri))
         goto err;
@@ -279,7 +283,13 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     /* obtain output length of ciphered key */
     if (!EVP_CipherUpdate(kemri->ctx, NULL, &outlen, in, (int)inlen))
         goto err;
-    out = OPENSSL_malloc(outlen);
+    /*
+     * On its integrity-failure paths that primitive writes and cleanses up to
+     * inlen bytes of the output buffer. Size the buffer for that worst case so
+     * a failed unwrap cannot write past the allocation.
+     */
+    outsize = (size_t)outlen < inlen ? inlen : (size_t)outlen;
+    out = OPENSSL_malloc(outsize);
     if (out == NULL)
         goto err;
     if (!EVP_CipherUpdate(kemri->ctx, out, &outlen, in, (int)inlen))
@@ -388,7 +398,7 @@ int ossl_cms_RecipientInfo_kemri_decrypt(const CMS_ContentInfo *cms,
         goto err;
 
     kem_ct = ASN1_STRING_get0_data(kemri->kemct);
-    kem_ct_len = ASN1_STRING_length(kemri->kemct);
+    kem_ct_len = ASN1_STRING_get_length(kemri->kemct);
 
     if (EVP_PKEY_decapsulate(kemri->pctx, NULL, &kem_secret_len, kem_ct, kem_ct_len) <= 0)
         return 0;

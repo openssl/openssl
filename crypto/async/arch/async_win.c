@@ -12,7 +12,7 @@
 
 #ifdef ASYNC_WIN
 
-#include <windows.h>
+#include "internal/e_os.h"
 #include "internal/cryptlib.h"
 
 int ASYNC_is_capable(void)

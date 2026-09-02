@@ -129,10 +129,10 @@ at all when such parameter data needs to be passed.
 Background / tl;dr
 ------------------
 
-### AlgorithmIdenfier parameter and how it's used
+### AlgorithmIdentifier parameter and how it's used
 
 OpenSSL has historically done a few tricks to not have to pass
-AlgorithmIdenfier parameter data to the backend implementations of
+AlgorithmIdentifier parameter data to the backend implementations of
 cryptographic operations:
 
 - In some cases, they were passed as part of the lower level key structure

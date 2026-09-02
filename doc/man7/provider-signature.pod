@@ -592,7 +592,7 @@ A getter that returns 1 if the operation is FIPS approved, or 0 otherwise.
 This may be used after calling either the sign or verify final functions. It may
 return 0 if either the "digest-check", "key-check", or "sign-check" are set to 0.
 
-=item "verify-message" (B<OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE> <integer>
+=item "verify-message" (B<OSSL_SIGNATURE_PARAM_FIPS_VERIFY_MESSAGE>) <integer>
 
 A getter that returns 1 if a signature verification operation acted on
 a raw message, or 0 if it verified a predigested message.  A value of 0

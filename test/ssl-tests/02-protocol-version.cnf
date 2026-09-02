@@ -363,8 +363,8 @@ test-357 = 357-version-negotiation
 test-358 = 358-version-negotiation
 test-359 = 359-version-negotiation
 test-360 = 360-version-negotiation
-test-361 = 361-ciphersuite-sanity-check-client
-test-362 = 362-ciphersuite-sanity-check-server
+test-361 = 361-ciphersuite-sanity-check-tls-client
+test-362 = 362-ciphersuite-sanity-check-tls-server
 # ===========================================================
 
 [0-version-negotiation]
@@ -10013,20 +10013,20 @@ ExpectedResult = Success
 
 # ===========================================================
 
-[361-ciphersuite-sanity-check-client]
-ssl_conf = 361-ciphersuite-sanity-check-client-ssl
+[361-ciphersuite-sanity-check-tls-client]
+ssl_conf = 361-ciphersuite-sanity-check-tls-client-ssl
 
-[361-ciphersuite-sanity-check-client-ssl]
-server = 361-ciphersuite-sanity-check-client-server
-client = 361-ciphersuite-sanity-check-client-client
+[361-ciphersuite-sanity-check-tls-client-ssl]
+server = 361-ciphersuite-sanity-check-tls-client-server
+client = 361-ciphersuite-sanity-check-tls-client-client
 
-[361-ciphersuite-sanity-check-client-server]
+[361-ciphersuite-sanity-check-tls-client-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = DEFAULT
 MaxProtocol = TLSv1.2
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[361-ciphersuite-sanity-check-client-client]
+[361-ciphersuite-sanity-check-tls-client-client]
 CipherString = AES128-SHA
 Ciphersuites = 
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -10034,24 +10034,25 @@ VerifyMode = Peer
 
 [test-361]
 ExpectedResult = ClientFail
+Method = TLS
 
 
 # ===========================================================
 
-[362-ciphersuite-sanity-check-server]
-ssl_conf = 362-ciphersuite-sanity-check-server-ssl
+[362-ciphersuite-sanity-check-tls-server]
+ssl_conf = 362-ciphersuite-sanity-check-tls-server-ssl
 
-[362-ciphersuite-sanity-check-server-ssl]
-server = 362-ciphersuite-sanity-check-server-server
-client = 362-ciphersuite-sanity-check-server-client
+[362-ciphersuite-sanity-check-tls-server-ssl]
+server = 362-ciphersuite-sanity-check-tls-server-server
+client = 362-ciphersuite-sanity-check-tls-server-client
 
-[362-ciphersuite-sanity-check-server-server]
+[362-ciphersuite-sanity-check-tls-server-server]
 Certificate = ${ENV::TEST_CERTS_DIR}/servercert.pem
 CipherString = AES128-SHA
 Ciphersuites = 
 PrivateKey = ${ENV::TEST_CERTS_DIR}/serverkey.pem
 
-[362-ciphersuite-sanity-check-server-client]
+[362-ciphersuite-sanity-check-tls-server-client]
 CipherString = AES128-SHA
 MaxProtocol = TLSv1.2
 VerifyCAFile = ${ENV::TEST_CERTS_DIR}/rootcert.pem
@@ -10059,5 +10060,6 @@ VerifyMode = Peer
 
 [test-362]
 ExpectedResult = ServerFail
+Method = TLS
 
 

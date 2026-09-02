@@ -11,7 +11,7 @@
  * Utility functions for handling OPENSSL_PEDANTIC_ZEROIZATION.
  *
  * ISO 19790:2012/Cor.1:2015 7.9 requires cryptographic module to provide
- * methods to zeroise all unproctected security sensitive parameters
+ * methods to zeroise all unprotected security sensitive parameters
  * (which includes both Critical/Private and Public security parameters).
  *
  * To comply with these (arguably, unnecessarily onerous) requirements,

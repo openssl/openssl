@@ -24,6 +24,7 @@
 struct evp_rand_st {
     OSSL_PROVIDER *prov;
     int name_id;
+    int no_store;
     char *type_name;
     const char *description;
     CRYPTO_REF_COUNT refcnt;
@@ -116,7 +117,7 @@ static void evp_rand_unlock(EVP_RAND_CTX *rand)
 
 static void *evp_rand_from_algorithm(int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_RAND *rand = NULL;
@@ -130,6 +131,7 @@ static void *evp_rand_from_algorithm(int name_id,
         return NULL;
     }
     rand->name_id = name_id;
+    rand->no_store = no_store;
     if ((rand->type_name = ossl_algorithm_get1_first_name(algodef)) == NULL) {
         evp_rand_free(rand);
         return NULL;
@@ -289,12 +291,23 @@ EVP_RAND *EVP_RAND_fetch(OSSL_LIB_CTX *libctx, const char *algorithm,
 
 int EVP_RAND_up_ref(EVP_RAND *rand)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     return evp_rand_up_ref(rand);
+#else
+    if (rand->no_store != 0)
+        return evp_rand_up_ref(rand);
+    return 1;
+#endif
 }
 
 void EVP_RAND_free(EVP_RAND *rand)
 {
+#ifdef OPENSSL_NO_CACHED_FETCH
     evp_rand_free(rand);
+#else
+    if (rand != NULL && (rand->no_store != 0))
+        evp_rand_free(rand);
+#endif
 }
 
 int evp_rand_get_number(const EVP_RAND *rand)

@@ -19,7 +19,6 @@
 #include "cipher_aes.h"
 #include "prov/implementations.h"
 #include "prov/providercommon.h"
-#include "cipher_aes_cfb.h"
 
 static OSSL_FUNC_cipher_freectx_fn aes_freectx;
 static OSSL_FUNC_cipher_dupctx_fn aes_dupctx;
@@ -44,7 +43,10 @@ static void *aes_dupctx(void *ctx)
     if (ret == NULL)
         return NULL;
     in->base.hw->copyctx(&ret->base, &in->base);
-
+    if (!ossl_cipher_generic_dupctx_tlsmac(&ret->base, &in->base)) {
+        OPENSSL_clear_free(ret, sizeof(*ret));
+        return NULL;
+    }
     return ret;
 }
 

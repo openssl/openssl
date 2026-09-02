@@ -2097,6 +2097,73 @@ static int test_kdf_get_kdf(void)
     return ok;
 }
 
+static int test_kdf_ctx_get_kdf(void)
+{
+    EVP_KDF *kdf = NULL;
+    const EVP_KDF *kdf_get0 = NULL;
+    EVP_KDF *kdf_get1 = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    int ok = 0;
+
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
+    if (!TEST_ptr(kdf))
+        goto out;
+
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!TEST_ptr(kdf))
+        goto out;
+
+    kdf_get0 = EVP_KDF_CTX_get0_kdf(kctx);
+    if (!TEST_ptr_eq(kdf, kdf_get0))
+        goto out;
+
+    kdf_get1 = EVP_KDF_CTX_get1_kdf(kctx);
+    if (!TEST_ptr(kdf_get1)
+        || !TEST_true(EVP_KDF_is_a(kdf_get1, EVP_KDF_get0_name(kdf))))
+        goto out;
+
+    ok = 1;
+
+out:
+    EVP_KDF_free(kdf_get1);
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
+
+    return ok;
+}
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+static int test_kdf_ctx_kdf(void)
+{
+    EVP_KDF *kdf = NULL;
+    const EVP_KDF *kdf_get = NULL;
+    EVP_KDF_CTX *kctx = NULL;
+    int ok = 0;
+
+    kdf = EVP_KDF_fetch(NULL, OSSL_KDF_NAME_PBKDF2, NULL);
+    if (!TEST_ptr(kdf))
+        goto out;
+
+    kctx = EVP_KDF_CTX_new(kdf);
+    if (!TEST_ptr(kdf))
+        goto out;
+
+    OSSL_BEGIN_ALLOW_DEPRECATED
+    kdf_get = EVP_KDF_CTX_kdf(kctx);
+    OSSL_END_ALLOW_DEPRECATED
+    if (!TEST_ptr_eq(kdf, kdf_get))
+        goto out;
+
+    ok = 1;
+
+out:
+    EVP_KDF_CTX_free(kctx);
+    EVP_KDF_free(kdf);
+
+    return ok;
+}
+#endif /* !OPENSSL_NO_DEPRECATED_4_1 */
+
 #if !defined(OPENSSL_NO_CMS) && !defined(OPENSSL_NO_DES) && !defined(OPENSSL_NO_X942KDF)
 static int test_kdf_x942_asn1(void)
 {
@@ -2366,6 +2433,10 @@ int setup_tests(void)
         ADD_TEST(test_kdf_kbkdf_kmac);
 #endif /* OPENSSL_NO_KBKDF */
     ADD_TEST(test_kdf_get_kdf);
+    ADD_TEST(test_kdf_ctx_get_kdf);
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+    ADD_TEST(test_kdf_ctx_kdf);
+#endif
     ADD_TEST(test_kdf_tls1_prf);
     ADD_TEST(test_kdf_tls1_prf_set_skey);
     ADD_TEST(test_kdf_tls1_prf_derive_skey);

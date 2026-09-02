@@ -4,7 +4,8 @@
 
 SSL_CTX_set1_groups, SSL_CTX_set1_groups_list, SSL_set1_groups,
 SSL_set1_groups_list, SSL_get1_groups, SSL_get0_iana_groups,
-SSL_get_shared_group, SSL_get_negotiated_group, SSL_CTX_set1_curves,
+SSL_get0_ec_point_formats, SSL_get_shared_group, SSL_get_negotiated_group,
+SSL_CTX_set1_curves,
 SSL_CTX_set1_curves_list, SSL_set1_curves, SSL_set1_curves_list,
 SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 - EC supported curve functions
@@ -21,6 +22,7 @@ SSL_get1_curves, SSL_get_shared_curve, SSL_CTX_get0_implemented_groups
 
  int SSL_get1_groups(SSL *ssl, int *groups);
  int SSL_get0_iana_groups(SSL *ssl, uint16_t **out);
+ int SSL_get0_ec_point_formats(SSL *ssl, const unsigned char **plst);
  int SSL_get_shared_group(SSL *s, int n);
  int SSL_get_negotiated_group(SSL *s);
 
@@ -113,7 +115,7 @@ levels, and can specify which predicted key shares should be sent by a client.
 Group tuples are used by OpenSSL TLS servers to decide whether to request a
 stronger keyshare than those predicted by sending a Hello Retry Request
 (B<HRR>) even if some of the predicted groups are supported.
-OpenSSL clients largely ignore tuple boundaries, and pay attenion only to the
+OpenSSL clients largely ignore tuple boundaries, and pay attention only to the
 overall order of I<list> elements and which groups are selected as predicted
 keyshares as described below.
 Tuple boundaries do however affect the behaviour of keyshare predictions
@@ -246,6 +248,19 @@ identifiers, as assigned by IANA.  The group list is returned in the same order
 that was received in the ClientHello.  The return value is the number of groups,
 not the number of bytes written.
 
+SSL_get0_ec_point_formats() retrieves the peer's B<ec_point_formats>
+extension as a byte array of B<TLSEXT_ECPOINTFORMAT_*> values in the
+order received.  If the peer sent the extension, B<*plst> is set to an
+internal buffer holding the list and its length is returned; otherwise
+the return value is 0 and B<*plst> is left unchanged.  The returned
+pointer is owned by the B<SSL> connection and must not be freed.  The
+point format no longer affects certificate selection or acceptance.
+
+The B<ec_point_formats> extension applies only to TLS 1.2 and below, but
+the peer's list is recorded even when TLS 1.3 is ultimately negotiated,
+since a TLS 1.3 B<ClientHello> may still carry the extension for
+backward compatibility.
+
 SSL_get_shared_group() returns the NID of the shared group B<n> for a
 server-side SSL B<ssl>. If B<n> is -1 then the total number of shared groups is
 returned, which may be zero. Other than for diagnostic purposes,
@@ -303,6 +318,10 @@ success and 0 for failure.
 SSL_get1_groups() returns the number of groups, which may be zero.
 
 SSL_get0_iana_groups() returns the number of (uint16_t) groups, which may be zero.
+
+SSL_get0_ec_point_formats() returns the number of point formats sent by
+the peer in its B<ec_point_formats> extension, or 0 if no such extension
+was received.
 
 SSL_get_shared_group() returns the NID of shared group B<n> or NID_undef if there
 is no shared group B<n>; or the total number of shared groups if B<n>
@@ -382,6 +401,10 @@ Support for ignoring unknown groups in SSL_CTX_set1_groups_list() and
 SSL_set1_groups_list() was added in OpenSSL 3.3.
 
 Support for B<ML-KEM> was added in OpenSSL 3.5.
+
+OpenSSL 3.5 also introduced support for group tuples, the C<*> keyshare
+prediction prefix, the C</> tuple separator, the C<DEFAULT> pseudo-group,
+and the C<-> prefix.
 
 OpenSSL 3.5 also introduced support for three I<hybrid> ECDH PQ key exchange
 TLS groups: B<X25519MLKEM768>, B<SecP256r1MLKEM768> and

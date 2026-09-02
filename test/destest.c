@@ -604,7 +604,7 @@ static int test_des_ede_cfb64(void)
         return 0;
     memcpy(cfb_tmp, cfb_iv, sizeof(cfb_iv));
     n = 0;
-    DES_ede3_cfb64_encrypt(cfb_buf1, cfb_buf2, (long)17, &ks, &ks, &ks,
+    DES_ede3_cfb64_encrypt(cfb_buf1, cfb_buf2, 17, &ks, &ks, &ks,
         &cfb_tmp, &n, DES_DECRYPT);
     DES_ede3_cfb64_encrypt(&cfb_buf1[17], &cfb_buf2[17], sizeof(plain) - 17,
         &ks, &ks, &ks, &cfb_tmp, &n, DES_DECRYPT);

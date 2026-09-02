@@ -14,9 +14,11 @@
 #include "recmethod_local.h"
 
 static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
+    unsigned char *snkey,
     unsigned char *key, size_t keylen,
     unsigned char *iv, size_t ivlen,
     unsigned char *mackey, size_t mackeylen,
+    const EVP_CIPHER *snciph,
     const EVP_CIPHER *ciph,
     size_t taglen,
     int mactype,
@@ -80,6 +82,26 @@ static int tls13_set_crypto_state(OSSL_RECORD_LAYER *rl, int level,
         ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
         return OSSL_RECORD_RETURN_FATAL;
     }
+
+    if (rl->isdtls && snciph != NULL) {
+        EVP_CIPHER_CTX *sn_ciph_ctx;
+
+        sn_ciph_ctx = rl->sn_enc_ctx = EVP_CIPHER_CTX_new();
+
+        if (sn_ciph_ctx == NULL) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+
+        if (EVP_CIPHER_CTX_set_padding(sn_ciph_ctx, 0)
+            || EVP_CipherInit_ex(sn_ciph_ctx, snciph, NULL,
+                   snkey, NULL, 1)
+                <= 0) {
+            ERR_raise(ERR_LIB_SSL, ERR_R_INTERNAL_ERROR);
+            return OSSL_RECORD_RETURN_FATAL;
+        }
+    }
+
 end:
     return OSSL_RECORD_RETURN_SUCCESS;
 }
@@ -91,10 +113,11 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     EVP_CIPHER_CTX *enc_ctx;
     unsigned char recheader[SSL3_RT_HEADER_LENGTH];
     unsigned char tag[EVP_MAX_MD_SIZE];
-    size_t nonce_len, offset, loop, hdrlen, taglen;
+    size_t nonce_len, offset, loop, hdrlen, taglen, exphdrlen;
+    int isdtls, sbit = 0, addlen;
     unsigned char *staticiv;
     unsigned char *nonce;
-    unsigned char *seq = rl->sequence;
+    unsigned char seq[SEQ_NUM_SIZE], *p_seq = seq;
     int lenu, lenf;
     TLS_RL_RECORD *rec = &recs[0];
     WPACKET wpkt;
@@ -111,6 +134,8 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     enc_ctx = rl->enc_ctx; /* enc_ctx is ignored when rl->mac_ctx != NULL */
     staticiv = rl->iv;
     nonce = rl->nonce;
+    isdtls = rl->isdtls;
+    l2n8(rl->sequence, p_seq);
 
     if (enc_ctx == NULL && rl->mac_ctx == NULL) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -164,18 +189,45 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
     for (loop = 0; loop < SEQ_NUM_SIZE; loop++)
         nonce[offset + loop] = staticiv[offset + loop] ^ seq[loop];
 
-    if (!tls_increment_sequence_ctr(rl)) {
+    if (!isdtls && !tls_increment_sequence_ctr(rl)) {
         /* RLAYERfatal already called */
         return 0;
     }
 
-    /* Set up the AAD */
-    if (!WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
+    /*-
+     * Set up the additional data as described in rfc8446 section 5.2:
+     *   "and the additional data input is the record header.
+     *   I.e.,
+     *      additional_data = TLSCiphertext.opaque_type ||
+     *                        TLSCiphertext.legacy_record_version ||
+     *                        TLSCiphertext.length"
+     * and in rfc1947 section 4:
+     *   "The entire header value shown in Figure 4 (but prior to record number
+     *   encryption; see Section 4.2.3) is used as the additional data value for
+     *   the AEAD function. For instance, if the minimal variant is used, the
+     *   Associated Data (AD) is 2 octets long."
+     *
+     *   For DTLS: at this point rec->type is just the first byte of the variable
+     *   header. So it is not an actual record type. The record type is set in
+     *   tls13_post_process_record() for incoming records.
+     */
+    if (isdtls) {
+        exphdrlen = dtls_get_rec_header_size(rec->type);
+        sbit = DTLS13_UNI_HDR_SEQ_BIT_IS_SET(rec->type);
+        addlen = DTLS13_UNI_HDR_LEN_BIT_IS_SET(rec->type);
+    } else {
+        exphdrlen = SSL3_RT_HEADER_LENGTH;
+        addlen = 1;
+    }
+
+    if ((isdtls && !ossl_assert(!DTLS13_UNI_HDR_CID_BIT_IS_SET(rec->type)))
+        || !WPACKET_init_static_len(&wpkt, recheader, sizeof(recheader), 0)
         || !WPACKET_put_bytes_u8(&wpkt, rec->type)
-        || !WPACKET_put_bytes_u16(&wpkt, rec->rec_version)
-        || !WPACKET_put_bytes_u16(&wpkt, rec->length + rl->taglen)
+        || (isdtls && (sbit ? !WPACKET_put_bytes_u16(&wpkt, rl->sequence) : !WPACKET_put_bytes_u8(&wpkt, rl->sequence)))
+        || (!isdtls && !WPACKET_put_bytes_u16(&wpkt, rec->rec_version))
+        || (addlen && !WPACKET_put_bytes_u16(&wpkt, rec->length + rl->taglen))
         || !WPACKET_get_total_written(&wpkt, &hdrlen)
-        || hdrlen != SSL3_RT_HEADER_LENGTH
+        || hdrlen != exphdrlen
         || !WPACKET_finish(&wpkt)) {
         RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
         WPACKET_cleanup(&wpkt);
@@ -187,7 +239,7 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
 
         if ((mac_ctx = EVP_MAC_CTX_dup(rl->mac_ctx)) == NULL
             || !EVP_MAC_update(mac_ctx, nonce, nonce_len)
-            || !EVP_MAC_update(mac_ctx, recheader, sizeof(recheader))
+            || !EVP_MAC_update(mac_ctx, recheader, hdrlen)
             || !EVP_MAC_update(mac_ctx, rec->input, rec->length)
             || !EVP_MAC_final(mac_ctx, tag, &taglen, rl->taglen)) {
             RLAYERfatal(rl, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
@@ -226,15 +278,9 @@ static int tls13_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
      * any AAD.
      */
     if ((mode == EVP_CIPH_CCM_MODE
-            && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL,
-                   (unsigned int)rec->length)
-                <= 0)
-        || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader,
-               sizeof(recheader))
-            <= 0
-        || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input,
-               (unsigned int)rec->length)
-            <= 0
+            && EVP_CipherUpdate(enc_ctx, NULL, &lenu, NULL, (int)rec->length) <= 0)
+        || EVP_CipherUpdate(enc_ctx, NULL, &lenu, recheader, (int)hdrlen) <= 0
+        || EVP_CipherUpdate(enc_ctx, rec->data, &lenu, rec->input, (int)rec->length) <= 0
         || EVP_CipherFinal_ex(enc_ctx, rec->data + lenu, &lenf) <= 0
         || (size_t)lenu + lenf != rec->length) {
         return 0;
@@ -284,7 +330,9 @@ static int tls13_post_process_record(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *rec)
         size_t end;
 
         if (rec->length == 0
-            || rec->type != SSL3_RT_APPLICATION_DATA) {
+                    || rl->isdtls
+                ? !DTLS13_UNI_HDR_FIX_BITS_IS_SET(rec->type)
+                : rec->type != SSL3_RT_APPLICATION_DATA) {
             RLAYERfatal(rl, SSL_AD_UNEXPECTED_MESSAGE,
                 SSL_R_BAD_RECORD_TYPE);
             return 0;
@@ -322,6 +370,15 @@ static uint8_t tls13_get_record_type(OSSL_RECORD_LAYER *rl,
      * when encrypting in TLSv1.3. The "inner" record type encodes the "real"
      * record type from the template.
      */
+    if (rl->isdtls) {
+        const unsigned char fixed = DTLS13_UNI_HDR_FIX_BITS;
+        const unsigned char sbit = DTLS13_UNI_HDR_SEQ_BIT;
+        const unsigned char lbit = DTLS13_UNI_HDR_LEN_BIT;
+        const unsigned char epochbits = DTLS13_UNI_HDR_EPOCH_BITS_MASK & rl->epoch;
+
+        return fixed | sbit | lbit | epochbits;
+    }
+
     return SSL3_RT_APPLICATION_DATA;
 }
 
@@ -331,6 +388,10 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
     TLS_RL_RECORD *thiswr)
 {
     size_t rlen;
+    size_t max_frag_len = rl->max_frag_len;
+    int isdtls = rl->isdtls;
+    size_t mac_size = 0;
+    size_t taglen = rl->taglen;
 
     /* Nothing to be done in the case of a plaintext alert */
     if (rl->allow_plain_alerts && thistempl->type != SSL3_RT_ALERT)
@@ -342,11 +403,14 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
     }
     TLS_RL_RECORD_add_length(thiswr, 1);
 
+    if (rl->isdtls && rl->curr_mtu != 0 && rl->curr_mtu < max_frag_len)
+        max_frag_len = rl->curr_mtu;
+
     /* Add TLS1.3 padding */
     rlen = TLS_RL_RECORD_get_length(thiswr);
-    if (rlen < rl->max_frag_len) {
+    if (rlen < max_frag_len) {
         size_t padding = 0;
-        size_t max_padding = rl->max_frag_len - rlen;
+        size_t max_padding = max_frag_len - rlen;
 
         /*
          * We might want to change the "else if" below so that
@@ -394,6 +458,19 @@ static int tls13_add_record_padding(OSSL_RECORD_LAYER *rl,
                     padding = bp - remainder;
             }
         }
+
+        /*
+         * DTLS1.3 RFC 9147 Section 4.2.3 says records should be padded
+         * if the ciphertext is less than 16 bytes.
+         */
+        if (isdtls) {
+            if (rl->mac_ctx != NULL)
+                mac_size = EVP_MAC_CTX_get_mac_size(rl->mac_ctx);
+
+            if (padding + rlen + taglen + mac_size < DTLS13_CIPHERTEXT_MINSIZE)
+                padding += DTLS13_CIPHERTEXT_MINSIZE - (padding + rlen + taglen + mac_size);
+        }
+
         if (padding > 0) {
             /* do not allow the record to exceed max plaintext length */
             if (padding > max_padding)
@@ -428,5 +505,26 @@ const struct record_functions_st tls_1_3_funcs = {
     tls13_add_record_padding,
     tls_prepare_for_encryption_default,
     tls_post_encryption_processing_default,
+    NULL
+};
+
+const struct record_functions_st dtls_1_3_funcs = {
+    tls13_set_crypto_state,
+    tls13_cipher,
+    NULL,
+    tls_default_set_protocol_version,
+    tls_default_read_n,
+    dtls_get_more_records,
+    NULL,
+    tls13_post_process_record,
+    NULL,
+    tls_write_records_default,
+    tls_allocate_write_buffers_default,
+    tls_initialise_write_packets_default,
+    tls13_get_record_type,
+    dtls_prepare_record_header,
+    tls13_add_record_padding,
+    tls_prepare_for_encryption_default,
+    dtls_post_encryption_processing,
     NULL
 };

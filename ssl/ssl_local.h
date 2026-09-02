@@ -12,6 +12,7 @@
 #ifndef OSSL_SSL_LOCAL_H
 #define OSSL_SSL_LOCAL_H
 
+#include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
 #include <errno.h>
@@ -35,6 +36,7 @@
 #include "internal/tsan_assist.h"
 #include "internal/bio.h"
 #include "internal/ktls.h"
+#include "internal/list.h"
 #include "internal/time.h"
 #include "internal/ssl.h"
 #include "internal/cryptlib.h"
@@ -42,8 +44,27 @@
 #include "record/record.h"
 #include "internal/quic_predef.h"
 #include "internal/quic_tls.h"
+#include "internal/thread_arch.h"
+#include "internal/bio_addr.h"
+#include "internal/dtls_record_rx.h"
+#include "internal/dgram_conn_lookup.h"
+#include "internal/rio_notifier.h"
 #ifndef OPENSSL_NO_ECH
 #include "ech/ech_local.h"
+#endif
+
+/*
+ * Forward declarations for DTLS listener types. These are defined in the
+ * headers above when DTLS is enabled, but we need forward declarations
+ * for the pointer types used in structures when DTLS is disabled.
+ * DGRAM_DEMUX requires either QUIC or DTLS to be enabled.
+ */
+#if defined(OPENSSL_NO_QUIC) && defined(OPENSSL_NO_DTLS)
+typedef struct dgram_demux_st DGRAM_DEMUX;
+#endif
+#ifdef OPENSSL_NO_DTLS
+typedef struct dtls_rx_st DTLS_RX;
+typedef struct dgram_conn_lookup_st DGRAM_CONN_LOOKUP;
 #endif
 
 #ifdef OPENSSL_BUILD_SHLIBSSL
@@ -52,7 +73,7 @@
 #endif
 
 #define TLS_MAX_VERSION_INTERNAL TLS1_3_VERSION
-#define DTLS_MAX_VERSION_INTERNAL DTLS1_2_VERSION
+#define DTLS_MAX_VERSION_INTERNAL DTLS1_3_VERSION
 
 /*
  * DTLS version numbers are strange because they're inverted. Except for
@@ -65,6 +86,47 @@
 #define DTLS_VERSION_LE(v1, v2) (dtls_ver_ordinal(v1) >= dtls_ver_ordinal(v2))
 /* TLS/DTLS version for the given SSL object: XTLS(ssl, 1, 2) == TLS 1.2 or DTLS 1.2 */
 #define XTLS(ssl, m, n) (SSL_is_dtls(ssl) ? (((0xFF - m) << 8) | (0xFF - n)) : (((0x02 + m) << 8) | (0x01 + n)))
+
+/*
+ * SSL/TLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb or if either are 0 or less
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+#define TLS_VERSION_CMP(versiona, versionb)                        \
+    ((!ossl_assert((versiona) > 0) || !ossl_assert((versionb) > 0) \
+         || (versiona) == (versionb))                              \
+            ? 0                                                    \
+            : ((versiona) < (versionb) ? -1 : 1))
+/*
+ * DTLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb or if either are 0 or less
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+#define DTLS_VERSION_CMP(versiona, versionb)                       \
+    ((!ossl_assert((versiona) > 0) || !ossl_assert((versionb) > 0) \
+         || (versiona) == (versionb))                              \
+            ? 0                                                    \
+            : (DTLS_VERSION_LT((versiona),                         \
+                   (versionb))                                     \
+                      ? -1                                         \
+                      : 1))
+/*
+ * SSL/TLS/DTLS version comparison
+ *
+ * Returns
+ *      0 if versiona is equal to versionb or if either are 0 or less
+ *      1 if versiona is greater than versionb
+ *     -1 if versiona is less than versionb
+ */
+#define PROTOCOL_VERSION_CMP(isdtls, versiona, versionb) \
+    ((isdtls) ? DTLS_VERSION_CMP(versiona, versionb)     \
+              : TLS_VERSION_CMP(versiona, versionb))
 
 #define SSL_AD_NO_ALERT -1
 
@@ -163,6 +225,10 @@
 #define SSL_AESGCM (SSL_AES128GCM | SSL_AES256GCM)
 #define SSL_AESCCM (SSL_AES128CCM | SSL_AES256CCM | SSL_AES128CCM8 | SSL_AES256CCM8)
 #define SSL_AES (SSL_AES128 | SSL_AES256 | SSL_AESGCM | SSL_AESCCM)
+#define SSL_AES128_ANY (SSL_AES128 | SSL_AES128CCM | SSL_AES128CCM8 \
+    | SSL_AES128GCM)
+#define SSL_AES256_ANY (SSL_AES256 | SSL_AES256CCM | SSL_AES256CCM8 \
+    | SSL_AES256GCM)
 #define SSL_CAMELLIA (SSL_CAMELLIA128 | SSL_CAMELLIA256)
 #define SSL_CHACHA20 (SSL_CHACHA20POLY1305)
 #define SSL_ARIAGCM (SSL_ARIA128GCM | SSL_ARIA256GCM)
@@ -267,17 +333,31 @@
 #define SSL_CONNECTION_IS_DTLS(s) \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
 
+/* Check if an SSL structure is using DTLS */
+#define SSL_CONNECTION_MIDDLEBOX_IS_ENABLED(s)          \
+    ((s->options & SSL_OP_ENABLE_MIDDLEBOX_COMPAT) != 0 \
+        && !SSL_CONNECTION_IS_DTLS(s))
+
+/* Check if we are using DTLSv1.3 */
+#define SSL_CONNECTION_IS_DTLS13(s) (SSL_CONNECTION_IS_DTLS(s)                      \
+    && DTLS_VERSION_GE(SSL_CONNECTION_GET_SSL(s)->method->version, DTLS1_3_VERSION) \
+    && SSL_CONNECTION_GET_SSL(s)->method->version != DTLS_ANY_VERSION)
+
 /* Check if an SSL_CTX structure is using DTLS */
 #define SSL_CTX_IS_DTLS(ctx) \
-    (ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS)
+    ((ctx->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_DTLS) != 0)
 
 /* Check if we are using TLSv1.3 */
 #define SSL_CONNECTION_IS_TLS13(s) (!SSL_CONNECTION_IS_DTLS(s)      \
     && SSL_CONNECTION_GET_SSL(s)->method->version >= TLS1_3_VERSION \
     && SSL_CONNECTION_GET_SSL(s)->method->version != TLS_ANY_VERSION)
 
+/* Check if we are using (D)TLSv1.3 */
+#define SSL_CONNECTION_IS_VERSION13(s) \
+    (SSL_CONNECTION_IS_DTLS13(s) || SSL_CONNECTION_IS_TLS13(s))
+
 #define SSL_CONNECTION_TREAT_AS_TLS13(s)                         \
-    (SSL_CONNECTION_IS_TLS13(s)                                  \
+    (SSL_CONNECTION_IS_VERSION13(s)                              \
         || (s)->early_data_state == SSL_EARLY_DATA_CONNECTING    \
         || (s)->early_data_state == SSL_EARLY_DATA_CONNECT_RETRY \
         || (s)->early_data_state == SSL_EARLY_DATA_WRITING       \
@@ -293,12 +373,6 @@
  */
 #define SSL_USE_SIGALGS(s) \
     (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_SIGALGS)
-/*
- * Allow TLS 1.2 ciphersuites: applies to DTLS 1.2 as well as TLS 1.2: may
- * apply to others in future.
- */
-#define SSL_USE_TLS1_2_CIPHERS(s) \
-    (SSL_CONNECTION_GET_SSL(s)->method->ssl3_enc->enc_flags & SSL_ENC_FLAG_TLS1_2_CIPHERS)
 
 #define IS_MAX_FRAGMENT_LENGTH_EXT_VALID(value) \
     (((value) >= TLSEXT_max_fragment_length_512) && ((value) <= TLSEXT_max_fragment_length_4096))
@@ -314,7 +388,7 @@
 #define SSL_IS_QUIC_INT_HANDSHAKE(s) (((s)->s3.flags & TLS1_FLAGS_QUIC_INTERNAL) != 0)
 
 /* no end of early data */
-#define SSL_NO_EOED(s) SSL_IS_QUIC_HANDSHAKE(s)
+#define SSL_NO_EOED(s) (SSL_IS_QUIC_HANDSHAKE(s) || SSL_CONNECTION_IS_DTLS13(s))
 
 /* alert_dispatch values */
 
@@ -387,7 +461,7 @@ typedef enum {
     SSL_PHA_REQUESTED /* request received by client, or sent by server */
 } SSL_PHA_STATE;
 
-/* CipherSuite length. SSLv3 and all TLS versions. */
+/* CipherSuite value length. */
 #define TLS_CIPHER_LEN 2
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
@@ -447,7 +521,7 @@ struct ssl_method_st {
     int (*num_ciphers)(void);
     const SSL_CIPHER *(*get_cipher)(unsigned ncipher);
     OSSL_TIME (*get_timeout)(void);
-    const struct ssl3_enc_method *ssl3_enc; /* Extra SSLv3/TLS stuff */
+    const struct ssl3_enc_method *ssl3_enc; /* Extra TLS stuff */
     int (*ssl_version)(void);
     long (*ssl_callback_ctrl)(SSL *s, int cb_id, void (*fp)(void));
     long (*ssl_ctx_callback_ctrl)(SSL_CTX *s, int cb_id, void (*fp)(void));
@@ -517,6 +591,21 @@ struct ssl_session_st {
      * to disable session caching and tickets.
      */
     int not_resumable;
+    /*
+     * Set when this session's master key was resolved from an external PSK
+     * identity (psk_find_session_cb(), or the legacy psk_server_callback())
+     * rather than from a resumption ticket or session-cache lookup.
+     * ssl_get_prev_session() uses this to exempt such sessions from sid_ctx
+     * checks that only make sense for a real cache lookup.
+     *
+     * Deliberately not part of the SSL_SESSION ASN.1 encoding: it must not
+     * survive a real ticket round-trip (a session reconstructed by
+     * d2i_SSL_SESSION() from a genuine, previously-issued ticket is by
+     * definition not an external-PSK match, and should get the ordinary
+     * sid_ctx treatment). ssl_session_dup() resets it to 0 on every copy,
+     * mirroring not_resumable just above, for the same reason.
+     */
+    int psk_external;
     /* Peer raw public key, if available */
     EVP_PKEY *peer_rpk;
     /* This is the cert and type for the other end. */
@@ -701,7 +790,6 @@ typedef enum tlsext_index_en {
     TLSEXT_IDX_outer_extensions,
     TLSEXT_IDX_grease1,
     TLSEXT_IDX_grease2,
-    TLSEXT_IDX_padding,
     TLSEXT_IDX_psk,
     /* Dummy index - must always be the last entry */
     TLSEXT_IDX_num_builtins
@@ -798,16 +886,6 @@ typedef struct {
     int pkey_nid; /* NID of public key algorithm */
     uint32_t amask; /* authmask corresponding to key type */
 } SSL_CERT_LOOKUP;
-
-/* flags values */
-#define TLS_GROUP_TYPE 0x0000000FU /* Mask for group type */
-#define TLS_GROUP_CURVE_PRIME 0x00000001U
-#define TLS_GROUP_CURVE_CHAR2 0x00000002U
-#define TLS_GROUP_CURVE_CUSTOM 0x00000004U
-#define TLS_GROUP_FFDHE 0x00000008U
-#define TLS_GROUP_ONLY_FOR_TLS1_3 0x00000010U
-
-#define TLS_GROUP_FFDHE_FOR_TLS1_3 (TLS_GROUP_FFDHE | TLS_GROUP_ONLY_FOR_TLS1_3)
 
 #if !defined(OPENSSL_NO_TLS1)      \
     || !defined(OPENSSL_NO_TLS1_1) \
@@ -927,11 +1005,8 @@ struct ssl_ctx_st {
 
     CRYPTO_EX_DATA ex_data;
 
-    const EVP_MD *md5; /* For SSLv3/TLSv1 'ssl3-md5' */
-    const EVP_MD *sha1; /* For SSLv3/TLSv1 'ssl3-sha1' */
-
     STACK_OF(X509) *extra_certs;
-    STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, SSLv3/TLSv1 */
+    STACK_OF(SSL_COMP) *comp_methods; /* stack of SSL_COMP, TLSv1 */
 
     /* Default values used when no per-SSL value is defined follow */
 
@@ -1041,10 +1116,6 @@ struct ssl_ctx_st {
         int status_type;
         /* RFC 4366 Maximum Fragment Length Negotiation */
         uint8_t max_fragment_len_mode;
-
-        /* EC extension values inherited by SSL structure */
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats;
 
         size_t supportedgroups_len;
         uint16_t *supportedgroups;
@@ -1254,8 +1325,11 @@ typedef struct cert_pkey_st CERT_PKEY;
 #define SSL_TYPE_QUIC_XSO 0x81
 #define SSL_TYPE_QUIC_LISTENER 0x82
 #define SSL_TYPE_QUIC_DOMAIN 0x83
+#define SSL_TYPE_DTLS_LISTENER 0x01
 
 #define SSL_TYPE_IS_QUIC(x) (((x) & 0x80) != 0)
+#define IS_DTLS_LISTENER(ssl) \
+    ((ssl) != NULL && (ssl)->type == SSL_TYPE_DTLS_LISTENER)
 
 struct ssl_st {
     int type;
@@ -1279,10 +1353,17 @@ struct ssl_connection_st {
     SSL *user_ssl;
 
     /*
-     * protocol version (one of SSL2_VERSION, SSL3_VERSION, TLS1_VERSION,
-     * DTLS1_VERSION)
+     * protocol version (one of TLS1_VERSION, TLS1_1_VERSION, TLS1_2_VERSION,
+     * TLS1_3_VERSION, DTLS1_VERSION, DTLS1_2_VERSION, DTLS1_3_VERSION)
      */
     int version;
+
+    /*
+     * The negotiated version for the connection. Initially PROTO_VERSION_UNSET.
+     * Set by ssl_set_negotiated_protocol_version().
+     */
+    int negotiated_version;
+
     /*
      * There are 2 BIO's even though they are normally both the same.  This
      * is so data can be read and written to different handlers
@@ -1375,13 +1456,15 @@ struct ssl_connection_st {
         int in_read_app_data;
 
         struct {
-            /* actually only need to be 16+20 for SSLv3 and 12 for TLS */
+            /* actually only need to be 12 for TLS */
             unsigned char finish_md[EVP_MAX_MD_SIZE * 2];
             size_t finish_md_len;
             unsigned char peer_finish_md[EVP_MAX_MD_SIZE * 2];
             size_t peer_finish_md_len;
             size_t message_size;
             int message_type;
+            uint64_t record_epoch;
+            uint64_t record_seq_num;
             /* used to hold the new cipher we are going to use */
             const SSL_CIPHER *new_cipher;
             EVP_PKEY *pkey; /* holds short lived key exchange key */
@@ -1399,6 +1482,7 @@ struct ssl_connection_st {
             size_t key_block_length;
             unsigned char *key_block;
             const EVP_CIPHER *new_sym_enc;
+            const EVP_CIPHER *new_sym_enc_sn;
             const EVP_MD *new_hash;
             int new_mac_pkey_type;
             size_t new_mac_secret_size;
@@ -1626,7 +1710,7 @@ struct ssl_connection_st {
     int first_packet;
     /*
      * What was passed in ClientHello.legacy_version. Used for RSA pre-master
-     * secret and SSLv3/TLS (<=1.2) rollback check
+     * secret and (D)TLS (<=1.2) rollback check
      */
     int client_version;
     /*
@@ -1657,8 +1741,6 @@ struct ssl_connection_st {
         unsigned char *scts;
         /* Length of raw extension data, if seen */
         uint16_t scts_len;
-        /* Expect OCSP CertificateStatus message */
-        int status_expected;
 
         struct {
             /* OCSP status request only */
@@ -1670,15 +1752,16 @@ struct ssl_connection_st {
             STACK_OF(OCSP_RESPONSE) *resp_ex;
         } ocsp;
 
-        /* RFC4507 session ticket expected to be received or sent */
-        int ticket_expected;
         /* TLS 1.3 tickets requested by the application. */
         int extra_tickets_expected;
 
-        /* our list */
-        size_t ecpointformats_len;
-        unsigned char *ecpointformats;
-        /* peer's list */
+        /*
+         * Peer's advertised ec_point_formats list (TLS 1.2 and below),
+         * retained as received so SSL_get0_ec_point_formats() can return
+         * it verbatim.  Point format no longer influences cert selection
+         * or acceptance; the parse hook validates RFC 4492/8422 section
+         * 5.1.2 ("uncompressed" must be present) inline.
+         */
         size_t peer_ecpointformats_len;
         unsigned char *peer_ecpointformats;
 
@@ -1723,19 +1806,12 @@ struct ssl_connection_st {
         /* The available PSK key exchange modes */
         int psk_kex_mode;
 
-        /* Set to one if we have negotiated ETM */
-        int use_etm;
-
         /* Are we expecting to receive early data? */
         int early_data;
-        /* Is the session suitable for early data? */
-        int early_data_ok;
 
         /* May be sent by a server in HRR. Must be echoed back in ClientHello */
         unsigned char *tls13_cookie;
         size_t tls13_cookie_len;
-        /* Have we received a cookie from the client? */
-        int cookieok;
 
         /*
          * Maximum Fragment Length as per RFC 4366.
@@ -1755,10 +1831,25 @@ struct ssl_connection_st {
          */
         int tick_identity;
 
+        /*
+         * Cached result of the resumption ticket age/lifetime check for the
+         * ClientHello under construction. Time-dependent, double-checked
+         * within the same flight (see tls13_check_tick_lifetime_hint()).
+         */
+        uint32_t tick_age_ms;
+
+        /*
+         * The first-offered PSK, the one that keys any 0-RTT, recorded while
+         * the ClientHello is built -- the resumption session when we offer it,
+         * else the external psksession; NULL when no 0-RTT is offered. Held
+         * (up-ref'd) so it stays valid across the post-ServerHello swap, and
+         * read by the binder, the early-key derivation, the early exporter and
+         * the byte-budget lookup. Freed at handshake reset and connection free.
+         */
+        SSL_SESSION *early_data_session;
+
         /* This is the list of algorithms the peer supports that we also support */
         int compress_certificate_from_peer[TLSEXT_comp_cert_limit];
-        /* indicate that we sent the extension, so we'll accept it */
-        int compress_certificate_sent;
 
         uint8_t client_cert_type;
         uint8_t client_cert_type_ctos;
@@ -1771,7 +1862,38 @@ struct ssl_connection_st {
 
         /* RFC 8701 GREASE */
         uint8_t grease_seed[OSSL_GREASE_LAST_INDEX + 1];
-        int grease_seeded;
+
+        /* "bool" fields go last, for slightly better packing */
+        bool grease_seeded;
+
+        /* Expect OCSP CertificateStatus message */
+        bool status_expected;
+
+        /* RFC4507 session ticket expected to be received or sent */
+        bool ticket_expected;
+
+        /* Set to one if we have negotiated ETM */
+        bool use_etm;
+
+        /* Is the session perhaps suitable for early data? */
+        bool early_data_ok;
+
+        /* Was the session found unsuitable for early data? */
+        bool early_data_suppressed;
+
+        /*
+         * Cached result of the resumption ticket age/lifetime check for the
+         * ClientHello under construction. Time-dependent, double-checked
+         * within the same flight (see tls13_check_tick_lifetime_hint()).
+         */
+        bool tick_age_checked;
+        bool tick_age_ok;
+
+        /* Have we received a cookie from the client? */
+        bool cookieok;
+
+        /* indicate that we sent the extension, so we'll accept it */
+        bool compress_certificate_sent;
     } ext;
 
     /*
@@ -1898,6 +2020,9 @@ struct ssl_connection_st {
     size_t client_cert_type_len;
     unsigned char *server_cert_type;
     size_t server_cert_type_len;
+
+    /* DTLS 1.3 needs to know when we have processed the Client/Server Hello */
+    int dtls13_process_hello;
 };
 
 /*
@@ -1934,6 +2059,12 @@ typedef struct sigalg_lookup_st {
     int maxdtls;
 } SIGALG_LOOKUP;
 
+typedef enum downgrade_en {
+    DOWNGRADE_NONE,
+    DOWNGRADE_TO_1_2,
+    DOWNGRADE_TO_1_1
+} DOWNGRADE;
+
 /* DTLS structures */
 
 #ifndef OPENSSL_NO_SCTP
@@ -1954,8 +2085,6 @@ struct hm_header_st {
     unsigned short seq;
     size_t frag_off;
     size_t frag_len;
-    unsigned int is_ccs;
-    struct dtls1_retransmit_state saved_retransmit_state;
 };
 
 typedef struct hm_fragment_st {
@@ -1967,6 +2096,11 @@ typedef struct hm_fragment_st {
 typedef struct pqueue_st pqueue;
 typedef struct pitem_st pitem;
 
+struct pqueue_st {
+    pitem *items;
+    int count;
+};
+
 struct pitem_st {
     unsigned char priority[8]; /* 64-bit value in big-endian encoding */
     void *data;
@@ -1976,6 +2110,7 @@ struct pitem_st {
 typedef struct pitem_st *piterator;
 
 pitem *pitem_new(unsigned char *prio64be, void *data);
+pitem *pitem_new_u64(uint64_t prio, void *data);
 void pitem_free(pitem *item);
 pqueue *pqueue_new(void);
 void pqueue_free(pqueue *pq);
@@ -1983,9 +2118,61 @@ pitem *pqueue_insert(pqueue *pq, pitem *item);
 pitem *pqueue_peek(pqueue *pq);
 pitem *pqueue_pop(pqueue *pq);
 pitem *pqueue_find(pqueue *pq, unsigned char *prio64be);
+pitem *pqueue_find_u64(pqueue *pq, uint64_t prio);
 pitem *pqueue_iterator(pqueue *pq);
 pitem *pqueue_next(piterator *iter);
 size_t pqueue_size(pqueue *pq);
+
+typedef struct dtls_msg_info_st {
+    unsigned char record_type;
+    unsigned char msg_type;
+    size_t msg_body_len;
+    unsigned short msg_seq;
+} dtls_msg_info;
+
+/* rfc9147, section 4 */
+typedef struct dtls1_record_number_st DTLS1_RECORD_NUMBER;
+
+struct dtls1_record_number_st {
+    uint64_t epoch;
+    uint64_t seqnum;
+    OSSL_LIST_MEMBER(record_number, DTLS1_RECORD_NUMBER);
+};
+
+DEFINE_LIST_OF(record_number, DTLS1_RECORD_NUMBER);
+
+DTLS1_RECORD_NUMBER *dtls1_record_number_new(uint64_t epoch, uint64_t seqnum);
+
+void ossl_list_record_number_elem_free(OSSL_LIST(record_number) * p_list);
+
+typedef struct dtls_sent_msg_st {
+    dtls_msg_info msg_info;
+    OSSL_LIST(record_number)
+    rec_nums;
+    unsigned char *msg_buf;
+    struct dtls1_retransmit_state saved_retransmit_state;
+} dtls_sent_msg;
+
+int dtls_any_sent_messages_are_missing_acknowledge(SSL_CONNECTION *s);
+
+static ossl_inline int dtls_msg_needs_ack(int sentbyserver, unsigned char msgtype)
+{
+    switch (msgtype) {
+    case SSL3_MT_NEWSESSION_TICKET:
+    case SSL3_MT_KEY_UPDATE:
+        return 1;
+
+    case SSL3_MT_CERTIFICATE:
+    case SSL3_MT_COMPRESSED_CERTIFICATE:
+    case SSL3_MT_CERTIFICATE_VERIFY:
+    case SSL3_MT_FINISHED:
+        if (!sentbyserver)
+            return 1;
+        /* fall-through */
+    default:
+        return 0;
+    }
+}
 
 typedef struct dtls1_state_st {
     unsigned char cookie[DTLS1_COOKIE_LENGTH];
@@ -1995,14 +2182,19 @@ typedef struct dtls1_state_st {
     unsigned short handshake_write_seq;
     unsigned short next_handshake_write_seq;
     unsigned short handshake_read_seq;
-    /* Buffered handshake messages */
-    pqueue *buffered_messages;
+    /* Buffered received handshake messages */
+    pqueue rcvd_messages;
     /* Buffered (sent) handshake records */
-    pqueue *sent_messages;
+    pqueue sent_messages;
+    /* Flag to indicate current HelloVerifyRequest status */
+    enum { SSL_HVR_NONE = 0,
+        SSL_HVR_RECEIVED,
+        SSL_HVR_SENT } hello_verify_request;
+    DOWNGRADE downgrade_after_hvr; /* Only used by a stateful server */
     size_t link_mtu; /* max on-the-wire DTLS packet size */
     size_t mtu; /* max DTLS packet size */
-    struct hm_header_st w_msg_hdr;
-    struct hm_header_st r_msg_hdr;
+    dtls_msg_info w_msg;
+    unsigned short r_msg_seq;
     /* Number of alerts received so far */
     unsigned int timeout_num_alerts;
     /*
@@ -2018,9 +2210,222 @@ typedef struct dtls1_state_st {
     int shutdown_received;
 #endif
 
+    /* Sequence numbers that are to be acknowledged */
+    OSSL_LIST(record_number)
+    ack_rec_num;
+
     DTLS_timer_cb timer_cb;
 
+#ifndef OPENSSL_NO_SOCK
+    /*
+     * Peer address for listener-created connections. When set, the record
+     * layer will use BIO_sendmmsg() with this address for writes instead
+     * of BIO_write(). This allows multiple connections to share the
+     * listener's network BIO.
+     */
+    BIO_ADDR peer_addr;
+#endif
+
+#ifndef OPENSSL_NO_DTLS
+    /*
+     * DTLS_RX structure is used by the DTLS Listener and
+     * contains the DGRAM_DEMUX and DGRAM_URXE_LIST of
+     * pending packets.
+     */
+    DTLS_RX *rx;
+
+    /*
+     * Reference to the parent listener for connections created via
+     * SSL_accept_connection(). This allows the connection to trigger
+     * the listener's demux pump when reading data.
+     */
+    SSL *listener;
+
+    /*
+     * Timestamp when this connection was created (for listener-created
+     * connections). Used to detect and clean up stale pending connections
+     * that haven't completed their handshake within the timeout period.
+     */
+    OSSL_TIME created_at;
+
+    /*
+     * Set when this connection is being driven by dtls_listener_drive_pending().
+     * Used to prevent multiple threads from driving the same connection
+     * concurrently and to allow the demux pump to be called without holding
+     * the listener mutex.
+     */
+    unsigned int being_driven : 1;
+
+    /*
+     * Blocking mode requested for this connection, as a DTLS_BLOCKING_MODE.
+     * Defaults to inheriting from the listener it came from.
+     */
+    unsigned int req_blocking_mode : 2;
+
+    /*
+     * Set while the listener itself is driving this connection's handshake, to
+     * stop it blocking. The listener drives pending connections from inside its
+     * own tick, so a connection which blocked there would stop the listener
+     * making any further progress, including the progress being waited for.
+     */
+    unsigned int force_nonblocking : 1;
+#endif
+
 } DTLS1_STATE;
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+/*
+ * Blocking mode of a DTLS listener or of a connection created from one.
+ *
+ * A connection set to INHERIT follows its listener, and a listener set to
+ * INHERIT means blocking, so blocking is the default throughout unless an
+ * application asks otherwise. This mirrors QUIC_BLOCKING_MODE.
+ */
+enum {
+    DTLS_BLOCKING_MODE_INHERIT,
+    DTLS_BLOCKING_MODE_NONBLOCKING,
+    DTLS_BLOCKING_MODE_BLOCKING
+};
+
+/*
+ * Define stack of SSL for DTLS listener incoming connections.
+ */
+DEFINE_STACK_OF(SSL)
+
+/*
+ * Default maximum number of pending connections for DTLS listeners.
+ */
+#define DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS 256
+
+/*
+ * Default maximum size in bytes of a datagram a DTLS listener will receive.
+ * A DTLS 1.3 ClientHello carrying large (e.g. post-quantum) key shares can
+ * exceed the 1500-byte Ethernet MTU; default a little above it so that such a
+ * ClientHello, when sent unfragmented, is received whole rather than truncated.
+ * Applied to the listener's demuxer.
+ */
+#define DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE 2000
+
+/*
+ * Upper bound for the DTLS listener receive datagram size: nothing larger than
+ * the maximum UDP payload can ever arrive. It may be raised up to this ceiling
+ * via SSL_set_value_uint(SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE).
+ */
+#define DTLS_LISTENER_MAX_DGRAM_SIZE 65535
+
+/*
+ * DTLS listener SSL object type. This implements the API personality
+ * layer for DTLS listener objects, providing server-side connection
+ * demultiplexing for DTLS 1.3.
+ */
+typedef struct dtls_listener_st {
+    /* SSL object common header. */
+    struct ssl_st ssl;
+
+    /*
+     * Mutex protecting listener-owned data structures accessed across threads:
+     * - pending_conns: pending connection lookup table
+     * - established_conns: established connection lookup table
+     * - incoming_connections: queue of completed connections awaiting accept
+     *
+     * Accessed from:
+     * - Listener thread: packet handling, driving handshakes
+     * - Connection thread: unregistering via SSL_free -> dtls1_free
+     */
+    CRYPTO_MUTEX *mutex;
+
+    /* Datagram demultiplexer for incoming connections. */
+    DGRAM_DEMUX *demux;
+
+    /* The network BIOs for sending and receiving datagrams. */
+    BIO *net_rbio;
+    BIO *net_wbio;
+
+    /* Queue of incoming connections awaiting accept. */
+    STACK_OF(SSL) *incoming_connections;
+
+    /*
+     * Use DGRAM_CONN_LOOKUP to find pending connections.
+     */
+    DGRAM_CONN_LOOKUP *pending_conns;
+
+    /*
+     * Use DGRAM_CONN_LOOKUP to keep track of established connections.
+     */
+    DGRAM_CONN_LOOKUP *established_conns;
+
+    /* Have we started listening yet? */
+    TSAN_QUALIFIER int listening;
+
+    /*
+     * Set by ossl_dtls_tick() when the network BIO returns a hard error.
+     * Once set, ossl_dtls_accept_connection() returns NULL immediately.
+     */
+    int fatal;
+
+    /* Require HelloVerifyRequest + cookie for DTLS 1.0/1.2 */
+    unsigned int require_hvr_cookie : 1;
+
+    /* Require HelloRetryRequest + cookie for DTLS 1.3 */
+    unsigned int require_hrr_cookie : 1;
+
+    /* Using the notifier architecture */
+    unsigned int have_notifier : 1;
+
+    /* Notifier has been signalled */
+    int signalled_notifier;
+
+    /*
+     * Time callback for customizable time source (primarily for testing).
+     * If NULL, ossl_time_now() is used.
+     */
+    OSSL_TIME (*now_cb)(void *arg);
+    void *now_cb_arg;
+
+    /*
+     * Timeout for pending connections. Connections that haven't completed
+     * their handshake within this duration are considered stale and removed.
+     * Default: 30 seconds. Set to ossl_time_infinite() to disable.
+     */
+    OSSL_TIME pending_timeout;
+
+    /*
+     * Maximum number of pending connections allowed.
+     * When this limit is reached, new connection attempts are rejected.
+     *
+     * Default: DTLS_LISTENER_DEFAULT_MAX_PENDING_CONNS
+     * This limit cannot be disabled.
+     */
+    size_t max_pending_conns;
+
+    /*
+     * Largest datagram the listener will receive, chosen by the application.
+     *
+     * Default: DTLS_LISTENER_DEFAULT_MAX_DGRAM_SIZE
+     */
+    size_t max_dgram_size;
+
+    CRYPTO_CONDVAR *notifier_cv;
+
+    /*
+     * Notifier for signaling events related to this listener.
+     */
+    RIO_NOTIFIER notifier;
+
+    /*
+     * Count of threads currently blocked waiting in poll().
+     */
+    size_t cur_blocking_waiters;
+
+    /*
+     * Blocking mode requested for this listener, as a DTLS_BLOCKING_MODE.
+     * INHERIT here means blocking, there being nothing further to inherit
+     * from.
+     */
+    unsigned int req_blocking_mode : 2;
+} DTLS_LISTENER;
+
+#endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 /*
  * From ECC-TLS draft, used in encoding the curve type in ECParameters
@@ -2183,8 +2588,7 @@ typedef struct cert_st {
 } CERT;
 
 /*
- * This is for the SSLv3/TLSv1.0 differences in crypto/hash stuff It is a bit
- * of a mess of functions, but hell, think of it as an opaque structure :-)
+ * This is for the TLSv1.0 differences in crypto/hash stuff.
  */
 typedef struct ssl3_enc_method {
     int (*setup_key_block)(SSL_CONNECTION *);
@@ -2232,12 +2636,6 @@ typedef struct ssl3_enc_method {
  */
 #define SSL_ENC_FLAG_TLS1_2_CIPHERS 0x10
 
-typedef enum downgrade_en {
-    DOWNGRADE_NONE,
-    DOWNGRADE_TO_1_2,
-    DOWNGRADE_TO_1_1
-} DOWNGRADE;
-
 /*
  * Dummy status type for the status_type extension. Indicates no status type
  * set
@@ -2282,6 +2680,9 @@ __owur const SSL_METHOD *dtls_bad_ver_client_method(void);
 __owur const SSL_METHOD *dtlsv1_2_method(void);
 __owur const SSL_METHOD *dtlsv1_2_server_method(void);
 __owur const SSL_METHOD *dtlsv1_2_client_method(void);
+__owur const SSL_METHOD *dtlsv1_3_method(void);
+__owur const SSL_METHOD *dtlsv1_3_server_method(void);
+__owur const SSL_METHOD *dtlsv1_3_client_method(void);
 
 extern const SSL3_ENC_METHOD TLSv1_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_1_enc_data;
@@ -2289,6 +2690,7 @@ extern const SSL3_ENC_METHOD TLSv1_2_enc_data;
 extern const SSL3_ENC_METHOD TLSv1_3_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_enc_data;
 extern const SSL3_ENC_METHOD DTLSv1_2_enc_data;
+extern const SSL3_ENC_METHOD DTLSv1_3_enc_data;
 
 /*
  * Flags for SSL methods
@@ -2480,16 +2882,20 @@ __owur int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
 void ssl_update_cache(SSL_CONNECTION *s, int mode);
 __owur int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     const EVP_CIPHER **enc);
+__owur int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
+    const EVP_CIPHER **enc);
 __owur int ssl_cipher_get_evp_md_mac(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     const EVP_MD **md,
     int *mac_pkey_type, size_t *mac_secret_size);
-__owur int ssl_cipher_get_evp(SSL_CTX *ctxc, const SSL_SESSION *s,
-    const EVP_CIPHER **enc, const EVP_MD **md,
+__owur int ssl_cipher_get_evp(SSL_CTX *ctx, const SSL_SESSION *s,
+    const EVP_CIPHER **snenc,
+    const EVP_CIPHER **enc,
+    const EVP_MD **md,
     int *mac_pkey_type, size_t *mac_secret_size,
     SSL_COMP **comp, int use_etm);
-__owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, size_t *mac_overhead,
-    size_t *int_overhead, size_t *blocksize,
-    size_t *ext_overhead);
+__owur int ssl_cipher_get_overhead(const SSL_CIPHER *c, int version,
+    size_t *mac_overhead, size_t *int_overhead,
+    size_t *blocksize, size_t *ext_overhead);
 __owur int ssl_cert_is_disabled(SSL_CTX *ctx, size_t idx);
 __owur const SSL_CIPHER *ssl_get_cipher_by_char(SSL_CONNECTION *ssl,
     const unsigned char *ptr,
@@ -2506,7 +2912,6 @@ void ssl_cert_set_cert_cb(CERT *c, int (*cb)(SSL *ssl, void *arg), void *arg);
 
 __owur int ssl_verify_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk);
 __owur int ssl_verify_rpk(SSL_CONNECTION *s, EVP_PKEY *rpk);
-__owur int ssl_verify_ocsp(SSL *s, STACK_OF(X509) *sk);
 __owur int ssl_build_cert_chain(SSL_CONNECTION *s, SSL_CTX *ctx, int flags);
 __owur int ssl_cert_set_cert_store(CERT *c, X509_STORE *store, int chain,
     int ref);
@@ -2631,25 +3036,22 @@ __owur int ssl_get_min_max_version(const SSL_CONNECTION *s, int *min_version,
     int *max_version, int *real_max);
 
 __owur OSSL_TIME tls1_default_timeout(void);
-__owur int dtls1_do_write(SSL_CONNECTION *s, uint8_t type);
-void dtls1_set_message_header(SSL_CONNECTION *s,
-    unsigned char mt,
-    size_t len,
-    size_t frag_off, size_t frag_len);
+__owur int dtls1_do_write(SSL_CONNECTION *s, uint8_t recordtype);
 
 int dtls1_write_app_data_bytes(SSL *s, uint8_t type, const void *buf_,
     size_t len, size_t *written);
+int dtls13_transcript_hash_update(EVP_MD_CTX *mdctx,
+    const unsigned char *buf, size_t len);
 
 __owur int dtls1_read_failed(SSL_CONNECTION *s, int code);
-__owur int dtls1_buffer_message(SSL_CONNECTION *s, int ccs);
-__owur int dtls1_retransmit_message(SSL_CONNECTION *s, unsigned short seq,
-    int *found);
-__owur int dtls1_get_queue_priority(unsigned short seq, int is_ccs);
-int dtls1_retransmit_buffered_messages(SSL_CONNECTION *s);
+__owur int dtls1_buffer_sent_message(SSL_CONNECTION *s, int record_type);
+__owur int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg);
+void dtls1_get_queue_priority(unsigned char *prio64be, unsigned short seq,
+    int record_type);
+int dtls1_retransmit_sent_messages(SSL_CONNECTION *s);
 void dtls1_clear_received_buffer(SSL_CONNECTION *s);
-void dtls1_clear_sent_buffer(SSL_CONNECTION *s);
-void dtls1_get_message_header(const unsigned char *data,
-    struct hm_header_st *msg_hdr);
+void dtls1_clear_sent_buffer(SSL_CONNECTION *s, int keep_unacked_msgs);
+void dtls1_acknowledge_sent_buffer(SSL_CONNECTION *s, uint64_t before_epoch);
 __owur OSSL_TIME dtls1_default_timeout(void);
 __owur int dtls1_get_timeout(const SSL_CONNECTION *s, OSSL_TIME *timeleft);
 __owur int dtls1_check_timeout_num(SSL_CONNECTION *s);
@@ -2657,11 +3059,67 @@ __owur int dtls1_handle_timeout(SSL_CONNECTION *s);
 void dtls1_start_timer(SSL_CONNECTION *s);
 void dtls1_stop_timer(SSL_CONNECTION *s);
 __owur int dtls1_is_timer_expired(SSL_CONNECTION *s);
+void dtls1_clear_current_wrl_from_sent_buffer(SSL_CONNECTION *s);
 __owur int dtls_raw_hello_verify_request(WPACKET *pkt, unsigned char *cookie,
     size_t cookie_len);
 __owur size_t dtls1_min_mtu(SSL_CONNECTION *s);
 void dtls1_hm_fragment_free(hm_fragment *frag);
+void dtls1_sent_msg_free(dtls_sent_msg *msg);
 __owur int dtls1_query_mtu(SSL_CONNECTION *s);
+
+#if !defined(OPENSSL_NO_DTLS) && !defined(OPENSSL_NO_SOCK)
+SSL *ossl_dtls_new_listener(SSL_CTX *ctx, uint64_t flags);
+void ossl_dtls_listener_free(SSL *ssl);
+SSL *ossl_dtls_get0_listener(const SSL *ssl);
+int ossl_dtls_listen(SSL *ssl);
+SSL *ossl_dtls_accept_connection(SSL *ssl, uint64_t flags);
+void ossl_dtls_listener_set0_net_rbio(SSL *s, BIO *bio);
+void ossl_dtls_listener_set0_net_wbio(SSL *s, BIO *bio);
+BIO *ossl_dtls_listener_get_net_rbio(const SSL *s);
+BIO *ossl_dtls_listener_get_net_wbio(const SSL *s);
+
+/* Established connections API - these handle their own locking */
+SSL *ossl_dtls_listener_find_established_conn(DTLS_LISTENER *dl,
+    const DGRAM_URXE *urxe);
+void ossl_dtls_listener_unregister_established_conn(SSL *s,
+    const BIO_ADDR *peer_addr);
+void ossl_dtls_listener_clear_established_conns(DTLS_LISTENER *dl);
+
+size_t ossl_dtls_get_accept_connection_queue_len(SSL *ssl);
+int ossl_dtls_listener_set_override_now_cb(SSL *s,
+    OSSL_TIME (*now_cb)(void *arg),
+    void *now_cb_arg);
+
+int ossl_dtls_get_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t *value);
+int ossl_dtls_set_value_uint(SSL *s, uint32_t class_, uint32_t id, uint64_t value);
+
+/* DTLS poll event functions - used by SSL_poll() */
+int ossl_dtls_listener_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents);
+int ossl_dtls_conn_poll_events(SSL *s, uint64_t events, int do_tick,
+    uint64_t *revents);
+void ossl_dtls_listener_enter_blocking_section(SSL *s);
+void ossl_dtls_listener_leave_blocking_section(SSL *s);
+int ossl_dtls_block_until_ready(SSL *ssl, uint64_t events, OSSL_TIME deadline,
+    int bound_by_event_timeout);
+int ossl_dtls_blocking(const SSL *s);
+int ossl_dtls_set_blocking_mode(SSL *s, int blocking);
+int ossl_dtls_get_blocking_mode(const SSL *s);
+int ossl_dtls_conn_wait_for_datagram(SSL *s);
+int ossl_dtls_conn_wait_for_write(SSL *s);
+int ossl_dtls_tick(DTLS_LISTENER *dl);
+
+/* DTLS Listener internal cookie callbacks */
+int ossl_dtls_listener_gen_cookie_cb(SSL *ssl, unsigned char *cookie,
+    unsigned int *cookie_len);
+int ossl_dtls_listener_verify_cookie_cb(SSL *ssl, const unsigned char *cookie,
+    unsigned int cookie_len);
+int ossl_dtls_listener_gen_stateless_cookie_cb(SSL *ssl, unsigned char *cookie,
+    size_t *cookie_len);
+int ossl_dtls_listener_verify_stateless_cookie_cb(SSL *ssl,
+    const unsigned char *cookie,
+    size_t cookie_len);
+#endif /* !OPENSSL_NO_DTLS && !OPENSSL_NO_SOCK */
 
 __owur int tls1_new(SSL *s);
 void tls1_free(SSL *s);
@@ -2821,10 +3279,9 @@ __owur int ssl_validate_ct(SSL_CONNECTION *s);
 
 __owur EVP_PKEY *ssl_get_auto_dh(SSL_CONNECTION *s);
 
-__owur int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int vfy,
-    int is_ee);
+__owur int ssl_security_cert(SSL_CONNECTION *s, SSL_CTX *ctx, X509 *x, int is_ee);
 __owur int ssl_security_cert_chain(SSL_CONNECTION *s, STACK_OF(X509) *sk,
-    X509 *ex, int vfy);
+    X509 *ex);
 
 int tls_choose_sigalg(SSL_CONNECTION *s, int fatalerrs);
 
@@ -2843,7 +3300,7 @@ __owur int tls_check_sigalg_curve(const SSL_CONNECTION *s, int curve);
 __owur int tls12_check_peer_sigalg(SSL_CONNECTION *s, uint16_t, EVP_PKEY *pkey);
 __owur int ssl_set_client_disabled(SSL_CONNECTION *s);
 __owur int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
-    int op, int echde);
+    int op);
 
 __owur int ssl_handshake_hash(SSL_CONNECTION *s,
     unsigned char *out, size_t outlen,

@@ -376,7 +376,7 @@ static int aes_ocb_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ctx->taglen = p.tag->data_size;
         } else {
             if (ctx->base.enc) {
-                ERR_raise(ERR_LIB_PROV, ERR_R_PASSED_INVALID_ARGUMENT);
+                ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
                 return 0;
             }
             if (p.tag->data_size != ctx->taglen) {
@@ -476,7 +476,11 @@ static int aes_ocb_get_ctx_params(void *vctx, OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (!ctx->base.enc || p.tag->data_size != ctx->taglen) {
+        if (!ctx->base.enc) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
+            return 0;
+        }
+        if (p.tag->data_size != ctx->taglen) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG_LENGTH);
             return 0;
         }
@@ -492,6 +496,14 @@ static int aes_ocb_cipher(void *vctx, unsigned char *out, size_t *outl,
 
     if (!ossl_prov_is_running())
         return 0;
+
+    /*
+     * EVP_Cipher() MUST CHECK THE TAG
+     * in == NULL indicates finalize, so hand it to the finalize path
+     * (which checks the tag on decrypt / produces it on encrypt)
+     */
+    if (in == NULL)
+        return aes_ocb_block_final(vctx, out, outl, outsize);
 
     if (outsize < inl) {
         ERR_raise(ERR_LIB_PROV, PROV_R_OUTPUT_BUFFER_TOO_SMALL);

@@ -179,12 +179,9 @@ This cannot be combined with encoded output in DER format.
 This option only applies to elliptic-curve based keys.
 
 This specifies how the points on the elliptic curve are converted
-into octet strings. Possible values are: B<compressed> (the default
-value), B<uncompressed> and B<hybrid>. For more information regarding
+into octet strings. Possible values are: B<uncompressed> (the default
+value), B<compressed> and B<hybrid>. For more information regarding
 the point conversion forms please read the X9.62 standard.
-B<Note> Due to patent issues the B<compressed> option is disabled
-by default for binary curves and can be enabled by defining
-the preprocessor macro B<OPENSSL_EC_BIN_PT_COMP> at compile time.
 
 =item B<-ec_param_enc> I<arg>
 

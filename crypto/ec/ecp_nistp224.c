@@ -1234,8 +1234,8 @@ static NISTP224_PRE_COMP *nistp224_pre_comp_new(void)
 NISTP224_PRE_COMP *EC_nistp224_pre_comp_dup(NISTP224_PRE_COMP *p)
 {
     int i;
-    if (p != NULL)
-        CRYPTO_UP_REF(&p->references, &i);
+    if (p == NULL || !CRYPTO_UP_REF(&p->references, &i))
+        return NULL;
     return p;
 }
 

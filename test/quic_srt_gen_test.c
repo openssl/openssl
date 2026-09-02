@@ -70,8 +70,26 @@ err:
     return testresult;
 }
 
+static int test_srt_gen_new_mfail(int idx)
+{
+    const struct test_case *t = &tests[idx];
+    QUIC_SRT_GEN *srt_gen = NULL;
+
+    MFAIL_start();
+    srt_gen = ossl_quic_srt_gen_new(NULL, NULL, t->key, t->key_len);
+    MFAIL_end();
+
+    if (srt_gen == NULL) {
+        return 0;
+    }
+
+    ossl_quic_srt_gen_free(srt_gen);
+    return 1;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_srt_gen, OSSL_NELEM(tests));
+    ADD_MFAIL_ALL_TESTS(test_srt_gen_new_mfail, OSSL_NELEM(tests));
     return 1;
 }

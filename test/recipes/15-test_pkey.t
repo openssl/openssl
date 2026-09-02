@@ -16,7 +16,7 @@ use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_pkey");
 
-plan tests => 6;
+plan tests => 9;
 
 my @app = ('openssl', 'pkey');
 
@@ -112,20 +112,91 @@ subtest "=== pkey handling of DER encoding ===" => sub {
        "Same file contents after converting to DER and back");
 };
 
-subtest "=== pkey text output ===" => sub {
+subtest "=== pkey -inform and -outform ===" => sub {
+    plan tests => 10;
+
+    my $priv_der = 'inform_priv.der';
+    my $priv_pem = 'inform_priv.pem';
+    my $pub_der = 'inform_pub.der';
+    my $pub_pem = 'inform_pub.pem';
+    my $pub_ref = 'inform_pubref.pem';
+
+    # Public keys convert between PEM and DER just like private keys do.
+    ok(run(app([@app, '-in', $in_key, '-pubout', '-outform', 'DER',
+                '-out', $pub_der])),
+       "write DER-encoded public key");
+    ok(run(app([@app, '-pubin', '-inform', 'DER', '-in', $pub_der,
+                '-pubout', '-out', $pub_pem])),
+       "read DER-encoded public key");
+    ok(run(app([@app, '-in', $in_key, '-pubout', '-out', $pub_ref])),
+       "write PEM-encoded public key");
+    is(compare_text($pub_ref, $pub_pem), 0,
+       "Same public key after converting to DER and back");
+
+    # -inform is unspecified by default, in which case the format is detected.
+    ok(run(app([@app, '-in', $in_key, '-outform', 'DER', '-out', $priv_der])),
+       "write DER-encoded private key");
+    ok(run(app([@app, '-in', $priv_der, '-out', $priv_pem])),
+       "DER input is accepted without -inform");
+    is(compare_text($in_key, $priv_pem), 0,
+       "Same private key after converting to DER and back");
+
+    # A mismatching -inform is not silently ignored.
+    ok(!run(app([@app, '-inform', 'DER', '-in', $in_key, '-noout'])),
+       "PEM input read as DER is rejected");
+    ok(!run(app([@app, '-inform', 'PEM', '-in', $priv_der, '-noout'])),
+       "DER input read as PEM is rejected");
+
+    # Unlike -inform, -outform is limited to PEM and DER.
+    ok(!run(app([@app, '-in', $in_key, '-outform', 'MSBLOB',
+                 '-out', 'inform_bad.tmp'])),
+       "-outform MSBLOB is rejected");
+};
+
+subtest "=== pkey PKCS#12 input ===" => sub {
     plan tests => 3;
+
+    my $p12 = 'key.p12';
+    ok(run(app(['openssl', 'pkcs12', '-export', '-inkey', $in_key,
+                '-in', srctop_file('test', 'certs', 'root-cert.pem'),
+                '-keypbe', 'AES-256-CBC', '-certpbe', 'AES-256-CBC',
+                '-macalg', 'sha256', '-passout', $pass, '-out', $p12])),
+       "create a PKCS#12 file holding the key");
+
+    my $from_p12 = 'from_p12.pem';
+    ok(run(app([@app, '-inform', 'P12', '-in', $p12, '-passin', $pass,
+                '-out', $from_p12])),
+       "read the private key from the PKCS#12 file");
+    is(compare_text($in_key, $from_p12), 0,
+       "key read from PKCS#12 is the same as the original key");
+};
+
+subtest "=== pkey text and text_pub output ===" => sub {
+    plan tests => 6;
 
     ok((grep /BEGIN PRIVATE KEY/,
         run(app([@app, '-in', $in_key, '-text']), capture => 1)),
         "pkey text output contains PEM header");
 
     ok(!(grep /BEGIN PRIVATE KEY/,
-        run(app([@app, '-in', $in_key, '-text', '-noout']), capture => 1)),
-        "pkey text output with -noout does not contain PEM header");
+         run(app([@app, '-in', $in_key, '-text', '-noout']), capture => 1)),
+         "pkey text output with -noout does not contain PEM header");
 
     ok((grep /Private-Key:/,
         run(app([@app, '-in', $in_key, '-text', '-noout']), capture => 1)),
         "pkey text output (even with -noout) contains \"Private-Key:\"");
+
+    ok(!(grep /Private-Key:/,
+         run(app([@app, '-in', $in_key, '-text_pub', '-noout']), capture => 1)),
+         "-text_pub does not print private key components");
+
+    ok((grep /Public-Key:/,
+        run(app([@app, '-in', $in_key, '-text_pub', '-noout']), capture => 1)),
+        "-text_pub prints public key components");
+
+    ok(!run(app([@app, '-in', $in_key, '-text', '-outform', 'DER',
+                 '-out', 'text_der.tmp'])),
+       "-text combined with DER output is rejected");
 };
 
 subtest "=== pkey EC point conversion form ===" => sub {
@@ -170,4 +241,38 @@ subtest "=== pkey EC point conversion form ===" => sub {
 
     ok(!run(app([@app, '-in', $in_key, '-ec_conv_form', 'compressed', '-noout'])),
        "-ec_conv_form on a non-EC key fails");
+};
+
+subtest "=== pkey EC parameter encoding ===" => sub {
+    plan skip_all => "EC not supported in this build" if disabled("ec");
+    plan tests => 6;
+
+    my $ec_key = 'ec_p256_enc.pem';
+    ok(run(app(['openssl', 'genpkey', '-algorithm', 'EC',
+                '-pkeyopt', 'ec_paramgen_curve:P-256', '-out', $ec_key])),
+       "generate P-256 EC key");
+
+    # A named_curve encoding identifies the group by its OID (prime256v1),
+    # whereas an explicit encoding inlines the full curve parameters, which
+    # asn1parse shows via the field-type OID (prime-field).
+    my $named = 'pub_named.der';
+    ok(run(app([@app, '-in', $ec_key, '-pubout', '-ec_param_enc', 'named_curve',
+                '-outform', 'DER', '-out', $named])),
+       "write public key with named_curve parameters");
+    ok((grep /prime256v1/,
+        run(app(['openssl', 'asn1parse', '-in', $named, '-inform', 'DER']),
+            capture => 1)),
+       "named_curve encoding references the curve by OID");
+
+    my $explicit = 'pub_explicit.der';
+    ok(run(app([@app, '-in', $ec_key, '-pubout', '-ec_param_enc', 'explicit',
+                '-outform', 'DER', '-out', $explicit])),
+       "write public key with explicit parameters");
+    ok((grep /prime-field/,
+        run(app(['openssl', 'asn1parse', '-in', $explicit, '-inform', 'DER']),
+            capture => 1)),
+       "explicit encoding inlines the curve parameters");
+
+    ok(!run(app([@app, '-in', $in_key, '-ec_param_enc', 'explicit', '-noout'])),
+       "-ec_param_enc on a non-EC key fails");
 };

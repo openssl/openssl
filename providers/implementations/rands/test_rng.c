@@ -170,8 +170,9 @@ static size_t test_rng_nonce(void *vtest, unsigned char *out,
         return 0;
 
     if (t->generate) {
-        for (i = 0; i < min_noncelen; i++)
-            out[i] = gen_byte(t);
+        if (out != NULL)
+            for (i = 0; i < min_noncelen; i++)
+                out[i] = gen_byte(t);
         return min_noncelen;
     }
 

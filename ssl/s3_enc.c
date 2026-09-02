@@ -65,10 +65,29 @@ int ssl3_finish_mac(SSL_CONNECTION *s, const unsigned char *buf, size_t len)
             return 0;
         }
     } else {
-        ret = EVP_DigestUpdate(s->s3.handshake_dgst, buf, len);
-        if (!ret) {
-            SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
-            return 0;
+        /*
+         * rfc9147:
+         * In DTLS 1.3, the message transcript is computed over the
+         * original TLS 1.3-style Handshake messages without the
+         * message_seq, fragment_offset, and fragment_length values. Note
+         * that this is a change from DTLS 1.2 where those values were
+         * included in the transcript.
+         *
+         * So this means that we record the full handshake messages in
+         * s->s3.handshake_buffer while s->s3.handshake_dgst is not in use and then
+         * we calculate the digest when initiating s->s3.handshake_dgst at which
+         * point we know what the protocol version is.
+         */
+        if (s->negotiated_version == DTLS1_3_VERSION) {
+            if (!dtls13_transcript_hash_update(s->s3.handshake_dgst, buf, len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
+        } else {
+            if (!EVP_DigestUpdate(s->s3.handshake_dgst, buf, len)) {
+                SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+                return 0;
+            }
         }
     }
     return 1;
@@ -99,9 +118,12 @@ int ssl3_digest_cached_records(SSL_CONNECTION *s, int keep)
                 SSL_R_NO_SUITABLE_DIGEST_ALGORITHM);
             return 0;
         }
-        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)
-            || !EVP_DigestUpdate(s->s3.handshake_dgst, hdata, hdatalen)) {
+        if (!EVP_DigestInit_ex(s->s3.handshake_dgst, md, NULL)) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
+            return 0;
+        }
+        if (!ssl3_finish_mac(s, hdata, hdatalen)) {
+            /* SSLfatal() already called */
             return 0;
         }
     }

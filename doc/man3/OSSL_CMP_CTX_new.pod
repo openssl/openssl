@@ -846,7 +846,7 @@ Perform a Certification Request transaction, making use of the new credentials:
 
     OSSL_CMP_CTX_set1_cert(cmp_ctx, initialCert);
     OSSL_CMP_CTX_set1_pkey(cmp_ctx, initialKey);
-    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, curentKey);
+    OSSL_CMP_CTX_set0_newPkey(cmp_ctx, 1, currentKey);
     currentCert = OSSL_CMP_exec_CR_ses(cmp_ctx);
 
 Perform a Key Update Request, signed using the cert (and key) to be updated:

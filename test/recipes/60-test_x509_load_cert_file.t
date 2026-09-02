@@ -8,6 +8,8 @@
 
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
+$ENV{ASAN_OPTIONS} = "detect_leaks=1";
+
 setup("test_load_cert_file");
 
 plan tests => 1;

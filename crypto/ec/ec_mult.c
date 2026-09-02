@@ -72,8 +72,8 @@ static EC_PRE_COMP *ec_pre_comp_new(const EC_GROUP *group)
 EC_PRE_COMP *EC_ec_pre_comp_dup(EC_PRE_COMP *pre)
 {
     int i;
-    if (pre != NULL)
-        CRYPTO_UP_REF(&pre->references, &i);
+    if (pre == NULL || !CRYPTO_UP_REF(&pre->references, &i))
+        return NULL;
     return pre;
 }
 

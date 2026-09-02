@@ -12,6 +12,7 @@ B<openssl rand>
 [B<-out> I<file>]
 [B<-base64>]
 [B<-hex>]
+[B<-n>]
 {- $OpenSSL::safe::opt_r_synopsis -}
 {- $OpenSSL::safe::opt_provider_synopsis -}
 I<num>[K|M|G|T]
@@ -54,6 +55,10 @@ Perform base64 encoding on the output.
 =item B<-hex>
 
 Show the output as a hex string.
+
+=item B<-n>
+
+Do not output the trailing newline.
 
 {- $OpenSSL::safe::opt_r_item -}
 

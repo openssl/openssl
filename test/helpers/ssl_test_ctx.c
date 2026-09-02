@@ -56,7 +56,8 @@ static int parse_boolean(const char *value, int *result)
 #define IMPLEMENT_SSL_TEST_INT_OPTION(struct_type, name, field)            \
     static int parse_##name##_##field(struct_type *ctx, const char *value) \
     {                                                                      \
-        ctx->field = atoi(value);                                          \
+        if (!test_strtoint(value, &ctx->field))                            \
+            ctx->field = 0;                                                \
         return 1;                                                          \
     }
 
@@ -158,6 +159,7 @@ static const test_enum ssl_protocols[] = {
     { "TLSv1", TLS1_VERSION },
     { "DTLSv1", DTLS1_VERSION },
     { "DTLSv1.2", DTLS1_2_VERSION },
+    { "DTLSv1.3", DTLS1_3_VERSION },
 };
 
 __owur static int parse_protocol(SSL_TEST_CTX *test_ctx, const char *value)

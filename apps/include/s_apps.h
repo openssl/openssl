@@ -18,8 +18,9 @@
 #define PORT "4433"
 #define PROTOCOL "tcp"
 
-#define SSL_VERSION_ALLOWS_RENEGOTIATION(s) \
-    (SSL_is_dtls(s) || (SSL_version(s) < TLS1_3_VERSION))
+#define SSL_VERSION_ALLOWS_RENEGOTIATION(s)                                                    \
+    ((SSL_is_dtls(s) && (SSL_version(s) > DTLS1_3_VERSION || SSL_version(s) == DTLS1_BAD_VER)) \
+        || (!SSL_is_dtls(s) && SSL_version(s) < TLS1_3_VERSION))
 
 typedef int (*do_server_cb)(int s, int stype, int prot, unsigned char *context);
 void get_sock_info_address(int asock, char **hostname, char **service);
@@ -40,7 +41,7 @@ int ssl_print_tmp_key(BIO *out, SSL *s);
 int init_client(int *sock, const char *host, const char *port,
     const char *bindhost, const char *bindport,
     int family, int type, int protocol, int tfo, int doconn,
-    BIO_ADDR **ba_ret);
+    BIO_ADDR **ba_ret, int c_quiet);
 int should_retry(int i);
 void do_ssl_shutdown(SSL *ssl);
 

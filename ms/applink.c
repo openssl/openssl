@@ -103,6 +103,14 @@ static int app_fsetmod(FILE *fp, char mod)
 extern "C" {
 #endif
 
+/*
+ * The AppLink table exposes the legacy CRT signatures used by ms/uplink.h.
+ */
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4996)
+#endif
+
 __declspec(dllexport) void **
 #if defined(__BORLANDC__)
     /*
@@ -150,6 +158,10 @@ __declspec(dllexport) void **
 
     return OPENSSL_ApplinkTable;
 }
+
+#if defined(_MSC_VER)
+#pragma warning(pop)
+#endif
 
 #ifdef __GNUC__
 #pragma GCC diagnostic pop

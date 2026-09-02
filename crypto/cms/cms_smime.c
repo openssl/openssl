@@ -36,12 +36,40 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
     unsigned char buf[4096];
     int r = 0, i;
     BIO *tmpout;
+    BIO *aeadbuf = NULL;
 
     tmpout = cms_get_text_bio(out, flags);
 
     if (tmpout == NULL) {
         ERR_raise(ERR_LIB_CMS, ERR_R_CMS_LIB);
         goto err;
+    }
+
+    /*
+     * For AEAD content (AuthEnvelopedData) the integrity tag is only verified
+     * once all the ciphertext has been processed, by the
+     * BIO_get_cipher_status() call below. RFC 5083 requires that the plaintext
+     * is not released to the caller until that verification succeeds, so
+     * buffer it in memory and only forward it to the output BIO once the tag
+     * has been checked. When CMS_TEXT is set tmpout is already a memory BIO
+     * that is flushed only on success, so the extra buffering is not needed.
+     */
+    if (tmpout == out && BIO_method_type(in) == BIO_TYPE_CIPHER) {
+        EVP_CIPHER_CTX *ctx = NULL;
+
+        if (BIO_get_cipher_ctx(in, &ctx) > 0 && ctx != NULL
+            && (EVP_CIPHER_get_flags(EVP_CIPHER_CTX_get0_cipher(ctx))
+                   & EVP_CIPH_FLAG_AEAD_CIPHER)
+                != 0) {
+            aeadbuf = BIO_new(BIO_s_mem());
+            if (aeadbuf == NULL) {
+                ERR_raise(ERR_LIB_CMS, ERR_R_BIO_LIB);
+                goto err;
+            }
+            /* Return 0 (EOF) rather than a retryable -1 once drained. */
+            BIO_set_mem_eof_return(aeadbuf, 0);
+            tmpout = aeadbuf;
+        }
     }
 
     /* Read all content through chain to process digest, decrypt etc */
@@ -65,6 +93,17 @@ static int cms_copy_content(BIO *out, BIO *in, unsigned int flags)
         if (!SMIME_text(tmpout, out)) {
             ERR_raise(ERR_LIB_CMS, CMS_R_SMIME_TEXT_ERROR);
             goto err;
+        }
+    } else if (aeadbuf != NULL) {
+        /* Forward the AEAD BIO to out BIO as the tag has been verified. */
+        for (;;) {
+            i = BIO_read(aeadbuf, buf, sizeof(buf));
+            if (i < 0)
+                goto err;
+            if (i == 0)
+                break;
+            if (BIO_write(out, buf, i) != i)
+                goto err;
         }
     }
 
@@ -311,7 +350,7 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     STACK_OF(X509_CRL) *crls = NULL;
     STACK_OF(X509) **si_chains = NULL;
     X509 *signer;
-    int i, scount = 0, ret = 0;
+    int i, n = 0, scount = 0, ret = 0;
     BIO *cmsbio = NULL, *tmpin = NULL, *tmpout = NULL;
     int cadesVerify = (flags & CMS_CADES) != 0;
     const CMS_CTX *ctx = ossl_cms_get0_cmsctx(cms);
@@ -339,6 +378,11 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
         CMS_SignerInfo_get0_algs(si, NULL, &signer, NULL, NULL);
         if (signer != NULL)
             scount++;
+        /* Reset verification results */
+        si->verify_result = 1; /* so far, fine */
+        si->cert_verified = 0;
+        si->attr_verified = 0;
+        si->content_verified = 0;
     }
 
     if (scount != sk_CMS_SignerInfo_num(sinfos))
@@ -374,8 +418,11 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
 
             if (!cms_signerinfo_verify_cert(si, store, untrusted, crls,
                     si_chains ? &si_chains[i] : NULL,
-                    ctx))
-                goto err;
+                    ctx)) {
+                si->verify_result = 0;
+                continue;
+            }
+            si->cert_verified = 1;
         }
     }
 
@@ -384,16 +431,25 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     if ((flags & CMS_NO_ATTR_VERIFY) == 0 || cadesVerify) {
         for (i = 0; i < scount; i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
-            if (CMS_signed_get_attr_count(si) < 0)
+            if (!si->verify_result)
                 continue;
-            if (CMS_SignerInfo_verify(si) <= 0)
-                goto err;
+            if (CMS_signed_get_attr_count(si) < 0) {
+                si->attr_verified = 1;
+                continue;
+            }
+            if (CMS_SignerInfo_verify(si) <= 0) {
+                si->verify_result = 0;
+                continue;
+            }
             if (cadesVerify) {
                 STACK_OF(X509) *si_chain = si_chains ? si_chains[i] : NULL;
 
-                if (ossl_cms_check_signing_certs(si, si_chain) <= 0)
-                    goto err;
+                if (ossl_cms_check_signing_certs(si, si_chain) <= 0) {
+                    si->verify_result = 0;
+                    continue;
+                }
             }
+            si->attr_verified = 1;
         }
     }
 
@@ -458,15 +514,30 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     if (!(flags & CMS_NO_CONTENT_VERIFY)) {
         for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
             si = sk_CMS_SignerInfo_value(sinfos, i);
+            if (!si->verify_result)
+                continue;
             if (CMS_SignerInfo_verify_ex(si, cmsbio, tmpin) <= 0) {
                 ERR_raise(ERR_LIB_CMS, CMS_R_CONTENT_VERIFY_ERROR);
-                goto err;
+                si->verify_result = 0;
+                continue;
             }
+            si->content_verified = 1;
         }
     }
 
-    ret = 1;
+    /* Determine overall result */
+    for (i = 0; i < scount; i++) {
+        if (sk_CMS_SignerInfo_value(sinfos, i)->verify_result)
+            n++;
+    }
+    if ((flags & CMS_VERIFY_PARTIAL) != 0)
+        ret = n > 0; /* One success is enough */
+    else
+        ret = n == scount; /* All must be successful */
 err:
+    if (!ret)
+        for (i = 0; i < scount; i++)
+            sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
     if (!(flags & SMIME_BINARY) && dcont) {
         do_free_upto(cmsbio, tmpout);
         if (tmpin != dcont)

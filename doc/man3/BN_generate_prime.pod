@@ -201,6 +201,8 @@ BN_is_prime_fasttest() and BN_check_prime return 0 if the number is composite,
 -1 on error.
 
 BN_generate_prime() returns the prime number on success, B<NULL> otherwise.
+Please note that the B<ret> BIGNUM is freed on failure and must not be
+used or freed by the caller in such case.
 
 BN_GENCB_new returns a pointer to a BN_GENCB structure on success, or B<NULL>
 otherwise.

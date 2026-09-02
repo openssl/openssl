@@ -102,6 +102,9 @@ int skeyutl_main(int argc, char **argv)
             goto end;
         params = app_params_new_from_opts(skeyopts,
             EVP_SKEYMGMT_get0_gen_settable_params(mgmt));
+        /* A NULL return is an error only if key options were given */
+        if (skeyopts != NULL && params == NULL)
+            goto end;
 
         skey = EVP_SKEY_generate(app_get0_libctx(),
             skeymgmt ? skeymgmt : EVP_CIPHER_name(cipher),

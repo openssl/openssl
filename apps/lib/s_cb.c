@@ -576,6 +576,8 @@ static STRINT_PAIR ssl_versions[] = {
     { "TLS 1.2", TLS1_2_VERSION },
     { "TLS 1.3", TLS1_3_VERSION },
     { "DTLS 1.0", DTLS1_VERSION },
+    { "DTLS 1.2", DTLS1_2_VERSION },
+    { "DTLS 1.3", DTLS1_3_VERSION },
     { "DTLS 1.0 (bad)", DTLS1_BAD_VER },
     { NULL }
 };
@@ -653,12 +655,16 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
     const char *str_version, *str_content_type = "", *str_details1 = "", *str_details2 = "";
     const unsigned char *bp = buf;
 
-    if (version == TLS1_VERSION || version == TLS1_1_VERSION || version == TLS1_2_VERSION || version == TLS1_3_VERSION || version == DTLS1_VERSION || version == DTLS1_BAD_VER) {
+    if (version == TLS1_VERSION || version == TLS1_1_VERSION
+        || version == TLS1_2_VERSION || version == TLS1_3_VERSION
+        || version == DTLS1_VERSION || version == DTLS1_2_VERSION
+        || version == DTLS1_3_VERSION || version == DTLS1_BAD_VER) {
         str_version = lookup(version, ssl_versions, "???");
         switch (content_type) {
         case SSL3_RT_CHANGE_CIPHER_SPEC:
             /* type 20 */
-            str_content_type = ", ChangeCipherSpec";
+            if (version != DTLS1_3_VERSION)
+                str_content_type = ", ChangeCipherSpec";
             break;
         case SSL3_RT_ALERT:
             /* type 21 */
@@ -687,6 +693,11 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             /* type 23 */
             str_content_type = ", ApplicationData";
             break;
+        case SSL3_RT_ACK:
+            /* type 26 */
+            if (version == DTLS1_3_VERSION)
+                str_content_type = ", ACK";
+            break;
         case SSL3_RT_HEADER:
             /* type 256 */
             str_content_type = ", RecordHeader";
@@ -696,11 +707,15 @@ void msg_cb(int write_p, int version, int content_type, const void *buf,
             str_content_type = ", InnerContent";
             break;
         default:
-            BIO_snprintf(tmpbuf, sizeof(tmpbuf) - 1, ", Unknown (content_type=%d)", content_type);
+            break;
+        }
+
+        if (str_content_type[0] == '\0') {
+            snprintf(tmpbuf, sizeof(tmpbuf) - 1, ", Unknown (content_type=%d)", content_type);
             str_content_type = tmpbuf;
         }
     } else {
-        BIO_snprintf(tmpbuf, sizeof(tmpbuf) - 1, "Not TLS data or unknown version (version=%d, content_type=%d)", version, content_type);
+        snprintf(tmpbuf, sizeof(tmpbuf) - 1, "Not TLS data or unknown version (version=%d, content_type=%d)", version, content_type);
         str_version = tmpbuf;
     }
 
@@ -775,8 +790,8 @@ static const STRINT_PAIR tlsext_types[] = {
     { NULL }
 };
 
-/* from rfc8446 4.2.3. + gost (https://tools.ietf.org/id/draft-smyshlyaev-tls12-gost-suites-04.html) */
 static STRINT_PAIR signature_tls13_scheme_list[] = {
+    /* RFC 8446 4.2.3 */
     { "rsa_pkcs1_sha1", 0x0201 /* TLSEXT_SIGALG_rsa_pkcs1_sha1 */ },
     { "ecdsa_sha1", 0x0203 /* TLSEXT_SIGALG_ecdsa_sha1 */ },
     /*  {"rsa_pkcs1_sha224",       0x0301    TLSEXT_SIGALG_rsa_pkcs1_sha224}, not in rfc8446 */
@@ -795,9 +810,59 @@ static STRINT_PAIR signature_tls13_scheme_list[] = {
     { "rsa_pss_pss_sha256", 0x0809 /* TLSEXT_SIGALG_rsa_pss_pss_sha256 */ },
     { "rsa_pss_pss_sha384", 0x080a /* TLSEXT_SIGALG_rsa_pss_pss_sha384 */ },
     { "rsa_pss_pss_sha512", 0x080b /* TLSEXT_SIGALG_rsa_pss_pss_sha512 */ },
+
+    /* RFC 8734 */
+    { "ecdsa_brainpoolP256r1tls13_sha256", 0x81a },
+    { "ecdsa_brainpoolP256r1tls13_sha384", 0x81b },
+    { "ecdsa_brainpoolP256r1tls13_sha512", 0x81c },
+
+    /* RFC 8998 */
+    { "sm2sig_sm3", 0x0708 /* TLSEXT_SIGALG_sm2sig_sm3 */ },
+
+    /* RFC 9367 */
+    { "gostr34102012_256a", 0x709 },
+    { "gostr34102012_256b", 0x70a },
+    { "gostr34102012_256c", 0x70b },
+    { "gostr34102012_256d", 0x70c },
+    { "gostr34102012_512a", 0x70d },
+    { "gostr34102012_512b", 0x70e },
+    { "gostr34102012_512c", 0x70f },
+
+    /* RFC 9963 */
+    { "rsa_pkcs1_sha256_legacy", 0x0420 },
+    { "rsa_pkcs1_sha384_legacy", 0x0520 },
+    { "rsa_pkcs1_sha512_legacy", 0x0620 },
+
+    /* IBS (https://datatracker.ietf.org/doc/html/draft-wang-tls-raw-public-key-with-ibc-02) */
+    { "eccsi_sha256", 0x0704 },
+    { "iso_ibs1", 0x0705 },
+    { "iso_ibs2", 0x0706 },
+    { "iso_chinese_ibs", 0x0707 },
+
+    /* ML-DSA (https://datatracker.ietf.org/doc/html/draft-ietf-tls-mldsa-00) */
+    { "mldsa44", 0x0904 },
+    { "mldsa65", 0x0905 },
+    { "mldsa87", 0x0906 },
+
+    /* SLH-DSA (https://datatracker.ietf.org/doc/html/draft-reddy-tls-slhdsa-01) */
+    { "slhdsa_sha2_128s", 0x0911 },
+    { "slhdsa_sha2_128f", 0x0912 },
+    { "slhdsa_sha2_192s", 0x0913 },
+    { "slhdsa_sha2_192f", 0x0914 },
+    { "slhdsa_sha2_256s", 0x0915 },
+    { "slhdsa_sha2_256f", 0x0916 },
+    { "slhdsa_shake_128s", 0x0917 },
+    { "slhdsa_shake_128f", 0x0918 },
+    { "slhdsa_shake_192s", 0x0919 },
+    { "slhdsa_shake_192f", 0x091a },
+    { "slhdsa_shake_256s", 0x091b },
+    { "slhdsa_shake_256f", 0x091c },
+
+    /* GOST (https://tools.ietf.org/id/draft-smyshlyaev-tls12-gost-suites-04.html) */
     { "gostr34102001", 0xeded /* TLSEXT_SIGALG_gostr34102001_gostr3411 */ },
     { "gostr34102012_256", 0xeeee /* TLSEXT_SIGALG_gostr34102012_256_gostr34112012_256 */ },
     { "gostr34102012_512", 0xefef /* TLSEXT_SIGALG_gostr34102012_512_gostr34112012_512 */ },
+
     { NULL }
 };
 
@@ -1474,10 +1539,7 @@ static STRINT_PAIR callback_types[] = {
     { "Signature Algorithm mask", SSL_SECOP_SIGALG_MASK },
     { "Certificate chain EE key", SSL_SECOP_EE_KEY },
     { "Certificate chain CA key", SSL_SECOP_CA_KEY },
-    { "Peer Chain EE key", SSL_SECOP_PEER_EE_KEY },
-    { "Peer Chain CA key", SSL_SECOP_PEER_CA_KEY },
     { "Certificate chain CA digest", SSL_SECOP_CA_MD },
-    { "Peer chain CA digest", SSL_SECOP_PEER_CA_MD },
     { "SSL compression", SSL_SECOP_COMPRESSION },
     { "Session ticket", SSL_SECOP_TICKET },
     { NULL }
@@ -1511,7 +1573,6 @@ static int security_callback_debug(const SSL *s, const SSL_CTX *ctx,
         show_nm = 0;
         break;
     case SSL_SECOP_CA_MD:
-    case SSL_SECOP_PEER_CA_MD:
         cert_md = 1;
         break;
     case SSL_SECOP_SIGALG_SUPPORTED:

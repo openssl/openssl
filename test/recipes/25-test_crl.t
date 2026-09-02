@@ -11,11 +11,12 @@ use strict;
 use warnings;
 
 use File::Spec;
+use File::Copy;
 use OpenSSL::Test qw/:DEFAULT srctop_file/;
 
 setup("test_crl");
 
-plan tests => 10;
+plan tests => 13;
 
 require_ok(srctop_file('test','recipes','tconversion.pl'));
 
@@ -44,12 +45,137 @@ ok(compare1stline_stdin([qw{openssl crl -hash -noout}],
                         '106cd822'),
    "crl piped input test");
 
+# Cover the -crlnumber and -issuer print options.
+subtest 'crl -crlnumber and -issuer' => sub {
+    plan tests => 4;
+
+    my $crl_num =
+        srctop_file("test/certs", "delta-crl-as-complete-delta.pem");
+    my $crl_nonum = srctop_file("test", "testcrl.pem");
+    my $issuer_num = "issuer=CN=Delta CRL as Complete Test CA";
+    my $issuer_nonum = "issuer=C=US, O=RSA Data Security, Inc.,"
+        . " OU=Secure Server Certification Authority";
+
+    ok(compare1stline([qw{openssl crl -noout -crlnumber -in}, $crl_num],
+                      'crlNumber=0x2000'),
+       "-crlnumber prints the CRL Number");
+    ok(compare1stline([qw{openssl crl -noout -crlnumber -in}, $crl_nonum],
+                      'crlNumber=<NONE>'),
+       "-crlnumber prints <NONE> when the CRL has no CRL Number");
+    ok(compare1stline([qw{openssl crl -noout -issuer -in}, $crl_num],
+                      $issuer_num),
+       "-issuer prints the CRL issuer DN");
+    ok(compare1stline([qw{openssl crl -noout -issuer -in}, $crl_nonum],
+                      $issuer_nonum),
+       "-issuer prints another CRL issuer DN");
+};
+
 ok(!run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "DER",
              "-out", $out, "-nameopt", "utf8"])));
 ok(run(app(["openssl", "crl", "-text", "-in", $pem, "-inform", "PEM",
             "-out", $out, "-nameopt", "utf8"])));
 is(cmp_text($out, srctop_file("test/certs", "cyrillic_crl.utf8")),
    0, 'Comparing utf8 output');
+
+# Verify a CRL's signature against its issuer certificate, supplied via
+# -CAfile, -CAstore and -CApath.
+subtest 'crl signature verification' => sub {
+    plan tests => 4;
+
+    my $crl = srctop_file("test/certs", "delta-crl-as-complete-delta.pem");
+    my $cacert = srctop_file("test/certs", "delta-crl-as-complete-ca.pem");
+
+    ok(run(app(["openssl", "crl", "-noout", "-in", $crl,
+                "-CAfile", $cacert])),
+       "verify CRL signature with -CAfile");
+
+    ok(run(app(["openssl", "crl", "-noout", "-in", $crl,
+                "-CAstore", $cacert])),
+       "verify CRL signature with -CAstore");
+
+    # -CApath needs a rehashed directory, which relies on the rehash command
+    # (not available on platforms without symlink support, e.g. Windows).
+    SKIP: {
+        skip "rehash is not available on this platform", 2
+            unless run(app(["openssl", "rehash", "-help"]));
+
+        my $capath = "crl_capath";
+        mkdir $capath;
+        copy($cacert, File::Spec->catfile($capath, "ca.pem"));
+        ok(run(app(["openssl", "rehash", $capath])),
+           "rehash the -CApath directory");
+        ok(run(app(["openssl", "crl", "-noout", "-in", $crl,
+                    "-CApath", $capath])),
+           "verify CRL signature with -CApath");
+    }
+};
+
+# Cover -gendelta (delta CRL generation), which is the only code path in the
+# crl app using the -key and -keyform options.
+subtest 'crl delta generation with -gendelta, -key and -keyform' => sub {
+    plan tests => 5;
+
+    # copy the CA cert and key in locally so the config uses plain paths
+    my $cacert = "gendelta-ca-cert.pem";
+    my $cakey = "gendelta-ca-key.pem";
+    copy(srctop_file("test", "certs", "ca-cert.pem"), $cacert);
+    copy(srctop_file("test", "certs", "ca-key.pem"), $cakey);
+
+    open my $cfg, '>', "gencrl.cnf" or die "Could not create gencrl.cnf: $!";
+    print $cfg <<"EOF";
+[ca]
+default_ca = CA_default
+[CA_default]
+database = index.txt
+certificate = $cacert
+private_key = $cakey
+crlnumber = crlnumber
+default_md = sha256
+default_crl_days = 30
+EOF
+    close $cfg;
+    open my $db, '>', "index.txt" or die "Could not create index.txt: $!";
+    close $db; # empty CA database
+    open my $num, '>', "crlnumber" or die "Could not create crlnumber: $!";
+    print $num "1000\n";
+    close $num;
+
+    run(app(["openssl", "ca", "-gencrl", "-config", "gencrl.cnf",
+             "-out", "delta-base.crl"]));
+    run(app(["openssl", "ca", "-gencrl", "-config", "gencrl.cnf",
+             "-out", "delta-newer.crl"]));
+
+    # -gendelta with a PEM signing key (the default -keyform)
+    ok(run(app(["openssl", "crl", "-in", "delta-base.crl",
+                "-gendelta", "delta-newer.crl",
+                "-key", $cakey, "-out", "delta.crl"])),
+       "generate delta CRL with -gendelta and a PEM -key");
+
+    run(app(["openssl", "crl", "-in", "delta.crl", "-noout", "-text",
+             "-out", "delta.txt"]));
+    test_file_contains("delta CRL", "delta.txt", "Delta CRL Indicator", 1);
+
+    # The same, loading the signing key from DER via -keyform DER
+    run(app(["openssl", "pkey", "-in", $cakey, "-outform", "DER",
+             "-out", "ca-key.der"]));
+    ok(run(app(["openssl", "crl", "-in", "delta-base.crl",
+                "-gendelta", "delta-newer.crl",
+                "-key", "ca-key.der", "-keyform", "DER",
+                "-out", "delta-der.crl"])),
+       "generate delta CRL with a DER -key and -keyform DER");
+
+    # -keyform must match the key encoding: a DER key read as PEM fails.
+    ok(!run(app(["openssl", "crl", "-in", "delta-base.crl",
+                 "-gendelta", "delta-newer.crl",
+                 "-key", "ca-key.der", "-keyform", "PEM",
+                 "-out", "delta-bad.crl"])),
+       "wrong -keyform for the signing key makes -gendelta fail");
+
+    # -gendelta requires a signing key.
+    ok(!run(app(["openssl", "crl", "-in", "delta-base.crl",
+                 "-gendelta", "delta-newer.crl", "-out", "delta-nokey.crl"])),
+       "-gendelta without -key fails");
+};
 
 sub compare1stline {
     my ($cmdarray, $str) = @_;

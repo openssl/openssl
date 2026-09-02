@@ -117,8 +117,26 @@ extern "C" {
 #define IMPLEMENT_PEM_read_fp(name, type, str, asn1)                        \
     type *PEM_read_##name(FILE *fp, type **x, pem_password_cb *cb, void *u) \
     {                                                                       \
-        return PEM_ASN1_read((d2i_of_void *)d2i_##asn1, str, fp,            \
-            (void **)x, cb, u);                                             \
+        BIO *b;                                                             \
+        const unsigned char *p = NULL;                                      \
+        unsigned char *data = NULL;                                         \
+        long len;                                                           \
+        type *ret = NULL;                                                   \
+                                                                            \
+        if ((b = BIO_new(BIO_s_file())) == NULL) {                          \
+            ERR_raise(ERR_LIB_PEM, ERR_R_BUF_LIB);                          \
+            return NULL;                                                    \
+        }                                                                   \
+        BIO_set_fp(b, fp, BIO_NOCLOSE);                                     \
+        if (PEM_bytes_read_bio(&data, &len, NULL, str, b, cb, u)) {         \
+            p = data;                                                       \
+            ret = d2i_##asn1(x, &p, len);                                   \
+            if (ret == NULL)                                                \
+                ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);                     \
+        }                                                                   \
+        BIO_free(b);                                                        \
+        OPENSSL_free(data);                                                 \
+        return ret;                                                         \
     }
 
 #define IMPLEMENT_PEM_write_fp(name, type, str, asn1)              \
@@ -146,12 +164,24 @@ extern "C" {
 #endif
 #endif
 
-#define IMPLEMENT_PEM_read_bio(name, type, str, asn1)                \
-    type *PEM_read_bio_##name(BIO *bp, type **x,                     \
-        pem_password_cb *cb, void *u)                                \
-    {                                                                \
-        return PEM_ASN1_read_bio((d2i_of_void *)d2i_##asn1, str, bp, \
-            (void **)x, cb, u);                                      \
+#define IMPLEMENT_PEM_read_bio(name, type, str, asn1)   \
+    type *PEM_read_bio_##name(BIO *bp, type **x,        \
+        pem_password_cb *cb, void *u)                   \
+    {                                                   \
+        const unsigned char *p = NULL;                  \
+        unsigned char *data = NULL;                     \
+        long len;                                       \
+        type *ret = NULL;                               \
+                                                        \
+        if (!PEM_bytes_read_bio(&data, &len, NULL, str, \
+                bp, cb, u))                             \
+            return NULL;                                \
+        p = data;                                       \
+        ret = d2i_##asn1(x, &p, len);                   \
+        if (ret == NULL)                                \
+            ERR_raise(ERR_LIB_PEM, ERR_R_ASN1_LIB);     \
+        OPENSSL_free(data);                             \
+        return ret;                                     \
     }
 
 #define IMPLEMENT_PEM_write_bio(name, type, str, asn1)                 \

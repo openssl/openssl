@@ -7,13 +7,35 @@
 
 name: Cross Compile
 
-on: [pull_request, push]
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 
 permissions:
   contents: read
 
 jobs:
   cross-compilation:
+    # Run the full test suite on push, and on pull requests labelled with
+    # 'extended tests'.  Other pull requests only run the EVP tests.
+    env:
+      EXTENDED: ${{ github.event_name == 'push' || contains(github.event.pull_request.labels.*.name, 'extended tests') }}
     strategy:
       fail-fast: false
       matrix:
@@ -74,7 +96,7 @@ jobs:
             # with -O2 on this platform, reduce optimization to -01
             arch: hppa-linux-gnu,
             libs: libc6-dev-hppa-cross,
-            target: -static -O1 linux-generic32,
+            target: -static -O1 -mlong-calls linux-generic32,
             fips: no,
             tests: -test_includes -test_store -test_x509_store
           }, {
@@ -107,6 +129,10 @@ jobs:
             fips: no
           }, {
             arch: riscv64-linux-gnu,
+            # Pin the vector spec version, otherwise qemu-user emits a
+            # "vector version is not specified" warning on stderr at every
+            # process start, which upsets tests that parse or check stderr.
+            qemucpu: "rv64,v=true,vext_spec=v1.0",
             libs: libc6-dev-riscv64-cross,
             target: linux64-riscv64,
             fips: no
@@ -211,19 +237,19 @@ jobs:
          cat /proc/cpuinfo
          QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }} ./util/opensslwrap.sh version -c
     - name: make all tests
-      if: github.event_name == 'push' && matrix.platform.tests == ''
+      if: env.EXTENDED == 'true' && matrix.platform.tests == ''
       run: |
         .github/workflows/make-test \
                   TESTS="-test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make some tests
-      if: github.event_name == 'push' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
+      if: env.EXTENDED == 'true' && matrix.platform.tests != 'none' && matrix.platform.tests != ''
       run: |
         .github/workflows/make-test \
                   TESTS="${{ matrix.platform.tests }} -test_afalg" \
                   QEMU_LD_PREFIX=/usr/${{ matrix.platform.arch }}
     - name: make evp tests
-      if: github.event_name == 'pull_request' && matrix.platform.tests != 'none'
+      if: env.EXTENDED != 'true' && matrix.platform.tests != 'none'
       run: |
         .github/workflows/make-test \
                   TESTS="test_evp*" \

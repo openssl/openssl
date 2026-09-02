@@ -7,7 +7,25 @@
 
 name: GitHub CI
 
-on: [pull_request, push]
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
 
 # for some reason, this does not work:
 # variables:
@@ -45,25 +63,6 @@ jobs:
     - name: git diff
       run: git diff --exit-code
 
-  check_docs:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        persist-credentials: false
-    - name: config
-      run: ./config --strict-warnings --banner=Configured enable-fips && perl configdata.pm --dump
-    - name: make build_generated
-      run: make -s build_generated
-    - name: make doc-nits
-      run: make doc-nits
-    - name: make help
-      run: make help
-    - name: make md-nits
-      run: |
-          sudo gem install mdl
-          make md-nits
-
   # This checks that we use ANSI C language syntax and semantics.
   # We are not as strict with libraries, but rather adapt to what's
   # expected to be available in a certain version of each platform.
@@ -88,12 +87,25 @@ jobs:
       run: git submodule update --init --depth 1 fuzz/corpora
     - name: localegen
       run: sudo locale-gen tr_TR.UTF-8
+    - name: cmocka
+      run: sudo apt-get -y install libcmocka-dev
+    - name: install dependencies for perl Net::Curl
+      run: |
+        sudo apt-get update
+        sudo apt-get -y install libcurl4-openssl-dev cpanminus build-essential
+    - name: install Net::Curl
+      run: |
+        url=https://cpan.metacpan.org/authors/id/S/SY/SYP/Net-Curl-0.58.tar.gz
+        sha=37c1585cc70e21579c7c733e306e97a46adc093a3777af6d8ba37d73986d7f5a
+        curl -fsSL "$url" -o Net-Curl.tar.gz
+        echo "$sha  Net-Curl.tar.gz" | sha256sum -c -
+        sudo cpanm --notest ./Net-Curl.tar.gz
     - name: fipsvendor
       # Make one fips build use a customized FIPS vendor
       run: echo "FIPS_VENDOR=CI" >> VERSION.dat
     - name: config
       # enable-quic is on by default, but we leave it here to check we're testing the explicit enable somewhere
-      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-sslkeylog enable-fips enable-quic enable-lms && perl configdata.pm --dump
+      run: CC=gcc ./config --strict-warnings --banner=Configured enable-demos enable-h3demo enable-ec_explicit_curves enable-sslkeylog enable-fips enable-quic enable-lms enable-unit-tests && perl configdata.pm --dump
     - name: make
       run: make -s -j4
     - name: get cpu info
@@ -460,6 +472,44 @@ jobs:
         path: artifacts.tar.gz
         if-no-files-found: ignore
 
+  fuzz_tests_mfail:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: trim corpora to a few seeds per fuzzer
+      env:
+        FUZZ_CORPUS_KEEP: 5
+      run: |
+        for d in fuzz/corpora/*/; do
+          find "$d" -maxdepth 1 -type f | tail -n +$((FUZZ_CORPUS_KEEP + 1)) | xargs -r rm -f
+        done
+    - name: Adjust ASLR for sanitizer
+      run: sudo sysctl -w vm.mmap_rnd_bits=28
+    - name: config
+      run: |
+        ./config --strict-warnings --banner=Configured --debug \
+          -DPEDANTIC -DFUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION \
+          enable-asan enable-ec_explicit_curves enable-ubsan \
+          enable-rc5 enable-md2 enable-ec_nistp_64_gcc_128 \
+          enable-weak-ssl-ciphers enable-nextprotoneg
+        perl configdata.pm --dump
+    - name: make
+      run: make -s -j4
+    - name: make test (fuzz with mfail)
+      run: .github/workflows/make-test OPENSSL_TEST_RAND_ORDER=0 TESTS="test_fuzz*"
+    - name: save artifacts
+      if: success() || failure()
+      uses: actions/upload-artifact@v5
+      with:
+        name: "ci@fuzz_tests_mfail"
+        path: artifacts.tar.gz
+        if-no-files-found: ignore
+
   memory_sanitizer:
     runs-on: ubuntu-latest
     steps:
@@ -629,95 +679,6 @@ jobs:
         name: "ci@legacy"
         path: artifacts.tar.gz
 
-  # out-of-source-and-install checks multiple things at the same time:
-  # - That building, testing and installing works from an out-of-source
-  #   build tree
-  # - That building, testing and installing works with a read-only source
-  #   tree
-  out-of-readonly-source-and-install-ubuntu:
-    runs-on: ubuntu-latest
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        path: ./source
-        persist-credentials: false
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
-      working-directory: ./source
-    - name: make source read-only
-      run: chmod -R a-w ./source
-    - name: create build and install directories
-      run: |
-        mkdir ./build
-        mkdir ./install
-    - name: config
-      run: |
-        ../source/config --banner=Configured enable-demos enable-h3demo enable-fips enable-lms enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
-        perl configdata.pm --dump
-      working-directory: ./build
-    - name: make
-      run: make -s -j4
-      working-directory: ./build
-    - name: get cpu info
-      run: |
-        cat /proc/cpuinfo
-        ./util/opensslwrap.sh version -c
-      working-directory: ./build
-    - name: make test
-      run: ../source/.github/workflows/make-test
-      working-directory: ./build
-    - name: save artifacts
-      if: success() || failure()
-      uses: actions/upload-artifact@v5
-      with:
-        name: "ci@out-of-readonly-source-and-install-ubuntu"
-        path: build/artifacts.tar.gz
-    - name: make install
-      run: make install
-      working-directory: ./build
-
-  out-of-readonly-source-and-install-macos:
-    runs-on: macos-15
-    steps:
-    - uses: actions/checkout@v6
-      with:
-        path: ./source
-        persist-credentials: false
-    - name: checkout fuzz/corpora submodule
-      run: git submodule update --init --depth 1 fuzz/corpora
-      working-directory: ./source
-    - name: make source read-only
-      run: chmod -R a-w ./source
-    - name: create build and install directories
-      run: |
-        mkdir ./build
-        mkdir ./install
-    - name: config
-      run: |
-        ../source/config --banner=Configured enable-fips enable-lms enable-demos enable-h3demo enable-quic enable-acvp-tests --strict-warnings --prefix=$(cd ../install; pwd)
-        perl configdata.pm --dump
-      working-directory: ./build
-    - name: make
-      run: make -s -j4
-      working-directory: ./build
-    - name: get cpu info
-      run: |
-        sysctl machdep.cpu
-        ./util/opensslwrap.sh version -c
-      working-directory: ./build
-    - name: make test
-      run: ../source/.github/workflows/make-test
-      working-directory: ./build
-    - name: save artifacts
-      if: success() || failure()
-      uses: actions/upload-artifact@v5
-      with:
-        name: "ci@out-of-readonly-source-and-install-macos-15"
-        path: build/artifacts.tar.gz
-    - name: make install
-      run: make install
-      working-directory: ./build
-
   external-tests-misc:
     runs-on: ubuntu-latest
     steps:
@@ -729,10 +690,6 @@ jobs:
       run: |
         sudo apt-get update
         sudo apt-get -yq install bison gettext keyutils ldap-utils libldap2-dev libkeyutils-dev python3 python3-paste python3-pyrad slapd tcsh python3-virtualenv virtualenv python3-kdcproxy gdb libtls-dev wget gpg
-    - name: install cpanm and Test2::V0 for gost_engine testing
-      uses: perl-actions/install-with-cpanm@10d60f00b4073f484fc29d45bfbe2f776397ab3d # v1.7
-      with:
-        install: Test2::V0
     - name: setup hostname workaround
       run: sudo hostname localhost
     - name: config
@@ -746,8 +703,9 @@ jobs:
       run: |
         cat /proc/cpuinfo
         ./util/opensslwrap.sh version -c
-    - name: test external gost-engine
-      run: make test TESTS="test_external_gost_engine"
+    - name: test failure when selecting non-existing test case
+      run: |
+        ! make test TESTS="test_external_gost_engine"
     - name: test external krb5
       run: make test TESTS="test_external_krb5"
     - name: test external tlsfuzzer

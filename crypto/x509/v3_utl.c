@@ -874,7 +874,6 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
     int i;
     int cnid = NID_undef;
     int alt_type;
-    int san_present = 0;
     int rv = 0;
     equal_fn equal;
 
@@ -934,15 +933,8 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
                      *   SmtpUTF8Mailbox is encoded as UTF8String.
                      *
                      * If it is not a UTF8String then that is unexpected, and
-                     * we ignore the invalid SAN (neither set san_present nor
-                     * consider it a candidate for equality).  This does mean
-                     * that the subject CN may be considered, as would be the
-                     * case when the malformed SmtpUtf8Mailbox SAN is instead
-                     * simply absent.
-                     *
-                     * When CN-ID matching is not desirable, applications can
-                     * choose to turn it off, doing so is at this time a best
-                     * practice.
+                     * we ignore the invalid SAN, so it is not considered a
+                     * candidate for equality.
                      */
                     if (othername_nid != NID_id_on_SmtpUTF8Mailbox
                         || gen->d.otherName->value->type != V_ASN1_UTF8STRING)
@@ -968,7 +960,6 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
                 cstr = gen->d.iPAddress;
                 break;
             }
-            san_present = 1;
             /* Positive on success, negative on error! */
             if ((rv = do_check_string(cstr, alt_type, equal, flags,
                      chk, chklen, peername))
@@ -978,12 +969,17 @@ static int do_x509_check(const X509 *x, const char *chk, size_t chklen,
         GENERAL_NAMES_free(gens);
         if (rv != 0)
             return rv;
-        if (san_present && !(flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT))
-            return 0;
     }
 
-    /* We're done if CN-ID is not pertinent */
-    if (cnid == NID_undef || (flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT))
+    /*
+     * The subject DN is not consulted by default: the subject commonName or
+     * emailAddress is matched only when the caller explicitly opts in with
+     * X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT, and never when
+     * X509_CHECK_FLAG_NEVER_CHECK_SUBJECT is set.
+     */
+    if (cnid == NID_undef
+        || (flags & X509_CHECK_FLAG_NEVER_CHECK_SUBJECT) != 0
+        || (flags & X509_CHECK_FLAG_ALWAYS_CHECK_SUBJECT) == 0)
         return 0;
 
     i = -1;
@@ -1108,20 +1104,20 @@ char *ossl_ipaddr_to_asc(const unsigned char *p, int len)
 
     switch (len) {
     case 4: /* IPv4 */
-        BIO_snprintf(buf, sizeof(buf), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
+        snprintf(buf, sizeof(buf), "%d.%d.%d.%d", p[0], p[1], p[2], p[3]);
         break;
     case 16: /* IPv6 */
         for (out = buf, i = 8, remain = sizeof(buf);
-            i-- > 0 && bytes >= 0;
+            i-- > 0 && bytes >= 0 && remain > 0;
             remain -= bytes, out += bytes) {
             const char *template = (i > 0 ? "%X:" : "%X");
 
-            bytes = BIO_snprintf(out, remain, template, p[0] << 8 | p[1]);
+            bytes = snprintf(out, remain, template, p[0] << 8 | p[1]);
             p += 2;
         }
         break;
     default:
-        BIO_snprintf(buf, sizeof(buf), "<invalid length=%d>", len);
+        snprintf(buf, sizeof(buf), "<invalid length=%d>", len);
         break;
     }
     return OPENSSL_strdup(buf);

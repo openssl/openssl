@@ -165,7 +165,7 @@ static int test_http_method(int do_get, int do_txt, int suggested_status)
     int res = 0;
     int real_server = do_txt && 0; /* remove "&& 0" for using real server */
 
-    BIO_snprintf(path, sizeof(path), "/%d%s", suggested_status,
+    snprintf(path, sizeof(path), "/%d%s", suggested_status,
         do_get > 1 ? "/will-be-redirected" : RPATH);
     if (do_txt) {
         content_type = "text/plain";
@@ -635,7 +635,7 @@ static int test_hdr_resp_hdr_limit_none(void)
 
 static int test_hdr_resp_hdr_limit_short(void)
 {
-    return (test_http_resp_hdr_limit(1));
+    return test_http_resp_hdr_limit(1);
 }
 
 static int test_hdr_resp_hdr_limit_256(void)

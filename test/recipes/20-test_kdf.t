@@ -75,12 +75,26 @@ my @sskdf_tests = (
       desc => 'SSKDF HMAC SHA256'},
 );
 
+my @krb5kdf_tests = (
+    { cmd => [qw{openssl kdf -keylen 16 -cipher AES-128-CBC -kdfopt hexkey:42263C6E89F4FC28B8DF68EE09799F15 -kdfopt hexconstant:0000000299 KRB5KDF}],
+      expected => '34:28:0A:38:2B:C9:27:69:B2:DA:2F:9E:F0:66:85:4B',
+      desc => 'KRB5KDF AES-128-CBC'},
+    { cmd => [qw{openssl kdf -keylen 32 -cipher AES-256-CBC -kdfopt hexkey:FE697B52BC0D3CE14432BA036A92E65BBB52280990A2FA27883998D72AF30161 -kdfopt hexconstant:0000000299 KRB5KDF}],
+      expected => 'BF:AB:38:8B:DC:B2:38:E9:F9:C9:8D:6A:87:83:04:F0:4D:30:C8:25:56:37:5A:C5:07:A7:A8:52:79:0F:46:74',
+      desc => 'KRB5KDF AES-256-CBC'},
+    # Using the -kdfopt cipher: option instead of -cipher
+    { cmd => [qw{openssl kdf -keylen 16 -kdfopt cipher:AES-128-CBC -kdfopt hexkey:42263C6E89F4FC28B8DF68EE09799F15 -kdfopt hexconstant:0000000299 KRB5KDF}],
+      expected => '34:28:0A:38:2B:C9:27:69:B2:DA:2F:9E:F0:66:85:4B',
+      desc => 'KRB5KDF AES-128-CBC'},
+);
+
 my @scrypt_tests = (
     { cmd => [qw{openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl -kdfopt n:1024 -kdfopt r:8 -kdfopt p:16 -kdfopt maxmem_bytes:10485760 id-scrypt}],
       expected => 'fd:ba:be:1c:9d:34:72:00:78:56:e7:19:0d:01:e9:fe:7c:6a:d7:cb:c8:23:78:30:e7:73:76:63:4b:37:31:62:2e:af:30:d9:2e:22:a3:88:6f:f1:09:27:9d:98:30:da:c7:27:af:b9:4a:83:ee:6d:83:60:cb:df:a2:cc:06:40',
       desc => 'SCRYPT' },
 );
 
+push @kdf_tests, @krb5kdf_tests unless disabled("krb5kdf");
 push @kdf_tests, @scrypt_tests unless disabled("scrypt");
 push @kdf_tests, @sshkdf_tests unless disabled("sshkdf");
 push @kdf_tests, @sskdf_tests unless disabled("sskdf");

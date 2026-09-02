@@ -169,13 +169,11 @@ issue the following commands to build OpenSSL.
     $ nmake test
 
 As mentioned in the [Choices](#choices) section, you need to pick one
-of the four Configure targets in the first command.
+of the Configure targets in the first command.
 
 Most likely you will be using the `VC-WIN64A`/`VC-WIN64A-HYBRIDCRT` target for
 64bit Windows binaries (AMD64) or `VC-WIN32`/`VC-WIN32-HYBRIDCRT` for 32bit
 Windows binaries (X86).
-The other two options are `VC-WIN64I` (Intel IA64, Itanium) and
-`VC-CE` (Windows CE) are rather uncommon nowadays.
 
 Installing OpenSSL
 ------------------
@@ -428,6 +426,22 @@ The names of the libraries are:
 * brotlidec.lib
 * brotlienc.lib
 
+### with-cmocka-include
+
+    --with-cmocka-include=DIR
+
+The directory for the location of the cmocka include file. This option is only
+necessary if [enable-unit-tests](#enable-unit-tests) is used and the include
+file is not already on the system include path.
+
+### with-cmocka-lib
+
+    --with-cmocka-lib=DIR
+
+The directory containing the cmocka library. This option is only necessary if
+[enable-unit-tests](#enable-unit-tests) is used and the library is not already
+on the system library path.
+
 ### with-zlib-include
 
     --with-zlib-include=DIR
@@ -645,7 +659,8 @@ Do not use `atexit()` in libcrypto builds.
 
 Before version 4.0, OpenSSL used to set `atexit()` handler for cleaning up
 global data, and this option allowed to disable that functionality.  `atexit()`
-handler setup was removed in OpenSSL 4.0, so this option does nothing now.
+handler setup was removed in OpenSSL 4.0, so `no-atexit` option is retained
+for compatibility reasons only, always present, and does nothing.
 
 ### no-autoalginit
 
@@ -816,6 +831,12 @@ external test suites are currently supported:
 
 See the file [test/README-external.md](test/README-external.md)
 for further details.
+
+### enable-unit-tests
+
+Enable building and running unit tests.
+
+This works only on platforms supporting ld `--wrap` option like Linux and BSD.
 
 ### no-filenames
 
@@ -1094,9 +1115,11 @@ The User Interface console method enables text based console prompts.
 
 ### enable-unit-test
 
-Enable additional unit test APIs.
+Enable exposing SSL_test_functions for overwriting ssl_init_wbio_buffer.
 
 This should not typically be used in production deployments.
+
+This option is deprecated and will be removed in OpenSSL 5.0.
 
 ### no-uplink
 
@@ -1200,7 +1223,8 @@ Build without support for the specified algorithm.
 
 The `ripemd` algorithm is deprecated and if used is synonymous with `rmd160`.
 
-### Compiler-specific options
+Compiler-specific options
+-------------------------
 
     -Dxxx, -Ixxx, -Wp, -lxxx, -Lxxx, -Wl, -rpath, -R, -framework, -static
 
@@ -1231,7 +1255,17 @@ encoding.
 Take note of the [Environment Variables](#environment-variables) documentation
 below and how these flags interact with those variables.
 
-### Environment Variables
+Miscellaneous options
+---------------------
+
+### --manpage-format
+
+Specify a specific output manpage format. The supported output types are mandoc
+and *roff. The *roff output format is the default for legacy and portability
+reasons.
+
+Environment Variables
+---------------------
 
     VAR=value
 
@@ -1308,10 +1342,18 @@ If `CC` is set, it is advisable to also set `CXX` to ensure both the C and C++
 compiler are in the same "family".  This becomes relevant with
 `enable-external-tests` and `enable-buildtest-c++`.
 
-### Reconfigure
+Reconfigure
+-----------
 
-    reconf
-    reconfigure
+### Make targets
+
+    `$ make reconf`
+
+or
+
+    `$ make reconfigure`
+
+### Description
 
 Reconfigure from earlier data.
 
@@ -1929,9 +1971,8 @@ on Cygwin, shared libraries are named `cygcrypto-1.1.dll` and `cygssl-1.1.dll`
 with import libraries `libcrypto.dll.a` and `libssl.dll.a`.
 
 On Windows build with MSVC or using MingW, shared libraries are named
-`libcrypto-1_1.dll` and `libssl-1_1.dll` for 32-bit Windows,
-`libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` for 64-bit x86_64 Windows,
-and `libcrypto-1_1-ia64.dll` and `libssl-1_1-ia64.dll` for IA64 Windows.
+`libcrypto-1_1.dll` and `libssl-1_1.dll` for 32-bit Windows, and
+`libcrypto-1_1-x64.dll` and `libssl-1_1-x64.dll` for 64-bit x86_64 Windows.
 With MSVC, the import libraries are named `libcrypto.lib` and `libssl.lib`,
 while with MingW, they are named `libcrypto.dll.a` and `libssl.dll.a`.
 

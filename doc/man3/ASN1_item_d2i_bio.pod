@@ -59,6 +59,16 @@ B<OSSL_LIB_CTX> provided in the I<libctx> parameter and the property query
 string in I<propq>. See L<crypto(7)/ALGORITHM FETCHING> for more information
 about algorithm fetching.
 
+When reading from I<in>, decoding consumes one complete DER-encoded structure
+and leaves any following bytes in the BIO, so concatenated structures can be
+read with successive calls. Reaching the end of the input cleanly, at a
+structure boundary, is not treated as an error: the function returns NULL
+without adding to the error queue. If the end of the input is reached in the
+middle of a structure, or an indefinite-length value is missing its
+end-of-contents octets (that is, the input is truncated), an error is queued
+with reason code B<ASN1_R_NOT_ENOUGH_DATA>. The same applies to
+ASN1_item_d2i_fp_ex().
+
 ASN1_item_d2i_bio() is the same as ASN1_item_d2i_bio_ex() except that the
 default B<OSSL_LIB_CTX> is used (i.e. NULL) and with a NULL property query
 string.
@@ -92,6 +102,12 @@ that the I<libctx> and I<propq> can be used when doing algorithm fetching.
 ASN1_item_d2i_bio(), ASN1_item_unpack_ex() and ASN1_item_unpack() return a pointer to
 an B<ASN1_VALUE> or NULL on error.
 
+The ASN1_item_d2i_bio() and ASN1_item_d2i_fp() functions, including their
+B<_ex> variants, also return NULL at a clean end of input. In that case the
+error queue is left unchanged, so a caller reading concatenated structures in
+a loop can distinguish a clean end of input from a decoding error by
+inspecting the error queue, for example with L<ERR_peek_error(3)>.
+
 ASN1_item_i2d_mem_bio() returns a pointer to a memory BIO or NULL on error.
 
 ASN1_item_pack() returns a pointer to an B<ASN1_STRING> or NULL on error.
@@ -105,7 +121,7 @@ The function ASN1_item_unpack_ex() was added in OpenSSL 3.2.
 
 =head1 COPYRIGHT
 
-Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

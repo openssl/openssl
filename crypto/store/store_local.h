@@ -104,6 +104,7 @@ struct ossl_store_loader_st {
     const char *propdef;
     const char *description;
 
+    int no_store;
     CRYPTO_REF_COUNT refcnt;
 
     OSSL_FUNC_store_open_fn *p_open;

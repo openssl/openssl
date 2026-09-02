@@ -1242,7 +1242,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
 #endif
             ) {
                 if (rctx->server != NULL && *rctx->server != '\0') {
-                    BIO_snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
+                    snprintf(buf, sizeof(buf), "server=http%s://%s%s%s",
                         rctx->use_ssl ? "s" : "", rctx->server,
                         rctx->port != NULL ? ":" : "",
                         rctx->port != NULL ? rctx->port : "");
@@ -1251,7 +1251,7 @@ BIO *OSSL_HTTP_exchange(OSSL_HTTP_REQ_CTX *rctx, char **redirection_url)
                 if (rctx->proxy != NULL)
                     ERR_add_error_data(2, " proxy=", rctx->proxy);
                 if (err == 0) {
-                    BIO_snprintf(buf, sizeof(buf), " peer has disconnected%s",
+                    snprintf(buf, sizeof(buf), " peer has disconnected%s",
                         rctx->use_ssl ? " violating the protocol" : ", likely because it requires the use of TLS");
                     ERR_add_error_data(1, buf);
                 }
@@ -1508,7 +1508,7 @@ int OSSL_HTTP_proxy_connect(BIO *bio, const char *server, const char *port,
         proxyauth = OPENSSL_malloc(len + 1);
         if (proxyauth == NULL)
             goto end;
-        if (BIO_snprintf(proxyauth, len + 1, "%s:%s", proxyuser,
+        if (snprintf(proxyauth, len + 1, "%s:%s", proxyuser,
                 proxypass != NULL ? proxypass : "")
             != (int)len)
             goto proxy_end;

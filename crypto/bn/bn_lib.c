@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -89,15 +89,7 @@ const BIGNUM *BN_value_one(void)
     return &const_one;
 }
 
-/*
- * Old Visual Studio ARM compiler miscompiles BN_num_bits_word()
- * https://mta.openssl.org/pipermail/openssl-users/2018-August/008465.html
- */
-#if defined(_MSC_VER) && defined(_ARM_) && defined(_WIN32_WCE) \
-    && _MSC_VER >= 1400 && _MSC_VER < 1501
-#define MS_BROKEN_BN_num_bits_word
-#pragma optimize("", off)
-#endif
+#ifndef __e2k__
 int BN_num_bits_word(BN_ULONG l)
 {
     BN_ULONG x, mask;
@@ -142,9 +134,20 @@ int BN_num_bits_word(BN_ULONG l)
 
     return bits;
 }
-#ifdef MS_BROKEN_BN_num_bits_word
-#pragma optimize("", on)
+#else /* __e2k__ */
+#include <x86gprintrin.h>
+int BN_num_bits_word(BN_ULONG l)
+{
+    /* clz(0) is well-defined on e2k, hence no if (l == 0) return 0;
+     * is required here.
+     */
+#if BN_BITS2 > 32
+    return 64 - __builtin_clzll(l);
+#else
+    return 32 - __builtin_clz(l);
 #endif
+}
+#endif /* __e2k__ */
 
 /*
  * This function still leaks `a->dmax`: it's caller's responsibility to
@@ -708,19 +711,37 @@ int BN_ucmp(const BIGNUM *a, const BIGNUM *b)
     int i;
     BN_ULONG t1, t2, *ap, *bp;
 
+    /*
+     * As it is a public API function, we should handle NULL parameters in
+     * some way. The function can’t return an error, so let’s define that NULL
+     * is less than any BIGNUM.
+     */
+    if (!ossl_assert(a != NULL && b != NULL))
+        return (b == NULL) - (a == NULL);
+
     ap = a->d;
     bp = b->d;
 
     if (BN_get_flags(a, BN_FLG_CONSTTIME)
-        && a->top == b->top) {
+        || BN_get_flags(b, BN_FLG_CONSTTIME)) {
         int res = 0;
+        int min_top = a->top < b->top ? a->top : b->top;
 
-        for (i = 0; i < b->top; i++) {
+        for (i = 0; i < min_top; i++) {
             res = constant_time_select_int((int)constant_time_lt_bn(ap[i], bp[i]),
                 -1, res);
             res = constant_time_select_int((int)constant_time_lt_bn(bp[i], ap[i]),
                 1, res);
         }
+
+        for (i = min_top; i < a->top; ++i)
+            res = constant_time_select_int((int)constant_time_is_zero_bn(ap[i]),
+                res, 1);
+
+        for (i = min_top; i < b->top; ++i)
+            res = constant_time_select_int((int)constant_time_is_zero_bn(bp[i]),
+                res, -1);
+
         return res;
     }
 
@@ -949,21 +970,24 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
     condition = ((~condition & ((condition - 1))) >> (BN_BITS2 - 1)) - 1;
 
-    t = (a->top ^ b->top) & condition;
+    t = (a->top ^ b->top) & value_barrier_bn(condition);
     a->top ^= t;
     b->top ^= t;
 
-    t = (a->neg ^ b->neg) & condition;
+    t = (a->neg ^ b->neg) & value_barrier_bn(condition);
     a->neg ^= t;
     b->neg ^= t;
 
     /*-
-     * BN_FLG_STATIC_DATA: indicates that data may not be written to. Intention
-     * is actually to treat it as it's read-only data, and some (if not most)
-     * of it does reside in read-only segment. In other words observation of
-     * BN_FLG_STATIC_DATA in BN_consttime_swap should be treated as fatal
-     * condition. It would either cause SEGV or effectively cause data
-     * corruption.
+     * BN_FLG_STATIC_DATA: indicates that d points to a buffer that this
+     * BIGNUM does not own, so it must never be reallocated or freed through
+     * the BIGNUM. The flag by itself does not forbid writing to the words,
+     * but much of the data marked this way is compiled-in and does reside in
+     * a read-only segment. Since BN_consttime_swap writes to d, observing
+     * BN_FLG_STATIC_DATA here should be treated as a fatal condition: it
+     * would either cause SEGV or effectively cause data corruption. The flag
+     * is therefore never swapped, as it describes the storage of each d
+     * buffer, which is not exchanged.
      *
      * BN_FLG_MALLOCED: refers to BN structure itself, and hence must be
      * preserved.
@@ -981,13 +1005,13 @@ void BN_consttime_swap(BN_ULONG condition, BIGNUM *a, BIGNUM *b, int nwords)
 
 #define BN_CONSTTIME_SWAP_FLAGS (BN_FLG_CONSTTIME | BN_FLG_FIXED_TOP)
 
-    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & condition;
+    t = ((a->flags ^ b->flags) & BN_CONSTTIME_SWAP_FLAGS) & value_barrier_bn(condition);
     a->flags ^= t;
     b->flags ^= t;
 
     /* conditionally swap the data */
     for (i = 0; i < nwords; i++) {
-        t = (a->d[i] ^ b->d[i]) & condition;
+        t = (a->d[i] ^ b->d[i]) & value_barrier_bn(condition);
         a->d[i] ^= t;
         b->d[i] ^= t;
     }

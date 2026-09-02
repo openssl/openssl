@@ -8,7 +8,7 @@
 
 
 use OpenSSL::Test::Simple;
-use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir/;
+use OpenSSL::Test qw/:DEFAULT srctop_file srctop_dir bldtop_dir bldtop_file/;
 use OpenSSL::Test::Utils;
 
 BEGIN {
@@ -24,7 +24,7 @@ plan tests => 2;
 
 ok(run(test(["prov_config_test", srctop_file("test", "default.cnf"),
                                  srctop_file("test", "recursive.cnf"),
-                                 srctop_file("test", "pathed.cnf")])),
+                                 bldtop_file("test", "pathed.cnf")])),
     "running prov_config_test default.cnf");
 
 SKIP: {
@@ -32,6 +32,6 @@ SKIP: {
 
     ok(run(test(["prov_config_test", srctop_file("test", "fips.cnf"),
                                      srctop_file("test", "recursive.cnf"),
-                                     srctop_file("test", "pathed.cnf")])),
+                                     bldtop_file("test", "pathed.cnf")])),
        "running prov_config_test fips.cnf");
 }

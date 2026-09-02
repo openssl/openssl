@@ -307,8 +307,10 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
     case SSL_TYPE_QUIC_CONNECTION:
         qc = (QUIC_CONNECTION *)s;
         ctx->obj = &qc->obj;
-        ctx->qd = qc->domain;
-        ctx->ql = qc->listener; /* never changes, so can be read without lock */
+        ctx->qd = qc->domain != NULL
+            ? qc->domain
+            : (qc->listener != NULL ? qc->listener->domain : NULL);
+        ctx->ql = qc->listener;
         ctx->qc = qc;
 
         if ((flags & QCTX_AUTO_S) != 0) {
@@ -357,7 +359,11 @@ static int expect_quic_as(const SSL *s, QCTX *ctx, uint32_t flags)
 
         xso = (QUIC_XSO *)s;
         ctx->obj = &xso->obj;
-        ctx->qd = xso->conn->domain;
+        ctx->qd = xso->conn->domain != NULL
+            ? xso->conn->domain
+            : (xso->conn->listener != NULL
+                      ? xso->conn->listener->domain
+                      : NULL);
         ctx->ql = xso->conn->listener;
         ctx->qc = xso->conn;
         ctx->xso = xso;
@@ -2150,6 +2156,23 @@ struct quic_wait_for_stream_args {
 };
 
 QUIC_NEEDS_LOCK
+static QUIC_STREAM *quic_get_incoming_default_stream(QUIC_CONNECTION *qc,
+    uint64_t expect_id)
+{
+    QUIC_STREAM_MAP *qsm = ossl_quic_channel_get_qsm(qc->ch);
+    QUIC_STREAM *qs;
+
+    qs = ossl_quic_stream_map_get_by_id(qsm,
+        expect_id | QUIC_STREAM_DIR_BIDI);
+    if (qs == NULL)
+        qs = ossl_quic_stream_map_get_by_id(qsm,
+            expect_id | QUIC_STREAM_DIR_UNI);
+
+    /* Auto-rejected streams remain in the map until garbage collection. */
+    return qs != NULL && qs->accept_node.next != NULL ? qs : NULL;
+}
+
+QUIC_NEEDS_LOCK
 static int quic_wait_for_stream(void *arg)
 {
     struct quic_wait_for_stream_args *args = arg;
@@ -2160,11 +2183,7 @@ static int quic_wait_for_stream(void *arg)
         return -1;
     }
 
-    args->qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(args->qc->ch),
-        args->expect_id | QUIC_STREAM_DIR_BIDI);
-    if (args->qs == NULL)
-        args->qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(args->qc->ch),
-            args->expect_id | QUIC_STREAM_DIR_UNI);
+    args->qs = quic_get_incoming_default_stream(args->qc, args->expect_id);
 
     if (args->qs != NULL)
         return 1; /* stream now exists */
@@ -2201,17 +2220,12 @@ static int qc_wait_for_default_xso_for_read(QCTX *ctx, int peek)
         ? QUIC_STREAM_INITIATOR_CLIENT
         : QUIC_STREAM_INITIATOR_SERVER;
 
-    qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-        expect_id | QUIC_STREAM_DIR_BIDI);
-    if (qs == NULL)
-        qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-            expect_id | QUIC_STREAM_DIR_UNI);
+    qs = quic_get_incoming_default_stream(qc, expect_id);
 
     if (qs == NULL) {
         qctx_maybe_autotick(ctx);
 
-        qs = ossl_quic_stream_map_get_by_id(ossl_quic_channel_get_qsm(qc->ch),
-            expect_id);
+        qs = quic_get_incoming_default_stream(qc, expect_id);
     }
 
     if (qs == NULL) {
@@ -3992,6 +4006,33 @@ err:
 }
 
 QUIC_TAKES_LOCK
+static int qc_getset_max_pending_channels(QCTX *ctx, uint32_t class_,
+    uint64_t *p_value_out, uint64_t *p_value_in)
+{
+    int ret = 0;
+    uint64_t value_out = 0;
+
+    qctx_lock(ctx);
+
+    if (class_ == SSL_VALUE_CLASS_GENERIC && ctx->is_listener) {
+        value_out = ossl_quic_port_get_max_pending_channels(ctx->ql->port);
+        if (p_value_in != NULL)
+            ossl_quic_port_set_max_pending_channels(ctx->ql->port, *p_value_in);
+        ret = 1;
+    } else {
+        QUIC_RAISE_NON_NORMAL_ERROR(ctx, SSL_R_UNSUPPORTED_CONFIG_VALUE_CLASS, NULL);
+        ret = 0;
+    }
+
+    qctx_unlock(ctx);
+
+    if (ret && p_value_out != NULL)
+        *p_value_out = value_out;
+
+    return ret;
+}
+
+QUIC_TAKES_LOCK
 static int qc_get_stream_avail(QCTX *ctx, uint32_t class_,
     int is_uni, int is_remote,
     uint64_t *value)
@@ -4133,6 +4174,7 @@ static int expect_quic_for_value(SSL *s, QCTX *ctx, uint32_t id)
     case SSL_VALUE_QUIC_WINDOWUSTR:
     case SSL_VALUE_QUIC_ACK_DELAY_EXPONENT:
     case SSL_VALUE_QUIC_ACK_DELAY_MAX:
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
         return expect_quic_cl(s, ctx);
     default:
         return expect_quic_conn_only(s, ctx);
@@ -4167,6 +4209,8 @@ int ossl_quic_get_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_ack_delay_exponent(&ctx, class_, value, NULL);
     case SSL_VALUE_QUIC_ACK_DELAY_MAX:
         return qc_getset_max_ack_delay(&ctx, class_, value, NULL);
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
+        return qc_getset_max_pending_channels(&ctx, class_, value, NULL);
 
     case SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL:
         return qc_get_stream_avail(&ctx, class_, /*uni=*/0, /*remote=*/0, value);
@@ -4225,6 +4269,8 @@ int ossl_quic_set_value_uint(SSL *s, uint32_t class_, uint32_t id,
         return qc_getset_ack_delay_exponent(&ctx, class_, NULL, &value);
     case SSL_VALUE_QUIC_ACK_DELAY_MAX:
         return qc_getset_max_ack_delay(&ctx, class_, NULL, &value);
+    case SSL_VALUE_QUIC_MAX_PENDING_CONNS:
+        return qc_getset_max_pending_channels(&ctx, class_, NULL, &value);
 
     default:
         return QUIC_RAISE_NON_NORMAL_ERROR(&ctx,
@@ -4906,7 +4952,7 @@ SSL *ossl_quic_new_from_listener(SSL *ssl, uint64_t flags)
     ossl_quic_channel_set_msg_callback_arg(qc->ch, ql->obj.ssl.ctx->msg_callback_arg);
 
     /*
-     * We deliberately pass NULL for engine and port, because we don't want to
+     * We deliberately pass NULL for engine and port, because we don't want
      * to turn QCSO we create here into an event leader, nor port leader.
      * Both those roles are occupied already by listener (`ssl`) we use
      * to create a new QCSO here.
@@ -4979,10 +5025,16 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 {
     QCTX lctx;
     QCTX cctx;
-    QUIC_CHANNEL *new_ch;
+    QUIC_CHANNEL *new_ch, *old_ch, *popped_ch;
+    QUIC_PORT *old_port;
+    QUIC_ENGINE *old_engine;
+#if defined(OPENSSL_THREADS)
+    CRYPTO_MUTEX *old_mutex = NULL;
+#endif
     QUIC_CONNECTION *qc = NULL;
     QUIC_LISTENER *ql = NULL;
     SSL *tls = NULL;
+    SSL_CONNECTION *tls_conn = NULL;
     int ret = 0;
 
     if (!expect_quic_listener(listener, &lctx))
@@ -4990,6 +5042,30 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
 
     if (!expect_quic_c(new_conn, &cctx))
         return -1;
+
+#if !defined(OPENSSL_NO_QUIC_THREAD_ASSIST)
+    if (cctx.qc->is_thread_assisted) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SSL_listen_ex requires new_conn without thread assistance");
+        return -1;
+    }
+#endif
+
+    /* The standalone transport is replaced, so new_conn must be unused. */
+    if (cctx.qc->started || cctx.qc->shutting_down
+        || cctx.qc->num_xso != 0
+        || cctx.qc->default_xso_created
+        || cctx.qc->listener != NULL
+        || ossl_quic_port_get_net_rbio(cctx.qc->port) != NULL
+        || ossl_quic_port_get_net_wbio(cctx.qc->port) != NULL
+        || ossl_quic_channel_is_active(cctx.qc->ch)
+        || ossl_quic_channel_is_term_any(cctx.qc->ch)
+        || !cctx.obj->is_event_leader || !cctx.obj->is_port_leader
+        || cctx.obj->parent_obj != NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_PASSED_INVALID_ARGUMENT,
+            "SSL_listen_ex requires a fresh connection created by SSL_new()");
+        return -1;
+    }
 
     qctx_lock_for_io(&lctx);
 
@@ -5000,53 +5076,109 @@ int ossl_quic_peeloff_conn(SSL *listener, SSL *new_conn)
         goto out;
     }
 
-    new_ch = ossl_quic_port_pop_incoming(lctx.ql->port);
-    if (new_ch != NULL) {
-        tls = ossl_ssl_connection_new_int(ossl_quic_port_get_channel_ctx(lctx.ql->port),
-            new_conn, TLS_method());
-        if (tls == NULL)
-            goto out;
+    /* Do all fallible setup before consuming the queued channel. */
+    new_ch = ossl_quic_port_peek_incoming(lctx.ql->port);
+    if (new_ch == NULL)
+        goto out;
 
-        qc = cctx.qc;
-        ql = lctx.ql;
-        /*
-         * Need to ensure that we take a reference on our new listener
-         * so that we don't free it before this connection
-         */
-        if (!SSL_up_ref(&ql->obj.ssl))
-            goto out;
+    qc = cctx.qc;
+    ql = lctx.ql;
 
-        ossl_quic_channel_free(qc->ch);
-        ossl_quic_port_free(qc->port);
-        ossl_quic_engine_free(qc->engine);
-        /*
-         * Ensure that we point to our listener so we can drop
-         * the above refcount when this SSL object is freed
-         */
-        qc->listener = ql;
-        qc->obj.engine = ql->engine;
-        qc->engine = ql->engine;
-        qc->port = ql->port;
-        qc->pending = 1;
-#if defined(OPENSSL_THREADS)
-        ossl_crypto_mutex_free(&qc->mutex);
-        qc->mutex = ql->mutex;
-#endif
-        qc->ch = new_ch;
-        SSL_free(qc->tls);
-        ossl_quic_channel_set0_tls(new_ch, tls);
-        qc->tls = tls;
-        ossl_quic_channel_get_peer_addr(new_ch, &qc->init_peer_addr); /* best effort */
-        qc->started = 1;
-        qc->as_server = 1;
-        qc->as_server_state = 1;
-        qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
-        qc->default_ssl_options = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
-        qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
-        qc->last_error = SSL_ERROR_NONE;
-        qc_update_reject_policy(qc);
-        ret = 1;
+    tls = ossl_ssl_connection_new_int(
+        ossl_quic_port_get_channel_ctx(ql->port), new_conn, TLS_method());
+    if (tls == NULL) {
+        /* An internal failure is not "no connection available" */
+        ret = -1;
+        goto out;
     }
+
+    tls_conn = SSL_CONNECTION_FROM_SSL(tls);
+    if (tls_conn == NULL) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        SSL_free(tls);
+        ret = -1;
+        goto out;
+    }
+
+    tls_conn->s3.flags |= TLS1_FLAGS_QUIC | TLS1_FLAGS_QUIC_INTERNAL;
+    tls_conn->options &= OSSL_QUIC_PERMITTED_OPTIONS_CONN;
+    tls_conn->pha_enabled = 0;
+
+    /* The connection keeps its listener alive. */
+    if (!SSL_up_ref(&ql->obj.ssl)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        SSL_free(tls);
+        ret = -1;
+        goto out;
+    }
+
+    /* Bind TLS before adopting the deferred incoming channel. */
+    if (!ossl_quic_channel_set0_tls(new_ch, tls)) {
+        QUIC_RAISE_NON_NORMAL_ERROR(NULL, ERR_R_INTERNAL_ERROR, NULL);
+        SSL_free(tls);
+        SSL_free(&ql->obj.ssl);
+        ret = -1;
+        goto out;
+    }
+
+    ossl_quic_channel_set_msg_callback(new_ch,
+        ql->obj.ssl.ctx->msg_callback, new_conn);
+    ossl_quic_channel_set_msg_callback_arg(new_ch,
+        ql->obj.ssl.ctx->msg_callback_arg);
+
+    /* The listener lock guarantees that the queue head has not changed. */
+    popped_ch = ossl_quic_port_pop_incoming(ql->port);
+    assert(popped_ch == new_ch);
+    (void)popped_ch;
+
+    old_ch = qc->ch;
+    old_port = qc->port;
+    old_engine = qc->engine;
+#if defined(OPENSSL_THREADS)
+    old_mutex = qc->mutex;
+#endif
+
+    /* Ensure that SSL_free() drops the listener reference. */
+    qc->listener = ql;
+    qc->engine = ql->engine;
+    qc->port = ql->port;
+    /* The connection is handed to the caller, as in SSL_accept_connection() */
+    qc->pending = 0;
+    /* Demote the standalone object into the listener's hierarchy. */
+    ossl_quic_obj_reparent(&qc->obj, &ql->obj);
+
+    /* Release the resources the connection owned as a standalone object. */
+    ossl_quic_channel_free(old_ch);
+    quic_unref_port_bios(old_port);
+    ossl_quic_port_free(old_port);
+    ossl_quic_engine_free(old_engine);
+#if defined(OPENSSL_THREADS)
+    /* The standalone mutex was borrowed by all three resources above. */
+    qc->mutex = ql->mutex;
+    ossl_crypto_mutex_free(&old_mutex);
+#endif
+
+    qc->ch = new_ch;
+    SSL_free(qc->tls);
+    qc->tls = tls;
+    ossl_quic_channel_get_peer_addr(new_ch,
+        &qc->init_peer_addr); /* best effort */
+    qc->started = 1;
+    qc->as_server = 1;
+    qc->as_server_state = 1;
+    /* Reinitialise configuration to the accepted-connection defaults. */
+    qc->default_stream_mode = SSL_DEFAULT_STREAM_MODE_AUTO_BIDI;
+    qc->default_ssl_mode = ql->obj.ssl.ctx->mode;
+    qc->default_ssl_options
+        = ql->obj.ssl.ctx->options & OSSL_QUIC_PERMITTED_OPTIONS;
+    qc->incoming_stream_policy = SSL_INCOMING_STREAM_POLICY_AUTO;
+    qc->incoming_stream_aec = 0;
+    qc->last_error = SSL_ERROR_NONE;
+    ossl_quic_obj_set_blocking_mode(&qc->obj, QUIC_BLOCKING_MODE_INHERIT);
+    qc->obj.event_handling_mode = SSL_VALUE_EVENT_HANDLING_MODE_INHERIT;
+    qc_update_reject_policy(qc);
+    ret = 1;
+
 out:
     qctx_unlock(&lctx);
     return ret;
@@ -5433,9 +5565,8 @@ int ossl_quic_get_peer_token(SSL_CTX *ctx, BIO_ADDR *peer,
 
     ossl_crypto_mutex_lock(c->mutex);
     tok = lh_QUIC_TOKEN_retrieve(c->cache, key);
-    if (tok != NULL) {
+    if (tok != NULL && CRYPTO_UP_REF(&tok->references, &ret)) {
         *token = tok;
-        CRYPTO_UP_REF(&tok->references, &ret);
         rc = 1;
     }
 
@@ -5588,7 +5719,6 @@ long ossl_quic_callback_ctrl(SSL *s, int cmd, void (*fp)(void))
             &ctx.qc->obj.ssl);
         /* This callback also needs to be set on the internal SSL object */
         return ssl3_callback_ctrl(ctx.qc->tls, cmd, fp);
-        ;
 
     default:
         /* Probably a TLS related ctrl. Defer to our internal SSL object */
@@ -5916,6 +6046,19 @@ QUIC_CHANNEL *ossl_quic_conn_get_channel(SSL *s)
         return NULL;
 
     return ctx.qc->ch;
+}
+
+QUIC_PORT *ossl_quic_listener_get_port(SSL *s)
+{
+    QCTX ctx;
+
+    /*
+     * expect listerner only
+     */
+    if (!expect_quic_listener(s, &ctx))
+        return NULL;
+
+    return ctx.ql->port;
 }
 
 int ossl_quic_set_diag_title(SSL_CTX *ctx, const char *title)

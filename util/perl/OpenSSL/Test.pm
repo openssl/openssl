@@ -333,7 +333,7 @@ sub app {
             $idx=$idx+1;
             my $resultdir = result_dir();
             my $srcdir = srctop_dir();
-            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
+            return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx.%p", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                        exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } else {
             return cmd([ @prog, @cmdargs ],
@@ -363,7 +363,7 @@ sub test {
            $idx=$idx+1;
            my $resultdir = result_dir();
            my $srcdir = srctop_dir();
-           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
+           return cmd([ "valgrind", "--leak-check=full", "--show-leak-kinds=all", "--gen-suppressions=all", "--suppressions=$srcdir/util/valgrind.suppression", "--log-file=$resultdir/valgrind.log.$idx.%p", "--suppressions=$srcdir/util/valgrind.suppression", @prog, @cmdargs ],
                    exe_shell => $ENV{EXE_SHELL}, %opts) -> (shift);
         } elsif (defined $ENV{OSSL_VALGRIND_CT}) {
            # Constant-time validation mode: mark secret data as undefined and
@@ -448,6 +448,14 @@ If used, B<VARREF> must be a reference to a scalar variable.  It will be
 assigned a boolean indicating if the command succeeded or not.  This is
 particularly useful together with B<capture>.
 
+=item B<quiet =E<gt> 0|1>
+
+If true, suppress the diagnostic line that C<run> normally prints to STDERR
+after the command completes (the C<command => exitcode> line) when running
+under a non-verbose test harness.  Has no effect outside a harness or under
+C<HARNESS_VERBOSE>.  Useful for loops that invoke many commands where that
+line would be noise.
+
 =back
 
 Usually 1 indicates that the command was successful and 0 indicates failure.
@@ -502,6 +510,10 @@ sub run {
     local $_;
 
     open($pipe, '-|', "$prefix$cmd") or die "Can't start command: $!";
+    # Read line by line, even if a recipe played with $/ (slurp or
+    # paragraph mode).  Otherwise, a bare prefix (or only the first
+    # line of a multi-line read) would hit the TAP stream unguarded.
+    local $/ = "\n";
     while(<$pipe>) {
         my $l = ($opts{prefix} // $default_prefix) . $_;
         if ($opts{capture}) {
@@ -522,19 +534,20 @@ sub run {
         ${$opts{statusvar}} = $r;
     }
 
-    # Restore STDOUT / STDERR on VMS
+    my $harness_quiet = $ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE};
     if ($^O eq 'VMS') {
-        if ($ENV{HARNESS_ACTIVE} && !$ENV{HARNESS_VERBOSE}) {
+        # Restore STDOUT / STDERR on VMS
+        if ($harness_quiet) {
             close STDOUT;
             close STDERR;
             open STDOUT, '>&', $save_STDOUT or die "Can't restore STDOUT: $!";
             open STDERR, '>&', $save_STDERR or die "Can't restore STDERR: $!";
         }
 
-        print STDERR "$prefix$display_cmd => $e\n"
-            if !$ENV{HARNESS_ACTIVE} || $ENV{HARNESS_VERBOSE};
+        print STDERR "$prefix$display_cmd => $e\n" unless $harness_quiet;
     } else {
-        print STDERR "$prefix$display_cmd => $e\n";
+        print STDERR "$prefix$display_cmd => $e\n"
+            unless $opts{quiet} && $harness_quiet;
     }
 
     # At this point, $? stops being interesting, and unfortunately,

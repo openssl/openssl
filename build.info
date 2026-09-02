@@ -1,5 +1,35 @@
 # Note that some of these directories are filtered in Configure.  Look for
 # %skipdir there for further explanations.
+{- use File::Spec::Functions;
+
+   # The L table in crypto/err/openssl.ec names, for each error library,
+   # the files mkerr.pl emits for it: fields three onwards, with NONE
+   # where there is nothing to emit.
+   our @err_files = ();
+   my $ec = catfile($sourcedir, "crypto", "err", "openssl.ec");
+
+   open my $fh, "<", $ec or die "Can't read $ec, $!\n";
+   while (<$fh>) {
+       s|\R$||;
+       next unless m|^L\s|;
+       my @field = split /\s+/;
+       push @err_files, grep { $_ ne "NONE" } @field[2 .. $#field];
+   }
+   close $fh;
+
+   our $err_headers = join(" \\\n         ", grep { m|\.h$| } @err_files);
+   our $err_rules =
+       join("", map {
+                "GENERATE[$_]=util/mkerr.pl -internal \\\n"
+                . "    -conf \$(SRCDIR)/crypto/err/openssl.ec -emit $_\n"
+                . "DEPEND[$_]=crypto/err/openssl.ec crypto/err/openssl.txt\n"
+            } @err_files);
+
+   # Adding a library to the table above changes the rules below, so the
+   # configuration has to be redone when it changes.
+   push @{$config{build_infos}}, $ec;
+   ""
+-}
 
 SUBDIRS=crypto ssl apps util fuzz providers doc
 IF[{- !$disabled{tests} -}]
@@ -32,6 +62,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ess.h \
          include/openssl/fipskey.h \
          include/openssl/lhash.h \
+         {- $err_headers -} \
+         include/openssl/obj_mac.h \
          include/openssl/opensslv.h \
          include/openssl/ocsp.h \
          include/openssl/pkcs12.h \
@@ -45,6 +77,8 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/x509_acert.h \
          include/openssl/x509_vfy.h \
          include/crypto/dso_conf.h \
+         include/crypto/ec_params.h \
+         include/crypto/rsa_params.h \
          providers/implementations/asymciphers/rsa_enc.inc \
          providers/implementations/asymciphers/sm2_enc.inc \
          providers/implementations/exchange/dh_exch.inc \
@@ -139,6 +173,12 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/rands/test_rng.inc
 
 GENERATE[include/openssl/asn1.h]=include/openssl/asn1.h.in
+
+{- $err_rules -}GENERATE[include/openssl/obj_mac.h]=crypto/objects/objects.pl \
+    -a $(SRCDIR)/crypto/objects/obj_compat.h \
+    $(SRCDIR)/crypto/objects/objects.txt $(SRCDIR)/crypto/objects/obj_mac.num
+DEPEND[include/openssl/obj_mac.h]=crypto/objects/objects.txt \
+    crypto/objects/obj_mac.num crypto/objects/obj_compat.h
 GENERATE[include/openssl/asn1t.h]=include/openssl/asn1t.h.in
 GENERATE[include/openssl/bio.h]=include/openssl/bio.h.in
 GENERATE[include/openssl/cmp.h]=include/openssl/cmp.h.in
@@ -262,8 +302,14 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/rands/seed_src.inc \
        providers/implementations/rands/seed_src_jitter.inc \
        providers/implementations/rands/test_rng.inc \
+       include/crypto/ec_params.h \
+       include/crypto/rsa_params.h \
        include/openssl/core_names.h]=util/perl|OpenSSL/paramnames.pm
 
+GENERATE[include/crypto/ec_params.h]=\
+    include/crypto/ec_params.h.in
+GENERATE[include/crypto/rsa_params.h]=\
+    include/crypto/rsa_params.h.in
 GENERATE[providers/implementations/asymciphers/rsa_enc.inc]=\
     providers/implementations/asymciphers/rsa_enc.inc.in
 GENERATE[providers/implementations/asymciphers/sm2_enc.inc]=\

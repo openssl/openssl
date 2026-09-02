@@ -38,7 +38,7 @@ able to process multiple simultaneous crypto operations. This
 capability could be utilised to parallelise the processing of a single
 connection. For example a single write can be split into multiple records and
 each one encrypted independently and in parallel. Note: this would only work in
-TLS1.1+. There was no support in SSLv3, TLSv1.0 or DTLS (any version). This
+TLS1.1+. There was no support in TLSv1.0 or DTLS (any version). This
 capability is known as "pipelining" within OpenSSL.
 
 In order to benefit from the pipelining capability, you would need to have an

@@ -62,7 +62,7 @@ my @opensslcpphandlers = (
     ##################################################################
     # OpenSSL CPP specials
     #
-    # These are used to convert certain pre-precessor expressions into
+    # These are used to convert certain pre-processor expressions into
     # others that @cpphandlers have a better chance to understand.
 
     # This changes any OPENSSL_NO_DEPRECATED_x_y[_z] check to a check of

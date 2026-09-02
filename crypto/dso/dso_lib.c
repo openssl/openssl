@@ -93,7 +93,7 @@ int DSO_up_ref(DSO *dso)
         return 0;
     }
 
-    if (CRYPTO_UP_REF(&dso->references, &i) <= 0)
+    if (!CRYPTO_UP_REF(&dso->references, &i))
         return 0;
 
     REF_PRINT_COUNT("DSO", i, dso);

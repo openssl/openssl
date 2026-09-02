@@ -22,8 +22,7 @@
 #include "bio_local.h"
 #include "internal/cryptlib.h"
 
-#if defined(OPENSSL_SYS_WINCE)
-#elif defined(OPENSSL_SYS_WIN32)
+#if defined(OPENSSL_SYS_WIN32)
 #elif defined(__wasi__)
 #define NO_SYSLOG
 #elif defined(OPENSSL_SYS_VMS)
@@ -241,7 +240,7 @@ static void xsyslog(BIO *bp, int priority, const char *string)
         break;
     }
 
-    BIO_snprintf(pidbuf, sizeof(pidbuf), "[%lu] ", GetCurrentProcessId());
+    snprintf(pidbuf, sizeof(pidbuf), "[%lu] ", GetCurrentProcessId());
     lpszStrings[0] = pidbuf;
     lpszStrings[1] = string;
 

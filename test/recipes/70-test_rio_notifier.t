@@ -14,9 +14,6 @@ setup("test_rio_notifier");
 plan skip_all => "RIO notifier tests require QUIC"
     if disabled("quic");
 
-plan skip_all => "RIO notifier WSA tests are only available on Windows"
-    if config("target") !~ /^(?:VC-|mingw|BC-)/i;
-
 plan tests => 1;
 
 ok(run(test(["rio_notifier_test"])));

@@ -13,6 +13,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <openssl/objects.h>
+#include "internal/e_os.h"
 #include "internal/comp.h"
 #include <openssl/err.h>
 #include "crypto/cryptlib.h"
@@ -46,10 +47,6 @@ static void brotli_free(void *opaque, void *address)
  * work.  Therefore, all BROTLI routines are loaded at run time
  * and we do not link to a .LIB file when BROTLI_SHARED is set.
  */
-#if defined(OPENSSL_SYS_WINDOWS) || defined(OPENSSL_SYS_WIN32)
-#include <windows.h>
-#endif
-
 #ifdef BROTLI_SHARED
 #include "internal/dso.h"
 

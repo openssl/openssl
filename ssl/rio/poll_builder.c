@@ -120,8 +120,10 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
 
     assert((rpb->pfd_heap != NULL && rpb->pfd_heap == pfds) || (rpb->pfd_heap == NULL && rpb->pfds == pfds));
     assert(i <= rpb->pfd_num && rpb->pfd_num <= rpb->pfd_alloc);
+    /* Check the index first because an appended entry is uninitialised. */
+    if (i == rpb->pfd_num || pfds[i].fd == -1)
+        pfds[i].events = 0;
     pfds[i].fd = fd;
-    pfds[i].events = 0;
 
     if (want_read)
         pfds[i].events |= POLLIN;
@@ -135,9 +137,39 @@ int ossl_rio_poll_builder_add_fd(RIO_POLL_BUILDER *rpb, int fd,
 #endif
 }
 
+/* Returns 1 if no file descriptors have been added to the poll builder. */
+static int rio_poll_builder_is_empty(const RIO_POLL_BUILDER *rpb)
+{
+#if RIO_POLL_METHOD == RIO_POLL_METHOD_SELECT
+    return rpb->hwm_fd < 0;
+#elif RIO_POLL_METHOD == RIO_POLL_METHOD_POLL
+    return rpb->pfd_num == 0;
+#else
+    return 1;
+#endif
+}
+
 int ossl_rio_poll_builder_poll(RIO_POLL_BUILDER *rpb, OSSL_TIME deadline)
 {
     int rc;
+
+    /*
+     * Waiting with no file descriptors is legitimate: a DTLS connection whose
+     * BIO cannot provide a poll descriptor has no readiness to wait for, but
+     * still has a retransmission deadline to wake for. Handle that here rather
+     * than leaving it to the OS, because poll() treats an empty descriptor set
+     * as a plain sleep whereas Windows' select() rejects it outright.
+     *
+     * With no descriptors and no deadline nothing could ever wake us, so that
+     * is a caller error rather than an indefinite sleep.
+     */
+    if (rio_poll_builder_is_empty(rpb)) {
+        if (ossl_time_is_infinite(deadline))
+            return 0;
+
+        OSSL_sleep(ossl_time2ms(ossl_time_subtract(deadline, ossl_time_now())));
+        return 1;
+    }
 
 #if RIO_POLL_METHOD == RIO_POLL_METHOD_SELECT
     do {

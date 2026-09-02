@@ -819,7 +819,8 @@ static int protocol_from_string(const char *value)
         { "tls1.2", TLS1_2_VERSION },
         { "tls1.3", TLS1_3_VERSION },
         { "dtls1", DTLS1_VERSION },
-        { "dtls1.2", DTLS1_2_VERSION }
+        { "dtls1.2", DTLS1_2_VERSION },
+        { "dtls1.3", DTLS1_3_VERSION }
     };
     size_t i;
     size_t n = OSSL_NELEM(versions);
@@ -1043,13 +1044,16 @@ int main(int argc, char *argv[])
         } else if (HAS_PREFIX(*argv, "-num")) {
             if (--argc < 1)
                 goto bad;
-            number = atoi(*(++argv));
+            (void)test_strtoint(*(++argv), &number);
             if (number == 0)
                 number = 1;
         } else if (strcmp(*argv, "-bytes") == 0) {
+            unsigned long ul = 0;
+
             if (--argc < 1)
                 goto bad;
-            bytes = atol(*(++argv));
+            if (OPENSSL_strtoul(*(++argv), NULL, 10, &ul) && ul <= LONG_MAX)
+                bytes = (long)ul;
             if (bytes == 0L)
                 bytes = 1L;
             i = (int)strlen(argv[0]);
@@ -1191,9 +1195,12 @@ int main(int argc, char *argv[])
                 goto bad;
             client_sess_in = *(++argv);
         } else if (strcmp(*argv, "-should_reuse") == 0) {
+            int reuse_arg = 0;
+
             if (--argc < 1)
                 goto bad;
-            should_reuse = !!atoi(*(++argv));
+            (void)test_strtoint(*(++argv), &reuse_arg);
+            should_reuse = reuse_arg != 0;
         } else if (strcmp(*argv, "-no_ticket") == 0) {
             no_ticket = 1;
         } else if (strcmp(*argv, "-client_ktls") == 0) {
@@ -1284,7 +1291,7 @@ int main(int argc, char *argv[])
         no_protocol = 0;
 
     /*
-     * Testing was requested for a compiled-out protocol (e.g. SSLv3).
+     * Testing was requested for a compiled-out protocol (e.g. TLSv1, etc.).
      * Ideally, we would error out, but the generic test wrapper can't know
      * when to expect failure. So we do nothing and return success.
      */
@@ -1938,7 +1945,7 @@ int doit_localhost(SSL *s_ssl, SSL *c_ssl, int family, long count,
     if (BIO_do_accept(acpt) <= 0)
         goto err;
 
-    BIO_snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
+    snprintf(addr_str, sizeof(addr_str), ":%s", BIO_get_accept_port(acpt));
 
     client = BIO_new_connect(addr_str);
     if (!client)
@@ -2967,8 +2974,8 @@ static unsigned int psk_client_callback(SSL *ssl, const char *hint,
     int ret;
     unsigned int psk_len = 0;
 
-    ret = BIO_snprintf(identity, max_identity_len, "Client_identity");
-    if (ret < 0)
+    ret = snprintf(identity, max_identity_len, "Client_identity");
+    if (ret < 0 || (unsigned int)ret >= max_identity_len)
         goto out_err;
     if (debug)
         fprintf(stderr, "client: created identity '%s' len=%d\n", identity,

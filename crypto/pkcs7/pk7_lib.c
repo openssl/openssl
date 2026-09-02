@@ -537,7 +537,7 @@ int PKCS7_set_digest(PKCS7 *p7, const EVP_MD *md)
     }
 
     ERR_raise(ERR_LIB_PKCS7, PKCS7_R_WRONG_CONTENT_TYPE);
-    return 1;
+    return 0;
 }
 
 STACK_OF(PKCS7_SIGNER_INFO) *PKCS7_get_signer_info(PKCS7 *p7)
@@ -716,8 +716,8 @@ int PKCS7_set_cipher(PKCS7 *p7, const EVP_CIPHER *cipher)
     return 1;
 }
 
-/* unfortunately cannot constify BIO_new_NDEF() due to this and CMS_stream() */
-int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
+/* Return the content octet string that indefinite-length streaming encodes */
+ASN1_OCTET_STRING *ossl_pkcs7_get0_stream_content(PKCS7 *p7)
 {
     ASN1_OCTET_STRING *os = NULL;
 
@@ -727,6 +727,10 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         break;
 
     case NID_pkcs7_signedAndEnveloped:
+        if (p7->d.signed_and_enveloped == NULL || p7->d.signed_and_enveloped->enc_data == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            break;
+        }
         os = p7->d.signed_and_enveloped->enc_data->enc_data;
         if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
@@ -735,6 +739,10 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         break;
 
     case NID_pkcs7_enveloped:
+        if (p7->d.enveloped == NULL || p7->d.enveloped->enc_data == NULL) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
+            break;
+        }
         os = p7->d.enveloped->enc_data->enc_data;
         if (os == NULL) {
             os = ASN1_OCTET_STRING_new();
@@ -747,7 +755,13 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
             ERR_raise(ERR_LIB_PKCS7, PKCS7_R_NO_CONTENT);
             break;
         }
-        os = p7->d.sign->contents->d.data;
+
+        if (!PKCS7_type_is_data(p7->d.sign->contents)) {
+            ERR_raise(ERR_LIB_PKCS7, PKCS7_R_UNSUPPORTED_CONTENT_TYPE);
+            break;
+        }
+
+        os = PKCS7_get_octet_string(p7->d.sign->contents);
         break;
 
     default:
@@ -755,11 +769,26 @@ int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
         break;
     }
 
+    return os;
+}
+
+int ossl_pkcs7_stream(PKCS7 *p7)
+{
+    ASN1_OCTET_STRING *os = ossl_pkcs7_get0_stream_content(p7);
+
     if (os == NULL)
         return 0;
 
-    os->flags |= ASN1_STRING_FLAG_NDEF;
-    *boundary = &os->data;
+    p7->state |= PKCS7_STATE_STREAMING;
 
     return 1;
 }
+
+#if !defined(OPENSSL_NO_DEPRECATED_4_1)
+int PKCS7_stream(unsigned char ***boundary, PKCS7 *p7)
+{
+    if (boundary != NULL)
+        *boundary = NULL;
+    return ossl_pkcs7_stream(p7);
+}
+#endif /* !defined(OPENSSL_NO_DEPRECATED_4_1) */

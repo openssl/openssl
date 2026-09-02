@@ -36,11 +36,12 @@
 #define SERVER_HELLO_DONE_MAX_LENGTH 0
 #define KEY_UPDATE_MAX_LENGTH 1
 #define CCS_MAX_LENGTH 1
+#define ACK_MAX_LENGTH 65538
 
-/* Max ServerHello size permitted by RFC 8446 */
+/* Max ServerHello size permitted by RFC 9846 */
 #define SERVER_HELLO_MAX_LENGTH 65607
 
-/* Max CertificateVerify size permitted by RFC 8446 */
+/* Max CertificateVerify size permitted by RFC 9846 */
 #define CERTIFICATE_VERIFY_MAX_LENGTH 65539
 
 /* Max should actually be 36 but we are generous */
@@ -104,6 +105,7 @@ MSG_PROCESS_RETURN ossl_statem_client_process_message(SSL_CONNECTION *s,
     PACKET *pkt);
 WORK_STATE ossl_statem_client_post_process_message(SSL_CONNECTION *s,
     WORK_STATE wst);
+int ossl_statem_dtls_client_use_timer(SSL_CONNECTION *s);
 
 /*
  * TLS/DTLS server state machine functions
@@ -119,12 +121,14 @@ MSG_PROCESS_RETURN ossl_statem_server_process_message(SSL_CONNECTION *s,
     PACKET *pkt);
 WORK_STATE ossl_statem_server_post_process_message(SSL_CONNECTION *s,
     WORK_STATE wst);
+int ossl_statem_dtls_server_use_timer(SSL_CONNECTION *s);
 
 /* Functions for getting new message data */
 __owur int tls_get_message_header(SSL_CONNECTION *s, int *mt);
 __owur int tls_get_message_body(SSL_CONNECTION *s, size_t *len);
 __owur int dtls_get_message(SSL_CONNECTION *s, int *mt);
 __owur int dtls_get_message_body(SSL_CONNECTION *s, size_t *len);
+__owur int tls_common_finish_mac(SSL_CONNECTION *s);
 
 /* Message construction and processing functions */
 __owur int tls_process_initial_server_flight(SSL_CONNECTION *s);
@@ -135,6 +139,7 @@ __owur CON_FUNC_RETURN tls_construct_change_cipher_spec(SSL_CONNECTION *s,
     WPACKET *pkt);
 __owur CON_FUNC_RETURN dtls_construct_change_cipher_spec(SSL_CONNECTION *s,
     WPACKET *pkt);
+__owur CON_FUNC_RETURN dtls_construct_ack(SSL_CONNECTION *s, WPACKET *pkt);
 
 __owur CON_FUNC_RETURN tls_construct_finished(SSL_CONNECTION *s, WPACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_key_update(SSL_CONNECTION *s, WPACKET *pkt);
@@ -206,6 +211,7 @@ __owur CON_FUNC_RETURN tls_construct_next_proto(SSL_CONNECTION *s, WPACKET *pkt)
 #endif
 __owur MSG_PROCESS_RETURN tls_process_hello_req(SSL_CONNECTION *s, PACKET *pkt);
 __owur MSG_PROCESS_RETURN dtls_process_hello_verify(SSL_CONNECTION *s, PACKET *pkt);
+__owur MSG_PROCESS_RETURN dtls_process_ack(SSL_CONNECTION *s, PACKET *pkt);
 __owur CON_FUNC_RETURN tls_construct_end_of_early_data(SSL_CONNECTION *s,
     WPACKET *pkt);
 
@@ -232,6 +238,8 @@ __owur CON_FUNC_RETURN tls_construct_server_done(SSL_CONNECTION *s,
     WPACKET *pkt);
 __owur MSG_PROCESS_RETURN tls_process_client_certificate(SSL_CONNECTION *s,
     PACKET *pkt);
+__owur WORK_STATE tls_post_process_client_certificate(SSL_CONNECTION *s,
+    WORK_STATE wst);
 #ifndef OPENSSL_NO_COMP_ALG
 __owur MSG_PROCESS_RETURN tls_process_client_compressed_certificate(SSL_CONNECTION *sc,
     PACKET *pkt);
@@ -269,6 +277,8 @@ __owur int tls_validate_all_contexts(SSL_CONNECTION *s, unsigned int thisctx,
     RAW_EXTENSION *exts);
 __owur int extension_is_relevant(SSL_CONNECTION *s, unsigned int extctx,
     unsigned int thisctx);
+__owur int tls_validate_no_unknown_extensions(SSL_CONNECTION *s,
+    PACKET *packet, unsigned int context);
 __owur int tls_collect_extensions(SSL_CONNECTION *s, PACKET *packet,
     unsigned int context,
     RAW_EXTENSION **res, size_t *len, int init);
@@ -304,9 +314,6 @@ int tls_parse_ctos_srp(SSL_CONNECTION *s, PACKET *pkt, unsigned int context,
     X509 *x, size_t chainidx);
 #endif
 int tls_parse_ctos_early_data(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context,
-    X509 *x, size_t chainidx);
-int tls_parse_ctos_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 int tls_parse_ctos_supported_groups(SSL_CONNECTION *s, PACKET *pkt,
@@ -496,9 +503,6 @@ EXT_RETURN tls_construct_ctos_grease1(SSL_CONNECTION *s, WPACKET *pkt,
 EXT_RETURN tls_construct_ctos_grease2(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context, X509 *x,
     size_t chainidx);
-EXT_RETURN tls_construct_ctos_padding(SSL_CONNECTION *s, WPACKET *pkt,
-    unsigned int context, X509 *x,
-    size_t chainidx);
 EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
@@ -516,9 +520,6 @@ int tls_parse_stoc_early_data(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 int tls_parse_stoc_maxfragmentlen(SSL_CONNECTION *s, PACKET *pkt,
-    unsigned int context,
-    X509 *x, size_t chainidx);
-int tls_parse_stoc_ec_pt_formats(SSL_CONNECTION *s, PACKET *pkt,
     unsigned int context,
     X509 *x, size_t chainidx);
 int tls_parse_stoc_session_ticket(SSL_CONNECTION *s, PACKET *pkt,

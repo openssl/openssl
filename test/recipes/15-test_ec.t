@@ -11,14 +11,15 @@ use strict;
 use warnings;
 
 use File::Spec;
-use OpenSSL::Test qw/:DEFAULT srctop_file/;
+use File::Compare qw(compare);
+use OpenSSL::Test qw/:DEFAULT srctop_file data_file/;
 use OpenSSL::Test::Utils;
 
 setup("test_ec");
 
 plan skip_all => 'EC is not supported in this build' if disabled('ec');
 
-plan tests => 16;
+plan tests => 20;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
@@ -101,6 +102,128 @@ SKIP: {
                      -args => ["pkey", "-pubin", "-pubout"] );
     };
 }
+
+subtest 'EC point conversion form (-conv_form)' => sub {
+    plan tests => 6;
+
+    my $key = srctop_file("test", "testec-p256.pem");
+
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout',
+                '-outform', 'DER', '-out', 'ec-conv-unc.der'])),
+       "writing public key with default (uncompressed) conversion form");
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout',
+                '-conv_form', 'compressed',
+                '-outform', 'DER', '-out', 'ec-conv-comp.der'])),
+       "writing public key with compressed conversion form");
+    ok((-s 'ec-conv-comp.der') < (-s 'ec-conv-unc.der'),
+       "compressed point encoding is smaller than uncompressed");
+    # The encodings are deterministic for a fixed key, so compare them
+    # against the checked-in reference files.
+    is(compare('ec-conv-unc.der', data_file('ec-conv-unc.der')), 0,
+       "uncompressed encoding matches the reference file");
+    is(compare('ec-conv-comp.der', data_file('ec-conv-comp.der')), 0,
+       "compressed encoding matches the reference file");
+    ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
+                 '-conv_form', 'bogus'])),
+       "an invalid conversion form is rejected");
+};
+
+subtest 'EC parameter encoding (-param_enc)' => sub {
+    plan tests => 6;
+
+    my $key = srctop_file("test", "testec-p256.pem");
+
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout', '-param_enc',
+                'named_curve', '-outform', 'DER', '-out', 'ec-param-named.der'])),
+       "writing public key with named_curve parameter encoding");
+    ok(run(app(['openssl', 'ec', '-in', $key, '-pubout', '-param_enc',
+                'explicit', '-outform', 'DER', '-out', 'ec-param-explicit.der'])),
+       "writing public key with explicit parameter encoding");
+    ok((-s 'ec-param-named.der') < (-s 'ec-param-explicit.der'),
+       "named_curve encoding is smaller than explicit");
+    # The encodings are deterministic for a fixed key, so compare them
+    # against the checked-in reference files.
+    is(compare('ec-param-named.der', data_file('ec-param-named.der')), 0,
+       "named_curve encoding matches the reference file");
+    is(compare('ec-param-explicit.der', data_file('ec-param-explicit.der')), 0,
+       "explicit encoding matches the reference file");
+    ok(!run(app(['openssl', 'ec', '-in', $key, '-noout',
+                 '-param_enc', 'bogus'])),
+       "an invalid parameter encoding is rejected");
+};
+
+subtest 'ec -text prints the key in text form' => sub {
+    plan tests => 7;
+
+    my $priv_key = srctop_file("test", "testec-p256.pem");
+    my $pub_key = srctop_file("test", "testecpub-p256.pem");
+
+    # The private (priv) and public (pub) values of the committed
+    # testec-p256.pem / testecpub-p256.pem keypair.  -text prints them as
+    # colon-separated hex; we strip the formatting and compare against the
+    # known values so the actual key material, not just the labels, is checked.
+    my $priv_hex = "36045F6C909612570C8C0113071FC809F6788084289C6AB003C60A"
+        . "17B2D5ADAD";
+    my $pub_hex = "04257C007484E23C571252C6912369E5CD33519FEFAAE85DFC5EB1FC"
+        . "9BCB1FDBC0D0FB63A86F9494CEF823552D1EEF4A48A87E9B4970E03DCF262AD"
+        . "4ACF598B6E9";
+
+    # ec -text on the private key.
+    my @priv = run(app(['openssl', 'ec', '-text', '-noout', '-in', $priv_key],
+                       stderr => undef),
+                   capture => 1);
+    chomp @priv;
+    my $priv_blob = uc join('', @priv);
+    $priv_blob =~ s/[^0-9A-F]//g;
+    ok(grep(/^Private-Key: \(256 bit field, 128 bit security level\)$/, @priv),
+       "ec -text prints the private key header");
+    ok(index($priv_blob, $priv_hex) >= 0,
+       "ec -text prints the expected private value");
+    ok(index($priv_blob, $pub_hex) >= 0,
+       "ec -text prints the expected public value");
+    ok(grep(/^ASN1 OID: prime256v1$/, @priv)
+       && grep(/^NIST CURVE: P-256$/, @priv),
+       "ec -text prints the curve identification");
+
+    # ec -text on the public key.
+    my @pub = run(app(['openssl', 'ec', '-pubin', '-text', '-noout',
+                       '-in', $pub_key],
+                      stderr => undef),
+                  capture => 1);
+    chomp @pub;
+    my $pub_blob = uc join('', @pub);
+    $pub_blob =~ s/[^0-9A-F]//g;
+    ok(grep(/^Public-Key: \(256 bit field, 128 bit security level\)$/, @pub),
+       "ec -text prints the public key header");
+    ok(index($pub_blob, $pub_hex) >= 0,
+       "ec -text prints the expected public value for a public key");
+    ok(!grep(/^priv:/, @pub),
+       "ec -text does not print a private component for a public key");
+};
+
+subtest 'ec -check reports the key consistency' => sub {
+    plan tests => 4;
+
+    # ec -check prints the verdict on stderr and always exits successfully,
+    # so check the printed message instead of the exit status.
+    my $valid_err = 'ec-check-valid.err';
+    ok(run(app(['openssl', 'ec', '-check', '-noout',
+                '-in', srctop_file("test", "testec-p256.pem")],
+               stderr => $valid_err)),
+       "ec -check runs on a valid key");
+    test_file_contains("ec -check of a valid key", $valid_err,
+                       "EC Key valid");
+
+    # The invalid key is testec-p256.pem with the group generator as the
+    # public key, which is on the curve but fails the pairwise check.
+    my $invalid_err = 'ec-check-invalid.err';
+    ok(run(app(['openssl', 'ec', '-check', '-noout',
+                '-in', data_file('ec-check-invalid.pem')],
+               stderr => $invalid_err)),
+       "ec -check runs on an invalid key");
+    test_file_contains("ec -check of an invalid key", $invalid_err,
+                       "EC Key Invalid");
+};
 
 subtest 'Check loading of fips and non-fips keys' => sub {
     plan skip_all => "FIPS is disabled"

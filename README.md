@@ -49,7 +49,7 @@ The OpenSSL toolkit includes:
   basis of the TLS implementation, but can also be used independently.
 
 - **openssl**
-  the OpenSSL command line tool, a swiss army knife for cryptographic tasks,
+  the OpenSSL command line tool, a Swiss Army knife for cryptographic tasks,
   testing and analyzing. It can be used for
   - creation of key parameters
   - creation of X.509 certificates, CSRs and CRLs
@@ -150,11 +150,10 @@ The manual pages for the master branch and all current stable releases are
 available online.
 
 - [OpenSSL master](https://docs.openssl.org/master/)
+- [OpenSSL 4.0](https://docs.openssl.org/4.0/)
 - [OpenSSL 3.6](https://docs.openssl.org/3.6/)
 - [OpenSSL 3.5](https://docs.openssl.org/3.5/)
 - [OpenSSL 3.4](https://docs.openssl.org/3.4/)
-- [OpenSSL 3.3](https://docs.openssl.org/3.3/)
-- [OpenSSL 3.2](https://docs.openssl.org/3.2/)
 - [OpenSSL 3.0](https://docs.openssl.org/3.0/)
 
 Demos

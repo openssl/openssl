@@ -125,8 +125,41 @@ err:
     return testresult;
 }
 
+static int test_rcidm_mfail(void)
+{
+    int testresult = 0;
+    QUIC_RCIDM *rcidm = NULL;
+    OSSL_QUIC_FRAME_NEW_CONN_ID ncid = { 0 };
+    uint64_t i;
+
+    MFAIL_start();
+
+    rcidm = ossl_quic_rcidm_new(&cid8_1);
+    if (rcidm == NULL)
+        goto err;
+
+    if (!ossl_quic_rcidm_add_from_initial(rcidm, &cid8_2))
+        goto err;
+
+    /* Push enough NCIDs to force at least one priority-queue grow/realloc. */
+    ncid.conn_id.id_len = 8;
+    for (i = 2; i < 20; ++i) {
+        ncid.seq_num = i;
+        ncid.conn_id.id[0] = (unsigned char)i;
+        if (!ossl_quic_rcidm_add_from_ncid(rcidm, &ncid))
+            goto err;
+    }
+
+    testresult = 1;
+err:
+    MFAIL_end();
+    ossl_quic_rcidm_free(rcidm);
+    return testresult;
+}
+
 int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rcidm, 3);
+    ADD_MFAIL_TEST(test_rcidm_mfail);
     return 1;
 }

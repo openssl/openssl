@@ -757,13 +757,8 @@ int setup_tests(void)
 {
     ADD_ALL_TESTS(test_rsa_pkcs1, 3);
     ADD_ALL_TESTS(test_rsa_oaep, 3);
-#if defined(_MSC_VER) || defined(OPENSSL_NO_CACHED_FETCH)
-    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_rsa_pkcs1_mfail, 3);
-    ADD_MFAIL_ALL_NO_CHECK_TESTS(test_rsa_oaep_mfail, 3);
-#else
     ADD_MFAIL_ALL_TESTS(test_rsa_pkcs1_mfail, 3);
     ADD_MFAIL_ALL_TESTS(test_rsa_oaep_mfail, 3);
-#endif
     ADD_ALL_TESTS(test_rsa_security_bit, OSSL_NELEM(rsa_security_bits_cases));
     ADD_TEST(test_rsa_saos);
     ADD_TEST(test_EVP_rsa_legacy_key);

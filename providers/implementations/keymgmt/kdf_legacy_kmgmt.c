@@ -75,8 +75,7 @@ int ossl_kdf_data_up_ref(KDF_DATA *kdfdata)
     if (!ossl_prov_is_running())
         return 0;
 
-    CRYPTO_UP_REF(&kdfdata->refcnt, &ref);
-    return 1;
+    return CRYPTO_UP_REF(&kdfdata->refcnt, &ref);
 }
 
 static void *kdf_newdata(void *provctx)

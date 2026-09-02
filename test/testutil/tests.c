@@ -76,12 +76,14 @@ static void test_fail_message_va(const char *prefix, const char *file,
     const char *left, const char *right,
     const char *op, const char *fmt, va_list ap)
 {
+    test_output_record_begin();
     test_fail_message_prefix(prefix, file, line, type, left, right, op);
     if (fmt != NULL) {
         test_vprintf_stderr(fmt, ap);
         test_printf_stderr("\n");
     }
     test_flush_stderr();
+    test_output_record_end();
 }
 
 static void test_fail_message(const char *prefix, const char *file,
@@ -118,20 +120,24 @@ void test_error_c90(const char *desc, ...)
 {
     va_list ap;
 
+    test_output_record_begin();
     va_start(ap, desc);
     test_fail_message_va(NULL, NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_error(const char *file, int line, const char *desc, ...)
 {
     va_list ap;
 
+    test_output_record_begin();
     va_start(ap, desc);
     test_fail_message_va(NULL, file, line, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
     test_printf_stderr("\n");
+    test_output_record_end();
 }
 
 void test_perror(const char *s)
@@ -145,6 +151,7 @@ void test_perror(const char *s)
 
 void test_note(const char *fmt, ...)
 {
+    test_output_record_begin();
     test_flush_stdout();
     if (fmt != NULL) {
         va_list ap;
@@ -155,6 +162,7 @@ void test_note(const char *fmt, ...)
         test_printf_stderr("\n");
     }
     test_flush_stderr();
+    test_output_record_end();
 }
 
 int test_skip(const char *file, int line, const char *desc, ...)
@@ -171,16 +179,20 @@ int test_skip_c90(const char *desc, ...)
 {
     va_list ap;
 
+    test_output_record_begin();
     va_start(ap, desc);
     test_fail_message_va("SKIP", NULL, -1, NULL, NULL, NULL, NULL, desc, ap);
     va_end(ap);
     test_printf_stderr("\n");
+    test_output_record_end();
     return TEST_SKIP_CODE;
 }
 
 void test_openssl_errors(void)
 {
+    test_output_record_begin();
     ERR_print_errors_cb(openssl_error_cb, NULL);
+    test_output_record_end();
     ERR_clear_error();
 }
 
@@ -533,11 +545,6 @@ int test_BN_abs_eq_word(const char *file, int line, const char *bns,
     return 0;
 }
 
-static const char *print_time(const ASN1_TIME *t)
-{
-    return t == NULL ? "<null>" : (const char *)ASN1_STRING_get0_data(t);
-}
-
 #define DEFINE_TIME_T_COMPARISON(opname, op)                           \
     int test_time_t_##opname(const char *file, int line,               \
         const char *s1, const char *s2,                                \
@@ -547,10 +554,21 @@ static const char *print_time(const ASN1_TIME *t)
         ASN1_TIME *at2 = ASN1_TIME_set(NULL, t2);                      \
         int r = at1 != NULL && at2 != NULL                             \
             && ASN1_TIME_compare(at1, at2) op 0;                       \
-        if (!r)                                                        \
+        if (!r) {                                                      \
+            const char *d1 = "<null>", *d2 = "<null>";                 \
+            int n1 = (int)(sizeof("<null>") - 1), n2 = n1;             \
+                                                                       \
+            if (at1 != NULL) {                                         \
+                d1 = (const char *)ASN1_STRING_get0_data(at1);         \
+                n1 = (int)ASN1_STRING_get_length(at1);                 \
+            }                                                          \
+            if (at2 != NULL) {                                         \
+                d2 = (const char *)ASN1_STRING_get0_data(at2);         \
+                n2 = (int)ASN1_STRING_get_length(at2);                 \
+            }                                                          \
             test_fail_message(NULL, file, line, "time_t", s1, s2, #op, \
-                "[%s] compared to [%s]",                               \
-                print_time(at1), print_time(at2));                     \
+                "[%.*s] compared to [%.*s]", n1, d1, n2, d2);          \
+        }                                                              \
         ASN1_STRING_free(at1);                                         \
         ASN1_STRING_free(at2);                                         \
         return r;                                                      \

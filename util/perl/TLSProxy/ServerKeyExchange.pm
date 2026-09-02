@@ -18,7 +18,7 @@ sub new
     my ($isdtls,
         $server,
         $msgseq,
-        $msgfrag,
+        $msgfraglen,
         $msgfragoffs,
         $data,
         $records,
@@ -30,7 +30,7 @@ sub new
         $server,
         TLSProxy::Message::MT_SERVER_KEY_EXCHANGE(),
         $msgseq,
-        $msgfrag,
+        $msgfraglen,
         $msgfragoffs,
         $data,
         $records,
@@ -77,7 +77,8 @@ sub parse
     my $record = ${$self->records}[0];
 
     if (TLSProxy::Proxy->is_tls13()
-            || $record->version() == TLSProxy::Record::VERS_TLS_1_2()) {
+        || $record->version() == TLSProxy::Record::VERS_TLS_1_2()
+        || $record->version() == TLSProxy::Record::VERS_DTLS_1_2()) {
         $sigalg = unpack('n', substr($self->data, $ptr));
         $ptr += 2;
     }

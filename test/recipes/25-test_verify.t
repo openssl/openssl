@@ -30,7 +30,47 @@ sub verify {
     run(app([@args]));
 }
 
-plan tests => 219;
+sub make_empty_crl {
+    my ($prefix, $ca_cert, $ca_key, $crl) = @_;
+    my $index = "$prefix-index.txt";
+    my $serial = "$prefix-serial.txt";
+    my $cnf = "$prefix.cnf";
+    my $ca_cert_file = "$prefix-ca-cert.pem";
+    my $ca_key_file = "$prefix-ca-key.pem";
+
+    open my $index_fh, ">", $index or return 0;
+    close $index_fh;
+    open my $serial_fh, ">", $serial or return 0;
+    print $serial_fh "01\n";
+    close $serial_fh;
+    copy($ca_cert, $ca_cert_file) or return 0;
+    copy($ca_key, $ca_key_file) or return 0;
+    open my $cnf_fh, ">", $cnf or return 0;
+    print $cnf_fh <<"EOF";
+[ ca ]
+default_ca = test_ca
+
+[ test_ca ]
+database = $index
+serial = $serial
+new_certs_dir = .
+certificate = $ca_cert_file
+private_key = $ca_key_file
+default_md = sha256
+default_days = 365
+default_crl_days = 365
+policy = policy_any
+
+[ policy_any ]
+commonName = optional
+EOF
+    close $cnf_fh;
+
+    run(app(["openssl", "ca", "-batch", "-config", $cnf, "-gencrl",
+             "-out", $crl]));
+}
+
+plan tests => 222;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
@@ -146,6 +186,13 @@ ok(!verify("ee-cert", "sslserver", [], [qw(ca-cert)], "-partial_chain"),
    "fail untrusted partial chain");
 ok(verify("ee-cert", "sslserver", [qw(ca-cert)], [], "-partial_chain"),
    "accept trusted partial chain");
+ok(make_empty_crl("partial-chain-ca", srctop_file(@certspath, "ca-cert.pem"),
+                  srctop_file(@certspath, "ca-key.pem"),
+                  "partial-chain-ca.crl")
+   && verify("ee-cert", "sslserver", [qw(ca-cert)], [],
+             "-partial_chain", "-crl_check_all", "-CRLfile",
+             "partial-chain-ca.crl"),
+   "accept trusted partial chain with CRL_CHECK_ALL");
 ok(!verify("ee-cert", "sslserver", [qw(ca-expired)], [], "-partial_chain"),
    "reject expired trusted partial chain"); # this check is beyond RFC 5280
 ok(!verify("ee-cert", "sslserver", [qw(root-expired)], [qw(ca-cert)]),
@@ -362,6 +409,17 @@ SKIP: {
     ok(verify("ee-cert-ec-sha3-512", "", ["root-cert"], ["ca-cert-ec-named"], ),
         "accept cert generated with EC and SHA3-512");
 }
+
+# DSA chains using id-dsa-with-sha384 / id-dsa-with-sha512 (GitHub issue #30432)
+SKIP: {
+    skip "DSA is not supported by this OpenSSL build", 2
+        if disabled("dsa");
+
+    ok(verify("ee-cert-dsa-sha384", "", ["root-cert-dsa-sha384"], [], ),
+        "accept DSA cert chain with SHA-384 signatures");
+    ok(verify("ee-cert-dsa-sha512", "", ["root-cert-dsa-sha512"], [], ),
+        "accept DSA cert chain with SHA-512 signatures");
+}
 # Same as above but with base provider used for decoding
 SKIP: {
     my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
@@ -434,8 +492,8 @@ ok(verify("goodcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
 ok(verify("goodcn2-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints CNs permitted - no SAN extension");
 
-ok(!verify("badcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
-   "Name Constraints CNs not permitted");
+ok(verify("badcn1-cert", "", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints DNS-like CN not checked by default");
 
 ok(!verify("badalt1-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints hostname not permitted");
@@ -452,11 +510,11 @@ ok(!verify("badalt4-cert", "", ["root-cert"], ["ncca1-cert"], ),
 ok(!verify("badalt5-cert", "", ["root-cert"], ["ncca1-cert"], ),
    "Name Constraints IP address not permitted");
 
-ok(!verify("badalt6-cert", "", ["root-cert"], ["ncca1-cert"], ),
-   "Name Constraints CN hostname not permitted");
+ok(verify("badalt6-cert", "", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints CN hostname not checked by default");
 
-ok(!verify("badalt7-cert", "", ["root-cert"], ["ncca1-cert"], ),
-   "Name Constraints CN BMPSTRING hostname not permitted");
+ok(verify("badalt7-cert", "", ["root-cert"], ["ncca1-cert"], ),
+   "Name Constraints CN BMPSTRING hostname not checked by default");
 
 ok(!verify("badalt8-cert", "", ["root-cert"], ["ncca1-cert", "ncca3-cert"], ),
    "Name constraints nested DNS name not permitted 1");

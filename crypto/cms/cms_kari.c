@@ -210,7 +210,9 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     size_t keklen;
     int rv = 0;
     unsigned char *out = NULL;
+    size_t out_alloc_len = 0;
     int outlen;
+    size_t outsize;
 
     keklen = EVP_CIPHER_CTX_get_key_length(kari->ctx);
     if (keklen > EVP_MAX_KEY_LENGTH || inlen > INT_MAX)
@@ -224,9 +226,16 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
     /* obtain output length of ciphered key */
     if (!EVP_CipherUpdate(kari->ctx, NULL, &outlen, in, (int)inlen))
         goto err;
-    out = OPENSSL_malloc(outlen);
+    /*
+     * On its integrity-failure paths that primitive writes and cleanses up to
+     * inlen bytes of the output buffer. Size the buffer for that worst case so
+     * a failed unwrap cannot write past the allocation.
+     */
+    outsize = (size_t)outlen < inlen ? inlen : (size_t)outlen;
+    out = OPENSSL_malloc(outsize);
     if (out == NULL)
         goto err;
+    out_alloc_len = (size_t)outlen;
     if (!EVP_CipherUpdate(kari->ctx, out, &outlen, in, (int)inlen))
         goto err;
     *pout = out;
@@ -236,7 +245,7 @@ static int cms_kek_cipher(unsigned char **pout, size_t *poutlen,
 err:
     OPENSSL_cleanse(kek, keklen);
     if (!rv)
-        OPENSSL_free(out);
+        OPENSSL_clear_free(out, out_alloc_len);
     EVP_CIPHER_CTX_reset(kari->ctx);
     /* FIXME: WHY IS kari->pctx freed here?  /RL */
     EVP_PKEY_CTX_free(kari->pctx);

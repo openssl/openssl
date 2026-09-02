@@ -64,6 +64,7 @@ int main(int argc, char *argv[])
 {
     int res = EXIT_FAILURE;
     long opts;
+    long old_timeout;
     const char *hostport;
     SSL_CTX *ctx = NULL;
     BIO *acceptor_bio;
@@ -174,7 +175,11 @@ int main(int argc, char *argv[])
      * byte array, that identifies the server application, and reduces the
      * chance of inappropriate cache sharing.
      */
-    SSL_CTX_set_session_id_context(ctx, (void *)cache_id, sizeof(cache_id));
+    if (SSL_CTX_set_session_id_context(ctx, (void *)cache_id, sizeof(cache_id)) <= 0) {
+        SSL_CTX_free(ctx);
+        ERR_print_errors_fp(stderr);
+        errx(res, "Failed to set server session ID context");
+    }
     SSL_CTX_set_session_cache_mode(ctx, SSL_SESS_CACHE_SERVER);
 
     /*
@@ -191,7 +196,9 @@ int main(int argc, char *argv[])
      * loaded servers with sporadic connections from any given client, a longer
      * time may be appropriate.
      */
-    SSL_CTX_set_timeout(ctx, 3600);
+    old_timeout = SSL_CTX_set_timeout(ctx, 3600);
+    if (old_timeout != 3600)
+        warnx("Changing session timeout from %ld to 3600", old_timeout);
 
     /*
      * Clients rarely employ certificate-based authentication, and so we don't

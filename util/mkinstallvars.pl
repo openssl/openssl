@@ -54,9 +54,9 @@ foreach (@ARGV) {
 # the former doesn't have a value, we give it the latter's value, and rely
 # on mechanisms further down to do the rest of the processing.
 # If they're both empty, it's still fine.
-print STDERR "DEBUG: LIBDIR = $values{LIBDIR}->[0], libdir = $values{libdir}->[0] => ";
+print STDERR "DEBUG: LIBDIR = $values{LIBDIR}->[0], libdir = $values{libdir}->[0] => " if $debug;
 $values{LIBDIR}->[0] = $values{libdir}->[0] unless $values{LIBDIR}->[0];
-print STDERR "LIBDIR = $values{LIBDIR}->[0]\n";
+print STDERR "LIBDIR = $values{LIBDIR}->[0]\n" if $debug;
 
 # warn if there are missing values, and also if there are unexpected values
 foreach my $k (sort keys %all) {

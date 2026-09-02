@@ -824,13 +824,13 @@ OSSL_CMP_MSG *ossl_cmp_error_new(OSSL_CMP_CTX *ctx, const OSSL_CMP_PKISI *si,
             goto err;
         msg->body->value.error->errorDetails = ft;
         if (lib != NULL && *lib != '\0'
-            && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, lib, -1))
+            && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, lib, strlen(lib)))
             goto err;
         if (reason != NULL && *reason != '\0'
-            && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, reason, -1))
+            && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, reason, strlen(reason)))
             goto err;
         if (details != NULL
-            && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details, -1))
+            && !ossl_cmp_sk_ASN1_UTF8STRING_push_str(ft, details, strlen(details)))
             goto err;
     }
 

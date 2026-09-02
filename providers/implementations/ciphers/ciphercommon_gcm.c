@@ -215,7 +215,7 @@ int ossl_gcm_get_ctx_params(void *vctx, OSSL_PARAM params[])
     if (p.tag != NULL) {
         sz = p.tag->data_size;
         if (!ctx->enc || ctx->taglen == UNINITIALISED_SIZET) {
-            ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_SET);
             return 0;
         }
         if (p.tag->data != NULL && (sz > EVP_GCM_TLS_TAG_LEN || sz == 0)) {
@@ -263,7 +263,11 @@ int ossl_gcm_set_ctx_params(void *vctx, const OSSL_PARAM params[])
             ERR_raise(ERR_LIB_PROV, PROV_R_FAILED_TO_GET_PARAMETER);
             return 0;
         }
-        if (sz == 0 || ctx->enc) {
+        if (ctx->enc) {
+            ERR_raise(ERR_LIB_PROV, PROV_R_TAG_NOT_NEEDED);
+            return 0;
+        }
+        if (sz == 0) {
             ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_TAG);
             return 0;
         }
@@ -521,8 +525,9 @@ static int gcm_tls_iv_set_fixed(PROV_GCM_CTX *ctx, unsigned char *iv,
         return 1;
     }
     /* Fixed field must be at least 4 bytes and invocation field at least 8 */
-    if ((len < EVP_GCM_TLS_FIXED_IV_LEN)
-        || (ctx->ivlen - (int)len) < EVP_GCM_TLS_EXPLICIT_IV_LEN)
+    if (len < EVP_GCM_TLS_FIXED_IV_LEN
+        || len > ctx->ivlen
+        || (ctx->ivlen - len) < EVP_GCM_TLS_EXPLICIT_IV_LEN)
         return 0;
     if (len > 0)
         memcpy(ctx->iv, iv, len);

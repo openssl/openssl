@@ -88,7 +88,7 @@ void CRYPTO_THREAD_clean_local(void);
 #endif
 
 /* Allow us to know if atomics will be implemented with a fallback lock or not. */
-#if defined(OSSL_USE_GCC_ATOMICS) || defined(OSSL_USE_SOLARIS_ATOMICS) || defined(USE_INTERLOCKEDOR64)
+#if defined(OSSL_USE_GCC_ATOMICS) || defined(OSSL_USE_SOLARIS_ATOMICS) || defined(OSSL_USE_INTERLOCKEDOR64)
 #define OSSL_ATOMICS_LOCKLESS
 #endif
 

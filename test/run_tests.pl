@@ -128,6 +128,7 @@ open $openssl_args{'tap_copy'}, ">$outfilename"
 
 my @alltests = find_matching_tests("*");
 my %tests = ();
+my $has_nonexistent_test = 0;
 
 sub reorder {
     my $key = pop;
@@ -152,6 +153,7 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
         warn "'alltests' encountered, ignoring everything before that...\n"
             unless $initial_arg;
         %tests = map { $_ => 1 } @alltests;
+        $has_nonexistent_test = 0;
     } elsif ($arg =~ m/^(-?)(.*)/) {
         my $sign = $1;
         my $test = $2;
@@ -162,10 +164,12 @@ foreach my $arg (@ARGV ? @ARGV : ('alltests')) {
             %tests = map { $_ => 1 } @alltests;
         }
 
+        # Flag non-existent test so we can return an error
         if (scalar @matches == 0) {
             warn "Test $test found no match, skipping ",
                 ($sign eq '-' ? "removal" : "addition"),
                 "...\n";
+            $has_nonexistent_test = 1 unless $sign eq '-';
         } else {
             foreach $test (@matches) {
                 if ($sign eq '-') {
@@ -391,9 +395,10 @@ if (ref($ret) ne "TAP::Parser::Aggregator" || !$ret->has_errors) {
 
 # If this is a TAP::Parser::Aggregator, $ret->has_errors is the count of
 # tests that failed.  We don't bother with that exact number, just exit
-# with an appropriate exit code when it isn't zero.
+# with an appropriate exit code when it isn't zero. We also return an error
+# if attempting to run a non-existent test.
 if (ref($ret) eq "TAP::Parser::Aggregator") {
-    exit 0 unless $ret->has_errors;
+    exit 0 unless $ret->has_errors || $has_nonexistent_test;
     exit 1 unless $^O eq 'VMS';
     # On VMS, perl converts an exit 1 to SS$_ABORT (%SYSTEM-F-ABORT), which
     # is a bit harsh.  As per perl recommendations, we explicitly use the
@@ -409,4 +414,6 @@ if (ref($ret) eq "TAP::Parser::Aggregator") {
 
 # If this isn't a TAP::Parser::Aggregator, it's the pre-TAP test harness,
 # which simply dies at the end if any test failed, so we don't need to bother
-# with any exit code in that case.
+# with any exit code in that case. The only exception is if we have a
+# non-existent test).
+exit 1 if $has_nonexistent_test;

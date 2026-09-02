@@ -325,9 +325,12 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
         return 0;
     }
 
-    if (st == NULL
-        || st->module_checksum_data == NULL) {
+    if (st == NULL) {
         ERR_raise(ERR_LIB_PROV, PROV_R_MISSING_CONFIG_DATA);
+        goto end;
+    }
+    if (st->module_checksum_data == NULL) {
+        ERR_raise(ERR_LIB_PROV, PROV_R_FIPS_MODULE_MISSING_CHECKSUM);
         goto end;
     }
 
@@ -344,7 +347,7 @@ int SELF_TEST_post(SELF_TEST_POST_PARAMS *st, void *fips_global,
     bio_module = (*st->bio_new_file_cb)(st->module_filename, "rb");
 
     /* This section can be called on demand and that could race with deferred
-     * tests being executed in another thread, so we use use helpers to get
+     * tests being executed in another thread, so we use helpers to get
      * proper locking around this critical section */
 
     if (SELF_TEST_lock_deferred(fips_global)) {

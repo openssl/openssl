@@ -986,6 +986,12 @@ int EVP_CIPHER_CTX_ctrl(EVP_CIPHER_CTX *ctx, int type, int arg, void *ptr)
         ctx->iv_len = -1;
         break;
     case EVP_CTRL_AEAD_SET_IV_FIXED:
+        /*
+         * arg == -1 is a valid sentinel meaning "use full ivlen"; anything
+         * below that would wrap to a huge size_t and overflow on memcpy.
+         */
+        if (arg < -1)
+            return 0;
         params[0] = OSSL_PARAM_construct_octet_string(
             OSSL_CIPHER_PARAM_AEAD_TLS1_IV_FIXED, ptr, sz);
         break;
@@ -1340,9 +1346,33 @@ static void set_legacy_nid(const char *name, void *vlegacy_nid)
 }
 #endif
 
+static int evp_cipher_up_ref(void *c)
+{
+    EVP_CIPHER *cipher = (EVP_CIPHER *)c;
+    int ref = 0;
+
+    if (cipher->origin == EVP_ORIG_DYNAMIC)
+        return CRYPTO_UP_REF(&cipher->refcnt, &ref);
+    return 1;
+}
+
+static void evp_cipher_free(void *c)
+{
+    EVP_CIPHER *cipher = (EVP_CIPHER *)c;
+    int i;
+
+    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
+        return;
+
+    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
+    if (i > 0)
+        return;
+    evp_cipher_free_int(cipher);
+}
+
 static void *evp_cipher_from_algorithm(const int name_id,
     const OSSL_ALGORITHM *algodef,
-    OSSL_PROVIDER *prov)
+    OSSL_PROVIDER *prov, int no_store)
 {
     const OSSL_DISPATCH *fns = algodef->implementation;
     EVP_CIPHER *cipher = NULL;
@@ -1352,6 +1382,9 @@ static void *evp_cipher_from_algorithm(const int name_id,
         ERR_raise(ERR_LIB_EVP, ERR_R_EVP_LIB);
         return NULL;
     }
+
+    if (no_store != 0)
+        cipher->flags |= EVP_CIPH_FLAG_NO_STORE;
 
 #ifndef FIPS_MODULE
     cipher->nid = NID_undef;
@@ -1511,18 +1544,8 @@ static void *evp_cipher_from_algorithm(const int name_id,
     return cipher;
 
 err:
-    EVP_CIPHER_free(cipher);
+    evp_cipher_free(cipher);
     return NULL;
-}
-
-static int evp_cipher_up_ref(void *cipher)
-{
-    return EVP_CIPHER_up_ref(cipher);
-}
-
-static void evp_cipher_free(void *cipher)
-{
-    EVP_CIPHER_free(cipher);
 }
 
 EVP_CIPHER *EVP_CIPHER_fetch(OSSL_LIB_CTX *ctx, const char *algorithm,
@@ -1557,11 +1580,13 @@ int EVP_CIPHER_can_pipeline(const EVP_CIPHER *cipher, int enc)
 
 int EVP_CIPHER_up_ref(EVP_CIPHER *cipher)
 {
-    int ref = 0;
-
-    if (cipher->origin == EVP_ORIG_DYNAMIC)
-        CRYPTO_UP_REF(&cipher->refcnt, &ref);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    return evp_cipher_up_ref(cipher);
+#else
+    if (cipher->flags & EVP_CIPH_FLAG_NO_STORE)
+        return evp_cipher_up_ref(cipher);
     return 1;
+#endif
 }
 
 void evp_cipher_free_int(EVP_CIPHER *cipher)
@@ -1574,15 +1599,12 @@ void evp_cipher_free_int(EVP_CIPHER *cipher)
 
 void EVP_CIPHER_free(EVP_CIPHER *cipher)
 {
-    int i;
-
-    if (cipher == NULL || cipher->origin != EVP_ORIG_DYNAMIC)
-        return;
-
-    CRYPTO_DOWN_REF(&cipher->refcnt, &i);
-    if (i > 0)
-        return;
-    evp_cipher_free_int(cipher);
+#ifdef OPENSSL_NO_CACHED_FETCH
+    evp_cipher_free(cipher);
+#else
+    if (cipher != NULL && (cipher->flags & EVP_CIPH_FLAG_NO_STORE))
+        evp_cipher_free(cipher);
+#endif
 }
 
 void EVP_CIPHER_do_all_provided(OSSL_LIB_CTX *libctx,

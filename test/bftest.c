@@ -387,7 +387,7 @@ static int test_bf_cfb64(void)
     memset(cbc_out, 0, 40);
     memcpy(iv, cbc_iv, 8);
     n = 0;
-    BF_cfb64_encrypt((unsigned char *)cbc_data, cbc_out, (long)13,
+    BF_cfb64_encrypt((unsigned char *)cbc_data, cbc_out, 13,
         &key, iv, &n, BF_ENCRYPT);
     BF_cfb64_encrypt((unsigned char *)&(cbc_data[13]), &(cbc_out[13]),
         len - 13, &key, iv, &n, BF_ENCRYPT);
@@ -419,7 +419,7 @@ static int test_bf_ofb64(void)
     memset(cbc_out, 0, 40);
     memcpy(iv, cbc_iv, 8);
     n = 0;
-    BF_ofb64_encrypt((unsigned char *)cbc_data, cbc_out, (long)13, &key, iv,
+    BF_ofb64_encrypt((unsigned char *)cbc_data, cbc_out, 13, &key, iv,
         &n);
     BF_ofb64_encrypt((unsigned char *)&(cbc_data[13]), &(cbc_out[13]),
         len - 13, &key, iv, &n);

@@ -25,13 +25,13 @@
 
 #define STRICT_ALIGNMENT 1
 #ifndef PEDANTIC
-#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || defined(__aarch64__) || defined(__s390__) || defined(__s390x__)
+#if defined(__i386) || defined(__i386__) || defined(__x86_64) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_AMD64) || defined(_M_X64) || defined(__aarch64__) || defined(__s390__) || defined(__s390x__) || defined(__e2k__)
 #undef STRICT_ALIGNMENT
 #endif
 #endif
 
 #if !defined(PEDANTIC) && !defined(OPENSSL_NO_ASM) && !defined(OPENSSL_NO_INLINE_ASM)
-#if defined(__GNUC__) && __GNUC__ >= 2
+#if defined(__GNUC__)
 #if defined(__x86_64) || defined(__x86_64__)
 #define BSWAP8(x) ({ uint64_t ret_=(x);                   \
                         asm ("bswapq %0"                \
@@ -72,6 +72,9 @@
 #define BSWAP4(x) ({ uint32_t ret_=(x);                   \
                         asm ("rev8 %0,%0; srli %0,%0,32"\
                         : "+&r"(ret_));  ret_; })
+#elif defined(__e2k__)
+#define BSWAP8(x) __builtin_bswap64(x)
+#define BSWAP4(x) __builtin_bswap32(x)
 #endif
 #elif defined(_MSC_VER)
 #if _MSC_VER >= 1300

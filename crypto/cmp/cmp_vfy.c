@@ -770,7 +770,7 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
                 "expected sender", expected_sender)) {
             str = X509_NAME_oneline(actual_sender, NULL, 0);
             ERR_raise_data(ERR_LIB_CMP, CMP_R_UNEXPECTED_SENDER,
-                str != NULL ? str : "<unknown>");
+                "%s", str != NULL ? str : "<unknown>");
             OPENSSL_free(str);
             return 0;
         }
@@ -816,8 +816,13 @@ int ossl_cmp_msg_check_update(OSSL_CMP_CTX *ctx, const OSSL_CMP_MSG *msg,
     res = 1; /* support more aggressive fuzzing by letting invalid msg pass */
 #endif
 
-    /* remove extraCerts again if not caching */
-    if (ctx->noCacheExtraCerts)
+    /*
+     * remove extraCerts again if not caching
+     * or if we failed validation above, lest a remote user
+     * starts sending us lots of certificates in invalid messages
+     * leading to a DOS from unbounded certificate stack growth
+     */
+    if (ctx->noCacheExtraCerts || res != 1)
         while (num_added-- > 0)
             X509_free(sk_X509_shift(ctx->untrusted));
 

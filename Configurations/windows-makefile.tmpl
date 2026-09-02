@@ -380,6 +380,9 @@ BIN_LDFLAGS={- join(' ', $target{bin_lflags} || (),
                          '$(CNF_LDFLAGS)', '$(LDFLAGS)') -}
 BIN_EX_LIBS=$(CNF_EX_LIBS) $(EX_LIBS)
 
+CMOCKA_LIBS={- $config{cmocka_libs} // '' -}
+DETOURS_LIBS={- $config{detours_libs} // '' -}
+
 # CPPFLAGS_Q is used for one thing only: to build up buildinf.h
 CPPFLAGS_Q={- $cppflags1 =~ s|([\\"])|\\$1|g;
               $cppflags2 =~ s|([\\"])|\\$1|g;
@@ -1001,11 +1004,14 @@ EOF
      my $ress = join($target{ld_resp_delim}, @ress);
      my $linklibs = join("", map { "$_$target{ld_resp_delim}" } @deps);
      my $deps = join(" ", @objs, @ress, @deps);
+     my $utlibs = $unified_info{unit_test_libs}->{$args{bin}};
+     $utlibs = (defined $utlibs && $utlibs ne '')
+               ? "$utlibs$target{ld_resp_delim}" : '';
      return <<"EOF";
 $bin: $deps
 	IF EXIST $bin.manifest DEL /F /Q $bin.manifest
 	\$(LD) \$(LDFLAGS) \$(BIN_LDFLAGS) @<<
-$objs$target{ld_resp_delim}\$(LDOUTFLAG)$bin$target{ldpostoutflag}$target{ld_resp_delim}$linklibs\$(BIN_EX_LIBS)$target{ldresflag}$target{ldresflag}$ress
+$objs$target{ld_resp_delim}\$(LDOUTFLAG)$bin$target{ldpostoutflag}$target{ld_resp_delim}$utlibs$linklibs\$(BIN_EX_LIBS)$target{ldresflag}$target{ldresflag}$ress
 <<
 	IF EXIST $bin.manifest \\
 	   \$(MT) \$(MTFLAGS) \$(MTINFLAG)$bin.manifest \$(MTOUTFLAG)$bin

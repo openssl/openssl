@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 61 + ($no_fips ? 0 : 5);
+plan tests => 65 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -174,6 +174,29 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
     my @match = grep /:error:/, <DATA>;
     close DATA;
     ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr6_empty");
+}
+
+# Test dumping a PKCS#12 file whose private key is stored in an unencrypted
+# keyBag (created with -keypbe NONE) rather than a shrouded keyBag.
+{
+    my $keybag = "keybag.p12";
+    ok(run(app(["openssl", "pkcs12", "-export", "-keyex", "-keypbe", "NONE",
+                "-certpbe", "NONE", "-nomac",
+                "-inkey", srctop_file(@path, "cert-key-cert.pem"),
+                "-in", srctop_file(@path, "cert-key-cert.pem"),
+                "-passout", "pass:", "-out", $keybag])),
+       "export PKCS#12 with an unencrypted key bag");
+
+    # -nodes so the dumped key isn't re-encrypted (which would prompt).
+    my @info = run(app(["openssl", "pkcs12", "-in", $keybag, "-info", "-nodes",
+                        "-passin", "pass:"], stderr => "keybag_info.txt"),
+                   capture => 1);
+    open DATA, "keybag_info.txt";
+    my @match = grep /Key bag/, <DATA>;
+    close DATA;
+    ok(scalar @match > 0 ? 1 : 0, "test unencrypted key bag is reported");
+    ok(grep(/-----BEGIN PRIVATE KEY-----/, @info) == 1,
+       "test private key from key bag is output");
 }
 
 my %pbmac1_tests = (
@@ -298,6 +321,50 @@ with({ exit_checker => sub { return shift == 1; } },
 
     delete $ENV{OPENSSL_CONF}
 }
+
+# Test -clcerts/-cacerts cert filtering and the -name friendly name.
+subtest "pkcs12 -clcerts/-cacerts filtering and -name" => sub {
+    plan tests => 7;
+
+    # A PKCS#12 with a key + matching EE cert (gets a localKeyID) and a CA
+    # cert added via -certfile (no localKeyID), plus a friendly name.
+    my $mixed = "mixed.p12";
+    ok(run(app(["openssl", "pkcs12", "-export",
+                "-inkey", srctop_file(@path, "ee-key.pem"),
+                "-in", srctop_file(@path, "ee-cert.pem"),
+                "-certfile", srctop_file(@path, "ca-cert.pem"),
+                "-name", "Friendly Client",
+                "-passout", "pass:", "-out", $mixed])),
+       "export a PKCS#12 with a client cert, a CA cert and a friendly name");
+
+    # -name sets the friendly name, visible in -info output.
+    my @info = run(app(["openssl", "pkcs12", "-in", $mixed, "-info", "-nokeys",
+                        "-passin", "pass:"]), capture => 1);
+    ok(grep(/friendlyName: Friendly Client/, @info) == 1,
+       "the -name friendly name is present in the output");
+
+    # Without filtering both certificates are dumped.
+    my @all = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys",
+                       "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @all) == 2,
+       "both certificates are output without filtering");
+
+    # -clcerts outputs only the client (leaf) certificate.
+    my @cl = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys", "-clcerts",
+                      "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @cl) == 1,
+       "-clcerts outputs a single certificate");
+    ok(grep(/subject=CN\s*=\s*server\.example/, @cl) == 1,
+       "-clcerts outputs the client certificate");
+
+    # -cacerts outputs only the CA certificate.
+    my @ca = run(app(["openssl", "pkcs12", "-in", $mixed, "-nokeys", "-cacerts",
+                      "-passin", "pass:"]), capture => 1);
+    ok(grep(/BEGIN CERTIFICATE/, @ca) == 1,
+       "-cacerts outputs a single certificate");
+    ok(grep(/subject=CN\s*=\s*CA\b/, @ca) == 1,
+       "-cacerts outputs the CA certificate");
+};
 
 # Tests for pkcs12_parse
 ok(run(test(["pkcs12_api_test",

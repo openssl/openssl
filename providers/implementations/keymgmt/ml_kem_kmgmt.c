@@ -118,10 +118,6 @@ static int ml_kem_pairwise_test(const ML_KEM_KEY *key, int key_flags)
 
     memset(out, 0, sizeof(out));
 
-    /*
-     * The pairwise test is skipped unless either RANDOM or FIXED entropy PCTs
-     * are enabled.
-     */
     if (key_flags & ML_KEM_KEY_RANDOM_PCT) {
         operation_result = ossl_ml_kem_encap_rand(ctext, v->ctext_bytes,
             secret, sizeof(secret), key);
@@ -156,7 +152,10 @@ err:
             v->algorithm_name);
     }
 #endif
-    OPENSSL_free(ctext);
+    OPENSSL_cleanse((void *)entropy, sizeof(entropy));
+    OPENSSL_cleanse((void *)secret, sizeof(secret));
+    OPENSSL_cleanse((void *)out, sizeof(out));
+    OPENSSL_clear_free(ctext, v->ctext_bytes);
     return ret;
 }
 
@@ -338,7 +337,7 @@ err:
     OSSL_PARAM_BLD_free(tmpl);
     OPENSSL_secure_clear_free(seedenc, seedlen);
     OPENSSL_secure_clear_free(prvenc, prvlen);
-    OPENSSL_free(pubenc);
+    OPENSSL_clear_free(pubenc, v->pubkey_bytes);
     return ret;
 }
 
@@ -401,10 +400,7 @@ static int ml_kem_key_fromdata(ML_KEM_KEY *key, const OSSL_PARAM params[],
     const ML_KEM_VINFO *v;
     struct ml_kem_import_params_st p;
 
-    /* Invalid attempt to mutate a key, what is the right error to report? */
-    if (key == NULL
-        || ossl_ml_kem_have_pubkey(key)
-        || !ml_kem_import_params_decoder(params, &p))
+    if (!ml_kem_import_params_decoder(params, &p))
         return 0;
     v = ossl_ml_kem_key_vinfo(key);
 
@@ -489,11 +485,16 @@ static int ml_kem_import(void *vkey, int selection, const OSSL_PARAM params[])
     int include_private;
     int res;
 
-    if (!ossl_prov_is_running() || key == NULL)
+    if (!ossl_prov_is_running()
+        || (selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0
+        || key == NULL)
         return 0;
-
-    if ((selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
+    if (ossl_ml_kem_have_pubkey(key)) {
+        /* Invalid attempt to mutate a key. */
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
         return 0;
+    }
 
     include_private = selection & OSSL_KEYMGMT_SELECT_PRIVATE_KEY ? 1 : 0;
     res = ml_kem_key_fromdata(key, params, include_private);
@@ -547,12 +548,14 @@ static void *ml_kem_load(const void *reference, size_t reference_sz)
                 goto err;
         }
         OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
+        OPENSSL_cleanse((void *)seed, sizeof(seed));
         return key;
     }
 
 err:
     if (key != NULL && key->vinfo != NULL)
         OPENSSL_secure_clear_free(encoded_dk, key->vinfo->prvkey_bytes);
+    OPENSSL_cleanse((void *)seed, sizeof(seed));
     ossl_ml_kem_key_free(key);
     return NULL;
 }
@@ -686,9 +689,8 @@ static int ml_kem_set_params(void *vkey, const OSSL_PARAM params[])
 
     /* Key mutation is reportedly generally not allowed */
     if (ossl_ml_kem_have_pubkey(key)) {
-        ERR_raise_data(ERR_LIB_PROV,
-            PROV_R_OPERATION_NOT_SUPPORTED_FOR_THIS_KEYTYPE,
-            "ML-KEM keys cannot be mutated");
+        ERR_raise_data(ERR_LIB_PROV, PROV_R_KEY_IMMUTABLE_ONCE_SET,
+            "Keys are immutable once key material has been loaded or generated");
         return 0;
     }
 
@@ -721,6 +723,7 @@ static int ml_kem_gen_set_params(void *vgctx, const OSSL_PARAM params[])
 
         /* Possibly, but less likely wrong data type */
         ERR_raise(ERR_LIB_PROV, PROV_R_INVALID_SEED_LENGTH);
+        OPENSSL_cleanse((void *)gctx->seedbuf, sizeof(gctx->seedbuf));
         gctx->seed = NULL;
         return 0;
     }
@@ -777,8 +780,10 @@ static void *ml_kem_gen(void *vgctx, OSSL_CALLBACK *osslcb, void *cbarg)
     if ((gctx->selection & OSSL_KEYMGMT_SELECT_KEYPAIR) == 0)
         return key;
 
-    if (seed != NULL && !ossl_ml_kem_set_seed(seed, ML_KEM_SEED_BYTES, key))
+    if (seed != NULL && !ossl_ml_kem_set_seed(seed, ML_KEM_SEED_BYTES, key)) {
+        ossl_ml_kem_key_free(key);
         return NULL;
+    }
     genok = ossl_ml_kem_genkey(nopub, 0, key);
 
     /* Erase the single-use seed */

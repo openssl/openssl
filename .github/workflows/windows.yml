@@ -7,7 +7,26 @@
 
 name: Windows GitHub CI
 
-on: [pull_request, push]
+on:
+  pull_request:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+  push:
+    paths-ignore:
+      - 'doc/**'
+      - '*.md'
+      - '*.pod'
+      - 'README*'
+      - 'funding.json'
+      - 'LICENSE.txt'
+      - 'VERSION.dat'
+
 
 permissions:
   contents: read
@@ -189,6 +208,59 @@ jobs:
       run: |
         call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
         nmake test VERBOSE_FAILURE=yes HARNESS_JOBS=4
+
+  unit-tests:
+    runs-on: windows-2022
+    steps:
+    - uses: actions/checkout@v6
+      with:
+        persist-credentials: false
+    - name: checkout fuzz/corpora submodule
+      run: git submodule update --init --depth 1 fuzz/corpora
+    - name: install jom
+      if: github.repository == 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://openssl-library.org/ci-deps/jom-1.1.7.exe" -OutFile C:\jom\jom.exe
+        $expected = (Get-Content "$env:GITHUB_WORKSPACE\.github\ci-deps.json" -Raw | ConvertFrom-Json).'jom-1.1.7.exe'
+        $actual = (Get-FileHash C:\jom\jom.exe -Algorithm SHA256).Hash
+        if ($actual -ne $expected) { throw "SHA256 mismatch for jom.exe (expected $expected, got $actual)" }
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install jom (forks)
+      if: github.repository != 'openssl/openssl'
+      run: |
+        mkdir C:\jom
+        Invoke-WebRequest -Uri "https://download.qt.io/official_releases/jom/jom_1_1_7.zip" -OutFile C:\jom\jom.zip
+        Expand-Archive -Path C:\jom\jom.zip -DestinationPath C:\jom
+        "C:\jom" | Out-File -FilePath "$env:GITHUB_PATH" -Append
+    - name: install cmocka and detours via vcpkg
+      shell: pwsh
+      run: |
+        & "$env:VCPKG_INSTALLATION_ROOT\vcpkg.exe" install cmocka:x64-windows-static-md detours:x64-windows-static-md
+        "VCPKG_INST=$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows-static-md" | Out-File -FilePath $env:GITHUB_ENV -Append
+    - name: prepare the build directory
+      run: mkdir _build
+    - name: config
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        perl ..\Configure VC-WIN64A --banner=Configured --strict-warnings no-makedepend no-asm enable-unit-tests ^
+          --with-cmocka-include=%VCPKG_INST%\include  --with-cmocka-lib=%VCPKG_INST%\lib ^
+          --with-detours-include=%VCPKG_INST%\include --with-detours-lib=%VCPKG_INST%\lib
+        perl configdata.pm --dump
+    - name: build
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        jom /j4 /S
+    - name: test
+      working-directory: _build
+      shell: cmd
+      run: |
+        call "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\VC\Auxiliary\Build\vcvars64.bat"
+        jom test VERBOSE=1 TESTS=test_unit
 
   minimal:
     runs-on: windows-2022

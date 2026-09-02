@@ -239,8 +239,7 @@ static int hmac_update(void *vmacctx, const unsigned char *data,
             datalen,
             macctx->tls_data_size,
             macctx->key,
-            macctx->keylen,
-            0);
+            macctx->keylen);
     }
 
     return HMAC_Update(macctx->ctx, data, datalen);

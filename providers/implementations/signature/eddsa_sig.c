@@ -551,7 +551,7 @@ static int ed448_sign(void *vpeddsactx,
     /*
      * s390x_ed448_digestsign() does not yet support context-strings or
      * pre-hashing. Fall back to non-accelerated sign if a context-string or
-     * pre-hasing is provided.
+     * pre-hashing is provided.
      */
     if (S390X_CAN_SIGN(ED448)
         && peddsactx->context_string_len == 0
@@ -673,7 +673,7 @@ static int ed448_verify(void *vpeddsactx,
     /*
      * s390x_ed448_digestverify() does not yet support context-strings or
      * pre-hashing. Fall back to non-accelerated verify if a context-string or
-     * pre-hasing is provided.
+     * pre-hashing is provided.
      */
     if (S390X_CAN_SIGN(ED448)
         && peddsactx->context_string_len == 0

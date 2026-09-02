@@ -210,88 +210,6 @@ ___
     return $code;
 }
 
-# aes-128 decryption with round keys v1-v11
-sub aes_128_decrypt_6 {
-    my $code=<<___;
-    @{[vaesz_vs $V24, $V11]}   # with round key w[40,43]
-    @{[vaesz_vs $V25, $V11]}   # with round key w[40,43]
-    @{[vaesz_vs $V26, $V11]}   # with round key w[40,43]
-    @{[vaesz_vs $V27, $V11]}   # with round key w[40,43]
-    @{[vaesz_vs $V28, $V11]}   # with round key w[40,43]
-    @{[vaesz_vs $V29, $V11]}   # with round key w[40,43]
-    @{[vaesdm_vs $V24, $V10]}  # with round key w[36,39]
-    @{[vaesdm_vs $V25, $V10]}  # with round key w[36,39]
-    @{[vaesdm_vs $V26, $V10]}  # with round key w[36,39]
-    @{[vaesdm_vs $V27, $V10]}  # with round key w[36,39]
-    @{[vaesdm_vs $V28, $V10]}  # with round key w[36,39]
-    @{[vaesdm_vs $V29, $V10]}  # with round key w[36,39]
-    @{[vaesdm_vs $V24, $V9]}   # with round key w[32,35]
-    @{[vaesdm_vs $V25, $V9]}   # with round key w[32,35]
-    @{[vaesdm_vs $V26, $V9]}   # with round key w[32,35]
-    @{[vaesdm_vs $V27, $V9]}   # with round key w[32,35]
-    @{[vaesdm_vs $V28, $V9]}   # with round key w[32,35]
-    @{[vaesdm_vs $V29, $V9]}   # with round key w[32,35]
-
-    @{[vaesdm_vs $V24, $V8]}   # with round key w[28,31]
-    @{[vaesdm_vs $V25, $V8]}   # with round key w[28,31]
-    @{[vaesdm_vs $V26, $V8]}   # with round key w[28,31]
-    @{[vaesdm_vs $V27, $V8]}   # with round key w[28,31]
-    @{[vaesdm_vs $V28, $V8]}   # with round key w[28,31]
-    @{[vaesdm_vs $V29, $V8]}   # with round key w[28,31]
-
-    @{[vaesdm_vs $V24, $V7]}   # with round key w[24,27]
-    @{[vaesdm_vs $V25, $V7]}   # with round key w[24,27]
-    @{[vaesdm_vs $V26, $V7]}   # with round key w[24,27]
-    @{[vaesdm_vs $V27, $V7]}   # with round key w[24,27]
-    @{[vaesdm_vs $V28, $V7]}   # with round key w[24,27]
-    @{[vaesdm_vs $V29, $V7]}   # with round key w[24,27]
-
-    @{[vaesdm_vs $V24, $V6]}   # with round key w[20,23]
-    @{[vaesdm_vs $V25, $V6]}   # with round key w[20,23]
-    @{[vaesdm_vs $V26, $V6]}   # with round key w[20,23]
-    @{[vaesdm_vs $V27, $V6]}   # with round key w[20,23]
-    @{[vaesdm_vs $V28, $V6]}   # with round key w[20,23]
-    @{[vaesdm_vs $V29, $V6]}   # with round key w[20,23]
-    
-    @{[vaesdm_vs $V24, $V5]}   # with round key w[16,19]
-    @{[vaesdm_vs $V25, $V5]}   # with round key w[16,19]
-    @{[vaesdm_vs $V26, $V5]}   # with round key w[16,19]
-    @{[vaesdm_vs $V27, $V5]}   # with round key w[16,19]
-    @{[vaesdm_vs $V28, $V5]}   # with round key w[16,19]
-    @{[vaesdm_vs $V29, $V5]}   # with round key w[16,19]
-
-    @{[vaesdm_vs $V24, $V4]}   # with round key w[12,15]
-    @{[vaesdm_vs $V25, $V4]}   # with round key w[12,15]
-    @{[vaesdm_vs $V26, $V4]}   # with round key w[12,15]
-    @{[vaesdm_vs $V27, $V4]}   # with round key w[12,15]
-    @{[vaesdm_vs $V28, $V4]}   # with round key w[12,15]
-    @{[vaesdm_vs $V29, $V4]}   # with round key w[12,15]
-
-    @{[vaesdm_vs $V24, $V3]}   # with round key w[ 8,11]
-    @{[vaesdm_vs $V25, $V3]}   # with round key w[ 8,11]
-    @{[vaesdm_vs $V26, $V3]}   # with round key w[ 8,11]
-    @{[vaesdm_vs $V27, $V3]}   # with round key w[ 8,11]
-    @{[vaesdm_vs $V28, $V3]}   # with round key w[ 8,11]
-    @{[vaesdm_vs $V29, $V3]}   # with round key w[ 8,11]
-
-    @{[vaesdm_vs $V24, $V2]}   # with round key w[ 4, 7]
-    @{[vaesdm_vs $V25, $V2]}   # with round key w[ 4, 7]
-    @{[vaesdm_vs $V26, $V2]}   # with round key w[ 4, 7]
-    @{[vaesdm_vs $V27, $V2]}   # with round key w[ 4, 7]
-    @{[vaesdm_vs $V28, $V2]}   # with round key w[ 4, 7]
-    @{[vaesdm_vs $V29, $V2]}   # with round key w[ 4, 7]
-
-    @{[vaesdf_vs $V24, $V1]}   # with round key w[ 0, 3]
-    @{[vaesdf_vs $V25, $V1]}   # with round key w[ 0, 3]
-    @{[vaesdf_vs $V26, $V1]}   # with round key w[ 0, 3]
-    @{[vaesdf_vs $V27, $V1]}   # with round key w[ 0, 3]
-    @{[vaesdf_vs $V28, $V1]}   # with round key w[ 0, 3]
-    @{[vaesdf_vs $V29, $V1]}   # with round key w[ 0, 3]
-___
-
-    return $code;
-}
-
 # aes-192 encryption with round keys v1-v13
 sub aes_192_encrypt {
     my $code=<<___;
@@ -557,16 +475,161 @@ ___
 $code .= <<___;
 .p2align 3
 L_cbc_dec_128:
-    # Load all 11 round keys to v1-v11 registers.
-    @{[aes_128_load_key $KEYP]}
-
+    @{[vsetivli "zero", 4, "e32", "m1", "ta", "ma"]}
     # Load IV.
     @{[vle32_v $V16, $IVP]}
 
-    li $T1, 96
-3:
-    blt $LEN, $T1, L_small 
+.Lcbc_dec_loop:
+    li $T0, 10
+    addi $KEYP, $KEYP, 160
+    @{[vle32_v $V11, $KEYP]}
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V10, $KEYP]}
+    li $T1, 64
+    bgeu $LEN, $T1, .Lcbc_check_64
 
+    @{[vle32_v $V24, $INP]}
+    @{[vmv_v_v $V17, $V24]}
+    j 2f
+
+1:
+    li $T0, 10
+    addi $KEYP, $KEYP, 160
+    @{[vle32_v $V11, $KEYP]}
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V10, $KEYP]}
+    @{[vle32_v $V24, $INP]}
+    @{[vmv_v_v $V17, $V24]}
+    addi $OUTP, $OUTP, 16
+
+2:
+    # AES body
+    @{[vaesz_vs $V24, $V11]}   # with round key w[40,43]
+    addi $T0, $T0, -2
+3:
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V11, $KEYP]}
+    @{[vaesdm_vs $V24, $V10]}  # with round key w[36,39]
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V10, $KEYP]}
+    @{[vaesdm_vs $V24, $V11]}   # with round key w[32,35]
+    addi $T0, $T0, -2
+    bnez $T0, 3b
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V11, $KEYP]}
+    @{[vaesdm_vs $V24, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdf_vs $V24, $V11]}   # with round key w[ 0, 3]
+
+    @{[vxor_vv $V24, $V24, $V16]}
+    @{[vse32_v $V24, $OUTP]}
+    @{[vmv_v_v $V16, $V17]}
+
+    addi $LEN, $LEN, -16
+    addi $INP, $INP, 16
+
+    bnez $LEN, 1b
+
+    @{[vse32_v $V16, $IVP]}
+
+    ret
+
+# =====================================================
+# If data 128bytes > length ≥ 64 bytes, process in batches of 4 blocks:
+# 4-block CBC decryption process:
+#   1. Load 4 ciphertext blocks
+#   2. Back up the ciphertext blocks
+#   3. Decrypt each data block
+#   4. Reload ciphertext blocks into registers v17-v20 for XOR
+#   5. XOR with previous ciphertext block (CBC chain)
+#   6. Update IV and store plaintext
+# If the data length is less than 64 bytes, process it block by block using the Lcbc_dec_loop function
+# =====================================================
+.Lcbc_check_64:
+    li $T1, 128
+    bgeu $LEN, $T1, .Lcbc_check_128
+
+    @{[vle32_v $V24, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V25, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V26, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V27, $INP]}
+    @{[vle32_v $V20, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V19, $INP]}
+
+    @{[vaesz_vs $V24, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V25, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V26, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V27, $V11]}   # with round key w[40,43]
+    addi $T0, $T0, -2
+4:
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V11, $KEYP]}
+    @{[vaesdm_vs $V24, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V25, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V26, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V27, $V10]}  # with round key w[36,39]
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V10, $KEYP]}
+    @{[vaesdm_vs $V24, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V25, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V26, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V27, $V11]}   # with round key w[32,35]
+    addi $T0, $T0, -2
+    bnez $T0, 4b
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V11, $KEYP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V18, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V17, $INP]}
+
+    @{[vaesdm_vs $V24, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V25, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V26, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V27, $V10]}   # with round key w[ 4, 7]
+
+    @{[vaesdf_vs $V24, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V25, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V26, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V27, $V11]}   # with round key w[ 0, 3]
+
+    @{[vxor_vv $V24, $V24, $V16]}
+    @{[vxor_vv $V25, $V25, $V17]}
+    @{[vxor_vv $V26, $V26, $V18]}
+    @{[vxor_vv $V27, $V27, $V19]}
+
+    @{[vse32_v $V24, $OUTP]}
+    addi $OUTP, $OUTP, 16
+    @{[vse32_v $V25, $OUTP]}
+    addi $OUTP, $OUTP, 16
+    @{[vse32_v $V26, $OUTP]}
+    addi $OUTP, $OUTP, 16
+    @{[vse32_v $V27, $OUTP]}
+    addi $OUTP, $OUTP, 16
+
+    @{[vmv_v_v $V16, $V20]}
+
+    addi $LEN, $LEN, -64
+    addi $INP, $INP, 64
+    bnez $LEN, .Lcbc_dec_loop
+    @{[vse32_v $V16, $IVP]}
+
+    ret
+
+# =====================================================
+# If data length ≥ 128 bytes, process 8 blocks in batch:
+# 8-block CBC decryption pipeline:
+#   1. Load 8 ciphertext blocks
+#   2. Back up the ciphertext blocks
+#   3. Decrypt each data block
+#   4. Reload ciphertext blocks into registers v17-v23 and v15 for XOR
+#   5. XOR with previous ciphertext block (CBC chain)
+#   6. Update IV and store plaintext
+# =====================================================
+.Lcbc_check_128:
     @{[vle32_v $V24, $INP]}
     addi $INP, $INP, 16
     @{[vle32_v $V25, $INP]}
@@ -579,67 +642,108 @@ L_cbc_dec_128:
     addi $INP, $INP, 16
     @{[vle32_v $V29, $INP]}
     addi $INP, $INP, 16
-    @{[vmv_v_v $V17, $V24]}  
-    @{[vmv_v_v $V18, $V25]}
-    @{[vmv_v_v $V19, $V26]} 
-    @{[vmv_v_v $V20, $V27]} 
-    @{[vmv_v_v $V21, $V28]} 
-    @{[vmv_v_v $V22, $V29]}  
+    @{[vle32_v $V30, $INP]}
+    addi $INP, $INP, 16
+    @{[vle32_v $V31, $INP]}
+    @{[vle32_v $V15, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V23, $INP]}
 
-    @{[aes_128_decrypt_6]} 
+    @{[vaesz_vs $V24, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V25, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V26, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V27, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V28, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V29, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V30, $V11]}   # with round key w[40,43]
+    @{[vaesz_vs $V31, $V11]}   # with round key w[40,43]
+    addi $INP, $INP, -16
+    @{[vle32_v $V22, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V21, $INP]}
+    addi $T0, $T0, -2
+4:
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V11, $KEYP]}
+    @{[vaesdm_vs $V24, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V25, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V26, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V27, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V28, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V29, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V30, $V10]}  # with round key w[36,39]
+    @{[vaesdm_vs $V31, $V10]}  # with round key w[36,39]
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V10, $KEYP]}
+    @{[vaesdm_vs $V24, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V25, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V26, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V27, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V28, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V29, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V30, $V11]}   # with round key w[32,35]
+    @{[vaesdm_vs $V31, $V11]}   # with round key w[32,35]
+    addi $T0, $T0, -2
+    bnez $T0, 4b
+    addi $KEYP, $KEYP, -16
+    @{[vle32_v $V11, $KEYP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V20, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V19, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V18, $INP]}
+    addi $INP, $INP, -16
+    @{[vle32_v $V17, $INP]}
+    @{[vaesdm_vs $V24, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V25, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V26, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V27, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V28, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V29, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V30, $V10]}   # with round key w[ 4, 7]
+    @{[vaesdm_vs $V31, $V10]}   # with round key w[ 4, 7]
 
-    @{[vxor_vv $V24, $V24, $V16]}  
+    @{[vaesdf_vs $V24, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V25, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V26, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V27, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V28, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V29, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V30, $V11]}   # with round key w[ 0, 3]
+    @{[vaesdf_vs $V31, $V11]}   # with round key w[ 0, 3]
+
+    @{[vxor_vv $V24, $V24, $V16]}
     @{[vxor_vv $V25, $V25, $V17]}
     @{[vxor_vv $V26, $V26, $V18]}
     @{[vxor_vv $V27, $V27, $V19]}
     @{[vxor_vv $V28, $V28, $V20]}
     @{[vxor_vv $V29, $V29, $V21]}
+    @{[vxor_vv $V30, $V30, $V22]}
+    @{[vxor_vv $V31, $V31, $V23]}
 
     @{[vse32_v $V24, $OUTP]}
-    addi $OUTP, $OUTP, 16 
+    addi $OUTP, $OUTP, 16
     @{[vse32_v $V25, $OUTP]}
-    addi $OUTP, $OUTP, 16      
+    addi $OUTP, $OUTP, 16
     @{[vse32_v $V26, $OUTP]}
     addi $OUTP, $OUTP, 16
     @{[vse32_v $V27, $OUTP]}
-    addi $OUTP, $OUTP, 16   
+    addi $OUTP, $OUTP, 16
     @{[vse32_v $V28, $OUTP]}
     addi $OUTP, $OUTP, 16
     @{[vse32_v $V29, $OUTP]}
     addi $OUTP, $OUTP, 16
-
-    @{[vmv_v_v $V16, $V22]}  
-
-    addi $LEN, $LEN, -96       
-    
-    bnez $LEN, 3b 
-    @{[vse32_v $V16, $IVP]} 
-
-    ret
-
-L_small:
-    @{[vle32_v $V24, $INP]}
-    @{[vmv_v_v $V17, $V24]}
-    j 2f
-
-1:
-    @{[vle32_v $V24, $INP]}
-    @{[vmv_v_v $V17, $V24]}
+    @{[vse32_v $V30, $OUTP]}
+    addi $OUTP, $OUTP, 16
+    @{[vse32_v $V31, $OUTP]}
     addi $OUTP, $OUTP, 16
 
-2:
-    # AES body
-    @{[aes_128_decrypt]}
+    @{[vmv_v_v $V16, $V15]}
 
-    @{[vxor_vv $V24, $V24, $V16]}
-    @{[vse32_v $V24, $OUTP]}
-    @{[vmv_v_v $V16, $V17]}
-
-    addi $LEN, $LEN, -16
-    addi $INP, $INP, 16
-
-    bnez $LEN, 1b
-
+    addi $LEN, $LEN, -128
+    addi $INP, $INP, 128
+    bnez $LEN, .Lcbc_dec_loop
     @{[vse32_v $V16, $IVP]}
 
     ret

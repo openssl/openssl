@@ -314,6 +314,7 @@ ERR_raise                               define
 ERR_raise_data                          define
 EVP_DigestSignUpdate                    define
 EVP_DigestVerifyUpdate                  define
+EVP_KDF_CTX_kdf                         define
 EVP_MD_CTX_get_block_size               define
 EVP_MD_CTX_get0_name                    define
 EVP_MD_CTX_get_size                     define
@@ -415,6 +416,7 @@ EVP_RSA_gen                             define
 EVP_seed_cfb                            define
 EVP_sm4_cfb                             define
 EXT_UTF8STRING                          define
+FIPS_mode                               define
 OBJ_cleanup                             define deprecated 1.1.0
 OCSP_parse_url                          define
 OCSP_REQ_CTX                            datatype deprecated 3.0.0
@@ -645,6 +647,7 @@ SSL_clear_mode                          define
 SSL_disable_ct                          define
 SSL_get0_chain_certs                    define
 SSL_get0_iana_groups                    define
+SSL_get0_ec_point_formats               define
 SSL_get0_session                        define
 SSL_get0_chain_cert_store               define
 SSL_get0_verify_cert_store              define
@@ -804,6 +807,7 @@ SSL_VALUE_QUIC_WINDOWBSTR               define
 SSL_VALUE_QUIC_WINDOWUSTR               define
 SSL_VALUE_QUIC_ACK_DELAY_EXPONENT       define
 SSL_VALUE_QUIC_ACK_DELAY_MAX            define
+SSL_VALUE_QUIC_MAX_PENDING_CONNS        define
 SSL_VALUE_QUIC_STREAM_BIDI_LOCAL_AVAIL  define
 SSL_VALUE_QUIC_STREAM_BIDI_REMOTE_AVAIL define
 SSL_VALUE_QUIC_STREAM_UNI_LOCAL_AVAIL   define
@@ -815,8 +819,14 @@ SSL_VALUE_EVENT_HANDLING_MODE_EXPLICIT  define
 SSL_VALUE_STREAM_WRITE_BUF_SIZE         define
 SSL_VALUE_STREAM_WRITE_BUF_USED         define
 SSL_VALUE_STREAM_WRITE_BUF_AVAIL        define
+SSL_VALUE_DTLS_LISTENER_MAX_PENDING_CONNS define
+SSL_VALUE_DTLS_LISTENER_PENDING_TIMEOUT define
+SSL_VALUE_DTLS_LISTENER_MAX_DGRAM_SIZE  define
 SSL_WRITE_FLAG_CONCLUDE                 define
 SSL_LISTENER_FLAG_NO_ACCEPT             define
+SSL_LISTENER_FLAG_NO_VALIDATE           define
+SSL_LISTENER_FLAG_SINGLE_THREAD         define
+SSL_LISTENER_FLAG_ADDRESS_VALIDATION    define
 TLS_DEFAULT_CIPHERSUITES                define deprecated 3.0.0
 X509_CRL_http_nbio                      define deprecated 3.0.0
 X509_http_nbio                          define deprecated 3.0.0

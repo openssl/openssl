@@ -1215,6 +1215,71 @@ err:
     return st;
 }
 
+typedef struct sum_all_alias_st {
+    const char *hex;
+    int negative;
+} SUM_ALL_ALIAS;
+
+static int test_sum_all_alias_helper(const SUM_ALL_ALIAS *test)
+{
+    BIGNUM *alias = NULL, *orig = NULL, *expected = NULL;
+    int st = 0;
+
+    if (!TEST_true(BN_hex2bn(&alias, test->hex)))
+        goto err;
+    if (test->negative && !BN_is_zero(alias))
+        BN_set_negative(alias, 1);
+    if (!TEST_ptr(orig = BN_dup(alias))
+        || !TEST_ptr(expected = BN_new()))
+        goto err;
+
+    /* BN_add */
+    if (!TEST_true(BN_add(expected, orig, orig))
+        || !TEST_true(BN_add(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias)
+        || !TEST_ptr(BN_copy(alias, orig))
+        /* BN_sub */
+        || !TEST_true(BN_sub(expected, orig, orig))
+        || !TEST_true(BN_sub(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias)
+        || !TEST_ptr(BN_copy(alias, orig))
+        /* BN_uadd */
+        || !TEST_true(BN_uadd(expected, orig, orig))
+        || !TEST_true(BN_uadd(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias)
+        || !TEST_ptr(BN_copy(alias, orig))
+        /* BN_usub */
+        || !TEST_true(BN_usub(expected, orig, orig))
+        || !TEST_true(BN_usub(alias, alias, alias))
+        || !TEST_BN_eq(expected, alias))
+        goto err;
+
+    st = 1;
+err:
+    BN_free(alias);
+    BN_free(orig);
+    BN_free(expected);
+    return st;
+}
+
+static int test_sum_all_alias(void)
+{
+    static const SUM_ALL_ALIAS tests[] = {
+        { "2A", 0 },
+        { "2A", 1 },
+        { "0", 0 },
+        { "FEDCBA98765432100123456789ABCDEFFEDCBA98765432100123456789ABCDEF", 0 },
+        { "FEDCBA98765432100123456789ABCDEFFEDCBA98765432100123456789ABCDEF", 1 }
+    };
+    size_t i;
+
+    for (i = 0; i < OSSL_NELEM(tests); i++) {
+        if (!test_sum_all_alias_helper(&tests[i]))
+            return 0;
+    }
+    return 1;
+}
+
 static int file_sum(STANZA *s)
 {
     BIGNUM *a = NULL, *b = NULL, *sum = NULL, *ret = NULL;
@@ -1238,7 +1303,6 @@ static int file_sum(STANZA *s)
     /*
      * Test that the functions work when |r| and |a| point to the same BIGNUM,
      * or when |r| and |b| point to the same BIGNUM.
-     * There is no test for all of |r|, |a|, and |b| pointint to the same BIGNUM.
      */
     if (!TEST_true(BN_copy(ret, a))
         || !TEST_true(BN_add(ret, ret, b))
@@ -1277,8 +1341,6 @@ static int file_sum(STANZA *s)
         /*
          * Test that the functions work when |r| and |a| point to the same
          * BIGNUM, or when |r| and |b| point to the same BIGNUM.
-         * There is no test for all of |r|, |a|, and |b| pointint to the same
-         * BIGNUM.
          */
         if (!TEST_true(BN_copy(ret, a))
             || !TEST_true(BN_uadd(ret, ret, b))
@@ -1738,15 +1800,16 @@ static int file_modexp(STANZA *s)
     }
 
     /* Regression test for carry propagation bug in sqr8x_reduction */
-    BN_hex2bn(&a, "050505050505");
-    BN_hex2bn(&b, "02");
-    BN_hex2bn(&c,
-        "4141414141414141414141274141414141414141414141414141414141414141"
-        "4141414141414141414141414141414141414141414141414141414141414141"
-        "4141414141414141414141800000000000000000000000000000000000000000"
-        "0000000000000000000000000000000000000000000000000000000000000000"
-        "0000000000000000000000000000000000000000000000000000000000000000"
-        "0000000000000000000000000000000000000000000000000000000001");
+    if (!TEST_true(BN_hex2bn(&a, "050505050505"))
+        || !TEST_true(BN_hex2bn(&b, "02"))
+        || !TEST_true(BN_hex2bn(&c,
+            "4141414141414141414141274141414141414141414141414141414141414141"
+            "4141414141414141414141414141414141414141414141414141414141414141"
+            "4141414141414141414141800000000000000000000000000000000000000000"
+            "0000000000000000000000000000000000000000000000000000000000000000"
+            "0000000000000000000000000000000000000000000000000000000000000000"
+            "0000000000000000000000000000000000000000000000000000000001")))
+        goto err;
     if (!TEST_true(BN_mod_exp(d, a, b, c, ctx))
         || !TEST_true(BN_mul(e, a, a, ctx))
         || !TEST_BN_eq(d, e))
@@ -3420,6 +3483,7 @@ int setup_tests(void)
         ADD_ALL_TESTS(test_signed_mod_replace_ab, OSSL_NELEM(signed_mod_tests));
         ADD_ALL_TESTS(test_signed_mod_replace_ba, OSSL_NELEM(signed_mod_tests));
         ADD_TEST(test_mod);
+        ADD_TEST(test_sum_all_alias);
         ADD_TEST(test_mod_inverse);
         ADD_ALL_TESTS(test_mod_exp_alias, 2);
         ADD_TEST(test_modexp_mont5);

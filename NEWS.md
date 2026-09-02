@@ -28,11 +28,141 @@ OpenSSL 4.1
 
 ### Major changes between OpenSSL 4.0 and OpenSSL 4.1 [under development]
 
+  * Support for DTLS 1.3 (RFC 9147) added. The DTLS 1.3 work includes:
+    * DTLS 1.3 support in the SSL listener API. `SSL_new_listener()` can
+      create a DTLS listener that demultiplexes incoming datagrams into
+      per-peer connections accepted with `SSL_accept_connection()`.
+    See the ossl-guide-dtlsv13(7) manpage for details.
+
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
+  * Initial support for the Elbrus2000 (e2k) architecture
+
+  * Fixed verification of DSA certificates signed with SHA-384 or SHA-512.
 
 OpenSSL 4.0
 -----------
+
+### Major changes between OpenSSL 4.0.1 and OpenSSL 4.0.2 [25 Aug 2026]
+
+OpenSSL 4.0.2 is a security patch release.  The most severe CVE fixed
+in this release is Moderate.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed QUIC server being able to trigger double free when processing
+    `INITIAL` packet.
+    ([CVE-2026-18798])
+
+  * Fixed heap buffer overflow in CMS key unwrapping.
+    ([CVE-2026-63072])
+
+  * Fixed invalid pointer dereference in CMP server via crafted `protectionAlg`.
+    ([CVE-2026-63076])
+
+  * Fixed unbounded memory growth in QUIC server incoming channel queue.
+    ([CVE-2026-14456])
+
+  * Fixed RPK server signature algorithm selection being able to dereference
+    a missing certificate.
+    ([CVE-2026-14457])
+
+  * Fixed excessive memory use buffering DTLS records for a future epoch.
+    ([CVE-2026-54874])
+
+  * Fixed client-side memory leak in OCSP response checking.
+    ([CVE-2026-54876])
+
+  * Fixed untrusted Sender DN being used as a format string in CMP response
+    validation.
+    ([CVE-2026-63073])
+
+  * Fixed CMP indefinite cache growth of `extraCerts`.
+    ([CVE-2026-63074])
+
+  * Fixed QUIC ACK-only packet retention being able to cause memory exhaustion.
+    ([CVE-2026-63075])
+
+  * Fixed possibility of AEAD forgeries with empty ciphertext when using
+    `EVP_Cipher()`.
+    ([CVE-2026-75803])
+
+  * Fixed checking of authentication tags for empty ciphertexts for AEAD ciphers
+    in CCM cipher mode.
+
+### Major changes between OpenSSL 4.0.0 and OpenSSL 4.0.1 [9 Jun 2026]
+
+OpenSSL 4.0.1 is a security patch release.  The most severe CVE fixed
+in this release is High.
+
+This release incorporates the following bug fixes and mitigations:
+
+  * Fixed heap use-after-free in `PKCS7_verify()`.
+    ([CVE-2026-45447])
+
+  * Fixed CMS `AuthEnvelopedData` processing may accept forged messages.
+    ([CVE-2026-34182])
+
+  * Fixed unbounded memory growth in the QUIC `PATH_CHALLENGE` handler.
+    ([CVE-2026-34183])
+
+  * Fixed double-free when checking OCSP stapled response.
+    ([CVE-2026-35188])
+
+  * Fixed NULL pointer dereference in QUIC server initial packet handling.
+    ([CVE-2026-42764])
+
+  * Fixed AES-OCB IV ignored on `EVP_Cipher()` path.
+    ([CVE-2026-45445])
+
+  * Fixed possible heap buffer overflow in ASN.1 multibyte string conversion.
+    ([CVE-2026-7383])
+
+  * Fixed out-of-bounds read in CMS password-based decryption.
+    ([CVE-2026-9076])
+
+  * Fixed heap buffer over-read in ASN.1 content parsing.
+    ([CVE-2026-34180])
+
+  * Fixed PKCS#12 files with PBMAC1 are accepted with short HMAC keys.
+    ([CVE-2026-34181])
+
+  * Fixed NULL dereference in certificate verification with OCSP Checking.
+    ([CVE-2026-42765])
+
+  * Fixed possible NULL dereference in password-dased CMS decryption.
+    ([CVE-2026-42766])
+
+  * Fixed NULL pointer dereference in CRMF `EncryptedValue` decryption.
+    ([CVE-2026-42767])
+
+  * Fixed multi-`RecipientInfo` Bleichenbacher Oracle in `CMS_decrypt()`
+    and `PKCS7_decrypt()`.
+    ([CVE-2026-42768])
+
+  * Fixed trust anchor substitution via `cert`/`issuer` typo in CMP
+    `rootCaKeyUpdate`.
+    ([CVE-2026-42769])
+
+  * Fixed FFC-DH peer validation uses attacker-supplied `q`.
+    ([CVE-2026-42770])
+
+  * Fixed possible out of bounds read in `X509_VERIFY_PARAM_set1_email()`.
+    ([CVE-2026-42771])
+
+  * Fixed incorrect tag processing for empty messages in AES-GCM-SIV
+    and AES-SIV modes.
+    ([CVE-2026-45446])
+
+  * Fixed excessive allocation of the handshake message buffer (aka HollowByte).
+
+  * Fixed a regression introduced in 4.0.0 that led to a `openssl pkey`
+    command crash when it was invoked to encrypt a private key with password
+    being provided interactively.
+
+  * Fixed a regression introduced in 4.0.0 that led to `openssl s_client -adv`
+    command prematurely terminating a session when reading input of 16384 bytes
+    in one `read()` call.
 
 ### Major changes between OpenSSL 3.6 and OpenSSL 4.0.0 [14 Apr 2026]
 
@@ -2363,6 +2493,11 @@ OpenSSL 0.9.x
 [CVE-2025-69420]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69420
 [CVE-2025-69421]: https://openssl-library.org/news/vulnerabilities/#CVE-2025-69421
 [CVE-2026-2673]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-2673
+[CVE-2026-7383]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-7383
+[CVE-2026-9076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-9076
+[CVE-2026-14456]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-14456
+[CVE-2026-14457]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-14457
+[CVE-2026-18798]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-18798
 [CVE-2026-22795]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22795
 [CVE-2026-22796]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-22796
 [CVE-2026-28386]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28386
@@ -2372,6 +2507,30 @@ OpenSSL 0.9.x
 [CVE-2026-28390]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-28390
 [CVE-2026-31789]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-31789
 [CVE-2026-31790]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-31790
+[CVE-2026-34180]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34180
+[CVE-2026-34181]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34181
+[CVE-2026-34182]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34182
+[CVE-2026-34183]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-34183
+[CVE-2026-35188]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-35188
+[CVE-2026-42764]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42764
+[CVE-2026-42765]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42765
+[CVE-2026-42766]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42766
+[CVE-2026-42767]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42767
+[CVE-2026-42768]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42768
+[CVE-2026-42769]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42769
+[CVE-2026-42770]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42770
+[CVE-2026-42771]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-42771
+[CVE-2026-45445]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45445
+[CVE-2026-45446]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45446
+[CVE-2026-45447]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-45447
+[CVE-2026-54874]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54874
+[CVE-2026-54876]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-54876
+[CVE-2026-63072]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63072
+[CVE-2026-63073]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63073
+[CVE-2026-63074]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63074
+[CVE-2026-63075]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63075
+[CVE-2026-63076]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-63076
+[CVE-2026-75803]: https://openssl-library.org/news/vulnerabilities/#CVE-2026-75803
 [ESV]: https://csrc.nist.gov/Projects/cryptographic-module-validation-program/entropy-validations
 [OpenSSL Guide]: https://docs.openssl.org/master/man7/ossl-guide-introduction
 [README-QUIC.md]: ./README-QUIC.md
