@@ -1,5 +1,5 @@
 /*
- * Copyright 1995-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 1995-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -488,6 +488,37 @@ err:
 
 #endif /* OPENSSL_NO_DSA */
 
+/*
+ * EVP_PKEY_CTX_set_dsa_paramgen_type() builds a UTF8 string OSSL_PARAM from
+ * its |name| argument; a NULL name used to crash the provider, which
+ * compared it with strcasecmp().
+ */
+static int dsa_set_dsa_paramgen_type_test(void)
+{
+    int ok = 0;
+    EVP_PKEY_CTX *paramgen_ctx = NULL;
+
+    paramgen_ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DSA, NULL);
+    if (!TEST_ptr(paramgen_ctx)
+        || !TEST_int_eq(EVP_PKEY_paramgen_init(paramgen_ctx), 1))
+        goto err;
+    if (!TEST_int_eq(EVP_PKEY_CTX_set_dsa_paramgen_type(paramgen_ctx,
+                         "fips186_4"),
+            1))
+        goto err;
+    /* An unknown name and a NULL name fail cleanly */
+    if (!TEST_int_le(EVP_PKEY_CTX_set_dsa_paramgen_type(paramgen_ctx,
+                         "no such type"),
+            0)
+        || !TEST_int_le(EVP_PKEY_CTX_set_dsa_paramgen_type(paramgen_ctx, NULL),
+            0))
+        goto err;
+    ok = 1;
+err:
+    EVP_PKEY_CTX_free(paramgen_ctx);
+    return ok;
+}
+
 int setup_tests(void)
 {
 #ifndef OPENSSL_NO_DSA
@@ -495,6 +526,7 @@ int setup_tests(void)
     ADD_TEST(dsa_keygen_test);
     ADD_TEST(test_dsa_sig_infinite_loop);
     ADD_TEST(test_dsa_sig_neg_param);
+    ADD_TEST(dsa_set_dsa_paramgen_type_test);
     ADD_ALL_TESTS(test_dsa_default_paramgen_validate, 2);
 #endif
     return 1;
