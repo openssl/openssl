@@ -96,8 +96,10 @@ jobs:
         include:
           - arch: amd64
             target: VC-WIN64A-MSVC2013
+            config: no-makedepend no-shared enable-fips -DOSSL_WINCTX=openssl
           - arch: x86
             target: VC-WIN32-MSVC2013
+            config: no-makedepend enable-fips -DOSSL_WINCTX=openssl
     runs-on: windows-2022
     env:
       IMAGE: ghcr.io/openssl/openssl-vs2013:latest
@@ -114,19 +116,13 @@ jobs:
       run: docker pull %IMAGE%
     - name: config
       run: |
-        $config = @(
-          'no-makedepend'
-          'no-shared'
-          'enable-fips'
-          '-DOSSL_WINCTX=openssl'
-        ) -join ' '
         $chain = @(
           # 'call', not a bare invocation: cmd does not necessarily return from a
           # batch file run without it, which would skip the rest of the chain.
           "call $env:VCVARS"
           'mkdir _build'
           'cd _build'
-          "perl ..\Configure ${{ matrix.target }} --banner=Configured $config"
+          "perl ..\Configure ${{ matrix.target }} --banner=Configured ${{ matrix.config }}"
           'perl configdata.pm --dump'
         ) -join ' && '
         docker run --rm --isolation=process -v "${env:GITHUB_WORKSPACE}:C:\src" `
