@@ -55,7 +55,9 @@ The two BIOs must both use the method returned by BIO_s_dgram_pair() and neither
 of the BIOs may currently be associated in a pair.
 
 L<BIO_destroy_bio_pair(3)> destroys the association between two connected BIOs.
-Freeing either half of the pair will automatically destroy the association.
+Freeing either half of the pair will automatically destroy the association. Once
+the association is destroyed, the remaining BIO reports EOF, fails any read or
+write, and may be joined into a new pair.
 
 L<BIO_reset(3)> clears any data in the write buffer of the given BIO. This means
 that the opposite BIO in the pair will no longer have any data waiting to be
@@ -129,6 +131,10 @@ BIO_C_GET_WRITE_GUARANTEE) may also be used. Invoking any other BIO call, or any
 other L<BIO_ctrl(3)> operation, on either half of a BIO datagram pair while any
 other BIO call is also in progress to either half of the same BIO datagram pair
 results in undefined behaviour.
+
+As an exception, one half of a BIO datagram pair may be freed while the calls
+listed above are in progress on the other half. Those calls then fail as if the
+association had been destroyed.
 
 =head1 CAPABILITY INDICATION
 
