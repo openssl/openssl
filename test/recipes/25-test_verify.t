@@ -70,11 +70,15 @@ EOF
              "-out", $crl]));
 }
 
-plan tests => 222;
+plan tests => 223;
 
 # Canonical success
 ok(verify("ee-cert", "sslserver", ["root-cert"], ["ca-cert"]),
    "accept compat trust");
+
+# RFC 9925 unsigned root-cert
+ok(verify("ee-cert", "sslserver", ["root-cert-unsigned"], ["ca-cert"]),
+   "accept RFC 9925 unsigned root cert");
 
 # Root CA variants
 ok(!verify("ee-cert", "sslserver", [qw(root-nonca)], [qw(ca-cert)]),
