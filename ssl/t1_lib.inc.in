@@ -8,20 +8,24 @@
  */
 
 {-
-use OpenSSL::paramnames qw(produce_param_decoder);
+use OpenSSL::paramnames qw(produce_param_decoder_ignore_duplicates);
 
 sub produce_ssl_param_decoder {
-    my $decoder = produce_param_decoder(@_);
+    my $decoder = produce_param_decoder_ignore_duplicates(@_);
 
-    # Adapt the provider-oriented decoder errors for libssl.
-    $decoder =~ s|#include "prov/proverr.h"|#include <openssl/err.h>|;
-    $decoder =~ s/ERR_LIB_PROV/ERR_LIB_SSL/g;
-    $decoder =~ s/PROV_R_REPEATED_PARAMETER/ERR_R_PASSED_INVALID_ARGUMENT/g;
+    # Remove the unavailable header inclusion.
+    $decoder =~ s|#include "prov/proverr.h"||;
     return $decoder;
 }
 -}
 
+/*
+ * There is no need to produce a list of gettables/settables because libssl
+ * doesn't support these query functions.
+ */
 #define tls_group_params_list
+#define tls_sigalg_params_list
+
 {- produce_ssl_param_decoder('tls_group_params',
                          (['OSSL_CAPABILITY_TLS_GROUP_NAME',          'name',     'utf8_string'],
                           ['OSSL_CAPABILITY_TLS_GROUP_NAME_INTERNAL', 'internal', 'utf8_string'],
@@ -35,7 +39,6 @@ sub produce_ssl_param_decoder {
                           ['OSSL_CAPABILITY_TLS_GROUP_MAX_DTLS',      'max_dtls', 'int'],
                          )); -}
 
-#define tls_sigalg_params_list
 {- produce_ssl_param_decoder('tls_sigalg_params',
                          (['OSSL_CAPABILITY_TLS_SIGALG_NAME',        'name',        'utf8_string'],
                           ['OSSL_CAPABILITY_TLS_SIGALG_IANA_NAME',   'iana_name',   'utf8_string'],
