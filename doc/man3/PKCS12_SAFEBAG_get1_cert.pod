@@ -33,7 +33,8 @@ PKCS8_PRIV_KEY_INFO_get1_skey - Get objects from a PKCS#12 safeBag
  const X509_SIG *PKCS12_SAFEBAG_get0_pkcs8(const PKCS12_SAFEBAG *bag);
 
  EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
-                                    OSSL_LIB_CTX *libctx, const char *propq);
+                                    OSSL_LIB_CTX *libctx, const char *propq,
+                                    const OSSL_PARAM *extra_params, int strict);
 
 =head1 DESCRIPTION
 
@@ -66,11 +67,21 @@ safeContentsBag.
 
 PKCS8_PRIV_KEY_INFO_get1_skey() converts a decrypted B<PKCS8_PRIV_KEY_INFO> (as
 returned by L<PKCS12_decrypt_secretbag(3)>) into an B<EVP_SKEY> symmetric key
-object if it holds a symmetric key inside. The algorithm OID in I<p8inf> is
-used to determine the key type (e.g., AES). If the algorithm OID is not
-recognized by current implementation as matching the known key type, a generic
-symmetric key type will be used. The caller can use L<EVP_SKEY_get0_algorithm(3)>
-to retrieve the original AlgorithmIdentifier.
+object if it holds a symmetric key inside. The algorithm OID and parameters
+from the PKCS8 AlgorithmIdentifier are stored as metadata on the key and can be
+retrieved via L<EVP_SKEY_get0_algorithm_id(3)>.
+
+The I<strict> parameter controls how unrecognized algorithm OIDs are handled.
+In permissive mode (I<strict> is 0), recognized OIDs select an algorithm-specific
+SKEYMGMT (e.g., B<OSSL_SKEY_TYPE_AES> for AES NIDs) and unrecognized OIDs
+fall back to a generic key type.
+In strict mode (I<strict> is nonzero), only recognized OIDs are accepted and
+unrecognized OIDs cause the function to return NULL.
+
+I<extra_params> is an optional caller-built L<OSSL_PARAM(3)> array containing
+additional metadata to attach to the key (e.g., B<OSSL_SKEY_PARAM_ALIAS> for the
+friendly name and B<OSSL_SKEY_PARAM_LOCAL_KEYID> for the local key ID from
+PKCS#12 bag attributes). May be NULL.
 
 =head1 RETURN VALUES
 
@@ -84,7 +95,7 @@ L<PKCS12_create(3)>,
 L<PKCS12_add_safe(3)>,
 L<PKCS12_add_safes(3)>,
 L<PKCS12_decrypt_secretbag(3)>,
-L<EVP_SKEY_get0_algorithm(3)>
+L<EVP_SKEY_get0_algorithm_id(3)>
 
 =head1 HISTORY
 

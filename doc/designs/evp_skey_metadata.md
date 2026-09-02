@@ -126,3 +126,79 @@ We implement the following accessors:
 These accessors use dedicated `OSSL_FUNC_SKEYMGMT_GET_LOCAL_KEYID` and
 `OSSL_FUNC_SKEYMGMT_GET_ALGORITHM_ID` dispatch functions, following the
 pattern of `EVP_SKEY_get0_key_id()`.
+
+PKCS8_PRIV_KEY_INFO_get1_skey changes
+--------------------------------------
+
+The function gains two new parameters:
+
+```c
+EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
+                                          OSSL_LIB_CTX *libctx,
+                                          const char *propq,
+                                          const OSSL_PARAM *extra_params,
+                                          int strict);
+```
+
+- **`extra_params`**: caller-built `OSSL_PARAM` array containing metadata
+  from bag attributes (local key ID and friendly name). May be NULL.
+  The function merges these with the params it builds from the PKCS8
+  structure (raw key bytes, algorithm identifier, algorithm parameters).
+
+- **`strict`**: controls how unrecognized algorithm OIDs are handled.
+  The function always attempts to match an algorithm-specific SKEYMGMT
+  based on the AlgorithmIdentifier OID (e.g. `OSSL_SKEY_TYPE_AES` for
+  AES NIDs).
+  - `0` (permissive, default): unrecognized OIDs fall back to
+    `OSSL_SKEY_TYPE_GENERIC`.
+  - non-zero (strict): unrecognized OIDs cause the function to return
+    NULL.
+
+The function now also:
+1. Extracts the full `X509_ALGOR` from the PKCS8 structure (via `PKCS8_pkey_get0`).
+2. DER-encodes the algorithm OID and adds it as
+   `OSSL_SKEY_PARAM_ALGORITHM_OID`.
+3. DER-encodes the algorithm parameters (if present) and adds them as
+   `OSSL_SKEY_PARAM_ALGORITHM_PARAMS`.
+4. Merges with `extra_params` (lkid, fname from caller).
+5. Calls `EVP_SKEY_import()` with the combined parameter set.
+
+Caller changes in p12_kiss.c
+-----------------------------
+
+In the `NID_secretBag` case in `parse_bag()`, the caller builds an
+`OSSL_PARAM` array with the friendly name and local key ID extracted
+from bag attributes, and passes it to `PKCS8_PRIV_KEY_INFO_get1_skey`
+via `extra_params`:
+
+```c
+case NID_secretBag:
+{
+    OSSL_PARAM extra[3];
+    int nparams = 0;
+    unsigned char *fname_utf8 = NULL;
+    int fname_utf8_len = 0;
+
+    if (fname) {
+        fname_utf8_len = ASN1_STRING_to_UTF8(&fname_utf8, fname);
+        if (fname_utf8_len >= 0) {
+            extra[nparams++] = OSSL_PARAM_construct_utf8_string(
+                OSSL_SKEY_PARAM_ALIAS,
+                (char *)fname_utf8, fname_utf8_len);
+        }
+    }
+    if (lkid) {
+        extra[nparams++] = OSSL_PARAM_construct_octet_string(
+            OSSL_SKEY_PARAM_LOCAL_KEYID,
+            lkid->data, lkid->length);
+    }
+    extra[nparams] = OSSL_PARAM_construct_end();
+
+    skey = PKCS8_PRIV_KEY_INFO_get1_skey(p8, ctx, propq, extra, 0);
+    OPENSSL_free(fname_utf8);
+    if (skey == NULL)
+        goto err;
+
+    /* push skey to stack ... */
+}
+```

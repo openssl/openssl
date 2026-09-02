@@ -10,6 +10,7 @@
 #include <stdio.h>
 #include "internal/cryptlib.h"
 #include <openssl/pkcs12.h>
+#include <openssl/core_names.h>
 #include "crypto/pkcs7/pk7_local.h"
 #include "p12_local.h"
 #include "crypto/x509.h" /* for ossl_x509_add_cert_new() */
@@ -399,12 +400,33 @@ static int parse_bag(PKCS12_SAFEBAG *bag, const char *pass, int passlen,
             return 1;
         {
             EVP_SKEY *skey;
+            OSSL_PARAM extra[3];
+            int nparams = 0;
+            unsigned char *fname_utf8 = NULL;
+            int fname_utf8_len = 0;
             PKCS8_PRIV_KEY_INFO *p8sb = PKCS12_decrypt_secretbag(bag, pass,
                 passlen, libctx, propq);
+
             if (p8sb == NULL)
                 return 0;
-            skey = PKCS8_PRIV_KEY_INFO_get1_skey(p8sb, libctx, propq);
+
+            if (fname) {
+                fname_utf8_len = ASN1_STRING_to_UTF8(&fname_utf8, fname);
+                if (fname_utf8_len >= 0)
+                    extra[nparams++] = OSSL_PARAM_construct_utf8_string(
+                        OSSL_SKEY_PARAM_ALIAS,
+                        (char *)fname_utf8, (size_t)fname_utf8_len);
+            }
+            if (lkid)
+                extra[nparams++] = OSSL_PARAM_construct_octet_string(
+                    OSSL_SKEY_PARAM_LOCAL_KEYID,
+                    lkid->data, (size_t)lkid->length);
+            extra[nparams] = OSSL_PARAM_construct_end();
+
+            skey = PKCS8_PRIV_KEY_INFO_get1_skey(p8sb, libctx, propq,
+                extra, 0);
             PKCS8_PRIV_KEY_INFO_free(p8sb);
+            OPENSSL_free(fname_utf8);
             if (skey == NULL) {
                 ERR_raise(ERR_LIB_PKCS12, PKCS12_R_PARSE_ERROR);
                 return 0;
