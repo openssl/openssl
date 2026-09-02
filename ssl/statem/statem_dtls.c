@@ -1525,6 +1525,8 @@ int dtls1_retransmit_message(SSL_CONNECTION *s, dtls_sent_msg *sent_msg)
     memcpy(s->init_buf->data, sent_msg->msg_buf,
         sent_msg->msg_info.msg_body_len + header_length);
     s->init_num = sent_msg->msg_info.msg_body_len + header_length;
+    /* Always retransmit from the start, not wherever init_off was left */
+    s->init_off = 0;
 
     memcpy(&s->d1->w_msg, &sent_msg->msg_info, sizeof(sent_msg->msg_info));
 
