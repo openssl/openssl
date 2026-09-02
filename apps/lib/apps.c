@@ -29,6 +29,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/http.h>
+#include <openssl/httperr.h>
 #include <openssl/pem.h>
 #include <openssl/store.h>
 #include <openssl/pkcs12.h>
@@ -447,6 +448,52 @@ CONF *app_load_config_modules(const char *configfile)
 #define IS_HTTP(uri) ((uri) != NULL && HAS_PREFIX(uri, OSSL_HTTP_PREFIX))
 #define IS_HTTPS(uri) ((uri) != NULL && HAS_PREFIX(uri, OSSL_HTTPS_PREFIX))
 
+/*
+ * Whether HTTP_R_MISSING_ASN1_ENCODING was raised since the last mark. It can
+ * sit anywhere among the errors of the transfer, and errors queued before the
+ * mark belong to something else.
+ */
+static int missing_asn1_encoding_since_mark(void)
+{
+    ERR_STATE *es = OSSL_ERR_STATE_new();
+    unsigned long err;
+    int n, found = 0;
+
+    if (es == NULL)
+        return 0;
+    /* scan a copy, leaving the original errors in place to be printed */
+    OSSL_ERR_STATE_save_to_mark(es);
+    OSSL_ERR_STATE_restore(es);
+    for (n = ERR_count_to_mark(); n > 0; n--) {
+        err = ERR_peek_last_error();
+        if (ERR_GET_LIB(err) == ERR_LIB_HTTP
+            && ERR_GET_REASON(err) == HTTP_R_MISSING_ASN1_ENCODING)
+            found = 1;
+        ERR_pop();
+    }
+    OSSL_ERR_STATE_restore(es);
+    OSSL_ERR_STATE_free(es);
+    return found;
+}
+
+/*
+ * Report why an HTTP download of an ASN.1 object failed, consuming the error
+ * mark set before the download. A non-DER response, typically a PEM file
+ * served at the URI, is easy to miss in the raw error queue, so state it
+ * plainly.
+ */
+static void print_http_load_error(const char *desc, const char *uri)
+{
+    int not_der = missing_asn1_encoding_since_mark();
+
+    ERR_clear_last_mark();
+    ERR_print_errors(bio_err);
+    BIO_printf(bio_err, "Unable to load %s from %s\n", desc, uri);
+    if (not_der)
+        BIO_printf(bio_err,
+            "The HTTP response was not a DER-encoded ASN.1 SEQUENCE\n");
+}
+
 X509 *load_cert_pass(const char *uri, int format, int maybe_stdin,
     const char *pass, const char *desc)
 {
@@ -457,11 +504,12 @@ X509 *load_cert_pass(const char *uri, int format, int maybe_stdin,
     if (IS_HTTPS(uri)) {
         BIO_printf(bio_err, "Loading %s over HTTPS is unsupported\n", desc);
     } else if (IS_HTTP(uri)) {
+        ERR_set_mark();
         cert = X509_load_http(uri, NULL, NULL, 0 /* timeout */);
-        if (cert == NULL) {
-            ERR_print_errors(bio_err);
-            BIO_printf(bio_err, "Unable to load %s from %s\n", desc, uri);
-        }
+        if (cert == NULL)
+            print_http_load_error(desc, uri);
+        else
+            ERR_clear_last_mark();
     } else {
         (void)load_key_certs_crls(uri, format, maybe_stdin, pass, desc, 0,
             NULL, NULL, NULL, &cert, NULL, NULL, NULL, NULL);
@@ -479,11 +527,12 @@ X509_CRL *load_crl(const char *uri, int format, int maybe_stdin,
     if (IS_HTTPS(uri)) {
         BIO_printf(bio_err, "Loading %s over HTTPS is unsupported\n", desc);
     } else if (IS_HTTP(uri)) {
+        ERR_set_mark();
         crl = X509_CRL_load_http(uri, NULL, NULL, 0 /* timeout */);
-        if (crl == NULL) {
-            ERR_print_errors(bio_err);
-            BIO_printf(bio_err, "Unable to load %s from %s\n", desc, uri);
-        }
+        if (crl == NULL)
+            print_http_load_error(desc, uri);
+        else
+            ERR_clear_last_mark();
     } else {
         (void)load_key_certs_crls(uri, format, maybe_stdin, NULL, desc, 0,
             NULL, NULL, NULL, NULL, NULL, &crl, NULL, NULL);
@@ -2838,12 +2887,40 @@ static char *get_dp_url(DIST_POINT *dp)
     return NULL;
 }
 
+/* List the URIs contained in a CRLDP; returns the number of URIs printed */
+static int print_dp_urls(STACK_OF(DIST_POINT) *crldp)
+{
+    int i, j, gtype, n = 0;
+
+    for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
+        DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
+        GENERAL_NAMES *gens;
+
+        if (dp->distpoint == NULL || dp->distpoint->type != 0)
+            continue;
+        gens = dp->distpoint->name.fullname;
+        for (j = 0; j < sk_GENERAL_NAME_num(gens); j++) {
+            GENERAL_NAME *gen = sk_GENERAL_NAME_value(gens, j);
+            ASN1_STRING *uri = GENERAL_NAME_get0_value(gen, &gtype);
+
+            if (gtype != GEN_URI)
+                continue;
+            BIO_puts(bio_err, "  ");
+            ASN1_STRING_print_ex(bio_err, uri,
+                ASN1_STRFLGS_ESC_CTRL | ASN1_STRFLGS_ESC_MSB);
+            BIO_puts(bio_err, "\n");
+            n++;
+        }
+    }
+    return n;
+}
+
 /*
  * Look through a CRLDP structure and attempt to find an http URL to
  * downloads a CRL from.
  */
 
-static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
+static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp, const char *desc)
 {
     int i;
     char *urlptr = NULL;
@@ -2853,11 +2930,18 @@ static X509_CRL *load_crl_crldp(STACK_OF(DIST_POINT) *crldp)
 
         urlptr = get_dp_url(dp);
         if (urlptr != NULL) {
-            X509_CRL *crl = load_crl(urlptr, FORMAT_UNDEF, 0, "CRL via CDP");
+            X509_CRL *crl = load_crl(urlptr, FORMAT_UNDEF, 0, desc);
 
             OPENSSL_free(urlptr);
             return crl;
         }
+    }
+    if (sk_DIST_POINT_num(crldp) > 0) {
+        BIO_printf(bio_err,
+            "No http:// URI among the distribution points to load the %s from\n",
+            desc);
+        if (print_dp_urls(crldp) == 0)
+            BIO_printf(bio_err, "  (the distribution points contain no URI)\n");
     }
     return NULL;
 }
@@ -2874,21 +2958,31 @@ static STACK_OF(X509_CRL) *crls_http_cb(const X509_STORE_CTX *ctx,
     STACK_OF(X509_CRL) *crls = NULL;
     X509_CRL *crl;
     STACK_OF(DIST_POINT) *crldp;
+    unsigned long flags;
 
     crls = sk_X509_CRL_new_null();
     if (!crls)
         return NULL;
     x = X509_STORE_CTX_get_current_cert(ctx);
     crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, NULL, NULL);
-    crl = load_crl_crldp(crldp);
+    if (crldp == NULL)
+        print_name(bio_err,
+            "Cannot download CRL: no distribution point in cert with subject=",
+            X509_get_subject_name(x));
+    crl = load_crl_crldp(crldp, "CRL via CDP");
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
 
     if (crl == NULL || !sk_X509_CRL_push(crls, crl))
         goto error;
 
+    /* The verifier ignores delta CRLs unless -use_deltas is given */
+    flags = X509_VERIFY_PARAM_get_flags(X509_STORE_CTX_get0_param(ctx));
+    if ((flags & X509_V_FLAG_USE_DELTAS) == 0)
+        return crls;
+
     /* Try to download delta CRL */
     crldp = X509_get_ext_d2i(x, NID_freshest_crl, NULL, NULL);
-    crl = load_crl_crldp(crldp);
+    crl = load_crl_crldp(crldp, "delta CRL via CDP");
     sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
 
     if (crl != NULL && !sk_X509_CRL_push(crls, crl))
