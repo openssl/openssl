@@ -6362,6 +6362,7 @@ static int test_evp_aead_tag_reject(int idx)
     EVP_CIPHER_CTX *ctx_ct = NULL;
     EVP_CIPHER_CTX *ctx_aad = NULL;
     EVP_CIPHER_CTX *ctx_ct_aad = NULL;
+    EVP_CIPHER_CTX *ctx_c_ct = NULL;
     unsigned char key[EVP_MAX_KEY_LENGTH];
     unsigned char iv[EVP_MAX_IV_LENGTH];
     unsigned char aad[] = "aad";
@@ -6422,11 +6423,24 @@ static int test_evp_aead_tag_reject(int idx)
         goto err;
     }
 
+    /* ciphertext only, EVP_Cipher() interface */
+    ERR_clear_error();
+    if (!TEST_ptr(ctx_c_ct = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_DecryptInit_ex2(ctx_c_ct, info->ciph, key, iv, params))
+        || !TEST_int_ge(EVP_Cipher(ctx_c_ct, out, ct, sizeof(ct)), 0)
+        || !TEST_int_lt(EVP_Cipher(ctx_c_ct, out, NULL, 0), 0)
+        || !TEST_err_r(ERR_LIB_PROV, PROV_R_BAD_DECRYPT)) {
+        TEST_info("test_evp_aead_tag_reject %s: ciphertext variant (EVP_Cipher)",
+            info->name);
+        goto err;
+    }
+
     testresult = 1;
 err:
     EVP_CIPHER_CTX_free(ctx_ct);
     EVP_CIPHER_CTX_free(ctx_aad);
     EVP_CIPHER_CTX_free(ctx_ct_aad);
+    EVP_CIPHER_CTX_free(ctx_c_ct);
     return testresult;
 }
 
