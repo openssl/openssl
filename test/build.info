@@ -765,6 +765,11 @@ IF[{- !$disabled{tests} -}]
   INCLUDE[bio_enc_test]=../include ../apps/include
   DEPEND[bio_enc_test]=../libcrypto libtestutil.a
 
+  PROGRAMS{noinst}=bio_ssl_test
+  SOURCE[bio_ssl_test]=bio_ssl_test.c
+  INCLUDE[bio_ssl_test]=../include ../apps/include
+  DEPEND[bio_ssl_test]=../libcrypto ../libssl libtestutil.a
+
   SOURCE[pkey_meth_kdf_test]=pkey_meth_kdf_test.c
   INCLUDE[pkey_meth_kdf_test]=../include ../apps/include
   DEPEND[pkey_meth_kdf_test]=../libcrypto libtestutil.a
