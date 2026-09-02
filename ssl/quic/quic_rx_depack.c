@@ -325,7 +325,9 @@ static int depack_do_frame_crypto(PACKET *pkt, QUIC_CHANNEL *ch,
         ossl_quic_channel_raise_protocol_error(ch,
             OSSL_QUIC_ERR_INTERNAL_ERROR,
             OSSL_QUIC_FRAME_TYPE_CRYPTO,
-            "internal error (rstream queue)");
+            ossl_quic_rstream_at_frame_limit(rstream)
+                ? "too many buffered crypto frames"
+                : "internal error (rstream queue)");
         return 0;
     }
 
@@ -625,7 +627,9 @@ static int depack_do_frame_stream(PACKET *pkt, QUIC_CHANNEL *ch,
         ossl_quic_channel_raise_protocol_error(ch,
             OSSL_QUIC_ERR_INTERNAL_ERROR,
             frame_type,
-            "internal error (rstream queue)");
+            ossl_quic_rstream_at_frame_limit(stream->rstream)
+                ? "too many buffered stream frames"
+                : "internal error (rstream queue)");
         return 0;
     }
 

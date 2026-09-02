@@ -55,6 +55,11 @@ void ossl_quic_rstream_free(QUIC_RSTREAM *qrs)
     OPENSSL_free(qrs);
 }
 
+int ossl_quic_rstream_at_frame_limit(const QUIC_RSTREAM *qrs)
+{
+    return qrs->fl.max_frames != 0 && qrs->fl.num_frames >= qrs->fl.max_frames;
+}
+
 int ossl_quic_rstream_queue_data(QUIC_RSTREAM *qrs, OSSL_QRX_PKT *pkt,
     uint64_t offset,
     const unsigned char *data, uint64_t data_len,
