@@ -630,7 +630,12 @@ static int addrinfo_wrap(int family, int socktype,
            all right. */
         BIO_ADDR *addr = BIO_ADDR_new();
         if (addr != NULL) {
-            BIO_ADDR_rawmake(addr, family, where, wherelen, port);
+            if (!BIO_ADDR_rawmake(addr, family, where, wherelen, port)) {
+                BIO_ADDR_free(addr);
+                BIO_ADDRINFO_free(*bai);
+                *bai = NULL;
+                return 0;
+            }
             (*bai)->bai_addr = BIO_ADDR_sockaddr_noconst(addr);
         }
     }
