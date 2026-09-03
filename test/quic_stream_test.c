@@ -1079,7 +1079,7 @@ err:
 
 /*
  * use 64kB as datagram size to force QUIC stack
- * to rach overhead treshold for all packets used
+ * to rach overhead threshold for all packets used
  * by test. So all data will be moved to stream buffers
  */
 #define MOVE_TRESHOLD 65535 * 2
