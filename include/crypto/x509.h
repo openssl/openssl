@@ -178,7 +178,6 @@ struct x509_st {
     X509_CINF cert_info;
     X509_ALGOR sig_alg;
     ASN1_BIT_STRING signature;
-    X509_SIG_INFO siginf;
     CRYPTO_REF_COUNT references;
     CRYPTO_EX_DATA ex_data;
     /* These contain copies of various extension values */
@@ -318,7 +317,6 @@ int ossl_a2i_ipadd(unsigned char *ipout, const char *ipasc);
 int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
 int ossl_x509v3_cache_extensions(const X509 *x);
-int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
 
 /**
  * @brief Compute the internal-use fingerprint of a DER-encodable object.

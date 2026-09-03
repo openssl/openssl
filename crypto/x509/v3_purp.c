@@ -519,7 +519,6 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
  * Cache info on various X.509v3 extensions and further derived information,
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
  * x->fingerprint is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
- * X509_SIG_INFO_VALID is set in x->flags if x->siginf was filled successfully.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  *
  * This is usually called by side-effect on objects, and forces us to keep
@@ -548,7 +547,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     STACK_OF(GENERAL_NAME) *tmp_altname;
     NAME_CONSTRAINTS *tmp_nc;
     STACK_OF(DIST_POINT) *tmp_crldp = NULL;
-    X509_SIG_INFO tmp_siginf;
 
 #ifdef tsan_ld_acq
     /* Fast lock-free check, see end of the function for details. */
@@ -751,9 +749,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
 
     scan_ext_flags(const_x, &tmp_ex_flags);
 
-    /* Set x->siginf, ignoring errors due to unsupported algos */
-    (void)ossl_x509_init_sig_info(const_x, &tmp_siginf);
-
     tmp_ex_flags |= EXFLAG_SET; /* Indicate that cert has been processed */
     ERR_pop_to_mark();
 
@@ -790,7 +785,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
     ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
 #endif
-    ((X509 *)const_x)->siginf = tmp_siginf;
 
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
