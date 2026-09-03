@@ -198,7 +198,7 @@ static struct stream_chunk_t *new_schunk(SFRAME_SET *fs, OSSL_QRX_PKT *pkt,
 
     rsize = r->end - r->start;
     assert(rsize <= pkt->datagram_len);
-    overhead = pkt->datagram_len - rsize;
+    overhead = UINT64_TO_SIZE_T(pkt->datagram_len - rsize);
     rsqp_add_overhead(fs->rsqp, overhead);
 
     if (keep_schunk_data_on_packet(fs, pkt, r) == 1) {
@@ -263,7 +263,8 @@ static void destroy_schunk(SFRAME_SET *fs, struct stream_chunk_t *sc)
                 OPENSSL_FUNC, (void *)sc, SCHUNK_OVERHEAD(sc->sc_pkt, sc),
                 fs->rsqp->rsqp_pkt_overhead_sz,
                 fs->rsqp->rsqp_pkt_overhead_sz - SCHUNK_OVERHEAD(sc->sc_pkt, sc));
-        rsqp_sub_overhead(fs->rsqp, SCHUNK_OVERHEAD(sc->sc_pkt, sc));
+        rsqp_sub_overhead(fs->rsqp,
+            UINT64_TO_SIZE_T(SCHUNK_OVERHEAD(sc->sc_pkt, sc)));
         ossl_qrx_pkt_release(sc->sc_pkt);
         break;
     case ST_TYPE_HEAP:
