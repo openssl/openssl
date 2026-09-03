@@ -2359,6 +2359,18 @@ static int ch_rx(QUIC_CHANNEL *ch, int channel_only, int *notify_other_threads)
         handled_any = 1;
     }
 
+    /*
+     * RFC 9000 s. 8.1
+     * Prior to address validation we may send up to three times as many bytes
+     * as we have received, counting all payload bytes of received datagrams,
+     * including bytes from packets which were discarded or could not be
+     * processed. The QRX counts the payload bytes of every datagram routed to
+     * this channel; drain the counter and convert it to unvalidated credit.
+     * This is a no-op once the peer address has been validated.
+     */
+    ossl_quic_tx_packetiser_add_unvalidated_credit(
+        ch->txp, (size_t)ossl_qrx_get_bytes_received(ch->qrx, /*clear=*/1));
+
     ch_rx_check_forged_pkt_limit(ch);
 
     if (handled_any && notify_other_threads != NULL)

@@ -1838,6 +1838,16 @@ static void port_default_packet_handler(QUIC_URXE *e, void *arg,
         goto undesirable;
 
     /*
+     * RFC 9000 s. 8.1
+     * The datagram carrying the client's first Initial packet is never
+     * processed by the channel's QRX (only the validated packet itself is
+     * injected below), so account its payload bytes towards the channel's
+     * anti-amplification credit here. This is a no-op if the peer address
+     * has already been validated via a token.
+     */
+    ossl_quic_tx_packetiser_add_unvalidated_credit(new_ch->txp, e->data_len);
+
+    /*
      * Generate a token for sending in a later NEW_TOKEN frame
      */
     if (gen_new_token == 1)
