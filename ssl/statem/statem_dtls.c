@@ -874,8 +874,10 @@ static int dtls1_process_out_of_seq_message(SSL_CONNECTION *s,
             goto err;
 
         if (dtls_msg_needs_ack(!s->server, msg_hdr->type)
-            && !add_record_to_ack_list(s))
+            && !add_record_to_ack_list(s)) {
+            pitem_free(item);
             goto err;
+        }
 
         item = pqueue_insert(&s->d1->rcvd_messages, item);
         /*
