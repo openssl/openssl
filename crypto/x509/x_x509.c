@@ -82,24 +82,14 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
             return 0;
         break;
 
-    case ASN1_OP_D2I_POST: {
-        int ok;
-
+    case ASN1_OP_D2I_POST:
         /*
-         * Cache the v3 extensions of the freshly decoded certificate. Invalid
-         * extensions set EXFLAG_INVALID but do not fail the parse; the mark
-         * keeps a successful parse from leaving errors on the queue, which
-         * verification re-raises as needed.  A failure to publish the cache,
-         * for example an allocation failure, does fail the parse.
+         * Invalid extensions set EXFLAG_INVALID and do not fail the parse;
+         * failing to build the cache does.
          */
-        ERR_set_mark();
-        ok = ossl_x509v3_cache_extensions(ret);
-        ERR_pop_to_mark();
-        if (!ok)
+        if (!ossl_x509_finalize(ret))
             return 0;
-        ret->ex_flags |= EXFLAG_SET; /* finalize: the parsed cert is immutable */
         break;
-    }
 
     case ASN1_OP_FREE_POST:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
@@ -179,17 +169,9 @@ int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq)
          * one embedded in a CMS or PKCS7 container and finalized during decode)
          * must be rebuilt under the new one.
          */
-        if (changed && (x->ex_flags & EXFLAG_SET) != 0) {
-            int ok;
-
-            ERR_set_mark();
-            ossl_x509_reset_ext_cache(x);
-            ok = ossl_x509v3_cache_extensions(x);
-            ERR_pop_to_mark();
-            if (!ok)
-                return 0;
-            x->ex_flags |= EXFLAG_SET;
-        }
+        if (changed && (x->ex_flags & EXFLAG_SET) != 0
+            && !ossl_x509_finalize(x))
+            return 0;
     }
     return 1;
 }

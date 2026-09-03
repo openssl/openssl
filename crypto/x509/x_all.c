@@ -195,6 +195,19 @@ void ossl_x509_reset_ext_cache(X509 *x)
     x->ex_nscert = 0;
 }
 
+int ossl_x509_finalize(X509 *x)
+{
+    ossl_x509_reset_ext_cache(x);
+    ERR_set_mark();
+    if (!ossl_x509v3_cache_extensions(x)) {
+        ERR_clear_last_mark();
+        return 0;
+    }
+    ERR_pop_to_mark();
+    x->ex_flags |= EXFLAG_SET;
+    return 1;
+}
+
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     const STACK_OF(X509_EXTENSION) *exts;
@@ -217,20 +230,12 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * which exist below are the same.
      */
     x->cert_info.enc.modified = 1;
+    ossl_x509_reset_ext_cache(x);
     ret = ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
         pkey, md, x->libctx, x->propq);
-    if (ret > 0) {
-        int ok;
-
-        ERR_set_mark();
-        ossl_x509_reset_ext_cache(x);
-        ok = ossl_x509v3_cache_extensions(x);
-        ERR_pop_to_mark();
-        if (!ok) /* the cache could not be published; report failure */
-            return 0;
-        x->ex_flags |= EXFLAG_SET; /* finalize the freshly signed cert */
-    }
+    if (ret > 0 && !ossl_x509_finalize(x))
+        return 0;
     return ret;
 }
 
@@ -249,20 +254,12 @@ int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
         && !X509_set_version(x, X509_VERSION_3))
         return 0;
     x->cert_info.enc.modified = 1;
+    ossl_x509_reset_ext_cache(x);
     ret = ASN1_item_sign_ctx(ASN1_ITEM_rptr(X509_CINF),
         &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, ctx);
-    if (ret > 0) {
-        int ok;
-
-        ERR_set_mark();
-        ossl_x509_reset_ext_cache(x);
-        ok = ossl_x509v3_cache_extensions(x);
-        ERR_pop_to_mark();
-        if (!ok) /* the cache could not be published; report failure */
-            return 0;
-        x->ex_flags |= EXFLAG_SET; /* finalize the freshly signed cert */
-    }
+    if (ret > 0 && !ossl_x509_finalize(x))
+        return 0;
     return ret;
 }
 

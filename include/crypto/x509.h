@@ -347,6 +347,13 @@ int ossl_x509v3_cache_extensions(const X509 *x);
  * invalidating any such pointer.
  */
 void ossl_x509_reset_ext_cache(X509 *x);
+
+/**
+ * @brief Rebuild the extension cache and finalize the certificate.
+ * @param x the certificate to finalize; the caller must exclusively own it
+ * @returns 1 on success, 0 if the cache could not be built
+ */
+int ossl_x509_finalize(X509 *x);
 /* True if the certificate is a proxy cert, whether derived or caller-asserted. */
 int ossl_x509_is_proxy(const X509 *x);
 /**

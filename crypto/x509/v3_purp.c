@@ -578,7 +578,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
      */
     tmp_policy_cache = ossl_policy_cache_new(const_x);
     if (tmp_policy_cache == NULL) {
-        ERR_pop_to_mark();
+        ERR_clear_last_mark(); /* keep the allocation error for the caller */
         return 0;
     }
     if (tmp_policy_cache->invalid)
