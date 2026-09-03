@@ -38,7 +38,7 @@ echo "   venv command:       $VENV_CMD"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
-cd $SRCTOP
+cd $BLDTOP
 
 # Create a python virtual env and activate
 rm -rf venv-cryptography
