@@ -138,7 +138,7 @@ void ossl_sha3_shake256_x4_avx512vl(
 #endif /* KECCAK1600_ASM && x86_64 && !OPENSSL_NO_ASM */
 
 /* Multi-buffer (x2) Keccak-f[1600] context and API */
-#if defined(__aarch64__) && defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM)
+#if defined(__aarch64__) && defined(__AARCH64EL__) && defined(KECCAK1600_ASM) && !defined(OPENSSL_NO_ASM)
 /*
  * Context for 2-way parallel SHAKE operations.
  * It only performs operations on a single interleaved
