@@ -30,6 +30,7 @@
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
+#include "crypto/sha.h"
 #include "x509_local.h"
 
 static void *RSA_new_thunk(void)
@@ -643,17 +644,27 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
     return EVP_Digest(key->data, key->length, md, len, type, NULL);
 }
 
+int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
+    unsigned char *hash, size_t hash_size)
+{
+    unsigned char *der = NULL;
+    int der_len;
+
+    if (!ossl_assert(hash_size >= SHA_DIGEST_LENGTH)) {
+        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+    der_len = ASN1_item_i2d((const ASN1_VALUE *)val, &der, it);
+    if (der_len < 0)
+        return 0;
+    ossl_sha1(der, (size_t)der_len, hash);
+    OPENSSL_free(der);
+    return 1;
+}
+
 int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
     unsigned int *len)
 {
-    if (EVP_MD_is_a(md, SN_sha1) && (cert->ex_flags & EXFLAG_SET) != 0
-        && (cert->ex_flags & EXFLAG_NO_FINGERPRINT) == 0) {
-        /* Asking for SHA1 and we already computed it. */
-        if (len != NULL)
-            *len = sizeof(cert->sha1_hash);
-        memcpy(data, cert->sha1_hash, sizeof(cert->sha1_hash));
-        return 1;
-    }
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
         data, len, cert->libctx, cert->propq);
 }
@@ -764,8 +775,8 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         && (data->flags & EXFLAG_NO_FINGERPRINT) == 0) {
         /* Asking for SHA1; always computed in CRL d2i. */
         if (len != NULL)
-            *len = sizeof(data->sha1_hash);
-        memcpy(md, data->sha1_hash, sizeof(data->sha1_hash));
+            *len = sizeof(data->fingerprint);
+        memcpy(md, data->fingerprint, sizeof(data->fingerprint));
         return 1;
     }
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
