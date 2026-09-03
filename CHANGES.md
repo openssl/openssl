@@ -231,6 +231,12 @@ OpenSSL 4.1
 
    *Bob Beck*
 
+ * A certificate that has not been signed is now encoded by `i2d_X509()` as
+   an unsigned certificate (RFC 9925), with `id-alg-unsigned` as the signature
+   algorithm and an empty signature, instead of failing to encode.
+
+   *Bob Beck*
+
  * Added -testmode option for `s_time` app.
 
    *Jakub Zelenka*

@@ -565,6 +565,12 @@ Represents an ANSI X9.42 DH parameters structure.
 
 Represents an ECDSA signature.
 
+=item B<X509>
+
+A certificate that has not been signed is encoded as an unsigned certificate
+as specified in RFC 9925, using B<id-alg-unsigned> as the signature algorithm
+and an empty signature.
+
 =item B<X509_ALGOR>
 
 Represents an B<AlgorithmIdentifier> structure as used in IETF RFC 6960 and

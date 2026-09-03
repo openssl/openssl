@@ -1728,6 +1728,55 @@ err:
     return ret;
 }
 
+/*
+ * A never-signed certificate encodes as an RFC 9925 unsigned certificate, and
+ * re-parsing it finalizes it, so an application-synthesized trust anchor can
+ * be used for verification without a signature.
+ */
+static int test_unsigned_cert_roundtrip(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *x = NULL, *parsed = NULL;
+    BASIC_CONSTRAINTS *bc = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    const ASN1_BIT_STRING *sig;
+    const X509_ALGOR *alg;
+    int len;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)2048))
+        || !TEST_ptr(x = cache_test_make_cert(key, "unsigned"))
+        || !TEST_ptr(bc = BASIC_CONSTRAINTS_new()))
+        goto err;
+    bc->ca = 0xff;
+    if (!TEST_true(X509_add1_ext_i2d(x, NID_basic_constraints, bc, 1,
+            X509V3_ADD_REPLACE))
+        || !TEST_int_gt(len = i2d_X509(x, &der), 0))
+        goto err;
+    p = der;
+    if (!TEST_ptr(parsed = d2i_X509(NULL, &p, len)))
+        goto err;
+
+    X509_get0_signature(&sig, &alg, parsed);
+    if (!TEST_int_eq(OBJ_obj2nid(alg->algorithm), NID_id_alg_unsigned)
+        || !TEST_ptr_null(alg->parameter)
+        || !TEST_size_t_eq(ASN1_STRING_get_length(sig), 0)
+        || !TEST_int_eq(X509_get_signature_nid(parsed), NID_id_alg_unsigned)
+        || !TEST_int_eq(X509_check_purpose(parsed, -1, 0), 1)
+        || !TEST_int_eq(X509_check_ca(parsed), 1))
+        goto err;
+
+    ret = 1;
+err:
+    OPENSSL_free(der);
+    BASIC_CONSTRAINTS_free(bc);
+    X509_free(parsed);
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -1750,6 +1799,7 @@ int setup_tests(void)
     ADD_TEST(test_invalid_policy_flag);
     ADD_TEST(test_cache_accessors_finalization);
     ADD_TEST(test_failed_sign_unfinalizes);
+    ADD_TEST(test_unsigned_cert_roundtrip);
 
     return 1;
 }

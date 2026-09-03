@@ -39,6 +39,23 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     switch (operation) {
 
+    case ASN1_OP_I2D_PRE:
+        /*
+         * A certificate that was never signed is encoded as an unsigned
+         * certificate (RFC 9925): id-alg-unsigned with no parameters in both
+         * signature algorithm fields and an empty signature.
+         */
+        if (OBJ_obj2nid(ret->sig_alg.algorithm) == NID_undef
+            && ret->signature.length == 0) {
+            if (!X509_ALGOR_set0(&ret->sig_alg, OBJ_nid2obj(NID_id_alg_unsigned),
+                    V_ASN1_UNDEF, NULL)
+                || !X509_ALGOR_set0(&ret->cert_info.signature,
+                    OBJ_nid2obj(NID_id_alg_unsigned), V_ASN1_UNDEF, NULL))
+                return 0;
+            ret->cert_info.enc.modified = 1;
+        }
+        break;
+
     case ASN1_OP_D2I_PRE:
         CRYPTO_free_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data);
         X509_CERT_AUX_free(ret->aux);
