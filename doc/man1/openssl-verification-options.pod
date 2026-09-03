@@ -302,10 +302,10 @@ See L<openssl-rehash(1)> for information on creating this type of directory.
 
 Do not use the default directory of trusted certificates.
 
-=item B<-CAstore> I<uri>
+=item B<-CAstore> I<filename>|I<uri>
 
-Use I<uri> as a store of trusted certificates.
-The URI may indicate a single certificate or a collection of them.
+Use I<filename> or I<uri> as a store of trusted certificates.
+May indicate a single certificate or a collection of them.
 When the URI references a file, only the PEM format is supported.
 With URIs in the C<file:> scheme, this is generally treated like B<-CApath> or
 B<-CAfile>, depending on whether the URI indicates a directory or a single file.

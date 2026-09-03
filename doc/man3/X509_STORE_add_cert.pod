@@ -102,16 +102,18 @@ query I<propq> are used when fetching algorithms from providers.
 X509_STORE_load_file() is similar to X509_STORE_load_file_ex() but
 uses NULL for the library context I<libctx> and property query I<propq>.
 
-X509_STORE_load_path() sets in B<X509_STORE> the given directory with
-certificate files in PEM format as source of trusted certificate(s).
-The certificate files in I<dir> are only looked up when required, e.g., when
-building the certificate chain or when verifying a peer certificate.
+X509_STORE_load_path() adds to B<X509_STORE> the given directory, which should
+contain certificate files in PEM format, as a source of trusted certificates.
+The certificate files in I<dir> are only looked up when required,
+typically on building a certificate chain when verifying a certificate.
 The certificates in the directory must be in hashed form, as
 documented in L<X509_LOOKUP_hash_dir(3)>.
 Use the L<openssl-rehash(1)> utility to create the necessary links.
 
-X509_STORE_load_store_ex() loads trusted certificate(s) into an B<X509_STORE>
-from a given URI. The library context I<libctx> and
+X509_STORE_load_store_ex() adds to the given B<X509_STORE> a URI or filename
+for a directory-like or file-like structure. As with X509_STORE_load_path(),
+the trusted certificates that may be found there will be loaded only on demand.
+The library context I<libctx> and
 property query I<propq> are used when fetching algorithms from providers.
 I<uri> must not be NULL. It must be a URI to a store, which may
 represent a single container or a whole catalogue of containers.
