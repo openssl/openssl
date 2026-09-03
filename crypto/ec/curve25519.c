@@ -5859,14 +5859,18 @@ int ossl_x25519(uint8_t out_shared_key[32], const uint8_t private_key[32],
     const uint8_t peer_public_value[32])
 {
     static const uint8_t kZeros[32] = { 0 };
+    uint32_t is_zero;
 
     CONSTTIME_SECRET(private_key, 32);
     x25519_scalar_mult(out_shared_key, private_key, peer_public_value);
     CONSTTIME_DECLASSIFY(private_key, 32);
-    CONSTTIME_DECLASSIFY(out_shared_key, 32);
 
     /* The all-zero output results when the input is a point of small order. */
-    return CRYPTO_memcmp(kZeros, out_shared_key, 32) != 0;
+    is_zero = constant_time_is_zero(
+        (unsigned int)CRYPTO_memcmp(kZeros, out_shared_key, 32));
+    CONSTTIME_DECLASSIFY(out_shared_key, 32);
+
+    return constant_time_declassify_u32(is_zero) == 0;
 }
 
 /*
