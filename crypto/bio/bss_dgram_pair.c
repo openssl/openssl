@@ -460,11 +460,14 @@ static int dgram_pair_ctrl_set_pcap_file(BIO *bio, void *ptr)
         return 0;
 
     if (filename != NULL) {
-        b1->tcpdump_f = fopen(filename, "wb");
-        if (b1->tcpdump_f != NULL) {
-            b1->owner = 1;
-            b2->tcpdump_f = b1->tcpdump_f;
-            ret = fwrite(&pcap_f_header, sizeof(pcap_f_header), 1, b1->tcpdump_f);
+        if (b1->tcpdump_f == NULL) {
+            b1->tcpdump_f = fopen(filename, "wb");
+            if (b1->tcpdump_f != NULL) {
+                b1->owner = 1;
+                b2->tcpdump_f = b1->tcpdump_f;
+                ret = fwrite(&pcap_f_header, sizeof(pcap_f_header), 1,
+                    b1->tcpdump_f);
+            }
         }
     }
 #endif

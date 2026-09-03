@@ -3209,6 +3209,8 @@ static int test_accept_stream(void)
         SSL_ACCEPT_STREAM_UNI | SSL_ACCEPT_STREAM_BIDI
     };
 
+    BIO_dgram_pair_set0_pcap_file(SSL_get_rbio(clientssl), "/tmp/test_accept_stream.pcap");
+
     if (!TEST_ptr(sctx = create_server_ctx())
         || !TEST_ptr(cctx = create_client_ctx())
         || !create_quic_ssl_objects(sctx, cctx, &qlistener, &clientssl))
