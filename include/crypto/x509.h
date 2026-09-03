@@ -119,8 +119,8 @@ struct X509_crl_st {
     ASN1_INTEGER *crl_number;
     ASN1_INTEGER *base_crl_number;
     STACK_OF(GENERAL_NAMES) *issuers;
-    /* hash of CRL */
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    /* internal-use fingerprint for X509_CRL_match(), see ossl_x509_internal_fingerprint() */
+    unsigned char fingerprint[SHA_DIGEST_LENGTH];
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
@@ -198,7 +198,8 @@ struct x509_st {
     STACK_OF(IPAddressFamily) *rfc3779_addr;
     struct ASIdentifiers_st *rfc3779_asid;
 #endif
-    unsigned char sha1_hash[SHA_DIGEST_LENGTH];
+    /* internal-use fingerprint for X509_cmp(), see ossl_x509_internal_fingerprint() */
+    unsigned char fingerprint[SHA_DIGEST_LENGTH];
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
@@ -318,6 +319,29 @@ int ossl_x509_set1_time(int *modified, ASN1_TIME **ptm, const ASN1_TIME *tm);
 int ossl_x509_print_ex_brief(BIO *bio, const X509 *cert, unsigned long neg_cflags);
 int ossl_x509v3_cache_extensions(const X509 *x);
 int ossl_x509_init_sig_info(const X509 *x, X509_SIG_INFO *info);
+
+/**
+ * @brief Compute the internal-use fingerprint of a DER-encodable object.
+ *
+ * The fingerprint is cached in X509 / X509_CRL fingerprint and used only for
+ * internal identity comparison (X509_cmp(), X509_CRL_match()); it is never
+ * returned to callers, so the algorithm is an implementation detail
+ * (currently SHA-1). It uses the built-in implementation directly rather
+ * than fetching one, so the result depends on neither the library context
+ * nor the property query string of the object and stays valid if the object
+ * is moved to another library context. It fails only if the object cannot be
+ * DER encoded, for instance a certificate still under construction, or on
+ * an allocation failure in the encoder.
+ *
+ * @param it the ASN1_ITEM describing @p val
+ * @param val the object to encode and hash
+ * @param hash output buffer for the fingerprint
+ * @param hash_size size in bytes of @p hash, must be at least
+ *                  SHA_DIGEST_LENGTH
+ * @returns 1 on success, 0 on failure
+ */
+int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
+    unsigned char *hash, size_t hash_size);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
