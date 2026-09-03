@@ -534,23 +534,27 @@ __owur static int parse_expected_key_type(int *ptype, const char *value)
      */
     if (strcmp("RSA", value) == 0) {
         nid = OBJ_ln2nid("rsaEncryption");
-    } else if (strcmp("RSA-PSS", value) == 0) {
+    } else if (OPENSSL_strcasecmp("RSA-PSS", value) == 0) {
         nid = OBJ_ln2nid("rsassaPss");
-    } else if (strcmp("Ed448", value) == 0) {
+    } else if (OPENSSL_strcasecmp("Ed448", value) == 0) {
         nid = OBJ_sn2nid("ED448");
-    } else if (strcmp("Ed25519", value) == 0) {
+    } else if (OPENSSL_strcasecmp("Ed25519", value) == 0) {
         nid = OBJ_sn2nid("ED25519");
-    } else if (strcmp("EC", value) == 0) {
+    } else if (OPENSSL_strcasecmp("EC", value) == 0) {
         nid = OBJ_sn2nid("id-ecPublicKey");
-    } else if (strcmp("curveSM2", value) == 0) {
+    } else if (OPENSSL_strcasecmp("curveSM2", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_curveSM2;
-    } else if (strcmp("X25519MLKEM768", value) == 0) {
+    } else if (OPENSSL_strcasecmp("MLKEM512X25519", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_MLKEM512X25519;
+    } else if (OPENSSL_strcasecmp("X25519MLKEM768", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_X25519MLKEM768;
-    } else if (strcmp("SecP256r1MLKEM768", value) == 0) {
+    } else if (OPENSSL_strcasecmp("SecP256r1MLKEM512", value) == 0) {
+        nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP256r1MLKEM512;
+    } else if (OPENSSL_strcasecmp("SecP256r1MLKEM768", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP256r1MLKEM768;
-    } else if (strcmp("SecP384r1MLKEM1024", value) == 0) {
+    } else if (OPENSSL_strcasecmp("SecP384r1MLKEM1024", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_SecP384r1MLKEM1024;
-    } else if (strcmp("curveSM2MLKEM768", value) == 0) {
+    } else if (OPENSSL_strcasecmp("curveSM2MLKEM768", value) == 0) {
         nid = TLSEXT_nid_unknown | OSSL_TLS_GROUP_ID_curveSM2MLKEM768;
     } else {
         nid = OBJ_ln2nid(value);
