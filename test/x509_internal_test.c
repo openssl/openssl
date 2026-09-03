@@ -1691,6 +1691,43 @@ err:
     return ret;
 }
 
+/*
+ * A failed X509_sign() must leave the certificate unfinalized, not finalized
+ * with the cache from before the attempt.  A 512-bit RSA key cannot sign a
+ * SHA-512 digest with PKCS#1 v1.5 padding, so the signature step fails after
+ * the signature algorithm fields have already been rewritten.
+ */
+static int test_failed_sign_unfinalizes(void)
+{
+    int ret = 0;
+    EVP_PKEY *key = NULL;
+    X509 *x = NULL;
+
+    if (!TEST_ptr(key = EVP_PKEY_Q_keygen(NULL, NULL, "RSA", (size_t)512))
+        || !TEST_ptr(x = cache_test_make_cert(key, "failed sign"))
+        || !TEST_int_gt(X509_sign(x, key, EVP_sha256()), 0)
+        || !TEST_int_eq(X509_check_purpose(x, -1, 0), 1))
+        goto err;
+
+    if (!TEST_int_le(X509_sign(x, key, EVP_sha512()), 0))
+        goto err;
+    ERR_clear_error();
+    if (!TEST_int_eq(X509_check_purpose(x, -1, 0), -1)
+        || !expect_unfinalized_error())
+        goto err;
+
+    /* A successful sign finalizes it again. */
+    if (!TEST_int_gt(X509_sign(x, key, EVP_sha256()), 0)
+        || !TEST_int_eq(X509_check_purpose(x, -1, 0), 1))
+        goto err;
+
+    ret = 1;
+err:
+    X509_free(x);
+    EVP_PKEY_free(key);
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_standard_exts);
@@ -1712,6 +1749,7 @@ int setup_tests(void)
     ADD_TEST(test_invalid_ext_raises);
     ADD_TEST(test_invalid_policy_flag);
     ADD_TEST(test_cache_accessors_finalization);
+    ADD_TEST(test_failed_sign_unfinalizes);
 
     return 1;
 }
