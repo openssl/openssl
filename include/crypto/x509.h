@@ -19,6 +19,19 @@
 #include "crypto/types.h"
 
 #include <crypto/asn1.h>
+#include <crypto/siphash.h>
+
+/*
+ * Size in bytes of the internal X509 / X509_CRL fingerprint, see
+ * ossl_x509_internal_fingerprint(). The fingerprint only short-circuits
+ * X509_cmp() and X509_CRL_match(), which compare the encodings on a match,
+ * so a collision costs one extra memcmp. With 64 bits a collision among
+ * n objects has probability about n^2 / 2^65: one in 10^12 for 10,000
+ * certificates, and even odds only at around 2^32 of them. The SipHash key
+ * is fixed, so an attacker can craft certificates that collide, but gains
+ * only that memcmp per colliding pair on certificates they had to supply.
+ */
+#define OSSL_X509_FINGERPRINT_SIZE SIPHASH_MIN_DIGEST_SIZE
 
 /* Internal X509 structures and functions: not for application use */
 
@@ -119,8 +132,12 @@ struct X509_crl_st {
     ASN1_INTEGER *crl_number;
     ASN1_INTEGER *base_crl_number;
     STACK_OF(GENERAL_NAMES) *issuers;
-    /* internal-use fingerprint for X509_CRL_match(), see ossl_x509_internal_fingerprint() */
-    unsigned char fingerprint[SHA_DIGEST_LENGTH];
+    /*
+     * Internal-use fingerprint for X509_CRL_match(), see
+     * ossl_x509_internal_fingerprint(). Not cryptographically secure and
+     * not collision free: a match is confirmed by comparing the CRLs.
+     */
+    unsigned char fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     /* alternative method to handle this CRL */
     const X509_CRL_METHOD *meth;
     void *meth_data;
@@ -197,8 +214,12 @@ struct x509_st {
     STACK_OF(IPAddressFamily) *rfc3779_addr;
     struct ASIdentifiers_st *rfc3779_asid;
 #endif
-    /* internal-use fingerprint for X509_cmp(), see ossl_x509_internal_fingerprint() */
-    unsigned char fingerprint[SHA_DIGEST_LENGTH];
+    /*
+     * Internal-use fingerprint for X509_cmp(), see
+     * ossl_x509_internal_fingerprint(). Not cryptographically secure and
+     * not collision free: a match is confirmed by comparing the certificates.
+     */
+    unsigned char fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     X509_CERT_AUX *aux;
     CRYPTO_RWLOCK *lock;
     volatile int ex_cached;
@@ -324,22 +345,23 @@ int ossl_x509v3_cache_extensions(const X509 *x);
  * The fingerprint is cached in X509 / X509_CRL fingerprint and used only for
  * internal identity comparison (X509_cmp(), X509_CRL_match()); it is never
  * returned to callers, so the algorithm is an implementation detail
- * (currently SHA-1). It uses the built-in implementation directly rather
- * than fetching one, so the result depends on neither the library context
- * nor the property query string of the object and stays valid if the object
- * is moved to another library context. It fails only if the object cannot be
+ * (currently SipHash-2-4 with a fixed key and 64-bit output; a collision
+ * only costs the callers a fall through to their encoding comparison).
+ * Callers hash the whole signed object (X509, X509_CRL). No algorithm
+ * is fetched, so the result depends on neither the library context nor the
+ * property query string of the object and stays valid if the object is
+ * moved to another library context. It fails only if the object cannot be
  * DER encoded, for instance a certificate still under construction, or on
  * an allocation failure in the encoder.
  *
  * @param it the ASN1_ITEM describing @p val
  * @param val the object to encode and hash
- * @param hash output buffer for the fingerprint
- * @param hash_size size in bytes of @p hash, must be at least
- *                  SHA_DIGEST_LENGTH
+ * @param hash output buffer for the fingerprint, OSSL_X509_FINGERPRINT_SIZE
+ *             bytes
  * @returns 1 on success, 0 on failure
  */
 int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
-    unsigned char *hash, size_t hash_size);
+    unsigned char *hash);
 
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,

@@ -247,7 +247,7 @@ static int crl_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
 
     case ASN1_OP_D2I_POST:
         if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509_CRL), crl,
-                crl->fingerprint, sizeof(crl->fingerprint)))
+                crl->fingerprint))
             crl->flags |= EXFLAG_NO_FINGERPRINT;
         crl->idp = X509_CRL_get_ext_d2i(crl, NID_issuing_distribution_point, &i, NULL);
         if (crl->idp == NULL && i != -1) {
