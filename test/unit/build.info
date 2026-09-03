@@ -5,6 +5,12 @@ IF[{- $config{target} =~ /^(?:linux|BSD)/ -}]
   DEPEND[crypto/bio/test_bio_addr]=../../libcrypto.a
   WRAP[crypto/bio/test_bio_addr]=BIO_sock_init getnameinfo freeaddrinfo
 
+  PROGRAMS{noinst}=crypto/bio/test_bf_buff
+  SOURCE[crypto/bio/test_bf_buff]=crypto/bio/test_bf_buff.c
+  INCLUDE[crypto/bio/test_bf_buff]=../../include ../../crypto/bio
+  DEPEND[crypto/bio/test_bf_buff]=../../libcrypto.a
+  WRAP[crypto/bio/test_bf_buff]=BIO_ADDR_new BIO_ADDR_copy
+
   PROGRAMS{noinst}=crypto/bio/test_bio_sock
   SOURCE[crypto/bio/test_bio_sock]=crypto/bio/test_bio_sock.c
   INCLUDE[crypto/bio/test_bio_sock]=../../include ../../crypto/bio
