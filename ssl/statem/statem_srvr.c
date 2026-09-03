@@ -1670,9 +1670,7 @@ CON_FUNC_RETURN dtls_construct_hello_verify_request(SSL_CONNECTION *s,
     int cb_ret = 0;
 
 #if !defined(OPENSSL_NO_DTLS)
-    DTLS_LISTENER *dl = (s->d1 != NULL && s->d1->listener != NULL)
-        ? (DTLS_LISTENER *)s->d1->listener
-        : NULL;
+    DTLS_LISTENER *dl = (DTLS_LISTENER *)s->d1->listener;
 
     if (dl != NULL && dl->require_hvr_cookie && sctx->app_gen_cookie_cb == NULL) {
         cb_ret = ossl_dtls_listener_gen_cookie_cb(ussl, s->d1->cookie, &cookie_leni);
