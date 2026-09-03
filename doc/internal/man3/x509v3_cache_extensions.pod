@@ -23,8 +23,6 @@ and stores the result in x->fingerprint;
 on failure (the certificate cannot be DER encoded, for instance because it is
 still under construction, or memory allocation failed) it sets
 B<EXFLAG_NO_FINGERPRINT> in x->flags instead.
-It sets B<X509_SIG_INFO_VALID> in x->flags if x->siginf was filled successfully,
-which may not be possible if a referenced algorithm is unknown or not available.
 Many OpenSSL functions that use an X509 object call this function implicitly.
 
 =head1 RETURN VALUES
