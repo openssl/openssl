@@ -770,15 +770,6 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    if (EVP_MD_is_a(type, SN_sha1)
-        && (data->flags & EXFLAG_SET) != 0
-        && (data->flags & EXFLAG_NO_FINGERPRINT) == 0) {
-        /* Asking for SHA1; always computed in CRL d2i. */
-        if (len != NULL)
-            *len = sizeof(data->fingerprint);
-        memcpy(md, data->fingerprint, sizeof(data->fingerprint));
-        return 1;
-    }
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_CRL), type, (char *)data,
         md, len, data->libctx, data->propq);
 }
