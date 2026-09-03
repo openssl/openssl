@@ -314,7 +314,7 @@ static int ch_init(QUIC_CHANNEL *ch)
 
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
         /* no quality control for crypto stream. */
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, NULL);
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, ch->rsqp);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
