@@ -14,7 +14,7 @@
 
 # 100 years should be enough for now
 if [ -z "$DAYS" ]; then
-    DAYS=36525
+    DAYS=36524 # there are 24 leap years per 100 years
 fi
 
 if [ -z "$OPENSSL_SIGALG" ]; then

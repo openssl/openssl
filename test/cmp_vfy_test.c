@@ -34,6 +34,10 @@ typedef struct test_fixture {
     OSSL_CMP_CTX *cmp_ctx;
     OSSL_CMP_MSG *msg;
     X509 *cert;
+    /*
+     * With execute_validate_msg_test(), this is the expected validated cert or NULL.
+     * With execute_validate_cert_path_test(), this is the target cert to be validated.
+     */
     ossl_cmp_allow_unprotected_cb_t allow_unprotected_cb;
     int additional_arg;
 } CMP_VFY_TEST_FIXTURE;
@@ -48,7 +52,7 @@ static void tear_down(CMP_VFY_TEST_FIXTURE *fixture)
     OPENSSL_free(fixture);
 }
 
-static time_t test_time_valid = 0, test_time_after_expiration = 0;
+static time_t test_time_valid = 0, test_time_after_expiration = 0; /* for Insta certs */
 
 static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
 {
@@ -68,6 +72,7 @@ static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
         X509_STORE_free(ts);
         return NULL;
     }
+    /* by default, set validation time relevant for Insta certs: */
     X509_VERIFY_PARAM_set_time(X509_STORE_get0_param(ts), test_time_valid);
     X509_STORE_set_verify_cb(ts, X509_STORE_CTX_print_verify_cb);
     return fixture;
@@ -75,11 +80,9 @@ static CMP_VFY_TEST_FIXTURE *set_up(const char *const test_case_name)
 
 static X509 *srvcert = NULL;
 static X509 *clcert = NULL;
-/* chain */
-static X509 *endentity1 = NULL, *endentity2 = NULL,
-            *intermediate = NULL, *root = NULL;
-/* INSTA chain */
-static X509 *insta_cert = NULL, *instaca_cert = NULL;
+static X509 *endentity2 = NULL, *intermediate = NULL, *root = NULL; /* 3-level chain */
+static X509 *endentity1 = NULL; /* 2-level chain together with same root as before */
+static X509 *insta_cert = NULL, *instaca_cert = NULL; /* 2-level Insta chain */
 
 static unsigned char rand_data[OSSL_CMP_TRANSACTIONID_LENGTH];
 static OSSL_CMP_MSG *ir_unprotected, *ir_rmprotection, *error_protected;
@@ -132,7 +135,7 @@ static int test_verify_popo_bad(void)
 }
 #endif
 
-/* indirectly checks also OSSL_CMP_validate_msg() */
+/* indirectly checks also OSSL_CMP_validate_msg(), uses only Insta or self-signed EE certs */
 static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
     int res = TEST_int_eq(fixture->expected,
@@ -141,17 +144,6 @@ static int execute_validate_msg_test(CMP_VFY_TEST_FIXTURE *fixture)
     X509 *validated = OSSL_CMP_CTX_get0_validatedSrvCert(fixture->cmp_ctx);
 
     return res && (!fixture->expected || TEST_ptr_eq(validated, fixture->cert));
-}
-
-static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
-{
-    X509_STORE *ts = OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx);
-    int res = TEST_int_eq(fixture->expected,
-        OSSL_CMP_validate_cert_path(fixture->cmp_ctx,
-            ts, fixture->cert));
-
-    OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
-    return res;
 }
 
 static int test_validate_msg_mac_alg_protection(int miss, int wrong)
@@ -219,6 +211,8 @@ static int add_untrusted(OSSL_CMP_CTX *ctx, X509 *cert)
     return X509_add_cert(OSSL_CMP_CTX_get0_untrusted(ctx), cert,
         X509_ADD_FLAG_UP_REF);
 }
+
+/* Message validation tests using self-signed certs for signature-based protection */
 
 static int test_validate_msg_signature_partial_chain(int expired)
 {
@@ -299,6 +293,33 @@ static int test_validate_msg_signature_sender_cert_srvcert(void)
     return test_validate_msg_signature_srvcert(0, 0, 0);
 }
 
+static int test_validate_msg_with_sender(const X509_NAME *name, int expected)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    fixture->cert = srvcert;
+    fixture->expected = expected;
+    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
+        || !TEST_true(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, name))
+        || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))) {
+        tear_down(fixture);
+        fixture = NULL;
+    }
+    EXECUTE_TEST(execute_validate_msg_test, tear_down);
+    return result;
+}
+
+static int test_validate_msg_signature_expected_sender(void)
+{
+    return test_validate_msg_with_sender(X509_get_subject_name(srvcert), 1);
+}
+
+static int test_validate_msg_signature_unexpected_sender(void)
+{
+    return test_validate_msg_with_sender(X509_get_subject_name(root), 0);
+}
+
+/* Message validation tests using Insta or other certs for signature-based protection */
+
 static int test_validate_msg_signature_sender_cert_untrusted(void)
 {
     SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
@@ -358,31 +379,6 @@ static int test_validate_msg_signature_sender_cert_absent(void)
 }
 #endif
 
-static int test_validate_with_sender(const X509_NAME *name, int expected)
-{
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    fixture->cert = srvcert;
-    fixture->expected = expected;
-    if (!TEST_ptr(fixture->msg = load_pkimsg(ir_protected_f, libctx))
-        || !TEST_true(OSSL_CMP_CTX_set1_expected_sender(fixture->cmp_ctx, name))
-        || !TEST_true(OSSL_CMP_CTX_set1_srvCert(fixture->cmp_ctx, srvcert))) {
-        tear_down(fixture);
-        fixture = NULL;
-    }
-    EXECUTE_TEST(execute_validate_msg_test, tear_down);
-    return result;
-}
-
-static int test_validate_msg_signature_expected_sender(void)
-{
-    return test_validate_with_sender(X509_get_subject_name(srvcert), 1);
-}
-
-static int test_validate_msg_signature_unexpected_sender(void)
-{
-    return test_validate_with_sender(X509_get_subject_name(root), 0);
-}
-
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_unprotected_request(void)
 {
@@ -396,48 +392,6 @@ static int test_validate_msg_unprotected_request(void)
     return result;
 }
 #endif
-
-static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int expired)
-{
-    (*fixture)->cert = endentity2;
-    (*fixture)->expected = wrong == NULL && !expired;
-    if (expired) {
-        X509_STORE *ts = OSSL_CMP_CTX_get0_trusted((*fixture)->cmp_ctx);
-        X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
-
-        X509_VERIFY_PARAM_set_time(vpm, test_time_after_expiration);
-    }
-    if (!add_trusted((*fixture)->cmp_ctx, wrong == NULL ? root : wrong)
-        || !add_untrusted((*fixture)->cmp_ctx, endentity1)
-        || !add_untrusted((*fixture)->cmp_ctx, intermediate)) {
-        tear_down((*fixture));
-        (*fixture) = NULL;
-    }
-}
-
-static int test_validate_cert_path_ok(void)
-{
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_path(&fixture, NULL, 0);
-    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
-    return result;
-}
-
-static int test_validate_cert_path_wrong_anchor(void)
-{
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_path(&fixture, srvcert /* wrong/non-root cert */, 0);
-    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
-    return result;
-}
-
-static int test_validate_cert_path_expired(void)
-{
-    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
-    setup_path(&fixture, NULL, 1);
-    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
-    return result;
-}
 
 static int execute_msg_check_test(CMP_VFY_TEST_FIXTURE *fixture)
 {
@@ -595,7 +549,8 @@ static int test_msg_check_recipient_nonce_error(void)
     return result;
 }
 
-/* Regression test for CVE-2026-63073 */
+/* Regression test for CVE-2026-63073, uses self-signed cert for signature-based protection */
+
 static int execute_msg_check_update_malicious_sender(CMP_VFY_TEST_FIXTURE *fixture)
 {
     const char *data = NULL;
@@ -645,6 +600,72 @@ static int test_msg_check_update_malicious_sender(void)
     return result;
 }
 
+/*
+ * The functions below use the normal OpenSSL test certs from test/certs/,
+ * forming a 2-level and mostly 3-level chains,
+ * all of which are kept valid (for tests using the current time).
+ */
+
+static void setup_path(CMP_VFY_TEST_FIXTURE **fixture, X509 *wrong, int not_yet_valid)
+{
+    X509_STORE *ts = OSSL_CMP_CTX_get0_trusted((*fixture)->cmp_ctx);
+    X509_VERIFY_PARAM *vpm = X509_STORE_get0_param(ts);
+
+    X509_VERIFY_PARAM_set_time(vpm, not_yet_valid ? 0 /* January 1st, 1970 */
+                                                  : time(NULL) /* override default validation time (set for Insta certs) by current time */);
+    (*fixture)->cert = endentity2;
+    (*fixture)->expected = wrong == NULL && !not_yet_valid;
+    if (!add_trusted((*fixture)->cmp_ctx, wrong == NULL ? root : wrong)
+        || !add_untrusted((*fixture)->cmp_ctx, endentity1)
+        || !add_untrusted((*fixture)->cmp_ctx, intermediate)) {
+        tear_down((*fixture));
+        (*fixture) = NULL;
+    }
+}
+
+static int execute_validate_cert_path_test(CMP_VFY_TEST_FIXTURE *fixture)
+{
+    X509_STORE *ts = OSSL_CMP_CTX_get0_trusted(fixture->cmp_ctx);
+    int res = TEST_int_eq(fixture->expected,
+        OSSL_CMP_validate_cert_path(fixture->cmp_ctx, ts, fixture->cert));
+
+    OSSL_CMP_CTX_print_errors(fixture->cmp_ctx);
+    return res;
+}
+
+static int test_validate_cert_path_2_level_ok(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_path(&fixture, NULL, 0);
+    fixture->cert = endentity1;
+    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
+    return result;
+}
+
+static int test_validate_cert_path_ok(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_path(&fixture, NULL, 0);
+    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
+    return result;
+}
+
+static int test_validate_cert_path_wrong_anchor(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_path(&fixture, srvcert /* wrong/non-root cert */, 0);
+    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
+    return result;
+}
+
+static int test_validate_cert_path_not_yet_valid(void)
+{
+    SETUP_TEST_FIXTURE(CMP_VFY_TEST_FIXTURE, set_up);
+    setup_path(&fixture, NULL, 1);
+    EXECUTE_TEST(execute_validate_cert_path_test, tear_down);
+    return result;
+}
+
 void cleanup_tests(void)
 {
     X509_free(srvcert);
@@ -683,8 +704,8 @@ int setup_tests(void)
     ts.tm_year = 2018 - 1900; /* 2018 */
     ts.tm_mon = 1; /* February */
     ts.tm_mday = 18; /* 18th */
-    test_time_valid = mktime(&ts); /* February 18th 2018 */
-    ts.tm_year += 10; /* February 18th 2028 */
+    test_time_valid = mktime(&ts); /* February 18th 2018, within validity of insta_cert */
+    ts.tm_year += 10; /* February 18th 2028, past validity of instaca_cert */
     test_time_after_expiration = mktime(&ts);
 
     if (!test_skip_common_options()) {
@@ -715,7 +736,7 @@ int setup_tests(void)
     if (!test_arg_libctx(&libctx, &default_null_provider, &provider, 15, USAGE))
         return 0;
 
-    /* Load certificates for cert chain */
+    /* Load certificates for 2-level and mixed 3-level chains */
     if (!TEST_ptr(endentity1 = load_cert_pem(endentity1_f, libctx))
         || !TEST_ptr(endentity2 = load_cert_pem(endentity2_f, libctx))
         || !TEST_ptr(root = load_cert_pem(root_f, NULL))
@@ -737,11 +758,13 @@ int setup_tests(void)
         || !TEST_ptr(error_protected = load_pkimsg(error_protected_f, libctx)))
         goto err;
 
-    /* Message validation tests */
+    /* CRMF proof-of-possession self-signature tests */
     ADD_TEST(test_verify_popo);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_verify_popo_bad);
 #endif
+
+    /* Message validation tests using self-signed certs for signature-based protection */
     ADD_TEST(test_validate_msg_signature_trusted_ok);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_trusted_expired);
@@ -752,15 +775,16 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_signature_bad);
 #endif
     ADD_TEST(test_validate_msg_signature_sender_cert_srvcert);
+    ADD_TEST(test_validate_msg_signature_expected_sender);
+    ADD_TEST(test_validate_msg_signature_unexpected_sender);
+    ADD_TEST(test_msg_check_update_malicious_sender);
+
+    /* Message validation tests using Insta or other certs for signature-based protection */
     ADD_TEST(test_validate_msg_signature_sender_cert_untrusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_trusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_extracert);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_sender_cert_absent);
-#endif
-    ADD_TEST(test_validate_msg_signature_expected_sender);
-    ADD_TEST(test_validate_msg_signature_unexpected_sender);
-#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_unprotected_request);
 #endif
     ADD_TEST(test_validate_msg_mac_alg_protection_ok);
@@ -769,11 +793,6 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_mac_alg_protection_wrong);
     ADD_TEST(test_validate_msg_mac_alg_protection_bad);
 #endif
-
-    /* Cert path validation tests */
-    ADD_TEST(test_validate_cert_path_ok);
-    ADD_TEST(test_validate_cert_path_expired);
-    ADD_TEST(test_validate_cert_path_wrong_anchor);
 
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_msg_check_no_protection_no_cb);
@@ -790,7 +809,12 @@ int setup_tests(void)
     ADD_TEST(test_msg_check_recipient_nonce_bad);
 #endif
     ADD_TEST(test_msg_check_recipient_nonce_error);
-    ADD_TEST(test_msg_check_update_malicious_sender);
+
+    /* Cert path validation tests, using normal OpenSSL test certs */
+    ADD_TEST(test_validate_cert_path_2_level_ok);
+    ADD_TEST(test_validate_cert_path_ok);
+    ADD_TEST(test_validate_cert_path_not_yet_valid);
+    ADD_TEST(test_validate_cert_path_wrong_anchor);
 
     return 1;
 
