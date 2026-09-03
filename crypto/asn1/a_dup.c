@@ -82,10 +82,14 @@ void *ASN1_item_dup(const ASN1_ITEM *it, const void *x)
     p = b;
     ret = ASN1_item_d2i_ex(NULL, &p, i, it, libctx, propq);
     OPENSSL_free(b);
+    if (ret == NULL)
+        return NULL;
 
     if (asn1_cb != NULL
-        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, (void *)x))
+        && !asn1_cb(ASN1_OP_DUP_POST, &ret, it, (void *)x)) {
+        ASN1_item_free(ret, it);
         goto auxerr;
+    }
 
     return ret;
 
