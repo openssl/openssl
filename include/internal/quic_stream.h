@@ -320,7 +320,7 @@ void ossl_quic_sstream_set_cleanse(QUIC_SSTREAM *qss, int cleanse);
  * is read by application. `statm` is queried for current rtt.
  */
 QUIC_RSTREAM *ossl_quic_rstream_new(QUIC_RXFC *rxfc,
-    OSSL_STATM *statm);
+    OSSL_STATM *statm, QUIC_RSTREAM_QPARM *rsqp);
 
 /*
  * Frees a QUIC_RSTREAM and any associated storage.
@@ -411,6 +411,9 @@ size_t ossl_quic_rstream_get_chunk_count(QUIC_RSTREAM *qrs);
  * returns the number of stream ranges kept in rstream
  */
 size_t ossl_quic_rstream_get_range_count(QUIC_RSTREAM *qrs);
+
+QUIC_RSTREAM_QPARM *ossl_quic_rstream_qparm_new(void);
+void ossl_quic_rstream_qparm_destroy(QUIC_RSTREAM_QPARM *rsqp);
 #endif
 
 #endif

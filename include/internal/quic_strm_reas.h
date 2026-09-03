@@ -33,29 +33,13 @@ typedef struct sframe_set_t {
     /* Cleanse data on release? */
     int cleanse;
     int move_buffers;
-    /*
-     * current allocation overhead of stream buffers.
-     * By default the data delivered in stream chunk are not
-     * copied from packet buffer to stream buffer. On hand,
-     * this saves a one copy operation, on the other hand,
-     * it may cause QUIC stack to hold a lot more memory
-     * for stream data than actually required.
-     * Consider packet with more than one frame The packet
-     * is full (packet size == MTU of media). There is
-     * a stream frame with 1 byte of application data, then
-     * there are other stream frames or padding frames.
-     * The packet is kept in memory until the 1byte stream
-     * chunk is consumed by app. The allocation overhead
-     * in this case is MTU - 1 (packet size - length of
-     * stream chunk).
-     */
-    size_t pkt_buf_overhead_sz;
+    QUIC_RSTREAM_QPARM *rsqp;
 } SFRAME_SET;
 
 /*
  * Initializes the stream frame list fs.
  */
-void ossl_sframe_set_init(SFRAME_SET *fs);
+void ossl_sframe_set_init(SFRAME_SET *fs, QUIC_RSTREAM_QPARM *rsqp);
 
 /*
  * Destroys the stream frame list fs releasing any data

@@ -308,8 +308,13 @@ static int ch_init(QUIC_CHANNEL *ch)
             goto err;
     }
 
+    ch->rsqp = ossl_quic_rstream_qparm_new();
+    if (ch->rsqp == NULL)
+        goto err;
+
     for (pn_space = QUIC_PN_SPACE_INITIAL; pn_space < QUIC_PN_SPACE_NUM; ++pn_space) {
-        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL);
+        /* no quality control for crypto stream. */
+        ch->crypto_recv[pn_space] = ossl_quic_rstream_new(NULL, NULL, NULL);
         if (ch->crypto_recv[pn_space] == NULL)
             goto err;
     }
@@ -408,6 +413,9 @@ static void ch_cleanup(QUIC_CHANNEL *ch)
         ossl_quic_rstream_free(ch->crypto_recv[pn_space]);
         ch->crypto_recv[pn_space] = NULL;
     }
+
+    ossl_quic_rstream_qparm_destroy(ch->rsqp);
+    ch->rsqp = NULL;
 
     ossl_qrx_pkt_release(ch->qrx_pkt);
     ch->qrx_pkt = NULL;
@@ -3839,7 +3847,7 @@ static int ch_init_new_stream(QUIC_CHANNEL *ch, QUIC_STREAM *qs,
             goto err;
 
     if (can_recv)
-        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL)) == NULL)
+        if ((qs->rstream = ossl_quic_rstream_new(NULL, NULL, ch->rsqp)) == NULL)
             goto err;
 
     /* TXFC */
