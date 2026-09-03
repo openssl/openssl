@@ -393,8 +393,17 @@ int ossl_quic_rxfc_get_error(QUIC_RXFC *rxfc, int clear)
 {
     int r = rxfc->error_code;
 
-    if (clear)
+    if (r == OSSL_QUIC_ERR_NO_ERROR && rxfc->parent != NULL)
+        r = rxfc->parent->error_code;
+
+    /*
+     * The clear argument is used for testing only.
+     */
+    if (clear) {
         rxfc->error_code = 0;
+        if (rxfc->parent != NULL)
+            rxfc->parent->error_code = 0;
+    }
 
     return r;
 }
