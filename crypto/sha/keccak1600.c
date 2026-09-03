@@ -13,6 +13,12 @@
 
 #include "internal/nelem.h"
 
+#ifdef INCLUDE_C_KECCAK1600
+/* The fallback implementation for `SHA3_absorb` and `SHA3_squeeze`. */
+size_t SHA3_absorb_c(uint64_t A[5][5], const unsigned char *inp, size_t len,
+    size_t r);
+void SHA3_squeeze_c(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
+#endif
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r);
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r, int next);
@@ -1092,8 +1098,14 @@ static uint64_t BitDeinterleave(uint64_t Ai)
  * padding and intermediate sub-block buffering, byte- or bitwise, is
  * caller's responsibility.
  */
+#ifdef INCLUDE_C_KECCAK1600
+/* The fallback implementation for `SHA3_absorb` and `SHA3_squeeze`. */
+size_t SHA3_absorb_c(uint64_t A[5][5], const unsigned char *inp, size_t len,
+    size_t r)
+#else
 size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
     size_t r)
+#endif
 {
     uint64_t *A_flat = (uint64_t *)A;
     size_t i, w = r / 8;
@@ -1123,8 +1135,13 @@ size_t SHA3_absorb(uint64_t A[5][5], const unsigned char *inp, size_t len,
  * When only a single call to SHA3_squeeze is required, |len| can be any size
  * and |next| must be 0.
  */
+#ifdef INCLUDE_C_KECCAK1600
+void SHA3_squeeze_c(uint64_t A[5][5], unsigned char *out, size_t len, size_t r,
+    int next)
+#else
 void SHA3_squeeze(uint64_t A[5][5], unsigned char *out, size_t len, size_t r,
     int next)
+#endif
 {
     uint64_t *A_flat = (uint64_t *)A;
     size_t i, w = r / 8;
