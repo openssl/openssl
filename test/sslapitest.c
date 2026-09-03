@@ -3232,6 +3232,58 @@ end:
 }
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OPENSSL_NO_TLS1_2) */
 
+/*
+ * d2i_SSL_SESSION_ex() must re-parse the peer certificate into the given
+ * library context.  Under a property query no provider satisfies, computing
+ * its digest must fail, as it does for a certificate parsed directly under
+ * that query.
+ */
+static int test_session_peer_libctx(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *sess = NULL, *decoded = NULL;
+    OSSL_LIB_CTX *empty = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    int len, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(sess = SSL_get1_session(clientssl))
+        || !TEST_ptr(SSL_SESSION_get0_peer(sess))
+        || !TEST_int_gt(len = i2d_SSL_SESSION(sess, &der), 0)
+        || !TEST_ptr(empty = OSSL_LIB_CTX_new()))
+        goto end;
+
+    p = der;
+    if (!TEST_ptr(decoded = d2i_SSL_SESSION_ex(NULL, &p, len, empty,
+                      "provider=definitely_missing"))
+        || !TEST_ptr(SSL_SESSION_get0_peer(decoded))
+        || !TEST_false(X509_digest(SSL_SESSION_get0_peer(decoded), EVP_sha1(),
+            md, &md_len)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(decoded);
+    SSL_SESSION_free(sess);
+    OPENSSL_free(der);
+    OSSL_LIB_CTX_free(empty);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int test_session_with_only_int_cache(void)
 {
 #ifndef OSSL_NO_USABLE_TLS1_3
@@ -17027,6 +17079,7 @@ int setup_tests(void)
 #endif
 #endif
     ADD_TEST(test_session_with_only_int_cache);
+    ADD_TEST(test_session_peer_libctx);
     ADD_TEST(test_session_with_only_ext_cache);
     ADD_TEST(test_session_with_both_cache);
     ADD_TEST(test_remove_session_cb_not_under_lock);

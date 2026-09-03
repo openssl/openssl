@@ -335,8 +335,26 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     ssl_session_calculate_timeout(ret);
 
     X509_free(ret->peer);
-    ret->peer = as->peer;
-    as->peer = NULL;
+    ret->peer = NULL;
+    if (as->peer != NULL) {
+        /*
+         * The certificate was decoded, and so finalized, in the default
+         * library context; re-parse it into the one requested.
+         */
+        unsigned char *der = NULL;
+        const unsigned char *data;
+        int len = i2d_X509(as->peer, &der);
+
+        if (len < 0)
+            goto err;
+        data = der;
+        ret->peer = X509_new_ex(libctx, propq);
+        if (ret->peer == NULL || d2i_X509(&ret->peer, &data, len) == NULL) {
+            OPENSSL_free(der);
+            goto err;
+        }
+        OPENSSL_free(der);
+    }
 
     EVP_PKEY_free(ret->peer_rpk);
     ret->peer_rpk = NULL;
