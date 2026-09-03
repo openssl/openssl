@@ -8,11 +8,14 @@
  */
 
 #include <time.h>
+#include <openssl/asn1.h>
 #include <openssl/bio.h>
 #include <openssl/crypto.h>
 #include <openssl/err.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
+#include <openssl/x509v3.h>
 
 #include "testutil.h"
 
@@ -1898,6 +1901,85 @@ static int test_crl_indirect_no_chain(void)
     return test;
 }
 
+/* An in-memory delta returned by X509_CRL_diff() must not act as a full CRL. */
+static int test_crl_diff_in_memory(void)
+{
+    X509 *root = X509_from_strings(kRoot);
+    X509 *leaf = X509_from_strings(kLeaf);
+    EVP_PKEY *pkey = PKEY_from_strings(kRootPrivateKey);
+    X509_CRL *base = CRL_from_strings(kCrlDeltaValid);
+    X509_CRL *newer = NULL, *delta = NULL, *unsigned_delta = NULL;
+    X509_CRL *decoded = NULL;
+    X509_EXTENSION *ext = NULL;
+    ASN1_INTEGER *number = NULL;
+    ASN1_TIME *last_update = NULL;
+    int idx, test = 0;
+
+    if (!TEST_ptr(root) || !TEST_ptr(leaf) || !TEST_ptr(pkey)
+        || !TEST_ptr(base))
+        goto end;
+
+    /*
+     * Turn the existing delta fixture into a full CRL that revokes |leaf|.
+     * X509_CRL_diff() reads cached fields from its inputs, so duplicate after
+     * each mutation to run the normal post-decode initialization.
+     */
+    idx = X509_CRL_get_ext_by_NID(base, NID_delta_crl, -1);
+    if (!TEST_int_ge(idx, 0)
+        || !TEST_ptr(ext = X509_CRL_delete_ext(base, idx))
+        || !TEST_int_gt(X509_CRL_sign(base, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(decoded = X509_CRL_dup(base)))
+        goto end;
+    X509_EXTENSION_free(ext);
+    ext = NULL;
+    X509_CRL_free(base);
+    base = decoded;
+    decoded = NULL;
+
+    /* The newer full CRL still revokes |leaf|. */
+    if (!TEST_ptr(newer = X509_CRL_dup(base))
+        || !TEST_ptr(number = ASN1_INTEGER_new())
+        || !TEST_true(ASN1_INTEGER_set(number, 0x1002))
+        || !TEST_int_gt(X509_CRL_add1_ext_i2d(newer, NID_crl_number,
+                            number, 0, X509V3_ADD_REPLACE),
+            0)
+        || !TEST_ptr(last_update = ASN1_TIME_set(NULL, kVerify - 86400))
+        || !TEST_true(X509_CRL_set1_lastUpdate(newer, last_update))
+        || !TEST_int_gt(X509_CRL_sign(newer, pkey, EVP_sha256()), 0)
+        || !TEST_ptr(decoded = X509_CRL_dup(newer)))
+        goto end;
+    X509_CRL_free(newer);
+    newer = decoded;
+    decoded = NULL;
+
+    /* The delta omits |leaf| because it is already present in |base|. */
+    if (!TEST_ptr(delta = X509_CRL_diff(base, newer, pkey, EVP_sha256(), 0))
+        || !TEST_int_eq(verify(leaf, root, make_CRL_stack(base, delta),
+                            X509_V_FLAG_CRL_CHECK, kVerify),
+            X509_V_ERR_CERT_REVOKED))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_ptr(unsigned_delta = X509_CRL_diff(base, newer, NULL, NULL, 0))
+        || !TEST_ulong_eq(ERR_peek_error(), 0))
+        goto end;
+
+    test = 1;
+end:
+    ASN1_TIME_free(last_update);
+    ASN1_INTEGER_free(number);
+    X509_EXTENSION_free(ext);
+    X509_CRL_free(decoded);
+    X509_CRL_free(unsigned_delta);
+    X509_CRL_free(delta);
+    X509_CRL_free(newer);
+    X509_CRL_free(base);
+    EVP_PKEY_free(pkey);
+    X509_free(leaf);
+    X509_free(root);
+    return test;
+}
+
 static int test_crl_diff_mfail(void)
 {
     X509_CRL *base_crl = NULL, *newer_crl = NULL, *delta = NULL;
@@ -2032,6 +2114,7 @@ int setup_tests(void)
     ADD_TEST(test_crl_indirect_wrong_ta);
     ADD_TEST(test_crl_indirect_no_chain);
     ADD_ALL_TESTS(test_reuse_crl, 6);
+    ADD_TEST(test_crl_diff_in_memory);
     ADD_MFAIL_TEST(test_crl_diff_mfail);
     ADD_TEST(test_crl_sigalg_mismatch);
     return 1;
