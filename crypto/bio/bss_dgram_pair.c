@@ -501,7 +501,7 @@ static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1)
     if (b1->tcpdump_f != NULL || b2->tcpdump_f != NULL) {
         if (b1->owner && b1->tcpdump_f)
             fclose(b1->tcpdump_f);
-        if (b2->owner && b1->tcpdump_f)
+        if (b2->owner && b2->tcpdump_f)
             fclose(b2->tcpdump_f);
         b1->tcpdump_f = NULL;
         b2->tcpdump_f = NULL;
