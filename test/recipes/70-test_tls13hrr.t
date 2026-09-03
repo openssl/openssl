@@ -83,15 +83,26 @@ sub run_tests
     #Test 1: A client should fail if the server changes the ciphersuite between the
     #        HRR and the SH
     $proxy->clear();
+    # Use a large MTU for DTLS in these tests. With the default MTU of 1500,
+    # the IPv6/UDP overhead limits the usable datagram payload enough that
+    # the server's Certificate/CertificateVerify flight can spill into a
+    # second datagram. If a fatal alert from the client then arrives at the
+    # proxy before that second datagram, the proxy is left holding a partial
+    # fragment and dies with "Changed peer, but we still have fragment data".
+    # A large MTU keeps the whole flight in one datagram and avoids the race.
     if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
+            $proxy->serverflags("-curves ffdhe3072 -mtu 16384");
+            $proxy->clientflags("-groups ffdhe2048:ffdhe3072 -mtu 16384");
+        } else {
+            $proxy->serverflags("-curves ffdhe3072");
         }
     } else {
-        $proxy->serverflags("-curves P-256");
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-groups P-384:P-256");
+            $proxy->serverflags("-curves P-256 -mtu 16384");
+            $proxy->clientflags("-groups P-384:P-256 -mtu 16384");
+        } else {
+            $proxy->serverflags("-curves P-256");
         }
     }
     $testtype = CHANGE_HRR_CIPHERSUITE;
@@ -103,14 +114,18 @@ sub run_tests
     #        we end up selecting a different ciphersuite between HRR and the SH
     $proxy->clear();
     if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
+            $proxy->serverflags("-curves ffdhe3072 -mtu 16384");
+            $proxy->clientflags("-groups ffdhe2048:ffdhe3072 -mtu 16384");
+        } else {
+            $proxy->serverflags("-curves ffdhe3072");
         }
     } else {
-        $proxy->serverflags("-curves P-384");
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-groups P-256:P-384");
+            $proxy->serverflags("-curves P-384 -mtu 16384");
+            $proxy->clientflags("-groups P-256:P-384 -mtu 16384");
+        } else {
+            $proxy->serverflags("-curves P-384");
         }
     }
     $proxy->ciphersuitess("TLS_AES_128_GCM_SHA256:TLS_AES_256_GCM_SHA384");
@@ -123,14 +138,18 @@ sub run_tests
     $fatal_alert = 0;
     $proxy->clear();
     if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-groups ffdhe2048:ffdhe3072");
+            $proxy->serverflags("-curves ffdhe3072 -mtu 16384");
+            $proxy->clientflags("-groups ffdhe2048:ffdhe3072 -mtu 16384");
+        } else {
+            $proxy->serverflags("-curves ffdhe3072");
         }
     } else {
-        $proxy->serverflags("-curves P-384");
         if ($run_test_as_dtls == 1) {
-            $proxy->clientflags("-groups P-256:P-384");
+            $proxy->serverflags("-curves P-384 -mtu 16384");
+            $proxy->clientflags("-groups P-256:P-384 -mtu 16384");
+        } else {
+            $proxy->serverflags("-curves P-384");
         }
     }
     $testtype = DUPLICATE_HRR;
@@ -158,8 +177,13 @@ sub run_tests
                               || ($run_test_as_dtls == 1 && disabled("dtls1_2"));
 
         $proxy->clear();
-        $proxy->clientflags("-groups P-256:brainpoolP512r1:P-521");
-        $proxy->serverflags("-groups brainpoolP512r1:P-521");
+        if ($run_test_as_dtls == 1) {
+            $proxy->clientflags("-groups P-256:brainpoolP512r1:P-521 -mtu 16384");
+            $proxy->serverflags("-groups brainpoolP512r1:P-521 -mtu 16384");
+        } else {
+            $proxy->clientflags("-groups P-256:brainpoolP512r1:P-521");
+            $proxy->serverflags("-groups brainpoolP512r1:P-521");
+        }
         $testtype = INVALID_GROUP;
         $proxy->start();
         ok(TLSProxy::Message->success(), "Invalid group with HRR");
@@ -170,9 +194,19 @@ sub run_tests
     $fatal_alert = 0;
     $proxy->clear();
     if (disabled("ec")) {
-        $proxy->serverflags("-curves ffdhe3072");
+        if ($run_test_as_dtls == 1) {
+            $proxy->serverflags("-curves ffdhe3072 -mtu 16384");
+            $proxy->clientflags("-mtu 16384");
+        } else {
+            $proxy->serverflags("-curves ffdhe3072");
+        }
     } else {
-        $proxy->serverflags("-curves P-384");
+        if ($run_test_as_dtls == 1) {
+            $proxy->serverflags("-curves P-384 -mtu 16384");
+            $proxy->clientflags("-mtu 16384");
+        } else {
+            $proxy->serverflags("-curves P-384");
+        }
     }
     $testtype = NO_SUPPORTED_VERSIONS;
     $proxy->start();
