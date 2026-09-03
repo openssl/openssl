@@ -19,6 +19,9 @@ O_BINC=`pwd`/$BLDTOP/include
 O_SINC=`pwd`/$SRCTOP/include
 O_LIB=`pwd`/$BLDTOP
 
+: "${PYTHON_CMD=python3}"
+: "${VENV_CMD=${PYTHON_CMD} -m venv}"
+
 export PATH=$O_EXE:$PATH
 export LD_LIBRARY_PATH=$O_LIB:$LD_LIBRARY_PATH
 
@@ -30,6 +33,8 @@ echo "Testing OpenSSL using Python Cryptography:"
 echo "   CWD:                $PWD"
 echo "   SRCTOP:             $SRCTOP"
 echo "   BLDTOP:             $BLDTOP"
+echo "   Python command:     $PYTHON_CMD"
+echo "   venv command:       $VENV_CMD"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
 echo "------------------------------------------------------------------"
 
@@ -37,7 +42,7 @@ cd $SRCTOP
 
 # Create a python virtual env and activate
 rm -rf venv-cryptography
-python -m venv venv-cryptography
+${VENV_CMD} venv-cryptography
 . ./venv-cryptography/bin/activate
 # Upgrade pip to always have latest
 pip install -U pip
