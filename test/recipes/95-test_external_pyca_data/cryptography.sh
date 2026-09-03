@@ -21,6 +21,7 @@ O_LIB=`pwd`/$BLDTOP
 
 : "${PYTHON_CMD=python3}"
 : "${VENV_CMD=${PYTHON_CMD} -m venv}"
+: "${INSTALLTOP=$(pwd)/${BLDTOP}/venv-cryptography/.local}"
 
 export PATH=$O_EXE:$PATH
 export LD_LIBRARY_PATH=$O_LIB:$LD_LIBRARY_PATH
@@ -33,6 +34,7 @@ echo "Testing OpenSSL using Python Cryptography:"
 echo "   CWD:                $PWD"
 echo "   SRCTOP:             $SRCTOP"
 echo "   BLDTOP:             $BLDTOP"
+echo "   INSTALLTOP:         $INSTALLTOP"
 echo "   Python command:     $PYTHON_CMD"
 echo "   venv command:       $VENV_CMD"
 echo "   OpenSSL version:    $OPENSSL_VERSION"
@@ -40,9 +42,18 @@ echo "------------------------------------------------------------------"
 
 cd $BLDTOP
 
-# Create a python virtual env and activate
+# Create a python virtual env
 rm -rf venv-cryptography
 ${VENV_CMD} venv-cryptography
+
+# Construct "installed" header directory
+find "$O_SINC" "$O_BINC" -name '*.h' -printf '%p %P\n' \
+    | while read -r from to; do
+        mkdir -p "$(dirname "$INSTALLTOP/include/$to")"
+        ln -sf "$from" "$INSTALLTOP/include/$to"
+    done
+
+# Activate the python virtual env
 . ./venv-cryptography/bin/activate
 # Upgrade pip to always have latest
 pip install -U pip
@@ -52,8 +63,7 @@ cd pyca-cryptography
 echo "------------------------------------------------------------------"
 echo "Building cryptography and installing test requirements"
 echo "------------------------------------------------------------------"
-LDFLAGS="-L$O_LIB" CFLAGS="-I$O_BINC -I$O_SINC " pip install .[test]
-pip install -e vectors
+OPENSSL_LIB_DIR="$O_LIB" OPENSSL_INCLUDE_DIR="$INSTALLTOP/include/" pip install . --group test
 
 echo "------------------------------------------------------------------"
 echo "Print linked libraries"
