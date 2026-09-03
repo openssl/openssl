@@ -81,10 +81,16 @@ int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
     char *orig_propq = NULL;
     int ret = 0;
 
+    if (p12 == NULL) {
+        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_PKCS12_POINTER);
+        return 0;
+    }
+
     if (ctx == NULL) {
         ERR_raise(ERR_LIB_PKCS12, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+
     initial_ca = ctx->ca != NULL ? *ctx->ca : NULL;
     initial_ca_count = initial_ca == NULL ? 0 : sk_X509_num(initial_ca);
     initial_skeys = ctx->skeys != NULL ? *ctx->skeys : NULL;
@@ -96,13 +102,8 @@ int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
         *ctx->cert = NULL;
     ctx->ocerts = NULL;
 
-    if (ctx->pkey == NULL && ctx->cert != NULL)
+    if (ctx->pkey == NULL && (ctx->cert != NULL || ctx->ca != NULL))
         ctx->pkey = &tmp_pkey;
-
-    if (p12 == NULL) {
-        ERR_raise(ERR_LIB_PKCS12, PKCS12_R_INVALID_NULL_PKCS12_POINTER);
-        return 0;
-    }
 
     orig_libctx = ossl_pkcs7_ctx_get0_libctx(&p12->authsafes->ctx);
     orig_propq = p12->authsafes->ctx.propq;
@@ -155,15 +156,17 @@ int PKCS12_parse_ex(PKCS12 *p12, const char *pass,
 
     /* Split the certs in ocerts over *cert and *ca as far as requested */
     while ((x = sk_X509_shift(ctx->ocerts)) != NULL) {
-        if (ctx->pkey != NULL && *ctx->pkey != NULL
-            && ctx->cert != NULL && *ctx->cert == NULL) {
+        if (ctx->pkey != NULL && *ctx->pkey != NULL) {
             int match;
 
             ERR_set_mark();
             match = X509_check_private_key(x, *ctx->pkey);
             ERR_pop_to_mark();
             if (match) {
-                *ctx->cert = x;
+                if (ctx->cert != NULL && *ctx->cert == NULL)
+                    *ctx->cert = x;
+                else
+                    X509_free(x);
                 continue;
             }
         }

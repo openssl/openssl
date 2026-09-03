@@ -71,6 +71,12 @@ If B<ca> is configured and B<*ca> is NULL, a new STACK will be allocated.
 If B<ca> is configured and B<*ca> is a valid STACK,
 then additional certificates are appended in the given order to B<*ca>.
 
+When the PKCS#12 file contains a private key, the certificate matching that
+key is always excluded from the CA stack. If B<cert> is configured, the
+matching certificate is returned in B<*cert>; otherwise it is discarded.
+The private key is extracted internally for this purpose even when B<pkey>
+is not configured.
+
 The B<friendlyName> and B<localKeyID> attributes (if present) on each
 certificate will be stored in the B<alias> and B<keyid> attributes of the
 B<X509> structure.

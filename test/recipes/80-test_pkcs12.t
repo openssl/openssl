@@ -56,7 +56,7 @@ $ENV{OPENSSL_WIN32_UTF8}=1;
 
 my $no_fips = disabled('fips') || ($ENV{NO_FIPS} // 0);
 
-plan tests => 71 + ($no_fips ? 0 : 5);
+plan tests => 73 + ($no_fips ? 0 : 5);
 
 # Test different PKCS#12 formats
 ok(run(test(["pkcs12_format_test"])), "test pkcs12 formats");
@@ -84,6 +84,7 @@ my $outfile4 = "out4.p12";
 my $outfile5 = "out5.p12";
 my $outfile6 = "out6.p12";
 my $outfile7 = "out7.p12";
+my $outfile8 = "out8.p12";
 
 # Test the -chain option with -untrusted
 ok(run(app(["openssl", "pkcs12", "-export", "-chain",
@@ -175,6 +176,15 @@ ok(grep(/Trusted key usage (Oracle)/, @pkcs12info) == 0,
     close DATA;
     ok(scalar @match > 0 ? 0 : 1, "test_export_pkcs12_outerr6_empty");
 }
+
+# Export key + cert + distinct CA cert for combination tests
+ok(run(app(["openssl", "pkcs12", "-export",
+            "-inkey", srctop_file(@path, "ee-key.pem"),
+            "-in", srctop_file(@path, "ee-cert.pem"),
+            "-certfile", srctop_file(@path, "ca-cert.pem"),
+            "-passout", "pass:",
+            "-nomac", "-out", $outfile8])),
+   "test_export_pkcs12_key_cert_ca");
 
 # Test dumping a PKCS#12 file whose private key is stored in an unencrypted
 # keyBag (created with -keypbe NONE) rather than a shrouded keyBag.
@@ -395,7 +405,6 @@ SKIP: {
 ok(run(test(["pkcs12_api_test",
              "-in", $outfile4,
              "-pass", "v3-certs",
-             "-has-ca", 1,
              "-has-key", 1,
              "-has-cert", 1,
              ])), "Test pkcs12_parse()");
@@ -408,10 +417,17 @@ ok(run(test(["pkcs12_api_test",
 ok(run(test(["pkcs12_api_test",
              "-in", $outfile6,
              "-pass", "",
-             "-has-ca", 1,
              "-has-key", 1,
              "-has-cert", 1,
              ])), "Test pkcs12_parse()");
+
+ok(run(test(["pkcs12_api_test",
+             "-in", $outfile8,
+             "-pass", "",
+             "-has-key", 1,
+             "-has-cert", 1,
+             "-has-ca", 1,
+             ])), "Test pkcs12_parse() key+cert+ca combinations");
 
 # Test against CVE-2025-69421, octet parameter is expected, but
 # NULL is being received and dereferenced
