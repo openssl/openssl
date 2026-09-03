@@ -26,6 +26,7 @@ static char *too_long_iv_cms_in = NULL;
 static char *pwri_kek_oob_der_in = NULL;
 static char *pwri_kek_no_iv_in = NULL;
 static char *ec_recip_in = NULL;
+static char *authdata_in = NULL;
 
 /*
  * This is our bad cms data, it contains an AuthEnvelopedData field
@@ -948,7 +949,85 @@ end:
 }
 #endif
 
-OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip [ed448certfile ed448privkeyfile]\n")
+/*
+ * Decoding into a library context re-parses the certificates the message
+ * carries there, including those in the originatorInfo of AuthenticatedData.
+ * Under a property query no provider satisfies, computing the digest of such a
+ * certificate must fail, as it does for one parsed directly under that query.
+ */
+static int test_authdata_originator_libctx(void)
+{
+    BIO *bio = NULL;
+    CMS_ContentInfo *cms = NULL, *decoded = NULL;
+    CMS_OriginatorInfo *originator = NULL;
+    CMS_CertificateChoices *choice = NULL;
+    const CMS_CertificateChoices *found;
+    OSSL_LIB_CTX *libctx = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    int len, ret = 0;
+
+    if (!TEST_ptr(bio = BIO_new_file(authdata_in, "r"))
+        || !TEST_ptr(cms = PEM_read_bio_CMS(bio, NULL, NULL, NULL))
+        || !TEST_int_eq(OBJ_obj2nid(cms->contentType), NID_id_smime_ct_authData)
+        || !TEST_ptr_null(cms->d.authenticatedData->originatorInfo))
+        goto err;
+
+    /* There is no API to build an originatorInfo; do it by hand. */
+    if (!TEST_ptr(originator = OPENSSL_zalloc(sizeof(*originator)))
+        || !TEST_ptr(originator->certificates
+            = sk_CMS_CertificateChoices_new_null())
+        || !TEST_ptr(choice = (CMS_CertificateChoices *)ASN1_item_new(
+                         ASN1_ITEM_rptr(CMS_CertificateChoices))))
+        goto err;
+    choice->type = CMS_CERTCHOICE_CERT;
+    X509_free(choice->d.certificate);
+    choice->d.certificate = cert;
+    if (!TEST_true(X509_up_ref(cert))) {
+        choice->d.certificate = NULL;
+        goto err;
+    }
+    if (!TEST_true(sk_CMS_CertificateChoices_push(originator->certificates,
+            choice)))
+        goto err;
+    choice = NULL;
+    cms->d.authenticatedData->originatorInfo = originator;
+    originator = NULL;
+
+    if (!TEST_int_gt(len = i2d_CMS_ContentInfo(cms, &der), 0)
+        || !TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(decoded = CMS_ContentInfo_new_ex(libctx,
+                         "provider=definitely_missing")))
+        goto err;
+    p = der;
+    if (!TEST_ptr(d2i_CMS_ContentInfo(&decoded, &p, len))
+        || !TEST_ptr(decoded->d.authenticatedData->originatorInfo)
+        || !TEST_ptr(found = sk_CMS_CertificateChoices_value(
+                         decoded->d.authenticatedData->originatorInfo->certificates,
+                         0))
+        || !TEST_int_eq(found->type, CMS_CERTCHOICE_CERT)
+        || !TEST_false(X509_digest(found->d.certificate, EVP_sha1(), md,
+            &md_len)))
+        goto err;
+
+    ret = 1;
+err:
+    ASN1_item_free((ASN1_VALUE *)choice, ASN1_ITEM_rptr(CMS_CertificateChoices));
+    if (originator != NULL) {
+        sk_CMS_CertificateChoices_free(originator->certificates);
+        OPENSSL_free(originator);
+    }
+    OPENSSL_free(der);
+    CMS_ContentInfo_free(decoded);
+    CMS_ContentInfo_free(cms);
+    BIO_free(bio);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
+OPT_TEST_DECLARE_USAGE("certfile privkeyfile derfile tooLongIVpem pwriKekOobDer pwriKekNoIv ecrecip authdatapem [ed448certfile ed448privkeyfile]\n")
 
 int setup_tests(void)
 {
@@ -966,7 +1045,8 @@ int setup_tests(void)
         || !TEST_ptr(too_long_iv_cms_in = test_get_argument(3))
         || !TEST_ptr(pwri_kek_oob_der_in = test_get_argument(4))
         || !TEST_ptr(pwri_kek_no_iv_in = test_get_argument(5))
-        || !TEST_ptr(ec_recip_in = test_get_argument(6)))
+        || !TEST_ptr(ec_recip_in = test_get_argument(6))
+        || !TEST_ptr(authdata_in = test_get_argument(7)))
         return 0;
 
     if (!TEST_ptr(cert = load_cert_pem(certin, NULL))
@@ -978,9 +1058,9 @@ int setup_tests(void)
         return 0;
     }
 
-    if (test_get_argument_count() >= 9) {
-        ed448_certin = test_get_argument(7);
-        ed448_privkeyin = test_get_argument(8);
+    if (test_get_argument_count() >= 10) {
+        ed448_certin = test_get_argument(8);
+        ed448_privkeyin = test_get_argument(9);
 
         if (!TEST_ptr(ed448_cert = load_cert_pem(ed448_certin, NULL))
             || !TEST_ptr(ed448_privkey = load_pkey_pem(ed448_privkeyin, NULL))) {
@@ -1009,6 +1089,7 @@ int setup_tests(void)
     ADD_TEST(test_cms_aesgcm_iv_too_long);
     ADD_TEST(test_pwri_kek_unwrap_short_encrypted_key);
     ADD_TEST(test_pwri_kek_unwrap_no_iv_key);
+    ADD_TEST(test_authdata_originator_libctx);
     if (ed448_cert != NULL && ed448_privkey != NULL) {
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs);
         ADD_TEST(test_CMS_add1_signer_ed448_signed_attrs_md);

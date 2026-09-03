@@ -508,6 +508,11 @@ static STACK_OF(CMS_CertificateChoices)
             return NULL;
         return &cms->d.authEnvelopedData->originatorInfo->certificates;
 
+    case NID_id_smime_ct_authData:
+        if (cms->d.authenticatedData->originatorInfo == NULL)
+            return NULL;
+        return &cms->d.authenticatedData->originatorInfo->certificates;
+
     default:
         ERR_raise(ERR_LIB_CMS, CMS_R_UNSUPPORTED_CONTENT_TYPE);
         return NULL;

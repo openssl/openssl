@@ -623,6 +623,60 @@ err:
     return ret;
 }
 
+/*
+ * A SignedData whose content is itself a SignedData: the inner certificates
+ * must also be re-parsed into the library context.  Under a property query no
+ * provider satisfies, computing their digest must fail, as it does for a
+ * certificate parsed directly under that query.
+ */
+static int pkcs7_nested_libctx_decode_test(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    PKCS7 *inner = NULL, *outer = NULL, *decoded = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    int len, ret = 0;
+
+    if (!TEST_int_gt(len = signeddata_der(&der), 0))
+        goto err;
+    p = der;
+    if (!TEST_ptr(inner = d2i_PKCS7(NULL, &p, len))
+        || !TEST_ptr(outer = PKCS7_dup(inner)))
+        goto err;
+    PKCS7_free(outer->d.sign->contents);
+    outer->d.sign->contents = inner;
+    inner = NULL;
+    OPENSSL_free(der);
+    der = NULL;
+
+    if (!TEST_int_gt(len = i2d_PKCS7(outer, &der), 0)
+        || !TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(decoded = PKCS7_new_ex(libctx,
+                         "provider=definitely_missing")))
+        goto err;
+    p = der;
+    if (!TEST_ptr(d2i_PKCS7(&decoded, &p, len))
+        || !TEST_true(PKCS7_type_is_signed(decoded))
+        || !TEST_ptr(decoded->d.sign->contents)
+        || !TEST_true(PKCS7_type_is_signed(decoded->d.sign->contents))
+        || !TEST_int_gt(sk_X509_num(decoded->d.sign->contents->d.sign->cert), 0)
+        || !TEST_false(X509_digest(
+            sk_X509_value(decoded->d.sign->contents->d.sign->cert, 0),
+            EVP_sha1(), md, &md_len)))
+        goto err;
+
+    ret = 1;
+err:
+    PKCS7_free(decoded);
+    PKCS7_free(outer);
+    PKCS7_free(inner);
+    OPENSSL_free(der);
+    OSSL_LIB_CTX_free(libctx);
+    return ret;
+}
+
 /*-
  * An allocation failure while re-parsing those certificates must fail the
  * decode, rather than hand back a container holding an unfinalized one.
@@ -703,6 +757,7 @@ int setup_tests(void)
     if (smimecap_cert != NULL && smimecap_privkey != NULL) {
         ADD_TEST(test_pkcs7_smimecap);
         ADD_TEST(pkcs7_libctx_decode_test);
+        ADD_TEST(pkcs7_nested_libctx_decode_test);
         ADD_MFAIL_NO_CHECK_TEST(pkcs7_libctx_decode_mfail_test);
     }
     ADD_TEST(pkcs7_stream_non_data_test);

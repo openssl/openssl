@@ -110,6 +110,21 @@ static int cakeyupdann_transfer_libctx(OSSL_CMP_CAKEYUPDANNCONTENT *ckua,
         && ossl_x509_transfer_libctx(&ckua->newWithNew, libctx, propq);
 }
 
+static int msgs_transfer_libctx(OSSL_CMP_MSGS *msgs, OSSL_LIB_CTX *libctx,
+    const char *propq)
+{
+    int i;
+
+    for (i = 0; i < sk_OSSL_CMP_MSG_num(msgs); i++) {
+        OSSL_CMP_MSG *msg = sk_OSSL_CMP_MSG_value(msgs, i);
+
+        if (!ossl_cmp_msg_set0_libctx(msg, libctx, propq)
+            || !ossl_cmp_msg_resolve_libctx(msg))
+            return 0;
+    }
+    return 1;
+}
+
 static int itav_transfer_libctx(OSSL_CMP_ITAV *itav, OSSL_LIB_CTX *libctx,
     const char *propq)
 {
@@ -119,6 +134,9 @@ static int itav_transfer_libctx(OSSL_CMP_ITAV *itav, OSSL_LIB_CTX *libctx,
         return 1;
 
     switch (OBJ_obj2nid(itav->infoType)) {
+    case NID_id_it_origPKIMessage:
+        return msgs_transfer_libctx(itav->infoValue.origPKIMessage,
+            libctx, propq);
     case NID_id_it_caProtEncCert:
         return ossl_x509_transfer_libctx(&itav->infoValue.caProtEncCert,
             libctx, propq);
@@ -164,7 +182,9 @@ int ossl_cmp_msg_resolve_libctx(OSSL_CMP_MSG *msg)
     libctx = msg->libctx;
     propq = msg->propq;
 
-    if (!certs_transfer_libctx(msg->extraCerts, libctx, propq))
+    if (!certs_transfer_libctx(msg->extraCerts, libctx, propq)
+        || (msg->header != NULL
+            && !itavs_transfer_libctx(msg->header->generalInfo, libctx, propq)))
         return 0;
 
     if ((body = msg->body) == NULL)
@@ -196,14 +216,7 @@ int ossl_cmp_msg_resolve_libctx(OSSL_CMP_MSG *msg)
     case OSSL_CMP_PKIBODY_CANN:
         return ossl_x509_transfer_libctx(&body->value.cann, libctx, propq);
     case OSSL_CMP_PKIBODY_NESTED:
-        for (i = 0; i < sk_OSSL_CMP_MSG_num(body->value.nested); i++) {
-            OSSL_CMP_MSG *nested = sk_OSSL_CMP_MSG_value(body->value.nested, i);
-
-            if (!ossl_cmp_msg_set0_libctx(nested, libctx, propq)
-                || !ossl_cmp_msg_resolve_libctx(nested))
-                return 0;
-        }
-        return 1;
+        return msgs_transfer_libctx(body->value.nested, libctx, propq);
     case OSSL_CMP_PKIBODY_GENM:
     case OSSL_CMP_PKIBODY_GENP:
         return itavs_transfer_libctx(body->value.genm, libctx, propq);

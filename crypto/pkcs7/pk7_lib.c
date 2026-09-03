@@ -457,6 +457,7 @@ int ossl_pkcs7_resolve_libctx(PKCS7 *p7)
     STACK_OF(PKCS7_RECIP_INFO) *rinfos;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
     STACK_OF(X509) *certs;
+    PKCS7 *inner = NULL;
 
     if (ctx == NULL || p7->d.ptr == NULL)
         return 1;
@@ -487,6 +488,14 @@ int ossl_pkcs7_resolve_libctx(PKCS7 *p7)
         if (si != NULL)
             si->ctx = ctx;
     }
+
+    /* Signed and digested content may itself be a PKCS7 structure. */
+    if (PKCS7_type_is_signed(p7))
+        inner = p7->d.sign->contents;
+    else if (PKCS7_type_is_digest(p7))
+        inner = p7->d.digest->contents;
+    if (inner != NULL && !ossl_pkcs7_ctx_propagate(p7, inner))
+        ret = 0;
     return ret;
 }
 

@@ -375,6 +375,55 @@ err:
     return res;
 }
 
+/* As above, for a certificate carried in a generalInfo ITAV of the header. */
+static int test_msg_generalinfo_transfers_libctx(void)
+{
+    OSSL_LIB_CTX *empty = OSSL_LIB_CTX_new();
+    OSSL_CMP_MSG *msg = NULL, *decoded = NULL;
+    OSSL_CMP_ITAV *itav = NULL;
+    const OSSL_CMP_ITAV *found;
+    X509 *cert = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    int len, res = 0;
+
+    if (!TEST_ptr(empty)
+        || !TEST_ptr(msg = OSSL_CMP_MSG_read(ir_protected_2_extracerts, NULL,
+                         NULL))
+        || !TEST_int_gt(sk_X509_num(msg->extraCerts), 0)
+        || !TEST_ptr(itav = OSSL_CMP_ITAV_new_rootCaCert(
+                         sk_X509_value(msg->extraCerts, 0)))
+        || !TEST_true(OSSL_CMP_ITAV_push0_stack_item(&msg->header->generalInfo,
+            itav)))
+        goto err;
+    itav = NULL;
+
+    if (!TEST_int_gt(len = i2d_OSSL_CMP_MSG(msg, &der), 0)
+        || !TEST_ptr(decoded = OSSL_CMP_MSG_new(empty,
+                         "provider=definitely_missing")))
+        goto err;
+    p = der;
+    if (!TEST_ptr(d2i_OSSL_CMP_MSG(&decoded, &p, len))
+        || !TEST_int_gt(sk_OSSL_CMP_ITAV_num(decoded->header->generalInfo), 0)
+        || !TEST_ptr(found = sk_OSSL_CMP_ITAV_value(decoded->header->generalInfo,
+                         sk_OSSL_CMP_ITAV_num(decoded->header->generalInfo) - 1))
+        || !TEST_true(OSSL_CMP_ITAV_get0_rootCaCert(found, &cert))
+        || !TEST_ptr(cert)
+        || !TEST_false(X509_digest(cert, EVP_sha1(), md, &md_len)))
+        goto err;
+
+    res = 1;
+err:
+    OSSL_CMP_ITAV_free(itav);
+    OPENSSL_free(der);
+    OSSL_CMP_MSG_free(decoded);
+    OSSL_CMP_MSG_free(msg);
+    OSSL_LIB_CTX_free(empty);
+    return res;
+}
+
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
 static int test_validate_msg_signature_sender_cert_absent(void)
 {
@@ -787,6 +836,7 @@ int setup_tests(void)
     ADD_TEST(test_validate_msg_signature_sender_cert_trusted);
     ADD_TEST(test_validate_msg_signature_sender_cert_extracert);
     ADD_TEST(test_msg_read_transfers_libctx);
+    ADD_TEST(test_msg_generalinfo_transfers_libctx);
 #ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     ADD_TEST(test_validate_msg_signature_sender_cert_absent);
 #endif

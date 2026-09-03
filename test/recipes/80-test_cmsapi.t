@@ -27,5 +27,6 @@ ok(run(test(["cmsapitest", srctop_file("test", "certs", "servercert.pem"),
              srctop_file("test", "recipes", "80-test_cmsapi_data", "cms_pwri_kek_oob.der"),
              srctop_file("test", "recipes", "80-test_cmsapi_data", "cms_pwri_kek_NoIV.der"),
              srctop_file("test", "smime-certs", "smec1.pem"),
+             srctop_file("test", "recipes", "80-test_cms_data", "authenticated_attrs.pem"),
              @ed448_args])),
              "running cmsapitest");
