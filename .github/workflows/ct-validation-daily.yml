@@ -254,6 +254,7 @@ jobs:
           make TESTS="test_internal_ml_kem \
                       test_internal_ml_dsa \
                       test_crypto_memcmp \
-                      test_evp_ct" \
+                      test_evp_ct \
+                      test_ct_validation_helpers" \
                OSSL_VALGRIND_CT=yes \
                test
