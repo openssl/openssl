@@ -518,7 +518,8 @@ static void scan_ext_flags(const X509 *x509, uint32_t *flags)
 /*
  * Cache info on various X.509v3 extensions and further derived information,
  * e.g., if cert 'x' is self-issued, in x->ex_flags and other internal fields.
- * x->fingerprint is filled in, or else EXFLAG_NO_FINGERPRINT is set in x->flags.
+ * x->fingerprint is filled in, or else EXFLAG_NO_FINGERPRINT is set in
+ * x->ex_flags.
  * Set EXFLAG_INVALID and return 0 in case the certificate is invalid.
  *
  * This is usually called by side-effect on objects, and forces us to keep
@@ -536,7 +537,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     int i;
     int res;
     uint32_t tmp_ex_flags;
-    unsigned char tmp_fingerprint[SHA_DIGEST_LENGTH];
+    unsigned char tmp_fingerprint[OSSL_X509_FINGERPRINT_SIZE];
     long tmp_ex_pathlen;
     long tmp_ex_pcpathlen;
     uint32_t tmp_ex_kusage;
@@ -569,7 +570,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ERR_set_mark();
 
     if (!ossl_x509_internal_fingerprint(ASN1_ITEM_rptr(X509), const_x,
-            tmp_fingerprint, sizeof(tmp_fingerprint)))
+            tmp_fingerprint))
         tmp_ex_flags |= EXFLAG_NO_FINGERPRINT;
 
     /* V1 should mean no extensions ... */
@@ -763,7 +764,8 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->ex_pathlen = tmp_ex_pathlen;
     ((X509 *)const_x)->ex_pcpathlen = tmp_ex_pcpathlen;
     if (!(tmp_ex_flags & EXFLAG_NO_FINGERPRINT))
-        memcpy(((X509 *)const_x)->fingerprint, tmp_fingerprint, SHA_DIGEST_LENGTH);
+        memcpy(((X509 *)const_x)->fingerprint, tmp_fingerprint,
+            sizeof(tmp_fingerprint));
     if (tmp_ex_flags & EXFLAG_KUSAGE)
         ((X509 *)const_x)->ex_kusage = tmp_ex_kusage;
     ((X509 *)const_x)->ex_xkusage = tmp_ex_xkusage;
