@@ -7828,6 +7828,37 @@ end:
 #endif /* OSSL_NO_USABLE_TLS1_3 */
 #endif /* !defined(OSSL_NO_USABLE_TLS1_3) || !defined(OSSL_NO_USABLE_DTLS1_3) */
 
+/*
+ * Test that the group accessors report "no group" rather than crashing when
+ * they are called on a connection that has not performed a handshake yet.
+ */
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+static int test_group_before_handshake(void)
+{
+    SSL_CTX *cctx = NULL;
+    SSL *clientssl = NULL;
+    int testresult = 0;
+
+    if (!TEST_ptr(cctx = SSL_CTX_new_ex(libctx, NULL, TLS_client_method())))
+        goto end;
+
+    if (!TEST_ptr(clientssl = SSL_new(cctx)))
+        goto end;
+
+    if (!TEST_ptr_null(SSL_get0_group_name(clientssl)))
+        goto end;
+
+    if (!TEST_int_eq(SSL_get_negotiated_group(clientssl), NID_undef))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_free(clientssl);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+#endif
+
 static int clntaddoldcb = 0;
 static int clntparseoldcb = 0;
 static int srvaddoldcb = 0;
@@ -17012,6 +17043,9 @@ int setup_tests(void)
 #ifndef OSSL_NO_USABLE_TLS1_3
     ADD_TEST(test_ktls_moving_write_buffer);
 #endif
+#endif
+#if !defined(OPENSSL_NO_TLS1_2) || !defined(OSSL_NO_USABLE_TLS1_3)
+    ADD_TEST(test_group_before_handshake);
 #endif
     ADD_TEST(test_large_message_tls);
     ADD_TEST(test_large_message_tls_read_ahead);
