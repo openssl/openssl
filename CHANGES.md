@@ -30,9 +30,13 @@ OpenSSL Releases
  - [OpenSSL 0.9.x](#openssl-09x)
 
 OpenSSL 4.2
------------
 
 ### Changes between 4.1 and 4.2 [xx XXX xxxx]
+
+ * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
+   newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
+
+   *Viktor Dukhovni*
 
  * Added public API for `IPAddrBlocks` ([RFC 3779]), mirroring the existing
    `ASIdentifiers` API: `IPAddrBlocks_new()`, `IPAddrBlocks_free()`,
@@ -24222,3 +24226,4 @@ ndif
 [SP 800-208]: https://csrc.nist.gov/pubs/sp/800/208/final
 [TCG Credential Profiles specification Version 1.2, Section 3.2.7]: https://trustedcomputinggroup.org/wp-content/uploads/Credential_Profiles_V1.2_Level2_Revision8.pdf#page=35
 [tls-hybrid-sm2-mlkem]: https://datatracker.ietf.org/doc/html/draft-yang-tls-hybrid-sm2-mlkem-03#name-iana-considerations
+[draft-rosomakho-tls-ecdhe-mlkem512-00]: https://datatracker.ietf.org/doc/html/draft-rosomakho-tls-ecdhe-mlkem512-00.html
