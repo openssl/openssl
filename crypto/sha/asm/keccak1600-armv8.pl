@@ -955,12 +955,6 @@ sub copy_4x2_input_align16_to_qvectors {
 $code.=<<___;
     ldp q$i,q$j,[$inp],#32
     ldp q$k,q$l,[$inp],#32
-#ifdef __AARCH64EB__
-    rev64 q$i,q$i;
-    rev64 q$j,q$j;
-    rev64 q$k,q$k;
-    rev64 q$l,q$l;
-#endif
 ___
 }
 
@@ -972,9 +966,6 @@ sub copy_1x2_input_align16_to_qvectors {
     my ($inp, $i) = @_;
 $code.=<<___;
     ldr q$i,[$inp]
-#ifdef __AARCH64EB__
-    rev64 q$i,q$i;
-#endif
 ___
 }
 
@@ -1078,20 +1069,6 @@ sub copy_4x2_qvectors_to_out2 {
     my $k = $i+2;
     my $l = $i+3;
 $code.=<<___;
-#ifdef __AARCH64EB__
-    rev64 v28.16b, v$i.16b
-    rev64 v29.16b, v$j.16b
-    rev64 v30.16b, v$k.16b
-    rev64 v31.16b, v$l.16b
-    st1 {v28.d}[0], [$out1], #8
-    st1 {v28.d}[1], [$out2], #8
-    st1 {v29.d}[0], [$out1], #8
-    st1 {v29.d}[1], [$out2], #8
-    st1 {v30.d}[0], [$out1], #8
-    st1 {v30.d}[1], [$out2], #8
-    st1 {v31.d}[0], [$out1], #8
-    st1 {v31.d}[1], [$out2], #8
-#else
     st1 {v$i.d}[0], [$out1], #8
     st1 {v$i.d}[1], [$out2], #8
     st1 {v$j.d}[0], [$out1], #8
@@ -1100,7 +1077,6 @@ $code.=<<___;
     st1 {v$k.d}[1], [$out2], #8
     st1 {v$l.d}[0], [$out1], #8
     st1 {v$l.d}[1], [$out2], #8
-#endif
 ___
 }
 ## @brief Move 1 double word from q$i to 2 output buffers.
@@ -1112,14 +1088,8 @@ ___
 sub copy_1x2_qvectors_to_out2 {
     my ($out1, $out2, $i) = @_;
 $code.=<<___;
-#ifdef __AARCH64EB__
-    rev64 v28.16b, v$i.16b
-    st1 {v28.d}[0], [$out1], #8
-    st1 {v28.d}[1], [$out2], #8
-#else
     st1 {v$i.d}[0], [$out1], #8
     st1 {v$i.d}[1], [$out2], #8
-#endif
 ___
 }
 

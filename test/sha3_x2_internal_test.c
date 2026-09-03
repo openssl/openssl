@@ -207,7 +207,7 @@ int setup_tests(void)
     OPENSSL_cpuid_setup();
 #endif
 
-#if !defined(KECCAK1600_ASM) || !defined(__aarch64__) || defined(OPENSSL_NO_ASM)
+#if !defined(KECCAK1600_ASM) || !defined(__aarch64__) || !defined(__AARCH64EL__) || defined(OPENSSL_NO_ASM)
     return TEST_skip("SHAKE x2 AARCH64 API not available in this build");
 #else
     if (!ossl_shakex2_sha3_capable_armv8())
