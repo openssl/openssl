@@ -30,7 +30,7 @@
 #include "crypto/x509.h"
 #include "crypto/x509_acert.h"
 #include "crypto/rsa.h"
-#include "crypto/sha.h"
+#include "crypto/siphash.h"
 #include "x509_local.h"
 
 static void *RSA_new_thunk(void)
@@ -645,19 +645,20 @@ int X509_pubkey_digest(const X509 *data, const EVP_MD *type,
 }
 
 int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
-    unsigned char *hash, size_t hash_size)
+    unsigned char *hash)
 {
+    static const unsigned char key[SIPHASH_KEY_SIZE] = { 0 };
+    SIPHASH ctx = { 0 };
     unsigned char *der = NULL;
     int der_len;
 
-    if (!ossl_assert(hash_size >= SHA_DIGEST_LENGTH)) {
-        ERR_raise(ERR_LIB_X509, ERR_R_INTERNAL_ERROR);
-        return 0;
-    }
     der_len = ASN1_item_i2d((const ASN1_VALUE *)val, &der, it);
     if (der_len < 0)
         return 0;
-    ossl_sha1(der, (size_t)der_len, hash);
+    (void)SipHash_set_hash_size(&ctx, OSSL_X509_FINGERPRINT_SIZE);
+    (void)SipHash_Init(&ctx, key, 0, 0);
+    SipHash_Update(&ctx, der, (size_t)der_len);
+    (void)SipHash_Final(&ctx, hash, OSSL_X509_FINGERPRINT_SIZE);
     OPENSSL_free(der);
     return 1;
 }

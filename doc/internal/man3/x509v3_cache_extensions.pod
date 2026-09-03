@@ -16,9 +16,9 @@ x509v3_cache_extensions
 This function processes any X509v3 extensions present in an X509 object I<x>
 and caches the result of that processing as well as further derived info,
 for instance whether the certificate is self-issued or has version X.509v1.
-It computes an internal-use SHA1 fingerprint of the certificate, used only by
-L<X509_cmp(3)> and never exposed to callers, with the built-in SHA1
-implementation, independent of any library context or property query string,
+It computes an internal-use fingerprint of the certificate, used only by
+L<X509_cmp(3)> and never exposed to callers,
+independent of any library context or property query string,
 and stores the result in x->fingerprint;
 on failure (the certificate cannot be DER encoded, for instance because it is
 still under construction, or memory allocation failed) it sets

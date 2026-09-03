@@ -52,11 +52,7 @@ ENDIF
 # siphash.c is needed by dtls_conn_lookup.c (DTLS) and quic_lcidm.c (QUIC)
 # for hash-flooding resistant connection lookup
 IF[{- !$disabled{dtls} || !$disabled{quic} -}]
-  IF[{- $disabled{siphash} -}]
-    SOURCE[../libssl]=../crypto/siphash/siphash.c
-  ELSE
-    SHARED_SOURCE[../libssl]=../crypto/siphash/siphash.c
-  ENDIF
+  SHARED_SOURCE[../libssl]=../crypto/siphash/siphash.c
 ENDIF
 
 IF[{- $target{needs_c99_snprintf_compat} -}]
