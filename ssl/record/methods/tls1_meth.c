@@ -261,6 +261,14 @@ static int tls1_cipher(OSSL_RECORD_LAYER *rl, TLS_RL_RECORD *recs,
             != 0) {
             unsigned char *seq;
 
+            /*
+             * Publicly invalid: the record is shorter than the mandatory
+             * AEAD overhead. Leave alert handling to the caller so TLS
+             * reports bad_record_mac and DTLS silently discards the record.
+             */
+            if (!sending && reclen[ctr] < rl->eivlen + rl->taglen)
+                return 0;
+
             seq = rl->sequence;
 
             if (rl->isdtls) {
