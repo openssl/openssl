@@ -45,12 +45,15 @@ static const int minimal_selection = OSSL_KEYMGMT_SELECT_DOMAIN_PARAMETERS
 
 /* Must match DECLARE_DISPATCH invocations at the end of the file */
 static const ECDH_VINFO hybrid_vtable[] = {
+    { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_512 },
     { "EC", "P-256", 65, 32, 32, 1, EVP_PKEY_ML_KEM_768 },
     { "EC", "P-384", 97, 48, 48, 1, EVP_PKEY_ML_KEM_1024 },
 #if !defined(OPENSSL_NO_ECX)
+    { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_512 },
     { "X25519", NULL, 32, 32, 32, 0, EVP_PKEY_ML_KEM_768 },
     { "X448", NULL, 56, 56, 56, 0, EVP_PKEY_ML_KEM_1024 },
 #else
+    { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
     { NULL, NULL, 0, 0, 0, 0, NID_undef },
 #endif
@@ -804,12 +807,14 @@ static void *mlx_kem_dup(const void *vkey, int selection)
         OSSL_DISPATCH_END                                                                  \
     }
 /* See |hybrid_vtable| above */
-DECLARE_DISPATCH(p256, 0);
-DECLARE_DISPATCH(p384, 1);
+DECLARE_DISPATCH(p256_512, 0);
+DECLARE_DISPATCH(p256, 1);
+DECLARE_DISPATCH(p384, 2);
 #if !defined(OPENSSL_NO_ECX)
-DECLARE_DISPATCH(x25519, 2);
-DECLARE_DISPATCH(x448, 3);
+DECLARE_DISPATCH(x25519_512, 3);
+DECLARE_DISPATCH(x25519, 4);
+DECLARE_DISPATCH(x448, 5);
 #endif
 #if !defined(FIPS_MODULE) && !defined(OPENSSL_NO_SM2)
-DECLARE_DISPATCH(curve_sm2, 4);
+DECLARE_DISPATCH(curve_sm2, 6);
 #endif
