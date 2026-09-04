@@ -193,7 +193,7 @@ static int dgram_pair_recvmmsg(BIO *b, BIO_MSG *msg, size_t stride,
     size_t *num_processed);
 
 static int dgram_pair_ctrl_destroy_bio_pair(BIO *bio1);
-static size_t dgram_pair_read_inner(struct bio_dgram_pair_st *b, uint8_t *buf,
+static size_t dgram_pair_read_inner(struct ring_buf *rbufptr, uint8_t *buf,
     size_t sz);
 
 #define BIO_MSG_N(array, n) (*(BIO_MSG *)((char *)(array) + (n) * stride))
@@ -687,7 +687,7 @@ static size_t dgram_pair_ctrl_pending(BIO *bio)
     saved_idx = rbufptr->idx[1];
     saved_count = rbufptr->count;
 
-    l = dgram_pair_read_inner(readb, (uint8_t *)&hdr, sizeof(hdr));
+    l = dgram_pair_read_inner(rbufptr, (uint8_t *)&hdr, sizeof(hdr));
 
     rbufptr->idx[1] = saved_idx;
     rbufptr->count = saved_count;
@@ -1025,16 +1025,10 @@ err:
 }
 
 /* Must hold peer write lock */
-static size_t dgram_pair_read_inner(struct bio_dgram_pair_st *b, uint8_t *buf, size_t sz)
+static size_t dgram_pair_read_inner(struct ring_buf *rbufptr, uint8_t *buf, size_t sz)
 {
     size_t total_read = 0;
-    struct ring_buf *rbufptr;
 
-    /*
-     * We read from the peer ring buffer, but b was already passed here
-     * as the peer bio, so we use get_self_ringbuf below
-     */
-    dgram_bio_get_self_data(b, &rbufptr, NULL);
     /*
      * We repeat pops from the ring buffer for as long as we have more
      * application *buffer to fill until we fail. We may not be able to pop
@@ -1079,7 +1073,7 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
     int is_multi)
 {
     size_t l, trunc = 0, saved_idx, saved_count;
-    struct bio_dgram_pair_st *b = bio->ptr, *readb;
+    struct bio_dgram_pair_st *b = bio->ptr;
     struct dgram_hdr hdr;
     struct ring_buf *rbufptr;
 
@@ -1092,9 +1086,9 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
     if (!ossl_assert(b != NULL))
         return -BIO_R_TRANSFER_ERROR;
 
-    dgram_bio_get_peer_data(b, &rbufptr, NULL, &readb);
+    dgram_bio_get_peer_data(b, &rbufptr, NULL, NULL);
 
-    if (!ossl_assert(readb != NULL && rbufptr->start != NULL))
+    if (!ossl_assert(rbufptr->start != NULL))
         return -BIO_R_TRANSFER_ERROR;
 
     if (sz > 0 && buf == NULL)
@@ -1107,7 +1101,7 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
     /* Read the header. */
     saved_idx = rbufptr->idx[1];
     saved_count = rbufptr->count;
-    l = dgram_pair_read_inner(readb, (uint8_t *)&hdr, sizeof(hdr));
+    l = dgram_pair_read_inner(rbufptr, (uint8_t *)&hdr, sizeof(hdr));
     if (l == 0) {
         /* Buffer was empty. */
         if (!is_multi)
@@ -1135,7 +1129,7 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
         }
     }
 
-    l = dgram_pair_read_inner(readb, (uint8_t *)buf, sz);
+    l = dgram_pair_read_inner(rbufptr, (uint8_t *)buf, sz);
     if (!ossl_assert(l == sz))
         /* We were somehow not able to read the entire datagram. */
         return -BIO_R_TRANSFER_ERROR;
@@ -1144,7 +1138,7 @@ static ossl_ssize_t dgram_pair_read_actual(BIO *bio, char *buf, size_t sz,
      * If the datagram was truncated due to an inadequate buffer, discard the
      * remainder.
      */
-    if (trunc > 0 && !ossl_assert(dgram_pair_read_inner(readb, NULL, trunc) == trunc))
+    if (trunc > 0 && !ossl_assert(dgram_pair_read_inner(rbufptr, NULL, trunc) == trunc))
         /* We were somehow not able to read/skip the entire datagram. */
         return -BIO_R_TRANSFER_ERROR;
 
@@ -1163,10 +1157,10 @@ static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
     struct bio_dgram_pair_st *x, *y;
 
     if (is_dgram_pair(a)) {
-        if (CRYPTO_THREAD_write_lock(a->pair->map[0].lock) == 0)
+        if (CRYPTO_THREAD_write_lock(b->pair->map[0].lock) == 0)
             return 0;
-        if (CRYPTO_THREAD_write_lock(a->pair->map[1].lock) == 0) {
-            CRYPTO_THREAD_unlock(a->pair->map[1].lock);
+        if (CRYPTO_THREAD_write_lock(b->pair->map[1].lock) == 0) {
+            CRYPTO_THREAD_unlock(b->pair->map[1].lock);
             return 0;
         }
     } else {
@@ -1194,9 +1188,9 @@ static int dgram_pair_lock_both_write(struct bio_dgram_pair_st *a,
 static void dgram_pair_unlock_both(struct bio_dgram_pair_st *a,
     struct bio_dgram_pair_st *b)
 {
-    if (is_dgram_pair(a)) {
-        CRYPTO_THREAD_unlock(a->pair->map[0].lock);
-        CRYPTO_THREAD_unlock(a->pair->map[1].lock);
+    if (is_dgram_pair(b)) {
+        CRYPTO_THREAD_unlock(b->pair->map[0].lock);
+        CRYPTO_THREAD_unlock(b->pair->map[1].lock);
     } else {
         CRYPTO_THREAD_unlock(a->lock);
         CRYPTO_THREAD_unlock(b->lock);
