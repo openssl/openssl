@@ -15,7 +15,8 @@ require Exporter;
 our @ISA = qw(Exporter);
 our @EXPORT_OK = qw(generate_public_macros
                     produce_param_decoder
-                    produce_param_decoder_with_count);
+                    produce_param_decoder_with_count
+                    produce_param_decoder_ignore_duplicates);
 
 our $headers_included = 0;
 my $case_sensitive = 1;
@@ -698,6 +699,7 @@ sub generate_public_macros {
 
 sub trie_matched {
   my $with_count = shift;
+  my $duplicate_errors = shift;
   my $field = shift;
   my $num = shift;
   my $indent1 = shift;
@@ -715,7 +717,7 @@ sub trie_matched {
     printf "%s}\n", $indent1;
     printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s[r->num_%s++] = (OSSL_PARAM *)p;\n", $indent1, $field, $field;
-  } else {
+  } elsif ($duplicate_errors) {
     printf "%sif (ossl_unlikely(r->%s != NULL)) {\n", $indent1, $field;
     printf "%sERR_raise_data(ERR_LIB_PROV, PROV_R_REPEATED_PARAMETER,\n", $indent2;
     printf "%s               \"param %%s is repeated\", s);\n", $indent2;
@@ -723,11 +725,17 @@ sub trie_matched {
     printf "%s}\n", $indent1;
     printf "%s++*count;\n", $indent1 if $with_count;
     printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent1, $field;
+  } else {
+    printf "%sif (ossl_likely(r->%s == NULL)) {\n", $indent1, $field;
+    printf "%s++*count;\n", $indent2 if $with_count;
+    printf "%sr->%s = (OSSL_PARAM *)p;\n", $indent2, $field;
+    printf "%s}\n", $indent1;
   }
 }
 
 sub generate_decoder_from_trie {
     my $with_count = shift;
+    my $duplicate_errors = shift;
     my $n = shift;
     my $trieref = shift;
     my $identmap = shift;
@@ -754,7 +762,7 @@ sub generate_decoder_from_trie {
         }
         print ")) {\n";
         printf "%s/* %s */\n", $indent1, $trieref->{'name'};
-        trie_matched($with_count, $field, $num, $indent1, $indent2);
+        trie_matched($with_count, $duplicate_errors, $field, $num, $indent1, $indent2);
         printf "%s}\n", $indent0;
 
         # If this is at the top level and it's conditional, we have to
@@ -776,7 +784,7 @@ sub generate_decoder_from_trie {
             printf "%sbreak;\n", $indent1;
             printf "%scase '\\0':\n", $indent0;
             output_ifdef($ifdefs->{$field});
-            trie_matched($with_count, $field, $num, $indent1, $indent2);
+            trie_matched($with_count, $duplicate_errors, $field, $num, $indent1, $indent2);
             output_endifdef($ifdefs->{$field});
         } else {
             printf "%sbreak;\n", $indent1;
@@ -786,7 +794,7 @@ sub generate_decoder_from_trie {
                 printf "   case '%s':", uc $l if ($l =~ /[a-z]/);
             }
             print "\n";
-            generate_decoder_from_trie($with_count, $n + 1, $trieref->{$l}, $identmap, $concat_num, $ifdefs);
+            generate_decoder_from_trie($with_count, $duplicate_errors, $n + 1, $trieref->{$l}, $identmap, $concat_num, $ifdefs);
         }
     }
     if ($need_break) {
@@ -859,7 +867,7 @@ sub locate_long_endings {
 }
 
 sub output_param_decoder {
-    my ($with_count, $decoder_name_base, @params) = @_;
+    my ($with_count, $duplicate_errors, $decoder_name_base, @params) = @_;
     my @keys = ();
     my %prms = ();
     my %concat_num = ();
@@ -959,7 +967,7 @@ sub output_param_decoder {
     print "    memset(r, 0, sizeof(*r));\n";
     print "    if (p != NULL)\n";
     print "        for (; (s = p->key) != NULL; p++)\n";
-    generate_decoder_from_trie($with_count, 0, \%t, \%prms, \%concat_num, \%ifdefs);
+    generate_decoder_from_trie($with_count, $duplicate_errors, 0, \%t, \%prms, \%concat_num, \%ifdefs);
     print "    return 1;\n";
     print "}\n#endif\n";
     print "/* End of machine generated */";
@@ -969,7 +977,7 @@ sub produce_param_decoder {
     my $s;
 
     open(local *STDOUT, '>', \$s);
-    output_param_decoder(0, @_);
+    output_param_decoder(0, 1, @_);
     return $s;
 }
 
@@ -977,6 +985,17 @@ sub produce_param_decoder_with_count {
     my $s;
 
     open(local *STDOUT, '>', \$s);
-    output_param_decoder(1, @_);
+    output_param_decoder(1, 1, @_);
+    return $s;
+}
+
+# Produce a parameter name decoder that ignores the second and subsequent repeats
+# of a parameter instead of erroring. This flavour is not recommended for general
+# use because it hides potential user error.
+sub produce_param_decoder_ignore_duplicates {
+    my $s;
+
+    open(local *STDOUT, '>', \$s);
+    output_param_decoder(0, 0, @_);
     return $s;
 }
