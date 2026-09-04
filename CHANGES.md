@@ -32,6 +32,14 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * A certificate whose subjectAltName, nameConstraints,
+   cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
+   extension cannot be decoded is no longer marked `EXFLAG_INVALID` when
+   parsed. Each of these extensions is decoded where a verification uses
+   it, and the verification fails there instead.
+
+   *Bob Beck*
+
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
    `OSSL_PARAM_locate()` calls.  This should ensure that the list
