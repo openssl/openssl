@@ -220,7 +220,7 @@ OSSL_FUNC_skeymgmt_export() returns 1 for success or 0 on error.
 OSSL_FUNC_skeymgmt_get_key_id() returns a pointer to a 0-terminated string or NULL.
 
 OSSL_FUNC_skeymgmt_get_local_keyid() and OSSL_FUNC_skeymgmt_get_algorithm_id()
-return 1 on success or 0 if the requested metadata is not available.
+return 1 on success or 0 on error.
 
 OSSL_FUNC_skeymgmt_gen_settable_params() and OSSL_FUNC_skeymgmt_imp_settable_params()
 return references to an array of B<OSSL_PARAM> which can be NULL if there are
