@@ -369,6 +369,20 @@ int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
     if (skey->skeymgmt->get_algorithm_id == NULL)
         return 0;
 
+    if (oid != NULL && oid_len != NULL)
+        ret_oid = 1;
+    if (params != NULL && params_len != NULL)
+        ret_params = 1;
+
+    if (ret_oid == 0 && ret_params == 0)
+        return 0;
+
+    if (ret_oid == 0 && (oid != NULL || oid_len != NULL))
+        return 0;
+
+    if (ret_params == 0 && (params != NULL || params_len != NULL))
+        return 0;
+
     return skey->skeymgmt->get_algorithm_id(skey->keydata,
         oid, oid_len, params, params_len);
 }
