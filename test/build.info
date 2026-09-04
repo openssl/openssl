@@ -743,7 +743,7 @@ IF[{- !$disabled{tests} -}]
   ENDIF
 
   SOURCE[dtlstest]=dtlstest.c helpers/ssltestlib.c
-  INCLUDE[dtlstest]=../include ../apps/include
+  INCLUDE[dtlstest]=.. ../include ../apps/include
   DEPEND[dtlstest]=../libcrypto ../libssl libtestutil.a
 
   IF[{- !$disabled{dtls} -}]

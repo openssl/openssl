@@ -458,6 +458,13 @@ int tls_get_more_records(OSSL_RECORD_LAYER *rl);
 #define DTLS13_UNI_HDR_LEN_BIT_IS_SET(byte) \
     (((byte) & DTLS13_UNI_HDR_LEN_BIT) == DTLS13_UNI_HDR_LEN_BIT)
 
+/* Low-order sequence number bits carried by a DTLS 1.3 unified header. */
+#define DTLS13_UNI_HDR_SEQ_MASK(len) \
+    ((((uint64_t)1) << ((len) * 8)) - 1)
+
+uint64_t dtls13_reconstruct_seq_num(uint64_t max_seq_num, uint64_t truncated,
+    size_t seqlen);
+
 size_t dtls_get_rec_header_size(uint8_t hdr_first_byte);
 int dtls_crypt_sequence_number(EVP_CIPHER_CTX *ctx, unsigned char *seq, size_t seqlen,
     unsigned char *rec_data);
