@@ -130,14 +130,20 @@ static int i2d_ECPrivateKey_thunk(const void *a, unsigned char **out)
 }
 #endif
 
-int X509_verify(const X509 *a, EVP_PKEY *r)
+int ossl_x509_verify_ex(const X509 *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq)
 {
     if (X509_ALGOR_cmp(&a->sig_alg, &a->cert_info.signature) != 0)
         return 0;
 
     return ASN1_item_verify_ex(ASN1_ITEM_rptr(X509_CINF), &a->sig_alg,
         &a->signature, &a->cert_info,
-        a->distinguishing_id, r, a->libctx, a->propq);
+        a->distinguishing_id, r, libctx, propq);
+}
+
+int X509_verify(const X509 *a, EVP_PKEY *r)
+{
+    return ossl_x509_verify_ex(a, r, a->libctx, a->propq);
 }
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
