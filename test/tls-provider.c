@@ -7,9 +7,13 @@
  * https://www.openssl.org/source/license.html
  */
 
+#include <limits.h>
+#include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 #include <openssl/core_names.h>
 #include <openssl/core_dispatch.h>
+#include <openssl/evp.h>
 #include <openssl/rand.h>
 #include <openssl/params.h>
 #include <openssl/err.h>
@@ -25,6 +29,7 @@
 #include <openssl/ssl.h>
 #include "internal/nelem.h"
 #include "internal/refcount.h"
+#include "internal/thread_once.h"
 
 #include <crypto/asn1.h>
 
@@ -276,7 +281,7 @@ static const OSSL_PARAM xor_kemgroup_params[] = {
 };
 
 #define NUM_DUMMY_GROUPS 50
-static char *dummy_group_names[NUM_DUMMY_GROUPS];
+#define DUMMY_GROUP_NAME_SIZE (sizeof("dummy") + 2)
 
 /*
  * We define a dummy TLS sigalg called for test purposes
@@ -396,20 +401,987 @@ static const OSSL_PARAM xor_sig_12_params[] = {
     OSSL_PARAM_END
 };
 
+typedef struct {
+    OSSL_LIB_CTX *libctx;
+    char *tls_ciphersuite_mode;
+    unsigned int tls_alg_ids[4];
+    size_t tls_alg_id_count;
+    char dummy_group_names[NUM_DUMMY_GROUPS][DUMMY_GROUP_NAME_SIZE];
+} PROV_XOR_CTX;
+
+static void release_tls_alg_ids(PROV_XOR_CTX *provctx);
+
+static ossl_inline OSSL_LIB_CTX *tls_provider_get0_libctx(PROV_XOR_CTX *provctx)
+{
+    return provctx->libctx;
+}
+
+#define TLS_TEST_AEAD128_NAME "TLS-TEST-AES-128-GCM"
+#define TLS_TEST_AEAD256_NAME "TLS-TEST-AES-256-GCM"
+#define TLS_TEST_LIMITED_AEAD128_NAME "TLS-TEST-LIMITED-AES-128-GCM"
+#define TLS_TEST_SHA256_NAME "TLS-TEST-SHA2-256"
+#define TLS_TEST_SHA384_NAME "TLS-TEST-SHA2-384"
+#define TLS_TEST_RECORD_LIMIT 4
+
+typedef struct {
+    EVP_CIPHER_CTX *subctx;
+    size_t encrypted_records;
+    size_t encryption_limit;
+    int enc;
+} TLS_PROXY_CIPHER_CTX;
+
+static void *tls_proxy_cipher_newctx(void *provctx, const char *name,
+    size_t encryption_limit)
+{
+    TLS_PROXY_CIPHER_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+    EVP_CIPHER *cipher = NULL;
+
+    if (ctx == NULL)
+        return NULL;
+    ctx->subctx = EVP_CIPHER_CTX_new();
+    cipher = EVP_CIPHER_fetch(tls_provider_get0_libctx(provctx), name,
+        "provider=default");
+    if (ctx->subctx == NULL || cipher == NULL
+        || EVP_CipherInit_ex2(ctx->subctx, cipher, NULL, NULL, 1, NULL) <= 0) {
+        EVP_CIPHER_free(cipher);
+        EVP_CIPHER_CTX_free(ctx->subctx);
+        OPENSSL_free(ctx);
+        return NULL;
+    }
+    EVP_CIPHER_free(cipher);
+    ctx->encryption_limit = encryption_limit;
+    return ctx;
+}
+
+static void *tls_proxy_aes128_newctx(void *provctx)
+{
+    return tls_proxy_cipher_newctx(provctx, "AES-128-GCM", 0);
+}
+
+static void *tls_proxy_aes256_newctx(void *provctx)
+{
+    return tls_proxy_cipher_newctx(provctx, "AES-256-GCM", 0);
+}
+
+static void *tls_proxy_limited_aes128_newctx(void *provctx)
+{
+    return tls_proxy_cipher_newctx(provctx, "AES-128-GCM",
+        TLS_TEST_RECORD_LIMIT);
+}
+
+static void tls_proxy_cipher_freectx(void *vctx)
+{
+    TLS_PROXY_CIPHER_CTX *ctx = vctx;
+
+    if (ctx != NULL)
+        EVP_CIPHER_CTX_free(ctx->subctx);
+    OPENSSL_free(ctx);
+}
+
+static void *tls_proxy_cipher_dupctx(void *vctx)
+{
+    TLS_PROXY_CIPHER_CTX *src = vctx;
+    TLS_PROXY_CIPHER_CTX *dst = OPENSSL_zalloc(sizeof(*dst));
+
+    if (dst == NULL)
+        return NULL;
+    dst->subctx = EVP_CIPHER_CTX_dup(src->subctx);
+    if (dst->subctx == NULL) {
+        OPENSSL_free(dst);
+        return NULL;
+    }
+    dst->encrypted_records = src->encrypted_records;
+    dst->encryption_limit = src->encryption_limit;
+    dst->enc = src->enc;
+    return dst;
+}
+
+static int tls_proxy_cipher_init(void *vctx, const unsigned char *key,
+    size_t keylen, const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[], int enc)
+{
+    TLS_PROXY_CIPHER_CTX *ctx = vctx;
+
+    if ((key != NULL
+            && keylen != (size_t)EVP_CIPHER_CTX_get_key_length(ctx->subctx))
+        || (iv != NULL
+            && ivlen != (size_t)EVP_CIPHER_CTX_get_iv_length(ctx->subctx)))
+        return 0;
+    if (EVP_CipherInit_ex2(ctx->subctx, NULL, key, iv, enc, params) <= 0)
+        return 0;
+    ctx->enc = enc;
+    return 1;
+}
+
+static int tls_proxy_cipher_einit(void *vctx, const unsigned char *key,
+    size_t keylen, const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    return tls_proxy_cipher_init(vctx, key, keylen, iv, ivlen, params, 1);
+}
+
+static int tls_proxy_cipher_dinit(void *vctx, const unsigned char *key,
+    size_t keylen, const unsigned char *iv, size_t ivlen,
+    const OSSL_PARAM params[])
+{
+    return tls_proxy_cipher_init(vctx, key, keylen, iv, ivlen, params, 0);
+}
+
+static int tls_proxy_cipher_update(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize, const unsigned char *in, size_t inl)
+{
+    TLS_PROXY_CIPHER_CTX *ctx = vctx;
+    int len;
+
+    if (outl == NULL || inl > INT_MAX || (out != NULL && outsize < inl)
+        || EVP_CipherUpdate(ctx->subctx, out, &len, in, (int)inl) <= 0)
+        return 0;
+    *outl = (size_t)len;
+    return 1;
+}
+
+static int tls_proxy_cipher_final(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize)
+{
+    TLS_PROXY_CIPHER_CTX *ctx = vctx;
+    int len;
+
+    if (outl == NULL
+        || (ctx->enc && ctx->encryption_limit != 0
+            && ctx->encrypted_records >= ctx->encryption_limit)
+        || EVP_CipherFinal_ex(ctx->subctx, out, &len) <= 0
+        || (size_t)len > outsize)
+        return 0;
+    if (ctx->enc)
+        ctx->encrypted_records++;
+    *outl = (size_t)len;
+    return 1;
+}
+
+static int tls_proxy_cipher_get_params(OSSL_PARAM params[], size_t keylen)
+{
+    OSSL_PARAM *p;
+    size_t blocksize = 1, ivlen = 12;
+    unsigned int mode = EVP_CIPH_GCM_MODE;
+    int value = 1;
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
+    if (p != NULL && !OSSL_PARAM_set_uint(p, mode))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, keylen))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, ivlen))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, blocksize))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
+    if (p != NULL && !OSSL_PARAM_set_int(p, value))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_CUSTOM_IV);
+    if (p != NULL && !OSSL_PARAM_set_int(p, value))
+        return 0;
+    return 1;
+}
+
+static int tls_proxy_aes128_get_params(OSSL_PARAM params[])
+{
+    return tls_proxy_cipher_get_params(params, 16);
+}
+
+static int tls_proxy_aes256_get_params(OSSL_PARAM params[])
+{
+    return tls_proxy_cipher_get_params(params, 32);
+}
+
+static int tls_proxy_cipher_get_ctx_params(void *vctx, OSSL_PARAM params[])
+{
+    TLS_PROXY_CIPHER_CTX *ctx = vctx;
+
+    return EVP_CIPHER_CTX_get_params(ctx->subctx, params) > 0;
+}
+
+static int tls_proxy_cipher_set_ctx_params(void *vctx,
+    const OSSL_PARAM params[])
+{
+    TLS_PROXY_CIPHER_CTX *ctx = vctx;
+
+    return EVP_CIPHER_CTX_set_params(ctx->subctx, params) > 0;
+}
+
+static const OSSL_PARAM tls_proxy_cipher_gettable_params[] = {
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_MODE, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_BLOCK_SIZE, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_AEAD, NULL),
+    OSSL_PARAM_int(OSSL_CIPHER_PARAM_CUSTOM_IV, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *tls_proxy_cipher_gettable(ossl_unused void *provctx)
+{
+    return tls_proxy_cipher_gettable_params;
+}
+
+static const OSSL_PARAM tls_proxy_cipher_gettable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_KEYLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *tls_proxy_cipher_gettable_ctx(
+    ossl_unused void *cctx, ossl_unused void *provctx)
+{
+    return tls_proxy_cipher_gettable_ctx_params;
+}
+
+static const OSSL_PARAM tls_proxy_cipher_settable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_IVLEN, NULL),
+    OSSL_PARAM_octet_string(OSSL_CIPHER_PARAM_AEAD_TAG, NULL, 0),
+    OSSL_PARAM_uint(OSSL_CIPHER_PARAM_PADDING, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *tls_proxy_cipher_settable_ctx(
+    ossl_unused void *cctx, ossl_unused void *provctx)
+{
+    return tls_proxy_cipher_settable_ctx_params;
+}
+
+#define TLS_PROXY_CIPHER_DISPATCH(newctx, get_params)                           \
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))newctx },                        \
+        { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))tls_proxy_cipher_freectx }, \
+        { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))tls_proxy_cipher_dupctx },   \
+        { OSSL_FUNC_CIPHER_ENCRYPT_INIT,                                        \
+            (void (*)(void))tls_proxy_cipher_einit },                           \
+        { OSSL_FUNC_CIPHER_DECRYPT_INIT,                                        \
+            (void (*)(void))tls_proxy_cipher_dinit },                           \
+        { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))tls_proxy_cipher_update },   \
+        { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))tls_proxy_cipher_final },     \
+        { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))get_params },            \
+        { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                      \
+            (void (*)(void))tls_proxy_cipher_get_ctx_params },                  \
+        { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                      \
+            (void (*)(void))tls_proxy_cipher_set_ctx_params },                  \
+        { OSSL_FUNC_CIPHER_GETTABLE_PARAMS,                                     \
+            (void (*)(void))tls_proxy_cipher_gettable },                        \
+        { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,                                 \
+            (void (*)(void))tls_proxy_cipher_gettable_ctx },                    \
+        { OSSL_FUNC_CIPHER_SETTABLE_CTX_PARAMS,                                 \
+            (void (*)(void))tls_proxy_cipher_settable_ctx },                    \
+        OSSL_DISPATCH_END
+
+static const OSSL_DISPATCH tls_proxy_aes128_functions[] = {
+    TLS_PROXY_CIPHER_DISPATCH(tls_proxy_aes128_newctx,
+        tls_proxy_aes128_get_params)
+};
+
+static const OSSL_DISPATCH tls_proxy_aes256_functions[] = {
+    TLS_PROXY_CIPHER_DISPATCH(tls_proxy_aes256_newctx,
+        tls_proxy_aes256_get_params)
+};
+
+static const OSSL_DISPATCH tls_proxy_limited_aes128_functions[] = {
+    TLS_PROXY_CIPHER_DISPATCH(tls_proxy_limited_aes128_newctx,
+        tls_proxy_aes128_get_params)
+};
+
+typedef struct {
+    EVP_MD *md;
+    EVP_MD_CTX *subctx;
+} TLS_PROXY_DIGEST_CTX;
+
+static void *tls_proxy_digest_newctx(void *provctx, const char *name)
+{
+    TLS_PROXY_DIGEST_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
+
+    if (ctx == NULL)
+        return NULL;
+    ctx->subctx = EVP_MD_CTX_new();
+    ctx->md = EVP_MD_fetch(tls_provider_get0_libctx(provctx), name,
+        "provider=default");
+    if (ctx->subctx == NULL || ctx->md == NULL) {
+        EVP_MD_CTX_free(ctx->subctx);
+        EVP_MD_free(ctx->md);
+        OPENSSL_free(ctx);
+        return NULL;
+    }
+    return ctx;
+}
+
+static void *tls_proxy_sha256_newctx(void *provctx)
+{
+    return tls_proxy_digest_newctx(provctx, "SHA2-256");
+}
+
+static void *tls_proxy_sha384_newctx(void *provctx)
+{
+    return tls_proxy_digest_newctx(provctx, "SHA2-384");
+}
+
+static void tls_proxy_digest_freectx(void *vctx)
+{
+    TLS_PROXY_DIGEST_CTX *ctx = vctx;
+
+    if (ctx != NULL) {
+        EVP_MD_CTX_free(ctx->subctx);
+        EVP_MD_free(ctx->md);
+    }
+    OPENSSL_free(ctx);
+}
+
+static void *tls_proxy_digest_dupctx(void *vctx)
+{
+    TLS_PROXY_DIGEST_CTX *src = vctx;
+    TLS_PROXY_DIGEST_CTX *dst = OPENSSL_zalloc(sizeof(*dst));
+
+    if (dst == NULL || !EVP_MD_up_ref(src->md)) {
+        OPENSSL_free(dst);
+        return NULL;
+    }
+    dst->md = src->md;
+    dst->subctx = EVP_MD_CTX_dup(src->subctx);
+    if (dst->subctx == NULL) {
+        tls_proxy_digest_freectx(dst);
+        return NULL;
+    }
+    return dst;
+}
+
+static int tls_proxy_digest_init(void *vctx, const OSSL_PARAM params[])
+{
+    TLS_PROXY_DIGEST_CTX *ctx = vctx;
+
+    return EVP_DigestInit_ex2(ctx->subctx, ctx->md, params) > 0;
+}
+
+static int tls_proxy_digest_update(void *vctx, const unsigned char *in,
+    size_t inl)
+{
+    TLS_PROXY_DIGEST_CTX *ctx = vctx;
+
+    return EVP_DigestUpdate(ctx->subctx, in, inl) > 0;
+}
+
+static int tls_proxy_digest_final(void *vctx, unsigned char *out,
+    size_t *outl, size_t outsize)
+{
+    TLS_PROXY_DIGEST_CTX *ctx = vctx;
+    unsigned int len;
+
+    if (outl == NULL || outsize < (size_t)EVP_MD_get_size(ctx->md)
+        || EVP_DigestFinal_ex(ctx->subctx, out, &len) <= 0)
+        return 0;
+    *outl = len;
+    return 1;
+}
+
+static int tls_proxy_digest_get_params(OSSL_PARAM params[], size_t size,
+    size_t blocksize)
+{
+    OSSL_PARAM *p;
+    int value;
+
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, size))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_BLOCK_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, blocksize))
+        return 0;
+    value = 0;
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_XOF);
+    if (p != NULL && !OSSL_PARAM_set_int(p, value))
+        return 0;
+    value = 1;
+    p = OSSL_PARAM_locate(params, OSSL_DIGEST_PARAM_ALGID_ABSENT);
+    if (p != NULL && !OSSL_PARAM_set_int(p, value))
+        return 0;
+    return 1;
+}
+
+static int tls_proxy_sha256_get_params(OSSL_PARAM params[])
+{
+    return tls_proxy_digest_get_params(params, 32, 64);
+}
+
+static int tls_proxy_sha384_get_params(OSSL_PARAM params[])
+{
+    return tls_proxy_digest_get_params(params, 48, 128);
+}
+
+static const OSSL_PARAM tls_proxy_digest_gettable_params[] = {
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_SIZE, NULL),
+    OSSL_PARAM_size_t(OSSL_DIGEST_PARAM_BLOCK_SIZE, NULL),
+    OSSL_PARAM_int(OSSL_DIGEST_PARAM_XOF, NULL),
+    OSSL_PARAM_int(OSSL_DIGEST_PARAM_ALGID_ABSENT, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *tls_proxy_digest_gettable(ossl_unused void *provctx)
+{
+    return tls_proxy_digest_gettable_params;
+}
+
+#define TLS_PROXY_DIGEST_DISPATCH(newctx, get_params)                           \
+    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))newctx },                        \
+        { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))tls_proxy_digest_freectx }, \
+        { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))tls_proxy_digest_dupctx },   \
+        { OSSL_FUNC_DIGEST_INIT, (void (*)(void))tls_proxy_digest_init },       \
+        { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))tls_proxy_digest_update },   \
+        { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))tls_proxy_digest_final },     \
+        { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))get_params },            \
+        { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                     \
+            (void (*)(void))tls_proxy_digest_gettable },                        \
+        OSSL_DISPATCH_END
+
+static const OSSL_DISPATCH tls_proxy_sha256_functions[] = {
+    TLS_PROXY_DIGEST_DISPATCH(tls_proxy_sha256_newctx,
+        tls_proxy_sha256_get_params)
+};
+
+static const OSSL_DISPATCH tls_proxy_sha384_functions[] = {
+    TLS_PROXY_DIGEST_DISPATCH(tls_proxy_sha384_newctx,
+        tls_proxy_sha384_get_params)
+};
+
+#define TLS_TEST_OVERSIZED_DIGEST_NAME "TLS-TEST-SHA2-256-65"
+
+static int tls_proxy_oversized_digest_get_params(OSSL_PARAM params[])
+{
+    return tls_proxy_digest_get_params(params, EVP_MAX_MD_SIZE + 1, 64);
+}
+
+static int tls_proxy_oversized_digest384_get_params(OSSL_PARAM params[])
+{
+    return tls_proxy_digest_get_params(params, EVP_MAX_MD_SIZE + 1, 128);
+}
+
+static const OSSL_DISPATCH tls_proxy_oversized_digest_functions[] = {
+    TLS_PROXY_DIGEST_DISPATCH(tls_proxy_sha256_newctx,
+        tls_proxy_oversized_digest_get_params)
+};
+
+static const OSSL_DISPATCH tls_proxy_oversized_digest384_functions[] = {
+    TLS_PROXY_DIGEST_DISPATCH(tls_proxy_sha384_newctx,
+        tls_proxy_oversized_digest384_get_params)
+};
+
+/* Test-only AEAD with a key one byte larger than EVP_MAX_KEY_LENGTH. */
+#define TLS_TEST_OVERSIZED_AEAD_NAME "TLS-TEST-AEAD-65"
+
+static void *tls_oversized_aead_newctx(ossl_unused void *provctx)
+{
+    return OPENSSL_zalloc(1);
+}
+
+static void tls_oversized_aead_freectx(void *vctx)
+{
+    OPENSSL_free(vctx);
+}
+
+static int tls_oversized_aead_init(void *vctx,
+    ossl_unused const unsigned char *key,
+    ossl_unused size_t keylen,
+    ossl_unused const unsigned char *iv,
+    ossl_unused size_t ivlen,
+    ossl_unused const OSSL_PARAM params[])
+{
+    return vctx != NULL;
+}
+
+static int tls_oversized_aead_update(ossl_unused void *vctx,
+    unsigned char *out, size_t *outl, size_t outsize,
+    const unsigned char *in, size_t inl)
+{
+    if (out == NULL || outl == NULL || outsize < inl)
+        return 0;
+    if (out != in)
+        memmove(out, in, inl);
+    *outl = inl;
+    return 1;
+}
+
+static int tls_oversized_aead_final(ossl_unused void *vctx,
+    ossl_unused unsigned char *out, size_t *outl,
+    ossl_unused size_t outsize)
+{
+    if (outl == NULL)
+        return 0;
+    *outl = 0;
+    return 1;
+}
+
+static int tls_oversized_aead_get_params(OSSL_PARAM params[])
+{
+    OSSL_PARAM *p;
+    size_t keylen = EVP_MAX_KEY_LENGTH + 1;
+
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_KEYLEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, keylen))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_BLOCK_SIZE);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, 1))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_IVLEN);
+    if (p != NULL && !OSSL_PARAM_set_size_t(p, 12))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_MODE);
+    if (p != NULL && !OSSL_PARAM_set_uint(p, EVP_CIPH_GCM_MODE))
+        return 0;
+    p = OSSL_PARAM_locate(params, OSSL_CIPHER_PARAM_AEAD);
+    if (p != NULL && !OSSL_PARAM_set_int(p, 1))
+        return 0;
+    return 1;
+}
+
+static int tls_oversized_aead_get_ctx_params(ossl_unused void *vctx,
+    OSSL_PARAM params[])
+{
+    OSSL_PARAM *p = OSSL_PARAM_locate(params,
+        OSSL_CIPHER_PARAM_AEAD_TAGLEN);
+
+    return p == NULL || OSSL_PARAM_set_size_t(p, EVP_GCM_TLS_TAG_LEN);
+}
+
+static const OSSL_PARAM tls_oversized_aead_gettable_ctx_params[] = {
+    OSSL_PARAM_size_t(OSSL_CIPHER_PARAM_AEAD_TAGLEN, NULL),
+    OSSL_PARAM_END
+};
+
+static const OSSL_PARAM *tls_oversized_aead_gettable_ctx(
+    ossl_unused void *vctx, ossl_unused void *provctx)
+{
+    return tls_oversized_aead_gettable_ctx_params;
+}
+
+static const OSSL_DISPATCH tls_oversized_aead_functions[] = {
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))tls_oversized_aead_newctx },
+    { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))tls_oversized_aead_freectx },
+    { OSSL_FUNC_CIPHER_ENCRYPT_INIT, (void (*)(void))tls_oversized_aead_init },
+    { OSSL_FUNC_CIPHER_DECRYPT_INIT, (void (*)(void))tls_oversized_aead_init },
+    { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))tls_oversized_aead_update },
+    { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))tls_oversized_aead_final },
+    { OSSL_FUNC_CIPHER_GET_PARAMS,
+        (void (*)(void))tls_oversized_aead_get_params },
+    { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,
+        (void (*)(void))tls_oversized_aead_get_ctx_params },
+    { OSSL_FUNC_CIPHER_GETTABLE_CTX_PARAMS,
+        (void (*)(void))tls_oversized_aead_gettable_ctx },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM tls_prov_ciphers[] = {
+    { TLS_TEST_AEAD128_NAME, "provider=tls-provider",
+        tls_proxy_aes128_functions },
+    { TLS_TEST_AEAD256_NAME, "provider=tls-provider",
+        tls_proxy_aes256_functions },
+    { TLS_TEST_LIMITED_AEAD128_NAME, "provider=tls-provider",
+        tls_proxy_limited_aes128_functions },
+    { TLS_TEST_OVERSIZED_AEAD_NAME, "provider=tls-provider",
+        tls_oversized_aead_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM tls_prov_digests[] = {
+    { TLS_TEST_SHA256_NAME ":SHA2-256:SHA256", "provider=tls-provider",
+        tls_proxy_sha256_functions },
+    { TLS_TEST_SHA384_NAME ":SHA2-384:SHA384", "provider=tls-provider",
+        tls_proxy_sha384_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM tls_prov_digests_with_oversized_sha256[] = {
+    { TLS_TEST_SHA256_NAME, "provider=tls-provider",
+        tls_proxy_sha256_functions },
+    { TLS_TEST_SHA384_NAME ":SHA2-384:SHA384", "provider=tls-provider",
+        tls_proxy_sha384_functions },
+    { TLS_TEST_OVERSIZED_DIGEST_NAME ":SHA2-256",
+        "provider=tls-provider", tls_proxy_oversized_digest_functions },
+    { NULL, NULL, NULL }
+};
+
+static const OSSL_ALGORITHM tls_prov_digests_with_oversized_sha384[] = {
+    { TLS_TEST_SHA256_NAME ":SHA2-256:SHA256", "provider=tls-provider",
+        tls_proxy_sha256_functions },
+    { TLS_TEST_SHA384_NAME, "provider=tls-provider",
+        tls_proxy_sha384_functions },
+    { TLS_TEST_OVERSIZED_DIGEST_NAME ":SHA2-384",
+        "provider=tls-provider", tls_proxy_oversized_digest384_functions },
+    { NULL, NULL, NULL }
+};
+
+/* Test-only TLS-CIPHERSUITE capability data. */
+static char tls_ciphersuite_name[] = "TLS_TEST_PROVIDER_AES_128_GCM_SHA256";
+static char tls_ciphersuite_aead[] = TLS_TEST_AEAD128_NAME;
+static char tls_ciphersuite_digest[] = TLS_TEST_SHA256_NAME;
+static unsigned int tls_ciphersuite_codepoint = 0xffa0;
+static unsigned int tls_ciphersuite_secbits = 128;
+static unsigned int tls_ciphersuite_taglen = EVP_GCM_TLS_TAG_LEN;
+#define TLS_TEST_MANY_COUNT 128
+static const OSSL_PARAM tls_ciphersuite_params[] = {
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_CIPHERSUITE_NAME,
+        tls_ciphersuite_name, sizeof(tls_ciphersuite_name)),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_CIPHERSUITE_CODE_POINT,
+        &tls_ciphersuite_codepoint),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_CIPHERSUITE_AEAD,
+        tls_ciphersuite_aead, sizeof(tls_ciphersuite_aead)),
+    OSSL_PARAM_utf8_string(OSSL_CAPABILITY_TLS_CIPHERSUITE_DIGEST,
+        tls_ciphersuite_digest, sizeof(tls_ciphersuite_digest)),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_CIPHERSUITE_SECURITY_BITS,
+        &tls_ciphersuite_secbits),
+    OSSL_PARAM_uint(OSSL_CAPABILITY_TLS_CIPHERSUITE_TAG_LENGTH,
+        &tls_ciphersuite_taglen),
+    OSSL_PARAM_END
+};
+
+enum {
+    TLS_CIPHERSUITE_NAME_PARAM,
+    TLS_CIPHERSUITE_CODEPOINT_PARAM,
+    TLS_CIPHERSUITE_AEAD_PARAM,
+    TLS_CIPHERSUITE_DIGEST_PARAM,
+    TLS_CIPHERSUITE_SECBITS_PARAM,
+    TLS_CIPHERSUITE_TAGLEN_PARAM,
+    TLS_CIPHERSUITE_END_PARAM
+};
+
+enum malformed_uint_kind {
+    MALFORMED_UINT_NULL_DATA,
+    MALFORMED_UINT_ZERO_SIZE,
+    MALFORMED_UINT_OVERSIZED_SIZE,
+    MALFORMED_UINT_WRONG_TYPE
+};
+
+static const struct {
+    const char *mode;
+    size_t param_index;
+    enum malformed_uint_kind kind;
+} malformed_uint_modes[] = {
+    { "null-codepoint-data", TLS_CIPHERSUITE_CODEPOINT_PARAM,
+        MALFORMED_UINT_NULL_DATA },
+    { "zero-codepoint-size", TLS_CIPHERSUITE_CODEPOINT_PARAM,
+        MALFORMED_UINT_ZERO_SIZE },
+    { "oversized-codepoint-size", TLS_CIPHERSUITE_CODEPOINT_PARAM,
+        MALFORMED_UINT_OVERSIZED_SIZE },
+    { "wrong-type-codepoint", TLS_CIPHERSUITE_CODEPOINT_PARAM,
+        MALFORMED_UINT_WRONG_TYPE },
+    { "null-secbits-data", TLS_CIPHERSUITE_SECBITS_PARAM,
+        MALFORMED_UINT_NULL_DATA },
+    { "zero-secbits-size", TLS_CIPHERSUITE_SECBITS_PARAM,
+        MALFORMED_UINT_ZERO_SIZE },
+    { "oversized-secbits-size", TLS_CIPHERSUITE_SECBITS_PARAM,
+        MALFORMED_UINT_OVERSIZED_SIZE },
+    { "wrong-type-secbits", TLS_CIPHERSUITE_SECBITS_PARAM,
+        MALFORMED_UINT_WRONG_TYPE },
+    { "null-taglen-data", TLS_CIPHERSUITE_TAGLEN_PARAM,
+        MALFORMED_UINT_NULL_DATA },
+    { "zero-taglen-size", TLS_CIPHERSUITE_TAGLEN_PARAM,
+        MALFORMED_UINT_ZERO_SIZE },
+    { "oversized-taglen-size", TLS_CIPHERSUITE_TAGLEN_PARAM,
+        MALFORMED_UINT_OVERSIZED_SIZE },
+    { "wrong-type-taglen", TLS_CIPHERSUITE_TAGLEN_PARAM,
+        MALFORMED_UINT_WRONG_TYPE }
+};
+
+/* Single-field string fixtures; the callback only reads these values. */
+static const struct {
+    const char *mode;
+    const char *value;
+    size_t value_len; /* Includes a trailing NUL where the fixture has one. */
+} ciphersuite_name_modes[] = {
+    { "bad-name", "TLS:TEST:INVALID", sizeof("TLS:TEST:INVALID") },
+    { "builtin-name", "TLS_AES_128_GCM_SHA256", sizeof("TLS_AES_128_GCM_SHA256") },
+    { "builtin-name-lower", "tls_aes_128_gcm_sha256", sizeof("tls_aes_128_gcm_sha256") },
+    { "legacy-name", "ECDHE-RSA-AES128-GCM-SHA256", sizeof("ECDHE-RSA-AES128-GCM-SHA256") },
+    { "legacy-name-lower", "ecdhe-rsa-aes128-gcm-sha256", sizeof("ecdhe-rsa-aes128-gcm-sha256") },
+    { "legacy-stdname", "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256", sizeof("TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256") },
+    { "legacy-stdname-lower", "tls_ecdhe_rsa_with_aes_128_gcm_sha256", sizeof("tls_ecdhe_rsa_with_aes_128_gcm_sha256") },
+    { "space-name", "TLS TEST", sizeof("TLS TEST") },
+    { "bang-name", "!", sizeof("!") },
+    { "tilde-name", "~", sizeof("~") },
+    { "delete-name", "TLS\x7f", sizeof("TLS\x7f") },
+    { "nonascii-name", "TLS\x80", sizeof("TLS\x80") },
+    { "embedded-nul-name", "TLS\0X", sizeof("TLS\0X") - 1 }
+};
+
+/* Algorithm substitutions share the normal UTF8_STRING representation. */
+static const struct {
+    const char *mode;
+    size_t param_index;
+    const char *name;
+} ciphersuite_algorithm_modes[] = {
+    { "valid-limit", TLS_CIPHERSUITE_AEAD_PARAM, TLS_TEST_LIMITED_AEAD128_NAME },
+    { "non-aead", TLS_CIPHERSUITE_AEAD_PARAM, "AES-128-ECB" },
+    { "ccm", TLS_CIPHERSUITE_AEAD_PARAM, "AES-128-CCM" },
+    { "unavailable-aead", TLS_CIPHERSUITE_AEAD_PARAM, "TLS-TEST-NO-SUCH-AEAD" },
+    { "unavailable-digest", TLS_CIPHERSUITE_DIGEST_PARAM, "TLS-TEST-NO-SUCH-DIGEST" },
+    { "oversized-key", TLS_CIPHERSUITE_AEAD_PARAM, TLS_TEST_OVERSIZED_AEAD_NAME },
+    { "bad-digest", TLS_CIPHERSUITE_DIGEST_PARAM, "SHA2-512" },
+    { "oversized-digest", TLS_CIPHERSUITE_DIGEST_PARAM, TLS_TEST_OVERSIZED_DIGEST_NAME },
+    { "oversized-digest-sha384", TLS_CIPHERSUITE_DIGEST_PARAM, TLS_TEST_OVERSIZED_DIGEST_NAME }
+};
+
+/* Values are literal, including zero; malformed representations are separate. */
+static const struct {
+    const char *mode;
+    size_t param_index;
+    unsigned int value;
+} ciphersuite_uint_modes[] = {
+    { "zero-codepoint", TLS_CIPHERSUITE_CODEPOINT_PARAM, 0 },
+    { "non-private-codepoint", TLS_CIPHERSUITE_CODEPOINT_PARAM, 0xfea0 },
+    { "grease-codepoint", TLS_CIPHERSUITE_CODEPOINT_PARAM, 0x0a0a },
+    { "builtin-codepoint", TLS_CIPHERSUITE_CODEPOINT_PARAM, 0x1301 },
+    { "bad-tag-length", TLS_CIPHERSUITE_TAGLEN_PARAM, EVP_GCM_TLS_TAG_LEN - 1 },
+    { "low-security", TLS_CIPHERSUITE_SECBITS_PARAM, 64 },
+    { "excess-security", TLS_CIPHERSUITE_SECBITS_PARAM, 256 }
+};
+
+/*
+ * Describe normal profiles and callback sequences. Omitted fields retain the
+ * base profile. Zero-valued scalars and malformed parameters are tested by the
+ * separate tables above, where zero never means "use the default".
+ */
+static const struct {
+    const char *mode;
+    const char *name;
+    unsigned int codepoint;
+    const char *aead;
+    const char *digest;
+    unsigned int secbits;
+    int emit_base; /* Emit the unmodified descriptor before the described one. */
+    int abort_after; /* Return failure after the callback, even if accepted. */
+} ciphersuite_sequence_modes[] = {
+    { .mode = "valid" },
+    { .mode = "valid-composed", .name = "TLS_TEST_COMPOSED_AES_128_GCM_SHA256", .aead = "AES-128-GCM", .digest = "SHA2-256" },
+    { .mode = "valid-sha384", .name = "TLS_TEST_PROVIDER_AES_256_GCM_SHA384", .codepoint = 0xffa2, .aead = TLS_TEST_AEAD256_NAME, .digest = TLS_TEST_SHA384_NAME, .secbits = 256 },
+    { .mode = "valid-both", .name = "TLS_TEST_PROVIDER_AES_256_GCM_SHA384", .codepoint = 0xffa2, .aead = TLS_TEST_AEAD256_NAME, .digest = TLS_TEST_SHA384_NAME, .secbits = 256, .emit_base = 1 },
+    { .mode = "valid-conflicting", .aead = TLS_TEST_AEAD256_NAME, .digest = TLS_TEST_SHA384_NAME, .secbits = 256 },
+    { .mode = "valid-two", .name = "TLS_TEST_PROVIDER_AES_128_GCM_SHA256_B", .codepoint = 0xffa1, .emit_base = 1 },
+    { .mode = "duplicate-descriptor", .emit_base = 1 },
+    { .mode = "duplicate-codepoint",
+        .name = "TLS_TEST_PROVIDER_AES_128_GCM_SHA256_B",
+        .emit_base = 1 },
+    { .mode = "duplicate-name", .name = "tls_test_provider_aes_128_gcm_sha256", .codepoint = 0xffa1, .emit_base = 1 },
+    { .mode = "valid-then-invalid",
+        .name = "TLS_TEST_PROVIDER_AES_128_GCM_SHA256_B",
+        .codepoint = 0xffa1,
+        .digest = "SHA2-512",
+        .emit_base = 1 },
+    { .mode = "valid-then-abort", .abort_after = 1 }
+};
+
+/**
+ * @brief Apply ordinary profile substitutions and emit a callback sequence.
+ * @param index Entry in ciphersuite_sequence_modes.
+ * @param params Mutable copy of the base descriptor.
+ * @param cb Descriptor consumer.
+ * @param arg Opaque consumer argument.
+ * @returns Callback result, or 0 for a requested outer abort.
+ */
+static int tls_ciphersuite_emit_sequence(size_t index, OSSL_PARAM params[],
+    OSSL_CALLBACK *cb, void *arg)
+{
+    unsigned int codepoint = ciphersuite_sequence_modes[index].codepoint;
+    unsigned int secbits = ciphersuite_sequence_modes[index].secbits;
+    const char *name = ciphersuite_sequence_modes[index].name;
+    const char *aead = ciphersuite_sequence_modes[index].aead;
+    const char *digest = ciphersuite_sequence_modes[index].digest;
+    int ret;
+
+    if (ciphersuite_sequence_modes[index].emit_base && cb(params, arg) == 0)
+        return 0;
+    if (name != NULL)
+        params[TLS_CIPHERSUITE_NAME_PARAM] = OSSL_PARAM_construct_utf8_string(
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_NAME, (char *)name, strlen(name) + 1);
+    if (codepoint != 0)
+        params[TLS_CIPHERSUITE_CODEPOINT_PARAM].data = &codepoint;
+    if (aead != NULL)
+        params[TLS_CIPHERSUITE_AEAD_PARAM] = OSSL_PARAM_construct_utf8_string(
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_AEAD, (char *)aead, strlen(aead) + 1);
+    if (digest != NULL)
+        params[TLS_CIPHERSUITE_DIGEST_PARAM] = OSSL_PARAM_construct_utf8_string(
+            OSSL_CAPABILITY_TLS_CIPHERSUITE_DIGEST, (char *)digest, strlen(digest) + 1);
+    if (secbits != 0)
+        params[TLS_CIPHERSUITE_SECBITS_PARAM].data = &secbits;
+    ret = cb(params, arg);
+    return ciphersuite_sequence_modes[index].abort_after ? 0 : ret;
+}
+
+/**
+ * @brief Emit the descriptor or callback sequence selected by a test mode.
+ * @param pctx Provider context holding the requested mode.
+ * @param cb Consumer of each descriptor, including deliberately invalid ones.
+ * @param arg Opaque consumer argument.
+ * @returns Capability status; modes may deliberately abort after a callback.
+ */
+static int tls_prov_get_ciphersuites(PROV_XOR_CTX *pctx,
+    OSSL_CALLBACK *cb, void *arg)
+{
+    const char *mode = pctx->tls_ciphersuite_mode;
+    OSSL_PARAM params[OSSL_NELEM(tls_ciphersuite_params) + 1];
+    char max_name[256], overlong_name[257], many_name[64], one_byte_name = 'X';
+    unsigned char one_byte_uint = 1;
+    unsigned int value;
+    size_t j;
+    int i, count;
+    /* Exact data sizes exercise the stricter capability string contract. */
+    const struct {
+        const char *mode;
+        size_t param_index;
+        const char *data;
+        size_t data_size;
+    } string_size_modes[] = {
+        { "unterminated-name", TLS_CIPHERSUITE_NAME_PARAM,
+            tls_ciphersuite_name, sizeof(tls_ciphersuite_name) - 1 },
+        { "unterminated-max-name", TLS_CIPHERSUITE_NAME_PARAM,
+            overlong_name, sizeof(overlong_name) - 1 },
+        { "max-name", TLS_CIPHERSUITE_NAME_PARAM, max_name, sizeof(max_name) },
+        { "overlong-name", TLS_CIPHERSUITE_NAME_PARAM, overlong_name, sizeof(overlong_name) },
+        { "null-name-data", TLS_CIPHERSUITE_NAME_PARAM, NULL, sizeof(tls_ciphersuite_name) },
+        { "zero-name-size", TLS_CIPHERSUITE_NAME_PARAM, tls_ciphersuite_name, 0 },
+        { "oversized-name-size", TLS_CIPHERSUITE_NAME_PARAM, &one_byte_name, SIZE_MAX },
+        { "max-aead-name", TLS_CIPHERSUITE_AEAD_PARAM, max_name, sizeof(max_name) },
+        { "overlong-aead-name", TLS_CIPHERSUITE_AEAD_PARAM, overlong_name, sizeof(overlong_name) },
+        { "max-digest-name", TLS_CIPHERSUITE_DIGEST_PARAM, max_name, sizeof(max_name) },
+        { "overlong-digest-name", TLS_CIPHERSUITE_DIGEST_PARAM, overlong_name, sizeof(overlong_name) }
+    };
+
+    if (mode == NULL || strcmp(mode, "unsupported") == 0)
+        return 0;
+    if (strcmp(mode, "empty") == 0)
+        return 1;
+    if (strcmp(mode, "capability-error") == 0) {
+        ERR_raise(ERR_LIB_USER, ERR_R_INTERNAL_ERROR);
+        return 0;
+    }
+
+    memcpy(params, tls_ciphersuite_params, sizeof(tls_ciphersuite_params));
+    for (j = 0; j < OSSL_NELEM(ciphersuite_name_modes); j++) {
+        if (strcmp(mode, ciphersuite_name_modes[j].mode) == 0) {
+            params[TLS_CIPHERSUITE_NAME_PARAM].data = (void *)ciphersuite_name_modes[j].value;
+            params[TLS_CIPHERSUITE_NAME_PARAM].data_size = ciphersuite_name_modes[j].value_len;
+            return cb(params, arg);
+        }
+    }
+
+    for (j = 0; j < OSSL_NELEM(ciphersuite_algorithm_modes); j++) {
+        if (strcmp(mode, ciphersuite_algorithm_modes[j].mode) == 0) {
+            OSSL_PARAM *param = &params[ciphersuite_algorithm_modes[j].param_index];
+            const char *name = ciphersuite_algorithm_modes[j].name;
+
+            *param = OSSL_PARAM_construct_utf8_string(param->key,
+                (char *)name, strlen(name) + 1);
+            return cb(params, arg);
+        }
+    }
+
+    memset(max_name, 'A', sizeof(max_name) - 1);
+    max_name[sizeof(max_name) - 1] = '\0';
+    memset(overlong_name, 'A', sizeof(overlong_name) - 1);
+    overlong_name[sizeof(overlong_name) - 1] = '\0';
+    for (j = 0; j < OSSL_NELEM(string_size_modes); j++) {
+        if (strcmp(mode, string_size_modes[j].mode) == 0) {
+            params[string_size_modes[j].param_index].data = (void *)string_size_modes[j].data;
+            params[string_size_modes[j].param_index].data_size = string_size_modes[j].data_size;
+            return cb(params, arg);
+        }
+    }
+
+    for (j = 0; j < OSSL_NELEM(malformed_uint_modes); j++) {
+        OSSL_PARAM *param;
+
+        if (strcmp(mode, malformed_uint_modes[j].mode) != 0)
+            continue;
+        param = &params[malformed_uint_modes[j].param_index];
+        switch (malformed_uint_modes[j].kind) {
+        case MALFORMED_UINT_NULL_DATA:
+            param->data = NULL;
+            break;
+        case MALFORMED_UINT_ZERO_SIZE:
+            param->data_size = 0;
+            break;
+        case MALFORMED_UINT_OVERSIZED_SIZE:
+            param->data = &one_byte_uint;
+            param->data_size = SIZE_MAX;
+            break;
+        case MALFORMED_UINT_WRONG_TYPE:
+            param->data_type = OSSL_PARAM_UTF8_STRING;
+            break;
+        }
+        return cb(params, arg);
+    }
+
+    for (j = 0; j < OSSL_NELEM(ciphersuite_uint_modes); j++) {
+        if (strcmp(mode, ciphersuite_uint_modes[j].mode) == 0) {
+            value = ciphersuite_uint_modes[j].value;
+            params[ciphersuite_uint_modes[j].param_index].data = &value;
+            return cb(params, arg);
+        }
+    }
+
+    for (j = 0; j < OSSL_NELEM(ciphersuite_sequence_modes); j++)
+        if (strcmp(mode, ciphersuite_sequence_modes[j].mode) == 0)
+            return tls_ciphersuite_emit_sequence(j, params, cb, arg);
+
+    if (strcmp(mode, "valid-many") == 0 || strcmp(mode, "too-many") == 0) {
+        count = TLS_TEST_MANY_COUNT + (strcmp(mode, "too-many") == 0);
+        for (i = 0; i < count; i++) {
+            snprintf(many_name, sizeof(many_name), "TLS_TEST_PROVIDER_INDEX_%03d", i);
+            value = 0xff00U + TLS_TEST_MANY_COUNT - 1U - (unsigned int)i;
+            params[TLS_CIPHERSUITE_NAME_PARAM].data = many_name;
+            params[TLS_CIPHERSUITE_NAME_PARAM].data_size = strlen(many_name) + 1;
+            params[TLS_CIPHERSUITE_CODEPOINT_PARAM].data = &value;
+            if (cb(params, arg) == 0)
+                return 0;
+        }
+        return 1;
+    }
+
+    if (strcmp(mode, "valid-unknown-param") == 0) {
+        params[TLS_CIPHERSUITE_END_PARAM] = OSSL_PARAM_construct_utf8_string(
+            "tls-test-optional", tls_ciphersuite_name, 0);
+        params[TLS_CIPHERSUITE_END_PARAM + 1] = OSSL_PARAM_construct_end();
+    } else if (strcmp(mode, "unterminated-algorithm-names") == 0) {
+        params[TLS_CIPHERSUITE_AEAD_PARAM].data_size = sizeof(tls_ciphersuite_aead) - 1;
+        params[TLS_CIPHERSUITE_DIGEST_PARAM].data_size = sizeof(tls_ciphersuite_digest) - 1;
+    } else if (strcmp(mode, "missing-param") == 0) {
+        params[TLS_CIPHERSUITE_SECBITS_PARAM].key = "tls-test-optional";
+    } else if (strcmp(mode, "wrong-type") == 0) {
+        params[TLS_CIPHERSUITE_NAME_PARAM].data_type = OSSL_PARAM_OCTET_STRING;
+    } else {
+        return 0;
+    }
+    return cb(params, arg);
+}
+
 static int tls_prov_get_capabilities(void *provctx, const char *capability,
     OSSL_CALLBACK *cb, void *arg)
 {
+    PROV_XOR_CTX *pctx = provctx;
+    OSSL_PARAM group_params[OSSL_NELEM(xor_group_params)];
+    OSSL_PARAM kemgroup_params[OSSL_NELEM(xor_kemgroup_params)];
+    OSSL_PARAM sig_nohash_params[OSSL_NELEM(xor_sig_nohash_params)];
+    OSSL_PARAM sig_hash_params[OSSL_NELEM(xor_sig_hash_params)];
     int ret = 0;
     int i;
-    const char *dummy_base = "dummy";
-    const size_t dummy_name_max_size = strlen(dummy_base) + 3;
 
     if (strcmp(capability, "TLS-GROUP") == 0) {
+        memcpy(group_params, xor_group_params, sizeof(group_params));
+        memcpy(kemgroup_params, xor_kemgroup_params,
+            sizeof(kemgroup_params));
+        group_params[3].data = &pctx->tls_alg_ids[0];
+        kemgroup_params[3].data = &pctx->tls_alg_ids[1];
+
         /* Register our 2 groups */
-        OPENSSL_assert(xor_group.group_id >= 65024
-            && xor_group.group_id < 65279 - NUM_DUMMY_GROUPS);
-        ret = cb(xor_group_params, arg);
-        ret &= cb(xor_kemgroup_params, arg);
+        if (pctx->tls_alg_ids[0] < 65024
+            || pctx->tls_alg_ids[0] >= 65280 - NUM_DUMMY_GROUPS)
+            return 0;
+        ret = cb(group_params, arg);
+        ret &= cb(kemgroup_params, arg);
 
         /*
          * Now register some dummy groups > GROUPLIST_INCREMENT (== 40) as defined
@@ -421,41 +1393,38 @@ static int tls_prov_get_capabilities(void *provctx, const char *capability,
             OSSL_PARAM dummygroup[OSSL_NELEM(xor_group_params)];
             unsigned int dummygroup_id;
 
-            memcpy(dummygroup, xor_group_params, sizeof(xor_group_params));
+            memcpy(dummygroup, group_params, sizeof(group_params));
 
-            /* Give the dummy group a unique name */
-            if (dummy_group_names[i] == NULL) {
-                dummy_group_names[i] = OPENSSL_zalloc(dummy_name_max_size);
-                if (dummy_group_names[i] == NULL)
-                    return 0;
-                snprintf(dummy_group_names[i],
-                    dummy_name_max_size,
-                    "%s%d", dummy_base, i);
-            }
-            dummygroup[0].data = dummy_group_names[i];
-            dummygroup[0].data_size = strlen(dummy_group_names[i]) + 1;
+            dummygroup[0].data = pctx->dummy_group_names[i];
+            dummygroup[0].data_size
+                = strlen(pctx->dummy_group_names[i]) + 1;
             /* assign unique group IDs also to dummy groups for registration */
-            dummygroup_id = 65279 - NUM_DUMMY_GROUPS + i;
+            dummygroup_id = 65280 - NUM_DUMMY_GROUPS + i;
             dummygroup[3].data = (unsigned char *)&dummygroup_id;
             ret &= cb(dummygroup, arg);
         }
     }
 
     if (strcmp(capability, "TLS-SIGALG") == 0) {
-        ret = cb(xor_sig_nohash_params, arg);
-        ret &= cb(xor_sig_hash_params, arg);
+        memcpy(sig_nohash_params, xor_sig_nohash_params,
+            sizeof(sig_nohash_params));
+        memcpy(sig_hash_params, xor_sig_hash_params,
+            sizeof(sig_hash_params));
+        sig_nohash_params[3].data = &pctx->tls_alg_ids[2];
+        sig_hash_params[4].data = &pctx->tls_alg_ids[3];
+        ret = cb(sig_nohash_params, arg);
+        ret &= cb(sig_hash_params, arg);
         ret &= cb(xor_sig_12_params, arg);
     }
+    if (strcmp(capability, "TLS-CIPHERSUITE") == 0)
+        ret = tls_prov_get_ciphersuites(pctx, cb, arg);
     return ret;
 }
 
-typedef struct {
-    OSSL_LIB_CTX *libctx;
-} PROV_XOR_CTX;
-
 static PROV_XOR_CTX *xor_newprovctx(OSSL_LIB_CTX *libctx)
 {
-    PROV_XOR_CTX *prov_ctx = OPENSSL_malloc(sizeof(PROV_XOR_CTX));
+    PROV_XOR_CTX *prov_ctx = OPENSSL_zalloc(sizeof(*prov_ctx));
+    int i;
 
     if (prov_ctx == NULL)
         return NULL;
@@ -465,10 +1434,11 @@ static PROV_XOR_CTX *xor_newprovctx(OSSL_LIB_CTX *libctx)
         return NULL;
     }
     prov_ctx->libctx = libctx;
+    for (i = 0; i < NUM_DUMMY_GROUPS; i++)
+        snprintf(prov_ctx->dummy_group_names[i],
+            sizeof(prov_ctx->dummy_group_names[i]), "dummy%d", i);
     return prov_ctx;
 }
-
-#define PROV_XOR_LIBCTX_OF(provctx) (((PROV_XOR_CTX *)provctx)->libctx)
 
 /*
  * Dummy "XOR" Key Exchange and signature algorithm. We just xor the
@@ -951,7 +1921,7 @@ static void *xor_gen_init(void *provctx, int selection,
         return NULL;
 
     gctx->selection = selection;
-    gctx->libctx = PROV_XOR_LIBCTX_OF(provctx);
+    gctx->libctx = tls_provider_get0_libctx(provctx);
 
     if (!xor_gen_set_params(gctx, params)) {
         OPENSSL_free(gctx);
@@ -1393,7 +2363,7 @@ static X509_SIG *p8info_to_encp8(PKCS8_PRIV_KEY_INFO *p8info,
     X509_SIG *p8 = NULL;
     char kstr[PEM_BUFSIZE];
     size_t klen = 0;
-    OSSL_LIB_CTX *libctx = PROV_XOR_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = tls_provider_get0_libctx(ctx->provctx);
 
     if (ctx->cipher == NULL || ctx->pwcb == NULL)
         return NULL;
@@ -1771,7 +2741,7 @@ static const OSSL_PARAM *key2any_settable_ctx_params(ossl_unused void *provctx)
 static int key2any_set_ctx_params(void *vctx, const OSSL_PARAM params[])
 {
     struct key2any_ctx_st *ctx = vctx;
-    OSSL_LIB_CTX *libctx = PROV_XOR_LIBCTX_OF(ctx->provctx);
+    OSSL_LIB_CTX *libctx = tls_provider_get0_libctx(ctx->provctx);
     const OSSL_PARAM *cipherp = OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_CIPHER);
     const OSSL_PARAM *propsp = OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_PROPERTIES);
     const OSSL_PARAM *save_paramsp = OSSL_PARAM_locate_const(params, OSSL_ENCODER_PARAM_SAVE_PARAMETERS);
@@ -2237,7 +3207,7 @@ static void *xor_der2key_decode_p8(const unsigned char **input_der,
     if ((p8inf = d2i_PKCS8_PRIV_KEY_INFO(NULL, input_der, input_der_len)) != NULL
         && PKCS8_pkey_get0(NULL, NULL, NULL, &alg, p8inf)
         && OBJ_obj2nid(alg->algorithm) == ctx->desc->evp_type)
-        key = key_from_pkcs8(p8inf, PROV_XOR_LIBCTX_OF(ctx->provctx), NULL);
+        key = key_from_pkcs8(p8inf, tls_provider_get0_libctx(ctx->provctx), NULL);
     PKCS8_PRIV_KEY_INFO_free(p8inf);
 
     return key;
@@ -3137,6 +4107,8 @@ static const OSSL_ALGORITHM tls_prov_signature[] = {
 static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
     int *no_cache)
 {
+    PROV_XOR_CTX *pctx = provctx;
+
     *no_cache = 0;
     switch (operation_id) {
     case OSSL_OP_KEYMGMT:
@@ -3151,21 +4123,29 @@ static const OSSL_ALGORITHM *tls_prov_query(void *provctx, int operation_id,
         return tls_prov_decoder;
     case OSSL_OP_SIGNATURE:
         return tls_prov_signature;
+    case OSSL_OP_CIPHER:
+        return tls_prov_ciphers;
+    case OSSL_OP_DIGEST:
+        if (pctx->tls_ciphersuite_mode != NULL) {
+            if (strcmp(pctx->tls_ciphersuite_mode, "oversized-digest") == 0)
+                return tls_prov_digests_with_oversized_sha256;
+            if (strcmp(pctx->tls_ciphersuite_mode,
+                    "oversized-digest-sha384")
+                == 0)
+                return tls_prov_digests_with_oversized_sha384;
+        }
+        return tls_prov_digests;
     }
     return NULL;
 }
 
 static void tls_prov_teardown(void *provctx)
 {
-    int i;
     PROV_XOR_CTX *pctx = (PROV_XOR_CTX *)provctx;
 
+    release_tls_alg_ids(pctx);
     OSSL_LIB_CTX_free(pctx->libctx);
-
-    for (i = 0; i < NUM_DUMMY_GROUPS; i++) {
-        OPENSSL_free(dummy_group_names[i]);
-        dummy_group_names[i] = NULL;
-    }
+    OPENSSL_free(pctx->tls_ciphersuite_mode);
     OPENSSL_free(pctx);
 }
 
@@ -3177,35 +4157,91 @@ static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
     OSSL_DISPATCH_END
 };
 
-static unsigned int randomize_tls_alg_id(OSSL_LIB_CTX *libctx)
+#define TLS_TEST_PRIVATE_ID_FIRST 65024U
+#define TLS_TEST_PRIVATE_ID_END 65280U
+#define TLS_TEST_RANDOM_ID_END (TLS_TEST_PRIVATE_ID_END - NUM_DUMMY_GROUPS)
+#define TLS_TEST_RANDOM_ID_COUNT \
+    (TLS_TEST_RANDOM_ID_END - TLS_TEST_PRIVATE_ID_FIRST)
+
+static unsigned int tls_alg_ids_in_use[TLS_TEST_RANDOM_ID_COUNT];
+static size_t tls_alg_ids_in_use_count;
+static CRYPTO_ONCE tls_alg_ids_lock_once = CRYPTO_ONCE_STATIC_INIT;
+static CRYPTO_RWLOCK *tls_alg_ids_lock;
+
+DEFINE_RUN_ONCE_STATIC(tls_alg_ids_init_lock)
+{
+    return (tls_alg_ids_lock = CRYPTO_THREAD_lock_new()) != NULL;
+}
+
+static int tls_alg_ids_write_lock(void)
+{
+    return RUN_ONCE(&tls_alg_ids_lock_once, tls_alg_ids_init_lock)
+        && CRYPTO_THREAD_write_lock(tls_alg_ids_lock);
+}
+
+static void release_tls_alg_ids(PROV_XOR_CTX *provctx)
+{
+    size_t i, j;
+
+    if (provctx == NULL || provctx->tls_alg_id_count == 0)
+        return;
+    if (!tls_alg_ids_write_lock())
+        return;
+    for (i = 0; i < provctx->tls_alg_id_count; i++) {
+        for (j = 0; j < tls_alg_ids_in_use_count; j++) {
+            if (tls_alg_ids_in_use[j] == provctx->tls_alg_ids[i]) {
+                tls_alg_ids_in_use[j]
+                    = tls_alg_ids_in_use[--tls_alg_ids_in_use_count];
+                break;
+            }
+        }
+    }
+    provctx->tls_alg_id_count = 0;
+    CRYPTO_THREAD_unlock(tls_alg_ids_lock);
+}
+
+static unsigned int randomize_tls_alg_id(PROV_XOR_CTX *provctx)
 {
     /*
      * Randomise the id we're going to use to ensure we don't interoperate
      * with anything but ourselves.
      */
     unsigned int id;
-    static unsigned int mem[10] = { 0 };
-    static int in_mem = 0;
-    int i;
+    size_t i;
 
+    if (provctx->tls_alg_id_count >= OSSL_NELEM(provctx->tls_alg_ids))
+        return 0;
 retry:
-    if (RAND_bytes_ex(libctx, (unsigned char *)&id, sizeof(id), 0) <= 0)
+    if (RAND_bytes_ex(provctx->libctx, (unsigned char *)&id, sizeof(id), 0)
+        <= 0)
         return 0;
     /*
      * Ensure id is within the IANA Reserved for private use range
-     * (65024-65279).
+     * (65024-65279 inclusive).
      * Carve out NUM_DUMMY_GROUPS ids for properly registering those.
      */
-    id %= 65279 - NUM_DUMMY_GROUPS - 65024;
-    id += 65024;
+    id %= TLS_TEST_RANDOM_ID_COUNT;
+    id += TLS_TEST_PRIVATE_ID_FIRST;
 
-    /* Ensure we did not already issue this id */
-    for (i = 0; i < in_mem; i++)
-        if (mem[i] == id)
+    if (!tls_alg_ids_write_lock())
+        return 0;
+    if (tls_alg_ids_in_use_count >= TLS_TEST_RANDOM_ID_COUNT) {
+        CRYPTO_THREAD_unlock(tls_alg_ids_lock);
+        return 0;
+    }
+
+    /* Ensure we did not already issue this id. */
+    for (i = 0; i < tls_alg_ids_in_use_count; i++) {
+        if (tls_alg_ids_in_use[i] == id) {
+            CRYPTO_THREAD_unlock(tls_alg_ids_lock);
             goto retry;
+        }
+    }
 
     /* Add this id to the list of ids issued by this function */
-    mem[in_mem++] = id;
+    tls_alg_ids_in_use[tls_alg_ids_in_use_count++] = id;
+    provctx->tls_alg_ids[provctx->tls_alg_id_count++] = id;
+    CRYPTO_THREAD_unlock(tls_alg_ids_lock);
 
     return id;
 }
@@ -3220,9 +4256,15 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
 #else
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_from_dispatch(handle, in);
 #endif /* defined(TLS_PROVIDER_CHILD_LIBCTX) */
+    OSSL_FUNC_core_get_params_fn *c_get_params = NULL;
     OSSL_FUNC_core_obj_create_fn *c_obj_create = NULL;
     OSSL_FUNC_core_obj_add_sigid_fn *c_obj_add_sigid = NULL;
     PROV_XOR_CTX *xor_prov_ctx = xor_newprovctx(libctx);
+    char *mode = NULL;
+    OSSL_PARAM mode_params[] = {
+        OSSL_PARAM_utf8_ptr("tls-ciphersuite-mode", &mode, 0),
+        OSSL_PARAM_END
+    };
 
     if (libctx == NULL || xor_prov_ctx == NULL)
         goto err;
@@ -3233,14 +4275,18 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
      * Randomise the group_id and code_points we're going to use to ensure we
      * don't interoperate with anything but ourselves.
      */
-    xor_group.group_id = randomize_tls_alg_id(libctx);
-    xor_kemgroup.group_id = randomize_tls_alg_id(libctx);
-    xor_sigalg.code_point = randomize_tls_alg_id(libctx);
-    xor_sigalg_hash.code_point = randomize_tls_alg_id(libctx);
+    if (randomize_tls_alg_id(xor_prov_ctx) == 0
+        || randomize_tls_alg_id(xor_prov_ctx) == 0
+        || randomize_tls_alg_id(xor_prov_ctx) == 0
+        || randomize_tls_alg_id(xor_prov_ctx) == 0)
+        goto err;
 
     /* Retrieve registration functions */
     for (; in->function_id != 0; in++) {
         switch (in->function_id) {
+        case OSSL_FUNC_CORE_GET_PARAMS:
+            c_get_params = OSSL_FUNC_core_get_params(in);
+            break;
         case OSSL_FUNC_CORE_OBJ_CREATE:
             c_obj_create = OSSL_FUNC_core_obj_create(in);
             break;
@@ -3252,6 +4298,11 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
             break;
         }
     }
+
+    if (c_get_params != NULL && c_get_params(handle, mode_params)
+        && mode != NULL
+        && (xor_prov_ctx->tls_ciphersuite_mode = OPENSSL_strdup(mode)) == NULL)
+        goto err;
 
     if (c_obj_create == NULL || c_obj_add_sigid == NULL) {
         ERR_raise(ERR_LIB_USER, XORPROV_R_OBJ_CREATE_ERR);
@@ -3286,6 +4337,9 @@ int tls_provider_init(const OSSL_CORE_HANDLE *handle,
     return 1;
 
 err:
+    release_tls_alg_ids(xor_prov_ctx);
+    if (xor_prov_ctx != NULL)
+        OPENSSL_free(xor_prov_ctx->tls_ciphersuite_mode);
     OPENSSL_free(xor_prov_ctx);
     *provctx = NULL;
     OSSL_LIB_CTX_free(libctx);
