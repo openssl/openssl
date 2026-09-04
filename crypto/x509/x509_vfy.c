@@ -1989,7 +1989,8 @@ end:
 static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons)
 {
-    int i;
+    STACK_OF(DIST_POINT) *crldp = NULL;
+    int i, ret = 0;
 
     if ((crl->idp_flags & IDP_ONLYATTR) != 0)
         return 0;
@@ -2000,15 +2001,19 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         if ((crl->idp_flags & IDP_ONLYCA) != 0)
             return 0;
     }
+    /* Not cached: decode the extension now; if it is broken nothing matches */
+    if (ossl_x509_decode_crldp(x, &crldp) != 1)
+        goto out;
     *preasons = crl->idp_reasons;
-    for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
-        DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
+    for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
+        DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
 
         if (crldp_check_crlissuer(dp, crl, crl_score)) {
             if (crl->idp == NULL
                 || idp_check_dp(dp->distpoint, crl->idp->distpoint)) {
                 *preasons &= dp->dp_reasons;
-                return 1;
+                ret = 1;
+                goto out;
             }
         }
     }
@@ -2019,9 +2024,12 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
      * cRLIssuer fields omitted and a distribution point name consisting of
      * the certificate issuer name and any issuerAltName entries.
      */
-    return (crl_score & CRL_SCORE_ISSUER_NAME) != 0
+    ret = (crl_score & CRL_SCORE_ISSUER_NAME) != 0
         && (crl->idp == NULL || crl->idp->distpoint == NULL
             || idp_check_issuer(crl->idp->distpoint, x));
+out:
+    sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
+    return ret;
 }
 
 /*

@@ -11,6 +11,7 @@
 
 #include <openssl/safestack.h>
 #include <openssl/x509_vfy.h>
+#include <openssl/x509v3.h>
 
 #include "internal/refcount.h"
 #include "internal/hashtable.h"
@@ -189,6 +190,18 @@ DEFINE_STACK_OF(STACK_OF_X509_NAME_ENTRY)
 int ossl_ignored_x509_extension(const X509_EXTENSION *ex, int flags);
 int ossl_x509_likely_issued(const X509 *issuer, const X509 *subject);
 int ossl_x509_signing_allowed(const X509 *issuer, const X509 *subject);
+/**
+ * @brief Decode and prepare the CRL distribution points of a certificate.
+ * Decodes the cRLDistributionPoints extension of x and completes each
+ * DIST_POINT with its reason mask and its full distribution point name, as
+ * the CRL matching code expects them. The caller frees *pcrldp with
+ * sk_DIST_POINT_pop_free(). *pcrldp is NULL when the extension is absent.
+ * @param x the certificate whose extension is decoded
+ * @param pcrldp receives the decoded distribution points, or NULL
+ * @returns 1 on success, 0 if the extension is invalid, -1 on an internal
+ *          error such as a memory allocation failure
+ */
+int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);

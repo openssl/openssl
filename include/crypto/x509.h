@@ -205,7 +205,6 @@ struct x509_st {
     ASN1_OCTET_STRING *skid;
     AUTHORITY_KEYID *akid;
     X509_POLICY_CACHE *policy_cache;
-    STACK_OF(DIST_POINT) *crldp;
     STACK_OF(GENERAL_NAME) *altname;
     NAME_CONSTRAINTS *nc;
 #ifndef OPENSSL_NO_RFC3779
