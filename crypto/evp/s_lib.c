@@ -359,6 +359,8 @@ int EVP_SKEY_get0_algorithm_id(const EVP_SKEY *skey,
     const unsigned char **oid, size_t *oid_len,
     const unsigned char **params, size_t *params_len)
 {
+    int ret_oid = 0, ret_params = 0;
+
     if (skey == NULL) {
         ERR_raise(ERR_LIB_EVP, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
