@@ -535,8 +535,15 @@ int CMS_verify(CMS_ContentInfo *cms, const STACK_OF(X509) *certs,
     else
         ret = n == scount; /* All must be successful */
 err:
+    /*
+     * On failure no signature must be reported as verified.  Iterate over all
+     * SignerInfos, not just the first 'scount': when we bail out early because
+     * a signer certificate could not be found, 'scount' is smaller than the
+     * number of signers and the trailing ones would otherwise keep the
+     * verify_result = 1 ("so far, fine") set in the init loop above.
+     */
     if (!ret)
-        for (i = 0; i < scount; i++)
+        for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++)
             sk_CMS_SignerInfo_value(sinfos, i)->verify_result = 0;
     if (!(flags & SMIME_BINARY) && dcont) {
         do_free_upto(cmsbio, tmpout);

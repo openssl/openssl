@@ -12,6 +12,7 @@
 #include <openssl/pem.h>
 #include <openssl/cms.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/x509.h>
 #include "../crypto/cms/cms_local.h" /* for d.signedData and d.envelopedData */
 
@@ -328,6 +329,79 @@ static int test_CMS_add1_cert(void)
         && TEST_true(CMS_add1_cert(cms, cert)); /* add cert again */
 
     CMS_ContentInfo_free(cms);
+    return ret;
+}
+
+/*
+ * Regression test for GH #32612: when CMS_verify() bails out early because a
+ * signer certificate cannot be found, every SignerInfo must report
+ * CMS_VERIFY_RESULT == 0.  A two-signer message with no embedded certificates,
+ * verified against an empty store, used to leave the trailing signer(s) at 1
+ * ("so far, fine") because the cleanup loop only reset the first 'scount'
+ * (== signers whose cert was found == 0 here) entries.
+ */
+static int test_CMS_verify_result_no_signer_cert(void)
+{
+    CMS_ContentInfo *cms = NULL, *cms2 = NULL;
+    BIO *in = NULL, *out = NULL, *der = NULL;
+    X509_STORE *store = NULL;
+    STACK_OF(CMS_SignerInfo) *sinfos;
+    const unsigned char *p;
+    unsigned char *derbuf = NULL;
+    long derlen;
+    int i, ret = 0;
+
+    if (!TEST_ptr(in = BIO_new_mem_buf("Hello World\n", -1))
+            || !TEST_ptr(out = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(der = BIO_new(BIO_s_mem()))
+            || !TEST_ptr(store = X509_STORE_new()))
+        goto end;
+
+    /* two signers, neither certificate embedded */
+    if (!TEST_ptr(cms = CMS_sign(NULL, NULL, NULL, in,
+                                 CMS_BINARY | CMS_PARTIAL | CMS_NOCERTS))
+            || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
+            || !TEST_ptr(CMS_add1_signer(cms, cert, privkey, NULL, CMS_NOCERTS))
+            || !TEST_true(CMS_final(cms, in, NULL, CMS_BINARY)))
+        goto end;
+
+    /* round-trip through DER so no in-memory signer cert pointers linger */
+    if (!TEST_true(i2d_CMS_bio(der, cms)))
+        goto end;
+    derlen = BIO_get_mem_data(der, &derbuf);
+    p = derbuf;
+    if (!TEST_ptr(cms2 = d2i_CMS_ContentInfo(NULL, &p, derlen)))
+        goto end;
+
+    ERR_clear_error();
+    if (!TEST_int_eq(CMS_verify(cms2, NULL, store, NULL, out,
+                                CMS_BINARY | CMS_VERIFY_PARTIAL), 0)
+            || !TEST_int_eq(ERR_GET_REASON(ERR_peek_last_error()),
+                            CMS_R_SIGNER_CERTIFICATE_NOT_FOUND))
+        goto end;
+
+    sinfos = CMS_get0_SignerInfos(cms2);
+    if (!TEST_int_eq(sk_CMS_SignerInfo_num(sinfos), 2))
+        goto end;
+    for (i = 0; i < sk_CMS_SignerInfo_num(sinfos); i++) {
+        CMS_SignerInfo *si = sk_CMS_SignerInfo_value(sinfos, i);
+
+        if (!TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
+                             CMS_VERIFY_RESULT), 0)
+                || !TEST_int_eq(CMS_SignerInfo_get_verification_result(si,
+                                    CMS_VERIFY_CERT), 0))
+            goto end;
+    }
+
+    ret = 1;
+end:
+    ERR_clear_error();
+    CMS_ContentInfo_free(cms);
+    CMS_ContentInfo_free(cms2);
+    X509_STORE_free(store);
+    BIO_free(in);
+    BIO_free(out);
+    BIO_free(der);
     return ret;
 }
 
@@ -1001,6 +1075,7 @@ int setup_tests(void)
     ADD_TEST(test_short_mac_on_auth_envelope_data);
     ADD_TEST(test_CMS_add_standard_smimecap_ex);
     ADD_TEST(test_CMS_add1_cert);
+    ADD_TEST(test_CMS_verify_result_no_signer_cert);
     ADD_TEST(test_d2i_CMS_bio_NULL);
     ADD_TEST(test_CMS_set1_key_mem_leak);
     ADD_TEST(test_encrypted_data);
