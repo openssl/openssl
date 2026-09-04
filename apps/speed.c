@@ -432,6 +432,7 @@ static const OPT_PAIR rsa_choices[RSA_NUM] = {
 };
 
 static double rsa_results[RSA_NUM][4]; /* 4 ops: sign, verify, encrypt, decrypt */
+static int rsa_no_enc_dec = 0; /* used in do_multi() and speed_main() */
 
 #ifndef OPENSSL_NO_DH
 enum ff_params_t {
@@ -1866,7 +1867,6 @@ int speed_main(int argc, char **argv)
     unsigned int idx;
     int keylen = 0;
     int buflen;
-    int rsa_no_enc_dec = 0;
     unsigned long error, uh_error;
     size_t declen;
     BIGNUM *bn = NULL;
@@ -4899,7 +4899,14 @@ static int do_multi(int multi, int size_num)
                     d = atof(sstrsep(&p, sep));
                     rsa_results[k][1] += d;
 
+                    if (rsa_no_enc_dec)
+                        continue;
+
                     d = atof(sstrsep(&p, sep));
+                    if (d == 0) {
+                        rsa_no_enc_dec = 1;
+                        continue;
+                    }
                     rsa_results[k][2] += d;
 
                     d = atof(sstrsep(&p, sep));
