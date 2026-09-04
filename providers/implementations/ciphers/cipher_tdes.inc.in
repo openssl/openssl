@@ -16,8 +16,12 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                           ['OSSL_CIPHER_PARAM_KEYLEN',           'common.keylen', 'size_t'],
                           ['OSSL_CIPHER_PARAM_IVLEN',            'common.ivlen',  'size_t'],
                           ['OSSL_CIPHER_PARAM_BLOCK_SIZE',       'common.bsize',  'size_t'],
+                          ['OSSL_CIPHER_PARAM_AEAD',             'common.aead',   'int' ],
                           ['OSSL_CIPHER_PARAM_CUSTOM_IV',        'common.custiv', 'int'],
+                          ['OSSL_CIPHER_PARAM_CTS',              'common.cts',    'int' ],
+                          ['OSSL_CIPHER_PARAM_TLS1_MULTIBLOCK',  'common.mb',     'int' ],
                           ['OSSL_CIPHER_PARAM_HAS_RAND_KEY',     'common.rand',   'int'],
+                          ['OSSL_CIPHER_PARAM_ENCRYPT_THEN_MAC', 'common.etm',    'int' ],
                           ['OSSL_CIPHER_PARAM_DECRYPT_ONLY',     'decrypt',       'int'],
                          )); -}
 
