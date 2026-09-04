@@ -174,6 +174,13 @@ int X509_cmp(const X509 *a, const X509 *b)
             return 1;
         rv = memcmp(a->cert_info.enc.enc,
             b->cert_info.enc.enc, a->cert_info.enc.len);
+        if (rv != 0)
+            return rv < 0 ? -1 : 1;
+        /* Same TBS: the signature algorithm and signature must match too */
+        rv = X509_ALGOR_cmp(&a->sig_alg, &b->sig_alg);
+        if (rv != 0)
+            return rv < 0 ? -1 : 1;
+        rv = ASN1_STRING_cmp(&a->signature, &b->signature);
     }
     return rv < 0 ? -1 : rv > 0;
 }
