@@ -357,7 +357,7 @@ void bn_release(BIGNUM *b, int limbs)
     if (fixed_top)
         return;
 
-    bn_correct_top(b);
+    bn_correct_top_consttime(b);
 }
 
 OSSL_FN *bn_get_ossl_fn(const BIGNUM *bn)
