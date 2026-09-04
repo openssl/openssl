@@ -45,6 +45,8 @@ typedef struct sframe_list_st {
     unsigned int fin;
     /* Number of stream frames in the list. */
     size_t num_frames;
+    /* Max frames allowed in the list, 0 for no limit. */
+    size_t max_frames;
     /* Offset of data not yet dropped */
     uint64_t offset;
     /* Is head locked ? */
