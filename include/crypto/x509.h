@@ -414,6 +414,26 @@ int ossl_x509_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
 int ossl_x509_get_signature_info_ex(const X509 *x, int *mdnid, int *pknid,
     int *secbits, uint32_t *flags, OSSL_LIB_CTX *libctx, const char *propq);
 
+/**
+ * @brief Digest a certificate with its own signature digest, fetching from
+ *        @p libctx.
+ *
+ * Like X509_digest_sig(), but the digest is fetched from the given library
+ * context and property query rather than the certificate's own.
+ *
+ * @param cert the certificate to digest
+ * @param md_used where to store the digest used, owned by the caller;
+ *                may be NULL
+ * @param md_is_fallback where to store whether a fallback digest was used
+ *                       because the signature algorithm has none; may be NULL
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns the digest as a new ASN1_OCTET_STRING, or NULL on error
+ */
+ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
+    EVP_MD **md_used, int *md_is_fallback,
+    OSSL_LIB_CTX *libctx, const char *propq);
+
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
