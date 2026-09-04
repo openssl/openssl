@@ -432,8 +432,8 @@ STACK_OF(X509) *pkcs7_get0_certificates(const PKCS7 *p7)
     return NULL;
 }
 
-/* Set up the library context into any loaded structure that needs it. */
-void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
+/* Point the signer infos of a PKCS7 at its context */
+void ossl_pkcs7_SignerInfos_set_ctx(PKCS7 *p7)
 {
     int i;
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
@@ -482,7 +482,7 @@ int ossl_pkcs7_ctx_propagate(const PKCS7 *from, PKCS7 *to)
     if (!ossl_pkcs7_set1_propq(to, from->ctx.propq))
         return 0;
 
-    ossl_pkcs7_resolve_libctx(to);
+    ossl_pkcs7_SignerInfos_set_ctx(to);
     return 1;
 }
 
