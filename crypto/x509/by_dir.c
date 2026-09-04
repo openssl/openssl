@@ -346,9 +346,10 @@ static int get_cert_by_subject_ex(X509_LOOKUP *xl, X509_LOOKUP_TYPE type,
             /* unless OPENSSL_NO_POSIX_IO, gracefully skip found file if cert/CRL fails to load. */
 #ifndef OPENSSL_NO_POSIX_IO
             res = 1;
-#endif
+#else
             if (res == 0)
                 break;
+#endif
             k++;
         }
 
