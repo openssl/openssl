@@ -4736,6 +4736,116 @@ err:
     EVP_PKEY_free(remote_key);
     return ret;
 }
+
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_DSA)
+/*
+ * Regression test for issue 32541: the default DSA method's finish slot
+ * freed the cached Montgomery context without clearing the pointer, so
+ * warming the cache, then switching method, then freeing the key would
+ * free that cache twice.
+ */
+static int test_dsa_finish_set_method(void)
+{
+    DSA *dsa = NULL;
+    DSA_METHOD *method = NULL;
+    DSA_SIG *sig = NULL;
+    int testresult = 0;
+    unsigned char dgst[20];
+    /* Same seed as test/dsatest.c, for fast deterministic parameters */
+    static unsigned char seed[20] = {
+        0xd5, 0x01, 0x4e, 0x4b, 0x60, 0xef, 0x2b, 0xa8, 0xb6, 0x21,
+        0x1b, 0x40, 0x62, 0xba, 0x32, 0x24, 0xe0, 0x42, 0x7d, 0xd3
+    };
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(dsa = DSA_new())
+        || !TEST_true(DSA_generate_parameters_ex(dsa, 512, seed, 20,
+            NULL, NULL, NULL))
+        || !TEST_true(DSA_generate_key(dsa)))
+        goto err;
+
+    /* Warm the Montgomery cache so the finish slot has something to free */
+    memset(dgst, 0, sizeof(dgst));
+    if (!TEST_ptr(sig = DSA_do_sign(dgst, sizeof(dgst), dsa)))
+        goto err;
+    DSA_SIG_free(sig);
+    sig = NULL;
+
+    /*
+     * Switch to a copy of the default method; the finish slot frees the
+     * cache.  Freeing the key below calls the finish slot again.
+     * Note that the key holds a raw pointer to the method, so the method
+     * must outlive the key and is only freed in the cleanup below.
+     */
+    if (!TEST_ptr(method = DSA_meth_dup(DSA_get_default_method()))
+        || !TEST_true(DSA_set_method(dsa, method)))
+        goto err;
+
+    testresult = 1;
+err:
+    DSA_SIG_free(sig);
+    DSA_free(dsa);
+    DSA_meth_free(method);
+    return testresult;
+}
+#endif
+
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+/*
+ * Regression test for issue 32541: the default DH method's finish slot
+ * freed the cached Montgomery context without clearing the pointer, so
+ * warming the cache, then switching method, then freeing the key would
+ * free that cache twice.
+ */
+static int test_dh_finish_set_method(void)
+{
+    DH *dh = NULL;
+    DH_METHOD *method = NULL;
+    unsigned char *buf = NULL;
+    int testresult = 0;
+
+    if (nullprov != NULL) {
+        testresult = TEST_skip("Test does not support a non-default library context");
+        goto err;
+    }
+
+    if (!TEST_ptr(dh = DH_get_2048_256())
+        || !TEST_true(DH_generate_key(dh)))
+        goto err;
+
+    /*
+     * Warm the Montgomery cache so the finish slot has something to free.
+     * Deriving against the key's own pub_key is only meant to touch the
+     * Montgomery path, not to perform a real derivation.
+     */
+    if (!TEST_ptr(buf = OPENSSL_malloc(DH_size(dh)))
+        || !TEST_int_gt(DH_compute_key(buf, DH_get0_pub_key(dh), dh), 0))
+        goto err;
+    OPENSSL_free(buf);
+    buf = NULL;
+
+    /*
+     * Switch to a copy of the default method; the finish slot frees the
+     * cache.  Freeing the key below calls the finish slot again.
+     * Note that the key holds a raw pointer to the method, so the method
+     * must outlive the key and is only freed in the cleanup below.
+     */
+    if (!TEST_ptr(method = DH_meth_dup(DH_get_default_method()))
+        || !TEST_true(DH_set_method(dh, method)))
+        goto err;
+
+    testresult = 1;
+err:
+    OPENSSL_free(buf);
+    DH_free(dh);
+    DH_meth_free(method);
+    return testresult;
+}
+#endif
 #endif /* !OPENSSL_NO_DH */
 
 /*
@@ -8410,6 +8520,12 @@ int setup_tests(void)
     ADD_TEST(test_EVP_PKEY_set1_DH);
 #endif
     ADD_TEST(test_dhx_derive_rejects_bad_peer_q);
+#if !defined(OPENSSL_NO_DEPRECATED_3_0) && !defined(OPENSSL_NO_DSA)
+    ADD_TEST(test_dsa_finish_set_method);
+#endif
+#ifndef OPENSSL_NO_DEPRECATED_3_0
+    ADD_TEST(test_dh_finish_set_method);
+#endif
 #endif
 #ifndef OPENSSL_NO_EC
     ADD_TEST(test_EC_priv_pub);
