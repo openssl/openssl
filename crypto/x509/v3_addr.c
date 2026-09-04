@@ -1275,6 +1275,18 @@ int X509v3_addr_subset(IPAddrBlocks *a, IPAddrBlocks *b)
     } while (0)
 
 /*
+ * Decode the IP address block extension of x into *pext, NULL if absent.
+ * Returns 1 on success, 0 if the extension is present but cannot be decoded.
+ */
+static int addr_ext_d2i(const X509 *x, IPAddrBlocks **pext)
+{
+    int crit;
+
+    *pext = X509_get_ext_d2i(x, NID_sbgp_ipAddrBlock, &crit, NULL);
+    return *pext != NULL || crit == -1;
+}
+
+/*
  * Core code for RFC 3779 2.3 path validation.
  *
  * Returns 1 for success, 0 on error.
@@ -1287,7 +1299,8 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     IPAddrBlocks *ext)
 {
     IPAddrBlocks *child = NULL;
-    int i, j, ret = 0, rv;
+    IPAddrBlocks **exts = NULL; /* per chain cert; child points into these */
+    int n, i, j, ret = 0, rv;
     X509 *x;
 
     if (!ossl_assert(chain != NULL && sk_X509_num(chain) > 0)
@@ -1295,6 +1308,13 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
         || !ossl_assert(ctx == NULL || ctx->verify_cb != NULL)) {
         if (ctx != NULL)
             ctx->error = X509_V_ERR_UNSPECIFIED;
+        return 0;
+    }
+    n = sk_X509_num(chain);
+    if ((exts = OPENSSL_calloc(n, sizeof(*exts))) == NULL) {
+        ERR_raise(ERR_LIB_X509V3, ERR_R_CRYPTO_LIB);
+        if (ctx != NULL)
+            ctx->error = X509_V_ERR_OUT_OF_MEM;
         return 0;
     }
 
@@ -1309,8 +1329,12 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     } else {
         i = 0;
         x = sk_X509_value(chain, i);
-        if ((ext = x->rfc3779_addr) == NULL)
-            return 1; /* Return success */
+        if (!addr_ext_d2i(x, &exts[i]))
+            validation_err(X509_V_ERR_INVALID_EXTENSION);
+        if ((ext = exts[i]) == NULL) {
+            ret = 1; /* Return success */
+            goto done;
+        }
     }
     if (!X509v3_addr_is_canonical(ext))
         validation_err(X509_V_ERR_INVALID_EXTENSION);
@@ -1327,11 +1351,13 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
      * Now walk up the chain.  No cert may list resources that its
      * parent doesn't list.
      */
-    for (i++; i < sk_X509_num(chain); i++) {
+    for (i++; i < n; i++) {
         x = sk_X509_value(chain, i);
-        if (!X509v3_addr_is_canonical(x->rfc3779_addr))
+        if (!addr_ext_d2i(x, &exts[i]))
             validation_err(X509_V_ERR_INVALID_EXTENSION);
-        if (x->rfc3779_addr == NULL) {
+        if (!X509v3_addr_is_canonical(exts[i]))
+            validation_err(X509_V_ERR_INVALID_EXTENSION);
+        if (exts[i] == NULL) {
             for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
                 IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
 
@@ -1345,13 +1371,12 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
             }
             continue;
         }
-        (void)sk_IPAddressFamily_set_cmp_func(x->rfc3779_addr,
-            IPAddressFamily_cmp);
-        sk_IPAddressFamily_sort(x->rfc3779_addr);
+        (void)sk_IPAddressFamily_set_cmp_func(exts[i], IPAddressFamily_cmp);
+        sk_IPAddressFamily_sort(exts[i]);
         for (j = 0; j < sk_IPAddressFamily_num(child); j++) {
             IPAddressFamily *fc = sk_IPAddressFamily_value(child, j);
-            int k = sk_IPAddressFamily_find(x->rfc3779_addr, fc);
-            IPAddressFamily *fp = sk_IPAddressFamily_value(x->rfc3779_addr, k);
+            int k = sk_IPAddressFamily_find(exts[i], fc);
+            IPAddressFamily *fp = sk_IPAddressFamily_value(exts[i], k);
 
             if (fp == NULL) {
                 if (fc->ipAddressChoice->type == IPAddressChoice_addressesOrRanges) {
@@ -1379,9 +1404,9 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     /*
      * Trust anchor can't inherit.
      */
-    if (x->rfc3779_addr != NULL) {
-        for (j = 0; j < sk_IPAddressFamily_num(x->rfc3779_addr); j++) {
-            IPAddressFamily *fp = sk_IPAddressFamily_value(x->rfc3779_addr, j);
+    if (exts[n - 1] != NULL) {
+        for (j = 0; j < sk_IPAddressFamily_num(exts[n - 1]); j++) {
+            IPAddressFamily *fp = sk_IPAddressFamily_value(exts[n - 1], j);
 
             if (!IPAddressFamily_check_len(fp))
                 goto done;
@@ -1394,6 +1419,9 @@ static int addr_validate_path_internal(X509_STORE_CTX *ctx,
     ret = 1;
 done:
     sk_IPAddressFamily_free(child);
+    for (i = 0; i < n; i++)
+        sk_IPAddressFamily_pop_free(exts[i], IPAddressFamily_free);
+    OPENSSL_free(exts);
     return ret;
 }
 
