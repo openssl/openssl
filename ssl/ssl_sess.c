@@ -128,6 +128,18 @@ SSL_SESSION *SSL_SESSION_new(void)
     return ss;
 }
 
+int ossl_ssl_session_set1_cipher(SSL_SESSION *session, const SSL_CIPHER *cipher)
+{
+    if (!ossl_ssl_cipher_up_ref(cipher)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
+        return 0;
+    }
+
+    ossl_ssl_cipher_free(session->cipher);
+    session->cipher = cipher;
+    return 1;
+}
+
 /*
  * Create a new SSL_SESSION and duplicate the contents of |src| into it. If
  * ticket == 0 then no ticket information is duplicated, otherwise it is.
@@ -163,6 +175,7 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
     dest->peer_chain = NULL;
     dest->peer = NULL;
     dest->peer_rpk = NULL;
+    dest->cipher = NULL;
     dest->ticket_appdata = NULL;
     memset(&dest->ex_data, 0, sizeof(dest->ex_data));
 
@@ -180,6 +193,9 @@ static SSL_SESSION *ssl_session_dup_intern(const SSL_SESSION *src, int ticket)
         ERR_raise(ERR_LIB_SSL, ERR_R_CRYPTO_LIB);
         goto err;
     }
+
+    if (!ossl_ssl_session_set1_cipher(dest, src->cipher))
+        goto err;
 
     if (src->peer != NULL) {
         if (!X509_up_ref(src->peer)) {
@@ -941,6 +957,7 @@ void SSL_SESSION_free(SSL_SESSION *ss)
 #endif
     OPENSSL_free(ss->ext.alpn_selected);
     OPENSSL_free(ss->ticket_appdata);
+    ossl_ssl_cipher_free(ss->cipher);
     CRYPTO_FREE_REF(&ss->references);
     OPENSSL_clear_free(ss, sizeof(*ss));
 }
@@ -1084,8 +1101,7 @@ const SSL_CIPHER *SSL_SESSION_get0_cipher(const SSL_SESSION *s)
 
 int SSL_SESSION_set_cipher(SSL_SESSION *s, const SSL_CIPHER *cipher)
 {
-    s->cipher = cipher;
-    return 1;
+    return ossl_ssl_session_set1_cipher(s, cipher);
 }
 
 const char *SSL_SESSION_get0_hostname(const SSL_SESSION *s)
