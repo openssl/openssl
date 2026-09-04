@@ -1,0 +1,14 @@
+openssl_conf = openssl_init
+
+[openssl_init]
+providers = providers
+
+[providers]
+default = default_sect
+tls-provider-child = tls_provider_sect
+
+[default_sect]
+activate = 1
+
+[tls_provider_sect]
+activate = 1
