@@ -363,6 +363,57 @@ int ossl_x509v3_cache_extensions(const X509 *x);
 int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
     unsigned char *hash);
 
+/**
+ * @brief Verify a certificate signature, fetching algorithms from @p libctx.
+ *
+ * Like X509_verify(), but the signature algorithm is fetched from the given
+ * library context and property query rather than the certificate's own.
+ *
+ * @param a the certificate to verify
+ * @param r the public key of the issuer
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns 1 if the signature is valid, 0 if not, -1 on error
+ */
+int ossl_x509_verify_ex(const X509 *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq);
+
+/**
+ * @brief Verify a CRL signature, fetching algorithms from @p libctx.
+ *
+ * Like X509_CRL_verify(), but the signature algorithm is fetched from the
+ * given library context and property query rather than the CRL's own. A
+ * CRL with a custom X509_CRL_METHOD is verified by that method, which is
+ * not told about the library context.
+ *
+ * @param crl the CRL to verify
+ * @param r the public key of the issuer
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns 1 if the signature is valid, 0 if not, -1 on error
+ */
+int ossl_x509_crl_verify_ex(X509_CRL *crl, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
+    const char *propq);
+
+/**
+ * @brief Describe a certificate's signature, fetching from @p libctx.
+ *
+ * Like X509_get_signature_info(), but any digest needed to determine the
+ * security bits is fetched from the given library context and property
+ * query rather than the certificate's own.
+ *
+ * @param x the certificate
+ * @param mdnid where to store the digest NID, may be NULL
+ * @param pknid where to store the public key algorithm NID, may be NULL
+ * @param secbits where to store the security bits, may be NULL
+ * @param flags where to store the X509_SIG_INFO flags, may be NULL
+ * @param libctx the library context to fetch from, NULL for the default
+ * @param propq the property query to fetch with, may be NULL
+ * @returns 1 if the information is valid, 0 if it is not available
+ */
+int ossl_x509_get_signature_info_ex(const X509 *x, int *mdnid, int *pknid,
+    int *secbits, uint32_t *flags, OSSL_LIB_CTX *libctx, const char *propq);
+
 int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
