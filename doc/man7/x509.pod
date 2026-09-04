@@ -45,6 +45,32 @@ B<X509_ATTRIBUTE_>I<XXX> functions handle certificate attributes.
 
 B<X509_EXTENSION_>I<XXX> functions handle certificate extensions.
 
+=head1 CACHED CERTIFICATE INFORMATION
+
+Some information derived from a certificate's extensions is computed once and
+cached within the B<X509> object rather than recomputed on each access, for
+instance the values reported by L<X509_get_extension_flags(3)> and related
+accessors.
+
+This cached information is populated when a certificate becomes I<finalized>:
+when it is parsed from its ASN.1 encoding with a B<d2i_X509> function, or
+signed with L<X509_sign(3)> or X509_sign_ctx(). It reflects the certificate as
+it was at that point. The extension accessors and the certificate verification
+functions rely on this cached information and require a finalized certificate:
+called on a certificate that is not finalized they fail, reporting
+B<ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED>. A certificate constructed with
+L<X509_new(3)> is finalized by signing it.
+
+Modifying a finalized certificate with a setter such as L<X509_set_version(3)>
+or L<X509_set_pubkey(3)>, or by adding or removing an extension with
+L<X509_add_ext(3)>, L<X509_add1_ext_i2d(3)> or L<X509_delete_ext(3)>, discards
+the cached information: the certificate is no longer finalized and must be
+signed again, or encoded and parsed again, before it is used. Finalizing it
+again frees and rebuilds the cached information, so any pointer that a B<get0>
+accessor such as L<X509_get0_subject_key_id(3)> returned earlier is then
+invalid, and what L<X509_set_proxy_flag(3)> and X509_set_proxy_pathlen() set
+is cleared.
+
 =head1 SEE ALSO
 
 L<X509_NAME_ENTRY_get_object(3)>,

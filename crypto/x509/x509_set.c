@@ -26,6 +26,7 @@ int X509_set_version(X509 *x, long version)
         return 0;
     if (version == X509_get_version(x))
         return 1; /* avoid needless modification even re-allocation */
+    ossl_x509_reset_ext_cache(x);
     if (version == X509_VERSION_1) {
         ASN1_INTEGER_free(x->cert_info.version);
         x->cert_info.version = NULL;
@@ -48,6 +49,7 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 
     if (x == NULL)
         return 0;
+    ossl_x509_reset_ext_cache(x);
     in = &x->cert_info.serialNumber;
     if (in != serial && !ASN1_STRING_copy(in, serial))
         return 0;
@@ -57,7 +59,10 @@ int X509_set_serialNumber(X509 *x, ASN1_INTEGER *serial)
 
 int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 {
-    if (x == NULL || !X509_NAME_set(&x->cert_info.issuer, name))
+    if (x == NULL)
+        return 0;
+    ossl_x509_reset_ext_cache(x);
+    if (!X509_NAME_set(&x->cert_info.issuer, name))
         return 0;
     x->cert_info.enc.modified = 1;
     return 1;
@@ -65,7 +70,10 @@ int X509_set_issuer_name(X509 *x, const X509_NAME *name)
 
 int X509_set_subject_name(X509 *x, const X509_NAME *name)
 {
-    if (x == NULL || !X509_NAME_set(&x->cert_info.subject, name))
+    if (x == NULL)
+        return 0;
+    ossl_x509_reset_ext_cache(x);
+    if (!X509_NAME_set(&x->cert_info.subject, name))
         return 0;
     x->cert_info.enc.modified = 1;
     return 1;
@@ -91,6 +99,7 @@ int X509_set1_notBefore(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL || tm == NULL)
         return 0;
+    ossl_x509_reset_ext_cache(x);
     return ossl_x509_set1_time(&x->cert_info.enc.modified,
         &x->cert_info.validity.notBefore, tm);
 }
@@ -99,6 +108,7 @@ int X509_set1_notAfter(X509 *x, const ASN1_TIME *tm)
 {
     if (x == NULL || tm == NULL)
         return 0;
+    ossl_x509_reset_ext_cache(x);
     return ossl_x509_set1_time(&x->cert_info.enc.modified,
         &x->cert_info.validity.notAfter, tm);
 }
@@ -107,6 +117,7 @@ int X509_set_pubkey(X509 *x, EVP_PKEY *pkey)
 {
     if (x == NULL)
         return 0;
+    ossl_x509_reset_ext_cache(x);
     if (!X509_PUBKEY_set(&(x->cert_info.key), pkey))
         return 0;
     x->cert_info.enc.modified = 1;

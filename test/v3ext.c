@@ -113,6 +113,38 @@ end:
     return ret;
 }
 
+/* Return the parsed certificate in infile, or NULL on error. */
+static X509 *load_infile_cert(void)
+{
+    BIO *b = BIO_new_file(infile, "r");
+    X509 *cert = NULL;
+
+    if (b != NULL)
+        cert = PEM_read_bio_X509(b, NULL, NULL, NULL);
+    BIO_free(b);
+    return cert;
+}
+
+/*
+ * Encode and decode cert, which finalizes the copy. Frees cert and returns
+ * the copy, or NULL on error.
+ */
+static X509 *reparse_cert(X509 *cert)
+{
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    X509 *copy = NULL;
+    int len = i2d_X509(cert, &der);
+
+    if (len > 0) {
+        p = der;
+        copy = d2i_X509(NULL, &p, len);
+    }
+    OPENSSL_free(der);
+    X509_free(cert);
+    return copy;
+}
+
 static const struct {
     long pathlen; /* Value of the basic constraints path length */
     int valid; /* Nonzero if a cert carrying it is accepted */
@@ -127,8 +159,9 @@ static const struct {
 };
 
 /*
- * Build a CA cert whose basic constraints extension carries the given
- * path length constraint and check whether extension caching accepts it.
+ * Give the CA cert in infile a basic constraints extension carrying the
+ * given path length constraint and check whether extension caching
+ * accepts it.
  * Values outside 0..255 must be rejected and reported as no constraint.
  */
 static int test_pathlen_range_value(int idx)
@@ -139,14 +172,16 @@ static int test_pathlen_range_value(int idx)
     BASIC_CONSTRAINTS *bs = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(cert = X509_new())
-        || !TEST_true(X509_set_version(cert, X509_VERSION_3))
+    if (!TEST_ptr(cert = load_infile_cert())
         || !TEST_ptr(bs = BASIC_CONSTRAINTS_new())
         || !TEST_ptr(bs->pathlen = ASN1_INTEGER_new())
         || !TEST_true(ASN1_INTEGER_set(bs->pathlen, pathlen)))
         goto end;
     bs->ca = 255;
-    if (!TEST_int_gt(X509_add1_ext_i2d(cert, NID_basic_constraints, bs, 1, 0), 0)
+    if (!TEST_int_gt(X509_add1_ext_i2d(cert, NID_basic_constraints, bs, 1,
+                         X509V3_ADD_REPLACE),
+            0)
+        || !TEST_ptr(cert = reparse_cert(cert))
         || !TEST_int_eq(X509_check_purpose(cert, -1, 0), valid ? 1 : -1)
         || !TEST_long_eq(X509_get_pathlen(cert), valid ? pathlen : -1))
         goto end;
@@ -159,8 +194,9 @@ end:
 }
 
 /*
- * Build a proxy cert whose proxyCertInfo extension carries the given
- * pcPathLengthConstraint and check whether extension caching accepts it.
+ * Make the cert in infile a proxy cert, without its CA basic constraints,
+ * whose proxyCertInfo extension carries the given pcPathLengthConstraint
+ * and check whether extension caching accepts it.
  * Values outside 0..255 must be rejected and reported as no constraint.
  */
 static int test_proxy_pathlen_range_value(int idx)
@@ -171,14 +207,17 @@ static int test_proxy_pathlen_range_value(int idx)
     PROXY_CERT_INFO_EXTENSION *pci = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(cert = X509_new())
-        || !TEST_true(X509_set_version(cert, X509_VERSION_3))
+    if (!TEST_ptr(cert = load_infile_cert())
         || !TEST_ptr(pci = PROXY_CERT_INFO_EXTENSION_new())
         || !TEST_ptr(pci->pcPathLengthConstraint = ASN1_INTEGER_new())
         || !TEST_true(ASN1_INTEGER_set(pci->pcPathLengthConstraint, pathlen)))
         goto end;
     pci->proxyPolicy->policyLanguage = OBJ_nid2obj(NID_id_ppl_inheritAll);
-    if (!TEST_int_gt(X509_add1_ext_i2d(cert, NID_proxyCertInfo, pci, 1, 0), 0)
+    if (!TEST_int_gt(X509_add1_ext_i2d(cert, NID_basic_constraints, NULL, 0,
+                         X509V3_ADD_DELETE),
+            0)
+        || !TEST_int_gt(X509_add1_ext_i2d(cert, NID_proxyCertInfo, pci, 1, 0), 0)
+        || !TEST_ptr(cert = reparse_cert(cert))
         || !TEST_int_eq(X509_check_purpose(cert, -1, 0), valid ? 1 : -1)
         || !TEST_long_eq(X509_get_proxy_pathlen(cert), valid ? pathlen : -1))
         goto end;
@@ -201,7 +240,7 @@ static int test_set_proxy_pathlen_value(int idx)
     X509 *cert = NULL;
     int ret = 0;
 
-    if (!TEST_ptr(cert = X509_new()))
+    if (!TEST_ptr(cert = load_infile_cert()))
         goto end;
     X509_set_proxy_flag(cert);
     X509_set_proxy_pathlen(cert, pathlen);
