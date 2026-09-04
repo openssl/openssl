@@ -782,7 +782,8 @@ static int check_extensions(X509_STORE_CTX *ctx)
  * Returns -1 on internal error.
  * Sadly, returns 0 also on internal error in ctx->verify_cb().
  */
-static int check_name_constraints(X509_STORE_CTX *ctx)
+static int do_check_name_constraints(X509_STORE_CTX *ctx,
+    NAME_CONSTRAINTS **ncs)
 {
     int i;
 
@@ -870,7 +871,7 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
          * to be obeyed.
          */
         for (j = sk_X509_num(ctx->chain) - 1; j > i; j--) {
-            NAME_CONSTRAINTS *nc = sk_X509_value(ctx->chain, j)->nc;
+            NAME_CONSTRAINTS *nc = ncs[j];
 
             if (nc) {
                 int rv = NAME_CONSTRAINTS_check(x, nc);
@@ -904,6 +905,24 @@ static int check_name_constraints(X509_STORE_CTX *ctx)
         }
     }
     return 1;
+}
+
+static int check_name_constraints(X509_STORE_CTX *ctx)
+{
+    NAME_CONSTRAINTS **ncs; /* the nameConstraints of each chain certificate */
+    int n = sk_X509_num(ctx->chain);
+    int i, ret;
+
+    if ((ncs = OPENSSL_calloc(n, sizeof(*ncs))) == NULL)
+        return -1;
+    for (i = 0; i < n; i++)
+        ncs[i] = X509_get_ext_d2i(sk_X509_value(ctx->chain, i),
+            NID_name_constraints, NULL, NULL);
+    ret = do_check_name_constraints(ctx, ncs);
+    for (i = 0; i < n; i++)
+        NAME_CONSTRAINTS_free(ncs[i]);
+    OPENSSL_free(ncs);
+    return ret;
 }
 
 static int check_id_error(X509_STORE_CTX *ctx, int errcode)

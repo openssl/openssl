@@ -47,7 +47,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         AUTHORITY_KEYID_free(ret->akid);
         ossl_policy_cache_free(ret->policy_cache);
         GENERAL_NAMES_free(ret->altname);
-        NAME_CONSTRAINTS_free(ret->nc);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
 
         /* fall through */
@@ -64,7 +63,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->akid = NULL;
         ret->policy_cache = NULL;
         ret->altname = NULL;
-        ret->nc = NULL;
         ret->distinguishing_id = NULL;
         ret->aux = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
@@ -78,7 +76,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         AUTHORITY_KEYID_free(ret->akid);
         ossl_policy_cache_free(ret->policy_cache);
         GENERAL_NAMES_free(ret->altname);
-        NAME_CONSTRAINTS_free(ret->nc);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
 
