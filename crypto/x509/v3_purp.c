@@ -730,25 +730,25 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     if (!check_name_constraints(tmp_nc))
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    /*
-     * Validate the CRL distribution point entries. They are not cached: the
-     * CRL checks decode them again when a CRL is being matched to x.
-     */
+    /* Validate the CRL distribution point entries */
     res = ossl_x509_decode_crldp(const_x, &tmp_crldp);
     if (res == 0)
         tmp_ex_flags |= EXFLAG_INVALID;
     sk_DIST_POINT_pop_free(tmp_crldp, DIST_POINT_free);
 
 #ifndef OPENSSL_NO_RFC3779
+    /* Validate the RFC 3779 extensions */
     STACK_OF(IPAddressFamily) *tmp_rfc3779_addr
         = X509_get_ext_d2i(const_x, NID_sbgp_ipAddrBlock, &i, NULL);
     if (tmp_rfc3779_addr == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
+    sk_IPAddressFamily_pop_free(tmp_rfc3779_addr, IPAddressFamily_free);
 
     struct ASIdentifiers_st *tmp_rfc3779_asid
         = X509_get_ext_d2i(const_x, NID_sbgp_autonomousSysNum, &i, NULL);
     if (tmp_rfc3779_asid == NULL && i != -1)
         tmp_ex_flags |= EXFLAG_INVALID;
+    ASIdentifiers_free(tmp_rfc3779_asid);
 #endif
 
     scan_ext_flags(const_x, &tmp_ex_flags);
@@ -782,13 +782,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->altname = tmp_altname;
     NAME_CONSTRAINTS_free(((X509 *)const_x)->nc);
     ((X509 *)const_x)->nc = tmp_nc;
-#ifndef OPENSSL_NO_RFC3779
-    sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
-    ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
-    ASIdentifiers_free(((X509 *)const_x)->rfc3779_asid);
-    ((X509 *)const_x)->rfc3779_asid = tmp_rfc3779_asid;
-#endif
-
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
     /*
