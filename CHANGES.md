@@ -60,6 +60,11 @@ OpenSSL 4.1
 
    *Jakub Zelenka*
 
+ * Added the `-crl_uri` option to `openssl x509` for printing URIs from a
+   certificate's CRL distribution points.
+
+   *Sai Kiran Taduri*
+
  * Fixed a bug where a TLS 1.3 session ticket could retain a stale ALPN
    protocol from an earlier connection after a resumption negotiated a
    different protocol (or none), on both the server and the client,
