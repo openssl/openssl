@@ -432,46 +432,17 @@ STACK_OF(X509) *pkcs7_get0_certificates(const PKCS7 *p7)
     return NULL;
 }
 
-static STACK_OF(PKCS7_RECIP_INFO) *pkcs7_get_recipient_info(const PKCS7 *p7)
-{
-    if (p7->d.ptr == NULL)
-        return NULL;
-    if (PKCS7_type_is_signedAndEnveloped(p7))
-        return p7->d.signed_and_enveloped->recipientinfo;
-    if (PKCS7_type_is_enveloped(p7))
-        return p7->d.enveloped->recipientinfo;
-    return NULL;
-}
-
-/*
- * Set up the library context into any loaded structure that needs it.
- * i.e loaded X509 objects.
- */
+/* Set up the library context into any loaded structure that needs it. */
 void ossl_pkcs7_resolve_libctx(PKCS7 *p7)
 {
     int i;
     const PKCS7_CTX *ctx = ossl_pkcs7_get0_ctx(p7);
-    OSSL_LIB_CTX *libctx = ossl_pkcs7_ctx_get0_libctx(ctx);
-    const char *propq = ossl_pkcs7_ctx_get0_propq(ctx);
-    STACK_OF(PKCS7_RECIP_INFO) *rinfos;
     STACK_OF(PKCS7_SIGNER_INFO) *sinfos;
-    STACK_OF(X509) *certs;
 
     if (ctx == NULL || p7->d.ptr == NULL)
         return;
 
-    rinfos = pkcs7_get_recipient_info(p7);
     sinfos = PKCS7_get_signer_info(p7);
-    certs = pkcs7_get0_certificates(p7);
-
-    for (i = 0; i < sk_X509_num(certs); i++)
-        ossl_x509_set0_libctx(sk_X509_value(certs, i), libctx, propq);
-
-    for (i = 0; i < sk_PKCS7_RECIP_INFO_num(rinfos); i++) {
-        PKCS7_RECIP_INFO *ri = sk_PKCS7_RECIP_INFO_value(rinfos, i);
-
-        ossl_x509_set0_libctx(ri->cert, libctx, propq);
-    }
 
     for (i = 0; i < sk_PKCS7_SIGNER_INFO_num(sinfos); i++) {
         PKCS7_SIGNER_INFO *si = sk_PKCS7_SIGNER_INFO_value(sinfos, i);
