@@ -32,6 +32,17 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * A certificate's cached extension information is now populated only when
+   the certificate is finalized (decoded or signed), no longer on first use.
+   Modifying the certificate with a setter, or by adding or removing an
+   extension, discards it until the certificate is signed or decoded again.
+   `X509_get_extension_flags()` and related functions, `X509_check_purpose()`,
+   `X509_check_ca()`, `X509_check_issued()`, `X509_self_signed()` and
+   certificate verification require a finalized certificate and fail on one
+   that is not. See x509(7).
+
+   *Bob Beck*
+
  * A certificate whose subjectAltName, nameConstraints,
    cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
    extension cannot be decoded is no longer marked `EXFLAG_INVALID` when

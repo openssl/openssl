@@ -213,6 +213,20 @@ int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp);
  *          cannot be decoded
  */
 int ossl_x509_decode_ext(const X509 *x, int nid, void **pval);
+/**
+ * @brief Discard the cached extension data of a certificate.
+ * Clears the derived extension data and what X509_set_proxy_flag() and
+ * X509_set_proxy_pathlen() set, leaving the certificate unfinalized.
+ * @param x the certificate whose cached extension data is discarded
+ */
+void ossl_x509_reset_ext_cache(X509 *x);
+/**
+ * @brief Finalize a certificate: build its cached extension data.
+ * Called when a certificate is decoded or signed. An invalid extension sets
+ * EXFLAG_INVALID; the error is raised when the cache is used.
+ * @param x the certificate to finalize; the caller owns it
+ */
+void ossl_x509_finalize(X509 *x);
 int ossl_x509_store_ctx_get_by_subject(const X509_STORE_CTX *ctx, X509_LOOKUP_TYPE type,
     const X509_NAME *name, X509_OBJECT *ret);
 __owur int ossl_x509_store_read_lock(X509_STORE *xs);
