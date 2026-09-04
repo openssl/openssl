@@ -1199,6 +1199,10 @@ int OSSL_FN_mod_exp_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *p,
  *                              with in_mont == NULL.
  * @returns             The arena payload size, in bytes.
  * @retval              0       on arithmetic overflow or invalid input.
+ *
+ * @note The nested Montgomery sizing inspects operand values, so @p a and
+ *       @p m (and @p in_mont->N when given) must be fully realised numbers
+ *       with limb storage, not width-only models.
  */
 size_t OSSL_FN_mod_exp_mont_ctx_size(const OSSL_FN *r, const OSSL_FN *a,
     const OSSL_FN *p, const OSSL_FN *m, OSSL_FN_MONT_CTX *in_mont);
@@ -1366,6 +1370,11 @@ int OSSL_FN_mul_mont(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
  * A timing side-channel may leak limb-size misalignment or whether the input
  * operands exceed the modulus. However, this leakage is non-critical and
  * acceptable from a security perspective.
+ *
+ * @note This sizing function inspects operand values (whether @p a and @p b
+ *       exceed @p mont->N), so they must be fully realised numbers with limb
+ *       storage.  Width-only models — an OSSL_FN with only |dsize| set —
+ *       are not permitted and would be read out of bounds.
  */
 size_t OSSL_FN_mul_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a, const OSSL_FN *b,
     OSSL_FN_MONT_CTX *mont);
@@ -1446,6 +1455,11 @@ int OSSL_FN_to_mont(OSSL_FN *r, const OSSL_FN *a,
  * A timing side-channel may leak limb-size misalignment or whether @p a
  * exceeds the modulus. However, this leakage is non-critical and acceptable
  * from a security perspective.
+ *
+ * @note This sizing function inspects operand values (whether @p a exceeds
+ *       @p mont->N), so @p a and @p mont->N must be fully realised numbers
+ *       with limb storage.  Width-only models — an OSSL_FN with only
+ *       |dsize| set — are not permitted and would be read out of bounds.
  */
 size_t OSSL_FN_to_mont_ctx_size(OSSL_FN *r, const OSSL_FN *a,
     OSSL_FN_MONT_CTX *mont);
