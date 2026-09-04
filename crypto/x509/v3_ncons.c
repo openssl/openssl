@@ -281,20 +281,24 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
 {
     int r, i, name_count, constraint_count;
     const X509_NAME *nm;
+    GENERAL_NAMES *altname;
 
     nm = X509_get_subject_name(x);
+    altname = X509_get_ext_d2i(x, NID_subject_alt_name, NULL, NULL);
 
     /*
      * Guard against certificates with an excessive number of names or
      * constraints causing a computationally expensive name constraints check.
      */
     if (!add_lengths(&name_count, X509_NAME_entry_count(nm),
-            sk_GENERAL_NAME_num(x->altname))
+            sk_GENERAL_NAME_num(altname))
         || !add_lengths(&constraint_count,
             sk_GENERAL_SUBTREE_num(nc->permittedSubtrees),
             sk_GENERAL_SUBTREE_num(nc->excludedSubtrees))
-        || (name_count > 0 && constraint_count > NAME_CHECK_MAX / name_count))
-        return X509_V_ERR_UNSPECIFIED;
+        || (name_count > 0 && constraint_count > NAME_CHECK_MAX / name_count)) {
+        r = X509_V_ERR_UNSPECIFIED;
+        goto out;
+    }
 
     if (X509_NAME_entry_count(nm) > 0) {
         GENERAL_NAME gntmp;
@@ -305,7 +309,7 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
         r = nc_match(&gntmp, nc);
 
         if (r != X509_V_OK)
-            return r;
+            goto out;
 
         gntmp.type = GEN_EMAIL;
 
@@ -320,24 +324,30 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
             ne = X509_NAME_get_entry(nm, i);
             /* XXX casts away const (but does not mutate) */
             gntmp.d.rfc822Name = (ASN1_STRING *)X509_NAME_ENTRY_get_data(ne);
-            if (gntmp.d.rfc822Name->type != V_ASN1_IA5STRING)
-                return X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+            if (gntmp.d.rfc822Name->type != V_ASN1_IA5STRING) {
+                r = X509_V_ERR_UNSUPPORTED_NAME_SYNTAX;
+                goto out;
+            }
 
             r = nc_match(&gntmp, nc);
 
             if (r != X509_V_OK)
-                return r;
+                goto out;
         }
     }
 
-    for (i = 0; i < sk_GENERAL_NAME_num(x->altname); i++) {
-        GENERAL_NAME *gen = sk_GENERAL_NAME_value(x->altname, i);
+    r = X509_V_OK;
+    for (i = 0; i < sk_GENERAL_NAME_num(altname); i++) {
+        GENERAL_NAME *gen = sk_GENERAL_NAME_value(altname, i);
+
         r = nc_match(gen, nc);
         if (r != X509_V_OK)
-            return r;
+            break;
     }
 
-    return X509_V_OK;
+out:
+    GENERAL_NAMES_free(altname);
+    return r;
 }
 
 static int cn2dnsid(const ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
