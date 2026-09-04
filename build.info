@@ -158,7 +158,6 @@ DEPEND[]=include/openssl/asn1.h \
          providers/implementations/digests/blake2_prov.inc \
          providers/implementations/digests/digestcommon.inc \
          providers/implementations/digests/mdc2_prov.inc \
-         providers/implementations/digests/sha2_prov.inc \
          providers/implementations/digests/sha3_prov.inc \
          providers/implementations/digests/ml_dsa_mu_prov.inc \
          providers/implementations/digests/cshake_prov.inc \
@@ -295,7 +294,6 @@ DEPEND[providers/implementations/asymciphers/rsa_enc.inc \
        providers/implementations/digests/ml_dsa_mu_prov.inc \
        providers/implementations/digests/digestcommon.inc \
        providers/implementations/digests/mdc2_prov.inc \
-       providers/implementations/digests/sha2_prov.inc \
        providers/implementations/digests/sha3_prov.inc \
        providers/implementations/digests/cshake_prov.inc \
        providers/implementations/include/prov/blake2_params.inc \
@@ -478,8 +476,6 @@ GENERATE[providers/implementations/digests/digestcommon.inc]=\
     providers/implementations/digests/digestcommon.inc.in
 GENERATE[providers/implementations/digests/mdc2_prov.inc]=\
     providers/implementations/digests/mdc2_prov.inc.in
-GENERATE[providers/implementations/digests/sha2_prov.inc]=\
-    providers/implementations/digests/sha2_prov.inc.in
 GENERATE[providers/implementations/digests/sha3_prov.inc]=\
     providers/implementations/digests/sha3_prov.inc.in
 GENERATE[providers/implementations/digests/cshake_prov.inc]=\
