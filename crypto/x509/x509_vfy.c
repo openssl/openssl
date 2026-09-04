@@ -672,6 +672,12 @@ static int check_extensions(X509_STORE_CTX *ctx)
                            * !(i == 0 && (x->ex_flags & EXFLAG_CA) == 0
                            *          && (x->ex_flags & EXFLAG_SI) != 0)
                            */
+            GENERAL_NAMES *san = X509_get_ext_d2i(x, NID_subject_alt_name,
+                NULL, NULL);
+            int san_absent = san == NULL;
+            int san_empty = san != NULL && sk_GENERAL_NAME_num(san) <= 0;
+
+            GENERAL_NAMES_free(san);
             /* Check Basic Constraints according to RFC 5280 section 4.2.1.9 */
             if (x->ex_pathlen != -1) {
                 CB_FAIL_IF((x->ex_flags & EXFLAG_CA) == 0,
@@ -693,13 +699,11 @@ static int check_extensions(X509_STORE_CTX *ctx)
             /* Check subject is non-empty acc. to RFC 5280 section 4.1.2.6 */
             CB_FAIL_IF(((x->ex_flags & EXFLAG_CA) != 0
                            || (x->ex_kusage & KU_CRL_SIGN) != 0
-                           || x->altname == NULL)
+                           || san_absent)
                     && X509_NAME_entry_count(X509_get_subject_name(x)) == 0,
                 ctx, x, i, X509_V_ERR_SUBJECT_NAME_EMPTY);
             /* Check SAN is non-empty according to RFC 5280 section 4.2.1.6 */
-            CB_FAIL_IF(x->altname != NULL
-                    && sk_GENERAL_NAME_num(x->altname) <= 0,
-                ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
+            CB_FAIL_IF(san_empty, ctx, x, i, X509_V_ERR_EMPTY_SUBJECT_ALT_NAME);
             /* Check sig alg consistency acc. to RFC 5280 section 4.1.1.2 */
             CB_FAIL_IF(X509_ALGOR_cmp(&x->sig_alg, &x->cert_info.signature) != 0,
                 ctx, x, i, X509_V_ERR_SIGNATURE_ALGORITHM_INCONSISTENCY);

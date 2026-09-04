@@ -205,7 +205,6 @@ struct x509_st {
     ASN1_OCTET_STRING *skid;
     AUTHORITY_KEYID *akid;
     X509_POLICY_CACHE *policy_cache;
-    STACK_OF(GENERAL_NAME) *altname;
     /*
      * Internal-use fingerprint for X509_cmp(), see
      * ossl_x509_internal_fingerprint(). Not cryptographically secure and
