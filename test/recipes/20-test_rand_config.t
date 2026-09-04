@@ -10,7 +10,7 @@
 use strict;
 use warnings;
 
-use OpenSSL::Test qw/:DEFAULT result_dir/;
+use OpenSSL::Test qw/:DEFAULT result_dir with/;
 use OpenSSL::Test::Utils;
 
 setup("test_rand_config");
@@ -81,9 +81,17 @@ if (disabled("fips-jitter")) {
         { seed => 'NONEXISTENT-SEED-SOURCE',
           expected_ok => 0,
           desc => 'unavailable configured seed source fails, no fallback' };
+    push @seed_tests,
+        { seed => 'HASH-DRBG',
+          strict => 'yes',
+          args => ['-hex', '1'],
+          expected_exit => 1,
+          stderr_re => qr/random number generator:.*:error retrieving entropy/,
+          desc => 'recursive strict seed source fails cleanly' };
 }
 
-plan tests => scalar @rand_tests * 2 + scalar @seed_tests;
+plan tests => scalar @rand_tests * 2 + scalar @seed_tests
+    + scalar grep { defined $_->{stderr_re} } @seed_tests;
 
 my $contents =<<'CONFIGEND';
 openssl_conf = openssl_init
@@ -127,8 +135,29 @@ foreach (@seed_tests) {
 
     $ENV{OPENSSL_CONF} = $tmpfile;
 
-    my $ok = run(app(["openssl", "rand", "-hex", "16"]));
-    ok(!$ok == !$_->{expected_ok}, $_->{desc});
+    my @args = @{ $_->{args} // ['-hex', '16'] };
+    if (defined $_->{expected_exit}) {
+        my $expected_exit = $_->{expected_exit};
+        my $stderr_file = 'rand_seed_config.err';
+
+        with({ exit_checker => sub { return shift == $expected_exit; } },
+            sub {
+                ok(run(app(["openssl", "rand", @args],
+                           stderr => $stderr_file)), $_->{desc});
+            });
+        if (defined $_->{stderr_re}) {
+            open(my $err, '<', $stderr_file)
+                or die "Could not open error output";
+            my $error = do { local $/; <$err> };
+            close($err);
+            like($error, $_->{stderr_re},
+                 "$_->{desc} reports a RAND error");
+        }
+        unlink($stderr_file);
+    } else {
+        my $ok = run(app(["openssl", "rand", @args]));
+        ok(!$ok == !$_->{expected_ok}, $_->{desc});
+    }
 }
 
 # Check that the stdout output contains the expected values.

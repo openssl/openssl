@@ -620,7 +620,20 @@ static EVP_RAND_CTX *rand_get0_seed(OSSL_LIB_CTX *ctx, RAND_GLOBAL *dgbl)
     if (ret != NULL)
         return ret;
 
+    /*
+     * Prevent a configured RAND from recursively constructing itself.  The
+     * marker is local to this thread and library context, so unrelated seed
+     * source construction can continue.
+     */
+    if (CRYPTO_THREAD_get_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx)
+        != NULL)
+        return NULL;
+    if (!CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx,
+            dgbl))
+        return NULL;
+
     seed = rand_new_seed(ctx);
+    CRYPTO_THREAD_set_local_ex(CRYPTO_THREAD_LOCAL_RAND_SEED_KEY, ctx, NULL);
     if (seed == NULL)
         return NULL;
 
