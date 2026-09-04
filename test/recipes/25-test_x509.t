@@ -17,7 +17,7 @@ use File::Compare qw/compare_text/;
 
 setup("test_x509");
 
-plan tests => 155;
+plan tests => 156;
 
 # Prevent MSys2 filename munging for arguments that look like file paths but
 # aren't
@@ -814,6 +814,22 @@ ok(!run(app(["openssl", "x509", "-multi", "-checkend",
 # Bad parse still returns non-zero
 ok(!run(app(["openssl", "x509", "-checkend", "60", "-in", $c_key])),
     "Bad parse with -checkend returns non-zero");
+
+# Regression test: with -multi, a failure on a later certificate must set
+# a failing exit status even after an earlier certificate succeeded, i.e.
+# the per-certificate success status must not leak into the final result.
+subtest "x509 -multi later failure is not masked by earlier success" => sub {
+    plan tests => 1;
+
+    # goodcn2-chain.pem holds two certificates without subjectAltName, so
+    # -checkhost falls back to the CN: "www.good.org" matches the first
+    # certificate ("CN=www.good.org") but not the second ("CN=Test NC CA 1")
+    my $chain = srctop_file(@certs, "goodcn2-chain.pem");
+
+    ok(!run(app(["openssl", "x509", "-multi", "-in", $chain, "-noout",
+                 "-checkhost", "www.good.org"])),
+       "-multi returns non-zero when a later certificate fails -checkhost");
+};
 
 # Signing using DER-encoded key and CA cert/key inputs,
 # exercising -keyform, -CAform and -CAkeyform

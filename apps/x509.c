@@ -1266,6 +1266,8 @@ end_cert_loop:
     goto end;
 
 err:
+    /* Every path reaching this label is a failure path */
+    ret = 1;
     ERR_print_errors(bio_err);
 
 end:
