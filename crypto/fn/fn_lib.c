@@ -14,6 +14,7 @@
 #include <openssl/err.h>
 #include "internal/common.h"
 #include "crypto/fnerr.h"
+#include "../bn/bn_local.h" /* For BN_LLONG / BN_ULLONG */
 #include "fn_local.h"
 #include "internal/constant_time.h"
 
@@ -330,6 +331,101 @@ int OSSL_FN_is_odd(const OSSL_FN *a)
     if (a->dsize <= 0)
         return 0;
     return (int)(a->d[0] & OSSL_FN_ULONG_C(1));
+}
+
+/*-
+ * Returns the least significant limb of |a| (0 when |a| has no limbs), which
+ * is the information the caller asked for.  The only control flow branches
+ * on the operand's public width (dsize), not on limb values.
+ */
+OSSL_FN_ULONG OSSL_FN_get_word(const OSSL_FN *a)
+{
+    if (a->dsize <= 0)
+        return 0;
+    return a->d[0];
+}
+
+/*-
+ * Set bit |pos| (0 = least significant) of |a|, by absolute position.  No
+ * expansion: an out-of-range position (|pos| >= the operand's width in bits)
+ * is an error, not an implicit grow.  The only control flow branches on the
+ * operand's public width (dsize), not on limb values.
+ */
+int OSSL_FN_set_bit(OSSL_FN *a, size_t pos)
+{
+    size_t limb = pos / OSSL_FN_BITS;
+    size_t off = pos % OSSL_FN_BITS;
+
+    if (limb >= (size_t)a->dsize) {
+        ERR_raise(ERR_LIB_OSSL_FN, OSSL_FN_R_RESULT_ARG_TOO_SMALL);
+        return 0;
+    }
+    a->d[limb] |= OSSL_FN_ULONG_C(1) << off;
+    return 1;
+}
+
+/*-
+ * Compute |a| mod |w| for a single-limb word |w|.
+ *
+ * Returns (OSSL_FN_ULONG)-1 when |w| is 0 (the error sentinel), matching the
+ * BN counterpart's convention.  Control flow branches only on the operand's
+ * public width (dsize), not on limb values; the reduction itself is the
+ * arithmetic the caller asked for.
+ */
+OSSL_FN_ULONG OSSL_FN_mod_word(const OSSL_FN *a, OSSL_FN_ULONG w)
+{
+    size_t i;
+
+    if (w == 0)
+        return (OSSL_FN_ULONG)-1;
+
+#ifdef BN_LLONG
+    {
+        BN_ULLONG ret = 0;
+
+        for (i = (size_t)a->dsize; i-- > 0;)
+            ret = (BN_ULLONG)(((ret << (BN_ULLONG)OSSL_FN_BITS) | a->d[i])
+                % (BN_ULLONG)w);
+        return (OSSL_FN_ULONG)ret;
+    }
+#else
+    if (w <= OSSL_FN_LOW_HALF_MASK) {
+        /*
+         * Fast path: reduce one half-limb at a time.  With |w| fitting in a
+         * half-limb, the running remainder is smaller than |w| and the
+         * shifts cannot overflow.
+         */
+        OSSL_FN_ULONG ret = 0;
+
+        for (i = (size_t)a->dsize; i-- > 0;) {
+            ret = ((ret << (OSSL_FN_BITS / 2))
+                      | ((a->d[i] >> (OSSL_FN_BITS / 2)) & OSSL_FN_LOW_HALF_MASK))
+                % w;
+            ret = ((ret << (OSSL_FN_BITS / 2)) | (a->d[i] & OSSL_FN_LOW_HALF_MASK))
+                % w;
+        }
+        return ret;
+    } else {
+        /*
+         * Slow path for a wide |w| without a double-width type: reduce one
+         * bit at a time, doubling modulo |w| without overflow (the running
+         * remainder is always smaller than |w|).
+         */
+        OSSL_FN_ULONG ret = 0;
+        int bit;
+
+        for (i = (size_t)a->dsize; i-- > 0;)
+            for (bit = OSSL_FN_BITS - 1; bit >= 0; bit--) {
+                if (ret < w - ret)
+                    ret += ret;
+                else
+                    ret = ret - (w - ret);
+                if ((a->d[i] >> bit) & 1)
+                    ret = (ret == w - 1) ? 0 : ret + 1;
+            }
+        return ret;
+    }
+#endif
 }
 
 OSSL_FN *OSSL_FN_copy(OSSL_FN *a, const OSSL_FN *b)

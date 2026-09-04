@@ -17,6 +17,7 @@
 #pragma once
 
 #include <stdbool.h>
+#include <openssl/bn.h> /* For BN_GENCB */
 #include "crypto/fn.h"
 
 #ifdef __cplusplus
@@ -130,6 +131,56 @@ OSSL_FN_ULONG ossl_fn_add_words(OSSL_FN_ULONG *r, size_t rl,
 OSSL_FN_ULONG ossl_fn_sub_words(OSSL_FN_ULONG *r, size_t rl,
     const OSSL_FN_ULONG *a, size_t al,
     const OSSL_FN_ULONG *b, size_t bl);
+
+/*
+ * Miller-Rabin probabilistic primality test (FIPS 186-4 C.3.1, or the
+ * enhanced variant C.3.2 when |enhanced| is nonzero).  |status| returns
+ * the primality verdict (a BN_PRIMETEST_* code).  Returns 1 on success
+ * (|status| is set), 0 on error.
+ */
+int ossl_fn_miller_rabin_is_prime(const OSSL_FN *w, int iterations,
+    OSSL_FN_CTX *ctx, BN_GENCB *cb, int enhanced, int *status,
+    OSSL_LIB_CTX *libctx);
+
+/*
+ * Calculate the arena payload size that ossl_fn_miller_rabin_is_prime()
+ * needs for a candidate of width |w|->dsize.  |w| must be a fully
+ * realised number, not a width-only model: nested sizing functions may
+ * inspect operand values.  Returns 0 on arithmetic overflow or invalid
+ * input.
+ */
+size_t ossl_fn_miller_rabin_is_prime_ctx_size(const OSSL_FN *w);
+
+/*
+ * Test whether |w| is probably prime, clamping |checks| to a minimum
+ * round count based on the candidate's width.  When |do_trial_division|
+ * is nonzero, small factors are weeded out first.  Returns 1 when probably
+ * prime, 0 when composite, -1 on error.
+ */
+int ossl_fn_check_prime(const OSSL_FN *w, int checks, OSSL_FN_CTX *ctx,
+    int do_trial_division, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/*
+ * Calculate the arena payload size that ossl_fn_check_prime() needs for a
+ * candidate of width |w|->dsize.  Returns 0 on arithmetic overflow or
+ * invalid input.
+ */
+size_t ossl_fn_check_prime_ctx_size(const OSSL_FN *w);
+
+/*
+ * Test whether |w| is probably prime, for key generation.  Always
+ * trial-divides; |checks| is used unclamped.  Returns 1 when probably
+ * prime, 0 when composite, -1 on error.
+ */
+int ossl_fn_check_generated_prime(const OSSL_FN *w, int checks,
+    OSSL_FN_CTX *ctx, BN_GENCB *cb, OSSL_LIB_CTX *libctx);
+
+/*
+ * Calculate the arena payload size that ossl_fn_check_generated_prime()
+ * needs for a candidate of width |w|->dsize.  Returns 0 on arithmetic
+ * overflow or invalid input.
+ */
+size_t ossl_fn_check_generated_prime_ctx_size(const OSSL_FN *w);
 
 #ifdef __cplusplus
 }
