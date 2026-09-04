@@ -60,6 +60,12 @@ OpenSSL 4.2
 
    *Shane Lontis and Paul Dale*
 
+ * Fixed library-context teardown when a provider owns child contexts.
+   Providers now retain the concrete library context selected for their
+   provider store, including when they were loaded with a NULL context.
+
+   *Martin Wolf*
+
  * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
    newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
 
