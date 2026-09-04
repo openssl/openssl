@@ -74,6 +74,14 @@ OpenSSL 4.2
 
    *John Claus*
 
+ * A certificate whose subjectAltName, nameConstraints,
+   cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
+   extension cannot be decoded is no longer marked `EXFLAG_INVALID` when
+   parsed. Each of these extensions is decoded where a verification uses
+   it, and the verification fails there instead.
+
+   *Bob Beck*
+
  * Added AVX-512 and VAES optimizations for AES-CTR mode. Performance for
    large inputs (1024 bytes or more) improved by 2.9x to 3.9x.
    <!-- https://github.com/openssl/openssl/pull/30755 -->
