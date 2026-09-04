@@ -9,12 +9,14 @@
 use strict;
 use warnings;
 
+use Math::BigInt;
+
 use OpenSSL::Test qw(:DEFAULT data_file);
 use OpenSSL::Test;
 
 setup("test_prime");
 
-plan tests => 10;
+plan tests => 19;
 
 my $prime_file      = data_file("prime.txt");
 my $composite_file  = data_file("composite.txt");
@@ -55,3 +57,52 @@ ok(run(app(["openssl", "prime", "-in", $prime_file, $composite_file, $long_numbe
 
 ok(run(app(["openssl", "prime", "-in", "does_not_exist.txt"])),
    "Run openssl prime with -in file that does not exist");
+
+my @generated = run(app(["openssl", "prime", "-generate", "-bits", "128"]),
+                    capture => 1);
+chomp @generated;
+
+ok(@generated == 1 && $generated[0] =~ /^\d+$/,
+   "Run openssl prime -generate with decimal output");
+
+ok(is_reported_prime($generated[0]),
+   "Generated decimal number is prime");
+
+@generated = run(app(["openssl", "prime", "-generate", "-bits", "128", "-hex"]),
+                 capture => 1);
+chomp @generated;
+
+ok(@generated == 1 && $generated[0] =~ /^[89A-F][0-9A-F]{31}$/,
+   "Run openssl prime -generate with 128 bit hex output");
+
+ok(is_reported_prime($generated[0], "-hex"),
+   "Generated hex number is prime");
+
+@generated = run(app(["openssl", "prime", "-generate", "-bits", "128", "-safe"]),
+                 capture => 1);
+chomp @generated;
+
+ok(@generated == 1 && $generated[0] =~ /^\d+$/,
+   "Run openssl prime -generate with -safe");
+
+ok(is_reported_prime($generated[0]),
+   "Generated safe prime is prime");
+
+my $q = @generated == 1
+    ? Math::BigInt->new($generated[0])->bsub(1)->bdiv(2)->bstr() : "0";
+ok(is_reported_prime($q),
+   "Generated safe prime (p-1)/2 is prime");
+
+ok(!run(app(["openssl", "prime", "-generate"])),
+   "Run openssl prime -generate without -bits fails");
+
+ok(!run(app(["openssl", "prime", "-generate", "-bits", "128", "42"])),
+   "Run openssl prime -generate with a number argument fails");
+
+# Check that the app reports the given number as prime.
+sub is_reported_prime {
+    my ($num, @flags) = @_;
+    my @out = run(app(["openssl", "prime", @flags, $num // "0"]),
+                  capture => 1);
+    return scalar grep { / is prime$/ } @out;
+}
