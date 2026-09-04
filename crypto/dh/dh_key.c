@@ -18,6 +18,8 @@
 #include "dh_local.h"
 #include "crypto/bn.h"
 #include "crypto/dh.h"
+#include "crypto/fn.h"
+#include "crypto/fn_intern.h"
 #include "crypto/security_bits.h"
 
 #ifdef FIPS_MODULE
@@ -40,7 +42,6 @@ static int dh_finish(DH *dh);
 int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
 {
     BN_CTX *ctx = NULL;
-    BN_MONT_CTX *mont = NULL;
     BIGNUM *z = NULL, *pminus1;
     int ret = -1;
 
@@ -74,17 +75,9 @@ int ossl_dh_compute_key(unsigned char *key, const BIGNUM *pub_key, DH *dh)
         goto err;
     }
 
-    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        mont = BN_MONT_CTX_set_locked(&dh->method_mont_p,
-            dh->lock, dh->params.p, ctx);
-        BN_set_flags(dh->priv_key, BN_FLG_CONSTTIME);
-        if (!mont)
-            goto err;
-    }
-
     /* (Step 1) Z = pub_key^priv_key mod p */
     if (!dh->meth->bn_mod_exp(dh, z, pub_key, dh->priv_key, dh->params.p, ctx,
-            mont)) {
+            NULL)) {
         ERR_raise(ERR_LIB_DH, ERR_R_BN_LIB);
         goto err;
     }
@@ -186,15 +179,100 @@ const DH_METHOD *DH_get_default_method(void)
     return default_DH_method;
 }
 
+/*
+ * The OSSL_FN modular exponentiation backing the default
+ * DH_METHOD::bn_mod_exp implementation; see dh_bn_mod_exp().
+ */
+static int dh_ossl_fn_mod_exp(const DH *dh, BIGNUM *r,
+    const BIGNUM *a, const BIGNUM *p,
+    const BIGNUM *m)
+{
+    int ret = 0;
+    OSSL_FN_CTX *fn_ctx = NULL;
+    OSSL_FN_MONT_CTX *fn_mont = NULL;
+    OSSL_FN *fn_r = NULL;
+    const OSSL_FN *fn_a = NULL, *fn_p = NULL, *fn_m = NULL;
+    const void *token = NULL;
+    int limbs, fn_bits;
+    size_t fn_size;
+
+    fn_a = bn_get_ossl_fn(a);
+    fn_p = bn_get_ossl_fn(p);
+    fn_m = bn_get_ossl_fn(m);
+    if (fn_a == NULL || fn_p == NULL || fn_m == NULL)
+        return 0;
+    limbs = (int)ossl_fn_get_dsize(fn_m);
+
+    /* Acquire the writable result before OSSL_FN_CTX sizing. */
+    if ((fn_r = bn_acquire_ossl_fn(r, limbs)) == NULL)
+        return 0;
+
+    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
+        /*
+         * We take the input DH as const, but we lie, because in some cases we
+         * want to get a hold of its Montgomery context.
+         *
+         * We cast to remove the const qualifier in this case, it should be
+         * fine...
+         */
+        OSSL_FN_MONT_CTX **pmont = (OSSL_FN_MONT_CTX **)&dh->method_mont_fn_p;
+
+        fn_mont = OSSL_FN_MONT_CTX_set_locked(pmont, dh->lock, fn_m);
+        if (fn_mont == NULL)
+            goto err;
+    }
+
+    fn_size = OSSL_FN_mod_exp_mont_ctx_size(fn_r, fn_a, fn_p, fn_m, fn_mont);
+    if (fn_size == 0)
+        goto err;
+
+    fn_ctx = OSSL_FN_CTX_secure_new_size(dh->libctx, fn_size);
+    if (fn_ctx == NULL)
+        goto err;
+    if ((token = OSSL_FN_CTX_start(fn_ctx)) == NULL)
+        goto err;
+
+    ret = OSSL_FN_mod_exp_mont(fn_r, fn_a, fn_p, fn_m, fn_ctx, fn_mont);
+
+    if (ret) {
+        fn_bits = (int)OSSL_FN_num_bits(fn_r);
+        bn_release(r, fn_bits > 0 ? (fn_bits + BN_BITS2 - 1) / BN_BITS2 : 1);
+    }
+
+    if (!OSSL_FN_CTX_end(fn_ctx, token)) {
+        token = NULL;
+        goto err;
+    }
+    token = NULL;
+err:
+    if (token != NULL)
+        OSSL_FN_CTX_end(fn_ctx, token);
+    OSSL_FN_CTX_free(fn_ctx);
+    return ret;
+}
+
+/*
+ * The default DH_METHOD::bn_mod_exp implementation.  This is where the
+ * default method's BIGNUM -> OSSL_FN conversion happens; see
+ * dh_ossl_fn_mod_exp() above.
+ *
+ * On s390x, the hardware accelerated s390x_mod_exp() is tried first and
+ * the OSSL_FN path serves as its fallback, mirroring the role
+ * BN_mod_exp_mont() had before.
+ *
+ * Keeping the OSSL_FN conversion behind this hook means surgical
+ * overrides (DH_meth_set_bn_mod_exp()) keep being honored by the default
+ * method's compute_key / generate_key operations.
+ */
 static int dh_bn_mod_exp(const DH *dh, BIGNUM *r,
     const BIGNUM *a, const BIGNUM *p,
     const BIGNUM *m, BN_CTX *ctx, BN_MONT_CTX *m_ctx)
 {
 #ifdef S390X_MOD_EXP
-    return s390x_mod_exp(r, a, p, m, ctx, m_ctx);
-#else
-    return BN_mod_exp_mont(r, a, p, m, ctx, m_ctx);
+    if (s390x_mod_exp(r, a, p, m, ctx, m_ctx))
+        return 1;
 #endif
+    return dh_ossl_fn_mod_exp(dh, r, a, p, m);
 }
 
 static int dh_init(DH *dh)
@@ -207,6 +285,9 @@ static int dh_init(DH *dh)
 static int dh_finish(DH *dh)
 {
     BN_MONT_CTX_free(dh->method_mont_p);
+    dh->method_mont_p = NULL;
+    OSSL_FN_MONT_CTX_free(dh->method_mont_fn_p);
+    dh->method_mont_fn_p = NULL;
     return 1;
 }
 
@@ -229,37 +310,8 @@ int DH_generate_key(DH *dh)
 int ossl_dh_generate_public_key(BN_CTX *ctx, const DH *dh,
     const BIGNUM *priv_key, BIGNUM *pub_key)
 {
-    int ret = 0;
-    BIGNUM *prk = BN_new();
-    BN_MONT_CTX *mont = NULL;
-
-    if (prk == NULL)
-        return 0;
-
-    if (dh->flags & DH_FLAG_CACHE_MONT_P) {
-        /*
-         * We take the input DH as const, but we lie, because in some cases we
-         * want to get a hold of its Montgomery context.
-         *
-         * We cast to remove the const qualifier in this case, it should be
-         * fine...
-         */
-        BN_MONT_CTX **pmont = (BN_MONT_CTX **)&dh->method_mont_p;
-
-        mont = BN_MONT_CTX_set_locked(pmont, dh->lock, dh->params.p, ctx);
-        if (mont == NULL)
-            goto err;
-    }
-    BN_with_flags(prk, priv_key, BN_FLG_CONSTTIME);
-
-    /* pub_key = g^priv_key mod p */
-    if (!dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, prk, dh->params.p,
-            ctx, mont))
-        goto err;
-    ret = 1;
-err:
-    BN_clear_free(prk);
-    return ret;
+    return dh->meth->bn_mod_exp(dh, pub_key, dh->params.g, priv_key,
+        dh->params.p, ctx, NULL);
 }
 
 static int generate_key(DH *dh)
@@ -333,18 +385,27 @@ static int generate_key(DH *dh)
                 l -= 2;
                 if (dh->length != 0 && dh->length < l)
                     l = dh->length;
-                if (!BN_priv_rand_ex(priv_key, l, BN_RAND_TOP_ONE,
-                        BN_RAND_BOTTOM_ANY, 0, ctx))
-                    goto err;
-                /*
-                 * We handle just one known case where g is a quadratic non-residue:
-                 * for g = 2: p % 8 == 3
-                 */
-                if (BN_is_word(dh->params.g, DH_GENERATOR_2)
-                    && !BN_is_bit_set(dh->params.p, 2)) {
-                    /* clear bit 0, since it won't be a secret anyway */
-                    if (!BN_clear_bit(priv_key, 0))
+                {
+                    OSSL_FN *fn_priv = bn_acquire_ossl_fn(priv_key,
+                        (l + BN_BITS2 - 1) / BN_BITS2);
+
+                    if (fn_priv == NULL)
                         goto err;
+                    if (!OSSL_FN_priv_rand(fn_priv, l, OSSL_FN_RAND_TOP_ONE,
+                            OSSL_FN_RAND_BOTTOM_ANY, 0, dh->libctx))
+                        goto err;
+                    /*
+                     * We handle just one known case where g is a quadratic
+                     * non-residue: for g = 2: p % 8 == 3.  The checks are
+                     * on public parameters, so they stay at the BN level.
+                     */
+                    if (BN_is_word(dh->params.g, DH_GENERATOR_2)
+                        && !BN_is_bit_set(dh->params.p, 2)) {
+                        /* clear bit 0, since it won't be a secret anyway */
+                        if (!OSSL_FN_clear_bit(fn_priv, 0))
+                            goto err;
+                    }
+                    bn_release(priv_key, (l + BN_BITS2 - 1) / BN_BITS2);
                 }
             } else
 #endif
