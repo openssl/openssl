@@ -8,6 +8,7 @@
 
 use strict;
 use warnings;
+use File::Spec;
 
 package OpenSSL::copyright;
 
@@ -27,8 +28,9 @@ sub year_of {
     my $YEAR = [localtime()]->[5] + 1900;
 
     # See if git's available
+    my $devnull = File::Spec->devnull();
     open my $FH,
-       "git log -1 --date=short --format=format:%cd $file 2>/dev/null|"
+       "git log -1 --date=short --format=format:%cd $file 2>$devnull|"
            or return $YEAR;
     my $LINE = <$FH> // '';
     close $FH;
