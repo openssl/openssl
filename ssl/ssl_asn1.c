@@ -83,8 +83,6 @@ ASN1_SEQUENCE(SSL_SESSION_ASN1) = {
     ASN1_EXP_OPT(SSL_SESSION_ASN1, peer_rpk, ASN1_OCTET_STRING, 20)
 } static_ASN1_SEQUENCE_END(SSL_SESSION_ASN1)
 
-IMPLEMENT_STATIC_ASN1_ENCODE_FUNCTIONS(SSL_SESSION_ASN1)
-
 /* Utility functions for i2d_SSL_SESSION */
 
 /* Initialise OCTET STRING from buffer and length */
@@ -219,7 +217,8 @@ int i2d_SSL_SESSION(const SSL_SESSION *in, unsigned char **pp)
         ssl_session_oinit(&as.ticket_appdata, &ticket_appdata,
             in->ticket_appdata, in->ticket_appdata_len);
 
-    ret = i2d_SSL_SESSION_ASN1(&as, pp);
+    ret = ASN1_item_i2d((const ASN1_VALUE *)&as, pp,
+        ASN1_ITEM_rptr(SSL_SESSION_ASN1));
     OPENSSL_free(peer_rpk.data);
     return ret;
 }
@@ -271,7 +270,9 @@ SSL_SESSION *d2i_SSL_SESSION_ex(SSL_SESSION **a, const unsigned char **pp,
     SSL_SESSION_ASN1 *as = NULL;
     SSL_SESSION *ret = NULL;
 
-    as = d2i_SSL_SESSION_ASN1(NULL, &p, length);
+    /* Decode in libctx so that the peer certificate's key lands in it too */
+    as = (SSL_SESSION_ASN1 *)ASN1_item_d2i_ex(NULL, &p, length,
+        ASN1_ITEM_rptr(SSL_SESSION_ASN1), libctx, propq);
     /* ASN.1 code returns suitable error */
     if (as == NULL)
         goto err;

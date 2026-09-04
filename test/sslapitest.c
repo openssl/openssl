@@ -12940,6 +12940,57 @@ static int validation_cbk(const CT_POLICY_EVAL_CTX *ctx,
 }
 #endif
 
+/*
+ * d2i_SSL_SESSION_ex() decodes the peer certificate in the given library
+ * context, so under a property query no provider satisfies, digesting the
+ * certificate fails as it does for one decoded directly under that query.
+ */
+static int test_session_peer_libctx(void)
+{
+    SSL_CTX *sctx = NULL, *cctx = NULL;
+    SSL *clientssl = NULL, *serverssl = NULL;
+    SSL_SESSION *sess = NULL, *decoded = NULL;
+    OSSL_LIB_CTX *empty = NULL;
+    unsigned char *der = NULL;
+    const unsigned char *p;
+    unsigned char md[EVP_MAX_MD_SIZE];
+    unsigned int md_len;
+    int len, testresult = 0;
+
+    if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
+            TLS_client_method(), TLS1_VERSION, 0,
+            &sctx, &cctx, cert, privkey))
+        || !TEST_true(create_ssl_objects(sctx, cctx, &serverssl, &clientssl,
+            NULL, NULL))
+        || !TEST_true(create_ssl_connection(serverssl, clientssl,
+            SSL_ERROR_NONE))
+        || !TEST_ptr(sess = SSL_get1_session(clientssl))
+        || !TEST_ptr(SSL_SESSION_get0_peer(sess))
+        || !TEST_int_gt(len = i2d_SSL_SESSION(sess, &der), 0)
+        || !TEST_ptr(empty = OSSL_LIB_CTX_new()))
+        goto end;
+
+    p = der;
+    if (!TEST_ptr(decoded = d2i_SSL_SESSION_ex(NULL, &p, len, empty,
+                      "provider=definitely_missing"))
+        || !TEST_ptr(SSL_SESSION_get0_peer(decoded))
+        || !TEST_false(X509_digest(SSL_SESSION_get0_peer(decoded), EVP_sha1(),
+            md, &md_len)))
+        goto end;
+
+    testresult = 1;
+end:
+    SSL_SESSION_free(decoded);
+    SSL_SESSION_free(sess);
+    OPENSSL_free(der);
+    OSSL_LIB_CTX_free(empty);
+    SSL_free(serverssl);
+    SSL_free(clientssl);
+    SSL_CTX_free(sctx);
+    SSL_CTX_free(cctx);
+    return testresult;
+}
+
 static int test_ssl_dup(void)
 {
     SSL_CTX *cctx = NULL, *sctx = NULL;
@@ -17174,6 +17225,7 @@ int setup_tests(void)
 #endif
 #ifndef OPENSSL_NO_TLS1_2
     ADD_TEST(test_ssl_dup);
+    ADD_TEST(test_session_peer_libctx);
     ADD_ALL_TESTS(test_session_secret_cb, 2);
 #ifndef OPENSSL_NO_DH
     ADD_ALL_TESTS(test_set_tmp_dh, 11);
