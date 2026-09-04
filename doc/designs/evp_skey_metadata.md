@@ -107,7 +107,7 @@ We implement the following accessors:
                                  const unsigned char **id, size_t *len);
   ```
 
-  Returns 1 on success (with `*id` and `*len` set), 0 if not available.
+  Returns 1 on success (with `*id` and `*len` set), 0 on error.
 
 - **Algorithm identifier**: new accessor that returns both the DER-encoded OID
   and the DER-encoded parameters:
