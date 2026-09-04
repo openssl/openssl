@@ -267,7 +267,7 @@ EVP_SKEY *PKCS8_PRIV_KEY_INFO_get1_skey(const PKCS8_PRIV_KEY_INFO *p8inf,
         goto err;
 
     skey = EVP_SKEY_import(libctx, skey_type, propq,
-        OSSL_SKEYMGMT_SELECT_SECRET_KEY, params);
+        OSSL_SKEYMGMT_SELECT_ALL, params);
 
 err:
     OSSL_PARAM_BLD_free(bld);
