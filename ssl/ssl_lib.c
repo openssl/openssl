@@ -4486,6 +4486,11 @@ SSL_CTX *SSL_CTX_new_ex(OSSL_LIB_CTX *libctx, const char *propq,
         goto err;
     }
 
+    if (!ossl_ssl_load_provider_ciphersuites(ret)) {
+        ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
+        goto err;
+    }
+
     /* initialise sig algs */
     if (!ssl_setup_sigalgs(ret)) {
         ERR_raise(ERR_LIB_SSL, ERR_R_SSL_LIB);
@@ -4720,6 +4725,11 @@ int SSL_CTX_up_ref(SSL_CTX *ctx)
     return ((i > 1) ? 1 : 0);
 }
 
+static void ssl_cipher_free_nonconst(SSL_CIPHER *cipher)
+{
+    ossl_ssl_cipher_free(cipher);
+}
+
 void SSL_CTX_free(SSL_CTX *a)
 {
     int i;
@@ -4796,6 +4806,9 @@ void SSL_CTX_free(SSL_CTX *a)
         ssl_evp_cipher_free(a->ssl_cipher_methods[j]);
     for (j = 0; j < SSL_MD_NUM_IDX; j++)
         ssl_evp_md_free(a->ssl_digest_methods[j]);
+    sk_SSL_CIPHER_free(a->provider_ciphersuites_by_name);
+    sk_SSL_CIPHER_pop_free(a->provider_ciphersuites,
+        ssl_cipher_free_nonconst);
     for (j = 0; j < a->group_list_len; j++) {
         OPENSSL_free(a->group_list[j].tlsname);
         OPENSSL_free(a->group_list[j].realname);

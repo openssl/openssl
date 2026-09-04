@@ -1282,6 +1282,11 @@ struct ssl_ctx_st {
     size_t group_list_len;
     size_t group_list_max_len;
 
+    /* Immutable after discovery; owns descriptors and is sorted by wire ID. */
+    STACK_OF(SSL_CIPHER) *provider_ciphersuites;
+    /* Shallow name index; descriptor ownership remains with the ID stack. */
+    STACK_OF(SSL_CIPHER) *provider_ciphersuites_by_name;
+
     TLS_SIGALG_INFO *sigalg_list;
     size_t sigalg_list_len;
     size_t sigalg_list_max_len;
@@ -2970,7 +2975,33 @@ static ossl_inline int ossl_is_grease_value(uint16_t val)
 }
 __owur int ssl_setup_sigalgs(SSL_CTX *ctx);
 int ssl_load_groups(SSL_CTX *ctx);
+/**
+ * @brief Discover and index provider suites when constructing an SSL_CTX.
+ * @param ctx Context under construction; its provider registry is uninitialised.
+ * @returns 1 on success (including no applicable suites), 0 on fatal failure.
+ *
+ * Retains EVP implementations fetched with ctx's libctx and property query.
+ * The registry is immutable after success; SSL_CTX_free() owns cleanup even on
+ * failure. Unavailable algorithms and unsupported capabilities are skipped.
+ */
+int ossl_ssl_load_provider_ciphersuites(SSL_CTX *ctx);
 int ssl_load_sigalgs(SSL_CTX *ctx);
+/**
+ * @brief Look up a borrowed provider descriptor in an immutable registry.
+ * @param ctx Owning context, or NULL for no registry.
+ * @param id Internal cipher ID, including SSL3_CK_CIPHERSUITE_FLAG.
+ * @returns Descriptor owned by ctx, or NULL if absent.
+ */
+__owur const SSL_CIPHER *ossl_ssl_get0_provider_cipher_by_id(const SSL_CTX *ctx,
+    uint32_t id);
+/**
+ * @brief Look up a borrowed provider descriptor by case-insensitive name.
+ * @param ctx Owning context, or NULL for no registry.
+ * @param name Suite name, or NULL for no match.
+ * @returns Descriptor owned by ctx, or NULL if absent.
+ */
+__owur const SSL_CIPHER *ossl_ssl_get0_provider_cipher_by_name(const SSL_CTX *ctx,
+    const char *name);
 __owur int ssl_fill_hello_random(SSL_CONNECTION *s, int server,
     unsigned char *field, size_t len,
     DOWNGRADE dgrd);
@@ -2995,6 +3026,12 @@ __owur unsigned int ssl_get_max_send_fragment(const SSL_CONNECTION *sc);
 __owur unsigned int ssl_get_split_send_fragment(const SSL_CONNECTION *sc);
 
 __owur const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id);
+/**
+ * @brief Check both built-in cipher names, including SCSVs, ignoring case.
+ * @param name Non-NULL candidate provider suite name.
+ * @returns 1 on a collision with an OpenSSL or standard name, otherwise 0.
+ */
+__owur int ossl_ssl_has_cipher_name(const char *name);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname);
 __owur const SSL_CIPHER *ssl3_get_cipher_by_char(const unsigned char *p);

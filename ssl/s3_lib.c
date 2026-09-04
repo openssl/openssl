@@ -4725,6 +4725,27 @@ const SSL_CIPHER *ssl3_get_cipher_by_id(uint32_t id)
     return OBJ_bsearch_ssl_cipher_id(&c, ssl3_scsvs, SSL3_NUM_SCSVS);
 }
 
+int ossl_ssl_has_cipher_name(const char *name)
+{
+    SSL_CIPHER *tbl;
+    SSL_CIPHER *alltabs[] = { tls13_ciphers, ssl3_ciphers, ssl3_scsvs };
+    size_t i, j;
+    const size_t tblsize[] = {
+        TLS13_NUM_CIPHERS, SSL3_NUM_CIPHERS, SSL3_NUM_SCSVS
+    };
+
+    for (j = 0; j < OSSL_NELEM(alltabs); j++) {
+        for (i = 0, tbl = alltabs[j]; i < tblsize[j]; i++, tbl++) {
+            if ((tbl->name != NULL
+                    && OPENSSL_strcasecmp(name, tbl->name) == 0)
+                || (tbl->stdname != NULL
+                    && OPENSSL_strcasecmp(name, tbl->stdname) == 0))
+                return 1;
+        }
+    }
+    return 0;
+}
+
 const SSL_CIPHER *ssl3_get_tls13_cipher_by_std_name(const char *stdname)
 {
     SSL_CIPHER *end = &tls13_ciphers[TLS13_NUM_CIPHERS];
