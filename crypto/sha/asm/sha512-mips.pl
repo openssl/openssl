@@ -311,6 +311,7 @@ $code.=<<___;
 #include "arch/mips_arch.h"
 
 .text
+.local	K${label}
 .set	noat
 #if !defined(__mips_eabi) && (!defined(__vxworks) || defined(__pic__))
 .option	pic2
