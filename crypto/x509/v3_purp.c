@@ -746,6 +746,7 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
         tmp_ex_flags |= EXFLAG_INVALID;
     if (!check_name_constraints(tmp_nc))
         tmp_ex_flags |= EXFLAG_INVALID;
+    NAME_CONSTRAINTS_free(tmp_nc);
 
     /* Validate the CRL distribution point entries */
     res = ossl_x509_decode_crldp(const_x, &tmp_crldp);
@@ -807,9 +808,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     sk_GENERAL_NAME_pop_free(((X509 *)const_x)->altname, GENERAL_NAME_free);
     ((X509 *)const_x)->altname = tmp_altname;
     tmp_altname = NULL;
-    NAME_CONSTRAINTS_free(((X509 *)const_x)->nc);
-    ((X509 *)const_x)->nc = tmp_nc;
-    tmp_nc = NULL;
 
 #ifdef tsan_st_rel
     tsan_st_rel((TSAN_QUALIFIER int *)&const_x->ex_cached, 1);
@@ -831,7 +829,6 @@ done:
     ASN1_OCTET_STRING_free(tmp_skid);
     AUTHORITY_KEYID_free(tmp_akid);
     sk_GENERAL_NAME_pop_free(tmp_altname, GENERAL_NAME_free);
-    NAME_CONSTRAINTS_free(tmp_nc);
     return ret;
 }
 
