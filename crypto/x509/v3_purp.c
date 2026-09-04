@@ -388,17 +388,16 @@ static int setup_dp(const X509 *x, DIST_POINT *dp)
     return DIST_POINT_set_dpname(dp->distpoint, iname) ? 1 : -1;
 }
 
-/* Return 1 on success, 0 if x is invalid, -1 on (internal) error. */
-static int setup_crldp(const X509 *x, STACK_OF(DIST_POINT) **tmp_crldp)
+int ossl_x509_decode_crldp(const X509 *x, STACK_OF(DIST_POINT) **pcrldp)
 {
     int i;
 
-    *tmp_crldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &i, NULL);
-    if (*tmp_crldp == NULL && i != -1)
+    *pcrldp = X509_get_ext_d2i(x, NID_crl_distribution_points, &i, NULL);
+    if (*pcrldp == NULL && i != -1)
         return 0;
 
-    for (i = 0; i < sk_DIST_POINT_num(*tmp_crldp); i++) {
-        int res = setup_dp(x, sk_DIST_POINT_value(*tmp_crldp, i));
+    for (i = 0; i < sk_DIST_POINT_num(*pcrldp); i++) {
+        int res = setup_dp(x, sk_DIST_POINT_value(*pcrldp, i));
 
         if (res < 1)
             return res;
@@ -731,10 +730,14 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     if (!check_name_constraints(tmp_nc))
         tmp_ex_flags |= EXFLAG_INVALID;
 
-    /* Handle CRL distribution point entries */
-    res = setup_crldp(const_x, &tmp_crldp);
+    /*
+     * Validate the CRL distribution point entries. They are not cached: the
+     * CRL checks decode them again when a CRL is being matched to x.
+     */
+    res = ossl_x509_decode_crldp(const_x, &tmp_crldp);
     if (res == 0)
         tmp_ex_flags |= EXFLAG_INVALID;
+    sk_DIST_POINT_pop_free(tmp_crldp, DIST_POINT_free);
 
 #ifndef OPENSSL_NO_RFC3779
     STACK_OF(IPAddressFamily) *tmp_rfc3779_addr
@@ -779,8 +782,6 @@ int ossl_x509v3_cache_extensions(const X509 *const_x)
     ((X509 *)const_x)->altname = tmp_altname;
     NAME_CONSTRAINTS_free(((X509 *)const_x)->nc);
     ((X509 *)const_x)->nc = tmp_nc;
-    sk_DIST_POINT_pop_free(((X509 *)const_x)->crldp, DIST_POINT_free);
-    ((X509 *)const_x)->crldp = tmp_crldp;
 #ifndef OPENSSL_NO_RFC3779
     sk_IPAddressFamily_pop_free(((X509 *)const_x)->rfc3779_addr, IPAddressFamily_free);
     ((X509 *)const_x)->rfc3779_addr = tmp_rfc3779_addr;
