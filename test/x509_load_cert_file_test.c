@@ -113,62 +113,150 @@ err:
     return ret;
 }
 
-/*
- * Test loading multiple certificates and a CRL with identical CN into
- * X509_STORE.
- */
+static int check_get1_certs(X509_STORE_CTX *ctx, const X509_NAME *name,
+    X509 *cert1, X509 *cert2)
+{
+    STACK_OF(X509) *certs = NULL;
+    X509 *got1, *got2;
+    int ret = 0;
+
+    if (!TEST_ptr(certs = X509_STORE_CTX_get1_certs(ctx, name))
+        || !TEST_int_eq(sk_X509_num(certs), cert2 == NULL ? 1 : 2))
+        goto err;
+
+    got1 = sk_X509_value(certs, 0);
+    if (cert2 == NULL) {
+        if (!TEST_ptr_eq(got1, cert1))
+            goto err;
+    } else {
+        got2 = sk_X509_value(certs, 1);
+        if (!TEST_true((got1 == cert1 && got2 == cert2)
+                || (got1 == cert2 && got2 == cert1)))
+            goto err;
+    }
+    ret = 1;
+
+err:
+    OSSL_STACK_OF_X509_free(certs);
+    return ret;
+}
+
+static int check_get1_crls(X509_STORE_CTX *ctx, const X509_NAME *name,
+    X509_CRL *crl1, X509_CRL *crl2)
+{
+    STACK_OF(X509_CRL) *crls = NULL;
+    X509_CRL *got1, *got2;
+    int ret = 0;
+
+    if (!TEST_ptr(crls = X509_STORE_CTX_get1_crls(ctx, name))
+        || !TEST_int_eq(sk_X509_CRL_num(crls), crl2 == NULL ? 1 : 2))
+        goto err;
+
+    got1 = sk_X509_CRL_value(crls, 0);
+    if (crl2 == NULL) {
+        if (!TEST_ptr_eq(got1, crl1))
+            goto err;
+    } else {
+        got2 = sk_X509_CRL_value(crls, 1);
+        if (!TEST_true((got1 == crl1 && got2 == crl2)
+                || (got1 == crl2 && got2 == crl1)))
+            goto err;
+    }
+    ret = 1;
+
+err:
+    sk_X509_CRL_pop_free(crls, X509_CRL_free);
+    return ret;
+}
+
+static int check_store_get1_by_name(X509_STORE_CTX *ctx, const X509_NAME *name1,
+    const X509_NAME *nameA, X509 *cert1, X509 *cert2, X509 *certA,
+    X509_CRL *crl1, X509_CRL *crl2, X509_CRL *crlA)
+{
+    return check_get1_certs(ctx, name1, cert1, cert2)
+        && check_get1_certs(ctx, nameA, certA, NULL)
+        && check_get1_crls(ctx, name1, crl1, crl2)
+        && check_get1_crls(ctx, nameA, crlA, NULL);
+}
+
+/* Check exact lookup results in hash table and flat store representations. */
 static int test_load_same_cn_certs(void)
 {
-    X509 *cert1 = NULL, *cert2 = NULL;
-    X509_CRL *crl2 = NULL;
-    int ret = 0;
+    X509 *cert1 = NULL, *cert2 = NULL, *certA = NULL;
+    X509_CRL *crl1 = NULL, *crl2 = NULL, *crlA = NULL;
     X509_STORE *store = NULL;
-    X509_STORE_CTX *s_ctx = NULL;
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-    STACK_OF(X509_OBJECT) *objs = NULL;
-#endif
-    STACK_OF(X509_CRL) *sk_x509_crl = NULL;
-    STACK_OF(X509) *sk_x509 = NULL;
-    X509_NAME *nm = NULL;
-
-    if (!TEST_ptr(nm = X509_NAME_new())
-        || !TEST_true(X509_NAME_add_entry_by_txt(nm, "CN", MBSTRING_ASC,
-            (unsigned char *)"www.example.test",
-            -1, -1, 0)))
-        goto err;
+    X509_STORE_CTX *ctx = NULL;
+    const X509_NAME *name1;
+    X509_NAME *nameA = NULL;
+    int ret = 0;
 
     if (!TEST_ptr(cert1 = X509_from_strings(cn_cert1))
         || !TEST_ptr(cert2 = X509_from_strings(cn_cert2))
-        || !TEST_ptr(crl2 = CRL_from_strings(cn_crl2))
-        || !TEST_ptr(s_ctx = X509_STORE_CTX_new())
+        || !TEST_ptr(crl1 = CRL_from_strings(cn_crl2))
+        || !TEST_ptr(name1 = X509_get_subject_name(cert1))
+        || !TEST_ptr(nameA = X509_NAME_new())
+        || !TEST_true(X509_NAME_add_entry_by_txt(nameA, "CN", MBSTRING_ASC,
+            (unsigned char *)"alpha.test", -1, -1, 0))
+        || !TEST_ptr(certA = X509_dup(cert1))
+        || !TEST_true(X509_set_subject_name(certA, nameA))
+        || !TEST_ptr(crl2 = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crl2, name1))
+        || !TEST_ptr(crlA = X509_CRL_new())
+        || !TEST_true(X509_CRL_set_issuer_name(crlA, nameA))
+        || !TEST_ptr(ctx = X509_STORE_CTX_new())
         || !TEST_ptr(store = X509_STORE_new())
-        || !TEST_true(X509_STORE_CTX_init(s_ctx, store, NULL, NULL))
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, NULL, NULL))
         || !TEST_true(X509_STORE_add_cert(store, cert1))
-        || !TEST_true(X509_STORE_add_crl(store, crl2))
+        || !TEST_true(X509_STORE_add_crl(store, crl1))
         || !TEST_true(X509_STORE_add_cert(store, cert2))
-    /* deliberately not taking lock in a single thread */
-#ifndef OPENSSL_NO_DEPRECATED_4_0
-        || !TEST_ptr(objs = X509_STORE_get0_objects(store))
-        || !TEST_int_eq(sk_X509_OBJECT_num(objs), 3)
-#endif
-        || !TEST_ptr(sk_x509 = X509_STORE_CTX_get1_certs(s_ctx, nm))
-        || !TEST_int_eq(sk_X509_num(sk_x509), 2)
-        || !TEST_ptr(sk_x509_crl = X509_STORE_CTX_get1_crls(s_ctx, nm))
-        || !TEST_int_eq(sk_X509_CRL_num(sk_x509_crl), 1))
+        || !TEST_true(X509_STORE_add_crl(store, crl2))
+        || !TEST_true(X509_STORE_add_cert(store, certA))
+        || !TEST_true(X509_STORE_add_crl(store, crlA))
+        || !check_store_get1_by_name(ctx, name1, nameA, cert1, cert2, certA,
+            crl1, crl2, crlA))
         goto err;
+
+#ifndef OPENSSL_NO_DEPRECATED_4_0
+    /* Exercise conversion of an already populated store. */
+    if (!TEST_ptr(X509_STORE_get0_objects(store))
+        || !check_store_get1_by_name(ctx, name1, nameA, cert1, cert2, certA,
+            crl1, crl2, crlA))
+        goto err;
+
+    X509_STORE_CTX_free(ctx);
+    ctx = NULL;
+    X509_STORE_free(store);
+    store = NULL;
+
+    /* Put a foreign object between the two matching objects of each type. */
+    if (!TEST_ptr(ctx = X509_STORE_CTX_new())
+        || !TEST_ptr(store = X509_STORE_new())
+        || !TEST_true(X509_STORE_CTX_init(ctx, store, NULL, NULL))
+        /* Deliberately single-threaded: this call exposes internal state. */
+        || !TEST_ptr(X509_STORE_get0_objects(store))
+        || !TEST_true(X509_STORE_add_cert(store, cert1))
+        || !TEST_true(X509_STORE_add_cert(store, certA))
+        || !TEST_true(X509_STORE_add_cert(store, cert2))
+        || !TEST_true(X509_STORE_add_crl(store, crl1))
+        || !TEST_true(X509_STORE_add_crl(store, crlA))
+        || !TEST_true(X509_STORE_add_crl(store, crl2))
+        || !check_store_get1_by_name(ctx, name1, nameA, cert1, cert2, certA,
+            crl1, crl2, crlA))
+        goto err;
+#endif
 
     ret = 1;
 
 err:
-    X509_NAME_free(nm);
-    OSSL_STACK_OF_X509_free(sk_x509);
-    sk_X509_CRL_pop_free(sk_x509_crl, X509_CRL_free);
+    X509_NAME_free(nameA);
+    X509_STORE_CTX_free(ctx);
     X509_STORE_free(store);
-    X509_STORE_CTX_free(s_ctx);
     X509_free(cert1);
     X509_free(cert2);
+    X509_free(certA);
+    X509_CRL_free(crl1);
     X509_CRL_free(crl2);
-
+    X509_CRL_free(crlA);
     return ret;
 }
 
