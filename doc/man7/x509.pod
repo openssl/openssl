@@ -59,7 +59,10 @@ it was at that point. The extension accessors and the certificate verification
 functions rely on this cached information and require a finalized certificate:
 called on a certificate that is not finalized they fail, reporting
 B<ERR_R_SHOULD_NOT_HAVE_BEEN_CALLED>. A certificate constructed with
-L<X509_new(3)> is finalized by signing it.
+L<X509_new(3)> is finalized by signing it. One that is never signed, such as
+a trust anchor an application builds around a bare public key, is finalized
+by encoding it with L<i2d_X509(3)>, which produces an unsigned certificate
+(RFC 9925), and parsing the result.
 
 Modifying a finalized certificate with a setter such as L<X509_set_version(3)>
 or L<X509_set_pubkey(3)>, or by adding or removing an extension with
