@@ -1367,6 +1367,18 @@ IF[{- !$disabled{tests} -}]
       SOURCE[fake-cipher]=fake-cipher.ld
       GENERATE[fake-cipher.ld]=../util/providers.num
     ENDIF
+    IF[{- !$disabled{tls} && !$disabled{tls1_3} -}]
+      MODULES{noinst}=tls-provider
+      SOURCE[tls-provider]=tls-provider-module.c tls-provider.c
+      INCLUDE[tls-provider]=.. ../include ../apps/include
+      DEPEND[tls-provider]=../libcrypto
+      IF[{- $target{needs_c99_snprintf_compat} -}]
+        SOURCE[tls-provider]=../crypto/msvc2013_snprintf.c
+      ENDIF
+      IF[{- defined $target{shared_defflag} -}]
+        SOURCE[tls-provider]=p_test.ld
+      ENDIF
+    ENDIF
     MODULES{noinst}=tls-provider-child
     SOURCE[tls-provider-child]=tls-provider-module.c tls-provider.c
     INCLUDE[tls-provider-child]=.. ../include ../apps/include
