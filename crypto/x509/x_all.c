@@ -275,6 +275,8 @@ X509 *X509_load_http(const char *url, BIO *bio, BIO *rbio, int timeout)
 int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     STACK_OF(X509_EXTENSION) *exts;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
     int bad = 0;
 
     if (x == NULL) {
@@ -287,9 +289,10 @@ int X509_REQ_sign(X509_REQ *x, EVP_PKEY *pkey, const EVP_MD *md)
     if (bad)
         return 0;
     x->req_info.enc.modified = 1;
+    ossl_x509_req_get0_libctx(x, &libctx, &propq);
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_REQ_INFO), &x->sig_alg, NULL,
         x->signature, &x->req_info, NULL,
-        pkey, md, x->libctx, x->propq);
+        pkey, md, libctx, propq);
 }
 
 int X509_REQ_sign_ctx(X509_REQ *x, EVP_MD_CTX *ctx)
@@ -470,10 +473,8 @@ X509_REQ *d2i_X509_REQ_bio(BIO *bp, X509_REQ **req)
     OSSL_LIB_CTX *libctx = NULL;
     const char *propq = NULL;
 
-    if (req != NULL && *req != NULL) {
-        libctx = (*req)->libctx;
-        propq = (*req)->propq;
-    }
+    if (req != NULL && *req != NULL)
+        ossl_x509_req_get0_libctx(*req, &libctx, &propq);
 
     return ASN1_item_d2i_bio_ex(ASN1_ITEM_rptr(X509_REQ), bp, req, libctx, propq);
 }
@@ -809,8 +810,12 @@ int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,
 int X509_REQ_digest(const X509_REQ *data, const EVP_MD *type,
     unsigned char *md, unsigned int *len)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    ossl_x509_req_get0_libctx(data, &libctx, &propq);
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509_REQ), type, (char *)data,
-        md, len, data->libctx, data->propq);
+        md, len, libctx, propq);
 }
 
 int X509_NAME_digest(const X509_NAME *data, const EVP_MD *type,
