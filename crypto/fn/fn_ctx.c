@@ -154,9 +154,9 @@ void OSSL_FN_CTX_free(OSSL_FN_CTX *ctx)
     assert(ctx->last_frame == NULL);
 
     if (ctx->is_securely_allocated)
-        OPENSSL_secure_free(ctx);
+        OPENSSL_secure_clear_free(ctx, sizeof(*ctx) + ctx->msize);
     else
-        OPENSSL_free(ctx);
+        OPENSSL_clear_free(ctx, sizeof(*ctx) + ctx->msize);
 }
 
 const void *OSSL_FN_CTX_start(OSSL_FN_CTX *ctx)

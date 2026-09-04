@@ -442,6 +442,140 @@ end:
     return ret;
 }
 
+/*
+ * Test that OSSL_FN_CTX_free() cleanses the whole context allocation
+ * before freeing it.  Custom memory hooks record the pointer and size of
+ * each allocation, and check that the buffer handed back to free() has
+ * been zeroed.
+ */
+static struct recorded_alloc_st {
+    void *ptr;
+    size_t size;
+} recorded_allocs[8];
+static size_t recorded_allocs_n = 0;
+static int recorded_allocs_nonzero = 0;
+
+static void record_alloc(void *ptr, size_t size)
+{
+    if (recorded_allocs_n < OSSL_NELEM(recorded_allocs)) {
+        recorded_allocs[recorded_allocs_n].ptr = ptr;
+        recorded_allocs[recorded_allocs_n].size = size;
+        recorded_allocs_n++;
+    }
+}
+
+static void check_free(void *ptr)
+{
+    for (size_t i = 0; i < recorded_allocs_n; i++) {
+        if (recorded_allocs[i].ptr == ptr) {
+            const unsigned char *p = recorded_allocs[i].ptr;
+
+            for (size_t j = 0; j < recorded_allocs[i].size; j++)
+                if (p[j] != 0)
+                    recorded_allocs_nonzero = 1;
+            recorded_allocs[i].ptr = NULL; /* only check each alloc once */
+        }
+    }
+}
+
+static void *hook_malloc(size_t num, const char *file, int line)
+{
+    void *ptr = malloc(num);
+
+    if (ptr != NULL)
+        record_alloc(ptr, num);
+    return ptr;
+}
+
+static void *hook_realloc(void *addr, size_t num, const char *file, int line)
+{
+    void *ptr = realloc(addr, num);
+
+    if (ptr != NULL && ptr != addr)
+        record_alloc(ptr, num);
+    return ptr;
+}
+
+static void hook_free(void *ptr, const char *file, int line)
+{
+    if (ptr != NULL)
+        check_free(ptr);
+    free(ptr);
+}
+
+static int test_ctx_free_clear_common(int secure)
+{
+    int ret = 0;
+    OSSL_FN_CTX *ctx = NULL;
+    size_t size = OSSL_FN_CTX_size(2, 4, 16);
+    const void *token = NULL;
+    CRYPTO_malloc_fn old_malloc;
+    CRYPTO_realloc_fn old_realloc;
+    CRYPTO_free_fn old_free;
+
+    if (!TEST_size_t_ne(size, 0))
+        return 0;
+
+    recorded_allocs_n = 0;
+    recorded_allocs_nonzero = 0;
+    memset(recorded_allocs, 0, sizeof(recorded_allocs));
+    /*
+     * Save the current memory functions so they can be restored below.
+     * Passing NULLs to CRYPTO_set_mem_functions() is a no-op, not a
+     * restore; leaving the hooks installed would make hook_free() inspect
+     * unrelated allocations at library deinit time.
+     */
+    CRYPTO_get_mem_functions(&old_malloc, &old_realloc, &old_free);
+    if (!CRYPTO_set_mem_functions(hook_malloc, hook_realloc, hook_free))
+        return 0;
+
+    if (secure)
+        ctx = OSSL_FN_CTX_secure_new_size(NULL, size);
+    else
+        ctx = OSSL_FN_CTX_new_size(NULL, size);
+
+    /* Allocate a number in the arena and fill it with a non-zero pattern */
+    if (TEST_ptr(ctx)
+        && TEST_ptr(token = OSSL_FN_CTX_start(ctx))) {
+        OSSL_FN *fn = OSSL_FN_CTX_get_limbs(ctx, 4);
+
+        if (TEST_ptr(fn)) {
+            OSSL_FN_ULONG *u = (OSSL_FN_ULONG *)ossl_fn_get_words(fn);
+
+            memset(u, 0xff, 4 * OSSL_FN_BYTES);
+        }
+        (void)OSSL_FN_CTX_end(ctx, token);
+    }
+    OSSL_FN_CTX_free(ctx);
+
+    if (!CRYPTO_set_mem_functions(old_malloc, old_realloc, old_free))
+        goto end;
+
+    if (!TEST_int_eq(recorded_allocs_nonzero, 0))
+        goto end;
+
+    ret = 1;
+end:
+    return ret;
+}
+
+static int test_ctx_free_clear(void)
+{
+    int ret = 0;
+    /* Secure memory may be unavailable (e.g. OPENSSL_NO_SECURE_MEMORY) */
+    int secure_ok = CRYPTO_secure_malloc_init(4096, 32);
+
+    if (!test_ctx_free_clear_common(0)
+        || (secure_ok && !test_ctx_free_clear_common(1)))
+        goto end;
+
+    ret = 1;
+end:
+    if (secure_ok)
+        CRYPTO_secure_malloc_done();
+    return ret;
+}
+
 int setup_tests(void)
 {
     ADD_TEST(test_struct);
@@ -452,6 +586,7 @@ int setup_tests(void)
     ADD_TEST(test_secure_ctx);
     ADD_TEST(test_secure_ctx_size);
     ADD_TEST(test_ctx_peak_used);
+    ADD_TEST(test_ctx_free_clear);
 
     return 1;
 }
