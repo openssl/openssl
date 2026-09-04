@@ -11,6 +11,7 @@ use POSIX ":sys_wait_h";
 package TLSProxy::Proxy;
 
 use File::Spec;
+use File::Temp qw/tempfile/;
 use IO::Socket;
 use IO::Select;
 use TLSProxy::Record;
@@ -126,6 +127,8 @@ sub init
         serverpid => 0,
         clientpid => 0,
         clientexit => 0,
+        clientoutput => "",
+        client_alerts => [],
         execute => $execute,
         cert => $cert,
         debug => $debug,
@@ -168,6 +171,8 @@ sub clearClient
     $self->{expected_tickets} = 2;
     $self->{clientpid} = 0;
     $self->{clientexit} = 0;
+    $self->{clientoutput} = "";
+    $self->{client_alerts} = [];
     $is_tls13 = 0;
     $ciphersuite = undef;
 
@@ -432,11 +437,21 @@ sub clientstart
         if ($self->debug) {
             print STDERR "Client command: $execcmd\n";
         }
+
+        # Capture s_client's stdout+stderr so it can be inspected after exit
+        # (see clientoutput/client_alerts). The open() below only wires the
+        # client's stdin. The file is created in the test results directory
+        # (the current working directory during a test run).
+        my (undef, $capturefile) = tempfile("client-XXXXXX",
+                                            DIR => File::Spec->curdir,
+                                            SUFFIX => ".out", OPEN => 0);
+        $self->{clientcapture} = $capturefile;
+
         open(my $savedout, ">&STDOUT");
         # If we open pipe with new descriptor, attempt to close it,
         # explicitly or implicitly, would incur waitpid and effectively
         # dead-lock...
-        if (!($pid = open(STDOUT, "| $execcmd"))) {
+        if (!($pid = open(STDOUT, "| $execcmd >\"$capturefile\" 2>&1"))) {
             my $err = $!;
             kill(3, $self->{real_serverpid});
             die "Failed to $execcmd: $err\n";
@@ -645,6 +660,19 @@ sub clientstart
     waitpid($pid, 0);
     $self->{clientexit} = $?;
 
+    # Slurp and parse the captured s_client output
+    if (defined $self->{clientcapture}) {
+        if (open(my $fh, '<', $self->{clientcapture})) {
+            local $/;
+            $self->{clientoutput} = <$fh>;
+            close($fh);
+        }
+        unlink $self->{clientcapture};
+        $self->{clientcapture} = undef;
+        print STDERR $self->{clientoutput} if $self->debug;
+        $self->{client_alerts} = _parse_alerts($self->{clientoutput});
+    }
+
     return $success;
 }
 
@@ -716,6 +744,26 @@ sub construct_alert_message
                  $alert_description;
 
     return $packet;
+}
+
+# Parse alerts logged by s_client's -msg message callback, e.g.
+#   >>> DTLS 1.2, Alert [length 0002], fatal unexpected_message
+# ">>>" is an alert we sent, "<<<" one we received. Returns a list of
+# { direction => 'sent'|'recv', level, name } hashrefs.
+sub _parse_alerts
+{
+    my $output = shift;
+    my @alerts;
+
+    foreach my $line (split /\n/, $output) {
+        next unless $line =~ /^(>>>|<<<) .+, Alert \[length [0-9a-f]+\], (warning|fatal) (\S+)$/;
+        push @alerts, {
+            direction => ($1 eq '>>>') ? 'sent' : 'recv',
+            level => $2,
+            name => $3,
+        };
+    }
+    return \@alerts;
 }
 
 sub process_packet
@@ -959,6 +1007,40 @@ sub clientexit
 {
     my $self = shift;
     return $self->{clientexit};
+}
+# True only if s_client exited cleanly (i.e. was not killed by a signal) with
+# a non-zero status, meaning it rejected the connection rather than crashing.
+sub client_failed
+{
+    my $self = shift;
+    my $status = $self->{clientexit};
+    return 0 if ($status & 127) != 0;
+    return ($status >> 8) != 0;
+}
+# Raw captured s_client stdout+stderr from the last run.
+sub clientoutput
+{
+    my $self = shift;
+    return $self->{clientoutput};
+}
+# Arrayref of all alerts parsed from the s_client -msg output.
+sub client_alerts
+{
+    my $self = shift;
+    return $self->{client_alerts};
+}
+# True if s_client locally generated the named fatal alert (e.g.
+# "unexpected_message"). Requires -msg in clientflags. Reflects the alert
+# s_client generated regardless of whether the peer ever received it.
+sub client_sent_fatal_alert
+{
+    my ($self, $name) = @_;
+    foreach my $alert (@{$self->{client_alerts}}) {
+        return 1 if $alert->{direction} eq 'sent'
+                    && $alert->{level} eq 'fatal'
+                    && $alert->{name} eq $name;
+    }
+    return 0;
 }
 
 #Read/write accessors
