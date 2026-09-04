@@ -31,8 +31,6 @@ ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
 IMPLEMENT_ASN1_FUNCTIONS(X509_CINF)
 /* X509 top level structure needs a bit of customisation */
 
-extern void ossl_policy_cache_free(X509_POLICY_CACHE *cache);
-
 static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
     void *exarg)
 {
@@ -45,7 +43,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         X509_CERT_AUX_free(ret->aux);
         ASN1_OCTET_STRING_free(ret->skid);
         AUTHORITY_KEYID_free(ret->akid);
-        ossl_policy_cache_free(ret->policy_cache);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
 
         /* fall through */
@@ -60,7 +57,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->ex_pcpathlen = -1;
         ret->skid = NULL;
         ret->akid = NULL;
-        ret->policy_cache = NULL;
         ret->distinguishing_id = NULL;
         ret->aux = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
@@ -72,7 +68,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         X509_CERT_AUX_free(ret->aux);
         ASN1_OCTET_STRING_free(ret->skid);
         AUTHORITY_KEYID_free(ret->akid);
-        ossl_policy_cache_free(ret->policy_cache);
         ASN1_OCTET_STRING_free(ret->distinguishing_id);
         break;
 
