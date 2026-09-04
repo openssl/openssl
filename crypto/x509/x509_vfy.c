@@ -99,9 +99,9 @@ static int null_callback(int ok, X509_STORE_CTX *e)
 /*-
  * Return 1 if given cert is considered self-signed, 0 if not, or -1 on error.
  * This actually verifies self-signedness only if requested.
- * It calls ossl_x509v3_cache_extensions()
- * to match issuer and subject names (i.e., the cert being self-issued) and any
- * present authority key identifier to match the subject key identifier, etc.
+ * It uses the cached extension data to match issuer and subject names (i.e.,
+ * the cert being self-issued) and any present authority key identifier to
+ * match the subject key identifier, etc.
  */
 int X509_self_signed(const X509 *cert, int verify_signature)
 {
@@ -111,7 +111,7 @@ int X509_self_signed(const X509 *cert, int verify_signature)
         ERR_raise(ERR_LIB_X509, X509_R_UNABLE_TO_GET_CERTS_PUBLIC_KEY);
         return -1;
     }
-    if (!ossl_x509v3_cache_extensions((X509 *)cert))
+    if (X509_check_purpose(cert, -1, 0) != 1)
         return -1;
     if ((cert->ex_flags & EXFLAG_SS) == 0)
         return 0;

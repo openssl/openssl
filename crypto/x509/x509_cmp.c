@@ -164,14 +164,7 @@ unsigned long X509_subject_name_hash_old(const X509 *x)
 }
 #endif
 
-/*
- * Compare two certificates: they must be identical for this to work. NB:
- * Although "cmp" operations are generally prototyped to take "const"
- * arguments (eg. for use in STACKs), the way X509 handling is - these
- * operations may involve ensuring the hashes are up-to-date and ensuring
- * certain cert information is cached. So this is the point where the
- * "depth-first" constification tree has to halt with an evil cast.
- */
+/* Compare two certificates: they must be identical for this to work. */
 int X509_cmp(const X509 *a, const X509 *b)
 {
     int rv = 0;
@@ -186,12 +179,9 @@ int X509_cmp(const X509 *a, const X509 *b)
     if (a->cert_info.enc.modified || b->cert_info.enc.modified)
         return a->cert_info.enc.modified ? 1 : -1;
 
-    /* attempt to compute cert hash */
-    (void)X509_check_purpose((X509 *)a, -1, 0);
-    (void)X509_check_purpose((X509 *)b, -1, 0);
-
-    if ((a->ex_flags & EXFLAG_NO_FINGERPRINT) == 0
-        && (b->ex_flags & EXFLAG_NO_FINGERPRINT) == 0)
+    /* The fingerprints are only there on finalized certificates */
+    if ((a->ex_flags & (EXFLAG_SET | EXFLAG_NO_FINGERPRINT)) == EXFLAG_SET
+        && (b->ex_flags & (EXFLAG_SET | EXFLAG_NO_FINGERPRINT)) == EXFLAG_SET)
         rv = memcmp(a->fingerprint, b->fingerprint, sizeof(a->fingerprint));
     if (rv != 0)
         return rv < 0 ? -1 : 1;

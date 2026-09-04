@@ -43,6 +43,11 @@ it will return one or more of the following flags ored together.
 
 =over 4
 
+=item B<EXFLAG_SET>
+
+The certificate is finalized: its cached extension information has been
+computed. See L<x509(7)>.
+
 =item B<EXFLAG_V1>
 
 The certificate is an obsolete version 1 certificate.
@@ -157,7 +162,8 @@ given certificate B<x> if it is a proxy certificate.
 =head1 NOTES
 
 The value of the flags correspond to extension values which are cached
-in the B<X509> structure. If the flags returned do not provide sufficient
+in the B<X509> structure when the certificate is decoded or signed; see
+L<x509(7)>. If the flags returned do not provide sufficient
 information an application should examine extension values directly
 for example using X509_get_ext_d2i().
 
@@ -179,7 +185,10 @@ is not present.
 
 X509_get_extension_flags(), X509_get_key_usage() and
 X509_get_extended_key_usage() return sets of flags corresponding to the
-certificate extension values.
+certificate extension values. X509_get_key_usage() and
+X509_get_extended_key_usage() return 0 if I<x> is not finalized (see
+L<x509(7)>) or has an invalid extension; X509_get_extension_flags() then
+returns flags without B<EXFLAG_SET> or with B<EXFLAG_INVALID> respectively.
 
 X509_get0_subject_key_id() returns the subject key identifier as a
 pointer to an B<ASN1_OCTET_STRING> structure or B<NULL> if the extension

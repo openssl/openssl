@@ -14,6 +14,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include "crypto/x509.h"
+#include "x509_local.h"
 
 ASN1_SEQUENCE_enc(X509_CINF, enc, 0) = {
     ASN1_EXP_OPT(X509_CINF, version, ASN1_INTEGER, 0),
@@ -48,7 +49,6 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         /* fall through */
 
     case ASN1_OP_NEW_POST:
-        ret->ex_cached = 0;
         ret->ex_kusage = 0;
         ret->ex_xkusage = 0;
         ret->ex_nscert = 0;
@@ -61,6 +61,10 @@ static int x509_cb(int operation, ASN1_VALUE **pval, const ASN1_ITEM *it,
         ret->aux = NULL;
         if (!CRYPTO_new_ex_data(CRYPTO_EX_INDEX_X509, ret, &ret->ex_data))
             return 0;
+        break;
+
+    case ASN1_OP_D2I_POST:
+        ossl_x509_finalize(ret);
         break;
 
     case ASN1_OP_FREE_POST:

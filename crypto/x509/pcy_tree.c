@@ -123,9 +123,6 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     for (i = n - 1; i >= 0; i--) {
         X509 *x = sk_X509_value(certs, i);
 
-        /* Call for side-effect of computing hash and caching extensions */
-        X509_check_purpose(x, -1, 0);
-
         if ((caches[i] = ossl_policy_cache_new(x)) == NULL) {
             ret = X509_PCY_TREE_INTERNAL;
             goto done;
