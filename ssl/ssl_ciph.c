@@ -127,6 +127,43 @@ static int ssl_cipher_info_find(const ssl_cipher_table *table,
 #define ssl_cipher_info_lookup(table, x) \
     ssl_cipher_info_find(table, OSSL_NELEM(table), x)
 
+int ossl_ssl_cipher_up_ref(const SSL_CIPHER *cipher)
+{
+    SSL_CIPHER *mutable_cipher = (SSL_CIPHER *)cipher;
+    int ref = 0;
+
+    if (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return 1;
+
+    if (!CRYPTO_UP_REF(&mutable_cipher->references, &ref))
+        return 0;
+
+    REF_PRINT_COUNT("SSL_CIPHER", ref, cipher);
+    REF_ASSERT_ISNT(ref < 2);
+    return 1;
+}
+
+void ossl_ssl_cipher_free(const SSL_CIPHER *cipher)
+{
+    SSL_CIPHER *mutable_cipher = (SSL_CIPHER *)cipher;
+    int ref;
+
+    if (cipher == NULL || cipher->origin != SSL_CIPHER_ORIGIN_PROVIDER)
+        return;
+
+    CRYPTO_DOWN_REF(&mutable_cipher->references, &ref);
+    REF_PRINT_COUNT("SSL_CIPHER", ref, cipher);
+    if (ref > 0)
+        return;
+    REF_ASSERT_ISNT(ref < 0);
+
+    ssl_evp_cipher_free(cipher->provider_cipher);
+    ssl_evp_md_free(cipher->provider_digest);
+    OPENSSL_free((char *)cipher->name);
+    CRYPTO_FREE_REF(&mutable_cipher->references);
+    OPENSSL_free(mutable_cipher);
+}
+
 static const int default_mac_pkey_id[SSL_MD_NUM_IDX] = {
     /* MD5, SHA, GOST94, MAC89 */
     EVP_PKEY_HMAC, EVP_PKEY_HMAC, EVP_PKEY_HMAC, NID_undef,

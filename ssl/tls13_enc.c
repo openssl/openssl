@@ -379,7 +379,10 @@ int tls13_setup_key_block(SSL_CONNECTION *s)
     int mac_type = NID_undef;
     size_t mac_secret_size = 0;
 
-    s->session->cipher = s->s3.tmp.new_cipher;
+    if (!ossl_ssl_session_set1_cipher(s->session, s->s3.tmp.new_cipher)) {
+        SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+        return 0;
+    }
     if (!ssl_cipher_get_evp(SSL_CONNECTION_GET_CTX(s), s->session, p_snc, &c,
             &hash, &mac_type, &mac_secret_size, NULL, 0)) {
         /* Error is already recorded */
