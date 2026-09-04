@@ -102,4 +102,5 @@ EVP_KDF_CTX *ossl_kdf_ctx_create(const char *kdfname, const char *mdname,
     OSSL_LIB_CTX *libctx, const char *propq);
 
 int ossl_hpke_str2suite(const char *suitestr, OSSL_HPKE_SUITE *suite);
+char *ossl_hpke_suite2str(OSSL_HPKE_SUITE suite);
 #endif
