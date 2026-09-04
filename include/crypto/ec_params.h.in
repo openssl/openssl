@@ -31,7 +31,7 @@ our @EC_ENCODING_TYPES = (
 );
 
 our @EC_POINT_FORMAT_TYPES = (
-    ['OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT',      'pt_format',  'utf8_string'],
+    ['OSSL_PKEY_PARAM_EC_POINT_CONVERSION_FORMAT',      'pt_format',  'utf8_string', 'duplicate: first'],
 );
 
 our @EC_FIELD_TYPE_TYPES = (
