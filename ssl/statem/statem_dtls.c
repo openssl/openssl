@@ -184,8 +184,10 @@ static int dtls1_write_hm_header(unsigned char *msgheaderstart,
         || !WPACKET_put_bytes_u24(&msgheader, fraglen)
         || !WPACKET_get_total_written(&msgheader, &msgheaderlen)
         || msgheaderlen != DTLS1_HM_HEADER_LENGTH
-        || !WPACKET_finish(&msgheader))
+        || !WPACKET_finish(&msgheader)) {
+        WPACKET_cleanup(&msgheader);
         return 0;
+    }
 
     return 1;
 }
