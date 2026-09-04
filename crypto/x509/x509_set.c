@@ -320,10 +320,14 @@ int ossl_x509_get_signature_info_ex(const X509 *x, int *mdnid, int *pknid,
 int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
     uint32_t *flags)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
+    ossl_x509_get0_libctx(x, &libctx, &propq);
     return ossl_x509_get_signature_info_ex(x, mdnid, pknid, secbits, flags,
-        x->libctx, x->propq);
+        libctx, propq);
 }

@@ -143,7 +143,11 @@ int ossl_x509_verify_ex(const X509 *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
 
 int X509_verify(const X509 *a, EVP_PKEY *r)
 {
-    return ossl_x509_verify_ex(a, r, a->libctx, a->propq);
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    ossl_x509_get0_libctx(a, &libctx, &propq);
+    return ossl_x509_verify_ex(a, r, libctx, propq);
 }
 
 int X509_REQ_verify_ex(X509_REQ *a, EVP_PKEY *r, OSSL_LIB_CTX *libctx,
@@ -198,6 +202,8 @@ static int bad_keyid_exts(const STACK_OF(X509_EXTENSION) *exts)
 int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
 {
     const STACK_OF(X509_EXTENSION) *exts;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
@@ -216,9 +222,10 @@ int X509_sign(X509 *x, EVP_PKEY *pkey, const EVP_MD *md)
      * which exist below are the same.
      */
     x->cert_info.enc.modified = 1;
+    ossl_x509_get0_libctx(x, &libctx, &propq);
     return ASN1_item_sign_ex(ASN1_ITEM_rptr(X509_CINF), &x->cert_info.signature,
         &x->sig_alg, &x->signature, &x->cert_info, NULL,
-        pkey, md, x->libctx, x->propq);
+        pkey, md, libctx, propq);
 }
 
 int X509_sign_ctx(X509 *x, EVP_MD_CTX *ctx)
@@ -672,8 +679,12 @@ int ossl_x509_internal_fingerprint(const ASN1_ITEM *it, const void *val,
 int X509_digest(const X509 *cert, const EVP_MD *md, unsigned char *data,
     unsigned int *len)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
+    ossl_x509_get0_libctx(cert, &libctx, &propq);
     return ossl_asn1_item_digest_ex(ASN1_ITEM_rptr(X509), md, (char *)cert,
-        data, len, cert->libctx, cert->propq);
+        data, len, libctx, propq);
 }
 
 ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
@@ -769,6 +780,9 @@ err:
 ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
     EVP_MD **md_used, int *md_is_fallback)
 {
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
+
     if (cert == NULL) {
         if (md_used != NULL)
             *md_used = NULL;
@@ -777,8 +791,8 @@ ASN1_OCTET_STRING *X509_digest_sig(const X509 *cert,
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return NULL;
     }
-    return ossl_x509_digest_sig_ex(cert, md_used, md_is_fallback,
-        cert->libctx, cert->propq);
+    ossl_x509_get0_libctx(cert, &libctx, &propq);
+    return ossl_x509_digest_sig_ex(cert, md_used, md_is_fallback, libctx, propq);
 }
 
 int X509_CRL_digest(const X509_CRL *data, const EVP_MD *type,

@@ -77,6 +77,8 @@ static int ocsp_verify(OCSP_REQUEST *req, OCSP_BASICRESP *bs,
     X509 *signer, unsigned long flags)
 {
     EVP_PKEY *skey;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
     int ret = 1;
 
     if ((flags & OCSP_NOSIGS) == 0) {
@@ -84,10 +86,11 @@ static int ocsp_verify(OCSP_REQUEST *req, OCSP_BASICRESP *bs,
             ERR_raise(ERR_LIB_OCSP, OCSP_R_NO_SIGNER_KEY);
             return -1;
         }
+        ossl_x509_get0_libctx(signer, &libctx, &propq);
         if (req != NULL)
-            ret = OCSP_REQUEST_verify(req, skey, signer->libctx, signer->propq);
+            ret = OCSP_REQUEST_verify(req, skey, libctx, propq);
         else
-            ret = OCSP_BASICRESP_verify(bs, skey, signer->libctx, signer->propq);
+            ret = OCSP_BASICRESP_verify(bs, skey, libctx, propq);
         if (ret <= 0)
             ERR_raise(ERR_LIB_OCSP, OCSP_R_SIGNATURE_FAILURE);
     }
@@ -191,6 +194,8 @@ static X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID *id)
     unsigned char tmphash[SHA_DIGEST_LENGTH], *keyhash;
     EVP_MD *md;
     X509 *x;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
     /* Easy if lookup by name */
     if (id->type == V_OCSP_RESPID_NAME)
@@ -205,7 +210,8 @@ static X509 *ocsp_find_signer_sk(const STACK_OF(X509) *certs, OCSP_RESPID *id)
     /* Calculate hash of each key and compare */
     for (i = 0; i < sk_X509_num(certs); i++) {
         if ((x = sk_X509_value(certs, i)) != NULL) {
-            if ((md = EVP_MD_fetch(x->libctx, SN_sha1, x->propq)) == NULL)
+            ossl_x509_get0_libctx(x, &libctx, &propq);
+            if ((md = EVP_MD_fetch(libctx, SN_sha1, propq)) == NULL)
                 break;
             r = X509_pubkey_digest(x, md, tmphash, NULL);
             EVP_MD_free(md);
