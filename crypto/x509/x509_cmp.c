@@ -41,13 +41,16 @@ unsigned long X509_issuer_and_serial_hash(const X509 *a)
     unsigned char md[16];
     char *f = NULL;
     EVP_MD *digest = NULL;
+    OSSL_LIB_CTX *libctx;
+    const char *propq;
 
     if (ctx == NULL)
         goto err;
     f = X509_NAME_oneline(a->cert_info.issuer, NULL, 0);
     if (f == NULL)
         goto err;
-    digest = EVP_MD_fetch(a->libctx, SN_md5, a->propq);
+    ossl_x509_get0_libctx(a, &libctx, &propq);
+    digest = EVP_MD_fetch(libctx, SN_md5, propq);
     if (digest == NULL)
         goto err;
 
