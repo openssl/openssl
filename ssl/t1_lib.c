@@ -229,7 +229,7 @@ struct provider_ctx_data_st {
     OSSL_PROVIDER *provider;
 };
 
-#ifndef OPENSSL_NO_TLS1_3
+#if !defined(OPENSSL_NO_TLS1_3)
 #define TLS_CIPHERSUITE_NAME_MAX_LEN 255
 #define TLS_CIPHERSUITE_ALGORITHM_NAME_MAX_LEN 255
 #define TLS_PROVIDER_CIPHERSUITE_MAX 128
@@ -331,7 +331,7 @@ static int ssl_provider_ciphersuite_name_cmp(
     return OPENSSL_strcasecmp((*ap)->name, (*bp)->name);
 }
 
-#endif
+#endif /* !defined(OPENSSL_NO_TLS1_3) */
 
 const SSL_CIPHER *ossl_ssl_get0_provider_cipher_by_id(const SSL_CTX *ctx,
     uint32_t id)
@@ -364,7 +364,7 @@ const SSL_CIPHER *ossl_ssl_get0_provider_cipher_by_name(const SSL_CTX *ctx,
                  : sk_SSL_CIPHER_value(ctx->provider_ciphersuites_by_name, i);
 }
 
-#ifndef OPENSSL_NO_TLS1_3
+#if !defined(OPENSSL_NO_TLS1_3)
 static OSSL_CALLBACK add_provider_ciphersuite;
 /**
  * @brief Validate a capability descriptor and retain its fetched algorithms.
@@ -620,7 +620,7 @@ static int index_provider_ciphersuites(SSL_CTX *ctx)
     ctx->provider_ciphersuites_by_name = by_name;
     return 1;
 }
-#endif
+#endif /* !defined(OPENSSL_NO_TLS1_3) */
 
 int ossl_ssl_load_provider_ciphersuites(SSL_CTX *ctx)
 {
@@ -628,7 +628,7 @@ int ossl_ssl_load_provider_ciphersuites(SSL_CTX *ctx)
     if (ctx->provider_ciphersuites == NULL)
         return 0;
 
-#ifdef OPENSSL_NO_TLS1_3
+#if defined(OPENSSL_NO_TLS1_3)
     return 1;
 #else
     if (SSL_CTX_IS_DTLS(ctx) || IS_QUIC_METHOD(ctx->method)
@@ -640,7 +640,7 @@ int ossl_ssl_load_provider_ciphersuites(SSL_CTX *ctx)
             discover_provider_ciphersuites, ctx))
         return 0;
     return index_provider_ciphersuites(ctx);
-#endif
+#endif /* defined(OPENSSL_NO_TLS1_3) */
 }
 
 #define TLS_GROUP_LIST_MALLOC_BLOCK_SIZE 10
@@ -3449,6 +3449,10 @@ int ssl_cipher_disabled(const SSL_CONNECTION *s, const SSL_CIPHER *c,
         || c->algorithm_auth & s->s3.tmp.mask_a)
         return 1;
     if (s->s3.tmp.max_ver == 0)
+        return 1;
+
+    if (SSL_IS_QUIC_HANDSHAKE(s)
+        && c->origin == SSL_CIPHER_ORIGIN_PROVIDER)
         return 1;
 
     if (SSL_IS_QUIC_INT_HANDSHAKE(s))

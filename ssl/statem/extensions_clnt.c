@@ -1102,7 +1102,7 @@ static int tls13_check_tick_lifetime_hint(SSL_CONNECTION *s)
  * that early_data is only advertised when the resumption PSK will actually
  * be sent.
  */
-static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
+static int tls13_check_resumption_psk(SSL_CONNECTION *s)
 {
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const EVP_MD *mdres;
@@ -1111,13 +1111,16 @@ static int tls13_check_resumption_psk(SSL_CONNECTION *s, const EVP_MD *handmd)
     if (s->session == NULL
         || s->session->ssl_version != version1_3
         || s->session->ext.ticklen == 0
-        || s->session->cipher == NULL)
+        || s->session->cipher == NULL
+        || s->session->provider_cipher_seen)
         return 0;
 
-    mdres = ssl_md(sctx, s->session->cipher->algorithm2);
+    mdres = ossl_ssl_cipher_get0_md(sctx, s->session->cipher);
     if (mdres == NULL)
         return 0;
-    if (s->hello_retry_request == SSL_HRR_PENDING && mdres != handmd)
+    if (s->hello_retry_request == SSL_HRR_PENDING
+        && !ossl_ssl_cipher_has_same_digest(s->session->cipher,
+            s->s3.tmp.new_cipher))
         return 0;
     if (tls13_check_tick_lifetime_hint(s) == 0)
         return 0;
@@ -1174,7 +1177,8 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
 
     if (s->psk_use_session_cb != NULL
         && (!s->psk_use_session_cb(ussl, handmd, &id, &idlen, &psksess)
-            || (psksess != NULL && psksess->ssl_version != version1_3))) {
+            || (psksess != NULL && psksess->ssl_version != version1_3)
+            || !ossl_ssl_session_is_external_psk_admissible(psksess))) {
         SSL_SESSION_free(psksess);
         SSLfatal(s, SSL_AD_INTERNAL_ERROR, SSL_R_BAD_PSK);
         return EXT_RETURN_FAIL;
@@ -1260,7 +1264,7 @@ EXT_RETURN tls_construct_ctos_early_data(SSL_CONNECTION *s, WPACKET *pkt,
      * the external psksession. Offer early_data only when that slot-0 PSK is
      * itself 0-RTT-capable; never key it off a PSK in a later slot.
      */
-    edsess = tls13_check_resumption_psk(s, handmd) ? s->session : psksess;
+    edsess = tls13_check_resumption_psk(s) ? s->session : psksess;
     if (s->early_data_state != SSL_EARLY_DATA_CONNECTING
         || edsess == NULL
         || edsess->ext.max_early_data == 0) {
@@ -1373,7 +1377,7 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
     size_t binderoffset, msglen;
     int reshashsize = 0, pskhashsize = 0;
     unsigned char *resbinder = NULL, *pskbinder = NULL, *msgstart = NULL;
-    const EVP_MD *handmd = NULL, *mdres = NULL, *mdpsk = NULL;
+    const EVP_MD *mdres = NULL, *mdpsk = NULL;
     int dores = 0;
     SSL_CTX *sctx = SSL_CONNECTION_GET_CTX(s);
     const int version1_3 = SSL_CONNECTION_IS_DTLS(s) ? DTLS1_3_VERSION : TLS1_3_VERSION;
@@ -1385,19 +1389,19 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
      * so don't add this extension.
      */
     if (s->session->ssl_version != version1_3
-        || (s->session->ext.ticklen == 0 && s->psksession == NULL))
+        || ((s->session->ext.ticklen == 0
+                || s->session->provider_cipher_seen)
+            && s->psksession == NULL))
         return EXT_RETURN_NOT_SENT;
 
-    if (s->hello_retry_request == SSL_HRR_PENDING)
-        handmd = ssl_handshake_md(s);
-
-    if (s->session->ext.ticklen != 0) {
+    if (s->session->ext.ticklen != 0
+        && !s->session->provider_cipher_seen) {
         /* Get the digest associated with the ciphersuite in the session */
         if (s->session->cipher == NULL) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return EXT_RETURN_FAIL;
         }
-        mdres = ssl_md(sctx, s->session->cipher->algorithm2);
+        mdres = ossl_ssl_cipher_get0_md(sctx, s->session->cipher);
         if (mdres == NULL) {
             /*
              * Don't recognize this cipher so we can't use the session.
@@ -1406,7 +1410,9 @@ EXT_RETURN tls_construct_ctos_psk(SSL_CONNECTION *s, WPACKET *pkt,
             goto dopsksess;
         }
 
-        if (s->hello_retry_request == SSL_HRR_PENDING && mdres != handmd) {
+        if (s->hello_retry_request == SSL_HRR_PENDING
+            && !ossl_ssl_cipher_has_same_digest(s->session->cipher,
+                s->s3.tmp.new_cipher)) {
             /*
              * Selected ciphersuite hash does not match the hash for the session
              * so we can't use it.
@@ -1455,7 +1461,7 @@ dopsksess:
         return EXT_RETURN_NOT_SENT;
 
     if (s->psksession != NULL) {
-        mdpsk = ssl_md(sctx, s->psksession->cipher->algorithm2);
+        mdpsk = ossl_ssl_cipher_get0_md(sctx, s->psksession->cipher);
         if (mdpsk == NULL) {
             /*
              * Don't recognize this cipher so we can't use the session.
@@ -1465,7 +1471,9 @@ dopsksess:
             return EXT_RETURN_FAIL;
         }
 
-        if (s->hello_retry_request == SSL_HRR_PENDING && mdpsk != handmd) {
+        if (s->hello_retry_request == SSL_HRR_PENDING
+            && !ossl_ssl_cipher_has_same_digest(s->psksession->cipher,
+                s->s3.tmp.new_cipher)) {
             /*
              * Selected ciphersuite hash does not match the hash for the PSK
              * session. This is an application bug.

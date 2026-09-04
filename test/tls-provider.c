@@ -401,10 +401,11 @@ static const OSSL_PARAM xor_sig_12_params[] = {
     OSSL_PARAM_END
 };
 
+/** @brief Per-instance capability fixtures and their owned resources. */
 typedef struct {
     OSSL_LIB_CTX *libctx;
-    char *tls_ciphersuite_mode;
-    unsigned int tls_alg_ids[4];
+    char *tls_ciphersuite_mode; /**< Owned capability fixture selector. */
+    unsigned int tls_alg_ids[4]; /**< Reserved group and signature IDs. */
     size_t tls_alg_id_count;
     char dummy_group_names[NUM_DUMMY_GROUPS][DUMMY_GROUP_NAME_SIZE];
 } PROV_XOR_CTX;
@@ -423,13 +424,21 @@ static ossl_inline OSSL_LIB_CTX *tls_provider_get0_libctx(PROV_XOR_CTX *provctx)
 #define TLS_TEST_SHA384_NAME "TLS-TEST-SHA2-384"
 #define TLS_TEST_RECORD_LIMIT 4
 
+/** @brief AES-GCM proxy with an optional record limit for tests. */
 typedef struct {
-    EVP_CIPHER_CTX *subctx;
-    size_t encrypted_records;
-    size_t encryption_limit;
+    EVP_CIPHER_CTX *subctx; /**< Owned default-provider cipher context. */
+    size_t encrypted_records; /**< Successful encryption finalisations. */
+    size_t encryption_limit; /**< Maximum record count; zero disables the limit. */
     int enc;
 } TLS_PROXY_CIPHER_CTX;
 
+/**
+ * @brief Create an AES-GCM proxy bound to the default provider.
+ * @param provctx Provider instance supplying the library context.
+ * @param name AES-GCM algorithm name to fetch.
+ * @param encryption_limit Record limit, or zero for no limit.
+ * @returns Owned context for tls_proxy_cipher_freectx(), or NULL on failure.
+ */
 static void *tls_proxy_cipher_newctx(void *provctx, const char *name,
     size_t encryption_limit)
 {
@@ -478,6 +487,11 @@ static void tls_proxy_cipher_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
+/**
+ * @brief Duplicate the cipher state and its record counter.
+ * @param vctx Source proxy context, left unchanged.
+ * @returns Owned context for tls_proxy_cipher_freectx(), or NULL on failure.
+ */
 static void *tls_proxy_cipher_dupctx(void *vctx)
 {
     TLS_PROXY_CIPHER_CTX *src = vctx;
@@ -496,6 +510,17 @@ static void *tls_proxy_cipher_dupctx(void *vctx)
     return dst;
 }
 
+/**
+ * @brief Initialise the record cipher without resetting its usage counter.
+ * @param vctx Proxy context to initialise.
+ * @param key Key bytes, or NULL.
+ * @param keylen Length of key when supplied.
+ * @param iv IV bytes, or NULL.
+ * @param ivlen Length of iv when supplied.
+ * @param params Parameters forwarded to EVP_CipherInit_ex2(), or NULL.
+ * @param enc 1 for encryption, 0 for decryption.
+ * @returns 1 on success, 0 for a length mismatch or initialisation failure.
+ */
 static int tls_proxy_cipher_init(void *vctx, const unsigned char *key,
     size_t keylen, const unsigned char *iv, size_t ivlen,
     const OSSL_PARAM params[], int enc)
@@ -540,6 +565,14 @@ static int tls_proxy_cipher_update(void *vctx, unsigned char *out,
     return 1;
 }
 
+/**
+ * @brief Finalise one record, enforcing the test-only encryption limit.
+ * @param vctx Proxy context; successful encryptions increment its counter.
+ * @param out Output buffer.
+ * @param outl Receives the output length on success.
+ * @param outsize Capacity of out.
+ * @returns 1 on success, 0 on failure or when the encryption limit is reached.
+ */
 static int tls_proxy_cipher_final(void *vctx, unsigned char *out,
     size_t *outl, size_t outsize)
 {
@@ -654,7 +687,7 @@ static const OSSL_PARAM *tls_proxy_cipher_settable_ctx(
 }
 
 #define TLS_PROXY_CIPHER_DISPATCH(newctx, get_params)                           \
-    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))newctx },                        \
+    { OSSL_FUNC_CIPHER_NEWCTX, (void (*)(void))(newctx) },                      \
         { OSSL_FUNC_CIPHER_FREECTX, (void (*)(void))tls_proxy_cipher_freectx }, \
         { OSSL_FUNC_CIPHER_DUPCTX, (void (*)(void))tls_proxy_cipher_dupctx },   \
         { OSSL_FUNC_CIPHER_ENCRYPT_INIT,                                        \
@@ -663,7 +696,7 @@ static const OSSL_PARAM *tls_proxy_cipher_settable_ctx(
             (void (*)(void))tls_proxy_cipher_dinit },                           \
         { OSSL_FUNC_CIPHER_UPDATE, (void (*)(void))tls_proxy_cipher_update },   \
         { OSSL_FUNC_CIPHER_FINAL, (void (*)(void))tls_proxy_cipher_final },     \
-        { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))get_params },            \
+        { OSSL_FUNC_CIPHER_GET_PARAMS, (void (*)(void))(get_params) },          \
         { OSSL_FUNC_CIPHER_GET_CTX_PARAMS,                                      \
             (void (*)(void))tls_proxy_cipher_get_ctx_params },                  \
         { OSSL_FUNC_CIPHER_SET_CTX_PARAMS,                                      \
@@ -691,11 +724,18 @@ static const OSSL_DISPATCH tls_proxy_limited_aes128_functions[] = {
         tls_proxy_aes128_get_params)
 };
 
+/** @brief SHA-2 proxy retaining its default-provider implementation. */
 typedef struct {
-    EVP_MD *md;
-    EVP_MD_CTX *subctx;
+    EVP_MD *md; /**< Owned fetched digest. */
+    EVP_MD_CTX *subctx; /**< Owned digest context. */
 } TLS_PROXY_DIGEST_CTX;
 
+/**
+ * @brief Create a SHA-2 proxy bound to the default provider.
+ * @param provctx Provider instance supplying the library context.
+ * @param name SHA-2 algorithm name to fetch.
+ * @returns Owned context for tls_proxy_digest_freectx(), or NULL on failure.
+ */
 static void *tls_proxy_digest_newctx(void *provctx, const char *name)
 {
     TLS_PROXY_DIGEST_CTX *ctx = OPENSSL_zalloc(sizeof(*ctx));
@@ -735,6 +775,11 @@ static void tls_proxy_digest_freectx(void *vctx)
     OPENSSL_free(ctx);
 }
 
+/**
+ * @brief Duplicate the digest state and retain its fetched implementation.
+ * @param vctx Source proxy context, left unchanged.
+ * @returns Owned context for tls_proxy_digest_freectx(), or NULL on failure.
+ */
 static void *tls_proxy_digest_dupctx(void *vctx)
 {
     TLS_PROXY_DIGEST_CTX *src = vctx;
@@ -768,6 +813,14 @@ static int tls_proxy_digest_update(void *vctx, const unsigned char *in,
     return EVP_DigestUpdate(ctx->subctx, in, inl) > 0;
 }
 
+/**
+ * @brief Finalise the digest after checking the caller's output capacity.
+ * @param vctx Proxy context to finalise.
+ * @param out Output buffer.
+ * @param outl Receives the digest length on success.
+ * @param outsize Capacity of out.
+ * @returns 1 on success, 0 on failure or insufficient output capacity.
+ */
 static int tls_proxy_digest_final(void *vctx, unsigned char *out,
     size_t *outl, size_t outsize)
 {
@@ -828,13 +881,13 @@ static const OSSL_PARAM *tls_proxy_digest_gettable(ossl_unused void *provctx)
 }
 
 #define TLS_PROXY_DIGEST_DISPATCH(newctx, get_params)                           \
-    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))newctx },                        \
+    { OSSL_FUNC_DIGEST_NEWCTX, (void (*)(void))(newctx) },                      \
         { OSSL_FUNC_DIGEST_FREECTX, (void (*)(void))tls_proxy_digest_freectx }, \
         { OSSL_FUNC_DIGEST_DUPCTX, (void (*)(void))tls_proxy_digest_dupctx },   \
         { OSSL_FUNC_DIGEST_INIT, (void (*)(void))tls_proxy_digest_init },       \
         { OSSL_FUNC_DIGEST_UPDATE, (void (*)(void))tls_proxy_digest_update },   \
         { OSSL_FUNC_DIGEST_FINAL, (void (*)(void))tls_proxy_digest_final },     \
-        { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))get_params },            \
+        { OSSL_FUNC_DIGEST_GET_PARAMS, (void (*)(void))(get_params) },          \
         { OSSL_FUNC_DIGEST_GETTABLE_PARAMS,                                     \
             (void (*)(void))tls_proxy_digest_gettable },                        \
         OSSL_DISPATCH_END
@@ -4163,6 +4216,7 @@ static const OSSL_DISPATCH tls_prov_dispatch_table[] = {
 #define TLS_TEST_RANDOM_ID_COUNT \
     (TLS_TEST_RANDOM_ID_END - TLS_TEST_PRIVATE_ID_FIRST)
 
+/** @brief Live fixture ID reservations, protected by tls_alg_ids_lock. */
 static unsigned int tls_alg_ids_in_use[TLS_TEST_RANDOM_ID_COUNT];
 static size_t tls_alg_ids_in_use_count;
 static CRYPTO_ONCE tls_alg_ids_lock_once = CRYPTO_ONCE_STATIC_INIT;
@@ -4179,6 +4233,10 @@ static int tls_alg_ids_write_lock(void)
         && CRYPTO_THREAD_write_lock(tls_alg_ids_lock);
 }
 
+/**
+ * @brief Release an instance's ID reservations under the shared lock.
+ * @param provctx Provider instance being unloaded, or NULL.
+ */
 static void release_tls_alg_ids(PROV_XOR_CTX *provctx)
 {
     size_t i, j;
@@ -4200,12 +4258,13 @@ static void release_tls_alg_ids(PROV_XOR_CTX *provctx)
     CRYPTO_THREAD_unlock(tls_alg_ids_lock);
 }
 
+/**
+ * @brief Reserve a random private-use ID not held by another live fixture.
+ * @param provctx Provider instance that owns the reservation until teardown.
+ * @returns Reserved ID, or zero on failure or exhaustion of the ID pool.
+ */
 static unsigned int randomize_tls_alg_id(PROV_XOR_CTX *provctx)
 {
-    /*
-     * Randomise the id we're going to use to ensure we don't interoperate
-     * with anything but ourselves.
-     */
     unsigned int id;
     size_t i;
 

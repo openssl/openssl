@@ -3267,6 +3267,11 @@ int SSL_new_session_ticket(SSL *s)
         || SSL_IS_FIRST_HANDSHAKE(sc) || !sc->server
         || !SSL_CONNECTION_IS_VERSION13(sc))
         return 0;
+    if (sc->session->provider_cipher_seen) {
+        ERR_raise(ERR_LIB_SSL,
+            SSL_R_PROVIDER_CIPHERSUITE_SESSION_UNSUPPORTED);
+        return 0;
+    }
     sc->ext.extra_tickets_expected++;
     if (!RECORD_LAYER_write_pending(&sc->rlayer) && !SSL_in_init(s))
         ossl_statem_set_in_init(sc, 1);
@@ -3621,7 +3626,11 @@ STACK_OF(SSL_CIPHER) *SSL_get1_supported_ciphers(SSL *s)
     if (!ssl_set_client_disabled(sc))
         return NULL;
     for (i = 0; i < sk_SSL_CIPHER_num(ciphers); i++) {
-        const SSL_CIPHER *c = sk_SSL_CIPHER_value(ciphers, i);
+        const SSL_CIPHER *c = ossl_ssl_get0_cipher_canon_enabled(sc,
+            sk_SSL_CIPHER_value(ciphers, i));
+
+        if (c == NULL)
+            continue;
         if (!ssl_cipher_disabled(sc, c, SSL_SECOP_CIPHER_SUPPORTED)) {
             if (!sk)
                 sk = sk_SSL_CIPHER_new_null();
@@ -3779,7 +3788,7 @@ char *SSL_get_shared_ciphers(const SSL *s, char *buf, int size)
         int n;
 
         c = sk_SSL_CIPHER_value(clntsk, i);
-        if (sk_SSL_CIPHER_find(srvrsk, c) < 0)
+        if (ossl_ssl_cipher_stack_find(srvrsk, c) < 0)
             continue;
 
         n = (int)OPENSSL_strnlen(c->name, size);
@@ -5561,6 +5570,30 @@ static int dup_ca_names(STACK_OF(X509_NAME) **dst, STACK_OF(X509_NAME) *src)
     return 1;
 }
 
+/**
+ * @brief Replace a shallow cipher stack with a canonicalised copy.
+ * @param s Destination connection providing the descriptor registry.
+ * @param dst Stack to replace on success; unchanged on failure.
+ * @param src Stack of borrowed descriptors to copy, or NULL to clear dst.
+ * @returns 1 on success, 0 on allocation or descriptor compatibility failure.
+ */
+static int dup_cipher_stack(const SSL_CONNECTION *s,
+    STACK_OF(SSL_CIPHER) **dst, STACK_OF(SSL_CIPHER) *src)
+{
+    STACK_OF(SSL_CIPHER) *copy = NULL;
+
+    if (src != NULL) {
+        copy = sk_SSL_CIPHER_dup(src);
+        if (copy == NULL || !ossl_ssl_cipher_stack_canon(s, copy)) {
+            sk_SSL_CIPHER_free(copy);
+            return 0;
+        }
+    }
+    sk_SSL_CIPHER_free(*dst);
+    *dst = copy;
+    return 1;
+}
+
 SSL *SSL_dup(SSL *s)
 {
     SSL *ret;
@@ -5652,15 +5685,17 @@ SSL *SSL_dup(SSL *s)
 
     X509_VERIFY_PARAM_inherit(retsc->param, sc->param);
 
-    /* dup the cipher_list and cipher_list_by_id stacks */
-    if (sc->cipher_list != NULL) {
-        if ((retsc->cipher_list = sk_SSL_CIPHER_dup(sc->cipher_list)) == NULL)
-            goto err;
-    }
-    if (sc->cipher_list_by_id != NULL)
-        if ((retsc->cipher_list_by_id = sk_SSL_CIPHER_dup(sc->cipher_list_by_id))
-            == NULL)
-            goto err;
+    /*
+     * SSL_dup() constructs the new object from the current SSL_CTX, which may
+     * differ from the source session_ctx after an SNI switch. Duplicate all
+     * per-connection stacks and canonicalise provider entries.
+     */
+    if (!dup_cipher_stack(retsc, &retsc->tls13_ciphersuites,
+            sc->tls13_ciphersuites)
+        || !dup_cipher_stack(retsc, &retsc->cipher_list, sc->cipher_list)
+        || !dup_cipher_stack(retsc, &retsc->cipher_list_by_id,
+            sc->cipher_list_by_id))
+        goto err;
 
     /* Dup the client_CA list */
     if (!dup_ca_names(&retsc->ca_names, sc->ca_names)
@@ -7598,7 +7633,12 @@ int ossl_bytes_to_cipher_list(SSL_CONNECTION *s, PACKET *cipher_suites,
     while (PACKET_copy_bytes(cipher_suites, cipher, n)) {
         c = ssl_get_cipher_by_char(s, cipher, 1);
         if (c != NULL) {
-            if ((c->valid && !sk_SSL_CIPHER_push(sk, c)) || (!c->valid && !sk_SSL_CIPHER_push(scsvs, c))) {
+            STACK_OF(SSL_CIPHER) *target = c->valid ? sk : scsvs;
+
+            if (c->origin == SSL_CIPHER_ORIGIN_PROVIDER
+                && ossl_ssl_cipher_stack_find(target, c) >= 0)
+                continue;
+            if (!sk_SSL_CIPHER_push(target, c)) {
                 if (fatal)
                     SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_CRYPTO_LIB);
                 else

@@ -32,6 +32,10 @@ issued will never be more than 1 regardless of the value set via
 SSL_set_num_tickets() or SSL_CTX_set_num_tickets(). If B<num_tickets> is set to
 0 then no tickets will be issued for either a normal connection or a resumption.
 
+Sessions that have used a provider-defined ciphersuite do not issue tickets,
+regardless of these settings. SSL_new_session_ticket() returns 0 for such
+sessions; see L<provider-base(7)>.
+
 Tickets are also issued on receipt of a post-handshake certificate from the
 client following a request by the server using
 L<SSL_verify_client_post_handshake(3)>. These new tickets will be associated
@@ -86,7 +90,7 @@ SSL_CTX_get_num_tickets() were added in OpenSSL 1.1.1.
 
 =head1 COPYRIGHT
 
-Copyright 2018-2021 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2018-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

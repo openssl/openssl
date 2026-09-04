@@ -32,6 +32,13 @@ OpenSSL 4.1
 
 ### Changes between 4.0 and 4.1 [xx XXX xxxx]
 
+ * Fixed allocation-failure handling in `SSL_CTX_set_ciphersuites()` and
+   `SSL_set_ciphersuites()`. If inserting a requested ciphersuite into the
+   active list fails, the setter now reports failure and preserves the
+   previous cipher lists instead of accepting an incomplete selection.
+
+   *Martin Wolf*
+
  * Refactored remaining cipher `OSSL_PARAM` name parsing so that
    automatically generated parsers are used instead of
    `OSSL_PARAM_locate()` calls.  This should ensure that the list
@@ -117,6 +124,14 @@ OpenSSL 4.1
    and streams in the hierarchy.
 
    *Mounir IDRASSI*
+
+ * Added provider-defined TLS 1.3 ciphersuites through the
+   `TLS-CIPHERSUITE` capability, with explicit selection and unchanged built-in
+   defaults. These sessions cannot be resumed, cached, serialised or ticketed.
+   Provider-backed external PSK and 0-RTT are unsupported, as are DTLS, QUIC and
+   kTLS. See provider-base(7) for the capability contract.
+
+   *Martin Wolf*
 
  * Fixed TLS 1.3 clients to encrypt 0-RTT early data with the first offered
    PSK identity (RFC 9846 section 4.3.10) when a 0-RTT-capable resumption

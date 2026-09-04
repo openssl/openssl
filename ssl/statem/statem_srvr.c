@@ -748,6 +748,7 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * ssl_get_prev_session() in that configuration.
          */
         if (s->num_tickets <= s->sent_tickets
+            || s->session->provider_cipher_seen
             || ((s->options & SSL_OP_NO_TICKET) != 0
                 && (SSL_CONNECTION_GET_CTX(s)->session_cache_mode & SSL_SESS_CACHE_SERVER)
                     == 0)
@@ -786,7 +787,8 @@ static WRITE_TRAN ossl_statem_server13_write_transition(SSL_CONNECTION *s)
          * been configured for.
          */
         if ((SSL_IS_FIRST_HANDSHAKE(s) || s->ext.extra_tickets_expected <= 0)
-            && (s->hit || s->num_tickets <= s->sent_tickets)) {
+            && (s->hit || s->num_tickets <= s->sent_tickets
+                || s->session->provider_cipher_seen)) {
             /* We've written enough tickets out. */
             st->hand_state = TLS_ST_OK;
         }

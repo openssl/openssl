@@ -219,10 +219,19 @@ IF[{- !$disabled{tests} -}]
   DEPEND[tls13ccstest]=../libcrypto ../libssl libtestutil.a
 
   IF[{- !$disabled{tls} && !$disabled{tls1_3} -}]
-    PROGRAMS{noinst}=provider_tls_ciphersuite_test
+    PROGRAMS{noinst}=provider_tls_ciphersuite_test provider_tls_nonresumption_test
     SOURCE[provider_tls_ciphersuite_test]=provider_tls_ciphersuite_test.c tls-provider.c helpers/ssltestlib.c
     INCLUDE[provider_tls_ciphersuite_test]=../include ../apps/include ..
     DEPEND[provider_tls_ciphersuite_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    SOURCE[provider_tls_nonresumption_test]=provider_tls_nonresumption_test.c tls-provider.c helpers/ssltestlib.c
+    INCLUDE[provider_tls_nonresumption_test]=../include ../apps/include ..
+    DEPEND[provider_tls_nonresumption_test]=../libcrypto.a ../libssl.a libtestutil.a
+
+    PROGRAMS{noinst}=provider_tls_ciphersuite_ext_test
+    SOURCE[provider_tls_ciphersuite_ext_test]=provider_tls_ciphersuite_ext_test.c tls-provider.c helpers/ssltestlib.c
+    INCLUDE[provider_tls_ciphersuite_ext_test]=../include ../apps/include ..
+    DEPEND[provider_tls_ciphersuite_ext_test]=../libcrypto.a ../libssl.a libtestutil.a
   ENDIF
 
   IF[{- !$disabled{ecx} && !$disabled{tls} && !$disabled{tls1_3} -}]

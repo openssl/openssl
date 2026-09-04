@@ -170,6 +170,11 @@ int ssl_cipher_get_evp_cipher_sn(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     return 0;
 }
 
+const EVP_MD *ossl_ssl_cipher_get0_md(SSL_CTX *ctx, const SSL_CIPHER *sslc)
+{
+    return EVP_sha256();
+}
+
 int ssl_cipher_get_evp_cipher(SSL_CTX *ctx, const SSL_CIPHER *sslc,
     const EVP_CIPHER **enc)
 {
