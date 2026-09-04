@@ -35,6 +35,7 @@ static int do_i2r_name_constraints(const X509V3_EXT_METHOD *method,
 static int print_nc_ipadd(BIO *bp, ASN1_OCTET_STRING *ip);
 
 static int nc_match(GENERAL_NAME *gen, NAME_CONSTRAINTS *nc);
+static int nc_subtrees_supported(const STACK_OF(GENERAL_SUBTREE) *subtrees);
 static int nc_match_single(int effective_type, GENERAL_NAME *gen,
     GENERAL_NAME *base);
 static int nc_dn(const X509_NAME *sub, const X509_NAME *nm);
@@ -300,6 +301,12 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
         goto out;
     }
 
+    if (!nc_subtrees_supported(nc->permittedSubtrees)
+        || !nc_subtrees_supported(nc->excludedSubtrees)) {
+        r = X509_V_ERR_UNSUPPORTED_CONSTRAINT_TYPE;
+        goto out;
+    }
+
     if (X509_NAME_entry_count(nm) > 0) {
         GENERAL_NAME gntmp;
         gntmp.type = GEN_DIRNAME;
@@ -348,6 +355,26 @@ int NAME_CONSTRAINTS_check(const X509 *x, NAME_CONSTRAINTS *nc)
 out:
     GENERAL_NAMES_free(altname);
     return r;
+}
+
+/*
+ * RFC 9598 prohibits email address constraints as an SmtpUTF8Mailbox
+ * otherName; they must be rfc822Name subtrees. Return 1 if subtrees contains
+ * no such constraint, 0 otherwise.
+ */
+static int nc_subtrees_supported(const STACK_OF(GENERAL_SUBTREE) *subtrees)
+{
+    int i;
+
+    for (i = 0; i < sk_GENERAL_SUBTREE_num(subtrees); i++) {
+        const GENERAL_SUBTREE *sub = sk_GENERAL_SUBTREE_value(subtrees, i);
+
+        if (sub->base->type == GEN_OTHERNAME
+            && OBJ_obj2nid(sub->base->d.otherName->type_id)
+                == NID_id_on_SmtpUTF8Mailbox)
+            return 0;
+    }
+    return 1;
 }
 
 static int cn2dnsid(const ASN1_STRING *cn, unsigned char **dnsid, size_t *idlen)
