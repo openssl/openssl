@@ -88,24 +88,8 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx)
 
 void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
 {
-    int i;
-    CMS_CertificateChoices *cch;
-    STACK_OF(CMS_CertificateChoices) **pcerts;
-    const CMS_CTX *ctx = ossl_cms_get0_cmsctx(ci);
-    OSSL_LIB_CTX *libctx = ossl_cms_ctx_get0_libctx(ctx);
-    const char *propq = ossl_cms_ctx_get0_propq(ctx);
-
     ossl_cms_SignerInfos_set_cmsctx(ci);
     ossl_cms_RecipientInfos_set_cmsctx(ci);
-
-    pcerts = cms_get0_certificate_choices(ci);
-    if (pcerts != NULL) {
-        for (i = 0; i < sk_CMS_CertificateChoices_num(*pcerts); i++) {
-            cch = sk_CMS_CertificateChoices_value(*pcerts, i);
-            if (cch->type == CMS_CERTCHOICE_CERT)
-                ossl_x509_set0_libctx(cch->d.certificate, libctx, propq);
-        }
-    }
 }
 
 const ASN1_OBJECT *CMS_get0_type(const CMS_ContentInfo *cms)

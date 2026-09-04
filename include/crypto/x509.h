@@ -226,9 +226,6 @@ struct x509_st {
 
     /* Set on live certificates for authentication purposes */
     ASN1_OCTET_STRING *distinguishing_id;
-
-    OSSL_LIB_CTX *libctx;
-    char *propq;
 } /* X509 */;
 
 /*
@@ -434,7 +431,19 @@ ASN1_OCTET_STRING *ossl_x509_digest_sig_ex(const X509 *cert,
     EVP_MD **md_used, int *md_is_fallback,
     OSSL_LIB_CTX *libctx, const char *propq);
 
-int ossl_x509_set0_libctx(X509 *x, OSSL_LIB_CTX *libctx, const char *propq);
+/**
+ * @brief Get the library context and property query of a certificate.
+ *
+ * A certificate has no library context of its own; the one given to
+ * X509_new_ex(), or to the decoder of the structure it is embedded in, is
+ * kept by its X509_PUBKEY, which needs it to decode the public key.
+ *
+ * @param x the certificate
+ * @param libctx where to store the library context, may be NULL
+ * @param propq where to store the property query, may be NULL
+ */
+void ossl_x509_get0_libctx(const X509 *x, OSSL_LIB_CTX **libctx,
+    const char **propq);
 int ossl_x509_crl_set0_libctx(X509_CRL *x, OSSL_LIB_CTX *libctx,
     const char *propq);
 int ossl_x509_req_set0_libctx(X509_REQ *x, OSSL_LIB_CTX *libctx,
