@@ -140,6 +140,7 @@ sub read_config {
     my $fips_mode = $provider eq "fips";
     local $ssltests::fips_3_4 = 0;
     local $ssltests::fips_3_5 = 0;
+    local $ssltests::fips_4_2 = 0;
 
     if ($fips_mode) {
         my $provconf = srctop_file("test", "fips-and-base.cnf");
@@ -148,9 +149,14 @@ sub read_config {
         run(test(["fips_version_test", "-config", $provconf, ">=3.4.0"]),
                  capture => 1, statusvar => \$exit);
         $ssltests::fips_3_4 = $exit;
+
         run(test(["fips_version_test", "-config", $provconf, ">=3.5.0"]),
                  capture => 1, statusvar => \$exit);
         $ssltests::fips_3_5 = $exit;
+
+        run(test(["fips_version_test", "-config", $provconf, ">=4.2.0"]),
+                 capture => 1, statusvar => \$exit);
+        $ssltests::fips_4_2 = $exit;
     }
 
     local $ssltests::fips_mode = $fips_mode;

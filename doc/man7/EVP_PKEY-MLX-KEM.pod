@@ -21,6 +21,13 @@ default and FIPS providers.
 
 =over 4
 
+=item B<MLKEM512X25519>
+
+The shared secret is the concatenation of a 32 byte L<EVP_PKEY-ML-KEM(7)> shared
+secret followed by a 32 byte L<EVP_PKEY-X25519(7)> shared secret. X25519 is not an
+approved FIPS algorithm, but this combination is still allowed by FIPS 140-3
+since ML-KEM is FIPS approved.
+
 =item B<X25519MLKEM768>
 
 The shared secret is the concatenation of a 32 byte L<EVP_PKEY-ML-KEM(7)> shared
@@ -33,6 +40,12 @@ since ML-KEM is FIPS approved.
 Similar to B<X25519MLKEM768> with a higher security strength, the shared secret
 is the concatenation of a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret followed
 by a 56 byte L<EVP_PKEY-X448(7)> shared secret.
+
+=item B<SecP256r1MLKEM512>
+
+The shared secret is the concatenation of a 32 byte L<EVP_PKEY-EC(7)> shared
+secret followed by a 32 byte L<EVP_PKEY-ML-KEM(7)> shared secret.
+Both algorithms used are FIPS approved.
 
 =item B<SecP256r1MLKEM768>
 
@@ -110,13 +123,21 @@ The format of the public keys for the different algorithms is:
 
 =over 4
 
+=item B<SecP256r1MLKEM512>
+
+A 65 byte EC public key followed by an 800 byte ML-KEM-512 public key.
+
 =item B<SecP256r1MLKEM768>
 
-A 65 byte EC public key followed by a 1184 byte ML-KEM-768 public key.
+A 65 byte EC public key followed by an 1184 byte ML-KEM-768 public key.
 
 =item B<SecP384r1MLKEM1024>
 
 A 97 byte EC public key followed by a 1568 byte ML-KEM-1024 public key.
+
+=item B<MLKEM512X25519>
+
+An 800 byte ML-KEM-512 public key followed by a 32 byte X25519 public key.
 
 =item B<X25519MLKEM768>
 
@@ -152,6 +173,10 @@ The format of the private keys for the different algorithms is:
 
 =over 4
 
+=item B<SecP256r1MLKEM512>
+
+32 byte EC private key followed by a 1632 byte ML-KEM-512 private key.
+
 =item B<SecP256r1MLKEM768>
 
 32 byte EC private key followed by a 2400 byte ML-KEM-768 private key.
@@ -159,6 +184,10 @@ The format of the private keys for the different algorithms is:
 =item B<SecP384r1MLKEM1024>
 
 48 byte EC private key followed by a 3168 byte ML-KEM-1024 private key.
+
+=item B<MLKEM512X25519>
+
+1632 byte ML-KEM-512 private key followed by a 32 byte X25519 private key.
 
 =item B<X25519MLKEM768>
 
@@ -208,6 +237,9 @@ L<provider-keymgmt(7)>
 This functionality was added in OpenSSL 3.5.
 
 Support for B<curveSM2MLKEM768> was added in OpenSSL 4.0.
+
+Support for B<MLKEM512X25519> and B<SecP256r1MLKEM512> was added in OpenSSL
+4.2.
 
 =head1 COPYRIGHT
 

@@ -159,9 +159,13 @@ It is used internally as a sub algorithm of CSHAKE.
 
 =item ML-KEM-1024, see L<EVP_KEM-ML-KEM-1024(7)>
 
+=item MLKEM512X25519, see L<EVP_PKEY-MLX-KEM(7)>
+
 =item X25519MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
 
 =item X448MLKEM1024, see L<EVP_PKEY-MLX-KEM(7)>
+
+=item SecP256r1MLKEM512, see L<EVP_PKEY-MLX-KEM(7)>
 
 =item SecP256r1MLKEM768, see L<EVP_PKEY-MLX-KEM(7)>
 
@@ -275,9 +279,13 @@ included in SP 800-56Arev3 are not approved for key agreement".
 
 =item MK-KEM-1024, see L<EVP_KEYMGMT-ML-KEM-1024(7)>
 
+=item MLKEM512X25519, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
 =item X25519MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
 =item X448MLKEM1024, see L<EVP_KEYMGMT-MLX-KEM(7)>
+
+=item SecP256r1MLKEM512, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
 =item SecP256r1MLKEM768, see L<EVP_KEYMGMT-MLX-KEM(7)>
 
@@ -643,7 +651,15 @@ L<https://www.openssl.org/source/>
 
 =head1 HISTORY
 
+The ML-DSA-44, ML-DSA-65, ML-DSA-87 signature algorithms, the ML-KEM-512,
+ML-KEM-768, ML-KEM-768 key exchange algorithms, and the hybrid X25519MLKEM768,
+SecP256r1MLKEM768, SecP384r1MLKEM1024 key exchange algorithms were added in
+OpenSSL 3.5.
+
 The HKDF-SHA256, HKDF-SHA384 and HKDF-SHA512 algorithms were added in OpenSSL 3.6.
+
+The hybrid key exchange MLKEM512X25519 and SecP256r1MLKEM512 algorithms were
+added in OpenSSL 4.2.
 
 The CSHAKE-128 and CSHAKE-256 algorithms were added in OpenSSL 4.0.
 

@@ -6439,14 +6439,16 @@ end:
  * Test 13 = Test MLKEM512
  * Test 14 = Test MLKEM768
  * Test 15 = Test MLKEM1024
- * Test 16 = Test X25519MLKEM768
- * Test 17 = Test SecP256r1MLKEM768
- * Test 18 = Test SecP384r1MLKEM1024
- * Test 19 = Test curveSM2 with TLSv1.3 client and server
- * Test 20 = Test curveSM2MLKEM768 with TLSv1.3 client and server
- * Test 21 = Test all ML-KEM with TLSv1.2 client and server
- * Test 22 = Test all FFDHE with TLSv1.2 client and server
- * Test 23 = Test all ECDHE with TLSv1.2 client and server
+ * Test 16 = Test MLKEM512X25519
+ * Test 17 = Test X25519MLKEM768
+ * Test 18 = Test SecP256r1MLKEM512
+ * Test 19 = Test SecP256r1MLKEM768
+ * Test 20 = Test SecP384r1MLKEM1024
+ * Test 21 = Test curveSM2 with TLSv1.3 client and server
+ * Test 22 = Test curveSM2MLKEM768 with TLSv1.3 client and server
+ * Test 23 = Test all ML-KEM with TLSv1.2 client and server
+ * Test 24 = Test all FFDHE with TLSv1.2 client and server
+ * Test 25 = Test all ECDHE with TLSv1.2 client and server
  */
 #ifndef OPENSSL_NO_EC
 static int ecdhe_kexch_groups[] = { NID_X9_62_prime256v1, NID_secp384r1,
@@ -6477,7 +6479,7 @@ static int test_key_exchange(int idx)
     switch (idx) {
 #ifndef OPENSSL_NO_EC
 #ifndef OPENSSL_NO_TLS1_2
-    case 23:
+    case 25:
         max_version = TLS1_2_VERSION;
 #endif /* OPENSSL_NO_TLS1_2 */
         /* Fall through */
@@ -6515,7 +6517,7 @@ static int test_key_exchange(int idx)
 #endif /* OPENSSL_NO_EC */
 #ifndef OPENSSL_NO_DH
 #ifndef OPENSSL_NO_TLS1_2
-    case 22:
+    case 24:
         max_version = TLS1_2_VERSION;
 #endif /* OPENSSL_NO_TLS1_2 */
         /* Fall through */
@@ -6547,7 +6549,7 @@ static int test_key_exchange(int idx)
 #endif /* OPENSSL_NO_DH */
 #ifndef OPENSSL_NO_ML_KEM
 #if !defined(OPENSSL_NO_TLS1_2)
-    case 21:
+    case 23:
         max_version = TLS1_2_VERSION;
         kexch_groups = NULL;
 #if !defined(OPENSSL_NO_EC)
@@ -6589,16 +6591,26 @@ static int test_key_exchange(int idx)
 #ifndef OPENSSL_NO_ECX
     case 16:
         kexch_groups = NULL;
+        kexch_name0 = "MLKEM512X25519";
+        kexch_names = kexch_name0;
+        break;
+    case 17:
+        kexch_groups = NULL;
         kexch_name0 = "X25519MLKEM768";
         kexch_names = kexch_name0;
         break;
 #endif /* OPENSSL_NO_ECX */
-    case 17:
+    case 18:
+        kexch_groups = NULL;
+        kexch_name0 = "SecP256r1MLKEM512";
+        kexch_names = kexch_name0;
+        break;
+    case 19:
         kexch_groups = NULL;
         kexch_name0 = "SecP256r1MLKEM768";
         kexch_names = kexch_name0;
         break;
-    case 18:
+    case 20:
         kexch_groups = NULL;
         kexch_name0 = "SecP384r1MLKEM1024";
         kexch_names = kexch_name0;
@@ -6608,7 +6620,7 @@ static int test_key_exchange(int idx)
 
 #ifndef OPENSSL_NO_EC
 #ifndef OPENSSL_NO_SM2
-    case 19:
+    case 21:
         if (is_fips)
             return TEST_skip("curveSM2 is not supported by the fips provider.");
         kexch_groups = NULL;
@@ -6616,7 +6628,7 @@ static int test_key_exchange(int idx)
         kexch_names = kexch_name0;
         break;
 #ifndef OPENSSL_NO_ML_KEM
-    case 20:
+    case 22:
         if (is_fips)
             return TEST_skip("curveSM2MLKEM768 is not supported by the fips provider.");
         kexch_groups = NULL;
@@ -6633,7 +6645,7 @@ static int test_key_exchange(int idx)
     }
 
     if (is_fips && fips_provider_version_lt(libctx, 3, 5, 0)
-        && ((idx >= 12 && idx <= 18) || idx == 21))
+        && ((idx >= 12 && idx <= 20) || idx == 23))
         return TEST_skip("ML-KEM not supported in this version of fips provider");
 
     if (!TEST_true(create_ssl_ctx_pair(libctx, TLS_server_method(),
@@ -17105,14 +17117,14 @@ int setup_tests(void)
 #if !defined(OSSL_NO_USABLE_TLS1_3)
 #ifndef OPENSSL_NO_TLS1_2
     /* Test with both TLSv1.3 and 1.2 versions */
-    ADD_ALL_TESTS(test_key_exchange, 23);
+    ADD_ALL_TESTS(test_key_exchange, 26);
 #if !defined(OPENSSL_NO_EC) && !defined(OPENSSL_NO_DH)
     ADD_ALL_TESTS(test_negotiated_group,
         4 * (OSSL_NELEM(ecdhe_kexch_groups) + OSSL_NELEM(ffdhe_kexch_groups)));
 #endif
 #else
     /* Test with only TLSv1.3 versions */
-    ADD_ALL_TESTS(test_key_exchange, 20);
+    ADD_ALL_TESTS(test_key_exchange, 23);
 #endif
     ADD_ALL_TESTS(test_custom_exts, 6);
     ADD_TEST(test_pha_key_update);
