@@ -26,6 +26,9 @@ One SSL_SESSION object, regardless of its reference count, must therefore
 only be used with one SSL_CTX object (and the SSL objects created
 from this SSL_CTX object).
 
+Provider-defined ciphersuite sessions are not serialisable.
+i2d_SSL_SESSION() returns 0 for them; the decode functions cannot create them.
+
 =head1 RETURN VALUES
 
 d2i_SSL_SESSION() and d2i_SSL_SESSION_ex() return a pointer to the newly
@@ -46,9 +49,12 @@ L<d2i_X509(3)>
 
 The function d2i_SSL_SESSION_ex() was added in OpenSSL 3.2.
 
+Provider-defined TLS 1.3 ciphersuite sessions became non-serialisable in
+OpenSSL 4.1.
+
 =head1 COPYRIGHT
 
-Copyright 2001-2024 The OpenSSL Project Authors. All Rights Reserved.
+Copyright 2001-2026 The OpenSSL Project Authors. All Rights Reserved.
 
 Licensed under the Apache License 2.0 (the "License").  You may not use
 this file except in compliance with the License.  You can obtain a copy

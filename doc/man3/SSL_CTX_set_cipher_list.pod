@@ -42,7 +42,7 @@ ciphersuites for B<ctx>.
 This is a simple colon (":") separated list of TLSv1.3 ciphersuite names in
 order of preference.
 As of OpenSSL 4.0, B<str> is processed case-insensitively.
-Valid TLSv1.3 ciphersuite names are:
+Built-in TLSv1.3 ciphersuite names are:
 
 =over 4
 
@@ -66,12 +66,20 @@ Valid TLSv1.3 ciphersuite names are:
 
 =back
 
+Loaded providers can add TLSv1.3 ciphersuites through C<TLS-CIPHERSUITE>; see
+L<provider-base(7)>. They are discovered when B<ctx> is created, require
+explicit selection, and do not update when another provider is loaded.
+
 An empty list is permissible. The default value for this setting is:
 
 "TLS_AES_256_GCM_SHA384:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_128_GCM_SHA256"
 
 SSL_set_ciphersuites() is the same as SSL_CTX_set_ciphersuites() except it
-configures the ciphersuites for B<ssl>.
+configures the ciphersuites for B<ssl>. Provider-defined names resolve through
+the original SSL_CTX; L<SSL_set_SSL_CTX(3)> does not replace that registry.
+SSL_set_SSL_CTX() otherwise keeps its existing behaviour. Switching to a
+context with a different library context or property query is outside the
+provider-ciphersuite contract.
 
 OSSL_default_cipher_list() returns the default cipher string for TLSv1.2
 (and earlier) ciphers. OSSL_default_ciphersuites() returns the default
@@ -119,6 +127,9 @@ could be selected and 0 on complete failure.
 
 SSL_CTX_set_ciphersuites() and SSL_set_ciphersuites() return 1 if the requested
 ciphersuite list was configured, and 0 otherwise.
+Passing a NULL context, SSL object, or list string returns 0 and reports
+B<ERR_R_PASSED_NULL_PARAMETER> without changing the configured list.
+An empty string is valid and configures an empty TLSv1.3 ciphersuite list.
 
 =head1 SEE ALSO
 
@@ -132,6 +143,8 @@ L<openssl-ciphers(1)>
 OSSL_default_cipher_list() and OSSL_default_ciphersites() are new in 3.0.
 
 Cipher names were case-sensitive prior to OpenSSL 4.0.
+
+Provider-defined TLSv1.3 ciphersuites were added in OpenSSL 4.1.
 
 =head1 COPYRIGHT
 
