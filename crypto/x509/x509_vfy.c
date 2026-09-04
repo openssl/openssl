@@ -2078,7 +2078,8 @@ static int check_crl(X509_STORE_CTX *ctx, X509_CRL *crl)
         if (rv != X509_V_OK && !verify_cb_crl(ctx, rv))
             return 0;
         /* Verify CRL signature */
-        if (X509_CRL_verify(crl, ikey) <= 0 && !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE))
+        if (ossl_x509_crl_verify_ex(crl, ikey, ctx->libctx, ctx->propq) <= 0
+            && !verify_cb_crl(ctx, X509_V_ERR_CRL_SIGNATURE_FAILURE))
             return 0;
     }
     return 1;
@@ -2398,7 +2399,9 @@ static int internal_verify(X509_STORE_CTX *ctx)
                 CB_FAIL_IF(1, ctx, xi, issuer_depth,
                     X509_V_ERR_UNABLE_TO_DECODE_ISSUER_PUBLIC_KEY);
             } else {
-                CB_FAIL_IF(X509_verify(xs, pkey) <= 0,
+                CB_FAIL_IF(ossl_x509_verify_ex(xs, pkey, ctx->libctx,
+                               ctx->propq)
+                        <= 0,
                     ctx, xs, n, X509_V_ERR_CERT_SIGNATURE_FAILURE);
             }
         }
@@ -3468,7 +3471,10 @@ static int check_dane_pkeys(X509_STORE_CTX *ctx)
 
     for (i = 0; i < recnum; ++i) {
         t = sk_danetls_record_value(dane->trecs, i);
-        if (t->usage != DANETLS_USAGE_DANE_TA || t->selector != DANETLS_SELECTOR_SPKI || t->mtype != DANETLS_MATCHING_FULL || X509_verify(cert, t->spki) <= 0)
+        if (t->usage != DANETLS_USAGE_DANE_TA
+            || t->selector != DANETLS_SELECTOR_SPKI
+            || t->mtype != DANETLS_MATCHING_FULL
+            || ossl_x509_verify_ex(cert, t->spki, ctx->libctx, ctx->propq) <= 0)
             continue;
 
         /* Clear any PKIX-?? matches that failed to extend to a full chain */
@@ -4147,7 +4153,8 @@ static int check_sig_level(X509_STORE_CTX *ctx, X509 *cert)
     if (level > NUM_AUTH_LEVELS)
         level = NUM_AUTH_LEVELS;
 
-    if (!X509_get_signature_info(cert, NULL, NULL, &secbits, NULL))
+    if (!ossl_x509_get_signature_info_ex(cert, NULL, NULL, &secbits, NULL,
+            ctx->libctx, ctx->propq))
         return 0;
 
     return secbits >= minbits_table[level - 1];

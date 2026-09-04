@@ -305,18 +305,25 @@ static int x509_sig_info_init(X509_SIG_INFO *siginf, const X509_ALGOR *alg,
     return 1;
 }
 
-int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
-    uint32_t *flags)
+int ossl_x509_get_signature_info_ex(const X509 *x, int *mdnid, int *pknid,
+    int *secbits, uint32_t *flags, OSSL_LIB_CTX *libctx, const char *propq)
 {
     X509_SIG_INFO siginf;
 
+    ERR_set_mark();
+    (void)x509_sig_info_init(&siginf, &x->sig_alg, &x->signature,
+        X509_PUBKEY_get0(x->cert_info.key), libctx, propq);
+    ERR_pop_to_mark();
+    return X509_SIG_INFO_get(&siginf, mdnid, pknid, secbits, flags);
+}
+
+int X509_get_signature_info(const X509 *x, int *mdnid, int *pknid, int *secbits,
+    uint32_t *flags)
+{
     if (x == NULL) {
         ERR_raise(ERR_LIB_X509, ERR_R_PASSED_NULL_PARAMETER);
         return 0;
     }
-    ERR_set_mark();
-    (void)x509_sig_info_init(&siginf, &x->sig_alg, &x->signature,
-        X509_PUBKEY_get0(x->cert_info.key), x->libctx, x->propq);
-    ERR_pop_to_mark();
-    return X509_SIG_INFO_get(&siginf, mdnid, pknid, secbits, flags);
+    return ossl_x509_get_signature_info_ex(x, mdnid, pknid, secbits, flags,
+        x->libctx, x->propq);
 }
