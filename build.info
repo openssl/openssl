@@ -60,6 +60,7 @@ DEPEND[]=include/openssl/asn1.h \
          include/openssl/ct.h \
          include/openssl/err.h \
          include/openssl/ess.h \
+         include/openssl/evp.h \
          include/openssl/fipskey.h \
          include/openssl/lhash.h \
          {- $err_headers -} \
@@ -199,6 +200,7 @@ GENERATE[include/openssl/crypto.h]=include/openssl/crypto.h.in
 GENERATE[include/openssl/ct.h]=include/openssl/ct.h.in
 GENERATE[include/openssl/err.h]=include/openssl/err.h.in
 GENERATE[include/openssl/ess.h]=include/openssl/ess.h.in
+GENERATE[include/openssl/evp.h]=include/openssl/evp.h.in
 GENERATE[include/openssl/fipskey.h]=include/openssl/fipskey.h.in
 GENERATE[include/openssl/lhash.h]=include/openssl/lhash.h.in
 GENERATE[include/openssl/ocsp.h]=include/openssl/ocsp.h.in

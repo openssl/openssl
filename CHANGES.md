@@ -67,6 +67,10 @@ OpenSSL 4.1
 
    *Daniel Kubec and Viktor Dukhovni*
 
+ * Implement extended support of metadata for symmetric key objects (EVP_SKEY).
+
+   *Dmitry Belyavskiy*
+
  * Declare support for AArch64 Guarded Control Stack (GCS) in assembly code.
 
    When building with compilers that support GCS (Clang 18+, GCC 15+),
@@ -312,6 +316,14 @@ OpenSSL 4.1
    pages for more information.
 
    *Bob Beck*
+
+ * Added support for parsing Java-generated PKCS#12 files containing symmetric
+   keys. The `openssl pkcs12` command can now extract symmetric secret keys
+   from PKCS#12 files created by Java's keytool utility. New API functions
+   `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` for selective extraction of
+   keys, certificates, and symmetric keys from PKCS#12 files.
+
+   *Dmitry Belyavskiy*
 
  * The API functions `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
    `CRYPTO_atomic_cmp_exch_ptr` have been added to libcrypto.

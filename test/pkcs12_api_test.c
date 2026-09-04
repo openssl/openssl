@@ -60,6 +60,7 @@ static const char *in_pass = "";
 static int has_key = 0;
 static int has_cert = 0;
 static int has_ca = 0;
+static int num_skeys = 0;
 
 static int changepass(PKCS12 *p12, EVP_PKEY *key, X509 *cert, STACK_OF(X509) *ca)
 {
@@ -301,6 +302,248 @@ err:
     return TEST_true(ret);
 }
 
+static int test_parse_ex_combinations(int idx)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
+    EVP_PKEY *key = NULL, *key2 = NULL;
+    X509 *cert = NULL, *cert2 = NULL;
+    STACK_OF(X509) *ca = NULL, *ca2 = NULL;
+    int want_key = (idx >> 2) & 1;
+    int want_cert = (idx >> 1) & 1;
+    int want_ca = idx & 1;
+    int baseline_ca_count = 0;
+
+    if (in_file == NULL || !has_key || !has_cert)
+        return 1;
+
+    TEST_info("parse_ex combination %d: want_key=%d want_cert=%d want_ca=%d",
+        idx, want_key, want_cert, want_ca);
+
+    /* Baseline: full parse to count CA certs */
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
+        goto err;
+    if (!TEST_ptr(key) || !TEST_ptr(cert))
+        goto err;
+    if (has_ca && !TEST_ptr(ca))
+        goto err;
+    baseline_ca_count = ca == NULL ? 0 : sk_X509_num(ca);
+    EVP_PKEY_free(key);
+    key = NULL;
+    X509_free(cert);
+    cert = NULL;
+    OSSL_STACK_OF_X509_free(ca);
+    ca = NULL;
+    PKCS12_free(p12);
+    p12 = NULL;
+
+    /* Test the specific combination via PKCS12_parse_ex */
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+        goto err;
+
+    if (want_key)
+        PKCS12_PARSE_CTX_set_pkey(ctx, &key2);
+    if (want_cert)
+        PKCS12_PARSE_CTX_set_cert(ctx, &cert2);
+    if (want_ca)
+        PKCS12_PARSE_CTX_set_ca(ctx, &ca2);
+
+    if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+            testctx, "provider=default")))
+        goto err;
+
+    if (want_key) {
+        if (!TEST_ptr(key2))
+            goto err;
+    }
+
+    if (want_cert) {
+        if (!TEST_ptr(cert2))
+            goto err;
+    }
+
+    if (want_ca) {
+        int actual_ca_count = ca2 == NULL ? 0 : sk_X509_num(ca2);
+
+        if (!TEST_int_eq(actual_ca_count, baseline_ca_count))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (!ret)
+        TEST_info("failed parse_ex combination %d: want_key=%d want_cert=%d want_ca=%d",
+            idx, want_key, want_cert, want_ca);
+    PKCS12_PARSE_CTX_free(ctx);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    EVP_PKEY_free(key2);
+    X509_free(cert2);
+    OSSL_STACK_OF_X509_free(ca2);
+    return ret;
+}
+
+static int test_parse_ex_skey(void)
+{
+    PKCS12 *p12 = NULL;
+    PKCS12_PARSE_CTX *ctx = NULL;
+    EVP_PKEY *pkey = NULL;
+    X509 *cert = NULL;
+    STACK_OF(X509) *ca = NULL;
+    STACK_OF(EVP_SKEY) *skeys = NULL;
+    EVP_SKEY *skey = NULL;
+    const unsigned char *raw_key = NULL;
+    size_t raw_key_len = 0;
+    int ret = 0;
+
+    if (in_file == NULL)
+        return 1;
+
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+
+    if (!TEST_ptr(ctx = PKCS12_PARSE_CTX_new()))
+        goto err;
+
+    PKCS12_PARSE_CTX_set_pkey(ctx, &pkey);
+    PKCS12_PARSE_CTX_set_cert(ctx, &cert);
+    PKCS12_PARSE_CTX_set_ca(ctx, &ca);
+    PKCS12_PARSE_CTX_set_skeys(ctx, &skeys);
+
+    if (!TEST_true(PKCS12_parse_ex(p12, in_pass, ctx,
+            testctx, "provider=default")))
+        goto err;
+
+    if ((has_key && !TEST_ptr(pkey)) || (!has_key && !TEST_ptr_null(pkey)))
+        goto err;
+    if ((has_cert && !TEST_ptr(cert)) || (!has_cert && !TEST_ptr_null(cert)))
+        goto err;
+    if (num_skeys > 0) {
+        if (!TEST_ptr(skeys)
+            || !TEST_int_eq(sk_EVP_SKEY_num(skeys), num_skeys))
+            goto err;
+    } else {
+        if (!TEST_ptr_null(skeys))
+            goto err;
+    }
+
+    if (num_skeys == 1 && skeys != NULL) {
+        skey = sk_EVP_SKEY_value(skeys, 0);
+        if (!TEST_ptr(skey))
+            goto err;
+        if (!TEST_true(EVP_SKEY_get0_raw_key(skey, &raw_key, &raw_key_len)))
+            goto err;
+        if (!TEST_size_t_eq(raw_key_len, 32))
+            goto err;
+        for (size_t i = 0; i < raw_key_len; i++) {
+            if (!TEST_uchar_eq(raw_key[i], 0x41))
+                goto err;
+        }
+        if (!TEST_str_eq(EVP_SKEY_get0_skeymgmt_name(skey), "AES"))
+            goto err;
+    }
+
+    ret = 1;
+
+err:
+    PKCS12_PARSE_CTX_free(ctx);
+    PKCS12_free(p12);
+    EVP_PKEY_free(pkey);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    sk_EVP_SKEY_pop_free(skeys, EVP_SKEY_free);
+    return ret;
+}
+
+static int test_parse_combinations(int idx)
+{
+    int ret = 0;
+    PKCS12 *p12 = NULL;
+    EVP_PKEY *key = NULL, *key2 = NULL;
+    X509 *cert = NULL, *cert2 = NULL;
+    STACK_OF(X509) *ca = NULL, *ca2 = NULL;
+    int want_key = (idx >> 2) & 1;
+    int want_cert = (idx >> 1) & 1;
+    int want_ca = idx & 1;
+    int baseline_ca_count = 0;
+
+    if (in_file == NULL || !has_key || !has_cert)
+        return 1;
+
+    TEST_info("combination %d: want_key=%d want_cert=%d want_ca=%d",
+        idx, want_key, want_cert, want_ca);
+
+    /* Baseline: full parse to count CA certs */
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
+        goto err;
+    if (!TEST_ptr(key) || !TEST_ptr(cert))
+        goto err;
+    if (has_ca && !TEST_ptr(ca))
+        goto err;
+    baseline_ca_count = ca == NULL ? 0 : sk_X509_num(ca);
+    EVP_PKEY_free(key);
+    key = NULL;
+    X509_free(cert);
+    cert = NULL;
+    OSSL_STACK_OF_X509_free(ca);
+    ca = NULL;
+    PKCS12_free(p12);
+    p12 = NULL;
+
+    /* Test the specific combination */
+    if (!TEST_ptr(p12 = PKCS12_load(in_file)))
+        goto err;
+    if (!TEST_true(PKCS12_parse(p12, in_pass,
+            want_key ? &key2 : NULL,
+            want_cert ? &cert2 : NULL,
+            want_ca ? &ca2 : NULL)))
+        goto err;
+
+    if (want_key) {
+        if (!TEST_ptr(key2))
+            goto err;
+    }
+
+    if (want_cert) {
+        if (!TEST_ptr(cert2))
+            goto err;
+    }
+
+    if (want_ca) {
+        int actual_ca_count = ca2 == NULL ? 0 : sk_X509_num(ca2);
+
+        /*
+         * The matching cert is always excluded from CA when the file
+         * contains a key, regardless of whether key or cert was requested.
+         */
+        if (!TEST_int_eq(actual_ca_count, baseline_ca_count))
+            goto err;
+    }
+
+    ret = 1;
+err:
+    if (!ret)
+        TEST_info("failed combination %d: want_key=%d want_cert=%d want_ca=%d",
+            idx, want_key, want_cert, want_ca);
+    PKCS12_free(p12);
+    EVP_PKEY_free(key);
+    X509_free(cert);
+    OSSL_STACK_OF_X509_free(ca);
+    EVP_PKEY_free(key2);
+    X509_free(cert2);
+    OSSL_STACK_OF_X509_free(ca2);
+    return ret;
+}
+
 typedef enum OPTION_choice {
     OPT_ERR = -1,
     OPT_EOF = 0,
@@ -309,6 +552,7 @@ typedef enum OPTION_choice {
     OPT_IN_HAS_KEY,
     OPT_IN_HAS_CERT,
     OPT_IN_HAS_CA,
+    OPT_IN_NUM_SKEYS,
     OPT_LEGACY,
     OPT_TEST_ENUM
 } OPTION_CHOICE;
@@ -322,6 +566,7 @@ const OPTIONS *test_get_options(void)
         { "has-key", OPT_IN_HAS_KEY, 'n', "Whether the input file does contain an user key" },
         { "has-cert", OPT_IN_HAS_CERT, 'n', "Whether the input file does contain an user certificate" },
         { "has-ca", OPT_IN_HAS_CA, 'n', "Whether the input file does contain other certificate" },
+        { "num-skeys", OPT_IN_NUM_SKEYS, 'n', "Number of symmetric keys in the input file" },
         { "legacy", OPT_LEGACY, '-', "Test the legacy APIs" },
         { NULL }
     };
@@ -336,11 +581,20 @@ static int test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero(void)
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
 
+    if (in_file == NULL)
+        return 1;
+
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         return 0;
     if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
         goto err;
     PKCS12_free(p12);
+    p12 = NULL;
+
+    if (key == NULL && cert == NULL && ca == NULL) {
+        ret = 1;
+        goto err;
+    }
 
     if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
                       NID_undef, NID_undef, 0, -1, 0,
@@ -364,11 +618,20 @@ static int test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen(void)
     STACK_OF(X509) *ca = NULL;
     PKCS12 *p12 = NULL;
 
+    if (in_file == NULL)
+        return 1;
+
     if (!TEST_ptr(p12 = PKCS12_load(in_file)))
         return 0;
     if (!TEST_true(PKCS12_parse(p12, in_pass, &key, &cert, &ca)))
         goto err;
     PKCS12_free(p12);
+    p12 = NULL;
+
+    if (key == NULL && cert == NULL && ca == NULL) {
+        ret = 1;
+        goto err;
+    }
 
     if (!TEST_ptr(p12 = PKCS12_create_ex2("pass", NULL, key, cert, ca,
                       NID_undef, NID_undef, 0, -1, 0,
@@ -407,6 +670,9 @@ int setup_tests(void)
         case OPT_IN_HAS_CA:
             has_ca = opt_int_arg();
             break;
+        case OPT_IN_NUM_SKEYS:
+            num_skeys = opt_int_arg();
+            break;
         case OPT_TEST_CASES:
             break;
         default:
@@ -427,6 +693,9 @@ int setup_tests(void)
     ADD_ALL_TESTS(pkcs12_create_ex2_test, 3);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_saltlen_zero);
     ADD_TEST(test_PKCS12_set_pbmac1_pbkdf2_invalid_saltlen);
+    ADD_ALL_TESTS(test_parse_combinations, 8);
+    ADD_ALL_TESTS(test_parse_ex_combinations, 8);
+    ADD_TEST(test_parse_ex_skey);
     return 1;
 }
 

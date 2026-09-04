@@ -34,6 +34,9 @@ OpenSSL 4.1
       per-peer connections accepted with `SSL_accept_connection()`.
     See the ossl-guide-dtlsv13(7) manpage for details.
 
+  * Added support for Java keytool PKCS#12 files with symmetric keys.
+    New API `PKCS12_parse_ex()` with `PKCS12_PARSE_CTX` has been added.
+
   * API calls `CRYPTO_atomic_load_ptr`, `CRYPTO_atomic_store_ptr`, and
     `CRYPTO_atomic_cmp_exch_ptr` have been added.
   * Initial support for the Elbrus2000 (e2k) architecture
