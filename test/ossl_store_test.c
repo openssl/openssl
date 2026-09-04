@@ -1,5 +1,5 @@
 /*
- * Copyright 2020-2025 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2020-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -11,6 +11,8 @@
 #include <limits.h>
 #include <openssl/store.h>
 #include <openssl/ui.h>
+#include <openssl/core_names.h>
+#include <openssl/params.h>
 #include "testutil.h"
 
 #ifndef PATH_MAX
@@ -253,6 +255,55 @@ static int test_store_attach_unregistered_scheme(void)
     return ret;
 }
 
+static int test_store_attach_load_mfail(void)
+{
+    const unsigned char input[] = { 0x30, 0x00 };
+    BIO *bio = NULL;
+    OSSL_STORE_CTX *store_ctx = NULL;
+    OSSL_STORE_INFO *info = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(bio = BIO_new_mem_buf(input, sizeof(input))))
+        goto err;
+
+    MFAIL_start();
+    store_ctx = OSSL_STORE_attach(bio, "file",
+        NULL, NULL, NULL, NULL, NULL, NULL, NULL);
+    if (store_ctx != NULL)
+        info = OSSL_STORE_load(store_ctx);
+    MFAIL_end();
+
+    ret = 1;
+
+err:
+    OSSL_STORE_INFO_free(info);
+    OSSL_STORE_close(store_ctx);
+    BIO_free(bio);
+    return ret;
+}
+
+static int test_store_attach_invalid_params(void)
+{
+    const unsigned char input[] = { 0 };
+    char invalid_expect[] = "invalid";
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_construct_utf8_string(OSSL_STORE_PARAM_EXPECT, invalid_expect, 0),
+        OSSL_PARAM_END
+    };
+    BIO *bio = NULL;
+    int ret = 0;
+
+    if (!TEST_ptr(bio = BIO_new_mem_buf(input, sizeof(input))))
+        goto err;
+
+    ret = TEST_ptr_null(OSSL_STORE_attach(bio, "file",
+        NULL, NULL, NULL, NULL, params, NULL, NULL));
+
+err:
+    BIO_free(bio);
+    return ret;
+}
+
 static int test_store_delete_null_uri(void)
 {
     /* Passing NULL uri must return 0, not crash */
@@ -314,6 +365,8 @@ int setup_tests(void)
 #endif
     ADD_TEST(test_store_search_by_key_fingerprint_fail);
     ADD_TEST(test_store_delete_null_uri);
+    ADD_MFAIL_NO_CHECK_TEST(test_store_attach_load_mfail);
+    ADD_TEST(test_store_attach_invalid_params);
     ADD_ALL_TESTS(test_store_get_params, 3);
     if (sm2file != NULL)
         ADD_TEST(test_store_attach_unregistered_scheme);
