@@ -40,7 +40,7 @@ CMS_ContentInfo *d2i_CMS_ContentInfo(CMS_ContentInfo **a,
         ossl_cms_ctx_get0_propq(ctx));
     if (ci != NULL) {
         ERR_set_mark();
-        ossl_cms_resolve_libctx(ci);
+        ossl_cms_infos_set_cmsctx(ci);
         ERR_pop_to_mark();
     }
     return ci;
@@ -86,7 +86,7 @@ const char *ossl_cms_ctx_get0_propq(const CMS_CTX *ctx)
     return ctx != NULL ? ctx->propq : NULL;
 }
 
-void ossl_cms_resolve_libctx(CMS_ContentInfo *ci)
+void ossl_cms_infos_set_cmsctx(CMS_ContentInfo *ci)
 {
     ossl_cms_SignerInfos_set_cmsctx(ci);
     ossl_cms_RecipientInfos_set_cmsctx(ci);
