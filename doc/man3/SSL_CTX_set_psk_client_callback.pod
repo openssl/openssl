@@ -93,6 +93,9 @@ be used as the basis for a PSK.
 Ownership of the SSL_SESSION object is passed to the OpenSSL library and so it
 should not be freed by the application.
 
+A session that has held a provider-defined ciphersuite is rejected. This
+version does not support provider-backed external PSK or 0-RTT.
+
 Note that as described above, the callback may be called a second time during a
 handshake. Since ownership of the SSL_SESSION is transferred to OpenSSL on each
 call, if the callback wishes to return the same SSL_SESSION pointer on a

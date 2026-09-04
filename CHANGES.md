@@ -66,6 +66,22 @@ OpenSSL 4.2
 
    *Martin Wolf*
 
+ * Fixed allocation-failure handling in `SSL_CTX_set_ciphersuites()` and
+   `SSL_set_ciphersuites()`. If inserting a requested ciphersuite into the
+   active list fails, the setter now reports failure and preserves the
+   previous cipher lists instead of accepting an incomplete selection.
+
+   *Martin Wolf*
+
+ * Added provider-defined TLS 1.3 ciphersuites through the
+   `TLS-CIPHERSUITE` capability, with explicit selection and unchanged built-in
+   defaults. These sessions cannot be resumed, cached, serialised or ticketed.
+   Provider-backed external PSK and 0-RTT are unsupported, as are DTLS, QUIC and
+   kTLS. Malformed descriptors and name or code-point collisions cause
+   `SSL_CTX` creation to fail. See provider-base(7) for the capability contract.
+
+   *Martin Wolf*
+
  * Added the `MLKEM512X25519` and `SecP256r1MLKEM512` hybrid TLS KEMs for the
    newly assigned IANA codepoints per [draft-rosomakho-tls-ecdhe-mlkem512-00].
 

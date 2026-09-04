@@ -50,6 +50,9 @@ in B<*sess>. The SSL_SESSION object should, as a minimum, set the master key,
 the ciphersuite and the protocol version. See
 L<SSL_CTX_set_psk_use_session_callback(3)> for details.
 
+A session that has held a provider-defined ciphersuite is rejected. This
+version does not support provider-backed external PSK or 0-RTT.
+
 It is also possible for the callback to succeed but not supply a PSK. To do this
 the callback should return successfully and ensure that B<*sess> is NULL. In
 this case no PSK will be used and, if a certificate has also been configured,

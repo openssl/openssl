@@ -38,9 +38,9 @@ static ossl_inline OSSL_PROVIDER *tls_provider_load(OSSL_LIB_CTX *ctx,
  * @param propq Default property query, or NULL to leave defaults untouched.
  * @returns 1 on success, 0 on failure; partial outputs remain owned by caller.
  *
- * Use tls_provider_libctx_free() after freeing dependent SSL objects. Tests
- * controlling provider load timing or registering multiple fixtures do so
- * explicitly instead of using this helper.
+ * Use tls_provider_libctx_free() after freeing dependent SSL, SSL_CTX and
+ * SSL_SESSION objects. Tests controlling provider load timing or registering
+ * multiple fixtures do so explicitly instead of using this helper.
  */
 static ossl_inline int tls_provider_libctx_new(OSSL_LIB_CTX **ctx,
     OSSL_PROVIDER **defprov, OSSL_PROVIDER **tlsprov,

@@ -100,7 +100,6 @@ int ciphers_main(int argc, char **argv)
 #endif
     const char *p;
     char *ciphers = NULL, *prog, *convert = NULL, *ciphersuites = NULL;
-    char buf[512];
     OPTION_CHOICE o;
     int min_version = 0, max_version = 0;
 
@@ -237,6 +236,7 @@ int ciphers_main(int argc, char **argv)
 
         for (i = 0; i < sk_SSL_CIPHER_num(sk); i++) {
             const SSL_CIPHER *c;
+            char *description = NULL;
 
             c = sk_SSL_CIPHER_value(sk, i);
 
@@ -262,7 +262,14 @@ int ciphers_main(int argc, char **argv)
                     nm = "UNKNOWN";
                 BIO_printf(bio_out, "%-45s - ", nm);
             }
-            BIO_puts(bio_out, SSL_CIPHER_description(c, buf, sizeof(buf)));
+            description = SSL_CIPHER_description(c, NULL, 0);
+            if (description == NULL)
+                goto err;
+            if (BIO_puts(bio_out, description) <= 0) {
+                OPENSSL_free(description);
+                goto err;
+            }
+            OPENSSL_free(description);
         }
     }
 
