@@ -9937,6 +9937,146 @@ err:
 #endif /* OPENSSL_NO_DH */
 #endif /* OPENSSL_NO_DEPRECATED_3_0 */
 
+/*-
+ * AES-CTR cases for the VAES/AVX-512 path: sizes spanning the 64-byte
+ * dispatch threshold, the 16/8/4-block tiers, odd tails, and the 2^64
+ * counter carry.  Each result is checked against an independent ECB-based
+ * CTR reference and a decrypt round-trip.
+ */
+static const struct {
+    int bits;
+    size_t len;
+    int ctr_carry; /* start the low 64 bits of the counter near overflow */
+} ctr_vaes_cases[] = {
+    { 128, 64, 0 },
+    { 128, 65, 0 },
+    { 128, 127, 0 },
+    { 128, 128, 0 },
+    { 128, 256, 0 },
+    { 128, 512, 0 },
+    { 128, 1024, 0 },
+    { 128, 5000, 0 },
+    { 192, 64, 0 },
+    { 192, 240, 0 },
+    { 192, 1024, 0 },
+    { 192, 4096, 0 },
+    { 256, 64, 0 },
+    { 256, 129, 0 },
+    { 256, 1024, 0 },
+    { 256, 4096, 0 },
+    { 128, 2048, 1 },
+    { 192, 2048, 1 },
+    { 256, 2048, 1 },
+};
+
+static int ctr_reference(int bits, const unsigned char *key,
+    const unsigned char *iv, const unsigned char *in,
+    unsigned char *out, size_t len)
+{
+    static const char *ecbname[] = {
+        "AES-128-ECB", "AES-192-ECB", "AES-256-ECB"
+    };
+    const char *name = ecbname[(bits - 128) / 64];
+    EVP_CIPHER *ecb = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char ctr[16], ks[16];
+    size_t off = 0;
+    int outl, i, ok = 0;
+
+    if (!TEST_ptr(ecb = EVP_CIPHER_fetch(testctx, name, NULL))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new())
+        || !TEST_true(EVP_EncryptInit_ex2(ctx, ecb, key, NULL, NULL))
+        || !TEST_true(EVP_CIPHER_CTX_set_padding(ctx, 0)))
+        goto err;
+
+    memcpy(ctr, iv, sizeof(ctr));
+    while (off < len) {
+        size_t n = len - off < 16 ? len - off : 16;
+
+        if (!TEST_true(EVP_EncryptUpdate(ctx, ks, &outl, ctr, 16))
+            || !TEST_int_eq(outl, 16))
+            goto err;
+        for (i = 0; i < (int)n; i++)
+            out[off + i] = in[off + i] ^ ks[i];
+        off += n;
+        /* Increment the 128-bit counter as a big-endian integer. */
+        for (i = 15; i >= 0; i--)
+            if (++ctr[i] != 0)
+                break;
+    }
+    ok = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(ecb);
+    return ok;
+}
+
+static int test_aes_ctr_vaes(int idx)
+{
+    static const char *ctrname[] = {
+        "AES-128-CTR", "AES-192-CTR", "AES-256-CTR"
+    };
+    int bits = ctr_vaes_cases[idx].bits;
+    size_t len = ctr_vaes_cases[idx].len;
+    const char *name = ctrname[(bits - 128) / 64];
+    EVP_CIPHER *ctr = NULL;
+    EVP_CIPHER_CTX *ctx = NULL;
+    unsigned char key[32], iv[16];
+    unsigned char *pt = NULL, *ref = NULL, *ct = NULL, *rt = NULL;
+    int outl, tmpl, ret = 0;
+
+    if (!TEST_ptr(pt = OPENSSL_malloc(len))
+        || !TEST_ptr(ref = OPENSSL_malloc(len))
+        || !TEST_ptr(ct = OPENSSL_malloc(len))
+        || !TEST_ptr(rt = OPENSSL_malloc(len)))
+        goto err;
+
+    if (!TEST_int_gt(RAND_bytes_ex(testctx, key, bits / 8, 0), 0)
+        || !TEST_int_gt(RAND_bytes_ex(testctx, iv, sizeof(iv), 0), 0)
+        || !TEST_int_gt(RAND_bytes_ex(testctx, pt, len, 0), 0))
+        goto err;
+
+    if (ctr_vaes_cases[idx].ctr_carry) {
+        /* Low 64 bits (bytes 8..15, big-endian) just below overflow. */
+        memset(iv + 8, 0xff, 8);
+        iv[15] = 0xf0;
+    }
+
+    if (!TEST_ptr(ctr = EVP_CIPHER_fetch(testctx, name, NULL))
+        || !TEST_ptr(ctx = EVP_CIPHER_CTX_new()))
+        goto err;
+
+    /* Independent reference (single-block ECB keystream). */
+    if (!ctr_reference(bits, key, iv, pt, ref, len))
+        goto err;
+
+    /* Encrypt: payloads >= 64 bytes select the VAES path on capable CPUs. */
+    if (!TEST_true(EVP_EncryptInit_ex2(ctx, ctr, key, iv, NULL))
+        || !TEST_true(EVP_EncryptUpdate(ctx, ct, &outl, pt, (int)len))
+        || !TEST_true(EVP_EncryptFinal_ex(ctx, ct + outl, &tmpl))
+        || !TEST_int_eq(outl + tmpl, (int)len)
+        || !TEST_mem_eq(ct, len, ref, len))
+        goto err;
+
+    /* Decrypt round-trip. */
+    if (!TEST_true(EVP_DecryptInit_ex2(ctx, ctr, key, iv, NULL))
+        || !TEST_true(EVP_DecryptUpdate(ctx, rt, &outl, ct, (int)len))
+        || !TEST_true(EVP_DecryptFinal_ex(ctx, rt + outl, &tmpl))
+        || !TEST_int_eq(outl + tmpl, (int)len)
+        || !TEST_mem_eq(rt, len, pt, len))
+        goto err;
+
+    ret = 1;
+err:
+    EVP_CIPHER_CTX_free(ctx);
+    EVP_CIPHER_free(ctr);
+    OPENSSL_free(pt);
+    OPENSSL_free(ref);
+    OPENSSL_free(ct);
+    OPENSSL_free(rt);
+    return ret;
+}
+
 int setup_tests(void)
 {
     char *config_file = NULL;
@@ -10147,6 +10287,7 @@ int setup_tests(void)
 
     ADD_ALL_TESTS(test_rsasve_degenerate_exponent, 2);
     ADD_ALL_TESTS(test_rsasve_degenerate_ciphertext, 3);
+    ADD_ALL_TESTS(test_aes_ctr_vaes, OSSL_NELEM(ctr_vaes_cases));
 
 #ifndef OPENSSL_NO_ML_KEM
     ADD_ALL_TESTS(test_ml_kem_seed_only, 2);

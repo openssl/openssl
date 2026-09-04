@@ -6,8 +6,8 @@
 # in the file LICENSE in the source distribution or at
 # https://www.openssl.org/source/license.html
 
-# Erase the temporary broadcast key schedule used by the AES-CBC VAES
-# intrinsic implementation and clear its caller-clobbered register state.
+# Erase the temporary broadcast key schedule used by the AES VAES
+# intrinsic implementations and clear their caller-clobbered register state.
 
 $output = $#ARGV >= 0 && $ARGV[$#ARGV] =~ m|\.\w+$| ? pop : undef;
 $flavour = $#ARGV >= 0 && $ARGV[0] !~ m|\.| ? shift : undef;
@@ -66,11 +66,11 @@ $num_keys = $win64 ? "%rdx" : "%rsi";
 $code = <<___;
 .text
 
-.globl  ossl_aes_cbc_vaes_cleanup_eligible
-.hidden ossl_aes_cbc_vaes_cleanup_eligible
-.type   ossl_aes_cbc_vaes_cleanup_eligible,\@abi-omnipotent
+.globl  ossl_aes_vaes_cleanup_eligible
+.hidden ossl_aes_vaes_cleanup_eligible
+.type   ossl_aes_vaes_cleanup_eligible,\@abi-omnipotent
 .align  16
-ossl_aes_cbc_vaes_cleanup_eligible:
+ossl_aes_vaes_cleanup_eligible:
 .cfi_startproc
     endbranch
 ___
@@ -80,32 +80,32 @@ if ($avx512vaes) {
     mov \$1,%eax
     ret
 .cfi_endproc
-.size ossl_aes_cbc_vaes_cleanup_eligible,.-ossl_aes_cbc_vaes_cleanup_eligible
+.size ossl_aes_vaes_cleanup_eligible,.-ossl_aes_vaes_cleanup_eligible
 
-# void ossl_aes_cbc_vaes_cleanup(void *key_schedule, size_t num_keys);
+# void ossl_aes_vaes_cleanup(void *key_schedule, size_t num_keys);
 #
 # num_keys counts 64-byte broadcast round keys. The caller invokes this only
 # after VAES use, so AVX-512 instructions are already safe to execute.
 # On Win64, the caller's epilogue restores the ABI-preserved low 128 bits of
 # XMM6-XMM15 if it used them. Their volatile upper lanes are cleared here.
-.globl  ossl_aes_cbc_vaes_cleanup
-.hidden ossl_aes_cbc_vaes_cleanup
-.type   ossl_aes_cbc_vaes_cleanup,\@abi-omnipotent
+.globl  ossl_aes_vaes_cleanup
+.hidden ossl_aes_vaes_cleanup
+.type   ossl_aes_vaes_cleanup,\@abi-omnipotent
 .align  32
-ossl_aes_cbc_vaes_cleanup:
+ossl_aes_vaes_cleanup:
 .cfi_startproc
     endbranch
     vpxord %zmm0,%zmm0,%zmm0
     test $num_keys,$num_keys
-    jz .Lvaes_cbc_clear_registers
+    jz .Lvaes_clear_registers
 
-.Lvaes_cbc_clear_keys:
+.Lvaes_clear_keys:
     vmovdqu64 %zmm0,($key_schedule)
     add \$64,$key_schedule
     dec $num_keys
-    jnz .Lvaes_cbc_clear_keys
+    jnz .Lvaes_clear_keys
 
-.Lvaes_cbc_clear_registers:
+.Lvaes_clear_registers:
 ___
 
     if ($win64) {
@@ -157,25 +157,25 @@ ___
     $code .= <<___;
     ret
 .cfi_endproc
-.size ossl_aes_cbc_vaes_cleanup,.-ossl_aes_cbc_vaes_cleanup
+.size ossl_aes_vaes_cleanup,.-ossl_aes_vaes_cleanup
 ___
 } else {
     $code .= <<___;
     xor %eax,%eax
     ret
 .cfi_endproc
-.size ossl_aes_cbc_vaes_cleanup_eligible,.-ossl_aes_cbc_vaes_cleanup_eligible
+.size ossl_aes_vaes_cleanup_eligible,.-ossl_aes_vaes_cleanup_eligible
 
-.globl  ossl_aes_cbc_vaes_cleanup
-.hidden ossl_aes_cbc_vaes_cleanup
-.type   ossl_aes_cbc_vaes_cleanup,\@abi-omnipotent
-ossl_aes_cbc_vaes_cleanup:
+.globl  ossl_aes_vaes_cleanup
+.hidden ossl_aes_vaes_cleanup
+.type   ossl_aes_vaes_cleanup,\@abi-omnipotent
+ossl_aes_vaes_cleanup:
 .cfi_startproc
     endbranch
     .byte 0x0f,0x0b                # ud2
     ret
 .cfi_endproc
-.size ossl_aes_cbc_vaes_cleanup,.-ossl_aes_cbc_vaes_cleanup
+.size ossl_aes_vaes_cleanup,.-ossl_aes_vaes_cleanup
 ___
 }
 
