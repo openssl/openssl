@@ -1912,6 +1912,10 @@ void *evp_pkey_export_to_provider(EVP_PKEY *pk, OSSL_LIB_CTX *libctx,
             params[0] = OSSL_PARAM_construct_octet_ptr("legacy-object",
                 &pk->pkey.ptr, sizeof(pk->pkey.ptr));
             p = params;
+        } else if (propquery != NULL) {
+            params[0] = OSSL_PARAM_construct_utf8_string(
+                OSSL_PKEY_PARAM_PROPERTIES, (char *)propquery, 0);
+            p = params;
         }
         keydata = evp_keymgmt_newdata(tmp_keymgmt, p);
         if (keydata == NULL)

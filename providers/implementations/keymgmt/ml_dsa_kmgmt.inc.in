@@ -39,3 +39,7 @@ use OpenSSL::paramnames qw(produce_param_decoder);
                          (['OSSL_PKEY_PARAM_ML_DSA_SEED', 'seed',  'octet_string'],
                           ['OSSL_PKEY_PARAM_PROPERTIES',  'propq', 'utf8_string'],
                          )); -}
+
+{- produce_param_decoder('ml_dsa_new_key_ex_params',
+                         (['OSSL_PKEY_PARAM_PROPERTIES',  'propq', 'utf8_string'],
+                         )); -}
