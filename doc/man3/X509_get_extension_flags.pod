@@ -92,11 +92,10 @@ construction) or on memory allocation failure.
 
 =item B<EXFLAG_INVALID_POLICY>
 
-The NID_certificate_policies certificate extension is invalid or
-inconsistent. The certificate should be rejected.
-This bit may also be raised after an out-of-memory error while
-processing the X509 object, so it may not be related to the processed
-ASN1 object itself.
+No longer set. Before OpenSSL 4.2 this bit was set on a certificate whose
+policy extensions were found invalid or inconsistent during a certificate
+verification with policy checking enabled; an invalid policy extension is
+still reported by the verification, as B<X509_V_ERR_INVALID_POLICY_EXTENSION>.
 
 =item B<EXFLAG_KUSAGE>
 
