@@ -86,14 +86,29 @@ int X509_CRL_cmp(const X509_CRL *a, const X509_CRL *b)
 
 int X509_CRL_match(const X509_CRL *a, const X509_CRL *b)
 {
-    int rv;
+    int rv = 0;
 
     if ((a->flags & EXFLAG_NO_FINGERPRINT) == 0
         && (b->flags & EXFLAG_NO_FINGERPRINT) == 0)
         rv = memcmp(a->sha1_hash, b->sha1_hash, SHA_DIGEST_LENGTH);
-    else
-        return -2;
+    if (rv != 0)
+        return rv < 0 ? -1 : 1;
 
+    /* Check for match against stored encoding too */
+    if (!a->crl.enc.modified && !b->crl.enc.modified) {
+        if (a->crl.enc.len < b->crl.enc.len)
+            return -1;
+        if (a->crl.enc.len > b->crl.enc.len)
+            return 1;
+        rv = memcmp(a->crl.enc.enc, b->crl.enc.enc, a->crl.enc.len);
+        if (rv != 0)
+            return rv < 0 ? -1 : 1;
+        /* Same TBS: the signature algorithm and signature must match too */
+        rv = X509_ALGOR_cmp(&a->sig_alg, &b->sig_alg);
+        if (rv != 0)
+            return rv < 0 ? -1 : 1;
+        rv = ASN1_STRING_cmp(&a->signature, &b->signature);
+    }
     return rv < 0 ? -1 : rv > 0;
 }
 
