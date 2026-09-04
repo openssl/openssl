@@ -76,6 +76,10 @@ BLDDIR={- $config{builddir} -}
 RESULT_D=$(BLDDIR)/test-runs
 FIPSKEY={- $config{FIPSKEY} -}
 
+# Additional flags for the 'prove' test harness, e.g.
+#     make test PROVEFLAGS=-v
+PROVEFLAGS=
+
 VERSION={- "$config{full_version}" -}
 VERSION_NUMBER={- "$config{version}" -}
 RELEASE_DATE={- my $t = localtime;
@@ -637,14 +641,9 @@ help: ## Show this help screen
 test: tests ## Run tests (alias of "tests")
 {- dependmagic('tests', 'Run tests'); -}: build_programs_nodep build_modules_nodep link-utils
 	"$(MAKE)" run_tests
-run_tests: FORCE
+run_tests: FORCE util/perl/OpenSSL/TestHarness.pm
 	@ : {- output_off() if $disabled{tests}; "" -}
-	( SRCTOP=$(SRCDIR) \
-	  BLDTOP=$(BLDDIR) \
-	  PERL="$(PERL)" \
-	  FIPSKEY="$(FIPSKEY)" \
-	  EXE_EXT={- platform->binext() -} \
-	  $(PERL) $(SRCDIR)/test/run_tests.pl $(TESTS) )
+	PERL5LIB=$(BLDDIR)/util/perl prove -P OpenSSL::TestHarness $(PROVEFLAGS) -- $(TESTS)
 	@ : {- if ($disabled{tests}) { output_on(); } else { output_off(); } "" -}
 	@echo "Tests are not supported with your chosen Configure options"
 	@ : {- output_on() if !$disabled{tests}; "" -}

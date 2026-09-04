@@ -436,6 +436,7 @@ providers/implementations/rands/test_rng.inc
 /doc/man7/openssl_user_macros.pod
 /util/shlib_wrap.sh
 /util/wrap.pl
+/util/perl/OpenSSL/TestHarness.pm
 /tags
 /TAGS
 *.map
