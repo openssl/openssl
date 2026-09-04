@@ -287,7 +287,7 @@ IF[{- !$disabled{tests} -}]
 
   SOURCE[provfetchtest]=provfetchtest.c
   INCLUDE[provfetchtest]=../include ../apps/include
-  DEPEND[provfetchtest]=../libcrypto libtestutil.a
+  DEPEND[provfetchtest]=../libcrypto.a libtestutil.a
 
   SOURCE[prov_config_test]=prov_config_test.c
   INCLUDE[prov_config_test]=../include ../apps/include
@@ -1350,6 +1350,14 @@ IF[{- !$disabled{tests} -}]
     IF[{- defined $target{shared_defflag} -}]
       SOURCE[fake-cipher]=fake-cipher.ld
       GENERATE[fake-cipher.ld]=../util/providers.num
+    ENDIF
+    MODULES{noinst}=tls-provider-child
+    SOURCE[tls-provider-child]=tls-provider-module.c tls-provider.c
+    INCLUDE[tls-provider-child]=.. ../include ../apps/include
+    DEFINE[tls-provider-child]=TLS_PROVIDER_CHILD_LIBCTX
+    DEPEND[tls-provider-child]=../libcrypto
+    IF[{- defined $target{shared_defflag} -}]
+      SOURCE[tls-provider-child]=p_test.ld
     ENDIF
   ENDIF
   IF[{- $disabled{module} || !$target{dso_scheme} -}]

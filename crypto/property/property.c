@@ -638,6 +638,130 @@ int ossl_method_store_remove_all_provided(OSSL_METHOD_STORE *store,
     return 1;
 }
 
+/** @brief Search state shared by the method-store teardown callbacks. */
+struct teardown_method_data {
+    const OSSL_PROVIDER *prov;
+    void *method; /* Borrowed match; NULL until one is found. */
+};
+
+/**
+ * @brief Find the first implementation belonging to the teardown provider.
+ * @param idx Algorithm index (unused).
+ * @param alg Algorithm whose implementations are searched.
+ * @param arg Search state; an existing match is retained.
+ */
+static void alg_find_provider_method(ossl_uintmax_t idx, ALGORITHM *alg,
+    void *arg)
+{
+    struct teardown_method_data *data = arg;
+    int i;
+
+    if (data->method != NULL)
+        return;
+    for (i = 0; i < sk_IMPLEMENTATION_num(alg->impls); i++) {
+        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
+
+        if (impl->provider == data->prov) {
+            data->method = impl->method.method;
+            return;
+        }
+    }
+}
+
+/**
+ * @brief Remove implementation references to a method during teardown.
+ * @param idx Algorithm index (unused).
+ * @param alg Algorithm whose implementations are pruned.
+ * @param arg Method identity, used only for pointer comparison.
+ */
+static void alg_teardown_method(ossl_uintmax_t idx, ALGORITHM *alg, void *arg)
+{
+    const void *method = arg;
+    int i;
+
+    for (i = sk_IMPLEMENTATION_num(alg->impls); i-- > 0;) {
+        IMPLEMENTATION *impl = sk_IMPLEMENTATION_value(alg->impls, i);
+
+        if (impl->method.method == method) {
+            (void)sk_IMPLEMENTATION_delete(alg->impls, i);
+            impl_free(impl);
+        }
+    }
+}
+
+static void *query_find_provider_method(QUERY *query,
+    const OSSL_PROVIDER *prov)
+{
+    for (; query != NULL; query = query->next) {
+        if (query->prov == prov)
+            return query->method.method;
+    }
+    return NULL;
+}
+
+/**
+ * @brief Unlink cache aliases before releasing their method references.
+ * @param head Cache or archive list to prune; updated in place.
+ * @param method Method identity, including aliases with no provider in the key.
+ */
+static void query_teardown_method(QUERY **head, const void *method)
+{
+    QUERY *query;
+
+    while ((query = *head) != NULL) {
+        if (query->method.method == method) {
+            *head = query->next;
+            impl_cache_free_unlinked(query);
+        } else {
+            head = &query->next;
+        }
+    }
+}
+
+void ossl_method_store_remove_all_provided_teardown(OSSL_METHOD_STORE *store,
+    const OSSL_PROVIDER *prov)
+{
+    struct teardown_method_data data;
+    void *method;
+    int i, j;
+
+    if (store == NULL || prov == NULL)
+        return;
+
+    /*
+     * The owning library context is being destroyed; no readers remain.
+     * Remove both provider-specific and provider-agnostic cache aliases for
+     * each method before releasing the provider which owns a child context.
+     */
+    for (;;) {
+        data.prov = prov;
+        data.method = NULL;
+        for (i = 0; i < NUM_SHARDS && data.method == NULL; i++) {
+            STORED_ALGORITHMS *sa = &store->algs[i];
+
+            ossl_sa_ALGORITHM_doall_arg(sa->algs,
+                alg_find_provider_method, &data);
+            for (j = 0; j < MAX_CACHE_LINES && data.method == NULL; j++)
+                data.method = query_find_provider_method(
+                    sa->cache_lists[j], prov);
+            if (data.method == NULL)
+                data.method = query_find_provider_method(sa->archive, prov);
+        }
+        if ((method = data.method) == NULL)
+            return;
+
+        for (i = 0; i < NUM_SHARDS; i++) {
+            STORED_ALGORITHMS *sa = &store->algs[i];
+
+            for (j = 0; j < MAX_CACHE_LINES; j++)
+                query_teardown_method(&sa->cache_lists[j], method);
+            query_teardown_method(&sa->archive, method);
+            ossl_sa_ALGORITHM_doall_arg(sa->algs,
+                alg_teardown_method, method);
+        }
+    }
+}
+
 static void alg_do_one(ALGORITHM *alg, IMPLEMENTATION *impl,
     void (*fn)(int id, void *method, void *fnarg),
     void *fnarg)

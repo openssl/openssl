@@ -1,5 +1,5 @@
 /*
- * Copyright 2021-2023 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2021-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -14,7 +14,22 @@
 #include <openssl/store.h>
 #include <openssl/rand.h>
 #include <openssl/core_names.h>
+#include "internal/thread_arch.h"
 #include "testutil.h"
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) \
+    && !defined(OPENSSL_NO_THREAD_POOL)
+#include "threadstest.h"
+#endif /* defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_NO_THREAD_POOL) */
+
+#define CHILD_RANDOM_CHECK "child-random-check"
+
+static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in, const OSSL_DISPATCH **out, void **provctx);
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) \
+    && !defined(OPENSSL_NO_THREAD_POOL)
+static int dummy_provider_init_deferred(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in, const OSSL_DISPATCH **out, void **provctx);
+#endif /* defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_NO_THREAD_POOL) */
 
 static int dummy_decoder_decode(void *ctx, OSSL_CORE_BIO *cin, int selection,
     OSSL_CALLBACK *object_cb, void *object_cbarg,
@@ -175,6 +190,32 @@ static const OSSL_ALGORITHM dummy_rand[] = {
     { NULL, NULL, NULL }
 };
 
+static void *dummy_keymgmt_new(void *provctx)
+{
+    return provctx;
+}
+
+static void dummy_keymgmt_free(void *keydata)
+{
+}
+
+static int dummy_keymgmt_has(const void *keydata, int selection)
+{
+    return 1;
+}
+
+static const OSSL_DISPATCH dummy_keymgmt_functions[] = {
+    { OSSL_FUNC_KEYMGMT_NEW, (void (*)(void))dummy_keymgmt_new },
+    { OSSL_FUNC_KEYMGMT_FREE, (void (*)(void))dummy_keymgmt_free },
+    { OSSL_FUNC_KEYMGMT_HAS, (void (*)(void))dummy_keymgmt_has },
+    OSSL_DISPATCH_END
+};
+
+static const OSSL_ALGORITHM dummy_keymgmt[] = {
+    { "DUMMY-KEY", "provider=dummy", dummy_keymgmt_functions },
+    { NULL, NULL, NULL }
+};
+
 static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
     int *no_cache)
 {
@@ -188,20 +229,160 @@ static const OSSL_ALGORITHM *dummy_query(void *provctx, int operation_id,
         return dummy_store;
     case OSSL_OP_RAND:
         return dummy_rand;
+    case OSSL_OP_KEYMGMT:
+        return dummy_keymgmt;
     }
     return NULL;
 }
 
+/**
+ * @brief Probe the child RNG and release its state on the calling thread.
+ * @param provctx Child library context to exercise.
+ * @param params Receives the probe result under CHILD_RANDOM_CHECK.
+ * @returns 1 if the result was stored or not requested, 0 on parameter failure.
+ */
+static int dummy_get_params(void *provctx, OSSL_PARAM params[])
+{
+    OSSL_PARAM *param = OSSL_PARAM_locate(params, CHILD_RANDOM_CHECK);
+    unsigned char bytes[32];
+    int result;
+
+    if (param == NULL)
+        return 1;
+    result = RAND_priv_bytes_ex(provctx, bytes, sizeof(bytes), 0) > 0;
+    OPENSSL_cleanse(bytes, sizeof(bytes));
+    OPENSSL_thread_stop_ex(provctx);
+    return OSSL_PARAM_set_int(param, result);
+}
+
 static const OSSL_DISPATCH dummy_dispatch_table[] = {
+    { OSSL_FUNC_PROVIDER_GET_PARAMS, (void (*)(void))dummy_get_params },
     { OSSL_FUNC_PROVIDER_QUERY_OPERATION, (void (*)(void))dummy_query },
     { OSSL_FUNC_PROVIDER_TEARDOWN, (void (*)(void))OSSL_LIB_CTX_free },
     OSSL_DISPATCH_END
 };
 
-static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) \
+    && !defined(OPENSSL_NO_THREAD_POOL)
+static OSSL_LIB_CTX *child_teardown_libctx;
+static OSSL_PROVIDER *child_teardown_provider;
+static CRYPTO_MUTEX *child_teardown_mutex;
+static CRYPTO_CONDVAR *child_teardown_condvar;
+static int child_teardown_worker_result;
+static int child_teardown_worker_ready;
+static int child_teardown_worker_release;
+
+/**
+ * @brief Exercise child-provider methods, then park until teardown is complete.
+ *
+ * Release child and parent per-thread state before signalling readiness. The
+ * parked worker must no longer use either context while the parent is freed.
+ */
+static void child_teardown_worker(void)
+{
+    EVP_KEYMGMT *keymgmt = NULL;
+    int random_ok = 0;
+    OSSL_PARAM params[] = {
+        OSSL_PARAM_int(CHILD_RANDOM_CHECK, &random_ok),
+        OSSL_PARAM_END
+    };
+
+    keymgmt = EVP_KEYMGMT_fetch(child_teardown_libctx, "DUMMY-KEY", NULL);
+    child_teardown_worker_result = keymgmt != NULL
+        && OSSL_PROVIDER_get_params(child_teardown_provider, params)
+        && random_ok;
+    EVP_KEYMGMT_free(keymgmt);
+    OPENSSL_thread_stop_ex(child_teardown_libctx);
+
+    ossl_crypto_mutex_lock(child_teardown_mutex);
+    child_teardown_worker_ready = 1;
+    ossl_crypto_condvar_signal(child_teardown_condvar);
+    while (!child_teardown_worker_release)
+        ossl_crypto_condvar_wait(child_teardown_condvar,
+            child_teardown_mutex);
+    ossl_crypto_mutex_unlock(child_teardown_mutex);
+}
+
+/**
+ * @brief Check parent teardown after deferred child-provider use on a worker.
+ * @returns 1 on success, 0 on setup, provider-operation or thread-join failure.
+ */
+static int test_child_provider_method_teardown(void)
+{
+    OSSL_LIB_CTX *libctx = NULL;
+    OSSL_PROVIDER *deflt = NULL;
+    OSSL_PROVIDER *dummy = NULL;
+    thread_t thread = 0;
+    int thread_started = 0;
+    int result = 0;
+
+    child_teardown_worker_result = 0;
+    child_teardown_worker_ready = 0;
+    child_teardown_worker_release = 0;
+    if (!TEST_ptr(libctx = OSSL_LIB_CTX_new())
+        || !TEST_ptr(child_teardown_mutex = ossl_crypto_mutex_new())
+        || !TEST_ptr(child_teardown_condvar = ossl_crypto_condvar_new())
+        || !TEST_true(OSSL_PROVIDER_add_builtin(libctx,
+            "dummy-teardown-prov", dummy_provider_init_deferred))
+        || !TEST_ptr(deflt = OSSL_PROVIDER_load(libctx, "default"))
+        || !TEST_ptr(dummy = OSSL_PROVIDER_load(libctx,
+                         "dummy-teardown-prov")))
+        goto err;
+
+    child_teardown_libctx = libctx;
+    child_teardown_provider = dummy;
+    if (!TEST_true(thread_started = run_thread(&thread,
+                       child_teardown_worker)))
+        goto err;
+
+    ossl_crypto_mutex_lock(child_teardown_mutex);
+    while (!child_teardown_worker_ready)
+        ossl_crypto_condvar_wait(child_teardown_condvar,
+            child_teardown_mutex);
+    ossl_crypto_mutex_unlock(child_teardown_mutex);
+    if (!TEST_true(child_teardown_worker_result)
+        || !TEST_true(OSSL_PROVIDER_unload(dummy)))
+        goto err;
+    dummy = NULL;
+    if (!TEST_true(OSSL_PROVIDER_unload(deflt)))
+        goto err;
+    deflt = NULL;
+    OSSL_LIB_CTX_free(libctx);
+    libctx = NULL;
+
+    ossl_crypto_mutex_lock(child_teardown_mutex);
+    child_teardown_worker_release = 1;
+    ossl_crypto_condvar_signal(child_teardown_condvar);
+    ossl_crypto_mutex_unlock(child_teardown_mutex);
+    result = wait_for_thread(thread);
+    thread_started = 0;
+    if (!TEST_true(result))
+        goto err;
+
+    result = 1;
+err:
+    if (thread_started) {
+        ossl_crypto_mutex_lock(child_teardown_mutex);
+        child_teardown_worker_release = 1;
+        ossl_crypto_condvar_signal(child_teardown_condvar);
+        ossl_crypto_mutex_unlock(child_teardown_mutex);
+        (void)wait_for_thread(thread);
+    }
+    OSSL_PROVIDER_unload(dummy);
+    OSSL_PROVIDER_unload(deflt);
+    OSSL_LIB_CTX_free(libctx);
+    child_teardown_libctx = NULL;
+    child_teardown_provider = NULL;
+    ossl_crypto_condvar_free(&child_teardown_condvar);
+    ossl_crypto_mutex_free(&child_teardown_mutex);
+    return result;
+}
+#endif /* defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_NO_THREAD_POOL) */
+
+static int dummy_provider_init_common(const OSSL_CORE_HANDLE *handle,
     const OSSL_DISPATCH *in,
     const OSSL_DISPATCH **out,
-    void **provctx)
+    void **provctx, int initialize_random)
 {
     OSSL_LIB_CTX *libctx = OSSL_LIB_CTX_new_child(handle, in);
     unsigned char buf[32];
@@ -213,11 +394,31 @@ static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
      * Do some work using the child libctx, to make sure this is possible from
      * inside the init function.
      */
-    if (RAND_bytes_ex(libctx, buf, sizeof(buf), 0) <= 0)
+    if (initialize_random
+        && RAND_bytes_ex(libctx, buf, sizeof(buf), 0) <= 0)
         return 0;
 
     return 1;
 }
+
+static int dummy_provider_init(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in,
+    const OSSL_DISPATCH **out,
+    void **provctx)
+{
+    return dummy_provider_init_common(handle, in, out, provctx, 1);
+}
+
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) \
+    && !defined(OPENSSL_NO_THREAD_POOL)
+static int dummy_provider_init_deferred(const OSSL_CORE_HANDLE *handle,
+    const OSSL_DISPATCH *in,
+    const OSSL_DISPATCH **out,
+    void **provctx)
+{
+    return dummy_provider_init_common(handle, in, out, provctx, 0);
+}
+#endif /* defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_NO_THREAD_POOL) */
 
 /*
  * Try fetching and freeing various things.
@@ -292,6 +493,10 @@ err:
 int setup_tests(void)
 {
     ADD_ALL_TESTS(fetch_test, 8);
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) \
+    && !defined(OPENSSL_NO_THREAD_POOL)
+    ADD_TEST(test_child_provider_method_teardown);
+#endif /* defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG) && !defined(OPENSSL_NO_THREAD_POOL) */
 
     return 1;
 }
