@@ -45,6 +45,12 @@ OpenSSL 4.2
 
    *Bob Beck*
 
+ * A certificate that has not been signed is now encoded by `i2d_X509()` as
+   an unsigned certificate (RFC 9925), with `id-alg-unsigned` as the signature
+   algorithm and an empty signature, instead of failing to encode.
+
+   *Bob Beck*
+
  * A certificate whose subjectAltName, nameConstraints,
    cRLDistributionPoints, or RFC 3779 IP address block or AS identifier
    extension cannot be decoded is no longer marked `EXFLAG_INVALID` when
