@@ -23,6 +23,7 @@
 #include <openssl/x509.h>
 #include <openssl/trace.h>
 #include <openssl/encoder.h>
+#include "internal/usdt.h"
 
 /*
  * Map error codes to TLS/SSL alart types.
@@ -353,6 +354,9 @@ CON_FUNC_RETURN tls_construct_cert_verify(SSL_CONNECTION *s, WPACKET *pkt)
         goto err;
     }
 
+    OSSL_USDT_new_context_with_data("tls::sign",
+        { "tls::signature_algorithm", OSSL_USDT_WORD(lu->sigalg) });
+
     /*
      * To avoid problems with older RSA providers we must also pass the digest
      * name when passing any other parameters.
@@ -525,6 +529,9 @@ MSG_PROCESS_RETURN tls_process_cert_verify(SSL_CONNECTION *s, PACKET *pkt)
 
     OSSL_TRACE1(TLS, "Using client verify alg %s\n",
         md == NULL ? "n/a" : EVP_MD_get0_name(md));
+
+    OSSL_USDT_new_context_with_data("tls::verify",
+        { "tls::signature_algorithm", OSSL_USDT_WORD(s->s3.tmp.peer_sigalg->sigalg) });
 
     /*
      * To avoid problems with older RSA providers we must also pass the digest

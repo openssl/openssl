@@ -17,6 +17,7 @@
 #ifndef OPENSSL_NO_ECH
 #include "internal/ech_helpers.h"
 #endif
+#include "internal/usdt.h"
 
 /* Used in the negotiate_dhe function */
 typedef enum {
@@ -2313,6 +2314,9 @@ int tls_parse_stoc_key_share(SSL_CONNECTION *s, PACKET *pkt,
         SSLfatal(s, SSL_AD_DECODE_ERROR, SSL_R_LENGTH_MISMATCH);
         return 0;
     }
+
+    OSSL_USDT_new_context_with_data("tls::key_exchange",
+        { "tls::group", OSSL_USDT_WORD(group_id) });
 
     if (!ginf->is_kem) {
         /* Regular KEX */
