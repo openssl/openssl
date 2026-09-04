@@ -1008,6 +1008,32 @@ DEF_SCRIPT(check_thread_assisted_idle,
     OP_TICK_ENABLE(C);
 }
 
+/*
+ * With per-op ticking disabled the client runs like a real thread-assisted
+ * app: progress comes only from API-call autoticks and the assist thread.
+ * Cover a full-duplex default-stream transfer with conclude/EOS both ways.
+ */
+DEF_SCRIPT(check_thread_assisted_transfer,
+    "thread-assisted client full-duplex transfer with conclude/EOS")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    OP_TICK_DISABLE(C);
+
+    OP_WRITE_B(C, "raspberry");
+    OP_CONCLUDE(C);
+    OP_READ_EXPECT_B(Sa, "raspberry");
+    OP_EXPECT_FIN(Sa);
+
+    OP_WRITE_B(Sa, "elderberry");
+    OP_CONCLUDE(Sa);
+    OP_READ_EXPECT_B(C, "elderberry");
+    OP_EXPECT_FIN(C);
+
+    OP_TICK_ENABLE(C);
+}
+
 DEF_FUNC(check_stream_reset_5)
 {
     int ok = 0;
@@ -1030,6 +1056,90 @@ DEF_FUNC(check_stream_reset_5)
     ok = 1;
 err:
     return ok;
+}
+
+/* Local close: the thread-assisted client shuts the connection down. */
+DEF_SCRIPT(check_thread_assisted_close_local,
+    "thread-assisted client closes the connection")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    OP_WRITE_B(C, "raspberry");
+    OP_READ_EXPECT_B(Sa, "raspberry");
+
+    OP_SHUTDOWN_WAIT(C, 0, 0, NULL);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 0, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(Sa, 0, 1, 1);
+}
+
+/* Remote close: the thread-assisted client handles the server's shutdown. */
+DEF_SCRIPT(check_thread_assisted_close_remote,
+    "thread-assisted client handles a remote close")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    OP_WRITE_B(C, "raspberry");
+    OP_READ_EXPECT_B(Sa, "raspberry");
+
+    OP_SHUTDOWN_WAIT(Sa, 0, 42, "changed my mind");
+    OP_EXPECT_CONN_CLOSE_INFO(Sa, 42, 1, 0);
+    OP_EXPECT_CONN_CLOSE_INFO(C, 42, 1, 1);
+}
+
+/* Stream reset sent and received by a thread-assisted client. */
+DEF_SCRIPT(check_thread_assisted_stream_reset,
+    "thread-assisted client sends and receives a stream reset")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    /* Client-initiated reset observed by the server */
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE_B(Ca, "raspberry");
+    OP_STREAM_RESET(Ca, 42);
+    OP_ACCEPT_STREAM_WAIT(Sa, Ss, 0);
+    OP_SELECT_SSL(0, Ss);
+    OP_FUNC(check_stream_reset_5);
+
+    /* Server-initiated reset observed by the client */
+    OP_NEW_STREAM(Sa, Sb, 0 /* bidirectional */);
+    OP_WRITE_B(Sb, "elderberry");
+    OP_STREAM_RESET(Sb, 42);
+    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+    OP_SELECT_SSL(0, Cb);
+    OP_FUNC(check_stream_reset_5);
+}
+
+/* Explicitly created and accepted streams on a thread-assisted client. */
+DEF_SCRIPT(check_thread_assisted_streams,
+    "thread-assisted client with explicitly created/accepted streams")
+{
+    OP_SIMPLE_PAIR_CONN_TA();
+    OP_SET_DEFAULT_STREAM_MODE(C, SSL_DEFAULT_STREAM_MODE_NONE);
+    OP_ACCEPT_CONN_WAIT(L, Sa, 0);
+
+    /* Client-initiated stream accepted by the server */
+    OP_NEW_STREAM(C, Ca, 0 /* bidirectional */);
+    OP_WRITE_B(Ca, "raspberry");
+    OP_CONCLUDE(Ca);
+    OP_ACCEPT_STREAM_WAIT(Sa, Ss, 0);
+    OP_READ_EXPECT_B(Ss, "raspberry");
+    OP_EXPECT_FIN(Ss);
+    OP_WRITE_B(Ss, "elderberry");
+    OP_CONCLUDE(Ss);
+    OP_READ_EXPECT_B(Ca, "elderberry");
+    OP_EXPECT_FIN(Ca);
+
+    /* Server-initiated stream accepted by the client */
+    OP_NEW_STREAM(Sa, Sb, 0 /* bidirectional */);
+    OP_WRITE_B(Sb, "cranberry");
+    OP_ACCEPT_STREAM_WAIT(C, Cb, 0);
+    OP_READ_EXPECT_B(Cb, "cranberry");
+    OP_WRITE_B(Cb, "blueberry");
+    OP_READ_EXPECT_B(Sb, "blueberry");
 }
 
 /*
@@ -3330,6 +3440,11 @@ static SCRIPT_INFO *const scripts[] = {
     USE(check_pc_flood),
     USE(check_ctx_cbks),
     USE(check_thread_assisted_idle),
+    USE(check_thread_assisted_transfer),
+    USE(check_thread_assisted_close_local),
+    USE(check_thread_assisted_close_remote),
+    USE(check_thread_assisted_stream_reset),
+    USE(check_thread_assisted_streams),
     USE(script_5),
     USE(script_6),
     USE(script_7),
