@@ -1062,7 +1062,10 @@ WORK_STATE ossl_statem_server_pre_work(SSL_CONNECTION *s, WORK_STATE wst)
             break;
         /* Writes to s->session are only safe for initial handshakes */
         if (s->session->cipher == NULL) {
-            s->session->cipher = s->s3.tmp.new_cipher;
+            if (!ossl_ssl_session_set1_cipher(s->session, s->s3.tmp.new_cipher)) {
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                return WORK_ERROR;
+            }
         } else if (s->session->cipher != s->s3.tmp.new_cipher) {
             SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
             return WORK_ERROR;
@@ -2397,7 +2400,10 @@ static int tls_early_post_process_client_hello(SSL_CONNECTION *s)
                 goto err;
             }
 
-            s->session->cipher = pref_cipher;
+            if (!ossl_ssl_session_set1_cipher(s->session, pref_cipher)) {
+                SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                goto err;
+            }
             sk_SSL_CIPHER_free(s->cipher_list);
             s->cipher_list = sk_SSL_CIPHER_dup(s->peer_ciphers);
             sk_SSL_CIPHER_free(s->cipher_list_by_id);

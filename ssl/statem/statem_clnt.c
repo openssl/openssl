@@ -899,7 +899,10 @@ WORK_STATE ossl_statem_client_post_work(SSL_CONNECTION *s, WORK_STATE wst)
                 return WORK_ERROR;
             break;
         }
-        s->session->cipher = s->s3.tmp.new_cipher;
+        if (!ossl_ssl_session_set1_cipher(s->session, s->s3.tmp.new_cipher)) {
+            SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+            return WORK_ERROR;
+        }
 #ifdef OPENSSL_NO_COMP
         s->session->compress_meth = 0;
 #else
@@ -2127,7 +2130,14 @@ MSG_PROCESS_RETURN tls_process_server_hello(SSL_CONNECTION *s, PACKET *pkt)
                     s->ext.session_secret_cb_arg)
                 && master_key_length > 0) {
                 s->session->master_key_length = master_key_length;
-                s->session->cipher = pref_cipher ? pref_cipher : ssl_get_cipher_by_char(s, cipherchars, 0);
+                if (!ossl_ssl_session_set1_cipher(
+                        s->session,
+                        pref_cipher != NULL
+                            ? pref_cipher
+                            : ssl_get_cipher_by_char(s, cipherchars, 0))) {
+                    SSLfatal_alert(s, SSL_AD_INTERNAL_ERROR);
+                    goto err;
+                }
             } else {
                 SSLfatal(s, SSL_AD_INTERNAL_ERROR, ERR_R_INTERNAL_ERROR);
                 goto err;

@@ -463,6 +463,10 @@ typedef enum {
 
 /* CipherSuite value length. */
 #define TLS_CIPHER_LEN 2
+
+#define SSL_CIPHER_ORIGIN_STATIC 0
+#define SSL_CIPHER_ORIGIN_PROVIDER 1
+
 /* used to hold info on the particular ciphers used */
 struct ssl_cipher_st {
     uint32_t valid;
@@ -485,6 +489,12 @@ struct ssl_cipher_st {
     uint32_t algorithm2; /* Extra flags */
     int32_t strength_bits; /* Number of bits really used */
     uint32_t alg_bits; /* Number of bits for algorithm */
+
+    /* Provider-defined TLS 1.3 ciphersuites own these trailing fields. */
+    int origin; /* SSL_CIPHER_ORIGIN_*; static entries need no reference count. */
+    CRYPTO_REF_COUNT references;
+    const EVP_CIPHER *provider_cipher; /* Owned fetched AEAD implementation. */
+    const EVP_MD *provider_digest; /* Owned fetched transcript digest. */
 };
 
 /* Used to hold SSL/TLS functions */
@@ -2864,6 +2874,18 @@ __owur SSL_SESSION *lookup_sess_in_cache(SSL_CONNECTION *s,
     size_t sess_id_len);
 __owur int ssl_get_prev_session(SSL_CONNECTION *s, CLIENTHELLO_MSG *hello);
 __owur SSL_SESSION *ssl_session_dup(const SSL_SESSION *src, int ticket);
+/**
+ * @brief Replace a session's cipher while retaining a descriptor reference.
+ * @param session Session to update; caller must exclude concurrent access.
+ * @param cipher Borrowed descriptor to retain, or NULL to clear the cipher.
+ * @returns 1 on success, 0 if taking the new reference fails (no change).
+ *
+ * Static descriptors have process lifetime and need no counted reference.
+ */
+__owur int ossl_ssl_session_set1_cipher(SSL_SESSION *session,
+    const SSL_CIPHER *cipher);
+__owur int ossl_ssl_cipher_up_ref(const SSL_CIPHER *cipher);
+void ossl_ssl_cipher_free(const SSL_CIPHER *cipher);
 __owur int ssl_cipher_id_cmp(const SSL_CIPHER *a, const SSL_CIPHER *b);
 DECLARE_OBJ_BSEARCH_GLOBAL_CMP_FN(SSL_CIPHER, SSL_CIPHER, ssl_cipher_id);
 __owur int ssl_cipher_ptr_id_cmp(const SSL_CIPHER *const *ap,
