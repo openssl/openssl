@@ -9,6 +9,7 @@
 
 #include <string.h>
 #include <openssl/bio.h>
+#include <openssl/err.h>
 #include <openssl/rand.h>
 #include "testutil.h"
 #include "internal/sockets.h"
@@ -777,6 +778,209 @@ err:
 }
 #endif /* !defined(OPENSSL_NO_CHACHA) */
 
+/* Checks that a half without a usable peer fails cleanly. */
+static int check_detached(BIO *bio, int reason)
+{
+    char buf[16];
+    BIO_MSG msg;
+    size_t num_processed = 1;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.data = buf;
+    msg.data_len = sizeof(buf);
+
+    if (!TEST_int_eq(BIO_eof(bio), 1)
+        || !TEST_int_eq(BIO_pending(bio), 0))
+        return 0;
+
+    ERR_clear_error();
+    if (!TEST_int_lt(BIO_read(bio, buf, sizeof(buf)), 0)
+        || !TEST_false(BIO_should_retry(bio))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), reason))
+        return 0;
+
+    ERR_clear_error();
+    if (!TEST_int_lt(BIO_write(bio, "x", 1), 0)
+        || !TEST_false(BIO_should_retry(bio))
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), reason))
+        return 0;
+
+    ERR_clear_error();
+    if (!TEST_false(BIO_recvmmsg(bio, &msg, sizeof(msg), 1, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), reason))
+        return 0;
+
+    num_processed = 1;
+    ERR_clear_error();
+    if (!TEST_false(BIO_sendmmsg(bio, &msg, sizeof(msg), 1, 0, &num_processed))
+        || !TEST_size_t_eq(num_processed, 0)
+        || !TEST_int_eq(ERR_GET_REASON(ERR_peek_error()), reason))
+        return 0;
+
+    ERR_clear_error();
+    return 1;
+}
+
+static int test_bio_dgram_pair_free_half(void)
+{
+    int testresult = 0;
+    BIO *bio1 = NULL, *bio2 = NULL, *bio3 = NULL;
+    char buf[16];
+
+    if (!TEST_true(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0))
+        || !TEST_int_eq(BIO_write(bio1, "hello", 5), 5)
+        || !TEST_int_eq(BIO_write(bio2, "world", 5), 5))
+        goto err;
+
+    /* Freeing one half must leave the other detached but usable. */
+    BIO_free(bio1);
+    bio1 = NULL;
+    if (!check_detached(bio2, BIO_R_BROKEN_PIPE))
+        goto err;
+
+    /* Which includes pairing it with a new peer. */
+    if (!TEST_ptr(bio3 = BIO_new(BIO_s_dgram_pair()))
+        || !TEST_true(BIO_destroy_bio_pair(bio2))
+        || !TEST_true(BIO_make_bio_pair(bio2, bio3))
+        || !TEST_int_eq(BIO_eof(bio2), 0)
+        || !TEST_int_eq(BIO_write(bio2, "again", 5), 5)
+        || !TEST_int_eq(BIO_read(bio3, buf, sizeof(buf)), 5)
+        || !TEST_mem_eq(buf, 5, "again", 5))
+        goto err;
+
+    /* Destroying the pair on the survivor must cope with a freed peer. */
+    BIO_free(bio3);
+    bio3 = NULL;
+    if (!TEST_true(BIO_destroy_bio_pair(bio2))
+        || !check_detached(bio2, BIO_R_UNINITIALIZED))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(bio1);
+    BIO_free(bio2);
+    BIO_free(bio3);
+    return testresult;
+}
+
+static int test_bio_dgram_pair_destroy(int idx)
+{
+    int testresult = 0;
+    BIO *bio1 = NULL, *bio2 = NULL;
+    BIO_ADDR *addr;
+    char buf[16];
+
+    if (!TEST_true(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0))
+        || !TEST_ptr(addr = BIO_ADDR_new())
+        || !TEST_true(BIO_dgram_set0_local_addr(bio1, addr)))
+        goto err;
+
+    if (!TEST_int_eq(BIO_write(bio1, "hello", 5), 5)
+        || !TEST_int_eq(BIO_read(bio2, buf, sizeof(buf)), 5)
+        || !TEST_int_eq(BIO_write(bio2, "world", 5), 5)
+        || !TEST_int_eq(BIO_read(bio1, buf, sizeof(buf)), 5))
+        goto err;
+
+    /* Destroying the pair on either half must detach both cleanly. */
+    if (!TEST_true(BIO_destroy_bio_pair(idx == 0 ? bio1 : bio2))
+        || !check_detached(bio1, idx == 0 ? BIO_R_UNINITIALIZED : BIO_R_BROKEN_PIPE)
+        || !check_detached(bio2, idx == 0 ? BIO_R_BROKEN_PIPE : BIO_R_UNINITIALIZED)
+        || !TEST_true(BIO_destroy_bio_pair(bio1))
+        || !TEST_true(BIO_destroy_bio_pair(bio2)))
+        goto err;
+
+    /* Both halves are free to be paired again. */
+    if (!TEST_true(BIO_make_bio_pair(bio1, bio2))
+        || !TEST_int_eq(BIO_write(bio1, "again", 5), 5)
+        || !TEST_int_eq(BIO_read(bio2, buf, sizeof(buf)), 5)
+        || !TEST_mem_eq(buf, 5, "again", 5))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(bio1);
+    BIO_free(bio2);
+    return testresult;
+}
+
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+#include "threadstest.h"
+
+static BIO *reader_bio;
+static int reader_reason, reader_eof, reader_write;
+
+/* Keeps receiving on its half until the peer is freed underneath it. */
+static void free_race_reader(void)
+{
+    char buf[16];
+    BIO_MSG msg;
+    size_t num_processed;
+    int r;
+
+    memset(&msg, 0, sizeof(msg));
+    msg.data = buf;
+    msg.data_len = sizeof(buf);
+
+    for (;;) {
+        if (BIO_recvmmsg(reader_bio, &msg, sizeof(msg), 1, 0, &num_processed))
+            continue;
+        /* Writes look at the peer too, so keep them in the mix. */
+        ERR_clear_error();
+        r = BIO_write(reader_bio, "x", 1);
+        if (r < 0 && !BIO_should_retry(reader_bio))
+            break;
+        ERR_clear_error();
+        r = BIO_read(reader_bio, buf, sizeof(buf));
+        if (r < 0 && !BIO_should_retry(reader_bio))
+            break;
+    }
+
+    reader_reason = ERR_GET_REASON(ERR_peek_error());
+    reader_eof = BIO_eof(reader_bio);
+    reader_write = BIO_write(reader_bio, "x", 1);
+    ERR_clear_error();
+}
+
+static int test_bio_dgram_pair_free_race(void)
+{
+    int testresult = 0, written = 0, r;
+    BIO *bio1 = NULL, *bio2 = NULL;
+    thread_t thread;
+
+    if (!TEST_true(BIO_new_bio_dgram_pair(&bio1, 0, &bio2, 0)))
+        goto err;
+
+    reader_bio = bio2;
+    if (!TEST_true(run_thread(&thread, free_race_reader)))
+        goto err;
+
+    /* Keep the reader busy, then pull its peer out from under it. */
+    while (written < 1000) {
+        r = BIO_write(bio1, "ping", 4);
+        if (r == 4)
+            written++;
+        else if (!BIO_should_retry(bio1))
+            break;
+    }
+    BIO_free(bio1);
+    bio1 = NULL;
+
+    if (!TEST_true(wait_for_thread(thread))
+        || !TEST_int_eq(written, 1000)
+        || !TEST_int_eq(reader_reason, BIO_R_BROKEN_PIPE)
+        || !TEST_int_eq(reader_eof, 1)
+        || !TEST_int_lt(reader_write, 0))
+        goto err;
+
+    testresult = 1;
+err:
+    BIO_free(bio1);
+    BIO_free(bio2);
+    return testresult;
+}
+#endif
+
 static int test_bio_dgram_mfail(void)
 {
     BIO *bio;
@@ -805,6 +1009,11 @@ int setup_tests(void)
     ADD_ALL_TESTS(test_bio_dgram, OSSL_NELEM(bio_dgram_cases));
 #if !defined(OPENSSL_NO_CHACHA)
     ADD_ALL_TESTS(test_bio_dgram_pair, 3);
+#endif
+    ADD_TEST(test_bio_dgram_pair_free_half);
+    ADD_ALL_TESTS(test_bio_dgram_pair_destroy, 2);
+#if defined(OPENSSL_THREADS) && !defined(CRYPTO_TDEBUG)
+    ADD_TEST(test_bio_dgram_pair_free_race);
 #endif
     ADD_MFAIL_TEST(test_bio_dgram_mfail);
 #endif
