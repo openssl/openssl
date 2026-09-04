@@ -1,5 +1,5 @@
 /*
- * Copyright 2002-2024 The OpenSSL Project Authors. All Rights Reserved.
+ * Copyright 2002-2026 The OpenSSL Project Authors. All Rights Reserved.
  *
  * Licensed under the Apache License 2.0 (the "License").  You may not use
  * this file except in compliance with the License.  You can obtain a copy
@@ -25,6 +25,19 @@ char *EC_POINT_point2hex(const EC_GROUP *group,
 
     if (buf_len == 0)
         return NULL;
+
+    /*
+     * Guard the buf_len * 2 + 2 size computation against integer
+     * overflow. In practice buf_len is bounded by the curve's field
+     * size and never approaches SIZE_MAX, but defense-in-depth means
+     * future code paths or future curves cannot trip a heap overflow
+     * in the hex-encoding loop below.
+     */
+    if (buf_len > (SIZE_MAX - 2) / 2) {
+        OPENSSL_free(buf);
+        ERR_raise(ERR_LIB_CRYPTO, CRYPTO_R_TOO_MANY_BYTES);
+        return NULL;
+    }
 
     ret = OPENSSL_malloc(buf_len * 2 + 2);
     if (ret == NULL)
