@@ -30,6 +30,7 @@
 #include "internal/dane.h"
 #include "crypto/x509.h"
 #include "x509_local.h"
+#include "pcy_local.h"
 
 /* CRL score values */
 
@@ -2178,14 +2179,21 @@ static int check_policy(X509_STORE_CTX *ctx)
     if (ret == X509_PCY_TREE_INVALID) {
         int i, cbcalled = 0;
 
-        /* Locate certificates with bad extensions and notify callback. */
-        for (i = 0; i < sk_X509_num(ctx->chain); i++) {
+        /* Locate the non-TA certificates with bad extensions, notify callback */
+        for (i = 0; i < sk_X509_num(ctx->chain) - 1; i++) {
             X509 *x = sk_X509_value(ctx->chain, i);
+            X509_POLICY_CACHE *cache = ossl_policy_cache_new(x);
+            int invalid;
 
-            if ((x->ex_flags & EXFLAG_INVALID_POLICY) != 0)
+            if (cache == NULL) {
+                ERR_raise(ERR_LIB_X509, ERR_R_X509_LIB);
+                goto memerr;
+            }
+            invalid = cache->invalid;
+            ossl_policy_cache_free(cache);
+            if (invalid)
                 cbcalled = 1;
-            CB_FAIL_IF((x->ex_flags & EXFLAG_INVALID_POLICY) != 0,
-                ctx, x, i, X509_V_ERR_INVALID_POLICY_EXTENSION);
+            CB_FAIL_IF(invalid, ctx, x, i, X509_V_ERR_INVALID_POLICY_EXTENSION);
         }
         if (!cbcalled) {
             /* Should not be able to get here */

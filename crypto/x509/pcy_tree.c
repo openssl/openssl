@@ -98,8 +98,9 @@ static void tree_print(BIO *channel,
 static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     unsigned int flags)
 {
-    X509_POLICY_TREE *tree;
+    X509_POLICY_TREE *tree = NULL;
     X509_POLICY_LEVEL *level;
+    X509_POLICY_CACHE **caches; /* of the n non-TA certificates */
     const X509_POLICY_CACHE *cache;
     X509_POLICY_DATA *data = NULL;
     int ret = X509_PCY_TREE_VALID;
@@ -117,20 +118,18 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     if (n == 0)
         return X509_PCY_TREE_EMPTY;
 
-    /*
-     * First setup the policy cache in all n non-TA certificates, this will be
-     * used in X509_verify_cert() which will invoke the verify callback for all
-     * certificates with invalid policy extensions.
-     */
+    if ((caches = OPENSSL_calloc(n, sizeof(*caches))) == NULL)
+        return X509_PCY_TREE_INTERNAL;
     for (i = n - 1; i >= 0; i--) {
         X509 *x = sk_X509_value(certs, i);
 
         /* Call for side-effect of computing hash and caching extensions */
         X509_check_purpose(x, -1, 0);
 
-        /* If cache is NULL, likely ENOMEM: return immediately */
-        if (ossl_policy_cache_set(x) == NULL)
-            return X509_PCY_TREE_INTERNAL;
+        if ((caches[i] = ossl_policy_cache_new(x)) == NULL) {
+            ret = X509_PCY_TREE_INTERNAL;
+            goto done;
+        }
     }
 
     /*
@@ -150,12 +149,11 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         X509 *x = sk_X509_value(certs, i);
         uint32_t ex_flags = X509_get_extension_flags(x);
 
-        /* All the policies are already cached, we can return early */
-        if (ex_flags & EXFLAG_INVALID_POLICY)
-            return X509_PCY_TREE_INVALID;
-
-        /* Access the cache which we now know exists */
-        cache = ossl_policy_cache_set(x);
+        cache = caches[i];
+        if (cache->invalid) {
+            ret = X509_PCY_TREE_INVALID;
+            goto done;
+        }
 
         if ((ret & X509_PCY_TREE_VALID) && cache->data == NULL)
             ret = X509_PCY_TREE_EMPTY;
@@ -171,11 +169,13 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     if (explicit_policy == 0)
         ret |= X509_PCY_TREE_EXPLICIT;
     if ((ret & X509_PCY_TREE_VALID) == 0)
-        return ret;
+        goto done;
 
     /* If we get this far initialize the tree */
-    if ((tree = OPENSSL_zalloc(sizeof(*tree))) == NULL)
-        return X509_PCY_TREE_INTERNAL;
+    if ((tree = OPENSSL_zalloc(sizeof(*tree))) == NULL) {
+        ret = X509_PCY_TREE_INTERNAL;
+        goto done;
+    }
 
     /* Limit the growth of the tree to mitigate CVE-2023-0464 */
     tree->node_maximum = OPENSSL_POLICY_TREE_NODES_MAX;
@@ -187,10 +187,8 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
      * policies of anyPolicy.  (RFC 5280 has the TA at depth 0 and the leaf at
      * depth n, we have the leaf at depth 0 and the TA at depth n).
      */
-    if ((tree->levels = OPENSSL_calloc(n + 1, sizeof(*tree->levels))) == NULL) {
-        OPENSSL_free(tree);
-        return X509_PCY_TREE_INTERNAL;
-    }
+    if ((tree->levels = OPENSSL_calloc(n + 1, sizeof(*tree->levels))) == NULL)
+        goto bad_tree;
     tree->nlevel = n + 1;
     level = tree->levels;
     if ((data = ossl_policy_data_new(NULL,
@@ -210,13 +208,13 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
         X509 *x = sk_X509_value(certs, i);
         uint32_t ex_flags = X509_get_extension_flags(x);
 
-        /* Access the cache which we now know exists */
-        cache = ossl_policy_cache_set(x);
-
         if (!X509_up_ref(x))
             goto bad_tree;
 
         (++level)->cert = x;
+        level->cache = caches[i];
+        caches[i] = NULL;
+        cache = level->cache;
 
         if (!cache->anyPolicy)
             level->flags |= X509_V_FLAG_INHIBIT_ANY;
@@ -247,11 +245,17 @@ static int tree_init(X509_POLICY_TREE **ptree, STACK_OF(X509) *certs,
     }
 
     *ptree = tree;
-    return ret;
+    tree = NULL;
+    goto done;
 
 bad_tree:
+    ret = X509_PCY_TREE_INTERNAL;
+done:
     X509_policy_tree_free(tree);
-    return X509_PCY_TREE_INTERNAL;
+    for (i = 0; i < n; i++)
+        ossl_policy_cache_free(caches[i]);
+    OPENSSL_free(caches);
+    return ret;
 }
 
 /*
@@ -604,7 +608,7 @@ static int tree_evaluate(X509_POLICY_TREE *tree)
     const X509_POLICY_CACHE *cache;
 
     for (i = 1; i < tree->nlevel; i++, curr++) {
-        cache = ossl_policy_cache_set(curr->cert);
+        cache = curr->cache;
         if (!tree_link_nodes(curr, cache, tree))
             return X509_PCY_TREE_INTERNAL;
 
@@ -638,6 +642,7 @@ void X509_policy_tree_free(X509_POLICY_TREE *tree)
 
     for (i = 0, curr = tree->levels; i < tree->nlevel; i++, curr++) {
         X509_free(curr->cert);
+        ossl_policy_cache_free(curr->cache);
         sk_X509_POLICY_NODE_pop_free(curr->nodes, ossl_policy_node_free);
         ossl_policy_node_free(curr->anyPolicy);
     }
