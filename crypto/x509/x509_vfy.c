@@ -1400,11 +1400,13 @@ end:
 /**
  * @brief builds a stack of crldp full names from relative distribution points
  * @param cert - The certificate to build full crldp names for
- * @returns - a stack of X509_NAME structs, indexed in parallel with cert->crldp
+ * @param crldp - The decoded CRL distribution points of cert
+ * @returns - a stack of X509_NAME structs, indexed in parallel with crldp
  * @returns NULL if an error occurred, such as trying to build more than MAX_DP_NAMES
  * full names from relative distribution points
  */
-static STACK_OF(X509_NAME) *get_crldp_full_names(const X509 *cert)
+static STACK_OF(X509_NAME) *get_crldp_full_names(const X509 *cert,
+    const STACK_OF(DIST_POINT) *crldp)
 {
     int i;
     STACK_OF(X509_NAME) *crldp_names = NULL;
@@ -1412,12 +1414,12 @@ static STACK_OF(X509_NAME) *get_crldp_full_names(const X509 *cert)
     X509_NAME *dp_name;
     int full_names = 0;
 
-    crldp_names = sk_X509_NAME_new_reserve(NULL, sk_DIST_POINT_num(cert->crldp));
+    crldp_names = sk_X509_NAME_new_reserve(NULL, sk_DIST_POINT_num(crldp));
     if (crldp_names == NULL)
         return NULL;
 
-    for (i = 0; i < sk_DIST_POINT_num(cert->crldp); i++) {
-        dp = sk_DIST_POINT_value(cert->crldp, i);
+    for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
+        dp = sk_DIST_POINT_value(crldp, i);
         if (dp->distpoint != NULL && dp->distpoint->type == 1) {
             if (full_names >= MAX_DP_NAMES) {
                 ERR_raise_data(ERR_LIB_X509, X509_R_INVALID_DISTPOINT, "Too many relative dist points in certificate");
@@ -1977,13 +1979,8 @@ static int check_crl_chain(X509_STORE_CTX *ctx,
  * distpoint is a nameRelativeToCRLIssuer fragment: the CRL issuer name with
  * the fragment appended.  The CRL issuer is the directoryName in
  * dp->CRLissuer if there is one, else the issuer of the certificate.
- *
- * The result is a fresh X509_NAME owned by the caller.  It is deliberately
- * not stored in dp->distpoint->dpname: once its extension cache has been
- * published a certificate is shared between threads without locking, and
- * computing the name here rather than when the certificate is parsed keeps
- * a certificate with many relative distribution points from costing a copy
- * of the issuer name per entry on every parse.  Returns NULL on error.
+ * The result is a fresh X509_NAME owned by the caller.  Returns NULL on
+ * error.
  */
 static X509_NAME *crldp_full_name(const X509 *x, const DIST_POINT *dp)
 {
@@ -2147,7 +2144,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
     unsigned int *preasons, STACK_OF(X509_NAME) **crldp_names,
     int *vfy_cb_err)
 {
-    int i;
+    STACK_OF(DIST_POINT) *crldp = NULL;
+    int i, ret = 0;
 
     if ((crl->idp_flags & IDP_ONLYATTR) != 0)
         return 0;
@@ -2158,10 +2156,13 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         if ((crl->idp_flags & IDP_ONLYCA) != 0)
             return 0;
     }
+    /* Not cached: decode the extension now; if it is broken nothing matches */
+    if (ossl_x509_decode_crldp(x, &crldp) != 1)
+        goto out;
     *preasons = crl->idp_reasons;
-    for (i = 0; i < sk_DIST_POINT_num(x->crldp); i++) {
-        DIST_POINT *dp = sk_DIST_POINT_value(x->crldp, i);
-        X509_NAME *dpname;
+    for (i = 0; i < sk_DIST_POINT_num(crldp); i++) {
+        DIST_POINT *dp = sk_DIST_POINT_value(crldp, i);
+        X509_NAME *dpname = NULL;
         int match;
 
         if (!crldp_check_crlissuer(dp, crl, crl_score))
@@ -2171,10 +2172,10 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         } else {
             if (dp->distpoint != NULL && dp->distpoint->type == 1) {
                 if (*crldp_names == NULL) {
-                    *crldp_names = get_crldp_full_names(x);
+                    *crldp_names = get_crldp_full_names(x, crldp);
                     if (*crldp_names == NULL) {
                         *vfy_cb_err = X509_V_ERR_UNSPECIFIED;
-                        return 0;
+                        goto out;
                     }
                 }
             }
@@ -2184,7 +2185,8 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
         }
         if (match) {
             *preasons &= dp->dp_reasons;
-            return 1;
+            ret = 1;
+            goto out;
         }
     }
     /*
@@ -2194,9 +2196,12 @@ static int crl_crldp_check(X509 *x, X509_CRL *crl, int crl_score,
      * cRLIssuer fields omitted and a distribution point name consisting of
      * the certificate issuer name and any issuerAltName entries.
      */
-    return (crl_score & CRL_SCORE_ISSUER_NAME) != 0
+    ret = (crl_score & CRL_SCORE_ISSUER_NAME) != 0
         && (crl->idp == NULL || crl->idp->distpoint == NULL
             || idp_check_issuer(crl->idp->distpoint, x));
+out:
+    sk_DIST_POINT_pop_free(crldp, DIST_POINT_free);
+    return ret;
 }
 
 /*
