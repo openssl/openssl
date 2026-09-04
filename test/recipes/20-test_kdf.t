@@ -88,6 +88,13 @@ my @krb5kdf_tests = (
       desc => 'KRB5KDF AES-128-CBC'},
 );
 
+my @kdf_bin_tests = (
+    { cmd => [qw{openssl kdf -keylen 10 -binary -out hkdf-sha256.bin -kdfopt digest:SHA256 -kdfopt key:secret -kdfopt salt:salt -kdfopt info:label HKDF}],
+      outfile => 'hkdf-sha256.bin',
+      expected => '2ac4369f525996f8de13',
+      desc => 'HKDF SHA256 binary output' },
+);
+
 my @scrypt_tests = (
     { cmd => [qw{openssl kdf -keylen 64 -kdfopt pass:password -kdfopt salt:NaCl -kdfopt n:1024 -kdfopt r:8 -kdfopt p:16 -kdfopt maxmem_bytes:10485760 id-scrypt}],
       expected => 'fd:ba:be:1c:9d:34:72:00:78:56:e7:19:0d:01:e9:fe:7c:6a:d7:cb:c8:23:78:30:e7:73:76:63:4b:37:31:62:2e:af:30:d9:2e:22:a3:88:6f:f1:09:27:9d:98:30:da:c7:27:af:b9:4a:83:ee:6d:83:60:cb:df:a2:cc:06:40',
@@ -99,10 +106,14 @@ push @kdf_tests, @scrypt_tests unless disabled("scrypt");
 push @kdf_tests, @sshkdf_tests unless disabled("sshkdf");
 push @kdf_tests, @sskdf_tests unless disabled("sskdf");
 
-plan tests => scalar @kdf_tests;
+plan tests => scalar @kdf_tests + scalar @kdf_bin_tests;
 
 foreach (@kdf_tests) {
     ok(compareline($_->{cmd}, $_->{expected}), $_->{desc});
+}
+
+foreach (@kdf_bin_tests) {
+    ok(comparebinary($_->{cmd}, $_->{outfile}, $_->{expected}), $_->{desc});
 }
 
 # Check that the stdout output matches the expected value.
@@ -118,10 +129,28 @@ sub compareline {
         if ($lines[0] =~ m|^\Q${expect}\E\R$|) {
             return 1;
         } else {
-            print "Got: $lines[0]";
-            print "Exp: $expect\n";
+            diag("Got: $lines[0]");
+            diag("Exp: $expect");
             return 0;
         }
     }
     return 0;
+}
+
+# Check that the binary output file matches the expected value.
+sub comparebinary {
+    my ($cmdarray, $outfile, $expect) = @_;
+
+    return 0 unless run(app($cmdarray));
+
+    open(my $fh, '<:raw', $outfile) or return 0;
+    my $got = unpack('H*', do { local $/; <$fh> });
+    close($fh);
+
+    if ($got ne lc $expect) {
+        diag("Got: $got");
+        diag("Exp: $expect");
+        return 0;
+    }
+    return 1;
 }
